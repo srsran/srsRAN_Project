@@ -18,10 +18,19 @@ using namespace srsran;
 
 namespace {
 
-class null_metrics_notifier final : public scheduler_metrics_notifier
+class null_metrics_notifier final : public scheduler_cell_metrics_notifier
 {
-public:
-  void report_metrics(const scheduler_cell_metrics& report) override {}
+private:
+  scheduler_cell_metrics* get_next() override { return &null_report; }
+
+  void commit(scheduler_cell_metrics& report) override
+  {
+    // do nothing
+    null_report.ue_metrics.clear();
+    null_report.events.clear();
+  }
+
+  scheduler_cell_metrics null_report{};
 };
 
 null_metrics_notifier null_notifier;
@@ -42,10 +51,9 @@ cell_metrics_handler::cell_metrics_handler(
     return;
   }
 
-  next_report.ue_metrics.reserve(MAX_NOF_DU_UES);
-  // Note: there can be more than one event per UE.
-  constexpr unsigned prereserved_events_per_ue = 3;
-  next_report.events.reserve(MAX_NOF_DU_UES * prereserved_events_per_ue);
+  next_report = notifier.get_builder();
+
+  // Pre-reserve space.
   ues.reserve(MAX_NOF_DU_UES);
   rnti_to_ue_index_lookup.reserve(MAX_NOF_DU_UES);
 }
@@ -61,7 +69,7 @@ void cell_metrics_handler::handle_ue_creation(du_ue_index_t ue_index, rnti_t rnt
   ues[ue_index].pci      = pcell_pci;
   rnti_to_ue_index_lookup.emplace(rnti, ue_index);
 
-  next_report.events.push_back(scheduler_cell_event{last_slot_tx, rnti, scheduler_cell_event::event_type::ue_add});
+  next_report->events.push_back(scheduler_cell_event{last_slot_tx, rnti, scheduler_cell_event::event_type::ue_add});
 }
 
 void cell_metrics_handler::handle_ue_reconfiguration(du_ue_index_t ue_index)
@@ -69,7 +77,7 @@ void cell_metrics_handler::handle_ue_reconfiguration(du_ue_index_t ue_index)
   if (not connected()) {
     return;
   }
-  next_report.events.push_back(
+  next_report->events.push_back(
       scheduler_cell_event{last_slot_tx, ues[ue_index].rnti, scheduler_cell_event::event_type::ue_reconf});
 }
 
@@ -80,7 +88,7 @@ void cell_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
   }
   if (ues.contains(ue_index)) {
     rnti_t rnti = ues[ue_index].rnti;
-    next_report.events.push_back(scheduler_cell_event{last_slot_tx, rnti, scheduler_cell_event::event_type::ue_rem});
+    next_report->events.push_back(scheduler_cell_event{last_slot_tx, rnti, scheduler_cell_event::event_type::ue_rem});
 
     rnti_to_ue_index_lookup.erase(rnti);
     ues.erase(ue_index);
@@ -346,28 +354,28 @@ void cell_metrics_handler::report_metrics()
 {
   for (ue_metric_context& ue : ues) {
     // Compute statistics of the UE metrics and push the result to the report.
-    next_report.ue_metrics.push_back(ue.compute_report(report_period, nof_slots_per_sf));
+    next_report->ue_metrics.push_back(ue.compute_report(report_period, nof_slots_per_sf));
   }
 
-  next_report.pci                       = cell_cfg.pci;
-  next_report.slot                      = last_slot_tx - report_period_slots;
-  next_report.nof_slots                 = report_period_slots;
-  next_report.nof_error_indications     = data.error_indication_counter;
-  next_report.average_decision_latency  = data.decision_latency_sum / report_period_slots;
-  next_report.max_decision_latency      = data.max_decision_latency;
-  next_report.max_decision_latency_slot = data.max_decision_latency_slot;
-  next_report.latency_histogram         = data.decision_latency_hist;
-  next_report.nof_prbs                  = cell_cfg.nof_dl_prbs; // TODO: to be removed from the report.
-  next_report.nof_dl_slots              = data.nof_dl_slots;
-  next_report.nof_ul_slots              = data.nof_ul_slots;
-  next_report.nof_prach_preambles       = data.nof_prach_preambles;
-  next_report.dl_grants_count           = data.nof_ue_pdsch_grants;
-  next_report.ul_grants_count           = data.nof_ue_pusch_grants;
-  next_report.nof_failed_pdcch_allocs   = data.nof_failed_pdcch_allocs;
-  next_report.nof_failed_uci_allocs     = data.nof_failed_uci_allocs;
-  next_report.nof_msg3_ok               = data.nof_msg3_ok;
-  next_report.nof_msg3_nok              = data.nof_msg3_nok;
-  next_report.avg_prach_delay_ms =
+  next_report->pci                       = cell_cfg.pci;
+  next_report->slot                      = last_slot_tx - report_period_slots;
+  next_report->nof_slots                 = report_period_slots;
+  next_report->nof_error_indications     = data.error_indication_counter;
+  next_report->average_decision_latency  = data.decision_latency_sum / report_period_slots;
+  next_report->max_decision_latency      = data.max_decision_latency;
+  next_report->max_decision_latency_slot = data.max_decision_latency_slot;
+  next_report->latency_histogram         = data.decision_latency_hist;
+  next_report->nof_prbs                  = cell_cfg.nof_dl_prbs; // TODO: to be removed from the report.
+  next_report->nof_dl_slots              = data.nof_dl_slots;
+  next_report->nof_ul_slots              = data.nof_ul_slots;
+  next_report->nof_prach_preambles       = data.nof_prach_preambles;
+  next_report->dl_grants_count           = data.nof_ue_pdsch_grants;
+  next_report->ul_grants_count           = data.nof_ue_pusch_grants;
+  next_report->nof_failed_pdcch_allocs   = data.nof_failed_pdcch_allocs;
+  next_report->nof_failed_uci_allocs     = data.nof_failed_uci_allocs;
+  next_report->nof_msg3_ok               = data.nof_msg3_ok;
+  next_report->nof_msg3_nok              = data.nof_msg3_nok;
+  next_report->avg_prach_delay_ms =
       data.nof_prach_preambles
           ? std::optional{static_cast<float>(data.sum_prach_delay_slots) / static_cast<float>(data.nof_prach_preambles)}
           : std::nullopt;
@@ -376,11 +384,10 @@ void cell_metrics_handler::report_metrics()
   data = {};
 
   // Report all UE metrics in a batch.
-  notifier.report_metrics(next_report);
+  next_report.reset();
 
   // Clear lists in preparation for the next report.
-  next_report.ue_metrics.clear();
-  next_report.events.clear();
+  next_report = notifier.get_builder();
 }
 
 void cell_metrics_handler::handle_slot_result(const sched_result&       slot_result,

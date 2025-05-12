@@ -9,7 +9,7 @@
  */
 
 #include "mac_metrics_aggregator.h"
-#include "srsran/adt/spsc_queue.h"
+#include "spsc_metric_report_channel.h"
 #include "srsran/mac/mac_metrics_notifier.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/support/executors/execute_until_success.h"
@@ -20,8 +20,22 @@ using namespace srsran;
 // to aggregate all cells separate reports.
 static constexpr unsigned cell_report_queue_size = 16;
 
+namespace {
+
+struct recycle_sched_report {
+  void operator()(scheduler_cell_metrics& report)
+  {
+    report.events.clear();
+    report.ue_metrics.clear();
+  }
+};
+
+using sched_queue_report_channel = spsc_metric_report_channel<scheduler_cell_metrics, recycle_sched_report>;
+
+} // namespace
+
 class mac_metrics_aggregator::cell_metric_handler final : public mac_cell_metric_notifier,
-                                                          public scheduler_metrics_notifier
+                                                          public sched_queue_report_channel
 {
 public:
   cell_metric_handler(mac_metrics_aggregator&     parent_,
@@ -29,14 +43,23 @@ public:
                       subcarrier_spacing          scs_common_,
                       scheduler_metrics_notifier* sched_notifier_,
                       srslog::basic_logger&       logger_) :
+    sched_queue_report_channel(cell_report_queue_size,
+                               logger_,
+                               []() {
+                                 scheduler_cell_metrics cell_metrics{};
+                                 cell_metrics.ue_metrics.reserve(MAX_NOF_DU_UES);
+                                 // Note: there can be more than one event per UE.
+                                 constexpr unsigned prereserved_events_per_ue = 3;
+                                 cell_metrics.events.reserve(MAX_NOF_DU_UES * prereserved_events_per_ue);
+                                 return cell_metrics;
+                               }),
     parent(parent_),
     cell_index(cell_index_),
     scs_common(scs_common_),
     period_slots(get_nof_slots_per_subframe(scs_common) * parent.period.count()),
     sched_notifier(sched_notifier_),
     logger(logger_),
-    mac_report_queue(cell_report_queue_size),
-    sched_report_queue(cell_report_queue_size)
+    mac_report_queue(cell_report_queue_size)
   {
   }
 
@@ -72,18 +95,15 @@ public:
     parent.aggr_timer.run();
   }
 
-  void report_metrics(const scheduler_cell_metrics& report) override
+  /// \brief Called by the scheduler to commit the report.
+  /// Note: This function is called from the scheduler execution context.
+  void commit(scheduler_cell_metrics& report) override
   {
-    // Note: Function called from the cell execution context.
-
     if (sched_notifier != nullptr) {
+      // TODO: Remove this and use only DU metrics interface.
       sched_notifier->report_metrics(report);
     }
-
-    if (not sched_report_queue.try_push(report)) {
-      logger.error("Failed to enqueue scheduler metric event. Cause: Task queue is full.");
-      return;
-    }
+    sched_queue_report_channel::commit(report);
   }
 
 private:
@@ -94,10 +114,7 @@ private:
                                                  concurrent_queue_policy::lockfree_spsc,
                                                  concurrent_queue_wait_policy::non_blocking>;
 
-  /// Queue type used to push new SCHED cell reports.
-  using sched_report_queue_type = concurrent_queue<scheduler_cell_metrics,
-                                                   concurrent_queue_policy::lockfree_spsc,
-                                                   concurrent_queue_wait_policy::non_blocking>;
+  sched_queue_report_channel& sched_queue() { return *static_cast<sched_queue_report_channel*>(this); }
 
   mac_metrics_aggregator&     parent;
   const du_cell_index_t       cell_index;
@@ -108,9 +125,6 @@ private:
 
   // Reports from a given MAC cell.
   mac_report_queue_type mac_report_queue;
-
-  // Reports from the scheduler.
-  sched_report_queue_type sched_report_queue;
 
   // Stateful flags access from the control executor.
   bool       active_flag = false;
@@ -199,32 +213,35 @@ void mac_metrics_aggregator::handle_pending_reports()
 bool mac_metrics_aggregator::pop_sched_report(cell_metric_handler& cell, scheduler_cell_metrics& report)
 {
   // Peek next report.
-  const auto* next_ev = cell.sched_report_queue.front();
-  if (next_ev == nullptr) {
+  scheduler_cell_metrics* next_rep = cell.sched_queue().peek();
+  if (next_rep == nullptr) {
     // No report to pop.
     return false;
   }
 
   if (SRSRAN_UNLIKELY(not next_report_start_slot.valid())) {
     // This is the first report ever. Compute window start slot.
-    next_report_start_slot = next_ev->slot - (next_ev->slot.to_uint() % cell.period_slots);
-    return cell.sched_report_queue.try_pop(report);
+    next_report_start_slot = next_rep->slot - (next_rep->slot.to_uint() % cell.period_slots);
+    report                 = *next_rep;
+    cell.sched_queue().pop();
+    return true;
   }
 
-  if (next_ev->slot >= next_report_start_slot and next_ev->slot < next_report_start_slot + cell.period_slots) {
+  if (next_rep->slot >= next_report_start_slot and next_rep->slot < next_report_start_slot + cell.period_slots) {
     // Report is within expected window.
-    return cell.sched_report_queue.try_pop(report);
+    report = *next_rep;
+    cell.sched_queue().pop();
+    return true;
   }
 
-  if (next_ev->slot >= next_report_start_slot + cell.period_slots and
-      next_ev->slot < next_report_start_slot + 2 * cell.period_slots) {
+  if (next_rep->slot >= next_report_start_slot + cell.period_slots and
+      next_rep->slot < next_report_start_slot + 2 * cell.period_slots) {
     // This is the report for the next window. Leave it in the queue to be processed later.
     return false;
   }
 
   // Report falls in invalid window. Discard it.
-  bool discard = cell.sched_report_queue.try_pop(report);
-  (void)discard;
+  cell.sched_queue().pop();
   logger.info("cell={}: Discarding old metric report for slot {}", fmt::underlying(cell.cell_index), report.slot);
   return false;
 }

@@ -16,6 +16,7 @@
 #include "srsran/ran/sch/sch_mcs.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/support/math/stats.h"
+#include "srsran/support/zero_copy_notifier.h"
 #include <optional>
 
 namespace srsran {
@@ -169,5 +170,8 @@ public:
   /// \brief This method will be called periodically by the scheduler to report the latest UE metrics statistics.
   virtual void report_metrics(const scheduler_cell_metrics& report) = 0;
 };
+
+/// \brief Notifier interface used by the scheduler to report metrics of a given cell in a zero-copy manner.
+using scheduler_cell_metrics_notifier = zero_copy_notifier<scheduler_cell_metrics>;
 
 } // namespace srsran

@@ -34,7 +34,10 @@
 
 namespace srsran {
 
-class scheduler_metrics_notifier;
+struct scheduler_cell_metrics;
+template <typename R>
+class zero_copy_notifier;
+using scheduler_cell_metrics_notifier = zero_copy_notifier<scheduler_cell_metrics>;
 
 /// Basic scheduler resource grid element for resource reservation.
 struct sched_grid_resource {
@@ -52,8 +55,8 @@ struct sched_grid_resource {
 /// \remark See O-RAN WG8, Section 9.2.3.2.1, Table 9.18.
 struct sched_cell_configuration_request_message {
   struct metrics_config {
-    std::chrono::milliseconds   report_period{0};
-    scheduler_metrics_notifier* notifier = nullptr;
+    std::chrono::milliseconds        report_period{0};
+    scheduler_cell_metrics_notifier* notifier = nullptr;
   };
 
   du_cell_index_t       cell_index;

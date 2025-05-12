@@ -90,18 +90,19 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_execution_contexts)
 {
   test_delimit_logger delimiter{"Test UE procedures execution contexts"};
 
-  auto&                               logger = srslog::fetch_basic_logger("TEST");
-  manual_task_worker                  ctrl_worker{128};
-  manual_task_worker                  dl_worker{128};
-  std::vector<task_executor*>         dl_execs = {&dl_worker};
-  dummy_ue_executor_mapper            ul_exec_mapper{ctrl_worker};
-  dummy_dl_executor_mapper            dl_exec_mapper{dl_execs[0]};
-  dummy_mac_event_indicator           du_mng_notifier;
-  dummy_mac_result_notifier           phy_notifier;
-  dummy_scheduler_ue_metrics_notifier sched_metrics_notif;
-  dummy_mac_metrics_notifier          mac_metrics_notif;
-  null_mac_pcap                       pcap;
-  timer_manager                       timers;
+  auto&                                 logger = srslog::fetch_basic_logger("TEST");
+  manual_task_worker                    ctrl_worker{128};
+  manual_task_worker                    dl_worker{128};
+  std::vector<task_executor*>           dl_execs = {&dl_worker};
+  dummy_ue_executor_mapper              ul_exec_mapper{ctrl_worker};
+  dummy_dl_executor_mapper              dl_exec_mapper{dl_execs[0]};
+  dummy_mac_event_indicator             du_mng_notifier;
+  dummy_mac_result_notifier             phy_notifier;
+  dummy_scheduler_ue_metrics_notifier   sched_metrics_notif;
+  dummy_scheduler_cell_metrics_notifier scheduler_cell_metrics_notif;
+  dummy_mac_metrics_notifier            mac_metrics_notif;
+  null_mac_pcap                         pcap;
+  timer_manager                         timers;
   mac_dl_config mac_dl_cfg{ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap, timers};
   mac_config    maccfg{du_mng_notifier,
                     ul_exec_mapper,
@@ -120,8 +121,8 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_execution_contexts)
 
   auto mac_cell_req      = test_helpers::make_default_mac_cell_config();
   mac_cell_req.sched_req = sched_config_helper::make_default_sched_cell_configuration_request();
-  sched_cfg_adapter.add_cell(
-      mac_scheduler_cell_creation_request{mac_cell_req, std::chrono::milliseconds{1000}, &sched_metrics_notif});
+  sched_cfg_adapter.add_cell(mac_scheduler_cell_creation_request{
+      mac_cell_req, std::chrono::milliseconds{1000}, &scheduler_cell_metrics_notif});
 
   // Set this to a valid ARFCN value (band 3, in this case, but it doesn't matter) - Required for SSB.
   mac_dl.add_cell(mac_cell_req, {});
@@ -152,17 +153,18 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_tsan)
 {
   test_delimit_logger delimiter{"Test UE procedures TSAN"};
 
-  blocking_task_worker                ctrl_worker{128};
-  task_worker                         dl_workers[] = {{"DL#1", 128}, {"DL#2", 128}};
-  task_worker_executor                dl_execs[]   = {{dl_workers[0]}, {dl_workers[1]}};
-  dummy_ue_executor_mapper            ul_exec_mapper{ctrl_worker};
-  dummy_dl_executor_mapper            dl_exec_mapper{&dl_execs[0], &dl_execs[1]};
-  dummy_mac_event_indicator           du_mng_notifier;
-  dummy_mac_result_notifier           phy_notifier;
-  null_mac_pcap                       pcap;
-  timer_manager                       timers;
-  dummy_scheduler_ue_metrics_notifier sched_metrics_notif;
-  dummy_mac_metrics_notifier          mac_metrics_notif;
+  blocking_task_worker                  ctrl_worker{128};
+  task_worker                           dl_workers[] = {{"DL#1", 128}, {"DL#2", 128}};
+  task_worker_executor                  dl_execs[]   = {{dl_workers[0]}, {dl_workers[1]}};
+  dummy_ue_executor_mapper              ul_exec_mapper{ctrl_worker};
+  dummy_dl_executor_mapper              dl_exec_mapper{&dl_execs[0], &dl_execs[1]};
+  dummy_mac_event_indicator             du_mng_notifier;
+  dummy_mac_result_notifier             phy_notifier;
+  null_mac_pcap                         pcap;
+  timer_manager                         timers;
+  dummy_scheduler_ue_metrics_notifier   sched_metrics_notif;
+  dummy_scheduler_cell_metrics_notifier sched_cell_metrics_notif;
+  dummy_mac_metrics_notifier            mac_metrics_notif;
   mac_dl_config mac_dl_cfg{ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap, timers};
   mac_config    maccfg{du_mng_notifier,
                     ul_exec_mapper,
@@ -184,7 +186,7 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_tsan)
   cell_cfg1.sched_req                 = sched_config_helper::make_default_sched_cell_configuration_request();
   // Set this to a valid ARFCN value (band 3, in this case, but it doesn't matter) - Required for SSB.
   sched_cfg_adapter.add_cell(
-      mac_scheduler_cell_creation_request{cell_cfg1, std::chrono::milliseconds{1000}, &sched_metrics_notif});
+      mac_scheduler_cell_creation_request{cell_cfg1, std::chrono::milliseconds{1000}, &sched_cell_metrics_notif});
   mac_dl.add_cell(cell_cfg1, {});
   mac_cell_creation_request cell_cfg2  = test_helpers::make_default_mac_cell_config();
   cell_cfg2.cell_index                 = to_du_cell_index(1);
@@ -192,7 +194,7 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_tsan)
   cell_cfg2.sched_req.cell_index       = to_du_cell_index(1);
   cell_cfg2.sched_req.cell_group_index = (du_cell_group_index_t)1;
   sched_cfg_adapter.add_cell(
-      mac_scheduler_cell_creation_request{cell_cfg2, std::chrono::milliseconds{1000}, &sched_metrics_notif});
+      mac_scheduler_cell_creation_request{cell_cfg2, std::chrono::milliseconds{1000}, &sched_cell_metrics_notif});
   mac_dl.add_cell(cell_cfg2, {});
 
   // TEST: Thread used for resumption does not change

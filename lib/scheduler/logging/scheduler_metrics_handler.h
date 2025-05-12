@@ -139,9 +139,9 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
     unsigned sum_prach_delay_slots = 0;
   };
 
-  scheduler_metrics_notifier&     notifier;
-  const std::chrono::milliseconds report_period;
-  const cell_configuration&       cell_cfg;
+  scheduler_cell_metrics_notifier& notifier;
+  const std::chrono::milliseconds  report_period;
+  const cell_configuration&        cell_cfg;
 
   // Derived values.
   const unsigned nof_slots_per_sf;
@@ -156,7 +156,8 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
   /// Metrics tracked that are reset on every report.
   non_persistent_data data;
 
-  scheduler_cell_metrics next_report;
+  /// Report being constructed.
+  scheduler_cell_metrics_notifier::builder next_report;
 
 public:
   /// \brief Creates a scheduler UE metrics handler for a given cell. In case the metrics_report_period is zero,
