@@ -28,6 +28,8 @@ build trx driver:
     KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "20G"
   timeout: 30 min
   rules:
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_TARGET_BRANCH_PROTECTED == "true" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != $CI_DEFAULT_BRANCH
+      when: never
     - if: $ON_MR
     - if: $ON_WEB
     - if: $ON_API

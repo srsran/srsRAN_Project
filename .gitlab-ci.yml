@@ -411,6 +411,8 @@ clang-tidy:
   extends: .codechecker
   stage: manual
   rules:
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_TARGET_BRANCH_PROTECTED == "true" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != $CI_DEFAULT_BRANCH
+      when: never
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
       when: manual
@@ -514,6 +516,8 @@ unit coverage:
     name: ${GITLAB_REGISTRY_URI}/${CI_TOOLS_REPO}/report-generator:5.1.26
     entrypoint: ["/bin/sh", "-c"]
   rules:
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_TARGET_BRANCH_PROTECTED == "true" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != $CI_DEFAULT_BRANCH
+      when: never
     - if: $ON_MR
       variables:
         coverage_report: summary
