@@ -58,6 +58,12 @@ cell_metrics_handler::cell_metrics_handler(
   rnti_to_ue_index_lookup.reserve(MAX_NOF_DU_UES);
 }
 
+cell_metrics_handler::~cell_metrics_handler()
+{
+  // Avoid reporting on destruction.
+  next_report.release();
+}
+
 void cell_metrics_handler::handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci)
 {
   if (not connected()) {

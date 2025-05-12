@@ -165,6 +165,7 @@ public:
   explicit cell_metrics_handler(
       const cell_configuration&                                                      cell_cfg_,
       const std::optional<sched_cell_configuration_request_message::metrics_config>& metrics_cfg);
+  ~cell_metrics_handler();
 
   /// \brief Register creation of a UE.
   void handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci) override;
