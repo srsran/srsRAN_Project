@@ -50,6 +50,9 @@ public:
     reports.reserve(capacity);
     for (unsigned i = 0; i != capacity; ++i) {
       reports.emplace_back(report_ctor());
+      bool discard = free_list.try_push(i);
+      srsran_assert(discard, "Failed to fill free list");
+      (void)discard;
     }
   }
   ~spsc_metric_report_channel() override
@@ -97,7 +100,7 @@ public:
 
   ReportType* peek()
   {
-    unsigned* idx = free_list.front();
+    unsigned* idx = pending.front();
     if (idx == nullptr) {
       return nullptr;
     }
