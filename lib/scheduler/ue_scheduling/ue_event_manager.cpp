@@ -119,11 +119,12 @@ private:
 
 class srsran::pdu_indication_pool
 {
-  static constexpr size_t UCI_INITIAL_POOL_SIZE = MAX_PUCCH_PDUS_PER_SLOT;
-  static constexpr size_t PHR_INITIAL_POOL_SIZE = 8;
-  static constexpr size_t CRC_INITIAL_POOL_SIZE = MAX_PUSCH_PDUS_PER_SLOT;
-  static constexpr size_t SRS_INITIAL_POOL_SIZE = MAX_SRS_PDUS_PER_SLOT;
-  static constexpr size_t BSR_INITIAL_POOL_SIZE = MAX_PUSCH_PDUS_PER_SLOT;
+  static constexpr size_t UCI_INITIAL_POOL_SIZE     = MAX_PUCCH_PDUS_PER_SLOT;
+  static constexpr size_t PHR_INITIAL_POOL_SIZE     = 8;
+  static constexpr size_t CRC_INITIAL_POOL_SIZE     = MAX_PUSCH_PDUS_PER_SLOT;
+  static constexpr size_t SRS_INITIAL_POOL_SIZE     = MAX_SRS_PDUS_PER_SLOT;
+  static constexpr size_t BSR_INITIAL_POOL_SIZE     = MAX_PUSCH_PDUS_PER_SLOT;
+  static constexpr size_t EXPECTED_NOF_DEALLOCATORS = 7;
 
 public:
   using uci_ptr     = unbounded_object_pool<uci_indication::uci_pdu>::ptr;
@@ -134,11 +135,11 @@ public:
   using pos_req_ptr = unbounded_object_pool<positioning_measurement_request>::ptr;
 
   pdu_indication_pool() :
-    pending_ucis(UCI_INITIAL_POOL_SIZE),
-    pending_phrs(PHR_INITIAL_POOL_SIZE),
-    pending_crcs(CRC_INITIAL_POOL_SIZE),
-    pending_srss(SRS_INITIAL_POOL_SIZE),
-    pending_bsrs(BSR_INITIAL_POOL_SIZE),
+    pending_ucis(UCI_INITIAL_POOL_SIZE, EXPECTED_NOF_DEALLOCATORS),
+    pending_phrs(PHR_INITIAL_POOL_SIZE, EXPECTED_NOF_DEALLOCATORS),
+    pending_crcs(CRC_INITIAL_POOL_SIZE, EXPECTED_NOF_DEALLOCATORS),
+    pending_srss(SRS_INITIAL_POOL_SIZE, EXPECTED_NOF_DEALLOCATORS),
+    pending_bsrs(BSR_INITIAL_POOL_SIZE, EXPECTED_NOF_DEALLOCATORS),
     pending_pos_reqs(0)
   {
   }
