@@ -12,8 +12,8 @@
 #include "srsran/gateways/baseband/baseband_gateway_transmitter.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/radio/radio_factory.h"
-#include "srsran/support/complex_normal_random.h"
 #include "srsran/support/executors/task_worker.h"
+#include "srsran/support/math/complex_normal_random.h"
 #include "srsran/support/math/math_utils.h"
 #include "srsran/support/srsran_assert.h"
 #include <algorithm>

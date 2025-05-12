@@ -14,9 +14,9 @@
 #include "srsran/phy/upper/channel_processors/pucch/factories.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/support/benchmark_utils.h"
-#include "srsran/support/complex_normal_random.h"
 #include "srsran/support/executors/task_worker_pool.h"
 #include "srsran/support/executors/unique_thread.h"
+#include "srsran/support/math/complex_normal_random.h"
 #include "srsran/support/math/math_utils.h"
 #include "srsran/support/srsran_test.h"
 #include <getopt.h>
