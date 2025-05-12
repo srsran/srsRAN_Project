@@ -99,7 +99,7 @@ variables:
             exit $ret
           fi
         fi
-        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+        echo "Using LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
         CTEST_CMD="ctest -j${KUBERNETES_CPU_REQUEST} ${CTEST_SUBSET_CMD} $CTEST_ARGS --schedule-random --output-on-failure --output-junit xunit.xml"
         echo "+ ${CTEST_CMD}"
 

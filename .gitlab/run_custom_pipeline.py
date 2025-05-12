@@ -78,6 +78,8 @@ def _search_job_by_name(project: Project, job_name: str, timeout: int) -> Dict[s
         for job in pipeline.jobs.list(iterator=True):
             if job.name == job_name:
                 variable_dict.update(_extract_variables_from_job(project, job.id))
+                if not variable_dict:
+                    continue  # If the variable dict is empty, keep searching
                 if "TESTBED" not in variable_dict:
                     variable_dict["TESTBED"] = "none"
                 return variable_dict
@@ -93,9 +95,11 @@ def _search_job_by_name(project: Project, job_name: str, timeout: int) -> Dict[s
 def _extract_variables_from_job(project: Project, job_id: int) -> Dict[str, str]:
     job = project.jobs.get(job_id)
     if "driver" in job.name:
-        return {}
-    print(f'🟢 Job "{job.name}" found (id: {job.id})')
+        return {}  # Filter out driver jobs
     job_log = job.trace().decode("utf-8")
+    if not job_log:
+        return {}  # Filter out jobs without output - we can't extract variables
+    print(f'🟢 Job "{job.name}" found (id: {job.id})')
 
     variable_dict = {}
     for needs_job_id in re.findall(NEEDS_REGEX, job_log):
