@@ -13,6 +13,7 @@
 #include "../../phy/support/resource_grid_test_doubles.h"
 #include "../../phy/upper/downlink_processor_test_doubles.h"
 #include "../../phy/upper/uplink_request_processor_test_doubles.h"
+#include "srsran/fapi/message_builders.h"
 #include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
 #include "srsran/fapi_adaptor/uci_part2_correspondence_generator.h"
 #include "srsran/phy/support/resource_grid_pool.h"
@@ -258,9 +259,9 @@ TEST_F(fapi_to_phy_translator_fixture, downlink_processor_is_configured_on_new_d
   ASSERT_EQ(rg_pool.get_getter_count(), 0);
 
   fapi::dl_tti_request_message msg;
-  msg.sfn                     = slot.sfn();
-  msg.slot                    = slot.slot_index();
-  msg.is_last_message_in_slot = false;
+  msg.sfn                        = slot.sfn();
+  msg.slot                       = slot.slot_index();
+  msg.is_last_dl_message_in_slot = false;
 
   translator.dl_tti_request(msg);
 
@@ -276,10 +277,12 @@ TEST_F(fapi_to_phy_translator_fixture,
   ASSERT_FALSE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
   ASSERT_EQ(rg_pool.get_getter_count(), 0);
 
-  fapi::dl_tti_request_message msg;
-  msg.sfn                     = slot.sfn();
-  msg.slot                    = slot.slot_index();
-  msg.is_last_message_in_slot = true;
+  fapi::dl_tti_request_message         msg;
+  fapi::dl_tti_request_message_builder builder(msg);
+  builder.add_ssb_pdu();
+  msg.sfn                        = slot.sfn();
+  msg.slot                       = slot.slot_index();
+  msg.is_last_dl_message_in_slot = true;
 
   translator.dl_tti_request(msg);
 
@@ -351,9 +354,9 @@ TEST_F(fapi_to_phy_translator_fixture, receiving_a_dl_tti_request_sends_previous
   ASSERT_EQ(rg_pool.get_getter_count(), 0);
 
   fapi::dl_tti_request_message msg;
-  msg.sfn                     = slot.sfn();
-  msg.slot                    = slot.slot_index();
-  msg.is_last_message_in_slot = false;
+  msg.sfn                        = slot.sfn();
+  msg.slot                       = slot.slot_index();
+  msg.is_last_dl_message_in_slot = false;
 
   // Increase the slots.
   for (unsigned i = 1; i != headroom_in_slots; ++i) {
@@ -384,9 +387,9 @@ TEST_F(fapi_to_phy_translator_fixture, receiving_a_dl_tti_request_from_a_slot_de
   translator.handle_new_slot(current_slot);
 
   fapi::dl_tti_request_message msg;
-  msg.sfn                     = current_slot.sfn();
-  msg.slot                    = current_slot.slot_index();
-  msg.is_last_message_in_slot = false;
+  msg.sfn                        = current_slot.sfn();
+  msg.slot                       = current_slot.slot_index();
+  msg.is_last_dl_message_in_slot = false;
 
   // Increase the slots.
   for (unsigned i = 0, e = headroom_in_slots + 1; i != e; ++i) {
@@ -414,9 +417,9 @@ TEST_F(fapi_to_phy_translator_fixture, message_received_is_sended_when_a_message
   ASSERT_EQ(rg_pool.get_getter_count(), 0);
 
   fapi::dl_tti_request_message msg;
-  msg.sfn                     = slot.sfn();
-  msg.slot                    = slot.slot_index();
-  msg.is_last_message_in_slot = false;
+  msg.sfn                        = slot.sfn();
+  msg.slot                       = slot.slot_index();
+  msg.is_last_dl_message_in_slot = false;
 
   // Send a DL_TTI.request.
   translator.dl_tti_request(msg);

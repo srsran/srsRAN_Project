@@ -153,12 +153,12 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
   frame_pool->clear_uplink_slot(context.slot, context.sector, logger);
 
   if (SRSRAN_UNLIKELY(window_checker.is_late(context.slot))) {
-    err_notifier.on_late_uplink_message({context.slot, context.sector});
-
     logger.warning(
         "Sector#{}: dropped late PRACH request in slot '{}'. No OFH data will be requested from an RU for this slot",
         context.sector,
         context.slot);
+
+    err_notifier.on_late_uplink_message({context.slot, context.sector});
     return;
   }
 
@@ -235,12 +235,12 @@ void uplink_request_handler_impl::handle_new_uplink_slot(const resource_grid_con
   frame_pool->clear_uplink_slot(context.slot, context.sector, logger);
 
   if (SRSRAN_UNLIKELY(window_checker.is_late(context.slot))) {
-    err_notifier.on_late_uplink_message({context.slot, context.sector});
-
     logger.warning(
         "Sector#{}: dropped late uplink request in slot '{}'. No OFH data will be requested from an RU for this slot",
         context.sector,
         context.slot);
+
+    err_notifier.on_late_uplink_message({context.slot, context.sector});
     return;
   }
 

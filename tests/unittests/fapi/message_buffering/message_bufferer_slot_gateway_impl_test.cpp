@@ -112,7 +112,7 @@ static bool operator==(const dl_tti_request_pdu& lhs, const dl_tti_request_pdu& 
 static bool operator==(const dl_tti_request_message& lhs, const dl_tti_request_message& rhs)
 {
   return lhs.sfn == rhs.sfn && lhs.slot == rhs.slot && lhs.num_pdus_of_each_type == rhs.num_pdus_of_each_type &&
-         lhs.num_groups == rhs.num_groups && lhs.is_last_message_in_slot == rhs.is_last_message_in_slot &&
+         lhs.num_groups == rhs.num_groups && lhs.is_last_dl_message_in_slot == rhs.is_last_dl_message_in_slot &&
          lhs.pdus == rhs.pdus;
 }
 

@@ -110,10 +110,12 @@ TEST(ofh_downlink_handler_impl, handling_downlink_data_use_control_and_user_plan
   downlink_handler_impl handler(config, std::move(dependencies));
 
   resource_grid_reader_spy rg_reader_spy(1, 1, 1);
+  rg_reader_spy.write(resource_grid_reader_spy::expected_entry_t{});
   resource_grid_writer_spy rg_writer_spy(1, 1, 1);
   resource_grid_spy        rg_spy(rg_reader_spy, rg_writer_spy);
   shared_resource_grid_spy rg(rg_spy);
-  resource_grid_context    rg_context;
+
+  resource_grid_context rg_context;
   rg_context.slot   = slot_point(1, 1, 1);
   rg_context.sector = 1;
 
@@ -163,6 +165,7 @@ TEST(ofh_downlink_handler_impl, late_rg_is_not_handled)
   downlink_handler_impl handler(config, std::move(dependencies));
 
   resource_grid_reader_spy rg_reader_spy(1, 1, 1);
+  rg_reader_spy.write(resource_grid_reader_spy::expected_entry_t{});
   resource_grid_writer_spy rg_writer_spy(1, 1, 1);
   resource_grid_spy        rg_spy(rg_reader_spy, rg_writer_spy);
   shared_resource_grid_spy rg(rg_spy);
@@ -208,6 +211,7 @@ TEST(ofh_downlink_handler_impl, same_slot_fails)
   downlink_handler_impl handler(config, std::move(dependencies));
 
   resource_grid_reader_spy rg_reader_spy(1, 1, 1);
+  rg_reader_spy.write(resource_grid_reader_spy::expected_entry_t{});
   resource_grid_writer_spy rg_writer_spy(1, 1, 1);
   resource_grid_spy        rg_spy(rg_reader_spy, rg_writer_spy);
   shared_resource_grid_spy rg(rg_spy);
@@ -249,6 +253,7 @@ TEST(ofh_downlink_handler_impl, rg_in_the_frontier_is_handled)
   downlink_handler_impl handler(config, std::move(dependencies));
 
   resource_grid_reader_spy rg_reader_spy(1, 1, 1);
+  rg_reader_spy.write(resource_grid_reader_spy::expected_entry_t{});
   resource_grid_writer_spy rg_writer_spy(1, 1, 1);
   resource_grid_spy        rg_spy(rg_reader_spy, rg_writer_spy);
   shared_resource_grid_spy rg(rg_spy);

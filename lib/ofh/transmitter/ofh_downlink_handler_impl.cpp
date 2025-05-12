@@ -55,14 +55,19 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
   // Clear any stale buffers associated with the context slot.
   frame_pool->clear_downlink_slot(context.slot, context.sector, logger);
 
-  if (window_checker.is_late(context.slot)) {
-    err_notifier.on_late_downlink_message({context.slot, sector_id});
+  // Nothing to do on empty resource grids.
+  if (grid.get_reader().is_empty()) {
+    return;
+  }
 
+  if (window_checker.is_late(context.slot)) {
     logger.warning(
         "Sector#{}: dropped late downlink resource grid in slot '{}'. No OFH data will be transmitted for this slot",
         sector_id,
         context.slot);
     ofh_tracer << trace_event("ofh_handle_dl_late", tp);
+
+    err_notifier.on_late_downlink_message({context.slot, sector_id});
     return;
   }
 
@@ -88,5 +93,6 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
     uplane_context.eaxc = dl_eaxc[cell_port_id];
     data_flow_uplane->enqueue_section_type_1_message(uplane_context, grid);
   }
+
   ofh_tracer << trace_event("ofh_handle_downlink", tp);
 }

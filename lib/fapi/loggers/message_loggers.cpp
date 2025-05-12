@@ -168,7 +168,7 @@ void srsran::fapi::log_dl_tti_request(const dl_tti_request_message& msg,
                  sector_id,
                  msg.sfn,
                  msg.slot,
-                 msg.is_last_message_in_slot);
+                 msg.is_last_dl_message_in_slot);
 
   for (const auto& pdu : msg.pdus) {
     switch (pdu.pdu_type) {

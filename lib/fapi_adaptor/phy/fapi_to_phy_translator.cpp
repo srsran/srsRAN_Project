@@ -354,6 +354,11 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
     return;
   }
 
+  // Ignore FAPI request message when there are no PDUs to process.
+  if (msg.is_last_dl_message_in_slot && msg.pdus.empty()) {
+    return;
+  }
+
   // Create controller for the current slot.
   slot_based_upper_phy_controller& controller = slot_controller_mngr.acquire_controller(slot);
 
@@ -391,7 +396,7 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
     pdsch_repository.pdus.push_back(pdsch);
   }
 
-  if (msg.is_last_message_in_slot) {
+  if (msg.is_last_dl_message_in_slot) {
     srsran_assert(
         pdsch_repository.empty(),
         "Sector#{}: The DL_TTI.request message in slot '{}' has been marked as the last message in the slot, but a "
