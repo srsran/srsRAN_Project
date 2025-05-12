@@ -816,6 +816,7 @@ public:
 	explicit ConcurrentQueue(size_t capacity = 32 * BLOCK_SIZE)
 		: producerListTail(nullptr),
 		producerCount(0),
+		preallocProducerListTail(nullptr),
 		initialBlockPoolIndex(0),
 		nextExplicitConsumerId(0),
 		globalExplicitConsumerOffset(0)
@@ -840,6 +841,7 @@ public:
 	ConcurrentQueue(size_t minCapacity, size_t maxExplicitProducers, size_t maxImplicitProducers)
 		: producerListTail(nullptr),
 		producerCount(0),
+		preallocProducerListTail(nullptr),
 		initialBlockPoolIndex(0),
 		nextExplicitConsumerId(0),
 		globalExplicitConsumerOffset(0)
@@ -848,6 +850,17 @@ public:
 		populate_initial_implicit_producer_hash();
 		size_t blocks = (((minCapacity + BLOCK_SIZE - 1) / BLOCK_SIZE) - 1) * (maxExplicitProducers + 1) + 2 * (maxExplicitProducers + maxImplicitProducers);
 		populate_initial_block_list(blocks);
+
+		// Pre-allocate implicit producers in a separate linked list to avoid paying the O(N) complexity
+		// on dequeue if we overallocate the number of producers.
+		for (unsigned i = 0; i != maxImplicitProducers; ++i) {
+			ProducerBase* producer = create<ImplicitProducer>(this);
+			// Add it to the lock-free list of pre-allocated producers.
+			auto prevTail = preallocProducerListTail.load(std::memory_order_relaxed);
+			do {
+				producer->next = prevTail;
+			} while (!preallocProducerListTail.compare_exchange_weak(prevTail, producer, std::memory_order_release, std::memory_order_relaxed));
+		}
 
 #ifdef MOODYCAMEL_QUEUE_INTERNAL_DEBUG
 		explicitProducers.store(nullptr, std::memory_order_relaxed);
@@ -862,6 +875,17 @@ public:
 	{
 		// Destroy producers
 		auto ptr = producerListTail.load(std::memory_order_relaxed);
+		while (ptr != nullptr) {
+			auto next = ptr->next_prod();
+			if (ptr->token != nullptr) {
+				ptr->token->producer = nullptr;
+			}
+			destroy(ptr);
+			ptr = next;
+		}
+
+		// Destroy pre-reserved producers that were never used.
+		ptr = preallocProducerListTail.load(std::memory_order_relaxed);
 		while (ptr != nullptr) {
 			auto next = ptr->next_prod();
 			if (ptr->token != nullptr) {
@@ -914,6 +938,7 @@ public:
 	ConcurrentQueue(ConcurrentQueue&& other) MOODYCAMEL_NOEXCEPT
 		: producerListTail(other.producerListTail.load(std::memory_order_relaxed)),
 		producerCount(other.producerCount.load(std::memory_order_relaxed)),
+		preallocProducerListTail(other.preallocProducerListTail.load(std::memory_order_relaxed)),
 		initialBlockPoolIndex(other.initialBlockPoolIndex.load(std::memory_order_relaxed)),
 		initialBlockPool(other.initialBlockPool),
 		initialBlockPoolSize(other.initialBlockPoolSize),
@@ -928,6 +953,7 @@ public:
 
 		other.producerListTail.store(nullptr, std::memory_order_relaxed);
 		other.producerCount.store(0, std::memory_order_relaxed);
+		other.preallocProducerListTail.store(nullptr, std::memory_order_relaxed);
 		other.nextExplicitConsumerId.store(0, std::memory_order_relaxed);
 		other.globalExplicitConsumerOffset.store(0, std::memory_order_relaxed);
 
@@ -969,6 +995,7 @@ private:
 
 		details::swap_relaxed(producerListTail, other.producerListTail);
 		details::swap_relaxed(producerCount, other.producerCount);
+		details::swap_relaxed(preallocProducerListTail, other.preallocProducerListTail);
 		details::swap_relaxed(initialBlockPoolIndex, other.initialBlockPoolIndex);
 		std::swap(initialBlockPool, other.initialBlockPool);
 		std::swap(initialBlockPoolSize, other.initialBlockPoolSize);
@@ -3249,6 +3276,17 @@ private:
 			}
 		}
 
+		// Check if we pre-allocated implicitProducers during construction.
+		if (not isExplicit) {
+			auto* ptr = preallocProducerListTail.load(std::memory_order_relaxed);
+			while (ptr != nullptr and not preallocProducerListTail.compare_exchange_weak(ptr, ptr->next_prod(), std::memory_order_acquire, std::memory_order_relaxed)) {
+			}
+			if (ptr != nullptr) {
+				// Transfer the pre-alloc Producer to producerListTail.
+				return add_producer(ptr);
+			}
+		}
+
 		return add_producer(isExplicit ? static_cast<ProducerBase*>(create<ExplicitProducer>(this)) : create<ImplicitProducer>(this));
 	}
 
@@ -3291,6 +3329,9 @@ private:
 		// producers we stole still think their parents are the other queue.
 		// So fix them up!
 		for (auto ptr = producerListTail.load(std::memory_order_relaxed); ptr != nullptr; ptr = ptr->next_prod()) {
+			ptr->parent = this;
+		}
+		for (auto ptr = preallocProducerListTail.load(std::memory_order_relaxed); ptr != nullptr; ptr = ptr->next_prod()) {
 			ptr->parent = this;
 		}
 	}
@@ -3658,6 +3699,8 @@ private:
 private:
 	std::atomic<ProducerBase*> producerListTail;
 	std::atomic<std::uint32_t> producerCount;
+
+	std::atomic<ProducerBase*> preallocProducerListTail;
 
 	std::atomic<size_t> initialBlockPoolIndex;
 	Block* initialBlockPool;
