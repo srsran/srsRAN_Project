@@ -25,7 +25,8 @@ inter_slice_scheduler::inter_slice_scheduler(const cell_configuration& cell_cfg_
   // DRB slice).
   unsigned capacity = cell_cfg.rrm_policy_members.size() + 2;
   dl_prio_queue.reserve(capacity);
-  ul_prio_queue.reserve(capacity);
+  // We use a larger capacity for the UL priority queue to account for the maximum number of PUSCH TD resources.
+  ul_prio_queue.reserve(capacity * pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS);
   slices.reserve(capacity);
 
   // NOTE: We assume nof. CRBs in a cell for both DL and UL are same.
