@@ -46,14 +46,14 @@ DECLARE_METRIC("nof_pucch_f2f3f4_invalid_csis", metric_nof_pucch_f2f3f4_invalid_
 DECLARE_METRIC("nof_pusch_invalid_harqs", metric_nof_pusch_invalid_harqs, unsigned, "");
 DECLARE_METRIC("nof_pusch_invalid_csis", metric_nof_pusch_invalid_csis, unsigned, "");
 DECLARE_METRIC("last_phr", metric_last_phr, std::optional<int>, "");
-DECLARE_METRIC("avg_ce_delay", metric_avg_ce_delay, float, "ms");
-DECLARE_METRIC("max_ce_delay", metric_max_ce_delay, float, "ms");
-DECLARE_METRIC("avg_crc_delay", metric_avg_crc_delay, float, "ms");
-DECLARE_METRIC("max_crc_delay", metric_max_crc_delay, float, "ms");
-DECLARE_METRIC("avg_pusch_harq_delay", metric_avg_pusch_harq_delay, float, "ms");
-DECLARE_METRIC("max_pusch_harq_delay", metric_max_pusch_harq_delay, float, "ms");
-DECLARE_METRIC("avg_pucch_harq_delay", metric_avg_pucch_harq_delay, float, "ms");
-DECLARE_METRIC("max_pucch_harq_delay", metric_max_pucch_harq_delay, float, "ms");
+DECLARE_METRIC("avg_ce_delay", metric_avg_ce_delay, std::optional<float>, "ms");
+DECLARE_METRIC("max_ce_delay", metric_max_ce_delay, std::optional<float>, "ms");
+DECLARE_METRIC("avg_crc_delay", metric_avg_crc_delay, std::optional<float>, "ms");
+DECLARE_METRIC("max_crc_delay", metric_max_crc_delay, std::optional<float>, "ms");
+DECLARE_METRIC("avg_pusch_harq_delay", metric_avg_pusch_harq_delay, std::optional<float>, "ms");
+DECLARE_METRIC("max_pusch_harq_delay", metric_max_pusch_harq_delay, std::optional<float>, "ms");
+DECLARE_METRIC("avg_pucch_harq_delay", metric_avg_pucch_harq_delay, std::optional<float>, "ms");
+DECLARE_METRIC("max_pucch_harq_delay", metric_max_pucch_harq_delay, std::optional<float>, "ms");
 DECLARE_METRIC_SET("ue_container",
                    mset_ue_container,
                    metric_pci,
@@ -106,6 +106,9 @@ DECLARE_METRIC("max_latency", metric_max_latency, unsigned, "");
 DECLARE_METRIC("nof_failed_pdcch_allocs", metric_nof_failed_pdcch_allocs, unsigned, "");
 DECLARE_METRIC("nof_failed_uci_allocs", metric_nof_failed_uci_allocs, unsigned, "");
 DECLARE_METRIC("latency_histogram", latency_histogram, std::vector<unsigned>, "");
+DECLARE_METRIC("msg3_nof_ok", metric_msg3_nof_ok, unsigned, "");
+DECLARE_METRIC("msg3_nof_nok", metric_msg3_nof_nok, unsigned, "");
+DECLARE_METRIC("avg_prach_delay", metric_avg_prach_delay, std::optional<float>, "ms");
 DECLARE_METRIC_SET("cell_metrics",
                    cell_metrics,
                    metric_error_indication_count,
@@ -113,7 +116,10 @@ DECLARE_METRIC_SET("cell_metrics",
                    metric_max_latency,
                    metric_nof_failed_pdcch_allocs,
                    metric_nof_failed_uci_allocs,
-                   latency_histogram);
+                   latency_histogram,
+                   metric_msg3_nof_ok,
+                   metric_msg3_nof_nok,
+                   metric_avg_prach_delay);
 
 /// Metrics root object.
 DECLARE_METRIC("timestamp", metric_timestamp_tag, double, "");
@@ -327,14 +333,14 @@ void scheduler_cell_metrics_consumer_json::handle_metric(const std::optional<sch
       output.write<metric_ul_nof_nok>(ue.ul_nof_nok);
       output.write<metric_bsr>(ue.bsr);
 
-      output.write<metric_avg_ce_delay>(ue.avg_ce_delay_ms.value_or(0.0f));
-      output.write<metric_max_ce_delay>(ue.max_ce_delay_ms.value_or(0.0f));
-      output.write<metric_avg_crc_delay>(ue.avg_crc_delay_ms.value_or(0.0f));
-      output.write<metric_max_crc_delay>(ue.max_crc_delay_ms.value_or(0.0f));
-      output.write<metric_avg_pusch_harq_delay>(ue.avg_pusch_harq_delay_ms.value_or(0.0f));
-      output.write<metric_max_pusch_harq_delay>(ue.max_pusch_harq_delay_ms.value_or(0.0f));
-      output.write<metric_avg_pucch_harq_delay>(ue.avg_pucch_harq_delay_ms.value_or(0.0f));
-      output.write<metric_max_pucch_harq_delay>(ue.max_pucch_harq_delay_ms.value_or(0.0f));
+      output.write<metric_avg_ce_delay>(ue.avg_ce_delay_ms);
+      output.write<metric_max_ce_delay>(ue.max_ce_delay_ms);
+      output.write<metric_avg_crc_delay>(ue.avg_crc_delay_ms);
+      output.write<metric_max_crc_delay>(ue.max_crc_delay_ms);
+      output.write<metric_avg_pusch_harq_delay>(ue.avg_pusch_harq_delay_ms);
+      output.write<metric_max_pusch_harq_delay>(ue.max_pusch_harq_delay_ms);
+      output.write<metric_avg_pucch_harq_delay>(ue.avg_pucch_harq_delay_ms);
+      output.write<metric_max_pucch_harq_delay>(ue.max_pucch_harq_delay_ms);
     }
 
     for (const auto& event : cell.events) {
@@ -355,6 +361,9 @@ void scheduler_cell_metrics_consumer_json::handle_metric(const std::optional<sch
     cell_output.write<metric_nof_failed_uci_allocs>(cell.nof_failed_uci_allocs);
     cell_output.write<latency_histogram>(
         std::vector<unsigned>(cell.latency_histogram.begin(), cell.latency_histogram.end()));
+    cell_output.write<metric_msg3_nof_ok>(cell.nof_msg3_ok);
+    cell_output.write<metric_msg3_nof_nok>(cell.nof_msg3_nok);
+    cell_output.write<metric_avg_prach_delay>(cell.avg_prach_delay_ms);
 
     // Log the context.
     ctx.write<metric_timestamp_tag>(get_time_stamp());
@@ -411,7 +420,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
         " total_dl_brate={}bps total_ul_brate={}bps nof_prbs={} nof_dl_slots={} nof_ul_slots={} nof_prach_preambles={} "
         "error_indications={} pdsch_rbs_per_slot={} pusch_rbs_per_slot={} pdschs_per_slot={:.3} puschs_per_slot={:.3} "
         "failed_pdcch={} failed_uci={} nof_ues={} mean_latency={}usec max_latency={}usec max_latency_slot={} "
-        "latency_hist=[{}]",
+        "latency_hist=[{}] msg3_ok={} msg3_nok={}",
         float_to_eng_string(sum_dl_bitrate_kbps * 1e3, 1, false),
         float_to_eng_string(sum_ul_bitrate_kbps * 1e3, 1, false),
         cell.nof_prbs,
@@ -429,7 +438,9 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
         cell.average_decision_latency.count(),
         cell.max_decision_latency.count(),
         cell.max_decision_latency_slot,
-        fmt::join(cell.latency_histogram.begin(), cell.latency_histogram.end(), ", "));
+        fmt::join(cell.latency_histogram.begin(), cell.latency_histogram.end(), ", "),
+        cell.nof_msg3_ok,
+        cell.nof_msg3_nok);
     if (max_crc_delay != std::numeric_limits<float>::min()) {
       fmt::format_to(std::back_inserter(buffer), " max_crc_delay={}ms", max_crc_delay);
     }
@@ -442,6 +453,8 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
     if (max_pusch_delay != std::numeric_limits<float>::min()) {
       fmt::format_to(std::back_inserter(buffer), " max_pusch_harq_delay={}ms", max_pusch_delay);
     }
+    fmt::format_to(
+        std::back_inserter(buffer), " avg_prach_delay={:.3}", format_unit_or(cell.avg_prach_delay_ms, "ms", "n/a"));
     if (not cell.events.empty()) {
       fmt::format_to(std::back_inserter(buffer), " events=[");
       bool first = true;

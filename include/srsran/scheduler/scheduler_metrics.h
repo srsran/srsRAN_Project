@@ -139,6 +139,12 @@ struct scheduler_cell_metrics {
   unsigned nof_failed_pdcch_allocs = 0;
   /// Number of failed UCI allocation attempts.
   unsigned nof_failed_uci_allocs = 0;
+  /// Number of MSG3s.
+  unsigned nof_msg3_ok = 0;
+  /// Number of MSG3 KOs.
+  unsigned nof_msg3_nok = 0;
+  /// Average PRACH delay in ms.
+  std::optional<float> avg_prach_delay_ms;
 
   unsigned                                nof_error_indications = 0;
   std::chrono::microseconds               average_decision_latency{0};

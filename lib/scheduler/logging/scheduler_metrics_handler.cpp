@@ -87,13 +87,28 @@ void cell_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
   }
 }
 
-void cell_metrics_handler::handle_rach_indication(const rach_indication_message& msg)
+void cell_metrics_handler::handle_rach_indication(const rach_indication_message& msg, slot_point sl_tx)
 {
   if (not connected()) {
     return;
   }
-  for (auto& occ : msg.occasions) {
+  unsigned slot_diff = sl_tx - msg.slot_rx;
+  for (const auto& occ : msg.occasions) {
     data.nof_prach_preambles += occ.preambles.size();
+    data.sum_prach_delay_slots += slot_diff * occ.preambles.size();
+  }
+}
+
+void cell_metrics_handler::handle_msg3_crc_indication(const ul_crc_pdu_indication& crc_pdu)
+{
+  if (not connected()) {
+    return;
+  }
+
+  if (crc_pdu.tb_crc_success) {
+    data.nof_msg3_ok++;
+  } else {
+    data.nof_msg3_nok++;
   }
 }
 
@@ -350,6 +365,12 @@ void cell_metrics_handler::report_metrics()
   next_report.ul_grants_count           = data.nof_ue_pusch_grants;
   next_report.nof_failed_pdcch_allocs   = data.nof_failed_pdcch_allocs;
   next_report.nof_failed_uci_allocs     = data.nof_failed_uci_allocs;
+  next_report.nof_msg3_ok               = data.nof_msg3_ok;
+  next_report.nof_msg3_nok              = data.nof_msg3_nok;
+  next_report.avg_prach_delay_ms =
+      data.nof_prach_preambles
+          ? std::optional{static_cast<float>(data.sum_prach_delay_slots) / static_cast<float>(data.nof_prach_preambles)}
+          : std::nullopt;
 
   // Reset cell-wide metric counters.
   data = {};

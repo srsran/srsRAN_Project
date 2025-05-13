@@ -225,7 +225,7 @@ void ra_scheduler::handle_rach_indication(const rach_indication_message& msg)
   }
 }
 
-void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& msg)
+void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& msg, slot_point sl_tx)
 {
   static const unsigned prach_duration = 1; // TODO: Take from config
 
@@ -304,7 +304,7 @@ void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& ms
   }
 
   // Forward RACH indication to metrics handler.
-  metrics_hdlr.handle_rach_indication(msg);
+  metrics_hdlr.handle_rach_indication(msg, sl_tx);
 }
 
 void ra_scheduler::handle_crc_indication(const ul_crc_indication& crc_ind)
@@ -349,6 +349,9 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
         // Deallocate Msg3 entry.
         pending_msg3.msg3_harq_ent.reset();
       }
+
+      // Forward MSG3 CRC indication to metrics handler.
+      metrics_hdlr.handle_msg3_crc_indication(crc);
     }
   }
 
@@ -373,7 +376,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
   // Pop pending RACHs and process them.
   rach_indication_message rach;
   while (pending_rachs.try_pop(rach)) {
-    handle_rach_indication_impl(rach);
+    handle_rach_indication_impl(rach, res_alloc.slot_tx());
   }
 
   if (not pending_rars.empty()) {
@@ -874,7 +877,7 @@ sch_prbs_tbs ra_scheduler::get_nof_pdsch_prbs_required(unsigned time_res_idx, un
   srsran_assert(nof_ul_grants > 0, "Invalid number of UL grants");
 
   return rar_data[time_res_idx].prbs_tbs_per_nof_grants
-      [std::min(nof_ul_grants, (unsigned)rar_data[time_res_idx].prbs_tbs_per_nof_grants.size()) - 1];
+      [std::min(nof_ul_grants, static_cast<unsigned>(rar_data[time_res_idx].prbs_tbs_per_nof_grants.size())) - 1];
 }
 
 void ra_scheduler::log_postponed_rar(const pending_rar_t&      rar,
