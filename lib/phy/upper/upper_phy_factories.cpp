@@ -369,8 +369,8 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
   report_fatal_error_if_not(prach_factory, "Invalid PRACH detector factory.");
 
   // Create PRACH detector pool factory if more than one thread is used.
-  if (config.max_ul_thread_concurrency > 1) {
-    prach_factory = create_prach_detector_pool_factory(std::move(prach_factory), config.max_ul_thread_concurrency);
+  if (config.max_prach_thread_concurrency > 1) {
+    prach_factory = create_prach_detector_pool_factory(std::move(prach_factory), config.max_prach_thread_concurrency);
     report_fatal_error_if_not(prach_factory, "Invalid PRACH detector pool factory.");
   }
 
