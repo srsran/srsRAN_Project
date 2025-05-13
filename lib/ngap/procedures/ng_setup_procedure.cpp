@@ -82,8 +82,16 @@ bool ng_setup_procedure::retry_required()
   }
 
   if (transaction_sink.timeout_expired()) {
+    // Timeout case.
     logger.warning("\"{}\" timed out after {}ms", name(), ng_setup_response_timeout.count());
     fmt::print("\"{}\" timed out after {}ms", name(), ng_setup_response_timeout.count());
+    return false;
+  }
+
+  if (!transaction_sink.failed()) {
+    // No response received.
+    logger.warning("\"{}\" failed. No response received", name());
+    fmt::print("\"{}\" failed. No response received\n", name());
     return false;
   }
 
