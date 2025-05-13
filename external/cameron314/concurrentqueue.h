@@ -855,8 +855,9 @@ public:
 		// on dequeue if we overallocate the number of producers.
 		for (unsigned i = 0; i != maxImplicitProducers; ++i) {
 			ProducerBase* producer = create<ImplicitProducer>(this);
+		        producer->inactive.store(true, std::memory_order_relaxed);
 			// Add it to the lock-free list of pre-allocated producers.
-			auto prevTail = preallocProducerListTail.load(std::memory_order_relaxed);
+			auto* prevTail = preallocProducerListTail.load(std::memory_order_relaxed);
 			do {
 				producer->next = prevTail;
 			} while (!preallocProducerListTail.compare_exchange_weak(prevTail, producer, std::memory_order_release, std::memory_order_relaxed));
@@ -3282,6 +3283,7 @@ private:
 			while (ptr != nullptr and not preallocProducerListTail.compare_exchange_weak(ptr, ptr->next_prod(), std::memory_order_acquire, std::memory_order_relaxed)) {
 			}
 			if (ptr != nullptr) {
+			        ptr->inactive.store(false, std::memory_order_relaxed);
 				// Transfer the pre-alloc Producer to producerListTail.
 				return add_producer(ptr);
 			}
