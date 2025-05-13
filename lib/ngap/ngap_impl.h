@@ -96,6 +96,13 @@ private:
   public:
     tx_pdu_notifier_with_logging(ngap_impl& parent_) : parent(parent_) {}
 
+    ~tx_pdu_notifier_with_logging()
+    {
+      if (decorated) {
+        decorated.reset();
+      }
+    }
+
     void connect(std::unique_ptr<ngap_message_notifier> decorated_) { decorated = std::move(decorated_); }
 
     void disconnect()
