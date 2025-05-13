@@ -18,6 +18,11 @@ using namespace harq_utils;
 
 namespace {
 
+/// \brief Number of milliseconds between a negative ACK/CRC being received and the respective HARQ being
+/// scheduled for retransmission. This value should be lower than the timeout used by the PHY to discard old HARQ
+/// softbuffers.
+std::chrono::milliseconds harq_retx_timeout{100};
+
 class noop_harq_timeout_notifier : public harq_timeout_notifier
 {
 public:
@@ -230,11 +235,25 @@ void cell_harq_repository<IsDl>::slot_indication(slot_point sl_tx)
 template <bool IsDl>
 void cell_harq_repository<IsDl>::handle_harq_ack_timeout(harq_type& h, slot_point sl_tx)
 {
-  srsran_sanity_check(h.status == harq_state_t::waiting_ack, "HARQ process in wrong state");
+  srsran_sanity_check(h.status == harq_state_t::waiting_ack or h.status == harq_state_t::pending_retx,
+                      "HARQ process in wrong state");
+
+  if (is_ntn_mode()) {
+    // Deallocate HARQ.
+    dealloc_harq(h);
+    return;
+  }
 
   bool ack_val = h.ack_on_timeout;
-  if (not is_ntn_mode()) {
-    // Only in non-NTN case, we log a warning.
+  if (h.status == harq_state_t::pending_retx) {
+    // This HARQ is being starved by the scheduler.
+    logger.info("rnti={} h_id={}: Discarding {} HARQ. Cause: The scheduler is starving this HARQ process from "
+                "being allocated ({} slots elapsed since last NOK).",
+                h.rnti,
+                fmt::underlying(h.h_id),
+                IsDl ? "DL" : "UL",
+                h.slot_retx_timeout - h.slot_ack);
+  } else {
     if (ack_val) {
       // Case: Not all HARQ-ACKs were received, but at least one positive ACK was received.
       logger.debug("rnti={} h_id={}: Setting {} HARQ to \"ACKed\" state. Cause: HARQ-ACK wait timeout ({} slots) was "
@@ -258,11 +277,8 @@ void cell_harq_repository<IsDl>::handle_harq_ack_timeout(harq_type& h, slot_poin
   // Deallocate HARQ.
   dealloc_harq(h);
 
-  if (max_ack_wait_in_slots != 1) {
-    // Report timeout with NACK after we delete the HARQ to avoid reentrancy.
-    // Only in non-NTN case.
-    timeout_notifier.on_harq_timeout(h.ue_idx, IsDl, ack_val);
-  }
+  // Report timeout with NACK after we delete the HARQ to avoid reentrancy.
+  timeout_notifier.on_harq_timeout(h.ue_idx, IsDl, ack_val);
 }
 
 template <bool IsDl>
@@ -318,8 +334,12 @@ void cell_harq_repository<IsDl>::dealloc_harq(harq_type& h)
     // Remove the HARQ from the timeout list.
     harq_timeout_wheel[h.slot_ack_timeout.to_uint() % harq_timeout_wheel.size()].pop(&h);
   } else {
+    srsran_sanity_check(h.status == harq_state_t::pending_retx, "Invalid HARQ state");
     // Remove the HARQ from the pending Retx list.
     harq_pending_retx_list.pop(&h);
+    // Remove HARQ from the timeout list.
+    harq_timeout_wheel[h.slot_retx_timeout.to_uint() % harq_timeout_wheel.size()].pop(&h);
+    h.slot_retx_timeout = {};
   }
   h.status = harq_state_t::empty;
 
@@ -385,8 +405,10 @@ void cell_harq_repository<IsDl>::set_pending_retx(harq_type& h)
     return;
   }
 
-  // Remove the HARQ from the timeout list.
+  // Remove the HARQ from the ACK timeout list and re-add it with a new timeout.
   harq_timeout_wheel[h.slot_ack_timeout.to_uint() % harq_timeout_wheel.size()].pop(&h);
+  h.slot_retx_timeout = last_sl_ind + (last_sl_ind.nof_slots_per_subframe() * harq_retx_timeout.count());
+  harq_timeout_wheel[h.slot_retx_timeout.to_uint() % harq_timeout_wheel.size()].push_front(&h);
 
   // Add HARQ to pending Retx list.
   harq_pending_retx_list.push_back(&h);
@@ -406,6 +428,8 @@ bool cell_harq_repository<IsDl>::handle_new_retx(harq_type& h, slot_point sl_tx,
 
   // Remove HARQ from pending Retx list.
   harq_pending_retx_list.pop(&h);
+  harq_timeout_wheel[h.slot_retx_timeout.to_uint() % harq_timeout_wheel.size()].pop(&h);
+  h.slot_retx_timeout = {};
 
   // Update HARQ common parameters.
   h.status         = harq_state_t::waiting_ack;

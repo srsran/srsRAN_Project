@@ -46,8 +46,11 @@ namespace harq_utils {
 /// Possible states of a HARQ process.
 enum class harq_state_t { empty, pending_retx, waiting_ack };
 
+struct pending_retx_list_tag;
+
 /// Parameters that are common to DL and UL HARQ processes.
-struct base_harq_process : public intrusive_double_linked_list_element<> {
+struct base_harq_process : public intrusive_double_linked_list_element<>,
+                           public intrusive_double_linked_list_element<pending_retx_list_tag> {
   du_ue_index_t ue_idx;
   rnti_t        rnti;
   harq_id_t     h_id;
@@ -55,6 +58,8 @@ struct base_harq_process : public intrusive_double_linked_list_element<> {
   slot_point    slot_tx;
   slot_point    slot_ack;
   slot_point    slot_ack_timeout;
+  /// Timeout for retransmit HARQ. This field is only set when status == pending_retx.
+  slot_point slot_retx_timeout;
   /// New Data Indicator. Its value should flip for every new Tx.
   bool ndi = false;
   /// Number of retransmissions that took place for the current Transport Block.
@@ -158,10 +163,10 @@ struct cell_harq_repository {
 
   slot_point last_sl_ind;
 
-  std::vector<ue_harq_entity_impl>                     ues;
-  intrusive_double_linked_list<harq_type>              harq_pending_retx_list;
-  std::vector<intrusive_double_linked_list<harq_type>> harq_timeout_wheel;
-  std::unique_ptr<harq_alloc_history>                  alloc_hist;
+  std::vector<ue_harq_entity_impl>                               ues;
+  intrusive_double_linked_list<harq_type, pending_retx_list_tag> harq_pending_retx_list;
+  std::vector<intrusive_double_linked_list<harq_type>>           harq_timeout_wheel;
+  std::unique_ptr<harq_alloc_history>                            alloc_hist;
 
   void               slot_indication(slot_point sl_tx);
   void               handle_harq_ack_timeout(harq_type& h, slot_point sl_tx);
@@ -337,6 +342,7 @@ class harq_pending_retx_list_impl
   using harq_pool      = harq_utils::cell_harq_repository<IsDl>;
   using harq_impl_type = std::conditional_t<IsDl, harq_utils::dl_harq_process_impl, harq_utils::ul_harq_process_impl>;
   using handle_type    = std::conditional_t<IsDl, dl_harq_process_handle, ul_harq_process_handle>;
+  using harq_impl_it_t = typename intrusive_double_linked_list<harq_impl_type, pending_retx_list_tag>::iterator;
 
 public:
   struct iterator {
@@ -345,10 +351,7 @@ public:
     using pointer           = std::optional<value_type>;
     using iterator_category = std::forward_iterator_tag;
 
-    iterator(harq_pool& pool_, typename intrusive_double_linked_list<harq_impl_type>::iterator it_) :
-      pool(&pool_), it(it_)
-    {
-    }
+    iterator(harq_pool& pool_, harq_impl_it_t it_) : pool(&pool_), it(it_) {}
 
     iterator& operator++()
     {
@@ -378,8 +381,8 @@ public:
     bool operator!=(const iterator& other) const { return !(*this == other); }
 
   private:
-    harq_pool*                                                      pool;
-    typename intrusive_double_linked_list<harq_impl_type>::iterator it;
+    harq_pool*     pool;
+    harq_impl_it_t it;
   };
 
 public:
