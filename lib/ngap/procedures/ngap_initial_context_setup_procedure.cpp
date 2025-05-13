@@ -44,7 +44,7 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
 {
   CORO_BEGIN(ctx);
 
-  logger.log_debug("\"{}\" initialized", name());
+  logger.log_debug("\"{}\" started...", name());
 
   CORO_AWAIT_VALUE(init_ctxt_setup_routine_outcome, cu_cp_notifier.on_new_initial_context_setup_request(request));
 
@@ -107,7 +107,7 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_failure(
   init_ctxt_setup_fail->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
   init_ctxt_setup_fail->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
 
-  // Fill PDU Session Resource Failed to Setup List
+  // Fill PDU Session Resource Failed to Setup List.
   fill_asn1_initial_context_setup_failure(init_ctxt_setup_fail, msg);
 
   // Notify metrics handler about failed PDU sessions.

@@ -37,9 +37,9 @@ void ngap_ue_context_release_procedure::operator()(coro_context<async_task<void>
 {
   CORO_BEGIN(ctx);
 
-  logger.log_debug("\"{}\" initialized", name());
+  logger.log_debug("\"{}\" started...", name());
 
-  // Notify DU processor about UE Context Release Command
+  // Notify DU processor about UE Context Release Command.
   CORO_AWAIT_VALUE(ue_context_release_complete, cu_cp_notifier.on_new_ue_context_release_command(command));
 
   // Verify response from DU processor.
@@ -51,13 +51,13 @@ void ngap_ue_context_release_procedure::operator()(coro_context<async_task<void>
   // Note: From this point the UE is removed and only the stored context can be accessed.
 
   if (send_ue_context_release_complete()) {
-  // Send ErrorIndication if it was stored for this UE
-  if (stored_error_indications.find(ue_ids.ue_index) != stored_error_indications.end()) {
-    const auto& req = stored_error_indications.at(ue_ids.ue_index);
-    send_error_indication(amf_notifier, logger.get_basic_logger(), req.ran_ue_id, req.amf_ue_id, req.cause);
-    // Remove stored error indication
-    stored_error_indications.erase(ue_ids.ue_index);
-  }
+    // Send ErrorIndication if it was stored for this UE
+    if (stored_error_indications.find(ue_ids.ue_index) != stored_error_indications.end()) {
+      const auto& req = stored_error_indications.at(ue_ids.ue_index);
+      send_error_indication(amf_notifier, logger.get_basic_logger(), req.ran_ue_id, req.amf_ue_id, req.cause);
+      // Remove stored error indication
+      stored_error_indications.erase(ue_ids.ue_index);
+    }
 
     logger.log_debug("\"{}\" finished successfully", name());
   } else {

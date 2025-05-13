@@ -31,9 +31,9 @@ void ngap_pdu_session_resource_release_procedure::operator()(coro_context<async_
 {
   CORO_BEGIN(ctx);
 
-  logger.log_debug("\"{}\" initialized", name());
+  logger.log_debug("\"{}\" started...", name());
 
-  // Handle mandatory IEs
+  // Handle mandatory IEs.
   CORO_AWAIT_VALUE(response, cu_cp_notifier.on_new_pdu_session_resource_release_command(command));
 
   // TODO: Handle optional IEs.
@@ -121,7 +121,7 @@ fill_asn1_pdu_session_resource_release_response(asn1::ngap::pdu_session_res_rele
       res_release_resp_transfer.ext = false;
     }
 
-    // Pack pdu_session_res_release_resp_transfer_s
+    // Pack PDU session resource release response transfer container.
     byte_buffer pdu = pack_into_pdu(res_release_resp_transfer);
     if (pdu.empty()) {
       return false;

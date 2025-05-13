@@ -40,35 +40,35 @@ void ngap_pdu_session_resource_modify_procedure::operator()(coro_context<async_t
 {
   CORO_BEGIN(ctx);
 
-  logger.log_debug("\"{}\" initialized", name());
+  logger.log_debug("\"{}\" started...", name());
 
-  // Verify PDU Session Resource Modify Request
+  // Verify PDU Session Resource Modify Request.
   verification_outcome = verify_pdu_session_resource_modify_request(request, asn1_request, logger);
 
   if (verification_outcome.request.pdu_session_res_modify_items.empty()) {
-    logger.log_info("Validation of PduSessionResourceModifyRequest failed");
+    logger.log_info("Validation of PDUSessionResourceModifyRequest failed");
     response = verification_outcome.response;
   } else {
-    // Handle mandatory IEs
+    // Handle mandatory IEs.
     CORO_AWAIT_VALUE(response, cu_cp_notifier.on_new_pdu_session_resource_modify_request(verification_outcome.request));
 
-    // TODO: Handle optional IEs
+    // TODO: Handle optional IEs.
 
-    // Combine validation response with DU processor response
+    // Combine validation response with DU processor response.
     combine_pdu_session_resource_modify_response();
   }
 
   if (!response.pdu_session_res_failed_to_modify_list.empty()) {
-    logger.log_warning("Some or all PduSessionResourceModifyItems failed to setup");
+    logger.log_info("Some or all PDUSessionResourceModifyItems failed to setup");
   }
 
   if (send_pdu_session_resource_modify_response()) {
     // Request UE release in case of a failure to cleanup CU-CP.
-  if (!response.pdu_session_res_failed_to_modify_list.empty()) {
-    ue_context_release_request = {
-        ue_ids.ue_index, {}, ngap_cause_radio_network_t::release_due_to_ngran_generated_reason};
-    CORO_AWAIT(ngap_ctrl_handler.handle_ue_context_release_request(ue_context_release_request));
-  }
+    if (!response.pdu_session_res_failed_to_modify_list.empty()) {
+      ue_context_release_request = {
+          ue_ids.ue_index, {}, ngap_cause_radio_network_t::release_due_to_ngran_generated_reason};
+      CORO_AWAIT(ngap_ctrl_handler.handle_ue_context_release_request(ue_context_release_request));
+    }
 
     logger.log_debug("\"{}\" finished successfully", name());
   } else {

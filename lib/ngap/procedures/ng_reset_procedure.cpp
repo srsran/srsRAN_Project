@@ -44,5 +44,7 @@ void ng_reset_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   // TODO: Handle NG RESET ACKNOWLEDGE message.
 
+  logger.debug("\"{}\" finished successfully", name());
+
   CORO_RETURN();
 }

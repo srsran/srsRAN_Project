@@ -50,7 +50,7 @@ private:
 
   cu_cp_ue_context_release_request ue_context_release_request;
 
-  // procedure outcomes
+  // Procedure outcomes.
   pdu_session_resource_modify_validation_outcome verification_outcome;
 };
 

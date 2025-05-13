@@ -76,7 +76,7 @@ public:
   }
 
 private:
-  // SCTP network gateway calls interface to inject received PDUs (ASN1 packed)
+  // SCTP network gateway calls interface to inject received PDUs (ASN1 packed).
   void on_new_pdu(byte_buffer pdu) override
   {
     ngap_message msg;
@@ -90,11 +90,11 @@ private:
     rx_pdu_notifier->on_new_message(msg);
   }
 
-  /// \brief Simply log those events for now
+  /// \brief Simply log those events for now.
   void on_connection_loss() override { test_logger.info("on_connection_loss"); }
   void on_connection_established() override { test_logger.info("on_connection_established"); }
 
-  /// We require a network gateway and a packer
+  /// We require a network gateway and a packer.
   const sctp_network_connector_config&  nw_config;
   inline_task_executor                  rx_executor;
   std::unique_ptr<io_broker>            epoll_broker;
@@ -155,7 +155,7 @@ protected:
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 
-/// Test successful ng setup procedure
+/// Test successful NG Setup procedure.
 TEST_F(ngap_integration_test, when_ng_setup_response_received_then_amf_connected)
 {
   test_logger.info("Launching NG setup procedure...");

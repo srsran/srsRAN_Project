@@ -84,7 +84,7 @@ bool ngap_impl::update_ue_index(ue_index_t              new_ue_index,
 
 bool ngap_impl::handle_amf_tnl_connection_request()
 {
-  // This could be a reconnection, so make sure the tx_pdu_notifier is disconnected before creating a new one.
+  // This could be a reconnection, so make sure the tx_pdu_notifier is released before creating a new one.
   if (tx_pdu_notifier.is_connected()) {
     tx_pdu_notifier.disconnect();
   }
@@ -542,7 +542,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   ngap_ue_context& ue_ctxt = ue_ctxt_list[uint_to_ran_ue_id(request->ran_ue_ngap_id)];
 
   if (ue_ctxt.release_scheduled) {
-    ue_ctxt.logger.log_info("Dropping PduSessionResourceSetupRequest. UE is already scheduled for release");
+    ue_ctxt.logger.log_info("Dropping PDUSessionResourceSetupRequest. UE is already scheduled for release");
     stored_error_indications.emplace(ue_ctxt.ue_ids.ue_index,
                                      error_indication_request_t{ngap_cause_radio_network_t::interaction_with_other_proc,
                                                                 ue_ctxt.ue_ids.ran_ue_id,
@@ -612,7 +612,7 @@ void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu
   // Check for duplicate messages.
   byte_buffer asn1_request_pdu = pack_into_pdu(request);
   if (asn1_request_pdu == ue_ctxt.last_pdu_session_resource_modify_request) {
-    ue_ctxt.logger.log_warning("Received duplicate PduSessionResourceModifyRequest");
+    ue_ctxt.logger.log_warning("Received duplicate PDUSessionResourceModifyRequest");
     schedule_error_indication(ue_ctxt.ue_ids.ue_index, ngap_cause_radio_network_t::unspecified);
     return;
   }
@@ -635,7 +635,7 @@ void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu
   cu_cp_pdu_session_resource_modify_request msg;
   msg.ue_index = ue_ctxt.ue_ids.ue_index;
   if (!fill_cu_cp_pdu_session_resource_modify_request(msg, request->pdu_session_res_modify_list_mod_req)) {
-    ue_ctxt.logger.log_warning("Unable to fill ASN1 contents for PduSessionResourceModifyRequest");
+    ue_ctxt.logger.log_warning("Unable to fill ASN1 contents for PDUSessionResourceModifyRequest");
     schedule_error_indication(ue_ctxt.ue_ids.ue_index, ngap_cause_radio_network_t::unspecified);
     return;
   }
@@ -663,7 +663,7 @@ void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pd
   ngap_ue_context& ue_ctxt = ue_ctxt_list[uint_to_ran_ue_id(command->ran_ue_ngap_id)];
 
   if (ue_ctxt.release_scheduled) {
-    ue_ctxt.logger.log_info("Dropping PduSessionResourceReleaseCommand. UE is already scheduled for release");
+    ue_ctxt.logger.log_info("Dropping PDUSessionResourceReleaseCommand. UE is already scheduled for release");
     stored_error_indications.emplace(ue_ctxt.ue_ids.ue_index,
                                      error_indication_request_t{ngap_cause_radio_network_t::interaction_with_other_proc,
                                                                 ue_ctxt.ue_ids.ran_ue_id,
@@ -998,8 +998,11 @@ async_task<bool> ngap_impl::handle_ue_context_release_request(const cu_cp_ue_con
     CORO_BEGIN(ctx);
 
     if (!ue_ctxt_list.contains(msg.ue_index)) {
-      logger.warning("ue={}: Dropping scheduled UeContextReleaseRequest. UE context does not exist anymore",
-                     msg.ue_index);
+      logger.warning("ue={} ran_ue_id={} amf_ue_id={}: Dropping scheduled UeContextReleaseRequest. UE context does not "
+                     "exist anymore",
+                     msg.ue_index,
+                     ngap_msg.pdu.init_msg().value.ue_context_release_request()->ran_ue_ngap_id,
+                     ngap_msg.pdu.init_msg().value.ue_context_release_request()->amf_ue_ngap_id);
     } else {
       if (!tx_pdu_notifier.on_new_message(ngap_msg)) {
         logger.error("ue={} ran_ue_id={} amf_ue_id={}: AMF notifier is not set. Cannot send UEContextReleaseRequest",

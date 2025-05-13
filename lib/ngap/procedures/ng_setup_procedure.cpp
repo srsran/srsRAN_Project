@@ -82,7 +82,7 @@ bool ng_setup_procedure::retry_required()
   }
 
   if (transaction_sink.timeout_expired()) {
-    logger.error("\"{}\" timed out after {}ms", name(), ng_setup_response_timeout.count());
+    logger.warning("\"{}\" timed out after {}ms", name(), ng_setup_response_timeout.count());
     fmt::print("\"{}\" timed out after {}ms", name(), ng_setup_response_timeout.count());
     return false;
   }
