@@ -98,7 +98,12 @@ private:
 
     void connect(std::unique_ptr<ngap_message_notifier> decorated_) { decorated = std::move(decorated_); }
 
-    void disconnect() { decorated.reset(); }
+    void disconnect()
+    {
+      if (is_connected()) {
+        decorated.reset();
+      }
+    }
 
     bool is_connected() const { return decorated != nullptr; }
 

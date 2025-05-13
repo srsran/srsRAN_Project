@@ -1220,5 +1220,8 @@ void ngap_impl::log_rx_pdu(const ngap_message& msg)
 bool ngap_impl::tx_pdu_notifier_with_logging::on_new_message(const ngap_message& msg)
 {
   log_pdu_helper(parent.logger, parent.logger.debug.enabled(), false, parent.ue_ctxt_list, msg.pdu);
+  if (decorated == nullptr) {
+    return false;
+  }
   return decorated->on_new_message(msg);
 }
