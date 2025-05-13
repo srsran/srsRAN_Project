@@ -87,7 +87,7 @@ protected:
   serving_cell_config                      serv_cell_cfg;
   du_cell_config_pool                      cfg_pool{sched_cfg};
   ue_cell_configuration                    ue_cc_cfg;
-  cell_harq_manager                        cell_harqs{1, MAX_NOF_HARQS};
+  cell_harq_manager                        cell_harqs{1, MAX_NOF_HARQS, nullptr, 100, 100};
   ul_logical_channel_manager               ul_lc_ch_mng;
   srslog::basic_logger&                    logger = srslog::fetch_basic_logger("SCHED");
   ue_drx_controller                        drx_controller{cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,

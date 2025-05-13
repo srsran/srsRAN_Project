@@ -245,6 +245,13 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
       ->capture_default_str()
       ->check(CLI::Range(0, 64));
   add_option(app,
+             "--harq_retx_timeout",
+             pdsch_params.harq_retx_timeout,
+             "Maximum time, in milliseconds, between a HARQ NACK and the scheduler allocating the respective "
+             "HARQ for retransmission. If this timeout is exceeded, the HARQ process is discarded.")
+      ->capture_default_str()
+      ->check(CLI::Range(10, 500));
+  add_option(app,
              "--max_consecutive_kos",
              pdsch_params.max_consecutive_kos,
              "Maximum number of HARQ-ACK consecutive KOs before an Radio Link Failure is reported")
@@ -726,6 +733,13 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
              "Maximum number of times a UL HARQ can be retransmitted, before it gets discarded")
       ->capture_default_str()
       ->check(CLI::Range(0, 64));
+  add_option(app,
+             "--harq_retx_timeout",
+             pusch_params.harq_retx_timeout,
+             "Maximum time, in milliseconds, between a CRC=KO and the scheduler allocating the respective "
+             "HARQ for retransmission. If this timeout is exceeded, the HARQ process is discarded.")
+      ->capture_default_str()
+      ->check(CLI::Range(10, 500));
   add_option(app,
              "--max_consecutive_kos",
              pusch_params.max_consecutive_kos,

@@ -98,7 +98,7 @@ protected:
   cell_common_configuration_list  cell_cfg_list;
   cell_configuration*             cell_cfg = nullptr;
   std::optional<ue_configuration> ue_ded_cfg;
-  cell_harq_manager cell_harqs{1, MAX_NOF_HARQS, std::make_unique<scheduler_harq_timeout_dummy_notifier>()};
+  cell_harq_manager cell_harqs{1, MAX_NOF_HARQS, std::make_unique<scheduler_harq_timeout_dummy_notifier>(), 100, 100};
 
   srslog::basic_logger& logger;
 

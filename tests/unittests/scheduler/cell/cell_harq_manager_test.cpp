@@ -98,7 +98,13 @@ class base_harq_manager_test
 {
 protected:
   base_harq_manager_test(unsigned nof_ues, unsigned ntn_cs_koffset = 0) :
-    cell_harqs(nof_ues, max_harqs_per_ue, timeout_handler.make_notifier(), max_ack_wait_timeout, ntn_cs_koffset)
+    cell_harqs(nof_ues,
+               max_harqs_per_ue,
+               timeout_handler.make_notifier(),
+               100,
+               100,
+               max_ack_wait_timeout,
+               ntn_cs_koffset)
   {
     logger.set_level(srslog::basic_levels::warning);
     srslog::init();

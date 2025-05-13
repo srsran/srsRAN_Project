@@ -81,7 +81,9 @@ struct test_bench {
   cell_resource_allocator       res_grid{cell_cfg};
   cell_harq_manager             cell_harqs{MAX_NOF_DU_UES,
                                MAX_NOF_HARQS,
-                               std::make_unique<scheduler_harq_timeout_dummy_notifier>()};
+                               std::make_unique<scheduler_harq_timeout_dummy_notifier>(),
+                               100,
+                               100};
   pdcch_resource_allocator_impl pdcch_sch{cell_cfg};
   pucch_allocator_impl          pucch_alloc{cell_cfg, 31U, 32U};
   uci_allocator_impl            uci_alloc{pucch_alloc};

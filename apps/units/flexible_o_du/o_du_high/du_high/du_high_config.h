@@ -130,6 +130,9 @@ struct du_high_unit_pdsch_config {
   unsigned nof_harqs = 16;
   /// Maximum number of times a DL HARQ process can be retransmitted, before it gets discarded.
   unsigned max_nof_harq_retxs = 4;
+  /// \brief Maximum time, in milliseconds, between a HARQ NACK and the scheduler allocating the respective HARQ for
+  /// retransmission. If this timeout is exceeded, the HARQ process is discarded.
+  unsigned harq_retx_timeout = 100;
   /// Maximum number of consecutive DL KOs before an RLF is reported.
   unsigned max_consecutive_kos = 100;
   /// Redundancy version sequence to use. Each element can have one of the following values: {0, 1, 2, 3}.
@@ -193,6 +196,9 @@ struct du_high_unit_pusch_config {
   unsigned max_ue_mcs = 28;
   /// Maximum number of times a UL HARQ process can be retransmitted, before it gets discarded.
   unsigned max_nof_harq_retxs = 4;
+  /// \brief Maximum time, in milliseconds, between a CRC=KO and the scheduler allocating the respective HARQ for
+  /// retransmission. If this timeout is exceeded, the HARQ process is discarded.
+  unsigned harq_retx_timeout = 100;
   /// Maximum number of consecutive UL KOs before an RLF is reported.
   unsigned max_consecutive_kos = 100;
   /// Redundancy version sequence to use. Each element can have one of the following values: {0, 1, 2, 3}.

@@ -18,11 +18,6 @@ using namespace harq_utils;
 
 namespace {
 
-/// \brief Number of milliseconds between a negative ACK/CRC being received and the respective HARQ being
-/// scheduled for retransmission. This value should be lower than the timeout used by the PHY to discard old HARQ
-/// softbuffers.
-std::chrono::milliseconds harq_retx_timeout{100};
-
 class noop_harq_timeout_notifier : public harq_timeout_notifier
 {
 public:
@@ -161,11 +156,13 @@ static const unsigned NTN_ACK_WAIT_TIMEOUT = 1;
 template <bool IsDl>
 cell_harq_repository<IsDl>::cell_harq_repository(unsigned               max_ues,
                                                  unsigned               max_ack_wait_timeout,
+                                                 unsigned               harq_retx_timeout_,
                                                  unsigned               max_harqs_per_ue_,
                                                  unsigned               ntn_cs_koffset,
                                                  harq_timeout_notifier& timeout_notifier_,
                                                  srslog::basic_logger&  logger_) :
   max_ack_wait_in_slots(ntn_cs_koffset == 0 ? max_ack_wait_timeout : NTN_ACK_WAIT_TIMEOUT),
+  harq_retx_timeout(harq_retx_timeout_),
   max_harqs_per_ue(max_harqs_per_ue_),
   timeout_notifier(timeout_notifier_),
   logger(logger_),
@@ -407,7 +404,7 @@ void cell_harq_repository<IsDl>::set_pending_retx(harq_type& h)
 
   // Remove the HARQ from the ACK timeout list and re-add it with a new timeout.
   harq_timeout_wheel[h.slot_ack_timeout.to_uint() % harq_timeout_wheel.size()].pop(&h);
-  h.slot_retx_timeout = last_sl_ind + (last_sl_ind.nof_slots_per_subframe() * harq_retx_timeout.count());
+  h.slot_retx_timeout = last_sl_ind + harq_retx_timeout;
   harq_timeout_wheel[h.slot_retx_timeout.to_uint() % harq_timeout_wheel.size()].push_front(&h);
 
   // Add HARQ to pending Retx list.
@@ -548,14 +545,28 @@ template class harq_utils::base_harq_process_handle<false>;
 cell_harq_manager::cell_harq_manager(unsigned                               max_ues,
                                      unsigned                               max_harqs_per_ue_,
                                      std::unique_ptr<harq_timeout_notifier> notifier,
+                                     unsigned                               dl_harq_retx_timeout,
+                                     unsigned                               ul_harq_retx_timeout,
                                      unsigned                               max_ack_wait_timeout,
                                      unsigned                               ntn_cs_koffset) :
   max_harqs_per_ue(max_harqs_per_ue_),
   timeout_notifier(notifier != nullptr and ntn_cs_koffset == 0 ? std::move(notifier)
                                                                : std::make_unique<noop_harq_timeout_notifier>()),
   logger(srslog::fetch_basic_logger("SCHED")),
-  dl(max_ues, max_ack_wait_timeout + ntn_cs_koffset, max_harqs_per_ue, ntn_cs_koffset, *timeout_notifier, logger),
-  ul(max_ues, max_ack_wait_timeout + ntn_cs_koffset, max_harqs_per_ue, ntn_cs_koffset, *timeout_notifier, logger)
+  dl(max_ues,
+     max_ack_wait_timeout + ntn_cs_koffset,
+     dl_harq_retx_timeout,
+     max_harqs_per_ue,
+     ntn_cs_koffset,
+     *timeout_notifier,
+     logger),
+  ul(max_ues,
+     max_ack_wait_timeout + ntn_cs_koffset,
+     ul_harq_retx_timeout,
+     max_harqs_per_ue,
+     ntn_cs_koffset,
+     *timeout_notifier,
+     logger)
 {
 }
 

@@ -1012,6 +1012,8 @@ static scheduler_expert_config generate_scheduler_expert_config(const du_high_un
   out_cfg.ue.dl_harq_la_ri_drop_threshold      = pdsch.harq_la_ri_drop_threshold;
   out_cfg.ue.max_nof_dl_harq_retxs             = pdsch.max_nof_harq_retxs;
   out_cfg.ue.max_nof_ul_harq_retxs             = pusch.max_nof_harq_retxs;
+  out_cfg.ue.dl_harq_retx_timeout              = std::chrono::milliseconds{pdsch.harq_retx_timeout};
+  out_cfg.ue.ul_harq_retx_timeout              = std::chrono::milliseconds{pusch.harq_retx_timeout};
   out_cfg.ue.max_pdschs_per_slot               = pdsch.max_pdschs_per_slot;
   out_cfg.ue.pre_policy_rr_dl_ue_group_size    = pdsch.nof_preselected_newtx_ues;
   out_cfg.ue.pre_policy_rr_dl_ue_group_period  = pdsch.newtx_ues_selection_period;
@@ -1069,6 +1071,7 @@ static scheduler_expert_config generate_scheduler_expert_config(const du_high_un
   out_cfg.ra.rar_mcs_index           = pdsch.fixed_rar_mcs;
   out_cfg.ra.max_nof_msg3_harq_retxs = prach.max_msg3_harq_retx;
   out_cfg.ra.msg3_mcs_index          = prach.fixed_msg3_mcs;
+  out_cfg.ra.harq_retx_timeout       = std::chrono::milliseconds{pusch.harq_retx_timeout};
 
   // SI parameters.
   out_cfg.si.sib1_mcs_index    = pdsch.fixed_sib1_mcs;

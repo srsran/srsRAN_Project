@@ -96,7 +96,9 @@ protected:
   test_helpers::test_sched_config_manager           test_cfg;
   cell_harq_manager                                 cell_harqs{MAX_NOF_DU_UES,
                                MAX_NOF_HARQS,
-                               std::make_unique<scheduler_harq_timeout_dummy_notifier>()};
+                               std::make_unique<scheduler_harq_timeout_dummy_notifier>(),
+                               100,
+                               100};
   ue_repository                                     ue_db;
   std::vector<std::unique_ptr<slice_ue_repository>> slices;
 

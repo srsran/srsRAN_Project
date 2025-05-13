@@ -117,7 +117,11 @@ ra_scheduler::ra_scheduler(const scheduler_ra_expert_config& sched_cfg_,
                               band_helper::get_duplex_mode(cell_cfg.band),
                               cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index)
           .format)),
-  msg3_harqs(MAX_NOF_MSG3, 1, std::make_unique<msg3_harq_timeout_notifier>(pending_msg3s)),
+  msg3_harqs(MAX_NOF_MSG3,
+             1,
+             std::make_unique<msg3_harq_timeout_notifier>(pending_msg3s),
+             sched_cfg.harq_retx_timeout.count() * get_nof_slots_per_subframe(cell_cfg.scs_common),
+             sched_cfg.harq_retx_timeout.count() * get_nof_slots_per_subframe(cell_cfg.scs_common)),
   pending_rachs(RACH_IND_QUEUE_SIZE),
   pending_crcs(CRC_IND_QUEUE_SIZE),
   pending_msg3s(MAX_NOF_MSG3)

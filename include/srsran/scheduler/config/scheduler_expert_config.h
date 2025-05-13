@@ -93,6 +93,10 @@ struct scheduler_ue_expert_config {
   unsigned max_nof_dl_harq_retxs = 4;
   /// Maximum number of UL HARQ retxs.
   unsigned max_nof_ul_harq_retxs = 4;
+  /// Timeout for DL HARQ with pending retransmission to be discarded.
+  std::chrono::milliseconds dl_harq_retx_timeout{100};
+  /// Timeout for UL HARQ with pending retransmission to be discarded.
+  std::chrono::milliseconds ul_harq_retx_timeout{100};
   /// Maximum MCS index that can be assigned when scheduling MSG4.
   sch_mcs_index max_msg4_mcs;
   /// Initial UL SINR value used for Dynamic UL MCS computation (in dB).
@@ -217,6 +221,8 @@ struct scheduler_ra_expert_config {
   sch_mcs_index msg3_mcs_index = 0;
   /// Maximum number of Msg3 PUSCH retransmissions.
   unsigned max_nof_msg3_harq_retxs = 4;
+  /// Timeout for Msg3 HARQ with pending retransmission to be discarded.
+  std::chrono::milliseconds harq_retx_timeout{100};
 };
 
 /// \brief Paging scheduling statically configurable expert parameters.

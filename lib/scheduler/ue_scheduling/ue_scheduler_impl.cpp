@@ -209,6 +209,8 @@ ue_scheduler_impl::cell_context::cell_context(const scheduler_ue_expert_config& 
   cell_harqs(MAX_NOF_DU_UES,
              MAX_NOF_HARQS,
              std::make_unique<harq_manager_timeout_notifier>(*params.cell_metrics),
+             expert_cfg.dl_harq_retx_timeout.count() * get_nof_slots_per_subframe(cell_res_alloc->cfg.scs_common),
+             expert_cfg.ul_harq_retx_timeout.count() * get_nof_slots_per_subframe(cell_res_alloc->cfg.scs_common),
              cell_harq_manager::DEFAULT_ACK_TIMEOUT_SLOTS,
              params.cell_res_alloc->cfg.ntn_cs_koffset),
   uci_sched(params.cell_res_alloc->cfg, *params.uci_alloc, ues),

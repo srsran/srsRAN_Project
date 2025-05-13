@@ -148,6 +148,7 @@ struct cell_harq_repository {
 
   cell_harq_repository(unsigned               max_ues,
                        unsigned               max_ack_wait_in_slots,
+                       unsigned               harq_retx_timeout,
                        unsigned               max_harqs_per_ue,
                        unsigned               ntn_cs_koffset,
                        harq_timeout_notifier& timeout_notifier_,
@@ -156,6 +157,8 @@ struct cell_harq_repository {
 
   /// Time interval, in slots, before the HARQ process assumes that the ACK/CRC went missing.
   const unsigned max_ack_wait_in_slots;
+  /// Maximum number of slots before a HARQ with pending retransmission is discarded.
+  const unsigned harq_retx_timeout;
   /// Maximum number of HARQs allowed per UE.
   const unsigned         max_harqs_per_ue;
   harq_timeout_notifier& timeout_notifier;
@@ -385,7 +388,6 @@ public:
     harq_impl_it_t it;
   };
 
-public:
   using value_type      = handle_type;
   using difference_type = std::ptrdiff_t;
 
@@ -414,9 +416,11 @@ public:
   /// (implementation-defined).
   static constexpr unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 256U;
 
-  cell_harq_manager(unsigned                               max_ues              = MAX_NOF_DU_UES,
-                    unsigned                               max_harqs_per_ue     = MAX_NOF_HARQS,
-                    std::unique_ptr<harq_timeout_notifier> notifier             = nullptr,
+  cell_harq_manager(unsigned                               max_ues,
+                    unsigned                               max_harqs_per_ue,
+                    std::unique_ptr<harq_timeout_notifier> notifier,
+                    unsigned                               dl_harq_retx_timeout,
+                    unsigned                               ul_harq_retx_timeout,
                     unsigned                               max_ack_wait_timeout = DEFAULT_ACK_TIMEOUT_SLOTS,
                     unsigned                               ntn_cs_koffset       = 0);
 
