@@ -76,7 +76,6 @@ transmitter_impl::transmitter_impl(const transmitter_config& config, transmitter
   dl_handler(generate_downlink_handler_config(config), resolve_downlink_handler_impl_dependencies(dependencies)),
   ul_request_handler(generate_uplink_request_handler_config(config),
                      resolve_uplink_request_handler_dependencies(dependencies)),
-  dl_task_dispatcher(config.sector, dl_handler, *dependencies.dl_executor),
   ul_task_dispatcher(config.sector, ul_request_handler, *dependencies.dl_executor),
   msg_transmitter(*dependencies.logger,
                   config.tx_timing_params,
@@ -100,7 +99,7 @@ uplink_request_handler& transmitter_impl::get_uplink_request_handler()
 
 downlink_handler& transmitter_impl::get_downlink_handler()
 {
-  return dl_task_dispatcher;
+  return dl_handler;
 }
 
 ota_symbol_boundary_notifier& transmitter_impl::get_ota_symbol_boundary_notifier()

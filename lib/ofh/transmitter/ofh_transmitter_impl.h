@@ -11,7 +11,6 @@
 #pragma once
 
 #include "ofh_downlink_handler_impl.h"
-#include "ofh_downlink_handler_task_dispatcher.h"
 #include "ofh_message_transmitter_impl.h"
 #include "ofh_transmitter_metrics_collector_impl.h"
 #include "ofh_transmitter_ota_symbol_task_dispatcher.h"
@@ -70,7 +69,6 @@ public:
 private:
   downlink_handler_impl                  dl_handler;
   uplink_request_handler_impl            ul_request_handler;
-  downlink_handler_task_dispatcher       dl_task_dispatcher;
   uplink_request_handler_task_dispatcher ul_task_dispatcher;
   message_transmitter_impl               msg_transmitter;
   transmitter_ota_symbol_task_dispatcher ota_dispatcher;
