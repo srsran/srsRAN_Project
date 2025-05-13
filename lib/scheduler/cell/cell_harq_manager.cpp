@@ -945,7 +945,7 @@ std::optional<ul_harq_process_handle> unique_ue_harq_entity::find_ul_harq_waitin
 std::optional<dl_harq_process_handle> unique_ue_harq_entity::find_dl_harq_waiting_ack(slot_point uci_slot,
                                                                                       uint8_t    harq_bit_idx)
 {
-  if (cell_harq_mgr->dl.alloc_hist != nullptr) {
+  if (cell_harq_mgr->dl.is_ntn_mode()) {
     // NTN mode.
     return cell_harq_mgr->dl.alloc_hist->find_dl_harq(ue_index, uci_slot, harq_bit_idx);
   }
@@ -962,7 +962,7 @@ std::optional<dl_harq_process_handle> unique_ue_harq_entity::find_dl_harq_waitin
 
 std::optional<ul_harq_process_handle> unique_ue_harq_entity::find_ul_harq_waiting_ack(slot_point pusch_slot)
 {
-  if (cell_harq_mgr->ul.alloc_hist != nullptr) {
+  if (cell_harq_mgr->ul.is_ntn_mode()) {
     // NTN mode.
     return cell_harq_mgr->ul.alloc_hist->find_ul_harq(ue_index, pusch_slot);
   }
