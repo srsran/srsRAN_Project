@@ -647,6 +647,10 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status) noexcept SRSR
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
     logger.log_info("Handled status report. t={}us {}", duration.count(), status);
 
+    if (metrics_low.is_enabled()) {
+      metrics_low.metrics_add_handle_status_latency_us(duration.count());
+    }
+
     // redirect deletion of status report to UE executor
     auto delete_status_pdu_func = [status = std::move(status)]() mutable {
       // leaving this scope will implicitly delete the status PDU
