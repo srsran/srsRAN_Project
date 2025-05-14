@@ -248,15 +248,16 @@ async_task<bool> mac_cell_processor::addmod_bearers(du_ue_index_t               
 
 async_task<bool> mac_cell_processor::remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids_to_rem)
 {
-  std::vector<lcid_t> lcids(lcids_to_rem.begin(), lcids_to_rem.end());
+  // Use bitset to minimize capture size.
+  auto lcids_to_rem_bset = bit_positions_to_bitset<MAX_NOF_RB_LCIDS>(lcids_to_rem);
 
   return execute_and_continue_on_blocking(
       cell_exec,
       ctrl_exec,
       timers,
-      [this, ue_index, lcids = std::move(lcids)]() {
+      [this, ue_index, lcids_to_rem_bset]() noexcept SRSRAN_RTSAN_NONBLOCKING -> bool {
         // Remove logical channels.
-        return ue_mng.remove_bearers(ue_index, lcids);
+        return ue_mng.remove_bearers(ue_index, lcids_to_rem_bset);
       },
       [this, ue_index]() {
         logger.warning("ue={}: Postponed UE bearer removal. Cause: Task queue is full", fmt::underlying(ue_index));

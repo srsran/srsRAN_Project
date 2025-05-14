@@ -16,7 +16,6 @@
 #include "srsran/mac/mac_config.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/du_ue_list.h"
-#include "srsran/scheduler/harq_id.h"
 
 namespace srsran {
 
@@ -43,7 +42,7 @@ public:
   // DL Logical Channel methods.
   const slotted_id_vector<lcid_t, mac_sdu_tx_builder*>& logical_channels() const { return dl_bearers; }
   void addmod_logical_channels(span<const mac_logical_channel_config> dl_logical_channels);
-  void remove_logical_channels(span<const lcid_t> lcids_to_remove);
+  void remove_logical_channels(const bounded_bitset<MAX_NOF_RB_LCIDS>& lcids_to_remove);
 
   const ue_con_res_id_t& get_con_res_id() const { return msg3_subpdu; }
 
@@ -106,7 +105,7 @@ public:
   /// \param[in] ue_index UE index for which to remove bearers.
   /// \param[in] lcids LCIDs of the bearers to remove.
   /// \return true if successfully removed. False, if the UE or bearers do not exist.
-  bool remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids);
+  bool remove_bearers(du_ue_index_t ue_index, const bounded_bitset<MAX_NOF_RB_LCIDS>& lcids_to_rem);
 
   /// \brief Returns UE Contention Resolution Id, which is derived from Msg3 bytes.
   ue_con_res_id_t get_con_res_id(rnti_t rnti);

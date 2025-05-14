@@ -36,11 +36,9 @@ void mac_dl_ue_context::addmod_logical_channels(span<const mac_logical_channel_c
   }
 }
 
-void mac_dl_ue_context::remove_logical_channels(span<const lcid_t> lcids_to_remove)
+void mac_dl_ue_context::remove_logical_channels(const bounded_bitset<MAX_NOF_RB_LCIDS>& lcids_to_remove)
 {
-  for (const lcid_t lcid : lcids_to_remove) {
-    dl_bearers.erase(lcid);
-  }
+  lcids_to_remove.for_each(0, lcids_to_remove.size(), [this](size_t pos) { dl_bearers.erase(uint_to_lcid(pos)); });
 }
 
 // ///////////////////////
@@ -77,14 +75,14 @@ bool mac_dl_ue_repository::addmod_bearers(du_ue_index_t                         
   return true;
 }
 
-bool mac_dl_ue_repository::remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids)
+bool mac_dl_ue_repository::remove_bearers(du_ue_index_t ue_index, const bounded_bitset<MAX_NOF_RB_LCIDS>& lcids_to_rem)
 {
   if (not ue_db.contains(ue_index)) {
     return false;
   }
   auto& u = ue_db[ue_index];
 
-  u.remove_logical_channels(lcids);
+  u.remove_logical_channels(lcids_to_rem);
   return true;
 }
 

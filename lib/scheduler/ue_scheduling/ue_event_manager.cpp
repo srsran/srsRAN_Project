@@ -124,7 +124,7 @@ class srsran::pdu_indication_pool
   static constexpr size_t CRC_INITIAL_POOL_SIZE     = MAX_PUSCH_PDUS_PER_SLOT;
   static constexpr size_t SRS_INITIAL_POOL_SIZE     = MAX_SRS_PDUS_PER_SLOT;
   static constexpr size_t BSR_INITIAL_POOL_SIZE     = MAX_PUSCH_PDUS_PER_SLOT;
-  static constexpr size_t EXPECTED_NOF_DEALLOCATORS = 7;
+  static constexpr size_t EXPECTED_NOF_DEALLOCATORS = 8;
 
 public:
   using uci_ptr     = unbounded_object_pool<uci_indication::uci_pdu>::ptr;

@@ -1026,3 +1026,14 @@ TEST(bounded_bitset_test, to_packed_bits_two_byte)
   std::array<uint8_t, 2> expected_packed_bits2 = {0b11000000, 0b01000000};
   ASSERT_TRUE(std::equal(expected_packed_bits2.begin(), expected_packed_bits2.end(), packed_bits2.begin()));
 }
+
+TEST(bounded_bitset_test, bit_positions_to_bitset)
+{
+  std::vector<unsigned> positions = {1, 2, 5};
+  auto                  bset      = bit_positions_to_bitset<7>(positions);
+  ASSERT_EQ(bset.size(), 6);
+  ASSERT_EQ(bset.count(), 3);
+  ASSERT_TRUE(bset.test(1));
+  ASSERT_TRUE(bset.test(2));
+  ASSERT_TRUE(bset.test(5));
+}

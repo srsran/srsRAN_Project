@@ -1516,6 +1516,24 @@ void for_each_interval(const bounded_bitset<N, LowestInfoBitIsMSB, Tag>& bitset,
   for_each_interval(bitset, 0, bitset.size(), function, value);
 }
 
+/// Converts a list of bit positions to a bounded_bitset.
+template <size_t N,
+          bool   LowestInfoBitIsMSB = false,
+          typename Tag              = detail::default_bounded_bitset_tag,
+          typename RangeType,
+          typename PosInteger = typename RangeType::value_type>
+bounded_bitset<N, LowestInfoBitIsMSB, Tag> bit_positions_to_bitset(const RangeType& bit_positions)
+{
+  bounded_bitset<N, LowestInfoBitIsMSB, Tag> result(N);
+  int                                        max_pos = -1;
+  for (PosInteger pos : bit_positions) {
+    result.set(static_cast<size_t>(pos));
+    max_pos = std::max(max_pos, static_cast<int>(pos));
+  }
+  result.resize(max_pos + 1);
+  return result;
+}
+
 } // namespace srsran
 
 namespace fmt {
