@@ -51,8 +51,8 @@ public:
 
   mac_cell_time_mapper_impl& get_time_mapper() { return slot_time_mapper; }
 
-  void handle_slot_indication(const mac_cell_timing_context& context) override;
-  void handle_error_indication(slot_point sl_tx, error_event event) override;
+  void handle_slot_indication(const mac_cell_timing_context& context) noexcept override;
+  void handle_error_indication(slot_point sl_tx, error_event event) noexcept override;
 
   /// Creates new UE DL context, updates logical channel MUX, adds UE in scheduler.
   async_task<bool> add_ue(const mac_ue_create_request& request);
