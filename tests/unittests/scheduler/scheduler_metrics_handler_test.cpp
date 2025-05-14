@@ -23,7 +23,7 @@ class test_scheduler_cell_metrics_notifier : public scheduler_cell_metrics_notif
 public:
   scheduler_cell_metrics last_report;
 
-  scheduler_cell_metrics* get_next() override { return &last_report; }
+  scheduler_cell_metrics& get_next() override { return last_report; }
 
   void commit(scheduler_cell_metrics& ptr) override {}
 };

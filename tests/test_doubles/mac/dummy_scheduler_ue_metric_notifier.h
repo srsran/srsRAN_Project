@@ -28,7 +28,7 @@ class dummy_scheduler_cell_metrics_notifier : public scheduler_cell_metrics_noti
 private:
   scheduler_cell_metrics last_metrics;
 
-  scheduler_cell_metrics* get_next() override { return &last_metrics; }
+  scheduler_cell_metrics& get_next() override { return last_metrics; }
 
   void commit(scheduler_cell_metrics& ptr) override
   {

@@ -21,7 +21,7 @@ namespace {
 class null_metrics_notifier final : public scheduler_cell_metrics_notifier
 {
 private:
-  scheduler_cell_metrics* get_next() override { return &null_report; }
+  scheduler_cell_metrics& get_next() override { return null_report; }
 
   void commit(scheduler_cell_metrics& report) override
   {
@@ -390,6 +390,7 @@ void cell_metrics_handler::report_metrics()
   data = {};
 
   // Report all UE metrics in a batch.
+  // Note: next_report will be reset afterwards. However, we prefer to first commit before fetching a new report.
   next_report.reset();
 
   // Clear lists in preparation for the next report.

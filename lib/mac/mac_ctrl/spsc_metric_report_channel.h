@@ -28,7 +28,7 @@ class spsc_metric_report_channel : public zero_copy_notifier<ReportType>
     void operator()(ReportType* report)
     {
       if (report != nullptr) {
-        parent->consume(*report);
+        parent->dispose(*report);
       }
     }
   };
@@ -63,14 +63,14 @@ public:
   spsc_metric_report_channel(const spsc_metric_report_channel&) = delete;
   spsc_metric_report_channel(spsc_metric_report_channel&&)      = delete;
 
-  ReportType* get_next() override
+  ReportType& get_next() override
   {
     unsigned* idx = free_list.front();
     if (idx == nullptr) {
       logger.warning("Metric report queue is depleted. Discarding next report...");
-      return &dummy_report;
+      return dummy_report;
     }
-    return &reports[*idx];
+    return reports[*idx];
   }
 
   void commit(ReportType& report) override
@@ -115,7 +115,8 @@ private:
   using queue_type =
       concurrent_queue<unsigned, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::non_blocking>;
 
-  void consume(ReportType& report)
+  /// Called when the report has been consumed and can be returned to the free list.
+  void dispose(ReportType& report)
   {
     unsigned idx = &report - reports.data();
     srsran_sanity_check(idx < reports.size(), "Invalid report being committed");
