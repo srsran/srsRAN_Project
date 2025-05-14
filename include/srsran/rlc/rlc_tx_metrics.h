@@ -82,6 +82,8 @@ struct rlc_am_tx_metrics_lower {
   uint32_t                sum_handle_status_latency_us;   ///< Total handle status latency over a (in us)
   std::optional<uint32_t> min_handle_status_latency_us;   ///< Minimum handle status latency (in us)
   std::optional<uint32_t> max_handle_status_latency_us;   ///< Maximum handle status latency (in us)
+  std::optional<uint32_t> max_processed_acks;             ///< Processed ACKs in slowest handle status.
+  std::optional<uint32_t> max_processed_nacks;            ///< Processed NACKs in slowest handle status.
 
   void reset()
   {
@@ -202,7 +204,7 @@ inline std::string format_rlc_tx_metrics(timer_duration metrics_period, const rl
         " retx_rate={}bps ctrl_pdus={} ctrl_rate={}bps pull_latency_avg={} pull_latency_sum={}s"
         " num_ack_latency_meas={} ack_latency_min={}ms ack_latency_avg={}s ack_latency_max={}ms"
         " num_handle_status_latency_meas={} min_handle_status_latency={}us handle_status_latency_avg={}s"
-        " max_handle_status_latency_us={}us",
+        " max_handle_status_latency_us={}us max_processed_acks={} max_processed_nacks={}",
         scaled_fmt_integer(am.num_pdus_with_segmentation, false),
         float_to_eng_string(
             static_cast<float>(am.num_pdu_bytes_with_segmentation) * 8 * 1000 / metrics_period.count(), 1, false),
@@ -225,7 +227,9 @@ inline std::string format_rlc_tx_metrics(timer_duration metrics_period, const rl
         am.min_handle_status_latency_us,
         float_to_eng_string(
             static_cast<float>(am.sum_handle_status_latency_us * 1e-6) / am.num_handle_status_latency_meas, 1, false),
-        am.max_handle_status_latency_us);
+        am.max_handle_status_latency_us,
+        am.max_processed_acks,
+        am.max_processed_nacks);
   }
   fmt::format_to(std::back_inserter(buffer), " pdu_latency_hist=[");
   for (unsigned i = 0; i < rlc_tx_metrics_lower::pdu_latency_hist_bins; i++) {

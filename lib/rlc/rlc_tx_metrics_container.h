@@ -238,7 +238,9 @@ public:
     am.max_ack_latency_ms = std::max(am.max_ack_latency_ms, std::optional<uint32_t>{ack_latency_ms});
   }
 
-  void metrics_add_handle_status_latency_us(uint32_t handle_status_latency_us)
+  void metrics_add_handle_status_latency_us(uint32_t processed_acks,
+                                            uint32_t processed_nacks,
+                                            uint32_t handle_status_latency_us)
   {
     if (not enabled) {
       return;
@@ -252,8 +254,11 @@ public:
     am.min_handle_status_latency_us = am.min_handle_status_latency_us
                                           ? std::min(*am.min_handle_status_latency_us, handle_status_latency_us)
                                           : handle_status_latency_us;
-    am.max_handle_status_latency_us =
-        std::max(am.max_handle_status_latency_us, std::optional<uint32_t>{handle_status_latency_us});
+    if (am.max_handle_status_latency_us < handle_status_latency_us) {
+      am.max_handle_status_latency_us = handle_status_latency_us;
+      am.max_processed_acks           = processed_acks;
+      am.max_processed_nacks          = processed_nacks;
+    }
   }
 
   // Metrics getters and setters
