@@ -607,11 +607,11 @@ void cell_harq_manager::destroy_ue(du_ue_index_t ue_idx)
 harq_utils::dl_harq_process_impl* cell_harq_manager::new_dl_tx(du_ue_index_t ue_idx,
                                                                rnti_t        rnti,
                                                                slot_point    pdsch_slot,
-                                                               unsigned      k1,
+                                                               unsigned      ack_delay,
                                                                unsigned      max_harq_nof_retxs,
                                                                uint8_t       harq_bit_idx)
 {
-  dl_harq_process_impl* h = dl.alloc_harq(ue_idx, pdsch_slot, pdsch_slot + k1, max_harq_nof_retxs);
+  dl_harq_process_impl* h = dl.alloc_harq(ue_idx, pdsch_slot, pdsch_slot + ack_delay, max_harq_nof_retxs);
   if (h == nullptr) {
     return nullptr;
   }
@@ -640,9 +640,9 @@ cell_harq_manager::new_ul_tx(du_ue_index_t ue_idx, rnti_t rnti, slot_point pusch
   return h;
 }
 
-bool dl_harq_process_handle::new_retx(slot_point pdsch_slot, unsigned k1, uint8_t harq_bit_idx)
+bool dl_harq_process_handle::new_retx(slot_point pdsch_slot, unsigned ack_delay, uint8_t harq_bit_idx)
 {
-  if (not harq_repo->handle_new_retx(*impl, pdsch_slot, pdsch_slot + k1)) {
+  if (not harq_repo->handle_new_retx(*impl, pdsch_slot, pdsch_slot + ack_delay)) {
     return false;
   }
   // Reset DL-only HARQ parameters.
@@ -868,10 +868,13 @@ void unique_ue_harq_entity::cancel_retxs()
   }
 }
 
-std::optional<dl_harq_process_handle>
-unique_ue_harq_entity::alloc_dl_harq(slot_point sl_tx, unsigned k1, unsigned max_harq_nof_retxs, unsigned harq_bit_idx)
+std::optional<dl_harq_process_handle> unique_ue_harq_entity::alloc_dl_harq(slot_point sl_tx,
+                                                                           unsigned   ack_delay,
+                                                                           unsigned   max_harq_nof_retxs,
+                                                                           unsigned   harq_bit_idx)
 {
-  dl_harq_process_impl* h = cell_harq_mgr->new_dl_tx(ue_index, crnti, sl_tx, k1, max_harq_nof_retxs, harq_bit_idx);
+  dl_harq_process_impl* h =
+      cell_harq_mgr->new_dl_tx(ue_index, crnti, sl_tx, ack_delay, max_harq_nof_retxs, harq_bit_idx);
   if (h == nullptr) {
     return std::nullopt;
   }

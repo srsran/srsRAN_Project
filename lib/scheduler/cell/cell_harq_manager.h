@@ -281,7 +281,7 @@ public:
 
   using base_type::cancel_retxs;
 
-  [[nodiscard]] bool new_retx(slot_point pdsch_slot, unsigned k1, uint8_t harq_bit_idx);
+  [[nodiscard]] bool new_retx(slot_point pdsch_slot, unsigned ack_delay, uint8_t harq_bit_idx);
 
   /// \brief Update the state of the DL HARQ process waiting for an HARQ-ACK.
   /// \param[in] ack HARQ-ACK status received.
@@ -460,7 +460,7 @@ private:
   harq_utils::dl_harq_process_impl* new_dl_tx(du_ue_index_t ue_idx,
                                               rnti_t        rnti,
                                               slot_point    pdsch_slot,
-                                              unsigned      k1,
+                                              unsigned      ack_delay,
                                               unsigned      max_harq_nof_retxs,
                                               uint8_t       harq_bit_idx);
 
@@ -544,7 +544,7 @@ public:
   }
 
   std::optional<dl_harq_process_handle>
-  alloc_dl_harq(slot_point sl_tx, unsigned k1, unsigned max_harq_nof_retxs, unsigned harq_bit_idx);
+  alloc_dl_harq(slot_point sl_tx, unsigned ack_delay, unsigned max_harq_nof_retxs, unsigned harq_bit_idx);
   std::optional<ul_harq_process_handle> alloc_ul_harq(slot_point sl_tx, unsigned max_harq_nof_retxs);
 
   std::optional<dl_harq_process_handle>       find_pending_dl_retx();
