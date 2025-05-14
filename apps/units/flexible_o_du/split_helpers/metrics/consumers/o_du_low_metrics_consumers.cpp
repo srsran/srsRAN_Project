@@ -479,14 +479,14 @@ static void log_upper_phy_metrics_verbose(fmt::basic_memory_buffer<char, str_buf
   const auto& ch_est = upper_metrics.pusch_metrics.ch_estimator_metrics;
   fmt::format_to(std::back_inserter(buffer),
                  "{:<25} avg_latency={:.2f} us, proc_rate={:.2f} MPRBps\n",
-                 "  PUSCH Channel estimator:",
+                 "  PUSCH chan. estimator:",
                  validate_fp_value(ch_est.avg_processing_latency),
                  validate_fp_value(ch_est.processing_rate_Mbps));
 
   const auto& ch_eq = upper_metrics.pusch_metrics.ch_equalizer_metrics;
   fmt::format_to(std::back_inserter(buffer),
                  "{:<25} proc_rate_per_nof_layers=[{:.2f}, {:.2f}, {:.2f}, {:.2f}] MREps\n",
-                 "  PUSCH channel equalizer:",
+                 "  PUSCH chan. equalizer:",
                  validate_fp_value(ch_eq.avg_rate_MREps_one_layer),
                  validate_fp_value(ch_eq.avg_rate_MREps_two_layers),
                  validate_fp_value(ch_eq.avg_rate_MREps_three_layers),
@@ -496,13 +496,13 @@ static void log_upper_phy_metrics_verbose(fmt::basic_memory_buffer<char, str_buf
   const auto& prg_pusch = upper_metrics.pusch_metrics.scrambling_metrics;
   fmt::format_to(std::back_inserter(buffer),
                  "{:<25} avg_init_time={:.2f} us, avg_advance_rate={:.2f} Mbps, avg_gen_rate={:.2f} Mbps\n",
-                 "  PUSCH PRG:",
+                 "  PUSCH scrambling:",
                  validate_fp_value(prg_pusch.avg_init_time_us),
                  validate_fp_value(prg_pusch.advance_rate_Mbps),
                  validate_fp_value(prg_pusch.generate_rate_Mbps));
   fmt::format_to(std::back_inserter(buffer),
                  "{:<25} avg_init_time={:.2f} us, avg_advance_rate={:.2f} Mbps, avg_gen_rate={:.2f} Mbps\n",
-                 "  PDSCH PRG:",
+                 "  PDSCH scrambling:",
                  validate_fp_value(prg_pdsch.avg_init_time_us),
                  validate_fp_value(prg_pdsch.advance_rate_Mbps),
                  validate_fp_value(prg_pdsch.generate_rate_Mbps));
@@ -673,7 +673,7 @@ void o_du_low_metrics_consumer_log::handle_metric(const srs_du::o_du_low_metrics
 
   for (const auto& upper_metrics : metric.du_lo_metrics.sector_metrics) {
     fmt::basic_memory_buffer<char, str_buffer_size> buffer;
-    fmt::format_to(std::back_inserter(buffer), "Upper PHY sector#{} metrics:\n", upper_metrics.sector_id);
+    fmt::format_to(std::back_inserter(buffer), "Upper PHY sector#{} metrics: ", upper_metrics.sector_id);
 
     fmt::format_to(std::back_inserter(buffer),
                    "PHY metrics: "

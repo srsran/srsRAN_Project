@@ -29,6 +29,8 @@ static void configure_cli11_metrics_args(CLI::App& app, metrics_config& metrics_
   // Log metrics configuration.
   add_option(app, "--enable_log", metrics_params.enable_log_metrics, "Enable log metrics reporting")
       ->always_capture_default();
+  add_option(app, "--enable_verbose", metrics_params.enable_verbose, "Enable extended detail metrics reporting")
+      ->always_capture_default();
 }
 
 void srsran::app_helpers::configure_cli11_with_metrics_appconfig_schema(CLI::App& app, metrics_config& config)

@@ -30,6 +30,9 @@ struct metrics_json_config {
 struct metrics_config {
   /// Enables the metrics in the log.
   bool enable_log_metrics = false;
+  /// Enable verbose metrics.
+  bool enable_verbose = false;
+
   /// JSON metrics configuration.
   metrics_json_config json_config;
 

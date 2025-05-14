@@ -22,9 +22,9 @@ struct ru_metrics;
 class flexible_o_du_metrics_consumer_log : public app_services::metrics_consumer
 {
 public:
-  flexible_o_du_metrics_consumer_log(srslog::log_channel& log_chan, std::vector<pci_t> pci_sector_map_) :
+  flexible_o_du_metrics_consumer_log(srslog::log_channel& log_chan, std::vector<pci_t> pci_sector_map_, bool verbose) :
     pci_sector_map(std::move(pci_sector_map_)),
-    odu_low_metrics_handler(log_chan, pci_sector_map),
+    odu_low_metrics_handler(log_chan, pci_sector_map, verbose),
     ru_metrics_handler(log_chan, pci_sector_map)
   {
   }

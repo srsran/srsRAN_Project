@@ -762,7 +762,7 @@ public:
     std::unique_ptr<upper_phy_metrics_collector_impl> metrics_collector;
     if (config.enable_metrics) {
       metrics_collector = std::make_unique<upper_phy_metrics_collector_impl>();
-      metric_notifier   = &(*metrics_collector);
+      metric_notifier   = metrics_collector.get();
     }
 
     std::shared_ptr<downlink_processor_factory> downlink_proc_factory =
