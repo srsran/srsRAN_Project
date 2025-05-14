@@ -244,12 +244,12 @@ void cell_harq_repository<IsDl>::handle_harq_ack_timeout(harq_type& h, slot_poin
   bool ack_val = h.ack_on_timeout;
   if (h.status == harq_state_t::pending_retx) {
     // This HARQ is being starved by the scheduler.
-    logger.info("rnti={} h_id={}: Discarding {} HARQ. Cause: The scheduler is starving this HARQ process from "
-                "being allocated ({} slots elapsed since last NOK).",
+    logger.info("rnti={} h_id={}: Discarding {} HARQ. Cause: The scheduler took too long to reschedule this HARQ "
+                "process ({} slots elapsed since last NOK).",
                 h.rnti,
                 fmt::underlying(h.h_id),
                 IsDl ? "DL" : "UL",
-                h.slot_retx_timeout - h.slot_ack);
+                h.slot_timeout - h.slot_ack);
   } else {
     if (ack_val) {
       // Case: Not all HARQ-ACKs were received, but at least one positive ACK was received.
@@ -258,16 +258,15 @@ void cell_harq_repository<IsDl>::handle_harq_ack_timeout(harq_type& h, slot_poin
                    h.rnti,
                    fmt::underlying(h.h_id),
                    IsDl ? "DL" : "UL",
-                   h.slot_ack_timeout - h.slot_ack);
+                   h.slot_timeout - h.slot_ack);
     } else {
       // At least one of the expected ACKs went missing and we haven't received any positive ACK.
       logger.warning("rnti={} h_id={}: Discarding {} HARQ. Cause: HARQ-ACK wait timeout ({} slots) was reached, but "
-                     "there are still "
-                     "missing HARQ-ACKs and none of the received ones are positive.",
+                     "there are still missing HARQ-ACKs and none of the received ones are positive.",
                      h.rnti,
                      fmt::underlying(h.h_id),
                      IsDl ? "DL" : "UL",
-                     h.slot_ack_timeout - h.slot_ack);
+                     h.slot_timeout - h.slot_ack);
     }
   }
 
@@ -312,8 +311,8 @@ typename cell_harq_repository<IsDl>::harq_type* cell_harq_repository<IsDl>::allo
       ue_harq_entity.last_slot_ack.valid() ? std::max(ue_harq_entity.last_slot_ack, sl_ack) : sl_ack;
 
   // Add HARQ to the timeout list.
-  h.slot_ack_timeout = sl_ack + max_ack_wait_in_slots;
-  harq_timeout_wheel[h.slot_ack_timeout.to_uint() % harq_timeout_wheel.size()].push_front(&h);
+  h.slot_timeout = sl_ack + max_ack_wait_in_slots;
+  harq_timeout_wheel[h.slot_timeout.to_uint() % harq_timeout_wheel.size()].push_front(&h);
 
   return &h;
 }
@@ -327,18 +326,14 @@ void cell_harq_repository<IsDl>::dealloc_harq(harq_type& h)
   }
 
   // Update HARQ process state.
-  if (h.status == harq_state_t::waiting_ack) {
-    // Remove the HARQ from the timeout list.
-    harq_timeout_wheel[h.slot_ack_timeout.to_uint() % harq_timeout_wheel.size()].pop(&h);
-  } else {
-    srsran_sanity_check(h.status == harq_state_t::pending_retx, "Invalid HARQ state");
+  if (h.status == harq_state_t::pending_retx) {
     // Remove the HARQ from the pending Retx list.
     harq_pending_retx_list.pop(&h);
-    // Remove HARQ from the timeout list.
-    harq_timeout_wheel[h.slot_retx_timeout.to_uint() % harq_timeout_wheel.size()].pop(&h);
-    h.slot_retx_timeout = {};
   }
-  h.status = harq_state_t::empty;
+  // Remove HARQ from the timeout list.
+  harq_timeout_wheel[h.slot_timeout.to_uint() % harq_timeout_wheel.size()].pop(&h);
+  h.slot_timeout = {};
+  h.status       = harq_state_t::empty;
 
   // Check if common HARQ entity params need to be updated.
   ue_harq_entity_impl& ue_harq_entity = ues[h.ue_idx];
@@ -403,9 +398,9 @@ void cell_harq_repository<IsDl>::set_pending_retx(harq_type& h)
   }
 
   // Remove the HARQ from the ACK timeout list and re-add it with a new timeout.
-  harq_timeout_wheel[h.slot_ack_timeout.to_uint() % harq_timeout_wheel.size()].pop(&h);
-  h.slot_retx_timeout = last_sl_ind + harq_retx_timeout;
-  harq_timeout_wheel[h.slot_retx_timeout.to_uint() % harq_timeout_wheel.size()].push_front(&h);
+  harq_timeout_wheel[h.slot_timeout.to_uint() % harq_timeout_wheel.size()].pop(&h);
+  h.slot_timeout = last_sl_ind + harq_retx_timeout;
+  harq_timeout_wheel[h.slot_timeout.to_uint() % harq_timeout_wheel.size()].push_front(&h);
 
   // Add HARQ to pending Retx list.
   harq_pending_retx_list.push_back(&h);
@@ -425,8 +420,8 @@ bool cell_harq_repository<IsDl>::handle_new_retx(harq_type& h, slot_point sl_tx,
 
   // Remove HARQ from pending Retx list.
   harq_pending_retx_list.pop(&h);
-  harq_timeout_wheel[h.slot_retx_timeout.to_uint() % harq_timeout_wheel.size()].pop(&h);
-  h.slot_retx_timeout = {};
+  harq_timeout_wheel[h.slot_timeout.to_uint() % harq_timeout_wheel.size()].pop(&h);
+  h.slot_timeout = {};
 
   // Update HARQ common parameters.
   h.status         = harq_state_t::waiting_ack;
@@ -443,8 +438,8 @@ bool cell_harq_repository<IsDl>::handle_new_retx(harq_type& h, slot_point sl_tx,
       ue_harq_entity.last_slot_ack.valid() ? std::max(ue_harq_entity.last_slot_ack, sl_ack) : sl_ack;
 
   // Add HARQ to the timeout list.
-  h.slot_ack_timeout = sl_ack + max_ack_wait_in_slots;
-  harq_timeout_wheel[h.slot_ack_timeout.to_uint() % harq_timeout_wheel.size()].push_front(&h);
+  h.slot_timeout = sl_ack + max_ack_wait_in_slots;
+  harq_timeout_wheel[h.slot_timeout.to_uint() % harq_timeout_wheel.size()].push_front(&h);
 
   return true;
 }
@@ -698,9 +693,9 @@ dl_harq_process_handle::status_update dl_harq_process_handle::dl_ack_info(mac_ha
   // We reduce the HARQ process timeout to receive the next HARQ-ACK. This is done because the two HARQ-ACKs should
   // arrive almost simultaneously, and in case the second goes missing, we don't want to block the HARQ for too long.
   auto& wheel = harq_repo->harq_timeout_wheel;
-  wheel[impl->slot_ack_timeout.to_uint() % wheel.size()].pop(impl);
-  impl->slot_ack_timeout = harq_repo->last_sl_ind + SHORT_ACK_TIMEOUT_DTX;
-  wheel[impl->slot_ack_timeout.to_uint() % wheel.size()].push_front(impl);
+  wheel[impl->slot_timeout.to_uint() % wheel.size()].pop(impl);
+  impl->slot_timeout = harq_repo->last_sl_ind + SHORT_ACK_TIMEOUT_DTX;
+  wheel[impl->slot_timeout.to_uint() % wheel.size()].push_front(impl);
 
   return status_update::no_update;
 }

@@ -55,11 +55,13 @@ struct base_harq_process : public intrusive_double_linked_list_element<>,
   rnti_t        rnti;
   harq_id_t     h_id;
   harq_state_t  status = harq_state_t::empty;
-  slot_point    slot_tx;
-  slot_point    slot_ack;
-  slot_point    slot_ack_timeout;
-  /// Timeout for retransmit HARQ. This field is only set when status == pending_retx.
-  slot_point slot_retx_timeout;
+  /// Slot at which the PxSCH was transmitted.
+  slot_point slot_tx;
+  /// Slot at which the respective ACK/CRC is expected to be received in the PHY.
+  slot_point slot_ack;
+  /// \brief Slot at which the currently set timeout expires. In case of status == waiting_ack, the timeout expires
+  /// if no ACK/CRC arrives. In case of status == pending_retx, the timeout expires if no new reTx is scheduled.
+  slot_point slot_timeout;
   /// New Data Indicator. Its value should flip for every new Tx.
   bool ndi = false;
   /// Number of retransmissions that took place for the current Transport Block.
