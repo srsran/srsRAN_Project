@@ -78,14 +78,14 @@ async_task<void> mac_dl_dummy_configurer::remove_ue(const mac_ue_delete_request&
   });
 }
 
-async_task<bool>
-mac_dl_dummy_configurer::addmod_bearers(du_ue_index_t                                  ue_index,
-                                        du_cell_index_t                                pcell_index,
-                                        const std::vector<mac_logical_channel_config>& logical_channels)
+async_task<bool> mac_dl_dummy_configurer::addmod_bearers(du_ue_index_t                          ue_index,
+                                                         du_cell_index_t                        pcell_index,
+                                                         span<const mac_logical_channel_config> logical_channels)
 {
   return launch_async([this, ue_index, logical_channels](coro_context<async_task<bool>>& ctx) {
     CORO_BEGIN(ctx);
-    last_ue_bearers_added = std::make_pair(ue_index, logical_channels);
+    last_ue_bearers_added = std::make_pair(
+        ue_index, std::vector<mac_logical_channel_config>(logical_channels.begin(), logical_channels.end()));
     CORO_RETURN(true);
   });
 }

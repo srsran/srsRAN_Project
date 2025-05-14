@@ -234,9 +234,11 @@ async_task<void> mac_cell_processor::remove_ue(const mac_ue_delete_request& requ
   });
 }
 
-async_task<bool> mac_cell_processor::addmod_bearers(du_ue_index_t                                  ue_index,
-                                                    const std::vector<mac_logical_channel_config>& logical_channels)
+async_task<bool> mac_cell_processor::addmod_bearers(du_ue_index_t                          ue_index,
+                                                    span<const mac_logical_channel_config> logical_channels)
 {
+  // Note: logical_channels must outlive the returned async_task completion.
+
   return execute_and_continue_on_blocking(
       cell_exec,
       ctrl_exec,

@@ -40,16 +40,16 @@ public:
   du_ue_index_t get_ue_index() const { return ue_index; }
 
   // DL Logical Channel methods.
-  const slotted_id_vector<lcid_t, mac_sdu_tx_builder*>& logical_channels() const { return dl_bearers; }
+  const slotted_id_table<lcid_t, mac_sdu_tx_builder*, MAX_NOF_RB_LCIDS>& logical_channels() const { return dl_bearers; }
   void addmod_logical_channels(span<const mac_logical_channel_config> dl_logical_channels);
   void remove_logical_channels(const bounded_bitset<MAX_NOF_RB_LCIDS>& lcids_to_remove);
 
   const ue_con_res_id_t& get_con_res_id() const { return msg3_subpdu; }
 
 private:
-  du_ue_index_t                                  ue_index;
-  slotted_id_vector<lcid_t, mac_sdu_tx_builder*> dl_bearers;
-  ue_con_res_id_t                                msg3_subpdu = {};
+  du_ue_index_t                                                   ue_index;
+  slotted_id_table<lcid_t, mac_sdu_tx_builder*, MAX_NOF_RB_LCIDS> dl_bearers;
+  ue_con_res_id_t                                                 msg3_subpdu = {};
 };
 
 /// Repository used to map upper layer bearers to MAC DL-SCH logical channels.

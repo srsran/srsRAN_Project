@@ -6,4 +6,6 @@
 # the distribution.
 #
 
+set_directory_properties(PROPERTIES LABELS "phy")
+
 add_subdirectory(upper)

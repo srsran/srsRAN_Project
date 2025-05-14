@@ -70,9 +70,9 @@ async_task<void> mac_dl_processor::remove_ue(const mac_ue_delete_request& reques
   return cells[request.cell_index]->remove_ue(request);
 }
 
-async_task<bool> mac_dl_processor::addmod_bearers(du_ue_index_t                                  ue_index,
-                                                  du_cell_index_t                                pcell_index,
-                                                  const std::vector<mac_logical_channel_config>& logical_channels)
+async_task<bool> mac_dl_processor::addmod_bearers(du_ue_index_t                          ue_index,
+                                                  du_cell_index_t                        pcell_index,
+                                                  span<const mac_logical_channel_config> logical_channels)
 {
   if (not has_cell(pcell_index)) {
     return launch_no_op_task<bool>(false);

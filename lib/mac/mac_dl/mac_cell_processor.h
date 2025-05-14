@@ -61,8 +61,7 @@ public:
   async_task<void> remove_ue(const mac_ue_delete_request& request);
 
   /// Add/Modify UE bearers in the MUX.
-  async_task<bool> addmod_bearers(du_ue_index_t                                  ue_index,
-                                  const std::vector<mac_logical_channel_config>& logical_channels);
+  async_task<bool> addmod_bearers(du_ue_index_t ue_index, span<const mac_logical_channel_config> logical_channels);
 
   /// Remove UE bearers in the MUX.
   async_task<bool> remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids_to_rem);
