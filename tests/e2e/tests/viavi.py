@@ -498,6 +498,7 @@ def check_metrics_criteria(
             operator.lt,
             test_configuration.expected_nof_kos,
         ),
+        _create_viavi_result("Error Indications", kpis.nof_error_indications, operator.eq, 0),
         _create_viavi_result("Errors" + (" & warnings" if warning_as_errors else ""), gnb_error_count, operator.eq, 0),
         _create_viavi_result("Viavi Warnings", len(viavi_kpis.warning_array), operator.lt, float("inf")),
         _create_viavi_result(
