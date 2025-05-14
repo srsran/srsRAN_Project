@@ -81,7 +81,7 @@ protected:
 
     // Prepare CRB bitmask that will be used to find available CRBs.
     const auto& init_dl_bwp = cell_cfg.dl_cfg_common.init_dl_bwp;
-    // TODO: support interleaving on this test.
+    // Note: VRB-to-PRB interleaving is not supported in this test.
     used_dl_vrbs = res_grid[0]
                        .dl_res_grid
                        .used_prbs(init_dl_bwp.generic_params.scs,
@@ -157,7 +157,7 @@ protected:
     vrb_interval vrbs = builder.recommended_vrbs(used_dl_vrbs);
 
     // Compute the corresponding CRBs.
-    // TODO: support interleaving on this test.
+    // Note: VRB-to-PRB interleaving is not supported in this test.
     std::pair<crb_interval, crb_interval> crbs = {
         prb_to_crb(init_dl_bwp.generic_params.crbs, vrbs.convert_to<prb_interval>()), {}};
 
@@ -192,7 +192,7 @@ protected:
     }
     auto& builder = result.value();
 
-    // TODO: perform inverse VRB-to-PRB mapping when interleaving is enabled for this slice/BWP.
+    // Note: VRB-to-PRB interleaving is not supported in this test.
     auto used_ul_vrbs = res_grid[pusch_slot]
                             .ul_res_grid
                             .used_prbs(init_ul_bwp.generic_params.scs,

@@ -9,9 +9,11 @@
  */
 
 #include "srsran/fapi_adaptor/mac/messages/pdsch.h"
+#include "srsran/asn1/rrc_nr/bwp_cfg.h"
 #include "srsran/fapi_adaptor/precoding_matrix_mapper.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
+#include "srsran/ran/resource_allocation/vrb_to_prb.h"
 #include "srsran/ran/sch/sch_constants.h"
 #include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/scheduler/result/pdsch_info.h"
@@ -229,14 +231,14 @@ static fapi::pdsch_trans_type get_pdsch_trans_type(coreset_id            id,
   return fapi::pdsch_trans_type::interleaved_other;
 }
 
-static fapi::vrb_to_prb_mapping_type get_vrb_to_prb_mapping_type(unsigned vrb_prb_mapping)
+static fapi::vrb_to_prb_mapping_type get_vrb_to_prb_mapping_type(vrb_to_prb::mapping_type vrb_prb_mapping)
 {
   switch (vrb_prb_mapping) {
-    case 2:
+    case vrb_to_prb::mapping_type::interleaved_n2:
       return fapi::vrb_to_prb_mapping_type::interleaved_rb_size2;
-    case 4:
+    case vrb_to_prb::mapping_type::interleaved_n4:
       return fapi::vrb_to_prb_mapping_type::interleaved_rb_size4;
-    case 0:
+    case vrb_to_prb::mapping_type::non_interleaved:
     default:
       return fapi::vrb_to_prb_mapping_type::non_interleaved;
   }
@@ -270,7 +272,7 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
       crbs.length(), crbs.start(), mac_pdu.pdsch_cfg.bwp_cfg->scs, mac_pdu.pdsch_cfg.bwp_cfg->cp);
 
   // Get the VRB-to-PRB mapping from the DCI.
-  bool is_interleaved = mac_pdu.pdsch_cfg.vrb_prb_mapping;
+  bool is_interleaved = mac_pdu.pdsch_cfg.vrb_prb_mapping != vrb_to_prb::mapping_type::non_interleaved;
   // Frequency allocation.
   // Note: As defined in TS38.214 Section 5.1.2.3, DCI format 1_0 uses bundle size of 2.
   fill_frequency_allocation(
@@ -327,7 +329,7 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
       crbs.length(), crbs.start(), mac_pdu.pdsch_cfg.bwp_cfg->scs, mac_pdu.pdsch_cfg.bwp_cfg->cp);
 
   // Get the VRB-to-PRB mapping from the DCI.
-  bool is_interleaved = mac_pdu.pdsch_cfg.vrb_prb_mapping;
+  bool is_interleaved = mac_pdu.pdsch_cfg.vrb_prb_mapping != vrb_to_prb::mapping_type::non_interleaved;
   // Frequency allocation.
   // Note: As defined in TS38.214 Section 5.1.2.3, DCI format 1_0 uses bundle size of 2.
   fill_frequency_allocation(
@@ -385,7 +387,7 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
       crbs.length(), crbs.start(), mac_pdu.pdsch_cfg.bwp_cfg->scs, mac_pdu.pdsch_cfg.bwp_cfg->cp);
 
   // Get the VRB-to-PRB mapping from the DCI.
-  bool is_interleaved = mac_pdu.pdsch_cfg.vrb_prb_mapping != 0;
+  bool is_interleaved = mac_pdu.pdsch_cfg.vrb_prb_mapping != vrb_to_prb::mapping_type::non_interleaved;
   // Frequency allocation.
   // Note: As defined in TS38.214 Section 5.1.2.3, DCI format 1_0 uses bundle size of 2.
   fill_frequency_allocation(
@@ -434,7 +436,7 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
       crbs.length(), crbs.start(), mac_pdu.pdsch_cfg.bwp_cfg->scs, mac_pdu.pdsch_cfg.bwp_cfg->cp);
 
   // Get the VRB-to-PRB mapping from the DCI.
-  bool is_interleaved = mac_pdu.pdsch_cfg.vrb_prb_mapping != 0;
+  bool is_interleaved = mac_pdu.pdsch_cfg.vrb_prb_mapping != vrb_to_prb::mapping_type::non_interleaved;
   // Frequency allocation.
   // Note: As defined in TS38.214 Section 5.1.2.3, DCI format 1_0 uses bundle size of 2.
   fill_frequency_allocation(

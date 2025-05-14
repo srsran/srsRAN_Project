@@ -824,7 +824,7 @@ void intra_slice_scheduler::update_used_dl_vrbs(const dl_ran_slice_candidate& sl
     for (const auto& pdsch : cell_alloc[pdsch_slot].result.dl.ue_grants) {
       // [Implementation defined] Disable interleaving if there are non-interleaved PDSCH grants already allocated on
       // that slot, to avoid wasting resources.
-      if (pdsch.pdsch_cfg.vrb_prb_mapping == 0) {
+      if (pdsch.pdsch_cfg.vrb_prb_mapping == vrb_to_prb::mapping_type::non_interleaved) {
         enable_pdsch_interleaving = false;
         break;
       }

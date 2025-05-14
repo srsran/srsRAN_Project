@@ -21,15 +21,15 @@ namespace {
 
 auto make_dl_dci_log_entry(const dci_dl_info& dci)
 {
-  bool                    is_formattable = true;
-  uint8_t                 h_id           = 0;
-  bool                    ndi            = false;
-  uint8_t                 rv             = 0;
-  uint8_t                 mcs            = 0;
-  uint8_t                 pucch_res_id   = 0;
-  std::optional<int8_t>   tpc_cmd;
-  std::optional<uint8_t>  dai;
-  std::optional<unsigned> vrb_prb;
+  bool                                    is_formattable = true;
+  uint8_t                                 h_id           = 0;
+  bool                                    ndi            = false;
+  uint8_t                                 rv             = 0;
+  uint8_t                                 mcs            = 0;
+  uint8_t                                 pucch_res_id   = 0;
+  std::optional<int8_t>                   tpc_cmd;
+  std::optional<uint8_t>                  dai;
+  std::optional<vrb_to_prb::mapping_type> vrb_prb;
 
   switch (dci.type) {
     case dci_dl_rnti_config_type::c_rnti_f1_0: {
@@ -76,7 +76,7 @@ auto make_dl_dci_log_entry(const dci_dl_info& dci)
         fmt::format_to(ctx.out(), " dai={}", dai.value());
       }
       if (vrb_prb.has_value()) {
-        fmt::format_to(ctx.out(), " vrb_prb_map={}", vrb_prb.value());
+        fmt::format_to(ctx.out(), " vrb_prb_map={}", fmt::underlying(vrb_prb.value()));
       }
     }
     return ctx.out();

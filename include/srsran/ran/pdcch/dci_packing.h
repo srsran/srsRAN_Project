@@ -18,6 +18,7 @@
 #include "srsran/ran/pdcch/pdcch_constants.h"
 #include "srsran/ran/physical_cell_group.h"
 #include "srsran/ran/pusch/tx_scheme_configuration.h"
+#include "srsran/ran/resource_allocation/vrb_to_prb.h"
 #include "srsran/support/units.h"
 #include <variant>
 
@@ -613,7 +614,7 @@ struct dci_1_0_c_rnti_configuration {
   /// Time domain resource assignment - 4 bit as per TS38.214 Section 5.1.2.1.
   unsigned time_resource;
   /// VRB-to-PRB mapping - 1 bit as per TS38.212 Table 7.3.1.2.2-5.
-  unsigned vrb_to_prb_mapping;
+  vrb_to_prb::mapping_type vrb_to_prb_mapping;
   /// Modulation and coding scheme - 5 bits as per TS38.214 Section 5.1.3.
   unsigned modulation_coding_scheme;
   /// New data indicator - 1 bit.
@@ -663,7 +664,7 @@ struct dci_1_0_p_rnti_configuration {
   unsigned time_resource;
   /// \brief VRB-to-PRB mapping - 1 bit as per TS38.212 Table 7.3.1.2.2-5.
   /// \remark If only the short message is carried, this bit field is reserved.
-  unsigned vrb_to_prb_mapping;
+  vrb_to_prb::mapping_type vrb_to_prb_mapping;
   /// \brief Modulation and coding scheme - 5 bits as per TS38.214 Section 5.1.3 and Table 5.1.3.1-1.
   /// \remark If only the short message is carried, this bit field is reserved.
   unsigned modulation_coding_scheme;
@@ -688,7 +689,7 @@ struct dci_1_0_si_rnti_configuration {
   /// Time domain resource assignment - 4 bit as per TS38.214 Section 5.1.2.1.
   unsigned time_resource;
   /// VRB-to-PRB mapping - 1 bit as per TS38.212 Table 7.3.1.2.2-5.
-  unsigned vrb_to_prb_mapping;
+  vrb_to_prb::mapping_type vrb_to_prb_mapping;
   /// Modulation coding scheme - 5 bits as per TS38.214 Section 5.1.3 and Table 5.1.3.1-1.
   unsigned modulation_coding_scheme;
   /// Redundancy version - 2 bits as per TS38.212 Table 7.3.1.1.1-2.
@@ -716,7 +717,7 @@ struct dci_1_0_ra_rnti_configuration {
   /// Time domain resource assignment - 4 bits as per TS38.214 Section 5.1.2.1.
   unsigned time_resource;
   /// VRB-to-PRB mapping - 1 bit as per to TS38.212 Table 7.3.1.2.2-5.
-  unsigned vrb_to_prb_mapping;
+  vrb_to_prb::mapping_type vrb_to_prb_mapping;
   /// Modulation and coding scheme - 5 bits as per TS38.214 Section 5.1.3 and Table 5.1.3.1-1.
   unsigned modulation_coding_scheme;
   /// \brief Transport Block scaling - 2 bits as per TS38.214 Section 5.1.3 and Table 5.1.3.2-2.
@@ -739,7 +740,7 @@ struct dci_1_0_tc_rnti_configuration {
   /// Time domain resource assignment - 4 bit as per TS38.214 Section 5.1.2.1.
   unsigned time_resource;
   /// VRB-to-PRB mapping - 1 bit as per TS38.212 Table 7.3.1.2.2-5.
-  unsigned vrb_to_prb_mapping;
+  vrb_to_prb::mapping_type vrb_to_prb_mapping;
   /// Modulation and coding scheme - 5 bits as per TS38.214 Table 5.1.3.1-1.
   unsigned modulation_coding_scheme;
   /// New data indicator - 1 bit.
@@ -989,7 +990,7 @@ struct dci_1_1_configuration {
   /// resource allocation type 1 and interleaved VRB-to-PRB mapping are configured (see \ref
   /// dci_size_config::pdsch_res_allocation_type and \ref dci_size_config::interleaved_vrb_prb_mapping). Otherwise,
   /// leave it unset.
-  std::optional<unsigned> vrb_prb_mapping;
+  std::optional<vrb_to_prb::mapping_type> vrb_prb_mapping;
   /// \brief PRB bundling size indicator - 1 bit if present.
   ///
   /// Dynamically selects between the configured PRB bundling size sets 1 and 2. Set as per TS38.214 Section 5.1.2.3 if

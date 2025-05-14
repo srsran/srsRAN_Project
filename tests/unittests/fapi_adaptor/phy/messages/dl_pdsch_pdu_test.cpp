@@ -48,6 +48,19 @@ static float calculate_ratio_pdsch_dmrs_to_sss_dB(float ratio_pdsch_data_to_sss_
   return ratio_pdsch_data_to_sss_dB + beta_dmrs_values[num_dmrs_cdm_grps_no_data];
 }
 
+static vrb_to_prb::mapping_type get_mapping_type(fapi::vrb_to_prb_mapping_type mapping_type)
+{
+  switch (mapping_type) {
+    case fapi::vrb_to_prb_mapping_type::interleaved_rb_size2:
+      return vrb_to_prb::mapping_type::interleaved_n2;
+    case fapi::vrb_to_prb_mapping_type::interleaved_rb_size4:
+      return vrb_to_prb::mapping_type::interleaved_n4;
+    case fapi::vrb_to_prb_mapping_type::non_interleaved:
+    default:
+      return vrb_to_prb::mapping_type::non_interleaved;
+  }
+}
+
 static rb_allocation make_freq_allocation(fapi::pdsch_trans_type         trasn_type,
                                           unsigned                       bwp_start,
                                           unsigned                       bwp_size,
@@ -80,8 +93,8 @@ static rb_allocation make_freq_allocation(fapi::pdsch_trans_type         trasn_t
           vrb_to_prb::create_interleaved_common_ss(coreset_start - bwp_start, bwp_start, bwp_size);
       break;
     case fapi::pdsch_trans_type::interleaved_other:
-      vrb_to_prb_configuration = vrb_to_prb::create_interleaved_other(
-          bwp_start, bwp_size, vrb_prb_mapping == fapi::vrb_to_prb_mapping_type::interleaved_rb_size2 ? 2 : 4);
+      vrb_to_prb_configuration =
+          vrb_to_prb::create_interleaved_other(bwp_start, bwp_size, get_mapping_type(vrb_prb_mapping));
       break;
   }
 

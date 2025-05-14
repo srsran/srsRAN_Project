@@ -663,7 +663,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     // Set DMRS additional position.
     out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs->additional_positions =
         uint_to_dmrs_additional_positions(base_cell.pdsch_cfg.dmrs_add_pos);
-    if (config.cells_cfg.front().cell.pdsch_cfg.interleaving_bundle_size != 0) {
+    if (config.cells_cfg.front().cell.pdsch_cfg.interleaving_bundle_size != vrb_to_prb::mapping_type::non_interleaved) {
       out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->vrb_to_prb_itlvr =
           static_cast<pdsch_config::vrb_to_prb_interleaver>(
               config.cells_cfg.front().cell.pdsch_cfg.interleaving_bundle_size);

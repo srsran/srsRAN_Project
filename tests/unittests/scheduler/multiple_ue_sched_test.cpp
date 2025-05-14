@@ -138,9 +138,9 @@ protected:
     test_scheduler_result_consistency(bench->cell_cfg, current_slot, *bench->sched_res);
   }
 
-  static scheduler_expert_config create_expert_config(sch_mcs_index max_msg4_mcs_index,
-                                                      unsigned      pdsch_interleaving_bundle_size,
-                                                      bool          enable_csi_rs_pdsch_multiplexing = true)
+  static scheduler_expert_config create_expert_config(sch_mcs_index            max_msg4_mcs_index,
+                                                      vrb_to_prb::mapping_type pdsch_interleaving_bundle_size,
+                                                      bool                     enable_csi_rs_pdsch_multiplexing = true)
   {
     auto cfg                                = config_helpers::make_default_scheduler_expert_config();
     cfg.ue.enable_csi_rs_pdsch_multiplexing = enable_csi_rs_pdsch_multiplexing;
@@ -243,11 +243,11 @@ protected:
     ue_creation_req.ue_index = ue_index;
     ue_creation_req.crnti    = to_rnti(allocate_rnti());
     switch (bench.value().expert_cfg.ue.pdsch_interleaving_bundle_size) {
-      case 2:
+      case vrb_to_prb::mapping_type::interleaved_n2:
         (*ue_creation_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg->vrb_to_prb_itlvr =
             pdsch_config::vrb_to_prb_interleaver::n2;
         break;
-      case 4:
+      case vrb_to_prb::mapping_type::interleaved_n4:
         (*ue_creation_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg->vrb_to_prb_itlvr =
             pdsch_config::vrb_to_prb_interleaver::n4;
         break;
@@ -280,11 +280,11 @@ protected:
   {
     pucch_cfg_builder.add_build_new_ue_pucch_cfg(ue_create_req.cfg.cells.value()[0].serv_cell_cfg);
     switch (bench.value().expert_cfg.ue.pdsch_interleaving_bundle_size) {
-      case 2:
+      case vrb_to_prb::mapping_type::interleaved_n2:
         (*ue_create_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg->vrb_to_prb_itlvr =
             pdsch_config::vrb_to_prb_interleaver::n2;
         break;
-      case 4:
+      case vrb_to_prb::mapping_type::interleaved_n4:
         (*ue_create_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg->vrb_to_prb_itlvr =
             pdsch_config::vrb_to_prb_interleaver::n4;
         break;
@@ -587,17 +587,18 @@ protected:
 
 // Parameters to be passed to test.
 struct multiple_ue_test_params {
-  uint16_t    nof_ues;
-  uint16_t    min_buffer_size_in_bytes;
-  uint16_t    max_buffer_size_in_bytes;
-  duplex_mode duplx_mode;
-  bool        enable_pusch_transform_precoding;
-  unsigned    pdsch_interleaving_bundle_size;
+  uint16_t                 nof_ues;
+  uint16_t                 min_buffer_size_in_bytes;
+  uint16_t                 max_buffer_size_in_bytes;
+  duplex_mode              duplx_mode;
+  bool                     enable_pusch_transform_precoding;
+  vrb_to_prb::mapping_type pdsch_interleaving_bundle_size;
 };
 
 class multiple_ue_sched_tester
   : public scheduler_impl_tester,
-    public ::testing::TestWithParam<std::tuple<uint16_t, std::pair<uint16_t, uint16_t>, duplex_mode, bool, unsigned>>
+    public ::testing::TestWithParam<
+        std::tuple<uint16_t, std::pair<uint16_t, uint16_t>, duplex_mode, bool, vrb_to_prb::mapping_type>>
 {
 public:
   multiple_ue_sched_tester() :
@@ -1372,7 +1373,8 @@ class single_ue_sched_tester : public scheduler_impl_tester, public ::testing::T
 
 TEST_F(single_ue_sched_tester, successfully_schedule_srb0_retransmission_fdd)
 {
-  setup_sched(create_expert_config(6, 0), create_custom_cell_config_request(duplex_mode::FDD, false));
+  setup_sched(create_expert_config(6, vrb_to_prb::mapping_type::non_interleaved),
+              create_custom_cell_config_request(duplex_mode::FDD, false));
 
   // Keep track of ACKs to send.
   std::optional<uci_indication> uci_ind_to_send;
@@ -1427,7 +1429,8 @@ TEST_F(single_ue_sched_tester, srb0_retransmission_not_scheduled_if_csi_rs_is_pr
   // Keep track of ACKs to send.
   std::optional<uci_indication> uci_ind_to_send;
 
-  setup_sched(create_expert_config(10, 0), create_custom_cell_config_request(srsran::duplex_mode::FDD, false));
+  setup_sched(create_expert_config(10, vrb_to_prb::mapping_type::non_interleaved),
+              create_custom_cell_config_request(srsran::duplex_mode::FDD, false));
   // Add UE.
   add_ue(to_du_ue_index(0), LCID_SRB0, static_cast<lcg_id_t>(0), srsran::duplex_mode::FDD, false);
 
@@ -1485,7 +1488,8 @@ TEST_F(single_ue_sched_tester, srb0_retransmission_not_scheduled_if_csi_rs_is_pr
 
 TEST_F(single_ue_sched_tester, test_ue_scheduling_with_empty_spcell_cfg)
 {
-  setup_sched(create_expert_config(10, 0), create_custom_cell_config_request(srsran::duplex_mode::TDD, false));
+  setup_sched(create_expert_config(10, vrb_to_prb::mapping_type::non_interleaved),
+              create_custom_cell_config_request(srsran::duplex_mode::TDD, false));
   // Add UE.
   const auto& cell_cfg_params = create_custom_cell_cfg_builder_params(srsran::duplex_mode::TDD);
   auto        ue_creation_req = sched_config_helper::create_empty_spcell_cfg_sched_ue_creation_request(cell_cfg_params);
@@ -1528,7 +1532,9 @@ INSTANTIATE_TEST_SUITE_P(multiple_ue_sched_tester,
                                                               std::make_pair(2000, 3000)),
                                             ::testing::Values(duplex_mode::FDD, duplex_mode::TDD),
                                             ::testing::Values(false, true),
-                                            ::testing::Values(0, 2, 4)),
+                                            ::testing::Values(vrb_to_prb::mapping_type::non_interleaved,
+                                                              vrb_to_prb::mapping_type::interleaved_n2,
+                                                              vrb_to_prb::mapping_type::interleaved_n4)),
                          [](const testing::TestParamInfo<multiple_ue_sched_tester::ParamType>& params) -> std::string {
                            const auto nof_ues                          = std::get<0>(params.param);
                            const auto min_buffer_size_in_bytes         = std::get<1>(params.param).first;
@@ -1542,7 +1548,7 @@ INSTANTIATE_TEST_SUITE_P(multiple_ue_sched_tester,
                                               max_buffer_size_in_bytes,
                                               to_string(duplx_mode),
                                               enable_pusch_transform_precoding ? "on" : "off",
-                                              pdsch_interleaving_bundle_size);
+                                              fmt::underlying(pdsch_interleaving_bundle_size));
                          });
 
 int main(int argc, char** argv)

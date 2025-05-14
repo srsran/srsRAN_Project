@@ -99,26 +99,19 @@ void search_space_info::update_pdsch_time_domain_list(const ue_cell_configuratio
   }
 }
 
-void search_space_info::update_pdsch_mappings(unsigned interleaving_bundle_size)
+void search_space_info::update_pdsch_mappings(vrb_to_prb::mapping_type interleaving_bundle_size)
 {
   const dci_dl_format               dci_fmt       = get_dl_dci_format();
   const bwp_downlink_common&        active_dl_bwp = *bwp->dl_common.value();
   const search_space_configuration& ss_cfg        = *cfg;
-  // TODO: make sure this is the right coreset.
-  const coreset_configuration& cs_cfg = *coreset;
 
   if (dci_fmt == dci_dl_format::f1_0 and ss_cfg.is_common_search_space()) {
-    non_interleaved_mapping = vrb_to_prb::create_non_interleaved_common_ss(cs_cfg.get_coreset_start_crb() -
-                                                                           active_dl_bwp.generic_params.crbs.start());
     // [Implementation defined] We don't support interleaving in common search spaces.
     interleaved_mapping.reset();
-  } else {
-    non_interleaved_mapping = vrb_to_prb::create_non_interleaved_other();
-    if (interleaving_bundle_size != 0) {
-      interleaved_mapping.emplace(vrb_to_prb::create_interleaved_other(active_dl_bwp.generic_params.crbs.start(),
-                                                                       active_dl_bwp.generic_params.crbs.length(),
-                                                                       interleaving_bundle_size));
-    }
+  } else if (interleaving_bundle_size != vrb_to_prb::mapping_type::non_interleaved) {
+    interleaved_mapping.emplace(vrb_to_prb::create_interleaved_other(active_dl_bwp.generic_params.crbs.start(),
+                                                                     active_dl_bwp.generic_params.crbs.length(),
+                                                                     interleaving_bundle_size));
   }
 }
 

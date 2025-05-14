@@ -17,6 +17,7 @@
 #include "srsran/ran/direct_current_offset.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
+#include "srsran/ran/resource_allocation/vrb_to_prb.h"
 #include "srsran/ran/resource_block.h"
 #include "srsran/ran/sch/sch_mcs.h"
 #include "srsran/ran/sib/sib_configuration.h"
@@ -176,7 +177,7 @@ struct scheduler_ue_expert_config {
   /// Boundaries in RB interval for resource allocation of UE PDSCHs.
   crb_interval pdsch_crb_limits{0, MAX_NOF_PRBS};
   /// Bundle size used for interleaving. Possible values: {0, 2, 4}. When set to 0, interleaving is disabled.
-  unsigned pdsch_interleaving_bundle_size{0};
+  vrb_to_prb::mapping_type pdsch_interleaving_bundle_size{vrb_to_prb::mapping_type::non_interleaved};
   /// Boundaries in RB interval for resource allocation of UE PUSCHs.
   crb_interval pusch_crb_limits{0, MAX_NOF_PRBS};
   /// Expert parameters to be passed to the policy scheduler.

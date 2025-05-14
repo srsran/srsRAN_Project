@@ -71,7 +71,7 @@ grant_info srsran::get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg, cons
 
 std::pair<grant_info, grant_info> srsran::get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg,
                                                                const dl_msg_alloc&        ue_grant,
-                                                               unsigned                   interleaving_bundle_size)
+                                                               vrb_to_prb::mapping_type   interleaving_bundle_size)
 {
   const vrb_interval vrbs   = ue_grant.pdsch_cfg.rbs.type1();
   unsigned           ref_rb = 0;
@@ -82,7 +82,7 @@ std::pair<grant_info, grant_info> srsran::get_pdsch_grant_info(const bwp_downlin
     ref_rb = ue_grant.pdsch_cfg.bwp_cfg->crbs.start();
   }
 
-  if (ue_grant.pdsch_cfg.vrb_prb_mapping != 0) {
+  if (ue_grant.pdsch_cfg.vrb_prb_mapping != vrb_to_prb::mapping_type::non_interleaved) {
     vrb_to_prb::interleaved_mapping mapping(vrb_to_prb::create_interleaved_other(
         ref_rb, ue_grant.pdsch_cfg.bwp_cfg->crbs.length(), interleaving_bundle_size));
     const auto                      prbs = mapping.vrb_to_prb(vrbs);

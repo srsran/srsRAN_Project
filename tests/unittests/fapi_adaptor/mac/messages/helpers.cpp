@@ -178,12 +178,12 @@ static coreset_configuration generate_coreset_configuration()
 
 static dci_1_0_si_rnti_configuration generate_si_f1_0()
 {
-  return {1, 2, 3, 1, 0, 2, 1};
+  return {1, 2, 3, vrb_to_prb::mapping_type::non_interleaved, 0, 2, 1};
 }
 
 static dci_1_0_ra_rnti_configuration generate_ra_f1_0()
 {
-  return {1, 2, 3, 0, 1, 2};
+  return {1, 2, 3, vrb_to_prb::mapping_type::non_interleaved, 1, 2};
 }
 
 static dci_dl_info generate_dci_dl_info()
@@ -292,7 +292,7 @@ static pdsch_information fill_valid_pdsch_information(coreset_configuration& cor
   info.dmrs            = {dmrs_symbol_mask(14), dmrs_config_type::type1, 2, 3, false, 0, 2, bounded_bitset<12>(12)};
   info.n_id            = generate_nid_pdsch();
   info.nof_layers      = 1U;
-  info.vrb_prb_mapping = 0;
+  info.vrb_prb_mapping = vrb_to_prb::mapping_type::non_interleaved;
   info.harq_id         = to_harq_id(4);
   info.ss_set_type     = search_space_set_type::type0;
   info.dci_fmt         = dci_dl_format::f1_0;
