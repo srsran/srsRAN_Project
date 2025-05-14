@@ -21,6 +21,7 @@
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pdcch/pdcch_candidates.h"
 #include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/ran/pucch/pucch_info.h"
 #include "srsran/rlc/rlc_srb_config_factory.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
 #include "srsran/scheduler/config/csi_helper.h"
@@ -700,20 +701,42 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
 
     switch (user_pucch_cfg.set1_format) {
       case pucch_format::FORMAT_2: {
-        auto& f2_params                  = du_pucch_cfg.f2_or_f3_or_f4_params.emplace<pucch_f2_params>();
-        f2_params.max_code_rate          = user_pucch_cfg.f2_max_code_rate;
-        f2_params.max_nof_rbs            = user_pucch_cfg.f2_max_nof_rbs;
+        // The number of symbols per PUCCH resource F2 is not exposed to the DU user interface and set by default to 2.
+        constexpr unsigned pucch_f2_nof_symbols = 2U;
+        auto&              f2_params            = du_pucch_cfg.f2_or_f3_or_f4_params.emplace<pucch_f2_params>();
+        f2_params.max_code_rate                 = user_pucch_cfg.f2_max_code_rate;
+        f2_params.max_nof_rbs =
+            user_pucch_cfg.f2_max_payload_bits.has_value()
+                ? get_pucch_format2_max_nof_prbs(user_pucch_cfg.f2_max_payload_bits.value(),
+                                                 pucch_f2_nof_symbols,
+                                                 to_max_code_rate_float(user_pucch_cfg.f2_max_code_rate))
+                : user_pucch_cfg.f2_max_nof_rbs;
         f2_params.intraslot_freq_hopping = user_pucch_cfg.f2_intraslot_freq_hopping;
         f2_params.max_payload_bits       = user_pucch_cfg.f2_max_payload_bits;
       } break;
       case pucch_format::FORMAT_3: {
-        auto& f3_params                  = du_pucch_cfg.f2_or_f3_or_f4_params.emplace<pucch_f3_params>();
-        f3_params.max_code_rate          = user_pucch_cfg.f3_max_code_rate;
-        f3_params.max_nof_rbs            = user_pucch_cfg.f3_max_nof_rbs;
-        f3_params.intraslot_freq_hopping = user_pucch_cfg.f3_intraslot_freq_hopping;
-        f3_params.max_payload_bits       = user_pucch_cfg.f3_max_payload_bits;
-        f3_params.additional_dmrs        = user_pucch_cfg.f3_additional_dmrs;
-        f3_params.pi2_bpsk               = user_pucch_cfg.f3_pi2_bpsk;
+        // The number of symbols per PUCCH resource is not exposed to the DU user interface; for PUCCH F3, we use all
+        // symbols available for PUCCH within a slot.
+        const unsigned max_nof_srs_symbols =
+            cell.cell.srs_cfg.srs_period_ms.has_value() ? cell.cell.srs_cfg.max_nof_symbols_per_slot : 0U;
+        const unsigned max_nof_pucch_symbols = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - max_nof_srs_symbols;
+        const unsigned pucch_f3_nof_symbols  = max_nof_pucch_symbols;
+        auto&          f3_params             = du_pucch_cfg.f2_or_f3_or_f4_params.emplace<pucch_f3_params>();
+        f3_params.max_code_rate              = user_pucch_cfg.f3_max_code_rate;
+        f3_params.max_nof_rbs                = user_pucch_cfg.f3_max_payload_bits.has_value()
+                                                   ? get_pucch_format3_max_nof_prbs(
+                                          user_pucch_cfg.f3_max_payload_bits.value(),
+                                          pucch_f3_nof_symbols,
+                                          to_max_code_rate_float(user_pucch_cfg.f3_max_code_rate),
+                                          // Since we are forcing 14 symbols intraslot_freq_hopping doesn't matter.
+                                          false,
+                                          user_pucch_cfg.f3_additional_dmrs,
+                                          user_pucch_cfg.f3_pi2_bpsk)
+                                                   : user_pucch_cfg.f3_max_nof_rbs;
+        f3_params.intraslot_freq_hopping     = user_pucch_cfg.f3_intraslot_freq_hopping;
+        f3_params.max_payload_bits           = user_pucch_cfg.f3_max_payload_bits;
+        f3_params.additional_dmrs            = user_pucch_cfg.f3_additional_dmrs;
+        f3_params.pi2_bpsk                   = user_pucch_cfg.f3_pi2_bpsk;
       } break;
       case pucch_format::FORMAT_4: {
         auto& f4_params                  = du_pucch_cfg.f2_or_f3_or_f4_params.emplace<pucch_f4_params>();
