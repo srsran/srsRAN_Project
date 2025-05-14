@@ -416,11 +416,14 @@ public:
   /// (implementation-defined).
   static constexpr unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 256U;
 
+  /// \brief Default timeout in slots for HARQ to be scheduled for retransmission after a negative CRC/ACK.
+  static constexpr unsigned DEFAULT_HARQ_RETX_TIMEOUT_SLOTS = 200U;
+
   cell_harq_manager(unsigned                               max_ues,
                     unsigned                               max_harqs_per_ue,
-                    std::unique_ptr<harq_timeout_notifier> notifier,
-                    unsigned                               dl_harq_retx_timeout,
-                    unsigned                               ul_harq_retx_timeout,
+                    std::unique_ptr<harq_timeout_notifier> notifier             = nullptr,
+                    unsigned                               dl_harq_retx_timeout = DEFAULT_HARQ_RETX_TIMEOUT_SLOTS,
+                    unsigned                               ul_harq_retx_timeout = DEFAULT_HARQ_RETX_TIMEOUT_SLOTS,
                     unsigned                               max_ack_wait_timeout = DEFAULT_ACK_TIMEOUT_SLOTS,
                     unsigned                               ntn_cs_koffset       = 0);
 

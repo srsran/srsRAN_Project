@@ -218,9 +218,7 @@ protected:
 
   cell_harq_manager       cell_harqs{MAX_NOF_DU_UES,
                                MAX_NOF_HARQS,
-                               std::make_unique<scheduler_harq_timeout_dummy_notifier>(),
-                               100,
-                               100};
+                               std::make_unique<scheduler_harq_timeout_dummy_notifier>()};
   cell_resource_allocator res_grid{cell_cfg};
 
   pdcch_resource_allocator_impl pdcch_alloc{cell_cfg};

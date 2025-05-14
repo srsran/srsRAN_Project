@@ -177,9 +177,7 @@ protected:
   cell_resource_allocator       res_grid{cell_cfg};
   cell_harq_manager             cell_harqs{MAX_NOF_DU_UES,
                                MAX_NOF_HARQS,
-                               std::make_unique<scheduler_harq_timeout_dummy_notifier>(),
-                               100,
-                               100};
+                               std::make_unique<scheduler_harq_timeout_dummy_notifier>()};
   pdcch_resource_allocator_impl pdcch_alloc{cell_cfg};
   pucch_allocator_impl pucch_alloc{cell_cfg, sched_cfg.ue.max_pucchs_per_slot, sched_cfg.ue.max_ul_grants_per_slot};
   uci_allocator_impl   uci_alloc{pucch_alloc};

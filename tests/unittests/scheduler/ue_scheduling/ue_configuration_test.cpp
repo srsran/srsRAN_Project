@@ -27,12 +27,7 @@ protected:
 
   cell_common_configuration_list cell_cfg_db;
   du_cell_group_config_pool      cfg_pool;
-  cell_harq_manager              cell_harqs{
-      1,
-      MAX_NOF_HARQS,
-      std::make_unique<scheduler_harq_timeout_dummy_notifier>(),
-      static_cast<unsigned>(sched_cfg.ue.dl_harq_retx_timeout.count() * get_nof_slots_per_subframe(msg.scs_common)),
-      static_cast<unsigned>(sched_cfg.ue.ul_harq_retx_timeout.count() * get_nof_slots_per_subframe(msg.scs_common))};
+  cell_harq_manager cell_harqs{1, MAX_NOF_HARQS, std::make_unique<scheduler_harq_timeout_dummy_notifier>()};
 };
 
 TEST_F(ue_configuration_test, configuration_valid_on_creation)

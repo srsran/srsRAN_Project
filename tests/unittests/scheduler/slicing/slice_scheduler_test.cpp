@@ -71,11 +71,7 @@ protected:
 
   cell_harq_manager cell_harqs{MAX_NOF_DU_UES,
                                MAX_NOF_HARQS,
-                               std::make_unique<scheduler_harq_timeout_dummy_notifier>(),
-                               static_cast<unsigned>(cell_cfg.expert_cfg.ue.dl_harq_retx_timeout.count() *
-                                                     get_nof_slots_per_subframe(cell_cfg.scs_common)),
-                               static_cast<unsigned>(cell_cfg.expert_cfg.ue.ul_harq_retx_timeout.count() *
-                                                     get_nof_slots_per_subframe(cell_cfg.scs_common))};
+                               std::make_unique<scheduler_harq_timeout_dummy_notifier>()};
   ue_repository     ues;
 
   cell_resource_allocator dummy_alloc{cell_cfg};

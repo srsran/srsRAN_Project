@@ -101,8 +101,8 @@ protected:
     cell_harqs(nof_ues,
                max_harqs_per_ue,
                timeout_handler.make_notifier(),
-               100,
-               100,
+               max_harq_retx_timeout,
+               max_harq_retx_timeout,
                max_ack_wait_timeout,
                ntn_cs_koffset)
   {
@@ -120,8 +120,9 @@ protected:
     cell_harqs.slot_indication(current_slot);
   }
 
-  const unsigned             max_ack_wait_timeout = 16;
-  const unsigned             max_harqs_per_ue     = 16;
+  const unsigned             max_ack_wait_timeout  = 16;
+  const unsigned             max_harqs_per_ue      = 16;
+  const unsigned             max_harq_retx_timeout = 100;
   dummy_harq_timeout_handler timeout_handler;
   srslog::basic_logger&      logger = srslog::fetch_basic_logger("SCHED");
 
