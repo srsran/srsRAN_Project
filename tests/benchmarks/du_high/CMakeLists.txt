@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-set_directory_properties(PROPERTIES LABELS "du_high|tsan")
+set_directory_properties(PROPERTIES LABELS "du_high|tsan|rtsan")
 
 include_directories(../../..)
 

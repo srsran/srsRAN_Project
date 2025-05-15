@@ -72,8 +72,9 @@ public:
 
   void on_cell_deactivation(const mac_dl_cell_metric_report& report) override
   {
+    last_report = report;
     defer_until_success(
-        parent.ctrl_exec, parent.timers, [this, report]() { parent.handle_cell_deactivation(cell_index, report); });
+        parent.ctrl_exec, parent.timers, [this]() { parent.handle_cell_deactivation(cell_index, last_report); });
   }
 
   void on_cell_metric_report(const mac_dl_cell_metric_report& report) override
@@ -124,7 +125,8 @@ private:
   srslog::basic_logger&       logger;
 
   // Reports from a given MAC cell.
-  mac_report_queue_type mac_report_queue;
+  mac_report_queue_type     mac_report_queue;
+  mac_dl_cell_metric_report last_report{};
 
   // Stateful flags access from the control executor.
   bool       active_flag = false;
