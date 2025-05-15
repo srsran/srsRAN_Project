@@ -529,7 +529,9 @@ public:
     }
     return std::nullopt;
   }
-  std::optional<ul_harq_process_handle> ul_harq(harq_id_t h_id)
+  std::optional<ul_harq_process_handle>       ul_harq(harq_id_t h_id, slot_point slot);
+  std::optional<const ul_harq_process_handle> ul_harq(harq_id_t h_id, slot_point slot) const;
+  std::optional<ul_harq_process_handle>       ul_harq(harq_id_t h_id)
   {
     if (h_id < get_ul_ue().harqs.size() and get_ul_ue().harqs[h_id].status != harq_utils::harq_state_t::empty) {
       return ul_harq_process_handle{cell_harq_mgr->ul, get_ul_ue().harqs[h_id]};

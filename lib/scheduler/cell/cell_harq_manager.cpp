@@ -856,6 +856,22 @@ void unique_ue_harq_entity::cancel_retxs()
   }
 }
 
+std::optional<ul_harq_process_handle> unique_ue_harq_entity::ul_harq(harq_id_t h_id, slot_point slot)
+{
+  if (cell_harq_mgr->ul.is_ntn_mode()) {
+    return cell_harq_mgr->ul.alloc_hist->find_ul_harq(ue_index, slot);
+  }
+  return ul_harq(h_id);
+}
+
+std::optional<const ul_harq_process_handle> unique_ue_harq_entity::ul_harq(harq_id_t h_id, slot_point slot) const
+{
+  if (cell_harq_mgr->ul.is_ntn_mode()) {
+    return cell_harq_mgr->ul.alloc_hist->find_ul_harq(ue_index, slot);
+  }
+  return ul_harq(h_id);
+}
+
 std::optional<dl_harq_process_handle> unique_ue_harq_entity::alloc_dl_harq(slot_point sl_tx,
                                                                            unsigned   ack_delay,
                                                                            unsigned   max_harq_nof_retxs,

@@ -340,7 +340,7 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
 
       // See TS38.321, 5.4.2.1 - "For UL transmission with UL grant in RA Response, HARQ process identifier 0 is used."
       harq_id_t                             h_id = to_harq_id(0);
-      std::optional<ul_harq_process_handle> h_ul = pending_msg3.msg3_harq_ent.ul_harq(h_id);
+      std::optional<ul_harq_process_handle> h_ul = pending_msg3.msg3_harq_ent.ul_harq(h_id, crc_ind.sl_rx);
       if (not h_ul.has_value() or crc.harq_id != h_id) {
         logger.warning("Invalid UL CRC, cell={}, rnti={}, h_id={}. Cause: HARQ-Id 0 must be used in Msg3",
                        fmt::underlying(cell_cfg.cell_index),
