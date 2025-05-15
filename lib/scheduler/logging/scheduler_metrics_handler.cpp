@@ -485,22 +485,30 @@ void cell_metrics_handler::push_result(slot_point                sl_tx,
   if (report_period_slots == 0) {
     return;
   }
-  if (SRSRAN_UNLIKELY(not next_report_slot.valid())) {
+
+  if (SRSRAN_UNLIKELY(not last_slot_tx.valid())) {
     // We enter here in the first call to this function.
     // We will make the \c next_report_slot aligned with the period.
-    unsigned mod_val = sl_tx.to_uint() % report_period_slots;
-    next_report_slot = mod_val > 0 ? sl_tx + report_period_slots - mod_val : sl_tx;
+    const unsigned mod_val            = sl_tx.to_uint() % report_period_slots;
+    const unsigned slots_until_report = mod_val > 0 ? report_period_slots - mod_val : 0;
+    next_report_slot                  = sl_tx + slots_until_report;
+    next_report_hfn                   = (report_period_slots / (NOF_SFNS * NOF_SUBFRAMES_PER_FRAME));
+  } else if (sl_tx.to_uint() < last_slot_tx.to_uint()) {
+    // SFN wrap-around detected.
+    last_hfn++;
   }
   last_slot_tx = sl_tx;
 
   handle_slot_result(slot_result, slot_decision_latency);
 
-  if (sl_tx >= next_report_slot) {
+  if (sl_tx >= next_report_slot and last_hfn >= next_report_hfn) {
     // Prepare report and forward it to the notifier.
     report_metrics();
 
     // Set next report slot.
     next_report_slot += report_period_slots;
+    const bool sfn_wrap = next_report_slot.to_uint() < sl_tx.to_uint();
+    next_report_hfn += (report_period_slots / (NOF_SFNS * NOF_SUBFRAMES_PER_FRAME)) + (sfn_wrap ? 1 : 0);
   }
 }
 

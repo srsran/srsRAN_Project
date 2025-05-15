@@ -151,7 +151,9 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
   const unsigned nof_slots_per_sf;
   const unsigned report_period_slots;
 
+  unsigned   last_hfn = 0;
   slot_point last_slot_tx;
+  unsigned   next_report_hfn = 0;
   slot_point next_report_slot;
 
   slotted_id_vector<du_ue_index_t, ue_metric_context> ues;

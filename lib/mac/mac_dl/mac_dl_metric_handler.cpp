@@ -72,17 +72,21 @@ void mac_dl_cell_metric_handler::on_cell_deactivation()
 
 void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& meas)
 {
+  last_hfn_tx += last_sl_tx.valid() and meas.sl_tx.to_uint() < last_sl_tx.to_uint() ? 1 : 0;
   last_sl_tx = meas.sl_tx;
+
   if (not enabled() or not cell_activated) {
     return;
   }
 
-  if (not next_report_slot.valid() and cell_activated) {
+  if (SRSRAN_UNLIKELY(not next_report_slot.valid() and cell_activated)) {
     // First slot after cell activation.
     // We will make the \c next_report_slot aligned with the period.
-    unsigned mod_val = meas.sl_tx.to_uint() % period_slots;
-    next_report_slot = mod_val > 0 ? meas.sl_tx + period_slots - mod_val : meas.sl_tx;
-    slot_duration    = std::chrono::nanoseconds(unsigned(1e6 / meas.sl_tx.nof_slots_per_subframe()));
+    const unsigned mod_val            = meas.sl_tx.to_uint() % period_slots;
+    const unsigned slots_until_report = mod_val > 0 ? period_slots - mod_val : 0;
+    next_report_slot                  = meas.sl_tx + slots_until_report;
+    next_report_hfn                   = (period_slots / (NOF_SFNS * NOF_SUBFRAMES_PER_FRAME));
+    slot_duration                     = std::chrono::nanoseconds(unsigned(1e6 / meas.sl_tx.nof_slots_per_subframe()));
     // Notify cell creation and next slot on which the report will be generated.
     notifier->on_cell_activation(next_report_slot);
   }
@@ -140,7 +144,7 @@ void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& 
     slot_duration    = std::chrono::nanoseconds(unsigned(1e6 / meas.sl_tx.nof_slots_per_subframe()));
   }
 
-  if (meas.sl_tx >= next_report_slot) {
+  if (meas.sl_tx >= next_report_slot and last_hfn_tx >= next_report_hfn) {
     send_new_report(meas.sl_tx);
   }
 }
@@ -168,6 +172,8 @@ void mac_dl_cell_metric_handler::send_new_report(slot_point sl_tx)
 
   // Set next report slot.
   next_report_slot += period_slots;
+  const bool sfn_wrap = next_report_slot.to_uint() < sl_tx.to_uint();
+  next_report_hfn += (period_slots / (NOF_SFNS * NOF_SUBFRAMES_PER_FRAME)) + (sfn_wrap ? 1 : 0);
 
   // Reset counters.
   data = {};

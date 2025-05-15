@@ -152,10 +152,12 @@ private:
   const unsigned            period_slots;
   mac_cell_metric_notifier* notifier;
 
+  unsigned   last_hfn_tx{0};
   slot_point last_sl_tx;
   bool       cell_activated = false;
 
   // Slot at which the next report is generated.
+  unsigned                 next_report_hfn{0};
   slot_point               next_report_slot;
   std::chrono::nanoseconds slot_duration{0};
 
