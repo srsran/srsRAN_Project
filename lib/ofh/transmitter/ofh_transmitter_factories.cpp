@@ -171,28 +171,35 @@ resolve_transmitter_dependencies(const transmitter_config&                      
   dependencies.dl_executor  = &downlink_executor;
   dependencies.err_notifier = &err_notifier;
 
-  auto frame_pool = create_eth_frame_pool(tx_config, logger);
+  dependencies.frame_pool_dl_cp = create_eth_frame_pool(tx_config, logger);
 
   dependencies.dl_df_cplane = std::make_unique<data_flow_cplane_downlink_task_dispatcher>(
       logger,
       create_data_flow_cplane_sched(tx_config,
                                     tx_config.is_downlink_static_compr_hdr_enabled,
                                     logger,
-                                    frame_pool,
+                                    dependencies.frame_pool_dl_cp,
                                     ul_cp_context_repo,
                                     prach_cp_context_repo),
       downlink_executor,
       tx_config.sector);
 
+  dependencies.frame_pool_dl_up = create_eth_frame_pool(tx_config, logger);
+
   dependencies.dl_df_uplane = std::make_unique<data_flow_uplane_downlink_task_dispatcher>(
-      logger, create_data_flow_uplane_data(tx_config, logger, frame_pool), downlink_executor, tx_config.sector);
+      logger,
+      create_data_flow_uplane_data(tx_config, logger, dependencies.frame_pool_dl_up),
+      downlink_executor,
+      tx_config.sector);
+
+  dependencies.frame_pool_ul_cp = create_eth_frame_pool(tx_config, logger);
 
   dependencies.ul_df_cplane = std::make_unique<data_flow_cplane_downlink_task_dispatcher>(
       logger,
       create_data_flow_cplane_sched(tx_config,
                                     tx_config.is_uplink_static_compr_hdr_enabled,
                                     logger,
-                                    frame_pool,
+                                    dependencies.frame_pool_ul_cp,
                                     ul_cp_context_repo,
                                     prach_cp_context_repo),
       downlink_executor,
@@ -201,7 +208,6 @@ resolve_transmitter_dependencies(const transmitter_config&                      
   dependencies.ul_slot_repo         = std::move(ul_slot_context_repo);
   dependencies.ul_prach_repo        = std::move(prach_context_repo);
   dependencies.eth_transmitter      = std::move(eth_transmitter);
-  dependencies.frame_pool           = std::move(frame_pool);
   dependencies.notifier_symbol_repo = std::move(notifier_symbol_repo);
 
   return dependencies;

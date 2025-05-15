@@ -46,8 +46,12 @@ struct transmitter_impl_dependencies {
   std::shared_ptr<uplink_notified_grid_symbol_repository> notifier_symbol_repo;
   /// Ethernet transmitter.
   std::unique_ptr<ether::transmitter> eth_transmitter;
-  /// Ethernet frame pool.
-  std::shared_ptr<ether::eth_frame_pool> frame_pool;
+  /// Ethernet frame pool downlink Control-Plane.
+  std::shared_ptr<ether::eth_frame_pool> frame_pool_dl_cp;
+  /// Ethernet frame pool uplink Control-Plane.
+  std::shared_ptr<ether::eth_frame_pool> frame_pool_ul_cp;
+  /// Ethernet frame pool downlink User-Plane.
+  std::shared_ptr<ether::eth_frame_pool> frame_pool_dl_up;
 };
 
 class transmitter_impl : public transmitter

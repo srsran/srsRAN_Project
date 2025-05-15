@@ -105,6 +105,7 @@ TEST(ofh_downlink_handler_impl, handling_downlink_data_use_control_and_user_plan
                                                                       notifier_spy,
                                                                       std::move(cplane),
                                                                       std::move(uplane),
+                                                                      std::make_shared<ether::eth_frame_pool>(mtu_size, 2),
                                                                       std::make_shared<ether::eth_frame_pool>(mtu_size, 2)};
 
   downlink_handler_impl handler(config, std::move(dependencies));
@@ -160,6 +161,7 @@ TEST(ofh_downlink_handler_impl, late_rg_is_not_handled)
                                                                       notifier_spy,
                                                                       std::move(cplane),
                                                                       std::move(uplane),
+                                                                      std::make_shared<ether::eth_frame_pool>(mtu_size, 2),
                                                                       std::make_shared<ether::eth_frame_pool>(mtu_size, 2)};
 
   downlink_handler_impl handler(config, std::move(dependencies));
@@ -206,6 +208,7 @@ TEST(ofh_downlink_handler_impl, same_slot_fails)
                                                                       notifier_spy,
                                                                       std::move(cplane),
                                                                       std::move(uplane),
+                                                                      std::make_shared<ether::eth_frame_pool>(mtu_size, 2),
                                                                       std::make_shared<ether::eth_frame_pool>(mtu_size, 2)};
 
   downlink_handler_impl handler(config, std::move(dependencies));
@@ -248,6 +251,7 @@ TEST(ofh_downlink_handler_impl, rg_in_the_frontier_is_handled)
                                                                       notifier_spy,
                                                                       std::move(cplane),
                                                                       std::move(uplane),
+                                                                      std::make_shared<ether::eth_frame_pool>(mtu_size, 2),
                                                                       std::make_shared<ether::eth_frame_pool>(mtu_size, 2)};
 
   downlink_handler_impl handler(config, std::move(dependencies));

@@ -19,15 +19,21 @@ message_transmitter_impl::message_transmitter_impl(srslog::basic_logger&        
                                                    const tx_window_timing_parameters&     timing_params_,
                                                    bool                                   are_metrics_enabled,
                                                    std::unique_ptr<ether::transmitter>    transmitter,
-                                                   std::shared_ptr<ether::eth_frame_pool> frame_pool) :
+                                                   std::shared_ptr<ether::eth_frame_pool> pool_dl_cp_,
+                                                   std::shared_ptr<ether::eth_frame_pool> pool_ul_cp_,
+                                                   std::shared_ptr<ether::eth_frame_pool> pool_dl_up_) :
   logger(logger_),
-  pool(std::move(frame_pool)),
+  pool_dl_cp(std::move(pool_dl_cp_)),
+  pool_ul_cp(std::move(pool_ul_cp_)),
+  pool_dl_up(std::move(pool_dl_up_)),
   eth_transmitter(std::move(transmitter)),
   metrics_collector(are_metrics_enabled),
   timing_params(timing_params_)
 {
   srsran_assert(eth_transmitter, "Invalid Ethernet transmitter");
-  srsran_assert(pool, "Invalid frame pool");
+  srsran_assert(pool_dl_cp, "Invalid Control-Plane downlink frame pool");
+  srsran_assert(pool_ul_cp, "Invalid Control-Plane uplink frame pool");
+  srsran_assert(pool_dl_up, "Invalid User-Plane downlink frame pool");
 }
 
 void message_transmitter_impl::transmit_frame_burst(span<span<const uint8_t>> frame_burst)
@@ -45,7 +51,8 @@ void message_transmitter_impl::transmit_frame_burst(span<span<const uint8_t>> fr
 
 void message_transmitter_impl::enqueue_messages_into_burst(
     const ether::frame_pool_interval&                   interval,
-    static_vector<span<const uint8_t>, MAX_BURST_SIZE>& frame_burst)
+    static_vector<span<const uint8_t>, MAX_BURST_SIZE>& frame_burst,
+    std::shared_ptr<ether::eth_frame_pool>&             pool)
 {
   trace_point pool_access_tp = ofh_tracer.now();
   auto        frame_buffers  = pool->read_frame_buffers(interval);
@@ -86,19 +93,19 @@ void message_transmitter_impl::on_new_symbol(const slot_symbol_point_context& sy
   ether::frame_pool_interval interval_cp_dl{{message_type::control_plane, data_direction::downlink},
                                             symbol_point_context.symbol_point + timing_params.sym_cp_dl_end,
                                             symbol_point_context.symbol_point + timing_params.sym_cp_dl_start};
-  enqueue_messages_into_burst(interval_cp_dl, frame_burst);
+  enqueue_messages_into_burst(interval_cp_dl, frame_burst, pool_dl_cp);
 
   // Enqueue pending UL Control-Plane messages.
   ether::frame_pool_interval interval_cp_ul{{message_type::control_plane, data_direction::uplink},
                                             symbol_point_context.symbol_point + timing_params.sym_cp_ul_end,
                                             symbol_point_context.symbol_point + timing_params.sym_cp_ul_start};
-  enqueue_messages_into_burst(interval_cp_ul, frame_burst);
+  enqueue_messages_into_burst(interval_cp_ul, frame_burst, pool_ul_cp);
 
   // Enqueue pending User-Plane messages.
   ether::frame_pool_interval interval_up{{message_type::user_plane, data_direction::downlink},
                                          symbol_point_context.symbol_point + timing_params.sym_up_dl_end,
                                          symbol_point_context.symbol_point + timing_params.sym_up_dl_start};
-  enqueue_messages_into_burst(interval_up, frame_burst);
+  enqueue_messages_into_burst(interval_up, frame_burst, pool_dl_up);
 
   // Transmit the data.
   trace_point tp_ether = ofh_tracer.now();
@@ -106,9 +113,9 @@ void message_transmitter_impl::on_new_symbol(const slot_symbol_point_context& sy
   ofh_tracer << trace_event("ofh_ether_tx", tp_ether);
 
   // Clear sent buffers.
-  pool->clear_sent_frame_buffers(interval_cp_dl);
-  pool->clear_sent_frame_buffers(interval_cp_ul);
-  pool->clear_sent_frame_buffers(interval_up);
+  pool_dl_cp->clear_sent_frame_buffers(interval_cp_dl);
+  pool_ul_cp->clear_sent_frame_buffers(interval_cp_ul);
+  pool_dl_up->clear_sent_frame_buffers(interval_up);
 
   ofh_tracer << trace_event("ofh_message_transmitter", tp);
 
