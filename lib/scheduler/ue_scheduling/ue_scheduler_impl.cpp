@@ -226,6 +226,7 @@ ue_scheduler_impl::cell_context::cell_context(const scheduler_ue_expert_config& 
                     *params.pdcch_sched,
                     *params.uci_alloc,
                     *params.cell_res_alloc,
+                    *params.cell_metrics,
                     cell_harqs,
                     srslog::fetch_basic_logger("SCHED")),
   srs_sched(params.cell_res_alloc->cfg, ues)

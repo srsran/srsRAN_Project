@@ -356,6 +356,16 @@ void cell_metrics_handler::handle_error_indication()
   ++data.error_indication_counter;
 }
 
+void cell_metrics_handler::handle_late_dl_harqs()
+{
+  ++data.nof_failed_pdsch_allocs_late_harqs;
+}
+
+void cell_metrics_handler::handle_late_ul_harqs()
+{
+  ++data.nof_failed_pusch_allocs_late_harqs;
+}
+
 void cell_metrics_handler::report_metrics()
 {
   for (ue_metric_context& ue : ues) {
@@ -385,6 +395,8 @@ void cell_metrics_handler::report_metrics()
       data.nof_prach_preambles
           ? std::optional{static_cast<float>(data.sum_prach_delay_slots) / static_cast<float>(data.nof_prach_preambles)}
           : std::nullopt;
+  next_report->nof_failed_pdsch_allocs_late_harqs = data.nof_failed_pdsch_allocs_late_harqs;
+  next_report->nof_failed_pusch_allocs_late_harqs = data.nof_failed_pusch_allocs_late_harqs;
 
   // Reset cell-wide metric counters.
   data = {};
@@ -462,8 +474,8 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
   ++data.decision_latency_hist[bin_idx];
 
   // Failed allocation attempts.
-  data.nof_failed_pdcch_allocs = slot_result.failed_attempts.pdcch;
-  data.nof_failed_uci_allocs   = slot_result.failed_attempts.uci;
+  data.nof_failed_pdcch_allocs += slot_result.failed_attempts.pdcch;
+  data.nof_failed_uci_allocs += slot_result.failed_attempts.uci;
 }
 
 void cell_metrics_handler::push_result(slot_point                sl_tx,

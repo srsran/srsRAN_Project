@@ -100,10 +100,12 @@ intra_slice_scheduler::intra_slice_scheduler(const scheduler_ue_expert_config& e
                                              pdcch_resource_allocator&         pdcch_alloc,
                                              uci_allocator&                    uci_alloc_,
                                              cell_resource_allocator&          cell_alloc_,
+                                             cell_metrics_handler&             cell_metrics_,
                                              cell_harq_manager&                cell_harqs_,
                                              srslog::basic_logger&             logger_) :
   expert_cfg(expert_cfg_),
   cell_alloc(cell_alloc_),
+  cell_metrics(cell_metrics_),
   cell_harqs(cell_harqs_),
   uci_alloc(uci_alloc_),
   logger(logger_),
@@ -661,7 +663,6 @@ bool intra_slice_scheduler::can_allocate_pusch(const slice_ue& u, const ue_cell&
   // Check if PDCCH/PUSCH are possible for the provided slots (e.g. not in UL slot or measGap)
   return ue_cc.is_pusch_enabled(pdcch_slot, pusch_slot);
 }
-
 std::optional<ue_newtx_candidate> intra_slice_scheduler::create_newtx_dl_candidate(const slice_ue& u) const
 {
   const ue_cell& ue_cc = u.get_cc();
@@ -682,19 +683,19 @@ std::optional<ue_newtx_candidate> intra_slice_scheduler::create_newtx_dl_candida
     if (not ue_cc.harqs.find_pending_dl_retx().has_value()) {
       // All HARQs are waiting for their respective HARQ-ACK. This may be a symptom of a long RTT for the PDSCH
       // and HARQ-ACK.
-      logger.warning(
+      logger.info(
           "ue={} rnti={} PDSCH allocation skipped. Cause: All the HARQs are allocated and waiting for their "
           "respective HARQ-ACK. Check if any HARQ-ACK went missing in the lower layers or is arriving too late to "
           "the scheduler.",
           fmt::underlying(ue_cc.ue_index),
           ue_cc.rnti());
+      cell_metrics.handle_late_dl_harqs();
     }
     return std::nullopt;
   }
 
   return ue_newtx_candidate{&u, &ue_cc, pending_bytes, forbid_sched_priority};
 }
-
 std::optional<ue_newtx_candidate> intra_slice_scheduler::create_newtx_ul_candidate(const slice_ue& u) const
 {
   const ue_cell& ue_cc = u.get_cc();
@@ -714,11 +715,12 @@ std::optional<ue_newtx_candidate> intra_slice_scheduler::create_newtx_ul_candida
     // No available HARQs.
     if (not ue_cc.harqs.find_pending_ul_retx().has_value()) {
       // All HARQs are waiting for their respective CRC. This may be a symptom of a slow PUSCH processing chain.
-      logger.warning("ue={} rnti={} PUSCH allocation skipped. Cause: All the UE HARQs are busy waiting for "
-                     "their respective CRC result. Check if any CRC PDU went missing in the lower layers or is "
-                     "arriving too late to the scheduler.",
-                     fmt::underlying(ue_cc.ue_index),
-                     ue_cc.rnti());
+      logger.info("ue={} rnti={} PUSCH allocation skipped. Cause: All the UE HARQs are busy waiting for "
+                  "their respective CRC result. Check if any CRC PDU went missing in the lower layers or is "
+                  "arriving too late to the scheduler.",
+                  fmt::underlying(ue_cc.ue_index),
+                  ue_cc.rnti());
+      cell_metrics.handle_late_ul_harqs();
     }
     return std::nullopt;
   }

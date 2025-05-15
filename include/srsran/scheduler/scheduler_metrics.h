@@ -146,6 +146,10 @@ struct scheduler_cell_metrics {
   unsigned nof_msg3_nok = 0;
   /// Average PRACH delay in ms.
   std::optional<float> avg_prach_delay_ms;
+  /// Number of failed PDSCH allocations due to late HARQs.
+  unsigned nof_failed_pdsch_allocs_late_harqs = 0;
+  /// Number of failed PUSCH allocations due to late HARQs.
+  unsigned nof_failed_pusch_allocs_late_harqs = 0;
 
   unsigned                                nof_error_indications = 0;
   std::chrono::microseconds               average_decision_latency{0};
