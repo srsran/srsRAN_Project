@@ -72,6 +72,7 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
   ngap_metrics next_ngap_metrics;
   s_nssai_t    snssai{slice_service_type{1}, slice_differentiator{}};
   next_ngap_metrics.pdu_session_metrics.emplace(snssai, pdu_session_metrics);
+  next_ngap_metrics.nof_cn_initiated_paging_requests = 5;
   metrics_hdlr.next_metrics.ngaps.emplace_back(ngap_info{"open5gs-amf0", next_ngap_metrics});
 
   metrics_hdlr.next_metrics.mobility.nof_handover_executions_requested    = 2;
@@ -121,6 +122,7 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
                 .metrics.pdu_session_metrics.begin()
                 ->second.nof_pdu_sessions_failed_to_setup.get_count(cause),
             1);
+  ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[0].metrics.nof_cn_initiated_paging_requests, 5);
   ASSERT_EQ(metrics_notifier.last_metrics_report->mobility.nof_handover_executions_requested, 2);
   ASSERT_EQ(metrics_notifier.last_metrics_report->mobility.nof_successful_handover_executions, 1);
   ASSERT_EQ(metrics_notifier.last_metrics_report->mobility.nof_handover_preparations_requested, 2);
