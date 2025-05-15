@@ -394,7 +394,7 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
     const pusch_time_domain_resource_allocation& pusch_td_res = ss.pusch_time_domain_list[pusch_td_index];
 
     // Check that k2 matches the chosen PUSCH slot
-    if (pdcch_slot + pusch_td_res.k2 != pusch_slot) {
+    if (pdcch_slot + pusch_td_res.k2 + cell_cfg.ntn_cs_koffset != pusch_slot) {
       continue;
     }
 

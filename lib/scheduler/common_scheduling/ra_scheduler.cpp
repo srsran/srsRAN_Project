@@ -788,7 +788,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
   for (unsigned pusch_td_res_index = 0; pusch_td_res_index != pusch_td_alloc_list.size(); ++pusch_td_res_index) {
     const auto&                   pusch_td_cfg = pusch_td_alloc_list[pusch_td_res_index];
     const unsigned                k2           = pusch_td_cfg.k2;
-    cell_slot_resource_allocator& pusch_alloc  = res_alloc[k2];
+    cell_slot_resource_allocator& pusch_alloc  = res_alloc[k2 + cell_cfg.ntn_cs_koffset];
     const unsigned                start_ul_symbols =
         NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.get_nof_ul_symbol_per_slot(pusch_alloc.slot);
     // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for

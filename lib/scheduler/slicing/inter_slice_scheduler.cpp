@@ -107,9 +107,10 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
     span<const pusch_time_domain_resource_allocation> pusch_time_domain_list =
         cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list;
     for (const unsigned pusch_td_res_idx :
-         valid_pusch_td_list_per_slot[slot_tx.to_uint() % valid_pusch_td_list_per_slot.size()]) {
-      const cell_slot_resource_allocator& pusch_alloc = res_grid[pusch_time_domain_list[pusch_td_res_idx].k2];
-      slot_point                          pusch_slot  = slot_tx + pusch_time_domain_list[pusch_td_res_idx].k2;
+         valid_pusch_td_list_per_slot[(slot_tx).to_uint() % valid_pusch_td_list_per_slot.size()]) {
+      unsigned pusch_delay = pusch_time_domain_list[pusch_td_res_idx].k2 + cell_cfg.ntn_cs_koffset;
+      const cell_slot_resource_allocator& pusch_alloc = res_grid[pusch_delay];
+      slot_point                          pusch_slot  = slot_tx + pusch_delay;
 
       unsigned pusch_rb_count = slice.inst.nof_pusch_rbs_allocated(pusch_slot);
       if (pusch_rb_count >= slice.inst.cfg.max_prb) {

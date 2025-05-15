@@ -36,7 +36,7 @@ public:
     harq_pool(parent_), ntn_cs_koffset(ntn_cs_koffset_)
   {
     srsran_assert(ntn_cs_koffset > 0 and ntn_cs_koffset <= NTN_CELL_SPECIFIC_KOFFSET_MAX, "Invalid NTN koffset");
-    unsigned ring_size = get_allocator_ring_size_gt_min(NTN_CELL_SPECIFIC_KOFFSET_MAX * 2);
+    unsigned ring_size = get_allocator_ring_size_gt_min(ntn_cs_koffset * 2 + SCHEDULER_MAX_K1);
     history.resize(ring_size);
   }
 
@@ -44,18 +44,18 @@ public:
   {
     last_sl_ind = sl_tx;
     // If there are no allocations for a long time, we may need to reset last_sl_ack.
-    if (last_sl_ack.valid() and last_sl_ack < last_sl_ind - ntn_cs_koffset) {
+    if (last_sl_ack.valid() and last_sl_ack < sl_tx - ntn_cs_koffset - SCHEDULER_MAX_K1) {
       last_sl_ack.clear();
     }
 
     // Clear old entries.
-    unsigned idx = get_current_index(sl_tx - SCHEDULER_MAX_K1);
+    unsigned idx = get_current_index(sl_tx - ntn_cs_koffset - SCHEDULER_MAX_K1);
     history[idx].clear();
   }
 
   void save_harq_newtx_info(const harq_impl_type& h)
   {
-    unsigned idx = get_offset_index(h.slot_ack);
+    unsigned idx = get_current_index(h.slot_ack);
     history[idx].emplace_back(h);
 
     if (not last_sl_ack.valid() or h.slot_ack > last_sl_ack) {
@@ -65,7 +65,7 @@ public:
 
   void handle_ack(harq_impl_type& h)
   {
-    auto& hist_entry = history[get_offset_index(h.slot_ack)];
+    auto& hist_entry = history[get_current_index(h.slot_ack)];
     if (&h < hist_entry.data() or &h >= hist_entry.data() + hist_entry.size()) {
       // Check if the HARQ Process being ACKed is the same as the one managed by the NTN history.
       srsran_assertion_failure("ACK Info handled for a non-NTN HARQ process");
@@ -77,7 +77,6 @@ public:
 
 protected:
   unsigned get_current_index(slot_point sl) const { return mod(sl.to_uint()); }
-  unsigned get_offset_index(slot_point sl) const { return get_current_index(sl + ntn_cs_koffset); }
   unsigned mod(unsigned idx) const { return idx % history.size(); }
 
   cell_harq_repository<IsDl>&              harq_pool;
@@ -100,11 +99,10 @@ public:
 
   std::optional<dl_harq_process_handle> find_dl_harq(du_ue_index_t ue_idx, slot_point uci_slot, unsigned harq_bit_idx)
   {
-    auto     adjusted_slot = uci_slot - ntn_cs_koffset;
-    unsigned idx           = get_offset_index(adjusted_slot);
+    unsigned idx = get_current_index(uci_slot);
     for (dl_harq_process_impl& h_impl : history[idx]) {
-      if (h_impl.ue_idx == ue_idx and h_impl.status == harq_state_t::waiting_ack and
-          h_impl.slot_ack == adjusted_slot and h_impl.harq_bit_idx == harq_bit_idx) {
+      if (h_impl.ue_idx == ue_idx and h_impl.status == harq_state_t::waiting_ack and h_impl.slot_ack == uci_slot and
+          h_impl.harq_bit_idx == harq_bit_idx) {
         return dl_harq_process_handle{harq_pool, h_impl};
       }
     }
@@ -120,7 +118,7 @@ public:
 
   std::optional<ul_harq_process_handle> find_ul_harq(du_ue_index_t ue_idx, slot_point pusch_slot)
   {
-    unsigned idx = get_offset_index(pusch_slot);
+    unsigned idx = get_current_index(pusch_slot);
     for (ul_harq_process_impl& h_impl : history[idx]) {
       if (h_impl.ue_idx == ue_idx and h_impl.status == harq_state_t::waiting_ack and h_impl.slot_ack == pusch_slot) {
         return ul_harq_process_handle{harq_pool, h_impl};
@@ -131,11 +129,11 @@ public:
 
   unsigned sum_pending_ul_tbs(du_ue_index_t ue_idx) const
   {
-    if (not last_sl_ack.valid() or last_sl_ack + ntn_cs_koffset < last_sl_ind) {
+    if (not last_sl_ack.valid() or last_sl_ack < last_sl_ind) {
       return 0;
     }
     unsigned sum     = 0;
-    unsigned end_idx = get_current_index(last_sl_ack + ntn_cs_koffset + 1);
+    unsigned end_idx = get_current_index(last_sl_ack + 1);
     for (unsigned idx = get_current_index(last_sl_ind); idx != end_idx; idx = mod(idx + 1)) {
       for (const ul_harq_process_impl& h : history[idx]) {
         if (h.ue_idx == ue_idx and h.status != harq_state_t::empty) {
@@ -176,7 +174,8 @@ cell_harq_repository<IsDl>::cell_harq_repository(unsigned               max_ues,
     ues[i].harqs.reserve(max_harqs_per_ue);
   }
 
-  harq_timeout_wheel.resize(get_allocator_ring_size_gt_min(max_ack_wait_timeout + get_max_slot_ul_alloc_delay(0)));
+  harq_timeout_wheel.resize(
+      get_allocator_ring_size_gt_min(max_ack_wait_timeout + get_max_slot_ul_alloc_delay(ntn_cs_koffset_)));
 }
 
 template <bool IsDl>
@@ -312,7 +311,7 @@ typename cell_harq_repository<IsDl>::harq_type* cell_harq_repository<IsDl>::allo
       ue_harq_entity.last_slot_ack.valid() ? std::max(ue_harq_entity.last_slot_ack, sl_ack) : sl_ack;
 
   // Add HARQ to the timeout list.
-  h.slot_timeout = sl_ack + max_ack_wait_in_slots;
+  h.slot_timeout = sl_ack + max_ack_wait_in_slots - ntn_cs_koffset;
   harq_timeout_wheel[h.slot_timeout.to_uint() % harq_timeout_wheel.size()].push_front(&h);
 
   return &h;
@@ -549,20 +548,8 @@ cell_harq_manager::cell_harq_manager(unsigned                               max_
   timeout_notifier(notifier != nullptr and ntn_cs_koffset == 0 ? std::move(notifier)
                                                                : std::make_unique<noop_harq_timeout_notifier>()),
   logger(srslog::fetch_basic_logger("SCHED")),
-  dl(max_ues,
-     max_ack_wait_timeout + ntn_cs_koffset,
-     dl_harq_retx_timeout,
-     max_harqs_per_ue,
-     ntn_cs_koffset,
-     *timeout_notifier,
-     logger),
-  ul(max_ues,
-     max_ack_wait_timeout + ntn_cs_koffset,
-     ul_harq_retx_timeout,
-     max_harqs_per_ue,
-     ntn_cs_koffset,
-     *timeout_notifier,
-     logger)
+  dl(max_ues, max_ack_wait_timeout, dl_harq_retx_timeout, max_harqs_per_ue, ntn_cs_koffset, *timeout_notifier, logger),
+  ul(max_ues, max_ack_wait_timeout, ul_harq_retx_timeout, max_harqs_per_ue, ntn_cs_koffset, *timeout_notifier, logger)
 {
 }
 

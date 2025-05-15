@@ -191,11 +191,16 @@ ue_cell_grid_allocator::setup_dl_grant_builder(const slice_ue&                  
   // Allocate UE DL HARQ.
   if (not is_retx) {
     // It is a new tx.
-    h_dl = ue_cc.harqs.alloc_dl_harq(pdsch_alloc.slot, k1, expert_cfg.max_nof_dl_harq_retxs, uci.harq_bit_idx).value();
+    h_dl = ue_cc.harqs
+               .alloc_dl_harq(pdsch_alloc.slot,
+                              k1 + ue_cell_cfg.cell_cfg_common.ntn_cs_koffset,
+                              expert_cfg.max_nof_dl_harq_retxs,
+                              uci.harq_bit_idx)
+               .value();
     srsran_assert(h_dl.has_value(), "Failed to allocate DL HARQ");
   } else {
     // It is a retx.
-    bool result = h_dl->new_retx(pdsch_alloc.slot, k1, uci.harq_bit_idx);
+    bool result = h_dl->new_retx(pdsch_alloc.slot, k1 + ue_cell_cfg.cell_cfg_common.ntn_cs_koffset, uci.harq_bit_idx);
     srsran_assert(result, "Harq is in invalid state");
   }
 
@@ -264,7 +269,8 @@ void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                    
   }
 
   // Compute TPC for PUCCH.
-  uint8_t tpc = ue_cc.get_pucch_power_controller().compute_tpc_command(pdsch_alloc.slot + k1);
+  uint8_t tpc = ue_cc.get_pucch_power_controller().compute_tpc_command(pdsch_alloc.slot + k1 +
+                                                                       ue_cell_cfg.cell_cfg_common.ntn_cs_koffset);
 
   // Fill DL PDCCH DCI PDU.
   // Number of possible Downlink Assignment Indexes {0, ..., 3} as per TS38.213 Section 9.1.3.
@@ -644,8 +650,8 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_in
 
   // Compute TPC command before computing the nof_prbs adaptation based on PHR; this is because, when the TPC gets
   // computed, the channel state manager will update close-loop power control adjustment.
-  const uint8_t tpc_command =
-      ue_cc.get_pusch_power_controller().compute_tpc_command(pdcch_alloc.slot + pusch_td_cfg.k2);
+  const uint8_t tpc_command = ue_cc.get_pusch_power_controller().compute_tpc_command(
+      pdcch_alloc.slot + pusch_td_cfg.k2 + cell_cfg.ntn_cs_koffset);
 
   // Fill UL PDCCH DCI.
   uint8_t rv = ue_cc.get_pusch_rv(grant.h_ul.nof_retxs());
