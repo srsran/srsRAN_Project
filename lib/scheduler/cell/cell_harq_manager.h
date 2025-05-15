@@ -171,6 +171,7 @@ struct cell_harq_repository {
   std::vector<ue_harq_entity_impl>                               ues;
   intrusive_double_linked_list<harq_type, pending_retx_list_tag> harq_pending_retx_list;
   std::vector<intrusive_double_linked_list<harq_type>>           harq_timeout_wheel;
+  unsigned                                                       ntn_cs_koffset;
   std::unique_ptr<harq_alloc_history>                            alloc_hist;
 
   void               slot_indication(slot_point sl_tx);

@@ -158,15 +158,16 @@ cell_harq_repository<IsDl>::cell_harq_repository(unsigned               max_ues,
                                                  unsigned               max_ack_wait_timeout,
                                                  unsigned               harq_retx_timeout_,
                                                  unsigned               max_harqs_per_ue_,
-                                                 unsigned               ntn_cs_koffset,
+                                                 unsigned               ntn_cs_koffset_,
                                                  harq_timeout_notifier& timeout_notifier_,
                                                  srslog::basic_logger&  logger_) :
-  max_ack_wait_in_slots(ntn_cs_koffset == 0 ? max_ack_wait_timeout : NTN_ACK_WAIT_TIMEOUT),
+  max_ack_wait_in_slots(ntn_cs_koffset_ == 0 ? max_ack_wait_timeout : NTN_ACK_WAIT_TIMEOUT),
   harq_retx_timeout(harq_retx_timeout_),
   max_harqs_per_ue(max_harqs_per_ue_),
   timeout_notifier(timeout_notifier_),
   logger(logger_),
-  alloc_hist(ntn_cs_koffset > 0 ? std::make_unique<harq_alloc_history>(*this, ntn_cs_koffset) : nullptr)
+  ntn_cs_koffset(ntn_cs_koffset_),
+  alloc_hist(ntn_cs_koffset_ > 0 ? std::make_unique<harq_alloc_history>(*this, ntn_cs_koffset_) : nullptr)
 {
   // Reserve space in advance for UEs and their HARQs.
   ues.resize(max_ues);
