@@ -40,6 +40,11 @@ void ngap_metrics_aggregator::aggregate_failed_pdu_session_setup(s_nssai_t s_nss
   aggregated_ngap_metrics.pdu_session_metrics[s_nssai].nof_pdu_sessions_failed_to_setup.increase(cause);
 }
 
+void ngap_metrics_aggregator::aggregate_cn_initiated_paging_request()
+{
+  ++aggregated_ngap_metrics.nof_cn_initiated_paging_requests;
+}
+
 ngap_metrics ngap_metrics_aggregator::request_metrics_report() const
 {
   return aggregated_ngap_metrics;

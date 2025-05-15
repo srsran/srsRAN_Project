@@ -108,16 +108,20 @@ private:
   std::array<unsigned, NOF_CAUSES> counters_by_cause = {};
 };
 
-// PDU session management metrics, see TS 28.552 section 5.1.1.5.
+/// PDU session management metrics, see TS 28.552 section 5.1.1.5.
 struct pdu_session_metrics_t {
   unsigned                nof_pdu_sessions_requested_to_setup = 0;
   unsigned                nof_pdu_sessions_successfully_setup = 0;
   ngap_counter_with_cause nof_pdu_sessions_failed_to_setup;
 };
 
+/// Paging Measurement metrics, see TS 28.552 section 5.1.1.27.
+
 /// \brief NGAP metrics for all UEs connected to an AMF.
 struct ngap_metrics {
   std::map<s_nssai_t, pdu_session_metrics_t> pdu_session_metrics;
+  /// Paging Measurement metrics, see TS 28.552 section 5.1.1.27.
+  unsigned nof_cn_initiated_paging_requests = 0;
 };
 
 /// \brief NGAP metrics per AMF.

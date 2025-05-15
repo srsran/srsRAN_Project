@@ -768,6 +768,9 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
 
 void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
 {
+  // Notify metrics handler about received paging request.
+  metrics_handler.aggregate_cn_initiated_paging_request();
+
   if (msg->ue_paging_id.type() != asn1::ngap::ue_paging_id_c::types::five_g_s_tmsi) {
     logger.warning("Dropping PDU. Unsupported UE Paging ID");
     send_error_indication(tx_pdu_notifier, logger);
