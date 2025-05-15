@@ -80,6 +80,12 @@ DECLARE_METRIC_SET("message_encoder",
                    mset_ofh_metrics_ul_cp_encoder,
                    mset_ofh_metrics_dl_up_encoder);
 
+DECLARE_METRIC_SET("message_transmitter",
+                   mset_ofh_metrics_message_transmitter,
+                   metric_average_latency,
+                   metric_max_latency,
+                   metric_cpu_usage);
+
 DECLARE_METRIC("late_dl_grids", ofh_metrics_tx_late_dl_grids, unsigned, "");
 DECLARE_METRIC("late_ul_requests", ofh_metrics_tx_late_ul_req, unsigned, "");
 DECLARE_METRIC_SET("transmitter_stats",
@@ -98,6 +104,7 @@ DECLARE_METRIC_SET("dl",
                    ofh_metrics_dl,
                    mset_ofh_metrics_ether_tx,
                    mset_ofh_metrics_message_encoder,
+                   mset_ofh_metrics_message_transmitter,
                    mset_ofh_metrics_tx_kpis);
 DECLARE_METRIC_SET("cell", ofh_metrics_cell, metric_pci, ofh_metrics_ul, ofh_metrics_dl);
 DECLARE_METRIC_LIST("ofh", mlist_ofh_cells, std::vector<ofh_metrics_cell>);
@@ -241,6 +248,15 @@ log_ru_ofh_metrics_json(srslog::log_channel& log_chan, const ofh::metrics& metri
     dl_up_message_encoder.write<metric_max_latency>(validate_fp_value(dl_up_df_metrics.message_packing_max_latency_us));
     dl_up_message_encoder.write<metric_cpu_usage>(dl_up_cpu_usage);
 
+    // Message transmitter.
+    const auto& message_tx_metrics = cell_metrics.tx_metrics.message_tx_metrics;
+    float msg_tx_cpu_usage = message_tx_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f;
+
+    auto& message_transmitter = output.get<ofh_metrics_dl>().get<mset_ofh_metrics_message_transmitter>();
+    message_transmitter.write<metric_average_latency>(validate_fp_value(message_tx_metrics.message_tx_avg_latency_us));
+    message_transmitter.write<metric_max_latency>(validate_fp_value(message_tx_metrics.message_tx_max_latency_us));
+    message_transmitter.write<metric_cpu_usage>(msg_tx_cpu_usage);
+
     // Transmitter KPIs.
     auto& transmitter_kpis = output.get<ofh_metrics_dl>().get<mset_ofh_metrics_tx_kpis>();
     transmitter_kpis.write<ofh_metrics_tx_late_dl_grids>(cell_metrics.tx_metrics.dl_metrics.nof_late_dl_grids);
@@ -317,10 +333,12 @@ static void log_ru_ofh_performance_metrics_verbose(fmt::basic_memory_buffer<char
   const auto& dl_cp_df_metrics = cell_metrics.tx_metrics.dl_metrics.dl_cp_metrics;
   const auto& dl_up_df_metrics = cell_metrics.tx_metrics.dl_metrics.dl_up_metrics;
   const auto& ul_cp_df_metrics = cell_metrics.tx_metrics.ul_metrics.ul_cp_metrics;
+  const auto& msg_tx_metrics   = cell_metrics.tx_metrics.message_tx_metrics;
 
-  float dl_cp_cpu_usage = dl_cp_df_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f;
-  float dl_up_cpu_usage = dl_up_df_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f;
-  float ul_cp_cpu_usage = ul_cp_df_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f;
+  float dl_cp_cpu_usage  = dl_cp_df_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f;
+  float dl_up_cpu_usage  = dl_up_df_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f;
+  float ul_cp_cpu_usage  = ul_cp_df_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f;
+  float msg_tx_cpu_usage = msg_tx_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f;
 
   fmt::format_to(std::back_inserter(buffer),
                  "{} cpu_usage={:.1f}% dl_up_max_latency={:.2f}us dl_up_avg_latency={:.2f}us; ",
@@ -342,6 +360,13 @@ static void log_ru_ofh_performance_metrics_verbose(fmt::basic_memory_buffer<char
                  validate_fp_value(ul_cp_cpu_usage),
                  validate_fp_value(ul_cp_df_metrics.message_packing_max_latency_us),
                  validate_fp_value(ul_cp_df_metrics.message_packing_avg_latency_us));
+
+  fmt::format_to(std::back_inserter(buffer),
+                 "{} cpu_usage={:.1f}% max_latency={:.2f}us avg_latency={:.2f}us; ",
+                 "message_tx:",
+                 validate_fp_value(msg_tx_cpu_usage),
+                 validate_fp_value(msg_tx_metrics.message_tx_max_latency_us),
+                 validate_fp_value(msg_tx_metrics.message_tx_avg_latency_us));
 
   fmt::format_to(std::back_inserter(buffer),
                  "{} nof_late_dl_grids={} nof_late_ul_req={}",

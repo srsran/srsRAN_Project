@@ -79,6 +79,7 @@ transmitter_impl::transmitter_impl(const transmitter_config& config, transmitter
   ul_task_dispatcher(config.sector, ul_request_handler, *dependencies.dl_executor),
   msg_transmitter(*dependencies.logger,
                   config.tx_timing_params,
+                  config.are_metrics_enabled,
                   std::move(dependencies.eth_transmitter),
                   std::move(dependencies.frame_pool)),
   ota_dispatcher(*dependencies.executor,
@@ -88,6 +89,7 @@ transmitter_impl::transmitter_impl(const transmitter_config& config, transmitter
   metrics_collector(config.are_metrics_enabled,
                     dl_handler.get_metrics_collector(),
                     ul_request_handler.get_metrics_collector(),
+                    msg_transmitter.get_metrics_collector(),
                     msg_transmitter.get_ethernet_transmitter().get_metrics_collector())
 {
 }

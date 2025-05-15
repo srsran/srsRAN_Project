@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "ofh_message_transmitter_metrics_collector.h"
 #include "srsran/ofh/ethernet/ethernet_frame_pool.h"
 #include "srsran/ofh/ethernet/ethernet_transmitter.h"
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
@@ -32,12 +33,15 @@ class message_transmitter_impl : public ota_symbol_boundary_notifier
   std::shared_ptr<ether::eth_frame_pool> pool;
   /// Ethernet transmitter.
   std::unique_ptr<ether::transmitter> eth_transmitter;
+  /// Metrics collector.
+  message_transmitter_metrics_collector metrics_collector;
   /// Internal representation of timing parameters.
   const tx_window_timing_parameters timing_params;
 
 public:
   message_transmitter_impl(srslog::basic_logger&                  logger_,
                            const tx_window_timing_parameters&     timing_params_,
+                           bool                                   are_metrics_enabled,
                            std::unique_ptr<ether::transmitter>    eth_transmitter,
                            std::shared_ptr<ether::eth_frame_pool> frame_pool);
 
@@ -46,6 +50,9 @@ public:
 
   /// Returns the Ethernet transmitter of this Open Fronthaul message transmitter.
   ether::transmitter& get_ethernet_transmitter();
+
+  /// Returns the metrics collector of this message transmitter implementation.
+  message_transmitter_metrics_collector& get_metrics_collector();
 
 private:
   /// Transmits the given frame burst.

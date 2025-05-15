@@ -17,9 +17,14 @@ using namespace ofh;
 
 message_transmitter_impl::message_transmitter_impl(srslog::basic_logger&                  logger_,
                                                    const tx_window_timing_parameters&     timing_params_,
+                                                   bool                                   are_metrics_enabled,
                                                    std::unique_ptr<ether::transmitter>    transmitter,
                                                    std::shared_ptr<ether::eth_frame_pool> frame_pool) :
-  logger(logger_), pool(std::move(frame_pool)), eth_transmitter(std::move(transmitter)), timing_params(timing_params_)
+  logger(logger_),
+  pool(std::move(frame_pool)),
+  eth_transmitter(std::move(transmitter)),
+  metrics_collector(are_metrics_enabled),
+  timing_params(timing_params_)
 {
   srsran_assert(eth_transmitter, "Invalid Ethernet transmitter");
   srsran_assert(pool, "Invalid frame pool");
@@ -70,6 +75,9 @@ void message_transmitter_impl::enqueue_messages_into_burst(
 
 void message_transmitter_impl::on_new_symbol(const slot_symbol_point_context& symbol_point_context)
 {
+  // Creates and starts the execution time measurer.
+  time_execution_measurer meas(metrics_collector.enabled());
+
   trace_point tp = ofh_tracer.now();
 
   static_vector<span<const uint8_t>, MAX_BURST_SIZE> frame_burst;
@@ -103,9 +111,16 @@ void message_transmitter_impl::on_new_symbol(const slot_symbol_point_context& sy
   pool->clear_sent_frame_buffers(interval_up);
 
   ofh_tracer << trace_event("ofh_message_transmitter", tp);
+
+  metrics_collector.update_stats(meas.stop());
 }
 
 ether::transmitter& message_transmitter_impl::get_ethernet_transmitter()
 {
   return *eth_transmitter;
+}
+
+message_transmitter_metrics_collector& message_transmitter_impl::get_metrics_collector()
+{
+  return metrics_collector;
 }
