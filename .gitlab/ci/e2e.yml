@@ -527,7 +527,6 @@ android x300:
 android drx:
   stage: rf
   extends: .e2e-run
-  allow_failure: true
   variables:
     GROUP: "rf"
     TESTBED: "android_b200"
