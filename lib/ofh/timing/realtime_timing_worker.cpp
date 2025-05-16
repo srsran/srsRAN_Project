@@ -11,6 +11,7 @@
 #include "realtime_timing_worker.h"
 #include "srsran/instrumentation/traces/ofh_traces.h"
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
+#include "srsran/support/rtsan.h"
 #include <future>
 #include <thread>
 
@@ -132,7 +133,7 @@ void realtime_timing_worker::stop()
   logger.info("Stopped the realtime timing worker");
 }
 
-void realtime_timing_worker::timing_loop()
+void realtime_timing_worker::timing_loop() SRSRAN_RTSAN_NONBLOCKING
 {
   while (SRSRAN_LIKELY(status.load(std::memory_order_relaxed) == worker_status::running)) {
     poll();
