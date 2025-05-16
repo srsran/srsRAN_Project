@@ -250,7 +250,8 @@ log_ru_ofh_metrics_json(srslog::log_channel& log_chan, const ofh::metrics& metri
 
     // Message transmitter.
     const auto& message_tx_metrics = cell_metrics.tx_metrics.message_tx_metrics;
-    float msg_tx_cpu_usage = message_tx_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f;
+    float       msg_tx_cpu_usage =
+        validate_fp_value(message_tx_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f);
 
     auto& message_transmitter = output.get<ofh_metrics_dl>().get<mset_ofh_metrics_message_transmitter>();
     message_transmitter.write<metric_average_latency>(validate_fp_value(message_tx_metrics.message_tx_avg_latency_us));
