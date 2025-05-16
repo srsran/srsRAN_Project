@@ -42,6 +42,43 @@ static void print_report(const mac_dl_metric_report& rep)
   }
 }
 
+namespace {
+
+struct dummy_sched_metric_handler {
+  dummy_sched_metric_handler(scheduler_cell_metrics_notifier& notif_, unsigned period_slots_) :
+    notif(notif_), period_slots(period_slots_)
+  {
+  }
+
+  void slot_indication(slot_point sl_tx)
+  {
+    if (not next_report_slot.valid()) {
+      unsigned sl_mod  = sl_tx.to_uint() % period_slots;
+      next_report_slot = sl_tx + period_slots - sl_mod;
+    }
+    report_slot_count++;
+
+    if (sl_tx == next_report_slot) {
+      auto builder       = notif.get_builder();
+      builder->slot      = sl_tx - report_slot_count;
+      builder->nof_slots = report_slot_count;
+      builder.reset();
+      next_report_slot += period_slots;
+      next_hfn += (period_slots / (NOF_SFNS * NOF_SUBFRAMES_PER_FRAME));
+      if (next_report_slot.to_uint() < sl_tx.to_uint()) {
+        next_hfn += 1;
+      }
+      report_slot_count = 0;
+    }
+  }
+
+  scheduler_cell_metrics_notifier& notif;
+  unsigned                         period_slots;
+  slot_point                       next_report_slot;
+  unsigned                         next_hfn{0};
+  unsigned                         report_slot_count{0};
+};
+
 class mac_metric_handler_test : public ::testing::Test
 {
 protected:
@@ -61,6 +98,7 @@ protected:
                                  srslog::fetch_basic_logger("MAC", true)};
 
   slotted_id_table<du_cell_index_t, mac_dl_cell_metric_handler, MAX_CELLS_PER_DU> cells;
+  slotted_id_table<du_cell_index_t, dummy_sched_metric_handler, MAX_CELLS_PER_DU> sched_cells;
 
   slot_point next_point{0, 1};
 
@@ -70,11 +108,15 @@ protected:
     auto  metrics_cfg = metrics.add_cell(to_du_cell_index(cell_index), scs);
     cells.emplace(
         cell_index, pci, scs, mac_cell_metric_report_config{metrics_cfg.report_period, metrics_cfg.mac_notifier});
+    sched_cells.emplace(cell_index, *metrics_cfg.sched_notifier, period_slots);
     return cells[cell_index];
   }
 
   void run_slot()
   {
+    for (auto& cell : sched_cells) {
+      cell.slot_indication(next_point);
+    }
     for (auto& cell : cells) {
       auto meas = cell.start_slot(next_point, metric_clock::now());
     }
@@ -83,6 +125,8 @@ protected:
     ++next_point;
   }
 };
+
+} // namespace
 
 TEST_F(mac_metric_handler_test, cell_created_successfully)
 {
@@ -141,7 +185,7 @@ TEST_F(mac_metric_handler_test, when_multi_cell_creation_staggered_then_reports_
   cellgen1.on_cell_activation();
 
   // Number of slots lower than period + timeout has elapsed.
-  const unsigned count_until_cell2 = test_rgen::uniform_int<unsigned>(0, period_slots - 1);
+  const unsigned count_until_cell2 = test_rgen::uniform_int<unsigned>(0, period_slots - 2);
   for (unsigned i = 0; i != count_until_cell2; ++i) {
     ASSERT_FALSE(metric_notifier.last_report.has_value());
     run_slot();

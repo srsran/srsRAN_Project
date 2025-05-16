@@ -29,6 +29,8 @@ struct mac_dl_cell_metric_report {
 
   /// Physical cell id.
   pci_t pci;
+  /// HFN of the first slot of the report.
+  unsigned start_hfn;
   /// First slot of the report.
   slot_point start_slot;
   /// Number of slots considered in this report.

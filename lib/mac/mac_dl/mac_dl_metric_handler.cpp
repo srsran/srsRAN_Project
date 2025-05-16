@@ -35,12 +35,15 @@ void mac_dl_cell_metric_handler::non_persistent_data::latency_data::save_sample(
   }
 }
 
+// mac_dl_cell_metric_handler
+
 mac_dl_cell_metric_handler::mac_dl_cell_metric_handler(pci_t                                cell_pci_,
                                                        subcarrier_spacing                   scs,
                                                        const mac_cell_metric_report_config& metrics_cfg) :
   cell_pci(cell_pci_),
   period_slots(metrics_cfg.report_period.count() * get_nof_slots_per_subframe(scs)),
-  notifier(metrics_cfg.notifier)
+  notifier(metrics_cfg.notifier),
+  slot_duration(std::chrono::nanoseconds(unsigned(1e6 / (get_nof_slots_per_subframe(scs)))))
 {
 }
 
@@ -58,7 +61,7 @@ void mac_dl_cell_metric_handler::on_cell_deactivation()
   if (not enabled()) {
     return;
   }
-  if (not cell_activated or not next_report_slot.valid()) {
+  if (not cell_activated or not last_sl_tx.valid()) {
     // Activation hasn't started or hasn't completed.
     return;
   }
@@ -72,23 +75,8 @@ void mac_dl_cell_metric_handler::on_cell_deactivation()
 
 void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& meas)
 {
-  last_hfn_tx += last_sl_tx.valid() and meas.sl_tx.to_uint() < last_sl_tx.to_uint() ? 1 : 0;
-  last_sl_tx = meas.sl_tx;
-
   if (not enabled() or not cell_activated) {
     return;
-  }
-
-  if (SRSRAN_UNLIKELY(not next_report_slot.valid() and cell_activated)) {
-    // First slot after cell activation.
-    // We will make the \c next_report_slot aligned with the period.
-    const unsigned mod_val            = meas.sl_tx.to_uint() % period_slots;
-    const unsigned slots_until_report = mod_val > 0 ? period_slots - mod_val : 0;
-    next_report_slot                  = meas.sl_tx + slots_until_report;
-    next_report_hfn                   = (period_slots / (NOF_SFNS * NOF_SUBFRAMES_PER_FRAME));
-    slot_duration                     = std::chrono::nanoseconds(unsigned(1e6 / meas.sl_tx.nof_slots_per_subframe()));
-    // Notify cell creation and next slot on which the report will be generated.
-    notifier->on_cell_activation(next_report_slot);
   }
 
   // Time difference
@@ -107,6 +95,19 @@ void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& 
     }
   } else {
     rusg_diff = make_unexpected(meas.start_rusg.error());
+  }
+
+  if (SRSRAN_UNLIKELY(not last_sl_tx.valid())) {
+    // First slot after cell activation.
+    // We will make the \c next_report_slot aligned with the period.
+    // Notify cell creation and next slot on which the report will be generated.
+    notifier->on_cell_activation(meas.sl_tx);
+    last_hfn   = 0;
+    last_sl_tx = meas.sl_tx;
+  } else {
+    // HFN gets incremented when a slot wrap-around is detected.
+    last_hfn += last_sl_tx.to_uint() > meas.sl_tx.to_uint() ? 1 : 0;
+    last_sl_tx = meas.sl_tx;
   }
 
   // Update metrics.
@@ -136,15 +137,7 @@ void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& 
     data.sys.save_sample(meas.sl_tx, std::chrono::nanoseconds{rusg_val.sys_time});
   }
 
-  if (not next_report_slot.valid()) {
-    // We enter here in the first call to this function.
-    // We will make the \c next_report_slot aligned with the period.
-    unsigned mod_val = meas.sl_tx.to_uint() % period_slots;
-    next_report_slot = mod_val > 0 ? meas.sl_tx + period_slots - mod_val : meas.sl_tx;
-    slot_duration    = std::chrono::nanoseconds(unsigned(1e6 / meas.sl_tx.nof_slots_per_subframe()));
-  }
-
-  if (meas.sl_tx >= next_report_slot and last_hfn_tx >= next_report_hfn) {
+  if (notifier->is_report_required(meas.sl_tx)) {
     send_new_report(meas.sl_tx);
   }
 }
@@ -153,8 +146,10 @@ void mac_dl_cell_metric_handler::send_new_report(slot_point sl_tx)
 {
   // Prepare cell report.
   mac_dl_cell_metric_report report;
-  report.pci           = cell_pci;
-  report.start_slot    = sl_tx - data.nof_slots;
+  report.pci        = cell_pci;
+  report.start_slot = sl_tx - data.nof_slots;
+  report.start_hfn  = last_hfn - (data.nof_slots / (NOF_SFNS * NOF_SUBFRAMES_PER_FRAME)) -
+                     (report.start_slot.to_uint() > sl_tx.to_uint() ? 1 : 0);
   report.slot_duration = slot_duration;
   report.nof_slots     = data.nof_slots;
   if (data.nof_slots > 0) {
@@ -170,11 +165,6 @@ void mac_dl_cell_metric_handler::send_new_report(slot_point sl_tx)
   report.count_involuntary_context_switches = data.count_invol_context_switches;
   report.cell_deactivated                   = data.last_report;
 
-  // Set next report slot.
-  next_report_slot += period_slots;
-  const bool sfn_wrap = next_report_slot.to_uint() < sl_tx.to_uint();
-  next_report_hfn += (period_slots / (NOF_SFNS * NOF_SUBFRAMES_PER_FRAME)) + (sfn_wrap ? 1 : 0);
-
   // Reset counters.
   data = {};
 
@@ -183,6 +173,6 @@ void mac_dl_cell_metric_handler::send_new_report(slot_point sl_tx)
     notifier->on_cell_metric_report(report);
   } else {
     notifier->on_cell_deactivation(report);
-    next_report_slot = {};
+    last_sl_tx = {};
   }
 }
