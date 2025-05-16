@@ -206,34 +206,37 @@ def assess_iperf_bitrate(
     pusch_mcs_table: str,
     iperf_duration: int,
     metrics: Metrics,
+    dl_brate_threshold: float = 0,
+    ul_brate_threshold: float = 0,
 ):
     """
     Check if the achieved bitrate values are above the expected thresholds
     """
-    min_dl_bitrate = get_max_theoretical_bitrate(
-        bw,
-        band,
-        nof_antennas_dl,
-        True,
-        QAMTable.QAM256 if pdsch_mcs_table == "qam256" else QAMTable.QAM64,
-    )
-
-    min_ul_bitrate = get_max_theoretical_bitrate(
-        bw,
-        band,
-        1,
-        False,
-        QAMTable.QAM256 if pusch_mcs_table == "qam256" else QAMTable.QAM64,
-    )
-
     # Defines the actual DL/UL bitrate as a percentage of the max theoretical bitrates
     effective_rate_coeff_dl = 0.66  # empirical value
     effective_rate_coeff_ul = 0.46  # empirical value
     # Defines the expected bitrate to be achived as a percentage of the DL/UL bitrates
     expected_to_max_coeff = 0.9
 
-    dl_brate_threshold = min_dl_bitrate * effective_rate_coeff_dl * expected_to_max_coeff
-    ul_brate_threshold = min_ul_bitrate * effective_rate_coeff_ul * expected_to_max_coeff
+    if dl_brate_threshold == 0:
+        min_dl_bitrate = get_max_theoretical_bitrate(
+            bw,
+            band,
+            nof_antennas_dl,
+            True,
+            QAMTable.QAM256 if pdsch_mcs_table == "qam256" else QAMTable.QAM64,
+        )
+        dl_brate_threshold = min_dl_bitrate * effective_rate_coeff_dl * expected_to_max_coeff
+
+    if ul_brate_threshold == 0:
+        min_ul_bitrate = get_max_theoretical_bitrate(
+            bw,
+            band,
+            1,
+            False,
+            QAMTable.QAM256 if pusch_mcs_table == "qam256" else QAMTable.QAM64,
+        )
+        ul_brate_threshold = min_ul_bitrate * effective_rate_coeff_ul * expected_to_max_coeff
 
     dl_bitrate_peak_average, ul_bitrate_peak_average = get_peak_average_bitrate(iperf_duration, metrics)
     dl_brate_assessment_ok = dl_bitrate_peak_average >= dl_brate_threshold
