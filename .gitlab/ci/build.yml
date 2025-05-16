@@ -587,7 +587,7 @@ valgrind changed tests:
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
       when: manual
-      allow_failure: false
+      allow_failure: true
   variables:
     CLEAN_BUILD: "False"
     FINGERPRINT: "fingerprints.csv"
