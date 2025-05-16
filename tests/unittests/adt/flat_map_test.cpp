@@ -58,7 +58,7 @@ TEST(flat_map_test, flat_map_creation_from_containers_with_reverse_order)
   ASSERT_EQ(m.size(), 3);
   ASSERT_EQ(m.begin()->first, 4);
   ASSERT_EQ((m.begin() + 1)->first, 2);
-  ASSERT_EQ((m.begin() + 3)->first, 1);
+  ASSERT_EQ((m.begin() + 2)->first, 1);
   ASSERT_EQ(m.begin() + 3, m.end());
   for (const auto& p : m) {
     ASSERT_EQ(p.first, p.second);
