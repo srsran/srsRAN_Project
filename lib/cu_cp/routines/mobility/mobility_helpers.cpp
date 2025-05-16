@@ -107,16 +107,17 @@ bool srsran::srs_cu_cp::handle_bearer_context_modification_response_1(
        bearer_context_modification_response.pdu_session_resource_modified_list) {
     auto pdu_session_it = next_config.pdu_sessions_to_setup_list.find(e1ap_pdu_session.pdu_session_id);
     if (pdu_session_it == next_config.pdu_sessions_to_setup_list.end()) {
-      logger.error("Could not update DRB UL-TEID during handover. Cause: could not find PDU session to setup. psi={}",
-                   e1ap_pdu_session.pdu_session_id);
+      logger.warning("Could not update DRB UL-TEID during handover. Cause: could not find PDU session to setup. psi={}",
+                     e1ap_pdu_session.pdu_session_id);
       continue;
     }
     for (const e1ap_drb_modified_item_ng_ran& e1ap_drb_mod : e1ap_pdu_session.drb_modified_list_ng_ran) {
       auto drb_it = pdu_session_it->second.drb_to_add.find(e1ap_drb_mod.drb_id);
       if (drb_it == pdu_session_it->second.drb_to_add.end()) {
-        logger.error("Could not update DRB UL-TEID during handover. Cause: could not find DRB to setup. psi={} drb={}",
-                     e1ap_pdu_session.pdu_session_id,
-                     e1ap_drb_mod.drb_id);
+        logger.warning(
+            "Could not update DRB UL-TEID during handover. Cause: could not find DRB to setup. psi={} drb={}",
+            e1ap_pdu_session.pdu_session_id,
+            e1ap_drb_mod.drb_id);
         continue;
       }
       up_drb_context& drb = drb_it->second;
