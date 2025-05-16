@@ -40,19 +40,6 @@ public:
   void estimate(channel_estimate& estimate, const resource_grid_reader& grid, const configuration& config) override;
 
 private:
-  /// Parameters for PUSCH DM-RS.
-  struct parameters {
-    bounded_bitset<NRE>  re_pattern;
-    std::array<float, 2> w_f;
-    std::array<float, 2> w_t;
-  };
-
-  /// Parameters for PUSCH DM-RS configuration type 1 as per TS 38.211 Table 6.4.1.1.3-1.
-  static const std::array<parameters, 8> params_type1;
-
-  /// Parameters for PUSCH DM-RS configuration type 2 as per TS 38.211 Table 6.4.1.1.3-2.
-  static const std::array<parameters, 12> params_type2;
-
   /// Maximum supported number of transmission layers.
   static constexpr unsigned MAX_TX_LAYERS = pusch_constants::MAX_NOF_LAYERS;
   /// DMRS for PUSCH reference point \f$k\f$ relative to Point A.
