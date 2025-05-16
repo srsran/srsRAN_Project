@@ -37,9 +37,9 @@ void mac_dl_cell_metric_handler::non_persistent_data::latency_data::save_sample(
 
 // mac_dl_cell_metric_handler
 
-mac_dl_cell_metric_handler::mac_dl_cell_metric_handler(pci_t                                cell_pci_,
-                                                       subcarrier_spacing                   scs,
-                                                       const mac_cell_metric_report_config& metrics_cfg) :
+mac_dl_cell_metric_handler::mac_dl_cell_metric_handler(pci_t                               cell_pci_,
+                                                       subcarrier_spacing                  scs,
+                                                       const mac_cell_config_dependencies& metrics_cfg) :
   cell_pci(cell_pci_),
   period_slots(metrics_cfg.report_period.count() * get_nof_slots_per_subframe(scs)),
   notifier(metrics_cfg.notifier),

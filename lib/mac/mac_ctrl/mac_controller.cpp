@@ -42,7 +42,7 @@ mac_cell_controller& mac_controller::add_cell(const mac_cell_creation_request& c
 
   // > Create MAC Cell DL Handler.
   return dl_unit.add_cell(cell_add_req,
-                          mac_cell_metric_report_config{cell_metrics_cfg.report_period, cell_metrics_cfg.mac_notifier});
+                          mac_cell_config_dependencies{cell_metrics_cfg.report_period, cell_metrics_cfg.mac_notifier});
 }
 
 void mac_controller::remove_cell(du_cell_index_t cell_index)

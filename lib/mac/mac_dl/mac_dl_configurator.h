@@ -15,6 +15,23 @@
 
 namespace srsran {
 
+/// Notifier of subframe starts for a given cell.
+class du_cell_timer_source
+{
+public:
+  using subframe_counter = uint32_t;
+
+  virtual ~du_cell_timer_source() = default;
+
+  virtual void on_cell_activation(unsigned sfn, unsigned subframe) = 0;
+
+  virtual void on_cell_deactivation() = 0;
+
+  virtual void on_tick(unsigned sfn, unsigned subframe) = 0;
+
+  virtual subframe_counter now() const = 0;
+};
+
 /// Notifier used by MAC DL to forward cell metric reports.
 class mac_cell_metric_notifier
 {
@@ -34,8 +51,8 @@ public:
   virtual void on_cell_metric_report(const mac_dl_cell_metric_report& report) = 0;
 };
 
-/// \brief Configuration of a MAC cell metric reporting.
-struct mac_cell_metric_report_config {
+/// \brief Dependencies between a MAC cell and remaining components of the MAC.
+struct mac_cell_config_dependencies {
   /// \brief Period of the metric reporting.
   std::chrono::milliseconds report_period{0};
   /// \brief Pointer to the MAC cell metric notifier.
@@ -49,8 +66,8 @@ public:
   virtual ~mac_dl_cell_manager() = default;
 
   /// Add new cell and set its configuration.
-  virtual mac_cell_controller& add_cell(const mac_cell_creation_request&     cell_cfg,
-                                        const mac_cell_metric_report_config& metrics) = 0;
+  virtual mac_cell_controller& add_cell(const mac_cell_creation_request&    cell_cfg,
+                                        const mac_cell_config_dependencies& deps) = 0;
 
   /// Remove an existing cell configuration.
   virtual void remove_cell(du_cell_index_t cell_index) = 0;

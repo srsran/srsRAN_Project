@@ -64,7 +64,7 @@ public:
   void handle_slot_indication(const mac_cell_timing_context& context) override
   {
     // Step timers by one millisecond.
-    if (context.sl_tx.to_uint() % get_nof_slots_per_subframe(to_subcarrier_spacing(context.sl_tx.numerology())) == 0) {
+    if (context.sl_tx.subframe_slot_index() == 0) {
       // The timer tick is handled in a separate execution context.
       if (not tick_exec.defer()) {
         logger.info("Discarding timer tick={} due to full queue. Retrying later...", context.sl_tx);

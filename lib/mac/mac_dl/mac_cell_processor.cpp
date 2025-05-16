@@ -25,16 +25,17 @@ using namespace srsran;
 /// Maximum PDSH K0 value as per TS38.331 "PDSCH-TimeDomainResourceAllocation".
 static constexpr size_t MAX_K0_DELAY = 32;
 
-mac_cell_processor::mac_cell_processor(const mac_cell_creation_request&     cell_cfg_req_,
-                                       mac_scheduler_cell_info_handler&     sched_,
-                                       du_rnti_table&                       rnti_table,
-                                       mac_cell_result_notifier&            phy_notifier_,
-                                       task_executor&                       cell_exec_,
-                                       task_executor&                       slot_exec_,
-                                       task_executor&                       ctrl_exec_,
-                                       mac_pcap&                            pcap_,
-                                       timer_manager&                       timers_,
-                                       const mac_cell_metric_report_config& metrics_cfg) :
+mac_cell_processor::mac_cell_processor(const mac_cell_creation_request&      cell_cfg_req_,
+                                       mac_scheduler_cell_info_handler&      sched_,
+                                       du_rnti_table&                        rnti_table,
+                                       mac_cell_result_notifier&             phy_notifier_,
+                                       task_executor&                        cell_exec_,
+                                       task_executor&                        slot_exec_,
+                                       task_executor&                        ctrl_exec_,
+                                       mac_pcap&                             pcap_,
+                                       timer_manager&                        timers_,
+                                       std::unique_ptr<du_cell_timer_source> timer_source_,
+                                       const mac_cell_config_dependencies&   dependencies) :
   logger(srslog::fetch_basic_logger("MAC")),
   cell_cfg(cell_cfg_req_),
   cell_exec(cell_exec_),
@@ -59,7 +60,8 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request&     cell
   dlsch_assembler(ue_mng, dl_harq_buffers),
   paging_assembler(pdu_pool),
   sched(sched_),
-  metrics(cell_cfg.pci, cell_cfg.scs_common, metrics_cfg),
+  time_source(std::move(timer_source_)),
+  metrics(cell_cfg.pci, cell_cfg.scs_common, dependencies),
   pcap(pcap_),
   slot_time_mapper(to_numerology_value(cell_cfg_req_.scs_common))
 {
@@ -277,6 +279,12 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point               sl
 {
   // * Start of Critical Path * //
 
+  // Tick DU timers on subframe boundaries.
+  if (sl_tx.subframe_slot_index() == 0) {
+    time_source->on_tick(sl_tx.sfn(), sl_tx.subframe_index());
+  }
+
+  // Initiate metric capturing.
   auto        metrics_meas = metrics.start_slot(sl_tx, enqueue_slot_tp);
   trace_point sched_tp     = metrics_meas.start_time_point();
 

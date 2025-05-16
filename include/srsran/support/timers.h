@@ -84,6 +84,9 @@ public:
   /// Returns the number of running timers handled by this instance.
   size_t nof_running_timers() const;
 
+  /// Gets the current tick count.
+  tick_point_t now() const;
+
 private:
   class manager_impl;
 

@@ -614,6 +614,11 @@ size_t timer_manager::nof_running_timers() const
   return impl->nof_timers_running;
 }
 
+tick_point_t timer_manager::now() const
+{
+  return impl->cur_time.load(std::memory_order_relaxed);
+}
+
 // unique_timer methods
 
 unique_timer& unique_timer::operator=(unique_timer&& other) noexcept
