@@ -123,6 +123,7 @@ def start_and_attach(
     plmn: Optional[PLMN] = None,
     inter_ue_start_period=INTER_UE_START_PERIOD,
     ric: Optional[NearRtRicStub] = None,
+    channel_emulator: Optional[ChannelEmulatorStub] = None,
 ) -> Dict[UEStub, UEAttachedInfo]:
     """
     Start stubs & wait until attach
@@ -137,6 +138,7 @@ def start_and_attach(
         gnb_post_cmd,
         plmn=plmn,
         ric=ric,
+        channel_emulator=channel_emulator,
     )
 
     return ue_start_and_attach(
@@ -146,6 +148,7 @@ def start_and_attach(
         ue_startup_timeout=ue_startup_timeout,
         attach_timeout=attach_timeout,
         inter_ue_start_period=inter_ue_start_period,
+        channel_emulator=channel_emulator,
     )
 
 
