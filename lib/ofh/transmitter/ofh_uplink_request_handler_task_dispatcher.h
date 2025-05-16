@@ -20,14 +20,16 @@ namespace ofh {
 class uplink_request_handler_task_dispatcher : public uplink_request_handler
 {
   const unsigned          sector_id;
+  srslog::basic_logger&   logger;
   uplink_request_handler& uplink_handler;
   task_executor&          executor;
 
 public:
   uplink_request_handler_task_dispatcher(unsigned                sector_id_,
+                                         srslog::basic_logger&   logger_,
                                          uplink_request_handler& uplink_handler_,
                                          task_executor&          executor_) :
-    sector_id(sector_id_), uplink_handler(uplink_handler_), executor(executor_)
+    sector_id(sector_id_), logger(logger_), uplink_handler(uplink_handler_), executor(executor_)
   {
   }
 

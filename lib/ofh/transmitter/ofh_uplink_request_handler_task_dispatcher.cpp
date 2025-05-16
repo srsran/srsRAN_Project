@@ -19,7 +19,7 @@ void uplink_request_handler_task_dispatcher::handle_prach_occasion(const prach_b
                                                                    prach_buffer&               buffer)
 {
   if (!executor.execute([context, &buffer, this]() { uplink_handler.handle_prach_occasion(context, buffer); })) {
-    srslog::fetch_basic_logger("OFH").warning(
+    logger.warning(
         "Sector#{}: failed to handle PRACH in the uplink request handler for slot '{}'", sector_id, context.slot);
   }
 }
@@ -28,7 +28,7 @@ void uplink_request_handler_task_dispatcher::handle_new_uplink_slot(const resour
                                                                     const shared_resource_grid&  grid)
 {
   if (!executor.execute([context, rg = grid.copy(), this]() { uplink_handler.handle_new_uplink_slot(context, rg); })) {
-    srslog::fetch_basic_logger("OFH").warning(
+    logger.warning(
         "Sector#{}: failed to handle uplink slot in the uplink request handler for slot '{}'", sector_id, context.slot);
   }
 }

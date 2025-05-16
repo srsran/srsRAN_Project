@@ -174,6 +174,7 @@ resolve_transmitter_dependencies(const transmitter_config&                      
   auto frame_pool = create_eth_frame_pool(tx_config, logger);
 
   dependencies.dl_df_cplane = std::make_unique<data_flow_cplane_downlink_task_dispatcher>(
+      logger,
       create_data_flow_cplane_sched(tx_config,
                                     tx_config.is_downlink_static_compr_hdr_enabled,
                                     logger,
@@ -184,9 +185,10 @@ resolve_transmitter_dependencies(const transmitter_config&                      
       tx_config.sector);
 
   dependencies.dl_df_uplane = std::make_unique<data_flow_uplane_downlink_task_dispatcher>(
-      create_data_flow_uplane_data(tx_config, logger, frame_pool), downlink_executor, tx_config.sector);
+      logger, create_data_flow_uplane_data(tx_config, logger, frame_pool), downlink_executor, tx_config.sector);
 
   dependencies.ul_df_cplane = std::make_unique<data_flow_cplane_downlink_task_dispatcher>(
+      logger,
       create_data_flow_cplane_sched(tx_config,
                                     tx_config.is_uplink_static_compr_hdr_enabled,
                                     logger,
