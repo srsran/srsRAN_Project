@@ -171,6 +171,12 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
   auto slot_idx = context.slot;
   if (is_short_preamble(context.format)) {
     ul_prach_repo->add(context, buffer, std::nullopt, std::nullopt);
+    if (SRSRAN_UNLIKELY(context.nof_td_occasions > 1)) {
+      logger.info("Sector#{}: PRACH with multiple time-domain occasions is configured, however only the first occasion "
+                  "will be used in slot '{}'",
+                  context.sector,
+                  context.slot);
+    }
   } else {
     // Determine slot index where the PRACH U-Plane is expected.
     slot_idx = get_long_prach_expected_slot(context);
