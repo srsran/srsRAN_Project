@@ -35,6 +35,7 @@ mac_impl::mac_impl(const mac_config& params) :
                                params.ue_exec_mapper,
                                params.cell_exec_mapper,
                                params.ctrl_exec,
+                               params.timer_exec,
                                params.timers,
                                mac_control_config::metrics_config{params.metrics.period,
                                                                   params.metrics.notifier,

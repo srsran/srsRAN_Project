@@ -16,10 +16,7 @@ using namespace srsran;
 mac_dl_processor::mac_dl_processor(const mac_dl_config&             mac_cfg,
                                    mac_scheduler_cell_info_handler& sched_,
                                    du_rnti_table&                   rnti_table_) :
-  cfg(mac_cfg),
-  rnti_table(rnti_table_),
-  sched(sched_),
-  time_ctrl(cfg.timers, cfg.ctrl_exec, srslog::fetch_basic_logger("MAC"))
+  cfg(mac_cfg), rnti_table(rnti_table_), sched(sched_)
 {
 }
 
@@ -28,13 +25,10 @@ bool mac_dl_processor::has_cell(du_cell_index_t cell_index) const
   return cell_index < MAX_NOF_DU_CELLS and cells[cell_index] != nullptr;
 }
 
-mac_cell_controller& mac_dl_processor::add_cell(const mac_cell_creation_request&    cell_cfg_req,
-                                                const mac_cell_config_dependencies& dependencies)
+mac_cell_controller& mac_dl_processor::add_cell(const mac_cell_creation_request& cell_cfg_req,
+                                                mac_cell_config_dependencies     dependencies)
 {
   srsran_assert(not has_cell(cell_cfg_req.cell_index), "Overwriting existing cell is invalid.");
-
-  // Create a time ticking source for the cell.
-  auto cell_time_ticker = time_ctrl.add_cell(cell_cfg_req.cell_index);
 
   // Create MAC cell and add it to list.
   cells[cell_cfg_req.cell_index] =
@@ -47,8 +41,7 @@ mac_cell_controller& mac_dl_processor::add_cell(const mac_cell_creation_request&
                                            cfg.ctrl_exec,
                                            cfg.pcap,
                                            cfg.timers,
-                                           std::move(cell_time_ticker),
-                                           dependencies);
+                                           std::move(dependencies));
 
   return *cells[cell_cfg_req.cell_index];
 }

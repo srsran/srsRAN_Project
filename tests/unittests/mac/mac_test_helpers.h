@@ -91,7 +91,7 @@ public:
 
   bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) override { return true; }
   void handle_cell_removal_request(du_cell_index_t cell_index) override {}
-  void handle_cell_activation_request(du_cell_index_t cell_index) override {}
+  void handle_cell_activation_request(du_cell_index_t cell_index, slot_point_extended sl_tx) override {}
   void handle_cell_deactivation_request(du_cell_index_t cell_index) override {}
   void handle_rach_indication(const rach_indication_message& msg) override { last_rach_ind = msg; }
   void handle_ue_creation_request(const sched_ue_creation_request_message& ue_request) override {}
@@ -124,7 +124,7 @@ public:
 
   void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs) override {}
 
-  void start_cell(du_cell_index_t cell_idx) override { active = true; }
+  void start_cell(du_cell_index_t cell_idx, slot_point_extended sl_tx) override { active = true; }
 
   void stop_cell(du_cell_index_t cell_idx) override { active = false; }
 

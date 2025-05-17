@@ -56,10 +56,10 @@ void scheduler_impl::handle_cell_removal_request(du_cell_index_t cell_index)
   cfg_mng.rem_cell(cell_index);
 }
 
-void scheduler_impl::handle_cell_activation_request(du_cell_index_t cell_index)
+void scheduler_impl::handle_cell_activation_request(du_cell_index_t cell_index, slot_point_extended sl_tx)
 {
   srsran_assert(cells.contains(cell_index), "cell={} does not exist", fmt::underlying(cell_index));
-  cells[cell_index]->start();
+  cells[cell_index]->start(sl_tx);
 }
 
 void scheduler_impl::handle_cell_deactivation_request(du_cell_index_t cell_index)

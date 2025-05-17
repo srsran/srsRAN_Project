@@ -11,6 +11,8 @@
 #pragma once
 
 #include "srsran/ran/du_types.h"
+#include "srsran/ran/slot_point.h"
+#include "srsran/ran/slot_point_extended.h"
 #include "srsran/srslog/logger.h"
 #include <array>
 
@@ -20,8 +22,8 @@ class timer_manager;
 class task_executor;
 class du_cell_timer_source;
 
-using subframe_counter = uint32_t;
-
+/// \brief This entity is responsible for gathering the SFNs and subframes of all the cells, keep track of HFN
+/// increments, tick DU timers.
 class du_time_controller
 {
 public:
@@ -33,22 +35,20 @@ private:
   class time_ticker_impl;
 
   struct cell_context {
-    bool             active{false};
-    subframe_counter last_counter{0};
-    std::atomic<int> next{-1};
+    bool                active{false};
+    slot_point_extended last_counter;
+    std::atomic<int>    next{-1};
   };
 
   bool push_back_new_cell(du_cell_index_t cell_index);
 
   bool rem_cell(du_cell_index_t cell_index);
 
-  void handle_cell_activation(du_cell_index_t cell_index, unsigned sfn, unsigned subframe);
+  void handle_cell_activation(du_cell_index_t cell_index, slot_point sl_tx);
 
   void handle_cell_deactivation(du_cell_index_t cell_index);
 
-  void handle_slot_ind(du_cell_index_t cell_index, unsigned sfn, unsigned subframe);
-
-  subframe_counter now(du_cell_index_t cell_index) const;
+  slot_point_extended handle_slot_ind(du_cell_index_t cell_index, slot_point sl_tx);
 
   timer_manager&        timers;
   task_executor&        tick_exec;
@@ -56,8 +56,8 @@ private:
 
   std::array<cell_context, MAX_NOF_DU_CELLS> cells;
 
-  std::atomic<int>              head{-1};
-  std::atomic<subframe_counter> master_count{0};
+  std::atomic<int>      head{-1};
+  std::atomic<uint32_t> master_count{0};
 };
 
 } // namespace srsran

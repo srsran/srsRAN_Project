@@ -46,6 +46,7 @@ protected:
              sched_config_helper::make_default_sched_cell_configuration_request()),
     metrics(cell_cfg, sched_cell_configuration_request_message::metrics_config{period, &metrics_notif})
   {
+    metrics.handle_cell_activation(slot_point_extended{next_sl_tx, 0});
     metrics.handle_ue_creation(test_ue_index, to_rnti(0x4601), pci_t{0});
   }
 

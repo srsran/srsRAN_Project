@@ -17,6 +17,7 @@
 #include "positioning_handler.h"
 #include "rlf_detector.h"
 #include "uci_cell_decoder.h"
+#include "srsran/ran/slot_point_extended.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/support/async/manual_event.h"
 
@@ -35,7 +36,10 @@ public:
 
   void remove_cell(du_cell_index_t cell_index) override;
 
-  void start_cell(du_cell_index_t cell_index) override { sched_impl->handle_cell_activation_request(cell_index); }
+  void start_cell(du_cell_index_t cell_index, slot_point_extended sl_tx) override
+  {
+    sched_impl->handle_cell_activation_request(cell_index, sl_tx);
+  }
 
   void stop_cell(du_cell_index_t cell_index) override { sched_impl->handle_cell_deactivation_request(cell_index); }
 
@@ -138,7 +142,7 @@ private:
   /// Handler of RACH indications.
   mac_rach_handler rach_handler;
 
-  std::atomic<slot_point>                                     last_slot_point;
+  std::atomic<slot_point_extended>                            last_slot_point;
   std::atomic<std::chrono::high_resolution_clock::time_point> last_slot_tp;
 
   /// List of event flags used by scheduler to notify that the configuration is complete.

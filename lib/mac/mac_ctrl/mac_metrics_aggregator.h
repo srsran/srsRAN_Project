@@ -51,7 +51,7 @@ private:
   /// Called when pending reports should be handled.
   void handle_pending_reports();
 
-  void handle_cell_activation(du_cell_index_t cell_index, slot_point report_slot, unsigned report_hf_count);
+  void handle_cell_activation(du_cell_index_t cell_index, slot_point_extended report_slot);
 
   void handle_cell_deactivation(du_cell_index_t cell_index, const mac_dl_cell_metric_report& last_report);
 
@@ -71,7 +71,7 @@ private:
   slotted_id_table<du_cell_index_t, std::unique_ptr<cell_metric_handler>, MAX_CELLS_PER_DU> cells;
 
   /// Expected start slot for the next report.
-  slot_point next_report_start_slot;
+  slot_point_extended next_report_start_slot;
 
   /// Number of cells currently active.
   unsigned nof_active_cells = 0;

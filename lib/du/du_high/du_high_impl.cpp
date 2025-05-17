@@ -50,43 +50,6 @@ public:
   mac_f1ap_paging_handler f1ap_paging_notifier;
 };
 
-/// Cell slot handler that additionally increments the DU high timers.
-class du_high_slot_handler final : public mac_cell_slot_handler
-{
-public:
-  du_high_slot_handler(timer_manager& timers_, mac_interface& mac_, task_executor& tick_exec_) :
-    timers(timers_),
-    mac(mac_),
-    tick_exec(tick_exec_, [this]() { timers.tick(); }),
-    logger(srslog::fetch_basic_logger("MAC"))
-  {
-  }
-  void handle_slot_indication(const mac_cell_timing_context& context) override
-  {
-    // Step timers by one millisecond.
-    if (context.sl_tx.subframe_slot_index() == 0) {
-      // The timer tick is handled in a separate execution context.
-      if (not tick_exec.defer()) {
-        logger.info("Discarding timer tick={} due to full queue. Retrying later...", context.sl_tx);
-      }
-    }
-
-    // Handle slot indication in MAC & Scheduler.
-    mac.get_slot_handler(to_du_cell_index(0)).handle_slot_indication(context);
-  }
-
-  void handle_error_indication(slot_point sl_tx, error_event event) override
-  {
-    mac.get_slot_handler(to_du_cell_index(0)).handle_error_indication(sl_tx, event);
-  }
-
-private:
-  timer_manager&                    timers;
-  mac_interface&                    mac;
-  task_redispatcher<task_executor&> tick_exec;
-  srslog::basic_logger&             logger;
-};
-
 du_high_impl::du_high_impl(const du_high_configuration& config_, const du_high_dependencies& dependencies) :
   cfg(config_),
   logger(srslog::fetch_basic_logger("DU")),
@@ -98,6 +61,7 @@ du_high_impl::du_high_impl(const du_high_configuration& config_, const du_high_d
                                       dependencies.exec_mapper->ue_mapper(),
                                       dependencies.exec_mapper->cell_mapper(),
                                       dependencies.exec_mapper->du_control_executor(),
+                                      dependencies.exec_mapper->du_timer_executor(),
                                       *dependencies.phy_adapter,
                                       cfg.ran.mac_cfg,
                                       *dependencies.mac_p,
@@ -137,10 +101,6 @@ du_high_impl::du_high_impl(const du_high_configuration& config_, const du_high_d
 
   // Connect Layer<->DU manager adapters.
   adapters->connect(*du_manager, *mac);
-
-  // Cell slot handler.
-  main_cell_slot_handler =
-      std::make_unique<du_high_slot_handler>(timers, *mac, dependencies.exec_mapper->du_timer_executor());
 }
 
 du_high_impl::~du_high_impl()
@@ -203,9 +163,6 @@ mac_pdu_handler& du_high_impl::get_pdu_handler()
 
 mac_cell_slot_handler& du_high_impl::get_slot_handler(du_cell_index_t cell_idx)
 {
-  if (cell_idx == 0) {
-    return *main_cell_slot_handler;
-  }
   return mac->get_slot_handler(cell_idx);
 }
 

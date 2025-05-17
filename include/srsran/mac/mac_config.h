@@ -53,6 +53,7 @@ struct mac_config {
   srs_du::du_high_ue_executor_mapper&   ue_exec_mapper;
   srs_du::du_high_cell_executor_mapper& cell_exec_mapper;
   task_executor&                        ctrl_exec;
+  task_executor&                        timer_exec;
   mac_result_notifier&                  phy_notifier;
   mac_expert_config                     mac_cfg;
   mac_pcap&                             pcap;

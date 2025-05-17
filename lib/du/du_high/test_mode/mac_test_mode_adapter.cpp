@@ -610,6 +610,7 @@ std::unique_ptr<mac_interface> srsran::srs_du::create_du_high_mac(const mac_conf
                                               mac_cfg.ue_exec_mapper,
                                               mac_cfg.cell_exec_mapper,
                                               mac_cfg.ctrl_exec,
+                                              mac_cfg.timer_exec,
                                               mac_testmode->get_phy_notifier(),
                                               mac_cfg.mac_cfg,
                                               mac_cfg.pcap,

@@ -44,6 +44,7 @@ protected:
                             ul_exec_mapper,
                             dl_exec_mapper,
                             worker,
+                            worker,
                             timers,
                             mac_control_config::metrics_config{std::chrono::milliseconds{1000}, mac_notifier, nullptr}};
   mac_ul_dummy_configurer     ul_unit;

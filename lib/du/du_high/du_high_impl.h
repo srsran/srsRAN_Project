@@ -63,8 +63,6 @@ private:
   std::unique_ptr<du_manager_interface> du_manager;
   std::unique_ptr<f1ap_du>              f1ap;
   std::unique_ptr<mac_interface>        mac;
-
-  std::unique_ptr<mac_cell_slot_handler> main_cell_slot_handler;
 };
 
 } // namespace srs_du

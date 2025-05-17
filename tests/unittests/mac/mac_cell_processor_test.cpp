@@ -8,7 +8,7 @@
  *
  */
 
-#include "lib/mac/mac_dl/du_time_controller.h"
+#include "lib/mac/mac_ctrl/du_time_controller.h"
 #include "lib/mac/mac_dl/mac_cell_processor.h"
 #include "mac_test_helpers.h"
 #include "srsran/mac/mac_cell_timing_context.h"
@@ -31,8 +31,7 @@ public:
              task_worker,
              pcap,
              timers,
-             timer_ctrl.add_cell(to_du_cell_index(0)),
-             {})
+             {timer_ctrl.add_cell(to_du_cell_index(0))})
   {
     next_slot = {to_numerology_value(builder_params.scs_common), 0};
   }

@@ -47,7 +47,7 @@ cell_metrics_handler::cell_metrics_handler(
   nof_slots_per_sf(get_nof_slots_per_subframe(cell_cfg.scs_common)),
   report_period_slots(report_period.count() * nof_slots_per_sf)
 {
-  if (not connected()) {
+  if (report_period_slots == 0) {
     return;
   }
 
@@ -66,35 +66,39 @@ cell_metrics_handler::~cell_metrics_handler()
 
 void cell_metrics_handler::handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci)
 {
-  if (not connected()) {
+  if (not enabled()) {
     return;
   }
+
   ues.emplace(ue_index);
   ues[ue_index].rnti     = rnti;
   ues[ue_index].ue_index = ue_index;
   ues[ue_index].pci      = pcell_pci;
   rnti_to_ue_index_lookup.emplace(rnti, ue_index);
 
-  next_report->events.push_back(scheduler_cell_event{last_slot_tx, rnti, scheduler_cell_event::event_type::ue_add});
+  next_report->events.push_back(
+      scheduler_cell_event{last_slot_tx.without_hfn(), rnti, scheduler_cell_event::event_type::ue_add});
 }
 
 void cell_metrics_handler::handle_ue_reconfiguration(du_ue_index_t ue_index)
 {
-  if (not connected()) {
+  if (not enabled()) {
     return;
   }
-  next_report->events.push_back(
-      scheduler_cell_event{last_slot_tx, ues[ue_index].rnti, scheduler_cell_event::event_type::ue_reconf});
+  next_report->events.push_back(scheduler_cell_event{
+      last_slot_tx.without_hfn(), ues[ue_index].rnti, scheduler_cell_event::event_type::ue_reconf});
 }
 
 void cell_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
 {
-  if (not connected()) {
+  if (not enabled()) {
     return;
   }
   if (ues.contains(ue_index)) {
     rnti_t rnti = ues[ue_index].rnti;
-    next_report->events.push_back(scheduler_cell_event{last_slot_tx, rnti, scheduler_cell_event::event_type::ue_rem});
+
+    next_report->events.push_back(
+        scheduler_cell_event{last_slot_tx.without_hfn(), rnti, scheduler_cell_event::event_type::ue_rem});
 
     rnti_to_ue_index_lookup.erase(rnti);
     ues.erase(ue_index);
@@ -103,7 +107,7 @@ void cell_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
 
 void cell_metrics_handler::handle_rach_indication(const rach_indication_message& msg, slot_point sl_tx)
 {
-  if (not connected()) {
+  if (not enabled()) {
     return;
   }
   unsigned slot_diff = sl_tx - msg.slot_rx;
@@ -115,7 +119,7 @@ void cell_metrics_handler::handle_rach_indication(const rach_indication_message&
 
 void cell_metrics_handler::handle_msg3_crc_indication(const ul_crc_pdu_indication& crc_pdu)
 {
-  if (not connected()) {
+  if (not enabled()) {
     return;
   }
 
@@ -130,7 +134,7 @@ void cell_metrics_handler::handle_crc_indication(slot_point                   sl
                                                  const ul_crc_pdu_indication& crc_pdu,
                                                  units::bytes                 tbs)
 {
-  if (not connected()) {
+  if (not enabled()) {
     return;
   }
   if (ues.contains(crc_pdu.ue_index)) {
@@ -159,7 +163,7 @@ void cell_metrics_handler::handle_crc_indication(slot_point                   sl
 
 void cell_metrics_handler::handle_srs_indication(const srs_indication::srs_indication_pdu& srs_pdu, unsigned ri)
 {
-  if (not connected()) {
+  if (not enabled()) {
     return;
   }
   if (ues.contains(srs_pdu.ue_index)) {
@@ -233,7 +237,7 @@ void cell_metrics_handler::handle_harq_timeout(du_ue_index_t ue_index, bool is_d
 
 void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_pdu& pdu, bool is_sr_opportunity_and_f1)
 {
-  if (not connected()) {
+  if (not enabled()) {
     return;
   }
   if (ues.contains(pdu.ue_index)) {
@@ -302,7 +306,7 @@ void cell_metrics_handler::handle_sr_indication(du_ue_index_t ue_index)
 
 void cell_metrics_handler::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr)
 {
-  if (not connected()) {
+  if (not enabled()) {
     return;
   }
   if (ues.contains(bsr.ue_index)) {
@@ -319,7 +323,7 @@ void cell_metrics_handler::handle_ul_bsr_indication(const ul_bsr_indication_mess
 
 void cell_metrics_handler::handle_ul_phr_indication(const ul_phr_indication_message& phr_ind)
 {
-  if (not connected()) {
+  if (not enabled()) {
     return;
   }
   if (ues.contains(phr_ind.ue_index)) {
@@ -340,7 +344,7 @@ void cell_metrics_handler::handle_ul_phr_indication(const ul_phr_indication_mess
 
 void cell_metrics_handler::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& dl_bs)
 {
-  if (not connected()) {
+  if (not enabled()) {
     return;
   }
   if (ues.contains(dl_bs.ue_index)) {
@@ -366,6 +370,14 @@ void cell_metrics_handler::handle_late_ul_harqs()
   ++data.nof_failed_pusch_allocs_late_harqs;
 }
 
+void cell_metrics_handler::handle_cell_activation(slot_point_extended sl_tx)
+{
+  if (not enabled()) {
+    return;
+  }
+  slot_tx_at_start.store(sl_tx, std::memory_order_relaxed);
+}
+
 void cell_metrics_handler::report_metrics()
 {
   for (ue_metric_context& ue : ues) {
@@ -374,7 +386,7 @@ void cell_metrics_handler::report_metrics()
   }
 
   next_report->pci                       = cell_cfg.pci;
-  next_report->slot                      = last_slot_tx - report_period_slots;
+  next_report->slot                      = last_slot_tx.without_hfn() - report_period_slots;
   next_report->nof_slots                 = report_period_slots;
   next_report->nof_error_indications     = data.error_indication_counter;
   next_report->average_decision_latency  = data.decision_latency_sum / report_period_slots;
@@ -412,9 +424,10 @@ void cell_metrics_handler::report_metrics()
 void cell_metrics_handler::handle_slot_result(const sched_result&       slot_result,
                                               std::chrono::microseconds slot_decision_latency)
 {
-  if (not connected()) {
+  if (not enabled()) {
     return;
   }
+
   data.nof_ue_pdsch_grants += slot_result.dl.ue_grants.size();
   for (const dl_msg_alloc& dl_grant : slot_result.dl.ue_grants) {
     auto it = rnti_to_ue_index_lookup.find(dl_grant.pdsch_cfg.rnti);
@@ -467,7 +480,7 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
   data.decision_latency_sum += slot_decision_latency;
   if (data.max_decision_latency < slot_decision_latency) {
     data.max_decision_latency      = slot_decision_latency;
-    data.max_decision_latency_slot = last_slot_tx;
+    data.max_decision_latency_slot = last_slot_tx.without_hfn();
   }
   unsigned bin_idx = slot_decision_latency.count() / scheduler_cell_metrics::nof_usec_per_bin;
   bin_idx          = std::min(bin_idx, scheduler_cell_metrics::latency_hist_bins - 1);
@@ -482,33 +495,37 @@ void cell_metrics_handler::push_result(slot_point                sl_tx,
                                        const sched_result&       slot_result,
                                        std::chrono::microseconds slot_decision_latency)
 {
-  if (report_period_slots == 0) {
+  if (not enabled()) {
     return;
   }
 
-  if (SRSRAN_UNLIKELY(not last_slot_tx.valid())) {
-    // We enter here in the first call to this function.
-    // We will make the \c next_report_slot aligned with the period.
-    const unsigned mod_val            = sl_tx.to_uint() % report_period_slots;
-    const unsigned slots_until_report = mod_val > 0 ? report_period_slots - mod_val : 0;
-    next_report_slot                  = sl_tx + slots_until_report;
-    next_report_hfn                   = (report_period_slots / (NOF_SFNS * NOF_SUBFRAMES_PER_FRAME));
-  } else if (sl_tx.to_uint() < last_slot_tx.to_uint()) {
-    // SFN wrap-around detected.
-    last_hfn++;
+  if (not next_report_slot_tx.valid()) {
+    // Determine whether cell was started. If so, setup next report slot.
+    auto slot_tx_ext = slot_tx_at_start.load(std::memory_order_relaxed);
+    if (not slot_tx_ext.valid()) {
+      return;
+    }
+    last_slot_tx        = slot_tx_ext;
+    unsigned slot_mod   = last_slot_tx.count() % report_period_slots;
+    next_report_slot_tx = last_slot_tx + report_period_slots - slot_mod;
   }
-  last_slot_tx = sl_tx;
+
+  // Update last slot tx accounting for HFN.
+  slot_point_extended next_sl_tx{sl_tx, last_slot_tx.hfn()};
+  if (next_sl_tx < last_slot_tx) {
+    // HFN rollover.
+    next_sl_tx += sl_tx.nof_slots_per_system_frame();
+  }
+  last_slot_tx = next_sl_tx;
 
   handle_slot_result(slot_result, slot_decision_latency);
 
-  if (sl_tx >= next_report_slot and last_hfn >= next_report_hfn) {
+  if (last_slot_tx >= next_report_slot_tx) {
     // Prepare report and forward it to the notifier.
     report_metrics();
 
     // Set next report slot.
-    next_report_slot += report_period_slots;
-    const bool sfn_wrap = next_report_slot.to_uint() < sl_tx.to_uint();
-    next_report_hfn += (report_period_slots / (NOF_SFNS * NOF_SUBFRAMES_PER_FRAME)) + (sfn_wrap ? 1 : 0);
+    next_report_slot_tx += report_period_slots;
   }
 }
 

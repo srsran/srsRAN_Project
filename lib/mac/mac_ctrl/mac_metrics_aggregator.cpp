@@ -60,27 +60,24 @@ public:
   {
   }
 
-  bool is_report_required(slot_point slot_tx) override
+  bool is_report_required(slot_point_extended slot_tx) override
   {
     // Note: Called from the cell execution context.
-    last_hf_count += (slot_tx.to_uint() < last_sl_tx.to_uint()) ? 1 : 0;
     last_sl_tx                       = slot_tx;
     const bool sched_report_is_ready = mac_builder != nullptr;
-    return sched_report_is_ready and slot_tx >= next_report_slot_tx and last_hf_count >= next_report_hf_count;
+    return sched_report_is_ready and slot_tx >= next_report_slot_tx;
   }
 
-  void on_cell_activation(slot_point slot_tx) override
+  void on_cell_activation(slot_point_extended slot_tx) override
   {
     // Determine the next report slot.
-    last_sl_tx                    = slot_tx;
-    unsigned slot_mod             = slot_tx.to_uint() % period_slots;
-    next_report_slot_tx           = slot_tx + period_slots - slot_mod;
-    const bool slot_wrap_detected = next_report_slot_tx.to_uint() < slot_tx.to_uint();
-    next_report_hf_count = (period_slots / (NOF_SFNS * NOF_SUBFRAMES_PER_FRAME)) + (slot_wrap_detected ? 1 : 0);
+    last_sl_tx          = slot_tx;
+    unsigned slot_mod   = slot_tx.to_uint() % period_slots;
+    next_report_slot_tx = slot_tx + period_slots - slot_mod;
 
     // Notify the backend of a cell activation.
-    defer_until_success(parent.ctrl_exec, parent.timers, [this, sl = next_report_slot_tx, hf = next_report_hf_count]() {
-      parent.handle_cell_activation(cell_index, sl, hf);
+    defer_until_success(parent.ctrl_exec, parent.timers, [this, sl = next_report_slot_tx]() {
+      parent.handle_cell_activation(cell_index, sl);
     });
   }
 
@@ -149,7 +146,7 @@ private:
     // Note: This function is called from the scheduler execution context.
     srsran_sanity_check(&report == &sched_builder->sched, "Invalid report being committed");
 
-    if (report.slot + report.nof_slots != next_report_slot_tx) {
+    if (not next_report_slot_tx.valid() or report.slot + report.nof_slots != next_report_slot_tx.without_hfn()) {
       // Scheduler report is out of window. Do not commit it.
       report.ue_metrics.clear();
       report.events.clear();
@@ -179,10 +176,8 @@ private:
   mac_dl_cell_metric_report last_report{};
 
   // Cached metric report being built.
-  slot_point last_sl_tx;
-  slot_point next_report_slot_tx;
-  unsigned   last_hf_count{0};
-  unsigned   next_report_hf_count{0};
+  slot_point_extended last_sl_tx;
+  slot_point_extended next_report_slot_tx;
 
   // Stateful flags access from the control executor.
   bool active_flag = false;
@@ -267,7 +262,7 @@ bool mac_metrics_aggregator::pop_report(cell_metric_handler& cell)
   const slot_point start_slot          = next_ev->sched.slot;
   const slot_point start_report_window = start_slot - (start_slot.to_uint() % cell.period_slots);
 
-  if (start_report_window == next_report_start_slot) {
+  if (start_report_window == next_report_start_slot.without_hfn()) {
     // Report is within expected window.
     // Note: This check is only effective for report periods that are not a multiple of a SFN. However, if a report
     // period is as long as a SFN, it is unlikely for it to be in the queue.
@@ -279,14 +274,14 @@ bool mac_metrics_aggregator::pop_report(cell_metric_handler& cell)
     return true;
   }
 
-  if (start_report_window == next_report_start_slot + cell.period_slots) {
+  if (start_report_window == next_report_start_slot.without_hfn() + cell.period_slots) {
     // Report is the one coming right after the expected one. Leave it in the queue to be dequeued later.
     return false;
   }
 
   // Report falls in invalid window. Discard it.
   cell.report_queue.pop();
-  if (start_report_window == next_report_start_slot - cell.period_slots) {
+  if (start_report_window == next_report_start_slot.without_hfn() - cell.period_slots) {
     logger.info("cell={}: Discarding old metric report for slot {}", fmt::underlying(cell.cell_index), start_slot);
   } else {
     logger.warning("cell={}: Discarding metric report falling in invalid report window",
@@ -316,9 +311,7 @@ void mac_metrics_aggregator::try_send_new_report()
   next_report.sched.cells.clear();
 }
 
-void mac_metrics_aggregator::handle_cell_activation(du_cell_index_t cell_index,
-                                                    slot_point      report_sl_tx,
-                                                    unsigned        report_hf_count)
+void mac_metrics_aggregator::handle_cell_activation(du_cell_index_t cell_index, slot_point_extended report_sl_tx)
 {
   srsran_assert(cells.contains(cell_index), "MAC cell activated but not configured");
   auto& cell = *cells[cell_index];

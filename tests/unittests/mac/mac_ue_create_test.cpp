@@ -78,6 +78,7 @@ protected:
                              ul_exec_mapper,
                              dl_exec_mapper,
                              worker,
+                             worker,
                              timers,
                              mac_control_config::metrics_config{.mac_notifier = mac_notifier}};
   mac_ctrl_dummy_configurer   mac_ctrl;

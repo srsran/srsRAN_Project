@@ -151,10 +151,9 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
   const unsigned nof_slots_per_sf;
   const unsigned report_period_slots;
 
-  unsigned   last_hfn = 0;
-  slot_point last_slot_tx;
-  unsigned   next_report_hfn = 0;
-  slot_point next_report_slot;
+  std::atomic<slot_point_extended> slot_tx_at_start;
+  slot_point_extended              last_slot_tx;
+  slot_point_extended              next_report_slot_tx;
 
   slotted_id_vector<du_ue_index_t, ue_metric_context> ues;
   flat_map<rnti_t, du_ue_index_t>                     rnti_to_ue_index_lookup;
@@ -227,11 +226,14 @@ public:
   /// \brief Handle late UL HARQ indication.
   void handle_late_ul_harqs();
 
+  /// Called when the cell is activated.
+  void handle_cell_activation(slot_point_extended sl_tx);
+
   /// \brief Handle results stored in the scheduler result and push new entry.
   void push_result(slot_point sl_tx, const sched_result& slot_result, std::chrono::microseconds slot_decision_latency);
 
   /// \brief Checks whether the metrics reporting is active.
-  bool connected() const { return report_period != std::chrono::milliseconds{0}; }
+  bool enabled() const { return report_period_slots != 0; }
 
 private:
   void handle_pucch_sinr(ue_metric_context& u, float sinr);

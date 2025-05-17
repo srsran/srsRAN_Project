@@ -22,6 +22,9 @@ constexpr uint32_t NOF_SUBFRAMES_PER_FRAME = 10;
 /// Number of system Frame Number values.
 constexpr size_t NOF_SFNS = 1024;
 
+/// Number of Hyper-Frame Number values.
+constexpr size_t NOF_HFNS = 1024;
+
 /// Duration of a subframe in milliseconds.
 constexpr uint32_t SUBFRAME_DURATION_MSEC = 1;
 
@@ -120,6 +123,7 @@ public:
   /// Conversion of slot_point to system slot.
   constexpr uint32_t system_slot() const { return count_val; }
   constexpr uint32_t to_uint() const { return count_val; }
+  constexpr uint32_t count() const { return count_val; }
   constexpr explicit operator uint32_t() const { return count_val; }
 
   /// Get Half Radio Frame size in number of slots.

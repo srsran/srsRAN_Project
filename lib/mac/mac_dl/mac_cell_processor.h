@@ -30,17 +30,16 @@ class timer_manager;
 class mac_cell_processor final : public mac_cell_slot_handler, public mac_cell_controller
 {
 public:
-  mac_cell_processor(const mac_cell_creation_request&      cell_cfg_req,
-                     mac_scheduler_cell_info_handler&      sched,
-                     du_rnti_table&                        rnti_table,
-                     mac_cell_result_notifier&             phy_notifier,
-                     task_executor&                        cell_exec,
-                     task_executor&                        slot_exec,
-                     task_executor&                        ctrl_exec,
-                     mac_pcap&                             pcap,
-                     timer_manager&                        timers,
-                     std::unique_ptr<du_cell_timer_source> timer_source,
-                     const mac_cell_config_dependencies&   dependencies);
+  mac_cell_processor(const mac_cell_creation_request& cell_cfg_req,
+                     mac_scheduler_cell_info_handler& sched,
+                     du_rnti_table&                   rnti_table,
+                     mac_cell_result_notifier&        phy_notifier,
+                     task_executor&                   cell_exec,
+                     task_executor&                   slot_exec,
+                     task_executor&                   ctrl_exec,
+                     mac_pcap&                        pcap,
+                     timer_manager&                   timers,
+                     mac_cell_config_dependencies     dependencies);
 
   /// Starts configured cell.
   async_task<void> start() override;

@@ -35,6 +35,7 @@ struct mac_control_config {
   srs_du::du_high_ue_executor_mapper&   ue_exec_mapper;
   srs_du::du_high_cell_executor_mapper& cell_exec_mapper;
   task_executor&                        ctrl_exec;
+  task_executor&                        timer_exec;
   timer_manager&                        timers;
   metrics_config                        metrics;
   srslog::basic_logger&                 logger = srslog::fetch_basic_logger("MAC", true);

@@ -20,6 +20,7 @@
 #include "srsran/ran/rrm.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/slot_point.h"
+#include "srsran/ran/slot_point_extended.h"
 #include "srsran/ran/sr_configuration.h"
 #include "srsran/ran/ssb/ssb_configuration.h"
 #include "srsran/ran/subcarrier_spacing.h"
@@ -211,7 +212,7 @@ public:
   virtual void handle_rach_indication(const rach_indication_message& msg) = 0;
 
   /// \brief Activate a configured cell. This method has no effect if the cell is already active.
-  virtual void handle_cell_activation_request(du_cell_index_t cell_index) = 0;
+  virtual void handle_cell_activation_request(du_cell_index_t cell_index, slot_point_extended sl_tx) = 0;
 
   /// \brief Deactivate a configured cell. This method has no effect if the cell is already deactivated.
   virtual void handle_cell_deactivation_request(du_cell_index_t cell_index) = 0;

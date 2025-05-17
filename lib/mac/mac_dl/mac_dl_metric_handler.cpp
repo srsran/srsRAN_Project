@@ -70,7 +70,7 @@ void mac_dl_cell_metric_handler::on_cell_deactivation()
   cell_activated   = false;
 
   // Report the remainder metrics.
-  send_new_report(last_sl_tx + 1);
+  send_new_report();
 }
 
 void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& meas)
@@ -112,44 +112,43 @@ void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& 
 
   // Update metrics.
   data.nof_slots++;
+  auto sl_tx = meas.sl_tx.without_hfn();
   if (not data.start_slot.valid()) {
     data.start_slot = meas.sl_tx;
   }
-  data.wall.save_sample(meas.sl_tx, time_diff);
-  data.slot_enqueue.save_sample(meas.sl_tx, enqueue_time_diff);
+  data.wall.save_sample(sl_tx, time_diff);
+  data.slot_enqueue.save_sample(sl_tx, enqueue_time_diff);
   auto last_tp = meas.start_tp;
   if (meas.dl_tti_req_tp != metric_clock::time_point{}) {
-    data.dl_tti_req.save_sample(meas.sl_tx, meas.dl_tti_req_tp - last_tp);
+    data.dl_tti_req.save_sample(sl_tx, meas.dl_tti_req_tp - last_tp);
     last_tp = meas.dl_tti_req_tp;
     if (meas.tx_data_req_tp != metric_clock::time_point{}) {
-      data.tx_data_req.save_sample(meas.sl_tx, meas.tx_data_req_tp - last_tp);
+      data.tx_data_req.save_sample(sl_tx, meas.tx_data_req_tp - last_tp);
       last_tp = meas.tx_data_req_tp;
     }
   }
   if (meas.ul_tti_req_tp != metric_clock::time_point{}) {
-    data.ul_tti_req.save_sample(meas.sl_tx, meas.ul_tti_req_tp - last_tp);
+    data.ul_tti_req.save_sample(sl_tx, meas.ul_tti_req_tp - last_tp);
   }
   if (rusg_diff.has_value()) {
     auto& rusg_val = rusg_diff.value();
     data.count_vol_context_switches += rusg_val.vol_ctxt_switch_count;
     data.count_invol_context_switches += rusg_val.invol_ctxt_switch_count;
-    data.user.save_sample(meas.sl_tx, std::chrono::nanoseconds{rusg_val.user_time});
-    data.sys.save_sample(meas.sl_tx, std::chrono::nanoseconds{rusg_val.sys_time});
+    data.user.save_sample(sl_tx, std::chrono::nanoseconds{rusg_val.user_time});
+    data.sys.save_sample(sl_tx, std::chrono::nanoseconds{rusg_val.sys_time});
   }
 
   if (notifier->is_report_required(meas.sl_tx)) {
-    send_new_report(meas.sl_tx);
+    send_new_report();
   }
 }
 
-void mac_dl_cell_metric_handler::send_new_report(slot_point sl_tx)
+void mac_dl_cell_metric_handler::send_new_report()
 {
   // Prepare cell report.
   mac_dl_cell_metric_report report;
-  report.pci        = cell_pci;
-  report.start_slot = sl_tx - data.nof_slots;
-  report.start_hfn  = last_hfn - (data.nof_slots / (NOF_SFNS * NOF_SUBFRAMES_PER_FRAME)) -
-                     (report.start_slot.to_uint() > sl_tx.to_uint() ? 1 : 0);
+  report.pci           = cell_pci;
+  report.start_slot    = data.start_slot;
   report.slot_duration = slot_duration;
   report.nof_slots     = data.nof_slots;
   if (data.nof_slots > 0) {

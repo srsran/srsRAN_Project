@@ -8,8 +8,8 @@
  *
  */
 
+#include "lib/mac/mac_ctrl/du_time_controller.h"
 #include "lib/mac/mac_ctrl/mac_metrics_aggregator.h"
-#include "lib/mac/mac_dl/du_time_controller.h"
 #include "lib/mac/mac_dl/mac_dl_metric_handler.h"
 #include "tests/test_doubles/mac/dummy_mac_metrics_notifier.h"
 #include "tests/test_doubles/mac/dummy_scheduler_ue_metric_notifier.h"
@@ -107,8 +107,10 @@ protected:
   {
     pci_t pci         = static_cast<unsigned>(cell_index);
     auto  metrics_cfg = metrics.add_cell(to_du_cell_index(cell_index), scs);
-    cells.emplace(
-        cell_index, pci, scs, mac_cell_config_dependencies{metrics_cfg.report_period, metrics_cfg.mac_notifier});
+    cells.emplace(cell_index,
+                  pci,
+                  scs,
+                  mac_cell_config_dependencies{nullptr, metrics_cfg.report_period, metrics_cfg.mac_notifier});
     sched_cells.emplace(cell_index, *metrics_cfg.sched_notifier, period_slots);
     return cells[cell_index];
   }
