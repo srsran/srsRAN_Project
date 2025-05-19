@@ -93,9 +93,6 @@ public:
 
   mac_dl_cell_metric_handler(pci_t cell_pci, subcarrier_spacing scs, const mac_cell_config_dependencies& metrics_cfg);
 
-  /// Called when the MAC cell is activated.
-  void on_cell_activation();
-
   /// Called when the MAC cell is deactivated.
   void on_cell_deactivation();
 
@@ -149,9 +146,8 @@ private:
   mac_cell_metric_notifier*      notifier;
   const std::chrono::nanoseconds slot_duration;
 
+  // Last slot indication time point.
   slot_point_extended last_sl_tx;
-  unsigned            last_hfn{0};
-  bool                cell_activated = false;
 
   // Metrics tracked
   non_persistent_data data;

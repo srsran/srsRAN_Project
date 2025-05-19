@@ -47,27 +47,17 @@ mac_dl_cell_metric_handler::mac_dl_cell_metric_handler(pci_t                    
 {
 }
 
-void mac_dl_cell_metric_handler::on_cell_activation()
-{
-  if (not enabled()) {
-    return;
-  }
-  data.last_report = false;
-  cell_activated   = true;
-}
-
 void mac_dl_cell_metric_handler::on_cell_deactivation()
 {
   if (not enabled()) {
     return;
   }
-  if (not cell_activated or not last_sl_tx.valid()) {
-    // Activation hasn't started or hasn't completed.
+  if (not last_sl_tx.valid()) {
+    // Activation hasn't started or completed.
     return;
   }
 
   data.last_report = true;
-  cell_activated   = false;
 
   // Report the remainder metrics.
   send_new_report();
@@ -75,7 +65,7 @@ void mac_dl_cell_metric_handler::on_cell_deactivation()
 
 void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& meas)
 {
-  if (not enabled() or not cell_activated) {
+  if (not enabled()) {
     return;
   }
 
@@ -99,16 +89,11 @@ void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& 
 
   if (SRSRAN_UNLIKELY(not last_sl_tx.valid())) {
     // First slot after cell activation.
-    // We will make the \c next_report_slot aligned with the period.
     // Notify cell creation and next slot on which the report will be generated.
     notifier->on_cell_activation(meas.sl_tx);
-    last_hfn   = 0;
-    last_sl_tx = meas.sl_tx;
-  } else {
-    // HFN gets incremented when a slot wrap-around is detected.
-    last_hfn += last_sl_tx.to_uint() > meas.sl_tx.to_uint() ? 1 : 0;
-    last_sl_tx = meas.sl_tx;
+    data = {};
   }
+  last_sl_tx = meas.sl_tx;
 
   // Update metrics.
   data.nof_slots++;

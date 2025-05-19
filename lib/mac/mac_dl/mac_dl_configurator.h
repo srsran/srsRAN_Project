@@ -28,6 +28,7 @@ public:
   /// Called on each new slot indication for a given cell.
   virtual slot_point_extended on_slot_indication(slot_point sl_tx) = 0;
 
+  /// Current HFN, SFN and slot number.
   slot_point_extended now() const { return cached_now; }
 
 protected:

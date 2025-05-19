@@ -166,6 +166,9 @@ slot_point_extended du_time_controller::handle_slot_ind(du_cell_index_t cell_ind
 {
   constexpr static int MAX_SKIPPED = 128;
 
+  // Set logger context.
+  logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
+
   if (not cells[cell_index].active) {
     // Create cell if it is not yet active.
     handle_cell_activation(cell_index, sl_tx);

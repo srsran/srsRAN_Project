@@ -83,6 +83,22 @@ struct dummy_sched_metric_handler {
 class mac_metric_handler_test : public ::testing::Test
 {
 protected:
+  struct cell_context {
+    bool                       active = true;
+    dummy_sched_metric_handler sched;
+    mac_dl_cell_metric_handler mac;
+
+    cell_context(scheduler_cell_metrics_notifier& sched_notif,
+                 mac_cell_metric_notifier&        mac_notif,
+                 pci_t                            pci,
+                 subcarrier_spacing               scs,
+                 std::chrono::milliseconds        report_period) :
+      sched(sched_notif, report_period.count() * get_nof_slots_per_subframe(scs)),
+      mac(pci, scs, mac_cell_config_dependencies{nullptr, report_period, &mac_notif})
+    {
+    }
+  };
+
   const std::chrono::milliseconds period{10};
   const subcarrier_spacing        scs = subcarrier_spacing::kHz15;
   const unsigned                  period_slots{static_cast<unsigned>(period.count() * get_nof_slots_per_subframe(scs))};
@@ -98,8 +114,7 @@ protected:
                                  timers,
                                  srslog::fetch_basic_logger("MAC", true)};
 
-  slotted_id_table<du_cell_index_t, mac_dl_cell_metric_handler, MAX_CELLS_PER_DU> cells;
-  slotted_id_table<du_cell_index_t, dummy_sched_metric_handler, MAX_CELLS_PER_DU> sched_cells;
+  slotted_id_table<du_cell_index_t, cell_context, MAX_CELLS_PER_DU> cells;
 
   slot_point next_point{0, 1};
 
@@ -107,25 +122,28 @@ protected:
   {
     pci_t pci         = static_cast<unsigned>(cell_index);
     auto  metrics_cfg = metrics.add_cell(to_du_cell_index(cell_index), scs);
-    cells.emplace(cell_index,
-                  pci,
-                  scs,
-                  mac_cell_config_dependencies{nullptr, metrics_cfg.report_period, metrics_cfg.mac_notifier});
-    sched_cells.emplace(cell_index, *metrics_cfg.sched_notifier, period_slots);
-    return cells[cell_index];
+    cells.emplace(
+        cell_index, *metrics_cfg.sched_notifier, *metrics_cfg.mac_notifier, pci, scs, metrics_cfg.report_period);
+    return cells[cell_index].mac;
   }
 
   void run_slot()
   {
-    for (auto& cell : sched_cells) {
-      cell.slot_indication(next_point);
-    }
     for (auto& cell : cells) {
-      auto meas = cell.start_slot(next_point, metric_clock::now());
+      if (cell.active) {
+        cell.sched.slot_indication(next_point);
+        cell.mac.start_slot(next_point, metric_clock::now());
+      }
     }
     timers.tick();
     task_worker.run_pending_tasks();
     ++next_point;
+  }
+
+  void deactivate_cell(du_cell_index_t cell_index)
+  {
+    cells[cell_index].active = false;
+    cells[cell_index].mac.on_cell_deactivation();
   }
 };
 
@@ -139,8 +157,7 @@ TEST_F(mac_metric_handler_test, cell_created_successfully)
 
 TEST_F(mac_metric_handler_test, for_single_cell_on_period_elapsed_then_report_is_generated)
 {
-  auto& cellgen = add_cell(to_du_cell_index(0));
-  cellgen.on_cell_activation();
+  add_cell(to_du_cell_index(0));
 
   // Number of slots equal to period+timeout has elapsed.
   unsigned wait_slots = period_slots + aggr_timeout_slots - 1;
@@ -157,10 +174,8 @@ TEST_F(mac_metric_handler_test, for_single_cell_on_period_elapsed_then_report_is
 
 TEST_F(mac_metric_handler_test, when_multi_cell_then_mac_report_generated_when_all_cells_generated_report)
 {
-  auto& cellgen1 = add_cell(to_du_cell_index(0));
-  auto& cellgen2 = add_cell(to_du_cell_index(1));
-  cellgen1.on_cell_activation();
-  cellgen2.on_cell_activation();
+  add_cell(to_du_cell_index(0));
+  add_cell(to_du_cell_index(1));
 
   // No report is ready until report period + timeout is reached.
   unsigned wait_slots = period_slots + aggr_timeout_slots - 1;
@@ -184,8 +199,7 @@ TEST_F(mac_metric_handler_test, when_multi_cell_then_mac_report_generated_when_a
 
 TEST_F(mac_metric_handler_test, when_multi_cell_creation_staggered_then_reports_are_aligned_in_slot)
 {
-  auto& cellgen1 = add_cell(to_du_cell_index(0));
-  cellgen1.on_cell_activation();
+  add_cell(to_du_cell_index(0));
 
   // Number of slots lower than period + timeout has elapsed.
   const unsigned count_until_cell2 = test_rgen::uniform_int<unsigned>(0, period_slots - 2);
@@ -195,8 +209,7 @@ TEST_F(mac_metric_handler_test, when_multi_cell_creation_staggered_then_reports_
   }
 
   // Cell 2 is created and we run the remaining slots of the period+timeout window.
-  auto& cellgen2 = add_cell(to_du_cell_index(1));
-  cellgen2.on_cell_activation();
+  add_cell(to_du_cell_index(1));
   unsigned wait_slots = period_slots + aggr_timeout_slots - 1;
   for (unsigned i = 0, e = wait_slots - count_until_cell2; i != e; ++i) {
     ASSERT_FALSE(metric_notifier.last_report.has_value());
@@ -214,10 +227,8 @@ TEST_F(mac_metric_handler_test, when_multi_cell_creation_staggered_then_reports_
 
 TEST_F(mac_metric_handler_test, when_one_cell_gets_removed_then_last_report_still_contains_its_report)
 {
-  auto& cellgen1 = add_cell(to_du_cell_index(0));
-  auto& cellgen2 = add_cell(to_du_cell_index(1));
-  cellgen1.on_cell_activation();
-  cellgen2.on_cell_activation();
+  add_cell(to_du_cell_index(0));
+  add_cell(to_du_cell_index(1));
 
   const unsigned count_until_cell_rem = test_rgen::uniform_int<unsigned>(1, period_slots - 1);
   for (unsigned i = 0; i != count_until_cell_rem; ++i) {
@@ -226,7 +237,7 @@ TEST_F(mac_metric_handler_test, when_one_cell_gets_removed_then_last_report_stil
   }
 
   // Cell1 is deactivated.
-  cellgen1.on_cell_deactivation();
+  deactivate_cell(to_du_cell_index(0));
   unsigned wait_slots = period_slots + aggr_timeout_slots - 1;
   for (unsigned i = 0, e = wait_slots - count_until_cell_rem; i != e; ++i) {
     ASSERT_FALSE(metric_notifier.last_report.has_value());

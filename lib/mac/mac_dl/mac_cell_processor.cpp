@@ -97,9 +97,6 @@ async_task<void> mac_cell_processor::stop()
           return;
         }
 
-        // Set cell state as inactive to stop answering to slot indications.
-        state = cell_state::inactive;
-
         // Notify scheduler about activation.
         sched.stop_cell(cell_cfg.cell_index);
 
@@ -108,6 +105,9 @@ async_task<void> mac_cell_processor::stop()
 
         // Notify time source about deactivation.
         time_source->on_cell_deactivation();
+
+        // Set cell state as inactive to stop answering to slot indications.
+        state = cell_state::inactive;
 
         logger.info("cell={}: Cell was stopped.", fmt::underlying(cell_cfg.cell_index));
       },
@@ -275,12 +275,17 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point               sl
 
   // Tick DU timers on subframe boundaries. Retrieve the combination of HFN, SFN and slot.
   auto slot_tx_ext = time_source->on_slot_indication(sl_tx);
-  if (SRSRAN_UNLIKELY(state == cell_state::activating)) {
+
+  if (SRSRAN_UNLIKELY(state != cell_state::active)) {
+    if (state == cell_state::inactive) {
+      // Ignore slot indication if cell is inactive.
+      phy_cell.on_cell_results_completion(sl_tx);
+      return;
+    }
+    // Cell is in the process of activating.
+
     // Notify scheduler about activation.
     sched.start_cell(cell_cfg.cell_index, slot_tx_ext);
-
-    // Initiate retrieval of metrics for this cell.
-    metrics.on_cell_activation();
 
     logger.info("cell={}: Cell was activated", fmt::underlying(cell_cfg.cell_index));
     state = cell_state::active;
@@ -289,8 +294,6 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point               sl
   // Initiate metric capturing.
   auto        metrics_meas = metrics.start_slot(slot_tx_ext, enqueue_slot_tp);
   trace_point sched_tp     = metrics_meas.start_time_point();
-
-  logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
 
   // Cleans old MAC DL PDU buffers.
   pdu_pool.tick(sl_tx.to_uint());
