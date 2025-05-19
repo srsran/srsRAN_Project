@@ -120,7 +120,8 @@ create_data_flow_uplane_data(const transmitter_config&              tx_config,
 }
 
 static std::shared_ptr<ether::eth_frame_pool> create_eth_frame_pool(const transmitter_config& tx_config,
-                                                                    srslog::basic_logger&     logger)
+                                                                    srslog::basic_logger&     logger,
+                                                                    bool calculate_nof_frames_per_symbol = true)
 {
   ether::vlan_frame_params ether_params;
   auto eth_builder   = (tx_config.tci_up || tx_config.tci_cp) ? ether::create_vlan_frame_builder(ether_params)
@@ -145,8 +146,11 @@ static std::shared_ptr<ether::eth_frame_pool> create_eth_frame_pool(const transm
   unsigned nof_prbs =
       get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.ru_working_bw), tx_config.scs, srsran::frequency_range::FR1);
 
-  unsigned nof_frames_per_symbol = ofh_uplane_fragment_size_calculator::calculate_nof_segments(
-      tx_config.mtu_size, nof_prbs, tx_config.dl_compr_params, headers_size);
+  unsigned nof_frames_per_symbol = 1;
+  if (calculate_nof_frames_per_symbol) {
+    nof_frames_per_symbol = ofh_uplane_fragment_size_calculator::calculate_nof_segments(
+        tx_config.mtu_size, nof_prbs, tx_config.dl_compr_params, headers_size);
+  }
 
   return std::make_shared<ether::eth_frame_pool>(tx_config.mtu_size, nof_frames_per_symbol);
 }
@@ -171,7 +175,7 @@ resolve_transmitter_dependencies(const transmitter_config&                      
   dependencies.dl_executor  = &downlink_executor;
   dependencies.err_notifier = &err_notifier;
 
-  dependencies.frame_pool_dl_cp = create_eth_frame_pool(tx_config, logger);
+  dependencies.frame_pool_dl_cp = create_eth_frame_pool(tx_config, logger, false);
 
   dependencies.dl_df_cplane = std::make_unique<data_flow_cplane_downlink_task_dispatcher>(
       logger,
@@ -192,7 +196,7 @@ resolve_transmitter_dependencies(const transmitter_config&                      
       downlink_executor,
       tx_config.sector);
 
-  dependencies.frame_pool_ul_cp = create_eth_frame_pool(tx_config, logger);
+  dependencies.frame_pool_ul_cp = create_eth_frame_pool(tx_config, logger, false);
 
   dependencies.ul_df_cplane = std::make_unique<data_flow_cplane_downlink_task_dispatcher>(
       logger,
