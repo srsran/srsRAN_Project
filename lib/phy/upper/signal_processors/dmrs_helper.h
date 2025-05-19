@@ -52,7 +52,7 @@ struct dmrs_pxsch_parameters {
   std::array<float, 2> w_t;
 };
 
-/// \brief Gets the PDSCH and PUSCH DM-RS parameters.
+/// \brief Retrieves DM-RS parameters for both PUSCH and PDSCH channels.
 ///
 /// The DM-RS parameters for PUSCH type 1 and 2 configuration are given in TS38.211 Table 6.4.1.1.3-1 and Table
 /// 6.4.1.1.3-2, respectively.
@@ -60,9 +60,9 @@ struct dmrs_pxsch_parameters {
 /// The DM-RS parameters for PDSCH type 1 and 2 configuration are given in TS 38.211 Table 7.4.1.1.2-1 and Table
 /// 7.4.1.1.2-2, respectively.
 ///
-/// \param type        DM-RS type.
-/// \param i_dmrs_port DM-RS port index.
-/// \return A read-only reference to the DM-RS parameters.
-const dmrs_pxsch_parameters& get_pxsch_dmrs_params(dmrs_type type, unsigned i_dmrs_port);
+/// \param type        Specifies the DM-RS configuration type.
+/// \param i_dmrs_port The DM-RS port index, indicating the specific configuration to retrieve.
+/// \return The DM-RS parameters for the specified channel and configuration type.
+dmrs_pxsch_parameters get_pxsch_dmrs_params(dmrs_type type, unsigned i_dmrs_port);
 
 } // namespace srsran

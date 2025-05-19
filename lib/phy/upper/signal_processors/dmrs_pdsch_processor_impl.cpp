@@ -78,7 +78,7 @@ void dmrs_pdsch_processor_impl::apply_cdm(span<cf_t>       sequence,
   }
 
   // Apply CDM to DM-RS ports other than port zero.
-  const dmrs_pxsch_parameters& params = get_pxsch_dmrs_params(config.type, dmrs_port);
+  dmrs_pxsch_parameters params = get_pxsch_dmrs_params(config.type, dmrs_port);
 
   // If no weights are applied, copy the original sequence.
   if ((params.w_t[l_prime] == +1.0F) && (params.w_f[0] == params.w_f[1])) {

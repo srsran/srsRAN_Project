@@ -123,7 +123,7 @@ void dmrs_pusch_estimator_impl::generate(dmrs_symbol_list&        symbols,
   // For each layer...
   for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
     // Select layer parameters.
-    const dmrs_pxsch_parameters& params = get_pxsch_dmrs_params(type, i_layer);
+    dmrs_pxsch_parameters params = get_pxsch_dmrs_params(type, i_layer);
 
     // Skip copy for layer 0.
     if (i_layer != 0) {

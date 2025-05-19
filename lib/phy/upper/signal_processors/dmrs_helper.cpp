@@ -82,7 +82,7 @@ void srsran::dmrs_sequence_generate(span<srsran::cf_t>       sequence,
       });
 }
 
-const dmrs_pxsch_parameters& srsran::get_pxsch_dmrs_params(dmrs_type type, unsigned i_dmrs_port)
+dmrs_pxsch_parameters srsran::get_pxsch_dmrs_params(dmrs_type type, unsigned i_dmrs_port)
 {
   // Select view of the selected table.
   span<const dmrs_pxsch_parameters> params = (type == dmrs_type::options::TYPE1)
