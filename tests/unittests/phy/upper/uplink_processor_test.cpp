@@ -154,6 +154,26 @@ protected:
                   .tbs_lbrm           = units::bytes(ldpc::MAX_CODEBLOCK_SIZE / 8),
                   .dc_position        = std::nullopt}};
 
+  const uplink_pdu_slot_repository::pucch_pdu pucch_pdu = {
+      .context = {.slot          = {0, 9},
+                  .rnti          = to_rnti(0x4601),
+                  .format        = pucch_format::FORMAT_0,
+                  .context_f0_f1 = std::nullopt},
+      .config  = pucch_processor::format0_configuration{.context              = std::nullopt,
+                                                        .slot                 = {0, 9},
+                                                        .cp                   = cyclic_prefix::NORMAL,
+                                                        .bwp_size_rb          = 275,
+                                                        .bwp_start_rb         = 0,
+                                                        .starting_prb         = 0,
+                                                        .second_hop_prb       = 270,
+                                                        .start_symbol_index   = 0,
+                                                        .nof_symbols          = 1,
+                                                        .initial_cyclic_shift = 0,
+                                                        .n_id                 = 0,
+                                                        .nof_harq_ack         = 1,
+                                                        .sr_opportunity       = true,
+                                                        .ports                = {0}}};
+
   prach_detector_spy*                     prach_spy = nullptr;
   pusch_processor_spy*                    pusch_spy = nullptr;
   manual_task_worker_always_enqueue_tasks pucch_executor;
@@ -407,6 +427,30 @@ TEST_F(UplinkProcessorFixture, pusch_discard_slot)
   ASSERT_FALSE(pusch_spy->has_process_method_been_called());
   ASSERT_TRUE(results_notifier.has_pusch_data_result_been_notified());
   ASSERT_TRUE(results_notifier.has_pusch_uci_result_been_notified());
+}
+
+TEST_F(UplinkProcessorFixture, pucch_discard_twice)
+{
+  // Contexted slot.
+  slot_point slot = pusch_pdu.pdu.slot;
+
+  // Add PDU to the repository.
+  {
+    unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+    repository->add_pucch_pdu(pucch_pdu);
+  }
+
+  shared_resource_grid shared_grid = grid.get_grid();
+
+  // Discard.
+  std::thread async1 = std::thread([this, slot]() { ul_processor->get_slot_processor(slot).discard_slot(); });
+  std::thread async2 = std::thread([this, slot]() { ul_processor->get_slot_processor(slot).discard_slot(); });
+  async1.join();
+  async2.join();
+
+  // Assert results.
+  ASSERT_FALSE(pucch_executor.has_pending_tasks());
+  ASSERT_TRUE(results_notifier.has_pucch_result_been_notified());
 }
 
 TEST_F(UplinkProcessorFixture, pusch_execute_after_stop)
