@@ -329,8 +329,10 @@ static void compute_v_pilots(span<cf_t> out, span<const float> in_abs, span<cons
   }
 
   for (unsigned i_pilot = 0; i_pilot != nof_v_pilots; ++i_pilot) {
-    int i_virtual = static_cast<int>(i_pilot) + v_offset;
-    out[i_pilot]  = std::polar(slope_abs * i_virtual + intercept_abs, slope_arg * i_virtual + intercept_arg);
+    int   i_virtual = static_cast<int>(i_pilot) + v_offset;
+    float rho       = slope_abs * i_virtual + intercept_abs;
+    out[i_pilot]    = std::polar(std::abs(rho),
+                              slope_arg * i_virtual + intercept_arg + ((rho > 0) ? 0.0F : static_cast<float>(M_PI)));
   }
 }
 
