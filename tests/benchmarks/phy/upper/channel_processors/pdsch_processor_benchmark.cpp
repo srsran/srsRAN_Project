@@ -681,6 +681,9 @@ static pdsch_processor_factory& get_processor_factory()
         std::make_unique<task_worker_pool<queue_policy>>("pdsch_proc", nof_pdsch_processor_concurrent_threads, 1024);
     executor             = std::make_unique<task_worker_pool_executor<queue_policy>>(*worker_pool);
     nof_concurrent_pdsch = nof_pdsch_processor_concurrent_threads;
+  } else {
+    worker_pool = std::make_unique<task_worker_pool<queue_policy>>("pdsch_proc", 1, 1024);
+    executor    = std::make_unique<task_worker_pool_executor<queue_policy>>(*worker_pool);
   }
 
   // Create flexible PDSCH processor.
