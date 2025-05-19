@@ -335,12 +335,17 @@ ntn:
   variables:
     TESTBED: "zmq_ntn"
     MARKERS: "zmq_ntn"
+  parallel:
+    matrix:
+      - E2E_FILE_OR_DIR: tests/ping.py
+      - E2E_FILE_OR_DIR: tests/iperf.py
   needs:
     - job: "basic relwithdeb"
       artifacts: true
     - job: "build amariue ntn zmq driver"
       artifacts: true
     - *retina-needs
+
 
 ################################################################################
 # TEST MODE
