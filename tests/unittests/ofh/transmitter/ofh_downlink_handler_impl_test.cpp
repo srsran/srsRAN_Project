@@ -56,8 +56,9 @@ public:
 /// Error notifier spy implementation.
 class error_notifier_spy : public error_notifier
 {
-  bool dl_late = false;
-  bool ul_late = false;
+  bool dl_late    = false;
+  bool ul_late    = false;
+  bool prach_late = false;
 
 public:
   // See interface for documentation.
@@ -66,8 +67,12 @@ public:
   // See interface for documentation.
   void on_late_uplink_message(const error_context& context) override { ul_late = true; }
 
+  // See interface for documentation.
+  void on_late_prach_message(const error_context& context) override { prach_late = true; }
+
   bool is_downlink_late() const { return dl_late; }
   bool is_uplink_late() const { return ul_late; }
+  bool is_prach_late() const { return prach_late; }
 };
 
 } // namespace

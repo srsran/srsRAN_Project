@@ -27,6 +27,7 @@ class error_notifier_dummy : public error_notifier
 public:
   void on_late_downlink_message(const error_context& context) override {}
   void on_late_uplink_message(const error_context& context) override {}
+  void on_late_prach_message(const error_context& context) override {}
 };
 
 } // namespace
@@ -158,7 +159,7 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
         context.sector,
         context.slot);
 
-    err_notifier.on_late_uplink_message({context.slot, context.sector});
+    err_notifier.on_late_prach_message({context.slot, context.sector});
     return;
   }
 

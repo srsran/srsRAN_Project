@@ -79,8 +79,9 @@ public:
 /// Error notifier spy implementation.
 class error_notifier_spy : public error_notifier
 {
-  bool dl_late = false;
-  bool ul_late = false;
+  bool dl_late    = false;
+  bool ul_late    = false;
+  bool prach_late = false;
 
 public:
   // See interface for documentation.
@@ -89,8 +90,12 @@ public:
   // See interface for documentation.
   void on_late_uplink_message(const error_context& context) override { ul_late = true; }
 
+  // See interface for documentation.
+  void on_late_prach_message(const error_context& context) override { prach_late = true; }
+
   bool is_downlink_late() const { return dl_late; }
   bool is_uplink_late() const { return ul_late; }
+  bool is_prach_late() const { return prach_late; }
 };
 
 class ofh_uplink_request_handler_impl_fixture : public ::testing::Test
@@ -216,6 +221,7 @@ TEST_F(ofh_uplink_request_handler_impl_fixture,
   ASSERT_FALSE(data_flow->has_enqueue_section_type_3_method_been_called());
   ASSERT_FALSE(notifier_spy.is_downlink_late());
   ASSERT_FALSE(notifier_spy.is_uplink_late());
+  ASSERT_FALSE(notifier_spy.is_prach_late());
 }
 
 TEST_F(ofh_uplink_request_handler_impl_fixture, handle_prach_request_generates_cplane_message)
@@ -249,6 +255,7 @@ TEST_F(ofh_uplink_request_handler_impl_fixture, handle_prach_request_generates_c
   ASSERT_EQ(filter_index_type::ul_prach_preamble_short, info.filter_type);
   ASSERT_FALSE(notifier_spy.is_downlink_late());
   ASSERT_FALSE(notifier_spy.is_uplink_late());
+  ASSERT_FALSE(notifier_spy.is_prach_late());
 }
 
 TEST_F(ofh_uplink_request_handler_impl_fixture, handle_late_prach_request_does_not_generate_cplane_message)
@@ -276,7 +283,9 @@ TEST_F(ofh_uplink_request_handler_impl_fixture, handle_late_prach_request_does_n
   ASSERT_FALSE(data_flow_prach->has_enqueue_section_type_3_method_been_called());
   ASSERT_TRUE(ul_prach_repo->get(context.slot).empty());
   ASSERT_FALSE(notifier_spy.is_downlink_late());
-  ASSERT_TRUE(notifier_spy.is_uplink_late());
+  ASSERT_FALSE(notifier_spy.is_downlink_late());
+  ASSERT_FALSE(notifier_spy.is_uplink_late());
+  ASSERT_TRUE(notifier_spy.is_prach_late());
 }
 
 TEST_F(ofh_uplink_request_handler_impl_fixture, handle_uplink_slot_generates_cplane_message)
@@ -311,6 +320,7 @@ TEST_F(ofh_uplink_request_handler_impl_fixture, handle_uplink_slot_generates_cpl
   ASSERT_EQ(writer_spy.get_nof_symbols(), symbol_range.stop());
   ASSERT_FALSE(notifier_spy.is_downlink_late());
   ASSERT_FALSE(notifier_spy.is_uplink_late());
+  ASSERT_FALSE(notifier_spy.is_prach_late());
 }
 
 TEST_F(ofh_uplink_request_handler_impl_fixture, handle_late_uplink_request_does_not_generates_cplane_message)
@@ -329,6 +339,7 @@ TEST_F(ofh_uplink_request_handler_impl_fixture, handle_late_uplink_request_does_
   ASSERT_FALSE(data_flow->has_enqueue_section_type_1_method_been_called());
   ASSERT_FALSE(notifier_spy.is_downlink_late());
   ASSERT_TRUE(notifier_spy.is_uplink_late());
+  ASSERT_FALSE(notifier_spy.is_prach_late());
 }
 
 TEST_F(ofh_uplink_request_handler_impl_fixture,
