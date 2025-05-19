@@ -84,17 +84,20 @@ class mac_metric_handler_test : public ::testing::Test
 {
 protected:
   struct cell_context {
-    bool                       active = true;
-    dummy_sched_metric_handler sched;
-    mac_dl_cell_metric_handler mac;
+    bool                                  active = true;
+    dummy_sched_metric_handler            sched;
+    mac_dl_cell_metric_handler            mac;
+    std::unique_ptr<du_cell_timer_source> timer_source;
 
-    cell_context(scheduler_cell_metrics_notifier& sched_notif,
-                 mac_cell_metric_notifier&        mac_notif,
-                 pci_t                            pci,
-                 subcarrier_spacing               scs,
-                 std::chrono::milliseconds        report_period) :
+    cell_context(scheduler_cell_metrics_notifier&      sched_notif,
+                 mac_cell_metric_notifier&             mac_notif,
+                 std::unique_ptr<du_cell_timer_source> timer_source_,
+                 pci_t                                 pci,
+                 subcarrier_spacing                    scs,
+                 std::chrono::milliseconds             report_period) :
       sched(sched_notif, report_period.count() * get_nof_slots_per_subframe(scs)),
-      mac(pci, scs, mac_cell_config_dependencies{nullptr, report_period, &mac_notif})
+      mac(pci, scs, mac_cell_config_dependencies{nullptr, report_period, &mac_notif}),
+      timer_source(std::move(timer_source_))
     {
     }
   };
@@ -103,16 +106,13 @@ protected:
   const subcarrier_spacing        scs = subcarrier_spacing::kHz15;
   const unsigned                  period_slots{static_cast<unsigned>(period.count() * get_nof_slots_per_subframe(scs))};
   unsigned aggr_timeout_slots = mac_metrics_aggregator::aggregation_timeout.count() * get_nof_slots_per_subframe(scs);
+  srslog::basic_logger&               logger = srslog::fetch_basic_logger("MAC", true);
   timer_manager                       timers{2};
   manual_task_worker                  task_worker{16};
   dummy_mac_metrics_notifier          metric_notifier;
   dummy_scheduler_ue_metrics_notifier sched_notifier;
-  mac_metrics_aggregator              metrics{period,
-                                 metric_notifier,
-                                 &sched_notifier,
-                                 task_worker,
-                                 timers,
-                                 srslog::fetch_basic_logger("MAC", true)};
+  du_time_controller                  du_timer{timers, task_worker, logger};
+  mac_metrics_aggregator              metrics{period, metric_notifier, &sched_notifier, task_worker, timers, logger};
 
   slotted_id_table<du_cell_index_t, cell_context, MAX_CELLS_PER_DU> cells;
 
@@ -121,21 +121,27 @@ protected:
   mac_dl_cell_metric_handler& add_cell(du_cell_index_t cell_index)
   {
     pci_t pci         = static_cast<unsigned>(cell_index);
-    auto  metrics_cfg = metrics.add_cell(to_du_cell_index(cell_index), scs);
-    cells.emplace(
-        cell_index, *metrics_cfg.sched_notifier, *metrics_cfg.mac_notifier, pci, scs, metrics_cfg.report_period);
+    auto  time_source = du_timer.add_cell(cell_index);
+    auto  metrics_cfg = metrics.add_cell(to_du_cell_index(cell_index), scs, *time_source);
+    cells.emplace(cell_index,
+                  *metrics_cfg.sched_notifier,
+                  *metrics_cfg.mac_notifier,
+                  std::move(time_source),
+                  pci,
+                  scs,
+                  metrics_cfg.report_period);
     return cells[cell_index].mac;
   }
 
   void run_slot()
   {
     for (auto& cell : cells) {
+      cell.timer_source->on_slot_indication(next_point);
       if (cell.active) {
         cell.sched.slot_indication(next_point);
         cell.mac.start_slot(next_point, metric_clock::now());
       }
     }
-    timers.tick();
     task_worker.run_pending_tasks();
     ++next_point;
   }

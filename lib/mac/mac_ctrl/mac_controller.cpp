@@ -38,7 +38,7 @@ mac_cell_controller& mac_controller::add_cell(const mac_cell_creation_request& c
   auto cell_time_source = time_ctrl.add_cell(cell_add_req.cell_index);
 
   // Add cell to metrics reports.
-  auto cell_metrics_cfg = metrics.add_cell(cell_add_req.cell_index, cell_add_req.scs_common);
+  auto cell_metrics_cfg = metrics.add_cell(cell_add_req.cell_index, cell_add_req.scs_common, *cell_time_source);
 
   // > Fill sched cell configuration message and pass it to the scheduler.
   sched_cfg.add_cell(mac_scheduler_cell_creation_request{

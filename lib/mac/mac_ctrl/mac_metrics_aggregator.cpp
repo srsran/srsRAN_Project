@@ -49,31 +49,38 @@ public:
                       du_cell_index_t             cell_index_,
                       subcarrier_spacing          scs_common_,
                       scheduler_metrics_notifier* sched_notifier_,
+                      du_cell_timer_source&       time_source_,
                       srslog::basic_logger&       logger_) :
     parent(parent_),
     cell_index(cell_index_),
     scs_common(scs_common_),
     period_slots(get_nof_slots_per_subframe(scs_common) * parent.period.count()),
     sched_notifier(sched_notifier_),
+    time_source(time_source_),
     logger(logger_),
     report_queue(cell_report_queue_size, logger_, []() { return report_preinit(); })
   {
   }
 
-  bool is_report_required(slot_point_extended slot_tx) override
+  bool is_report_required(slot_point slot_tx) override
   {
     // Note: Called from the cell execution context.
-    last_sl_tx                       = slot_tx;
+    slot_point_extended new_last_sl_tx{slot_tx, last_sl_tx.hfn()};
+    if (SRSRAN_UNLIKELY(new_last_sl_tx < last_sl_tx)) {
+      // SFN rollover detected.
+      new_last_sl_tx += slot_tx.nof_slots_per_system_frame();
+    }
+    last_sl_tx                       = new_last_sl_tx;
     const bool sched_report_is_ready = mac_builder != nullptr;
-    return sched_report_is_ready and slot_tx >= next_report_slot_tx;
+    return sched_report_is_ready and last_sl_tx >= next_report_slot_tx;
   }
 
-  void on_cell_activation(slot_point_extended slot_tx) override
+  void on_cell_activation() override
   {
     // Determine the next report slot.
-    last_sl_tx          = slot_tx;
-    unsigned slot_mod   = slot_tx.to_uint() % period_slots;
-    next_report_slot_tx = slot_tx + period_slots - slot_mod;
+    last_sl_tx          = time_source.now();
+    unsigned slot_mod   = last_sl_tx.count() % period_slots;
+    next_report_slot_tx = last_sl_tx + period_slots - slot_mod;
 
     // Notify the backend of a cell activation.
     defer_until_success(parent.ctrl_exec, parent.timers, [this, sl = next_report_slot_tx]() {
@@ -93,7 +100,7 @@ public:
   void on_cell_metric_report(const mac_dl_cell_metric_report& report) override
   {
     // Note: Function called from the DU cell execution context.
-    srsran_sanity_check(is_report_required(last_sl_tx), "Report not required");
+    srsran_sanity_check(is_report_required(last_sl_tx.without_hfn()), "Report not required");
 
     // Save MAC report.
     mac_builder->mac = report;
@@ -167,6 +174,7 @@ private:
   const subcarrier_spacing    scs_common;
   const unsigned              period_slots;
   scheduler_metrics_notifier* sched_notifier;
+  du_cell_timer_source&       time_source;
   srslog::basic_logger&       logger;
 
   // Reports from a given cell.
@@ -204,7 +212,9 @@ mac_metrics_aggregator::mac_metrics_aggregator(std::chrono::milliseconds   perio
 
 mac_metrics_aggregator::~mac_metrics_aggregator() {}
 
-cell_metric_report_config mac_metrics_aggregator::add_cell(du_cell_index_t cell_index, subcarrier_spacing scs_common)
+cell_metric_report_config mac_metrics_aggregator::add_cell(du_cell_index_t       cell_index,
+                                                           subcarrier_spacing    scs_common,
+                                                           du_cell_timer_source& time_source)
 {
   srsran_assert(not cells.contains(cell_index), "Duplicate cell creation");
 
@@ -213,8 +223,9 @@ cell_metric_report_config mac_metrics_aggregator::add_cell(du_cell_index_t cell_
   next_report.sched.cells.reserve(cells.size());
 
   // Create a handler for the new cell.
-  auto  cell_handler = std::make_unique<cell_metric_handler>(*this, cell_index, scs_common, sched_notifier, logger);
-  auto& cell_ref     = *cell_handler;
+  auto cell_handler =
+      std::make_unique<cell_metric_handler>(*this, cell_index, scs_common, sched_notifier, time_source, logger);
+  auto& cell_ref = *cell_handler;
   cells.emplace(cell_index, std::move(cell_handler));
 
   // Return the cell report configuration.

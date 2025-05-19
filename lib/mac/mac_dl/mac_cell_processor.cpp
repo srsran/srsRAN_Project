@@ -292,7 +292,7 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point               sl
   }
 
   // Initiate metric capturing.
-  auto        metrics_meas = metrics.start_slot(slot_tx_ext, enqueue_slot_tp);
+  auto        metrics_meas = metrics.start_slot(sl_tx, enqueue_slot_tp);
   trace_point sched_tp     = metrics_meas.start_time_point();
 
   // Cleans old MAC DL PDU buffers.

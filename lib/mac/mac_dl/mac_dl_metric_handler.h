@@ -37,7 +37,7 @@ public:
   struct slot_measurement {
     slot_measurement() = default;
     slot_measurement(mac_dl_cell_metric_handler& parent_,
-                     slot_point_extended         sl_tx_,
+                     slot_point                  sl_tx_,
                      metric_clock::time_point    slot_ind_enqueue_tp_) :
       parent(&parent_), sl_tx(sl_tx_), slot_ind_enqueue_tp(slot_ind_enqueue_tp_)
     {
@@ -82,7 +82,7 @@ public:
     friend class mac_dl_cell_metric_handler;
 
     std::unique_ptr<mac_dl_cell_metric_handler, noop_operation> parent;
-    slot_point_extended                                         sl_tx;
+    slot_point                                                  sl_tx;
     metric_clock::time_point                                    slot_ind_enqueue_tp;
     metric_clock::time_point                                    start_tp;
     metric_clock::time_point                                    dl_tti_req_tp;
@@ -99,7 +99,7 @@ public:
   /// Initiate new slot measurements.
   /// \param[in] sl_tx Tx slot.
   /// \param[in] slot_ind_trigger_tp Time point when the slot_indication was signalled by the lower layers.
-  auto start_slot(slot_point_extended sl_tx, metric_clock::time_point slot_ind_trigger_tp)
+  auto start_slot(slot_point sl_tx, metric_clock::time_point slot_ind_trigger_tp)
   {
     if (not enabled()) {
       return slot_measurement{};
@@ -122,17 +122,17 @@ private:
       void save_sample(slot_point sl_tx, std::chrono::nanoseconds tdiff);
     };
 
-    unsigned            nof_slots = 0;
-    slot_point_extended start_slot;
-    latency_data        wall;
-    latency_data        user;
-    latency_data        sys;
-    latency_data        slot_enqueue;
-    latency_data        dl_tti_req;
-    latency_data        tx_data_req;
-    latency_data        ul_tti_req;
-    unsigned            count_vol_context_switches{0};
-    unsigned            count_invol_context_switches{0};
+    unsigned     nof_slots = 0;
+    slot_point   start_slot;
+    latency_data wall;
+    latency_data user;
+    latency_data sys;
+    latency_data slot_enqueue;
+    latency_data dl_tti_req;
+    latency_data tx_data_req;
+    latency_data ul_tti_req;
+    unsigned     count_vol_context_switches{0};
+    unsigned     count_invol_context_switches{0};
     /// \brief Whether the cell was marked for deactivation and this is the last report.
     bool last_report = false;
   };
@@ -146,7 +146,7 @@ private:
   mac_cell_metric_notifier*      notifier;
   const std::chrono::nanoseconds slot_duration;
 
-  // Last slot indication time point.
+  // Last slot indication time point extended with HFN to avoid SFN wrap-around ambiguity.
   slot_point_extended last_sl_tx;
 
   // Metrics tracked

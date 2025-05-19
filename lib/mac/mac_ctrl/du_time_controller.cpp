@@ -135,13 +135,13 @@ void du_time_controller::handle_cell_activation(du_cell_index_t cell_index, slot
     slot_point_extended master_cpy{sl_tx.scs(), master_count.load(std::memory_order_relaxed)};
     slot_point_extended curr_count{sl_tx, master_cpy.hfn()};
     int                 diff          = curr_count - master_cpy;
-    const int           max_slot_diff = NOF_SF_PER_HFN * sl_tx.nof_slots_per_subframe() / 2;
+    const int           max_slot_diff = sl_tx.nof_slots_per_system_frame() / 2;
     if (diff < -max_slot_diff) {
       // This new cell is a bit ahead of the master cell and there was SFN rollover.
-      curr_count += NOF_SF_PER_HFN;
+      curr_count += sl_tx.nof_slots_per_system_frame();
     } else if (diff > max_slot_diff) {
       // This new cell is a bit behind the master cell and there was SFN rollover.
-      curr_count -= NOF_SF_PER_HFN;
+      curr_count -= sl_tx.nof_slots_per_system_frame();
     }
     cells[cell_index].last_counter = curr_count;
   }
@@ -177,7 +177,7 @@ slot_point_extended du_time_controller::handle_slot_ind(du_cell_index_t cell_ind
   slot_point_extended sl_tx_ext{sl_tx, cells[cell_index].last_counter.hfn()};
   if (sl_tx_ext < cells[cell_index].last_counter) {
     // HFN rollover detected.
-    sl_tx_ext += NOF_SF_PER_HFN;
+    sl_tx_ext += sl_tx.nof_slots_per_system_frame();
   }
 
   // Update cell slot counter.
