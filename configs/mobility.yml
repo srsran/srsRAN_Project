@@ -2,6 +2,7 @@
 
 cu_cp:
   mobility:
+    trigger_handover_from_measurements: true
     # List of all cells known to the CU-CP, their configs (if not provided over F1) and their respective neighbor cells.
     cells:
       - nr_cell_id: 0x66C000          # For the default gnb_id=411 (gnb_id_bit_length=22), NR cell IDs start with 0x66C000 and increment for each cell of the DU.
