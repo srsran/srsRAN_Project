@@ -48,7 +48,7 @@ static pdcp_metrics_notifier* build_pdcp_metrics_config(std::vector<app_services
         std::make_unique<cu_up_pdcp_metrics_consumer_json>(srslog::fetch_basic_logger("APP"),
                                                            app_helpers::fetch_json_metrics_log_channel(),
                                                            *workers.metrics_exec,
-                                                           timers.create_unique_timer(*workers.non_rt_low_prio_exec),
+                                                           timers.create_unique_timer(*workers.non_rt_medium_prio_exec),
                                                            cu_up_metrics_cfg.cu_up_report_period));
   }
   if (cu_up_metrics_cfg.common_metrics_cfg.enable_log_metrics) {
@@ -95,7 +95,7 @@ o_cu_up_unit srsran::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_
           create_udp_gtpu_gateway(n3_udp_cfg,
                                   *dependencies.io_brk,
                                   dependencies.workers->cu_up_exec_mapper->io_ul_executor(),
-                                  *dependencies.workers->non_rt_external_data_exec);
+                                  *dependencies.workers->non_rt_low_prio_exec);
       ngu_gws.push_back(std::move(ngu_gw));
     }
   } else {

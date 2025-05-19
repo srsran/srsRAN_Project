@@ -400,7 +400,7 @@ int main(int argc, char** argv)
 
   // Create console helper object for commands and metrics printing.
   app_services::cmdline_command_dispatcher command_parser(
-      *epoll_broker, *workers.non_rt_low_prio_exec, o_cucp_unit.commands.cmdline.commands);
+      *epoll_broker, *workers.non_rt_medium_prio_exec, o_cucp_unit.commands.cmdline.commands);
 
   for (auto& metric : o_cucp_unit.metrics) {
     metrics_configs.push_back(std::move(metric));

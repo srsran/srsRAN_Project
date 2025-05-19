@@ -83,10 +83,10 @@ struct strand_based_executor_config {
   unsigned ul_ue_task_queue_size;
   /// \brief Size for the task queues of the strands created in the CU-UP for UE control tasks.
   unsigned ctrl_ue_task_queue_size;
-  /// \brief Executor to which strands will be associated.
-  task_executor& worker_pool_executor;
-  /// \brief Executor which will be used to receive external data.
-  task_executor& external_data_executor;
+  /// \brief Executor to which CU-UP strands and crypto tasks will be associated.
+  task_executor& medium_prio_executor;
+  /// \brief Executor to which CU-UP packet reception tasks will be associated.
+  task_executor& low_prio_executor;
   /// \brief Whether to instantiate a dedicated strand for sending UL PDUs to the IO.
   bool dedicated_io_strand;
   /// \brief Timers used by the application.

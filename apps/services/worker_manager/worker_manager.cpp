@@ -252,8 +252,8 @@ void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_c
                                                                                     config.dl_ue_executor_queue_size,
                                                                                     config.ul_ue_executor_queue_size,
                                                                                     config.ctrl_ue_executor_queue_size,
+                                                                                    *exec_map.at("medium_prio_exec"),
                                                                                     *exec_map.at("low_prio_exec"),
-                                                                                    *exec_map.at("external_data_exec"),
                                                                                     config.dedicated_io_ul_strand,
                                                                                     &timers});
 }
@@ -296,7 +296,7 @@ void worker_manager::create_du_executors(const worker_manager_config::du_high_co
   cfg.ue_executors.max_nof_strands   = 1;
   cfg.ue_executors.ctrl_queue_size   = task_worker_queue_size;
   cfg.ue_executors.pdu_queue_size    = du_hi.ue_data_tasks_queue_size;
-  cfg.ue_executors.pool_executor     = exec_map.at("low_prio_exec");
+  cfg.ue_executors.pool_executor     = exec_map.at("medium_prio_exec");
   cfg.ctrl_executors.task_queue_size = task_worker_queue_size;
   cfg.ctrl_executors.pool_executor   = exec_map.at("high_prio_exec");
   cfg.is_rt_mode_enabled             = du_hi.is_rt_mode_enabled;
@@ -337,21 +337,21 @@ void worker_manager::create_low_prio_executors(const worker_manager_config& work
 
   // Associate executors to the worker pool.
   // Used for receiving data from external nodes.
-  non_rt_pool.executors.emplace_back("external_data_exec", task_priority::max - 2);
+  non_rt_pool.executors.emplace_back("low_prio_exec", task_priority::max - 2);
   // Used for PCAP writing and CU-UP.
-  non_rt_pool.executors.emplace_back("low_prio_exec", task_priority::max - 1);
+  non_rt_pool.executors.emplace_back("medium_prio_exec", task_priority::max - 1);
   // Used for control plane and timer management.
   non_rt_pool.executors.emplace_back("high_prio_exec", task_priority::max);
 
-  std::vector<strand>& low_prio_strands  = non_rt_pool.executors[1].strands;
-  std::vector<strand>& high_prio_strands = non_rt_pool.executors[2].strands;
+  std::vector<strand>& medium_prio_strands = non_rt_pool.executors[1].strands;
+  std::vector<strand>& high_prio_strands   = non_rt_pool.executors[2].strands;
 
   // Configuration of strands for PCAP writing. These strands will use the low priority executor.
-  append_pcap_strands(low_prio_strands, worker_cfg.pcap_cfg);
+  append_pcap_strands(medium_prio_strands, worker_cfg.pcap_cfg);
 
   // Metrics strand configuration.
   strand metrics_strand_cfg{{{"metrics_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}};
-  low_prio_strands.push_back(metrics_strand_cfg);
+  medium_prio_strands.push_back(metrics_strand_cfg);
 
   // Configuration of strand for the CU-CP task handling.
   strand cu_cp_strand{{{"ctrl_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}};
@@ -362,10 +362,10 @@ void worker_manager::create_low_prio_executors(const worker_manager_config& work
     report_fatal_error("Failed to instantiate {} execution context", non_rt_pool.name);
   }
 
-  non_rt_external_data_exec = exec_mng.executors().at("external_data_exec");
-  non_rt_low_prio_exec      = exec_mng.executors().at("low_prio_exec");
-  non_rt_hi_prio_exec       = exec_mng.executors().at("high_prio_exec");
-  metrics_exec              = exec_mng.executors().at("metrics_exec");
+  non_rt_low_prio_exec    = exec_mng.executors().at("low_prio_exec");
+  non_rt_medium_prio_exec = exec_mng.executors().at("medium_prio_exec");
+  non_rt_hi_prio_exec     = exec_mng.executors().at("high_prio_exec");
+  metrics_exec            = exec_mng.executors().at("metrics_exec");
 }
 
 void worker_manager::associate_low_prio_executors(const worker_manager_config& config)

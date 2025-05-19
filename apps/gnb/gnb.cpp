@@ -495,7 +495,7 @@ int main(int argc, char** argv)
     commands.push_back(std::move(cmd));
   }
 
-  app_services::cmdline_command_dispatcher command_parser(*epoll_broker, *workers.non_rt_low_prio_exec, commands);
+  app_services::cmdline_command_dispatcher command_parser(*epoll_broker, *workers.non_rt_medium_prio_exec, commands);
 
   // Connect E1AP to O-CU-CP.
   e1_gw->attach_cu_cp(o_cucp_obj.get_cu_cp().get_e1_handler());

@@ -214,7 +214,7 @@ class strand_based_cu_up_executor_mapper final : public cu_up_executor_mapper
 {
 public:
   strand_based_cu_up_executor_mapper(const strand_based_executor_config& config) :
-    cu_up_strand(&config.worker_pool_executor,
+    cu_up_strand(&config.medium_prio_executor,
                  std::array<concurrent_queue_params, 2>{
                      {{concurrent_queue_policy::lockfree_mpmc, config.default_task_queue_size},
                       {concurrent_queue_policy::lockfree_mpmc, config.default_task_queue_size}}}),
@@ -247,7 +247,7 @@ private:
 
     // Create IO executor that can be either inlined with CU-UP strand or its own strand.
     if (config.dedicated_io_strand) {
-      io_ul_exec.emplace<io_dedicated_strand_type>(&config.worker_pool_executor, config.ul_ue_task_queue_size);
+      io_ul_exec.emplace<io_dedicated_strand_type>(&config.medium_prio_executor, config.ul_ue_task_queue_size);
       io_ul_exec_ptr = &std::get<io_dedicated_strand_type>(io_ul_exec);
     } else {
       io_ul_exec.emplace<inline_task_executor>();
@@ -270,7 +270,7 @@ private:
     }
 
     return base_cu_up_executor_pool_config{
-        ctrl_exec, ue_dl_execs, ue_ul_execs, ue_ctrl_execs, config.worker_pool_executor, *config.timers};
+        ctrl_exec, ue_dl_execs, ue_ul_execs, ue_ctrl_execs, config.medium_prio_executor, *config.timers};
   }
 
   // Base strand that sequentializes accesses to the worker pool executor.

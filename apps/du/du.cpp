@@ -311,7 +311,7 @@ int main(int argc, char** argv)
         f1u_gw_config,
         *epoll_broker,
         workers.get_du_high_executor_mapper().ue_mapper().mac_ul_pdu_executor(to_du_ue_index(0)),
-        *workers.non_rt_low_prio_exec);
+        *workers.non_rt_medium_prio_exec);
     if (not sock_cfg.five_qi.has_value()) {
       f1u_gw_maps.default_gws.push_back(std::move(f1u_gw));
     } else {
@@ -375,7 +375,7 @@ int main(int argc, char** argv)
 
   // Register the commands.
   app_services::cmdline_command_dispatcher command_parser(
-      *epoll_broker, *workers.non_rt_low_prio_exec, du_inst_and_cmds.commands.cmdline.commands);
+      *epoll_broker, *workers.non_rt_medium_prio_exec, du_inst_and_cmds.commands.cmdline.commands);
 
   // Start processing.
   du_inst.get_operation_controller().start();
