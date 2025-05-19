@@ -49,7 +49,7 @@ void ng_setup_procedure::operator()(coro_context<async_task<ngap_ng_setup_result
 
     // Forward message to AMF.
     if (!amf_notifier.on_new_message(request)) {
-      logger.error("AMF notifier is not set. Cannot send NGSetupRequest");
+      logger.warning("AMF notifier is not set. Cannot send NGSetupRequest");
       CORO_EARLY_RETURN(ngap_ng_setup_failure{ngap_cause_misc_t::unspecified});
     }
 

@@ -196,7 +196,7 @@ void ngap_impl::handle_initial_ue_message(const cu_cp_initial_ue_message& msg)
                            ue_ctxt.request_pdu_session_timer.duration().count());
   // Forward message to AMF.
   if (!tx_pdu_notifier.on_new_message(ngap_msg)) {
-    ue_ctxt.logger.log_error("AMF notifier is not set. Cannot send InitialUEMessage");
+    ue_ctxt.logger.log_warning("AMF notifier is not set. Cannot send InitialUEMessage");
     return;
   }
 }
@@ -800,7 +800,7 @@ ngap_message generate_handover_failure(uint64_t amf_ue_id)
 void ngap_impl::send_handover_failure(uint64_t amf_ue_id, const std::string& cause)
 {
   if (!tx_pdu_notifier.on_new_message(generate_handover_failure(amf_ue_id))) {
-    logger.error("AMF notifier is not set. Cannot send HandoverFailure (cause: {})", cause);
+    logger.warning("AMF notifier is not set. Cannot send HandoverFailure (cause: {})", cause);
     return;
   }
   logger.warning("Sending HandoverFailure. Cause: {}", cause);
@@ -1077,7 +1077,7 @@ void ngap_impl::handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t          
 
   // Forward message to AMF.
   if (!tx_pdu_notifier.on_new_message(ngap_msg)) {
-    ue_ctxt.logger.log_error("AMF notifier is not set. Cannot send HandoverNotify");
+    ue_ctxt.logger.log_warning("AMF notifier is not set. Cannot send HandoverNotify");
     return;
   }
 }

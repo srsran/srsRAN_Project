@@ -81,7 +81,7 @@ bool ngap_ue_context_release_procedure::send_ue_context_release_complete()
 
   // Forward message to AMF.
   if (!amf_notifier.on_new_message(ngap_msg)) {
-    logger.log_error("AMF notifier is not set. Cannot send UEContextReleaseComplete");
+    logger.log_warning("AMF notifier is not set. Cannot send UEContextReleaseComplete");
     return false;
   }
 

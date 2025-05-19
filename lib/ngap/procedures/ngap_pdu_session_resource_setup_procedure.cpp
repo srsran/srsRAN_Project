@@ -117,7 +117,7 @@ bool ngap_pdu_session_resource_setup_procedure::send_pdu_session_resource_setup_
 
   // Forward message to AMF.
   if (!amf_notifier.on_new_message(ngap_msg)) {
-    logger.log_error("AMF notifier is not set. Cannot send PDUSessionResourceSetupResponse");
+    logger.log_warning("AMF notifier is not set. Cannot send PDUSessionResourceSetupResponse");
     return false;
   }
 

@@ -143,7 +143,7 @@ bool ngap_pdu_session_resource_modify_procedure::send_pdu_session_resource_modif
 
   // Forward message to AMF.
   if (!amf_notifier.on_new_message(ngap_msg)) {
-    logger.log_error("AMF notifier is not set. Cannot send PDUSessionResourceModifyResponse");
+    logger.log_warning("AMF notifier is not set. Cannot send PDUSessionResourceModifyResponse");
     return false;
   }
 

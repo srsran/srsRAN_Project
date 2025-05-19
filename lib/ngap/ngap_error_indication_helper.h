@@ -65,7 +65,7 @@ inline void send_error_indication(ngap_message_notifier&      ngap_notifier,
 
   // Forward message to AMF.
   if (!ngap_notifier.on_new_message(ngap_msg)) {
-    logger.error("AMF notifier is not set. Cannot send ErrorIndication");
+    logger.warning("AMF notifier is not set. Cannot send ErrorIndication");
     return;
   }
 }
