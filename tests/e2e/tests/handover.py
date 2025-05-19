@@ -321,7 +321,9 @@ def _handover_multi_ues(
         always_download_artifacts=always_download_artifacts,
     )
 
-    start_network(ue_array, gnb, fivegc, gnb_post_cmd=("log --cu_level=debug", "log --mac_level=debug"))
+    start_network(
+        ue_array, gnb, fivegc, gnb_post_cmd=("log --cu_level=debug --hex_max_size=32", "log --mac_level=debug")
+    )
 
     ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
 
@@ -484,7 +486,9 @@ def _handover_multi_ues_iperf(
         always_download_artifacts=always_download_artifacts,
     )
 
-    start_network(ue_array, gnb, fivegc, gnb_post_cmd=("log --cu_level=debug", "log --mac_level=debug"))
+    start_network(
+        ue_array, gnb, fivegc, gnb_post_cmd=("log --cu_level=debug --hex_max_size=32", "log --mac_level=debug")
+    )
 
     ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
 
