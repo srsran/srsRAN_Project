@@ -29,6 +29,7 @@ private:
     null_report.ue_metrics.clear();
     null_report.events.clear();
   }
+  bool is_sched_report_required(slot_point sl_tx) override { return false; }
 
   scheduler_cell_metrics null_report{};
 };
@@ -76,8 +77,7 @@ void cell_metrics_handler::handle_ue_creation(du_ue_index_t ue_index, rnti_t rnt
   ues[ue_index].pci      = pcell_pci;
   rnti_to_ue_index_lookup.emplace(rnti, ue_index);
 
-  next_report->events.push_back(
-      scheduler_cell_event{last_slot_tx.without_hfn(), rnti, scheduler_cell_event::event_type::ue_add});
+  next_report->events.push_back(scheduler_cell_event{last_slot_tx, rnti, scheduler_cell_event::event_type::ue_add});
 }
 
 void cell_metrics_handler::handle_ue_reconfiguration(du_ue_index_t ue_index)
@@ -85,8 +85,8 @@ void cell_metrics_handler::handle_ue_reconfiguration(du_ue_index_t ue_index)
   if (not enabled()) {
     return;
   }
-  next_report->events.push_back(scheduler_cell_event{
-      last_slot_tx.without_hfn(), ues[ue_index].rnti, scheduler_cell_event::event_type::ue_reconf});
+  next_report->events.push_back(
+      scheduler_cell_event{last_slot_tx, ues[ue_index].rnti, scheduler_cell_event::event_type::ue_reconf});
 }
 
 void cell_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
@@ -97,8 +97,7 @@ void cell_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
   if (ues.contains(ue_index)) {
     rnti_t rnti = ues[ue_index].rnti;
 
-    next_report->events.push_back(
-        scheduler_cell_event{last_slot_tx.without_hfn(), rnti, scheduler_cell_event::event_type::ue_rem});
+    next_report->events.push_back(scheduler_cell_event{last_slot_tx, rnti, scheduler_cell_event::event_type::ue_rem});
 
     rnti_to_ue_index_lookup.erase(rnti);
     ues.erase(ue_index);
@@ -370,14 +369,6 @@ void cell_metrics_handler::handle_late_ul_harqs()
   ++data.nof_failed_pusch_allocs_late_harqs;
 }
 
-void cell_metrics_handler::handle_cell_activation(slot_point_extended sl_tx)
-{
-  if (not enabled()) {
-    return;
-  }
-  slot_tx_at_start.store(sl_tx, std::memory_order_relaxed);
-}
-
 void cell_metrics_handler::report_metrics()
 {
   for (ue_metric_context& ue : ues) {
@@ -386,7 +377,7 @@ void cell_metrics_handler::report_metrics()
   }
 
   next_report->pci                       = cell_cfg.pci;
-  next_report->slot                      = last_slot_tx.without_hfn() - report_period_slots;
+  next_report->slot                      = last_slot_tx - report_period_slots;
   next_report->nof_slots                 = report_period_slots;
   next_report->nof_error_indications     = data.error_indication_counter;
   next_report->average_decision_latency  = data.decision_latency_sum / report_period_slots;
@@ -480,7 +471,7 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
   data.decision_latency_sum += slot_decision_latency;
   if (data.max_decision_latency < slot_decision_latency) {
     data.max_decision_latency      = slot_decision_latency;
-    data.max_decision_latency_slot = last_slot_tx.without_hfn();
+    data.max_decision_latency_slot = last_slot_tx;
   }
   unsigned bin_idx = slot_decision_latency.count() / scheduler_cell_metrics::nof_usec_per_bin;
   bin_idx          = std::min(bin_idx, scheduler_cell_metrics::latency_hist_bins - 1);
@@ -498,34 +489,13 @@ void cell_metrics_handler::push_result(slot_point                sl_tx,
   if (not enabled()) {
     return;
   }
-
-  if (not next_report_slot_tx.valid()) {
-    // Determine whether cell was started. If so, setup next report slot.
-    auto slot_tx_ext = slot_tx_at_start.load(std::memory_order_relaxed);
-    if (not slot_tx_ext.valid()) {
-      return;
-    }
-    last_slot_tx        = slot_tx_ext;
-    unsigned slot_mod   = last_slot_tx.count() % report_period_slots;
-    next_report_slot_tx = last_slot_tx + report_period_slots - slot_mod;
-  }
-
-  // Update last slot tx accounting for HFN.
-  slot_point_extended next_sl_tx{sl_tx, last_slot_tx.hfn()};
-  if (next_sl_tx < last_slot_tx) {
-    // HFN rollover.
-    next_sl_tx += sl_tx.nof_slots_per_system_frame();
-  }
-  last_slot_tx = next_sl_tx;
+  last_slot_tx = sl_tx;
 
   handle_slot_result(slot_result, slot_decision_latency);
 
-  if (last_slot_tx >= next_report_slot_tx) {
+  if (notifier.is_sched_report_required(sl_tx)) {
     // Prepare report and forward it to the notifier.
     report_metrics();
-
-    // Set next report slot.
-    next_report_slot_tx += report_period_slots;
   }
 }
 

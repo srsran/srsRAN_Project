@@ -77,7 +77,6 @@ async_task<void> mac_cell_processor::start()
           // No-op.
           return;
         }
-
         state = cell_state::activating;
       },
       [this]() {
@@ -274,7 +273,7 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point               sl
   // * Start of Critical Path * //
 
   // Tick DU timers on subframe boundaries. Retrieve the combination of HFN, SFN and slot.
-  auto slot_tx_ext = time_source->on_slot_indication(sl_tx);
+  time_source->on_slot_indication(sl_tx);
 
   if (SRSRAN_UNLIKELY(state != cell_state::active)) {
     if (state == cell_state::inactive) {
@@ -285,7 +284,7 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point               sl
     // Cell is in the process of activating.
 
     // Notify scheduler about activation.
-    sched.start_cell(cell_cfg.cell_index, slot_tx_ext);
+    sched.start_cell(cell_cfg.cell_index);
 
     logger.info("cell={}: Cell was activated", fmt::underlying(cell_cfg.cell_index));
     state = cell_state::active;

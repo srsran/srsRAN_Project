@@ -148,9 +148,8 @@ void cell_scheduler::reset_resource_grid(slot_point sl_tx)
   uci_alloc.slot_indication(sl_tx);
 }
 
-void cell_scheduler::start(slot_point_extended sl_tx)
+void cell_scheduler::start()
 {
-  metrics.handle_cell_activation(sl_tx);
   stopped.store(false, std::memory_order_relaxed);
 }
 

@@ -47,27 +47,36 @@ mac_dl_cell_metric_handler::mac_dl_cell_metric_handler(pci_t                    
 {
 }
 
-void mac_dl_cell_metric_handler::on_cell_deactivation()
+void mac_dl_cell_metric_handler::on_cell_activation(slot_point sl_tx)
 {
-  if (not enabled()) {
+  if (not enabled() or active()) {
     return;
   }
-  if (not last_sl_tx.valid()) {
+  last_sl_tx = sl_tx;
+  data       = {};
+  // Notify cell creation and next slot on which the report will be generated.
+  notifier->on_cell_activation();
+}
+
+void mac_dl_cell_metric_handler::on_cell_deactivation()
+{
+  if (not enabled() or not active()) {
     // Activation hasn't started or completed.
     return;
   }
 
-  data.last_report = true;
-
   // Report the remainder metrics.
+  data.last_report = true;
   send_new_report();
+  last_sl_tx = {};
 }
 
 void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& meas)
 {
-  if (not enabled()) {
+  if (not enabled() or not active()) {
     return;
   }
+  last_sl_tx = meas.sl_tx;
 
   // Time difference
   const auto                     stop_tp           = metric_clock::now();
@@ -86,14 +95,6 @@ void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& 
   } else {
     rusg_diff = make_unexpected(meas.start_rusg.error());
   }
-
-  if (SRSRAN_UNLIKELY(not last_sl_tx.valid())) {
-    // First slot after cell activation.
-    // Notify cell creation and next slot on which the report will be generated.
-    notifier->on_cell_activation();
-    data = {};
-  }
-  last_sl_tx = meas.sl_tx;
 
   // Update metrics.
   data.nof_slots++;
@@ -156,6 +157,5 @@ void mac_dl_cell_metric_handler::send_new_report()
     notifier->on_cell_metric_report(report);
   } else {
     notifier->on_cell_deactivation(report);
-    last_sl_tx = {};
   }
 }

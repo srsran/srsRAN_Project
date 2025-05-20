@@ -44,6 +44,9 @@ public:
       if (enabled()) {
         start_tp   = metric_clock::now();
         start_rusg = resource_usage::now();
+        if (not parent->active()) {
+          parent->on_cell_activation(sl_tx);
+        }
       }
     }
     ~slot_measurement()
@@ -108,6 +111,11 @@ public:
   }
 
 private:
+  /// Called when the MAC cell is activated.
+  void on_cell_activation(slot_point sl_tx);
+
+  bool active() const { return last_sl_tx.valid(); }
+
   bool enabled() const { return notifier != nullptr; }
 
   struct non_persistent_data {
@@ -147,6 +155,7 @@ private:
   const std::chrono::nanoseconds slot_duration;
 
   // Last slot indication time point extended with HFN to avoid SFN wrap-around ambiguity.
+  // If not set, the cell is inactive.
   slot_point_extended last_sl_tx;
 
   // Metrics tracked

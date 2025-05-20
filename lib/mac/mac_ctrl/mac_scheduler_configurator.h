@@ -16,11 +16,7 @@
 namespace srsran {
 
 struct mac_cell_creation_request;
-
-struct scheduler_cell_metrics;
-template <typename R>
-class zero_copy_notifier;
-using scheduler_cell_metrics_notifier = zero_copy_notifier<scheduler_cell_metrics>;
+class scheduler_cell_metrics_notifier;
 
 struct mac_scheduler_cell_creation_request {
   const mac_cell_creation_request& cell_params;

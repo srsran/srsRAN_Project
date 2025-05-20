@@ -42,7 +42,7 @@ full_cell_report report_preinit()
 } // namespace
 
 class mac_metrics_aggregator::cell_metric_handler final : public mac_cell_metric_notifier,
-                                                          public zero_copy_notifier<scheduler_cell_metrics>
+                                                          public scheduler_cell_metrics_notifier
 {
 public:
   cell_metric_handler(mac_metrics_aggregator&     parent_,
@@ -64,6 +64,9 @@ public:
 
   bool is_report_required(slot_point slot_tx) override
   {
+    if (SRSRAN_UNLIKELY(not last_sl_tx.valid())) {
+      return false;
+    }
     // Note: Called from the cell execution context.
     slot_point_extended new_last_sl_tx{slot_tx, last_sl_tx.hfn()};
     if (SRSRAN_UNLIKELY(new_last_sl_tx < last_sl_tx)) {
@@ -73,6 +76,19 @@ public:
     last_sl_tx                       = new_last_sl_tx;
     const bool sched_report_is_ready = mac_builder != nullptr;
     return sched_report_is_ready and last_sl_tx >= next_report_slot_tx;
+  }
+
+  bool is_sched_report_required(slot_point slot_tx) override
+  {
+    if (SRSRAN_UNLIKELY(not last_sl_tx.valid())) {
+      return false;
+    }
+    slot_point_extended new_last_sl_tx{slot_tx, last_sl_tx.hfn()};
+    if (SRSRAN_UNLIKELY(new_last_sl_tx < last_sl_tx)) {
+      // SFN rollover detected.
+      new_last_sl_tx += slot_tx.nof_slots_per_system_frame();
+    }
+    return sched_builder != nullptr and new_last_sl_tx >= next_report_slot_tx;
   }
 
   void on_cell_activation() override

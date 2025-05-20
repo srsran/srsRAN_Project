@@ -21,11 +21,25 @@ using namespace srsran;
 class test_scheduler_cell_metrics_notifier : public scheduler_cell_metrics_notifier
 {
 public:
+  unsigned               period_slots = 1000;
+  slot_point             next_sl_report;
   scheduler_cell_metrics last_report;
 
   scheduler_cell_metrics& get_next() override { return last_report; }
 
   void commit(scheduler_cell_metrics& ptr) override {}
+
+  bool is_sched_report_required(slot_point sl_tx) override
+  {
+    if (not next_sl_report.valid()) {
+      next_sl_report = sl_tx + period_slots - (sl_tx.count() % period_slots);
+    }
+    if (sl_tx >= next_sl_report) {
+      next_sl_report += period_slots;
+      return true;
+    }
+    return false;
+  }
 };
 
 class test_scheduler_ue_metrics_notifier : public scheduler_metrics_notifier
@@ -46,7 +60,7 @@ protected:
              sched_config_helper::make_default_sched_cell_configuration_request()),
     metrics(cell_cfg, sched_cell_configuration_request_message::metrics_config{period, &metrics_notif})
   {
-    metrics.handle_cell_activation(slot_point_extended{next_sl_tx, 0});
+    metrics_notif.period_slots = report_period.count() * get_nof_slots_per_subframe(cell_cfg.scs_common);
     metrics.handle_ue_creation(test_ue_index, to_rnti(0x4601), pci_t{0});
   }
 

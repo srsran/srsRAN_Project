@@ -27,8 +27,7 @@ public:
 
   /// \brief Start scheduling for a given cell. If cell was already activated, this operation has no effect.
   /// \param cell_idx DU-specific index of the cell for which the slot is being processed.
-  /// \param sl_tx HFN, SFN and slot index of the transmit slot at which the cell was started.
-  virtual void start_cell(du_cell_index_t cell_idx, slot_point_extended sl_tx) = 0;
+  virtual void start_cell(du_cell_index_t cell_idx) = 0;
 
   /// \brief Stop running cell. If cell was already deactivated, this operation has no effect.
   /// \param cell_idx DU-specific index of the cell for which the slot is being processed.

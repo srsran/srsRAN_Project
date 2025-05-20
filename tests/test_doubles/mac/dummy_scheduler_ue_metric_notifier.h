@@ -25,7 +25,7 @@ public:
 
 class dummy_scheduler_cell_metrics_notifier : public scheduler_cell_metrics_notifier
 {
-private:
+public:
   scheduler_cell_metrics last_metrics;
 
   scheduler_cell_metrics& get_next() override { return last_metrics; }
@@ -34,6 +34,8 @@ private:
   {
     srsran_assert(&ptr == &last_metrics, "Invalid reference passed");
   }
+
+  bool is_sched_report_required(slot_point sl_tx) override { return false; }
 };
 
 } // namespace srsran

@@ -28,7 +28,7 @@ public:
   void handle_cell_removal_request(du_cell_index_t cell_index) override;
 
   // Cell activity.
-  void handle_cell_activation_request(du_cell_index_t cell_index, slot_point_extended sl_tx) override;
+  void handle_cell_activation_request(du_cell_index_t cell_index) override;
   void handle_cell_deactivation_request(du_cell_index_t cell_index) override;
 
   // Sys Info handling.

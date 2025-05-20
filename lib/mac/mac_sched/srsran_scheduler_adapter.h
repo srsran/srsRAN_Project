@@ -36,10 +36,7 @@ public:
 
   void remove_cell(du_cell_index_t cell_index) override;
 
-  void start_cell(du_cell_index_t cell_index, slot_point_extended sl_tx) override
-  {
-    sched_impl->handle_cell_activation_request(cell_index, sl_tx);
-  }
+  void start_cell(du_cell_index_t cell_index) override { sched_impl->handle_cell_activation_request(cell_index); }
 
   void stop_cell(du_cell_index_t cell_index) override { sched_impl->handle_cell_deactivation_request(cell_index); }
 

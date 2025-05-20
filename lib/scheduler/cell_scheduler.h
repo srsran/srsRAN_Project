@@ -44,7 +44,7 @@ public:
   void run_slot(slot_point sl_tx);
 
   /// Activate cell.
-  void start(slot_point_extended sl_tx);
+  void start();
 
   /// Deactivate cell.
   void stop();
@@ -90,10 +90,7 @@ private:
   pucch_guardbands_scheduler    pucch_guard_sch;
   paging_scheduler              pg_sch;
 
-  slot_point_extended last_sl_tx;
-
-  std::atomic<slot_point_extended> slot_when_started;
-  std::atomic<uint32_t>            stopped{false};
+  std::atomic<bool> stopped{false};
 };
 
 } // namespace srsran

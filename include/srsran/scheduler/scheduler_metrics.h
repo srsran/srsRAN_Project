@@ -175,7 +175,11 @@ public:
   virtual void report_metrics(const scheduler_cell_metrics& report) = 0;
 };
 
-/// \brief Notifier interface used by the scheduler to report metrics of a given cell in a zero-copy manner.
-using scheduler_cell_metrics_notifier = zero_copy_notifier<scheduler_cell_metrics>;
+/// Interface used by the scheduler to determine whether a new metric report is required.
+class scheduler_cell_metrics_notifier : public zero_copy_notifier<scheduler_cell_metrics>
+{
+public:
+  virtual bool is_sched_report_required(slot_point sl_tx) = 0;
+};
 
 } // namespace srsran
