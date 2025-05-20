@@ -393,7 +393,8 @@ validate_pusch_cell_unit_config(const du_high_unit_pusch_config& config, unsigne
 
   if (min_k1 < config.min_k2) {
     fmt::print("The value min_k2 {} set for PUSCH cannot be greater than the min_k1 {} set for PUCCH config.\n",
-               config.start_rb);
+               config.min_k2,
+               min_k1);
     return false;
   }
 
