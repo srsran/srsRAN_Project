@@ -240,7 +240,7 @@ private:
   slot_point          next_sl_tx;
   const sched_result* result = nullptr;
 
-  circular_array<sched_result, 64> sched_results;
+  circular_array<sched_result, 64> sched_results{};
 };
 
 void benchmark_tdd(benchmarker& bm, const bench_params& params)
