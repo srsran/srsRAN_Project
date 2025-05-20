@@ -17,7 +17,13 @@
 
 namespace srsran {
 
-/// Specialization for moodycamel lockfree MPMC without a blocking mechanism.
+/// \brief Specialization for moodycamel lockfree MPMC without a blocking mechanism.
+///
+/// The moodycamel lockfree MPMC queue is not technically a queue. It is more linked list of sub-queues, each sub-queue
+/// used by a different producer. The consumer will round-robin across the sub-queues to dequeue elements. This means
+/// that there are no linearizability guarantees.
+/// While this queue provides a bounded queue API, it is hard to use it because it requires that the users know how
+/// many producers they will need. So, instead we just use the unbounded queue API.
 template <typename T>
 class concurrent_queue<T, concurrent_queue_policy::moodycamel_lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>
 {
@@ -26,8 +32,17 @@ public:
   static constexpr concurrent_queue_policy      queue_policy = concurrent_queue_policy::moodycamel_lockfree_mpmc;
   static constexpr concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::non_blocking;
 
-  explicit concurrent_queue(size_t qsize) : queue(qsize) {}
+  /// \brief Constructs a concurrent queue and pre-reserves the configured capacity.
+  /// \param[in] qsize The capacity to reserve.
+  /// \param[in] nof_prereserved_producers Number of producers to pre-reserve.
+  /// \remark Given the moodycamel queue particularities, there is no guarantee that the provided capacity will
+  /// always be available in the case of multiple producers.
+  explicit concurrent_queue(size_t qsize, size_t nof_prereserved_producers = 1) :
+    queue(qsize, 0, nof_prereserved_producers)
+  {
+  }
 
+  /// \brief Pushes an element to the queue. If the producer sub-queue is full, the call mallocs a new block.
   bool try_push(const T& elem) { return queue.enqueue(elem); }
   bool try_push(T&& elem) { return queue.enqueue(std::move(elem)); }
   template <typename U>
