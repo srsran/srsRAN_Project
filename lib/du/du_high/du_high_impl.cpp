@@ -181,3 +181,8 @@ du_configurator& du_high_impl::get_du_configurator()
 {
   return *du_manager;
 }
+
+du_manager_time_mapper_accessor& du_high_impl::get_du_manager_time_mapper_accessor()
+{
+  return *du_manager;
+}

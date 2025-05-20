@@ -43,6 +43,8 @@ public:
 
   du_configurator& get_du_configurator() override;
 
+  du_manager_time_mapper_accessor& get_du_manager_time_mapper_accessor() override;
+
 private:
   class layer_connector;
 
