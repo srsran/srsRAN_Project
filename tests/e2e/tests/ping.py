@@ -168,7 +168,13 @@ def test_android_ims(
 @mark.android_hp
 @mark.flaky(
     reruns=2,
-    only_rerun=["failed to start", "Exception calling application", "Attach timeout reached", "Some packages got lost"],
+    only_rerun=[
+        "failed to start",
+        "Exception calling application",
+        "Attach timeout reached",
+        "Some packages got lost",
+        "Failed to connect to remote host",
+    ],
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_android_hp(
