@@ -27,12 +27,13 @@ namespace srsran {
 
 /// This struct will hold relevant metrics for the PDCP TX
 struct pdcp_tx_metrics_container {
-  uint32_t num_sdus;
-  uint32_t num_sdu_bytes;
-  uint32_t num_pdus;
-  uint32_t num_pdu_bytes;
-  uint32_t num_discard_timeouts;
-  uint32_t sum_pdu_latency_ns; ///< total PDU latency (in ns)
+  uint32_t num_sdus;             ///< Number of SDUs
+  uint32_t num_sdu_bytes;        ///< Number of SDU bytes
+  uint32_t num_dropped_sdus;     ///< Number of dropped SDUs
+  uint32_t num_pdus;             ///< Number of transmitted PDUs
+  uint32_t num_pdu_bytes;        ///< Number of transmitted PDU bytes
+  uint32_t num_discard_timeouts; ///< Number of discard timeouts
+  uint32_t sum_pdu_latency_ns;   ///< total PDU latency (in ns)
   unsigned counter;
 
   // CPU Usage metrics
@@ -58,10 +59,12 @@ inline std::string format_pdcp_tx_metrics(timer_duration metrics_period, const p
 {
   fmt::memory_buffer buffer;
   fmt::format_to(std::back_inserter(buffer),
-                 "num_sdus={} sdu_rate={}bps num_pdus={} pdu_rate={}bps num_discard_timeouts={} sum_sdu_latency={}ns "
+                 "num_sdus={} sdu_rate={}bps dropped_sdus={} num_pdus={} pdu_rate={}bps num_discard_timeouts={} "
+                 "sum_sdu_latency={}ns "
                  "sdu_latency_hist=[",
                  scaled_fmt_integer(m.num_sdus, false),
                  float_to_eng_string(static_cast<float>(m.num_sdu_bytes) * 8 * 1000 / metrics_period.count(), 1, false),
+                 scaled_fmt_integer(m.num_dropped_sdus, false),
                  scaled_fmt_integer(m.num_pdus, false),
                  float_to_eng_string(static_cast<float>(m.num_pdu_bytes) * 8 * 1000 / metrics_period.count(), 1, false),
                  scaled_fmt_integer(m.num_discard_timeouts, false),
@@ -103,22 +106,23 @@ struct formatter<srsran::pdcp_tx_metrics_container> {
   template <typename FormatContext>
   auto format(srsran::pdcp_tx_metrics_container m, FormatContext& ctx) const
   {
-    return format_to(
-        ctx.out(),
-        "num_sdus={} num_sdu_bytes={} num_pdus={} num_pdu_bytes={} num_discard_timeouts={} sum_pdu_latency={}ns "
-        "sdu_latency_hist=[{}] min_sdu_latency={}{} max_sdu_latency={}{} sum_crypto_latency={}ns",
-        m.num_sdus,
-        m.num_sdu_bytes,
-        m.num_pdus,
-        m.num_pdu_bytes,
-        m.num_discard_timeouts,
-        m.sum_pdu_latency_ns,
-        fmt::join(m.pdu_latency_hist, " "),
-        m.min_pdu_latency_ns,
-        m.min_pdu_latency_ns.has_value() ? "ns" : "",
-        m.max_pdu_latency_ns,
-        m.max_pdu_latency_ns.has_value() ? "ns" : "",
-        m.sum_crypto_processing_latency_ns);
+    return format_to(ctx.out(),
+                     "num_sdus={} num_sdu_bytes={} num_dropped_sdus={} num_pdus={} num_pdu_bytes={} "
+                     "num_discard_timeouts={} sum_pdu_latency={}ns "
+                     "sdu_latency_hist=[{}] min_sdu_latency={}{} max_sdu_latency={}{} sum_crypto_latency={}ns",
+                     m.num_sdus,
+                     m.num_sdu_bytes,
+                     m.num_dropped_sdus,
+                     m.num_pdus,
+                     m.num_pdu_bytes,
+                     m.num_discard_timeouts,
+                     m.sum_pdu_latency_ns,
+                     fmt::join(m.pdu_latency_hist, " "),
+                     m.min_pdu_latency_ns,
+                     m.min_pdu_latency_ns.has_value() ? "ns" : "",
+                     m.max_pdu_latency_ns,
+                     m.max_pdu_latency_ns.has_value() ? "ns" : "",
+                     m.sum_crypto_processing_latency_ns);
   }
 };
 } // namespace fmt

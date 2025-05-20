@@ -105,6 +105,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
     } else {
       logger.log_warning("Dropping SDU. Entity is stopped");
     }
+    metrics.add_lost_sdus(1);
     return;
   }
 
@@ -123,6 +124,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
         }
       }
       warn_on_drop_count++;
+      metrics.add_lost_sdus(1);
       return;
     }
     if (warn_on_drop_count != 0) {
@@ -145,6 +147,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   if (st.tx_next >= cfg.custom.max_count.hard) {
     if (!max_count_overflow) {
       logger.log_error("Reached maximum count, refusing to transmit further. count={}", st.tx_next);
+      metrics.add_lost_sdus(1);
       upper_cn.on_protocol_failure();
       max_count_overflow = true;
     }
@@ -192,6 +195,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
       auto sdu_buf_copy = buf_info.buf.deep_copy();
       if (not sdu_buf_copy.has_value()) {
         logger.log_error("Unable to deep copy SDU");
+        metrics.add_lost_sdus(1);
         upper_cn.on_protocol_failure();
         return;
       }
@@ -213,6 +217,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   // Pack header
   if (not write_data_pdu_header(buf_info.buf, hdr)) {
     logger.log_error("Could not append PDU header, dropping SDU and notifying RRC. count={}", st.tx_next);
+    metrics.add_lost_sdus(1);
     upper_cn.on_protocol_failure();
     return;
   }
@@ -223,6 +228,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   if (not exp_buf.has_value()) {
     logger.log_error("Could not apply ciphering and integrity protection, dropping SDU and notifying RRC. count={}",
                      st.tx_next);
+    metrics.add_lost_sdus(1);
     upper_cn.on_protocol_failure();
     return;
   }
