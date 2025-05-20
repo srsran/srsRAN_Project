@@ -174,6 +174,7 @@ void realtime_timing_worker::poll()
 
   // Are we still in the same symbol as before?
   if (delta == 0) {
+    SRSRAN_RTSAN_SCOPED_DISABLER(d);
     std::this_thread::sleep_for(sleep_time);
     return;
   }
