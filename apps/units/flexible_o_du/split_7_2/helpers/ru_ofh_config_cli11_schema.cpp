@@ -370,12 +370,14 @@ static void configure_cli11_expert_execution_args(CLI::App& app, ru_ofh_unit_exp
       "Sets the cell CPU affinities configuration on a per cell basis");
 }
 
+#ifdef DPDK_FOUND
 static void configure_cli11_hal_args(CLI::App& app, std::optional<ru_ofh_unit_hal_config>& config)
 {
   config.emplace();
 
   add_option(app, "--eal_args", config->eal_args, "EAL configuration parameters used to initialize DPDK");
 }
+#endif
 
 static void configure_cli11_metrics_args(CLI::App& app, ru_ofh_unit_metrics_config& config)
 {
@@ -398,9 +400,11 @@ void srsran::configure_cli11_with_ru_ofh_config_schema(CLI::App& app, ru_ofh_uni
   CLI::App* expert_subcmd = add_subcommand(app, "expert_execution", "Expert execution configuration")->configurable();
   configure_cli11_expert_execution_args(*expert_subcmd, parsed_cfg.config.expert_execution_cfg);
 
-  // HAL section.
+  // HAL section only available when DPDK is present.
+#ifdef DPDK_FOUND
   CLI::App* hal_subcmd = add_subcommand(app, "hal", "HAL configuration")->configurable();
   configure_cli11_hal_args(*hal_subcmd, parsed_cfg.config.hal_config);
+#endif
 
   // Metrics section.
   app_helpers::configure_cli11_with_metrics_appconfig_schema(app, parsed_cfg.config.metrics_cfg.metrics_cfg);
@@ -408,6 +412,7 @@ void srsran::configure_cli11_with_ru_ofh_config_schema(CLI::App& app, ru_ofh_uni
   configure_cli11_metrics_args(*metrics_subcmd, parsed_cfg.config.metrics_cfg);
 }
 
+#ifdef DPDK_FOUND
 static void manage_hal_optional(CLI::App& app, std::optional<ru_ofh_unit_hal_config>& hal_config)
 {
   // Clean the HAL optional.
@@ -417,8 +422,11 @@ static void manage_hal_optional(CLI::App& app, std::optional<ru_ofh_unit_hal_con
     subcmd->disabled();
   }
 }
+#endif
 
 void srsran::autoderive_ru_ofh_parameters_after_parsing(CLI::App& app, ru_ofh_unit_parsed_config& parsed_cfg)
 {
+#ifdef DPDK_FOUND
   manage_hal_optional(app, parsed_cfg.config.hal_config);
+#endif
 }

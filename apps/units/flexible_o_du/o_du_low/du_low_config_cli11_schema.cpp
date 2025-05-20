@@ -272,6 +272,7 @@ static void configure_cli11_expert_phy_args(CLI::App& app, du_low_unit_expert_up
       ->capture_default_str();
 }
 
+#ifdef DPDK_FOUND
 static void configure_cli11_hwacc_pdsch_enc_args(CLI::App& app, std::optional<hwacc_pdsch_appconfig>& config)
 {
   config.emplace();
@@ -349,7 +350,9 @@ static void configure_cli11_hal_args(CLI::App& app, std::optional<du_low_unit_ha
       add_subcommand(app, "bbdev_hwacc", "BBDEV-based hardware-acceleration configuration parameters");
   configure_cli11_bbdev_hwacc_args(*bbdev_hwacc_subcmd, config->bbdev_hwacc);
 }
+#endif
 
+#ifdef DPDK_FOUND
 static void manage_hal_optional(CLI::App& app, du_low_unit_config& parsed_cfg)
 {
   // Clean the HAL optional.
@@ -364,6 +367,7 @@ static void manage_hal_optional(CLI::App& app, du_low_unit_config& parsed_cfg)
     parsed_cfg.hal_config->bbdev_hwacc.reset();
   }
 }
+#endif
 
 static void configure_cli11_metrics_layers_args(CLI::App& app, du_low_unit_metrics_config& parsed_cfg)
 {
@@ -388,9 +392,11 @@ void srsran::configure_cli11_with_du_low_config_schema(CLI::App& app, du_low_uni
   CLI::App* expert_subcmd = add_subcommand(app, "expert_execution", "Expert execution configuration")->configurable();
   configure_cli11_expert_execution_args(*expert_subcmd, parsed_cfg.expert_execution_cfg);
 
+#ifdef DPDK_FOUND
   // HAL section.
   CLI::App* hal_subcmd = add_subcommand(app, "hal", "HAL configuration")->configurable();
   configure_cli11_hal_args(*hal_subcmd, parsed_cfg.hal_config);
+#endif
 
   // Metrics section.
   app_helpers::configure_cli11_with_metrics_appconfig_schema(app, parsed_cfg.metrics_cfg.common_metrics_cfg);
@@ -436,5 +442,7 @@ void srsran::autoderive_du_low_parameters_after_parsing(CLI::App&           app,
     parsed_cfg.expert_execution_cfg.cell_affinities.resize(nof_cells);
   }
 
+#ifdef DPDK_FOUND
   manage_hal_optional(app, parsed_cfg);
+#endif
 }
