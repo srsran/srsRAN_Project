@@ -16,6 +16,7 @@
 #include "procedures/f1_removal_procedure.h"
 #include "procedures/f1_setup_procedure.h"
 #include "procedures/f1ap_stop_procedure.h"
+#include "procedures/gnb_cu_configuration_update_procedure.h"
 #include "procedures/ue_context_modification_procedure.h"
 #include "procedures/ue_context_release_procedure.h"
 #include "procedures/ue_context_setup_procedure.h"
@@ -121,7 +122,7 @@ void f1ap_cu_impl::handle_paging(const cu_cp_paging_message& msg)
 {
   asn1::f1ap::paging_s paging = {};
 
-  // Pack message into PDU
+  // Pack message into PDU.
   f1ap_message paging_msg;
   paging_msg.pdu.set_init_msg();
   paging_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_PAGING);
@@ -216,6 +217,12 @@ f1ap_cu_impl::handle_positioning_measurement_request(const measurement_request_t
 
 #endif // SRSRAN_HAS_ENTERPRISE
 
+async_task<f1ap_gnb_cu_configuration_update_response>
+f1ap_cu_impl::handle_gnb_cu_configuration_update(const f1ap_gnb_cu_configuration_update& request)
+{
+  return launch_async<gnb_cu_configuration_update_procedure>(cfg, request, tx_pdu_notifier, ev_mng, logger);
+}
+
 void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
 {
   switch (msg.value.type().value) {
@@ -307,7 +314,7 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const asn1::f1ap::init_ul_rrc_m
     req.du_to_cu_rrc_container = byte_buffer(msg->du_to_cu_rrc_container);
   } else {
     // Assume the DU can't serve the UE, so the CU-CP should reject the UE, see TS 38.473 section 8.4.1.2.
-    // We will forward an empty container to the RRC UE entity, that will trigger an RRC Reject
+    // We will forward an empty container to the RRC UE entity, that will trigger an RRC Reject.
     logger.debug("du_ue={}: Forwarding \"InitialULRRCMessageTransfer\" to RRC to reject the UE. Cause: Missing DU "
                  "to CU container",
                  fmt::underlying(du_ue_id));
@@ -462,6 +469,16 @@ void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcom
         logger.warning("Unexpected transaction id={}", transaction_id.value());
       }
       break;
+    case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::gnb_cu_cfg_upd_ack:
+      transaction_id = get_transaction_id(outcome);
+      if (not transaction_id.has_value()) {
+        logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
+        break;
+      }
+      if (not ev_mng.transactions.set_response(transaction_id.value(), outcome)) {
+        logger.warning("Unexpected transaction id={}", transaction_id.value());
+      }
+      break;
     default:
       logger.warning("Successful outcome of type {} is not supported", outcome.value.type().to_string());
       break;
@@ -521,6 +538,16 @@ void f1ap_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_ou
       }
       break;
     case asn1::f1ap::f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::positioning_meas_fail:
+      transaction_id = get_transaction_id(outcome);
+      if (not transaction_id.has_value()) {
+        logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
+        break;
+      }
+      if (not ev_mng.transactions.set_response(transaction_id.value(), make_unexpected(outcome))) {
+        logger.warning("Unexpected transaction id={}", transaction_id.value());
+      }
+      break;
+    case asn1::f1ap::f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::gnb_cu_cfg_upd_fail:
       transaction_id = get_transaction_id(outcome);
       if (not transaction_id.has_value()) {
         logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());

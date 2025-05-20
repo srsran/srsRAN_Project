@@ -15,6 +15,7 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_cp_ue_messages.h"
 #include "srsran/f1ap/cu_cp/du_setup_notifier.h"
+#include "srsran/f1ap/cu_cp/f1ap_cu_configuration_update.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_ue_context_update.h"
 #include "srsran/f1ap/cu_cp/f1ap_du_context.h"
 #include "srsran/f1ap/cu_cp/f1ap_nrppa_msg_handling.h"
@@ -155,6 +156,20 @@ public:
   virtual void remove_ue_context(ue_index_t ue_index) = 0;
 };
 
+/// Handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
+class f1ap_interface_management_handler
+{
+public:
+  virtual ~f1ap_interface_management_handler() = default;
+
+  /// \brief Initiates the gNB-CU Configuration Update procedure  as per TS 38.473 section 8.2.5.
+  /// \param[in] request The gNB-CU Configuration Update message to transmit.
+  /// \return Returns a f1ap_gnb_cu_configuration_update_response struct with the success member set to
+  /// 'true' in case of a successful outcome, 'false' otherwise.
+  virtual async_task<f1ap_gnb_cu_configuration_update_response>
+  handle_gnb_cu_configuration_update(const f1ap_gnb_cu_configuration_update& request) = 0;
+};
+
 /// Combined entry point for F1AP handling.
 class f1ap_cu : public f1ap_message_handler,
                 public f1ap_rrc_message_handler,
@@ -162,7 +177,8 @@ class f1ap_cu : public f1ap_message_handler,
                 public f1ap_statistics_handler,
                 public f1ap_paging_manager,
                 public f1ap_ue_context_removal_handler,
-                public f1ap_nrppa_message_handler
+                public f1ap_nrppa_message_handler,
+                public f1ap_interface_management_handler
 {
 public:
   virtual ~f1ap_cu() = default;
@@ -171,13 +187,14 @@ public:
 
   virtual async_task<void> stop() = 0;
 
-  virtual f1ap_message_handler&            get_f1ap_message_handler()            = 0;
-  virtual f1ap_rrc_message_handler&        get_f1ap_rrc_message_handler()        = 0;
-  virtual f1ap_ue_context_manager&         get_f1ap_ue_context_manager()         = 0;
-  virtual f1ap_statistics_handler&         get_f1ap_statistics_handler()         = 0;
-  virtual f1ap_paging_manager&             get_f1ap_paging_manager()             = 0;
-  virtual f1ap_ue_context_removal_handler& get_f1ap_ue_context_removal_handler() = 0;
-  virtual f1ap_nrppa_message_handler&      get_f1ap_nrppa_message_handler()      = 0;
+  virtual f1ap_message_handler&              get_f1ap_message_handler()              = 0;
+  virtual f1ap_rrc_message_handler&          get_f1ap_rrc_message_handler()          = 0;
+  virtual f1ap_ue_context_manager&           get_f1ap_ue_context_manager()           = 0;
+  virtual f1ap_statistics_handler&           get_f1ap_statistics_handler()           = 0;
+  virtual f1ap_paging_manager&               get_f1ap_paging_manager()               = 0;
+  virtual f1ap_ue_context_removal_handler&   get_f1ap_ue_context_removal_handler()   = 0;
+  virtual f1ap_nrppa_message_handler&        get_f1ap_nrppa_message_handler()        = 0;
+  virtual f1ap_interface_management_handler& get_f1ap_interface_management_handler() = 0;
 };
 
 } // namespace srs_cu_cp
