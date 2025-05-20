@@ -77,7 +77,12 @@ async_task<void> mac_cell_processor::start()
           // No-op.
           return;
         }
-        state = cell_state::activating;
+
+        // Notify scheduler about activation.
+        sched.start_cell(cell_cfg.cell_index);
+
+        state = cell_state::active;
+        logger.info("cell={}: Cell was activated", fmt::underlying(cell_cfg.cell_index));
       },
       [this]() {
         logger.warning("cell={}: Postponed cell start operation. Cause: Task queue is full",
@@ -275,19 +280,10 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point               sl
   // Tick DU timers on subframe boundaries. Retrieve the combination of HFN, SFN and slot.
   time_source->on_slot_indication(sl_tx);
 
-  if (SRSRAN_UNLIKELY(state != cell_state::active)) {
-    if (state == cell_state::inactive) {
-      // Ignore slot indication if cell is inactive.
-      phy_cell.on_cell_results_completion(sl_tx);
-      return;
-    }
-    // Cell is in the process of activating.
-
-    // Notify scheduler about activation.
-    sched.start_cell(cell_cfg.cell_index);
-
-    logger.info("cell={}: Cell was activated", fmt::underlying(cell_cfg.cell_index));
-    state = cell_state::active;
+  if (SRSRAN_UNLIKELY(state == cell_state::inactive)) {
+    // Ignore slot indication if cell is inactive.
+    phy_cell.on_cell_results_completion(sl_tx);
+    return;
   }
 
   // Initiate metric capturing.

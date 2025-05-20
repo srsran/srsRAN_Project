@@ -122,7 +122,7 @@ private:
   mac_dl_cell_metric_handler metrics;
 
   // Represents cell activation state.
-  enum class cell_state { inactive, activating, active } state = cell_state::inactive;
+  enum class cell_state { inactive, active } state = cell_state::inactive;
 
   mac_pcap& pcap;
 

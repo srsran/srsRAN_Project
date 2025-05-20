@@ -46,38 +46,25 @@ static void print_report(const mac_dl_metric_report& rep)
 namespace {
 
 struct dummy_sched_metric_handler {
-  dummy_sched_metric_handler(scheduler_cell_metrics_notifier& notif_, unsigned period_slots_) :
-    notif(notif_), period_slots(period_slots_)
-  {
-  }
+  dummy_sched_metric_handler(scheduler_cell_metrics_notifier& notif_) : notif(notif_) { builder = notif.get_builder(); }
 
   void slot_indication(slot_point sl_tx)
   {
-    if (not next_report_slot.valid()) {
-      unsigned sl_mod  = sl_tx.to_uint() % period_slots;
-      next_report_slot = sl_tx + period_slots - sl_mod;
-    }
     report_slot_count++;
 
-    if (sl_tx == next_report_slot) {
-      auto builder       = notif.get_builder();
+    if (notif.is_sched_report_required(sl_tx)) {
       builder->slot      = sl_tx - report_slot_count;
       builder->nof_slots = report_slot_count;
       builder.reset();
-      next_report_slot += period_slots;
-      next_hfn += (period_slots / (NOF_SFNS * NOF_SUBFRAMES_PER_FRAME));
-      if (next_report_slot.to_uint() < sl_tx.to_uint()) {
-        next_hfn += 1;
-      }
+      builder           = notif.get_builder();
       report_slot_count = 0;
     }
   }
 
   scheduler_cell_metrics_notifier& notif;
-  unsigned                         period_slots;
-  slot_point                       next_report_slot;
-  unsigned                         next_hfn{0};
   unsigned                         report_slot_count{0};
+
+  zero_copy_notifier<scheduler_cell_metrics>::builder builder;
 };
 
 class mac_metric_handler_test : public ::testing::Test
@@ -95,7 +82,7 @@ protected:
                  pci_t                                 pci,
                  subcarrier_spacing                    scs,
                  std::chrono::milliseconds             report_period) :
-      sched(sched_notif, report_period.count() * get_nof_slots_per_subframe(scs)),
+      sched(sched_notif),
       mac(pci, scs, mac_cell_config_dependencies{nullptr, report_period, &mac_notif}),
       timer_source(std::move(timer_source_))
     {
