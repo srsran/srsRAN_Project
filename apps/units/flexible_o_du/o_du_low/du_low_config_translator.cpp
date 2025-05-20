@@ -44,7 +44,8 @@ static void generate_du_low_config(srs_du::du_low_config&             out_config
     // Number of slots per system frame.
     unsigned nof_slots_per_system_frame = NOF_SFNS * nof_slots_per_frame;
     // PUSCH HARQ process lifetime in slots. It assumes the maximum lifetime is 100ms.
-    unsigned expire_pusch_harq_timeout_slots = 100 * nof_slots_per_subframe;
+    unsigned expire_pusch_harq_timeout_slots =
+        100 * nof_slots_per_subframe + du_low.expert_phy_cfg.max_processing_delay_slots;
 
     // Calculate the number of UL slots in a frame and in a PUSCH HARQ process lifetime.
     unsigned nof_ul_slots_in_harq_lifetime = expire_pusch_harq_timeout_slots;
