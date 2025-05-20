@@ -674,10 +674,14 @@ viavi 24h:
   stage: rf
   extends: .e2e-run
   variables:
-    GROUP: uesim
+    GROUP: rf
     TESTBED: s72_uesim
     E2E_LOG_LEVEL: info
     RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+      when: delayed
+      start_in: 8 hours # woraround: let zmq-uesim finish first
   needs:
     - job: basic avx2 dpdk
       artifacts: true
