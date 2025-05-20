@@ -13,6 +13,7 @@
 #include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
 #include "srsran/asn1/rrc_nr/dl_ccch_msg_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/f1ap/cu_cp/f1ap_cu_configuration_update.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/qos/five_qi.h"
@@ -153,5 +154,21 @@ srsran::srs_cu_cp::create_ue_context_setup_request(const std::initializer_list<d
 
     req.drbs_to_be_setup_list.push_back(drb_item);
   }
+  return req;
+}
+
+f1ap_gnb_cu_configuration_update srsran::srs_cu_cp::create_gnb_cu_configuration_update()
+{
+  f1ap_gnb_cu_configuration_update req;
+
+  req.cells_to_be_activated_list = {
+      {nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(0).value()}, MIN_PCI},
+      {nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(1).value()}, MIN_PCI + 1}};
+
+  req.cells_to_be_deactivated_list = {
+      {nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(2).value()}}};
+
+  req.gnb_cu_name = "srs_cu_cp";
+
   return req;
 }

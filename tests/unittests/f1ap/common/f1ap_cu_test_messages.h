@@ -65,8 +65,15 @@ generate_ue_context_modification_response(gnb_cu_ue_f1ap_id_t          cu_ue_id,
 /// \brief Generates dummy F1AP UE CONTEXT MODIFICATION FAILURE message.
 f1ap_message generate_ue_context_modification_failure(gnb_cu_ue_f1ap_id_t cu_ue_id, gnb_du_ue_f1ap_id_t du_ue_id);
 
-/// \brief Generate a dummy Paging message.
+/// \brief Generate a dummy PAGING message.
 cu_cp_paging_message generate_paging_message();
+
+/// \brief Generate a dummy GNB-CU CONFIGURATION FAILURE message.
+f1ap_message generate_gnb_cu_configuration_update_failure();
+
+/// \brief Generate a dummy GNB-CU CONFIGURATION ACKNOWLEDGEMENT message.
+f1ap_message generate_gnb_cu_configuration_update_acknowledgement(
+    const std::vector<f1ap_cell_failed_to_activate>& cells_failed_to_activate);
 
 } // namespace srs_cu_cp
 } // namespace srsran
