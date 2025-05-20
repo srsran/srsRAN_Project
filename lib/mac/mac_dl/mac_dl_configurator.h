@@ -12,6 +12,7 @@
 
 #include "srsran/mac/mac_cell_manager.h"
 #include "srsran/mac/mac_metrics.h"
+#include "srsran/ran/slot_point_extended.h"
 
 namespace srsran {
 

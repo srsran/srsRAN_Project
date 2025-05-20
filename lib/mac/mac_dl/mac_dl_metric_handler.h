@@ -16,7 +16,6 @@
 #include "srsran/mac/mac_metrics.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/slot_point.h"
-#include "srsran/ran/slot_point_extended.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/tracing/resource_usage.h"
 #include <memory>
@@ -154,9 +153,8 @@ private:
   mac_cell_metric_notifier*      notifier;
   const std::chrono::nanoseconds slot_duration;
 
-  // Last slot indication time point extended with HFN to avoid SFN wrap-around ambiguity.
-  // If not set, the cell is inactive.
-  slot_point_extended last_sl_tx;
+  // Last slot indication slot point. If not set, the cell is inactive.
+  slot_point last_sl_tx;
 
   // Metrics tracked
   non_persistent_data data;

@@ -237,8 +237,8 @@ void srsran_scheduler_adapter::handle_dl_buffer_state_update(
     const high_resolution_clock::time_point sl_tp = last_slot_tp.load(std::memory_order_relaxed);
     if (sl_tp != high_resolution_clock::time_point{}) {
       // Convert HOL TOA from chrono time point to slots.
-      bs.hol_toa = chrono_to_slot_point(
-          mac_dl_bs_ind.hol_toa.value(), sl_tp, last_slot_point.load(std::memory_order_relaxed).without_hfn());
+      bs.hol_toa =
+          chrono_to_slot_point(mac_dl_bs_ind.hol_toa.value(), sl_tp, last_slot_point.load(std::memory_order_relaxed));
     }
   }
 

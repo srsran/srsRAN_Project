@@ -88,7 +88,7 @@ ru_emulator_timing_notifier::ru_emulator_timing_notifier(srslog::basic_logger&  
   scs(subcarrier_spacing::kHz30),
   nof_symbols_per_slot(get_nsymb_per_slot(cyclic_prefix::NORMAL)),
   nof_symbols_per_sec(nof_symbols_per_slot * get_nof_slots_per_subframe(scs) * NOF_SUBFRAMES_PER_FRAME * 100),
-  nof_slots_per_system_frame(slot_point(scs, 0).nof_slots_per_system_frame()),
+  nof_slots_per_system_frame(slot_point(scs, 0).nof_slots_per_hyper_frame()),
   symbol_duration(1e9 / nof_symbols_per_sec),
   sleep_time(std::chrono::duration_cast<std::chrono::nanoseconds>(symbol_duration) / 15)
 {

@@ -11,7 +11,7 @@
 #pragma once
 
 #include "../mac_config_interfaces.h"
-#include "../mac_ctrl/du_time_controller.h"
+#include "du_time_controller.h"
 #include "mac_config.h"
 #include "mac_metrics_aggregator.h"
 #include "mac_scheduler_configurator.h"

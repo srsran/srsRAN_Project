@@ -51,8 +51,8 @@ public:
   using slot_point::clear;
   using slot_point::count;
   using slot_point::nof_slots_per_frame;
+  using slot_point::nof_slots_per_hyper_frame;
   using slot_point::nof_slots_per_subframe;
-  using slot_point::nof_slots_per_system_frame;
   using slot_point::numerology;
   using slot_point::scs;
   using slot_point::sfn;
@@ -67,14 +67,14 @@ public:
   using slot_point::nof_hrf_slots;
   using slot_point::subframe_slot_index;
 
-  uint32_t hfn() const { return count() / nof_slots_per_system_frame(); }
+  uint32_t hfn() const { return count() / nof_slots_per_hyper_frame(); }
 
   /// The number of slots represented by all HFNs.
   constexpr uint32_t nof_slots_in_all_hfns() const { return nof_slots_per_frame() * NOF_SFNS * NOF_HFNS; }
 
   constexpr slot_point without_hfn() const
   {
-    return valid() ? slot_point{this->numerology_val, this->count_val % nof_slots_per_system_frame()} : slot_point{};
+    return valid() ? slot_point{this->numerology_val, this->count_val % nof_slots_per_hyper_frame()} : slot_point{};
   }
 
   constexpr bool operator==(const slot_point_extended& other) const

@@ -17,7 +17,6 @@
 #include "positioning_handler.h"
 #include "rlf_detector.h"
 #include "uci_cell_decoder.h"
-#include "srsran/ran/slot_point_extended.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/support/async/manual_event.h"
 
@@ -139,7 +138,7 @@ private:
   /// Handler of RACH indications.
   mac_rach_handler rach_handler;
 
-  std::atomic<slot_point_extended>                            last_slot_point;
+  std::atomic<slot_point>                                     last_slot_point;
   std::atomic<std::chrono::high_resolution_clock::time_point> last_slot_tp;
 
   /// List of event flags used by scheduler to notify that the configuration is complete.

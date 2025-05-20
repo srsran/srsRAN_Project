@@ -127,21 +127,21 @@ void du_time_controller::handle_cell_activation(du_cell_index_t cell_index, slot
   // Add cell to linked list of active cells.
   if (push_back_new_cell(cell_index)) {
     // The cell was the first to be added. Then, it is the current master cell.
-    // Start with hfn == 0.
-    cells[cell_index].last_counter = sl_tx;
+    // Start with HFN count == 0.
+    cells[cell_index].last_counter = slot_point_extended{sl_tx, 0};
     master_count.store(cells[cell_index].last_counter.count(), std::memory_order_relaxed);
   } else {
     // Setup cell-local last slot counter.
     slot_point_extended master_cpy{sl_tx.scs(), master_count.load(std::memory_order_relaxed)};
     slot_point_extended curr_count{sl_tx, master_cpy.hfn()};
     int                 diff          = curr_count - master_cpy;
-    const int           max_slot_diff = sl_tx.nof_slots_per_system_frame() / 2;
+    const int           max_slot_diff = sl_tx.nof_slots_per_hyper_frame() / 2;
     if (diff < -max_slot_diff) {
       // This new cell is a bit ahead of the master cell and there was SFN rollover.
-      curr_count += sl_tx.nof_slots_per_system_frame();
+      curr_count += sl_tx.nof_slots_per_hyper_frame();
     } else if (diff > max_slot_diff) {
       // This new cell is a bit behind the master cell and there was SFN rollover.
-      curr_count -= sl_tx.nof_slots_per_system_frame();
+      curr_count -= sl_tx.nof_slots_per_hyper_frame();
     }
     cells[cell_index].last_counter = curr_count;
   }
@@ -176,8 +176,8 @@ slot_point_extended du_time_controller::handle_slot_ind(du_cell_index_t cell_ind
 
   slot_point_extended sl_tx_ext{sl_tx, cells[cell_index].last_counter.hfn()};
   if (sl_tx_ext < cells[cell_index].last_counter) {
-    // HFN rollover detected.
-    sl_tx_ext += sl_tx.nof_slots_per_system_frame();
+    // SFN rollover detected. Increment HFN.
+    sl_tx_ext += sl_tx.nof_slots_per_hyper_frame();
   }
 
   // Update cell slot counter.

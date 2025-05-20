@@ -71,7 +71,7 @@ public:
     slot_point_extended new_last_sl_tx{slot_tx, last_sl_tx.hfn()};
     if (SRSRAN_UNLIKELY(new_last_sl_tx < last_sl_tx)) {
       // SFN rollover detected.
-      new_last_sl_tx += slot_tx.nof_slots_per_system_frame();
+      new_last_sl_tx += slot_tx.nof_slots_per_hyper_frame();
     }
     last_sl_tx                       = new_last_sl_tx;
     const bool sched_report_is_ready = mac_builder != nullptr;
@@ -86,7 +86,7 @@ public:
     slot_point_extended new_last_sl_tx{slot_tx, last_sl_tx.hfn()};
     if (SRSRAN_UNLIKELY(new_last_sl_tx < last_sl_tx)) {
       // SFN rollover detected.
-      new_last_sl_tx += slot_tx.nof_slots_per_system_frame();
+      new_last_sl_tx += slot_tx.nof_slots_per_hyper_frame();
     }
     return sched_builder != nullptr and new_last_sl_tx >= next_report_slot_tx;
   }
@@ -197,7 +197,7 @@ private:
   report_queue_type          report_queue;
   report_queue_type::builder mac_builder;
   report_queue_type::builder sched_builder;
-  mac_dl_cell_metric_report last_report{};
+  mac_dl_cell_metric_report  last_report{};
 
   // Cached metric report being built.
   slot_point_extended last_sl_tx;
@@ -360,8 +360,8 @@ void mac_metrics_aggregator::handle_cell_deactivation(du_cell_index_t           
   srsran_assert(last_report.cell_deactivated, "Expected cell deactivated flag to be set");
 
   // Save last report before deactivating cell.
-  if (last_report.start_slot >= next_report_start_slot and
-      last_report.start_slot < next_report_start_slot + cell.period_slots) {
+  slot_point next_start_sl_tx = next_report_start_slot.without_hfn();
+  if (last_report.start_slot >= next_start_sl_tx and last_report.start_slot < next_start_sl_tx + cell.period_slots) {
     next_report.dl.cells.push_back(last_report);
   }
   cell.active_flag = false;

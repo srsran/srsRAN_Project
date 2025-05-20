@@ -205,7 +205,7 @@ void cell_harq_repository<IsDl>::slot_indication(slot_point sl_tx)
     auto& h = harq_pending_retx_list.front();
     srsran_sanity_check(h.status == harq_state_t::pending_retx, "HARQ process in wrong state");
     // [Implementation-defined] Maximum time we give to the scheduler policy to retransmit a HARQ process.
-    const unsigned max_nof_slots_for_retx = last_sl_ind.nof_slots_per_system_frame() / 4;
+    const unsigned max_nof_slots_for_retx = last_sl_ind.nof_slots_per_hyper_frame() / 4;
     if (last_sl_ind < (h.slot_ack + max_nof_slots_for_retx)) {
       break;
     }
