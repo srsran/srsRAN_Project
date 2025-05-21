@@ -12,6 +12,7 @@
 #include "lib/scheduler/logging/scheduler_event_logger.h"
 #include "lib/scheduler/logging/scheduler_metrics_handler.h"
 #include "lib/scheduler/logging/scheduler_result_logger.h"
+#include "lib/scheduler/support/csi_rs_helpers.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
@@ -56,14 +57,14 @@ protected:
     test_logger.set_level(srslog::basic_levels::info);
     srslog::init();
 
-    auto& dl_lst = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
-    for (auto& pdsch : dl_lst) {
+    const auto& dl_lst = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
+    for (const auto& pdsch : dl_lst) {
       if (pdsch.k0 > max_k_value) {
         max_k_value = pdsch.k0;
       }
     }
-    auto& ul_lst = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
-    for (auto& pusch : ul_lst) {
+    const auto& ul_lst = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
+    for (const auto& pusch : ul_lst) {
       if (pusch.k2 > max_k_value) {
         constexpr unsigned max_msg3_delta = 6;
         max_k_value                       = pusch.k2 + max_msg3_delta;
@@ -152,7 +153,8 @@ protected:
     }
 
     // Msg3 grant checks.
-    unsigned nof_grants = 0, nof_puschs = 0;
+    unsigned nof_grants = 0;
+    unsigned nof_puschs = 0;
     for (const rar_information& rar : scheduled_rars(0)) {
       nof_grants += rar.grants.size();
     }
@@ -179,11 +181,10 @@ protected:
 
   void handle_rach_indication(const rach_indication_message& rach) { ra_sch.handle_rach_indication(rach); }
 
-  rach_indication_message::preamble create_preamble()
+  static rach_indication_message::preamble create_preamble()
   {
-    static unsigned next_rnti =
-        test_rgen::uniform_int<unsigned>(to_value(rnti_t::MIN_CRNTI), to_value(rnti_t::MAX_CRNTI));
-    static const unsigned rnti_inc = test_rgen::uniform_int<unsigned>(1, 5);
+    static auto next_rnti = test_rgen::uniform_int<unsigned>(to_value(rnti_t::MIN_CRNTI), to_value(rnti_t::MAX_CRNTI));
+    static const auto rnti_inc = test_rgen::uniform_int<unsigned>(1, 5);
 
     rach_indication_message::preamble preamble{};
     preamble.preamble_id = test_rgen::uniform_int<unsigned>(0, 63);
@@ -247,11 +248,6 @@ protected:
         .result.ul.puschs;
   }
 
-  span<const ul_sched_info> scheduled_msg3_retxs(uint8_t time_resource) const
-  {
-    return res_grid[get_pusch_td_resource(time_resource).k2].result.ul.puschs;
-  }
-
   bool no_rar_grants_scheduled() const
   {
     for (unsigned i = 0; i != max_k_value; ++i) {
@@ -265,7 +261,7 @@ protected:
   }
 
   bool rar_ul_grant_consistent_with_rach_preamble(const rar_ul_grant&                      rar_grant,
-                                                  const rach_indication_message::preamble& preamb)
+                                                  const rach_indication_message::preamble& preamb) const
   {
     return rar_grant.temp_crnti == preamb.tc_rnti and rar_grant.rapid == preamb.preamble_id and
            rar_grant.ta == preamb.time_advance.to_Ta(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs);
@@ -305,9 +301,10 @@ protected:
                  "Cannot allocate more RARs than the number of detected preambles");
 
       for (const rar_ul_grant& grant : rar->grants) {
-        auto it = std::find_if(occ.preambles.begin(),
-                               occ.preambles.end(),
-                               [crnti = grant.temp_crnti](const auto& preamble) { return preamble.tc_rnti == crnti; });
+        const auto* it =
+            std::find_if(occ.preambles.begin(), occ.preambles.end(), [crnti = grant.temp_crnti](const auto& preamble) {
+              return preamble.tc_rnti == crnti;
+            });
         TESTASSERT(it != occ.preambles.end(), "RAR grant with no associated preamble was allocated");
         const rach_indication_message::preamble& preamble = *it;
 
@@ -342,14 +339,10 @@ protected:
       return false;
     }
     const auto& pusch_list = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
-    if (std::none_of(pusch_list.begin(), pusch_list.end(), [this, &pdcch_slot](const auto& pusch) {
-          return cell_cfg.is_fully_ul_enabled(
-              pdcch_slot + get_msg3_delay(pusch, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs));
-        })) {
-      // slot for Msg3 PUSCH is not UL slot.
-      return false;
-    }
-    return true;
+    return not std::none_of(pusch_list.begin(), pusch_list.end(), [this, &pdcch_slot](const auto& pusch) {
+      return cell_cfg.is_fully_ul_enabled(pdcch_slot +
+                                          get_msg3_delay(pusch, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs));
+    });
   }
 
   bool is_slot_valid_for_msg3_retx_pdcch() const
@@ -366,14 +359,9 @@ protected:
     }
 
     const auto& pusch_list = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
-    if (std::none_of(pusch_list.begin(), pusch_list.end(), [this, &pdcch_slot](const auto& pusch) {
-          return cell_cfg.is_fully_ul_enabled(pdcch_slot + pusch.k2);
-        })) {
-      // slot for Msg3 reTx PUSCH is not UL slot.
-      return false;
-    }
-
-    return true;
+    return not std::none_of(pusch_list.begin(), pusch_list.end(), [this, &pdcch_slot](const auto& pusch) {
+      return cell_cfg.is_fully_ul_enabled(pdcch_slot + pusch.k2);
+    });
   }
 
   bool msg3_consistent_with_rars(span<const rar_information> rars,
@@ -383,7 +371,7 @@ protected:
     nof_matches = 0;
     for (const rar_information& rar : rars) {
       for (const rar_ul_grant& grant : rar.grants) {
-        auto it = std::find_if(ul_grants.begin(), ul_grants.end(), [&grant](const auto& ul_info) {
+        const auto* it = std::find_if(ul_grants.begin(), ul_grants.end(), [&grant](const auto& ul_info) {
           return ul_info.pusch_cfg.rnti == grant.temp_crnti;
         });
         if (it != ul_grants.end()) {
@@ -424,9 +412,9 @@ protected:
     return rar_win.contains(result_slot_tx());
   }
 
-  const rar_information* find_rar(span<const rar_information> rars, rnti_t ra_rnti) const
+  static const rar_information* find_rar(span<const rar_information> rars, rnti_t ra_rnti)
   {
-    auto rar_it =
+    const auto* rar_it =
         std::find_if(rars.begin(), rars.end(), [ra_rnti](const auto& rar) { return rar.pdsch_cfg.rnti == ra_rnti; });
     return rar_it != rars.end() ? &*rar_it : nullptr;
   }
@@ -495,13 +483,21 @@ TEST_P(ra_scheduler_fdd_test, schedules_one_rar_per_slot_when_multi_preambles_wi
   for (; nof_sched_grants < one_rach.occasions[0].preambles.size() and next_slot < last_slot_tx;) {
     run_slot();
 
+    slot_point last_alloc_slot = res_grid[0].slot;
+
+    if (csi_helper::is_csi_rs_slot(cell_cfg, last_alloc_slot)) {
+      // CSI-RS slot, skip it.
+      continue;
+    }
     // RAR PDSCH allocated.
-    ASSERT_EQ(scheduled_rars(0).size(), 1)
-        << fmt::format("Only {}<{} RACHs were handled", nof_sched_grants, one_rach.occasions[0].preambles.size());
+    ASSERT_EQ(scheduled_rars(0).size(), 1) << fmt::format("Only {}<{} RACHs were handled at slot={}",
+                                                          nof_sched_grants,
+                                                          one_rach.occasions[0].preambles.size(),
+                                                          last_alloc_slot);
     unsigned nof_grants = 0;
     ASSERT_TRUE(rars_consistent_with_rach_indication(scheduled_rars(0), one_rach, nof_grants));
     ASSERT_EQ(nof_grants, scheduled_rars(0)[0].grants.size())
-        << "All scheduled RAR grants must be for the provided occasion";
+        << fmt::format("All scheduled RAR grants must be for the provided occasion at slot {}", last_alloc_slot);
 
     // Msg3 allocated.
     ASSERT_EQ(scheduled_msg3_newtxs(0).size(), nof_grants);
@@ -530,7 +526,7 @@ TEST_P(ra_scheduler_fdd_test, schedules_one_rar_per_slot_when_multi_preambles_wi
 TEST_P(ra_scheduler_fdd_test, schedules_multiple_rars_per_slot_when_multiple_prach_occasions)
 {
   // Forward multiple RACH occasions with one preamble.
-  unsigned                nof_occasions = test_rgen::uniform_int<unsigned>(1, MAX_PRACH_OCCASIONS_PER_SLOT);
+  auto                    nof_occasions = test_rgen::uniform_int<unsigned>(1, MAX_PRACH_OCCASIONS_PER_SLOT);
   rach_indication_message rach_ind      = create_rach_indication(0);
   for (unsigned i = 0; i != nof_occasions; ++i) {
     rach_ind.occasions.emplace_back();
@@ -588,6 +584,12 @@ TEST_P(ra_scheduler_tdd_test, schedules_rar_in_valid_slots_when_tdd)
       break;
     }
 
+    slot_point last_alloc_slot = res_grid[0].slot;
+
+    if (csi_helper::is_csi_rs_slot(cell_cfg, last_alloc_slot)) {
+      // CSI-RS slot, skip it.
+      continue;
+    }
     // RAR PDSCH allocated.
     ASSERT_EQ(scheduled_rars(0).size(), 1);
     unsigned nof_grants = 0;

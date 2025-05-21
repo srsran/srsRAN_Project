@@ -144,9 +144,6 @@ private:
 
   sch_prbs_tbs get_nof_pdsch_prbs_required(unsigned time_res_idx, unsigned nof_ul_grants) const;
 
-  /// Returns true if this slot is for CSI-RS, in which case the RAR scheduling will be postponed.
-  bool is_csi_rs_slot(slot_point slot) const;
-
   // Set the max number of slots the scheduler can look ahead in the resource grid (with respect to the current slot) to
   // find PDSCH space for RAR.
   static const unsigned max_dl_slots_ahead_sched = 8U;

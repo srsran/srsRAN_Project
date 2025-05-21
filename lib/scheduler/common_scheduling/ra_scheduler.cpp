@@ -12,9 +12,9 @@
 #include "../logging/scheduler_event_logger.h"
 #include "../logging/scheduler_metrics_handler.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator_impl.h"
+#include "../support/csi_rs_helpers.h"
 #include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
-#include "../support/pdcch/pdcch_mapping.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/sch_pdu_builder.h"
@@ -446,7 +446,7 @@ bool ra_scheduler::is_slot_candidate_for_rar(cell_slot_resource_allocator& slot_
     return false;
   }
 
-  if (is_csi_rs_slot(pdcch_slot)) {
+  if (csi_helper::is_csi_rs_slot(cell_cfg, pdcch_slot)) {
     // TODO: Remove this once multiplexing is possible.
     // At the moment, we do not multiple PDSCH and CSI-RS.
     return false;
@@ -895,25 +895,4 @@ void ra_scheduler::log_postponed_rar(const pending_rar_t&      rar,
   } else {
     logger.debug("RAR allocation for ra-rnti={} was postponed. Cause: {}", rar.ra_rnti, cause_str);
   }
-}
-
-bool ra_scheduler::is_csi_rs_slot(slot_point slot) const
-{
-  // Slot for zp-CSI-RS.
-  for (unsigned i = 0; i != cell_cfg.zp_csi_rs_list.size(); ++i) {
-    const zp_csi_rs_resource& zp_csi = cell_cfg.zp_csi_rs_list[i];
-    if ((slot - *zp_csi.offset).to_uint() % (unsigned)*zp_csi.period == 0) {
-      return true;
-    }
-  }
-
-  // Slot for nzp-CSI-RS.
-  for (unsigned i = 0; i != cell_cfg.nzp_csi_rs_list.size(); ++i) {
-    const nzp_csi_rs_resource& nzp_csi = cell_cfg.nzp_csi_rs_list[i];
-    if ((slot - *nzp_csi.csi_res_offset).to_uint() % (unsigned)*nzp_csi.csi_res_period == 0) {
-      return true;
-    }
-  }
-
-  return false;
 }
