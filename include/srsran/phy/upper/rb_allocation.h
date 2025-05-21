@@ -112,6 +112,9 @@ public:
   /// \return True if the PRB allocation is contiguous. Otherwise, false.
   bool is_contiguous() const { return vrb_mask.is_contiguous() && !vrb_to_prb_config.is_interleaved(); }
 
+  /// Determines if the VRB mask is contiguous in frequency domain.
+  bool is_vrb_mask_contiguous() const { return vrb_mask.is_contiguous(); }
+
   /// \brief Gets the corresponding PRB intervals for the allocation.
   ///
   /// \return A pair of PRB intervals.

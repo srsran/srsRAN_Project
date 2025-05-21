@@ -190,12 +190,12 @@ static coreset_configuration generate_coreset_configuration()
 
 static dci_1_0_si_rnti_configuration generate_si_f1_0()
 {
-  return {1, 2, 3, 1, 0, 2, 1};
+  return {1, 2, 3, vrb_to_prb::mapping_type::non_interleaved, 0, 2, 1};
 }
 
 static dci_1_0_ra_rnti_configuration generate_ra_f1_0()
 {
-  return {1, 2, 3, 0, 1, 2};
+  return {1, 2, 3, vrb_to_prb::mapping_type::non_interleaved, 1, 2};
 }
 
 static dci_dl_info generate_dci_dl_info()
@@ -296,18 +296,18 @@ static pdsch_information fill_valid_pdsch_information(coreset_configuration& cor
   bwp_config  = generate_bwp_configuration();
   coreset_cfg = generate_coreset_configuration();
 
-  info.rnti           = to_rnti(0x4444);
-  info.bwp_cfg        = &bwp_config;
-  info.coreset_cfg    = &coreset_cfg;
-  info.rbs            = vrb_interval{40, 60};
-  info.symbols        = {3, 10};
-  info.dmrs           = {dmrs_symbol_mask(14), dmrs_config_type::type1, 2, 3, false, 0, 2, bounded_bitset<12>(12)};
-  info.n_id           = generate_nid_pdsch();
-  info.nof_layers     = 1U;
-  info.is_interleaved = false;
-  info.harq_id        = to_harq_id(4);
-  info.ss_set_type    = search_space_set_type::type0;
-  info.dci_fmt        = dci_dl_format::f1_0;
+  info.rnti            = to_rnti(0x4444);
+  info.bwp_cfg         = &bwp_config;
+  info.coreset_cfg     = &coreset_cfg;
+  info.rbs             = vrb_interval{40, 60};
+  info.symbols         = {3, 10};
+  info.dmrs            = {dmrs_symbol_mask(14), dmrs_config_type::type1, 2, 3, false, 0, 2, bounded_bitset<12>(12)};
+  info.n_id            = generate_nid_pdsch();
+  info.nof_layers      = 1U;
+  info.vrb_prb_mapping = vrb_to_prb::mapping_type::non_interleaved;
+  info.harq_id         = to_harq_id(4);
+  info.ss_set_type     = search_space_set_type::type0;
+  info.dci_fmt         = dci_dl_format::f1_0;
   info.codewords.push_back(pdsch_codeword{{modulation_scheme::QAM16, 220.F}, 5, pdsch_mcs_table::qam64, 2, 128});
 
   if (nof_ports == 2) {

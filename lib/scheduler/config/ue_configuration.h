@@ -32,7 +32,9 @@
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/pdcch/cce_to_prb_mapping.h"
 #include "srsran/ran/pdcch/pdcch_candidates.h"
+#include "srsran/ran/resource_allocation/vrb_to_prb.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
+#include <optional>
 
 namespace srsran {
 
@@ -49,6 +51,7 @@ using crb_index_list = static_vector<uint16_t, pdcch_constants::MAX_NOF_RB_PDCCH
 struct search_space_info {
   const search_space_configuration*                 cfg     = nullptr;
   const coreset_configuration*                      coreset = nullptr;
+  std::optional<vrb_to_prb::interleaved_mapping>    interleaved_mapping;
   bwp_config_ptr                                    bwp;
   crb_interval                                      dl_crb_lims;
   crb_interval                                      ul_crb_lims;
@@ -93,6 +96,8 @@ struct search_space_info {
                                pci_t                                                                        pci);
 
   void update_pdsch_time_domain_list(const ue_cell_configuration& ue_cell_cfg);
+
+  void update_pdsch_mappings(vrb_to_prb::mapping_type interleaving_bundle_size);
 
 private:
   // PDCCH candidates of the SearchSpace for different slot offsets and aggregation levels. Indexed by

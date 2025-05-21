@@ -862,7 +862,7 @@ public:
   /// Constructs a builder that will help to fill the given DL TTI request message.
   explicit dl_tti_request_message_builder(dl_tti_request_message& msg_) : msg(msg_)
   {
-    msg.is_last_message_in_slot = false;
+    msg.is_last_dl_message_in_slot = false;
   }
 
   /// Sets the DL_TTI.request basic parameters and returns a reference to the builder.
@@ -1025,7 +1025,7 @@ public:
   /// Sets the flag of the last message in slot.
   dl_tti_request_message_builder& set_last_message_in_slot_flag()
   {
-    msg.is_last_message_in_slot = true;
+    msg.is_last_dl_message_in_slot = true;
     return *this;
   }
 

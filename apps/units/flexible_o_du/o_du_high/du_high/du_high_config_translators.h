@@ -24,14 +24,14 @@
 
 #include "du_high_config.h"
 #include "srsran/du/du_cell_config.h"
-#include "srsran/du/du_high/du_qos_config.h"
 #include "srsran/du/du_high/du_srb_config.h"
-#include "srsran/mac/mac_config.h"
-#include "srsran/ran/logical_channel/lcid.h"
-#include "srsran/ran/qos/five_qi.h"
 #include <map>
 
 namespace srsran {
+
+namespace srs_du {
+struct du_high_configuration;
+}
 
 struct du_high_unit_config;
 struct worker_manager_config;
@@ -39,17 +39,8 @@ struct worker_manager_config;
 /// Converts and returns the given gnb application configuration to a DU cell configuration.
 std::vector<srs_du::du_cell_config> generate_du_cell_config(const du_high_unit_config& config);
 
-/// Converts and returns the given gnb application QoS configuration to a DU QoS list configuration.
-std::map<five_qi_t, srs_du::du_qos_config> generate_du_qos_config(const du_high_unit_config& config);
-
-/// Converts and returns the given gnb application QoS configuration to a DU SRB list configuration.
-std::map<srb_id_t, srs_du::du_srb_config> generate_du_srb_config(const du_high_unit_config& config);
-
-/// Converts and returns the given gnb application configuration to a mac expert configuration.
-mac_expert_config generate_mac_expert_config(const du_high_unit_config& config);
-
-/// Converts and returns the given gnb application configuration to a scheduler expert configuration.
-scheduler_expert_config generate_scheduler_expert_config(const du_high_unit_config& config);
+/// Generates and fills the given DU high configuration from the given DU high unit configuration.
+void generate_du_high_config(srs_du::du_high_configuration& du_hi_cfg, const du_high_unit_config& du_high_unit_cfg);
 
 /// Augments RLC parameters based on NTN configuration.
 void ntn_augment_rlc_parameters(const ntn_config& ntn_cfg, std::map<srb_id_t, srs_du::du_srb_config>& srb_cfgs);

@@ -27,7 +27,7 @@
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/srsvec/conversion.h"
 #include "srsran/srsvec/copy.h"
-#include "srsran/support/complex_normal_random.h"
+#include "srsran/support/math/complex_normal_random.h"
 
 namespace srsran {
 

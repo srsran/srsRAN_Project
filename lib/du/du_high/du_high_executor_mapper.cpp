@@ -147,7 +147,7 @@ public:
   }
 
 private:
-  using cell_strand_type = priority_task_strand<task_executor*>;
+  using cell_strand_type = priority_task_strand<task_executor*, force_dispatch_strand_lock<enqueue_priority::max>>;
   struct strand_context {
     std::unique_ptr<cell_strand_type> strand;
     task_executor*                    slot_ind_exec;

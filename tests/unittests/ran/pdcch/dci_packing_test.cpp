@@ -191,7 +191,8 @@ protected:
     config.payload_size                   = payload_size;
     config.frequency_resource             = frequency_resource_dist(rgen);
     config.time_resource                  = time_resource_dist(rgen);
-    config.vrb_to_prb_mapping             = vrb_to_prb_mapping_dist(rgen);
+    config.vrb_to_prb_mapping             = vrb_to_prb_mapping_dist(rgen) ? vrb_to_prb::mapping_type::interleaved_n2
+                                                                          : vrb_to_prb::mapping_type::non_interleaved;
     config.modulation_coding_scheme       = modulation_coding_scheme_dist(rgen);
     config.new_data_indicator             = new_data_indicator_dist(rgen);
     config.redundancy_version             = redundancy_version_dist(rgen);
@@ -218,7 +219,8 @@ protected:
     config.short_messages           = short_messages_dist(rgen);
     config.frequency_resource       = frequency_resource_dist(rgen);
     config.time_resource            = time_resource_dist(rgen);
-    config.vrb_to_prb_mapping       = vrb_to_prb_mapping_dist(rgen);
+    config.vrb_to_prb_mapping       = vrb_to_prb_mapping_dist(rgen) ? vrb_to_prb::mapping_type::interleaved_n2
+                                                                    : vrb_to_prb::mapping_type::non_interleaved;
     config.modulation_coding_scheme = modulation_coding_scheme_dist(rgen);
     config.tb_scaling               = tb_scaling_dist(rgen);
 
@@ -236,7 +238,8 @@ protected:
     config.N_rb_dl_bwp                  = N_rb_dl_bwp;
     config.frequency_resource           = frequency_resource_dist(rgen);
     config.time_resource                = time_resource_dist(rgen);
-    config.vrb_to_prb_mapping           = vrb_to_prb_mapping_dist(rgen);
+    config.vrb_to_prb_mapping           = vrb_to_prb_mapping_dist(rgen) ? vrb_to_prb::mapping_type::interleaved_n2
+                                                                        : vrb_to_prb::mapping_type::non_interleaved;
     config.modulation_coding_scheme     = modulation_coding_scheme_dist(rgen);
     config.redundancy_version           = redundancy_version_dist(rgen);
     config.system_information_indicator = system_information_indicator_dist(rgen);
@@ -254,7 +257,8 @@ protected:
     config.N_rb_dl_bwp                   = N_rb_dl_bwp;
     config.frequency_resource            = frequency_resource_dist(rgen);
     config.time_resource                 = time_resource_dist(rgen);
-    config.vrb_to_prb_mapping            = vrb_to_prb_mapping_dist(rgen);
+    config.vrb_to_prb_mapping            = vrb_to_prb_mapping_dist(rgen) ? vrb_to_prb::mapping_type::interleaved_n2
+                                                                         : vrb_to_prb::mapping_type::non_interleaved;
     config.modulation_coding_scheme      = modulation_coding_scheme_dist(rgen);
     config.tb_scaling                    = tb_scaling_dist(rgen);
 
@@ -272,7 +276,8 @@ protected:
     config.N_rb_dl_bwp                    = N_rb_dl_bwp;
     config.frequency_resource             = frequency_resource_dist(rgen);
     config.time_resource                  = time_resource_dist(rgen);
-    config.vrb_to_prb_mapping             = vrb_to_prb_mapping_dist(rgen);
+    config.vrb_to_prb_mapping             = vrb_to_prb_mapping_dist(rgen) ? vrb_to_prb::mapping_type::interleaved_n2
+                                                                          : vrb_to_prb::mapping_type::non_interleaved;
     config.modulation_coding_scheme       = modulation_coding_scheme_dist(rgen);
     config.new_data_indicator             = new_data_indicator_dist(rgen);
     config.redundancy_version             = redundancy_version_dist(rgen);
@@ -620,7 +625,8 @@ protected:
     if (payload_size.vrb_prb_mapping.value() != 0) {
       // Set the VRB-to-PRB mapping field.
       uniform_distribution vrb_prb_mapping_dist(0, pow2(payload_size.vrb_prb_mapping.value()) - 1);
-      config.vrb_prb_mapping = vrb_prb_mapping_dist(rgen);
+      config.vrb_prb_mapping = vrb_prb_mapping_dist(rgen) ? vrb_to_prb::mapping_type::interleaved_n2
+                                                          : vrb_to_prb::mapping_type::non_interleaved;
     }
 
     if (payload_size.prb_bundling_size_indicator.value() != 0) {
@@ -864,7 +870,7 @@ static dci_payload build_dci_1_0_c_rnti_expected(const dci_1_0_c_rnti_configurat
   expected_pack(expected, config.time_resource, 4);
 
   // VRB-to-PRB mapping - 1 bit.
-  expected.push_back(config.vrb_to_prb_mapping & 1U);
+  expected.push_back(config.vrb_to_prb_mapping != vrb_to_prb::mapping_type::non_interleaved);
 
   // Modulation and coding scheme - 5 bits.
   expected_pack(expected, config.modulation_coding_scheme, 5);
@@ -944,7 +950,7 @@ static dci_payload build_dci_1_0_p_rnti_expected(const dci_1_0_p_rnti_configurat
     expected_pack(expected, config.time_resource, 4);
 
     // VRB-to-PRB mapping - 1 bit.
-    expected.push_back(config.vrb_to_prb_mapping & 1U);
+    expected.push_back(config.vrb_to_prb_mapping != vrb_to_prb::mapping_type::non_interleaved);
 
     // Modulation and coding scheme - 5 bits.
     expected_pack(expected, config.modulation_coding_scheme, 5);
@@ -975,7 +981,7 @@ static dci_payload build_dci_1_0_si_rnti_expected(const dci_1_0_si_rnti_configur
   expected_pack(expected, config.time_resource, 4);
 
   // VRB-to-PRB mapping - 1 bit.
-  expected.push_back(config.vrb_to_prb_mapping & 1U);
+  expected.push_back(config.vrb_to_prb_mapping != vrb_to_prb::mapping_type::non_interleaved);
 
   // Modulation coding scheme - 5 bits.
   expected_pack(expected, config.modulation_coding_scheme, 5);
@@ -1008,7 +1014,7 @@ static dci_payload build_dci_1_0_ra_rnti_expected(const dci_1_0_ra_rnti_configur
   expected_pack(expected, config.time_resource, 4);
 
   // VRB-to-PRB mapping - 1 bit.
-  expected.push_back(config.vrb_to_prb_mapping & 1U);
+  expected.push_back(config.vrb_to_prb_mapping != vrb_to_prb::mapping_type::non_interleaved);
 
   // Modulation and coding scheme - 5 bits.
   expected_pack(expected, config.modulation_coding_scheme, 5);
@@ -1041,7 +1047,7 @@ static dci_payload build_dci_1_0_tc_rnti_expected(const dci_1_0_tc_rnti_configur
   expected_pack(expected, config.time_resource, 4);
 
   // VRB-to-PRB mapping - 1 bit.
-  expected.push_back(config.vrb_to_prb_mapping & 1U);
+  expected.push_back(config.vrb_to_prb_mapping != vrb_to_prb::mapping_type::non_interleaved);
 
   // Modulation and coding scheme - 5 bits.
   expected_pack(expected, config.modulation_coding_scheme, 5);
@@ -1239,7 +1245,9 @@ static dci_payload build_dci_1_1_expected(const dci_1_1_configuration& config)
 
   if (payload_size.vrb_prb_mapping.value() != 0) {
     // VRB-to-PRB mapping - 1 bit if present.
-    expected_pack(expected, config.vrb_prb_mapping.value(), payload_size.vrb_prb_mapping.value());
+    expected_pack(expected,
+                  config.vrb_prb_mapping.value() != vrb_to_prb::mapping_type::non_interleaved,
+                  payload_size.vrb_prb_mapping.value());
   }
 
   if (payload_size.prb_bundling_size_indicator.value() != 0) {

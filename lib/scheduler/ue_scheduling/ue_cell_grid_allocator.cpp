@@ -138,7 +138,7 @@ ue_cell_grid_allocator::allocate_dl_grant(const ue_newtx_dl_grant_request& reque
 {
   // Select PDCCH searchSpace and PDSCH time-domain resource config.
   auto sched_ctxt = sched_helper::get_newtx_dl_sched_context(
-      request.user, cell_alloc[0].slot, request.pdsch_slot, request.pending_bytes);
+      request.user, cell_alloc[0].slot, request.pdsch_slot, request.interleaving_enabled, request.pending_bytes);
   if (not sched_ctxt.has_value()) {
     // No valid parameters were found for this UE.
     return make_unexpected(dl_alloc_failure_cause::other);
@@ -204,11 +204,16 @@ ue_cell_grid_allocator::setup_dl_grant_builder(const slice_ue&                  
   // Allocate UE DL HARQ.
   if (not is_retx) {
     // It is a new tx.
-    h_dl = ue_cc.harqs.alloc_dl_harq(pdsch_alloc.slot, k1, expert_cfg.max_nof_dl_harq_retxs, uci.harq_bit_idx).value();
+    h_dl = ue_cc.harqs
+               .alloc_dl_harq(pdsch_alloc.slot,
+                              k1 + ue_cell_cfg.cell_cfg_common.ntn_cs_koffset,
+                              expert_cfg.max_nof_dl_harq_retxs,
+                              uci.harq_bit_idx)
+               .value();
     srsran_assert(h_dl.has_value(), "Failed to allocate DL HARQ");
   } else {
     // It is a retx.
-    bool result = h_dl->new_retx(pdsch_alloc.slot, k1, uci.harq_bit_idx);
+    bool result = h_dl->new_retx(pdsch_alloc.slot, k1 + ue_cell_cfg.cell_cfg_common.ntn_cs_koffset, uci.harq_bit_idx);
     srsran_assert(result, "Harq is in invalid state");
   }
 
@@ -221,7 +226,8 @@ ue_cell_grid_allocator::setup_dl_grant_builder(const slice_ue&                  
 
 void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                        grant,
                                               vrb_interval                          vrbs,
-                                              std::pair<crb_interval, crb_interval> crbs)
+                                              std::pair<crb_interval, crb_interval> crbs,
+                                              bool                                  enable_interleaving)
 {
   // Derive remaining parameters from \c dl_grant_params.
   ue&                                          u                  = ues[grant.user->ue_index()];
@@ -276,7 +282,8 @@ void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                    
   }
 
   // Compute TPC for PUCCH.
-  uint8_t tpc = ue_cc.get_pucch_power_controller().compute_tpc_command(pdsch_alloc.slot + k1);
+  uint8_t tpc = ue_cc.get_pucch_power_controller().compute_tpc_command(pdsch_alloc.slot + k1 +
+                                                                       ue_cell_cfg.cell_cfg_common.ntn_cs_koffset);
 
   // Fill DL PDCCH DCI PDU.
   // Number of possible Downlink Assignment Indexes {0, ..., 3} as per TS38.213 Section 9.1.3.
@@ -311,7 +318,8 @@ void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                    
                             rv,
                             grant.h_dl,
                             nof_layers,
-                            tpc);
+                            tpc,
+                            enable_interleaving);
       break;
     default:
       report_fatal_error("Unsupported RNTI type for PDSCH allocation");
@@ -385,8 +393,8 @@ expected<vrb_interval, dl_alloc_failure_cause>
 ue_cell_grid_allocator::allocate_dl_grant(const ue_retx_dl_grant_request& request)
 {
   // Select PDCCH searchSpace and PDSCH time-domain resource config.
-  auto sched_ctxt =
-      sched_helper::get_retx_dl_sched_context(request.user, cell_alloc[0].slot, request.pdsch_slot, request.h_dl);
+  auto sched_ctxt = sched_helper::get_retx_dl_sched_context(
+      request.user, cell_alloc[0].slot, request.pdsch_slot, request.interleaving_enabled, request.h_dl);
   if (not sched_ctxt) {
     return make_unexpected(dl_alloc_failure_cause::other);
   }
@@ -404,13 +412,18 @@ ue_cell_grid_allocator::allocate_dl_grant(const ue_retx_dl_grant_request& reques
   }
 
   // Compute the corresponding CRBs.
-  // TODO: support interleaving.
-  static constexpr search_space_id      ue_ded_ss_id = to_search_space_id(2);
+  constexpr static search_space_id      ue_ded_ss_id = to_search_space_id(2);
   const auto&                           ss_info      = request.user.get_cc().cfg().search_space(ue_ded_ss_id);
-  std::pair<crb_interval, crb_interval> crbs = {prb_to_crb(ss_info.dl_crb_lims, static_cast<prb_interval>(vrbs)), {}};
+  std::pair<crb_interval, crb_interval> crbs;
+  if (request.interleaving_enabled) {
+    const auto prbs = ss_info.interleaved_mapping.value().vrb_to_prb(vrbs);
+    crbs            = {prb_to_crb(ss_info.dl_crb_lims, prbs.first), prb_to_crb(ss_info.dl_crb_lims, prbs.second)};
+  } else {
+    crbs = {prb_to_crb(ss_info.dl_crb_lims, vrbs.convert_to<prb_interval>()), {}};
+  }
 
   // Set PDSCH parameters.
-  set_pdsch_params(grant.value(), vrbs, crbs);
+  set_pdsch_params(grant.value(), vrbs, crbs, request.interleaving_enabled);
   return vrbs;
 }
 
@@ -572,12 +585,15 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_in
   // Compute exact MCS and TBS for this transmission.
   expected<sch_mcs_tbs, compute_ul_mcs_tbs_error> mcs_tbs_info;
   // TODO: find TS reference for -> Since, PUSCH always uses non interleaved mapping, prbs = vrbs.
-  const auto crbs = prb_to_crb(ss_info.ul_crb_lims, static_cast<prb_interval>(vrbs));
+  const auto crbs = prb_to_crb(ss_info.ul_crb_lims, vrbs.convert_to<prb_interval>());
   if (not is_retx) {
     // If it's a new Tx, compute the MCS and TBS from SNR, payload size, and available RBs.
-    bool contains_dc =
-        dc_offset_helper::is_contained(cell_cfg.expert_cfg.ue.initial_ul_dc_offset, cell_cfg.nof_ul_prbs, crbs);
 
+    // Note: Even if at this point we can determine if the RBs intersect the DC location (via
+    // dc_offset_helper::is_contained), we take the conservative approach and assume that the DC location is always
+    // contained in the RBs. This may slightly reduce the MCS beyond what's needed to satisfy the effective code rate
+    // limits. We do this to simplify the search for available RBs during HARQ retxs.
+    const bool contains_dc = true;
     mcs_tbs_info =
         compute_ul_mcs_tbs(pusch_cfg, ue_cc.active_bwp(), grant.cfg.recommended_mcs, vrbs.length(), contains_dc);
 
@@ -647,8 +663,8 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_in
 
   // Compute TPC command before computing the nof_prbs adaptation based on PHR; this is because, when the TPC gets
   // computed, the channel state manager will update close-loop power control adjustment.
-  const uint8_t tpc_command =
-      ue_cc.get_pusch_power_controller().compute_tpc_command(pdcch_alloc.slot + pusch_td_cfg.k2);
+  const uint8_t tpc_command = ue_cc.get_pusch_power_controller().compute_tpc_command(
+      pdcch_alloc.slot + pusch_td_cfg.k2 + cell_cfg.ntn_cs_koffset);
 
   // Fill UL PDCCH DCI.
   uint8_t rv = ue_cc.get_pusch_rv(grant.h_ul.nof_retxs());
@@ -824,10 +840,11 @@ void ue_cell_grid_allocator::post_process_pucch_pw_ctrl_results(slot_point slot)
 }
 
 void ue_cell_grid_allocator::dl_newtx_grant_builder::set_pdsch_params(vrb_interval                          alloc_vrbs,
-                                                                      std::pair<crb_interval, crb_interval> alloc_crbs)
+                                                                      std::pair<crb_interval, crb_interval> alloc_crbs,
+                                                                      bool enable_interleaving)
 {
   // Transfer the PDSCH parameters to the parent DL grant.
-  parent->set_pdsch_params(parent->dl_grants[grant_index], alloc_vrbs, alloc_crbs);
+  parent->set_pdsch_params(parent->dl_grants[grant_index], alloc_vrbs, alloc_crbs, enable_interleaving);
 
   // Set PDSCH parameters and set parent as nullptr to avoid further modifications.
   parent = nullptr;

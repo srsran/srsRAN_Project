@@ -32,7 +32,7 @@ set(SOURCES
         phy_to_fapi_time_event_translator.cpp)
 
 add_library(srsran_phy_to_fapi_translator STATIC ${SOURCES})
-target_link_libraries(srsran_phy_to_fapi_translator srslog)
+target_link_libraries(srsran_phy_to_fapi_translator PRIVATE srslog)
 
 add_library(srsran_phy_fapi_adaptor STATIC phy_fapi_sector_adaptor_impl.cpp phy_fapi_adaptor_impl.cpp phy_fapi_adaptor_factory_impl.cpp)
 target_link_libraries(srsran_phy_fapi_adaptor srsran_fapi_to_phy_translator srsran_phy_to_fapi_translator)

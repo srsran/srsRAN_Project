@@ -350,7 +350,7 @@ dl_tti_request_message unittest::build_valid_dl_tti_request()
   msg.pdus.back().pdu_type   = dl_pdu_type::CSI_RS;
   msg.pdus.back().csi_rs_pdu = build_valid_dl_csi_pdu();
 
-  msg.is_last_message_in_slot = false;
+  msg.is_last_dl_message_in_slot = false;
 
   return msg;
 }

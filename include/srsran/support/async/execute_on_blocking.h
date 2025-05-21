@@ -94,7 +94,7 @@ auto dispatch_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
 {
   if constexpr (std::is_invocable_v<Callable>) {
     // The task is a callable object.
-    using return_type = function_return_t<decltype(&Callable::operator())>;
+    using return_type = std::invoke_result_t<Callable>;
 
     if constexpr (std::is_same_v<return_type, void>) {
       // CASE: callable has the signature void().

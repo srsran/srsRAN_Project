@@ -75,9 +75,9 @@ public:
     cu_cp.get_mobility_command_handler().trigger_handover(static_cast<pci_t>(serving_pci.value()),
                                                           static_cast<rnti_t>(rnti.value()),
                                                           static_cast<pci_t>(target_pci.value()));
-    fmt::print("Handover triggered for UE with pci={} rnti={:#04x} to pci={}.\n",
+    fmt::print("Handover triggered for UE with pci={} rnti={} to pci={}.\n",
                serving_pci.value(),
-               rnti.value(),
+               static_cast<rnti_t>(rnti.value()),
                target_pci.value());
   }
 };

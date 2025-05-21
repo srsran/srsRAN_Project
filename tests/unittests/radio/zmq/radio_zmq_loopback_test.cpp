@@ -24,8 +24,8 @@
 #include "srsran/gateways/baseband/baseband_gateway_transmitter.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/radio/radio_factory.h"
-#include "srsran/support/complex_normal_random.h"
 #include "srsran/support/executors/task_worker.h"
+#include "srsran/support/math/complex_normal_random.h"
 #include <gtest/gtest.h>
 #include <random>
 #include <unistd.h>
@@ -83,7 +83,7 @@ protected:
   bool throttle_tx;
 
   static std::unique_ptr<radio_factory> factory;
-  static task_worker                    async_task_worker;
+  static std::unique_ptr<task_worker>   async_task_worker;
   std::vector<std::mt19937>             tx_rgen;
   std::vector<std::mt19937>             rx_rgen;
   complex_normal_distribution<cf_t>     tx_dist;
@@ -91,6 +91,10 @@ protected:
 
   static void SetUpTestSuite()
   {
+    if (!async_task_worker) {
+      async_task_worker = std::make_unique<task_worker>("async_thread", 2 * RADIO_MAX_NOF_PORTS);
+    }
+
     if (factory) {
       return;
     }
@@ -103,7 +107,7 @@ protected:
     srslog::fetch_basic_logger("POOL").set_level(log_level);
   }
 
-  static void TearDownTestSuite() { async_task_worker.stop(); }
+  static void TearDownTestSuite() { async_task_worker->stop(); }
 
   static std::vector<std::string> get_zmq_ports(unsigned nof_ports)
   {
@@ -155,13 +159,13 @@ public:
   void on_radio_rt_event(const event_description& description) override {}
 };
 
-std::unique_ptr<radio_factory> RadioZmqE2EFixture::factory = nullptr;
-task_worker                    RadioZmqE2EFixture::async_task_worker("async_thread", 2 * RADIO_MAX_NOF_PORTS);
+std::unique_ptr<radio_factory> RadioZmqE2EFixture::factory           = nullptr;
+std::unique_ptr<task_worker>   RadioZmqE2EFixture::async_task_worker = nullptr;
 
 TEST_P(RadioZmqE2EFixture, RadioZmqE2EFlow)
 {
   // Asynchronous task executor.
-  std::unique_ptr<task_executor> async_task_executor = make_task_executor_ptr(async_task_worker);
+  std::unique_ptr<task_executor> async_task_executor = make_task_executor_ptr(*async_task_worker);
 
   // Prepare radio configuration.
   radio_configuration::radio radio_config;

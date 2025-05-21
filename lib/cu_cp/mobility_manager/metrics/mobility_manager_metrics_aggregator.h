@@ -35,6 +35,12 @@ public:
   /// \brief Aggregates the metrics for the successful handover preparation.
   void aggregate_successful_handover_preparation();
 
+  /// \brief Aggregates the metrics for the requested handover execution.
+  void aggregate_requested_handover_execution();
+
+  /// \brief Aggregates the metrics for the successful handover execution.
+  void aggregate_successful_handover_execution();
+
   mobility_management_metrics request_metrics_report() const;
 
 private:

@@ -183,6 +183,40 @@ void rrc_du_impl::remove_ue(ue_index_t ue_index)
   ue_db.erase(ue_it);
 }
 
+void rrc_du_impl::handle_successful_rrc_setup(std::optional<establishment_cause_t> cause)
+{
+  if (cause.has_value()) {
+    metrics_aggregator.aggregate_successful_connection_establishment(cause.value());
+    return;
+  }
+  metrics_aggregator.aggregate_successful_rrc_setup();
+}
+
+void rrc_du_impl::handle_successful_rrc_release()
+{
+  metrics_aggregator.aggregate_successful_rrc_release();
+}
+
+void rrc_du_impl::handle_attempted_rrc_setup(establishment_cause_t cause)
+{
+  metrics_aggregator.aggregate_attempted_connection_establishment(cause);
+}
+
+void rrc_du_impl::handle_attempted_rrc_reestablishment()
+{
+  metrics_aggregator.aggregate_attempted_connection_reestablishment();
+}
+
+void rrc_du_impl::handle_successful_rrc_reestablishment()
+{
+  metrics_aggregator.aggregate_successful_connection_reestablishment(true);
+}
+
+void rrc_du_impl::handle_successful_rrc_reestablishment_fallback()
+{
+  metrics_aggregator.aggregate_successful_connection_reestablishment(false);
+}
+
 void rrc_du_impl::release_ues()
 {
   // TODO: release all UEs connected to this RRC entity.

@@ -31,6 +31,13 @@ ue_repository::ue_repository() : logger(srslog::fetch_basic_logger("SCHED")), ue
   rnti_to_ue_index_lookup.reserve(MAX_NOF_DU_UES);
 }
 
+ue_repository::~ue_repository()
+{
+  for (auto& u : ues_to_rem) {
+    u.second.release();
+  }
+}
+
 /// \brief This function checks whether it is safe to remove a UE. Currently we verify that the UE has no DL or UL
 /// HARQ awaiting an ACK.
 static bool is_ue_ready_for_removal(ue& u)

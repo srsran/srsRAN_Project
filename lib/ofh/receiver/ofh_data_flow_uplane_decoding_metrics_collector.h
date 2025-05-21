@@ -72,6 +72,8 @@ public:
         (max_latency_val_ns == default_max_latency_ns) ? 0.f : static_cast<float>(max_latency_val_ns) / 1000.f;
 
     metrics.cpu_usage_us = static_cast<double>(sum_elapsed_val_ns) / 1000.0;
+
+    reset();
   }
 
 private:

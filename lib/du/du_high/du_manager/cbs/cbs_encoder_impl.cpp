@@ -21,10 +21,10 @@
  */
 
 #include "cbs_encoder_impl.h"
+#include "srsran/adt/span.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/math/math_utils.h"
 #include <algorithm>
-#include <codecvt>
 #include <locale>
 
 using namespace srsran;
@@ -327,15 +327,53 @@ unsigned get_nof_gsm7_chars(const std::string& data)
 
 bool encode_ucs2(std::vector<uint8_t>& out, const std::string& data)
 {
-  // Convert from UTF-8 (8bit string variable length encoding) to UCS-2 (16 bit string fixed length encoding).
-  std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> ucs2_converter;
-  std::u16string                                              ucs2_data;
+  std::u16string   ucs2_data;
+  span<const char> data_view(data.data(), data.size());
 
-  // Attempt conversion to UCS-2. If any character requires more than two bytes, skip encoding.
-  try {
-    ucs2_data = ucs2_converter.from_bytes(data);
-  } catch (std::range_error& e) {
-    return false;
+  // Obtain the Unicode code point from the UTF-8 string and convert to UCS-2.
+  while (!data_view.empty()) {
+    uint32_t unicode_symbol = 0;
+    size_t   nof_bytes      = 0;
+
+    // Obtain the UTF-8 lead byte.
+    uint8_t leading_char = data_view[0];
+
+    if (leading_char <= 0x7f) {
+      // One byte code point (ASCII characters).
+      unicode_symbol = leading_char;
+      nof_bytes      = 1;
+    } else if ((leading_char & 0xe0) == 0xc0) {
+      // Two byte code point (Other languages).
+      unicode_symbol = leading_char & 0x1f;
+      nof_bytes      = 2;
+    } else if ((leading_char & 0xf0) == 0xe0) {
+      // Three byte code point (rest of the basic multilingual plane).
+      unicode_symbol = leading_char & 0x0f;
+      nof_bytes      = 3;
+    }
+
+    // Do not encode 4 byte UTF-8 characters, as they lie outside the basic multilingual plane and are not supported by
+    // the UCS-2 code.
+
+    // If the UTF-8 character is not valid, stop encoding.
+    if ((nof_bytes == 0) || (data_view.size() < nof_bytes)) {
+      return false;
+    }
+
+    // Write the remaining bytes.
+    for (unsigned i_byte = 1; i_byte < nof_bytes; ++i_byte) {
+      unicode_symbol = (unicode_symbol << 6) | (data_view[i_byte] & 0x3f);
+    }
+
+    // Advance data view.
+    data_view = data_view.last(data_view.size() - nof_bytes);
+
+    // Encode the 32-bit code point into UCS-2, if possible.
+    if (unicode_symbol > 0xffff) {
+      return false;
+    }
+
+    ucs2_data.push_back(static_cast<char16_t>(unicode_symbol));
   }
 
   // Number of encoded UCS-2 bytes.

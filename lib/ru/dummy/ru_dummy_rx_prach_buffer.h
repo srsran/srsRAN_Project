@@ -28,7 +28,7 @@
 #include "srsran/ran/prach/prach_constants.h"
 #include "srsran/ran/prach/prach_format_type.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
-#include "srsran/support/complex_normal_random.h"
+#include "srsran/support/math/complex_normal_random.h"
 
 namespace srsran {
 

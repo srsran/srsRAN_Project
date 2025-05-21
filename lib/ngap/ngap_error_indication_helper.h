@@ -56,13 +56,13 @@ inline void send_error_indication(ngap_message_notifier&      ngap_notifier,
   ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_ERROR_IND);
   auto& error_ind = ngap_msg.pdu.init_msg().value.error_ind();
 
-  // Set optionally provided RAN UE ID
+  // Set optionally provided RAN UE ID.
   if (ran_ue_id.has_value()) {
     error_ind->ran_ue_ngap_id_present = true;
     error_ind->ran_ue_ngap_id         = ran_ue_id_to_uint(ran_ue_id.value());
   }
 
-  // Set optionally provided AMF UE ID
+  // Set optionally provided AMF UE ID.
   if (amf_ue_id.has_value()) {
     error_ind->amf_ue_ngap_id_present = true;
     error_ind->amf_ue_ngap_id         = amf_ue_id_to_uint(amf_ue_id.value());
@@ -73,14 +73,13 @@ inline void send_error_indication(ngap_message_notifier&      ngap_notifier,
     error_ind->cause         = cause_to_asn1(cause.value());
   }
 
-  // TODO: Add missing values
+  // TODO: Add missing values.
 
-  // Forward message to AMF
-  logger.info("{}{}{}Sending ErrorIndication",
-              error_ind->ran_ue_ngap_id_present ? fmt::format(" ran_ue={}", error_ind->ran_ue_ngap_id) : "",
-              error_ind->amf_ue_ngap_id_present ? fmt::format(" amf_ue={}", error_ind->amf_ue_ngap_id) : "",
-              error_ind->ran_ue_ngap_id_present || error_ind->amf_ue_ngap_id_present ? ": " : "");
-  ngap_notifier.on_new_message(ngap_msg);
+  // Forward message to AMF.
+  if (!ngap_notifier.on_new_message(ngap_msg)) {
+    logger.warning("AMF notifier is not set. Cannot send ErrorIndication");
+    return;
+  }
 }
 
 } // namespace srs_cu_cp

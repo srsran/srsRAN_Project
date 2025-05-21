@@ -119,19 +119,19 @@ struct du_low_unit_expert_threads_config {
     if (nof_threads < 4) {
       nof_ul_threads            = 1;
       nof_pusch_decoder_threads = 0;
-      nof_dl_threads            = 2;
+      nof_dl_threads            = 3;
     } else if (nof_threads < 8) {
       nof_ul_threads            = 1;
       nof_pusch_decoder_threads = 1;
-      nof_dl_threads            = 4;
+      nof_dl_threads            = 5;
     } else if (nof_threads < 16) {
       nof_ul_threads            = 1;
       nof_pusch_decoder_threads = 1;
-      nof_dl_threads            = 4;
+      nof_dl_threads            = 5;
     } else {
       nof_ul_threads            = 2;
       nof_pusch_decoder_threads = 2;
-      nof_dl_threads            = 6;
+      nof_dl_threads            = 7;
     }
   }
 

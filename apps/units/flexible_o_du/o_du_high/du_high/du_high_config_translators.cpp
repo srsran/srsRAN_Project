@@ -25,6 +25,7 @@
 #include "du_high_config.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_cell_config_validation.h"
+#include "srsran/du/du_high/du_high_configuration.h"
 #include "srsran/du/du_high/du_manager/cbs/cbs_encoder.h"
 #include "srsran/du/du_high/du_qos_config_helpers.h"
 #include "srsran/du/du_update_config_helpers.h"
@@ -32,6 +33,7 @@
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pdcch/pdcch_candidates.h"
 #include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/ran/pucch/pucch_info.h"
 #include "srsran/rlc/rlc_srb_config_factory.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
 #include "srsran/scheduler/config/csi_helper.h"
@@ -674,6 +676,11 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     // Set DMRS additional position.
     out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs->additional_positions =
         uint_to_dmrs_additional_positions(base_cell.pdsch_cfg.dmrs_add_pos);
+    if (config.cells_cfg.front().cell.pdsch_cfg.interleaving_bundle_size != vrb_to_prb::mapping_type::non_interleaved) {
+      out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->vrb_to_prb_itlvr =
+          static_cast<pdsch_config::vrb_to_prb_interleaver>(
+              config.cells_cfg.front().cell.pdsch_cfg.interleaving_bundle_size);
+    }
 
     // Parameters for csiMeasConfig.
     if (param.csi_rs_enabled) {
@@ -706,20 +713,42 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
 
     switch (user_pucch_cfg.set1_format) {
       case pucch_format::FORMAT_2: {
-        auto& f2_params                  = du_pucch_cfg.f2_or_f3_or_f4_params.emplace<pucch_f2_params>();
-        f2_params.max_code_rate          = user_pucch_cfg.f2_max_code_rate;
-        f2_params.max_nof_rbs            = user_pucch_cfg.f2_max_nof_rbs;
+        // The number of symbols per PUCCH resource F2 is not exposed to the DU user interface and set by default to 2.
+        constexpr unsigned pucch_f2_nof_symbols = 2U;
+        auto&              f2_params            = du_pucch_cfg.f2_or_f3_or_f4_params.emplace<pucch_f2_params>();
+        f2_params.max_code_rate                 = user_pucch_cfg.f2_max_code_rate;
+        f2_params.max_nof_rbs =
+            user_pucch_cfg.f2_max_payload_bits.has_value()
+                ? get_pucch_format2_max_nof_prbs(user_pucch_cfg.f2_max_payload_bits.value(),
+                                                 pucch_f2_nof_symbols,
+                                                 to_max_code_rate_float(user_pucch_cfg.f2_max_code_rate))
+                : user_pucch_cfg.f2_max_nof_rbs;
         f2_params.intraslot_freq_hopping = user_pucch_cfg.f2_intraslot_freq_hopping;
         f2_params.max_payload_bits       = user_pucch_cfg.f2_max_payload_bits;
       } break;
       case pucch_format::FORMAT_3: {
-        auto& f3_params                  = du_pucch_cfg.f2_or_f3_or_f4_params.emplace<pucch_f3_params>();
-        f3_params.max_code_rate          = user_pucch_cfg.f3_max_code_rate;
-        f3_params.max_nof_rbs            = user_pucch_cfg.f3_max_nof_rbs;
-        f3_params.intraslot_freq_hopping = user_pucch_cfg.f3_intraslot_freq_hopping;
-        f3_params.max_payload_bits       = user_pucch_cfg.f3_max_payload_bits;
-        f3_params.additional_dmrs        = user_pucch_cfg.f3_additional_dmrs;
-        f3_params.pi2_bpsk               = user_pucch_cfg.f3_pi2_bpsk;
+        // The number of symbols per PUCCH resource is not exposed to the DU user interface; for PUCCH F3, we use all
+        // symbols available for PUCCH within a slot.
+        const unsigned max_nof_srs_symbols =
+            cell.cell.srs_cfg.srs_period_ms.has_value() ? cell.cell.srs_cfg.max_nof_symbols_per_slot : 0U;
+        const unsigned max_nof_pucch_symbols = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - max_nof_srs_symbols;
+        const unsigned pucch_f3_nof_symbols  = max_nof_pucch_symbols;
+        auto&          f3_params             = du_pucch_cfg.f2_or_f3_or_f4_params.emplace<pucch_f3_params>();
+        f3_params.max_code_rate              = user_pucch_cfg.f3_max_code_rate;
+        f3_params.max_nof_rbs                = user_pucch_cfg.f3_max_payload_bits.has_value()
+                                                   ? get_pucch_format3_max_nof_prbs(
+                                          user_pucch_cfg.f3_max_payload_bits.value(),
+                                          pucch_f3_nof_symbols,
+                                          to_max_code_rate_float(user_pucch_cfg.f3_max_code_rate),
+                                          // Since we are forcing 14 symbols intraslot_freq_hopping doesn't matter.
+                                          false,
+                                          user_pucch_cfg.f3_additional_dmrs,
+                                          user_pucch_cfg.f3_pi2_bpsk)
+                                                   : user_pucch_cfg.f3_max_nof_rbs;
+        f3_params.intraslot_freq_hopping     = user_pucch_cfg.f3_intraslot_freq_hopping;
+        f3_params.max_payload_bits           = user_pucch_cfg.f3_max_payload_bits;
+        f3_params.additional_dmrs            = user_pucch_cfg.f3_additional_dmrs;
+        f3_params.pi2_bpsk                   = user_pucch_cfg.f3_pi2_bpsk;
       } break;
       case pucch_format::FORMAT_4: {
         auto& f4_params                  = du_pucch_cfg.f2_or_f3_or_f4_params.emplace<pucch_f4_params>();
@@ -831,7 +860,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
         auto& f3_params       = std::get<pucch_f3_params>(du_pucch_cfg.f2_or_f3_or_f4_params);
         f3_params.nof_symbols = std::min(du_pucch_cfg.max_nof_symbols.to_uint(), f3_params.nof_symbols.to_uint());
       } else if (std::holds_alternative<pucch_f4_params>(du_pucch_cfg.f2_or_f3_or_f4_params)) {
-        auto& f4_params       = std::get<pucch_f3_params>(du_pucch_cfg.f2_or_f3_or_f4_params);
+        auto& f4_params       = std::get<pucch_f4_params>(du_pucch_cfg.f2_or_f3_or_f4_params);
         f4_params.nof_symbols = std::min(du_pucch_cfg.max_nof_symbols.to_uint(), f4_params.nof_symbols.to_uint());
       }
       // Add extra PUSCH time-domain resources to enable PUSCH on symbols not used by the SRS.
@@ -894,7 +923,7 @@ static rlc_am_config generate_du_rlc_am_config(const du_high_unit_rlc_am_config&
   return out_rlc;
 }
 
-std::map<five_qi_t, srs_du::du_qos_config> srsran::generate_du_qos_config(const du_high_unit_config& config)
+static std::map<five_qi_t, srs_du::du_qos_config> generate_du_qos_config(const du_high_unit_config& config)
 {
   std::map<five_qi_t, srs_du::du_qos_config> out_cfg = {};
   if (config.qos_cfg.empty()) {
@@ -946,7 +975,7 @@ std::map<five_qi_t, srs_du::du_qos_config> srsran::generate_du_qos_config(const 
   return out_cfg;
 }
 
-std::map<srb_id_t, srs_du::du_srb_config> srsran::generate_du_srb_config(const du_high_unit_config& config)
+static std::map<srb_id_t, srs_du::du_srb_config> generate_du_srb_config(const du_high_unit_config& config)
 {
   std::map<srb_id_t, srs_du::du_srb_config> srb_cfg;
 
@@ -989,7 +1018,7 @@ std::map<srb_id_t, srs_du::du_srb_config> srsran::generate_du_srb_config(const d
   return srb_cfg;
 }
 
-mac_expert_config srsran::generate_mac_expert_config(const du_high_unit_config& config)
+static mac_expert_config generate_mac_expert_config(const du_high_unit_config& config)
 {
   mac_expert_config out_cfg = {};
   for (const auto& cell : config.cells_cfg) {
@@ -1001,7 +1030,7 @@ mac_expert_config srsran::generate_mac_expert_config(const du_high_unit_config& 
   return out_cfg;
 }
 
-scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_unit_config& config)
+static scheduler_expert_config generate_scheduler_expert_config(const du_high_unit_config& config)
 {
   scheduler_expert_config out_cfg = config_helpers::make_default_scheduler_expert_config();
 
@@ -1018,6 +1047,8 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   out_cfg.ue.dl_harq_la_ri_drop_threshold      = pdsch.harq_la_ri_drop_threshold;
   out_cfg.ue.max_nof_dl_harq_retxs             = pdsch.max_nof_harq_retxs;
   out_cfg.ue.max_nof_ul_harq_retxs             = pusch.max_nof_harq_retxs;
+  out_cfg.ue.dl_harq_retx_timeout              = std::chrono::milliseconds{pdsch.harq_retx_timeout};
+  out_cfg.ue.ul_harq_retx_timeout              = std::chrono::milliseconds{pusch.harq_retx_timeout};
   out_cfg.ue.max_pdschs_per_slot               = pdsch.max_pdschs_per_slot;
   out_cfg.ue.pre_policy_rr_dl_ue_group_size    = pdsch.nof_preselected_newtx_ues;
   out_cfg.ue.pre_policy_rr_dl_ue_group_period  = pdsch.newtx_ues_selection_period;
@@ -1041,6 +1072,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   out_cfg.ue.olla_ul_snr_inc                  = pusch.olla_snr_inc;
   out_cfg.ue.olla_max_ul_snr_offset           = pusch.olla_max_snr_offset;
   out_cfg.ue.pdsch_crb_limits                 = {pdsch.start_rb, pdsch.end_rb};
+  out_cfg.ue.pdsch_interleaving_bundle_size   = pdsch.interleaving_bundle_size;
   out_cfg.ue.pusch_crb_limits                 = {pusch.start_rb, pusch.end_rb};
   if (app_sched_expert_cfg.policy_sched_expert_cfg.has_value() and
       std::holds_alternative<time_qos_scheduler_expert_config>(app_sched_expert_cfg.policy_sched_expert_cfg.value())) {
@@ -1074,6 +1106,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   out_cfg.ra.rar_mcs_index           = pdsch.fixed_rar_mcs;
   out_cfg.ra.max_nof_msg3_harq_retxs = prach.max_msg3_harq_retx;
   out_cfg.ra.msg3_mcs_index          = prach.fixed_msg3_mcs;
+  out_cfg.ra.harq_retx_timeout       = std::chrono::milliseconds{pusch.harq_retx_timeout};
 
   // SI parameters.
   out_cfg.si.sib1_mcs_index    = pdsch.fixed_sib1_mcs;
@@ -1089,6 +1122,26 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   }
 
   return out_cfg;
+}
+
+void srsran::generate_du_high_config(srs_du::du_high_configuration& du_hi_cfg,
+                                     const du_high_unit_config&     du_high_unit_cfg)
+{
+  // DU-high configuration.
+  du_hi_cfg.ran.gnb_du_id        = du_high_unit_cfg.gnb_du_id;
+  du_hi_cfg.ran.gnb_du_name      = fmt::format("srsdu{}", fmt::underlying(du_hi_cfg.ran.gnb_du_id));
+  du_hi_cfg.ran.cells            = generate_du_cell_config(du_high_unit_cfg);
+  du_hi_cfg.metrics.enable_mac   = du_high_unit_cfg.metrics.layers_cfg.enable_mac;
+  du_hi_cfg.metrics.enable_rlc   = du_high_unit_cfg.metrics.layers_cfg.enable_rlc;
+  du_hi_cfg.metrics.enable_sched = du_high_unit_cfg.metrics.layers_cfg.enable_scheduler;
+  du_hi_cfg.metrics.period       = std::chrono::milliseconds{du_high_unit_cfg.metrics.du_report_period};
+
+  // Validates the derived parameters.
+  du_hi_cfg.ran.srbs                  = generate_du_srb_config(du_high_unit_cfg);
+  du_hi_cfg.ran.qos                   = generate_du_qos_config(du_high_unit_cfg);
+  du_hi_cfg.ran.mac_cfg               = generate_mac_expert_config(du_high_unit_cfg);
+  du_hi_cfg.ran.mac_cfg.initial_crnti = to_rnti(0x4601);
+  du_hi_cfg.ran.sched_cfg             = generate_scheduler_expert_config(du_high_unit_cfg);
 }
 
 void srsran::ntn_augment_rlc_parameters(const ntn_config& ntn_cfg, std::map<srb_id_t, srs_du::du_srb_config>& srb_cfgs)

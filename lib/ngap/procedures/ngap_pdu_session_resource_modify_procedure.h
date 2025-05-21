@@ -48,8 +48,8 @@ public:
 private:
   void combine_pdu_session_resource_modify_response();
 
-  // results senders
-  void send_pdu_session_resource_modify_response();
+  // Result senders.
+  bool send_pdu_session_resource_modify_response();
 
   const cu_cp_pdu_session_resource_modify_request    request;
   const asn1::ngap::pdu_session_res_modify_request_s asn1_request;
@@ -62,7 +62,7 @@ private:
 
   cu_cp_ue_context_release_request ue_context_release_request;
 
-  // procedure outcomes
+  // Procedure outcomes.
   pdu_session_resource_modify_validation_outcome verification_outcome;
 };
 

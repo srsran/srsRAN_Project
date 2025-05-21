@@ -50,18 +50,6 @@ private:
   /// additional position, as per TS38.211 Section 7.4.1.1.2. and TS38.214 Section 5.6.1.2.
   static constexpr unsigned MAX_DMRS_SYMBOLS = 4;
 
-  /// Defines generation parameters.
-  struct params_t {
-    std::array<float, 2> w_f;
-    std::array<float, 2> w_t;
-  };
-
-  /// Provides TS 38.211 Table 7.4.1.1.2-1: Parameters for PDSCH DM-RS configuration type 1.
-  static const std::array<params_t, 8> params_type1;
-
-  /// Provides TS 38.211 Table 7.4.1.1.2-2: Parameters for PDSCH DM-RS configuration type 2.
-  static const std::array<params_t, 12> params_type2;
-
   /// Pseudo-random sequence generator instance.
   std::unique_ptr<pseudo_random_generator> prg;
   std::unique_ptr<resource_grid_mapper>    mapper;

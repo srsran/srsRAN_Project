@@ -319,8 +319,6 @@ protected:
 
 TEST_P(du_srs_resource_manager_tester, ue_are_assigned_orthogonal_srs_resources)
 {
-  du_ue_index_t next_ue_index = to_du_ue_index(0);
-
   // Keeps track of which SRS resources have been assigned to the UEs.
   std::vector<srs_res_params> used_srs_resources;
   // > Created UEs have unique SRS resources.
@@ -341,23 +339,21 @@ TEST_P(du_srs_resource_manager_tester, ue_are_assigned_orthogonal_srs_resources)
                              [&res_params](const srs_res_params& res) { return res.collides(res_params); }));
 
     used_srs_resources.push_back(res_params);
-    next_ue_index = to_du_ue_index((unsigned)next_ue_index + 1);
   }
 
   // Erase a random UE and attempt.
-  const du_ue_index_t ue_idx_to_rem = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, ues.size() - 1));
-  du_srs_res_mng.dealloc_resources(ues[ue_idx_to_rem]);
-  auto& ue_to_be_removed = ues[ue_idx_to_rem];
+  const du_ue_index_t ue_idx_to_rem    = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, ues.size() - 1));
+  auto&               ue_to_be_removed = ues[ue_idx_to_rem];
   // First, find the SRS resource of the ue to be removed and removed it from the vector of used resources.
   srs_res_params srs_res_to_be_removed(
       ue_to_be_removed.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg->srs_res_list[0]);
   auto res_to_remove_it = std::find(used_srs_resources.begin(), used_srs_resources.end(), srs_res_to_be_removed);
   ASSERT_FALSE(res_to_remove_it == used_srs_resources.end());
   used_srs_resources.erase(res_to_remove_it);
+  du_srs_res_mng.dealloc_resources(ues[ue_idx_to_rem]);
   ues.erase(ue_idx_to_rem);
 
   // Attempt a new allocation and verify it is successful.
-  next_ue_index                       = to_du_ue_index((unsigned)next_ue_index + 1);
   std::optional<cell_group_config> ue = add_ue(ue_idx_to_rem);
   ASSERT_TRUE(ue.has_value());
 

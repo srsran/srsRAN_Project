@@ -35,6 +35,18 @@ void mobility_manager_metrics_aggregator::aggregate_successful_handover_preparat
   ++aggregated_mobility_manager_metrics.nof_successful_handover_preparations;
 }
 
+/// \brief Aggregates the metrics for the requested handover execution.
+void mobility_manager_metrics_aggregator::aggregate_requested_handover_execution()
+{
+  ++aggregated_mobility_manager_metrics.nof_handover_executions_requested;
+}
+
+/// \brief Aggregates the metrics for the successful handover execution.
+void mobility_manager_metrics_aggregator::aggregate_successful_handover_execution()
+{
+  ++aggregated_mobility_manager_metrics.nof_successful_handover_executions;
+}
+
 mobility_management_metrics mobility_manager_metrics_aggregator::request_metrics_report() const
 {
   return aggregated_mobility_manager_metrics;

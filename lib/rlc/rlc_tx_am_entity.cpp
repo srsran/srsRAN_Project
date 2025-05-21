@@ -142,7 +142,7 @@ void rlc_tx_am_entity::discard_sdu(uint32_t pdcp_sn)
 }
 
 // TS 38.322 v16.2.0 Sec. 5.2.3.1
-size_t rlc_tx_am_entity::pull_pdu(span<uint8_t> rlc_pdu_buf) SRSRAN_RTSAN_NONBLOCKING
+size_t rlc_tx_am_entity::pull_pdu(span<uint8_t> rlc_pdu_buf) noexcept SRSRAN_RTSAN_NONBLOCKING
 {
   std::chrono::time_point<std::chrono::steady_clock> pull_begin;
   if (metrics_low.is_enabled()) {
@@ -649,15 +649,21 @@ void rlc_tx_am_entity::on_status_pdu(rlc_am_status_pdu status)
   }
 }
 
-void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status) SRSRAN_RTSAN_NONBLOCKING
+void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status) noexcept SRSRAN_RTSAN_NONBLOCKING
 {
   trace_point status_tp = l2_tracer.now();
   auto        t_start   = std::chrono::steady_clock::now();
 
-  auto on_function_exit = make_scope_exit([&]() {
+  uint32_t processed_acks   = 0;
+  uint32_t processed_nacks  = 0;
+  auto     on_function_exit = make_scope_exit([&]() {
     auto t_end    = std::chrono::steady_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
     logger.log_info("Handled status report. t={}us {}", duration.count(), status);
+
+    if (metrics_low.is_enabled()) {
+      metrics_low.metrics_add_handle_status_latency_us(processed_acks, processed_nacks, duration.count());
+    }
 
     // redirect deletion of status report to UE executor
     auto delete_status_pdu_func = [status = std::move(status)]() mutable {
@@ -734,6 +740,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status) SRSRAN_RTSAN_
   std::optional<uint32_t> max_deliv_retx_pdcp_sn = {}; // initialize with not value set
   bool                    recycle_bin_full       = false;
   for (uint32_t sn = st.tx_next_ack; tx_mod_base(sn) < tx_mod_base(stop_sn); sn = (sn + 1) % mod) {
+    processed_acks++;
     if (tx_window.has_sn(sn)) {
       rlc_tx_am_sdu_info& sdu_info = tx_window[sn];
       if (sdu_info.pdcp_sn.has_value()) {
@@ -794,6 +801,8 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status) SRSRAN_RTSAN_
               "Truncating invalid NACK range at ack_sn={}. nack={}", status.ack_sn, status.get_nacks()[nack_idx]);
           break;
         }
+
+        processed_nacks++;
         rlc_am_status_nack nack = {};
         nack.nack_sn            = range_sn;
         if (status.get_nacks()[nack_idx].has_so) {

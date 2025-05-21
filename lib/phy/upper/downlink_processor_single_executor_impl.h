@@ -32,7 +32,6 @@
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/support/executors/task_executor.h"
-#include <mutex>
 
 namespace srsran {
 

@@ -28,6 +28,7 @@
 
 namespace srsran {
 
+/// The E1AP radio network cause, see TS 38.463 section 9.3.1.2.
 enum class e1ap_cause_radio_network_t : uint8_t {
   unspecified = 0,
   unknown_or_already_allocated_gnb_cu_cp_ue_e1ap_id,
@@ -65,8 +66,11 @@ enum class e1ap_cause_radio_network_t : uint8_t {
   meas_not_supported_for_the_obj
 };
 
+/// The E1AP transport cause, see TS 38.463 section 9.3.1.2.
 enum class e1ap_cause_transport_t : uint8_t { unspecified = 0, transport_res_unavailable, unknown_tnl_address_for_iab };
 
+/// The E1AP cause to indicate the reason for a particular event, see TS 38.463 section 9.3.1.2.
+/// The E1AP cause is a union of the radio network cause, transport cause, protocol cause and misc cause.
 using e1ap_cause_t = std::variant<e1ap_cause_radio_network_t, e1ap_cause_transport_t, cause_protocol_t, cause_misc_t>;
 
 } // namespace srsran

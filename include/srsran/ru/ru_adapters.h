@@ -184,6 +184,16 @@ public:
     l1_ul_tracer << instant_trace_event{"handle_ul_request_late", instant_trace_event::cpu_scope::thread};
   }
 
+  // See interface for documentation.
+  void on_late_prach_message(const ru_error_context& context) override
+  {
+    srsran_assert(context.sector < handlers.size(), "Invalid sector '{}'", context.sector);
+    srsran_assert(handlers[context.sector], "Adapter for sector '{}' is not connected", context.sector);
+
+    handlers[context.sector]->handle_late_prach_message(context.slot);
+    l1_ul_tracer << instant_trace_event{"handle_late_prach_message", instant_trace_event::cpu_scope::thread};
+  }
+
   /// Maps the given upper PHY error handler and sector to this adapter.
   void map_handler(unsigned sector, upper_phy_error_handler& hndlr)
   {

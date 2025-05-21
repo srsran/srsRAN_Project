@@ -52,9 +52,10 @@ public:
   virtual async_task<bool> add_ue(const mac_ue_create_request& msg) = 0;
 
   /// \brief Update the bearers of an existing UE in the MAC DL processor.
-  virtual async_task<bool> addmod_bearers(du_ue_index_t                                  ue_index,
-                                          du_cell_index_t                                pcell_index,
-                                          const std::vector<mac_logical_channel_config>& logical_channels) = 0;
+  /// Note: logical_channels must outlive the returned async_task until its completion.
+  virtual async_task<bool> addmod_bearers(du_ue_index_t                          ue_index,
+                                          du_cell_index_t                        pcell_index,
+                                          span<const mac_logical_channel_config> logical_channels) = 0;
 
   /// \brief Remove the bearers of an existing UE in the MAC DL processor.
   virtual async_task<bool>

@@ -68,6 +68,7 @@ public:
 
   async_task<void> handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg) override;
 
+  void schedule_cu_up_async_task(async_task<void> task);
   void schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) override;
 
   // cu_up_e1ap_connection_notifier
@@ -77,11 +78,14 @@ public:
 
   size_t get_nof_ues() override { return ue_mng->get_nof_ues(); }
 
+  void trigger_enable_test_mode();
+  void trigger_disable_test_mode();
+
 private:
   void on_statistics_report_timer_expired();
 
-  async_task<e1ap_bearer_context_modification_response> enable_test_mode() override;
-  async_task<void> test_mode_release_bearer_command(e1ap_bearer_context_release_command release_command);
+  async_task<void> enable_test_mode() override;
+  async_task<void> disable_test_mode();
 
   std::map<five_qi_t, cu_up_qos_config> qos;
   const network_interface_config        net_cfg;

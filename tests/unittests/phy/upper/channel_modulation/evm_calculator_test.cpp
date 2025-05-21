@@ -21,7 +21,7 @@
  */
 
 #include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
-#include "srsran/support/complex_normal_random.h"
+#include "srsran/support/math/complex_normal_random.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 #include <random>

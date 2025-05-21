@@ -22,24 +22,24 @@
 
 #pragma once
 
+#include "srsran/du/du_high/du_metrics_notifier.h"
 #include "srsran/du/du_high/o_du_high_metrics_notifier.h"
-#include "srsran/mac/mac_metrics_notifier.h"
 
 namespace srsran {
 namespace srs_du {
 
 /// Proxy class that listen to scheduler metrics and forwards them to the configured scheduler metrics notifier and O-DU
 /// high metrics notifier.
-class o_du_high_metrics_notifier_proxy : public mac_metrics_notifier
+class o_du_high_metrics_notifier_proxy : public du_metrics_notifier
 {
-  mac_metrics_notifier*       mac_notifier    = nullptr;
+  du_metrics_notifier*        du_notifier     = nullptr;
   o_du_high_metrics_notifier* odu_hi_notifier = nullptr;
 
 public:
-  explicit o_du_high_metrics_notifier_proxy(mac_metrics_notifier* notifier_);
+  explicit o_du_high_metrics_notifier_proxy(du_metrics_notifier* notifier_);
 
   // See interface for documentation.
-  void on_new_metrics_report(const mac_metric_report& report) override;
+  void on_new_metric_report(const du_metrics_report& report) override;
 
   /// Sets the O-DU high metrics notifier to the given one.
   void set_o_du_high_metrics_notifier(o_du_high_metrics_notifier& notifier);

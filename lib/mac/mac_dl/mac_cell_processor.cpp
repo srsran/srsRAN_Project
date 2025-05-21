@@ -83,9 +83,7 @@ async_task<void> mac_cell_processor::start()
       cell_exec,
       ctrl_exec,
       timers,
-      launch_async([this](coro_context<async_task<void>>& ctx) {
-        CORO_BEGIN(ctx);
-
+      [this]() noexcept SRSRAN_RTSAN_NONBLOCKING {
         if (state == cell_state::active) {
           // No-op.
           return;
@@ -100,9 +98,7 @@ async_task<void> mac_cell_processor::start()
         state = cell_state::active;
 
         logger.info("cell={}: Cell was activated", fmt::underlying(cell_cfg.cell_index));
-
-        CORO_RETURN();
-      }),
+      },
       [this]() {
         logger.warning("cell={}: Postponed cell start operation. Cause: Task queue is full",
                        fmt::underlying(cell_cfg.cell_index));
@@ -115,7 +111,7 @@ async_task<void> mac_cell_processor::stop()
       cell_exec,
       ctrl_exec,
       timers,
-      [this]() {
+      [this]() noexcept SRSRAN_RTSAN_NONBLOCKING {
         if (state == cell_state::inactive) {
           return;
         }
@@ -147,14 +143,18 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
       // Change to respective DL cell executor context.
       CORO_AWAIT(execute_on_blocking(cell_exec, timers));
 
-      if (request.new_sys_info.has_value()) {
-        // Forward new SIB1/SI message PDUs to SIB assembler and update version.
-        sib_assembler.handle_si_change_request(*request.new_sys_info);
+      {
+        SRSRAN_RTSAN_SCOPED_ENABLER;
 
-        // Notify scheduler of SIB1/SI message scheduling update.
-        sched.handle_si_change_indication(request.new_sys_info->si_sched_cfg);
+        if (request.new_sys_info.has_value()) {
+          // Forward new SIB1/SI message PDUs to SIB assembler and update version.
+          sib_assembler.handle_si_change_request(*request.new_sys_info);
 
-        resp.si_updated = true;
+          // Notify scheduler of SIB1/SI message scheduling update.
+          sched.handle_si_change_indication(request.new_sys_info->si_sched_cfg);
+
+          resp.si_updated = true;
+        }
       }
 
       // Change back to CTRL executor context.
@@ -170,7 +170,8 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
   });
 }
 
-void mac_cell_processor::handle_slot_indication(const mac_cell_timing_context& context)
+void mac_cell_processor::handle_slot_indication(const mac_cell_timing_context& context) noexcept
+    SRSRAN_RTSAN_NONBLOCKING
 {
   slot_time_mapper.handle_slot_indication(context);
   trace_point slot_ind_enqueue_tp = metric_clock::now();
@@ -183,7 +184,7 @@ void mac_cell_processor::handle_slot_indication(const mac_cell_timing_context& c
   }
 }
 
-void mac_cell_processor::handle_error_indication(slot_point sl_tx, error_event event)
+void mac_cell_processor::handle_error_indication(slot_point sl_tx, error_event event) noexcept SRSRAN_RTSAN_NONBLOCKING
 {
   // Forward error indication to the scheduler to be processed asynchronously.
   sched.handle_error_indication(sl_tx, cell_cfg.cell_index, event);
@@ -204,7 +205,7 @@ async_task<bool> mac_cell_processor::add_ue(const mac_ue_create_request& request
       cell_exec,
       ctrl_exec,
       timers,
-      [this, ue_inst = std::move(ue_inst)]() mutable {
+      [this, ue_inst = std::move(ue_inst)]() mutable noexcept SRSRAN_RTSAN_NONBLOCKING {
         // > Insert UE and DL bearers.
         // Note: Ensure we only do so if the cell is active.
         return state == cell_state::active and ue_mng.add_ue(std::move(ue_inst));
@@ -227,8 +228,12 @@ async_task<void> mac_cell_processor::remove_ue(const mac_ue_delete_request& requ
     // Note: Caller (ctrl exec) blocks if the cell executor is full.
     CORO_AWAIT(execute_on_blocking(cell_exec, timers, log_dispatch_failure));
 
-    // Remove UE associated DL channels
-    ue_mng.remove_ue(request.ue_index);
+    {
+      SRSRAN_RTSAN_SCOPED_ENABLER;
+
+      // Remove UE associated DL channels
+      ue_mng.remove_ue(request.ue_index);
+    }
 
     // Change back to CTRL executor before returning
     // Note: Blocks if the executor is full (which should never happen).
@@ -241,14 +246,16 @@ async_task<void> mac_cell_processor::remove_ue(const mac_ue_delete_request& requ
   });
 }
 
-async_task<bool> mac_cell_processor::addmod_bearers(du_ue_index_t                                  ue_index,
-                                                    const std::vector<mac_logical_channel_config>& logical_channels)
+async_task<bool> mac_cell_processor::addmod_bearers(du_ue_index_t                          ue_index,
+                                                    span<const mac_logical_channel_config> logical_channels)
 {
+  // Note: logical_channels must outlive the returned async_task completion.
+
   return execute_and_continue_on_blocking(
       cell_exec,
       ctrl_exec,
       timers,
-      [this, ue_index, logical_channels]() {
+      [this, ue_index, logical_channels]() noexcept SRSRAN_RTSAN_NONBLOCKING {
         // Configure logical channels.
         return state == cell_state::active and ue_mng.addmod_bearers(ue_index, logical_channels);
       },
@@ -260,15 +267,16 @@ async_task<bool> mac_cell_processor::addmod_bearers(du_ue_index_t               
 
 async_task<bool> mac_cell_processor::remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids_to_rem)
 {
-  std::vector<lcid_t> lcids(lcids_to_rem.begin(), lcids_to_rem.end());
+  // Use bitset to minimize capture size.
+  auto lcids_to_rem_bset = bit_positions_to_bitset<MAX_NOF_RB_LCIDS>(lcids_to_rem);
 
   return execute_and_continue_on_blocking(
       cell_exec,
       ctrl_exec,
       timers,
-      [this, ue_index, lcids = std::move(lcids)]() {
+      [this, ue_index, lcids_to_rem_bset]() noexcept SRSRAN_RTSAN_NONBLOCKING -> bool {
         // Remove logical channels.
-        return ue_mng.remove_bearers(ue_index, lcids);
+        return ue_mng.remove_bearers(ue_index, lcids_to_rem_bset);
       },
       [this, ue_index]() {
         logger.warning("ue={}: Postponed UE bearer removal. Cause: Task queue is full", fmt::underlying(ue_index));
@@ -276,7 +284,8 @@ async_task<bool> mac_cell_processor::remove_bearers(du_ue_index_t ue_index, span
 }
 
 void mac_cell_processor::handle_slot_indication_impl(slot_point               sl_tx,
-                                                     metric_clock::time_point enqueue_slot_tp) SRSRAN_RTSAN_NONBLOCKING
+                                                     metric_clock::time_point enqueue_slot_tp) noexcept
+    SRSRAN_RTSAN_NONBLOCKING
 {
   // * Start of Critical Path * //
 
@@ -349,6 +358,7 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point               sl
     mac_ul_res.ul_res = &sl_res.ul;
     phy_cell.on_new_uplink_scheduler_results(mac_ul_res);
 
+    metrics_meas.on_ul_tti_req();
     l2_tracer << trace_event{"mac_ul_tti_req", ul_tti_req_tp};
   }
 

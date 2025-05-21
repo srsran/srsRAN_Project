@@ -36,7 +36,7 @@
 #include "srsran/ran/sch/sch_mcs.h"
 #include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/srsvec/bit.h"
-#include "srsran/support/complex_normal_random.h"
+#include "srsran/support/math/complex_normal_random.h"
 #include "srsran/support/srsran_test.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>

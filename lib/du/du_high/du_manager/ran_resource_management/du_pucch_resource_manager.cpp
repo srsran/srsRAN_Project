@@ -330,43 +330,59 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
         .report_slot_offset = csi_res_offset.value().second;
   }
 
+  auto& ue_ded_pucch_cfg = cell_grp_cfg.cells[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value();
+
   // Update the PUCCH max payload.
   // As per TS 38.231, Section 9.2.1, with PUCCH Format 1, we can have up to 2 HARQ-ACK bits (SR doesn't count as part
   // of the payload).
-  static constexpr unsigned pucch_f1_max_harq_payload = 2U;
-  cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value().format_max_payload[pucch_format_to_uint(
-      pucch_format::FORMAT_1)]                        = pucch_f1_max_harq_payload;
+  static constexpr unsigned pucch_f0_f1_max_harq_payload = 2U;
+  if (std::holds_alternative<pucch_f0_params>(user_defined_pucch_cfg.f0_or_f1_params)) {
+    ue_ded_pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_0)] = pucch_f0_f1_max_harq_payload;
+  } else {
+    ue_ded_pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_1)] = pucch_f0_f1_max_harq_payload;
+  }
 
   if (std::holds_alternative<pucch_f2_params>(user_defined_pucch_cfg.f2_or_f3_or_f4_params)) {
-    const auto& f2_params = std::get<pucch_f2_params>(user_defined_pucch_cfg.f2_or_f3_or_f4_params);
-    cell_grp_cfg.cells[0]
-        .serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value()
-        .format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_2)] = get_pucch_format2_max_payload(
-        f2_params.max_nof_rbs,
-        f2_params.nof_symbols.to_uint(),
-        to_max_code_rate_float(default_pucch_cfg.format_2_common_param.value().max_c_rate));
+    auto* res_f2_it = std::find_if(ue_ded_pucch_cfg.pucch_res_list.begin(),
+                                   ue_ded_pucch_cfg.pucch_res_list.end(),
+                                   [](const pucch_resource& res) { return res.format == pucch_format::FORMAT_2; });
+    srsran_assert(res_f2_it != ue_ded_pucch_cfg.pucch_res_list.end(),
+                  "No PUCCH F2 resource found in the UE dedicated configuration");
+    ue_ded_pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_2)] = get_pucch_format2_max_payload(
+        std::get<pucch_format_2_3_cfg>(res_f2_it->format_params).nof_prbs,
+        std::get<pucch_format_2_3_cfg>(res_f2_it->format_params).nof_symbols,
+        to_max_code_rate_float(ue_ded_pucch_cfg.format_2_common_param.value().max_c_rate));
+    ue_ded_pucch_cfg.set_1_format = pucch_format::FORMAT_2;
   } else if (std::holds_alternative<pucch_f3_params>(user_defined_pucch_cfg.f2_or_f3_or_f4_params)) {
-    const auto& f3_params = std::get<pucch_f3_params>(user_defined_pucch_cfg.f2_or_f3_or_f4_params);
-    cell_grp_cfg.cells[0]
-        .serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value()
-        .format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_3)] = get_pucch_format3_max_payload(
-        f3_params.max_nof_rbs,
-        f3_params.nof_symbols.to_uint(),
-        to_max_code_rate_float(default_pucch_cfg.format_3_common_param.value().max_c_rate),
-        f3_params.intraslot_freq_hopping,
-        f3_params.additional_dmrs,
-        f3_params.pi2_bpsk);
+    auto* res_f3_it = std::find_if(ue_ded_pucch_cfg.pucch_res_list.begin(),
+                                   ue_ded_pucch_cfg.pucch_res_list.end(),
+                                   [](const pucch_resource& res) { return res.format == pucch_format::FORMAT_3; });
+    srsran_assert(res_f3_it != ue_ded_pucch_cfg.pucch_res_list.end(),
+                  "No PUCCH F3 resource found in the UE dedicated configuration");
+    const auto& f3_common_params = ue_ded_pucch_cfg.format_3_common_param.value();
+    ue_ded_pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_3)] =
+        get_pucch_format3_max_payload(std::get<pucch_format_2_3_cfg>(res_f3_it->format_params).nof_prbs,
+                                      std::get<pucch_format_2_3_cfg>(res_f3_it->format_params).nof_symbols,
+                                      to_max_code_rate_float(ue_ded_pucch_cfg.format_3_common_param.value().max_c_rate),
+                                      res_f3_it->second_hop_prb.has_value(),
+                                      f3_common_params.additional_dmrs,
+                                      f3_common_params.pi_2_bpsk);
+    ue_ded_pucch_cfg.set_1_format = pucch_format::FORMAT_3;
   } else {
-    const auto& f4_params = std::get<pucch_f4_params>(user_defined_pucch_cfg.f2_or_f3_or_f4_params);
-    cell_grp_cfg.cells[0]
-        .serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value()
-        .format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_4)] = get_pucch_format4_max_payload(
-        f4_params.nof_symbols.to_uint(),
-        to_max_code_rate_float(default_pucch_cfg.format_4_common_param.value().max_c_rate),
-        f4_params.intraslot_freq_hopping,
-        f4_params.additional_dmrs,
-        f4_params.pi2_bpsk,
-        f4_params.occ_length);
+    auto* res_f4_it = std::find_if(ue_ded_pucch_cfg.pucch_res_list.begin(),
+                                   ue_ded_pucch_cfg.pucch_res_list.end(),
+                                   [](const pucch_resource& res) { return res.format == pucch_format::FORMAT_4; });
+    srsran_assert(res_f4_it != ue_ded_pucch_cfg.pucch_res_list.end(),
+                  "No PUCCH F4 resource found in the UE dedicated configuration");
+    const auto& f4_common_params = ue_ded_pucch_cfg.format_4_common_param.value();
+    ue_ded_pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_4)] =
+        get_pucch_format4_max_payload(std::get<pucch_format_4_cfg>(res_f4_it->format_params).nof_symbols,
+                                      to_max_code_rate_float(ue_ded_pucch_cfg.format_4_common_param.value().max_c_rate),
+                                      res_f4_it->second_hop_prb.has_value(),
+                                      f4_common_params.additional_dmrs,
+                                      f4_common_params.pi_2_bpsk,
+                                      std::get<pucch_format_4_cfg>(res_f4_it->format_params).occ_length);
+    ue_ded_pucch_cfg.set_1_format = pucch_format::FORMAT_4;
   }
 
   ++cells[0].ue_idx;

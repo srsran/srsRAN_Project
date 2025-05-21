@@ -23,6 +23,7 @@
 #include "scheduler_impl.h"
 #include "ue_scheduling/ue_scheduler_impl.h"
 #include "srsran/scheduler/config/scheduler_cell_config_validator.h"
+#include "srsran/support/rtsan.h"
 
 using namespace srsran;
 
@@ -208,7 +209,8 @@ void scheduler_impl::handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac
   groups[grp_idx]->get_feedback_handler().handle_dl_mac_ce_indication(mac_ce);
 }
 
-const sched_result& scheduler_impl::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
+const sched_result& scheduler_impl::slot_indication(slot_point      sl_tx,
+                                                    du_cell_index_t cell_index) noexcept SRSRAN_RTSAN_NONBLOCKING
 {
   srsran_assert(cells.contains(cell_index), "cell={} does not exist", fmt::underlying(cell_index));
   cell_scheduler& cell = *cells[cell_index];

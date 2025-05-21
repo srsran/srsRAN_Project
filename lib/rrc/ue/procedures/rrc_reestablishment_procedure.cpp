@@ -63,6 +63,9 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
 {
   CORO_BEGIN(ctx);
 
+  // Notify metrics about attempted RRC connection reestablishment.
+  metrics_notifier.on_attempted_rrc_connection_reestablishment();
+
   logger.log_debug("\"{}\" for old c-rnti={}, pci={} initialized",
                    name(),
                    to_rnti(reestablishment_request.rrc_reest_request.ue_id.c_rnti),
@@ -110,7 +113,8 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
   if (transaction.has_response()) {
     context.state = rrc_state::connected;
 
-    // Notify metrics.
+    // Notify metrics about successful RRC connection reestablishment.
+    metrics_notifier.on_successful_rrc_connection_reestablishment();
     metrics_notifier.on_new_rrc_connection();
 
     // Notify DU Processor to start a Reestablishment Context Modification Routine.
@@ -147,7 +151,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
 
 async_task<void> rrc_reestablishment_procedure::handle_rrc_reestablishment_fallback()
 {
-  context.connection_cause.value = asn1::rrc_nr::establishment_cause_e::mt_access;
+  context.connection_cause = establishment_cause_t::mt_access;
 
   return launch_async([this](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
@@ -160,7 +164,8 @@ async_task<void> rrc_reestablishment_procedure::handle_rrc_reestablishment_fallb
                                                  metrics_notifier,
                                                  ngap_notifier,
                                                  event_mng,
-                                                 logger));
+                                                 logger,
+                                                 true));
 
     if (old_ue_reest_context.ue_index != ue_index_t::invalid and !old_ue_reest_context.old_ue_fully_attached) {
       // The UE exists but still has not established an SRB2 and DRB. Request the release of the old UE.

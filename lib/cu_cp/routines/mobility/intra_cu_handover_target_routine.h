@@ -23,6 +23,7 @@
 #pragma once
 
 #include "../../cu_cp_impl_interface.h"
+#include "../../mobility_manager/mobility_manager_impl.h"
 #include "../../ue_manager/ue_manager_impl.h"
 #include "srsran/support/async/async_task.h"
 
@@ -37,6 +38,7 @@ public:
                                    cu_cp_ue_context_release_handler&             ue_context_release_handler_,
                                    cu_cp_ue_context_manipulation_handler&        cu_cp_handler_,
                                    ue_manager&                                   ue_mng_,
+                                   mobility_manager&                             mobility_mng_,
                                    srslog::basic_logger&                         logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
@@ -56,6 +58,7 @@ private:
   cu_cp_ue_context_release_handler&      ue_context_release_handler;
   cu_cp_ue_context_manipulation_handler& cu_cp_handler;
   ue_manager&                            ue_mng;
+  mobility_manager&                      mobility_mng;
 
   srslog::basic_logger& logger;
 

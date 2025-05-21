@@ -145,31 +145,19 @@ protected:
         return false;
       }
 
-      if (test_metrics.pdu_session_metrics.at(s_nssai).nof_pdu_sessions_failed_to_setup.size() !=
-          metrics.nof_pdu_sessions_failed_to_setup.size()) {
-        test_logger.error("Size of PDU sessions failed to setup for s_nssai {} mismatch: expected {}, got {}",
-                          s_nssai,
-                          metrics.nof_pdu_sessions_failed_to_setup.size(),
-                          test_metrics.pdu_session_metrics.at(s_nssai).nof_pdu_sessions_failed_to_setup.size());
-        return false;
-      }
+      for (unsigned idx = 0; idx < metrics.nof_pdu_sessions_failed_to_setup.size(); ++idx) {
+        unsigned expected_count = metrics.nof_pdu_sessions_failed_to_setup.get_count(idx);
+        unsigned test_count =
+            test_metrics.pdu_session_metrics.at(s_nssai).nof_pdu_sessions_failed_to_setup.get_count(idx);
 
-      for (const auto& [cause, count] : metrics.nof_pdu_sessions_failed_to_setup) {
-        if (test_metrics.pdu_session_metrics.at(s_nssai).nof_pdu_sessions_failed_to_setup.find(cause) ==
-            ngap->get_metrics_handler()
-                .handle_ngap_metrics_report_request()
-                .metrics.pdu_session_metrics.at(s_nssai)
-                .nof_pdu_sessions_failed_to_setup.end()) {
-          test_logger.error("PDU sessions failed to setup for s_nssai {} cause {} not found", s_nssai, cause);
-          return false;
-        }
+        if (expected_count != test_count) {
+          test_logger.error(
+              "PDU sessions failed to setup for s_nssai {} cause {} mismatch: expected {}, got {}",
+              s_nssai,
+              test_metrics.pdu_session_metrics.at(s_nssai).nof_pdu_sessions_failed_to_setup.get_cause(idx),
+              expected_count,
+              test_count);
 
-        if (test_metrics.pdu_session_metrics.at(s_nssai).nof_pdu_sessions_failed_to_setup.at(cause) != count) {
-          test_logger.error("PDU sessions failed to setup for s_nssai {} cause {} mismatch: expected {}, got {}",
-                            s_nssai,
-                            test_metrics.pdu_session_metrics.at(s_nssai).nof_pdu_sessions_failed_to_setup.at(cause),
-                            cause,
-                            count);
           return false;
         }
       }
@@ -252,10 +240,13 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test,
   ASSERT_TRUE(was_pdu_session_resource_setup_request_invalid());
 
   // Check that metrics contain the failed PDU session setup.
+  pdu_session_metrics_t expected_pdu_session_metrics = {2, 0, {}};
+  expected_pdu_session_metrics.nof_pdu_sessions_failed_to_setup.increase(
+      ngap_cause_radio_network_t::multiple_pdu_session_id_instances);
+
   ASSERT_TRUE(check_metrics_report(
       "open5gs-amf0",
-      {{{slice_service_type{1}, slice_differentiator::create(0x0027db).value()},
-        pdu_session_metrics_t{2, 0, {{ngap_cause_radio_network_t::multiple_pdu_session_id_instances, 1}}}}}));
+      {{{slice_service_type{1}, slice_differentiator::create(0x0027db).value()}, expected_pdu_session_metrics}}));
 }
 
 /// Test invalid PDU Session Resource Setup Request.

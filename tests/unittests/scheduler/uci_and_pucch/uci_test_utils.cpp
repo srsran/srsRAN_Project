@@ -258,6 +258,36 @@ test_bench::test_bench(const test_bench_params& params,
   if (params.cfg_for_mimo_4x4) {
     auto& pucch_cfg = ue_req.cfg.cells->back().serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value();
     pucch_cfg.format_2_common_param.value().max_c_rate = max_pucch_code_rate::dot_35;
+    if (params.pucch_f2_f3_more_prbs) {
+      for (auto res_it = pucch_cfg.pucch_res_list.begin(); res_it != pucch_cfg.pucch_res_list.end(); ++res_it) {
+        if (res_it->format == set1_format and std::holds_alternative<pucch_format_2_3_cfg>(res_it->format_params)) {
+          std::get<pucch_format_2_3_cfg>(res_it->format_params).nof_prbs = 2U;
+        }
+      }
+    }
+    const auto& res_f2 = std::find_if(pucch_cfg.pucch_res_list.begin(),
+                                      pucch_cfg.pucch_res_list.end(),
+                                      [](const auto& pucch) { return pucch.format == pucch_format::FORMAT_2; });
+    srsran_assert(res_f2 != pucch_cfg.pucch_res_list.end(), "PUCCH format 2 not found");
+    const auto& res_f2_cfg = std::get<pucch_format_2_3_cfg>(res_f2->format_params);
+    pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_2)] =
+        get_pucch_format2_max_payload(res_f2_cfg.nof_prbs,
+                                      res_f2_cfg.nof_symbols,
+                                      to_max_code_rate_float(pucch_cfg.format_2_common_param.value().max_c_rate));
+    pucch_cfg.set_1_format = pucch_format::FORMAT_2;
+    ue_req.cfg.cells->back().serv_cell_cfg.csi_meas_cfg =
+        csi_helper::make_csi_meas_config(csi_helper::csi_builder_params{.nof_ports = 4});
+    auto& beta_offsets = std::get<uci_on_pusch::beta_offsets_semi_static>(ue_req.cfg.cells->back()
+                                                                              .serv_cell_cfg.ul_config.value()
+                                                                              .init_ul_bwp.pusch_cfg.value()
+                                                                              .uci_cfg.value()
+                                                                              .beta_offsets_cfg.value());
+    beta_offsets.beta_offset_csi_p2_idx_1.value() = 6;
+  }
+
+  if (params.max_c_rate != max_pucch_code_rate::dot_25) {
+    auto& pucch_cfg = ue_req.cfg.cells->back().serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value();
+    pucch_cfg.format_2_common_param.value().max_c_rate = params.max_c_rate;
     const auto& res_f2                                 = std::find_if(pucch_cfg.pucch_res_list.begin(),
                                       pucch_cfg.pucch_res_list.end(),
                                       [](const auto& pucch) { return pucch.format == pucch_format::FORMAT_2; });
@@ -267,14 +297,6 @@ test_bench::test_bench(const test_bench_params& params,
         get_pucch_format2_max_payload(res_f2_cfg.nof_prbs,
                                       res_f2_cfg.nof_symbols,
                                       to_max_code_rate_float(pucch_cfg.format_2_common_param.value().max_c_rate));
-    ue_req.cfg.cells->back().serv_cell_cfg.csi_meas_cfg =
-        csi_helper::make_csi_meas_config(csi_helper::csi_builder_params{.nof_ports = 4});
-    auto& beta_offsets = std::get<uci_on_pusch::beta_offsets_semi_static>(ue_req.cfg.cells->back()
-                                                                              .serv_cell_cfg.ul_config.value()
-                                                                              .init_ul_bwp.pusch_cfg.value()
-                                                                              .uci_cfg.value()
-                                                                              .beta_offsets_cfg.value());
-    beta_offsets.beta_offset_csi_p2_idx_1.value() = 6;
   }
 
   ue_req_main = ue_req;

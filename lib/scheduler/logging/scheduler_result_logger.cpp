@@ -33,14 +33,15 @@ namespace {
 
 auto make_dl_dci_log_entry(const dci_dl_info& dci)
 {
-  bool                   is_formattable = true;
-  uint8_t                h_id           = 0;
-  bool                   ndi            = false;
-  uint8_t                rv             = 0;
-  uint8_t                mcs            = 0;
-  uint8_t                pucch_res_id   = 0;
-  std::optional<int8_t>  tpc_cmd;
-  std::optional<uint8_t> dai;
+  bool                                    is_formattable = true;
+  uint8_t                                 h_id           = 0;
+  bool                                    ndi            = false;
+  uint8_t                                 rv             = 0;
+  uint8_t                                 mcs            = 0;
+  uint8_t                                 pucch_res_id   = 0;
+  std::optional<int8_t>                   tpc_cmd;
+  std::optional<uint8_t>                  dai;
+  std::optional<vrb_to_prb::mapping_type> vrb_prb;
 
   switch (dci.type) {
     case dci_dl_rnti_config_type::c_rnti_f1_0: {
@@ -68,6 +69,7 @@ auto make_dl_dci_log_entry(const dci_dl_info& dci)
       mcs                = dci1_1.tb1_modulation_coding_scheme;
       pucch_res_id       = dci1_1.pucch_resource_indicator;
       tpc_cmd            = dci1_1.tpc_command;
+      vrb_prb            = dci1_1.vrb_prb_mapping;
       if (dci.c_rnti_f1_1.downlink_assignment_index.has_value()) {
         dai = dci.c_rnti_f1_1.downlink_assignment_index;
       }
@@ -76,7 +78,7 @@ auto make_dl_dci_log_entry(const dci_dl_info& dci)
       is_formattable = false;
       break;
   }
-  return make_formattable([is_formattable, h_id, ndi, rv, mcs, pucch_res_id, dai, tpc_cmd](auto& ctx) {
+  return make_formattable([is_formattable, h_id, ndi, rv, mcs, pucch_res_id, dai, tpc_cmd, vrb_prb](auto& ctx) {
     if (is_formattable) {
       fmt::format_to(ctx.out(), "dci: h_id={} ndi={} rv={} mcs={} res_ind={}", h_id, ndi, rv, mcs, pucch_res_id);
       if (tpc_cmd.has_value()) {
@@ -84,6 +86,9 @@ auto make_dl_dci_log_entry(const dci_dl_info& dci)
       }
       if (dai.has_value()) {
         fmt::format_to(ctx.out(), " dai={}", dai.value());
+      }
+      if (vrb_prb.has_value()) {
+        fmt::format_to(ctx.out(), " vrb_prb_map={}", fmt::underlying(vrb_prb.value()));
       }
     }
     return ctx.out();

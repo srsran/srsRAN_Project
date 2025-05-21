@@ -62,7 +62,7 @@ TEST_P(pdcp_tx_empty_pool_test, empty_pool)
   uint32_t n_sdus          = pool_size + 1;
   auto     test_empty_pool = [this, n_sdus](uint32_t tx_next) {
     // Set state of PDCP entiy
-    pdcp_tx_state st = {tx_next, tx_next};
+    pdcp_tx_state st = {tx_next, tx_next, tx_next};
     pdcp_tx->set_state(st);
     pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::off, security::ciphering_enabled::off);
 

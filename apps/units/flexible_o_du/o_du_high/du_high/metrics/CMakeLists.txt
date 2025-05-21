@@ -18,13 +18,14 @@
 # and at http://www.gnu.org/licenses/.
 #
 
+add_subdirectory(consumers)
+
 set(SOURCES
-        du_high_mac_metrics_producer.cpp
-        du_high_mac_metrics_consumers.cpp
         du_high_rlc_metrics_producer.cpp
         du_high_rlc_metrics_consumers.cpp
-        du_high_scheduler_cell_metrics_producer.cpp
-        du_high_scheduler_cell_metrics_consumers.cpp)
+        du_metrics_consumers.cpp
+        du_metrics_producer.cpp)
 
 add_library(srsran_du_high_unit_metrics_helpers STATIC ${SOURCES})
 target_include_directories(srsran_du_high_unit_metrics_helpers PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(srsran_du_high_unit_metrics_helpers PRIVATE srsran_du_high_unit_metrics_consumers)

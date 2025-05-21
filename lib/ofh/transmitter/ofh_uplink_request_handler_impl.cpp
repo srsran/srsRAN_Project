@@ -39,6 +39,7 @@ class error_notifier_dummy : public error_notifier
 public:
   void on_late_downlink_message(const error_context& context) override {}
   void on_late_uplink_message(const error_context& context) override {}
+  void on_late_prach_message(const error_context& context) override {}
 };
 
 } // namespace
@@ -165,12 +166,12 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
   frame_pool->clear_uplink_slot(context.slot, context.sector, logger);
 
   if (SRSRAN_UNLIKELY(window_checker.is_late(context.slot))) {
-    err_notifier.on_late_uplink_message({context.slot, context.sector});
-
     logger.warning(
         "Sector#{}: dropped late PRACH request in slot '{}'. No OFH data will be requested from an RU for this slot",
         context.sector,
         context.slot);
+
+    err_notifier.on_late_prach_message({context.slot, context.sector});
     return;
   }
 
@@ -183,6 +184,12 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
   auto slot_idx = context.slot;
   if (is_short_preamble(context.format)) {
     ul_prach_repo->add(context, buffer, std::nullopt, std::nullopt);
+    if (SRSRAN_UNLIKELY(context.nof_td_occasions > 1)) {
+      logger.info("Sector#{}: PRACH with multiple time-domain occasions is configured, however only the first occasion "
+                  "will be used in slot '{}'",
+                  context.sector,
+                  context.slot);
+    }
   } else {
     // Determine slot index where the PRACH U-Plane is expected.
     slot_idx = get_long_prach_expected_slot(context);
@@ -241,12 +248,12 @@ void uplink_request_handler_impl::handle_new_uplink_slot(const resource_grid_con
   frame_pool->clear_uplink_slot(context.slot, context.sector, logger);
 
   if (SRSRAN_UNLIKELY(window_checker.is_late(context.slot))) {
-    err_notifier.on_late_uplink_message({context.slot, context.sector});
-
     logger.warning(
         "Sector#{}: dropped late uplink request in slot '{}'. No OFH data will be requested from an RU for this slot",
         context.sector,
         context.slot);
+
+    err_notifier.on_late_uplink_message({context.slot, context.sector});
     return;
   }
 

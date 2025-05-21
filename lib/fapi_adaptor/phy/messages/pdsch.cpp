@@ -81,17 +81,17 @@ static void fill_power_values(pdsch_processor::pdu_t& proc_pdu, const fapi::dl_p
       proc_pdu.ratio_pdsch_data_to_sss_dB + get_sch_to_dmrs_ratio_dB(fapi_pdu.num_dmrs_cdm_grps_no_data);
 }
 
-static unsigned get_interleaver_size(fapi::vrb_to_prb_mapping_type vrb_to_prb_mapping)
+static vrb_to_prb::mapping_type get_mapping_type(fapi::vrb_to_prb_mapping_type vrb_to_prb_mapping)
 {
   switch (vrb_to_prb_mapping) {
     case fapi::vrb_to_prb_mapping_type::interleaved_rb_size2:
-      return 2;
+      return vrb_to_prb::mapping_type::interleaved_n2;
     case fapi::vrb_to_prb_mapping_type::interleaved_rb_size4:
-      return 4;
+      return vrb_to_prb::mapping_type::interleaved_n4;
     case fapi::vrb_to_prb_mapping_type::non_interleaved:
-      break;
+    default:
+      return vrb_to_prb::mapping_type::non_interleaved;
   }
-  return 0;
 }
 
 /// Constructs the VRB-to-PRB configuration in function of the transmission type parameter of the PDSCH PDU.
@@ -106,7 +106,7 @@ static vrb_to_prb::configuration make_vrb_to_prb_config(const fapi::dl_pdsch_pdu
   // Initial BWP size.
   unsigned N_bwp_init_size = fapi_pdu.pdsch_maintenance_v3.initial_dl_bwp_size;
   // Bundle i size.
-  unsigned L_i = get_interleaver_size(fapi_pdu.vrb_to_prb_mapping);
+  vrb_to_prb::mapping_type L_i = get_mapping_type(fapi_pdu.vrb_to_prb_mapping);
 
   switch (fapi_pdu.pdsch_maintenance_v3.trans_type) {
     case fapi::pdsch_trans_type::non_interleaved_common_ss:

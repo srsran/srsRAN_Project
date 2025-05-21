@@ -96,3 +96,7 @@ add_test(lockfree_triple_buffer_test lockfree_triple_buffer_test)
 add_executable(batched_dispatch_queue_test batched_dispatch_queue_test.cpp)
 target_link_libraries(batched_dispatch_queue_test srslog srsran_support gtest gtest_main)
 add_test(batched_dispatch_queue_test batched_dispatch_queue_test)
+
+add_executable(flat_map_test flat_map_test.cpp)
+target_link_libraries(flat_map_test srslog srsran_support gtest gtest_main)
+add_test(flat_map_test flat_map_test)

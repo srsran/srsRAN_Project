@@ -27,6 +27,7 @@
 #include "srsran/ran/pdcch/dci_format.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/ran/precoding/precoding_constants.h"
+#include "srsran/ran/resource_allocation/vrb_to_prb.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/time_alignment_config.h"
@@ -91,9 +92,9 @@ struct pdsch_information {
   /// Number of layers as per TS 38.211, Section 7.3.1.3. Values: {1,...,8}.
   unsigned nof_layers;
   /// Whether the PDSCH is interleaved via VRB-to-PRB mapping.
-  bool                  is_interleaved;
-  search_space_set_type ss_set_type;
-  dci_dl_format         dci_fmt;
+  vrb_to_prb::mapping_type vrb_prb_mapping;
+  search_space_set_type    ss_set_type;
+  dci_dl_format            dci_fmt;
   /// HARQ process number as per TS38.212 Section 7.3.1.1. Values: {0,...,15}.
   harq_id_t harq_id;
   /// Precoding information for the PDSCH. This field is empty in case of 1-antenna port setups.

@@ -41,6 +41,8 @@ struct ue_newtx_dl_grant_request {
   slot_point pdsch_slot;
   /// Pending newTx bytes to allocate.
   unsigned pending_bytes;
+  /// Whether interleaving VRB-to-PRB mapping is enabled.
+  bool interleaving_enabled;
 };
 
 /// Request for a reTx DL grant allocation.
@@ -53,6 +55,8 @@ struct ue_retx_dl_grant_request {
   dl_harq_process_handle h_dl;
   /// Current DL VRB occupation.
   vrb_bitmap& used_dl_vrbs;
+  /// Whether interleaving VRB-to-PRB mapping is enabled.
+  bool interleaving_enabled;
 };
 
 /// Request to reserve space for control channels of a UL grant.
@@ -75,8 +79,6 @@ struct ue_retx_ul_grant_request {
   ul_harq_process_handle h_ul;
   /// Current UL VRB occupation.
   vrb_bitmap& used_ul_vrbs;
-  /// Current UL BWP CRB limits.
-  crb_interval ul_bwp_crb_limits;
 };
 
 /// \brief Status of a UE grant allocation, and action for the scheduler policy to follow afterwards.
@@ -132,7 +134,9 @@ public:
     ~dl_newtx_grant_builder() { srsran_assert(parent == nullptr, "PDSCH parameters were not set"); }
 
     /// Sets the final VRBs for the PDSCH allocation.
-    void set_pdsch_params(vrb_interval alloc_vrbs, std::pair<crb_interval, crb_interval> alloc_crbs);
+    void set_pdsch_params(vrb_interval                          alloc_vrbs,
+                          std::pair<crb_interval, crb_interval> alloc_crbs,
+                          bool                                  enable_interleaving);
 
     /// For a given max number of RBs and a bitmap of used VRBs, returns the recommended parameters for the PDSCH grant.
     vrb_interval recommended_vrbs(const vrb_bitmap& used_vrbs, unsigned max_nof_rbs = MAX_NOF_PRBS) const
@@ -235,7 +239,10 @@ private:
                                                                unsigned                              pending_bytes);
 
   // Set final PDSCH parameters and allocate remaining DL grant resources.
-  void set_pdsch_params(dl_grant_info& grant, vrb_interval vrbs, std::pair<crb_interval, crb_interval> crbs);
+  void set_pdsch_params(dl_grant_info&                        grant,
+                        vrb_interval                          vrbs,
+                        std::pair<crb_interval, crb_interval> crbs,
+                        bool                                  enable_interleaving);
 
   // Set final PUSCH parameters and allocate remaining UL grant resources.
   void set_pusch_params(ul_grant_info& grant, const vrb_interval& vrbs);

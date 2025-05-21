@@ -26,9 +26,9 @@
 #include "srsran/phy/upper/channel_processors/pucch/factories.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/support/benchmark_utils.h"
-#include "srsran/support/complex_normal_random.h"
 #include "srsran/support/executors/task_worker_pool.h"
 #include "srsran/support/executors/unique_thread.h"
+#include "srsran/support/math/complex_normal_random.h"
 #include "srsran/support/math/math_utils.h"
 #include "srsran/support/srsran_test.h"
 #include <getopt.h>
@@ -95,8 +95,6 @@ static uint64_t                     nof_threads           = 1;
 static uint64_t                     batch_size_per_thread = 100;
 static std::string                  selected_profile_name = "all";
 static benchmark_modes              benchmark_mode        = benchmark_modes::latency;
-static std::unique_ptr<task_worker_pool<concurrent_queue_policy::locking_mpmc>>          worker_pool = nullptr;
-static std::unique_ptr<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>> executor    = nullptr;
 
 // Thread shared variables.
 static constexpr auto        thread_sync_sleep_duration = std::chrono::nanoseconds(10U);
@@ -580,10 +578,6 @@ int main(int argc, char** argv)
   if ((benchmark_mode == benchmark_modes::throughput_thread) || (benchmark_mode == benchmark_modes::all)) {
     fmt::print("\n--- Thread throughput ---\n");
     perf_meas.print_percentiles_throughput("transmissions", 1.0 / static_cast<double>(nof_threads));
-  }
-
-  if (worker_pool) {
-    worker_pool->stop();
   }
 
   return 0;

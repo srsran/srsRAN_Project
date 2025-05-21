@@ -29,12 +29,12 @@ using namespace srs_du;
 
 namespace {
 
-/// Scheduler metrics notifier dummy implementation.
-class scheduler_metrics_notifier_dummy : public mac_metrics_notifier
+/// DU metrics notifier dummy implementation.
+class du_metrics_notifier_dummy : public du_metrics_notifier
 {
 public:
   // See interface for documentation.
-  void on_new_metrics_report(const mac_metric_report& report) override {}
+  void on_new_metric_report(const du_metrics_report& report) override {}
 };
 
 /// O-RAN DU high metrics notifier dummy implementation.
@@ -48,17 +48,17 @@ public:
 } // namespace
 
 static o_du_high_metrics_notifier_dummy dummy_odu_high_notifier;
-static scheduler_metrics_notifier_dummy dummy_scheduler_notifier;
+static du_metrics_notifier_dummy        dummy_du_notifier;
 
-o_du_high_metrics_notifier_proxy::o_du_high_metrics_notifier_proxy(mac_metrics_notifier* notifier_) :
-  mac_notifier(notifier_ ? notifier_ : &dummy_scheduler_notifier), odu_hi_notifier(&dummy_odu_high_notifier)
+o_du_high_metrics_notifier_proxy::o_du_high_metrics_notifier_proxy(du_metrics_notifier* notifier_) :
+  du_notifier(notifier_ ? notifier_ : &dummy_du_notifier), odu_hi_notifier(&dummy_odu_high_notifier)
 {
 }
 
-void o_du_high_metrics_notifier_proxy::on_new_metrics_report(const mac_metric_report& report)
+void o_du_high_metrics_notifier_proxy::on_new_metric_report(const du_metrics_report& report)
 {
   // Continue to report as expected.
-  mac_notifier->on_new_metrics_report(report);
+  du_notifier->on_new_metric_report(report);
 
   // Report to E2.
   // :TODO:

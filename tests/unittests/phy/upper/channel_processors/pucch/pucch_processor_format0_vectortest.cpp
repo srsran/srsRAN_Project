@@ -26,7 +26,7 @@
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/phy/upper/channel_processors/pucch/formatters.h"
 #include "srsran/ran/pucch/pucch_constants.h"
-#include "srsran/support/complex_normal_random.h"
+#include "srsran/support/math/complex_normal_random.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

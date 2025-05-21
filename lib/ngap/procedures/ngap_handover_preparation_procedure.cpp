@@ -39,7 +39,7 @@ srsran::srs_cu_cp::start_ngap_handover_preparation(const ngap_handover_preparati
                                                    timer_factory                            timers,
                                                    ngap_ue_logger&                          logger)
 {
-  logger.log_error("NG Handover failed. Cause: NG handover not supported.");
+  logger.log_info("NG Handover failed. Cause: NG handover not supported.");
   auto err_function = [](coro_context<async_task<ngap_handover_preparation_response>>& ctx) {
     CORO_BEGIN(ctx);
     CORO_RETURN(ngap_handover_preparation_response{false});

@@ -95,6 +95,7 @@ protected:
 
   ue_manager                      ue_mng{cu_cp_cfg};
   dummy_n2_gateway                n2_gw;
+  dummy_ngap_message_handler      dummy_amf;
   dummy_ngap_cu_cp_notifier       cu_cp_notifier{ue_mng};
   std::unique_ptr<ngap_interface> ngap;
 };

@@ -283,7 +283,8 @@ unsigned intra_slice_scheduler::schedule_dl_retx_candidates(dl_ran_slice_candida
     }
 
     // Perform DL grant allocation, including PDCCH, PDSCH and UCI.
-    auto result = ue_alloc.allocate_dl_grant(ue_retx_dl_grant_request{u, pdsch_slot, h, used_dl_vrbs});
+    auto result =
+        ue_alloc.allocate_dl_grant(ue_retx_dl_grant_request{u, pdsch_slot, h, used_dl_vrbs, enable_pdsch_interleaving});
     if (not result.has_value() and result.error() == dl_alloc_failure_cause::skip_slot) {
       // Received signal to stop allocations in the slot.
       break;
@@ -524,14 +525,18 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
     }
 
     // Compute the corresponding CRBs.
-    // TODO: support interleaving.
-    constexpr static search_space_id            ue_ded_ss_id = to_search_space_id(2);
-    const auto&                                 ss_info = grant_builder.ue().get_cc().cfg().search_space(ue_ded_ss_id);
-    const std::pair<crb_interval, crb_interval> alloc_crbs = {
-        prb_to_crb(ss_info.dl_crb_lims, static_cast<prb_interval>(alloc_vrbs)), {}};
+    constexpr static search_space_id      ue_ded_ss_id = to_search_space_id(2);
+    const auto&                           ss_info      = grant_builder.ue().get_cc().cfg().search_space(ue_ded_ss_id);
+    std::pair<crb_interval, crb_interval> alloc_crbs;
+    if (enable_pdsch_interleaving) {
+      const auto prbs = ss_info.interleaved_mapping.value().vrb_to_prb(alloc_vrbs);
+      alloc_crbs      = {prb_to_crb(ss_info.dl_crb_lims, prbs.first), prb_to_crb(ss_info.dl_crb_lims, prbs.second)};
+    } else {
+      alloc_crbs = {prb_to_crb(ss_info.dl_crb_lims, alloc_vrbs.convert_to<prb_interval>()), {}};
+    }
 
     // Save CRBs, MCS and RI.
-    grant_builder.set_pdsch_params(alloc_vrbs, alloc_crbs);
+    grant_builder.set_pdsch_params(alloc_vrbs, alloc_crbs, enable_pdsch_interleaving);
 
     // Fill used VRBs.
     const unsigned nof_rbs_alloc = alloc_vrbs.length();
@@ -772,6 +777,10 @@ unsigned intra_slice_scheduler::max_pdschs_to_alloc(const dl_ran_slice_candidate
 
 unsigned intra_slice_scheduler::max_puschs_to_alloc(const ul_ran_slice_candidate& slice)
 {
+  if (not cell_alloc.cfg.is_ul_enabled(slice.get_slot_tx())) {
+    return 0;
+  }
+
   // We cannot allocate more than the number of UEs available.
   int puschs_to_alloc = slice.get_slice_ues().size();
 
@@ -822,10 +831,28 @@ void intra_slice_scheduler::update_used_dl_vrbs(const dl_ran_slice_candidate& sl
   const auto&              init_dl_bwp      = cell_alloc.cfg.dl_cfg_common.init_dl_bwp;
   const ofdm_symbol_range& symbols_to_check = init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].symbols;
 
-  // TODO: perform inverse VRB-to-PRB mapping when interleaving is enabled for this slice/BWP.
-  used_dl_vrbs = cell_alloc[pdsch_slot]
-                     .dl_res_grid.used_prbs(init_dl_bwp.generic_params.scs, dl_crb_lims, symbols_to_check)
-                     .convert_to<vrb_bitmap>();
+  enable_pdsch_interleaving = ss_info.interleaved_mapping.has_value();
+  if (enable_pdsch_interleaving) {
+    for (const auto& pdsch : cell_alloc[pdsch_slot].result.dl.ue_grants) {
+      // [Implementation defined] Disable interleaving if there are non-interleaved PDSCH grants already allocated on
+      // that slot, to avoid wasting resources.
+      if (pdsch.pdsch_cfg.vrb_prb_mapping == vrb_to_prb::mapping_type::non_interleaved) {
+        enable_pdsch_interleaving = false;
+        break;
+      }
+    }
+  }
+
+  const prb_bitmap used_prbs =
+      cell_alloc[pdsch_slot].dl_res_grid.used_prbs(init_dl_bwp.generic_params.scs, dl_crb_lims, symbols_to_check);
+
+  // Perform inverse VRB-to-PRB mapping when interleaving is enabled for this slice/BWP.
+  if (enable_pdsch_interleaving) {
+    const auto& interleaved_mapping = ss_info.interleaved_mapping.value();
+    used_dl_vrbs                    = interleaved_mapping.prb_to_vrb(used_prbs);
+  } else {
+    used_dl_vrbs = used_prbs.convert_to<vrb_bitmap>();
+  }
 }
 
 void intra_slice_scheduler::update_used_ul_vrbs(const ul_ran_slice_candidate& slice)

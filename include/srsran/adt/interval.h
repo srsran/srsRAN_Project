@@ -25,13 +25,18 @@
 #include "srsran/support/srsran_assert.h"
 #include "fmt/format.h"
 #include <cassert>
-#include <string>
 #include <type_traits>
 
 namespace srsran {
 
+namespace detail {
+
+struct default_interval_tag;
+
+} // namespace detail
+
 /// Representation of an interval between two numeric-types with the math representation [start, stop).
-template <typename T, bool RightClosed = false>
+template <typename T, bool RightClosed = false, typename Tag = detail::default_interval_tag>
 class interval
 {
   static_assert(std::is_trivially_copyable_v<T>, "Expected to be trivially copyable");
@@ -54,19 +59,19 @@ public:
   }
 
   template <typename U, typename V>
-  static interval<T> start_and_len(U start_point, V dur)
+  static constexpr interval start_and_len(U start_point, V dur)
   {
     return interval(start_point, start_point + dur);
   }
 
-  constexpr T start() const { return start_; }
+  constexpr T start() const noexcept { return start_; }
 
-  constexpr T stop() const { return stop_; }
+  constexpr T stop() const noexcept { return stop_; }
 
   bool empty() const { return not RightClosed and stop_ == start_; }
 
   /// Interval length. e.g. [0, 1), [0, 1], [0 .. 1) have length 1. [0 .. 1] has length 2.
-  length_type length() const
+  length_type length() const noexcept
   {
     return static_cast<length_type>(stop_ - start_ + ((RightClosed and not is_real::value) ? 1 : 0));
   }
@@ -112,7 +117,7 @@ public:
   }
 
   /// If this and other intervals overlap.
-  bool overlaps(interval other) const
+  bool overlaps(interval other) const noexcept
   {
     // Note: if one or both intervals are empty, this will always return false
     return RightClosed ? start_ <= other.stop_ and other.start_ <= stop_
@@ -120,16 +125,19 @@ public:
   }
 
   /// If interval contains provided point.
-  bool contains(T point) const { return start_ <= point and (point < stop_ or (RightClosed and point == stop_)); }
+  bool contains(T point) const noexcept
+  {
+    return start_ <= point and (point < stop_ or (RightClosed and point == stop_));
+  }
 
   /// If interval contains provided interval.
-  bool contains(interval other) const { return start_ <= other.start_ and other.stop_ <= stop_; }
+  bool contains(interval other) const noexcept { return start_ <= other.start_ and other.stop_ <= stop_; }
 
   /// Assign to this interval the intersection between this and the provided interval.
-  interval<T>& intersect(const interval<T>& other)
+  interval& intersect(const interval& other)
   {
     if (not overlaps(other)) {
-      *this = interval<T>{};
+      *this = interval{};
     } else {
       start_ = std::max(start(), other.start());
       stop_  = std::min(stop(), other.stop());
@@ -140,65 +148,62 @@ public:
   /// Returns the closest integer to \c point that is within the bounds of the interval.
   T clamp(T point) const { return std::max(std::min(point, stop_), start_); }
 
+  bool operator==(const interval& other) const noexcept { return start() == other.start() and stop() == other.stop(); }
+
+  bool operator!=(const interval& other) const noexcept { return not(*this == other); }
+
+  /// Compares interval starting points. If they are the same, the interval with shorter length is the lowest.
+  bool operator<(const interval& other) const noexcept
+  {
+    return start() < other.start() or (start() == other.start() and stop() < other.stop());
+  }
+
+  /// Make union of intervals. If intervals do not overlap, the empty interval is returned.
+  interval operator|(const interval& other) const noexcept
+  {
+    if (not overlaps(other)) {
+      return interval{};
+    }
+    return {std::min(start(), other.start()), std::max(stop(), other.stop())};
+  }
+
+  /// Make intersection of intervals.
+  interval operator&(const interval& other) const noexcept
+  {
+    if (not overlaps(other)) {
+      return interval{};
+    }
+    return interval{std::max(start(), other.start()), std::min(stop(), other.stop())};
+  }
+  template <typename Interval>
+  Interval convert_to() const
+  {
+    static_assert(right_closed() == Interval::right_closed(), "Conversion only supported for same RightClosed");
+    // Just the tag changes.
+    return {start(), stop()};
+  }
+
+  static constexpr bool right_closed() noexcept { return RightClosed; }
+
 private:
   T start_;
   T stop_;
 };
-
-template <typename T>
-bool operator==(const interval<T>& lhs, const interval<T>& rhs)
-{
-  return lhs.start() == rhs.start() and lhs.stop() == rhs.stop();
-}
-
-template <typename T>
-bool operator!=(const interval<T>& lhs, const interval<T>& rhs)
-{
-  return not(lhs == rhs);
-}
-
-/// Compares interval starting points. In case the starting point is the same, the interval with shorter length
-/// is the lowest.
-template <typename T>
-bool operator<(const interval<T>& lhs, const interval<T>& rhs)
-{
-  return lhs.start() < rhs.start() or (lhs.start() == rhs.start() and lhs.stop() < rhs.stop());
-}
-
-/// Make union of intervals. If intervals do not overlap, the empty interval is returned
-template <typename T>
-interval<T> operator|(const interval<T>& lhs, const interval<T>& rhs)
-{
-  if (not lhs.overlaps(rhs)) {
-    return interval<T>{};
-  }
-  return {std::min(lhs.start(), rhs.start()), std::max(lhs.stop(), rhs.stop())};
-}
-
-/// Make intersection of intervals
-template <typename T>
-interval<T> operator&(const interval<T>& lhs, const interval<T>& rhs)
-{
-  if (not lhs.overlaps(rhs)) {
-    return interval<T>{};
-  }
-  return interval<T>{std::max(lhs.start(), rhs.start()), std::min(lhs.stop(), rhs.stop())};
-}
 
 } // namespace srsran
 
 namespace fmt {
 
 /// Format intervals with the notation [start, stop)
-template <typename T, bool RightClosed>
-struct formatter<srsran::interval<T, RightClosed>> : public formatter<T> {
+template <typename T, bool RightClosed, typename Tag>
+struct formatter<srsran::interval<T, RightClosed, Tag>> : public formatter<T> {
   template <typename FormatContext>
-  auto format(const srsran::interval<T, RightClosed>& interv, FormatContext& ctx) const
+  auto format(const srsran::interval<T, RightClosed, Tag>& interv, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "[{}{}{}{}",
                      interv.start(),
-                     srsran::interval<T, RightClosed>::is_real::value ? ", " : "..",
+                     srsran::interval<T, RightClosed, Tag>::is_real::value ? ", " : "..",
                      interv.stop(),
                      RightClosed ? ']' : ')');
   }

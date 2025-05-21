@@ -44,7 +44,7 @@ void ngap_asn1_packer::handle_packed_pdu(const byte_buffer& bytes)
   asn1::cbit_ref          bref(bytes);
   srs_cu_cp::ngap_message msg = {};
   if (msg.pdu.unpack(bref) != asn1::SRSASN_SUCCESS) {
-    logger.error("Sending Error Indication. Cause: Could not unpack Rx PDU");
+    logger.error("Sending ErrorIndication. Cause: Could not unpack Rx PDU");
     send_error_indication(amf_notifier, logger);
     return;
   }

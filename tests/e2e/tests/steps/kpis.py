@@ -52,6 +52,7 @@ class KPIs:
     nof_attach_failures: int = 0
     nof_reestablishments: int = 0
     nof_handovers: int = 0
+    nof_error_indications: int = 0
 
 
 # pylint: disable=too-many-locals
@@ -86,6 +87,8 @@ def get_kpis(
 
     kpis.ul_bler_aggregate = 0 if not total_ul_ko_ok else gnb_metrics.total.ul_nof_ko / total_ul_ko_ok
     kpis.dl_bler_aggregate = 0 if not total_dl_ko_ok else gnb_metrics.total.dl_nof_ko / total_dl_ko_ok
+
+    kpis.nof_error_indications = gnb_metrics.cell.error_indication_cnt
 
     # UE
     for ue in ue_array:

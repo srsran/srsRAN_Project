@@ -37,7 +37,7 @@ public:
   explicit synchronized_mock_amf() : rx_pdus(1024), pending_tx_pdus(16) {}
 
   std::unique_ptr<ngap_message_notifier>
-  handle_cu_cp_connection_request(std::unique_ptr<ngap_message_notifier> cu_cp_rx_pdu_notifier) override
+  handle_cu_cp_connection_request(std::unique_ptr<ngap_rx_message_notifier> cu_cp_rx_pdu_notifier) override
   {
     class sync_mock_pdu_notifier : public ngap_message_notifier
     {
@@ -45,7 +45,7 @@ public:
       sync_mock_pdu_notifier(synchronized_mock_amf& parent_) : parent(parent_) {}
       ~sync_mock_pdu_notifier() override { parent.rx_pdu_notifier.reset(); }
 
-      void on_new_message(const ngap_message& msg) override
+      [[nodiscard]] bool on_new_message(const ngap_message& msg) override
       {
         // If a PDU response has been previously enqueued, we send it now.
         if (not parent.pending_tx_pdus.empty()) {
@@ -57,6 +57,7 @@ public:
 
         bool success = parent.rx_pdus.push_blocking(msg);
         report_error_if_not(success, "Queue is full");
+        return true;
       }
 
     private:
@@ -100,7 +101,7 @@ private:
 
   std::atomic<bool> connection_dropped = false;
 
-  std::unique_ptr<ngap_message_notifier> rx_pdu_notifier;
+  std::unique_ptr<ngap_rx_message_notifier> rx_pdu_notifier;
 
   // Tx PDUs to send once the NG connection is set up.
   ngap_pdu_queue pending_tx_pdus;

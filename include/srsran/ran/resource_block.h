@@ -28,6 +28,11 @@
 
 namespace srsran {
 
+// Tags used to differentiate RB types.
+struct crb_tag {};
+struct prb_tag {};
+struct vrb_tag {};
+
 /// Maximum number of PRBs of a UE carrier, for any SCS.
 /// \remark See TS 38.331 - "maxNrofPhysicalResourceBlocks".
 constexpr std::size_t MAX_NOF_PRBS = 275;

@@ -23,6 +23,7 @@
 #include "cu_up_manager_impl.h"
 #include "cu_up_manager_helpers.h"
 #include "routines/cu_up_bearer_context_modification_routine.h"
+#include "routines/cu_up_test_mode_routines.h"
 #include "srsran/support/async/execute_on_blocking.h"
 
 using namespace srsran;
@@ -68,6 +69,11 @@ cu_up_manager_impl::cu_up_manager_impl(const cu_up_manager_impl_config&       co
 async_task<void> cu_up_manager_impl::stop()
 {
   return ue_mng->stop();
+}
+
+void cu_up_manager_impl::schedule_cu_up_async_task(async_task<void> task)
+{
+  cu_up_task_scheduler.schedule(std::move(task));
 }
 
 void cu_up_manager_impl::schedule_ue_async_task(ue_index_t ue_index, async_task<void> task)
@@ -154,50 +160,32 @@ cu_up_manager_impl::handle_bearer_context_release_command(const e1ap_bearer_cont
   return ue_mng->remove_ue(msg.ue_index);
 }
 
-async_task<e1ap_bearer_context_modification_response> cu_up_manager_impl::enable_test_mode()
+async_task<void> cu_up_manager_impl::enable_test_mode()
 {
-  e1ap_bearer_context_setup_request bearer_context_setup = fill_test_mode_bearer_context_setup_request(test_mode_cfg);
-
-  // Setup bearer context and PDU session.
-  e1ap_bearer_context_setup_response setup_resp = handle_bearer_context_setup_request(bearer_context_setup);
-
-  // Apply test TEID to demux.
-  gtpu_teid_t teid = setup_resp.pdu_session_resource_setup_list.begin()->ng_dl_up_tnl_info.gtp_teid;
-  ngu_demux.apply_test_teid(teid);
-
-  //  Modifiy bearer
-  e1ap_bearer_context_modification_request bearer_modify =
-      fill_test_mode_bearer_context_modification_request(setup_resp);
-
-  if (test_mode_cfg.attach_detach_period.count() != 0) {
-    test_mode_ue_timer = timers.create_unique_timer(exec_mapper.ctrl_executor());
-    e1ap_bearer_context_release_command release_command;
-    release_command.ue_index = setup_resp.ue_index;
-    test_mode_ue_timer.set(test_mode_cfg.attach_detach_period, [this, release_command](timer_id_t /**/) {
-      cu_up_task_scheduler.schedule(test_mode_release_bearer_command(release_command));
-    });
-    test_mode_ue_timer.run();
-  }
-
-  return handle_bearer_context_modification_request(bearer_modify);
+  return launch_async<cu_up_enable_test_mode_routine>(test_mode_cfg, *this, ngu_demux);
 }
 
-async_task<void>
-cu_up_manager_impl::test_mode_release_bearer_command(e1ap_bearer_context_release_command release_command)
+async_task<void> cu_up_manager_impl::disable_test_mode()
 {
-  test_mode_ue_timer.set(test_mode_cfg.attach_detach_period, [this](timer_id_t timer_id) {
-    cu_up_task_scheduler.schedule([this](coro_context<async_task<void>>& ctx) {
-      CORO_BEGIN(ctx);
-      CORO_AWAIT(enable_test_mode());
-      CORO_RETURN();
-    });
-  });
+  return launch_async<cu_up_disable_test_mode_routine>(*this, *ue_mng);
+}
 
-  test_mode_ue_timer.run();
-  return launch_async([this, release_command](coro_context<async_task<void>>& ctx) {
-    CORO_BEGIN(ctx);
-    CORO_AWAIT(handle_bearer_context_release_command(release_command));
+void cu_up_manager_impl::trigger_enable_test_mode()
+{
+  if (test_mode_cfg.attach_detach_period.count() != 0) {
+    test_mode_ue_timer = timers.create_unique_timer(exec_mapper.ctrl_executor());
+    test_mode_ue_timer.set(test_mode_cfg.attach_detach_period,
+                           [this](timer_id_t /**/) { schedule_cu_up_async_task(enable_test_mode()); });
+    test_mode_ue_timer.run();
+  }
+}
 
-    CORO_RETURN();
-  });
+void cu_up_manager_impl::trigger_disable_test_mode()
+{
+  if (test_mode_cfg.attach_detach_period.count() != 0) {
+    test_mode_ue_timer = timers.create_unique_timer(exec_mapper.ctrl_executor());
+    test_mode_ue_timer.set(test_mode_cfg.attach_detach_period,
+                           [this](timer_id_t /**/) { schedule_cu_up_async_task(disable_test_mode()); });
+    test_mode_ue_timer.run();
+  }
 }

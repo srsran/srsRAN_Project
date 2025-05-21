@@ -36,7 +36,7 @@ async_task<void> srsran::srs_cu_cp::start_ngap_handover_resource_allocation(cons
                                                                             task_executor&               task_exec,
                                                                             srslog::basic_logger&        logger)
 {
-  logger.error("NG Handover resource allocation failed. Cause: NG handover not supported");
+  logger.info("NG Handover resource allocation failed. Cause: NG handover not supported");
   auto err_function = [](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
     CORO_RETURN();

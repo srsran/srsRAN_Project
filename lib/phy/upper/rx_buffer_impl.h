@@ -246,7 +246,7 @@ public:
     state expected_state = state::reserved;
     bool  from_reserved  = current_state.compare_exchange_weak(expected_state, state::available);
 
-    // The  buffer cannot be freed if it is locked.
+    // The buffer cannot be freed if it is locked.
     if (!from_reserved) {
       return false;
     }

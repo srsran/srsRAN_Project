@@ -58,15 +58,22 @@ namespace harq_utils {
 /// Possible states of a HARQ process.
 enum class harq_state_t { empty, pending_retx, waiting_ack };
 
+struct pending_retx_list_tag;
+
 /// Parameters that are common to DL and UL HARQ processes.
-struct base_harq_process : public intrusive_double_linked_list_element<> {
+struct base_harq_process : public intrusive_double_linked_list_element<>,
+                           public intrusive_double_linked_list_element<pending_retx_list_tag> {
   du_ue_index_t ue_idx;
   rnti_t        rnti;
   harq_id_t     h_id;
   harq_state_t  status = harq_state_t::empty;
-  slot_point    slot_tx;
-  slot_point    slot_ack;
-  slot_point    slot_ack_timeout;
+  /// Slot at which the PxSCH was transmitted.
+  slot_point slot_tx;
+  /// Slot at which the respective ACK/CRC is expected to be received in the PHY.
+  slot_point slot_ack;
+  /// \brief Slot at which the currently set timeout expires. In case of status == waiting_ack, the timeout expires
+  /// if no ACK/CRC arrives. In case of status == pending_retx, the timeout expires if no new reTx is scheduled.
+  slot_point slot_timeout;
   /// New Data Indicator. Its value should flip for every new Tx.
   bool ndi = false;
   /// Number of retransmissions that took place for the current Transport Block.
@@ -155,6 +162,7 @@ struct cell_harq_repository {
 
   cell_harq_repository(unsigned               max_ues,
                        unsigned               max_ack_wait_in_slots,
+                       unsigned               harq_retx_timeout,
                        unsigned               max_harqs_per_ue,
                        unsigned               ntn_cs_koffset,
                        harq_timeout_notifier& timeout_notifier_,
@@ -163,6 +171,8 @@ struct cell_harq_repository {
 
   /// Time interval, in slots, before the HARQ process assumes that the ACK/CRC went missing.
   const unsigned max_ack_wait_in_slots;
+  /// Maximum number of slots before a HARQ with pending retransmission is discarded.
+  const unsigned harq_retx_timeout;
   /// Maximum number of HARQs allowed per UE.
   const unsigned         max_harqs_per_ue;
   harq_timeout_notifier& timeout_notifier;
@@ -170,10 +180,11 @@ struct cell_harq_repository {
 
   slot_point last_sl_ind;
 
-  std::vector<ue_harq_entity_impl>                     ues;
-  intrusive_double_linked_list<harq_type>              harq_pending_retx_list;
-  std::vector<intrusive_double_linked_list<harq_type>> harq_timeout_wheel;
-  std::unique_ptr<harq_alloc_history>                  alloc_hist;
+  std::vector<ue_harq_entity_impl>                               ues;
+  intrusive_double_linked_list<harq_type, pending_retx_list_tag> harq_pending_retx_list;
+  std::vector<intrusive_double_linked_list<harq_type>>           harq_timeout_wheel;
+  unsigned                                                       ntn_cs_koffset;
+  std::unique_ptr<harq_alloc_history>                            alloc_hist;
 
   void               slot_indication(slot_point sl_tx);
   void               handle_harq_ack_timeout(harq_type& h, slot_point sl_tx);
@@ -283,7 +294,7 @@ public:
 
   using base_type::cancel_retxs;
 
-  [[nodiscard]] bool new_retx(slot_point pdsch_slot, unsigned k1, uint8_t harq_bit_idx);
+  [[nodiscard]] bool new_retx(slot_point pdsch_slot, unsigned ack_delay, uint8_t harq_bit_idx);
 
   /// \brief Update the state of the DL HARQ process waiting for an HARQ-ACK.
   /// \param[in] ack HARQ-ACK status received.
@@ -349,6 +360,7 @@ class harq_pending_retx_list_impl
   using harq_pool      = harq_utils::cell_harq_repository<IsDl>;
   using harq_impl_type = std::conditional_t<IsDl, harq_utils::dl_harq_process_impl, harq_utils::ul_harq_process_impl>;
   using handle_type    = std::conditional_t<IsDl, dl_harq_process_handle, ul_harq_process_handle>;
+  using harq_impl_it_t = typename intrusive_double_linked_list<harq_impl_type, pending_retx_list_tag>::iterator;
 
 public:
   struct iterator {
@@ -357,10 +369,7 @@ public:
     using pointer           = std::optional<value_type>;
     using iterator_category = std::forward_iterator_tag;
 
-    iterator(harq_pool& pool_, typename intrusive_double_linked_list<harq_impl_type>::iterator it_) :
-      pool(&pool_), it(it_)
-    {
-    }
+    iterator(harq_pool& pool_, harq_impl_it_t it_) : pool(&pool_), it(it_) {}
 
     iterator& operator++()
     {
@@ -390,11 +399,10 @@ public:
     bool operator!=(const iterator& other) const { return !(*this == other); }
 
   private:
-    harq_pool*                                                      pool;
-    typename intrusive_double_linked_list<harq_impl_type>::iterator it;
+    harq_pool*     pool;
+    harq_impl_it_t it;
   };
 
-public:
   using value_type      = handle_type;
   using difference_type = std::ptrdiff_t;
 
@@ -423,9 +431,14 @@ public:
   /// (implementation-defined).
   static constexpr unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 256U;
 
-  cell_harq_manager(unsigned                               max_ues              = MAX_NOF_DU_UES,
-                    unsigned                               max_harqs_per_ue     = MAX_NOF_HARQS,
+  /// \brief Default timeout in slots for HARQ to be scheduled for retransmission after a negative CRC/ACK.
+  static constexpr unsigned DEFAULT_HARQ_RETX_TIMEOUT_SLOTS = 200U;
+
+  cell_harq_manager(unsigned                               max_ues,
+                    unsigned                               max_harqs_per_ue,
                     std::unique_ptr<harq_timeout_notifier> notifier             = nullptr,
+                    unsigned                               dl_harq_retx_timeout = DEFAULT_HARQ_RETX_TIMEOUT_SLOTS,
+                    unsigned                               ul_harq_retx_timeout = DEFAULT_HARQ_RETX_TIMEOUT_SLOTS,
                     unsigned                               max_ack_wait_timeout = DEFAULT_ACK_TIMEOUT_SLOTS,
                     unsigned                               ntn_cs_koffset       = 0);
 
@@ -460,7 +473,7 @@ private:
   harq_utils::dl_harq_process_impl* new_dl_tx(du_ue_index_t ue_idx,
                                               rnti_t        rnti,
                                               slot_point    pdsch_slot,
-                                              unsigned      k1,
+                                              unsigned      ack_delay,
                                               unsigned      max_harq_nof_retxs,
                                               uint8_t       harq_bit_idx);
 
@@ -528,7 +541,9 @@ public:
     }
     return std::nullopt;
   }
-  std::optional<ul_harq_process_handle> ul_harq(harq_id_t h_id)
+  std::optional<ul_harq_process_handle>       ul_harq(harq_id_t h_id, slot_point slot);
+  std::optional<const ul_harq_process_handle> ul_harq(harq_id_t h_id, slot_point slot) const;
+  std::optional<ul_harq_process_handle>       ul_harq(harq_id_t h_id)
   {
     if (h_id < get_ul_ue().harqs.size() and get_ul_ue().harqs[h_id].status != harq_utils::harq_state_t::empty) {
       return ul_harq_process_handle{cell_harq_mgr->ul, get_ul_ue().harqs[h_id]};
@@ -544,7 +559,7 @@ public:
   }
 
   std::optional<dl_harq_process_handle>
-  alloc_dl_harq(slot_point sl_tx, unsigned k1, unsigned max_harq_nof_retxs, unsigned harq_bit_idx);
+  alloc_dl_harq(slot_point sl_tx, unsigned ack_delay, unsigned max_harq_nof_retxs, unsigned harq_bit_idx);
   std::optional<ul_harq_process_handle> alloc_ul_harq(slot_point sl_tx, unsigned max_harq_nof_retxs);
 
   std::optional<dl_harq_process_handle>       find_pending_dl_retx();

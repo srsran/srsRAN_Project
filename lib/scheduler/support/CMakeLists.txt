@@ -31,7 +31,6 @@ add_library(sched_support STATIC
         prbs_calculator.cpp
         mcs_calculator.cpp
         pdcch_aggregation_level_calculator.cpp
-        rb_helper.cpp
         sr_helper.cpp
         dci_builder.cpp
         sch_pdu_builder.cpp

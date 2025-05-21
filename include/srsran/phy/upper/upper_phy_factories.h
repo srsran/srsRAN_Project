@@ -306,6 +306,8 @@ struct upper_phy_config {
   bool is_prach_long_format;
   /// Maximum number of concurrent downlink processes.
   unsigned nof_dl_processors;
+  /// Maximum PRACH detector thread concurrency.
+  unsigned max_prach_thread_concurrency;
   /// Maximum uplink processor thread concurrency.
   unsigned max_ul_thread_concurrency;
   /// Maximum asynchronous PUSCH processing concurrency for each UL processor.
@@ -329,7 +331,7 @@ struct upper_phy_config {
   /// Upper PHY resource grid gateway.
   upper_phy_rg_gateway* rg_gateway;
   /// Downlink task executors.
-  std::vector<task_executor*> dl_executors;
+  task_executor* dl_executor;
   /// PUCCH task executor.
   task_executor* pucch_executor;
   /// PUSCH task executor.

@@ -89,6 +89,8 @@ smoke zmq:
   extends: .e2e-run
   stage: manual
   rules:
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_TARGET_BRANCH_PROTECTED == "true" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != $CI_DEFAULT_BRANCH
+      when: never
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
       when: manual
@@ -154,6 +156,7 @@ amari 1UE:
   extends: .zmq-uesim
   variables:
     MARKERS: "zmq_single_ue"
+    E2E_LOG_LEVEL: "warning"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
 
 amari 1UE 4x4 mimo:
@@ -333,12 +336,17 @@ ntn:
   variables:
     TESTBED: "zmq_ntn"
     MARKERS: "zmq_ntn"
+  parallel:
+    matrix:
+      - E2E_FILE_OR_DIR: tests/ping.py
+      - E2E_FILE_OR_DIR: tests/iperf.py
   needs:
     - job: "basic relwithdeb"
       artifacts: true
     - job: "build amariue ntn zmq driver"
       artifacts: true
     - *retina-needs
+
 
 ################################################################################
 # TEST MODE
@@ -525,7 +533,6 @@ android x300:
 android drx:
   stage: rf
   extends: .e2e-run
-  allow_failure: true
   variables:
     GROUP: "rf"
     TESTBED: "android_b200"
@@ -682,17 +689,25 @@ viavi 24h:
     TESTBED: "s72_uesim"
     E2E_LOG_LEVEL: "info"
     RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
-  allow_failure: true
   needs:
     - job: "basic avx2 dpdk"
       artifacts: true
     - *retina-needs
 
-amari 2UE s72x:
+amari 2UE s72x handover:
+  extends: .s72
+  variables:
+    MARKERS: "s72"
+    KEYWORDS: "sequentially"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+  timeout: 4h
+
+amari 1UE s72x iperf:
   extends: .s72
   variables:
     MARKERS: "s72"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+    E2E_FILE_OR_DIR: tests/iperf.py
   timeout: 4h
 
 ################################################################################

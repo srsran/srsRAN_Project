@@ -54,7 +54,7 @@ resolve_uplink_request_handler_dependencies(transmitter_impl_dependencies& tx_de
           std::move(tx_dependencies.ul_prach_repo),
           std::move(tx_dependencies.notifier_symbol_repo),
           std::move(tx_dependencies.ul_df_cplane),
-          tx_dependencies.frame_pool};
+          tx_dependencies.frame_pool_ul_cp};
 }
 
 static downlink_handler_impl_config generate_downlink_handler_config(const transmitter_config& tx_config)
@@ -81,31 +81,38 @@ resolve_downlink_handler_impl_dependencies(transmitter_impl_dependencies& tx_dep
           *tx_dependencies.err_notifier,
           std::move(tx_dependencies.dl_df_cplane),
           std::move(tx_dependencies.dl_df_uplane),
-          tx_dependencies.frame_pool};
+          tx_dependencies.frame_pool_dl_cp,
+          tx_dependencies.frame_pool_dl_up};
 }
 
 transmitter_impl::transmitter_impl(const transmitter_config& config, transmitter_impl_dependencies&& dependencies) :
   dl_handler(generate_downlink_handler_config(config), resolve_downlink_handler_impl_dependencies(dependencies)),
   ul_request_handler(generate_uplink_request_handler_config(config),
                      resolve_uplink_request_handler_dependencies(dependencies)),
+  ul_task_dispatcher(config.sector, *dependencies.logger, ul_request_handler, *dependencies.dl_executor),
   msg_transmitter(*dependencies.logger,
                   config.tx_timing_params,
+                  config.are_metrics_enabled,
                   std::move(dependencies.eth_transmitter),
-                  std::move(dependencies.frame_pool)),
-  ota_dispatcher(*dependencies.executor,
+                  std::move(dependencies.frame_pool_dl_cp),
+                  std::move(dependencies.frame_pool_ul_cp),
+                  std::move(dependencies.frame_pool_dl_up)),
+  ota_dispatcher(*dependencies.logger,
+                 *dependencies.executor,
                  dl_handler.get_ota_symbol_boundary_notifier(),
                  ul_request_handler.get_ota_symbol_boundary_notifier(),
                  msg_transmitter),
   metrics_collector(config.are_metrics_enabled,
                     dl_handler.get_metrics_collector(),
                     ul_request_handler.get_metrics_collector(),
+                    msg_transmitter.get_metrics_collector(),
                     msg_transmitter.get_ethernet_transmitter().get_metrics_collector())
 {
 }
 
 uplink_request_handler& transmitter_impl::get_uplink_request_handler()
 {
-  return ul_request_handler;
+  return ul_task_dispatcher;
 }
 
 downlink_handler& transmitter_impl::get_downlink_handler()

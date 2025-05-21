@@ -24,6 +24,7 @@
 #include "lib/scheduler/support/pdcch/pdcch_mapping.h"
 #include "srsran/ran/pdcch/cce_to_prb_mapping.h"
 #include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/ran/resource_allocation/vrb_to_prb.h"
 
 using namespace srsran;
 
@@ -80,7 +81,9 @@ grant_info srsran::get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg, cons
   return get_common_pdsch_grant_info(bwp_cfg, pg.pdsch_cfg);
 }
 
-grant_info srsran::get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg, const dl_msg_alloc& ue_grant)
+std::pair<grant_info, grant_info> srsran::get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg,
+                                                               const dl_msg_alloc&        ue_grant,
+                                                               vrb_to_prb::mapping_type   interleaving_bundle_size)
 {
   const vrb_interval vrbs   = ue_grant.pdsch_cfg.rbs.type1();
   unsigned           ref_rb = 0;
@@ -90,8 +93,26 @@ grant_info srsran::get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg, cons
   } else {
     ref_rb = ue_grant.pdsch_cfg.bwp_cfg->crbs.start();
   }
-  crb_interval crbs = {vrbs.start() + ref_rb, vrbs.stop() + ref_rb};
-  return grant_info{ue_grant.pdsch_cfg.bwp_cfg->scs, ue_grant.pdsch_cfg.symbols, crbs};
+
+  if (ue_grant.pdsch_cfg.vrb_prb_mapping != vrb_to_prb::mapping_type::non_interleaved) {
+    vrb_to_prb::interleaved_mapping mapping(vrb_to_prb::create_interleaved_other(
+        ref_rb, ue_grant.pdsch_cfg.bwp_cfg->crbs.length(), interleaving_bundle_size));
+    const auto                      prbs = mapping.vrb_to_prb(vrbs);
+    return {
+        grant_info{ue_grant.pdsch_cfg.bwp_cfg->scs,
+                   ue_grant.pdsch_cfg.symbols,
+                   prb_to_crb(ue_grant.pdsch_cfg.bwp_cfg->crbs, prbs.first)},
+        grant_info{ue_grant.pdsch_cfg.bwp_cfg->scs,
+                   ue_grant.pdsch_cfg.symbols,
+                   prb_to_crb(ue_grant.pdsch_cfg.bwp_cfg->crbs, prbs.second)},
+    };
+  } else {
+    crb_interval crbs = {vrbs.start() + ref_rb, vrbs.stop() + ref_rb};
+    return {
+        grant_info{ue_grant.pdsch_cfg.bwp_cfg->scs, ue_grant.pdsch_cfg.symbols, crbs},
+        grant_info{},
+    };
+  }
 }
 
 std::vector<test_grant_info> srsran::get_dl_grants(const cell_configuration& cell_cfg, const dl_sched_result& dl_res)
@@ -146,10 +167,18 @@ std::vector<test_grant_info> srsran::get_dl_grants(const cell_configuration& cel
 
   // Register UE PDSCHs.
   for (const dl_msg_alloc& ue_pdsch : dl_res.ue_grants) {
+    const auto pdsch_grants = get_pdsch_grant_info(
+        cell_cfg.dl_cfg_common.init_dl_bwp, ue_pdsch, cell_cfg.expert_cfg.ue.pdsch_interleaving_bundle_size);
     grants.emplace_back();
     grants.back().type  = test_grant_info::UE_DL;
     grants.back().rnti  = ue_pdsch.pdsch_cfg.rnti;
-    grants.back().grant = get_pdsch_grant_info(cell_cfg.dl_cfg_common.init_dl_bwp, ue_pdsch);
+    grants.back().grant = pdsch_grants.first;
+    if (not pdsch_grants.second.crbs.empty()) {
+      grants.emplace_back();
+      grants.back().type  = test_grant_info::UE_DL;
+      grants.back().rnti  = ue_pdsch.pdsch_cfg.rnti;
+      grants.back().grant = pdsch_grants.second;
+    }
   }
 
   for (const dl_paging_allocation& pg : dl_res.paging_grants) {

@@ -137,7 +137,8 @@ void benchmark_rach_scheduling()
 
 int main(int argc, char** argv)
 {
-  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::error);
+  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::warning);
+  srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::warning);
 
   srslog::init();
 

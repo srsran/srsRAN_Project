@@ -74,7 +74,7 @@ std::unique_ptr<o_du_high> srsran::srs_du::make_o_du_high(const o_du_high_config
   dependencies.logger          = &srslog::fetch_basic_logger("DU");
   dependencies.du_high_adaptor = fapi_adaptor::create_mac_fapi_adaptor_factory()->create(
       generate_fapi_adaptor_config(config), generate_fapi_adaptor_dependencies(config, odu_dependencies));
-  dependencies.metrics_notifier = odu_dependencies.du_hi.mac_metrics_notif;
+  dependencies.metrics_notifier = odu_dependencies.du_hi.du_notifier;
 
   dependencies.logger->debug("FAPI adaptors created successfully");
 
@@ -83,8 +83,8 @@ std::unique_ptr<o_du_high> srsran::srs_du::make_o_du_high(const o_du_high_config
   auto odu = std::make_unique<o_du_high_impl>(config.du_hi.ran.cells.size(), std::move(dependencies));
 
   // Resolve dependencies for DU-high.
-  odu_dependencies.du_hi.phy_adapter       = &odu->get_mac_result_notifier();
-  odu_dependencies.du_hi.mac_metrics_notif = &odu->get_mac_metrics_notifier();
+  odu_dependencies.du_hi.phy_adapter = &odu->get_mac_result_notifier();
+  odu_dependencies.du_hi.du_notifier = &odu->get_du_metrics_notifier();
 
   if (!odu_dependencies.e2_client) {
     odu->set_du_high(make_du_high(du_hi_cfg, odu_dependencies.du_hi));

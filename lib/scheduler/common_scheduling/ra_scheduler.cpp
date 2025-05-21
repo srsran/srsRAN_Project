@@ -129,7 +129,13 @@ ra_scheduler::ra_scheduler(const scheduler_ra_expert_config& sched_cfg_,
                               band_helper::get_duplex_mode(cell_cfg.band),
                               cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index)
           .format)),
-  msg3_harqs(MAX_NOF_MSG3, 1, std::make_unique<msg3_harq_timeout_notifier>(pending_msg3s)),
+  msg3_harqs(MAX_NOF_MSG3,
+             1,
+             std::make_unique<msg3_harq_timeout_notifier>(pending_msg3s),
+             sched_cfg.harq_retx_timeout.count() * get_nof_slots_per_subframe(cell_cfg.scs_common),
+             sched_cfg.harq_retx_timeout.count() * get_nof_slots_per_subframe(cell_cfg.scs_common),
+             cell_harq_manager::DEFAULT_ACK_TIMEOUT_SLOTS,
+             cell_cfg.ntn_cs_koffset),
   pending_rachs(RACH_IND_QUEUE_SIZE),
   pending_crcs(CRC_IND_QUEUE_SIZE),
   pending_msg3s(MAX_NOF_MSG3)
@@ -237,7 +243,7 @@ void ra_scheduler::handle_rach_indication(const rach_indication_message& msg)
   }
 }
 
-void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& msg)
+void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& msg, slot_point sl_tx)
 {
   static const unsigned prach_duration = 1; // TODO: Take from config
 
@@ -316,7 +322,7 @@ void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& ms
   }
 
   // Forward RACH indication to metrics handler.
-  metrics_hdlr.handle_rach_indication(msg);
+  metrics_hdlr.handle_rach_indication(msg, sl_tx);
 }
 
 void ra_scheduler::handle_crc_indication(const ul_crc_indication& crc_ind)
@@ -346,7 +352,7 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
 
       // See TS38.321, 5.4.2.1 - "For UL transmission with UL grant in RA Response, HARQ process identifier 0 is used."
       harq_id_t                             h_id = to_harq_id(0);
-      std::optional<ul_harq_process_handle> h_ul = pending_msg3.msg3_harq_ent.ul_harq(h_id);
+      std::optional<ul_harq_process_handle> h_ul = pending_msg3.msg3_harq_ent.ul_harq(h_id, crc_ind.sl_rx);
       if (not h_ul.has_value() or crc.harq_id != h_id) {
         logger.warning("Invalid UL CRC, cell={}, rnti={}, h_id={}. Cause: HARQ-Id 0 must be used in Msg3",
                        fmt::underlying(cell_cfg.cell_index),
@@ -361,6 +367,9 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
         // Deallocate Msg3 entry.
         pending_msg3.msg3_harq_ent.reset();
       }
+
+      // Forward MSG3 CRC indication to metrics handler.
+      metrics_hdlr.handle_msg3_crc_indication(crc);
     }
   }
 
@@ -385,7 +394,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
   // Pop pending RACHs and process them.
   rach_indication_message rach;
   while (pending_rachs.try_pop(rach)) {
-    handle_rach_indication_impl(rach);
+    handle_rach_indication_impl(rach, res_alloc.slot_tx());
   }
 
   if (not pending_rars.empty()) {
@@ -791,7 +800,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
   for (unsigned pusch_td_res_index = 0; pusch_td_res_index != pusch_td_alloc_list.size(); ++pusch_td_res_index) {
     const auto&                   pusch_td_cfg = pusch_td_alloc_list[pusch_td_res_index];
     const unsigned                k2           = pusch_td_cfg.k2;
-    cell_slot_resource_allocator& pusch_alloc  = res_alloc[k2];
+    cell_slot_resource_allocator& pusch_alloc  = res_alloc[k2 + cell_cfg.ntn_cs_koffset];
     const unsigned                start_ul_symbols =
         NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.get_nof_ul_symbol_per_slot(pusch_alloc.slot);
     // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
@@ -886,7 +895,7 @@ sch_prbs_tbs ra_scheduler::get_nof_pdsch_prbs_required(unsigned time_res_idx, un
   srsran_assert(nof_ul_grants > 0, "Invalid number of UL grants");
 
   return rar_data[time_res_idx].prbs_tbs_per_nof_grants
-      [std::min(nof_ul_grants, (unsigned)rar_data[time_res_idx].prbs_tbs_per_nof_grants.size()) - 1];
+      [std::min(nof_ul_grants, static_cast<unsigned>(rar_data[time_res_idx].prbs_tbs_per_nof_grants.size())) - 1];
 }
 
 void ra_scheduler::log_postponed_rar(const pending_rar_t&      rar,

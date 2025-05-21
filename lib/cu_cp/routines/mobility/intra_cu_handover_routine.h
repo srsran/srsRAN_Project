@@ -23,6 +23,7 @@
 #pragma once
 
 #include "../../cu_cp_impl_interface.h"
+#include "../../mobility_manager/mobility_manager_impl.h"
 #include "../../ue_manager/ue_manager_impl.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/async/eager_async_task.h"
@@ -44,6 +45,7 @@ public:
                             cu_cp_ue_removal_handler&              ue_removal_handler_,
                             cu_cp_ue_context_manipulation_handler& cu_cp_handler_,
                             ue_manager&                            ue_mng_,
+                            mobility_manager&                      mobility_mng_,
                             srslog::basic_logger&                  logger_);
 
   void operator()(coro_context<async_task<cu_cp_intra_cu_handover_response>>& ctx);
@@ -51,6 +53,7 @@ public:
   static const char* name() { return "Intra CU Handover Routine"; }
 
 private:
+  void generate_bearer_context_modification_request_1();
   bool generate_ue_context_setup_request(f1ap_ue_context_setup_request&               setup_request,
                                          const static_vector<srb_id_t, MAX_NOF_SRBS>& srbs,
                                          const rrc_ue_transfer_context&               transfer_context);
@@ -73,13 +76,15 @@ private:
   cu_cp_ue_removal_handler&              ue_removal_handler;         // to trigger UE removal (if setup fails)
   cu_cp_ue_context_manipulation_handler& cu_cp_handler;              // to trigger UE context transfer (if sucessful)
   ue_manager&                            ue_mng;                     // to remove UE context from source DU processor
+  mobility_manager&                      mobility_mng;               // to notify metrics about handover execution
   up_config_update                       next_config;
   srslog::basic_logger&                  logger;
 
   // (sub-)routine requests
   f1ap_ue_context_setup_request            target_ue_context_setup_request;
   f1ap_ue_context_modification_request     source_ue_context_mod_request;
-  e1ap_bearer_context_modification_request bearer_context_modification_request;
+  e1ap_bearer_context_modification_request bearer_context_modification_request_1;
+  e1ap_bearer_context_modification_request bearer_context_modification_request_2;
   rrc_reconfiguration_procedure_request    rrc_reconfig_args;
   f1ap_ue_context_release_command          ue_context_release_cmd; // If HO fails target UE context needs to be removed.
   cu_cp_ue_context_release_command ue_context_release_command;     // After succesfull HO source UE needs to be removed.
@@ -88,7 +93,9 @@ private:
   cu_cp_intra_cu_handover_response response_msg;
   f1ap_ue_context_setup_response   target_ue_context_setup_response;
   e1ap_bearer_context_modification_response
-      bearer_context_modification_response; // to inform CU-UP about the new TEID for UL F1u traffic
+      bearer_context_modification_response_1; // to inform the DU about the new UL-TEID for F1-U traffic.
+  e1ap_bearer_context_modification_response
+      bearer_context_modification_response_2; // to confirm PDCP re-establishment and key change successful.
   f1ap_ue_context_modification_response source_ue_context_modification_response;
   bool                                  rrc_reconfig_sent = false;
 };

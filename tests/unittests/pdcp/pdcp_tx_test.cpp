@@ -78,7 +78,7 @@ TEST_P(pdcp_tx_test, pdu_gen)
   auto test_pdu_gen = [this](uint32_t tx_next) {
     srsran::test_delimit_logger delimiter("TX PDU generation. SN_SIZE={} COUNT={}", sn_size, tx_next);
     // Set state of PDCP entiy
-    pdcp_tx_state st = {tx_next, tx_next};
+    pdcp_tx_state st = {tx_next, tx_next, tx_next};
     pdcp_tx->set_state(st);
     pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
 
@@ -118,7 +118,7 @@ TEST_P(pdcp_tx_test, pdu_stall_then_continue_via_deliv_notif)
 {
   init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am, pdcp_discard_timer::infinity);
 
-  auto test_pdu_gen = [this](uint32_t tx_next) {
+  auto test_pdu_gen = [this](uint32_t tx_next, uint32_t qsize = 16) {
     srsran::test_delimit_logger delimiter(
         "TX PDU stall; then continue via RETX notif. SN_SIZE={} COUNT={}", sn_size, tx_next);
     // Set state of PDCP entiy
@@ -127,7 +127,7 @@ TEST_P(pdcp_tx_test, pdu_stall_then_continue_via_deliv_notif)
     pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
 
     uint32_t pdu_size             = sn_size == pdcp_sn_size::size12bits ? pdu_size_snlen12 : pdu_size_snlen18;
-    uint32_t rlc_queue_size       = 16;
+    uint32_t rlc_queue_size       = qsize;
     uint32_t rlc_queue_size_bytes = rlc_queue_size * pdu_size;
     pdcp_tx->handle_desired_buffer_size_notification(rlc_queue_size_bytes);
     uint32_t window_size = pdcp_window_size(sn_size);
@@ -155,6 +155,16 @@ TEST_P(pdcp_tx_test, pdu_stall_then_continue_via_deliv_notif)
     {
       // Notify transmission of all PDUs
       pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + stall - 1, sn_size));
+
+      // Write an SDU that should not be dropped
+      byte_buffer sdu = byte_buffer::create(sdu1).value();
+      pdcp_tx->handle_sdu(std::move(sdu));
+
+      // Check there is a new PDU
+      ASSERT_EQ(test_frame.pdu_queue.size(), 0);
+    }
+    {
+      // Notify delivery of all PDUs
       pdcp_tx->handle_delivery_notification(pdcp_compute_sn(tx_next + stall - 1, sn_size));
 
       // Write an SDU that should not be dropped
@@ -168,10 +178,16 @@ TEST_P(pdcp_tx_test, pdu_stall_then_continue_via_deliv_notif)
   };
 
   if (config.sn_size == pdcp_sn_size::size12bits) {
+    // Test stall limited by RLC queue size.
     test_pdu_gen(0);
     test_pdu_gen(2048);
     test_pdu_gen(4095);
     test_pdu_gen(4096);
+    // Test stall limited by PDCP TX window size.
+    test_pdu_gen(0, 4096);
+    test_pdu_gen(2048, 4096);
+    test_pdu_gen(4095, 4096);
+    test_pdu_gen(4096, 4096);
   } else if (config.sn_size == pdcp_sn_size::size18bits) {
     test_pdu_gen(0);
     test_pdu_gen(131072);
@@ -369,7 +385,7 @@ TEST_P(pdcp_tx_test, discard_timer_and_stop)
     ASSERT_EQ(0, pdcp_tx->nof_pdus_in_window());
   };
 
-  pdcp_tx_state st = {};
+  pdcp_tx_state st = {0, 0, 0};
   if (config.sn_size == pdcp_sn_size::size12bits) {
     // test the beginning
     st = {0, 0, 0};

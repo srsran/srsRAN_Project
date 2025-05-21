@@ -28,6 +28,7 @@
 #include "srsran/ran/sch/sch_mcs.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/support/math/stats.h"
+#include "srsran/support/zero_copy_notifier.h"
 #include <optional>
 
 namespace srsran {
@@ -151,6 +152,12 @@ struct scheduler_cell_metrics {
   unsigned nof_failed_pdcch_allocs = 0;
   /// Number of failed UCI allocation attempts.
   unsigned nof_failed_uci_allocs = 0;
+  /// Number of MSG3s.
+  unsigned nof_msg3_ok = 0;
+  /// Number of MSG3 KOs.
+  unsigned nof_msg3_nok = 0;
+  /// Average PRACH delay in ms.
+  std::optional<float> avg_prach_delay_ms;
 
   unsigned                                nof_error_indications = 0;
   std::chrono::microseconds               average_decision_latency{0};
@@ -175,5 +182,8 @@ public:
   /// \brief This method will be called periodically by the scheduler to report the latest UE metrics statistics.
   virtual void report_metrics(const scheduler_cell_metrics& report) = 0;
 };
+
+/// \brief Notifier interface used by the scheduler to report metrics of a given cell in a zero-copy manner.
+using scheduler_cell_metrics_notifier = zero_copy_notifier<scheduler_cell_metrics>;
 
 } // namespace srsran

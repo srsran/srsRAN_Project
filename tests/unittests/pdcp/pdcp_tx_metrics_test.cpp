@@ -140,7 +140,7 @@ TEST_P(pdcp_tx_metrics_test, sdu_pdu)
     srsran::test_delimit_logger delimiter("TX SDU/PDU metrics test. SN_SIZE={} COUNT={}", sn_size, tx_next);
     // Set state of PDCP entiy
 
-    pdcp_tx_state st = {tx_next, tx_next};
+    pdcp_tx_state st = {tx_next, tx_next, tx_next};
     pdcp_tx->set_state(st);
     pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
 

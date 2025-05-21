@@ -26,8 +26,6 @@
 #include "tests/test_doubles/f1ap/f1c_test_local_gateway.h"
 #include "tests/test_doubles/mac/dummy_mac_result_notifier.h"
 #include "tests/test_doubles/mac/dummy_scheduler_ue_metric_notifier.h"
-#include "tests/unittests/f1ap/common/test_helpers.h"
-#include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
 #include "tests/unittests/ngap/test_helpers.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/du/du_high/du_high.h"
@@ -40,7 +38,7 @@ namespace srsran {
 class du_high_cu_cp_worker_manager
 {
 public:
-  explicit du_high_cu_cp_worker_manager(unsigned nof_dus);
+  explicit du_high_cu_cp_worker_manager(unsigned nof_dus, timer_manager& timers);
   ~du_high_cu_cp_worker_manager();
 
   void stop();

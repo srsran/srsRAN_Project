@@ -38,8 +38,13 @@ bool handle_context_setup_response(cu_cp_intra_cu_handover_response&         res
                                    const srslog::basic_logger&               logger,
                                    bool                                      reestablish_pdcp);
 
+bool handle_bearer_context_modification_response_1(
+    const e1ap_bearer_context_modification_response& bearer_context_modification_response,
+    up_config_update&                                next_config,
+    const srslog::basic_logger&                      logger);
+
 /// \brief Handler Bearer context modification response from CU-UP and prefill UE context modification for source DU.
-bool handle_bearer_context_modification_response(
+bool handle_bearer_context_modification_response_2(
     cu_cp_intra_cu_handover_response&                response_msg,
     f1ap_ue_context_modification_request&            source_ue_context_mod_request,
     const e1ap_bearer_context_modification_response& bearer_context_modification_response,

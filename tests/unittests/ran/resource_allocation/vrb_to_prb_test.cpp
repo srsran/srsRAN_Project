@@ -201,7 +201,7 @@ INSTANTIATE_TEST_SUITE_P(test_interleaved_mapping,
                          ::testing::Values(create_interleaved_coreset0(10, 133),
                                            create_interleaved_common_ss(10, 0, 133),
                                            create_interleaved_common_ss(10, 5, 133),
-                                           create_interleaved_other(0, 133, 2),
-                                           create_interleaved_other(0, 133, 4),
-                                           create_interleaved_other(5, 133, 2),
-                                           create_interleaved_other(5, 133, 4)));
+                                           create_interleaved_other(0, 133, mapping_type::interleaved_n2),
+                                           create_interleaved_other(0, 133, mapping_type::interleaved_n4),
+                                           create_interleaved_other(5, 133, mapping_type::interleaved_n2),
+                                           create_interleaved_other(5, 133, mapping_type::interleaved_n4)));

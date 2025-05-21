@@ -71,6 +71,10 @@ void rrc_ue_impl::handle_ul_ccch_pdu(byte_buffer pdu)
 
 void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request_s& request_msg)
 {
+  // Notify metrics about attempted RRC connection establishment.
+  metrics_notifier.on_attempted_rrc_connection_establishment(
+      static_cast<establishment_cause_t>(request_msg.rrc_setup_request.establishment_cause.value));
+
   // Perform various checks to make sure we can serve the RRC Setup Request.
   if (not cu_cp_notifier.on_ue_setup_request(context.cell.cgi.plmn_id)) {
     logger.log_error("Sending Connection Reject. Cause: RRC connections not allowed");
@@ -102,7 +106,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
       on_ue_release_required(ngap_cause_radio_network_t::unspecified);
       return;
   }
-  context.connection_cause.value = request_ies.establishment_cause.value;
+  context.connection_cause = static_cast<establishment_cause_t>(request_ies.establishment_cause.value);
 
   // Launch RRC setup procedure.
   cu_cp_ue_notifier.schedule_async_task(launch_async<rrc_setup_procedure>(context,

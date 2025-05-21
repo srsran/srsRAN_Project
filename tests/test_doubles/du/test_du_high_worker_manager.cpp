@@ -21,8 +21,11 @@
  */
 
 #include "test_du_high_worker_manager.h"
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/support/executors/inline_task_executor.h"
 #include "srsran/support/executors/priority_task_worker.h"
 #include "srsran/support/executors/task_worker_pool.h"
+#include "srsran/support/timers.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -123,10 +126,33 @@ private:
   std::unique_ptr<du_high_executor_mapper> exec_mapper;
 };
 
+class preinitialize_tls_resources : public unique_thread::observer
+{
+public:
+  preinitialize_tls_resources(timer_manager& timers_) : timers(timers_) {}
+
+  void on_thread_creation() override
+  {
+    // Pre-initialize thread-local resources to avoid doing it in the critical path.
+    init_byte_buffer_segment_pool_tls();
+    // Pre-initialize timer queues to avoid doing it in the critical path.
+    inline_task_executor dummy_executor;
+    auto                 dummy_timer = timers.create_unique_timer(dummy_executor);
+    dummy_timer.stop();
+  }
+
+  void on_thread_destruction() override {}
+
+private:
+  timer_manager& timers;
+};
+
 } // namespace
 
 std::unique_ptr<test_helpers::du_high_worker_manager>
 srsran::test_helpers::create_multi_threaded_du_high_executor_mapper(const du_high_worker_config& cfg)
 {
+  unique_thread::add_observer(std::make_unique<preinitialize_tls_resources>(cfg.timers));
+
   return std::make_unique<multithreaded_du_high_executor_mapper>(cfg);
 }

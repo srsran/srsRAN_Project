@@ -25,6 +25,7 @@ set(SOURCES
         ofh_message_transmitter_impl.cpp
         ofh_uplane_fragment_size_calculator.cpp
         ofh_uplink_request_handler_impl.cpp
+        ofh_uplink_request_handler_task_dispatcher.cpp
         ofh_transmitter_factories.cpp
         ofh_transmitter_impl.cpp)
 

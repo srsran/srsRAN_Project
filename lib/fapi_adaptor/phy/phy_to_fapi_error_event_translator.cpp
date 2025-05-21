@@ -54,3 +54,8 @@ void phy_to_fapi_error_event_translator::on_late_uplink_message(srsran::slot_poi
                                                                         fapi::message_type_id::ul_tti_request,
                                                                         fapi::error_code_id::out_of_sync));
 }
+
+void phy_to_fapi_error_event_translator::on_late_prach_message(slot_point prach_msg_slot)
+{
+  // Do nothing.
+}

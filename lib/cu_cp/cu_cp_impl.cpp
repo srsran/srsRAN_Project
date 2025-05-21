@@ -406,8 +406,8 @@ void cu_cp_impl::handle_handover_reconfiguration_sent(const cu_cp_intra_cu_hando
 
   cu_cp_ue* ue = ue_mng.find_du_ue(request.target_ue_index);
 
-  ue->get_task_sched().schedule_async_task(
-      launch_async<intra_cu_handover_target_routine>(request, *this, get_cu_cp_ue_context_handler(), ue_mng, logger));
+  ue->get_task_sched().schedule_async_task(launch_async<intra_cu_handover_target_routine>(
+      request, *this, get_cu_cp_ue_context_handler(), ue_mng, mobility_mng, logger));
 }
 
 void cu_cp_impl::handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index)
@@ -758,6 +758,7 @@ cu_cp_impl::handle_intra_cu_handover_request(const cu_cp_intra_cu_handover_reque
       get_cu_cp_ue_removal_handler(),
       *this,
       ue_mng,
+      mobility_mng,
       logger);
 }
 

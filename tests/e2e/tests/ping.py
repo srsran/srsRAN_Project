@@ -657,7 +657,7 @@ def test_ntn(
     ntn_scenario_def.ephemeris_info_type = EphemerisInfoType.ORBITAL
     ntn_scenario_def.min_sat_elevation_deg = 20
     ntn_scenario_def.pass_start_offset_s = 10
-    ntn_scenario_def.delay_offset_us = 100
+    ntn_scenario_def.delay_offset_us = 20
     ntn_scenario_def.sample_rate = 5760000
     ntn_scenario_def.enable_feeder_link = enable_feeder_link
     ntn_scenario_def.enable_doppler = True

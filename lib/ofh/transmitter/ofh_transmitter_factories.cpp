@@ -132,7 +132,8 @@ create_data_flow_uplane_data(const transmitter_config&              tx_config,
 }
 
 static std::shared_ptr<ether::eth_frame_pool> create_eth_frame_pool(const transmitter_config& tx_config,
-                                                                    srslog::basic_logger&     logger)
+                                                                    srslog::basic_logger&     logger,
+                                                                    bool calculate_nof_frames_per_symbol = true)
 {
   ether::vlan_frame_params ether_params;
   auto eth_builder   = (tx_config.tci_up || tx_config.tci_cp) ? ether::create_vlan_frame_builder(ether_params)
@@ -157,8 +158,11 @@ static std::shared_ptr<ether::eth_frame_pool> create_eth_frame_pool(const transm
   unsigned nof_prbs =
       get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.ru_working_bw), tx_config.scs, srsran::frequency_range::FR1);
 
-  unsigned nof_frames_per_symbol = ofh_uplane_fragment_size_calculator::calculate_nof_segments(
-      tx_config.mtu_size, nof_prbs, tx_config.dl_compr_params, headers_size);
+  unsigned nof_frames_per_symbol = 1;
+  if (calculate_nof_frames_per_symbol) {
+    nof_frames_per_symbol = ofh_uplane_fragment_size_calculator::calculate_nof_segments(
+        tx_config.mtu_size, nof_prbs, tx_config.dl_compr_params, headers_size);
+  }
 
   return std::make_shared<ether::eth_frame_pool>(tx_config.mtu_size, nof_frames_per_symbol);
 }
@@ -180,28 +184,38 @@ resolve_transmitter_dependencies(const transmitter_config&                      
 
   dependencies.logger       = &logger;
   dependencies.executor     = &tx_executor;
+  dependencies.dl_executor  = &downlink_executor;
   dependencies.err_notifier = &err_notifier;
 
-  auto frame_pool = create_eth_frame_pool(tx_config, logger);
+  dependencies.frame_pool_dl_cp = create_eth_frame_pool(tx_config, logger, false);
 
   dependencies.dl_df_cplane = std::make_unique<data_flow_cplane_downlink_task_dispatcher>(
+      logger,
       create_data_flow_cplane_sched(tx_config,
                                     tx_config.is_downlink_static_compr_hdr_enabled,
                                     logger,
-                                    frame_pool,
+                                    dependencies.frame_pool_dl_cp,
                                     ul_cp_context_repo,
                                     prach_cp_context_repo),
       downlink_executor,
       tx_config.sector);
 
+  dependencies.frame_pool_dl_up = create_eth_frame_pool(tx_config, logger);
+
   dependencies.dl_df_uplane = std::make_unique<data_flow_uplane_downlink_task_dispatcher>(
-      create_data_flow_uplane_data(tx_config, logger, frame_pool), downlink_executor, tx_config.sector);
+      logger,
+      create_data_flow_uplane_data(tx_config, logger, dependencies.frame_pool_dl_up),
+      downlink_executor,
+      tx_config.sector);
+
+  dependencies.frame_pool_ul_cp = create_eth_frame_pool(tx_config, logger, false);
 
   dependencies.ul_df_cplane = std::make_unique<data_flow_cplane_downlink_task_dispatcher>(
+      logger,
       create_data_flow_cplane_sched(tx_config,
                                     tx_config.is_uplink_static_compr_hdr_enabled,
                                     logger,
-                                    frame_pool,
+                                    dependencies.frame_pool_ul_cp,
                                     ul_cp_context_repo,
                                     prach_cp_context_repo),
       downlink_executor,
@@ -210,7 +224,6 @@ resolve_transmitter_dependencies(const transmitter_config&                      
   dependencies.ul_slot_repo         = std::move(ul_slot_context_repo);
   dependencies.ul_prach_repo        = std::move(prach_context_repo);
   dependencies.eth_transmitter      = std::move(eth_transmitter);
-  dependencies.frame_pool           = std::move(frame_pool);
   dependencies.notifier_symbol_repo = std::move(notifier_symbol_repo);
 
   return dependencies;

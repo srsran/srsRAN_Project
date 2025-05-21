@@ -55,7 +55,7 @@ protected:
     sched_ue_creation_request_message ue_creation_req =
         sched_config_helper::create_default_sched_ue_creation_request(params);
     ue_creation_req.ue_index = to_du_ue_index(0);
-    ue_creation_req.crnti    = to_rnti(0x4601 + (unsigned)ue_creation_req.ue_index);
+    ue_creation_req.crnti    = to_rnti(0x4601 + static_cast<unsigned>(ue_creation_req.ue_index));
     for (const lcid_t lcid : std::array<lcid_t, 3>{uint_to_lcid(1), uint_to_lcid(2), uint_to_lcid(4)}) {
       ue_creation_req.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(lcid));
     }
@@ -67,7 +67,7 @@ protected:
 
   void run_slot()
   {
-    next_slot++;
+    ++next_slot;
     ue_ptr->slot_indication(next_slot);
   }
 
@@ -89,7 +89,7 @@ protected:
                                   {},
                                   ue_cc->cfg().cell_cfg_common.pci,
                                   2,
-                                  false,
+                                  vrb_to_prb::mapping_type::non_interleaved,
                                   search_space_set_type::ue_specific,
                                   dci_dl_format::f1_1,
                                   h_dl.id(),

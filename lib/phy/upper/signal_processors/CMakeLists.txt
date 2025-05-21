@@ -19,6 +19,7 @@
 #
 
 set(SOURCES
+        dmrs_helper.cpp
         prs/factories.cpp
         prs/prs_generator_impl.cpp
         ptrs/ptrs_pdsch_generator_impl.cpp

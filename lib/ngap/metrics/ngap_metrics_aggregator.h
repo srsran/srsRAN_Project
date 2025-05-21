@@ -37,6 +37,8 @@ public:
 
   void aggregate_failed_pdu_session_setup(s_nssai_t s_nssai, ngap_cause_t cause);
 
+  void aggregate_cn_initiated_paging_request();
+
   ngap_metrics request_metrics_report() const;
 
 private:

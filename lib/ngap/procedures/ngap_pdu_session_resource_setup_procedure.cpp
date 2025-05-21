@@ -56,34 +56,36 @@ void ngap_pdu_session_resource_setup_procedure::operator()(coro_context<async_ta
 {
   CORO_BEGIN(ctx);
 
-  logger.log_debug("\"{}\" initialized", name());
+  logger.log_debug("\"{}\" started...", name());
 
-  // Verify PDU Session Resource Setup Request
+  // Verify PDU Session Resource Setup Request.
   verification_outcome = verify_pdu_session_resource_setup_request(request, asn1_request, logger);
 
   if (verification_outcome.request.pdu_session_res_setup_items.empty()) {
-    logger.log_info("Validation of PduSessionResourceSetupRequest failed");
+    logger.log_info("Validation of PDUSessionResourceSetupRequest failed");
     response = verification_outcome.response;
   } else {
-    // Add NAS PDU to PDU Session Resource Setup Request
+    // Add NAS PDU to PDU Session Resource Setup Request.
     if (asn1_request->nas_pdu_present) {
       verification_outcome.request.nas_pdu = asn1_request->nas_pdu.copy();
     }
 
-    // Handle mandatory IEs
+    // Handle mandatory IEs.
     CORO_AWAIT_VALUE(response, cu_cp_notifier.on_new_pdu_session_resource_setup_request(verification_outcome.request));
 
-    // Combine validation response with DU processor response
+    // Combine validation response with DU processor response.
     combine_pdu_session_resource_setup_response();
   }
 
   if (!response.pdu_session_res_failed_to_setup_items.empty()) {
-    logger.log_warning("Some or all PduSessionResourceSetupItems failed to setup");
+    logger.log_warning("Some or all PDUSessionResourceSetupItems failed to setup");
   }
 
-  send_pdu_session_resource_setup_response();
-
-  logger.log_debug("\"{}\" finalized", name());
+  if (send_pdu_session_resource_setup_response()) {
+    logger.log_debug("\"{}\" finished successfully", name());
+  } else {
+    logger.log_debug("\"{}\" failed", name());
+  }
 
   CORO_RETURN();
 }
@@ -101,7 +103,7 @@ void ngap_pdu_session_resource_setup_procedure::combine_pdu_session_resource_set
   }
 }
 
-void ngap_pdu_session_resource_setup_procedure::send_pdu_session_resource_setup_response()
+bool ngap_pdu_session_resource_setup_procedure::send_pdu_session_resource_setup_response()
 {
   ngap_message ngap_msg = {};
 
@@ -125,5 +127,11 @@ void ngap_pdu_session_resource_setup_procedure::send_pdu_session_resource_setup_
                                                        pdu_session.unsuccessful_transfer.cause);
   }
 
-  amf_notifier.on_new_message(ngap_msg);
+  // Forward message to AMF.
+  if (!amf_notifier.on_new_message(ngap_msg)) {
+    logger.log_warning("AMF notifier is not set. Cannot send PDUSessionResourceSetupResponse");
+    return false;
+  }
+
+  return true;
 }

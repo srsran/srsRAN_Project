@@ -46,8 +46,8 @@ public:
   static const char* name() { return "UE Context Release Procedure"; }
 
 private:
-  // results senders
-  void send_ue_context_release_complete();
+  // Result senders.
+  bool send_ue_context_release_complete();
 
   cu_cp_ue_context_release_command                            command;
   const ngap_ue_ids                                           ue_ids;

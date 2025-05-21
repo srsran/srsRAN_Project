@@ -117,7 +117,7 @@ private:
   /// Pre-compute invariant fields of Msg3 PDUs (PUSCH, DCI, etc.) for faster scheduling.
   void precompute_msg3_pdus();
 
-  void handle_rach_indication_impl(const rach_indication_message& msg);
+  void handle_rach_indication_impl(const rach_indication_message& msg, slot_point sl_tx);
 
   void handle_pending_crc_indications_impl(cell_resource_allocator& res_alloc);
 

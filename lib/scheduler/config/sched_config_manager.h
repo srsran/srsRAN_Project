@@ -79,6 +79,9 @@ public:
 
   void reset();
 
+  /// Called when notifying the sched_config_manager is not desired.
+  void release() { parent = nullptr; }
+
   du_ue_index_t ue_index() const { return ue_idx; }
 
 private:

@@ -22,35 +22,32 @@
 
 #pragma once
 
-#include "du_high_mac_metrics.h"
-#include "srsran/srslog/log_channel.h"
+#include "config_message_gateway_impl.h"
+#include "srsran/fapi/fapi_config_message_interface_collection.h"
 
 namespace srsran {
+namespace fapi {
 
-/// Consumer for the json MAC metrics.
-class mac_metrics_consumer_json : public app_services::metrics_consumer
+/// FAPI configuration message interface collection implementation.
+class fapi_config_message_interface_collection_impl : public fapi_config_message_interface_collection
 {
+  config_message_gateway_impl gateway;
+
 public:
-  explicit mac_metrics_consumer_json(srslog::log_channel& log_chan_) : log_chan(log_chan_) {}
+  explicit fapi_config_message_interface_collection_impl(srslog::basic_logger& logger) : gateway(logger) {}
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
-
-private:
-  srslog::log_channel& log_chan;
-};
-
-/// Consumer for the logger MAC metrics.
-class mac_metrics_consumer_log : public app_services::metrics_consumer
-{
-public:
-  explicit mac_metrics_consumer_log(srslog::log_channel& log_chan_) : log_chan(log_chan_) {}
+  config_message_gateway& get_config_message_gateway() override;
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  void set_config_message_notifier(config_message_notifier& config_notifier) override;
 
-private:
-  srslog::log_channel& log_chan;
+  // See interface for documentation.
+  void set_slot_error_message_notifier(slot_error_message_notifier& err_notifier) override;
+
+  // See interface for documentation.
+  void set_cell_operation_request_notifier(cell_operation_request_notifier& cell_notifier) override;
 };
 
+} // namespace fapi
 } // namespace srsran

@@ -45,7 +45,7 @@ public:
 
   [[nodiscard]] unsigned connect_du()
   {
-    // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
+    // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure).
     std::optional<unsigned> ret = connect_new_du();
     EXPECT_TRUE(ret.has_value());
     return ret.value();
@@ -53,7 +53,7 @@ public:
 
   [[nodiscard]] unsigned setup_du(const f1ap_message& f1_setup_request)
   {
-    // Setup DU
+    // Setup DU.
     unsigned tmp_du_idx = connect_du();
 
     get_du(tmp_du_idx).push_ul_pdu(f1_setup_request);
@@ -74,7 +74,7 @@ public:
 
   [[nodiscard]] bool send_minimal_ngap_paging_and_await_f1ap_paging(unsigned du_idx_)
   {
-    // Inject NGAP Paging and wait for F1AP Paging
+    // Inject NGAP Paging and wait for F1AP Paging.
     if (!send_ngap_paging(du_idx_, generate_valid_minimal_paging_message())) {
       return false;
     }
@@ -86,7 +86,7 @@ public:
 
   [[nodiscard]] bool send_ngap_paging_and_await_f1ap_paging(unsigned du_idx_)
   {
-    // Inject NGAP Paging and wait for F1AP Paging
+    // Inject NGAP Paging and wait for F1AP Paging.
     if (!send_ngap_paging(du_idx_, generate_valid_paging_message())) {
       return false;
     }
@@ -100,7 +100,7 @@ public:
   {
     const auto& paging_msg = msg.pdu.init_msg().value.paging();
 
-    // check ue id idx value
+    // Check UE ID idx value.
     if (paging_msg->ue_id_idx_value.idx_len10().to_number() != (279089024671 % 1024)) {
       test_logger.error("UE ID idx value mismatch {} != {}",
                         paging_msg->ue_id_idx_value.idx_len10().to_number(),
@@ -108,7 +108,7 @@ public:
       return false;
     }
 
-    // check paging id
+    // Check paging ID.
     if (paging_msg->paging_id.cn_ue_paging_id().five_g_s_tmsi().to_number() != 279089024671) {
       test_logger.error("Paging ID mismatch {} != {}",
                         paging_msg->paging_id.cn_ue_paging_id().five_g_s_tmsi().to_number(),
@@ -116,7 +116,7 @@ public:
       return false;
     }
 
-    // check paging cell list
+    // Check paging cell list.
     if (paging_msg->paging_cell_list.size() != 1) {
       test_logger.error("Paging cell list size mismatch {} != {}", paging_msg->paging_cell_list.size(), 1);
       return false;
@@ -144,7 +144,7 @@ public:
 
     const auto& paging_msg = msg.pdu.init_msg().value.paging();
 
-    // check paging drx
+    // Check paging DRX.
     if (!paging_msg->paging_drx_present) {
       return false;
     }
@@ -153,7 +153,7 @@ public:
       return false;
     }
 
-    // check paging prio
+    // Check paging prio.
     if (!paging_msg->paging_prio_present) {
       return false;
     }
@@ -162,7 +162,7 @@ public:
       return false;
     }
 
-    // check paging origin
+    // Check paging origin.
     if (!paging_msg->paging_origin_present) {
       return false;
     }
@@ -180,102 +180,134 @@ public:
 
 TEST_F(cu_cp_paging_test, when_du_connection_not_finished_then_paging_is_not_sent_to_du)
 {
-  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure).
   unsigned du_idx = connect_du();
 
-  // Inject NGAP Paging with only mandatory values
+  // Inject NGAP Paging with only mandatory values.
   ASSERT_TRUE(send_ngap_paging(du_idx, generate_valid_minimal_paging_message()));
 
-  // Make sure that no paging was sent to the DU
+  // Make sure he paging request is in the metrics.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ngaps[0].metrics.nof_cn_initiated_paging_requests, 1) << "Paging request should be in the metrics";
+
+  // Make sure that no paging was sent to the DU.
   ASSERT_FALSE(this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu));
 }
 
 TEST_F(cu_cp_paging_test, when_no_du_for_tac_exists_then_paging_is_not_sent_to_du)
 {
-  // Connect DU and run F1Setup
+  // Connect DU and run F1Setup.
   unsigned du_idx = setup_du(test_helpers::generate_f1_setup_request());
 
-  // Inject NGAP Paging with unknown TAC
+  // Inject NGAP Paging with unknown TAC.
   ngap_message paging_msg = generate_valid_minimal_paging_message();
   paging_msg.pdu.init_msg().value.paging()->tai_list_for_paging[0].tai.tac.from_number(8);
   ASSERT_TRUE(send_ngap_paging(du_idx, paging_msg));
 
-  // Make sure that no paging was sent to the DU
+  // Make sure he paging request is in the metrics.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ngaps[0].metrics.nof_cn_initiated_paging_requests, 1) << "Paging request should be in the metrics";
+
+  // Make sure that no paging was sent to the DU.
   ASSERT_FALSE(this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu));
 }
 
 TEST_F(cu_cp_paging_test, when_assist_data_for_paging_for_unknown_tac_is_included_then_paging_is_not_sent_to_du)
 {
-  // Connect DU and run F1Setup
+  // Connect DU and run F1Setup.
   unsigned du_idx = setup_du(test_helpers::generate_f1_setup_request());
 
-  // Inject NGAP Paging with unknown TAC but assist data for paging
+  // Inject NGAP Paging with unknown TAC but assist data for paging.
   ngap_message paging_msg = generate_valid_paging_message();
   paging_msg.pdu.init_msg().value.paging()->tai_list_for_paging[0].tai.tac.from_number(8);
   ASSERT_TRUE(send_ngap_paging(du_idx, paging_msg));
 
-  // Make sure that no paging was sent to the DU
+  // Make sure he paging request is in the metrics.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ngaps[0].metrics.nof_cn_initiated_paging_requests, 1) << "Paging request should be in the metrics";
+
+  // Make sure that no paging was sent to the DU.
   ASSERT_FALSE(this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu));
 }
 
 TEST_F(cu_cp_paging_test, when_invalid_paging_message_received_then_paging_is_not_sent_to_du)
 {
-  // Connect DU and run F1Setup
+  // Connect DU and run F1Setup.
   unsigned du_idx = setup_du(test_helpers::generate_f1_setup_request());
 
-  // Inject invalid NGAP Paging
+  // Inject invalid NGAP Paging.
   ASSERT_TRUE(send_ngap_paging(du_idx, generate_invalid_paging_message()));
 
-  // Make sure that no paging was sent to the DU
+  // Make sure he paging request is in the metrics.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ngaps[0].metrics.nof_cn_initiated_paging_requests, 1) << "Paging request should be in the metrics";
+
+  // Make sure that no paging was sent to the DU.
   ASSERT_FALSE(this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu));
 }
 
 TEST_F(cu_cp_paging_test, when_valid_paging_message_received_then_paging_is_sent_to_du)
 {
-  // Connect DU and run F1Setup
+  // Connect DU and run F1Setup.
   unsigned du_idx = setup_du(test_helpers::generate_f1_setup_request());
 
-  // Inject NGAP Paging with only mandatory values and await F1AP Paging
+  // Inject NGAP Paging with only mandatory values and await F1AP Paging.
   ASSERT_TRUE(send_minimal_ngap_paging_and_await_f1ap_paging(du_idx));
+
+  // Make sure he paging request is in the metrics.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ngaps[0].metrics.nof_cn_initiated_paging_requests, 1) << "Paging request should be in the metrics";
 }
 
 TEST_F(cu_cp_paging_test, when_valid_paging_message_received_then_paging_is_only_sent_to_du_with_matching_tac)
 {
-  // Connect DU and run F1Setup
+  // Connect DU and run F1Setup.
   unsigned du_idx = setup_du(test_helpers::generate_f1_setup_request());
 
-  // Connect second DU and run F1Setup
+  // Connect second DU and run F1Setup.
   unsigned du_idx2 = setup_du(test_helpers::generate_f1_setup_request(
       int_to_gnb_du_id(0x12), {{nr_cell_identity::create(6577).value(), 1, 8}}));
 
-  // Inject NGAP Paging with only mandatory values and await F1AP Paging
+  // Inject NGAP Paging with only mandatory values and await F1AP Paging.
   ASSERT_TRUE(send_minimal_ngap_paging_and_await_f1ap_paging(du_idx));
 
-  // Make sure that no paging was sent to the second DU
+  // Make sure he paging request is in the metrics.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ngaps[0].metrics.nof_cn_initiated_paging_requests, 1) << "Paging request should be in the metrics";
+
+  // Make sure that no paging was sent to the second DU.
   ASSERT_FALSE(this->get_du(du_idx2).try_pop_dl_pdu(f1ap_pdu));
 }
 
 TEST_F(cu_cp_paging_test, when_valid_paging_message_received_then_paging_is_only_sent_to_du_with_matching_nci)
 {
-  // Connect DU and run F1Setup
+  // Connect DU and run F1Setup.
   unsigned du_idx = setup_du(test_helpers::generate_f1_setup_request());
 
-  // Connect second DU and run F1Setup
+  // Connect second DU and run F1Setup.
   unsigned du_idx2 = setup_du(test_helpers::generate_f1_setup_request(
       int_to_gnb_du_id(0x12), {{nr_cell_identity::create(6577).value(), 1, 7}}));
 
-  // Inject NGAP Paging with only mandatory values and await F1AP Paging
+  // Inject NGAP Paging with only mandatory values and await F1AP Paging.
   ASSERT_TRUE(send_minimal_ngap_paging_and_await_f1ap_paging(du_idx));
 
-  // Make sure that no paging was sent to the second DU
+  // Make sure he paging request is in the metrics.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ngaps[0].metrics.nof_cn_initiated_paging_requests, 1) << "Paging request should be in the metrics";
+
+  // Make sure that no paging was sent to the second DU.
   ASSERT_FALSE(this->get_du(du_idx2).try_pop_dl_pdu(f1ap_pdu));
 }
 
 TEST_F(cu_cp_paging_test, when_valid_paging_message_with_optional_values_received_then_paging_is_sent_to_du)
 {
-  // Connect DU and run F1Setup
+  // Connect DU and run F1Setup.
   unsigned du_idx = setup_du(test_helpers::generate_f1_setup_request());
 
-  // Inject NGAP Paging with optional values and await F1AP Paging
+  // Inject NGAP Paging with optional values and await F1AP Paging.
   ASSERT_TRUE(send_ngap_paging_and_await_f1ap_paging(du_idx));
+
+  // Make sure he paging request is in the metrics.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ngaps[0].metrics.nof_cn_initiated_paging_requests, 1) << "Paging request should be in the metrics";
 }

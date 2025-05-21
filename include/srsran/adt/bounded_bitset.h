@@ -695,7 +695,7 @@ public:
   /// \param[in] function Function to execute - the signature should be compatible with <tt>void ()(unsigned)</tt>.
   /// \param[in] value    Bit value that triggers the function execution.
   template <class T>
-  inline void for_each(size_t startpos, size_t endpos, T&& function, bool value = true) const noexcept
+  void for_each(size_t startpos, size_t endpos, T&& function, bool value = true) const noexcept
   {
     static_assert(std::is_convertible<T, std::function<void(size_t)>>::value,
                   "The function must have void(size_t) signature.");
@@ -1484,6 +1484,68 @@ inline bounded_bitset<N2, LowestInfoBitIsMSB> fold_and_accumulate(const bounded_
   return fold_and_accumulate<N2, N, LowestInfoBitIsMSB>(other, fold_length, 0, fold_length);
 }
 
+/// \brief Executes a function for all \c true (or all \c false) intervals in the given bitset interval.
+///
+/// The method calls \c function for each interval, passing the first and last bit positions of the interval.
+///
+/// \param[in] startpos Smallest bit index considered for the function execution (included).
+/// \param[in] endpos   Largest bit index considered for the function execution (excluded).
+/// \param[in] function Function to execute - the signature should be compatible with <tt>void ()(size_t,size_t)</tt>.
+/// \param[in] value    Bit value that triggers the function execution.
+template <size_t N, bool LowestInfoBitIsMSB, typename Tag, class Func>
+void for_each_interval(const bounded_bitset<N, LowestInfoBitIsMSB, Tag>& bitset,
+                       size_t                                            startpos,
+                       size_t                                            endpos,
+                       Func&&                                            function,
+                       bool                                              value = true)
+{
+  static_assert(std::is_convertible<Func, std::function<void(size_t, size_t)>>::value,
+                "The function must have void(size_t) signature.");
+
+  // Iterate for all intervals.
+  for (int start_interval = bitset.find_lowest(startpos, endpos, value); start_interval != (-1);
+       start_interval     = bitset.find_lowest(start_interval, endpos, value)) {
+    // Find the end of the current interval.
+    int end_interval = bitset.find_lowest(start_interval, endpos, !value);
+
+    // If no more ending, force the end position.
+    if (end_interval == -1) {
+      end_interval = endpos;
+    }
+
+    // Call function.
+    function(start_interval, end_interval);
+
+    // Advance interval.
+    start_interval = end_interval;
+  }
+}
+
+// Executes a function for all \c true (or all \c false) intervals in the given bitset.
+template <size_t N, bool LowestInfoBitIsMSB, typename Tag, class Func>
+void for_each_interval(const bounded_bitset<N, LowestInfoBitIsMSB, Tag>& bitset, Func&& function, bool value = true)
+{
+  for_each_interval(bitset, 0, bitset.size(), function, value);
+}
+
+/// Converts a list of bit positions to a bounded_bitset.
+template <size_t N,
+          bool   LowestInfoBitIsMSB = false,
+          typename Tag              = detail::default_bounded_bitset_tag,
+          typename RangeType,
+          typename PosInteger = typename RangeType::value_type>
+bounded_bitset<N, LowestInfoBitIsMSB, Tag> bit_positions_to_bitset(const RangeType& bit_positions)
+{
+  bounded_bitset<N, LowestInfoBitIsMSB, Tag> result(N);
+  int                                        max_pos = -1;
+  for (PosInteger pos : bit_positions) {
+    result.set(static_cast<size_t>(pos));
+    max_pos = std::max(max_pos, static_cast<int>(pos));
+  }
+  result.resize(max_pos + 1);
+  return result;
+}
+
 } // namespace srsran
 
 namespace fmt {
@@ -1524,16 +1586,9 @@ struct formatter<srsran::bounded_bitset<N, LowestInfoBitIsMSB, Tag>> {
     }
 
     if (mode == intervals) {
-      fmt::format_to(ctx.out(), "{{");
       bool first = true;
-      for (int start_interval = s.find_lowest(); start_interval != (-1);
-           start_interval     = s.find_lowest(start_interval, s.size(), true)) {
-        // Find the end of the current interval.
-        int end_interval = s.find_lowest(start_interval, s.size(), false);
-        if (end_interval == -1) {
-          end_interval = s.size();
-        }
-
+      fmt::format_to(ctx.out(), "{{");
+      for_each_interval(s, [&first, &ctx](size_t start_interval, size_t end_interval) {
         // Append a comma if the interval is not the first.
         if (first) {
           first = false;
@@ -1547,10 +1602,7 @@ struct formatter<srsran::bounded_bitset<N, LowestInfoBitIsMSB, Tag>> {
         } else {
           fmt::format_to(ctx.out(), "{}", start_interval);
         }
-
-        // Advance interval.
-        start_interval = end_interval;
-      }
+      });
       fmt::format_to(ctx.out(), "}}");
       return ctx.out();
     }

@@ -50,9 +50,9 @@ public:
   std::optional<rrc_meas_cfg>        meas_cfg;
   std::optional<cu_cp_five_g_s_tmsi> five_g_s_tmsi;
   std::variant<uint64_t, asn1::fixed_bitstring<39>>
-                                         setup_ue_id; ///< this is either a random value or the 5G-S-TMSI-PART1
-  asn1::rrc_nr::establishment_cause_opts connection_cause;
-  std::map<srb_id_t, ue_srb_context>     srbs;
+                                     setup_ue_id; ///< this is either a random value or the 5G-S-TMSI-PART1
+  establishment_cause_t              connection_cause;
+  std::map<srb_id_t, ue_srb_context> srbs;
   std::optional<asn1::rrc_nr::ue_cap_rat_container_list_l> capabilities_list;
   std::optional<rrc_ue_transfer_context> transfer_context; // Context of old UE when created through mobility.
   bool                                   reestablishment_ongoing = false;

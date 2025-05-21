@@ -380,7 +380,8 @@ static void manage_hal_optional(CLI::App& app, du_low_unit_config& parsed_cfg)
 static void configure_cli11_metrics_layers_args(CLI::App& app, du_low_unit_metrics_config& parsed_cfg)
 {
   CLI::App* layers_subcmd = add_subcommand(app, "layers", "Layer basis metrics configuration")->configurable();
-  add_option(*layers_subcmd, "--enable_du_low", parsed_cfg.enable_du_low, "Enable DU low metrics")
+  add_option(
+      *layers_subcmd, "--enable_du_low", parsed_cfg.enable_du_low, "Enable DU low metrics (upper physical layer)")
       ->capture_default_str();
 }
 

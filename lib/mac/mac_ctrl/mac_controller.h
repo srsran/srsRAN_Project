@@ -40,7 +40,7 @@ struct mac_ue_context {
 
 class rnti_manager;
 
-class mac_controller : public mac_ctrl_configurator, public mac_ue_configurator, public mac_cell_manager
+class mac_controller final : public mac_ctrl_configurator, public mac_ue_configurator, public mac_cell_manager
 {
 public:
   mac_controller(const mac_control_config&   cfg_,

@@ -318,7 +318,7 @@ struct dl_tti_request_message : public base_message {
   //: TODO: groups array
   //: TODO: top level rate match patterns
   /// Vendor specific parameters.
-  bool is_last_message_in_slot;
+  bool is_last_dl_message_in_slot;
 };
 
 } // namespace fapi

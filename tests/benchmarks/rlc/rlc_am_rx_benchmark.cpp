@@ -24,10 +24,19 @@
 #include "lib/rlc/rlc_tx_am_entity.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "srsran/support/benchmark_utils.h"
+#include "srsran/support/executors/inline_task_executor.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <getopt.h>
 
 using namespace srsran;
+
+// Initialize timer backend queue. The unique_timer will push into this queue
+// upon destruction.
+static void initialize_thead_local_storage(timer_manager& timers)
+{
+  inline_task_executor inline_exec;
+  auto                 dummy_timer = timers.create_unique_timer(inline_exec);
+}
 
 /// Mocking class of the surrounding layers invoked by the RLC AM Tx entity.
 class rlc_tx_am_test_frame : public rlc_tx_upper_layer_data_notifier,
@@ -132,7 +141,7 @@ static void parse_args(int argc, char** argv, bench_params& params)
   }
 }
 
-std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
+static std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order, timer_manager& timers)
 {
   // Set Tx config
   rlc_tx_am_config config;
@@ -149,7 +158,6 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
   // Create test frame
   auto tester = std::make_unique<rlc_tx_am_test_frame>(config.sn_field_length);
 
-  timer_manager      timers;
   manual_task_worker pcell_worker{128};
   manual_task_worker ue_worker{128};
 
@@ -229,7 +237,7 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
   return pdus;
 }
 
-void benchmark_rx_pdu(const bench_params& params, rx_order order)
+static void benchmark_rx_pdu(const bench_params& params, rx_order order, timer_manager& timers)
 {
   fmt::memory_buffer buffer;
   fmt::format_to(std::back_inserter(buffer), "Benchmark RLC AM RX PDUs ({})", order);
@@ -237,7 +245,6 @@ void benchmark_rx_pdu(const bench_params& params, rx_order order)
 
   auto tester = std::make_unique<rlc_rx_am_test_frame>();
 
-  timer_manager      timers;
   manual_task_worker pcell_worker{128};
   manual_task_worker ue_worker{128};
 
@@ -266,7 +273,7 @@ void benchmark_rx_pdu(const bench_params& params, rx_order order)
   // Bind AM Rx/Tx interconnect
   rlc_rx->set_status_notifier(tester.get());
 
-  std::vector<byte_buffer> pdus = generate_pdus(params, order);
+  std::vector<byte_buffer> pdus = generate_pdus(params, order, timers);
 
   unsigned i = 0;
 
@@ -297,20 +304,24 @@ int main(int argc, char** argv)
   bench_params params{};
   parse_args(argc, argv, params);
 
+  // Add pre-initialization of resources to created threads.
+  timer_manager timers;
+  initialize_thead_local_storage(timers);
+
   // Setup size of byte buffer pool.
   init_byte_buffer_segment_pool(524288);
 
   {
-    benchmark_rx_pdu(params, rx_order::in_order);
+    benchmark_rx_pdu(params, rx_order::in_order, timers);
   }
   {
-    benchmark_rx_pdu(params, rx_order::swapped_edges);
+    benchmark_rx_pdu(params, rx_order::swapped_edges, timers);
   }
   {
-    benchmark_rx_pdu(params, rx_order::reverse_order);
+    benchmark_rx_pdu(params, rx_order::reverse_order, timers);
   }
   {
-    benchmark_rx_pdu(params, rx_order::even_odd);
+    benchmark_rx_pdu(params, rx_order::even_odd, timers);
   }
   srslog::flush();
 }

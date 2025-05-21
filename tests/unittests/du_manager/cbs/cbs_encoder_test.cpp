@@ -26,7 +26,6 @@
 #include "srsran/support/srsran_assert.h"
 #include "srsran/support/units.h"
 #include <arpa/inet.h>
-#include <codecvt>
 #include <gtest/gtest.h>
 #include <random>
 
@@ -41,60 +40,73 @@ using cbsEncoderParams = std::tuple<unsigned, unsigned>;
 class CbsEncoderFixtureHelpers
 {
 public:
-  // List of ASCII characters supported by the GSM-7 encoder.
+  /// List of ASCII characters supported by the GSM-7 encoder.
   static const std::string gsm_7_supported_chars;
 
-  // Encoding types to test.
-  enum class encoding_type { GSM7, UCS2 };
-
-  // Generates the test messages for the encoder.
-  static std::string generate_cbs_message(unsigned nof_characters, encoding_type encoding)
+  /// Generates the test messages for the encoder.
+  static std::string generate_cbs_message_gsm7(unsigned nof_characters)
   {
-    std::string message;
-    switch (encoding) {
-      case encoding_type::GSM7: {
-        unsigned remaining_nof_chars = nof_characters;
-        while (remaining_nof_chars > 0) {
-          // Append ASCII characters supported by GSM-7 encoder until the message reaches the desired size.
-          size_t nof_chars_to_append =
-              std::min(static_cast<size_t>(remaining_nof_chars), gsm_7_supported_chars.length());
-          std::string chars_to_append = gsm_7_supported_chars.substr(0, nof_chars_to_append);
-          message.append(chars_to_append);
-          remaining_nof_chars -= nof_chars_to_append;
-        }
-      } break;
-      case encoding_type::UCS2: {
-        // Random distribution that can generate all possible UCS-2 characters.
-        std::uniform_int_distribution<char16_t> dist(0x0000, 0xffff);
-
-        // Generate random UCS-2 characters (UCS-2 is equivalent to UTF-16 for unicode characters in the basic
-        // multilingual plane).
-        std::u16string utf16_str;
-        for (unsigned remaining_nof_chars = nof_characters; remaining_nof_chars != 0; --remaining_nof_chars) {
-          char16_t ucs2_ch = dist(rgen);
-
-          // Checks if the generated value is a valid UCS-2 codepoint.
-          auto is_valid_ucs2_char = [](char16_t ucs2_char) {
-            // It can't be in the High Surrogate code range.
-            return (ucs2_char < 0xd800 || ucs2_char > 0xdbff) &&
-                   // It can't be in the Low Surrogate code range.
-                   (ucs2_char < 0xdc00 || ucs2_char > 0xdfff) &&
-                   // It can't be an unallocated code point.
-                   (ucs2_char < 0x2fe0 || ucs2_char > 0x2fef);
-          };
-
-          while (!is_valid_ucs2_char(ucs2_ch)) {
-            ucs2_ch = dist(rgen);
-          }
-          utf16_str.push_back(ucs2_ch);
-        }
-
-        // Convert the generated UCS-2 characters to a UTF-8 string (expected format at the input of the encoder).
-        std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> ucs2_converter;
-        message = ucs2_converter.to_bytes(utf16_str);
-      } break;
+    std::string ascii_message;
+    unsigned    remaining_nof_chars = nof_characters;
+    while (remaining_nof_chars > 0) {
+      // Append ASCII characters supported by GSM-7 encoder until the message reaches the desired size.
+      size_t nof_chars_to_append  = std::min(static_cast<size_t>(remaining_nof_chars), gsm_7_supported_chars.length());
+      std::string chars_to_append = gsm_7_supported_chars.substr(0, nof_chars_to_append);
+      ascii_message.append(chars_to_append);
+      remaining_nof_chars -= nof_chars_to_append;
     }
-    return message;
+    return ascii_message;
+  }
+
+  /// Generates the test messages for the encoder. It also return the expected UCS2 encoded message.
+  static std::pair<std::string, std::u16string> generate_cbs_message_ucs2(unsigned nof_characters)
+  {
+    std::string utf8_message;
+    // Random distribution that can generate all possible UCS-2 characters.
+    std::uniform_int_distribution<char16_t> dist(0x0000, 0xffff);
+
+    // Generate random UCS-2 characters (UCS-2 is equivalent to UTF-16 for unicode characters in the basic
+    // multilingual plane).
+    std::u16string utf16_str;
+    for (unsigned remaining_nof_chars = nof_characters; remaining_nof_chars != 0; --remaining_nof_chars) {
+      char16_t ucs2_ch = dist(rgen);
+
+      // Checks if the generated value is a valid UCS-2 codepoint.
+      auto is_valid_ucs2_char = [](char16_t ucs2_char) {
+        // It can't be in the High Surrogate code range.
+        return (ucs2_char < 0xd800 || ucs2_char > 0xdbff) &&
+               // It can't be in the Low Surrogate code range.
+               (ucs2_char < 0xdc00 || ucs2_char > 0xdfff) &&
+               // It can't be an unallocated code point.
+               (ucs2_char < 0x2fe0 || ucs2_char > 0x2fef);
+      };
+
+      while (!is_valid_ucs2_char(ucs2_ch)) {
+        ucs2_ch = dist(rgen);
+      }
+      utf16_str.push_back(ucs2_ch);
+    }
+
+    for (auto& ucs2_ch : utf16_str) {
+      if (ucs2_ch <= 0x7f) {
+        // One byte UTF-8 character.
+        auto utf8_ch = static_cast<unsigned char>(ucs2_ch);
+        utf8_message.push_back(utf8_ch);
+      } else if (ucs2_ch <= 0x7ff) {
+        auto utf8_lead_byte = 0xc0 | static_cast<unsigned char>(ucs2_ch >> 6U);
+        auto utf8_byte_2    = 0x80 | static_cast<unsigned char>(ucs2_ch & 0x3f);
+        utf8_message.push_back(utf8_lead_byte);
+        utf8_message.push_back(utf8_byte_2);
+      } else if (ucs2_ch <= 0xffff) {
+        auto utf8_lead_byte = 0xe0 | static_cast<unsigned char>(ucs2_ch >> 12U);
+        auto utf8_byte_2    = 0x80 | static_cast<unsigned char>((ucs2_ch >> 6U) & 0x3f);
+        auto utf8_byte_3    = 0x80 | static_cast<unsigned char>(ucs2_ch & 0x3f);
+        utf8_message.push_back(utf8_lead_byte);
+        utf8_message.push_back(utf8_byte_2);
+        utf8_message.push_back(utf8_byte_3);
+      }
+    }
+    return {utf8_message, utf16_str};
   }
 };
 
@@ -119,14 +131,11 @@ protected:
     size = std::get<0>(GetParam());
   }
 
-  // Checks that the encoded CB-Data IE matches the expected message.
-  static void check_ucs2_encoded_message(std::vector<uint8_t>& cb_data_ucs2, const std::string& expected_message)
+  /// Checks that the encoded CB-Data IE matches the expected message.
+  static void check_ucs2_encoded_message(std::vector<uint8_t>& cb_data_ucs2, const std::u16string& expected_message)
   {
-    std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> ucs2_converter;
-    std::u16string expected_message_utf16 = ucs2_converter.from_bytes(expected_message);
-
     // Obtain the number of unicode characters in the expected message.
-    std::size_t total_message_length = expected_message_utf16.length();
+    std::size_t total_message_length = expected_message.length();
 
     // Determine the number of CB-Data IE pages.
     static constexpr units::bytes cb_data_info_page_nof_bytes{82};
@@ -151,8 +160,7 @@ protected:
       std::size_t i_page_nof_ucs2_chars =
           std::min(static_cast<std::size_t>(nof_ucs2_chars_page), total_message_length - i_page_expected_msg_begin);
 
-      std::u16string expected_msg_in_page =
-          expected_message_utf16.substr(i_page_expected_msg_begin, i_page_nof_ucs2_chars);
+      std::u16string expected_msg_in_page = expected_message.substr(i_page_expected_msg_begin, i_page_nof_ucs2_chars);
 
       // Extract characters in the current CB-Data IE page from the encoded message. Recall that padding is used so that
       // The CB-Data Information page is always 82 bytes (See TS23.041 Section 9.3.19).
@@ -205,7 +213,7 @@ TEST_P(CbsEncoderFixture, CbsEncoderTestGsm7)
   unsigned message_size = std::get<0>(GetParam());
 
   // Generate a CBS message that can be encoded using GSM-7.
-  std::string message = generate_cbs_message(message_size, encoding_type::GSM7);
+  std::string message = generate_cbs_message_gsm7(message_size);
 
   // GSM-7 data coding scheme value.
   static constexpr unsigned gsm7_coding_scheme = 0x00;
@@ -221,7 +229,10 @@ TEST_P(CbsEncoderFixture, CbsEncoderTestUcs2)
   unsigned message_size = std::get<0>(GetParam());
 
   // Generate a CBS message that can be encoded using UCS-2.
-  std::string message = generate_cbs_message(message_size, encoding_type::UCS2);
+  std::pair<std::string, std::u16string> messages = generate_cbs_message_ucs2(message_size);
+
+  std::string    message          = std::get<0>(messages);
+  std::u16string expected_message = std::get<1>(messages);
 
   // UCS-2 data coding scheme value.
   static constexpr unsigned ucs2_coding_scheme = 0x48;
@@ -230,7 +241,7 @@ TEST_P(CbsEncoderFixture, CbsEncoderTestUcs2)
   std::vector<uint8_t> ucs2_enc_message = encoder->encode_cb_data(message, ucs2_coding_scheme);
 
   // Test encoding.
-  check_ucs2_encoded_message(ucs2_enc_message, message);
+  check_ucs2_encoded_message(ucs2_enc_message, expected_message);
 }
 
 class CbsEncodingDeathTestFixture : public ::testing::Test, public CbsEncoderFixtureHelpers
@@ -287,7 +298,7 @@ TEST_F(CbsEncodingDeathTestFixture, CbsEncodingMessageSizeDeathTest)
     // Maximum supported message size is 15 (CB Data pages) times 93 (number of GSM-7 characters in a page).
     unsigned max_supported_gsm7_message_size = 15 * 93;
 
-    std::string message = generate_cbs_message(max_supported_gsm7_message_size + 1, encoding_type::GSM7);
+    std::string message = generate_cbs_message_gsm7(max_supported_gsm7_message_size + 1);
 
     // Attempt to encode a message that is too long.
     ASSERT_DEATH(
@@ -301,7 +312,8 @@ TEST_F(CbsEncodingDeathTestFixture, CbsEncodingMessageSizeDeathTest)
   { // Maximum supported message size is 15 (CB Data pages) times 41 (number of UCS-2 characters in a page).
     unsigned max_supported_ucs2_message_size = 15 * 41;
 
-    std::string message = generate_cbs_message(max_supported_ucs2_message_size + 1, encoding_type::UCS2);
+    std::pair<std::string, std::u16string> messages = generate_cbs_message_ucs2(max_supported_ucs2_message_size + 1);
+    std::string                            message  = std::get<0>(messages);
 
     // Attempt to encode a message that is too long.
     ASSERT_DEATH(
@@ -320,7 +332,7 @@ TEST_F(CbsEncodingDeathTestFixture, CbsEncodingUnsupportedCharactersDeathTest)
   ASSERT_NE(encoder, nullptr);
 
   {
-    std::string message = generate_cbs_message(10, encoding_type::GSM7);
+    std::string message = generate_cbs_message_gsm7(10);
 
     // Append character not suppored by the GSM-7 encoder.
     message.append("à");
@@ -332,7 +344,8 @@ TEST_F(CbsEncodingDeathTestFixture, CbsEncodingUnsupportedCharactersDeathTest)
   }
 
   {
-    std::string message = generate_cbs_message(10, encoding_type::UCS2);
+    std::pair<std::string, std::u16string> messages = generate_cbs_message_ucs2(10);
+    std::string                            message  = std::get<0>(messages);
 
     // Append character not suppored by the GSM-7 encoder.
     message.append("\xF0\x91\xBE\xBF");
@@ -342,7 +355,7 @@ TEST_F(CbsEncodingDeathTestFixture, CbsEncodingUnsupportedCharactersDeathTest)
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(CbsEncoderTest,
+INSTANTIATE_TEST_SUITE_P(CbsEncoderTestUcs2,
                          CbsEncoderFixture,
                          ::testing::Combine(
                              // Message length.

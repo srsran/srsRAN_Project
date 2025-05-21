@@ -23,6 +23,8 @@
 #pragma once
 
 #include "srsran/fapi/messages/base_message.h"
+#include "srsran/fapi/messages/config_request_tlvs.h"
+#include "srsran/fapi/messages/error_code.h"
 #include <array>
 
 namespace srsran {
@@ -35,14 +37,18 @@ struct param_request : public base_message {
 
 /// Param response message.
 struct param_response : public base_message {
-  uint8_t num_tlv;
-  // :TODO: TBD.
+  error_code_id error_code;
+  uint8_t       num_tlv;
 };
 
 /// Config request message.
 struct config_request : public base_message {
-  uint8_t num_tlvs;
-  // :TODO: TBD.
+  phy_config     phy_cfg;
+  carrier_config carrier_cfg;
+  cell_config    cell_cfg;
+  prach_config   prach_cfg;
+  ssb_config     ssb_cfg;
+  tdd_phy_config tdd_cfg;
 };
 
 /// Config response message.
@@ -50,14 +56,7 @@ struct config_response : public base_message {
   /// Maximum number of invalid TLVs supported.
   static constexpr unsigned MAX_NUM_TLVS = 2048;
 
-  uint8_t                            num_invalid_unsupported_tlvs;
-  uint8_t                            num_invalid_tlvs_can_conf_idle;
-  uint8_t                            num_invalid_tlvs_can_conf_running;
-  uint8_t                            num_missing_tlvs;
-  std::array<uint16_t, MAX_NUM_TLVS> unsupported_tlvs;
-  std::array<uint16_t, MAX_NUM_TLVS> valid_idle_tlvs;
-  std::array<uint16_t, MAX_NUM_TLVS> valid_running_tlvs;
-  std::array<uint16_t, MAX_NUM_TLVS> missing_tlvs;
+  error_code_id error_code;
 };
 
 /// Start request message.

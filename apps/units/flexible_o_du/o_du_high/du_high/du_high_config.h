@@ -142,6 +142,9 @@ struct du_high_unit_pdsch_config {
   unsigned nof_harqs = 16;
   /// Maximum number of times a DL HARQ process can be retransmitted, before it gets discarded.
   unsigned max_nof_harq_retxs = 4;
+  /// \brief Maximum time, in milliseconds, between a HARQ NACK and the scheduler allocating the respective HARQ for
+  /// retransmission. If this timeout is exceeded, the HARQ process is discarded.
+  unsigned harq_retx_timeout = 100;
   /// Maximum number of consecutive DL KOs before an RLF is reported.
   unsigned max_consecutive_kos = 100;
   /// Redundancy version sequence to use. Each element can have one of the following values: {0, 1, 2, 3}.
@@ -188,6 +191,11 @@ struct du_high_unit_pdsch_config {
   uint8_t harq_la_ri_drop_threshold{1};
   /// Position for additional DM-RS in DL, see Tables 7.4.1.1.2-3 and 7.4.1.1.2-4 in TS 38.211.
   unsigned dmrs_add_pos{2};
+  /// \brief Bundle size used for interleaving.
+  ///
+  /// Controls the bundle size used for interleaving for PDSCH transmissions scheduled on dedicated search spaces. If
+  /// set to zero, interleaving will be disabled. All other PDSCH transmissions will be always non-interleaved.
+  vrb_to_prb::mapping_type interleaving_bundle_size{vrb_to_prb::mapping_type::non_interleaved};
 };
 
 /// PUSCH application configuration.
@@ -200,6 +208,9 @@ struct du_high_unit_pusch_config {
   unsigned max_ue_mcs = 28;
   /// Maximum number of times a UL HARQ process can be retransmitted, before it gets discarded.
   unsigned max_nof_harq_retxs = 4;
+  /// \brief Maximum time, in milliseconds, between a CRC=KO and the scheduler allocating the respective HARQ for
+  /// retransmission. If this timeout is exceeded, the HARQ process is discarded.
+  unsigned harq_retx_timeout = 100;
   /// Maximum number of consecutive UL KOs before an RLF is reported.
   unsigned max_consecutive_kos = 100;
   /// Redundancy version sequence to use. Each element can have one of the following values: {0, 1, 2, 3}.
@@ -378,7 +389,7 @@ struct du_high_unit_pucch_config {
   /// @{
   /// Max number of PRBs for PUCCH Format 2. Values {1,...,16}.
   unsigned f2_max_nof_rbs = 1;
-  /// \brief Maximum payload in bits that can be carried by PUCCH Format 2. Values {1,...,11}.
+  /// \brief Min required payload capacity in bits that can be carried by PUCCH Format 2. Values {4,...,40}.
   /// If this is set, \ref f2_max_nof_rbs is ignored.
   std::optional<unsigned> f2_max_payload_bits;
   /// Max code rate for PUCCH Format 2.
@@ -393,7 +404,7 @@ struct du_high_unit_pucch_config {
   /// @{
   /// Max number of PRBs for PUCCH Format 3. Values {1,...,16}.
   unsigned f3_max_nof_rbs = 1;
-  /// \brief Maximum payload in bits that can be carried by PUCCH Format 3. Values {1,...,11}.
+  /// \brief Min required payload capacity in bits that can be carried by PUCCH Format 3. Values {4,...,40}.
   /// If this is set, \ref f2_max_nof_rbs is ignored.
   std::optional<unsigned> f3_max_payload_bits;
   /// Max code rate for PUCCH Format 3.

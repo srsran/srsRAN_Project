@@ -61,10 +61,12 @@ void ran_slice_instance::slot_indication(slot_point slot_tx)
   pusch_slot_to_clear = 0;
 
   // Reset last alloc slot if the difference becomes too large, to avoid ambiguity.
-  if (last_pdsch_alloc_slot.valid() and slot_tx > last_pdsch_alloc_slot + MAX_SLOTS_SINCE_LAST_PXSCH) {
+  if (last_pdsch_alloc_slot.valid() and
+      slot_tx > last_pdsch_alloc_slot + MAX_SLOTS_SINCE_LAST_PXSCH + cell_cfg->ntn_cs_koffset) {
     last_pdsch_alloc_slot.clear();
   }
-  if (last_pusch_alloc_slot.valid() and slot_tx > last_pusch_alloc_slot + MAX_SLOTS_SINCE_LAST_PXSCH) {
+  if (last_pusch_alloc_slot.valid() and
+      slot_tx > last_pusch_alloc_slot + MAX_SLOTS_SINCE_LAST_PXSCH + cell_cfg->ntn_cs_koffset) {
     last_pusch_alloc_slot.clear();
   }
 }

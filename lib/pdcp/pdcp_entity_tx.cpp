@@ -520,7 +520,7 @@ void pdcp_entity_tx::data_recovery()
 
 void pdcp_entity_tx::reset()
 {
-  st = {};
+  st = {0, 0, 0};
   tx_window.clear();
   logger.log_debug("Entity was reset. {}", st);
 }
@@ -972,7 +972,7 @@ pdcp_entity_tx::early_drop_reason pdcp_entity_tx::check_early_drop(const byte_bu
   if (updated_buffer_size > desired_buffer_size) {
     return early_drop_reason::full_rlc_queue;
   }
-  if ((st.tx_next - st.tx_trans) >= (window_size - 1)) {
+  if ((st.tx_next - st.tx_next_ack) >= (window_size - 1)) {
     return early_drop_reason::full_window;
   }
   return early_drop_reason::no_drop;

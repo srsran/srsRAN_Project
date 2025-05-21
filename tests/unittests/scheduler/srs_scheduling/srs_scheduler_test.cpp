@@ -22,14 +22,11 @@
 
 #include "lib/scheduler/srs/srs_scheduler_impl.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
-#include "tests/unittests/scheduler/test_utils/config_generators.h"
-#include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
-#include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/ran/srs/srs_bandwidth_configuration.h"
+#include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
-#include <random>
 
 using namespace srsran;
 

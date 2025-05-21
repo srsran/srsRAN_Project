@@ -40,6 +40,7 @@ public:
   using const_iterator = ue_list::const_iterator;
 
   explicit ue_repository();
+  ~ue_repository();
 
   /// \brief Mark start of new slot and update UEs states.
   void slot_indication(slot_point sl_tx);

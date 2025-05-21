@@ -532,6 +532,7 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
   unsigned       nof_f2_f3_f4_rbs;
   const unsigned nof_res_f2_f3_f4 =
       pucch_cfg.nof_ue_pucch_res_harq_per_set * pucch_cfg.nof_cell_harq_pucch_sets + pucch_cfg.nof_cell_csi_resources;
+  unsigned f2_f3_f4_max_payload = 0U;
   switch (pucch_cfg.set1_format) {
     case pucch_format::FORMAT_2: {
       // The number of symbols per PUCCH resource F2 is not exposed to the DU user interface and set by default to 2.
@@ -551,6 +552,8 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
       if (pucch_cfg.f2_intraslot_freq_hopping) {
         nof_f2_f3_f4_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f2_f3_f4_rbs) / 2.0F)) * 2;
       }
+      f2_f3_f4_max_payload = get_pucch_format2_max_payload(
+          f2_max_rbs, pucch_f2_nof_symbols, to_max_code_rate_float(pucch_cfg.f2_max_code_rate));
     } break;
     case pucch_format::FORMAT_3: {
       // The number of symbols per PUCCH resource is not exposed to the DU user interface; for PUCCH F3, we use all
@@ -575,6 +578,12 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
       if (pucch_cfg.f3_intraslot_freq_hopping) {
         nof_f2_f3_f4_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f2_f3_f4_rbs) / 2.0F)) * 2;
       }
+      f2_f3_f4_max_payload = get_pucch_format3_max_payload(f3_max_rbs,
+                                                           pucch_f3_nof_symbols,
+                                                           to_max_code_rate_float(pucch_cfg.f3_max_code_rate),
+                                                           false,
+                                                           pucch_cfg.f3_additional_dmrs,
+                                                           pucch_cfg.f3_pi2_bpsk);
     } break;
     case pucch_format::FORMAT_4: {
       // The number of symbols per PUCCH resource is not exposed to the DU user interface; for PUCCH F4, we use all
@@ -587,10 +596,28 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
       if (pucch_cfg.f4_intraslot_freq_hopping) {
         nof_f2_f3_f4_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f2_f3_f4_rbs) / 2.0F)) * 2;
       }
+      f2_f3_f4_max_payload = get_pucch_format4_max_payload(pucch_f4_nof_symbols,
+                                                           to_max_code_rate_float(pucch_cfg.f4_max_code_rate),
+                                                           false,
+                                                           pucch_cfg.f4_additional_dmrs,
+                                                           pucch_cfg.f4_pi2_bpsk,
+                                                           static_cast<pucch_f4_occ_len>(pucch_cfg.f4_occ_length));
     } break;
     default:
       fmt::print("Invalid PUCCH format for Set Id 1.\n");
       return false;
+  }
+
+  // Make sure the PUCCH has the minimum required payload for the given number of antennas.
+  if (config.nof_antennas_dl == 1 and f2_f3_f4_max_payload < 4U) {
+    fmt::print("With the given parameters and 1 DL antenna, PUCCH F2 max payload must be at least 4 bits.\n");
+    return false;
+  } else if (config.nof_antennas_dl == 2 and f2_f3_f4_max_payload < 7U) {
+    fmt::print("With the given parameters and 2 DL antennas, PUCCH F2 max payload must be at least 7 bits.\n");
+    return false;
+  } else if (config.nof_antennas_dl == 4 and f2_f3_f4_max_payload < 11U) {
+    fmt::print("With the given parameters and 4 DL antennas, PUCCH F2 max payload must be at least 11 bits.\n");
+    return false;
   }
 
   // Verify the number of RBs for the PUCCH resources does not exceed the BWP size.

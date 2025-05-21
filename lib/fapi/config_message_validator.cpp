@@ -20,12 +20,14 @@
  *
  */
 
-#include "du_high_mac_metrics_producer.h"
-#include "du_high_mac_metrics.h"
+#include "config_message_validator.h"
 
 using namespace srsran;
+using namespace fapi;
 
-void mac_metrics_producer_impl::on_new_metrics_report(const mac_metric_report& report)
+bool srsran::fapi::validate_config_request_message(const config_request& msg, srslog::basic_logger& logger)
 {
-  notifier.on_new_metric(mac_metrics_impl(report));
+  // :TODO: implement me!
+
+  return true;
 }

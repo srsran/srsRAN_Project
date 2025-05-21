@@ -110,8 +110,8 @@ error_type<std::string> pdsch_processor_validator_impl::is_valid(const pdsch_pro
   }
 
   // Only contiguous allocation is currently supported.
-  if (!pdu.freq_alloc.is_contiguous()) {
-    return make_unexpected("Only contiguous allocation is currently supported.");
+  if (!pdu.freq_alloc.is_vrb_mask_contiguous()) {
+    return make_unexpected("Only contiguous VRB mask allocation is currently supported.");
   }
 
   // Only one codeword is currently supported.

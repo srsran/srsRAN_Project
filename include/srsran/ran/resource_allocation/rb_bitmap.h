@@ -28,11 +28,6 @@
 
 namespace srsran {
 
-// Tags used to differentiate RB types.
-struct crb_bitmap_tag {};
-struct prb_bitmap_tag {};
-struct vrb_bitmap_tag {};
-
 /// \brief Common Resource Block (CRB) bitmap.
 ///
 /// Describes a frequency allocation mask applied to the entire channel bandwidth. The lowest
@@ -41,7 +36,7 @@ struct vrb_bitmap_tag {};
 ///
 /// A CRB bitmap size must be lower than or equal to the channel bandwidth to avoid allocating
 /// resources outside of the physical resource grid.
-using crb_bitmap = bounded_bitset<MAX_NOF_PRBS, false, crb_bitmap_tag>;
+using crb_bitmap = bounded_bitset<MAX_NOF_PRBS, false, crb_tag>;
 
 inline crb_bitmap& operator|=(crb_bitmap& crb_bits, const crb_interval& grant)
 {
@@ -56,7 +51,7 @@ inline crb_bitmap& operator|=(crb_bitmap& crb_bits, const crb_interval& grant)
 /// represents the lowest PRB contained within the BWP.
 ///
 /// The conversion from a PRB bitmap to a CRB bitmap requires the BWP description.
-using prb_bitmap = bounded_bitset<MAX_NOF_PRBS, false, prb_bitmap_tag>;
+using prb_bitmap = bounded_bitset<MAX_NOF_PRBS, false, prb_tag>;
 
 inline prb_bitmap& operator|=(prb_bitmap& prb_bits, const prb_interval& grant)
 {
@@ -71,7 +66,7 @@ inline prb_bitmap& operator|=(prb_bitmap& prb_bits, const prb_interval& grant)
 /// bit corresponds to the lowest indexed VRB defined in the mapping, i.e., VRB 0.
 ///
 /// A VRB bitmap size must be lower than or equal to the BWP where the mapping is defined.
-using vrb_bitmap = bounded_bitset<MAX_NOF_PRBS, false, vrb_bitmap_tag>;
+using vrb_bitmap = bounded_bitset<MAX_NOF_PRBS, false, vrb_tag>;
 
 inline vrb_bitmap& operator|=(vrb_bitmap& vrb_bits, const vrb_interval& grant)
 {

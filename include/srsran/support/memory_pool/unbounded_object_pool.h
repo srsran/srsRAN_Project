@@ -55,7 +55,14 @@ class unbounded_object_pool
 public:
   using ptr = std::unique_ptr<T, pool_deleter>;
 
-  unbounded_object_pool(unsigned initial_capacity)
+  unbounded_object_pool(unsigned initial_capacity) : objects(initial_capacity)
+  {
+    for (unsigned i = 0; i != initial_capacity; ++i) {
+      objects.enqueue(std::make_unique<T>());
+    }
+  }
+  unbounded_object_pool(unsigned initial_capacity, unsigned expected_nof_deallocation_contexts) :
+    objects(initial_capacity, 0, expected_nof_deallocation_contexts)
   {
     for (unsigned i = 0; i != initial_capacity; ++i) {
       objects.enqueue(std::make_unique<T>());

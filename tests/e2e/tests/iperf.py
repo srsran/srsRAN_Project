@@ -33,16 +33,25 @@ from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts, param
 from retina.protocol.base_pb2 import Metrics, PLMN
+from retina.protocol.channel_emulator_pb2 import EphemerisInfoType, NtnScenarioDefinition, NtnScenarioType
+from retina.protocol.channel_emulator_pb2_grpc import ChannelEmulatorStub
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ric_pb2_grpc import NearRtRicStub
 from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
 
-from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth
+from .steps.configuration import (
+    _get_dl_arfcn,
+    _get_ul_arfcn,
+    configure_test_parameters,
+    get_minimum_sample_rate_for_bandwidth,
+    nr_arfcn_to_freq,
+)
 from .steps.iperf_helpers import (
     assess_iperf_bitrate,
     get_maximum_throughput,
+    HIGH_BITRATE,
     LONG_DURATION,
     LOW_BITRATE,
     MEDIUM_BITRATE,
@@ -50,11 +59,14 @@ from .steps.iperf_helpers import (
     TINY_DURATION,
 )
 from .steps.stub import (
+    get_ntn_configs,
     INTER_UE_START_PERIOD,
     iperf_parallel,
+    is_ntn_channel_emulator,
     ric_validate_e2_interface,
     start_and_attach,
     start_kpm_mon_xapp,
+    start_ntn_channel_emulator,
     start_rc_xapp,
     stop,
     stop_kpm_mon_xapp,
@@ -178,6 +190,88 @@ def test_ric(
         pdsch_mcs_table="qam64",
         pusch_mcs_table="qam64",
         ric=ric,
+    )
+
+
+@mark.parametrize(
+    "direction",
+    (param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),),
+)
+@mark.parametrize(
+    "protocol",
+    (param(IPerfProto.UDP, id="udp", marks=mark.udp),),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth, enable_feeder_link",
+    (
+        param(256, 15, 5, False, id="band:%s-scs:%s-bandwidth:%s-fl:%s"),
+        param(256, 15, 5, True, id="band:%s-scs:%s-bandwidth:%s-fl:%s"),
+    ),
+)
+@mark.zmq_ntn
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def test_ntn(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue: UEStub,  # pylint: disable=invalid-name
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    channel_emulator: ChannelEmulatorStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    enable_feeder_link: bool,
+    protocol: IPerfProto,
+    direction: IPerfDir,
+):
+    """
+    NTN ZMQ Iperf
+    """
+    ntn_scenario_def = NtnScenarioDefinition()
+    ntn_scenario_def.scenario_type = NtnScenarioType.GEO
+    ntn_scenario_def.ephemeris_info_type = EphemerisInfoType.ORBITAL
+    ntn_scenario_def.min_sat_elevation_deg = 20
+    ntn_scenario_def.pass_start_offset_s = 10
+    ntn_scenario_def.delay_offset_us = 20
+    ntn_scenario_def.sample_rate = 5760000
+    ntn_scenario_def.enable_feeder_link = enable_feeder_link
+    ntn_scenario_def.enable_doppler = True
+    ntn_scenario_def.access_link_dl_freq_hz = nr_arfcn_to_freq(_get_dl_arfcn(band))
+    ntn_scenario_def.access_link_ul_freq_hz = nr_arfcn_to_freq(_get_ul_arfcn(band))
+    ntn_scenario_def.feeder_link_dl_freq_hz = nr_arfcn_to_freq(_get_dl_arfcn(band))
+    ntn_scenario_def.feeder_link_ul_freq_hz = nr_arfcn_to_freq(_get_ul_arfcn(band))
+
+    # Define min DL/UL data rates to be achieved.
+    min_dl_bitrate = 20e6 * 0.9
+    min_ul_bitrate = 18e6 * 0.9
+
+    _iperf(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=[ue],
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=5760000,
+        iperf_duration=SHORT_DURATION,
+        protocol=protocol,
+        bitrate=HIGH_BITRATE,
+        direction=direction,
+        global_timing_advance=-1,
+        time_alignment_calibration=0,
+        warning_as_errors=False,
+        always_download_artifacts=True,
+        common_search_space_enable=False,
+        prach_config_index=31,
+        pdsch_mcs_table="qam256",
+        pusch_mcs_table="qam256",
+        channel_emulator=channel_emulator,
+        ntn_scenario_def=ntn_scenario_def,
+        assess_bitrate=True,
+        min_dl_bitrate=min_dl_bitrate,
+        min_ul_bitrate=min_ul_bitrate,
     )
 
 
@@ -725,6 +819,81 @@ def test_rf(
     )
 
 
+@mark.parametrize(
+    "direction",
+    (param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),),
+)
+@mark.parametrize(
+    "protocol",
+    (param(IPerfProto.UDP, id="udp", marks=mark.udp),),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth, bitrate",
+    (
+        param(41, 30, 50, int(600e6), id=ZMQ_ID),
+        param(41, 30, 100, int(1.2e9), id=ZMQ_ID),
+    ),
+)
+@mark.s72
+@mark.flaky(
+    reruns=2,
+    only_rerun=[
+        "failed to start",
+        "5GC crashed",
+    ],
+)
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def test_s72(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue: UEStub,
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    bitrate: int,
+    protocol: IPerfProto,
+    direction: IPerfDir,
+):
+    """
+    Amariue Split 7.2x IPerfs
+    """
+
+    _iperf(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=(ue,),
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=None,  # default from testbed
+        iperf_duration=SHORT_DURATION,
+        bitrate=bitrate,
+        protocol=protocol,
+        direction=direction,
+        gnb_post_cmd=(
+            "log --all_level=warning --lib_level=warning",
+            "expert_execution threads non_rt --non_rt_task_queue_size=4096",
+            "expert_phy --max_proc_delay=4",
+        ),
+        nof_antennas_dl=4,
+        nof_antennas_ul=1,
+        global_timing_advance=-1,
+        prach_config_index=159,
+        time_alignment_calibration=0,
+        always_download_artifacts=False,
+        warning_as_errors=False,
+        bitrate_threshold=0,
+        ue_stop_timeout=1,
+        assess_bitrate=True,
+        stop_gnb_first=True,
+        packet_length=1400,
+    )
+
+
 # pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals
 def _iperf(
     retina_manager: RetinaTestManager,
@@ -759,10 +928,24 @@ def _iperf(
     inter_ue_start_period=INTER_UE_START_PERIOD,
     ric: Optional[NearRtRicStub] = None,
     assess_bitrate: bool = False,
+    stop_gnb_first: bool = False,
+    packet_length: int = 0,
+    channel_emulator: Optional[ChannelEmulatorStub] = None,
+    ntn_scenario_def: Optional[NtnScenarioDefinition] = None,
+    min_dl_bitrate: float = 0,
+    min_ul_bitrate: float = 0,
 ):
     wait_before_power_off = 5
 
     logging.info("Iperf Test")
+
+    ntn_config = None
+    if channel_emulator and ntn_scenario_def:
+        if not is_ntn_channel_emulator(channel_emulator):
+            logging.info("The channel emulator is not a NTN emulator.")
+            return
+        start_ntn_channel_emulator(ue_array, gnb, channel_emulator, ntn_scenario_def)
+        ntn_config = get_ntn_configs(channel_emulator)
 
     configure_test_parameters(
         retina_manager=retina_manager,
@@ -781,6 +964,7 @@ def _iperf(
         nof_antennas_ul=nof_antennas_ul,
         pdsch_mcs_table=pdsch_mcs_table,
         pusch_mcs_table=pusch_mcs_table,
+        ntn_config=ntn_config,
     )
 
     configure_artifacts(
@@ -796,6 +980,7 @@ def _iperf(
         plmn=plmn,
         inter_ue_start_period=inter_ue_start_period,
         ric=ric,
+        channel_emulator=channel_emulator,
     )
 
     if ric:
@@ -809,6 +994,7 @@ def _iperf(
         direction,
         iperf_duration,
         bitrate,
+        packet_length,
         bitrate_threshold,
     )
 
@@ -828,6 +1014,7 @@ def _iperf(
         ue_stop_timeout=ue_stop_timeout,
         warning_as_errors=warning_as_errors,
         ric=ric,
+        stop_gnb_first=stop_gnb_first,
     )
 
     metrics: Metrics = gnb.GetMetrics(Empty())
@@ -845,4 +1032,6 @@ def _iperf(
             pusch_mcs_table=pusch_mcs_table,
             iperf_duration=iperf_duration,
             metrics=metrics,
+            dl_brate_threshold=min_dl_bitrate,
+            ul_brate_threshold=min_ul_bitrate,
         )

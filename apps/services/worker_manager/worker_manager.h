@@ -77,7 +77,7 @@ struct worker_manager : public worker_manager_executor_getter {
   srs_du::du_high_executor_mapper& get_du_high_executor_mapper() { return *du_high_exec_mapper; }
 
   // Gets the DU-low downlink executors.
-  void get_du_low_dl_executors(std::vector<task_executor*>& executors, unsigned sector_id) const;
+  task_executor& get_du_low_dl_executor(unsigned sector_id) const;
 
   /// Get executor based on the name.
   task_executor* find_executor(const std::string& name) const
@@ -91,8 +91,14 @@ struct worker_manager : public worker_manager_executor_getter {
   worker_manager_executor_getter* get_executor_getter() { return this; }
 
 private:
+  struct du_crit_path_executor_desc {
+    // Description of L2 executors for the DU-high.
+    srs_du::du_high_executor_config::cell_executor_config l2_execs;
+    // Description of L1 executors for DU-low.
+    // TODO
+  };
   std::unique_ptr<srs_du::du_high_executor_mapper> du_high_exec_mapper;
-  std::vector<std::vector<task_executor*>>         du_low_dl_executors;
+  std::vector<task_executor*>                      du_low_dl_executors;
 
   /// Manager of execution contexts and respective executors instantiated by the application.
   task_execution_manager exec_mng;
@@ -129,9 +135,6 @@ private:
 
   std::vector<execution_config_helper::single_worker> create_fapi_workers(unsigned nof_cells);
 
-  std::vector<execution_config_helper::priority_multiqueue_worker> create_du_hi_slot_workers(unsigned nof_cells,
-                                                                                             bool     rt_mode);
-
   /// Helper method that creates the CU-UP executors.
   void create_cu_up_executors(const worker_manager_config::cu_up_config& config, timer_manager& timers);
 
@@ -142,11 +145,10 @@ private:
                            timer_manager&                                      timers);
 
   /// Helper method that creates the low Distributed Unit executors.
-  void create_du_low_executors(bool     is_blocking_mode_active,
-                               unsigned nof_ul_workers,
-                               unsigned nof_dl_workers,
-                               unsigned nof_pusch_decoder_workers,
-                               unsigned nof_cells);
+  du_crit_path_executor_desc
+  create_du_crit_path_prio_executors(unsigned                                                   nof_cells,
+                                     bool                                                       rt_mode,
+                                     const std::optional<worker_manager_config::du_low_config>& du_low);
 
   /// Helper method that creates the Radio Unit dummy executors.
   void create_ru_dummy_executors();

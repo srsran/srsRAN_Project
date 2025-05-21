@@ -130,7 +130,7 @@ receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_depend
                     window_checker,
                     msg_receiver.get_metrics_collector(),
                     msg_receiver.get_ethernet_receiver().get_metrics_collector()),
-  rcv_task_dispatcher(msg_receiver, *dependencies.executor, config.sector),
+  rcv_task_dispatcher(*dependencies.logger, msg_receiver, *dependencies.executor, config.sector),
   ctrl(rcv_task_dispatcher)
 {
 }

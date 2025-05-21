@@ -66,6 +66,7 @@ intra_cu_handover_routine::intra_cu_handover_routine(const cu_cp_intra_cu_handov
                                                      cu_cp_ue_removal_handler&              ue_removal_handler_,
                                                      cu_cp_ue_context_manipulation_handler& cu_cp_handler_,
                                                      ue_manager&                            ue_mng_,
+                                                     mobility_manager&                      mobility_mng_,
                                                      srslog::basic_logger&                  logger_) :
   request(request_),
   target_cell_sib1(target_cell_sib1_),
@@ -76,6 +77,7 @@ intra_cu_handover_routine::intra_cu_handover_routine(const cu_cp_intra_cu_handov
   ue_removal_handler(ue_removal_handler_),
   cu_cp_handler(cu_cp_handler_),
   ue_mng(ue_mng_),
+  mobility_mng(mobility_mng_),
   logger(logger_)
 {
 }
@@ -99,6 +101,17 @@ void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_c
 
   logger.debug("ue={}: \"{}\" initialized", request.source_ue_index, name());
 
+  // Allocate new UL-TEID(s) in the CU-UP for the UE, and thus block any further UL traffic.
+  {
+    generate_bearer_context_modification_request_1();
+    CORO_AWAIT_VALUE(
+        bearer_context_modification_response_1,
+        e1ap_bearer_ctxt_mng.handle_bearer_context_modification_request(bearer_context_modification_request_1));
+
+    handle_bearer_context_modification_response_1(bearer_context_modification_response_1, next_config, logger);
+  }
+
+  // Perform UE context setup at target DU.
   {
     // Allocate UE index at target DU
     target_ue_context_setup_request.ue_index = ue_mng.add_ue(request.target_du_index, request.cgi.plmn_id);
@@ -121,7 +134,7 @@ void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_c
 
     // Handle UE Context Setup Response
     if (!handle_context_setup_response(response_msg,
-                                       bearer_context_modification_request,
+                                       bearer_context_modification_request_2,
                                        target_ue_context_setup_response,
                                        next_config,
                                        logger,
@@ -161,16 +174,16 @@ void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_c
     }
 
     // prepare Bearer Context Modification Request and call E1AP notifier
-    bearer_context_modification_request.ue_index = request.source_ue_index;
+    bearer_context_modification_request_2.ue_index = request.source_ue_index;
 
     // call E1AP procedure and wait for BearerContextModificationResponse
     CORO_AWAIT_VALUE(
-        bearer_context_modification_response,
-        e1ap_bearer_ctxt_mng.handle_bearer_context_modification_request(bearer_context_modification_request));
+        bearer_context_modification_response_2,
+        e1ap_bearer_ctxt_mng.handle_bearer_context_modification_request(bearer_context_modification_request_2));
 
     // Handle Bearer Context Modification Response
-    if (!handle_bearer_context_modification_response(
-            response_msg, source_ue_context_mod_request, bearer_context_modification_response, next_config, logger)) {
+    if (!handle_bearer_context_modification_response_2(
+            response_msg, source_ue_context_mod_request, bearer_context_modification_response_2, next_config, logger)) {
       logger.warning("ue={}: \"{}\" failed to modify bearer context at target CU-UP", request.source_ue_index, name());
 
       {
@@ -230,6 +243,9 @@ void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_c
       logger.debug("ue={}: \"{}\" failed", request.source_ue_index, name());
       CORO_EARLY_RETURN(response_msg);
     }
+
+    // Notify mobility manager about requested handover execution.
+    mobility_mng.get_metrics_handler().aggregate_requested_handover_execution();
   }
 
   {
@@ -312,25 +328,47 @@ bool intra_cu_handover_routine::add_security_context_to_bearer_context_modificat
     const srsran::security::sec_as_config& security_cfg)
 {
   // Fill security info
-  bearer_context_modification_request.security_info.emplace();
-  bearer_context_modification_request.security_info->security_algorithm.ciphering_algo = security_cfg.cipher_algo;
-  bearer_context_modification_request.security_info->security_algorithm.integrity_protection_algorithm =
+  bearer_context_modification_request_2.security_info.emplace();
+  bearer_context_modification_request_2.security_info->security_algorithm.ciphering_algo = security_cfg.cipher_algo;
+  bearer_context_modification_request_2.security_info->security_algorithm.integrity_protection_algorithm =
       security_cfg.integ_algo;
   auto k_enc_buffer = byte_buffer::create(security_cfg.k_enc);
   if (not k_enc_buffer.has_value()) {
     logger.warning("Unable to allocate byte_buffer");
     return false;
   }
-  bearer_context_modification_request.security_info->up_security_key.encryption_key = std::move(k_enc_buffer.value());
+  bearer_context_modification_request_2.security_info->up_security_key.encryption_key = std::move(k_enc_buffer.value());
   if (security_cfg.k_int.has_value()) {
     auto k_int_buffer = byte_buffer::create(security_cfg.k_int.value());
     if (not k_int_buffer.has_value()) {
       logger.warning("Unable to allocate byte_buffer");
       return false;
     }
-    bearer_context_modification_request.security_info->up_security_key.integrity_protection_key =
+    bearer_context_modification_request_2.security_info->up_security_key.integrity_protection_key =
         std::move(k_int_buffer.value());
   }
 
   return true;
+}
+
+void intra_cu_handover_routine::generate_bearer_context_modification_request_1()
+{
+  bearer_context_modification_request_1.ue_index                 = request.source_ue_index;
+  bearer_context_modification_request_1.new_ul_tnl_info_required = true;
+
+  // Request new UL-TEID for all DRBs.
+  e1ap_ng_ran_bearer_context_mod_request& ctx_mod_req =
+      bearer_context_modification_request_1.ng_ran_bearer_context_mod_request.emplace();
+
+  for (const std::pair<const pdu_session_id_t, up_pdu_session_context>& pdu_session :
+       source_rrc_context.up_ctx.pdu_sessions) {
+    e1ap_pdu_session_res_to_modify_item pdu_mod_item;
+    pdu_mod_item.pdu_session_id = pdu_session.first;
+    for (const std::pair<const drb_id_t, up_drb_context>& drb : pdu_session.second.drbs) {
+      e1ap_drb_to_modify_item_ng_ran drb_mod_item;
+      drb_mod_item.drb_id = drb.first;
+      pdu_mod_item.drb_to_modify_list_ng_ran.insert(drb_mod_item.drb_id, drb_mod_item);
+    }
+    ctx_mod_req.pdu_session_res_to_modify_list.insert(pdu_mod_item.pdu_session_id, pdu_mod_item);
+  }
 }

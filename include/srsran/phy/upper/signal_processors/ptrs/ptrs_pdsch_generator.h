@@ -51,7 +51,7 @@ public:
     unsigned scrambling_id;
     /// DM-RS for PDSCH sequence initialization (\f$n_{SCID}\f$).
     bool n_scid;
-    /// Indicates the generated signal linear amplitude.
+    /// Generated signal linear amplitude.
     float amplitude;
     /// DM-RS position mask. Indicates the OFDM symbols carrying DM-RS within the slot.
     symbol_slot_mask dmrs_symbols_mask;

@@ -53,8 +53,8 @@ private:
 class o_du_low_metrics_consumer_log
 {
 public:
-  o_du_low_metrics_consumer_log(srslog::log_channel& log_chan_, span<const pci_t> pci_sector_map_) :
-    log_chan(log_chan_), verbose(false), pci_sector_map(pci_sector_map_)
+  o_du_low_metrics_consumer_log(srslog::log_channel& log_chan_, span<const pci_t> pci_sector_map_, bool verbose_) :
+    log_chan(log_chan_), verbose(verbose_), pci_sector_map(pci_sector_map_)
   {
     srsran_assert(log_chan.enabled(), "JSON log channel is not enabled");
   }

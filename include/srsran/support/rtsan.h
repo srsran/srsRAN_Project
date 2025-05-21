@@ -36,7 +36,26 @@
 
 #define SRSRAN_RTSAN_NONBLOCKING [[clang::nonblocking]]
 #define SRSRAN_RTSAN_SCOPED_DISABLER(VAR) __rtsan::ScopedDisabler(VAR);
+
+namespace srsran {
+namespace detail {
+class scoped_enabler
+{
+public:
+  scoped_enabler() { __rtsan_enable(); }
+  ~scoped_enabler() { __rtsan_disable(); }
+  scoped_enabler(const scoped_enabler&)            = delete;
+  scoped_enabler& operator=(const scoped_enabler&) = delete;
+  scoped_enabler(scoped_enabler&&)                 = delete;
+  scoped_enabler& operator=(scoped_enabler&&)      = delete;
+};
+} // namespace detail
+} // namespace srsran
+
+#define SRSRAN_RTSAN_SCOPED_ENABLER ::srsran::detail::scoped_enabler rtsan_enabler##__LINE__
+
 #else
 #define SRSRAN_RTSAN_NONBLOCKING
 #define SRSRAN_RTSAN_SCOPED_DISABLER(VAR)
+#define SRSRAN_RTSAN_SCOPED_ENABLER
 #endif

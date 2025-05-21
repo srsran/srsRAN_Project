@@ -432,32 +432,33 @@ void uplink_processor_impl::notify_discard_pucch(const uplink_pdu_slot_repositor
 
 void uplink_processor_impl::discard_slot()
 {
+  // Notify to the repository the discard of the slot.
+  if (!pdu_repository.start_discard_slot()) {
+    // Skip if it is not necessary.
+    return;
+  }
+
   logger.warning(current_slot.sfn(), current_slot.slot_index(), "Discarded uplink slot. Ignoring processing.");
 
   // Iterate all possible symbols.
   for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
     for (const auto& pdu : pdu_repository.get_pucch_pdus(i_symbol)) {
-      if (pdu_repository.on_create_pdu_task()) {
-        notify_discard_pucch(pdu);
-      }
+      notify_discard_pucch(pdu);
     }
 
     for (const auto& collection : pdu_repository.get_pucch_f1_repository(i_symbol)) {
-      if (pdu_repository.on_create_pdu_task()) {
-        notify_discard_pucch(collection);
-      }
+      notify_discard_pucch(collection);
     }
 
     for (const auto& pdu : pdu_repository.get_pusch_pdus(i_symbol)) {
-      if (pdu_repository.on_create_pdu_task()) {
-        notify_discard_pusch(pdu);
-      }
+      notify_discard_pusch(pdu);
     }
 
     for ([[maybe_unused]] const auto& pdu : pdu_repository.get_srs_pdus(i_symbol)) {
-      if (pdu_repository.on_create_pdu_task()) {
-        pdu_repository.on_finish_processing_pdu();
-      }
+      pdu_repository.on_finish_processing_pdu();
     }
   }
+
+  // Notify the end of discarding slot.
+  pdu_repository.finish_discard_slot();
 }

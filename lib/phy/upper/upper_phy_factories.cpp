@@ -271,8 +271,8 @@ create_downlink_processor_pool(std::shared_ptr<downlink_processor_factory> facto
       processor_config.id      = i_proc;
       processor_config.gateway = config.rg_gateway;
 
-      // Assign an executor to each DL processor from the list in round-robin fashion.
-      processor_config.executor = config.dl_executors[i_proc % config.dl_executors.size()];
+      // Assign the same executor to each DL processor.
+      processor_config.executor = config.dl_executor;
 
       std::unique_ptr<downlink_processor_base> dl_proc;
       if (config.log_level == srslog::basic_levels::none) {
@@ -300,6 +300,7 @@ create_dl_resource_grid_pool(const upper_phy_config& config, std::shared_ptr<res
 {
   // Configure one pool per upper PHY.
   report_fatal_error_if_not(rg_factory, "Invalid resource grid factory.");
+  report_fatal_error_if_not(config.dl_executor != nullptr, "Invalid task executor.");
 
   // Generate resource grid instances.
   std::vector<std::unique_ptr<resource_grid>> grids(config.nof_dl_rg);
@@ -308,7 +309,7 @@ create_dl_resource_grid_pool(const upper_phy_config& config, std::shared_ptr<res
         return rg_factory->create(nof_tx_ports, MAX_NSYMB_PER_SLOT, dl_bw_rb * NRE);
       });
 
-  return create_asynchronous_resource_grid_pool(*config.dl_executors.front(), std::move(grids));
+  return create_asynchronous_resource_grid_pool(*config.dl_executor, std::move(grids));
 }
 
 static std::unique_ptr<resource_grid_pool>
@@ -380,8 +381,8 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
   report_fatal_error_if_not(prach_factory, "Invalid PRACH detector factory.");
 
   // Create PRACH detector pool factory if more than one thread is used.
-  if (config.max_ul_thread_concurrency > 1) {
-    prach_factory = create_prach_detector_pool_factory(std::move(prach_factory), config.max_ul_thread_concurrency);
+  if (config.max_prach_thread_concurrency > 1) {
+    prach_factory = create_prach_detector_pool_factory(std::move(prach_factory), config.max_prach_thread_concurrency);
     report_fatal_error_if_not(prach_factory, "Invalid PRACH detector pool factory.");
   }
 
@@ -773,7 +774,7 @@ public:
     std::unique_ptr<upper_phy_metrics_collector_impl> metrics_collector;
     if (config.enable_metrics) {
       metrics_collector = std::make_unique<upper_phy_metrics_collector_impl>();
-      metric_notifier   = &(*metrics_collector);
+      metric_notifier   = metrics_collector.get();
     }
 
     std::shared_ptr<downlink_processor_factory> downlink_proc_factory =

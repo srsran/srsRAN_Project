@@ -23,10 +23,19 @@
 #include "lib/rlc/rlc_tx_am_entity.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "srsran/support/benchmark_utils.h"
+#include "srsran/support/executors/inline_task_executor.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <getopt.h>
 
 using namespace srsran;
+
+// Initialize timer backend queue. The unique_timer will push into this queue
+// upon destruction.
+static void initialize_thead_local_storage(timer_manager& timers)
+{
+  inline_task_executor inline_exec;
+  auto                 dummy_timer = timers.create_unique_timer(inline_exec);
+}
 
 /// Mocking class of the surrounding layers invoked by the RLC AM Tx entity.
 class rlc_tx_am_test_frame : public rlc_tx_upper_layer_data_notifier,
@@ -94,7 +103,7 @@ static void parse_args(int argc, char** argv, bench_params& params)
   }
 }
 
-void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params& params)
+void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params& params, timer_manager& timers)
 {
   fmt::memory_buffer buffer;
   fmt::format_to(std::back_inserter(buffer), "Benchmark status report handling. {}", status);
@@ -115,7 +124,6 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params&
   // Create test frame
   auto tester = std::make_unique<rlc_tx_am_test_frame>(config.sn_field_length);
 
-  timer_manager      timers;
   manual_task_worker pcell_worker{128};
   manual_task_worker ue_worker{128};
 
@@ -172,22 +180,25 @@ int main(int argc, char** argv)
   bench_params params{};
   parse_args(argc, argv, params);
 
+  timer_manager timers;
+  initialize_thead_local_storage(timers);
+
   {
     rlc_am_status_pdu status(rlc_am_sn_size::size18bits);
     status.ack_sn = 1024;
-    benchmark_status_pdu_handling(std::move(status), params);
+    benchmark_status_pdu_handling(std::move(status), params, timers);
   }
   {
     rlc_am_status_pdu status(rlc_am_sn_size::size18bits);
     status.ack_sn = 2048;
-    benchmark_status_pdu_handling(std::move(status), params);
+    benchmark_status_pdu_handling(std::move(status), params, timers);
   }
   {
     rlc_am_status_pdu status(rlc_am_sn_size::size18bits);
     status.ack_sn           = 2048;
     rlc_am_status_nack nack = {}; // NACK SN=0
     status.push_nack(nack);
-    benchmark_status_pdu_handling(std::move(status), params);
+    benchmark_status_pdu_handling(std::move(status), params, timers);
   }
   {
     rlc_am_status_pdu status(rlc_am_sn_size::size18bits);
@@ -220,7 +231,7 @@ int main(int argc, char** argv)
       nack.nack_range         = 255;
       status.push_nack(nack);
     }
-    benchmark_status_pdu_handling(std::move(status), params);
+    benchmark_status_pdu_handling(std::move(status), params, timers);
   }
   srslog::flush();
 }

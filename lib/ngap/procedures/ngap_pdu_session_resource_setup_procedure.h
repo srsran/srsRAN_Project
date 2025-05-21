@@ -49,8 +49,8 @@ public:
 private:
   void combine_pdu_session_resource_setup_response();
 
-  // results senders
-  void send_pdu_session_resource_setup_response();
+  // Result senders.
+  bool send_pdu_session_resource_setup_response();
 
   const cu_cp_pdu_session_resource_setup_request    request;
   const asn1::ngap::pdu_session_res_setup_request_s asn1_request;
@@ -68,7 +68,7 @@ private:
   // Maps PDU session ID to S-NSSAI for metrics.
   std::map<pdu_session_id_t, s_nssai_t> pdu_session_id_to_snssai;
 
-  // procedure outcomes
+  // Procedure outcomes.
   pdu_session_resource_setup_validation_outcome verification_outcome;
 };
 

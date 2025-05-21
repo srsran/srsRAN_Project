@@ -41,6 +41,9 @@ public:
   // See interface for documentation.
   void handle_late_uplink_message(slot_point slot) override;
 
+  // See interface for documentation.
+  void handle_late_prach_message(slot_point slot) override;
+
   /// Sets the given notifier as the error notifier of this handler.
   void set_error_notifier(upper_phy_error_notifier& notifier) { error_notifier = std::ref(notifier); }
 

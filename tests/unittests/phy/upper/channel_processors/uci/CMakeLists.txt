@@ -25,6 +25,6 @@ set_directory_properties(PROPERTIES LABELS "phy")
 
 if (USE_PHY_TESTVECTORS)
     add_executable(uci_decoder_test uci_decoder_test.cpp)
-    target_link_libraries(uci_decoder_test srsran_channel_processors srsran_channel_coding srsran_upper_phy_support)
+    target_link_libraries(uci_decoder_test srsran_channel_processors srsran_channel_coding srsran_upper_phy_support gtest gtest_main)
     add_test_vector(uci_decoder_test uci_decoder_test_data.tar.gz "")
 endif (USE_PHY_TESTVECTORS)

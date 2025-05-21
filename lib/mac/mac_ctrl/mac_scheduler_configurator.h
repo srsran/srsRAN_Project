@@ -29,10 +29,15 @@ namespace srsran {
 
 struct mac_cell_creation_request;
 
+struct scheduler_cell_metrics;
+template <typename R>
+class zero_copy_notifier;
+using scheduler_cell_metrics_notifier = zero_copy_notifier<scheduler_cell_metrics>;
+
 struct mac_scheduler_cell_creation_request {
   const mac_cell_creation_request& cell_params;
   std::chrono::milliseconds        metric_report_period;
-  scheduler_metrics_notifier*      metric_notifier;
+  scheduler_cell_metrics_notifier* metric_notifier;
 };
 
 /// \brief Adapter interface between MAC and scheduler that allows the srsGNB MAC to configure different scheduler

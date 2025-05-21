@@ -115,6 +115,13 @@ void rx_buffer_pool_impl::run_slot(const slot_point& slot)
     // Get reference to the buffer.
     rx_buffer_impl& buffer = buffers[i_buffer];
 
+    // Skip checks if the buffer is locked.
+    if (buffer.is_locked()) {
+      // Extend expiration time.
+      expirations[i_buffer] = slot + expire_timeout_slots;
+      continue;
+    }
+
     // Determines whether the buffer is free.
     bool is_free = false;
 
@@ -122,12 +129,6 @@ void rx_buffer_pool_impl::run_slot(const slot_point& slot)
     if ((expirations[i_buffer] != null_expiration) && (expirations[i_buffer] <= slot)) {
       // Try to expire the buffer.
       is_free = buffer.expire();
-
-      // If the buffer is not available, increase the expiration time and continue to the next buffer.
-      if (!is_free) {
-        expirations[i_buffer] = slot + expire_timeout_slots;
-        continue;
-      }
     } else {
       // Check if the buffer is free before expiring.
       is_free = buffer.is_free();

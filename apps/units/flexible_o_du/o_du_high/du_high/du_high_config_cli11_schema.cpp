@@ -257,6 +257,13 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
       ->capture_default_str()
       ->check(CLI::Range(0, 64));
   add_option(app,
+             "--harq_retx_timeout",
+             pdsch_params.harq_retx_timeout,
+             "Maximum time, in milliseconds, between a HARQ NACK and the scheduler allocating the respective "
+             "HARQ for retransmission. If this timeout is exceeded, the HARQ process is discarded.")
+      ->capture_default_str()
+      ->check(CLI::Range(10, 500));
+  add_option(app,
              "--max_consecutive_kos",
              pdsch_params.max_consecutive_kos,
              "Maximum number of HARQ-ACK consecutive KOs before an Radio Link Failure is reported")
@@ -375,6 +382,12 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
   add_option(app, "--dmrs_additional_position", pdsch_params.dmrs_add_pos, "PDSCH DMRS additional position")
       ->capture_default_str()
       ->check(CLI::Range(0, 3));
+  add_option(app,
+             "--interleaving_bundle_size",
+             pdsch_params.interleaving_bundle_size,
+             "PDSCH interleaving bundle size. Valid values: [0, 2, 4]")
+      ->capture_default_str()
+      ->check(CLI::IsMember({0, 2, 4}));
 }
 
 static void configure_cli11_du_args(CLI::App& app, bool& warn_on_drop)
@@ -733,6 +746,13 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
       ->capture_default_str()
       ->check(CLI::Range(0, 64));
   add_option(app,
+             "--harq_retx_timeout",
+             pusch_params.harq_retx_timeout,
+             "Maximum time, in milliseconds, between a CRC=KO and the scheduler allocating the respective "
+             "HARQ for retransmission. If this timeout is exceeded, the HARQ process is discarded.")
+      ->capture_default_str()
+      ->check(CLI::Range(10, 500));
+  add_option(app,
              "--max_consecutive_kos",
              pusch_params.max_consecutive_kos,
              "Maximum number of CRC consecutive KOs before an Radio Link Failure is reported")
@@ -1049,9 +1069,11 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   add_option(app, "--f2_max_nof_rbs", pucch_params.f2_max_nof_rbs, "Max number of RBs for PUCCH F2 resources")
       ->capture_default_str()
       ->check(CLI::Range(1, 16));
-  add_option(
-      app, "--f2_max_payload", pucch_params.f2_max_payload_bits, "Max number payload bits for PUCCH F2 resources")
-      ->check(CLI::Range(1, 11));
+  add_option(app,
+             "--f2_max_payload",
+             pucch_params.f2_max_payload_bits,
+             "Min required payload capacity in bits for PUCCH F2 resources")
+      ->check(CLI::Range(4, 40));
   add_option_function<std::string>(
       app,
       "--f2_max_code_rate",
@@ -1066,9 +1088,11 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   add_option(app, "--f3_max_nof_rbs", pucch_params.f3_max_nof_rbs, "Max number of RBs for PUCCH F3 resources")
       ->capture_default_str()
       ->check(CLI::IsMember({1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 15, 16}));
-  add_option(
-      app, "--f3_max_payload", pucch_params.f3_max_payload_bits, "Max number payload bits for PUCCH F3 resources")
-      ->check(CLI::Range(1, 11));
+  add_option(app,
+             "--f3_max_payload",
+             pucch_params.f3_max_payload_bits,
+             "Min required payload capacity in bits for PUCCH F3 resources")
+      ->check(CLI::Range(4, 40));
   add_option_function<std::string>(
       app,
       "--f3_max_code_rate",
@@ -2109,6 +2133,9 @@ static void derive_cell_auto_params(du_high_unit_base_cell_config& cell_cfg)
   // If NR band is not set, derive a valid one from the DL-ARFCN.
   if (not cell_cfg.band.has_value()) {
     cell_cfg.band = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_f_ref_arfcn);
+  }
+  if (not cell_cfg.sched_expert_cfg.policy_sched_expert_cfg.has_value()) {
+    cell_cfg.sched_expert_cfg.policy_sched_expert_cfg.emplace(time_rr_scheduler_expert_config{});
   }
 
   // If in TDD mode, and pattern was not set, generate a pattern DDDDDDXUUU.

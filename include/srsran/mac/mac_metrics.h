@@ -61,6 +61,8 @@ struct mac_dl_cell_metric_report {
   latency_report dl_tti_req_latency;
   /// \brief Description of the delays between the MAC completing a DL TTI request and completing a TX Data request.
   latency_report tx_data_req_latency;
+  /// \brief Description of the delays of the MAC at completing a UL TTI request.
+  latency_report ul_tti_req_latency;
   /// Number of voluntary context switches.
   unsigned count_voluntary_context_switches;
   /// Number of involuntary context switches.

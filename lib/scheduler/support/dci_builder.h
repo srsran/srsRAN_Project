@@ -95,7 +95,8 @@ void build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
                            uint8_t                       rv,
                            const dl_harq_process_handle& h_dl,
                            unsigned                      nof_layers,
-                           uint8_t                       tpc);
+                           uint8_t                       tpc,
+                           bool                          enable_interleaving);
 
 /// Builds DCI f0_0 for TC-RNTI, used in Msg3 retxs.
 void build_dci_f0_0_tc_rnti(dci_ul_info&               dci,

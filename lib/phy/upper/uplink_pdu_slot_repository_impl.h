@@ -31,6 +31,15 @@
 
 namespace srsran {
 
+/// \brief Implements an the uplink slot repository.
+///
+/// The implementation is build with an internal finite state machine with the following states:
+/// - Idle: the repository does not contain any PDU and it is not processing;
+/// - Accepting: the repository accepts the enqueueing of new PDUs;
+/// - Waiting: the repository contains PDUs but it has not processed any yet;
+/// - Processing: the repository contains PDUs and it is processing PDUs;
+/// - Discarding slot: the repository is in a state of discarding the collected PDUs; and
+/// - Stopped: the repository does not accept transitioning to any other state.
 class uplink_pdu_slot_repository_impl : public unique_uplink_pdu_slot_repository::uplink_pdu_slot_repository_callback
 {
 public:
@@ -122,6 +131,9 @@ public:
   }
 
   /// \brief Reserves the repository for a new slot context.
+  ///
+  /// A reservation is not successful if the current state is not idle.
+  ///
   /// \return \c true if the reservation is successful, otherwise \c false.
   bool reserve_on_new_slot(slot_point new_slot)
   {
@@ -160,15 +172,64 @@ public:
     srsran_assert(is_state_accepting_pdu(prev), "Unexpected prev={:08x} finishing PDUs.", prev);
   }
 
-  /// \brief Returns \c true if the repository is configured with the given slot.
+  /// \brief Notifies the start of a slot discard.
   ///
-  /// The slot is considered invalid if the current state is accepting PDUs, idle, stopped or if the given slot is not
-  /// equal to the configured one.
+  /// The current state does not allow discarding the slot if:
+  /// - is stopped;
+  /// - is discarding (to avoid discarding twice); or
+  /// - there are no pending PDUs to discard.
+  ///
+  /// \return \c true if the current state allows to discard the slot, otherwise \c false.
+  bool start_discard_slot()
+  {
+    // Get current state.
+    uint32_t current_state = pending_pdu_count.load();
+
+    uint32_t nof_pending_pdu_in_queue = current_state & 0xfff;
+
+    // Skip function - returns true if the slot discard is not necessary.
+    auto skip_function = [&current_state]() {
+      // Skip if the state is stopped, already discarding or no pending PDU.
+      return is_state_stopped(current_state) || is_state_discarding(current_state) ||
+             !has_state_pending_pdu_in_queue(current_state);
+    };
+
+    // Try to set the number of pending execute PDU equal to the number of enqueued tasks and set the discarding slot
+    // mask.
+    bool success = false;
+    while (!skip_function() && !success) {
+      success = pending_pdu_count.compare_exchange_weak(
+          current_state, current_state | (nof_pending_pdu_in_queue * pending_pdu_inc_exec) | discarding_slot_mask);
+    }
+
+    return success;
+  }
+
+  /// \brief Notifies the completion of the slot discard.
+  ///
+  /// Transitions the state to idle.
+  ///
+  /// \remark An assertion is triggered if there are still PDUs to notify.
+  void finish_discard_slot()
+  {
+    [[maybe_unused]] uint32_t prev_state = pending_pdu_count.exchange(pending_pdu_count_idle);
+    srsran_assert(!has_state_pending_pdu_in_queue(prev_state) && !has_state_pending_pdu_in_exec(prev_state) &&
+                      is_state_discarding(prev_state),
+                  "Unexpected state after discarding slot 0x{:08x}",
+                  prev_state);
+  }
+
+  /// \brief Returns \c true if the repository is configured with the given slot and ready to process PDUs.
+  ///
+  /// The slot is considered invalid if :
+  /// - the current state is accepting PDUs, idle, discarding a slot, or stopped; or
+  /// - the given slot is not equal to the configured one.
   bool is_slot_valid(slot_point slot) const
   {
     // Verify that the repository is in a valid state to process PDUs.
     uint32_t current_state = pending_pdu_count.load();
-    if (is_state_idle(current_state) || is_state_accepting_pdu(current_state) || is_state_stopped(current_state)) {
+    if (is_state_idle(current_state) || is_state_accepting_pdu(current_state) || is_state_discarding(current_state) ||
+        is_state_stopped(current_state)) {
       return false;
     }
 
@@ -283,13 +344,15 @@ public:
   /// \brief Stops the uplink PDU slot repository.
   ///
   /// It waits as long as:
-  /// - the repository is active accepting PDUs; and
-  /// - there are asynchronous tasks being executed.
+  /// - the repository is active accepting PDUs;
+  /// - there are asynchronous tasks being executed; or
+  /// - it is in the process of discarding a slot.
   void stop()
   {
     // As long as there are pending asynchronous tasks, wait for them to finish.
     for (uint32_t current_state = pending_pdu_count.load();
          is_state_accepting_pdu(current_state) || has_state_pending_pdu_in_exec(current_state) ||
+         is_state_discarding(current_state) ||
          !pending_pdu_count.compare_exchange_weak(current_state, pending_pdu_count_stopped);
          current_state = pending_pdu_count.load()) {
       std::this_thread::sleep_for(std::chrono::microseconds(10));
@@ -299,6 +362,8 @@ public:
 private:
   /// Accepting PDU state mask in the pending PDU count.
   static constexpr uint32_t accepting_pdu_mask = 0x80000000;
+  /// The current state is discarding the slot.
+  static constexpr uint32_t discarding_slot_mask = 0x40000000;
   /// Pending PDU value when the processor is idle.
   static constexpr uint32_t pending_pdu_count_idle = 0x0;
   /// Pending PDU value when the processor is stopped.
@@ -313,6 +378,9 @@ private:
 
   /// Returns \c true if a state is stopped.
   static constexpr bool is_state_stopped(uint32_t state) { return state == pending_pdu_count_stopped; }
+
+  /// Returns \c true if a state is in process of discarding the slot.
+  static constexpr bool is_state_discarding(uint32_t state) { return state & discarding_slot_mask; }
 
   /// Returns \c true if a state is accepting PDU.
   static constexpr bool is_state_accepting_pdu(uint32_t state) { return state & accepting_pdu_mask; }

@@ -30,7 +30,7 @@
 #pragma GCC diagnostic ignored "-Wsuggest-override"
 #endif // __clang__
 
-#include "srsran/support/complex_normal_random.h"
+#include "srsran/support/math/complex_normal_random.h"
 #include <gtest/gtest.h>
 
 namespace srsran {

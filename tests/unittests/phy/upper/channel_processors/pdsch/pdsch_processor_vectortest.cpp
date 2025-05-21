@@ -321,11 +321,6 @@ private:
         } else {
           cb_batch_length = 0;
         }
-
-        // Create worker pool and executor.
-        worker_pool = std::make_unique<task_worker_pool<concurrent_queue_policy::locking_mpmc>>(
-            "pdsch_proc", NOF_CONCURRENT_THREADS, 128);
-        executor = std::make_unique<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>>(*worker_pool);
       }
 
       return create_pdsch_flexible_processor_factory_sw(ldpc_segmenter_tx_factory,
@@ -347,13 +342,26 @@ protected:
   // PDSCH validator.
   std::unique_ptr<pdsch_pdu_validator> pdu_validator;
   // Worker pool.
-  std::unique_ptr<task_worker_pool<concurrent_queue_policy::locking_mpmc>>          worker_pool;
-  std::unique_ptr<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>> executor;
+  static std::unique_ptr<task_worker_pool<concurrent_queue_policy::locking_mpmc>>          worker_pool;
+  static std::unique_ptr<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>> executor;
+
+  static void SetUpTestSuite()
+  {
+    // Create worker pool and executor.
+    if (!worker_pool || !executor) {
+      worker_pool = std::make_unique<task_worker_pool<concurrent_queue_policy::locking_mpmc>>(
+          "pdsch_proc", NOF_CONCURRENT_THREADS, 128);
+      executor = std::make_unique<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>>(*worker_pool);
+    }
+  }
 
   void SetUp() override
   {
     const PdschProcessorParams& param        = GetParam();
     const std::string&          factory_type = std::get<0>(param);
+
+    ASSERT_NE(worker_pool, nullptr) << "Invalid worker pool.";
+    ASSERT_NE(executor, nullptr) << "Invalid executor.";
 
     // Create PDSCH processor factory.
     std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory =
@@ -374,16 +382,26 @@ protected:
     ASSERT_NE(pdu_validator, nullptr) << "Cannot create PDSCH validator";
   }
 
-  void TearDown() override
+  static void TearDownTestSuite()
   {
+    if (executor) {
+      executor.reset();
+    }
     if (worker_pool) {
       worker_pool->stop();
     }
   }
 };
 
+std::unique_ptr<task_worker_pool<concurrent_queue_policy::locking_mpmc>> PdschProcessorFixture::worker_pool = nullptr;
+std::unique_ptr<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>> PdschProcessorFixture::executor =
+    nullptr;
+
 TEST_P(PdschProcessorFixture, PdschProcessorVectortest)
 {
+  ASSERT_NE(pdsch_proc, nullptr) << "Invalid PDSCH processor.";
+  ASSERT_NE(pdu_validator, nullptr) << "Invalid PDSCH PDU validator.";
+
   pdsch_processor_notifier_spy notifier_spy;
   const PdschProcessorParams&  param     = GetParam();
   const test_case_t&           test_case = std::get<1>(param);

@@ -68,8 +68,9 @@ public:
 /// Error notifier spy implementation.
 class error_notifier_spy : public error_notifier
 {
-  bool dl_late = false;
-  bool ul_late = false;
+  bool dl_late    = false;
+  bool ul_late    = false;
+  bool prach_late = false;
 
 public:
   // See interface for documentation.
@@ -78,8 +79,12 @@ public:
   // See interface for documentation.
   void on_late_uplink_message(const error_context& context) override { ul_late = true; }
 
+  // See interface for documentation.
+  void on_late_prach_message(const error_context& context) override { prach_late = true; }
+
   bool is_downlink_late() const { return dl_late; }
   bool is_uplink_late() const { return ul_late; }
+  bool is_prach_late() const { return prach_late; }
 };
 
 } // namespace
@@ -117,15 +122,18 @@ TEST(ofh_downlink_handler_impl, handling_downlink_data_use_control_and_user_plan
                                                                       notifier_spy,
                                                                       std::move(cplane),
                                                                       std::move(uplane),
+                                                                      std::make_shared<ether::eth_frame_pool>(mtu_size, 2),
                                                                       std::make_shared<ether::eth_frame_pool>(mtu_size, 2)};
 
   downlink_handler_impl handler(config, std::move(dependencies));
 
   resource_grid_reader_spy rg_reader_spy(1, 1, 1);
+  rg_reader_spy.write(resource_grid_reader_spy::expected_entry_t{});
   resource_grid_writer_spy rg_writer_spy(1, 1, 1);
   resource_grid_spy        rg_spy(rg_reader_spy, rg_writer_spy);
   shared_resource_grid_spy rg(rg_spy);
-  resource_grid_context    rg_context;
+
+  resource_grid_context rg_context;
   rg_context.slot   = slot_point(1, 1, 1);
   rg_context.sector = 1;
 
@@ -170,11 +178,13 @@ TEST(ofh_downlink_handler_impl, late_rg_is_not_handled)
                                                                       notifier_spy,
                                                                       std::move(cplane),
                                                                       std::move(uplane),
+                                                                      std::make_shared<ether::eth_frame_pool>(mtu_size, 2),
                                                                       std::make_shared<ether::eth_frame_pool>(mtu_size, 2)};
 
   downlink_handler_impl handler(config, std::move(dependencies));
 
   resource_grid_reader_spy rg_reader_spy(1, 1, 1);
+  rg_reader_spy.write(resource_grid_reader_spy::expected_entry_t{});
   resource_grid_writer_spy rg_writer_spy(1, 1, 1);
   resource_grid_spy        rg_spy(rg_reader_spy, rg_writer_spy);
   shared_resource_grid_spy rg(rg_spy);
@@ -215,11 +225,13 @@ TEST(ofh_downlink_handler_impl, same_slot_fails)
                                                                       notifier_spy,
                                                                       std::move(cplane),
                                                                       std::move(uplane),
+                                                                      std::make_shared<ether::eth_frame_pool>(mtu_size, 2),
                                                                       std::make_shared<ether::eth_frame_pool>(mtu_size, 2)};
 
   downlink_handler_impl handler(config, std::move(dependencies));
 
   resource_grid_reader_spy rg_reader_spy(1, 1, 1);
+  rg_reader_spy.write(resource_grid_reader_spy::expected_entry_t{});
   resource_grid_writer_spy rg_writer_spy(1, 1, 1);
   resource_grid_spy        rg_spy(rg_reader_spy, rg_writer_spy);
   shared_resource_grid_spy rg(rg_spy);
@@ -256,11 +268,13 @@ TEST(ofh_downlink_handler_impl, rg_in_the_frontier_is_handled)
                                                                       notifier_spy,
                                                                       std::move(cplane),
                                                                       std::move(uplane),
+                                                                      std::make_shared<ether::eth_frame_pool>(mtu_size, 2),
                                                                       std::make_shared<ether::eth_frame_pool>(mtu_size, 2)};
 
   downlink_handler_impl handler(config, std::move(dependencies));
 
   resource_grid_reader_spy rg_reader_spy(1, 1, 1);
+  rg_reader_spy.write(resource_grid_reader_spy::expected_entry_t{});
   resource_grid_writer_spy rg_writer_spy(1, 1, 1);
   resource_grid_spy        rg_spy(rg_reader_spy, rg_writer_spy);
   shared_resource_grid_spy rg(rg_spy);

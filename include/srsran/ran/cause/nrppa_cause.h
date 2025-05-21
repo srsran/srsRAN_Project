@@ -27,12 +27,14 @@
 
 namespace srsran {
 
+/// The NRPPa radio network cause, see TS 38.455 section 9.2.1.
 enum class nrppa_cause_radio_network_t : uint8_t {
   unspecified = 0,
   requested_item_not_supported,
   requested_item_temporarily_not_available
 };
 
+/// The NRPPa protocol cause, see TS 38.455 section 9.2.1.
 enum class nrppa_cause_protocol_t : uint8_t {
   transfer_syntax_error = 0,
   abstract_syntax_error_reject,
@@ -43,8 +45,11 @@ enum class nrppa_cause_protocol_t : uint8_t {
   abstract_syntax_error_falsely_constructed_msg
 };
 
+/// The NRPPa misc cause, see TS 38.455 section 9.2.1.
 enum class nrppa_cause_misc_t : uint8_t { unspecified = 0 };
 
+/// The NRPPa cause to indicate the reason for a particular event, see TS 38.455 section 9.2.1.
+/// The NRPPa cause is a union of the radio network cause, protocol cause and misc cause.
 using nrppa_cause_t = std::variant<nrppa_cause_radio_network_t, nrppa_cause_protocol_t, nrppa_cause_misc_t>;
 
 } // namespace srsran

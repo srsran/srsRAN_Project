@@ -47,7 +47,7 @@ public:
   void handle_si_update_request(const si_scheduling_update_request& req) override;
 
   // scheduler_slot_handler interface methods.
-  const sched_result& slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override;
+  const sched_result& slot_indication(slot_point sl_tx, du_cell_index_t cell_index) noexcept override;
   void handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index, error_outcome event) override;
 
   // DU manager events.

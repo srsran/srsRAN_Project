@@ -37,7 +37,8 @@ inter_slice_scheduler::inter_slice_scheduler(const cell_configuration& cell_cfg_
   // DRB slice).
   unsigned capacity = cell_cfg.rrm_policy_members.size() + 2;
   dl_prio_queue.reserve(capacity);
-  ul_prio_queue.reserve(capacity);
+  // We use a larger capacity for the UL priority queue to account for the maximum number of PUSCH TD resources.
+  ul_prio_queue.reserve(capacity * pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS);
   slices.reserve(capacity);
 
   // NOTE: We assume nof. CRBs in a cell for both DL and UL are same.
@@ -118,9 +119,10 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
     span<const pusch_time_domain_resource_allocation> pusch_time_domain_list =
         cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list;
     for (const unsigned pusch_td_res_idx :
-         valid_pusch_td_list_per_slot[slot_tx.to_uint() % valid_pusch_td_list_per_slot.size()]) {
-      const cell_slot_resource_allocator& pusch_alloc = res_grid[pusch_time_domain_list[pusch_td_res_idx].k2];
-      slot_point                          pusch_slot  = slot_tx + pusch_time_domain_list[pusch_td_res_idx].k2;
+         valid_pusch_td_list_per_slot[(slot_tx).to_uint() % valid_pusch_td_list_per_slot.size()]) {
+      unsigned pusch_delay = pusch_time_domain_list[pusch_td_res_idx].k2 + cell_cfg.ntn_cs_koffset;
+      const cell_slot_resource_allocator& pusch_alloc = res_grid[pusch_delay];
+      slot_point                          pusch_slot  = slot_tx + pusch_delay;
 
       unsigned pusch_rb_count = slice.inst.nof_pusch_rbs_allocated(pusch_slot);
       if (pusch_rb_count >= slice.inst.cfg.max_prb) {

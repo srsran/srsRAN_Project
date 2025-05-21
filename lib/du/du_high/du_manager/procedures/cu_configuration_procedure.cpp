@@ -111,6 +111,8 @@ async_task<void> cu_configuration_procedure::stop_cell(const nr_cell_global_id_t
 
   static const std::chrono::milliseconds periodic_check_timeout{10};
   static const unsigned                  nof_checks = std::chrono::milliseconds{500} / periodic_check_timeout;
+  static const std::chrono::milliseconds mac_grant_flush_timeout{50};
+
   unique_timer timer = du_params.services.timers.create_unique_timer(du_params.services.du_mng_exec);
   return launch_async(
       [this, cell_index, timer = std::move(timer), count = 0U](coro_context<async_task<void>>& ctx) mutable {
@@ -139,6 +141,10 @@ async_task<void> cu_configuration_procedure::stop_cell(const nr_cell_global_id_t
 
         // Stop cell.
         CORO_AWAIT(cell_mng.stop(cell_index));
+
+        // Wait for some slots to ensure all pending grants were flushed.
+        // TODO: Move this wait to the MAC once the FAPI stop procedure is supported.
+        CORO_AWAIT(async_wait_for(timer, mac_grant_flush_timeout));
 
         CORO_RETURN();
       });

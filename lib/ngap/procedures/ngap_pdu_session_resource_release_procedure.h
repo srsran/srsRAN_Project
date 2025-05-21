@@ -43,8 +43,8 @@ public:
   static const char* name() { return "PDU Session Resource Release Procedure"; }
 
 private:
-  // results senders
-  void send_pdu_session_resource_release_response();
+  // Result senders.
+  bool send_pdu_session_resource_release_response();
 
   cu_cp_pdu_session_resource_release_command  command;
   const ngap_ue_ids                           ue_ids;

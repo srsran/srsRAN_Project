@@ -75,7 +75,9 @@ public:
     context_info({context, &buffer})
   {
     srsran_assert(context.nof_fd_occasions == 1, "Only supporting one frequency domain occasion");
-    srsran_assert(context.nof_td_occasions == 1, "Only supporting one time domain occasion");
+    srsran_assert(is_short_preamble(context.format) ||
+                      (is_long_preamble(context.format) && context.nof_td_occasions == 1),
+                  "Only supporting one time domain occasion for long preamble format");
 
     // Get preamble information.
     preamble_info =

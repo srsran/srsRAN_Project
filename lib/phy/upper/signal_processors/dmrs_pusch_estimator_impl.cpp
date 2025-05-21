@@ -27,47 +27,6 @@
 
 using namespace srsran;
 
-namespace {
-const bounded_bitset<NRE> RE_PATTERN_TYPE1_DELTA0 =
-    {true, false, true, false, true, false, true, false, true, false, true, false};
-const bounded_bitset<NRE> RE_PATTERN_TYPE1_DELTA1 =
-    {false, true, false, true, false, true, false, true, false, true, false, true};
-const bounded_bitset<NRE> RE_PATTERN_TYPE2_DELTA0 =
-    {true, true, false, false, false, false, true, true, false, false, false, false};
-const bounded_bitset<NRE> RE_PATTERN_TYPE2_DELTA2 =
-    {false, false, true, true, false, false, false, false, true, true, false, false};
-const bounded_bitset<NRE> RE_PATTERN_TYPE2_DELTA4 =
-    {false, false, false, false, true, true, false, false, false, false, true, true};
-} // namespace
-
-const std::array<dmrs_pusch_estimator_impl::parameters, dmrs_type::DMRS_MAX_PORTS_TYPE1>
-    dmrs_pusch_estimator_impl::params_type1 = {{
-        /* Port 1000 */ {RE_PATTERN_TYPE1_DELTA0, {+1.0F, +1.0F}, {+1.0F, +1.0F}},
-        /* Port 1001 */ {RE_PATTERN_TYPE1_DELTA0, {+1.0F, -1.0F}, {+1.0F, +1.0F}},
-        /* Port 1002 */ {RE_PATTERN_TYPE1_DELTA1, {+1.0F, +1.0F}, {+1.0F, +1.0F}},
-        /* Port 1003 */ {RE_PATTERN_TYPE1_DELTA1, {+1.0F, -1.0F}, {+1.0F, +1.0F}},
-        /* Port 1004 */ {RE_PATTERN_TYPE1_DELTA0, {+1.0F, +1.0F}, {+1.0F, -1.0F}},
-        /* Port 1005 */ {RE_PATTERN_TYPE1_DELTA0, {+1.0F, -1.0F}, {+1.0F, -1.0F}},
-        /* Port 1006 */ {RE_PATTERN_TYPE1_DELTA1, {+1.0F, +1.0F}, {+1.0F, -1.0F}},
-        /* Port 1007 */ {RE_PATTERN_TYPE1_DELTA1, {+1.0F, -1.0F}, {+1.0F, -1.0F}},
-    }};
-
-const std::array<dmrs_pusch_estimator_impl::parameters, dmrs_type::DMRS_MAX_PORTS_TYPE2>
-    dmrs_pusch_estimator_impl::params_type2 = {{
-        /* Port 1000 */ {RE_PATTERN_TYPE2_DELTA0, {+1.0F, +1.0F}, {+1.0F, +1.0F}},
-        /* Port 1001 */ {RE_PATTERN_TYPE2_DELTA0, {+1.0F, -1.0F}, {+1.0F, +1.0F}},
-        /* Port 1002 */ {RE_PATTERN_TYPE2_DELTA2, {+1.0F, +1.0F}, {+1.0F, +1.0F}},
-        /* Port 1003 */ {RE_PATTERN_TYPE2_DELTA2, {+1.0F, -1.0F}, {+1.0F, +1.0F}},
-        /* Port 1004 */ {RE_PATTERN_TYPE2_DELTA4, {+1.0F, +1.0F}, {+1.0F, +1.0F}},
-        /* Port 1005 */ {RE_PATTERN_TYPE2_DELTA4, {+1.0F, -1.0F}, {+1.0F, +1.0F}},
-        /* Port 1006 */ {RE_PATTERN_TYPE2_DELTA0, {+1.0F, +1.0F}, {+1.0F, -1.0F}},
-        /* Port 1007 */ {RE_PATTERN_TYPE2_DELTA0, {+1.0F, -1.0F}, {+1.0F, -1.0F}},
-        /* Port 1008 */ {RE_PATTERN_TYPE2_DELTA2, {+1.0F, +1.0F}, {+1.0F, -1.0F}},
-        /* Port 1009 */ {RE_PATTERN_TYPE2_DELTA2, {+1.0F, -1.0F}, {+1.0F, -1.0F}},
-        /* Port 1010 */ {RE_PATTERN_TYPE2_DELTA4, {+1.0F, +1.0F}, {+1.0F, -1.0F}},
-        /* Port 1011 */ {RE_PATTERN_TYPE2_DELTA4, {+1.0F, -1.0F}, {+1.0F, -1.0F}},
-    }};
-
 void dmrs_pusch_estimator_impl::estimate(channel_estimate&           estimate,
                                          const resource_grid_reader& grid,
                                          const configuration&        config)
@@ -158,7 +117,7 @@ void dmrs_pusch_estimator_impl::generate(dmrs_symbol_list&        symbols,
                 dmrs_symbol_index = 0;
        ofdm_symbol_index != ofdm_symbol_end;
        ++ofdm_symbol_index) {
-    // Skip symbol if it does not carry DMRS.
+    // Skip symbol if it does not carry DM-RS.
     if (!cfg.symbols_mask.test(ofdm_symbol_index)) {
       continue;
     }
@@ -176,7 +135,7 @@ void dmrs_pusch_estimator_impl::generate(dmrs_symbol_list&        symbols,
   // For each layer...
   for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
     // Select layer parameters.
-    const parameters& params = (type == dmrs_type::TYPE1) ? params_type1[i_layer] : params_type2[i_layer];
+    dmrs_pxsch_parameters params = get_pxsch_dmrs_params(type, i_layer);
 
     // Skip copy for layer 0.
     if (i_layer != 0) {
@@ -189,17 +148,17 @@ void dmrs_pusch_estimator_impl::generate(dmrs_symbol_list&        symbols,
         span<const cf_t> dmrs_layer0 = symbols.get_symbol(i_symbol, 0);
 
         // If a time weight is required...
-        if (params.w_t[0] != params.w_t[1] && i_symbol % 2 == 1) {
-          // Apply the weight.
+        if ((params.w_t[0] != params.w_t[1]) && (i_symbol % 2 == 1)) {
+          // apply the weight...
           srsvec::sc_prod(dmrs_layer0, params.w_t[1], dmrs);
         } else {
           // otherwise, copy symbols from layer 0 to the current layer.
           srsvec::copy(dmrs, dmrs_layer0);
         }
 
-        // If a frequency weight is required.
+        // If a frequency weight is required...
         if (params.w_f[0] != params.w_f[1]) {
-          // Apply frequency domain mask.
+          // apply frequency domain mask.
           for (unsigned subc = 1, subc_end = 2 * (dmrs.size() / 2) + 1; subc != subc_end; subc += 2) {
             dmrs[subc] *= params.w_f[1];
           }

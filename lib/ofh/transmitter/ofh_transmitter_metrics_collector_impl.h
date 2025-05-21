@@ -23,6 +23,7 @@
 #pragma once
 
 #include "ofh_downlink_handler_metrics_collector.h"
+#include "ofh_message_transmitter_metrics_collector.h"
 #include "ofh_uplink_request_handler_metrics_collector.h"
 #include "srsran/ofh/ethernet/ethernet_transmitter_metrics_collector.h"
 #include "srsran/ofh/transmitter/ofh_transmitter_metrics_collector.h"
@@ -36,10 +37,12 @@ public:
   transmitter_metrics_collector_impl(bool                                      metrics_enabled,
                                      downlink_handler_metrics_collector&       dl_metrics_collector_,
                                      uplink_request_handler_metrics_collector& ul_metrics_collector_,
+                                     message_transmitter_metrics_collector&    message_tx_collector_,
                                      ether::transmitter_metrics_collector*     eth_transmitter_collector_) :
     is_disabled(!metrics_enabled),
     dl_metrics_collector(dl_metrics_collector_),
     ul_metrics_collector(ul_metrics_collector_),
+    message_tx_collector(message_tx_collector_),
     eth_transmitter_collector(eth_transmitter_collector_)
   {
   }
@@ -56,6 +59,7 @@ public:
 
     dl_metrics_collector.collect_metrics(metric.dl_metrics);
     ul_metrics_collector.collect_metrics(metric.ul_metrics);
+    message_tx_collector.collect_metrics(metric.message_tx_metrics);
     if (eth_transmitter_collector) {
       eth_transmitter_collector->collect_metrics(metric.eth_transmitter_metrics);
     }
@@ -65,6 +69,7 @@ private:
   const bool                                is_disabled;
   downlink_handler_metrics_collector&       dl_metrics_collector;
   uplink_request_handler_metrics_collector& ul_metrics_collector;
+  message_transmitter_metrics_collector&    message_tx_collector;
   ether::transmitter_metrics_collector*     eth_transmitter_collector;
 };
 

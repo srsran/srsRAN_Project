@@ -18,8 +18,6 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-set_directory_properties(PROPERTIES LABELS "rlc")
-
 include_directories(../../..)
 
 add_executable(rlc_handle_status_report rlc_handle_status_report.cpp)
@@ -33,3 +31,6 @@ add_test(rlc_am_rx_benchmark rlc_am_rx_benchmark)
 add_executable(rlc_am_tx_benchmark rlc_am_tx_benchmark.cpp)
 target_link_libraries(rlc_am_tx_benchmark srsran_rlc srslog pdcp_test_doubles)
 add_test(rlc_am_tx_benchmark rlc_am_tx_benchmark)
+
+set_tests_properties(rlc_am_tx_benchmark rlc_am_rx_benchmark PROPERTIES LABELS "rlc|rtsan")
+set_tests_properties(rlc_handle_status_report PROPERTIES LABELS "rlc")

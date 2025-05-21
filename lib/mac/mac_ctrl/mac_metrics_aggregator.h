@@ -30,15 +30,13 @@
 
 namespace srsran {
 
-class scheduler_metrics_notifier;
-
 struct cell_metric_report_config {
   /// \brief Period of the metric report.
   std::chrono::milliseconds report_period;
   /// \brief Pointer to the MAC cell metric notifier.
   mac_cell_metric_notifier* mac_notifier = nullptr;
   /// \brief Pointer to the SCHED cell metric notifier.
-  scheduler_metrics_notifier* sched_notifier = nullptr;
+  scheduler_cell_metrics_notifier* sched_notifier = nullptr;
 };
 
 /// \brief Aggregator of the metrics of all the different MAC components (UL, DL, scheduler)
