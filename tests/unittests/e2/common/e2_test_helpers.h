@@ -1024,4 +1024,68 @@ class e2_test_setup : public e2_test_base
   }
 };
 
+class dummy_e2_interface : public e2_interface
+{
+public:
+  dummy_e2_interface() : logger(srslog::fetch_basic_logger("TEST")) {}
+
+  // e2_message_handler interface
+  void handle_message(const e2_message& msg) override
+  {
+    logger.info("Received E2 message of type {}", msg.pdu.type().to_string());
+    last_msg = msg;
+  }
+
+  // e2_event_handler interface
+  void handle_connection_loss() override { logger.info("E2 connection lost"); }
+
+  // e2_connection_manager interface
+  bool handle_e2_tnl_connection_request() override
+  {
+    logger.info("E2 TNL connection request received");
+    return true;
+  }
+
+  async_task<void> handle_e2_disconnection_request() override
+  {
+    logger.info("E2 disconnection request received");
+    return launch_async([](coro_context<async_task<void>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
+  async_task<e2_setup_response_message> handle_e2_setup_request(e2_setup_request_message& request) override
+  {
+    logger.info("E2 setup request received");
+    return launch_async([](coro_context<async_task<e2_setup_response_message>>& ctx) {
+      CORO_BEGIN(ctx);
+      e2_setup_response_message response;
+      response.success = true;
+      CORO_RETURN(response);
+    });
+  }
+
+  async_task<e2_setup_response_message> start_initial_e2_setup_routine() override
+  {
+    logger.info("Starting initial E2 setup routine");
+    return launch_async([](coro_context<async_task<e2_setup_response_message>>& ctx) {
+      CORO_BEGIN(ctx);
+      e2_setup_response_message response;
+      response.success = true;
+      CORO_RETURN(response);
+    });
+  }
+
+  // e2_interface interface
+  void start() override { logger.info("Starting dummy E2 interface"); }
+
+  void stop() override { logger.info("Stopping dummy E2 interface"); }
+
+  e2_message last_msg;
+
+private:
+  srslog::basic_logger& logger;
+};
+
 } // namespace srsran
