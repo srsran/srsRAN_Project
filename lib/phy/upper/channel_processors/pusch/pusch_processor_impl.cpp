@@ -204,8 +204,11 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   ch_est_config.rx_ports.assign(pdu.rx_ports.begin(), pdu.rx_ports.end());
   dependencies.get_estimator().estimate(ch_estimate, grid, ch_est_config);
 
-  // Handles the direct current if it is present.
-  if (pdu.dc_position.has_value()) {
+  // Set the DC (Direct Current) subcarrier to zero if its position is within the resource grid and transform precoding
+  // is disabled. This step is skipped when transform precoding is used, as forcing the DC to zero in that case may
+  // introduce non-linear distortion after the inverse transform. The issue is particularly pronounced for narrowband
+  // PUSCH transmissions.
+  if (pdu.dc_position.has_value() && std::holds_alternative<dmrs_configuration>(pdu.dmrs)) {
     for (unsigned i_port = 0, i_port_end = pdu.rx_ports.size(); i_port != i_port_end; ++i_port) {
       for (unsigned i_layer = 0, i_layer_end = pdu.nof_tx_layers; i_layer != i_layer_end; ++i_layer) {
         for (unsigned i_symbol = pdu.start_symbol_index, i_symbol_end = pdu.start_symbol_index + pdu.nof_symbols;
