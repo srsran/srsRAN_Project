@@ -442,11 +442,11 @@ bool ra_scheduler::is_slot_candidate_for_rar(cell_slot_resource_allocator& slot_
   }
 
   // Ensure slot for RAR PDCCH has DL enabled.
-  if (not cell_cfg.is_dl_enabled(slot_res_alloc.slot)) {
+  if (not cell_cfg.is_dl_enabled(pdcch_slot)) {
     return false;
   }
 
-  if (not slot_res_alloc.result.dl.csi_rs.empty()) {
+  if (is_csi_rs_slot(pdcch_slot)) {
     // TODO: Remove this once multiplexing is possible.
     // At the moment, we do not multiple PDSCH and CSI-RS.
     return false;
@@ -895,4 +895,25 @@ void ra_scheduler::log_postponed_rar(const pending_rar_t&      rar,
   } else {
     logger.debug("RAR allocation for ra-rnti={} was postponed. Cause: {}", rar.ra_rnti, cause_str);
   }
+}
+
+bool ra_scheduler::is_csi_rs_slot(slot_point slot) const
+{
+  // Slot for zp-CSI-RS.
+  for (unsigned i = 0; i != cell_cfg.zp_csi_rs_list.size(); ++i) {
+    const zp_csi_rs_resource& zp_csi = cell_cfg.zp_csi_rs_list[i];
+    if ((slot - *zp_csi.offset).to_uint() % (unsigned)*zp_csi.period == 0) {
+      return true;
+    }
+  }
+
+  // Slot for nzp-CSI-RS.
+  for (unsigned i = 0; i != cell_cfg.nzp_csi_rs_list.size(); ++i) {
+    const nzp_csi_rs_resource& nzp_csi = cell_cfg.nzp_csi_rs_list[i];
+    if ((slot - *nzp_csi.csi_res_offset).to_uint() % (unsigned)*nzp_csi.csi_res_period == 0) {
+      return true;
+    }
+  }
+
+  return false;
 }
