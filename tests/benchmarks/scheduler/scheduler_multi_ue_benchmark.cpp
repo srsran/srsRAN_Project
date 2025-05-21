@@ -255,24 +255,26 @@ void benchmark_tdd(benchmarker& bm, const bench_params& params)
   builder_params.scs_common           = subcarrier_spacing::kHz30;
   builder_params.tdd_ul_dl_cfg_common = tdd_ul_dl_config_common{builder_params.scs_common, {10, 7, 8, 2, 0}};
   builder_params.nof_dl_ports         = 4;
-  multi_ue_sched_simulator sim{sched_cfg, builder_params};
+
+  // Instantiate the simulator on the heap because of huge object size
+  std::unique_ptr<multi_ue_sched_simulator> sim = std::make_unique<multi_ue_sched_simulator>(sched_cfg, builder_params);
 
   // Add UEs.
   for (unsigned ue_count = 0; ue_count != params.nof_ues; ++ue_count) {
-    sim.add_ue();
+    sim->add_ue();
   }
 
   // Update UE buffer states.
-  sim.push_dl_bs(params.dl_bs);
+  sim->push_dl_bs(params.dl_bs);
 
   // Run benchmark.
   bm.new_measure(
       fmt::format("TDD scheduling {} UEs", params.nof_ues),
       1,
-      [&sim]() mutable { sim.run_slot(); },
+      [&sim]() mutable { sim->run_slot(); },
       [&]() {
-        sim.process_results();
-        sim.push_dl_bs(params.dl_bs);
+        sim->process_results();
+        sim->push_dl_bs(params.dl_bs);
       });
 }
 
