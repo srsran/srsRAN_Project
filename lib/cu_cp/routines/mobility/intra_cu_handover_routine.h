@@ -41,7 +41,6 @@ public:
   static const char* name() { return "Intra CU Handover Routine"; }
 
 private:
-  void generate_bearer_context_modification_request_1();
   bool generate_ue_context_setup_request(f1ap_ue_context_setup_request&               setup_request,
                                          const static_vector<srb_id_t, MAX_NOF_SRBS>& srbs,
                                          const rrc_ue_transfer_context&               transfer_context);
@@ -71,8 +70,7 @@ private:
   // (sub-)routine requests
   f1ap_ue_context_setup_request            target_ue_context_setup_request;
   f1ap_ue_context_modification_request     source_ue_context_mod_request;
-  e1ap_bearer_context_modification_request bearer_context_modification_request_1;
-  e1ap_bearer_context_modification_request bearer_context_modification_request_2;
+  e1ap_bearer_context_modification_request bearer_context_modification_request;
   rrc_reconfiguration_procedure_request    rrc_reconfig_args;
   f1ap_ue_context_release_command          ue_context_release_cmd; // If HO fails target UE context needs to be removed.
   cu_cp_ue_context_release_command ue_context_release_command;     // After succesfull HO source UE needs to be removed.
@@ -81,9 +79,7 @@ private:
   cu_cp_intra_cu_handover_response response_msg;
   f1ap_ue_context_setup_response   target_ue_context_setup_response;
   e1ap_bearer_context_modification_response
-      bearer_context_modification_response_1; // to inform the DU about the new UL-TEID for F1-U traffic.
-  e1ap_bearer_context_modification_response
-      bearer_context_modification_response_2; // to confirm PDCP re-establishment and key change successful.
+      bearer_context_modification_response; // to inform CU-UP about the new TEID for UL F1u traffic
   f1ap_ue_context_modification_response source_ue_context_modification_response;
   bool                                  rrc_reconfig_sent = false;
 };

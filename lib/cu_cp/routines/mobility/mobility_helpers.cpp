@@ -92,43 +92,7 @@ bool srsran::srs_cu_cp::handle_context_setup_response(
   return target_ue_context_setup_response.success;
 }
 
-bool srsran::srs_cu_cp::handle_bearer_context_modification_response_1(
-    const e1ap_bearer_context_modification_response& bearer_context_modification_response,
-    up_config_update&                                next_config,
-    const srslog::basic_logger&                      logger)
-
-{
-  if (bearer_context_modification_response.pdu_session_resource_modified_list.empty()) {
-    return false;
-  }
-
-  // Update PDU sessions to setup with newly obtained UL-TEID.
-  for (const e1ap_pdu_session_resource_modified_item& e1ap_pdu_session :
-       bearer_context_modification_response.pdu_session_resource_modified_list) {
-    auto pdu_session_it = next_config.pdu_sessions_to_setup_list.find(e1ap_pdu_session.pdu_session_id);
-    if (pdu_session_it == next_config.pdu_sessions_to_setup_list.end()) {
-      logger.error("Could not update DRB UL-TEID during handover. Cause: could not find PDU session to setup. psi={}",
-                   e1ap_pdu_session.pdu_session_id);
-      continue;
-    }
-    for (const e1ap_drb_modified_item_ng_ran& e1ap_drb_mod : e1ap_pdu_session.drb_modified_list_ng_ran) {
-      auto drb_it = pdu_session_it->second.drb_to_add.find(e1ap_drb_mod.drb_id);
-      if (drb_it == pdu_session_it->second.drb_to_add.end()) {
-        logger.error("Could not update DRB UL-TEID during handover. Cause: could not find DRB to setup. psi={} drb={}",
-                     e1ap_pdu_session.pdu_session_id,
-                     e1ap_drb_mod.drb_id);
-        continue;
-      }
-      up_drb_context& drb = drb_it->second;
-      drb.ul_up_tnl_info_to_be_setup_list.clear();
-      drb.ul_up_tnl_info_to_be_setup_list.push_back(e1ap_drb_mod.ul_up_transport_params[0].up_tnl_info);
-    }
-  }
-
-  return bearer_context_modification_response.success;
-}
-
-bool srsran::srs_cu_cp::handle_bearer_context_modification_response_2(
+bool srsran::srs_cu_cp::handle_bearer_context_modification_response(
     cu_cp_intra_cu_handover_response&                response_msg,
     f1ap_ue_context_modification_request&            source_ue_context_mod_request,
     const e1ap_bearer_context_modification_response& bearer_context_modification_response,
