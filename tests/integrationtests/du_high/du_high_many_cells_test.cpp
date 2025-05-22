@@ -354,6 +354,8 @@ TEST_F(du_high_many_cells_deferred_activation_test, when_cell_starts_deactivated
   static_vector<bool, MAX_NOF_DU_CELLS> sib1_alloc(nof_cells, false);
   static_vector<bool, MAX_NOF_DU_CELLS> prach_alloc(nof_cells, false);
   for (unsigned i = 0; i != test_nof_slots; ++i) {
+    this->run_slot();
+
     for (unsigned c = 0; c != nof_cells; ++c) {
       if (phy.cells[c].last_dl_res.has_value()) {
         csi_rs_alloc[c] |= not phy.cells[c].last_dl_res.value().dl_res->csi_rs.empty();
