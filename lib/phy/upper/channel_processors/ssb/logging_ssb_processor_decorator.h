@@ -62,7 +62,13 @@ public:
       return;
     }
     // Single line log entry.
-    logger.info(data.get_buffer().data(), divide_ceil(data.size(), 8), "SSB: {:s} {}", pdu, time_ns);
+    logger.info(pdu.slot.sfn(),
+                pdu.slot.slot_index(),
+                data.get_buffer().data(),
+                divide_ceil(data.size(), 8),
+                "SSB: {:s} {}",
+                pdu,
+                time_ns);
   }
 
 private:
