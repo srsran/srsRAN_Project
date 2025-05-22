@@ -50,29 +50,28 @@ void message_transmitter_impl::transmit_frame_burst(span<span<const uint8_t>> fr
 }
 
 void message_transmitter_impl::enqueue_messages_into_burst(
-    const ether::frame_pool_interval&                   interval,
-    static_vector<span<const uint8_t>, MAX_BURST_SIZE>& frame_burst,
-    std::shared_ptr<ether::eth_frame_pool>&             pool)
+    const ether::frame_pool_interval&                                    interval,
+    ofh::message_type                                                    type,
+    ofh::data_direction                                                  direction,
+    static_vector<ether::scoped_frame_buffer, ether::MAX_TX_BURST_SIZE>& read_frames,
+    std::shared_ptr<ether::eth_frame_pool>&                              pool)
 {
   trace_point pool_access_tp = ofh_tracer.now();
-  auto        frame_buffers  = pool->read_frame_buffers(interval);
+
+  unsigned prev_size = read_frames.size();
+  pool->enqueue_pending_into_burst(interval, read_frames);
+
   ofh_tracer << trace_event("ofh_tx_pool_access", pool_access_tp);
 
-  if (frame_buffers.empty()) {
+  if ((read_frames.size() - prev_size) == 0) {
     return;
-  }
-
-  srsran_assert(frame_burst.size() + frame_buffers.size() <= frame_burst.capacity(), "Frame burst vector is too small");
-
-  for (const auto& frame : frame_buffers) {
-    frame_burst.emplace_back(frame->data());
   }
 
   if (SRSRAN_UNLIKELY(logger.debug.enabled())) {
     logger.debug("Enqueueing '{}' frame(s) of type '{}-{}' in interval '{}_{}':{}_{} for tx burst",
-                 frame_buffers.size(),
-                 (interval.type.type == message_type::control_plane) ? "control-plane" : "user-plane",
-                 (interval.type.direction == data_direction::downlink) ? "downlink" : "uplink",
+                 read_frames.size() - prev_size,
+                 (type == message_type::control_plane) ? "control-plane" : "user-plane",
+                 (direction == data_direction::downlink) ? "downlink" : "uplink",
                  interval.start.get_slot(),
                  interval.start.get_symbol_index(),
                  interval.end.get_slot(),
@@ -85,38 +84,38 @@ void message_transmitter_impl::on_new_symbol(const slot_symbol_point_context& sy
   // Creates and starts the execution time measurer.
   time_execution_measurer meas(metrics_collector.enabled());
 
-  trace_point tp = ofh_tracer.now();
-
-  static_vector<span<const uint8_t>, MAX_BURST_SIZE> frame_burst;
+  trace_point                                                         tp = ofh_tracer.now();
+  static_vector<ether::scoped_frame_buffer, ether::MAX_TX_BURST_SIZE> read_frames;
 
   // Enqueue pending DL Control-Plane messages.
-  ether::frame_pool_interval interval_cp_dl{{message_type::control_plane, data_direction::downlink},
-                                            symbol_point_context.symbol_point + timing_params.sym_cp_dl_end,
+  ether::frame_pool_interval interval_cp_dl{symbol_point_context.symbol_point + timing_params.sym_cp_dl_end,
                                             symbol_point_context.symbol_point + timing_params.sym_cp_dl_start};
-  enqueue_messages_into_burst(interval_cp_dl, frame_burst, pool_dl_cp);
+  enqueue_messages_into_burst(
+      interval_cp_dl, message_type::control_plane, data_direction::downlink, read_frames, pool_dl_cp);
 
   // Enqueue pending UL Control-Plane messages.
-  ether::frame_pool_interval interval_cp_ul{{message_type::control_plane, data_direction::uplink},
-                                            symbol_point_context.symbol_point + timing_params.sym_cp_ul_end,
+  ether::frame_pool_interval interval_cp_ul{symbol_point_context.symbol_point + timing_params.sym_cp_ul_end,
                                             symbol_point_context.symbol_point + timing_params.sym_cp_ul_start};
-  enqueue_messages_into_burst(interval_cp_ul, frame_burst, pool_ul_cp);
+  enqueue_messages_into_burst(
+      interval_cp_ul, message_type::control_plane, data_direction::uplink, read_frames, pool_ul_cp);
 
   // Enqueue pending User-Plane messages.
-  ether::frame_pool_interval interval_up{{message_type::user_plane, data_direction::downlink},
-                                         symbol_point_context.symbol_point + timing_params.sym_up_dl_end,
+  ether::frame_pool_interval interval_up{symbol_point_context.symbol_point + timing_params.sym_up_dl_end,
                                          symbol_point_context.symbol_point + timing_params.sym_up_dl_start};
-  enqueue_messages_into_burst(interval_up, frame_burst, pool_dl_up);
+  enqueue_messages_into_burst(interval_up, message_type::user_plane, data_direction::downlink, read_frames, pool_dl_up);
+
+  // Construct burst of byte buffers ready to be transmitted.
+  static_vector<span<const uint8_t>, ether::MAX_TX_BURST_SIZE> frame_burst;
+
+  for (const auto& frame : read_frames) {
+    frame_burst.emplace_back(frame->data());
+  }
 
   // Transmit the data.
   trace_point tp_ether = ofh_tracer.now();
   transmit_frame_burst(frame_burst);
+
   ofh_tracer << trace_event("ofh_ether_tx", tp_ether);
-
-  // Clear sent buffers.
-  pool_dl_cp->clear_sent_frame_buffers(interval_cp_dl);
-  pool_ul_cp->clear_sent_frame_buffers(interval_cp_ul);
-  pool_dl_up->clear_sent_frame_buffers(interval_up);
-
   ofh_tracer << trace_event("ofh_message_transmitter", tp);
 
   metrics_collector.update_stats(meas.stop());

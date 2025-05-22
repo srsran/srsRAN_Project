@@ -145,7 +145,11 @@ protected:
             ul_prach_repo,
             notified_symbol_repo,
             std::move(temp),
-            std::make_shared<ether::eth_frame_pool>(mtu_size, 2)};
+            std::make_shared<ether::eth_frame_pool>(srslog::fetch_basic_logger("TEST"),
+                                                    mtu_size,
+                                                    2,
+                                                    ofh::message_type::control_plane,
+                                                    ofh::data_direction::uplink)};
   }
 
   uplink_request_handler_impl_dependencies get_dependencies_prach_cp_enabled()
@@ -159,7 +163,11 @@ protected:
             ul_prach_repo,
             notified_symbol_repo,
             std::move(temp),
-            std::make_shared<ether::eth_frame_pool>(mtu_size, 2)};
+            std::make_shared<ether::eth_frame_pool>(srslog::fetch_basic_logger("TEST"),
+                                                    mtu_size,
+                                                    2,
+                                                    ofh::message_type::control_plane,
+                                                    ofh::data_direction::uplink)};
   }
 
   uplink_request_handler_impl_config get_config_prach_cp_disabled()

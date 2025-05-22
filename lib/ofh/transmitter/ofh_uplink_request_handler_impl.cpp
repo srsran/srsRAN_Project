@@ -151,7 +151,7 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
     logger.debug("Registering PRACH context entry for slot '{}' and sector#{}", context.slot, context.sector);
   }
 
-  frame_pool->clear_uplink_slot(context.slot, context.sector, logger);
+  frame_pool->clear_slot(context.slot, context.sector);
 
   if (SRSRAN_UNLIKELY(window_checker.is_late(context.slot))) {
     logger.warning(
@@ -233,7 +233,7 @@ void uplink_request_handler_impl::handle_new_uplink_slot(const resource_grid_con
     logger.debug("Registering UL context entry for slot '{}' and sector#{}", context.slot, context.sector);
   }
 
-  frame_pool->clear_uplink_slot(context.slot, context.sector, logger);
+  frame_pool->clear_slot(context.slot, context.sector);
 
   if (SRSRAN_UNLIKELY(window_checker.is_late(context.slot))) {
     logger.warning(

@@ -121,6 +121,8 @@ create_data_flow_uplane_data(const transmitter_config&              tx_config,
 
 static std::shared_ptr<ether::eth_frame_pool> create_eth_frame_pool(const transmitter_config& tx_config,
                                                                     srslog::basic_logger&     logger,
+                                                                    ofh::message_type         type,
+                                                                    ofh::data_direction       direction,
                                                                     bool calculate_nof_frames_per_symbol = true)
 {
   ether::vlan_frame_params ether_params;
@@ -152,7 +154,7 @@ static std::shared_ptr<ether::eth_frame_pool> create_eth_frame_pool(const transm
         tx_config.mtu_size, nof_prbs, tx_config.dl_compr_params, headers_size);
   }
 
-  return std::make_shared<ether::eth_frame_pool>(tx_config.mtu_size, nof_frames_per_symbol);
+  return std::make_shared<ether::eth_frame_pool>(logger, tx_config.mtu_size, nof_frames_per_symbol, type, direction);
 }
 
 static transmitter_impl_dependencies
@@ -175,7 +177,8 @@ resolve_transmitter_dependencies(const transmitter_config&                      
   dependencies.dl_executor  = &downlink_executor;
   dependencies.err_notifier = &err_notifier;
 
-  dependencies.frame_pool_dl_cp = create_eth_frame_pool(tx_config, logger, false);
+  dependencies.frame_pool_dl_cp =
+      create_eth_frame_pool(tx_config, logger, message_type::control_plane, data_direction::downlink, false);
 
   dependencies.dl_df_cplane = std::make_unique<data_flow_cplane_downlink_task_dispatcher>(
       logger,
@@ -188,7 +191,8 @@ resolve_transmitter_dependencies(const transmitter_config&                      
       downlink_executor,
       tx_config.sector);
 
-  dependencies.frame_pool_dl_up = create_eth_frame_pool(tx_config, logger);
+  dependencies.frame_pool_dl_up =
+      create_eth_frame_pool(tx_config, logger, message_type::user_plane, data_direction::downlink);
 
   dependencies.dl_df_uplane = std::make_unique<data_flow_uplane_downlink_task_dispatcher>(
       logger,
@@ -196,7 +200,8 @@ resolve_transmitter_dependencies(const transmitter_config&                      
       downlink_executor,
       tx_config.sector);
 
-  dependencies.frame_pool_ul_cp = create_eth_frame_pool(tx_config, logger, false);
+  dependencies.frame_pool_ul_cp =
+      create_eth_frame_pool(tx_config, logger, message_type::control_plane, data_direction::uplink, false);
 
   dependencies.ul_df_cplane = std::make_unique<data_flow_cplane_downlink_task_dispatcher>(
       logger,

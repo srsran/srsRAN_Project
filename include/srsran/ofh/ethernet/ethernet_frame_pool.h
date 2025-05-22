@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/mpmc_queue.h"
 #include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ofh/ethernet/ethernet_properties.h"
@@ -19,459 +20,466 @@
 #include "srsran/ran/frame_types.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/srsvec/zero.h"
 #include "srsran/support/units.h"
 #include <mutex>
 
 namespace srsran {
 namespace ether {
 
-class frame_buffer_array;
+class frame_buffer_pool;
 
-/// Storage for one Ethernet frame buffer.
+/// The class manages storage dedicated for an Ethernet frame.
 class frame_buffer
 {
+  friend class frame_buffer_pool;
+
   /// State of the buffer inside a buffer pool.
-  enum class frame_buffer_status { free, reserved, used, marked_to_send };
+  enum class buffer_state : uint8_t {
+    /// \brief The buffer is available for being reserved.
+    free,
+    /// \brief The buffer is reserved by an Open Fronthaul message encoder. It cannot be re-reserved.
+    ///
+    /// It can transition to one of the following states:
+    /// -\c free: in case the buffer remains empty when it gets out of the scope where it was reserved.
+    /// -\c pending: the buffer was written by an encoder and it is not empty when it goes out of reservation
+    /// scope.
+    reserved,
+    /// \brief The buffer is pending to be transmitter by the message transmitter.
+    ///
+    /// It can transition to one of the following states:
+    /// -\c queued: when the message transmitter adds it to its transmission queue.
+    /// -\c free: when the parent buffer pool decides that the buffer transmission time has expired.
+    /// -\c reserved: when the pool pops a buffer from the pending queue and decides that it is not expired. This is a
+    /// workaround, as the state will be changed back to pending when the buffer goes out of scope, as described above.
+    pending,
+    /// \brief The buffer is owned by the Open Fronthaul message transmitter and is queued to be transmitted over
+    /// Ethernet.
+    ///
+    /// From this state it can transition to \c free state when the message transmitter releases the ownership over it.
+    queued
+  };
 
-  size_t               sz     = 0;
-  frame_buffer_status  status = frame_buffer_status::free;
+  std::atomic<buffer_state> state = buffer_state::free;
+  /// Actual storage.
   std::vector<uint8_t> buffer;
+  /// Size of written data.
+  size_t sz = 0;
 
-  friend class frame_buffer_array;
+  const ofh::slot_symbol_point invalid_timestamp{slot_point(), 0, 14};
+  /// Timestamp indicates in which slot this buffer was reserved.
+  /// When the buffer is in \c pending state this field is used to check if it has expired.
+  ofh::slot_symbol_point reservation_symbol_point = invalid_timestamp;
 
 public:
   /// Constructors.
   frame_buffer() = default;
   explicit frame_buffer(unsigned size) : buffer(size, 0) {}
 
+  /// The buffer is considered empty if a the reserving part didn't call \c set_size method.
   constexpr bool empty() const noexcept { return sz == 0; }
 
+  /// Returns the size of written data.
   constexpr size_t size() const noexcept { return sz; }
 
+  /// Sets the size of written data.
   constexpr void set_size(size_t new_size) noexcept
   {
     srsran_assert(new_size <= MAX_ETH_FRAME_LENGTH, "Can't set_size: new size if out-of-bounds");
     unsigned written_size = (new_size < MIN_ETH_FRAME_LENGTH) ? MIN_ETH_FRAME_LENGTH : new_size;
-    if (new_size < MIN_ETH_FRAME_LENGTH) {
-      std::fill(buffer.begin() + new_size, buffer.begin() + MIN_ETH_FRAME_LENGTH, 0);
+    if (SRSRAN_UNLIKELY(new_size < MIN_ETH_FRAME_LENGTH)) {
+      srsvec::zero(span<uint8_t>(&buffer[new_size], &buffer[MIN_ETH_FRAME_LENGTH]));
     }
     sz = written_size;
   }
 
+  /// Resets the size of written data to zero.
   constexpr void clear() noexcept { sz = 0; }
 
-  span<uint8_t>       data() noexcept { return {buffer}; }
+  /// Returns timestamp of this buffer that indicates the slot and symbol in which the buffer was reserved and written.
+  ofh::slot_symbol_point get_slot_symbol() { return reservation_symbol_point; }
+
+  /// Gets the buffer.
+  span<uint8_t> get_buffer() noexcept { return buffer; }
+
+  /// Gets the read-only buffer.
   span<const uint8_t> data() const noexcept { return {buffer.data(), sz}; }
+
+private:
+  /// Sets the timestamp of the buffer upon reservation.
+  void set_slot_symbol(ofh::slot_symbol_point symbol_point_) { reservation_symbol_point = symbol_point_; }
 };
 
-/// Aggregates Open Fronthaul message properties used by the \c eth_frame_pool.
-struct ofh_pool_message_type {
-  ofh::message_type   type;
-  ofh::data_direction direction;
+/// \brief Pool of Ethernet frame buffers with lock-free access.
+///
+/// The pool stores an array of unique pointers to \c frame_buffer.
+class frame_buffer_pool
+{
+  using state = frame_buffer::buffer_state;
+
+  /// Queue type used for storing buffers identifiers.
+  using queue_type =
+      concurrent_queue<unsigned, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>;
+
+  using unique_frame_buffer = std::unique_ptr<frame_buffer>;
+
+  /// \brief Custom deleter of the \c std::unique_ptr<unique_frame_buffer> object.
+  ///
+  /// It doesn't free the memory but only updates the state of the buffer when a unique_ptr owning it goes out of scope.
+  struct buffer_deleter {
+    frame_buffer_pool* pool;
+
+    void operator()(unique_frame_buffer* ptr)
+    {
+      if (ptr != nullptr) {
+        pool->update_state(*ptr);
+      }
+    }
+  };
+
+public:
+  /// A wrapper over std::unique_ptr<unique_frame_buffer> that simplifies access to the pointed \c frame_buffer object.
+  class scoped_frame_buffer
+  {
+    using managed_frame_buffer = std::unique_ptr<unique_frame_buffer, buffer_deleter>;
+    managed_frame_buffer buffer;
+
+  public:
+    scoped_frame_buffer() : buffer(nullptr, buffer_deleter{nullptr}) {}
+    explicit scoped_frame_buffer(unique_frame_buffer* ptr, buffer_deleter&& deleter) : buffer(ptr, std::move(deleter))
+    {
+    }
+
+    /// These two methods simplify access to the frame buffer directly.
+    frame_buffer* operator->() const noexcept { return (*buffer).get(); }
+    frame_buffer& operator*() const noexcept { return **buffer; }
+
+    /// Returns pointer to the managed object mimicking unique_ptr interface.
+    unique_frame_buffer* get() noexcept { return buffer.get(); }
+
+    /// Mimics the unique_ptr interface and allows to use the class object in boolean expressions.
+    explicit operator bool() const noexcept { return static_cast<bool>(buffer); }
+  };
+
+  /// Constructor receives minimum required number of buffers with a given size required for encoding an OFDM symbol. It
+  /// allocates twice the requested amount given that both data and PRACH can be scheduled in the same uplink symbol.
+  /// The pool assigns an identifier to each of buffers and puts them into a list of free buffers.
+  frame_buffer_pool(srslog::basic_logger& logger_, unsigned min_nof_buffers, unsigned buffer_size) :
+    number_of_buffers(min_nof_buffers * 2),
+    logger(logger_),
+    free_list(number_of_buffers),
+    pending_list(number_of_buffers)
+  {
+    for (unsigned i = 0; i != number_of_buffers; ++i) {
+      entries.emplace_back(std::make_unique<frame_buffer>(buffer_size));
+      while (!free_list.try_push(i)) {
+      }
+    }
+  }
+
+  /// The class is non-copyable.
+  frame_buffer_pool(const frame_buffer_pool&)            = delete;
+  frame_buffer_pool& operator=(const frame_buffer_pool&) = delete;
+
+  /// \brief Tries to get a free buffer from the pre-allocated storage.
+  ///
+  /// \param[in] symbol_point - slot and symbol where the reservation of buffer is requested.
+  /// \return returns non-empty \c scoped_frame_buffer on success, otherwise a \c scoped_frame_buffer initialized with
+  /// nullptr.
+  scoped_frame_buffer reserve(ofh::slot_symbol_point symbol_point)
+  {
+    auto idx = free_list.try_pop();
+    if (!idx) {
+      logger.warning("Ethernet frame pool: failed to reserve a buffer");
+      return {};
+    }
+    // Peek the free buffer.
+    frame_buffer& buffer = *entries[*idx];
+
+    // Change state to 'reserved'.
+    auto current_state = buffer.state.load(std::memory_order_acquire);
+    srsran_sanity_check(current_state == state::free,
+                        "Ethernet frame pool: invalid state of the buffer popped from the free list");
+    while (!buffer.state.compare_exchange_weak(current_state, state::reserved)) {
+    }
+
+    // Clear it before returning and save the reservation timestamp.
+    buffer.clear();
+    buffer.set_slot_symbol(symbol_point);
+
+    return scoped_frame_buffer{&entries[*idx], buffer_deleter{this}};
+  }
+
+  /// \brief Enqueues buffers in \c state::pending into the given vector.
+  ///
+  /// \param[in] burst_of_frames - a vector in which the pending buffers must be enqueued.
+  void enqueue_pending(static_vector<scoped_frame_buffer, MAX_TX_BURST_SIZE>& burst_of_frames)
+  {
+    unsigned idx;
+    while (pending_list.try_pop(idx)) {
+      srsran_sanity_check(idx < entries.size(), "Ethernet frame pool: invalid buffer popped from pending list");
+
+      auto& buffer = entries[idx];
+      // Change the state to 'queued'.
+      auto current_state = buffer->state.load(std::memory_order_acquire);
+      srsran_sanity_check(current_state == state::pending, "Invalid state of the buffer popped from pending list");
+      while (!buffer->state.compare_exchange_weak(current_state, state::queued)) {
+      }
+      // Add popped buffer into the output vector.
+      burst_of_frames.emplace_back(scoped_frame_buffer{&entries[idx], buffer_deleter{this}});
+    }
+  }
+
+  /// \brief Enqueues buffers in \c state::pending into the given vector.
+  ///
+  /// This method is used when pending buffers need to be checked for expiry.
+  ///
+  /// \param[in] burst_of_frames - a vector in which the pending buffers must be enqueued.
+  void pop_pending(static_vector<scoped_frame_buffer, MAX_TX_BURST_SIZE>& burst_of_frames)
+  {
+    unsigned idx;
+    while (pending_list.try_pop(idx)) {
+      srsran_sanity_check(idx < entries.size(), "Invalid buffer popped from pending list");
+      burst_of_frames.emplace_back(scoped_frame_buffer{&entries[idx], buffer_deleter{this}});
+    }
+  }
+
+  /// \brief Puts the given buffer back into the pending queue.
+  ///
+  /// The method is used after verifying that the buffer has not been expired.
+  void return_to_pending(unique_frame_buffer& buffer)
+  {
+    // Change the state to 'reserved' and it will be put to pending queue when it goes out of scope.
+    auto current_state = buffer->state.load(std::memory_order_acquire);
+    srsran_sanity_check(current_state == state::pending, "Invalid state of the pending buffer");
+
+    while (!buffer->state.compare_exchange_weak(current_state, state::reserved)) {
+    }
+  }
+
+private:
+  /// Transitions the given frame buffer into the next state based on its current state.
+  void update_state(unique_frame_buffer& buffer)
+  {
+    auto current_state = buffer->state.load();
+    bool success       = false;
+
+    while (!success) {
+      switch (current_state) {
+        case state::reserved:
+          if (buffer->empty()) {
+            success = buffer->state.compare_exchange_strong(current_state, state::free);
+            if (SRSRAN_LIKELY(success)) {
+              free(buffer);
+            }
+          } else {
+            success = buffer->state.compare_exchange_strong(current_state, state::pending);
+            if (SRSRAN_LIKELY(success)) {
+              put_to_pending_queue(buffer);
+            }
+          }
+          break;
+        case state::pending:
+          /// When a 'pending' buffer is popped from the queue without changing its state to 'enqueued', it gets freed.
+          success = buffer->state.compare_exchange_strong(current_state, state::free);
+          if (SRSRAN_LIKELY(success)) {
+            free(buffer);
+          }
+          break;
+        case state::queued:
+          success = buffer->state.compare_exchange_strong(current_state, state::free);
+          if (SRSRAN_LIKELY(success)) {
+            free(buffer);
+          }
+          break;
+        default:
+          success = true;
+          break;
+      }
+    }
+  }
+
+  /// Puts the reserved buffer into the 'pending' queue.
+  void put_to_pending_queue(unique_frame_buffer& buffer)
+  {
+    unsigned idx = &buffer - entries.data();
+    srsran_sanity_check(idx < entries.size(), "Ethernet frame pool: unknown buffer can't be saved in 'pending' queue");
+    if (SRSRAN_UNLIKELY(!pending_list.try_push(idx))) {
+      logger.warning("Ethernet frame pool: failed to add buffer to the 'pending' queue");
+      free(buffer);
+    }
+  }
+
+  /// Puts the buffer into a queue of free buffers.
+  void free(unique_frame_buffer& buffer)
+  {
+    unsigned idx = &buffer - entries.data();
+    srsran_sanity_check(idx < entries.size(), "Ethernet frame pool: cannot free a buffer not pertaining to this pool");
+
+    // Push identifier back in the pool.
+    while (SRSRAN_UNLIKELY(!free_list.try_push(idx))) {
+      logger.warning("Ethernet frame pool: failed to put buffer into a 'free' queue");
+    }
+  }
+
+  const unsigned                   number_of_buffers;
+  srslog::basic_logger&            logger;
+  std::vector<unique_frame_buffer> entries;
+  queue_type                       free_list;
+  queue_type                       pending_list;
 };
 
-/// Context used for accessing specific entry in the \c eth_frame_pool object.
-struct frame_pool_context {
-  ofh_pool_message_type  type;
-  ofh::slot_symbol_point symbol_point;
-};
+using scoped_frame_buffer = frame_buffer_pool::scoped_frame_buffer;
 
 /// Specifies an interval of symbols for which \c eth_frame_pool object must be accessed. Interval includes start and
 /// end symbols.
 struct frame_pool_interval {
-  ofh_pool_message_type  type;
   ofh::slot_symbol_point start;
   ofh::slot_symbol_point end;
 };
 
-/// Class encapsulating \c ether::frame_buffer buffers used in a circular manner. It is used by \c eth_frame_pool
-/// class to manage Ethernet frame buffers for each OFH type in a slot symbol. Internally it keeps track of current
-/// write and read positions.
-class frame_buffer_array
-{
-  /// Type of the buffer used in the pool to store Ethernet frames with a specific OFH packet.
-  using storage_array_type = std::vector<frame_buffer>;
-
-  /// Number of entries in the internal storage. Each entry comprises multiple frame buffers, the number of
-  /// buffers in one entry is received at construction time.
-  static constexpr size_t NUM_OF_ENTRIES = 2;
-
-  /// Structure used to count number of written and read elements in the circular array.
-  struct rd_wr_counter {
-    unsigned count    = 0;
-    unsigned boundary = 0;
-    // Constructor receives upper boundary.
-    explicit rd_wr_counter(unsigned b) : boundary(b) {}
-    // Increment by N positions and wrap-around if needed
-    void increment(unsigned n = 1) { count += n; }
-    // Return counter value.
-    unsigned value() const { return count % boundary; }
-  };
-
-public:
-  struct used_buffer {
-    frame_buffer*          buffer;
-    ofh::slot_symbol_point timestamp;
-  };
-
-  // Constructor receives number of buffers stored/read at a time, reserves storage for all eAxCs.
-  frame_buffer_array(unsigned nof_buffers_to_return, unsigned buffer_size, unsigned nof_antennas) :
-    increment_quant(nof_buffers_to_return),
-    storage_nof_buffers(nof_buffers_to_return * nof_antennas * NUM_OF_ENTRIES),
-    buffers_array(storage_nof_buffers, frame_buffer{buffer_size}),
-    write_position(storage_nof_buffers)
-  {
-    aux_array.reserve(storage_nof_buffers);
-  }
-
-  // Returns view over increment_quant buffers for writing if they are free, returns empty span otherwise.
-  // The state of returned buffers is changed to 'reserved'.
-  span<frame_buffer> reserve_buffers()
-  {
-    span<frame_buffer> wr_buffers(&buffers_array[write_position.value()], increment_quant);
-
-    bool free = std::all_of(wr_buffers.begin(), wr_buffers.end(), [](const frame_buffer& buffer) {
-      return buffer.status == frame_buffer::frame_buffer_status::free;
-    });
-    if (!free) {
-      return {};
-    }
-    // Mark buffers as reserved.
-    for (auto& buffer : wr_buffers) {
-      buffer.status = frame_buffer::frame_buffer_status::reserved;
-    }
-    write_position.increment(increment_quant);
-    return wr_buffers;
-  }
-
-  // Stores actually used buffers in a list of buffers ready for sending.
-  // Unused buffers state is changed to 'free'.
-  void push_buffers(span<frame_buffer> prepared_buffers, ofh::slot_symbol_point symbol_point)
-  {
-    for (auto& buffer : prepared_buffers) {
-      if (buffer.empty()) {
-        buffer.status = frame_buffer::frame_buffer_status::free;
-      } else {
-        buffer.status = frame_buffer::frame_buffer_status::used;
-        used_buffers.push_back({&buffer, symbol_point});
-      }
-    }
-  }
-
-  // Changed state of sent buffers to 'free'.
-  void clear_buffers()
-  {
-    for (auto& buffer : buffers_array) {
-      if (buffer.status == frame_buffer::frame_buffer_status::marked_to_send) {
-        buffer.status = frame_buffer::frame_buffer_status::free;
-      }
-    }
-  }
-
-  // Changed state of all 'used' buffers to 'free'.
-  void reset_buffers()
-  {
-    for (auto& buffer : buffers_array) {
-      if (buffer.status != frame_buffer::frame_buffer_status::marked_to_send &&
-          buffer.status != frame_buffer::frame_buffer_status::reserved) {
-        buffer.status = frame_buffer::frame_buffer_status::free;
-      }
-    }
-    used_buffers.clear();
-  }
-
-  // Returns a vector of pointers to the buffers ready for sending.
-  span<const frame_buffer*> find_buffers_ready_for_sending()
-  {
-    aux_array.clear();
-    for (auto& used_buf : used_buffers) {
-      used_buf.buffer->status = frame_buffer::frame_buffer_status::marked_to_send;
-      aux_array.emplace_back(used_buf.buffer);
-    }
-    used_buffers.clear();
-    return aux_array;
-  }
-
-  span<const used_buffer> get_prepared_buffers() const { return used_buffers; }
-
-private:
-  // Number of buffers accessed at a time.
-  unsigned increment_quant;
-  // Maximum number of buffers stored in the pool.
-  unsigned storage_nof_buffers;
-  // Data buffers.
-  storage_array_type buffers_array;
-  // Used buffers are added to this list.
-  static_vector<used_buffer, 128> used_buffers;
-  // Auxiliary array used as a list of ready-to-send buffers returned to a reader.
-  std::vector<const frame_buffer*> aux_array;
-  // Keeps track of the current write position.
-  rd_wr_counter write_position;
-};
-
-/// Pool of Ethernet frames pre-allocated for each slot symbol.
+/// Pool of Ethernet frame buffers pre-allocated for symbols in slots.
 class eth_frame_pool
 {
   /// Number of slots the pool can accommodate.
   static constexpr size_t NUM_SLOTS = 20L;
 
-  /// Maximum number of entries contained by the pool, one entry per OFDM symbol, sized to accommodate 20 slots.
+  /// Maximum number of entries contained by the pool (one entry per OFDM symbol), sized to accommodate 20 slots.
   static constexpr size_t NUM_ENTRIES = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP * NUM_SLOTS;
 
-  /// Number of symbols in an interval for which an auxiliary vector is pre-allocated to store buffer pointers.
-  static constexpr size_t NUM_INTERVAL_SYMBOL = 14;
-
-  /// Pool entry stores three circular arrays for every OFH type (DL C-Plane, UL C-Plane and U-Plane).
-  struct pool_entry {
-    /// Number of buffers returned for Control-Plane messages at a time.
-    const size_t NUM_CP_MESSAGES_TO_RETURN = 1;
-
-    /// Circular arrays of Ethernet frame buffers for each OFH type (DL C-Plane, UL C-Plane and U-Plane).
-    std::vector<frame_buffer_array> buffers;
-
-    pool_entry(units::bytes mtu, unsigned num_of_frames)
-    {
-      // DL C-Plane storage.
-      buffers.emplace_back(NUM_CP_MESSAGES_TO_RETURN, mtu.value(), ofh::MAX_NOF_SUPPORTED_EAXC);
-      // UL C-Plane storage.
-      buffers.emplace_back(NUM_CP_MESSAGES_TO_RETURN, mtu.value(), ofh::MAX_NOF_SUPPORTED_EAXC * 2);
-      // U-Plane storage.
-      buffers.emplace_back(num_of_frames, mtu.value(), ofh::MAX_NOF_SUPPORTED_EAXC);
-    }
-
-    /// Returns frame buffers for the given OFH type and given direction.
-    frame_buffer_array& get_ofh_type_buffers(ofh::message_type type, ofh::data_direction dir)
-    {
-      unsigned index = static_cast<unsigned>(type) * 2;
-      if (dir == ofh::data_direction::uplink) {
-        index += 1;
-      }
-      return buffers[index];
-    }
-
-    /// Returns frame buffers for the given OFH type and given direction.
-    const frame_buffer_array& get_ofh_type_buffers(ofh::message_type type, ofh::data_direction dir) const
-    {
-      unsigned index = static_cast<unsigned>(type) * 2;
-      if (dir == ofh::data_direction::uplink) {
-        index += 1;
-      }
-      return buffers[index];
-    }
-
-    /// Returns a view over next free frame buffers for a given OFH type, or an empty span if there is no free space.
-    span<frame_buffer> reserve_buffers(const ofh_pool_message_type& context)
-    {
-      frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type, context.direction);
-      span<frame_buffer>  buffs     = entry_buf.reserve_buffers();
-      // Reset size of buffers before returning.
-      for (auto& buf : buffs) {
-        buf.clear();
-      }
-      return buffs;
-    }
-
-    /// Push span of ready buffers to the array associated with the given OFH type.
-    void push_buffers(const frame_pool_context& context, span<frame_buffer> prepared_buffers)
-    {
-      frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type.type, context.type.direction);
-      entry_buf.push_buffers(prepared_buffers, context.symbol_point);
-    }
-
-    void clear_buffers(const ofh_pool_message_type& context)
-    {
-      frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type, context.direction);
-      entry_buf.clear_buffers();
-    }
-
-    void reset_buffers(const ofh_pool_message_type& context)
-    {
-      frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type, context.direction);
-      entry_buf.reset_buffers();
-    }
-
-    span<const frame_buffer_array::used_buffer> get_prepared_buffers(const ofh_pool_message_type& context) const
-    {
-      const frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type, context.direction);
-      return entry_buf.get_prepared_buffers();
-    }
-
-    /// Returns a view over a next stored frame buffer for a given OFH type.
-    span<const frame_buffer*> read_buffers(const ofh_pool_message_type& context)
-    {
-      frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type, context.direction);
-      return entry_buf.find_buffers_ready_for_sending();
-    }
-  }; // End of pool_entry class.
-
   /// Returns pool entry for the given slot and symbol.
-  const pool_entry& get_pool_entry(slot_point slot_point, unsigned symbol) const
+  const frame_buffer_pool& get_pool_entry(slot_point slot_point, unsigned symbol) const
   {
     unsigned slot_index = slot_point.slot_index();
     unsigned sym_index  = (slot_index * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP + symbol) % NUM_ENTRIES;
-    return pool[sym_index];
+    return *pool[sym_index];
   }
+
   /// Returns pool entry for the given slot and symbol.
-  pool_entry& get_pool_entry(slot_point slot_point, unsigned symbol)
+  frame_buffer_pool& get_pool_entry(slot_point slot_point, unsigned symbol)
   {
-    return const_cast<pool_entry&>(const_cast<const eth_frame_pool*>(this)->get_pool_entry(slot_point, symbol));
+    return const_cast<frame_buffer_pool&>(const_cast<const eth_frame_pool*>(this)->get_pool_entry(slot_point, symbol));
   }
 
 public:
-  /// Constructor;
-  eth_frame_pool(units::bytes mtu, unsigned num_of_frames) : pool(NUM_ENTRIES, {mtu, num_of_frames})
+  /// Constructor
+  ///
+  /// \param logger_        - Logger object.
+  /// \param mtu            - MTU size of the Ethernet port. It defines the size of the allocated buffers.
+  /// \param num_of_frames  - Number of frames with given MTU size that can be send in one symbol.
+  /// \param type           - Type of Open Fronthaul messages this pool is dedicated for.
+  /// \param direction      - Direction of the Open Fronthaul messages this pool is dedicated for.
+  eth_frame_pool(srslog::basic_logger& logger_,
+                 units::bytes          mtu,
+                 unsigned              num_of_frames,
+                 ofh::message_type     type,
+                 ofh::data_direction   direction) :
+    logger(logger_), pool_frames_type(type), pool_frames_data_direction(direction)
   {
-    aux_array.reserve(ofh::MAX_NOF_SUPPORTED_EAXC * num_of_frames * NUM_INTERVAL_SYMBOL);
-  }
-
-  /// Returns data buffer from the pool for the given slot and symbol.
-  span<frame_buffer> get_frame_buffers(const frame_pool_context& context)
-  {
-    pool_entry& p_entry = get_pool_entry(context.symbol_point.get_slot(), context.symbol_point.get_symbol_index());
-    // Acquire lock before accessing pool entry.
-    std::lock_guard<std::mutex> lock(mutex);
-    return p_entry.reserve_buffers(context.type);
-  }
-
-  /// Increments number of prepared Ethernet frames in the given slot symbol.
-  void push_frame_buffers(const frame_pool_context& context, span<frame_buffer> prepared_buffers)
-  {
-    pool_entry& p_entry = get_pool_entry(context.symbol_point.get_slot(), context.symbol_point.get_symbol_index());
-    // Lock and update the pool entry.
-    std::lock_guard<std::mutex> lock(mutex);
-    p_entry.push_buffers(context, prepared_buffers);
-  }
-
-  /// Returns data buffers from the pool to a reader thread given a specific symbol context.
-  span<const frame_buffer*> read_frame_buffers(const frame_pool_context& context)
-  {
-    pool_entry& p_entry = get_pool_entry(context.symbol_point.get_slot(), context.symbol_point.get_symbol_index());
-    // Acquire lock before accessing pool entry.
-    std::lock_guard<std::mutex> lock(mutex);
-    return p_entry.read_buffers(context.type);
-  }
-
-  /// Returns data buffers from the pool to a reader thread for an interval of symbols.
-  span<const frame_buffer*> read_frame_buffers(const frame_pool_interval& interval)
-  {
-    if (interval.start > interval.end) {
-      return {};
+    for (unsigned i = 0; i != NUM_ENTRIES; ++i) {
+      /// Multiply by 2 because for uplink C-Plane we may need to allocate space for data and PRACH.
+      pool.emplace_back(
+          std::make_unique<frame_buffer_pool>(logger, num_of_frames * ofh::MAX_NOF_SUPPORTED_EAXC * 2, mtu.value()));
     }
-    // Acquire lock before accessing pool entries.
-    std::lock_guard<std::mutex> lock(mutex);
-
-    aux_array.clear();
-
-    // Extra 1 is added to include the end symbol of the interval.
-    unsigned distance = (interval.end - interval.start) + 1;
-    for (unsigned i = 0; i != distance; ++i) {
-      ofh::slot_symbol_point tmp_symbol = interval.start + i;
-
-      pool_entry& p_entry        = get_pool_entry(tmp_symbol.get_slot(), tmp_symbol.get_symbol_index());
-      auto        symbol_buffers = p_entry.read_buffers(interval.type);
-      for (const auto& buffer : symbol_buffers) {
-        aux_array.emplace_back(buffer);
-      }
-    }
-    return aux_array;
   }
 
-  /// Clears prepared Ethernet frame buffers for the given symbol context.
-  void clear_sent_frame_buffers(const frame_pool_context& context)
+  /// Tries to reserves a buffer from the pool allocated for the given slot and symbol.
+  scoped_frame_buffer reserve(ofh::slot_symbol_point symbol_point)
   {
-    pool_entry& p_entry = get_pool_entry(context.symbol_point.get_slot(), context.symbol_point.get_symbol_index());
-    // Acquire lock before accessing pool entry.
-    std::lock_guard<std::mutex> lock(mutex);
-    p_entry.clear_buffers(context.type);
+    auto& p_entry = get_pool_entry(symbol_point.get_slot(), symbol_point.get_symbol_index());
+    return p_entry.reserve(symbol_point);
   }
 
-  /// Clears prepared Ethernet frame buffers for an interval of symbols.
-  void clear_sent_frame_buffers(const frame_pool_interval& interval)
+  /// Enqueues buffers pending in the pool allocated for the given slot and symbol.
+  void enqueue_pending_into_burst(ofh::slot_symbol_point                                 symbol_point,
+                                  static_vector<scoped_frame_buffer, MAX_TX_BURST_SIZE>& burst)
+  {
+    auto& p_entry = get_pool_entry(symbol_point.get_slot(), symbol_point.get_symbol_index());
+    return p_entry.enqueue_pending(burst);
+  }
+
+  /// Enqueues buffers pending in the pools allocated for the given interval of symbols.
+  void enqueue_pending_into_burst(const frame_pool_interval&                             interval,
+                                  static_vector<scoped_frame_buffer, MAX_TX_BURST_SIZE>& burst)
   {
     if (interval.start > interval.end) {
       return;
     }
-    // Acquire lock before accessing pool entries.
-    std::lock_guard<std::mutex> lock(mutex);
 
     // Extra 1 is added to include the end symbol of the interval.
     unsigned distance = (interval.end - interval.start) + 1;
     for (unsigned i = 0; i != distance; ++i) {
       ofh::slot_symbol_point tmp_symbol = interval.start + i;
 
-      pool_entry& p_entry = get_pool_entry(tmp_symbol.get_slot(), tmp_symbol.get_symbol_index());
-      p_entry.clear_buffers(interval.type);
+      auto& p_entry = get_pool_entry(tmp_symbol.get_slot(), tmp_symbol.get_symbol_index());
+      p_entry.enqueue_pending(burst);
     }
   }
 
-  /// Clears stored buffers associated with the given slot and logs the messages that could not be sent.
-  void clear_downlink_slot(slot_point slot_point, unsigned sector, srslog::basic_logger& logger)
+  /// Pops 'pending' buffers from the pool corresponding to the given slot and symbol and checks whether they are
+  /// expired. Clears expired buffers and logs the respective message.
+  void clear_slot(slot_point slot, unsigned sector)
   {
-    // Lock before changing the pool entries.
-    std::lock_guard<std::mutex> lock(mutex);
+    {
+      static_vector<scoped_frame_buffer, MAX_TX_BURST_SIZE> frame_burst;
 
-    pool_entry& cp_entry = get_pool_entry(slot_point, 0);
-    // Clear buffers with DL Control-Plane messages.
-    ofh_pool_message_type msg_type{ofh::message_type::control_plane, ofh::data_direction::downlink};
+      auto& entry = get_pool_entry(slot, 0);
+      entry.pop_pending(frame_burst);
 
-    auto dl_cp_buffers = cp_entry.get_prepared_buffers(msg_type);
-    for (const auto& used_buf : dl_cp_buffers) {
-      if (used_buf.timestamp.get_slot() == slot_point) {
-        continue;
-      }
-      logger.warning("Sector #{}: Detected '{}' late downlink C-Plane messages in the transmitter queue for slot '{}'",
-                     sector,
-                     dl_cp_buffers.size(),
-                     used_buf.timestamp.get_slot());
-      cp_entry.reset_buffers(msg_type);
-      break;
-    }
+      unsigned   nof_lates = 0;
+      slot_point late_slot = {};
 
-    // Clear buffers with User-Plane messages.
-    msg_type.type      = ofh::message_type::user_plane;
-    msg_type.direction = ofh::data_direction::downlink;
-    for (unsigned symbol = 0; symbol != NOF_OFDM_SYM_PER_SLOT_NORMAL_CP; ++symbol) {
-      pool_entry& up_entry = get_pool_entry(slot_point, symbol);
-
-      auto dl_up_buffers = up_entry.get_prepared_buffers(msg_type);
-      for (const auto& used_buf : dl_up_buffers) {
-        if (used_buf.timestamp.get_slot() == slot_point) {
-          continue;
+      for (auto& scoped_buffer : frame_burst) {
+        if (scoped_buffer->get_slot_symbol().get_slot() != slot) {
+          ++nof_lates;
+          if (!late_slot.valid()) {
+            late_slot = scoped_buffer->get_slot_symbol().get_slot();
+          }
+        } else {
+          entry.return_to_pending(*scoped_buffer.get());
         }
-        logger.warning("Sector #{}: Detected '{}' late downlink U-Plane messages in the transmitter queue for slot "
-                       "'{}', symbol '{}'",
+      }
+      if (nof_lates) {
+        logger.warning("Sector #{}: Detected {} late {} {} message(s) in the transmitter queue for slot '{}'",
                        sector,
-                       dl_up_buffers.size(),
-                       used_buf.timestamp.get_slot(),
-                       used_buf.timestamp.get_symbol_index());
-        up_entry.reset_buffers(msg_type);
-        break;
+                       nof_lates,
+                       pool_frames_data_direction == ofh::data_direction::downlink ? "downlink" : "uplink",
+                       pool_frames_type == ofh::message_type::control_plane ? "C-Plane" : "U-Plane",
+                       late_slot);
       }
     }
-  }
 
-  /// Clears stored uplink C-Plane buffers associated with the given slot and logs the messages that could not be sent.
-  void clear_uplink_slot(slot_point slot_point, unsigned sector, srslog::basic_logger& logger)
-  {
-    // Lock before changing the pool entries.
-    std::lock_guard<std::mutex> lock(mutex);
+    // DL C-Plane is only written in the first symbol of a slot.
+    if (pool_frames_type == ofh::message_type::control_plane &&
+        pool_frames_data_direction == ofh::data_direction::downlink) {
+      return;
+    }
 
-    for (unsigned symbol = 0; symbol != NOF_OFDM_SYM_PER_SLOT_NORMAL_CP; ++symbol) {
-      pool_entry& cp_entry = get_pool_entry(slot_point, symbol);
-      // Clear buffers with UL Control-Plane messages.
-      ofh_pool_message_type msg_type{ofh::message_type::control_plane, ofh::data_direction::uplink};
+    unsigned   nof_lates = 0;
+    slot_point late_slot = {};
+    for (unsigned symbol = 1; symbol != NOF_OFDM_SYM_PER_SLOT_NORMAL_CP; ++symbol) {
+      static_vector<scoped_frame_buffer, MAX_TX_BURST_SIZE> frame_burst;
 
-      auto ul_cp_buffers = cp_entry.get_prepared_buffers(msg_type);
-      for (const auto& used_buf : ul_cp_buffers) {
-        if (used_buf.timestamp.get_slot() == slot_point) {
-          continue;
+      auto& cup_entry = get_pool_entry(slot, symbol);
+      cup_entry.pop_pending(frame_burst);
+
+      for (auto& scoped_buffer : frame_burst) {
+        if (scoped_buffer->get_slot_symbol().get_slot() != slot) {
+          ++nof_lates;
+          if (!late_slot.valid()) {
+            late_slot = scoped_buffer->get_slot_symbol().get_slot();
+          }
+        } else {
+          cup_entry.return_to_pending(*scoped_buffer.get());
         }
-        logger.warning("Sector #{}: Detected '{}' late uplink C-Plane messages in the transmitter queue for slot '{}'",
+      }
+      if (nof_lates) {
+        logger.warning("Sector #{}: Detected {} late {} {} message(s) in the transmitter queue for slot '{}'",
                        sector,
-                       ul_cp_buffers.size(),
-                       used_buf.timestamp.get_slot());
-        cp_entry.reset_buffers(msg_type);
-        break;
+                       nof_lates,
+                       pool_frames_data_direction == ofh::data_direction::downlink ? "downlink" : "uplink",
+                       pool_frames_type == ofh::message_type::control_plane ? "C-Plane" : "U-Plane",
+                       late_slot);
       }
     }
   }
@@ -480,12 +488,10 @@ public:
   size_t pool_size_in_slots() const { return NUM_SLOTS; }
 
 private:
-  /// Buffer pool.
-  std::vector<pool_entry> pool;
-  /// Mutex protecting buffers read/write counters.
-  mutable std::mutex mutex;
-  /// Auxiliary buffer.
-  std::vector<const frame_buffer*> aux_array;
+  srslog::basic_logger&                           logger;
+  std::vector<std::unique_ptr<frame_buffer_pool>> pool;
+  ofh::message_type                               pool_frames_type;
+  ofh::data_direction                             pool_frames_data_direction;
 };
 
 } // namespace ether

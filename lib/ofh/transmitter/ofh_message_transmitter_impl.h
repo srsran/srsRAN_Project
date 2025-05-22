@@ -24,9 +24,6 @@ namespace ofh {
 /// Message transmission is managed according the given transmission window.
 class message_transmitter_impl : public ota_symbol_boundary_notifier
 {
-  /// Maximum number of frames allowed to be transmitted in a single burst.
-  static constexpr unsigned MAX_BURST_SIZE = 128;
-
   /// Logger.
   srslog::basic_logger& logger;
   /// Ethernet frame pool.
@@ -65,9 +62,11 @@ private:
   void transmit_frame_burst(span<span<const uint8_t>> frame_burst);
 
   /// Enqueues pending frames that match the given interval into the output buffer.
-  void enqueue_messages_into_burst(const ether::frame_pool_interval&                   interval,
-                                   static_vector<span<const uint8_t>, MAX_BURST_SIZE>& frame_burst,
-                                   std::shared_ptr<ether::eth_frame_pool>&             pool);
+  void enqueue_messages_into_burst(const ether::frame_pool_interval&                                    interval,
+                                   ofh::message_type                                                    type,
+                                   ofh::data_direction                                                  direction,
+                                   static_vector<ether::scoped_frame_buffer, ether::MAX_TX_BURST_SIZE>& frame_burst,
+                                   std::shared_ptr<ether::eth_frame_pool>&                              pool);
 };
 
 } // namespace ofh

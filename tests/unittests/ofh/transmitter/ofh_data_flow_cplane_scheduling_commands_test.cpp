@@ -86,7 +86,12 @@ protected:
       std::make_shared<uplink_cplane_context_repository>(58);
   std::shared_ptr<uplink_cplane_context_repository> prach_cplane_context_repo =
       std::make_shared<uplink_cplane_context_repository>(58);
-  std::shared_ptr<ether::eth_frame_pool>    frame_pool = std::make_shared<ether::eth_frame_pool>(units::bytes(9000), 2);
+  std::shared_ptr<ether::eth_frame_pool> frame_pool =
+      std::make_shared<ether::eth_frame_pool>(srslog::fetch_basic_logger("TEST"),
+                                              units::bytes(9000),
+                                              2,
+                                              ofh::message_type::control_plane,
+                                              ofh::data_direction::downlink);
   ether::testing::vlan_frame_builder_spy*   vlan_builder;
   ecpri::testing::packet_builder_spy*       ecpri_builder;
   cplane_message_builder_spy*               cplane_builder;
