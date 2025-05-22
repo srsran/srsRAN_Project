@@ -55,7 +55,7 @@ f1ap_message generate_f1_setup_request(gnb_du_id_t                              
                                        const std::vector<served_cell_item_info>& cells     = {served_cell_item_info{}});
 
 /// \brief Generates dummy F1 SETUP RESPONSE message based on the request.
-f1ap_message generate_f1_setup_response(const f1ap_message& f1_setup_request);
+f1ap_message generate_f1_setup_response(const f1ap_message& f1_setup_request, bool activate_cells = true);
 
 /// \brief Generates dummy F1 SETUP FAILURE message based on the request.
 f1ap_message generate_f1_setup_failure(const f1ap_message& f1_setup_request);

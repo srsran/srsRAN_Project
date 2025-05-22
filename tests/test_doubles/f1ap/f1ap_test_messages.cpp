@@ -89,7 +89,7 @@ f1ap_message srsran::test_helpers::generate_f1_setup_request(gnb_du_id_t        
   return msg;
 }
 
-f1ap_message srsran::test_helpers::generate_f1_setup_response(const f1ap_message& f1_setup_request)
+f1ap_message srsran::test_helpers::generate_f1_setup_response(const f1ap_message& f1_setup_request, bool activate_cells)
 {
   srsran_assert(f1_setup_request.pdu.type().value == f1ap_pdu_c::types_opts::init_msg, "Expected F1 setup request");
   srsran_assert(f1_setup_request.pdu.init_msg().value.type().value ==
@@ -106,15 +106,17 @@ f1ap_message srsran::test_helpers::generate_f1_setup_response(const f1ap_message
   f1_setup_resp->gnb_cu_name.from_string("srscu");
   f1_setup_resp->gnb_cu_rrc_version.latest_rrc_version.from_number(2);
 
-  f1_setup_resp->cells_to_be_activ_list_present = true;
-  f1_setup_resp->cells_to_be_activ_list.resize(req->gnb_du_served_cells_list.size());
-  for (unsigned i = 0; i != req->gnb_du_served_cells_list.size(); ++i) {
-    auto& req_cell = req->gnb_du_served_cells_list[i]->gnb_du_served_cells_item();
-    f1_setup_resp->cells_to_be_activ_list[i].load_info_obj(ASN1_F1AP_ID_CELLS_TO_BE_ACTIV_LIST_ITEM);
-    auto& cell          = f1_setup_resp->cells_to_be_activ_list[i].value().cells_to_be_activ_list_item();
-    cell.nr_cgi         = req_cell.served_cell_info.nr_cgi;
-    cell.nr_pci_present = true;
-    cell.nr_pci         = req_cell.served_cell_info.nr_pci;
+  f1_setup_resp->cells_to_be_activ_list_present = activate_cells;
+  if (activate_cells) {
+    f1_setup_resp->cells_to_be_activ_list.resize(req->gnb_du_served_cells_list.size());
+    for (unsigned i = 0; i != req->gnb_du_served_cells_list.size(); ++i) {
+      auto& req_cell = req->gnb_du_served_cells_list[i]->gnb_du_served_cells_item();
+      f1_setup_resp->cells_to_be_activ_list[i].load_info_obj(ASN1_F1AP_ID_CELLS_TO_BE_ACTIV_LIST_ITEM);
+      auto& cell          = f1_setup_resp->cells_to_be_activ_list[i].value().cells_to_be_activ_list_item();
+      cell.nr_cgi         = req_cell.served_cell_info.nr_cgi;
+      cell.nr_pci_present = true;
+      cell.nr_pci         = req_cell.served_cell_info.nr_pci;
+    }
   }
 
   return resp;

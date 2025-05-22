@@ -35,8 +35,12 @@ class dummy_du_f1ap_tx_pdu_notifier : public f1ap_message_notifier
 public:
   dummy_du_f1ap_tx_pdu_notifier(task_executor&                         test_exec_,
                                 std::vector<f1ap_message>&             last_f1ap_msgs_,
-                                std::unique_ptr<f1ap_message_notifier> du_rx_notifier_) :
-    test_exec(test_exec_), last_f1ap_msgs(last_f1ap_msgs_), du_rx_notifier(std::move(du_rx_notifier_))
+                                std::unique_ptr<f1ap_message_notifier> du_rx_notifier_,
+                                bool                                   cell_start_on_f1_setup_) :
+    test_exec(test_exec_),
+    last_f1ap_msgs(last_f1ap_msgs_),
+    du_rx_notifier(std::move(du_rx_notifier_)),
+    cell_start_on_f1_setup(cell_start_on_f1_setup_)
   {
   }
 
@@ -45,7 +49,7 @@ public:
     if (msg.pdu.type().value == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg) {
       if (msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_F1_SETUP) {
         // Auto-schedule CU response.
-        du_rx_notifier->on_new_message(test_helpers::generate_f1_setup_response(msg));
+        du_rx_notifier->on_new_message(test_helpers::generate_f1_setup_response(msg, cell_start_on_f1_setup));
       } else if (msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_F1_REMOVAL) {
         // Auto-schedule CU response.
         du_rx_notifier->on_new_message(test_helpers::generate_f1_removal_response(msg));
@@ -66,6 +70,7 @@ public:
   task_executor&                         test_exec;
   std::vector<f1ap_message>&             last_f1ap_msgs;
   std::unique_ptr<f1ap_message_notifier> du_rx_notifier;
+  const bool                             cell_start_on_f1_setup;
 };
 
 } // namespace
@@ -130,12 +135,16 @@ void phy_cell_test_dummy::on_cell_results_completion(slot_point slot)
   cached_ul_res  = {};
 }
 
-dummy_f1c_test_client::dummy_f1c_test_client(task_executor& test_exec_) : test_exec(test_exec_) {}
+dummy_f1c_test_client::dummy_f1c_test_client(task_executor& test_exec_, bool cell_start_on_f1_setup_) :
+  cell_start_on_f1_setup(cell_start_on_f1_setup_), test_exec(test_exec_)
+{
+}
 
 std::unique_ptr<f1ap_message_notifier>
 dummy_f1c_test_client::handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier)
 {
-  return std::make_unique<dummy_du_f1ap_tx_pdu_notifier>(test_exec, last_f1ap_msgs, std::move(du_rx_pdu_notifier));
+  return std::make_unique<dummy_du_f1ap_tx_pdu_notifier>(
+      test_exec, last_f1ap_msgs, std::move(du_rx_pdu_notifier), cell_start_on_f1_setup);
 }
 
 static void init_loggers()
@@ -186,12 +195,12 @@ du_high_configuration srs_du::create_du_high_configuration(const du_high_env_sim
 }
 
 du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
-  du_high_env_simulator(create_du_high_configuration(params))
+  du_high_env_simulator(create_du_high_configuration(params), params.active_cells_on_start)
 {
 }
 
-du_high_env_simulator::du_high_env_simulator(const du_high_configuration& du_hi_cfg_) :
-  cu_notifier(workers.test_worker),
+du_high_env_simulator::du_high_env_simulator(const du_high_configuration& du_hi_cfg_, bool active_cells_on_start) :
+  cu_notifier(workers.test_worker, active_cells_on_start),
   du_metrics(workers.test_worker),
   du_high_cfg(du_hi_cfg_),
   du_hi_dependencies([this]() {

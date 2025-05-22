@@ -294,6 +294,48 @@ INSTANTIATE_TEST_SUITE_P(du_high_many_cells_test_suite,
                          du_high_many_cells_tester,
                          ::testing::Values(test_params{2}, test_params{4}));
 
+class du_high_many_cells_deferred_activation_test : public du_high_env_simulator, public testing::Test
+{
+protected:
+  constexpr static unsigned nof_cells = 4;
+
+  du_high_many_cells_deferred_activation_test() :
+    du_high_env_simulator(du_high_env_sim_params{nof_cells, std::nullopt, std::nullopt, std::nullopt, false})
+  {
+  }
+};
+
+TEST_F(du_high_many_cells_deferred_activation_test, when_cell_is_deferred_activated_then_no_allocation_is_done)
+{
+  const unsigned test_nof_slots = 256;
+
+  for (unsigned i = 0; i != test_nof_slots; ++i) {
+    this->run_slot();
+
+    for (unsigned c = 0; c != this->nof_cells; ++c) {
+      if (phy.cells[c].last_dl_res.has_value()) {
+        ASSERT_TRUE(phy.cells[c].last_dl_res.value().dl_res->csi_rs.empty());
+        ASSERT_TRUE(phy.cells[c].last_dl_res.value().dl_res->bc.sibs.empty());
+        ASSERT_TRUE(phy.cells[c].last_dl_res.value().dl_res->bc.ssb_info.empty());
+        ASSERT_TRUE(phy.cells[c].last_dl_res.value().dl_res->dl_pdcchs.empty());
+        ASSERT_TRUE(phy.cells[c].last_dl_res.value().dl_res->ul_pdcchs.empty());
+        ASSERT_TRUE(phy.cells[c].last_dl_res.value().dl_res->ue_grants.empty());
+        ASSERT_TRUE(phy.cells[c].last_dl_res.value().dl_res->rar_grants.empty());
+        ASSERT_TRUE(phy.cells[c].last_dl_res.value().dl_res->paging_grants.empty());
+        ASSERT_TRUE(phy.cells[c].last_dl_res.value().dl_pdcch_pdus.empty());
+        ASSERT_TRUE(phy.cells[c].last_dl_res.value().ul_pdcch_pdus.empty());
+        ASSERT_TRUE(phy.cells[c].last_dl_res.value().ssb_pdus.empty());
+      }
+      if (phy.cells[c].last_ul_res.has_value()) {
+        ASSERT_TRUE(phy.cells[c].last_ul_res.value().ul_res->prachs.empty());
+        ASSERT_TRUE(phy.cells[c].last_ul_res.value().ul_res->pucchs.empty());
+        ASSERT_TRUE(phy.cells[c].last_ul_res.value().ul_res->puschs.empty());
+        ASSERT_TRUE(phy.cells[c].last_ul_res.value().ul_res->srss.empty());
+      }
+    }
+  }
+}
+
 class du_high_many_cells_metrics_test : public du_high_env_simulator, public testing::Test
 {
 protected:
