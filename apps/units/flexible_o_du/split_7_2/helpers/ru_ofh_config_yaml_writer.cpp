@@ -117,17 +117,14 @@ static YAML::Node build_ru_ofh_cell_section(const ru_ofh_unit_cell_config& confi
   if (config.vlan_tag_up.has_value()) {
     node["vlan_tag_up"] = config.vlan_tag_up.value();
   }
-  for (auto id : config.ru_prach_port_id) {
-    node["prach_port_id"] = id;
-  }
+
+  node["prach_port_id"] = config.ru_prach_port_id;
   node["prach_port_id"].SetStyle(YAML::EmitterStyle::Flow);
-  for (auto id : config.ru_dl_port_id) {
-    node["dl_port_id"] = id;
-  }
+
+  node["dl_port_id"] = config.ru_dl_port_id;
   node["dl_port_id"].SetStyle(YAML::EmitterStyle::Flow);
-  for (auto id : config.ru_ul_port_id) {
-    node["ul_port_id"] = id;
-  }
+
+  node["ul_port_id"] = config.ru_ul_port_id;
   node["ul_port_id"].SetStyle(YAML::EmitterStyle::Flow);
 
   return node;
