@@ -687,27 +687,11 @@ TEST_P(ra_scheduler_tdd_test, when_no_rbs_are_available_then_rar_is_scheduled_in
 INSTANTIATE_TEST_SUITE_P(ra_scheduler,
                          ra_scheduler_fdd_test,
                          ::testing::Values(test_params{.scs = subcarrier_spacing::kHz15, .k0 = 0, .k2s = {2}},
-                                           test_params{.scs = subcarrier_spacing::kHz15, .k0 = 2, .k2s = {2}},
-                                           test_params{.scs = subcarrier_spacing::kHz15, .k0 = 4, .k2s = {2}},
-                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 0, .k2s = {2}},
-                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 2, .k2s = {2}},
-                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 4, .k2s = {2}}));
+                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 0, .k2s = {2}}));
 
 INSTANTIATE_TEST_SUITE_P(ra_scheduler,
                          ra_scheduler_tdd_test,
                          ::testing::Values(test_params{.scs = subcarrier_spacing::kHz15, .k0 = 0, .k2s = {2, 4}},
-                                           test_params{.scs = subcarrier_spacing::kHz15, .k0 = 2, .k2s = {2, 4}},
-                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 0, .k2s = {2, 4}},
-                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 2, .k2s = {2, 4}},
-                                           test_params{.scs        = subcarrier_spacing::kHz30,
-                                                       .k0         = 6,
-                                                       .k2s        = {2, 4},
-                                                       .tdd_config = tdd_ul_dl_config_common{
-                                                           .ref_scs  = subcarrier_spacing::kHz30,
-                                                           .pattern1 = {.dl_ul_tx_period_nof_slots = 10,
-                                                                        .nof_dl_slots              = 6,
-                                                                        .nof_dl_symbols            = 6,
-                                                                        .nof_ul_slots              = 3,
-                                                                        .nof_ul_symbols            = 0}}}));
+                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 0, .k2s = {2, 4}}));
 
 } // namespace

@@ -446,12 +446,6 @@ bool ra_scheduler::is_slot_candidate_for_rar(cell_slot_resource_allocator& slot_
     return false;
   }
 
-  if (csi_helper::is_csi_rs_slot(cell_cfg, pdcch_slot)) {
-    // TODO: Remove this once multiplexing is possible.
-    // At the moment, we do not multiple PDSCH and CSI-RS.
-    return false;
-  }
-
   // Check for space in PDCCH result list. We check for space in PDSCH later, once the k0 is known.
   if (slot_res_alloc.result.dl.dl_pdcchs.full()) {
     log_postponed_rar(pending_rars.front(), "PDCCH grants limit reached", pdcch_slot);
@@ -584,6 +578,12 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
     // > Check whether PDSCH time domain resource does not overlap with CORESET.
     if (pdsch_td_res.symbols.start() < ss_cfg.get_first_symbol_index() + coreset_duration) {
       continue;
+    }
+
+    if (csi_helper::is_csi_rs_slot(cell_cfg, pdsch_alloc.slot)) {
+      // TODO: Remove this once multiplexing is possible.
+      // At the moment, we do not multiple PDSCH and CSI-RS.
+      return false;
     }
 
     // > Find available RBs in PDSCH for RAR grant.
