@@ -364,10 +364,10 @@ public:
                        const std::optional<std::chrono::milliseconds>&         metrics_period) :
     strand(cfg.pool_executor,
            std::array<concurrent_queue_params, 2>{
-               concurrent_queue_params{concurrent_queue_policy::lockfree_spsc, cfg.task_queue_size},
+               concurrent_queue_params{concurrent_queue_policy::lockfree_mpmc, cfg.task_queue_size},
                concurrent_queue_params{concurrent_queue_policy::lockfree_mpmc, cfg.task_queue_size}}),
     timer_exec(decorator.decorate(strand.get_executors()[0],
-                                  not rt_mode_enabled,
+                                  false,
                                   trace_enabled,
                                   metrics_period,
                                   trace_enabled or metrics_period ? "du_timer_exec" : "")),

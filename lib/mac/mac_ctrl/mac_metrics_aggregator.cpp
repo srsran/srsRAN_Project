@@ -278,12 +278,11 @@ bool mac_metrics_aggregator::pop_report(cell_metric_handler& cell)
   }
 
   const slot_point start_slot          = next_ev->sched.slot;
-  const slot_point start_report_window = start_slot - (start_slot.to_uint() % cell.period_slots);
+  const slot_point start_report_window = start_slot - (start_slot.count() % cell.period_slots);
 
-  if (start_report_window == next_report_start_slot.without_hyper_sfn()) {
+  if (start_report_window >= next_report_start_slot.without_hyper_sfn() and
+      start_report_window < (next_report_start_slot + cell.period_slots).without_hyper_sfn()) {
     // Report is within expected window.
-    // Note: This check is only effective for report periods that are not a multiple of a SFN. However, if a report
-    // period is as long as a SFN, it is unlikely for it to be in the queue.
     if (next_ev->mac.has_value()) {
       next_report.dl.cells.push_back(*next_ev->mac);
     }
@@ -292,14 +291,14 @@ bool mac_metrics_aggregator::pop_report(cell_metric_handler& cell)
     return true;
   }
 
-  if (start_report_window == next_report_start_slot.without_hyper_sfn() + cell.period_slots) {
+  if (start_report_window >= (next_report_start_slot + cell.period_slots).without_hyper_sfn()) {
     // Report is the one coming right after the expected one. Leave it in the queue to be dequeued later.
     return false;
   }
 
   // Report falls in invalid window. Discard it.
   cell.report_queue.pop();
-  if (start_report_window == next_report_start_slot.without_hyper_sfn() - cell.period_slots) {
+  if (start_report_window >= (next_report_start_slot - cell.period_slots).without_hyper_sfn()) {
     logger.info("cell={}: Discarding old metric report for slot {}", fmt::underlying(cell.cell_index), start_slot);
   } else {
     logger.warning("cell={}: Discarding metric report falling in invalid report window",
