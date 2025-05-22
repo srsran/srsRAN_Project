@@ -159,9 +159,6 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
   /// Metrics tracked that are reset on every report.
   non_persistent_data data;
 
-  /// Report being constructed.
-  scheduler_cell_metrics_notifier::builder next_report;
-
 public:
   /// \brief Creates a scheduler UE metrics handler for a given cell. In case the metrics_report_period is zero,
   /// no metrics are reported.
@@ -230,11 +227,16 @@ public:
   /// \brief Checks whether the metrics reporting is active.
   bool enabled() const { return report_period_slots != 0; }
 
+  /// \brief Called when the cell is stopped. This will trigger a cell stop report.
+  void handle_cell_deactivation();
+
 private:
   void handle_pucch_sinr(ue_metric_context& u, float sinr);
   void handle_csi_report(ue_metric_context& u, const csi_report_data& csi);
   void report_metrics();
   void handle_slot_result(const sched_result& slot_result, std::chrono::microseconds slot_decision_latency);
+
+  std::vector<scheduler_cell_event> pending_events;
 };
 
 /// Handler of metrics for all the UEs and cells of the scheduler.

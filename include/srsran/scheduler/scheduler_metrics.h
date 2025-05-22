@@ -179,7 +179,8 @@ public:
 class scheduler_cell_metrics_notifier : public zero_copy_notifier<scheduler_cell_metrics>
 {
 public:
-  virtual bool is_sched_report_required(slot_point sl_tx) = 0;
+  /// Check whether a new metric report is required given the current slot.
+  virtual bool is_sched_report_required(slot_point sl_tx) const = 0;
 };
 
 } // namespace srsran

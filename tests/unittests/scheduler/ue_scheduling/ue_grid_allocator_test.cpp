@@ -473,7 +473,8 @@ TEST_P(ue_grid_allocator_tester, successfully_allocated_pdsch_even_with_large_ga
   // Ensure next PDSCH to be allocated slot is after wrap around of 1024 SFNs (large gap to last allocated PDSCH slot)
   // and current slot value is less than last allocated PDSCH slot. e.g. next PDSCH to be allocated slot=SFN 2, slot 2
   // after wrap around of 1024 SFNs.
-  for (unsigned i = 0; i < current_slot.nof_slots_per_hyper_frame() / 2 + current_slot.nof_slots_per_frame(); ++i) {
+  for (unsigned i = 0; i < current_slot.nof_slots_per_hyper_system_frame() / 2 + current_slot.nof_slots_per_frame();
+       ++i) {
     slot_indication();
   }
 
@@ -561,7 +562,8 @@ TEST_P(ue_grid_allocator_tester, successfully_allocated_pusch_even_with_large_ga
   // Ensure next PUSCH to be allocated slot is after wrap around of 1024 SFNs (large gap to last allocated PUSCH slot)
   // and current slot value is less than last allocated PUSCH slot. e.g. next PUSCH to be allocated slot=SFN 2, slot 2
   // after wrap around of 1024 SFNs.
-  for (unsigned i = 0; i < current_slot.nof_slots_per_hyper_frame() / 2 + current_slot.nof_slots_per_frame(); ++i) {
+  for (unsigned i = 0; i < current_slot.nof_slots_per_hyper_system_frame() / 2 + current_slot.nof_slots_per_frame();
+       ++i) {
     slot_indication();
   }
 

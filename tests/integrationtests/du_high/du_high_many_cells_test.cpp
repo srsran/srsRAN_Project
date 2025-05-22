@@ -267,6 +267,12 @@ TEST_P(du_high_many_cells_tester, when_cell_restarted_then_ues_can_be_created)
            test_helpers::is_gnb_cu_config_update_acknowledge_valid(this->cu_notifier.last_f1ap_msgs.back(), req);
   }));
 
+  // Random number of slots elapsed.
+  const unsigned nof_slots_before_reactivation = test_rgen::uniform_int<unsigned>(0, 500);
+  for (unsigned i = 0; i != nof_slots_before_reactivation; ++i) {
+    this->run_slot();
+  }
+
   // Restart the cell.
   this->cu_notifier.last_f1ap_msgs.clear();
   f1ap_message req_restart = test_helpers::create_gnb_cu_configuration_update_request(0, {{rem_cgi}}, {});

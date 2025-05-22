@@ -57,38 +57,37 @@ public:
     period_slots(get_nof_slots_per_subframe(scs_common) * parent.period.count()),
     sched_notifier(sched_notifier_),
     time_source(time_source_),
-    logger(logger_),
     report_queue(cell_report_queue_size, logger_, []() { return report_preinit(); })
   {
   }
 
   bool is_report_required(slot_point slot_tx) override
   {
+    // Note: Called from the cell execution context.
     if (SRSRAN_UNLIKELY(not last_sl_tx.valid())) {
+      // Cell not yet active.
       return false;
     }
-    // Note: Called from the cell execution context.
-    slot_point_extended new_last_sl_tx{slot_tx, last_sl_tx.hfn()};
+    slot_point_extended new_last_sl_tx{slot_tx, last_sl_tx.hyper_sfn()};
     if (SRSRAN_UNLIKELY(new_last_sl_tx < last_sl_tx)) {
       // SFN rollover detected.
-      new_last_sl_tx += slot_tx.nof_slots_per_hyper_frame();
+      new_last_sl_tx += slot_tx.nof_slots_per_hyper_system_frame();
     }
-    last_sl_tx                       = new_last_sl_tx;
-    const bool sched_report_is_ready = mac_builder != nullptr;
-    return sched_report_is_ready and last_sl_tx >= next_report_slot_tx;
+    last_sl_tx = new_last_sl_tx;
+    return mac_builder != nullptr and last_sl_tx >= next_report_slot_tx;
   }
 
-  bool is_sched_report_required(slot_point slot_tx) override
+  bool is_sched_report_required(slot_point slot_tx) const override
   {
     if (SRSRAN_UNLIKELY(not last_sl_tx.valid())) {
       return false;
     }
-    slot_point_extended new_last_sl_tx{slot_tx, last_sl_tx.hfn()};
+    slot_point_extended new_last_sl_tx{slot_tx, last_sl_tx.hyper_sfn()};
     if (SRSRAN_UNLIKELY(new_last_sl_tx < last_sl_tx)) {
       // SFN rollover detected.
-      new_last_sl_tx += slot_tx.nof_slots_per_hyper_frame();
+      new_last_sl_tx += slot_tx.nof_slots_per_hyper_system_frame();
     }
-    return sched_builder != nullptr and new_last_sl_tx >= next_report_slot_tx;
+    return new_last_sl_tx >= next_report_slot_tx;
   }
 
   void on_cell_activation() override
@@ -116,7 +115,7 @@ public:
   void on_cell_metric_report(const mac_dl_cell_metric_report& report) override
   {
     // Note: Function called from the DU cell execution context.
-    srsran_sanity_check(is_report_required(last_sl_tx.without_hfn()), "Report not required");
+    srsran_sanity_check(is_report_required(last_sl_tx.without_hyper_sfn()), "Report not required");
 
     // Save MAC report.
     mac_builder->mac = report;
@@ -169,13 +168,6 @@ private:
     // Note: This function is called from the scheduler execution context.
     srsran_sanity_check(&report == &sched_builder->sched, "Invalid report being committed");
 
-    if (not next_report_slot_tx.valid() or report.slot + report.nof_slots != next_report_slot_tx.without_hfn()) {
-      // Scheduler report is out of window. Do not commit it.
-      report.ue_metrics.clear();
-      report.events.clear();
-      return;
-    }
-
     if (sched_notifier != nullptr) {
       // TODO: Remove this and use only DU metrics interface.
       sched_notifier->report_metrics(report);
@@ -191,7 +183,6 @@ private:
   const unsigned              period_slots;
   scheduler_metrics_notifier* sched_notifier;
   du_cell_timer_source&       time_source;
-  srslog::basic_logger&       logger;
 
   // Reports from a given cell.
   report_queue_type          report_queue;
@@ -289,7 +280,7 @@ bool mac_metrics_aggregator::pop_report(cell_metric_handler& cell)
   const slot_point start_slot          = next_ev->sched.slot;
   const slot_point start_report_window = start_slot - (start_slot.to_uint() % cell.period_slots);
 
-  if (start_report_window == next_report_start_slot.without_hfn()) {
+  if (start_report_window == next_report_start_slot.without_hyper_sfn()) {
     // Report is within expected window.
     // Note: This check is only effective for report periods that are not a multiple of a SFN. However, if a report
     // period is as long as a SFN, it is unlikely for it to be in the queue.
@@ -301,14 +292,14 @@ bool mac_metrics_aggregator::pop_report(cell_metric_handler& cell)
     return true;
   }
 
-  if (start_report_window == next_report_start_slot.without_hfn() + cell.period_slots) {
+  if (start_report_window == next_report_start_slot.without_hyper_sfn() + cell.period_slots) {
     // Report is the one coming right after the expected one. Leave it in the queue to be dequeued later.
     return false;
   }
 
   // Report falls in invalid window. Discard it.
   cell.report_queue.pop();
-  if (start_report_window == next_report_start_slot.without_hfn() - cell.period_slots) {
+  if (start_report_window == next_report_start_slot.without_hyper_sfn() - cell.period_slots) {
     logger.info("cell={}: Discarding old metric report for slot {}", fmt::underlying(cell.cell_index), start_slot);
   } else {
     logger.warning("cell={}: Discarding metric report falling in invalid report window",
@@ -360,7 +351,7 @@ void mac_metrics_aggregator::handle_cell_deactivation(du_cell_index_t           
   srsran_assert(last_report.cell_deactivated, "Expected cell deactivated flag to be set");
 
   // Save last report before deactivating cell.
-  slot_point next_start_sl_tx = next_report_start_slot.without_hfn();
+  slot_point next_start_sl_tx = next_report_start_slot.without_hyper_sfn();
   if (last_report.start_slot >= next_start_sl_tx and last_report.start_slot < next_start_sl_tx + cell.period_slots) {
     next_report.dl.cells.push_back(last_report);
   }

@@ -29,7 +29,7 @@ private:
     null_report.ue_metrics.clear();
     null_report.events.clear();
   }
-  bool is_sched_report_required(slot_point sl_tx) override { return false; }
+  bool is_sched_report_required(slot_point sl_tx) const override { return false; }
 
   scheduler_cell_metrics null_report{};
 };
@@ -52,18 +52,14 @@ cell_metrics_handler::cell_metrics_handler(
     return;
   }
 
-  next_report = notifier.get_builder();
-
   // Pre-reserve space.
   ues.reserve(MAX_NOF_DU_UES);
   rnti_to_ue_index_lookup.reserve(MAX_NOF_DU_UES);
+  constexpr unsigned pre_reserved_event_capacity = 3 * MAX_NOF_DU_UES;
+  pending_events.reserve(pre_reserved_event_capacity);
 }
 
-cell_metrics_handler::~cell_metrics_handler()
-{
-  // Avoid reporting on destruction.
-  next_report.release();
-}
+cell_metrics_handler::~cell_metrics_handler() {}
 
 void cell_metrics_handler::handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci)
 {
@@ -77,7 +73,7 @@ void cell_metrics_handler::handle_ue_creation(du_ue_index_t ue_index, rnti_t rnt
   ues[ue_index].pci      = pcell_pci;
   rnti_to_ue_index_lookup.emplace(rnti, ue_index);
 
-  next_report->events.push_back(scheduler_cell_event{last_slot_tx, rnti, scheduler_cell_event::event_type::ue_add});
+  pending_events.push_back(scheduler_cell_event{last_slot_tx, rnti, scheduler_cell_event::event_type::ue_add});
 }
 
 void cell_metrics_handler::handle_ue_reconfiguration(du_ue_index_t ue_index)
@@ -85,7 +81,7 @@ void cell_metrics_handler::handle_ue_reconfiguration(du_ue_index_t ue_index)
   if (not enabled()) {
     return;
   }
-  next_report->events.push_back(
+  pending_events.push_back(
       scheduler_cell_event{last_slot_tx, ues[ue_index].rnti, scheduler_cell_event::event_type::ue_reconf});
 }
 
@@ -97,7 +93,7 @@ void cell_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
   if (ues.contains(ue_index)) {
     rnti_t rnti = ues[ue_index].rnti;
 
-    next_report->events.push_back(scheduler_cell_event{last_slot_tx, rnti, scheduler_cell_event::event_type::ue_rem});
+    pending_events.push_back(scheduler_cell_event{last_slot_tx, rnti, scheduler_cell_event::event_type::ue_rem});
 
     rnti_to_ue_index_lookup.erase(rnti);
     ues.erase(ue_index);
@@ -371,10 +367,13 @@ void cell_metrics_handler::handle_late_ul_harqs()
 
 void cell_metrics_handler::report_metrics()
 {
+  auto next_report = notifier.get_builder();
+
   for (ue_metric_context& ue : ues) {
     // Compute statistics of the UE metrics and push the result to the report.
     next_report->ue_metrics.push_back(ue.compute_report(report_period, nof_slots_per_sf));
   }
+  next_report->events.swap(pending_events);
 
   next_report->pci                       = cell_cfg.pci;
   next_report->slot                      = last_slot_tx - report_period_slots;
@@ -407,9 +406,6 @@ void cell_metrics_handler::report_metrics()
   // Report all UE metrics in a batch.
   // Note: next_report will be reset afterwards. However, we prefer to first commit before fetching a new report.
   next_report.reset();
-
-  // Clear lists in preparation for the next report.
-  next_report = notifier.get_builder();
 }
 
 void cell_metrics_handler::handle_slot_result(const sched_result&       slot_result,
@@ -497,6 +493,12 @@ void cell_metrics_handler::push_result(slot_point                sl_tx,
     // Prepare report and forward it to the notifier.
     report_metrics();
   }
+}
+
+void cell_metrics_handler::handle_cell_deactivation()
+{
+  // Commit whatever is pending for the report.
+  report_metrics();
 }
 
 scheduler_ue_metrics

@@ -17,9 +17,6 @@
 
 using namespace srsran;
 
-/// Number of subframes per hyper frame.
-static constexpr uint32_t NOF_SF_PER_HFN = NOF_SFNS * NOF_SUBFRAMES_PER_FRAME;
-
 class du_time_controller::time_ticker_impl final : public du_cell_timer_source
 {
 public:
@@ -39,10 +36,9 @@ public:
 
   void on_cell_deactivation() override { parent.handle_cell_deactivation(cell_index); }
 
-  slot_point_extended on_slot_indication(slot_point sl_tx) override
+  slot_point_extended on_slot_indication_impl(slot_point sl_tx) override
   {
-    this->cached_now = parent.handle_slot_ind(cell_index, sl_tx);
-    return this->cached_now;
+    return parent.handle_slot_ind(cell_index, sl_tx);
   }
 };
 
@@ -58,92 +54,47 @@ std::unique_ptr<du_cell_timer_source> du_time_controller::add_cell(du_cell_index
   return std::make_unique<time_ticker_impl>(*this, cell_index);
 }
 
-bool du_time_controller::push_back_new_cell(du_cell_index_t cell_index)
+// Helper to setup the cell initial last slot counter based on the master cell clock.
+static slot_point_extended get_init_slot_tx_ext(slot_point sl_tx, uint32_t master_cell_clock)
 {
-  cells[cell_index].next = -1;
-
-  while (true) {
-    int curr = head.load(std::memory_order_acquire);
-
-    if (curr == -1) {
-      // Empty list, try to insert at head
-      if (head.compare_exchange_strong(curr, cell_index, std::memory_order_release, std::memory_order_acquire)) {
-        return true;
-      }
-    } else {
-      // Walk to the tail
-      while (true) {
-        int next = cells[curr].next.load(std::memory_order_acquire);
-        if (next == -1) {
-          // Try to attach at the tail
-          if (cells[curr].next.compare_exchange_weak(
-                  next, cell_index, std::memory_order_release, std::memory_order_acquire)) {
-            return false;
-          } else {
-            // Restart traversal in case of contention.
-            break;
-          }
-        }
-        curr = next;
-      }
-    }
+  static const int    max_slot_diff = sl_tx.nof_slots_per_hyper_system_frame() / 2;
+  slot_point_extended master_sl{sl_tx.scs(), master_cell_clock};
+  slot_point_extended curr_count{sl_tx, master_sl.hyper_sfn()};
+  int                 diff = curr_count - master_sl;
+  if (diff < -max_slot_diff) {
+    // This new cell is a bit ahead of the master cell and there was SFN rollover.
+    curr_count += sl_tx.nof_slots_per_hyper_system_frame();
+  } else if (diff > max_slot_diff) {
+    // This new cell is a bit behind the master cell and there was SFN rollover.
+    curr_count -= sl_tx.nof_slots_per_hyper_system_frame();
   }
-}
-
-bool du_time_controller::rem_cell(du_cell_index_t cell_index)
-{
-  int prev = -1;
-  int curr = head.load(std::memory_order_acquire);
-  while (curr != -1) {
-    int next = cells[curr].next.load(std::memory_order_acquire);
-
-    if (curr == cell_index) {
-      // Found target
-      if (prev == -1) {
-        // It's the head
-        if (head.compare_exchange_strong(curr, next, std::memory_order_release, std::memory_order_acquire)) {
-          return next == -1;
-        }
-      } else {
-        if (cells[prev].next.compare_exchange_strong(
-                curr, next, std::memory_order_release, std::memory_order_acquire)) {
-          return false;
-        }
-      }
-    }
-
-    prev = curr;
-    curr = next;
-  }
-
-  report_fatal_error("Unable to remove cell {} from linked list", fmt::underlying(cell_index));
+  return curr_count;
 }
 
 void du_time_controller::handle_cell_activation(du_cell_index_t cell_index, slot_point sl_tx)
 {
-  srsran_assert(not cells[cell_index].active, "Invalid state");
+  if (cells[cell_index].active) {
+    return;
+  }
   cells[cell_index].active = true;
 
-  // Add cell to linked list of active cells.
-  if (push_back_new_cell(cell_index)) {
-    // The cell was the first to be added. Then, it is the current master cell.
-    // Start with HFN count == 0.
+  // Increment number of active cells.
+  nof_active_cells.fetch_add(1, std::memory_order_acq_rel);
+
+  // Setup the cell initial slot counter.
+  int32_t cur_master_clock = master_count.load(std::memory_order_relaxed);
+  if (cur_master_clock < 0) {
+    // First cell to be activated. Start with HFN count == 0, and set the master clock to one slot before the current
+    // slot.
     cells[cell_index].last_counter = slot_point_extended{sl_tx, 0};
-    master_count.store(cells[cell_index].last_counter.count(), std::memory_order_relaxed);
-  } else {
-    // Setup cell-local last slot counter.
-    slot_point_extended master_cpy{sl_tx.scs(), master_count.load(std::memory_order_relaxed)};
-    slot_point_extended curr_count{sl_tx, master_cpy.hfn()};
-    int                 diff          = curr_count - master_cpy;
-    const int           max_slot_diff = sl_tx.nof_slots_per_hyper_frame() / 2;
-    if (diff < -max_slot_diff) {
-      // This new cell is a bit ahead of the master cell and there was SFN rollover.
-      curr_count += sl_tx.nof_slots_per_hyper_frame();
-    } else if (diff > max_slot_diff) {
-      // This new cell is a bit behind the master cell and there was SFN rollover.
-      curr_count -= sl_tx.nof_slots_per_hyper_frame();
+    uint32_t master_count_val      = (cells[cell_index].last_counter - 1).count();
+    if (not master_count.compare_exchange_strong(cur_master_clock, master_count_val)) {
+      // Another cell won the race and initialized the master clock instead.
+      srsran_sanity_check(cur_master_clock >= 0, "invalid master clock");
+      cells[cell_index].last_counter = get_init_slot_tx_ext(sl_tx, cur_master_clock);
     }
-    cells[cell_index].last_counter = curr_count;
+  } else {
+    cells[cell_index].last_counter = get_init_slot_tx_ext(sl_tx, cur_master_clock);
   }
 }
 
@@ -155,8 +106,21 @@ void du_time_controller::handle_cell_deactivation(du_cell_index_t cell_index)
   }
   cells[cell_index].active = false;
 
-  bool all_cells_removed = rem_cell(cell_index);
-  if (all_cells_removed) {
+  int32_t master_cell_clock = master_count.load(std::memory_order_relaxed);
+
+  // Decrement the number of active cells.
+  uint32_t nof_active = nof_active_cells.fetch_sub(1, std::memory_order_release) - 1;
+
+  // Check if this is the last cell to be deactivated.
+  // If so, we will try to reset the master clock, as there may be a long period of time ahead when we will not be
+  // receiving new slot indications. However, we have to watch out for concurrent cell activations.
+  while (nof_active == 0 and master_cell_clock >= 0 and
+         not master_count.compare_exchange_strong(
+             master_cell_clock, -1, std::memory_order_release, std::memory_order_relaxed)) {
+    nof_active = nof_active_cells.load(std::memory_order_acquire);
+  }
+
+  if (nof_active == 0) {
     logger.info("All cells have been deactivating. The timers will be stopped.");
     // TODO: Initiate system timer service.
   }
@@ -169,33 +133,39 @@ slot_point_extended du_time_controller::handle_slot_ind(du_cell_index_t cell_ind
   // Set logger context.
   logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
 
-  if (not cells[cell_index].active) {
+  // Update cell slot counter.
+  slot_point_extended& cell_sl_counter = cells[cell_index].last_counter;
+  if (SRSRAN_UNLIKELY(not cells[cell_index].active)) {
     // Create cell if it is not yet active.
     handle_cell_activation(cell_index, sl_tx);
+  } else {
+    slot_point_extended sl_tx_ext{sl_tx, cell_sl_counter.hyper_sfn()};
+    if (sl_tx_ext < cell_sl_counter) {
+      // SFN rollover detected. Increment HFN.
+      sl_tx_ext += sl_tx.nof_slots_per_hyper_system_frame();
+    }
+    cell_sl_counter = sl_tx_ext;
   }
 
-  slot_point_extended sl_tx_ext{sl_tx, cells[cell_index].last_counter.hfn()};
-  if (sl_tx_ext < cells[cell_index].last_counter) {
-    // SFN rollover detected. Increment HFN.
-    sl_tx_ext += sl_tx.nof_slots_per_hyper_frame();
-  }
-
-  // Update cell slot counter.
-  int nof_skipped                = sl_tx_ext - cells[cell_index].last_counter;
-  cells[cell_index].last_counter = sl_tx_ext;
-
-  if (sl_tx_ext.subframe_slot_index() != 0) {
+  if (cell_sl_counter.subframe_slot_index() != 0) {
     // Not a subframe boundary. Return.
-    return cells[cell_index].last_counter;
+    return cell_sl_counter;
   }
 
-  // Check if the cell is responsible for ticking.
-  if (this->head.load(std::memory_order_acquire) != cell_index) {
-    // Another cell is in control. Return.
-    return cells[cell_index].last_counter;
+  // Update the master cell clock. For each slot, only one cell will be able to update the master clock.
+  int32_t             master_cpy = master_count.load(std::memory_order_relaxed);
+  slot_point_extended master_sl;
+  do {
+    master_sl = {sl_tx.scs(), static_cast<uint32_t>(master_cpy)};
+  } while (cell_sl_counter > master_sl and not master_count.compare_exchange_weak(master_cpy, cell_sl_counter.count()));
+  int nof_skipped = cell_sl_counter - master_sl;
+
+  // If nof_skipped > 0, this is the cell responsible for ticking.
+  if (nof_skipped <= 0) {
+    return cell_sl_counter;
   }
 
-  if (nof_skipped < 0 or nof_skipped >= MAX_SKIPPED) {
+  if (nof_skipped >= MAX_SKIPPED) {
     // Number of skipped slots is too high. This is likely an error.
     logger.warning("cell={}: Unexpected jump in slot indications of {}", fmt::underlying(cell_index), nof_skipped);
     return cells[cell_index].last_counter;
@@ -208,7 +178,7 @@ slot_point_extended du_time_controller::handle_slot_ind(du_cell_index_t cell_ind
         }
       })) {
     // The task executor dispatch was successful. Update the master count.
-    master_count.store(sl_tx_ext.count(), std::memory_order_relaxed);
+    master_count.store(cell_sl_counter.count(), std::memory_order_relaxed);
   }
 
   return cells[cell_index].last_counter;

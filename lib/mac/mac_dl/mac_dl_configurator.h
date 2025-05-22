@@ -26,12 +26,18 @@ public:
   virtual void on_cell_deactivation() = 0;
 
   /// Called on each new slot indication for a given cell.
-  virtual slot_point_extended on_slot_indication(slot_point sl_tx) = 0;
+  slot_point_extended on_slot_indication(slot_point sl_tx)
+  {
+    cached_now = on_slot_indication_impl(sl_tx);
+    return cached_now;
+  }
 
   /// Current HFN, SFN and slot number.
   slot_point_extended now() const { return cached_now; }
 
-protected:
+private:
+  virtual slot_point_extended on_slot_indication_impl(slot_point sl_tx) = 0;
+
   slot_point_extended cached_now;
 };
 

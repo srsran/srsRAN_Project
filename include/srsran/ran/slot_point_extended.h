@@ -14,7 +14,10 @@
 
 namespace srsran {
 
-/// Slot point type that represents the numerology, HFN, SFN and slot index of the current slot.
+/// Number of Hyper System Frame Number (HyperSFN) values. As per TS 38.331, a HyperSFN ranges from 0 to 1023.
+constexpr size_t NOF_HYPER_SFNS = 1024;
+
+/// Slot point type that represents the numerology, HyperSFN, SFN and slot index of the current slot.
 class slot_point_extended : private slot_point
 {
   /// Number of possible numerologies.
@@ -27,7 +30,9 @@ public:
     uint32_t numerology = to_numerology_value(scs);
     srsran_assert(numerology < NOF_NUMEROLOGIES, "Invalid numerology idx={} passed", numerology);
     numerology_val = numerology;
-    srsran_assert(count < NOF_HFNS * NOF_SFNS * get_nof_slots_per_subframe(scs), "Invalid slot count={} passed", count);
+    srsran_assert(count < NOF_HYPER_SFNS * NOF_SFNS * NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(scs),
+                  "Invalid slot count={} passed",
+                  count);
     count_val = count;
   }
   constexpr slot_point_extended(slot_point slot)
@@ -35,15 +40,15 @@ public:
     numerology_val = slot.numerology();
     count_val      = slot.count();
   }
-  constexpr slot_point_extended(slot_point slot, uint32_t hfn)
+  constexpr slot_point_extended(slot_point slot, uint32_t hyper_sfn)
   {
-    srsran_assert(hfn < NOF_HFNS, "Invalid HFN={} passed", hfn);
+    srsran_assert(hyper_sfn < NOF_HYPER_SFNS, "Invalid HyperSFN={} passed", hyper_sfn);
     numerology_val = slot.numerology();
-    count_val      = slot.count() + hfn * NOF_SFNS * NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(slot.scs());
+    count_val = slot.count() + hyper_sfn * NOF_SFNS * NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(slot.scs());
   }
-  constexpr slot_point_extended(subcarrier_spacing scs, uint32_t hfn, uint32_t sfn, uint32_t slot_frame_index) :
+  constexpr slot_point_extended(subcarrier_spacing scs, uint32_t hyper_sfn, uint32_t sfn, uint32_t slot_frame_index) :
     slot_point_extended(scs,
-                        (hfn * NOF_SFNS + sfn) * NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(scs) +
+                        (hyper_sfn * NOF_SFNS + sfn) * NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(scs) +
                             slot_frame_index)
   {
   }
@@ -51,7 +56,7 @@ public:
   using slot_point::clear;
   using slot_point::count;
   using slot_point::nof_slots_per_frame;
-  using slot_point::nof_slots_per_hyper_frame;
+  using slot_point::nof_slots_per_hyper_system_frame;
   using slot_point::nof_slots_per_subframe;
   using slot_point::numerology;
   using slot_point::scs;
@@ -67,14 +72,17 @@ public:
   using slot_point::nof_hrf_slots;
   using slot_point::subframe_slot_index;
 
-  uint32_t hfn() const { return count() / nof_slots_per_hyper_frame(); }
+  /// Current HyperSFN value.
+  uint32_t hyper_sfn() const { return count() / nof_slots_per_hyper_system_frame(); }
 
-  /// The number of slots represented by all HFNs.
-  constexpr uint32_t nof_slots_in_all_hfns() const { return nof_slots_per_frame() * NOF_SFNS * NOF_HFNS; }
+  /// The number of slots represented by all HyperSFNs.
+  constexpr uint32_t nof_slots_in_all_hyper_sfns() const { return nof_slots_per_frame() * NOF_SFNS * NOF_HYPER_SFNS; }
 
-  constexpr slot_point without_hfn() const
+  /// Convert slot_point_extended to slot_point.
+  constexpr slot_point without_hyper_sfn() const
   {
-    return valid() ? slot_point{this->numerology_val, this->count_val % nof_slots_per_hyper_frame()} : slot_point{};
+    return valid() ? slot_point{this->numerology_val, this->count_val % nof_slots_per_hyper_system_frame()}
+                   : slot_point{};
   }
 
   constexpr bool operator==(const slot_point_extended& other) const
@@ -87,9 +95,9 @@ public:
     srsran_assert(numerology() == other.numerology(), "Comparing slots of different numerologies");
     int v = static_cast<int>(other.count_val) - static_cast<int>(count_val);
     if (v > 0) {
-      return (v < static_cast<int>(nof_slots_in_all_hfns() / 2));
+      return (v < static_cast<int>(nof_slots_in_all_hyper_sfns() / 2));
     }
-    return (v < -static_cast<int>(nof_slots_in_all_hfns() / 2));
+    return (v < -static_cast<int>(nof_slots_in_all_hyper_sfns() / 2));
   }
   constexpr bool operator<=(slot_point_extended other) const { return (*this == other) or (*this < other); }
   constexpr bool operator>=(slot_point_extended other) const { return not(*this < other); }
@@ -98,7 +106,7 @@ public:
   constexpr slot_difference operator-(const slot_point_extended& other) const
   {
     int      a = static_cast<int>(count_val) - static_cast<int>(other.count_val);
-    uint32_t N = nof_slots_in_all_hfns();
+    uint32_t N = nof_slots_in_all_hyper_sfns();
     if (a >= static_cast<int>(N / 2)) {
       return a - N;
     }
@@ -111,7 +119,7 @@ public:
   slot_point_extended& operator++()
   {
     count_val++;
-    if (count_val == nof_slots_in_all_hfns()) {
+    if (count_val == nof_slots_in_all_hyper_sfns()) {
       count_val = 0;
     }
     return *this;
@@ -125,12 +133,12 @@ public:
   template <typename Unsigned, std::enable_if_t<std::is_unsigned_v<Unsigned>, int> = 0>
   slot_point_extended& operator+=(Unsigned jump)
   {
-    count_val = (count_val + jump) % nof_slots_in_all_hfns();
+    count_val = (count_val + jump) % nof_slots_in_all_hyper_sfns();
     return *this;
   }
   slot_point_extended& operator+=(int jump)
   {
-    const int nof_slots = static_cast<int>(nof_slots_in_all_hfns());
+    const int nof_slots = static_cast<int>(nof_slots_in_all_hyper_sfns());
     int       tmp       = (static_cast<int>(count_val) + jump) % nof_slots;
     count_val           = tmp + (tmp < 0 ? nof_slots : 0);
     return *this;

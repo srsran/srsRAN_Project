@@ -60,7 +60,7 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
   paging_assembler(pdu_pool),
   sched(sched_),
   time_source(std::move(dependencies.timer_source)),
-  metrics(cell_cfg.pci, cell_cfg.scs_common, dependencies),
+  metrics(cell_cfg.pci, cell_cfg.scs_common, dependencies.notifier),
   pcap(pcap_),
   slot_time_mapper(to_numerology_value(cell_cfg_req_.scs_common))
 {
@@ -107,8 +107,7 @@ async_task<void> mac_cell_processor::stop()
         // Notify that cell metrics stopped being collected.
         metrics.on_cell_deactivation();
 
-        // Notify time source about deactivation.
-        time_source->on_cell_deactivation();
+        // TODO: Call time_source->on_cell_deactivation() once FAPI supports stop procedure.
 
         // Set cell state as inactive to stop answering to slot indications.
         state = cell_state::inactive;

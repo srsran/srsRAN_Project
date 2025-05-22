@@ -104,7 +104,7 @@ TEST_P(EthFramePoolFixture, writing_small_pkt_is_rounded_to_min_eth_size)
 {
   // Initialize slot to a random value.
   slot_point slot(to_numerology_value(scs), 0);
-  unsigned   slots_per_system_frame = slot.nof_slots_per_hyper_frame();
+  unsigned   slots_per_system_frame = slot.nof_slots_per_hyper_system_frame();
   slot += test_rgen::uniform_int<unsigned>(0, slots_per_system_frame);
 
   for (unsigned slot_count = 0; slot_count < TEST_NUM_SLOTS; ++slot_count) {
@@ -147,7 +147,7 @@ TEST_P(EthFramePoolFixture, read_after_write_should_return_correct_data)
 {
   // Initialize slot to a random value.
   slot_point slot(to_numerology_value(scs), 0);
-  unsigned   slots_per_system_frame = slot.nof_slots_per_hyper_frame();
+  unsigned   slots_per_system_frame = slot.nof_slots_per_hyper_system_frame();
   slot += test_rgen::uniform_int<unsigned>(0, slots_per_system_frame);
 
   for (unsigned slot_count = 0; slot_count < TEST_NUM_SLOTS; ++slot_count) {
@@ -198,7 +198,7 @@ TEST_P(EthFramePoolFixture, read_multiple_written_packets_per_symbol_should_retu
 {
   // Initialize slot to a random value.
   slot_point slot(to_numerology_value(scs), 0);
-  unsigned   slots_per_system_frame = slot.nof_slots_per_hyper_frame();
+  unsigned   slots_per_system_frame = slot.nof_slots_per_hyper_system_frame();
   slot += test_rgen::uniform_int<unsigned>(0, slots_per_system_frame);
 
   for (unsigned slot_count = 0; slot_count < TEST_NUM_SLOTS; ++slot_count) {
@@ -257,7 +257,7 @@ TEST_P(EthFramePoolFixture, read_interval_should_return_correct_data)
 {
   // Initialize slot to a random value.
   slot_point slot(to_numerology_value(scs), 0);
-  unsigned   slots_per_system_frame = slot.nof_slots_per_hyper_frame();
+  unsigned   slots_per_system_frame = slot.nof_slots_per_hyper_system_frame();
   slot += test_rgen::uniform_int<unsigned>(0, slots_per_system_frame);
 
   auto num_antennas = test_rgen::uniform_int<unsigned>(1, ofh::MAX_NOF_SUPPORTED_EAXC);

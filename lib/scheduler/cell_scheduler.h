@@ -52,7 +52,7 @@ public:
   const sched_result& last_result() const { return res_grid[0].result; }
 
   /// Check if the cell is running.
-  bool is_running() const { return not stopped.load(std::memory_order_relaxed); }
+  bool is_running() const { return active; }
 
   void handle_si_update_request(const si_scheduling_update_request& msg);
 
@@ -68,6 +68,8 @@ public:
   ue_scheduler& ue_sched;
 
 private:
+  void handle_pending_cell_activity_commands();
+
   void reset_resource_grid(slot_point sl_tx);
 
   /// Resource grid of this cell.
@@ -90,7 +92,12 @@ private:
   pucch_guardbands_scheduler    pucch_guard_sch;
   paging_scheduler              pg_sch;
 
-  std::atomic<bool> stopped{false};
+  // Current state of the cell.
+  bool active = true;
+
+  // Pending command for cell start/stop.
+  enum class activation_command { no_cmd, start_cmd, stop_cmd };
+  std::atomic<activation_command> activ_cmd{activation_command::no_cmd};
 };
 
 } // namespace srsran

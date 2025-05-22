@@ -21,13 +21,13 @@
 using namespace srsran;
 
 static inline uint64_t get_current_system_slot(std::chrono::microseconds slot_duration,
-                                               uint64_t                  nof_slots_per_system_frame)
+                                               uint64_t                  nof_slots_per_hyper_system_frame)
 {
   // Get the time since the epoch.
   auto time_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(
       std::chrono::high_resolution_clock::now().time_since_epoch());
 
-  return (time_since_epoch / slot_duration) % nof_slots_per_system_frame;
+  return (time_since_epoch / slot_duration) % nof_slots_per_hyper_system_frame;
 }
 
 ru_dummy_impl::ru_dummy_impl(const ru_dummy_configuration& config, ru_dummy_dependencies dependencies) noexcept :
@@ -61,8 +61,9 @@ ru_dummy_impl::ru_dummy_impl(const ru_dummy_configuration& config, ru_dummy_depe
 void ru_dummy_impl::start()
 {
   // Get initial system slot.
-  uint64_t initial_system_slot = get_current_system_slot(slot_duration, current_slot.nof_slots_per_hyper_frame());
-  current_slot                 = slot_point(current_slot.numerology(), initial_system_slot);
+  uint64_t initial_system_slot =
+      get_current_system_slot(slot_duration, current_slot.nof_slots_per_hyper_system_frame());
+  current_slot = slot_point(current_slot.numerology(), initial_system_slot);
 
   uint32_t              expected_state = state_idle;
   [[maybe_unused]] bool success        = internal_state.compare_exchange_strong(expected_state, state_running);
@@ -91,7 +92,7 @@ void ru_dummy_impl::stop()
 void ru_dummy_impl::loop()
 {
   // Get the current system slot from the system time.
-  uint64_t slot_count = get_current_system_slot(slot_duration, current_slot.nof_slots_per_hyper_frame());
+  uint64_t slot_count = get_current_system_slot(slot_duration, current_slot.nof_slots_per_hyper_system_frame());
 
   // Make sure a minimum time between loop executions without crossing boundaries.
   if (slot_count == current_slot.system_slot()) {

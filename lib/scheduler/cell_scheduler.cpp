@@ -91,33 +91,37 @@ void cell_scheduler::run_slot(slot_point sl_tx)
   // > Start with clearing old allocations from the grid.
   reset_resource_grid(sl_tx);
 
-  if (SRSRAN_LIKELY(is_running())) {
-    // Cell is active. Run the cell sub-schedulers.
+  // > Handle commands to start/stop cell if any.
+  handle_pending_cell_activity_commands();
 
-    // > SSB scheduling.
-    ssb_sch.run_slot(res_grid, sl_tx);
-
-    // > Schedule CSI-RS.
-    csi_sch.run_slot(res_grid[0]);
-
-    // > Schedule SIB1 and SI-message signalling.
-    si_sch.run_slot(res_grid);
-
-    // > Schedule PUCCH guardbands.
-    pucch_guard_sch.run_slot(res_grid);
-
-    // > Schedule PRACH PDUs.
-    prach_sch.run_slot(res_grid);
-
-    // > Schedule RARs and Msg3.
-    ra_sch.run_slot(res_grid);
-
-    // > Schedule Paging.
-    pg_sch.run_slot(res_grid);
-
-    // > Schedule UE DL and UL data.
-    ue_sched.run_slot(sl_tx);
+  if (SRSRAN_UNLIKELY(not is_running())) {
+    return;
   }
+  // Cell is active. Run the cell sub-schedulers.
+
+  // > SSB scheduling.
+  ssb_sch.run_slot(res_grid, sl_tx);
+
+  // > Schedule CSI-RS.
+  csi_sch.run_slot(res_grid[0]);
+
+  // > Schedule SIB1 and SI-message signalling.
+  si_sch.run_slot(res_grid);
+
+  // > Schedule PUCCH guardbands.
+  pucch_guard_sch.run_slot(res_grid);
+
+  // > Schedule PRACH PDUs.
+  prach_sch.run_slot(res_grid);
+
+  // > Schedule RARs and Msg3.
+  ra_sch.run_slot(res_grid);
+
+  // > Schedule Paging.
+  pg_sch.run_slot(res_grid);
+
+  // > Schedule UE DL and UL data.
+  ue_sched.run_slot(sl_tx);
 
   // > Mark stop of the slot processing
   auto slot_stop_tp = std::chrono::high_resolution_clock::now();
@@ -148,12 +152,32 @@ void cell_scheduler::reset_resource_grid(slot_point sl_tx)
   uci_alloc.slot_indication(sl_tx);
 }
 
+void cell_scheduler::handle_pending_cell_activity_commands()
+{
+  auto cmd = activ_cmd.exchange(activation_command::no_cmd, std::memory_order_relaxed);
+  if (SRSRAN_LIKELY(cmd == activation_command::no_cmd)) {
+    // No-op.
+    return;
+  }
+  if ((cmd == activation_command::start_cmd and active) or (cmd == activation_command::stop_cmd and not active)) {
+    // No-op.
+    return;
+  }
+
+  if (cmd == activation_command::start_cmd) {
+    active = true;
+  } else {
+    active = false;
+    metrics.handle_cell_deactivation();
+  }
+}
+
 void cell_scheduler::start()
 {
-  stopped.store(false, std::memory_order_relaxed);
+  activ_cmd.store(activation_command::start_cmd, std::memory_order_relaxed);
 }
 
 void cell_scheduler::stop()
 {
-  stopped.store(true, std::memory_order_relaxed);
+  activ_cmd.store(activation_command::stop_cmd, std::memory_order_relaxed);
 }

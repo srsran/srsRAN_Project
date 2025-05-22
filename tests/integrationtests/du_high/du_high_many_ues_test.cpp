@@ -14,8 +14,6 @@
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
-TEST_RGEN_SET_SEED(3)
-
 using namespace srsran;
 using namespace srs_du;
 

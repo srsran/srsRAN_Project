@@ -80,11 +80,8 @@ protected:
                  mac_cell_metric_notifier&             mac_notif,
                  std::unique_ptr<du_cell_timer_source> timer_source_,
                  pci_t                                 pci,
-                 subcarrier_spacing                    scs,
-                 std::chrono::milliseconds             report_period) :
-      sched(sched_notif),
-      mac(pci, scs, mac_cell_config_dependencies{nullptr, report_period, &mac_notif}),
-      timer_source(std::move(timer_source_))
+                 subcarrier_spacing                    scs) :
+      sched(sched_notif), mac(pci, scs, &mac_notif), timer_source(std::move(timer_source_))
     {
     }
   };
@@ -110,13 +107,7 @@ protected:
     pci_t pci         = static_cast<unsigned>(cell_index);
     auto  time_source = du_timer.add_cell(cell_index);
     auto  metrics_cfg = metrics.add_cell(to_du_cell_index(cell_index), scs, *time_source);
-    cells.emplace(cell_index,
-                  *metrics_cfg.sched_notifier,
-                  *metrics_cfg.mac_notifier,
-                  std::move(time_source),
-                  pci,
-                  scs,
-                  metrics_cfg.report_period);
+    cells.emplace(cell_index, *metrics_cfg.sched_notifier, *metrics_cfg.mac_notifier, std::move(time_source), pci, scs);
     return cells[cell_index].mac;
   }
 

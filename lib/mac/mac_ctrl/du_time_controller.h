@@ -22,7 +22,7 @@ class timer_manager;
 class task_executor;
 class du_cell_timer_source;
 
-/// \brief This entity is responsible for gathering the SFNs and subframes of all the cells, keep track of HFN
+/// \brief This entity is responsible for gathering the SFNs and subframes of all the cells, keep track of HSFN
 /// increments, tick DU timers.
 class du_time_controller
 {
@@ -40,12 +40,10 @@ private:
     std::atomic<int>    next{-1};
   };
 
-  bool push_back_new_cell(du_cell_index_t cell_index);
-
-  bool rem_cell(du_cell_index_t cell_index);
-
+  /// Called on the first slot indication received for a cell.
   void handle_cell_activation(du_cell_index_t cell_index, slot_point sl_tx);
 
+  /// Called when the cell gets deactivated.
   void handle_cell_deactivation(du_cell_index_t cell_index);
 
   slot_point_extended handle_slot_ind(du_cell_index_t cell_index, slot_point sl_tx);
@@ -56,8 +54,8 @@ private:
 
   std::array<cell_context, MAX_NOF_DU_CELLS> cells;
 
-  std::atomic<int>      head{-1};
-  std::atomic<uint32_t> master_count{0};
+  std::atomic<int32_t>  master_count{-1};
+  std::atomic<uint32_t> nof_active_cells{0};
 };
 
 } // namespace srsran

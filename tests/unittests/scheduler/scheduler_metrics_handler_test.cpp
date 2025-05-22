@@ -22,14 +22,14 @@ class test_scheduler_cell_metrics_notifier : public scheduler_cell_metrics_notif
 {
 public:
   unsigned               period_slots = 1000;
-  slot_point             next_sl_report;
+  mutable slot_point     next_sl_report;
   scheduler_cell_metrics last_report;
 
   scheduler_cell_metrics& get_next() override { return last_report; }
 
   void commit(scheduler_cell_metrics& ptr) override {}
 
-  bool is_sched_report_required(slot_point sl_tx) override
+  bool is_sched_report_required(slot_point sl_tx) const override
   {
     if (not next_sl_report.valid()) {
       next_sl_report = sl_tx + period_slots - (sl_tx.count() % period_slots);
