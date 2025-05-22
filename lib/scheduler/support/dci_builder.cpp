@@ -417,9 +417,6 @@ void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                  dci,
       nof_layers,
       ue_cell_cfg.get_pusch_codebook_config().max_rank.value(),
       static_cast<srs_resource_configuration::one_two_four_enum>(ue_cell_cfg.get_srs_nof_ports()),
-      use_transform_precoder,
-      dmrs_config_type::type1,
-      dmrs_max_length::len1,
       tpmi);
 
   // See 38.212, clause 7.3.1.1.2 - N^{UL,BWP}_RB for C-RNTI.
