@@ -305,10 +305,11 @@ protected:
   }
 };
 
-TEST_F(du_high_many_cells_deferred_activation_test, when_cell_is_deferred_activated_then_no_allocation_is_done)
+TEST_F(du_high_many_cells_deferred_activation_test, when_cell_starts_deactivated_then_no_allocation_is_performed)
 {
   const unsigned test_nof_slots = 256;
 
+  // While the cells remain deactivated, there should not be any allocation.
   for (unsigned i = 0; i != test_nof_slots; ++i) {
     this->run_slot();
 
@@ -333,6 +334,43 @@ TEST_F(du_high_many_cells_deferred_activation_test, when_cell_is_deferred_activa
         ASSERT_TRUE(phy.cells[c].last_ul_res.value().ul_res->srss.empty());
       }
     }
+  }
+
+  // CU sends gNB-CU-ConfigurationUpdateRequest to activate cells.
+  this->cu_notifier.last_f1ap_msgs.clear();
+  std::vector<nr_cell_global_id_t> cgis;
+  for (unsigned i = 0; i != nof_cells; ++i) {
+    cgis.push_back(nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(i).value()});
+  }
+  auto req_msg = test_helpers::create_gnb_cu_configuration_update_request(0, cgis, {});
+  this->du_hi->get_f1ap_du().handle_message(req_msg);
+  ASSERT_TRUE(this->run_until([this, req_msg]() {
+    return not this->cu_notifier.last_f1ap_msgs.empty() and
+           test_helpers::is_gnb_cu_config_update_acknowledge_valid(this->cu_notifier.last_f1ap_msgs.back(), req_msg);
+  }));
+
+  static_vector<bool, MAX_NOF_DU_CELLS> csi_rs_alloc(nof_cells, false);
+  static_vector<bool, MAX_NOF_DU_CELLS> ssb_alloc(nof_cells, false);
+  static_vector<bool, MAX_NOF_DU_CELLS> sib1_alloc(nof_cells, false);
+  static_vector<bool, MAX_NOF_DU_CELLS> prach_alloc(nof_cells, false);
+  for (unsigned i = 0; i != test_nof_slots; ++i) {
+    for (unsigned c = 0; c != nof_cells; ++c) {
+      if (phy.cells[c].last_dl_res.has_value()) {
+        csi_rs_alloc[c] |= not phy.cells[c].last_dl_res.value().dl_res->csi_rs.empty();
+        ssb_alloc[c] |= not phy.cells[c].last_dl_res.value().dl_res->bc.ssb_info.empty();
+        sib1_alloc[c] |= not phy.cells[c].last_dl_res.value().dl_res->bc.sibs.empty();
+      }
+      if (phy.cells[c].last_ul_res.has_value()) {
+        prach_alloc[c] |= not phy.cells[c].last_ul_res.value().ul_res->prachs.empty();
+      }
+    }
+  }
+  // Check that all cells have been activated.
+  for (unsigned c = 0; c != nof_cells; ++c) {
+    ASSERT_TRUE(csi_rs_alloc[c]);
+    ASSERT_TRUE(ssb_alloc[c]);
+    ASSERT_TRUE(sib1_alloc[c]);
+    ASSERT_TRUE(prach_alloc[c]);
   }
 }
 
