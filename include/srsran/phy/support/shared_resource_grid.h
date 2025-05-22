@@ -29,6 +29,12 @@ public:
   class pool_interface
   {
   public:
+    /// \brief Reference counter value used when the resource grid pool has been destroyed.
+    ///
+    /// The shared resource grid shall trigger an assertion if the reference counter is set to this value when it is
+    /// copied or destroyed.
+    static constexpr unsigned ref_counter_destroyed = std::numeric_limits<unsigned>::max() - 1;
+
     /// Default destructor.
     virtual ~pool_interface() = default;
 
@@ -99,6 +105,8 @@ public:
   /// The last owner to release the grid shall notify the pool.
   void release()
   {
+    srsran_assert((ref_count == nullptr) || (ref_count->load() != pool_interface::ref_counter_destroyed),
+                  "Resource grid is outliving the pool.");
     if (is_valid()) {
       bool last = dec_ref_count();
       if (last) {
@@ -152,7 +160,11 @@ public:
   /// \brief Determines whether the resource grid is valid.
   ///
   /// \return \c true if the pool and the reference counter are not \c nullptr.
-  bool is_valid() const { return (pool != nullptr) && (ref_count != nullptr); }
+  bool is_valid() const
+  {
+    return (pool != nullptr) && (ref_count != nullptr) &&
+           (ref_count->load(std::memory_order_relaxed) != pool_interface::ref_counter_destroyed);
+  }
 
   /// \brief Overload conversion to bool.
   /// \return \c true if the resource grid is valid.
@@ -171,11 +183,30 @@ private:
   /// \brief Decrement the reference counter.
   /// \return \c true if it is the last.
   /// \remark This method assumes the instance is valid.
-  bool dec_ref_count() { return ref_count->fetch_sub(1, std::memory_order::memory_order_acq_rel) == 1; }
+  bool dec_ref_count()
+  {
+    unsigned current_count = ref_count->load();
+
+    while ((current_count != pool_interface::ref_counter_destroyed) &&
+           !ref_count->compare_exchange_strong(current_count, current_count - 1)) {
+    }
+
+    return current_count == 1;
+  }
 
   /// \brief Increases the reference count by one.
+  ///
+  /// Tries to increment the reference count as long as
+  ///
   /// \remark This method assumes the instance is valid.
-  void inc_ref_count() { ref_count->fetch_add(1, std::memory_order::memory_order_relaxed); }
+  void inc_ref_count()
+  {
+    unsigned current_count = ref_count->load();
+
+    while ((current_count != pool_interface::ref_counter_destroyed) &&
+           !ref_count->compare_exchange_strong(current_count, current_count + 1)) {
+    }
+  }
 
   /// Resource grid pool. Set to \c nullptr for invalid resource grid.
   pool_interface* pool = nullptr;

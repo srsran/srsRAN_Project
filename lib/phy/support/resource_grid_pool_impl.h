@@ -67,7 +67,7 @@ private:
   /// \brief Resource grid scope count.
   ///
   /// A resource grid is available when the counter is equal to \c ref_counter_available.
-  std::vector<std::atomic<unsigned>> grids_scope_count;
+  span<std::atomic<unsigned>> grids_scope_count;
   /// Pool of resource grid zero set string for tracing.
   std::vector<std::string> grids_str_zero;
   /// Pool of resource grid reservation string for tracing.
