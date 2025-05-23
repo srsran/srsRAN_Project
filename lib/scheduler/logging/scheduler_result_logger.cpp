@@ -717,15 +717,23 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
 {
   const bool broadcast_is_empty = result.dl.bc.ssb_info.empty() and result.dl.bc.sibs.empty() and
                                   result.dl.csi_rs.empty() and result.ul.prachs.empty();
-  const bool non_broadcast_is_empty = result.dl.dl_pdcchs.empty() and result.dl.ul_pdcchs.empty() and
-                                      result.dl.paging_grants.empty() and result.dl.rar_grants.empty() and
-                                      result.dl.ue_grants.empty() and result.ul.puschs.empty() and
-                                      result.ul.pucchs.empty();
-  const bool slot_is_logged = (log_broadcast and not broadcast_is_empty) or not non_broadcast_is_empty;
+
+  const bool non_broadcast_is_empty =
+      std::any_of(result.dl.dl_pdcchs.begin(),
+                  result.dl.dl_pdcchs.end(),
+                  [](const pdcch_dl_information& pdcch) { return pdcch.ctx.rnti != rnti_t::SI_RNTI; }) and
+      result.dl.ul_pdcchs.empty() and result.dl.paging_grants.empty() and result.dl.rar_grants.empty() and
+      result.dl.ue_grants.empty() and result.ul.puschs.empty() and result.ul.pucchs.empty();
+
+  const bool failed_attempts = result.failed_attempts.pdcch + result.failed_attempts.uci > 0;
+  const bool slot_is_logged =
+      (log_broadcast and not broadcast_is_empty) or not non_broadcast_is_empty or failed_attempts;
 
   if (slot_is_logged) {
-    const unsigned nof_pdschs = result.dl.paging_grants.size() + result.dl.rar_grants.size() +
-                                result.dl.ue_grants.size() + result.dl.bc.sibs.size();
+    unsigned nof_pdschs = result.dl.paging_grants.size() + result.dl.rar_grants.size() + result.dl.ue_grants.size();
+    if (log_broadcast) {
+      nof_pdschs += result.dl.bc.sibs.size();
+    }
     const unsigned nof_puschs       = result.ul.puschs.size();
     const unsigned nof_failed_pdcch = result.failed_attempts.pdcch;
     const unsigned nof_failed_uci   = result.failed_attempts.uci;
@@ -746,13 +754,16 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
 
 void scheduler_result_logger::log_info(const sched_result& result, std::chrono::microseconds decision_latency)
 {
-  bool slot_is_logged = (log_broadcast and not result.dl.bc.sibs.empty()) or not result.dl.rar_grants.empty() or
+  const bool failed_attempts = result.failed_attempts.pdcch + result.failed_attempts.uci > 0;
+  bool       slot_is_logged  = (log_broadcast and not result.dl.bc.sibs.empty()) or not result.dl.rar_grants.empty() or
                         not result.dl.ue_grants.empty() or not result.ul.puschs.empty() or
-                        not result.dl.paging_grants.empty();
+                        not result.dl.paging_grants.empty() or failed_attempts;
 
   if (slot_is_logged) {
-    const unsigned nof_pdschs = result.dl.paging_grants.size() + result.dl.rar_grants.size() +
-                                result.dl.ue_grants.size() + result.dl.bc.sibs.size();
+    unsigned nof_pdschs = result.dl.paging_grants.size() + result.dl.rar_grants.size() + result.dl.ue_grants.size();
+    if (log_broadcast) {
+      nof_pdschs += result.dl.bc.sibs.size();
+    }
     const unsigned nof_puschs = result.ul.puschs.size();
     logger.info("Slot decisions pci={} t={}us ({} PDSCH{}, {} PUSCH{}): {}",
                 pci,
