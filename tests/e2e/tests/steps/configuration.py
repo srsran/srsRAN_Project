@@ -128,6 +128,7 @@ def configure_test_parameters(
     cu_cp_inactivity_timer: int = -1,
     use_format_0: bool = False,
     pucch_set1_format: int = 2,
+    pdsch_interleaving_bundle_size: int = 0,
     ntn_config: NtnScenarioConfig = None,
     pdcch_log: bool = False,
 ):
@@ -177,6 +178,7 @@ def configure_test_parameters(
                 "cu_cp_inactivity_timer": cu_cp_inactivity_timer,
                 "use_format_0": use_format_0,
                 "pucch_set1_format": pucch_set1_format,
+                "pdsch_interleaving_bundle_size": pdsch_interleaving_bundle_size,
             },
         },
         "5gc": {"parameters": {"ims_mode": ims_mode}},

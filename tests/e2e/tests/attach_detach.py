@@ -62,6 +62,47 @@ def test_smoke(
 
 
 @mark.parametrize(
+    "pdsch_interleaving_bundle_size",
+    (
+        param(2, id="n2"),
+        param(4, id="n4"),
+    ),
+)
+@mark.zmq
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def test_pdsch_interleaving(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_8: Tuple[UEStub, ...],
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    pdsch_interleaving_bundle_size: int,
+):
+    """
+    ZMQ Attach / Detach with PDSCH interleaving
+    """
+    _attach_and_detach_multi_ues(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=ue_8,
+        gnb=gnb,
+        fivegc=fivegc,
+        band=41,
+        common_scs=30,
+        bandwidth=10,
+        sample_rate=None,
+        bitrate=HIGH_BITRATE,
+        protocol=IPerfProto.UDP,
+        direction=IPerfDir.DOWNLINK,
+        global_timing_advance=0,
+        time_alignment_calibration=0,
+        ue_stop_timeout=15,
+        always_download_artifacts=False,
+        pdsch_interleaving_bundle_size=pdsch_interleaving_bundle_size,
+    )
+
+
+@mark.parametrize(
     "direction",
     (
         param(IPerfDir.DOWNLINK, id="downlink", marks=mark.downlink),
@@ -195,8 +236,9 @@ def _attach_and_detach_multi_ues(
     always_download_artifacts: bool,
     warning_as_errors: bool = True,
     reattach_count: int = 1,
-    ue_stop_timeout=30,
-    ue_settle_time=0,
+    ue_stop_timeout: int = 30,
+    ue_settle_time: int = 0,
+    pdsch_interleaving_bundle_size: int = 0,
 ):
     logging.info("Attach / Detach Test")
 
@@ -209,6 +251,7 @@ def _attach_and_detach_multi_ues(
         sample_rate=sample_rate,
         global_timing_advance=global_timing_advance,
         time_alignment_calibration=time_alignment_calibration,
+        pdsch_interleaving_bundle_size=pdsch_interleaving_bundle_size,
     )
     configure_artifacts(
         retina_data=retina_data,
