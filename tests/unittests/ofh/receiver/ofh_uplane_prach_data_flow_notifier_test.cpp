@@ -55,7 +55,8 @@ TEST(ofh_uplane_prach_data_flow_notifier, unwritten_buffer_does_not_notify)
   context.start_preamble_index            = 0;
   context.nof_preamble_indices            = 1;
 
-  repo->add(context, buffer, std::nullopt, std::nullopt);
+  repo->add(context, buffer, srslog::fetch_basic_logger("TEST"), std::nullopt, std::nullopt);
+  repo->process_pending_contexts();
   sender.notify_prach(slot);
 
   ASSERT_FALSE(repo->get(slot).empty());
@@ -90,7 +91,8 @@ TEST(ofh_uplane_prach_data_flow_notifier, completed_long_prach_buffer_triggers_n
   context.nof_preamble_indices            = 1;
 
   static_vector<cbf16_t, 839> samples(839);
-  repo->add(context, buffer, std::nullopt, std::nullopt);
+  repo->add(context, buffer, srslog::fetch_basic_logger("TEST"), std::nullopt, std::nullopt);
+  repo->process_pending_contexts();
   ASSERT_FALSE(repo->get(slot).empty());
 
   // Fill the grid.
@@ -132,7 +134,8 @@ TEST(ofh_uplane_prach_data_flow_notifier, completed_short_prach_buffer_triggers_
   context.nof_preamble_indices            = 1;
 
   static_vector<cbf16_t, 139> samples(139);
-  repo->add(context, buffer, std::nullopt, std::nullopt);
+  repo->add(context, buffer, srslog::fetch_basic_logger("TEST"), std::nullopt, std::nullopt);
+  repo->process_pending_contexts();
   ASSERT_FALSE(repo->get(slot).empty());
 
   // Fill the grid.

@@ -62,7 +62,8 @@ TEST_F(ofh_uplane_rx_symbol_data_flow_writer_fixture, death_test_no_eaxc_found)
 {
   unsigned invalid_eaxc = 4;
 
-  repo->add({results.params.slot, sector}, shared_grid.get_grid(), symbol_range);
+  repo->add({results.params.slot, sector}, shared_grid.get_grid(), symbol_range, srslog::fetch_basic_logger("TEST"));
+  repo->process_pending_contexts();
   ASSERT_FALSE(repo->get(results.params.slot, results.params.symbol_id).empty());
 
   ASSERT_DEATH(writer.write_to_resource_grid(invalid_eaxc, results), "");
@@ -76,7 +77,8 @@ TEST_F(ofh_uplane_rx_symbol_data_flow_writer_fixture, decoded_prbs_outside_grid_
   section.start_prb = nof_prb;
   section.iq_samples.resize(section.nof_prbs * NOF_SUBCARRIERS_PER_RB);
 
-  repo->add({results.params.slot, sector}, shared_grid.get_grid(), symbol_range);
+  repo->add({results.params.slot, sector}, shared_grid.get_grid(), symbol_range, srslog::fetch_basic_logger("TEST"));
+  repo->process_pending_contexts();
   writer.write_to_resource_grid(eaxc[0], results);
 
   ASSERT_FALSE(repo->get(results.params.slot, results.params.symbol_id).empty());
@@ -94,7 +96,8 @@ TEST_F(ofh_uplane_rx_symbol_data_flow_writer_fixture, decoded_prbs_match_grid_pr
   section.start_prb = 0;
   section.iq_samples.resize(section.nof_prbs * NOF_SUBCARRIERS_PER_RB);
 
-  repo->add({results.params.slot, sector}, shared_grid.get_grid(), symbol_range);
+  repo->add({results.params.slot, sector}, shared_grid.get_grid(), symbol_range, srslog::fetch_basic_logger("TEST"));
+  repo->process_pending_contexts();
   writer.write_to_resource_grid(eaxc[0], results);
 
   ASSERT_FALSE(repo->get(results.params.slot, results.params.symbol_id).empty());
@@ -113,7 +116,8 @@ TEST_F(ofh_uplane_rx_symbol_data_flow_writer_fixture, decoded_prbs_bigger_than_g
   section.start_prb = 0;
   section.iq_samples.resize(section.nof_prbs * NOF_SUBCARRIERS_PER_RB);
 
-  repo->add({results.params.slot, sector}, shared_grid.get_grid(), symbol_range);
+  repo->add({results.params.slot, sector}, shared_grid.get_grid(), symbol_range, srslog::fetch_basic_logger("TEST"));
+  repo->process_pending_contexts();
   writer.write_to_resource_grid(eaxc[0], results);
 
   ASSERT_FALSE(repo->get(results.params.slot, results.params.symbol_id).empty());
@@ -132,7 +136,8 @@ TEST_F(ofh_uplane_rx_symbol_data_flow_writer_fixture, segmented_prbs_inside_the_
   section.start_prb = 0;
   section.iq_samples.resize(section.nof_prbs * NOF_SUBCARRIERS_PER_RB);
 
-  repo->add({results.params.slot, sector}, shared_grid.get_grid(), symbol_range);
+  repo->add({results.params.slot, sector}, shared_grid.get_grid(), symbol_range, srslog::fetch_basic_logger("TEST"));
+  repo->process_pending_contexts();
   writer.write_to_resource_grid(eaxc[0], results);
 
   ASSERT_FALSE(repo->get(results.params.slot, results.params.symbol_id).empty());
@@ -153,7 +158,8 @@ TEST_F(ofh_uplane_rx_symbol_data_flow_writer_fixture, segmented_prbs_write_the_p
   section.start_prb = 40;
   section.iq_samples.resize(section.nof_prbs * NOF_SUBCARRIERS_PER_RB);
 
-  repo->add({results.params.slot, sector}, shared_grid.get_grid(), symbol_range);
+  repo->add({results.params.slot, sector}, shared_grid.get_grid(), symbol_range, srslog::fetch_basic_logger("TEST"));
+  repo->process_pending_contexts();
   writer.write_to_resource_grid(eaxc[0], results);
 
   ASSERT_FALSE(repo->get(results.params.slot, results.params.symbol_id).empty());
@@ -174,7 +180,8 @@ TEST_F(ofh_uplane_rx_symbol_data_flow_writer_fixture, segmented_prbs_fill_the_gr
   section.start_prb = 0;
   section.iq_samples.resize(section.nof_prbs * NOF_SUBCARRIERS_PER_RB);
 
-  repo->add({results.params.slot, sector}, shared_grid.get_grid(), symbol_range);
+  repo->add({results.params.slot, sector}, shared_grid.get_grid(), symbol_range, srslog::fetch_basic_logger("TEST"));
+  repo->process_pending_contexts();
   writer.write_to_resource_grid(eaxc[0], results);
   ASSERT_EQ(section.nof_prbs, rg_writer.get_nof_prbs_written());
   {

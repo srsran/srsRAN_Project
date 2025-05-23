@@ -171,7 +171,7 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
   // Store the context in the repository, use correct slot index for long format accounting for PRACH duration.
   auto slot_idx = context.slot;
   if (is_short_preamble(context.format)) {
-    ul_prach_repo->add(context, buffer, std::nullopt, std::nullopt);
+    ul_prach_repo->add(context, buffer, logger, std::nullopt, std::nullopt);
     if (SRSRAN_UNLIKELY(context.nof_td_occasions > 1)) {
       logger.info("Sector#{}: PRACH with multiple time-domain occasions is configured, however only the first occasion "
                   "will be used in slot '{}'",
@@ -184,7 +184,7 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
     // Determine PRACH start symbol.
     unsigned start_symbol = get_prach_start_symbol(context);
 
-    ul_prach_repo->add(context, buffer, start_symbol, slot_idx);
+    ul_prach_repo->add(context, buffer, logger, start_symbol, slot_idx);
   }
 
   if (!is_prach_cp_enabled) {
@@ -253,7 +253,7 @@ void uplink_request_handler_impl::handle_new_uplink_slot(const resource_grid_con
                                        : ofdm_symbol_range(0, get_nsymb_per_slot(cp));
 
   // Store the context in the repository.
-  ul_slot_repo->add(context, grid, df_context.symbol_range);
+  ul_slot_repo->add(context, grid, df_context.symbol_range, logger);
 
   // Add entry to the notified symbol repository.
   notifier_symbol_repo->add(context.slot, df_context.symbol_range.start(), cp);
