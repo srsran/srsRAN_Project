@@ -158,5 +158,5 @@ variables:
         set -x
         ctest -j${KUBERNETES_CPU_REQUEST} --schedule-random --output-on-failure --output-junit xunit.xml $CTEST_ARGS
         { set +x; } 2>/dev/null
-        grep -l "ERROR SUMMARY: 0 errors" Testing/Temporary/MemoryChecker.*.log | xargs rm
+        grep -l "ERROR SUMMARY: 0 errors" Testing/Temporary/MemoryChecker.*.log | xargs rm || true
       }
