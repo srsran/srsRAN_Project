@@ -414,20 +414,24 @@ def _test_viavi(
 
     # Wait until end
     try:
-        info = viavi.wait_until_running_campaign_finishes(test_declaration.test_timeout)
-        if info.status is not CampaignStatusEnum.PASS:
-            pytest.fail(f"Viavi Test Failed: {info.message}")
-        # Final stop
-        stop(
-            (),
-            gnb,
-            None,
-            retina_data,
-            gnb_stop_timeout=gnb_stop_timeout,
-            log_search=log_search,
-            warning_as_errors=test_declaration.warning_as_errors,
-            fail_if_kos=False,
-        )
+        info = viavi.wait_until_running_campaign_teardown(test_declaration.test_timeout)
+        try:
+            # Final stop
+            logging.info("Stopping GNB")
+            stop(
+                (),
+                gnb,
+                None,
+                retina_data,
+                gnb_stop_timeout=gnb_stop_timeout,
+                log_search=log_search,
+                warning_as_errors=test_declaration.warning_as_errors,
+                fail_if_kos=False,
+            )
+        finally:
+            info = viavi.wait_until_running_campaign_finishes(test_declaration.test_timeout)
+            if info.status is not CampaignStatusEnum.PASS:
+                pytest.fail(f"Viavi Test Failed: {info.message}")
 
     # This except and the finally should be inside the request, but the campaign_name makes it complicated
     except (TimeoutError, KeyboardInterrupt):
