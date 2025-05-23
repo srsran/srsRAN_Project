@@ -33,11 +33,7 @@ public:
     builder_params.channel_bw_mhz = bs_channel_bandwidth::MHz20;
 
     // Create cell config with space for two PDCCHs in the SearchSpace#1.
-    sched_cell_configuration_request_message cell_cfg_req =
-        sched_config_helper::make_default_sched_cell_configuration_request(builder_params);
-    cell_cfg_req.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].set_non_ss0_nof_candidates(
-        std::array<uint8_t, 5>{0, 0, 2, 0, 0});
-    add_cell(cell_cfg_req);
+    add_cell(sched_config_helper::make_default_sched_cell_configuration_request(builder_params));
 
     srsran_assert(not this->cell_cfg_list[0].nzp_csi_rs_list.empty(),
                   "This test assumes a setup with NZP CSI-RS enabled");
