@@ -41,6 +41,8 @@ class KPIs:
     nof_reestablishments: int = 0
     nof_handovers: int = 0
     nof_error_indications: int = 0
+    max_late_dl_harqs: int = 0
+    max_late_ul_harqs: int = 0
 
 
 # pylint: disable=too-many-locals
@@ -77,6 +79,9 @@ def get_kpis(
     kpis.dl_bler_aggregate = 0 if not total_dl_ko_ok else gnb_metrics.total.dl_nof_ko / total_dl_ko_ok
 
     kpis.nof_error_indications = gnb_metrics.cell.error_indication_cnt
+
+    kpis.max_late_dl_harqs = gnb_metrics.cell.max_late_dl_harqs
+    kpis.max_late_ul_harqs = gnb_metrics.cell.max_late_ul_harqs
 
     # UE
     for ue in ue_array:

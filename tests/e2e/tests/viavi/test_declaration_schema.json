@@ -31,6 +31,9 @@
                     "expected_ul_bitrate": {
                         "type": "integer"
                     },
+                    "expected_max_late_harqs": {
+                        "type": "integer"
+                    },
                     "expected_nof_kos": {
                         "type": "number"
                     },

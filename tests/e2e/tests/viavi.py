@@ -56,6 +56,7 @@ class _ViaviConfiguration:
     expected_ul_bitrate: float = 0
     expected_dl_bitrate: float = 0
     expected_nof_kos: float = 0  # Infinity value is represented in a float
+    expected_max_late_harqs: int = 0
     warning_as_errors: bool = True
     warning_allowlist: List[str] = field(default_factory=list)
 
@@ -94,6 +95,7 @@ def load_yaml_config(config_filename: str) -> List[_ViaviConfiguration]:
                 retina_params=test_declaration.get("retina_params", {}),
                 expected_dl_bitrate=test_declaration["expected_dl_bitrate"],
                 expected_ul_bitrate=test_declaration["expected_ul_bitrate"],
+                expected_max_late_harqs=test_declaration["expected_max_late_harqs"],
                 expected_nof_kos=test_declaration["expected_nof_kos"],
                 warning_as_errors=test_declaration["warning_as_errors"],
                 warning_allowlist=test_declaration.get("warning_allowlist", []),
@@ -497,6 +499,18 @@ def check_metrics_criteria(
             viavi_kpis.ul_data.num_tbs_nack if viavi_kpis.ul_data.num_tbs_nack is not None else 0,
             operator.lt,
             test_configuration.expected_nof_kos,
+        ),
+        _create_viavi_result(
+            "Late DL HARQs (gnb)",
+            kpis.max_late_dl_harqs,
+            operator.lt,
+            test_configuration.expected_max_late_harqs,
+        ),
+        _create_viavi_result(
+            "Late UL HARQs (gnb)",
+            kpis.max_late_ul_harqs,
+            operator.lt,
+            test_configuration.expected_max_late_harqs,
         ),
         _create_viavi_result("Error Indications", kpis.nof_error_indications, operator.eq, 0),
         _create_viavi_result("Errors" + (" & warnings" if warning_as_errors else ""), gnb_error_count, operator.eq, 0),

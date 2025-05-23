@@ -129,6 +129,7 @@ def configure_test_parameters(
     use_format_0: bool = False,
     pucch_set1_format: int = 2,
     ntn_config: NtnScenarioConfig = None,
+    pdcch_log: bool = False,
 ):
     """
     Configure test parameters
@@ -151,6 +152,7 @@ def configure_test_parameters(
                 "rx_to_tx_latency": rx_to_tx_latency,
                 "nof_antennas_dl": nof_antennas_dl,
                 "nof_antennas_ul": nof_antennas_ul,
+                "pdcch_log": pdcch_log,
             },
         },
         "gnb": {
