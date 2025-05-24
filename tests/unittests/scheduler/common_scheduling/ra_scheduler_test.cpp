@@ -538,8 +538,12 @@ TEST_P(ra_scheduler_fdd_test, schedules_multiple_rars_per_slot_when_multiple_pra
 
   unsigned nof_sched_grants = 0;
   for (unsigned slot_count = 0; nof_sched_grants < rach_ind.occasions[0].preambles.size(); ++slot_count) {
-    ASSERT_TRUE(++slot_count < 20);
+    ASSERT_TRUE(++slot_count < 20) << fmt::format(
+        "Scheduled {} out of {} RAR grants", nof_sched_grants, rach_ind.occasions[0].preambles.size());
     run_slot();
+    if (scheduled_rars(0).empty()) {
+      continue;
+    }
 
     // RAR PDSCHs allocated.
     ASSERT_LE(scheduled_rars(0).size(), rach_ind.occasions.size());
