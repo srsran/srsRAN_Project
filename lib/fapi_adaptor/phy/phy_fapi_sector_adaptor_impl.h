@@ -14,69 +14,21 @@
 #include "phy_to_fapi_error_event_translator.h"
 #include "phy_to_fapi_results_event_translator.h"
 #include "phy_to_fapi_time_event_translator.h"
+#include "srsran/fapi_adaptor/phy/phy_fapi_adaptor_config.h"
 #include "srsran/fapi_adaptor/phy/phy_fapi_sector_adaptor.h"
 
 namespace srsran {
 class uplink_request_processor;
 
-namespace fapi {
-struct carrier_config;
-struct prach_config;
-} // namespace fapi
-
 namespace fapi_adaptor {
-
-/// PHY/FAPI sector adaptor implementation configuration.
-struct phy_fapi_sector_adaptor_impl_config {
-  /// Base station sector identifier.
-  unsigned sector_id;
-  /// Request headroom size in slots.
-  unsigned nof_slots_request_headroom;
-  /// Allows to request uplink on empty UL_TTI.request.
-  bool allow_request_on_empty_ul_tti;
-  /// Subcarrier spacing as per TS38.211 Section 4.2.
-  subcarrier_spacing scs;
-  /// Common subcarrier spacing, as per TS38.331 Section 6.2.2.
-  subcarrier_spacing scs_common;
-  /// FAPI PRACH configuration TLV as per SCF-222 v4.0 section 3.3.2.4.
-  fapi::prach_config prach_cfg;
-  /// FAPI carrier configuration TLV as per SCF-222 v4.0 section 3.3.2.4.
-  fapi::carrier_config carrier_cfg;
-  /// PRACH port list.
-  std::vector<uint8_t> prach_ports;
-};
-
-/// PHY/FAPI sector adaptor implementation dependencies.
-struct phy_fapi_sector_adaptor_impl_dependencies {
-  /// Logger.
-  srslog::basic_logger* logger;
-  /// Downlink processor pool.
-  downlink_processor_pool* dl_processor_pool;
-  /// Downlink resource grid pool.
-  resource_grid_pool* dl_rg_pool;
-  /// Downlink PDU validator.
-  const downlink_pdu_validator* dl_pdu_validator;
-  /// Uplink request processor.
-  uplink_request_processor* ul_request_processor;
-  /// Uplink resource grid pool.
-  resource_grid_pool* ul_rg_pool;
-  /// Uplink slot PDU repository.
-  uplink_pdu_slot_repository_pool* ul_pdu_repository;
-  /// Uplink PDU validator.
-  const uplink_pdu_validator* ul_pdu_validator;
-  /// Precoding matrix repository.
-  std::unique_ptr<precoding_matrix_repository> pm_repo;
-  /// UCI Part2 correspondence repository.
-  std::unique_ptr<uci_part2_correspondence_repository> part2_repo;
-};
 
 /// \brief PHY&ndash;FAPI bidirectional adaptor sector implementation.
 class phy_fapi_sector_adaptor_impl : public phy_fapi_sector_adaptor
 {
 public:
   /// Constructor for the PHY&ndash;FAPI bidirectional sector adaptor.
-  phy_fapi_sector_adaptor_impl(const phy_fapi_sector_adaptor_impl_config&  config,
-                               phy_fapi_sector_adaptor_impl_dependencies&& dependencies);
+  phy_fapi_sector_adaptor_impl(const phy_fapi_sector_adaptor_config&  config,
+                               phy_fapi_sector_adaptor_dependencies&& dependencies);
 
   upper_phy_error_notifier& get_error_notifier() override;
 

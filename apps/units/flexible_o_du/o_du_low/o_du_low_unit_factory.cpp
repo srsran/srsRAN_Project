@@ -9,7 +9,6 @@
  */
 
 #include "o_du_low_unit_factory.h"
-#include "apps/helpers/metrics/metrics_config.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "du_low_config.h"
 #include "du_low_config_translator.h"
@@ -87,13 +86,13 @@ o_du_low_unit o_du_low_unit_factory::create(const o_du_low_unit_config&       pa
 {
   srs_du::o_du_low_config o_du_low_cfg;
 
+  // Copy FAPI configuration.
+  o_du_low_cfg.fapi_cfg = params.fapi_cfg;
+
   // Configure the metrics.
   o_du_low_cfg.enable_metrics = params.du_low_unit_cfg.metrics_cfg.enable_du_low;
 
-  generate_o_du_low_config(o_du_low_cfg, params.du_low_unit_cfg, params.du_cells, params.max_puschs_per_slot);
-
-  // Fill the PRACH ports.
-  o_du_low_cfg.prach_ports = params.prach_ports;
+  generate_o_du_low_config(o_du_low_cfg, params.du_low_unit_cfg, params.cells);
 
   // Fill the workers information.
   for (unsigned i = 0, e = o_du_low_cfg.du_low_cfg.cells.size(); i != e; ++i) {
@@ -119,7 +118,7 @@ o_du_low_unit o_du_low_unit_factory::create(const o_du_low_unit_config&       pa
   }
 
   o_du_low_unit unit;
-  unit.o_du_lo = srs_du::make_o_du_low(o_du_low_cfg, params.du_cells);
+  unit.o_du_lo = srs_du::make_o_du_low(o_du_low_cfg);
   report_error_if_not(unit.o_du_lo, "Invalid O-DU low");
 
   return unit;

@@ -26,6 +26,103 @@
 
 using namespace srsran;
 
+static fapi::prach_config generate_prach_config_tlv(const srs_du::du_cell_config& cell_cfg)
+{
+  fapi::prach_config config     = {};
+  config.prach_res_config_index = 0;
+  config.prach_sequence_length  = fapi::prach_sequence_length_type::long_sequence;
+  config.prach_scs              = prach_subcarrier_spacing::kHz1_25;
+  config.prach_ul_bwp_pusch_scs = cell_cfg.scs_common;
+  config.restricted_set         = restricted_set_config::UNRESTRICTED;
+  config.num_prach_fd_occasions = cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.msg1_fdm;
+  config.prach_config_index =
+      cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.prach_config_index;
+  config.prach_format           = prach_format_type::zero;
+  config.num_prach_td_occasions = 1;
+  config.num_preambles          = 1;
+  config.start_preamble_index   = 0;
+
+  // Add FD occasion info.
+  fapi::prach_fd_occasion_config& fd_occasion = config.fd_occasions.emplace_back();
+  fd_occasion.prach_root_sequence_index =
+      cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().prach_root_seq_index;
+  fd_occasion.prach_freq_offset =
+      cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.msg1_frequency_start;
+  fd_occasion.prach_zero_corr_conf =
+      cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.zero_correlation_zone_config;
+
+  return config;
+}
+
+static fapi::carrier_config generate_carrier_config_tlv(const srs_du::du_cell_config& du_cell)
+{
+  // Deduce common numerology and grid size for DL and UL.
+  unsigned numerology = to_numerology_value(du_cell.scs_common);
+  unsigned grid_size_bw_prb =
+      band_helper::get_n_rbs_from_bw(MHz_to_bs_channel_bandwidth(du_cell.dl_carrier.carrier_bw_mhz),
+                                     du_cell.scs_common,
+                                     band_helper::get_freq_range(du_cell.dl_carrier.band));
+
+  fapi::carrier_config fapi_config = {};
+
+  // NOTE; for now we only need to fill the nof_prb_ul_grid and nof_prb_dl_grid for the common SCS.
+  fapi_config.dl_grid_size             = {};
+  fapi_config.dl_grid_size[numerology] = grid_size_bw_prb;
+  fapi_config.ul_grid_size             = {};
+  fapi_config.ul_grid_size[numerology] = grid_size_bw_prb;
+
+  // Number of transmit and receive antenna ports.
+  fapi_config.num_tx_ant = du_cell.dl_carrier.nof_ant;
+  fapi_config.num_rx_ant = du_cell.ul_carrier.nof_ant;
+
+  return fapi_config;
+}
+
+static o_du_low_unit_config generate_o_du_low_config(const du_low_unit_config&            du_low_unit_cfg,
+                                                     span<const srs_du::du_cell_config>   cells,
+                                                     span<const du_high_unit_cell_config> du_hi_cells)
+{
+  o_du_low_unit_config odu_low_cfg = {du_low_unit_cfg, {}, {}};
+
+  for (unsigned i = 0, e = cells.size(); i != e; ++i) {
+    const auto& cell        = cells[i];
+    const auto& du_hi_cell  = du_hi_cells[i];
+    auto&       fapi_sector = odu_low_cfg.fapi_cfg.sectors.emplace_back();
+
+    fapi_sector.carrier_cfg                   = generate_carrier_config_tlv(cell);
+    fapi_sector.prach_cfg                     = generate_prach_config_tlv(cell);
+    fapi_sector.allow_request_on_empty_ul_tti = du_low_unit_cfg.expert_phy_cfg.allow_request_on_empty_uplink_slot;
+    fapi_sector.nof_slots_request_headroom    = du_low_unit_cfg.expert_phy_cfg.nof_slots_request_headroom;
+    fapi_sector.prach_ports                   = du_hi_cell.cell.prach_cfg.ports;
+    fapi_sector.scs                           = cell.scs_common;
+    fapi_sector.scs_common                    = cell.scs_common;
+    fapi_sector.sector_id                     = i;
+
+    auto&   du_low_cell    = odu_low_cfg.cells.emplace_back();
+    nr_band band           = cell.dl_carrier.band;
+    du_low_cell.duplex     = band_helper::get_duplex_mode(band);
+    du_low_cell.freq_range = band_helper::get_freq_range(band);
+    du_low_cell.bw_rb      = band_helper::get_n_rbs_from_bw(
+        MHz_to_bs_channel_bandwidth(cell.dl_carrier.carrier_bw_mhz), cell.scs_common, du_low_cell.freq_range);
+    du_low_cell.nof_rx_antennas = cell.ul_carrier.nof_ant;
+    du_low_cell.nof_tx_antennas = cell.dl_carrier.nof_ant;
+    du_low_cell.prach_ports     = du_hi_cell.cell.prach_cfg.ports;
+    du_low_cell.scs_common      = cell.scs_common;
+    du_low_cell.prach_config_index =
+        cell.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index;
+    du_low_cell.max_puschs_per_slot  = du_hi_cell.cell.pusch_cfg.max_puschs_per_slot;
+    du_low_cell.pusch_max_nof_layers = cell.pusch_max_nof_layers;
+    if (cell.tdd_ul_dl_cfg_common) {
+      du_low_cell.tdd_pattern1 = cell.tdd_ul_dl_cfg_common->pattern1;
+      if (cell.tdd_ul_dl_cfg_common->pattern2) {
+        du_low_cell.tdd_pattern2 = cell.tdd_ul_dl_cfg_common->pattern2;
+      }
+    }
+  }
+
+  return odu_low_cfg;
+}
+
 o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependencies& dependencies)
 {
   o_du_unit      o_du;
@@ -57,14 +154,7 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
   // Create flexible O-DU implementation.
   auto du_impl = std::make_unique<flexible_o_du_impl>(nof_cells, flexible_odu_metrics_notifier);
 
-  std::vector<srs_du::cell_prach_ports_entry> prach_ports;
-  std::vector<unsigned>                       max_pusch_per_slot;
-  for (const auto& high : du_hi.cells_cfg) {
-    prach_ports.push_back(high.cell.prach_cfg.ports);
-    max_pusch_per_slot.push_back(high.cell.pusch_cfg.max_puschs_per_slot);
-  }
-
-  o_du_low_unit_config       odu_low_cfg          = {du_lo, prach_ports, du_cells, max_pusch_per_slot};
+  o_du_low_unit_config       odu_low_cfg          = generate_o_du_low_config(du_lo, du_cells, du_hi.cells_cfg);
   o_du_low_unit_dependencies odu_low_dependencies = {
       du_impl->get_upper_ru_dl_rg_adapter(), du_impl->get_upper_ru_ul_request_adapter(), *dependencies.workers};
   o_du_low_unit_factory odu_low_factory(du_lo.hal_config, nof_cells);

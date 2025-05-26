@@ -18,25 +18,18 @@
 
 using namespace srsran;
 
-static void generate_du_low_config(srs_du::du_low_config&             out_config,
-                                   const du_low_unit_config&          du_low,
-                                   span<const srs_du::du_cell_config> du_cells,
-                                   span<const unsigned>               max_puschs_per_slot)
+static void generate_du_low_config(srs_du::du_low_config&                          out_config,
+                                   const du_low_unit_config&                       du_low,
+                                   span<const o_du_low_unit_config::du_low_config> cells)
 {
-  out_config.cells.reserve(du_cells.size());
+  out_config.cells.reserve(cells.size());
 
-  for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
-    const srs_du::du_cell_config& cell           = du_cells[i];
-    upper_phy_config&             upper_phy_cell = out_config.cells.emplace_back().upper_phy_cfg;
-
-    // Get band, frequency range and duplex mode from the band.
-    nr_band               band       = cell.dl_carrier.band;
-    const frequency_range freq_range = band_helper::get_freq_range(band);
-    const duplex_mode     duplex     = band_helper::get_duplex_mode(band);
+  for (unsigned i = 0, e = cells.size(); i != e; ++i) {
+    const o_du_low_unit_config::du_low_config& cell           = cells[i];
+    upper_phy_config&                          upper_phy_cell = out_config.cells.emplace_back().upper_phy_cfg;
 
     // Get bandwidth in PRB.
-    const unsigned bw_rb = band_helper::get_n_rbs_from_bw(
-        MHz_to_bs_channel_bandwidth(cell.dl_carrier.carrier_bw_mhz), cell.scs_common, freq_range);
+    const unsigned bw_rb = cell.bw_rb;
     // Deduce the number of slots per subframe.
     const unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(cell.scs_common);
     // Deduce the number of slots per frame.
@@ -50,12 +43,12 @@ static void generate_du_low_config(srs_du::du_low_config&             out_config
     // Calculate the number of UL slots in a frame and in a PUSCH HARQ process lifetime.
     unsigned nof_ul_slots_in_harq_lifetime = expire_pusch_harq_timeout_slots;
     unsigned nof_ul_slots_per_frame        = nof_slots_per_frame;
-    if (duplex == duplex_mode::TDD && cell.tdd_ul_dl_cfg_common.has_value()) {
-      const tdd_ul_dl_pattern& pattern1     = cell.tdd_ul_dl_cfg_common->pattern1;
+    if (cell.duplex == duplex_mode::TDD && cell.tdd_pattern1.has_value()) {
+      const tdd_ul_dl_pattern& pattern1     = *cell.tdd_pattern1;
       unsigned                 period_slots = pattern1.dl_ul_tx_period_nof_slots;
       unsigned                 nof_ul_slots = pattern1.nof_ul_slots + ((pattern1.nof_ul_symbols != 0) ? 1 : 0);
-      if (cell.tdd_ul_dl_cfg_common->pattern2.has_value()) {
-        const tdd_ul_dl_pattern& pattern2 = cell.tdd_ul_dl_cfg_common->pattern2.value();
+      if (cell.tdd_pattern2.has_value()) {
+        const tdd_ul_dl_pattern& pattern2 = *cell.tdd_pattern2;
         period_slots += pattern2.dl_ul_tx_period_nof_slots;
         nof_ul_slots += pattern2.nof_ul_slots + ((pattern2.nof_ul_symbols != 0) ? 1 : 0);
       }
@@ -75,7 +68,7 @@ static void generate_du_low_config(srs_du::du_low_config&             out_config
     // Calculate the maximum number of active PUSCH HARQ processes from:
     // - the maximum number of users per slot; and
     // - the number of PUSCH occasions in a HARQ process lifetime.
-    const unsigned nof_buffers = max_puschs_per_slot[i] * nof_ul_slots_in_harq_lifetime;
+    const unsigned nof_buffers = cell.max_puschs_per_slot * nof_ul_slots_in_harq_lifetime;
 
     // Calculate the maximum number of receive codeblocks. It is equal to the product of:
     // - the maximum number of codeblocks that can be scheduled in one slot; and
@@ -92,21 +85,21 @@ static void generate_du_low_config(srs_du::du_low_config&             out_config
 
     static constexpr unsigned prach_pipeline_depth = 1;
 
-    const prach_configuration prach_cfg = prach_configuration_get(
-        freq_range, duplex, cell.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index);
+    const prach_configuration prach_cfg =
+        prach_configuration_get(cell.freq_range, cell.duplex, cell.prach_config_index);
     srsran_assert(prach_cfg.format != prach_format_type::invalid,
                   "Unsupported PRACH configuration index (i.e., {}) for the given frequency range (i.e., {}) and "
                   "duplex mode (i.e., {}).",
-                  cell.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index,
-                  to_string(freq_range),
-                  to_string(duplex));
+                  cell.prach_config_index,
+                  to_string(cell.freq_range),
+                  to_string(cell.duplex));
 
     // Maximum number of concurrent PUSCH transmissions. It is the maximum number of PUSCH transmissions that can be
     // processed simultaneously. If there are no dedicated threads for PUSCH decoding, it sets the queue size to one.
     // Otherwise, it is set to the maximum number of PUSCH transmissions that can be scheduled in one frame.
     unsigned max_pusch_concurrency = 1;
     if (du_low.expert_execution_cfg.threads.nof_pusch_decoder_threads > 0) {
-      max_pusch_concurrency = max_puschs_per_slot[i] * nof_ul_slots_per_frame;
+      max_pusch_concurrency = cell.max_puschs_per_slot * nof_ul_slots_per_frame;
     }
 
     upper_phy_cell.nof_slots_request_headroom         = du_low.expert_phy_cfg.nof_slots_request_headroom;
@@ -119,8 +112,8 @@ static void generate_du_low_config(srs_du::du_low_config&             out_config
     upper_phy_cell.rx_symbol_printer_prach            = du_low.loggers.phy_rx_symbols_prach;
     upper_phy_cell.logger_max_hex_size                = du_low.loggers.hex_max_size;
     upper_phy_cell.enable_metrics                     = du_low.metrics_cfg.enable_du_low;
-    upper_phy_cell.nof_tx_ports                       = cell.dl_carrier.nof_ant;
-    upper_phy_cell.nof_rx_ports                       = cell.ul_carrier.nof_ant;
+    upper_phy_cell.nof_tx_ports                       = cell.nof_tx_antennas;
+    upper_phy_cell.nof_rx_ports                       = cell.nof_rx_antennas;
     upper_phy_cell.ldpc_decoder_iterations            = du_low.expert_phy_cfg.pusch_decoder_max_iterations;
     upper_phy_cell.ldpc_decoder_early_stop            = du_low.expert_phy_cfg.pusch_decoder_early_stop;
     upper_phy_cell.nof_dl_rg                          = dl_pipeline_depth + 2;
@@ -164,12 +157,11 @@ static void generate_du_low_config(srs_du::du_low_config&             out_config
   }
 }
 
-void srsran::generate_o_du_low_config(srs_du::o_du_low_config&           out_config,
-                                      const du_low_unit_config&          du_low_unit_cfg,
-                                      span<const srs_du::du_cell_config> du_cells,
-                                      span<const unsigned>               max_puschs_per_slot)
+void srsran::generate_o_du_low_config(srs_du::o_du_low_config&                        out_config,
+                                      const du_low_unit_config&                       du_low_unit_cfg,
+                                      span<const o_du_low_unit_config::du_low_config> cells)
 {
-  generate_du_low_config(out_config.du_low_cfg, du_low_unit_cfg, du_cells, max_puschs_per_slot);
+  generate_du_low_config(out_config.du_low_cfg, du_low_unit_cfg, cells);
 }
 
 void srsran::fill_du_low_worker_manager_config(worker_manager_config&    config,

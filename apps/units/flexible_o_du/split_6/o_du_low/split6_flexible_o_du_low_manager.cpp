@@ -11,3 +11,7 @@
 #include "split6_flexible_o_du_low_manager.h"
 
 using namespace srsran;
+
+void split6_flexible_o_du_low_manager::start() {}
+
+void split6_flexible_o_du_low_manager::stop() {}
