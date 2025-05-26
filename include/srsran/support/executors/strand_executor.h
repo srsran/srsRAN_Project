@@ -223,16 +223,19 @@ public:
   {
     unique_task task;
     uint32_t    queue_size = state.get_queue_size();
+
+    unsigned max_pops = 256;
     while (queue_size > 0) {
       // Note: We use a blocking pop because (in theory) at this point we have the guarantee that at least one task
       // is stored in the queue (job_count > 0). However, we still apply a timeout policy to catch unexpected
       // situations or invalid states of the strand. We could not use a non-blocking pop because some of the MPMC
       // queue implementations have spurious failures.
       unsigned run_count = 0;
-      for (; run_count != queue_size and queue.pop(task); ++run_count) {
+      unsigned max_count = std::min(queue_size, max_pops);
+      for (; run_count != max_count and queue.pop(task); ++run_count) {
         task();
       }
-      if (run_count != queue_size) {
+      if (run_count != max_count) {
         // Unexpected failure to pop enqueued tasks. Possible reason: Are you using an SPSC queue with multiple
         // producers?
         srslog::fetch_basic_logger("ALL").error(
@@ -246,7 +249,25 @@ public:
       // We have run all the tasks that were enqueued since when we computed queue_size.
       // Recompute the queue_size to check if there are tasks that were enqueued in the meantime.
       queue_size = state.on_task_completion(run_count);
+
+      max_pops -= run_count;
+      // Check if queue should yield back control.
+      if (queue_size > 0 and max_pops == 0) {
+        dispatch_value_dequeue_task();
+        break;
+      }
     }
+  }
+
+  bool dispatch_value_dequeue_task()
+  {
+    // Dispatch batch dequeue job.
+    bool dispatch_successful = detail::get_task_executor_ref(out_exec).defer([this]() { run_enqueued_tasks(); });
+    if (not dispatch_successful) {
+      handle_failed_task_dispatch();
+      return false;
+    }
+    return true;
   }
 
   void handle_failed_task_dispatch()
