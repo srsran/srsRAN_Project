@@ -138,6 +138,17 @@ static void fill_asn1_gnb_cu_configuration_update(asn1::f1ap::gnb_cu_cfg_upd_s& 
         asn1_cell.nr_pci         = cell.pci.value();
       }
 
+      if (!cell.available_plmn_list.empty()) {
+        asn1_cell.ie_exts_present                     = true;
+        asn1_cell.ie_exts.available_plmn_list_present = true;
+
+        for (const auto& plmn : cell.available_plmn_list) {
+          available_plmn_list_item_s asn1_plmn;
+          asn1_plmn.plmn_id = plmn.to_bytes();
+          asn1_cell.ie_exts.available_plmn_list.push_back(asn1_plmn);
+        }
+      }
+
       asn1_cfg_update->cells_to_be_activ_list.push_back(asn1_cell_container);
     }
   }

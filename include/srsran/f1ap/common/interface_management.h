@@ -18,8 +18,9 @@ namespace srsran {
 
 /// Cell commanded by the CU to be activated via the F1AP interface.
 struct f1ap_cell_to_activate {
-  nr_cell_global_id_t  cgi;
-  std::optional<pci_t> pci;
+  nr_cell_global_id_t        cgi;
+  std::optional<pci_t>       pci;
+  std::vector<plmn_identity> available_plmn_list;
 };
 
 /// Cell failed to be activated via the F1AP interface.
