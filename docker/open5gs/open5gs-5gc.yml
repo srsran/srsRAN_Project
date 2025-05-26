@@ -124,7 +124,9 @@ smf:
       - address: 127.0.0.4
         port: 9090
   session:
-    - subnet: ${UE_GATEWAY_IP}
+    - subnet: ${UE_IP_RANGE}
+      gateway: ${UE_GATEWAY_IP}
+
   dns:
     - 8.8.8.8
     - 8.8.4.4
@@ -208,7 +210,8 @@ upf:
       - address: ${OPEN5GS_IP}
         advertise: ${UPF_ADVERTISE_IP}
   session:
-    - subnet: ${UE_GATEWAY_IP}
+    - subnet: ${UE_IP_RANGE}
+      gateway: ${UE_GATEWAY_IP}
 
 hss:
   freeDiameter:
