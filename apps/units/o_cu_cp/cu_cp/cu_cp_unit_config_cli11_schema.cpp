@@ -120,14 +120,29 @@ static void configure_cli11_amf_item_args(CLI::App& app, cu_cp_unit_amf_config_i
   add_option(app, "--bind_addr", config.bind_addr, "Local IP address to bind for N2 interface")->check(CLI::ValidIPV4);
   add_option(app, "--bind_interface", config.bind_interface, "Network device to bind for N2 interface")
       ->capture_default_str();
-  add_option(app, "--sctp_rto_initial", config.sctp_rto_initial_ms, "SCTP initial RTO value in milliseconds");
-  add_option(app, "--sctp_rto_min", config.sctp_rto_min_ms, "SCTP RTO min in milliseconds");
-  add_option(app, "--sctp_rto_max", config.sctp_rto_max_ms, "SCTP RTO max in milliseconds");
-  add_option(app, "--sctp_init_max_attempts", config.sctp_init_max_attempts, "SCTP init max attempts");
-  add_option(app, "--sctp_max_init_timeo", config.sctp_max_init_timeo_ms, "SCTP max init timeout in milliseconds");
-  add_option(app, "--sctp_hb_interval", config.sctp_hb_interval_ms, "SCTP heartbeat interval in milliseconds")
+  add_option(app,
+             "--sctp_rto_initial",
+             config.sctp_rto_initial_ms,
+             "SCTP initial RTO value in milliseconds (-1 to use system default)");
+  add_option(app, "--sctp_rto_min", config.sctp_rto_min_ms, "SCTP RTO min in milliseconds (-1 to use system default)");
+  add_option(app, "--sctp_rto_max", config.sctp_rto_max_ms, "SCTP RTO max in milliseconds (-1 to use system default)");
+  add_option(app,
+             "--sctp_init_max_attempts",
+             config.sctp_init_max_attempts,
+             "SCTP init max attempts (-1 to use system default)");
+  add_option(app,
+             "--sctp_max_init_timeo",
+             config.sctp_max_init_timeo_ms,
+             "SCTP max init timeout in milliseconds (-1 to use system default)");
+  add_option(app,
+             "--sctp_hb_interval",
+             config.sctp_hb_interval_ms,
+             "SCTP heartbeat interval in milliseconds (-1 to use system default)")
       ->capture_default_str();
-  add_option(app, "--sctp_assoc_max_retx", config.sctp_assoc_max_retx, "SCTP assocination max retransmissions")
+  add_option(app,
+             "--sctp_assoc_max_retx",
+             config.sctp_assoc_max_retx,
+             "SCTP assocination max retransmissions (-1 to use system default)")
       ->capture_default_str();
   add_option(app,
              "--sctp_nodelay",
