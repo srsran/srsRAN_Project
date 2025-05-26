@@ -315,6 +315,17 @@ public:
   virtual void handle_pending_ue_task_cancellation(ue_index_t ue_index) = 0;
 };
 
+/// Interface to handle AMF reconnections.
+class cu_cp_amf_reconnection_handler
+{
+public:
+  virtual ~cu_cp_amf_reconnection_handler() = default;
+
+  /// \brief Handle AMF reconnections.
+  /// \param[in] amf_index The index of the AMF that reconnected.
+  virtual void handle_amf_reconnection(amf_index_t amf_index) = 0;
+};
+
 class cu_cp_impl_interface : public cu_cp_e1ap_event_handler,
                              public cu_cp_du_event_handler,
                              public cu_cp_rrc_ue_interface,
@@ -324,7 +335,8 @@ class cu_cp_impl_interface : public cu_cp_e1ap_event_handler,
                              public cu_cp_nrppa_handler,
                              public cu_cp_ue_context_manipulation_handler,
                              public cu_cp_mobility_manager_handler,
-                             public cu_cp_ue_removal_handler
+                             public cu_cp_ue_removal_handler,
+                             public cu_cp_amf_reconnection_handler
 {
 public:
   virtual ~cu_cp_impl_interface() = default;
@@ -338,6 +350,7 @@ public:
   virtual cu_cp_measurement_config_handler&      get_cu_cp_measurement_config_handler() = 0;
   virtual cu_cp_mobility_manager_handler&        get_cu_cp_mobility_manager_handler()   = 0;
   virtual cu_cp_ue_removal_handler&              get_cu_cp_ue_removal_handler()         = 0;
+  virtual cu_cp_amf_reconnection_handler&        get_cu_cp_amf_reconnection_handler()   = 0;
 };
 
 } // namespace srs_cu_cp

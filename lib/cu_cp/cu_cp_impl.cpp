@@ -12,6 +12,7 @@
 #include "du_processor/du_processor_repository.h"
 #include "metrics_handler/metrics_handler_impl.h"
 #include "routines/amf_connection_loss_routine.h"
+#include "routines/cell_activation_routine.h"
 #include "routines/initial_context_setup_routine.h"
 #include "routines/mobility/inter_cu_handover_target_routine.h"
 #include "routines/mobility/intra_cu_handover_routine.h"
@@ -68,7 +69,13 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   paging_handler(du_db),
   ngap_db(ngap_repository_config{cfg, get_cu_cp_ngap_handler(), paging_handler, srslog::fetch_basic_logger("CU-CP")}),
   mobility_mng(cfg.mobility.mobility_manager_config, mobility_manager_ev_notifier, ngap_db, du_db, ue_mng),
-  controller(cfg, common_task_sched, ngap_db, cu_up_db, du_db, *cfg.services.cu_cp_executor),
+  controller(cfg,
+             get_cu_cp_amf_reconnection_handler(),
+             common_task_sched,
+             ngap_db,
+             cu_up_db,
+             du_db,
+             *cfg.services.cu_cp_executor),
   metrics_hdlr(std::make_unique<metrics_handler_impl>(*cfg.services.cu_cp_executor,
                                                       *cfg.services.timers,
                                                       ue_mng,
@@ -777,6 +784,18 @@ void cu_cp_impl::handle_pending_ue_task_cancellation(ue_index_t ue_index)
   if (rrc_ue != nullptr) {
     rrc_ue->get_controller().stop();
   }
+}
+
+void cu_cp_impl::handle_amf_reconnection(amf_index_t amf_index)
+{
+  if (ngap_db.find_ngap(amf_index) == nullptr) {
+    logger.warning("AMF index={} not found", amf_index);
+    return;
+  }
+
+  std::vector<plmn_identity> served_plmns = ngap_db.find_ngap(amf_index)->get_ngap_context().get_supported_plmns();
+
+  common_task_sched.schedule_async_task(launch_async<cell_activation_routine>(cfg, served_plmns, du_db, logger));
 }
 
 void cu_cp_impl::initialize_handover_ue_release_timer(

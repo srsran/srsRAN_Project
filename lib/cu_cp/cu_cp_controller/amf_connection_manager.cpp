@@ -23,11 +23,13 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-amf_connection_manager::amf_connection_manager(ngap_repository&       ngaps_,
-                                               timer_manager&         timers_,
-                                               task_executor&         cu_cp_exec_,
-                                               common_task_scheduler& common_task_sched_) :
+amf_connection_manager::amf_connection_manager(ngap_repository&                ngaps_,
+                                               cu_cp_amf_reconnection_handler& cu_cp_notifier_,
+                                               timer_manager&                  timers_,
+                                               task_executor&                  cu_cp_exec_,
+                                               common_task_scheduler&          common_task_sched_) :
   ngaps(ngaps_),
+  cu_cp_notifier(cu_cp_notifier_),
   timers(timers_),
   cu_cp_exec(cu_cp_exec_),
   common_task_sched(common_task_sched_),
@@ -97,6 +99,8 @@ void amf_connection_manager::reconnect_to_amf(amf_index_t               amf_inde
           ngaps.update_plmn_lookup(amf_index);
           ue_mng->remove_blocked_plmns(ngaps.find_ngap(amf_index)->get_ngap_context().get_supported_plmns());
           amfs_connected.emplace(amf_index, true);
+          // Notrify CU-CP about the successful reconnection.
+          cu_cp_notifier.handle_amf_reconnection(amf_index);
         } else {
           logger.info("Failed to reconnect to AMF index {}", amf_index);
         }
