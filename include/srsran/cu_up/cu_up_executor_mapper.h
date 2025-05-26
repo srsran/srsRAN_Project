@@ -64,6 +64,8 @@ public:
   /// \brief Gets task executor that is used by the E2 CU-UP agent.
   virtual task_executor& e2_executor() = 0;
 
+  virtual task_executor& n3_executor() = 0;
+
   /// \brief Instantiate executors for a created UE in the CU-UP.
   virtual std::unique_ptr<ue_executor_mapper> create_ue_executor_mapper() = 0;
 };

@@ -257,6 +257,7 @@ public:
                       {concurrent_queue_policy::lockfree_mpmc, config.default_task_queue_size}}}),
     ctrl_exec(decorator.decorate(cu_up_strand.get_executors()[0], true, std::nullopt, "cu_up_strand_ctrl_exec")),
     ues_exec(decorator.decorate(cu_up_strand.get_executors()[1], true, std::nullopt, "cu_up_strand_ues_exec")),
+    n3_exec(decorator.decorate(config.low_prio_executor, true, std::nullopt, "n3_exec")),
     cu_up_exec_pool(create_strands(config))
   {
   }
@@ -266,6 +267,8 @@ public:
   task_executor& io_ul_executor() override { return *io_ul_exec_ptr; }
 
   task_executor& e2_executor() override { return ctrl_exec; }
+
+  task_executor& n3_executor() override { return n3_exec; }
 
   std::unique_ptr<ue_executor_mapper> create_ue_executor_mapper() override
   {
@@ -321,6 +324,8 @@ private:
   // IO executor with two modes
   std::variant<inline_task_executor, io_dedicated_strand_type> io_ul_exec;
   task_executor*                                               io_ul_exec_ptr;
+
+  task_executor& n3_exec; // Executor reception of N3 packets from io_broker.
 
   // UE strands and respective executors.
   std::vector<std::unique_ptr<ue_strand_type>> ue_strands;
