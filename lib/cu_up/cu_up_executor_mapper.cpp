@@ -11,14 +11,45 @@
 #include "srsran/cu_up/cu_up_executor_mapper.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/support/async/execute_on_blocking.h"
+#include "srsran/support/executors/executor_tracer.h"
 #include "srsran/support/executors/inline_task_executor.h"
+#include "srsran/support/executors/sequential_metrics_executor.h"
 #include "srsran/support/executors/strand_executor.h"
+#include "srsran/support/tracing/event_tracing.h"
 #include <variant>
 
 using namespace srsran;
 using namespace srs_cu_up;
 
 namespace {
+
+/// Helper class to decorate executors with extra functionalities.
+struct executor_decorator {
+  template <typename Exec>
+  task_executor& decorate(Exec&&                                          exec,
+                          bool                                            tracing_enabled,
+                          const std::optional<std::chrono::milliseconds>& metrics_period,
+                          const std::string&                              exec_name = "")
+  {
+    if (not tracing_enabled and not metrics_period) {
+      return exec;
+    }
+    report_error_if_not(not tracing_enabled or not metrics_period,
+                        "Metrics and tracing cannot be used at the same time");
+
+    if (tracing_enabled) {
+      decorators.push_back(make_trace_executor_ptr(exec_name, exec, tracer));
+    } else {
+      decorators.push_back(make_metrics_executor_ptr(exec_name, exec, metrics_logger, *metrics_period));
+    }
+    return *decorators.back();
+  }
+
+private:
+  std::vector<std::unique_ptr<task_executor>> decorators;
+  file_event_tracer<true>                     tracer;
+  srslog::basic_logger&                       metrics_logger = srslog::fetch_basic_logger("METRICS");
+};
 
 /// Task executor adaptor that allows cancelling pending tasks, from within the executor's context.
 class cancellable_task_executor final : public task_executor
@@ -175,6 +206,9 @@ public:
 
 private:
   struct ue_executor_context {
+    // Tracing helpers.
+    executor_decorator decorator;
+
     task_executor& ctrl_exec;
     task_executor& ul_exec;
     task_executor& dl_exec;
@@ -184,7 +218,10 @@ private:
                         task_executor& ul_exec_,
                         task_executor& dl_exec_,
                         task_executor& crypto_exec_) :
-      ctrl_exec(ctrl_exec_), ul_exec(ul_exec_), dl_exec(dl_exec_), crypto_exec(crypto_exec_)
+      ctrl_exec(decorator.decorate(ctrl_exec_, true, std::nullopt, "cu_up_ue_ctrl_exec")),
+      ul_exec(decorator.decorate(ul_exec_, true, std::nullopt, "cu_up_ue_ul_exec")),
+      dl_exec(decorator.decorate(dl_exec_, true, std::nullopt, "cu_up_ue_dl_exec")),
+      crypto_exec(crypto_exec_)
     {
     }
   };
@@ -218,7 +255,8 @@ public:
                  std::array<concurrent_queue_params, 2>{
                      {{concurrent_queue_policy::lockfree_mpmc, config.default_task_queue_size},
                       {concurrent_queue_policy::lockfree_mpmc, config.default_task_queue_size}}}),
-    ctrl_exec(cu_up_strand.get_executors()[0]),
+    ctrl_exec(decorator.decorate(cu_up_strand.get_executors()[0], true, std::nullopt, "cu_up_strand_ctrl_exec")),
+    ues_exec(decorator.decorate(cu_up_strand.get_executors()[1], true, std::nullopt, "cu_up_strand_ues_exec")),
     cu_up_exec_pool(create_strands(config))
   {
   }
@@ -272,10 +310,13 @@ private:
     return base_cu_up_executor_pool_config{
         ctrl_exec, ue_dl_execs, ue_ul_execs, ue_ctrl_execs, config.medium_prio_executor, *config.timers};
   }
+  // Tracing helpers.
+  executor_decorator decorator = {};
 
   // Base strand that sequentializes accesses to the worker pool executor.
   cu_up_strand_type cu_up_strand;
-  task_executor&    ctrl_exec;
+  task_executor&    ctrl_exec; // Executor associated with CU-UP control tasks of the CU-UP strand.
+  task_executor&    ues_exec;  // Executor associated with CU-UP UE tasks of the CU-UP strand.
 
   // IO executor with two modes
   std::variant<inline_task_executor, io_dedicated_strand_type> io_ul_exec;
