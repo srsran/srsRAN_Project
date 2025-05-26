@@ -333,7 +333,8 @@ protected:
     }
     const auto& pdsch_list = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
     if (std::none_of(pdsch_list.begin(), pdsch_list.end(), [this, &pdcch_slot](const auto& pdsch) {
-          return cell_cfg.is_dl_enabled(pdcch_slot + pdsch.k0);
+          return cell_cfg.is_dl_enabled(pdcch_slot + pdsch.k0) and
+                 not csi_helper::is_csi_rs_slot(cell_cfg, pdcch_slot + pdsch.k0);
         })) {
       // slot for PDSCH is not DL slot.
       return false;
@@ -656,26 +657,33 @@ TEST_P(ra_scheduler_tdd_test, when_no_rbs_are_available_then_rar_is_scheduled_in
   // Given that the resource grid was already filled for this slot, no RAR should be scheduled.
   ASSERT_TRUE(res_grid[0].result.dl.dl_pdcchs.empty());
 
-  int      td_res = -1;
-  unsigned n      = 1;
-  for (; rar_win.contains(res_grid[0].slot + n); ++n) {
-    if (not is_slot_valid_for_rar_pdcch(n)) {
-      ASSERT_TRUE(scheduled_dl_pdcchs().empty())
-          << fmt::format("RAR PDCCH allocated in invalid slot {}", result_slot_tx());
-      continue;
-    }
+  // Note: There is a small chance that the RAR was not scheduled because the next "n" (< max RA DL sched delay) slots
+  // were not valid for DL RAR scheduling (not DL slots or they contain CSI-RS). For this reason, we may need to
+  // call "run_slot" again.
+  const unsigned attempts_remaining = 2;
+  int            td_res             = -1;
+  for (unsigned a = 0; a != attempts_remaining and td_res == -1; ++a) {
+    unsigned       n     = 1;
+    const unsigned max_n = 6;
+    for (; rar_win.contains(res_grid[0].slot + n) and n != max_n; ++n) {
+      if (not is_slot_valid_for_rar_pdcch(n)) {
+        ASSERT_TRUE(scheduled_dl_pdcchs().empty())
+            << fmt::format("RAR PDCCH allocated in invalid slot {}", result_slot_tx());
+        continue;
+      }
 
-    // RAR PDCCH scheduled.
-    ASSERT_EQ(res_grid[n].result.dl.dl_pdcchs.size(), 1);
-    td_res = res_grid[n].result.dl.dl_pdcchs[0].dci.ra_f1_0.time_resource;
-    break;
+      // RAR PDCCH scheduled.
+      ASSERT_EQ(res_grid[n].result.dl.dl_pdcchs.size(), 1) << fmt::format("No RAR PDCCH in slot {}", res_grid[n].slot);
+      td_res = res_grid[n].result.dl.dl_pdcchs[0].dci.ra_f1_0.time_resource;
+      break;
+    }
+    for (unsigned i = 0; i != n; ++i) {
+      // Update current slot to the slot when PDCCH was scheduled.
+      run_slot();
+    }
   }
 
   ASSERT_GE(td_res, 0) << "RAR PDCCH not found";
-  for (unsigned i = 0; i != n; ++i) {
-    // Update current slot to the slot when PDCCH was scheduled.
-    run_slot();
-  }
   // RAR PDSCH allocated.
   span<const rar_information> rars = scheduled_rars(td_res);
   ASSERT_EQ(rars.size(), 1);
