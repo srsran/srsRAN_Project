@@ -26,14 +26,14 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    // init GW logger
+    // Init GW logger.
     srslog::fetch_basic_logger("SCTP-GW", false).set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("SCTP-GW", false).set_hex_dump_max_size(100);
   }
 
   void TearDown() override
   {
-    // flush logger after each test
+    // Flush logger after each test.
     srslog::flush();
 
     stop_token.store(true, std::memory_order_relaxed);
@@ -69,13 +69,13 @@ protected:
     return true;
   }
 
-  // spawn a thread to receive data
+  // Spawn a thread to receive data.
   void start_receive_thread()
   {
     rx_thread = std::thread([this]() {
       stop_token.store(false);
       while (not stop_token.load(std::memory_order_relaxed)) {
-        // call receive() on socket
+        // Call receive() on socket.
         server->receive();
 
         std::this_thread::sleep_for(std::chrono::microseconds(100));
@@ -167,7 +167,7 @@ TEST_F(sctp_network_gateway_tester, when_socket_not_exists_then_connect_fails)
   config.if_name           = "client";
   config.dest_name         = "server";
   config.connect_address   = "127.0.0.1";
-  config.connect_port      = 0; // attempt to connect to port 0 which should always fail
+  config.connect_port      = 0; // attempt to connect to port 0 which should always fail.
   config.non_blocking_mode = true;
   config.reuse_addr        = true;
   create_client(config);
@@ -182,7 +182,7 @@ TEST_F(sctp_network_gateway_tester, when_v6_socket_not_exists_then_connect_fails
   config.if_name           = "client";
   config.dest_name         = "server";
   config.connect_address   = "::1";
-  config.connect_port      = 0; // attempt to connect to port 0 which should always fail
+  config.connect_port      = 0; // attempt to connect to port 0 which should always fail.
   config.non_blocking_mode = true;
   config.reuse_addr        = true;
   create_client(config);
@@ -223,19 +223,19 @@ TEST_F(sctp_network_gateway_tester, when_config_valid_then_trx_succeeds)
   byte_buffer pdu_oversized(make_oversized_tx_byte_buffer());
   send_to_server(pdu_oversized);
 
-  // check reception of small PDU
+  // Check reception of small PDU.
   {
     expected<byte_buffer> rx_pdu = server_data_notifier.get_rx_pdu_blocking();
     ASSERT_TRUE(rx_pdu.has_value());
     ASSERT_EQ(rx_pdu.value(), pdu_small);
   }
-  // check reception of large PDU
+  // Check reception of large PDU.
   {
     expected<byte_buffer> rx_pdu = server_data_notifier.get_rx_pdu_blocking();
     ASSERT_TRUE(rx_pdu.has_value());
     ASSERT_EQ(rx_pdu.value(), pdu_large);
   }
-  // oversized PDU not expected to be received
+  // Oversized PDU not expected to be received.
   ASSERT_TRUE(server_data_notifier.empty());
 }
 
@@ -273,19 +273,19 @@ TEST_F(sctp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
   byte_buffer pdu_oversized(make_oversized_tx_byte_buffer());
   send_to_server(pdu_oversized);
 
-  // check reception of small PDU
+  // Check reception of small PDU.
   {
     expected<byte_buffer> rx_pdu = server_data_notifier.get_rx_pdu_blocking();
     ASSERT_TRUE(rx_pdu.has_value());
     ASSERT_EQ(rx_pdu.value(), pdu_small);
   }
-  // check reception of large PDU
+  // Check reception of large PDU.
   {
     expected<byte_buffer> rx_pdu = server_data_notifier.get_rx_pdu_blocking();
     ASSERT_TRUE(rx_pdu.has_value());
     ASSERT_EQ(rx_pdu.value(), pdu_large);
   }
-  // oversized PDU not expected to be received
+  // Oversized PDU not expected to be received.
   ASSERT_TRUE(server_data_notifier.empty());
 }
 
@@ -323,25 +323,25 @@ TEST_F(sctp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
   byte_buffer pdu_oversized(make_oversized_tx_byte_buffer());
   send_to_server(pdu_oversized);
 
-  // check reception of small PDU
+  // Check reception of small PDU.
   {
     expected<byte_buffer> rx_pdu = server_data_notifier.get_rx_pdu_blocking();
     ASSERT_TRUE(rx_pdu.has_value());
     ASSERT_EQ(rx_pdu.value(), pdu_small);
   }
-  // check reception of large PDU
+  // Check reception of large PDU.
   {
     expected<byte_buffer> rx_pdu = server_data_notifier.get_rx_pdu_blocking();
     ASSERT_TRUE(rx_pdu.has_value());
     ASSERT_EQ(rx_pdu.value(), pdu_large);
   }
-  // oversized PDU not expected to be received
+  // Oversized PDU not expected to be received.
   ASSERT_TRUE(server_data_notifier.empty());
 }
 
 TEST_F(sctp_network_gateway_tester, when_rto_is_set_then_rto_changes)
 {
-  // Test RTO values
+  // Test RTO values.
   std::chrono::milliseconds rto_init{120};
   std::chrono::milliseconds rto_min{120};
   std::chrono::milliseconds rto_max{800};
@@ -361,7 +361,7 @@ TEST_F(sctp_network_gateway_tester, when_rto_is_set_then_rto_changes)
   int fd = server->get_socket_fd();
   fmt::print("{}\n", fd);
 
-  // Check used RTO values
+  // Check used RTO values.
   sctp_rtoinfo rto_opts  = {};
   socklen_t    rto_sz    = sizeof(sctp_rtoinfo);
   rto_opts.srto_assoc_id = 0;
@@ -373,7 +373,7 @@ TEST_F(sctp_network_gateway_tester, when_rto_is_set_then_rto_changes)
 
 TEST_F(sctp_network_gateway_tester, when_init_msg_is_set_then_init_msg_changes)
 {
-  // Test RTO values
+  // Test RTO values.
   uint32_t                  init_max_attempts = 1;
   std::chrono::milliseconds max_init_timeo{120};
 
@@ -391,7 +391,7 @@ TEST_F(sctp_network_gateway_tester, when_init_msg_is_set_then_init_msg_changes)
   int fd = server->get_socket_fd();
   fmt::print("{}\n", fd);
 
-  // Check used SCTP_INITMSG values
+  // Check used SCTP_INITMSG values.
   sctp_initmsg init_opts = {};
   socklen_t    init_sz   = sizeof(sctp_initmsg);
   ASSERT_EQ(getsockopt(fd, SOL_SCTP, SCTP_INITMSG, &init_opts, &init_sz), 0);
@@ -402,7 +402,7 @@ TEST_F(sctp_network_gateway_tester, when_init_msg_is_set_then_init_msg_changes)
 
 TEST_F(sctp_network_gateway_tester, when_assoc_is_set_then_assoc_changes)
 {
-  // Test retransmission value
+  // Test retransmission value.
   uint32_t assoc_max_rxt = 5;
 
   sctp_network_connector_config server_config;
@@ -418,7 +418,7 @@ TEST_F(sctp_network_gateway_tester, when_assoc_is_set_then_assoc_changes)
   int fd = server->get_socket_fd();
   fmt::print("{}\n", fd);
 
-  // Check used SCTP_ASSOCINFO values
+  // Check used SCTP_ASSOCINFO values.
   sctp_assocparams assoc_opts = {};
   socklen_t        assoc_sz   = sizeof(sctp_assocparams);
   ASSERT_EQ(getsockopt(fd, SOL_SCTP, SCTP_ASSOCINFO, &assoc_opts, &assoc_sz), 0);
@@ -428,8 +428,8 @@ TEST_F(sctp_network_gateway_tester, when_assoc_is_set_then_assoc_changes)
 
 TEST_F(sctp_network_gateway_tester, when_paddr_is_set_then_paddr_changes)
 {
-  // Test heartbeat interval value
-  std::chrono::seconds hb_interval{5};
+  // Test heartbeat interval value.
+  std::chrono::milliseconds hb_interval{5000};
 
   sctp_network_connector_config server_config;
   server_config.if_name      = "server";
@@ -444,7 +444,7 @@ TEST_F(sctp_network_gateway_tester, when_paddr_is_set_then_paddr_changes)
   int fd = server->get_socket_fd();
   fmt::print("{}\n", fd);
 
-  // Check used SCTP_PEER_ADDR_PARAMS values
+  // Check used SCTP_PEER_ADDR_PARAMS values.
   sctp_paddrparams paddr_opts = {};
   socklen_t        paddr_sz   = sizeof(sctp_paddrparams);
   ASSERT_EQ(getsockopt(fd, SOL_SCTP, SCTP_PEER_ADDR_PARAMS, &paddr_opts, &paddr_sz), 0);

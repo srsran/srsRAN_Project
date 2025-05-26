@@ -128,10 +128,10 @@ bool sctp_set_init_msg_opts(const unique_fd&                         fd,
 
 /// \brief Modify SCTP default Peer Address parameters for quicker detection of broken links.
 /// Changes to the heartbeat interval.
-bool sctp_set_paddr_opts(const unique_fd&                    fd,
-                         std::optional<std::chrono::seconds> hb_interval,
-                         const std::string&                  if_name,
-                         srslog::basic_logger&               logger)
+bool sctp_set_paddr_opts(const unique_fd&                         fd,
+                         std::optional<std::chrono::milliseconds> hb_interval,
+                         const std::string&                       if_name,
+                         srslog::basic_logger&                    logger)
 {
   srsran_sanity_check(fd.is_open(), "Invalid FD");
 
