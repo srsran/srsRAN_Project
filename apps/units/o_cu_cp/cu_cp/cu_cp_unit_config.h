@@ -272,7 +272,7 @@ struct cu_cp_unit_metrics_config {
 /// CU-CP application unit configuration.
 struct cu_cp_unit_config {
   /// Node name.
-  std::string ran_node_name = "cu_cp_01";
+  std::string ran_node_name = "srscucp01";
   /// gNB identifier.
   gnb_id_t gnb_id = {411, 22};
   /// Maximum number of DUs.
