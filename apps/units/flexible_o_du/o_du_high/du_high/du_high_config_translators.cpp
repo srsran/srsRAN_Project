@@ -224,18 +224,18 @@ static void fill_csi_resources(serving_cell_config& out_cell, const du_high_unit
   // [Implementation-defined] The default CSI symbols are in symbols 4 and 8, the DM-RS for PDSCH might collide in
   // symbol index 8 when the number of DM-RS additional positions is 3.
   if (uint_to_dmrs_additional_positions(cell_cfg.pdsch_cfg.dmrs_add_pos) == dmrs_additional_positions::pos3) {
-    csi_params.csi_ofdm_symbol_index = 9;
+    csi_params.zp_csi_ofdm_symbol_index = 9;
     // As per TS 38.214, clause 5.1.6.1.1, following time-domain locations of the two CSI-RS resources in a slot, or of
     // the four CSI-RS resources in two consecutive slots are allowed:
     // {4,8}, {5,9}, or {6,10} for frequency range 1 and frequency range 2.
     // NOTE: As per TS 38.211, table 7.4.1.1.2-3, PDSCH DM-RS time-domain positions for single-symbol DM-RS
     // corresponding to ld >= 12 and dmrs-AdditionalPosition pos3 are l0, 5, 8, 11.
-    csi_params.tracking_csi_ofdm_symbol_indexes = {6, 10, 6, 10};
+    csi_params.tracking_csi_ofdm_symbol_indices = {6, 10, 6, 10};
   }
 
   if (cell_cfg.tdd_ul_dl_cfg.has_value()) {
-    const unsigned max_csi_symbol_index = *std::max_element(csi_params.tracking_csi_ofdm_symbol_indexes.begin(),
-                                                            csi_params.tracking_csi_ofdm_symbol_indexes.end());
+    const unsigned max_csi_symbol_index = *std::max_element(csi_params.tracking_csi_ofdm_symbol_indices.begin(),
+                                                            csi_params.tracking_csi_ofdm_symbol_indices.end());
     if (not csi_helper::derive_valid_csi_rs_slot_offsets(
             csi_params,
             csi_cfg.meas_csi_slot_offset,

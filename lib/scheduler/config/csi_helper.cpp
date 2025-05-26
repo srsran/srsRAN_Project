@@ -40,12 +40,22 @@ csi_resource_periodicity srsran::csi_helper::get_max_csi_rs_period(subcarrier_sp
 bool srsran::csi_helper::is_csi_rs_period_valid(csi_resource_periodicity       csi_rs_period,
                                                 const tdd_ul_dl_config_common& tdd_cfg)
 {
+  // The CSI-RS period must be multiple of the TDD period.
   const unsigned tdd_period = nof_slots_per_tdd_period(tdd_cfg);
   if (static_cast<unsigned>(csi_rs_period) % tdd_period != 0) {
     return false;
   }
-  span<const csi_resource_periodicity> csi_options = csi_resource_periodicity_options();
-  return std::find(csi_options.begin(), csi_options.end(), csi_rs_period) != csi_options.end();
+
+  // According to TS38.214, Section 5.1.6.1.1, a UE expects periods of 10, 20, 40, or 80 milliseconds in CSI-RS for
+  // tracking.
+  unsigned                      nof_slots_per_subframe = get_nof_slots_per_subframe(tdd_cfg.ref_scs);
+  const std::array<unsigned, 4> csi_opt_msec           = {10 * nof_slots_per_subframe,
+                                                          20 * nof_slots_per_subframe,
+                                                          40 * nof_slots_per_subframe,
+                                                          80 * nof_slots_per_subframe};
+
+  return std::find(csi_opt_msec.begin(), csi_opt_msec.end(), csi_resource_periodicity_to_uint(csi_rs_period)) !=
+         csi_opt_msec.end();
 }
 
 std::optional<csi_resource_periodicity>
@@ -175,9 +185,9 @@ static zp_csi_rs_resource make_default_zp_csi_rs_resource(const csi_builder_para
   // Freq Alloc -> Row4.
   res.res_mapping.nof_ports = 4;
   res.res_mapping.fd_alloc.resize(3);
-  res.res_mapping.fd_alloc.set(2, true);
+  res.res_mapping.fd_alloc.set(params.pci % res.res_mapping.fd_alloc.size(), true);
   res.res_mapping.cdm                     = csi_rs_cdm_type::fd_CDM2;
-  res.res_mapping.first_ofdm_symbol_in_td = params.csi_ofdm_symbol_index;
+  res.res_mapping.first_ofdm_symbol_in_td = params.zp_csi_ofdm_symbol_index;
   res.res_mapping.freq_density            = csi_rs_freq_density_type::one;
   res.res_mapping.freq_band_rbs           = get_csi_freq_occupation_rbs(params.nof_rbs, params.nof_rbs);
   res.period                              = params.csi_rs_period;
@@ -285,33 +295,45 @@ static nzp_csi_rs_resource make_channel_measurement_nzp_csi_rs_resource(const cs
 
   res.res_id                              = static_cast<nzp_csi_rs_res_id_t>(0);
   res.csi_res_offset                      = params.meas_csi_slot_offset;
-  res.res_mapping.first_ofdm_symbol_in_td = 4;
+  res.res_mapping.first_ofdm_symbol_in_td = params.cm_csi_ofdm_symbol_index;
   res.res_mapping.nof_ports               = params.nof_ports;
   res.res_mapping.freq_density            = csi_rs_freq_density_type::one;
 
+  // Select the amount of frequency-domain resources and the CDM configuration depending on the number of transmit
+  // ports.
   if (params.nof_ports == 1) {
-    // Freq Alloc -> Row2 (size 12) = 000000000001
+    // Code multiplexing is not necessary when only one port is used. This makes it possible to have twelve possible
+    // frequency domain allocations.
     res.res_mapping.fd_alloc.resize(12);
-    res.res_mapping.fd_alloc.set(11, true);
     res.res_mapping.cdm = csi_rs_cdm_type::no_CDM;
   } else if (params.nof_ports == 2) {
-    // Freq Alloc -> Row Other (size 6) = 000001
+    // Code multiplexing of two resource elements is used when two transmitted ports are used. This allows six possible
+    // frequency domain locations.
     res.res_mapping.fd_alloc.resize(6);
-    res.res_mapping.fd_alloc.set(5, true);
     res.res_mapping.cdm = csi_rs_cdm_type::fd_CDM2;
   } else if (params.nof_ports == 4) {
-    // Freq Alloc -> Row 4 (size 3) = 001
+    // Code multiplexing of four resource elements is used when four transmitted ports are used. This allows three
+    // possible frequency domain locations.
     res.res_mapping.fd_alloc.resize(3);
-    res.res_mapping.fd_alloc.set(2, true);
     res.res_mapping.cdm = csi_rs_cdm_type::fd_CDM2;
   } else {
+    // Another number of ports is not currently supported.
     report_error("Number of ports {} not supported", params.nof_ports);
   }
+
+  // [Implementation-defined] Select the frequency domain allocation in function of the PCI to avoid that NZP-CSI-RS
+  // from neighbor cells overlap.
+  res.res_mapping.fd_alloc.set(params.pci % res.res_mapping.fd_alloc.size());
 
   return res;
 }
 
-/// \brief Generate Tracking NZP-CSI-RS resource.
+/// \brief Generate Tracking Reference Signal (TRS) resource set.
+///
+/// The TRS resource set contains four NZP-CSI-RS resources. The resources are mapped on two consecutive slots.
+///
+/// The NZP-CSI-RS resources selected for TRS are constrained by TS38.214 Section 5.1.6.1.1 which specifies the number
+/// of ports, multiplexing, OFDM symbols to use within the slot, periodicity, and density.
 static void
 fill_tracking_nzp_csi_rs_resource(span<nzp_csi_rs_resource> tracking_csi_rs,
                                   const csi_builder_params& params,
@@ -325,14 +347,18 @@ fill_tracking_nzp_csi_rs_resource(span<nzp_csi_rs_resource> tracking_csi_rs,
   nzp_csi_rs_resource res = make_common_nzp_csi_rs_resource(params);
 
   res.res_mapping.nof_ports    = 1;
-  res.res_mapping.fd_alloc     = {true, false, false, false};
   res.res_mapping.cdm          = csi_rs_cdm_type::no_CDM;
   res.res_mapping.freq_density = csi_rs_freq_density_type::three;
+  res.res_mapping.fd_alloc.resize(4);
+
+  // [Implementation-defined] Select the frequency domain allocation in function of the PCI to avoid that NZP-CSI-RS
+  // from neighbor cells overlap.
+  res.res_mapping.fd_alloc.set(params.pci % res.res_mapping.fd_alloc.size());
 
   static constexpr unsigned rel_slot_offset[] = {0, 0, 1, 1};
   for (unsigned i = 0; i != NOF_TRACKING_RESOURCES; ++i) {
     res.res_id                              = static_cast<nzp_csi_rs_res_id_t>(first_csi_res_id + i);
-    res.res_mapping.first_ofdm_symbol_in_td = params.tracking_csi_ofdm_symbol_indexes[i];
+    res.res_mapping.first_ofdm_symbol_in_td = params.tracking_csi_ofdm_symbol_indices[i];
     res.csi_res_offset                      = params.tracking_csi_slot_offset + rel_slot_offset[i];
     tracking_csi_rs[i]                      = res;
   }
