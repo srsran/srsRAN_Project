@@ -277,11 +277,16 @@ bool mac_metrics_aggregator::pop_report(cell_metric_handler& cell)
     return false;
   }
 
-  const slot_point start_slot          = next_ev->sched.slot;
-  const slot_point start_report_window = start_slot - (start_slot.count() % cell.period_slots);
+  slot_point_extended start_slot{next_ev->sched.slot, next_report_start_slot.hyper_sfn()};
+  if (std::abs(start_slot - next_report_start_slot) >= next_ev->sched.slot.nof_slots_per_hyper_system_frame() / 2) {
+    if (start_slot < next_report_start_slot) {
+      start_slot += next_ev->sched.slot.nof_slots_per_hyper_system_frame();
+    } else {
+      start_slot -= next_ev->sched.slot.nof_slots_per_hyper_system_frame();
+    }
+  }
 
-  if (start_report_window >= next_report_start_slot.without_hyper_sfn() and
-      start_report_window < (next_report_start_slot + cell.period_slots).without_hyper_sfn()) {
+  if (start_slot >= next_report_start_slot and start_slot < (next_report_start_slot + cell.period_slots)) {
     // Report is within expected window.
     if (next_ev->mac.has_value()) {
       next_report.dl.cells.push_back(*next_ev->mac);
@@ -291,19 +296,24 @@ bool mac_metrics_aggregator::pop_report(cell_metric_handler& cell)
     return true;
   }
 
-  if (start_report_window >= (next_report_start_slot + cell.period_slots).without_hyper_sfn()) {
+  if (start_slot >= next_report_start_slot + cell.period_slots) {
     // Report is the one coming right after the expected one. Leave it in the queue to be dequeued later.
     return false;
   }
 
   // Report falls in invalid window. Discard it.
   cell.report_queue.pop();
-  if (start_report_window >= (next_report_start_slot - cell.period_slots).without_hyper_sfn()) {
-    logger.info("cell={}: Discarding old metric report for slot {}", fmt::underlying(cell.cell_index), start_slot);
+  if (start_slot >= next_report_start_slot - cell.period_slots) {
+    logger.info("cell={}: Discarding old metric report. Expected report for slot={} but got it for slot={}",
+                fmt::underlying(cell.cell_index),
+                next_report_start_slot.without_hyper_sfn(),
+                start_slot.without_hyper_sfn());
   } else {
-    logger.warning("cell={}: Discarding metric report falling in invalid report window",
+    logger.warning("cell={}: Discarding metric report falling in invalid report window. Expected report for slot={}, "
+                   "but got for slot={}",
                    fmt::underlying(cell.cell_index),
-                   start_slot);
+                   next_report_start_slot.without_hyper_sfn(),
+                   start_slot.without_hyper_sfn());
   }
   return true;
 }
@@ -318,10 +328,15 @@ void mac_metrics_aggregator::try_send_new_report()
   // Forward the full report.
   notifier.on_new_metrics_report(next_report);
 
-  // Update next report window start slot.
   const unsigned period_slots = next_report.dl.cells[0].start_slot.nof_slots_per_subframe() * period.count();
   const unsigned start_mod    = next_report.dl.cells[0].start_slot.to_uint() % period_slots;
-  next_report_start_slot      = (next_report.dl.cells[0].start_slot - start_mod) + period_slots;
+  slot_point     start_slot   = next_report.dl.cells[0].start_slot - start_mod;
+  slot_point     end_slot     = start_slot + period_slots;
+  logger.debug(
+      "Metric report of {} cells completed for slots=[{}, {})", next_report.dl.cells.size(), start_slot, end_slot);
+
+  // Update next report window start slot.
+  next_report_start_slot = end_slot;
 
   // Reset report.
   next_report.dl.cells.clear();
