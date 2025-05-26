@@ -125,27 +125,41 @@ static void fill_asn1_gnb_cu_configuration_update(asn1::f1ap::gnb_cu_cfg_upd_s& 
                                                   const f1ap_gnb_cu_configuration_update& cfg_update)
 {
   // Fill cells to be activated list.
-  for (const auto& cell : cfg_update.cells_to_be_activated_list) {
-    asn1::protocol_ie_single_container_s<asn1::f1ap::cells_to_be_activ_list_item_ies_o> asn1_cell_container;
-    cells_to_be_activ_list_item_s& asn1_cell = asn1_cell_container->cells_to_be_activ_list_item();
+  if (!cfg_update.cells_to_be_activated_list.empty()) {
+    asn1_cfg_update->cells_to_be_activ_list_present = true;
 
-    asn1_cell.nr_cgi = cgi_to_asn1(cell.cgi);
-    if (cell.pci.has_value()) {
-      asn1_cell.nr_pci_present = true;
-      asn1_cell.nr_pci         = cell.pci.value();
+    for (const auto& cell : cfg_update.cells_to_be_activated_list) {
+      asn1::protocol_ie_single_container_s<asn1::f1ap::cells_to_be_activ_list_item_ies_o> asn1_cell_container;
+      cells_to_be_activ_list_item_s& asn1_cell = asn1_cell_container->cells_to_be_activ_list_item();
+
+      asn1_cell.nr_cgi = cgi_to_asn1(cell.cgi);
+      if (cell.pci.has_value()) {
+        asn1_cell.nr_pci_present = true;
+        asn1_cell.nr_pci         = cell.pci.value();
+      }
+
+      asn1_cfg_update->cells_to_be_activ_list.push_back(asn1_cell_container);
     }
-
-    asn1_cfg_update->cells_to_be_activ_list.push_back(asn1_cell_container);
   }
 
   // Fill cells to be deactivated list.
-  for (const auto& cell : cfg_update.cells_to_be_deactivated_list) {
-    asn1::protocol_ie_single_container_s<asn1::f1ap::cells_to_be_deactiv_list_item_ies_o> asn1_cell_container;
-    cells_to_be_deactiv_list_item_s& asn1_cell = asn1_cell_container->cells_to_be_deactiv_list_item();
+  if (!cfg_update.cells_to_be_deactivated_list.empty()) {
+    asn1_cfg_update->cells_to_be_deactiv_list_present = true;
 
-    asn1_cell.nr_cgi = cgi_to_asn1(cell.cgi);
+    for (const auto& cell : cfg_update.cells_to_be_deactivated_list) {
+      asn1::protocol_ie_single_container_s<asn1::f1ap::cells_to_be_deactiv_list_item_ies_o> asn1_cell_container;
+      cells_to_be_deactiv_list_item_s& asn1_cell = asn1_cell_container->cells_to_be_deactiv_list_item();
 
-    asn1_cfg_update->cells_to_be_deactiv_list.push_back(asn1_cell_container);
+      asn1_cell.nr_cgi = cgi_to_asn1(cell.cgi);
+
+      asn1_cfg_update->cells_to_be_deactiv_list.push_back(asn1_cell_container);
+    }
+  }
+
+  // Fill GNB CU name.
+  if (!cfg_update.gnb_cu_name.empty()) {
+    asn1_cfg_update->gnb_cu_name_present = true;
+    asn1_cfg_update->gnb_cu_name.from_string(cfg_update.gnb_cu_name);
   }
 }
 
