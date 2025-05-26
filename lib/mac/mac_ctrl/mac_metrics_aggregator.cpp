@@ -251,8 +251,11 @@ void mac_metrics_aggregator::handle_pending_reports()
   while (nof_reports > 0) {
     unsigned pop_count = 0;
     for (auto& cell : cells) {
-      for (auto result = pop_report(*cell); result and pop_count != nof_reports; result = pop_report(*cell)) {
-        ++pop_count;
+      for (bool report_popped = pop_report(*cell); report_popped; report_popped = pop_report(*cell)) {
+        if (++pop_count == nof_reports) {
+          // All reports have been processed.
+          break;
+        }
       }
     }
     if (pop_count != nof_reports) {
