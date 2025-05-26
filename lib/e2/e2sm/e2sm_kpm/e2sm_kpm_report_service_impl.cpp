@@ -195,11 +195,17 @@ bool e2sm_kpm_report_service_style2::collect_measurements()
     meas_records_items.clear();
     meas_provider.get_meas_data(
         meas_info.meas_type, meas_info.label_info_list, {ue_id}, cell_global_id, meas_records_items);
+    if (meas_records_items.empty()) {
+      continue;
+    }
     // Fill measurements data.
     meas_data_item.meas_record.push_back(meas_records_items[0]);
   }
   ric_ind_message.meas_data.push_back(meas_data_item);
   if (not is_ind_msg_ready_) {
+    if (meas_records_items.empty()) {
+      return false;
+    }
     // Indication is ready when filled with at least one valid value.
     if (meas_records_items[0].type() != meas_record_item_c::types_opts::no_value) {
       is_ind_msg_ready_ = true;
@@ -517,6 +523,10 @@ bool e2sm_kpm_report_service_style5::collect_measurements()
           break;
         }
       }
+    }
+
+    if (not is_ind_msg_ready_) {
+      return false;
     }
 
     // Put each measurement record into a proper place.
