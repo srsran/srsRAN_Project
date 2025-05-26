@@ -146,8 +146,8 @@ public:
   metrics_handler&                get_metrics_handler() override { return *metrics_hdlr; }
 
   // cu_cp public interface.
-  cu_cp_f1c_handler&                     get_f1c_handler() override { return controller->get_f1c_handler(); }
-  cu_cp_e1_handler&                      get_e1_handler() override { return controller->get_e1_handler(); }
+  cu_cp_f1c_handler&                     get_f1c_handler() override { return controller.get_f1c_handler(); }
+  cu_cp_e1_handler&                      get_e1_handler() override { return controller.get_e1_handler(); }
   cu_cp_e1ap_event_handler&              get_cu_cp_e1ap_handler() override { return *this; }
   cu_cp_ng_handler&                      get_ng_handler() override { return *this; }
   cu_cp_ngap_handler&                    get_cu_cp_ngap_handler() override { return *this; }
@@ -234,7 +234,7 @@ private:
   mobility_manager mobility_mng;
 
   // Handler of the CU-CP connections to other remote nodes (e.g. AMF, CU-UPs, DUs).
-  std::unique_ptr<cu_cp_controller> controller;
+  cu_cp_controller controller;
 
   std::unique_ptr<metrics_handler> metrics_hdlr;
 

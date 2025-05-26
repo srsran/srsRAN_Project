@@ -67,6 +67,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   paging_handler(du_db),
   ngap_db(ngap_repository_config{cfg, get_cu_cp_ngap_handler(), paging_handler, srslog::fetch_basic_logger("CU-CP")}),
   mobility_mng(cfg.mobility.mobility_manager_config, mobility_manager_ev_notifier, ngap_db, du_db, ue_mng),
+  controller(cfg, common_task_sched, ngap_db, cu_up_db, du_db, *cfg.services.cu_cp_executor),
   metrics_hdlr(std::make_unique<metrics_handler_impl>(*cfg.services.cu_cp_executor,
                                                       *cfg.services.timers,
                                                       ue_mng,
@@ -87,9 +88,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   rrc_du_cu_cp_notifier.connect_cu_cp(get_cu_cp_measurement_config_handler());
   cell_meas_mobility_notifier.connect_mobility_manager(mobility_mng);
 
-  controller = std::make_unique<cu_cp_controller>(
-      cfg, common_task_sched, ngap_db, cu_up_db, du_db, *cfg.services.cu_cp_executor);
-  conn_notifier.connect_node_connection_handler(*controller);
+  conn_notifier.connect_node_connection_handler(controller);
 
   // Start statistics report timer.
   statistics_report_timer = cfg.services.timers->create_unique_timer(*cfg.services.cu_cp_executor);
@@ -110,7 +109,7 @@ bool cu_cp_impl::start()
 
   if (not cfg.services.cu_cp_executor->execute([this, &p]() {
         // Start AMF connection procedure.
-        controller->amf_connection_handler().connect_to_amf(&p);
+        controller.amf_connection_handler().connect_to_amf(&p);
       })) {
     report_fatal_error("Failed to initiate CU-CP setup");
   }
@@ -135,7 +134,7 @@ void cu_cp_impl::stop()
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 
-  controller->stop();
+  controller.stop();
 
   logger.info("CU-CP stopped successfully.");
 }
@@ -152,7 +151,7 @@ bool cu_cp_impl::amfs_are_connected()
   }
 
   for (const auto& [amf_index, ngap] : ngap_db.get_ngaps()) {
-    if (not controller->amf_connection_handler().is_amf_connected(amf_index)) {
+    if (not controller.amf_connection_handler().is_amf_connected(amf_index)) {
       return false;
     }
   }
@@ -679,7 +678,7 @@ void cu_cp_impl::handle_n2_disconnection(amf_index_t amf_index)
   logger.warning("Handling N2 disconnection. Lost PLMNs: {}", fmt::format("{}", fmt::join(plmns, " ")));
 
   // Notify AMF connection manager about the disconnection.
-  controller->amf_connection_handler().handle_amf_connection_loss(amf_index);
+  controller.amf_connection_handler().handle_amf_connection_loss(amf_index);
 
   // Stop accepting new UEs for the given PLMNs.
   ue_mng.add_blocked_plmns(plmns);
@@ -705,7 +704,7 @@ void cu_cp_impl::handle_n2_disconnection(amf_index_t amf_index)
   }
 
   // Try to reconnect to AMF.
-  controller->amf_connection_handler().reconnect_to_amf(amf_index, &ue_mng, cfg.ngap.amf_reconnection_retry_time);
+  controller.amf_connection_handler().reconnect_to_amf(amf_index, &ue_mng, cfg.ngap.amf_reconnection_retry_time);
 }
 
 std::optional<rrc_meas_cfg>
@@ -848,7 +847,7 @@ void cu_cp_impl::handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& r
   // Connect cu-cp to rrc ue adapters.
   ue_mng.get_rrc_ue_cu_cp_adapter(ue_index).connect_cu_cp(get_cu_cp_rrc_ue_interface(),
                                                           get_cu_cp_ue_removal_handler(),
-                                                          *controller,
+                                                          controller,
                                                           ue->get_up_resource_manager(),
                                                           get_cu_cp_measurement_handler());
 }
