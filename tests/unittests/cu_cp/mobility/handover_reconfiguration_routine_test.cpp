@@ -105,7 +105,8 @@ public:
     });
   }
 
-  rrc_ue_release_context get_rrc_ue_release_context(bool requires_rrc_msg) override
+  rrc_ue_release_context get_rrc_ue_release_context(bool                                requires_rrc_msg,
+                                                    std::optional<std::chrono::seconds> release_wait_time) override
   {
     logger.info("Received a new request to get RRC UE release context");
     rrc_ue_release_context release_context;
