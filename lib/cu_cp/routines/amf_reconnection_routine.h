@@ -22,12 +22,14 @@ async_task<bool>
 start_amf_reconnection(ngap_interface& ngap, timer_factory timers, std::chrono::milliseconds reconnection_retry_time);
 
 /// \brief Handles the reconnection between the CU-CP and AMF.
-class amf_connection_loss_routine
+class amf_reconnection_routine
 {
 public:
-  amf_connection_loss_routine(ngap_interface&           ngap_,
-                              timer_factory             timers,
-                              std::chrono::milliseconds reconnection_retry_time_);
+  amf_reconnection_routine(ngap_interface&           ngap_,
+                           timer_factory             timers,
+                           std::chrono::milliseconds reconnection_retry_time_);
+
+  static std::string name() { return "AMF Reconnection Routine"; }
 
   void operator()(coro_context<async_task<bool>>& ctx);
 

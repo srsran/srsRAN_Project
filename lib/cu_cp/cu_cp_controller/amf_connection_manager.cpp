@@ -10,9 +10,9 @@
 
 #include "amf_connection_manager.h"
 #include "../cu_cp_impl_interface.h"
-#include "../routines/amf_connection_loss_routine.h"
 #include "../routines/amf_connection_removal_routine.h"
 #include "../routines/amf_connection_setup_routine.h"
+#include "../routines/amf_reconnection_routine.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ran/plmn_identity.h"

@@ -8,7 +8,7 @@
  *
  */
 
-#include "amf_connection_loss_routine.h"
+#include "amf_reconnection_routine.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap_setup.h"
 #include "srsran/support/async/async_timer.h"
@@ -21,12 +21,12 @@ async_task<bool> srsran::srs_cu_cp::start_amf_reconnection(ngap_interface&      
                                                            timer_factory             timers,
                                                            std::chrono::milliseconds reconnection_retry_time)
 {
-  return launch_async<amf_connection_loss_routine>(ngap, timers, reconnection_retry_time);
+  return launch_async<amf_reconnection_routine>(ngap, timers, reconnection_retry_time);
 }
 
-amf_connection_loss_routine::amf_connection_loss_routine(ngap_interface&           ngap_,
-                                                         timer_factory             timers,
-                                                         std::chrono::milliseconds reconnection_retry_time_) :
+amf_reconnection_routine::amf_reconnection_routine(ngap_interface&           ngap_,
+                                                   timer_factory             timers,
+                                                   std::chrono::milliseconds reconnection_retry_time_) :
   ngap(ngap_),
   logger(srslog::fetch_basic_logger("CU-CP")),
   amf_tnl_connection_retry_timer(timers.create_timer()),
@@ -34,10 +34,14 @@ amf_connection_loss_routine::amf_connection_loss_routine(ngap_interface&        
 {
 }
 
-void amf_connection_loss_routine::operator()(coro_context<async_task<bool>>& ctx)
+void amf_reconnection_routine::operator()(coro_context<async_task<bool>>& ctx)
 {
   CORO_BEGIN(ctx);
 
+  logger.info("\"{}\" started...", name());
+
+  logger.info("TNL connection establishment to AMF failed. Retrying in {}...", reconnection_retry_time);
+  CORO_AWAIT(async_wait_for(amf_tnl_connection_retry_timer, reconnection_retry_time));
   while (not ngap.handle_amf_tnl_connection_request()) {
     logger.info("TNL connection establishment to AMF failed. Retrying in {}...", reconnection_retry_time);
     CORO_AWAIT(async_wait_for(amf_tnl_connection_retry_timer, reconnection_retry_time));
@@ -54,9 +58,13 @@ void amf_connection_loss_routine::operator()(coro_context<async_task<bool>>& ctx
       plmn_list += plmn.to_string() + " ";
     }
 
-    logger.info("Reconnected to AMF. Supported PLMNs: {}", plmn_list);
+    logger.debug("Reconnected to AMF. Supported PLMNs: {}", plmn_list);
+
+    logger.info("\"{}\" finished successfully", name());
+
   } else {
-    logger.error("Failed to reconnect to AMF");
+    logger.info("\"{}\" failed", name());
+
     CORO_EARLY_RETURN(false);
   }
 
