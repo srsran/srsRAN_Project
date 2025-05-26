@@ -9,7 +9,7 @@
  */
 
 #include "amf_connection_loss_routine.h"
-#include "srsran/ran/cause/ngap_cause.h"
+#include "cell_deactivation_routine.h"
 #include "srsran/support/async/coroutine.h"
 
 using namespace srsran;
@@ -18,6 +18,7 @@ using namespace srs_cu_cp;
 amf_connection_loss_routine::amf_connection_loss_routine(const amf_index_t                 amf_index_,
                                                          const cu_cp_configuration&        cu_cp_cfg_,
                                                          std::vector<plmn_identity>&       plmns_,
+                                                         du_processor_repository&          du_db_,
                                                          cu_cp_ue_context_release_handler& ue_release_handler_,
                                                          ue_manager&                       ue_mng_,
                                                          cu_cp_controller&                 controller_,
@@ -25,6 +26,7 @@ amf_connection_loss_routine::amf_connection_loss_routine(const amf_index_t      
   amf_index(amf_index_),
   cu_cp_cfg(cu_cp_cfg_),
   plmns(plmns_),
+  du_db(du_db_),
   ue_release_handler(ue_release_handler_),
   ue_mng(ue_mng_),
   controller(controller_),
@@ -44,7 +46,8 @@ void amf_connection_loss_routine::operator()(coro_context<async_task<void>>& ctx
   // Stop accepting new UEs for the given PLMNs.
   ue_mng.add_blocked_plmns(plmns);
 
-  release_ues();
+  // Deactivate the cells served by the disconnected AMF.
+  CORO_AWAIT(launch_async<cell_deactivation_routine>(cu_cp_cfg, plmns, du_db, ue_release_handler, ue_mng, logger));
 
   // Try to reconnect to AMF.
   controller.amf_connection_handler().reconnect_to_amf(amf_index, &ue_mng, cu_cp_cfg.ngap.amf_reconnection_retry_time);
@@ -52,28 +55,4 @@ void amf_connection_loss_routine::operator()(coro_context<async_task<void>>& ctx
   logger.info("\"{}\" finished successfully", name());
 
   CORO_RETURN();
-}
-
-void amf_connection_loss_routine::release_ues()
-{
-  // Release all UEs with the PLMNs served by the disconnected AMF.
-  for (const auto& plmn : plmns) {
-    std::vector<cu_cp_ue*> ues = ue_mng.find_ues(plmn);
-
-    for (const auto& ue : ues) {
-      if (ue != nullptr) {
-        logger.info("ue={}: Releasing UE (PLMN {}) due to N2 disconnection", ue->get_ue_index(), plmn);
-        ue->get_task_sched().schedule_async_task(
-            launch_async([this,
-                          command = cu_cp_ue_context_release_command{ue->get_ue_index(),
-                                                                     ngap_cause_transport_t::transport_res_unavailable,
-                                                                     true}](coro_context<async_task<void>>& ctx) {
-              CORO_BEGIN(ctx);
-              // The outcome of the procedure is ignored, as we don't send anything to the (lost) AMF.
-              CORO_AWAIT(ue_release_handler.handle_ue_context_release_command(command));
-              CORO_RETURN();
-            }));
-      }
-    }
-  }
 }

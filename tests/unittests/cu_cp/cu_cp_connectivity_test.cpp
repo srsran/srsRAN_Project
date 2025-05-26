@@ -130,6 +130,17 @@ TEST_F(cu_cp_connectivity_test, when_amf_connection_is_lost_then_connected_ues_a
     ASSERT_TRUE(report.ues.empty());
   }
 
+  // TEST: Verify that Cells are deactivated in DU.
+  {
+    // Verify F1AP GNB CU Configuration Update is sent to DU.
+    f1ap_message f1ap_pdu;
+    ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+    ASSERT_TRUE(test_helpers::is_valid_gnb_cu_configuration_update(f1ap_pdu));
+
+    // DU sends F1AP UE Context Release Complete.
+    get_du(du_idx).push_ul_pdu(generate_gnb_cu_configuration_update_acknowledgement({}));
+  }
+
   // TEST: Verify that new UE connection is rejected.
   {
     // Send Initial UL RRC Message.

@@ -679,7 +679,7 @@ void cu_cp_impl::handle_n2_disconnection(amf_index_t amf_index)
   logger.warning("Handling N2 disconnection. Lost PLMNs: {}", fmt::format("{}", fmt::join(plmns, " ")));
 
   common_task_sched.schedule_async_task(
-      launch_async<amf_connection_loss_routine>(amf_index, cfg, plmns, *this, ue_mng, controller, logger));
+      launch_async<amf_connection_loss_routine>(amf_index, cfg, plmns, du_db, *this, ue_mng, controller, logger));
 }
 
 std::optional<rrc_meas_cfg>
