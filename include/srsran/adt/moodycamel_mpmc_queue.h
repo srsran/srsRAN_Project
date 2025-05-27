@@ -37,7 +37,7 @@ public:
   /// \param[in] nof_prereserved_producers Number of producers to pre-reserve.
   /// \remark Given the moodycamel queue particularities, there is no guarantee that the provided capacity will
   /// always be available in the case of multiple producers.
-  explicit concurrent_queue(size_t qsize, size_t nof_prereserved_producers = 1) :
+  explicit concurrent_queue(size_t qsize, size_t nof_prereserved_producers = 2) :
     queue(qsize, 0, nof_prereserved_producers)
   {
   }
