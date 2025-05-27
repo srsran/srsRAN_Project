@@ -264,7 +264,7 @@ int main(int argc, char** argv)
                                 : os_sched_affinity_bitmask::available_cpus();
   // Check the modified configuration.
   if (!validate_appconfig(gnb_cfg) || !o_cu_cp_app_unit->on_configuration_validation(available_cpu_mask) ||
-      !o_cu_up_app_unit->on_configuration_validation(available_cpu_mask) ||
+      !o_cu_up_app_unit->on_configuration_validation(not gnb_cfg.log_cfg.tracing_filename.empty()) ||
       !o_du_app_unit->on_configuration_validation(available_cpu_mask) ||
       !validate_plmn_and_tacs(o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config,
                               o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg)) {

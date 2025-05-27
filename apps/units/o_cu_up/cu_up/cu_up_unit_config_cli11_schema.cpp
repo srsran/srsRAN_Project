@@ -152,9 +152,6 @@ static void configure_cli11_log_args(CLI::App& app, cu_up_unit_logger_config& lo
       ->check(CLI::Range(0, 1024));
   add_option(app, "--e1ap_json_enabled", log_params.e1ap_json_enabled, "Enable JSON logging of E1AP PDUs")
       ->always_capture_default();
-
-  add_option(app, "--tracing_filename", log_params.tracing_filename, "Set to a valid file path to enable tracing")
-      ->always_capture_default();
 }
 
 static void configure_cli11_pcap_args(CLI::App& app, cu_up_unit_pcap_config& pcap_params)

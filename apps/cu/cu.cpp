@@ -228,7 +228,7 @@ int main(int argc, char** argv)
   // Check the modified configuration.
   if (!validate_cu_appconfig(cu_cfg) ||
       !o_cu_cp_app_unit->on_configuration_validation(os_sched_affinity_bitmask::available_cpus()) ||
-      !o_cu_up_app_unit->on_configuration_validation(os_sched_affinity_bitmask::available_cpus())) {
+      !o_cu_up_app_unit->on_configuration_validation(not cu_cfg.log_cfg.tracing_filename.empty())) {
     report_error("Invalid configuration detected.\n");
   }
 

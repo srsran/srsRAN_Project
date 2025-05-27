@@ -39,9 +39,6 @@ public:
   /// Auto derive configuration parameters.
   virtual void on_configuration_parameters_autoderivation(CLI::App& app) = 0;
 
-  /// Validates the configuration of this application unit. Returns true on success, otherwise false.
-  virtual bool on_configuration_validation(const os_sched_affinity_bitmask& available_cpus) const = 0;
-
   /// Registers the loggers of this application unit.
   virtual void on_loggers_registration() = 0;
 

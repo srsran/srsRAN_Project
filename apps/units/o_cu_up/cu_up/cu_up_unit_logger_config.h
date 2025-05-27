@@ -26,8 +26,6 @@ struct cu_up_unit_logger_config {
   int hex_max_size = 0;
   /// Enable JSON generation for the E1AP Tx and Rx PDUs.
   bool e1ap_json_enabled = false;
-  /// Enable tracing.
-  std::string tracing_filename;
 };
 
 } // namespace srsran
