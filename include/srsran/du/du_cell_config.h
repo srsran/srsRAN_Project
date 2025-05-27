@@ -41,6 +41,8 @@ struct drx_params {
   std::chrono::milliseconds on_duration;
   std::chrono::milliseconds long_cycle;
   std::chrono::milliseconds inactivity_timer;
+  unsigned                  retx_timer_dl;
+  unsigned                  retx_timer_ul;
 };
 
 /// Parameters that are used to initialize or build the \c MAC-CellGroupConfig, TS 38.331.

@@ -607,6 +607,19 @@ static YAML::Node build_du_high_srs_section(const du_high_unit_srs_config& confi
   return node;
 }
 
+static YAML::Node build_du_high_drx_section(const du_high_unit_drx_config& config)
+{
+  YAML::Node node;
+
+  node["on_duration_timer"] = config.on_duration_timer;
+  node["inactivity_timer"]  = config.inactivity_timer;
+  node["retx_timer_dl"]     = config.retx_timer_dl;
+  node["retx_timer_ul"]     = config.retx_timer_ul;
+  node["long_cycle"]        = config.long_cycle;
+
+  return node;
+}
+
 static YAML::Node build_cell_entry(const du_high_unit_base_cell_config& config)
 {
   YAML::Node node;
@@ -643,6 +656,7 @@ static YAML::Node build_cell_entry(const du_high_unit_base_cell_config& config)
   node["paging"] = build_du_high_paging_section(config.paging_cfg);
   node["csi"]    = build_du_high_csi_section(config.csi_cfg);
   node["srs"]    = build_du_high_srs_section(config.srs_cfg);
+  node["drx"]    = build_du_high_drx_section(config.drx_cfg);
   fill_du_high_sched_expert_section(node, config.sched_expert_cfg);
 
   return node;

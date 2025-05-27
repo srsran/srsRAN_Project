@@ -868,6 +868,8 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
       drx.on_duration         = std::chrono::milliseconds{base_cell.drx_cfg.on_duration_timer};
       drx.long_cycle          = std::chrono::milliseconds{base_cell.drx_cfg.long_cycle};
       drx.inactivity_timer    = std::chrono::milliseconds{base_cell.drx_cfg.inactivity_timer};
+      drx.retx_timer_dl       = base_cell.drx_cfg.retx_timer_dl;
+      drx.retx_timer_ul       = base_cell.drx_cfg.retx_timer_ul;
     }
 
     // Slicing configuration.

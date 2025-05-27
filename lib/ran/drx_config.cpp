@@ -9,11 +9,11 @@
  */
 
 #include "srsran/ran/drx_config.h"
+#include "srsran/adt/to_array.h"
 
 using namespace srsran;
-using namespace drx_helper;
 
-span<const std::chrono::milliseconds> srsran::drx_helper::valid_long_cycle_values()
+span<const std::chrono::milliseconds> drx_helper::valid_long_cycle_values()
 {
   using msec = std::chrono::milliseconds;
   static constexpr std::array<msec, 20> values{msec{10},   msec{20},   msec{32},   msec{40},   msec{60},
@@ -23,7 +23,7 @@ span<const std::chrono::milliseconds> srsran::drx_helper::valid_long_cycle_value
   return values;
 }
 
-span<const std::chrono::milliseconds> srsran::drx_helper::valid_on_duration_timer_values()
+span<const std::chrono::milliseconds> drx_helper::valid_on_duration_timer_values()
 {
   using msec = std::chrono::milliseconds;
   static constexpr std::array<msec, 24> values{msec{1},   msec{2},   msec{3},   msec{4},    msec{5},    msec{6},
@@ -33,12 +33,18 @@ span<const std::chrono::milliseconds> srsran::drx_helper::valid_on_duration_time
   return values;
 }
 
-span<const std::chrono::milliseconds> srsran::drx_helper::valid_inactivity_timer_values()
+span<const std::chrono::milliseconds> drx_helper::valid_inactivity_timer_values()
 {
   using msec = std::chrono::milliseconds;
   static constexpr std::array<msec, 24> values{msec{0},   msec{1},   msec{2},    msec{3},    msec{4},   msec{5},
                                                msec{6},   msec{8},   msec{10},   msec{20},   msec{30},  msec{40},
                                                msec{50},  msec{60},  msec{80},   msec{100},  msec{200}, msec{300},
                                                msec{500}, msec{750}, msec{1280}, msec{1920}, msec{2560}};
+  return values;
+}
+
+span<const unsigned> drx_helper::valid_retx_timer_values()
+{
+  static constexpr auto values = to_array<unsigned>({0, 1, 2, 4, 6, 8, 16, 24, 33, 40, 64, 80, 96, 112, 128, 160, 320});
   return values;
 }

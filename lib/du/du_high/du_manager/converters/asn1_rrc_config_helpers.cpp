@@ -893,9 +893,8 @@ static asn1::rrc_nr::tdd_ul_dl_pattern_s make_asn1_rrc_tdd_ul_dl_pattern(subcarr
       out.dl_ul_tx_periodicity.value         = asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::ms0p5;
       out.ext                                = true;
       out.dl_ul_tx_periodicity_v1530_present = true;
-      out.dl_ul_tx_periodicity_v1530.value =
-          (asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_v1530_opts::options)(
-              std::distance(ext_periods.begin(), it));
+      out.dl_ul_tx_periodicity_v1530.value = static_cast<tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_v1530_opts::options>(
+          std::distance(ext_periods.begin(), it));
     } else {
       report_fatal_error("Unsupported TDD UL/DL periodicity {}ms", periodicity_ms);
     }
@@ -2705,8 +2704,12 @@ static asn1::rrc_nr::drx_cfg_s make_asn1_drx_config(const drx_config& cfg)
     report_fatal_error("Invalid Inactivity timer value {}", cfg.inactivity_timer.count());
   }
 
-  out.drx_retx_timer_dl.value = drx_cfg_s::drx_retx_timer_dl_opts::sl0;
-  out.drx_retx_timer_ul.value = drx_cfg_s::drx_retx_timer_ul_opts::sl0;
+  if (not asn1::number_to_enum(out.drx_retx_timer_dl, cfg.retx_timer_dl)) {
+    report_fatal_error("Invalid Retransmission DL timer value {}", cfg.retx_timer_dl);
+  }
+  if (not asn1::number_to_enum(out.drx_retx_timer_ul, cfg.retx_timer_ul)) {
+    report_fatal_error("Invalid Retransmission UL timer value {}", cfg.retx_timer_ul);
+  }
 
   auto&    out_cycle = out.drx_long_cycle_start_offset;
   unsigned offset    = cfg.long_start_offset.count();

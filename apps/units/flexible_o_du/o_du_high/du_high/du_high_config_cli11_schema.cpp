@@ -693,6 +693,18 @@ static void configure_cli11_drx_args(CLI::App& app, du_high_unit_drx_config& drx
       ->capture_default_str()
       ->check(CLI::IsMember(views::transform(drx_helper::valid_inactivity_timer_values(), to_uint)));
   add_option(app,
+             "--retx_timer_dl",
+             drx_params.retx_timer_dl,
+             "Maximum duration in slots until a DL ReTX is received by the UE, when DRX is configured.")
+      ->capture_default_str()
+      ->check(CLI::IsMember(drx_helper::valid_retx_timer_values()));
+  add_option(app,
+             "--retx_timer_ul",
+             drx_params.retx_timer_ul,
+             "Maximum duration in slots until a grant for UL ReTX is received by the UE, when DRX is configured.")
+      ->capture_default_str()
+      ->check(CLI::IsMember(drx_helper::valid_retx_timer_values()));
+  add_option(app,
              "--long_cycle",
              drx_params.long_cycle,
              "Duration in milliseconds between UE DRX long cycles. The value 0 is used to disable DRX")
