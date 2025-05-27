@@ -719,9 +719,9 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
                                   result.dl.csi_rs.empty() and result.ul.prachs.empty();
 
   const bool non_broadcast_is_empty =
-      std::any_of(result.dl.dl_pdcchs.begin(),
-                  result.dl.dl_pdcchs.end(),
-                  [](const pdcch_dl_information& pdcch) { return pdcch.ctx.rnti != rnti_t::SI_RNTI; }) and
+      std::none_of(result.dl.dl_pdcchs.begin(),
+                   result.dl.dl_pdcchs.end(),
+                   [](const pdcch_dl_information& pdcch) { return pdcch.ctx.rnti != rnti_t::SI_RNTI; }) and
       result.dl.ul_pdcchs.empty() and result.dl.paging_grants.empty() and result.dl.rar_grants.empty() and
       result.dl.ue_grants.empty() and result.ul.puschs.empty() and result.ul.pucchs.empty();
 
