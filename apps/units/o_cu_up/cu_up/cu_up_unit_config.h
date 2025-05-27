@@ -87,6 +87,7 @@ struct cu_up_unit_execution_config {
   uint32_t dl_ue_executor_queue_size   = 8192;
   uint32_t ul_ue_executor_queue_size   = 8192;
   uint32_t ctrl_ue_executor_queue_size = 8192;
+  bool     executor_tracing_enable     = false;
 };
 
 /// CU-UP application unit configuration.

@@ -170,6 +170,7 @@ struct base_cu_up_executor_pool_config {
   span<task_executor*> ctrl_executors;
   task_executor&       crypto_exec;
   timer_manager&       timers;
+  bool                 tracing_enabled;
 };
 
 class round_robin_cu_up_exec_pool
@@ -192,8 +193,11 @@ public:
     }
 
     for (unsigned i = 0; i != config.ctrl_executors.size(); ++i) {
-      execs.emplace_back(
-          *config.ctrl_executors[i], *config.ul_executors[i], *config.dl_executors[i], config.crypto_exec);
+      execs.emplace_back(*config.ctrl_executors[i],
+                         *config.ul_executors[i],
+                         *config.dl_executors[i],
+                         config.crypto_exec,
+                         config.tracing_enabled);
     }
   }
 
@@ -217,10 +221,11 @@ private:
     ue_executor_context(task_executor& ctrl_exec_,
                         task_executor& ul_exec_,
                         task_executor& dl_exec_,
-                        task_executor& crypto_exec_) :
-      ctrl_exec(decorator.decorate(ctrl_exec_, true, std::nullopt, "cu_up_ue_ctrl_exec")),
-      ul_exec(decorator.decorate(ul_exec_, true, std::nullopt, "cu_up_ue_ul_exec")),
-      dl_exec(decorator.decorate(dl_exec_, true, std::nullopt, "cu_up_ue_dl_exec")),
+                        task_executor& crypto_exec_,
+                        bool           tracing_enabled) :
+      ctrl_exec(decorator.decorate(ctrl_exec_, tracing_enabled, std::nullopt, "cu_up_ue_ctrl_exec")),
+      ul_exec(decorator.decorate(ul_exec_, tracing_enabled, std::nullopt, "cu_up_ue_ul_exec")),
+      dl_exec(decorator.decorate(dl_exec_, tracing_enabled, std::nullopt, "cu_up_ue_dl_exec")),
       crypto_exec(crypto_exec_)
     {
     }
@@ -256,7 +261,6 @@ public:
                      {{concurrent_queue_policy::lockfree_mpmc, config.default_task_queue_size},
                       {concurrent_queue_policy::lockfree_mpmc, config.default_task_queue_size}}}),
     ctrl_exec(decorator.decorate(cu_up_strand.get_executors()[0], true, std::nullopt, "cu_up_strand_ctrl_exec")),
-    ues_exec(decorator.decorate(cu_up_strand.get_executors()[1], true, std::nullopt, "cu_up_strand_ues_exec")),
     n3_exec(decorator.decorate(config.low_prio_executor, true, std::nullopt, "n3_exec")),
     cu_up_exec_pool(create_strands(config))
   {
@@ -310,8 +314,13 @@ private:
       ue_dl_execs[i]   = &execs[2];
     }
 
-    return base_cu_up_executor_pool_config{
-        ctrl_exec, ue_dl_execs, ue_ul_execs, ue_ctrl_execs, config.medium_prio_executor, *config.timers};
+    return base_cu_up_executor_pool_config{ctrl_exec,
+                                           ue_dl_execs,
+                                           ue_ul_execs,
+                                           ue_ctrl_execs,
+                                           config.medium_prio_executor,
+                                           *config.timers,
+                                           config.tracing_enabled};
   }
   // Tracing helpers.
   executor_decorator decorator = {};
@@ -319,7 +328,6 @@ private:
   // Base strand that sequentializes accesses to the worker pool executor.
   cu_up_strand_type cu_up_strand;
   task_executor&    ctrl_exec; // Executor associated with CU-UP control tasks of the CU-UP strand.
-  task_executor&    ues_exec;  // Executor associated with CU-UP UE tasks of the CU-UP strand.
 
   // IO executor with two modes
   std::variant<inline_task_executor, io_dedicated_strand_type> io_ul_exec;

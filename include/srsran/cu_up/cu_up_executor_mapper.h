@@ -93,6 +93,8 @@ struct strand_based_executor_config {
   bool dedicated_io_strand;
   /// \brief Timers used by the application.
   timer_manager* timers;
+  /// \brief Enable CU-UP executor tracing.
+  bool tracing_enabled;
 };
 
 /// \brief Creates an executor mapper for the CU-UP that is based on strands of a worker pool.

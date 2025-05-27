@@ -255,7 +255,8 @@ void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_c
                                                                                     *exec_map.at("medium_prio_exec"),
                                                                                     *exec_map.at("low_prio_exec"),
                                                                                     config.dedicated_io_ul_strand,
-                                                                                    &timers});
+                                                                                    &timers,
+                                                                                    config.executor_tracing_enable});
 }
 
 void worker_manager::create_du_executors(const worker_manager_config::du_high_config&        du_hi,

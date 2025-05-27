@@ -90,6 +90,7 @@ void srsran::fill_cu_up_worker_manager_config(worker_manager_config& config, con
   config.cu_up_cfg.value().dl_ue_executor_queue_size   = unit_cfg.exec_cfg.dl_ue_executor_queue_size;
   config.cu_up_cfg.value().ul_ue_executor_queue_size   = unit_cfg.exec_cfg.ul_ue_executor_queue_size;
   config.cu_up_cfg.value().ctrl_ue_executor_queue_size = unit_cfg.exec_cfg.ctrl_ue_executor_queue_size;
+  config.cu_up_cfg.value().executor_tracing_enable     = unit_cfg.exec_cfg.executor_tracing_enable;
 
   auto& pcap_cfg = config.pcap_cfg;
   if (unit_cfg.pcap_cfg.e1ap.enabled) {

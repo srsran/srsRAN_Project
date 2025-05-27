@@ -86,6 +86,8 @@ struct worker_manager_config {
     uint32_t ctrl_ue_executor_queue_size = 2048;
     /// Wether to offload socket TX to a dedicated strand.
     bool dedicated_io_ul_strand = true;
+    /// Whether to enable task tracing.
+    bool executor_tracing_enable = false;
   };
 
   /// PCAP worker configuration.

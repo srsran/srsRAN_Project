@@ -26,9 +26,22 @@ static bool validate_qos_appconfig(span<const cu_up_unit_qos_config> config)
   return true;
 }
 
+static bool validate_cu_up_expert_execution_appconfig(const cu_up_unit_execution_config& exec_cfg,
+                                                      const std::string&                 tracing_filename)
+{
+  if (exec_cfg.executor_tracing_enable && tracing_filename == "") {
+    fmt::println("Tracing requested for CU-UP executors, but tracing is disabled\n");
+    return false;
+  }
+  return true;
+}
+
 bool srsran::validate_cu_up_unit_config(const cu_up_unit_config& config)
 {
   if (!validate_qos_appconfig(config.qos_cfg)) {
+    return false;
+  }
+  if (!validate_cu_up_expert_execution_appconfig(config.exec_cfg, config.loggers.tracing_filename)) {
     return false;
   }
 
