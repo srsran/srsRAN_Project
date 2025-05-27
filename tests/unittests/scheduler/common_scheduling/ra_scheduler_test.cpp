@@ -16,6 +16,7 @@
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
+#include "srsran/adt/noop_functor.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
@@ -172,10 +173,12 @@ protected:
 
   slot_point next_slot_rx() const { return next_slot - tx_rx_delay; }
 
-  void run_slot_until_next_rach_opportunity()
+  template <typename Func = noop_operation>
+  void run_slot_until_next_rach_opportunity(const Func& func = {})
   {
     while (not cell_cfg.is_fully_ul_enabled(this->next_slot_rx() - 1)) {
       run_slot();
+      func();
     }
   }
 
@@ -705,5 +708,84 @@ INSTANTIATE_TEST_SUITE_P(ra_scheduler,
                          ra_scheduler_tdd_test,
                          ::testing::Values(test_params{.scs = subcarrier_spacing::kHz15, .k0 = 0, .k2s = {2, 4}},
                                            test_params{.scs = subcarrier_spacing::kHz30, .k0 = 0, .k2s = {2, 4}}));
+
+class failed_rar_scheduler_test : public base_ra_scheduler_test, public ::testing::Test
+{
+protected:
+  failed_rar_scheduler_test() :
+    base_ra_scheduler_test(duplex_mode::TDD, test_params{.scs = subcarrier_spacing::kHz30, .k0 = 0, .k2s = {2, 4}})
+  {
+  }
+};
+
+TEST_F(failed_rar_scheduler_test, when_rar_grants_not_scheduled_within_window_then_future_rars_can_still_be_scheduled)
+{
+  unsigned grants_to_fail = MAX_NOF_DU_UES;
+  for (unsigned i = 0; i * MAX_PREAMBLES_PER_PRACH_OCCASION < grants_to_fail; ++i) {
+    // Keep pushing RACH indications which will lead to failed to be scheduled RARs.
+    run_slot_until_next_rach_opportunity();
+    rach_indication_message rach_ind = create_rach_indication(MAX_PREAMBLES_PER_PRACH_OCCASION);
+    handle_rach_indication(rach_ind);
+    slot_interval rar_win = get_rar_window(rach_ind.slot_rx);
+
+    // Forbid PDCCH alloc within the RAR window to force failure.
+    this->pdcch_sch.fail_pdcch_alloc_cond = [](slot_point pdcch_slot) { return true; };
+    while (this->res_grid[1].slot < rar_win.stop()) {
+      run_slot();
+
+      ASSERT_TRUE(res_grid[0].result.ul.puschs.empty());
+      ASSERT_TRUE(res_grid[0].result.dl.rar_grants.empty());
+      ASSERT_TRUE(res_grid[0].result.dl.dl_pdcchs.empty());
+    }
+  }
+
+  // Now, we should be able to schedule RARs again.
+  this->pdcch_sch.fail_pdcch_alloc_cond = [](slot_point) { return false; };
+  auto ack_msg3s                        = [this]() {
+    if (not this->res_grid[0].result.ul.puschs.empty()) {
+      // Forward CRC=OK for Msg3s.
+      ul_crc_indication crc_ind = create_crc_indication(res_grid[0].result.ul.puschs, true);
+      this->ra_sch.handle_crc_indication(crc_ind);
+    }
+  };
+  unsigned grant_count = 0;
+  while (grant_count < MAX_NOF_DU_UES) {
+    run_slot_until_next_rach_opportunity(ack_msg3s);
+    rach_indication_message rach_ind = create_rach_indication(test_rgen::uniform_int<unsigned>(1, 10));
+    handle_rach_indication(rach_ind);
+
+    for (unsigned nof_sched_grants = 0; nof_sched_grants < rach_ind.occasions[0].preambles.size();) {
+      run_slot();
+      ack_msg3s();
+
+      if (not is_slot_valid_for_rar_pdcch()) {
+        ASSERT_TRUE(scheduled_dl_pdcchs().empty())
+            << fmt::format("RAR PDCCH allocated in invalid slot {}", result_slot_tx());
+        continue;
+      }
+      if (not is_in_rar_window(rach_ind.slot_rx)) {
+        ASSERT_TRUE(scheduled_dl_pdcchs().empty()) << fmt::format("RAR PDCCH allocated after RAR window");
+        break;
+      }
+
+      slot_point last_alloc_slot = res_grid[0].slot;
+
+      if (csi_helper::is_csi_rs_slot(cell_cfg, last_alloc_slot)) {
+        // CSI-RS slot, skip it.
+        continue;
+      }
+      // RAR PDSCH allocated.
+      ASSERT_EQ(scheduled_rars(0).size(), 1);
+      unsigned nof_grants = 0;
+      ASSERT_TRUE(rars_consistent_with_rach_indication(scheduled_rars(0), rach_ind, nof_grants));
+      ASSERT_EQ(nof_grants, scheduled_rars(0)[0].grants.size())
+          << "All scheduled RAR grants must be for the provided occasion";
+
+      nof_sched_grants += nof_grants;
+    }
+
+    grant_count += rach_ind.occasions[0].preambles.size();
+  }
+}
 
 } // namespace
