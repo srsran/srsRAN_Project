@@ -71,7 +71,6 @@ void amf_connection_loss_routine::release_ues()
               CORO_BEGIN(ctx);
               // The outcome of the procedure is ignored, as we don't send anything to the (lost) AMF.
               CORO_AWAIT(ue_release_handler.handle_ue_context_release_command(command));
-              logger.info("ue={}: UE released", command.ue_index);
               CORO_RETURN();
             }));
       }
