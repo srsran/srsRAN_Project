@@ -416,10 +416,15 @@ void ra_scheduler::update_pending_rars(slot_point pdcch_slot)
     // - if window hasn't started, stop loop, as RARs are ordered by slot
     if (not rar_req.rar_window.contains(pdcch_slot)) {
       if (pdcch_slot >= rar_req.rar_window.stop()) {
-        logger.warning("Could not transmit RAR within the window={}, prach_slot={}, slot_tx={}",
+        logger.warning("ra-rnti={}: Could not transmit RAR within the window={}, prach_slot={}, slot_tx={}",
+                       rar_req.ra_rnti,
                        rar_req.rar_window,
                        rar_req.prach_slot_rx,
                        pdcch_slot);
+        // Clear associated Msg3 grants that were not yet scheduled.
+        for (rnti_t tcrnti : rar_req.tc_rntis) {
+          pending_msg3s[to_value(tcrnti) % MAX_NOF_MSG3].msg3_harq_ent.reset();
+        }
         it = pending_rars.erase(it);
         continue;
       }
