@@ -831,6 +831,49 @@ public:
   }
 };
 
+/// Dummy implementation of the CU configurator interface.
+class dummy_cu_configurator : public cu_configurator
+{
+public:
+  dummy_cu_configurator(srs_cu_cp::mobility_manager_cu_cp_notifier& mobility_notifier_) :
+    dummy_mobility_notifier(mobility_notifier_)
+  {
+  }
+  srs_cu_cp::mobility_manager_cu_cp_notifier& get_mobility_notifier() override { return dummy_mobility_notifier; }
+
+  srs_cu_cp::ue_index_t get_ue_index(const srs_cu_cp::amf_ue_id_t& amf_ue_id,
+                                     const srs_cu_cp::guami_t&     guami,
+                                     const gnb_cu_ue_f1ap_id_t&    gnb_cu_ue_f1ap_id) const override
+  {
+    return srs_cu_cp::uint_to_ue_index(1);
+  }
+
+  srs_cu_cp::du_index_t get_du_index(const srs_cu_cp::ue_index_t& ue_index) const override
+  {
+    return srs_cu_cp::uint_to_du_index(1);
+  }
+
+  srs_cu_cp::du_index_t get_du_index(const nr_cell_global_id_t& nr_cgi) const override
+  {
+    return srs_cu_cp::uint_to_du_index(1);
+  }
+
+  pci_t get_pci(const nr_cell_global_id_t& nr_cgi) const override { return pci_t(1); }
+
+  async_task<srs_cu_cp::cu_cp_intra_cu_handover_response>
+  trigger_handover(const srs_cu_cp::du_index_t&                      source_du_index,
+                   const srs_cu_cp::cu_cp_intra_cu_handover_request& handover_req) override
+  {
+    return launch_async([](coro_context<async_task<srs_cu_cp::cu_cp_intra_cu_handover_response>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(srs_cu_cp::cu_cp_intra_cu_handover_response{true});
+    });
+  }
+
+private:
+  srs_cu_cp::mobility_manager_cu_cp_notifier& dummy_mobility_notifier;
+};
+
 /// Fixture class for E2AP
 class e2_base
 {
@@ -990,7 +1033,7 @@ class e2_test_setup : public e2_test_base
     e2sm_rc_packer                 = std::make_unique<e2sm_rc_asn1_packer>();
     mobility_notifier              = std::make_unique<dummy_e2_mobility_notifier>();
     du_rc_param_configurator       = std::make_unique<dummy_du_configurator>();
-    cu_rc_param_configurator       = std::make_unique<cu_configurator>(*mobility_notifier);
+    cu_rc_param_configurator       = std::make_unique<dummy_cu_configurator>(*mobility_notifier);
     e2sm_rc_iface                  = std::make_unique<e2sm_rc_impl>(test_logger, *e2sm_rc_packer);
     e2sm_rc_control_service_style2 = std::make_unique<e2sm_rc_control_service>(2);
     e2sm_rc_control_service_style3 = std::make_unique<e2sm_rc_control_service>(3);
