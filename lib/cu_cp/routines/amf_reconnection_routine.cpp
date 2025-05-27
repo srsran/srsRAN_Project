@@ -53,12 +53,14 @@ void amf_reconnection_routine::operator()(coro_context<async_task<bool>>& ctx)
   success = std::holds_alternative<ngap_ng_setup_response>(result_msg);
 
   if (success) {
-    std::string plmn_list;
-    for (const auto& plmn : ngap.get_ngap_context().get_supported_plmns()) {
-      plmn_list += plmn.to_string() + " ";
-    }
+    if (logger.debug.enabled()) {
+      std::string plmn_list;
+      for (const auto& plmn : ngap.get_ngap_context().get_supported_plmns()) {
+        plmn_list += plmn.to_string() + " ";
+      }
 
-    logger.debug("Reconnected to AMF. Supported PLMNs: {}", plmn_list);
+      logger.debug("Reconnected to AMF. Supported PLMNs: {}", plmn_list);
+    }
 
     logger.info("\"{}\" finished successfully", name());
 
