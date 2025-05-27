@@ -27,7 +27,7 @@ struct cell_selection_info {
   bounded_integer<int, -43, -12> q_qual_min = -20;
 };
 
-enum class sib_type { sib1 = 1, sib2 = 2, sib6 = 6, sib7 = 7, sib8 = 8, sib19 = 19, sib_invalid };
+enum class sib_type : unsigned { sib1 = 1, sib2 = 2, sib6 = 6, sib7 = 7, sib8 = 8, sib19 = 19, sib_invalid };
 
 /// Configures a pattern of SSBs. See TS 38.331, \c SSB-ToMeasure.
 /// Equates to longBitmap when size of bitset equals to 64.

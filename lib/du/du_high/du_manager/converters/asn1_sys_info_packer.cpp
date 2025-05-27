@@ -318,58 +318,84 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
     if (!du_cfg.si_config->si_sched_info.empty()) {
       bool ret = asn1::number_to_enum(sib1.si_sched_info.si_win_len, du_cfg.si_config.value().si_window_len_slots);
       srsran_assert(ret, "Invalid SI window length");
+
+      // For each SI message in the configuration...
       for (const auto& cfg_si : du_cfg.si_config->si_sched_info) {
+        // Prepare a SchedulingInfo element. This holds information for an SI message carrying SIBs 2, 6, 7 or 8.
         sched_info_s asn1_si;
         asn1_si.si_broadcast_status.value = sched_info_s::si_broadcast_status_opts::broadcasting;
         ret                               = asn1::number_to_enum(asn1_si.si_periodicity, cfg_si.si_period_radio_frames);
         srsran_assert(ret, "Invalid SI period");
+
+        // Prepare a SchedulingInfo2-r17 element. This is used for SIB-19.
+        sched_info2_r17_s asn1_si_r17;
+        asn1_si_r17.si_broadcast_status_r17.value = sched_info2_r17_s::si_broadcast_status_r17_opts::broadcasting;
+        ret = asn1::number_to_enum(asn1_si_r17.si_periodicity_r17, cfg_si.si_period_radio_frames);
+        srsran_assert(ret, "Invalid SI period");
+        if (cfg_si.si_window_position.has_value()) {
+          asn1_si_r17.si_win_position_r17 = cfg_si.si_window_position.value();
+        }
+
         for (auto mapping_info : cfg_si.sib_mapping_info) {
-          sib_type_info_s type_info;
-          auto            sib_id      = static_cast<uint8_t>(mapping_info);
-          ret                         = asn1::number_to_enum(type_info.type, sib_id);
-          type_info.value_tag_present = true;
-          type_info.value_tag         = 0;
-          if (ret) {
-            asn1_si.sib_map_info.push_back(type_info);
+          // For each entry in the mapping info, find the matching SIB.
+          auto sib_id = static_cast<unsigned>(mapping_info);
+          for (const auto& sib : du_cfg.si_config->sibs) {
+            sib_type type = get_sib_info_type(sib);
+            if (static_cast<std::underlying_type_t<sib_type>>(type) == sib_id) {
+              switch (type) {
+                case sib_type::sib2:
+                case sib_type::sib6:
+                case sib_type::sib7:
+                case sib_type::sib8: {
+                  // If the mapping info entry is for a regular SIB, append the SIB type to the schedulingInfo element.
+                  sib_type_info_s type_info;
+                  ret                         = asn1::number_to_enum(type_info.type, sib_id);
+                  type_info.value_tag_present = true;
+                  type_info.value_tag         = 0;
+                  if (ret) {
+                    asn1_si.sib_map_info.push_back(type_info);
+                  }
+                } break;
+                case sib_type::sib19: {
+                  // If the mapping info entry is for a release 17 SIB, append to the schedulingInfo2 element.
+                  sib_type_info_v1700_s type_info2;
+                  auto                  sib_id_r17 = static_cast<uint8_t>(mapping_info);
+                  type_info2.sib_type_r17.set_type1_r17();
+                  ret = asn1::number_to_enum(type_info2.sib_type_r17.type1_r17(), sib_id_r17);
+                  if (ret) {
+                    asn1_si_r17.sib_map_info_r17.push_back(type_info2);
+                  }
+                } break;
+                case sib_type::sib1:
+                case sib_type::sib_invalid:
+                default:
+                  srsran_assertion_failure("Invalid SIB type (i.e., {}) for an SI message", fmt::underlying(type));
+              }
+              break;
+            }
           }
         }
+
+        srsran_assert((asn1_si.sib_map_info.size() == 0) || (asn1_si_r17.sib_map_info_r17.size() == 0),
+                      "An SI message containing release 17 SIBs cannot hold other SIB types");
+
+        // Append the SchedulingInfo element to the SchedulingInfo list.
         if (asn1_si.sib_map_info.size() > 0) {
           sib1.si_sched_info_present = true;
           sib1.si_sched_info.sched_info_list.push_back(asn1_si);
         }
-      }
-    }
 
-    for (const auto& sib : du_cfg.si_config->sibs) {
-      if (std::holds_alternative<sib19_info>(sib)) {
-        sib1.non_crit_ext_present                                               = true;
-        sib1.non_crit_ext.non_crit_ext_present                                  = true;
-        sib1.non_crit_ext.non_crit_ext.non_crit_ext_present                     = true;
-        sib1.non_crit_ext.non_crit_ext.non_crit_ext.si_sched_info_v1700_present = true;
-        sib1.non_crit_ext.non_crit_ext.non_crit_ext.cell_barred_ntn_r17_present = true;
-        sib1.non_crit_ext.non_crit_ext.non_crit_ext.cell_barred_ntn_r17 =
-            sib1_v1700_ies_s::cell_barred_ntn_r17_opts::not_barred;
-        auto& si_sched_info_r17 = sib1.non_crit_ext.non_crit_ext.non_crit_ext.si_sched_info_v1700;
-        for (const auto& cfg_si : du_cfg.si_config->si_sched_info) {
-          sched_info2_r17_s asn1_si_r17;
-          asn1_si_r17.si_broadcast_status_r17.value = sched_info2_r17_s::si_broadcast_status_r17_opts::broadcasting;
-          bool ret = asn1::number_to_enum(asn1_si_r17.si_periodicity_r17, cfg_si.si_period_radio_frames);
-          srsran_assert(ret, "Invalid SI period");
-          if (cfg_si.si_window_position.has_value()) {
-            asn1_si_r17.si_win_position_r17 = cfg_si.si_window_position.value();
-          }
-          for (auto mapping_info : cfg_si.sib_mapping_info) {
-            sib_type_info_v1700_s type_info;
-            auto                  sib_id_r17 = static_cast<uint8_t>(mapping_info);
-            type_info.sib_type_r17.set_type1_r17();
-            ret = asn1::number_to_enum(type_info.sib_type_r17.type1_r17(), sib_id_r17);
-            if (ret) {
-              asn1_si_r17.sib_map_info_r17.push_back(type_info);
-            }
-          }
-          if (asn1_si_r17.sib_map_info_r17.size() > 0) {
-            si_sched_info_r17.sched_info_list2_r17.push_back(asn1_si_r17);
-          }
+        // Append the SchedulingInfo2-r17 element to the SchedulingInfo2-r17 list.
+        if (asn1_si_r17.sib_map_info_r17.size() > 0) {
+          sib1.non_crit_ext_present                                               = true;
+          sib1.non_crit_ext.non_crit_ext_present                                  = true;
+          sib1.non_crit_ext.non_crit_ext.non_crit_ext_present                     = true;
+          sib1.non_crit_ext.non_crit_ext.non_crit_ext.si_sched_info_v1700_present = true;
+          sib1.non_crit_ext.non_crit_ext.non_crit_ext.cell_barred_ntn_r17_present = true;
+          sib1.non_crit_ext.non_crit_ext.non_crit_ext.cell_barred_ntn_r17 =
+              sib1_v1700_ies_s::cell_barred_ntn_r17_opts::not_barred;
+          auto& si_sched_info_r17 = sib1.non_crit_ext.non_crit_ext.non_crit_ext.si_sched_info_v1700;
+          si_sched_info_r17.sched_info_list2_r17.push_back(asn1_si_r17);
         }
       }
     }
