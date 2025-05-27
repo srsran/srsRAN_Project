@@ -368,9 +368,11 @@ void mac_metrics_aggregator::handle_cell_deactivation(du_cell_index_t           
   srsran_assert(last_report.cell_deactivated, "Expected cell deactivated flag to be set");
 
   // Save last report before deactivating cell.
-  slot_point next_start_sl_tx = next_report_start_slot.without_hyper_sfn();
-  if (last_report.start_slot >= next_start_sl_tx and last_report.start_slot < next_start_sl_tx + cell.period_slots) {
-    next_report.dl.cells.push_back(last_report);
+  if (last_report.start_slot.valid()) {
+    slot_point next_start_sl_tx = next_report_start_slot.without_hyper_sfn();
+    if (last_report.start_slot >= next_start_sl_tx and last_report.start_slot < next_start_sl_tx + cell.period_slots) {
+      next_report.dl.cells.push_back(last_report);
+    }
   }
   cell.active_flag = false;
   if (--nof_active_cells == 0) {
