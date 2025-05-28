@@ -39,7 +39,7 @@ public:
     /// DM-RS position mask. Indicates the OFDM symbols carrying DM-RS within the slot.
     symbol_slot_mask symbols_mask;
     /// Allocation RB list, the entries set to true are used for transmission.
-    prb_bitmap rb_mask;
+    crb_bitmap rb_mask;
     /// Precoding configuration.
     precoding_configuration precoding;
   };

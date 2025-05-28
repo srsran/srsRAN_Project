@@ -33,7 +33,7 @@ public:
     /// Reference point for PDCCH DMRS \e k in RBs.
     unsigned reference_point_k_rb;
     /// Indicates the PRB used for the PDCCH transmission. The bit at position zero corresponds to CRB0.
-    prb_bitmap rb_mask;
+    crb_bitmap rb_mask;
     /// CORESET start symbol index.
     unsigned start_symbol_index;
     /// CORESET duration in symbols.

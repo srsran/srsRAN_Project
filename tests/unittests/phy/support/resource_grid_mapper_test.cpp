@@ -223,14 +223,14 @@ protected:
     both.merge(reserved);
 
     // Get the number of RE in the allocation pattern.
-    unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~prb_bitmap(MAX_RB));
+    unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~crb_bitmap(MAX_RB));
 
     // Get the number of RE in the reserved pattern.
-    unsigned nof_reserved_re = reserved.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~prb_bitmap(MAX_RB));
+    unsigned nof_reserved_re = reserved.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~crb_bitmap(MAX_RB));
 
     // Number of REs in the data pattern which are also reserved.
     unsigned nof_overlapping_re =
-        nof_data_re + nof_reserved_re - both.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~prb_bitmap(MAX_RB));
+        nof_data_re + nof_reserved_re - both.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~crb_bitmap(MAX_RB));
 
     // Subtract the reserved REs overlapping with data from the total number of data RE.
     nof_data_re -= nof_overlapping_re;
@@ -343,7 +343,7 @@ TEST_F(ResourceGridMapperFixture, SinglePort)
   re_pattern_list allocation = generate_random_allocation(MAX_RB);
 
   // Get the total number of RE in the allocation pattern.
-  unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~prb_bitmap(MAX_RB));
+  unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~crb_bitmap(MAX_RB));
 
   // Generate random RE arranged by layers.
   const re_buffer_reader<>& input_data = generate_random_data(nof_layers, nof_data_re);
@@ -383,7 +383,7 @@ TEST_F(ResourceGridMapperFixture, OneLayerToOnePort)
     re_pattern_list allocation = generate_random_allocation(MAX_RB);
 
     // Get the total number of RE in the allocation pattern.
-    unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~prb_bitmap(MAX_RB));
+    unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~crb_bitmap(MAX_RB));
 
     // Generate random RE arranged by layers.
     const re_buffer_reader<>& input_data = generate_random_data(nof_layers, nof_data_re);
@@ -421,7 +421,7 @@ TEST_F(ResourceGridMapperFixture, OneLayerAllPorts)
     re_pattern_list allocation = generate_random_allocation(MAX_RB);
 
     // Get the total number of RE in the allocation pattern.
-    unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~prb_bitmap(MAX_RB));
+    unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~crb_bitmap(MAX_RB));
 
     // Generate random RE arranged by layers.
     const re_buffer_reader<>& input_data = generate_random_data(nof_layers, nof_data_re);
@@ -455,7 +455,7 @@ TEST_F(ResourceGridMapperFixture, Identity)
     re_pattern_list allocation = generate_random_allocation(MAX_RB);
 
     // Get the total number of RE in the allocation pattern.
-    unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~prb_bitmap(MAX_RB));
+    unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~crb_bitmap(MAX_RB));
 
     // Generate random RE arranged by layers.
     const re_buffer_reader<>& input_data = generate_random_data(nof_streams, nof_data_re);
@@ -495,7 +495,7 @@ TEST_F(ResourceGridMapperFixture, OneLayerTwoPorts)
     re_pattern_list allocation = generate_random_allocation(MAX_RB);
 
     // Get the total number of RE in the allocation pattern.
-    unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~prb_bitmap(MAX_RB));
+    unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~crb_bitmap(MAX_RB));
 
     // Generate random RE arranged by layers.
     const re_buffer_reader<>& input_data = generate_random_data(nof_layers, nof_data_re);
@@ -535,7 +535,7 @@ TEST_F(ResourceGridMapperFixture, TwoLayerTwoPorts)
     re_pattern_list allocation = generate_random_allocation(MAX_RB);
 
     // Get the total number of RE in the allocation pattern.
-    unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~prb_bitmap(MAX_RB));
+    unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~crb_bitmap(MAX_RB));
 
     // Generate random RE arranged by layers.
     const re_buffer_reader<>& input_data = generate_random_data(nof_layers, nof_data_re);
@@ -577,7 +577,7 @@ TEST_F(ResourceGridMapperFixture, OneLayerFourPorts)
       re_pattern_list allocation = generate_random_allocation(MAX_RB);
 
       // Get the total number of RE in the allocation pattern.
-      unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~prb_bitmap(MAX_RB));
+      unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~crb_bitmap(MAX_RB));
 
       // Generate random RE arranged by layers.
       const re_buffer_reader<>& input_data = generate_random_data(nof_layers, nof_data_re);
@@ -621,7 +621,7 @@ TEST_F(ResourceGridMapperFixture, TwoLayerFourPorts)
         re_pattern_list allocation = generate_random_allocation(MAX_RB);
 
         // Get the total number of RE in the allocation pattern.
-        unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~prb_bitmap(MAX_RB));
+        unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~crb_bitmap(MAX_RB));
 
         // Generate random RE arranged by layers.
         const re_buffer_reader<>& input_data = generate_random_data(nof_layers, nof_data_re);
@@ -665,7 +665,7 @@ TEST_F(ResourceGridMapperFixture, ThreeLayerFourPorts)
       re_pattern_list allocation = generate_random_allocation(MAX_RB);
 
       // Get the total number of RE in the allocation pattern.
-      unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~prb_bitmap(MAX_RB));
+      unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~crb_bitmap(MAX_RB));
 
       // Generate random RE arranged by layers.
       const re_buffer_reader<>& input_data = generate_random_data(nof_layers, nof_data_re);
@@ -708,7 +708,7 @@ TEST_F(ResourceGridMapperFixture, FourLayerFourPorts)
       re_pattern_list allocation = generate_random_allocation(MAX_RB);
 
       // Get the total number of RE in the allocation pattern.
-      unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~prb_bitmap(MAX_RB));
+      unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~crb_bitmap(MAX_RB));
 
       // Generate random RE arranged by layers.
       const re_buffer_reader<>& input_data = generate_random_data(nof_layers, nof_data_re);
@@ -760,7 +760,7 @@ TEST_P(ResourceGridMapperFixture, MultiplePrg)
     re_pattern_list allocation = generate_random_allocation(nof_rb);
 
     // Get the total number of RE in the allocation pattern.
-    unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~prb_bitmap(MAX_RB));
+    unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~crb_bitmap(MAX_RB));
 
     // Generate random RE arranged by layers.
     const re_buffer_reader<>& input_data = generate_random_data(nof_layers, nof_data_re);

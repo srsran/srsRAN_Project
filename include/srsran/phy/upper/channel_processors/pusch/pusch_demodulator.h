@@ -39,8 +39,8 @@ public:
   struct configuration {
     /// Radio Network Temporary Identifier, see parameter \f$n_{RNTI}\f$ in TS38.211 Section 6.3.1.1.
     uint16_t rnti;
-    /// Allocation RB list: the entries set to true are used for transmission.
-    prb_bitmap rb_mask;
+    /// Allocation CRB list: the entries set to true are used for transmission.
+    crb_bitmap rb_mask;
     /// Modulation scheme used for transmission.
     modulation_scheme modulation;
     /// Time domain allocation within a slot: start symbol index {0, ..., 12}.

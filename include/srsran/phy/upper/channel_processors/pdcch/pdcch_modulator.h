@@ -28,7 +28,7 @@ public:
   /// Describes the necessary parameters to modulate a PDCCH transmission.
   struct config_t {
     /// Indicates the RBs used for the PDCCH transmission.
-    prb_bitmap rb_mask;
+    crb_bitmap rb_mask;
     /// CORESET start symbol index.
     unsigned start_symbol_index;
     /// CORESET duration in symbols.

@@ -51,7 +51,7 @@ void pdcch_modulator_impl::map(resource_grid_writer& grid, const re_buffer_reade
 
   // Create PDCCH mapping pattern.
   re_pattern pattern;
-  pattern.prb_mask = config.rb_mask;
+  pattern.crb_mask = config.rb_mask;
   pattern.symbols.fill(config.start_symbol_index, config.start_symbol_index + config.duration);
   pattern.re_mask = re_mask;
 

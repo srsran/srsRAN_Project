@@ -24,7 +24,7 @@ namespace srsran {
 /// \brief Helper function to generate DM-RS sequences.
 ///
 /// This function generates DM-RS sequences based on a pseudo-random sequence generation. It generates \c
-/// nof_dmrs_per_rb for every active resource block given in \c rb_mask and skips the \c nof_dmrs_per_rb for every
+/// nof_dmrs_per_rb for every active resource block given in \c crb_mask and skips the \c nof_dmrs_per_rb for every
 /// inactive resource block.
 ///
 /// \param[out]    sequence             Destination storage for the generated sequence.
@@ -32,7 +32,7 @@ namespace srsran {
 /// \param[in]     amplitude            Generated sequence amplitude.
 /// \param[in]     reference_point_k_rb Reference Common Resource Block index (CRB).
 /// \param[in]     nof_dmrs_per_rb      Number of DM-RS to generate per active CRB.
-/// \param[in]     rb_mask              Active resource blocks.
+/// \param[in]     crb_mask             Active resource blocks.
 /// \note It assumes that the pseudo-random generator is initialized.
 /// \note The sequence size must be consistent with the number of active RBs and the number of DM-RS per RB.
 void dmrs_sequence_generate(span<cf_t>               sequence,
@@ -40,7 +40,7 @@ void dmrs_sequence_generate(span<cf_t>               sequence,
                             float                    amplitude,
                             unsigned                 reference_point_k_rb,
                             unsigned                 nof_dmrs_per_rb,
-                            const prb_bitmap&        rb_mask);
+                            const crb_bitmap&        crb_mask);
 
 /// Parameters for PDSCH and PUSCH DM-RS.
 struct dmrs_pxsch_parameters {

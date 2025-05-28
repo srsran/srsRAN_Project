@@ -166,8 +166,8 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
 
        // Create RE pattern that collides with DM-RS.
        re_pattern reserved_pattern;
-       reserved_pattern.prb_mask = ~prb_bitmap(MAX_RB);
-       reserved_pattern.prb_mask.fill(0, MAX_RB);
+       reserved_pattern.crb_mask = ~crb_bitmap(MAX_RB);
+       reserved_pattern.crb_mask.fill(0, MAX_RB);
        reserved_pattern.symbols = pdu.dmrs_symbol_mask;
        reserved_pattern.re_mask = ~bounded_bitset<NRE>(NRE);
        pdu.reserved.merge(reserved_pattern);

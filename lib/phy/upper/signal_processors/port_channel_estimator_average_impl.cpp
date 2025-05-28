@@ -231,7 +231,7 @@ void port_channel_estimator_average_impl::compute_hop(srsran::channel_estimate& 
   }
 
   // Extract RB mask lowest and highest RB. Also, determine if the allocation is contiguous.
-  const prb_bitmap& hop_rb_mask = (hop == 0) ? pattern.rb_mask : pattern.rb_mask2;
+  const crb_bitmap& hop_rb_mask = (hop == 0) ? pattern.rb_mask : pattern.rb_mask2;
   int               lowest_rb   = hop_rb_mask.find_lowest();
   int               highest_rb  = hop_rb_mask.find_highest();
   unsigned          rb_count    = hop_rb_mask.count();

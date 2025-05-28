@@ -102,8 +102,8 @@ public:
                   dmrs_pattern.symbols.size());
 
     // Generate DMRS pattern.
-    dmrs_pattern.prb_mask.resize(bwp_start_rb + bwp_size_rb);
-    dmrs_pattern.prb_mask.fill(bwp_start_rb, bwp_start_rb + bwp_size_rb);
+    dmrs_pattern.crb_mask.resize(bwp_start_rb + bwp_size_rb);
+    dmrs_pattern.crb_mask.fill(bwp_start_rb, bwp_start_rb + bwp_size_rb);
     dmrs_pattern.re_mask = get_dmrs_prb_mask(nof_cdm_groups_without_data);
     dmrs_pattern.symbols = symbol_mask;
 

@@ -49,7 +49,7 @@ pdsch_process_dmrs(resource_grid_writer& grid, dmrs_pdsch_processor& dmrs, const
   dmrs_config.n_scid               = pdu.n_scid;
   dmrs_config.amplitude            = convert_dB_to_amplitude(-pdu.ratio_pdsch_dmrs_to_sss_dB);
   dmrs_config.symbols_mask         = pdu.dmrs_symbol_mask;
-  dmrs_config.rb_mask              = rb_mask_bitset.convert_to<prb_bitmap>();
+  dmrs_config.rb_mask              = rb_mask_bitset;
   dmrs_config.precoding            = pdu.precoding;
 
   // Put DM-RS.
@@ -70,7 +70,7 @@ pdsch_process_ptrs(resource_grid_writer& grid, ptrs_pdsch_generator& ptrs_genera
   // Extract PT-RS configuration parameters.
   const pdsch_processor::ptrs_configuration& ptrs = *pdu.ptrs;
 
-  prb_bitmap rb_mask_bitset = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb).convert_to<prb_bitmap>();
+  crb_bitmap rb_mask_bitset = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
   // Select the DM-RS reference point.
   unsigned ptrs_reference_point_k_rb = 0;
@@ -114,10 +114,10 @@ pdsch_process_ptrs(resource_grid_writer& grid, ptrs_pdsch_generator& ptrs_genera
 inline unsigned pdsch_compute_nof_data_re(const pdsch_processor::pdu_t& pdu)
 {
   // Get PRB mask.
-  prb_bitmap prb_mask = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb).convert_to<prb_bitmap>();
+  crb_bitmap crb_mask = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
-  // Get number of PRB.
-  unsigned nof_prb = prb_mask.count();
+  // Get number of RB.
+  unsigned nof_prb = crb_mask.count();
 
   // Calculate the number of RE allocated in the grid.
   unsigned nof_grid_re = nof_prb * NRE * pdu.nof_symbols;
@@ -142,7 +142,7 @@ inline unsigned pdsch_compute_nof_data_re(const pdsch_processor::pdu_t& pdu)
         .rnti             = to_rnti(pdu.rnti),
         .dmrs_type        = (pdu.dmrs == dmrs_type::TYPE1) ? dmrs_config_type::type1 : dmrs_config_type::type2,
         .dmrs_symbol_mask = pdu.dmrs_symbol_mask,
-        .rb_mask          = prb_mask,
+        .rb_mask          = crb_mask,
         .time_allocation  = {pdu.start_symbol_index, pdu.start_symbol_index + pdu.nof_symbols},
         .freq_density     = ptrs_config.freq_density,
         .time_density     = ptrs_config.time_density,
@@ -155,7 +155,7 @@ inline unsigned pdsch_compute_nof_data_re(const pdsch_processor::pdu_t& pdu)
     re_pattern ptrs_reserved_re_pattern;
     for (unsigned i_prb = ptrs_reserved_pattern.rb_begin; i_prb < ptrs_reserved_pattern.rb_end;
          i_prb += ptrs_reserved_pattern.rb_stride) {
-      ptrs_reserved_re_pattern.prb_mask.set(i_prb);
+      ptrs_reserved_re_pattern.crb_mask.set(i_prb);
     }
     ptrs_reserved_re_pattern.symbols = ptrs_reserved_pattern.symbol_mask;
     ptrs_reserved_re_pattern.re_mask.set(ptrs_reserved_pattern.re_offset.front());
@@ -164,7 +164,7 @@ inline unsigned pdsch_compute_nof_data_re(const pdsch_processor::pdu_t& pdu)
   }
 
   // Calculate the number of reserved resource elements.
-  unsigned nof_reserved_re = reserved.get_inclusion_count(pdu.start_symbol_index, pdu.nof_symbols, prb_mask);
+  unsigned nof_reserved_re = reserved.get_inclusion_count(pdu.start_symbol_index, pdu.nof_symbols, crb_mask);
 
   // Subtract the number of reserved RE from the number of allocated RE.
   srsran_assert(nof_grid_re > nof_reserved_re,

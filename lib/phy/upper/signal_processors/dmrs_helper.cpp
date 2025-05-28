@@ -54,16 +54,16 @@ void srsran::dmrs_sequence_generate(span<srsran::cf_t>       sequence,
                                     float                    amplitude,
                                     unsigned                 reference_point_k_rb,
                                     unsigned                 nof_dmrs_per_rb,
-                                    const prb_bitmap&        rb_mask)
+                                    const crb_bitmap&        crb_mask)
 {
-  unsigned nof_dmrs_symbols = nof_dmrs_per_rb * rb_mask.count();
+  unsigned nof_dmrs_symbols = nof_dmrs_per_rb * crb_mask.count();
   srsran_assert(sequence.size() == nof_dmrs_symbols,
                 "DM-RS sequence size, i.e., {} does not match the number of RE allocated for DM-RS, i.e., {}.",
                 sequence.size(),
                 nof_dmrs_symbols);
 
   for_each_interval(
-      rb_mask, [&sequence, &prg, amplitude, &reference_point_k_rb, nof_dmrs_per_rb](size_t rb_begin, size_t rb_end) {
+      crb_mask, [&sequence, &prg, amplitude, &reference_point_k_rb, nof_dmrs_per_rb](size_t rb_begin, size_t rb_end) {
         // Skip DM-RS in between the current reference and the first RB of the interval.
         unsigned nof_rb_skip = rb_begin - reference_point_k_rb;
         prg.advance(nof_rb_skip * nof_dmrs_per_rb * 2);

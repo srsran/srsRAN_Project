@@ -56,18 +56,18 @@ static void map_dmrs_type1_contiguous(resource_grid_writer&          writer,
   srsran_assert((first_symbol >= 0) && (end_symbol >= 0),
                 "At least one OFDM symbol must be used by the allocation pattern.");
 
-  unsigned nof_re_symbol = nof_dmrs_re_prb * pattern.prb_mask.count();
+  unsigned nof_re_symbol = nof_dmrs_re_prb * pattern.crb_mask.count();
 
   if ((nof_re_symbol != precoding_buffer.get_nof_re()) || (nof_precoding_ports != precoding_buffer.get_nof_slices())) {
     // Resize the output buffer if the input dimensions don't match.
     precoding_buffer.resize(nof_precoding_ports, nof_re_symbol);
   }
 
-  unsigned first_prb = pattern.prb_mask.find_lowest(true);
-  unsigned prb_end   = pattern.prb_mask.find_highest(true) + 1;
+  unsigned first_crb = pattern.crb_mask.find_lowest(true);
+  unsigned crb_end   = pattern.crb_mask.find_highest(true) + 1;
 
   // First subcarrier occupied by a DM-RS symbol.
-  unsigned first_subcarrier = first_prb * NRE + cdm_group_id;
+  unsigned first_subcarrier = first_crb * NRE + cdm_group_id;
 
   // Counter for the number of RE read from the input and mapped to the grid.
   unsigned i_re_buffer = 0;
@@ -80,16 +80,16 @@ static void map_dmrs_type1_contiguous(resource_grid_writer&          writer,
     // Counter for the number of precoded REs for the current symbol.
     unsigned i_precoding_buffer = 0;
     // First PRG in the allocation pattern.
-    unsigned first_prg = first_prb / prg_size;
+    unsigned first_prg = first_crb / prg_size;
     for (unsigned i_prg = first_prg, nof_prg = precoding.get_nof_prg(); i_prg != nof_prg; ++i_prg) {
       // Get the precoding matrix for the current PRG.
       const precoding_weight_matrix& prg_weights = precoding.get_prg_coefficients(i_prg);
 
       // First PRB in the PRG used by the allocation pattern.
-      unsigned prg_prb_start = std::max(i_prg * prg_size, first_prb);
+      unsigned prg_prb_start = std::max(i_prg * prg_size, first_crb);
 
       // First PRB outside the range of PRB belonging to the current PRG and used by the allocation pattern.
-      unsigned prg_prb_end = std::min((i_prg + 1) * prg_size, prb_end);
+      unsigned prg_prb_end = std::min((i_prg + 1) * prg_size, crb_end);
 
       // Number of allocated RE for the current PRG.
       unsigned nof_re_prg = (prg_prb_end - prg_prb_start) * nof_dmrs_re_prb;
@@ -146,7 +146,7 @@ void resource_grid_mapper_impl::map(resource_grid_writer&          writer,
   // Temporary intermediate buffer for storing precoded symbols.
   precoding_buffer_type precoding_buffer;
 
-  bool is_dmrs_type1 = pattern.prb_mask.is_contiguous(true) &&
+  bool is_dmrs_type1 = pattern.crb_mask.is_contiguous(true) &&
                        (pattern.re_mask == get_re_mask_type_1(0) || pattern.re_mask == get_re_mask_type_1(1));
 
   if (is_dmrs_type1) {

@@ -180,8 +180,8 @@ void pdsch_processor_flexible_impl::initialize_new_transmission(
                   cw_length);
   }
 
-  // Get the PRB allocation mask.
-  const crb_bitmap prb_allocation_mask = config.freq_alloc.get_crb_mask(config.bwp_start_rb, config.bwp_size_rb);
+  // Get the CRB allocation mask.
+  const crb_bitmap crb_allocation_mask = config.freq_alloc.get_crb_mask(config.bwp_start_rb, config.bwp_size_rb);
 
   // First symbol used in this transmission.
   unsigned start_symbol_index = config.start_symbol_index;
@@ -213,7 +213,7 @@ void pdsch_processor_flexible_impl::initialize_new_transmission(
   reserved.merge(dmrs_pattern);
 
   // Set PDSCH allocation pattern.
-  pdsch_pattern.prb_mask = prb_allocation_mask.convert_to<prb_bitmap>();
+  pdsch_pattern.crb_mask = crb_allocation_mask;
   pdsch_pattern.re_mask  = ~re_prb_mask();
   pdsch_pattern.symbols  = symbols;
   allocation.merge(pdsch_pattern);

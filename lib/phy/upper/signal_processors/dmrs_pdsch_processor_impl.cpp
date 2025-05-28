@@ -161,7 +161,7 @@ void srsran::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const co
 
     // Set DM-RS allocation pattern of the CDM group.
     re_pattern dmrs_pattern_cdm;
-    dmrs_pattern_cdm.prb_mask = config.rb_mask;
+    dmrs_pattern_cdm.crb_mask = config.rb_mask;
     dmrs_pattern_cdm.symbols  = config.symbols_mask;
     dmrs_pattern_cdm.re_mask =
         (config.type == dmrs_type::TYPE1) ? get_re_mask_type_1(i_cdm_group) : get_re_mask_type_2(i_cdm_group);

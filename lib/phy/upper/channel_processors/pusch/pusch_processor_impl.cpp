@@ -138,7 +138,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   unsigned nof_rb = pdu.freq_alloc.get_nof_rb();
 
   // Get RB mask relative to Point A. It assumes PUSCH is never interleaved.
-  prb_bitmap rb_mask = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb).convert_to<prb_bitmap>();
+  crb_bitmap rb_mask = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
   // Determine if the PUSCH allocation overlaps with the position of the DC.
   bool overlap_dc = false;

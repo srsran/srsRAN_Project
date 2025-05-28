@@ -172,8 +172,8 @@ TEST_P(PdschProcessorFixture, UnitTest)
   re_pattern_list reserved = pdu.reserved;
   reserved.merge(dmrs_reserved_pattern);
 
-  // Get physical RB allocation mask.
-  prb_bitmap rb_mask = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb).convert_to<prb_bitmap>();
+  // Get RB allocation mask.
+  crb_bitmap rb_mask = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
   // Count number of resource elements.
   unsigned Nre = pdu.freq_alloc.get_nof_rb() * NRE * pdu.nof_symbols -

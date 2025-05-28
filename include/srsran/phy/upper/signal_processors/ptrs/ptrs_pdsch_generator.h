@@ -43,8 +43,8 @@ public:
     float amplitude;
     /// DM-RS position mask. Indicates the OFDM symbols carrying DM-RS within the slot.
     symbol_slot_mask dmrs_symbols_mask;
-    /// PDSCH frequency domain allocation as RB list. The entries set to true are used for transmission.
-    prb_bitmap rb_mask;
+    /// PDSCH frequency domain allocation as a CRB mask. The entries set to true are used for transmission.
+    crb_bitmap rb_mask;
     /// PDSCH time domain allocation.
     interval<uint8_t> time_allocation;
     /// Frequency domain density.
