@@ -24,8 +24,7 @@ class application_message_banners
 {
 public:
   /// Announces the application started.
-  explicit application_message_banners(std::string_view app_name, std::string_view log_filename_) :
-    log_filename(log_filename_)
+  application_message_banners(std::string_view app_name, std::string_view log_filename_) : log_filename(log_filename_)
   {
     fmt::print("==== {} started ===\n", app_name);
     fmt::print("Type <h> to view help\n");

@@ -522,7 +522,8 @@ int main(int argc, char** argv)
       app_services::create_remote_server(gnb_cfg.remote_control_config, du_inst_and_cmds.commands.remote);
 
   {
-    app_services::application_message_banners app_banner(app_name, gnb_cfg.log_cfg.filename);
+    app_services::application_message_banners app_banner(
+        app_name, gnb_cfg.log_cfg.filename == "stdout" ? std::string_view() : gnb_cfg.log_cfg.filename);
 
     while (is_app_running) {
       std::this_thread::sleep_for(std::chrono::milliseconds(250));

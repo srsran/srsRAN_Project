@@ -385,7 +385,8 @@ int main(int argc, char** argv)
 
   metrics_mngr.start();
   {
-    app_services::application_message_banners app_banner(app_name, du_cfg.log_cfg.filename);
+    app_services::application_message_banners app_banner(
+        app_name, du_cfg.log_cfg.filename == "stdout" ? std::string_view() : du_cfg.log_cfg.filename);
 
     while (is_app_running) {
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
