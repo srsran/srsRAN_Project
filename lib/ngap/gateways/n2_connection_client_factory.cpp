@@ -243,7 +243,7 @@ public:
 
     if (sctp_sender == nullptr) {
       logger.error(
-          "Failed to establish N2 TNL connection to AMF on {}:{}.\n", sctp_cfg.connect_address, sctp_cfg.connect_port);
+          "Failed to establish N2 TNL connection to AMF on {}:{}.", sctp_cfg.connect_address, sctp_cfg.connect_port);
       return nullptr;
     }
     logger.info("{}: Connection to {} on {}:{} was established",
