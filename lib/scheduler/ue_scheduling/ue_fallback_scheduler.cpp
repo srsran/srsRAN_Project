@@ -640,7 +640,7 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
   pdsch_alloc.dl_res_grid.fill(grant_info{scs, pdsch_td_cfg.symbols, ue_grant_crbs});
 
   // Update DRX controller state.
-  u.drx_controller().on_new_pdcch_alloc<true>(pdcch_alloc.slot, pdsch_alloc.slot);
+  u.drx_controller().on_new_dl_pdcch_alloc(pdcch_alloc.slot);
 
   // Fill ConRes and/or SRB grant.
   return fill_dl_srb_grant(u,
@@ -1155,7 +1155,7 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
   u.get_pcell().get_pusch_power_controller().update_pusch_pw_ctrl_state(pusch_alloc.slot, ue_grant_crbs.length());
 
   // Update DRX controller state.
-  u.drx_controller().on_new_pdcch_alloc<false>(pdcch_alloc.slot, pusch_alloc.slot);
+  u.drx_controller().on_new_ul_pdcch_alloc(pdcch_alloc.slot, pusch_alloc.slot);
 
   fill_ul_srb_grant(u,
                     pdcch_alloc.slot,

@@ -104,7 +104,7 @@ TEST_F(ue_drx_controller_test, when_pdcch_sent_then_on_duration_extended_by_inac
 
     if (i == pdcch_idx) {
       // Note: for DL PDCCH grants `pxsch_slot` is ignored.
-      drx.on_new_pdcch_alloc<true>(cur_slot, slot_point{});
+      drx.on_new_dl_pdcch_alloc(cur_slot);
     }
 
     bool enabled = drx.is_pdcch_enabled();
@@ -215,7 +215,7 @@ TEST_F(ue_drx_controller_no_inactivity_test, when_pdcch_received_then_activity_i
     if (in_active_window) {
       // New PDCCH took place but it has no effect in active time.
       // Note: for DL PDCCH grants `pxsch_slot` is ignored.
-      this->drx.on_new_pdcch_alloc<true>(cur_slot, slot_point{});
+      this->drx.on_new_dl_pdcch_alloc(cur_slot);
     }
 
     ASSERT_EQ(enabled, in_active_window);
@@ -247,7 +247,7 @@ TEST_F(ue_drx_controller_retx_ul_test, when_pdcch_sent_then_on_duration_extended
     tick();
 
     if (i == pdcch_idx) {
-      drx.on_new_pdcch_alloc<false>(cur_slot, cur_slot + k2);
+      drx.on_new_ul_pdcch_alloc(cur_slot, cur_slot + k2);
     }
 
     bool enabled = drx.is_pdcch_enabled();
@@ -291,7 +291,7 @@ TEST_F(ue_drx_controller_retx_dl_test,
     tick();
 
     if (i == pdcch_idx) {
-      drx.on_new_pdcch_alloc<true>(cur_slot, cur_slot + k0);
+      drx.on_new_dl_pdcch_alloc(cur_slot);
     }
 
     if (i == pucch_idx) {
@@ -330,7 +330,7 @@ TEST_F(ue_drx_controller_retx_dl_test,
     tick();
 
     if (i == pdcch_idx) {
-      drx.on_new_pdcch_alloc<true>(cur_slot, cur_slot + k0);
+      drx.on_new_dl_pdcch_alloc(cur_slot);
     }
 
     bool enabled = drx.is_pdcch_enabled();

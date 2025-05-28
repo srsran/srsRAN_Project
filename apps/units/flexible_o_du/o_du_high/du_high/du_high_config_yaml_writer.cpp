@@ -656,7 +656,9 @@ static YAML::Node build_cell_entry(const du_high_unit_base_cell_config& config)
   node["paging"] = build_du_high_paging_section(config.paging_cfg);
   node["csi"]    = build_du_high_csi_section(config.csi_cfg);
   node["srs"]    = build_du_high_srs_section(config.srs_cfg);
-  node["drx"]    = build_du_high_drx_section(config.drx_cfg);
+  if (config.drx_cfg.long_cycle != 0) {
+    node["drx"] = build_du_high_drx_section(config.drx_cfg);
+  }
   fill_du_high_sched_expert_section(node, config.sched_expert_cfg);
 
   return node;
