@@ -37,7 +37,8 @@ private:
   virtual std::unique_ptr<split6_slot_configurator_plugin> create_plugin() = 0;
 
   /// Creates Radio Unit.
-  std::unique_ptr<radio_unit> create_radio_unit();
+  std::unique_ptr<radio_unit> create_radio_unit(split6_flexible_o_du_low_impl& odu_low,
+                                                const fapi::fapi_cell_config&  config);
 
   /// Creates O-DU low.
   std::unique_ptr<srs_du::o_du_low> create_o_du_low(const fapi::fapi_cell_config& config,

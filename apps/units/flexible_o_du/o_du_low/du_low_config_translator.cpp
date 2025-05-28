@@ -42,12 +42,12 @@ static void generate_du_low_config(srs_du::du_low_config&                       
 
     // Calculate the number of UL slots in a frame and in a PUSCH HARQ process lifetime.
     unsigned nof_ul_slots_in_harq_lifetime = expire_pusch_harq_timeout_slots;
-    if (cell.duplex == duplex_mode::TDD && cell.tdd_pattern1.has_value()) {
-      const tdd_ul_dl_pattern& pattern1     = *cell.tdd_pattern1;
+    if (cell.duplex == duplex_mode::TDD && cell.tdd_pattern.has_value()) {
+      const tdd_ul_dl_pattern& pattern1     = cell.tdd_pattern->pattern1;
       unsigned                 period_slots = pattern1.dl_ul_tx_period_nof_slots;
       unsigned                 nof_ul_slots = pattern1.nof_ul_slots + ((pattern1.nof_ul_symbols != 0) ? 1 : 0);
-      if (cell.tdd_pattern2.has_value()) {
-        const tdd_ul_dl_pattern& pattern2 = *cell.tdd_pattern2;
+      if (cell.tdd_pattern->pattern2) {
+        const tdd_ul_dl_pattern& pattern2 = *cell.tdd_pattern->pattern2;
         period_slots += pattern2.dl_ul_tx_period_nof_slots;
         nof_ul_slots += pattern2.nof_ul_slots + ((pattern2.nof_ul_symbols != 0) ? 1 : 0);
       }

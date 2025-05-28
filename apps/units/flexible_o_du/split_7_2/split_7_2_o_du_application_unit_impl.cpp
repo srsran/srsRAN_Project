@@ -78,6 +78,9 @@ void split_7_2_o_du_application_unit_impl::fill_worker_manager_config(worker_man
   unsigned nof_cells               = unit_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg.size();
   fill_o_du_high_worker_manager_config(config, unit_cfg.odu_high_cfg, is_blocking_mode_enable);
   fill_du_low_worker_manager_config(config, unit_cfg.du_low_cfg, is_blocking_mode_enable, nof_cells);
-  auto cells = generate_du_cell_config(unit_cfg.odu_high_cfg.du_high_cfg.config);
-  fill_ofh_worker_manager_config(config, unit_cfg.ru_cfg.config, cells);
+  std::vector<unsigned> nof_dl_antennas;
+  for (const auto& cell : unit_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg) {
+    nof_dl_antennas.push_back(cell.cell.nof_antennas_dl);
+  }
+  fill_ofh_worker_manager_config(config, unit_cfg.ru_cfg.config, std::move(nof_dl_antennas));
 }

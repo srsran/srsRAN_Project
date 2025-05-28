@@ -10,26 +10,23 @@
 
 #pragma once
 
+#include "apps/units/flexible_o_du/split_helpers/flexible_o_du_configs.h"
 #include "srsran/ru/ofh/ru_ofh_configuration.h"
 
 namespace srsran {
-
-namespace srs_du {
-struct du_cell_config;
-}
 
 struct ru_ofh_unit_config;
 struct worker_manager_config;
 
 /// Converts and returns the given Open Fronthaul Radio Unit application unit configuration to a Open Fronthaul Radio
 /// Unit configuration.
-ru_ofh_configuration generate_ru_ofh_config(const ru_ofh_unit_config&          ru_cfg,
-                                            span<const srs_du::du_cell_config> du_cells,
-                                            unsigned                           max_processing_delay_slots);
+ru_ofh_configuration generate_ru_ofh_config(const ru_ofh_unit_config&                        ru_cfg,
+                                            span<const flexible_o_du_ru_config::cell_config> cells,
+                                            unsigned max_processing_delay_slots);
 
 /// Fills the OFH worker manager parameters of the given worker manager configuration.
-void fill_ofh_worker_manager_config(worker_manager_config&             config,
-                                    const ru_ofh_unit_config&          ru_cfg,
-                                    span<const srs_du::du_cell_config> du_cells);
+void fill_ofh_worker_manager_config(worker_manager_config&    config,
+                                    const ru_ofh_unit_config& ru_cfg,
+                                    std::vector<unsigned>     nof_downlink_antennas);
 
 } // namespace srsran

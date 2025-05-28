@@ -22,18 +22,17 @@ struct worker_manager;
 /// O-RAN DU low unit configuration.
 struct o_du_low_unit_config {
   struct du_low_config {
-    srs_du::cell_prach_ports_entry   prach_ports;
-    unsigned                         max_puschs_per_slot;
-    frequency_range                  freq_range;
-    duplex_mode                      duplex;
-    subcarrier_spacing               scs_common;
-    unsigned                         bw_rb;
-    std::optional<tdd_ul_dl_pattern> tdd_pattern1;
-    std::optional<tdd_ul_dl_pattern> tdd_pattern2;
-    unsigned                         prach_config_index;
-    unsigned                         pusch_max_nof_layers;
-    unsigned                         nof_rx_antennas;
-    unsigned                         nof_tx_antennas;
+    srs_du::cell_prach_ports_entry         prach_ports;
+    unsigned                               max_puschs_per_slot;
+    frequency_range                        freq_range;
+    duplex_mode                            duplex;
+    subcarrier_spacing                     scs_common;
+    unsigned                               bw_rb;
+    std::optional<tdd_ul_dl_config_common> tdd_pattern;
+    unsigned                               prach_config_index;
+    unsigned                               pusch_max_nof_layers;
+    unsigned                               nof_rx_antennas;
+    unsigned                               nof_tx_antennas;
   };
 
   const du_low_unit_config&             du_low_unit_cfg;
