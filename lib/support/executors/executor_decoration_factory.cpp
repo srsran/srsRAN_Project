@@ -66,7 +66,7 @@ void make_executor_decorator_helper(std::unique_ptr<task_executor>&   result,
     make_executor_decorator_helper(
         result,
         sequential_metrics_executor<ComposedExecutor, srslog::basic_logger&>(
-            first_policy->name, std::forward<ComposedExecutor>(exec), first_policy->logger, first_policy->period),
+            first_policy->name, std::forward<ComposedExecutor>(exec), *first_policy->logger, first_policy->period),
         policies...);
   } else if constexpr (std::is_same_v<Decoration, execution_decoration_config::trace_option>) {
     make_executor_decorator_helper(result,

@@ -9,11 +9,8 @@
  */
 
 #include "srsran/du/du_high/du_high_executor_mapper.h"
-#include "srsran/support/executors/executor_throttler.h"
-#include "srsran/support/executors/executor_tracer.h"
-#include "srsran/support/executors/sequential_metrics_executor.h"
+#include "srsran/support/executors/executor_decoration_factory.h"
 #include "srsran/support/executors/strand_executor.h"
-#include "srsran/support/executors/sync_task_executor.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -38,25 +35,18 @@ struct executor_decorator {
                         "Metrics and tracing cannot be used at the same time");
     report_error_if_not(not throttle_thres or not is_sync, "Throttling cannot be used with synchronous executors");
 
-    if (not is_sync) {
-      if (tracing_enabled) {
-        decorators.push_back(make_trace_executor_ptr(exec_name, exec, tracer));
-      } else {
-        decorators.push_back(make_metrics_executor_ptr(exec_name, exec, metrics_logger, *metrics_period));
-      }
-      if (throttle_thres.has_value()) {
-        decorators.back() = make_executor_throttler_ptr(std::move(decorators.back()), *throttle_thres);
-      }
-    } else {
-      if (tracing_enabled) {
-        decorators.push_back(make_sync_executor(make_trace_executor(exec_name, exec, tracer)));
-      } else if (metrics_period) {
-        decorators.push_back(
-            make_sync_executor(make_metrics_executor(exec_name, exec, metrics_logger, *metrics_period)));
-      } else {
-        decorators.push_back(make_sync_executor(exec));
-      }
+    execution_decoration_config cfg;
+    if (tracing_enabled) {
+      cfg.trace = execution_decoration_config::trace_option{exec_name, &tracer};
     }
+    if (metrics_period) {
+      cfg.metrics = execution_decoration_config::metrics_option{exec_name, &metrics_logger, *metrics_period};
+    }
+    if (is_sync) {
+      cfg.sync = execution_decoration_config::sync_option{};
+    }
+    decorators.push_back(decorate_executor(std::forward<Exec>(exec), cfg));
+
     return *decorators.back();
   }
 

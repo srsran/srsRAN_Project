@@ -17,6 +17,7 @@
 #include <string>
 
 namespace srsran {
+
 /// Description of the decorators to be applied to an executor.
 struct execution_decoration_config {
   struct sync_option {};
@@ -26,7 +27,7 @@ struct execution_decoration_config {
   };
   struct metrics_option {
     std::string               name;
-    srslog::basic_logger&     logger;
+    srslog::basic_logger*     logger;
     std::chrono::milliseconds period;
   };
 
