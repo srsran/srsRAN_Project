@@ -27,6 +27,7 @@
 - name: srs-gnb
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
+  host_network: retina.srs.io/secondary-ip
   requirements:
     arch: amd64
     cpu:
@@ -54,7 +55,7 @@
   type: 5gc
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
   taints: ["purpose=corenetworks"]
-  host_network: true
+  host_network: retina.srs.io/secondary-ip
   requirements:
     arch: amd64
     cpu:
