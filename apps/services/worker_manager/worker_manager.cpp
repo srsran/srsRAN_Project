@@ -252,6 +252,7 @@ void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_c
                                                                                     config.dl_ue_executor_queue_size,
                                                                                     config.ul_ue_executor_queue_size,
                                                                                     config.ctrl_ue_executor_queue_size,
+                                                                                    config.strand_batch_size,
                                                                                     *exec_map.at("medium_prio_exec"),
                                                                                     *exec_map.at("low_prio_exec"),
                                                                                     config.dedicated_io_ul_strand,

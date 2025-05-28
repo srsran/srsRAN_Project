@@ -85,6 +85,8 @@ struct strand_based_executor_config {
   unsigned ul_ue_task_queue_size;
   /// \brief Size for the task queues of the strands created in the CU-UP for UE control tasks.
   unsigned ctrl_ue_task_queue_size;
+  /// \brief Maximum number of tasks that run in a strand before yeilding.
+  unsigned strand_batch_size;
   /// \brief Executor to which CU-UP strands and crypto tasks will be associated.
   task_executor& medium_prio_executor;
   /// \brief Executor to which CU-UP packet reception tasks will be associated.

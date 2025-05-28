@@ -19,6 +19,7 @@ namespace srsran {
 
 struct du_high_worker_manager {
   static const uint32_t task_worker_queue_size = 10000;
+  static const unsigned strand_batch_size      = 256;
 
   du_high_worker_manager();
   ~du_high_worker_manager();

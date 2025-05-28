@@ -51,6 +51,7 @@ class multithreaded_du_high_executor_mapper final : public test_helpers::du_high
 {
   static constexpr unsigned nof_low_prio_threads   = 3;
   static constexpr unsigned task_worker_queue_size = 10000;
+  static constexpr unsigned strand_batch_size      = 256;
 
 public:
   multithreaded_du_high_executor_mapper(const test_helpers::du_high_worker_config& cfg) :
@@ -86,6 +87,7 @@ public:
                                cfg.nof_cell_workers,
                                task_worker_queue_size,
                                task_worker_queue_size,
+                               strand_batch_size,
                                &low_prio_exec};
     exec_cfg.ctrl_executors = {task_worker_queue_size, &high_prio_exec};
 

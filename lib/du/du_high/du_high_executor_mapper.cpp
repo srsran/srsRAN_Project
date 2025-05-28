@@ -115,7 +115,8 @@ public:
     cell_strands.resize(cfg.nof_cells);
     for (unsigned i = 0, e = cfg.nof_cells; i != e; ++i) {
       cell_strands[i].strand =
-          std::make_unique<cell_strand_type>(cfg.pool_executors[i % cfg.pool_executors.size()],
+          std::make_unique<cell_strand_type>(256,
+                                             cfg.pool_executors[i % cfg.pool_executors.size()],
                                              std::array<concurrent_queue_params, 2>{slot_qparams, other_qparams});
       auto execs = cell_strands[i].strand->get_executors();
 
@@ -180,7 +181,8 @@ protected:
     task_executor*               dl_exec;
   };
 
-  common_ue_executor_mapper(unsigned initial_capacity)
+  common_ue_executor_mapper(unsigned initial_capacity, unsigned strand_batch_size_) :
+    strand_batch_size(strand_batch_size_)
   {
     srsran_assert(initial_capacity > 0, "Invalid number of max strands");
 
@@ -195,6 +197,7 @@ protected:
   {
     auto& strand_ctxt  = strands.emplace_back();
     strand_ctxt.strand = std::make_unique<strand_type>(
+        strand_batch_size,
         &pool_exec,
         std::array<concurrent_queue_params, 3>{
             concurrent_queue_params{concurrent_queue_policy::lockfree_mpmc, ctrl_queue_size},
@@ -223,6 +226,7 @@ protected:
 
   std::vector<strand_context> strands;
   executor_decorator          decorator;
+  const unsigned              strand_batch_size;
 };
 
 /// L2 UL executor mapper that maps UEs based on their RNTI.
@@ -233,9 +237,10 @@ public:
                                  unsigned                                        max_strands,
                                  unsigned                                        ctrl_queue_size,
                                  unsigned                                        pdu_queue_size,
+                                 unsigned                                        strand_batch_size_,
                                  bool                                            trace_enabled,
                                  const std::optional<std::chrono::milliseconds>& metrics_period) :
-    common_ue_executor_mapper(max_strands)
+    common_ue_executor_mapper(max_strands, strand_batch_size_)
   {
     for (unsigned i = 0; i != max_strands; ++i) {
       add_strand(pool_executor, ctrl_queue_size, pdu_queue_size, trace_enabled, metrics_period);
@@ -274,9 +279,10 @@ public:
                                     unsigned                                        max_strands_,
                                     unsigned                                        ctrl_queue_size_,
                                     unsigned                                        pdu_queue_size_,
+                                    unsigned                                        strand_batch_size_,
                                     bool                                            trace_enabled_,
                                     const std::optional<std::chrono::milliseconds>& metrics_period_) :
-    common_ue_executor_mapper(max_strands_),
+    common_ue_executor_mapper(max_strands_, strand_batch_size_),
     pool_exec(pool_executor),
     max_strands(max_strands_),
     ctrl_queue_size(ctrl_queue_size_),
@@ -340,6 +346,7 @@ std::unique_ptr<du_high_ue_executor_mapper> create_du_high_ue_executor_mapper(co
                                                            config.ue_executors.max_nof_strands,
                                                            config.ue_executors.ctrl_queue_size,
                                                            config.ue_executors.pdu_queue_size,
+                                                           config.ue_executors.strand_batch_size,
                                                            config.trace_exec_tasks,
                                                            config.metrics_period);
   } else {
@@ -347,6 +354,7 @@ std::unique_ptr<du_high_ue_executor_mapper> create_du_high_ue_executor_mapper(co
                                                                  config.ue_executors.max_nof_strands,
                                                                  config.ue_executors.ctrl_queue_size,
                                                                  config.ue_executors.pdu_queue_size,
+                                                                 config.ue_executors.strand_batch_size,
                                                                  config.trace_exec_tasks,
                                                                  config.metrics_period);
   }
@@ -370,7 +378,8 @@ public:
                        bool                                                    rt_mode_enabled,
                        bool                                                    trace_enabled,
                        const std::optional<std::chrono::milliseconds>&         metrics_period) :
-    strand(cfg.pool_executor,
+    strand(256,
+           cfg.pool_executor,
            std::array<concurrent_queue_params, 2>{
                concurrent_queue_params{concurrent_queue_policy::lockfree_mpmc, cfg.task_queue_size},
                concurrent_queue_params{concurrent_queue_policy::lockfree_mpmc, cfg.task_queue_size}}),

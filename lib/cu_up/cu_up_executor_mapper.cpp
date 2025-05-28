@@ -256,7 +256,8 @@ class strand_based_cu_up_executor_mapper final : public cu_up_executor_mapper
 {
 public:
   strand_based_cu_up_executor_mapper(const strand_based_executor_config& config) :
-    cu_up_strand(&config.medium_prio_executor,
+    cu_up_strand(config.strand_batch_size,
+                 &config.medium_prio_executor,
                  std::array<concurrent_queue_params, 2>{
                      {{concurrent_queue_policy::lockfree_mpmc, config.default_task_queue_size},
                       {concurrent_queue_policy::lockfree_mpmc, config.default_task_queue_size}}}),
@@ -292,7 +293,8 @@ private:
 
     // Create IO executor that can be either inlined with CU-UP strand or its own strand.
     if (config.dedicated_io_strand) {
-      io_ul_exec.emplace<io_dedicated_strand_type>(&config.medium_prio_executor, config.ul_ue_task_queue_size);
+      io_ul_exec.emplace<io_dedicated_strand_type>(
+          config.strand_batch_size, &config.medium_prio_executor, config.ul_ue_task_queue_size);
       io_ul_exec_ptr = &std::get<io_dedicated_strand_type>(io_ul_exec);
     } else {
       io_ul_exec.emplace<inline_task_executor>();
@@ -306,7 +308,8 @@ private:
     ue_dl_execs.resize(config.max_nof_ue_strands);
     std::array<concurrent_queue_params, 3> ue_queue_params = {ctrl_ue_qparams, ul_ue_qparams, dl_ue_qparams};
     for (unsigned i = 0; i != config.max_nof_ue_strands; ++i) {
-      ue_strands[i] = std::make_unique<ue_strand_type>(cu_up_strand.get_executors()[1], ue_queue_params);
+      ue_strands[i] =
+          std::make_unique<ue_strand_type>(config.strand_batch_size, cu_up_strand.get_executors()[1], ue_queue_params);
       span<ue_strand_type::executor_type> execs = ue_strands[i]->get_executors();
       srsran_assert(execs.size() == 3, "Three executors should have been created for the three priorities");
       ue_ctrl_execs[i] = &execs[0];

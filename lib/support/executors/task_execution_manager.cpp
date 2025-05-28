@@ -61,8 +61,8 @@ std::unique_ptr<task_executor> decorate_executor(const execution_config_helper::
   std::unique_ptr<task_executor> ret;
   if (desc.strand_queue_size.has_value()) {
     // Convert executor into a strand.
-    ret = std::make_unique<task_strand<Exec, concurrent_queue_policy::lockfree_mpmc>>(std::forward<Exec>(exec),
-                                                                                      desc.strand_queue_size.value());
+    ret = std::make_unique<task_strand<Exec, concurrent_queue_policy::lockfree_mpmc>>(
+        256, std::forward<Exec>(exec), desc.strand_queue_size.value());
   } else {
     ret = exec_to_ptr(std::forward<Exec>(exec));
   }
