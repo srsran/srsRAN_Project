@@ -17,6 +17,7 @@ namespace srsran {
 
 namespace detail {
 
+/// Helper class that verifies if provided T contains "->execute" method.
 template <typename T, typename... Args>
 class is_task_executor_ptr
 {
@@ -32,6 +33,7 @@ public:
   static constexpr bool value = decltype(test(std::declval<T>()))::value;
 };
 
+/// Helper class that verifies if provided T contains "->execute" method.
 template <typename T>
 class is_task_executor_ptr<T>
 {
