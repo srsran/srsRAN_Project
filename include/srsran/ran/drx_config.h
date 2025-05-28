@@ -52,7 +52,7 @@ span<const std::chrono::milliseconds> valid_long_cycle_values();
 /// Valid onDurationTimer values as per TS 38.331, "drx-LongCycleStartOffset".
 span<const std::chrono::milliseconds> valid_on_duration_timer_values();
 
-/// Valid InactivityTimer values as per TS 38.331, "drx-InactivityTyimer".
+/// Valid InactivityTimer values as per TS 38.331, "drx-InactivityTimer".
 span<const std::chrono::milliseconds> valid_inactivity_timer_values();
 
 /// Valid RetransmissionTimer values as per TS 38.331, "drx-RetransmissionTimerDL" and "drx-RetransmissionTimerUL".

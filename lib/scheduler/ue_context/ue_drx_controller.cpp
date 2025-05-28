@@ -62,8 +62,14 @@ void ue_drx_controller::slot_indication(slot_point dl_slot)
   }
 
   if (not active_time_end.valid()) {
-    const unsigned slot_mod = dl_slot.to_uint() % active_window_period;
-    if (slot_mod >= active_window.start() and slot_mod < active_window.stop()) {
+    const unsigned slot_mod                  = dl_slot.to_uint() % active_window_period;
+    bool is_slot_in_on_duration_timer_window = slot_mod >= active_window.start() and slot_mod < active_window.stop();
+    if (not is_slot_in_on_duration_timer_window and active_window.stop() >= active_window_period) {
+      // We must also check the interval [0, window_end % window_period).
+      is_slot_in_on_duration_timer_window = slot_mod < active_window.stop() % active_window_period;
+    }
+
+    if (is_slot_in_on_duration_timer_window) {
       // "the Active Time includes the time while [...] drx-onDuration [...] is running."
       slot_point new_end = dl_slot + (active_window.stop() - slot_mod);
       active_time_end    = new_end;
@@ -76,6 +82,7 @@ bool ue_drx_controller::is_pdcch_enabled() const
   if (not drx_cfg.has_value()) {
     return true;
   }
+
   return is_active_time();
 }
 
@@ -94,17 +101,22 @@ bool ue_drx_controller::is_active_time() const
   return false;
 }
 
-void ue_drx_controller::on_new_pdcch_alloc(slot_point pdcch_slot)
+void ue_drx_controller::on_dl_harq_nack(slot_point uci_slot)
 {
   if (not drx_cfg.has_value()) {
     return;
   }
 
-  if (inactivity_dur != 0 and is_active_time()) {
-    // "1> if the MAC entity is in Active Time
-    // "  2> if the PDCCH indicates a new transmission (DL or UL) [...] start or restart drx-InactivityTimer in the
-    // first symbol after the end of the PDCCH reception."
-    slot_point new_end = pdcch_slot + inactivity_dur;
+  // "  2> if the PDCCH indicates a DL transmission:
+  // "    3> start the drx-HARQ-RTT-TimerDL for the corresponding HARQ process in the first symbol after the end of the
+  // "       corresponding transmission carrying the DL HARQ feedback;
+  // [Implementation defined] drx-HARQ-TimerDL is always 0.
+  if (drx_cfg->retx_timer_dl != 0) {
+    // "1> if a drx-HARQ-RTT-TimerDL expires:
+    // "  2> if the data of the corresponding HARQ process was not successfully decoded:
+    // "    3> start the drx-RetransmissionTimerDL for the corresponding HARQ process in the first symbol after the
+    // "       expiry of drx-HARQ-RTT-TimerDL.
+    slot_point new_end = uci_slot + drx_cfg->retx_timer_dl;
     if (not active_time_end.valid() or active_time_end < new_end) {
       active_time_end = new_end;
     }

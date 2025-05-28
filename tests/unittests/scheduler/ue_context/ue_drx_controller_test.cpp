@@ -12,6 +12,7 @@
 #include "lib/scheduler/config/logical_channel_config_pool.h"
 #include "lib/scheduler/ue_context/ue_drx_controller.h"
 #include "lib/scheduler/ue_context/ul_logical_channel_manager.h"
+#include "srsran/ran/cyclic_prefix.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -63,8 +64,8 @@ protected:
 
 TEST_F(drx_disabled_ue_drx_controller_test, when_no_drx_config_provided_pdcch_is_always_available)
 {
-  const unsigned NOF_TESTS = 16;
-  for (unsigned i = 0; i != NOF_TESTS; ++i) {
+  static constexpr unsigned nof_tests = 16;
+  for (unsigned i = 0; i != nof_tests; ++i) {
     tick();
     ASSERT_TRUE(drx.is_pdcch_enabled());
   }
@@ -100,7 +101,8 @@ TEST_F(ue_drx_controller_test, when_pdcch_sent_then_on_duration_extended_by_inac
     tick();
 
     if (i == pdcch_idx) {
-      drx.on_new_pdcch_alloc(cur_slot);
+      // Note: for DL PDCCH grants `pxsch_slot` is ignored.
+      drx.on_new_pdcch_alloc<true>(cur_slot, slot_point{});
     }
 
     bool enabled = drx.is_pdcch_enabled();
@@ -183,7 +185,8 @@ TEST_F(ue_drx_no_inactivity_controller_test, when_pdcch_received_then_activity_i
 
     if (in_active_window) {
       // New PDCCH took place but it has no effect in active time.
-      this->drx.on_new_pdcch_alloc(cur_slot);
+      // Note: for DL PDCCH grants `pxsch_slot` is ignored.
+      this->drx.on_new_pdcch_alloc<false>(cur_slot, slot_point{});
     }
 
     ASSERT_EQ(enabled, in_active_window);

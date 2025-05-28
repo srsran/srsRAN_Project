@@ -42,7 +42,50 @@ public:
   bool is_pdcch_enabled() const;
 
   /// Update DRX active time based on new PDCCH allocations.
-  void on_new_pdcch_alloc(slot_point dl_slot);
+  template <bool IsDl>
+  void on_new_pdcch_alloc(slot_point pdcch_slot, slot_point pxsch_slot)
+  {
+    if (not drx_cfg.has_value()) {
+      return;
+    }
+
+    if (not is_active_time()) {
+      return;
+    }
+
+    // "1> if the MAC entity is in Active Time
+    if (inactivity_dur != 0) {
+      // "  2> if the PDCCH indicates a new transmission (DL or UL) [...] start or restart drx-InactivityTimer in the
+      //       first symbol after the end of the PDCCH reception."
+      slot_point inactivity_timer_end_slot = pdcch_slot + inactivity_dur;
+
+      if (not active_time_end.valid() or active_time_end < inactivity_timer_end_slot) {
+        active_time_end = inactivity_timer_end_slot;
+      }
+    }
+
+    // For DL, the drx-HARQ-RTT-TimerUL is only started by the UE when the HARQ process is not successfully decoded, so
+    // we don't know if that timer will be set at this point. See \ref ue_drx_controller::on_pucch_harq_nack.
+    if (not IsDl) {
+      // "  2> if the PDCCH indicates a UL transmission:
+      // "    3> start the drx-HARQ-RTT-TimerUL for the corresponding HARQ process in the first symbol after the end of
+      //         the first transmission (within a bundle) of the corresponding PUSCH transmission;
+      // [Implementation defined] drx-HARQ-RTT-TimerUL is always 0.
+      if (drx_cfg->retx_timer_ul != 0) {
+        // "1> if a drx-HARQ-RTT-TimerUL expires:
+        // "  2> start the drx-RetransmissionTimerUL for the corresponding HARQ process in the first symbol after the
+        //       expiry of drx-HARQ-RTT-TimerUL.
+        slot_point retx_timer_end_slot = pxsch_slot + drx_cfg->retx_timer_ul;
+
+        if (not active_time_end.valid() or active_time_end < retx_timer_end_slot) {
+          active_time_end = retx_timer_end_slot;
+        }
+      }
+    }
+  }
+
+  /// Update DRX active time based on a PUCCH HARQ NACK.
+  void on_dl_harq_nack(slot_point uci_slot);
 
   /// Update DRX active time based on ContentionResolutionTimer.
   void on_con_res_start();

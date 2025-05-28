@@ -373,7 +373,7 @@ void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                    
   grant.h_dl.save_grant_params(pdsch_sched_ctx, msg);
 
   // Update DRX state given the new allocation.
-  u.drx_controller().on_new_pdcch_alloc(pdcch_alloc.slot);
+  u.drx_controller().on_new_pdcch_alloc<false>(pdcch_alloc.slot, pdsch_alloc.slot);
 }
 
 expected<vrb_interval, dl_alloc_failure_cause>
@@ -750,7 +750,7 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_in
   u.handle_ul_transport_block_info(grant.h_ul.get_grant_params().tbs_bytes);
 
   // Update DRX state given the new allocation.
-  u.drx_controller().on_new_pdcch_alloc(pdcch_alloc.slot);
+  u.drx_controller().on_new_pdcch_alloc<false>(pdcch_alloc.slot, pusch_alloc.slot);
 
   // Update the number of PRBs used in the PUSCH allocation.
   ue_cc.get_pusch_power_controller().update_pusch_pw_ctrl_state(pusch_alloc.slot, vrbs.length());

@@ -122,6 +122,10 @@ std::optional<ue_cell::dl_ack_info_result> ue_cell::handle_dl_ack_info(slot_poin
 
   dl_harq_process_handle::status_update outcome = h_dl->dl_ack_info(ack_value, pucch_snr);
 
+  if (outcome == dl_harq_process_handle::status_update::nacked) {
+    drx_ctrl.on_dl_harq_nack(uci_slot);
+  }
+
   if (outcome == dl_harq_process_handle::status_update::acked or
       outcome == dl_harq_process_handle::status_update::nacked) {
     // HARQ is not expecting more ACK bits. Consider the feedback in the link adaptation controller.
