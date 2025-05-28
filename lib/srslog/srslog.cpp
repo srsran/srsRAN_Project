@@ -163,6 +163,7 @@ sink& srslog::fetch_stderr_sink(const std::string& id, std::unique_ptr<log_forma
 
 sink& srslog::fetch_file_sink(const std::string&             path,
                               size_t                         max_size,
+                              bool                           mark_eof,
                               bool                           force_flush,
                               std::unique_ptr<log_formatter> f)
 {
@@ -177,7 +178,7 @@ sink& srslog::fetch_file_sink(const std::string&             path,
   auto& s = srslog_instance::get().get_sink_repo().emplace(
       std::piecewise_construct,
       std::forward_as_tuple(path),
-      std::forward_as_tuple(new file_sink(path, max_size, force_flush, std::move(f))));
+      std::forward_as_tuple(new file_sink(path, max_size, mark_eof, force_flush, std::move(f))));
 
   return *s;
 }
@@ -412,7 +413,7 @@ sink* srslog::create_stderr_sink(const std::string& name)
   return srslog_instance::get().get_sink_repo().find("stderr")->get();
 }
 
-sink* srslog::create_file_sink(const std::string& path, size_t max_size)
+sink* srslog::create_file_sink(const std::string& path, size_t max_size, bool mark_eof)
 {
   //: TODO: GCC5 or lower versions emits an error if we use the new() expression
   // directly, use redundant piecewise_construct instead.
@@ -421,7 +422,7 @@ sink* srslog::create_file_sink(const std::string& path, size_t max_size)
       .emplace(std::piecewise_construct,
                std::forward_as_tuple(path),
                std::forward_as_tuple(
-                   new file_sink(path, max_size, false, std::unique_ptr<log_formatter>(new text_formatter))))
+                   new file_sink(path, max_size, mark_eof, false, std::unique_ptr<log_formatter>(new text_formatter))))
       .get();
 }
 
