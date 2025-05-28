@@ -456,7 +456,7 @@ int main(int argc, char** argv)
       app_services::create_remote_server(cu_cfg.remote_control_config, {});
 
   {
-    app_services::application_message_banners app_banner(app_name);
+    app_services::application_message_banners app_banner(app_name, cu_cfg.log_cfg.filename);
 
     while (is_app_running) {
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
