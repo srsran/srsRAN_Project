@@ -9,6 +9,7 @@
  */
 
 #include "srsran/support/executors/executor_decoration_factory.h"
+#include "srsran/support/executors/executor_throttler.h"
 #include "srsran/support/executors/executor_tracer.h"
 #include "srsran/support/executors/sequential_metrics_executor.h"
 #include "srsran/support/executors/sync_task_executor.h"
@@ -62,6 +63,11 @@ void make_executor_decorator_helper(std::unique_ptr<task_executor>&   result,
   if constexpr (std::is_same_v<Decoration, execution_decoration_config::sync_option>) {
     make_executor_decorator_helper(
         result, sync_task_executor<ComposedExecutor>(std::forward<ComposedExecutor>(exec)), policies...);
+  } else if constexpr (std::is_same_v<Decoration, execution_decoration_config::throttle_option>) {
+    make_executor_decorator_helper(
+        result,
+        executor_throttler<ComposedExecutor>(std::forward<ComposedExecutor>(exec), first_policy->nof_task_threshold),
+        policies...);
   } else if constexpr (std::is_same_v<Decoration, execution_decoration_config::metrics_option>) {
     make_executor_decorator_helper(
         result,
@@ -72,7 +78,7 @@ void make_executor_decorator_helper(std::unique_ptr<task_executor>&   result,
     make_executor_decorator_helper(result,
                                    executor_tracer<ComposedExecutor, file_event_tracer<true>>{
                                        std::forward<ComposedExecutor>(exec), *first_policy->tracer, first_policy->name},
-                                   std::forward<Policies>(policies)...);
+                                   policies...);
   } else {
     static_assert(false, "Unsupported executor policy in make_executor_decorator_helper");
   }
@@ -84,13 +90,13 @@ std::unique_ptr<task_executor> srsran::decorate_executor(std::unique_ptr<task_ex
                                                          const execution_decoration_config& config)
 {
   std::unique_ptr<task_executor> result;
-  make_executor_decorator_helper(result, std::move(exec), config.sync, config.metrics, config.trace);
+  make_executor_decorator_helper(result, std::move(exec), config.sync, config.throttle, config.metrics, config.trace);
   return result;
 }
 
 std::unique_ptr<task_executor> srsran::decorate_executor(task_executor& exec, const execution_decoration_config& config)
 {
   std::unique_ptr<task_executor> result;
-  make_executor_decorator_helper(result, exec, config.sync, config.metrics, config.trace);
+  make_executor_decorator_helper(result, exec, config.sync, config.throttle, config.metrics, config.trace);
   return result;
 }

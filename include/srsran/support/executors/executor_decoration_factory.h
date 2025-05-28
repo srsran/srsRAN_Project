@@ -21,6 +21,10 @@ namespace srsran {
 /// Description of the decorators to be applied to an executor.
 struct execution_decoration_config {
   struct sync_option {};
+  struct throttle_option {
+    /// Number of tasks pending after which the caller to the executor starts being throttled.
+    unsigned nof_task_threshold;
+  };
   struct trace_option {
     std::string              name;
     file_event_tracer<true>* tracer;
@@ -33,6 +37,9 @@ struct execution_decoration_config {
 
   /// If set, the executor will block the caller until the task is executed.
   std::optional<sync_option> sync;
+  /// \brief If set, the executor will throttle the execute/defer caller if the number of pending tasks exceeds the
+  /// specified threshold.
+  std::optional<throttle_option> throttle;
   /// \brief If set, the executor will collect metrics on the task execution latencies.
   /// \remark This decorator should be only used with sequential executors (e.g. strands, single threads).
   std::optional<metrics_option> metrics;

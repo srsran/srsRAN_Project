@@ -36,14 +36,17 @@ struct executor_decorator {
     report_error_if_not(not throttle_thres or not is_sync, "Throttling cannot be used with synchronous executors");
 
     execution_decoration_config cfg;
+    if (is_sync) {
+      cfg.sync = execution_decoration_config::sync_option{};
+    }
+    if (throttle_thres.has_value()) {
+      cfg.throttle = execution_decoration_config::throttle_option{*throttle_thres};
+    }
     if (tracing_enabled) {
       cfg.trace = execution_decoration_config::trace_option{exec_name, &tracer};
     }
     if (metrics_period) {
       cfg.metrics = execution_decoration_config::metrics_option{exec_name, &metrics_logger, *metrics_period};
-    }
-    if (is_sync) {
-      cfg.sync = execution_decoration_config::sync_option{};
     }
     decorators.push_back(decorate_executor(std::forward<Exec>(exec), cfg));
 

@@ -28,6 +28,12 @@ public:
     exec(std::forward<E>(executor_)), thres_throttle(thres_throttle_)
   {
   }
+  executor_throttler(executor_throttler&& other) noexcept :
+    exec(std::forward<Executor>(other.exec)),
+    thres_throttle(other.thres_throttle),
+    count(other.count.exchange(0, std::memory_order_relaxed))
+  {
+  }
 
   [[nodiscard]] bool execute(unique_task task) override { return dispatch_impl<true>(std::move(task)); }
 
