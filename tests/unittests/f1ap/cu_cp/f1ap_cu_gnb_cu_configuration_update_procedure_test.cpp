@@ -9,6 +9,7 @@
  */
 
 #include "f1ap_cu_test_helpers.h"
+#include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/ran/cause/f1ap_cause.h"
 #include "srsran/support/async/async_test_utils.h"
@@ -84,7 +85,7 @@ TEST_F(f1ap_cu_gnb_cu_configuration_update_test, when_response_received_then_pro
   // Start GNB CU CONFIGURATION UPDATE procedure and return back the response from the DU.
   f1ap_gnb_cu_configuration_update req = create_gnb_cu_configuration_update();
   this->start_procedure(req);
-  f1ap_message response = generate_gnb_cu_configuration_update_acknowledgement({});
+  f1ap_message response = test_helpers::generate_gnb_cu_configuration_update_acknowledgement({});
   f1ap->handle_message(response);
 
   // The GNB CU CONFIGURATION UPDATE ACKNOWLEDGEMENT was received and the F1AP-CU completed the procedure.
@@ -97,9 +98,10 @@ TEST_F(f1ap_cu_gnb_cu_configuration_update_test,
   // Start GNB CU CONFIGURATION UPDATE procedure and return back the response from the DU.
   f1ap_gnb_cu_configuration_update req = create_gnb_cu_configuration_update();
   this->start_procedure(req);
-  f1ap_message response = generate_gnb_cu_configuration_update_acknowledgement({f1ap_cell_failed_to_activate{
-      nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(0).value()},
-      f1ap_cause_radio_network_t::cell_not_available}});
+  f1ap_message response =
+      test_helpers::generate_gnb_cu_configuration_update_acknowledgement({f1ap_cell_failed_to_activate{
+          nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(0).value()},
+          f1ap_cause_radio_network_t::cell_not_available}});
   f1ap->handle_message(response);
 
   // The GNB CU CONFIGURATION UPDATE ACKNOWLEDGEMENT was received and the F1AP-CU completed the procedure.
@@ -112,7 +114,7 @@ TEST_F(f1ap_cu_gnb_cu_configuration_update_test, when_ue_setup_failure_received_
   f1ap_gnb_cu_configuration_update req = create_gnb_cu_configuration_update();
   this->start_procedure(req);
 
-  f1ap_message response = generate_gnb_cu_configuration_update_failure();
+  f1ap_message response = test_helpers::generate_gnb_cu_configuration_update_failure();
   f1ap->handle_message(response);
 
   // The GNB CU CONFIGURATION UPDATE FAILURE was received and the F1AP-CU completed the procedure with failure.

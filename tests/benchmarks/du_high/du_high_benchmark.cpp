@@ -355,7 +355,7 @@ private:
             int_to_gnb_du_ue_f1ap_id(init_msg.value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
         gnb_cu_ue_f1ap_id_t cu_ue_id =
             int_to_gnb_cu_ue_f1ap_id(init_msg.value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
-        f1ap_message dl_msg = test_helpers::create_dl_rrc_message_transfer(
+        f1ap_message dl_msg = test_helpers::generate_dl_rrc_message_transfer(
             du_ue_id, cu_ue_id, srb_id_t::srb0, byte_buffer::create({0x1, 0x2, 0x3}).value());
         du_rx_pdu_notifier->on_new_message(dl_msg);
       } break;
@@ -777,7 +777,7 @@ public:
           int_to_gnb_du_ue_f1ap_id(pdu->pdu.init_msg().value.ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
       gnb_cu_ue_f1ap_id_t cu_ue_id =
           int_to_gnb_cu_ue_f1ap_id(pdu->pdu.init_msg().value.ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
-      f1ap_message uectxt_msg = test_helpers::create_ue_context_setup_request(
+      f1ap_message uectxt_msg = test_helpers::generate_ue_context_setup_request(
           cu_ue_id, du_ue_id, 0, {drb_id_t::drb1}, config_helpers::make_default_du_cell_config().nr_cgi);
       auto& ue_ctxt_setup = *uectxt_msg.pdu.init_msg().value.ue_context_setup_request();
       // Do not send RRC container, otherwise we have to send an RLC ACK.

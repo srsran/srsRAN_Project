@@ -107,11 +107,12 @@ protected:
 TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_f1ap_notifies_du_of_ue_context_update)
 {
   du_creates_f1_logical_connection();
-  start_procedure(test_helpers::create_ue_context_setup_request(gnb_cu_ue_f1ap_id_t{0},
-                                                                gnb_du_ue_f1ap_id_t{0},
-                                                                1,
-                                                                {drb_id_t::drb1},
-                                                                config_helpers::make_default_du_cell_config().nr_cgi));
+  start_procedure(
+      test_helpers::generate_ue_context_setup_request(gnb_cu_ue_f1ap_id_t{0},
+                                                      gnb_du_ue_f1ap_id_t{0},
+                                                      1,
+                                                      {drb_id_t::drb1},
+                                                      config_helpers::make_default_du_cell_config().nr_cgi));
 
   // DU manager receives UE Context Update Request.
   ASSERT_TRUE(this->f1ap_du_cfg_handler.last_ue_context_update_req.has_value());
@@ -129,11 +130,11 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_f1ap_respo
 {
   du_creates_f1_logical_connection();
   f1ap_message msg =
-      test_helpers::create_ue_context_setup_request(gnb_cu_ue_f1ap_id_t{0},
-                                                    gnb_du_ue_f1ap_id_t{0},
-                                                    1,
-                                                    {drb_id_t::drb1},
-                                                    config_helpers::make_default_du_cell_config().nr_cgi);
+      test_helpers::generate_ue_context_setup_request(gnb_cu_ue_f1ap_id_t{0},
+                                                      gnb_du_ue_f1ap_id_t{0},
+                                                      1,
+                                                      {drb_id_t::drb1},
+                                                      config_helpers::make_default_du_cell_config().nr_cgi);
   start_procedure(msg);
 
   // Lower layers handle RRC container.
@@ -169,11 +170,11 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_the_rrc_co
 {
   du_creates_f1_logical_connection();
   f1ap_message msg =
-      test_helpers::create_ue_context_setup_request(gnb_cu_ue_f1ap_id_t{0},
-                                                    gnb_du_ue_f1ap_id_t{0},
-                                                    1,
-                                                    {drb_id_t::drb1},
-                                                    config_helpers::make_default_du_cell_config().nr_cgi);
+      test_helpers::generate_ue_context_setup_request(gnb_cu_ue_f1ap_id_t{0},
+                                                      gnb_du_ue_f1ap_id_t{0},
+                                                      1,
+                                                      {drb_id_t::drb1},
+                                                      config_helpers::make_default_du_cell_config().nr_cgi);
   start_procedure(msg);
 
   // F1AP sends RRC Container present in UE CONTEXT SETUP REQUEST via SRB1.
@@ -185,11 +186,11 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_new_srbs_b
 {
   du_creates_f1_logical_connection();
   f1ap_message msg =
-      test_helpers::create_ue_context_setup_request(gnb_cu_ue_f1ap_id_t{0},
-                                                    gnb_du_ue_f1ap_id_t{0},
-                                                    1,
-                                                    {drb_id_t::drb1},
-                                                    config_helpers::make_default_du_cell_config().nr_cgi);
+      test_helpers::generate_ue_context_setup_request(gnb_cu_ue_f1ap_id_t{0},
+                                                      gnb_du_ue_f1ap_id_t{0},
+                                                      1,
+                                                      {drb_id_t::drb1},
+                                                      config_helpers::make_default_du_cell_config().nr_cgi);
   run_ue_context_setup_procedure(test_ue->ue_index, msg);
 
   // UL data through created SRB2 reaches F1-C.
@@ -207,7 +208,7 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_new_srbs_b
 
 TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_without_gnb_du_ue_f1ap_id_then_ue_is_created)
 {
-  f1ap_message msg = test_helpers::create_ue_context_setup_request(
+  f1ap_message msg = test_helpers::generate_ue_context_setup_request(
       gnb_cu_ue_f1ap_id_t{0}, std::nullopt, 1, {drb_id_t::drb1}, config_helpers::make_default_du_cell_config().nr_cgi);
 
   start_procedure(msg);
@@ -218,7 +219,7 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_without_gnb_du_
 
 TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_without_gnb_du_ue_f1ap_id_then_ue_context_is_updated)
 {
-  f1ap_message msg = test_helpers::create_ue_context_setup_request(
+  f1ap_message msg = test_helpers::generate_ue_context_setup_request(
       gnb_cu_ue_f1ap_id_t{0}, std::nullopt, 1, {drb_id_t::drb1}, config_helpers::make_default_du_cell_config().nr_cgi);
 
   start_procedure(msg);
@@ -236,7 +237,7 @@ TEST_F(
     f1ap_du_ue_context_setup_test,
     when_f1ap_receives_request_without_gnb_du_ue_f1ap_id_then_ue_context_setup_response_is_sent_to_cu_cp_with_crnti_ie)
 {
-  f1ap_message msg = test_helpers::create_ue_context_setup_request(
+  f1ap_message msg = test_helpers::generate_ue_context_setup_request(
       gnb_cu_ue_f1ap_id_t{0}, std::nullopt, 1, {drb_id_t::drb1}, config_helpers::make_default_du_cell_config().nr_cgi);
 
   start_procedure(msg);
@@ -265,7 +266,7 @@ TEST_F(
 
 TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_without_pdcp_sn_length_drb_setup_fails)
 {
-  f1ap_message msg = test_helpers::create_ue_context_setup_request(
+  f1ap_message msg = test_helpers::generate_ue_context_setup_request(
       gnb_cu_ue_f1ap_id_t{0}, std::nullopt, 1, {drb_id_t::drb1}, config_helpers::make_default_du_cell_config().nr_cgi);
 
   // Disable PDCP SN length information from DRB to setup.

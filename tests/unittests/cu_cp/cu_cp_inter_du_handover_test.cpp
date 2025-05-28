@@ -14,7 +14,6 @@
 #include "tests/test_doubles/rrc/rrc_test_message_validators.h"
 #include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
-#include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/f1ap/f1ap_message.h"
@@ -65,11 +64,11 @@ public:
   {
     // Inject UL RRC Message (containing RRC Measurement Report) and wait for UE Context Setup Request
     get_du(source_du_idx)
-        .push_ul_pdu(
-            generate_ul_rrc_message_transfer(ue_ctx->cu_ue_id.value(),
-                                             ue_ctx->du_ue_id.value(),
-                                             srb_id_t::srb1,
-                                             make_byte_buffer("000800410004015f741fe0804bf183fcaa6e9699").value()));
+        .push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
+            ue_ctx->du_ue_id.value(),
+            ue_ctx->cu_ue_id.value(),
+            srb_id_t::srb1,
+            make_byte_buffer("000800410004015f741fe0804bf183fcaa6e9699").value()));
     report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(target_du_idx, f1ap_pdu),
                               "Failed to receive UE Context Setup Request");
     report_fatal_error_if_not(test_helpers::is_valid_ue_context_setup_request_with_ue_capabilities(f1ap_pdu),
@@ -81,7 +80,8 @@ public:
   {
     // Inject UE Context Setup Failure
     get_du(target_du_idx)
-        .push_ul_pdu(generate_ue_context_setup_failure(ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value()));
+        .push_ul_pdu(
+            test_helpers::generate_ue_context_setup_failure(ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value()));
     return true;
   }
 
@@ -89,26 +89,26 @@ public:
   {
     // Inject UE Context Setup Response and await Bearer Context Modification Request
     get_du(target_du_idx)
-        .push_ul_pdu(
-            generate_ue_context_setup_response(ue_ctx->cu_ue_id.value(),
-                                               ue_ctx->du_ue_id.value(),
-                                               crnti,
-                                               make_byte_buffer("5c06c0060030258380f80408d07810000929dc601349798002692f"
-                                                                "1200000464c6b6c61b3704020000080800041a235246c0134978"
-                                                                "90000023271adb19127c03033255878092748837146e30dc71b963"
-                                                                "7dfab6387580221603400c162300e20981950001ff0000000003"
-                                                                "06e10840000402ca0041904000040d31a01100102000e388844800"
-                                                                "4080038e2221400102000e3888c60004080038e24060088681aa"
-                                                                "b2420e0008206102860e4a60c9a3670e8f00000850000800b50001"
-                                                                "000850101800b50102000850202800b50203000850303800b503"
-                                                                "0b8c8b5040c00504032014120d00505036014160e0050603a0141a"
-                                                                "120c506a0496302a72fd159e26f2681d2083c5df81821c000000"
-                                                                "38ffd294a5294f28160000219760000000000005000001456aa280"
-                                                                "23800c00041000710804e20070101084000e21009c200e040220"
-                                                                "8001c420138401c0c042100038840270c038200882000710804e18"
-                                                                "004000000410c04080c100e0d0000e388000000400800100c001"
-                                                                "0120044014c00004620090e3800c")
-                                                   .value()));
+        .push_ul_pdu(test_helpers::generate_ue_context_setup_response(
+            ue_ctx->cu_ue_id.value(),
+            ue_ctx->du_ue_id.value(),
+            crnti,
+            make_byte_buffer("5c06c0060030258380f80408d07810000929dc601349798002692f"
+                             "1200000464c6b6c61b3704020000080800041a235246c0134978"
+                             "90000023271adb19127c03033255878092748837146e30dc71b963"
+                             "7dfab6387580221603400c162300e20981950001ff0000000003"
+                             "06e10840000402ca0041904000040d31a01100102000e388844800"
+                             "4080038e2221400102000e3888c60004080038e24060088681aa"
+                             "b2420e0008206102860e4a60c9a3670e8f00000850000800b50001"
+                             "000850101800b50102000850202800b50203000850303800b503"
+                             "0b8c8b5040c00504032014120d00505036014160e0050603a0141a"
+                             "120c506a0496302a72fd159e26f2681d2083c5df81821c000000"
+                             "38ffd294a5294f28160000219760000000000005000001456aa280"
+                             "23800c00041000710804e20070101084000e21009c200e040220"
+                             "8001c420138401c0c042100038840270c038200882000710804e18"
+                             "004000000410c04080c100e0d0000e388000000400800100c001"
+                             "0120044014c00004620090e3800c")
+                .value()));
     report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu),
                               "Failed to receive Bearer Context Modification Request");
     report_fatal_error_if_not(
@@ -157,18 +157,18 @@ public:
   {
     // Inject UE Context Modification Response and wait for UE Context Release Command
     get_du(source_du_idx)
-        .push_ul_pdu(
-            generate_ue_context_modification_response(ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value(), crnti));
+        .push_ul_pdu(test_helpers::generate_ue_context_modification_response(
+            ue_ctx->du_ue_id.value(), ue_ctx->cu_ue_id.value(), crnti));
     return true;
   }
 
   [[nodiscard]] bool send_rrc_reconfiguration_complete()
   {
     get_du(target_du_idx)
-        .push_ul_pdu(generate_ul_rrc_message_transfer(ue_ctx->cu_ue_id.value(),
-                                                      ue_ctx->du_ue_id.value(),
-                                                      srb_id_t::srb1,
-                                                      make_byte_buffer("8000080035c41efd").value()));
+        .push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(ue_ctx->du_ue_id.value(),
+                                                                    ue_ctx->cu_ue_id.value(),
+                                                                    srb_id_t::srb1,
+                                                                    make_byte_buffer("8000080035c41efd").value()));
     return true;
   }
 
@@ -176,7 +176,7 @@ public:
   {
     // Inject F1AP UE Context Release Complete
     get_du(du_idx).push_ul_pdu(
-        generate_ue_context_release_complete(ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value()));
+        test_helpers::generate_ue_context_release_complete(ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value()));
     return true;
   }
 

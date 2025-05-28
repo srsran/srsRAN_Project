@@ -14,7 +14,6 @@
 #include "tests/test_doubles/ngap/ngap_test_message_validators.h"
 #include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
-#include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/e1ap/common/e1ap_types.h"
@@ -289,7 +288,7 @@ TEST_F(
     srsran_assert(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu), "there are still F1AP DL messages to pop from DU");
 
     // Inject Initial UL RRC message
-    f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
+    f1ap_message init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
     test_logger.info("c-rnti={} du_ue={}: Injecting Initial UL RRC message", crnti, fmt::underlying(du_ue_id));
     get_du(du_idx).push_ul_pdu(init_ul_rrc_msg);
 
@@ -308,8 +307,8 @@ TEST_F(
 
     // Send RRC Setup Complete.
     // > Generate UL DCCH message (containing RRC Setup Complete).
-    f1ap_message ul_dcch_msg =
-        generate_ul_rrc_message_transfer(cu_ue_id, du_ue_id, srb_id_t::srb1, generate_rrc_setup_complete());
+    f1ap_message ul_dcch_msg = test_helpers::generate_ul_rrc_message_transfer(
+        du_ue_id, cu_ue_id, srb_id_t::srb1, generate_rrc_setup_complete());
     // > Generate UL RRC Message (containing RRC Setup Complete) with PDCP SN=0.
     get_du(du_idx).push_ul_pdu(ul_dcch_msg);
   }

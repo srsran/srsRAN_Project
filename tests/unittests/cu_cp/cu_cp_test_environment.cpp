@@ -16,7 +16,6 @@
 #include "tests/test_doubles/rrc/rrc_test_messages.h"
 #include "tests/unittests/cu_cp/test_doubles/mock_cu_up.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
-#include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
@@ -403,7 +402,7 @@ bool cu_cp_test_environment::connect_new_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t
   srsran_assert(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu), "there are still F1AP DL messages to pop from DU");
 
   // Inject Initial UL RRC message
-  f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
+  f1ap_message init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
   test_logger.info("c-rnti={} du_ue={}: Injecting Initial UL RRC message", crnti, fmt::underlying(du_ue_id));
   get_du(du_idx).push_ul_pdu(init_ul_rrc_msg);
 
@@ -473,9 +472,9 @@ bool cu_cp_test_environment::authenticate_ue(unsigned du_idx, gnb_du_ue_f1ap_id_
                             "Invalid DL RRC message transfer");
 
   // Inject UL RRC msg transfer (authentication response)
-  f1ap_message ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
-      ue_ctx.cu_ue_id.value(),
+  f1ap_message ul_rrc_msg_transfer = test_helpers::generate_ul_rrc_message_transfer(
       du_ue_id,
+      ue_ctx.cu_ue_id.value(),
       srb_id_t::srb1,
       make_byte_buffer("00013a0abf002b96882dac46355c4f34464ddaf7b43fde37ae8000000000").value());
   get_du(du_idx).push_ul_pdu(ul_rrc_msg_transfer);
@@ -498,9 +497,9 @@ bool cu_cp_test_environment::authenticate_ue(unsigned du_idx, gnb_du_ue_f1ap_id_
                             "Invalid DL RRC message transfer");
 
   // Inject UL RRC msg transfer (ue security mode complete)
-  ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
-      ue_ctx.cu_ue_id.value(),
+  ul_rrc_msg_transfer = test_helpers::generate_ul_rrc_message_transfer(
       du_ue_id,
+      ue_ctx.cu_ue_id.value(),
       srb_id_t::srb1,
       make_byte_buffer("00023a1cbf0243241cb5003f002f3b80048290a1b283800000f8b880103f0020bc800680807888787f800008192a3b4"
                        "c080080170170700c0080a980808000000000")
@@ -543,12 +542,13 @@ bool cu_cp_test_environment::setup_ue_security(unsigned du_idx, gnb_du_ue_f1ap_i
   }
 
   // Inject UE Context Setup Response
-  f1ap_message ue_ctxt_setup_response = generate_ue_context_setup_response(ue_ctx.cu_ue_id.value(), du_ue_id);
+  f1ap_message ue_ctxt_setup_response =
+      test_helpers::generate_ue_context_setup_response(ue_ctx.cu_ue_id.value(), du_ue_id);
   get_du(du_idx).push_ul_pdu(ue_ctxt_setup_response);
 
   // Inject RRC Security Mode Complete
-  f1ap_message ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
-      ue_ctx.cu_ue_id.value(), du_ue_id, srb_id_t::srb1, make_byte_buffer("00032a00fd5ec7ff").value());
+  f1ap_message ul_rrc_msg_transfer = test_helpers::generate_ul_rrc_message_transfer(
+      du_ue_id, ue_ctx.cu_ue_id.value(), srb_id_t::srb1, make_byte_buffer("00032a00fd5ec7ff").value());
   get_du(du_idx).push_ul_pdu(ul_rrc_msg_transfer);
 
   // Wait for UE Capability Enquiry
@@ -564,7 +564,7 @@ bool cu_cp_test_environment::setup_ue_security(unsigned du_idx, gnb_du_ue_f1ap_i
   }
 
   // Inject UL RRC Message Transfer (containing UE Capability Info)
-  get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
+  get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
       du_ue_id,
       ue_ctx.cu_ue_id.value(),
       srb_id_t::srb1,
@@ -601,11 +601,11 @@ bool cu_cp_test_environment::finish_ue_registration(unsigned du_idx, unsigned cu
   auto& ue_ctx = attached_ues.at(du_ue_id_to_ran_ue_id_map.at(du_idx).at(du_ue_id));
 
   // Inject Registration Complete and wait UL NAS message.
-  get_du(du_idx).push_ul_pdu(
-      test_helpers::create_ul_rrc_message_transfer(du_ue_id,
-                                                   ue_ctx.cu_ue_id.value(),
-                                                   srb_id_t::srb1,
-                                                   make_byte_buffer("00053a053f015362c51680bf00218086b09a5b").value()));
+  get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
+      du_ue_id,
+      ue_ctx.cu_ue_id.value(),
+      srb_id_t::srb1,
+      make_byte_buffer("00053a053f015362c51680bf00218086b09a5b").value()));
   bool result = this->wait_for_ngap_tx_pdu(ngap_pdu);
   report_fatal_error_if_not(result, "Failed to receive Registration Complete");
 
@@ -624,7 +624,7 @@ bool cu_cp_test_environment::request_pdu_session_resource_setup(unsigned        
   auto& ue_ctx = attached_ues.at(du_ue_id_to_ran_ue_id_map.at(du_idx).at(du_ue_id));
 
   // Inject PDU Session Establishment Request and wait UL NAS message.
-  get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
+  get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
       du_ue_id,
       ue_ctx.cu_ue_id.value(),
       srb_id_t::srb1,
@@ -811,7 +811,7 @@ bool cu_cp_test_environment::send_rrc_reconfiguration_complete_and_await_pdu_ses
   auto& ue_ctx = attached_ues.at(du_ue_id_to_ran_ue_id_map.at(du_idx).at(du_ue_id));
 
   // Inject UL RRC Message (containing RRC Reconfiguration Complete) and wait for PDU Session Resource Setup Response
-  get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
+  get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
       du_ue_id, ue_ctx.cu_ue_id.value(), srb_id_t::srb1, std::move(rrc_reconfiguration_complete)));
   bool result = this->wait_for_ngap_tx_pdu(ngap_pdu);
   report_fatal_error_if_not(result, "Failed to receive PDU Session Resource Setup Response");
@@ -950,7 +950,7 @@ bool cu_cp_test_environment::reestablish_ue(unsigned            du_idx,
   byte_buffer rrc_container =
       pack_ul_ccch_msg(create_rrc_reestablishment_request(old_crnti, old_pci, "1111010001000010"));
   f1ap_message f1ap_init_ul_rrc_msg =
-      test_helpers::create_init_ul_rrc_message_transfer(new_du_ue_id, new_crnti, {}, std::move(rrc_container));
+      test_helpers::generate_init_ul_rrc_message_transfer(new_du_ue_id, new_crnti, {}, std::move(rrc_container));
   get_du(du_idx).push_ul_pdu(f1ap_init_ul_rrc_msg);
 
   // Wait for DL RRC message transfer (with RRC Reestablishment / RRC Setup / RRC Reject).
@@ -1010,7 +1010,7 @@ bool cu_cp_test_environment::reestablish_ue(unsigned            du_idx,
   report_error_if_not(pdu.append(std::array<uint8_t, 4>{0x01, 0x1d, 0x37, 0x38}), "bad alloc");
   // > Send UL RRC Message to CU-CP.
   get_du(du_idx).push_ul_pdu(
-      test_helpers::create_ul_rrc_message_transfer(new_du_ue_id, *old_ue.cu_ue_id, srb_id_t::srb1, std::move(pdu)));
+      test_helpers::generate_ul_rrc_message_transfer(new_du_ue_id, *old_ue.cu_ue_id, srb_id_t::srb1, std::move(pdu)));
 
   // STATUS: CU-CP sends E1AP Bearer Context Modification Request.
   e1ap_message e1ap_pdu;
@@ -1053,7 +1053,7 @@ bool cu_cp_test_environment::reestablish_ue(unsigned            du_idx,
   report_error_if_not(pdu.prepend(std::array<uint8_t, 2>{0x00U, 0x01U}), "bad alloc");
   report_error_if_not(pdu.append(std::array<uint8_t, 4>{0xd3, 0x69, 0xb8, 0xf7}), "bad alloc");
   get_du(du_idx).push_ul_pdu(
-      test_helpers::create_ul_rrc_message_transfer(new_du_ue_id, *old_ue.cu_ue_id, srb_id_t::srb1, std::move(pdu)));
+      test_helpers::generate_ul_rrc_message_transfer(new_du_ue_id, *old_ue.cu_ue_id, srb_id_t::srb1, std::move(pdu)));
 
   return true;
 }
