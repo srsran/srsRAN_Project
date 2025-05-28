@@ -32,10 +32,18 @@ public:
   void on_stop_indication(const fapi::stop_indication& msg) override {}
 };
 
+class operation_controller_dummy : public fapi::operation_controller
+{
+public:
+  void start() override {}
+  void stop() override {}
+};
+
 } // namespace
 
 static config_message_notifier_dummy     dummy_config_notifier;
 static slot_error_message_notifier_dummy dummy_slot_error_notifier;
+static operation_controller_dummy        dummy_controller;
 
 fapi::config_message_notifier& split6_cell_configurator_plugin_dummy::get_config_message_notifier()
 {
@@ -45,4 +53,9 @@ fapi::config_message_notifier& split6_cell_configurator_plugin_dummy::get_config
 fapi::slot_error_message_notifier& split6_cell_configurator_plugin_dummy::get_slot_error_message_notifier()
 {
   return dummy_slot_error_notifier;
+}
+
+fapi::operation_controller& split6_cell_configurator_plugin_dummy::get_operation_controller()
+{
+  return dummy_controller;
 }

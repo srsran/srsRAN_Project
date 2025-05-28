@@ -75,10 +75,12 @@ bool srsran::validate_split_7_2_o_du_unit_config(const split_7_2_o_du_unit_confi
   }
 
   auto du_low_dependencies = get_du_low_validation_dependencies(config.odu_high_cfg.du_high_cfg.config);
-  if (!validate_du_low_config(config.du_low_cfg, du_low_dependencies, available_cpus)) {
+  if (!validate_du_low_config(config.du_low_cfg, du_low_dependencies) ||
+      !validate_du_low_cpus(config.du_low_cfg, available_cpus)) {
     return false;
   }
 
   auto ru_ofh_dependencies = get_ru_ofh_validation_dependencies(config.odu_high_cfg.du_high_cfg.config);
-  return validate_ru_ofh_config(config.ru_cfg.config, ru_ofh_dependencies, available_cpus);
+  return validate_ru_ofh_config(config.ru_cfg.config, ru_ofh_dependencies) &&
+         validate_ru_ofh_cpus(config.ru_cfg.config, available_cpus);
 }

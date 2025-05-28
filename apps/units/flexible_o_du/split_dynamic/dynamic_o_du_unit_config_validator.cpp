@@ -123,19 +123,20 @@ bool srsran::validate_dynamic_o_du_unit_config(const dynamic_o_du_unit_config&  
   }
 
   auto du_low_dependencies = get_du_low_validation_dependencies(config.odu_high_cfg.du_high_cfg.config);
-  if (!validate_du_low_config(config.du_low_cfg, du_low_dependencies, available_cpus)) {
+  if (!validate_du_low_config(config.du_low_cfg, du_low_dependencies) ||
+      !validate_du_low_cpus(config.du_low_cfg, available_cpus)) {
     return false;
   }
 
-  if (std::holds_alternative<ru_ofh_unit_parsed_config>(config.ru_cfg)) {
+  if (auto* ru_ofh = std::get_if<ru_ofh_unit_parsed_config>(&config.ru_cfg)) {
     auto ru_ofh_dependencies = get_ru_ofh_validation_dependencies(config.odu_high_cfg.du_high_cfg.config);
-    return validate_ru_ofh_config(
-        std::get<ru_ofh_unit_parsed_config>(config.ru_cfg).config, ru_ofh_dependencies, available_cpus);
+    return validate_ru_ofh_config(ru_ofh->config, ru_ofh_dependencies) &&
+           validate_ru_ofh_cpus(ru_ofh->config, available_cpus);
   }
 
-  if (std::holds_alternative<ru_sdr_unit_config>(config.ru_cfg)) {
+  if (auto* ru_sdr = std::get_if<ru_sdr_unit_config>(&config.ru_cfg)) {
     auto ru_sdr_dependencies = get_ru_sdr_validation_dependencies(config.odu_high_cfg.du_high_cfg.config);
-    return validate_ru_sdr_config(std::get<ru_sdr_unit_config>(config.ru_cfg), ru_sdr_dependencies, available_cpus);
+    return validate_ru_sdr_config(*ru_sdr, ru_sdr_dependencies) && validate_ru_sdr_cpus(*ru_sdr, available_cpus);
   }
 
   if (!validate_expert_execution_unit_config(std::get<ru_dummy_unit_config>(config.ru_cfg), available_cpus)) {

@@ -11,6 +11,8 @@
 #include "split6_flexible_o_du_low_impl.h"
 #include "srsran/du/du_low/du_low.h"
 #include "srsran/du/du_operation_controller.h"
+#include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
+#include "srsran/fapi_adaptor/phy/phy_fapi_sector_adaptor.h"
 #include "srsran/phy/upper/upper_phy.h"
 #include "srsran/ru/ru_controller.h"
 #include "srsran/support/srsran_assert.h"
@@ -25,9 +27,9 @@ split6_flexible_o_du_low_impl::~split6_flexible_o_du_low_impl()
   // :TODO: plugin needs to be stopped?
 }
 
-void split6_flexible_o_du_low_impl::set_dependencies(std::unique_ptr<split6_slot_configurator_plugin> slot,
-                                                     std::unique_ptr<srs_du::o_du_low>                du,
-                                                     std::unique_ptr<radio_unit>                      radio)
+void split6_flexible_o_du_low_impl::set_dependencies(std::unique_ptr<fapi::slot_configurator_plugin> slot,
+                                                     std::unique_ptr<srs_du::o_du_low>               du,
+                                                     std::unique_ptr<radio_unit>                     radio)
 {
   srsran_assert(slot, "Invalid split 6 slot plugin");
   srsran_assert(du, "Invalid O-DU low");
@@ -45,15 +47,20 @@ void split6_flexible_o_du_low_impl::set_dependencies(std::unique_ptr<split6_slot
 
   // Connect all the sectors of the DU low to the RU adaptors.
   for (unsigned i = 0; i != NOF_CELLS_SUPPORTED; ++i) {
-    auto& upper = odu_low->get_du_low().get_upper_phy(i);
     // Make connections between DU and RU.
+    auto& upper = odu_low->get_du_low().get_upper_phy(i);
     ru_ul_adapt.map_handler(i, upper.get_rx_symbol_handler());
     ru_timing_adapt.map_handler(i, upper.get_timing_handler());
     ru_error_adapt.map_handler(i, upper.get_error_handler());
+
+    // Connect plugin with O-DU low.
+    auto& fapi_adaptor = odu_low->get_phy_fapi_adaptor().get_sector_adaptor(i);
+    fapi_adaptor.set_slot_time_message_notifier(slot_plugin->get_slot_time_message_notifier());
+    fapi_adaptor.set_slot_data_message_notifier(slot_plugin->get_slot_data_message_notifier());
+    fapi_adaptor.set_slot_error_message_notifier(slot_plugin->get_error_message_notifier());
   }
 
   // :TODO: plugin needs to be started?
-
   odu_low->get_operation_controller().start();
   ru->get_controller().get_operation_controller().start();
 }

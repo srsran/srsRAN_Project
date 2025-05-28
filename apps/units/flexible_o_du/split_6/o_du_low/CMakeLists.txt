@@ -7,12 +7,23 @@
 #
 
 set(SOURCES
+            cell_operation_request_impl.cpp
+            split6_flexible_o_du_low_factory.cpp
+            split6_flexible_o_du_low_impl.cpp
+            split6_flexible_o_du_low_manager.cpp
             split6_o_du_low_application_unit_impl.cpp
             split6_o_du_low_unit_cli11_schema.cpp
             split6_o_du_low_unit_config_validator.cpp)
 
-add_library(srsran_split6_o_du_low_plugin STATIC split6_o_du_low_plugin_dummy.cpp)
+add_library(srsran_split6_o_du_low_plugin STATIC split6_o_du_low_plugin_dummy.cpp
+                                                 split6_cell_configurator_plugin_dummy.cpp
+                                                 split6_slot_configurator_plugin_dummy.cpp)
 
 add_library(srsran_flexible_o_du_low_split_6 STATIC ${SOURCES})
 target_include_directories(srsran_flexible_o_du_low_split_6 PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(srsran_flexible_o_du_low_split_6 )
+target_link_libraries(srsran_flexible_o_du_low_split_6 PRIVATE
+        srsran_fapi_config_gateway
+        srsran_o_du_low_unit_helpers
+        srsran_split_8_app_unit_helpers
+        srsran_split_7_2_app_unit_helpers
+        srsran_split6_o_du_low_plugin)

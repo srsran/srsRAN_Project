@@ -35,3 +35,9 @@ void fapi_config_message_interface_collection_impl::set_cell_operation_request_n
 {
   gateway.set_cell_operation_request_notifier(cell_notifier);
 }
+
+std::unique_ptr<fapi_config_message_interface_collection>
+srsran::fapi::create_fapi_config_message_interface_collection(srslog::basic_logger& logger)
+{
+  return std::make_unique<fapi_config_message_interface_collection_impl>(logger);
+}

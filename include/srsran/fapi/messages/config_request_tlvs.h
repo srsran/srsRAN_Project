@@ -184,7 +184,7 @@ struct multi_msg_a_pusch_config {
 /// 64) beam_id field is valid;
 struct ssb_config {
   uint16_t                ssb_config_index;
-  uint16_t                ssb_offset_point_a;
+  ssb_offset_to_pointA    ssb_offset_point_a;
   uint8_t                 beta_pss_profile_nr;
   int16_t                 beta_pss_profile_sss;
   ssb_periodicity         ssb_period;

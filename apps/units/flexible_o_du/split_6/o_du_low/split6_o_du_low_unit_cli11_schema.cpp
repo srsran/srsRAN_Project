@@ -12,7 +12,9 @@
 #include "apps/units/flexible_o_du/o_du_low/du_low_config_cli11_schema.h"
 #include "apps/units/flexible_o_du/split_7_2/helpers/ru_ofh_config_cli11_schema.h"
 #include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_config_cli11_schema.h"
+#include "split6_constants.h"
 #include "split6_o_du_low_unit_config.h"
+#include "srsran/ran/band_helper.h"
 
 using namespace srsran;
 
@@ -56,10 +58,13 @@ static void manage_ru(CLI::App& app, split6_o_du_low_unit_config& config)
 
 void srsran::autoderive_split6_o_du_low_parameters_after_parsing(CLI::App& app, split6_o_du_low_unit_config& config)
 {
-  const unsigned nof_cells = 1U;
+  if (CLI::App* expert_cmd = app.get_subcommand("expert_phy");
+      expert_cmd->count_all() == 0 || expert_cmd->count("--max_proc_delay") == 0) {
+    report_error("'max_proc_delay' property is mandatory in this configuration");
+  }
 
   // Auto derive SDR parameters.
-  autoderive_ru_sdr_parameters_after_parsing(app, sdr_cfg, nof_cells);
+  autoderive_ru_sdr_parameters_after_parsing(app, sdr_cfg, split6_du_low::NOF_CELLS_SUPPORTED);
   // Auto derive OFH parameters.
   autoderive_ru_ofh_parameters_after_parsing(app, ofh_cfg);
 
@@ -67,9 +72,9 @@ void srsran::autoderive_split6_o_du_low_parameters_after_parsing(CLI::App& app, 
   manage_ru(app, config);
 
   // Auto derive DU low parameters.
-  const auto&   cell = config.odu_high_cfg.du_high_cfg.config.cells_cfg.front().cell;
-  const nr_band band = cell.band ? cell.band.value() : band_helper::get_band_from_dl_arfcn(cell.dl_f_ref_arfcn);
-  const bool    is_zmq_rf_driver = false;
+  const bool is_zmq_rf_driver = false;
+  // NOTE: TDD is hardcoded because it does not matter as max proc delay parameter is mandatory in this application
+  // unit.
   autoderive_du_low_parameters_after_parsing(
-      app, config.du_low_cfg, band_helper::get_duplex_mode(band), is_zmq_rf_driver, nof_cells);
+      app, config.du_low_cfg, duplex_mode::TDD, is_zmq_rf_driver, split6_du_low::NOF_CELLS_SUPPORTED);
 }

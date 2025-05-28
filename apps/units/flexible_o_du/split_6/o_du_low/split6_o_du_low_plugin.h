@@ -11,9 +11,7 @@
 #pragma once
 
 #include "srsran/adt/span.h"
-#include "srsran/fapi_adaptor/fapi_adaptor.h"
 #include <memory>
-#include <vector>
 
 namespace CLI {
 class App;

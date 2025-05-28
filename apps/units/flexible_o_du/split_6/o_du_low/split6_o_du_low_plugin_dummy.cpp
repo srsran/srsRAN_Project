@@ -12,7 +12,7 @@
 
 using namespace srsran;
 
-#ifndef SRSRAN_HAS_ENTERPRISE
+#ifndef SRSRAN_HAS_SPLIT6_ENTERPRISE
 std::unique_ptr<split6_o_du_low_plugin> srsran::create_split6_o_du_low_plugin(std::string_view app_name)
 {
   return std::make_unique<split6_o_du_low_plugin_dummy>();

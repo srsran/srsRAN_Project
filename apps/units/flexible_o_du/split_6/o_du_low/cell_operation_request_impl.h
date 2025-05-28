@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "split6_flexible_o_du_low_factory.h"
 #include "split6_flexible_o_du_low_impl.h"
 #include "srsran/fapi/cell_operation_request_notifier.h"
 #include <memory>
@@ -23,6 +24,11 @@ namespace srsran {
 class cell_operation_request_handler_impl : public fapi::cell_operation_request_notifier
 {
 public:
+  explicit cell_operation_request_handler_impl(split6_flexible_o_du_low_factory& factory_odu_low_) :
+    factory_odu_low(factory_odu_low_)
+  {
+  }
+
   // See interface for documentation.
   bool on_start_request(const fapi::fapi_cell_config& config) override;
 
@@ -30,6 +36,7 @@ public:
   void on_stop_request() override { flexible_odu_low.reset(); }
 
 private:
+  split6_flexible_o_du_low_factory&              factory_odu_low;
   std::unique_ptr<split6_flexible_o_du_low_impl> flexible_odu_low;
 };
 

@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "split6_slot_configurator_plugin.h"
+#include "srsran/fapi/slot_configurator_plugin.h"
 
 namespace srsran {
 
 /// Split 6 slot configurator plugin dummy implementation.
-class split6_slot_configurator_plugin_dummy : public split6_slot_configurator_plugin
+class split6_slot_configurator_plugin_dummy : public fapi::slot_configurator_plugin
 {
 public:
   // See interface for documentation.

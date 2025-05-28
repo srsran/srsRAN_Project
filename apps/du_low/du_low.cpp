@@ -18,6 +18,7 @@
 #include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/services/remote_control/remote_server.h"
 #include "apps/services/worker_manager/worker_manager.h"
+#include "apps/units/flexible_o_du/split_6/o_du_low/split6_o_du_low_application_unit_impl.h"
 #include "du_low_appconfig.h"
 #include "du_low_appconfig_cli11_schema.h"
 #include "du_low_appconfig_translators.h"
@@ -89,7 +90,7 @@ static void initialize_log(const std::string& filename)
   srslog::init();
 }
 
-static void register_app_logs(const du_low_appconfig& du_cfg /*, application_unit& du_low_app_unit*/)
+static void register_app_logs(const du_low_appconfig& du_cfg, application_unit& du_low_app_unit)
 {
   const logger_appconfig& log_cfg = du_cfg.log_cfg;
   // Set log-level of app and all non-layer specific components to app level.
@@ -113,7 +114,7 @@ static void register_app_logs(const du_low_appconfig& du_cfg /*, application_uni
   app_helpers::initialize_metrics_log_channels(metrics_cfg, log_cfg.hex_max_size);
 
   // Register units logs.
-  // du_low_app_unit.on_loggers_registration();
+  du_low_app_unit.on_loggers_registration();
 }
 
 int main(int argc, char** argv)
@@ -142,14 +143,13 @@ int main(int argc, char** argv)
   // Configure CLI11 with the DU application configuration schema.
   configure_cli11_with_du_low_appconfig_schema(app, du_low_cfg);
 
-  // :TODO: create the app unit.
-  // auto o_du_app_unit = create_flexible_o_du_application_unit("du");
-  // o_du_app_unit->on_parsing_configuration_registration(app);
+  auto o_du_app_unit = create_flexible_o_du_low_application_unit(app_name);
+  o_du_app_unit->on_parsing_configuration_registration(app);
 
   // Set the callback for the app calling all the autoderivation functions.
-  app.callback([&app, &du_low_cfg /*, &o_du_app_unit*/]() {
+  app.callback([&app, &du_low_cfg, &o_du_app_unit]() {
     autoderive_du_low_parameters_after_parsing(app, du_low_cfg);
-    // o_du_app_unit->on_configuration_parameters_autoderivation(app);
+    o_du_app_unit->on_configuration_parameters_autoderivation(app);
   });
 
   // Parse arguments.
@@ -161,21 +161,20 @@ int main(int argc, char** argv)
   }
 
   // Check the modified configuration.
-  if (!validate_du_low_appconfig(du_low_cfg) /*||
+  if (!validate_du_low_appconfig(du_low_cfg) ||
       !o_du_app_unit->on_configuration_validation((du_low_cfg.expert_execution_cfg.affinities.isolated_cpus)
                                                       ? du_low_cfg.expert_execution_cfg.affinities.isolated_cpus.value()
-                                                      : os_sched_affinity_bitmask::available_cpus())*/) {
+                                                      : os_sched_affinity_bitmask::available_cpus())) {
     report_error("Invalid configuration detected.\n");
   }
 
   // Set up logging.
   initialize_log(du_low_cfg.log_cfg.filename);
-  register_app_logs(du_low_cfg /*, *o_du_app_unit*/);
+  register_app_logs(du_low_cfg, *o_du_app_unit);
 
   // Check the metrics and metrics consumers.
   srslog::basic_logger& app_logger = srslog::fetch_basic_logger("APP");
-  bool                  metrics_enabled =
-      /*o_du_app_unit->are_metrics_enabled() || */ du_low_cfg.metrics_cfg.rusage_config.enable_app_usage;
+  bool metrics_enabled = o_du_app_unit->are_metrics_enabled() || du_low_cfg.metrics_cfg.rusage_config.enable_app_usage;
 
   if (!metrics_enabled && du_low_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg.enabled()) {
     app_logger.warning("Logger or JSON metrics output enabled but no metrics will be reported as no layer was enabled");
@@ -187,7 +186,7 @@ int main(int argc, char** argv)
   if (config_logger.debug.enabled()) {
     YAML::Node node;
     fill_du_low_appconfig_in_yaml_schema(node, du_low_cfg);
-    // o_du_app_unit->dump_config(node);
+    o_du_app_unit->dump_config(node);
     config_logger.debug("Input configuration (all values): \n{}", YAML::Dump(node));
   } else {
     config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
@@ -228,8 +227,8 @@ int main(int argc, char** argv)
 
   // Instantiate worker manager.
   worker_manager_config worker_manager_cfg;
-  // o_du_app_unit->fill_worker_manager_config(worker_manager_cfg);
   fill_du_low_worker_manager_config(worker_manager_cfg, du_low_cfg);
+  o_du_app_unit->fill_worker_manager_config(worker_manager_cfg);
   worker_manager_cfg.app_timers = &app_timers;
 
   worker_manager workers{worker_manager_cfg};
@@ -249,9 +248,11 @@ int main(int argc, char** argv)
 
   // Create app-level resource usage service and metrics.
   auto app_resource_usage_service = app_services::build_app_resource_usage_service(
-      metrics_notifier_forwarder, du_low_cfg.metrics_cfg.rusage_config, srslog::fetch_basic_logger("GNB"));
+      metrics_notifier_forwarder, du_low_cfg.metrics_cfg.rusage_config, srslog::fetch_basic_logger("APP"));
 
   std::vector<app_services::metrics_config> app_metrics = std::move(app_resource_usage_service.metrics);
+
+  auto du = o_du_app_unit->create_flexible_o_du_low(workers, srslog::fetch_basic_logger("APP"));
 
   // Only DU has metrics now.
   app_services::metrics_manager metrics_mngr(
@@ -267,6 +268,8 @@ int main(int argc, char** argv)
   // :TODO: how to manage cmdline and remote commands??
 
   metrics_mngr.start();
+  du->start();
+
   {
     app_services::application_message_banners app_banner(app_name, du_low_cfg.log_cfg.filename);
 
@@ -274,6 +277,8 @@ int main(int argc, char** argv)
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
   }
+
+  du->stop();
   metrics_mngr.stop();
 
   workers.stop();

@@ -271,7 +271,7 @@ struct dl_prs_pdu {
 };
 
 /// Downlink PDU type ID.
-enum class dl_pdu_type : uint16_t { PDCCH, PDSCH, CSI_RS, SSB, PRS };
+enum class dl_pdu_type : uint16_t { PDCCH, PDSCH, CSI_RS, SSB, PRS = 5 };
 
 inline unsigned to_value(dl_pdu_type value)
 {

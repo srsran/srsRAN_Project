@@ -14,27 +14,8 @@
 using namespace srsran;
 
 static bool validate_expert_execution_unit_config(const ru_ofh_unit_expert_execution_config& config,
-                                                  unsigned                                   nof_cells,
                                                   const os_sched_affinity_bitmask&           available_cpus)
 {
-  // Configuring more cells for expert execution than the number of cells is an error.
-  if (config.cell_affinities.size() != nof_cells) {
-    fmt::print("Using different number of cells for Open Fronthaul expert execution '{}' than the number of defined "
-               "cells '{}'\n",
-               config.cell_affinities.size(),
-               nof_cells);
-
-    return false;
-  }
-
-  // Configuring more entries for tx-rx affinities than the number of cells is an error.
-  if (config.txrx_affinities.size() > nof_cells) {
-    fmt::print("Using more txrx cells for Open Fronthaul expert execution '{}' than the number of defined cells '{}'\n",
-               config.txrx_affinities.size(),
-               nof_cells);
-    return false;
-  }
-
   auto validate_cpu_range = [](const os_sched_affinity_bitmask& allowed_cpus_mask,
                                const os_sched_affinity_bitmask& mask,
                                const std::string&               name) {
@@ -216,8 +197,7 @@ static bool validate_hal_config(const std::optional<ru_ofh_unit_hal_config>& con
 }
 
 bool srsran::validate_ru_ofh_config(const ru_ofh_unit_config&                 config,
-                                    span<const ru_ofh_cell_validation_config> cell_config,
-                                    const os_sched_affinity_bitmask&          available_cpus)
+                                    span<const ru_ofh_cell_validation_config> cell_config)
 {
   if (config.cells.size() != cell_config.size()) {
     fmt::print("Number of cells in the DU={} don't match the number of cells in the RU={}\n",
@@ -227,11 +207,25 @@ bool srsran::validate_ru_ofh_config(const ru_ofh_unit_config&                 co
     return false;
   }
 
-  if (!validate_ru_ofh_unit_config(config.cells, cell_config)) {
+  // Configuring more cells for expert execution than the number of cells is an error.
+  if (config.expert_execution_cfg.cell_affinities.size() != cell_config.size()) {
+    fmt::print("Using different number of cells for Open Fronthaul expert execution '{}' than the number of defined "
+               "cells '{}'\n",
+               config.expert_execution_cfg.cell_affinities.size(),
+               cell_config.size());
+
     return false;
   }
 
-  if (!validate_expert_execution_unit_config(config.expert_execution_cfg, cell_config.size(), available_cpus)) {
+  // Configuring more entries for tx-rx affinities than the number of cells is an error.
+  if (config.expert_execution_cfg.txrx_affinities.size() > cell_config.size()) {
+    fmt::print("Using more txrx cells for Open Fronthaul expert execution '{}' than the number of defined cells '{}'\n",
+               config.expert_execution_cfg.txrx_affinities.size(),
+               cell_config.size());
+    return false;
+  }
+
+  if (!validate_ru_ofh_unit_config(config.cells, cell_config)) {
     return false;
   }
 
@@ -240,4 +234,9 @@ bool srsran::validate_ru_ofh_config(const ru_ofh_unit_config&                 co
   }
 
   return true;
+}
+
+bool srsran::validate_ru_ofh_cpus(const ru_ofh_unit_config& config, const os_sched_affinity_bitmask& available_cpus)
+{
+  return validate_expert_execution_unit_config(config.expert_execution_cfg, available_cpus);
 }

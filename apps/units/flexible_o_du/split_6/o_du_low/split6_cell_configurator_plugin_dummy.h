@@ -10,13 +10,12 @@
 
 #pragma once
 
-#include "apps/units/flexible_o_du/split_6/o_du_low/split6_cell_configurator_plugin.h"
-#include "split6_cell_configurator_plugin.h"
+#include "srsran/fapi/cell_configurator_plugin.h"
 
 namespace srsran {
 
 /// Split 6 cell configurator plugin dummy implementation.
-class split6_cell_configurator_plugin_dummy : public split6_cell_configurator_plugin
+class split6_cell_configurator_plugin_dummy : public fapi::cell_configurator_plugin
 {
 public:
   // See interface for documentation.
@@ -24,6 +23,9 @@ public:
 
   // See interface for documentation.
   fapi::slot_error_message_notifier& get_slot_error_message_notifier() override;
+
+  // See interface for documentation.
+  fapi::operation_controller& get_operation_controller() override;
 };
 
 } // namespace srsran

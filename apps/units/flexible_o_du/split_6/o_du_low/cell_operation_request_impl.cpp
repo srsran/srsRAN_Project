@@ -16,7 +16,7 @@ using namespace srsran;
 bool cell_operation_request_handler_impl::on_start_request(const fapi::fapi_cell_config& config)
 {
   // Call the factory.
-  flexible_odu_low = create_split6_flexible_o_du_low_impl();
+  flexible_odu_low = factory_odu_low.create_split6_flexible_o_du_low(config);
 
   // Return true when the flexible O-DU low was successfully created, otherwise false.
   return flexible_odu_low != nullptr;

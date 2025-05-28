@@ -6,4 +6,8 @@
 # the distribution.
 #
 
+# Do not build by default.
+set_directory_properties(PROPERTIES EXCLUDE_FROM_ALL TRUE)
+
 add_subdirectory(o_du_high)
+add_subdirectory(o_du_low)

@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <memory>
+
 namespace srsran {
 namespace fapi {
 
@@ -38,6 +40,10 @@ public:
   /// Sets the cell operation request notifier of this FAPI cell configurator.
   virtual void set_cell_operation_request_notifier(cell_operation_request_notifier& cell_notifier) = 0;
 };
+
+/// Creates a FAPI configuration message interface collection.
+std::unique_ptr<fapi_config_message_interface_collection>
+create_fapi_config_message_interface_collection(srslog::basic_logger& logger);
 
 } // namespace fapi
 } // namespace srsran

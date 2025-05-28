@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/fapi/cell_config.h"
 #include "srsran/fapi/cell_operation_request_notifier.h"
 #include "srsran/fapi/config_message_gateway.h"
 #include "srsran/srslog/logger.h"

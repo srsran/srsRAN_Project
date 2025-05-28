@@ -134,6 +134,8 @@ worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
   if (worker_cfg.du_hi_cfg) {
     create_du_executors(
         worker_cfg.du_hi_cfg.value(), worker_cfg.du_low_cfg, worker_cfg.fapi_cfg, *worker_cfg.app_timers);
+  } else if (worker_cfg.du_low_cfg) {
+    create_du_crit_path_prio_executors(*worker_cfg.du_low_cfg);
   }
 
   if (worker_cfg.ru_ofh_cfg) {
@@ -324,7 +326,8 @@ void worker_manager::create_du_executors(const worker_manager_config::du_high_co
   }
 
   // Create L1 and L2 critical path executors.
-  auto crit_path_exec_desc = create_du_crit_path_prio_executors(du_hi.nof_cells, du_hi.is_rt_mode_enabled, du_low);
+  auto crit_path_exec_desc = du_low ? create_du_crit_path_prio_executors(*du_low)
+                                    : create_du_crit_path_prio_executors(du_hi.nof_cells, du_hi.is_rt_mode_enabled);
 
   // Instantiate DU-high executor mapper.
   srs_du::du_high_executor_config cfg;
@@ -389,23 +392,30 @@ void worker_manager::add_low_prio_strands(const worker_manager_config& worker_cf
   executor_decorators_exec.push_back(std::move(metric_strand));
 }
 
+worker_manager::du_crit_path_executor_desc worker_manager::create_du_crit_path_prio_executors(unsigned nof_cells,
+                                                                                              bool     rt_mode)
+{
+  using namespace execution_config_helper;
+
+  du_crit_path_executor_desc desc;
+  // Need to create dedicated DU-high L2 threads as there is no DU-low.
+  desc.l2_execs = create_dedicated_du_hi_cell_executors(exec_mng, nof_cells, rt_mode, affinity_mng);
+
+  return desc;
+}
+
 worker_manager::du_crit_path_executor_desc
-worker_manager::create_du_crit_path_prio_executors(unsigned                                                   nof_cells,
-                                                   bool                                                       rt_mode,
-                                                   const std::optional<worker_manager_config::du_low_config>& du_low)
+worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::du_low_config& du_low)
 {
   using namespace execution_config_helper;
 
   du_crit_path_executor_desc desc;
 
-  if (not du_low.has_value()) {
-    // Need to create dedicated DU-high L2 threads as there is no DU-low.
-    desc.l2_execs = create_dedicated_du_hi_cell_executors(exec_mng, nof_cells, rt_mode, affinity_mng);
-    return desc;
-  }
-
   // DU low executor mapper configuration.
   srs_du::du_low_executor_mapper_config du_low_exec_mapper_config;
+
+  const unsigned nof_cells = du_low.nof_cells;
+  const bool     rt_mode   = !du_low.is_blocking_mode_active;
 
   // Instantiate workers for the DU-low.
   if (not rt_mode) {
@@ -436,8 +446,8 @@ worker_manager::create_du_crit_path_prio_executors(unsigned                     
 
   } else {
     // RF case.
-    unsigned nof_ul_workers = du_low->nof_ul_threads;
-    unsigned nof_dl_workers = du_low->nof_dl_threads;
+    unsigned nof_ul_workers = du_low.nof_ul_threads;
+    unsigned nof_dl_workers = du_low.nof_dl_threads;
 
     std::vector<task_executor*> l2_execs;
 
@@ -506,7 +516,7 @@ worker_manager::create_du_crit_path_prio_executors(unsigned                     
       }
 
       // Instantiate dedicated PUSCH decoder workers for each cell.
-      unsigned    nof_pusch_decoder_workers = du_low.value().nof_pusch_decoder_threads;
+      unsigned    nof_pusch_decoder_workers = du_low.nof_pusch_decoder_threads;
       std::string pusch_decoder_exec_name   = l1_pusch_exec_name;
       if (nof_pusch_decoder_workers > 0) {
         pusch_decoder_exec_name                            = "du_low_pusch_dec_exec#" + cell_id_str;
@@ -552,9 +562,9 @@ worker_manager::create_du_crit_path_prio_executors(unsigned                     
     }
 
     // Setup metrics configuration.
-    if (du_low.value().metrics_period.has_value()) {
+    if (du_low.metrics_period.has_value()) {
       du_low_exec_mapper_config.metrics.emplace(
-          srs_du::du_low_executor_mapper_metric_config{.period              = *du_low->metrics_period,
+          srs_du::du_low_executor_mapper_metric_config{.period              = *du_low.metrics_period,
                                                        .sequential_executor = *metrics_exec,
                                                        .logger = app_helpers::fetch_logger_metrics_log_channel()});
     }

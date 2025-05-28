@@ -10,20 +10,10 @@
 
 #pragma once
 
-#include "messages/config_request_tlvs.h"
-
 namespace srsran {
 namespace fapi {
 
-/// FAPI cell configuration.
-struct fapi_cell_config {
-  phy_config     phy_cfg;
-  carrier_config carrier_cfg;
-  cell_config    cell_cfg;
-  prach_config   prach_cfg;
-  ssb_config     ssb_cfg;
-  tdd_phy_config tdd_cfg;
-};
+struct fapi_cell_config;
 
 /// \brief FAPI cell operation request notifier.
 ///

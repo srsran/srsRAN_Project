@@ -10,15 +10,23 @@
 
 #include "split6_flexible_o_du_low_factory.h"
 #include "apps/services/metrics/metrics_config.h"
+#include "apps/services/worker_manager/worker_manager.h"
+#include "apps/units/flexible_o_du/o_du_low/du_low_config_validator.h"
 #include "apps/units/flexible_o_du/o_du_low/o_du_low_unit_factory.h"
+#include "apps/units/flexible_o_du/split_7_2/helpers/ru_ofh_config_validator.h"
 #include "apps/units/flexible_o_du/split_7_2/helpers/ru_ofh_factories.h"
+#include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_config_validator.h"
 #include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_factories.h"
 #include "apps/units/flexible_o_du/split_helpers/flexible_o_du_configs.h"
+#include "split6_cell_configurator_plugin_dummy.h"
 #include "split6_constants.h"
 #include "split6_flexible_o_du_low_impl.h"
 #include "split6_slot_configurator_plugin_dummy.h"
 #include "srsran/du/du_low/o_du_low_config.h"
-#include "srsran/fapi/cell_operation_request_notifier.h"
+#include "srsran/fapi/cell_config.h"
+#include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
+#include "srsran/fapi_adaptor/phy/phy_fapi_sector_adaptor.h"
+#include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 
 using namespace srsran;
@@ -28,9 +36,24 @@ namespace {
 /// Split 6 flexible O-DU low factory dummy implementation.
 class split6_flexible_o_du_low_factory_dummy : public split6_flexible_o_du_low_factory
 {
+public:
+  split6_flexible_o_du_low_factory_dummy(split6_o_du_low_unit_config unit_config_, worker_manager& workers_) :
+    split6_flexible_o_du_low_factory(unit_config_, workers_)
+  {
+  }
+
+  std::unique_ptr<fapi::cell_configurator_plugin>
+  create_fapi_cell_configurator_plugin(srslog::basic_logger& logger, fapi::config_message_gateway& gateway) override
+  {
+    return std::make_unique<split6_cell_configurator_plugin_dummy>();
+  }
+
 private:
   // See interface for documentation.
-  std::unique_ptr<split6_slot_configurator_plugin> create_plugin() override
+  std::unique_ptr<fapi::slot_configurator_plugin>
+  create_plugin(const fapi::fapi_cell_config&     config,
+                fapi::slot_message_gateway&       gateway,
+                fapi::slot_last_message_notifier& last_msg_notifier) override
   {
     return std::make_unique<split6_slot_configurator_plugin_dummy>();
   }
@@ -39,21 +62,38 @@ private:
 } // namespace
 
 std::unique_ptr<split6_flexible_o_du_low_impl>
-split6_flexible_o_du_low_factory::create_split6_flexible_o_du_low_impl(const fapi::fapi_cell_config& config)
+split6_flexible_o_du_low_factory::create_split6_flexible_o_du_low(const fapi::fapi_cell_config& config)
 {
   auto odu = std::make_unique<split6_flexible_o_du_low_impl>();
 
   // Create Radio Unit.
-  auto ru = create_ru(*odu, config);
+  auto ru = create_radio_unit(*odu, config);
+  if (!ru) {
+    return nullptr;
+  }
 
   // Create O-DU low.
-  auto odu_low =
-      create_odu_low(config, {odu->get_upper_ru_dl_rg_adapter(), odu->get_upper_ru_ul_request_adapter(), workers});
+  auto odu_low = create_o_du_low(config,
+                                 {odu->get_upper_ru_dl_rg_adapter(),
+                                  odu->get_upper_ru_ul_request_adapter(),
+                                  workers.get_du_low_executor_mapper()});
+
+  if (!odu_low.o_du_lo) {
+    return nullptr;
+  }
+
+  // Get the FAPI sector adaptor to get the dependencies.
+  auto& fapi_sector_adaptor = odu_low.o_du_lo->get_phy_fapi_adaptor().get_sector_adaptor(split6_du_low::CELL_ID);
 
   // Create split 6 slot messages plugin.
-  auto plugin = create_plugin();
+  auto plugin = create_plugin(
+      config, fapi_sector_adaptor.get_slot_message_gateway(), fapi_sector_adaptor.get_slot_last_message_notifier());
 
-  odu->set_dependencies(std::move(plugin), std::move(odu_low), std::move(ru));
+  if (!plugin) {
+    return nullptr;
+  }
+
+  odu->set_dependencies(std::move(plugin), std::move(odu_low.o_du_lo), std::move(ru));
 
   return odu;
 }
@@ -64,36 +104,48 @@ static unsigned get_period_in_slots(unsigned period, unsigned nof_slots_per_subf
   switch (period) {
     // 0.5 ms.
     case 0:
-      srsran_assert(nof_slots_per_subframe > 1 && nof_slots_per_subframe % 2 == 0,
-                    "Invalid number of slots per subframe");
+      srsran_assert(nof_slots_per_subframe % 2 == 0, "Invalid number of slots per subframe to get periodicity 0.5ms");
       return nof_slots_per_subframe / 2;
+      // 0.625 ms.
+    case 1:
+      srsran_assert((nof_slots_per_subframe * 5) % 8 == 0,
+                    "Invalid number of slots per subframe to get periodicity 0.625ms");
+      return nof_slots_per_subframe * 5 / 8;
       // 1 ms.
     case 2:
       return nof_slots_per_subframe;
+      // 1.25 ms.
+    case 3:
+      srsran_assert((nof_slots_per_subframe * 5) % 4 == 0,
+                    "Invalid number of slots per subframe to get 1.25ms periodicity");
+      return nof_slots_per_subframe * 5 / 4;
+      // 2 ms.
+    case 4:
+      return 2 * nof_slots_per_subframe;
+      // 2.5 ms.
+    case 5:
+      srsran_assert((nof_slots_per_subframe * 5) % 2 == 0,
+                    "Invalid number of slots per subframe to get periodicity 2.5ms");
+      return nof_slots_per_subframe * 5 / 2;
       // 5 ms.
     case 6:
       return nof_slots_per_subframe * 5;
       // 10 ms.
     case 7:
       return nof_slots_per_subframe * 10;
-      // Ignore the rest of the cases for simplicity.
-      // 0.625 ms.
-    case 1:
-      // 1.25 ms.
-    case 3:
-      // 2 ms.
-    case 4:
-      // 2.5 ms.
-    case 5:
-      srsran_assert(0, "TDD period '{}' not supported");
+    default:
+      srsran_assert(0, "TDD period '{}' not supported", period);
   }
+
+  return nof_slots_per_subframe;
 }
 
 /// Generates the TDD pattern from the given FAPI structure.
 static tdd_ul_dl_config_common generate_tdd_pattern(subcarrier_spacing scs, const fapi::tdd_phy_config& pattern)
 {
-  tdd_ul_dl_config_common out;
-  out.ref_scs = scs;
+  // Note: initializing the struct is important to set all values to 0.
+  tdd_ul_dl_config_common out = {};
+  out.ref_scs                 = scs;
 
   // [Implementation defined] For now only fill one pattern.
   auto& pattern1 = out.pattern1;
@@ -101,7 +153,8 @@ static tdd_ul_dl_config_common generate_tdd_pattern(subcarrier_spacing scs, cons
   unsigned nof_slots_per_subframe    = slot_point(scs, 0).nof_slots_per_subframe();
   pattern1.dl_ul_tx_period_nof_slots = get_period_in_slots(pattern.tdd_period, nof_slots_per_subframe);
 
-  for (const auto& slot : pattern.slot_config) {
+  for (unsigned i = 0; i != pattern1.dl_ul_tx_period_nof_slots; ++i) {
+    const auto& slot = pattern.slot_config[i];
     if (std::all_of(slot.cbegin(), slot.cend(), [](const fapi::tdd_slot_symbol_type& value) {
           return value == fapi::tdd_slot_symbol_type::dl_symbol;
         })) {
@@ -124,7 +177,7 @@ static tdd_ul_dl_config_common generate_tdd_pattern(subcarrier_spacing scs, cons
               slot.cend(),
               [](const fapi::tdd_slot_symbol_type& value) { return value == fapi::tdd_slot_symbol_type::ul_symbol; });
           I != slot.cend()) {
-        pattern1.nof_ul_symbols = std::distance(slot.cbegin(), I);
+        pattern1.nof_ul_symbols = std::distance(I, slot.cend());
       }
     }
   }
@@ -132,13 +185,47 @@ static tdd_ul_dl_config_common generate_tdd_pattern(subcarrier_spacing scs, cons
   return out;
 }
 
-std::unique_ptr<srs_du::o_du_low>
-split6_flexible_o_du_low_factory::create_o_du_low(const fapi::fapi_cell_config& config,
-                                                  o_du_low_unit_dependencies&&  odu_low_dependencies)
+static std::vector<du_low_prach_validation_config>
+get_du_low_validation_dependencies(const fapi::fapi_cell_config& config)
+{
+  std::vector<du_low_prach_validation_config> out_cfg(split6_du_low::NOF_CELLS_SUPPORTED);
+
+  du_low_prach_validation_config& out_cell = out_cfg.front();
+
+  // Get PRACH info.
+  subcarrier_spacing common_scs = config.phy_cfg.scs;
+
+  prach_configuration prach_info = prach_configuration_get(frequency_range::FR1,
+                                                           static_cast<duplex_mode>(config.cell_cfg.frame_duplex_type),
+                                                           config.prach_cfg.prach_config_index);
+  // PRACH format type.
+  out_cell.format = prach_info.format;
+
+  // Get preamble info.
+  prach_preamble_information preamble_info =
+      is_long_preamble(prach_info.format)
+          ? get_prach_preamble_long_info(prach_info.format)
+          : get_prach_preamble_short_info(prach_info.format, to_ra_subcarrier_spacing(common_scs), false);
+
+  out_cell.prach_scs             = preamble_info.scs;
+  out_cell.zero_correlation_zone = config.prach_cfg.fd_occasions.front().prach_zero_corr_conf;
+  out_cell.nof_prach_ports       = split6_du_low::PRACH_NOF_PORTS;
+  out_cell.nof_antennas_ul       = config.carrier_cfg.num_rx_ant;
+
+  return out_cfg;
+}
+
+o_du_low_unit split6_flexible_o_du_low_factory::create_o_du_low(const fapi::fapi_cell_config& config,
+                                                                o_du_low_unit_dependencies&&  odu_low_dependencies)
 {
   srs_du::cell_prach_ports_entry prach_ports = {split6_du_low::PRACH_PORT};
 
-  o_du_low_unit_config odu_low_cfg = {config.du_low_cfg, {}, {}};
+  auto du_low_dependencies = get_du_low_validation_dependencies(config);
+  if (!validate_du_low_config(unit_config.du_low_cfg, du_low_dependencies)) {
+    return {};
+  }
+
+  o_du_low_unit_config odu_low_cfg = {unit_config.du_low_cfg, {}, {}};
 
   auto& fapi_sector = odu_low_cfg.fapi_cfg.sectors.emplace_back();
 
@@ -153,9 +240,13 @@ split6_flexible_o_du_low_factory::create_o_du_low(const fapi::fapi_cell_config& 
   // instance.
   fapi_sector.sector_id = 0;
 
-  auto&   du_low_cell = odu_low_cfg.cells.emplace_back();
-  nr_band band        = band_helper::get_band_from_dl_arfcn(band_helper::freq_to_nr_arfcn(config.carrier_cfg.dl_freq));
-  du_low_cell.duplex  = band_helper::get_duplex_mode(band);
+  auto&  du_low_cell = odu_low_cfg.cells.emplace_back();
+  double dl_freq_ref = band_helper::get_f_ref_from_abs_freq_point_a(
+      config.carrier_cfg.dl_freq * 1e3,
+      get_max_Nprb(config.carrier_cfg.dl_bandwidth, config.phy_cfg.scs, frequency_range::FR1),
+      config.phy_cfg.scs);
+  nr_band band                     = band_helper::get_band_from_dl_arfcn(band_helper::freq_to_nr_arfcn(dl_freq_ref));
+  du_low_cell.duplex               = static_cast<duplex_mode>(config.cell_cfg.frame_duplex_type);
   du_low_cell.freq_range           = band_helper::get_freq_range(band);
   du_low_cell.bw_rb                = config.carrier_cfg.dl_grid_size[to_numerology_value(config.phy_cfg.scs)];
   du_low_cell.nof_rx_antennas      = config.carrier_cfg.num_rx_ant;
@@ -172,7 +263,7 @@ split6_flexible_o_du_low_factory::create_o_du_low(const fapi::fapi_cell_config& 
     du_low_cell.tdd_pattern.emplace(generate_tdd_pattern(config.phy_cfg.scs, config.tdd_cfg));
   }
 
-  o_du_low_unit_factory odu_low_factory(du_lo.hal_config, split6_du_low::NOF_CELLS_SUPPORTED);
+  o_du_low_unit_factory odu_low_factory(unit_config.du_low_cfg.hal_config, split6_du_low::NOF_CELLS_SUPPORTED);
 
   return odu_low_factory.create(odu_low_cfg, std::move(odu_low_dependencies));
 }
@@ -203,6 +294,47 @@ static flexible_o_du_ru_config generate_o_du_ru_config(const fapi::fapi_cell_con
   return out_cfg;
 }
 
+static std::vector<ru_ofh_cell_validation_config>
+get_ru_ofh_validation_dependencies(const fapi::fapi_cell_config& config)
+{
+  std::vector<ru_ofh_cell_validation_config> out_cfg(split6_du_low::NOF_CELLS_SUPPORTED);
+
+  ru_ofh_cell_validation_config& out_cell = out_cfg.front();
+
+  // Validates the sampling rate is compatible with the PRACH sequence.
+  out_cell.scs             = config.phy_cfg.scs;
+  out_cell.nof_prach_ports = split6_du_low::PRACH_NOF_PORTS;
+  out_cell.nof_antennas_dl = config.carrier_cfg.num_tx_ant;
+  out_cell.nof_antennas_ul = config.carrier_cfg.num_rx_ant;
+
+  return out_cfg;
+}
+
+static std::vector<ru_sdr_cell_validation_config>
+get_ru_sdr_validation_dependencies(const fapi::fapi_cell_config& config)
+{
+  std::vector<ru_sdr_cell_validation_config> out_cfg(split6_du_low::NOF_CELLS_SUPPORTED);
+
+  ru_sdr_cell_validation_config& out_cell = out_cfg.front();
+
+  // Validates the sampling rate is compatible with the PRACH sequence.
+  out_cell.common_scs     = config.phy_cfg.scs;
+  out_cell.channel_bw_mhz = MHz_to_bs_channel_bandwidth(config.carrier_cfg.dl_bandwidth);
+  out_cell.dplx_mode      = static_cast<duplex_mode>(config.cell_cfg.frame_duplex_type);
+
+  prach_configuration prach_info =
+      prach_configuration_get(frequency_range::FR1, out_cell.dplx_mode, config.prach_cfg.prach_config_index);
+
+  out_cell.prach_format = prach_info.format;
+
+  out_cell.preamble_info =
+      is_long_preamble(prach_info.format)
+          ? get_prach_preamble_long_info(prach_info.format)
+          : get_prach_preamble_short_info(prach_info.format, to_ra_subcarrier_spacing(config.phy_cfg.scs), false);
+
+  return out_cfg;
+}
+
 std::unique_ptr<radio_unit> split6_flexible_o_du_low_factory::create_radio_unit(split6_flexible_o_du_low_impl& odu_low,
                                                                                 const fapi::fapi_cell_config&  config)
 {
@@ -215,17 +347,30 @@ std::unique_ptr<radio_unit> split6_flexible_o_du_low_factory::create_radio_unit(
                                                 odu_low.get_upper_ru_error_adapter()};
 
   if (const auto* cfg = std::get_if<ru_ofh_unit_parsed_config>(&ru_cfg)) {
+    auto ru_ofh_dependencies = get_ru_ofh_validation_dependencies(config);
+    if (!validate_ru_ofh_config(cfg->config, ru_ofh_dependencies)) {
+      return nullptr;
+    }
+
     return create_ofh_radio_unit(cfg->config, ru_config, ru_dependencies);
   }
 
   if (const auto* cfg = std::get_if<ru_sdr_unit_config>(&ru_cfg)) {
+    auto ru_sdr_dependencies = get_ru_sdr_validation_dependencies(config);
+    if (!validate_ru_sdr_config(*cfg, ru_sdr_dependencies)) {
+      return nullptr;
+    }
+
     return create_sdr_radio_unit(*cfg, ru_config, ru_dependencies);
   }
 
-  srsran::report_error("Could not detect valid Radio Unit configuration");
+  report_error("Could not detect valid Radio Unit configuration");
 }
 
-std::unique_ptr<split6_flexible_o_du_low_factory> srsran::create_split6_flexible_o_du_low_factory()
+#ifndef SRSRAN_HAS_SPLIT6_ENTERPRISE
+std::unique_ptr<split6_flexible_o_du_low_factory>
+srsran::create_split6_flexible_o_du_low_factory(split6_o_du_low_unit_config unit_config, worker_manager& workers)
 {
-  return std::make_unique<split6_flexible_o_du_low_factory_dummy>();
+  return std::make_unique<split6_flexible_o_du_low_factory_dummy>(unit_config, workers);
 }
+#endif

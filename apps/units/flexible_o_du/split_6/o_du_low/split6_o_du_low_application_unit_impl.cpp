@@ -9,12 +9,16 @@
  */
 
 #include "split6_o_du_low_application_unit_impl.h"
+#include "apps/services/worker_manager/worker_manager_config.h"
 #include "apps/units/flexible_o_du/o_du_low/du_low_config_translator.h"
 #include "apps/units/flexible_o_du/o_du_low/du_low_config_yaml_writer.h"
 #include "apps/units/flexible_o_du/split_7_2/helpers/ru_ofh_config_translator.h"
 #include "apps/units/flexible_o_du/split_7_2/helpers/ru_ofh_config_yaml_writer.h"
 #include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_config_translator.h"
 #include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_config_yaml_writer.h"
+#include "split6_constants.h"
+#include "split6_flexible_o_du_low_factory.h"
+#include "split6_flexible_o_du_low_manager.h"
 #include "split6_o_du_low_unit_cli11_schema.h"
 #include "split6_o_du_low_unit_config_validator.h"
 #include "split6_o_du_low_unit_logger_registrator.h"
@@ -65,10 +69,10 @@ void split6_o_du_low_application_unit_impl::dump_config(YAML::Node& node) const
 {
   fill_du_low_config_in_yaml_schema(node, unit_cfg.du_low_cfg);
 
-  if (auto* ru = std::get_if<ru_ofh_unit_parsed_config>(&unit_cfg.ru_cfg)) {
-    fill_ru_ofh_config_in_yaml_schema(node, ru->config);
-  } else if (auto* ru = std::get_if<ru_sdr_unit_config>(&unit_cfg.ru_cfg)) {
-    fill_ru_sdr_config_in_yaml_schema(node, *ru);
+  if (auto* ru_ofh = std::get_if<ru_ofh_unit_parsed_config>(&unit_cfg.ru_cfg)) {
+    fill_ru_ofh_config_in_yaml_schema(node, ru_ofh->config);
+  } else if (auto* ru_sdr = std::get_if<ru_sdr_unit_config>(&unit_cfg.ru_cfg)) {
+    fill_ru_sdr_config_in_yaml_schema(node, *ru_sdr);
   }
 }
 
@@ -79,11 +83,31 @@ void split6_o_du_low_application_unit_impl::fill_worker_manager_config(worker_ma
   plugin->fill_worker_manager_config(config);
 
   const unsigned nof_cells = 1U;
+  config.config_affinities.resize(nof_cells);
   fill_du_low_worker_manager_config(config, unit_cfg.du_low_cfg, is_blocking_mode_enable, nof_cells);
 
-  if (auto* ru = std::get_if<ru_sdr_unit_config>(&unit_cfg.ru_cfg)) {
-    fill_sdr_worker_manager_config(config, *ru);
-  } else if (auto* ru = std::get_if<ru_ofh_unit_parsed_config>(&unit_cfg.ru_cfg)) {
-    fill_ofh_worker_manager_config(config, ru->config, cells);
+  if (auto* ru_sdr = std::get_if<ru_sdr_unit_config>(&unit_cfg.ru_cfg)) {
+    fill_sdr_worker_manager_config(config, *ru_sdr);
+  } else if (auto* ru_ofh = std::get_if<ru_ofh_unit_parsed_config>(&unit_cfg.ru_cfg)) {
+    fill_ofh_worker_manager_config(config, ru_ofh->config, {split6_du_low::NOF_TX_ANTENNA_SUPPORTED});
   }
+}
+
+std::unique_ptr<du_operation_controller>
+split6_o_du_low_application_unit_impl::create_flexible_o_du_low(worker_manager& workers, srslog::basic_logger& logger)
+{
+  /// Split 6 flexible O-DU low manager dependencies.
+  split6_flexible_o_du_low_manager_dependencies dependencies;
+  dependencies.factory_odu_low             = create_split6_flexible_o_du_low_factory(unit_cfg, workers);
+  dependencies.config_interface_collection = fapi::create_fapi_config_message_interface_collection(logger);
+  dependencies.cell_plugin                 = dependencies.factory_odu_low->create_fapi_cell_configurator_plugin(
+      logger, dependencies.config_interface_collection->get_config_message_gateway());
+
+  return std::make_unique<split6_flexible_o_du_low_manager>(std::move(dependencies));
+}
+
+std::unique_ptr<split6_o_du_low_application_unit_impl>
+srsran::create_flexible_o_du_low_application_unit(std::string_view app_name)
+{
+  return std::make_unique<split6_o_du_low_application_unit_impl>(app_name, create_split6_o_du_low_plugin(app_name));
 }

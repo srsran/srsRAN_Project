@@ -173,10 +173,8 @@ private:
                            timer_manager&                                      timers);
 
   /// Helper method that creates the low Distributed Unit executors.
-  du_crit_path_executor_desc
-  create_du_crit_path_prio_executors(unsigned                                                   nof_cells,
-                                     bool                                                       rt_mode,
-                                     const std::optional<worker_manager_config::du_low_config>& du_low);
+  du_crit_path_executor_desc create_du_crit_path_prio_executors(unsigned nof_cells, bool rt_mode);
+  du_crit_path_executor_desc create_du_crit_path_prio_executors(const worker_manager_config::du_low_config& du_low);
 
   /// Helper method that creates the Radio Unit dummy executors.
   void create_ru_dummy_executors();
