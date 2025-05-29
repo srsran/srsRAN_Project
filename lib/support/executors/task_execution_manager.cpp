@@ -191,7 +191,8 @@ protected:
           qparams[i].policy = strand_cfg.queues[i].policy;
           qparams[i].size   = strand_cfg.queues[i].size;
         }
-        auto strand_ptr = make_priority_task_strand_ptr(exec_type{basic_exec}, qparams);
+        auto strand_ptr =
+            make_priority_task_strand_ptr(exec_type{basic_exec}, std::numeric_limits<unsigned>::max(), qparams);
         std::shared_ptr<priority_task_strand<exec_type>> shared_strand = std::move(strand_ptr);
 
         // Create executors that own the strand through reference counting.
@@ -208,7 +209,7 @@ protected:
         concurrent_queue_params qparams;
         qparams.policy  = strand_cfg.queues[0].policy;
         qparams.size    = strand_cfg.queues[0].size;
-        auto strand_ptr = make_task_strand_ptr(exec_type{basic_exec}, qparams);
+        auto strand_ptr = make_task_strand_ptr(exec_type{basic_exec}, std::numeric_limits<unsigned>::max(), qparams);
         if (strand_cfg.queues[0].synchronous) {
           strand_ptr = make_sync_executor(std::move(strand_ptr));
         }

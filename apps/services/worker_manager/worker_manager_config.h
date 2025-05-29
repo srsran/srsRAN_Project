@@ -69,7 +69,7 @@ struct worker_manager_config {
   struct du_high_config {
     /// DU-high UE data related tasks queue size.
     unsigned ue_data_tasks_queue_size;
-    /// TODO.
+    /// Maximum batch size used in DU strands.
     unsigned strand_batch_size;
     /// DU high number of cells.
     unsigned nof_cells;
@@ -86,8 +86,8 @@ struct worker_manager_config {
     uint32_t dl_ue_executor_queue_size   = 2048;
     uint32_t ul_ue_executor_queue_size   = 2048;
     uint32_t ctrl_ue_executor_queue_size = 2048;
-    /// Strand maximum tasks in a batch
-    uint32_t strand_batch_size = 256;
+    /// Maximum batch size used in CU-UP strands.
+    unsigned strand_batch_size = 256;
     /// Wether to offload socket TX to a dedicated strand.
     bool dedicated_io_ul_strand = true;
     /// Whether to enable task tracing.

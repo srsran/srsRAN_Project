@@ -115,7 +115,7 @@ public:
     cell_strands.resize(cfg.nof_cells);
     for (unsigned i = 0, e = cfg.nof_cells; i != e; ++i) {
       cell_strands[i].strand =
-          std::make_unique<cell_strand_type>(256,
+          std::make_unique<cell_strand_type>(std::numeric_limits<unsigned>::max(),
                                              cfg.pool_executors[i % cfg.pool_executors.size()],
                                              std::array<concurrent_queue_params, 2>{slot_qparams, other_qparams});
       auto execs = cell_strands[i].strand->get_executors();
@@ -378,7 +378,7 @@ public:
                        bool                                                    rt_mode_enabled,
                        bool                                                    trace_enabled,
                        const std::optional<std::chrono::milliseconds>&         metrics_period) :
-    strand(256,
+    strand(std::numeric_limits<unsigned>::max(),
            cfg.pool_executor,
            std::array<concurrent_queue_params, 2>{
                concurrent_queue_params{concurrent_queue_policy::lockfree_mpmc, cfg.task_queue_size},

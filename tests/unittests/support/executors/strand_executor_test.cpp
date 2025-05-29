@@ -32,10 +32,10 @@ static_assert(is_task_executor_ptr<priority_task_strand_executor<task_executor*>
 
 // Test helper function that verifies that a given number of tasks are executed in order.
 template <typename WaitCondition>
-void run_count_test(task_executor&       strand,
-                    unsigned             total_increments,
-                    unsigned             nof_producers,
-                    const WaitCondition& wait_tasks_to_run)
+static void run_count_test(task_executor&       strand,
+                           unsigned             total_increments,
+                           unsigned             nof_producers,
+                           const WaitCondition& wait_tasks_to_run)
 {
   srslog::init();
 
@@ -92,10 +92,10 @@ class single_prio_strand_test : public testing::Test
 {
 protected:
   template <typename ExecType>
-  void setup_strand(ExecType&& exec, unsigned queue_size)
+  void setup_strand(ExecType&& exec, unsigned max_pops, unsigned queue_size)
   {
-    strand_exec = make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc, StrandType>(std::forward<ExecType>(exec),
-                                                                                           queue_size);
+    strand_exec = make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc, StrandType>(
+        std::forward<ExecType>(exec), max_pops, queue_size);
   }
 
   std::unique_ptr<task_executor> strand_exec;
@@ -109,7 +109,7 @@ TYPED_TEST(single_prio_strand_test, dispatch_to_single_worker_causes_no_race_con
   static const unsigned nof_pushers    = 4;
 
   task_worker w{"WORKER", nof_increments};
-  this->setup_strand(make_task_executor(w), nof_increments);
+  this->setup_strand(make_task_executor(w), std::numeric_limits<unsigned>::max(), nof_increments);
 
   run_count_test(*this->strand_exec, nof_increments, nof_pushers, [&w]() { w.wait_pending_tasks(); });
 }
@@ -122,7 +122,9 @@ TYPED_TEST(single_prio_strand_test, dispatch_to_worker_pool_causes_no_race_condi
 
   task_worker_pool<concurrent_queue_policy::lockfree_mpmc> pool{
       "POOL", nof_workers, nof_increments, std::chrono::microseconds{100}};
-  this->setup_strand(task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc>(pool), nof_increments);
+  this->setup_strand(task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc>(pool),
+                     std::numeric_limits<unsigned>::max(),
+                     nof_increments);
 
   run_count_test(*this->strand_exec, nof_increments, nof_pushers, [&pool]() { pool.wait_pending_tasks(); });
 }
@@ -133,7 +135,7 @@ TYPED_TEST(single_prio_strand_test, execute_inside_worker_runs_inline)
 
   task_worker w{"WORKER", 256};
   auto        worker_exec = make_task_executor(w);
-  this->setup_strand(make_task_executor(w), 4);
+  this->setup_strand(make_task_executor(w), std::numeric_limits<unsigned>::max(), 4);
 
   unsigned count = 0;
   w.push_task_blocking([this, &count]() {
@@ -154,12 +156,12 @@ template <typename StrandType>
 class multi_prio_strand_test : public testing::Test
 {
 protected:
-  void setup_strand(task_executor& exec)
+  void setup_strand(unsigned max_pops, task_executor& exec)
   {
     const std::array<unsigned, 2>        qsizes  = {16, 16};
     std::vector<concurrent_queue_params> qparams = {{concurrent_queue_policy::lockfree_mpmc, qsizes[0]},
                                                     {concurrent_queue_policy::lockfree_mpmc, qsizes[1]}};
-    strand_ptr                                   = make_priority_task_strand_ptr<StrandType>(&exec, qparams);
+    strand_ptr                                   = make_priority_task_strand_ptr<StrandType>(&exec, max_pops, qparams);
     strand_execs                                 = make_priority_task_executor_ptrs(strand_ptr.get());
   }
 
@@ -179,7 +181,7 @@ TYPED_TEST(multi_prio_strand_test, multi_priorities_in_strand)
   auto pool_exec = task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc>(pool);
 
   // Instantiate strands.
-  this->setup_strand(pool_exec);
+  this->setup_strand(std::numeric_limits<unsigned>::max(), pool_exec);
 
   concurrent_queue<enqueue_priority, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::sleep>
       order_of_tasks(10);
