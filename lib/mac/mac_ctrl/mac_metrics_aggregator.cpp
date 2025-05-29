@@ -332,14 +332,13 @@ void mac_metrics_aggregator::try_send_new_report()
   notifier.on_new_metrics_report(next_report);
 
   const unsigned period_slots = next_report.dl.cells[0].start_slot.nof_slots_per_subframe() * period.count();
-  const unsigned start_mod    = next_report.dl.cells[0].start_slot.to_uint() % period_slots;
-  slot_point     start_slot   = next_report.dl.cells[0].start_slot - start_mod;
-  slot_point     end_slot     = start_slot + period_slots;
-  logger.debug(
-      "Metric report of {} cells completed for slots=[{}, {})", next_report.dl.cells.size(), start_slot, end_slot);
+  logger.debug("Metric report of {} cells completed for slots=[{}, {})",
+               next_report.dl.cells.size(),
+               next_report_start_slot.without_hyper_sfn(),
+               (next_report_start_slot + period_slots).without_hyper_sfn());
 
   // Update next report window start slot.
-  next_report_start_slot = end_slot;
+  next_report_start_slot += period_slots;
 
   // Reset report.
   next_report.dl.cells.clear();

@@ -17,6 +17,7 @@
 #include "srsran/ran/drx_config.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/duplex_mode.h"
+#include "srsran/ran/slot_point_extended.h"
 #include "srsran/support/cli11_utils.h"
 #include "srsran/support/config_parsers.h"
 #include "srsran/support/format/fmt_to_c_str.h"
@@ -1816,7 +1817,7 @@ static void configure_cli11_metrics_args(CLI::App& app, du_high_unit_metrics_con
              metrics_params.du_report_period,
              "DU statistics report period in milliseconds")
       ->capture_default_str()
-      ->check(CLI::Range(0, 10240));
+      ->check(CLI::Range(0U, static_cast<unsigned>(NOF_SUBFRAMES_PER_FRAME * NOF_SFNS * NOF_HYPER_SFNS)));
 
   auto* layers_subcmd = add_subcommand(app, "layers", "Layer basis metrics configuration")->configurable();
   configure_cli11_metrics_layers_args(*layers_subcmd, metrics_params.layers_cfg);
