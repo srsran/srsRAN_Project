@@ -55,6 +55,7 @@ private:
   std::array<cell_context, MAX_NOF_DU_CELLS> cells;
 
   std::atomic<int32_t>  master_count{-1};
+  std::atomic<int32_t>  missed_slots{0};
   std::atomic<uint32_t> nof_active_cells{0};
 };
 

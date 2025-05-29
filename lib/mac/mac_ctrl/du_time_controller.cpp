@@ -152,7 +152,8 @@ slot_point_extended du_time_controller::handle_slot_ind(du_cell_index_t cell_ind
     return cell_sl_counter;
   }
 
-  // Update the master cell clock. For each slot, only one cell will be able to update the master clock.
+  // Update the master cell clock.
+  // For each new slot, only one cell will be able to win the "race" and update the master clock.
   int32_t             master_cpy = master_count.load(std::memory_order_relaxed);
   slot_point_extended master_sl;
   do {
@@ -168,18 +169,22 @@ slot_point_extended du_time_controller::handle_slot_ind(du_cell_index_t cell_ind
   if (nof_skipped >= MAX_SKIPPED) {
     // Number of skipped slots is too high. This is likely an error.
     logger.warning("cell={}: Unexpected jump in slot indications of {}", fmt::underlying(cell_index), nof_skipped);
-    return cells[cell_index].last_counter;
+    return cell_sl_counter;
   }
 
+  // Add the slots that could not be pushed to the executor before.
+  nof_skipped += missed_slots.exchange(0, std::memory_order_relaxed);
+
   // Initiate operation to tick timers.
-  if (tick_exec.defer([this, nof_skipped]() {
+  if (not tick_exec.defer([this, nof_skipped]() {
         for (int i = 0; i != nof_skipped; ++i) {
           timers.tick();
         }
       })) {
-    // The task executor dispatch was successful. Update the master count.
-    master_count.store(cell_sl_counter.count(), std::memory_order_relaxed);
+    // Defer operation failed. The queue is full.
+    // We accumulate the number of skipped slots, so that we can tick them later.
+    missed_slots.store(nof_skipped, std::memory_order_relaxed);
   }
 
-  return cells[cell_index].last_counter;
+  return cell_sl_counter;
 }
