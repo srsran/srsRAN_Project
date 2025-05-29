@@ -80,7 +80,7 @@ void make_executor_decorator_helper(std::unique_ptr<task_executor>&   result,
                                        std::forward<ComposedExecutor>(exec), *first_policy->tracer, first_policy->name},
                                    policies...);
   } else {
-    static_assert(false, "Unsupported executor policy in make_executor_decorator_helper");
+    report_fatal_error("Unsupported executor decoration policy in make_executor_decorator_helper");
   }
 }
 
