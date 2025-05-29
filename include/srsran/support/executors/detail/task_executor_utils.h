@@ -18,9 +18,9 @@ namespace srsran {
 
 namespace detail {
 
-// Helper traits to detect execute/defer methods in types.
+/// Helper traits to detect execute/defer methods in types.
 CREATE_TRAIT_HAS_METHOD(has_execute_method, execute);
-CREATE_TRAIT_HAS_METHOD(has_defer_method, execute);
+CREATE_TRAIT_HAS_METHOD(has_defer_method, defer);
 
 } // namespace detail
 
@@ -85,7 +85,7 @@ public:
   static constexpr bool value = decltype(test(std::declval<T>()))::value;
 };
 
-// Helper function to determine whether an executor allows a task to be run inline, given the caller thread.
+/// Helper function to determine whether an executor allows a task to be run inline, given the caller thread.
 template <typename Executor, std::enable_if_t<task_executor_has_can_run_task_inline<Executor>::value, int> = 0>
 bool executor_lets_run_task_inline(const Executor& exec)
 {

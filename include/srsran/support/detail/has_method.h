@@ -15,10 +15,11 @@
 namespace srsran {
 namespace detail {
 
+/// Helper metafunction to determine if a type T can be dereferenced (i.e., have an operator* defined).
 template <typename T, typename = void>
 struct is_dereferenceable_impl : std::false_type {};
 
-// Specialization for types that can be dereferenced (i.e., have an operator* defined).
+/// Specialization for types that can be dereferenced.
 template <typename T>
 struct is_dereferenceable_impl<T, std::void_t<decltype(*std::declval<T>())>> : std::true_type {};
 
@@ -35,6 +36,6 @@ using is_dereferenceable = detail::is_dereferenceable_impl<T>;
                                                                                                                        \
   template <typename T, typename Ret, typename... Args>                                                                \
   struct trait_name<T, Ret(Args...), std::void_t<decltype(std::declval<T>().method_name(std::declval<Args>()...))>>    \
-    : std::is_same<decltype(std::declval<T>().method_name(std::declval<Args>()...)), Ret> {};
+    : std::is_same<decltype(std::declval<T>().method_name(std::declval<Args>()...)), Ret> {}
 
 } // namespace srsran
