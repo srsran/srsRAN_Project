@@ -75,7 +75,7 @@ void si_message_scheduler::update_si_message_windows(slot_point sl_tx)
 
     if (not pending_messages[i].window.empty()) {
       // SI message is already in the window. Check for window end.
-      if (pending_messages[i].window.stop() < sl_tx) {
+      if (pending_messages[i].window.stop() <= sl_tx) {
         if (pending_messages[i].nof_tx_in_current_window == 0) {
           logger.warning("SI message {} window ended, but no transmissions were made.", i);
         }
