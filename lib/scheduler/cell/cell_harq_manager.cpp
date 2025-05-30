@@ -253,20 +253,21 @@ void cell_harq_repository<IsDl>::handle_harq_ack_timeout(harq_type& h, slot_poin
   } else {
     if (ack_val) {
       // Case: Not all HARQ-ACKs were received, but at least one positive ACK was received.
-      logger.debug("rnti={} h_id={}: Setting {} HARQ to \"ACKed\" state. Cause: HARQ-ACK wait timeout ({} slots) was "
-                   "reached with still missing PUCCH HARQ-ACKs. However, one positive ACK was received.",
+      logger.debug("rnti={} h_id={}: Setting {} HARQ to \"ACKed\" state. Cause: Timeout was reached ({} slots), but "
+                   "there are still missing PUCCH HARQ-ACK indications. However, one positive ACK was received.",
                    h.rnti,
                    fmt::underlying(h.h_id),
                    IsDl ? "DL" : "UL",
                    h.slot_timeout - h.slot_ack);
     } else {
       // At least one of the expected ACKs went missing and we haven't received any positive ACK.
-      logger.warning("rnti={} h_id={}: Discarding {} HARQ. Cause: HARQ-ACK wait timeout ({} slots) was reached, but "
-                     "there are still missing HARQ-ACKs and none of the received ones are positive.",
+      logger.warning("rnti={} h_id={}: Discarding {} HARQ. Cause: Timeout was reached ({} slots) to receive the "
+                     "respective HARQ-ACK indication from lower layers (HARQ-ACK slot={})",
                      h.rnti,
                      fmt::underlying(h.h_id),
                      IsDl ? "DL" : "UL",
-                     h.slot_timeout - h.slot_ack);
+                     h.slot_timeout - h.slot_ack,
+                     h.slot_ack);
     }
   }
 
