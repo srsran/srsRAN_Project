@@ -14,7 +14,6 @@
 #include "rlc_tx_entity.h"
 #include "srsran/support/executors/task_executor.h"
 #include "fmt/format.h"
-#include <mutex>
 
 namespace srsran {
 
