@@ -87,7 +87,7 @@ struct cu_up_unit_execution_config {
   uint32_t dl_ue_executor_queue_size   = 8192;
   uint32_t ul_ue_executor_queue_size   = 8192;
   uint32_t ctrl_ue_executor_queue_size = 8192;
-  uint32_t strand_batch_size           = 256;
+  unsigned strand_batch_size           = 256;
   bool     executor_tracing_enable     = false;
 };
 

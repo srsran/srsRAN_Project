@@ -61,8 +61,8 @@ std::unique_ptr<task_executor> decorate_executor(const execution_config_helper::
   std::unique_ptr<task_executor> ret;
   if (desc.strand_queue_size.has_value()) {
     // Convert executor into a strand.
-    ret = std::make_unique<task_strand<Exec, concurrent_queue_policy::lockfree_mpmc>>(
-        256, std::forward<Exec>(exec), desc.strand_queue_size.value());
+    ret = std::make_unique<task_strand<Exec, concurrent_queue_policy::lockfree_mpmc>>(std::forward<Exec>(exec),
+                                                                                      desc.strand_queue_size.value());
   } else {
     ret = exec_to_ptr(std::forward<Exec>(exec));
   }
@@ -191,8 +191,7 @@ protected:
           qparams[i].policy = strand_cfg.queues[i].policy;
           qparams[i].size   = strand_cfg.queues[i].size;
         }
-        auto strand_ptr =
-            make_priority_task_strand_ptr(exec_type{basic_exec}, std::numeric_limits<unsigned>::max(), qparams);
+        auto strand_ptr = make_priority_task_strand_ptr(exec_type{basic_exec}, qparams);
         std::shared_ptr<priority_task_strand<exec_type>> shared_strand = std::move(strand_ptr);
 
         // Create executors that own the strand through reference counting.
@@ -209,7 +208,7 @@ protected:
         concurrent_queue_params qparams;
         qparams.policy  = strand_cfg.queues[0].policy;
         qparams.size    = strand_cfg.queues[0].size;
-        auto strand_ptr = make_task_strand_ptr(exec_type{basic_exec}, std::numeric_limits<unsigned>::max(), qparams);
+        auto strand_ptr = make_task_strand_ptr(exec_type{basic_exec}, qparams);
         if (strand_cfg.queues[0].synchronous) {
           strand_ptr = make_sync_executor(std::move(strand_ptr));
         }

@@ -131,8 +131,6 @@ struct du_high_executor_config {
     unsigned ctrl_queue_size;
     /// Size of the queue used for PDU handling tasks associated with a UE.
     unsigned pdu_queue_size;
-    /// Maximum number of tasks that run in a strand before yeilding.
-    unsigned strand_batch_size;
     /// Executor of a thread pool to which strands will point to.
     task_executor* pool_executor;
   };

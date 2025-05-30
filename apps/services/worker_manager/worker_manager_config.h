@@ -69,8 +69,6 @@ struct worker_manager_config {
   struct du_high_config {
     /// DU-high UE data related tasks queue size.
     unsigned ue_data_tasks_queue_size;
-    /// Maximum batch size used in DU strands.
-    unsigned strand_batch_size;
     /// DU high number of cells.
     unsigned nof_cells;
     /// Real-time mode enabled flag.

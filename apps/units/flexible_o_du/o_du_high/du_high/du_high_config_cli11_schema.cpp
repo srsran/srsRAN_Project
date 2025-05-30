@@ -1977,9 +1977,6 @@ static void configure_cli11_execution_args(CLI::App& app, du_high_unit_execution
              exec_cfg.ue_data_executor_queue_size,
              "DU's UE executor task queue size for PDU processing")
       ->capture_default_str();
-  add_option(
-      app, "--du_strand_batch_size", exec_cfg.strand_batch_size, "DU's UE executor task queue size for PDU processing")
-      ->capture_default_str();
 }
 
 void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_parsed_config& parsed_cfg)

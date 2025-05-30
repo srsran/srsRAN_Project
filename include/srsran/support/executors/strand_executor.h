@@ -349,11 +349,11 @@ public:
   using executor_type = task_strand_executor<OutExec, QueuePolicy, StrandLockPolicy>;
 
   template <typename ExecType>
-  task_strand(unsigned max_pops, ExecType&& out_exec, unsigned qsize) :
-    impl(max_pops, std::forward<ExecType>(out_exec), qsize), exec(*this)
+  task_strand(ExecType&& out_exec, unsigned qsize, unsigned max_batch = std::numeric_limits<unsigned>::max()) :
+    impl(max_batch, std::forward<ExecType>(out_exec), qsize), exec(*this)
   {
     bool is_basic_lock = std::is_same<StrandLockPolicy, basic_strand_lock>::value;
-    srsran_assert(is_basic_lock or max_pops == std::numeric_limits<unsigned>::max(),
+    srsran_assert(is_basic_lock or max_batch == std::numeric_limits<unsigned>::max(),
                   "Cannot use limited bachtes with locking policies that are not \"basic_strand_lock\"");
   }
 
@@ -419,8 +419,10 @@ public:
   using executor_type = priority_task_strand_executor<strand_type&>;
 
   template <typename ExecType, typename ArrayOfQueueParams>
-  priority_task_strand(unsigned max_pops, ExecType&& out_exec, const ArrayOfQueueParams& strand_queue_params) :
-    impl(max_pops, std::forward<ExecType>(out_exec), strand_queue_params)
+  priority_task_strand(ExecType&&                out_exec,
+                       const ArrayOfQueueParams& strand_queue_params,
+                       unsigned                  max_batch = std::numeric_limits<unsigned>::max()) :
+    impl(max_batch, std::forward<ExecType>(out_exec), strand_queue_params)
   {
     static_assert(std::is_same_v<typename std::decay_t<ArrayOfQueueParams>::value_type, concurrent_queue_params>,
                   "Invalid queue params type");
@@ -465,22 +467,21 @@ private:
 
 /// \brief Creates a task strand instance with a single priority task level.
 template <typename StrandType = basic_strand_lock, typename OutExec = task_executor*>
-std::unique_ptr<task_executor>
-make_task_strand_ptr(OutExec&& out_exec, unsigned max_pops, const concurrent_queue_params& qparams)
+std::unique_ptr<task_executor> make_task_strand_ptr(OutExec&& out_exec, const concurrent_queue_params& qparams)
 {
   switch (qparams.policy) {
     case concurrent_queue_policy::lockfree_mpmc:
       return std::make_unique<task_strand<OutExec, concurrent_queue_policy::lockfree_mpmc, StrandType>>(
-          max_pops, std::forward<OutExec>(out_exec), qparams.size);
+          std::forward<OutExec>(out_exec), qparams.size);
     case concurrent_queue_policy::lockfree_spsc:
       return std::make_unique<task_strand<OutExec, concurrent_queue_policy::lockfree_spsc, StrandType>>(
-          max_pops, std::forward<OutExec>(out_exec), qparams.size);
+          std::forward<OutExec>(out_exec), qparams.size);
     case concurrent_queue_policy::locking_mpmc:
       return std::make_unique<task_strand<OutExec, concurrent_queue_policy::locking_mpmc, StrandType>>(
-          max_pops, std::forward<OutExec>(out_exec), qparams.size);
+          std::forward<OutExec>(out_exec), qparams.size);
     case concurrent_queue_policy::locking_mpsc:
       return std::make_unique<task_strand<OutExec, concurrent_queue_policy::locking_mpsc, StrandType>>(
-          max_pops, std::forward<OutExec>(out_exec), qparams.size);
+          std::forward<OutExec>(out_exec), qparams.size);
     default:
       break;
   }
@@ -492,19 +493,18 @@ make_task_strand_ptr(OutExec&& out_exec, unsigned max_pops, const concurrent_que
 template <concurrent_queue_policy QueuePolicy,
           typename StrandType = basic_strand_lock,
           typename OutExec    = task_executor*>
-std::unique_ptr<task_executor> make_task_strand_ptr(OutExec&& out_exec, unsigned max_pops, unsigned strand_queue_size)
+std::unique_ptr<task_executor> make_task_strand_ptr(OutExec&& out_exec, unsigned strand_queue_size)
 {
-  return std::make_unique<task_strand<OutExec, QueuePolicy, StrandType>>(
-      max_pops, std::forward<OutExec>(out_exec), strand_queue_size);
+  return std::make_unique<task_strand<OutExec, QueuePolicy, StrandType>>(std::forward<OutExec>(out_exec),
+                                                                         strand_queue_size);
 }
 
 /// \brief Creates a task strand instance with several priority task levels.
 template <typename StrandType = basic_strand_lock, typename OutExec = task_executor*>
 std::unique_ptr<priority_task_strand<OutExec, StrandType>>
-make_priority_task_strand_ptr(OutExec&& out_exec, unsigned max_pops, span<const concurrent_queue_params> qparams)
+make_priority_task_strand_ptr(OutExec&& out_exec, span<const concurrent_queue_params> qparams)
 {
-  return std::make_unique<priority_task_strand<OutExec, StrandType>>(
-      max_pops, std::forward<OutExec>(out_exec), qparams);
+  return std::make_unique<priority_task_strand<OutExec, StrandType>>(std::forward<OutExec>(out_exec), qparams);
 }
 
 /// \brief Creates a task executor with a given priority for a strand that supports multiple priorities.

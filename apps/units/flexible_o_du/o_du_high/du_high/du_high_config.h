@@ -958,7 +958,6 @@ struct du_high_unit_pcap_config {
 /// Configuration of the task executors queues.
 struct du_high_unit_execution_queues_config {
   uint32_t ue_data_executor_queue_size = 8192;
-  unsigned strand_batch_size           = std::numeric_limits<unsigned>::max();
 };
 
 /// CPU affinities configuration for the cell.
