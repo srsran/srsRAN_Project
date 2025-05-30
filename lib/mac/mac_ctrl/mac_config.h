@@ -29,6 +29,7 @@ struct mac_control_config {
     std::chrono::milliseconds   period{1000};
     mac_metrics_notifier&       mac_notifier;
     scheduler_metrics_notifier* sched_notifier = nullptr;
+    unsigned                    max_nof_ue_events;
   };
 
   mac_ul_ccch_notifier&                 event_notifier;

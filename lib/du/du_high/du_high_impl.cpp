@@ -69,6 +69,7 @@ du_high_impl::du_high_impl(const du_high_configuration& config_, const du_high_d
                                       mac_config::metrics_config{cfg.metrics.period,
                                                                  cfg.metrics.enable_mac,
                                                                  cfg.metrics.enable_sched,
+                                                                 cfg.metrics.max_nof_sched_ue_events,
                                                                  adapters->mac_ev_notifier,
                                                                  dependencies.sched_metrics_notifier},
                                       cfg.ran.sched_cfg},

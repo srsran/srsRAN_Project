@@ -55,7 +55,7 @@ cell_metrics_handler::cell_metrics_handler(
   // Pre-reserve space.
   ues.reserve(MAX_NOF_DU_UES);
   rnti_to_ue_index_lookup.reserve(MAX_NOF_DU_UES);
-  constexpr unsigned pre_reserved_event_capacity = 3 * MAX_NOF_DU_UES;
+  const unsigned pre_reserved_event_capacity = std::min(3U * MAX_NOF_DU_UES, metrics_cfg->max_ue_events_per_report);
   pending_events.reserve(pre_reserved_event_capacity);
 }
 
@@ -73,7 +73,11 @@ void cell_metrics_handler::handle_ue_creation(du_ue_index_t ue_index, rnti_t rnt
   ues[ue_index].pci      = pcell_pci;
   rnti_to_ue_index_lookup.emplace(rnti, ue_index);
 
-  pending_events.push_back(scheduler_cell_event{last_slot_tx, rnti, scheduler_cell_event::event_type::ue_add});
+  if (pending_events.size() < pending_events.capacity()) {
+    pending_events.push_back(scheduler_cell_event{last_slot_tx, rnti, scheduler_cell_event::event_type::ue_add});
+  } else {
+    data.filtered_events_counter++;
+  }
 }
 
 void cell_metrics_handler::handle_ue_reconfiguration(du_ue_index_t ue_index)
@@ -81,8 +85,12 @@ void cell_metrics_handler::handle_ue_reconfiguration(du_ue_index_t ue_index)
   if (not enabled()) {
     return;
   }
-  pending_events.push_back(
-      scheduler_cell_event{last_slot_tx, ues[ue_index].rnti, scheduler_cell_event::event_type::ue_reconf});
+  if (pending_events.size() < pending_events.capacity()) {
+    pending_events.push_back(
+        scheduler_cell_event{last_slot_tx, ues[ue_index].rnti, scheduler_cell_event::event_type::ue_reconf});
+  } else {
+    data.filtered_events_counter++;
+  }
 }
 
 void cell_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
@@ -93,7 +101,11 @@ void cell_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
   if (ues.contains(ue_index)) {
     rnti_t rnti = ues[ue_index].rnti;
 
-    pending_events.push_back(scheduler_cell_event{last_slot_tx, rnti, scheduler_cell_event::event_type::ue_rem});
+    if (pending_events.size() < pending_events.capacity()) {
+      pending_events.push_back(scheduler_cell_event{last_slot_tx, rnti, scheduler_cell_event::event_type::ue_rem});
+    } else {
+      data.filtered_events_counter++;
+    }
 
     rnti_to_ue_index_lookup.erase(rnti);
     ues.erase(ue_index);
@@ -399,6 +411,7 @@ void cell_metrics_handler::report_metrics()
           : std::nullopt;
   next_report->nof_failed_pdsch_allocs_late_harqs = data.nof_failed_pdsch_allocs_late_harqs;
   next_report->nof_failed_pusch_allocs_late_harqs = data.nof_failed_pusch_allocs_late_harqs;
+  next_report->nof_filtered_events                = data.filtered_events_counter;
 
   // Reset cell-wide metric counters.
   data = {};

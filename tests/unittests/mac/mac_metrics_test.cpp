@@ -96,7 +96,10 @@ protected:
   dummy_mac_metrics_notifier          metric_notifier;
   dummy_scheduler_ue_metrics_notifier sched_notifier;
   du_time_controller                  du_timer{timers, task_worker, logger};
-  mac_metrics_aggregator              metrics{period, metric_notifier, &sched_notifier, task_worker, timers, logger};
+  mac_metrics_aggregator metrics{mac_control_config::metrics_config{period, metric_notifier, &sched_notifier},
+                                 task_worker,
+                                 timers,
+                                 logger};
 
   slotted_id_table<du_cell_index_t, cell_context, MAX_CELLS_PER_DU> cells;
 

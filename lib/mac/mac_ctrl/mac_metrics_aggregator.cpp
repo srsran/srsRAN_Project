@@ -28,14 +28,14 @@ struct full_cell_report {
   std::optional<mac_dl_cell_metric_report> mac;
 };
 
-full_cell_report report_preinit()
+full_cell_report report_preinit(unsigned max_ue_events = 64)
 {
   full_cell_report report{};
   // Pre-reserve space for UE metrics.
   report.sched.ue_metrics.reserve(MAX_NOF_DU_UES);
   // Note: there can be more than one event per UE.
-  constexpr unsigned prereserved_events_per_ue = 3;
-  report.sched.events.reserve(MAX_NOF_DU_UES * prereserved_events_per_ue);
+  const unsigned ue_event_capacity = std::min(max_ue_events, MAX_NOF_DU_UES * 3U);
+  report.sched.events.reserve(ue_event_capacity);
   return report;
 }
 
@@ -54,10 +54,12 @@ public:
     parent(parent_),
     cell_index(cell_index_),
     scs_common(scs_common_),
-    period_slots(get_nof_slots_per_subframe(scs_common) * parent.period.count()),
+    period_slots(get_nof_slots_per_subframe(scs_common) * parent.cfg.period.count()),
     sched_notifier(sched_notifier_),
     time_source(time_source_),
-    report_queue(cell_report_queue_size, logger_, []() { return report_preinit(); })
+    report_queue(cell_report_queue_size, logger_, [ue_events = parent.cfg.max_nof_ue_events]() {
+      return report_preinit(ue_events);
+    })
   {
   }
 
@@ -200,18 +202,11 @@ private:
 
 // class mac_metrics_aggregator
 
-mac_metrics_aggregator::mac_metrics_aggregator(std::chrono::milliseconds   period_,
-                                               mac_metrics_notifier&       mac_notifier_,
-                                               scheduler_metrics_notifier* sched_notifier_,
-                                               task_executor&              ctrl_exec_,
-                                               timer_manager&              timers_,
-                                               srslog::basic_logger&       logger_) :
-  period(period_),
-  notifier(mac_notifier_),
-  sched_notifier(sched_notifier_),
-  ctrl_exec(ctrl_exec_),
-  timers(timers_),
-  logger(logger_)
+mac_metrics_aggregator::mac_metrics_aggregator(const mac_control_config::metrics_config& cfg_,
+                                               task_executor&                            ctrl_exec_,
+                                               timer_manager&                            timers_,
+                                               srslog::basic_logger&                     logger_) :
+  cfg(cfg_), ctrl_exec(ctrl_exec_), timers(timers_), logger(logger_)
 {
   aggr_timer = timers_.create_unique_timer(ctrl_exec);
   aggr_timer.set(aggregation_timeout, [this](timer_id_t /* unused */) { handle_pending_reports(); });
@@ -231,12 +226,12 @@ cell_metric_report_config mac_metrics_aggregator::add_cell(du_cell_index_t      
 
   // Create a handler for the new cell.
   auto cell_handler =
-      std::make_unique<cell_metric_handler>(*this, cell_index, scs_common, sched_notifier, time_source, logger);
+      std::make_unique<cell_metric_handler>(*this, cell_index, scs_common, cfg.sched_notifier, time_source, logger);
   auto& cell_ref = *cell_handler;
   cells.emplace(cell_index, std::move(cell_handler));
 
   // Return the cell report configuration.
-  return cell_metric_report_config{period, &cell_ref, &cell_ref};
+  return cell_metric_report_config{cfg.period, &cell_ref, &cell_ref};
 }
 
 void mac_metrics_aggregator::rem_cell(du_cell_index_t cell_index)
@@ -329,9 +324,9 @@ void mac_metrics_aggregator::try_send_new_report()
   }
 
   // Forward the full report.
-  notifier.on_new_metrics_report(next_report);
+  cfg.mac_notifier.on_new_metrics_report(next_report);
 
-  const unsigned period_slots = next_report.dl.cells[0].start_slot.nof_slots_per_subframe() * period.count();
+  const unsigned period_slots = next_report.dl.cells[0].start_slot.nof_slots_per_subframe() * cfg.period.count();
   logger.debug("Metric report of {} cells completed for slots=[{}, {})",
                next_report.dl.cells.size(),
                next_report_start_slot.without_hyper_sfn(),

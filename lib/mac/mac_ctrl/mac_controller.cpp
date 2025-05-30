@@ -28,7 +28,7 @@ mac_controller::mac_controller(const mac_control_config&   cfg_,
   rnti_table(rnti_table_),
   sched_cfg(sched_cfg_),
   time_ctrl(cfg.timers, cfg.timer_exec, srslog::fetch_basic_logger("MAC")),
-  metrics(cfg.metrics.period, cfg.metrics.mac_notifier, cfg.metrics.sched_notifier, cfg.ctrl_exec, cfg.timers, logger)
+  metrics(cfg.metrics, cfg.ctrl_exec, cfg.timers, logger)
 {
 }
 

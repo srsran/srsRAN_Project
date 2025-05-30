@@ -141,6 +141,8 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
     unsigned nof_failed_pdsch_allocs_late_harqs = 0;
     // Number of failed PUSCH allocations due to late HARQs.
     unsigned nof_failed_pusch_allocs_late_harqs = 0;
+    // Number of UE events not reported because the maximum number of events was reached.
+    unsigned filtered_events_counter = 0;
   };
 
   scheduler_cell_metrics_notifier& notifier;
@@ -165,7 +167,7 @@ public:
   explicit cell_metrics_handler(
       const cell_configuration&                                                      cell_cfg_,
       const std::optional<sched_cell_configuration_request_message::metrics_config>& metrics_cfg);
-  ~cell_metrics_handler();
+  ~cell_metrics_handler() override;
 
   /// \brief Register creation of a UE.
   void handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci) override;

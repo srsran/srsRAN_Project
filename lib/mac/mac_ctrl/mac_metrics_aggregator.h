@@ -35,12 +35,10 @@ public:
   /// \remark The value is an heuristic to compensate for cells that get too delayed.
   constexpr static std::chrono::milliseconds aggregation_timeout{8};
 
-  mac_metrics_aggregator(std::chrono::milliseconds   period_,
-                         mac_metrics_notifier&       mac_notifier_,
-                         scheduler_metrics_notifier* sched_notifier_,
-                         task_executor&              ctrl_exec_,
-                         timer_manager&              timers_,
-                         srslog::basic_logger&       logger_);
+  mac_metrics_aggregator(const mac_control_config::metrics_config& cfg,
+                         task_executor&                            ctrl_exec_,
+                         timer_manager&                            timers_,
+                         srslog::basic_logger&                     logger_);
   ~mac_metrics_aggregator();
 
   cell_metric_report_config
@@ -63,12 +61,10 @@ private:
   /// Creates a new aggregated metric report if the right conditions are met.
   void try_send_new_report();
 
-  std::chrono::milliseconds   period;
-  mac_metrics_notifier&       notifier;
-  scheduler_metrics_notifier* sched_notifier;
-  task_executor&              ctrl_exec;
-  timer_manager&              timers;
-  srslog::basic_logger&       logger;
+  mac_control_config::metrics_config cfg;
+  task_executor&                     ctrl_exec;
+  timer_manager&                     timers;
+  srslog::basic_logger&              logger;
 
   /// Metric handlers for configured cells.
   slotted_id_table<du_cell_index_t, std::unique_ptr<cell_metric_handler>, MAX_CELLS_PER_DU> cells;

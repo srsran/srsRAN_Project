@@ -475,6 +475,9 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
                        event_to_string(event.type));
         first = false;
       }
+      if (cell.nof_filtered_events > 0) {
+        fmt::format_to(std::back_inserter(buffer), ", ... ({} remaining events) ...", cell.nof_filtered_events);
+      }
       fmt::format_to(std::back_inserter(buffer), "]");
     }
     log_chan("{}", to_c_str(buffer));

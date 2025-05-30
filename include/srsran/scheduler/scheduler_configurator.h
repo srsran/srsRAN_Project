@@ -54,6 +54,8 @@ struct sched_cell_configuration_request_message {
   struct metrics_config {
     std::chrono::milliseconds        report_period{0};
     scheduler_cell_metrics_notifier* notifier = nullptr;
+    /// Maximum number of UE events per report.
+    unsigned max_ue_events_per_report = 64;
   };
 
   du_cell_index_t       cell_index;
