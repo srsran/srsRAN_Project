@@ -124,6 +124,12 @@ static void configure_cli11_expert_execution_args(CLI::App& app, du_high_unit_ex
         }
       },
       "Sets the cell CPU affinities configuration on a per cell basis");
+  CLI::App* queues_subcmd = add_subcommand(app, "queues", "Task executor queue parameters")->configurable();
+  add_option(*queues_subcmd,
+             "--du_ue_data_executor_queue_size",
+             config.du_queue_cfg.ue_data_executor_queue_size,
+             "DU's UE executor task queue size for PDU processing")
+      ->capture_default_str();
 }
 
 static void configure_cli11_pdcch_common_args(CLI::App& app, pdcch_common_unit_config& common_params)
@@ -1970,15 +1976,6 @@ static void configure_cli11_qos_args(CLI::App& app, du_high_unit_qos_config& qos
   app.needs(f1u_du_subcmd);
 }
 
-static void configure_cli11_execution_args(CLI::App& app, du_high_unit_execution_queues_config& exec_cfg)
-{
-  add_option(app,
-             "--du_ue_data_executor_queue_size",
-             exec_cfg.ue_data_executor_queue_size,
-             "DU's UE executor task queue size for PDU processing")
-      ->capture_default_str();
-}
-
 void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_parsed_config& parsed_cfg)
 {
   add_option(app, "--gnb_id", parsed_cfg.config.gnb_id.id, "gNodeB identifier")->capture_default_str();
@@ -2003,11 +2000,6 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
   // PCAP section.
   CLI::App* pcap_subcmd = add_subcommand(app, "pcap", "PCAP configuration")->configurable();
   configure_cli11_pcap_args(*pcap_subcmd, parsed_cfg.config.pcaps);
-
-  // Execution section.
-  CLI::App* exec_subcmd   = add_subcommand(app, "expert_execution", "Execution parameters")->configurable();
-  CLI::App* queues_subcmd = add_subcommand(*exec_subcmd, "queues", "Task executor queue parameters")->configurable();
-  configure_cli11_execution_args(*queues_subcmd, parsed_cfg.config.expert_execution_cfg.du_queue_cfg);
 
   // Common cell section.
   CLI::App* common_cell_subcmd = add_subcommand(app, "cell_cfg", "Default cell configuration")->configurable();
