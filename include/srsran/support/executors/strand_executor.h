@@ -352,6 +352,9 @@ public:
   task_strand(unsigned max_pops, ExecType&& out_exec, unsigned qsize) :
     impl(max_pops, std::forward<ExecType>(out_exec), qsize), exec(*this)
   {
+    bool is_basic_lock = std::is_same<StrandLockPolicy, basic_strand_lock>::value;
+    srsran_assert(is_basic_lock or max_pops == std::numeric_limits<unsigned>::max(),
+                  "Cannot use limited bachtes with locking policies that are not \"basic_strand_lock\"");
   }
 
   [[nodiscard]] bool execute(unique_task task) override
