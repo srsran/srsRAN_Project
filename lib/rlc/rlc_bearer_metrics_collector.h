@@ -15,28 +15,28 @@
 #include "srsran/rlc/rlc_metrics.h"
 
 namespace srsran {
-class rlc_metrics_aggregator
+class rlc_bearer_metrics_collector
 {
 public:
-  rlc_metrics_aggregator(gnb_du_id_t           du,
-                         du_ue_index_t         ue,
-                         rb_id_t               rb,
-                         timer_duration        metrics_period_,
-                         rlc_metrics_notifier* rlc_metrics_notif_,
-                         task_executor&        ue_executor_);
+  rlc_bearer_metrics_collector(gnb_du_id_t           du,
+                               du_ue_index_t         ue,
+                               rb_id_t               rb,
+                               timer_duration        metrics_period_,
+                               rlc_metrics_notifier* rlc_metrics_notif_,
+                               task_executor&        ue_executor_);
 
-  // \brief push metrics from the lower RLC executor to the aggregator
+  // \brief push metrics from the lower RLC executor to the collector.
   // This will be called will transfer the execution by pushing a copy to
   // ue executor
   void push_tx_low_metrics(rlc_tx_metrics_lower m_lower_);
-  // \brief push metrics from the high RLC executors to the aggregator
+  // \brief push metrics from the high RLC executors to the collector.
   // As these are called from the UE executor no execution transfer is required.
   void push_tx_high_metrics(rlc_tx_metrics_higher m_higher_);
-  // \brief push metrics from the high RLC executors to the aggregator
+  // \brief push metrics from the high RLC executors to the collector.
   // As these are called from the UE executor no execution transfer is required.
   void push_rx_high_metrics(rlc_rx_metrics m_rx_high_);
 
-  // \brief get metrics report period from the aggregator.
+  // \brief get metrics report period from the collector.
   const timer_duration& get_metrics_period() const { return metrics_period; }
 
 private:

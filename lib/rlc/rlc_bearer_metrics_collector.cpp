@@ -8,16 +8,16 @@
  *
  */
 
-#include "rlc_metrics_aggregator.h"
+#include "rlc_bearer_metrics_collector.h"
 
 using namespace srsran;
 
-rlc_metrics_aggregator::rlc_metrics_aggregator(gnb_du_id_t           du_,
-                                               du_ue_index_t         ue_,
-                                               rb_id_t               rb_,
-                                               timer_duration        metrics_period_,
-                                               rlc_metrics_notifier* rlc_metrics_notif_,
-                                               task_executor&        ue_executor_) :
+rlc_bearer_metrics_collector::rlc_bearer_metrics_collector(gnb_du_id_t           du_,
+                                                           du_ue_index_t         ue_,
+                                                           rb_id_t               rb_,
+                                                           timer_duration        metrics_period_,
+                                                           rlc_metrics_notifier* rlc_metrics_notif_,
+                                                           task_executor&        ue_executor_) :
   du(du_),
   ue(ue_),
   rb(rb_),
@@ -31,46 +31,46 @@ rlc_metrics_aggregator::rlc_metrics_aggregator(gnb_du_id_t           du_,
   m_rx_high.counter = UINT32_MAX;
 }
 
-void rlc_metrics_aggregator::push_tx_high_metrics(rlc_tx_metrics_higher m_higher_)
+void rlc_bearer_metrics_collector::push_tx_high_metrics(rlc_tx_metrics_higher m_higher_)
 {
   if (not ue_executor.execute([this, m_higher_]() { push_tx_high_metrics_impl(m_higher_); })) {
     logger.log_error("Could not push TX high metrics");
   }
 }
 
-void rlc_metrics_aggregator::push_tx_low_metrics(rlc_tx_metrics_lower m_lower_)
+void rlc_bearer_metrics_collector::push_tx_low_metrics(rlc_tx_metrics_lower m_lower_)
 {
   if (not ue_executor.execute([this, m_lower_]() { push_tx_low_metrics_impl(m_lower_); })) {
     logger.log_error("Could not push TX low metrics");
   }
 }
 
-void rlc_metrics_aggregator::push_rx_high_metrics(rlc_rx_metrics m_rx_high_)
+void rlc_bearer_metrics_collector::push_rx_high_metrics(rlc_rx_metrics m_rx_high_)
 {
   if (not ue_executor.execute([this, m_rx_high_]() { push_rx_high_metrics_impl(m_rx_high_); })) {
     logger.log_error("Could not push RX high metrics");
   }
 }
 
-void rlc_metrics_aggregator::push_tx_high_metrics_impl(rlc_tx_metrics_higher m_higher_)
+void rlc_bearer_metrics_collector::push_tx_high_metrics_impl(rlc_tx_metrics_higher m_higher_)
 {
   m_higher = m_higher_;
   push_report();
 }
 
-void rlc_metrics_aggregator::push_tx_low_metrics_impl(rlc_tx_metrics_lower m_lower_)
+void rlc_bearer_metrics_collector::push_tx_low_metrics_impl(rlc_tx_metrics_lower m_lower_)
 {
   m_lower = m_lower_;
   push_report();
 }
 
-void rlc_metrics_aggregator::push_rx_high_metrics_impl(rlc_rx_metrics m_rx_high_)
+void rlc_bearer_metrics_collector::push_rx_high_metrics_impl(rlc_rx_metrics m_rx_high_)
 {
   m_rx_high = m_rx_high_;
   push_report();
 }
 
-void rlc_metrics_aggregator::push_report()
+void rlc_bearer_metrics_collector::push_report()
 {
   if (m_lower.counter != m_higher.counter || m_lower.counter != m_rx_high.counter) {
     return;

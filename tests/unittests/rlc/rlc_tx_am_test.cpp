@@ -122,7 +122,7 @@ protected:
     // Create test frame
     tester = std::make_unique<rlc_tx_am_test_frame>(config.sn_field_length);
 
-    metrics_agg = std::make_unique<rlc_metrics_aggregator>(
+    metrics_coll = std::make_unique<rlc_bearer_metrics_collector>(
         gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, timer_duration{1000}, tester.get(), ue_worker);
 
     // Create RLC AM TX entity
@@ -133,7 +133,7 @@ protected:
                                              *tester,
                                              *tester,
                                              *tester,
-                                             *metrics_agg,
+                                             *metrics_coll,
                                              pcap,
                                              pcell_worker,
                                              ue_worker,
@@ -354,16 +354,16 @@ protected:
     pcell_worker.run_pending_tasks();
   }
 
-  srslog::basic_logger&                   logger  = srslog::fetch_basic_logger("TEST", false);
-  rlc_am_sn_size                          sn_size = GetParam();
-  rlc_tx_am_config                        config;
-  timer_manager                           timers;
-  manual_task_worker                      ue_worker{128};
-  manual_task_worker                      pcell_worker{128};
-  std::unique_ptr<rlc_tx_am_test_frame>   tester;
-  null_rlc_pcap                           pcap;
-  std::unique_ptr<rlc_tx_am_entity>       rlc;
-  std::unique_ptr<rlc_metrics_aggregator> metrics_agg;
+  srslog::basic_logger&                         logger  = srslog::fetch_basic_logger("TEST", false);
+  rlc_am_sn_size                                sn_size = GetParam();
+  rlc_tx_am_config                              config;
+  timer_manager                                 timers;
+  manual_task_worker                            ue_worker{128};
+  manual_task_worker                            pcell_worker{128};
+  std::unique_ptr<rlc_tx_am_test_frame>         tester;
+  null_rlc_pcap                                 pcap;
+  std::unique_ptr<rlc_tx_am_entity>             rlc;
+  std::unique_ptr<rlc_bearer_metrics_collector> metrics_coll;
 };
 
 TEST_P(rlc_tx_am_test, create_new_entity)

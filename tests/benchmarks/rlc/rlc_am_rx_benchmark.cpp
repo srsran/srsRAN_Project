@@ -150,15 +150,15 @@ static std::vector<byte_buffer> generate_pdus(bench_params params, rx_order orde
   manual_task_worker ue_worker{128};
 
   // Create RLC AM TX entity
-  std::unique_ptr<rlc_tx_am_entity>       rlc_tx      = nullptr;
-  std::unique_ptr<rlc_metrics_aggregator> metrics_agg = nullptr;
+  std::unique_ptr<rlc_tx_am_entity>             rlc_tx       = nullptr;
+  std::unique_ptr<rlc_bearer_metrics_collector> metrics_coll = nullptr;
 
   auto& logger = srslog::fetch_basic_logger("RLC");
   logger.set_level(srslog::basic_levels::warning);
 
   null_rlc_pcap pcap;
 
-  metrics_agg = std::make_unique<rlc_metrics_aggregator>(
+  metrics_coll = std::make_unique<rlc_bearer_metrics_collector>(
       gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, timer_duration{0}, tester.get(), ue_worker);
 
   // Make PDUs
@@ -170,7 +170,7 @@ static std::vector<byte_buffer> generate_pdus(bench_params params, rx_order orde
                                               *tester,
                                               *tester,
                                               *tester,
-                                              *metrics_agg,
+                                              *metrics_coll,
                                               pcap,
                                               pcell_worker,
                                               ue_worker,
@@ -244,7 +244,7 @@ static void benchmark_rx_pdu(const bench_params& params, rx_order order, timer_m
   config.t_status_prohibit = 0;
   config.t_reassembly      = 200;
 
-  auto metrics_agg = std::make_unique<rlc_metrics_aggregator>(
+  auto metrics_agg = std::make_unique<rlc_bearer_metrics_collector>(
       gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, timer_duration{0}, tester.get(), ue_worker);
 
   // Create RLC AM RX entity

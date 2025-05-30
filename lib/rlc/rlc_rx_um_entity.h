@@ -97,7 +97,7 @@ public:
                    rb_id_t                           rb_id,
                    const rlc_rx_um_config&           config,
                    rlc_rx_upper_layer_data_notifier& upper_dn_,
-                   rlc_metrics_aggregator&           metrics_agg_,
+                   rlc_bearer_metrics_collector&     metrics_coll_,
                    rlc_pcap&                         pcap_,
                    task_executor&                    ue_executor,
                    timer_manager&                    timers);
