@@ -259,7 +259,7 @@ struct cell_resource_allocator {
   /// \brief Number of previous slot results to keep in history before they get deleted.
   ///
   /// Having access to past decisions is useful during the handling of error indications.
-  static const size_t RING_MAX_HISTORY_SIZE = 8;
+  static const size_t RING_MAX_HISTORY_SIZE = 16;
   /// Number of slots managed by this container.
   static const size_t RING_ALLOCATOR_SIZE = get_allocator_ring_size_gt_min(
       RING_MAX_HISTORY_SIZE + get_max_slot_ul_alloc_delay(NTN_CELL_SPECIFIC_KOFFSET_MAX));
