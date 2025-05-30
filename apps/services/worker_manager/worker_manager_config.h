@@ -76,7 +76,7 @@ struct worker_manager_config {
     /// Whether to log performance metrics for the DU-high executors.
     std::optional<std::chrono::milliseconds> metrics_period;
     /// Whether to enable task tracing.
-    bool executor_tracing_enable = false;
+    bool executor_tracing_enable;
   };
 
   // CU-UP worker configuration
