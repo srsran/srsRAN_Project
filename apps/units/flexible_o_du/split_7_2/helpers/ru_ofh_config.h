@@ -17,9 +17,52 @@
 #include "srsran/support/units.h"
 #include <chrono>
 #include <string>
+#include <variant>
 #include <vector>
 
 namespace srsran {
+
+/// Configuration parameters related to the scaling of the IQ symbols in the DL OFH resource grid.
+struct ru_ofh_scaling_config {
+  /// \brief RU reference level in dBFS.
+  ///
+  /// This parameter must be set to the magnitude that is required for a single subcarrier to reach the nominal RF power
+  /// of the RU. Some RUs specify their IQ reference level in their documentation. It is referenced to the full scale
+  /// value of the selected OFH compression scheme.
+  ///
+  /// \warning Check the RU documentation before settings this parameter, as incorrect values may damage the RU.
+  float ru_reference_level_dBFS = -12.0f;
+  /// \brief Attenuation of the subcarrier IQ data as a back-off to \ref ru_reference_level_dBFS.
+  ///
+  /// Set this parameter to the desired RMS power attenuation of the IQ symbols in the resource grid. It acts as a
+  /// back-off applied to the RU reference level. Its intended use is to prevent the sum of the power contributions of
+  /// each subcarrier in the signal from exceeding the RU reference level. Some RUs specify the expected subcarrier
+  /// magnitude in their documentation. If no expected subcarrier magnitude is stated on the RU documentation, it is
+  /// recommended to start with a large back-off (e.g., 30 dB), and decrease gradually until the desired RF power is
+  /// reached.
+  ///
+  /// Some RUs that support multiple channel bandwidths normalize their internal gain according to the selected RU
+  /// bandwidth. This makes the subcarrier RMS power valid for all supported bandwidth settings. For RUs that don't
+  /// normalize based on channel bandwidth, a subcarrier RMS power for a new BW can be derived from a subcarrier RMS
+  /// power calibrated for a previous BW by applying the following expression:
+  ///
+  /// \f$ $$P_{BW2}\text{ [dBFS]}=P_{BW1}\text{ [dBFS]} - 10\log_{10}{\bigg(\frac{BW2}{BW1}\bigg)}\f$
+  ///
+  /// \warning Check the RU documentation before settings this parameter, as incorrect values may damage the RU.
+  float subcarrier_rms_backoff_dB = 30.0f;
+};
+
+/// Configuration parameters related to the scaling of the IQ symbols in the DL OFH resource grid (legacy version).
+struct ru_ofh_legacy_scaling_config {
+  /// \brief IQ data scaling to be applied prior to Downlink data compression.
+  ///
+  /// If configured, it overrides the other power configuration parameters \ref ru_reference_level_dBFS and \ref
+  /// subcarrier_rms_backoff_dB. To preserve backwards-compatibility with older configs, the IQ scaling factor applied
+  /// to the OFH symbols will include \f$ G_{iq}=\frac{\text{iq\_scaling}}{\sqrt{12 N_{RB}}} \f$.
+  ///
+  /// \warning Check the RU documentation before settings this parameter, as incorrect values may damage the RU.
+  float iq_scaling = 0.1f;
+};
 
 /// gNB app Open Fronthaul base cell configuration.
 struct ru_ofh_unit_base_cell_config {
@@ -69,8 +112,8 @@ struct ru_ofh_unit_base_cell_config {
   bool is_downlink_static_comp_hdr_enabled = true;
   /// Uplink static compression header flag.
   bool is_uplink_static_comp_hdr_enabled = true;
-  /// IQ data scaling to be applied prior to Downlink data compression.
-  float iq_scaling = 0.35F;
+  /// Scaling configuration parameters.
+  std::variant<std::monostate, ru_ofh_scaling_config, ru_ofh_legacy_scaling_config> iq_scaling_config;
 };
 
 /// gNB app Open Fronthaul cell configuration.

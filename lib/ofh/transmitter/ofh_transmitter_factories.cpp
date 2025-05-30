@@ -96,13 +96,9 @@ create_data_flow_uplane_data(const transmitter_config&              tx_config,
       (tx_config.tci_up) ? ether::create_vlan_frame_builder(ether_params) : ether::create_frame_builder(ether_params);
   dependencies.ecpri_builder = ecpri::create_ecpri_packet_builder();
 
-  const unsigned nof_prbs =
-      get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.bw), tx_config.scs, srsran::frequency_range::FR1);
-  const double bw_scaling = 1.0 / (std::sqrt(nof_prbs * NOF_SUBCARRIERS_PER_RB));
-
   std::array<std::unique_ptr<iq_compressor>, NOF_COMPRESSION_TYPES_SUPPORTED> compressors;
   for (unsigned i = 0; i != NOF_COMPRESSION_TYPES_SUPPORTED; ++i) {
-    compressors[i] = create_iq_compressor(static_cast<compression_type>(i), logger, tx_config.iq_scaling * bw_scaling);
+    compressors[i] = create_iq_compressor(static_cast<compression_type>(i), logger, tx_config.iq_scaling);
   }
   dependencies.compressor_sel = create_iq_compressor_selector(std::move(compressors));
 

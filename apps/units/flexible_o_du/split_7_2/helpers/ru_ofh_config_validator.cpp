@@ -78,6 +78,41 @@ static bool validate_transmission_window(std::chrono::duration<double, std::micr
   return ((window_end - window_start) > symbol_duration);
 }
 
+static bool validate_scaling_params(
+    const std::variant<std::monostate, ru_ofh_scaling_config, ru_ofh_legacy_scaling_config>& scaling_params_)
+{
+  if (const auto* scaling_params = std::get_if<ru_ofh_scaling_config>(&scaling_params_)) {
+    interval<float, true> ref_level_range(-std::numeric_limits<float>::infinity(), 0.0f);
+    interval<float, true> backoff_range(0.0f, std::numeric_limits<float>::infinity());
+    if (!ref_level_range.contains(scaling_params->ru_reference_level_dBFS)) {
+      fmt::print("RU Reference level, i.e., {} dBFS lies outside of the valid range {}\n",
+                 scaling_params->ru_reference_level_dBFS,
+                 ref_level_range);
+      return false;
+    }
+
+    if (!backoff_range.contains(scaling_params->subcarrier_rms_backoff_dB)) {
+      fmt::print("Subcarrier back-off, i.e., {} dB lies outside of the valid range {}\n",
+                 scaling_params->subcarrier_rms_backoff_dB,
+                 backoff_range);
+      return false;
+    }
+  } else if (const auto* legacy_scaling_params = std::get_if<ru_ofh_legacy_scaling_config>(&scaling_params_)) {
+    interval<float, true> iq_scaling_range(0.0f, std::numeric_limits<float>::infinity());
+    if (!iq_scaling_range.contains(legacy_scaling_params->iq_scaling)) {
+      fmt::print("IQ scaling, i.e., {} lies outside of the valid range {}\n",
+                 legacy_scaling_params->iq_scaling,
+                 iq_scaling_range);
+      return false;
+    }
+  } else {
+    fmt::print("Missing IQ scaling configuration!\n");
+    return false;
+  }
+
+  return true;
+}
+
 /// Validates the given Open Fronthaul Radio Unit application configuration. Returns true on success, otherwise
 /// false.
 static bool validate_ru_ofh_unit_config(span<const ru_ofh_unit_cell_config>       ofh_cells,
@@ -158,6 +193,10 @@ static bool validate_ru_ofh_unit_config(span<const ru_ofh_unit_cell_config>     
     if (!validate_duplicated_ports<unsigned>(ofh_cell.ru_prach_port_id)) {
       fmt::print("Detected duplicated uplink PRACH port identifiers\n");
 
+      return false;
+    }
+
+    if (!validate_scaling_params(ofh_cell.cell.iq_scaling_config)) {
       return false;
     }
   }
