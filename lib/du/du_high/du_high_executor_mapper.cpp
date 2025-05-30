@@ -31,9 +31,6 @@ struct executor_decorator {
       // No decoration needed, return the original executor.
       return exec;
     }
-    report_error_if_not(not tracing_enabled or not metrics_period,
-                        "Metrics and tracing cannot be used at the same time");
-    report_error_if_not(not throttle_thres or not is_sync, "Throttling cannot be used with synchronous executors");
 
     execution_decoration_config cfg;
     if (is_sync) {
@@ -43,10 +40,10 @@ struct executor_decorator {
       cfg.throttle = execution_decoration_config::throttle_option{*throttle_thres};
     }
     if (tracing_enabled) {
-      cfg.trace = execution_decoration_config::trace_option{exec_name, &tracer};
+      cfg.trace = execution_decoration_config::trace_option{exec_name};
     }
     if (metrics_period) {
-      cfg.metrics = execution_decoration_config::metrics_option{exec_name, &metrics_logger, *metrics_period};
+      cfg.metrics = execution_decoration_config::metrics_option{exec_name, *metrics_period};
     }
     decorators.push_back(decorate_executor(std::forward<Exec>(exec), cfg));
 
@@ -55,8 +52,6 @@ struct executor_decorator {
 
 private:
   std::vector<std::unique_ptr<task_executor>> decorators;
-  file_event_tracer<true>                     tracer;
-  srslog::basic_logger&                       metrics_logger = srslog::fetch_basic_logger("METRICS");
 };
 
 /// Cell executor mapper that uses dedicated serialized workers, one per cell.

@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsran/srslog/logger.h"
 #include "srsran/support/executors/detail/task_executor_utils.h"
-#include "srsran/support/tracing/event_tracing.h"
+#include <chrono>
+#include <memory>
 #include <optional>
 #include <string>
 
@@ -26,12 +26,13 @@ struct execution_decoration_config {
     unsigned nof_task_threshold;
   };
   struct trace_option {
-    std::string              name;
-    file_event_tracer<true>* tracer;
+    /// Name of the executor to be traced.
+    std::string name;
   };
   struct metrics_option {
-    std::string               name;
-    srslog::basic_logger*     logger;
+    /// Name of the executor for which metrics are to be reported.
+    std::string name;
+    /// Period at which the metrics are collected.
     std::chrono::milliseconds period;
   };
 
