@@ -130,6 +130,10 @@ static void configure_cli11_expert_execution_args(CLI::App& app, du_high_unit_ex
              config.du_queue_cfg.ue_data_executor_queue_size,
              "DU's UE executor task queue size for PDU processing")
       ->capture_default_str();
+  CLI::App* tracing_subcmd = add_subcommand(app, "tracing", "Task executor tracing parameters")->configurable();
+  add_option(
+      *tracing_subcmd, "--du_high_enable", config.executor_tracing_enable, "Enable tracing for DU-high executors")
+      ->capture_default_str();
 }
 
 static void configure_cli11_pdcch_common_args(CLI::App& app, pdcch_common_unit_config& common_params)

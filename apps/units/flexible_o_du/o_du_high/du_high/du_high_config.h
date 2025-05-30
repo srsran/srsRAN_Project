@@ -970,6 +970,9 @@ struct du_high_unit_expert_execution_config {
   /// \brief Task executor configuration for the DU.
   du_high_unit_execution_queues_config du_queue_cfg;
 
+  /// \brief Whether to enable tracing of the DU-high executors.
+  bool executor_tracing_enable = false;
+
   /// \brief CPU affinities per cell of the gNB app.
   ///
   /// \note Add one cell by default.

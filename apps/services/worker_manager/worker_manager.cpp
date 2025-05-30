@@ -302,7 +302,7 @@ void worker_manager::create_du_executors(const worker_manager_config::du_high_co
   cfg.ctrl_executors.task_queue_size = task_worker_queue_size;
   cfg.ctrl_executors.pool_executor   = exec_map.at("high_prio_exec");
   cfg.is_rt_mode_enabled             = du_hi.is_rt_mode_enabled;
-  cfg.trace_exec_tasks               = false;
+  cfg.trace_exec_tasks               = du_hi.executor_tracing_enable;
   cfg.metrics_period                 = du_hi.metrics_period;
 
   du_high_exec_mapper = create_du_high_executor_mapper(cfg);

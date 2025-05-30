@@ -1169,6 +1169,8 @@ void srsran::fill_du_high_worker_manager_config(worker_manager_config&     confi
   du_hi_cfg.ue_data_tasks_queue_size = unit_cfg.expert_execution_cfg.du_queue_cfg.ue_data_executor_queue_size;
   du_hi_cfg.is_rt_mode_enabled       = !is_blocking_mode_enabled;
   du_hi_cfg.nof_cells                = unit_cfg.cells_cfg.size();
+  du_hi_cfg.executor_tracing_enable  = unit_cfg.expert_execution_cfg.executor_tracing_enable;
+
   // Set the number of cells of the affinities vector.
   config.config_affinities.resize(du_hi_cfg.nof_cells);
   for (unsigned i = 0; i != du_hi_cfg.nof_cells; ++i) {
