@@ -76,6 +76,24 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
   drx_res_mng(cell_cfg_list),
   ra_res_alloc(cell_cfg_list)
 {
+  for (const auto& cell : cell_cfg_list) {
+    const du_cell_index_t cell_idx    = cell.ue_ded_serv_cell_cfg.cell_index;
+    unsigned              max_nof_ues = pucch_res_mng.get_nof_sr_free_res_offsets(cell_idx);
+
+    if (cell.ue_ded_serv_cell_cfg.csi_meas_cfg.has_value()) {
+      max_nof_ues = std::min(max_nof_ues, srs_res_mng->get_nof_srs_free_res_offsets(cell_idx));
+    }
+
+    if (cell.srs_cfg.srs_period.has_value()) {
+      max_nof_ues = std::min(max_nof_ues, srs_res_mng->get_nof_srs_free_res_offsets(cell_idx));
+    }
+
+    logger.info("The upper-bound on the number of UEs supported by cell {{pci={}, du_cell_index={}}} is {} (the actual "
+                "number might be lower than that).",
+                cell.pci,
+                fmt::underlying(cell_idx),
+                max_nof_ues);
+  }
 }
 
 expected<ue_ran_resource_configurator, std::string>
