@@ -213,13 +213,11 @@ public:
   void add(const prach_buffer_context& context,
            prach_buffer&               buffer_,
            srslog::basic_logger&       logger,
-           std::optional<unsigned>     start_symbol,
-           std::optional<slot_point>   slot)
+           std::optional<unsigned>     start_symbol)
   {
-    if (!pending_context_to_add.try_push([context, &buffer_, start_symbol, slot, this]() {
+    if (!pending_context_to_add.try_push([context, &buffer_, start_symbol, this]() {
           std::lock_guard<std::mutex> lock(mutex);
-          slot_point                  current_slot = slot.value_or(context.slot);
-          entry(current_slot)                      = prach_context(context, buffer_, start_symbol);
+          entry(context.slot) = prach_context(context, buffer_, start_symbol);
         })) {
       logger.warning("Failed to enqueue task to add the uplink context to the repository");
     }

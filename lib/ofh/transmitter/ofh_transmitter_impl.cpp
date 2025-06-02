@@ -17,16 +17,15 @@ using namespace ofh;
 static uplink_request_handler_impl_config generate_uplink_request_handler_config(const transmitter_config& tx_config)
 {
   uplink_request_handler_impl_config config;
-  config.sector                              = tx_config.sector;
-  config.is_prach_cp_enabled                 = tx_config.is_prach_cp_enabled;
-  config.enable_lf_prach_slot_autoderivation = tx_config.enable_lf_prach_slot_autoderivation;
-  config.prach_eaxc                          = tx_config.prach_eaxc;
-  config.ul_data_eaxc                        = tx_config.ul_eaxc;
-  config.tdd_config                          = tx_config.tdd_config;
-  config.cp                                  = tx_config.cp;
-  config.scs                                 = tx_config.scs;
-  config.tx_timing_params                    = tx_config.tx_timing_params;
-  config.ul_processing_time                  = tx_config.ul_processing_time;
+  config.sector              = tx_config.sector;
+  config.is_prach_cp_enabled = tx_config.is_prach_cp_enabled;
+  config.prach_eaxc          = tx_config.prach_eaxc;
+  config.ul_data_eaxc        = tx_config.ul_eaxc;
+  config.tdd_config          = tx_config.tdd_config;
+  config.cp                  = tx_config.cp;
+  config.scs                 = tx_config.scs;
+  config.tx_timing_params    = tx_config.tx_timing_params;
+  config.ul_processing_time  = tx_config.ul_processing_time;
 
   return config;
 }

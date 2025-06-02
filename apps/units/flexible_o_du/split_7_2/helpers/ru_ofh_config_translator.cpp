@@ -115,19 +115,18 @@ static void generate_config(ru_ofh_configuration&              out_cfg,
                                                                                symbol_duration);
     sector_cfg.rx_window_timing_params =
         rx_timing_window_params_us_to_symbols(cell_cfg.cell.Ta4_max, cell_cfg.cell.Ta4_min, symbol_duration);
-    sector_cfg.is_prach_control_plane_enabled      = cell_cfg.cell.is_prach_control_plane_enabled;
-    sector_cfg.enable_lf_prach_slot_autoderivation = cell_cfg.cell.enable_lf_prach_slot_autoderivation;
-    sector_cfg.ignore_prach_start_symbol           = cell_cfg.cell.ignore_prach_start_symbol;
-    sector_cfg.ignore_ecpri_payload_size_field     = cell_cfg.cell.ignore_ecpri_payload_size_field;
-    sector_cfg.ignore_ecpri_seq_id_field           = cell_cfg.cell.ignore_ecpri_seq_id_field;
-    sector_cfg.log_unreceived_ru_frames            = cell_cfg.cell.log_unreceived_ru_frames;
-    sector_cfg.ul_compression_params               = {ofh::to_compression_type(cell_cfg.cell.compression_method_ul),
-                                                      cell_cfg.cell.compression_bitwidth_ul};
-    sector_cfg.dl_compression_params               = {ofh::to_compression_type(cell_cfg.cell.compression_method_dl),
-                                                      cell_cfg.cell.compression_bitwidth_dl};
-    sector_cfg.prach_compression_params            = {ofh::to_compression_type(cell_cfg.cell.compression_method_prach),
-                                                      cell_cfg.cell.compression_bitwidth_prach};
-    sector_cfg.iq_scaling                          = cell_cfg.cell.iq_scaling;
+    sector_cfg.is_prach_control_plane_enabled  = cell_cfg.cell.is_prach_control_plane_enabled;
+    sector_cfg.ignore_prach_start_symbol       = cell_cfg.cell.ignore_prach_start_symbol;
+    sector_cfg.ignore_ecpri_payload_size_field = cell_cfg.cell.ignore_ecpri_payload_size_field;
+    sector_cfg.ignore_ecpri_seq_id_field       = cell_cfg.cell.ignore_ecpri_seq_id_field;
+    sector_cfg.log_unreceived_ru_frames        = cell_cfg.cell.log_unreceived_ru_frames;
+    sector_cfg.ul_compression_params           = {ofh::to_compression_type(cell_cfg.cell.compression_method_ul),
+                                                  cell_cfg.cell.compression_bitwidth_ul};
+    sector_cfg.dl_compression_params           = {ofh::to_compression_type(cell_cfg.cell.compression_method_dl),
+                                                  cell_cfg.cell.compression_bitwidth_dl};
+    sector_cfg.prach_compression_params        = {ofh::to_compression_type(cell_cfg.cell.compression_method_prach),
+                                                  cell_cfg.cell.compression_bitwidth_prach};
+    sector_cfg.iq_scaling                      = cell_cfg.cell.iq_scaling;
 
     sector_cfg.tci_cp = cell_cfg.vlan_tag_cp;
     sector_cfg.tci_up = cell_cfg.vlan_tag_up;
