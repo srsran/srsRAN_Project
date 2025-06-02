@@ -79,6 +79,10 @@ public:
   // ngap_ue_context_removal_handler
   void remove_ue_context(ue_index_t ue_index) override;
 
+  // ngap_ue_id_translator
+  ue_index_t  get_ue_index(const amf_ue_id_t& amf_ue_id) override;
+  amf_ue_id_t get_amf_ue_id(const ue_index_t& ue_index) override;
+
   ngap_message_handler&                        get_ngap_message_handler() override { return *this; }
   ngap_event_handler&                          get_ngap_event_handler() override { return *this; }
   ngap_connection_manager&                     get_ngap_connection_manager() override { return *this; }
@@ -89,6 +93,7 @@ public:
   ngap_metrics_handler&                        get_metrics_handler() override { return *this; }
   ngap_statistics_handler&                     get_ngap_statistics_handler() override { return *this; }
   ngap_ue_context_removal_handler&             get_ngap_ue_context_removal_handler() override { return *this; }
+  ngap_ue_id_translator&                       get_ngap_ue_id_translator() override { return *this; }
 
 private:
   class tx_pdu_notifier_with_logging final : public ngap_message_notifier

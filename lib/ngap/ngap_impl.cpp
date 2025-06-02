@@ -1118,6 +1118,24 @@ void ngap_impl::remove_ue_context(ue_index_t ue_index)
   ue_ctxt_list.remove_ue_context(ue_index);
 }
 
+ue_index_t ngap_impl::get_ue_index(const amf_ue_id_t& amf_ue_ngap_id)
+{
+  if (ue_ctxt_list.contains(amf_ue_ngap_id)) {
+    ngap_ue_context& ue_ctxt = ue_ctxt_list[amf_ue_ngap_id];
+    return ue_ctxt.ue_ids.ue_index;
+  }
+  return ue_index_t::invalid;
+}
+
+amf_ue_id_t ngap_impl::get_amf_ue_id(const ue_index_t& ue_index)
+{
+  if (ue_ctxt_list.contains(ue_index)) {
+    ngap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
+    return ue_ctxt.ue_ids.amf_ue_id;
+  }
+  return amf_ue_id_t::invalid;
+}
+
 void ngap_impl::schedule_error_indication(ue_index_t ue_index, ngap_cause_t cause, std::optional<amf_ue_id_t> amf_ue_id)
 {
   ngap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
