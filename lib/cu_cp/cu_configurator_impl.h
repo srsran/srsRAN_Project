@@ -26,7 +26,6 @@ public:
     mobility_notif(mobility_notif_), du_db(du_db_), ngap_db(ngap_db_), ue_mng(ue_mng_)
   {
   }
-  srs_cu_cp::mobility_manager_cu_cp_notifier& get_mobility_notifier() override { return mobility_notif; }
 
   /// Get UE index for a given tuple of (AMF-UE-NGAP-ID, GUAMI, GNB-CU-UE-F1AP-ID).
   srs_cu_cp::ue_index_t get_ue_index(const srs_cu_cp::amf_ue_id_t& amf_ue_id,

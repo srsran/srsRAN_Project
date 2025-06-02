@@ -37,9 +37,6 @@ class cu_configurator
 public:
   virtual ~cu_configurator() = default;
 
-  // Get Mobility Notifier to trigger HO.
-  virtual srs_cu_cp::mobility_manager_cu_cp_notifier& get_mobility_notifier() = 0;
-
   /// Get UE index for a given GNB-CU-UE-F1AP-ID.
   virtual srs_cu_cp::ue_index_t get_ue_index(const srs_cu_cp::amf_ue_id_t& amf_ue_id,
                                              const srs_cu_cp::guami_t&     guami,
