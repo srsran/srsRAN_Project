@@ -50,8 +50,8 @@ protected:
     ue_executor{ue_executor_},
     pcell_timer_factory{timers, pcell_executor},
     ue_timer_factory{timers, ue_executor},
-    high_metrics_timer(pcell_timer_factory.create_timer()),
-    low_metrics_timer(ue_timer_factory.create_timer()),
+    high_metrics_timer(ue_timer_factory.create_timer()),
+    low_metrics_timer(pcell_timer_factory.create_timer()),
     metrics_coll(metrics_coll_)
   {
     if (metrics_coll.get_metrics_period().count()) {
