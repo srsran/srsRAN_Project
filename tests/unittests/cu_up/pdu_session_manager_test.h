@@ -108,7 +108,7 @@ generate_pdu_session_res_to_setup_item(pdu_session_id_t psi, drb_id_t drb_id, qo
   // prepare request
   e1ap_pdu_session_res_to_setup_item pdu_session_setup_item;
   pdu_session_setup_item.pdu_session_id                        = psi;
-  pdu_session_setup_item.pdu_session_type                      = "ipv4";
+  pdu_session_setup_item.pdu_session_type                      = pdu_session_type_t::ipv4;
   pdu_session_setup_item.snssai.sst                            = slice_service_type{1};
   pdu_session_setup_item.snssai.sd                             = slice_differentiator::create(10203).value();
   pdu_session_setup_item.security_ind.integrity_protection_ind = integrity_protection_indication_t::not_needed;

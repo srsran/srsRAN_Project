@@ -870,5 +870,49 @@ ngap_asn1_to_gbr_qos_flow_information(const asn1::ngap::gbr_qos_info_s& asn1_gbr
   return gbr_qos_info;
 }
 
+/// \brief Convert NGAP ASN.1 to \c pdu_session_type_t.
+/// \param[out] pdu_session_type The common type pdu session type.
+/// \param[in] ans1_pdu_session_type The ASN.1 type pdu session type.
+/// \return True, if the conversion was successful, False otherwise.
+inline bool asn1_to_pdu_session_type(pdu_session_type_t&                   pdu_session_type,
+                                     const asn1::ngap::pdu_session_type_e& ans1_pdu_session_type)
+{
+  switch (ans1_pdu_session_type) {
+    case asn1::ngap::pdu_session_type_e::pdu_session_type_opts::ipv4:
+      pdu_session_type = pdu_session_type_t::ipv4;
+      break;
+    case asn1::ngap::pdu_session_type_e::pdu_session_type_opts::ipv6:
+      pdu_session_type = pdu_session_type_t::ipv6;
+      break;
+    case asn1::ngap::pdu_session_type_e::pdu_session_type_opts::ipv4v6:
+      pdu_session_type = pdu_session_type_t::ipv4v6;
+      break;
+    case asn1::ngap::pdu_session_type_e::pdu_session_type_opts::ethernet:
+      pdu_session_type = pdu_session_type_t::ethernet;
+      break;
+    default:
+      srslog::fetch_basic_logger("NGAP").error("Cannot convert ASN.1 PDU session type to common type");
+      return false;
+  }
+  return true;
+}
+
+/// \brief Convert common type \c pdu_session_type_t to NGAP ASN.1.
+/// \param[in] pdu_session_type The common type pdu session type.
+/// \return The ASN.1 type pdu session type.
+inline asn1::ngap::pdu_session_type_e pdu_session_type_to_asn1(const pdu_session_type_t& pdu_session_type)
+{
+  switch (pdu_session_type) {
+    case pdu_session_type_t::ipv4:
+      return asn1::ngap::pdu_session_type_e::ipv4;
+    case pdu_session_type_t::ipv6:
+      return asn1::ngap::pdu_session_type_e::ipv6;
+    case pdu_session_type_t::ipv4v6:
+      return asn1::ngap::pdu_session_type_e::ipv4v6;
+    default:
+      return asn1::ngap::pdu_session_type_e::ethernet;
+  }
+}
+
 } // namespace srs_cu_cp
 } // namespace srsran

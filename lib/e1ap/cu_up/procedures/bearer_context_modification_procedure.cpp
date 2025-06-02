@@ -46,7 +46,12 @@ void bearer_context_modification_procedure::operator()(coro_context<async_task<v
     CORO_EARLY_RETURN();
   }
 
-  fill_e1ap_bearer_context_modification_request(bearer_context_mod, request);
+  if (!fill_e1ap_bearer_context_modification_request(bearer_context_mod, request)) {
+    ue_ctxt.logger.log_error(
+        "Sending BearerContextModificationFailure. Cause: Invalid BearerContextModificationRequest");
+    pdu_notifier.on_new_message(e1ap_msg);
+    CORO_EARLY_RETURN();
+  }
 
   // Here, we transfer to the UE control executor to safely delete PDU sessions,
   // change keys, perform PDCP retransmissions, etc.

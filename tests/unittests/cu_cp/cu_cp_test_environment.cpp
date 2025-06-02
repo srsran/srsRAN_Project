@@ -846,7 +846,7 @@ bool cu_cp_test_environment::setup_pdu_session(unsigned               du_idx,
   auto& ue_ctx = attached_ues.at(du_ue_id_to_ran_ue_id_map.at(du_idx).at(du_ue_id));
 
   ngap_message pdu_session_resource_setup_request = generate_valid_pdu_session_resource_setup_request_message(
-      ue_ctx.amf_ue_id.value(), ue_ctx.ran_ue_id.value(), {{psi, {{qfi, 9}}}});
+      ue_ctx.amf_ue_id.value(), ue_ctx.ran_ue_id.value(), {{psi, {pdu_session_type_t::ipv4, {{qfi, 9}}}}});
 
   if (is_initial_session) {
     // Inject PDU Session Resource Setup Request and wait for Bearer Context Setup Request.

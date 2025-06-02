@@ -240,6 +240,20 @@ inline void fill_asn1_drb_to_setup_item(asn1::e1ap::drb_to_setup_item_ng_ran_s& 
   }
 }
 
+inline asn1::e1ap::pdu_session_type_e pdu_session_type_to_asn1(const pdu_session_type_t& pdu_session_type)
+{
+  switch (pdu_session_type) {
+    case pdu_session_type_t::ipv4:
+      return asn1::e1ap::pdu_session_type_e::ipv4;
+    case pdu_session_type_t::ipv6:
+      return asn1::e1ap::pdu_session_type_e::ipv6;
+    case pdu_session_type_t::ipv4v6:
+      return asn1::e1ap::pdu_session_type_e::ipv4v6;
+    default:
+      return asn1::e1ap::pdu_session_type_e::ethernet;
+  }
+}
+
 inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_setup_request_s& asn1_request,
                                                    const e1ap_bearer_context_setup_request&    request)
 {
@@ -280,7 +294,7 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
     asn1_pdu_session_res_item.pdu_session_id = pdu_session_id_to_uint(pdu_session_res_item.pdu_session_id);
 
     // Fill PDU session type.
-    asn1::string_to_enum(asn1_pdu_session_res_item.pdu_session_type, pdu_session_res_item.pdu_session_type);
+    asn1_pdu_session_res_item.pdu_session_type = pdu_session_type_to_asn1(pdu_session_res_item.pdu_session_type);
 
     // Fill S-NSSAI.
     asn1_pdu_session_res_item.snssai = snssai_to_e1ap_asn1(pdu_session_res_item.snssai);
@@ -599,7 +613,7 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
         asn1_res_to_setup_mod_item.pdu_session_id = pdu_session_id_to_uint(res_to_setup_mod_item.pdu_session_id);
 
         // Fill PDU session type.
-        asn1::string_to_enum(asn1_res_to_setup_mod_item.pdu_session_type, res_to_setup_mod_item.pdu_session_type);
+        asn1_res_to_setup_mod_item.pdu_session_type = pdu_session_type_to_asn1(res_to_setup_mod_item.pdu_session_type);
 
         // Fill S-NSSAI.
         asn1_res_to_setup_mod_item.snssai = snssai_to_e1ap_asn1(res_to_setup_mod_item.snssai);

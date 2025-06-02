@@ -158,7 +158,9 @@ void ngap_test::run_pdu_session_resource_setup(ue_index_t ue_index, pdu_session_
   auto& ue = test_ues.at(ue_index);
 
   ngap_message pdu_session_resource_setup_request = generate_valid_pdu_session_resource_setup_request_message(
-      ue.amf_ue_id.value(), ue.ran_ue_id.value(), {{pdu_session_id, {{uint_to_qos_flow_id(1), 9}}}});
+      ue.amf_ue_id.value(),
+      ue.ran_ue_id.value(),
+      {{pdu_session_id, {pdu_session_type_t::ipv4, {{uint_to_qos_flow_id(1), 9}}}}});
   ngap->handle_message(pdu_session_resource_setup_request);
 }
 

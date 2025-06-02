@@ -52,7 +52,7 @@ srsran::srs_cu_cp::generate_pdu_session_resource_setup(ue_index_t ue_index,
     item.pdu_session_aggregate_maximum_bit_rate_dl = 100;
     item.pdu_session_aggregate_maximum_bit_rate_ul = 100;
     item.ul_ngu_up_tnl_info = {transport_layer_address::create_from_string("127.0.0.1"), int_to_gtpu_teid(0x1)};
-    item.pdu_session_type   = "ipv4";
+    item.pdu_session_type   = pdu_session_type_t::ipv4;
     item.security_ind       = {};
 
     for (unsigned k = 0; k < num_qos_flows; ++k) {

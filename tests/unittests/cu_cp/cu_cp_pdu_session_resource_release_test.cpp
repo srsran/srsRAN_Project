@@ -84,7 +84,9 @@ public:
 
     // Inject NGAP PDU Session Resource Setup Request and await Bearer Context Modification Request
     get_amf().push_tx_pdu(generate_valid_pdu_session_resource_setup_request_message(
-        ue_ctx->amf_ue_id.value(), ue_ctx->ran_ue_id.value(), {{psi2, {{uint_to_qos_flow_id(2), 7}}}}));
+        ue_ctx->amf_ue_id.value(),
+        ue_ctx->ran_ue_id.value(),
+        {{psi2, {pdu_session_type_t::ipv4, {{uint_to_qos_flow_id(2), 7}}}}}));
     report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu),
                               "Failed to receive Bearer Context Modification Request");
     report_fatal_error_if_not(test_helpers::is_valid_bearer_context_modification_request(e1ap_pdu),

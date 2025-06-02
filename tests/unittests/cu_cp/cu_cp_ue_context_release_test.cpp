@@ -153,7 +153,7 @@ public:
     get_amf().push_tx_pdu(generate_valid_pdu_session_resource_setup_request_message(
         ue_ctx->amf_ue_id.value(),
         ue_ctx->ran_ue_id.value(),
-        {{uint_to_pdu_session_id(1), {{uint_to_qos_flow_id(1), 9}}}}));
+        {{uint_to_pdu_session_id(1), {pdu_session_type_t::ipv4, {{uint_to_qos_flow_id(1), 9}}}}}));
     return true;
   }
 

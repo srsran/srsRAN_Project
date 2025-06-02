@@ -178,7 +178,7 @@ inline void fill_e1ap_drb_to_setup_item(e1ap_drb_to_setup_item_ng_ran&          
   }
 }
 
-inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_request&                request,
+inline bool fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_request&                request,
                                                    const asn1::e1ap::bearer_context_setup_request_s& asn1_request)
 {
   // security info
@@ -217,10 +217,13 @@ inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_req
       // pdu session id
       pdu_session_res_item.pdu_session_id = uint_to_pdu_session_id(asn1_pdu_session_res_item.pdu_session_id);
 
-      // pdu session type
-      pdu_session_res_item.pdu_session_type = asn1_pdu_session_res_item.pdu_session_type.to_string();
+      // Fill PDU session type.
+      if (!asn1_to_pdu_session_type(pdu_session_res_item.pdu_session_type,
+                                    asn1_pdu_session_res_item.pdu_session_type)) {
+        return false;
+      }
 
-      // s-nssai
+      // Fill S-NSSAI.
       pdu_session_res_item.snssai = e1ap_asn1_to_snssai(asn1_pdu_session_res_item.snssai);
 
       // ng ul up transport layer information
@@ -289,6 +292,8 @@ inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_req
   if (asn1_request->ue_inactivity_timer_present) {
     request.ue_inactivity_timer = std::chrono::seconds(asn1_request->ue_inactivity_timer);
   }
+
+  return true;
 }
 
 inline void fill_asn1_bearer_context_setup_response(asn1::e1ap::sys_bearer_context_setup_resp_c& asn1_response,
@@ -364,7 +369,7 @@ inline void fill_asn1_bearer_context_setup_response(asn1::e1ap::sys_bearer_conte
   }
 }
 
-inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_modification_request&       request,
+inline bool fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_modification_request&       request,
                                                           const asn1::e1ap::bearer_context_mod_request_s& asn1_request)
 {
   // security info
@@ -431,10 +436,13 @@ inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
         pdu_session_res_to_setup_mod_item.pdu_session_id =
             uint_to_pdu_session_id(asn1_res_to_setup_mod_item.pdu_session_id);
 
-        // pdu session type
-        pdu_session_res_to_setup_mod_item.pdu_session_type = asn1_res_to_setup_mod_item.pdu_session_type.to_string();
+        // Fill PDU session type.
+        if (!asn1_to_pdu_session_type(pdu_session_res_to_setup_mod_item.pdu_session_type,
+                                      asn1_res_to_setup_mod_item.pdu_session_type)) {
+          return false;
+        }
 
-        // s nssai
+        // Fill S-NSSAI.
         pdu_session_res_to_setup_mod_item.snssai = e1ap_asn1_to_snssai(asn1_res_to_setup_mod_item.snssai);
 
         // security ind
@@ -665,6 +673,8 @@ inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
   if (asn1_request->activity_notif_level_present) {
     request.activity_notif_level = static_cast<e1ap_activity_notif_level>((int)asn1_request->activity_notif_level);
   }
+
+  return true;
 }
 
 inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_bearer_context_mod_resp_c& asn1_response,

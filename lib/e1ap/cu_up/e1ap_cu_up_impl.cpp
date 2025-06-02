@@ -203,7 +203,12 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
 
   // Forward message to CU-UP
   e1ap_bearer_context_setup_request bearer_context_setup = {};
-  fill_e1ap_bearer_context_setup_request(bearer_context_setup, msg);
+  if (!fill_e1ap_bearer_context_setup_request(bearer_context_setup, msg)) {
+    logger.error("Sending BearerContextSetupFailure. Cause: Invalid BearerContextSetupRequest");
+    // Send response.
+    pdu_notifier->on_new_message(e1ap_msg);
+    return;
+  }
 
   e1ap_bearer_context_setup_response bearer_context_setup_response_msg =
       cu_up_notifier.on_bearer_context_setup_request_received(bearer_context_setup);

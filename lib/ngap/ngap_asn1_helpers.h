@@ -275,7 +275,11 @@ inline bool fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_re
   setup_item.ul_ngu_up_tnl_info = asn1_to_up_transport_layer_info(asn1_setup_req_transfer->ul_ngu_up_tnl_info);
 
   // Fill PDU session type.
-  setup_item.pdu_session_type = asn1_setup_req_transfer->pdu_session_type.to_string();
+  if (!asn1_to_pdu_session_type(setup_item.pdu_session_type, asn1_setup_req_transfer->pdu_session_type)) {
+    srslog::fetch_basic_logger("NGAP").error(
+        "Invalid PDU Session Type in PDU Session Resource Setup Request Transfer PDU");
+    return false;
+  }
 
   // Fill security indication.
   if (asn1_setup_req_transfer->security_ind_present) {
