@@ -33,8 +33,8 @@ namespace srsran {
 
 /// Describes a resource element pattern within a resource grid.
 struct re_pattern {
-  /// Physical resource block mask.
-  prb_bitmap prb_mask;
+  /// Common Resource Block (CRB) mask, relative to Point A.
+  crb_bitmap crb_mask;
   /// Resource element mask per resource block. True entries indicate the resource elements affected by the pattern.
   re_prb_mask re_mask{};
   /// Symbol mask. True entries indicate the symbols affected by the pattern.
@@ -57,7 +57,7 @@ struct re_pattern {
              unsigned                rb_stride,
              const re_prb_mask&      re_mask_,
              const symbol_slot_mask& symbols_) :
-    prb_mask(rb_end), re_mask(re_mask_), symbols(symbols_)
+    crb_mask(rb_end), re_mask(re_mask_), symbols(symbols_)
   {
     static constexpr interval<unsigned, true> rb_begin_interval  = {0, MAX_RB - 1};
     static constexpr interval<unsigned, true> rb_stride_interval = {1, MAX_RB - 1};
@@ -77,10 +77,10 @@ struct re_pattern {
         rb_begin < rb_end, "The RB begin (i.e., {}) must be smaller than RB end (i.e., {})", rb_begin, rb_end);
 
     if (rb_stride == 1) {
-      prb_mask.fill(rb_begin, rb_end);
+      crb_mask.fill(rb_begin, rb_end);
     } else {
       for (unsigned i_prb = rb_begin; i_prb < rb_end; i_prb += rb_stride) {
-        prb_mask.set(i_prb);
+        crb_mask.set(i_prb);
       }
     }
   }
@@ -88,7 +88,7 @@ struct re_pattern {
   /// \brief Copy constructor.
   ///
   /// \param[in] other Provides the reference to other resource element pattern to copy.
-  re_pattern(const re_pattern& other) : prb_mask(other.prb_mask), re_mask(other.re_mask), symbols(other.symbols)
+  re_pattern(const re_pattern& other) : crb_mask(other.crb_mask), re_mask(other.re_mask), symbols(other.symbols)
   {
     // Do nothing.
   }
@@ -123,7 +123,7 @@ inline bool operator==(const re_pattern& pattern1, const re_pattern& pattern2)
     return false;
   }
 
-  if (pattern1.prb_mask != pattern2.prb_mask) {
+  if (pattern1.crb_mask != pattern2.crb_mask) {
     return false;
   }
 
@@ -230,9 +230,9 @@ public:
   ///
   /// \param[in] start_symbol Indicates the start symbol index within the slot.
   /// \param[in] nof_symbols  Indicates the number of symbols within the slot.
-  /// \param[in] prb_mask     Selection of PRB to count.
+  /// \param[in] rb_mask     Selection of Common Resource Blocks (CRB) to count.
   /// \return The number of included elements.
-  unsigned get_inclusion_count(unsigned start_symbol, unsigned nof_symbols, const prb_bitmap& prb_mask) const;
+  unsigned get_inclusion_count(unsigned start_symbol, unsigned nof_symbols, const crb_bitmap& crb_mask) const;
 
   /// \brief Excludes the described resource element pattern list in a resource grid symbol mask.
   ///

@@ -22,12 +22,27 @@
 
 #pragma once
 
+#include "srsran/ran/cause/f1ap_cause.h"
 #include "srsran/ran/nr_cgi.h"
+#include "srsran/ran/pci.h"
 
 namespace srsran {
 
 /// Cell commanded by the CU to be activated via the F1AP interface.
 struct f1ap_cell_to_activate {
+  nr_cell_global_id_t        cgi;
+  std::optional<pci_t>       pci;
+  std::vector<plmn_identity> available_plmn_list;
+};
+
+/// Cell failed to be activated via the F1AP interface.
+struct f1ap_cell_failed_to_activate {
+  nr_cell_global_id_t cgi;
+  f1ap_cause_t        cause;
+};
+
+/// Cell commanded by the CU to be deactivated via the F1AP interface.
+struct f1ap_cell_to_deactivate {
   nr_cell_global_id_t cgi;
 };
 

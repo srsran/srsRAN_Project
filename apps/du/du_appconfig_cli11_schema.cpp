@@ -82,20 +82,34 @@ void srsran::configure_cli11_with_du_appconfig_schema(CLI::App& app, du_appconfi
   app_services::configure_cli11_with_app_resource_usage_config_schema(app, du_cfg.metrics_cfg.rusage_config);
   app_services::configure_cli11_with_metrics_appconfig_schema(app, du_cfg.metrics_cfg.metrics_service_cfg);
 
+#ifdef DPDK_FOUND
   // HAL section.
   du_cfg.hal_config.emplace();
   configure_cli11_with_hal_appconfig_schema(app, *du_cfg.hal_config);
+#else
+  app.failure_message([](const CLI::App* application, const CLI::Error& e) -> std::string {
+    if (std::string(e.what()).find("INI was not able to parse hal.++") == std::string::npos) {
+      return CLI::FailureMessage::simple(application, e);
+    }
+
+    return "Invalid configuration detected, 'hal' section is present but the application was built without DPDK "
+           "support\n" +
+           CLI::FailureMessage::simple(application, e);
+  });
+#endif
 
   // Remote control section.
   configure_cli11_with_remote_control_appconfig_schema(app, du_cfg.remote_control_config);
 }
 
+#ifdef DPDK_FOUND
 static void manage_hal_optional(CLI::App& app, du_appconfig& du_cfg)
 {
   if (!is_hal_section_present(app)) {
     du_cfg.hal_config.reset();
   }
 }
+#endif
 
 static void configure_default_f1u(du_appconfig& du_cfg)
 {
@@ -108,6 +122,9 @@ static void configure_default_f1u(du_appconfig& du_cfg)
 
 void srsran::autoderive_du_parameters_after_parsing(CLI::App& app, du_appconfig& du_cfg)
 {
+#ifdef DPDK_FOUND
   manage_hal_optional(app, du_cfg);
+#endif
+
   configure_default_f1u(du_cfg);
 }

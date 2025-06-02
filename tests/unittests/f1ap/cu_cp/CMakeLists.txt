@@ -23,6 +23,7 @@ target_include_directories(f1ap_cu_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(f1ap_cu_test_helpers f1ap_test_helpers srsran_f1ap_du srsran_f1ap_cu srsran_support f1ap_asn1 srslog)
 
 set(SOURCES
+        f1ap_cu_gnb_cu_configuration_update_procedure_test.cpp
         f1ap_cu_ue_context_test.cpp
         f1ap_cu_ue_context_setup_procedure_test.cpp
         f1ap_cu_ue_context_modification_procedure_test.cpp

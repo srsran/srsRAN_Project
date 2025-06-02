@@ -39,15 +39,12 @@ public:
   /// Creates a flexible O-RAN DU using the given dependencies.
   virtual o_du_unit create_flexible_o_du_unit(const o_du_unit_dependencies& dependencies) = 0;
 
+  /// Validates the configuration of this application unit. Returns true on success, otherwise false.
+  virtual bool on_configuration_validation(const os_sched_affinity_bitmask& available_cpus) const = 0;
+
   /// Returns the O-RAN DU high unit configuration of this flexible DU.
   virtual o_du_high_unit_config&       get_o_du_high_unit_config()       = 0;
   virtual const o_du_high_unit_config& get_o_du_high_unit_config() const = 0;
-
-  /// Dumps the flexible O-RAN DU configuration into the given YAML node.
-  virtual void dump_config(YAML::Node& node) const = 0;
-
-  /// Fills the given worker manager configuration with the flexible O-RAN DU parameters.
-  virtual void fill_worker_manager_config(worker_manager_config& config) = 0;
 };
 
 /// \brief Creates a flexible O-RAN DU application unit.

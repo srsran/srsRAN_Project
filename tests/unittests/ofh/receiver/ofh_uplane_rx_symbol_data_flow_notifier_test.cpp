@@ -68,7 +68,8 @@ TEST(ofh_data_flow_uplane_rx_symbol_notifier, unwritten_grid_does_not_notify)
   unsigned                            symbol = 0;
   unsigned                            sector = 0;
 
-  repo->add({slot, sector}, get_resource_grid(), symbol_range);
+  repo->add({slot, sector}, get_resource_grid(), symbol_range, srslog::fetch_basic_logger("TEST"));
+  repo->process_pending_contexts();
   sender.notify_received_symbol(slot, symbol);
 
   ASSERT_FALSE(repo->get(slot, symbol).empty());
@@ -86,7 +87,8 @@ TEST(ofh_data_flow_uplane_rx_symbol_notifier, completed_resource_grid_triggers_n
   unsigned                            sector = 0;
 
   std::vector<cbf16_t> samples(nof_prb * NOF_SUBCARRIERS_PER_RB);
-  repo->add({slot, sector}, get_resource_grid(), symbol_range);
+  repo->add({slot, sector}, get_resource_grid(), symbol_range, srslog::fetch_basic_logger("TEST"));
+  repo->process_pending_contexts();
   ASSERT_FALSE(repo->get(slot, symbol).empty());
 
   // Fill the grid.
@@ -114,7 +116,8 @@ TEST(ofh_data_flow_uplane_rx_symbol_notifier, uncompleted_port_does_not_notify)
   unsigned                            sector = 0;
 
   std::vector<cbf16_t> samples(nof_prb * NOF_SUBCARRIERS_PER_RB);
-  repo->add({slot, sector}, get_resource_grid(), symbol_range);
+  repo->add({slot, sector}, get_resource_grid(), symbol_range, srslog::fetch_basic_logger("TEST"));
+  repo->process_pending_contexts();
 
   // Fill the grid.
   repo->write_grid(slot, 0, symbol, 0, samples);
@@ -136,7 +139,8 @@ TEST(ofh_data_flow_uplane_rx_symbol_notifier, uncompleted_prbs_does_not_notify)
   unsigned                            sector = 0;
 
   std::vector<cbf16_t> samples(nof_prb * NOF_SUBCARRIERS_PER_RB);
-  repo->add({slot, sector}, get_resource_grid(), symbol_range);
+  repo->add({slot, sector}, get_resource_grid(), symbol_range, srslog::fetch_basic_logger("TEST"));
+  repo->process_pending_contexts();
 
   // Fill the grid.
   repo->write_grid(slot, 0, symbol, 0, samples);

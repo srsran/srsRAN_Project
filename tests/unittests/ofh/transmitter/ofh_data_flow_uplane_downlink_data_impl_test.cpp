@@ -120,7 +120,8 @@ protected:
     data_flow_uplane_downlink_data_impl_dependencies dependencies;
     dependencies.logger         = &srslog::fetch_basic_logger("TEST");
     dependencies.compressor_sel = std::make_unique<ofh::testing::iq_compressor_dummy>();
-    dependencies.frame_pool     = std::make_shared<ether::eth_frame_pool>(units::bytes(9000), 2);
+    dependencies.frame_pool     = std::make_shared<ether::eth_frame_pool>(
+        *dependencies.logger, units::bytes(9000), 2, ofh::message_type::user_plane, ofh::data_direction::downlink);
 
     {
       auto temp               = std::make_unique<ofh_uplane_packet_builder_spy>();
@@ -270,7 +271,8 @@ TEST(ofh_data_flow_uplane_downlink_data_impl,
     dependencies.ecpri_builder = std::move(temp);
   }
 
-  dependencies.frame_pool = std::make_shared<ether::eth_frame_pool>(units::bytes(frame_size), 2);
+  dependencies.frame_pool = std::make_shared<ether::eth_frame_pool>(
+      *dependencies.logger, units::bytes(frame_size), 2, ofh::message_type::user_plane, ofh::data_direction::downlink);
 
   resource_grid_reader_spy rg_reader_spy(1, context.symbol_range.length(), config.ru_nof_prbs);
   for (uint8_t symbol = 0; symbol != context.symbol_range.length(); ++symbol) {
@@ -314,7 +316,8 @@ TEST(ofh_data_flow_uplane_downlink_data_impl, frame_buffer_size_of_nof_prbs_gene
   unsigned prb_size  = 28;
   unsigned prbs_size = prb_size * config.ru_nof_prbs;
 
-  dependencies.frame_pool = std::make_shared<ether::eth_frame_pool>(units::bytes(prbs_size), 2);
+  dependencies.frame_pool = std::make_shared<ether::eth_frame_pool>(
+      *dependencies.logger, units::bytes(prbs_size), 2, message_type::user_plane, data_direction::downlink);
   ofh_uplane_packet_builder_spy* uplane_builder;
 
   {

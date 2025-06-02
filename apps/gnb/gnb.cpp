@@ -276,7 +276,7 @@ int main(int argc, char** argv)
                                 : os_sched_affinity_bitmask::available_cpus();
   // Check the modified configuration.
   if (!validate_appconfig(gnb_cfg) || !o_cu_cp_app_unit->on_configuration_validation(available_cpu_mask) ||
-      !o_cu_up_app_unit->on_configuration_validation(available_cpu_mask) ||
+      !o_cu_up_app_unit->on_configuration_validation(not gnb_cfg.log_cfg.tracing_filename.empty()) ||
       !o_du_app_unit->on_configuration_validation(available_cpu_mask) ||
       !validate_plmn_and_tacs(o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config,
                               o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg)) {
@@ -507,7 +507,7 @@ int main(int argc, char** argv)
     commands.push_back(std::move(cmd));
   }
 
-  app_services::cmdline_command_dispatcher command_parser(*epoll_broker, *workers.non_rt_low_prio_exec, commands);
+  app_services::cmdline_command_dispatcher command_parser(*epoll_broker, *workers.non_rt_medium_prio_exec, commands);
 
   // Connect E1AP to O-CU-CP.
   e1_gw->attach_cu_cp(o_cucp_obj.get_cu_cp().get_e1_handler());
@@ -534,7 +534,8 @@ int main(int argc, char** argv)
       app_services::create_remote_server(gnb_cfg.remote_control_config, du_inst_and_cmds.commands.remote);
 
   {
-    app_services::application_message_banners app_banner(app_name);
+    app_services::application_message_banners app_banner(
+        app_name, gnb_cfg.log_cfg.filename == "stdout" ? std::string_view() : gnb_cfg.log_cfg.filename);
 
     while (is_app_running) {
       std::this_thread::sleep_for(std::chrono::milliseconds(250));

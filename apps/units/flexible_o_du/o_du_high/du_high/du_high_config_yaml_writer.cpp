@@ -367,31 +367,37 @@ static YAML::Node build_du_high_pusch_section(const du_high_unit_pusch_config& c
 {
   YAML::Node node;
 
-  node["min_ue_mcs"]               = config.min_ue_mcs;
-  node["max_ue_mcs"]               = config.max_ue_mcs;
-  node["max_consecutive_kos"]      = config.max_consecutive_kos;
-  node["mcs_table"]                = to_string(config.mcs_table);
-  node["max_rank"]                 = config.max_rank;
-  node["msg3_delta_preamble"]      = config.msg3_delta_preamble;
-  node["p0_nominal_with_grant"]    = config.p0_nominal_with_grant;
-  node["max_puschs_per_slot"]      = config.max_puschs_per_slot;
-  node["beta_offset_ack_idx_1"]    = config.beta_offset_ack_idx_1;
-  node["beta_offset_ack_idx_2"]    = config.beta_offset_ack_idx_2;
-  node["beta_offset_ack_idx_3"]    = config.beta_offset_ack_idx_3;
-  node["beta_offset_csi_p1_idx_1"] = config.beta_offset_csi_p1_idx_1;
-  node["beta_offset_csi_p1_idx_2"] = config.beta_offset_csi_p1_idx_2;
-  node["beta_offset_csi_p2_idx_1"] = config.beta_offset_csi_p2_idx_1;
-  node["beta_offset_csi_p2_idx_2"] = config.beta_offset_csi_p2_idx_2;
-  node["min_k2"]                   = config.min_k2;
-  node["dc_offset"]                = to_string(config.dc_offset);
-  node["olla_snr_inc_step"]        = config.olla_snr_inc;
-  node["olla_target_bler"]         = config.olla_target_bler;
-  node["olla_max_snr_offset"]      = config.olla_max_snr_offset;
-  node["dmrs_additional_position"] = config.dmrs_add_pos;
-  node["min_rb_size"]              = config.min_rb_size;
-  node["max_rb_size"]              = config.max_rb_size;
-  node["start_rb"]                 = config.start_rb;
-  node["end_rb"]                   = config.end_rb;
+  node["min_ue_mcs"]                      = config.min_ue_mcs;
+  node["max_ue_mcs"]                      = config.max_ue_mcs;
+  node["max_consecutive_kos"]             = config.max_consecutive_kos;
+  node["mcs_table"]                       = to_string(config.mcs_table);
+  node["max_rank"]                        = config.max_rank;
+  node["msg3_delta_preamble"]             = config.msg3_delta_preamble;
+  node["p0_nominal_with_grant"]           = config.p0_nominal_with_grant;
+  node["max_puschs_per_slot"]             = config.max_puschs_per_slot;
+  node["beta_offset_ack_idx_1"]           = config.beta_offset_ack_idx_1;
+  node["beta_offset_ack_idx_2"]           = config.beta_offset_ack_idx_2;
+  node["beta_offset_ack_idx_3"]           = config.beta_offset_ack_idx_3;
+  node["beta_offset_csi_p1_idx_1"]        = config.beta_offset_csi_p1_idx_1;
+  node["beta_offset_csi_p1_idx_2"]        = config.beta_offset_csi_p1_idx_2;
+  node["beta_offset_csi_p2_idx_1"]        = config.beta_offset_csi_p2_idx_1;
+  node["beta_offset_csi_p2_idx_2"]        = config.beta_offset_csi_p2_idx_2;
+  node["min_k2"]                          = config.min_k2;
+  node["dc_offset"]                       = to_string(config.dc_offset);
+  node["olla_snr_inc_step"]               = config.olla_snr_inc;
+  node["olla_target_bler"]                = config.olla_target_bler;
+  node["olla_max_snr_offset"]             = config.olla_max_snr_offset;
+  node["dmrs_additional_position"]        = config.dmrs_add_pos;
+  node["min_rb_size"]                     = config.min_rb_size;
+  node["max_rb_size"]                     = config.max_rb_size;
+  node["start_rb"]                        = config.start_rb;
+  node["end_rb"]                          = config.end_rb;
+  node["enable_closed_loop_pw_control"]   = config.enable_closed_loop_pw_control;
+  node["enable_phr_bw_adaptation"]        = config.enable_phr_bw_adaptation;
+  node["target_pusch_sinr"]               = config.target_pusch_sinr;
+  node["path_loss_for_target_pusch_sinr"] = config.path_loss_for_target_pusch_sinr;
+  node["path_loss_compensation_factor"]   = config.path_loss_compensation_factor;
+  node["enable_transform_precoding"]      = config.enable_transform_precoding;
 
   for (auto rv : config.rv_sequence) {
     node["rv_sequence"].push_back(rv);
@@ -613,6 +619,19 @@ static YAML::Node build_du_high_srs_section(const du_high_unit_srs_config& confi
   return node;
 }
 
+static YAML::Node build_du_high_drx_section(const du_high_unit_drx_config& config)
+{
+  YAML::Node node;
+
+  node["on_duration_timer"] = config.on_duration_timer;
+  node["inactivity_timer"]  = config.inactivity_timer;
+  node["retx_timer_dl"]     = config.retx_timer_dl;
+  node["retx_timer_ul"]     = config.retx_timer_ul;
+  node["long_cycle"]        = config.long_cycle;
+
+  return node;
+}
+
 static YAML::Node build_cell_entry(const du_high_unit_base_cell_config& config)
 {
   YAML::Node node;
@@ -649,6 +668,9 @@ static YAML::Node build_cell_entry(const du_high_unit_base_cell_config& config)
   node["paging"] = build_du_high_paging_section(config.paging_cfg);
   node["csi"]    = build_du_high_csi_section(config.csi_cfg);
   node["srs"]    = build_du_high_srs_section(config.srs_cfg);
+  if (config.drx_cfg.long_cycle != 0) {
+    node["drx"] = build_du_high_drx_section(config.drx_cfg);
+  }
   fill_du_high_sched_expert_section(node, config.sched_expert_cfg);
 
   return node;

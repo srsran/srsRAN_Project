@@ -40,7 +40,7 @@ class ru_emulator_timing_notifier : public ofh::ota_symbol_boundary_notifier_man
   subcarrier_spacing                              scs;
   const unsigned                                  nof_symbols_per_slot;
   const unsigned                                  nof_symbols_per_sec;
-  const unsigned                                  nof_slots_per_system_frame;
+  const unsigned                                  nof_slots_per_hyper_system_frame;
   const std::chrono::duration<double, std::nano>  symbol_duration;
   const std::chrono::nanoseconds                  sleep_time;
   unsigned                                        previous_symb_index = 0;

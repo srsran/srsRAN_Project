@@ -55,9 +55,9 @@ public:
     /// Boolean mask to specify the OFDM symbols carrying DM-RS.
     bounded_bitset<MAX_NSYMB_PER_SLOT> symbols;
     /// Boolean mask to specify the resource blocks carrying DM-RS.
-    prb_bitmap rb_mask;
+    crb_bitmap rb_mask;
     /// Boolean mask to specify the resource blocks carrying DM-RS after the frequency hop.
-    prb_bitmap rb_mask2;
+    crb_bitmap rb_mask2;
     /// Symbol index within the slot in which the first hop occurs if it has a value.
     std::optional<unsigned> hopping_symbol_index;
     /// Boolean mask to specify the resource elements within the resource blocks carrying DM-RS symbols.

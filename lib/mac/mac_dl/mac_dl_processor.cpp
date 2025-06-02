@@ -37,8 +37,8 @@ bool mac_dl_processor::has_cell(du_cell_index_t cell_index) const
   return cell_index < MAX_NOF_DU_CELLS and cells[cell_index] != nullptr;
 }
 
-mac_cell_controller& mac_dl_processor::add_cell(const mac_cell_creation_request&     cell_cfg_req,
-                                                const mac_cell_metric_report_config& metrics_cfg)
+mac_cell_controller& mac_dl_processor::add_cell(const mac_cell_creation_request& cell_cfg_req,
+                                                mac_cell_config_dependencies     dependencies)
 {
   srsran_assert(not has_cell(cell_cfg_req.cell_index), "Overwriting existing cell is invalid.");
 
@@ -53,7 +53,7 @@ mac_cell_controller& mac_dl_processor::add_cell(const mac_cell_creation_request&
                                            cfg.ctrl_exec,
                                            cfg.pcap,
                                            cfg.timers,
-                                           metrics_cfg);
+                                           std::move(dependencies));
 
   return *cells[cell_cfg_req.cell_index];
 }

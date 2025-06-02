@@ -36,12 +36,18 @@
 
 using namespace srsran;
 
+static_assert(is_task_executor<priority_task_strand_executor<task_executor*>>::value, "is_task_executor failed");
+static_assert(is_task_executor_ptr<priority_task_strand_executor<task_executor*>*>::value,
+              "is_task_executor_ptr failed");
+static_assert(is_task_executor_ptr<priority_task_strand_executor<task_executor*>*&>::value,
+              "is_task_executor_ptr failed");
+
 // Test helper function that verifies that a given number of tasks are executed in order.
 template <typename WaitCondition>
-void run_count_test(task_executor&       strand,
-                    unsigned             total_increments,
-                    unsigned             nof_producers,
-                    const WaitCondition& wait_tasks_to_run)
+static void run_count_test(task_executor&       strand,
+                           unsigned             total_increments,
+                           unsigned             nof_producers,
+                           const WaitCondition& wait_tasks_to_run)
 {
   srslog::init();
 

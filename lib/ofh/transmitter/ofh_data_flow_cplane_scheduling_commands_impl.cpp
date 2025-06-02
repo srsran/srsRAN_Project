@@ -21,7 +21,6 @@
  */
 
 #include "ofh_data_flow_cplane_scheduling_commands_impl.h"
-#include "scoped_frame_buffer.h"
 #include "srsran/ran/resource_block.h"
 
 using namespace srsran;
@@ -180,8 +179,8 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_1_message(
   }
 
   // Get an ethernet frame buffer.
-  scoped_frame_buffer scoped_buffer(*frame_pool, symbol_point, message_type::control_plane, direction);
-  if (SRSRAN_UNLIKELY(scoped_buffer.empty())) {
+  auto scoped_buffer = frame_pool->reserve(symbol_point);
+  if (SRSRAN_UNLIKELY(!scoped_buffer)) {
     logger.warning("Sector#{}: not enough space in the buffer pool to create a {} type 1 Control-Plane message for "
                    "slot '{}' and eAxC '{}'",
                    sector_id,
@@ -190,8 +189,7 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_1_message(
                    context.eaxc);
     return;
   }
-  ether::frame_buffer& frame_buffer = scoped_buffer.get_next_frame();
-  span<uint8_t>        buffer       = frame_buffer.data();
+  span<uint8_t> buffer = scoped_buffer->get_buffer();
 
   // Build the Open Fronthaul control message. Only one port supported.
   units::bytes                    ether_hdr_size = eth_builder->get_header_size();
@@ -228,7 +226,7 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_1_message(
   span<uint8_t> eth_buffer = span<uint8_t>(buffer).first(ether_hdr_size.value() + bytes_written);
   eth_builder->build_frame(eth_buffer);
 
-  frame_buffer.set_size(eth_buffer.size());
+  scoped_buffer->set_size(eth_buffer.size());
 }
 
 void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_3_prach_message(
@@ -244,8 +242,8 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_3_prach_mes
   }
 
   // Get an ethernet frame buffer.
-  scoped_frame_buffer scoped_buffer(*frame_pool, symbol_point, message_type::control_plane, data_direction::uplink);
-  if (SRSRAN_UNLIKELY(scoped_buffer.empty())) {
+  auto scoped_buffer = frame_pool->reserve(symbol_point);
+  if (SRSRAN_UNLIKELY(!scoped_buffer)) {
     logger.warning("Sector#{}: not enough space in the buffer pool to create a type 3 PRACH Control-Plane message for "
                    "slot '{}' and eAxC '{}'",
                    sector_id,
@@ -253,8 +251,7 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_3_prach_mes
                    context.eaxc);
     return;
   }
-  ether::frame_buffer& frame_buffer = scoped_buffer.get_next_frame();
-  span<uint8_t>        buffer       = frame_buffer.data();
+  span<uint8_t> buffer = scoped_buffer->get_buffer();
 
   // Build the Open Fronthaul control message. Only one port supported.
   units::bytes                    ether_hdr_size = eth_builder->get_header_size();
@@ -304,7 +301,7 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_3_prach_mes
   span<uint8_t> eth_buffer = span<uint8_t>(buffer).first(ether_hdr_size.value() + bytes_written);
   eth_builder->build_frame(eth_buffer);
 
-  frame_buffer.set_size(eth_buffer.size());
+  scoped_buffer->set_size(eth_buffer.size());
 }
 
 data_flow_message_encoding_metrics_collector* data_flow_cplane_scheduling_commands_impl::get_metrics_collector()

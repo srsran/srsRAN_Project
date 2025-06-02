@@ -32,13 +32,13 @@ void re_pattern::get_inclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned
   }
 
   // Avoid creating a bounded bitset if the allocation is contiguous.
-  int      i_prb_lowest  = prb_mask.find_lowest();
-  int      i_prb_highest = prb_mask.find_highest();
-  unsigned prb_count     = prb_mask.count();
-  srsran_assert((i_prb_lowest <= i_prb_highest) && (i_prb_highest >= 0), "Invalid PRB allocation.");
-  if ((static_cast<unsigned>(i_prb_highest + 1 - i_prb_lowest) == prb_count) && re_mask.all()) {
-    unsigned i_re_begin = i_prb_lowest * NRE;
-    unsigned i_re_end   = std::min(NRE * (i_prb_highest + 1), static_cast<unsigned>(mask.size()));
+  int      i_crb_lowest  = crb_mask.find_lowest();
+  int      i_crb_highest = crb_mask.find_highest();
+  unsigned crb_count     = crb_mask.count();
+  srsran_assert((i_crb_lowest <= i_crb_highest) && (i_crb_highest >= 0), "Invalid CRB allocation.");
+  if ((static_cast<unsigned>(i_crb_highest + 1 - i_crb_lowest) == crb_count) && re_mask.all()) {
+    unsigned i_re_begin = i_crb_lowest * NRE;
+    unsigned i_re_end   = std::min(NRE * (i_crb_highest + 1), static_cast<unsigned>(mask.size()));
 
     if (i_re_begin < mask.size()) {
       mask.fill(i_re_begin, i_re_end, true);
@@ -48,7 +48,7 @@ void re_pattern::get_inclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned
   }
 
   // Generate a RE mask for the entire bandwidth.
-  bounded_bitset<MAX_RB * NRE> pattern_re_mask = prb_mask.kronecker_product<NRE>(re_mask);
+  bounded_bitset<MAX_RB * NRE> pattern_re_mask = crb_mask.kronecker_product<NRE>(re_mask);
 
   // Append zeros or discard bits to match the input mask size.
   pattern_re_mask.resize(mask.size());
@@ -67,13 +67,13 @@ void re_pattern::get_exclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned
   }
 
   // Avoid creating a bounded bitset if the allocation is contiguous.
-  int      i_prb_lowest  = prb_mask.find_lowest();
-  int      i_prb_highest = prb_mask.find_highest();
-  unsigned prb_count     = prb_mask.count();
-  srsran_assert((i_prb_lowest <= i_prb_highest) && (i_prb_highest >= 0), "Invalid PRB allocation.");
-  if ((static_cast<unsigned>(i_prb_highest + 1 - i_prb_lowest) == prb_count) && re_mask.all()) {
-    unsigned i_re_begin = i_prb_lowest * NRE;
-    unsigned i_re_end   = std::min(NRE * (i_prb_highest + 1), static_cast<unsigned>(mask.size()));
+  int      i_crb_lowest  = crb_mask.find_lowest();
+  int      i_crb_highest = crb_mask.find_highest();
+  unsigned crb_count     = crb_mask.count();
+  srsran_assert((i_crb_lowest <= i_crb_highest) && (i_crb_highest >= 0), "Invalid CRB allocation.");
+  if ((static_cast<unsigned>(i_crb_highest + 1 - i_crb_lowest) == crb_count) && re_mask.all()) {
+    unsigned i_re_begin = i_crb_lowest * NRE;
+    unsigned i_re_end   = std::min(NRE * (i_crb_highest + 1), static_cast<unsigned>(mask.size()));
 
     if (i_re_begin < mask.size()) {
       mask.fill(i_re_begin, i_re_end, false);
@@ -83,7 +83,7 @@ void re_pattern::get_exclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned
   }
 
   // Generate a RE mask for the entire bandwidth.
-  bounded_bitset<MAX_RB * NRE> pattern_re_mask = prb_mask.kronecker_product<NRE>(re_mask);
+  bounded_bitset<MAX_RB * NRE> pattern_re_mask = crb_mask.kronecker_product<NRE>(re_mask);
 
   // Append zeros or discard bits to match the input mask size.
   pattern_re_mask.resize(mask.size());
@@ -99,7 +99,7 @@ void re_pattern_list::merge(const re_pattern& pattern)
   // Iterate all given patterns.
   for (re_pattern& p : list) {
     // Skip if RB allocation parameters do NOT match.
-    bool prb_match = (p.prb_mask == pattern.prb_mask);
+    bool crb_match = (p.crb_mask == pattern.crb_mask);
 
     // Check if symbol mask matches.
     bool lmatch = (pattern.symbols == p.symbols);
@@ -109,30 +109,30 @@ void re_pattern_list::merge(const re_pattern& pattern)
 
     // If PRB, OFDM symbols and subcarriers mask match, it means that the patterns are completely overlapped and no
     // merging is required.
-    if (prb_match && kmatch && lmatch) {
+    if (crb_match && kmatch && lmatch) {
       return;
     }
 
     // OFDM symbols and subcarriers mask match, combine PRB.
     if (lmatch && kmatch) {
-      prb_bitmap temp_prb_mask = pattern.prb_mask;
-      if (p.prb_mask.size() < temp_prb_mask.size()) {
-        p.prb_mask.resize(temp_prb_mask.size());
-      } else if (p.prb_mask.size() > temp_prb_mask.size()) {
-        temp_prb_mask.resize(p.prb_mask.size());
+      crb_bitmap temp_rb_mask = pattern.crb_mask;
+      if (p.crb_mask.size() < temp_rb_mask.size()) {
+        p.crb_mask.resize(temp_rb_mask.size());
+      } else if (p.crb_mask.size() > temp_rb_mask.size()) {
+        temp_rb_mask.resize(p.crb_mask.size());
       }
-      p.prb_mask |= temp_prb_mask;
+      p.crb_mask |= temp_rb_mask;
       return;
     }
 
     // If OFDM symbols mask matches, combine subcarrier mask.
-    if (prb_match && lmatch) {
+    if (crb_match && lmatch) {
       p.re_mask |= pattern.re_mask;
       return;
     }
 
     // If subcarriers mask matches, combine OFDM symbols mask.
-    if (prb_match && kmatch) {
+    if (crb_match && kmatch) {
       p.symbols |= pattern.symbols;
       return;
     }
@@ -174,7 +174,7 @@ void re_pattern_list::get_inclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, uns
 }
 
 unsigned
-re_pattern_list::get_inclusion_count(unsigned start_symbol, unsigned nof_symbols, const prb_bitmap& rb_mask) const
+re_pattern_list::get_inclusion_count(unsigned start_symbol, unsigned nof_symbols, const crb_bitmap& rb_mask) const
 {
   // Early return if the list is empty.
   if (list.empty()) {
@@ -185,16 +185,16 @@ re_pattern_list::get_inclusion_count(unsigned start_symbol, unsigned nof_symbols
   if (list.size() == 1) {
     const re_pattern& pattern = list.front();
 
-    // Get PRB mask from the pattern.
-    prb_bitmap prb_mask = pattern.prb_mask;
+    // Get CRB mask from the pattern.
+    crb_bitmap crb_mask = pattern.crb_mask;
 
     // Adapt pattern to the mask size.
-    prb_mask.resize(rb_mask.size());
+    crb_mask.resize(rb_mask.size());
 
-    // Filter the PRB of interest.
-    prb_mask &= rb_mask;
+    // Filter the CRB of interest.
+    crb_mask &= rb_mask;
 
-    return prb_mask.count() * pattern.symbols.count() * pattern.re_mask.count();
+    return crb_mask.count() * pattern.symbols.count() * pattern.re_mask.count();
   }
 
   unsigned count = 0;

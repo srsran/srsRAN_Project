@@ -46,6 +46,7 @@ struct du_high_configuration {
     bool                      enable_rlc   = false;
     bool                      enable_f1ap  = false;
     std::chrono::milliseconds period{1000};
+    unsigned                  max_nof_sched_ue_events = 64;
   };
 
   du_high_ran_config  ran;

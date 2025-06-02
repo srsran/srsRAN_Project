@@ -101,6 +101,10 @@ struct du_high_unit_drx_config {
   unsigned on_duration_timer = 10;
   /// drx-InactivityTimer in milliseconds, as per TS 38.331.
   unsigned inactivity_timer = 0;
+  /// drx-RetransmissionTimerDL in slots, as per TS 38.331.
+  unsigned retx_timer_dl = 0;
+  /// drx-RetransmissionTimerUL in slots, as per TS 38.331.
+  unsigned retx_timer_ul = 0;
   /// drx-LongCycle in milliseconds, as per TS 38.331. The value 0 is used for disabling DRX.
   unsigned long_cycle = 0;
 };
@@ -977,6 +981,9 @@ struct du_high_unit_cpu_affinities_cell_config {
 struct du_high_unit_expert_execution_config {
   /// \brief Task executor configuration for the DU.
   du_high_unit_execution_queues_config du_queue_cfg;
+
+  /// \brief Whether to enable tracing of the DU-high executors.
+  bool executor_tracing_enable = false;
 
   /// \brief CPU affinities per cell of the gNB app.
   ///

@@ -22,7 +22,8 @@
 
 #include "ofh_data_flow_uplane_downlink_data_impl.h"
 #include "ofh_uplane_fragment_size_calculator.h"
-#include "scoped_frame_buffer.h"
+#include "srsran/ofh/ethernet/ethernet_frame_pool.h"
+#include "srsran/ofh/timing/slot_symbol_point.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/support/shared_resource_grid.h"
@@ -124,19 +125,7 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
   for (unsigned symbol_id = context.symbol_range.start(), symbol_end = context.symbol_range.length();
        symbol_id != symbol_end;
        ++symbol_id) {
-    trace_point         pool_access_tp = ofh_tracer.now();
-    slot_symbol_point   symbol_point(context.slot, symbol_id, nof_symbols_per_slot);
-    scoped_frame_buffer scoped_buffer(*frame_pool, symbol_point, message_type::user_plane, data_direction::downlink);
-    if (SRSRAN_UNLIKELY(scoped_buffer.empty())) {
-      logger.warning("Sector#{}: not enough space in the buffer pool to create a downlink User-Plane message for slot "
-                     "'{}' and eAxC '{}', symbol_id '{}'",
-                     sector_id,
-                     context.slot,
-                     context.eaxc,
-                     symbol_id);
-      return;
-    }
-    ofh_tracer << trace_event("ofh_uplane_pool_access", pool_access_tp);
+    slot_symbol_point symbol_point(context.slot, symbol_id, nof_symbols_per_slot);
 
     span<const cbf16_t> iq_data;
     if (SRSRAN_LIKELY(ru_nof_prbs * NOF_SUBCARRIERS_PER_RB == reader.get_nof_subc())) {
@@ -153,8 +142,21 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
     unsigned                            fragment_start_prb = 0U;
     unsigned                            fragment_nof_prbs  = 0U;
     do {
-      ether::frame_buffer& frame_buffer = scoped_buffer.get_next_frame();
-      span<uint8_t>        data         = frame_buffer.data();
+      trace_point pool_access_tp = ofh_tracer.now();
+      auto        scoped_buffer  = frame_pool->reserve(symbol_point);
+      ofh_tracer << trace_event("ofh_uplane_pool_access", pool_access_tp);
+
+      if (SRSRAN_UNLIKELY(!scoped_buffer)) {
+        logger.warning(
+            "Sector#{}: not enough space in the buffer pool to create a downlink User-Plane message for slot "
+            "'{}' and eAxC '{}', symbol_id '{}'",
+            sector_id,
+            context.slot,
+            context.eaxc,
+            symbol_id);
+        return;
+      }
+      span<uint8_t> data = scoped_buffer->get_buffer();
 
       is_last_fragment = prb_fragment_calculator.calculate_fragment_size(
           fragment_start_prb, fragment_nof_prbs, data.size() - headers_size.value());
@@ -179,7 +181,7 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
           up_params,
           context.eaxc,
           data);
-      frame_buffer.set_size(used_size);
+      scoped_buffer->set_size(used_size);
     } while (!is_last_fragment);
   }
 }

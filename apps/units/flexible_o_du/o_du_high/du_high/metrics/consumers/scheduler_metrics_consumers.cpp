@@ -121,6 +121,8 @@ DECLARE_METRIC("latency_histogram", latency_histogram, std::vector<unsigned>, ""
 DECLARE_METRIC("msg3_nof_ok", metric_msg3_nof_ok, unsigned, "");
 DECLARE_METRIC("msg3_nof_nok", metric_msg3_nof_nok, unsigned, "");
 DECLARE_METRIC("avg_prach_delay", metric_avg_prach_delay, std::optional<float>, "ms");
+DECLARE_METRIC("late_dl_harqs", metric_nof_failed_pdsch_alloc_late_harqs, unsigned, "");
+DECLARE_METRIC("late_ul_harqs", metric_nof_failed_pusch_alloc_late_harqs, unsigned, "");
 DECLARE_METRIC_SET("cell_metrics",
                    cell_metrics,
                    metric_error_indication_count,
@@ -131,7 +133,9 @@ DECLARE_METRIC_SET("cell_metrics",
                    latency_histogram,
                    metric_msg3_nof_ok,
                    metric_msg3_nof_nok,
-                   metric_avg_prach_delay);
+                   metric_avg_prach_delay,
+                   metric_nof_failed_pdsch_alloc_late_harqs,
+                   metric_nof_failed_pusch_alloc_late_harqs);
 
 /// Metrics root object.
 DECLARE_METRIC("timestamp", metric_timestamp_tag, double, "");
@@ -376,6 +380,8 @@ void scheduler_cell_metrics_consumer_json::handle_metric(const std::optional<sch
     cell_output.write<metric_msg3_nof_ok>(cell.nof_msg3_ok);
     cell_output.write<metric_msg3_nof_nok>(cell.nof_msg3_nok);
     cell_output.write<metric_avg_prach_delay>(cell.avg_prach_delay_ms);
+    cell_output.write<metric_nof_failed_pdsch_alloc_late_harqs>(cell.nof_failed_pdsch_allocs_late_harqs);
+    cell_output.write<metric_nof_failed_pusch_alloc_late_harqs>(cell.nof_failed_pusch_allocs_late_harqs);
 
     // Log the context.
     ctx.write<metric_timestamp_tag>(get_time_stamp());
@@ -432,7 +438,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
         " total_dl_brate={}bps total_ul_brate={}bps nof_prbs={} nof_dl_slots={} nof_ul_slots={} nof_prach_preambles={} "
         "error_indications={} pdsch_rbs_per_slot={} pusch_rbs_per_slot={} pdschs_per_slot={:.3} puschs_per_slot={:.3} "
         "failed_pdcch={} failed_uci={} nof_ues={} mean_latency={}usec max_latency={}usec max_latency_slot={} "
-        "latency_hist=[{}] msg3_ok={} msg3_nok={}",
+        "latency_hist=[{}] msg3_ok={} msg3_nok={} late_dl_harqs={} late_ul_harqs={}",
         float_to_eng_string(sum_dl_bitrate_kbps * 1e3, 1, false),
         float_to_eng_string(sum_ul_bitrate_kbps * 1e3, 1, false),
         cell.nof_prbs,
@@ -452,7 +458,9 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
         cell.max_decision_latency_slot,
         fmt::join(cell.latency_histogram.begin(), cell.latency_histogram.end(), ", "),
         cell.nof_msg3_ok,
-        cell.nof_msg3_nok);
+        cell.nof_msg3_nok,
+        cell.nof_failed_pdsch_allocs_late_harqs,
+        cell.nof_failed_pusch_allocs_late_harqs);
     if (max_crc_delay != std::numeric_limits<float>::min()) {
       fmt::format_to(std::back_inserter(buffer), " max_crc_delay={}ms", max_crc_delay);
     }
@@ -478,6 +486,9 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
                        event.slot,
                        event_to_string(event.type));
         first = false;
+      }
+      if (cell.nof_filtered_events > 0) {
+        fmt::format_to(std::back_inserter(buffer), ", ... ({} remaining events) ...", cell.nof_filtered_events);
       }
       fmt::format_to(std::back_inserter(buffer), "]");
     }

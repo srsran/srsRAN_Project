@@ -79,7 +79,8 @@ protected:
       return true;
     }
     if (drx_args->inactivity_timer != ue_drx_cfg->inactivity_timer or drx_args->long_cycle != ue_drx_cfg->long_cycle or
-        drx_args->on_duration != ue_drx_cfg->on_duration_timer) {
+        drx_args->on_duration != ue_drx_cfg->on_duration_timer or
+        drx_args->retx_timer_dl != ue_drx_cfg->retx_timer_dl or drx_args->retx_timer_ul != ue_drx_cfg->retx_timer_ul) {
       return false;
     }
     return true;

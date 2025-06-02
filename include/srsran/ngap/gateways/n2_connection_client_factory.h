@@ -52,7 +52,7 @@ struct n2_connection_client_config {
     std::optional<std::chrono::milliseconds> rto_max;
     std::optional<int32_t>                   init_max_attempts;
     std::optional<std::chrono::milliseconds> max_init_timeo;
-    std::optional<std::chrono::seconds>      hb_interval;
+    std::optional<std::chrono::milliseconds> hb_interval;
     std::optional<int32_t>                   assoc_max_rxt;
     std::optional<bool>                      nodelay;
   };

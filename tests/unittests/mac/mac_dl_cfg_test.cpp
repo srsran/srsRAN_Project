@@ -116,9 +116,11 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_execution_contexts)
   null_mac_pcap                         pcap;
   timer_manager                         timers;
   mac_dl_config mac_dl_cfg{ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap, timers};
-  mac_config    maccfg{du_mng_notifier,
+
+  mac_config   maccfg{du_mng_notifier,
                     ul_exec_mapper,
                     dl_exec_mapper,
+                    ctrl_worker,
                     ctrl_worker,
                     phy_notifier,
                     mac_expert_config{.configs = {{10000, 10000, 10000}}},
@@ -126,7 +128,7 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_execution_contexts)
                     timers,
                     mac_config::metrics_config{.notifier = mac_metrics_notif, .sched_notifier = &sched_metrics_notif},
                     scheduler_expert_config{}};
-  rnti_manager  rnti_mng;
+  rnti_manager rnti_mng;
 
   srsran_scheduler_adapter sched_cfg_adapter{maccfg, rnti_mng};
   mac_dl_processor         mac_dl(mac_dl_cfg, sched_cfg_adapter, rnti_mng);
@@ -178,9 +180,11 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_tsan)
   dummy_scheduler_cell_metrics_notifier sched_cell_metrics_notif;
   dummy_mac_metrics_notifier            mac_metrics_notif;
   mac_dl_config mac_dl_cfg{ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap, timers};
-  mac_config    maccfg{du_mng_notifier,
+
+  mac_config   maccfg{du_mng_notifier,
                     ul_exec_mapper,
                     dl_exec_mapper,
+                    ctrl_worker,
                     ctrl_worker,
                     phy_notifier,
                     mac_expert_config{.configs = {{10000, 10000, 10000}}},
@@ -188,7 +192,7 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_tsan)
                     timers,
                     mac_config::metrics_config{.notifier = mac_metrics_notif, .sched_notifier = &sched_metrics_notif},
                     scheduler_expert_config{}};
-  rnti_manager  rnti_mng;
+  rnti_manager rnti_mng;
 
   srsran_scheduler_adapter sched_cfg_adapter{maccfg, rnti_mng};
   mac_dl_processor         mac_dl(mac_dl_cfg, sched_cfg_adapter, rnti_mng);

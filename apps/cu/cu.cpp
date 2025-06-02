@@ -240,7 +240,7 @@ int main(int argc, char** argv)
   // Check the modified configuration.
   if (!validate_cu_appconfig(cu_cfg) ||
       !o_cu_cp_app_unit->on_configuration_validation(os_sched_affinity_bitmask::available_cpus()) ||
-      !o_cu_up_app_unit->on_configuration_validation(os_sched_affinity_bitmask::available_cpus())) {
+      !o_cu_up_app_unit->on_configuration_validation(not cu_cfg.log_cfg.tracing_filename.empty())) {
     report_error("Invalid configuration detected.\n");
   }
 
@@ -412,7 +412,7 @@ int main(int argc, char** argv)
 
   // Create console helper object for commands and metrics printing.
   app_services::cmdline_command_dispatcher command_parser(
-      *epoll_broker, *workers.non_rt_low_prio_exec, o_cucp_unit.commands.cmdline.commands);
+      *epoll_broker, *workers.non_rt_medium_prio_exec, o_cucp_unit.commands.cmdline.commands);
 
   for (auto& metric : o_cucp_unit.metrics) {
     metrics_configs.push_back(std::move(metric));
@@ -468,7 +468,8 @@ int main(int argc, char** argv)
       app_services::create_remote_server(cu_cfg.remote_control_config, {});
 
   {
-    app_services::application_message_banners app_banner(app_name);
+    app_services::application_message_banners app_banner(
+        app_name, cu_cfg.log_cfg.filename == "stdout" ? std::string_view() : cu_cfg.log_cfg.filename);
 
     while (is_app_running) {
       std::this_thread::sleep_for(std::chrono::milliseconds(250));

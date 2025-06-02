@@ -52,9 +52,9 @@ void o_cu_up_application_unit_impl::on_configuration_parameters_autoderivation(C
   autoderive_o_cu_up_e2_parameters_after_parsing(unit_cfg.e2_cfg);
 }
 
-bool o_cu_up_application_unit_impl::on_configuration_validation(const os_sched_affinity_bitmask& available_cpus) const
+bool o_cu_up_application_unit_impl::on_configuration_validation(bool tracing_enabled) const
 {
-  return validate_cu_up_unit_config(unit_cfg.cu_up_cfg);
+  return validate_cu_up_unit_config(unit_cfg.cu_up_cfg, tracing_enabled);
 }
 
 void o_cu_up_application_unit_impl::on_loggers_registration()

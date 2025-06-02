@@ -115,6 +115,8 @@ void du_drx_resource_manager::handle_ue_cap_update(cell_group_config& cell_grp_c
   drx.long_start_offset = offset_pool->allocate(pcell_index);
   drx.on_duration_timer = pcell_cfg_common.mcg_params.drx->on_duration;
   drx.inactivity_timer  = pcell_cfg_common.mcg_params.drx->inactivity_timer;
+  drx.retx_timer_dl     = pcell_cfg_common.mcg_params.drx->retx_timer_dl;
+  drx.retx_timer_ul     = pcell_cfg_common.mcg_params.drx->retx_timer_ul;
 }
 
 void du_drx_resource_manager::handle_ue_removal(cell_group_config& cell_grp_cfg)

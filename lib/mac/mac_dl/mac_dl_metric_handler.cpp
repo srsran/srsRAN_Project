@@ -47,57 +47,47 @@ void mac_dl_cell_metric_handler::non_persistent_data::latency_data::save_sample(
   }
 }
 
-mac_dl_cell_metric_handler::mac_dl_cell_metric_handler(pci_t                                cell_pci_,
-                                                       subcarrier_spacing                   scs,
-                                                       const mac_cell_metric_report_config& metrics_cfg) :
+// mac_dl_cell_metric_handler
+
+mac_dl_cell_metric_handler::mac_dl_cell_metric_handler(pci_t                     cell_pci_,
+                                                       subcarrier_spacing        scs,
+                                                       mac_cell_metric_notifier* notifier_) :
   cell_pci(cell_pci_),
-  period_slots(metrics_cfg.report_period.count() * get_nof_slots_per_subframe(scs)),
-  notifier(metrics_cfg.notifier)
+  notifier(notifier_),
+  slot_duration(std::chrono::nanoseconds(unsigned(1e6 / (get_nof_slots_per_subframe(scs)))))
 {
 }
 
-void mac_dl_cell_metric_handler::on_cell_activation()
+void mac_dl_cell_metric_handler::on_cell_activation(slot_point sl_tx)
 {
-  if (not enabled()) {
+  if (not enabled() or active()) {
     return;
   }
-  data.last_report = false;
-  cell_activated   = true;
+  last_sl_tx = sl_tx;
+  data       = {};
+  // Notify cell creation and next slot on which the report will be generated.
+  notifier->on_cell_activation();
 }
 
 void mac_dl_cell_metric_handler::on_cell_deactivation()
 {
-  if (not enabled()) {
+  if (not enabled() or not active()) {
+    // Activation hasn't started or completed.
     return;
   }
-  if (not cell_activated or not next_report_slot.valid()) {
-    // Activation hasn't started or hasn't completed.
-    return;
-  }
-
-  data.last_report = true;
-  cell_activated   = false;
 
   // Report the remainder metrics.
-  send_new_report(last_sl_tx + 1);
+  data.last_report = true;
+  send_new_report();
+  last_sl_tx = {};
 }
 
 void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& meas)
 {
-  last_sl_tx = meas.sl_tx;
-  if (not enabled() or not cell_activated) {
+  if (not enabled() or not active()) {
     return;
   }
-
-  if (not next_report_slot.valid() and cell_activated) {
-    // First slot after cell activation.
-    // We will make the \c next_report_slot aligned with the period.
-    unsigned mod_val = meas.sl_tx.to_uint() % period_slots;
-    next_report_slot = mod_val > 0 ? meas.sl_tx + period_slots - mod_val : meas.sl_tx;
-    slot_duration    = std::chrono::nanoseconds(unsigned(1e6 / meas.sl_tx.nof_slots_per_subframe()));
-    // Notify cell creation and next slot on which the report will be generated.
-    notifier->on_cell_activation(next_report_slot);
-  }
+  last_sl_tx = meas.sl_tx;
 
   // Time difference
   const auto                     stop_tp           = metric_clock::now();
@@ -144,25 +134,17 @@ void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& 
     data.sys.save_sample(meas.sl_tx, std::chrono::nanoseconds{rusg_val.sys_time});
   }
 
-  if (not next_report_slot.valid()) {
-    // We enter here in the first call to this function.
-    // We will make the \c next_report_slot aligned with the period.
-    unsigned mod_val = meas.sl_tx.to_uint() % period_slots;
-    next_report_slot = mod_val > 0 ? meas.sl_tx + period_slots - mod_val : meas.sl_tx;
-    slot_duration    = std::chrono::nanoseconds(unsigned(1e6 / meas.sl_tx.nof_slots_per_subframe()));
-  }
-
-  if (meas.sl_tx >= next_report_slot) {
-    send_new_report(meas.sl_tx);
+  if (notifier->is_report_required(meas.sl_tx)) {
+    send_new_report();
   }
 }
 
-void mac_dl_cell_metric_handler::send_new_report(slot_point sl_tx)
+void mac_dl_cell_metric_handler::send_new_report()
 {
   // Prepare cell report.
   mac_dl_cell_metric_report report;
   report.pci           = cell_pci;
-  report.start_slot    = sl_tx - data.nof_slots;
+  report.start_slot    = data.start_slot;
   report.slot_duration = slot_duration;
   report.nof_slots     = data.nof_slots;
   if (data.nof_slots > 0) {
@@ -178,9 +160,6 @@ void mac_dl_cell_metric_handler::send_new_report(slot_point sl_tx)
   report.count_involuntary_context_switches = data.count_invol_context_switches;
   report.cell_deactivated                   = data.last_report;
 
-  // Set next report slot.
-  next_report_slot += period_slots;
-
   // Reset counters.
   data = {};
 
@@ -189,6 +168,5 @@ void mac_dl_cell_metric_handler::send_new_report(slot_point sl_tx)
     notifier->on_cell_metric_report(report);
   } else {
     notifier->on_cell_deactivation(report);
-    next_report_slot = {};
   }
 }

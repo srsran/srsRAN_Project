@@ -52,15 +52,16 @@ public:
     nof_symbols(get_preamble_duration(format) == 0 ? 1U : get_preamble_duration(format)),
     writer(prach_eaxc, 0, srslog::fetch_basic_logger("TEST"), repo)
   {
-    buffer_context.slot             = slot;
-    buffer_context.format           = format;
-    buffer_context.ports            = {0};
+    buffer_context.slot   = slot;
+    buffer_context.format = format;
+    buffer_context.ports.push_back(0);
     buffer_context.nof_td_occasions = 1;
     buffer_context.nof_fd_occasions = 1;
     buffer_context.pusch_scs        = srsran::subcarrier_spacing::kHz30;
     buffer_context.start_symbol     = 0;
 
-    repo->add(buffer_context, buffer, std::nullopt, std::nullopt);
+    repo->add(buffer_context, buffer, srslog::fetch_basic_logger("TEST"), std::nullopt, std::nullopt);
+    repo->process_pending_contexts();
 
     results.params.slot      = slot;
     results.params.symbol_id = 0;
@@ -120,7 +121,8 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, decoded_prbs_before_pra
   buffer_context.pusch_scs = subcarrier_spacing::kHz60;
   buffer_context.format    = prach_format_type::zero;
   unsigned nof_symbols_    = 1U;
-  repo->add(buffer_context, buffer, std::nullopt, std::nullopt);
+  repo->add(buffer_context, buffer, srslog::fetch_basic_logger("TEST"), std::nullopt, std::nullopt);
+  repo->process_pending_contexts();
 
   auto& section     = results.sections.back();
   section.nof_prbs  = 11;
@@ -143,7 +145,8 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, prbs_at_the_beginning_w
   buffer_context.pusch_scs = subcarrier_spacing::kHz60;
   buffer_context.format    = prach_format_type::zero;
   unsigned nof_symbols_    = 1U;
-  repo->add(buffer_context, buffer, std::nullopt, std::nullopt);
+  repo->add(buffer_context, buffer, srslog::fetch_basic_logger("TEST"), std::nullopt, std::nullopt);
+  repo->process_pending_contexts();
 
   auto& section     = results.sections.back();
   section.nof_prbs  = 1;
@@ -168,7 +171,8 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, 60kHz_long_format_one_m
   preamble_length          = 839;
   nof_symbols              = 1U;
   buffer                   = prach_buffer_dummy(nof_symbols, is_long_preamble(buffer_context.format));
-  repo->add(buffer_context, buffer, std::nullopt, std::nullopt);
+  repo->add(buffer_context, buffer, srslog::fetch_basic_logger("TEST"), std::nullopt, std::nullopt);
+  repo->process_pending_contexts();
 
   auto& section     = results.sections.back();
   section.nof_prbs  = 81;
@@ -192,7 +196,8 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, 60kHz_long_format_one_m
   preamble_length          = 839;
   nof_symbols              = 1U;
   buffer                   = prach_buffer_dummy(nof_symbols, is_long_preamble(buffer_context.format));
-  repo->add(buffer_context, buffer, std::nullopt, std::nullopt);
+  repo->add(buffer_context, buffer, srslog::fetch_basic_logger("TEST"), std::nullopt, std::nullopt);
+  repo->process_pending_contexts();
 
   auto& section     = results.sections.back();
   section.nof_prbs  = 96;
@@ -235,7 +240,8 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, decoded_prbs_with_start
   buffer = prach_buffer_dummy(nof_symbols, is_long_preamble(buffer_context.format));
   // Offset the start symbol.
   buffer_context.start_symbol = 2;
-  repo->add(buffer_context, buffer, std::nullopt, std::nullopt);
+  repo->add(buffer_context, buffer, srslog::fetch_basic_logger("TEST"), std::nullopt, std::nullopt);
+  repo->process_pending_contexts();
 
   auto& section     = results.sections.back();
   section.nof_prbs  = (format == prach_format_type::zero) ? 72 : 12;

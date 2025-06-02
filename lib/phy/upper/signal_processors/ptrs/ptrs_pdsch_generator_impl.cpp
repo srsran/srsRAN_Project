@@ -108,11 +108,11 @@ void ptrs_pdsch_generator_generic_impl::generate(resource_grid_writer& grid, con
 
     // Prepare RE mapping pattern for the symbol.
     re_pattern map_pattern;
-    map_pattern.prb_mask.resize(config.rb_mask.size());
+    map_pattern.crb_mask.resize(config.rb_mask.size());
     map_pattern.symbols.resize(MAX_NSYMB_PER_SLOT);
     map_pattern.symbols.set(i_symbol);
     for (unsigned i_prb = pattern.rb_begin; i_prb < pattern.rb_end; i_prb += pattern.rb_stride) {
-      map_pattern.prb_mask.set(i_prb);
+      map_pattern.crb_mask.set(i_prb);
     }
     map_pattern.re_mask.resize(NOF_SUBCARRIERS_PER_RB);
     map_pattern.re_mask.set(pattern.re_offset[0]);

@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "../logging/scheduler_metrics_handler.h"
 #include "../policy/scheduler_policy.h"
 #include "../slicing/ran_slice_candidate.h"
 #include "ue_cell_grid_allocator.h"
@@ -40,6 +41,7 @@ public:
                         pdcch_resource_allocator&         pdcch_alloc,
                         uci_allocator&                    uci_alloc,
                         cell_resource_allocator&          cell_alloc,
+                        cell_metrics_handler&             cell_metrics_,
                         cell_harq_manager&                cell_harqs_,
                         srslog::basic_logger&             logger_);
 
@@ -104,6 +106,7 @@ private:
 
   const scheduler_ue_expert_config& expert_cfg;
   const cell_resource_allocator&    cell_alloc;
+  cell_metrics_handler&             cell_metrics;
   cell_harq_manager&                cell_harqs;
   uci_allocator&                    uci_alloc;
   srslog::basic_logger&             logger;

@@ -40,11 +40,18 @@ struct drx_config {
   /// Duration of the UE inactivity timer. Values: {0, 1, 2, 3, 4, 5, 6, 8, 10, 20, 30, 40, 50, 60, 80, 100, 200, 300,
   /// 500, 750, 1280, 1920, 2560}.
   std::chrono::milliseconds inactivity_timer;
+  /// Duration of the Retransmission DL timer, in slots. See "drx-RetransmissionTimerDL" in TS 38.331. Values: {0, 1, 2,
+  /// 4, 6, 8, 16, 24, 33, 40, 64, 80, 96, 112, 128, 160, 320}.
+  unsigned retx_timer_dl;
+  /// Duration of the Retransmission UL timer, in slots. See "drx-RetransmissionTimerUL" in TS 38.331. Values: {0, 1, 2,
+  /// 4, 6, 8, 16, 24, 33, 40, 64, 80, 96, 112, 128, 160, 320}.
+  unsigned retx_timer_ul;
 
   bool operator==(const drx_config& other) const
   {
     return long_cycle == other.long_cycle && long_start_offset == other.long_start_offset &&
-           on_duration_timer == other.on_duration_timer && inactivity_timer == other.inactivity_timer;
+           on_duration_timer == other.on_duration_timer && inactivity_timer == other.inactivity_timer &&
+           retx_timer_dl == other.retx_timer_dl && retx_timer_ul == other.retx_timer_ul;
   }
   bool operator!=(const drx_config& other) const { return not(*this == other); }
 };
@@ -57,8 +64,11 @@ span<const std::chrono::milliseconds> valid_long_cycle_values();
 /// Valid onDurationTimer values as per TS 38.331, "drx-LongCycleStartOffset".
 span<const std::chrono::milliseconds> valid_on_duration_timer_values();
 
-/// Valid InactivityTimer values as per TS 38.331, "drx-InactivityTyimer".
+/// Valid InactivityTimer values as per TS 38.331, "drx-InactivityTimer".
 span<const std::chrono::milliseconds> valid_inactivity_timer_values();
+
+/// Valid RetransmissionTimer values as per TS 38.331, "drx-RetransmissionTimerDL" and "drx-RetransmissionTimerUL".
+span<const unsigned> valid_retx_timer_values();
 
 } // namespace drx_helper
 

@@ -217,7 +217,7 @@ void cell_harq_repository<IsDl>::slot_indication(slot_point sl_tx)
     auto& h = harq_pending_retx_list.front();
     srsran_sanity_check(h.status == harq_state_t::pending_retx, "HARQ process in wrong state");
     // [Implementation-defined] Maximum time we give to the scheduler policy to retransmit a HARQ process.
-    const unsigned max_nof_slots_for_retx = last_sl_ind.nof_slots_per_system_frame() / 4;
+    const unsigned max_nof_slots_for_retx = last_sl_ind.nof_slots_per_hyper_system_frame() / 4;
     if (last_sl_ind < (h.slot_ack + max_nof_slots_for_retx)) {
       break;
     }
@@ -265,20 +265,21 @@ void cell_harq_repository<IsDl>::handle_harq_ack_timeout(harq_type& h, slot_poin
   } else {
     if (ack_val) {
       // Case: Not all HARQ-ACKs were received, but at least one positive ACK was received.
-      logger.debug("rnti={} h_id={}: Setting {} HARQ to \"ACKed\" state. Cause: HARQ-ACK wait timeout ({} slots) was "
-                   "reached with still missing PUCCH HARQ-ACKs. However, one positive ACK was received.",
+      logger.debug("rnti={} h_id={}: Setting {} HARQ to \"ACKed\" state. Cause: Timeout was reached ({} slots), but "
+                   "there are still missing PUCCH HARQ-ACK indications. However, one positive ACK was received.",
                    h.rnti,
                    fmt::underlying(h.h_id),
                    IsDl ? "DL" : "UL",
                    h.slot_timeout - h.slot_ack);
     } else {
       // At least one of the expected ACKs went missing and we haven't received any positive ACK.
-      logger.warning("rnti={} h_id={}: Discarding {} HARQ. Cause: HARQ-ACK wait timeout ({} slots) was reached, but "
-                     "there are still missing HARQ-ACKs and none of the received ones are positive.",
+      logger.warning("rnti={} h_id={}: Discarding {} HARQ. Cause: Timeout was reached ({} slots) to receive the "
+                     "respective HARQ-ACK indication from lower layers (HARQ-ACK slot={})",
                      h.rnti,
                      fmt::underlying(h.h_id),
                      IsDl ? "DL" : "UL",
-                     h.slot_timeout - h.slot_ack);
+                     h.slot_timeout - h.slot_ack,
+                     h.slot_ack);
     }
   }
 

@@ -20,6 +20,7 @@
  *
  */
 
+#include "srsran/support/executors/executor_decoration_factory.h"
 #include "srsran/support/executors/sync_task_executor.h"
 #include "srsran/support/executors/task_worker.h"
 #include <gtest/gtest.h>
@@ -61,6 +62,22 @@ TEST(sync_task_worker, multiple_producers_sync_their_tasks)
   std::thread t2(f);
   t1.join();
   t2.join();
+
+  w.stop();
+}
+
+TEST(sync_task_worker, decorate_with_sync_cfg_instantiates_sync_executor)
+{
+  task_worker w{"WORKER", 1};
+  auto        exec      = decorate_executor(make_task_executor_ptr(w),
+                                execution_decoration_config{.sync = execution_decoration_config::sync_option{}});
+  auto        sync_exec = make_sync_executor(exec);
+
+  std::atomic<unsigned> counter{0};
+  for (unsigned i = 0; i != 10; ++i) {
+    ASSERT_TRUE(sync_exec->execute([&counter]() { ++counter; }));
+    ASSERT_EQ(counter, i + 1);
+  }
 
   w.stop();
 }

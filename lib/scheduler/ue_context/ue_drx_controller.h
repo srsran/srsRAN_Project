@@ -53,8 +53,14 @@ public:
   /// Determines whether the PDCCH can be allocated for a given slot.
   bool is_pdcch_enabled() const;
 
-  /// Update DRX active time based on new PDCCH allocations.
-  void on_new_pdcch_alloc(slot_point dl_slot);
+  /// Update DRX active time based on new DL PDCCH allocations.
+  void on_new_dl_pdcch_alloc(slot_point pdcch_slot);
+
+  /// Update DRX active time based on new UL PDCCH allocations.
+  void on_new_ul_pdcch_alloc(slot_point pdcch_slot, slot_point pusch_slot);
+
+  /// Update DRX active time based on a PUCCH HARQ NACK.
+  void on_dl_harq_nack(slot_point uci_slot);
 
   /// Update DRX active time based on ContentionResolutionTimer.
   void on_con_res_start();
@@ -62,6 +68,7 @@ public:
 private:
   /// Whether the UE is within DRX active time.
   bool is_active_time() const;
+  void update_inactivity_timer(slot_point pdcch_slot);
 
   const subcarrier_spacing          scs_common;
   std::chrono::milliseconds         conres_timer;

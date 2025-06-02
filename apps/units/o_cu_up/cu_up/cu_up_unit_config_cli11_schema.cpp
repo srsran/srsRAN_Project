@@ -63,16 +63,30 @@ static void configure_cli11_ngu_gtpu_args(CLI::App& app, cu_up_unit_ngu_gtpu_con
 
 static void configure_cli11_execution_args(CLI::App& app, cu_up_unit_execution_config& exec_cfg)
 {
-  add_option(
-      app, "--cu_up_dl_ue_executor_queue_size", exec_cfg.dl_ue_executor_queue_size, "CU-UP's DL UE executor queue size")
+  CLI::App* queues_subcmd = add_subcommand(app, "queues", "Task executor queue parameters")->configurable();
+  add_option(*queues_subcmd,
+             "--cu_up_dl_ue_executor_queue_size",
+             exec_cfg.dl_ue_executor_queue_size,
+             "CU-UP's DL UE executor queue size")
       ->capture_default_str();
-  add_option(
-      app, "--cu_up_ul_ue_executor_queue_size", exec_cfg.ul_ue_executor_queue_size, "CU-UP's UL UE executor queue size")
+  add_option(*queues_subcmd,
+             "--cu_up_ul_ue_executor_queue_size",
+             exec_cfg.ul_ue_executor_queue_size,
+             "CU-UP's UL UE executor queue size")
       ->capture_default_str();
-  add_option(app,
+  add_option(*queues_subcmd,
              "--cu_up_ctrl_ue_executor_queue_size",
              exec_cfg.ctrl_ue_executor_queue_size,
              "CU-UP's CTRL UE executor queue size")
+      ->capture_default_str();
+  add_option(
+      *queues_subcmd, "--cu_up_strand_batch_size", exec_cfg.ctrl_ue_executor_queue_size, "CU-UP's strands batch size")
+      ->capture_default_str();
+  CLI::App* tracing_subcmd = add_subcommand(app, "tracing", "Task executor tracing parameters")->configurable();
+  add_option(*tracing_subcmd,
+             "--cu_up_executor_tracing_enable",
+             exec_cfg.executor_tracing_enable,
+             "Enable tracing for CU-UP executors")
       ->capture_default_str();
 }
 
@@ -217,9 +231,8 @@ void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_
   configure_cli11_cu_up_args(*cu_up_subcmd, unit_cfg);
 
   // Execution section.
-  CLI::App* exec_subcmd   = add_subcommand(app, "expert_execution", "Execution parameters")->configurable();
-  CLI::App* queues_subcmd = add_subcommand(*exec_subcmd, "queues", "Task executor queue parameters")->configurable();
-  configure_cli11_execution_args(*queues_subcmd, unit_cfg.exec_cfg);
+  CLI::App* exec_subcmd = add_subcommand(app, "expert_execution", "Execution parameters")->configurable();
+  configure_cli11_execution_args(*exec_subcmd, unit_cfg.exec_cfg);
 
   // Loggers section.
   CLI::App* log_subcmd = add_subcommand(app, "log", "Logging configuration")->configurable();

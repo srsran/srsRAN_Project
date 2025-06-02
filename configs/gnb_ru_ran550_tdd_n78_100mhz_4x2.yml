@@ -1,5 +1,5 @@
 # This example configuration outlines how to configure the srsRAN Project CU/DU to use an O-RU and split 7.2. This is specifically for use
-# with the Benetel R550 RU. This config will create a single TDD MIMO cell transmitting in band 78, with 100 MHz bandwidth and 30 kHz sub-carrier-spacing.
+# with the Benetel RAN550 RU. This config will create a single TDD MIMO cell transmitting in band 78, with 100 MHz bandwidth and 30 kHz sub-carrier-spacing.
 # The parameters used to configure the RU are found in the `ru_ofh` sub-section. This configuration makes used of the OFH Lib from SRS to enable split 7.2.
 
 cu_cp:
@@ -23,15 +23,15 @@ ru_ofh:
   t1a_min_up: 80
   ta4_max: 500
   ta4_min: 25
-  is_prach_cp_enabled: false
+  is_prach_cp_enabled: true
   compr_method_ul: bfp
   compr_bitwidth_ul: 9
   compr_method_dl: bfp
   compr_bitwidth_dl: 9
   compr_method_prach: bfp
   compr_bitwidth_prach: 9
-  enable_ul_static_compr_hdr: true
-  enable_dl_static_compr_hdr: true
+  enable_ul_static_compr_hdr: false
+  enable_dl_static_compr_hdr: false
   iq_scaling: 5.5
   cells:
     - network_interface: enp1s0f0
@@ -54,10 +54,11 @@ cell_cfg:
   nof_antennas_dl: 4
   nof_antennas_ul: 2
   prach:
-    prach_config_index: 7
+    prach_config_index: 159
     prach_root_sequence_index: 1
     zero_correlation_zone: 0
-    prach_frequency_start: 0
+  ssb:
+    ssb_block_power_dbm: -4
   tdd_ul_dl_cfg:
     dl_ul_tx_period: 10
     nof_dl_slots: 7

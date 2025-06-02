@@ -46,6 +46,14 @@ public:
     metrics.num_sdu_bytes += num_sdu_bytes_;
   }
 
+  void add_lost_sdus(uint32_t num_sdus)
+  {
+    if (not enabled) {
+      return;
+    }
+    metrics.num_dropped_sdus += num_sdus;
+  }
+
   void add_pdus(uint32_t num_pdus_, size_t num_pdu_bytes_)
   {
     if (not enabled) {

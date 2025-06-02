@@ -31,19 +31,25 @@ namespace app_services {
 
 /// \brief Application message banners service.
 ///
-/// Announces in STDIN when the application starts and stops.
+/// Announces in STDOUT when the application starts and stops.
 class application_message_banners
 {
 public:
   /// Announces the application started.
-  explicit application_message_banners(std::string_view app_name)
+  application_message_banners(std::string_view app_name, std::string_view log_filename_) : log_filename(log_filename_)
   {
     fmt::print("==== {} started ===\n", app_name);
     fmt::print("Type <h> to view help\n");
   }
 
   /// Announces the application is stopping.
-  ~application_message_banners() { fmt::print("Stopping ..\n"); }
+  ~application_message_banners()
+  {
+    fmt::print("Stopping...\n");
+    if (!log_filename.empty()) {
+      fmt::print("Logfile stored in {}\n", log_filename);
+    }
+  }
 
   /// Announces the application name and version using its build hash.
   static void announce_app_and_version(std::string_view app_name)
@@ -57,6 +63,9 @@ public:
     // Log build info
     logger.info("Built in {} mode using {}", get_build_mode(), get_build_info());
   }
+
+private:
+  std::string log_filename;
 };
 
 } // namespace app_services

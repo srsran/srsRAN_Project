@@ -61,11 +61,11 @@ private:
     return aggregation_level * pdcch_constants::NOF_REG_PER_CCE * pdcch_constants::NOF_RE_PDCCH_PER_RB * 2;
   }
 
-  /// \brief Computes the allocation mask as per TS38.211 Section 7.3.2.2.
+  /// \brief Computes the Common Resource Blocks (CRBs) allocation mask as per TS38.211 Section 7.3.2.2.
   /// \param[in] coreset Provides CORESET parameters.
   /// \param[in] dci Provides DCI parameters.
   /// \return The PRB allocation mask for the PDCCH transmission.
-  static prb_bitmap compute_rb_mask(const coreset_description& coreset, const dci_description& dci);
+  static crb_bitmap compute_rb_mask(const coreset_description& coreset, const dci_description& dci);
 
 public:
   /// Generic PDSCH modulator instance constructor.

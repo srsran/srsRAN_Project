@@ -29,6 +29,7 @@
 #include "srsran/ran/drx_config.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/duplex_mode.h"
+#include "srsran/ran/slot_point_extended.h"
 #include "srsran/support/cli11_utils.h"
 #include "srsran/support/config_parsers.h"
 #include "srsran/support/format/fmt_to_c_str.h"
@@ -135,6 +136,16 @@ static void configure_cli11_expert_execution_args(CLI::App& app, du_high_unit_ex
         }
       },
       "Sets the cell CPU affinities configuration on a per cell basis");
+  CLI::App* queues_subcmd = add_subcommand(app, "queues", "Task executor queue parameters")->configurable();
+  add_option(*queues_subcmd,
+             "--du_ue_data_executor_queue_size",
+             config.du_queue_cfg.ue_data_executor_queue_size,
+             "DU's UE executor task queue size for PDU processing")
+      ->capture_default_str();
+  CLI::App* tracing_subcmd = add_subcommand(app, "tracing", "Task executor tracing parameters")->configurable();
+  add_option(
+      *tracing_subcmd, "--du_high_enable", config.executor_tracing_enable, "Enable tracing for DU-high executors")
+      ->capture_default_str();
 }
 
 static void configure_cli11_pdcch_common_args(CLI::App& app, pdcch_common_unit_config& common_params)
@@ -704,6 +715,18 @@ static void configure_cli11_drx_args(CLI::App& app, du_high_unit_drx_config& drx
              "Duration in milliseconds that the UE stays active after PDCCH reception, when DRX is configured.")
       ->capture_default_str()
       ->check(CLI::IsMember(views::transform(drx_helper::valid_inactivity_timer_values(), to_uint)));
+  add_option(app,
+             "--retx_timer_dl",
+             drx_params.retx_timer_dl,
+             "Maximum duration in slots until a DL ReTX is received by the UE, when DRX is configured.")
+      ->capture_default_str()
+      ->check(CLI::IsMember(drx_helper::valid_retx_timer_values()));
+  add_option(app,
+             "--retx_timer_ul",
+             drx_params.retx_timer_ul,
+             "Maximum duration in slots until a grant for UL ReTX is received by the UE, when DRX is configured.")
+      ->capture_default_str()
+      ->check(CLI::IsMember(drx_helper::valid_retx_timer_values()));
   add_option(app,
              "--long_cycle",
              drx_params.long_cycle,
@@ -1816,7 +1839,7 @@ static void configure_cli11_metrics_args(CLI::App& app, du_high_unit_metrics_con
              metrics_params.du_report_period,
              "DU statistics report period in milliseconds")
       ->capture_default_str()
-      ->check(CLI::Range(0, 10240));
+      ->check(CLI::Range(0U, static_cast<unsigned>(NOF_SUBFRAMES_PER_FRAME * NOF_SFNS * NOF_HYPER_SFNS)));
 
   auto* layers_subcmd = add_subcommand(app, "layers", "Layer basis metrics configuration")->configurable();
   configure_cli11_metrics_layers_args(*layers_subcmd, metrics_params.layers_cfg);
@@ -1969,15 +1992,6 @@ static void configure_cli11_qos_args(CLI::App& app, du_high_unit_qos_config& qos
   app.needs(f1u_du_subcmd);
 }
 
-static void configure_cli11_execution_args(CLI::App& app, du_high_unit_execution_queues_config& exec_cfg)
-{
-  add_option(app,
-             "--du_ue_data_executor_queue_size",
-             exec_cfg.ue_data_executor_queue_size,
-             "DU's UE executor task queue size for PDU processing")
-      ->capture_default_str();
-}
-
 void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_parsed_config& parsed_cfg)
 {
   add_option(app, "--gnb_id", parsed_cfg.config.gnb_id.id, "gNodeB identifier")->capture_default_str();
@@ -2002,11 +2016,6 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
   // PCAP section.
   CLI::App* pcap_subcmd = add_subcommand(app, "pcap", "PCAP configuration")->configurable();
   configure_cli11_pcap_args(*pcap_subcmd, parsed_cfg.config.pcaps);
-
-  // Execution section.
-  CLI::App* exec_subcmd   = add_subcommand(app, "expert_execution", "Execution parameters")->configurable();
-  CLI::App* queues_subcmd = add_subcommand(*exec_subcmd, "queues", "Task executor queue parameters")->configurable();
-  configure_cli11_execution_args(*queues_subcmd, parsed_cfg.config.expert_execution_cfg.du_queue_cfg);
 
   // Common cell section.
   CLI::App* common_cell_subcmd = add_subcommand(app, "cell_cfg", "Default cell configuration")->configurable();

@@ -46,10 +46,7 @@
 
 namespace srsran {
 
-struct scheduler_cell_metrics;
-template <typename R>
-class zero_copy_notifier;
-using scheduler_cell_metrics_notifier = zero_copy_notifier<scheduler_cell_metrics>;
+class scheduler_cell_metrics_notifier;
 
 /// Basic scheduler resource grid element for resource reservation.
 struct sched_grid_resource {
@@ -69,6 +66,8 @@ struct sched_cell_configuration_request_message {
   struct metrics_config {
     std::chrono::milliseconds        report_period{0};
     scheduler_cell_metrics_notifier* notifier = nullptr;
+    /// Maximum number of UE events per report.
+    unsigned max_ue_events_per_report = 64;
   };
 
   du_cell_index_t       cell_index;

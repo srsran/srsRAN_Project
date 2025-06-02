@@ -279,6 +279,12 @@ TEST_P(du_high_many_cells_tester, when_cell_restarted_then_ues_can_be_created)
            test_helpers::is_gnb_cu_config_update_acknowledge_valid(this->cu_notifier.last_f1ap_msgs.back(), req);
   }));
 
+  // Random number of slots elapsed.
+  const unsigned nof_slots_before_reactivation = test_rgen::uniform_int<unsigned>(0, 500);
+  for (unsigned i = 0; i != nof_slots_before_reactivation; ++i) {
+    this->run_slot();
+  }
+
   // Restart the cell.
   this->cu_notifier.last_f1ap_msgs.clear();
   f1ap_message req_restart = test_helpers::create_gnb_cu_configuration_update_request(0, {{rem_cgi}}, {});
@@ -299,6 +305,88 @@ TEST_P(du_high_many_cells_tester, when_cell_restarted_then_ues_can_be_created)
 INSTANTIATE_TEST_SUITE_P(du_high_many_cells_test_suite,
                          du_high_many_cells_tester,
                          ::testing::Values(test_params{2}, test_params{4}));
+
+class du_high_many_cells_deferred_activation_test : public du_high_env_simulator, public testing::Test
+{
+protected:
+  constexpr static unsigned nof_cells = 4;
+
+  du_high_many_cells_deferred_activation_test() :
+    du_high_env_simulator(du_high_env_sim_params{nof_cells, std::nullopt, std::nullopt, std::nullopt, false})
+  {
+  }
+};
+
+TEST_F(du_high_many_cells_deferred_activation_test, when_cell_starts_deactivated_then_no_allocation_is_performed)
+{
+  const unsigned test_nof_slots = 256;
+
+  // While the cells remain deactivated, there should not be any allocation.
+  for (unsigned i = 0; i != test_nof_slots; ++i) {
+    this->run_slot();
+
+    for (unsigned c = 0; c != this->nof_cells; ++c) {
+      if (phy.cells[c].last_dl_res.has_value()) {
+        ASSERT_TRUE(phy.cells[c].last_dl_res.value().dl_res->csi_rs.empty());
+        ASSERT_TRUE(phy.cells[c].last_dl_res.value().dl_res->bc.sibs.empty());
+        ASSERT_TRUE(phy.cells[c].last_dl_res.value().dl_res->bc.ssb_info.empty());
+        ASSERT_TRUE(phy.cells[c].last_dl_res.value().dl_res->dl_pdcchs.empty());
+        ASSERT_TRUE(phy.cells[c].last_dl_res.value().dl_res->ul_pdcchs.empty());
+        ASSERT_TRUE(phy.cells[c].last_dl_res.value().dl_res->ue_grants.empty());
+        ASSERT_TRUE(phy.cells[c].last_dl_res.value().dl_res->rar_grants.empty());
+        ASSERT_TRUE(phy.cells[c].last_dl_res.value().dl_res->paging_grants.empty());
+        ASSERT_TRUE(phy.cells[c].last_dl_res.value().dl_pdcch_pdus.empty());
+        ASSERT_TRUE(phy.cells[c].last_dl_res.value().ul_pdcch_pdus.empty());
+        ASSERT_TRUE(phy.cells[c].last_dl_res.value().ssb_pdus.empty());
+      }
+      if (phy.cells[c].last_ul_res.has_value()) {
+        ASSERT_TRUE(phy.cells[c].last_ul_res.value().ul_res->prachs.empty());
+        ASSERT_TRUE(phy.cells[c].last_ul_res.value().ul_res->pucchs.empty());
+        ASSERT_TRUE(phy.cells[c].last_ul_res.value().ul_res->puschs.empty());
+        ASSERT_TRUE(phy.cells[c].last_ul_res.value().ul_res->srss.empty());
+      }
+    }
+  }
+
+  // CU sends gNB-CU-ConfigurationUpdateRequest to activate cells.
+  this->cu_notifier.last_f1ap_msgs.clear();
+  std::vector<nr_cell_global_id_t> cgis;
+  for (unsigned i = 0; i != nof_cells; ++i) {
+    cgis.push_back(nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(i).value()});
+  }
+  auto req_msg = test_helpers::create_gnb_cu_configuration_update_request(0, cgis, {});
+  this->du_hi->get_f1ap_du().handle_message(req_msg);
+  ASSERT_TRUE(this->run_until([this, req_msg]() {
+    return not this->cu_notifier.last_f1ap_msgs.empty() and
+           test_helpers::is_gnb_cu_config_update_acknowledge_valid(this->cu_notifier.last_f1ap_msgs.back(), req_msg);
+  }));
+
+  static_vector<bool, MAX_NOF_DU_CELLS> csi_rs_alloc(nof_cells, false);
+  static_vector<bool, MAX_NOF_DU_CELLS> ssb_alloc(nof_cells, false);
+  static_vector<bool, MAX_NOF_DU_CELLS> sib1_alloc(nof_cells, false);
+  static_vector<bool, MAX_NOF_DU_CELLS> prach_alloc(nof_cells, false);
+  for (unsigned i = 0; i != test_nof_slots; ++i) {
+    this->run_slot();
+
+    for (unsigned c = 0; c != nof_cells; ++c) {
+      if (phy.cells[c].last_dl_res.has_value()) {
+        csi_rs_alloc[c] |= not phy.cells[c].last_dl_res.value().dl_res->csi_rs.empty();
+        ssb_alloc[c] |= not phy.cells[c].last_dl_res.value().dl_res->bc.ssb_info.empty();
+        sib1_alloc[c] |= not phy.cells[c].last_dl_res.value().dl_res->bc.sibs.empty();
+      }
+      if (phy.cells[c].last_ul_res.has_value()) {
+        prach_alloc[c] |= not phy.cells[c].last_ul_res.value().ul_res->prachs.empty();
+      }
+    }
+  }
+  // Check that all cells have been activated.
+  for (unsigned c = 0; c != nof_cells; ++c) {
+    ASSERT_TRUE(csi_rs_alloc[c]);
+    ASSERT_TRUE(ssb_alloc[c]);
+    ASSERT_TRUE(sib1_alloc[c]);
+    ASSERT_TRUE(prach_alloc[c]);
+  }
+}
 
 class du_high_many_cells_metrics_test : public du_high_env_simulator, public testing::Test
 {
@@ -330,31 +418,46 @@ TEST_F(du_high_many_cells_metrics_test, when_du_metrics_are_configured_then_metr
   ASSERT_TRUE(run_rrc_setup(rnti2));
   ASSERT_TRUE(run_ue_context_setup(rnti2));
 
-  // Flush any report pushed during UE creation.
-  this->workers.flush_pending_control_tasks();
+  // Drop the first metrics report as it may not contain all slots.
+  const unsigned metrics_period_slots =
+      METRICS_PERIOD.count() * get_nof_slots_per_subframe(du_high_cfg.ran.cells[0].scs_common);
+  const unsigned nof_test_slots = metrics_period_slots + 20;
+  if (not run_until([this]() { return du_metrics.last_report.has_value(); }, nof_test_slots)) {
+    this->workers.flush_pending_control_tasks();
+    ASSERT_TRUE(du_metrics.last_report.has_value());
+  }
   du_metrics.last_report.reset();
 
   // Wait for the next report.
-  const unsigned nof_test_slots =
-      METRICS_PERIOD.count() * get_nof_slots_per_subframe(du_high_cfg.ran.cells[0].scs_common) + 20;
   if (not run_until([this]() { return du_metrics.last_report.has_value(); }, nof_test_slots)) {
     this->workers.flush_pending_control_tasks();
     ASSERT_TRUE(du_metrics.last_report.has_value());
   }
   // Metrics received.
-  ASSERT_EQ(du_metrics.last_report.value().mac.value().sched.cells.size(), nof_cells);
-  ASSERT_EQ(du_metrics.last_report.value().mac.value().sched.cells[0].ue_metrics.size(), 1);
-  ASSERT_EQ(du_metrics.last_report.value().mac.value().sched.cells[1].ue_metrics.size(), 1);
-  ASSERT_EQ(du_metrics.last_report.value().mac.value().sched.cells[2].ue_metrics.size(), 0);
-  ASSERT_EQ(du_metrics.last_report.value().mac.value().sched.cells[3].ue_metrics.size(), 0);
-  ASSERT_EQ(du_metrics.last_report.value().mac.value().sched.cells[0].ue_metrics[0].rnti, rnti1);
-  ASSERT_EQ(du_metrics.last_report.value().mac.value().sched.cells[1].ue_metrics[0].rnti, rnti2);
-  ASSERT_EQ(du_metrics.last_report.value().mac.value().dl.cells.size(), nof_cells);
+  auto& sched_metrics = du_metrics.last_report.value().mac.value().sched;
+  ASSERT_EQ(sched_metrics.cells.size(), nof_cells);
+  for (unsigned i = 0; i != nof_cells; ++i) {
+    ASSERT_EQ(sched_metrics.cells[i].nof_slots, metrics_period_slots);
+  }
+  ASSERT_EQ(sched_metrics.cells[0].ue_metrics.size(), 1);
+  ASSERT_EQ(sched_metrics.cells[1].ue_metrics.size(), 1);
+  ASSERT_EQ(sched_metrics.cells[2].ue_metrics.size(), 0);
+  ASSERT_EQ(sched_metrics.cells[3].ue_metrics.size(), 0);
+  ASSERT_EQ(sched_metrics.cells[0].ue_metrics[0].rnti, rnti1);
+  ASSERT_EQ(sched_metrics.cells[1].ue_metrics[0].rnti, rnti2);
+  auto& mac_metrics = du_metrics.last_report.value().mac.value();
+  ASSERT_EQ(mac_metrics.dl.cells.size(), nof_cells);
+  for (unsigned i = 0; i != nof_cells; ++i) {
+    ASSERT_EQ(mac_metrics.dl.cells[i].nof_slots, metrics_period_slots);
+  }
   ASSERT_EQ(du_metrics.last_report.value().f1ap.value().ues.size(), 2);
 
   // After one metric period elapses, we should receive a new report.
   du_metrics.last_report.reset();
-  ASSERT_TRUE(this->run_until([this]() { return du_metrics.last_report.has_value(); }, nof_test_slots));
+  if (not this->run_until([this]() { return du_metrics.last_report.has_value(); }, nof_test_slots)) {
+    this->workers.flush_pending_control_tasks();
+    ASSERT_TRUE(du_metrics.last_report.has_value());
+  }
   // Metrics received.
   ASSERT_EQ(du_metrics.last_report.value().mac.value().sched.cells.size(), nof_cells);
   ASSERT_EQ(du_metrics.last_report.value().mac.value().dl.cells.size(), nof_cells);

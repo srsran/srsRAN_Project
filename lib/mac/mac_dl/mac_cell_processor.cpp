@@ -37,16 +37,16 @@ using namespace srsran;
 /// Maximum PDSH K0 value as per TS38.331 "PDSCH-TimeDomainResourceAllocation".
 static constexpr size_t MAX_K0_DELAY = 32;
 
-mac_cell_processor::mac_cell_processor(const mac_cell_creation_request&     cell_cfg_req_,
-                                       mac_scheduler_cell_info_handler&     sched_,
-                                       du_rnti_table&                       rnti_table,
-                                       mac_cell_result_notifier&            phy_notifier_,
-                                       task_executor&                       cell_exec_,
-                                       task_executor&                       slot_exec_,
-                                       task_executor&                       ctrl_exec_,
-                                       mac_pcap&                            pcap_,
-                                       timer_manager&                       timers_,
-                                       const mac_cell_metric_report_config& metrics_cfg) :
+mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg_req_,
+                                       mac_scheduler_cell_info_handler& sched_,
+                                       du_rnti_table&                   rnti_table,
+                                       mac_cell_result_notifier&        phy_notifier_,
+                                       task_executor&                   cell_exec_,
+                                       task_executor&                   slot_exec_,
+                                       task_executor&                   ctrl_exec_,
+                                       mac_pcap&                        pcap_,
+                                       timer_manager&                   timers_,
+                                       mac_cell_config_dependencies     dependencies) :
   logger(srslog::fetch_basic_logger("MAC")),
   cell_cfg(cell_cfg_req_),
   cell_exec(cell_exec_),
@@ -71,7 +71,8 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request&     cell
   dlsch_assembler(ue_mng, dl_harq_buffers),
   paging_assembler(pdu_pool),
   sched(sched_),
-  metrics(cell_cfg.pci, cell_cfg.scs_common, metrics_cfg),
+  time_source(std::move(dependencies.timer_source)),
+  metrics(cell_cfg.pci, cell_cfg.scs_common, dependencies.notifier),
   pcap(pcap_),
   slot_time_mapper(to_numerology_value(cell_cfg_req_.scs_common))
 {
@@ -84,7 +85,7 @@ async_task<void> mac_cell_processor::start()
       ctrl_exec,
       timers,
       [this]() noexcept SRSRAN_RTSAN_NONBLOCKING {
-        if (state == cell_state::active) {
+        if (state != cell_state::inactive) {
           // No-op.
           return;
         }
@@ -92,11 +93,7 @@ async_task<void> mac_cell_processor::start()
         // Notify scheduler about activation.
         sched.start_cell(cell_cfg.cell_index);
 
-        // Initiate retrieval of metrics for this cell.
-        metrics.on_cell_activation();
-
         state = cell_state::active;
-
         logger.info("cell={}: Cell was activated", fmt::underlying(cell_cfg.cell_index));
       },
       [this]() {
@@ -116,14 +113,16 @@ async_task<void> mac_cell_processor::stop()
           return;
         }
 
-        // Set cell state as inactive to stop answering to slot indications.
-        state = cell_state::inactive;
-
         // Notify scheduler about activation.
         sched.stop_cell(cell_cfg.cell_index);
 
         // Notify that cell metrics stopped being collected.
         metrics.on_cell_deactivation();
+
+        // TODO: Call time_source->on_cell_deactivation() once FAPI supports stop procedure.
+
+        // Set cell state as inactive to stop answering to slot indications.
+        state = cell_state::inactive;
 
         logger.info("cell={}: Cell was stopped.", fmt::underlying(cell_cfg.cell_index));
       },
@@ -289,10 +288,18 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point               sl
 {
   // * Start of Critical Path * //
 
+  // Tick DU timers on subframe boundaries. Retrieve the combination of HFN, SFN and slot.
+  time_source->on_slot_indication(sl_tx);
+
+  if (SRSRAN_UNLIKELY(state == cell_state::inactive)) {
+    // Ignore slot indication if cell is inactive.
+    phy_cell.on_cell_results_completion(sl_tx);
+    return;
+  }
+
+  // Initiate metric capturing.
   auto        metrics_meas = metrics.start_slot(sl_tx, enqueue_slot_tp);
   trace_point sched_tp     = metrics_meas.start_time_point();
-
-  logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
 
   // Cleans old MAC DL PDU buffers.
   pdu_pool.tick(sl_tx.to_uint());

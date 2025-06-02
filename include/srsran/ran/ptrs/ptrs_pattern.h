@@ -42,8 +42,8 @@ struct ptrs_pattern_configuration {
   dmrs_config_type dmrs_type;
   /// DM-RS position mask. Indicates the OFDM symbols carrying DM-RS within the slot.
   bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask;
-  /// Frequency domain allocation as RB list. The entries set to true are used for transmission.
-  prb_bitmap rb_mask;
+  /// Frequency domain allocation as CRB mask. The entries set to true are used for transmission.
+  crb_bitmap rb_mask;
   /// Time domain allocation of the transmission containing PT-RS.
   interval<uint8_t> time_allocation;
   /// Frequency domain density.

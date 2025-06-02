@@ -38,9 +38,7 @@ inline void register_dynamic_o_du_loggers(const dynamic_o_du_unit_config& config
 
   if (std::holds_alternative<ru_sdr_unit_config>(config.ru_cfg)) {
     register_ru_sdr_logs(std::get<ru_sdr_unit_config>(config.ru_cfg).loggers);
-  }
-
-  if (std::holds_alternative<ru_ofh_unit_parsed_config>(config.ru_cfg)) {
+  } else if (std::holds_alternative<ru_ofh_unit_parsed_config>(config.ru_cfg)) {
     register_ru_ofh_loggers(std::get<ru_ofh_unit_parsed_config>(config.ru_cfg).config.loggers);
   }
 }

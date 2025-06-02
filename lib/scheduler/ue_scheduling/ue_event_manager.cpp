@@ -845,9 +845,10 @@ void ue_event_manager::handle_error_indication(slot_point                       
     const cell_slot_resource_allocator* prev_slot_result = du_cells[cell_index].res_grid->get_history(sl_tx);
     if (prev_slot_result == nullptr) {
       logger.warning("cell={}, slot={}: Discarding error indication. Cause: Scheduler results associated with the slot "
-                     "of the error indication have already been erased",
+                     "of the error indication have already been erased (current slot={})",
                      fmt::underlying(cell_index),
-                     sl_tx);
+                     sl_tx,
+                     last_sl);
       return;
     }
 

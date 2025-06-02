@@ -41,12 +41,14 @@ struct mac_control_config {
     std::chrono::milliseconds   period{1000};
     mac_metrics_notifier&       mac_notifier;
     scheduler_metrics_notifier* sched_notifier = nullptr;
+    unsigned                    max_nof_ue_events;
   };
 
   mac_ul_ccch_notifier&                 event_notifier;
   srs_du::du_high_ue_executor_mapper&   ue_exec_mapper;
   srs_du::du_high_cell_executor_mapper& cell_exec_mapper;
   task_executor&                        ctrl_exec;
+  task_executor&                        timer_exec;
   timer_manager&                        timers;
   metrics_config                        metrics;
   srslog::basic_logger&                 logger = srslog::fetch_basic_logger("MAC", true);

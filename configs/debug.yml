@@ -1,0 +1,17 @@
+# A set of useful config settings to facilitate troubleshooting
+pcap:
+  mac_enable: true
+  mac_type: dlt
+  rlc_enable: false
+  rlc_rb_type: srb
+  ngap_enable: false
+
+log:
+  all_level: warning
+  config_level: debug
+
+metrics:
+  enable_log: true
+  layers:
+    enable_ru: true
+    enable_sched: true

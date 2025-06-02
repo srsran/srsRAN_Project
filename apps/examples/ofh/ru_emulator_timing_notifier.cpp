@@ -80,11 +80,11 @@ static unsigned get_symbol_index(std::chrono::nanoseconds                 fracti
 /// Returns current system slot.
 static inline uint64_t get_current_system_slot(gps_clock::time_point    tp,
                                                std::chrono::nanoseconds slot_duration,
-                                               unsigned                 nof_slots_per_system_frame)
+                                               unsigned                 nof_slots_per_hyper_system_frame)
 {
   // Get the time since the epoch.
   auto time_since_epoch = std::chrono::duration_cast<std::chrono::nanoseconds>(tp.time_since_epoch());
-  return (time_since_epoch / slot_duration) % nof_slots_per_system_frame;
+  return (time_since_epoch / slot_duration) % nof_slots_per_hyper_system_frame;
 }
 
 /// Returns the difference between cur and prev taking into account a potential wrap arounds of the values.
@@ -100,7 +100,7 @@ ru_emulator_timing_notifier::ru_emulator_timing_notifier(srslog::basic_logger&  
   scs(subcarrier_spacing::kHz30),
   nof_symbols_per_slot(get_nsymb_per_slot(cyclic_prefix::NORMAL)),
   nof_symbols_per_sec(nof_symbols_per_slot * get_nof_slots_per_subframe(scs) * NOF_SUBFRAMES_PER_FRAME * 100),
-  nof_slots_per_system_frame(slot_point(scs, 0).nof_slots_per_system_frame()),
+  nof_slots_per_hyper_system_frame(slot_point(scs, 0).nof_slots_per_hyper_system_frame()),
   symbol_duration(1e9 / nof_symbols_per_sec),
   sleep_time(std::chrono::duration_cast<std::chrono::nanoseconds>(symbol_duration) / 15)
 {
@@ -197,7 +197,7 @@ void ru_emulator_timing_notifier::poll()
   }
 
   uint64_t slot_count = get_current_system_slot(
-      now, std::chrono::duration_cast<std::chrono::nanoseconds>(slot_duration), nof_slots_per_system_frame);
+      now, std::chrono::duration_cast<std::chrono::nanoseconds>(slot_duration), nof_slots_per_hyper_system_frame);
 
   slot_point        current_slot(to_numerology_value(scs), slot_count);
   slot_symbol_point symbol_point(current_slot, current_symbol_index % nof_symbols_per_slot, nof_symbols_per_slot);

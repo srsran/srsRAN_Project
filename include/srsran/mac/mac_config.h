@@ -57,6 +57,7 @@ struct mac_config {
     std::chrono::milliseconds   period{1000};
     bool                        mac_enabled;
     bool                        sched_enabled;
+    unsigned                    max_nof_ue_events = 64;
     mac_metrics_notifier&       notifier;
     scheduler_metrics_notifier* sched_notifier = nullptr;
   };
@@ -65,6 +66,7 @@ struct mac_config {
   srs_du::du_high_ue_executor_mapper&   ue_exec_mapper;
   srs_du::du_high_cell_executor_mapper& cell_exec_mapper;
   task_executor&                        ctrl_exec;
+  task_executor&                        timer_exec;
   mac_result_notifier&                  phy_notifier;
   mac_expert_config                     mac_cfg;
   mac_pcap&                             pcap;

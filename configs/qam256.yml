@@ -1,7 +1,0 @@
-# Supplementary config file to achieve higher downlinke rates by enabling higher order modulation scheme and reduce SSB transmission periodicity.
-
-cell_cfg:
-  pdsch:
-    mcs_table: qam256
-  ssb:
-    ssb_period: 20   

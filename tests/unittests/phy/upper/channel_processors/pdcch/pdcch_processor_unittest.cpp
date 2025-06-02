@@ -43,7 +43,7 @@ std::unique_ptr<pdcch_processor> create_pdcch_processor(pdcch_processor_config_t
 class pdcch_processor_impl
 {
 public:
-  static prb_bitmap compute_rb_mask(const pdcch_processor::coreset_description& coreset,
+  static crb_bitmap compute_rb_mask(const pdcch_processor::coreset_description& coreset,
                                     const pdcch_processor::dci_description&     dci);
 };
 
@@ -143,7 +143,7 @@ int main()
                 pdcch->process(grid.get_writer(), pdu);
 
                 // Calculate ideal allocation mask.
-                prb_bitmap rb_mask = pdcch_processor_impl::compute_rb_mask(pdu.coreset, pdu.dci);
+                crb_bitmap rb_mask = pdcch_processor_impl::compute_rb_mask(pdu.coreset, pdu.dci);
 
                 // Check PDCCH encoder inputs.
                 TESTASSERT_EQ(encoder->get_nof_entries(), 1);

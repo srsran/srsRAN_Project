@@ -87,6 +87,8 @@ struct worker_manager_config {
     bool is_rt_mode_enabled;
     /// Whether to log performance metrics for the DU-high executors.
     std::optional<std::chrono::milliseconds> metrics_period;
+    /// Whether to enable task tracing.
+    bool executor_tracing_enable;
   };
 
   // CU-UP worker configuration
@@ -96,8 +98,12 @@ struct worker_manager_config {
     uint32_t dl_ue_executor_queue_size   = 2048;
     uint32_t ul_ue_executor_queue_size   = 2048;
     uint32_t ctrl_ue_executor_queue_size = 2048;
+    /// Maximum batch size used in CU-UP strands.
+    unsigned strand_batch_size = 256;
     /// Wether to offload socket TX to a dedicated strand.
     bool dedicated_io_ul_strand = true;
+    /// Whether to enable task tracing.
+    bool executor_tracing_enable = false;
   };
 
   /// PCAP worker configuration.

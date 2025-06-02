@@ -130,7 +130,7 @@ protected:
 
     config.cp           = (bool_dist(rgen) == 0) ? cyclic_prefix::NORMAL : cyclic_prefix::EXTENDED;
     unsigned numerology = (config.cp == cyclic_prefix::EXTENDED) ? 2 : num_dist(rgen);
-    unsigned slot       = slot_dist(rgen) % slot_point(numerology, 0).nof_slots_per_system_frame();
+    unsigned slot       = slot_dist(rgen) % slot_point(numerology, 0).nof_slots_per_hyper_system_frame();
     config.slot         = slot_point(numerology, slot);
     config.bwp_size_rb  = bwp_size_dist(rgen);
     config.starting_prb = std::min(starting_prb_dist(rgen), config.bwp_size_rb - 1);

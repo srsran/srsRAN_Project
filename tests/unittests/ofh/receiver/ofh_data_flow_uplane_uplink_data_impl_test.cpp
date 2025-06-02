@@ -85,7 +85,11 @@ public:
 
     // Fill the contexts
     ul_cplane_context_repo_ptr->add(slot, eaxc, context);
-    ul_context_repo->add({slot, sector}, shared_grid.get_grid(), {context.start_symbol, context.nof_symbols});
+    ul_context_repo->add({slot, sector},
+                         shared_grid.get_grid(),
+                         {context.start_symbol, context.nof_symbols},
+                         srslog::fetch_basic_logger("TEST"));
+    ul_context_repo->process_pending_contexts();
   }
 
   data_flow_uplane_uplink_data_impl_config get_config()

@@ -68,8 +68,11 @@ struct csi_rs_resource_mapping {
   bool operator!=(const csi_rs_resource_mapping& rhs) const { return !(rhs == *this); }
 };
 
-/// Used to configure a periodicity for periodic and semi-persistent CSI resources, and for
-/// periodic and semi-persistent reporting on PUCCH.
+/// \brief Channel State Information Reference Signals (CSI-RS) period in slots.
+///
+/// Used to configure a periodicity for periodic and semi-persistent CSI-RS resources, and for periodic and
+/// semi-persistent reporting on PUCCH.
+///
 /// \remark See TS 38.331, \c CSI-ResourcePeriodicityAndOffset.
 enum class csi_resource_periodicity {
   slots4   = 4,

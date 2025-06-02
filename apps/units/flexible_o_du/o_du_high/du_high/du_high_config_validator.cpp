@@ -405,7 +405,8 @@ validate_pusch_cell_unit_config(const du_high_unit_pusch_config& config, unsigne
 
   if (min_k1 < config.min_k2) {
     fmt::print("The value min_k2 {} set for PUSCH cannot be greater than the min_k1 {} set for PUCCH config.\n",
-               config.start_rb);
+               config.min_k2,
+               min_k1);
     return false;
   }
 
@@ -963,13 +964,19 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
 
   const du_high_unit_sib_config& sib_cfg = cell_cfg.sib_cfg;
 
+  // Compute how many slots it takes to transmit all SI messages in sequence.
+  const unsigned all_si_msg_slots = sib_cfg.si_sched_info.size() * sib_cfg.si_window_len_slots;
+
+  // If the SI period of any SI message is shorter than the number of slots required to transmit the SI messages, the
+  // configuration is invalid.
   for (const auto& si_msg : sib_cfg.si_sched_info) {
     const unsigned si_period_slots =
         si_msg.si_period_rf * get_nof_slots_per_subframe(cell_cfg.common_scs) * NOF_SUBFRAMES_PER_FRAME;
-    if (sib_cfg.si_window_len_slots > si_period_slots) {
-      fmt::print("The SI window length in slots {} is larger than the SI message period {}.\n",
-                 sib_cfg.si_window_len_slots,
-                 si_period_slots);
+    if (all_si_msg_slots > si_period_slots) {
+      fmt::print("The SI message period (i.e., {} frames) is too small given the SI window length (i.e., {} slots). "
+                 "Increase the SI period or decrease the SI window length.\n",
+                 si_msg.si_period_rf,
+                 sib_cfg.si_window_len_slots);
       return false;
     }
   }

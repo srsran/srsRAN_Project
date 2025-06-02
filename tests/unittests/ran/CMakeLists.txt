@@ -93,6 +93,10 @@ add_executable(pusch_mcs_table_test pusch/pusch_mcs_table_test.cpp)
 target_link_libraries(pusch_mcs_table_test srsran_ran srslog gtest gtest_main)
 add_test(pusch_mcs_table_test pusch_mcs_table_test)
 
+add_executable(pusch_precoding_info_test pusch/pusch_precoding_info_test.cpp)
+target_link_libraries(pusch_precoding_info_test srsran_ran srslog gtest gtest_main)
+add_test(pusch_precoding_info_test pusch_precoding_info_test)
+
 add_executable(pusch_tpmi_select_test pusch/pusch_tpmi_select_test.cpp)
 target_link_libraries(pusch_tpmi_select_test srsran_ran srslog gtest gtest_main)
 add_test_vector(pusch_tpmi_select_test none "")

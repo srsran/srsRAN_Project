@@ -24,9 +24,9 @@
 #include "../logging/scheduler_event_logger.h"
 #include "../logging/scheduler_metrics_handler.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator_impl.h"
+#include "../support/csi_rs_helpers.h"
 #include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
-#include "../support/pdcch/pdcch_mapping.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/sch_pdu_builder.h"
@@ -428,10 +428,15 @@ void ra_scheduler::update_pending_rars(slot_point pdcch_slot)
     // - if window hasn't started, stop loop, as RARs are ordered by slot
     if (not rar_req.rar_window.contains(pdcch_slot)) {
       if (pdcch_slot >= rar_req.rar_window.stop()) {
-        logger.warning("Could not transmit RAR within the window={}, prach_slot={}, slot_tx={}",
+        logger.warning("ra-rnti={}: Could not transmit RAR within the window={}, prach_slot={}, slot_tx={}",
+                       rar_req.ra_rnti,
                        rar_req.rar_window,
                        rar_req.prach_slot_rx,
                        pdcch_slot);
+        // Clear associated Msg3 grants that were not yet scheduled.
+        for (rnti_t tcrnti : rar_req.tc_rntis) {
+          pending_msg3s[to_value(tcrnti) % MAX_NOF_MSG3].msg3_harq_ent.reset();
+        }
         it = pending_rars.erase(it);
         continue;
       }
@@ -454,13 +459,7 @@ bool ra_scheduler::is_slot_candidate_for_rar(cell_slot_resource_allocator& slot_
   }
 
   // Ensure slot for RAR PDCCH has DL enabled.
-  if (not cell_cfg.is_dl_enabled(slot_res_alloc.slot)) {
-    return false;
-  }
-
-  if (not slot_res_alloc.result.dl.csi_rs.empty()) {
-    // TODO: Remove this once multiplexing is possible.
-    // At the moment, we do not multiple PDSCH and CSI-RS.
+  if (not cell_cfg.is_dl_enabled(pdcch_slot)) {
     return false;
   }
 
@@ -596,6 +595,12 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
     // > Check whether PDSCH time domain resource does not overlap with CORESET.
     if (pdsch_td_res.symbols.start() < ss_cfg.get_first_symbol_index() + coreset_duration) {
       continue;
+    }
+
+    if (csi_helper::is_csi_rs_slot(cell_cfg, pdsch_alloc.slot)) {
+      // TODO: Remove this once multiplexing is possible.
+      // At the moment, we do not multiple PDSCH and CSI-RS.
+      return false;
     }
 
     // > Find available RBs in PDSCH for RAR grant.

@@ -158,6 +158,12 @@ struct scheduler_cell_metrics {
   unsigned nof_msg3_nok = 0;
   /// Average PRACH delay in ms.
   std::optional<float> avg_prach_delay_ms;
+  /// Number of failed PDSCH allocations due to late HARQs.
+  unsigned nof_failed_pdsch_allocs_late_harqs = 0;
+  /// Number of failed PUSCH allocations due to late HARQs.
+  unsigned nof_failed_pusch_allocs_late_harqs = 0;
+  /// Number of UE events not reported because the maximum number of events was reached.
+  unsigned nof_filtered_events = 0;
 
   unsigned                                nof_error_indications = 0;
   std::chrono::microseconds               average_decision_latency{0};
@@ -183,7 +189,12 @@ public:
   virtual void report_metrics(const scheduler_cell_metrics& report) = 0;
 };
 
-/// \brief Notifier interface used by the scheduler to report metrics of a given cell in a zero-copy manner.
-using scheduler_cell_metrics_notifier = zero_copy_notifier<scheduler_cell_metrics>;
+/// Interface used by the scheduler to determine whether a new metric report is required.
+class scheduler_cell_metrics_notifier : public zero_copy_notifier<scheduler_cell_metrics>
+{
+public:
+  /// Check whether a new metric report is required given the current slot.
+  virtual bool is_sched_report_required(slot_point sl_tx) const = 0;
+};
 
 } // namespace srsran

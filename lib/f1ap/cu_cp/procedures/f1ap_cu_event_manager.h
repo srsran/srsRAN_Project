@@ -44,15 +44,20 @@ class f1ap_event_manager
 public:
   protocol_transaction_manager<f1ap_transaction_response> transactions;
 
-  /// F1 TRP information exchange outcome
+  /// F1 TRP information exchange outcome.
   using f1ap_trp_information_outcome_t =
       expected<const asn1::f1ap::trp_info_resp_s*, const asn1::f1ap::trp_info_fail_s*>;
   event_signal<f1ap_trp_information_outcome_t> f1ap_trp_information_outcome;
 
-  /// F1 positioning measurement outcome
+  /// F1 positioning measurement outcome.
   using f1ap_positioning_measurement_outcome_t =
       expected<const asn1::f1ap::positioning_meas_resp_s*, const asn1::f1ap::positioning_meas_fail_s*>;
   event_signal<f1ap_positioning_measurement_outcome_t> f1ap_positioning_measurement_outcome;
+
+  /// F1 GNB CU configuration update outcome.
+  using f1ap_gnb_cu_configuration_update_outcome_t =
+      expected<const asn1::f1ap::gnb_cu_cfg_upd_ack_s*, const asn1::f1ap::gnb_cu_cfg_upd_fail_s*>;
+  event_signal<f1ap_gnb_cu_configuration_update_outcome_t> f1ap_gnb_cu_configuration_update_outcome;
 
   explicit f1ap_event_manager(timer_factory timer_service) : transactions(MAX_NOF_TRANSACTIONS, timer_service) {}
 };

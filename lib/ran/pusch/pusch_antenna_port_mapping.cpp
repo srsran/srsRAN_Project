@@ -26,18 +26,12 @@ using namespace srsran;
 
 #ifndef SRSRAN_HAS_ENTERPRISE
 
-// Current range of supported number of layers.
-static constexpr interval<unsigned, true> nof_layers_range(1, 1);
-
 unsigned srsran::get_pusch_antenna_port_mapping_row_index(unsigned         nof_layers,
                                                           bool             transform_precoder,
                                                           dmrs_config_type dmrs_cfg_type,
                                                           dmrs_max_length  dmrs_max_len)
 {
-  srsran_assert(nof_layers_range.contains(nof_layers),
-                "The number of layers (i.e., {}) is out of the range {}.",
-                nof_layers,
-                nof_layers_range);
+  srsran_assert(nof_layers == 1, "The number of layers (i.e., {}) must be one.", nof_layers);
   srsran_assert(dmrs_cfg_type == dmrs_config_type::type1, "Only DM-RS type 1 is supported.");
   srsran_assert(dmrs_max_len == dmrs_max_length::len1, "Only DM-RS maximum length 1 is supported.");
 
@@ -52,76 +46,14 @@ unsigned srsran::get_pusch_antenna_port_mapping_row_index(unsigned         nof_l
   return 2;
 }
 
-unsigned srsran::get_pusch_precoding_info_row_index(unsigned                                      nof_layers,
-                                                    unsigned                                      max_rank,
-                                                    srs_resource_configuration::one_two_four_enum nof_srs_ports,
-                                                    bool                                          transform_precoder,
-                                                    dmrs_config_type                              dmrs_cfg_type,
-                                                    dmrs_max_length                               dmrs_max_len,
-                                                    unsigned                                      tpmi)
+unsigned srsran::get_pusch_precoding_info_row_index(unsigned nof_layers,
+                                                    unsigned max_rank,
+                                                    srs_resource_configuration::one_two_four_enum /* nof_srs_ports */,
+                                                    unsigned tpmi)
 {
-  static constexpr interval<unsigned, true> max_rank_range(1, 4);
-  srsran_assert(
-      max_rank_range.contains(max_rank), "Maximum rank (i.e., {}) is out of the range {}.", max_rank, max_rank_range);
-  srsran_assert(nof_layers_range.contains(nof_layers),
-                "The number of layers (i.e., {}) is out of the range {}.",
-                nof_layers,
-                nof_layers_range);
-  srsran_assert(nof_layers <= max_rank,
-                "The number of layers (i.e., {}) must not exceed the maximum rank (i.e., {}).",
-                nof_layers,
-                max_rank);
-  srsran_assert(dmrs_cfg_type == dmrs_config_type::type1, "Only DM-RS type 1 is supported.");
-  srsran_assert(dmrs_max_len == dmrs_max_length::len1, "Only DM-RS maximum length 1 is supported.");
+  srsran_assert(nof_layers == 1, "The number of layers (i.e., {}) must be one.", nof_layers);
+  srsran_assert(max_rank == 1, "The maximum rank (i.e., {}) must be one.", max_rank);
 
-  // TS38.212 Tables 7.3.1.1.2-2 and 7.3.1.1.2-3.
-  if ((nof_srs_ports == srs_resource_configuration::one_two_four_enum::four) && !transform_precoder &&
-      (dmrs_cfg_type == dmrs_config_type::type1) && (dmrs_max_len == dmrs_max_length::len1)) {
-    srsran_assert(tpmi < 28, "PUSCH TPMI, (i.e., {}) must be lower than 28.", tpmi);
-
-    // Direct TPMI to row index for maximum rank 1.
-    if (max_rank == 1) {
-      return tpmi;
-    }
-
-    // TPMI [0, 3] to row index [0, 3]
-    if (tpmi < 4) {
-      return tpmi;
-    }
-
-    // TPMI [4, 11] to row index [12, 19]
-    if (tpmi < 12) {
-      return tpmi + 8;
-    }
-
-    // TPMI [12, 27] to row index [32, 47]
-    if (tpmi < 28) {
-      return tpmi + 20;
-    }
-  }
-
-  // TS38.212 Tables 7.3.1.1.2-4 and 7.3.1.1.2-5.
-  if ((nof_srs_ports == srs_resource_configuration::one_two_four_enum::two) && !transform_precoder &&
-      (dmrs_cfg_type == dmrs_config_type::type1) && (dmrs_max_len == dmrs_max_length::len1)) {
-    srsran_assert(tpmi < 7, "PUSCH TPMI, (i.e., {}) must be lower than 9.", tpmi);
-
-    // Direct TPMI to row index for maximum rank 1.
-    if (max_rank == 1) {
-      return tpmi;
-    }
-
-    // TPMI [0, 1] to row index [0, 1]
-    if (tpmi < 2) {
-      return tpmi;
-    }
-
-    // TPMI [2, 5] to row index [3, 6]
-    if (tpmi < 6) {
-      return tpmi + 1;
-    }
-  }
-
-  // Unhandled case.
-  return 0;
+  return tpmi;
 }
 #endif // SRSRAN_HAS_ENTERPRISE

@@ -61,7 +61,7 @@ struct cu_cp_unit_amf_config_item {
   int         sctp_rto_max_ms        = 500;
   int         sctp_init_max_attempts = 3;
   int         sctp_max_init_timeo_ms = 500;
-  int         sctp_hb_interval_s     = 30;
+  int         sctp_hb_interval_ms    = 30000;
   int         sctp_assoc_max_retx    = 10;
   bool        sctp_nodelay           = false;
 
@@ -284,7 +284,7 @@ struct cu_cp_unit_metrics_config {
 /// CU-CP application unit configuration.
 struct cu_cp_unit_config {
   /// Node name.
-  std::string ran_node_name = "cu_cp_01";
+  std::string ran_node_name = "srscucp01";
   /// gNB identifier.
   gnb_id_t gnb_id = {411, 22};
   /// Maximum number of DUs.

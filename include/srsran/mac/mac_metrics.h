@@ -23,7 +23,6 @@
 #pragma once
 
 #include "srsran/ran/pci.h"
-#include "srsran/ran/slot_point.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include <chrono>
 #include <vector>
@@ -41,7 +40,7 @@ struct mac_dl_cell_metric_report {
 
   /// Physical cell id.
   pci_t pci;
-  /// First slot of the report.
+  /// First SFN and SLOT of the report.
   slot_point start_slot;
   /// Number of slots considered in this report.
   unsigned nof_slots;
