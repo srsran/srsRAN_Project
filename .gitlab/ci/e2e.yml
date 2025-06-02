@@ -633,8 +633,6 @@ viavi rtsan:
   extends: .viavi
   variables:
     KEYWORDS: rtsan
-  when: manual
-  allow_failure: true
   needs:
     - job: basic avx512 dpdk rtsan
       artifacts: true
