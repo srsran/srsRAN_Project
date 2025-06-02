@@ -178,7 +178,7 @@ struct e1ap_up_security_key {
     return *this;
   }
   byte_buffer encryption_key;
-  // Optional, TS 38.463 Sec. 9.4.5
+  // Optional, TS 38.463 Sec. 9.4.5.
   byte_buffer integrity_protection_key;
 };
 
