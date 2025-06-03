@@ -177,6 +177,9 @@ public:
   /// Retransmits all PDUs. Integrity protection and ciphering is re-applied.
   void retransmit_all_pdus();
 
+  /// Get metrics.
+  pdcp_tx_metrics_container get_metrics_and_reset() { return metrics.get_metrics_and_reset(); }
+
   enum class early_drop_reason { zero_dbs, full_rlc_queue, full_window, no_drop };
 
 private:
@@ -268,10 +271,11 @@ private:
   /// \param is_retx Flags whether this is a notification of a ReTx or not
   void handle_delivery_notification_impl(uint32_t notif_sn, bool is_retx);
 
+  void handle_reordering_timeout();
+
   pdcp_tx_metrics          metrics;
   pdcp_metrics_aggregator& metrics_agg;
 };
-
 } // namespace srsran
 
 namespace fmt {

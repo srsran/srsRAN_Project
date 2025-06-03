@@ -95,6 +95,14 @@ public:
     return true;
   }
 
+  /// Drop next pending task if it is enqueued.
+  bool try_drop_next()
+  {
+    assert_thread_id();
+    unique_task t;
+    return pending_tasks.try_pop(t);
+  }
+
   /// Run next pending task once it is enqueued.
   bool run_next_blocking()
   {

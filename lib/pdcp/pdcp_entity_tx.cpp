@@ -68,7 +68,11 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
 
   logger.log_info("PDCP configured. {}", cfg);
 
-  discard_timer = ue_ctrl_timer_factory.create_timer();
+  discard_timer           = ue_ctrl_timer_factory.create_timer();
+  crypto_reordering_timer = ue_ctrl_timer_factory.create_timer();
+
+  crypto_reordering_timer.set(std::chrono::milliseconds{10},
+                              [this](timer_id_t /*timer_id*/) { crypto_reordering_timeout(); });
 
   // Populate null security engines
   sec_engine_pool.reserve(max_nof_crypto_workers);
@@ -268,8 +272,6 @@ void pdcp_entity_tx::apply_reordering(pdcp_tx_buffer_info buf_info, bool is_retx
     return;
   }
 
-  logger.log_debug("Applying reordering. count={} st={}", buf_info.count, st);
-
   // Drop PDU if its out of date due to retransmissions.
   if (buf_info.retx_id != retransmit_id) {
     logger.log_debug(
@@ -303,6 +305,11 @@ void pdcp_entity_tx::apply_reordering(pdcp_tx_buffer_info buf_info, bool is_retx
   // Store protected PDU in TX window.
   tx_window[buf_info.count].pdu = std::move(buf_info.buf);
   if (buf_info.count != st.tx_trans_crypto) {
+    logger.log_debug("Buffered PDU and awaiting reordering. count={} st={}", buf_info.count, st);
+    if (not crypto_reordering_timer.is_running()) {
+      crypto_reordering_timer.run();
+      logger.log_debug("Started reordering timer"); // TODO rm.
+    }
     return;
   }
 

@@ -28,12 +28,12 @@ TEST_P(pdcp_tx_stop_test, stop_when_there_are_no_pending_pdus)
   // Check await rx crypto flag is not set.
   manual_event_flag& awaitable = pdcp_tx->crypto_awaitable();
 
-  ASSERT_FALSE(awaitable.is_set());
+  FLUSH_AND_ASSERT_FALSE(awaitable.is_set());
 
   pdcp_tx->stop();
 
   // Awaitable is now set.
-  ASSERT_TRUE(awaitable.is_set());
+  FLUSH_AND_ASSERT_TRUE(awaitable.is_set());
 }
 
 /// \brief Test correct packing of PDCP data PDU headers
@@ -54,38 +54,45 @@ TEST_P(pdcp_tx_stop_test, stop_when_there_are_pending_pdus)
   // Check await rx crypto flag is not set.
   manual_event_flag& awaitable = pdcp_tx->crypto_awaitable();
 
-  ASSERT_FALSE(awaitable.is_set());
+  FLUSH_AND_ASSERT_FALSE(awaitable.is_set());
 
   pdcp_tx->stop();
 
   // Awaitable is not set yet. Flushing the crypto and UL workers
   // tasks are required for the waitable to be set.
-  ASSERT_FALSE(awaitable.is_set());
+  FLUSH_AND_ASSERT_FALSE(awaitable.is_set());
 
   // Process one PDU, one more remains in the queue.
   wait_one_crypto_task();
   worker.run_pending_tasks();
 
   // Token count should be 1 still, double check flag is not set.
-  ASSERT_FALSE(awaitable.is_set());
+  FLUSH_AND_ASSERT_FALSE(awaitable.is_set());
 
   // Process second PDU in the crypto engine.
   wait_one_crypto_task();
 
   // Awaitable is not set yet. The UL worker still requires to be flushed.
-  ASSERT_FALSE(awaitable.is_set());
+  FLUSH_AND_ASSERT_FALSE(awaitable.is_set());
 
   worker.run_pending_tasks();
 
   // Awaitable is now set.
-  ASSERT_TRUE(awaitable.is_set());
+  FLUSH_AND_ASSERT_TRUE(awaitable.is_set());
 }
 
 /// \brief Test correct functioning when crypto engine drops PDUs
+///
+/// This test will:
+/// 1. Push SDUs until the crypto executor queue is full and an SDU is dropped. This will cause a dropped SN.
+/// 2. Run the crypto executor. This will flush the SDUs up to the lost one.
+/// 3. Start pushing SDUs. These will stall awaiting for the lost SDU.
+/// 4. Run the timers. The crypto reordering timer will expire and flush the stalled SDUs.
+/// 5. Check SDU processing is back to normal.
 TEST_P(pdcp_tx_stop_test, full_crypto_engine_does_not_stall)
 {
-  init(GetParam());
-  srsran::test_delimit_logger delimiter("Normal stop test. SN_SIZE={} ", sn_size);
+  init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am, pdcp_discard_timer::infinity);
+  srsran::test_delimit_logger delimiter("Full crypto engine does not stall. SN_SIZE={} ", sn_size);
 
   pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
 
@@ -94,8 +101,91 @@ TEST_P(pdcp_tx_stop_test, full_crypto_engine_does_not_stall)
     byte_buffer test_sdu1 = byte_buffer::create(sdu1).value();
     pdcp_tx->handle_sdu(std::move(test_sdu1));
   }
+
+  // This PDU should be dropped.
+  byte_buffer dropped_sdu = byte_buffer::create(sdu1).value();
+  pdcp_tx->handle_sdu(std::move(dropped_sdu));
+
+  {
+    pdcp_tx_metrics_container m = pdcp_tx->get_metrics_and_reset();
+    logger.error("{}", m); // TODO rm.
+    FLUSH_AND_ASSERT_EQ(m.num_dropped_sdus, 1);
+  }
+  // Empty the crypto and DL worker queues.
+  wait_pending_crypto();
+  wait_pending_dl();
+
+  {
+    pdcp_tx_metrics_container m = pdcp_tx->get_metrics_and_reset();
+    logger.error("{}", m); // TODO rm.
+    FLUSH_AND_ASSERT_EQ(m.num_pdus, crypto_worker_qsize);
+  }
+
+  // Send PDUs again. This should stalls, waiting for the lost PDU.
+  for (uint32_t count = 0; count < crypto_worker_qsize; count++) {
+    byte_buffer test_sdu1 = byte_buffer::create(sdu1).value();
+    pdcp_tx->handle_sdu(std::move(test_sdu1));
+  }
+  wait_pending_crypto();
+  wait_pending_dl();
+  {
+    pdcp_tx_metrics_container m = pdcp_tx->get_metrics_and_reset();
+    logger.error("{}", m);
+    FLUSH_AND_ASSERT_EQ(m.num_pdus, 0);
+  }
+
+  tick_all(10);
+  {
+    pdcp_tx_metrics_container m = pdcp_tx->get_metrics_and_reset();
+    logger.error("{}", m);
+    FLUSH_AND_ASSERT_EQ(m.num_pdus, 128);
+  }
+
+  // Check await rx crypto flag is not set.
+  manual_event_flag& awaitable = pdcp_tx->crypto_awaitable();
+
+  FLUSH_AND_ASSERT_FALSE(awaitable.is_set());
+
+  for (uint32_t count = 0; count < crypto_worker_qsize; count++) {
+    wait_one_crypto_task();
+    wait_one_dl_worker_task();
+  }
+
+  pdcp_tx->stop();
+
+  // Awaitable is now set.
+  FLUSH_AND_ASSERT_TRUE(awaitable.is_set());
+}
+
+/// \brief Test correct functioning when DL worker drops PDUs
+TEST_P(pdcp_tx_stop_test, full_dl_worker_does_not_stall)
+{
+  init(GetParam());
+  srsran::test_delimit_logger delimiter("Full DL worker does not stall. SN_SIZE={} ", sn_size);
+
+  pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
+
+  // Push SDUs to entity, but don't run crypto executor.
+  for (uint32_t count = 0; count < dl_worker_qsize; count++) {
+    byte_buffer test_sdu1 = byte_buffer::create(sdu1).value();
+    pdcp_tx->handle_sdu(std::move(test_sdu1));
+    wait_one_crypto_task();
+  }
   byte_buffer test_sdu1 = byte_buffer::create(sdu1).value();
   pdcp_tx->handle_sdu(std::move(test_sdu1));
+  wait_one_crypto_task();
+
+  // Check await rx crypto flag is not set.
+  manual_event_flag& awaitable = pdcp_tx->crypto_awaitable();
+
+  FLUSH_AND_ASSERT_FALSE(awaitable.is_set());
+
+  wait_pending_dl();
+
+  pdcp_tx->stop();
+
+  // Awaitable is now set.
+  FLUSH_AND_ASSERT_TRUE(awaitable.is_set());
 }
 
 ///////////////////////////////////////////////////////////////////
