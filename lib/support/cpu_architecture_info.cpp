@@ -232,11 +232,11 @@ void cpu_architecture_info::print_cpu_info(srslog::basic_logger& logger) const
                  cpu_desc.nof_numa_nodes > 1 ? "nodes" : "node");
 
 #ifdef NUMA_SUPPORT
-  fmt::format_to(fmt_buf, "CPUs per NUMA node:\n{{");
+  fmt::format_to(std::back_inserter(fmt_buf), "CPUs per NUMA node:\n{{");
   for (unsigned node = 0; node != cpu_desc.nof_numa_nodes; ++node) {
-    fmt::format_to(fmt_buf, "\n   Node {} CPUs: {}", node, print_cpus_list(cpu_desc.node_cpus[node]));
+    fmt::format_to(std::back_inserter(fmt_buf), "\n   Node {} CPUs: {}", node, print_cpus_list(cpu_desc.node_cpus[node]));
   }
-  fmt::format_to(fmt_buf, "\n}}\n");
+  fmt::format_to(std::back_inserter(fmt_buf), "\n}}\n");
 #endif
 
   fmt::format_to(std::back_inserter(fmt_buf), "CPUs per each physical CPU core:\n{{");
