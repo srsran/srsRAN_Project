@@ -138,7 +138,6 @@ smoke zmq:
     GROUP: uesim
     TESTBED: zmq_uesim
     E2E_LOG_LEVEL: info
-    RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
   needs:
     - job: basic relwithdeb
       artifacts: true
@@ -387,7 +386,6 @@ test mode ru:
     MARKERS: test_mode
     KEYWORDS: test_ru
     E2E_LOG_LEVEL: warning
-    RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
   needs:
     - job: basic ru dummy
       artifacts: true
@@ -444,7 +442,6 @@ test mode ue many ues:
     MARKERS: test_mode_many_ues
     KEYWORDS: test_mode_many_ues
     E2E_LOG_LEVEL: warning
-    RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
 
 ################################################################################
 # RF
@@ -549,7 +546,6 @@ android drx:
     MARKERS: viavi
     E2E_LOG_LEVEL: warning
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.rlc_rb_type=srb"
-    RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
   needs:
@@ -675,7 +671,6 @@ viavi 24h:
     GROUP: rf
     TESTBED: s72_uesim
     E2E_LOG_LEVEL: info
-    RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
       when: delayed
