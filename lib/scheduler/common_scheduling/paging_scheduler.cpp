@@ -65,6 +65,14 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
                               ? pdsch_default_time_allocations_default_A_table(bwp_cfg.cp, cell_cfg.dmrs_typeA_pos)
                               : cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
 
+    // Generate an empty vector for each element of pdsch_time_res_idx_to_scheduled_ues_lookup; only then we can reserve
+    // the capacity.
+    pdsch_time_res_idx_to_scheduled_ues_lookup.assign(pdsch_time_res_idx_to_scheduled_ues_lookup.capacity(),
+                                                      std::vector<const sched_paging_information*>{});
+    for (auto& sched_paging_ues : pdsch_time_res_idx_to_scheduled_ues_lookup) {
+      sched_paging_ues.reserve(MAX_PAGING_RECORDS_PER_PAGING_PDU);
+    }
+
   } else {
     srsran_assertion_failure("Paging Search Space not configured in DL BWP.");
   }
@@ -109,9 +117,10 @@ void paging_scheduler::run_slot(cell_resource_allocator& res_grid)
     }
   }
 
-  // Initialize.
-  pdsch_time_res_idx_to_scheduled_ues_lookup.assign(MAX_NOF_PDSCH_TD_RESOURCE_ALLOCATIONS,
-                                                    std::vector<const sched_paging_information*>{});
+  // Clear all previous vectors.
+  for (auto& sched_paging_ues : pdsch_time_res_idx_to_scheduled_ues_lookup) {
+    sched_paging_ues.clear();
+  }
 
   for (const auto& pg_it : paging_pending_ues) {
     const auto&    pg_info   = pg_it.second.info;
