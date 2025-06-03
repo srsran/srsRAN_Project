@@ -208,8 +208,7 @@ void ra_scheduler::precompute_msg3_pdus()
                            msg3_rv);
 
     // Note: RNTI will be overwritten later.
-    const vrb_interval vrbs = rb_helper::crb_to_vrb_ul_non_interleaved(
-        crb_interval{0, prbs_tbs.nof_prbs}, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.start());
+    const vrb_interval vrbs = msg3_crb_to_vrb(cell_cfg, crb_interval{0, prbs_tbs.nof_prbs});
     build_pusch_f0_0_tc_rnti(msg3_data[i].pusch,
                              pusch_cfg,
                              prbs_tbs.tbs_bytes,
@@ -416,11 +415,15 @@ void ra_scheduler::update_pending_rars(slot_point pdcch_slot)
     // - if window hasn't started, stop loop, as RARs are ordered by slot
     if (not rar_req.rar_window.contains(pdcch_slot)) {
       if (pdcch_slot >= rar_req.rar_window.stop()) {
-        logger.warning("ra-rnti={}: Could not transmit RAR within the window={}, prach_slot={}, slot_tx={}",
+        logger.warning("ra-rnti={}: Could not transmit RAR within the window={}, prach_slot={}, slot_tx={}, "
+                       "failed_attempts={{pdcch={}, pdsch={}, pusch={}}}",
                        rar_req.ra_rnti,
                        rar_req.rar_window,
                        rar_req.prach_slot_rx,
-                       pdcch_slot);
+                       pdcch_slot,
+                       rar_req.failed_attempts.pdcch,
+                       rar_req.failed_attempts.pdsch,
+                       rar_req.failed_attempts.pusch);
         // Clear associated Msg3 grants that were not yet scheduled.
         for (rnti_t tcrnti : rar_req.tc_rntis) {
           pending_msg3s[to_value(tcrnti) % MAX_NOF_MSG3].msg3_harq_ent.reset();
@@ -542,7 +545,7 @@ void ra_scheduler::schedule_pending_rars(cell_resource_allocator& res_alloc, slo
   }
 }
 
-unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allocator& res_alloc, slot_point pdcch_slot)
+unsigned ra_scheduler::schedule_rar(pending_rar_t& rar, cell_resource_allocator& res_alloc, slot_point pdcch_slot)
 {
   cell_slot_resource_allocator& pdcch_alloc = res_alloc[pdcch_slot];
 
@@ -566,6 +569,7 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
     if (pdsch_alloc.result.dl.rar_grants.full()) {
       // early exit.
       log_postponed_rar(rar, "RAR grants limit reached", pdcch_slot);
+      ++rar.failed_attempts.pdsch;
       return 0;
     }
 
@@ -587,8 +591,8 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
 
     if (csi_helper::is_csi_rs_slot(cell_cfg, pdsch_alloc.slot)) {
       // TODO: Remove this once multiplexing is possible.
-      // At the moment, we do not multiple PDSCH and CSI-RS.
-      return false;
+      // At the moment, we do not multiplex PDSCH and CSI-RS.
+      return 0;
     }
 
     // > Find available RBs in PDSCH for RAR grant.
@@ -609,12 +613,14 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
   if (max_nof_allocs == 0) {
     // Early exit.
     log_postponed_rar(rar, "Not enough PRBs available for RAR PDSCH", pdcch_slot);
+    ++rar.failed_attempts.pdsch;
     return 0;
   }
 
   if (pdsch_time_res_index == pdsch_td_res_alloc_list.size()) {
     // Early exit.
     log_postponed_rar(rar, "No PDSCH time domain resource found for RAR", pdcch_slot);
+    ++rar.failed_attempts.pdsch;
     return 0;
   }
 
@@ -663,6 +669,7 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
   max_nof_allocs = msg3_candidates.size();
   if (max_nof_allocs == 0) {
     log_postponed_rar(rar, "No PUSCH time domain resource found for Msg3");
+    ++rar.failed_attempts.pusch;
     return 0;
   }
   rar_crbs.resize(get_nof_pdsch_prbs_required(pdsch_time_res_index, max_nof_allocs).nof_prbs);
@@ -673,6 +680,7 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
   pdcch_dl_information*          pdcch    = pdcch_sch.alloc_dl_pdcch_common(pdcch_alloc, rar.ra_rnti, ss_id, aggr_lvl);
   if (pdcch == nullptr) {
     log_postponed_rar(rar, "No PDCCH space for RAR", pdcch_slot);
+    ++rar.failed_attempts.pdcch;
     return 0;
   }
 

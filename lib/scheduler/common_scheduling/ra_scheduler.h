@@ -64,12 +64,18 @@ public:
 private:
   class msg3_harq_timeout_notifier;
 
+  struct pending_rar_failed_attempts_t {
+    unsigned pdcch = 0;
+    unsigned pdsch = 0;
+    unsigned pusch = 0;
+  };
   struct pending_rar_t {
     rnti_t                                                  ra_rnti = rnti_t::INVALID_RNTI;
     slot_point                                              prach_slot_rx;
     slot_point                                              last_sched_try_slot;
     slot_interval                                           rar_window;
     static_vector<rnti_t, MAX_PREAMBLES_PER_PRACH_OCCASION> tc_rntis;
+    pending_rar_failed_attempts_t                           failed_attempts;
   };
   struct pending_msg3_t {
     /// Detected PRACH Preamble associated to this Msg3.
@@ -123,7 +129,7 @@ private:
 
   /// Find and allocate DL and UL resources for pending RAR and associated Msg3 grants.
   /// \return The number of allocated Msg3 grants.
-  unsigned schedule_rar(const pending_rar_t& rar, cell_resource_allocator& res_alloc, slot_point pdcch_slot);
+  unsigned schedule_rar(pending_rar_t& rar, cell_resource_allocator& res_alloc, slot_point pdcch_slot);
 
   /// Schedule RAR grant and associated Msg3 grants in the provided scheduling resources.
   /// \param res_alloc Cell Resource Allocator.
