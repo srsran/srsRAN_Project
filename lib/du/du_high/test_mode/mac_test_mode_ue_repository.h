@@ -10,12 +10,12 @@
 
 #pragma once
 
+#include "srsran/adt/flat_map.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/adt/unique_function.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/scheduler/scheduler_configurator.h"
-#include <unordered_map>
 #include <vector>
 
 namespace srsran {
@@ -69,9 +69,9 @@ private:
   struct cell_info {
     cell_event_queue pending_tasks;
     // Mapping between UE RNTI and test UE information.
-    std::unordered_map<rnti_t, test_ue_info> rnti_to_ue_info_lookup;
+    flat_map<rnti_t, test_ue_info> rnti_to_ue_info_lookup;
 
-    cell_info(unsigned qsize) : pending_tasks(qsize) {}
+    cell_info(unsigned qsize) : pending_tasks(qsize) { rnti_to_ue_info_lookup.reserve(MAX_NOF_DU_UES); }
   };
 
   unsigned get_cell_index(du_ue_index_t ue_index) const;
