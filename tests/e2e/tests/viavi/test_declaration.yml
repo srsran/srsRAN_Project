@@ -32,7 +32,7 @@ tests:
         enable_log: true
         layers:
           enable_executor: true
-          enable_rlc: true
+          enable_rlc: false
           enable_ru: true
       cell_cfg:
         pdsch:
@@ -502,7 +502,7 @@ tests:
           du_report_period: 10000
         layers:
           enable_executor: true
-          enable_rlc: true
+          enable_rlc: false
           enable_ru: true
           enable_pdcp: true
       cell_cfg:
