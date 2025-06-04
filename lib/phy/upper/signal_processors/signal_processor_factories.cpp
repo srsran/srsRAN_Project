@@ -58,7 +58,7 @@ private:
 public:
   explicit dmrs_pdcch_processor_sw_factory(std::shared_ptr<pseudo_random_generator_factory> prg_factory_,
                                            std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory_) :
-    prg_factory(std::move(prg_factory_)), rg_mapper_factory(rg_mapper_factory_)
+    prg_factory(std::move(prg_factory_)), rg_mapper_factory(std::move(rg_mapper_factory_))
   {
     srsran_assert(prg_factory, "Invalid PRG factory.");
   }
