@@ -75,7 +75,7 @@ void rlc_tx_tm_entity::discard_sdu(uint32_t pdcp_sn)
 }
 
 // TS 38.322 v16.2.0 Sec. 5.2.1.1
-size_t rlc_tx_tm_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
+size_t rlc_tx_tm_entity::pull_pdu(span<uint8_t> mac_sdu_buf) noexcept SRSRAN_RTSAN_NONBLOCKING
 {
   size_t grant_len = mac_sdu_buf.size();
   logger.log_debug("MAC opportunity. grant_len={}", grant_len);
@@ -144,7 +144,7 @@ void rlc_tx_tm_entity::handle_changed_buffer_state()
   }
 }
 
-void rlc_tx_tm_entity::update_mac_buffer_state()
+void rlc_tx_tm_entity::update_mac_buffer_state() noexcept SRSRAN_RTSAN_NONBLOCKING
 {
   pending_buffer_state.clear(std::memory_order_seq_cst);
   rlc_buffer_state bs = get_buffer_state();

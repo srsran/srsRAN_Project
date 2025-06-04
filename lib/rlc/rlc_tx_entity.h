@@ -15,6 +15,7 @@
 #include "rlc_tx_metrics_container.h"
 #include "srsran/pcap/rlc_pcap.h"
 #include "srsran/rlc/rlc_tx.h"
+#include "srsran/support/rtsan.h"
 
 namespace srsran {
 
@@ -61,7 +62,7 @@ protected:
                                high_metrics_timer.run();
                              });
       low_metrics_timer.set(std::chrono::milliseconds(metrics_coll.get_metrics_period().count()),
-                            [this](timer_id_t tid) {
+                            [this](timer_id_t tid) noexcept SRSRAN_RTSAN_NONBLOCKING {
                               metrics_coll.push_tx_low_metrics(metrics_low.get_and_reset_metrics());
                               low_metrics_timer.run();
                             });

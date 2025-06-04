@@ -72,8 +72,9 @@ rlc_tx_am_entity::rlc_tx_am_entity(gnb_du_id_t                          gnb_du_i
 
   //  configure t_poll_retransmission timer
   if (cfg.t_poll_retx > 0) {
-    poll_retransmit_timer.set(std::chrono::milliseconds(cfg.t_poll_retx),
-                              [this](timer_id_t tid) { on_expired_poll_retransmit_timer(); });
+    poll_retransmit_timer.set(
+        std::chrono::milliseconds(cfg.t_poll_retx),
+        [this](timer_id_t tid) noexcept SRSRAN_RTSAN_NONBLOCKING { on_expired_poll_retransmit_timer(); });
   }
 
   logger.log_info("RLC AM configured. {}", cfg);
@@ -985,7 +986,7 @@ void rlc_tx_am_entity::handle_changed_buffer_state()
   }
 }
 
-void rlc_tx_am_entity::update_mac_buffer_state(bool force_notify)
+void rlc_tx_am_entity::update_mac_buffer_state(bool force_notify) noexcept SRSRAN_RTSAN_NONBLOCKING
 {
   pending_buffer_state.clear(std::memory_order_seq_cst);
   rlc_buffer_state bs = get_buffer_state();
@@ -1141,7 +1142,7 @@ uint8_t rlc_tx_am_entity::get_polling_bit(uint32_t sn, bool is_retx, uint32_t pa
   return poll;
 }
 
-void rlc_tx_am_entity::on_expired_poll_retransmit_timer()
+void rlc_tx_am_entity::on_expired_poll_retransmit_timer() noexcept SRSRAN_RTSAN_NONBLOCKING
 {
   // t-PollRetransmit
   logger.log_info("Poll retransmit timer expired after {}ms.", poll_retransmit_timer.duration().count());
