@@ -24,12 +24,13 @@ ARG NUM_JOBS=""
 ##################
 # Stage 1: Build #
 ##################
+
 FROM ubuntu:$OS_VERSION AS builder
 
 # Adding the complete repo to the context, in /src folder
 ADD . /src
 # An alternative could be to download the repo
-# RUN apt update && apt-get install -y --no-install-recommends git git-lfs
+# RUN apt update && apt-get install -y --no-install-recommends git git-lfs ca-certificates
 # RUN git clone https://github.com/srsran/srsRAN_Project.git /src
 
 # Install srsRAN build dependencies
@@ -56,24 +57,29 @@ RUN if [ -z "$NUM_JOBS" ]; then NUM_JOBS=$(nproc); fi \
     && \
     /src/docker/scripts/builder.sh -c ${COMPILER} -m "-j${NUM_JOBS} srscu srsdu srsdu_split_8 srsdu_split_7_2 gnb gnb_split_8 gnb_split_7_2 ru_emulator" \
     -DBUILD_TESTS=False -DENABLE_UHD=On -DENABLE_DPDK=On -DMARCH=${MARCH} -DCMAKE_INSTALL_PREFIX=/opt/srs \
-    ${EXTRA_CMAKE_ARGS} /src \
-    && \
-    mkdir -p /opt/srs/bin /opt/srs/share/srsran && \
-    cp /src/build/apps/cu/srscu                 /opt/srs/bin/srscu            && \
-    cp /src/build/apps/du/srsdu                 /opt/srs/bin/srsdu            && \
-    cp /src/build/apps/du_split_8/srsdu         /opt/srs/bin/srsdu_split_8    && \
-    cp /src/build/apps/du_split_7_2/srsdu       /opt/srs/bin/srsdu_split_7_2  && \
-    cp /src/build/apps/gnb/gnb                  /opt/srs/bin/gnb              && \
-    cp /src/build/apps/gnb_split_8/gnb          /opt/srs/bin/gnb_split_8      && \
-    cp /src/build/apps/gnb_split_7_2/gnb        /opt/srs/bin/gnb_split_7_2    && \
-    cp /src/build/apps/examples/ofh/ru_emulator /opt/srs/bin/ru_emulator      && \
-    cp /src/configs/*.yml                       /opt/srs/share/srsran/
+    ${EXTRA_CMAKE_ARGS} /src
+RUN cp /src/build/apps/cu/srscu             /tmp/srscu                     && \
+    cp /src/build/apps/du/srsdu             /tmp/srsdu                     && \
+    cp /src/build/apps/du_split_8/srsdu     /tmp/srsdu_split_8             && \
+    cp /src/build/apps/du_split_7_2/srsdu   /tmp/srsdu_split_7_2           && \
+    cp /src/build/apps/gnb/gnb              /tmp/gnb                       && \
+    cp /src/build/apps/gnb_split_8/gnb      /tmp/gnb_split_8               && \
+    cp /src/build/apps/gnb_split_7_2/gnb    /tmp/gnb_split_7_2             && \
+    cd /src/build                                                          && \
+    make install                                                           && \
+    mv /tmp/srscu                           /opt/srs/bin/srscu             && \
+    mv /tmp/srsdu                           /opt/srs/bin/srsdu             && \
+    mv /tmp/srsdu_split_8                   /opt/srs/bin/srsdu_split_8     && \
+    mv /tmp/srsdu_split_7_2                 /opt/srs/bin/srsdu_split_7_2   && \
+    mv /tmp/gnb                             /opt/srs/bin/gnb               && \
+    mv /tmp/gnb_split_8                     /opt/srs/bin/gnb_split_8       && \
+    mv /tmp/gnb_split_7_2                   /opt/srs/bin/gnb_split_7_2
 
 ################
 # Stage 2: Run #
 ################
 
-FROM ubuntu:$OS_VERSION
+FROM ubuntu:$OS_VERSION AS runtime
 
 ARG UHD_VERSION
 ARG DPDK_VERSION
@@ -97,3 +103,38 @@ RUN /usr/local/etc/install_srsran_dependencies.sh run && \
     /usr/local/etc/install_dpdk_dependencies.sh run && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends curl ntpdate && \
     apt-get autoremove && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+#########################################################
+# Stage 3: Generate container SPDX and merge build SPDX #
+#########################################################
+
+FROM anchore/syft:v1.26.1 AS syft-bin
+FROM philipssoftware/spdxmerge:v0.2.0 AS spdx-merger
+COPY --from=syft-bin  /syft                      /syft
+COPY --from=runtime   /                          /rootfs
+COPY --from=builder   /opt/srs/share/srsran.spdx /sbom/srsran.spdx
+
+# Generate SPDX file for the container image
+RUN mkdir -p /sbom && /syft dir:/rootfs -o spdx > /sbom/container.spdx
+# Merge the container SPDX with the build SPDX
+RUN sed -i -e '/def validate(self/,/return messages/ { /messages.append("ExtractedLicense text can not be None"/ { s#messages.append.*#return messages# } }' /usr/local/lib/python3.11/site-packages/spdx/license.py && \
+    sed -i -e 's|def write_text_value(tag, value, out):|def write_text_value(tag, value, out):\n    if value is None:\n        return|'  /usr/local/lib/python3.11/site-packages/spdx/writers/tagvalue.py && \
+    python3 spdxmerge/SPDXMerge.py \
+      --docpath /sbom \
+      --outpath /usr/local/etc/ \
+      --name "srsran-image" \
+      --mergetype 1 \
+      --author "Software Radio Systems Ltd" \
+      --email "srs@srs.io" \
+      --docnamespace "https://srs.io/spdxdocs/srsran" \
+      --filetype T && \
+    sed -i 's/^\(FilesAnalyzed:[[:space:]]*\)True/\1true/; s/^\(FilesAnalyzed:[[:space:]]*\)False/\1false/' /usr/local/etc/merged-SBoM-deep.spdx && \
+    sed -i -E 's|^(LicenseID:.*)|\1\nExtractedText: NOASSERTION|' /usr/local/etc/merged-SBoM-deep.spdx && \
+    sed -i '/^Relationship:.*#/d' /usr/local/etc/merged-SBoM-deep.spdx
+
+######################################################
+# Final Stage: Resume run stage with final SPDX file #
+######################################################
+
+FROM runtime
+COPY --from=spdx-merger /usr/local/etc/merged-SBoM-deep.spdx /usr/local/etc/srsran_image.spdx
