@@ -28,7 +28,7 @@ tests:
         enable_log: true
         layers:
           enable_executor: true
-          enable_rlc: false
+          enable_rlc: true
           enable_ru: true
       cell_cfg:
         pdsch:
