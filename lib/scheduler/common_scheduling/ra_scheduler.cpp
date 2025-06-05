@@ -451,12 +451,15 @@ bool ra_scheduler::is_slot_candidate_for_rar(cell_slot_resource_allocator& slot_
 
   // Ensure slot for RAR PDCCH has DL enabled.
   if (not cell_cfg.is_dl_enabled(pdcch_slot)) {
+    log_postponed_rar(pending_rars.front(), "PDCCH slot is not DL enabled", pdcch_slot);
+    ++pending_rars.front().failed_attempts.pdcch;
     return false;
   }
 
   // Check for space in PDCCH result list. We check for space in PDSCH later, once the k0 is known.
   if (slot_res_alloc.result.dl.dl_pdcchs.full()) {
     log_postponed_rar(pending_rars.front(), "PDCCH grants limit reached", pdcch_slot);
+    ++pending_rars.front().failed_attempts.pdcch;
     return false;
   }
 
@@ -469,6 +472,8 @@ bool ra_scheduler::is_slot_candidate_for_rar(cell_slot_resource_allocator& slot_
   if (not pdcch_helper::is_pdcch_monitoring_active(pdcch_slot, ss_cfg) or
       ss_cfg.get_first_symbol_index() + cs_cfg.duration > cell_cfg.get_nof_dl_symbol_per_slot(pdcch_slot)) {
     // RAR scheduling only possible when PDCCH monitoring is active.
+    log_postponed_rar(pending_rars.front(), "PDCCH monitoring is inactive or not enough DL symbols", pdcch_slot);
+    ++pending_rars.front().failed_attempts.pdcch;
     return false;
   }
 
@@ -485,6 +490,8 @@ bool ra_scheduler::is_slot_candidate_for_rar(cell_slot_resource_allocator& slot_
   }
   if (not pusch_slots_available) {
     // Msg3 scheduling only possible when PUSCH is available.
+    log_postponed_rar(pending_rars.front(), "No PUSCH slot that is UL enabled.", pdcch_slot);
+    ++pending_rars.front().failed_attempts.pusch;
     return false;
   }
 
@@ -576,6 +583,8 @@ unsigned ra_scheduler::schedule_rar(pending_rar_t& rar, cell_resource_allocator&
     // > Ensure slot for RAR PDSCH has DL enabled.
     if (not cell_cfg.is_dl_enabled(pdsch_alloc.slot)) {
       // Early exit.
+      log_postponed_rar(rar, "PDSCH slot is not DL enabled", pdcch_slot);
+      ++rar.failed_attempts.pdsch;
       return 0;
     }
 
@@ -592,6 +601,8 @@ unsigned ra_scheduler::schedule_rar(pending_rar_t& rar, cell_resource_allocator&
     if (csi_helper::is_csi_rs_slot(cell_cfg, pdsch_alloc.slot)) {
       // TODO: Remove this once multiplexing is possible.
       // At the moment, we do not multiplex PDSCH and CSI-RS.
+      log_postponed_rar(rar, "RAR can not be in CSI-RS slot", pdcch_slot);
+      ++rar.failed_attempts.pdsch;
       return 0;
     }
 
@@ -599,13 +610,20 @@ unsigned ra_scheduler::schedule_rar(pending_rar_t& rar, cell_resource_allocator&
     const unsigned          nof_rar_rbs = get_nof_pdsch_prbs_required(time_resource, rar.tc_rntis.size()).nof_prbs;
     const ofdm_symbol_range symbols     = pdsch_td_res.symbols;
     const crb_bitmap        used_crbs   = pdsch_alloc.dl_res_grid.used_crbs(get_dl_bwp_cfg().scs, ra_crb_lims, symbols);
-    const unsigned          nof_allocs  = rb_helper::find_empty_interval_of_length(used_crbs, nof_rar_rbs).length() /
-                                get_nof_pdsch_prbs_required(time_resource, 1).nof_prbs;
+    const auto              available_crbs = rb_helper::find_empty_interval_of_length(used_crbs, nof_rar_rbs);
+    // Check how many allocations can we fit in the available interval.
+    // Note: we have to call \c get_nof_pdsch_prbs_required for every nof_allocs because the number of PRBs is not
+    // linear w.r.t. the payload size (all RARs are sent in the same PDSCH grant). See \ref srsran::get_nof_prbs.
+    unsigned nof_allocs = rar.tc_rntis.size();
+    while (nof_allocs != 0 &&
+           get_nof_pdsch_prbs_required(time_resource, nof_allocs).nof_prbs > available_crbs.length()) {
+      --nof_allocs;
+    }
 
     // > Pick the TD resource that leads to the maximum allocations possible.
     if (nof_allocs > max_nof_allocs) {
       max_nof_allocs       = nof_allocs;
-      rar_crbs             = rb_helper::find_empty_interval_of_length(used_crbs, nof_rar_rbs);
+      rar_crbs             = available_crbs;
       pdsch_time_res_index = time_resource;
     }
   }
