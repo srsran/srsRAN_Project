@@ -670,22 +670,24 @@ static asn1::rrc_nr::sib19_r17_s make_asn1_rrc_cell_sib19(const sib19_info& sib1
     if (const auto* pos_vel = std::get_if<ecef_coordinates_t>(&sib19_params.ephemeris_info.value())) {
       sib19.ntn_cfg_r17.ephemeris_info_r17_present = true;
       sib19.ntn_cfg_r17.ephemeris_info_r17.set_position_velocity_r17();
-      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_x_r17  = pos_vel->position_x;
-      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_y_r17  = pos_vel->position_y;
-      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_z_r17  = pos_vel->position_z;
-      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vx_r17 = pos_vel->velocity_vx;
-      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vy_r17 = pos_vel->velocity_vy;
-      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vz_r17 = pos_vel->velocity_vz;
+      position_velocity_r17_s& rv = sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17();
+      rv.position_x_r17           = static_cast<int32_t>(pos_vel->position_x);
+      rv.position_y_r17           = static_cast<int32_t>(pos_vel->position_y);
+      rv.position_z_r17           = static_cast<int32_t>(pos_vel->position_z);
+      rv.velocity_vx_r17          = static_cast<int32_t>(pos_vel->velocity_vx);
+      rv.velocity_vy_r17          = static_cast<int32_t>(pos_vel->velocity_vy);
+      rv.velocity_vz_r17          = static_cast<int32_t>(pos_vel->velocity_vz);
     } else {
       const auto& orbital_elem = std::get<orbital_coordinates_t>(sib19_params.ephemeris_info.value());
       sib19.ntn_cfg_r17.ephemeris_info_r17_present = true;
       sib19.ntn_cfg_r17.ephemeris_info_r17.set_orbital_r17();
-      sib19.ntn_cfg_r17.ephemeris_info_r17.orbital_r17().semi_major_axis_r17 = (uint64_t)orbital_elem.semi_major_axis;
-      sib19.ntn_cfg_r17.ephemeris_info_r17.orbital_r17().eccentricity_r17    = (uint32_t)orbital_elem.eccentricity;
-      sib19.ntn_cfg_r17.ephemeris_info_r17.orbital_r17().periapsis_r17       = (uint32_t)orbital_elem.periapsis;
-      sib19.ntn_cfg_r17.ephemeris_info_r17.orbital_r17().longitude_r17       = (uint32_t)orbital_elem.longitude;
-      sib19.ntn_cfg_r17.ephemeris_info_r17.orbital_r17().inclination_r17     = (int32_t)orbital_elem.inclination;
-      sib19.ntn_cfg_r17.ephemeris_info_r17.orbital_r17().mean_anomaly_r17    = (uint32_t)orbital_elem.mean_anomaly;
+      orbital_r17_s& orbit      = sib19.ntn_cfg_r17.ephemeris_info_r17.orbital_r17();
+      orbit.semi_major_axis_r17 = static_cast<uint64_t>(orbital_elem.semi_major_axis);
+      orbit.eccentricity_r17    = static_cast<uint32_t>(orbital_elem.eccentricity);
+      orbit.periapsis_r17       = static_cast<uint32_t>(orbital_elem.periapsis);
+      orbit.longitude_r17       = static_cast<uint32_t>(orbital_elem.longitude);
+      orbit.inclination_r17     = static_cast<int32_t>(orbital_elem.inclination);
+      orbit.mean_anomaly_r17    = static_cast<uint32_t>(orbital_elem.mean_anomaly);
     }
   }
   if (sib19_params.epoch_time.has_value()) {
@@ -702,13 +704,13 @@ static asn1::rrc_nr::sib19_r17_s make_asn1_rrc_cell_sib19(const sib19_info& sib1
   sib19.ntn_cfg_r17.ntn_polarization_ul_r17_present = false;
 
   if (sib19_params.ta_info.has_value()) {
-    sib19.ntn_cfg_r17.ta_info_r17_present                             = true;
-    sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_r17_present         = true;
-    sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_variant_r17_present = true;
-    sib19.ntn_cfg_r17.ta_info_r17.ta_common_r17       = (uint32_t)sib19_params.ta_info.value().ta_common;
-    sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_r17 = (int32_t)sib19_params.ta_info.value().ta_common_drift;
-    sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_variant_r17 =
-        (uint16_t)sib19_params.ta_info.value().ta_common_drift_variant;
+    sib19.ntn_cfg_r17.ta_info_r17_present       = true;
+    ta_info_r17_s& ta_info                      = sib19.ntn_cfg_r17.ta_info_r17;
+    ta_info.ta_common_r17                       = static_cast<uint32_t>(sib19_params.ta_info.value().ta_common);
+    ta_info.ta_common_drift_r17_present         = true;
+    ta_info.ta_common_drift_r17                 = static_cast<int32_t>(sib19_params.ta_info.value().ta_common_drift);
+    ta_info.ta_common_drift_variant_r17_present = true;
+    ta_info.ta_common_drift_variant_r17 = static_cast<uint16_t>(sib19_params.ta_info.value().ta_common_drift_variant);
   }
 
   if (sib19_params.ntn_ul_sync_validity_dur.has_value()) {
