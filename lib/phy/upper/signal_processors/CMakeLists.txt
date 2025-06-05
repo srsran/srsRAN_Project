@@ -12,7 +12,6 @@ set(SOURCES
         prs/prs_generator_impl.cpp
         ptrs/ptrs_pdsch_generator_impl.cpp
         ptrs/ptrs_pdsch_generator_factory.cpp
-        pucch/dmrs_pucch_estimator_format1.cpp
         pucch/dmrs_pucch_estimator_format2.cpp
         pucch/dmrs_pucch_estimator_formats3_4.cpp
         srs/srs_estimator_factory.cpp

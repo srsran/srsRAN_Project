@@ -17,7 +17,6 @@
 #include "nzp_csi_rs_generator_pool.h"
 #include "port_channel_estimator_average_impl.h"
 #include "pss_processor_impl.h"
-#include "pucch/dmrs_pucch_estimator_format1.h"
 #include "pucch/dmrs_pucch_estimator_format2.h"
 #include "pucch/dmrs_pucch_estimator_formats3_4.h"
 #include "pucch/dmrs_pucch_estimator_impl.h"
@@ -110,21 +109,6 @@ public:
 
   std::unique_ptr<dmrs_pucch_estimator> create() override
   {
-    // Prepare DM-RS for PUCCH Format 1 low PAPR sequence parameters.
-    unsigned               m     = 1;
-    unsigned               delta = 0;
-    std::array<float, NRE> alphas;
-    std::generate(alphas.begin(), alphas.end(), [&, n = 0]() mutable {
-      return TWOPI * static_cast<float>(n++) / static_cast<float>(NRE);
-    });
-
-    std::unique_ptr<dmrs_pucch_estimator_format1> estimator_format1 = std::make_unique<dmrs_pucch_estimator_format1>(
-        prg_factory->create(),
-        lpc_factory->create(m, delta, alphas),
-        ch_estimator_factory->create(port_channel_estimator_fd_smoothing_strategy::mean,
-                                     port_channel_estimator_td_interpolation_strategy::average,
-                                     /*compensate_cfo =*/false));
-
     std::unique_ptr<dmrs_pucch_estimator_format2> estimator_format2 = std::make_unique<dmrs_pucch_estimator_format2>(
         prg_factory->create(),
         ch_estimator_factory->create(port_channel_estimator_fd_smoothing_strategy::filter,
@@ -139,8 +123,7 @@ public:
                                          port_channel_estimator_td_interpolation_strategy::average,
                                          /*compensate_cfo =*/false));
 
-    return std::make_unique<dmrs_pucch_estimator_impl>(
-        std::move(estimator_format1), std::move(estimator_format2), std::move(estimator_formats3_4));
+    return std::make_unique<dmrs_pucch_estimator_impl>(std::move(estimator_format2), std::move(estimator_formats3_4));
   }
 
 private:
