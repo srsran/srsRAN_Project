@@ -30,14 +30,18 @@ public:
   ///
   /// This will transfer the execution to UE executor; a copy of the metrics is passed through a triple buffer.
   void push_tx_low_metrics(rlc_tx_metrics_lower m_lower_);
-  // \brief push metrics from the high RLC executors to the collector.
-  // As these are called from the UE executor no execution transfer is required.
+
+  /// \brief push metrics from the high RLC executors to the collector.
+  ///
+  /// As these are called from the UE executor no execution transfer is required.
   void push_tx_high_metrics(rlc_tx_metrics_higher m_higher_);
-  // \brief push metrics from the high RLC executors to the collector.
-  // As these are called from the UE executor no execution transfer is required.
+
+  /// \brief push metrics from the high RLC executors to the collector.
+  ///
+  /// As these are called from the UE executor no execution transfer is required.
   void push_rx_high_metrics(rlc_rx_metrics m_rx_high_);
 
-  // \brief get metrics report period from the collector.
+  /// \brief get metrics report period from the collector.
   const timer_duration& get_metrics_period() const { return metrics_period; }
 
 private:
