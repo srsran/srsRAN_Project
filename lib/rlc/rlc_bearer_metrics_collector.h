@@ -11,6 +11,7 @@
 #pragma once
 
 #include "rlc_bearer_logger.h"
+#include "srsran/adt/lockfree_triple_buffer.h"
 #include "srsran/ran/gnb_du_id.h"
 #include "srsran/rlc/rlc_metrics.h"
 
@@ -25,9 +26,9 @@ public:
                                rlc_metrics_notifier* rlc_metrics_notif_,
                                task_executor&        ue_executor_);
 
-  // \brief push metrics from the lower RLC executor to the collector.
-  // This will be called will transfer the execution by pushing a copy to
-  // ue executor
+  /// \brief push metrics from the lower RLC executor to the collector.
+  ///
+  /// This will transfer the execution to UE executor; a copy of the metrics is passed through a triple buffer.
   void push_tx_low_metrics(rlc_tx_metrics_lower m_lower_);
   // \brief push metrics from the high RLC executors to the collector.
   // As these are called from the UE executor no execution transfer is required.
@@ -40,8 +41,9 @@ public:
   const timer_duration& get_metrics_period() const { return metrics_period; }
 
 private:
-  // \brief build and push metrics report to the metrics notifier.
-  // Must be run from the UE executor.
+  /// \brief build and push metrics report to the metrics notifier.
+  ///
+  /// Must be run from the UE executor.
   void push_report();
 
   void push_tx_high_metrics_impl(rlc_tx_metrics_higher m_higher_);
@@ -61,5 +63,8 @@ private:
   task_executor& ue_executor;
 
   rlc_bearer_logger logger;
+
+  /// Triple buffer for alloc-free forwarding of \c rlc_tx_metrics_lower from cell executor to ue executor
+  lockfree_triple_buffer<rlc_tx_metrics_lower> metrics_lower_triple_buf;
 };
 } // namespace srsran

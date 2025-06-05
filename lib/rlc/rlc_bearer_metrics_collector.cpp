@@ -40,7 +40,10 @@ void rlc_bearer_metrics_collector::push_tx_high_metrics(rlc_tx_metrics_higher m_
 
 void rlc_bearer_metrics_collector::push_tx_low_metrics(rlc_tx_metrics_lower m_lower_)
 {
-  if (not ue_executor.execute([this, m_lower_]() { push_tx_low_metrics_impl(m_lower_); })) {
+  // Because of its size, passing this metrics object directly through a capture in a unique_task would involve malloc
+  // and free. Therefore we pass the object through a triple buffer instead.
+  metrics_lower_triple_buf.write_and_commit(m_lower_);
+  if (not ue_executor.execute([this]() { push_tx_low_metrics_impl(metrics_lower_triple_buf.read()); })) {
     logger.log_error("Could not push TX low metrics");
   }
 }
