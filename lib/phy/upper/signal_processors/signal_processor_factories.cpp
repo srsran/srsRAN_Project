@@ -135,7 +135,7 @@ public:
         std::make_unique<dmrs_pucch_estimator_formats3_4>(
             prg_factory->create(),
             lpg_factory->create(),
-            ch_estimator_factory->create(port_channel_estimator_fd_smoothing_strategy::mean,
+            ch_estimator_factory->create(port_channel_estimator_fd_smoothing_strategy::filter,
                                          port_channel_estimator_td_interpolation_strategy::average,
                                          /*compensate_cfo =*/false));
 
