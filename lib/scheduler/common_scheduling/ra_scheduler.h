@@ -19,7 +19,6 @@
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/srslog/srslog.h"
-#include <deque>
 
 namespace srsran {
 
@@ -152,7 +151,10 @@ private:
 
   // Set the max number of slots the scheduler can look ahead in the resource grid (with respect to the current slot) to
   // find PDSCH space for RAR.
-  static const unsigned max_dl_slots_ahead_sched = 8U;
+  static constexpr unsigned max_dl_slots_ahead_sched = 8U;
+
+  /// Maximum RAR window length in slots. See ra-ResponseWindow in TS 38.331.
+  static constexpr unsigned max_rar_window_length = 80U;
 
   // args
   const scheduler_ra_expert_config& sched_cfg;
@@ -188,11 +190,11 @@ private:
   sch_mcs_description                 msg3_mcs_config;
 
   // variables
-  cell_harq_manager           msg3_harqs;
-  rach_indication_queue       pending_rachs;
-  crc_indication_queue        pending_crcs;
-  std::deque<pending_rar_t>   pending_rars;
-  std::vector<pending_msg3_t> pending_msg3s;
+  cell_harq_manager                                                           msg3_harqs;
+  rach_indication_queue                                                       pending_rachs;
+  crc_indication_queue                                                        pending_crcs;
+  static_vector<pending_rar_t, MAX_RAR_PDUS_PER_SLOT * max_rar_window_length> pending_rars;
+  std::vector<pending_msg3_t>                                                 pending_msg3s;
 };
 
 } // namespace srsran
