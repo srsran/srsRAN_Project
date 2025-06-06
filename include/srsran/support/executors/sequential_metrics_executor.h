@@ -25,7 +25,7 @@ template <typename ExecutorType, typename Logger>
 class sequential_metrics_executor : public task_executor
 {
   /// Maximum number of elements the pool can hold.
-  static constexpr unsigned POOL_SIZE = 2048;
+  static constexpr unsigned POOL_SIZE = 8 * 1024;
 
   using time_point = std::chrono::time_point<std::chrono::steady_clock>;
   using queue_type =
