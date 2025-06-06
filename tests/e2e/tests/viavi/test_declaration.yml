@@ -31,7 +31,7 @@ tests:
       metrics:
         enable_log: true
         layers:
-          enable_executor: false
+          enable_executor: true
           enable_rlc: true
           enable_ru: true
       cell_cfg:
@@ -501,7 +501,7 @@ tests:
           cu_up_report_period: 10000
           du_report_period: 10000
         layers:
-          enable_executor: false
+          enable_executor: true
           enable_rlc: true
           enable_ru: true
           enable_pdcp: true
