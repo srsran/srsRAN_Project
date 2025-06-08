@@ -2047,7 +2047,8 @@ basic avx512 dpdk withassert:
 basic avx512 dpdk rtsan:
   extends: basic avx512 dpdk
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+    - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     OS: ubuntu-24.04-rtsan
     COMPILER: clang
