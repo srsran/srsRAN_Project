@@ -19,6 +19,7 @@ namespace srsran {
 
 /// O-RAN DU low Split 6 unit configuration.
 struct split6_o_du_low_unit_config {
+  unsigned du_report_period = 1000;
   /// DU low configuration.
   du_low_unit_config du_low_cfg;
   /// Radio Unit configuration.

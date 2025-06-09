@@ -29,7 +29,8 @@ split6_flexible_o_du_low_impl::~split6_flexible_o_du_low_impl()
 
 void split6_flexible_o_du_low_impl::set_dependencies(std::unique_ptr<fapi::slot_configurator_plugin> slot,
                                                      std::unique_ptr<srs_du::o_du_low>               du,
-                                                     std::unique_ptr<radio_unit>                     radio)
+                                                     std::unique_ptr<radio_unit>                     radio,
+                                                     unique_timer                                    timer)
 {
   srsran_assert(slot, "Invalid split 6 slot plugin");
   srsran_assert(du, "Invalid O-DU low");
@@ -63,4 +64,10 @@ void split6_flexible_o_du_low_impl::set_dependencies(std::unique_ptr<fapi::slot_
   // :TODO: plugin needs to be started?
   odu_low->get_operation_controller().start();
   ru->get_controller().get_operation_controller().start();
+
+  // Initialize metrics collector.
+  if (report_period.count() != 0 && notifier) {
+    metrics_collector = split6_o_du_low_metrics_collector_impl(
+        odu_low->get_metrics_collector(), ru->get_metrics_collector(), notifier, std::move(timer), report_period);
+  }
 }

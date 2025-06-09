@@ -16,6 +16,7 @@
 #include "apps/units/flexible_o_du/split_7_2/helpers/ru_ofh_config_yaml_writer.h"
 #include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_config_translator.h"
 #include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_config_yaml_writer.h"
+#include "metrics/split6_flexible_o_du_low_metrics_builder.h"
 #include "split6_constants.h"
 #include "split6_flexible_o_du_low_factory.h"
 #include "split6_flexible_o_du_low_manager.h"
@@ -93,17 +94,31 @@ void split6_o_du_low_application_unit_impl::fill_worker_manager_config(worker_ma
   }
 }
 
-std::unique_ptr<du_operation_controller>
-split6_o_du_low_application_unit_impl::create_flexible_o_du_low(worker_manager& workers, srslog::basic_logger& logger)
+split6_o_du_low_unit
+split6_o_du_low_application_unit_impl::create_flexible_o_du_low(worker_manager&                 workers,
+                                                                app_services::metrics_notifier& metrics_notifier,
+                                                                timer_manager&                  timers,
+                                                                srslog::basic_logger&           logger)
 {
+  split6_o_du_low_unit output;
+
+  // :TODO: 0 is hardcoded to the cell id. Difficult to add here the PCI as it is a parameter that will be readed
+  // dynamically after the CONFIG.request FAPI message.
+  auto notifier = build_split6_flexible_o_du_low_metrics_config(
+      output.metrics, metrics_notifier, unit_cfg.du_low_cfg.metrics_cfg.common_metrics_cfg, {0});
+
   /// Split 6 flexible O-DU low manager dependencies.
   split6_flexible_o_du_low_manager_dependencies dependencies;
-  dependencies.factory_odu_low             = create_split6_flexible_o_du_low_factory(unit_cfg, workers);
+  dependencies.factory_odu_low = create_split6_flexible_o_du_low_factory(unit_cfg, workers, timers, notifier);
   dependencies.config_interface_collection = fapi::create_fapi_config_message_interface_collection(logger);
   dependencies.cell_plugin                 = dependencies.factory_odu_low->create_fapi_cell_configurator_plugin(
       logger, dependencies.config_interface_collection->get_config_message_gateway());
 
-  return std::make_unique<split6_flexible_o_du_low_manager>(std::move(dependencies));
+  auto odu_low = std::make_unique<split6_flexible_o_du_low_manager>(std::move(dependencies));
+
+  output.odu_low = std::move(odu_low);
+
+  return output;
 }
 
 std::unique_ptr<split6_o_du_low_application_unit_impl>

@@ -15,6 +15,7 @@
 #include "split6_constants.h"
 #include "split6_o_du_low_unit_config.h"
 #include "srsran/ran/band_helper.h"
+#include "srsran/support/cli11_utils.h"
 
 using namespace srsran;
 
@@ -26,6 +27,14 @@ void srsran::configure_cli11_with_split6_o_du_low_unit_config_schema(CLI::App& a
   configure_cli11_with_du_low_config_schema(app, config.du_low_cfg);
   configure_cli11_with_ru_ofh_config_schema(app, ofh_cfg);
   configure_cli11_with_ru_sdr_config_schema(app, sdr_cfg);
+
+  CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
+  auto*     periodicity_subcmd =
+      add_subcommand(*metrics_subcmd, "periodicity", "Metrics periodicity configuration")->configurable();
+  add_option(
+      *periodicity_subcmd, "--du_report_period", config.du_report_period, "DU statistics report period in milliseconds")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 10240));
 }
 
 static void manage_ru(CLI::App& app, split6_o_du_low_unit_config& config)

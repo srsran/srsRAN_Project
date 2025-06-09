@@ -16,6 +16,7 @@
 #include <memory>
 
 namespace srsran {
+class split6_flexible_o_du_low_metrics_notifier;
 
 /// \brief Cell operation request handler implementation.
 ///

@@ -37,8 +37,11 @@ namespace {
 class split6_flexible_o_du_low_factory_dummy : public split6_flexible_o_du_low_factory
 {
 public:
-  split6_flexible_o_du_low_factory_dummy(split6_o_du_low_unit_config unit_config_, worker_manager& workers_) :
-    split6_flexible_o_du_low_factory(unit_config_, workers_)
+  split6_flexible_o_du_low_factory_dummy(split6_o_du_low_unit_config                unit_config_,
+                                         worker_manager&                            workers_,
+                                         timer_manager&                             timers_,
+                                         split6_flexible_o_du_low_metrics_notifier* notifier_) :
+    split6_flexible_o_du_low_factory(unit_config_, workers_, timers_, notifier_)
   {
   }
 
@@ -64,7 +67,8 @@ private:
 std::unique_ptr<split6_flexible_o_du_low_impl>
 split6_flexible_o_du_low_factory::create_split6_flexible_o_du_low(const fapi::fapi_cell_config& config)
 {
-  auto odu = std::make_unique<split6_flexible_o_du_low_impl>();
+  auto odu = std::make_unique<split6_flexible_o_du_low_impl>(notifier,
+                                                             std::chrono::milliseconds(unit_config.du_report_period));
 
   // Create Radio Unit.
   auto ru = create_radio_unit(*odu, config);
@@ -93,7 +97,8 @@ split6_flexible_o_du_low_factory::create_split6_flexible_o_du_low(const fapi::fa
     return nullptr;
   }
 
-  odu->set_dependencies(std::move(plugin), std::move(odu_low.o_du_lo), std::move(ru));
+  odu->set_dependencies(
+      std::move(plugin), std::move(odu_low.o_du_lo), std::move(ru), timers.create_unique_timer(*workers.metrics_exec));
 
   return odu;
 }
@@ -369,8 +374,11 @@ std::unique_ptr<radio_unit> split6_flexible_o_du_low_factory::create_radio_unit(
 
 #ifndef SRSRAN_HAS_SPLIT6_ENTERPRISE
 std::unique_ptr<split6_flexible_o_du_low_factory>
-srsran::create_split6_flexible_o_du_low_factory(split6_o_du_low_unit_config unit_config, worker_manager& workers)
+srsran::create_split6_flexible_o_du_low_factory(split6_o_du_low_unit_config                unit_config,
+                                                worker_manager&                            workers,
+                                                timer_manager&                             timers,
+                                                split6_flexible_o_du_low_metrics_notifier* notifier)
 {
-  return std::make_unique<split6_flexible_o_du_low_factory_dummy>(unit_config, workers);
+  return std::make_unique<split6_flexible_o_du_low_factory_dummy>(unit_config, workers, timers, notifier);
 }
 #endif

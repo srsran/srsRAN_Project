@@ -255,7 +255,6 @@ int main(int argc, char** argv)
   // Register the commands.
   app_services::cmdline_command_dispatcher command_parser(*epoll_broker, *workers.non_rt_low_prio_exec, {});
 
-  // :TODO: how to manage metrics from the DU low?
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
 
   // Create app-level resource usage service and metrics.
@@ -264,11 +263,16 @@ int main(int argc, char** argv)
 
   std::vector<app_services::metrics_config> app_metrics = std::move(app_resource_usage_service.metrics);
 
-  auto du = o_du_app_unit->create_flexible_o_du_low(workers, srslog::fetch_basic_logger("APP"));
+  auto du = o_du_app_unit->create_flexible_o_du_low(
+      workers, metrics_notifier_forwarder, app_timers, srslog::fetch_basic_logger("APP"));
+
+  for (auto& metric : du.metrics) {
+    app_metrics.push_back(std::move(metric));
+  }
 
   // Only DU has metrics now.
   app_services::metrics_manager metrics_mngr(
-      srslog::fetch_basic_logger("GNB"),
+      srslog::fetch_basic_logger("APP"),
       *workers.metrics_exec,
       app_metrics,
       app_timers,
@@ -280,7 +284,7 @@ int main(int argc, char** argv)
   // :TODO: how to manage cmdline and remote commands??
 
   metrics_mngr.start();
-  du->start();
+  du.odu_low->start();
 
   {
     app_services::application_message_banners app_banner(app_name, du_low_cfg.log_cfg.filename);
@@ -290,7 +294,7 @@ int main(int argc, char** argv)
     }
   }
 
-  du->stop();
+  du.odu_low->stop();
   metrics_mngr.stop();
 
   workers.stop();

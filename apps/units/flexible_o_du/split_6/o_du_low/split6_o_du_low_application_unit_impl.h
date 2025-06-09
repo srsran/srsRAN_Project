@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "apps/services/metrics/metrics_config.h"
 #include "apps/units/application_unit.h"
 #include "split6_o_du_low_plugin.h"
 #include "split6_o_du_low_unit_config.h"
@@ -18,7 +19,17 @@
 
 namespace srsran {
 
+class timer_manager;
 struct worker_manager;
+
+namespace app_services {
+class metrics_notifier;
+}
+
+struct split6_o_du_low_unit {
+  std::unique_ptr<du_operation_controller>  odu_low;
+  std::vector<app_services::metrics_config> metrics;
+};
 
 /// O-RAN DU low Split6 application unit implementation.
 class split6_o_du_low_application_unit_impl : public application_unit
@@ -48,8 +59,10 @@ public:
   void fill_worker_manager_config(worker_manager_config& config) override;
 
   /// Creates and returns the low FAPI control adaptor of this application unit.
-  std::unique_ptr<du_operation_controller> create_flexible_o_du_low(worker_manager&       workers,
-                                                                    srslog::basic_logger& logger);
+  split6_o_du_low_unit create_flexible_o_du_low(worker_manager&                 workers,
+                                                app_services::metrics_notifier& metrics_notifier,
+                                                timer_manager&                  timers,
+                                                srslog::basic_logger&           logger);
 
 private:
   split6_o_du_low_unit_config             unit_cfg;

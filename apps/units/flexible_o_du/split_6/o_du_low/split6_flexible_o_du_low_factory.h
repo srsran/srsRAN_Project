@@ -32,12 +32,17 @@ struct worker_manager;
 class split6_flexible_o_du_low_factory
 {
 protected:
-  split6_o_du_low_unit_config unit_config;
-  worker_manager&             workers;
+  split6_o_du_low_unit_config                unit_config;
+  worker_manager&                            workers;
+  timer_manager&                             timers;
+  split6_flexible_o_du_low_metrics_notifier* notifier;
 
 public:
-  split6_flexible_o_du_low_factory(split6_o_du_low_unit_config unit_config_, worker_manager& workers_) :
-    unit_config(unit_config_), workers(workers_)
+  split6_flexible_o_du_low_factory(split6_o_du_low_unit_config                unit_config_,
+                                   worker_manager&                            workers_,
+                                   timer_manager&                             timers_,
+                                   split6_flexible_o_du_low_metrics_notifier* notifier_) :
+    unit_config(unit_config_), workers(workers_), timers(timers_), notifier(notifier_)
   {
   }
 
@@ -68,6 +73,9 @@ private:
 
 /// Creates a split 6 flexible O-DU low factory.
 std::unique_ptr<split6_flexible_o_du_low_factory>
-create_split6_flexible_o_du_low_factory(split6_o_du_low_unit_config unit_config, worker_manager& workers);
+create_split6_flexible_o_du_low_factory(split6_o_du_low_unit_config                unit_config,
+                                        worker_manager&                            workers,
+                                        timer_manager&                             timers,
+                                        split6_flexible_o_du_low_metrics_notifier* notifier_);
 
 } // namespace srsran

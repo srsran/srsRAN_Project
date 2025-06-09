@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "split6_o_du_low_metrics_collector_impl.h"
 #include "srsran/du/du_low/o_du_low.h"
 #include "srsran/fapi/slot_configurator_plugin.h"
 #include "srsran/ru/ru.h"
@@ -17,6 +18,8 @@
 #include <memory>
 
 namespace srsran {
+
+class split6_flexible_o_du_low_metrics_notifier;
 
 /// \brief Split 6 flexible O-DU low implementation.
 ///
@@ -28,8 +31,13 @@ class split6_flexible_o_du_low_impl
   static constexpr unsigned NOF_CELLS_SUPPORTED = 1U;
 
 public:
-  split6_flexible_o_du_low_impl() :
-    ru_ul_adapt(NOF_CELLS_SUPPORTED), ru_timing_adapt(NOF_CELLS_SUPPORTED), ru_error_adapt(NOF_CELLS_SUPPORTED)
+  split6_flexible_o_du_low_impl(split6_flexible_o_du_low_metrics_notifier* notifier_,
+                                std::chrono::milliseconds                  report_period_) :
+    report_period(report_period_),
+    notifier(notifier_),
+    ru_ul_adapt(NOF_CELLS_SUPPORTED),
+    ru_timing_adapt(NOF_CELLS_SUPPORTED),
+    ru_error_adapt(NOF_CELLS_SUPPORTED)
   {
   }
 
@@ -38,7 +46,8 @@ public:
   /// Sets the dependencies to the given one
   void set_dependencies(std::unique_ptr<fapi::slot_configurator_plugin> slot,
                         std::unique_ptr<srs_du::o_du_low>               du,
-                        std::unique_ptr<radio_unit>                     radio);
+                        std::unique_ptr<radio_unit>                     radio,
+                        unique_timer                                    timer);
 
   /// Getters to the adaptors.
   upper_phy_ru_ul_adapter&         get_upper_ru_ul_adapter() { return ru_ul_adapt; }
@@ -48,6 +57,8 @@ public:
   upper_phy_ru_ul_request_adapter& get_upper_ru_ul_request_adapter() { return ru_ul_request_adapt; }
 
 private:
+  std::chrono::milliseconds                       report_period{0};
+  split6_flexible_o_du_low_metrics_notifier*      notifier;
   upper_phy_ru_ul_adapter                         ru_ul_adapt;
   upper_phy_ru_timing_adapter                     ru_timing_adapt;
   upper_phy_ru_error_adapter                      ru_error_adapt;
@@ -56,6 +67,7 @@ private:
   std::unique_ptr<radio_unit>                     ru;
   upper_phy_ru_dl_rg_adapter                      ru_dl_rg_adapt;
   upper_phy_ru_ul_request_adapter                 ru_ul_request_adapt;
+  split6_o_du_low_metrics_collector_impl          metrics_collector;
 };
 
 } // namespace srsran
