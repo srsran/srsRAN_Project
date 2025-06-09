@@ -25,7 +25,7 @@ template <typename ExecutorType, typename Logger>
 class sequential_metrics_executor : public task_executor
 {
   /// Maximum number of elements the pool can hold.
-  static constexpr unsigned POOL_SIZE = 8 * 1024;
+  static constexpr unsigned POOL_SIZE = 256 * 1024;
 
   using time_point = std::chrono::time_point<std::chrono::steady_clock>;
   using queue_type =
@@ -33,10 +33,14 @@ class sequential_metrics_executor : public task_executor
 
 public:
   template <typename U>
-  sequential_metrics_executor(std::string name_, U&& exec_, Logger& logger_, std::chrono::milliseconds period_) :
+  sequential_metrics_executor(std::string               name_,
+                              U&&                       exec_,
+                              Logger&                   metrics_logger_,
+                              std::chrono::milliseconds period_) :
     name(std::move(name_)),
     exec(std::forward<U>(exec_)),
-    logger(logger_),
+    metrics_logger(metrics_logger_),
+    logger(srslog::fetch_basic_logger("APP")),
     period(period_),
     task_pool(POOL_SIZE),
     free_tasks(std::make_unique<queue_type>(POOL_SIZE))
@@ -52,8 +56,7 @@ public:
   {
     unsigned task_idx = 0;
     if (not free_tasks->try_pop(task_idx)) {
-      srslog::fetch_basic_logger("APP").warning("Unable to execute new task in the '{}' metrics executor decorator",
-                                                name);
+      logger.warning("Unable to execute new task in the '{}' metrics executor decorator", name);
       return false;
     }
 
@@ -77,8 +80,7 @@ public:
   {
     unsigned task_idx = 0;
     if (not free_tasks->try_pop(task_idx)) {
-      srslog::fetch_basic_logger("APP").warning("Unable to defer new task in the '{}' metrics executor decorator",
-                                                name);
+      logger.warning("Unable to defer new task in the '{}' metrics executor decorator", name);
       return false;
     }
 
@@ -142,17 +144,17 @@ private:
     auto telapsed_since_last_report = end_tp - last_tp;
     if (telapsed_since_last_report >= period) {
       // Report metrics.
-      logger.info("Executor metrics \"{}\": nof_executes={} nof_defers={} enqueue_avg={}usec "
-                  "enqueue_max={}usec task_avg={}usec task_max={}usec cpu_load={:.1f}% {}",
-                  name,
-                  counters.dispatch_count - counters.defer_count,
-                  counters.defer_count,
-                  duration_cast<microseconds>(counters.enqueue_sum_latency / counters.dispatch_count).count(),
-                  duration_cast<microseconds>(counters.enqueue_max_latency).count(),
-                  duration_cast<microseconds>(counters.task_sum_latency / counters.dispatch_count).count(),
-                  duration_cast<microseconds>(counters.task_max_latency).count(),
-                  counters.task_sum_latency.count() * 100.0 / telapsed_since_last_report.count(),
-                  counters.sum_rusg);
+      metrics_logger.info("Executor metrics \"{}\": nof_executes={} nof_defers={} enqueue_avg={}usec "
+                          "enqueue_max={}usec task_avg={}usec task_max={}usec cpu_load={:.1f}% {}",
+                          name,
+                          counters.dispatch_count - counters.defer_count,
+                          counters.defer_count,
+                          duration_cast<microseconds>(counters.enqueue_sum_latency / counters.dispatch_count).count(),
+                          duration_cast<microseconds>(counters.enqueue_max_latency).count(),
+                          duration_cast<microseconds>(counters.task_sum_latency / counters.dispatch_count).count(),
+                          duration_cast<microseconds>(counters.task_max_latency).count(),
+                          counters.task_sum_latency.count() * 100.0 / telapsed_since_last_report.count(),
+                          counters.sum_rusg);
 
       counters = {};
       last_tp  = end_tp;
@@ -161,7 +163,8 @@ private:
 
   std::string                     name;
   ExecutorType                    exec;
-  Logger&                         logger;
+  Logger&                         metrics_logger;
+  srslog::basic_logger&           logger;
   const std::chrono::milliseconds period;
   std::vector<unique_task>        task_pool;
   std::unique_ptr<queue_type>     free_tasks;
