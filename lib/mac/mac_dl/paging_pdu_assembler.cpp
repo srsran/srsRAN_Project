@@ -17,9 +17,8 @@ using namespace srsran;
 /// \brief Build RRC-NR Paging message from the Paging grant.
 /// \param[in] pg Paging grant information.
 /// \return RRC-NR Paging message.
-static asn1::rrc_nr::paging_s make_asn1_rrc_cell_paging_msg(const dl_paging_allocation& pg)
+static void make_asn1_rrc_cell_paging_msg(asn1::rrc_nr::paging_s& rrc_pg, const dl_paging_allocation& pg)
 {
-  asn1::rrc_nr::paging_s rrc_pg{};
   for (const paging_ue_info& info : pg.paging_ue_list) {
     asn1::rrc_nr::paging_record_s pg_rec{};
     if (info.paging_type_indicator == paging_ue_info::cn_ue_paging_identity) {
@@ -31,8 +30,6 @@ static asn1::rrc_nr::paging_s make_asn1_rrc_cell_paging_msg(const dl_paging_allo
     }
     rrc_pg.paging_record_list.push_back(pg_rec);
   }
-
-  return rrc_pg;
 }
 
 /// \brief Derive packed cell PCCH-PCH Paging message.
@@ -45,7 +42,8 @@ static byte_buffer make_asn1_rrc_cell_pcch_pch_msg(const dl_paging_allocation& p
 
   asn1::rrc_nr::pcch_msg_s pcch_msg{};
   auto&                    pcch_c1 = pcch_msg.msg.set_c1();
-  pcch_c1.set_paging()             = make_asn1_rrc_cell_paging_msg(pg);
+  auto&                    rrc_pg  = pcch_c1.set_paging();
+  make_asn1_rrc_cell_paging_msg(rrc_pg, pg);
 
   const asn1::SRSASN_CODE ret = pcch_msg.pack(bref);
   srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack PCCH-PCH Paging message");
