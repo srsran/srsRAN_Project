@@ -27,12 +27,11 @@
 - name: srs-gnb
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
-  host_network: retina.srs.io/secondary-ip
   requirements:
     arch: amd64
     cpu:
-      requests: 12
-      limits: 12
+      requests: 8
+      limits: 8
     memory:
       requests: "20G"
       limits: "20G"
@@ -54,8 +53,8 @@
 - name: open5gs
   type: 5gc
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
-  taints: ["purpose=corenetworks"]
-  host_network: retina.srs.io/secondary-ip
+  labels:
+    - kubernetes.io/hostname=sdr6
   requirements:
     arch: amd64
     cpu:
