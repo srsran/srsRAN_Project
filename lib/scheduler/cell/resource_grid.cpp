@@ -292,6 +292,8 @@ void cell_slot_resource_allocator::slot_indication(slot_point new_slot)
   result.ul.prachs.clear();
   result.ul.pucchs.clear();
   result.ul.srss.clear();
+  result.failed_attempts.pdcch = 0;
+  result.failed_attempts.uci   = 0;
   dl_res_grid.clear();
   ul_res_grid.clear();
 
