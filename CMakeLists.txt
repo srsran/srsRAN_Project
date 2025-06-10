@@ -264,8 +264,8 @@ sbom_generate(
     SUPPLIER     "Software Radio Systems Ltd"
     SUPPLIER_URL "https://srs.io"
     DOWNLOAD_URL "https://github.com/srsran/srsRAN_Project.git"
-    LICENSE      "AGPL-3.0-only"
-    )
+    LICENSE      "LicenseRef-srsRAN"
+)
 
 ########################################################################
 # Find dependencies
@@ -567,7 +567,7 @@ function(notify_binary_target)
     message(STATUS "Adding binary target: ${ARGV}")
     sbom_add(
         TARGET       ${ARGV}
-        LICENSE      "AGPL-3.0-only"
+        LICENSE      "LicenseRef-srsRAN"
     )
 endfunction()
 
@@ -617,4 +617,9 @@ message(STATUS "Building srsRAN version ${SRSRAN_VERSION_STRING}")
 ########################################################################
 # Generate SBOM
 ########################################################################
+sbom_add(
+    LICENSE "LicenseRef-srsRAN"
+    NAME    "AGPL-3.0-only"
+    FILE    "${CMAKE_SOURCE_DIR}/LICENSE"
+)
 sbom_finalize(NO_VERIFY)
