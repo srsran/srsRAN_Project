@@ -30,13 +30,13 @@ struct rrm_policy_member {
 
 struct rrm_policy_ratio_group {
   /// Used to identify the group to which the policy is applied.
-  rrm_policy_member pol_member;
+  std::vector<rrm_policy_member> policy_members_list;
   /// Sets the minimum percentage of PRBs to be allocated to this group.
-  std::optional<int> min_prb_policy_ratio;
+  std::optional<unsigned> min_prb_policy_ratio;
   /// Sets the maximum percentage of PRBs to be allocated to this group.
-  std::optional<int> max_prb_policy_ratio;
+  std::optional<unsigned> max_prb_policy_ratio;
   /// Sets the percentage of PRBs to be allocated to this group.
-  std::optional<int> ded_prb_policy_ratio;
+  std::optional<unsigned> ded_prb_policy_ratio;
 };
 
 } // namespace srsran

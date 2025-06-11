@@ -160,6 +160,8 @@ inline e2_message generate_e2_setup_request(std::string oid)
 inline e2_message generate_ric_control_request_style2_action6(srslog::basic_logger& logger)
 {
   using namespace asn1::e2ap;
+  using r_param = asn1::e2sm::e2sm_rc_ctrl_msg_format1_item_s;
+
   e2_message  e2_msg;
   init_msg_s& initmsg = e2_msg.pdu.set_init_msg();
   initmsg.load_info_obj(ASN1_E2AP_ID_RIC_CTRL);
@@ -178,7 +180,7 @@ inline e2_message generate_ric_control_request_style2_action6(srslog::basic_logg
   ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1().ric_ctrl_decision_present = false;
   ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1().ric_style_type            = 2;
   ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1().ric_ctrl_action_id        = 6;
-  ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1().ue_id.set_gnb_ue_id();
+  ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1().ue_id.set_gnb_du_ue_id();
   ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1().ue_id.gnb_du_ue_id().gnb_cu_ue_f1ap_id = 4;
 
   srsran::byte_buffer ctrl_hdr_buff;
@@ -192,25 +194,82 @@ inline e2_message generate_ric_control_request_style2_action6(srslog::basic_logg
 
   asn1::e2sm::e2sm_rc_ctrl_msg_s ctrl_msg;
   ctrl_msg.ric_ctrl_msg_formats.set_ctrl_msg_format1();
-  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format1().ran_p_list.resize(2);
-  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format1().ran_p_list[0].ran_param_id = 11;
-  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format1()
-      .ran_p_list[0]
-      .ran_param_value_type.set_ran_p_choice_elem_false()
-      .ran_param_value_present = true;
-  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format1()
-      .ran_p_list[0]
-      .ran_param_value_type.ran_p_choice_elem_false()
-      .ran_param_value.set_value_int()                                        = 5;
-  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format1().ran_p_list[1].ran_param_id = 12;
-  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format1()
-      .ran_p_list[1]
-      .ran_param_value_type.set_ran_p_choice_elem_false()
-      .ran_param_value_present = true;
-  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format1()
-      .ran_p_list[1]
-      .ran_param_value_type.ran_p_choice_elem_false()
-      .ran_param_value.set_value_int() = 12;
+  asn1::e2sm::e2sm_rc_ctrl_msg_format1_s& ctrl_msg_f1 = ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format1();
+
+  // 1 RRM Policy Ratio List (no need to parse).
+  r_param pol_ratio_param;
+  pol_ratio_param.ran_param_id                                                                   = 1;
+  pol_ratio_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present     = true;
+  pol_ratio_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() = 1;
+  ctrl_msg_f1.ran_p_list.push_back(pol_ratio_param);
+  // 2 RRM Policy Ratio Group.
+  r_param pol_group_param;
+  pol_group_param.ran_param_id                                                                   = 2;
+  pol_group_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present     = true;
+  pol_group_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() = 1;
+  ctrl_msg_f1.ran_p_list.push_back(pol_group_param);
+  // 3 RRM Policy (no need to parse).
+  r_param policy_param;
+  policy_param.ran_param_id                                                                   = 3;
+  policy_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present     = true;
+  policy_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() = 1;
+  ctrl_msg_f1.ran_p_list.push_back(policy_param);
+  // Note: 4 missing/skipped in TS.
+  // 5 RRM Policy Member (no need to parse).
+  r_param pol_mem_param;
+  pol_mem_param.ran_param_id                                                                   = 5;
+  pol_mem_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present     = true;
+  pol_mem_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() = 1;
+  ctrl_msg_f1.ran_p_list.push_back(pol_mem_param);
+  // 6 RRM Policy Ratio List (no need to parse).
+  r_param pol_ratio_list_param;
+  pol_ratio_list_param.ran_param_id                                                                   = 6;
+  pol_ratio_list_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present     = true;
+  pol_ratio_list_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() = 1;
+  ctrl_msg_f1.ran_p_list.push_back(pol_ratio_list_param);
+  // 7 PLMN Identity.
+  r_param plmn_param;
+  plmn_param.ran_param_id                                                               = 7;
+  plmn_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present = true;
+  plmn_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s().from_bytes(
+      plmn_identity::parse("00101")->to_bytes());
+  ctrl_msg_f1.ran_p_list.push_back(plmn_param);
+  // 8 S-NSSAI (no need to parse).
+  r_param nssai_param;
+  nssai_param.ran_param_id                                                                   = 8;
+  nssai_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present     = true;
+  nssai_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() = 1;
+  ctrl_msg_f1.ran_p_list.push_back(nssai_param);
+  // 9 SST.
+  r_param sst_param;
+  sst_param.ran_param_id                                                               = 9;
+  sst_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present = true;
+  sst_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s().from_number(1);
+  ctrl_msg_f1.ran_p_list.push_back(sst_param);
+  // 10 SD.
+  r_param sd_param;
+  sd_param.ran_param_id                                                               = 10;
+  sd_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present = true;
+  sd_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s().from_number(1);
+  ctrl_msg_f1.ran_p_list.push_back(sd_param);
+  // 11 Min PRB Policy Ratio.
+  r_param min_prb_param;
+  min_prb_param.ran_param_id                                                                   = 11;
+  min_prb_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present     = true;
+  min_prb_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() = 5;
+  ctrl_msg_f1.ran_p_list.push_back(min_prb_param);
+  // 12 Max PRB Policy Ratio.
+  r_param max_prb_param;
+  max_prb_param.ran_param_id                                                                   = 12;
+  max_prb_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present     = true;
+  max_prb_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() = 25;
+  ctrl_msg_f1.ran_p_list.push_back(max_prb_param);
+  // 13 Dedicated PRB Policy Ratio.
+  r_param ded_prb_param;
+  ded_prb_param.ran_param_id                                                                   = 13;
+  ded_prb_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present     = true;
+  ded_prb_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() = 50;
+  ctrl_msg_f1.ran_p_list.push_back(ded_prb_param);
 
   srsran::byte_buffer ctrl_msg_buff;
   asn1::bit_ref       bref_msg1(ctrl_msg_buff);

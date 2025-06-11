@@ -19,18 +19,14 @@
 namespace srsran {
 namespace srs_du {
 
-struct control_config_params {
+struct du_mac_sched_control_config {
+  uint64_t ue_id;
   // Sets the number of HARQ processes to be used.
   std::optional<unsigned> num_harq_processes;
   // Sets the number of HARQ retransmissions to be used.
   std::optional<unsigned> num_harq_retransmissions;
-  // Set the radio resource management policy.
-  std::optional<rrm_policy_ratio_group> rrm_policy_group;
-};
-
-struct du_mac_sched_control_config {
-  uint64_t                           ue_id;
-  std::vector<control_config_params> param_list;
+  // Set the radio resource management policy list.
+  std::vector<rrm_policy_ratio_group> rrm_policy_ratio_list;
 };
 
 struct du_mac_sched_control_config_response {

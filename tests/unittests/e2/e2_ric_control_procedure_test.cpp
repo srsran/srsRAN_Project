@@ -32,21 +32,6 @@ TEST_F(e2_test_setup, ric_control_procedure_setup)
   e2->handle_e2_disconnection_request();
 }
 
-TEST_F(e2_test_setup, ric_control_procedure_setup2)
-{
-  e2->handle_e2_tnl_connection_request();
-  e2_message request_msg = generate_ric_control_request(test_logger, 2, 6, 11, 12);
-  e2->handle_message(request_msg);
-
-  e2_message& msg = e2_client->last_tx_e2_pdu;
-  ASSERT_EQ(msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::successful_outcome);
-  ASSERT_EQ(msg.pdu.successful_outcome().value.type(),
-            asn1::e2ap::e2ap_elem_procs_o::successful_outcome_c::types_opts::ric_ctrl_ack);
-  auto ack = msg.pdu.successful_outcome().value.ric_ctrl_ack();
-  ASSERT_EQ(ack->ran_function_id, 3);
-  e2->handle_e2_disconnection_request();
-}
-
 TEST_F(e2_test_setup, ric_control_procedure_fail)
 {
   e2->handle_e2_tnl_connection_request();
