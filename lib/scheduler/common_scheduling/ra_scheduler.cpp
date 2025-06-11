@@ -258,6 +258,10 @@ void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& ms
     }
     if (rar_req == nullptr) {
       // Create new pending RAR
+      if (pending_rars.full()) {
+        logger.warning("ra-rnti={}: Discarding PRACH occasion. Cause: Pending RARs queue is full", ra_rnti);
+        continue;
+      }
       pending_rars.emplace_back();
       rar_req                = &pending_rars.back();
       rar_req->ra_rnti       = to_rnti(ra_rnti);

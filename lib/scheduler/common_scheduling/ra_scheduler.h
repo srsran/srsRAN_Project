@@ -153,9 +153,6 @@ private:
   // find PDSCH space for RAR.
   static constexpr unsigned max_dl_slots_ahead_sched = 8U;
 
-  /// Maximum RAR window length in slots. See ra-ResponseWindow in TS 38.331.
-  static constexpr unsigned max_rar_window_length = 80U;
-
   // args
   const scheduler_ra_expert_config& sched_cfg;
   const cell_configuration&         cell_cfg;
@@ -190,11 +187,23 @@ private:
   sch_mcs_description                 msg3_mcs_config;
 
   // variables
-  cell_harq_manager                                                           msg3_harqs;
-  rach_indication_queue                                                       pending_rachs;
-  crc_indication_queue                                                        pending_crcs;
-  static_vector<pending_rar_t, MAX_RAR_PDUS_PER_SLOT * max_rar_window_length> pending_rars;
-  std::vector<pending_msg3_t>                                                 pending_msg3s;
+  cell_harq_manager     msg3_harqs;
+  rach_indication_queue pending_rachs;
+  crc_indication_queue  pending_crcs;
+
+  /// The maximum number of pending RARs is given by the maximum number of PRACH occasions that can accumulate from a
+  /// given UL slot (at which the PRACH is received) until the expiration of the RAR window. The worst case is when:
+  /// (i) the PRACH is received instantaneously by the scheduler, and the PRACH slot is the farthest possible from the
+  ///     beginning of the start of the RAR window.
+  /// (ii) RAR window is min(80 slots, 10 ms).
+  /// (iii) there are PRACHs occasions in every UL slot.
+  /// (iv) there are no suitable DL slots for scheduling the RARs (pending RARs will be in the vector until the RAR
+  ///      window expires).
+  /// [Implementation-defined] Assume 80 slots RAR window + TDD 2D1S7D with 30kHz SCS slots and
+  /// MAX_PRACH_OCCASIONS_PER_SLOT (the actual number would depend on the PRACH configuration index).
+  static constexpr size_t                                                             MAX_PENDING_RARS_SLOTS = 90U;
+  static_vector<pending_rar_t, MAX_PRACH_OCCASIONS_PER_SLOT * MAX_PENDING_RARS_SLOTS> pending_rars;
+  std::vector<pending_msg3_t>                                                         pending_msg3s;
 };
 
 } // namespace srsran
