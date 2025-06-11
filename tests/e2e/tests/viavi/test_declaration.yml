@@ -453,7 +453,12 @@ tests:
     test_name: "1UE fading noise UDP uplink"
     test_timeout: *test_timeout
     # Configuration
-    gnb_extra_config: *1ue_mimo_config
+    gnb_extra_config:
+      <<: *1ue_mimo_config
+      expert_execution:
+        threads:
+          upper_phy:
+            nof_pusch_decoder_threads: 3
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
