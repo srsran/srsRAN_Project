@@ -213,7 +213,7 @@ void du_configuration_manager::handle_gnb_cu_configuration_update(const f1ap_gnb
         du_ctxt.served_cells.begin(), du_ctxt.served_cells.end(), [&cell](const auto& c) { return c.cgi == cell.cgi; });
 
     // If the cell is already in the served cells, update the PLMNs.
-    if (it == du_ctxt.served_cells.end()) {
+    if (it != du_ctxt.served_cells.end()) {
       // If a PLMN from the update is not in the currently served PLMN list, add it to the served PLMNs.
       for (const auto& updated_plmn : cell.available_plmn_list) {
         if (std::find(it->served_plmns.begin(), it->served_plmns.end(), updated_plmn) == it->served_plmns.end()) {
