@@ -19,7 +19,9 @@ void srs_du::add_ntn_config_update_remote_command(application_unit_commands&    
                                                   const ntn_config&                ntn_cfg,
                                                   du_configurator&                 du_cfgtr,
                                                   du_manager_time_mapper_accessor& du_time_mapper_accessor,
-                                                  ru_controller&                   ru_ctrl)
+                                                  ru_controller&                   ru_ctrl,
+                                                  timer_manager&                   timers_,
+                                                  task_executor&                   timer_exec_)
 {
 }
 

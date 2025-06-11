@@ -256,7 +256,9 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
         ntn_cfg.value(),
         odu_instance->get_o_du_high().get_du_high().get_du_configurator(),
         odu_instance->get_o_du_high().get_du_high().get_du_manager_time_mapper_accessor(),
-        ru->get_controller());
+        ru->get_controller(),
+        *dependencies.timer_mng,
+        dependencies.workers->get_du_high_executor_mapper().du_control_executor());
   }
 
   // Configure the RU and DU in the dynamic DU.

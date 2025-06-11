@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include <optional>
-
 namespace srsran {
 
+class task_executor;
+class timer_manager;
 class ru_controller;
 struct application_unit_commands;
 struct ntn_config;
@@ -29,12 +29,15 @@ class du_manager_time_mapper_accessor;
 /// \param du_cfgtr DU configurator interface.
 /// \param du_time_mapper_accessor entity to access MAC slot-time mapper.
 /// \param ru_ctrl  RU controller interface.
+/// \param timers   Timers for the update task.
+/// \param timer_exec Task executor for the periodic SIB19 update task.
 /// \return True on success.
 void add_ntn_config_update_remote_command(application_unit_commands&       commands,
                                           const ntn_config&                ntn_cfg,
                                           du_configurator&                 du_cfgtr,
                                           du_manager_time_mapper_accessor& du_time_mapper_accessor,
-                                          ru_controller&                   ru_ctrl);
-
+                                          ru_controller&                   ru_ctrl,
+                                          timer_manager&                   timers,
+                                          task_executor&                   timer_exec);
 } // namespace srs_du
 } // namespace srsran
