@@ -18,6 +18,7 @@
 #include "srsran/phy/upper/upper_phy_rg_gateway.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/rtsan.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
@@ -57,7 +58,7 @@ void downlink_processor_single_executor_impl::process_pdcch(const pdcch_processo
   pdcch_processor::pdu_t& pdu_ref = pdcch_list.emplace_back(pdu);
 
   // Try to enqueue the PDU processing task.
-  bool enqueued = executor.execute([this, &pdu_ref]() {
+  bool enqueued = executor.execute([this, &pdu_ref]() SRSRAN_RTSAN_NONBLOCKING {
     trace_point process_pdcch_tp = l1_dl_tracer.now();
 
     // Do not execute if the grid is not available.
@@ -91,7 +92,7 @@ void downlink_processor_single_executor_impl::process_pdsch(
   pdsch_proc_args& pdsch_args = pdsch_list.emplace_back(pdu, std::move(data_));
 
   // Try to enqueue the PDU processing task.
-  bool enqueued = executor.execute([this, &pdsch_args]() mutable {
+  bool enqueued = executor.execute([this, &pdsch_args]() mutable SRSRAN_RTSAN_NONBLOCKING {
     trace_point process_pdsch_tp = l1_dl_tracer.now();
 
     // Do not execute if the grid is not available.
@@ -129,7 +130,7 @@ void downlink_processor_single_executor_impl::process_ssb(const ssb_processor::p
   ssb_processor::pdu_t& pdu_ref = ssb_list.emplace_back(pdu);
 
   // Try to enqueue the PDU processing task.
-  bool enqueued = executor.execute([this, &pdu_ref]() {
+  bool enqueued = executor.execute([this, &pdu_ref]() SRSRAN_RTSAN_NONBLOCKING {
     trace_point process_ssb_tp = l1_dl_tracer.now();
 
     // Do not execute if the grid is not available.
@@ -161,7 +162,7 @@ void downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_r
   nzp_csi_rs_generator::config_t& config_ref = nzp_csi_rs_list.emplace_back(config);
 
   // Try to enqueue the PDU processing task.
-  bool enqueued = executor.execute([this, &config_ref]() {
+  bool enqueued = executor.execute([this, &config_ref]() SRSRAN_RTSAN_NONBLOCKING {
     trace_point process_nzp_csi_rs_tp = l1_dl_tracer.now();
 
     // Do not execute if the grid is not available.
@@ -193,7 +194,7 @@ void downlink_processor_single_executor_impl::process_prs(const prs_generator_co
   prs_generator_configuration& config_ref = prs_list.emplace_back(config);
 
   // Try to enqueue the PDU processing task.
-  bool enqueued = executor.execute([this, &config_ref]() {
+  bool enqueued = executor.execute([this, &config_ref]() SRSRAN_RTSAN_NONBLOCKING {
     trace_point process_prs_tp = l1_dl_tracer.now();
 
     // Do not execute if the grid is not available.

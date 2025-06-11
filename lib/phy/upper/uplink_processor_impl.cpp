@@ -16,6 +16,7 @@
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/phy/upper/upper_phy_rx_results_notifier.h"
+#include "srsran/support/rtsan.h"
 
 using namespace srsran;
 
@@ -135,7 +136,7 @@ void uplink_processor_impl::handle_rx_symbol(const shared_resource_grid& grid, u
 
 void uplink_processor_impl::process_prach(const prach_buffer& buffer, const prach_buffer_context& context_)
 {
-  bool success = task_executors.prach_executor.execute([this, &buffer, context_]() {
+  bool success = task_executors.prach_executor.execute([this, &buffer, context_]() SRSRAN_RTSAN_NONBLOCKING {
     trace_point tp = l1_ul_tracer.now();
 
     ul_prach_results ul_results;

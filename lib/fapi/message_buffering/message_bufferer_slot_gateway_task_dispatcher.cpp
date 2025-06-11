@@ -15,6 +15,7 @@
 #include "srsran/fapi/messages/ul_tti_request.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/rtsan.h"
 
 using namespace srsran;
 using namespace fapi;
@@ -35,7 +36,8 @@ message_bufferer_slot_gateway_task_dispatcher::message_bufferer_slot_gateway_tas
 
 void message_bufferer_slot_gateway_task_dispatcher::dl_tti_request(const dl_tti_request_message& msg)
 {
-  if (!executor.defer([this, msg]() { message_bufferer_gateway.handle_dl_tti_request(msg); })) {
+  if (!executor.defer([this, msg]()
+                          SRSRAN_RTSAN_NONBLOCKING { message_bufferer_gateway.handle_dl_tti_request(msg); })) {
     logger.warning("Sector#{}: Failed to cache DL_TTI.request message for slot '{}'",
                    sector_id,
                    slot_point(scs, msg.sfn, msg.slot));
@@ -44,7 +46,8 @@ void message_bufferer_slot_gateway_task_dispatcher::dl_tti_request(const dl_tti_
 
 void message_bufferer_slot_gateway_task_dispatcher::ul_tti_request(const ul_tti_request_message& msg)
 {
-  if (!executor.defer([this, msg]() { message_bufferer_gateway.handle_ul_tti_request(msg); })) {
+  if (!executor.defer([this, msg]()
+                          SRSRAN_RTSAN_NONBLOCKING { message_bufferer_gateway.handle_ul_tti_request(msg); })) {
     logger.warning("Sector#{}: Failed to cache UL_TTI.request message for slot '{}'",
                    sector_id,
                    slot_point(scs, msg.sfn, msg.slot));
@@ -53,7 +56,8 @@ void message_bufferer_slot_gateway_task_dispatcher::ul_tti_request(const ul_tti_
 
 void message_bufferer_slot_gateway_task_dispatcher::ul_dci_request(const ul_dci_request_message& msg)
 {
-  if (!executor.defer([this, msg]() { message_bufferer_gateway.handle_ul_dci_request(msg); })) {
+  if (!executor.defer([this, msg]()
+                          SRSRAN_RTSAN_NONBLOCKING { message_bufferer_gateway.handle_ul_dci_request(msg); })) {
     logger.warning("Sector#{}: Failed to cache UL_DCI.request message for slot '{}'",
                    sector_id,
                    slot_point(scs, msg.sfn, msg.slot));
@@ -62,7 +66,8 @@ void message_bufferer_slot_gateway_task_dispatcher::ul_dci_request(const ul_dci_
 
 void message_bufferer_slot_gateway_task_dispatcher::tx_data_request(const tx_data_request_message& msg)
 {
-  if (!executor.defer([this, msg]() { message_bufferer_gateway.handle_tx_data_request(msg); })) {
+  if (!executor.defer([this, msg]()
+                          SRSRAN_RTSAN_NONBLOCKING { message_bufferer_gateway.handle_tx_data_request(msg); })) {
     logger.warning("Sector#{}: Failed to cache TX_Data.request message for slot '{}'",
                    sector_id,
                    slot_point(scs, msg.sfn, msg.slot));
@@ -76,7 +81,8 @@ void message_bufferer_slot_gateway_task_dispatcher::update_current_slot(slot_poi
 
 void message_bufferer_slot_gateway_task_dispatcher::forward_cached_messages(slot_point slot)
 {
-  if (!executor.defer([this, slot]() { message_bufferer_gateway.forward_cached_messages(slot); })) {
+  if (!executor.defer([this, slot]()
+                          SRSRAN_RTSAN_NONBLOCKING { message_bufferer_gateway.forward_cached_messages(slot); })) {
     logger.warning("Sector#{}: Failed to dispatch cached messages for slot '{}'", sector_id, slot);
   }
 }

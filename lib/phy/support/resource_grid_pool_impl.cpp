@@ -14,6 +14,7 @@
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/rtsan.h"
 #include "srsran/support/srsran_assert.h"
 #include <mutex>
 
@@ -133,7 +134,7 @@ void resource_grid_pool_impl::notify_release_scope(unsigned identifier)
   }
 
   // Create lambda function for setting the grid to zero.
-  auto set_all_zero_func = [this, identifier]() {
+  auto set_all_zero_func = [this, identifier]() SRSRAN_RTSAN_NONBLOCKING {
     trace_point tp = l1_common_tracer.now();
 
     // Set grid to zero.

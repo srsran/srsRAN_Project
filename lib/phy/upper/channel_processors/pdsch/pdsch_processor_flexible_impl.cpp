@@ -13,6 +13,7 @@
 #include "pdsch_processor_validator_impl.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/ran/ptrs/ptrs_pattern.h"
+#include "srsran/support/rtsan.h"
 #include "srsran/support/tracing/event_tracing.h"
 
 using namespace srsran;
@@ -65,7 +66,7 @@ void pdsch_processor_flexible_impl::process(resource_grid_writer&               
       ++async_task_counter;
 
       // Process PT-RS concurrently.
-      auto ptrs_task = [this]() {
+      auto ptrs_task = [this]() SRSRAN_RTSAN_NONBLOCKING {
         pdsch_process_ptrs(*grid, ptrs_generator_pool->get(), config);
 
         // Decrement asynchronous task counter.
@@ -82,7 +83,7 @@ void pdsch_processor_flexible_impl::process(resource_grid_writer&               
     }
 
     // Process DM-RS concurrently.
-    auto dmrs_task = [this]() {
+    auto dmrs_task = [this]() SRSRAN_RTSAN_NONBLOCKING {
       pdsch_process_dmrs(*grid, dmrs_generator_pool->get(), config);
 
       // Decrement asynchronous task counter.
@@ -276,7 +277,7 @@ void pdsch_processor_flexible_impl::fork_cb_batches()
   cb_task_counter  = nof_cb_tasks;
   cb_batch_counter = 0;
 
-  auto async_task = [this, nof_cb_per_batch]() {
+  auto async_task = [this, nof_cb_per_batch]() SRSRAN_RTSAN_NONBLOCKING {
     // Select codeblock processor.
     pdsch_block_processor& block_processor = block_processor_pool->get();
 
