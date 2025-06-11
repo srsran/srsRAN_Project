@@ -98,7 +98,6 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_execution_contexts)
   dummy_dl_executor_mapper              dl_exec_mapper{dl_execs[0]};
   dummy_mac_event_indicator             du_mng_notifier;
   dummy_mac_result_notifier             phy_notifier;
-  dummy_scheduler_ue_metrics_notifier   sched_metrics_notif;
   dummy_scheduler_cell_metrics_notifier scheduler_cell_metrics_notif;
   dummy_mac_metrics_notifier            mac_metrics_notif;
   null_mac_pcap                         pcap;
@@ -114,7 +113,7 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_execution_contexts)
                     mac_expert_config{.configs = {{10000, 10000, 10000}}},
                     pcap,
                     timers,
-                    mac_config::metrics_config{.notifier = mac_metrics_notif, .sched_notifier = &sched_metrics_notif},
+                    mac_config::metrics_config{.notifier = mac_metrics_notif},
                     scheduler_expert_config{}};
   rnti_manager rnti_mng;
 
@@ -178,7 +177,7 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_tsan)
                     mac_expert_config{.configs = {{10000, 10000, 10000}}},
                     pcap,
                     timers,
-                    mac_config::metrics_config{.notifier = mac_metrics_notif, .sched_notifier = &sched_metrics_notif},
+                    mac_config::metrics_config{.notifier = mac_metrics_notif},
                     scheduler_expert_config{}};
   rnti_manager rnti_mng;
 

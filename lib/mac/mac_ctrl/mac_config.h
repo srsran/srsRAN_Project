@@ -26,10 +26,9 @@ class timer_manager;
 /// Config for MAC controller.
 struct mac_control_config {
   struct metrics_config {
-    std::chrono::milliseconds   period{1000};
-    mac_metrics_notifier&       mac_notifier;
-    scheduler_metrics_notifier* sched_notifier = nullptr;
-    unsigned                    max_nof_ue_events;
+    std::chrono::milliseconds period{1000};
+    mac_metrics_notifier&     mac_notifier;
+    unsigned                  max_nof_ue_events;
   };
 
   mac_ul_ccch_notifier&                 event_notifier;

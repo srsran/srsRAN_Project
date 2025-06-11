@@ -45,17 +45,15 @@ class mac_metrics_aggregator::cell_metric_handler final : public mac_cell_metric
                                                           public scheduler_cell_metrics_notifier
 {
 public:
-  cell_metric_handler(mac_metrics_aggregator&     parent_,
-                      du_cell_index_t             cell_index_,
-                      subcarrier_spacing          scs_common_,
-                      scheduler_metrics_notifier* sched_notifier_,
-                      du_cell_timer_source&       time_source_,
-                      srslog::basic_logger&       logger_) :
+  cell_metric_handler(mac_metrics_aggregator& parent_,
+                      du_cell_index_t         cell_index_,
+                      subcarrier_spacing      scs_common_,
+                      du_cell_timer_source&   time_source_,
+                      srslog::basic_logger&   logger_) :
     parent(parent_),
     cell_index(cell_index_),
     scs_common(scs_common_),
     period_slots(get_nof_slots_per_subframe(scs_common) * parent.cfg.period.count()),
-    sched_notifier(sched_notifier_),
     time_source(time_source_),
     report_queue(cell_report_queue_size, logger_, [ue_events = parent.cfg.max_nof_ue_events]() {
       return report_preinit(ue_events);
@@ -170,21 +168,15 @@ private:
     // Note: This function is called from the scheduler execution context.
     srsran_sanity_check(&report == &sched_builder->sched, "Invalid report being committed");
 
-    if (sched_notifier != nullptr) {
-      // TODO: Remove this and use only DU metrics interface.
-      sched_notifier->report_metrics(report);
-    }
-
     // Scheduler prepared report, now it is the turn of the MAC cell to prepare its report.
     mac_builder = std::move(sched_builder);
   }
 
-  mac_metrics_aggregator&     parent;
-  const du_cell_index_t       cell_index;
-  const subcarrier_spacing    scs_common;
-  const unsigned              period_slots;
-  scheduler_metrics_notifier* sched_notifier;
-  du_cell_timer_source&       time_source;
+  mac_metrics_aggregator&  parent;
+  const du_cell_index_t    cell_index;
+  const subcarrier_spacing scs_common;
+  const unsigned           period_slots;
+  du_cell_timer_source&    time_source;
 
   // Reports from a given cell.
   report_queue_type          report_queue;
@@ -225,9 +217,8 @@ cell_metric_report_config mac_metrics_aggregator::add_cell(du_cell_index_t      
   next_report.sched.cells.reserve(cells.size());
 
   // Create a handler for the new cell.
-  auto cell_handler =
-      std::make_unique<cell_metric_handler>(*this, cell_index, scs_common, cfg.sched_notifier, time_source, logger);
-  auto& cell_ref = *cell_handler;
+  auto  cell_handler = std::make_unique<cell_metric_handler>(*this, cell_index, scs_common, time_source, logger);
+  auto& cell_ref     = *cell_handler;
   cells.emplace(cell_index, std::move(cell_handler));
 
   // Return the cell report configuration.

@@ -90,13 +90,12 @@ protected:
   const subcarrier_spacing        scs = subcarrier_spacing::kHz15;
   const unsigned                  period_slots{static_cast<unsigned>(period.count() * get_nof_slots_per_subframe(scs))};
   unsigned aggr_timeout_slots = mac_metrics_aggregator::aggregation_timeout.count() * get_nof_slots_per_subframe(scs);
-  srslog::basic_logger&               logger = srslog::fetch_basic_logger("MAC", true);
-  timer_manager                       timers{2};
-  manual_task_worker                  task_worker{16};
-  dummy_mac_metrics_notifier          metric_notifier;
-  dummy_scheduler_ue_metrics_notifier sched_notifier;
-  du_time_controller                  du_timer{timers, task_worker, logger};
-  mac_metrics_aggregator metrics{mac_control_config::metrics_config{period, metric_notifier, &sched_notifier},
+  srslog::basic_logger&      logger = srslog::fetch_basic_logger("MAC", true);
+  timer_manager              timers{2};
+  manual_task_worker         task_worker{16};
+  dummy_mac_metrics_notifier metric_notifier;
+  du_time_controller         du_timer{timers, task_worker, logger};
+  mac_metrics_aggregator     metrics{mac_control_config::metrics_config{period, metric_notifier},
                                  task_worker,
                                  timers,
                                  logger};

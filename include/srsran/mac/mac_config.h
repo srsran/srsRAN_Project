@@ -42,12 +42,11 @@ struct mac_expert_config {
 /// \brief Configuration passed to MAC during its instantiation.
 struct mac_config {
   struct metrics_config {
-    std::chrono::milliseconds   period{1000};
-    bool                        mac_enabled;
-    bool                        sched_enabled;
-    unsigned                    max_nof_ue_events = 64;
-    mac_metrics_notifier&       notifier;
-    scheduler_metrics_notifier* sched_notifier = nullptr;
+    std::chrono::milliseconds period{1000};
+    bool                      mac_enabled;
+    bool                      sched_enabled;
+    unsigned                  max_nof_ue_events = 64;
+    mac_metrics_notifier&     notifier;
   };
 
   mac_ul_ccch_notifier&                 ul_ccch_notifier;
