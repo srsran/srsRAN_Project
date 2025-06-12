@@ -109,17 +109,18 @@ RUN /usr/local/etc/install_srsran_dependencies.sh run && \
 #########################################################
 
 FROM anchore/syft:v1.26.1 AS syft-bin
-FROM philipssoftware/spdxmerge:v0.2.0 AS spdx-merger
+FROM python:3.11.3-alpine AS spdx-merger
 COPY --from=syft-bin  /syft                      /syft
 COPY --from=runtime   /                          /rootfs
 COPY --from=builder   /opt/srs/share/srsran.spdx /sbom/srsran.spdx
 
 # Generate SPDX file for the container image
-RUN mkdir -p /sbom && /syft dir:/rootfs -o spdx > /sbom/container.spdx
+RUN mkdir -p /sbom /usr/local/etc/ && /syft dir:/rootfs -o spdx > /sbom/container.spdx
 # Merge the container SPDX with the build SPDX
-RUN sed -i -e '/def validate(self/,/return messages/ { /messages.append("ExtractedLicense text can not be None"/ { s#messages.append.*#return messages# } }' /usr/local/lib/python3.11/site-packages/spdx/license.py && \
+RUN pip install spdxmerge==0.2.0 && \
+    sed -i -e '/def validate(self/,/return messages/ { /messages.append("ExtractedLicense text can not be None"/ { s#messages.append.*#return messages# } }' /usr/local/lib/python3.11/site-packages/spdx/license.py && \
     sed -i -e 's|def write_text_value(tag, value, out):|def write_text_value(tag, value, out):\n    if value is None:\n        return|'  /usr/local/lib/python3.11/site-packages/spdx/writers/tagvalue.py && \
-    python3 spdxmerge/SPDXMerge.py \
+    spdxmerge \
       --docpath /sbom \
       --outpath /usr/local/etc/ \
       --name "srsran-image" \
@@ -127,7 +128,7 @@ RUN sed -i -e '/def validate(self/,/return messages/ { /messages.append("Extract
       --author "Software Radio Systems Ltd" \
       --email "srs@srs.io" \
       --docnamespace "https://srs.io/spdxdocs/srsran" \
-      --filetype T && \
+      --filetype T >/dev/null && \
     sed -i 's/^\(FilesAnalyzed:[[:space:]]*\)True/\1true/; s/^\(FilesAnalyzed:[[:space:]]*\)False/\1false/' /usr/local/etc/merged-SBoM-deep.spdx && \
     sed -i -E 's|^(LicenseID:.*)|\1\nExtractedText: NOASSERTION|' /usr/local/etc/merged-SBoM-deep.spdx && \
     sed -i '/^Relationship:.*#/d' /usr/local/etc/merged-SBoM-deep.spdx
