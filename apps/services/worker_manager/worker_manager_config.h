@@ -92,6 +92,8 @@ struct worker_manager_config {
     bool dedicated_io_ul_strand = true;
     /// Whether to enable task tracing.
     bool executor_tracing_enable = false;
+    /// Whether to log performance metrics for the CU-UP executors.
+    std::optional<std::chrono::milliseconds> metrics_period;
   };
 
   /// PCAP worker configuration.

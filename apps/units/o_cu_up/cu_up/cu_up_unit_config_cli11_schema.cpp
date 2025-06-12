@@ -172,6 +172,9 @@ static void configure_cli11_metrics_layers_args(CLI::App& app, cu_up_unit_metric
 {
   add_option(app, "--enable_e1ap", metrics_params.enable_e1ap, "Enable E1AP metrics")->capture_default_str();
   add_option(app, "--enable_pdcp", metrics_params.enable_pdcp, "Enable PDCP metrics")->capture_default_str();
+  add_option(
+      app, "--enable_cu_up_executor", metrics_params.enable_cu_up_executor, "Whether to log CU-UP executor metrics")
+      ->capture_default_str();
 }
 
 static void configure_cli11_metrics_args(CLI::App& app, cu_up_unit_metrics_config& metrics_params)
