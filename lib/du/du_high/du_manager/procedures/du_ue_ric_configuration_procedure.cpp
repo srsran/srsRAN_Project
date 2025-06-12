@@ -61,6 +61,10 @@ manual_event<du_mac_sched_control_config_response>& du_ue_ric_configuration_proc
                                // Await for UE configuration completion.
                                CORO_AWAIT_VALUE(const mac_ue_reconfiguration_response result, handle_mac_config());
 
+                               if (result.result) {
+                                 du_params.mac.ue_cfg.handle_ue_config_applied(result.ue_index);
+                               }
+
                                // Signal completion of UE configuration to external coroutine.
                                ue_config_completed.set(
                                    du_mac_sched_control_config_response{result.result, result.result, result.result});
