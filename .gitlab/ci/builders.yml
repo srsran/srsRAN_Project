@@ -298,11 +298,12 @@ ubuntu-dpdk-builder arm64:
       export DOCKERFILE=$CONTEXT/$OS_FAMILY
       export BUILD_ARGS="OS_NAME=${OS_NAME};VERSION=${OS_VERSION};TAG=${VERSION};RHEL_VERSION=${RHEL_CT_VERSION};CR_REGISTRY_URI=${CR_REGISTRY_URI}"
     - |
-      cp -r ${CI_PROJECT_DIR}/docker/scripts/. ${CI_PROJECT_DIR}/${CONTEXT}
-      ls -lah $CONTEXT
-    - |
-      mkdir -p $CONTEXT/uhd $CONTEXT/dpdk
-      ls -lah $CONTEXT/uhd $CONTEXT/dpdk
+      mkdir -p ${CI_PROJECT_DIR}/${CONTEXT}/lib
+      DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends curl apt-transport-https ca-certificates xz-utils
+      curl --header "PRIVATE-TOKEN: $CODEBOT_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/wls/25.03/libwls.a" -o ${CI_PROJECT_DIR}/${CONTEXT}/lib/libwls.a
+    - cp -r ${CI_PROJECT_DIR}/docker/scripts/. ${CI_PROJECT_DIR}/${CONTEXT}
+    - mkdir -p $CONTEXT/lib $CONTEXT/uhd $CONTEXT/dpdk
+    - ls -lah $CONTEXT $CONTEXT/lib $CONTEXT/uhd $CONTEXT/dpdk
   needs:
     - builder version
 
