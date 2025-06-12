@@ -278,7 +278,7 @@ void rlc_tx_um_entity::handle_changed_buffer_state()
   if (not pending_buffer_state.test_and_set(std::memory_order_seq_cst)) {
     logger.log_debug("Triggering buffer state update to lower layer");
     // Redirect handling of status to pcell_executor
-    if (not pcell_executor.defer([this]() { update_mac_buffer_state(); })) {
+    if (not pcell_executor.defer(TRACE_TASK([this]() { update_mac_buffer_state(); }))) {
       logger.log_error("Failed to enqueue buffer state update");
     }
   } else {

@@ -70,7 +70,7 @@ public:
 
       pooled_task();
 
-      handle_metrics(true, enqueue_tp, start_tp, start_rusg);
+      handle_metrics(true, enqueue_tp, start_tp, start_rusg, pooled_task.file, pooled_task.lineno);
       pooled_task = {};
       (void)free_tasks->try_push(task_idx);
     });
@@ -94,7 +94,7 @@ public:
 
       pooled_task();
 
-      handle_metrics(false, enqueue_tp, start_tp, start_rusg);
+      handle_metrics(false, enqueue_tp, start_tp, start_rusg, pooled_task.file, pooled_task.lineno);
       pooled_task = {};
       (void)free_tasks->try_push(task_idx);
     });
@@ -116,7 +116,9 @@ private:
   void handle_metrics(bool                                           is_exec,
                       time_point                                     enqueue_tp,
                       time_point                                     start_tp,
-                      const expected<resource_usage::snapshot, int>& start_rusg)
+                      const expected<resource_usage::snapshot, int>& start_rusg,
+                      const char*                                    file,
+                      int                                            line)
   {
     using namespace std::chrono;
 
@@ -141,7 +143,13 @@ private:
     }
 
     // Check if it is time for a new metric report.
-    auto telapsed_since_last_report = end_tp - last_tp;
+    auto                  telapsed_since_last_report = end_tp - last_tp;
+    static const unsigned THRESHOLD                  = 100;
+    if (duration_cast<milliseconds>(counters.task_max_latency).count() > THRESHOLD && file) {
+      // Report metrics.
+      metrics_logger.info(
+          "Executor metrics \"{}\": task took longer than {}ms to execute in {}:{} ", name, THRESHOLD, file, line);
+    }
     if (telapsed_since_last_report >= period) {
       // Report metrics.
       metrics_logger.info("Executor metrics \"{}\": nof_executes={} nof_defers={} enqueue_avg={}usec "

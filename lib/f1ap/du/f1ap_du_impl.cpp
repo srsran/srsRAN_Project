@@ -347,7 +347,7 @@ void f1ap_du_impl::handle_message(const f1ap_message& msg)
   using pdu_types = f1ap_pdu_c::types_opts;
 
   // Run F1AP protocols in Control executor.
-  if (not ctrl_exec.execute([this, msg]() {
+  if (not ctrl_exec.execute(TRACE_TASK([this, msg]() {
         // Log message.
         log_pdu(true, msg);
 
@@ -368,7 +368,7 @@ void f1ap_du_impl::handle_message(const f1ap_message& msg)
             logger.error("Invalid PDU type");
             break;
         }
-      })) {
+      }))) {
     logger.error("Unable to dispatch handling of F1AP PDU. Cause: DU task queue is full");
     // TODO: Handle.
     return;

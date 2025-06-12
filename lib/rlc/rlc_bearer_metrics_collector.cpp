@@ -33,7 +33,7 @@ rlc_bearer_metrics_collector::rlc_bearer_metrics_collector(gnb_du_id_t          
 
 void rlc_bearer_metrics_collector::push_tx_high_metrics(rlc_tx_metrics_higher m_higher_)
 {
-  if (not ue_executor.execute([this, m_higher_]() { push_tx_high_metrics_impl(m_higher_); })) {
+  if (not ue_executor.execute(TRACE_TASK([this, m_higher_]() { push_tx_high_metrics_impl(m_higher_); }))) {
     logger.log_error("Could not push TX high metrics");
   }
 }
@@ -43,14 +43,14 @@ void rlc_bearer_metrics_collector::push_tx_low_metrics(rlc_tx_metrics_lower m_lo
   // Because of its size, passing this metrics object directly through a capture in a unique_task would involve malloc
   // and free. Therefore we pass the object through a triple buffer instead.
   metrics_lower_triple_buf.write_and_commit(m_lower_);
-  if (not ue_executor.execute([this]() { push_tx_low_metrics_impl(metrics_lower_triple_buf.read()); })) {
+  if (not ue_executor.execute(TRACE_TASK([this]() { push_tx_low_metrics_impl(metrics_lower_triple_buf.read()); }))) {
     logger.log_error("Could not push TX low metrics");
   }
 }
 
 void rlc_bearer_metrics_collector::push_rx_high_metrics(rlc_rx_metrics m_rx_high_)
 {
-  if (not ue_executor.execute([this, m_rx_high_]() { push_rx_high_metrics_impl(m_rx_high_); })) {
+  if (not ue_executor.execute(TRACE_TASK([this, m_rx_high_]() { push_rx_high_metrics_impl(m_rx_high_); }))) {
     logger.log_error("Could not push RX high metrics");
   }
 }

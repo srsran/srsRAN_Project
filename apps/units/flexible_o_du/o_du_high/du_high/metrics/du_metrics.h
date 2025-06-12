@@ -13,6 +13,7 @@
 #include "apps/services/metrics/metrics_consumer.h"
 #include "apps/services/metrics/metrics_properties.h"
 #include "apps/services/metrics/metrics_set.h"
+#include "srsran/adt/unique_function.h"
 #include "srsran/du/du_high/du_metrics_report.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/support/executors/task_executor.h"
@@ -49,11 +50,11 @@ inline auto du_metrics_callback = [](const app_services::metrics_set&      repor
                                      srslog::basic_logger&                 logger) {
   const auto& metric = static_cast<const du_metrics_impl&>(report);
 
-  if (!executor.defer([metric, consumers]() {
+  if (!executor.defer(TRACE_TASK([metric, consumers]() {
         for (auto& consumer : consumers) {
           consumer->handle_metric(metric);
         }
-      })) {
+      }))) {
     logger.error("Failed to dispatch the metric '{}'", metric.get_properties().name());
   }
 };

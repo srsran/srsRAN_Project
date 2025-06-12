@@ -55,7 +55,7 @@ bool udp_network_gateway_impl::subscribe_to(io_broker& broker)
 
 void udp_network_gateway_impl::handle_pdu(byte_buffer pdu, const sockaddr_storage& dest_addr)
 {
-  auto fn = [this, p = std::move(pdu), dest_addr]() mutable { handle_pdu_impl(std::move(p), dest_addr); };
+  auto fn = TRACE_TASK([this, p = std::move(pdu), dest_addr]() mutable { handle_pdu_impl(std::move(p), dest_addr); });
   if (not io_tx_executor.execute(std::move(fn))) {
     logger.info("Dropped PDU, queue is full.");
   }
