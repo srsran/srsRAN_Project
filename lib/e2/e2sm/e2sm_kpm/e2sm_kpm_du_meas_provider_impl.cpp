@@ -597,16 +597,16 @@ bool e2sm_kpm_du_meas_provider_impl::get_delay_ul(const asn1::e2sm::label_info_l
   }
 
   if (ues.empty()) {
-    double mean_ul_delay_ms = std::accumulate(last_ue_metrics.begin(),
-                                              last_ue_metrics.end(),
-                                              0,
-                                              [](size_t sum, const scheduler_ue_metrics& metric) {
-                                                return sum + metric.avg_crc_delay_ms.value_or(0.0f);
-                                              }) /
-                              last_ue_metrics.size();
+    float mean_ul_delay_ms = std::accumulate(last_ue_metrics.begin(),
+                                             last_ue_metrics.end(),
+                                             0,
+                                             [](size_t sum, const scheduler_ue_metrics& metric) {
+                                               return sum + metric.avg_crc_delay_ms.value_or(0.0f);
+                                             }) /
+                             last_ue_metrics.size();
     meas_record_item_c meas_record_item;
     if (mean_ul_delay_ms) {
-      meas_record_item.set_real().value = static_cast<float>(mean_ul_delay_ms);
+      meas_record_item.set_real().value = mean_ul_delay_ms * 10; // unit is 0.1ms
     } else {
       meas_record_item.set_no_value();
     }
@@ -619,7 +619,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_delay_ul(const asn1::e2sm::label_info_l
     uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
     meas_record_item_c  meas_record_item;
     if (last_ue_metrics[ue_idx].avg_crc_delay_ms.has_value()) {
-      meas_record_item.set_real().value = last_ue_metrics[ue_idx].avg_crc_delay_ms.value();
+      meas_record_item.set_real().value = (last_ue_metrics[ue_idx].avg_crc_delay_ms.value() * 10); // unit is 0.1ms
     } else {
       meas_record_item.set_no_value();
     }
@@ -1018,7 +1018,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_rlc_sdu_latency(const asn1::e2sm
       }
     }
     if (av_ue_sdu_latency_us) {
-      float av_ue_sdu_latency_ms = (av_ue_sdu_latency_us / ue_aggr_rlc_metrics.size()) / 1e3; // Unit is 0.1 ms.
+      float av_ue_sdu_latency_ms = (av_ue_sdu_latency_us / ue_aggr_rlc_metrics.size()) / 100; // Unit is 0.1 ms.
       av_ue_sdu_latency_ms       = std::round(av_ue_sdu_latency_ms * 10.0f) / 10.0f;
       meas_record_item.set_real();
       meas_record_item.real().value = av_ue_sdu_latency_ms;
@@ -1052,7 +1052,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_rlc_sdu_latency(const asn1::e2sm
                           0,
                           [](size_t sum, const rlc_metrics& metric) { return sum + metric.tx.tx_high.num_sdus; });
       if (tot_sdu_latency_us) {
-        float av_ue_sdu_latency_ms = (tot_sdu_latency_us / tot_num_sdus) / 1e3; // Unit is 0.1 ms.
+        float av_ue_sdu_latency_ms = (static_cast<float>(tot_sdu_latency_us) / tot_num_sdus) / 100; // Unit is 0.1 ms.
         av_ue_sdu_latency_ms       = std::round(av_ue_sdu_latency_ms * 10.0f) / 10.0f;
         meas_record_item.set_real();
         meas_record_item.real().value = av_ue_sdu_latency_ms;
@@ -1102,7 +1102,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_rlc_sdu_latency(const asn1::e2sm
     }
     if (av_ue_sdu_latency_us) {
       meas_record_item.set_real();
-      meas_record_item.real().value = (av_ue_sdu_latency_us / ue_aggr_rlc_metrics.size()) / 1e3; // Unit is ms.
+      meas_record_item.real().value = (av_ue_sdu_latency_us / ue_aggr_rlc_metrics.size()) / 100; // Unit is 0.1ms.
       items.push_back(meas_record_item);
       meas_collected = true;
     } else {
@@ -1122,7 +1122,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_rlc_sdu_latency(const asn1::e2sm
         meas_collected = true;
         continue;
       }
-      int tot_sdu_latency =
+      int tot_sdu_latency_us =
           std::accumulate(ue_aggr_rlc_metrics[ue_idx].begin(),
                           ue_aggr_rlc_metrics[ue_idx].end(),
                           0,
@@ -1132,9 +1132,9 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_rlc_sdu_latency(const asn1::e2sm
                           ue_aggr_rlc_metrics[ue_idx].end(),
                           0,
                           [](size_t sum, const rlc_metrics& metric) { return sum + metric.rx.num_sdus; });
-      if (tot_sdu_latency) {
+      if (tot_sdu_latency_us) {
         meas_record_item.set_real();
-        meas_record_item.real().value = (tot_sdu_latency / tot_num_sdus) / 1e3; // Unit is ms.
+        meas_record_item.real().value = (static_cast<float>(tot_sdu_latency_us) / tot_num_sdus) / 100; // Unit is 0.1ms.
         items.push_back(meas_record_item);
         meas_collected = true;
       } else {
