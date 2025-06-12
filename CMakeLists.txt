@@ -75,10 +75,12 @@ option(ENABLE_LIBNUMA        "Enable LibNUMA"                             OFF)
 option(ENABLE_EXPORT         "Enable PIC and export libraries"            OFF)
 option(ENABLE_TRX_DRIVER     "Enable Amarisoft TRX driver library"        OFF)
 option(ENABLE_PLUGINS        "Compile plugins in the plugin folder"       ON)
-option(BUILD_TESTS           "Compile tests"                              ON)
+option(BUILD_TESTING         "Compile tests"                              ON)
 option(ENABLE_GPROF          "Enable gprof"                               OFF)
-option(USE_PHY_TESTVECTORS   "Enable testvector PHY tests"                ON)
 option(FORCE_DEBUG_INFO      "Add debug information to Release build"     OFF)
+if (BUILD_TESTING)
+option(USE_PHY_TESTVECTORS   "Enable testvector PHY tests"                ON)
+endif(BUILD_TESTING)
 
 # Set assertion level options and default value.
 set(ASSERT_LEVEL "AUTO" CACHE STRING "Assertion paranoia level")
@@ -381,13 +383,15 @@ if (ENABLE_ARMPL AND ${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
 endif (ENABLE_ARMPL AND ${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
 
 # Google Tests
-if (BUILD_TESTS)
+if (BUILD_TESTING)
     find_package(GTest REQUIRED)
     # Alias gtest_discover_tests increase discovery the timeout.
     function(gtest_discover_tests)
         _gtest_discover_tests(${ARGV} DISCOVERY_TIMEOUT 15)
     endfunction()
-endif (BUILD_TESTS)
+else()
+    message(STATUS "Skipping Tests. Set BUILD_TESTING to On to compile tests.")
+endif (BUILD_TESTING)
 
 # Threads
 find_package(Threads REQUIRED)
@@ -582,12 +586,12 @@ add_subdirectory(external)
 add_subdirectory(lib)
 add_subdirectory(utils)
 
-if (BUILD_TESTS)
+if (BUILD_TESTING)
     add_subdirectory(tests/test_doubles)
     add_subdirectory(tests/unittests)
     add_subdirectory(tests/integrationtests)
     add_subdirectory(tests/benchmarks)
-endif (BUILD_TESTS)
+endif (BUILD_TESTING)
 
 if (ENABLE_PLUGINS)
     # Discover all subdirectories in the plugin directory (but not recursively)

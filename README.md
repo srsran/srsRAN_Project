@@ -26,7 +26,7 @@ Build Instructions
   * mbedTLS:             <https://www.trustedfirmware.org/projects/mbed-tls/>
   * git-lfs:             <https://git-lfs.github.com/>
   * googletest:          <https://github.com/google/googletest/>
-    * You can skip test building by using the cmake option `-DBUILD_TESTS=False`. GoogleTest is not mandatory when building without tests.
+    * You can skip test building by using the cmake option `-DBUILD_TESTING=False`. GoogleTest is not mandatory when building without tests.
 
 You can install the required libraries for some example distributions with the commands below:
 
