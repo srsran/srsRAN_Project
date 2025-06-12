@@ -140,7 +140,11 @@ function(sbom_generate)
 	endif()
 
 	if("${SBOM_GENERATE_EXTREF}" STREQUAL "")
-		string(LENGTH ${GIT_COMMIT_HASH} _len)
+		if(NOT DEFINED GIT_COMMIT_HASH OR "${GIT_COMMIT_HASH}" STREQUAL "")
+			set(LENGTH 0)
+		else()
+			string(LENGTH ${GIT_COMMIT_HASH} _len)
+		endif()
 
 		if(NOT "${SBOM_GENERATE_DOWNLOAD_URL}" STREQUAL ""
 		   AND NOT "${SBOM_GENERATE_DOWNLOAD_URL}" STREQUAL "NOASSERTION"
