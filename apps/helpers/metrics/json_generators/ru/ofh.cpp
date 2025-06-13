@@ -1,0 +1,185 @@
+/*
+ *
+ * Copyright 2021-2025 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#include "ofh.h"
+#include "helpers.h"
+#include "srsran/ofh/ofh_metrics.h"
+
+using namespace srsran;
+using namespace app_helpers;
+using namespace json_generators;
+
+namespace srsran {
+namespace ofh {
+
+void to_json(nlohmann::json& json, const received_messages_metrics& metrics)
+{
+  json["total"]   = metrics.nof_early_messages + metrics.nof_late_messages + metrics.nof_on_time_messages;
+  json["early"]   = metrics.nof_early_messages;
+  json["on_time"] = metrics.nof_on_time_messages;
+  json["late"]    = metrics.nof_late_messages;
+}
+
+} // namespace ofh
+} // namespace srsran
+
+static nlohmann::json generate_ethernet_rx(const ether::receiver_metrics& metrics, unsigned metrics_period_ms)
+{
+  nlohmann::json json;
+
+  json["average_throughput_Mbps"] = validate_fp_value(static_cast<float>(metrics.total_nof_bytes * CHAR_BIT) /
+                                                      static_cast<float>(metrics_period_ms * 1e3));
+  json["average_latency_us"]      = validate_fp_value(metrics.avg_packet_rx_latency_us);
+  json["max_latency_us"]          = validate_fp_value(metrics.max_packet_rx_latency_us);
+  json["cpu_usage_percent"]       = validate_fp_value(metrics.cpu_usage_us / (metrics_period_ms * 1e3) * 100.0f);
+
+  return json;
+}
+
+static nlohmann::json generate_message_decoder_item(const ofh::rx_data_flow_perf_metrics& metrics,
+                                                    unsigned                              metrics_period_ms)
+{
+  nlohmann::json json;
+
+  json["average_latency_us"] = validate_fp_value(metrics.message_unpacking_avg_latency_us);
+  json["max_latency_us"]     = validate_fp_value(metrics.message_unpacking_max_latency_us);
+  json["cpu_usage_percent"]  = validate_fp_value(metrics.cpu_usage_us / (metrics_period_ms * 1e3) * 100.0f);
+
+  return json;
+}
+
+static nlohmann::json generate_message_decoder(const ofh::message_decoding_performance_metrics& metrics,
+                                               unsigned                                         metrics_period_ms)
+{
+  nlohmann::json json;
+
+  json["prach"] = generate_message_decoder_item(metrics.prach_processing_metrics, metrics_period_ms);
+  json["data"]  = generate_message_decoder_item(metrics.data_processing_metrics, metrics_period_ms);
+
+  return json;
+}
+
+static nlohmann::json generate_uplink(const ofh::receiver_metrics& metrics, unsigned metrics_period_ms)
+{
+  nlohmann::json json;
+
+  json["received_packets"]  = metrics.rx_messages_metrics;
+  json["ethernet_receiver"] = generate_ethernet_rx(metrics.eth_receiver_metrics, metrics_period_ms);
+  json["message_decoder"]   = generate_message_decoder(metrics.rx_decoding_perf_metrics, metrics_period_ms);
+
+  return json;
+}
+
+static nlohmann::json generate_ethernet_tx(const ether::transmitter_metrics& metrics, unsigned metrics_period_ms)
+{
+  nlohmann::json json;
+
+  json["average_throughput_Mbps"] = validate_fp_value(static_cast<float>(metrics.total_nof_bytes * CHAR_BIT) /
+                                                      static_cast<float>(metrics_period_ms * 1e3));
+  json["average_latency_us"]      = validate_fp_value(metrics.avg_packet_tx_latency_us);
+  json["max_latency_us"]          = validate_fp_value(metrics.max_packet_tx_latency_us);
+  json["cpu_usage_percent"] =
+      validate_fp_value(validate_fp_value(metrics.cpu_usage_us / (metrics_period_ms * 1e3) * 100.0f));
+
+  return json;
+}
+
+static nlohmann::json generate_tx_data_flow(const ofh::tx_data_flow_perf_metrics& metrics, unsigned metrics_period_ms)
+{
+  nlohmann::json json;
+
+  json["average_latency_us"] = validate_fp_value(metrics.message_packing_avg_latency_us);
+  json["max_latency_us"]     = validate_fp_value(metrics.message_packing_max_latency_us);
+  json["cpu_usage_percent"] =
+      validate_fp_value(validate_fp_value(metrics.cpu_usage_us / (metrics_period_ms * 1e3) * 100.0f));
+
+  return json;
+}
+
+static nlohmann::json generate_message_encoder(const ofh::transmitter_metrics& metrics, unsigned metrics_period_ms)
+{
+  nlohmann::json json;
+
+  json["dl_cp"] = generate_tx_data_flow(metrics.dl_metrics.dl_cp_metrics, metrics_period_ms);
+  json["ul_cp"] = generate_tx_data_flow(metrics.ul_metrics.ul_cp_metrics, metrics_period_ms);
+  json["dl_up"] = generate_tx_data_flow(metrics.dl_metrics.dl_up_metrics, metrics_period_ms);
+
+  return json;
+}
+
+static nlohmann::json generate_message_transmitter(const ofh::message_transmitter_metrics& metrics,
+                                                   unsigned                                metrics_period_ms)
+{
+  nlohmann::json json;
+
+  json["average_latency_us"] = validate_fp_value(metrics.message_tx_avg_latency_us);
+  json["max_latency_us"]     = validate_fp_value(metrics.message_tx_max_latency_us);
+  json["cpu_usage_percent"] =
+      validate_fp_value(validate_fp_value(metrics.cpu_usage_us / (metrics_period_ms * 1e3) * 100.0f));
+
+  return json;
+}
+
+static nlohmann::json generate_transmitter_statistics(const ofh::transmitter_metrics& metrics)
+{
+  nlohmann::json json;
+
+  json["late_dl_grids"]    = metrics.dl_metrics.nof_late_dl_grids;
+  json["late_ul_requests"] = metrics.ul_metrics.nof_late_ul_requests;
+
+  return json;
+}
+
+static nlohmann::json generate_downlink(const ofh::transmitter_metrics& metrics, unsigned metrics_period_ms)
+{
+  nlohmann::json json;
+
+  json["ethernet_transmitter"] = generate_ethernet_tx(metrics.eth_transmitter_metrics, metrics_period_ms);
+  json["message_encoder"]      = generate_message_encoder(metrics, metrics_period_ms);
+  json["message_transmitter"]  = generate_message_transmitter(metrics.message_tx_metrics, metrics_period_ms);
+  json["transmitter_stats"]    = generate_transmitter_statistics(metrics);
+
+  return json;
+}
+
+static nlohmann::json generate_ofh_cell(const ofh::sector_metrics& metrics, pci_t pci)
+{
+  nlohmann::json json;
+
+  json["pci"] = pci;
+  json["ul"]  = generate_uplink(metrics.rx_metrics, metrics.metrics_period_ms.count());
+  json["dl"]  = generate_downlink(metrics.tx_metrics, metrics.metrics_period_ms.count());
+
+  return json;
+}
+
+nlohmann::json json_generators::generate(const ofh::metrics& metrics, span<const pci_t> pci_sector_map)
+{
+  nlohmann::json json;
+
+  json["timestamp"] = get_time_stamp();
+  auto& json_ru     = json["ru"];
+  auto& json_ofh    = json_ru["ofh"];
+
+  for (const auto& cell : metrics.sectors) {
+    srsran_assert(cell.sector_id < pci_sector_map.size(),
+                  "Sector id '{}' out of range of the pci-sector mapper. Size of the mapper is '{}' ",
+                  cell.sector_id,
+                  pci_sector_map.size());
+    json_ofh.emplace_back(generate_ofh_cell(cell, pci_sector_map[cell.sector_id]));
+  }
+
+  return json;
+}
+
+std::string json_generators::generate_string(const ofh::metrics& metrics, span<const pci_t> pci_sector_map, int indent)
+{
+  return generate(metrics, pci_sector_map).dump(indent);
+}

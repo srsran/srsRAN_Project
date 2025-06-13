@@ -6,6 +6,8 @@
 # the distribution.
 #
 
+add_subdirectory(json_generators)
+
 set(SOURCES
         metrics_config_cli11_schema.cpp
         metrics_config_yaml_writer.cpp
