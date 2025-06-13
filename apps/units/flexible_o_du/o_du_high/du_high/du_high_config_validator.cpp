@@ -822,6 +822,8 @@ static bool validate_tdd_ul_dl_pattern_unit_config(const tdd_ul_dl_pattern_unit_
   }
 
   // Extended CP not currently supported: assume 14 symbols per slot; 2 symbols for DL-to-UL switching.
+  // As per "5G-NR in Bullets", Table 352, we consider a number of guard symbols that accommodates both SCS 15kHz and
+  // 30kHz.
   if (config.nof_dl_symbols + config.nof_ul_symbols > NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - 2U) {
     fmt::print("Invalid TDD pattern: the sum of DL and UL symbols in the special slot should not exceed 12.\n");
     return false;
