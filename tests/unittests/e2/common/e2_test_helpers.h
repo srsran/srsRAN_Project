@@ -888,10 +888,7 @@ public:
   {
     return srs_du::du_param_config_response{};
   }
-  srs_du::du_si_pdu_update_response handle_si_pdu_update(const srs_du::du_si_pdu_update_request& req) override
-  {
-    return srs_du::du_si_pdu_update_response{};
-  }
+  void handle_si_pdu_update(const srs_du::du_si_pdu_update_request& req) override {}
 };
 
 /// Dummy implementation of the CU configurator interface.

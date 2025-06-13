@@ -249,26 +249,17 @@ du_param_config_response du_manager_impl::handle_operator_config_request(const d
   return fut.get();
 }
 
-du_si_pdu_update_response du_manager_impl::handle_si_pdu_update(const du_si_pdu_update_request& req)
+void du_manager_impl::handle_si_pdu_update(const du_si_pdu_update_request& req)
 {
-  std::promise<du_si_pdu_update_response> p;
-  std::future<du_si_pdu_update_response>  fut = p.get_future();
+  schedule_async_task(launch_async([&req, this](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
 
-  // Switch to DU manager execution context.
-  execute_until_success(params.services.du_mng_exec, params.services.timers, [this, req, &p]() {
-    // Dispatch common task.
-    schedule_async_task(launch_async([&](coro_context<async_task<void>>& ctx) {
-      CORO_BEGIN(ctx);
+    if (not running) {
+      // Already stopped.
+      CORO_EARLY_RETURN();
+    }
+    CORO_AWAIT(start_du_mac_si_pdu_update(req, params, cell_mng));
 
-      // Launch procedure to update SI PDU.
-      CORO_AWAIT_VALUE(auto resp, start_du_mac_si_pdu_update(req, params, cell_mng));
-
-      // Signal back to caller.
-      p.set_value(resp);
-
-      CORO_RETURN();
-    }));
-  });
-
-  return fut.get();
+    CORO_RETURN();
+  }));
 }

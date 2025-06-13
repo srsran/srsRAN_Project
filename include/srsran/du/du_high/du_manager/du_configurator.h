@@ -94,7 +94,7 @@ public:
   virtual du_param_config_response handle_operator_config_request(const du_param_config_request& req) = 0;
 
   /// Apply new SI PDU requested from outside the DU.
-  virtual du_si_pdu_update_response handle_si_pdu_update(const du_si_pdu_update_request& req) = 0;
+  virtual void handle_si_pdu_update(const du_si_pdu_update_request& req) = 0;
 };
 
 } // namespace srs_du
