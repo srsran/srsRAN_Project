@@ -869,7 +869,6 @@ def test_s72(
         protocol=protocol,
         direction=direction,
         gnb_post_cmd=(
-            "log --all_level=warning --lib_level=warning",
             "expert_execution threads non_rt --non_rt_task_queue_size=4096",
             "expert_phy --max_proc_delay=4",
         ),

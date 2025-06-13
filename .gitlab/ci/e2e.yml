@@ -669,13 +669,13 @@ viavi 24h:
   variables:
     GROUP: rf
     TESTBED: s72_uesim
-    E2E_LOG_LEVEL: info
+    E2E_LOG_LEVEL: warning
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
       when: delayed
       start_in: 8 hours # woraround: let zmq-uesim finish first
   needs:
-    - job: basic avx2 dpdk
+    - job: basic avx2 dpdk rtsan
       artifacts: true
     - *retina-needs
 

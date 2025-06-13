@@ -1982,7 +1982,7 @@ basic ru dummy:
     <<: *build_artifacts
     expire_in: 3 days
 
-basic avx2 dpdk:
+basic avx2 dpdk rtsan:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
@@ -1990,13 +1990,15 @@ basic avx2 dpdk:
   interruptible: false
   variables:
     SRS_TARGET: gnb_split_7_2
-    OS: ubuntu-24.04
-    COMPILER: gcc
+    OS: ubuntu-24.04-rtsan
+    COMPILER: clang
     CMAKE_BUILD_TYPE: Release
     TEST_MODE: none
     ENABLE_UHD: "False"
     ENABLE_ZEROMQ: "False"
     ENABLE_DPDK: "True"
+    ENABLE_RTSAN: "True"
+    ENABLE_WERROR: "False"
     DPDK_VERSION: "23.11.1_avx2"
     MARCH: x86-64-v3
     FORCE_DEBUG_INFO: "True"
