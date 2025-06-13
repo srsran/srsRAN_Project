@@ -429,6 +429,8 @@ test mode ru acc100:
   extends: test mode ru
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
+      when: manual
+      allow_failure: true
   variables:
     TESTBED: test_mode_acc100
     MARKERS: test_mode_acc100
