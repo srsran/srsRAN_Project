@@ -740,6 +740,8 @@ pdsch_config srsran::config_helpers::make_default_pdsch_config(const cell_config
   pdsch_cfg.prb_bndlg.bundling.emplace<prb_bundling::static_bundling>(
       prb_bundling::static_bundling({.sz = prb_bundling::static_bundling::bundling_size::wideband}));
 
+  pdsch_cfg.vrb_to_prb_interleaving = vrb_to_prb::mapping_type::non_interleaved;
+
   if (params.csi_rs_enabled) {
     const csi_helper::csi_builder_params csi_params = make_default_csi_builder_params(params);
 

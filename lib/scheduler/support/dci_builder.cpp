@@ -266,10 +266,9 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
   f1_1.payload_size = dci_sz.format1_1_ue_size.value();
 
   if (dci_sz_cfg.interleaved_vrb_prb_mapping.has_value() and dci_sz_cfg.interleaved_vrb_prb_mapping.value()) {
-    if (opt_pdsch_cfg.value().vrb_to_prb_itlvr.has_value()) {
-      f1_1.vrb_prb_mapping = enable_interleaving
-                                 ? static_cast<vrb_to_prb::mapping_type>(opt_pdsch_cfg.value().vrb_to_prb_itlvr.value())
-                                 : vrb_to_prb::mapping_type::non_interleaved;
+    if (opt_pdsch_cfg.value().vrb_to_prb_interleaving != vrb_to_prb::mapping_type::non_interleaved) {
+      f1_1.vrb_prb_mapping = enable_interleaving ? opt_pdsch_cfg.value().vrb_to_prb_interleaving
+                                                 : vrb_to_prb::mapping_type::non_interleaved;
     }
   }
 

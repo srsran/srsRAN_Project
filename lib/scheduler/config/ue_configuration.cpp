@@ -158,7 +158,7 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
   const auto&                              opt_pdsch_cfg              = active_bwp.dl_ded.value()->pdsch_cfg;
   const auto*                              opt_pdsch_serving_cell_cfg = ue_cell_cfg.pdsch_serving_cell_cfg();
 
-  dci_size_config dci_sz_cfg = dci_size_config{
+  auto dci_sz_cfg = dci_size_config{
       is_dci_format_monitored_in_ue_ss(ue_cell_cfg, active_bwp.bwp_id, true),
       is_dci_format_monitored_in_ue_ss(ue_cell_cfg, active_bwp.bwp_id, false),
       init_dl_bwp.generic_params.crbs.length(),
@@ -308,15 +308,17 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
         break;
       }
       case pdsch_config::resource_allocation::resource_allocation_type_1: {
-        dci_sz_cfg.pdsch_res_allocation_type   = resource_allocation::resource_allocation_type_1;
-        dci_sz_cfg.interleaved_vrb_prb_mapping = opt_pdsch_cfg.value().vrb_to_prb_itlvr.has_value();
+        dci_sz_cfg.pdsch_res_allocation_type = resource_allocation::resource_allocation_type_1;
+        dci_sz_cfg.interleaved_vrb_prb_mapping =
+            opt_pdsch_cfg.value().vrb_to_prb_interleaving != vrb_to_prb::mapping_type::non_interleaved;
         break;
       }
       case pdsch_config::resource_allocation::dynamic_switch: {
         dci_sz_cfg.pdsch_res_allocation_type = resource_allocation::dynamic_switch;
         dci_sz_cfg.nof_dl_rb_groups          = static_cast<unsigned>(
             get_nominal_rbg_size(active_dl_bwp.crbs.length(), opt_pdsch_cfg.value().rbg_sz == rbg_size::config1));
-        dci_sz_cfg.interleaved_vrb_prb_mapping = opt_pdsch_cfg.value().vrb_to_prb_itlvr.has_value();
+        dci_sz_cfg.interleaved_vrb_prb_mapping =
+            opt_pdsch_cfg.value().vrb_to_prb_interleaving != vrb_to_prb::mapping_type::non_interleaved;
         break;
       }
     }

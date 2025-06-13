@@ -1092,17 +1092,17 @@ calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_config& 
       [](const tci_state& st) { return st.state_id; });
 
   // VRB-to-PRB Interleaver.
-  if (dest.vrb_to_prb_itlvr.has_value()) {
+  if (dest.vrb_to_prb_interleaving != srsran::vrb_to_prb::mapping_type::non_interleaved) {
     out.vrb_to_prb_interleaver_present = true;
-    switch (dest.vrb_to_prb_itlvr.value()) {
-      case pdsch_config::vrb_to_prb_interleaver::n2:
+    switch (dest.vrb_to_prb_interleaving) {
+      case srsran::vrb_to_prb::mapping_type::interleaved_n2:
         out.vrb_to_prb_interleaver = pdsch_cfg_s::vrb_to_prb_interleaver_opts::n2;
         break;
-      case pdsch_config::vrb_to_prb_interleaver::n4:
+      case srsran::vrb_to_prb::mapping_type::interleaved_n4:
         out.vrb_to_prb_interleaver = pdsch_cfg_s::vrb_to_prb_interleaver_opts::n4;
         break;
       default:
-        srsran_assertion_failure("Invalid VRB-to-PRB Interleaver={}", fmt::underlying(dest.vrb_to_prb_itlvr.value()));
+        srsran_assertion_failure("Invalid VRB-to-PRB Interleaver={}", fmt::underlying(dest.vrb_to_prb_interleaving));
     }
   }
 

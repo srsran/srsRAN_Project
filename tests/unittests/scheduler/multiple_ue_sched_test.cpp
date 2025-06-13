@@ -242,18 +242,8 @@ protected:
 
     ue_creation_req.ue_index = ue_index;
     ue_creation_req.crnti    = to_rnti(allocate_rnti());
-    switch (bench.value().expert_cfg.ue.pdsch_interleaving_bundle_size) {
-      case vrb_to_prb::mapping_type::interleaved_n2:
-        (*ue_creation_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg->vrb_to_prb_itlvr =
-            pdsch_config::vrb_to_prb_interleaver::n2;
-        break;
-      case vrb_to_prb::mapping_type::interleaved_n4:
-        (*ue_creation_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg->vrb_to_prb_itlvr =
-            pdsch_config::vrb_to_prb_interleaver::n4;
-        break;
-      default:
-        break;
-    }
+    (*ue_creation_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg->vrb_to_prb_interleaving =
+        bench.value().expert_cfg.ue.pdsch_interleaving_bundle_size;
 
     auto it = std::find_if(ue_creation_req.cfg.lc_config_list->begin(),
                            ue_creation_req.cfg.lc_config_list->end(),
@@ -279,18 +269,8 @@ protected:
   void add_ue(sched_ue_creation_request_message& ue_create_req, bool enable_pusch_transform_precoding)
   {
     pucch_cfg_builder.add_build_new_ue_pucch_cfg(ue_create_req.cfg.cells.value()[0].serv_cell_cfg);
-    switch (bench.value().expert_cfg.ue.pdsch_interleaving_bundle_size) {
-      case vrb_to_prb::mapping_type::interleaved_n2:
-        (*ue_create_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg->vrb_to_prb_itlvr =
-            pdsch_config::vrb_to_prb_interleaver::n2;
-        break;
-      case vrb_to_prb::mapping_type::interleaved_n4:
-        (*ue_create_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg->vrb_to_prb_itlvr =
-            pdsch_config::vrb_to_prb_interleaver::n4;
-        break;
-      default:
-        break;
-    }
+    (*ue_create_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg->vrb_to_prb_interleaving =
+        bench.value().expert_cfg.ue.pdsch_interleaving_bundle_size;
     if (enable_pusch_transform_precoding) {
       ue_create_req.cfg.cells.value()[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().trans_precoder =
           pusch_config::transform_precoder::enabled;
