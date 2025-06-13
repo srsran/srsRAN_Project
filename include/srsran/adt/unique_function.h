@@ -277,8 +277,8 @@ public:
   bool is_empty() const noexcept { return oper_ptr == &empty_table; }
   bool is_in_small_buffer() const noexcept { return oper_ptr->is_in_small_buffer(); }
 
-  const char* file;
-  int         lineno;
+  const char* file   = nullptr;
+  int         lineno = -1;
 
 private:
   template <typename Signature, size_t C, bool F>

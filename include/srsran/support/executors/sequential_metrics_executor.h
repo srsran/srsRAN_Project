@@ -64,16 +64,21 @@ public:
     pooled_task              = std::move(task);
 
     auto enqueue_tp = std::chrono::steady_clock::now();
-    return detail::invoke_execute(exec, [this, &pooled_task, enqueue_tp, task_idx]() {
+    bool ret        = detail::invoke_execute(exec, [this, &pooled_task, enqueue_tp, task_idx]() {
       auto start_tp   = std::chrono::steady_clock::now();
       auto start_rusg = resource_usage::now();
 
       pooled_task();
 
-      handle_metrics(true, enqueue_tp, start_tp, start_rusg, pooled_task.file, pooled_task.lineno);
+      handle_metrics(true, enqueue_tp, start_tp, start_rusg, free_tasks->size(), pooled_task.file, pooled_task.lineno);
       pooled_task = {};
       (void)free_tasks->try_push(task_idx);
     });
+    if (not ret) {
+      pooled_task = {};
+      (void)free_tasks->try_push(task_idx);
+    }
+    return ret;
   }
 
   [[nodiscard]] bool defer(unique_task task) override
@@ -88,16 +93,21 @@ public:
     pooled_task              = std::move(task);
 
     auto enqueue_tp = std::chrono::steady_clock::now();
-    return detail::invoke_defer(exec, [this, &pooled_task, enqueue_tp, task_idx]() {
+    bool ret        = detail::invoke_defer(exec, [this, &pooled_task, enqueue_tp, task_idx]() {
       auto start_tp   = std::chrono::steady_clock::now();
       auto start_rusg = resource_usage::now();
 
       pooled_task();
 
-      handle_metrics(false, enqueue_tp, start_tp, start_rusg, pooled_task.file, pooled_task.lineno);
+      handle_metrics(false, enqueue_tp, start_tp, start_rusg, free_tasks->size(), pooled_task.file, pooled_task.lineno);
       pooled_task = {};
       (void)free_tasks->try_push(task_idx);
     });
+    if (not ret) {
+      pooled_task = {};
+      (void)free_tasks->try_push(task_idx);
+    }
+    return ret;
   }
 
 private:
@@ -110,6 +120,7 @@ private:
     std::chrono::nanoseconds task_max_latency{0};
     resource_usage::diff     sum_rusg             = {};
     unsigned                 failed_rusg_captures = 0;
+    size_t                   qsize                = std::numeric_limits<size_t>::max();
   };
 
   /// Updates and prints the metrics for this executor.
@@ -117,6 +128,7 @@ private:
                       time_point                                     enqueue_tp,
                       time_point                                     start_tp,
                       const expected<resource_usage::snapshot, int>& start_rusg,
+                      size_t                                         qsize,
                       const char*                                    file,
                       int                                            line)
   {
@@ -141,6 +153,7 @@ private:
     } else {
       ++counters.failed_rusg_captures;
     }
+    counters.qsize = std::min(counters.qsize, qsize);
 
     // Check if it is time for a new metric report.
     auto                  telapsed_since_last_report = end_tp - last_tp;
@@ -153,7 +166,7 @@ private:
     if (telapsed_since_last_report >= period) {
       // Report metrics.
       metrics_logger.info("Executor metrics \"{}\": nof_executes={} nof_defers={} enqueue_avg={}usec "
-                          "enqueue_max={}usec task_avg={}usec task_max={}usec cpu_load={:.1f}% {}",
+                          "enqueue_max={}usec task_avg={}usec task_max={}usec cpu_load={:.1f}% {} q_size={}",
                           name,
                           counters.dispatch_count - counters.defer_count,
                           counters.defer_count,
@@ -162,7 +175,8 @@ private:
                           duration_cast<microseconds>(counters.task_sum_latency / counters.dispatch_count).count(),
                           duration_cast<microseconds>(counters.task_max_latency).count(),
                           counters.task_sum_latency.count() * 100.0 / telapsed_since_last_report.count(),
-                          counters.sum_rusg);
+                          counters.sum_rusg,
+                          counters.qsize);
 
       counters = {};
       last_tp  = end_tp;
