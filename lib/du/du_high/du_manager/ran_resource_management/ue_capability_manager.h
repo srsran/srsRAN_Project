@@ -79,6 +79,8 @@ private:
   pdsch_mcs_table select_pdsch_mcs_table(du_cell_index_t cell_idx) const;
   pusch_mcs_table select_pusch_mcs_table(du_cell_index_t cell_idx) const;
 
+  vrb_to_prb::mapping_type select_pdsch_interleaving(du_cell_index_t cell_idx) const;
+
   /// Selects the PUSCH transmission codebook subset.
   tx_scheme_codebook_subset select_tx_codebook_subset(du_cell_index_t cell_idx) const;
   /// Selects the SRS transmission number of ports.
