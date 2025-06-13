@@ -864,7 +864,7 @@ def test_s72(
         common_scs=common_scs,
         bandwidth=bandwidth,
         sample_rate=None,  # default from testbed
-        iperf_duration=SHORT_DURATION,
+        iperf_duration=10 * 60,
         bitrate=bitrate,
         protocol=protocol,
         direction=direction,
