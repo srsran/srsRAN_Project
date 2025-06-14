@@ -104,7 +104,7 @@ struct du_low_unit_expert_threads_config {
   {
     unsigned nof_threads = cpu_architecture_info::get().get_host_nof_available_cpus();
 
-    if (nof_threads < 4) {
+    if (nof_threads <= 4) {
       nof_ul_threads            = 1;
       nof_pusch_decoder_threads = 0;
       nof_dl_threads            = 3;
