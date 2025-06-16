@@ -120,7 +120,7 @@ License:   Apache License, Version 2.0
 
 Files:     external/nlohmann/json.hpp
            external/nlohmann/json_fwd.hpp
-Copyright: 2013-2023 Niels Lohmann
+Copyright: 2013-2025 Niels Lohmann
 License:   MIT
 
 
