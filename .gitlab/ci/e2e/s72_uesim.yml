@@ -29,25 +29,6 @@
     - type: ru
       model: amariue-s72
 
-- name: amarisoft-mme
-  type: 5gc
-  image: ${RETINA_REGISTRY_PREFIX}/amarisoft5gc-remote:${RETINA_VERSION}
-  taints: ["purpose=retina"]
-  requirements:
-    arch: amd64
-    cpu:
-      requests: 4
-      limits: 4
-    memory:
-      requests: "4G"
-      limits: "4G"
-    ephemeral-storage:
-      requests: "6G"
-      limits: "6G"
-  resources:
-    - type: emulator
-      model: callbox
-
 - name: srs-gnb
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
@@ -77,3 +58,22 @@
     - local_path: ${GNB_BUILD_PATH}/apps/gnb/gnb
       remote_path: /usr/local/bin/gnb
       is_executable: true
+
+- name: amarisoft-mme
+  type: 5gc
+  image: ${RETINA_REGISTRY_PREFIX}/amarisoft5gc-remote:${RETINA_VERSION}
+  taints: ["purpose=retina"]
+  requirements:
+    arch: amd64
+    cpu:
+      requests: 4
+      limits: 4
+    memory:
+      requests: "4G"
+      limits: "4G"
+    ephemeral-storage:
+      requests: "6G"
+      limits: "6G"
+  resources:
+    - type: emulator
+      model: callbox
