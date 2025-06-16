@@ -177,6 +177,9 @@ void srsran::fill_du_low_worker_manager_config(worker_manager_config&    config,
   du_low_cfg.nof_dl_threads            = unit_cfg.expert_execution_cfg.threads.nof_dl_threads;
   du_low_cfg.nof_ul_threads            = unit_cfg.expert_execution_cfg.threads.nof_ul_threads;
   du_low_cfg.nof_pusch_decoder_threads = unit_cfg.expert_execution_cfg.threads.nof_pusch_decoder_threads;
+  if (unit_cfg.metrics_cfg.enable_du_low) {
+    du_low_cfg.metrics_period.emplace(unit_cfg.metrics_cfg.du_report_period);
+  }
 
   srsran_assert(config.config_affinities.size() == unit_cfg.expert_execution_cfg.cell_affinities.size(),
                 "Invalid number of cell affinities");

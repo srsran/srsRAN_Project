@@ -14,6 +14,8 @@
 #include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "du_low_config.h"
 #include "srsran/adt/expected.h"
+#include "srsran/ran/slot_point.h"
+#include "srsran/ran/slot_point_extended.h"
 #include "srsran/support/cli11_utils.h"
 #include "srsran/support/config_parsers.h"
 
@@ -369,11 +371,19 @@ static void manage_hal_optional(CLI::App& app, du_low_unit_config& parsed_cfg)
 }
 #endif
 
-static void configure_cli11_metrics_layers_args(CLI::App& app, du_low_unit_metrics_config& parsed_cfg)
+static void configure_cli11_metrics_args(CLI::App& app, du_low_unit_metrics_config& metrics_params)
 {
+  auto* periodicity_subcmd = add_subcommand(app, "periodicity", "Metrics periodicity configuration")->configurable();
+  add_option(*periodicity_subcmd,
+             "--du_report_period",
+             metrics_params.du_report_period,
+             "DU statistics report period in milliseconds")
+      ->capture_default_str()
+      ->check(CLI::Range(0U, static_cast<unsigned>(NOF_SUBFRAMES_PER_FRAME * NOF_SFNS * NOF_HYPER_SFNS)));
+
   CLI::App* layers_subcmd = add_subcommand(app, "layers", "Layer basis metrics configuration")->configurable();
   add_option(
-      *layers_subcmd, "--enable_du_low", parsed_cfg.enable_du_low, "Enable DU low metrics (upper physical layer)")
+      *layers_subcmd, "--enable_du_low", metrics_params.enable_du_low, "Enable DU low metrics (upper physical layer)")
       ->capture_default_str();
 }
 
@@ -401,7 +411,7 @@ void srsran::configure_cli11_with_du_low_config_schema(CLI::App& app, du_low_uni
   // Metrics section.
   app_helpers::configure_cli11_with_metrics_appconfig_schema(app, parsed_cfg.metrics_cfg.common_metrics_cfg);
   CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
-  configure_cli11_metrics_layers_args(*metrics_subcmd, parsed_cfg.metrics_cfg);
+  configure_cli11_metrics_args(*metrics_subcmd, parsed_cfg.metrics_cfg);
 }
 
 void srsran::autoderive_du_low_parameters_after_parsing(CLI::App&           app,
