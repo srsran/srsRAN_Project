@@ -307,7 +307,7 @@ void radio_uhd_tx_stream::transmit(const baseband_gateway_buffer_reader&        
     }
 
     // Increment timespec.
-    uhd_metadata.time_spec += txd_samples * srate_hz;
+    uhd_metadata.time_spec += txd_samples / srate_hz;
 
     // Increment the total amount of received samples.
     txd_samples_total += txd_samples;
