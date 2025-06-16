@@ -99,6 +99,9 @@ struct ntn_config {
   std::optional<unsigned> distance_threshold;
   /// NTN-config values
   /// Indicate the epoch time for the NTN assistance information.
+  /// It represents a timestamp in ms unit of Unix time (UTC time since 1970-01-01)
+  std::optional<uint64_t> epoch_timestamp;
+  /// If provided it will be used to fill the EpochTime section in SIB19.
   std::optional<epoch_time_t> epoch_time;
   /// Scheduling offset used for the timing relationships that are modified for NTN (see TS 38.213). The unit of the
   /// field K_offset is number of slots for a given subcarrier spacing of 15 kHz.
@@ -112,10 +115,10 @@ struct ntn_config {
   /// This field provides satellite ephemeris either in format of position and velocity state vector or in format of
   /// orbital parameters.
   std::variant<ecef_coordinates_t, orbital_coordinates_t> ephemeris_info;
-  /// Network-controlled common timing advanced value and it may include any timing offset considered necessary by the
+  /// Network-controlled common timing advanced value, and it may include any timing offset considered necessary by the
   /// network.
   std::optional<ta_info_t> ta_info;
-  /// Parameters of the feeder link used to compute the doppler shifts.
+  /// Parameters of the feeder link used to compute the Doppler shifts.
   std::optional<feeder_link_info_t> feeder_link_info;
   /// Geodetic coordinates (in degrees) of the NTN Gateway location.
   std::optional<geodetic_coordinates_t> ntn_gateway_location;
@@ -125,4 +128,5 @@ struct ntn_config {
   unsigned                si_window_len_slots;
   std::optional<unsigned> si_window_position;
 };
+
 } // namespace srsran

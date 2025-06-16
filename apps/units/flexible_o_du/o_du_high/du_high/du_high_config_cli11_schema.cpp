@@ -1892,12 +1892,42 @@ static void configure_cli11_ephemeris_info_orbital(CLI::App& app, orbital_coordi
       ->capture_default_str();
 }
 
+static void configure_cli11_feeder_link(CLI::App& app, feeder_link_info_t& feeder_link_info)
+{
+  add_option(app,
+             "--enable_doppler_compensation",
+             feeder_link_info.enable_doppler_compensation,
+             "Enable/disable Feeder Link Doppler compensation.")
+      ->capture_default_str();
+  add_option(app, "--dl_freq", feeder_link_info.dl_freq, "Downlink feeder link carrier frequency (gnb->sat) [Hz]")
+      ->capture_default_str()
+      ->check(CLI::Range(0.0, 100e9));
+  add_option(app, "--ul_freq", feeder_link_info.ul_freq, "Uplink feeder link carrier frequency (sat->gnb) [Hz]")
+      ->capture_default_str()
+      ->check(CLI::Range(0.0, 100e9));
+}
+
+static void configure_cli11_geodetic_coordinates(CLI::App& app, geodetic_coordinates_t& location)
+{
+  add_option(app, "--latitude", location.latitude, "Latitude [degree]")
+      ->capture_default_str()
+      ->check(CLI::Range(-90.0, 90.0));
+  add_option(app, "--longitude", location.longitude, "Longitude [degree]")
+      ->capture_default_str()
+      ->check(CLI::Range(-180.0, 180.0));
+  add_option(app, "--altitude", location.altitude, "Altitude [m]")
+      ->capture_default_str()
+      ->check(CLI::Range(-1000.0, 20000.0));
+}
+
 static void configure_cli11_ntn_args(CLI::App&                  app,
                                      std::optional<ntn_config>& ntn,
                                      epoch_time_t&              epoch_time,
                                      ta_info_t&                 ta_info,
                                      orbital_coordinates_t&     orbital_coordinates,
-                                     ecef_coordinates_t&        ecef_coordinates)
+                                     ecef_coordinates_t&        ecef_coordinates,
+                                     feeder_link_info_t&        feeder_link_info,
+                                     geodetic_coordinates_t&    ntn_gateway_location)
 {
   ntn_config& config = ntn.emplace();
 
@@ -1909,7 +1939,13 @@ static void configure_cli11_ntn_args(CLI::App&                  app,
       ->capture_default_str()
       ->check(CLI::IsMember({5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 120, 180, 240, 900}));
 
-  // epoch time.
+  // Epoch timestamp.
+  app.add_option("--epoch_timestamp",
+                 ntn->epoch_timestamp,
+                 "Epoch timestamp for the NTN assistance information in ms unit of Unix time")
+      ->capture_default_str();
+
+  // Epoch time.
   CLI::App* epoch_time_subcmd = add_subcommand(app, "epoch_time", "Epoch time for the NTN assistance information");
   configure_cli11_epoch_time(*epoch_time_subcmd, epoch_time);
 
@@ -1919,18 +1955,28 @@ static void configure_cli11_ntn_args(CLI::App&                  app,
 
   // ephemeris configuration.
   CLI::App* ephem_subcmd_ecef =
-      add_subcommand(app, "ephemeris_info_ecef", "ephermeris information of the satellite in ecef coordinates");
+      add_subcommand(app, "ephemeris_info_ecef", "Ephermeris information of the satellite in ecef coordinates");
   configure_cli11_ephemeris_info_ecef(*ephem_subcmd_ecef, ecef_coordinates);
 
   CLI::App* ephem_subcmd_orbital =
-      add_subcommand(app, "ephemeris_orbital", "ephermeris information of the satellite in orbital coordinates");
+      add_subcommand(app, "ephemeris_orbital", "Ephermeris information of the satellite in orbital coordinates");
   configure_cli11_ephemeris_info_orbital(*ephem_subcmd_orbital, orbital_coordinates);
+
+  CLI::App* feeder_link_subcmd =
+      add_subcommand(app, "feeder_link", "Feeder link parameters used to compensate Doppler shifts");
+  configure_cli11_feeder_link(*feeder_link_subcmd, feeder_link_info);
+
+  CLI::App* gateway_location_subcmd =
+      add_subcommand(app, "gateway_location", "Geoderic coordinates of the NTN Gateway location");
+  configure_cli11_geodetic_coordinates(*gateway_location_subcmd, ntn_gateway_location);
 }
 
-static epoch_time_t          epoch_time;
-static ta_info_t             ta_info;
-static ecef_coordinates_t    ecef_coordinates;
-static orbital_coordinates_t orbital_coordinates;
+static epoch_time_t           epoch_time;
+static ta_info_t              ta_info;
+static ecef_coordinates_t     ecef_coordinates;
+static orbital_coordinates_t  orbital_coordinates;
+static feeder_link_info_t     feeder_link_info;
+static geodetic_coordinates_t ntn_gateway_location;
 
 static void configure_cli11_rlc_um_args(CLI::App& app, du_high_unit_rlc_um_config& rlc_um_params)
 {
@@ -2030,8 +2076,14 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
 
   // NTN section.
   CLI::App* ntn_subcmd = add_subcommand(app, "ntn", "NTN parameters")->configurable();
-  configure_cli11_ntn_args(
-      *ntn_subcmd, parsed_cfg.config.ntn_cfg, epoch_time, ta_info, orbital_coordinates, ecef_coordinates);
+  configure_cli11_ntn_args(*ntn_subcmd,
+                           parsed_cfg.config.ntn_cfg,
+                           epoch_time,
+                           ta_info,
+                           orbital_coordinates,
+                           ecef_coordinates,
+                           feeder_link_info,
+                           ntn_gateway_location);
 
   // Cell section.
   add_option_cell(
@@ -2099,12 +2151,13 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
 
 static void manage_ntn_optional(CLI::App& app, du_high_unit_config& gnb_cfg)
 {
-  auto     ntn_app             = app.get_subcommand_ptr("ntn");
-  unsigned nof_epoch_entries   = ntn_app->get_subcommand("epoch_time")->count_all();
-  unsigned nof_ta_info_entries = ntn_app->get_subcommand("ta_info")->count_all();
-  unsigned nof_ecef_entries    = ntn_app->get_subcommand("ephemeris_info_ecef")->count_all();
-  unsigned nof_orbital_entries = ntn_app->get_subcommand("ephemeris_orbital")->count_all();
-
+  auto     ntn_app                = app.get_subcommand_ptr("ntn");
+  unsigned nof_epoch_entries      = ntn_app->get_subcommand("epoch_time")->count_all();
+  unsigned nof_ta_info_entries    = ntn_app->get_subcommand("ta_info")->count_all();
+  unsigned nof_ecef_entries       = ntn_app->get_subcommand("ephemeris_info_ecef")->count_all();
+  unsigned nof_orbital_entries    = ntn_app->get_subcommand("ephemeris_orbital")->count_all();
+  unsigned nof_fl_entries         = ntn_app->get_subcommand("feeder_link")->count_all();
+  unsigned nof_ground_loc_entries = ntn_app->get_subcommand("gateway_location")->count_all();
   if (nof_epoch_entries) {
     gnb_cfg.ntn_cfg.value().epoch_time = epoch_time;
   }
@@ -2118,6 +2171,15 @@ static void manage_ntn_optional(CLI::App& app, du_high_unit_config& gnb_cfg)
   } else if (nof_orbital_entries) {
     gnb_cfg.ntn_cfg.value().ephemeris_info = orbital_coordinates;
   }
+
+  if (nof_fl_entries) {
+    gnb_cfg.ntn_cfg.value().feeder_link_info = feeder_link_info;
+  }
+
+  if (nof_ground_loc_entries) {
+    gnb_cfg.ntn_cfg.value().ntn_gateway_location = ntn_gateway_location;
+  }
+
   if (app.get_subcommand("ntn")->count_all() == 0) {
     gnb_cfg.ntn_cfg.reset();
     // As NTN configuration is optional, disable the command when it is not present in the configuration.
