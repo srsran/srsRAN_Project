@@ -495,7 +495,7 @@ worker_manager::create_du_crit_path_prio_executors(unsigned                     
                                        {{l2_exec_name, task_priority::max},
                                         {l1_dl_exec_name, task_priority::max - 1},
                                         {l1_pdsch_exec_name, task_priority::max - 2},
-                                        {l1_prach_exec_name, task_priority::max, {}, task_worker_queue_size}},
+                                        {l1_prach_exec_name, task_priority::max - 2, {}, task_worker_queue_size}},
                                        dl_worker_sleep_time,
                                        dl_worker_pool_prio,
                                        dl_cpu_masks};

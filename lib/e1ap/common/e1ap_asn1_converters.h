@@ -1461,4 +1461,31 @@ inline void asn1_to_security_indication(security_indication_t& security_ind, con
   }
 }
 
+/// \brief Converts ASN.1 PDU session type to \c pdu_session_type_t.
+/// \param[out] pdu_session_type The common type PDU session type.
+/// \param[in] ans1_pdu_session_type The ASN.1 PDU session type.
+/// \return True if the conversion was successful, false otherwise.
+inline bool asn1_to_pdu_session_type(pdu_session_type_t&                   pdu_session_type,
+                                     const asn1::e1ap::pdu_session_type_e& ans1_pdu_session_type)
+{
+  switch (ans1_pdu_session_type) {
+    case asn1::e1ap::pdu_session_type_e::pdu_session_type_opts::ipv4:
+      pdu_session_type = pdu_session_type_t::ipv4;
+      break;
+    case asn1::e1ap::pdu_session_type_e::pdu_session_type_opts::ipv6:
+      pdu_session_type = pdu_session_type_t::ipv6;
+      break;
+    case asn1::e1ap::pdu_session_type_e::pdu_session_type_opts::ipv4v6:
+      pdu_session_type = pdu_session_type_t::ipv4v6;
+      break;
+    case asn1::e1ap::pdu_session_type_e::pdu_session_type_opts::ethernet:
+      pdu_session_type = pdu_session_type_t::ethernet;
+      break;
+    default:
+      srslog::fetch_basic_logger("E1AP").warning("Cannot convert ASN.1 PDU session type to common type");
+      return false;
+  }
+  return true;
+}
+
 } // namespace srsran

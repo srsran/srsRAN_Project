@@ -30,6 +30,7 @@
 #include "adapters/nrppa_adapters.h"
 #include "adapters/rrc_du_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
+#include "cu_configurator_impl.h"
 #include "cu_cp_controller/cu_cp_controller.h"
 #include "cu_cp_impl_interface.h"
 #include "cu_up_processor/cu_up_processor_repository.h"
@@ -254,7 +255,7 @@ private:
 
   std::atomic<bool> stopped{false};
 
-  cu_configurator cu_cp_cfgtr;
+  cu_configurator_impl cu_cp_cfgtr;
 };
 
 } // namespace srs_cu_cp

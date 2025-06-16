@@ -23,10 +23,11 @@
 #pragma once
 
 #include "rlc_bearer_logger.h"
-#include "rlc_metrics_aggregator.h"
+#include "rlc_bearer_metrics_collector.h"
 #include "rlc_tx_metrics_container.h"
 #include "srsran/pcap/rlc_pcap.h"
 #include "srsran/rlc/rlc_tx.h"
+#include "srsran/support/rtsan.h"
 
 namespace srsran {
 
@@ -45,14 +46,14 @@ protected:
                 rlc_tx_upper_layer_data_notifier&    upper_dn_,
                 rlc_tx_upper_layer_control_notifier& upper_cn_,
                 rlc_tx_lower_layer_notifier&         lower_dn_,
-                rlc_metrics_aggregator&              metrics_agg_,
+                rlc_bearer_metrics_collector&        metrics_coll_,
                 rlc_pcap&                            pcap_,
                 task_executor&                       pcell_executor_,
                 task_executor&                       ue_executor_,
                 timer_manager&                       timers) :
     logger("RLC", {gnb_du_id, ue_index, rb_id_, "DL"}),
-    metrics_high(metrics_agg_.get_metrics_period().count()),
-    metrics_low(metrics_agg_.get_metrics_period().count()),
+    metrics_high(metrics_coll_.get_metrics_period().count()),
+    metrics_low(metrics_coll_.get_metrics_period().count()),
     rb_id(rb_id_),
     upper_dn(upper_dn_),
     upper_cn(upper_cn_),
@@ -62,19 +63,19 @@ protected:
     ue_executor{ue_executor_},
     pcell_timer_factory{timers, pcell_executor},
     ue_timer_factory{timers, ue_executor},
-    high_metrics_timer(pcell_timer_factory.create_timer()),
-    low_metrics_timer(ue_timer_factory.create_timer()),
-    metrics_agg(metrics_agg_)
+    high_metrics_timer(ue_timer_factory.create_timer()),
+    low_metrics_timer(pcell_timer_factory.create_timer()),
+    metrics_coll(metrics_coll_)
   {
-    if (metrics_agg.get_metrics_period().count()) {
-      high_metrics_timer.set(std::chrono::milliseconds(metrics_agg.get_metrics_period().count()),
+    if (metrics_coll.get_metrics_period().count()) {
+      high_metrics_timer.set(std::chrono::milliseconds(metrics_coll.get_metrics_period().count()),
                              [this](timer_id_t tid) {
-                               metrics_agg.push_tx_high_metrics(metrics_high.get_and_reset_metrics());
+                               metrics_coll.push_tx_high_metrics(metrics_high.get_and_reset_metrics());
                                high_metrics_timer.run();
                              });
-      low_metrics_timer.set(std::chrono::milliseconds(metrics_agg.get_metrics_period().count()),
-                            [this](timer_id_t tid) {
-                              metrics_agg.push_tx_low_metrics(metrics_low.get_and_reset_metrics());
+      low_metrics_timer.set(std::chrono::milliseconds(metrics_coll.get_metrics_period().count()),
+                            [this](timer_id_t tid) noexcept SRSRAN_RTSAN_NONBLOCKING {
+                              metrics_coll.push_tx_low_metrics(metrics_low.get_and_reset_metrics());
                               low_metrics_timer.run();
                             });
 
@@ -100,7 +101,7 @@ protected:
   unique_timer low_metrics_timer;
 
 private:
-  rlc_metrics_aggregator& metrics_agg;
+  rlc_bearer_metrics_collector& metrics_coll;
 
 public:
   /// \brief Stops all internal timers.

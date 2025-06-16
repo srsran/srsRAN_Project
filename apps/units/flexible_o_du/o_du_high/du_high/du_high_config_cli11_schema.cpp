@@ -2189,6 +2189,22 @@ static void derive_auto_params(du_high_unit_config& config)
 
     derive_cell_auto_params(cell.cell);
   }
+
+  // Auto derive NTN SIB19 scheduling info.
+  if (config.ntn_cfg.has_value()) {
+    auto& sib_cfg = config.cells_cfg.front().cell.sib_cfg;
+    auto& ntn_cfg = config.ntn_cfg;
+    for (const auto& si_msg : sib_cfg.si_sched_info) {
+      for (unsigned j = 0, je = si_msg.sib_mapping_info.size(); j != je; ++j) {
+        if (si_msg.sib_mapping_info[j] == 19) {
+          ntn_cfg->si_msg_idx          = j;
+          ntn_cfg->si_period_rf        = si_msg.si_period_rf;
+          ntn_cfg->si_window_len_slots = sib_cfg.si_window_len_slots;
+          ntn_cfg->si_window_position  = si_msg.si_window_position;
+        }
+      }
+    }
+  }
 }
 
 void srsran::autoderive_du_high_parameters_after_parsing(CLI::App& app, du_high_unit_config& unit_cfg)

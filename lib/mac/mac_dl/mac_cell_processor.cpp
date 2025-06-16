@@ -165,6 +165,11 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
       CORO_AWAIT(sched.handle_positioning_measurement_request(cell_cfg.cell_index, request.positioning.value()));
     }
 
+    if (request.new_si_pdu_info.has_value()) {
+      sib_assembler.enqueue_si_message_pdu_updates(*request.new_si_pdu_info);
+      resp.si_pdus_enqueued = true;
+    }
+
     CORO_RETURN(resp);
   });
 }
@@ -175,10 +180,10 @@ void mac_cell_processor::handle_slot_indication(const mac_cell_timing_context& c
   slot_time_mapper.handle_slot_indication(context);
   trace_point slot_ind_enqueue_tp = metric_clock::now();
   // Change execution context to slot indication executor.
-  if (not slot_exec.execute([this, context, slot_ind_enqueue_tp]() {
+  if (not slot_exec.execute(TRACE_TASK([this, context, slot_ind_enqueue_tp]() {
         l2_tracer << trace_event{"mac_slot_ind_enqueue", slot_ind_enqueue_tp};
         handle_slot_indication_impl(context.sl_tx, slot_ind_enqueue_tp);
-      })) {
+      }))) {
     logger.warning("Skipped slot indication={}. Cause: DL task queue is full.", context.sl_tx);
   }
 }

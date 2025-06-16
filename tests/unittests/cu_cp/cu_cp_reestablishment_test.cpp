@@ -217,8 +217,8 @@ public:
     qos_flow_id_t    qfi    = qos_flow_id_t::min;
 
     // Inject PDU Session Resource Setup Request and wait for Bearer Context Setup Request
-    get_amf().push_tx_pdu(
-        generate_valid_pdu_session_resource_setup_request_message(amf_ue_id, ran_ue_id, {{psi, {{qfi, 9}}}}));
+    get_amf().push_tx_pdu(generate_valid_pdu_session_resource_setup_request_message(
+        amf_ue_id, ran_ue_id, {{psi, {pdu_session_type_t::ipv4, {{qfi, 9}}}}}));
     result = this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu);
     report_fatal_error_if_not(result, "Failed to receive Bearer Context Setup Request");
     report_fatal_error_if_not(test_helpers::is_valid_bearer_context_setup_request(e1ap_pdu),

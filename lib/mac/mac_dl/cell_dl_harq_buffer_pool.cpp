@@ -126,7 +126,7 @@ void cell_dl_harq_buffer_pool::grow_cache_in_background()
     return;
   }
 
-  if (not ctrl_exec.defer([this]() {
+  if (not ctrl_exec.defer(TRACE_TASK([this]() {
         // Allocate minibatch of DL HARQ buffers and save them in cache.
         for (unsigned i = 0; i != DL_HARQ_ALLOC_MINIBATCH; ++i) {
           if (auto* buffer = allocate_from_pool()) {
@@ -139,7 +139,7 @@ void cell_dl_harq_buffer_pool::grow_cache_in_background()
 
         // Dispatch new task to grow the cache if it hasn't yet achieved the desired size.
         grow_cache_in_background();
-      })) {
+      }))) {
     logger.warning("Failed to dispatch task to allocate DL HARQ buffers");
   }
 }

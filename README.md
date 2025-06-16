@@ -23,13 +23,15 @@ Build Preparation
 
 * Build tools:
   * cmake:               <https://cmake.org/>
-  
 * Mandatory requirements:
   * libfftw:             <https://www.fftw.org/>
   * libsctp:             <https://github.com/sctp/lksctp-tools>
   * yaml-cpp:            <https://github.com/jbeder/yaml-cpp>
   * mbedTLS:             <https://www.trustedfirmware.org/projects/mbed-tls/>
   * googletest:          <https://github.com/google/googletest/>
+* Optional requirements:
+  * googletest:          <https://github.com/google/googletest/>
+    * You can enable test building by using the cmake option `-DBUILD_TESTING=On`. GoogleTest is only mandatory when building with tests.
 
 You can install the build tools and mandatory requirements for some example distributions with the commands below:
 
@@ -37,7 +39,7 @@ You can install the build tools and mandatory requirements for some example dist
 <summary><strong>Ubuntu 22.04</strong></summary>
 
 ```bash
-sudo apt-get install cmake make gcc g++ pkg-config libfftw3-dev libmbedtls-dev libsctp-dev libyaml-cpp-dev libgtest-dev
+sudo apt-get install cmake make gcc g++ pkg-config libfftw3-dev libmbedtls-dev libsctp-dev libyaml-cpp-dev
 ```
 
 </details>
@@ -45,7 +47,7 @@ sudo apt-get install cmake make gcc g++ pkg-config libfftw3-dev libmbedtls-dev l
 <summary><strong>Fedora</strong></summary>
 
 ```bash
-sudo yum install cmake make gcc gcc-c++ fftw-devel lksctp-tools-devel yaml-cpp-devel mbedtls-devel gtest-devel
+sudo yum install cmake make gcc gcc-c++ fftw-devel lksctp-tools-devel yaml-cpp-devel mbedtls-devel
 ```
 
 </details>
@@ -53,7 +55,7 @@ sudo yum install cmake make gcc gcc-c++ fftw-devel lksctp-tools-devel yaml-cpp-d
 <summary><strong>Arch Linux</strong></summary>
 
 ```bash
-sudo pacman -S cmake make base-devel fftw mbedtls yaml-cpp lksctp-tools gtest
+sudo pacman -S cmake make base-devel fftw mbedtls yaml-cpp lksctp-tools
 ```
 
 </details>
@@ -88,13 +90,11 @@ First, clone the srsRAN Project repository:
 Then build the code-base:
 
 ```bash
-
     cd srsRAN_Project
     mkdir build
     cd build
     cmake ../ 
     make -j $(nproc)
-    make test -j $(nproc)
 ```
 
 You can now run the gNB from ``srsRAN_Project/build/apps/gnb/``. If you wish to install the srsRAN Project gNB, you can use the following command:
@@ -119,7 +119,6 @@ mkdir build
 cd build
 cmake ../ -DENABLE_EXPORT=ON -DENABLE_ZEROMQ=ON
 make -j $(nproc)
-make test -j $(nproc)
 ```
 
 Pay extra attention to the cmake console output. Make sure you read the following line to ensure ZMQ has been correctly detected by srsRAN:
@@ -154,7 +153,6 @@ mkdir build
 cd build
 cmake ../ -DENABLE_DPDK=True -DASSERT_LEVEL=MINIMAL
 make -j $(nproc)
-make test -j $(nproc)
 ```
 
 </details>

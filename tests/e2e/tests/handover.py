@@ -112,6 +112,7 @@ def test_s72_sequentially(
         prach_config_index=159,
         warning_as_errors=False,
         stop_gnb_first=True,
+        verbose_cu_mac=False,
     )
 
 
@@ -175,6 +176,7 @@ def _handover_sequentially(
     prach_config_index: int = -1,
     warning_as_errors: bool = True,
     stop_gnb_first: bool = False,
+    verbose_cu_mac: bool = True,
 ):
     with _handover_multi_ues(
         retina_manager=retina_manager,
@@ -196,6 +198,7 @@ def _handover_sequentially(
         nof_antennas_dl=nof_antennas_dl,
         prach_config_index=prach_config_index,
         stop_gnb_first=stop_gnb_first,
+        verbose_cu_mac=verbose_cu_mac,
     ) as (ue_attach_info_dict, movements, traffic_seconds):
 
         for ue_stub, ue_attach_info in ue_attach_info_dict.items():
@@ -298,6 +301,7 @@ def _handover_multi_ues(
     sleep_between_movement_steps: int = 2,
     cell_position_offset: Tuple[float, float, float] = (1000, 0, 0),
     stop_gnb_first: bool = False,
+    verbose_cu_mac: bool = True,
 ) -> Generator[
     Tuple[
         Dict[UEStub, UEAttachedInfo],
@@ -332,9 +336,11 @@ def _handover_multi_ues(
         retina_data=retina_data,
         always_download_artifacts=always_download_artifacts,
     )
-
     start_network(
-        ue_array, gnb, fivegc, gnb_post_cmd=("log --cu_level=debug --hex_max_size=32", "log --mac_level=debug")
+        ue_array,
+        gnb,
+        fivegc,
+        gnb_post_cmd=(("log --cu_level=debug --hex_max_size=32", "log --mac_level=debug") if verbose_cu_mac else ()),
     )
 
     ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)

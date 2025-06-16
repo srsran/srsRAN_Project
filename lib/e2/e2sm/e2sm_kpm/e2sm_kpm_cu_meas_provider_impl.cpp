@@ -227,7 +227,7 @@ bool e2sm_kpm_cu_meas_provider_impl::get_pdcp_reordering_delay_ul(const asn1::e2
     }
     if (av_ue_reordering_delay_us) {
       meas_record_item.set_real();
-      meas_record_item.real().value = (float)av_ue_reordering_delay_us / ue_aggr_pdcp_metrics.size();
+      meas_record_item.real().value = (av_ue_reordering_delay_us / ue_aggr_pdcp_metrics.size()) / 100; // unit is 0.1ms
       items.push_back(meas_record_item);
       meas_collected = true;
     } else {

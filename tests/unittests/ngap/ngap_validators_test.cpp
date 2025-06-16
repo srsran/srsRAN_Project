@@ -83,7 +83,7 @@ public:
   {
     pdu_session_id_t setup_psi = uint_to_pdu_session_id(1);
     ngap_message     ngap_msg  = generate_valid_pdu_session_resource_setup_request_message(
-        amf_ue_id, ran_ue_id, {{setup_psi, {{uint_to_qos_flow_id(1), 9}}}});
+        amf_ue_id, ran_ue_id, {{setup_psi, {pdu_session_type_t::ipv4, {{uint_to_qos_flow_id(1), 9}}}}});
 
     auto& pdu_session_res_setup_req = ngap_msg.pdu.init_msg().value.pdu_session_res_setup_request();
 
@@ -101,7 +101,7 @@ public:
       pdu_session_id_t psi)
   {
     ngap_message ngap_msg = generate_valid_pdu_session_resource_setup_request_message(
-        amf_ue_id, ran_ue_id, {{psi, {{uint_to_qos_flow_id(1), 9}}}});
+        amf_ue_id, ran_ue_id, {{psi, {pdu_session_type_t::ipv4, {{uint_to_qos_flow_id(1), 9}}}}});
 
     auto& asn1_request                         = ngap_msg.pdu.init_msg().value.pdu_session_res_setup_request();
     asn1_request->ue_aggr_max_bit_rate_present = false;
@@ -198,7 +198,7 @@ TEST_F(ngap_validator_test, when_valid_request_received_then_pdu_session_setup_s
   ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
 
   ngap_message ngap_msg = generate_valid_pdu_session_resource_setup_request_message(
-      amf_ue_id, ran_ue_id, {{uint_to_pdu_session_id(1), {{uint_to_qos_flow_id(1), 9}}}});
+      amf_ue_id, ran_ue_id, {{uint_to_pdu_session_id(1), {pdu_session_type_t::ipv4, {{uint_to_qos_flow_id(1), 9}}}}});
 
   auto& asn1_request = ngap_msg.pdu.init_msg().value.pdu_session_res_setup_request();
 

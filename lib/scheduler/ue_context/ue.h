@@ -116,7 +116,9 @@ public:
   /// \brief Handles MAC CE indication.
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& msg)
   {
-    dl_lc_ch_mgr.handle_mac_ce_indication({.ce_lcid = msg.ce_lcid, .ce_payload = dummy_ce_payload{}});
+    if (not dl_lc_ch_mgr.handle_mac_ce_indication({.ce_lcid = msg.ce_lcid, .ce_payload = dummy_ce_payload{}})) {
+      logger.warning("Dropped MAC CE, queue is full.");
+    }
   }
 
   /// Called when a new UE configuration is passed to the scheduler, as part of the RRC Reconfiguration procedure.

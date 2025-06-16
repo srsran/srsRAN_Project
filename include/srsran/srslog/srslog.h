@@ -194,10 +194,12 @@ sink& fetch_stderr_sink(const std::string&             id = "stderr",
 /// Specifying a max_size value different to zero will make the sink create a
 /// new file each time the current file exceeds this value. The units of
 /// max_size are bytes.
+/// The \c mark_eof flag specifies if an end mark should be added when the sink is closed.
 /// Setting force_flush to true will flush the sink after every write.
 /// NOTE: Any '#' characters in the path will get removed.
 sink& fetch_file_sink(const std::string&             path,
                       size_t                         max_size    = 0,
+                      bool                           mark_eof    = true,
                       bool                           force_flush = false,
                       std::unique_ptr<log_formatter> f           = get_default_log_formatter());
 
@@ -227,8 +229,9 @@ bool install_custom_sink(const std::string& id, std::unique_ptr<sink> s);
 /// Specifying a max_size value different to zero will make the sink create a
 /// new file each time the current file exceeds this value. The units of
 /// max_size are bytes.
+/// The \c mark_eof flag specifies if an end mark should be added when the sink is closed.
 /// NOTE: Deprecated, use fetch_file_sink instead.
-sink* create_file_sink(const std::string& path, size_t max_size = 0);
+sink* create_file_sink(const std::string& path, size_t max_size = 0, bool mark_eof = true);
 
 /// Creates a new sink that writes into the stdout stream and registers it into
 /// a sink repository so that it can be later retrieved in other parts of the

@@ -123,6 +123,9 @@ TEST(nof_prb_calculation, test_entries_match)
       {{372, 12, 36, 0, {modulation_scheme::QPSK,  379}, 1, 0}, 37U, 372U},
       // This entry is the edge-case when TBS derivation stops being table-based (3824 bits, or 478 bytes).
       {{478, 12, 36, 0, {modulation_scheme::QPSK,  379}, 1, 0}, 48U, 480U},
+      // This entry is to test the PRB computation in case of small-payload and high-capacity, it should be
+      // at least 1 PRB.
+      {{2,  13, 36, 0, {modulation_scheme::QAM256,  948}, 4, 0}, 1U,  453U},
       // clang-format on
   };
 

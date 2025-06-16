@@ -106,7 +106,7 @@ protected:
   cu_up_ue_logger                                             logger{"CU-UP", {MIN_UE_INDEX}};
 };
 
-/// Fixture class for PDU session manager tests with default network interface config
+/// Fixture class for PDU session manager tests with default network interface config.
 class pdu_session_manager_test : public pdu_session_manager_test_base, public ::testing::Test
 {
 protected:
@@ -117,10 +117,10 @@ protected:
 inline e1ap_pdu_session_res_to_setup_item
 generate_pdu_session_res_to_setup_item(pdu_session_id_t psi, drb_id_t drb_id, qos_flow_id_t qfi, five_qi_t five_qi)
 {
-  // prepare request
+  // Prepare request.
   e1ap_pdu_session_res_to_setup_item pdu_session_setup_item;
   pdu_session_setup_item.pdu_session_id                        = psi;
-  pdu_session_setup_item.pdu_session_type                      = "ipv4";
+  pdu_session_setup_item.pdu_session_type                      = pdu_session_type_t::ipv4;
   pdu_session_setup_item.snssai.sst                            = slice_service_type{1};
   pdu_session_setup_item.snssai.sd                             = slice_differentiator::create(10203).value();
   pdu_session_setup_item.security_ind.integrity_protection_ind = integrity_protection_indication_t::not_needed;
@@ -164,7 +164,7 @@ generate_pdu_session_res_to_setup_item(pdu_session_id_t psi, drb_id_t drb_id, qo
 inline e1ap_pdu_session_res_to_modify_item generate_pdu_session_res_to_modify_item_to_remove_drb(pdu_session_id_t psi,
                                                                                                  drb_id_t drb_id)
 {
-  // prepare modification request (to remove bearers)
+  // Prepare modification request (to remove bearers).
   e1ap_pdu_session_res_to_modify_item pdu_session_modify_item;
   pdu_session_modify_item.pdu_session_id = psi;
 
@@ -176,7 +176,7 @@ inline e1ap_pdu_session_res_to_modify_item generate_pdu_session_res_to_modify_it
 inline e1ap_pdu_session_res_to_modify_item generate_pdu_session_res_to_modify_item_to_modify_drb(pdu_session_id_t psi,
                                                                                                  drb_id_t drb_id)
 {
-  // prepare modification request (to remove bearers)
+  // Prepare modification request (to remove bearers).
   e1ap_pdu_session_res_to_modify_item pdu_session_modify_item;
   pdu_session_modify_item.pdu_session_id = psi;
 
@@ -192,7 +192,7 @@ generate_pdu_session_res_to_modify_item_to_setup_drb(pdu_session_id_t           
                                                      std::vector<qos_flow_id_t> qfi_list,
                                                      five_qi_t                  five_qi)
 {
-  // prepare modification request (to add further bearers)
+  // Prepare modification request (to add further bearers).
   e1ap_pdu_session_res_to_modify_item pdu_session_modify_item;
   pdu_session_modify_item.pdu_session_id = psi;
 

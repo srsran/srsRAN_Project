@@ -131,11 +131,14 @@ private:
 
 class srsran::pdu_indication_pool
 {
-  static constexpr size_t UCI_INITIAL_POOL_SIZE     = MAX_PUCCH_PDUS_PER_SLOT;
-  static constexpr size_t PHR_INITIAL_POOL_SIZE     = 8;
-  static constexpr size_t CRC_INITIAL_POOL_SIZE     = MAX_PUSCH_PDUS_PER_SLOT;
-  static constexpr size_t SRS_INITIAL_POOL_SIZE     = MAX_SRS_PDUS_PER_SLOT;
-  static constexpr size_t BSR_INITIAL_POOL_SIZE     = MAX_PUSCH_PDUS_PER_SLOT;
+  // The indications from the PHY can arrive with some delay; we assume that, in a slot, we can receive the indication
+  // from max 4 slots.
+  static constexpr size_t MAX_EXPECTED_SLOTS        = 4;
+  static constexpr size_t UCI_INITIAL_POOL_SIZE     = MAX_PUCCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
+  static constexpr size_t PHR_INITIAL_POOL_SIZE     = MAX_PUSCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
+  static constexpr size_t CRC_INITIAL_POOL_SIZE     = MAX_PUSCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
+  static constexpr size_t SRS_INITIAL_POOL_SIZE     = MAX_SRS_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
+  static constexpr size_t BSR_INITIAL_POOL_SIZE     = MAX_PUSCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
   static constexpr size_t EXPECTED_NOF_DEALLOCATORS = 8;
 
 public:

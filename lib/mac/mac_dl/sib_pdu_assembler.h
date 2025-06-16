@@ -26,6 +26,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/lockfree_triple_buffer.h"
 #include "srsran/mac/cell_configuration.h"
+#include "srsran/mac/mac_cell_manager.h"
 #include "srsran/scheduler/result/pdsch_info.h"
 #include "srsran/srslog/logger.h"
 
@@ -42,6 +43,9 @@ public:
 
     virtual si_version_type update(si_version_type si_version, const byte_buffer& pdu) = 0;
 
+    /// \brief Enqueue encodes SI messages at proper Tx slots.
+    virtual bool enqueue_si_pdu_updates(const mac_cell_sys_info_pdu_update& pdu_update_req) = 0;
+
     /// Retrieve encoded SI bytes for a given SI scheduling opportunity.
     virtual span<const uint8_t> get_pdu(slot_point sl_tx, const sib_information& si_info) = 0;
   };
@@ -53,6 +57,9 @@ public:
 
   /// \brief Retrieve the encoded SI message.
   span<const uint8_t> encode_si_pdu(slot_point sl_tx, const sib_information& si_info);
+
+  /// \brief Enqueue encodes SI messages at proper Tx slots.
+  bool enqueue_si_message_pdu_updates(const mac_cell_sys_info_pdu_update& pdu_update_req);
 
 private:
   using bcch_dl_sch_buffer = std::shared_ptr<const std::vector<uint8_t>>;
@@ -85,6 +92,14 @@ private:
   // SI buffers that are being currently encoded and sent to lower layers.
   // Note: This member is only accessed from the RT path.
   si_buffer_snapshot current_buffers;
+
+  std::unique_ptr<message_handler> message_ext_handler;
 };
+
+/// \brief Instantiates an SI message extension handler.
+/// \param[in] req    Request containing System Information signalled by the cell.
+/// \return A pointer to the SI message extension handler on success, otherwise \c nullptr.
+std::unique_ptr<sib_pdu_assembler::message_handler>
+create_si_message_extension_handler(const mac_cell_sys_info_config& req);
 
 } // namespace srsran

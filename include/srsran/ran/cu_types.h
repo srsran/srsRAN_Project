@@ -163,6 +163,9 @@ inline bool security_result_required(const security_indication_t& security_indic
 
 enum class activity_notification_level_t : uint8_t { ue = 0, pdu_session = 1, drb = 2, invalid = 3 };
 
+/// Common type enum for PDU Session types.
+enum class pdu_session_type_t : uint8_t { ipv4 = 0, ipv6, ipv4v6, ethernet };
+
 } // namespace srsran
 
 // Formatters
@@ -243,6 +246,31 @@ struct formatter<srsran::security_indication_t> {
                      "integrity_ind={} confidentiality_ind={}",
                      security_ind.integrity_protection_ind,
                      security_ind.confidentiality_protection_ind);
+  }
+};
+
+template <>
+struct formatter<srsran::pdu_session_type_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::pdu_session_type_t& type, FormatContext& ctx) const
+  {
+    switch (type) {
+      case srsran::pdu_session_type_t::ipv4:
+        return format_to(ctx.out(), "ipv4");
+      case srsran::pdu_session_type_t::ipv6:
+        return format_to(ctx.out(), "ipv6");
+      case srsran::pdu_session_type_t::ipv4v6:
+        return format_to(ctx.out(), "ipv4v6");
+      case srsran::pdu_session_type_t::ethernet:
+        return format_to(ctx.out(), "ethernet");
+    }
+    return format_to(ctx.out(), "invalid");
   }
 };
 

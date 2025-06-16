@@ -23,6 +23,7 @@
 #include "rrc_measurement_types_asn1_converters.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/error_handling.h"
+#include <type_traits>
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -162,30 +163,24 @@ asn1::rrc_nr::ssb_mtc_s srsran::srs_cu_cp::ssb_mtc_to_rrc_asn1(rrc_ssb_mtc ssb_m
 {
   asn1::rrc_nr::ssb_mtc_s asn1_ssb_mtc;
 
-  switch ((uint8_t)ssb_mtc.periodicity_and_offset.periodicity) {
-    case 5:
-      asn1_ssb_mtc.periodicity_and_offset.set_sf5();
-      asn1_ssb_mtc.periodicity_and_offset.sf5() = ssb_mtc.periodicity_and_offset.offset;
+  switch (ssb_mtc.periodicity_and_offset.periodicity) {
+    case rrc_periodicity_and_offset::periodicity_t::sf5:
+      asn1_ssb_mtc.periodicity_and_offset.set_sf5() = ssb_mtc.periodicity_and_offset.offset;
       break;
-    case 10:
-      asn1_ssb_mtc.periodicity_and_offset.set_sf10();
-      asn1_ssb_mtc.periodicity_and_offset.sf10() = ssb_mtc.periodicity_and_offset.offset;
+    case rrc_periodicity_and_offset::periodicity_t::sf10:
+      asn1_ssb_mtc.periodicity_and_offset.set_sf10() = ssb_mtc.periodicity_and_offset.offset;
       break;
-    case 20:
-      asn1_ssb_mtc.periodicity_and_offset.set_sf20();
-      asn1_ssb_mtc.periodicity_and_offset.sf20() = ssb_mtc.periodicity_and_offset.offset;
+    case rrc_periodicity_and_offset::periodicity_t::sf20:
+      asn1_ssb_mtc.periodicity_and_offset.set_sf20() = ssb_mtc.periodicity_and_offset.offset;
       break;
-    case 40:
-      asn1_ssb_mtc.periodicity_and_offset.set_sf40();
-      asn1_ssb_mtc.periodicity_and_offset.sf40() = ssb_mtc.periodicity_and_offset.offset;
+    case rrc_periodicity_and_offset::periodicity_t::sf40:
+      asn1_ssb_mtc.periodicity_and_offset.set_sf40() = ssb_mtc.periodicity_and_offset.offset;
       break;
-    case 80:
-      asn1_ssb_mtc.periodicity_and_offset.set_sf80();
-      asn1_ssb_mtc.periodicity_and_offset.sf80() = ssb_mtc.periodicity_and_offset.offset;
+    case rrc_periodicity_and_offset::periodicity_t::sf80:
+      asn1_ssb_mtc.periodicity_and_offset.set_sf80() = ssb_mtc.periodicity_and_offset.offset;
       break;
-    case 160:
-      asn1_ssb_mtc.periodicity_and_offset.set_sf160();
-      asn1_ssb_mtc.periodicity_and_offset.sf160() = ssb_mtc.periodicity_and_offset.offset;
+    case rrc_periodicity_and_offset::periodicity_t::sf160:
+      asn1_ssb_mtc.periodicity_and_offset.set_sf160() = ssb_mtc.periodicity_and_offset.offset;
       break;
     default:
       report_fatal_error("Cannot convert SSB MTC to ASN.1 type");

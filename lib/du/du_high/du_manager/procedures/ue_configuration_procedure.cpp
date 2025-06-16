@@ -218,7 +218,7 @@ void ue_configuration_procedure::clear_old_ue_context()
   if (not drbs_to_rem.empty()) {
     // Dispatch DRB context destruction to the respective UE executor.
     task_executor& exec = du_params.services.ue_execs.ctrl_executor(ue->ue_index);
-    if (not exec.defer([drbs = std::move(drbs_to_rem)]() mutable { drbs.clear(); })) {
+    if (not exec.defer(TRACE_TASK([drbs = std::move(drbs_to_rem)]() mutable { drbs.clear(); }))) {
       logger.warning("ue={}: Could not dispatch DRB removal task to UE executor. Destroying it the main DU manager "
                      "execution context",
                      fmt::underlying(ue->ue_index));

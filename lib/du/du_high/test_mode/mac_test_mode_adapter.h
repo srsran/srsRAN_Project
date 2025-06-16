@@ -103,10 +103,10 @@ private:
     // Locks a given slot.
     // Note: In normal scenarios, this mutex will have no contention, as the times of write and read are separate.
     // However, if the ring buffer is too small, this may stop being true.
-    mutable std::mutex         mutex;
-    slot_point                 slot;
-    std::vector<pucch_info>    pucchs;
-    std::vector<ul_sched_info> puschs;
+    mutable std::mutex                                    mutex;
+    slot_point                                            slot;
+    static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>    pucchs;
+    static_vector<ul_sched_info, MAX_PUSCH_PDUS_PER_SLOT> puschs;
   };
 
   void forward_uci_ind_to_mac(const mac_uci_indication_message& uci_msg);

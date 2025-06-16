@@ -39,6 +39,7 @@ tests:
       metrics:
         enable_log: true
         layers:
+          enable_executor: true
           enable_rlc: true
           enable_ru: true
       cell_cfg:

@@ -35,9 +35,9 @@ if (ZEROMQ_FOUND OR UHD_FOUND)
             srsran_channel_precoder
             )
     # Add lower PHY sample loopback test with ZeroMQ only if ZeroMQ is available.
-    if (ZEROMQ_FOUND AND BUILD_TESTS)
+    if (ZEROMQ_FOUND AND BUILD_TESTING)
         add_test(radio_ssb_zmq_20MHz_n7 radio_ssb -P zmq_20MHz_n7 -D 10 -L 1 -v warning -du)
         add_test(radio_ssb_zmq_20MHz_n78 radio_ssb -P zmq_20MHz_n78 -D 10 -L 1 -v warning -du)
-    endif (ZEROMQ_FOUND AND BUILD_TESTS)
+    endif (ZEROMQ_FOUND AND BUILD_TESTING)
 
 endif (ZEROMQ_FOUND OR UHD_FOUND)

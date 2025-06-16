@@ -31,7 +31,6 @@
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/srslog/srslog.h"
-#include <deque>
 
 namespace srsran {
 
@@ -76,12 +75,18 @@ public:
 private:
   class msg3_harq_timeout_notifier;
 
+  struct pending_rar_failed_attempts_t {
+    unsigned pdcch = 0;
+    unsigned pdsch = 0;
+    unsigned pusch = 0;
+  };
   struct pending_rar_t {
     rnti_t                                                  ra_rnti = rnti_t::INVALID_RNTI;
     slot_point                                              prach_slot_rx;
     slot_point                                              last_sched_try_slot;
     slot_interval                                           rar_window;
     static_vector<rnti_t, MAX_PREAMBLES_PER_PRACH_OCCASION> tc_rntis;
+    pending_rar_failed_attempts_t                           failed_attempts;
   };
   struct pending_msg3_t {
     /// Detected PRACH Preamble associated to this Msg3.
@@ -135,7 +140,7 @@ private:
 
   /// Find and allocate DL and UL resources for pending RAR and associated Msg3 grants.
   /// \return The number of allocated Msg3 grants.
-  unsigned schedule_rar(const pending_rar_t& rar, cell_resource_allocator& res_alloc, slot_point pdcch_slot);
+  unsigned schedule_rar(pending_rar_t& rar, cell_resource_allocator& res_alloc, slot_point pdcch_slot);
 
   /// Schedule RAR grant and associated Msg3 grants in the provided scheduling resources.
   /// \param res_alloc Cell Resource Allocator.
@@ -158,7 +163,7 @@ private:
 
   // Set the max number of slots the scheduler can look ahead in the resource grid (with respect to the current slot) to
   // find PDSCH space for RAR.
-  static const unsigned max_dl_slots_ahead_sched = 8U;
+  static constexpr unsigned max_dl_slots_ahead_sched = 8U;
 
   // args
   const scheduler_ra_expert_config& sched_cfg;
@@ -194,11 +199,23 @@ private:
   sch_mcs_description                 msg3_mcs_config;
 
   // variables
-  cell_harq_manager           msg3_harqs;
-  rach_indication_queue       pending_rachs;
-  crc_indication_queue        pending_crcs;
-  std::deque<pending_rar_t>   pending_rars;
-  std::vector<pending_msg3_t> pending_msg3s;
+  cell_harq_manager     msg3_harqs;
+  rach_indication_queue pending_rachs;
+  crc_indication_queue  pending_crcs;
+
+  /// The maximum number of pending RARs is given by the maximum number of PRACH occasions that can accumulate from a
+  /// given UL slot (at which the PRACH is received) until the expiration of the RAR window. The worst case is when:
+  /// (i) the PRACH is received instantaneously by the scheduler, and the PRACH slot is the farthest possible from the
+  ///     beginning of the start of the RAR window.
+  /// (ii) RAR window is min(80 slots, 10 ms).
+  /// (iii) there are PRACHs occasions in every UL slot.
+  /// (iv) there are no suitable DL slots for scheduling the RARs (pending RARs will be in the vector until the RAR
+  ///      window expires).
+  /// [Implementation-defined] Assume 80 slots RAR window + TDD 2D1S7D with 30kHz SCS slots and
+  /// MAX_PRACH_OCCASIONS_PER_SLOT (the actual number would depend on the PRACH configuration index).
+  static constexpr size_t                                                             MAX_PENDING_RARS_SLOTS = 90U;
+  static_vector<pending_rar_t, MAX_PRACH_OCCASIONS_PER_SLOT * MAX_PENDING_RARS_SLOTS> pending_rars;
+  std::vector<pending_msg3_t>                                                         pending_msg3s;
 };
 
 } // namespace srsran

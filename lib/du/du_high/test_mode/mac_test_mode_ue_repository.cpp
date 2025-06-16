@@ -75,7 +75,7 @@ const sched_ue_config_request* mac_test_mode_ue_repository::find_sched_ue_cfg_re
 bool mac_test_mode_ue_repository::is_msg4_rxed(rnti_t rnti) const
 {
   unsigned cell_idx = get_cell_index(rnti);
-  if (cells[cell_idx]->rnti_to_ue_info_lookup.count(rnti) > 0) {
+  if (cells[cell_idx]->rnti_to_ue_info_lookup.find(rnti) != cells[cell_idx]->rnti_to_ue_info_lookup.end()) {
     return cells[cell_idx]->rnti_to_ue_info_lookup.at(rnti).msg4_rx_flag;
   }
   return false;
@@ -84,7 +84,7 @@ bool mac_test_mode_ue_repository::is_msg4_rxed(rnti_t rnti) const
 void mac_test_mode_ue_repository::msg4_rxed(rnti_t rnti, bool msg4_rx_flag_)
 {
   unsigned cell_idx = get_cell_index(rnti);
-  if (cells[cell_idx]->rnti_to_ue_info_lookup.count(rnti) > 0) {
+  if (cells[cell_idx]->rnti_to_ue_info_lookup.find(rnti) != cells[cell_idx]->rnti_to_ue_info_lookup.end()) {
     cells[cell_idx]->rnti_to_ue_info_lookup.at(rnti).msg4_rx_flag = msg4_rx_flag_;
   }
 }
@@ -105,10 +105,10 @@ void mac_test_mode_ue_repository::add_ue(rnti_t                         rnti,
   unsigned cell_idx = get_cell_index(ue_idx);
 
   // Dispatch creation of UE to du_cell thread.
-  while (not cells[cell_idx]->pending_tasks.try_push([this, rnti, ue_idx, sched_ue_cfg_req]() {
+  while (not cells[cell_idx]->pending_tasks.try_push([this, rnti, ue_idx, cfg = sched_ue_cfg_req]() mutable {
     unsigned idx = get_cell_index(ue_idx);
-    cells[idx]->rnti_to_ue_info_lookup[rnti] =
-        test_ue_info{.ue_idx = ue_idx, .sched_ue_cfg_req = sched_ue_cfg_req, .msg4_rx_flag = false};
+    cells[idx]->rnti_to_ue_info_lookup.emplace(
+        rnti, test_ue_info{.ue_idx = ue_idx, .sched_ue_cfg_req = std::move(cfg), .msg4_rx_flag = false});
   })) {
     srslog::fetch_basic_logger("MAC").warning("Failed to add test mode UE. Retrying...");
   }
@@ -119,7 +119,7 @@ void mac_test_mode_ue_repository::remove_ue(rnti_t rnti)
   unsigned cell_idx = get_cell_index(rnti);
   while (not cells[cell_idx]->pending_tasks.try_push([this, rnti]() {
     unsigned idx = get_cell_index(rnti);
-    if (cells[idx]->rnti_to_ue_info_lookup.count(rnti) > 0) {
+    if (cells[idx]->rnti_to_ue_info_lookup.find(rnti) != cells[idx]->rnti_to_ue_info_lookup.end()) {
       cells[idx]->rnti_to_ue_info_lookup.erase(rnti);
     }
   })) {

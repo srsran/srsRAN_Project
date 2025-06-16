@@ -171,7 +171,7 @@ public:
                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                    rlc_tx_lower_layer_notifier&         lower_dn_,
-                   rlc_metrics_aggregator&              metrics_aggregator_,
+                   rlc_bearer_metrics_collector&        metrics_coll_,
                    rlc_pcap&                            pcap_,
                    task_executor&                       pcell_executor_,
                    task_executor&                       ue_executor_,
@@ -219,7 +219,7 @@ public:
   ///
   /// Note: This function shall be executed by the same executor that calls pull_pdu(), i.e. the pcell_executor,
   /// in order to avoid incidential blocking of those critical paths.
-  void on_expired_poll_retransmit_timer();
+  void on_expired_poll_retransmit_timer() noexcept;
 
   // Window helpers
 
@@ -372,7 +372,7 @@ private:
   ///
   /// Safe execution from: pcell_executor
   /// \param force_notify forces a notification of the lower layer regardless of the current/previous buffer state.
-  void update_mac_buffer_state(bool force_notify);
+  void update_mac_buffer_state(bool force_notify) noexcept;
 
   void log_state(srslog::basic_levels level)
   {

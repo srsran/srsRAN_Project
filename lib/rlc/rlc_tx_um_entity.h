@@ -26,7 +26,6 @@
 #include "rlc_tx_entity.h"
 #include "srsran/support/executors/task_executor.h"
 #include "fmt/format.h"
-#include <mutex>
 
 namespace srsran {
 
@@ -89,7 +88,7 @@ public:
                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                    rlc_tx_lower_layer_notifier&         lower_dn_,
-                   rlc_metrics_aggregator&              metrics_agg_,
+                   rlc_bearer_metrics_collector&        metrics_coll_,
                    rlc_pcap&                            pcap_,
                    task_executor&                       pcell_executor_,
                    task_executor&                       ue_executor_,
@@ -110,7 +109,7 @@ public:
   void discard_sdu(uint32_t pdcp_sn) override;
 
   // Interfaces for lower layers
-  size_t           pull_pdu(span<uint8_t> mac_sdu_buf) override;
+  size_t           pull_pdu(span<uint8_t> mac_sdu_buf) noexcept override;
   rlc_buffer_state get_buffer_state() override;
 
 private:
@@ -133,7 +132,7 @@ private:
   /// its execution is queued by \c handle_changed_buffer_state.
   ///
   /// Safe execution from: pcell_executor
-  void update_mac_buffer_state();
+  void update_mac_buffer_state() noexcept;
 
   void log_state(srslog::basic_levels level) { logger.log(level, "TX entity state. {} next_so={}", st, next_so); }
 

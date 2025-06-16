@@ -1284,7 +1284,7 @@
       },
       "id": 21,
       "panels": [],
-      "title": "Report Interval",
+      "title": "Rank Indicator",
       "type": "row"
     },
     {
@@ -1336,7 +1336,8 @@
           },
           "decimals": 0,
           "mappings": [],
-          "min": 0,
+          "max": 4,
+          "min": 1,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1444,7 +1445,8 @@
           },
           "decimals": 0,
           "mappings": [],
-          "min": 0,
+          "max": 4,
+          "min": 1,
           "thresholds": {
             "mode": "absolute",
             "steps": [

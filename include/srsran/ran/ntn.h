@@ -23,38 +23,84 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <variant>
 
 namespace srsran {
 
+/// Satellite ephemeris in format of position and velocity state vector in ECEF.
 struct ecef_coordinates_t {
-  int position_x;
-  int position_y;
-  int position_z;
-  int velocity_vx;
-  int velocity_vy;
-  int velocity_vz;
+  /// X coordinate of position state vector. Unit is meter.
+  double position_x;
+  /// Y coordinate of position state vector. Unit is meter.
+  double position_y;
+  /// Z coordinate of position state vector. Unit is meter.
+  double position_z;
+  /// X coordinate of velocity state vector. Unit is meter/second.
+  double velocity_vx;
+  /// Y coordinate of velocity state vector. Unit is meter/second.
+  double velocity_vy;
+  /// Z coordinate of velocity state vector. Unit is meter/second.
+  double velocity_vz;
 };
 
+/// Satellite ephemeris in format of orbital parameters in ECI. See NIMA TR 8350.2.
 struct orbital_coordinates_t {
-  uint64_t semi_major_axis;
-  double   eccentricity;
-  double   periapsis;
-  double   longitude;
-  double   mean_anomaly;
-  double   inclination;
+  /// Semi major axis. Unit is meter.
+  double semi_major_axis;
+  /// Eccentricity. Unitless.
+  double eccentricity;
+  /// Argument of periapsis. Unit is radian.
+  double periapsis;
+  /// Longitude of ascending node. Unit is radian.
+  double longitude;
+  /// Mean anomaly M at epoch time. Unit is radian.
+  double mean_anomaly;
+  /// Inclination. Unit is radian.
+  double inclination;
 };
 
+/// Timing advance information for NTN.
 struct ta_info_t {
-  unsigned ta_common;
-  int      ta_common_drift;
-  unsigned ta_common_drift_variant;
+  /// Network-controlled common timing advanced value and it may include any timing offset considered necessary by the
+  /// network. ta-Common with value of 0 is supported. Unit is us.
+  double ta_common;
+  /// Indicate drift rate of the common TA. Unit is us/s.
+  double ta_common_drift;
+  /// Indicate drift rate variation of the common TA. Unit is us/s^2.
+  double ta_common_drift_variant;
 };
 
+/// EpochTime is used to indicate the epoch time for the NTN assistance information, and it is defined as the starting
+/// time of a DL sub-frame, indicated by a SFN and a sub-frame number signaled together with the assistance information.
 struct epoch_time_t {
+  /// For serving cell, it indicates the current SFN or the next upcoming SFN after the frame where the message
+  /// indicating the epochTime is received. For neighbour cell, it indicates the SFN nearest to the frame where the
+  /// message indicating the epochTime is received.
   unsigned sfn;
+  /// Sub-frame number within the SFN.
   unsigned subframe_number;
+};
+
+/// Parameters of the feeder link used to compute the Doppler shifts.
+struct feeder_link_info_t {
+  /// Flag to enable/disable doppler compensation for the feeder link.
+  bool enable_doppler_compensation;
+  /// Downlink frequency of the feeder link. Unit is Hz.
+  double dl_freq;
+  /// Uplink frequency of the feeder link. Unit is Hz.
+  double ul_freq;
+};
+
+/// Geodetic coordinates of the NTN Gateway location.
+struct geodetic_coordinates_t {
+  /// Latitude. Unit is degree.
+  double latitude;
+  /// Longitude. Unit is degree.
+  double longitude;
+  /// Altitude. Unit is meter.
+  double altitude;
 };
 
 struct ntn_config {
@@ -63,7 +109,7 @@ struct ntn_config {
   std::optional<std::string> reference_location;
   /// Distance from the serving cell reference location, as defined in TS 38.304. Each step represents 50m.
   std::optional<unsigned> distance_threshold;
-  // NTN-config values
+  /// NTN-config values
   /// Indicate the epoch time for the NTN assistance information.
   std::optional<epoch_time_t> epoch_time;
   /// Scheduling offset used for the timing relationships that are modified for NTN (see TS 38.213). The unit of the
@@ -81,5 +127,14 @@ struct ntn_config {
   /// Network-controlled common timing advanced value and it may include any timing offset considered necessary by the
   /// network.
   std::optional<ta_info_t> ta_info;
+  /// Parameters of the feeder link used to compute the doppler shifts.
+  std::optional<feeder_link_info_t> feeder_link_info;
+  /// Geodetic coordinates (in degrees) of the NTN Gateway location.
+  std::optional<geodetic_coordinates_t> ntn_gateway_location;
+  /// SIB19 scheduling information.
+  unsigned                si_msg_idx;
+  unsigned                si_period_rf;
+  unsigned                si_window_len_slots;
+  std::optional<unsigned> si_window_position;
 };
 } // namespace srsran

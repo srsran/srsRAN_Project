@@ -42,8 +42,6 @@ from retina.protocol.gnb_pb2_grpc import GNBStub
 
 from .steps.stub import FIVEGC_STARTUP_TIMEOUT, GNB_STARTUP_TIMEOUT, handle_start_error, stop
 
-_POD_ERROR = "Error creating the pod"
-
 
 @mark.parametrize(
     "extra_config, nof_ant",
@@ -155,10 +153,6 @@ def test_ue(
 
 
 @mark.test_mode_acc100
-@mark.flaky(
-    reruns=2,
-    only_rerun=[_POD_ERROR],
-)
 def test_ru_acc100(
     # Retina
     retina_manager: RetinaTestManager,
@@ -184,10 +178,6 @@ def test_ru_acc100(
 
 
 @mark.test_mode
-@mark.flaky(
-    reruns=2,
-    only_rerun=[_POD_ERROR],
-)
 def test_ru(
     # Retina
     retina_manager: RetinaTestManager,
@@ -202,10 +192,6 @@ def test_ru(
 
 
 @mark.test_mode
-@mark.flaky(
-    reruns=2,
-    only_rerun=[_POD_ERROR],
-)
 def test_ru_16cell_50ue(
     # Retina
     retina_manager: RetinaTestManager,
@@ -220,10 +206,6 @@ def test_ru_16cell_50ue(
 
 
 @mark.test_mode_not_crash
-@mark.flaky(
-    reruns=2,
-    only_rerun=[_POD_ERROR],
-)
 def test_ru_not_crash(
     # Retina
     retina_manager: RetinaTestManager,
@@ -247,10 +229,6 @@ def test_ru_not_crash(
 
 
 @mark.test_mode_not_crash
-@mark.flaky(
-    reruns=2,
-    only_rerun=[_POD_ERROR],
-)
 def test_ru_16cell_50ue_not_crash(
     # Retina
     retina_manager: RetinaTestManager,
@@ -365,10 +343,6 @@ def _test_ru(
 
 
 @mark.test_mode_many_ues
-@mark.flaky(
-    reruns=2,
-    only_rerun=[_POD_ERROR],
-)
 # pylint: disable=too-many-locals
 def test_mode_many_ues(
     # Retina

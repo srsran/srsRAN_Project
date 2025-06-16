@@ -124,6 +124,11 @@ Copyright: 2013-2023 Niels Lohmann
 License:   MIT
 
 
+Files:     external/cmake-sbom/sbom.cmake
+Copyright: 2023-2024 Jochem Rutgers
+License:   MIT
+
+
 License: MIT
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the "Software"),

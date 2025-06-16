@@ -62,8 +62,12 @@ static meas_gap_config create_meas_gap(subcarrier_spacing scs, const ssb_mtc_s& 
   switch (smtc1.periodicity_and_offset.type().value) {
     case ssb_mtc_s::periodicity_and_offset_c_::types_opts::sf5:
       meas_gap.offset = smtc1.periodicity_and_offset.sf5();
+      meas_gap.mgrp   = meas_gap_repetition_period::ms20;
+      break;
     case ssb_mtc_s::periodicity_and_offset_c_::types_opts::sf10:
       meas_gap.offset = smtc1.periodicity_and_offset.sf10();
+      meas_gap.mgrp   = meas_gap_repetition_period::ms20;
+      break;
     case ssb_mtc_s::periodicity_and_offset_c_::types_opts::sf20:
       meas_gap.offset = smtc1.periodicity_and_offset.sf20();
       meas_gap.mgrp   = meas_gap_repetition_period::ms20;

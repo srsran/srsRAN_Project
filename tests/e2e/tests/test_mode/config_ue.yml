@@ -18,6 +18,21 @@
 # and at http://www.gnu.org/licenses/.
 #
 
+metrics:
+  layers:
+    enable_app_usage: true
+    enable_pdcp: true
+    enable_sched: true
+    enable_rlc: true
+    enable_mac: true
+    enable_du_low: true
+    enable_ru: true
+  periodicity:
+    app_usage_report_period: 10000
+    cu_cp_report_period: 5000
+    cu_up_report_period: 5000
+    du_report_period: 1000
+
 cu_up:
   warn_on_drop: False
 
@@ -26,7 +41,7 @@ cu_cp:
   inactivity_timer: 3
   rrc:
     force_reestablishment_fallback: false
-  
+
 cell_cfg:
   dl_arfcn: 625000
   band: 78

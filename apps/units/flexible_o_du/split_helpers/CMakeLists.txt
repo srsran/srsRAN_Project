@@ -23,7 +23,8 @@ add_subdirectory(metrics)
 set(SOURCES
         flexible_o_du_factory.cpp
         flexible_o_du_impl.cpp
-        flexible_o_du_metrics_aggregator.cpp)
+        flexible_o_du_metrics_aggregator.cpp
+        commands/ntn_config_update_remote_command_factory.cpp)
 
 add_library(srsran_flexible_o_du_helpers STATIC ${SOURCES})
 target_include_directories(srsran_flexible_o_du_helpers PRIVATE ${CMAKE_SOURCE_DIR})

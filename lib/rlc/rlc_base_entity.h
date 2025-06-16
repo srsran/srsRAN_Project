@@ -49,7 +49,7 @@ public:
     ue_index(ue_index_),
     rb_id(rb_id_),
     metrics_period(metrics_period_),
-    metrics_agg(gnb_du_id_, ue_index, rb_id_, metrics_period_, rlc_metrics_notifier_, ue_executor_)
+    metrics_coll(gnb_du_id_, ue_index, rb_id_, metrics_period_, rlc_metrics_notifier_, ue_executor_)
   {
   }
   ~rlc_base_entity() override                         = default;
@@ -95,7 +95,7 @@ protected:
   std::unique_ptr<rlc_tx_entity> tx;
   std::unique_ptr<rlc_rx_entity> rx;
   timer_duration                 metrics_period;
-  rlc_metrics_aggregator         metrics_agg;
+  rlc_bearer_metrics_collector   metrics_coll;
 };
 
 } // namespace srsran

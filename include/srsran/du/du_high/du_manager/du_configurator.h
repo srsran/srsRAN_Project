@@ -22,25 +22,23 @@
 
 #pragma once
 
+#include "srsran/adt/byte_buffer.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/rrm.h"
+#include "srsran/ran/slot_point.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
 namespace srs_du {
 
-struct control_config_params {
+struct du_mac_sched_control_config {
+  uint64_t ue_id;
   // Sets the number of HARQ processes to be used.
   std::optional<unsigned> num_harq_processes;
   // Sets the number of HARQ retransmissions to be used.
   std::optional<unsigned> num_harq_retransmissions;
-  // Set the radio resource management policy.
-  std::optional<rrm_policy_ratio_group> rrm_policy_group;
-};
-
-struct du_mac_sched_control_config {
-  uint64_t                           ue_id;
-  std::vector<control_config_params> param_list;
+  // Set the radio resource management policy list.
+  std::vector<rrm_policy_ratio_group> rrm_policy_ratio_list;
 };
 
 struct du_mac_sched_control_config_response {
@@ -74,6 +72,27 @@ struct du_param_config_response {
   bool success;
 };
 
+/// Structure used to update SI PDU messages, without SI change notifications nor in a modification of valueTag in SIB1.
+struct du_si_pdu_update_request {
+  using time_point = std::chrono::system_clock::time_point;
+  /// NR Cell Global ID of the cell being configured.
+  nr_cell_global_id_t nr_cgi;
+  /// SI message index.
+  unsigned si_msg_idx;
+  /// SIB index (e.g., sib2 => value 2).
+  unsigned sib_idx;
+  /// Slot at which the first SI is transmitted.
+  slot_point slot;
+  /// SI period in nof slots, required if more than one are SI PDU passed.
+  std::optional<unsigned> si_slot_period;
+  /// Packed content of SIB messages.
+  span<byte_buffer> si_messages;
+};
+
+struct du_si_pdu_update_response {
+  bool success;
+};
+
 /// Interface to configure parameters of an already operational DU.
 class du_configurator
 {
@@ -85,6 +104,9 @@ public:
 
   /// Apply new config updates requested from outside the DU.
   virtual du_param_config_response handle_operator_config_request(const du_param_config_request& req) = 0;
+
+  /// Apply new SI PDU requested from outside the DU.
+  virtual void handle_si_pdu_update(const du_si_pdu_update_request& req) = 0;
 };
 
 } // namespace srs_du

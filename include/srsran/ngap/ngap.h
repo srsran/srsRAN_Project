@@ -300,6 +300,23 @@ public:
   update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index, ngap_cu_cp_ue_notifier& new_ue_notifier) = 0;
 };
 
+/// Interface to map between ue_index and amf_ue_id.
+class ngap_ue_id_translator
+{
+public:
+  virtual ~ngap_ue_id_translator() = default;
+
+  /// \brief Map amf_ue_id to ue_index.
+  /// \param[in] amf_ue_id of a given UE.
+  /// \param[out] ue_index of the given UE.
+  virtual ue_index_t get_ue_index(const amf_ue_id_t& amf_ue_id) = 0;
+
+  /// \brief Map ue_index to amf_ue_id.
+  /// \param[in] ue_index of a given UE.
+  /// \param[out] amf_ue_id of the given UE.
+  virtual amf_ue_id_t get_amf_ue_id(const ue_index_t& ue_index) = 0;
+};
+
 /// Interface used to capture the NGAP metrics from a single CU-CP NGAP.
 class ngap_metrics_handler
 {
@@ -331,7 +348,8 @@ class ngap_interface : public ngap_message_handler,
                        public ngap_ue_control_manager,
                        public ngap_statistics_handler,
                        public ngap_ue_context_removal_handler,
-                       public ngap_metrics_handler
+                       public ngap_metrics_handler,
+                       public ngap_ue_id_translator
 {
 public:
   virtual ~ngap_interface() = default;
@@ -346,6 +364,7 @@ public:
   virtual ngap_metrics_handler&                        get_metrics_handler()                      = 0;
   virtual ngap_statistics_handler&                     get_ngap_statistics_handler()              = 0;
   virtual ngap_ue_context_removal_handler&             get_ngap_ue_context_removal_handler()      = 0;
+  virtual ngap_ue_id_translator&                       get_ngap_ue_id_translator()                = 0;
 };
 
 } // namespace srs_cu_cp

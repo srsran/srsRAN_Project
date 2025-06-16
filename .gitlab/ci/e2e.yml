@@ -138,7 +138,6 @@ smoke zmq:
     GROUP: uesim
     TESTBED: zmq_uesim
     E2E_LOG_LEVEL: info
-    RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
   needs:
     - job: basic relwithdeb
       artifacts: true
@@ -387,7 +386,6 @@ test mode ru:
     MARKERS: test_mode
     KEYWORDS: test_ru
     E2E_LOG_LEVEL: warning
-    RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
   needs:
     - job: basic ru dummy
       artifacts: true
@@ -431,6 +429,8 @@ test mode ru acc100:
   extends: test mode ru
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
+      when: manual
+      allow_failure: true
   variables:
     TESTBED: test_mode_acc100
     MARKERS: test_mode_acc100
@@ -444,7 +444,6 @@ test mode ue many ues:
     MARKERS: test_mode_many_ues
     KEYWORDS: test_mode_many_ues
     E2E_LOG_LEVEL: warning
-    RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
 
 ################################################################################
 # RF
@@ -549,11 +548,10 @@ android drx:
     MARKERS: viavi
     E2E_LOG_LEVEL: warning
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.rlc_rb_type=srb"
-    RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
   needs:
-    - job: basic avx512 dpdk
+    - job: basic avx512 dpdk rtsan
       artifacts: true
     - *retina-needs
 
@@ -629,17 +627,6 @@ viavi debug:
       artifacts: true
     - *retina-needs
 
-viavi rtsan:
-  extends: .viavi
-  variables:
-    KEYWORDS: rtsan
-  when: manual
-  allow_failure: true
-  needs:
-    - job: basic avx512 dpdk rtsan
-      artifacts: true
-    - *retina-needs
-
 viavi um:
   extends: .viavi
   rules:
@@ -657,6 +644,10 @@ viavi 3h:
       start_in: 1 hour
   variables:
     KEYWORDS: 3h
+  needs:
+    - job: basic avx512 dpdk
+      artifacts: true
+    - *retina-needs
 
 viavi 24h:
   extends: .viavi
@@ -665,6 +656,10 @@ viavi 24h:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     KEYWORDS: 24h
+  needs:
+    - job: basic avx512 dpdk
+      artifacts: true
+    - *retina-needs
 
 ################################################################################
 # Amari S72
@@ -676,14 +671,13 @@ viavi 24h:
   variables:
     GROUP: rf
     TESTBED: s72_uesim
-    E2E_LOG_LEVEL: info
-    RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
+    E2E_LOG_LEVEL: warning
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
       when: delayed
       start_in: 8 hours # woraround: let zmq-uesim finish first
   needs:
-    - job: basic avx2 dpdk
+    - job: basic avx2 dpdk rtsan
       artifacts: true
     - *retina-needs
 

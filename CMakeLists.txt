@@ -87,10 +87,12 @@ option(ENABLE_LIBNUMA        "Enable LibNUMA"                             OFF)
 option(ENABLE_EXPORT         "Enable PIC and export libraries"            OFF)
 option(ENABLE_TRX_DRIVER     "Enable Amarisoft TRX driver library"        OFF)
 option(ENABLE_PLUGINS        "Compile plugins in the plugin folder"       ON)
-option(BUILD_TESTS           "Compile tests"                              ON)
+option(BUILD_TESTING         "Compile tests"                              OFF)
 option(ENABLE_GPROF          "Enable gprof"                               OFF)
-option(USE_PHY_TESTVECTORS   "Enable testvector PHY tests"                OFF)
 option(FORCE_DEBUG_INFO      "Add debug information to Release build"     OFF)
+if (BUILD_TESTING)
+option(USE_PHY_TESTVECTORS   "Enable testvector PHY tests"                OFF)
+endif(BUILD_TESTING)
 
 # Set assertion level options and default value.
 set(ASSERT_LEVEL "AUTO" CACHE STRING "Assertion paranoia level")
@@ -264,6 +266,22 @@ if(NOT EXIT_TIMEOUT STREQUAL "AUTO")
 endif()
 
 ########################################################################
+# Create SBOM project
+########################################################################
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/external/cmake-sbom")
+include(sbom)
+include(GNUInstallDirs)
+
+sbom_generate(
+    OUTPUT       "${CMAKE_INSTALL_PREFIX}/share/srsran.spdx"
+    PROJECT      "srsRAN 5G CU DU"
+    SUPPLIER     "Software Radio Systems Ltd"
+    SUPPLIER_URL "https://srs.io"
+    DOWNLOAD_URL "https://github.com/srsran/srsRAN_Project.git"
+    LICENSE      "LicenseRef-srsRAN"
+)
+
+########################################################################
 # Find dependencies
 ########################################################################
 
@@ -283,6 +301,31 @@ if (ENABLE_BACKWARD)
             message(STATUS "Backward-cpp found, but external libraries are missing.")
         endif()
     endif()
+    if (LIBDW_FOUND)
+        sbom_add(
+            PACKAGE            "libdw"
+            DOWNLOAD_LOCATION  "https://sourceware.org/elfutils/"
+            SUPPLIER           "elfutils project"
+            LICENSE            "GPL-2.0-or-later"
+            VERSION            ${LIBDW_VERSION}
+        )
+	elseif(LIBBFD_FOUND)
+        sbom_add(
+            PACKAGE            "libbfd"
+            DOWNLOAD_LOCATION  "https://sourceware.org/elfutils/"
+            SUPPLIER           "elfutils project"
+            LICENSE            "GPL-2.0-or-later"
+            VERSION            ${LIBBFD_VERSION}
+        )
+	elseif(LIBDWARF_FOUND)
+        sbom_add(
+            PACKAGE            "libdwarf"
+            DOWNLOAD_LOCATION  "https://sourceware.org/elfutils/"
+            SUPPLIER           "elfutils project"
+            LICENSE            "GPL-2.0-or-later"
+            VERSION            ${LIBDWARF_VERSION}
+        )
+    endif()
 else ()
     # Empty macro to add backward when it is not enabled.
     macro(add_backward)
@@ -298,6 +341,13 @@ if (MBEDTLS_FOUND)
     else(BUILD_STATIC)
         set(SEC_LIBRARIES "${MBEDTLS_LIBRARIES}")
     endif(BUILD_STATIC)
+    sbom_add(
+        PACKAGE            "mbedTLS"
+        DOWNLOAD_LOCATION  "https://tls.mbed.org"
+        SUPPLIER           "MbedTLS project"
+        LICENSE            "Apache-2.0"
+        VERSION            ${PC_MBEDTLS_VERSION}
+    )
 else(MBEDTLS_FOUND)
     message(FATAL_ERROR "mbedTLS is required to build ${CMAKE_PROJECT_NAME}")
 endif (MBEDTLS_FOUND)
@@ -305,27 +355,55 @@ endif (MBEDTLS_FOUND)
 # FFTW
 if (ENABLE_FFTW)
     find_package(FFTW3F)
+    if(FFTW3F_FOUND)
+        sbom_add(
+            PACKAGE            "FFTW3"
+            DOWNLOAD_LOCATION  "http://www.fftw.org"
+            SUPPLIER           "FFTW project"
+            LICENSE            "GPL-2.0-or-later OR LGPL-2.1-or-later"
+            VERSION            ${PC_FFTW3F_VERSION}
+        )
+    endif(FFTW3F_FOUND)
 endif (ENABLE_FFTW)
 
 # MKL
 if (ENABLE_MKL AND ${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     find_package(MKL)
+    if(MKL_FOUND)
+        sbom_add(
+            PACKAGE            "Intel MKL"
+            DOWNLOAD_LOCATION  "https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html"
+            SUPPLIER           "Intel Corporation"
+            LICENSE            "Apache-2.0"
+            VERSION            ${MKL_VERSION}
+        )
+    endif(MKL_FOUND)
 endif (ENABLE_MKL AND ${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
 
 # ARMPL
 if (ENABLE_ARMPL AND ${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
     find_package(ARMPL)
+    if(ARMPL_FOUND)
+        sbom_add(
+            PACKAGE            "ARM Performance Libraries"
+            DOWNLOAD_LOCATION  "https://developer.arm.com/Tools%20and%20Software/Arm%20Performance%20Libraries#Downloads"
+            SUPPLIER           "Arm Ltd."
+            LICENSE            "Apache-2.0"
+            VERSION            ${ARMPL_VERSION}
+        )
+    endif(ARMPL_FOUND)
 endif (ENABLE_ARMPL AND ${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
 
 # Google Tests
-if (BUILD_TESTS)
+if (BUILD_TESTING)
     find_package(GTest REQUIRED)
-
     # Alias gtest_discover_tests increase discovery the timeout.
     function(gtest_discover_tests)
         _gtest_discover_tests(${ARGV} DISCOVERY_TIMEOUT 15)
     endfunction()
-endif (BUILD_TESTS)
+else()
+    message(STATUS "Skipping Tests. Set BUILD_TESTING to On to compile tests.")
+endif (BUILD_TESTING)
 
 # Threads
 find_package(Threads REQUIRED)
@@ -336,6 +414,13 @@ if (ENABLE_UHD)
     if (UHD_FOUND)
         include_directories(${UHD_INCLUDE_DIRS})
         link_directories(${UHD_LIBRARY_DIRS})
+        sbom_add(
+            PACKAGE            "UHD"
+            DOWNLOAD_LOCATION  "https://github.com/EttusResearch/uhd"
+            SUPPLIER           "Ettus Research, a National Instruments Brand"
+            LICENSE            "GPL-3.0-or-later"
+            VERSION            ${UHD_VERSION}
+        )
     endif (UHD_FOUND)
 else (ENABLE_UHD)
     unset(UHD_FOUND CACHE)
@@ -346,6 +431,13 @@ find_package(YAMLCPP)
 if (YAMLCPP_FOUND)
     include_directories(${YAMLCPP_INCLUDE_DIR})
     link_directories(${YAMLCPP_LIBRARY})
+    sbom_add(
+        PACKAGE            "yaml-cpp"
+        DOWNLOAD_LOCATION  "https://github.com/jbeder/yaml-cpp"
+        SUPPLIER           "yaml-cpp project"
+        LICENSE            "MIT"
+        VERSION            ${PC_YAMLCPP_VERSION}
+    )
 else (YAMLCPP_FOUND)
     message(FATAL_ERROR "yaml-cpp is required to build ${CMAKE_PROJECT_NAME}")
 endif (YAMLCPP_FOUND)
@@ -356,6 +448,13 @@ if (ENABLE_ZEROMQ)
     if (ZEROMQ_FOUND)
         include_directories(${ZEROMQ_INCLUDE_DIRS})
         link_directories(${ZEROMQ_LIBRARY_DIRS})
+        sbom_add(
+            PACKAGE            "ZeroMQ"
+            DOWNLOAD_LOCATION  "https://zeromq.org/"
+            SUPPLIER           "ZeroMQ project"
+            LICENSE            "LGPL-3.0-or-later"
+            VERSION            ${ZEROMQ_PKG_VERSION}
+        )
     endif (ZEROMQ_FOUND)
 else (ENABLE_ZEROMQ)
     unset(ZEROMQ_FOUND CACHE)
@@ -366,6 +465,13 @@ if (ENABLE_LIBNUMA)
     if (NUMA_FOUND)
         include_directories(${NUMA_INCLUDE_DIRS})
         add_definitions(-DNUMA_SUPPORT)
+        sbom_add(
+            PACKAGE            "LibNUMA"
+            DOWNLOAD_LOCATION  "https://github.com/numactl/numactl"
+            SUPPLIER           "NUMA project"
+            LICENSE            "LGPL-2.1-or-later"
+            VERSION            ${NUMA_VERSION}
+        )
     endif (NUMA_FOUND)
 endif (ENABLE_LIBNUMA)
 
@@ -375,6 +481,13 @@ if (ENABLE_DPDK)
     find_package(DPDK ${DPDK_MIN_VERSION})
     if (DPDK_FOUND)
         include_directories(SYSTEM ${DPDK_INCLUDE_DIRS})
+        sbom_add(
+            PACKAGE            "DPDK"
+            DOWNLOAD_LOCATION  "https://www.dpdk.org/"
+            SUPPLIER           "DPDK project"
+            LICENSE            "BSD-3-Clause"
+            VERSION            ${DPDK_VERSION}
+        )
     else ()
         unset(DPDK_FOUND CACHE)
         message(WARNING "Building without DPDK support as DPDK dependencies could not be resolved")
@@ -382,6 +495,16 @@ if (ENABLE_DPDK)
 else (ENABLE_DPDK)
     unset(DPDK_FOUND CACHE)
 endif (ENABLE_DPDK)
+
+if(SCTP_FOUND)
+    sbom_add(
+        PACKAGE            "SCTP"
+        DOWNLOAD_LOCATION  "https://www.sctp.org/"
+        SUPPLIER           "SCTP project"
+        LICENSE            "BSD-3-Clause"
+        VERSION            ${PC_SCTP_VERSION}
+    )
+endif (SCTP_FOUND)
 
 ########################################################################
 # Instruction Set Architecture setup
@@ -453,11 +576,15 @@ endforeach()
 add_custom_target(all_srsran_headers SOURCES ${ALL_HEADER_FILES})
 
 ########################################################################
-# Simple function to notify binary targets.
+# Simple function to notify binary targets + Add target to SBOM
 ########################################################################
 
 function(notify_binary_target)
     message(STATUS "Adding binary target: ${ARGV}")
+    sbom_add(
+        TARGET       ${ARGV}
+        LICENSE      "LicenseRef-srsRAN"
+    )
 endfunction()
 
 ########################################################################
@@ -471,28 +598,26 @@ add_subdirectory(external)
 add_subdirectory(lib)
 add_subdirectory(utils)
 
-if (BUILD_TESTS)
+if (BUILD_TESTING)
     add_subdirectory(tests/test_doubles)
     add_subdirectory(tests/unittests)
     add_subdirectory(tests/integrationtests)
     add_subdirectory(tests/benchmarks)
-endif (BUILD_TESTS)
+endif (BUILD_TESTING)
 
 if (ENABLE_PLUGINS)
-   # Discover all subdirectories in the plugin directory (but not recursively)
-   file(GLOB SUBDIRS RELATIVE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/plugins/*)
+    # Discover all subdirectories in the plugin directory (but not recursively)
+    file(GLOB SUBDIRS RELATIVE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/plugins/*)
 
-   # Loop through each plugin subdirectory
-   foreach(subdir ${SUBDIRS})
-       # Check if it's a directory and contains a CMakeLists.txt file
-       if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/${subdir} AND EXISTS ${CMAKE_SOURCE_DIR}/${subdir}/CMakeLists.txt)
-           message(STATUS "Adding plugin: ${subdir}")
-           add_subdirectory(${subdir})
-       endif()
-   endforeach()
+    # Loop through each plugin subdirectory
+    foreach(subdir ${SUBDIRS})
+        # Check if it's a directory and contains a CMakeLists.txt file
+        if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/${subdir} AND EXISTS ${CMAKE_SOURCE_DIR}/${subdir}/CMakeLists.txt)
+            message(STATUS "Adding plugin: ${subdir}")
+            add_subdirectory(${subdir})
+        endif()
+    endforeach()
 endif ()
-
-
 
 ########################################################################
 # Export (selected) libraries
@@ -505,3 +630,13 @@ else(ENABLE_EXPORT)
 endif(ENABLE_EXPORT)
 
 message(STATUS "Building srsRAN version ${SRSRAN_VERSION_STRING}")
+
+########################################################################
+# Generate SBOM
+########################################################################
+sbom_add(
+    LICENSE "LicenseRef-srsRAN"
+    NAME    "AGPL-3.0-only"
+    FILE    "${CMAKE_SOURCE_DIR}/LICENSE"
+)
+sbom_finalize(NO_VERIFY)

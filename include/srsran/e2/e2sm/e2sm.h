@@ -92,6 +92,8 @@ public:
                                  T&                                        ctrl_cfg,
                                  Func                                      parse_action_ran_parameter_value)
   {
+    parse_action_ran_parameter_value(ran_param, ran_param_id, ue_id, ctrl_cfg);
+
     if (ran_param.type() == asn1::e2sm::ran_param_value_type_c::types_opts::ran_p_choice_list) {
       for (auto& ran_p_list : ran_param.ran_p_choice_list().ran_param_list.list_of_ran_param) {
         for (auto& ran_p : ran_p_list.seq_of_ran_params) {
@@ -108,8 +110,6 @@ public:
               ran_seq.ran_param_value_type, ran_seq.ran_param_id, ue_id, ctrl_cfg, parse_action_ran_parameter_value);
         }
       }
-    } else if (ran_param.type() == asn1::e2sm::ran_param_value_type_c::types_opts::ran_p_choice_elem_false) {
-      parse_action_ran_parameter_value(ran_param, ran_param_id, ue_id, ctrl_cfg);
     }
   }
 

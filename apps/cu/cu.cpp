@@ -108,12 +108,14 @@ static signal_dispatcher cleanup_signal_dispatcher;
 static void cleanup_signal_handler(int signal)
 {
   cleanup_signal_dispatcher.notify_signal(signal);
+  srslog::fetch_basic_logger("APP").error("Emergency flush of the logger");
   srslog::flush();
 }
 
 /// Function to call when an error is reported by the application.
 static void app_error_report_handler()
 {
+  srslog::fetch_basic_logger("APP").error("Emergency flush of the logger");
   srslog::flush();
 }
 

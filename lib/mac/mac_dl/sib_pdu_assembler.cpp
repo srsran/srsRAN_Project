@@ -39,6 +39,8 @@ sib_pdu_assembler::sib_pdu_assembler(const mac_cell_sys_info_config& req) : logg
   last_cfg_buffers.sib1_len = units::bytes{0};
   save_buffers(0, req);
   current_buffers = last_cfg_buffers;
+
+  message_ext_handler = create_si_message_extension_handler(req);
 }
 
 void sib_pdu_assembler::handle_si_change_request(const mac_cell_sys_info_config& req)
@@ -50,6 +52,14 @@ void sib_pdu_assembler::handle_si_change_request(const mac_cell_sys_info_config&
 
   // Forward new version and buffers to SIB assembler RT path.
   pending.write_and_commit(last_cfg_buffers);
+}
+
+bool sib_pdu_assembler::enqueue_si_message_pdu_updates(const mac_cell_sys_info_pdu_update& req)
+{
+  if (message_ext_handler) {
+    return message_ext_handler->enqueue_si_pdu_updates(req);
+  }
+  return false;
 }
 
 static std::shared_ptr<const std::vector<uint8_t>> make_linear_buffer(const byte_buffer& pdu)
@@ -157,6 +167,13 @@ span<const uint8_t> sib_pdu_assembler::encode_si_pdu(slot_point sl_tx, const sib
     return span<const uint8_t>{zeros_payload}.first(tbs);
   }
 
+  if (message_ext_handler) {
+    auto si_pdu = message_ext_handler->get_pdu(sl_tx, si_info);
+    if (!si_pdu.empty()) {
+      return si_pdu;
+    }
+  }
+
   if (current_buffers.si_msg_buffers[idx].first.value() > tbs) {
     logger.warning(
         "Failed to encode SI-message {} PDSCH. Cause: PDSCH TB size {} is smaller than the SI-message length {}",
@@ -179,3 +196,13 @@ span<const uint8_t> sib_pdu_assembler::encode_si_pdu(slot_point sl_tx, const sib
 
   return span<const uint8_t>(std::get<bcch_dl_sch_buffer>(current_buffers.si_msg_buffers[idx].second)->data(), tbs);
 }
+
+#ifndef SRSRAN_HAS_ENTERPRISE_NTN
+
+std::unique_ptr<sib_pdu_assembler::message_handler>
+srsran::create_si_message_extension_handler(const mac_cell_sys_info_config& req)
+{
+  return nullptr;
+}
+
+#endif // SRSRAN_HAS_ENTERPRISE_NTN

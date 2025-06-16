@@ -90,7 +90,14 @@ class du_manager_interface_query
 public:
   virtual ~du_manager_interface_query() = default;
   virtual size_t nof_ues()              = 0;
-  /// Fetch MAC cell time-slot mapper.
+};
+
+/// Interface to access the DU MAC time-slot mapper.
+class du_manager_time_mapper_accessor
+{
+public:
+  virtual ~du_manager_time_mapper_accessor() = default;
+  /// Get MAC cell time-slot mapper.
   virtual mac_cell_time_mapper& get_time_mapper() = 0;
 };
 
@@ -105,6 +112,7 @@ public:
 };
 
 class du_manager_interface : public du_manager_interface_query,
+                             public du_manager_time_mapper_accessor,
                              public du_manager_controller,
                              public du_manager_configurator,
                              public du_manager_mac_event_handler,

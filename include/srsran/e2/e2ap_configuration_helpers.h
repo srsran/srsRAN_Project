@@ -34,7 +34,6 @@ inline e2ap_configuration make_default_e2ap_config()
   e2ap_configuration cfg{};
   cfg.gnb_id            = {411, 22};
   cfg.plmn              = "00101";
-  cfg.gnb_du_id         = int_to_gnb_du_id(1);
   cfg.max_setup_retries = 5;
   cfg.e2sm_kpm_enabled  = false;
   cfg.e2sm_rc_enabled   = false;

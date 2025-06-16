@@ -111,7 +111,7 @@ void e1ap_cu_up_impl::handle_bearer_context_inactivity_notification(
     return;
   }
 
-  // Get UE context
+  // Get UE context.
   e1ap_ue_context& ue_ctxt = ue_ctxt_list[msg.ue_index];
 
   e1ap_message e1ap_msg;
@@ -182,7 +182,7 @@ void e1ap_cu_up_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& ms
 
 void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bearer_context_setup_request_s& msg)
 {
-  // create failure message for early returns
+  // Create failure message for early returns.
   e1ap_message e1ap_msg;
   e1ap_msg.pdu.set_unsuccessful_outcome();
   e1ap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
@@ -204,18 +204,23 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
   if (cu_up_ue_e1ap_id == gnb_cu_up_ue_e1ap_id_t::invalid) {
     logger.error("Sending BearerContextSetupFailure. Cause: No CU-UP-UE-E1AP-ID available");
 
-    // send response
+    // Send response.
     pdu_notifier->on_new_message(e1ap_msg);
     return;
   }
 
-  // Add gnb_cu_up_ue_e1ap_id to failure message
+  // Add gnb_cu_up_ue_e1ap_id to failure message.
   e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->gnb_cu_up_ue_e1ap_id =
       gnb_cu_up_ue_e1ap_id_to_uint(cu_up_ue_e1ap_id);
 
-  // Forward message to CU-UP
+  // Forward message to CU-UP.
   e1ap_bearer_context_setup_request bearer_context_setup = {};
-  fill_e1ap_bearer_context_setup_request(bearer_context_setup, msg);
+  if (!fill_e1ap_bearer_context_setup_request(bearer_context_setup, msg)) {
+    logger.error("Sending BearerContextSetupFailure. Cause: Invalid BearerContextSetupRequest");
+    // Send response.
+    pdu_notifier->on_new_message(e1ap_msg);
+    return;
+  }
 
   e1ap_bearer_context_setup_response bearer_context_setup_response_msg =
       cu_up_notifier.on_bearer_context_setup_request_received(bearer_context_setup);
@@ -223,12 +228,12 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
   if (bearer_context_setup_response_msg.ue_index == INVALID_UE_INDEX) {
     logger.error("Sending BearerContextSetupFailure. Cause: Invalid UE index");
 
-    // send response
+    // Send response.
     pdu_notifier->on_new_message(e1ap_msg);
     return;
   }
 
-  // Create UE context and store it
+  // Create UE context and store it.
   ue_ctxt_list.add_ue(bearer_context_setup_response_msg.ue_index,
                       cu_up_ue_e1ap_id,
                       int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1ap_id),
@@ -249,7 +254,7 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
         e1ap_msg.pdu.successful_outcome().value.bearer_context_setup_resp()->sys_bearer_context_setup_resp,
         bearer_context_setup_response_msg);
 
-    // send response
+    // Send response.
     pdu_notifier->on_new_message(e1ap_msg);
 
     metrics.add_successful_context_setup();
@@ -257,14 +262,14 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
     e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->cause =
         cause_to_asn1(bearer_context_setup_response_msg.cause.value());
 
-    // send response
+    // Send response.
     pdu_notifier->on_new_message(e1ap_msg);
   }
 }
 
 void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1ap::bearer_context_mod_request_s& msg)
 {
-  // create failure message for early returns
+  // Create failure message for early returns.
   e1ap_message e1ap_msg;
   e1ap_msg.pdu.set_unsuccessful_outcome();
   e1ap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
@@ -288,11 +293,11 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
 void e1ap_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::bearer_context_release_cmd_s& msg)
 {
   if (!ue_ctxt_list.contains(int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id))) {
-    // create failure message for early returns
+    // Create failure message for early returns.
     e1ap_message e1ap_msg;
     e1ap_msg.pdu.set_unsuccessful_outcome();
     e1ap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_RELEASE);
-    // TODO fill other values
+    // TODO fill other values.
 
     logger.error("No UE context for the received gnb_cu_up_ue_e1ap_id={} available", msg->gnb_cu_up_ue_e1ap_id);
     pdu_notifier->on_new_message(e1ap_msg);
@@ -302,10 +307,10 @@ void e1ap_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::be
   e1ap_ue_context& ue_ctxt  = ue_ctxt_list[int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id)];
   ue_index_t       ue_index = ue_ctxt.ue_ids.ue_index;
 
-  // Remove UE context at E1AP before switching to UE execution context to avoid concurrent access of ue_ctxt_list
+  // Remove UE context at E1AP before switching to UE execution context to avoid concurrent access of ue_ctxt_list.
   ue_ctxt_list.remove_ue(ue_ctxt.ue_ids.ue_index);
 
-  // Handle the release procedure
+  // Handle the release procedure.
   cu_up_notifier.on_schedule_ue_async_task(
       ue_index,
       launch_async<bearer_context_release_procedure>(ue_index, msg, *pdu_notifier, cu_up_notifier, metrics, logger));

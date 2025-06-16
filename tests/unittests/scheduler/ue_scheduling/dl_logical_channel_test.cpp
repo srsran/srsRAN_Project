@@ -137,7 +137,7 @@ TEST_F(dl_logical_channel_tester, mac_ce_indication_updates_tx_pending_bytes)
 {
   dl_logical_channel_manager lch_mng{subcarrier_spacing::kHz15, false, create_empty_config()};
   const unsigned             dummy_ce_payload = 0;
-  lch_mng.handle_mac_ce_indication({.ce_lcid = lcid_dl_sch_t::TA_CMD, .ce_payload = dummy_ce_payload});
+  ASSERT_TRUE(lch_mng.handle_mac_ce_indication({.ce_lcid = lcid_dl_sch_t::TA_CMD, .ce_payload = dummy_ce_payload}));
 
   ASSERT_TRUE(lch_mng.has_pending_bytes());
   ASSERT_TRUE(lch_mng.has_pending_ces());
@@ -173,7 +173,7 @@ TEST_F(dl_logical_channel_tester, mac_ce_is_scheduled_if_tb_has_space)
 
   lcid_dl_sch_t  ce_lcid          = get_random_dl_mac_ce();
   const unsigned dummy_ce_payload = 0;
-  lch_mng.handle_mac_ce_indication({.ce_lcid = ce_lcid, .ce_payload = dummy_ce_payload});
+  ASSERT_TRUE(lch_mng.handle_mac_ce_indication({.ce_lcid = ce_lcid, .ce_payload = dummy_ce_payload}));
   unsigned mac_ce_required_bytes = lcid_dl_sch_t{ce_lcid}.sizeof_ce() + FIXED_SIZED_MAC_CE_SUBHEADER_SIZE;
   unsigned tb_size               = test_rgen::uniform_int<unsigned>(0, 50);
 
@@ -247,7 +247,7 @@ TEST_F(dl_logical_channel_tester, check_scheduling_of_ue_con_res_id_mac_ce)
 
   lcid_dl_sch_t  ce_lcid          = lcid_dl_sch_t::UE_CON_RES_ID;
   const unsigned dummy_ce_payload = 0;
-  lch_mng.handle_mac_ce_indication({.ce_lcid = ce_lcid, .ce_payload = dummy_ce_payload});
+  ASSERT_TRUE(lch_mng.handle_mac_ce_indication({.ce_lcid = ce_lcid, .ce_payload = dummy_ce_payload}));
   unsigned mac_ce_required_bytes = lcid_dl_sch_t{ce_lcid}.sizeof_ce() + FIXED_SIZED_MAC_CE_SUBHEADER_SIZE;
   unsigned tb_size               = 10;
 
@@ -265,7 +265,7 @@ TEST_F(dl_logical_channel_tester, pending_ue_con_res_id_ce_bytes_does_not_includ
 
   lcid_dl_sch_t  ce_lcid          = lcid_dl_sch_t::LONG_DRX_CMD;
   const unsigned dummy_ce_payload = 0;
-  lch_mng.handle_mac_ce_indication({.ce_lcid = ce_lcid, .ce_payload = dummy_ce_payload});
+  ASSERT_TRUE(lch_mng.handle_mac_ce_indication({.ce_lcid = ce_lcid, .ce_payload = dummy_ce_payload}));
 
   ASSERT_EQ(lch_mng.pending_con_res_ce_bytes(), 0);
 }
@@ -278,7 +278,7 @@ TEST_F(dl_logical_channel_tester, assign_leftover_bytes_to_sdu_if_leftover_bytes
       subcarrier_spacing::kHz15, false, create_lcid_config(std::vector<lcid_t>{LCID_SRB0, LCID_SRB1})};
   lcid_dl_sch_t  ce_lcid          = lcid_dl_sch_t::UE_CON_RES_ID;
   const unsigned dummy_ce_payload = 0;
-  lch_mng.handle_mac_ce_indication({.ce_lcid = ce_lcid, .ce_payload = dummy_ce_payload});
+  ASSERT_TRUE(lch_mng.handle_mac_ce_indication({.ce_lcid = ce_lcid, .ce_payload = dummy_ce_payload}));
   lch_mng.handle_dl_buffer_status_indication(LCID_SRB0, 295);
   lch_mng.handle_dl_buffer_status_indication(LCID_SRB1, 10000);
 
@@ -297,12 +297,14 @@ TEST_F(dl_logical_channel_tester, ta_cmd_mac_ce_gets_updated_if_already_in_pendi
 {
   dl_logical_channel_manager lch_mng{subcarrier_spacing::kHz15, false, create_empty_config()};
   const auto first_ta_cmd_ce_payload = ta_cmd_ce_payload{.tag_id = time_alignment_group::id_t{0}, .ta_cmd = 29};
-  lch_mng.handle_mac_ce_indication({.ce_lcid = lcid_dl_sch_t::TA_CMD, .ce_payload = first_ta_cmd_ce_payload});
+  ASSERT_TRUE(
+      lch_mng.handle_mac_ce_indication({.ce_lcid = lcid_dl_sch_t::TA_CMD, .ce_payload = first_ta_cmd_ce_payload}));
   ASSERT_TRUE(lch_mng.has_pending_bytes());
   ASSERT_TRUE(lch_mng.has_pending_ces());
 
   const auto second_ta_cmd_ce_payload = ta_cmd_ce_payload{.tag_id = time_alignment_group::id_t{0}, .ta_cmd = 33};
-  lch_mng.handle_mac_ce_indication({.ce_lcid = lcid_dl_sch_t::TA_CMD, .ce_payload = second_ta_cmd_ce_payload});
+  ASSERT_TRUE(
+      lch_mng.handle_mac_ce_indication({.ce_lcid = lcid_dl_sch_t::TA_CMD, .ce_payload = second_ta_cmd_ce_payload}));
   ASSERT_TRUE(lch_mng.has_pending_bytes());
   ASSERT_TRUE(lch_mng.has_pending_ces());
 
@@ -357,7 +359,8 @@ TEST_F(dl_logical_channel_tester, when_ce_is_pending_and_non_srb_slice_has_pendi
 
   // CE is pending. SRB slice should be the selected slice to send it.
   const auto second_ta_cmd_ce_payload = ta_cmd_ce_payload{.tag_id = time_alignment_group::id_t{0}, .ta_cmd = 33};
-  lch_mng.handle_mac_ce_indication({.ce_lcid = lcid_dl_sch_t::TA_CMD, .ce_payload = second_ta_cmd_ce_payload});
+  ASSERT_TRUE(
+      lch_mng.handle_mac_ce_indication({.ce_lcid = lcid_dl_sch_t::TA_CMD, .ce_payload = second_ta_cmd_ce_payload}));
   ASSERT_TRUE(lch_mng.has_pending_bytes(ran_slice_id_t{0}));
   ASSERT_FALSE(lch_mng.has_pending_bytes(ran_slice_id_t{1}));
 

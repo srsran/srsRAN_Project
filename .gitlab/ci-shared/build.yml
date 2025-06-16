@@ -100,7 +100,7 @@ variables:
         fi
       done
       if [[ $TEST_MODE = "none" ]]; then
-        BUILD_ARGS="${BUILD_ARGS} -DBUILD_TESTS=False"
+        BUILD_ARGS="${BUILD_ARGS} -DBUILD_TESTING=False"
       fi
 
       BUILD_CMD="${BUILD_ARGS}"

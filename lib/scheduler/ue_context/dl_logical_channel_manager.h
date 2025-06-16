@@ -25,6 +25,7 @@
 #include "../config/logical_channel_list_config.h"
 #include "../slicing/ran_slice_id.h"
 #include "srsran/adt/intrusive_list.h"
+#include "srsran/adt/ring_buffer.h"
 #include "srsran/mac/mac_pdu_format.h"
 #include "srsran/ran/logical_channel/lcid_dl_sch.h"
 #include "srsran/scheduler/result/pdsch_info.h"
@@ -164,7 +165,8 @@ public:
   }
 
   /// \brief Enqueue new MAC CE to be scheduled.
-  void handle_mac_ce_indication(const mac_ce_info& ce);
+  /// \return True if the MAC CE was enqueued successfully, false if the queue was full.
+  [[nodiscard]] bool handle_mac_ce_indication(const mac_ce_info& ce);
 
   /// \brief Allocates highest priority MAC SDU within space of \c rem_bytes bytes. Updates \c lch_info with allocated
   /// bytes for the MAC SDU (no MAC subheader).
@@ -232,7 +234,7 @@ private:
   bool pending_con_res_id{false};
 
   // List of pending CEs except UE Contention Resolution Identity.
-  std::deque<mac_ce_info> pending_ces;
+  ring_buffer<mac_ce_info> pending_ces;
 };
 
 /// \brief Allocate MAC SDUs and corresponding MAC subPDU subheaders.

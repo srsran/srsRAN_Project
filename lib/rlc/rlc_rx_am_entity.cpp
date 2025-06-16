@@ -31,11 +31,11 @@ rlc_rx_am_entity::rlc_rx_am_entity(gnb_du_id_t                       gnb_du_id,
                                    rb_id_t                           rb_id,
                                    const rlc_rx_am_config&           config,
                                    rlc_rx_upper_layer_data_notifier& upper_dn_,
-                                   rlc_metrics_aggregator&           metrics_agg_,
+                                   rlc_bearer_metrics_collector&     metrics_coll_,
                                    rlc_pcap&                         pcap_,
                                    task_executor&                    ue_executor_,
                                    timer_manager&                    timers) :
-  rlc_rx_entity(gnb_du_id, ue_index, rb_id, upper_dn_, metrics_agg_, pcap_, ue_executor_, timers),
+  rlc_rx_entity(gnb_du_id, ue_index, rb_id, upper_dn_, metrics_coll_, pcap_, ue_executor_, timers),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
   am_window_size(window_size(to_number(cfg.sn_field_length))),
@@ -651,7 +651,7 @@ rlc_am_status_pdu& rlc_rx_am_entity::get_status_pdu()
 {
   do_status.store(false, std::memory_order_relaxed);
   if (status_prohibit_timer.is_valid() && cfg.t_status_prohibit > 0) {
-    if (not ue_executor.defer([&]() { status_prohibit_timer.run(); })) {
+    if (not ue_executor.defer(TRACE_TASK([&]() { status_prohibit_timer.run(); }))) {
       logger.log_error("Unable to start prohibit timer");
     }
     status_prohibit_timer_is_running.store(true, std::memory_order_relaxed);

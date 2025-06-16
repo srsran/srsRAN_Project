@@ -876,12 +876,11 @@ def test_s72(
         common_scs=common_scs,
         bandwidth=bandwidth,
         sample_rate=None,  # default from testbed
-        iperf_duration=SHORT_DURATION,
+        iperf_duration=10 * 60,
         bitrate=bitrate,
         protocol=protocol,
         direction=direction,
         gnb_post_cmd=(
-            "log --all_level=warning --lib_level=warning",
             "expert_execution threads non_rt --non_rt_task_queue_size=4096",
             "expert_phy --max_proc_delay=4",
         ),

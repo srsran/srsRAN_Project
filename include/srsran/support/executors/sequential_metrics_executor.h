@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include "srsran/adt/mpmc_queue.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/detail/task_executor_utils.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/tracing/resource_usage.h"
@@ -34,36 +36,90 @@ namespace srsran {
 template <typename ExecutorType, typename Logger>
 class sequential_metrics_executor : public task_executor
 {
+  /// Maximum number of elements the pool can hold.
+  static constexpr unsigned POOL_SIZE = 256 * 1024;
+
   using time_point = std::chrono::time_point<std::chrono::steady_clock>;
+  using queue_type =
+      concurrent_queue<unsigned, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>;
 
 public:
   template <typename U>
-  sequential_metrics_executor(std::string name_, U&& exec_, Logger& logger_, std::chrono::milliseconds period_) :
-    name(std::move(name_)), exec(std::forward<U>(exec_)), logger(logger_), period(period_)
+  sequential_metrics_executor(std::string               name_,
+                              U&&                       exec_,
+                              Logger&                   metrics_logger_,
+                              std::chrono::milliseconds period_) :
+    name(std::move(name_)),
+    exec(std::forward<U>(exec_)),
+    metrics_logger(metrics_logger_),
+    logger(srslog::fetch_basic_logger("APP")),
+    period(period_),
+    task_pool(POOL_SIZE),
+    free_tasks(std::make_unique<queue_type>(POOL_SIZE))
   {
+    for (unsigned i = 0, e = task_pool.size(); i != e; ++i) {
+      (void)free_tasks->try_push(i);
+    }
+
     last_tp = std::chrono::steady_clock::now();
   }
 
   [[nodiscard]] bool execute(unique_task task) override
   {
+    unsigned task_idx = 0;
+    if (not free_tasks->try_pop(task_idx)) {
+      logger.warning("Unable to execute new task in the '{}' metrics executor decorator", name);
+      return false;
+    }
+
+    unique_task& pooled_task = task_pool[task_idx];
+    pooled_task              = std::move(task);
+
     auto enqueue_tp = std::chrono::steady_clock::now();
-    return detail::invoke_execute(exec, [this, t = std::move(task), enqueue_tp]() {
+    bool ret        = detail::invoke_execute(exec, [this, &pooled_task, enqueue_tp, task_idx]() {
       auto start_tp   = std::chrono::steady_clock::now();
       auto start_rusg = resource_usage::now();
-      t();
-      handle_metrics(true, enqueue_tp, start_tp, start_rusg);
+
+      pooled_task();
+
+      handle_metrics(true, enqueue_tp, start_tp, start_rusg, free_tasks->size(), pooled_task.file, pooled_task.lineno);
+      pooled_task = {};
+      (void)free_tasks->try_push(task_idx);
     });
+    if (not ret) {
+      pooled_task = {};
+      (void)free_tasks->try_push(task_idx);
+    }
+    return ret;
   }
 
   [[nodiscard]] bool defer(unique_task task) override
   {
+    unsigned task_idx = 0;
+    if (not free_tasks->try_pop(task_idx)) {
+      logger.warning("Unable to defer new task in the '{}' metrics executor decorator", name);
+      return false;
+    }
+
+    unique_task& pooled_task = task_pool[task_idx];
+    pooled_task              = std::move(task);
+
     auto enqueue_tp = std::chrono::steady_clock::now();
-    return detail::invoke_defer(exec, [this, t = std::move(task), enqueue_tp]() {
+    bool ret        = detail::invoke_defer(exec, [this, &pooled_task, enqueue_tp, task_idx]() {
       auto start_tp   = std::chrono::steady_clock::now();
       auto start_rusg = resource_usage::now();
-      t();
-      handle_metrics(false, enqueue_tp, start_tp, start_rusg);
+
+      pooled_task();
+
+      handle_metrics(false, enqueue_tp, start_tp, start_rusg, free_tasks->size(), pooled_task.file, pooled_task.lineno);
+      pooled_task = {};
+      (void)free_tasks->try_push(task_idx);
     });
+    if (not ret) {
+      pooled_task = {};
+      (void)free_tasks->try_push(task_idx);
+    }
+    return ret;
   }
 
 private:
@@ -76,12 +132,17 @@ private:
     std::chrono::nanoseconds task_max_latency{0};
     resource_usage::diff     sum_rusg             = {};
     unsigned                 failed_rusg_captures = 0;
+    size_t                   qsize                = std::numeric_limits<size_t>::max();
   };
 
+  /// Updates and prints the metrics for this executor.
   void handle_metrics(bool                                           is_exec,
                       time_point                                     enqueue_tp,
                       time_point                                     start_tp,
-                      const expected<resource_usage::snapshot, int>& start_rusg)
+                      const expected<resource_usage::snapshot, int>& start_rusg,
+                      size_t                                         qsize,
+                      const char*                                    file,
+                      int                                            line)
   {
     using namespace std::chrono;
 
@@ -91,9 +152,9 @@ private:
     auto task_latency    = end_tp - start_tp;
 
     // Update internal metrics.
-    counters.dispatch_count++;
+    ++counters.dispatch_count;
     if (not is_exec) {
-      counters.defer_count++;
+      ++counters.defer_count;
     }
     counters.enqueue_sum_latency += enqueue_latency;
     counters.enqueue_max_latency = std::max(counters.enqueue_max_latency, enqueue_latency);
@@ -102,24 +163,32 @@ private:
     if (end_rusg.has_value() and start_rusg.has_value()) {
       counters.sum_rusg += *end_rusg - *start_rusg;
     } else {
-      counters.failed_rusg_captures++;
+      ++counters.failed_rusg_captures;
     }
+    counters.qsize = std::min(counters.qsize, qsize);
 
     // Check if it is time for a new metric report.
-    auto telapsed_since_last_report = end_tp - last_tp;
+    auto                  telapsed_since_last_report = end_tp - last_tp;
+    static const unsigned THRESHOLD                  = 100;
+    if (duration_cast<milliseconds>(counters.task_max_latency).count() > THRESHOLD && file) {
+      // Report metrics.
+      metrics_logger.info(
+          "Executor metrics \"{}\": task took longer than {}ms to execute in {}:{} ", name, THRESHOLD, file, line);
+    }
     if (telapsed_since_last_report >= period) {
       // Report metrics.
-      logger.info("Executor metrics \"{}\": nof_executes={} nof_defers={} enqueue_avg={}usec "
-                  "enqueue_max={}usec task_avg={}usec task_max={}usec cpu_load={:.1f}% {}",
-                  name,
-                  counters.dispatch_count - counters.defer_count,
-                  counters.defer_count,
-                  duration_cast<microseconds>(counters.enqueue_sum_latency / counters.dispatch_count).count(),
-                  duration_cast<microseconds>(counters.enqueue_max_latency).count(),
-                  duration_cast<microseconds>(counters.task_sum_latency / counters.dispatch_count).count(),
-                  duration_cast<microseconds>(counters.task_max_latency).count(),
-                  counters.task_sum_latency.count() * 100.0 / telapsed_since_last_report.count(),
-                  counters.sum_rusg);
+      metrics_logger.info("Executor metrics \"{}\": nof_executes={} nof_defers={} enqueue_avg={}usec "
+                          "enqueue_max={}usec task_avg={}usec task_max={}usec cpu_load={:.1f}% {} q_size={}",
+                          name,
+                          counters.dispatch_count - counters.defer_count,
+                          counters.defer_count,
+                          duration_cast<microseconds>(counters.enqueue_sum_latency / counters.dispatch_count).count(),
+                          duration_cast<microseconds>(counters.enqueue_max_latency).count(),
+                          duration_cast<microseconds>(counters.task_sum_latency / counters.dispatch_count).count(),
+                          duration_cast<microseconds>(counters.task_max_latency).count(),
+                          counters.task_sum_latency.count() * 100.0 / telapsed_since_last_report.count(),
+                          counters.sum_rusg,
+                          counters.qsize);
 
       counters = {};
       last_tp  = end_tp;
@@ -128,14 +197,17 @@ private:
 
   std::string                     name;
   ExecutorType                    exec;
-  Logger&                         logger;
+  Logger&                         metrics_logger;
+  srslog::basic_logger&           logger;
   const std::chrono::milliseconds period;
+  std::vector<unique_task>        task_pool;
+  std::unique_ptr<queue_type>     free_tasks;
 
   non_persistent_data                                counters;
   std::chrono::time_point<std::chrono::steady_clock> last_tp;
 };
 
-/// Returns a task executor that decorates a sequential executor to track its performance metrics
+/// Returns a task executor that decorates a sequential executor to track its performance metrics.
 template <typename SequentialExec, typename Logger>
 sequential_metrics_executor<SequentialExec, Logger>
 make_metrics_executor(std::string exec_name, SequentialExec&& exec, Logger& logger, std::chrono::milliseconds period)
@@ -144,7 +216,7 @@ make_metrics_executor(std::string exec_name, SequentialExec&& exec, Logger& logg
       std::move(exec_name), std::forward<SequentialExec>(exec), logger, period);
 }
 
-/// Returns an owning pointer to a task executor that decorates a sequential executor to track its performance metrics
+/// Returns an owning pointer to a task executor that decorates a sequential executor to track its performance metrics.
 template <typename SequentialExec, typename Logger>
 std::unique_ptr<task_executor> make_metrics_executor_ptr(std::string               exec_name,
                                                          SequentialExec&&          exec,

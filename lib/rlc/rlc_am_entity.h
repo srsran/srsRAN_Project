@@ -55,13 +55,13 @@ public:
                                                                                  tx_upper_dn,
                                                                                  tx_upper_cn,
                                                                                  tx_lower_dn,
-                                                                                 metrics_agg,
+                                                                                 metrics_coll,
                                                                                  pcap,
                                                                                  pcell_executor,
                                                                                  ue_executor,
                                                                                  timers);
     std::unique_ptr<rlc_rx_am_entity> rx_am = std::make_unique<rlc_rx_am_entity>(
-        gnb_du_id_, ue_index_, rb_id_, config.rx, rx_upper_dn, metrics_agg, pcap, ue_executor, timers);
+        gnb_du_id_, ue_index_, rb_id_, config.rx, rx_upper_dn, metrics_coll, pcap, ue_executor, timers);
 
     // Tx/Rx interconnect
     tx_am->set_status_provider(rx_am.get());

@@ -18,9 +18,6 @@ except ImportError:
     print("Install Gitlab Python library: https://pypi.org/project/python-gitlab/")
     exit(1)
 
-DEFAULT_BUILD_ARGS = '-DCMAKE_BUILD_TYPE=Release -DFORCE_DEBUG_INFO=True -DENABLE_UHD=False -DENABLE_DPDK=True -DENABLE_ZEROMQ=False -DMARCH="x86-64-v4"'
-DEFAULT_DPDK_VERSION = "23.11.1_avx512"
-
 
 # pylint: disable=too-many-instance-attributes
 @dataclass
@@ -32,6 +29,39 @@ class _TestDefinition:
     test_name: str = ""
     description: str = ""
     gnb_extra_config: Dict = field(default_factory=dict)
+
+
+@dataclass
+class _BuildDefinition:
+    tag: str
+    os: str
+    compiler: str
+    srs_target: str
+    build_args: str
+    dpdk_version: str
+    uhd_version: str
+
+
+BUILD_DEFINITIONS: Dict[str, _BuildDefinition] = {
+    "standard": _BuildDefinition(
+        tag="amd64-avx2-avx512",
+        os="ubuntu-24.04",
+        compiler="gcc",
+        srs_target="gnb_split_7_2",
+        build_args='-DCMAKE_BUILD_TYPE=Release -DFORCE_DEBUG_INFO=True -DENABLE_UHD=False -DENABLE_DPDK=True -DENABLE_ZEROMQ=False -DMARCH="x86-64-v4"',
+        dpdk_version="23.11.1_avx512",
+        uhd_version="",
+    ),
+    "rtsan": _BuildDefinition(
+        tag="amd64-avx2-avx512",
+        os="ubuntu-24.04-rtsan",
+        compiler="clang",
+        srs_target="gnb_split_7_2",
+        build_args='-DCMAKE_BUILD_TYPE=Release -DFORCE_DEBUG_INFO=True -DENABLE_UHD=False -DENABLE_DPDK=True -DENABLE_ZEROMQ=False -DMARCH="x86-64-v4" -DENABLE_RTSAN=True -DENABLE_WERROR=False',
+        dpdk_version="23.11.1_avx512",
+        uhd_version="",
+    ),
+}
 
 
 # pylint: disable=too-many-instance-attributes
@@ -46,8 +76,7 @@ class _ArgsDefinition:
     campaign_path: str = ""
     timeout: int = ""
     gnb_cli: str = ""
-    build_args: str = DEFAULT_BUILD_ARGS
-    dpdk_version: str = DEFAULT_DPDK_VERSION
+    build_mode: str = ""
 
 
 def _convert_extra_config_into_command(extra_config: dict) -> str:
@@ -90,8 +119,7 @@ def validate_args(args) -> _ArgsDefinition:
     args_definition.testid = args.testid
     args_definition.timeout = args.timeout
     args_definition.gnb_cli = args.srsgnb_cli
-    args_definition.build_args = args.build_args
-    args_definition.dpdk_version = args.dpdk_version
+    args_definition.build_mode = args.build_mode
 
     if not args_definition.testlist:
         fail_validate = False
@@ -120,25 +148,14 @@ def show_test_list():
 
 
 def run_test(args_definition: _ArgsDefinition, test_definition: _TestDefinition):
+    build_definition = BUILD_DEFINITIONS[args_definition.build_mode]
     timeout = args_definition.timeout if args_definition.timeout else 972800
-    retina_log_level = "warning"
     branch = args_definition.branch
     private_token = args_definition.token
 
-    INFRASTRUCTURE_TAG = "amd64-avx2-avx512"
-    OS_NAME = "ubuntu-24.04"
-    COMPILER = "gcc"
-    TESTMODE = "none"
-
-    BUILD_ARGS = args_definition.build_args
-    DPDK_VERSION = args_definition.dpdk_version
-
-    TESTBED = "viavi"
-    MARKERS = "viavi_manual"
-
-    RETINA_LAUNCHER_ARGS = f'--viavi-manual-campaign-filename "{test_definition.campaign_filename}" --viavi-manual-test-name "{test_definition.id}" --viavi-manual-test-timeout {timeout} --retina-pod-timeout 900'
+    retina_launcher_args = f'--viavi-manual-campaign-filename "{test_definition.campaign_filename}" --viavi-manual-test-name "{test_definition.id}" --viavi-manual-test-timeout {timeout}'
     if args_definition.gnb_cli:
-        RETINA_LAUNCHER_ARGS += f' --viavi-manual-gnb-arguments "{args_definition.gnb_cli}"'
+        retina_launcher_args += f' --viavi-manual-gnb-arguments "{args_definition.gnb_cli}"'
         print("")
         print(
             "⚠️  Using srsgnb-cli overwrites the configuration defined in the test_declaration.yml for the test. Please review your new config carefully!!"
@@ -151,32 +168,31 @@ def run_test(args_definition: _ArgsDefinition, test_definition: _TestDefinition)
             sys.exit(0)
         print("")
 
-    RETINA_PARAM_ARGS = "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.rlc_rb_type=srb"
-
     variables = [
-        {"key": "INFRASTRUCTURE_TAG", "value": INFRASTRUCTURE_TAG},
-        {"key": "OS", "value": OS_NAME},
-        {"key": "COMPILER", "value": COMPILER},
-        {"key": "TEST_MODE", "value": TESTMODE},
-        {"key": "BUILD_ARGS", "value": BUILD_ARGS},
-        {"key": "SRS_TARGET", "value": "gnb_split_7_2"},
-        {"key": "UHD_VERSION", "value": ""},
-        {"key": "DPDK_VERSION", "value": DPDK_VERSION},
-        {"key": "TESTBED", "value": TESTBED},
-        {"key": "MARKERS", "value": MARKERS},
+        {"key": "INFRASTRUCTURE_TAG", "value": build_definition.tag},
+        {"key": "OS", "value": build_definition.os},
+        {"key": "COMPILER", "value": build_definition.compiler},
+        {"key": "BUILD_ARGS", "value": build_definition.build_args},
+        {"key": "SRS_TARGET", "value": build_definition.srs_target},
+        {"key": "UHD_VERSION", "value": build_definition.uhd_version},
+        {"key": "DPDK_VERSION", "value": build_definition.dpdk_version},
+        {"key": "TEST_MODE", "value": "none"},
+        {"key": "TESTBED", "value": "viavi"},
+        {"key": "MARKERS", "value": "viavi_manual"},
         {"key": "KEYWORDS", "value": ""},
-        {"key": "RETINA_LAUNCHER_ARGS", "value": RETINA_LAUNCHER_ARGS},
-        {"key": "RETINA_PARAM_ARGS", "value": RETINA_PARAM_ARGS},
-        {"key": "E2E_LOG_LEVEL", "value": retina_log_level},
+        {"key": "RETINA_LAUNCHER_ARGS", "value": retina_launcher_args},
+        {"key": "RETINA_PARAM_ARGS", "value": "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.rlc_rb_type=srb"},
+        {"key": "E2E_LOG_LEVEL", "value": "warning"},
         {"key": "GROUP", "value": "viavi"},
         {"key": "PIPELINE_DESCRIPTION", "value": "Viavi manual test"},
     ]
 
     print(f"Creating Viavi pipeline for branch {branch}...")
     print(f"    - Test ID: {test_definition.id}")
-    print(f"    - OS {OS_NAME}")
-    print(f"    - BUILD_ARGS {BUILD_ARGS}")
-    print(f"    - DPDK_VERSION {DPDK_VERSION}")
+    print(f"    - Build mode: {args_definition.build_mode}")
+    print(f"      - OS {build_definition.os}")
+    print(f"      - BUILD_ARGS {build_definition.build_args}")
+    print(f"      - DPDK_VERSION {build_definition.dpdk_version}")
 
     gl = gitlab.Gitlab("https://gitlab.com", private_token=private_token)
     project = gl.projects.get("softwareradiosystems/srsgnb")
@@ -217,15 +233,10 @@ def main():
     )
 
     parser.add_argument(
-        "--build-args",
-        help=f'Build arguments for the pipeline. Default: "{DEFAULT_BUILD_ARGS}"',
-        default=DEFAULT_BUILD_ARGS,
-    )
-
-    parser.add_argument(
-        "--dpdk-version",
-        help=f'DPDK version to use in the pipeline. Default: "{DEFAULT_DPDK_VERSION}"',
-        default=DEFAULT_DPDK_VERSION,
+        "--build-mode",
+        help='Build mode for gnb. Default: "rtsan"',
+        default="rtsan",
+        choices=BUILD_DEFINITIONS.keys(),
     )
 
     parser.add_argument("--timeout", help="Timeout in seconds for the test")

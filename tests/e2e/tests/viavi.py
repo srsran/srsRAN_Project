@@ -47,7 +47,11 @@ from .steps.kpis import get_kpis, KPIs
 from .steps.stub import _stop_stub, GNB_STARTUP_TIMEOUT, handle_start_error, stop
 
 _OMIT_VIAVI_FAILURE_LIST = ["authentication"]
-_FLAKY_ERROR_LIST = ["Error creating the pod", "Viavi API call timed out"]
+_FLAKY_ERROR_LIST = [
+    "Timeout reached while reserving and/or waiting for pods to be ready",
+    "Error creating the pod",
+    "Viavi API call timed out",
+]
 _GNB_STOP_TIMEOUT = 15  # When timeout reached, retina gets GDB backtrace and sends sigkill. 0 means no timeout
 
 
@@ -165,6 +169,10 @@ def viavi_manual_gnb_arguments(request):
 
 
 @mark.viavi_manual
+@mark.flaky(
+    reruns=2,
+    only_rerun=_FLAKY_ERROR_LIST,
+)
 # pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals
 def test_viavi_manual(
     capsys: pytest.CaptureFixture[str],

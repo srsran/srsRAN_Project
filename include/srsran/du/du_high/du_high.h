@@ -33,6 +33,7 @@ namespace srsran {
 namespace srs_du {
 
 class du_configurator;
+class du_manager_time_mapper_accessor;
 
 /// Interface to DU-high class, which owns and manages the interaction between MAC, RLC and F1 layers.
 class du_high
@@ -66,6 +67,9 @@ public:
 
   /// Returns handler to configure and control the UEs attached to this DU.
   virtual du_configurator& get_du_configurator() = 0;
+
+  /// Returns handler to get Cell MAC slot-time mapper.
+  virtual du_manager_time_mapper_accessor& get_du_manager_time_mapper_accessor() = 0;
 };
 
 } // namespace srs_du

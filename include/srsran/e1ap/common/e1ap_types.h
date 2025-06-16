@@ -163,7 +163,7 @@ struct e1ap_drb_to_setup_item_ng_ran {
 
 struct e1ap_pdu_session_res_to_setup_item {
   pdu_session_id_t                                           pdu_session_id = pdu_session_id_t::invalid;
-  std::string                                                pdu_session_type;
+  pdu_session_type_t                                         pdu_session_type;
   s_nssai_t                                                  snssai;
   up_transport_layer_info                                    ng_ul_up_tnl_info;
   security_indication_t                                      security_ind;
@@ -190,7 +190,7 @@ struct e1ap_up_security_key {
     return *this;
   }
   byte_buffer encryption_key;
-  // Optional, TS 38.463 Sec. 9.4.5
+  // Optional, TS 38.463 Sec. 9.4.5.
   byte_buffer integrity_protection_key;
 };
 

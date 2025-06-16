@@ -32,7 +32,7 @@ static constexpr char log_filename[] = "file_sink_test.log";
 static bool when_data_is_written_to_file_then_contents_are_valid()
 {
   file_test_utils::scoped_file_deleter deleter(log_filename);
-  file_sink file(log_filename, 0, false, std::unique_ptr<log_formatter>(new test_dummies::log_formatter_dummy));
+  file_sink file(log_filename, 0, false, false, std::unique_ptr<log_formatter>(new test_dummies::log_formatter_dummy));
 
   std::vector<std::string> entries;
   for (unsigned i = 0; i != 10; ++i) {
@@ -49,13 +49,45 @@ static bool when_data_is_written_to_file_then_contents_are_valid()
   return true;
 }
 
+static bool test_end_of_file_mark()
+{
+  file_test_utils::scoped_file_deleter deleter(log_filename);
+  auto                                 file = std::make_unique<file_sink>(
+      log_filename, 0, true, false, std::unique_ptr<log_formatter>(new test_dummies::log_formatter_dummy));
+
+  std::vector<std::string> entries;
+  for (unsigned i = 0; i != 10; ++i) {
+    std::string entry = "Test log entry - " + std::to_string(i) + '\n';
+    file->write(detail::memory_buffer(entry));
+    entries.push_back(entry);
+  }
+  file->flush();
+
+  ASSERT_EQ(file_test_utils::file_exists(log_filename), true);
+  ASSERT_EQ(file_test_utils::compare_file_contents(log_filename, entries), true);
+
+  auto eof_entry = std::string("(END)") + '\n';
+  entries.push_back(eof_entry);
+
+  file.reset();
+
+  ASSERT_EQ(file_test_utils::file_exists(log_filename), true);
+  ASSERT_EQ(file_test_utils::compare_file_contents(log_filename, entries), true);
+
+  return true;
+}
+
 /// A Test-Specific Subclass of file_sink. This subclass provides public access
 /// to the data members of the parent class.
 class file_sink_subclass : public file_sink
 {
 public:
-  file_sink_subclass(std::string name, size_t max_size_) :
-    file_sink(std::move(name), max_size_, false, std::unique_ptr<log_formatter>(new test_dummies::log_formatter_dummy))
+  file_sink_subclass(std::string name, size_t max_size_, bool mark_eof_) :
+    file_sink(std::move(name),
+              max_size_,
+              mark_eof_,
+              false,
+              std::unique_ptr<log_formatter>(new test_dummies::log_formatter_dummy))
   {
   }
 
@@ -69,7 +101,7 @@ static bool when_data_written_exceeds_size_threshold_then_new_file_is_created()
   std::string                          filename2 = file_utils::build_filename_with_index(log_filename, 2);
   file_test_utils::scoped_file_deleter deleter   = {filename0, filename1, filename2};
 
-  file_sink_subclass file(log_filename, 5001);
+  file_sink_subclass file(log_filename, 5001, false);
 
   // Build a 1000 byte entry.
   std::string entry(1000, 'a');
@@ -112,6 +144,7 @@ static bool when_data_written_exceeds_size_threshold_then_new_file_is_created()
 int main()
 {
   TEST_FUNCTION(when_data_is_written_to_file_then_contents_are_valid);
+  TEST_FUNCTION(test_end_of_file_mark);
   TEST_FUNCTION(when_data_written_exceeds_size_threshold_then_new_file_is_created);
 
   return 0;

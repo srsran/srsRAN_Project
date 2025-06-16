@@ -108,7 +108,7 @@ def test_pdsch_interleaving(
         direction=IPerfDir.DOWNLINK,
         global_timing_advance=0,
         time_alignment_calibration=0,
-        ue_stop_timeout=15,
+        ue_stop_timeout=60,
         always_download_artifacts=False,
         pdsch_interleaving_bundle_size=pdsch_interleaving_bundle_size,
     )

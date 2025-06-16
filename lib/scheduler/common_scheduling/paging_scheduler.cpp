@@ -49,6 +49,7 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
   new_paging_notifications(PAGING_INFO_QUEUE_SIZE),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
+  paging_pending_ues.reserve(MAX_NOF_PENDING_PAGINGS);
   if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.has_value()) {
     for (const auto& cfg : cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
       if (cfg.get_id() != cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value()) {
@@ -77,6 +78,14 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
                               ? pdsch_default_time_allocations_default_A_table(bwp_cfg.cp, cell_cfg.dmrs_typeA_pos)
                               : cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
 
+    // Generate an empty vector for each element of pdsch_time_res_idx_to_scheduled_ues_lookup; only then we can reserve
+    // the capacity.
+    pdsch_time_res_idx_to_scheduled_ues_lookup.assign(pdsch_time_res_idx_to_scheduled_ues_lookup.capacity(),
+                                                      std::vector<const sched_paging_information*>{});
+    for (auto& sched_paging_ues : pdsch_time_res_idx_to_scheduled_ues_lookup) {
+      sched_paging_ues.reserve(MAX_PAGING_RECORDS_PER_PAGING_PDU);
+    }
+
   } else {
     srsran_assertion_failure("Paging Search Space not configured in DL BWP.");
   }
@@ -89,7 +98,13 @@ void paging_scheduler::run_slot(cell_resource_allocator& res_grid)
   while (new_paging_notifications.try_pop(new_pg_info)) {
     // Check whether Paging information is already present or not. i.e. tackle repeated Paging attempt from upper
     // layers.
-    paging_pending_ues.try_emplace(new_pg_info.paging_identity, ue_paging_info{.info = new_pg_info, .retry_count = 0});
+    if (paging_pending_ues.find(new_pg_info.paging_identity) == paging_pending_ues.end()) {
+      if (paging_pending_ues.size() < MAX_NOF_PENDING_PAGINGS) {
+        paging_pending_ues.emplace(new_pg_info.paging_identity, ue_paging_info{.info = new_pg_info, .retry_count = 0});
+      } else {
+        logger.warning("Map of paging pending UEs is full. Dropping paging id={}\n", new_pg_info.paging_identity);
+      }
+    }
   }
 
   // NOTE:
@@ -121,9 +136,10 @@ void paging_scheduler::run_slot(cell_resource_allocator& res_grid)
     }
   }
 
-  // Initialize.
-  pdsch_time_res_idx_to_scheduled_ues_lookup.assign(MAX_NOF_PDSCH_TD_RESOURCE_ALLOCATIONS,
-                                                    std::vector<const sched_paging_information*>{});
+  // Clear all previous vectors.
+  for (auto& sched_paging_ues : pdsch_time_res_idx_to_scheduled_ues_lookup) {
+    sched_paging_ues.clear();
+  }
 
   for (const auto& pg_it : paging_pending_ues) {
     const auto&    pg_info   = pg_it.second.info;
@@ -207,7 +223,7 @@ void paging_scheduler::run_slot(cell_resource_allocator& res_grid)
                         paging_search_space)) {
       // Allocation successful.
       for (const auto* pg_info : pdsch_time_res_idx_to_scheduled_ues_lookup[pdsch_td_res_idx]) {
-        paging_pending_ues[pg_info->paging_identity].retry_count++;
+        paging_pending_ues.at(pg_info->paging_identity).retry_count++;
       }
     }
   }
