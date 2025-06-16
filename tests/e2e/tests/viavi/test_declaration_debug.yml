@@ -38,6 +38,12 @@ tests:
           max_pucchs_per_slot: 10
         pusch:
           max_puschs_per_slot: 2
+      expert_execution:
+        queues:
+          du_ue_data_executor_queue_size: 16384
+        threads:
+          upper_phy:
+            nof_pusch_decoder_threads: 2          
     # test/fail criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6
