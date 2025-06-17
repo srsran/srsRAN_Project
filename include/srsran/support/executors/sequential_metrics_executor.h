@@ -157,7 +157,7 @@ private:
 
     // Check if it is time for a new metric report.
     auto                  telapsed_since_last_report = end_tp - last_tp;
-    static const unsigned THRESHOLD                  = 100;
+    static const unsigned THRESHOLD                  = 25;
     if (duration_cast<milliseconds>(counters.task_max_latency).count() > THRESHOLD && file) {
       // Report metrics.
       metrics_logger.info(
