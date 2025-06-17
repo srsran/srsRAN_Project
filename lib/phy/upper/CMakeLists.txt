@@ -52,9 +52,7 @@ add_library(log_likelihood_ratio log_likelihood_ratio.cpp)
 target_link_libraries(log_likelihood_ratio srsvec)
 
 add_library(srsran_upper_phy_support
-        rb_allocation.cpp
         rx_buffer_pool_impl.cpp
 )
-target_link_libraries(srsran_upper_phy_support srsran_ran)
 
 add_to_exported_libs(log_likelihood_ratio srsran_upper_phy_support)

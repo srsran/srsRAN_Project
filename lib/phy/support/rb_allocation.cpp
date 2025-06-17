@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsran/phy/upper/rb_allocation.h"
+#include "srsran/phy/support/rb_allocation.h"
 #include "srsran/ran/resource_allocation/vrb_to_prb.h"
 
 using namespace srsran;
@@ -75,4 +75,20 @@ crb_bitmap rb_allocation::get_crb_mask(unsigned bwp_start_rb, unsigned bwp_size_
   }
   vrb_to_prb::non_interleaved_mapping map(vrb_to_prb_config);
   return map.vrb_to_crb(bwp_start_rb, bwp_size_rb, vrb_mask);
+}
+
+static_vector<uint16_t, MAX_NOF_PRBS> rb_allocation::get_crb_indices(unsigned bwp_start_rb, unsigned bwp_size_rb) const
+{
+  srsran_assert(is_bwp_valid(bwp_start_rb, bwp_size_rb),
+                "Invalid BWP configuration {}:{} for a VRB mask of size {}.",
+                bwp_start_rb,
+                bwp_size_rb,
+                vrb_mask.size());
+
+  if (vrb_to_prb_config.is_interleaved()) {
+    vrb_to_prb::interleaved_mapping map(vrb_to_prb_config);
+    return map.vrb_to_crb_indices(bwp_start_rb, bwp_size_rb, vrb_mask);
+  }
+  vrb_to_prb::non_interleaved_mapping map(vrb_to_prb_config);
+  return map.vrb_to_crb_indices(bwp_start_rb, bwp_size_rb, vrb_mask);
 }

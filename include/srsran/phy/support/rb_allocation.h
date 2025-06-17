@@ -103,19 +103,8 @@ public:
   /// Determines if the VRB mask is contiguous in frequency domain.
   bool is_vrb_mask_contiguous() const { return vrb_mask.is_contiguous(); }
 
-  /// \brief Gets the corresponding PRB intervals for the allocation.
-  ///
-  /// \return A pair of PRB intervals.
-  /// \note Only use this method if the VRB mask is contiguous.
-  prb_interval get_prb_interval() const
-  {
-    srsran_assert(vrb_mask.is_contiguous(),
-                  "The allocation can only be represented as a PRB interval when the VRB mask is contiguous and the "
-                  "mapping is non-interleaved.");
-
-    vrb_to_prb::non_interleaved_mapping map(vrb_to_prb_config);
-    return map.vrb_to_prb(vrb_interval{vrb_mask.find_lowest(), vrb_mask.find_highest() + 1});
-  }
+  /// Gets the VRB mask.
+  const vrb_bitmap& get_vrb_mask() const { return vrb_mask; }
 
   /// Gets the number of allocated VRB.
   unsigned get_nof_rb() const { return vrb_mask.count(); }
@@ -130,8 +119,8 @@ public:
   /// lowest numbered resource block in the CORESET. For all other allocations, the available physical resources for VRB
   /// to PRB mapping comprise the entire BWP size.
   ///
-  /// \param[in] bwp_start_rb Lowest PRB index of the BWP relative to CRB0 (PointA), i.e. \f$N_{BWP,i}^{start}\f$.
-  /// \param[in] bwp_size_rb  BWP size in PRB, i.e. \f$N_{BWP,i}^{size}\f$.
+  /// \param[in] bwp_start_rb   Lowest CRB index of the BWP relative to CRB0 (PointA) as \f$N_{BWP,i}^{start}\f$.
+  /// \param[in] bwp_size_rb    BWP size in PRB as \f$N_{BWP,i}^{size}\f$.
   /// \return True if the combination of BWP and resource block is valid, false otherwise.
   bool is_bwp_valid(unsigned bwp_start_rb, unsigned bwp_size_rb) const
   {
@@ -147,10 +136,22 @@ public:
   /// The resultant mask is represented in a \c crb_bitmap of size \f$N_{BWP,i}^{start}+N_{BWP,i}^{size}\f$ in which
   /// every set bit represents an active CRB. The first bit of the mask belongs to CRB0 (PointA).
   ///
-  /// \param[in] bwp_start_rb Indicates the BWP lowest CRB index relative to CRB0 (PointA) as \f$N_{BWP,i}^{start}\f$.
-  /// \param[in] bwp_size_rb Indicates the BWP size in PRB as \f$N_{BWP,i}^{size}\f$.
+  /// \param[in] bwp_start_rb   Lowest CRB index of the BWP relative to CRB0 (PointA) as \f$N_{BWP,i}^{start}\f$.
+  /// \param[in] bwp_size_rb    BWP size in PRB as \f$N_{BWP,i}^{size}\f$.
   /// \return The CRB allocation mask represented as a bounded bitset.
   crb_bitmap get_crb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const;
+
+  /// \brief Generates the common resource block (CRB) indices for the frequency domain allocation.
+  ///
+  /// Calculates the CRB allocation resource block indices considering the BWP frequency allocation, the VRB mask and
+  /// the VRB-to-PRB mapping.
+  ///
+  /// The indices are ordered sequentially.
+  ///
+  /// \param[in] bwp_start_rb   Lowest CRB index of the BWP relative to CRB0 (PointA) as \f$N_{BWP,i}^{start}\f$.
+  /// \param[in] bwp_size_rb    BWP size in PRB as \f$N_{BWP,i}^{size}\f$.
+  /// \return The CRB allocation indices.
+  static_vector<uint16_t, MAX_NOF_PRBS> get_crb_indices(unsigned bwp_start_rb, unsigned bwp_size_rb) const;
 };
 
 } // namespace srsran
@@ -169,13 +170,13 @@ struct formatter<srsran::rb_allocation> {
   template <typename FormatContext>
   auto format(const srsran::rb_allocation& rb_alloc, FormatContext& ctx) const
   {
-    // TODO: change to is_mask_contiguous when the interleaved mapping supports vrb_to_prb interval conversion.
-    if (!rb_alloc.is_contiguous()) {
-      return format_to(ctx.out(), "non-contiguous");
+    const auto& vrb_mask = rb_alloc.get_vrb_mask();
+
+    if (!rb_alloc.is_vrb_mask_contiguous()) {
+      return format_to(ctx.out(), "{:i}", rb_alloc.get_vrb_mask());
     }
 
-    const auto prbs = rb_alloc.get_prb_interval();
-    return format_to(ctx.out(), "[{}, {})", prbs.start(), prbs.start() + prbs.length());
+    return format_to(ctx.out(), "[{}, {})", vrb_mask.find_lowest(), vrb_mask.find_highest() + 1);
   }
 };
 

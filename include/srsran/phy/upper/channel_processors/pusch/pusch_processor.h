@@ -12,8 +12,8 @@
 
 #include "srsran/adt/expected.h"
 #include "srsran/adt/static_vector.h"
+#include "srsran/phy/support/rb_allocation.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
-#include "srsran/phy/upper/rb_allocation.h"
 #include "srsran/ran/pusch/pusch_context.h"
 #include "srsran/ran/sch/ldpc_base_graph.h"
 #include "srsran/ran/sch/sch_mcs.h"

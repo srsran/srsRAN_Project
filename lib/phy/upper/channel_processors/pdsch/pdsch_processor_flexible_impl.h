@@ -111,7 +111,7 @@ private:
   /// Indicates whether the current transmission is concurrent (true) or not.
   bool async_proc = false;
   /// PDSCH transmission allocation pattern.
-  re_pattern_list allocation;
+  resource_grid_mapper::allocation_configuration allocation;
   /// PDSCH transmission reserved elements pattern.
   re_pattern_list reserved;
   /// Precoding configuration scaled.

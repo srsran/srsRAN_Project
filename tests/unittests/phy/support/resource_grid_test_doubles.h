@@ -478,16 +478,9 @@ public:
 /// interface.
 ///
 /// \note The test terminates if any component under test calls any method from the interface.
-class resource_grid_dummy : public resource_grid, private resource_grid_mapper
+class resource_grid_dummy : public resource_grid
 {
 private:
-  /// Throws a assertion failure due to an overridden method call.
-  void failure() const
-  {
-    srsran_assertion_failure(
-        "Components using resource grid dummy are not allowed to call any method from the interface.");
-  }
-
   resource_grid_reader_spy reader;
   resource_grid_writer_spy writer;
 
@@ -501,24 +494,6 @@ public:
   const resource_grid_reader& get_reader() const override { return reader; }
 
   void set_all_zero() override { ++set_all_zero_count; }
-
-  void map(resource_grid_writer&          grid,
-           const re_buffer_reader<>&      input,
-           const re_pattern&              pattern,
-           const precoding_configuration& precoding) override
-  {
-    failure();
-  }
-
-  void map(resource_grid_writer& grid,
-           symbol_buffer& /* buffer */,
-           const re_pattern_list& /* pattern */,
-           const re_pattern_list& /* reserved */,
-           const precoding_configuration& /* precoding */,
-           unsigned /* re_skip */) override
-  {
-    failure();
-  }
 
   unsigned get_reader_writer_count() const { return reader.get_count() + writer.get_count(); }
 

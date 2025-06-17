@@ -181,9 +181,6 @@ void pdsch_processor_flexible_impl::initialize_new_transmission(
                   cw_length);
   }
 
-  // Get the CRB allocation mask.
-  const crb_bitmap crb_allocation_mask = config.freq_alloc.get_crb_mask(config.bwp_start_rb, config.bwp_size_rb);
-
   // First symbol used in this transmission.
   unsigned start_symbol_index = config.start_symbol_index;
 
@@ -199,9 +196,10 @@ void pdsch_processor_flexible_impl::initialize_new_transmission(
   symbol_slot_mask symbols;
   symbols.fill(start_symbol_index, end_symbol_index);
 
-  // Allocation pattern for the mapper.
-  allocation.clear();
-  re_pattern pdsch_pattern;
+  // Prepare the allocation pattern for the resource grid mapper.
+  allocation.bwp        = {pdu.bwp_start_rb, pdu.bwp_start_rb + pdu.bwp_size_rb};
+  allocation.freq_alloc = pdu.freq_alloc;
+  allocation.time_alloc = {pdu.start_symbol_index, pdu.start_symbol_index + pdu.nof_symbols};
 
   // Reserved REs, including DM-RS and CSI-RS.
   reserved = re_pattern_list(config.reserved);
@@ -212,12 +210,6 @@ void pdsch_processor_flexible_impl::initialize_new_transmission(
 
   // Merge DM-RS RE pattern into the reserved RE patterns.
   reserved.merge(dmrs_pattern);
-
-  // Set PDSCH allocation pattern.
-  pdsch_pattern.crb_mask = crb_allocation_mask;
-  pdsch_pattern.re_mask  = ~re_prb_mask();
-  pdsch_pattern.symbols  = symbols;
-  allocation.merge(pdsch_pattern);
 }
 
 void pdsch_processor_flexible_impl::sync_pdsch_cb_processing()

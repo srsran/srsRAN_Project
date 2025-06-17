@@ -13,12 +13,13 @@
 #include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/support/precoding_configuration.h"
+#include "srsran/phy/support/rb_allocation.h"
 #include "srsran/phy/support/re_pattern.h"
 #include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
-#include "srsran/phy/upper/rb_allocation.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 
 namespace srsran {
 
@@ -37,20 +38,24 @@ public:
   struct config_t {
     /// Provides \f$n_{RNTI}\f$ from TS38.211 section 7.3.1.1 Scrambling.
     uint16_t rnti;
-    /// Number of contiguous PRBs allocated to the BWP {1, ..., 275}.
-    unsigned bwp_size_rb;
-    /// BWP start RB index from Point A {0, ..., 274}.
-    unsigned bwp_start_rb;
+    /// \brief Bandwidth part location within the resource grid.
+    ///
+    /// The BWP start common resource block index is relative to Point A and must be in the range {0, ..., 274}. The BWP
+    /// length is expressed as a number of contiguous common resource blocks and must be in the range {1, ..., 275}.
+    crb_interval bwp;
     /// Modulation of codeword 1 (q = 0).
     modulation_scheme modulation1;
     /// Modulation of codeword 2 ( q = 1).
     modulation_scheme modulation2;
     /// Frequency domain allocation.
     rb_allocation freq_allocation;
-    /// Time domain allocation within a slot: start symbol index (0...12).
-    unsigned start_symbol_index;
-    /// Time domain allocation within a slot: number of symbols (1...14).
-    unsigned nof_symbols;
+    /// \brief Time-domain allocation within a slot.
+    ///
+    /// The start symbol index and the number of symbols within the slot must be in the range {0, ..., 12} and {1, ...,
+    /// 14}, respectively.
+    ///
+    /// The time allocation must not exceed the maximum number of OFDM symbols in a slot.
+    ofdm_symbol_range time_alloc;
     /// DM-RS symbol positions as a mask.
     symbol_slot_mask dmrs_symb_pos;
     /// Indicates the DMRS configuration type.

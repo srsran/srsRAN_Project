@@ -42,43 +42,23 @@ void pdsch_modulator_impl::map(resource_grid_writer& grid,
                                float                 scaling,
                                const config_t&       config)
 {
-  // Get the common resource block allocation mask.
-  const crb_bitmap crb_allocation_mask = config.freq_allocation.get_crb_mask(config.bwp_start_rb, config.bwp_size_rb);
-
-  // First symbol used in this transmission.
-  unsigned start_symbol_index = config.start_symbol_index;
-
-  // Calculate the end symbol index (excluded) and assert it does not exceed the slot boundary.
-  unsigned end_symbol_index = config.start_symbol_index + config.nof_symbols;
-
-  srsran_assert(end_symbol_index <= MAX_NSYMB_PER_SLOT,
-                "The time allocation of the transmission [{}, {}) exceeds the slot boundary.",
-                start_symbol_index,
-                end_symbol_index);
+  srsran_assert(config.time_alloc.stop() <= MAX_NSYMB_PER_SLOT,
+                "The time allocation of the transmission {} exceeds the slot boundary.",
+                config.time_alloc);
 
   // PDSCH OFDM symbol mask.
   symbol_slot_mask symbols;
-  symbols.fill(start_symbol_index, end_symbol_index);
-
-  // Allocation pattern for the mapper.
-  re_pattern_list allocation;
-  re_pattern      pdsch_pattern;
+  symbols.fill(config.time_alloc.start(), config.time_alloc.stop());
 
   // Reserved REs, including DM-RS and CSI-RS.
   re_pattern_list reserved(config.reserved);
 
   // Get DM-RS RE pattern.
   re_pattern dmrs_pattern = config.dmrs_config_type.get_dmrs_pattern(
-      config.bwp_start_rb, config.bwp_size_rb, config.nof_cdm_groups_without_data, config.dmrs_symb_pos);
+      config.bwp.start(), config.bwp.length(), config.nof_cdm_groups_without_data, config.dmrs_symb_pos);
 
   // Merge DM-RS RE pattern into the reserved RE patterns.
   reserved.merge(dmrs_pattern);
-
-  // Set PDSCH allocation pattern.
-  pdsch_pattern.crb_mask = crb_allocation_mask;
-  pdsch_pattern.re_mask  = ~re_prb_mask();
-  pdsch_pattern.symbols  = symbols;
-  allocation.merge(pdsch_pattern);
 
   if (std::isnormal(config.scaling)) {
     scaling *= config.scaling;
@@ -87,6 +67,10 @@ void pdsch_modulator_impl::map(resource_grid_writer& grid,
   precoding2 *= scaling;
 
   resource_grid_mapper::symbol_buffer_adapter buffer_adapter(data_re);
+
+  // Prepare resource grid mapper allocation.
+  resource_grid_mapper::allocation_configuration allocation = {
+      .bwp = config.bwp, .freq_alloc = config.freq_allocation, .time_alloc = config.time_alloc};
 
   // Map into the resource grid.
   mapper->map(grid, buffer_adapter, allocation, reserved, precoding2);
