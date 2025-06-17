@@ -81,13 +81,17 @@ protected:
 
     // Prepare CRB bitmask that will be used to find available CRBs.
     const auto& init_dl_bwp = cell_cfg.dl_cfg_common.init_dl_bwp;
+    const auto  prb_lims    = crb_to_prb(init_dl_bwp.generic_params.crbs,
+                                     cell_cfg.expert_cfg.ue.pdsch_crb_limits & init_dl_bwp.generic_params.crbs);
+    auto        used_prbs   = res_grid[0].dl_res_grid.used_prbs(init_dl_bwp.generic_params.scs,
+                                                       init_dl_bwp.generic_params.crbs,
+                                                       init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].symbols);
+    if (not prb_lims.empty()) {
+      used_prbs.fill(0, prb_lims.start());
+      used_prbs.fill(prb_lims.stop(), used_prbs.size());
+    }
     // Note: VRB-to-PRB interleaving is not supported in this test.
-    used_dl_vrbs = res_grid[0]
-                       .dl_res_grid
-                       .used_prbs(init_dl_bwp.generic_params.scs,
-                                  init_dl_bwp.generic_params.crbs,
-                                  init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].symbols)
-                       .convert_to<vrb_bitmap>();
+    used_dl_vrbs = used_prbs.convert_to<vrb_bitmap>();
 
     on_each_slot();
 

@@ -213,22 +213,12 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
   }
 
   // Determine RB allocation limits.
-  interval<unsigned> nof_rb_lims = cell_cfg.expert_cfg.ue.pdsch_nof_rbs &
-                                   ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.convert_to<interval<unsigned>>();
   const auto crb_lims = (cell_cfg.expert_cfg.ue.pdsch_crb_limits & ss.dl_crb_lims).convert_to<crb_interval>();
-
-  const auto   prb_lims = crb_to_prb(ss.dl_crb_lims, crb_lims);
-  vrb_interval vrb_lims;
-  if (interleaving_enabled and ss.interleaved_mapping.has_value()) {
-    const auto& interleaved_mapping = ss.interleaved_mapping.value();
-    vrb_lims                        = {interleaved_mapping.prb_to_vrb(prb_lims.start()),
-                                       interleaved_mapping.prb_to_vrb(prb_lims.stop() - 1) + 1};
-  } else {
-    vrb_lims = prb_lims.convert_to<vrb_interval>();
-  }
-
-  nof_rb_lims = nof_rb_lims & interval<unsigned>{0, vrb_lims.length()};
-  if (vrb_lims.empty() or nof_rb_lims.empty()) {
+  const interval<unsigned> nof_rb_lims =
+      cell_cfg.expert_cfg.ue.pdsch_nof_rbs &
+      ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.convert_to<interval<unsigned>>() &
+      interval<unsigned>{0, crb_lims.length()};
+  if (crb_lims.empty() or nof_rb_lims.empty()) {
     // Invalid RB allocation range.
     return std::nullopt;
   }
@@ -285,7 +275,6 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
     dl_sched_context ctxt;
     ctxt.ss_id              = ss.cfg->get_id();
     ctxt.pdsch_td_res_index = pdsch_td_index;
-    ctxt.vrb_lims           = vrb_lims;
     ctxt.recommended_mcs    = mcs;
     ctxt.recommended_ri     = nof_layers;
     ctxt.expected_nof_rbs   = nof_rbs;
@@ -320,7 +309,7 @@ find_available_vrbs(const dl_sched_context& space_cfg, const vrb_bitmap& used_vr
   unsigned nof_rbs = std::min(space_cfg.expected_nof_rbs, max_rbs);
 
   // Compute PRB allocation interval.
-  vrb_interval vrbs = rb_helper::find_empty_interval_of_length(used_vrbs, nof_rbs, space_cfg.vrb_lims);
+  vrb_interval vrbs = rb_helper::find_empty_interval_of_length(used_vrbs, nof_rbs);
   if (vrbs.empty()) {
     return vrb_interval{};
   }

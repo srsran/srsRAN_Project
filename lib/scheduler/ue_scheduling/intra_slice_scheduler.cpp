@@ -814,7 +814,6 @@ void intra_slice_scheduler::update_used_dl_vrbs(const dl_ran_slice_candidate& sl
   const slice_ue_repository&       slice_ues    = slice.get_slice_ues();
   static constexpr search_space_id ue_ded_ss_id = to_search_space_id(2);
   const search_space_info&         ss_info      = slice_ues.begin()->get_cc().cfg().search_space(ue_ded_ss_id);
-  const auto&                      dl_crb_lims  = ss_info.dl_crb_lims;
 
   // [Implementation defined] We use the common PDSCH TD resources as a reference for the computation of RBs
   // unavailable for PDSCH. This assumes that these resources are not colliding with PDCCH.
@@ -833,8 +832,16 @@ void intra_slice_scheduler::update_used_dl_vrbs(const dl_ran_slice_candidate& sl
     }
   }
 
-  const prb_bitmap used_prbs =
-      cell_alloc[pdsch_slot].dl_res_grid.used_prbs(init_dl_bwp.generic_params.scs, dl_crb_lims, symbols_to_check);
+  prb_bitmap used_prbs = cell_alloc[pdsch_slot].dl_res_grid.used_prbs(
+      init_dl_bwp.generic_params.scs, ss_info.dl_crb_lims, symbols_to_check);
+  // Mark as used the PRBs that fall outside the CRB limits.
+  const auto prb_lims = crb_to_prb(ss_info.dl_crb_lims,
+                                   slice_ues.begin()->get_cc().cfg().cell_cfg_common.expert_cfg.ue.pdsch_crb_limits &
+                                       ss_info.dl_crb_lims);
+  if (not prb_lims.empty()) {
+    used_prbs.fill(0, prb_lims.start());
+    used_prbs.fill(prb_lims.stop(), used_prbs.size());
+  }
 
   // Perform inverse VRB-to-PRB mapping when interleaving is enabled for this slice/BWP.
   if (enable_pdsch_interleaving) {
