@@ -330,6 +330,62 @@ def test_android(
 
 @mark.parametrize(
     "direction",
+    (param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),),
+)
+@mark.parametrize(
+    "protocol",
+    (param(IPerfProto.UDP, id="udp", marks=mark.udp),),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth",
+    (param(78, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),),
+)
+@mark.android
+@mark.flaky(
+    reruns=2,
+    only_rerun=["failed to start", "Exception calling application", "Attach timeout reached", "Some packages got lost"],
+)
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def test_android_interleaving(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue: UEStub,  # pylint: disable=invalid-name
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    protocol: IPerfProto,
+    direction: IPerfDir,
+):
+    """
+    Android IPerfs Interleaving
+    """
+
+    _iperf(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=(ue,),
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=get_minimum_sample_rate_for_bandwidth(bandwidth),
+        iperf_duration=SHORT_DURATION,
+        protocol=protocol,
+        bitrate=get_maximum_throughput(bandwidth, band, direction, protocol),
+        direction=direction,
+        global_timing_advance=-1,
+        time_alignment_calibration="auto",
+        always_download_artifacts=True,
+        warning_as_errors=False,
+        pdsch_interleaving_bundle_size=2,
+    )
+
+
+@mark.parametrize(
+    "direction",
     (
         param(IPerfDir.DOWNLINK, id="downlink", marks=mark.downlink),
         param(IPerfDir.UPLINK, id="uplink", marks=mark.uplink),
@@ -687,6 +743,59 @@ def test_zmq(
     )
 
 
+@mark.zmq
+@mark.parametrize(
+    "direction",
+    (param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),),
+)
+@mark.parametrize(
+    "protocol",
+    (param(IPerfProto.UDP, id="udp", marks=mark.tcp),),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth, bitrate",
+    (param(41, 30, 50, MEDIUM_BITRATE, id=ZMQ_ID),),
+)
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def test_znq_interleaving(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_32: Tuple[UEStub, ...],
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    bitrate: int,
+    protocol: IPerfProto,
+    direction: IPerfDir,
+):
+    """
+    ZMQ Interleaving
+    """
+
+    _iperf(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=ue_32,
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=None,  # default from testbed
+        iperf_duration=60,
+        bitrate=bitrate,
+        protocol=protocol,
+        direction=direction,
+        global_timing_advance=0,
+        time_alignment_calibration=0,
+        always_download_artifacts=False,
+        pdsch_interleaving_bundle_size=2,
+        gnb_post_cmd=("log --hex_max_size=32 cu_cp --inactivity_timer=600", ""),
+    )
+
+
 @mark.parametrize(
     "direction",
     (
@@ -927,6 +1036,7 @@ def _iperf(
     ntn_scenario_def: Optional[NtnScenarioDefinition] = None,
     min_dl_bitrate: float = 0,
     min_ul_bitrate: float = 0,
+    pdsch_interleaving_bundle_size: int = 0,
 ):
     wait_before_power_off = 5
 
@@ -958,6 +1068,7 @@ def _iperf(
         pdsch_mcs_table=pdsch_mcs_table,
         pusch_mcs_table=pusch_mcs_table,
         ntn_config=ntn_config,
+        pdsch_interleaving_bundle_size=pdsch_interleaving_bundle_size,
     )
 
     configure_artifacts(
