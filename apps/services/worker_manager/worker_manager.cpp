@@ -325,7 +325,7 @@ execution_config_helper::worker_pool worker_manager::create_low_prio_workers(uns
       // Left empty, is filled later.
       {},
       std::chrono::microseconds{100},
-      os_thread_realtime_priority::no_realtime(),
+      os_thread_realtime_priority::min(),
       std::vector<os_sched_affinity_bitmask>{low_prio_mask}};
 
   return non_rt_pool;

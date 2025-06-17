@@ -23,7 +23,7 @@ struct io_broker_config {
   explicit io_broker_config(os_sched_affinity_bitmask mask_ = {}) : cpu_mask(std::move(mask_)) {}
 
   std::string                 thread_name = "io_broker_epoll";
-  os_thread_realtime_priority thread_prio = os_thread_realtime_priority::no_realtime();
+  os_thread_realtime_priority thread_prio = os_thread_realtime_priority::min() + 5;
   os_sched_affinity_bitmask   cpu_mask;
 };
 
