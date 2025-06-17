@@ -254,7 +254,7 @@ void radio_uhd_tx_stream::transmit(const baseband_gateway_buffer_reader&        
             return;
           }
 
-          power_ramping_metadata.time_spec += txd_samples * srate_hz;
+          power_ramping_metadata.time_spec += uhd::time_spec_t::from_ticks(txd_samples, srate_hz);
           txd_padding_sps_total += txd_samples;
 
         } while (txd_padding_sps_total < nof_padding_samples);
@@ -295,7 +295,7 @@ void radio_uhd_tx_stream::transmit(const baseband_gateway_buffer_reader&        
     }
 
     // Increment timespec.
-    uhd_metadata.time_spec += txd_samples * srate_hz;
+    uhd_metadata.time_spec += uhd::time_spec_t::from_ticks(txd_samples, srate_hz);
 
     // Increment the total amount of received samples.
     txd_samples_total += txd_samples;
