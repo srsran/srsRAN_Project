@@ -130,7 +130,9 @@ variables:
             --exclude=${CI_PROJECT_DIR}/plugins/.*/include/srsran/asn1/nrppa/.* \
             --exclude=${CI_PROJECT_DIR}/plugins/.*/lib/asn1/nrppa/.* \
             --exclude-lines-by-pattern \".*srsran_assert.*|.*srsran_sanity_check.*\" \
-            --root=${CI_PROJECT_DIR}"
+            --root=${CI_PROJECT_DIR} \
+            --gcov-ignore-parse-errors=all \
+            --merge-mode-functions=merge-use-line-min"
 
           echo "+ gcovr: Coverage generation"
           if ! output=$(gcovr $common_options --keep 2>&1); then
