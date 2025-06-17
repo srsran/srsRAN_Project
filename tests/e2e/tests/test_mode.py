@@ -190,7 +190,14 @@ def test_ru_16cell_50ue(
     """
     Run gnb in test mode ru dummy.
     """
-    _test_ru(retina_manager, retina_data, gnb, ru_config="config_ru_16cell_50ue.yml", warning_as_errors=False)
+    _test_ru(
+        retina_manager,
+        retina_data,
+        gnb,
+        ru_config="config_ru_16cell_50ue.yml",
+        duration=10 * 60,
+        warning_as_errors=False,
+    )
 
 
 @mark.test_mode_not_crash
