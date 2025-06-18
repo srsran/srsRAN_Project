@@ -75,7 +75,6 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/span.h"
 #include <atomic>
-#include "control_socket_context.h"
 
 #ifdef DPDK_FOUND
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
@@ -248,7 +247,7 @@ void start_tcp_control_server(srsran::srs_cu_cp::ngap_interface* ngap, srslog::b
         gnb_logger.error("TCP server: Accept failed");
         continue;
       }
-      control_client_socket_fd = new_socket;
+      //control_client_socket_fd = new_socket;
       ssize_t read_size;
       while ((read_size = read(new_socket, buffer, sizeof(buffer) - 1)) > 0) {
         buffer[read_size] = '\0';

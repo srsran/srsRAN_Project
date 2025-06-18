@@ -28,7 +28,6 @@
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include <atomic>
-#include "control_socket_context.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -64,6 +63,7 @@ public:
 
     //----TAS:: Response from SCTP----
     logger.info("n2_connection_client_factory -> sctp_to_n2_pdu_notifier -> on_new_sdu");
+    /*
     int fd = control_client_socket_fd;
     asn1::json_writer js;
     msg.pdu.to_json(js);
@@ -72,7 +72,7 @@ public:
     if (fd >= 0) {
       send(fd, json_str.c_str(), json_str.size(), 0);
     }
-    
+    */
     // Forward unpacked Rx PDU to the DU.
     du_rx_pdu_notifier->on_new_message(msg);
 
