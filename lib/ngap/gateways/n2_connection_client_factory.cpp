@@ -27,6 +27,9 @@
 #include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/pcap/dlt_pcap.h"
+#include <atomic>
+
+extern std::atomic<int> control_client_socket_fd;
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -59,8 +62,18 @@ public:
     if (pcap_writer.is_write_enabled()) {
       pcap_writer.push_pdu(sdu.copy());
     }
-
+    
+    //----TAS:: Response from SCTP----
     logger.info("n2_connection_client_factory -> sctp_to_n2_pdu_notifier -> on_new_sdu");
+    int fd = control_client_socket_fd;
+    asn1::json_writer js;
+    msg.pdu.to_json(js);
+    std::string json_str = js.to_string();
+
+    if (fd >= 0) {
+      send(fd, json_str.c_str(), json_str.size(), 0);
+    }
+    
     // Forward unpacked Rx PDU to the DU.
     du_rx_pdu_notifier->on_new_message(msg);
 
@@ -103,7 +116,7 @@ public:
     if (pcap_writer.is_write_enabled()) {
       pcap_writer.push_pdu(tx_sdu.copy());
     }
-
+    //----TAS:: Will be get called only when using regular process----
     logger.info("n2_connection_client_factory -> on_new_message");
     // Forward packed Tx PDU to SCTP gateway.
     sctp_rx_pdu_notifier->on_new_sdu(std::move(tx_sdu));

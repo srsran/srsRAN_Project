@@ -75,6 +75,10 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/span.h"
 #include <atomic>
+
+// Define shared socket FD for control channel
+std::atomic<int> control_client_socket_fd = -1;
+
 #ifdef DPDK_FOUND
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
 #endif
@@ -247,7 +251,7 @@ void start_tcp_control_server(srsran::srs_cu_cp::ngap_interface* ngap, srslog::b
         gnb_logger.error("TCP server: Accept failed");
         continue;
       }
-
+      control_client_socket_fd - new_socket;
       ssize_t read_size;
       while ((read_size = read(new_socket, buffer, sizeof(buffer) - 1)) > 0) {
         buffer[read_size] = '\0';
@@ -621,6 +625,7 @@ int main(int argc, char** argv)
     report_error("CU-CP failed to connect to AMF");
   }
 
+  //-----TAS:: Custom Code to open TCP Server-----
   auto my_plmn_expected = srsran::plmn_identity::parse("00101");
 
   if (my_plmn_expected.has_value()) {
@@ -633,36 +638,13 @@ int main(int argc, char** argv)
       gnb_logger.info("Connected to AMF. Ready to send packets.");
 
       start_tcp_control_server(ngap, gnb_logger);
-
-      /*
-      // Example fake NGAP packet (not real ASN.1, just for testing transmission)
-      std::vector<uint8_t> my_raw_bytes = {
-        0x00, 0x08, // Message Length (fake)
-        0x00, 0x01, // NGAP Procedure Code (fake)
-        0x01, 0x00, // Criticality (fake)
-        0x02, 0x00, // Some Information Element (fake)
-        0x03, 0x04  // Some other field (fake)
-      };
-
-      span<const uint8_t> bytes_view(my_raw_bytes.data(), my_raw_bytes.size());
-      byte_buffer my_custom_buffer;
-
-      if (not my_custom_buffer.append(bytes_view)) {
-        gnb_logger.error("Failed to build byte_buffer from custom raw bytes");
-      }
-
-      bool success = ngap->send_custom_pdu(std::move(my_custom_buffer));
-      if (success) {
-          gnb_logger.info("Successfully sent custom NGAP PDU");
-      } else {
-          gnb_logger.error("Failed to send custom NGAP PDU");
-      }*/
     } else {
       gnb_logger.info("NGAP interface is not ready");
     }
   } else {
     gnb_logger.info("Failed to parse PLMN identity");
   }
+  //----End of Custom Code----
 
   // Connect F1-C to O-CU-CP and start listening for new F1-C connection requests.
   f1c_gw->attach_cu_cp(o_cucp_obj.get_cu_cp().get_f1c_handler());
