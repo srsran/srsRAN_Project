@@ -244,16 +244,15 @@ void start_tcp_control_server(srsran::srs_cu_cp::ngap_interface* ngap, srslog::b
     }
 
     gnb_logger.info("TCP server started on port 8899. Use 'telnet 127.0.0.1 8899' to send commands.");
-
     while (true) {
       new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen);
       if (new_socket < 0) {
         gnb_logger.error("TCP server: Accept failed");
         continue;
       }
-      control_client_socket_fd - new_socket;
+      control_client_socket_fd = new_socket;
       ssize_t read_size;
-      while ((read_size = read(new_socket, buffer, sizeof(buffer) - 1)) > 0) {
+      while ((read_size = read(new_socket, bsuffer, sizeof(buffer) - 1)) > 0) {
         buffer[read_size] = '\0';
         std::string line(buffer);
         std::istringstream iss(line);
