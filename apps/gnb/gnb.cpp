@@ -252,7 +252,7 @@ void start_tcp_control_server(srsran::srs_cu_cp::ngap_interface* ngap, srslog::b
       }
       control_client_socket_fd = new_socket;
       ssize_t read_size;
-      while ((read_size = read(new_socket, bsuffer, sizeof(buffer) - 1)) > 0) {
+      while ((read_size = read(new_socket, buffer, sizeof(buffer) - 1)) > 0) {
         buffer[read_size] = '\0';
         std::string line(buffer);
         std::istringstream iss(line);
