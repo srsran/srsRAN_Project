@@ -28,8 +28,7 @@
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include <atomic>
-
-extern std::atomic<int> control_client_socket_fd;
+#include "control_socket_context.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -62,7 +61,7 @@ public:
     if (pcap_writer.is_write_enabled()) {
       pcap_writer.push_pdu(sdu.copy());
     }
-    
+
     //----TAS:: Response from SCTP----
     logger.info("n2_connection_client_factory -> sctp_to_n2_pdu_notifier -> on_new_sdu");
     int fd = control_client_socket_fd;

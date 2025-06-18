@@ -75,9 +75,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/span.h"
 #include <atomic>
-
-// Define shared socket FD for control channel
-std::atomic<int> control_client_socket_fd = -1;
+#include "control_socket_context.h"
 
 #ifdef DPDK_FOUND
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
