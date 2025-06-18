@@ -42,6 +42,7 @@ target_link_libraries(gnb_base PRIVATE
         srsran_e1_gateway
         srsran_o_cu_cp_app_unit
         srsran_o_cu_up_app_unit
+        control_socket_context
 )
 
 if (DPDK_FOUND)
