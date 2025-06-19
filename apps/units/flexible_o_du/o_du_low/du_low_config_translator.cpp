@@ -42,7 +42,6 @@ static void generate_du_low_config(srs_du::du_low_config&                       
 
     // Calculate the number of UL slots in a frame and in a PUSCH HARQ process lifetime.
     unsigned nof_ul_slots_in_harq_lifetime = expire_pusch_harq_timeout_slots;
-    unsigned nof_ul_slots_per_frame        = nof_slots_per_frame;
     if (cell.duplex == duplex_mode::TDD && cell.tdd_pattern1.has_value()) {
       const tdd_ul_dl_pattern& pattern1     = *cell.tdd_pattern1;
       unsigned                 period_slots = pattern1.dl_ul_tx_period_nof_slots;
@@ -52,7 +51,6 @@ static void generate_du_low_config(srs_du::du_low_config&                       
         period_slots += pattern2.dl_ul_tx_period_nof_slots;
         nof_ul_slots += pattern2.nof_ul_slots + ((pattern2.nof_ul_symbols != 0) ? 1 : 0);
       }
-      nof_ul_slots_per_frame        = divide_ceil(nof_slots_per_frame, period_slots) * nof_ul_slots;
       nof_ul_slots_in_harq_lifetime = divide_ceil(expire_pusch_harq_timeout_slots, period_slots) * nof_ul_slots;
     }
 
@@ -75,13 +73,16 @@ static void generate_du_low_config(srs_du::du_low_config&                       
     // - the number of PUSCH occasions in a HARQ process lifetime.
     const unsigned max_rx_nof_codeblocks = nof_ul_slots_in_harq_lifetime * max_nof_pusch_cb_slot;
 
-    // Determine processing pipelines depth. Make sure the number of slots per system frame is divisible by the pipeline
-    // depths.
+    // Determine processing downlink pipeline depth. Make sure the number of slots per system frame is divisible by the
+    // pipeline depth.
     unsigned dl_pipeline_depth = 4 * du_low.expert_phy_cfg.max_processing_delay_slots;
     while (nof_slots_per_hyper_system_frame % dl_pipeline_depth != 0) {
       ++dl_pipeline_depth;
     }
-    unsigned ul_pipeline_depth = std::max(dl_pipeline_depth, 8U);
+
+    // The uplink pipeline depth is set equal to the number of slots per frame for reusing uplink processors every
+    // 10 ms.
+    unsigned ul_pipeline_depth = nof_slots_per_frame;
 
     static constexpr unsigned prach_pipeline_depth = 1;
 
@@ -95,11 +96,11 @@ static void generate_du_low_config(srs_du::du_low_config&                       
                   to_string(cell.duplex));
 
     // Maximum number of concurrent PUSCH transmissions. It is the maximum number of PUSCH transmissions that can be
-    // processed simultaneously. If there are no dedicated threads for PUSCH decoding, it sets the queue size to one.
-    // Otherwise, it is set to the maximum number of PUSCH transmissions that can be scheduled in one frame.
+    // processed simultaneously in one slot. If there are no dedicated threads for PUSCH decoding, it sets the queue
+    // size to one. Otherwise, it is set to the maximum number of PUSCH transmissions that can be scheduled in one slot.
     unsigned max_pusch_concurrency = 1;
     if (du_low.expert_execution_cfg.threads.nof_pusch_decoder_threads > 0) {
-      max_pusch_concurrency = cell.max_puschs_per_slot * nof_ul_slots_per_frame;
+      max_pusch_concurrency = cell.max_puschs_per_slot;
     }
 
     upper_phy_cell.nof_slots_request_headroom         = du_low.expert_phy_cfg.nof_slots_request_headroom;
