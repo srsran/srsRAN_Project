@@ -162,6 +162,10 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
     pci_cell_mapper.push_back(cell.pci);
   }
 
+  std::chrono::nanoseconds symbol_duration(
+      static_cast<int64_t>(1e6 / (get_nsymb_per_slot(cyclic_prefix::NORMAL) *
+                                  get_nof_slots_per_subframe(du_hi.cells_cfg.front().cell.common_scs))));
+
   std::vector<std::unique_ptr<app_services::toggle_stdout_metrics_app_command::metrics_subcommand>>
       ru_metrics_subcommands;
   // Create flexible O-DU metrics configuration.
@@ -170,7 +174,8 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
                                          ru_metrics_subcommands,
                                          *dependencies.metrics_notifier,
                                          config.ru_cfg.config,
-                                         std::move(pci_cell_mapper));
+                                         std::move(pci_cell_mapper),
+                                         symbol_duration);
 
   // Create flexible O-DU implementation.
   auto du_impl = std::make_unique<flexible_o_du_impl>(nof_cells, flexible_odu_metrics_notifier);

@@ -55,8 +55,8 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
   trace_point tp = ofh_tracer.now();
 
   // Clear any stale buffers associated with the context slot.
-  frame_pool_dl_cp->clear_slot(context.slot, context.sector);
-  frame_pool_dl_up->clear_slot(context.slot, context.sector);
+  metrics_collector.update_cp_dl_lates(frame_pool_dl_cp->clear_slot(context.slot, context.sector));
+  metrics_collector.update_up_dl_lates(frame_pool_dl_up->clear_slot(context.slot, context.sector));
 
   // Nothing to do on empty resource grids.
   if (grid.get_reader().is_empty()) {

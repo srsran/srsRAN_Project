@@ -15,7 +15,7 @@
 namespace srsran {
 namespace ofh {
 
-struct data_flow_message_decoding_metrics_collector;
+class data_flow_message_decoding_metrics_collector;
 
 /// Open Fronthaul User-Plane uplink data flow.
 class data_flow_uplane_uplink_data

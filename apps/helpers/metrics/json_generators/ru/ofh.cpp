@@ -22,10 +22,18 @@ namespace ofh {
 
 void to_json(nlohmann::json& json, const received_messages_metrics& metrics)
 {
-  json["total"]   = metrics.nof_early_messages + metrics.nof_late_messages + metrics.nof_on_time_messages;
-  json["early"]   = metrics.nof_early_messages;
-  json["on_time"] = metrics.nof_on_time_messages;
-  json["late"]    = metrics.nof_late_messages;
+  json["total"]           = metrics.nof_early_messages + metrics.nof_late_messages + metrics.nof_on_time_messages;
+  json["early"]           = metrics.nof_early_messages;
+  json["on_time"]         = metrics.nof_on_time_messages;
+  json["late"]            = metrics.nof_late_messages;
+  json["earliest_msg_us"] = metrics.ealiest_rx_msg_in_symbols;
+  json["latest_msg_us"]   = metrics.latest_rx_msg_in_symbols;
+}
+
+void to_json(nlohmann::json& json, const closed_rx_window_metrics& metrics)
+{
+  json["nof_missed_uplink_symbols"]  = metrics.nof_missing_uplink_symbols;
+  json["nof_missed_prach_occasions"] = metrics.nof_missing_prach_contexts;
 }
 
 } // namespace ofh
@@ -49,9 +57,10 @@ static nlohmann::json generate_message_decoder_item(const ofh::rx_data_flow_perf
 {
   nlohmann::json json;
 
-  json["average_latency_us"] = validate_fp_value(metrics.message_unpacking_avg_latency_us);
-  json["max_latency_us"]     = validate_fp_value(metrics.message_unpacking_max_latency_us);
-  json["cpu_usage_percent"]  = validate_fp_value(metrics.cpu_usage_us / (metrics_period_ms * 1e3) * 100.0f);
+  json["nof_dropped_messages"] = metrics.nof_dropped_messages;
+  json["average_latency_us"]   = validate_fp_value(metrics.message_unpacking_avg_latency_us);
+  json["max_latency_us"]       = validate_fp_value(metrics.message_unpacking_max_latency_us);
+  json["cpu_usage_percent"]    = validate_fp_value(metrics.cpu_usage_us / (metrics_period_ms * 1e3) * 100.0f);
 
   return json;
 }
@@ -64,6 +73,10 @@ static nlohmann::json generate_message_decoder(const ofh::message_decoding_perfo
   json["prach"] = generate_message_decoder_item(metrics.prach_processing_metrics, metrics_period_ms);
   json["data"]  = generate_message_decoder_item(metrics.data_processing_metrics, metrics_period_ms);
 
+  auto& ecpri_json                        = json["ecpri"];
+  ecpri_json["nof_future_seqid_messages"] = metrics.nof_skipped_messages;
+  ecpri_json["nof_past_seqid_messages"]   = metrics.nof_dropped_messages;
+
   return json;
 }
 
@@ -74,6 +87,7 @@ static nlohmann::json generate_uplink(const ofh::receiver_metrics& metrics, unsi
   json["received_packets"]  = metrics.rx_messages_metrics;
   json["ethernet_receiver"] = generate_ethernet_rx(metrics.eth_receiver_metrics, metrics_period_ms);
   json["message_decoder"]   = generate_message_decoder(metrics.rx_decoding_perf_metrics, metrics_period_ms);
+  json["rx_window_stats"]   = metrics.closed_window_metrics;
 
   return json;
 }
@@ -132,8 +146,11 @@ static nlohmann::json generate_transmitter_statistics(const ofh::transmitter_met
 {
   nlohmann::json json;
 
-  json["late_dl_grids"]    = metrics.dl_metrics.nof_late_dl_grids;
-  json["late_ul_requests"] = metrics.ul_metrics.nof_late_ul_requests;
+  json["late_dl_rgs"]         = metrics.dl_metrics.nof_late_dl_grids;
+  json["late_ul_requests"]    = metrics.ul_metrics.nof_late_ul_requests;
+  json["late_cp_dl_messages"] = metrics.dl_metrics.nof_late_cp_dl;
+  json["late_up_dl_messages"] = metrics.dl_metrics.nof_late_up_dl;
+  json["late_cp_ul_messages"] = metrics.ul_metrics.nof_late_cp_ul;
 
   return json;
 }

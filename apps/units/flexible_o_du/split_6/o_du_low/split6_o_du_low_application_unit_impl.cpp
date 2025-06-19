@@ -107,10 +107,15 @@ split6_o_du_low_application_unit_impl::create_flexible_o_du_low(worker_manager& 
 {
   split6_o_du_low_unit output;
 
+  // :TODO:
+  std::chrono::nanoseconds symbol_duration(static_cast<int64_t>(
+      SUBFRAME_DURATION_MSEC * 1e6 /
+      (get_nsymb_per_slot(cyclic_prefix::NORMAL) * get_nof_slots_per_subframe(subcarrier_spacing::kHz30))));
+
   // :TODO: 0 is hardcoded to the cell id. Difficult to add here the PCI as it is a parameter that will be readed
   // dynamically after the CONFIG.request FAPI message.
   auto notifier = build_split6_flexible_o_du_low_metrics_config(
-      output.metrics, metrics_notifier, unit_cfg.du_low_cfg.metrics_cfg.common_metrics_cfg, {0});
+      output.metrics, metrics_notifier, unit_cfg.du_low_cfg.metrics_cfg.common_metrics_cfg, {0}, symbol_duration);
 
   // Split 6 flexible O-DU low manager dependencies.
   split6_flexible_o_du_low_dependencies dependencies;

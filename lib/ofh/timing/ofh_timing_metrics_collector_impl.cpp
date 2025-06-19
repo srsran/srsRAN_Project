@@ -25,8 +25,8 @@ void timing_metrics_collector_impl::update_metrics(unsigned num_skipped_symbols)
   nof_skipped_symbols.fetch_add(num_skipped_symbols, std::memory_order_relaxed);
 
   // Update the maximum number of continuous symbols skipped.
-  unsigned stored_max = max_nof_continuous_skipped_symbol.load(std::memory_order_relaxed);
-  if (num_skipped_symbols > stored_max) {
-    max_nof_continuous_skipped_symbol.store(num_skipped_symbols, std::memory_order_relaxed);
+  unsigned current_max = max_nof_continuous_skipped_symbol.load(std::memory_order_relaxed);
+  while (num_skipped_symbols > current_max &&
+         !max_nof_continuous_skipped_symbol.compare_exchange_weak(current_max, num_skipped_symbols)) {
   }
 }

@@ -28,8 +28,10 @@ static double validate_fp_value(double value)
   return 0.0;
 }
 
-static void
-log_ru_ofh_metrics_json(srslog::log_channel& log_chan, const ofh::metrics& metrics, span<const pci_t> pci_sector_map)
+static void log_ru_ofh_metrics_json(srslog::log_channel&            log_chan,
+                                    const ofh::metrics&             metrics,
+                                    span<const pci_t>               pci_sector_map,
+                                    const std::chrono::nanoseconds& symbol_duration)
 {
   log_chan("{}", app_helpers::json_generators::generate_string(metrics, pci_sector_map, 2));
 }
@@ -37,7 +39,7 @@ log_ru_ofh_metrics_json(srslog::log_channel& log_chan, const ofh::metrics& metri
 void ru_metrics_consumer_json::handle_metric(const ru_metrics& metric)
 {
   if (auto* ofh_metrics = std::get_if<ofh::metrics>(&metric.metrics)) {
-    log_ru_ofh_metrics_json(log_chan, *ofh_metrics, pci_sector_map);
+    log_ru_ofh_metrics_json(log_chan, *ofh_metrics, pci_sector_map, symbol_duration);
   }
 }
 
@@ -77,7 +79,7 @@ static void log_ru_ofh_performance_metrics_verbose(fmt::basic_memory_buffer<char
   // Message decoder.
   const auto& decoder_metrics = cell_metrics.rx_metrics.rx_decoding_perf_metrics;
   fmt::format_to(std::back_inserter(buffer),
-                 "{} nof_dropped_msg={} nof_skipped_msg={}; ",
+                 "{} nof_past_seqid_msg={} nof_future_seqid_msg={}; ",
                  "ecpri:",
                  decoder_metrics.nof_dropped_messages,
                  decoder_metrics.nof_skipped_messages);
@@ -144,21 +146,25 @@ static void log_ru_ofh_performance_metrics_verbose(fmt::basic_memory_buffer<char
                  validate_fp_value(msg_tx_metrics.message_tx_avg_latency_us));
 
   fmt::format_to(std::back_inserter(buffer),
-                 "{} nof_late_dl_grids={} nof_late_ul_req={}",
+                 "{} nof_late_dl_rgs={} nof_late_ul_req={} nof_late_cp_dl={} nof_late_up_dl={} nof_late_cp_ul={}",
                  "tx_kpis:",
                  cell_metrics.tx_metrics.dl_metrics.nof_late_dl_grids,
-                 cell_metrics.tx_metrics.ul_metrics.nof_late_ul_requests);
+                 cell_metrics.tx_metrics.ul_metrics.nof_late_ul_requests,
+                 cell_metrics.tx_metrics.dl_metrics.nof_late_cp_dl,
+                 cell_metrics.tx_metrics.dl_metrics.nof_late_up_dl,
+                 cell_metrics.tx_metrics.ul_metrics.nof_late_cp_ul);
 }
 
-static void log_ru_ofh_metrics(srslog::log_channel& log_chan,
-                               const ofh::metrics&  metrics,
-                               span<const pci_t>    pci_sector_map,
-                               bool                 verbose)
+static void log_ru_ofh_metrics(srslog::log_channel&            log_chan,
+                               const ofh::metrics&             metrics,
+                               span<const pci_t>               pci_sector_map,
+                               bool                            verbose,
+                               const std::chrono::nanoseconds& symbol_duration)
 {
   fmt::basic_memory_buffer<char, str_buffer_size> buffer;
 
   fmt::format_to(std::back_inserter(buffer),
-                 "OFH metrics: timing metrics: nof_skipped_symbols={} max_continuous_skipped_symbols={}; ",
+                 "OFH metrics: timing metrics: nof_skipped_symbols={} skipped_symbols_max_burst={}; ",
                  metrics.timing.nof_skipped_symbols,
                  metrics.timing.max_nof_continuous_skipped_symbol);
 
@@ -166,18 +172,22 @@ static void log_ru_ofh_metrics(srslog::log_channel& log_chan,
     const ofh::received_messages_metrics& rx_ofh_metrics    = cell_metrics.rx_metrics.rx_messages_metrics;
     const ofh::closed_rx_window_metrics&  rx_closed_metrics = cell_metrics.rx_metrics.closed_window_metrics;
 
-    fmt::format_to(std::back_inserter(buffer),
-                   "sector#{} pci={} received messages stats: rx_total={} rx_early={} "
-                   "rx_on_time={} rx_late={}, nof_missed_uplink_symbols={} nof_missed_prach_context={}; ",
-                   cell_metrics.sector_id,
-                   static_cast<unsigned>(pci_sector_map[cell_metrics.sector_id]),
-                   rx_ofh_metrics.nof_early_messages + rx_ofh_metrics.nof_on_time_messages +
-                       rx_ofh_metrics.nof_late_messages,
-                   rx_ofh_metrics.nof_early_messages,
-                   rx_ofh_metrics.nof_on_time_messages,
-                   rx_ofh_metrics.nof_late_messages,
-                   rx_closed_metrics.nof_missing_uplink_symbols,
-                   rx_closed_metrics.nof_missing_prach_contexts);
+    fmt::format_to(
+        std::back_inserter(buffer),
+        "sector#{} pci={} received messages stats: rx_total={} rx_early={} "
+        "rx_on_time={} rx_late={} earliest_msg_us={} latest_msg_us={}, nof_missed_uplink_symbols={} "
+        "nof_missed_prach_occasions={}; ",
+        cell_metrics.sector_id,
+        static_cast<unsigned>(pci_sector_map[cell_metrics.sector_id]),
+        rx_ofh_metrics.nof_early_messages + rx_ofh_metrics.nof_on_time_messages + rx_ofh_metrics.nof_late_messages,
+        rx_ofh_metrics.nof_early_messages,
+        rx_ofh_metrics.nof_on_time_messages,
+        rx_ofh_metrics.nof_late_messages,
+        validate_fp_value(static_cast<float>(rx_ofh_metrics.ealiest_rx_msg_in_symbols) * symbol_duration.count() *
+                          1e-3),
+        validate_fp_value(static_cast<float>(rx_ofh_metrics.latest_rx_msg_in_symbols) * symbol_duration.count() * 1e-3),
+        rx_closed_metrics.nof_missing_uplink_symbols,
+        rx_closed_metrics.nof_missing_prach_contexts);
 
     if (verbose) {
       log_ru_ofh_performance_metrics_verbose(buffer, cell_metrics);
@@ -189,7 +199,7 @@ static void log_ru_ofh_metrics(srslog::log_channel& log_chan,
 void ru_metrics_consumer_log::handle_metric(const ru_metrics& metric)
 {
   if (auto* ofh_metrics = std::get_if<ofh::metrics>(&metric.metrics)) {
-    log_ru_ofh_metrics(log_chan, *ofh_metrics, pci_sector_map, verbose);
+    log_ru_ofh_metrics(log_chan, *ofh_metrics, pci_sector_map, verbose, symbol_duration);
   }
 }
 
@@ -281,9 +291,14 @@ void ru_metrics_handler_stdout::log_ru_dummy_metrics_in_stdout(const ru_dummy_me
 
 static void print_ofh_header()
 {
-  fmt::println("     | ----------- Number of received OFH messages ----------- |");
-  fmt::println(
-      " pci | {:^11} | {:^11} | {:^13} | {:^11} |", "Total Count", "Early count", "On time count", "Late count");
+  fmt::println("     | -------------------------- Number of received OFH messages ------------------------- |");
+  fmt::println(" pci | {:^11} | {:^11} | {:^13} | {:^11} | {:^12} | {:^11} |",
+               "Total Count",
+               "Early count",
+               "On time count",
+               "Late count",
+               "Earliest msg",
+               "Latest msg");
 }
 
 void ru_metrics_handler_stdout::log_ru_ofh_metrics_in_stdout(const ofh::metrics& ofh_metrics)
@@ -303,11 +318,14 @@ void ru_metrics_handler_stdout::log_ru_ofh_metrics_in_stdout(const ofh::metrics&
 
     const ofh::received_messages_metrics& rx_metrics = cell.rx_metrics.rx_messages_metrics;
 
-    fmt::println(" {:^3} | {:^11} | {:^11} | {:^13} | {:^11} |",
-                 static_cast<unsigned>(pci_sector_map[cell.sector_id]),
-                 rx_metrics.nof_early_messages + rx_metrics.nof_late_messages + rx_metrics.nof_on_time_messages,
-                 rx_metrics.nof_early_messages,
-                 rx_metrics.nof_on_time_messages,
-                 rx_metrics.nof_late_messages);
+    fmt::println(
+        " {:^3} | {:^11} | {:^11} | {:^13} | {:^11} | {:^12} | {:^11} |",
+        static_cast<unsigned>(pci_sector_map[cell.sector_id]),
+        rx_metrics.nof_early_messages + rx_metrics.nof_late_messages + rx_metrics.nof_on_time_messages,
+        rx_metrics.nof_early_messages,
+        rx_metrics.nof_on_time_messages,
+        rx_metrics.nof_late_messages,
+        validate_fp_value(static_cast<float>(rx_metrics.ealiest_rx_msg_in_symbols) * symbol_duration.count() * 1e-3),
+        validate_fp_value(static_cast<float>(rx_metrics.latest_rx_msg_in_symbols) * symbol_duration.count() * 1e-3));
   }
 }
