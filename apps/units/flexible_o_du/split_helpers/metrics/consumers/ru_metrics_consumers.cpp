@@ -146,29 +146,35 @@ static void log_ru_ofh_metrics(srslog::log_channel& log_chan,
                                span<const pci_t>    pci_sector_map,
                                bool                 verbose)
 {
-  for (const auto& cell_metrics : metrics.sectors) {
-    fmt::basic_memory_buffer<char, str_buffer_size> buffer;
+  fmt::basic_memory_buffer<char, str_buffer_size> buffer;
 
-    const ofh::received_messages_metrics& rx_ofh_metrics = cell_metrics.rx_metrics.rx_messages_metrics;
+  fmt::format_to(std::back_inserter(buffer),
+                 "OFH metrics: timing metrics: nof_skipped_symbols={} max_continuous_skipped_symbols={}; ",
+                 metrics.timing.nof_skipped_symbols,
+                 metrics.timing.max_nof_continuous_skipped_symbol);
+
+  for (const auto& cell_metrics : metrics.sectors) {
+    const ofh::received_messages_metrics& rx_ofh_metrics    = cell_metrics.rx_metrics.rx_messages_metrics;
+    const ofh::closed_rx_window_metrics&  rx_closed_metrics = cell_metrics.rx_metrics.closed_window_metrics;
 
     fmt::format_to(std::back_inserter(buffer),
-                   "OFH sector#{} pci={} received messages stats: rx_total={} rx_early={} "
-                   "rx_on_time={} rx_late={}",
+                   "sector#{} pci={} received messages stats: rx_total={} rx_early={} "
+                   "rx_on_time={} rx_late={}, nof_missed_uplink_symbols={} nof_missed_prach_context={}; ",
                    cell_metrics.sector_id,
                    static_cast<unsigned>(pci_sector_map[cell_metrics.sector_id]),
                    rx_ofh_metrics.nof_early_messages + rx_ofh_metrics.nof_on_time_messages +
                        rx_ofh_metrics.nof_late_messages,
                    rx_ofh_metrics.nof_early_messages,
                    rx_ofh_metrics.nof_on_time_messages,
-                   rx_ofh_metrics.nof_late_messages);
+                   rx_ofh_metrics.nof_late_messages,
+                   rx_closed_metrics.nof_missing_uplink_symbols,
+                   rx_closed_metrics.nof_missing_prach_contexts);
 
     if (verbose) {
       log_ru_ofh_performance_metrics_verbose(buffer, cell_metrics, pci_sector_map);
     }
-
-    // Flush buffer to the logger.
-    log_chan("{}", to_c_str(buffer));
   }
+  log_chan("{}", to_c_str(buffer));
 }
 
 void ru_metrics_consumer_log::handle_metric(const ru_metrics& metric)

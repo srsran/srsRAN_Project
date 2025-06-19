@@ -10,11 +10,11 @@
 
 #pragma once
 
+#include "ofh_timing_metrics_collector_impl.h"
 #include "srsran/adt/span.h"
 #include "srsran/ofh/ofh_controller.h"
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier_manager.h"
 #include "srsran/ran/cyclic_prefix.h"
-#include "srsran/ran/slot_point.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/support/executors/task_executor.h"
 #include <atomic>
@@ -52,6 +52,7 @@ class realtime_timing_worker : public operation_controller, public ota_symbol_bo
   const std::chrono::nanoseconds                 sleep_time;
   unsigned                                       previous_symb_index = 0;
   std::atomic<worker_status>                     status{worker_status::running};
+  timing_metrics_collector_impl                  metrics_collector;
 
 public:
   realtime_timing_worker(srslog::basic_logger& logger_, task_executor& executor_, const realtime_worker_cfg& cfg);
@@ -64,6 +65,9 @@ public:
 
   // See interface for documentation.
   void subscribe(span<ota_symbol_boundary_notifier*> notifiers) override;
+
+  /// Returns the metrics collector of this timing worker.
+  timing_metrics_collector& get_metrics_collector() { return metrics_collector; }
 
 private:
   /// Main timing loop.

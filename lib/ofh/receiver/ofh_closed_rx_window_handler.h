@@ -13,6 +13,7 @@
 #include "../support/prach_context_repository.h"
 #include "../support/uplink_context_repository.h"
 #include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
+#include "srsran/ofh/receiver/ofh_receiver_metrics.h"
 #include "srsran/ofh/receiver/ofh_receiver_timing_parameters.h"
 #include "srsran/ofh/receiver/ofh_receiver_warn_unreceived_frames_parameters.h"
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
@@ -65,6 +66,9 @@ public:
     }
   }
 
+  /// Collects the metrics of the closed reception window metrics.
+  void collect_metrics(closed_rx_window_metrics& metrics);
+
 private:
   /// \brief Handles the uplink context for the closed reception window given by symbol point.
   ///
@@ -92,6 +96,10 @@ private:
   std::shared_ptr<prach_context_repository>  prach_repo;
   std::shared_ptr<uplink_context_repository> uplink_repo;
   std::shared_ptr<uplane_rx_symbol_notifier> notifier;
+  /// Counts every symbol not received when reception window closes.
+  std::atomic<unsigned> nof_missed_uplink_symbols;
+  /// Counts every PRACH not received when the reception window closes.
+  std::atomic<unsigned> nof_missed_prach_contexts;
 };
 
 } // namespace ofh

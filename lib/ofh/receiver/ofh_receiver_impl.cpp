@@ -115,6 +115,7 @@ receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_depend
                                                  window_checker,
                                                  closed_window_handler)),
   metrics_collector(config.are_metrics_enabled,
+                    closed_window_handler,
                     window_checker,
                     msg_receiver.get_metrics_collector(),
                     msg_receiver.get_ethernet_receiver().get_metrics_collector()),

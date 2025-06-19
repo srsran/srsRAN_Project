@@ -51,6 +51,13 @@ void closed_rx_window_handler::on_new_symbol(const slot_symbol_point_context& sy
   }
 }
 
+void closed_rx_window_handler::collect_metrics(closed_rx_window_metrics& metrics)
+{
+  // Fill the metrics and reset internal counters.
+  metrics.nof_missing_prach_contexts = nof_missed_prach_contexts.exchange(0, std::memory_order_relaxed);
+  metrics.nof_missing_uplink_symbols = nof_missed_uplink_symbols.exchange(0, std::memory_order_relaxed);
+}
+
 void closed_rx_window_handler::handle_uplink_context(slot_symbol_point symbol_point)
 {
   expected<uplink_context::uplink_context_resource_grid_info> context =
@@ -60,6 +67,9 @@ void closed_rx_window_handler::handle_uplink_context(slot_symbol_point symbol_po
     return;
   }
 
+  // Increase the metrics counter.
+  nof_missed_uplink_symbols.fetch_add(1, std::memory_order_relaxed);
+
   uplink_context::uplink_context_resource_grid_info& ctx_value = *context;
 
   uplane_rx_symbol_context notification_context = {
@@ -67,10 +77,10 @@ void closed_rx_window_handler::handle_uplink_context(slot_symbol_point symbol_po
   notifier->on_new_uplink_symbol(notification_context, std::move(ctx_value.grid), false);
 
   if (log_unreceived_messages) {
-    logger.warning("Sector#{}: missed incoming User-Plane uplink messages for slot '{}', symbol '{}'",
-                   ctx_value.context.sector,
-                   ctx_value.context.slot,
-                   symbol_point.get_symbol_index());
+    logger.info("Sector#{}: missed incoming User-Plane uplink messages for slot '{}', symbol '{}'",
+                ctx_value.context.sector,
+                ctx_value.context.slot,
+                symbol_point.get_symbol_index());
   }
 
   if (SRSRAN_UNLIKELY(logger.debug.enabled())) {
@@ -96,14 +106,16 @@ void closed_rx_window_handler::handle_prach_context(slot_symbol_point symbol_poi
     return;
   }
 
+  nof_missed_prach_contexts.fetch_add(1, std::memory_order_relaxed);
+
   const auto& ctx_value = *context;
 
   notifier->on_new_prach_window_data(ctx_value.context, *ctx_value.buffer);
 
   if (log_unreceived_messages) {
-    logger.warning("Sector#{}: missed incoming User-Plane PRACH messages for slot '{}'",
-                   ctx_value.context.sector,
-                   ctx_value.context.slot);
+    logger.info("Sector#{}: missed incoming User-Plane PRACH messages for slot '{}'",
+                ctx_value.context.sector,
+                ctx_value.context.slot);
   }
 
   if (SRSRAN_UNLIKELY(logger.debug.enabled())) {

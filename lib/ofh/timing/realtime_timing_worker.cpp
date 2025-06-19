@@ -181,12 +181,13 @@ void realtime_timing_worker::poll()
 
   // Check if we have missed more than one symbol.
   if (SRSRAN_UNLIKELY(delta > 1)) {
-    logger.info("Real-time timing worker woke up late, skipped '{}' symbols", delta);
+    logger.debug("Real-time timing worker woke up late, skipped '{}' symbols", delta);
+    metrics_collector.update_metrics(delta);
   }
   if (SRSRAN_UNLIKELY(delta >= nof_symbols_per_slot)) {
-    logger.warning("Real-time timing worker woke up late, sleep time has been '{}us', or equivalently, '{}' symbols",
-                   std::chrono::duration_cast<std::chrono::microseconds>(delta * symbol_duration).count(),
-                   delta);
+    logger.info("Real-time timing worker woke up late, sleep time has been '{}us', or equivalently, '{}' symbols",
+                std::chrono::duration_cast<std::chrono::microseconds>(delta * symbol_duration).count(),
+                delta);
   }
 
   slot_symbol_point symbol_point(

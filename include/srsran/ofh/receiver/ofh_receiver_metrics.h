@@ -26,6 +26,14 @@ struct received_messages_metrics {
   unsigned nof_late_messages;
 };
 
+/// Open Fronthaul reception window closing metrics.
+struct closed_rx_window_metrics {
+  /// Number of requested uplink symbols that were not fully received within the expected reception window.
+  unsigned nof_missing_uplink_symbols;
+  /// Number of PRACH context that were not fully received within the expected reception window.
+  unsigned nof_missing_prach_contexts;
+};
+
 /// Open Fronthaul received messages decoding performance metrics.
 struct message_decoding_performance_metrics {
   rx_data_flow_perf_metrics data_processing_metrics;
@@ -34,6 +42,7 @@ struct message_decoding_performance_metrics {
 
 /// Open Fronthaul receiver metrics.
 struct receiver_metrics {
+  closed_rx_window_metrics             closed_window_metrics;
   received_messages_metrics            rx_messages_metrics;
   message_decoding_performance_metrics rx_decoding_perf_metrics;
   ether::receiver_metrics              eth_receiver_metrics;

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/ofh/ofh_sector_metrics_collector.h"
+#include "srsran/ofh/timing/ofh_timing_metrics_collector.h"
 #include "srsran/ru/ru_metrics_collector.h"
 #include <vector>
 
@@ -19,13 +20,20 @@ namespace srsran {
 /// Open Fronthaul Radio Unit metrics collector implementation.
 class ru_ofh_metrics_collector_impl : public ru_metrics_collector
 {
+  ofh::timing_metrics_collector*       timing_collector;
   std::vector<ofh::metrics_collector*> sector_metrics_collectors;
 
 public:
-  ru_ofh_metrics_collector_impl() = default;
+  ru_ofh_metrics_collector_impl() = delete;
 
-  explicit ru_ofh_metrics_collector_impl(std::vector<ofh::metrics_collector*> sector_metrics_collectors_) :
-    sector_metrics_collectors(std::move(sector_metrics_collectors_))
+  explicit ru_ofh_metrics_collector_impl(ofh::timing_metrics_collector& timing_collector_) :
+    timing_collector(&timing_collector_)
+  {
+  }
+
+  ru_ofh_metrics_collector_impl(ofh::timing_metrics_collector&       timing_collector_,
+                                std::vector<ofh::metrics_collector*> sector_metrics_collectors_) :
+    timing_collector(&timing_collector_), sector_metrics_collectors(std::move(sector_metrics_collectors_))
   {
   }
 
