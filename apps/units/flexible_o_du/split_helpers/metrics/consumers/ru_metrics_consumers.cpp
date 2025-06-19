@@ -42,8 +42,7 @@ void ru_metrics_consumer_json::handle_metric(const ru_metrics& metric)
 }
 
 static void log_ru_ofh_performance_metrics_verbose(fmt::basic_memory_buffer<char, str_buffer_size>& buffer,
-                                                   const ofh::sector_metrics&                       cell_metrics,
-                                                   span<const pci_t>                                pci_sector_map)
+                                                   const ofh::sector_metrics&                       cell_metrics)
 {
   float ether_rx_cpu_usage = cell_metrics.rx_metrics.eth_receiver_metrics.cpu_usage_us /
                              (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f;
@@ -75,8 +74,16 @@ static void log_ru_ofh_performance_metrics_verbose(fmt::basic_memory_buffer<char
                  validate_fp_value(ether_tx_throughput),
                  cell_metrics.tx_metrics.eth_transmitter_metrics.total_nof_bytes);
 
-  const auto& ul_prach_df_metrics = cell_metrics.rx_metrics.rx_decoding_perf_metrics.prach_processing_metrics;
-  const auto& ul_data_df_metrics  = cell_metrics.rx_metrics.rx_decoding_perf_metrics.data_processing_metrics;
+  // Message decoder.
+  const auto& decoder_metrics = cell_metrics.rx_metrics.rx_decoding_perf_metrics;
+  fmt::format_to(std::back_inserter(buffer),
+                 "{} nof_dropped_msg={} nof_skipped_msg={}; ",
+                 "ecpri:",
+                 decoder_metrics.nof_dropped_messages,
+                 decoder_metrics.nof_skipped_messages);
+
+  const auto& ul_prach_df_metrics = decoder_metrics.prach_processing_metrics;
+  const auto& ul_data_df_metrics  = decoder_metrics.data_processing_metrics;
 
   float prach_unpacking_cpu_usage =
       ul_prach_df_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f;
@@ -84,14 +91,16 @@ static void log_ru_ofh_performance_metrics_verbose(fmt::basic_memory_buffer<char
       ul_data_df_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f;
 
   fmt::format_to(std::back_inserter(buffer),
-                 "{} cpu_usage={:.1f}% max_latency={:.2f}us avg_latency={:.2f}us; ",
+                 "{} nof_dropped_msg={} cpu_usage={:.1f}% max_latency={:.2f}us avg_latency={:.2f}us; ",
                  "rcv_prach:",
+                 ul_prach_df_metrics.nof_dropped_messages,
                  validate_fp_value(prach_unpacking_cpu_usage),
                  validate_fp_value(ul_prach_df_metrics.message_unpacking_max_latency_us),
                  validate_fp_value(ul_prach_df_metrics.message_unpacking_avg_latency_us));
   fmt::format_to(std::back_inserter(buffer),
-                 "{} cpu_usage={:.1f}% max_latency={:.2f}us avg_latency={:.2f}us; ",
+                 "{} nof_dropped_msg={} cpu_usage={:.1f}% max_latency={:.2f}us avg_latency={:.2f}us; ",
                  "rcv_ul:",
+                 ul_data_df_metrics.nof_dropped_messages,
                  validate_fp_value(data_unpacking_cpu_usage),
                  validate_fp_value(ul_data_df_metrics.message_unpacking_max_latency_us),
                  validate_fp_value(ul_data_df_metrics.message_unpacking_avg_latency_us));
@@ -171,7 +180,7 @@ static void log_ru_ofh_metrics(srslog::log_channel& log_chan,
                    rx_closed_metrics.nof_missing_prach_contexts);
 
     if (verbose) {
-      log_ru_ofh_performance_metrics_verbose(buffer, cell_metrics, pci_sector_map);
+      log_ru_ofh_performance_metrics_verbose(buffer, cell_metrics);
     }
   }
   log_chan("{}", to_c_str(buffer));

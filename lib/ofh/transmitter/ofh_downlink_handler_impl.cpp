@@ -64,7 +64,7 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
   }
 
   if (window_checker.is_late(context.slot)) {
-    logger.warning(
+    logger.info(
         "Sector#{}: dropped late downlink resource grid in slot '{}'. No OFH data will be transmitted for this slot",
         sector_id,
         context.slot);

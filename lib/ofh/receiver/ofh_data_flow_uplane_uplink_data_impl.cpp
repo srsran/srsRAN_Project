@@ -24,7 +24,8 @@ data_flow_uplane_uplink_data_impl::data_flow_uplane_uplink_data_impl(
   uplane_decoder(std::move(dependencies.uplane_decoder)),
   rx_symbol_writer(config.ul_eaxc, config.sector, *dependencies.logger, dependencies.ul_context_repo),
   notification_sender(*dependencies.logger, dependencies.ul_context_repo, dependencies.notifier),
-  sector_id(config.sector)
+  sector_id(config.sector),
+  metrics_collector(config.are_metrics_enabled)
 {
   srsran_assert(ul_cplane_context_repo, "Invalid control plane repository");
   srsran_assert(uplane_decoder, "Invalid User-Plane decoder");
@@ -36,15 +37,23 @@ void data_flow_uplane_uplink_data_impl::decode_type1_message(unsigned eaxc, span
 
   uplane_message_decoder_results results;
   if (!uplane_decoder->decode(results, message)) {
+    metrics_collector.increase_dropped_messages();
     return;
   }
   ofh_tracer << trace_event("ofh_receiver_uplane_decode", decode_tp);
 
   if (should_uplane_packet_be_filtered(eaxc, results)) {
+    metrics_collector.increase_dropped_messages();
+
     return;
   }
 
-  rx_symbol_writer.write_to_resource_grid(eaxc, results);
+  if (!rx_symbol_writer.write_to_resource_grid(eaxc, results)) {
+    metrics_collector.increase_dropped_messages();
+
+    return;
+  }
+
   notification_sender.notify_received_symbol(results.params.slot, results.params.symbol_id);
 }
 

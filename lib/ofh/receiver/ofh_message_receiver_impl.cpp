@@ -34,7 +34,9 @@ message_receiver_impl::message_receiver_impl(const message_receiver_config&  con
   data_flow_uplink(std::move(dependencies.data_flow_uplink)),
   data_flow_prach(std::move(dependencies.data_flow_prach)),
   eth_receiver(std::move(dependencies.eth_receiver)),
-  metrics_collector(config.are_metrics_enabled)
+  metrics_collector(config.are_metrics_enabled,
+                    data_flow_uplink->get_metrics_collector(),
+                    data_flow_prach->get_metrics_collector())
 {
   srsran_assert(vlan_decoder, "Invalid VLAN decoder");
   srsran_assert(ecpri_decoder, "Invalid eCPRI decoder");
@@ -80,15 +82,18 @@ void message_receiver_impl::process_new_frame(ether::unique_rx_buffer buffer)
   int nof_skipped_seq_id = seq_id_checker->update_and_compare_seq_id(eaxc, (ecpri_iq_params.seq_id >> 8));
   // Drop the message when it is from the past.
   if (SRSRAN_UNLIKELY(nof_skipped_seq_id < 0)) {
+    metrics_collector.increase_dropped_messages();
+
     logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet for eAxC value '{}' as sequence "
-                "identifier field is "
-                "from the past",
+                "identifier field is from the past",
                 sector_id,
                 eaxc);
     return;
   }
   if (SRSRAN_UNLIKELY(nof_skipped_seq_id > 0)) {
-    logger.warning("Sector#{}: potentially lost '{}' messages sent by the RU", sector_id, nof_skipped_seq_id);
+    metrics_collector.update_skipped_messages(nof_skipped_seq_id);
+
+    logger.info("Sector#{}: potentially lost '{}' messages sent by the RU", sector_id, nof_skipped_seq_id);
   }
 
   std::optional<slot_symbol_point> slot_point = uplane_peeker::peek_slot_symbol_point(ofh_pdu, nof_symbols, scs);

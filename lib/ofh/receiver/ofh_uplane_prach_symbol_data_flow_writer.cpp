@@ -10,12 +10,11 @@
 
 #include "ofh_uplane_prach_symbol_data_flow_writer.h"
 #include "srsran/ofh/serdes/ofh_uplane_message_decoder_properties.h"
-#include "srsran/srsvec/conversion.h"
 
 using namespace srsran;
 using namespace ofh;
 
-void uplane_prach_symbol_data_flow_writer::write_to_prach_buffer(unsigned                              eaxc,
+bool uplane_prach_symbol_data_flow_writer::write_to_prach_buffer(unsigned                              eaxc,
                                                                  const uplane_message_decoder_results& results)
 {
   slot_point slot = results.params.slot;
@@ -27,7 +26,7 @@ void uplane_prach_symbol_data_flow_writer::write_to_prach_buffer(unsigned       
                 sector_id,
                 slot,
                 eaxc);
-    return;
+    return false;
   }
 
   // Find resource grid port with eAxC.
@@ -38,7 +37,10 @@ void uplane_prach_symbol_data_flow_writer::write_to_prach_buffer(unsigned       
                 eaxc,
                 prach_context.get_max_nof_ports());
 
-    return;
+    // This port is not needed for the PRACH, so the message is not counted as an error for PRACH. A case of use for
+    // this is configure OFH with 4 ports, 2 rx antennas and only one port for PRACH. eCRPI decoder will filter 2 of the
+    // eAxCs as not being used (only 2 rx antennas), and the other is checked here.
+    return true;
   }
 
   unsigned prach_nof_res           = prach_context.get_prach_nof_re();
@@ -105,4 +107,6 @@ void uplane_prach_symbol_data_flow_writer::write_to_prach_buffer(unsigned       
                    port);
     }
   }
+
+  return true;
 }

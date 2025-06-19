@@ -9,6 +9,7 @@
  */
 
 #include "../../../../lib/ofh/receiver/ofh_closed_rx_window_handler.h"
+#include "../../../../lib/ofh/receiver/ofh_data_flow_uplane_decoding_metrics_collector.h"
 #include "../../../../lib/ofh/receiver/ofh_message_receiver_impl.h"
 #include "../../../../lib/ofh/receiver/ofh_rx_window_checker.h"
 #include "../../../../lib/ofh/receiver/ofh_sequence_id_checker_dummy_impl.h"
@@ -51,11 +52,15 @@ private:
 /// Data flow User-Plane uplink PRACH spy.
 class data_flow_uplane_uplink_prach_spy : public data_flow_uplane_uplink_prach
 {
-  bool decode_function_called = false;
+  bool                                         decode_function_called = false;
+  data_flow_message_decoding_metrics_collector metrics_collector{false};
 
 public:
   // See interface for documentation.
   void decode_type1_message(unsigned eaxc, span<const uint8_t> msg) override { decode_function_called = true; }
+
+  // See interface for documentation.
+  data_flow_message_decoding_metrics_collector& get_metrics_collector() override { return metrics_collector; }
 
   /// Returns true if the decode_type1_message function has been called, otherwise false.
   bool has_decode_function_been_called() const { return decode_function_called; }
@@ -64,11 +69,15 @@ public:
 /// Data flow User-Plane uplink PRACH spy.
 class data_flow_uplane_uplink_data_spy : public data_flow_uplane_uplink_data
 {
-  bool decode_function_called = false;
+  bool                                         decode_function_called = false;
+  data_flow_message_decoding_metrics_collector metrics_collector{false};
 
 public:
   // See interface for documentation.
   void decode_type1_message(unsigned eaxc, span<const uint8_t> msg) override { decode_function_called = true; }
+
+  // See interface for documentation.
+  data_flow_message_decoding_metrics_collector& get_metrics_collector() override { return metrics_collector; }
 
   /// Returns true if the decode_type1_message function has been called, otherwise false.
   bool has_decode_function_been_called() const { return decode_function_called; }

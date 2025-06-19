@@ -68,6 +68,7 @@ create_uplink_prach_data_flow(const receiver_config&                            
   config.ignore_prach_start_symbol = receiver_cfg.ignore_prach_start_symbol;
   config.prach_eaxcs               = receiver_cfg.prach_eaxc;
   config.sector                    = receiver_cfg.sector;
+  config.are_metrics_enabled       = receiver_cfg.are_metrics_enabled;
 
   data_flow_uplane_uplink_prach_impl_dependencies dependencies;
   dependencies.logger                    = &logger;
@@ -87,8 +88,9 @@ create_uplink_data_flow(const receiver_config&                            receiv
                         std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo)
 {
   data_flow_uplane_uplink_data_impl_config config;
-  config.ul_eaxc = receiver_cfg.ul_eaxc;
-  config.sector  = receiver_cfg.sector;
+  config.ul_eaxc             = receiver_cfg.ul_eaxc;
+  config.sector              = receiver_cfg.sector;
+  config.are_metrics_enabled = receiver_cfg.are_metrics_enabled;
 
   data_flow_uplane_uplink_data_impl_dependencies dependencies;
   dependencies.logger                 = &logger;
