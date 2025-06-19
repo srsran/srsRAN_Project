@@ -309,6 +309,8 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
       }
       case pdsch_config::resource_allocation::resource_allocation_type_1: {
         dci_sz_cfg.pdsch_res_allocation_type = resource_allocation::resource_allocation_type_1;
+        // NOTE: dci_sz_cfg.interleaved_vrb_prb_mapping is expected to be set (true or false depends on
+        // opt_pdsch_cfg.value()) in case of \ref  resource_allocation_type_1.
         dci_sz_cfg.interleaved_vrb_prb_mapping =
             opt_pdsch_cfg.value().vrb_to_prb_interleaving != vrb_to_prb::mapping_type::non_interleaved;
         break;
@@ -317,6 +319,8 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
         dci_sz_cfg.pdsch_res_allocation_type = resource_allocation::dynamic_switch;
         dci_sz_cfg.nof_dl_rb_groups          = static_cast<unsigned>(
             get_nominal_rbg_size(active_dl_bwp.crbs.length(), opt_pdsch_cfg.value().rbg_sz == rbg_size::config1));
+        // NOTE: dci_sz_cfg.interleaved_vrb_prb_mapping is expected to be set (true or false depends on
+        // opt_pdsch_cfg.value()) in case of \ref dynamic_switch.
         dci_sz_cfg.interleaved_vrb_prb_mapping =
             opt_pdsch_cfg.value().vrb_to_prb_interleaving != vrb_to_prb::mapping_type::non_interleaved;
         break;

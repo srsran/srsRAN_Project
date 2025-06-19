@@ -93,8 +93,7 @@ struct pdsch_config {
   /// DMRS configuration for PDSCH transmissions using PDSCH mapping type B (chosen dynamically via
   /// PDSCH-TimeDomainResourceAllocation).
   std::optional<dmrs_downlink_config> pdsch_mapping_type_b_dmrs;
-  /// Interleaving unit. If field is absent, the UE performs non-interleaved VRB-to-PRB mapping. The field
-  /// vrb-ToPRB-Interleaver applies to DCI format 1_1.
+  /// VRB-to-PRB mapping type for PDSCH. The field vrb-ToPRB-Interleaver applies to DCI format 1_1.
   vrb_to_prb::mapping_type vrb_to_prb_interleaving;
   /// A list of Transmission Configuration Indicator (TCI) states indicating a transmission configuration which includes
   /// QCL-relationships between the DL RSs in one RS set and the PDSCH DMRS ports (see TS 38.214, clause 5.1.5).

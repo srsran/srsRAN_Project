@@ -133,7 +133,7 @@ static void set_ul_mimo(serving_cell_config&      cell_cfg,
 
 static void set_pdsch_interleaving(serving_cell_config& cell_cfg, vrb_to_prb::mapping_type interleaving_opt)
 {
-  // Set MCS index table for PDSCH. See TS 38.214, Table 5.1.3.1-[1-3].
+  // Set \c vrb-ToPRB-Interleaver for PDSCH, as per TS 38.331, \c PDSCH-Config.
   if (cell_cfg.init_dl_bwp.pdsch_cfg.has_value()) {
     cell_cfg.init_dl_bwp.pdsch_cfg->vrb_to_prb_interleaving = interleaving_opt;
   }
@@ -194,7 +194,7 @@ void ue_capability_manager::update_impl(du_ue_resource_config& ue_res_cfg)
   // Enable 256QAM for PUSCH, if supported.
   set_pusch_mcs_table(pcell_cfg, select_pusch_mcs_table(cell_idx));
 
-  // Enable VRb-to-PRB interleaving for PDSCH, if supported.
+  // Enable VRB-to-PRB interleaving for PDSCH, if supported.
   set_pdsch_interleaving(pcell_cfg, select_pdsch_interleaving(cell_idx));
 
   // Setup UL MIMO parameters.
@@ -314,19 +314,19 @@ vrb_to_prb::mapping_type ue_capability_manager::select_pdsch_interleaving(du_cel
   const auto& init_dl_bwp = base_cell_cfg_list[cell_idx].ue_ded_serv_cell_cfg.init_dl_bwp;
 
   if (init_dl_bwp.pdsch_cfg.has_value()) {
-    vrb_to_prb::mapping_type app_pdsch_interliving = init_dl_bwp.pdsch_cfg.value().vrb_to_prb_interleaving;
+    vrb_to_prb::mapping_type app_pdsch_interleaving = init_dl_bwp.pdsch_cfg.value().vrb_to_prb_interleaving;
     if (ue_caps.has_value()) {
       if (ue_caps->pdsch_interleaving_vrb_to_prb_supported) {
         // If the PDSCH interleaving is enabled in the application configuration and supported by the UE, return it.
-        return app_pdsch_interliving;
+        return app_pdsch_interleaving;
       }
     } else if (test_cfg.test_ue.has_value() and test_cfg.test_ue->rnti != rnti_t::INVALID_RNTI) {
       // Has no capabilities but the UE is in test mode.
-      return app_pdsch_interliving;
+      return app_pdsch_interleaving;
     }
   }
 
-  // Default to Non-interleaved if no base cell PDSCH config of if the UE capabilities are not available.
+  // Default to \c non-interleaved if no base cell PDSCH config or if the UE capabilities are not available.
   return vrb_to_prb::mapping_type::non_interleaved;
 }
 

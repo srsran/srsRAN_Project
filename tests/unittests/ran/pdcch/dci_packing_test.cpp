@@ -613,8 +613,7 @@ protected:
     if (payload_size.vrb_prb_mapping.value() != 0) {
       // Set the VRB-to-PRB mapping field.
       uniform_distribution vrb_prb_mapping_dist(0, pow2(payload_size.vrb_prb_mapping.value()) - 1);
-      config.vrb_prb_mapping = vrb_prb_mapping_dist(rgen) ? vrb_to_prb::mapping_type::interleaved_n2
-                                                          : vrb_to_prb::mapping_type::non_interleaved;
+      config.vrb_prb_mapping = vrb_prb_mapping_dist(rgen) ? true : false;
     }
 
     if (payload_size.prb_bundling_size_indicator.value() != 0) {
@@ -1233,9 +1232,7 @@ static dci_payload build_dci_1_1_expected(const dci_1_1_configuration& config)
 
   if (payload_size.vrb_prb_mapping.value() != 0) {
     // VRB-to-PRB mapping - 1 bit if present.
-    expected_pack(expected,
-                  config.vrb_prb_mapping.value() != vrb_to_prb::mapping_type::non_interleaved,
-                  payload_size.vrb_prb_mapping.value());
+    expected_pack(expected, config.vrb_prb_mapping.value() != false, payload_size.vrb_prb_mapping.value());
   }
 
   if (payload_size.prb_bundling_size_indicator.value() != 0) {
