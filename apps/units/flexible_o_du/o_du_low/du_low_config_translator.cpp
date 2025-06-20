@@ -100,7 +100,7 @@ static void generate_du_low_config(srs_du::du_low_config&                       
     // size to one. Otherwise, it is set to the maximum number of PUSCH transmissions that can be scheduled in one slot.
     unsigned max_pusch_concurrency = 1;
     if (du_low.expert_execution_cfg.threads.nof_pusch_decoder_threads > 0) {
-      max_pusch_concurrency = cell.max_puschs_per_slot;
+      max_pusch_concurrency = MAX_PUSCH_PDUS_PER_SLOT;
     }
 
     upper_phy_cell.nof_slots_request_headroom         = du_low.expert_phy_cfg.nof_slots_request_headroom;
