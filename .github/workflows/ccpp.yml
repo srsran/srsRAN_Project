@@ -27,7 +27,7 @@ jobs:
         sudo docker/scripts/install_dependencies.sh
     - name: Build srsRAN Project on x86 ${{ matrix.os }} with compiler ${{ matrix.compiler }}
       run: |
-        docker/scripts/builder.sh -c ${{ matrix.compiler }} -m "-j$(nproc)" .
+        docker/scripts/builder.sh -c ${{ matrix.compiler }} -m "-j$(nproc)" -DBUILD_TESTING=On .
     - name: Run unit tests
       run: |
         cd build && ctest -j$(nproc) --schedule-random --output-on-failure
