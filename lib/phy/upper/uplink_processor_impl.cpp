@@ -80,6 +80,9 @@ void uplink_processor_impl::stop()
 
 unique_uplink_pdu_slot_repository uplink_processor_impl::get_pdu_slot_repository(slot_point slot)
 {
+  // Discard current slot if possible.
+  discard_slot();
+
   // Try to configure a new slot.
   if (!pdu_repository.reserve_on_new_slot(slot)) {
     // Return an invalid repository.
@@ -98,6 +101,12 @@ unique_uplink_pdu_slot_repository uplink_processor_impl::get_pdu_slot_repository
 
 void uplink_processor_impl::handle_rx_symbol(const shared_resource_grid& grid, unsigned end_symbol_index)
 {
+  // Try locking the slot processor. This prevents that the processor handle symbols and discards from different
+  // threads concurrently.
+  if (!pdu_repository.start_handle_rx_symbol()) {
+    return;
+  }
+
   // Verify that the symbol index is in increasing order.
   if (end_symbol_index < nof_processed_symbols) {
     logger.warning(current_slot.sfn(),
@@ -105,6 +114,7 @@ void uplink_processor_impl::handle_rx_symbol(const shared_resource_grid& grid, u
                    "Unexpected symbol index {} is back in time, expected {}.",
                    end_symbol_index,
                    nof_processed_symbols);
+    pdu_repository.finish_handle_rx_symbol();
     return;
   }
 
@@ -132,6 +142,9 @@ void uplink_processor_impl::handle_rx_symbol(const shared_resource_grid& grid, u
       process_srs(grid, pdu);
     }
   }
+
+  // Unlock the slot processor.
+  pdu_repository.finish_handle_rx_symbol();
 }
 
 void uplink_processor_impl::process_prach(const prach_buffer& buffer, const prach_buffer_context& context_)
@@ -421,16 +434,15 @@ void uplink_processor_impl::notify_discard_pucch(const uplink_pdu_slot_repositor
 
 void uplink_processor_impl::discard_slot()
 {
-  // Notify to the repository the discard of the slot.
+  // Notify to the repository the discard of the slot. It skips the discard if the current state does not require it.
   if (!pdu_repository.start_discard_slot()) {
-    // Skip if it is not necessary.
     return;
   }
 
   logger.warning(current_slot.sfn(), current_slot.slot_index(), "Discarded uplink slot. Ignoring processing.");
 
-  // Iterate all possible symbols.
-  for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
+  // Iterate all symbols that have not been processed yet.
+  for (unsigned i_symbol = nof_processed_symbols; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
     for (const auto& pdu : pdu_repository.get_pucch_pdus(i_symbol)) {
       notify_discard_pucch(pdu);
     }
@@ -448,6 +460,6 @@ void uplink_processor_impl::discard_slot()
     }
   }
 
-  // Notify the end of discarding slot.
+  // Notify the end of discarding slot. The processor becomes idle.
   pdu_repository.finish_discard_slot();
 }

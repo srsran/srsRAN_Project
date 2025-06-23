@@ -499,7 +499,7 @@ TEST_F(UplinkProcessorFixture, reserve_slot_twice_without_request)
 
 TEST_F(UplinkProcessorFixture, reserve_slot_twice_with_request)
 {
-  // Contexted slot.
+  // Context slot.
   slot_point slot = pusch_pdu.pdu.slot;
 
   // Get the repository for the first time - it has a pending PDU.
@@ -509,9 +509,44 @@ TEST_F(UplinkProcessorFixture, reserve_slot_twice_with_request)
     ASSERT_TRUE(repository.is_valid());
   }
 
-  // Get the reporsitory for the second time - it shall return an invalid repository.
+  // Get the repository for the second time - it shall return a valid repository.
+  unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+  ASSERT_TRUE(repository.is_valid());
+}
+
+TEST_F(UplinkProcessorFixture, reserve_slot_twice_pending_exec)
+{
+  // Context slot.
+  slot_point slot = pusch_pdu.pdu.slot;
+
+  unsigned end_symbol_index = pusch_pdu.pdu.start_symbol_index + pusch_pdu.pdu.nof_symbols - 1;
+
+  // Get the repository for the first time - it has a pending PDU.
+  {
+    unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+    repository->add_pusch_pdu(pusch_pdu);
+    ASSERT_TRUE(repository.is_valid());
+  }
+
+  // Notify reception of receive symbol.
+  {
+    shared_resource_grid shared_grid = grid.get_grid();
+    ul_processor->get_slot_processor(slot).handle_rx_symbol(shared_grid, end_symbol_index);
+  }
+
+  // Assert execution expectations.
+  ASSERT_TRUE(pusch_executor.has_pending_tasks());
+  ASSERT_FALSE(pusch_spy->has_process_method_been_called());
+
+  // Get the repository for the second time - it shall return an invalid repository.
   unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
   ASSERT_FALSE(repository.is_valid());
+
+  ASSERT_TRUE(pusch_executor.run_pending_tasks());
+  ASSERT_TRUE(pusch_spy->has_process_method_been_called());
+
+  repository = ul_processor->get_pdu_slot_repository(slot);
+  ASSERT_TRUE(repository.is_valid());
 }
 
 TEST_F(UplinkProcessorFixture, stop_no_pending_task)
