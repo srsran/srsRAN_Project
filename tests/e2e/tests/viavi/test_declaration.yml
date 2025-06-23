@@ -536,6 +536,7 @@ tests:
         threads:
           non_rt:
             non_rt_task_queue_size: 8192
+          upper_phy:
             nof_pusch_decoder_threads: 2
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
