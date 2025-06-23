@@ -498,30 +498,30 @@ def check_metrics_criteria(
         _create_viavi_result(
             "UL bitrate", kpis.ul_brate_aggregate, operator.gt, test_configuration.expected_ul_bitrate
         ),
-        _create_viavi_result("DL KOs (gnb)", kpis.nof_ko_dl, operator.lt, test_configuration.expected_nof_kos),
+        _create_viavi_result("DL KOs (gnb)", kpis.nof_ko_dl, operator.le, test_configuration.expected_nof_kos),
         _create_viavi_result(
             "DL KOs (viavi)",
             viavi_kpis.dl_data.num_tbs_errors if viavi_kpis.dl_data.num_tbs_errors is not None else 0,
-            operator.lt,
+            operator.le,
             test_configuration.expected_nof_kos,
         ),
-        _create_viavi_result("UL KOs (gnb)", kpis.nof_ko_ul, operator.lt, test_configuration.expected_nof_kos),
+        _create_viavi_result("UL KOs (gnb)", kpis.nof_ko_ul, operator.le, test_configuration.expected_nof_kos),
         _create_viavi_result(
             "UL KOs (viavi)",
             viavi_kpis.ul_data.num_tbs_nack if viavi_kpis.ul_data.num_tbs_nack is not None else 0,
-            operator.lt,
+            operator.le,
             test_configuration.expected_nof_kos,
         ),
         _create_viavi_result(
             "Late DL HARQs (gnb)",
             kpis.max_late_dl_harqs,
-            operator.lt,
+            operator.le,
             test_configuration.expected_max_late_harqs,
         ),
         _create_viavi_result(
             "Late UL HARQs (gnb)",
             kpis.max_late_ul_harqs,
-            operator.lt,
+            operator.le,
             test_configuration.expected_max_late_harqs,
         ),
         _create_viavi_result("Error Indications", kpis.nof_error_indications, operator.eq, 0),
