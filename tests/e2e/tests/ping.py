@@ -586,6 +586,13 @@ def test_rf(
     (param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),),
 )
 @mark.rf_not_crash
+@mark.flaky(
+    reruns=2,
+    only_rerun=[
+        "socket is already closed",
+        "failed to connect to all addresses",
+    ],
+)
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_rf_does_not_crash(
     retina_manager: RetinaTestManager,
