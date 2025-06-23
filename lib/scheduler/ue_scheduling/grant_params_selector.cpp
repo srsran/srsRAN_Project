@@ -218,7 +218,7 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
       cell_cfg.expert_cfg.ue.pdsch_nof_rbs &
       ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.convert_to<interval<unsigned>>() &
       interval<unsigned>{0, crb_lims.length()};
-  if (crb_lims.empty() or nof_rb_lims.empty()) {
+  if (nof_rb_lims.empty()) {
     // Invalid RB allocation range.
     return std::nullopt;
   }
@@ -309,13 +309,7 @@ find_available_vrbs(const dl_sched_context& space_cfg, const vrb_bitmap& used_vr
   unsigned nof_rbs = std::min(space_cfg.expected_nof_rbs, max_rbs);
 
   // Compute PRB allocation interval.
-  vrb_interval vrbs = rb_helper::find_empty_interval_of_length(used_vrbs, nof_rbs);
-  if (vrbs.empty()) {
-    return vrb_interval{};
-  }
-
-  // Successful CRB interval derivation.
-  return vrbs;
+  return rb_helper::find_empty_interval_of_length(used_vrbs, nof_rbs);
 }
 
 vrb_interval sched_helper::compute_newtx_dl_vrbs(const dl_sched_context& decision_ctxt,
@@ -374,7 +368,7 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
   const auto prb_lims = crb_to_prb(ss.ul_crb_lims, crb_lims);
   const auto vrb_lims = prb_lims.convert_to<vrb_interval>();
   nof_rb_lims         = nof_rb_lims & interval<unsigned>{0, vrb_lims.length()};
-  if (vrb_lims.empty() or nof_rb_lims.empty()) {
+  if (nof_rb_lims.empty()) {
     // Invalid RB allocation range.
     return std::nullopt;
   }
