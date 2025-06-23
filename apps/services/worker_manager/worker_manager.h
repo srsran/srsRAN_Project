@@ -104,6 +104,9 @@ private:
   /// Manager of execution contexts and respective executors instantiated by the application.
   task_execution_manager exec_mng;
 
+  /// Collection of task executor decorators.
+  std::vector<std::unique_ptr<task_executor>> executor_decorators_exec;
+
   os_sched_affinity_manager low_prio_affinity_mng;
   os_sched_affinity_bitmask ru_timing_mask;
 

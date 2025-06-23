@@ -11,6 +11,7 @@
 #ifndef FMT_MODULE
 #  include <functional>  // std::reference_wrapper
 #  include <memory>      // std::unique_ptr
+#  include <new>
 #  include <vector>
 #endif
 
@@ -83,6 +84,9 @@ template <typename Context> class dynamic_format_arg_store {
       value = !(detail::is_reference_wrapper<T>::value ||
                 std::is_same<T, basic_string_view<char_type>>::value ||
                 std::is_same<T, detail::std_string_view<char_type>>::value ||
+                (mapped_type == detail::type::custom_type &&
+                  sizeof(T) <= sizeof(void *) &&
+                  std::is_trivially_destructible_v<T>) ||
                 (mapped_type != detail::type::cstring_type &&
                  mapped_type != detail::type::string_type &&
                  mapped_type != detail::type::custom_type))
@@ -98,6 +102,7 @@ template <typename Context> class dynamic_format_arg_store {
   // Storage of basic_format_arg must be contiguous.
   std::vector<basic_format_arg<Context>> data_;
   std::vector<detail::named_arg_info<char_type>> named_info_;
+  std::vector<std::aligned_storage_t<sizeof(void*)>> sso_buffer;
 
   // Storage of arguments not fitting into basic_format_arg must grow
   // without relocation because items in data_ refer to it.
@@ -111,6 +116,12 @@ template <typename Context> class dynamic_format_arg_store {
 
   template <typename T> void emplace_arg(const T& arg) {
     data_.emplace_back(arg);
+  }
+
+  template <typename T> void emplace_arg_sso(const T& arg) {
+    ::new (&sso_buffer.emplace_back()) T(arg);
+    data_.emplace_back(
+      *std::launder(reinterpret_cast<const T *>(&sso_buffer.back())));
   }
 
   template <typename T>
@@ -152,8 +163,18 @@ template <typename Context> class dynamic_format_arg_store {
    *     std::string result = fmt::vformat("{} and {} and {}", store);
    */
   template <typename T> void push_back(const T& arg) {
-    if (detail::const_check(need_copy<T>::value))
+    if constexpr (detail::const_check(need_copy<T>::value))
       emplace_arg(dynamic_args_.push<stored_t<T>>(arg));
+    else if constexpr (detail::const_check(detail::mapped_type_constant<T, char_type>::value ==
+                       detail::type::custom_type &&
+                       sizeof(T) <= sizeof(void *) &&
+                       std::is_trivially_destructible_v<T>))
+    {
+      if (sso_buffer.capacity() > sso_buffer.size())
+        emplace_arg_sso(detail::unwrap(arg));
+      else
+        emplace_arg(dynamic_args_.push<stored_t<T>>(arg));
+    }
     else
       emplace_arg(detail::unwrap(arg));
   }
@@ -198,6 +219,7 @@ template <typename Context> class dynamic_format_arg_store {
   /// Erase all elements from the store.
   void clear() {
     data_.clear();
+    sso_buffer.clear();
     named_info_.clear();
     dynamic_args_ = {};
   }
@@ -208,6 +230,7 @@ template <typename Context> class dynamic_format_arg_store {
     FMT_ASSERT(new_cap >= new_cap_named,
                "set of arguments includes set of named arguments");
     data_.reserve(new_cap);
+    sso_buffer.reserve(new_cap);
     named_info_.reserve(new_cap_named);
   }
 

@@ -55,11 +55,12 @@ using _mm256_comparator = __m256i (*)(__m256i a, __m256i b);
 /// absolute value of the two 16bit samples computed thus far and stores them in the output span.
 ///
 /// \tparam    COMPARE  AVX2 intrinsic used for comparison, either \c mm256_min_epi16 or \c _mm256_max_epi16.
+/// \tparam    OFFSET   Subtracts an offset to the resultant absolute value.
 /// \param[out] abs     A span of two absolute values of max (or min) samples in each of the two input RBs.
 /// \param[in] v0_epi16 AVX2 register storing first four IQ pairs of each of the two RB.
 /// \param[in] v1_epi16 AVX2 register storing second four IQ pairs of each of the two RB.
 /// \param[in] v2_epi16 AVX2 register storing last four IQ pairs of each of the two RB.
-template <_mm256_comparator COMPARE>
+template <_mm256_comparator COMPARE, unsigned OFFSET>
 inline void find_rbs_abs_min_max_values(span<uint16_t> abs, __m256i v0_epi16, __m256i v1_epi16, __m256i v2_epi16)
 {
   // Find vertical min/max across every 3 16bit values in each resource block.
@@ -79,6 +80,10 @@ inline void find_rbs_abs_min_max_values(span<uint16_t> abs, __m256i v0_epi16, __
   __m256i cmp_2val_swp_epi16 = _mm256_shuffle_epi8(cmp_2val_epi16, shuffle_mask);
   __m256i cmp_rb0_rb1_epi16  = COMPARE(cmp_2val_epi16, cmp_2val_swp_epi16);
   __m256i cmp_rb0_rb1_epu16  = _mm256_abs_epi16(cmp_rb0_rb1_epi16);
+
+  if (OFFSET != 0) {
+    cmp_rb0_rb1_epu16 = _mm256_subs_epu16(cmp_rb0_rb1_epu16, _mm256_set1_epi16(OFFSET));
+  }
 
   // Extract absolute minimum/maximum values for each RB.
   abs[0] = _mm256_extract_epi16(cmp_rb0_rb1_epu16, 0);
@@ -113,11 +118,11 @@ inline void calculate_max_abs(span<unsigned> max_abs, __m256i rb0_epi16, __m256i
   __m256i v2_epi16 = _mm256_permute2f128_si256(rb0_epi16, rb1_epi16, 0x31);
   __m256i v1_epi16 = rb01_epi16;
 
-  find_rbs_abs_min_max_values<_mm256_min_epi16>(abs_min_values, v0_epi16, v1_epi16, v2_epi16);
-  find_rbs_abs_min_max_values<_mm256_max_epi16>(abs_max_values, v0_epi16, v1_epi16, v2_epi16);
+  find_rbs_abs_min_max_values<_mm256_min_epi16, 1>(abs_min_values, v0_epi16, v1_epi16, v2_epi16);
+  find_rbs_abs_min_max_values<_mm256_max_epi16, 0>(abs_max_values, v0_epi16, v1_epi16, v2_epi16);
 
-  max_abs[0] = std::max<unsigned>(abs_max_values[0], abs_min_values[0] - 1U);
-  max_abs[1] = std::max<unsigned>(abs_max_values[1], abs_min_values[1] - 1U);
+  max_abs[0] = std::max<unsigned>(abs_max_values[0], abs_min_values[0]);
+  max_abs[1] = std::max<unsigned>(abs_max_values[1], abs_min_values[1]);
 }
 
 } // namespace mm256

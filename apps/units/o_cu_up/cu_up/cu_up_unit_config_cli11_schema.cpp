@@ -79,8 +79,7 @@ static void configure_cli11_execution_args(CLI::App& app, cu_up_unit_execution_c
              exec_cfg.ctrl_ue_executor_queue_size,
              "CU-UP's CTRL UE executor queue size")
       ->capture_default_str();
-  add_option(
-      *queues_subcmd, "--cu_up_strand_batch_size", exec_cfg.ctrl_ue_executor_queue_size, "CU-UP's strands batch size")
+  add_option(*queues_subcmd, "--cu_up_strand_batch_size", exec_cfg.strand_batch_size, "CU-UP's strands batch size")
       ->capture_default_str();
   CLI::App* tracing_subcmd = add_subcommand(app, "tracing", "Task executor tracing parameters")->configurable();
   add_option(*tracing_subcmd,
@@ -184,6 +183,9 @@ static void configure_cli11_metrics_layers_args(CLI::App& app, cu_up_unit_metric
 {
   add_option(app, "--enable_e1ap", metrics_params.enable_e1ap, "Enable E1AP metrics")->capture_default_str();
   add_option(app, "--enable_pdcp", metrics_params.enable_pdcp, "Enable PDCP metrics")->capture_default_str();
+  add_option(
+      app, "--enable_cu_up_executor", metrics_params.enable_cu_up_executor, "Whether to log CU-UP executor metrics")
+      ->capture_default_str();
 }
 
 static void configure_cli11_metrics_args(CLI::App& app, cu_up_unit_metrics_config& metrics_params)

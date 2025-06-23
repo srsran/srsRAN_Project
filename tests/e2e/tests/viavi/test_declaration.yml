@@ -55,14 +55,18 @@ tests:
         pusch:
           max_puschs_per_slot: 2
       expert_execution:
+        queues:
+          du_ue_data_executor_queue_size: 16384
         threads:
           non_rt:
             non_rt_task_queue_size: 8192
+          upper_phy:
+            nof_pusch_decoder_threads: 2
     # Pass / Fail Criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6
     expected_max_late_harqs: 4
-    expected_nof_kos: 10
+    expected_nof_kos: 1
     warning_as_errors: true
     warning_allowlist: &base_warning_allowlist
       - missed incoming User-Plane PRACH messages
@@ -77,7 +81,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 72.0e+6
     expected_max_late_harqs: 4
-    expected_nof_kos: 10
+    expected_nof_kos: 1
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -104,7 +108,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 72.0e+6
     expected_max_late_harqs: 4
-    expected_nof_kos: 10
+    expected_nof_kos: 1
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -121,7 +125,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 72.0e+6
     expected_max_late_harqs: 4
-    expected_nof_kos: 10
+    expected_nof_kos: 1
     warning_as_errors: true
     warning_allowlist:
       - missed incoming User-Plane PRACH messages
@@ -163,7 +167,7 @@ tests:
     expected_dl_bitrate: 1.0e+9
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 10
+    expected_nof_kos: 1
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -177,7 +181,7 @@ tests:
     expected_dl_bitrate: 1.0e+9
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 10
+    expected_nof_kos: 1
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -193,7 +197,7 @@ tests:
     expected_dl_bitrate: 1.0e+9
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 10
+    expected_nof_kos: 1
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -233,7 +237,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 10
+    expected_nof_kos: 1
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -266,7 +270,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 10
+    expected_nof_kos: 1
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -295,6 +299,8 @@ tests:
           nof_ul_slots: 7
           nof_ul_symbols: 0
       expert_execution:
+        queues:
+          du_ue_data_executor_queue_size: 16384
         threads:
           upper_phy:
             nof_ul_threads: 3
@@ -305,7 +311,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 10
+    expected_nof_kos: 1
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -334,6 +340,8 @@ tests:
           nof_ul_slots: 6
           nof_ul_symbols: 0
       expert_execution:
+        queues:
+          du_ue_data_executor_queue_size: 16384
         threads:
           upper_phy:
             nof_ul_threads: 3
@@ -344,7 +352,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 10
+    expected_nof_kos: 1
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -373,6 +381,8 @@ tests:
           nof_ul_slots: 3
           nof_ul_symbols: 0
       expert_execution:
+        queues:
+          du_ue_data_executor_queue_size: 16384
         threads:
           upper_phy:
             nof_ul_threads: 3
@@ -383,7 +393,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 10
+    expected_nof_kos: 1
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -416,7 +426,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 10
+    expected_nof_kos: 1
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -430,7 +440,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 10
+    expected_nof_kos: 1
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -456,7 +466,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 130.0e+6
     expected_max_late_harqs: 4
-    expected_nof_kos: 10
+    expected_nof_kos: 1
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -468,6 +478,8 @@ tests:
     gnb_extra_config:
       <<: *1ue_mimo_config
       expert_execution:
+        queues:
+          du_ue_data_executor_queue_size: 16384
         threads:
           upper_phy:
             nof_pusch_decoder_threads: 3
@@ -488,7 +500,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6
     expected_max_late_harqs: 4
-    expected_nof_kos: 10
+    expected_nof_kos: 1
     warning_as_errors: true
 
   - id: "32UE ideal UDP bidirectional Long 3h"
@@ -501,7 +513,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6
     expected_max_late_harqs: 4
-    expected_nof_kos: 10
+    expected_nof_kos: 1
     warning_as_errors: true
 
   - id: "32UE ideal UDP bidirectional Long 24h"
@@ -531,9 +543,12 @@ tests:
         pusch:
           max_puschs_per_slot: 2
       expert_execution:
+        queues:
+          du_ue_data_executor_queue_size: 16384
         threads:
           non_rt:
             non_rt_task_queue_size: 8192
+            nof_pusch_decoder_threads: 2
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3

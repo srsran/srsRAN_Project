@@ -116,7 +116,7 @@ struct du_low_unit_expert_threads_config {
   {
     unsigned nof_threads = cpu_architecture_info::get().get_host_nof_available_cpus();
 
-    if (nof_threads < 4) {
+    if (nof_threads <= 4) {
       nof_ul_threads            = 1;
       nof_pusch_decoder_threads = 0;
       nof_dl_threads            = 3;
@@ -241,7 +241,8 @@ struct du_low_unit_hal_config {
 /// Metrics configuration of the DU low.
 struct du_low_unit_metrics_config {
   app_helpers::metrics_config common_metrics_cfg;
-  bool                        enable_du_low = false;
+  bool                        enable_du_low    = false;
+  unsigned                    du_report_period = 1000;
 };
 
 /// DU low configuration.

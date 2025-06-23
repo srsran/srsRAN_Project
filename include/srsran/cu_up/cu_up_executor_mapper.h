@@ -25,6 +25,7 @@
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/timers.h"
+#include <optional>
 
 namespace srsran {
 namespace srs_cu_up {
@@ -109,6 +110,8 @@ struct strand_based_executor_config {
   timer_manager* timers;
   /// \brief Enable CU-UP executor tracing.
   bool tracing_enabled;
+  /// \brief CU-UP executor metrics period.
+  std::optional<std::chrono::milliseconds> metrics_period;
 };
 
 /// \brief Creates an executor mapper for the CU-UP that is based on strands of a worker pool.

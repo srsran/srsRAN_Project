@@ -70,11 +70,12 @@ struct worker_manager_config {
 
   /// DU low worker configuration.
   struct du_low_config {
-    bool     is_blocking_mode_active;
-    unsigned nof_ul_threads;
-    unsigned nof_dl_threads;
-    unsigned nof_pusch_decoder_threads;
-    unsigned nof_cells;
+    bool                                     is_blocking_mode_active;
+    unsigned                                 nof_ul_threads;
+    unsigned                                 nof_dl_threads;
+    unsigned                                 nof_pusch_decoder_threads;
+    unsigned                                 nof_cells;
+    std::optional<std::chrono::milliseconds> metrics_period;
   };
 
   /// DU high worker configuration.
@@ -104,6 +105,8 @@ struct worker_manager_config {
     bool dedicated_io_ul_strand = true;
     /// Whether to enable task tracing.
     bool executor_tracing_enable = false;
+    /// Whether to log performance metrics for the CU-UP executors.
+    std::optional<std::chrono::milliseconds> metrics_period;
   };
 
   /// PCAP worker configuration.

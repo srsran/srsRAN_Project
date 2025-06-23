@@ -819,10 +819,18 @@ static bool validate_tdd_ul_dl_pattern_unit_config(const tdd_ul_dl_pattern_unit_
     return false;
   }
 
-  // NOTE: 1 of the slots in the TDD pattern is the special slot.
-  if (config.nof_dl_slots + config.nof_ul_slots > config.dl_ul_period_slots - 1) {
-    fmt::print("Invalid TDD pattern: the sum of DL and UL slots is not compatible with TDD period.\n");
-    return false;
+  if (config.nof_ul_slots != 0) {
+    // NOTE: 1 of the slots in the TDD pattern is the special slot.
+    if (config.nof_dl_slots + config.nof_ul_slots > config.dl_ul_period_slots - 1) {
+      fmt::print("Invalid TDD pattern: the sum of DL and UL slots is not compatible with TDD period.\n");
+      return false;
+    }
+  } else {
+    // NOTE: If there are only DL slots in the TDD pattern, then the special slot is optional.
+    if (config.nof_dl_slots < config.dl_ul_period_slots - 1 or config.nof_dl_slots > config.dl_ul_period_slots) {
+      fmt::print("Invalid TDD pattern: the number of DL slots is not compatible with the TDD configuration.\n");
+      return false;
+    }
   }
 
   // Extended CP not currently supported: assume 14 symbols per slot; 2 symbols for DL-to-UL switching.

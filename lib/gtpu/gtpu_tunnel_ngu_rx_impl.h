@@ -165,11 +165,17 @@ protected:
 
     // Check out-of-window
     if (!inside_rx_window(sn)) {
-      logger.log_warning("SN falls out of Rx window. sn={} pdu_len={} {} reordering_timer_running={}",
-                         sn,
-                         pdu_len,
-                         st,
-                         reordering_timer.is_running());
+      if (nof_log_sn_out_of_window++ < max_nof_log_sn_out_of_window) {
+        logger.log_warning("SN falls out of Rx window. sn={} pdu_len={} {} reordering_timer_running={}",
+                           sn,
+                           pdu_len,
+                           st,
+                           reordering_timer.is_running());
+        if (nof_log_sn_out_of_window == max_nof_log_sn_out_of_window) {
+          logger.log_warning("Throttling previous log message after {} contiguous repetitions",
+                             nof_log_sn_out_of_window);
+        }
+      }
       gtpu_rx_sdu_info rx_sdu_info = {std::move(rx_sdu), pdu_session_info.qos_flow_id, sn};
       deliver_sdu(rx_sdu_info);
       return;
@@ -218,6 +224,9 @@ protected:
       reordering_timer.run();
       logger.log_debug("Started t-Reordering. {}", st);
     }
+
+    // Reset throttled logs
+    nof_log_sn_out_of_window = 0;
   }
 
   void deliver_sdu(gtpu_rx_sdu_info& sdu_info)
@@ -337,6 +346,10 @@ private:
     // RX_Deliv <= SN < RX_Deliv + Window_Size
     return rx_mod_base(sn) < gtpu_rx_window_size;
   }
+
+  // Log helper for throttling
+  static constexpr unsigned max_nof_log_sn_out_of_window = 5;
+  unsigned                  nof_log_sn_out_of_window     = 0;
 };
 
 } // namespace srsran

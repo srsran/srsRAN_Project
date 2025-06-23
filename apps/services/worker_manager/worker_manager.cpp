@@ -21,8 +21,11 @@
  */
 
 #include "worker_manager.h"
+#include "apps/helpers/metrics/metrics_helpers.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/du/du_high/du_high_executor_mapper.h"
+#include "srsran/srslog/srslog.h"
+#include "srsran/support/executors/concurrent_metrics_executor.h"
 #include "srsran/support/executors/inline_task_executor.h"
 
 using namespace srsran;
@@ -269,7 +272,8 @@ void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_c
                                                                                     *exec_map.at("low_prio_exec"),
                                                                                     config.dedicated_io_ul_strand,
                                                                                     &timers,
-                                                                                    config.executor_tracing_enable});
+                                                                                    config.executor_tracing_enable,
+                                                                                    config.metrics_period});
 }
 
 void worker_manager::create_du_executors(const worker_manager_config::du_high_config&        du_hi,
@@ -336,7 +340,7 @@ execution_config_helper::worker_pool worker_manager::create_low_prio_workers(uns
       // Left empty, is filled later.
       {},
       std::chrono::microseconds{100},
-      os_thread_realtime_priority::no_realtime(),
+      os_thread_realtime_priority::min(),
       std::vector<os_sched_affinity_bitmask>{low_prio_mask}};
 
   return non_rt_pool;
@@ -480,10 +484,6 @@ worker_manager::create_du_crit_path_prio_executors(unsigned                     
         report_fatal_error("Failed to instantiate {} execution context", ul_worker_pool.name);
       }
 
-      upper_pucch_exec.push_back(exec_mng.executors().at(l1_pucch_exec_name));
-      upper_pusch_exec.push_back(exec_mng.executors().at(l1_pusch_exec_name));
-      upper_srs_exec.push_back(exec_mng.executors().at(l1_srs_exec_name));
-
       // Instantiate dedicated worker pool for high priority tasks such as L2, the upper physical layer downlink
       // processing, and the PRACH detector. This worker pool comprises four different priority queues where the L2 and
       // the PRACH detector queues have the highest priority.
@@ -504,9 +504,58 @@ worker_manager::create_du_crit_path_prio_executors(unsigned                     
         report_fatal_error("Failed to instantiate {} execution context", dl_worker_pool.name);
       }
 
-      du_low_dl_executors.push_back(exec_mng.executors().at(l1_dl_exec_name));
-      upper_prach_exec.push_back(exec_mng.executors().at(l1_prach_exec_name));
-      upper_pdsch_exec.push_back(exec_mng.executors().at(l1_pdsch_exec_name));
+      // TODO: move this to a dedicated worker mapper.
+      task_executor* cell_upper_dl_exec    = exec_mng.executors().at(l1_dl_exec_name);
+      task_executor* cell_upper_pucch_exec = exec_mng.executors().at(l1_pucch_exec_name);
+      task_executor* cell_upper_pusch_exec = exec_mng.executors().at(l1_pusch_exec_name);
+      task_executor* cell_upper_srs_exec   = exec_mng.executors().at(l1_srs_exec_name);
+      task_executor* cell_upper_prach_exec = exec_mng.executors().at(l1_prach_exec_name);
+      task_executor* cell_upper_pdsch_exec = exec_mng.executors().at(l1_pdsch_exec_name);
+
+      // Wrap executors with metrics.
+      if (du_low.value().metrics_period.has_value()) {
+        srslog::log_channel& metrics_logger = app_helpers::fetch_logger_metrics_log_channel();
+
+        std::chrono::milliseconds      metrics_period = du_low.value().metrics_period.value();
+        std::unique_ptr<task_executor> executor;
+
+        executor = make_concurrent_metrics_executor_ptr(
+            l1_dl_exec_name, *cell_upper_dl_exec, *metrics_exec, metrics_logger, metrics_period);
+        cell_upper_dl_exec = executor.get();
+        executor_decorators_exec.emplace_back(std::move(executor));
+
+        executor = make_concurrent_metrics_executor_ptr(
+            l1_pucch_exec_name, *cell_upper_pucch_exec, *metrics_exec, metrics_logger, metrics_period);
+        cell_upper_pucch_exec = executor.get();
+        executor_decorators_exec.emplace_back(std::move(executor));
+
+        executor = make_concurrent_metrics_executor_ptr(
+            l1_pusch_exec_name, *cell_upper_pusch_exec, *metrics_exec, metrics_logger, metrics_period);
+        cell_upper_pusch_exec = executor.get();
+        executor_decorators_exec.emplace_back(std::move(executor));
+
+        executor = make_concurrent_metrics_executor_ptr(
+            l1_srs_exec_name, *cell_upper_srs_exec, *metrics_exec, metrics_logger, metrics_period);
+        cell_upper_srs_exec = executor.get();
+        executor_decorators_exec.emplace_back(std::move(executor));
+
+        executor = make_concurrent_metrics_executor_ptr(
+            l1_prach_exec_name, *cell_upper_prach_exec, *metrics_exec, metrics_logger, metrics_period);
+        cell_upper_prach_exec = executor.get();
+        executor_decorators_exec.emplace_back(std::move(executor));
+
+        executor = make_concurrent_metrics_executor_ptr(
+            l1_pdsch_exec_name, *cell_upper_pdsch_exec, *metrics_exec, metrics_logger, metrics_period);
+        cell_upper_pdsch_exec = executor.get();
+        executor_decorators_exec.emplace_back(std::move(executor));
+      }
+
+      du_low_dl_executors.push_back(cell_upper_dl_exec);
+      upper_pucch_exec.push_back(cell_upper_pucch_exec);
+      upper_pusch_exec.push_back(cell_upper_pusch_exec);
+      upper_srs_exec.push_back(cell_upper_srs_exec);
+      upper_prach_exec.push_back(cell_upper_prach_exec);
+      upper_pdsch_exec.push_back(cell_upper_pdsch_exec);
       l2_execs.push_back(exec_mng.executors().at(l2_exec_name));
     }
 
@@ -554,7 +603,21 @@ worker_manager::create_du_crit_path_prio_executors(unsigned                     
       report_fatal_error("Failed to instantiate {} execution context", pusch_decoder_worker_pool.name);
     }
 
-    upper_pusch_decoder_exec.push_back(exec_mng.executors().at(pusch_decoder_exec_name));
+    task_executor* cell_upper_pusch_decoder_exec = exec_mng.executors().at(pusch_decoder_exec_name);
+    if (du_low.value().metrics_period.has_value()) {
+      srslog::log_channel& metrics_logger = app_helpers::fetch_logger_metrics_log_channel();
+
+      std::unique_ptr<task_executor> concurrent_metrics_executor =
+          make_concurrent_metrics_executor_ptr(pusch_decoder_exec_name,
+                                               *cell_upper_pusch_decoder_exec,
+                                               *metrics_exec,
+                                               metrics_logger,
+                                               du_low.value().metrics_period.value());
+      cell_upper_pusch_decoder_exec = concurrent_metrics_executor.get();
+      executor_decorators_exec.emplace_back(std::move(concurrent_metrics_executor));
+    }
+
+    upper_pusch_decoder_exec.push_back(cell_upper_pusch_decoder_exec);
   }
 
   return desc;

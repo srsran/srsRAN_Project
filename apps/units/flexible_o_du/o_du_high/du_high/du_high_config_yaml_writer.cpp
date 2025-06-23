@@ -104,8 +104,37 @@ static YAML::Node build_du_high_ntn_section(const ntn_config& config)
   YAML::Node node;
 
   node["cell_specific_koffset"] = config.cell_specific_koffset;
+
+  if (config.ntn_ul_sync_validity_dur) {
+    node["ntn_ul_sync_validity_dur"] = config.ntn_ul_sync_validity_dur.value();
+  }
+
   if (config.ta_info) {
-    node["ta_common"] = config.ta_info.value().ta_common;
+    node["ta_common"]               = config.ta_info.value().ta_common;
+    node["ta_common_drift"]         = config.ta_info.value().ta_common_drift;
+    node["ta_common_drift_variant"] = config.ta_info.value().ta_common_drift_variant;
+  }
+
+  if (config.epoch_timestamp) {
+    node["epoch_timestamp"] = config.epoch_timestamp.value();
+  }
+
+  if (config.feeder_link_info) {
+    YAML::Node fl_node;
+    fl_node["enable_doppler_compensation"] = config.feeder_link_info.value().enable_doppler_compensation;
+    fl_node["dl_freq"]                     = config.feeder_link_info.value().dl_freq;
+    fl_node["ul_freq"]                     = config.feeder_link_info.value().ul_freq;
+
+    node["feeder_link_info"] = fl_node;
+  }
+
+  if (config.ntn_gateway_location) {
+    YAML::Node gw_loc_node;
+    gw_loc_node["latitude"]  = config.ntn_gateway_location.value().latitude;
+    gw_loc_node["longitude"] = config.ntn_gateway_location.value().longitude;
+    gw_loc_node["altitude"]  = config.ntn_gateway_location.value().altitude;
+
+    node["ntn_gateway_location"] = gw_loc_node;
   }
 
   if (config.epoch_time.has_value()) {

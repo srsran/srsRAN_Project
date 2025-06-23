@@ -23,9 +23,8 @@
 #include "srsran/cu_up/cu_up_executor_mapper.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/support/async/execute_on_blocking.h"
-#include "srsran/support/executors/executor_tracer.h"
+#include "srsran/support/executors/executor_decoration_factory.h"
 #include "srsran/support/executors/inline_task_executor.h"
-#include "srsran/support/executors/sequential_metrics_executor.h"
 #include "srsran/support/executors/strand_executor.h"
 #include "srsran/support/tracing/event_tracing.h"
 #include <variant>
@@ -39,28 +38,37 @@ namespace {
 struct executor_decorator {
   template <typename Exec>
   task_executor& decorate(Exec&&                                          exec,
+                          bool                                            is_sync,
                           bool                                            tracing_enabled,
+                          std::optional<unsigned>                         throttle_thres,
                           const std::optional<std::chrono::milliseconds>& metrics_period,
                           const std::string&                              exec_name = "")
   {
-    if (not tracing_enabled and not metrics_period) {
+    if (not is_sync and not tracing_enabled and not metrics_period and not throttle_thres) {
+      // No decoration needed, return the original executor.
       return exec;
     }
-    report_error_if_not(not tracing_enabled or not metrics_period,
-                        "Metrics and tracing cannot be used at the same time");
 
-    if (tracing_enabled) {
-      decorators.push_back(make_trace_executor_ptr(exec_name, exec, tracer));
-    } else {
-      decorators.push_back(make_metrics_executor_ptr(exec_name, exec, metrics_logger, *metrics_period));
+    execution_decoration_config cfg;
+    if (is_sync) {
+      cfg.sync = execution_decoration_config::sync_option{};
     }
+    if (throttle_thres.has_value()) {
+      cfg.throttle = execution_decoration_config::throttle_option{*throttle_thres};
+    }
+    if (tracing_enabled) {
+      cfg.trace = execution_decoration_config::trace_option{exec_name};
+    }
+    if (metrics_period) {
+      cfg.metrics = execution_decoration_config::metrics_option{exec_name, *metrics_period};
+    }
+    decorators.push_back(decorate_executor(std::forward<Exec>(exec), cfg));
+
     return *decorators.back();
   }
 
 private:
   std::vector<std::unique_ptr<task_executor>> decorators;
-  file_event_tracer<true>                     tracer;
-  srslog::basic_logger&                       metrics_logger = srslog::fetch_basic_logger("METRICS");
 };
 
 /// Task executor adaptor that allows cancelling pending tasks, from within the executor's context.
@@ -176,13 +184,14 @@ private:
 };
 
 struct base_cu_up_executor_pool_config {
-  task_executor&       main_exec;
-  span<task_executor*> dl_executors;
-  span<task_executor*> ul_executors;
-  span<task_executor*> ctrl_executors;
-  task_executor&       crypto_exec;
-  timer_manager&       timers;
-  bool                 tracing_enabled;
+  task_executor&                           main_exec;
+  span<task_executor*>                     dl_executors;
+  span<task_executor*>                     ul_executors;
+  span<task_executor*>                     ctrl_executors;
+  task_executor&                           crypto_exec;
+  timer_manager&                           timers;
+  bool                                     tracing_enabled;
+  std::optional<std::chrono::milliseconds> metrics_period;
 };
 
 class round_robin_cu_up_exec_pool
@@ -205,11 +214,13 @@ public:
     }
 
     for (unsigned i = 0; i != config.ctrl_executors.size(); ++i) {
-      execs.emplace_back(*config.ctrl_executors[i],
+      execs.emplace_back(i,
+                         *config.ctrl_executors[i],
                          *config.ul_executors[i],
                          *config.dl_executors[i],
                          config.crypto_exec,
-                         config.tracing_enabled);
+                         config.tracing_enabled,
+                         config.metrics_period);
     }
   }
 
@@ -224,20 +235,28 @@ private:
   struct ue_executor_context {
     // Tracing helpers.
     executor_decorator decorator;
+    std::string        ctrl_exec_name;
+    std::string        dl_exec_name;
+    std::string        ul_exec_name;
 
     task_executor& ctrl_exec;
     task_executor& ul_exec;
     task_executor& dl_exec;
     task_executor& crypto_exec;
 
-    ue_executor_context(task_executor& ctrl_exec_,
-                        task_executor& ul_exec_,
-                        task_executor& dl_exec_,
-                        task_executor& crypto_exec_,
-                        bool           tracing_enabled) :
-      ctrl_exec(decorator.decorate(ctrl_exec_, tracing_enabled, std::nullopt, "cu_up_ue_ctrl_exec")),
-      ul_exec(decorator.decorate(ul_exec_, tracing_enabled, std::nullopt, "cu_up_ue_ul_exec")),
-      dl_exec(decorator.decorate(dl_exec_, tracing_enabled, std::nullopt, "cu_up_ue_dl_exec")),
+    ue_executor_context(unsigned                                 index_,
+                        task_executor&                           ctrl_exec_,
+                        task_executor&                           ul_exec_,
+                        task_executor&                           dl_exec_,
+                        task_executor&                           crypto_exec_,
+                        bool                                     tracing_enabled,
+                        std::optional<std::chrono::milliseconds> metrics_period) :
+      ctrl_exec_name("cu_up_ue_ctrl_exec_" + std::to_string(index_)),
+      dl_exec_name("cu_up_ue_dl_exec_" + std::to_string(index_)),
+      ul_exec_name("cu_up_ue_ul_exec_" + std::to_string(index_)),
+      ctrl_exec(decorator.decorate(ctrl_exec_, false, tracing_enabled, std::nullopt, metrics_period, ctrl_exec_name)),
+      ul_exec(decorator.decorate(ul_exec_, false, tracing_enabled, std::nullopt, metrics_period, ul_exec_name)),
+      dl_exec(decorator.decorate(dl_exec_, false, tracing_enabled, std::nullopt, metrics_period, dl_exec_name)),
       crypto_exec(crypto_exec_)
     {
     }
@@ -273,8 +292,15 @@ public:
                      {{concurrent_queue_policy::lockfree_mpmc, config.default_task_queue_size},
                       {concurrent_queue_policy::lockfree_mpmc, config.default_task_queue_size}}},
                  config.strand_batch_size),
-    ctrl_exec(decorator.decorate(cu_up_strand.get_executors()[0], true, std::nullopt, "cu_up_strand_ctrl_exec")),
-    n3_exec(decorator.decorate(config.low_prio_executor, true, std::nullopt, "n3_exec")),
+    ctrl_exec(decorator.decorate(cu_up_strand.get_executors()[0],
+                                 false,
+                                 config.tracing_enabled,
+                                 std::nullopt,
+                                 config.metrics_period,
+                                 "cu_up_strand_ctrl_exec")),
+    n3_exec(
+        decorator
+            .decorate(config.low_prio_executor, false, config.tracing_enabled, std::nullopt, std::nullopt, "n3_exec")),
     cu_up_exec_pool(create_strands(config))
   {
   }
@@ -335,7 +361,8 @@ private:
                                            ue_ctrl_execs,
                                            config.medium_prio_executor,
                                            *config.timers,
-                                           config.tracing_enabled};
+                                           config.tracing_enabled,
+                                           config.metrics_period};
   }
   // Tracing helpers.
   executor_decorator decorator = {};
