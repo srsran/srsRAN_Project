@@ -75,35 +75,49 @@ services:
     # Command to run into the final container
     command: gnb -c /gnb_config.yml cu_cp amf --addr ${OPEN5GS_IP:-10.53.1.2} --bind_addr ${GNB_IP:-10.53.1.3}
 
-  metrics-server:
-    container_name: metrics_server
-    image: srsran/metrics_server
+  telegraf:
+    container_name: telegraf
+    image: srsran/telegraf
     build:
-      context: metrics_server
-    environment:
-      - PORT=${METRICS_SERVER_PORT}
-      - BUCKET=${DOCKER_INFLUXDB_INIT_BUCKET}
-      - TESTBED=default
-      - URL=http://${DOCKER_INFLUXDB_INIT_HOST}:${DOCKER_INFLUXDB_INIT_PORT}
-      - ORG=${DOCKER_INFLUXDB_INIT_ORG}
-      - TOKEN=${DOCKER_INFLUXDB_INIT_ADMIN_TOKEN}
+      context: telegraf  
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    env_file:
+      - .env
+    # volumes:
+    #   - /tmp/metrics.txt:/etc/telegraf/metrics.txt:ro # Uncomment to use an input metrics file
     ports:
-      - 55555:${METRICS_SERVER_PORT}/udp
+      - 55555:${TELEGRAF_LISTENER_PORT}/udp
+    healthcheck:
+      test: >
+        CMD-SHELL
+         grep -q ':0FA0 ' /proc/net/udp /proc/net/udp6
+      # 0FA0 is 4000 in hex, which is the default Telegraf listener port
+      timeout: 5s
+      interval: 1s
     networks:
       metrics:
         ipv4_address: 172.19.1.4
 
   influxdb:
     container_name: influxdb
-    image: influxdb:${DOCKER_INFLUXDB_VERSION}
+    image: influxdb:${INFLUXDB3_VERSION}
+    user: "0:0"
     volumes:
-      - influxdb-storage:/var/lib/influxdb2:rw
+      - influxdb-storage:/var/lib/influxdb3:rw
     env_file:
       - .env
+    environment:
+      - LOG_FILTER=${INFLUXDB3_LOG_LEVEL}
+    command: >
+      --object-store=memory --data-dir=/var/lib/influxdb3 --plugin-dir=/var/lib/influxdb3-plugins --node-id="${INFLUXDB_NODE_ID:-node0}" --http-bind="${INFLUXDB3_HTTP_BIND_ADDR}" --without-auth
     restart: on-failure:10
-    # Uncomment port section to access InfluxDB from outside the docker network
-    # ports:
-    #   - 8086:${DOCKER_INFLUXDB_INIT_PORT}
+    healthcheck:
+      test: >
+        curl -f ${INFLUXDB3_HOST_URL}/health
+      timeout: 5s
+      interval: 1s
     networks:
       metrics:
         ipv4_address: 172.19.1.5
@@ -114,17 +128,17 @@ services:
     build:
       context: grafana
       args:
-        GRAFANA_VERSION: ${DOCKER_GRAFANA_VERSION}
-        LOGO_URL: ${GRAFANA_LOGO_URL}
+        GF_VERSION: ${GF_VERSION}
+        LOGO_URL: ${GF_LOGO_URL}
     volumes:
       - grafana-storage:/var/lib/grafana:rw
     env_file:
       - .env
     depends_on:
-      - influxdb
-      - metrics-server
+      telegraf:
+        condition: service_healthy      
     ports:
-      - 3300:${GRAFANA_PORT}
+      - 3300:${GF_PORT}
     networks:
       metrics:
         ipv4_address: 172.19.1.6

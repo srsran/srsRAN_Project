@@ -6,4 +6,10 @@
 # the distribution.
 #
 
-SRS_GF_VERSION: "1.5.1"
+ARG TELEGRAF_VERSION=1.35.0
+FROM telegraf:${TELEGRAF_VERSION}
+
+ADD *.conf /etc/telegraf/
+ADD /entrypoint.sh /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]

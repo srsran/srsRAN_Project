@@ -4,7 +4,7 @@ This folder contains a multi-container application, composed of:
 
 - srsRAN gnb: it will build and launch the gnb.
 - Open5g core: an open source core to use with srsRAN gnb.
-- Grafana (+ InfluxDB + srsRAN metrics server): a UI solution to monitor metrics from srsRAN gnb.
+- Grafana (+ InfluxDB + Telegraf): a UI solution to monitor metrics from srsRAN gnb.
 
 To launch the full multi-container solution, please run:
 
@@ -44,14 +44,14 @@ If you're not familiarized with `docker compose` tool, it will be recommended to
 
 ## Enabling metrics reporting in the gnb
 
-To be able to see gnb's metric in the UI solution (grafana + influxdb + metrics-server) it's required to enable metrics reporting in the gnb config.
+To be able to see gnb's metric in the UI solution (Grafana + InfluxDB + Telegraf) it's required to enable metrics reporting in the gnb config.
 For example:
 
 ```yml
 metrics:
   enable_json_metrics: true
-  addr: 172.19.1.4  # Metrics-server IP
-  port: 55555       # Metrics-server Port
+  addr: 172.19.1.4  # Telegraf IP
+  port: 55555       # Telegraf Port
 ```
 
 ## Run some services
@@ -65,7 +65,7 @@ docker compose -f docker/docker-compose.yml up <service_to_run>
 Main options are:
 
 - `gnb`: It will start the srsRAN Project gNB + Open5G core, without UI stack.
-- `grafana`: It will start the full Grafana + InfluxDB + metrics-server stack, without srsRAN Project gnb and Open5g services.
+- `grafana`: It will start the full Grafana + InfluxDB + Telegraf stack, without srsRAN Project gnb and Open5g services.
 
 However, any service declared in the docker-compose.yml can be started standalone, like `5gc` or `influxdb`.
 
@@ -150,5 +150,3 @@ You can access grafana in <http://localhost:3300>. By default, you'll be in view
 After your fist log, it will ask you to change the password for a new one, but it can be skipped.
 
 Provisioned Dashboards are into `Home > Dashboards`. **They don't support variable substitution**, so if you change default values in `.env` file, you'll need to go to `grafana/dashboards/` and manually search and replace values such as influxdb uid or bucket in every `.json` file.
-
-For more info about the metrics server, please check it's own [README.md](metrics_server/README.md).

@@ -26,9 +26,6 @@ stages:
   - compose
   - publish
 
-variables:
-  PY_DIR: docker/metrics_server
-
 .gnb-docker:
   - changes: &srs_container_changes
       paths:
@@ -49,24 +46,14 @@ no docker changes:
         - docker/docker-compose.yml
         - docker/.env
         - docker/Dockerfile
-        - docker/metrics_server/**/*
         - docker/open5gs/**/*
+        - docker/telegraf/**/*
         - docker/grafana/**/*
         - docker/scripts/**/*
       when: never
     - if: $ON_MR
   script:
     - echo "Nothing to check"
-
-metrics tox:
-  extends: .tox
-  stage: static
-  variables:
-    GIT_LFS_SKIP_SMUDGE: 1
-  rules:
-    - if: $ON_MR
-      changes:
-        - docker/metrics_server/**/*
 
 grafana version changed:
   extends: .version_changed_pyproject
@@ -78,20 +65,23 @@ grafana version changed:
       changes:
         - docker/grafana/**/*
   script:
-    - NEW_VERSION=$(cat docker/grafana/version.yml | grep SRS_GRAFANA_VERSION | cut -d'"' -f2)
+    - NEW_VERSION=$(cat docker/grafana/version.yml | grep SRS_GF_VERSION | cut -d'"' -f2)
     - export NEW_VERSION
     - |
       git checkout $CI_MERGE_REQUEST_DIFF_BASE_SHA
       if [ ! -e "docker/grafana/version.yml" ]; then
           exit 0
       fi
-    - OLD_VERSION=$(cat docker/grafana/version.yml | grep SRS_GRAFANA_VERSION | cut -d'"' -f2)
+      if [ ! $(cat docker/grafana/version.yml | grep SRS_GF_VERSION) ]; then
+          exit 0
+      fi
+    - OLD_VERSION=$(cat docker/grafana/version.yml | grep SRS_GF_VERSION | cut -d'"' -f2)
     - export OLD_VERSION
     - |
       echo "OLD version: $OLD_VERSION -- NEW version: $NEW_VERSION"
     - python3 -c "import semver; import os; exit(0) if (semver.compare(os.environ['NEW_VERSION'], os.environ['OLD_VERSION']) > 0) else exit(1)"
 
-metrics version changed:
+telegraf version changed:
   extends: .version_changed_pyproject
   stage: static
   variables:
@@ -99,19 +89,32 @@ metrics version changed:
   rules:
     - if: $ON_MR
       changes:
-        - docker/metrics_server/**/*
+        - docker/telegraf/**/*
+  script:
+    - NEW_VERSION=$(cat docker/telegraf/version.yml | grep  SRS_TELEGRAF_VERSION | cut -d'"' -f2)
+    - export NEW_VERSION
+    - |
+      git checkout $CI_MERGE_REQUEST_DIFF_BASE_SHA
+      if [ ! $(cat docker/telegraf/version.yml | grep  SRS_TELEGRAF_VERSION) ]; then
+          exit 0
+      fi
+    - OLD_VERSION=$(cat docker/telegraf/version.yml | grep  SRS_TELEGRAF_VERSION | cut -d'"' -f2)
+    - export OLD_VERSION
+    - |
+      echo "OLD version: $OLD_VERSION -- NEW version: $NEW_VERSION"
+    - python3 -c "import semver; import os; exit(0) if (semver.compare(os.environ['NEW_VERSION'], os.environ['OLD_VERSION']) > 0) else exit(1)"
 
-metrics version check in retina:
-  extends: metrics version changed
+telegraf version check in retina:
+  extends: telegraf version changed
   script:
     - |
-      VERSION_IN_PYPROJECT=$(cat docker/metrics_server/pyproject.toml | grep '^version' | cut -d'"' -f2)
-      VERSION_IN_RETINA=$(cat .gitlab/ci/e2e/.env | grep METRICS_SERVER_VERSION | cut -d'=' -f2)
-      echo "pyproject.toml version: $VERSION_IN_PYPROJECT -- retina .env version: $VERSION_IN_RETINA"
+      VERSION_IN_COMPOSE=$(cat docker/telegraf/version.yml | grep  SRS_TELEGRAF_VERSION | cut -d'"' -f2)
+      VERSION_IN_RETINA=$(cat .gitlab/ci/e2e/.env | grep TELEGRAF_VERSION | cut -d'=' -f2)
+      echo "compose version: $VERSION_IN_COMPOSE -- retina version: $VERSION_IN_RETINA"
     - |
-      export VERSION_IN_PYPROJECT
+      export VERSION_IN_COMPOSE
       export VERSION_IN_RETINA
-    - python3 -c "import semver; import os; exit(semver.compare(os.environ['VERSION_IN_RETINA'], os.environ['VERSION_IN_PYPROJECT']))"
+    - python3 -c "import semver; import os; exit(semver.compare(os.environ['VERSION_IN_RETINA'], os.environ['VERSION_IN_COMPOSE']))"
 
 ################################################################################
 # Docker Compose
@@ -195,63 +198,59 @@ grafana docker compose:
   script:
     - docker compose -f docker/docker-compose.yml run --no-deps grafana --version
 
-influxdb docker compose:
+influxdb and telegraf docker compose:
   extends: .docker compose
   rules:
     - if: $ON_MR
       changes:
         paths:
           - docker/.env
+          - docker/telegraf/**/*
           - docker/docker-compose.yml
     - if: $CI_DESCRIPTION =~ /Weekly/
       interruptible: false
   script:
-    - docker compose -f docker/docker-compose.yml run influxdb influx version
-
-metrics-server docker compose:
-  extends: .docker compose
-  rules:
-    - if: $ON_MR
-      changes:
-        paths:
-          - docker/.env
-          - docker/metrics_server/**/*
-          - docker/docker-compose.yml
-    - if: $CI_DESCRIPTION =~ /Weekly/
-      interruptible: false
-  script:
-    - docker compose -f docker/docker-compose.yml run metrics-server metrics-server --help
+    - docker compose -f docker/docker-compose.yml up influxdb telegraf -d --wait
+    - |
+      echo '{"timestamp": 1750248119.559, "fake_metric": {"field": 0}}' | nc -u -w1 localhost 55555
+    - |
+      if docker compose -f docker/docker-compose.yml logs telegraf | grep -E 'E!|error'; then
+        docker compose -f docker/docker-compose.yml down --volumes
+        exit 1
+      fi
+    - docker compose -f docker/docker-compose.yml logs
+    - docker compose -f docker/docker-compose.yml down --volumes
 
 ################################################################################
 # Publish
 ################################################################################
-metrics server image:
+telegraf image:
   extends: .docker-builder
   stage: publish
   rules:
     - if: $ON_MR
       changes:
         paths:
-          - docker/metrics_server/**/*
+          - docker/telegraf/**/*
   variables:
     GIT_LFS_SKIP_SMUDGE: 1
     REGISTRY_URI: $GITLAB_REGISTRY_URI
-    NAME: metrics_server
-    CONTEXT: ${CI_PROJECT_DIR}/docker/metrics_server
+    NAME: telegraf
+    CONTEXT: ${CI_PROJECT_DIR}/docker/telegraf
     MODE: publish
   before_script:
     - |
-      export VERSION=$(cat ${CONTEXT}/pyproject.toml | grep '^version' | cut -d'"' -f2)
+      export VERSION=$(cat ${CONTEXT}/version.yml | grep SRS_TELEGRAF_VERSION | cut -d'"' -f2)
 
-metrics server image latest:
-  extends: metrics server image
+telegraf image latest:
+  extends: telegraf image
   variables:
     OVERWRITE: "true"
   before_script:
     - |
       export VERSION=latest
 
-grafana server image:
+grafana image:
   extends: .docker-builder
   stage: publish
   rules:
@@ -273,15 +272,15 @@ grafana server image:
         export BUILD_ARGS="LOGO_SRC=/etc/grafana/provisioning/logo.png"
       fi
     - |
-      export VERSION=$(cat docker/grafana/version.yml | grep SRS_GRAFANA_VERSION | cut -d'"' -f2)
+      export VERSION=$(cat docker/grafana/version.yml | grep SRS_GF_VERSION | cut -d'"' -f2)
   parallel:
     matrix:
       - REGISTRY_ORG: /${CI_PROJECT_NAME}
       - REGISTRY_ORG: /${SRSRAN_IMAGE_PREFIX}
         LOGO_URL: ${SRSRAN_IMAGE_LOGO_URL}
 
-grafana server image latest:
-  extends: grafana server image
+grafana image latest:
+  extends: grafana image
   variables:
     OVERWRITE: "true"
   before_script:

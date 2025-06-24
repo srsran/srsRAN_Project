@@ -106,8 +106,29 @@
       "repeatDirection": "v",
       "targets": [
         {
-          "query": "from(bucket: \"srsran\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ofh_ul_received_packets\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"pci\"] == \"${pci}\")",
-          "refId": "A"
+          "dataset": "iox",
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT ul_received_packets_total AS total, ul_received_packets_early AS early, ul_received_packets_on_time AS on_time, ul_received_packets_late AS late, time FROM ofh WHERE pci == $pci AND time >= $__timeFrom AND time <= $__timeTo ORDER BY time",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          },
+          "table": "ofh"
         }
       ],
       "title": "Cell PCI $pci",
@@ -125,7 +146,7 @@
   ],
   "preload": false,
   "refresh": "5s",
-  "schemaVersion": 40,
+  "schemaVersion": 41,
   "tags": [],
   "templating": {
     "list": [
@@ -139,14 +160,13 @@
           "type": "influxdb",
           "uid": "JOSE3g9KVz"
         },
-        "definition": "from(bucket: \"srsran\")\n  |> range(start: -15m)\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ofh_ul_received_packets\")\n  |> map(fn: (r) => ({ r with _value: r[\"pci\"] }))\n  |> group(columns: [\"pci\"])\n  |> distinct(column: \"pci\")\n",
+        "definition": "SELECT pci FROM ofh GROUP BY pci",
         "includeAll": false,
         "multi": true,
         "name": "pci",
         "options": [],
         "query": {
-          "maxDataPoints": 1000,
-          "query": "from(bucket: \"srsran\")\n  |> range(start: -15m)\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ofh_ul_received_packets\")\n  |> map(fn: (r) => ({ r with _value: r[\"pci\"] }))\n  |> group(columns: [\"pci\"])\n  |> distinct(column: \"pci\")\n",
+          "query": "SELECT pci FROM ofh GROUP BY pci",
           "refId": "InfluxVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -178,6 +198,6 @@
   "timezone": "browser",
   "title": "OFH Metrics",
   "uid": "eee8440pj5hq8b",
-  "version": 2,
+  "version": 3,
   "weekStart": ""
 }
