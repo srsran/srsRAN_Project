@@ -14,6 +14,7 @@
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/detail/task_executor_utils.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/rtsan.h"
 #include "srsran/support/tracing/resource_usage.h"
 #include <chrono>
 
@@ -25,7 +26,7 @@ template <typename ExecutorType, typename Logger>
 class sequential_metrics_executor : public task_executor
 {
   /// Maximum number of elements the pool can hold.
-  static constexpr unsigned POOL_SIZE = 256 * 1024;
+  static constexpr unsigned POOL_SIZE = 32 * 1024;
 
   using time_point = std::chrono::time_point<std::chrono::steady_clock>;
   using queue_type =
@@ -70,7 +71,7 @@ public:
 
       pooled_task();
 
-      handle_metrics(true, enqueue_tp, start_tp, start_rusg, free_tasks->size(), pooled_task.file, pooled_task.lineno);
+      handle_metrics(true, enqueue_tp, start_tp, start_rusg, pooled_task.file, pooled_task.lineno);
       pooled_task = {};
       (void)free_tasks->try_push(task_idx);
     });
@@ -99,7 +100,7 @@ public:
 
       pooled_task();
 
-      handle_metrics(false, enqueue_tp, start_tp, start_rusg, free_tasks->size(), pooled_task.file, pooled_task.lineno);
+      handle_metrics(false, enqueue_tp, start_tp, start_rusg, pooled_task.file, pooled_task.lineno);
       pooled_task = {};
       (void)free_tasks->try_push(task_idx);
     });
@@ -120,7 +121,6 @@ private:
     std::chrono::nanoseconds task_max_latency{0};
     resource_usage::diff     sum_rusg             = {};
     unsigned                 failed_rusg_captures = 0;
-    size_t                   qsize                = std::numeric_limits<size_t>::max();
   };
 
   /// Updates and prints the metrics for this executor.
@@ -128,9 +128,8 @@ private:
                       time_point                                     enqueue_tp,
                       time_point                                     start_tp,
                       const expected<resource_usage::snapshot, int>& start_rusg,
-                      size_t                                         qsize,
                       const char*                                    file,
-                      int                                            line)
+                      int                                            line) SRSRAN_RTSAN_NONBLOCKING
   {
     using namespace std::chrono;
 
@@ -153,7 +152,6 @@ private:
     } else {
       ++counters.failed_rusg_captures;
     }
-    counters.qsize = std::min(counters.qsize, qsize);
 
     // Check if it is time for a new metric report.
     auto                  telapsed_since_last_report = end_tp - last_tp;
@@ -166,7 +164,7 @@ private:
     if (telapsed_since_last_report >= period) {
       // Report metrics.
       metrics_logger.info("Executor metrics \"{}\": nof_executes={} nof_defers={} enqueue_avg={}usec "
-                          "enqueue_max={}usec task_avg={}usec task_max={}usec cpu_load={:.1f}% {} q_size={}",
+                          "enqueue_max={}usec task_avg={}usec task_max={}usec cpu_load={:.1f}% {}",
                           name,
                           counters.dispatch_count - counters.defer_count,
                           counters.defer_count,
@@ -175,8 +173,7 @@ private:
                           duration_cast<microseconds>(counters.task_sum_latency / counters.dispatch_count).count(),
                           duration_cast<microseconds>(counters.task_max_latency).count(),
                           counters.task_sum_latency.count() * 100.0 / telapsed_since_last_report.count(),
-                          counters.sum_rusg,
-                          counters.qsize);
+                          counters.sum_rusg);
 
       counters = {};
       last_tp  = end_tp;

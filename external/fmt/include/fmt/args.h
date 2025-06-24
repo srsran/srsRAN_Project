@@ -74,6 +74,8 @@ class dynamic_arg_list {
  */
 template <typename Context> class dynamic_format_arg_store {
  private:
+  static constexpr unsigned MAX_SSO_BUFFER_SIZE = 64;
+
   using char_type = typename Context::char_type;
 
   template <typename T> struct need_copy {
@@ -85,7 +87,7 @@ template <typename Context> class dynamic_format_arg_store {
                 std::is_same<T, basic_string_view<char_type>>::value ||
                 std::is_same<T, detail::std_string_view<char_type>>::value ||
                 (mapped_type == detail::type::custom_type &&
-                  sizeof(T) <= sizeof(void *) &&
+                  sizeof(T) <= MAX_SSO_BUFFER_SIZE &&
                   std::is_trivially_destructible_v<T>) ||
                 (mapped_type != detail::type::cstring_type &&
                  mapped_type != detail::type::string_type &&
@@ -102,7 +104,10 @@ template <typename Context> class dynamic_format_arg_store {
   // Storage of basic_format_arg must be contiguous.
   std::vector<basic_format_arg<Context>> data_;
   std::vector<detail::named_arg_info<char_type>> named_info_;
-  std::vector<std::aligned_storage_t<sizeof(void*)>> sso_buffer;
+  std::vector<std::aligned_storage_t<MAX_SSO_BUFFER_SIZE>> sso_buffer;
+  static constexpr unsigned MAX_POOL_STRING_SIZE = 64;
+  unsigned free_string_pool_pos = 0;
+  std::vector<std::string> string_pool;
 
   // Storage of arguments not fitting into basic_format_arg must grow
   // without relocation because items in data_ refer to it.
@@ -122,6 +127,12 @@ template <typename Context> class dynamic_format_arg_store {
     ::new (&sso_buffer.emplace_back()) T(arg);
     data_.emplace_back(
       *std::launder(reinterpret_cast<const T *>(&sso_buffer.back())));
+  }
+
+  template <typename T> void emplace_short_string(const T& arg) {
+    auto& str = string_pool[free_string_pool_pos++];
+    str = arg;
+    data_.emplace_back(str.c_str());
   }
 
   template <typename T>
@@ -163,13 +174,26 @@ template <typename Context> class dynamic_format_arg_store {
    *     std::string result = fmt::vformat("{} and {} and {}", store);
    */
   template <typename T> void push_back(const T& arg) {
-    if constexpr (detail::const_check(need_copy<T>::value))
-      emplace_arg(dynamic_args_.push<stored_t<T>>(arg));
+    if constexpr (detail::const_check(need_copy<T>::value)) {
+      if constexpr (detail::mapped_type_constant<T, char_type>::value == detail::type::cstring_type) {
+        if (free_string_pool_pos < string_pool.size() && std::strlen(arg) <= MAX_POOL_STRING_SIZE)
+          emplace_short_string(detail::unwrap(arg));
+        else
+          emplace_arg(dynamic_args_.push<stored_t<T>>(arg));
+      }
+      else if constexpr (detail::mapped_type_constant<T, char_type>::value == detail::type::string_type) {
+        if (free_string_pool_pos < string_pool.size() && arg.size() <= MAX_POOL_STRING_SIZE)
+          emplace_short_string(detail::unwrap(arg));
+        else
+          emplace_arg(dynamic_args_.push<stored_t<T>>(arg));
+      }
+      else
+        emplace_arg(dynamic_args_.push<stored_t<T>>(arg));
+    }
     else if constexpr (detail::const_check(detail::mapped_type_constant<T, char_type>::value ==
                        detail::type::custom_type &&
-                       sizeof(T) <= sizeof(void *) &&
-                       std::is_trivially_destructible_v<T>))
-    {
+                       sizeof(T) <= MAX_SSO_BUFFER_SIZE &&
+                       std::is_trivially_destructible_v<T>)) {
       if (sso_buffer.capacity() > sso_buffer.size())
         emplace_arg_sso(detail::unwrap(arg));
       else
@@ -220,6 +244,7 @@ template <typename Context> class dynamic_format_arg_store {
   void clear() {
     data_.clear();
     sso_buffer.clear();
+    free_string_pool_pos = 0;
     named_info_.clear();
     dynamic_args_ = {};
   }
@@ -232,6 +257,10 @@ template <typename Context> class dynamic_format_arg_store {
     data_.reserve(new_cap);
     sso_buffer.reserve(new_cap);
     named_info_.reserve(new_cap_named);
+    string_pool.resize(new_cap);
+    for (auto &elem: string_pool) {
+      elem.reserve(MAX_POOL_STRING_SIZE);
+    }
   }
 
   /// Returns the number of elements in the store.
