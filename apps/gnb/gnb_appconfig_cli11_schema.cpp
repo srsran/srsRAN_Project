@@ -104,11 +104,10 @@ void srsran::autoderive_supported_tas_for_amf_from_du_cells(const du_high_unit_c
 
   // Clear supported TAs.
   srslog::fetch_basic_logger("CONFIG").debug(
-      "{} supported TAs will be derived from DU cell config\n",
+      "{} supported TAs will be derived from DU cell config",
       cu_cp_cfg.amf_config.amf.is_default_supported_tas ? "No supported TAs configured," : "--no-core configured,");
   cu_cp_cfg.amf_config.amf.supported_tas.clear();
   cu_cp_cfg.amf_config.amf.is_default_supported_tas = false;
-  cu_cp_cfg.amf_config.amf.supported_tas.resize(du_hi_cfg.cells_cfg.size());
 
   // Derive supported TAs from DU cell configuration.
   for (const auto& cell : du_hi_cfg.cells_cfg) {
