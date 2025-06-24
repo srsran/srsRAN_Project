@@ -47,7 +47,7 @@ struct cu_up_unit_ngu_socket_config {
 
 /// GPTU parameters.
 struct cu_up_unit_ngu_gtpu_config {
-  unsigned                  gtpu_queue_size          = 8192;
+  unsigned                  gtpu_queue_size          = 2046;
   unsigned                  gtpu_batch_size          = 256;
   unsigned                  gtpu_reordering_timer_ms = 0;
   std::chrono::milliseconds rate_limiter_period{100};
