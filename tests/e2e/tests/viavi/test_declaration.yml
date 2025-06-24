@@ -42,6 +42,9 @@ tests:
           max_pucchs_per_slot: 10
         pusch:
           max_puschs_per_slot: 2
+      cu_cp:
+        rrc:
+          rrc_procedure_timeout_ms: 7200
       expert_execution:
         queues:
           du_ue_data_executor_queue_size: 16384
