@@ -552,6 +552,7 @@ include_directories(external)
 # List of directories that contain header files
 set(ALL_HEADER_DIRS
   apps
+  external
   lib
   include
   tests/unittests
