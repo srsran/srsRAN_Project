@@ -11,6 +11,7 @@
 #include "../../../../lib/ofh/compression/packing_utils_generic.h"
 #include "../../../../lib/ofh/compression/quantizer.h"
 #include "ofh_compression_test_data.h"
+#include "srsran/adt/to_array.h"
 #include "srsran/ofh/compression/compression_factory.h"
 #include "srsran/ofh/compression/compression_properties.h"
 #include "srsran/srslog/srslog.h"
@@ -30,13 +31,34 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
                            test_case.cIQ_width,
                            test_case.iq_scaling);
 }
+
+std::ostream& operator<<(std::ostream& os, span<const uint8_t> data)
+{
+  return os << fmt::format("{:02x}", data);
+}
+
 } // namespace srsran
+
+static const auto implementation_types = to_array<std::string>({"generic"
+#ifdef __AVX2__
+                                                                ,
+                                                                "avx2"
+#endif // __AVX2__
+#ifdef __AVX512F__
+                                                                ,
+                                                                "avx512"
+#endif // __AVX512F__
+#ifdef __ARM_NEON
+                                                                ,
+                                                                "neon"
+#endif // __ARM_NEON
+});
 
 namespace {
 
 using OFHCompressionParams = std::tuple<std::string, test_case_t>;
 
-class OFHCompressionFixture : public ::testing::TestWithParam<OFHCompressionParams>
+class OFHCompressionVectorTestFixture : public ::testing::TestWithParam<OFHCompressionParams>
 {
 protected:
   void SetUp() override
@@ -57,8 +79,25 @@ protected:
   srslog::basic_logger&            logger       = srslog::fetch_basic_logger("TEST", false);
 };
 
+class OFHCompressionBfp9TestFixture : public ::testing::TestWithParam<std::string>
+{
+protected:
+  void SetUp() override
+  {
+    params.type       = compression_type::BFP;
+    params.data_width = 9;
+
+    compressor = create_iq_compressor(params.type, logger, 1.0, GetParam());
+    ASSERT_NE(compressor, nullptr);
+  }
+
+  ru_compression_params          params     = {};
+  std::unique_ptr<iq_compressor> compressor = nullptr;
+  srslog::basic_logger&          logger     = srslog::fetch_basic_logger("TEST", false);
+};
+
 // Verify data after compression and following decompression.
-TEST_P(OFHCompressionFixture, match_test_case_result_and_decompress_to_original)
+TEST_P(OFHCompressionVectorTestFixture, match_test_case_result_and_decompress_to_original)
 {
   // Instantiate quantizer object.
   quantizer q(params.data_width);
@@ -131,7 +170,7 @@ TEST_P(OFHCompressionFixture, match_test_case_result_and_decompress_to_original)
 }
 
 // Verify zero input is correctly processed.
-TEST_P(OFHCompressionFixture, zero_input_compression_is_correct)
+TEST_P(OFHCompressionVectorTestFixture, zero_input_compression_is_correct)
 {
   // Generate array of random complex float samples.
   unsigned          nof_prb = std::get<1>(GetParam()).nof_prb;
@@ -157,10 +196,8 @@ TEST_P(OFHCompressionFixture, zero_input_compression_is_correct)
 }
 
 // Verify BPSK modulated data are correctly processed.
-TEST(ru_compression_test, bpsk_input_compression_is_correct)
+TEST_P(OFHCompressionBfp9TestFixture, bpsk_input_compression_is_correct)
 {
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
-
   // Instantiate quantizer object.
   quantizer q(9);
 
@@ -174,10 +211,8 @@ TEST(ru_compression_test, bpsk_input_compression_is_correct)
       {255, 255, 255, -255, 255, 255, -255, 255, 255, -255, -255, 255},
       {-255, 255, 255, -255, -255, -255, -255, 255, -255, -255, -255, 255}};
 
-  std::unique_ptr<iq_compressor> compressor = create_iq_compressor(compression_type::BFP, logger, 1.0, "generic");
-  ru_compression_params          params     = {compression_type::BFP, 9};
-  unsigned                       prb_size   = get_compressed_prb_size(params).value();
-  std::vector<uint8_t>           compressed_data(4 * prb_size);
+  unsigned             prb_size = get_compressed_prb_size(params).value();
+  std::vector<uint8_t> compressed_data(4 * prb_size);
 
   // Compress it.
   std::vector<cbf16_t> test_data_cbf16(test_data.size());
@@ -206,22 +241,61 @@ TEST(ru_compression_test, bpsk_input_compression_is_correct)
   }
 }
 
+// Verify exponents are correctly processed.
+TEST_P(OFHCompressionBfp9TestFixture, test_compr_param)
+{
+  static constexpr unsigned test_compr_param_begin = 0;
+  static constexpr unsigned test_compr_param_end   = 7;
+  static constexpr unsigned test_compr_param_count = test_compr_param_end - test_compr_param_begin + 1;
+  static constexpr unsigned nof_shifts             = NOF_SUBCARRIERS_PER_RB;
+
+  // Use one PRB for each shift and exponent.
+  static constexpr unsigned nof_prb = nof_shifts * test_compr_param_count;
+
+  // Generate test data. Each PRB contains a one located in different places with a different scaling.
+  std::vector<cbf16_t> test_data(nof_prb * NOF_SUBCARRIERS_PER_RB);
+  unsigned             idx = 0;
+  for (unsigned shift = 0; shift != nof_shifts; ++shift) {
+    for (unsigned i_param = 0; i_param != test_compr_param_count; ++i_param) {
+      unsigned test_compr_param = test_compr_param_begin + i_param;
+      float    scale = static_cast<float>(pow2(test_compr_param)) / static_cast<float>(pow2(test_compr_param_end + 1));
+
+      span<cbf16_t> test_data_prb = span<cbf16_t>(test_data).subspan(idx, NOF_SUBCARRIERS_PER_RB);
+      test_data_prb[shift]        = scale;
+
+      idx += NOF_SUBCARRIERS_PER_RB;
+    }
+  }
+
+  // Prepare compressed data.
+  unsigned             prb_size = get_compressed_prb_size(params).value();
+  std::vector<uint8_t> compressed_data(nof_prb * prb_size);
+
+  // Compress it.
+  compressor->compress(compressed_data, test_data, params);
+
+  // Check the compression parameter matches with the expected.
+  unsigned i_prb = 0;
+  for (unsigned shift = 0; shift != nof_shifts; ++shift) {
+    for (unsigned i_param = 0; i_param != test_compr_param_count; ++i_param) {
+      uint8_t expected_compr_param = test_compr_param_begin + i_param;
+
+      // Parameter should match the expected.
+      ASSERT_EQ(compressed_data[i_prb * prb_size], expected_compr_param) << fmt::format("wrong shift={} param", shift);
+
+      // Increment PRB index.
+      ++i_prb;
+    }
+  }
+}
+
 INSTANTIATE_TEST_SUITE_P(OFHCompressionTestSuite,
-                         OFHCompressionFixture,
-                         ::testing::Combine(::testing::Values("generic"
-#ifdef __AVX2__
-                                                              ,
-                                                              "avx2"
-#endif // __AVX2__
-#ifdef __AVX512F__
-                                                              ,
-                                                              "avx512"
-#endif // __AVX512F__
-#ifdef __ARM_NEON
-                                                              ,
-                                                              "neon"
-#endif // __ARM_NEON
-                                                              ),
+                         OFHCompressionVectorTestFixture,
+                         ::testing::Combine(::testing::ValuesIn(implementation_types),
                                             ::testing::ValuesIn(ofh_compression_test_data)));
+
+INSTANTIATE_TEST_SUITE_P(OFHCompressionTestSuite,
+                         OFHCompressionBfp9TestFixture,
+                         ::testing::ValuesIn(implementation_types));
 
 } // namespace
