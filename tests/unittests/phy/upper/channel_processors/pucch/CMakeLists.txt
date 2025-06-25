@@ -15,7 +15,7 @@ add_executable(pucch_processor_format1_unittest pucch_processor_format1_unittest
 target_link_libraries(pucch_processor_format1_unittest
         srsran_channel_equalizer
         srsran_channel_processors
-        srsran_generic_funcs
+        srsran_dft
         srsran_transform_precoding
         srslog
         gtest
@@ -31,7 +31,7 @@ add_executable(pucch_processor_validators_test
 target_link_libraries(pucch_processor_validators_test
         srsran_channel_equalizer
         srsran_channel_processors
-        srsran_generic_funcs
+        srsran_dft
         srsran_phy_support
         srsran_transform_precoding
         srsran_upper_phy_support
@@ -45,7 +45,7 @@ if (USE_PHY_TESTVECTORS)
     target_link_libraries(pucch_demodulator_format2_test
             srsran_channel_equalizer
             srsran_channel_processors
-            srsran_generic_funcs
+            srsran_dft
             srsran_phy_support
             srsran_transform_precoding
             srsran_upper_phy_support
@@ -58,7 +58,7 @@ if (USE_PHY_TESTVECTORS)
     target_link_libraries(pucch_demodulator_format3_test
             srsran_channel_equalizer
             srsran_channel_processors
-            srsran_generic_funcs
+            srsran_dft
             srsran_phy_support
             srsran_transform_precoding
             srsran_upper_phy_support
@@ -71,7 +71,7 @@ if (USE_PHY_TESTVECTORS)
     target_link_libraries(pucch_demodulator_format4_test
             srsran_channel_equalizer
             srsran_channel_processors
-            srsran_generic_funcs
+            srsran_dft
             srsran_phy_support
             srsran_transform_precoding
             srsran_upper_phy_support
@@ -84,7 +84,7 @@ if (USE_PHY_TESTVECTORS)
     target_link_libraries(pucch_processor_format0_vectortest
             srsran_channel_equalizer
             srsran_channel_processors
-            srsran_generic_funcs
+            srsran_dft
             srsran_phy_support
             srsran_transform_precoding
             srslog
@@ -96,7 +96,7 @@ if (USE_PHY_TESTVECTORS)
     target_link_libraries(pucch_processor_format1_vectortest
             srsran_channel_equalizer
             srsran_channel_processors
-            srsran_generic_funcs
+            srsran_dft
             srsran_phy_support
             srsran_transform_precoding
             srslog
@@ -108,7 +108,7 @@ if (USE_PHY_TESTVECTORS)
     target_link_libraries(pucch_processor_format2_vectortest
             srsran_channel_processors
             srsran_channel_equalizer
-            srsran_generic_funcs
+            srsran_dft
             srsran_phy_support
             srsran_transform_precoding
             gtest
@@ -120,7 +120,7 @@ if (USE_PHY_TESTVECTORS)
     target_link_libraries(pucch_processor_format3_vectortest
             srsran_channel_processors
             srsran_channel_equalizer
-            srsran_generic_funcs
+            srsran_dft
             srsran_phy_support
             srsran_transform_precoding
             gtest
@@ -132,7 +132,7 @@ if (USE_PHY_TESTVECTORS)
     target_link_libraries(pucch_processor_format4_vectortest
             srsran_channel_processors
             srsran_channel_equalizer
-            srsran_generic_funcs
+            srsran_dft
             srsran_phy_support
             srsran_transform_precoding
             gtest
