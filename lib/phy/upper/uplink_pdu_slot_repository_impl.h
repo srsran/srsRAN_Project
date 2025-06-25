@@ -28,9 +28,23 @@ namespace srsran {
 /// - Processing: the repository contains PDUs and it is processing PDUs;
 /// - Locked: the repository is executing a sequential procedure and it does not accept any transitions; and
 /// - Stopped: the repository does not accept transitioning to any other state.
-class uplink_pdu_slot_repository_impl : public unique_uplink_pdu_slot_repository::uplink_pdu_slot_repository_callback
+class uplink_pdu_slot_repository_impl : public unique_uplink_pdu_slot_repository::uplink_pdu_slot_repository_callback,
+                                        private shared_resource_grid::pool_interface
 {
 public:
+  /// Creates an uplink PDU slot repository.
+  uplink_pdu_slot_repository_impl(resource_grid& grid_, std::atomic<unsigned>& grid_ref_counter_) :
+    grid(grid_), grid_ref_counter(grid_ref_counter_)
+  {
+  }
+
+  /// Uplink slot repository destructor.
+  ~uplink_pdu_slot_repository_impl() override
+  {
+    // Sets the resource grid reference counter to a value that indicates the grid has been destroyed.
+    grid_ref_counter = shared_resource_grid::pool_interface::ref_counter_destroyed;
+  }
+
   /// PUCCH Format 1 aggregated configuration.
   struct pucch_f1_collection {
     /// Pairs the reception context with the UE dedicated parameters.
@@ -153,11 +167,16 @@ public:
   }
 
   // See the unique_uplink_pdu_slot_repository::uplink_pdu_slot_repository_callback interface for documentation.
-  void finish_adding_pdus() override
+  shared_resource_grid finish_adding_pdus() override
   {
     // Remove accepting PDU mask and verify the previous state was accepting PDU.
     [[maybe_unused]] uint32_t prev = pending_pdu_count.fetch_xor(accepting_pdu_mask);
     srsran_assert(is_state_accepting_pdu(prev), "Unexpected prev={:08x} finishing PDUs.", prev);
+
+    // Set grid reference counter to one.
+    grid_ref_counter = 1;
+
+    return {*this, grid_ref_counter, 0};
   }
 
   /// \brief Notifies the start of a slot discard.
@@ -429,6 +448,12 @@ private:
     srsran_assert((prev & accepting_pdu_mask) != 0, "The slot repository is the invalid state of NOT accepting PDUs.");
   }
 
+  // See the shared_resource_grid::pool_interface interface for documentation.
+  resource_grid& get(unsigned identifier) override { return grid; }
+
+  // See the shared_resource_grid::pool_interface interface for documentation.
+  void notify_release_scope(unsigned identifier) override {}
+
   /// Repository that contains PUSCH PDUs.
   std::array<static_vector<pusch_pdu, MAX_PUSCH_PDUS_PER_SLOT>, MAX_NSYMB_PER_SLOT> pusch_repository;
   /// Repository that contains PUCCH PDUs.
@@ -441,5 +466,9 @@ private:
   std::atomic<uint32_t> pending_pdu_count = {};
   /// Current configured slot.
   slot_point configured_slot;
+  /// Resource grid associated to the uplink slot.
+  resource_grid& grid;
+  /// Resource grid reference counter.
+  std::atomic<unsigned>& grid_ref_counter;
 };
 } // namespace srsran

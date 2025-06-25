@@ -34,7 +34,7 @@ void upper_phy_rx_symbol_handler_impl::handle_rx_symbol(const upper_phy_rx_symbo
   uplink_slot_processor& ul_proc = ul_processor_pool.get_slot_processor(context.slot);
 
   // Notify Rx symbol.
-  ul_proc.handle_rx_symbol(grid, context.symbol);
+  ul_proc.handle_rx_symbol(context.symbol);
 }
 
 void upper_phy_rx_symbol_handler_impl::handle_rx_prach_window(const prach_buffer_context& context,

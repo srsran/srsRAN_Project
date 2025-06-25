@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/phy/upper/channel_processors/pucch/pucch_processor.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor.h"
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator_configuration.h"
@@ -78,7 +79,7 @@ public:
 class unique_uplink_pdu_slot_repository
 {
 public:
-  /// Downlink processor underlying interface.
+  /// Uplink PDU repository underlying interface.
   class uplink_pdu_slot_repository_callback : public uplink_pdu_slot_repository
   {
   public:
@@ -86,14 +87,15 @@ public:
     virtual ~uplink_pdu_slot_repository_callback() = default;
 
     /// Stops adding PDUs.
-    virtual void finish_adding_pdus() = 0;
+    virtual shared_resource_grid finish_adding_pdus() = 0;
   };
 
-  /// Default constructor - creates an invalid downlink processor.
+  /// Default constructor - creates an invalid uplink repository.
   unique_uplink_pdu_slot_repository() = default;
 
-  /// Builds a unique downlink processor from an underlying instance.
-  explicit unique_uplink_pdu_slot_repository(uplink_pdu_slot_repository_callback& processor_) : processor(&processor_)
+  /// Builds a unique uplink repository from an underlying instance.
+  explicit unique_uplink_pdu_slot_repository(uplink_pdu_slot_repository_callback& repository_) :
+    repository(&repository_)
   {
   }
 
@@ -107,51 +109,63 @@ public:
   unique_uplink_pdu_slot_repository(unique_uplink_pdu_slot_repository&& other) noexcept
   {
     release();
-    processor       = other.processor;
-    other.processor = nullptr;
+    repository       = other.repository;
+    other.repository = nullptr;
   }
 
   /// Move assignment operator.
   unique_uplink_pdu_slot_repository& operator=(unique_uplink_pdu_slot_repository&& other) noexcept
   {
     release();
-    processor       = other.processor;
-    other.processor = nullptr;
+    repository       = other.repository;
+    other.repository = nullptr;
     return *this;
   }
 
-  /// Returns \c true if the unique processor is valid, false otherwise.
-  bool is_valid() const { return processor != nullptr; }
+  /// Returns \c true if the unique repository is valid, false otherwise.
+  bool is_valid() const { return repository != nullptr; }
 
   /// Default destructor - notifies the end of processing PDUs.
   ~unique_uplink_pdu_slot_repository() { release(); }
 
-  /// Releases the unique processor.
-  void release()
+  /// \brief Releases the unique uplink PDU slot repository and obtain the resource grid.
+  ///
+  /// The unique PDU slot repository will stop being valid after this call and it will not accept for uplink PDU until a
+  /// new slot is configured.
+  ///
+  /// \return A shared resource grid if the repository is valid, otherwise an invalid grid.
+  shared_resource_grid release()
   {
+    shared_resource_grid grid;
+
+    // Notify the repository that no more PDU will be queued and obtain the resource grid for the configured slot.
     if (is_valid()) {
-      processor->finish_adding_pdus();
+      grid = repository->finish_adding_pdus();
     }
-    processor = nullptr;
+
+    // Invalidate pointer to the instance. It will no longer be valid.
+    repository = nullptr;
+
+    return grid;
   }
 
   /// Gets the underlying uplink PDU slot repository.
   uplink_pdu_slot_repository& get()
   {
-    srsran_assert(is_valid(), "Invalid processor.");
-    return *processor;
+    srsran_assert(is_valid(), "Invalid repository.");
+    return *repository;
   }
 
   /// Gets the underlying uplink PDU slot repository.
   uplink_pdu_slot_repository* operator->()
   {
-    srsran_assert(is_valid(), "Invalid processor.");
-    return processor;
+    srsran_assert(is_valid(), "Invalid repository.");
+    return repository;
   }
 
 private:
-  /// Reference to the underlying downlink processor. Set to \c nullptr for an invalid processor.
-  uplink_pdu_slot_repository_callback* processor = nullptr;
+  /// Reference to the underlying uplink repository. Set to \c nullptr for an invalid repository.
+  uplink_pdu_slot_repository_callback* repository = nullptr;
 };
 
 /// Uplink slot PDU repository pool.

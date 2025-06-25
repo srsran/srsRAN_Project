@@ -41,9 +41,8 @@ public:
 
   /// \brief Notify the reception of an OFDM symbol.
   ///
-  /// \param[in] grid             Resource grid.
   /// \param[in] end_symbol_index Last received symbol in the slot.
-  virtual void handle_rx_symbol(const shared_resource_grid& grid, unsigned end_symbol_index) = 0;
+  virtual void handle_rx_symbol(unsigned end_symbol_index) = 0;
 
   /// \brief Processes the PRACH using the given configuration and context.
   ///

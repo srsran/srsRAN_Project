@@ -34,7 +34,6 @@ generate_fapi_adaptor_dependencies(du_low& du_low, const fapi_adaptor::phy_fapi_
     dependencies.dl_rg_pool           = &upper.get_downlink_resource_grid_pool();
     dependencies.dl_pdu_validator     = &upper.get_downlink_pdu_validator();
     dependencies.ul_request_processor = &upper.get_uplink_request_processor();
-    dependencies.ul_rg_pool           = &upper.get_uplink_resource_grid_pool();
     dependencies.ul_pdu_repository    = &upper.get_uplink_pdu_slot_repository();
     dependencies.ul_pdu_validator     = &upper.get_uplink_pdu_validator();
     dependencies.pm_repo              = std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_repository>>(

@@ -159,7 +159,7 @@ public:
   public:
     dummy_instance(uplink_slot_processor& base_) : base(base_) {}
 
-    void handle_rx_symbol(const shared_resource_grid& grid, unsigned end_symbol_index) override
+    void handle_rx_symbol(unsigned end_symbol_index) override
     {
       // Ignore symbol.
     }
@@ -193,6 +193,7 @@ public:
                         std::unique_ptr<pusch_processor> pusch_proc_,
                         std::unique_ptr<pucch_processor> pucch_proc_,
                         std::unique_ptr<srs_estimator>   srs_,
+                        std::unique_ptr<resource_grid>   grid_,
                         task_executor_collection&        task_executors_,
                         rx_buffer_pool&                  rm_buffer_pool_,
                         upper_phy_rx_results_notifier&   notifier_,
@@ -209,8 +210,11 @@ public:
   void stop() override;
 
 private:
+  /// Creates a static resource grid reference counter that outlives the repository.
+  static std::atomic<unsigned>& get_grid_ref_counter();
+
   // See uplink_slot_processor interface for documentation.
-  void handle_rx_symbol(const shared_resource_grid& grid, unsigned end_symbol_index) override;
+  void handle_rx_symbol(unsigned end_symbol_index) override;
 
   // See uplink_slot_processor interface for documentation.
   void process_prach(const prach_buffer& buffer, const prach_buffer_context& context) override;
@@ -219,17 +223,16 @@ private:
   void discard_slot() override;
 
   /// Helper method for processing PUSCH.
-  void process_pusch(const shared_resource_grid& grid, const uplink_pdu_slot_repository::pusch_pdu& pdu);
+  void process_pusch(const uplink_pdu_slot_repository::pusch_pdu& pdu);
 
   /// Helper method for processing PUCCH.
-  void process_pucch(const shared_resource_grid& grid, const uplink_pdu_slot_repository::pucch_pdu& pdu);
+  void process_pucch(const uplink_pdu_slot_repository::pucch_pdu& pdu);
 
   /// Helper method for processing PUCCH Format 1.
-  void process_pucch_f1(const shared_resource_grid&                                 grid,
-                        const uplink_pdu_slot_repository_impl::pucch_f1_collection& collection);
+  void process_pucch_f1(const uplink_pdu_slot_repository_impl::pucch_f1_collection& collection);
 
   /// Helper method for processing SRS.
-  void process_srs(const shared_resource_grid& grid, const uplink_pdu_slot_repository::srs_pdu& pdu);
+  void process_srs(const uplink_pdu_slot_repository::srs_pdu& pdu);
 
   /// Helper method for notifying a discarded PUSCH reception.
   void notify_discard_pusch(const uplink_pdu_slot_repository::pusch_pdu& pdu);
@@ -240,6 +243,8 @@ private:
   /// Helper method for notifying a discarded PUCCH Format 1 collection.
   void notify_discard_pucch(const uplink_pdu_slot_repository_impl::pucch_f1_collection& collection);
 
+  /// Resource grid reference counter.
+  std::atomic<unsigned>& grid_ref_counter;
   /// PDU repository.
   uplink_pdu_slot_repository_impl pdu_repository;
   /// Pool of PUSCH processor adaptors.
@@ -254,6 +259,8 @@ private:
   std::unique_ptr<pucch_processor> pucch_proc;
   /// SRS channel estimator.
   std::unique_ptr<srs_estimator> srs;
+  /// Resource grid associated to the slot.
+  std::unique_ptr<resource_grid> grid;
   /// Task executors.
   task_executor_collection task_executors;
   /// Internal dummy instance to avoid exposing \c handle_rx_symbol() and \c discard_slot() in slots that do not match

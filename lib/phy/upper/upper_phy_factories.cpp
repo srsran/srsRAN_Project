@@ -44,11 +44,13 @@ public:
                                 std::shared_ptr<pusch_processor_factory>         pusch_factory_,
                                 std::shared_ptr<prach_detector_factory>          prach_factory_,
                                 std::shared_ptr<srs_estimator_factory>           srs_factory_,
+                                std::shared_ptr<resource_grid_factory>           grid_factory_,
                                 uplink_processor_impl::task_executor_collection& task_executors_) :
     pucch_factory(std::move(pucch_factory_)),
     pusch_factory(std::move(pusch_factory_)),
     prach_factory(std::move(prach_factory_)),
     srs_factory(std::move(srs_factory_)),
+    grid_factory(std::move(grid_factory_)),
     task_executors(task_executors_)
   {
     report_fatal_error_if_not(prach_factory, "Invalid PRACH factory.");
@@ -71,14 +73,19 @@ public:
     std::unique_ptr<srs_estimator> srs = srs_factory->create();
     report_fatal_error_if_not(srs, "Invalid SRS estimator.");
 
+    std::unique_ptr<resource_grid> grid =
+        grid_factory->create(config.nof_rx_ports, MAX_NSYMB_PER_SLOT, config.nof_rb * NOF_SUBCARRIERS_PER_RB);
+    report_fatal_error_if_not(grid, "Invalid SRS estimator.");
+
     return std::make_unique<uplink_processor_impl>(std::move(prach),
                                                    std::move(pusch_proc),
                                                    std::move(pucch_proc),
                                                    std::move(srs),
+                                                   std::move(grid),
                                                    task_executors,
                                                    config.rm_buffer_pool,
                                                    config.notifier,
-                                                   config.max_nof_rb,
+                                                   config.nof_rb,
                                                    config.max_nof_layers);
   }
 
@@ -97,14 +104,19 @@ public:
     std::unique_ptr<srs_estimator> srs = srs_factory->create(logger);
     report_fatal_error_if_not(srs, "Invalid SRS estimator.");
 
+    std::unique_ptr<resource_grid> grid =
+        grid_factory->create(config.nof_rx_ports, MAX_NSYMB_PER_SLOT, config.nof_rb * NOF_SUBCARRIERS_PER_RB);
+    report_fatal_error_if_not(grid, "Invalid SRS estimator.");
+
     return std::make_unique<uplink_processor_impl>(std::move(prach),
                                                    std::move(pusch_proc),
                                                    std::move(pucch_proc),
                                                    std::move(srs),
+                                                   std::move(grid),
                                                    task_executors,
                                                    config.rm_buffer_pool,
                                                    config.notifier,
-                                                   config.max_nof_rb,
+                                                   config.nof_rb,
                                                    config.max_nof_layers);
   }
 
@@ -121,6 +133,7 @@ private:
   std::shared_ptr<pusch_processor_factory>        pusch_factory;
   std::shared_ptr<prach_detector_factory>         prach_factory;
   std::shared_ptr<srs_estimator_factory>          srs_factory;
+  std::shared_ptr<resource_grid_factory>          grid_factory;
   uplink_processor_impl::task_executor_collection task_executors;
 };
 
@@ -300,25 +313,10 @@ create_dl_resource_grid_pool(const upper_phy_config& config, std::shared_ptr<res
   return create_asynchronous_resource_grid_pool(*config.dl_executor, std::move(grids));
 }
 
-static std::unique_ptr<resource_grid_pool>
-create_ul_resource_grid_pool(const upper_phy_config& config, std::shared_ptr<resource_grid_factory> rg_factory)
-{
-  // Configure one pool per upper PHY.
-  report_fatal_error_if_not(rg_factory, "Invalid resource grid factory.");
-
-  // Generate resource grid instances.
-  std::vector<std::unique_ptr<resource_grid>> grids(config.nof_ul_rg);
-  std::generate(
-      grids.begin(), grids.end(), [&rg_factory, nof_rx_ports = config.nof_rx_ports, ul_bw_rb = config.ul_bw_rb]() {
-        return rg_factory->create(nof_rx_ports, MAX_NSYMB_PER_SLOT, ul_bw_rb * NRE);
-      });
-
-  // Create UL resource grid pool.
-  return create_generic_resource_grid_pool(std::move(grids));
-}
-
 static std::shared_ptr<uplink_processor_factory>
-create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_notifiers* metric_notifier)
+create_ul_processor_factory(const upper_phy_config&                config,
+                            std::shared_ptr<resource_grid_factory> rg_factory,
+                            upper_phy_metrics_notifiers*           metric_notifier)
 {
   // Verify the PUSCH processor capabilities.
   pusch_processor_phy_capabilities pusch_capabilities = get_pusch_processor_phy_capabilities();
@@ -671,6 +669,7 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
                                                       std::move(pusch_factory),
                                                       std::move(prach_factory),
                                                       std::move(srs_factory),
+                                                      rg_factory,
                                                       ul_task_executors);
   report_fatal_error_if_not(factory, "Invalid Uplink processor factory.");
 
@@ -702,7 +701,8 @@ create_ul_processor_pool(uplink_processor_factory&      factory,
     // Prepare UL processor configuration.
     uplink_processor_config ul_proc_config = {.notifier       = rx_results_notifier,
                                               .rm_buffer_pool = rm_buffer_pool,
-                                              .max_nof_rb     = config.ul_bw_rb,
+                                              .nof_rx_ports   = config.nof_rx_ports,
+                                              .nof_rb         = config.ul_bw_rb,
                                               .max_nof_layers = config.pusch_max_nof_layers};
 
     for (unsigned count = 0; count != config.nof_ul_rg; ++count) {
@@ -783,10 +783,8 @@ public:
     phy_config.dl_rg_pool = create_dl_resource_grid_pool(config, rg_factory);
     report_fatal_error_if_not(phy_config.dl_rg_pool, "Invalid downlink resource grid pool.");
 
-    std::shared_ptr<uplink_processor_factory> ul_processor_fact = create_ul_processor_factory(config, metric_notifier);
-
-    phy_config.ul_rg_pool = create_ul_resource_grid_pool(config, rg_factory);
-    report_fatal_error_if_not(phy_config.ul_rg_pool, "Invalid uplink resource grid pool.");
+    std::shared_ptr<uplink_processor_factory> ul_processor_fact =
+        create_ul_processor_factory(config, rg_factory, metric_notifier);
 
     if (metric_notifier) {
       downlink_proc_factory = create_downlink_processor_generator_metric_decorator_factory(

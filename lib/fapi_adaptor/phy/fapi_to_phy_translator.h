@@ -69,8 +69,6 @@ struct fapi_to_phy_translator_dependencies {
   const downlink_pdu_validator* dl_pdu_validator;
   /// Uplink request processor.
   uplink_request_processor* ul_request_processor;
-  /// Uplink resource grid pool.
-  resource_grid_pool* ul_rg_pool;
   /// Uplink slot PDU repository.
   uplink_pdu_slot_repository_pool* ul_pdu_repository;
   /// Uplink PDU validator.
@@ -255,8 +253,6 @@ private:
   const downlink_pdu_validator& dl_pdu_validator;
   /// Uplink request processor.
   uplink_request_processor& ul_request_processor;
-  /// Uplink resource grid pool.
-  resource_grid_pool& ul_rg_pool;
   /// Uplink PDU validator.
   const uplink_pdu_validator& ul_pdu_validator;
   /// Uplink slot PDU repository.
