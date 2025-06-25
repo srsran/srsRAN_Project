@@ -559,7 +559,7 @@ set(ALL_HEADER_DIRS
 )
 set(ALL_HEADER_FILES "")
 foreach(TMP_DIR ${ALL_HEADER_DIRS})
-  file(GLOB_RECURSE TMP_HEADERS "${TMP_DIR}/*.h")
+  file(GLOB_RECURSE TMP_HEADERS "${TMP_DIR}/*.h" "${TMP_DIR}/*.hpp")
   list(APPEND ALL_HEADER_FILES ${TMP_HEADERS})
 endforeach()
 add_custom_target(all_srsran_headers SOURCES ${ALL_HEADER_FILES})
