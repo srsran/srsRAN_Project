@@ -32,7 +32,8 @@ ue_cell::ue_cell(du_ue_index_t                ue_index_,
                  rnti_t                       crnti_val,
                  const ue_cell_configuration& ue_cell_cfg_,
                  cell_harq_manager&           cell_harq_pool,
-                 ue_drx_controller&           drx_ctrl_) :
+                 ue_drx_controller&           drx_ctrl_,
+                 std::optional<slot_point>    msg3_slot_rx) :
   ue_index(ue_index_),
   cell_index(ue_cell_cfg_.cell_cfg_common.cell_index),
   harqs(cell_harq_pool.add_ue(ue_index,
@@ -47,6 +48,7 @@ ue_cell::ue_cell(du_ue_index_t                ue_index_,
   expert_cfg(cell_cfg.expert_cfg.ue),
   drx_ctrl(drx_ctrl_),
   logger(srslog::fetch_basic_logger("SCHED")),
+  conres_procedure({.complete = false, .msg3_rx_slot = msg3_slot_rx}),
   channel_state(cell_cfg.expert_cfg.ue, ue_cfg->get_nof_dl_ports()),
   ue_mcs_calculator(ue_cell_cfg_.cell_cfg_common, channel_state),
   pusch_pwr_controller(ue_cell_cfg_, channel_state),
@@ -479,4 +481,13 @@ double ue_cell::get_estimated_ul_rate(const pusch_config_params& pusch_cfg, sch_
 
   // Return the estimated throughput, considering that the number of bytes is for a slot.
   return tbs_bits / NOF_BITS_PER_BYTE;
+}
+
+void ue_cell::set_conres_complete(bool state)
+{
+  conres_procedure.complete = state;
+  if (state) {
+    conres_procedure.msg3_rx_slot.reset();
+    logger.debug("ue={} rnti={}: ConRes procedure completed", fmt::underlying(ue_index), rnti());
+  }
 }

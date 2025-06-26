@@ -52,6 +52,9 @@ public:
   /// Push BSR indication.
   void push_bsr(const ul_bsr_indication_message& bsr) { sched->handle_ul_bsr_indication(bsr); }
 
+  /// Push UCI indication with 1 positive ACK bit over PUCCH F1.
+  void push_uci_indication(du_cell_index_t cell_idx, slot_point slot_uci);
+
   /// Advance scheduler by one slot.
   void run_slot(du_cell_index_t cell_idx = to_du_cell_index(0));
 

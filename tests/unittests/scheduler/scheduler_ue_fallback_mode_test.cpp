@@ -166,7 +166,23 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
                          return pucch.crnti == rnti and pucch.format() == pucch_format::FORMAT_1 and
                                 pucch.uci_bits.harq_ack_nof_bits > 0;
                        });
-  }));
+  })) << "Failed to schedule ConRes CE and Msg4 PDCCH, PDSCH and PUCCH for UE in fallback mode";
+
+  slot_point uci_slot = next_slot;
+  // Decrease the slot by one, as the the \ref run_slot() function increase the slot at the end of the function.
+  uci_slot -= 1;
+  // Push an ACK to trigger the Contention Resolution completion in the scheduler.
+  this->push_uci_indication(to_du_cell_index(0), uci_slot);
+  run_slot();
+
+  //  ASSERT_TRUE(this->run_slot_until([this]() {
+  //    return std::any_of(this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs.begin(),
+  //                       this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs.end(),
+  //                       [rnti = this->rnti](const pucch_info& pucch) {
+  //                         return pucch.crnti == rnti and pucch.format() == pucch_format::FORMAT_1 and
+  //                                pucch.uci_bits.harq_ack_nof_bits > 0;
+  //                       });
+  //  }));
 
   // Enqueue SRB1 data; with the UE in fallback mode, and after the MSG4 has been delivered, both common and dedicated
   // resources should be used.

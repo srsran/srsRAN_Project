@@ -186,7 +186,7 @@ public:
 
 private:
   /// Update UE configuration.
-  void set_config(const ue_configuration& new_cfg);
+  void set_config(const ue_configuration& new_cfg, std::optional<slot_point> msg3_rx_slot = std::nullopt);
 
   // Expert config parameters used for UE scheduler.
   const scheduler_ue_expert_config& expert_cfg;

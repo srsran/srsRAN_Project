@@ -314,6 +314,13 @@ protected:
     bench->sch.handle_dl_buffer_state_indication(msg);
   }
 
+  void push_conres_mac_ce(du_ue_index_t ue_index)
+  {
+    // Notification from upper layers of DL buffer state.
+    const dl_mac_ce_indication msg{.ue_index = ue_index, .ce_lcid = lcid_dl_sch_t::UE_CON_RES_ID};
+    bench->sch.handle_dl_mac_ce_indication(msg);
+  }
+
   void notify_ul_bsr_from_ue(du_ue_index_t ue_index, unsigned buffer_size, lcg_id_t lcg_id)
   {
     auto& test_ue = get_ue(ue_index);
@@ -1502,6 +1509,8 @@ TEST_F(single_ue_sched_tester, test_ue_scheduling_with_empty_spcell_cfg)
 
   run_slot();
 
+  // Push ConRes MAC CE to trigger the ConRes completion in the scheduler.
+  push_conres_mac_ce(to_du_ue_index(0));
   // Push DL buffer status indication.
   push_buffer_state_to_dl_ue(to_du_ue_index(0), 100, LCID_SRB0);
 

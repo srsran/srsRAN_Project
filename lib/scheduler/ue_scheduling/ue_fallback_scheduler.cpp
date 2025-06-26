@@ -261,6 +261,14 @@ bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_allo
       continue;
     }
 
+    const bool srb0_or_srb1_only = alloc_type != dl_new_tx_alloc_type::conres_only and not u.is_conres_ce_pending();
+    if (srb0_or_srb1_only and not u.get_pcell().is_conres_complete()) {
+      // If the UE hasn't acked the ConRes, we cannot schedule the SRB0 or SRB1, as any MAC PDU received without ConRes
+      // MAC CE would make the Contention Resolution fail, as per TS 38.331, Section 5.1.5.
+      ++next_ue;
+      continue;
+    }
+
     // Make the scheduling attempt.
     dl_sched_outcome outcome = schedule_dl_srb(res_alloc, u, std::nullopt);
     if (outcome == dl_sched_outcome::next_ue) {
@@ -1325,6 +1333,20 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       // UE has no new txs pending. It can be removed.
       ue_it = pending_dl_ues_new_tx.erase(ue_it);
       continue;
+    }
+
+    // Check if the \c ra-ContentionResolutionTimer has expired before the ConRes has been tx-ed and acked.
+    if (u.get_pcell().is_conres_complete() and not u.get_pcell().get_msg3_rx_slot().valid()) {
+      const auto ra_conres_timer_subframes = static_cast<uint32_t>(
+          u.get_pcell().cfg().init_bwp().ul_common.value()->rach_cfg_common.value().ra_con_res_timer.count());
+      if (divide_ceil<uint32_t, uint32_t>(sl - u.get_pcell().get_msg3_rx_slot(), sl.nof_slots_per_subframe()) >
+          ra_conres_timer_subframes) {
+        logger.warning(
+            "ue={} rnti={}: ra-ContentionResolutionTimer expired before the UE has received and acked ConRes",
+            fmt::underlying(u.ue_index),
+            u.crnti);
+        // TODO: remove the UE and continue with the next one.
+      }
     }
 
     ++ue_it;
