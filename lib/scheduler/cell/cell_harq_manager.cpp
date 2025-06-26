@@ -228,7 +228,7 @@ void cell_harq_repository<IsDl>::slot_indication(slot_point sl_tx)
                    "processes. Parameters: dci={} rbs={} mcs={} nof_symbols={} nof_layers={}",
                    h.rnti,
                    fmt::underlying(h.h_id),
-                   IsDl ? "DL" : "UL",
+                   IsDl ? std::string_view{"DL"} : std::string_view{"UL"},
                    dci_format_to_string(get_dci_format(h.prev_tx_params.dci_cfg_type)),
                    h.prev_tx_params.rbs,
                    h.prev_tx_params.mcs,
@@ -260,7 +260,7 @@ void cell_harq_repository<IsDl>::handle_harq_ack_timeout(harq_type& h, slot_poin
                 "process ({} slots elapsed since last NOK).",
                 h.rnti,
                 fmt::underlying(h.h_id),
-                IsDl ? "DL" : "UL",
+                IsDl ? std::string_view{"DL"} : std::string_view{"UL"},
                 h.slot_timeout - h.slot_ack);
   } else {
     if (ack_val) {
@@ -269,7 +269,7 @@ void cell_harq_repository<IsDl>::handle_harq_ack_timeout(harq_type& h, slot_poin
                    "there are still missing PUCCH HARQ-ACK indications. However, one positive ACK was received.",
                    h.rnti,
                    fmt::underlying(h.h_id),
-                   IsDl ? "DL" : "UL",
+                   IsDl ? std::string_view{"DL"} : std::string_view{"UL"},
                    h.slot_timeout - h.slot_ack);
     } else {
       // At least one of the expected ACKs went missing and we haven't received any positive ACK.
@@ -277,7 +277,7 @@ void cell_harq_repository<IsDl>::handle_harq_ack_timeout(harq_type& h, slot_poin
                      "respective HARQ-ACK indication from lower layers (HARQ-ACK slot={})",
                      h.rnti,
                      fmt::underlying(h.h_id),
-                     IsDl ? "DL" : "UL",
+                     IsDl ? std::string_view{"DL"} : std::string_view{"UL"},
                      h.slot_timeout - h.slot_ack,
                      h.slot_ack);
     }
@@ -373,14 +373,14 @@ void cell_harq_repository<IsDl>::handle_ack(harq_type& h, bool ack)
                    "were cancelled",
                    h.rnti,
                    fmt::underlying(h.h_id),
-                   IsDl ? "DL" : "UL",
+                   IsDl ? std::string_view{"DL"} : std::string_view{"UL"},
                    h.prev_tx_params.tbs_bytes);
     } else {
       logger.info(
           "rnti={} h_id={}: Discarding {} HARQ process TB with tbs={}. Cause: Maximum number of reTxs {} exceeded",
           h.rnti,
           fmt::underlying(h.h_id),
-          IsDl ? "DL" : "UL",
+          IsDl ? std::string_view{"DL"} : std::string_view{"UL"},
           h.prev_tx_params.tbs_bytes,
           h.max_nof_harq_retxs);
     }

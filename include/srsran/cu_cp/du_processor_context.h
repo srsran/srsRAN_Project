@@ -47,10 +47,14 @@ struct du_cell_configuration {
   tac_t tac;
   /// Physical cell ID
   pci_t pci;
+  /// PLMN identitys served by the cell.
+  std::vector<plmn_identity> served_plmns;
   /// NR bands provided/supported by the cell.
   std::vector<nr_band> bands;
   /// System Information provided by the DU for this cell.
   du_sys_info sys_info;
+  /// Deactivated PLMN identitys initially served by the cell.
+  std::vector<plmn_identity> deactivated_plmns;
 };
 
 } // namespace srs_cu_cp

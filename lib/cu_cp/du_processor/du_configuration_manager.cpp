@@ -82,6 +82,16 @@ public:
     return {};
   }
 
+  void handle_gnb_cu_configuration_update(const f1ap_gnb_cu_configuration_update& req) override
+  {
+    if (this->ctxt == nullptr) {
+      srslog::fetch_basic_logger("CU-CP").debug(
+          "Can't handle gNB CU Configuration Update. Cause: DU configuration context not found.");
+      return;
+    }
+    parent.handle_gnb_cu_configuration_update(req, this->ctxt->id);
+  }
+
 private:
   du_configuration_manager& parent;
 };
@@ -101,10 +111,12 @@ static du_cell_configuration create_du_cell_config(du_cell_index_t              
 {
   const auto&           cell_req = f1ap_cell_cfg.served_cell_info;
   du_cell_configuration cell;
-  cell.cell_index = cell_idx;
-  cell.cgi        = cell_req.nr_cgi;
-  cell.tac        = cell_req.five_gs_tac.value();
-  cell.pci        = cell_req.nr_pci;
+  cell.cell_index        = cell_idx;
+  cell.cgi               = cell_req.nr_cgi;
+  cell.tac               = cell_req.five_gs_tac.value();
+  cell.pci               = cell_req.nr_pci;
+  cell.served_plmns      = cell_req.served_plmns;
+  cell.deactivated_plmns = {};
   // Add band information.
   if (cell_req.nr_mode_info.fdd.has_value()) {
     for (const auto& band : cell_req.nr_mode_info.fdd.value().dl_nr_freq_info.freq_band_list_nr) {
@@ -196,6 +208,97 @@ du_configuration_manager::handle_du_config_update(const du_configuration_context
     du_context.served_cells.push_back(create_du_cell_config(cell_idx, cell_to_add));
   }
   return &it->second;
+}
+
+void du_configuration_manager::handle_gnb_cu_configuration_update(const f1ap_gnb_cu_configuration_update& req,
+                                                                  gnb_du_id_t                             du_id)
+{
+  if (dus.find(du_id) == dus.end()) {
+    logger.warning("du_id={}: Failed to update DU. Cause: DU context not found", fmt::underlying(du_id));
+    return;
+  }
+  auto& du_ctxt = dus.at(du_id);
+
+  for (const auto& cell : req.cells_to_be_activated_list) {
+    // Find cell in the served cells.
+    auto it = std::find_if(
+        du_ctxt.served_cells.begin(), du_ctxt.served_cells.end(), [&cell](const auto& c) { return c.cgi == cell.cgi; });
+
+    // If the cell is already in the served cells, update the PLMNs.
+    if (it != du_ctxt.served_cells.end()) {
+      // If a PLMN from the update is not in the currently served PLMN list, add it to the served PLMNs.
+      for (const auto& updated_plmn : cell.available_plmn_list) {
+        if (std::find(it->served_plmns.begin(), it->served_plmns.end(), updated_plmn) == it->served_plmns.end()) {
+          it->served_plmns.push_back(updated_plmn);
+        }
+        // If it is in the deactivated PLMN list, remove it from there.
+        if (std::find(it->deactivated_plmns.begin(), it->deactivated_plmns.end(), updated_plmn) ==
+            it->served_plmns.end()) {
+          it->deactivated_plmns.erase(
+              std::remove(it->deactivated_plmns.begin(), it->deactivated_plmns.end(), updated_plmn),
+              it->deactivated_plmns.end());
+        }
+      }
+
+      // If a currently served PLMN is not in the update, add the PLMN to the deactivated.
+      for (const auto& served_plmn : it->served_plmns) {
+        if (std::find(cell.available_plmn_list.begin(), cell.available_plmn_list.end(), served_plmn) ==
+            cell.available_plmn_list.end()) {
+          it->deactivated_plmns.push_back(served_plmn);
+        }
+      }
+
+      // Remove deactivated PLMNs from served PLMNs.
+      for (const auto& deactivated_plmn : it->deactivated_plmns) {
+        it->served_plmns.erase(std::remove(it->served_plmns.begin(), it->served_plmns.end(), deactivated_plmn),
+                               it->served_plmns.end());
+      }
+    }
+
+    // If the cell is deactivated, move it to the served cells.
+    auto deactivated_it = std::find_if(du_ctxt.deactivated_cells.begin(),
+                                       du_ctxt.deactivated_cells.end(),
+                                       [&cell](const auto& c) { return c.cgi == cell.cgi; });
+    if (deactivated_it != du_ctxt.deactivated_cells.end()) {
+      // Activate all PLMNs from the update.
+      for (const auto& plmn_to_activate : cell.available_plmn_list) {
+        // Add PLMN to served PLMNs.
+        deactivated_it->served_plmns.push_back(plmn_to_activate);
+        // Remove PLMN from deactivated PLMNs.
+        deactivated_it->deactivated_plmns.erase(std::remove(deactivated_it->deactivated_plmns.begin(),
+                                                            deactivated_it->deactivated_plmns.end(),
+                                                            plmn_to_activate),
+                                                deactivated_it->deactivated_plmns.end());
+      }
+
+      // Move cell to served cells.
+      du_ctxt.served_cells.push_back(*deactivated_it);
+      du_ctxt.deactivated_cells.erase(deactivated_it);
+    }
+  }
+
+  for (const auto& cell : req.cells_to_be_deactivated_list) {
+    // Find cell in the served cells.
+    auto it = std::find_if(
+        du_ctxt.served_cells.begin(), du_ctxt.served_cells.end(), [&cell](const auto& c) { return c.cgi == cell.cgi; });
+
+    // If the cell in the served cells, deactivate it.
+    if (it != du_ctxt.served_cells.end()) {
+      // Move all served PLMNs to deactivated PLMNs.
+      for (const auto& plmn : it->served_plmns) {
+        it->deactivated_plmns.push_back(plmn);
+      }
+      // Remove deactivated PLMNs from served PLMNs.
+      for (const auto& deactivated_plmn : it->deactivated_plmns) {
+        it->served_plmns.erase(std::remove(it->served_plmns.begin(), it->served_plmns.end(), deactivated_plmn),
+                               it->served_plmns.end());
+      }
+
+      // Move cell to deactivated cells.
+      du_ctxt.deactivated_cells.push_back(*it);
+      du_ctxt.served_cells.erase(it);
+    }
+  }
 }
 
 void du_configuration_manager::rem_du(gnb_du_id_t du_id)

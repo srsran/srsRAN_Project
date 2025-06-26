@@ -58,6 +58,6 @@ std::unique_ptr<radio_unit> srsran::create_ofh_radio_unit(const ru_ofh_unit_conf
     sector_deps.logger            = dependencies.logger;
   }
 
-  return create_ofh_ru(generate_ru_ofh_config(ru_cfg, ru_config.du_cells, ru_config.max_processing_delay),
+  return create_ofh_ru(generate_ru_ofh_config(ru_cfg, ru_config.cells, ru_config.max_processing_delay),
                        std::move(dependencies));
 }

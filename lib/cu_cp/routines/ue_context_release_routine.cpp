@@ -57,8 +57,9 @@ void ue_context_release_routine::operator()(coro_context<async_task<cu_cp_ue_con
 
     // Call RRC UE notifier to get the release context of the UE and add the location info to the UE context release
     // complete message
-    release_context =
-        ue_mng.find_du_ue(command.ue_index)->get_rrc_ue()->get_rrc_ue_release_context(command.requires_rrc_release);
+    release_context = ue_mng.find_du_ue(command.ue_index)
+                          ->get_rrc_ue()
+                          ->get_rrc_ue_release_context(command.requires_rrc_release, command.release_wait_time);
     release_complete.user_location_info = release_context.user_location_info;
   }
 

@@ -417,7 +417,7 @@ private:
 };
 
 /// Describes a resource grid spy.
-class resource_grid_spy : public resource_grid, private resource_grid_mapper
+class resource_grid_spy : public resource_grid
 {
 public:
   resource_grid_spy(resource_grid_reader& reader_, resource_grid_writer& writer_) : reader(reader_), writer(writer_)
@@ -441,24 +441,6 @@ public:
 
   /// Resets all counters.
   void clear() { set_all_zero_count = 0; }
-
-  void map(resource_grid_writer& grid,
-           const re_buffer_reader<>& /* input */,
-           const re_pattern& /* pattern */,
-           const precoding_configuration& /* precoding */) override
-  {
-    srsran_assertion_failure("Resource grid spy does not implement the resource grid mapper.");
-  }
-
-  void map(resource_grid_writer&          grid,
-           symbol_buffer&                 buffer,
-           const re_pattern_list&         pattern,
-           const re_pattern_list&         reserved,
-           const precoding_configuration& precoding,
-           unsigned                       re_skip) override
-  {
-    srsran_assertion_failure("Resource grid spy does not implement the resource grid mapper.");
-  }
 
 private:
   resource_grid_reader& reader;

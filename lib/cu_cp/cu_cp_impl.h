@@ -158,6 +158,9 @@ public:
   cu_cp_mobility_command_handler& get_mobility_command_handler() override { return mobility_mng; }
   metrics_handler&                get_metrics_handler() override { return *metrics_hdlr; }
 
+  // cu_cp_amf_reconnection_handler.
+  void handle_amf_reconnection(amf_index_t amf_index) override;
+
   // cu_cp public interface.
   cu_cp_f1c_handler&                     get_f1c_handler() override { return controller.get_f1c_handler(); }
   cu_cp_e1_handler&                      get_e1_handler() override { return controller.get_e1_handler(); }
@@ -172,6 +175,7 @@ public:
   cu_cp_mobility_manager_handler&        get_cu_cp_mobility_manager_handler() override { return *this; }
   cu_cp_ue_removal_handler&              get_cu_cp_ue_removal_handler() override { return *this; }
   cu_cp_ue_context_manipulation_handler& get_cu_cp_ue_context_handler() override { return *this; }
+  cu_cp_amf_reconnection_handler&        get_cu_cp_amf_reconnection_handler() override { return *this; }
   cu_configurator&                       get_cu_configurator() override { return cu_cp_cfgtr; }
 
 private:

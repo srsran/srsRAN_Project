@@ -99,7 +99,6 @@ fapi_to_phy_translator::fapi_to_phy_translator(const fapi_to_phy_translator_conf
   logger(*dependencies.logger),
   dl_pdu_validator(*dependencies.dl_pdu_validator),
   ul_request_processor(*dependencies.ul_request_processor),
-  ul_rg_pool(*dependencies.ul_rg_pool),
   ul_pdu_validator(*dependencies.ul_pdu_validator),
   ul_pdu_repository(*dependencies.ul_pdu_repository),
   slot_controller_mngr(*dependencies.dl_processor_pool,
@@ -601,18 +600,17 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
     ul_pdu_slot_repository->add_srs_pdu(pdu);
   }
 
-  // Release repository - it ensures the repository is available when the UL request reaches the RU.
-  ul_pdu_slot_repository.release();
+  // Release repository and obtain uplink resource grid - it ensures that the uplink processing associated with the slot
+  // is ready when the UL request reaches the RU.
+  shared_resource_grid ul_rg = ul_pdu_slot_repository.release();
 
-  // Notify to capture uplink slot.
+  // Prepare the capture uplink slot context.
   resource_grid_context rg_context;
   rg_context.slot   = slot;
   rg_context.sector = sector_id;
 
-  shared_resource_grid ul_rg = ul_rg_pool.allocate_resource_grid(slot);
-
   // Abort UL processing for this slot if the resource grid is not available.
-  if (!ul_rg) {
+  if (SRSRAN_UNLIKELY(!ul_rg)) {
     logger.warning("Sector#{}: Failed to allocate UL resource grid for UL_TTI.request from slot {}.{}",
                    sector_id,
                    msg.sfn,

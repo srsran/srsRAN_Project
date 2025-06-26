@@ -28,16 +28,17 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-cu_cp_controller::cu_cp_controller(const cu_cp_configuration&  config_,
-                                   common_task_scheduler&      common_task_sched_,
-                                   ngap_repository&            ngaps_,
-                                   cu_up_processor_repository& cu_ups_,
-                                   du_processor_repository&    dus_,
-                                   task_executor&              ctrl_exec_) :
+cu_cp_controller::cu_cp_controller(const cu_cp_configuration&      config_,
+                                   cu_cp_amf_reconnection_handler& cu_cp_notifier,
+                                   common_task_scheduler&          common_task_sched_,
+                                   ngap_repository&                ngaps_,
+                                   cu_up_processor_repository&     cu_ups_,
+                                   du_processor_repository&        dus_,
+                                   task_executor&                  ctrl_exec_) :
   cfg(config_),
   ctrl_exec(ctrl_exec_),
   logger(srslog::fetch_basic_logger("CU-CP")),
-  amf_mng(ngaps_, *cfg.services.timers, ctrl_exec_, common_task_sched_),
+  amf_mng(ngaps_, cu_cp_notifier, *cfg.services.timers, ctrl_exec_, common_task_sched_),
   du_mng(cfg.admission.max_nof_dus, dus_, ctrl_exec, common_task_sched_),
   cu_up_mng(cfg.admission.max_nof_cu_ups, cu_ups_, ctrl_exec, common_task_sched_)
 {

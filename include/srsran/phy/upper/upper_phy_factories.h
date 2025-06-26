@@ -47,8 +47,10 @@ struct uplink_processor_config {
   upper_phy_rx_results_notifier& notifier;
   /// Rate Matching receive buffer pool.
   rx_buffer_pool& rm_buffer_pool;
-  /// PUSCH allocation maximum number of PRB.
-  unsigned max_nof_rb;
+  /// Number of receive ports.
+  unsigned nof_rx_ports;
+  /// Resource grid bandwidth in resource blocks.
+  unsigned nof_rb;
   /// PUSCH allocation maximum number of layers.
   unsigned max_nof_layers;
 };

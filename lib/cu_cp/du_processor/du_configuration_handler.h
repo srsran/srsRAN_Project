@@ -24,6 +24,7 @@
 
 #include "srsran/cu_cp/du_processor_context.h"
 #include "srsran/f1ap/cu_cp/du_setup_notifier.h"
+#include "srsran/f1ap/cu_cp/f1ap_cu_configuration_update.h"
 #include "srsran/ran/gnb_du_id.h"
 #include "srsran/support/srsran_assert.h"
 
@@ -39,6 +40,8 @@ struct du_configuration_context {
   uint8_t     rrc_version = 2;
   /// Served cells for this DU.
   std::vector<du_cell_configuration> served_cells;
+  /// Deactivated cells for this DU.
+  std::vector<du_cell_configuration> deactivated_cells;
 
   const du_cell_configuration* find_cell(pci_t pci) const
   {
@@ -72,6 +75,9 @@ public:
 
   /// Update the configuration of an existing DU managed by the CU-CP.
   virtual error_type<du_setup_result::rejected> handle_du_config_update(const du_config_update_request& req) = 0;
+
+  /// Update the configuration of an existing DU managed by the CU-CP.
+  virtual void handle_gnb_cu_configuration_update(const f1ap_gnb_cu_configuration_update& req) = 0;
 
 protected:
   const du_configuration_context* ctxt = nullptr;

@@ -23,23 +23,22 @@
 #include "ru_sdr_config_translator.h"
 #include "apps/services/worker_manager/worker_manager_config.h"
 #include "ru_sdr_config.h"
-#include "srsran/du/du_cell_config.h"
 #include "srsran/ran/band_helper.h"
 
 using namespace srsran;
 
 /// Fills the given low PHY configuration from the given gnb configuration.
-static lower_phy_configuration generate_low_phy_config(const srs_du::du_cell_config& config,
-                                                       const ru_sdr_unit_config&     ru_cfg,
-                                                       unsigned                      max_processing_delay_slot,
-                                                       unsigned                      sector_id)
+static lower_phy_configuration generate_low_phy_config(const flexible_o_du_ru_config::cell_config& config,
+                                                       const ru_sdr_unit_config&                   ru_cfg,
+                                                       unsigned max_processing_delay_slot,
+                                                       unsigned sector_id)
 {
   /// Static configuration that the gnb supports.
   static constexpr cyclic_prefix cp = cyclic_prefix::NORMAL;
 
   lower_phy_configuration out_cfg;
 
-  out_cfg.scs                        = config.scs_common;
+  out_cfg.scs                        = config.scs;
   out_cfg.cp                         = cp;
   out_cfg.sector_id                  = sector_id;
   out_cfg.dft_window_offset          = 0.5F;
@@ -47,7 +46,7 @@ static lower_phy_configuration generate_low_phy_config(const srs_du::du_cell_con
 
   out_cfg.srate = sampling_rate::from_MHz(ru_cfg.srate_MHz);
 
-  out_cfg.ta_offset = band_helper::get_ta_offset(config.dl_carrier.band);
+  out_cfg.ta_offset = band_helper::get_ta_offset(config.band);
   if (ru_cfg.time_alignment_calibration.has_value()) {
     // Selects the user specific value.
     out_cfg.time_alignment_calibration = ru_cfg.time_alignment_calibration.value();
@@ -89,9 +88,7 @@ static lower_phy_configuration generate_low_phy_config(const srs_du::du_cell_con
   out_cfg.system_time_throttling = ru_cfg.expert_cfg.lphy_dl_throttling;
 
   const unsigned bandwidth_sc =
-      NOF_SUBCARRIERS_PER_RB *
-      band_helper::get_n_rbs_from_bw(
-          MHz_to_bs_channel_bandwidth(config.dl_carrier.carrier_bw_mhz), config.scs_common, frequency_range::FR1);
+      NOF_SUBCARRIERS_PER_RB * band_helper::get_n_rbs_from_bw(config.bw, config.scs, frequency_range::FR1);
 
   // Apply gain back-off to account for the PAPR of the signal and the DFT power normalization.
   out_cfg.amplitude_config.input_gain_dB =
@@ -107,12 +104,11 @@ static lower_phy_configuration generate_low_phy_config(const srs_du::du_cell_con
   out_cfg.amplitude_config.full_scale_lin = 1.0F;
 
   lower_phy_sector_description sector_config;
-  sector_config.bandwidth_rb = band_helper::get_n_rbs_from_bw(
-      MHz_to_bs_channel_bandwidth(config.dl_carrier.carrier_bw_mhz), config.scs_common, frequency_range::FR1);
-  sector_config.dl_freq_hz   = band_helper::nr_arfcn_to_freq(config.dl_carrier.arfcn_f_ref);
-  sector_config.ul_freq_hz   = band_helper::nr_arfcn_to_freq(config.ul_carrier.arfcn_f_ref);
-  sector_config.nof_rx_ports = config.ul_carrier.nof_ant;
-  sector_config.nof_tx_ports = config.dl_carrier.nof_ant;
+  sector_config.bandwidth_rb = band_helper::get_n_rbs_from_bw(config.bw, config.scs, frequency_range::FR1);
+  sector_config.dl_freq_hz   = band_helper::nr_arfcn_to_freq(config.dl_arfcn);
+  sector_config.ul_freq_hz   = band_helper::nr_arfcn_to_freq(config.ul_arfcn);
+  sector_config.nof_rx_ports = config.nof_rx_antennas;
+  sector_config.nof_tx_ports = config.nof_tx_antennas;
   out_cfg.sectors.push_back(sector_config);
 
   if (!is_valid_lower_phy_config(out_cfg)) {
@@ -166,9 +162,9 @@ static double calibrate_center_freq_Hz(double center_freq_Hz, double freq_offset
   return (center_freq_Hz + freq_offset_Hz) * (1.0 + calibration_ppm * 1e-6);
 }
 
-static void generate_radio_config(radio_configuration::radio&        out_cfg,
-                                  const ru_sdr_unit_config&          ru_cfg,
-                                  span<const srs_du::du_cell_config> du_cells)
+static void generate_radio_config(radio_configuration::radio&                      out_cfg,
+                                  const ru_sdr_unit_config&                        ru_cfg,
+                                  span<const flexible_o_du_ru_config::cell_config> cells)
 {
   out_cfg.args             = ru_cfg.device_arguments;
   out_cfg.log_level        = ru_cfg.loggers.radio_level;
@@ -183,17 +179,17 @@ static void generate_radio_config(radio_configuration::radio&        out_cfg,
   const std::vector<std::string>& zmq_rx_addr = extract_zmq_ports(ru_cfg.device_arguments, "rx_port");
 
   // For each sector...
-  for (unsigned sector_id = 0; sector_id != du_cells.size(); ++sector_id) {
+  for (unsigned sector_id = 0, e = cells.size(); sector_id != e; ++sector_id) {
     // Select cell configuration.
-    const srs_du::du_cell_config& cell = du_cells[sector_id];
+    const flexible_o_du_ru_config::cell_config& cell = cells[sector_id];
 
     // Each cell is mapped to a different stream.
     radio_configuration::stream tx_stream_config;
     radio_configuration::stream rx_stream_config;
 
     // Deduce center frequencies.
-    const double cell_tx_freq_Hz = band_helper::nr_arfcn_to_freq(cell.dl_carrier.arfcn_f_ref);
-    const double cell_rx_freq_Hz = band_helper::nr_arfcn_to_freq(cell.ul_carrier.arfcn_f_ref);
+    const double cell_tx_freq_Hz = band_helper::nr_arfcn_to_freq(cell.dl_arfcn);
+    const double cell_rx_freq_Hz = band_helper::nr_arfcn_to_freq(cell.ul_arfcn);
 
     // Correct actual RF center frequencies considering offset and PPM calibration.
     double center_tx_freq_cal_Hz =
@@ -208,7 +204,7 @@ static void generate_radio_config(radio_configuration::radio&        out_cfg,
         cell_rx_freq_Hz + ru_cfg.lo_offset_MHz * 1e6, ru_cfg.center_freq_offset_Hz, ru_cfg.calibrate_clock_ppm);
 
     // For each DL antenna port in the cell...
-    for (unsigned port_id = 0; port_id != cell.dl_carrier.nof_ant; ++port_id) {
+    for (unsigned port_id = 0; port_id != cell.nof_tx_antennas; ++port_id) {
       // Create channel configuration and append it to the previous ones.
       radio_configuration::channel tx_ch_config = {};
       tx_ch_config.freq.center_frequency_hz     = center_tx_freq_cal_Hz;
@@ -221,18 +217,18 @@ static void generate_radio_config(radio_configuration::radio&        out_cfg,
 
       // Add the TX ports.
       if (ru_cfg.device_driver == "zmq") {
-        if (sector_id * cell.dl_carrier.nof_ant + port_id >= zmq_tx_addr.size()) {
+        if (sector_id * cell.nof_tx_antennas + port_id >= zmq_tx_addr.size()) {
           report_error("ZMQ transmission channel arguments out of bounds\n");
         }
 
-        tx_ch_config.args = zmq_tx_addr[sector_id * cell.dl_carrier.nof_ant + port_id];
+        tx_ch_config.args = zmq_tx_addr[sector_id * cell.nof_tx_antennas + port_id];
       }
       tx_stream_config.channels.emplace_back(tx_ch_config);
     }
     out_cfg.tx_streams.emplace_back(tx_stream_config);
 
     // For each UL antenna port in the cell...
-    for (unsigned port_id = 0; port_id != cell.ul_carrier.nof_ant; ++port_id) {
+    for (unsigned port_id = 0; port_id != cell.nof_rx_antennas; ++port_id) {
       // Create channel configuration and append it to the previous ones.
       radio_configuration::channel rx_ch_config = {};
       rx_ch_config.freq.center_frequency_hz     = center_rx_freq_cal_Hz;
@@ -245,11 +241,11 @@ static void generate_radio_config(radio_configuration::radio&        out_cfg,
 
       // Add the RX ports.
       if (ru_cfg.device_driver == "zmq") {
-        if (sector_id * cell.ul_carrier.nof_ant + port_id >= zmq_rx_addr.size()) {
+        if (sector_id * cell.nof_rx_antennas + port_id >= zmq_rx_addr.size()) {
           report_error("ZMQ reception channel arguments out of bounds\n");
         }
 
-        rx_ch_config.args = zmq_rx_addr[sector_id * cell.ul_carrier.nof_ant + port_id];
+        rx_ch_config.args = zmq_rx_addr[sector_id * cell.nof_rx_antennas + port_id];
       }
       rx_stream_config.channels.emplace_back(rx_ch_config);
     }
@@ -257,17 +253,17 @@ static void generate_radio_config(radio_configuration::radio&        out_cfg,
   }
 }
 
-ru_generic_configuration srsran::generate_ru_sdr_config(const ru_sdr_unit_config&          ru_cfg,
-                                                        span<const srs_du::du_cell_config> du_cells,
-                                                        unsigned                           max_processing_delay_slots)
+ru_generic_configuration srsran::generate_ru_sdr_config(const ru_sdr_unit_config&                        ru_cfg,
+                                                        span<const flexible_o_du_ru_config::cell_config> cells,
+                                                        unsigned max_processing_delay_slots)
 {
   ru_generic_configuration out_cfg;
   out_cfg.are_metrics_enabled = ru_cfg.metrics_cfg.enable_ru_metrics;
   out_cfg.device_driver       = ru_cfg.device_driver;
-  generate_radio_config(out_cfg.radio_cfg, ru_cfg, du_cells);
+  generate_radio_config(out_cfg.radio_cfg, ru_cfg, cells);
 
   unsigned sector_id = 0;
-  for (const auto& cell : du_cells) {
+  for (const auto& cell : cells) {
     out_cfg.lower_phy_config.push_back(generate_low_phy_config(cell, ru_cfg, max_processing_delay_slots, sector_id++));
   }
 

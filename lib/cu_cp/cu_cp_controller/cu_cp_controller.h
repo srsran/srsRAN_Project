@@ -48,12 +48,13 @@ class ue_manager;
 class cu_cp_controller : public cu_cp_ue_admission_controller
 {
 public:
-  cu_cp_controller(const cu_cp_configuration&  config_,
-                   common_task_scheduler&      common_task_sched_,
-                   ngap_repository&            ngaps_,
-                   cu_up_processor_repository& cu_ups_,
-                   du_processor_repository&    dus_,
-                   task_executor&              ctrl_exec);
+  cu_cp_controller(const cu_cp_configuration&      config_,
+                   cu_cp_amf_reconnection_handler& cu_cp_notifier,
+                   common_task_scheduler&          common_task_sched_,
+                   ngap_repository&                ngaps_,
+                   cu_up_processor_repository&     cu_ups_,
+                   du_processor_repository&        dus_,
+                   task_executor&                  ctrl_exec);
 
   void stop();
 

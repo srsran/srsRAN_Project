@@ -190,9 +190,12 @@ public:
 };
 
 class uplink_pdu_slot_repository_spy : public uplink_pdu_slot_repository_pool,
-                                       private unique_uplink_pdu_slot_repository::uplink_pdu_slot_repository_callback
+                                       private unique_uplink_pdu_slot_repository::uplink_pdu_slot_repository_callback,
+                                       private shared_resource_grid::pool_interface
 {
 public:
+  uplink_pdu_slot_repository_spy() : grid_spy(rg_reader, rg_writer) {}
+
   unique_uplink_pdu_slot_repository get_pdu_slot_repository(slot_point slot) override
   {
     srsran_assert(pusch_pdus.empty(), "PUSCH PDU list is not empty.");
@@ -203,7 +206,9 @@ public:
   }
 
 private:
-  void finish_adding_pdus() override {}
+  static constexpr unsigned resource_grid_id = 0;
+
+  shared_resource_grid finish_adding_pdus() override { return {*this, grid_ref_count, resource_grid_id}; }
 
   void add_pusch_pdu(const pusch_pdu& pdu) override { pusch_pdus.emplace_back(pdu); }
 
@@ -211,10 +216,25 @@ private:
 
   void add_srs_pdu(const srs_pdu& pdu) override { srs_pdus.emplace_back(pdu); }
 
-  slot_point             current_slot;
-  std::vector<pusch_pdu> pusch_pdus;
-  std::vector<pucch_pdu> pucch_pdus;
-  std::vector<srs_pdu>   srs_pdus;
+  resource_grid& get(unsigned identifier) override
+  {
+    srsran_assert(identifier == resource_grid_id, "Invalid identifier {}.", identifier);
+    return grid_spy;
+  }
+
+  void notify_release_scope(unsigned identifier) override
+  {
+    srsran_assert(identifier == resource_grid_id, "Invalid identifier {}.", identifier);
+  }
+
+  slot_point               current_slot;
+  std::vector<pusch_pdu>   pusch_pdus;
+  std::vector<pucch_pdu>   pucch_pdus;
+  std::vector<srs_pdu>     srs_pdus;
+  resource_grid_reader_spy rg_reader;
+  resource_grid_writer_spy rg_writer;
+  resource_grid_spy        grid_spy;
+  std::atomic<unsigned>    grid_ref_count = 0;
 };
 
 } // namespace
@@ -243,7 +263,6 @@ protected:
       &rg_pool,
       &dl_pdu_validator,
       &ul_request_processor,
-      &rg_pool,
       &pdu_repo,
       &ul_pdu_validator,
       std::move(std::get<std::unique_ptr<precoding_matrix_repository>>(generate_precoding_matrix_tables(1, 0))),
@@ -478,7 +497,6 @@ TEST_F(fapi_to_phy_translator_fixture, empty_ul_tti_generates_request_when_allow
        &rg_pool,
        &dl_pdu_validator,
        &ul_request_processor,
-       &rg_pool,
        &pdu_repo,
        &ul_pdu_validator,
        std::move(std::get<std::unique_ptr<precoding_matrix_repository>>(generate_precoding_matrix_tables(1, 0))),

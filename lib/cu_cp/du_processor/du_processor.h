@@ -128,7 +128,19 @@ public:
   virtual async_task<void> on_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) = 0;
 };
 
-class du_processor : public du_processor_cell_info_interface
+class du_processor_configuration_update_interface
+{
+public:
+  virtual ~du_processor_configuration_update_interface() = default;
+
+  /// \brief Apply neccesary configuration changes and forward the GNB CU Configuration Update to the F1AP.
+  /// \param[in] request The F1AP GNB CU Configuration Update.
+  /// \return The F1AP GNB CU Configuration Update response.
+  virtual async_task<f1ap_gnb_cu_configuration_update_response>
+  handle_configuration_update(const f1ap_gnb_cu_configuration_update& request) = 0;
+};
+
+class du_processor : public du_processor_cell_info_interface, public du_processor_configuration_update_interface
 {
 public:
   virtual ~du_processor() = default;

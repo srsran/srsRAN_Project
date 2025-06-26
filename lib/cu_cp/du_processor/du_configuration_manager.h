@@ -24,6 +24,7 @@
 
 #include "du_configuration_handler.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/f1ap/cu_cp/f1ap_cu_configuration_update.h"
 #include "srsran/ran/plmn_identity.h"
 #include "srsran/srslog/srslog.h"
 
@@ -50,6 +51,8 @@ private:
   expected<const du_configuration_context*, du_setup_result::rejected>
        handle_du_config_update(const du_configuration_context& current_ctxt, const du_config_update_request& req);
   void rem_du(gnb_du_id_t du_id);
+
+  void handle_gnb_cu_configuration_update(const f1ap_gnb_cu_configuration_update& req, gnb_du_id_t du_id);
 
   validation_result validate_new_du_config(const du_setup_request& req) const;
   validation_result validate_du_config_update(const du_config_update_request& req) const;

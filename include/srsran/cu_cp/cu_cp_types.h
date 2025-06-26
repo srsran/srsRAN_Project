@@ -40,6 +40,7 @@
 #include "srsran/ran/tac.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -500,9 +501,10 @@ struct cu_cp_pdu_session_resource_modify_response {
 };
 
 struct cu_cp_ue_context_release_command {
-  ue_index_t   ue_index = ue_index_t::invalid;
-  ngap_cause_t cause;
-  bool         requires_rrc_release = true;
+  ue_index_t                          ue_index = ue_index_t::invalid;
+  ngap_cause_t                        cause;
+  bool                                requires_rrc_release = true;
+  std::optional<std::chrono::seconds> release_wait_time    = std::nullopt;
 };
 
 struct cu_cp_ue_context_release_request {

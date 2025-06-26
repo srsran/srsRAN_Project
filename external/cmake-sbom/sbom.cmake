@@ -415,7 +415,14 @@ function(sbom_finalize)
 		string(REPLACE \";\" \"\" SBOM_VERIFICATION_CODES \"\${SBOM_VERIFICATION_CODES}\")
 		file(WRITE \"${PROJECT_BINARY_DIR}/sbom/verification.txt\" \"\${SBOM_VERIFICATION_CODES}\")
 		file(SHA1 \"${PROJECT_BINARY_DIR}/sbom/verification.txt\" SBOM_VERIFICATION_CODE)
-		configure_file(\"${PROJECT_BINARY_DIR}/sbom/sbom.spdx.in\" \"${_sbom}\")
+		if(DEFINED ENV{DESTDIR})
+			set(_dest \"\$ENV{DESTDIR}${_sbom}\")
+		else()
+			set(_dest \"${_sbom}\")
+		endif()
+		get_filename_component(_dest_dir \"\${_dest}\" DIRECTORY)
+		file(MAKE_DIRECTORY \"\${_dest_dir}\")
+		configure_file(\"${PROJECT_BINARY_DIR}/sbom/sbom.spdx.in\" \"\${_dest}\" COPYONLY)
 		"
 	)
 
@@ -631,12 +638,13 @@ Relationship: ${SBOM_FILE_RELATIONSHIP}"
 			"
 			cmake_policy(SET CMP0011 NEW)
 			cmake_policy(SET CMP0012 NEW)
-			if(NOT EXISTS \"\${CMAKE_INSTALL_PREFIX}/${SBOM_FILE_FILENAME}\")
+			set(_install_root \"\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}\")
+			if(NOT EXISTS \"\${_install_root}/${SBOM_FILE_FILENAME}\")
 				if(NOT ${SBOM_FILE_OPTIONAL})
 					message(FATAL_ERROR \"Cannot find ${SBOM_FILE_FILENAME}\")
 				endif()
 			else()
-				file(SHA1 \${CMAKE_INSTALL_PREFIX}/${SBOM_FILE_FILENAME} _sha1)
+				file(SHA1 \${_install_root}/${SBOM_FILE_FILENAME} _sha1)
 				list(APPEND SBOM_VERIFICATION_CODES \${_sha1})
 				file(APPEND \"${PROJECT_BINARY_DIR}/sbom/sbom.spdx.in\"
 \"

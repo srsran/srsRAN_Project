@@ -37,6 +37,7 @@ public:
   amf_connection_loss_routine(const amf_index_t                 amf_index_,
                               const cu_cp_configuration&        cu_cp_cfg_,
                               std::vector<plmn_identity>&       plmns_,
+                              du_processor_repository&          du_db_,
                               cu_cp_ue_context_release_handler& ue_release_handler_,
                               ue_manager&                       ue_mng_,
                               cu_cp_controller&                 controller_,
@@ -46,12 +47,11 @@ public:
 
   void operator()(coro_context<async_task<void>>& ctx);
 
-  void release_ues();
-
 private:
   const amf_index_t                 amf_index;
   const cu_cp_configuration&        cu_cp_cfg;
   std::vector<plmn_identity>&       plmns;
+  du_processor_repository&          du_db;
   cu_cp_ue_context_release_handler& ue_release_handler;
   ue_manager&                       ue_mng;
   cu_cp_controller&                 controller;

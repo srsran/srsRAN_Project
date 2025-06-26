@@ -537,7 +537,8 @@ async_task<bool> rrc_ue_impl::handle_rrc_ue_capability_transfer_request(const rr
   return launch_async<rrc_ue_capability_transfer_procedure>(context, *this, *event_mng, logger);
 }
 
-rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context(bool requires_rrc_message)
+rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context(bool                                requires_rrc_message,
+                                                               std::optional<std::chrono::seconds> release_wait_time)
 {
   // Prepare location info to return.
   rrc_ue_release_context release_context;
@@ -570,8 +571,14 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context(bool requires_rrc
         return release_context;
       }
 
-      dl_dcch_msg_s dl_dcch_msg;
-      dl_dcch_msg.msg.set_c1().set_rrc_release().crit_exts.set_rrc_release();
+      dl_dcch_msg_s      dl_dcch_msg;
+      rrc_release_ies_s& release = dl_dcch_msg.msg.set_c1().set_rrc_release().crit_exts.set_rrc_release();
+      if (release_wait_time.has_value()) {
+        release.non_crit_ext_present = true;
+        // If wait time is provided, set it.
+        release.non_crit_ext.wait_time_present = true;
+        release.non_crit_ext.wait_time         = release_wait_time.value().count();
+      }
 
       // Pack DL CCCH msg.
       pdcp_tx_result pdcp_packing_result =

@@ -44,6 +44,14 @@ public:
   ///
   /// If the uplink processor assigned to the given slot is not available, the unique PDU slot repository will be
   /// invalid.
+  ///
+  /// An uplink processor is not available if:
+  /// - the associated resource grid is present in a scope; or
+  /// - the processor is executing processing tasks asynchronously.
+  ///
+  /// The uplink processor will discard pending PDUs prior configuring the new slot if:
+  /// - the associated resource grid is not present in any scope; and
+  /// - the processor is not processing any task asynchronously.
   virtual unique_uplink_pdu_slot_repository get_pdu_slot_repository(slot_point slot) = 0;
 
   /// \brief Gets the slot processing interface.

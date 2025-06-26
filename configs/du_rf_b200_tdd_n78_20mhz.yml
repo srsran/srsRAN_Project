@@ -1,9 +1,12 @@
 # Example config for a DU with one 20MHz TDD cell using a USRP as RF frontend.
 f1ap:
   cu_cp_addr: 127.0.10.1
-  bind_addr: 127.0.10.2
-nru:
-  bind_addr: 127.0.10.2
+  bind_addr: 127.0.1.2
+
+f1u:
+  socket:
+    -
+      bind_addr: 127.0.1.2
 
 ru_sdr:
   device_driver: uhd

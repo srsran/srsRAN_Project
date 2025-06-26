@@ -54,19 +54,25 @@ tests:
           max_pucchs_per_slot: 10
         pusch:
           max_puschs_per_slot: 2
+      cu_cp:
+        rrc:
+          rrc_procedure_timeout_ms: 7200
       expert_execution:
         queues:
           du_ue_data_executor_queue_size: 16384
         threads:
           non_rt:
+            nof_non_rt_threads: 3
             non_rt_task_queue_size: 8192
           upper_phy:
-            nof_pusch_decoder_threads: 2
+            nof_dl_threads: 4
+            nof_ul_threads: 1
+            nof_pusch_decoder_threads: 3
     # Pass / Fail Criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6
     expected_max_late_harqs: 4
-    expected_nof_kos: 1
+    expected_nof_kos: 5
     warning_as_errors: true
     warning_allowlist: &base_warning_allowlist
       - missed incoming User-Plane PRACH messages
@@ -81,7 +87,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 72.0e+6
     expected_max_late_harqs: 4
-    expected_nof_kos: 1
+    expected_nof_kos: 5
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -93,13 +99,6 @@ tests:
     gnb_extra_config:
       <<: *base_config
       cell_cfg:
-        pdsch:
-          max_pdschs_per_slot: 4
-        ul_common:
-          max_ul_grants_per_slot: 12
-          max_pucchs_per_slot: 10
-        pusch:
-          max_puschs_per_slot: 2
         sched_expert_cfg:
           policy_sched_cfg:
             qos_sched:
@@ -108,7 +107,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 72.0e+6
     expected_max_late_harqs: 4
-    expected_nof_kos: 1
+    expected_nof_kos: 5
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -125,7 +124,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 72.0e+6
     expected_max_late_harqs: 4
-    expected_nof_kos: 1
+    expected_nof_kos: 5
     warning_as_errors: true
     warning_allowlist:
       - missed incoming User-Plane PRACH messages
@@ -167,7 +166,7 @@ tests:
     expected_dl_bitrate: 1.0e+9
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 1
+    expected_nof_kos: 5
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -181,7 +180,7 @@ tests:
     expected_dl_bitrate: 1.0e+9
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 1
+    expected_nof_kos: 5
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -197,7 +196,7 @@ tests:
     expected_dl_bitrate: 1.0e+9
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 1
+    expected_nof_kos: 5
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -237,7 +236,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 1
+    expected_nof_kos: 5
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -249,13 +248,6 @@ tests:
     gnb_extra_config:
       <<: *base_config
       cell_cfg:
-        pdsch:
-          max_pdschs_per_slot: 4
-        ul_common:
-          max_ul_grants_per_slot: 12
-          max_pucchs_per_slot: 10
-        pusch:
-          max_puschs_per_slot: 2
         pucch:
           sr_period_ms: 20
           f2_or_f3_or_f4_nof_cell_res_csi: 21
@@ -270,7 +262,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 1
+    expected_nof_kos: 5
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -282,13 +274,6 @@ tests:
     gnb_extra_config:
       <<: *base_config
       cell_cfg:
-        pdsch:
-          max_pdschs_per_slot: 4
-        ul_common:
-          max_ul_grants_per_slot: 12
-          max_pucchs_per_slot: 10
-        pusch:
-          max_puschs_per_slot: 2
         pucch:
           sr_period_ms: 40
           f0_or_f1_nof_cell_res_sr: 30
@@ -298,20 +283,11 @@ tests:
           nof_dl_symbols: 10
           nof_ul_slots: 7
           nof_ul_symbols: 0
-      expert_execution:
-        queues:
-          du_ue_data_executor_queue_size: 16384
-        threads:
-          upper_phy:
-            nof_ul_threads: 3
-            nof_pusch_decoder_threads: 3
-          non_rt:
-            non_rt_task_queue_size: 8192
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 1
+    expected_nof_kos: 5
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -323,13 +299,6 @@ tests:
     gnb_extra_config:
       <<: *base_config
       cell_cfg:
-        pdsch:
-          max_pdschs_per_slot: 4
-        ul_common:
-          max_ul_grants_per_slot: 12
-          max_pucchs_per_slot: 10
-        pusch:
-          max_puschs_per_slot: 2
         pucch:
           sr_period_ms: 40
           f0_or_f1_nof_cell_res_sr: 30
@@ -339,20 +308,11 @@ tests:
           nof_dl_symbols: 10
           nof_ul_slots: 6
           nof_ul_symbols: 0
-      expert_execution:
-        queues:
-          du_ue_data_executor_queue_size: 16384
-        threads:
-          upper_phy:
-            nof_ul_threads: 3
-            nof_pusch_decoder_threads: 3
-          non_rt:
-            non_rt_task_queue_size: 8192
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 1
+    expected_nof_kos: 5
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -364,13 +324,6 @@ tests:
     gnb_extra_config:
       <<: *base_config
       cell_cfg:
-        pdsch:
-          max_pdschs_per_slot: 4
-        ul_common:
-          max_ul_grants_per_slot: 12
-          max_pucchs_per_slot: 10
-        pusch:
-          max_puschs_per_slot: 2
         pucch:
           sr_period_ms: 40
           f0_or_f1_nof_cell_res_sr: 30
@@ -380,20 +333,11 @@ tests:
           nof_dl_symbols: 12
           nof_ul_slots: 3
           nof_ul_symbols: 0
-      expert_execution:
-        queues:
-          du_ue_data_executor_queue_size: 16384
-        threads:
-          upper_phy:
-            nof_ul_threads: 3
-            nof_pusch_decoder_threads: 3
-          non_rt:
-            non_rt_task_queue_size: 8192
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 1
+    expected_nof_kos: 5
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -402,12 +346,7 @@ tests:
     test_name: "1UE birth-death UDP bidirectional"
     test_timeout: *test_timeout
     # Configuration
-    gnb_extra_config:
-      <<: *base_config
-      expert_execution:
-        threads:
-          upper_phy:
-            nof_pusch_decoder_threads: 3
+    gnb_extra_config: *base_config
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
@@ -426,7 +365,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 1
+    expected_nof_kos: 5
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -440,7 +379,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 1
+    expected_nof_kos: 5
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -452,13 +391,6 @@ tests:
     gnb_extra_config: &1ue_mimo_config
       <<: *base_config
       cell_cfg:
-        pdsch:
-          max_pdschs_per_slot: 4
-        ul_common:
-          max_ul_grants_per_slot: 12
-          max_pucchs_per_slot: 10
-        pusch:
-          max_puschs_per_slot: 2
         nof_antennas_ul: 2
         srs:
           srs_period_ms: 10
@@ -466,7 +398,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 130.0e+6
     expected_max_late_harqs: 4
-    expected_nof_kos: 1
+    expected_nof_kos: 5
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -475,14 +407,7 @@ tests:
     test_name: "1UE fading noise UDP uplink"
     test_timeout: *test_timeout
     # Configuration
-    gnb_extra_config:
-      <<: *1ue_mimo_config
-      expert_execution:
-        queues:
-          du_ue_data_executor_queue_size: 16384
-        threads:
-          upper_phy:
-            nof_pusch_decoder_threads: 3
+    gnb_extra_config: *1ue_mimo_config
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
@@ -500,7 +425,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6
     expected_max_late_harqs: 4
-    expected_nof_kos: 1
+    expected_nof_kos: 5
     warning_as_errors: true
 
   - id: "32UE ideal UDP bidirectional Long 3h"
@@ -513,7 +438,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6
     expected_max_late_harqs: 4
-    expected_nof_kos: 1
+    expected_nof_kos: 5
     warning_as_errors: true
 
   - id: "32UE ideal UDP bidirectional Long 24h"
@@ -522,6 +447,7 @@ tests:
     test_timeout: 90000
     # Configuration
     gnb_extra_config:
+      <<: *base_config
       log:
         all_level: warning
         lib_level: warning
@@ -534,21 +460,6 @@ tests:
           enable_rlc: true
           enable_ru: true
           enable_pdcp: true
-      cell_cfg:
-        pdsch:
-          max_pdschs_per_slot: 4
-        ul_common:
-          max_ul_grants_per_slot: 12
-          max_pucchs_per_slot: 10
-        pusch:
-          max_puschs_per_slot: 2
-      expert_execution:
-        queues:
-          du_ue_data_executor_queue_size: 16384
-        threads:
-          non_rt:
-            non_rt_task_queue_size: 8192
-            nof_pusch_decoder_threads: 2
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3

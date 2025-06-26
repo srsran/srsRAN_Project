@@ -126,15 +126,34 @@ static o_du_low_unit_config generate_o_du_low_config(const du_low_unit_config&  
         cell.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index;
     du_low_cell.max_puschs_per_slot  = du_hi_cell.cell.pusch_cfg.max_puschs_per_slot;
     du_low_cell.pusch_max_nof_layers = cell.pusch_max_nof_layers;
-    if (cell.tdd_ul_dl_cfg_common) {
-      du_low_cell.tdd_pattern1 = cell.tdd_ul_dl_cfg_common->pattern1;
-      if (cell.tdd_ul_dl_cfg_common->pattern2) {
-        du_low_cell.tdd_pattern2 = cell.tdd_ul_dl_cfg_common->pattern2;
-      }
-    }
+    du_low_cell.tdd_pattern          = cell.tdd_ul_dl_cfg_common;
   }
 
   return odu_low_cfg;
+}
+
+static flexible_o_du_ru_config generate_o_du_ru_config(span<const srs_du::du_cell_config> cells,
+                                                       unsigned                           max_processing_delay,
+                                                       unsigned                           prach_nof_ports)
+{
+  flexible_o_du_ru_config out_cfg;
+  out_cfg.prach_nof_ports      = prach_nof_ports;
+  out_cfg.max_processing_delay = max_processing_delay;
+
+  for (const auto& cell : cells) {
+    auto& out_cell           = out_cfg.cells.emplace_back();
+    out_cell.nof_tx_antennas = cell.dl_carrier.nof_ant;
+    out_cell.nof_rx_antennas = cell.ul_carrier.nof_ant;
+    out_cell.scs             = cell.scs_common;
+    out_cell.dl_arfcn        = cell.dl_carrier.arfcn_f_ref;
+    out_cell.ul_arfcn        = cell.ul_carrier.arfcn_f_ref;
+    out_cell.tdd_config      = cell.tdd_ul_dl_cfg_common;
+    out_cell.bw              = MHz_to_bs_channel_bandwidth(cell.dl_carrier.carrier_bw_mhz);
+    out_cell.band            = cell.dl_carrier.band;
+    out_cell.cp              = cell.dl_cfg_common.init_dl_bwp.generic_params.cp;
+  }
+
+  return out_cfg;
 }
 
 o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependencies& dependencies)
@@ -229,9 +248,8 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
   auto odu_instance = make_o_du(std::move(odu_dependencies));
   report_error_if_not(odu_instance, "Invalid Distributed Unit");
 
-  flexible_o_du_ru_config       ru_config{{du_cells},
-                                    du_lo.expert_phy_cfg.max_processing_delay_slots,
-                                    static_cast<unsigned>(du_hi.cells_cfg.front().cell.prach_cfg.ports.size())};
+  flexible_o_du_ru_config ru_config = generate_o_du_ru_config(
+      du_cells, du_lo.expert_phy_cfg.max_processing_delay_slots, du_hi.cells_cfg.front().cell.prach_cfg.ports.size());
   flexible_o_du_ru_dependencies ru_dependencies{*dependencies.workers,
                                                 du_impl->get_upper_ru_ul_adapter(),
                                                 du_impl->get_upper_ru_timing_adapter(),

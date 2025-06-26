@@ -51,6 +51,13 @@ N300_CONFIG_FILE: str = "configs/gnb_rf_n310_fdd_n3_20mhz.yml"
     ),
 )
 @mark.rf_b200
+@mark.flaky(
+    reruns=2,
+    only_rerun=[
+        "socket is already closed",
+        "failed to connect to all addresses",
+    ],
+)
 def test_rf_b200_config(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,

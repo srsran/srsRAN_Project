@@ -53,8 +53,6 @@ struct upper_phy_impl_config {
   std::unique_ptr<uplink_processor_pool> ul_processor_pool;
   /// Downlink resource grid pool.
   std::unique_ptr<resource_grid_pool> dl_rg_pool;
-  /// Uplink resource grid pool.
-  std::unique_ptr<resource_grid_pool> ul_rg_pool;
   /// PRACH buffer pool.
   std::unique_ptr<prach_buffer_pool> prach_pool;
   /// Receive buffer pool.
@@ -130,9 +128,6 @@ public:
   resource_grid_pool& get_downlink_resource_grid_pool() override;
 
   // See interface for documentation.
-  resource_grid_pool& get_uplink_resource_grid_pool() override;
-
-  // See interface for documentation.
   uplink_request_processor& get_uplink_request_processor() override;
 
   // See interface for documentation.
@@ -167,8 +162,6 @@ private:
   std::unique_ptr<rx_buffer_pool_controller> rx_buf_pool;
   /// Downlink resource grid pool.
   std::unique_ptr<resource_grid_pool> dl_rg_pool;
-  /// Uplink resource grid pool.
-  std::unique_ptr<resource_grid_pool> ul_rg_pool;
   /// PRACH buffer pool.
   std::unique_ptr<prach_buffer_pool> prach_pool;
   /// Downlink processor pool.

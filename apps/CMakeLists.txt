@@ -20,6 +20,7 @@
 
 add_subdirectory(cu)
 add_subdirectory(du)
+add_subdirectory(du_low)
 add_subdirectory(examples)
 add_subdirectory(gnb)
 add_subdirectory(helpers)

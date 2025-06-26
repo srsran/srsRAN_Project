@@ -68,9 +68,6 @@ public:
   /// Returns the downlink resource grid pool of this upper PHY.
   virtual resource_grid_pool& get_downlink_resource_grid_pool() = 0;
 
-  /// Returns the uplink resource grid pool of this upper PHY.
-  virtual resource_grid_pool& get_uplink_resource_grid_pool() = 0;
-
   /// Returns the uplink request processor of this upper PHY.
   virtual uplink_request_processor& get_uplink_request_processor() = 0;
 

@@ -38,10 +38,11 @@ struct cu_cp_configuration;
 class amf_connection_manager
 {
 public:
-  amf_connection_manager(ngap_repository&       ngaps_,
-                         timer_manager&         timers_,
-                         task_executor&         cu_cp_exec_,
-                         common_task_scheduler& common_task_sched_);
+  amf_connection_manager(ngap_repository&                ngaps_,
+                         cu_cp_amf_reconnection_handler& cu_cp_notifier_,
+                         timer_manager&                  timers_,
+                         task_executor&                  cu_cp_exec_,
+                         common_task_scheduler&          common_task_sched_);
 
   /// \brief Initiates the connection to the AMF.
   /// A promise is passed as a parameter to enable blocking synchronization between the completion of the scheduled
@@ -72,11 +73,12 @@ private:
   void        handle_connection_setup_result(amf_index_t amf_index, bool success);
   amf_index_t plmn_to_amf_index(plmn_identity plmn) const;
 
-  ngap_repository&       ngaps;
-  timer_manager&         timers;
-  task_executor&         cu_cp_exec;
-  common_task_scheduler& common_task_sched;
-  srslog::basic_logger&  logger;
+  ngap_repository&                ngaps;
+  cu_cp_amf_reconnection_handler& cu_cp_notifier;
+  timer_manager&                  timers;
+  task_executor&                  cu_cp_exec;
+  common_task_scheduler&          common_task_sched;
+  srslog::basic_logger&           logger;
 
   std::unordered_map<amf_index_t, std::atomic<bool>> amfs_connected;
 

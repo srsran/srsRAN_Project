@@ -77,7 +77,9 @@ public:
                                                                      std::chrono::milliseconds timeout_ms) override;
   bool             store_ue_capabilities(byte_buffer ue_capabilities) override;
   async_task<bool> handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) override;
-  rrc_ue_release_context                get_rrc_ue_release_context(bool requires_rrc_message) override;
+  rrc_ue_release_context
+                                        get_rrc_ue_release_context(bool                                requires_rrc_message,
+                                                                   std::optional<std::chrono::seconds> release_wait_time = std::nullopt) override;
   rrc_ue_transfer_context               get_transfer_context() override;
   std::optional<rrc_meas_cfg>           generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config) override;
   byte_buffer                           get_packed_meas_config() override;

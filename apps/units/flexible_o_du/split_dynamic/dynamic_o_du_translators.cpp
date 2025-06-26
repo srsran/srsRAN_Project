@@ -32,25 +32,24 @@
 
 using namespace srsran;
 
-ru_dummy_configuration srsran::generate_ru_dummy_config(const ru_dummy_unit_config&        ru_cfg,
-                                                        span<const srs_du::du_cell_config> du_cells,
-                                                        unsigned                           max_processing_delay_slots,
-                                                        unsigned                           nof_prach_ports)
+ru_dummy_configuration srsran::generate_ru_dummy_config(const ru_dummy_unit_config&                      ru_cfg,
+                                                        span<const flexible_o_du_ru_config::cell_config> du_cells,
+                                                        unsigned max_processing_delay_slots,
+                                                        unsigned nof_prach_ports)
 {
   ru_dummy_configuration out_cfg;
 
-  const srs_du::du_cell_config& cell = du_cells.front();
+  const flexible_o_du_ru_config::cell_config& cell = du_cells.front();
 
   // Derive parameters.
-  unsigned channel_bw_prb = band_helper::get_n_rbs_from_bw(
-      MHz_to_bs_channel_bandwidth(cell.dl_carrier.carrier_bw_mhz), cell.scs_common, frequency_range::FR1);
+  unsigned channel_bw_prb = band_helper::get_n_rbs_from_bw(cell.bw, cell.scs, frequency_range::FR1);
 
   // Fill configuration parameters.
   out_cfg.are_metrics_enabled        = ru_cfg.metrics_cfg.enable_ru_metrics;
-  out_cfg.scs                        = cell.scs_common;
+  out_cfg.scs                        = cell.scs;
   out_cfg.nof_sectors                = du_cells.size();
   out_cfg.rx_rg_nof_prb              = channel_bw_prb;
-  out_cfg.rx_rg_nof_ports            = cell.ul_carrier.nof_ant;
+  out_cfg.rx_rg_nof_ports            = cell.nof_rx_antennas;
   out_cfg.rx_prach_nof_ports         = nof_prach_ports;
   out_cfg.max_processing_delay_slots = max_processing_delay_slots;
   out_cfg.dl_processing_delay        = ru_cfg.dl_processing_delay;
@@ -84,8 +83,11 @@ void srsran::fill_dynamic_du_worker_manager_config(worker_manager_config&       
   if (auto* ru_sdr = std::get_if<ru_sdr_unit_config>(&unit_cfg.ru_cfg)) {
     fill_sdr_worker_manager_config(config, *ru_sdr);
   } else if (auto* ru_ofh = std::get_if<ru_ofh_unit_parsed_config>(&unit_cfg.ru_cfg)) {
-    auto cells = generate_du_cell_config(unit_cfg.odu_high_cfg.du_high_cfg.config);
-    fill_ofh_worker_manager_config(config, ru_ofh->config, cells);
+    std::vector<unsigned> nof_dl_antennas;
+    for (const auto& cell : unit_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg) {
+      nof_dl_antennas.push_back(cell.cell.nof_antennas_dl);
+    }
+    fill_ofh_worker_manager_config(config, ru_ofh->config, std::move(nof_dl_antennas));
   } else if (auto* ru_dummy = std::get_if<ru_dummy_unit_config>(&unit_cfg.ru_cfg)) {
     fill_dummy_worker_manager_config(config, *ru_dummy);
   }

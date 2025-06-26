@@ -68,7 +68,6 @@ generate_fapi_to_phy_translator_dependencies(phy_fapi_sector_adaptor_dependencie
   fapi_dependencies.dl_rg_pool           = dependencies.dl_rg_pool;
   fapi_dependencies.dl_pdu_validator     = dependencies.dl_pdu_validator;
   fapi_dependencies.ul_request_processor = dependencies.ul_request_processor;
-  fapi_dependencies.ul_rg_pool           = dependencies.ul_rg_pool;
   fapi_dependencies.ul_pdu_repository    = dependencies.ul_pdu_repository;
   fapi_dependencies.ul_pdu_validator     = dependencies.ul_pdu_validator;
   fapi_dependencies.pm_repo              = std::move(dependencies.pm_repo);
