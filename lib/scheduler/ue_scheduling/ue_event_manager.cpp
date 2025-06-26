@@ -525,7 +525,7 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
       // ConRes + MSG4; there is only 1 HARQ process waiting for ACKs, which acks the ConRes. Until this is acked, no
       // other DL grant could be scheduled.
       if (not ue_cc.is_conres_complete() and result->update == dl_harq_process_handle::status_update::acked) {
-        ue_cc.set_conres_complete(true);
+        ue_cc.set_conres_state(true);
       }
 
       // In case the HARQ process is not waiting for more HARQ-ACK bits. Notify metrics handler with HARQ outcome.
@@ -735,6 +735,8 @@ void ue_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& c
     // Notify SRB fallback scheduler upon receiving ConRes CE indication.
     if (ce.ce_lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
       du_cells[ue_db[ce.ue_index].get_pcell().cell_index].fallback_sched->handle_conres_indication(ce.ue_index);
+      // Set the ConRes procedure state to "Started" in the pCell.
+      ue_db[ce.ue_index].get_pcell().set_conres_state(false);
     }
 
     // Log event.

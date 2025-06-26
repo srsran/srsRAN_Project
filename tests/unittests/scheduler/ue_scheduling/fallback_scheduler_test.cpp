@@ -123,14 +123,14 @@ struct test_bench {
     return true;
   }
 
-  void set_conres_complete(du_ue_index_t ue_index)
+  void set_conres_state(du_ue_index_t ue_index, bool state)
   {
     if (not ue_db.contains(ue_index)) {
       // UE already exists.
       return;
     }
 
-    ue_db[ue_index].get_pcell().set_conres_complete(true);
+    ue_db[ue_index].get_pcell().set_conres_state(state);
   }
 };
 
@@ -319,6 +319,7 @@ protected:
     if (tx_conres) {
       bench->ue_db[ue_idx].handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_idx, lcid_dl_sch_t::UE_CON_RES_ID});
       bench->fallback_sched.handle_conres_indication(ue_idx);
+      bench->set_conres_state(ue_idx, false);
     }
 
     // Notify scheduler of DL buffer state.
@@ -432,8 +433,6 @@ TEST_P(fallback_scheduler_tester, successfully_allocated_resources_for_srb1_pdu_
   // Add UE.
   const du_ue_index_t ue_idx = to_du_ue_index(0);
   add_ue(to_rnti(0x4601), ue_idx);
-  // Set ConRes complete for the UE.
-  bench->set_conres_complete(ue_idx);
   auto& test_ue = get_ue(ue_idx);
   // UE reports CQI 0.
   csi_report_data csi_report{};
@@ -448,6 +447,16 @@ TEST_P(fallback_scheduler_tester, successfully_allocated_resources_for_srb1_pdu_
   bool is_ue_allocated_pdsch{false};
   for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue * (1U << current_slot.numerology()); sl_idx++) {
     run_slot();
+    // If the UE is allocated a PUCCH, then assume it has acked the ConRes.
+    if (std::any_of(bench->res_grid[0].result.ul.pucchs.begin(),
+                    bench->res_grid[0].result.ul.pucchs.end(),
+                    [&test_ue](const pucch_info& pucch) {
+                      return pucch.crnti == test_ue.crnti and pucch.uci_bits.harq_ack_nof_bits != 0 and
+                             pucch.format() == srsran::pucch_format::FORMAT_1;
+                    })) {
+      bench->set_conres_state(ue_idx, true);
+    }
+
     const pdcch_dl_information* pdcch_it = get_ue_allocated_pdcch(test_ue);
     if (pdcch_it != nullptr) {
       is_ue_allocated_pdcch = true;
@@ -532,7 +541,7 @@ TEST_P(fallback_scheduler_tester, when_conres_and_msg4_scheduled_separately_msg4
   ASSERT_FALSE(msg4_pdcch.has_value());
 
   // Ack the ConRes to set the Contention Resolution complete.
-  bench->set_conres_complete(test_ue.ue_index);
+  bench->set_conres_state(test_ue.ue_index, true);
 
   for (; sl_idx != max_test_run_slots * 2; ++sl_idx) {
     run_slot();
@@ -571,7 +580,7 @@ TEST_P(fallback_scheduler_tester, conres_and_msg4_scheduled_scheduled_over_diffe
                     });
     if (con_res_pucch_allocated) {
       // Set ConRes complete for the UE.
-      bench->set_conres_complete(test_ue.ue_index);
+      bench->set_conres_state(test_ue.ue_index, true);
     }
 
     const pdcch_dl_information* pdcch_it = get_ue_allocated_pdcch(test_ue);
@@ -586,6 +595,60 @@ TEST_P(fallback_scheduler_tester, conres_and_msg4_scheduled_scheduled_over_diffe
   ASSERT_TRUE(conres_pdcch.has_value());
   ASSERT_TRUE(msg4_pdcch.has_value());
   ASSERT_TRUE(conres_pdcch != msg4_pdcch);
+}
+
+TEST_P(fallback_scheduler_tester, when_conres_and_msg4_srb1_scheduled_separately_msg4_not_scheduled_until_conres_acked)
+{
+  setup_sched(create_expert_config(1), create_custom_cell_config_request(params.k0));
+
+  // Add UE 1.
+  add_ue(to_rnti(0x4601), to_du_ue_index(0));
+  // Notify about SRB0 message in DL of size 101 bytes.
+  unsigned ue1_mac_srb1_sdu_size = 99;
+  push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, ue1_mac_srb1_sdu_size, false);
+
+  // ConRes and Msg4 are scheduled separately.
+  const auto&               test_ue = get_ue(to_du_ue_index(0));
+  std::optional<slot_point> conres_pdcch;
+  std::optional<slot_point> msg4_srb1_pdcch;
+  unsigned                  sl_idx             = 0;
+  const unsigned            max_test_run_slots = 10U * (1U << current_slot.numerology());
+  for (; sl_idx != max_test_run_slots; ++sl_idx) {
+    // Set DL grid at slot 1 (the first slot, where the PDSCH will be allocated) busy from RB 3 until the end of the bw;
+    // this will force the scheduler to allocate Conres in isolation. Avoid the first symbols of teh slot to allow the
+    // PDCCH to be allocated.
+    static constexpr unsigned first_dl_allocable_slot = 1U;
+    bench->res_grid[first_dl_allocable_slot].dl_res_grid.fill(
+        grant_info(bench->cell_cfg.scs_common,
+                   ofdm_symbol_range{3, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP},
+                   crb_interval{3, bench->cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.stop()}));
+    run_slot();
+
+    const pdcch_dl_information* pdcch_it = get_ue_allocated_pdcch(test_ue);
+    if (pdcch_it != nullptr) {
+      if (pdcch_it->dci.type == dci_dl_rnti_config_type::tc_rnti_f1_0) {
+        conres_pdcch = current_slot;
+      } else if (pdcch_it->dci.type == dci_dl_rnti_config_type::c_rnti_f1_0) {
+        msg4_srb1_pdcch = current_slot;
+      }
+    }
+  }
+
+  ASSERT_TRUE(conres_pdcch.has_value());
+  ASSERT_FALSE(msg4_srb1_pdcch.has_value());
+
+  // Ack the ConRes to set the Contention Resolution complete.
+  bench->set_conres_state(test_ue.ue_index, true);
+
+  for (; sl_idx != max_test_run_slots * 2; ++sl_idx) {
+    run_slot();
+
+    const pdcch_dl_information* pdcch_it = get_ue_allocated_pdcch(test_ue);
+    if (pdcch_it != nullptr and pdcch_it->dci.type == dci_dl_rnti_config_type::c_rnti_f1_0) {
+      msg4_srb1_pdcch = current_slot;
+    }
+  }
+  ASSERT_TRUE(msg4_srb1_pdcch.has_value());
 }
 
 TEST_P(fallback_scheduler_tester, test_large_srb0_buffer_size)
@@ -1282,7 +1345,7 @@ TEST_P(fallback_scheduler_srb1_segmentation, test_scheduling_srb1_segmentation)
   for (unsigned du_idx = 0; du_idx < MAX_UES; du_idx++) {
     add_ue(to_rnti(0x4601 + du_idx), to_du_ue_index(du_idx));
     // For this test, assumes the ConRes has been transmitted and acked.
-    bench->set_conres_complete(to_du_ue_index(du_idx));
+    //    bench->set_conres_complete(to_du_ue_index(du_idx));
     ues_testers.emplace_back(bench->cell_cfg, get_ue(to_du_ue_index(du_idx)), this);
   }
 

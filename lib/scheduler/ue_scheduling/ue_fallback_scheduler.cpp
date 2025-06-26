@@ -563,7 +563,7 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
     }
     if (chosen_tbs < min_pending_bytes) {
       // We could not even fulfill the minimum pending bytes.
-      logger.debug("rnti={}: Fallback newTx allocation postponed. Cause: Pending non-segmentable bytes exceed TBS "
+      logger.debug("rnti={}: Fallback newTx allocation postponed. Cause: Pending non-segmentable bytes ({}) exceed TBS "
                    "calculated ({})",
                    u.crnti,
                    min_pending_bytes,
@@ -1320,27 +1320,31 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
   for (auto ue_it = pending_dl_ues_new_tx.begin(); ue_it != pending_dl_ues_new_tx.end();) {
     if (not ues.contains(ue_it->ue_index)) {
       // UE was removed in the meantime.
+      logger.debug("ue={}: will be removed", fmt::underlying(ue_it->ue_index));
       ue_it = pending_dl_ues_new_tx.erase(ue_it);
       continue;
     }
     auto& u = ues[ue_it->ue_index];
     if (not u.get_pcell().is_in_fallback_mode()) {
       // UE exited fallback.
+      logger.debug("ue={}: will be removed", fmt::underlying(ue_it->ue_index));
       ue_it = pending_dl_ues_new_tx.erase(ue_it);
       continue;
     }
     if (not u.has_pending_dl_newtx_bytes()) {
       // UE has no new txs pending. It can be removed.
+      logger.debug("ue={}: will be removed", fmt::underlying(ue_it->ue_index));
       ue_it = pending_dl_ues_new_tx.erase(ue_it);
       continue;
     }
 
     // Check if the \c ra-ContentionResolutionTimer has expired before the ConRes has been tx-ed and acked.
-    if (u.get_pcell().is_conres_complete() and not u.get_pcell().get_msg3_rx_slot().valid()) {
+    if (not u.get_pcell().is_conres_complete() and u.get_pcell().get_msg3_rx_slot().valid()) {
       const auto ra_conres_timer_subframes = static_cast<uint32_t>(
           u.get_pcell().cfg().init_bwp().ul_common.value()->rach_cfg_common.value().ra_con_res_timer.count());
-      if (divide_ceil<uint32_t, uint32_t>(sl - u.get_pcell().get_msg3_rx_slot(), sl.nof_slots_per_subframe()) >
-          ra_conres_timer_subframes) {
+      const int slot_diff = sl - u.get_pcell().get_msg3_rx_slot();
+      if (slot_diff < 0 or divide_ceil<uint32_t, uint32_t>(static_cast<uint32_t>(slot_diff),
+                                                           sl.nof_slots_per_subframe()) > ra_conres_timer_subframes) {
         logger.warning(
             "ue={} rnti={}: ra-ContentionResolutionTimer expired before the UE has received and acked ConRes",
             fmt::underlying(u.ue_index),

@@ -159,7 +159,7 @@ public:
 
   bool is_conres_complete() { return conres_procedure.complete; }
 
-  void set_conres_complete(bool state);
+  void set_conres_state(bool state);
 
   slot_point get_msg3_rx_slot() const { return conres_procedure.msg3_rx_slot.value_or(slot_point{}); }
 

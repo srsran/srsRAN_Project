@@ -48,7 +48,8 @@ ue_cell::ue_cell(du_ue_index_t                ue_index_,
   expert_cfg(cell_cfg.expert_cfg.ue),
   drx_ctrl(drx_ctrl_),
   logger(srslog::fetch_basic_logger("SCHED")),
-  conres_procedure({.complete = false, .msg3_rx_slot = msg3_slot_rx}),
+  // Set ConRes procedure complete by default.
+  conres_procedure({.complete = true, .msg3_rx_slot = msg3_slot_rx}),
   channel_state(cell_cfg.expert_cfg.ue, ue_cfg->get_nof_dl_ports()),
   ue_mcs_calculator(ue_cell_cfg_.cell_cfg_common, channel_state),
   pusch_pwr_controller(ue_cell_cfg_, channel_state),
@@ -483,11 +484,13 @@ double ue_cell::get_estimated_ul_rate(const pusch_config_params& pusch_cfg, sch_
   return tbs_bits / NOF_BITS_PER_BYTE;
 }
 
-void ue_cell::set_conres_complete(bool state)
+void ue_cell::set_conres_state(bool state)
 {
   conres_procedure.complete = state;
   if (state) {
     conres_procedure.msg3_rx_slot.reset();
     logger.debug("ue={} rnti={}: ConRes procedure completed", fmt::underlying(ue_index), rnti());
+  } else {
+    logger.debug("ue={} rnti={}: ConRes procedure started", fmt::underlying(ue_index), rnti());
   }
 }
