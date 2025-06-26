@@ -241,28 +241,39 @@ TEST_P(OFHCompressionBfp9TestFixture, bpsk_input_compression_is_correct)
   }
 }
 
-// Verify exponents are correctly processed.
+// Verify exponents are correctly processed for BFP9 compression algorithm.
 TEST_P(OFHCompressionBfp9TestFixture, test_compr_param)
 {
+  // The BFP9 compression algorithm uses a common exponent as per physical resource block. The exponent range varies in
+  // range [0, 7].
   static constexpr unsigned test_compr_param_begin = 0;
   static constexpr unsigned test_compr_param_end   = 7;
   static constexpr unsigned test_compr_param_count = test_compr_param_end - test_compr_param_begin + 1;
-  static constexpr unsigned nof_shifts             = NOF_SUBCARRIERS_PER_RB;
+
+  // This test creates a vector of resource blocks. The Resource Blocks are filled with zeros except one resource
+  // element that is set to a real value that is translated to a given exponent. The position of the writen resource
+  // element is shifted across the 12 possibles positions for each of the exponents.
+  static constexpr unsigned nof_shifts = NOF_SUBCARRIERS_PER_RB;
 
   // Use one PRB for each shift and exponent.
   static constexpr unsigned nof_prb = nof_shifts * test_compr_param_count;
 
-  // Generate test data. Each PRB contains a one located in different places with a different scaling.
+  // Generate test data. Each PRB contains a real one located in different places with a different scaling. The rest of
+  // samples are left as zero.
   std::vector<cbf16_t> test_data(nof_prb * NOF_SUBCARRIERS_PER_RB);
   unsigned             idx = 0;
   for (unsigned shift = 0; shift != nof_shifts; ++shift) {
     for (unsigned i_param = 0; i_param != test_compr_param_count; ++i_param) {
+      // Select exponent (or compression parameter).
       unsigned test_compr_param = test_compr_param_begin + i_param;
-      float    scale = static_cast<float>(pow2(test_compr_param)) / static_cast<float>(pow2(test_compr_param_end + 1));
+
+      // Calculate the required scale that results in the selected compression parameter.
+      float scale = static_cast<float>(pow2(test_compr_param)) / static_cast<float>(pow2(test_compr_param_end + 1));
 
       span<cbf16_t> test_data_prb = span<cbf16_t>(test_data).subspan(idx, NOF_SUBCARRIERS_PER_RB);
-      test_data_prb[shift]        = scale;
+      test_data_prb[shift]        = 1.0f * scale;
 
+      // Advance a physical resource block.
       idx += NOF_SUBCARRIERS_PER_RB;
     }
   }
@@ -271,7 +282,7 @@ TEST_P(OFHCompressionBfp9TestFixture, test_compr_param)
   unsigned             prb_size = get_compressed_prb_size(params).value();
   std::vector<uint8_t> compressed_data(nof_prb * prb_size);
 
-  // Compress it.
+  // Compress test data.
   compressor->compress(compressed_data, test_data, params);
 
   // Check the compression parameter matches with the expected.
