@@ -178,6 +178,12 @@ amari 1UE rtsan:
   when: manual
   allow_failure: true
 
+amari 4UE:
+  extends: .zmq
+  variables:
+    E2E_FILE_OR_DIR: tests/slicing.py
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+
 amari 4UE deb:
   extends: .zmq
   rules:

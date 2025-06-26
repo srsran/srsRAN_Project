@@ -21,7 +21,7 @@ from retina.launcher.public import MetricServerInfo
 from retina.protocol.channel_emulator_pb2 import EphemerisInfoType, NtnScenarioConfig, NtnScenarioType
 
 
-def configure_ntn_parameters(retina_data: RetinaTestData, ntn_config: NtnScenarioConfig = None):
+def configure_ntn_parameters(retina_data: RetinaTestData, ntn_config: NtnScenarioConfig):
     """
     Configure test NTN parameters
     """
@@ -129,8 +129,10 @@ def configure_test_parameters(
     use_format_0: bool = False,
     pucch_set1_format: int = 2,
     pdsch_interleaving_bundle_size: int = 0,
-    ntn_config: NtnScenarioConfig = None,
+    ntn_config: Optional[NtnScenarioConfig] = None,
     pdcch_log: bool = False,
+    slices: Optional[List[dict]] = None,
+    ue_sds: Optional[List[str]] = None,
 ):
     """
     Configure test parameters
@@ -154,6 +156,7 @@ def configure_test_parameters(
                 "nof_antennas_dl": nof_antennas_dl,
                 "nof_antennas_ul": nof_antennas_ul,
                 "pdcch_log": pdcch_log,
+                "ue_sds": ue_sds if ue_sds is not None else [],
             },
         },
         "gnb": {
@@ -179,9 +182,15 @@ def configure_test_parameters(
                 "use_format_0": use_format_0,
                 "pucch_set1_format": pucch_set1_format,
                 "pdsch_interleaving_bundle_size": pdsch_interleaving_bundle_size,
+                "slices": slices if slices is not None else [],
             },
         },
-        "5gc": {"parameters": {"ims_mode": ims_mode}},
+        "5gc": {
+            "parameters": {
+                "ims_mode": ims_mode,
+                "slices": [slice["sd"] for slice in slices] if slices is not None else [],
+            }
+        },
     }
     if n3_enable is not None and n3_enable:
         retina_data.test_config["gnb"]["parameters"]["pcap"] = True
