@@ -198,6 +198,27 @@ byte_buffer create_dl_dcch_rrc_container(uint32_t pdcp_sn, const byte_buffer& dl
 /// \brief Remove PDCP header from DL-DCCH message.
 byte_buffer extract_dl_dcch_msg(const byte_buffer& rrc_container);
 
+/// \brief Generates dummy F1AP TRP INFORMATION REQUEST message.
+f1ap_message generate_trp_information_request();
+
+/// \brief Generates dummy F1AP TRP INFORMATION RESPONSE message.
+f1ap_message generate_trp_information_response(const trp_id_t& trp_id);
+
+/// \brief Generates dummy F1AP TRP INFORMATION FAILURE message.
+f1ap_message generate_trp_information_failure();
+
+/// \brief Generates dummy F1AP POSITIONING INFORMATION RESPONSE message.
+f1ap_message generate_positioning_information_response(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id);
+
+/// \brief Generates dummy F1AP POSITIONING INFORMATION FAILURE message.
+f1ap_message generate_positioning_information_failure(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id);
+
+/// \brief Generates dummy F1AP POSITIONING ACTIVATION RESPONSE message.
+f1ap_message generate_positioning_activation_response(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id);
+
+/// \brief Generates dummy F1AP POSITIONING ACTIVATION FAILURE message.
+f1ap_message generate_positioning_activation_failure(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id);
+
 /// \brief Generates dummy F1AP POSITIONING MEASUREMENT RESPONSE message, sent by the DU to the CU, as per
 /// TS 38.473 section 8.13.3.2.
 f1ap_message
