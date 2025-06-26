@@ -760,7 +760,7 @@ unsigned intra_slice_scheduler::max_pdschs_to_alloc(const dl_ran_slice_candidate
   }
 
   // Assume at least one RB per UE.
-  pdschs_to_alloc = std::min(pdschs_to_alloc, (int)slice.remaining_rbs());
+  pdschs_to_alloc = std::min(pdschs_to_alloc, static_cast<int>(slice.remaining_rbs()));
 
   return std::max(pdschs_to_alloc, 0);
 }
@@ -774,13 +774,12 @@ unsigned intra_slice_scheduler::max_puschs_to_alloc(const ul_ran_slice_candidate
   // We cannot allocate more than the number of UEs available.
   int puschs_to_alloc = slice.get_slice_ues().size();
 
-  // The max PUSCHs-per-slot limit cannot be exceeded.
+  // Determine how many PUSCHs can be allocated in this slot.
   const auto& pusch_res = cell_alloc[pusch_slot].result;
+  // The max PUSCHs-per-slot limit cannot be exceeded.
   // Note: We use signed integer to avoid unsigned overflow.
-  const int max_puschs = std::min(
-      static_cast<int>(std::min(static_cast<unsigned>(MAX_PUSCH_PDUS_PER_SLOT), expert_cfg.max_puschs_per_slot)),
-      puschs_to_alloc);
-  puschs_to_alloc = max_puschs - static_cast<int>(pusch_res.ul.puschs.size());
+  const int max_puschs = std::min(static_cast<unsigned>(MAX_PUSCH_PDUS_PER_SLOT), expert_cfg.max_puschs_per_slot);
+  puschs_to_alloc      = std::min(puschs_to_alloc, max_puschs - static_cast<int>(pusch_res.ul.puschs.size()));
   if (puschs_to_alloc <= 0) {
     return 0;
   }
@@ -793,17 +792,18 @@ unsigned intra_slice_scheduler::max_puschs_to_alloc(const ul_ran_slice_candidate
     return 0;
   }
 
-  // Assume at least one RB per UE.
-  puschs_to_alloc = std::min(puschs_to_alloc, static_cast<int>(slice.remaining_rbs()));
-  if (puschs_to_alloc <= 0) {
-    return 0;
-  }
-
   // Determine how many PDCCHs can be allocated in this slot.
   const auto& pdcch_res = cell_alloc[pdcch_slot].result;
   puschs_to_alloc       = std::min({puschs_to_alloc,
                                     static_cast<int>(MAX_UL_PDCCH_PDUS_PER_SLOT - pdcch_res.dl.ul_pdcchs.size()),
                                     static_cast<int>(expert_cfg.max_pdcch_alloc_attempts_per_slot - ul_attempts_count)});
+  if (puschs_to_alloc <= 0) {
+    return 0;
+  }
+
+  // Assume at least one RB per UE.
+  puschs_to_alloc = std::min(puschs_to_alloc, static_cast<int>(slice.remaining_rbs()));
+
   return std::max(puschs_to_alloc, 0);
 }
 
