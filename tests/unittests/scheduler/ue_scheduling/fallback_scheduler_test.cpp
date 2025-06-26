@@ -499,36 +499,94 @@ TEST_P(fallback_scheduler_tester, failed_allocating_resources)
   }
 }
 
-// TEST_P(fallback_scheduler_tester, conres_and_msg4_scheduled_scheduled_over_different_slots_if_they_dont_fit_together)
-//{
-//   setup_sched(create_expert_config(1), create_custom_cell_config_request(params.k0));
-//
-//   // Add UE 1.
-//   add_ue(to_rnti(0x4601), to_du_ue_index(0));
-//   // Notify about SRB0 message in DL of size 101 bytes.
-//   unsigned ue1_mac_srb0_sdu_size = 99;
-//   push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, ue1_mac_srb0_sdu_size, true);
-//
-//   // ConRes and Msg4 are scheduled separately.
-//   const auto&               test_ue = get_ue(to_du_ue_index(0));
-//   std::optional<slot_point> conres_pdcch;
-//   std::optional<slot_point> msg4_pdcch;
-//   for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue * (1U << current_slot.numerology()); sl_idx++)
-//   {
-//     run_slot();
-//     const pdcch_dl_information* pdcch_it = get_ue_allocated_pdcch(test_ue);
-//     if (pdcch_it != nullptr) {
-//       if (pdcch_it->dci.type == dci_dl_rnti_config_type::tc_rnti_f1_0) {
-//         conres_pdcch = current_slot;
-//       } else if (pdcch_it->dci.type == dci_dl_rnti_config_type::c_rnti_f1_0) {
-//         msg4_pdcch = current_slot;
-//       }
-//     }
-//   }
-//   ASSERT_TRUE(conres_pdcch.has_value());
-//   ASSERT_TRUE(msg4_pdcch.has_value());
-//   ASSERT_TRUE(conres_pdcch != msg4_pdcch);
-// }
+TEST_P(fallback_scheduler_tester, when_conres_and_msg4_scheduled_separately_msg4_not_scheduled_until_conres_acked)
+{
+  setup_sched(create_expert_config(1), create_custom_cell_config_request(params.k0));
+
+  // Add UE 1.
+  add_ue(to_rnti(0x4601), to_du_ue_index(0));
+  // Notify about SRB0 message in DL of size 101 bytes.
+  unsigned ue1_mac_srb0_sdu_size = 99;
+  push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, ue1_mac_srb0_sdu_size, true);
+
+  // ConRes and Msg4 are scheduled separately.
+  const auto&               test_ue = get_ue(to_du_ue_index(0));
+  std::optional<slot_point> conres_pdcch;
+  std::optional<slot_point> msg4_pdcch;
+  unsigned                  sl_idx             = 0;
+  const unsigned            max_test_run_slots = 10U * (1U << current_slot.numerology());
+  for (; sl_idx != max_test_run_slots; ++sl_idx) {
+    run_slot();
+
+    const pdcch_dl_information* pdcch_it = get_ue_allocated_pdcch(test_ue);
+    if (pdcch_it != nullptr) {
+      if (pdcch_it->dci.type == dci_dl_rnti_config_type::tc_rnti_f1_0) {
+        conres_pdcch = current_slot;
+      } else if (pdcch_it->dci.type == dci_dl_rnti_config_type::c_rnti_f1_0) {
+        msg4_pdcch = current_slot;
+      }
+    }
+  }
+
+  ASSERT_TRUE(conres_pdcch.has_value());
+  ASSERT_FALSE(msg4_pdcch.has_value());
+
+  // Ack the ConRes to set the Contention Resolution complete.
+  bench->set_conres_complete(test_ue.ue_index);
+
+  for (; sl_idx != max_test_run_slots * 2; ++sl_idx) {
+    run_slot();
+
+    const pdcch_dl_information* pdcch_it = get_ue_allocated_pdcch(test_ue);
+    if (pdcch_it != nullptr and pdcch_it->dci.type == dci_dl_rnti_config_type::c_rnti_f1_0) {
+      msg4_pdcch = current_slot;
+    }
+  }
+  ASSERT_TRUE(msg4_pdcch.has_value());
+}
+
+TEST_P(fallback_scheduler_tester, conres_and_msg4_scheduled_scheduled_over_different_slots_if_they_dont_fit_together)
+{
+  setup_sched(create_expert_config(1), create_custom_cell_config_request(params.k0));
+
+  // Add UE 1.
+  add_ue(to_rnti(0x4601), to_du_ue_index(0));
+  // Notify about SRB0 message in DL of size 101 bytes.
+  unsigned ue1_mac_srb0_sdu_size = 99;
+  push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, ue1_mac_srb0_sdu_size, true);
+
+  // ConRes and Msg4 are scheduled separately.
+  const auto&               test_ue = get_ue(to_du_ue_index(0));
+  std::optional<slot_point> conres_pdcch;
+  std::optional<slot_point> msg4_pdcch;
+  for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue * (1U << current_slot.numerology()); sl_idx++) {
+    run_slot();
+
+    // If PUCCH is allocated, set the Contention Resolution complete for the UE.
+    bool con_res_pucch_allocated =
+        std::any_of(bench->res_grid[0].result.ul.pucchs.begin(),
+                    bench->res_grid[0].result.ul.pucchs.end(),
+                    [&test_ue](const pucch_info& pucch) {
+                      return pucch.crnti == test_ue.crnti and pucch.uci_bits.harq_ack_nof_bits == 1U;
+                    });
+    if (con_res_pucch_allocated) {
+      // Set ConRes complete for the UE.
+      bench->set_conres_complete(test_ue.ue_index);
+    }
+
+    const pdcch_dl_information* pdcch_it = get_ue_allocated_pdcch(test_ue);
+    if (pdcch_it != nullptr) {
+      if (pdcch_it->dci.type == dci_dl_rnti_config_type::tc_rnti_f1_0) {
+        conres_pdcch = current_slot;
+      } else if (pdcch_it->dci.type == dci_dl_rnti_config_type::c_rnti_f1_0) {
+        msg4_pdcch = current_slot;
+      }
+    }
+  }
+  ASSERT_TRUE(conres_pdcch.has_value());
+  ASSERT_TRUE(msg4_pdcch.has_value());
+  ASSERT_TRUE(conres_pdcch != msg4_pdcch);
+}
 
 TEST_P(fallback_scheduler_tester, test_large_srb0_buffer_size)
 {
