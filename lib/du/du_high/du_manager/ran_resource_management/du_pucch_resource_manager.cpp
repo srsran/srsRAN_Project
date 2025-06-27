@@ -429,7 +429,7 @@ du_pucch_resource_manager::get_csi_resource_offset(const csi_meas_config& csi_me
     const auto csi_report_size = get_csi_report_pucch_size(csi_report_cfg);
 
     const sr_nof_bits sr_bits_to_report  = sr_csi_on_the_same_slot ? sr_nof_bits::one : sr_nof_bits::no_sr;
-    const unsigned    candidate_uci_bits = sr_nof_bits_to_uint(sr_bits_to_report) + csi_report_size.value();
+    const unsigned    candidate_uci_bits = sr_nof_bits_to_uint(sr_bits_to_report) + csi_report_size.part1_size.value();
 
     unsigned max_payload;
     if (std::holds_alternative<pucch_f2_params>(user_defined_pucch_cfg.f2_or_f3_or_f4_params)) {

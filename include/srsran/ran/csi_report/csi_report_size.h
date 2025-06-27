@@ -15,8 +15,8 @@
 
 namespace srsran {
 
-/// Collects the parameters that describe the CSI report size transmitted in PUSCH.
-struct csi_report_pusch_size {
+/// Collects the parameters that describe the CSI report size transmitted in PUCCH and PUSCH.
+struct csi_report_size {
   /// \brief CSI Part 1 number of bits.
   ///
   /// It is the total number of CSI Part 1 reports described in TS38.212 Table 6.3.2.1.2-6.
