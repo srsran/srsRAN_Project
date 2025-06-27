@@ -175,15 +175,6 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
   this->push_uci_indication(to_du_cell_index(0), uci_slot);
   run_slot();
 
-  //  ASSERT_TRUE(this->run_slot_until([this]() {
-  //    return std::any_of(this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs.begin(),
-  //                       this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs.end(),
-  //                       [rnti = this->rnti](const pucch_info& pucch) {
-  //                         return pucch.crnti == rnti and pucch.format() == pucch_format::FORMAT_1 and
-  //                                pucch.uci_bits.harq_ack_nof_bits > 0;
-  //                       });
-  //  }));
-
   // Enqueue SRB1 data; with the UE in fallback mode, and after the MSG4 has been delivered, both common and dedicated
   // resources should be used.
   this->push_dl_buffer_state(dl_buffer_state_indication_message{this->ue_index, LCID_SRB1, crnti_msg_size});

@@ -523,7 +523,7 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
 
       // NOTE: this is for the first attachment only. In this case, the first ACK is the one that acks the ConRes or the
       // ConRes + MSG4; there is only 1 HARQ process waiting for ACKs, which acks the ConRes. Until this is acked, no
-      // other DL grant could be scheduled.
+      // other DL grant should be scheduled.
       if (not ue_cc.is_conres_complete() and result->update == dl_harq_process_handle::status_update::acked) {
         ue_cc.set_conres_state(true);
       }

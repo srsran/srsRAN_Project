@@ -48,7 +48,7 @@ ue_cell::ue_cell(du_ue_index_t                ue_index_,
   expert_cfg(cell_cfg.expert_cfg.ue),
   drx_ctrl(drx_ctrl_),
   logger(srslog::fetch_basic_logger("SCHED")),
-  // Set ConRes procedure complete by default.
+  // Set ConRes procedure complete by default. Variable only needed for RACHs where MSG3 contains ConRes MAC-CE.
   conres_procedure({.complete = true, .msg3_rx_slot = msg3_slot_rx}),
   channel_state(cell_cfg.expert_cfg.ue, ue_cfg->get_nof_dl_ports()),
   ue_mcs_calculator(ue_cell_cfg_.cell_cfg_common, channel_state),

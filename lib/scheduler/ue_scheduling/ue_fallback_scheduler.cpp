@@ -1338,18 +1338,27 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       continue;
     }
 
-    // Check if the \c ra-ContentionResolutionTimer has expired before the ConRes has been tx-ed and acked.
+    // Check if the \c ra-ContentionResolutionTimer has expired before the ConRes has been scheduled.
     if (not u.get_pcell().is_conres_complete() and u.get_pcell().get_msg3_rx_slot().valid()) {
-      const auto ra_conres_timer_subframes = static_cast<uint32_t>(
-          u.get_pcell().cfg().init_bwp().ul_common.value()->rach_cfg_common.value().ra_con_res_timer.count());
-      const int slot_diff = sl - u.get_pcell().get_msg3_rx_slot();
-      if (slot_diff < 0 or divide_ceil<uint32_t, uint32_t>(static_cast<uint32_t>(slot_diff),
-                                                           sl.nof_slots_per_subframe()) > ra_conres_timer_subframes) {
-        logger.warning(
-            "ue={} rnti={}: ra-ContentionResolutionTimer expired before the UE has received and acked ConRes",
-            fmt::underlying(u.ue_index),
-            u.crnti);
-        // TODO: remove the UE and continue with the next one.
+      // We need to check if the UE has pending ACKs. If not and the ConRes procedure is not completed yes, it means
+      // ra-ContentionResolutionTimer has expired.
+      // NOTE If the gNB is waiting for a pending ACK, we'll handle it in the loop at the end of this function.
+      const bool waiting_for_pending_acks =
+          std::find_if(
+              ongoing_ues_ack_retxs.begin(), ongoing_ues_ack_retxs.end(), [&u](const ack_and_retx_tracker& ue_tx) {
+                return ue_tx.ue_index == u.ue_index and ue_tx.h_dl.is_waiting_ack();
+              }) != ongoing_ues_ack_retxs.end();
+      if (not waiting_for_pending_acks) {
+        const auto ra_conres_timer_subframes = static_cast<uint32_t>(
+            u.get_pcell().cfg().init_bwp().ul_common.value()->rach_cfg_common.value().ra_con_res_timer.count());
+        const int slot_diff = sl - u.get_pcell().get_msg3_rx_slot();
+        if (slot_diff < 0 or divide_ceil<uint32_t, uint32_t>(static_cast<uint32_t>(slot_diff),
+                                                             sl.nof_slots_per_subframe()) > ra_conres_timer_subframes) {
+          logger.warning("ue={} rnti={}: ra-ContentionResolutionTimer expired before UE's ConRes was scheduled",
+                         fmt::underlying(u.ue_index),
+                         u.crnti);
+          // TODO: remove the UE and continue with the next one.
+        }
       }
     }
 
@@ -1379,7 +1388,7 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
   }
 
   // Only remove the {UE, HARQ-process} elements that have been retransmitted and positively acked. The rest of the
-  // elements are potential candidate for retransmissions.
+  // elements are potential candidates for retransmissions.
   for (auto it_ue_harq = ongoing_ues_ack_retxs.begin(); it_ue_harq != ongoing_ues_ack_retxs.end();) {
     if (not ues.contains(it_ue_harq->ue_index) or not ues[it_ue_harq->ue_index].get_pcell().is_in_fallback_mode()) {
       it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
@@ -1388,6 +1397,31 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
     if (it_ue_harq->h_dl.empty()) {
       it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
       continue;
+    }
+
+    // Check if the \c ra-ContentionResolutionTimer has expired before the ConRes has been tx-ed and acked.
+    if (not ues[it_ue_harq->ue_index].get_pcell().is_conres_complete() and
+        ues[it_ue_harq->ue_index].get_pcell().get_msg3_rx_slot().valid()) {
+      // If the gNB is waiting for a pending ACK, we need to check if the slot at which the PDSCH will be sent is before
+      // the ra-ContentionResolutionTimer will expire.
+      const slot_point sl_tx                     = it_ue_harq->h_dl.pdsch_slot();
+      const auto       ra_conres_timer_subframes = static_cast<uint32_t>(ues[it_ue_harq->ue_index]
+                                                                       .get_pcell()
+                                                                       .cfg()
+                                                                       .init_bwp()
+                                                                       .ul_common.value()
+                                                                       ->rach_cfg_common.value()
+                                                                       .ra_con_res_timer.count());
+      const int        slot_diff                 = sl_tx - ues[it_ue_harq->ue_index].get_pcell().get_msg3_rx_slot();
+      if (slot_diff < 0 or
+          divide_ceil<uint32_t, uint32_t>(static_cast<uint32_t>(slot_diff), sl_tx.nof_slots_per_subframe()) >
+              ra_conres_timer_subframes) {
+        logger.warning(
+            "ue={} rnti={}: ra-ContentionResolutionTimer expired before the UE has received and acked ConRes",
+            fmt::underlying(ues[it_ue_harq->ue_index].ue_index),
+            ues[it_ue_harq->ue_index].crnti);
+        // TODO: remove the UE and continue with the next one.
+      }
     }
     ++it_ue_harq;
   }

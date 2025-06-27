@@ -157,10 +157,12 @@ public:
   /// \brief Returns an estimated UL rate in bytes per slot based on the given input parameters.
   double get_estimated_ul_rate(const pusch_config_params& pusch_cfg, sch_mcs_index mcs, unsigned nof_prbs) const;
 
-  bool is_conres_complete() { return conres_procedure.complete; }
+  bool is_conres_complete() const { return conres_procedure.complete; }
 
+  /// Sets the Contention Resolution procedure state as started (if "false") or complete (if "true").
   void set_conres_state(bool state);
 
+  /// Returns the slot in which the MSG3 was received, if available; if not, returns a non-valid slot_point.
   slot_point get_msg3_rx_slot() const { return conres_procedure.msg3_rx_slot.value_or(slot_point{}); }
 
 private:
@@ -174,14 +176,13 @@ private:
   ue_drx_controller&                drx_ctrl;
   srslog::basic_logger&             logger;
 
+  /// \brief Tracks state of the Contention Resolution procedure for RACHs where MSG3 contains a MAC CE with ConRes.
   struct conres_state {
     /// \brief Whether the MAC CE Contention Resolution has been transmitted and acked by the UE.
     bool complete = false;
 
-    /// MSG3 rx-slot, if available.
+    /// MSG3 rx-slot, if available. Used to issue a warning if the ConRes doesn't get scheduled on time.
     std::optional<slot_point> msg3_rx_slot = std::nullopt;
-
-    slot_point conres_tx_slot;
   };
 
   /// \brief Whether cell is currently active.
@@ -191,6 +192,7 @@ private:
   /// cellConfigCommon are used.
   bool in_fallback_mode = true;
 
+  // This is not used in case of RACH followed by a MSG3 with MAC CE C-RNTI.
   conres_state conres_procedure;
 
   ue_channel_state_manager channel_state;

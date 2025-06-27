@@ -514,7 +514,8 @@ TEST_P(fallback_scheduler_tester, when_conres_and_msg4_scheduled_separately_msg4
 
   // Add UE 1.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
-  // Notify about SRB0 message in DL of size 101 bytes.
+  // Notify about SRB0 message in DL of size 99 bytes (this size is set empirically to force the scheduler to schedule
+  // Conres and MSG4 separately).
   unsigned ue1_mac_srb0_sdu_size = 99;
   push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, ue1_mac_srb0_sdu_size, true);
 
@@ -560,7 +561,8 @@ TEST_P(fallback_scheduler_tester, conres_and_msg4_scheduled_scheduled_over_diffe
 
   // Add UE 1.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
-  // Notify about SRB0 message in DL of size 101 bytes.
+  // Notify about SRB0 message in DL of size 99 bytes (this size is set empirically to force the scheduler to schedule
+  // Conres and MSG4 separately).
   unsigned ue1_mac_srb0_sdu_size = 99;
   push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, ue1_mac_srb0_sdu_size, true);
 
