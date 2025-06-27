@@ -28,7 +28,6 @@ Build Preparation
   * libsctp:             <https://github.com/sctp/lksctp-tools>
   * yaml-cpp:            <https://github.com/jbeder/yaml-cpp>
   * mbedTLS:             <https://www.trustedfirmware.org/projects/mbed-tls/>
-  * googletest:          <https://github.com/google/googletest/>
 * Optional requirements:
   * googletest:          <https://github.com/google/googletest/>
     * You can enable test building by using the cmake option `-DBUILD_TESTING=On`. GoogleTest is only mandatory when building with tests.
