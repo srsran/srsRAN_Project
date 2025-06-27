@@ -108,7 +108,6 @@ TEST_P(pdcp_tx_stop_test, full_crypto_engine_does_not_stall)
 
   {
     pdcp_tx_metrics_container m = pdcp_tx->get_metrics_and_reset();
-    logger.error("{}", m); // TODO rm.
     FLUSH_AND_ASSERT_EQ(m.num_dropped_sdus, 1);
   }
   // Empty the crypto and DL worker queues.
@@ -117,7 +116,6 @@ TEST_P(pdcp_tx_stop_test, full_crypto_engine_does_not_stall)
 
   {
     pdcp_tx_metrics_container m = pdcp_tx->get_metrics_and_reset();
-    logger.error("{}", m); // TODO rm.
     FLUSH_AND_ASSERT_EQ(m.num_pdus, crypto_worker_qsize);
   }
 

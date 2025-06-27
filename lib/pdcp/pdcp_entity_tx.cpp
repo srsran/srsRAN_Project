@@ -306,11 +306,6 @@ void pdcp_entity_tx::apply_reordering(pdcp_tx_buffer_info buf_info, bool is_retx
   tx_window[buf_info.count].pdu = std::move(buf_info.buf);
   if (buf_info.count != st.tx_trans_crypto) {
     logger.log_debug("Buffered PDU and awaiting reordering. count={} st={}", buf_info.count, st);
-    if (not crypto_reordering_timer.is_running()) {
-      crypto_reordering_timer.run();
-      logger.log_debug("Started reordering timer"); // TODO rm.
-    }
-    return;
   }
 
   // Deliver in order PDUs. Break and update TX_TRANS_CRYPTO when we find a missing PDU.
@@ -323,6 +318,17 @@ void pdcp_entity_tx::apply_reordering(pdcp_tx_buffer_info buf_info, bool is_retx
     if (cfg.custom.test_mode) {
       handle_transmit_notification(SN(count));
     }
+  }
+
+  // Handle reordering timers
+  if (crypto_reordering_timer.is_running() and st.tx_trans_crypto >= st.tx_reord_crypto) {
+    crypto_reordering_timer.stop();
+    logger.log_debug("Stopped t-Reordering.", st);
+  }
+  if (not crypto_reordering_timer.is_running() and st.tx_trans_crypto < st.tx_next) {
+    st.tx_reord_crypto = st.tx_next;
+    crypto_reordering_timer.run();
+    logger.log_debug("Started t-Reordering.");
   }
 }
 
@@ -1123,12 +1129,19 @@ void pdcp_entity_tx::crypto_reordering_timeout()
   }
   logger.log_debug("Crypto reordering timer expired. st={}", st);
 
-  // Advanced the TX_TRANS_CRYPTO to the first missing PDU.
-  for (uint32_t count = st.tx_trans_crypto; count < st.tx_next; count++) {
-    if (tx_window.has_sn(count)) {
-      break;
+  // Advance the TX_TRANS_CRYPTO to TX_REORD_CRYPTO.
+  // Deliver all processed PDUs up until TX_REORD_CRYPTO.
+  while (st.tx_trans_crypto != st.tx_reord_crypto) {
+    if (tx_window.has_sn(st.tx_trans_crypto && not tx_window[st.tx_trans_crypto].pdu.empty())) {
+      logger.log_debug("Dropping SDU. count={}", st.tx_trans_crypto);
+    } else {
+      pdcp_tx_pdu_info pdu_info{.pdu     = std::move(tx_window[st.tx_trans_crypto].pdu),
+                                .count   = st.tx_trans_crypto,
+                                .sdu_toa = tx_window[st.tx_trans_crypto].sdu_info.time_of_arrival};
+      write_data_pdu_to_lower_layers(std::move(pdu_info), false);
     }
-    st.tx_trans_crypto = count + 1;
+    // Update RX_DELIV
+    st.tx_trans_crypto = st.tx_trans_crypto + 1;
   }
 
   // Deliver in order PDUs. Break and update TX_TRANS_CRYPTO when we find a missing PDU.
@@ -1141,6 +1154,13 @@ void pdcp_entity_tx::crypto_reordering_timeout()
     if (cfg.custom.test_mode) {
       handle_transmit_notification(SN(count));
     }
+  }
+
+  // Update TX_CRYPTO_REORD to TX_NEXT if there are still PDUs that need to be processed.
+  if (st.tx_trans_crypto < st.tx_next) {
+    logger.log_debug("Updating tx_trans_crypto to tx_next. {}", st);
+    st.tx_reord_crypto = st.tx_next;
+    crypto_reordering_timer.run();
   }
 }
 

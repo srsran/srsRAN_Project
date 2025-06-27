@@ -38,6 +38,11 @@ struct pdcp_tx_state {
   /// still pending. This is used for TX reordering when using parallel ciphering and integrity protection.
   /// NOTE: This is a custom state variable, not specified by the standard.
   uint32_t tx_trans_crypto = 0;
+  /// This state variable indicates the COUNT value following the COUNT value associated with the PDCP Data
+  /// PDU which triggered reordering. This is used for TX reordering when using parallel ciphering and
+  /// integrity protection.
+  /// NOTE: This is a custom state variable, not specified by the standard.
+  uint32_t tx_reord_crypto = 0;
   /// This state variable indicates the next COUNT value for which we will
   /// receive a transmission notification from the F1/RLC. If TX_TRANS == TX_NEXT,
   /// it means we are not currently waiting for any TX notification.
