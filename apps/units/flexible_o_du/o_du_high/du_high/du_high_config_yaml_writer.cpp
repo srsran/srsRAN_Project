@@ -133,6 +133,14 @@ static YAML::Node build_du_high_ntn_section(const ntn_config& config)
     node["epoch_time"] = epoch_node;
   }
 
+  if (config.epoch_sfn_offset) {
+    node["epoch_sfn_offset"] = config.epoch_sfn_offset.value();
+  }
+
+  if (config.use_state_vector) {
+    node["use_state_vector"] = config.use_state_vector.value();
+  }
+
   if (std::holds_alternative<ecef_coordinates_t>(config.ephemeris_info)) {
     YAML::Node  ephemeris_node;
     const auto& ephem       = std::get<ecef_coordinates_t>(config.ephemeris_info);

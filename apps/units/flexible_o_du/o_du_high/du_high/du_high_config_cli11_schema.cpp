@@ -1951,6 +1951,19 @@ static void configure_cli11_ntn_args(CLI::App&                  app,
                  "Epoch timestamp for the NTN assistance information in ms unit of Unix time")
       ->capture_default_str();
 
+  // Epoch time offset in nof SFNs.
+  app.add_option("--epoch_sfn_offset",
+                 ntn->epoch_sfn_offset,
+                 "Optional offset (in SFN) between the SIB19 tx slot and the epoch time of the NTN assistance info")
+      ->capture_default_str();
+
+  // Epoch time offset in nof SFNs.
+  app.add_option(
+         "--use_state_vector",
+         ntn->use_state_vector,
+         "Whether to broadcast EphemerisInfo as ECEF state vectors (if true) or ECI Orbital parameters (if false)")
+      ->capture_default_str();
+
   // Epoch time.
   CLI::App* epoch_time_subcmd = add_subcommand(app, "epoch_time", "Epoch time for the NTN assistance information");
   configure_cli11_epoch_time(*epoch_time_subcmd, epoch_time);
@@ -2165,25 +2178,29 @@ static void manage_ntn_optional(CLI::App& app, du_high_unit_config& gnb_cfg)
   unsigned nof_fl_entries         = ntn_app->get_subcommand("feeder_link")->count_all();
   unsigned nof_ground_loc_entries = ntn_app->get_subcommand("gateway_location")->count_all();
   if (nof_epoch_entries) {
-    gnb_cfg.ntn_cfg.value().epoch_time = epoch_time;
+    gnb_cfg.ntn_cfg->epoch_time = epoch_time;
   }
 
   if (nof_ta_info_entries) {
-    gnb_cfg.ntn_cfg.value().ta_info = ta_info;
+    gnb_cfg.ntn_cfg->ta_info = ta_info;
   }
 
   if (nof_ecef_entries) {
-    gnb_cfg.ntn_cfg.value().ephemeris_info = ecef_coordinates;
+    gnb_cfg.ntn_cfg->ephemeris_info = ecef_coordinates;
   } else if (nof_orbital_entries) {
-    gnb_cfg.ntn_cfg.value().ephemeris_info = orbital_coordinates;
+    gnb_cfg.ntn_cfg->ephemeris_info = orbital_coordinates;
+  }
+
+  if (not gnb_cfg.ntn_cfg->use_state_vector.has_value()) {
+    gnb_cfg.ntn_cfg->use_state_vector = nof_ecef_entries != 0;
   }
 
   if (nof_fl_entries) {
-    gnb_cfg.ntn_cfg.value().feeder_link_info = feeder_link_info;
+    gnb_cfg.ntn_cfg->feeder_link_info = feeder_link_info;
   }
 
   if (nof_ground_loc_entries) {
-    gnb_cfg.ntn_cfg.value().ntn_gateway_location = ntn_gateway_location;
+    gnb_cfg.ntn_cfg->ntn_gateway_location = ntn_gateway_location;
   }
 
   if (app.get_subcommand("ntn")->count_all() == 0) {

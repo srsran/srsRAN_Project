@@ -98,9 +98,13 @@ struct ntn_config {
   /// Distance from the serving cell reference location, as defined in TS 38.304. Each step represents 50m.
   std::optional<unsigned> distance_threshold;
   /// NTN-config values
-  /// Indicate the epoch time for the NTN assistance information.
+  /// Indicate the epoch time for the NTN assistance information passed in the config file.
   /// It represents a timestamp in ms unit of Unix time (UTC time since 1970-01-01)
   std::optional<uint64_t> epoch_timestamp;
+  /// Optional offset (in SFN) between the SIB19 transmission slot and the epoch time (EpochTime IE) of the NTN
+  /// assistance info. Allows sending NTN assistance information that will become valid epoch_sfn_offset number of
+  /// system frames after SIB19 Tx slot.
+  std::optional<uint64_t> epoch_sfn_offset;
   /// If provided it will be used to fill the EpochTime section in SIB19.
   std::optional<epoch_time_t> epoch_time;
   /// Scheduling offset used for the timing relationships that are modified for NTN (see TS 38.213). The unit of the
@@ -112,6 +116,10 @@ struct ntn_config {
   /// (from epochTime) during which the UE can apply assistance information without having acquired new assistance
   /// information. Values {5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 120, 180, 240, 900} seconds.
   std::optional<unsigned> ntn_ul_sync_validity_dur;
+  /// Whether to broadcast Ephemeris information as ECEF state vectors (if true) or ECI Orbital parameters (if false).
+  /// If not provided, the value is derived from the variant of ephemeris_info.
+  /// If provided and does not match the variant of ephemeris_info, the ephemeris_info is converted accordingly.
+  std::optional<bool> use_state_vector;
   /// This field provides satellite ephemeris either in format of position and velocity state vector or in format of
   /// orbital parameters.
   std::variant<ecef_coordinates_t, orbital_coordinates_t> ephemeris_info;
