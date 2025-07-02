@@ -1845,51 +1845,57 @@ static void configure_cli11_ta_info(CLI::App& app, ta_info_t& ta_info)
 {
   add_option(app, "--ta_common", ta_info.ta_common, "TA common offset")
       ->capture_default_str()
-      ->check(CLI::Range(0, 66485757));
+      ->check(CLI::Range(0.0, 270730.0));
   add_option(app, "--ta_common_drift", ta_info.ta_common_drift, "Drift rate of the common TA")
       ->capture_default_str()
-      ->check(CLI::Range(-257303, 257303));
+      ->check(CLI::Range(-51.4606, 51.4606));
   add_option(app, "--ta_common_drift_variant", ta_info.ta_common_drift_variant, "Drift rate variation of the common TA")
       ->capture_default_str()
-      ->check(CLI::Range(0, 28949));
+      ->check(CLI::Range(0.0, 0.57898));
 }
 
 static void configure_cli11_ephemeris_info_ecef(CLI::App& app, ecef_coordinates_t& ephemeris_info)
 {
   add_option(app, "--pos_x", ephemeris_info.position_x, "X Position of the satellite [m]")
       ->capture_default_str()
-      ->check(CLI::Range(-67108864, 67108863));
+      ->check(CLI::Range(-43620761.6, 43620759.3));
   add_option(app, "--pos_y", ephemeris_info.position_y, "Y Position of the satellite [m]")
       ->capture_default_str()
-      ->check(CLI::Range(-67108864, 67108863));
+      ->check(CLI::Range(-43620761.6, 43620759.3));
   add_option(app, "--pos_z", ephemeris_info.position_z, "Z Position of the satellite [m]")
       ->capture_default_str()
-      ->check(CLI::Range(-67108864, 67108863));
+      ->check(CLI::Range(-43620761.6, 43620759.3));
   add_option(app, "--vel_x", ephemeris_info.velocity_vx, "X Velocity of the satellite [m/s]")
       ->capture_default_str()
-      ->check(CLI::Range(-32768, 32767));
+      ->check(CLI::Range(-7864.32, 7864.26));
   add_option(app, "--vel_y", ephemeris_info.velocity_vy, "Y Velocity of the satellite [m/s]")
       ->capture_default_str()
-      ->check(CLI::Range(-32768, 32767));
+      ->check(CLI::Range(-7864.32, 7864.26));
   add_option(app, "--vel_z", ephemeris_info.velocity_vz, "Z Velocity of the satellite [m/s]")
       ->capture_default_str()
-      ->check(CLI::Range(-32768, 32767));
+      ->check(CLI::Range(-7864.32, 7864.26));
 }
 
 static void configure_cli11_ephemeris_info_orbital(CLI::App& app, orbital_coordinates_t& ephemeris_info)
 {
   add_option(app, "--semi_major_axis", ephemeris_info.semi_major_axis, "Semi-major axis of the satellite [m]")
       ->capture_default_str()
-      ->check(CLI::Range(0, 1000000000));
+      ->check(CLI::Range(6500000.0, 42998632.07));
   add_option(app, "--eccentricity", ephemeris_info.eccentricity, "Eccentricity of the satellite [-]")
-      ->capture_default_str();
-  add_option(app, "--periapsis", ephemeris_info.periapsis, "Periapsis of the satellite [rad]")->capture_default_str();
+      ->capture_default_str()
+      ->check(CLI::Range(0.0, 0.01500510825));
+  add_option(app, "--periapsis", ephemeris_info.periapsis, "Periapsis of the satellite [rad]")
+      ->capture_default_str()
+      ->check(CLI::Range(0.0, 6.28407400155));
   add_option(app, "--longitude", ephemeris_info.longitude, "Longitude of the satellites angle of ascending node [rad]")
-      ->capture_default_str();
+      ->capture_default_str()
+      ->check(CLI::Range(0.0, 6.28407400155));
   add_option(app, "--inclination", ephemeris_info.inclination, "Inclination of the satellite [rad]")
-      ->capture_default_str();
+      ->capture_default_str()
+      ->check(CLI::Range(-1.57101850624, 1.57101848283));
   add_option(app, "--mean_anomaly", ephemeris_info.mean_anomaly, "Mean anomaly of the satellite [rad]")
-      ->capture_default_str();
+      ->capture_default_str()
+      ->check(CLI::Range(0.0, 6.28407400155));
 }
 
 static void configure_cli11_feeder_link(CLI::App& app, feeder_link_info_t& feeder_link_info)
