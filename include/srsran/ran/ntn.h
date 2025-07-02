@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "nr_cgi.h"
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -135,6 +136,8 @@ struct ntn_config {
   unsigned                si_period_rf;
   unsigned                si_window_len_slots;
   std::optional<unsigned> si_window_position;
+  // NR-CGI
+  nr_cell_global_id_t nr_cgi;
 };
 
 } // namespace srsran

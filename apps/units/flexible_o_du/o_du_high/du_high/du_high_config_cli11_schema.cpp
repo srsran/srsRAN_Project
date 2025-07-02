@@ -2278,6 +2278,17 @@ static void derive_auto_params(du_high_unit_config& config)
         }
       }
     }
+    auto&                      cell_cfg = config.cells_cfg.front().cell;
+    expected<plmn_identity>    plmn     = plmn_identity::parse(cell_cfg.plmn);
+    expected<nr_cell_identity> nci      = nr_cell_identity::create(config.gnb_id, cell_cfg.sector_id.value());
+    if (not plmn.has_value()) {
+      report_error("Invalid PLMN: {}", cell_cfg.plmn);
+    }
+    if (not nci.has_value()) {
+      report_error("Invalid NR-NCI");
+    }
+    ntn_cfg->nr_cgi.plmn_id = plmn.value();
+    ntn_cfg->nr_cgi.nci     = nci.value();
   }
 }
 
