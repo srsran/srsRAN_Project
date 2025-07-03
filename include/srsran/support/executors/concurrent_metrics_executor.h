@@ -164,6 +164,8 @@ private:
       (void)free_tasks->try_push(task_idx);
     });
     if (!success) {
+      task = {};
+      (void)free_tasks->try_push(task_idx);
       logger.debug("Unsuccessful execution of handle metrics.");
     }
   }
