@@ -141,6 +141,8 @@ struct sched_ue_config_request {
   std::optional<drx_config> drx_cfg;
   /// measGapConfig.
   std::optional<meas_gap_config> meas_gap_cfg;
+  /// Whether this configuration procedure comes after rrcReestablishment.
+  bool reestablished;
 };
 
 /// Request to create a new UE in scheduler.
@@ -162,6 +164,7 @@ struct sched_ue_reconfiguration_message {
   du_ue_index_t           ue_index;
   rnti_t                  crnti;
   sched_ue_config_request cfg;
+  bool                    reestablished;
 };
 
 /// UE Delete Request.

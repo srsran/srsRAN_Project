@@ -830,7 +830,7 @@ void ue_configuration::update(const cell_common_configuration_list& common_cells
     lc_list = params.lc_ch_list.value();
   }
 
-  // Update DRX config
+  // Update DRX config.
   ue_drx_cfg = cfg_req.drx_cfg;
 
   // Update UE dedicated cell configs.

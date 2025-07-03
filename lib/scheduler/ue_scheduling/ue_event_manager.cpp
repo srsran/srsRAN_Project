@@ -305,7 +305,7 @@ void ue_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
     }
 
     // Configure existing UE.
-    ue_db[ue_idx].handle_reconfiguration_request(ue_reconf_command{ev.next_config()});
+    ue_db[ue_idx].handle_reconfiguration_request(ue_reconf_command{ev.next_config()}, ev.is_reestablished());
 
     // Update slice scheduler.
     for (unsigned i = 0, e = u.nof_cells(); i != e; ++i) {

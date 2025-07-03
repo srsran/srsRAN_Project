@@ -83,10 +83,11 @@ void ue::release_resources()
   }
 }
 
-void ue::handle_reconfiguration_request(const ue_reconf_command& cmd)
+void ue::handle_reconfiguration_request(const ue_reconf_command& cmd, bool reestablished_)
 {
   // UE enters fallback mode when a Reconfiguration takes place.
   reconf_ongoing = true;
+  reestablished  = reestablished_;
   get_pcell().set_fallback_state(true);
   dl_lc_ch_mgr.set_fallback_state(true);
 
@@ -99,6 +100,7 @@ void ue::handle_config_applied()
   get_pcell().set_fallback_state(false);
   dl_lc_ch_mgr.set_fallback_state(false);
   reconf_ongoing = false;
+  reestablished  = false;
 }
 
 void ue::set_config(const ue_configuration& new_cfg, std::optional<slot_point> msg3_slot_rx)

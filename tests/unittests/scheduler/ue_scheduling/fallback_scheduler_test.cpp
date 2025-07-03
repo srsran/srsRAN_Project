@@ -19,12 +19,15 @@
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "lib/scheduler/ue_scheduling/ue_fallback_scheduler.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
-#include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsran/ran/duplex_mode.h"
+#include "srsran/scheduler/config/scheduler_expert_config_factory.h"
+#include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include "srsran/support/test_utils.h"
+#include <algorithm>
 #include <gtest/gtest.h>
+#include <utility>
 
 using namespace srsran;
 
@@ -89,10 +92,10 @@ struct test_bench {
   ue_fallback_scheduler         fallback_sched;
   csi_rs_scheduler              csi_rs_sched;
 
-  explicit test_bench(const scheduler_expert_config&                  sched_cfg_,
+  explicit test_bench(scheduler_expert_config                         sched_cfg_,
                       const cell_config_builder_params&               builder_params_,
                       const sched_cell_configuration_request_message& cell_req) :
-    sched_cfg{sched_cfg_},
+    sched_cfg{std::move(sched_cfg_)},
     builder_params{builder_params_},
     cell_cfg{*[&]() { return cfg_mng.add_cell(cell_req); }()},
     fallback_sched(expert_cfg, cell_cfg, pdcch_sch, pucch_alloc, uci_alloc, ue_db),
@@ -172,15 +175,11 @@ protected:
 
     const auto& dl_lst = bench->cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
     for (const auto& pdsch : dl_lst) {
-      if (pdsch.k0 > max_k_value) {
-        max_k_value = pdsch.k0;
-      }
+      max_k_value = std::max<unsigned int>(pdsch.k0, max_k_value);
     }
     const auto& ul_lst = bench->cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
     for (const auto& pusch : ul_lst) {
-      if (pusch.k2 > max_k_value) {
-        max_k_value = pusch.k2;
-      }
+      max_k_value = std::max(pusch.k2, max_k_value);
     }
 
     mac_logger.set_context(current_slot.sfn(), current_slot.slot_index());
@@ -725,7 +724,7 @@ TEST_P(fallback_scheduler_tester, sanity_check_with_random_max_mcs_and_payload_s
   const du_ue_index_t ue_idx = to_du_ue_index(0);
   add_ue(to_rnti(0x4601), ue_idx);
   // Random payload size.
-  const unsigned mac_srb0_sdu_size = test_rgen::uniform_int<unsigned>(1, 458);
+  const auto mac_srb0_sdu_size = test_rgen::uniform_int<unsigned>(1, 458);
   push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, mac_srb0_sdu_size, true);
 
   srslog::basic_logger& logger(srslog::fetch_basic_logger("TEST"));
@@ -1094,7 +1093,7 @@ protected:
       }
     }
 
-    unsigned generate_srb1_next_update_delay() const
+    static unsigned generate_srb1_next_update_delay()
     {
       // Generate a random number of slots to wait until the next SRB1 buffer update.
       return test_rgen::uniform_int(20U, 40U);
@@ -1307,8 +1306,8 @@ protected:
       }
     }
 
-    unsigned generate_srb1_buffer_size() { return test_rgen::uniform_int(128U, parent->MAX_MAC_SRB0_SDU_SIZE); }
-    unsigned generate_srb1_next_update_delay() const
+    unsigned generate_srb1_buffer_size() const { return test_rgen::uniform_int(128U, parent->MAX_MAC_SRB0_SDU_SIZE); }
+    static unsigned generate_srb1_next_update_delay()
     {
       // Generate a random number of slots to wait until the next SRB1 buffer update.
       return test_rgen::uniform_int(20U, 40U);
@@ -1529,7 +1528,7 @@ TEST_P(ul_fallback_sched_tester_sr_indication, when_gnb_receives_sr_ind_ue_gets_
     run_slot();
 
     auto& puschs   = bench->res_grid[0].result.ul.puschs;
-    auto  pusch_it = std::find_if(puschs.begin(), puschs.end(), [rnti = ue.crnti](const ul_sched_info& pusch) {
+    auto* pusch_it = std::find_if(puschs.begin(), puschs.end(), [rnti = ue.crnti](const ul_sched_info& pusch) {
       return pusch.pusch_cfg.rnti == rnti;
     });
     if (pusch_it != puschs.end()) {

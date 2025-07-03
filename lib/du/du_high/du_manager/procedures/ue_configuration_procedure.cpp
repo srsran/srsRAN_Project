@@ -263,8 +263,9 @@ async_task<mac_ue_reconfiguration_response> ue_configuration_procedure::update_m
     lc_ch.dl_bearer = &bearer.connector.mac_tx_sdu_notifier;
   }
 
-  // Create Scheduler UE Reconfig Request that will be embedded in the mac configuration request.
-  mac_ue_reconf_req.sched_cfg = create_scheduler_ue_config_request(*ue, *ue->resources);
+  // Create Scheduler UE Reconfig Request that will be embedded in the MAC configuration request.
+  mac_ue_reconf_req.sched_cfg     = create_scheduler_ue_config_request(*ue, *ue->resources);
+  mac_ue_reconf_req.reestablished = ue->reestablished_cfg_pending != nullptr;
 
   return du_params.mac.ue_cfg.handle_ue_reconfiguration_request(mac_ue_reconf_req);
 }

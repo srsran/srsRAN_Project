@@ -612,16 +612,21 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
   // the UE already has a dedicated config.
   // Note: In case the UE has no full config (RRC Reject), dedicated PUCCH is not required.
   // Note: If the actual UE has received the RRCSetup (with config) but the gNB doesn't receive an ACK=1, the UE can use
-  // the PUCCH dedicated resource to ACK the RRCSetup Retx (as per ts 38.213, section 9.2.1, "if a ue has dedicated
+  // the PUCCH dedicated resource to ACK the RRCSetup Retx (as per TS 38.213, section 9.2.1, "if a ue has dedicated
   // PUCCH resource configuration, the UE is provided by higher layers with one or more PUCCH resources [...]")
   // Note: The confirmation of UE fallback exit coming from higher layers may be late. In such case, we err on the side
   // of caution and allocate a dedicated PUCCH as well. We do not need to do this for the CON RES CE or SRB0
   // allocations.
-  const bool use_common    = not u.is_reconfig_ongoing();
-  bool       use_dedicated = not use_common;
+  // Note: \c u.is_reestablished() is only set at the start of the RRC Reconfiguration procedure.
+  const bool use_common    = not u.is_reconfig_ongoing() or u.is_reestablished();
+  bool       use_dedicated = u.is_reconfig_ongoing();
   if (u.ue_cfg_dedicated()->is_ue_cfg_complete()) {
-    use_dedicated |=
-        is_retx or (dci_type == dci_dl_rnti_config_type::c_rnti_f1_0 and u.has_pending_dl_newtx_bytes(LCID_SRB1));
+    // Note: this check is meant for the case of the GNB missing the ACK for RRCSetup and then retransmitting it. In
+    // this case, we need to schedule also on dedicated because the UE already has a dedicated configuration, even
+    // though we don't know that.
+    // As a side effect, this will make the GNB also schedule on dedicated resources for the case of missing the ACK for
+    // RRCReestablishment and then retransmitting it. This is not optimal, but not critical.
+    use_dedicated |= is_retx;
   }
   std::optional<uci_allocation> uci = allocate_ue_fallback_pucch(u,
                                                                  res_alloc,
