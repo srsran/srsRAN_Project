@@ -371,12 +371,12 @@ static int trx_srsran_start(TRXState* s1, const TRXDriverParams* p)
                 "Invalid sampling rate num={}, den={}.",
                 p->sample_rate[0].num,
                 p->sample_rate[0].den);
-  double sample_rate_Hz = static_cast<double>(p->sample_rate->num) / static_cast<double>(p->sample_rate[0].den);
+  double sampling_rate_Hz = static_cast<double>(p->sample_rate->num) / static_cast<double>(p->sample_rate[0].den);
 
   // Prepare noise generator.
   if (context.noise_spd.has_value()) {
     // Convert to standard deviation and initialize noise generator.
-    float noise_std = std::sqrt(convert_dB_to_power(context.noise_spd.value()) * sample_rate_Hz);
+    float noise_std = std::sqrt(convert_dB_to_power(context.noise_spd.value()) * sampling_rate_Hz);
     context.dist    = complex_normal_distribution<>(0.0, noise_std);
   }
 
@@ -393,7 +393,7 @@ static int trx_srsran_start(TRXState* s1, const TRXDriverParams* p)
 
   // Prepare configuration.
   radio_configuration::radio configuration = {};
-  configuration.sampling_rate_hz           = sample_rate_Hz;
+  configuration.sampling_rate_Hz           = sampling_rate_Hz;
   configuration.log_level                  = context.log_level;
   configuration.otw_format                 = context.otw_format;
 
@@ -412,7 +412,7 @@ static int trx_srsran_start(TRXState* s1, const TRXDriverParams* p)
       tx_stream_config.channels.emplace_back();
       radio_configuration::channel& tx_channel_config = tx_stream_config.channels.back();
 
-      tx_channel_config.freq.center_frequency_hz  = static_cast<double>(p->tx_freq[tx_port_count]);
+      tx_channel_config.freq.center_frequency_Hz  = static_cast<double>(p->tx_freq[tx_port_count]);
       tx_channel_config.gain_dB                   = static_cast<double>(p->tx_gain[tx_port_count]);
       tx_channel_config.args                      = context.tx_port_args[tx_port_count];
       context.tx_port_channel_gain[rx_port_count] = p->tx_gain[tx_port_count];
@@ -429,7 +429,7 @@ static int trx_srsran_start(TRXState* s1, const TRXDriverParams* p)
       rx_stream_config.channels.emplace_back();
       radio_configuration::channel& rx_channel_config = rx_stream_config.channels.back();
 
-      rx_channel_config.freq.center_frequency_hz  = static_cast<double>(p->rx_freq[rx_port_count]);
+      rx_channel_config.freq.center_frequency_Hz  = static_cast<double>(p->rx_freq[rx_port_count]);
       rx_channel_config.gain_dB                   = static_cast<double>(p->rx_gain[rx_port_count]);
       rx_channel_config.args                      = context.rx_port_args[rx_port_count];
       context.rx_port_channel_gain[rx_port_count] = p->rx_gain[rx_port_count];

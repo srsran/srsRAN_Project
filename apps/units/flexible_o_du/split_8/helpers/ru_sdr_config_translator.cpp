@@ -156,7 +156,7 @@ static void generate_radio_config(radio_configuration::radio&                   
 {
   out_cfg.args             = ru_cfg.device_arguments;
   out_cfg.log_level        = ru_cfg.loggers.radio_level;
-  out_cfg.sampling_rate_hz = ru_cfg.srate_MHz * 1e6;
+  out_cfg.sampling_rate_Hz = ru_cfg.srate_MHz * 1e6;
   out_cfg.otw_format       = radio_configuration::to_otw_format(ru_cfg.otw_format);
   out_cfg.clock.clock      = radio_configuration::to_clock_source(ru_cfg.clock_source);
   out_cfg.clock.sync       = radio_configuration::to_clock_source(ru_cfg.synch_source);
@@ -195,11 +195,11 @@ static void generate_radio_config(radio_configuration::radio&                   
     for (unsigned port_id = 0; port_id != cell.nof_tx_antennas; ++port_id) {
       // Create channel configuration and append it to the previous ones.
       radio_configuration::channel tx_ch_config = {};
-      tx_ch_config.freq.center_frequency_hz     = center_tx_freq_cal_Hz;
+      tx_ch_config.freq.center_frequency_Hz     = center_tx_freq_cal_Hz;
       if (std::isnormal(ru_cfg.lo_offset_MHz)) {
-        tx_ch_config.freq.lo_frequency_hz = lo_tx_freq_cal_Hz;
+        tx_ch_config.freq.lo_frequency_Hz = lo_tx_freq_cal_Hz;
       } else {
-        tx_ch_config.freq.lo_frequency_hz = 0.0;
+        tx_ch_config.freq.lo_frequency_Hz = 0.0;
       }
       tx_ch_config.gain_dB = ru_cfg.tx_gain_dB;
 
@@ -219,11 +219,11 @@ static void generate_radio_config(radio_configuration::radio&                   
     for (unsigned port_id = 0; port_id != cell.nof_rx_antennas; ++port_id) {
       // Create channel configuration and append it to the previous ones.
       radio_configuration::channel rx_ch_config = {};
-      rx_ch_config.freq.center_frequency_hz     = center_rx_freq_cal_Hz;
+      rx_ch_config.freq.center_frequency_Hz     = center_rx_freq_cal_Hz;
       if (std::isnormal(ru_cfg.lo_offset_MHz)) {
-        rx_ch_config.freq.lo_frequency_hz = lo_rx_freq_cal_Hz;
+        rx_ch_config.freq.lo_frequency_Hz = lo_rx_freq_cal_Hz;
       } else {
-        rx_ch_config.freq.lo_frequency_hz = 0.0;
+        rx_ch_config.freq.lo_frequency_Hz = 0.0;
       }
       rx_ch_config.gain_dB = ru_cfg.rx_gain_dB;
 

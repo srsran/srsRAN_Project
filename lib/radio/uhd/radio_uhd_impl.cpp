@@ -243,7 +243,7 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     return;
   }
 
-  if (!device.set_automatic_master_clock_rate(radio_config.sampling_rate_hz)) {
+  if (!device.set_automatic_master_clock_rate(radio_config.sampling_rate_Hz)) {
     fmt::print("Error setting master clock rate. {}\n", device.get_error_message());
     return;
   }
@@ -277,7 +277,7 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
 
   // Set Tx rate.
   double actual_tx_rate_Hz = 0.0;
-  if (!device.set_tx_rate(actual_tx_rate_Hz, radio_config.sampling_rate_hz)) {
+  if (!device.set_tx_rate(actual_tx_rate_Hz, radio_config.sampling_rate_Hz)) {
     fmt::print("Error: setting Tx sampling rate. {}\n", device.get_error_message());
     return;
   }
@@ -285,7 +285,7 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
 
   // Set Rx rate.
   double actual_rx_rate_Hz = 0.0;
-  if (!device.set_rx_rate(actual_rx_rate_Hz, radio_config.sampling_rate_hz)) {
+  if (!device.set_rx_rate(actual_rx_rate_Hz, radio_config.sampling_rate_Hz)) {
     fmt::print("Error: setting Rx sampling rate. {}\n", device.get_error_message());
     return;
   }

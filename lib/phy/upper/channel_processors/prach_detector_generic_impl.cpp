@@ -111,7 +111,7 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
   unsigned dft_size = idft.get_size();
 
   // Deduce sampling rate.
-  double sample_rate_Hz = dft_size * ra_scs_to_Hz(preamble_info.scs);
+  double sampling_rate_Hz = dft_size * ra_scs_to_Hz(preamble_info.scs);
 
   // Calculate cyclic prefix duration in seconds.
   double cp_duration = preamble_info.cp_length.to_seconds();
@@ -165,9 +165,9 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
   // Prepare results.
   prach_detection_result result;
   result.rssi_dB         = convert_power_to_dB(rssi);
-  result.time_resolution = phy_time_unit::from_seconds(1.0 / static_cast<double>(sample_rate_Hz));
+  result.time_resolution = phy_time_unit::from_seconds(1.0 / static_cast<double>(sampling_rate_Hz));
   result.time_advance_max =
-      phy_time_unit::from_seconds(static_cast<double>(max_delay_samples) * 0.8 / static_cast<double>(sample_rate_Hz));
+      phy_time_unit::from_seconds(static_cast<double>(max_delay_samples) * 0.8 / static_cast<double>(sampling_rate_Hz));
   result.preambles.clear();
 
   // Early stop if the RSSI is zero.
@@ -324,7 +324,7 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
         prach_detection_result::preamble_indication& info = result.preambles.emplace_back();
         info.preamble_index                               = preamble_index;
         info.time_advance =
-            phy_time_unit::from_seconds(static_cast<double>(delay) / static_cast<double>(sample_rate_Hz));
+            phy_time_unit::from_seconds(static_cast<double>(delay) / static_cast<double>(sampling_rate_Hz));
         // Normalize the detection metric with respect to the threshold.
         info.detection_metric = peak / threshold;
       }

@@ -410,7 +410,7 @@ static radio_configuration::radio create_radio_configuration()
 
   radio_config.clock.clock      = radio_configuration::to_clock_source(clock_source);
   radio_config.clock.sync       = radio_configuration::to_clock_source(sync_source);
-  radio_config.sampling_rate_hz = srate.to_Hz<double>();
+  radio_config.sampling_rate_Hz = srate.to_Hz<double>();
   radio_config.otw_format       = otw_format;
   radio_config.tx_mode          = radio_configuration::transmission_mode::continuous;
   radio_config.power_ramping_us = 0.0F;
@@ -423,7 +423,7 @@ static radio_configuration::radio create_radio_configuration()
     for (unsigned port_id = 0; port_id != nof_ports; ++port_id) {
       // Create channel configuration and append it to the previous ones.
       radio_configuration::channel tx_ch_config;
-      tx_ch_config.freq.center_frequency_hz = dl_center_freq;
+      tx_ch_config.freq.center_frequency_Hz = dl_center_freq;
       tx_ch_config.gain_dB                  = tx_gain;
       if (!tx_channel_args.empty()) {
         tx_ch_config.args = tx_channel_args[sector_id * nof_ports + port_id];
@@ -431,7 +431,7 @@ static radio_configuration::radio create_radio_configuration()
       tx_stream_config.channels.emplace_back(tx_ch_config);
 
       radio_configuration::channel rx_ch_config;
-      rx_ch_config.freq.center_frequency_hz = rx_freq;
+      rx_ch_config.freq.center_frequency_Hz = rx_freq;
       rx_ch_config.gain_dB                  = rx_gain;
       if (!rx_channel_args.empty()) {
         rx_ch_config.args = rx_channel_args[sector_id * nof_ports + port_id];
@@ -700,7 +700,7 @@ int main(int argc, char** argv)
   // Calculate starting time.
   double                     delay_s      = 0.1;
   baseband_gateway_timestamp current_time = radio->read_current_time();
-  baseband_gateway_timestamp start_time = current_time + static_cast<uint64_t>(delay_s * radio_config.sampling_rate_hz);
+  baseband_gateway_timestamp start_time = current_time + static_cast<uint64_t>(delay_s * radio_config.sampling_rate_Hz);
 
   // Start processing.
   radio->start(start_time);
