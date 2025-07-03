@@ -1,0 +1,35 @@
+#
+# Copyright 2021-2025 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
+add_executable(srscucp
+        cu_cp.cpp
+        cu_cp_appconfig_cli11_schema.cpp
+        #cu_appconfig_validator.cpp
+        #cu_appconfig_yaml_writer.cpp
+)
+
+install(TARGETS srscucp
+        RUNTIME)
+
+target_link_libraries(srscucp PRIVATE
+        srsran_app_helpers
+        srsran_app_services
+        srsran_e1_gateway
+        srsran_e2
+        srsran_f1c_gateway
+        srsran_ngap
+        srsran_o_cu_cp_app_unit
+        srsran_pcap
+        srsran_support
+        srsran_versioning
+)
+
+add_backward(srscucp)
+
+target_include_directories(srscucp PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/external)
+notify_binary_target(srscucp)
