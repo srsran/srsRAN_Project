@@ -7,6 +7,7 @@
 #
 
 add_subdirectory(cu)
+add_subdirectory(cu_up)
 add_subdirectory(du)
 add_subdirectory(du_low)
 add_subdirectory(examples)
