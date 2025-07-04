@@ -42,7 +42,8 @@ void srsran::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_up_appco
   app_services::configure_cli11_with_metrics_appconfig_schema(app, cu_up_cfg.metrics_cfg.metrics_service_cfg);
 
   // NR-U section.
-  CLI::App* f1u_subcmd = add_subcommand(app, "f1u", "F1-U parameters")->configurable();
+  CLI::App* cu_up_subcmd = add_subcommand(app, "cu_up", "CU-UP parameters")->configurable();
+  CLI::App* f1u_subcmd   = add_subcommand(*cu_up_subcmd, "f1u", "F1-U parameters")->configurable();
   configure_cli11_f1u_sockets_args(*f1u_subcmd, cu_up_cfg.f1u_cfg);
 }
 
