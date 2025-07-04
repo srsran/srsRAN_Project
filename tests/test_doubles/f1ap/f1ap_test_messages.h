@@ -202,7 +202,7 @@ byte_buffer extract_dl_dcch_msg(const byte_buffer& rrc_container);
 f1ap_message generate_trp_information_request();
 
 /// \brief Generates dummy F1AP TRP INFORMATION RESPONSE message.
-f1ap_message generate_trp_information_response(const trp_id_t& trp_id);
+f1ap_message generate_trp_information_response(const std::vector<trp_id_t>& trp_ids);
 
 /// \brief Generates dummy F1AP TRP INFORMATION FAILURE message.
 f1ap_message generate_trp_information_failure();
