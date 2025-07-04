@@ -140,9 +140,9 @@ public:
   du_trp_info_response request_trp_info() override
   {
     return du_trp_info_response{
-        {{.trp_id = trp_id_t{0}, .pci = MIN_PCI},
-         {.trp_id = trp_id_t{0}, .cgi = nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::min()}},
-         {.trp_id = trp_id_t{0}, .arfcn = 368500}}};
+        {{.trp_id = trp_id_t{1}, .pci = MIN_PCI},
+         {.trp_id = trp_id_t{1}, .cgi = nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::min()}},
+         {.trp_id = trp_id_t{1}, .arfcn = 368500}}};
   }
 
   async_task<du_positioning_info_response> request_positioning_info(const du_positioning_info_request& req) override

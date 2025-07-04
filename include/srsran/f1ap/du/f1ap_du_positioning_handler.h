@@ -14,13 +14,12 @@
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
+#include "srsran/ran/positioning/positioning_ids.h"
 #include "srsran/ran/scs_specific_carrier.h"
 #include "srsran/ran/srs/srs_configuration.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran::srs_du {
-
-using trp_id_t = uint32_t;
 
 struct du_trp_info {
   trp_id_t                           trp_id;
@@ -72,7 +71,7 @@ struct pos_meas_result_item {
 };
 
 struct pos_meas_result {
-  uint32_t                          trp_id;
+  trp_id_t                          trp_id;
   std::vector<pos_meas_result_item> results;
 };
 
