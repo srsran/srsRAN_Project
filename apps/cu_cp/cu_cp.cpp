@@ -162,7 +162,7 @@ int main(int argc, char** argv)
   enable_backtrace();
 
   // Setup and configure config parsing.
-  CLI::App app("srsCUCP application");
+  CLI::App app("srsCU-CP application");
   app.config_formatter(create_yaml_config_parser());
   app.allow_config_extras(CLI::config_extras_mode::error);
   // Fill the generic application arguments to parse.
