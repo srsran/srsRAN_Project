@@ -11,7 +11,6 @@
 #include "worker_manager.h"
 #include "apps/helpers/metrics/metrics_helpers.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/du/du_high/du_high_executor_mapper.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/concurrent_metrics_executor.h"
 #include "srsran/support/executors/inline_task_executor.h"
@@ -68,7 +67,6 @@ worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
   }
 
   create_low_prio_executors(worker_cfg);
-  associate_low_prio_executors(worker_cfg);
 
   if (worker_cfg.is_split6_enabled) {
     create_split6_executors();
@@ -350,7 +348,6 @@ void worker_manager::create_low_prio_executors(const worker_manager_config& work
   non_rt_pool.executors.emplace_back("high_prio_exec", task_priority::max);
 
   std::vector<strand>& medium_prio_strands = non_rt_pool.executors[1].strands;
-  std::vector<strand>& high_prio_strands   = non_rt_pool.executors[2].strands;
 
   // Configuration of strands for PCAP writing. These strands will use the low priority executor.
   append_pcap_strands(medium_prio_strands, worker_cfg.pcap_cfg);
@@ -358,10 +355,6 @@ void worker_manager::create_low_prio_executors(const worker_manager_config& work
   // Metrics strand configuration.
   strand metrics_strand_cfg{{{"metrics_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}};
   medium_prio_strands.push_back(metrics_strand_cfg);
-
-  // Configuration of strand for the CU-CP task handling.
-  strand cu_cp_strand{{{"ctrl_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}};
-  high_prio_strands.push_back(cu_cp_strand);
 
   // Create non-RT worker pool.
   if (not exec_mng.add_execution_context(create_execution_context(non_rt_pool))) {
@@ -372,16 +365,9 @@ void worker_manager::create_low_prio_executors(const worker_manager_config& work
   non_rt_medium_prio_exec = exec_mng.executors().at("medium_prio_exec");
   non_rt_hi_prio_exec     = exec_mng.executors().at("high_prio_exec");
   metrics_exec            = exec_mng.executors().at("metrics_exec");
-}
 
-void worker_manager::associate_low_prio_executors(const worker_manager_config& config)
-{
-  using namespace execution_config_helper;
-  const auto& exec_map = exec_mng.executors();
-
-  // Update executor pointer mapping
-  cu_cp_exec = exec_map.at("ctrl_exec");
-  cu_e2_exec = exec_map.at("ctrl_exec");
+  cu_cp_exec_mapper = srs_cu_cp::make_cu_cp_executor_mapper(
+      srs_cu_cp::strand_based_executor_config{*exec_mng.executors().at("high_prio_exec")});
 }
 
 worker_manager::du_crit_path_executor_desc

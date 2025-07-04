@@ -339,8 +339,11 @@ int main(int argc, char** argv)
     cu_f1u_gw_config.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;
     cu_f1u_gw_config.rx_max_mmsg                = sock_cfg.udp_config.rx_max_msgs;
     cu_f1u_gw_config.dscp                       = sock_cfg.udp_config.dscp;
-    std::unique_ptr<gtpu_gateway> cu_f1u_gw     = create_udp_gtpu_gateway(
-        cu_f1u_gw_config, *epoll_broker, workers.cu_up_exec_mapper->io_ul_executor(), *workers.non_rt_low_prio_exec);
+    std::unique_ptr<gtpu_gateway> cu_f1u_gw =
+        create_udp_gtpu_gateway(cu_f1u_gw_config,
+                                *epoll_broker,
+                                workers.get_cu_up_executor_mapper().io_ul_executor(),
+                                *workers.non_rt_low_prio_exec);
     if (not sock_cfg.five_qi.has_value()) {
       f1u_gw_maps.default_gws.push_back(std::move(cu_f1u_gw));
     } else {
@@ -382,14 +385,12 @@ int main(int argc, char** argv)
 
   // Create O-CU-CP dependencies.
   o_cu_cp_unit_dependencies o_cucp_deps;
-  o_cucp_deps.cu_cp_executor       = workers.cu_cp_exec;
-  o_cucp_deps.cu_cp_n2_rx_executor = workers.non_rt_hi_prio_exec;
-  o_cucp_deps.cu_cp_e2_exec        = workers.cu_e2_exec;
-  o_cucp_deps.timers               = cu_timers;
-  o_cucp_deps.ngap_pcap            = cu_cp_dlt_pcaps.ngap.get();
-  o_cucp_deps.broker               = epoll_broker.get();
-  o_cucp_deps.e2_gw                = e2_gw_cu_cp.get();
-  o_cucp_deps.metrics_notifier     = &metrics_notifier_forwarder;
+  o_cucp_deps.executor_mapper  = &workers.get_cu_cp_executor_mapper();
+  o_cucp_deps.timers           = cu_timers;
+  o_cucp_deps.ngap_pcap        = cu_cp_dlt_pcaps.ngap.get();
+  o_cucp_deps.broker           = epoll_broker.get();
+  o_cucp_deps.e2_gw            = e2_gw_cu_cp.get();
+  o_cucp_deps.metrics_notifier = &metrics_notifier_forwarder;
 
   // Create O-CU-CP.
   auto                o_cucp_unit = o_cu_cp_app_unit->create_o_cu_cp(o_cucp_deps);
@@ -427,7 +428,6 @@ int main(int argc, char** argv)
   // Create and start O-CU-UP
   o_cu_up_unit_dependencies o_cuup_unit_deps;
   o_cuup_unit_deps.workers          = &workers;
-  o_cuup_unit_deps.cu_up_e2_exec    = workers.cu_e2_exec;
   o_cuup_unit_deps.e1ap_conn_client = e1_gw.get();
   o_cuup_unit_deps.f1u_gateway      = cu_f1u_conn.get();
   o_cuup_unit_deps.gtpu_pcap        = cu_up_dlt_pcaps.n3.get();

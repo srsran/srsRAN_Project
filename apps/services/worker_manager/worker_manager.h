@@ -12,6 +12,7 @@
 
 #include "worker_manager_config.h"
 #include "worker_manager_worker_getter.h"
+#include "srsran/cu_cp/cu_cp_executor_mapper.h"
 #include "srsran/cu_up/cu_up_executor_mapper.h"
 #include "srsran/du/du_high/du_high_executor_mapper.h"
 #include "srsran/du/du_low/du_low_executor_mapper.h"
@@ -37,7 +38,6 @@ struct worker_manager : public worker_manager_executor_getter {
   /// - e1ap_cu_cp::handle_message calls cu-cp ctrl exec
   /// - e1ap_cu_up::handle_message calls cu-up ue exec
 
-  task_executor*              cu_cp_exec = nullptr;
   std::vector<task_executor*> lower_phy_tx_exec;
   std::vector<task_executor*> lower_phy_rx_exec;
   std::vector<task_executor*> lower_phy_dl_exec;
@@ -49,19 +49,28 @@ struct worker_manager : public worker_manager_executor_getter {
   std::vector<task_executor*> fapi_exec;
   std::vector<task_executor*> ru_dl_exec;
   std::vector<task_executor*> ru_rx_exec;
-  task_executor*              cu_e2_exec              = nullptr;
   task_executor*              non_rt_low_prio_exec    = nullptr;
   task_executor*              non_rt_medium_prio_exec = nullptr;
   task_executor*              non_rt_hi_prio_exec     = nullptr;
   task_executor*              split6_exec             = nullptr;
   task_executor*              metrics_exec            = nullptr;
 
-  std::unique_ptr<srs_cu_up::cu_up_executor_mapper> cu_up_exec_mapper;
-
   srs_du::du_high_executor_mapper& get_du_high_executor_mapper()
   {
     srsran_assert(du_high_exec_mapper, "DU High execution mapper is not available.");
     return *du_high_exec_mapper;
+  }
+
+  srs_cu_cp::cu_cp_executor_mapper& get_cu_cp_executor_mapper()
+  {
+    srsran_assert(cu_cp_exec_mapper, "CU-CP execution mapper is not available.");
+    return *cu_cp_exec_mapper;
+  }
+
+  srs_cu_up::cu_up_executor_mapper& get_cu_up_executor_mapper()
+  {
+    srsran_assert(cu_up_exec_mapper, "CU-UP execution mapper is not available.");
+    return *cu_up_exec_mapper;
   }
 
   srs_du::du_low_executor_mapper& get_du_low_executor_mapper()
@@ -94,6 +103,9 @@ private:
   std::unique_ptr<srs_du::du_high_executor_mapper> du_high_exec_mapper;
   std::unique_ptr<srs_du::du_low_executor_mapper>  du_low_exec_mapper;
   std::vector<task_executor*>                      crit_path_prio_executors;
+
+  std::unique_ptr<srs_cu_cp::cu_cp_executor_mapper> cu_cp_exec_mapper;
+  std::unique_ptr<srs_cu_up::cu_up_executor_mapper> cu_up_exec_mapper;
 
   /// Manager of execution contexts and respective executors instantiated by the application.
   task_execution_manager exec_mng;
@@ -129,7 +141,6 @@ private:
                                                                unsigned int              low_prio_task_queue_size,
                                                                os_sched_affinity_bitmask low_prio_mask);
   void                                 create_low_prio_executors(const worker_manager_config& config);
-  void                                 associate_low_prio_executors(const worker_manager_config& config);
 
   std::vector<execution_config_helper::single_worker> create_fapi_workers(unsigned nof_cells);
 

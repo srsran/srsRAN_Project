@@ -19,6 +19,7 @@
 #include "e2/o_cu_cp_e2_config_translators.h"
 #include "o_cu_cp_unit_config.h"
 #include "o_cu_cp_unit_impl.h"
+#include "srsran/cu_cp/cu_cp_executor_mapper.h"
 #include "srsran/cu_cp/o_cu_cp_config.h"
 #include "srsran/cu_cp/o_cu_cp_factory.h"
 #include "srsran/e2/e2_cu_metrics_connector.h"
@@ -56,9 +57,7 @@ static pdcp_metrics_notifier* build_pdcp_metrics_config(std::vector<app_services
 
 o_cu_cp_unit srsran::build_o_cu_cp(const o_cu_cp_unit_config& unit_cfg, o_cu_cp_unit_dependencies& dependencies)
 {
-  srsran_assert(dependencies.cu_cp_executor, "Invalid CU-CP executor");
-  srsran_assert(dependencies.cu_cp_n2_rx_executor, "Invalid N2 Rx executor");
-  srsran_assert(dependencies.cu_cp_e2_exec, "Invalid E2 executor");
+  srsran_assert(dependencies.executor_mapper, "Invalid CU-CP executor mapper");
   srsran_assert(dependencies.ngap_pcap, "Invalid NGAP PCAP");
   srsran_assert(dependencies.broker, "Invalid IO broker");
   srsran_assert(dependencies.metrics_notifier, "Invalid metrics notifier");
@@ -67,8 +66,8 @@ o_cu_cp_unit srsran::build_o_cu_cp(const o_cu_cp_unit_config& unit_cfg, o_cu_cp_
   const cu_cp_unit_config&        cucp_unit_cfg = unit_cfg.cucp_cfg;
   srs_cu_cp::cu_cp_configuration& cu_cp_cfg     = o_cu_cp_cfg.cu_cp_config;
   cu_cp_cfg                                     = generate_cu_cp_config(cucp_unit_cfg);
-  cu_cp_cfg.services.cu_cp_executor             = dependencies.cu_cp_executor;
-  cu_cp_cfg.services.cu_cp_e2_exec              = dependencies.cu_cp_e2_exec;
+  cu_cp_cfg.services.cu_cp_executor             = &dependencies.executor_mapper->ctrl_executor();
+  cu_cp_cfg.services.cu_cp_e2_exec              = &dependencies.executor_mapper->e2_executor();
   cu_cp_cfg.services.timers                     = dependencies.timers;
 
   o_cu_cp_unit ocucp;
@@ -78,20 +77,20 @@ o_cu_cp_unit srsran::build_o_cu_cp(const o_cu_cp_unit_config& unit_cfg, o_cu_cp_
   // Create N2 Client Gateways.
   std::vector<std::unique_ptr<srs_cu_cp::n2_connection_client>> n2_clients;
 
-  n2_clients.push_back(
-      srs_cu_cp::create_n2_connection_client(generate_n2_client_config(cucp_unit_cfg.amf_config.no_core,
-                                                                       cucp_unit_cfg.amf_config.amf,
-                                                                       *dependencies.ngap_pcap,
-                                                                       *dependencies.broker,
-                                                                       *dependencies.cu_cp_n2_rx_executor)));
+  n2_clients.push_back(srs_cu_cp::create_n2_connection_client(
+      generate_n2_client_config(cucp_unit_cfg.amf_config.no_core,
+                                cucp_unit_cfg.amf_config.amf,
+                                *dependencies.ngap_pcap,
+                                *dependencies.broker,
+                                dependencies.executor_mapper->n2_rx_executor())));
 
   for (const auto& amf : cucp_unit_cfg.extra_amfs) {
-    n2_clients.push_back(
-        srs_cu_cp::create_n2_connection_client(generate_n2_client_config(cucp_unit_cfg.amf_config.no_core,
-                                                                         amf,
-                                                                         *dependencies.ngap_pcap,
-                                                                         *dependencies.broker,
-                                                                         *dependencies.cu_cp_n2_rx_executor)));
+    n2_clients.push_back(srs_cu_cp::create_n2_connection_client(
+        generate_n2_client_config(cucp_unit_cfg.amf_config.no_core,
+                                  amf,
+                                  *dependencies.ngap_pcap,
+                                  *dependencies.broker,
+                                  dependencies.executor_mapper->n2_rx_executor())));
   }
 
   for (unsigned i = 0, e = n2_clients.size(); i != e; ++i) {
