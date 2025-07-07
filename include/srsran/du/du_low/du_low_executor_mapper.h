@@ -102,12 +102,12 @@ struct du_low_executor_mapper_single_exec_config {
 ///
 /// All task executors are given.
 struct du_low_executor_mapper_manual_exec_config {
+  /// High priority executor.
+  task_executor* high_priority_executor = nullptr;
   /// Executor for downlink transmissions.
   task_executor* dl_executor = nullptr;
   /// Executor for PDSCH concurrent processing.
   task_executor* pdsch_executor = nullptr;
-  /// Executor for PRACH detection.
-  task_executor* prach_executor = nullptr;
   /// Executor for PUSCH reception.
   task_executor* pusch_executor = nullptr;
   /// Executor for PUCCH reception.

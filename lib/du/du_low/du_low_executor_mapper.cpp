@@ -9,7 +9,9 @@
  */
 
 #include "srsran/du/du_low/du_low_executor_mapper.h"
+#include "srsran/adt/mpmc_queue.h"
 #include "srsran/support/executors/concurrent_metrics_executor.h"
+#include "srsran/support/executors/strand_executor.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
@@ -101,7 +103,7 @@ public:
         const auto& manual = std::get<du_low_executor_mapper_manual_exec_config>(cell_config);
         dl_exec            = manual.dl_executor;
         pdsch_exec         = manual.pdsch_executor;
-        prach_exec         = manual.prach_executor;
+        prach_exec         = create_strand(manual.high_priority_executor);
         pusch_exec         = manual.pusch_executor;
         pusch_dec_exec     = manual.pusch_decoder_executor;
         pucch_exec         = manual.pucch_executor;
@@ -144,17 +146,29 @@ public:
   }
 
 private:
+  /// Creates a strand on the top of a given executor.
+  task_executor* create_strand(task_executor* base_executor)
+  {
+    srsran_assert(base_executor != nullptr, "Invalid executor.");
+    executors.emplace_back(make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(*base_executor, 2048));
+    return executors.back().get();
+  }
+
+  /// Wraps an executor with a metric decorator.
   task_executor* wrap_executor_with_metric(task_executor*                              base_executor,
                                            std::string                                 exec_name,
                                            const du_low_executor_mapper_metric_config& config)
   {
-    metrics_executor.emplace_back(make_concurrent_metrics_executor_ptr(
+    srsran_assert(base_executor != nullptr, "Invalid executor.");
+    executors.emplace_back(make_concurrent_metrics_executor_ptr(
         exec_name, *base_executor, config.sequential_executor, config.logger, config.period));
-    return metrics_executor.back().get();
+    return executors.back().get();
   }
 
+  /// Actual executor map indexed per cell basis.
   std::vector<std::unique_ptr<du_low_cell_executor_mapper>> cell_mappers;
-  std::vector<std::unique_ptr<task_executor>>               metrics_executor;
+  /// List of internal executor instances.
+  std::vector<std::unique_ptr<task_executor>> executors;
 };
 
 } // namespace

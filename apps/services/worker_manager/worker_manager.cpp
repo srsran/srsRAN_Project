@@ -439,7 +439,7 @@ worker_manager::create_du_crit_path_prio_executors(unsigned                     
       const std::string               l1_pusch_exec_name  = "du_low_pusch_exec#" + cell_id_str;
       const std::string               l1_srs_exec_name    = "du_low_srs_exec#" + cell_id_str;
       const std::string               l2_exec_name        = "l2_exec#" + cell_id_str;
-      const std::string               l1_prach_exec_name  = "prach_exec#" + cell_id_str;
+      const std::string               l1_high_prio_name   = "l1_high_prio#" + cell_id_str;
       const auto                      ul_worker_pool_prio = os_thread_realtime_priority::max() - 15;
       const auto                      dl_worker_pool_prio = os_thread_realtime_priority::max() - 2;
       const std::chrono::microseconds ul_worker_sleep_time{20};
@@ -484,7 +484,7 @@ worker_manager::create_du_crit_path_prio_executors(unsigned                     
                                        {{l2_exec_name, task_priority::max},
                                         {l1_dl_exec_name, task_priority::max - 1},
                                         {l1_pdsch_exec_name, task_priority::max - 2},
-                                        {l1_prach_exec_name, task_priority::max - 2, {}, task_worker_queue_size}},
+                                        {l1_high_prio_name, task_priority::max - 2}},
                                        dl_worker_sleep_time,
                                        dl_worker_pool_prio,
                                        dl_cpu_masks};
@@ -526,9 +526,9 @@ worker_manager::create_du_crit_path_prio_executors(unsigned                     
 
       // Fill the task executors for each cell.
       du_low_exec_mapper_config.cells.emplace_back(srs_du::du_low_executor_mapper_manual_exec_config{
+          .high_priority_executor = exec_mng.executors().at(l1_high_prio_name),
           .dl_executor            = exec_mng.executors().at(l1_dl_exec_name),
           .pdsch_executor         = exec_mng.executors().at(l1_pdsch_exec_name),
-          .prach_executor         = exec_mng.executors().at(l1_prach_exec_name),
           .pusch_executor         = exec_mng.executors().at(l1_pusch_exec_name),
           .pucch_executor         = exec_mng.executors().at(l1_pucch_exec_name),
           .srs_executor           = exec_mng.executors().at(l1_srs_exec_name),
