@@ -21,10 +21,14 @@ class task_fork_limiter final : public task_executor
 {
 public:
   template <typename E>
-  task_fork_limiter(E&& exec, unsigned max_forks_, unsigned qsize_) :
-    max_forks(max_forks_), out_exec(std::forward<E>(exec)), queue(qsize_)
+  task_fork_limiter(E&&      exec,
+                    unsigned max_forks_,
+                    unsigned qsize_,
+                    unsigned max_batch_ = std::numeric_limits<unsigned>::max()) :
+    max_forks(max_forks_), max_batch(max_batch_), out_exec(std::forward<E>(exec)), queue(qsize_)
   {
     report_fatal_error_if_not(max_forks > 0, "Fork limit executor must have a positive max_forks value.");
+    report_fatal_error_if_not(max_batch > 0, "Fork limit executor must have a positive max_batch value.");
   }
 
   [[nodiscard]] bool execute(unique_task task) override { return dispatch<true>(std::move(task)); }
@@ -50,9 +54,9 @@ private:
 
     bool dispatch_successful = false;
     if constexpr (Execute) {
-      dispatch_successful = detail::get_task_executor_ref(out_exec).execute([this]() { handle_enqueued_task(); });
+      dispatch_successful = detail::get_task_executor_ref(out_exec).execute([this]() { process_enqueued_tasks(); });
     } else {
-      dispatch_successful = detail::get_task_executor_ref(out_exec).defer([this]() { handle_enqueued_task(); });
+      dispatch_successful = detail::get_task_executor_ref(out_exec).defer([this]() { process_enqueued_tasks(); });
     }
     if (not dispatch_successful) {
       // Failed to dispatch the task, handle it accordingly.
@@ -62,10 +66,11 @@ private:
     return true;
   }
 
-  void handle_enqueued_task()
+  void process_enqueued_tasks()
   {
     unique_task task;
 
+    unsigned max_pops  = max_batch;
     unsigned jobs_left = job_count.load(std::memory_order_acquire);
     while (jobs_left > 0) {
       if (not pop_task(task)) {
@@ -77,7 +82,24 @@ private:
 
       // Decrement the job count after successful pop and task execute.
       jobs_left = job_count.fetch_sub(1, std::memory_order_acq_rel) - 1;
+
+      // Check if we should yield back control to the worker.
+      if (--max_pops == 0 and jobs_left > 0) {
+        defer_remaining_tasks();
+        break;
+      }
     }
+  }
+
+  bool defer_remaining_tasks()
+  {
+    // Dispatch batch dequeue job.
+    bool dispatch_successful = detail::get_task_executor_ref(out_exec).defer([this]() { process_enqueued_tasks(); });
+    if (not dispatch_successful) {
+      handle_failed_dispatch();
+      return false;
+    }
+    return true;
   }
 
   void handle_failed_dispatch()
@@ -128,6 +150,8 @@ private:
 
   /// Maximum number of concurrent forks allowed for this executor.
   const unsigned max_forks;
+  /// Maximum number of tasks that can be processed by one fork, before it yields control back to the worker.
+  const unsigned max_batch;
 
   // Executor to which tasks are dispatched in serialized manner.
   ExecType out_exec;
@@ -136,7 +160,7 @@ private:
   concurrent_queue<unique_task, QueuePolicy, concurrent_queue_wait_policy::non_blocking> queue;
 
   /// Current number of active forks, used to limit the number of concurrent tasks.
-  std::atomic<int> job_count{0};
+  std::atomic<unsigned> job_count{0};
 };
 
 /// \brief Create an adaptor of the task_executor that limits the number of concurrent tasks to \c max_fork_size.
