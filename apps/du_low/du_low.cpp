@@ -18,6 +18,7 @@
 #include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/services/remote_control/remote_server.h"
 #include "apps/services/worker_manager/worker_manager.h"
+#include "apps/units/application_unit.h"
 #include "apps/units/flexible_o_du/split_6/o_du_low/split6_o_du_low_application_unit_impl.h"
 #include "du_low_appconfig.h"
 #include "du_low_appconfig_cli11_schema.h"
@@ -34,9 +35,11 @@
 #include "srsran/support/versioning/build_info.h"
 #include "srsran/support/versioning/version.h"
 #include <atomic>
+#ifdef DPDK_FOUND
+#include "srsran/hal/dpdk/dpdk_eal_factory.h"
+#endif
 // Include ThreadSanitizer (TSAN) options if thread sanitization is enabled.
 // This include is not unused - it helps prevent false alarms from the thread sanitizer.
-#include "apps/units/application_unit.h"
 #include "srsran/support/tsan_options.h"
 
 using namespace srsran;
@@ -221,6 +224,15 @@ int main(int argc, char** argv)
   // Check some common causes of performance issues and print a warning if required.
   check_cpu_governor(app_logger);
   check_drm_kms_polling(app_logger);
+
+#ifdef DPDK_FOUND
+  std::unique_ptr<dpdk::dpdk_eal> eal;
+  if (du_low_cfg.hal_config) {
+    // Prepend the application name in argv[0] as it is expected by EAL.
+    eal = dpdk::create_dpdk_eal(std::string(argv[0]) + " " + du_low_cfg.hal_config->eal_args,
+                                srslog::fetch_basic_logger("EAL", false));
+  }
+#endif
 
   // Create manager of timers for DU, which will be driven by the PHY slot ticks.
   timer_manager app_timers{256};

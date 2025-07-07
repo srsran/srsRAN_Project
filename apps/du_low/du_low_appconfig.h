@@ -43,6 +43,8 @@ struct du_low_appconfig {
   expert_execution_appconfig expert_execution_cfg;
   /// Remote control configuration.
   remote_control_appconfig remote_control_config;
+  /// HAL configuration.
+  std::optional<hal_appconfig> hal_config;
   /// Dryrun mode enabled flag.
   bool enable_dryrun = false;
 };
