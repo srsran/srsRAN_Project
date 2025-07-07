@@ -340,15 +340,16 @@ template <typename OutExec, concurrent_queue_policy QueuePolicy, typename Strand
 class task_strand final : public task_executor
 {
 public:
-  using executor_type = task_strand_executor<OutExec, QueuePolicy, StrandLockPolicy>;
+  constexpr static bool     is_basic_lock             = std::is_same_v<StrandLockPolicy, basic_strand_lock>;
+  constexpr static unsigned default_strand_batch_size = is_basic_lock ? 256 : std::numeric_limits<unsigned>::max();
+  using executor_type                                 = task_strand_executor<OutExec, QueuePolicy, StrandLockPolicy>;
 
   template <typename ExecType>
-  task_strand(ExecType&& out_exec, unsigned qsize, unsigned max_batch = std::numeric_limits<unsigned>::max()) :
+  task_strand(ExecType&& out_exec, unsigned qsize, unsigned max_batch = default_strand_batch_size) :
     impl(max_batch, std::forward<ExecType>(out_exec), qsize), exec(*this)
   {
-    bool is_basic_lock = std::is_same<StrandLockPolicy, basic_strand_lock>::value;
-    srsran_assert(is_basic_lock or max_batch == std::numeric_limits<unsigned>::max(),
-                  "Cannot use limited bachtes with locking policies that are not \"basic_strand_lock\"");
+    report_fatal_error_if_not(is_basic_lock or max_batch == std::numeric_limits<unsigned>::max(),
+                              "Cannot use limited batches with locking policies that are not \"basic_strand_lock\"");
   }
 
   [[nodiscard]] bool execute(unique_task task) override
@@ -409,17 +410,21 @@ template <typename OutExec, typename StrandLockPolicy = basic_strand_lock>
 class priority_task_strand
 {
 public:
-  using strand_type   = priority_task_strand<OutExec, StrandLockPolicy>;
-  using executor_type = priority_task_strand_executor<strand_type&>;
+  constexpr static bool     is_basic_lock             = std::is_same_v<StrandLockPolicy, basic_strand_lock>;
+  constexpr static unsigned default_strand_batch_size = is_basic_lock ? 256 : std::numeric_limits<unsigned>::max();
+  using strand_type                                   = priority_task_strand<OutExec, StrandLockPolicy>;
+  using executor_type                                 = priority_task_strand_executor<strand_type&>;
 
   template <typename ExecType, typename ArrayOfQueueParams>
   priority_task_strand(ExecType&&                out_exec,
                        const ArrayOfQueueParams& strand_queue_params,
-                       unsigned                  max_batch = std::numeric_limits<unsigned>::max()) :
+                       unsigned                  max_batch = default_strand_batch_size) :
     impl(max_batch, std::forward<ExecType>(out_exec), strand_queue_params)
   {
     static_assert(std::is_same_v<typename std::decay_t<ArrayOfQueueParams>::value_type, concurrent_queue_params>,
                   "Invalid queue params type");
+    report_fatal_error_if_not(is_basic_lock or max_batch == std::numeric_limits<unsigned>::max(),
+                              "Cannot use limited batches with locking policies that are not \"basic_strand_lock\"");
     exec_list.reserve(nof_priority_levels());
     for (unsigned i = 0; i != strand_queue_params.size(); ++i) {
       exec_list.emplace_back(executor_type{detail::queue_index_to_enqueue_priority(i, nof_priority_levels()), *this});
