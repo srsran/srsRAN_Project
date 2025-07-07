@@ -405,6 +405,9 @@ int main(int argc, char** argv)
   // Stop O-CU-UP activity.
   o_cuup_unit.unit->get_operation_controller().stop();
 
+  // FIXME: closing the E1 gateway should be part of the E1 Release procedure
+  e1_gw.reset();
+
   // Stop the timer source before stopping the workers.
   time_source.reset();
 
