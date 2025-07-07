@@ -2236,9 +2236,11 @@ static void derive_cell_auto_params(du_high_unit_base_cell_config& cell_cfg)
   if (not cell_cfg.prach_cfg.prach_config_index.has_value()) {
     if (band_helper::get_duplex_mode(cell_cfg.band.value()) == duplex_mode::FDD) {
       cell_cfg.prach_cfg.prach_config_index = 16;
-    } else {
+    } else if (band_helper::get_freq_range(cell_cfg.band.value()) == frequency_range::FR1) {
       // Valid for TDD period of 5 ms. And, PRACH index 159 is well tested.
       cell_cfg.prach_cfg.prach_config_index = 159;
+    } else {
+      cell_cfg.prach_cfg.prach_config_index = 112;
     }
   }
 

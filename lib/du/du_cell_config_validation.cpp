@@ -356,6 +356,8 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
     } else {
       CHECK_EQ(L_max, 8, "For SSB case C and frequency > {}MHz, L_max must be 8", cutoff_freq_mhz_case_c_unpaired);
     }
+  } else if (ssb_case == ssb_pattern_case::D) {
+    CHECK_EQ(L_max, 64, "For SSB case D L_max must be 64");
   } else {
     if (cell_cfg.dl_carrier.arfcn_f_ref <= CUTOFF_FREQ_ARFCN_CASE_A_B_C) {
       CHECK_EQ(L_max, 4, "For SSB case A and B and frequency <= {}MHz, L_max must be 4", cutoff_freq_mhz_case_a_b_c);
@@ -613,7 +615,7 @@ static check_outcome check_prach_config(const du_cell_config& cell_cfg)
 
   const rach_config_common& rach_cfg = cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value();
 
-  const auto prach_cfg = prach_configuration_get(frequency_range::FR1,
+  const auto prach_cfg = prach_configuration_get(band_helper::get_freq_range(cell_cfg.dl_carrier.band),
                                                  band_helper::get_duplex_mode(cell_cfg.dl_carrier.band),
                                                  rach_cfg.rach_cfg_generic.prach_config_index);
   CHECK_NEQ(fmt::underlying(prach_cfg.format),

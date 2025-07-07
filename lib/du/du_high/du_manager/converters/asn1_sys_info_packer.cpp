@@ -250,20 +250,25 @@ static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_ce
   asn1::number_to_enum(cell.ssb_periodicity_serving_cell, ssb_periodicity_to_value(du_cfg.ssb_cfg.ssb_period));
   cell.ss_pbch_block_pwr = du_cfg.ssb_cfg.ssb_block_power;
 
-  n_ta_offset ta_offset                = band_helper::get_ta_offset(du_cfg.dl_carrier.band);
-  cell.n_timing_advance_offset_present = true;
+  n_ta_offset ta_offset = band_helper::get_ta_offset(du_cfg.dl_carrier.band);
   switch (ta_offset) {
     case n_ta_offset::n0:
+      cell.n_timing_advance_offset_present = true;
       cell.n_timing_advance_offset.value =
           asn1::rrc_nr::serving_cell_cfg_common_sib_s::n_timing_advance_offset_opts::n0;
       break;
     case n_ta_offset::n25600:
+      cell.n_timing_advance_offset_present = true;
       cell.n_timing_advance_offset.value =
           asn1::rrc_nr::serving_cell_cfg_common_sib_s::n_timing_advance_offset_opts::n25600;
       break;
     case n_ta_offset::n39936:
+      cell.n_timing_advance_offset_present = true;
       cell.n_timing_advance_offset.value =
           asn1::rrc_nr::serving_cell_cfg_common_sib_s::n_timing_advance_offset_opts::n39936;
+      break;
+    case n_ta_offset::n13792:
+      // The parameter is ignored.
       break;
     default:
       report_fatal_error("Invalid timing advance offset");

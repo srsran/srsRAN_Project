@@ -36,9 +36,11 @@ create_data_flow_cplane_sched(const transmitter_config&                         
 {
   data_flow_cplane_scheduling_commands_impl_config config;
 
-  config.ru_nof_prbs =
-      get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.ru_working_bw), tx_config.scs, srsran::frequency_range::FR1);
-  config.sector             = tx_config.sector;
+  frequency_range freq_range =
+      (tx_config.scs > subcarrier_spacing::kHz60) ? frequency_range::FR2 : frequency_range::FR1;
+
+  config.ru_nof_prbs = get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.ru_working_bw), tx_config.scs, freq_range);
+  config.sector      = tx_config.sector;
   config.dl_compr_params    = tx_config.dl_compr_params;
   config.ul_compr_params    = tx_config.ul_compr_params;
   config.prach_compr_params = tx_config.prach_compr_params;
@@ -75,9 +77,11 @@ create_data_flow_uplane_data(const transmitter_config&              tx_config,
                              srslog::basic_logger&                  logger,
                              std::shared_ptr<ether::eth_frame_pool> frame_pool)
 {
+  frequency_range freq_range =
+      (tx_config.scs > subcarrier_spacing::kHz60) ? frequency_range::FR2 : frequency_range::FR1;
+
   data_flow_uplane_downlink_data_impl_config config;
-  config.ru_nof_prbs =
-      get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.ru_working_bw), tx_config.scs, srsran::frequency_range::FR1);
+  config.ru_nof_prbs  = get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.ru_working_bw), tx_config.scs, freq_range);
   config.sector       = tx_config.sector;
   config.dl_eaxc      = tx_config.dl_eaxc;
   config.compr_params = tx_config.dl_compr_params;
@@ -121,6 +125,9 @@ static std::shared_ptr<ether::eth_frame_pool> create_eth_frame_pool(const transm
                                                                     ofh::data_direction       direction,
                                                                     bool calculate_nof_frames_per_symbol = true)
 {
+  frequency_range freq_range =
+      (tx_config.scs > subcarrier_spacing::kHz60) ? frequency_range::FR2 : frequency_range::FR1;
+
   ether::vlan_frame_params ether_params;
   auto eth_builder   = (tx_config.tci_up || tx_config.tci_cp) ? ether::create_vlan_frame_builder(ether_params)
                                                               : ether::create_frame_builder(ether_params);
@@ -141,8 +148,7 @@ static std::shared_ptr<ether::eth_frame_pool> create_eth_frame_pool(const transm
                               ecpri_builder->get_header_size(ecpri::message_type::iq_data) +
                               uplane_builder->get_header_size(tx_config.dl_compr_params);
 
-  unsigned nof_prbs =
-      get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.ru_working_bw), tx_config.scs, srsran::frequency_range::FR1);
+  unsigned nof_prbs = get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.ru_working_bw), tx_config.scs, freq_range);
 
   unsigned nof_frames_per_symbol = 1;
   if (calculate_nof_frames_per_symbol) {

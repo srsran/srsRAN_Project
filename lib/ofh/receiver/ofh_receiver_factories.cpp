@@ -32,8 +32,11 @@ static std::unique_ptr<uplane_message_decoder> create_uplane_decoder(const recei
     decompr[i] = create_iq_decompressor(static_cast<compression_type>(i), logger);
   }
 
+  frequency_range freq_range =
+      (receiver_cfg.scs > subcarrier_spacing::kHz60) ? frequency_range::FR2 : frequency_range::FR1;
+
   unsigned nof_prbs_ru =
-      get_max_Nprb(bs_channel_bandwidth_to_MHz(receiver_cfg.ru_operating_bw), receiver_cfg.scs, frequency_range::FR1);
+      get_max_Nprb(bs_channel_bandwidth_to_MHz(receiver_cfg.ru_operating_bw), receiver_cfg.scs, freq_range);
 
   // Open FrontHaul decoder.
   return (receiver_cfg.is_uplink_static_compr_hdr_enabled) ? create_static_compr_method_ofh_user_plane_packet_decoder(

@@ -699,15 +699,17 @@ validate_prach_cell_unit_config(const du_high_unit_prach_config& config, nr_band
 {
   srsran_assert(config.prach_config_index.has_value(), "The PRACH configuration index must be set.");
 
-  auto code =
-      prach_helper::prach_config_index_is_valid(config.prach_config_index.value(), band_helper::get_duplex_mode(band));
+  frequency_range freq_range = band_helper::get_freq_range(band);
+  duplex_mode     dplx_mode  = band_helper::get_duplex_mode(band);
+
+  auto code = prach_helper::prach_config_index_is_valid(config.prach_config_index.value(), freq_range, dplx_mode);
   if (not code.has_value()) {
     fmt::print("{}", code.error());
     return false;
   }
 
   code = prach_helper::zero_correlation_zone_is_valid(
-      config.zero_correlation_zone, config.prach_config_index.value(), band_helper::get_duplex_mode(band));
+      config.zero_correlation_zone, config.prach_config_index.value(), freq_range, dplx_mode);
   if (not code.has_value()) {
     fmt::print("{}", code.error());
     return false;

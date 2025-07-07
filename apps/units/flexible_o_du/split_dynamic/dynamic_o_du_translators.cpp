@@ -30,7 +30,8 @@ ru_dummy_configuration srsran::generate_ru_dummy_config(const ru_dummy_unit_conf
   const flexible_o_du_ru_config::cell_config& cell = du_cells.front();
 
   // Derive parameters.
-  unsigned channel_bw_prb = band_helper::get_n_rbs_from_bw(cell.bw, cell.scs, frequency_range::FR1);
+  frequency_range freq_range     = band_helper::get_freq_range(cell.band);
+  unsigned        channel_bw_prb = band_helper::get_n_rbs_from_bw(cell.bw, cell.scs, freq_range);
 
   // Fill configuration parameters.
   out_cfg.are_metrics_enabled        = ru_cfg.metrics_cfg.enable_ru_metrics;

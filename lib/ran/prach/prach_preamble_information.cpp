@@ -159,12 +159,13 @@ phy_time_unit srsran::get_prach_window_duration(prach_format_type  format,
 prach_symbols_slots_duration srsran::get_prach_duration_info(const prach_configuration& prach_cfg,
                                                              subcarrier_spacing         pusch_scs)
 {
-  srsran_assert(pusch_scs == subcarrier_spacing::kHz15 or pusch_scs == subcarrier_spacing::kHz30,
-                "Only SCS 15kHz and 30kHz supported");
+  srsran_assert((pusch_scs == subcarrier_spacing::kHz15) || (pusch_scs == subcarrier_spacing::kHz30) ||
+                    (pusch_scs == subcarrier_spacing::kHz120),
+                "Only SCS 15kHz, 30kHz and 120kHz are supported");
 
   prach_symbols_slots_duration output{};
 
-  // With SCS 15kHz and 30kHz, only normal CP is supported.
+  // Only SCS 60kHz SCS supports extended CP.
   static const unsigned nof_symbols_per_slot = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
   static const double   symbol_duration_msec =
       (double)SUBFRAME_DURATION_MSEC / (double)(get_nof_slots_per_subframe(pusch_scs) * nof_symbols_per_slot);
@@ -189,13 +190,17 @@ prach_symbols_slots_duration srsran::get_prach_duration_info(const prach_configu
     output.nof_symbols = static_cast<unsigned>(prach_cfg.nof_occasions_within_slot * prach_cfg.duration);
     // Starting slot within the subframe; this can be derived from Section 5.3.2, TS 38.211.
     const bool prach_starts_in_even_slot =
-        prach_scs == prach_subcarrier_spacing::kHz15 or
-        (prach_scs == prach_subcarrier_spacing::kHz30 and prach_cfg.nof_prach_slots_within_subframe != 1);
+        (prach_scs == prach_subcarrier_spacing::kHz15) ||
+        (((prach_scs == prach_subcarrier_spacing::kHz30) || (prach_scs == prach_subcarrier_spacing::kHz120)) and
+         (prach_cfg.nof_prach_slots_within_subframe != 1));
     output.start_slot_pusch_scs = prach_starts_in_even_slot ? 0U : 1U;
     // The burst of PRACH opportunities for short PRACH formats can be over 1 or 2 slots, as per Section 5.3.2,  and
     // Tables 6.3.3.2-2 and 6.3.3.2-3, TS 38.211.
     output.prach_length_slots =
-        prach_scs == prach_subcarrier_spacing::kHz30 and prach_cfg.nof_prach_slots_within_subframe != 1 ? 2U : 1U;
+        (prach_scs == prach_subcarrier_spacing::kHz30 or prach_scs == prach_subcarrier_spacing::kHz120) and
+                prach_cfg.nof_prach_slots_within_subframe != 1
+            ? 2U
+            : 1U;
   }
 
   return output;

@@ -78,9 +78,10 @@ static void validates_derived_du_params(span<const srs_du::du_cell_config> cells
   for (const auto& cell_cfg : cells) {
     const rach_config_common& rach_cfg = cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value();
 
-    const auto prach_cfg = prach_configuration_get(frequency_range::FR1,
-                                                   band_helper::get_duplex_mode(cell_cfg.dl_carrier.band),
-                                                   rach_cfg.rach_cfg_generic.prach_config_index);
+    frequency_range freq_range = band_helper::get_freq_range(cell_cfg.dl_carrier.band);
+    duplex_mode     dplx_mode  = band_helper::get_duplex_mode(cell_cfg.dl_carrier.band);
+
+    const auto prach_cfg = prach_configuration_get(freq_range, dplx_mode, rach_cfg.rach_cfg_generic.prach_config_index);
 
     prb_interval prb_interval_no_pucch = config_helpers::find_largest_prb_interval_without_pucch(
         cell_cfg.pucch_cfg, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());

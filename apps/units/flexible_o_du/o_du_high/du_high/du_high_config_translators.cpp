@@ -311,13 +311,17 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
   out_cfg.reserve(config.cells_cfg.size());
 
   for (const auto& cell : config.cells_cfg) {
+    nr_band         band       = cell.cell.band.value();
+    frequency_range freq_range = band_helper::get_freq_range(band);
+    duplex_mode     dplx_mode  = band_helper::get_duplex_mode(band);
+
     cell_config_builder_params           param;
     const du_high_unit_base_cell_config& base_cell = cell.cell;
     param.pci                                      = base_cell.pci;
     param.scs_common                               = base_cell.common_scs;
     param.channel_bw_mhz                           = base_cell.channel_bw_mhz;
     param.dl_f_ref_arfcn                           = base_cell.dl_f_ref_arfcn;
-    param.band                                     = *base_cell.band;
+    param.band                                     = band;
     // Enable CSI-RS if the PDSCH mcs is dynamic (min_ue_mcs != max_ue_mcs).
     param.csi_rs_enabled      = base_cell.csi_cfg.csi_rs_enabled;
     param.nof_dl_ports        = base_cell.nof_antennas_dl;
@@ -332,8 +336,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     } else if (param.channel_bw_mhz > bs_channel_bandwidth::MHz50) {
       param.max_coreset0_duration = 1;
     }
-    const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
-        base_cell.channel_bw_mhz, param.scs_common, band_helper::get_freq_range(*param.band));
+    const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(base_cell.channel_bw_mhz, param.scs_common, freq_range);
 
     std::optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc;
     if (base_cell.pdcch_cfg.common.coreset0_index.has_value()) {
@@ -364,7 +367,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     param.coreset0_index    = ssb_freq_loc->coreset0_idx;
 
     // Set TDD pattern.
-    const bool is_tdd = band_helper::get_duplex_mode(*param.band) == duplex_mode::TDD;
+    const bool is_tdd = (dplx_mode == duplex_mode::TDD);
     if (is_tdd) {
       param.tdd_ul_dl_cfg_common.emplace(generate_tdd_pattern(param.scs_common, cell.cell.tdd_ul_dl_cfg.value()));
     }
@@ -477,11 +480,8 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     rach_cfg.rach_cfg_generic.preamble_trans_max    = base_cell.prach_cfg.preamble_trans_max;
     rach_cfg.rach_cfg_generic.power_ramping_step_db = base_cell.prach_cfg.power_ramping_step_db;
     rach_cfg.msg3_transform_precoder                = cell.cell.pusch_cfg.enable_transform_precoding;
-    const bool is_long_prach =
-        is_long_preamble(prach_configuration_get(band_helper::get_freq_range(param.band.value()),
-                                                 band_helper::get_duplex_mode(param.band.value()),
-                                                 rach_cfg.rach_cfg_generic.prach_config_index)
-                             .format);
+    const bool is_long_prach                        = is_long_preamble(
+        prach_configuration_get(freq_range, dplx_mode, rach_cfg.rach_cfg_generic.prach_config_index).format);
     // \c is_prach_root_seq_index_l839 and msg1_scs are derived parameters, that depend on the PRACH format. They are
     // originally computed in the base_cell struct, but since we overwrite the PRACH prach_config_index (which
     // determines the PRACH format), we need to recompute both \c is_prach_root_seq_index_l839 and \c msg1_scs.

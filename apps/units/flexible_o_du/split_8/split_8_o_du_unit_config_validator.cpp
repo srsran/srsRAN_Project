@@ -27,7 +27,7 @@ static std::vector<du_low_prach_validation_config> get_du_low_validation_depende
 
     // Get PRACH info.
     subcarrier_spacing  common_scs = in_cell.common_scs;
-    prach_configuration prach_info = prach_configuration_get(frequency_range::FR1,
+    prach_configuration prach_info = prach_configuration_get(band_helper::get_freq_range(in_cell.band.value()),
                                                              band_helper::get_duplex_mode(in_cell.band.value()),
                                                              in_cell.prach_cfg.prach_config_index.value());
 
@@ -57,14 +57,16 @@ static std::vector<ru_sdr_cell_validation_config> get_ru_sdr_validation_dependen
     ru_sdr_cell_validation_config&       out_cell = out_cfg[i];
     const du_high_unit_base_cell_config& in_cell  = config.cells_cfg[i].cell;
 
+    frequency_range freq_range = band_helper::get_freq_range(in_cell.band.value());
+    duplex_mode     dplx_mode  = band_helper::get_duplex_mode(in_cell.band.value());
+
     // Validates the sampling rate is compatible with the PRACH sequence.
-    out_cell.common_scs            = in_cell.common_scs;
-    prach_configuration prach_info = prach_configuration_get(frequency_range::FR1,
-                                                             band_helper::get_duplex_mode(in_cell.band.value()),
-                                                             in_cell.prach_cfg.prach_config_index.value());
-    out_cell.prach_format          = prach_info.format;
-    out_cell.channel_bw_mhz        = in_cell.channel_bw_mhz;
-    out_cell.dplx_mode             = band_helper::get_duplex_mode(in_cell.band.value());
+    out_cell.common_scs = in_cell.common_scs;
+    prach_configuration prach_info =
+        prach_configuration_get(freq_range, dplx_mode, in_cell.prach_cfg.prach_config_index.value());
+    out_cell.prach_format   = prach_info.format;
+    out_cell.channel_bw_mhz = in_cell.channel_bw_mhz;
+    out_cell.dplx_mode      = dplx_mode;
     out_cell.preamble_info =
         is_long_preamble(prach_info.format)
             ? get_prach_preamble_long_info(prach_info.format)

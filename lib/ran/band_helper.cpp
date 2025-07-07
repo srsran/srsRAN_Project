@@ -50,7 +50,7 @@ struct nr_band_raster {
 
 // From Tables 5.4.2.3-1 and 5.4.2.3-2 in TS 38.104, table with NR operating FR1 and FR2 band and related ARFCN
 // lower-bound and upper-bound. (FDD, TDD or SDL).
-// NTN bands from Table 5.4.2.3-1 in TS38.108
+// NTN bands from Table 5.4.2.3-1 in TS 38.108
 //
 // NOTE: It only includes FDD, TDD, and SDL bands.
 // NOTE: Band 2 is a subset of band 25.
@@ -1234,9 +1234,32 @@ min_channel_bandwidth srsran::band_helper::get_min_channel_bw(nr_band nr_band, s
   return min_channel_bandwidth::invalid;
 }
 
-// Compute the maximum value of row index of Table 13-11, TS 38.213 that can be addressed for a specific configuration.
+// Compute the maximum value of row index of Tables 13-[1-10], TS 38.213 that can be addressed for a specific
+// configuration.
 static unsigned get_max_coreset0_index(nr_band band, subcarrier_spacing scs_common, subcarrier_spacing scs_ssb)
 {
+  // Row indexes for frequency range 2.
+  if (get_freq_range(band) == frequency_range::FR2) {
+    // TS 38.213 Table 13-7.
+    if (scs_ssb == subcarrier_spacing::kHz120 and scs_common == subcarrier_spacing::kHz60) {
+      return 11;
+    }
+    // TS 38.213 Table 13-8.
+    if (scs_ssb == subcarrier_spacing::kHz120 and scs_common == subcarrier_spacing::kHz120) {
+      return 7;
+    }
+    // TS 38.213 Table 13-9.
+    if (scs_ssb == subcarrier_spacing::kHz240 and scs_common == subcarrier_spacing::kHz60) {
+      return 3;
+    }
+    // TS 38.213 Table 13-10.
+    if (scs_ssb == subcarrier_spacing::kHz240 and scs_common == subcarrier_spacing::kHz120) {
+      return 7;
+    }
+    // Other combinations are not supported.
+    return 0;
+  }
+
   const min_channel_bandwidth min_channel_bw         = band_helper::get_min_channel_bw(band, scs_common);
   const bool                  is_for_shared_spectrum = band_helper::is_band_for_shared_spectrum(band);
 

@@ -27,7 +27,7 @@ static std::vector<du_low_prach_validation_config> get_du_low_validation_depende
 
     // Get PRACH info.
     subcarrier_spacing  common_scs = in_cell.common_scs;
-    prach_configuration prach_info = prach_configuration_get(frequency_range::FR1,
+    prach_configuration prach_info = prach_configuration_get(band_helper::get_freq_range(in_cell.band.value()),
                                                              band_helper::get_duplex_mode(in_cell.band.value()),
                                                              in_cell.prach_cfg.prach_config_index.value());
 
@@ -77,7 +77,7 @@ static std::vector<ru_sdr_cell_validation_config> get_ru_sdr_validation_dependen
 
     // Validates the sampling rate is compatible with the PRACH sequence.
     out_cell.common_scs            = in_cell.common_scs;
-    prach_configuration prach_info = prach_configuration_get(frequency_range::FR1,
+    prach_configuration prach_info = prach_configuration_get(band_helper::get_freq_range(in_cell.band.value()),
                                                              band_helper::get_duplex_mode(in_cell.band.value()),
                                                              in_cell.prach_cfg.prach_config_index.value());
     out_cell.prach_format          = prach_info.format;

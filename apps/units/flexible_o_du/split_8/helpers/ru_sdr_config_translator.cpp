@@ -75,8 +75,9 @@ static lower_phy_configuration generate_low_phy_config(const flexible_o_du_ru_co
   // Get lower PHY system time throttling.
   out_cfg.system_time_throttling = ru_cfg.expert_cfg.lphy_dl_throttling;
 
-  const unsigned bandwidth_sc =
-      NOF_SUBCARRIERS_PER_RB * band_helper::get_n_rbs_from_bw(config.bw, config.scs, frequency_range::FR1);
+  const frequency_range freq_range = band_helper::get_freq_range(config.band);
+  const unsigned        bandwidth_sc =
+      NOF_SUBCARRIERS_PER_RB * band_helper::get_n_rbs_from_bw(config.bw, config.scs, freq_range);
 
   // Apply gain back-off to account for the PAPR of the signal and the DFT power normalization.
   out_cfg.amplitude_config.input_gain_dB =
@@ -92,7 +93,7 @@ static lower_phy_configuration generate_low_phy_config(const flexible_o_du_ru_co
   out_cfg.amplitude_config.full_scale_lin = 1.0F;
 
   lower_phy_sector_description sector_config;
-  sector_config.bandwidth_rb = band_helper::get_n_rbs_from_bw(config.bw, config.scs, frequency_range::FR1);
+  sector_config.bandwidth_rb = band_helper::get_n_rbs_from_bw(config.bw, config.scs, freq_range);
   sector_config.dl_freq_hz   = band_helper::nr_arfcn_to_freq(config.dl_arfcn);
   sector_config.ul_freq_hz   = band_helper::nr_arfcn_to_freq(config.ul_arfcn);
   sector_config.nof_rx_ports = config.nof_rx_antennas;
