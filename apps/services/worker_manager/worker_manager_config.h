@@ -98,7 +98,10 @@ struct worker_manager_config {
   };
 
   /// CU-CP executor configuration
-  struct cu_cp_config {};
+  struct cu_cp_config {
+    /// Whether to log performance metrics for the CU-CP executors.
+    std::optional<std::chrono::milliseconds> metrics_period;
+  };
 
   /// PCAP worker configuration.
   struct pcap_config {

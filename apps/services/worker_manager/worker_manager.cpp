@@ -249,7 +249,7 @@ create_dedicated_du_hi_cell_executors(task_execution_manager&                   
 void worker_manager::create_cu_cp_executors(const worker_manager_config::cu_cp_config& config, timer_manager& timers)
 {
   cu_cp_exec_mapper = srs_cu_cp::make_cu_cp_executor_mapper(
-      srs_cu_cp::strand_based_executor_config{*exec_mng.executors().at("high_prio_exec")});
+      srs_cu_cp::strand_based_executor_config{*exec_mng.executors().at("high_prio_exec"), config.metrics_period});
 }
 
 void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_config& config, timer_manager& timers)

@@ -10,7 +10,9 @@
 
 #pragma once
 
+#include <chrono>
 #include <memory>
+#include <optional>
 
 namespace srsran {
 
@@ -38,6 +40,8 @@ public:
 struct strand_based_executor_config {
   /// \brief Executor to which CU-CP strands will be associated.
   task_executor& pool_executor;
+  /// \brief CU-UP executor metrics period.
+  std::optional<std::chrono::milliseconds> metrics_period;
 };
 
 /// \brief Creates an executor mapper for the CU-CP that is based on strands of a worker pool.
