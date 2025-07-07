@@ -66,7 +66,7 @@ struct worker_manager_config {
     std::optional<std::chrono::milliseconds> metrics_period;
   };
 
-  /// DU high worker configuration.
+  /// DU high executor configuration.
   struct du_high_config {
     /// DU-high UE data related tasks queue size.
     unsigned ue_data_tasks_queue_size;
@@ -80,7 +80,7 @@ struct worker_manager_config {
     bool executor_tracing_enable;
   };
 
-  // CU-UP worker configuration
+  /// CU-UP executor configuration
   struct cu_up_config {
     unsigned max_nof_ue_strands = 16;
     /// UE task queue size.
@@ -96,6 +96,9 @@ struct worker_manager_config {
     /// Whether to log performance metrics for the CU-UP executors.
     std::optional<std::chrono::milliseconds> metrics_period;
   };
+
+  /// CU-CP executor configuration
+  struct cu_cp_config {};
 
   /// PCAP worker configuration.
   struct pcap_config {
@@ -125,6 +128,8 @@ struct worker_manager_config {
   bool is_split6_enabled = false;
   /// CU-UP configuration.
   std::optional<cu_up_config> cu_up_cfg;
+  /// CU-CP configuration.
+  std::optional<cu_cp_config> cu_cp_cfg;
   /// DU high configuration.
   std::optional<du_high_config> du_hi_cfg;
   /// FAPI configuration.

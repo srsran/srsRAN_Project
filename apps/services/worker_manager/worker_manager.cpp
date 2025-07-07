@@ -72,6 +72,10 @@ worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
     create_split6_executors();
   }
 
+  if (worker_cfg.cu_cp_cfg) {
+    create_cu_cp_executors(worker_cfg.cu_cp_cfg.value(), *worker_cfg.app_timers);
+  }
+
   if (worker_cfg.cu_up_cfg) {
     create_cu_up_executors(worker_cfg.cu_up_cfg.value(), *worker_cfg.app_timers);
   }
@@ -242,6 +246,12 @@ create_dedicated_du_hi_cell_executors(task_execution_manager&                   
   return cell_workers;
 }
 
+void worker_manager::create_cu_cp_executors(const worker_manager_config::cu_cp_config& config, timer_manager& timers)
+{
+  cu_cp_exec_mapper = srs_cu_cp::make_cu_cp_executor_mapper(
+      srs_cu_cp::strand_based_executor_config{*exec_mng.executors().at("high_prio_exec")});
+}
+
 void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_config& config, timer_manager& timers)
 {
   using namespace execution_config_helper;
@@ -365,9 +375,6 @@ void worker_manager::create_low_prio_executors(const worker_manager_config& work
   non_rt_medium_prio_exec = exec_mng.executors().at("medium_prio_exec");
   non_rt_hi_prio_exec     = exec_mng.executors().at("high_prio_exec");
   metrics_exec            = exec_mng.executors().at("metrics_exec");
-
-  cu_cp_exec_mapper = srs_cu_cp::make_cu_cp_executor_mapper(
-      srs_cu_cp::strand_based_executor_config{*exec_mng.executors().at("high_prio_exec")});
 }
 
 worker_manager::du_crit_path_executor_desc

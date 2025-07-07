@@ -507,6 +507,10 @@ srs_cu_cp::n2_connection_client_config srsran::generate_n2_client_config(bool   
 
 void srsran::fill_cu_cp_worker_manager_config(worker_manager_config& config, const cu_cp_unit_config& unit_cfg)
 {
+  // CU-CP executors are needed.
+  config.cu_cp_cfg.emplace();
+
+  // Enable PCAPs.
   auto& pcap_cfg = config.pcap_cfg;
   if (unit_cfg.pcap_cfg.e1ap.enabled) {
     pcap_cfg.is_e1ap_enabled = true;

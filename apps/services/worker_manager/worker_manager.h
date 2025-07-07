@@ -144,6 +144,9 @@ private:
 
   std::vector<execution_config_helper::single_worker> create_fapi_workers(unsigned nof_cells);
 
+  /// Helper method that creates the CU-CP executors.
+  void create_cu_cp_executors(const worker_manager_config::cu_cp_config& config, timer_manager& timers);
+
   /// Helper method that creates the CU-UP executors.
   void create_cu_up_executors(const worker_manager_config::cu_up_config& config, timer_manager& timers);
 
