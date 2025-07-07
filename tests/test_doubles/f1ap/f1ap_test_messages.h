@@ -222,6 +222,14 @@ f1ap_message generate_positioning_activation_response(gnb_du_ue_f1ap_id_t du_ue_
 /// \brief Generates dummy F1AP POSITIONING ACTIVATION FAILURE message.
 f1ap_message generate_positioning_activation_failure(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id);
 
+/// \brief Generates dummy F1AP POSITIONING MEASUREMENT REQUEST message.
+f1ap_message
+generate_positioning_measurement_request(trp_id_t                                             trp_id,
+                                         lmf_meas_id_t                                        lmf_meas_id,
+                                         ran_meas_id_t                                        ran_meas_id,
+                                         std::vector<asn1::f1ap::pos_meas_type_opts::options> pos_meas_type_list = {
+                                             asn1::f1ap::pos_meas_type_opts::options::ul_rtoa});
+
 /// \brief Generates dummy F1AP POSITIONING MEASUREMENT RESPONSE message, sent by the DU to the CU, as per
 /// TS 38.473 section 8.13.3.2.
 f1ap_message
