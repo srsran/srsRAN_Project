@@ -180,7 +180,7 @@ def test_ru(
 
 
 @mark.test_mode
-def test_ru_16cell_50ue(
+def test_ru_10cell_50ue(
     # Retina
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -194,7 +194,7 @@ def test_ru_16cell_50ue(
         retina_manager,
         retina_data,
         gnb,
-        ru_config="config_ru_16cell_50ue.yml",
+        ru_config="config_ru_10cell_50ue.yml",
         duration=10 * 60,
         warning_as_errors=False,
     )
@@ -224,7 +224,7 @@ def test_ru_not_crash(
 
 
 @mark.test_mode_not_crash
-def test_ru_16cell_50ue_not_crash(
+def test_ru_10cell_50ue_not_crash(
     # Retina
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -239,7 +239,7 @@ def test_ru_16cell_50ue_not_crash(
         retina_manager,
         retina_data,
         gnb,
-        ru_config="config_ru_16cell_50ue.yml",
+        ru_config="config_ru_10cell_50ue.yml",
         duration=15 * 60,
         gnb_stop_timeout=150,
         warning_as_errors=False,

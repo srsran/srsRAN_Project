@@ -59,12 +59,6 @@ cells:
   - pci: 8
   - pci: 9
   - pci: 10
-  - pci: 11
-  - pci: 12
-  - pci: 13
-  - pci: 14
-  - pci: 15
-  - pci: 16
 
 ru_dummy:
   time_scaling: 10
