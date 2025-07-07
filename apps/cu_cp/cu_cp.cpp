@@ -28,6 +28,7 @@
 // #include "cu_appconfig_yaml_writer.h"
 #include "srsran/cu_cp/cu_cp_operation_controller.h"
 #include "srsran/e1ap/gateways/e1_local_connector_factory.h"
+#include "srsran/e1ap/gateways/e1_network_server_factory.h"
 #include "srsran/e2/e2ap_config_translators.h"
 #include "srsran/f1ap/gateways/f1c_network_server_factory.h"
 #include "srsran/support/backtrace.h"
@@ -278,9 +279,16 @@ int main(int argc, char** argv)
       {f1c_sctp_cfg, *epoll_broker, *workers.non_rt_hi_prio_exec, *cu_cp_dlt_pcaps.f1ap});
   std::unique_ptr<srs_cu_cp::f1c_connection_server> cu_f1c_gw = srsran::create_f1c_gateway_server(f1c_server_cfg);
 
-  // Create E1AP local connector
-  std::unique_ptr<e1_local_connector> e1_gw =
-      create_e1_local_connector(e1_local_connector_config{*cu_cp_dlt_pcaps.e1ap});
+  // Instantiate E1 GW
+  // > Create E1 config
+  sctp_network_gateway_config e1_sctp_cfg{};
+  e1_sctp_cfg.if_name      = "E1";
+  e1_sctp_cfg.bind_address = cu_cp_cfg.e1ap_cfg.bind_addr;
+  e1_sctp_cfg.bind_port    = E1AP_PORT;
+  e1_sctp_cfg.ppid         = E1AP_PPID;
+  // > Create E1 gateway
+  std::unique_ptr<srs_cu_cp::e1_connection_server> e1_gw = create_e1_gateway_server(
+      e1_cu_cp_sctp_gateway_config{e1_sctp_cfg, *epoll_broker, *workers.non_rt_hi_prio_exec, *cu_cp_dlt_pcaps.e1ap});
 
   // Create time source that ticks the timers.
   std::optional<io_timer_source> time_source(

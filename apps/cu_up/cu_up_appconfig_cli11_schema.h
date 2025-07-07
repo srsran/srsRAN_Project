@@ -20,4 +20,3 @@ struct cu_up_appconfig;
 void configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_up_appconfig& cu_up_cfg);
 
 } // namespace srsran
-

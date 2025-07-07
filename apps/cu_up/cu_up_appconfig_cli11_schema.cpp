@@ -21,6 +21,14 @@
 
 using namespace srsran;
 
+static void configure_cli11_e1ap_args(CLI::App& app, srs_cu_up::e1ap_appconfig& e1ap_params)
+{
+  app.add_option("--cu_cp_addr", e1ap_params.cu_cp_address, "CU-CP F1-C address to connect to")->capture_default_str();
+  app.add_option(
+         "--bind_addr", e1ap_params.bind_address, "CU-UP E1AP bind address. If left empty, implicit bind is performed")
+      ->capture_default_str();
+}
+
 void srsran::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_up_appconfig& cu_up_cfg)
 {
   app.add_flag("--dryrun", cu_up_cfg.enable_dryrun, "Enable application dry run mode")->capture_default_str();
@@ -41,9 +49,12 @@ void srsran::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_up_appco
   app_services::configure_cli11_with_app_resource_usage_config_schema(app, cu_up_cfg.metrics_cfg.rusage_config);
   app_services::configure_cli11_with_metrics_appconfig_schema(app, cu_up_cfg.metrics_cfg.metrics_service_cfg);
 
-  // NR-U section.
   CLI::App* cu_up_subcmd = add_subcommand(app, "cu_up", "CU-UP parameters")->configurable();
-  CLI::App* f1u_subcmd   = add_subcommand(*cu_up_subcmd, "f1u", "F1-U parameters")->configurable();
+
+  // E1AP section.
+  CLI::App* e1ap_subcmd = add_subcommand(*cu_up_subcmd, "e1ap", "E1AP parameters")->configurable();
+  configure_cli11_e1ap_args(*e1ap_subcmd, cu_up_cfg.e1ap_cfg);
+  // NR-U section.
+  CLI::App* f1u_subcmd = add_subcommand(*cu_up_subcmd, "f1u", "F1-U parameters")->configurable();
   configure_cli11_f1u_sockets_args(*f1u_subcmd, cu_up_cfg.f1u_cfg);
 }
-

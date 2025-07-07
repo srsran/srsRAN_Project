@@ -25,9 +25,9 @@
 #include "apps/units/o_cu_up/o_cu_up_unit_config.h"
 #include "apps/units/o_cu_up/pcap_factory.h"
 #include "cu_up_appconfig.h"
+#include "srsran/e1ap/gateways/e1_network_client_factory.h"
 // #include "cu_up_appconfig_validator.h"
 //  #include "cu_appconfig_yaml_writer.h"
-#include "srsran/e1ap/gateways/e1_local_connector_factory.h"
 #include "srsran/e2/e2ap_config_translators.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/f1u/cu_up/split_connector/f1u_split_connector_factory.h"
@@ -310,9 +310,18 @@ int main(int argc, char** argv)
   std::unique_ptr<f1u_cu_up_udp_gateway> cu_f1u_conn =
       srs_cu_up::create_split_f1u_gw({f1u_gw_maps, *cu_f1u_gtpu_demux, *cu_up_dlt_pcaps.f1u, GTPU_PORT});
 
-  // Create E1AP local connector
-  std::unique_ptr<e1_local_connector> e1_gw =
-      create_e1_local_connector(e1_local_connector_config{*cu_up_dlt_pcaps.e1ap});
+  // Instantiate E1 client gateway.
+  // > Create E1 config
+  sctp_network_connector_config e1_sctp{};
+  e1_sctp.if_name         = "E1";
+  e1_sctp.dest_name       = "CU-CP";
+  e1_sctp.connect_address = cu_up_cfg.e1ap_cfg.cu_cp_address;
+  e1_sctp.connect_port    = E1AP_PORT;
+  e1_sctp.ppid            = E1AP_PPID;
+  e1_sctp.bind_address    = cu_up_cfg.e1ap_cfg.bind_address;
+  // > Create E1 gateway
+  std::unique_ptr<srs_cu_up::e1_connection_client> e1_gw = create_e1_gateway_client(
+      e1_cu_up_sctp_gateway_config{e1_sctp, *epoll_broker, *workers.non_rt_hi_prio_exec, *cu_up_dlt_pcaps.e1ap});
 
   // Create time source that ticks the timers.
   std::optional<io_timer_source> time_source(
@@ -413,4 +422,3 @@ int main(int argc, char** argv)
 
   return 0;
 }
-
