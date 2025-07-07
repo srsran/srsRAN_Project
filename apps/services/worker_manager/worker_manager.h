@@ -14,6 +14,7 @@
 #include "worker_manager_worker_getter.h"
 #include "srsran/cu_up/cu_up_executor_mapper.h"
 #include "srsran/du/du_high/du_high_executor_mapper.h"
+#include "srsran/du/du_low/du_low_executor_mapper.h"
 #include "srsran/support/executors/task_execution_manager.h"
 #include "srsran/support/executors/task_executor.h"
 
@@ -42,12 +43,6 @@ struct worker_manager : public worker_manager_executor_getter {
   std::vector<task_executor*> lower_phy_dl_exec;
   std::vector<task_executor*> lower_phy_ul_exec;
   std::vector<task_executor*> lower_prach_exec;
-  std::vector<task_executor*> upper_pusch_exec;
-  std::vector<task_executor*> upper_pusch_decoder_exec;
-  std::vector<task_executor*> upper_pucch_exec;
-  std::vector<task_executor*> upper_prach_exec;
-  std::vector<task_executor*> upper_srs_exec;
-  std::vector<task_executor*> upper_pdsch_exec;
   task_executor*              radio_exec     = nullptr;
   task_executor*              ru_timing_exec = nullptr;
   std::vector<task_executor*> ru_txrx_exec;
@@ -63,7 +58,17 @@ struct worker_manager : public worker_manager_executor_getter {
 
   std::unique_ptr<srs_cu_up::cu_up_executor_mapper> cu_up_exec_mapper;
 
-  srs_du::du_high_executor_mapper& get_du_high_executor_mapper() { return *du_high_exec_mapper; }
+  srs_du::du_high_executor_mapper& get_du_high_executor_mapper()
+  {
+    srsran_assert(du_high_exec_mapper, "DU High execution mapper is not available.");
+    return *du_high_exec_mapper;
+  }
+
+  srs_du::du_low_executor_mapper& get_du_low_executor_mapper()
+  {
+    srsran_assert(du_low_exec_mapper, "DU Low execution mapper is not available.");
+    return *du_low_exec_mapper;
+  }
 
   // Gets the DU-low downlink executors.
   task_executor& get_du_low_dl_executor(unsigned sector_id) const;
@@ -87,7 +92,8 @@ private:
     // TODO
   };
   std::unique_ptr<srs_du::du_high_executor_mapper> du_high_exec_mapper;
-  std::vector<task_executor*>                      du_low_dl_executors;
+  std::unique_ptr<srs_du::du_low_executor_mapper>  du_low_exec_mapper;
+  std::vector<task_executor*>                      crit_path_prio_executors;
 
   /// Manager of execution contexts and respective executors instantiated by the application.
   task_execution_manager exec_mng;

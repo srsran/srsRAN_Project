@@ -176,10 +176,12 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
   auto du_impl = std::make_unique<flexible_o_du_impl>(nof_cells, flexible_odu_metrics_notifier);
 
   o_du_low_unit_config       odu_low_cfg          = generate_o_du_low_config(du_lo, du_cells, du_hi.cells_cfg);
-  o_du_low_unit_dependencies odu_low_dependencies = {
-      du_impl->get_upper_ru_dl_rg_adapter(), du_impl->get_upper_ru_ul_request_adapter(), *dependencies.workers};
-  o_du_low_unit_factory odu_low_factory(du_lo.hal_config, nof_cells);
-  auto                  odu_lo_unit = odu_low_factory.create(odu_low_cfg, odu_low_dependencies);
+  o_du_low_unit_dependencies odu_low_dependencies = {.rg_gateway = du_impl->get_upper_ru_dl_rg_adapter(),
+                                                     .rx_symbol_request_notifier =
+                                                         du_impl->get_upper_ru_ul_request_adapter(),
+                                                     .workers = dependencies.workers->get_du_low_executor_mapper()};
+  o_du_low_unit_factory      odu_low_factory(du_lo.hal_config, nof_cells);
+  auto                       odu_lo_unit = odu_low_factory.create(odu_low_cfg, odu_low_dependencies);
 
   std::for_each(odu_lo_unit.metrics.begin(), odu_lo_unit.metrics.end(), [&](auto& e) {
     o_du.metrics.emplace_back(std::move(e));

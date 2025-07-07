@@ -11,13 +11,13 @@
 #pragma once
 
 #include "du_low_hal_factory.h"
+#include "srsran/du/du_low/du_low_executor_mapper.h"
 #include "srsran/du/du_low/o_du_low_config.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"
 
 namespace srsran {
 
 struct du_low_unit_config;
-struct worker_manager;
 
 /// O-RAN DU low unit configuration.
 struct o_du_low_unit_config {
@@ -44,7 +44,7 @@ struct o_du_low_unit_config {
 struct o_du_low_unit_dependencies {
   upper_phy_rg_gateway&                 rg_gateway;
   upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier;
-  worker_manager&                       workers;
+  srs_du::du_low_executor_mapper&       workers;
 };
 
 } // namespace srsran

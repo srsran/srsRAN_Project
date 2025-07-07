@@ -96,25 +96,26 @@ o_du_low_unit o_du_low_unit_factory::create(const o_du_low_unit_config&       pa
 
   // Fill the workers information.
   for (unsigned i = 0, e = o_du_low_cfg.du_low_cfg.cells.size(); i != e; ++i) {
+    srs_du::du_low_cell_executor_mapper& cell_exec_map = dependencies.workers[i];
+
     srs_du::du_low_cell_config& cell = o_du_low_cfg.du_low_cfg.cells[i];
 
-    generate_dl_processor_config(cell.dl_proc_cfg,
-                                 params.du_low_unit_cfg,
-                                 *dependencies.workers.upper_pdsch_exec[i],
-                                 hal_dependencies.hw_encoder_factory);
+    generate_dl_processor_config(
+        cell.dl_proc_cfg, params.du_low_unit_cfg, cell_exec_map.pdsch_executor(), hal_dependencies.hw_encoder_factory);
 
     upper_phy_config& upper          = cell.upper_phy_cfg;
     upper.rg_gateway                 = &dependencies.rg_gateway;
     upper.rx_symbol_request_notifier = &dependencies.rx_symbol_request_notifier;
-    upper.pucch_executor             = dependencies.workers.upper_pucch_exec[i];
-    upper.pusch_executor             = dependencies.workers.upper_pusch_exec[i];
-    upper.pusch_decoder_executor     = dependencies.workers.upper_pusch_decoder_exec[i];
-    upper.prach_executor             = dependencies.workers.upper_prach_exec[i];
-    upper.srs_executor               = dependencies.workers.upper_srs_exec[i];
+    upper.pucch_executor             = &cell_exec_map.pucch_executor();
+    upper.pusch_executor             = &cell_exec_map.pusch_executor();
+    upper.pusch_decoder_executor =
+        (upper.nof_pusch_decoder_threads > 1) ? &cell_exec_map.pusch_decoder_executor() : nullptr;
+    upper.prach_executor = &cell_exec_map.prach_executor();
+    upper.srs_executor   = &cell_exec_map.srs_executor();
     if (hal_dependencies.hw_decoder_factory) {
       upper.hw_decoder_factory = hal_dependencies.hw_decoder_factory;
     }
-    upper.dl_executor = &dependencies.workers.get_du_low_dl_executor(i);
+    upper.dl_executor = &cell_exec_map.downlink_executor();
   }
 
   o_du_low_unit unit;

@@ -399,6 +399,9 @@ worker_manager::create_du_crit_path_prio_executors(unsigned                     
     return desc;
   }
 
+  // DU low executor mapper configuration.
+  srs_du::du_low_executor_mapper_config du_low_exec_mapper_config;
+
   // Instantiate workers for the DU-low.
   if (not rt_mode) {
     // Create a single worker, shared by the whole PHY. As it is shared for all the PHY, pick the first cell of the
@@ -409,13 +412,18 @@ worker_manager::create_du_crit_path_prio_executors(unsigned                     
                        affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::l1_dl),
                        os_thread_realtime_priority::no_realtime());
 
+    // Get common physical layer executor.
+    task_executor* phy_exec = exec_mng.executors().at("phy_exec");
+
+    // Fill the task executors for each cell.
     for (unsigned cell_id = 0, cell_end = nof_cells; cell_id != cell_end; ++cell_id) {
-      upper_pusch_exec.push_back(exec_mng.executors().at("phy_exec"));
-      upper_pucch_exec.push_back(exec_mng.executors().at("phy_exec"));
-      upper_srs_exec.push_back(exec_mng.executors().at("phy_exec"));
-      upper_prach_exec.push_back(exec_mng.executors().at("phy_exec"));
-      upper_pdsch_exec.push_back(exec_mng.executors().at("phy_exec"));
-      du_low_dl_executors.push_back(exec_mng.executors().at("phy_exec"));
+      du_low_exec_mapper_config.cells.emplace_back(
+          srs_du::du_low_executor_mapper_single_exec_config{.common_executor = phy_exec});
+    }
+
+    // Save DL executors for the higher layers.
+    for (unsigned cell_id = 0, cell_end = nof_cells; cell_id != cell_end; ++cell_id) {
+      crit_path_prio_executors.push_back(exec_mng.executors().at("phy_exec"));
     }
 
     // Need to create dedicated DU-high L2 threads as there is only one DU-low thread.
@@ -492,59 +500,58 @@ worker_manager::create_du_crit_path_prio_executors(unsigned                     
         report_fatal_error("Failed to instantiate {} execution context", dl_worker_pool.name);
       }
 
-      // TODO: move this to a dedicated worker mapper.
-      task_executor* cell_upper_dl_exec    = exec_mng.executors().at(l1_dl_exec_name);
-      task_executor* cell_upper_pucch_exec = exec_mng.executors().at(l1_pucch_exec_name);
-      task_executor* cell_upper_pusch_exec = exec_mng.executors().at(l1_pusch_exec_name);
-      task_executor* cell_upper_srs_exec   = exec_mng.executors().at(l1_srs_exec_name);
-      task_executor* cell_upper_prach_exec = exec_mng.executors().at(l1_prach_exec_name);
-      task_executor* cell_upper_pdsch_exec = exec_mng.executors().at(l1_pdsch_exec_name);
+      // Instantiate dedicated PUSCH decoder workers for each cell.
+      unsigned    nof_pusch_decoder_workers = du_low.value().nof_pusch_decoder_threads;
+      std::string pusch_decoder_exec_name   = l1_pusch_exec_name;
+      if (nof_pusch_decoder_workers > 0) {
+        pusch_decoder_exec_name                            = "du_low_pusch_dec_exec#" + cell_id_str;
+        const std::string               name_pusch_decoder = "pusch#" + cell_id_str;
+        const auto                      pusch_decoder_prio = os_thread_realtime_priority::max() - 30;
+        const std::chrono::microseconds pusch_decoder_sleep_time{20};
 
-      // Wrap executors with metrics.
-      if (du_low.value().metrics_period.has_value()) {
-        srslog::log_channel& metrics_logger = app_helpers::fetch_logger_metrics_log_channel();
+        // As the PUSCH decoding is not time-critical, assign CPUs dedicated for low priority.
+        std::vector<os_sched_affinity_bitmask> pusch_decoder_cpu_masks;
+        for (unsigned w = 0; w != nof_pusch_decoder_workers; ++w) {
+          pusch_decoder_cpu_masks.push_back(
+              low_prio_affinity_mng.calcute_affinity_mask(sched_affinity_mask_types::low_priority));
+        }
 
-        std::chrono::milliseconds      metrics_period = du_low.value().metrics_period.value();
-        std::unique_ptr<task_executor> executor;
+        // Instantiate dedicated worker pool for the dedicated upper physical layer PUSCH decoding. This worker pool
+        // comprises a single priority queue.
+        const worker_pool pusch_decoder_worker_pool{name_pusch_decoder,
+                                                    nof_pusch_decoder_workers,
+                                                    {{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
+                                                    {{pusch_decoder_exec_name}},
+                                                    pusch_decoder_sleep_time,
+                                                    pusch_decoder_prio,
+                                                    pusch_decoder_cpu_masks};
 
-        executor = make_concurrent_metrics_executor_ptr(
-            l1_dl_exec_name, *cell_upper_dl_exec, *metrics_exec, metrics_logger, metrics_period);
-        cell_upper_dl_exec = executor.get();
-        executor_decorators_exec.emplace_back(std::move(executor));
-
-        executor = make_concurrent_metrics_executor_ptr(
-            l1_pucch_exec_name, *cell_upper_pucch_exec, *metrics_exec, metrics_logger, metrics_period);
-        cell_upper_pucch_exec = executor.get();
-        executor_decorators_exec.emplace_back(std::move(executor));
-
-        executor = make_concurrent_metrics_executor_ptr(
-            l1_pusch_exec_name, *cell_upper_pusch_exec, *metrics_exec, metrics_logger, metrics_period);
-        cell_upper_pusch_exec = executor.get();
-        executor_decorators_exec.emplace_back(std::move(executor));
-
-        executor = make_concurrent_metrics_executor_ptr(
-            l1_srs_exec_name, *cell_upper_srs_exec, *metrics_exec, metrics_logger, metrics_period);
-        cell_upper_srs_exec = executor.get();
-        executor_decorators_exec.emplace_back(std::move(executor));
-
-        executor = make_concurrent_metrics_executor_ptr(
-            l1_prach_exec_name, *cell_upper_prach_exec, *metrics_exec, metrics_logger, metrics_period);
-        cell_upper_prach_exec = executor.get();
-        executor_decorators_exec.emplace_back(std::move(executor));
-
-        executor = make_concurrent_metrics_executor_ptr(
-            l1_pdsch_exec_name, *cell_upper_pdsch_exec, *metrics_exec, metrics_logger, metrics_period);
-        cell_upper_pdsch_exec = executor.get();
-        executor_decorators_exec.emplace_back(std::move(executor));
+        if (not exec_mng.add_execution_context(create_execution_context(pusch_decoder_worker_pool))) {
+          report_fatal_error("Failed to instantiate {} execution context", pusch_decoder_worker_pool.name);
+        }
       }
 
-      du_low_dl_executors.push_back(cell_upper_dl_exec);
-      upper_pucch_exec.push_back(cell_upper_pucch_exec);
-      upper_pusch_exec.push_back(cell_upper_pusch_exec);
-      upper_srs_exec.push_back(cell_upper_srs_exec);
-      upper_prach_exec.push_back(cell_upper_prach_exec);
-      upper_pdsch_exec.push_back(cell_upper_pdsch_exec);
+      // Fill the task executors for each cell.
+      du_low_exec_mapper_config.cells.emplace_back(srs_du::du_low_executor_mapper_manual_exec_config{
+          .dl_executor            = exec_mng.executors().at(l1_dl_exec_name),
+          .pdsch_executor         = exec_mng.executors().at(l1_pdsch_exec_name),
+          .prach_executor         = exec_mng.executors().at(l1_prach_exec_name),
+          .pusch_executor         = exec_mng.executors().at(l1_pusch_exec_name),
+          .pucch_executor         = exec_mng.executors().at(l1_pucch_exec_name),
+          .srs_executor           = exec_mng.executors().at(l1_srs_exec_name),
+          .pusch_decoder_executor = exec_mng.executors().at(pusch_decoder_exec_name)});
+
+      // Save DL executors for the higher layers.
+      crit_path_prio_executors.push_back(exec_mng.executors().at(l1_dl_exec_name));
       l2_execs.push_back(exec_mng.executors().at(l2_exec_name));
+    }
+
+    // Setup metrics configuration.
+    if (du_low.value().metrics_period.has_value()) {
+      du_low_exec_mapper_config.metrics.emplace(
+          srs_du::du_low_executor_mapper_metric_config{.period              = *du_low->metrics_period,
+                                                       .sequential_executor = *metrics_exec,
+                                                       .logger = app_helpers::fetch_logger_metrics_log_channel()});
     }
 
     // Reuse DU-low DL executors for L2 critical path.
@@ -555,58 +562,8 @@ worker_manager::create_du_crit_path_prio_executors(unsigned                     
     desc.l2_execs                     = pool_desc;
   }
 
-  // Skip the creation of the PUSCH decoder worker pool if asynchronous PUSCH decoder threads are not required.
-  unsigned nof_pusch_decoder_workers = du_low.value().nof_pusch_decoder_threads;
-  if (nof_pusch_decoder_workers == 0) {
-    upper_pusch_decoder_exec.resize(nof_cells, nullptr);
-    return desc;
-  }
-
-  // Instantiate dedicated PUSCH decoder workers for each cell.
-  for (unsigned cell_id = 0, cell_end = nof_cells; cell_id != cell_end; ++cell_id) {
-    const std::string               cell_id_str             = std::to_string(cell_id);
-    const std::string               name_pusch_decoder      = "pusch#" + cell_id_str;
-    const std::string               pusch_decoder_exec_name = "du_low_pusch_dec_exec#" + cell_id_str;
-    const auto                      pusch_decoder_prio      = os_thread_realtime_priority::max() - 30;
-    const std::chrono::microseconds pusch_decoder_sleep_time{20};
-
-    // As the PUSCH decoding is not time-critical, assign CPUs dedicated for low priority.
-    std::vector<os_sched_affinity_bitmask> pusch_decoder_cpu_masks;
-    for (unsigned w = 0; w != nof_pusch_decoder_workers; ++w) {
-      pusch_decoder_cpu_masks.push_back(
-          low_prio_affinity_mng.calcute_affinity_mask(sched_affinity_mask_types::low_priority));
-    }
-
-    // Instantiate dedicated worker pool for the dedicated upper physical layer PUSCH decoding. This worker pool
-    // comprises a single priority queue.
-    const worker_pool pusch_decoder_worker_pool{name_pusch_decoder,
-                                                nof_pusch_decoder_workers,
-                                                {{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
-                                                {{pusch_decoder_exec_name}},
-                                                pusch_decoder_sleep_time,
-                                                pusch_decoder_prio,
-                                                pusch_decoder_cpu_masks};
-
-    if (not exec_mng.add_execution_context(create_execution_context(pusch_decoder_worker_pool))) {
-      report_fatal_error("Failed to instantiate {} execution context", pusch_decoder_worker_pool.name);
-    }
-
-    task_executor* cell_upper_pusch_decoder_exec = exec_mng.executors().at(pusch_decoder_exec_name);
-    if (du_low.value().metrics_period.has_value()) {
-      srslog::log_channel& metrics_logger = app_helpers::fetch_logger_metrics_log_channel();
-
-      std::unique_ptr<task_executor> concurrent_metrics_executor =
-          make_concurrent_metrics_executor_ptr(pusch_decoder_exec_name,
-                                               *cell_upper_pusch_decoder_exec,
-                                               *metrics_exec,
-                                               metrics_logger,
-                                               du_low.value().metrics_period.value());
-      cell_upper_pusch_decoder_exec = concurrent_metrics_executor.get();
-      executor_decorators_exec.emplace_back(std::move(concurrent_metrics_executor));
-    }
-
-    upper_pusch_decoder_exec.push_back(cell_upper_pusch_decoder_exec);
-  }
+  // Create DU low executor mapper.
+  du_low_exec_mapper = srs_du::create_du_low_executor_mapper(du_low_exec_mapper_config);
 
   return desc;
 }
@@ -850,6 +807,6 @@ void worker_manager::create_ru_dummy_executors()
 
 task_executor& worker_manager::get_du_low_dl_executor(unsigned sector_id) const
 {
-  srsran_assert(sector_id < du_low_dl_executors.size(), "Invalid sector configuration");
-  return *du_low_dl_executors[sector_id];
+  srsran_assert(sector_id < crit_path_prio_executors.size(), "Invalid sector configuration");
+  return *crit_path_prio_executors[sector_id];
 }
