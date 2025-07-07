@@ -240,7 +240,7 @@ public:
       if (run_count != max_count) {
         // Unexpected failure to pop enqueued tasks. Possible reason: Are you using an SPSC queue with multiple
         // producers?
-        srslog::fetch_basic_logger("ALL").error(
+        logger.error(
             "Couldn't run all pending tasks stored in strand in the thread {} (popped tasks={} < queue_size={}).",
             this_thread_name(),
             run_count,
@@ -281,23 +281,14 @@ public:
     // currently hold the strand, there is no concurrent thread popping tasks.
     uint32_t queue_size = state.get_queue_size();
 
-    srslog::fetch_basic_logger("ALL").warning("Failed to dispatch {} tasks stored in strand. Discarding them...",
-                                              queue_size);
+    logger.warning("Discarding {} tasks stored in strand. Cause: The strand cannot dispatch its task to executor.",
+                   queue_size);
 
     unique_task dropped_task;
     while (queue_size > 0) {
       unsigned run_count = 0;
       for (; run_count != queue_size and this->queue.pop(dropped_task); ++run_count) {
         // do nothing with popped task.
-        if (run_count != queue_size) {
-          // Unexpected failure to pop enqueued tasks. Possible reason: Are you using an SPSC queue with multiple
-          // producers?
-          srslog::fetch_basic_logger("ALL").error(
-              "Couldn't run all pending tasks stored in strand in the thread {} (popped tasks={} < queue_size={}).",
-              this_thread_name(),
-              run_count,
-              queue_size);
-        }
       }
       queue_size = state.on_task_completion(run_count);
     }
@@ -314,6 +305,9 @@ public:
 
   // Number of jobs currently enqueued in the strand.
   StrandLockPolicy state;
+
+  // Logger used to report errors and warnings.
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("ALL");
 };
 
 } // namespace detail
