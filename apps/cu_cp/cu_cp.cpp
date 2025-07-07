@@ -177,8 +177,7 @@ int main(int argc, char** argv)
   o_cu_cp_app_unit->on_parsing_configuration_registration(app);
 
   // Set the callback for the app calling all the autoderivation functions.
-  app.callback(
-      [&app, &cu_cp_cfg, &o_cu_cp_app_unit]() { o_cu_cp_app_unit->on_configuration_parameters_autoderivation(app); });
+  app.callback([&app, &o_cu_cp_app_unit]() { o_cu_cp_app_unit->on_configuration_parameters_autoderivation(app); });
 
   // Parse arguments.
   CLI11_PARSE(app, argc, argv);
