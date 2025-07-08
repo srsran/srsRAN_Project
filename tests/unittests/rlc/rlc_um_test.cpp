@@ -192,6 +192,7 @@ protected:
     std::vector<uint8_t> tx_pdu(payload_len);
     while (buffer_state > 0 && num_pdus < max_num_pdus) {
       unsigned n = rlc1_tx_lower->pull_pdu(tx_pdu);
+      ue_worker.run_pending_tasks();
       pdu_bufs[num_pdus] =
           byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>{tx_pdu.data(), n}).value()).value();
 
@@ -376,6 +377,7 @@ TEST_P(rlc_um_test, tx_without_segmentation)
   std::vector<uint8_t> tx_pdu(payload_len);
   for (uint32_t i = 0; i < num_pdus; i++) {
     unsigned nwritten = rlc1_tx_lower->pull_pdu(tx_pdu);
+    ue_worker.run_pending_tasks();
     pdu_bufs[i] =
         byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>{tx_pdu.data(), nwritten}).value()).value();
     EXPECT_EQ(payload_len, pdu_bufs[i].length());
@@ -467,6 +469,7 @@ TEST_P(rlc_um_test, tx_with_segmentation)
   std::vector<uint8_t> tx_pdu(payload_len);
   while (rlc1_tx_lower->get_buffer_state().pending_bytes > 0 && num_pdus < max_num_pdus) {
     unsigned nwritten = rlc1_tx_lower->pull_pdu(tx_pdu);
+    ue_worker.run_pending_tasks();
     pdu_bufs[num_pdus] =
         byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>{tx_pdu.data(), nwritten}).value()).value();
 
@@ -582,7 +585,8 @@ TEST_P(rlc_um_test, sdu_discard)
   // Transmit full PDU
   std::vector<uint8_t> tx_pdu(data_pdu_size);
   unsigned             nwritten = rlc1_tx_lower->pull_pdu(tx_pdu);
-  byte_buffer_chain    pdu =
+  ue_worker.run_pending_tasks();
+  byte_buffer_chain pdu =
       byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>{tx_pdu.data(), nwritten}).value()).value();
   EXPECT_FALSE(pdu.empty());
   EXPECT_TRUE(std::equal(pdu.begin() + header_size, pdu.end(), sdu_bufs[1].begin()));
@@ -619,6 +623,7 @@ TEST_P(rlc_um_test, sdu_discard)
   // Transmit full PDU
   tx_pdu.resize(data_pdu_size);
   nwritten = rlc1_tx_lower->pull_pdu(tx_pdu);
+  ue_worker.run_pending_tasks();
   pdu = byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>{tx_pdu.data(), nwritten}).value()).value();
   EXPECT_FALSE(pdu.empty());
   EXPECT_TRUE(std::equal(pdu.begin() + header_size, pdu.end(), sdu_bufs[2].begin()));
@@ -709,7 +714,8 @@ TEST_P(rlc_um_test, sdu_discard_with_pdcp_sn_wraparound)
   // Transmit full PDU
   std::vector<uint8_t> tx_pdu(data_pdu_size);
   unsigned             nwritten = rlc1_tx_lower->pull_pdu(tx_pdu);
-  byte_buffer_chain    pdu =
+  ue_worker.run_pending_tasks();
+  byte_buffer_chain pdu =
       byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>{tx_pdu.data(), nwritten}).value()).value();
   EXPECT_FALSE(pdu.empty());
   EXPECT_TRUE(std::equal(pdu.begin() + header_size, pdu.end(), sdu_bufs[1].begin()));
@@ -731,6 +737,7 @@ TEST_P(rlc_um_test, sdu_discard_with_pdcp_sn_wraparound)
 
   // Transmit full PDU
   nwritten = rlc1_tx_lower->pull_pdu(tx_pdu);
+  ue_worker.run_pending_tasks();
   pdu = byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>{tx_pdu.data(), nwritten}).value()).value();
   EXPECT_FALSE(pdu.empty());
   EXPECT_TRUE(std::equal(pdu.begin() + header_size, pdu.end(), sdu_bufs[2].begin()));
@@ -789,6 +796,7 @@ TEST_P(rlc_um_test, tx_with_segmentation_reverse_rx)
   std::vector<uint8_t> tx_pdu(payload_len);
   while (rlc1_tx_lower->get_buffer_state().pending_bytes > 0 && num_pdus < max_num_pdus) {
     unsigned nwritten = rlc1_tx_lower->pull_pdu(tx_pdu);
+    ue_worker.run_pending_tasks();
     pdu_bufs[num_pdus] =
         byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>{tx_pdu.data(), nwritten}).value()).value();
 
@@ -877,6 +885,7 @@ TEST_P(rlc_um_test, tx_multiple_SDUs_with_segmentation)
   std::vector<uint8_t> tx_pdu(payload_len);
   while (rlc1_tx_lower->get_buffer_state().pending_bytes > 0 && num_pdus < max_num_pdus) {
     unsigned nwritten = rlc1_tx_lower->pull_pdu(tx_pdu);
+    ue_worker.run_pending_tasks();
     pdu_bufs[num_pdus] =
         byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>{tx_pdu.data(), nwritten}).value()).value();
 
@@ -986,7 +995,8 @@ TEST_P(rlc_um_test, reassembly_window_wrap_around)
     // read PDUs from lower end of RLC1 and write into lower end of RLC2
     std::vector<uint8_t> pdu_tmp(payload_len);
     while (rlc1_tx_lower->get_buffer_state().pending_bytes > 0 && num_pdus < max_num_pdus) {
-      unsigned          nwritten = rlc1_tx_lower->pull_pdu(pdu_tmp);
+      unsigned nwritten = rlc1_tx_lower->pull_pdu(pdu_tmp);
+      ue_worker.run_pending_tasks();
       byte_buffer_chain tx_pdu =
           byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>{pdu_tmp.data(), nwritten}).value()).value();
       if (tx_pdu.empty()) {
@@ -1051,7 +1061,8 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
     // read PDUs from lower end of RLC1 and write into lower end of RLC2 (except 11th and 22th)
     std::vector<uint8_t> pdu_tmp(payload_len);
     while (rlc1_tx_lower->get_buffer_state().pending_bytes > 0 && num_pdus < max_num_pdus) {
-      unsigned          nwritten = rlc1_tx_lower->pull_pdu(pdu_tmp);
+      unsigned nwritten = rlc1_tx_lower->pull_pdu(pdu_tmp);
+      ue_worker.run_pending_tasks();
       byte_buffer_chain tx_pdu =
           byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>{pdu_tmp.data(), nwritten}).value()).value();
       if (tx_pdu.empty()) {
@@ -1137,6 +1148,7 @@ TEST_P(rlc_um_test, lost_segment_outside_reassembly_window)
   std::vector<uint8_t> pdu_tmp(payload_len);
   while (rlc1_tx_lower->get_buffer_state().pending_bytes > 0 && num_pdus < max_num_pdus) {
     unsigned nwritten = rlc1_tx_lower->pull_pdu(pdu_tmp);
+    ue_worker.run_pending_tasks();
     pdu_bufs[num_pdus] =
         byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>{pdu_tmp.data(), nwritten}).value()).value();
 
@@ -1223,6 +1235,7 @@ TEST_P(rlc_um_test, out_of_order_segments_across_SDUs)
   std::vector<uint8_t> pdu_tmp(payload_len);
   while (rlc1_tx_lower->get_buffer_state().pending_bytes > 0 && num_pdus < max_num_pdus) {
     unsigned nwritten = rlc1_tx_lower->pull_pdu(pdu_tmp);
+    ue_worker.run_pending_tasks();
     pdu_bufs[num_pdus] =
         byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>{pdu_tmp.data(), nwritten}).value()).value();
 
@@ -1300,6 +1313,7 @@ TEST_P(rlc_um_test, tx_huge_bursts_report_buffer_state_correctly)
   std::vector<uint8_t> tx_pdu(payload_len);
   for (uint32_t i = 0; i < num_pdus; i++) {
     unsigned nwritten = rlc1_tx_lower->pull_pdu(tx_pdu);
+    ue_worker.run_pending_tasks();
     EXPECT_EQ(payload_len, nwritten);
 
     // Verify transmit notification
