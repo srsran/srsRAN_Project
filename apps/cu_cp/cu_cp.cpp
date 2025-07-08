@@ -24,8 +24,6 @@
 #include "apps/units/o_cu_cp/o_cu_cp_unit_config.h"
 #include "apps/units/o_cu_cp/pcap_factory.h"
 #include "cu_cp_appconfig.h"
-// #include "cu_cp_appconfig_validator.h"
-// #include "cu_appconfig_yaml_writer.h"
 #include "srsran/cu_cp/cu_cp_operation_controller.h"
 #include "srsran/e1ap/gateways/e1_local_connector_factory.h"
 #include "srsran/e1ap/gateways/e1_network_server_factory.h"
@@ -110,7 +108,7 @@ static void register_app_logs(const cu_cp_appconfig& cu_cp_cfg, o_cu_cp_applicat
 {
   const logger_appconfig& log_cfg = cu_cp_cfg.log_cfg;
   // Set log-level of app and all non-layer specific components to app level.
-  for (const auto& id : {"ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP", "ASN1"}) {
+  for (const auto& id : {"ALL", "SCTP-GW", "IO-EPOLL", "PCAP", "ASN1"}) {
     auto& logger = srslog::fetch_basic_logger(id, false);
     logger.set_level(log_cfg.lib_level);
     logger.set_hex_dump_max_size(log_cfg.hex_max_size);
@@ -187,41 +185,28 @@ int main(int argc, char** argv)
     return 0;
   }
 
-  // Check the modified configuration.
-  // if (!validate_cu_appconfig(cu_cp_cfg) ||
-  //    !o_cu_cp_app_unit->on_configuration_validation(os_sched_affinity_bitmask::available_cpus())) {
-  //  report_error("Invalid configuration detected.\n");
-  //}
+  // TODO: validate appconfig
 
   // Set up logging.
   initialize_log(cu_cp_cfg.log_cfg.filename);
   register_app_logs(cu_cp_cfg, *o_cu_cp_app_unit);
 
   // Check the metrics and metrics consumers.
-  srslog::basic_logger& cu_logger = srslog::fetch_basic_logger("CU-CP");
+  srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
   bool                  metrics_enabled =
       o_cu_cp_app_unit->are_metrics_enabled() || cu_cp_cfg.metrics_cfg.rusage_config.enable_app_usage;
 
   if (!metrics_enabled && cu_cp_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg.enabled()) {
-    cu_logger.warning("Logger or JSON metrics output enabled but no metrics will be reported as no layer was enabled");
+    cu_cp_logger.warning(
+        "Logger or JSON metrics output enabled but no metrics will be reported as no layer was enabled");
     fmt::println("Logger or JSON metrics output enabled but no metrics will be reported as no layer was enabled");
   }
 
-  // Log input configuration.
-  // srslog::basic_logger& config_logger = srslog::fetch_basic_logger("CONFIG");
-  // if (config_logger.debug.enabled()) {
-  //  YAML::Node node;
-  //  fill_cu_appconfig_in_yaml_schema(node, cu_cfg);
-  //  o_cu_cp_app_unit->dump_config(node);
-  //  o_cu_up_app_unit->dump_config(node);
-  //  config_logger.debug("Input configuration (all values): \n{}", YAML::Dump(node));
-  //} else {
-  //  config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
-  //}
+  // TODO: Log input configuration.
 
   app_services::application_tracer app_tracer;
   if (not cu_cp_cfg.log_cfg.tracing_filename.empty()) {
-    app_tracer.enable_tracer(cu_cp_cfg.log_cfg.tracing_filename, cu_logger);
+    app_tracer.enable_tracer(cu_cp_cfg.log_cfg.tracing_filename, cu_cp_logger);
   }
 
   // configure cgroups
@@ -235,18 +220,19 @@ int main(int argc, char** argv)
 
   // Check and log included CPU features and check support by current CPU
   if (cpu_supports_included_features()) {
-    cu_logger.debug("Required CPU features: {}", get_cpu_feature_info());
+    cu_cp_logger.debug("Required CPU features: {}", get_cpu_feature_info());
   } else {
     // Quit here until we complete selection of the best matching implementation for the current CPU at runtime.
-    cu_logger.error("The CPU does not support the required CPU features that were configured during compile time: {}",
-                    get_cpu_feature_info());
+    cu_cp_logger.error(
+        "The CPU does not support the required CPU features that were configured during compile time: {}",
+        get_cpu_feature_info());
     report_error("The CPU does not support the required CPU features that were configured during compile time: {}\n",
                  get_cpu_feature_info());
   }
 
   // Check some common causes of performance issues and print a warning if required.
-  check_cpu_governor(cu_logger);
-  check_drm_kms_polling(cu_logger);
+  check_cpu_governor(cu_cp_logger);
+  check_drm_kms_polling(cu_cp_logger);
 
   // Create manager of timers for CU-CP and CU-UP, which will be driven by the system timer slot ticks.
   timer_manager  app_timers{256};
@@ -305,7 +291,7 @@ int main(int argc, char** argv)
 
   // Create app-level resource usage service and metrics.
   auto app_resource_usage_service = app_services::build_app_resource_usage_service(
-      metrics_notifier_forwarder, cu_cp_cfg.metrics_cfg.rusage_config, cu_logger);
+      metrics_notifier_forwarder, cu_cp_cfg.metrics_cfg.rusage_config, cu_cp_logger);
 
   std::vector<app_services::metrics_config> metrics_configs = std::move(app_resource_usage_service.metrics);
 
@@ -339,9 +325,9 @@ int main(int argc, char** argv)
   e1_gw->attach_cu_cp(o_cucp_obj.get_cu_cp().get_e1_handler());
 
   // start O-CU-CP
-  cu_logger.info("Starting CU-CP...");
+  cu_cp_logger.info("Starting CU-CP...");
   o_cucp_obj.get_operation_controller().start();
-  cu_logger.info("CU-CP started successfully");
+  cu_cp_logger.info("CU-CP started successfully");
 
   // Check connection to AMF
   if (not o_cucp_obj.get_cu_cp().get_ng_handler().amfs_are_connected()) {
@@ -391,14 +377,14 @@ int main(int argc, char** argv)
   time_source.reset();
 
   // Close PCAPs
-  cu_logger.info("Closing PCAP files...");
+  cu_cp_logger.info("Closing PCAP files...");
   cu_cp_dlt_pcaps.reset();
-  cu_logger.info("PCAP files successfully closed.");
+  cu_cp_logger.info("PCAP files successfully closed.");
 
   // Stop workers
-  cu_logger.info("Stopping executors...");
+  cu_cp_logger.info("Stopping executors...");
   workers.stop();
-  cu_logger.info("Executors closed successfully.");
+  cu_cp_logger.info("Executors closed successfully.");
 
   srslog::flush();
 

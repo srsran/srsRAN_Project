@@ -9,8 +9,6 @@
 add_executable(srscucp
         cu_cp.cpp
         cu_cp_appconfig_cli11_schema.cpp
-        #cu_appconfig_validator.cpp
-        #cu_appconfig_yaml_writer.cpp
 )
 
 install(TARGETS srscucp
