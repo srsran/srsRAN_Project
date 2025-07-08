@@ -213,7 +213,7 @@ int run_benchmark(bench_params params, int algo)
     fmt::print("Unsupported algortithm. Use NIA/NEA 0, 1, 2 or 3.\n");
     return -1;
   }
-  fmt::print("------ Benchmarcking: NIA{} NEA{} ------\n", algo, algo);
+  fmt::print("------ Benchmarking: NIA{} NEA{} ------\n", algo, algo);
 
   auto int_algo  = static_cast<security::integrity_algorithm>(algo);
   auto ciph_algo = static_cast<security::ciphering_algorithm>(algo);
@@ -240,7 +240,7 @@ int run_benchmark(bench_params params, int algo)
     benchmark_pdcp_tx(params, security::integrity_enabled::on, security::ciphering_enabled::off, int_algo, ciph_algo);
     benchmark_pdcp_tx(params, security::integrity_enabled::off, security::ciphering_enabled::on, int_algo, ciph_algo);
   }
-  fmt::print("------ End of Benchmarck ------\n");
+  fmt::print("------ End of Benchmark ------\n");
   return 0;
 }
 
