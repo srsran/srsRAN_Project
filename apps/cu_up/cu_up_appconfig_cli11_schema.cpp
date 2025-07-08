@@ -23,7 +23,7 @@ using namespace srsran;
 
 static void configure_cli11_e1ap_args(CLI::App& app, srs_cu_up::e1ap_appconfig& e1ap_params)
 {
-  app.add_option("--cu_cp_addr", e1ap_params.cu_cp_address, "CU-CP F1-C address to connect to")->capture_default_str();
+  app.add_option("--cu_cp_addr", e1ap_params.cu_cp_address, "CU-CP E1AP address to connect to")->capture_default_str();
   app.add_option(
          "--bind_addr", e1ap_params.bind_address, "CU-UP E1AP bind address. If left empty, implicit bind is performed")
       ->capture_default_str();

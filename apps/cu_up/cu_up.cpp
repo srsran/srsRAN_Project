@@ -26,8 +26,6 @@
 #include "apps/units/o_cu_up/pcap_factory.h"
 #include "cu_up_appconfig.h"
 #include "srsran/e1ap/gateways/e1_network_client_factory.h"
-// #include "cu_up_appconfig_validator.h"
-//  #include "cu_appconfig_yaml_writer.h"
 #include "srsran/e2/e2ap_config_translators.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/f1u/cu_up/split_connector/f1u_split_connector_factory.h"
@@ -181,13 +179,6 @@ int main(int argc, char** argv)
   auto o_cu_up_app_unit = create_o_cu_up_application_unit("cu-up");
   o_cu_up_app_unit->on_parsing_configuration_registration(app);
 
-  // Set the callback for the app calling all the autoderivation functions.
-  // app.callback([&app, &cu_cfg, &o_cu_up_app_unit]() {
-  //  o_cu_up_app_unit->on_configuration_parameters_autoderivation(app);
-
-  //  autoderive_cu_up_parameters_after_parsing(cu_cfg, o_cu_up_app_unit->get_o_cu_up_unit_config());
-  //});
-
   // Parse arguments.
   CLI11_PARSE(app, argc, argv);
 
@@ -196,11 +187,7 @@ int main(int argc, char** argv)
     return 0;
   }
 
-  // Check the modified configuration.
-  // if (!validate_cu_appconfig(cu_cfg) ||
-  //    !o_cu_up_app_unit->on_configuration_validation(not cu_cfg.log_cfg.tracing_filename.empty())) {
-  //  report_error("Invalid configuration detected.\n");
-  //}
+  // TODO: validate appconfig
 
   // Set up logging.
   initialize_log(cu_up_cfg.log_cfg.filename);
@@ -217,17 +204,7 @@ int main(int argc, char** argv)
     fmt::println("Logger or JSON metrics output enabled but no metrics will be reported as no layer was enabled");
   }
 
-  // Log input configuration.
-  // srslog::basic_logger& config_logger = srslog::fetch_basic_logger("CONFIG");
-  // if (config_logger.debug.enabled()) {
-  //   YAML::Node node;
-  //   fill_cu_appconfig_in_yaml_schema(node, cu_up_cfg);
-  //   o_cu_cp_app_unit->dump_config(node);
-  //   o_cu_up_app_unit->dump_config(node);
-  //   config_logger.debug("Input configuration (all values): \n{}", YAML::Dump(node));
-  // } else {
-  //   config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
-  // }
+  // TODO: Log input configuration.
 
   app_services::application_tracer app_tracer;
   if (not cu_up_cfg.log_cfg.tracing_filename.empty()) {
@@ -343,17 +320,7 @@ int main(int argc, char** argv)
 
   std::vector<app_services::metrics_config> metrics_configs = std::move(app_resource_usage_service.metrics);
 
-  // if (std::unique_ptr<app_services::cmdline_command> cmd = app_services::create_stdout_metrics_app_command(
-  //         {{o_cucp_unit.commands.cmdline.metrics_subcommands}}, false)) {
-  //   o_cucp_unit.commands.cmdline.commands.push_back(std::move(cmd));
-  // }
-
-  // Create console helper object for commands and metrics printing.
-  // app_services::cmdline_command_dispatcher command_parser(
-  //    *epoll_broker, *workers.non_rt_medium_prio_exec, o_cucp_unit.commands.cmdline.commands);
-
-  // Connect E1AP to O-CU-CP.
-  // e1_gw->attach_cu_cp(o_cucp_obj.get_cu_cp().get_e1_handler());
+  // TODO: Create console helper object for commands and metrics printing.
 
   // Create and start O-CU-UP
   o_cu_up_unit_dependencies o_cuup_unit_deps;
