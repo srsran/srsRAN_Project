@@ -142,7 +142,8 @@ TEST_F(rlc_tx_tm_test, test_tx)
   // read PDU from lower end
   std::vector<uint8_t> tx_pdu(sdu_size);
   unsigned             nwritten = rlc->pull_pdu(tx_pdu);
-  byte_buffer_chain    pdu =
+  ue_worker.run_pending_tasks();
+  byte_buffer_chain pdu =
       byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>(tx_pdu.data(), nwritten)).value()).value();
   EXPECT_EQ(pdu.length(), sdu_size);
   EXPECT_EQ(pdu, sdu_buf);
@@ -159,6 +160,7 @@ TEST_F(rlc_tx_tm_test, test_tx)
   // read another PDU from lower end but there is nothing to read
   tx_pdu.resize(sdu_size);
   nwritten = rlc->pull_pdu(tx_pdu);
+  ue_worker.run_pending_tasks();
   pdu = byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>(tx_pdu.data(), nwritten)).value()).value();
   EXPECT_EQ(pdu.length(), 0);
   pcell_worker.run_pending_tasks();
@@ -193,6 +195,7 @@ TEST_F(rlc_tx_tm_test, test_tx)
   // read PDU from lower end with insufficient space for the whole SDU
   tx_pdu.resize(sdu_size - 1);
   nwritten = rlc->pull_pdu(tx_pdu);
+  ue_worker.run_pending_tasks();
   pdu = byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>(tx_pdu.data(), nwritten)).value()).value();
   EXPECT_EQ(pdu.length(), 0);
   pcell_worker.run_pending_tasks();
@@ -229,6 +232,7 @@ TEST_F(rlc_tx_tm_test, test_tx)
   // read first PDU from lower end with oversized space
   tx_pdu.resize(3 * sdu_size);
   nwritten = rlc->pull_pdu(tx_pdu);
+  ue_worker.run_pending_tasks();
   pdu = byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>(tx_pdu.data(), nwritten)).value()).value();
   EXPECT_EQ(pdu.length(), sdu_size);
   EXPECT_EQ(pdu, sdu_buf);
@@ -247,6 +251,7 @@ TEST_F(rlc_tx_tm_test, test_tx)
   // read second PDU from lower end with oversized space
   tx_pdu.resize(3 * sdu_size);
   nwritten = rlc->pull_pdu(tx_pdu);
+  ue_worker.run_pending_tasks();
   pdu = byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>(tx_pdu.data(), nwritten)).value()).value();
   EXPECT_EQ(pdu.length(), sdu_size);
   EXPECT_EQ(pdu, sdu_buf2);
@@ -289,7 +294,8 @@ TEST_F(rlc_tx_tm_test, discard_sdu_increments_discard_failure_counter)
   // read PDU from lower end
   std::vector<uint8_t> tx_pdu(sdu_size);
   unsigned             nwritten = rlc->pull_pdu(tx_pdu);
-  byte_buffer_chain    pdu =
+  ue_worker.run_pending_tasks();
+  byte_buffer_chain pdu =
       byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>(tx_pdu.data(), nwritten)).value()).value();
   EXPECT_EQ(pdu.length(), sdu_size);
   EXPECT_EQ(pdu, sdu_buf);
@@ -319,7 +325,8 @@ TEST_F(rlc_tx_tm_test, test_tx_metrics)
   // read PDU from lower end
   std::vector<uint8_t> tx_pdu(sdu_size - 1);
   unsigned             nwritten = rlc->pull_pdu(tx_pdu);
-  byte_buffer_chain    pdu =
+  ue_worker.run_pending_tasks();
+  byte_buffer_chain pdu =
       byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>(tx_pdu.data(), nwritten)).value()).value();
 
   rlc_tx_metrics m = rlc->get_metrics();
