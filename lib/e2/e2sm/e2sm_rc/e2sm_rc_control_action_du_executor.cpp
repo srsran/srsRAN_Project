@@ -9,6 +9,7 @@
  */
 
 #include "e2sm_rc_control_action_du_executor.h"
+#include "srsran/f1ap/du/f1ap_du.h"
 #include <future>
 
 using namespace asn1::e2ap;
@@ -16,9 +17,13 @@ using namespace asn1::e2sm;
 using namespace srsran;
 
 e2sm_rc_control_action_du_executor_base::e2sm_rc_control_action_du_executor_base(
-    srs_du::du_configurator& du_configurator_,
-    uint32_t                 action_id_) :
-  logger(srslog::fetch_basic_logger("E2SM-RC")), action_id(action_id_), du_param_configurator(du_configurator_)
+    srs_du::du_configurator&       du_configurator_,
+    srs_du::f1ap_ue_id_translator& f1ap_ue_id_translator_,
+    uint32_t                       action_id_) :
+  logger(srslog::fetch_basic_logger("E2SM-RC")),
+  action_id(action_id_),
+  du_param_configurator(du_configurator_),
+  f1ap_ue_id_provider(f1ap_ue_id_translator_)
 {
 }
 
@@ -58,8 +63,9 @@ e2sm_rc_control_action_du_executor_base::return_ctrl_failure(const e2sm_ric_cont
 }
 
 e2sm_rc_control_action_2_6_du_executor::e2sm_rc_control_action_2_6_du_executor(
-    srs_du::du_configurator& du_configurator_) :
-  e2sm_rc_control_action_du_executor_base(du_configurator_, 6)
+    srs_du::du_configurator&       du_configurator_,
+    srs_du::f1ap_ue_id_translator& f1ap_ue_id_translator_) :
+  e2sm_rc_control_action_du_executor_base(du_configurator_, f1ap_ue_id_translator_, 6)
 {
   // Control Action description:
   // To control the radio resource management policy for slice-specific PRB quota allocation
@@ -177,7 +183,7 @@ e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2sm_ri
   logger.info(
       "Slice-level PRB quota Control Request: gNB-CU-UE-F1AP-ID={}, PLMN:{}, SST:{}, SD:{}, PRB-ratios: min={}, "
       "max={}, ded={}",
-      ctrl_config.ue_id,
+      gnb_du_ue_f1ap_id_to_uint(ctrl_config.ue_id),
       policy_member.plmn_id.to_string(),
       policy_member.s_nssai.sst.value(),
       policy_member.s_nssai.sd.value(),
@@ -207,7 +213,14 @@ e2sm_rc_control_action_2_6_du_executor::convert_to_du_config_request(const e2sm_
   if (ctrl_hdr.ue_id.type() != ue_id_c::types_opts::gnb_du_ue_id) {
     return {};
   }
-  ctrl_config.ue_id = ctrl_hdr.ue_id.gnb_du_ue_id().gnb_cu_ue_f1ap_id;
+  uint64_t gnb_cu_ue_f1ap_id = ctrl_hdr.ue_id.gnb_du_ue_id().gnb_cu_ue_f1ap_id;
+  ctrl_config.ue_id          = f1ap_ue_id_provider.get_gnb_du_ue_f1ap_id(int_to_gnb_cu_ue_f1ap_id(gnb_cu_ue_f1ap_id));
+
+  if (ctrl_config.ue_id == gnb_du_ue_f1ap_id_t::invalid) {
+    logger.info("Slice-level PRB quota Control Request received but UE not found, gNB-CU-UE-F1AP-ID={}",
+                gnb_cu_ue_f1ap_id);
+    return {};
+  }
 
   // Use a lambda to define the template function in parse_ran_parameter_value
   auto parse_action_ran_parameter_value_lambda = [this](const ran_param_value_type_c&        ran_param,
@@ -220,7 +233,7 @@ e2sm_rc_control_action_2_6_du_executor::convert_to_du_config_request(const e2sm_
     if (action_params.find(ran_p.ran_param_id) != action_params.end()) {
       parse_ran_parameter_value(ran_p.ran_param_value_type,
                                 ran_p.ran_param_id,
-                                ctrl_config.ue_id,
+                                gnb_cu_ue_f1ap_id,
                                 ctrl_config,
                                 parse_action_ran_parameter_value_lambda);
     }

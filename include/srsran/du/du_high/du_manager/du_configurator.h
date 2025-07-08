@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/rrm.h"
 #include "srsran/ran/slot_point.h"
@@ -20,7 +21,7 @@ namespace srsran {
 namespace srs_du {
 
 struct du_mac_sched_control_config {
-  uint64_t ue_id;
+  gnb_du_ue_f1ap_id_t ue_id;
   // Sets the number of HARQ processes to be used.
   std::optional<unsigned> num_harq_processes;
   // Sets the number of HARQ retransmissions to be used.

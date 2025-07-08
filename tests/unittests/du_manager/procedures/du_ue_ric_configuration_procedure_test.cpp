@@ -47,7 +47,7 @@ TEST_F(du_ue_ric_config_tester,
        when_new_ric_config_is_started_then_du_manager_starts_mac_config_and_waits_for_mac_response)
 {
   du_mac_sched_control_config config_req;
-  config_req.ue_id = (uint64_t)test_ue->f1ap_ue_id;
+  config_req.ue_id = test_ue->f1ap_ue_id;
   rrm_policy_ratio_group pol;
   pol.max_prb_policy_ratio = 50;
   pol.min_prb_policy_ratio = 5;
@@ -77,7 +77,7 @@ TEST_F(du_ue_ric_config_tester,
 TEST_F(du_ue_ric_config_tester, when_mac_finished_configuration_then_procedure_finishes)
 {
   du_mac_sched_control_config config_req;
-  config_req.ue_id = (uint64_t)test_ue->f1ap_ue_id;
+  config_req.ue_id = test_ue->f1ap_ue_id;
   rrm_policy_ratio_group pol;
   config_req.rrm_policy_ratio_list.push_back(pol);
   start_procedure(config_req);
@@ -104,7 +104,7 @@ TEST_F(du_ue_ric_config_tester,
 
   // Start RIC UE config.
   du_mac_sched_control_config config_req;
-  config_req.ue_id = (uint64_t)test_ue->f1ap_ue_id;
+  config_req.ue_id = test_ue->f1ap_ue_id;
   rrm_policy_ratio_group pol;
   config_req.rrm_policy_ratio_list.push_back(pol);
   start_procedure(config_req);
