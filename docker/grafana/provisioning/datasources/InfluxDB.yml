@@ -20,3 +20,4 @@ datasources:
       version: SQL
       dbName: ${INFLUXDB3_BUCKET}
       insecureGrpc: true
+      maxSeries: 100000
