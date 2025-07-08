@@ -667,6 +667,28 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->vrb_to_prb_interleaving =
         config.cells_cfg.front().cell.pdsch_cfg.interleaving_bundle_size;
 
+    // According to TS 38.214 Section 5.1.2.3, prb-BundlingType size must match the VRB-to-PRB mapping type.
+    switch (out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->vrb_to_prb_interleaving) {
+      case vrb_to_prb::mapping_type::non_interleaved:
+        // > If $P'_{BWP,i}$ is determined as "wideband", the UE is not expected to be scheduled with non-contiguous
+        // > PRBs and the UE may assume that the same precoding is applied to the allocated resource.
+        out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->prb_bndlg.bundling.emplace<prb_bundling::static_bundling>(
+            prb_bundling::static_bundling({.sz = prb_bundling::static_bundling::bundling_size::wideband}));
+        break;
+      case vrb_to_prb::mapping_type::interleaved_n2:
+        // > When a UE is configured with nominal RBG size = 2 for bandwidth part i according to clause 5.1.2.2.1, or
+        // > when a UE is configured with interleaving unit of 2 for VRB to PRB mapping provided by the higher layer
+        // > parameter vrb-ToPRB-Interleaver given by PDSCH-Config for bandwidth part i, the UE is not expected to be
+        // > configured with $P'_{BWP,i} = 4$.
+        out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->prb_bndlg.bundling.emplace<prb_bundling::static_bundling>(
+            prb_bundling::static_bundling({.sz = std::nullopt}));
+        break;
+      case vrb_to_prb::mapping_type::interleaved_n4:
+        out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->prb_bndlg.bundling.emplace<prb_bundling::static_bundling>(
+            prb_bundling::static_bundling({.sz = prb_bundling::static_bundling::bundling_size::n4}));
+        break;
+    }
+
     // Parameters for csiMeasConfig.
     if (param.csi_rs_enabled) {
       fill_csi_resources(out_cell.ue_ded_serv_cell_cfg, base_cell);

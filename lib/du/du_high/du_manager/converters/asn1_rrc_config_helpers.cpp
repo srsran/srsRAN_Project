@@ -1149,17 +1149,19 @@ calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_config& 
 
   // PRB Bundling.
   if (const auto* result = std::get_if<prb_bundling::static_bundling>(&dest.prb_bndlg.bundling)) {
-    auto& st_bundling               = out.prb_bundling_type.set_static_bundling();
-    st_bundling.bundle_size_present = true;
-    switch (result->sz.value()) {
-      case prb_bundling::static_bundling::bundling_size::n4:
-        st_bundling.bundle_size = pdsch_cfg_s::prb_bundling_type_c_::static_bundling_s_::bundle_size_opts::n4;
-        break;
-      case prb_bundling::static_bundling::bundling_size::wideband:
-        st_bundling.bundle_size = pdsch_cfg_s::prb_bundling_type_c_::static_bundling_s_::bundle_size_opts::wideband;
-        break;
-      default:
-        srsran_assertion_failure("Invalid static PRB bundling size={}", fmt::underlying(result->sz.value()));
+    auto& st_bundling = out.prb_bundling_type.set_static_bundling();
+    if (result->sz.has_value()) {
+      st_bundling.bundle_size_present = true;
+      switch (result->sz.value()) {
+        case prb_bundling::static_bundling::bundling_size::n4:
+          st_bundling.bundle_size = pdsch_cfg_s::prb_bundling_type_c_::static_bundling_s_::bundle_size_opts::n4;
+          break;
+        case prb_bundling::static_bundling::bundling_size::wideband:
+          st_bundling.bundle_size = pdsch_cfg_s::prb_bundling_type_c_::static_bundling_s_::bundle_size_opts::wideband;
+          break;
+        default:
+          srsran_assertion_failure("Invalid static PRB bundling size={}", fmt::underlying(result->sz.value()));
+      }
     }
   } else {
     // Dynamic bundling.
