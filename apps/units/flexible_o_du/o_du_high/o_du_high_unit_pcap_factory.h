@@ -81,18 +81,18 @@ create_o_du_pcaps(const o_du_high_unit_config& config, worker_manager& workers, 
 
   const auto& pcap_cfg   = config.du_high_cfg.config.pcaps;
   pcaps.f1ap             = pcap_cfg.f1ap.enabled
-                               ? create_f1ap_pcap(pcap_cfg.f1ap.filename, workers.get_pcap_executor_mapper().get_f1ap_executor())
+                               ? create_f1ap_pcap(pcap_cfg.f1ap.filename, workers.get_du_pcap_executors().get_f1ap_executor())
                                : create_null_dlt_pcap();
   pcaps.f1ap_sig_handler = std::make_unique<signal_observer>(signal_source, [&pcaps]() { pcaps.f1ap->flush(); });
 
   pcaps.f1u             = pcap_cfg.f1u.enabled
-                              ? create_gtpu_pcap(pcap_cfg.f1u.filename, workers.get_pcap_executor_mapper().get_f1u_executor())
+                              ? create_gtpu_pcap(pcap_cfg.f1u.filename, workers.get_du_pcap_executors().get_f1u_executor())
                               : create_null_dlt_pcap();
   pcaps.f1u_sig_handler = std::make_unique<signal_observer>(signal_source, [&pcaps]() { pcaps.f1u->flush(); });
 
-  pcaps.e2ap             = config.e2_cfg.pcaps.enabled ? create_e2ap_pcap(config.e2_cfg.pcaps.filename,
-                                                              workers.get_pcap_executor_mapper().get_e2ap_executor())
-                                                       : create_null_dlt_pcap();
+  pcaps.e2ap             = config.e2_cfg.pcaps.enabled
+                               ? create_e2ap_pcap(config.e2_cfg.pcaps.filename, workers.get_du_pcap_executors().get_e2ap_executor())
+                               : create_null_dlt_pcap();
   pcaps.e2ap_sig_handler = std::make_unique<signal_observer>(signal_source, [&pcaps]() { pcaps.e2ap->flush(); });
   if (pcap_cfg.mac.type != "dlt" && pcap_cfg.mac.type != "udp") {
     report_error("Invalid type for MAC PCAP. type={}\n", pcap_cfg.mac.type);
@@ -100,7 +100,7 @@ create_o_du_pcaps(const o_du_high_unit_config& config, worker_manager& workers, 
   pcaps.mac             = pcap_cfg.mac.enabled
                               ? create_mac_pcap(pcap_cfg.mac.filename,
                                     pcap_cfg.mac.type == "dlt" ? mac_pcap_type::dlt : mac_pcap_type::udp,
-                                    workers.get_pcap_executor_mapper().get_mac_executor())
+                                    workers.get_du_pcap_executors().get_mac_executor())
                               : create_null_mac_pcap();
   pcaps.mac_sig_handler = std::make_unique<signal_observer>(signal_source, [&pcaps]() { pcaps.mac->flush(); });
 
@@ -109,7 +109,7 @@ create_o_du_pcaps(const o_du_high_unit_config& config, worker_manager& workers, 
   }
 
   pcaps.rlc             = pcap_cfg.rlc.enabled ? create_rlc_pcap(pcap_cfg.rlc.filename,
-                                                     workers.get_pcap_executor_mapper().get_rlc_executor(),
+                                                     workers.get_du_pcap_executors().get_rlc_executor(),
                                                      pcap_cfg.rlc.rb_type != "drb",
                                                      pcap_cfg.rlc.rb_type != "srb")
                                                : create_null_rlc_pcap();

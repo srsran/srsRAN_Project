@@ -43,7 +43,7 @@ private:
 
 namespace {
 
-class pcap_executor_mapper_impl final : public pcap_executor_mapper
+class pcap_executor_mapper_impl final : public gnb_pcap_executor_mapper
 {
 public:
   pcap_executor_mapper_impl(const worker_manager_config::pcap_config& config, task_executor& pool_task_exec)

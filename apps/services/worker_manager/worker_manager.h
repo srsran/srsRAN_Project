@@ -21,6 +21,15 @@
 
 namespace srsran {
 
+/// Mapper of PCAP executors for the APP.
+class gnb_pcap_executor_mapper : public du_pcap_executor_mapper,
+                                 public cu_cp_pcap_executor_mapper,
+                                 public cu_up_pcap_executor_mapper
+{
+public:
+  virtual ~gnb_pcap_executor_mapper() = default;
+};
+
 /// Manages the workers of the app.
 struct worker_manager {
   worker_manager(const worker_manager_config& config);
@@ -79,7 +88,9 @@ struct worker_manager {
     return *du_low_exec_mapper;
   }
 
-  pcap_executor_mapper& get_pcap_executor_mapper() { return *pcap_exec_mapper; }
+  du_pcap_executor_mapper&    get_du_pcap_executors() { return *pcap_exec_mapper; }
+  cu_cp_pcap_executor_mapper& get_cu_cp_pcap_executors() { return *pcap_exec_mapper; }
+  cu_up_pcap_executor_mapper& get_cu_up_pcap_executors() { return *pcap_exec_mapper; }
 
   // Gets the DU-low downlink executors.
   task_executor& get_du_low_dl_executor(unsigned sector_id) const;
@@ -105,7 +116,7 @@ private:
   std::unique_ptr<srs_cu_cp::cu_cp_executor_mapper> cu_cp_exec_mapper;
   std::unique_ptr<srs_cu_up::cu_up_executor_mapper> cu_up_exec_mapper;
 
-  std::unique_ptr<pcap_executor_mapper> pcap_exec_mapper;
+  std::unique_ptr<gnb_pcap_executor_mapper> pcap_exec_mapper;
 
   /// Manager of execution contexts and respective executors instantiated by the application.
   task_execution_manager exec_mng;

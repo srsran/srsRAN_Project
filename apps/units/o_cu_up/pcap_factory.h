@@ -61,9 +61,9 @@ struct o_cu_up_dlt_pcaps {
 };
 
 /// Creates the DLT PCAPs of the O-RAN CU-UP.
-inline o_cu_up_dlt_pcaps create_o_cu_up_dlt_pcaps(const o_cu_up_unit_config& unit_cfg,
-                                                  pcap_executor_mapper&      exec_mapper,
-                                                  signal_dispatcher&         signal_source)
+inline o_cu_up_dlt_pcaps create_o_cu_up_dlt_pcaps(const o_cu_up_unit_config&  unit_cfg,
+                                                  cu_up_pcap_executor_mapper& exec_mapper,
+                                                  signal_dispatcher&          signal_source)
 {
   o_cu_up_dlt_pcaps pcaps;
 
