@@ -648,6 +648,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_prach_cell_count(const asn1::e2sm::labe
   meas_record_item_c meas_record_item;
   meas_record_item.set_integer() = nof_ded_cell_preambles;
   items.push_back(meas_record_item);
+  meas_collected = true;
 
   return meas_collected;
 }
