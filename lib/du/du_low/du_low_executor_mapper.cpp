@@ -113,7 +113,7 @@ public:
         if (manual.max_concurrent_pusch_decoders > 0) {
           const unsigned pusch_dec_queue_size = 2048;
           auto           fork_limiter         = make_task_fork_limiter_ptr<concurrent_queue_policy::lockfree_mpmc>(
-              pusch_dec_exec, manual.max_concurrent_pusch_decoders, pusch_dec_queue_size);
+              *pusch_dec_exec, manual.max_concurrent_pusch_decoders, pusch_dec_queue_size);
           executors.emplace_back(std::move(fork_limiter));
           pusch_dec_exec = executors.back().get();
         }

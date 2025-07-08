@@ -20,7 +20,7 @@ template <typename ExecType, concurrent_queue_policy QueuePolicy>
 class task_fork_limiter final : public task_executor
 {
 public:
-  template <typename E>
+  template <typename E = ExecType>
   task_fork_limiter(E&&      exec,
                     unsigned max_forks_,
                     unsigned qsize_,

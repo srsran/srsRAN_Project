@@ -123,8 +123,11 @@ static void generate_du_low_config(srs_du::du_low_config&                       
     upper_phy_cell.max_prach_thread_concurrency       = 1;
     upper_phy_cell.max_ul_thread_concurrency          = du_low.expert_execution_cfg.threads.nof_ul_threads + 1;
     upper_phy_cell.max_pusch_concurrency              = max_pusch_concurrency;
-    upper_phy_cell.nof_pusch_decoder_threads          = du_low.expert_execution_cfg.threads.nof_pusch_decoder_threads +
-                                               du_low.expert_execution_cfg.threads.nof_ul_threads;
+    // FIXME
+    const unsigned extra_threads_temp = 6;
+    upper_phy_cell.nof_pusch_decoder_threads =
+        du_low.expert_execution_cfg.threads.nof_pusch_decoder_threads * cells.size() +
+        du_low.expert_execution_cfg.threads.nof_ul_threads + extra_threads_temp;
     upper_phy_cell.nof_prach_buffer           = prach_pipeline_depth * nof_slots_per_subframe;
     upper_phy_cell.max_nof_td_prach_occasions = prach_cfg.nof_occasions_within_slot;
     upper_phy_cell.max_nof_fd_prach_occasions = 1;
