@@ -14,6 +14,7 @@
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/concurrent_metrics_executor.h"
 #include "srsran/support/executors/inline_task_executor.h"
+#include "srsran/support/executors/strand_executor.h"
 
 using namespace srsran;
 
@@ -39,6 +40,53 @@ public:
 private:
   timer_manager& timers;
 };
+
+namespace {
+
+class pcap_executor_mapper_impl final : public pcap_executor_mapper
+{
+public:
+  pcap_executor_mapper_impl(const worker_manager_config::pcap_config& config, task_executor& pool_task_exec)
+  {
+    // These layers have very low throughput, so no point in instantiating more than one strand.
+    // This means that there is no parallelization in pcap writing across these layers.
+    if (config.is_f1ap_enabled or config.is_ngap_enabled or config.is_e1ap_enabled or config.is_e2ap_enabled) {
+      common_exec =
+          make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(pool_task_exec, task_worker_queue_size);
+    }
+
+    if (config.is_n3_enabled) {
+      n3_exec = make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(pool_task_exec, task_worker_queue_size);
+    }
+    if (config.is_f1u_enabled) {
+      f1u_exec = make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(pool_task_exec, task_worker_queue_size);
+    }
+    if (config.is_mac_enabled) {
+      mac_exec = make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(pool_task_exec, task_worker_queue_size);
+    }
+    if (config.is_rlc_enabled) {
+      rlc_exec = make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(pool_task_exec, task_worker_queue_size);
+    }
+  }
+
+  task_executor& get_f1ap_executor() override { return *common_exec; }
+  task_executor& get_ngap_executor() override { return *common_exec; }
+  task_executor& get_e1ap_executor() override { return *common_exec; }
+  task_executor& get_e2ap_executor() override { return *common_exec; }
+  task_executor& get_n3_executor() override { return *n3_exec; }
+  task_executor& get_f1u_executor() override { return *f1u_exec; }
+  task_executor& get_mac_executor() override { return *mac_exec; }
+  task_executor& get_rlc_executor() override { return *rlc_exec; }
+
+private:
+  std::unique_ptr<task_executor> common_exec;
+  std::unique_ptr<task_executor> n3_exec;
+  std::unique_ptr<task_executor> f1u_exec;
+  std::unique_ptr<task_executor> mac_exec;
+  std::unique_ptr<task_executor> rlc_exec;
+};
+
+} // namespace
 
 worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
   low_prio_affinity_mng({worker_cfg.low_prio_sched_config})
@@ -66,7 +114,9 @@ worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
     affinity_mng.emplace_back(cell_affinities);
   }
 
-  create_low_prio_executors(worker_cfg);
+  create_low_prio_worker_pool(worker_cfg);
+
+  add_low_prio_strands(worker_cfg);
 
   if (worker_cfg.is_split6_enabled) {
     create_split6_executors();
@@ -141,39 +191,11 @@ void worker_manager::create_prio_worker(const std::string&                      
   }
 }
 
-void append_pcap_strands(std::vector<execution_config_helper::strand>& strand_list,
-                         const worker_manager_config::pcap_config&     config)
+void worker_manager::add_pcap_strands(const worker_manager_config::pcap_config& config)
 {
   using namespace execution_config_helper;
 
-  // Default configuration for each pcap writer strand.
-  strand base_strand_cfg{{{"pcap_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}};
-
-  // These layers have very low throughput, so no point in instantiating more than one strand.
-  // This means that there is no parallelization in pcap writing across these layers.
-  if (config.is_f1ap_enabled or config.is_ngap_enabled or config.is_e1ap_enabled or config.is_e2ap_enabled) {
-    strand_list.emplace_back(base_strand_cfg);
-  }
-
-  if (config.is_n3_enabled) {
-    base_strand_cfg.queues[0].name = "n3_pcap_exec";
-    strand_list.emplace_back(base_strand_cfg);
-  }
-
-  if (config.is_f1u_enabled) {
-    base_strand_cfg.queues[0].name = "f1u_pcap_exec";
-    strand_list.emplace_back(base_strand_cfg);
-  }
-
-  if (config.is_mac_enabled) {
-    base_strand_cfg.queues[0].name = "mac_pcap_exec";
-    strand_list.emplace_back(base_strand_cfg);
-  }
-
-  if (config.is_rlc_enabled) {
-    base_strand_cfg.queues[0].name = "rlc_pcap_exec";
-    strand_list.emplace_back(base_strand_cfg);
-  }
+  pcap_exec_mapper = std::make_unique<pcap_executor_mapper_impl>(config, *exec_mng.executors().at("medium_prio_exec"));
 }
 
 std::vector<execution_config_helper::single_worker> worker_manager::create_fapi_workers(unsigned nof_cells)
@@ -320,61 +342,50 @@ void worker_manager::create_du_executors(const worker_manager_config::du_high_co
   du_high_exec_mapper = create_du_high_executor_mapper(cfg);
 }
 
-execution_config_helper::worker_pool worker_manager::create_low_prio_workers(unsigned nof_low_prio_threads,
-                                                                             unsigned low_prio_task_queue_size,
-                                                                             os_sched_affinity_bitmask low_prio_mask)
+void worker_manager::create_low_prio_worker_pool(const worker_manager_config& worker_cfg)
 {
   using namespace execution_config_helper;
 
   // Configure non-RT worker pool.
-  worker_pool non_rt_pool{
-      "non_rt_pool",
-      nof_low_prio_threads,
-      {{concurrent_queue_policy::lockfree_mpmc, low_prio_task_queue_size}, // three task priority levels.
-       {concurrent_queue_policy::lockfree_mpmc, low_prio_task_queue_size},
-       {concurrent_queue_policy::lockfree_mpmc, low_prio_task_queue_size}},
-      // Left empty, is filled later.
-      {},
-      std::chrono::microseconds{100},
-      os_thread_realtime_priority::min(),
-      std::vector<os_sched_affinity_bitmask>{low_prio_mask}};
+  const unsigned                  nof_workers = worker_cfg.nof_low_prio_threads;
+  const std::chrono::microseconds sleep_time{100};
+  const auto                      worker_pool_prio = os_thread_realtime_priority::min();
+  const task_queue                qparams{concurrent_queue_policy::lockfree_mpmc, worker_cfg.low_prio_task_queue_size};
 
-  return non_rt_pool;
-}
-
-void worker_manager::create_low_prio_executors(const worker_manager_config& worker_cfg)
-{
-  using namespace execution_config_helper;
-  // TODO: split executor creation and association to workers
-  worker_pool non_rt_pool = create_low_prio_workers(
-      worker_cfg.nof_low_prio_threads, worker_cfg.low_prio_task_queue_size, worker_cfg.low_prio_sched_config.mask);
-
-  // Associate executors to the worker pool.
-  // Used for receiving data from external nodes.
-  non_rt_pool.executors.emplace_back("low_prio_exec", task_priority::max - 2);
-  // Used for PCAP writing and CU-UP.
-  non_rt_pool.executors.emplace_back("medium_prio_exec", task_priority::max - 1);
-  // Used for control plane and timer management.
-  non_rt_pool.executors.emplace_back("high_prio_exec", task_priority::max);
-
-  std::vector<strand>& medium_prio_strands = non_rt_pool.executors[1].strands;
-
-  // Configuration of strands for PCAP writing. These strands will use the low priority executor.
-  append_pcap_strands(medium_prio_strands, worker_cfg.pcap_cfg);
-
-  // Metrics strand configuration.
-  strand metrics_strand_cfg{{{"metrics_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}};
-  medium_prio_strands.push_back(metrics_strand_cfg);
+  worker_pool non_rt_pool{"non_rt_pool",
+                          nof_workers,
+                          {qparams, qparams, qparams},
+                          // Used for control plane and timer management.
+                          {{"high_prio_exec", task_priority::max},
+                           // Used for PCAP writing and CU-UP.
+                           {"medium_prio_exec", task_priority::max - 1},
+                           // Used for receiving data from external nodes.
+                           {"low_prio_exec", task_priority::max - 2}},
+                          sleep_time,
+                          worker_pool_prio,
+                          {worker_cfg.low_prio_sched_config.mask}};
 
   // Create non-RT worker pool.
   if (not exec_mng.add_execution_context(create_execution_context(non_rt_pool))) {
     report_fatal_error("Failed to instantiate {} execution context", non_rt_pool.name);
   }
+}
 
+void worker_manager::add_low_prio_strands(const worker_manager_config& worker_cfg)
+{
+  using namespace execution_config_helper;
   non_rt_low_prio_exec    = exec_mng.executors().at("low_prio_exec");
   non_rt_medium_prio_exec = exec_mng.executors().at("medium_prio_exec");
   non_rt_hi_prio_exec     = exec_mng.executors().at("high_prio_exec");
-  metrics_exec            = exec_mng.executors().at("metrics_exec");
+
+  // Configuration of strands for PCAP writing. These strands will use the low priority executor.
+  add_pcap_strands(worker_cfg.pcap_cfg);
+
+  // Metrics strand configuration and instantiation.
+  auto metric_strand =
+      make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(non_rt_medium_prio_exec, task_worker_queue_size);
+  metrics_exec = metric_strand.get();
+  executor_decorators_exec.push_back(std::move(metric_strand));
 }
 
 worker_manager::du_crit_path_executor_desc

@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "pcap_executor_mapper.h"
 #include "worker_manager_config.h"
-#include "worker_manager_worker_getter.h"
 #include "srsran/cu_cp/cu_cp_executor_mapper.h"
 #include "srsran/cu_up/cu_up_executor_mapper.h"
 #include "srsran/du/du_high/du_high_executor_mapper.h"
@@ -22,7 +22,7 @@
 namespace srsran {
 
 /// Manages the workers of the app.
-struct worker_manager : public worker_manager_executor_getter {
+struct worker_manager {
   worker_manager(const worker_manager_config& config);
 
   void stop();
@@ -79,6 +79,8 @@ struct worker_manager : public worker_manager_executor_getter {
     return *du_low_exec_mapper;
   }
 
+  pcap_executor_mapper& get_pcap_executor_mapper() { return *pcap_exec_mapper; }
+
   // Gets the DU-low downlink executors.
   task_executor& get_du_low_dl_executor(unsigned sector_id) const;
 
@@ -88,10 +90,6 @@ struct worker_manager : public worker_manager_executor_getter {
     auto it = exec_mng.executors().find(name);
     return it != exec_mng.executors().end() ? it->second : nullptr;
   }
-
-  task_executor& get_executor(const std::string& name) const override { return *exec_mng.executors().at(name); }
-
-  worker_manager_executor_getter* get_executor_getter() { return this; }
 
 private:
   struct du_crit_path_executor_desc {
@@ -106,6 +104,8 @@ private:
 
   std::unique_ptr<srs_cu_cp::cu_cp_executor_mapper> cu_cp_exec_mapper;
   std::unique_ptr<srs_cu_up::cu_up_executor_mapper> cu_up_exec_mapper;
+
+  std::unique_ptr<pcap_executor_mapper> pcap_exec_mapper;
 
   /// Manager of execution contexts and respective executors instantiated by the application.
   task_execution_manager exec_mng;
@@ -137,10 +137,10 @@ private:
                           span<const os_sched_affinity_bitmask> cpu_masks = {},
                           concurrent_queue_policy               queue_policy = concurrent_queue_policy::locking_mpmc);
 
-  execution_config_helper::worker_pool create_low_prio_workers(unsigned                  nof_low_prio_threads,
-                                                               unsigned int              low_prio_task_queue_size,
-                                                               os_sched_affinity_bitmask low_prio_mask);
-  void                                 create_low_prio_executors(const worker_manager_config& config);
+  void create_low_prio_worker_pool(const worker_manager_config& config);
+  void add_low_prio_strands(const worker_manager_config& config);
+
+  void add_pcap_strands(const worker_manager_config::pcap_config& config);
 
   std::vector<execution_config_helper::single_worker> create_fapi_workers(unsigned nof_cells);
 
