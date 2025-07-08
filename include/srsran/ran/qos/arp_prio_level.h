@@ -15,8 +15,8 @@
 
 namespace srsran {
 
-/// \brief QoS Priority Level. See TS 38.473 QoS Priority Level. Values: (0..127).
-struct qos_prio_level_t : public bounded_integer<uint8_t, 0, 127> {
+/// \brief Allocation and Retention Priority Level. See TS 38.473 Allocation and Retention Priority. Values: (0..15).
+struct arp_prio_level_t : public bounded_integer<uint8_t, 0, 15> {
   using bounded_integer::bounded_integer;
 };
 
@@ -25,7 +25,7 @@ struct qos_prio_level_t : public bounded_integer<uint8_t, 0, 127> {
 // Formatters
 namespace fmt {
 template <>
-struct formatter<srsran::qos_prio_level_t> {
+struct formatter<srsran::arp_prio_level_t> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx)
   {
@@ -33,9 +33,9 @@ struct formatter<srsran::qos_prio_level_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::qos_prio_level_t& qos_prio_level, FormatContext& ctx) const
+  auto format(const srsran::arp_prio_level_t& arp_prio_level, FormatContext& ctx) const
   {
-    return format_to(ctx.out(), "QoS Priority Level={:#x}", qos_prio_level.value());
+    return format_to(ctx.out(), "ARP Priority Level={:#x}", arp_prio_level.value());
   }
 };
 

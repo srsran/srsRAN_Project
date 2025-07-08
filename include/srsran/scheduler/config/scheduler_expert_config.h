@@ -43,7 +43,7 @@ struct time_qos_scheduler_expert_config {
   weight_function qos_weight_func = weight_function::gbr_prioritized;
   /// Fairness Coefficient to use in Proportional Fair weight of the QoS-aware policy.
   double pf_fairness_coeff = 2.0;
-  /// Whether to take into account or ignore the QoS Flow priority in the QoS-aware scheduling.
+  /// Whether to take into account or ignore the QoS Flow priority and ARP priority in the QoS-aware scheduling.
   bool priority_enabled = true;
   /// Whether to take into account or ignore the QoS Flow Packet Delay Budget (PDB) in the QoS-aware scheduling.
   bool pdb_enabled = true;

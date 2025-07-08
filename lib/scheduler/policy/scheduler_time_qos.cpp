@@ -11,6 +11,7 @@
 #include "../slicing/slice_ue_repository.h"
 #include "../support/csi_report_helpers.h"
 #include "../ue_scheduling/grant_params_selector.h"
+#include <algorithm>
 
 using namespace srsran;
 
@@ -124,7 +125,7 @@ double combine_qos_metrics(double                                  pf_weight,
     pf_weight = std::max(1.0, pf_weight);
   }
 
-  // The return is a combination of QoS priority, GBR and PF weight functions.
+  // The return is a combination of QoS priority, ARP priority, GBR and PF weight functions.
   return gbr_weight * pf_weight * prio_weight * delay_weight;
 }
 
@@ -140,9 +141,10 @@ double compute_dl_qos_weights(const slice_ue&                         u,
     return std::numeric_limits<double>::max();
   }
 
-  uint8_t min_prio_level = qos_prio_level_t::max();
-  double  gbr_weight     = 0;
-  double  delay_weight   = 0;
+  static constexpr uint16_t max_combined_prio_level = qos_prio_level_t::max() * arp_prio_level_t::max();
+  uint16_t                  min_combined_prio       = max_combined_prio_level;
+  double                    gbr_weight              = 0;
+  double                    delay_weight            = 0;
   if (policy_params.gbr_enabled or policy_params.priority_enabled or policy_params.pdb_enabled) {
     for (logical_channel_config_ptr lc : *u.logical_channels()) {
       if (not u.contains(lc->lcid) or not lc->qos.has_value() or u.pending_dl_newtx_bytes(lc->lcid) == 0) {
@@ -150,8 +152,11 @@ double compute_dl_qos_weights(const slice_ue&                         u,
         continue;
       }
 
-      // Track the LC with the lowest priority.
-      min_prio_level = std::min(lc->qos->qos.priority.value(), min_prio_level);
+      // Track the LC with the lowest combined priority (combining QoS and ARP priority levels).
+      if (policy_params.priority_enabled) {
+        min_combined_prio = std::min(
+            static_cast<uint16_t>(lc->qos->qos.priority.value() * lc->qos->arp_priority.value()), min_combined_prio);
+      }
 
       slot_point hol_toa = u.dl_hol_toa(lc->lcid);
       if (hol_toa.valid() and slot_tx >= hol_toa) {
@@ -179,12 +184,13 @@ double compute_dl_qos_weights(const slice_ue&                         u,
   gbr_weight   = policy_params.gbr_enabled and gbr_weight != 0 ? gbr_weight : 1.0;
   delay_weight = policy_params.pdb_enabled and delay_weight != 0 ? delay_weight : 1.0;
 
-  double pf_weight   = compute_pf_metric(estim_dl_rate, avg_dl_rate, policy_params.pf_fairness_coeff);
-  double prio_weight = policy_params.priority_enabled ? (qos_prio_level_t::max() + 1 - min_prio_level) /
-                                                            static_cast<double>(qos_prio_level_t::max() + 1)
+  double pf_weight = compute_pf_metric(estim_dl_rate, avg_dl_rate, policy_params.pf_fairness_coeff);
+  // If priority is disabled, set the priority weight of all UEs to 1.0.
+  double prio_weight = policy_params.priority_enabled ? (max_combined_prio_level + 1 - min_combined_prio) /
+                                                            static_cast<double>(max_combined_prio_level + 1)
                                                       : 1.0;
 
-  // The return is a combination of QoS priority, GBR and PF weight functions.
+  // The return is a combination of ARP and QoS priorities, GBR and PF weight functions.
   return combine_qos_metrics(pf_weight, gbr_weight, prio_weight, delay_weight, policy_params);
 }
 
@@ -199,8 +205,9 @@ double compute_ul_qos_weights(const slice_ue&                         u,
     return max_sched_priority;
   }
 
-  uint8_t min_prio_level = qos_prio_level_t::max();
-  double  gbr_weight     = 0;
+  static constexpr uint16_t max_combined_prio_level = qos_prio_level_t::max() * arp_prio_level_t::max();
+  uint16_t                  min_combined_prio       = max_combined_prio_level;
+  double                    gbr_weight              = 0;
   if (policy_params.gbr_enabled or policy_params.priority_enabled) {
     for (logical_channel_config_ptr lc : *u.logical_channels()) {
       if (not u.contains(lc->lcid) or not lc->qos.has_value() or u.pending_ul_unacked_bytes(lc->lc_group) == 0) {
@@ -209,8 +216,11 @@ double compute_ul_qos_weights(const slice_ue&                         u,
         continue;
       }
 
-      // Track the LC with the lowest priority.
-      min_prio_level = std::min(lc->qos->qos.priority.value(), min_prio_level);
+      // Track the LC with the lowest combined priority (combining QoS and ARP priority levels).
+      if (policy_params.priority_enabled) {
+        min_combined_prio = std::min(
+            static_cast<uint16_t>(lc->qos->qos.priority.value() * lc->qos->arp_priority.value()), min_combined_prio);
+      }
 
       if (not lc->qos->gbr_qos_info.has_value()) {
         // LC is a non-GBR flow.
@@ -230,11 +240,11 @@ double compute_ul_qos_weights(const slice_ue&                         u,
 
   // If no GBR flows are configured, the gbr rate is set to 1.0.
   gbr_weight = policy_params.gbr_enabled and gbr_weight != 0 ? gbr_weight : 1.0;
-
-  double pf_weight   = compute_pf_metric(estim_ul_rate, avg_ul_rate, policy_params.pf_fairness_coeff);
-  double prio_weight = policy_params.priority_enabled ? (qos_prio_level_t::max() + 1 - min_prio_level) /
-                                                            static_cast<double>(qos_prio_level_t::max() + 1)
+  // If priority is disabled, set the priority weight of all UEs to 1.0.
+  double prio_weight = policy_params.priority_enabled ? (max_combined_prio_level + 1 - min_combined_prio) /
+                                                            static_cast<double>(max_combined_prio_level + 1)
                                                       : 1.0;
+  double pf_weight   = compute_pf_metric(estim_ul_rate, avg_ul_rate, policy_params.pf_fairness_coeff);
 
   return combine_qos_metrics(pf_weight, gbr_weight, prio_weight, 1.0, policy_params);
 }
