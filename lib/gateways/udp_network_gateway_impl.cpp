@@ -89,12 +89,15 @@ void udp_network_gateway_impl::handle_pdu_impl(const byte_buffer& pdu, const soc
                  strerror(errno));
   }
 
-  std::string local_addr_str;
-  std::string dest_addr_str;
-  uint16_t    dest_port = sockaddr_to_port((sockaddr*)&dest_addr, logger);
-  sockaddr_to_ip_str((sockaddr*)&dest_addr, dest_addr_str, logger);
-  sockaddr_to_ip_str((sockaddr*)&local_addr, local_addr_str, logger);
-  logger.debug("Sent PDU of {} bytes. local_ip={} dest={}:{}", pdu.length(), local_addr_str, dest_addr_str, dest_port);
+  if (logger.debug.enabled()) {
+    std::string local_addr_str;
+    std::string dest_addr_str;
+    uint16_t    dest_port = sockaddr_to_port((sockaddr*)&dest_addr, logger);
+    sockaddr_to_ip_str((sockaddr*)&dest_addr, dest_addr_str, logger);
+    sockaddr_to_ip_str((sockaddr*)&local_addr, local_addr_str, logger);
+    logger.debug(
+        "Sent PDU of {} bytes. local_ip={} dest={}:{}", pdu.length(), local_addr_str, dest_addr_str, dest_port);
+  }
 }
 
 void udp_network_gateway_impl::handle_io_error(io_broker::error_code code)
