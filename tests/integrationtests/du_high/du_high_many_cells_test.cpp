@@ -300,7 +300,8 @@ protected:
   constexpr static unsigned nof_cells = 4;
 
   du_high_many_cells_deferred_activation_test() :
-    du_high_env_simulator(du_high_env_sim_params{nof_cells, std::nullopt, std::nullopt, std::nullopt, false})
+    du_high_env_simulator(
+        du_high_env_sim_params{nof_cells, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false})
   {
   }
 };

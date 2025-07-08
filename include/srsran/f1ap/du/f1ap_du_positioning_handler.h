@@ -71,7 +71,9 @@ struct pos_meas_result_item {
 };
 
 struct pos_meas_result {
-  trp_id_t                          trp_id;
+  trp_id_t trp_id;
+  /// Slot point at which the measurement (SRS) was received at PHY layer.
+  slot_point                        sl_rx;
   std::vector<pos_meas_result_item> results;
 };
 

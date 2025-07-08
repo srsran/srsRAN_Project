@@ -258,6 +258,10 @@ struct mac_srs_pdu {
     rnti(rnti_), time_advance_offset(ta), report(normalized_channel_iq_matrix{matrix})
   {
   }
+  mac_srs_pdu(rnti_t rnti_, std::optional<phy_time_unit> ta, std::optional<phy_time_unit> rtoa) :
+    rnti(rnti_), time_advance_offset(ta), report(positioning_report{rtoa})
+  {
+  }
 
   /// RNTI value corresponding to the UE that generated this PDU.
   rnti_t rnti;

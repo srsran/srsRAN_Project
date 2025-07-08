@@ -181,6 +181,9 @@ du_high_configuration srs_du::create_du_high_configuration(const du_high_env_sim
       cfg.ran.cells.back().pucch_cfg = params.pucch_cfg.value();
     }
     cfg.ran.mac_cfg.configs.push_back({10000, 10000, 10000});
+    if (params.srs_period.has_value()) {
+      cfg.ran.cells.back().srs_cfg.srs_period = params.srs_period;
+    }
   }
 
   cfg.ran.qos       = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 0);
@@ -629,6 +632,11 @@ void du_high_env_simulator::handle_slot_results(du_cell_index_t cell_index)
       if (uci_ind.has_value()) {
         this->du_hi->get_control_info_handler(cell_index).handle_uci(uci_ind.value());
       }
+    }
+
+    if (not ul_res.srss.empty()) {
+      mac_srs_indication_message srs_ind = test_helpers::create_srs_indication(sl_rx, ul_res.srss);
+      this->du_hi->get_control_info_handler(cell_index).handle_srs(srs_ind);
     }
   }
 }

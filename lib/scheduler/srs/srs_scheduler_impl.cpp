@@ -251,6 +251,7 @@ void srs_scheduler_impl::handle_positioning_measurement_request(const positionin
                    srs_res.periodicity_and_offset.value().offset,
                    srs_res.id.ue_res_id);
       res_added = true;
+      logger.debug("rnti={}: neighbor cell UE's SRS for positioning added to SRS scheduler", req.pos_rnti);
     }
     srsran_assert(res_added, "Invalid positioning measurement request for rnti={}", req.pos_rnti);
 

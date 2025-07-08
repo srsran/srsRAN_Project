@@ -40,6 +40,8 @@ struct mac_cell_positioning_measurement_request {
 
 /// MAC cell positioning measurement response.
 struct mac_cell_positioning_measurement_response {
+  /// Slot at which the measurement (SRS) was received at PHY layer.
+  slot_point                 sl_rx;
   std::vector<phy_time_unit> ul_rtoas;
 };
 

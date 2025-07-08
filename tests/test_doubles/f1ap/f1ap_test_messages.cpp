@@ -792,7 +792,9 @@ f1ap_message srsran::test_helpers::generate_positioning_measurement_request(
     trp_id_t                                             trp_id,
     lmf_meas_id_t                                        lmf_meas_id,
     ran_meas_id_t                                        ran_meas_id,
-    std::vector<asn1::f1ap::pos_meas_type_opts::options> pos_meas_type_list)
+    std::vector<asn1::f1ap::pos_meas_type_opts::options> pos_meas_type_list,
+    subcarrier_spacing                                   scs,
+    unsigned                                             srs_offset)
 {
   return {};
 }

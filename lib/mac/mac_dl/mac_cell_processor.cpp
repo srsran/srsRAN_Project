@@ -152,7 +152,8 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
 
     if (request.positioning.has_value()) {
       // Positioning measurement request has been received.
-      CORO_AWAIT(sched.handle_positioning_measurement_request(cell_cfg.cell_index, request.positioning.value()));
+      CORO_AWAIT_VALUE(resp.positioning,
+                       sched.handle_positioning_measurement_request(cell_cfg.cell_index, request.positioning.value()));
     }
 
     if (request.new_si_pdu_info.has_value()) {
