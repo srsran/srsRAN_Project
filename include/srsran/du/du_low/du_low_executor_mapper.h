@@ -116,6 +116,8 @@ struct du_low_executor_mapper_manual_exec_config {
   task_executor* srs_executor = nullptr;
   /// Executor for PUSCH decoding.
   task_executor* pusch_decoder_executor = nullptr;
+  /// Maximum number of concurrent PUSCH decoders.
+  unsigned max_concurrent_pusch_decoders = 16;
 };
 
 /// Variant of the DU low executor mapping configuration.

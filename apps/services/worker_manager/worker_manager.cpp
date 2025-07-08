@@ -351,8 +351,13 @@ void worker_manager::create_low_prio_worker_pool(const worker_manager_config& wo
   using namespace execution_config_helper;
 
   // Configure non-RT worker pool.
-  const unsigned                  nof_workers = worker_cfg.nof_low_prio_threads;
-  const std::chrono::microseconds sleep_time{100};
+  const unsigned nof_workers =
+      // TODO: Fix config.
+      worker_cfg.nof_low_prio_threads +
+      (worker_cfg.du_low_cfg.has_value()
+           ? worker_cfg.du_low_cfg->nof_pusch_decoder_threads * worker_cfg.du_low_cfg->nof_cells
+           : 0);
+  const std::chrono::microseconds sleep_time{50};
   const auto                      worker_pool_prio = os_thread_realtime_priority::min();
   const task_queue                qparams{concurrent_queue_policy::lockfree_mpmc, worker_cfg.low_prio_task_queue_size};
 
@@ -516,45 +521,23 @@ worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::
       }
 
       // Instantiate dedicated PUSCH decoder workers for each cell.
-      unsigned    nof_pusch_decoder_workers = du_low.nof_pusch_decoder_threads;
-      std::string pusch_decoder_exec_name   = l1_pusch_exec_name;
+      // In case of pusch_decoder_threads > 0, the PUSCH decoder will take place in the non-rt thread pool.
+      const unsigned nof_pusch_decoder_workers = du_low.nof_pusch_decoder_threads;
+      std::string    pusch_decoder_exec_name   = l1_pusch_exec_name;
       if (nof_pusch_decoder_workers > 0) {
-        pusch_decoder_exec_name                            = "du_low_pusch_dec_exec#" + cell_id_str;
-        const std::string               name_pusch_decoder = "pusch#" + cell_id_str;
-        const auto                      pusch_decoder_prio = os_thread_realtime_priority::max() - 30;
-        const std::chrono::microseconds pusch_decoder_sleep_time{20};
-
-        // As the PUSCH decoding is not time-critical, assign CPUs dedicated for low priority.
-        std::vector<os_sched_affinity_bitmask> pusch_decoder_cpu_masks;
-        for (unsigned w = 0; w != nof_pusch_decoder_workers; ++w) {
-          pusch_decoder_cpu_masks.push_back(
-              low_prio_affinity_mng.calcute_affinity_mask(sched_affinity_mask_types::low_priority));
-        }
-
-        // Instantiate dedicated worker pool for the dedicated upper physical layer PUSCH decoding. This worker pool
-        // comprises a single priority queue.
-        const worker_pool pusch_decoder_worker_pool{name_pusch_decoder,
-                                                    nof_pusch_decoder_workers,
-                                                    {{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
-                                                    {{pusch_decoder_exec_name}},
-                                                    pusch_decoder_sleep_time,
-                                                    pusch_decoder_prio,
-                                                    pusch_decoder_cpu_masks};
-
-        if (not exec_mng.add_execution_context(create_execution_context(pusch_decoder_worker_pool))) {
-          report_fatal_error("Failed to instantiate {} execution context", pusch_decoder_worker_pool.name);
-        }
+        pusch_decoder_exec_name = "medium_prio_exec";
       }
 
       // Fill the task executors for each cell.
       du_low_exec_mapper_config.cells.emplace_back(srs_du::du_low_executor_mapper_manual_exec_config{
-          .high_priority_executor = exec_mng.executors().at(l1_high_prio_name),
-          .dl_executor            = exec_mng.executors().at(l1_dl_exec_name),
-          .pdsch_executor         = exec_mng.executors().at(l1_pdsch_exec_name),
-          .pusch_executor         = exec_mng.executors().at(l1_pusch_exec_name),
-          .pucch_executor         = exec_mng.executors().at(l1_pucch_exec_name),
-          .srs_executor           = exec_mng.executors().at(l1_srs_exec_name),
-          .pusch_decoder_executor = exec_mng.executors().at(pusch_decoder_exec_name)});
+          .high_priority_executor        = exec_mng.executors().at(l1_high_prio_name),
+          .dl_executor                   = exec_mng.executors().at(l1_dl_exec_name),
+          .pdsch_executor                = exec_mng.executors().at(l1_pdsch_exec_name),
+          .pusch_executor                = exec_mng.executors().at(l1_pusch_exec_name),
+          .pucch_executor                = exec_mng.executors().at(l1_pucch_exec_name),
+          .srs_executor                  = exec_mng.executors().at(l1_srs_exec_name),
+          .pusch_decoder_executor        = exec_mng.executors().at(pusch_decoder_exec_name),
+          .max_concurrent_pusch_decoders = nof_pusch_decoder_workers});
 
       // Save DL executors for the higher layers.
       crit_path_prio_executors.push_back(exec_mng.executors().at(l1_dl_exec_name));

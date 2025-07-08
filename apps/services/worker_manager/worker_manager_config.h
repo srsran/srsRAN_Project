@@ -116,7 +116,7 @@ struct worker_manager_config {
   };
 
   /// Number of low priority threads.
-  unsigned nof_low_prio_threads;
+  unsigned nof_low_prio_threads = 4;
   /// Low priority task worker queue size.
   unsigned low_prio_task_queue_size;
   /// Low priority CPU bitmasks.

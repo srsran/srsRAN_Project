@@ -12,6 +12,7 @@
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/support/executors/concurrent_metrics_executor.h"
 #include "srsran/support/executors/strand_executor.h"
+#include "srsran/support/executors/task_fork_limiter.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
@@ -108,6 +109,14 @@ public:
         pusch_dec_exec     = manual.pusch_decoder_executor;
         pucch_exec         = manual.pucch_executor;
         srs_exec           = manual.srs_executor;
+
+        if (manual.max_concurrent_pusch_decoders > 0) {
+          const unsigned pusch_dec_queue_size = 2048;
+          auto           fork_limiter         = make_task_fork_limiter_ptr<concurrent_queue_policy::lockfree_mpmc>(
+              pusch_dec_exec, manual.max_concurrent_pusch_decoders, pusch_dec_queue_size);
+          executors.emplace_back(std::move(fork_limiter));
+          pusch_dec_exec = executors.back().get();
+        }
       }
 
       srsran_assert(dl_exec != nullptr, "Invalid DL executor.");

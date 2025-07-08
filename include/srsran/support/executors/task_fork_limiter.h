@@ -166,30 +166,12 @@ private:
 /// \brief Create an adaptor of the task_executor that limits the number of concurrent tasks to \c max_fork_size.
 /// \param[in] out_exec Executor to which tasks are ultimately dispatched.
 /// \param[in] max_fork_size Maximum number of concurrent tasks that can run concurrently in the wrapped executor.
-/// \param[in] qparams Parameters of the queue used to store tasks that are waiting to be executed.
-template <typename OutExec = task_executor*>
-std::unique_ptr<task_executor>
-make_task_fork_limiter_ptr(OutExec&& out_exec, unsigned max_fork_size, const concurrent_queue_params& qparams)
+/// \param[in] qsize Size of the internal queue
+template <concurrent_queue_policy QueuePolicy, typename OutExec = task_executor*>
+std::unique_ptr<task_executor> make_task_fork_limiter_ptr(OutExec&& out_exec, unsigned max_fork_size, unsigned qsize)
 {
-  switch (qparams.policy) {
-    case concurrent_queue_policy::lockfree_mpmc:
-      return std::make_unique<task_fork_limiter<OutExec, concurrent_queue_policy::lockfree_mpmc>>(
-          std::forward<OutExec>(out_exec), max_fork_size, qparams.size);
-    case concurrent_queue_policy::lockfree_spsc:
-      report_fatal_error("Invalid queue policy for fork_limit_executor: lockfree_spsc");
-    case concurrent_queue_policy::locking_mpmc:
-      return std::make_unique<task_fork_limiter<OutExec, concurrent_queue_policy::locking_mpmc>>(
-          std::forward<OutExec>(out_exec), max_fork_size, qparams.size);
-    case concurrent_queue_policy::locking_mpsc:
-      report_fatal_error("Invalid queue policy for fork_limit_executor: lockfree_mpsc");
-    case concurrent_queue_policy::moodycamel_lockfree_mpmc:
-      return std::make_unique<task_fork_limiter<OutExec, concurrent_queue_policy::moodycamel_lockfree_mpmc>>(
-          std::forward<OutExec>(out_exec), max_fork_size, qparams.size);
-    default:
-      break;
-  }
-  report_fatal_error("Unsupported queue policy.");
-  return nullptr;
+  return std::make_unique<task_fork_limiter<OutExec, QueuePolicy>>(
+      std::forward<OutExec>(out_exec), max_fork_size, qsize);
 }
 
 } // namespace srsran
