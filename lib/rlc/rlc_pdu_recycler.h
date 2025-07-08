@@ -25,11 +25,11 @@ namespace srsran {
 class rlc_pdu_recycler
 {
 public:
-  rlc_pdu_recycler(size_t rlc_window_size, rlc_bearer_logger& logger_) : logger(logger_)
+  rlc_pdu_recycler(size_t recycler_size, rlc_bearer_logger& logger_) : logger(logger_)
   {
     recycle_bin = std::make_unique<concurrent_queue<byte_buffer,
                                                     concurrent_queue_policy::lockfree_spsc,
-                                                    concurrent_queue_wait_policy::non_blocking>>(rlc_window_size);
+                                                    concurrent_queue_wait_policy::non_blocking>>(recycler_size);
   }
 
   /// \brief Adds a discarded PDU to the recycler which shall be deleted later by another executor
