@@ -12,6 +12,7 @@
 
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/dmrs.h"
 #include "srsran/ran/prach/prach_format_type.h"
 #include "srsran/ran/prach/prach_subcarrier_spacing.h"
 #include "srsran/ran/prach/restricted_set_config.h"
@@ -49,6 +50,7 @@ struct carrier_config {
   uint8_t                 freq_shift_7p5kHz;
   uint8_t                 power_profile;
   uint8_t                 power_offset_rs_index;
+  dmrs_typeA_position     dmrs_typeA_pos;
 };
 
 /// Encodes the cell configuration.

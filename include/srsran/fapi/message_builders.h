@@ -543,13 +543,26 @@ public:
 
   // :TODO: Beamforming.
 
-  /// Sets the Tx Power info parameters for the fields of the PDSCH PDU.
+  /// Sets the profile NR Tx Power info parameters for the fields of the PDSCH PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
-  dl_pdsch_pdu_builder& set_tx_power_info_parameters(int                     power_control_offset,
-                                                     power_control_offset_ss power_control_offset_ss)
+  dl_pdsch_pdu_builder& set_profile_nr_tx_power_info_parameters(int                     power_control_offset,
+                                                                power_control_offset_ss power_control_offset_ss)
   {
-    pdu.power_control_offset_profile_nr    = power_control_offset;
-    pdu.power_control_offset_ss_profile_nr = power_control_offset_ss;
+    auto& power = pdu.power_config.emplace<dl_pdsch_pdu::power_profile_nr>();
+
+    power.power_control_offset_profile_nr    = power_control_offset;
+    power.power_control_offset_ss_profile_nr = power_control_offset_ss;
+
+    return *this;
+  }
+
+  /// Sets the profile SSS Tx Power info parameters for the fields of the PDSCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
+  dl_pdsch_pdu_builder& set_profile_sss_tx_power_info_parameters(float dmrs_offset_db, float data_offset_db)
+  {
+    auto& power                    = pdu.power_config.emplace<dl_pdsch_pdu::power_profile_sss>();
+    power.data_power_offset_sss_db = data_offset_db;
+    power.dmrs_power_offset_sss_db = dmrs_offset_db;
 
     return *this;
   }

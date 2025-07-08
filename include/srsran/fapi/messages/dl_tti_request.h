@@ -137,6 +137,18 @@ struct dl_pdsch_pdu {
   /// Maximum size of DL TB CRC.
   static constexpr unsigned MAX_SIZE_DL_TB_CRC = 2;
 
+  /// Profile NR power parameters.
+  struct power_profile_nr {
+    int                     power_control_offset_profile_nr;
+    power_control_offset_ss power_control_offset_ss_profile_nr;
+  };
+
+  /// Profile SSS power parameters.
+  struct power_profile_sss {
+    float dmrs_power_offset_sss_db;
+    float data_power_offset_sss_db;
+  };
+
   std::bitset<BITMAP_SIZE>                             pdu_bitmap;
   rnti_t                                               rnti;
   uint16_t                                             pdu_index;
@@ -164,10 +176,9 @@ struct dl_pdsch_pdu {
   vrb_to_prb_mapping_type                              vrb_to_prb_mapping;
   uint8_t                                              start_symbol_index;
   uint8_t                                              nr_of_symbols;
+  std::variant<power_profile_nr, power_profile_sss>    power_config;
   // :TODO: PTRS
   tx_precoding_and_beamforming_pdu         precoding_and_beamforming;
-  int                                      power_control_offset_profile_nr;
-  power_control_offset_ss                  power_control_offset_ss_profile_nr;
   uint8_t                                  is_last_cb_present;
   inline_tb_crc_type                       is_inline_tb_crc;
   std::array<uint32_t, MAX_SIZE_DL_TB_CRC> dl_tb_crc_cw;

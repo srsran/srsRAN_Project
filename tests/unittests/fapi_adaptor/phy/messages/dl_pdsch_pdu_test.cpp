@@ -219,7 +219,7 @@ TEST(fapi_to_phy_pdsch_conversion_test, valid_pdu_conversion_success)
                       }
 
                       builder.set_pdsch_allocation_in_time_parameters(start_symbol_index, nr_of_symbols);
-                      builder.set_tx_power_info_parameters(power_profile_nr, power_ss_profile_nr);
+                      builder.set_profile_nr_tx_power_info_parameters(power_profile_nr, power_ss_profile_nr);
 
                       // :TODO: not filling CBG to retx control parameters.
 
