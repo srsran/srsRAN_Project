@@ -32,8 +32,8 @@ struct ofdm_demodulator_configuration {
   unsigned nof_samples_window_offset;
   /// Scaling factor at the DFT output.
   float scale;
-  /// Indicates the center frequency of the carrier in Hz.
-  double center_freq_hz;
+  /// Carrier center frequency in Hertz.
+  double center_freq_Hz;
 };
 
 /// \brief Describes an OFDM demodulator that demodulates at symbol granularity.
@@ -51,6 +51,14 @@ public:
   /// \param[in] symbol_index Indicates the symbol index within the subframe.
   /// \return The number of samples for the given symbol index.
   virtual unsigned get_symbol_size(unsigned symbol_index) const = 0;
+
+  /// \brief Sets the center frequency.
+  ///
+  /// The implementation of this method must be thread safe and the new center frequency takes effect in the next call
+  /// to demodulate().
+  ///
+  /// \param[in] center_frequency_Hz Given center frequency in Hertz.
+  virtual void set_center_frequency(double center_frequency_Hz) = 0;
 
   /// \brief Demodulates an OFDM signal with symbol granularity.
   /// \param[out] grid Provides the output as frequency-domain signal corresponding to one slot.

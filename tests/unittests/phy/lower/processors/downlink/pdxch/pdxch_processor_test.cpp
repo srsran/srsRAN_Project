@@ -63,7 +63,7 @@ std::ostream& operator<<(std::ostream& os, const ofdm_modulator_configuration& c
              config.dft_size,
              config.cp.to_string(),
              config.scale,
-             config.center_freq_hz);
+             config.center_freq_Hz);
   return os;
 }
 
@@ -76,7 +76,7 @@ bool operator==(const pdxch_processor_baseband::symbol_context& left,
 bool operator==(const ofdm_modulator_configuration& left, const ofdm_modulator_configuration& right)
 {
   return (left.numerology == right.numerology) && (left.bw_rb == right.bw_rb) && (left.dft_size == right.dft_size) &&
-         (left.cp == right.cp) && (left.scale == right.scale) && (left.center_freq_hz == right.center_freq_hz);
+         (left.cp == right.cp) && (left.scale == right.scale) && (left.center_freq_Hz == right.center_freq_Hz);
 }
 
 bool operator==(span<const cf_t> left, span<const cf_t> right)
@@ -201,7 +201,7 @@ TEST_P(LowerPhyDownlinkProcessorFixture, ModulatorConfiguration)
   expected_mod_config.dft_size       = srate.get_dft_size(scs);
   expected_mod_config.cp             = cp;
   expected_mod_config.scale          = 1.0F;
-  expected_mod_config.center_freq_hz = config.center_freq_Hz;
+  expected_mod_config.center_freq_Hz = config.center_freq_Hz;
 
   ASSERT_EQ(ofdm_mod_spy->get_configuration(), expected_mod_config);
 }

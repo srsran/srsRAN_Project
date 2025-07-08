@@ -33,8 +33,10 @@ ofdm_symbol_demodulator_impl::ofdm_symbol_demodulator_impl(ofdm_demodulator_comm
   phase_compensation_table(to_subcarrier_spacing(ofdm_config.numerology),
                            ofdm_config.cp,
                            ofdm_config.dft_size,
-                           ofdm_config.center_freq_hz,
-                           false)
+                           ofdm_config.center_freq_Hz,
+                           false),
+  next_center_freq_Hz(ofdm_config.center_freq_Hz),
+  current_center_freq_Hz(ofdm_config.center_freq_Hz)
 {
   report_fatal_error_if_not(std::isnormal(scale), "Invalid scaling factor {}.", scale);
   report_fatal_error_if_not(
@@ -84,6 +86,13 @@ void ofdm_symbol_demodulator_impl::demodulate(resource_grid_writer& grid,
                                               unsigned              port_index,
                                               unsigned              symbol_index)
 {
+  // Recalculate phase compensation if the center frequency has changed.
+  double center_freq_Hz = next_center_freq_Hz.load(std::memory_order::memory_order_relaxed);
+  if (center_freq_Hz != current_center_freq_Hz) {
+    phase_compensation_table = phase_compensation_lut(scs, cp, dft_size, center_freq_Hz, false);
+    current_center_freq_Hz   = center_freq_Hz;
+  }
+
   // Calculate number of symbols per slot.
   unsigned nsymb = get_nsymb_per_slot(cp);
 

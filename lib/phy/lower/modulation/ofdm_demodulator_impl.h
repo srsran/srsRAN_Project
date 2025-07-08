@@ -45,6 +45,10 @@ private:
   std::unique_ptr<dft_processor> dft;
   /// Phase compensation table.
   phase_compensation_lut phase_compensation_table;
+  /// Next center frequency in Hertz.
+  std::atomic<double> next_center_freq_Hz;
+  /// Current center frequency in Hertz.
+  double current_center_freq_Hz;
   /// Internal buffer aimed at storing the phase compensated DFT outputs.
   std::vector<cf_t> compensated_output;
   /// DFT window offset phase compensation.
@@ -72,6 +76,9 @@ public:
   {
     return cp.get_length(symbol_index, scs).to_samples(sampling_rate_Hz) + dft_size;
   }
+
+  // See interface for documentation.
+  void set_center_frequency(double center_frequency_Hz) override { next_center_freq_Hz = center_frequency_Hz; }
 
   // See interface for documentation.
   void

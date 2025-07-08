@@ -36,3 +36,13 @@ lower_phy_cfo_controller& lower_phy_sector::get_rx_cfo_control()
 {
   return low_phy->get_rx_cfo_control();
 }
+
+lower_phy_center_freq_controller& lower_phy_sector::get_tx_center_freq_control()
+{
+  return low_phy->get_tx_center_freq_control();
+}
+
+lower_phy_center_freq_controller& lower_phy_sector::get_rx_center_freq_control()
+{
+  return low_phy->get_rx_center_freq_control();
+}

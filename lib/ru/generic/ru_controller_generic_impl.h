@@ -48,10 +48,30 @@ public:
   ru_cfo_controller_generic_impl(std::vector<lower_phy_sector*> phy_sectors_) : phy_sectors(std::move(phy_sectors_)) {}
 
   // See interface for documentation.
-  bool set_tx_cfo(unsigned port_id, const cfo_compensation_request& cfo_request) override;
+  bool set_tx_cfo(unsigned sector_id, const cfo_compensation_request& cfo_request) override;
 
   // See interface for documentation.
-  bool set_rx_cfo(unsigned port_id, const cfo_compensation_request& cfo_request) override;
+  bool set_rx_cfo(unsigned sector_id, const cfo_compensation_request& cfo_request) override;
+};
+
+/// Radio Unit carrier frequency offset controller generic implementation.
+class ru_center_frequency_controller_generic_impl : public ru_center_frequency_controller
+{
+  std::vector<lower_phy_sector*> phy_sectors;
+
+public:
+  ru_center_frequency_controller_generic_impl() = default;
+
+  ru_center_frequency_controller_generic_impl(std::vector<lower_phy_sector*> phy_sectors_) :
+    phy_sectors(std::move(phy_sectors_))
+  {
+  }
+
+  // See interface for documentation.
+  bool set_tx_center_frequency(unsigned sector_id, double center_freq_Hz) override;
+
+  // See interface for documentation.
+  bool set_rx_center_frequency(unsigned sector_id, double center_freq_Hz) override;
 };
 
 /// Radio Unit controller generic implementation.
@@ -68,6 +88,8 @@ public:
 
   // See interface for documentation.
   ru_cfo_controller* get_cfo_controller() override { return &cfo_controller; }
+
+  ru_center_frequency_controller* get_center_frequency_controller() override;
 
   // See interface for documentation.
   void start() override;

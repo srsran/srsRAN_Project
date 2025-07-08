@@ -14,7 +14,7 @@
 
 namespace srsran {
 
-/// Lower physical layer carrier frequency processor interface.
+/// Lower physical layer carrier frequency offset controller interface.
 class lower_phy_cfo_controller
 {
 public:

@@ -73,6 +73,12 @@ public:
   // See interface for documentation.
   lower_phy_cfo_controller& get_rx_cfo_control() override;
 
+  // See interface for documentation.
+  lower_phy_center_freq_controller& get_tx_center_freq_control() override;
+
+  // See interface for documentation.
+  lower_phy_center_freq_controller& get_rx_center_freq_control() override;
+
   // See lower_phy_controller interface for documentation.
   void start(baseband_gateway_timestamp init_time) override { controller->start(init_time); }
 

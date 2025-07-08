@@ -36,7 +36,10 @@ public:
   void stop() override { pdxch_proc->stop(); }
 
   // See interface for documentation.
-  baseband_cfo_processor& get_cfo_handler() override;
+  baseband_cfo_processor& get_cfo_control() override;
+
+  // See interface for documentation.
+  lower_phy_center_freq_controller& get_carrier_center_frequency_control() override;
 
   // See interface for documentation.
   pdxch_processor_request_handler& get_downlink_request_handler() override;

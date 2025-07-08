@@ -14,6 +14,7 @@
 #include "srsran/adt/circular_array.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/phy/lower/modulation/ofdm_demodulator.h"
+#include "srsran/phy/lower/processors/lower_phy_center_freq_controller.h"
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor.h"
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_baseband.h"
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_notifier.h"
@@ -26,6 +27,7 @@ namespace srsran {
 /// Implements PUxCH baseband processor.
 class puxch_processor_impl : public puxch_processor,
                              private puxch_processor_baseband,
+                             private lower_phy_center_freq_controller,
                              private puxch_processor_request_handler
 {
 public:
@@ -55,6 +57,9 @@ public:
   // See interface for documentation.
   puxch_processor_baseband& get_baseband() override { return *this; }
 
+  // See interface for documentation.
+  lower_phy_center_freq_controller& get_center_freq_control() override;
+
 private:
   // See interface for documentation.
   bool process_symbol(const baseband_gateway_buffer_reader& samples,
@@ -62,6 +67,9 @@ private:
 
   // See interface for documentation.
   void handle_request(const shared_resource_grid& grid, const resource_grid_context& context) override;
+
+  // See interface for documentation.
+  bool set_carrier_center_frequency(double carrier_center_frequency_Hz) override;
 
   std::atomic<bool>                        stopped = false;
   unsigned                                 nof_symbols_per_slot;

@@ -16,6 +16,7 @@
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_factories.h"
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_notifier.h"
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_request_handler.h"
+#include "srsran/phy/lower/processors/lower_phy_center_freq_controller.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/srslog/srslog.h"
@@ -113,7 +114,7 @@ public:
   }
 };
 
-class pdxch_processor_spy : public pdxch_processor
+class pdxch_processor_spy : public pdxch_processor, private lower_phy_center_freq_controller
 {
 public:
   pdxch_processor_spy(const pdxch_processor_configuration& config_) : config(config_) {}
@@ -132,6 +133,8 @@ public:
 
   const pdxch_processor_notifier* get_notifier() const { return notifier; }
 
+  lower_phy_center_freq_controller& get_center_freq_control() override { return *this; }
+
   const std::vector<pdxch_processor_baseband_spy::entry_t>& get_baseband_entries() const
   {
     return baseband.get_entries();
@@ -140,6 +143,9 @@ public:
   void clear() { baseband.clear(); }
 
 private:
+  // See interface for documentation.
+  bool set_carrier_center_frequency(double carrier_center_frequency_Hz) override { return false; }
+
   pdxch_processor_notifier*           notifier = nullptr;
   pdxch_processor_configuration       config;
   pdxch_processor_request_handler_spy request_handler;

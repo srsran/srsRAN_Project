@@ -30,8 +30,8 @@ struct ofdm_modulator_configuration {
   cyclic_prefix cp;
   /// Scaling factor at the DFT output.
   float scale;
-  /// Indicates the center frequency of the carrier in Hz.
-  double center_freq_hz;
+  /// Carrier center frequency in Hertz.
+  double center_freq_Hz;
 };
 
 /// \brief Describes an OFDM modulator that modulates at symbol granularity.
@@ -49,6 +49,14 @@ public:
   /// \param[in] symbol_index Indicates the symbol index within the subframe.
   /// \return The number of samples for the given symbol index.
   virtual unsigned get_symbol_size(unsigned symbol_index) const = 0;
+
+  /// \brief Sets the center frequency.
+  ///
+  /// The implementation of this method must be thread safe and the new center frequency takes effect in the next call
+  /// to modulate().
+  ///
+  /// \param[in] center_frequency_Hz Given center frequency in Hertz.
+  virtual void set_center_frequency(double center_frequency_Hz) = 0;
 
   /// \brief Modulates an OFDM signal with symbol granularity.
   /// \param[out] output Provides the time domain modulated signal.

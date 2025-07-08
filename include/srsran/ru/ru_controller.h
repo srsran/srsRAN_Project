@@ -65,12 +65,14 @@ struct cfo_compensation_request {
   /// Optional timestamp at which the CFO command is applied. Set to \c std::nullopt for applying it immediately.
   std::optional<time_point> start_timestamp;
 };
+
 /// \brief Radio Unit - carrier frequency offset control interface.
 ///
-/// Allows modify the carrier frequency offset for downlink and uplink of the Radio Unit.
+/// Provides an interface for modifying the carrier frequency offset for downlink and uplink in runtime.
 class ru_cfo_controller
 {
 public:
+  /// Default destructor.
   virtual ~ru_cfo_controller() = default;
 
   /// \brief Sets the downlink carrier frequency offset for the specified sector.
@@ -84,6 +86,28 @@ public:
   /// \param[in] cfo_request CFO config to be set.
   /// \return \c true if the operation is successful, \c false otherwise.
   virtual bool set_rx_cfo(unsigned sector_id, const cfo_compensation_request& cfo_request) = 0;
+};
+
+/// \brief Radio Unit - carrier center frequency control interface.
+///
+/// Provides an interface for modifying the carrier center frequency for downlink and uplink in runtime.
+class ru_center_frequency_controller
+{
+public:
+  /// Default destructor.
+  virtual ~ru_center_frequency_controller() = default;
+
+  /// \brief Sets the downlink carrier center frequency for the specified sector.
+  /// \param[in] sector_id Sector identifier.
+  /// \param[in] center_freq_Hz Center frequency in Hertz.
+  /// \return \c true if the operation is successful, \c false otherwise.
+  virtual bool set_tx_center_frequency(unsigned sector_id, double center_freq_Hz) = 0;
+
+  /// \brief Sets the uplink carrier center frequency for the specified sector.
+  /// \param[in] sector_id Sector identifier.
+  /// \param[in] center_freq_Hz Center frequency in Hertz.
+  /// \return \c true if the operation is successful, \c false otherwise.
+  virtual bool set_rx_center_frequency(unsigned sector_id, double center_freq_Hz) = 0;
 };
 
 /// \brief Radio Unit - control interface.
@@ -107,6 +131,10 @@ public:
   /// Returns the carrier frequency offset controller of this Radio Unit or nullptr if the Radio Unit does not support
   /// it.
   virtual ru_cfo_controller* get_cfo_controller() = 0;
+
+  /// Returns the carrier center frequency controller of this Radio Unit or \c nullptr if the Radio Unit does not
+  /// support.
+  virtual ru_center_frequency_controller* get_center_frequency_controller() = 0;
 };
 
 } // namespace srsran

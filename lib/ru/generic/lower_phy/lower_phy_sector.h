@@ -16,6 +16,9 @@
 
 namespace srsran {
 
+class lower_phy_cfo_controller;
+class lower_phy_center_freq_controller;
+
 /// Lower PHY sector implementation.
 class lower_phy_sector : public lower_phy
 {
@@ -36,6 +39,12 @@ public:
 
   // See interface for documentation.
   lower_phy_cfo_controller& get_rx_cfo_control() override;
+
+  // See interface for documentation.
+  lower_phy_center_freq_controller& get_tx_center_freq_control() override;
+
+  // See interface for documentation.
+  lower_phy_center_freq_controller& get_rx_center_freq_control() override;
 
   /// Sets the lower PHY of this sector to the given one.
   void set_lower_phy(std::unique_ptr<lower_phy> phy)

@@ -42,7 +42,12 @@ downlink_processor_baseband& downlink_processor_impl::get_baseband()
   return downlink_proc_baseband;
 }
 
-baseband_cfo_processor& downlink_processor_impl::get_cfo_handler()
+baseband_cfo_processor& downlink_processor_impl::get_cfo_control()
 {
   return downlink_proc_baseband.get_cfo_control();
+}
+
+lower_phy_center_freq_controller& downlink_processor_impl::get_carrier_center_frequency_control()
+{
+  return pdxch_proc->get_center_freq_control();
 }
