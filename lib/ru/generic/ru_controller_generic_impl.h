@@ -58,12 +58,13 @@ public:
 class ru_center_frequency_controller_generic_impl : public ru_center_frequency_controller
 {
   std::vector<lower_phy_sector*> phy_sectors;
+  radio_session*                 radio;
 
 public:
   ru_center_frequency_controller_generic_impl() = default;
 
-  ru_center_frequency_controller_generic_impl(std::vector<lower_phy_sector*> phy_sectors_) :
-    phy_sectors(std::move(phy_sectors_))
+  ru_center_frequency_controller_generic_impl(std::vector<lower_phy_sector*> phy_sectors_, radio_session* radio_) :
+    phy_sectors(std::move(phy_sectors_)), radio(radio_)
   {
   }
 
@@ -98,17 +99,22 @@ public:
   void stop() override;
 
   /// Sets the radio session of this controller.
-  void set_radio(radio_session& session) { radio = &session; }
+  void set_radio(radio_session& session)
+  {
+    radio                  = &session;
+    center_freq_controller = ru_center_frequency_controller_generic_impl(low_phy_crtl, radio);
+  }
 
   /// Set low phy sectors.
   void set_lower_phy_sectors(std::vector<lower_phy_sector*> sectors);
 
 private:
-  double                          srate_MHz;
-  radio_session*                  radio;
-  ru_gain_controller_generic_impl gain_controller;
-  std::vector<lower_phy_sector*>  low_phy_crtl;
-  ru_cfo_controller_generic_impl  cfo_controller;
+  double                                      srate_MHz;
+  radio_session*                              radio;
+  ru_gain_controller_generic_impl             gain_controller;
+  std::vector<lower_phy_sector*>              low_phy_crtl;
+  ru_cfo_controller_generic_impl              cfo_controller;
+  ru_center_frequency_controller_generic_impl center_freq_controller;
 };
 
 } // namespace srsran

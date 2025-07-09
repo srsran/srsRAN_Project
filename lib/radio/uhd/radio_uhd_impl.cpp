@@ -505,6 +505,42 @@ baseband_gateway_timestamp radio_session_uhd_impl::read_current_time()
   return time.to_ticks(actual_sampling_rate_Hz);
 }
 
+bool radio_session_uhd_impl::set_tx_freq(unsigned stream_id, double center_freq_Hz)
+{
+  // Iterate all ports searching for the given stream.
+  for (unsigned i_port = 0, end = tx_port_map.size(); i_port != end; ++i_port) {
+    // Skip if the stream does not match the given stream.
+    if (tx_port_map[i_port].first != stream_id) {
+      continue;
+    }
+
+    // Set transmit frequency for the port.
+    if (!set_tx_freq(i_port, {.center_frequency_Hz = center_freq_Hz, .lo_frequency_Hz = 0.0})) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool radio_session_uhd_impl::set_rx_freq(unsigned stream_id, double center_freq_Hz)
+{
+  // Iterate all ports searching for the given stream.
+  for (unsigned i_port = 0, end = rx_port_map.size(); i_port != end; ++i_port) {
+    // Skip if the stream does not match the given stream.
+    if (rx_port_map[i_port].first != stream_id) {
+      continue;
+    }
+
+    // Set receive frequency for the port.
+    if (!set_rx_freq(i_port, {.center_frequency_Hz = center_freq_Hz, .lo_frequency_Hz = 0.0})) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 std::unique_ptr<radio_session> radio_factory_uhd_impl::create(const radio_configuration::radio& config,
                                                               task_executor&                    async_task_executor,
                                                               radio_notification_handler&       notifier)
