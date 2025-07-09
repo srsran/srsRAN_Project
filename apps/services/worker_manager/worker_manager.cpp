@@ -798,7 +798,7 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
         lower_phy_dl_exec.push_back(exec_mng.executors().at(exec_dl));
         lower_phy_ul_exec.push_back(exec_mng.executors().at(exec_ul));
 
-        lower_prach_exec.push_back(exec_mng.executors().at("prach_exec#" + std::to_string(cell_id)));
+        lower_prach_exec.push_back(&du_low_exec_mapper->get_cell_mapper(cell_id).prach_executor());
         break;
       }
     }
