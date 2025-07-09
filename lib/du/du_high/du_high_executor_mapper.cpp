@@ -412,30 +412,13 @@ public:
 private:
   task_executor& create_time_exec(const du_high_executor_config& config)
   {
-    task_executor* base_time_exec = nullptr;
-    if (not config.is_rt_mode_enabled) {
-      // In case of non-RT mode, non-RT pool is used for timers.
-      // Note: We don't use the cell executor, because it may be a synchronous executor, which will cause a deadlock.
-      tick_strand    = std::make_unique<tick_strand_type>(config.ctrl_executors.pool_executor,
-                                                       config.ctrl_executors.task_queue_size);
-      base_time_exec = tick_strand.get();
-    } else if (const auto* execs =
-                   std::get_if<du_high_executor_config::dedicated_cell_worker_list>(&config.cell_executors)) {
-      // In case the cell executors are dedicated task workers, we do not need to instantiate any strand.
-      // We will use the executor of the first cell worker.
-      base_time_exec = execs->at(0).low_prio_executor;
-    } else if (const auto* pool_execs =
-                   std::get_if<du_high_executor_config::strand_based_worker_pool>(&config.cell_executors)) {
-      // In case the cell executors are a thread pool, we will create a strand.
-      tick_strand =
-          std::make_unique<tick_strand_type>(pool_execs->pool_executors[0], config.ctrl_executors.task_queue_size);
-      base_time_exec = tick_strand.get();
-    } else {
-      report_fatal_error("Invalid DU-high cell executor configuration");
-    }
+    // Create a strand pointing to the same pool used by the control executors.
+    tick_strand =
+        std::make_unique<tick_strand_type>(config.ctrl_executors.pool_executor, config.ctrl_executors.task_queue_size);
+    task_executor& base_time_exec = *tick_strand;
 
     // Decorate base_time_exec.
-    return decorator.decorate(*base_time_exec,
+    return decorator.decorate(base_time_exec,
                               false,
                               config.trace_exec_tasks,
                               // Throttle the timer tick caller in non-RT mode
