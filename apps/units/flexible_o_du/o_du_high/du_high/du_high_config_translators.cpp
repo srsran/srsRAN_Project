@@ -160,46 +160,15 @@ static sib8_info create_sib8_info(const du_high_unit_sib_config::cmas_config& cm
 static sib19_info create_sib19_info(const du_high_unit_config& config)
 {
   sib19_info sib19;
-  sib19.cell_specific_koffset = config.ntn_cfg.value().cell_specific_koffset;
-  sib19.ephemeris_info        = config.ntn_cfg.value().ephemeris_info;
-
-  // These ephemeris parameters are all scaled in accordance with NIMA TR 8350.2.
-  if (std::holds_alternative<ecef_coordinates_t>(sib19.ephemeris_info.value())) {
-    std::get<ecef_coordinates_t>(sib19.ephemeris_info.value()).position_x /= 1.3;
-    std::get<ecef_coordinates_t>(sib19.ephemeris_info.value()).position_y /= 1.3;
-    std::get<ecef_coordinates_t>(sib19.ephemeris_info.value()).position_z /= 1.3;
-    std::get<ecef_coordinates_t>(sib19.ephemeris_info.value()).velocity_vx /= 0.06;
-    std::get<ecef_coordinates_t>(sib19.ephemeris_info.value()).velocity_vy /= 0.06;
-    std::get<ecef_coordinates_t>(sib19.ephemeris_info.value()).velocity_vz /= 0.06;
-  } else if (std::holds_alternative<orbital_coordinates_t>(sib19.ephemeris_info.value())) {
-    std::get<orbital_coordinates_t>(sib19.ephemeris_info.value()).semi_major_axis -= 6500000;
-    std::get<orbital_coordinates_t>(sib19.ephemeris_info.value()).semi_major_axis /= 0.004249;
-    std::get<orbital_coordinates_t>(sib19.ephemeris_info.value()).eccentricity /= 0.00000001431;
-    std::get<orbital_coordinates_t>(sib19.ephemeris_info.value()).periapsis /= 0.00000002341;
-    std::get<orbital_coordinates_t>(sib19.ephemeris_info.value()).longitude /= 0.00000002341;
-    std::get<orbital_coordinates_t>(sib19.ephemeris_info.value()).inclination /= 0.00000002341;
-    std::get<orbital_coordinates_t>(sib19.ephemeris_info.value()).mean_anomaly /= 0.00000002341;
-  }
-  if (config.ntn_cfg.value().distance_threshold.has_value()) {
-    sib19.distance_thres = config.ntn_cfg.value().distance_threshold.value();
-  }
-  if (config.ntn_cfg.value().epoch_time.has_value()) {
-    sib19.epoch_time = config.ntn_cfg.value().epoch_time.value();
-  }
-  if (config.ntn_cfg.value().k_mac.has_value()) {
-    sib19.k_mac = config.ntn_cfg.value().k_mac.value();
-  }
-  if (config.ntn_cfg.value().ntn_ul_sync_validity_dur.has_value()) {
-    sib19.ntn_ul_sync_validity_dur = config.ntn_cfg.value().ntn_ul_sync_validity_dur.value();
-  }
-  if (config.ntn_cfg.value().ta_info.has_value()) {
-    sib19.ta_info = config.ntn_cfg.value().ta_info.value();
-    sib19.ta_info.value().ta_common /= 0.004072;
-    sib19.ta_info.value().ta_common_drift /= 0.0002;
-    sib19.ta_info.value().ta_common_drift_variant /= 0.00002;
-  }
-  if (config.ntn_cfg.value().reference_location.has_value()) {
-    sib19.ref_location = config.ntn_cfg.value().reference_location.value();
+  if (config.ntn_cfg.has_value()) {
+    sib19.distance_thres           = config.ntn_cfg.value().distance_threshold;
+    sib19.ref_location             = config.ntn_cfg.value().reference_location;
+    sib19.cell_specific_koffset    = config.ntn_cfg.value().cell_specific_koffset;
+    sib19.ephemeris_info           = config.ntn_cfg.value().ephemeris_info;
+    sib19.epoch_time               = config.ntn_cfg.value().epoch_time;
+    sib19.k_mac                    = config.ntn_cfg.value().k_mac;
+    sib19.ta_info                  = config.ntn_cfg.value().ta_info;
+    sib19.ntn_ul_sync_validity_dur = config.ntn_cfg.value().ntn_ul_sync_validity_dur;
   }
   return sib19;
 }

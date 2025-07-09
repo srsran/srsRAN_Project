@@ -655,67 +655,86 @@ static asn1::rrc_nr::sib19_r17_s make_asn1_rrc_cell_sib19(const sib19_info& sib1
   using namespace asn1::rrc_nr;
   sib19_r17_s sib19;
 
+  // Distance Threshold.
   if (sib19_params.distance_thres.has_value()) {
     sib19.distance_thresh_r17_present = true;
-    sib19.distance_thresh_r17         = sib19_params.distance_thres.value();
+    sib19.distance_thresh_r17         = static_cast<uint16_t>(sib19_params.distance_thres.value() / 50);
   }
+
+  // Reference Location.
   if (sib19_params.ref_location.has_value()) {
     sib19.ref_location_r17.from_string(sib19_params.ref_location.value());
   }
 
+  // T-Service, currently not supported.
   sib19.t_service_r17_present = false;
-  sib19.ntn_cfg_r17_present   = true;
 
+  // NTN-Config
+  sib19.ntn_cfg_r17_present = true;
+
+  // Currently not supported fields.
+  sib19.ntn_cfg_r17.kmac_r17_present                = false;
+  sib19.ntn_cfg_r17.ntn_polarization_dl_r17_present = false;
+  sib19.ntn_cfg_r17.ntn_polarization_ul_r17_present = false;
+  sib19.ntn_cfg_r17.ta_report_r17_present           = false;
+
+  // Cell-specific-k-offset.
   if (sib19_params.cell_specific_koffset.has_value()) {
     sib19.ntn_cfg_r17.cell_specific_koffset_r17_present = true;
     sib19.ntn_cfg_r17.cell_specific_koffset_r17         = sib19_params.cell_specific_koffset.value();
   }
 
-  if (sib19_params.ephemeris_info.has_value()) {
-    if (const auto* pos_vel = std::get_if<ecef_coordinates_t>(&sib19_params.ephemeris_info.value())) {
-      sib19.ntn_cfg_r17.ephemeris_info_r17_present = true;
-      sib19.ntn_cfg_r17.ephemeris_info_r17.set_position_velocity_r17();
-      position_velocity_r17_s& rv = sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17();
-      rv.position_x_r17           = static_cast<int32_t>(pos_vel->position_x);
-      rv.position_y_r17           = static_cast<int32_t>(pos_vel->position_y);
-      rv.position_z_r17           = static_cast<int32_t>(pos_vel->position_z);
-      rv.velocity_vx_r17          = static_cast<int32_t>(pos_vel->velocity_vx);
-      rv.velocity_vy_r17          = static_cast<int32_t>(pos_vel->velocity_vy);
-      rv.velocity_vz_r17          = static_cast<int32_t>(pos_vel->velocity_vz);
-    } else {
-      const auto& orbital_elem = std::get<orbital_coordinates_t>(sib19_params.ephemeris_info.value());
-      sib19.ntn_cfg_r17.ephemeris_info_r17_present = true;
-      sib19.ntn_cfg_r17.ephemeris_info_r17.set_orbital_r17();
-      orbital_r17_s& orbit      = sib19.ntn_cfg_r17.ephemeris_info_r17.orbital_r17();
-      orbit.semi_major_axis_r17 = static_cast<uint64_t>(orbital_elem.semi_major_axis);
-      orbit.eccentricity_r17    = static_cast<uint32_t>(orbital_elem.eccentricity);
-      orbit.periapsis_r17       = static_cast<uint32_t>(orbital_elem.periapsis);
-      orbit.longitude_r17       = static_cast<uint32_t>(orbital_elem.longitude);
-      orbit.inclination_r17     = static_cast<int32_t>(orbital_elem.inclination);
-      orbit.mean_anomaly_r17    = static_cast<uint32_t>(orbital_elem.mean_anomaly);
-    }
-  }
-  if (sib19_params.epoch_time.has_value()) {
-    sib19.ntn_cfg_r17.epoch_time_r17_present          = true;
-    sib19.ntn_cfg_r17.epoch_time_r17.sfn_r17          = sib19_params.epoch_time.value().sfn;
-    sib19.ntn_cfg_r17.epoch_time_r17.sub_frame_nr_r17 = sib19_params.epoch_time.value().subframe_number;
-  }
+  // K-mac.
   if (sib19_params.k_mac.has_value()) {
     sib19.ntn_cfg_r17.kmac_r17_present = true;
     sib19.ntn_cfg_r17.kmac_r17         = sib19_params.k_mac.value();
   }
 
-  sib19.ntn_cfg_r17.ntn_polarization_dl_r17_present = false;
-  sib19.ntn_cfg_r17.ntn_polarization_ul_r17_present = false;
+  // The remaining parameters can be updated without system information change notifications nor a modification of
+  // valueTag in SIB1.
 
+  // Epoch Time.
+  if (sib19_params.epoch_time.has_value()) {
+    sib19.ntn_cfg_r17.epoch_time_r17_present          = true;
+    sib19.ntn_cfg_r17.epoch_time_r17.sfn_r17          = sib19_params.epoch_time.value().sfn;
+    sib19.ntn_cfg_r17.epoch_time_r17.sub_frame_nr_r17 = sib19_params.epoch_time.value().subframe_number;
+  }
+
+  // TA-Info.
   if (sib19_params.ta_info.has_value()) {
     sib19.ntn_cfg_r17.ta_info_r17_present       = true;
     ta_info_r17_s& ta_info                      = sib19.ntn_cfg_r17.ta_info_r17;
-    ta_info.ta_common_r17                       = static_cast<uint32_t>(sib19_params.ta_info.value().ta_common);
     ta_info.ta_common_drift_r17_present         = true;
-    ta_info.ta_common_drift_r17                 = static_cast<int32_t>(sib19_params.ta_info.value().ta_common_drift);
     ta_info.ta_common_drift_variant_r17_present = true;
-    ta_info.ta_common_drift_variant_r17 = static_cast<uint16_t>(sib19_params.ta_info.value().ta_common_drift_variant);
+    ta_info.ta_common_r17                       = static_cast<uint32_t>(sib19_params.ta_info->ta_common / 0.004072);
+    ta_info.ta_common_drift_r17                 = static_cast<int32_t>(sib19_params.ta_info->ta_common_drift / 0.0002);
+    ta_info.ta_common_drift_variant_r17 =
+        static_cast<uint16_t>(sib19_params.ta_info->ta_common_drift_variant / 0.00002);
+  }
+
+  // Ephemeris info.
+  if (sib19_params.ephemeris_info.has_value()) {
+    sib19.ntn_cfg_r17.ephemeris_info_r17_present = true;
+    if (const auto* pos_vel = std::get_if<ecef_coordinates_t>(&sib19_params.ephemeris_info.value())) {
+      sib19.ntn_cfg_r17.ephemeris_info_r17.set_position_velocity_r17();
+      position_velocity_r17_s& rv = sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17();
+      rv.position_x_r17           = static_cast<int32_t>(pos_vel->position_x / 1.3);
+      rv.position_y_r17           = static_cast<int32_t>(pos_vel->position_y / 1.3);
+      rv.position_z_r17           = static_cast<int32_t>(pos_vel->position_z / 1.3);
+      rv.velocity_vx_r17          = static_cast<int32_t>(pos_vel->velocity_vx / 0.06);
+      rv.velocity_vy_r17          = static_cast<int32_t>(pos_vel->velocity_vy / 0.06);
+      rv.velocity_vz_r17          = static_cast<int32_t>(pos_vel->velocity_vz / 0.06);
+    } else {
+      const auto& orbital_elem = std::get<orbital_coordinates_t>(sib19_params.ephemeris_info.value());
+      sib19.ntn_cfg_r17.ephemeris_info_r17.set_orbital_r17();
+      orbital_r17_s& orbit      = sib19.ntn_cfg_r17.ephemeris_info_r17.orbital_r17();
+      orbit.semi_major_axis_r17 = static_cast<uint64_t>((orbital_elem.semi_major_axis - 6500000) / 0.004249);
+      orbit.eccentricity_r17    = static_cast<uint32_t>(orbital_elem.eccentricity / 0.00000001431);
+      orbit.inclination_r17     = static_cast<int32_t>(orbital_elem.inclination / 0.00000002341);
+      orbit.longitude_r17       = static_cast<uint32_t>(orbital_elem.longitude / 0.00000002341);
+      orbit.periapsis_r17       = static_cast<uint32_t>(orbital_elem.periapsis / 0.00000002341);
+      orbit.mean_anomaly_r17    = static_cast<uint32_t>(orbital_elem.mean_anomaly / 0.00000002341);
+    }
   }
 
   if (sib19_params.ntn_ul_sync_validity_dur.has_value()) {
