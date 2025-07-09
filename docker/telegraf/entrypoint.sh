@@ -19,6 +19,7 @@ health_code=0
 _term() {
     curl -sf -o /dev/null http://localhost:9273/health
     health_code=$?
+    echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') I! Health check returned code $health_code"
     kill -TERM "$child" 2>/dev/null
 }
 trap _term SIGTERM SIGINT
