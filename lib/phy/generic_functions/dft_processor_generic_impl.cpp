@@ -120,11 +120,17 @@ template <unsigned N>
 class generic_dft_dit<N, std::enable_if_t<((N % 3 == 0) && (N % 5 != 0))>> : public generic_dft_N
 {
 private:
-  unsigned               stride;
-  generic_dft_dit<N / 3> radix3;
-  std::array<cf_t, N>    table;
-  const cf_t             w1;
-  const cf_t             w2;
+  static constexpr unsigned N_3 = N / 3;
+  unsigned                  stride;
+  generic_dft_dit<N_3>      radix3;
+  std::array<cf_t, N>       table;
+  std::array<float, N>      table_re;
+  std::array<float, N>      table_im;
+  std::array<cf_t, N>       table2;
+  std::array<float, N>      table2_re;
+  std::array<float, N>      table2_im;
+  const cf_t                w1;
+  const cf_t                w2;
 
 public:
   generic_dft_dit(float sign, unsigned stride_) :
@@ -133,8 +139,13 @@ public:
     w1(std::polar(1.0f, sign * 2.0f * static_cast<float>(M_PI) / 3.0f)),
     w2(std::polar(1.0f, sign * 4.0f * static_cast<float>(M_PI) / 3.0f))
   {
-    for (unsigned idx = 0; idx != N; ++idx) {
-      table[idx] = std::polar(1.0F, sign * TWOPI * static_cast<float>(idx) / static_cast<float>(N));
+    for (unsigned idx = 0; idx != N_3; ++idx) {
+      table[idx]     = std::polar(1.0F, sign * TWOPI * static_cast<float>(idx) / static_cast<float>(N));
+      table_re[idx]  = table[idx].real();
+      table_im[idx]  = table[idx].imag();
+      table2[idx]    = std::polar(1.0F, 2 * sign * TWOPI * static_cast<float>(idx) / static_cast<float>(N));
+      table2_re[idx] = table2[idx].real();
+      table2_im[idx] = table2[idx].imag();
     }
   }
 
@@ -142,20 +153,35 @@ public:
   {
     // Radix 3.
     radix3.run(&out[0], in);
-    radix3.run(&out[N / 3], &in[stride]);
-    radix3.run(&out[2 * N / 3], &in[2 * stride]);
+    radix3.run(&out[N_3], &in[stride]);
+    radix3.run(&out[2 * N_3], &in[2 * stride]);
 
     unsigned k = 0;
 
-    for (; k != N / 3; ++k) {
-      cf_t p = out[k];
-      cf_t q = table[k] * out[k + N / 3];
-      cf_t r = table[2 * k] * out[k + 2 * N / 3];
+#if SRSRAN_SIMD_CF_SIZE
+    simd_cf_t w1_simd = srsran_simd_cf_set1(w1);
+    simd_cf_t w2_simd = srsran_simd_cf_set1(w2);
+    for (; k != (N_3 / SRSRAN_SIMD_CF_SIZE) * SRSRAN_SIMD_CF_SIZE; k += SRSRAN_SIMD_CF_SIZE) {
+      simd_cf_t p_simd = srsran_simd_cfi_loadu(&out[k]);
+      simd_cf_t q_simd = srsran_simd_cf_loadu(&table_re[k], &table_im[k]) * srsran_simd_cfi_loadu(&out[k + N_3]);
+      simd_cf_t r_simd = srsran_simd_cf_loadu(&table2_re[k], &table2_im[k]) * srsran_simd_cfi_loadu(&out[k + 2 * N_3]);
 
       // Radix-3 butterfly (like a 3-point DFT).
-      out[k]             = p + q + r;
-      out[k + N / 3]     = p + q * w1 + r * w2;
-      out[k + 2 * N / 3] = p + q * w2 + r * w1;
+      srsran_simd_cfi_storeu(&out[k], p_simd + q_simd + r_simd);
+      srsran_simd_cfi_storeu(&out[k + N_3], p_simd + q_simd * w1_simd + r_simd * w2_simd);
+      srsran_simd_cfi_storeu(&out[k + 2 * N_3], p_simd + q_simd * w2_simd + r_simd * w1_simd);
+    }
+#endif // SRSRAN_SIMD_CF_SIZE
+
+    for (; k != N_3; ++k) {
+      cf_t p = out[k];
+      cf_t q = table[k] * out[k + N_3];
+      cf_t r = table2[k] * out[k + 2 * N_3];
+
+      // Radix-3 butterfly (like a 3-point DFT).
+      out[k]           = p + q + r;
+      out[k + N_3]     = p + q * w1 + r * w2;
+      out[k + 2 * N_3] = p + q * w2 + r * w1;
     }
   }
 };
@@ -280,6 +306,108 @@ public:
     out[3] = q0 - q1;
   }
 };
+
+#if SRSRAN_SIMD_CF_SIZE != 0
+
+// Implements a DFT of size SRSRAN_SIMD_CF_SIZE.
+template <>
+class generic_dft_dit<SRSRAN_SIMD_CF_SIZE> : public generic_dft_N
+{
+private:
+  static constexpr unsigned N = SRSRAN_SIMD_CF_SIZE;
+  unsigned                  stride;
+  std::array<float, N * N>  tables_re;
+  std::array<float, N * N>  tables_im;
+
+public:
+  generic_dft_dit(float sign, unsigned stride_) : stride(stride_)
+  {
+    std::array<cf_t, N> cexp;
+    for (unsigned k = 0; k != N; ++k) {
+      cexp[k] = std::polar(1.0F, sign * TWOPI * static_cast<float>(k) / static_cast<float>(N));
+    }
+
+    for (unsigned k = 0; k != N; ++k) {
+      for (unsigned n = 0; n != N; ++n) {
+        cf_t w               = cexp[(k * n) % N];
+        tables_re[N * k + n] = w.real();
+        tables_im[N * k + n] = w.imag();
+      }
+    }
+  }
+
+  void run(cf_t* out, const cf_t* in) const override
+  {
+    simd_cf_t p_simd = srsran_simd_cf_set1(in[0]);
+    for (unsigned n = 1; n != N; ++n) {
+      simd_cf_t p_in_simd = srsran_simd_cf_set1(in[stride * n]);
+      simd_cf_t w_simd    = srsran_simd_cf_loadu(&tables_re[n * N], &tables_im[n * N]);
+
+      p_simd = srsran_simd_cf_add(p_simd, srsran_simd_cf_prod(p_in_simd, w_simd));
+    }
+
+    srsran_simd_cfi_storeu(out, p_simd);
+  }
+};
+
+// Implements a DFT of size 2 * SRSRAN_SIMD_CF_SIZE.
+template <>
+class generic_dft_dit<2 * SRSRAN_SIMD_CF_SIZE> : public generic_dft_N
+{
+private:
+  static constexpr unsigned N = SRSRAN_SIMD_CF_SIZE;
+  unsigned                  stride;
+  alignas(SIMD_BYTE_ALIGN) std::array<float, N * N> tables_re;
+  alignas(SIMD_BYTE_ALIGN) std::array<float, N * N> tables_im;
+
+public:
+  generic_dft_dit(float sign, unsigned stride_) : stride(stride_)
+  {
+    std::array<cf_t, N> cexp;
+    for (unsigned k = 0; k != N; ++k) {
+      cexp[k] = std::polar(1.0F, sign * TWOPI * static_cast<float>(k) / static_cast<float>(N));
+    }
+
+    for (unsigned k = 0; k != N; ++k) {
+      for (unsigned n = 0; n != N; ++n) {
+        cf_t w               = cexp[(k * n) % N];
+        tables_re[N * k + n] = w.real();
+        tables_im[N * k + n] = w.imag();
+      }
+    }
+
+    for (unsigned k = 0; k != N; ++k) {
+      cf_t w       = std::polar(1.0F, sign * TWOPI * static_cast<float>(k) / static_cast<float>(2 * N));
+      tables_re[k] = w.real();
+      tables_im[k] = w.imag();
+    }
+  }
+
+  void run(cf_t* out, const cf_t* in) const override
+  {
+    simd_cf_t p_simd = srsran_simd_cf_set1(*in);
+    in += stride;
+    simd_cf_t q_simd = srsran_simd_cf_set1(*in);
+    in += stride;
+    for (unsigned n = 1; n != N; ++n) {
+      simd_cf_t p_in_simd = srsran_simd_cf_set1(*in);
+      in += stride;
+      simd_cf_t q_in_simd = srsran_simd_cf_set1(*in);
+      in += stride;
+      simd_cf_t w_simd = srsran_simd_cf_load(&tables_re[N * n], &tables_im[N * n]);
+
+      p_simd += p_in_simd * w_simd;
+      q_simd += q_in_simd * w_simd;
+    }
+
+    q_simd = q_simd * srsran_simd_cf_load(tables_re.data(), tables_im.data());
+
+    srsran_simd_cfi_storeu(out, p_simd + q_simd);
+    srsran_simd_cfi_storeu(out + N, p_simd - q_simd);
+  }
+};
+
+#endif // SRSRAN_SIMD_CF_SIZE == 8
 
 // Implements a DFT of size 9.
 template <>
