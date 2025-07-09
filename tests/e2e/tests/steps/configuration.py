@@ -204,15 +204,14 @@ def configure_test_parameters(
     if ntn_config is not None:
         configure_ntn_parameters(retina_data, ntn_config)
 
-    metrics_server = None
     for node_name in retina_manager.get_testbed_info().get("generic", {}).keys():
         if "metrics-server" in node_name:
-            metrics_server = retina_manager.get_testbed_info()["generic"][node_name]
-
-    if metrics_server is not None and metrics_server.metadata.get("ip", None) is not None:
-        retina_data.test_config["gnb"]["parameters"]["metrics_hostname"] = metrics_server.metadata["ip"]
-        retina_data.test_config["gnb"]["parameters"]["metrics_port"] = metrics_server.port
-        logging.info("Metrics Server in %s:%s will be used for this test.", metrics_server.address, metrics_server.port)
+            metrics_server_dict = retina_manager.get_testbed_info()["generic"][node_name]
+            metrics_server = MetricServerInfo(metrics_server_dict.metadata["ip"], metrics_server_dict.port)
+            logging.info(
+                "Metrics Server in %s:%s will be used for this test.", metrics_server.address, metrics_server.port
+            )
+            configure_metric_server_for_gnb(retina_manager, retina_data, metrics_server)
 
     logging.info("Test config: \n%s", pformat(retina_data.test_config))
     retina_manager.parse_configuration(retina_data.test_config)
