@@ -11,6 +11,7 @@
 #include "worker_manager.h"
 #include "apps/helpers/metrics/metrics_helpers.h"
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/ru/ofh/ru_ofh_executor_mapper_factory.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/concurrent_metrics_executor.h"
 #include "srsran/support/executors/inline_task_executor.h"
@@ -577,6 +578,8 @@ void worker_manager::create_ofh_executors(const worker_manager_config::ru_ofh_co
   using namespace execution_config_helper;
   const unsigned nof_cells = config.nof_downlink_antennas.size();
 
+  ru_ofh_executor_mapper_config exec_mapper_config;
+
   // Timing executor.
   {
     const std::string name      = "ru_timing";
@@ -596,13 +599,12 @@ void worker_manager::create_ofh_executors(const worker_manager_config::ru_ofh_co
     if (!exec_mng.add_execution_context(create_execution_context(ru_worker))) {
       report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
     }
-    ru_timing_exec = exec_mng.executors().at(exec_name);
+    exec_mapper_config.timing_executor = exec_mng.executors().at(exec_name);
   }
 
   for (unsigned i = 0, e = nof_cells; i != e; ++i) {
     // Executor for the Open Fronthaul User and Control messages codification.
     {
-      ru_dl_exec.emplace_back();
       unsigned nof_ofh_dl_workers =
           (config.is_downlink_parallelized) ? std::max(config.nof_downlink_antennas[i] / 2U, 1U) : 1U;
       const std::string name      = "ru_dl_#" + std::to_string(i);
@@ -620,7 +622,7 @@ void worker_manager::create_ofh_executors(const worker_manager_config::ru_ofh_co
                          prio,
                          cpu_masks,
                          concurrent_queue_policy::lockfree_mpmc);
-      ru_dl_exec[i] = exec_mng.executors().at(exec_name);
+      exec_mapper_config.downlink_executors.push_back(exec_mng.executors().at(exec_name));
     }
     // Executor for Open Fronthaul messages decoding.
     {
@@ -638,7 +640,7 @@ void worker_manager::create_ofh_executors(const worker_manager_config::ru_ofh_co
       if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
       }
-      ru_rx_exec.push_back(exec_mng.executors().at(exec_name));
+      exec_mapper_config.uplink_executors.push_back(exec_mng.executors().at(exec_name));
     }
   }
   // Executor for Open Fronthaul messages transmission and reception.
@@ -656,9 +658,14 @@ void worker_manager::create_ofh_executors(const worker_manager_config::ru_ofh_co
       if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
       }
-      ru_txrx_exec.push_back(exec_mng.executors().at(exec_name));
+      exec_mapper_config.txrx_executors.push_back(exec_mng.executors().at(exec_name));
     }
   }
+
+  exec_mapper_config.nof_sectors = nof_cells;
+
+  // Create executor mapper.
+  ofh_exec_mapper = create_ofh_ru_executor_mapper(exec_mapper_config);
 }
 
 void worker_manager::create_split6_executors()

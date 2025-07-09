@@ -20,4 +20,5 @@ target_link_libraries(srsran_worker_manager_app_service
         srsran_cu_up     # TODO: Temp
         srsran_du_high   # TODO: Temp
         srsran_cu_cp     # TODO: Temp
-        srsran_o_du_low) # TODO: Temp
+        srsran_o_du_low  # TODO: Temp
+        srsran_ru_ofh)   # TODO: Temp

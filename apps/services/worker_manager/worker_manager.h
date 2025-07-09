@@ -16,6 +16,7 @@
 #include "srsran/cu_up/cu_up_executor_mapper.h"
 #include "srsran/du/du_high/du_high_executor_mapper.h"
 #include "srsran/du/du_low/du_low_executor_mapper.h"
+#include "srsran/ru/ofh/ru_ofh_executor_mapper.h"
 #include "srsran/support/executors/task_execution_manager.h"
 #include "srsran/support/executors/task_executor.h"
 
@@ -52,12 +53,8 @@ struct worker_manager {
   std::vector<task_executor*> lower_phy_dl_exec;
   std::vector<task_executor*> lower_phy_ul_exec;
   std::vector<task_executor*> lower_prach_exec;
-  task_executor*              radio_exec     = nullptr;
-  task_executor*              ru_timing_exec = nullptr;
-  std::vector<task_executor*> ru_txrx_exec;
+  task_executor*              radio_exec = nullptr;
   std::vector<task_executor*> fapi_exec;
-  std::vector<task_executor*> ru_dl_exec;
-  std::vector<task_executor*> ru_rx_exec;
   task_executor*              non_rt_low_prio_exec    = nullptr;
   task_executor*              non_rt_medium_prio_exec = nullptr;
   task_executor*              non_rt_hi_prio_exec     = nullptr;
@@ -86,6 +83,12 @@ struct worker_manager {
   {
     srsran_assert(du_low_exec_mapper, "DU Low execution mapper is not available.");
     return *du_low_exec_mapper;
+  }
+
+  ru_ofh_executor_mapper& get_ofh_ru_executor_mapper()
+  {
+    srsran_assert(ofh_exec_mapper, "OFH RU execution mapper is not available.");
+    return *ofh_exec_mapper;
   }
 
   du_pcap_executor_mapper&    get_du_pcap_executors() { return *pcap_exec_mapper; }
@@ -118,15 +121,17 @@ private:
 
   std::unique_ptr<gnb_pcap_executor_mapper> pcap_exec_mapper;
 
+  /// Open Fronthaul RU executor mapper.
+  std::unique_ptr<ru_ofh_executor_mapper> ofh_exec_mapper;
+
   /// Manager of execution contexts and respective executors instantiated by the application.
   task_execution_manager exec_mng;
 
   /// Collection of task executor decorators.
   std::vector<std::unique_ptr<task_executor>> executor_decorators_exec;
 
-  os_sched_affinity_manager low_prio_affinity_mng;
-  os_sched_affinity_bitmask ru_timing_mask;
-
+  os_sched_affinity_manager              low_prio_affinity_mng;
+  os_sched_affinity_bitmask              ru_timing_mask;
   std::vector<os_sched_affinity_bitmask> ru_txrx_affinity_masks;
 
   /// CPU affinity bitmask manager per cell.
