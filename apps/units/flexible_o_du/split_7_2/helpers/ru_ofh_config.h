@@ -13,6 +13,7 @@
 #include "apps/helpers/metrics/metrics_config.h"
 #include "apps/services/worker_manager/os_sched_affinity_manager.h"
 #include "srsran/ofh/receiver/ofh_receiver_configuration.h"
+#include "srsran/ofh/serdes/ofh_cplane_message_properties.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/support/units.h"
 #include <chrono>
@@ -114,6 +115,8 @@ struct ru_ofh_unit_base_cell_config {
   bool is_uplink_static_comp_hdr_enabled = true;
   /// Scaling configuration parameters.
   std::variant<std::monostate, ru_ofh_scaling_config, ru_ofh_legacy_scaling_config> iq_scaling_config;
+  /// PRACH FFT size (to be used in the C-plane Type 3 messages).
+  ofh::cplane_fft_size c_plane_prach_fft_len = ofh::cplane_fft_size::fft_4096;
 };
 
 /// gNB app Open Fronthaul cell configuration.

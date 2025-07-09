@@ -35,6 +35,8 @@ struct data_flow_cplane_scheduling_commands_impl_config {
   ru_compression_params ul_compr_params;
   /// PRACH compression parameters.
   ru_compression_params prach_compr_params;
+  /// PRACH FFT size (to be used in Type 3 messages).
+  cplane_fft_size c_plane_prach_fft_len;
 };
 
 /// Open Fronthaul Control-Plane scheduling and beamforming commands data flow implementation dependencies.
@@ -76,6 +78,7 @@ private:
   const unsigned                                    nof_symbols_per_slot;
   const unsigned                                    ru_nof_prbs;
   const unsigned                                    sector_id;
+  const cplane_fft_size                             c_plane_prach_fft_len;
   const ru_compression_params                       dl_compr_params;
   const ru_compression_params                       ul_compr_params;
   const ru_compression_params                       prach_compr_params;

@@ -41,10 +41,11 @@ create_data_flow_cplane_sched(const transmitter_config&                         
 
   config.ru_nof_prbs = get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.ru_working_bw), tx_config.scs, freq_range);
   config.sector      = tx_config.sector;
-  config.dl_compr_params    = tx_config.dl_compr_params;
-  config.ul_compr_params    = tx_config.ul_compr_params;
-  config.prach_compr_params = tx_config.prach_compr_params;
-  config.cp                 = tx_config.cp;
+  config.dl_compr_params       = tx_config.dl_compr_params;
+  config.ul_compr_params       = tx_config.ul_compr_params;
+  config.prach_compr_params    = tx_config.prach_compr_params;
+  config.cp                    = tx_config.cp;
+  config.c_plane_prach_fft_len = tx_config.c_plane_prach_fft_len;
 
   ether::vlan_frame_params ether_params;
   ether_params.eth_type        = ether::ECPRI_ETH_TYPE;

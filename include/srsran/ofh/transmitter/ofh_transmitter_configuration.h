@@ -15,6 +15,7 @@
 #include "srsran/ofh/ecpri/ecpri_packet_builder.h"
 #include "srsran/ofh/ethernet/ethernet_mac_address.h"
 #include "srsran/ofh/ofh_constants.h"
+#include "srsran/ofh/serdes/ofh_cplane_message_properties.h"
 #include "srsran/ofh/transmitter/ofh_transmitter_timing_parameters.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/cyclic_prefix.h"
@@ -71,6 +72,8 @@ struct transmitter_config {
   bool is_uplink_static_compr_hdr_enabled;
   /// IQ samples scaling factor.
   float iq_scaling;
+  /// C-Plane PRACH FFT size (to be used in Type 3 messages).
+  cplane_fft_size c_plane_prach_fft_len;
   /// Downlink processing time in microseconds.
   std::chrono::microseconds dl_processing_time;
   /// Uplink request processing time in microseconds.

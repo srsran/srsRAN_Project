@@ -153,6 +153,9 @@ static void generate_config(ru_ofh_configuration&                            out
       report_fatal_error(
           "Either the iq_scaling or the RU reference level and subarrier RMS backoff must be configured.");
     }
+
+    // C-Plane PRACH FFT config.
+    sector_cfg.c_plane_prach_fft_len = ofh_cell_cfg.cell.c_plane_prach_fft_len;
   }
 
   if (!is_valid_ru_ofh_config(out_cfg)) {

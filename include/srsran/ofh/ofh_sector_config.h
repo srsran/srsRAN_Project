@@ -100,6 +100,8 @@ struct sector_configuration {
   bool is_uplink_static_compr_hdr_enabled = true;
   /// IQ data scaling to be applied prior to Downlink data compression.
   float iq_scaling;
+  /// C-Plane PRACH FFT size (to be used in Type 3 messages).
+  ofh::cplane_fft_size c_plane_prach_fft_len = ofh::cplane_fft_size::fft_4096;
   /// \brief Number of slots the timing handler is notified in advance of the transmission time.
   ///
   /// Sets the maximum allowed processing delay in slots.

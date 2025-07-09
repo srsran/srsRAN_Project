@@ -225,6 +225,38 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_unit_bas
         return "";
       });
 
+  auto cplane_prach_fft_size_check = [](const std::string& value) -> std::string {
+    if ((value == "128") || (value == "256") || (value == "512") || (value == "1024") || (value == "1536") ||
+        (value == "2048") || (value == "3072") || (value == "4096")) {
+      return {};
+    }
+
+    return "Supported Open Fronthaul Radio Unit C-Plane PRACH FFT sizes are [128, 256, 512, 1024, 1536, 2048, 3072, "
+           "4096]";
+  };
+
+  app.add_option_function<unsigned>(
+         "--cplane_prach_fft_len",
+         [&config](unsigned value) {
+           switch (value) {
+             case 0:
+               config.c_plane_prach_fft_len = ofh::cplane_fft_size::fft_noop;
+               break;
+             case 1536:
+               config.c_plane_prach_fft_len = ofh::cplane_fft_size::fft_1536;
+               break;
+             case 3072:
+               config.c_plane_prach_fft_len = ofh::cplane_fft_size::fft_3072;
+               break;
+             default:
+               config.c_plane_prach_fft_len = static_cast<ofh::cplane_fft_size>(std::log2(value));
+               break;
+           }
+         },
+         "PRACH FFT length (used in C-Plane Type-3 messages)")
+      ->capture_default_str()
+      ->check(cplane_prach_fft_size_check);
+
   // Callback function for validating that both compression method and bitwidth parameters were specified.
   auto validate_compression_input = [](CLI::App& cli_app, const std::string& direction) {
     std::string method_param    = "--compr_method_" + direction;
