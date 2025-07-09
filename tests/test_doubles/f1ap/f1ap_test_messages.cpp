@@ -789,7 +789,7 @@ byte_buffer srsran::test_helpers::extract_dl_dcch_msg(const byte_buffer& rrc_con
 #ifndef SRSRAN_HAS_ENTERPRISE
 
 f1ap_message srsran::test_helpers::generate_positioning_measurement_request(
-    trp_id_t                                             trp_id,
+    std::vector<trp_id_t>                                trp_ids,
     lmf_meas_id_t                                        lmf_meas_id,
     ran_meas_id_t                                        ran_meas_id,
     std::vector<asn1::f1ap::pos_meas_type_opts::options> pos_meas_type_list,
