@@ -48,11 +48,11 @@ def configure_ntn_parameters(retina_data: RetinaTestData, ntn_config: NtnScenari
     retina_data.test_config["gnb"]["parameters"]["sib19"][
         "cell_specific_koffset"
     ] = ntn_config.sib19_cfg.cell_specific_koffset
-    retina_data.test_config["gnb"]["parameters"]["sib19"]["ta_common"] = int(ntn_config.sib19_cfg.ta_common)
-    retina_data.test_config["gnb"]["parameters"]["sib19"]["ta_common_drift"] = int(ntn_config.sib19_cfg.ta_common_drift)
-    retina_data.test_config["gnb"]["parameters"]["sib19"]["ta_common_drift_variant"] = int(
-        ntn_config.sib19_cfg.ta_common_drift_variant
-    )
+    retina_data.test_config["gnb"]["parameters"]["sib19"]["ta_common"] = ntn_config.sib19_cfg.ta_common
+    retina_data.test_config["gnb"]["parameters"]["sib19"]["ta_common_drift"] = ntn_config.sib19_cfg.ta_common_drift
+    retina_data.test_config["gnb"]["parameters"]["sib19"][
+        "ta_common_drift_variant"
+    ] = ntn_config.sib19_cfg.ta_common_drift_variant
     if ntn_config.sib19_cfg.ephemeris_info_type == EphemerisInfoType.ORBITAL:
         retina_data.test_config["gnb"]["parameters"]["sib19"]["use_ephemeris_orbital"] = True
         retina_data.test_config["gnb"]["parameters"]["sib19"][
