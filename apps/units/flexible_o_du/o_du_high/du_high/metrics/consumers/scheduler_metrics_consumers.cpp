@@ -243,7 +243,7 @@ void scheduler_cell_metrics_consumer_stdout::handle_metric(const std::optional<s
 
       fmt::print("   {:>2}", ue.ul_mcs.to_uint());
       if (ue.ul_brate_kbps > 0) {
-        fmt::print(" {:>6.6}", float_to_eng_string(ue.ul_brate_kbps * 1e3, 1, true));
+        fmt::print(" {:>6.6}", float_to_eng_string(ue.ul_brate_kbps * 1e3, 2, true));
       } else {
         fmt::print(" {:>6}", 0);
       }
@@ -431,8 +431,8 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
         "error_indications={} pdsch_rbs_per_slot={} pusch_rbs_per_slot={} pdschs_per_slot={:.3} puschs_per_slot={:.3} "
         "failed_pdcch={} failed_uci={} nof_ues={} mean_latency={}usec max_latency={}usec max_latency_slot={} "
         "latency_hist=[{}] msg3_ok={} msg3_nok={} late_dl_harqs={} late_ul_harqs={}",
-        float_to_eng_string(sum_dl_bitrate_kbps * 1e3, 1, false),
-        float_to_eng_string(sum_ul_bitrate_kbps * 1e3, 1, false),
+        float_to_eng_string(sum_dl_bitrate_kbps * 1e3, 2, false),
+        float_to_eng_string(sum_ul_bitrate_kbps * 1e3, 2, false),
         cell.nof_prbs,
         cell.nof_dl_slots,
         cell.nof_ul_slots,
@@ -508,7 +508,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
       fmt::format_to(std::back_inserter(buffer), " dl_mcs={}", int(ue.dl_mcs.to_uint()));
       if (ue.dl_brate_kbps > 0) {
         fmt::format_to(
-            std::back_inserter(buffer), " dl_brate={}bps", float_to_eng_string(ue.dl_brate_kbps * 1e3, 1, false));
+            std::back_inserter(buffer), " dl_brate={}bps", float_to_eng_string(ue.dl_brate_kbps * 1e3, 2, false));
       } else {
         fmt::format_to(std::back_inserter(buffer), " dl_brate={}bps", 0);
       }
@@ -550,7 +550,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
       fmt::format_to(std::back_inserter(buffer), " ul_mcs={}", ue.ul_mcs.to_uint());
       if (ue.ul_brate_kbps > 0) {
         fmt::format_to(
-            std::back_inserter(buffer), " ul_brate={}bps", float_to_eng_string(ue.ul_brate_kbps * 1e3, 1, false));
+            std::back_inserter(buffer), " ul_brate={}bps", float_to_eng_string(ue.ul_brate_kbps * 1e3, 2, false));
       } else {
         fmt::format_to(std::back_inserter(buffer), " ul_brate={}bps", 0);
       }
