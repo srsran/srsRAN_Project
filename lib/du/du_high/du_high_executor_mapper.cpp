@@ -413,7 +413,14 @@ private:
   task_executor& create_time_exec(const du_high_executor_config& config)
   {
     task_executor* base_time_exec = nullptr;
-    if (const auto* execs = std::get_if<du_high_executor_config::dedicated_cell_worker_list>(&config.cell_executors)) {
+    if (not config.is_rt_mode_enabled) {
+      // In case of non-RT mode, non-RT pool is used for timers.
+      // Note: We don't use the cell executor, because it may be a synchronous executor, which will cause a deadlock.
+      tick_strand    = std::make_unique<tick_strand_type>(config.ctrl_executors.pool_executor,
+                                                       config.ctrl_executors.task_queue_size);
+      base_time_exec = tick_strand.get();
+    } else if (const auto* execs =
+                   std::get_if<du_high_executor_config::dedicated_cell_worker_list>(&config.cell_executors)) {
       // In case the cell executors are dedicated task workers, we do not need to instantiate any strand.
       // We will use the executor of the first cell worker.
       base_time_exec = execs->at(0).low_prio_executor;
