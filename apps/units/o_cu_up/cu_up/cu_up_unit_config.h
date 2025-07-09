@@ -39,7 +39,7 @@ struct cu_up_unit_metrics_config {
 };
 
 struct cu_up_unit_ngu_socket_config {
-  std::string   bind_addr      = "auto";
+  std::string   bind_addr      = "127.0.0.1";
   std::string   bind_interface = "auto";
   std::string   ext_addr       = "auto";
   udp_appconfig udp_config     = {};

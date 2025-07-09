@@ -150,6 +150,20 @@ static void fill_cu_worker_manager_config(worker_manager_config& config, const c
   config.low_prio_sched_config    = unit_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg;
 }
 
+static void autoderive_cu_up_parameters_after_parsing(cu_up_appconfig& cu_up_config, o_cu_up_unit_config& o_cu_up_cfg)
+{
+  // If no UPF is configured, we set a default configuration.
+  if (o_cu_up_cfg.cu_up_cfg.ngu_cfg.ngu_socket_cfg.empty()) {
+    cu_up_unit_ngu_socket_config sock_cfg;
+    o_cu_up_cfg.cu_up_cfg.ngu_cfg.ngu_socket_cfg.push_back(sock_cfg);
+  }
+  // If no F1-U socket configuration is derived, we set a default configuration.
+  if (cu_up_config.f1u_cfg.f1u_socket_cfg.empty()) {
+    f1u_socket_appconfig sock_cfg;
+    cu_up_config.f1u_cfg.f1u_socket_cfg.push_back(sock_cfg);
+  }
+}
+
 int main(int argc, char** argv)
 {
   // Set the application error handler.
@@ -178,6 +192,13 @@ int main(int argc, char** argv)
 
   auto o_cu_up_app_unit = create_o_cu_up_application_unit("cu-up");
   o_cu_up_app_unit->on_parsing_configuration_registration(app);
+
+  // Set the callback for the app calling all the autoderivation functions.
+  app.callback([&app, &cu_up_cfg, &o_cu_up_app_unit]() {
+    o_cu_up_app_unit->on_configuration_parameters_autoderivation(app);
+
+    autoderive_cu_up_parameters_after_parsing(cu_up_cfg, o_cu_up_app_unit->get_o_cu_up_unit_config());
+  });
 
   // Parse arguments.
   CLI11_PARSE(app, argc, argv);
