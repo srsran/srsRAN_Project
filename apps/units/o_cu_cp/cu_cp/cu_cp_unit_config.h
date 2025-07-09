@@ -40,7 +40,7 @@ struct cu_cp_unit_supported_ta_item {
 };
 
 struct cu_cp_unit_amf_config_item {
-  std::string ip_addr                = "127.0.0.1";
+  std::string ip_addr                = "127.0.1.100";
   uint16_t    port                   = 38412;
   std::string bind_addr              = "127.0.0.1";
   std::string bind_interface         = "auto";

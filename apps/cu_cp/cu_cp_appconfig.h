@@ -24,7 +24,7 @@ namespace srs_cu_cp {
 /// E1AP configuration.
 struct e1ap_appconfig {
   /// CU-CP E1AP bind address.
-  std::string bind_addr = "127.0.11.1";
+  std::string bind_addr = "127.0.0.1";
 };
 
 /// F1AP configuration.

@@ -25,9 +25,9 @@ namespace srs_cu_up {
 /// Configuration of the E1AP interface of the CU-UP.
 struct e1ap_appconfig {
   /// CU-CP E1AP address the CU-UP will connect to.
-  std::string cu_cp_address = "127.0.11.1";
+  std::string cu_cp_address = "127.0.20.1";
   /// CU-UP E1AP bind address.
-  std::string bind_address = "127.0.11.2";
+  std::string bind_address = "127.0.20.2";
 };
 
 /// Metrics report configuration.

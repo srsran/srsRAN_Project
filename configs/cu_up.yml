@@ -1,10 +1,13 @@
 # Example config for a locally deployed CU-UP
 
 cu_up:
+  e1ap:
+    cu_cp_addr: 127.0.20.1
+    bind_addr: 127.0.20.2
   ngu:
     socket:
       -
-        bind_addr: 127.0.10.2
+        bind_addr: 127.0.0.1
   f1u:
     socket:
       -

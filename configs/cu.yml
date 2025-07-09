@@ -3,8 +3,7 @@
 cu_cp:
   amf:
     addr: 127.0.1.100
-    port: 38412
-    bind_addr: 127.0.10.2
+    bind_addr: 127.0.0.1
     supported_tracking_areas:
       - tac: 7
         plmn_list:
