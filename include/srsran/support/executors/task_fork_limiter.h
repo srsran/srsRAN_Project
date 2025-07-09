@@ -68,6 +68,7 @@ private:
 
   void process_enqueued_tasks()
   {
+    active_forks.fetch_add(1, std::memory_order_acq_rel);
     unique_task task;
 
     unsigned max_pops  = max_batch;
@@ -76,12 +77,11 @@ private:
       if (not pop_task(task)) {
         break;
       }
+      // Decrement the job count after successful pop.
+      jobs_left = job_count.fetch_sub(1, std::memory_order_acq_rel) - 1;
 
       // Execute the task.
       task();
-
-      // Decrement the job count after successful pop and task execute.
-      jobs_left = job_count.fetch_sub(1, std::memory_order_acq_rel) - 1;
 
       // Check if we should yield back control to the worker.
       if (--max_pops == 0 and jobs_left > 0) {
@@ -89,6 +89,8 @@ private:
         break;
       }
     }
+
+    active_forks.fetch_sub(1, std::memory_order_acq_rel);
   }
 
   bool defer_remaining_tasks()
@@ -127,22 +129,23 @@ private:
       // Failed to pop a task from the queue.
 
       // Re-read pending job count.
-      unsigned jobs_left = job_count.load(std::memory_order_acquire);
-      if (jobs_left > 0) {
-        // This is likely a spurious pop failure (some MPMC queue implementations have this issue). We will retry the
-        // pop.
+      unsigned jobs_left          = job_count.load(std::memory_order_acquire);
+      unsigned active_forks_count = active_forks.load(std::memory_order_acquire);
+      if (active_forks_count <= 1 and jobs_left > 0) {
+        // For some queues, the pop operation may fail spuriously, even when there are tasks in the queue.
+        // If only one fork branch is active and there are more jobs left, we cannot give up yet.
         continue;
       }
 
       // No more tasks to process.
-      // Note: This is expected to happen even when jobs_left > 0, when there are more than one concurrent consumer.
       return false;
     }
 
     if (nof_attempts >= max_attempts) {
-      // Unexpected failure to pop enqueued tasks. Possible reason: Are you using an SPSC queue with multiple
-      // producers?
-      srslog::fetch_basic_logger("ALL").error("Couldn't pop pending tasks.");
+      // Unexpected failure to pop enqueued tasks.
+      srslog::fetch_basic_logger("ALL").error("Couldn't pop pending tasks (tasks={}, active forks={}).",
+                                              job_count.load(std::memory_order_relaxed),
+                                              active_forks.load(std::memory_order_relaxed));
       return false;
     }
     return true;
@@ -161,6 +164,9 @@ private:
 
   /// Current number of active forks, used to limit the number of concurrent tasks.
   std::atomic<unsigned> job_count{0};
+
+  /// Counter of the number of active forks.
+  std::atomic<unsigned> active_forks{0};
 };
 
 /// \brief Create an adaptor of the task_executor that limits the number of concurrent tasks to \c max_fork_size.
