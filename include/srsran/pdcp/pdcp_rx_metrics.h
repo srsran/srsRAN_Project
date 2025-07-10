@@ -86,12 +86,12 @@ inline std::string format_pdcp_rx_metrics(timer_duration metrics_period, const p
   }
   fmt::format_to(std::back_inserter(buffer), "]");
   if (m.min_sdu_latency_ns.has_value()) {
-    fmt::format_to(std::back_inserter(buffer), " min_sdu_latency={}us", m.min_sdu_latency_ns.value() * 1e-3);
+    fmt::format_to(std::back_inserter(buffer), " min_sdu_latency={:.2f}us", m.min_sdu_latency_ns.value() * 1e-3);
   } else {
     fmt::format_to(std::back_inserter(buffer), " min_sdu_latency=none");
   }
   if (m.max_sdu_latency_ns) {
-    fmt::format_to(std::back_inserter(buffer), " max_sdu_latency={}us", m.max_sdu_latency_ns.value() * 1e-3);
+    fmt::format_to(std::back_inserter(buffer), " max_sdu_latency={:.2f}us", m.max_sdu_latency_ns.value() * 1e-3);
   } else {
     fmt::format_to(std::back_inserter(buffer), " max_sdu_latency=none");
   }

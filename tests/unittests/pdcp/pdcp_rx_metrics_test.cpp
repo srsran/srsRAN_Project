@@ -143,7 +143,7 @@ TEST_F(pdcp_rx_metrics_container_test, values)
         "num_integrity_verified_pdus=450k num_integrity_failed_pdus=865k num_t_reordering_timeouts=4.46k "
         "avg_reordering_delay=19.86ms reordering_counter=23 avg_sdu_latency=0.01us sdu_latency_hist=[ 999  20  400 "
         "8.0k "
-        "160k 3.2M 64M  128] min_sdu_latency=1.2us max_sdu_latency=54.322us crypto_cpu_usage=500.00\%";
+        "160k 3.2M 64M  128] min_sdu_latency=1.20us max_sdu_latency=54.32us crypto_cpu_usage=500.00\%";
     srslog::fetch_basic_logger("TEST", false).info("out_str={}", out_str);
     srslog::fetch_basic_logger("TEST", false).info("exp_str={}", exp_str);
     EXPECT_EQ(out_str, exp_str);
