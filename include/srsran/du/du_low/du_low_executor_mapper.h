@@ -104,6 +104,8 @@ struct du_low_executor_mapper_single_exec_config {
 struct du_low_executor_mapper_manual_exec_config {
   /// High priority executor.
   task_executor* high_priority_executor = nullptr;
+  /// Low priority executor.
+  task_executor* low_priority_executor = nullptr;
   /// Executor for downlink transmissions.
   task_executor* dl_executor = nullptr;
   /// Executor for PDSCH concurrent processing.
@@ -114,10 +116,8 @@ struct du_low_executor_mapper_manual_exec_config {
   task_executor* pucch_executor = nullptr;
   /// Executor for SRS reception.
   task_executor* srs_executor = nullptr;
-  /// Executor for PUSCH decoding.
-  task_executor* pusch_decoder_executor = nullptr;
-  /// Maximum number of concurrent PUSCH decoders.
-  unsigned max_concurrent_pusch_decoders = 16;
+  /// Limits the number of threads that can decode PUSCH concurrently.
+  unsigned max_concurrent_pusch_decoders = 2;
 };
 
 /// Variant of the DU low executor mapping configuration.

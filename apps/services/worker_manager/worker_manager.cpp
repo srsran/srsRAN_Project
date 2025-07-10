@@ -520,24 +520,16 @@ worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::
         report_fatal_error("Failed to instantiate {} execution context", dl_worker_pool.name);
       }
 
-      // Instantiate dedicated PUSCH decoder workers for each cell.
-      // In case of pusch_decoder_threads > 0, the PUSCH decoder will take place in the non-rt thread pool.
-      const unsigned nof_pusch_decoder_workers = du_low.nof_pusch_decoder_threads;
-      std::string    pusch_decoder_exec_name   = l1_pusch_exec_name;
-      if (nof_pusch_decoder_workers > 0) {
-        pusch_decoder_exec_name = "medium_prio_exec";
-      }
-
       // Fill the task executors for each cell.
       du_low_exec_mapper_config.cells.emplace_back(srs_du::du_low_executor_mapper_manual_exec_config{
           .high_priority_executor        = exec_mng.executors().at(l1_high_prio_name),
+          .low_priority_executor         = non_rt_low_prio_exec,
           .dl_executor                   = exec_mng.executors().at(l1_dl_exec_name),
           .pdsch_executor                = exec_mng.executors().at(l1_pdsch_exec_name),
           .pusch_executor                = exec_mng.executors().at(l1_pusch_exec_name),
           .pucch_executor                = exec_mng.executors().at(l1_pucch_exec_name),
           .srs_executor                  = exec_mng.executors().at(l1_srs_exec_name),
-          .pusch_decoder_executor        = exec_mng.executors().at(pusch_decoder_exec_name),
-          .max_concurrent_pusch_decoders = nof_pusch_decoder_workers});
+          .max_concurrent_pusch_decoders = du_low.nof_pusch_decoder_threads});
 
       // Save DL executors for the higher layers.
       crit_path_prio_executors.push_back(exec_mng.executors().at(l1_dl_exec_name));

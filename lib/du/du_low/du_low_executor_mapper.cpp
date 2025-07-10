@@ -106,17 +106,9 @@ public:
         pdsch_exec         = manual.pdsch_executor;
         prach_exec         = create_strand(manual.high_priority_executor);
         pusch_exec         = manual.pusch_executor;
-        pusch_dec_exec     = manual.pusch_decoder_executor;
-        pucch_exec         = manual.pucch_executor;
-        srs_exec           = manual.srs_executor;
-
-        if (manual.max_concurrent_pusch_decoders > 0) {
-          const unsigned pusch_dec_queue_size = 2048;
-          auto           fork_limiter         = make_task_fork_limiter_ptr<concurrent_queue_policy::lockfree_mpmc>(
-              *pusch_dec_exec, manual.max_concurrent_pusch_decoders, pusch_dec_queue_size);
-          executors.emplace_back(std::move(fork_limiter));
-          pusch_dec_exec = executors.back().get();
-        }
+        pusch_dec_exec = create_task_fork_limiter(manual.low_priority_executor, manual.max_concurrent_pusch_decoders);
+        pucch_exec     = manual.pucch_executor;
+        srs_exec       = manual.srs_executor;
       }
 
       srsran_assert(dl_exec != nullptr, "Invalid DL executor.");
@@ -155,11 +147,27 @@ public:
   }
 
 private:
+  /// Default queue size for DU low executors.
+  static constexpr unsigned default_queue_size = 2048;
+
   /// Creates a strand on the top of a given executor.
   task_executor* create_strand(task_executor* base_executor)
   {
     srsran_assert(base_executor != nullptr, "Invalid executor.");
-    executors.emplace_back(make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(*base_executor, 2048));
+    executors.emplace_back(
+        make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(*base_executor, default_queue_size));
+    return executors.back().get();
+  }
+  /// Creates a task fork limiter on the top of a given executor.
+  task_executor* create_task_fork_limiter(task_executor* base_executor, unsigned max_nof_threads)
+  {
+    if (max_nof_threads <= 1) {
+      return create_strand(base_executor);
+    }
+
+    srsran_assert(base_executor != nullptr, "Invalid executor.");
+    executors.emplace_back(make_task_fork_limiter_ptr<concurrent_queue_policy::lockfree_mpmc>(
+        *base_executor, max_nof_threads, default_queue_size));
     return executors.back().get();
   }
 

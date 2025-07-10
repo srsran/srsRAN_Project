@@ -12,6 +12,7 @@
 #include "apps/services/worker_manager/worker_manager_config.h"
 #include "du_low_config.h"
 #include "srsran/du/du_cell_config.h"
+#include "srsran/du/du_low/du_low_executor_mapper.h"
 #include "srsran/phy/upper/upper_phy_factories.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/prach/prach_configuration.h"

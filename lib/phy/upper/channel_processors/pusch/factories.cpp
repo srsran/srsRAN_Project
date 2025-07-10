@@ -80,7 +80,7 @@ public:
           config.dematcher_factory->create(), config.decoder_factory->create(), crcs1);
     }
 
-    decoder_pool = std::make_unique<pusch_decoder_impl::codeblock_decoder_pool>(std::move(codeblock_decoders));
+    decoder_pool = std::make_unique<pusch_decoder_impl::codeblock_decoder_pool>(codeblock_decoders);
   }
 
   std::unique_ptr<pusch_decoder> create() override
