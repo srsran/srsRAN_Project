@@ -9,6 +9,7 @@
  */
 
 #include "dl_logical_channel_manager.h"
+#include "srsran/ran/qos/arp_prio_level.h"
 
 using namespace srsran;
 
@@ -131,13 +132,14 @@ void dl_logical_channel_manager::set_lcid_ran_slice(lcid_t lcid, ran_slice_id_t 
   channels[lcid].slice_id = slice_id;
 }
 
-static uint8_t get_lc_prio(const logical_channel_config& cfg)
+static uint16_t get_lc_prio(const logical_channel_config& cfg)
 {
-  uint8_t prio = 0;
+  uint16_t prio = 0;
   if (is_srb(cfg.lcid)) {
     prio = cfg.lcid <= LCID_SRB1 ? 0 : 1;
   } else {
-    prio = cfg.qos.has_value() ? cfg.qos->qos.priority.value() : qos_prio_level_t::max();
+    prio = cfg.qos.has_value() ? cfg.qos->qos.priority.value() * cfg.qos->arp_priority.value()
+                               : qos_prio_level_t::max() * arp_prio_level_t::max();
   }
   return prio;
 }
