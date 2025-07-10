@@ -977,7 +977,7 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
     for (const uint8_t sib_it : si_msg.sib_mapping_info) {
       // si-WindowPosition-r17 is part of release 17 specification only. See TS 38.331, V17.0.0, \c SchedulingInfo2-r17.
       if (sib_it < r17_min_sib_type and si_msg.si_window_position.has_value()) {
-        fmt::print("The SIB{} cannot be configured with SI-window position", sib_it);
+        fmt::print("The SIB{} cannot be configured with SI-window position.\n", sib_it);
         return false;
       }
       sibs_included.push_back(sib_it);
@@ -990,7 +990,7 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
   // Check if there are repeated SIBs in the SI messages.
   const auto duplicate_it = std::adjacent_find(sibs_included.begin(), sibs_included.end());
   if (duplicate_it != sibs_included.end()) {
-    fmt::print("The SIB{} cannot be included more than once in the broadcast SI messages", *duplicate_it);
+    fmt::print("The SIB{} cannot be included more than once in the broadcast SI messages.\n", *duplicate_it);
     return false;
   }
 
