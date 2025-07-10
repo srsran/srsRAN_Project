@@ -1011,6 +1011,8 @@ rhel-8 amd64 avx2:
     OS: rhel-8
     MARCH: x86-64-v3
     INFRASTRUCTURE_TAG: amd64-avx2
+    KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "50G"
+    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"
   parallel:
     matrix:
       - <<: *basic_combinations
