@@ -572,7 +572,7 @@ struct du_high_unit_sib_config {
     /// Periodicity of the SI-message in radio frames. Values: {8, 16, 32, 64, 128, 256, 512}.
     unsigned si_period_rf = 32;
     /// SI window position of the associated SI-message. See TS 38.331, \c SchedulingInfo2-r17. Values: {1,...,256}.
-    /// \remark This field is only applicable for release 17 \c SI-SchedulingInfo.
+    /// \remark This field is only applicable for release 17 \c SI-SchedulingInfo2.
     std::optional<unsigned> si_window_position;
   };
 
