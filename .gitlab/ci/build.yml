@@ -1852,7 +1852,11 @@ basic package:
 basic relwithdeb:
   extends: .build_and_unit
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests OpenSource/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
+      variables:
+        ENABLE_FFTW: "False"
+        ENABLE_MKL: "True"
   retry: 2
   interruptible: false
   variables:
@@ -1873,7 +1877,11 @@ basic relwithdeb:
 basic tsan:
   extends: .build_and_unit
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests OpenSource/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
+      variables:
+        ENABLE_FFTW: "False"
+        ENABLE_MKL: "True"
   retry: 2
   interruptible: false
   variables:
@@ -1896,7 +1904,11 @@ basic tsan:
 basic asan:
   extends: .build_and_unit
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests OpenSource/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
+      variables:
+        ENABLE_FFTW: "False"
+        ENABLE_MKL: "True"
   retry: 2
   interruptible: false
   variables:
@@ -1916,33 +1928,14 @@ basic asan:
     <<: *build_artifacts
     expire_in: 3 days
 
-basic rtsan:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
-  retry: 2
-  interruptible: false
-  variables:
-    SRS_TARGET: gnb
-    OS: ubuntu-24.04-rtsan
-    COMPILER: clang
-    CMAKE_BUILD_TYPE: Debug
-    ASSERT_LEVEL: PARANOID
-    ENABLE_RTSAN: "True"
-    ENABLE_WERROR: "False"
-    TEST_MODE: none
-    MARCH: x86-64-v3
-    INFRASTRUCTURE_TAG: amd64-avx2
-  after_script:
-    - *build_after_script
-  artifacts:
-    <<: *build_artifacts
-    expire_in: 3 days
-
 basic memcheck:
   extends: .build_and_unit
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests OpenSource/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
+      variables:
+        ENABLE_FFTW: "False"
+        ENABLE_MKL: "True"
   retry: 2
   interruptible: false
   variables:
@@ -1963,7 +1956,11 @@ basic memcheck:
 basic ru dummy:
   extends: .build_and_unit
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests OpenSource/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
+      variables:
+        ENABLE_FFTW: "False"
+        ENABLE_MKL: "True"
   retry: 2
   interruptible: false
   variables:
@@ -1989,7 +1986,11 @@ basic ru dummy:
 basic avx2 dpdk rtsan:
   extends: .build_and_unit
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests OpenSource/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
+      variables:
+        ENABLE_FFTW: "False"
+        ENABLE_MKL: "True"
   retry: 2
   interruptible: false
   variables:
@@ -2018,8 +2019,15 @@ basic avx2 dpdk rtsan:
 basic avx512 dpdk:
   extends: .build_and_unit
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests OpenSource/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
+      variables:
+        ENABLE_FFTW: "False"
+        ENABLE_MKL: "True"
     - if: $CI_DESCRIPTION =~ /Weekly/
+      variables:
+        ENABLE_FFTW: "False"
+        ENABLE_MKL: "True"
   retry: 2
   interruptible: false
   variables:
@@ -2046,15 +2054,26 @@ basic avx512 dpdk:
 basic avx512 dpdk withassert:
   extends: basic avx512 dpdk
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests OpenSource/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
+      variables:
+        ENABLE_FFTW: "False"
+        ENABLE_MKL: "True"
   variables:
     ASSERT_LEVEL: PARANOID
 
 basic avx512 dpdk rtsan:
   extends: basic avx512 dpdk
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests OpenSource/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
+      variables:
+        ENABLE_FFTW: "False"
+        ENABLE_MKL: "True"
     - if: $CI_DESCRIPTION =~ /Weekly/
+      variables:
+        ENABLE_FFTW: "False"
+        ENABLE_MKL: "True"
   variables:
     OS: ubuntu-24.04-rtsan
     COMPILER: clang
