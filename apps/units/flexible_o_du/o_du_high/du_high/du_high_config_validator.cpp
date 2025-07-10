@@ -994,6 +994,14 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
     return false;
   }
 
+  // Check if SIB19 is included together with any other SIB, which is not allowed.
+  const auto sib19_included = std::find(
+      sibs_included.begin(), sibs_included.end(), static_cast<std::underlying_type_t<sib_type>>(sib_type::sib19));
+  if (sib19_included != sibs_included.end() && sibs_included.size() > 1) {
+    fmt::print("SIB19 cannot be included in the SI messages together with other SIBs.\n");
+    return false;
+  }
+
   // Check whether SI window position when provided in SI scheduling information is in ascending order. See TS 38.331,
   // \c si-WindowPosition.
   for (unsigned i = 0, j = 0; i < si_window_positions.size() && j < si_window_positions.size(); ++i, ++j) {
