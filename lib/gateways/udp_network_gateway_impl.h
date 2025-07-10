@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/batched_dispatch_queue.h"
 #include "srsran/gateways/udp_network_gateway.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/io/unique_fd.h"
@@ -21,6 +22,11 @@
 namespace srsran {
 
 constexpr uint32_t network_gateway_udp_max_len = 9100;
+
+struct udp_tx_pdu_t {
+  byte_buffer      pdu;
+  sockaddr_storage dst_addr;
+};
 
 class udp_network_gateway_impl final : public udp_network_gateway
 {
@@ -41,6 +47,8 @@ private:
 
   // Actual PDU handling, shall run in IO executor.
   void handle_pdu_impl(const byte_buffer& pdu, const sockaddr_storage& dest_addr);
+
+  void handle_pdu_impl(span<udp_tx_pdu_t> pdus);
 
   // Handle error detected by io_broker that led to the io deregistration.
   void handle_io_error(io_broker::error_code code);
@@ -67,6 +75,8 @@ private:
 
   unique_fd             sock_fd;
   io_broker::subscriber io_subcriber;
+
+  batched_dispatch_queue<udp_tx_pdu_t> batched_queue;
 
   sockaddr_storage local_addr        = {}; // the local address
   socklen_t        local_addrlen     = 0;

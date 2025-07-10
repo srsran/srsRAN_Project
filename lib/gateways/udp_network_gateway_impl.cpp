@@ -30,7 +30,8 @@ udp_network_gateway_impl::udp_network_gateway_impl(udp_network_gateway_config   
   data_notifier(data_notifier_),
   logger(srslog::fetch_basic_logger("UDP-GW")),
   io_tx_executor(io_tx_executor_),
-  io_rx_executor(io_rx_executor_)
+  io_rx_executor(io_rx_executor_),
+  batched_queue(256, io_tx_executor, logger, [this](span<udp_tx_pdu_t> pdus) { handle_pdu_impl(std::move(pdus)); })
 {
   logger.info("UDP GW configured. rx_max_mmsg={} pool_thres={} ext_bind_addr={}",
               config.rx_max_mmsg,
@@ -55,9 +56,56 @@ bool udp_network_gateway_impl::subscribe_to(io_broker& broker)
 
 void udp_network_gateway_impl::handle_pdu(byte_buffer pdu, const sockaddr_storage& dest_addr)
 {
-  auto fn = TRACE_TASK([this, p = std::move(pdu), dest_addr]() mutable { handle_pdu_impl(std::move(p), dest_addr); });
-  if (not io_tx_executor.execute(std::move(fn))) {
-    logger.info("Dropped PDU, queue is full.");
+  batched_queue.try_push(udp_tx_pdu_t{std::move(pdu), dest_addr});
+}
+
+void udp_network_gateway_impl::handle_pdu_impl(span<udp_tx_pdu_t> pdus)
+{
+  if (not sock_fd.is_open()) {
+    logger.error("Socket not initialized");
+    return;
+  }
+
+  mmsghdr  mmsg[256];
+  iovec    msgs[256][256];
+  unsigned msg_index     = 0;
+  unsigned segment_index = 0;
+  for (const auto& pdu : pdus) {
+    if (pdu.pdu.length() > network_gateway_udp_max_len) {
+      logger.error("PDU of {} bytes exceeds maximum length of {} bytes", pdu.pdu.length(), network_gateway_udp_max_len);
+      break;
+    }
+    for (span segment : pdu.pdu.segments()) {
+      const unsigned char* data               = segment.begin();
+      unsigned             size               = segment.size();
+      msgs[msg_index][segment_index].iov_base = (void*)data;
+      msgs[msg_index][segment_index].iov_len  = size;
+      segment_index++;
+      if (segment_index >= 256) {
+        logger.error("Too many segments. Truncating PDU.");
+        break;
+      }
+    }
+
+    mmsg[msg_index].msg_hdr.msg_iov        = &msgs[msg_index][0];
+    mmsg[msg_index].msg_hdr.msg_iovlen     = segment_index;
+    mmsg[msg_index].msg_hdr.msg_name       = (void*)&pdu.dst_addr;
+    mmsg[msg_index].msg_hdr.msg_namelen    = sizeof(pdu.dst_addr);
+    mmsg[msg_index].msg_hdr.msg_control    = nullptr;
+    mmsg[msg_index].msg_hdr.msg_controllen = 0;
+    mmsg[msg_index].msg_hdr.msg_flags      = 0;
+
+    segment_index = 0;
+    msg_index++;
+    if (msg_index > 256) {
+      logger.error("Too many SDUs to send in a single burst, dropping.");
+      break;
+    }
+  }
+
+  int ret = sendmmsg(sock_fd.value(), mmsg, msg_index, 0);
+  if (ret < 0) {
+    logger.error("error in sendmmsg ret={}, error={}", msg_index, ret, strerror(errno));
   }
 }
 

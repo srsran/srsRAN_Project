@@ -102,7 +102,7 @@ int main(int argc, char** argv)
   std::unique_ptr<udp_network_gateway>              gw2;
 
   inline_task_executor io_rx_executor;
-  manual_task_worker   io_tx_executor{128};
+  inline_task_executor io_tx_executor;
 
   gw1 = create_udp_network_gateway({gw1_cfg, gw1_dn, io_tx_executor, io_rx_executor});
   gw2 = create_udp_network_gateway({gw2_cfg, gw2_dn, io_tx_executor, io_rx_executor});
