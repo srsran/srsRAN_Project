@@ -106,7 +106,8 @@ private:
 
   void handle_failed_dispatch()
   {
-    srslog::fetch_basic_logger("ALL").error("Couldn't dispatch forked task. Cause: out_exec queue is full");
+    srslog::fetch_basic_logger("ALL").error(
+        "task_fork_limiter: Couldn't dispatch forked task. Cause: out_exec queue is full");
 
     // If we failed to dispatch the task, we need to revert the increment of job count.
     // TODO: Improve the failed dispatch handling. For instance, we could let it not fail if there is at least a forked
@@ -123,29 +124,29 @@ private:
 
   bool pop_task(unique_task& task)
   {
-    static constexpr unsigned max_attempts = 100;
-    unsigned                  nof_attempts = 0;
-    for (; nof_attempts < max_attempts and not queue.try_pop(task); ++nof_attempts) {
+    if (not queue.try_pop(task)) {
       // Failed to pop a task from the queue.
-
       // Re-read pending job count.
-      unsigned jobs_left          = job_count.load(std::memory_order_acquire);
-      unsigned active_forks_count = active_forks.load(std::memory_order_acquire);
-      if (active_forks_count <= 1 and jobs_left > 0) {
-        // For some queues, the pop operation may fail spuriously, even when there are tasks in the queue.
-        // If only one fork branch is active and there are more jobs left, we cannot give up yet.
-        continue;
+      unsigned jobs_left = job_count.load(std::memory_order_acquire);
+      if (jobs_left == 0) {
+        // No more jobs left to process. Probably, another fork did the pop operation concurrently.
+        count_pop_fails.store(0, std::memory_order_relaxed);
+        return false;
       }
 
-      // No more tasks to process.
-      return false;
-    }
-
-    if (nof_attempts >= max_attempts) {
-      // Unexpected failure to pop enqueued tasks.
-      srslog::fetch_basic_logger("ALL").error("Couldn't pop pending tasks (tasks={}, active forks={}).",
-                                              job_count.load(std::memory_order_relaxed),
-                                              active_forks.load(std::memory_order_relaxed));
+      // There are still jobs left to process.
+      unsigned active_forks_count = active_forks.load(std::memory_order_acquire);
+      if (active_forks_count <= 1) {
+        // Sometimes, the pop operation may fail spuriously, even when there are tasks in the queue.
+        // Last fork alive. Do not give up yet and defer the popping.
+        auto count_copy = count_pop_fails.fetch_add(1, std::memory_order_relaxed) + 1;
+        if (count_copy >= 1000) {
+          count_pop_fails.store(0, std::memory_order_relaxed);
+          srslog::fetch_basic_logger("ALL").warning(
+              "task_fork_limiter: Too many pop failures detected. There was likely a lost job in the queue");
+        }
+        defer_remaining_tasks();
+      }
       return false;
     }
     return true;
@@ -167,6 +168,9 @@ private:
 
   /// Counter of the number of active forks.
   std::atomic<unsigned> active_forks{0};
+
+  /// Counter of the number of unexpected pop failures.
+  std::atomic<unsigned> count_pop_fails{0};
 };
 
 /// \brief Create an adaptor of the task_executor that limits the number of concurrent tasks to \c max_fork_size.
