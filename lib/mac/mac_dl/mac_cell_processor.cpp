@@ -62,8 +62,10 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
   time_source(std::move(dependencies.timer_source)),
   metrics(cell_cfg.pci, cell_cfg.scs_common, dependencies.notifier),
   pcap(pcap_),
-  slot_time_mapper(to_numerology_value(cell_cfg_req_.scs_common))
+  slot_time_mapper(to_numerology_value(cell_cfg_req_.scs_common)),
+  sib1_pcap_dumped_version(std::numeric_limits<unsigned>::max())
 {
+  std::fill(si_pcap_dumped_version.begin(), si_pcap_dumped_version.end(), std::numeric_limits<unsigned>::max());
 }
 
 async_task<void> mac_cell_processor::start()
@@ -519,9 +521,14 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
 
   for (unsigned i = 0, e = dl_res.si_pdus.size(); i != e; ++i) {
     const sib_information& dl_alloc = sl_res.dl.bc.sibs[i];
-    // At the moment, we allocate max 1 SIB (SIB1) message per slot. Eventually, this will be extended to other SIBs.
-    // TODO: replace sib1_pcap_dumped flag with a vector or booleans that includes other SIBs.
-    if (dl_alloc.si_indicator == sib_information::sib1 and not sib1_pcap_dumped) {
+    if (dl_alloc.si_indicator != sib_information::sib1) {
+      srsran_assert(dl_alloc.si_msg_index.has_value() and *dl_alloc.si_msg_index < si_pcap_dumped_version.size(),
+                    "Invalid SI message index");
+    }
+    unsigned& dumped_version = (dl_alloc.si_indicator == sib_information::sib1)
+                                   ? sib1_pcap_dumped_version
+                                   : si_pcap_dumped_version[*dl_alloc.si_msg_index];
+    if (dumped_version != dl_alloc.version) {
       const mac_dl_data_result::dl_pdu& sib1_pdu = dl_res.si_pdus[i];
       mac_nr_context_info               context  = {};
       context.radioType = cell_cfg.sched_req.tdd_ul_dl_cfg_common.has_value() ? PCAP_TDD_RADIO : PCAP_FDD_RADIO;
@@ -532,7 +539,7 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
       context.sub_frame_number    = sl_tx.subframe_index();
       context.length              = sib1_pdu.pdu.get_buffer().size();
       pcap.push_pdu(context, sib1_pdu.pdu.get_buffer());
-      sib1_pcap_dumped = true;
+      dumped_version = dl_alloc.version;
     }
   }
 
