@@ -307,7 +307,7 @@ public:
   }
 };
 
-#if SRSRAN_SIMD_CF_SIZE != 0
+#if SRSRAN_SIMD_CF_SIZE > 4
 
 // Implements a DFT of size SRSRAN_SIMD_CF_SIZE.
 template <>
@@ -349,6 +349,10 @@ public:
     srsran_simd_cfi_storeu(out, p_simd);
   }
 };
+
+#endif // SRSRAN_SIMD_CF_SIZE > 4
+
+#if (2 * SRSRAN_SIMD_CF_SIZE) > 4
 
 // Implements a DFT of size 2 * SRSRAN_SIMD_CF_SIZE.
 template <>
@@ -407,7 +411,7 @@ public:
   }
 };
 
-#endif // SRSRAN_SIMD_CF_SIZE == 8
+#endif // (2 * SRSRAN_SIMD_CF_SIZE) > 4
 
 // Implements a DFT of size 9.
 template <>
