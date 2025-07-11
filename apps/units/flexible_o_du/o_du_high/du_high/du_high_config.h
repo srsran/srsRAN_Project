@@ -865,6 +865,8 @@ struct du_high_unit_base_cell_config {
   du_high_unit_drx_config drx_cfg;
   /// Network slice configuration.
   std::vector<du_high_unit_cell_slice_config> slice_cfg;
+  /// NTN configuration.
+  std::optional<ntn_config> ntn_cfg;
 };
 
 struct du_high_unit_test_mode_ue_config {
@@ -1067,8 +1069,6 @@ struct du_high_unit_config {
   du_high_unit_logger_config loggers;
   /// Configuration for testing purposes.
   du_high_unit_test_mode_config test_mode_cfg = {};
-  /// NTN configuration.
-  std::optional<ntn_config> ntn_cfg;
   /// \brief Cell configuration.
   ///
   /// \note Add one cell by default.

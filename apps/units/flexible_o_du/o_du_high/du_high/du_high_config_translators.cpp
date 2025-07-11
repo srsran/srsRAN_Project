@@ -157,22 +157,20 @@ static sib8_info create_sib8_info(const du_high_unit_sib_config::cmas_config& cm
   return sib8;
 }
 
-static sib19_info create_sib19_info(const du_high_unit_config& config)
+static sib19_info create_sib19_info(const ntn_config& config)
 {
   sib19_info sib19;
-  if (config.ntn_cfg.has_value()) {
-    sib19.distance_thres           = config.ntn_cfg.value().distance_threshold;
-    sib19.ref_location             = config.ntn_cfg.value().reference_location;
-    sib19.t_service                = config.ntn_cfg.value().t_service;
-    sib19.cell_specific_koffset    = config.ntn_cfg.value().cell_specific_koffset;
-    sib19.ephemeris_info           = config.ntn_cfg.value().ephemeris_info;
-    sib19.epoch_time               = config.ntn_cfg.value().epoch_time;
-    sib19.k_mac                    = config.ntn_cfg.value().k_mac;
-    sib19.ta_info                  = config.ntn_cfg.value().ta_info;
-    sib19.ntn_ul_sync_validity_dur = config.ntn_cfg.value().ntn_ul_sync_validity_dur;
-    sib19.polarization             = config.ntn_cfg.value().polarization;
-    sib19.ta_report                = config.ntn_cfg.value().ta_report;
-  }
+  sib19.distance_thres           = config.distance_threshold;
+  sib19.ref_location             = config.reference_location;
+  sib19.t_service                = config.t_service;
+  sib19.cell_specific_koffset    = config.cell_specific_koffset;
+  sib19.ephemeris_info           = config.ephemeris_info;
+  sib19.epoch_time               = config.epoch_time;
+  sib19.k_mac                    = config.k_mac;
+  sib19.ta_info                  = config.ta_info;
+  sib19.ntn_ul_sync_validity_dur = config.ntn_ul_sync_validity_dur;
+  sib19.polarization             = config.polarization;
+  sib19.ta_report                = config.ta_report;
   return sib19;
 }
 
@@ -408,11 +406,11 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
             item = create_sib8_info(base_cell.sib_cfg.cmas_cfg.value());
           } break;
           case 19: {
-            if (config.ntn_cfg.has_value()) {
-              item = create_sib19_info(config);
-            } else {
-              report_error("SIB19 is not configured, NTN fields required\n");
+            if (!base_cell.ntn_cfg.has_value()) {
+              report_error("SIB-19 cannot be scheduled without NTN config. Set the NTN config or remove SIB-19 from "
+                           "the si_sched_info list\n");
             }
+            item = create_sib19_info(base_cell.ntn_cfg.value());
           } break;
           default:
             report_error("SIB{} not supported\n", sib_id);
@@ -518,8 +516,8 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
             : std::min(cell.cell.nof_antennas_ul,
                        std::min(phy_capabilities.max_nof_layers, cell.cell.pusch_cfg.max_rank));
 
-    if (config.ntn_cfg.has_value()) {
-      out_cell.ntn_cs_koffset = config.ntn_cfg.value().cell_specific_koffset;
+    if (cell.cell.ntn_cfg.has_value()) {
+      out_cell.ntn_cs_koffset = cell.cell.ntn_cfg.value().cell_specific_koffset;
     }
     // Parameters for PUCCH-ConfigCommon.
     if (not out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.has_value()) {
@@ -997,9 +995,12 @@ static std::map<srb_id_t, srs_du::du_srb_config> generate_du_srb_config(const du
     srb_cfg.at(srb_id_t::srb3).rlc = make_default_srb_rlc_config();
   }
 
-  if (config.ntn_cfg.has_value()) {
-    ntn_augment_rlc_parameters(config.ntn_cfg.value(), srb_cfg);
+  for (auto& cell : config.cells_cfg) {
+    if (cell.cell.ntn_cfg.has_value()) {
+      ntn_augment_rlc_parameters(cell.cell.ntn_cfg.value(), srb_cfg);
+    }
   }
+
   return srb_cfg;
 }
 
@@ -1044,7 +1045,7 @@ static scheduler_expert_config generate_scheduler_expert_config(const du_high_un
   out_cfg.ue.olla_dl_target_bler               = pdsch.olla_target_bler;
   out_cfg.ue.olla_cqi_inc                      = pdsch.olla_cqi_inc;
   out_cfg.ue.olla_max_cqi_offset               = pdsch.olla_max_cqi_offset;
-  if (config.ntn_cfg.has_value()) {
+  if (cell.ntn_cfg.has_value()) {
     out_cfg.ue.auto_ack_harq = true;
   }
   out_cfg.ue.ul_mcs = {pusch.min_ue_mcs, pusch.max_ue_mcs};

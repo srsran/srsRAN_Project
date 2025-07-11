@@ -391,11 +391,25 @@ validate_pusch_cell_unit_config(const du_high_unit_pusch_config& config, unsigne
   return true;
 }
 
+static bool validate_ntn_config(const ntn_config& ntn_cfg)
+{
+  bool valid = true;
+
+  if (const auto* ecef = std::get_if<ecef_coordinates_t>(&ntn_cfg.ephemeris_info)) {
+    if (ecef->position_x == 0 and ecef->position_y == 0 and ecef->position_z == 0 and ecef->velocity_vx == 0 and
+        ecef->velocity_vy == 0 and ecef->velocity_vz == 0) {
+      fmt::print("Ephemeris info has to be provided (in ECEF State Vector or ECI Orbital Elements format).\n");
+      valid = false;
+    }
+  }
+
+  return valid;
+}
+
 /// Validates the given PUCCH cell application configuration. Returns true on success, otherwise false.
 static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config& config,
                                             subcarrier_spacing                   scs_common,
-                                            unsigned                             nof_crbs,
-                                            bool                                 ntn)
+                                            unsigned                             nof_crbs)
 {
   const du_high_unit_pucch_config& pucch_cfg = config.pucch_cfg;
   if (not config.csi_cfg.csi_rs_enabled and pucch_cfg.nof_cell_csi_resources > 0) {
@@ -433,7 +447,7 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
                get_nof_slots_per_subframe(scs_common));
     return false;
   }
-  if (!ntn) {
+  if (!config.ntn_cfg.has_value()) {
     span<const unsigned> valid_sr_period_slots = mu_to_valid_sr_period_slots_lookup.at(to_numerology_value(scs_common));
     if (std::find(valid_sr_period_slots.begin(), valid_sr_period_slots.end(), sr_period_slots) ==
         valid_sr_period_slots.end()) {
@@ -441,6 +455,10 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
                  pucch_cfg.sr_period_msec,
                  sr_period_slots,
                  scs_to_khz(scs_common));
+      return false;
+    }
+  } else {
+    if (!validate_ntn_config(*config.ntn_cfg)) {
       return false;
     }
   }
@@ -1018,7 +1036,7 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
 }
 
 /// Validates the given cell application configuration. Returns true on success, otherwise false.
-static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& config, bool ntn)
+static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& config)
 {
   if (config.pci >= INVALID_PCI) {
     fmt::print("Invalid PCI (i.e. {}). PCI ranges from 0 to {}.\n", config.pci, MAX_PCI);
@@ -1081,7 +1099,7 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     return false;
   }
 
-  if (!validate_pucch_cell_unit_config(config, config.common_scs, nof_crbs, ntn)) {
+  if (!validate_pucch_cell_unit_config(config, config.common_scs, nof_crbs)) {
     return false;
   }
 
@@ -1116,17 +1134,17 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
   return true;
 }
 
-static bool validate_cell_unit_config(const du_high_unit_cell_config& config, bool ntn)
+static bool validate_cell_unit_config(const du_high_unit_cell_config& config)
 {
-  return validate_base_cell_unit_config(config.cell, ntn);
+  return validate_base_cell_unit_config(config.cell);
 }
 
 /// Validates the given list of cell application configuration. Returns true on success, otherwise false.
-static bool validate_cells_unit_config(span<const du_high_unit_cell_config> config, const gnb_id_t& gnb_id, bool ntn)
+static bool validate_cells_unit_config(span<const du_high_unit_cell_config> config, const gnb_id_t& gnb_id)
 {
   tac_t tac = config[0].cell.tac;
   for (const auto& cell : config) {
-    if (!validate_cell_unit_config(cell, ntn)) {
+    if (!validate_cell_unit_config(cell)) {
       return false;
     }
     if (cell.cell.tac != tac) {
@@ -1217,21 +1235,6 @@ static bool validate_test_mode_unit_config(const du_high_unit_config& config)
   }
 
   return true;
-}
-
-static bool validate_ntn_config(const ntn_config& ntn_cfg)
-{
-  bool valid = true;
-
-  if (const auto* ecef = std::get_if<ecef_coordinates_t>(&ntn_cfg.ephemeris_info)) {
-    if (ecef->position_x == 0 and ecef->position_y == 0 and ecef->position_z == 0 and ecef->velocity_vx == 0 and
-        ecef->velocity_vy == 0 and ecef->velocity_vz == 0) {
-      fmt::print("Ephemeris info has to be provided (in ECEF State Vector or ECI Orbital Elements format).\n");
-      valid = false;
-    }
-  }
-
-  return valid;
 }
 
 template <typename id_type>
@@ -1413,13 +1416,7 @@ static bool validate_qos_config(span<const du_high_unit_qos_config> config)
 
 bool srsran::validate_du_high_config(const du_high_unit_config& config, const os_sched_affinity_bitmask& available_cpus)
 {
-  bool ntn = false;
-  if (config.ntn_cfg.has_value()) {
-    if (config.ntn_cfg.has_value()) {
-      ntn = true;
-    }
-  }
-  if (!validate_cells_unit_config(config.cells_cfg, config.gnb_id, ntn)) {
+  if (!validate_cells_unit_config(config.cells_cfg, config.gnb_id)) {
     return false;
   }
 
@@ -1437,12 +1434,6 @@ bool srsran::validate_du_high_config(const du_high_unit_config& config, const os
 
   if (!validate_qos_config(config.qos_cfg)) {
     return false;
-  }
-
-  if (config.ntn_cfg.has_value()) {
-    if (!validate_ntn_config(config.ntn_cfg.value())) {
-      return false;
-    }
   }
 
   if (!validate_pcap_configs(config)) {

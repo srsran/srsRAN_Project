@@ -21,6 +21,11 @@ void srsran::configure_cli11_advanced_ntn_args(CLI::App& app, ntn_config& config
   // Advanced NTN config parameters are not implemented.
 }
 
+void srsran::configure_cli11_cell_ntn_args(CLI::App& app, std::optional<ntn_config>& cell_ntn_params)
+{
+  // Per-cell NTN config parameters are not implemented.
+}
+
 #endif // SRSRAN_HAS_ENTERPRISE_NTN
 
 static void configure_cli11_epoch_time(CLI::App& app, epoch_time_t& epoch_time)

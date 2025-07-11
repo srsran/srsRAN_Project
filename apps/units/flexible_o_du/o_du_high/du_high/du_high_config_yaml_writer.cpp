@@ -98,9 +98,12 @@ static YAML::Node build_du_high_ntn_section(const ntn_config& config)
   }
 
   if (config.ta_info) {
-    node["ta_common"]               = config.ta_info.value().ta_common;
-    node["ta_common_drift"]         = config.ta_info.value().ta_common_drift;
-    node["ta_common_drift_variant"] = config.ta_info.value().ta_common_drift_variant;
+    YAML::Node ta_info_node;
+    ta_info_node["ta_common"]               = config.ta_info.value().ta_common;
+    ta_info_node["ta_common_drift"]         = config.ta_info.value().ta_common_drift;
+    ta_info_node["ta_common_drift_variant"] = config.ta_info.value().ta_common_drift_variant;
+
+    node["ta_info"] = ta_info_node;
   }
 
   if (config.epoch_timestamp) {
@@ -698,6 +701,10 @@ static YAML::Node build_cell_entry(const du_high_unit_base_cell_config& config)
   }
   fill_du_high_sched_expert_section(node, config.sched_expert_cfg);
 
+  if (config.ntn_cfg) {
+    node["ntn"] = build_du_high_ntn_section(config.ntn_cfg.value());
+  }
+
   return node;
 }
 
@@ -839,9 +846,6 @@ void srsran::fill_du_high_config_in_yaml_schema(YAML::Node& node, const du_high_
   fill_du_high_metrics_section(node["metrics"], config.metrics);
   fill_du_high_pcap_section(node["pcap"], config.pcaps);
   node["du"] = build_du_section(config);
-  if (config.ntn_cfg) {
-    node["ntn"] = build_du_high_ntn_section(config.ntn_cfg.value());
-  }
   if (config.test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI) {
     node["test_mode"] = build_du_high_testmode_section(config.test_mode_cfg);
   }

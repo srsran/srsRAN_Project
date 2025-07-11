@@ -274,7 +274,7 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
   }
 
   // Add NTN-Config update remote command.
-  auto& ntn_cfg = config.odu_high_cfg.du_high_cfg.config.ntn_cfg;
+  auto& ntn_cfg = config.odu_high_cfg.du_high_cfg.config.cells_cfg.front().cell.ntn_cfg;
   if (ntn_cfg.has_value()) {
     add_ntn_config_update_remote_command(
         o_du.commands,

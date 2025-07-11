@@ -11,6 +11,7 @@
 #pragma once
 
 #include "CLI/CLI11.hpp"
+#include <optional>
 
 namespace srsran {
 
@@ -21,5 +22,8 @@ void configure_cli11_ntn_args(CLI::App& app, ntn_config& config);
 
 /// Helper function to configure advanced NTN capabilities.
 void configure_cli11_advanced_ntn_args(CLI::App& app, ntn_config& config);
+
+/// Helper function to configure per-cell NTN capabilities.
+void configure_cli11_cell_ntn_args(CLI::App& app, std::optional<ntn_config>& cell_ntn_params);
 
 } // namespace srsran

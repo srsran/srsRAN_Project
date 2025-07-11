@@ -1933,19 +1933,27 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
 
   // NTN section.
   static ntn_config ntn_cfg;
-  CLI::App*         ntn_subcmd = add_subcommand(app, "ntn", "NTN parameters")->configurable();
+  CLI::App*         ntn_subcmd = add_subcommand(app, "ntn", "Default NTN configuration")->configurable();
   configure_cli11_ntn_args(*ntn_subcmd, ntn_cfg);
-  auto ntn_verify_callback = [&]() {
+  ntn_subcmd->parse_complete_callback([&]() {
     CLI::App* ntn_sub_cmd = app.get_subcommand("ntn");
     if (ntn_sub_cmd->count() != 0) {
-      parsed_cfg.config.ntn_cfg.emplace(ntn_cfg);
+      parsed_cfg.common_cell_cfg.ntn_cfg.emplace(ntn_cfg);
+      for (auto& cell : parsed_cfg.config.cells_cfg) {
+        cell.cell.ntn_cfg.emplace(ntn_cfg);
+      }
+      // Run the callback again for the cells if the option callback is already run once.
+      if (app.get_option("--cells")->get_callback_run()) {
+        app.get_option("--cells")->run_callback();
+      }
     } else {
-      parsed_cfg.config.ntn_cfg.reset();
+      for (auto& cell : parsed_cfg.config.cells_cfg) {
+        cell.cell.ntn_cfg.reset();
+      }
       // As NTN configuration is optional, disable the command when it is not present in the configuration.
       ntn_sub_cmd->disabled();
-    }
-  };
-  ntn_subcmd->parse_complete_callback(ntn_verify_callback);
+    };
+  });
 
   // Cell section.
   add_option_cell(
@@ -1966,6 +1974,7 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
           subapp.config_formatter(create_yaml_config_parser());
           subapp.allow_config_extras(CLI::config_extras_mode::capture);
           configure_cli11_cells_args(subapp, parsed_cfg.config.cells_cfg[i]);
+          configure_cli11_cell_ntn_args(subapp, parsed_cfg.config.cells_cfg[i].cell.ntn_cfg);
           std::istringstream ss(values[i]);
           subapp.parse_from_stream(ss);
         }
@@ -2068,30 +2077,32 @@ static void derive_auto_params(du_high_unit_config& config)
   }
 
   // Auto derive NTN SIB19 scheduling info.
-  if (config.ntn_cfg.has_value()) {
-    auto& sib_cfg = config.cells_cfg.front().cell.sib_cfg;
-    auto& ntn_cfg = config.ntn_cfg;
-    for (const auto& si_msg : sib_cfg.si_sched_info) {
-      for (unsigned j = 0, je = si_msg.sib_mapping_info.size(); j != je; ++j) {
-        if (si_msg.sib_mapping_info[j] == 19) {
-          ntn_cfg->si_msg_idx          = j;
-          ntn_cfg->si_period_rf        = si_msg.si_period_rf;
-          ntn_cfg->si_window_len_slots = sib_cfg.si_window_len_slots;
-          ntn_cfg->si_window_position  = si_msg.si_window_position;
+  for (auto& cell : config.cells_cfg) {
+    if (cell.cell.ntn_cfg.has_value()) {
+      auto& sib_cfg = cell.cell.sib_cfg;
+      auto& ntn_cfg = cell.cell.ntn_cfg;
+      for (const auto& si_msg : sib_cfg.si_sched_info) {
+        for (unsigned j = 0, je = si_msg.sib_mapping_info.size(); j != je; ++j) {
+          if (si_msg.sib_mapping_info[j] == 19) {
+            ntn_cfg->si_msg_idx          = j;
+            ntn_cfg->si_period_rf        = si_msg.si_period_rf;
+            ntn_cfg->si_window_len_slots = sib_cfg.si_window_len_slots;
+            ntn_cfg->si_window_position  = si_msg.si_window_position;
+          }
         }
       }
+      auto&                      cell_cfg = cell.cell;
+      expected<plmn_identity>    plmn     = plmn_identity::parse(cell_cfg.plmn);
+      expected<nr_cell_identity> nci      = nr_cell_identity::create(config.gnb_id, cell_cfg.sector_id.value());
+      if (not plmn.has_value()) {
+        report_error("Invalid PLMN: {}", cell_cfg.plmn);
+      }
+      if (not nci.has_value()) {
+        report_error("Invalid NR-NCI");
+      }
+      ntn_cfg->nr_cgi.plmn_id = plmn.value();
+      ntn_cfg->nr_cgi.nci     = nci.value();
     }
-    auto&                      cell_cfg = config.cells_cfg.front().cell;
-    expected<plmn_identity>    plmn     = plmn_identity::parse(cell_cfg.plmn);
-    expected<nr_cell_identity> nci      = nr_cell_identity::create(config.gnb_id, cell_cfg.sector_id.value());
-    if (not plmn.has_value()) {
-      report_error("Invalid PLMN: {}", cell_cfg.plmn);
-    }
-    if (not nci.has_value()) {
-      report_error("Invalid NR-NCI");
-    }
-    ntn_cfg->nr_cgi.plmn_id = plmn.value();
-    ntn_cfg->nr_cgi.nci     = nci.value();
   }
 }
 
