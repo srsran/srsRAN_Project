@@ -22,6 +22,8 @@ struct srs_estimator_result {
   srs_channel_matrix channel_matrix;
   /// Wideband energy per resource element (EPRE), in decibel.
   std::optional<float> epre_dB;
+  /// Wideband reference signal received power (RSRP), in decibel.
+  std::optional<float> rsrp_dB;
   /// Wideband measured noise variance as a linear quantity.
   std::optional<float> noise_variance;
   /// Measured time alignment.

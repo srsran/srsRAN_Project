@@ -195,6 +195,7 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
   result.time_alignment.time_alignment /= nof_antenna_ports;
 
   float noise_var = 0;
+  float rsrp      = 0;
   // Compensate time alignment and estimate channel coefficients.
   for (unsigned i_rx_port = 0; i_rx_port != nof_rx_ports; ++i_rx_port) {
     for (unsigned i_antenna_port = 0; i_antenna_port != nof_antenna_ports; ++i_antenna_port) {
@@ -218,6 +219,7 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
       // Calculate channel wideband coefficient.
       cf_t coefficient = srsvec::mean(mean_lse);
       result.channel_matrix.set_coefficient(coefficient, i_rx_port, i_antenna_port);
+      rsrp += std::norm(coefficient);
 
       // View for noise computation: with interleaved pilots, we need to keep track of two different sets of REs -
       // those for odd-indexed ports and those for even-indexed ports.
@@ -252,10 +254,12 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
   unsigned correction_factor = (interleaved_pilots ? 2 : 1);
   noise_var /= static_cast<float>((nof_symbols * sequence_length - nof_estimates) * correction_factor * nof_rx_ports);
   epre /= static_cast<float>(nof_symbols * correction_factor * nof_rx_ports);
+  rsrp /= static_cast<float>(nof_antenna_ports * nof_rx_ports);
 
-  // Set noise variance and EPRE.
+  // Set noise variance, EPRE and RSRP.
   result.noise_variance = noise_var;
   result.epre_dB        = convert_power_to_dB(epre);
+  result.rsrp_dB        = convert_power_to_dB(rsrp);
 
   return result;
 }
