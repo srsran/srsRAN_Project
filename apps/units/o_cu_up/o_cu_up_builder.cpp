@@ -87,6 +87,7 @@ o_cu_up_unit srsran::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_
       n3_udp_cfg.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;
       n3_udp_cfg.bind_port                  = GTPU_PORT;
       n3_udp_cfg.rx_max_mmsg                = sock_cfg.udp_config.rx_max_msgs;
+      n3_udp_cfg.tx_qsize                   = sock_cfg.udp_config.tx_qsize;
       n3_udp_cfg.tx_max_mmsg                = sock_cfg.udp_config.tx_max_msgs;
       n3_udp_cfg.tx_max_segments            = sock_cfg.udp_config.tx_max_segments;
       n3_udp_cfg.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;

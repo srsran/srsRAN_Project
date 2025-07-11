@@ -33,7 +33,7 @@ udp_network_gateway_impl::udp_network_gateway_impl(udp_network_gateway_config   
   io_rx_executor(io_rx_executor_),
   tx_ctx(config.tx_max_mmsg, config.tx_max_segments),
   batched_queue(
-      8192,
+      config.tx_qsize,
       io_tx_executor,
       logger,
       [this](span<udp_tx_pdu_t> pdus) { handle_pdu_impl(pdus); },
