@@ -523,6 +523,7 @@ worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::
       // Fill the task executors for each cell.
       du_low_exec_mapper_config.cells.emplace_back(srs_du::du_low_executor_mapper_manual_exec_config{
           .high_priority_executor        = exec_mng.executors().at(l1_high_prio_name),
+          .medium_priority_executor      = non_rt_medium_prio_exec,
           .low_priority_executor         = non_rt_low_prio_exec,
           .dl_executor                   = exec_mng.executors().at(l1_dl_exec_name),
           .pdsch_executor                = exec_mng.executors().at(l1_pdsch_exec_name),

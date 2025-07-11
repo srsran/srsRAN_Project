@@ -106,9 +106,10 @@ public:
         pdsch_exec         = manual.pdsch_executor;
         prach_exec         = create_strand(manual.high_priority_executor);
         pusch_exec         = manual.pusch_executor;
-        pusch_dec_exec = create_task_fork_limiter(manual.low_priority_executor, manual.max_concurrent_pusch_decoders);
-        pucch_exec     = manual.pucch_executor;
-        srs_exec       = manual.srs_executor;
+        pusch_dec_exec =
+            create_task_fork_limiter(manual.medium_priority_executor, manual.max_concurrent_pusch_decoders);
+        pucch_exec = manual.pucch_executor;
+        srs_exec   = manual.srs_executor;
       }
 
       srsran_assert(dl_exec != nullptr, "Invalid DL executor.");

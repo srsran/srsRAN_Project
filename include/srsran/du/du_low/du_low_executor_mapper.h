@@ -104,6 +104,8 @@ struct du_low_executor_mapper_single_exec_config {
 struct du_low_executor_mapper_manual_exec_config {
   /// High priority executor.
   task_executor* high_priority_executor = nullptr;
+  /// Medium priority executor.
+  task_executor* medium_priority_executor = nullptr;
   /// Low priority executor.
   task_executor* low_priority_executor = nullptr;
   /// Executor for downlink transmissions.
