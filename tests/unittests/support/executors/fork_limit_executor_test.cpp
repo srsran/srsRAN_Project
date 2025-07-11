@@ -23,6 +23,9 @@ protected:
 
 TEST_F(fork_limit_executor_test, max_forks_limit_are_respected)
 {
+  srslog::fetch_basic_logger("ALL").set_level(srslog::basic_levels::warning);
+  srslog::init();
+
   static const unsigned max_forks = 4;
   const unsigned        nof_tasks = 5000;
   auto                  limiter   = make_task_fork_limiter_ptr<concurrent_queue_policy::lockfree_mpmc>(
@@ -30,8 +33,9 @@ TEST_F(fork_limit_executor_test, max_forks_limit_are_respected)
 
   std::atomic<unsigned> active_forks{0};
   std::atomic<unsigned> max_active_forks{0};
+  std::atomic<unsigned> tasks_completed{0};
   for (unsigned i = 0; i < nof_tasks; ++i) {
-    ASSERT_TRUE(limiter->defer([&max_active_forks, &active_forks]() {
+    ASSERT_TRUE(limiter->defer([&max_active_forks, &active_forks, &tasks_completed]() {
       auto cur_val = active_forks.fetch_add(1, std::memory_order_acq_rel) + 1;
       // Compute max concurrent forks.
       unsigned prev_max = max_active_forks.load(std::memory_order_relaxed);
@@ -40,6 +44,7 @@ TEST_F(fork_limit_executor_test, max_forks_limit_are_respected)
         // Try to update max_active_forks until it succeeds.
       }
       active_forks.fetch_sub(1, std::memory_order_acq_rel);
+      tasks_completed.fetch_add(1, std::memory_order_relaxed);
     }));
   }
 
@@ -48,5 +53,6 @@ TEST_F(fork_limit_executor_test, max_forks_limit_are_respected)
   EXPECT_LE(max_active_forks, max_forks) << "Fork limit executor should not allow more than " << max_forks
                                          << " concurrent tasks. Value: " << max_active_forks;
   ASSERT_GT(max_active_forks, 0);
+  ASSERT_EQ(tasks_completed.load(), nof_tasks);
   fmt::print("Max active forks: {}\n", max_active_forks.load());
 }
