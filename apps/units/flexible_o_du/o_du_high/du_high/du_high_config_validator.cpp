@@ -1020,6 +1020,12 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
     return false;
   }
 
+  // If NTN-config present, check if SIB19 sched info is provided.
+  if (cell_cfg.ntn_cfg.has_value() and sib19_included == sibs_included.end()) {
+    fmt::print("NTN-Config is present, but SIB19 scheduling information was not provided.\n");
+    return false;
+  }
+
   // Check whether SI window position when provided in SI scheduling information is in ascending order. See TS 38.331,
   // \c si-WindowPosition.
   for (unsigned i = 0, j = 0; i < si_window_positions.size() && j < si_window_positions.size(); ++i, ++j) {
