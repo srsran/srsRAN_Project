@@ -42,6 +42,9 @@ public:
   lower_phy_center_freq_controller& get_carrier_center_frequency_control() override;
 
   // See interface for documentation.
+  lower_phy_tx_time_offset_controller& get_tx_time_offset_control() override;
+
+  // See interface for documentation.
   pdxch_processor_request_handler& get_downlink_request_handler() override;
 
   // See interface for documentation.

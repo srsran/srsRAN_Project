@@ -44,6 +44,9 @@ public:
   // See the ru_controller interface for documentation.
   ru_center_frequency_controller* get_center_frequency_controller() override { return nullptr; }
 
+  // See the ru_controller interface for documentation.
+  ru_tx_time_offset_controller* get_tx_time_offset_controller() override { return nullptr; }
+
   /// Sets the sectors controllers.
   void set_sector_controllers(std::vector<ofh::operation_controller*> controllers);
 

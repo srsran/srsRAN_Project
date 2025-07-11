@@ -18,6 +18,7 @@
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_request_handler.h"
 #include "srsran/phy/lower/processors/lower_phy_center_freq_controller.h"
 #include "srsran/phy/lower/processors/lower_phy_cfo_controller.h"
+#include "srsran/phy/lower/processors/lower_phy_tx_time_offset_controller.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/srsvec/copy.h"
 #include <random>
@@ -94,8 +95,13 @@ public:
 class lower_phy_center_freq_controller_spy : public lower_phy_center_freq_controller
 {
 public:
-  // See interface for documentation.
   bool set_carrier_center_frequency(double carrier_center_frequency_Hz) override { return false; }
+};
+
+class lower_phy_tx_time_offset_controller_spy : public lower_phy_tx_time_offset_controller
+{
+public:
+  void set_tx_time_offset(phy_time_unit tx_time_offset) override {}
 };
 
 class lower_phy_downlink_processor_spy : public lower_phy_downlink_processor
@@ -125,6 +131,8 @@ public:
 
   lower_phy_center_freq_controller& get_carrier_center_frequency_control() override { return center_freq_control_spy; }
 
+  lower_phy_tx_time_offset_controller& get_tx_time_offset_control() override { return tx_time_offset_control_spy; }
+
   const pdxch_processor_request_handler_spy& get_pdxch_proc_request_handler_spy() const
   {
     return pdxch_proc_request_handler_spy;
@@ -141,13 +149,14 @@ public:
   }
 
 private:
-  downlink_processor_configuration     config;
-  downlink_processor_notifier*         notifier;
-  pdxch_processor_notifier*            pdxch_notifier;
-  baseband_cfo_processor_spy           cfo_processor_spy;
-  lower_phy_center_freq_controller_spy center_freq_control_spy;
-  pdxch_processor_request_handler_spy  pdxch_proc_request_handler_spy;
-  downlink_processor_baseband_spy      downlink_proc_baseband_spy;
+  downlink_processor_configuration        config;
+  downlink_processor_notifier*            notifier;
+  pdxch_processor_notifier*               pdxch_notifier;
+  baseband_cfo_processor_spy              cfo_processor_spy;
+  lower_phy_center_freq_controller_spy    center_freq_control_spy;
+  lower_phy_tx_time_offset_controller_spy tx_time_offset_control_spy;
+  pdxch_processor_request_handler_spy     pdxch_proc_request_handler_spy;
+  downlink_processor_baseband_spy         downlink_proc_baseband_spy;
 };
 
 class lower_phy_downlink_processor_factory_spy : public lower_phy_downlink_processor_factory

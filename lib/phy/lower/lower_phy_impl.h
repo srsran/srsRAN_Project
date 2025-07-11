@@ -90,6 +90,9 @@ public:
     controller->stop();
   }
 
+  // See lower_phy_controller interface for documentation.
+  lower_phy_tx_time_offset_controller& get_tx_time_offset_control() override;
+
 private:
   /// Downlink processor.
   std::unique_ptr<lower_phy_downlink_processor> downlink_proc;

@@ -18,6 +18,7 @@
 #include "srsran/phy/lower/lower_phy_controller.h"
 #include "srsran/phy/lower/processors/lower_phy_center_freq_controller.h"
 #include "srsran/phy/lower/processors/lower_phy_cfo_controller.h"
+#include "srsran/phy/lower/processors/lower_phy_tx_time_offset_controller.h"
 #include "srsran/radio/radio_session.h"
 #include "srsran/support/math/math_utils.h"
 
@@ -112,9 +113,10 @@ void ru_controller_generic_impl::set_lower_phy_sectors(std::vector<lower_phy_sec
 {
   srsran_assert(!sectors.empty(), "Could not set empty sectors");
 
-  low_phy_crtl           = std::move(sectors);
-  cfo_controller         = ru_cfo_controller_generic_impl(low_phy_crtl);
-  center_freq_controller = ru_center_frequency_controller_generic_impl(low_phy_crtl, radio);
+  low_phy_crtl              = std::move(sectors);
+  cfo_controller            = ru_cfo_controller_generic_impl(low_phy_crtl);
+  center_freq_controller    = ru_center_frequency_controller_generic_impl(low_phy_crtl, radio);
+  tx_time_offset_controller = ru_tx_time_offset_controller_generic_impl(low_phy_crtl);
 }
 
 ru_center_frequency_controller* ru_controller_generic_impl::get_center_frequency_controller()
@@ -168,6 +170,15 @@ bool ru_center_frequency_controller_generic_impl::set_rx_center_frequency(unsign
   radio->get_management_plane().set_rx_freq(sector_id, center_freq_Hz);
   if (sector_id < phy_sectors.size()) {
     return phy_sectors[sector_id]->get_rx_center_freq_control().set_carrier_center_frequency(center_freq_Hz);
+  }
+  return false;
+}
+
+bool ru_tx_time_offset_controller_generic_impl::set_tx_time_offset(unsigned sector_id, phy_time_unit tx_time_offset)
+{
+  if (sector_id < phy_sectors.size()) {
+    phy_sectors[sector_id]->get_tx_time_offset_control().set_tx_time_offset(tx_time_offset);
+    return true;
   }
   return false;
 }

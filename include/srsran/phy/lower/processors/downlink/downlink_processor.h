@@ -17,6 +17,7 @@ class downlink_processor_notifier;
 class downlink_processor_notifier;
 class lower_phy_center_freq_controller;
 class lower_phy_cfo_controller;
+class lower_phy_tx_time_offset_controller;
 class pdxch_processor_notifier;
 class pdxch_processor_request_handler;
 
@@ -47,6 +48,9 @@ public:
 
   /// Gets the downlink processor request handler.
   virtual pdxch_processor_request_handler& get_downlink_request_handler() = 0;
+
+  /// Gets the transmit time offset controller interface.
+  virtual lower_phy_tx_time_offset_controller& get_tx_time_offset_control() = 0;
 
   /// \brief Gets the downlink processor baseband interface.
   /// \return A reference to the internal downlink processor baseband interface.

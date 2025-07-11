@@ -92,6 +92,9 @@ private:
   // See interface for documentation.
   ru_cfo_controller* get_cfo_controller() override { return nullptr; }
 
+  // See interface for documentation.
+  ru_tx_time_offset_controller* get_tx_time_offset_controller() override { return nullptr; }
+
   // See ru_downlink_plane_handler for documentation.
   void handle_dl_data(const resource_grid_context& context, const shared_resource_grid& grid) override
   {

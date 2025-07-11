@@ -268,6 +268,11 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
     o_du.commands.cmdline.commands.push_back(std::make_unique<cfo_app_command>(*controller));
   }
 
+  // Create the RU transmit time offset command.
+  if (auto* controller = ru->get_controller().get_tx_time_offset_controller()) {
+    o_du.commands.cmdline.commands.push_back(std::make_unique<tx_time_offset_app_command>(*controller));
+  }
+
   // Add NTN-Config update remote command.
   auto& ntn_cfg = config.odu_high_cfg.du_high_cfg.config.ntn_cfg;
   if (ntn_cfg.has_value()) {

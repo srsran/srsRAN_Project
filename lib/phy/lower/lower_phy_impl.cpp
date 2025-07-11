@@ -61,3 +61,8 @@ lower_phy_center_freq_controller& ue_lower_phy_impl::get_rx_center_freq_control(
 {
   return uplink_proc->get_carrier_center_frequency_control();
 }
+
+lower_phy_tx_time_offset_controller& ue_lower_phy_impl::get_tx_time_offset_control()
+{
+  return downlink_proc->get_tx_time_offset_control();
+}

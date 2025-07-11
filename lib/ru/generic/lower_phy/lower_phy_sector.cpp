@@ -46,3 +46,8 @@ lower_phy_center_freq_controller& lower_phy_sector::get_rx_center_freq_control()
 {
   return low_phy->get_rx_center_freq_control();
 }
+
+lower_phy_tx_time_offset_controller& lower_phy_sector::get_tx_time_offset_control()
+{
+  return low_phy->get_tx_time_offset_control();
+}

@@ -20,6 +20,7 @@ class lower_phy_rx_symbol_notifier;
 class lower_phy_timing_notifier;
 class lower_phy_cfo_controller;
 class lower_phy_center_freq_controller;
+class lower_phy_tx_time_offset_controller;
 
 /// \brief Lower PHY main interface.
 ///
@@ -50,6 +51,9 @@ public:
 
   /// \brief Gets the receive carrier center frequency control.
   virtual lower_phy_center_freq_controller& get_rx_center_freq_control() = 0;
+
+  /// Gets the transmit time offset control.
+  virtual lower_phy_tx_time_offset_controller& get_tx_time_offset_control() = 0;
 };
 
 } // namespace srsran

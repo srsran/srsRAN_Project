@@ -51,3 +51,8 @@ lower_phy_center_freq_controller& downlink_processor_impl::get_carrier_center_fr
 {
   return pdxch_proc->get_center_freq_control();
 }
+
+lower_phy_tx_time_offset_controller& downlink_processor_impl::get_tx_time_offset_control()
+{
+  return downlink_proc_baseband;
+}

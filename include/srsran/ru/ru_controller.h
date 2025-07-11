@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/ran/phy_time_unit.h"
 #include <optional>
 
 namespace srsran {
@@ -110,6 +111,23 @@ public:
   virtual bool set_rx_center_frequency(unsigned sector_id, double center_freq_Hz) = 0;
 };
 
+/// \brief Radio Unit - transmit time offset control interface.
+///
+/// Allows setting in runtime a transmit time offset. The transmit signal continuity is not guaranteed for the slot in
+/// which the transmission time offset is applied.
+class ru_tx_time_offset_controller
+{
+public:
+  /// Default destructor.
+  virtual ~ru_tx_time_offset_controller() = default;
+
+  /// \brief Sets the transmit time offset for a specified sector.
+  /// \param[in] sector_id      Sector identifier.
+  /// \param[in] tx_time_offset Time offset value.
+  /// \return \c true if the operation is successful, \c false otherwise.
+  virtual bool set_tx_time_offset(unsigned sector_id, phy_time_unit tx_time_offset) = 0;
+};
+
 /// \brief Radio Unit - control interface.
 ///
 /// Allows starting and stopping the Radio Unit.
@@ -135,6 +153,9 @@ public:
   /// Returns the carrier center frequency controller of this Radio Unit or \c nullptr if the Radio Unit does not
   /// support.
   virtual ru_center_frequency_controller* get_center_frequency_controller() = 0;
+
+  /// Returns the transmit time offset controller of this Radio Unit or nullptr if the Radio unit does not support it.
+  virtual ru_tx_time_offset_controller* get_tx_time_offset_controller() = 0;
 };
 
 } // namespace srsran
