@@ -44,8 +44,9 @@ private:
       return false;
     }
 
-    unsigned prev_forks         = job_count.fetch_add(1, std::memory_order_acq_rel);
-    bool     permission_to_fork = prev_forks + 1 <= max_forks;
+    auto prev_state         = job_enqueued();
+    auto prev_jobs_left     = jobs_to_run(prev_state);
+    bool permission_to_fork = prev_jobs_left + 1 <= max_forks;
 
     if (not permission_to_fork) {
       // Too many concurrent tasks are already dispatched. No need to dispatch this task.
@@ -68,30 +69,28 @@ private:
 
   void process_enqueued_tasks()
   {
-    active_forks.fetch_add(1, std::memory_order_acq_rel);
     unique_task task;
 
     unsigned max_pops  = max_batch;
-    unsigned jobs_left = job_count.load(std::memory_order_acquire);
-    while (jobs_left > 0) {
+    auto     state_cpy = state.load(std::memory_order_acquire);
+    while (jobs_in_queue(state_cpy) > 0) {
       if (not pop_task(task)) {
         break;
       }
+      job_dequeued();
 
       // Execute the task.
       task();
 
       // Decrement the job count after successful pop and task execution.
-      jobs_left = job_count.fetch_sub(1, std::memory_order_acq_rel) - 1;
+      state_cpy = job_completed();
 
       // Check if we should yield back control to the worker.
-      if (--max_pops == 0 and jobs_left > 0) {
+      if (--max_pops == 0 and jobs_in_queue(state_cpy) > 0) {
         defer_remaining_tasks();
         break;
       }
     }
-
-    active_forks.fetch_sub(1, std::memory_order_acq_rel);
   }
 
   bool defer_remaining_tasks()
@@ -107,19 +106,19 @@ private:
 
   void handle_failed_dispatch()
   {
-    srslog::fetch_basic_logger("ALL").error(
-        "task_fork_limiter: Couldn't dispatch forked task. Cause: out_exec queue is full");
+    logger.error("task_fork_limiter: Couldn't dispatch forked task. Cause: out_exec queue is full");
 
     // If we failed to dispatch the task, we need to revert the increment of job count.
     // TODO: Improve the failed dispatch handling. For instance, we could let it not fail if there is at least a forked
     // task already running.
-    unsigned jobs_left = job_count.load(std::memory_order_acquire);
-    while (jobs_left > 0) {
+    auto state_cpy = state.load(std::memory_order_acquire);
+    while (jobs_in_queue(state_cpy) > 0) {
       unique_task dropped_task;
       if (not pop_task(dropped_task)) {
         break;
       }
-      jobs_left = job_count.fetch_sub(1, std::memory_order_acq_rel) - 1;
+      job_dequeued();
+      job_completed();
     }
   }
 
@@ -128,16 +127,9 @@ private:
     if (not queue.try_pop(task)) {
       // Failed to pop a task from the queue.
 
-      // Check if this is the last fork alive.
-      unsigned active_forks_count = active_forks.load(std::memory_order_acquire);
-      if (active_forks_count > 1) {
-        // There are other forks alive.
-        return false;
-      }
-
       // Re-read pending job count.
-      unsigned jobs_left = job_count.load(std::memory_order_relaxed);
-      if (jobs_left == 0) {
+      auto state_cpy = state.load(std::memory_order_acquire);
+      if (jobs_in_queue(state_cpy) == 0) {
         // No more jobs left to process. Probably, another fork did the pop operation concurrently and depleted the
         // queue.
         count_pop_fails.store(0, std::memory_order_relaxed);
@@ -147,16 +139,29 @@ private:
       // There are still jobs left in the queue and this is the last fork alive. This can happen because the pop
       // operation fails spuriously for some queue implementations.
       auto count_copy = count_pop_fails.fetch_add(1, std::memory_order_relaxed) + 1;
-      if (count_copy >= 1000) {
+      if (count_copy >= 5000) {
         count_pop_fails.store(0, std::memory_order_relaxed);
-        srslog::fetch_basic_logger("ALL").warning(
-            "task_fork_limiter: Too many pop failures detected. There was likely a lost job in the queue");
+        logger.warning("task_fork_limiter: Too many pop failures detected. There was likely a lost job in the queue");
       }
       defer_remaining_tasks();
       return false;
     }
     return true;
   }
+
+  /// Called to fetch the number of jobs stored in the queue.
+  uint32_t jobs_in_queue(uint64_t state_cpy) const { return state_cpy & 0xffffffffU; }
+  /// Called to fetch the number of jobs that need to be run. It will be equal or higher than jobs_in_queue.
+  uint32_t jobs_to_run(uint64_t state_cpy) const { return (state_cpy >> 32U) & 0xffffffffU; }
+  /// Called when a new job is enqueued.
+  uint64_t job_enqueued()
+  {
+    return state.fetch_add((static_cast<uint64_t>(1U) << 32U) + 1U, std::memory_order_acq_rel);
+  }
+  /// Called when a job is dequeued.
+  uint64_t job_dequeued() { return state.fetch_sub(1U, std::memory_order_acq_rel); }
+  /// Called when a job runs to completion.
+  uint64_t job_completed() { return state.fetch_sub(static_cast<uint64_t>(1U) << 32U, std::memory_order_acq_rel); }
 
   /// Maximum number of concurrent forks allowed for this executor.
   const unsigned max_forks;
@@ -169,11 +174,12 @@ private:
   // Queue of pending tasks.
   concurrent_queue<unique_task, QueuePolicy, concurrent_queue_wait_policy::non_blocking> queue;
 
-  /// Current number of active forks, used to limit the number of concurrent tasks.
-  std::atomic<unsigned> job_count{0};
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("ALL");
 
-  /// Counter of the number of active forks.
-  std::atomic<unsigned> active_forks{0};
+  /// Current number of active forks, used to limit the number of concurrent tasks.
+  /// \brief Current state of the task fork limiter. It contains two parts: (i) 32 LSBs for the jobs stored in the
+  /// queue, and (ii) 32 MSBs for the jobs that still need to be run.
+  std::atomic<uint64_t> state{0};
 
   /// Counter of the number of unexpected pop failures.
   std::atomic<unsigned> count_pop_fails{0};
