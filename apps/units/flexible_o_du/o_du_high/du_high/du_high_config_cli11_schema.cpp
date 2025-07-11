@@ -18,6 +18,7 @@
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/slot_point_extended.h"
+#include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/support/cli11_utils.h"
 #include "srsran/support/config_parsers.h"
 #include "srsran/support/format/fmt_to_c_str.h"
@@ -679,7 +680,7 @@ static void configure_cli11_scheduler_expert_args(CLI::App& app, du_high_unit_sc
   CLI::App* policy_sched_cfg_subcmd =
       add_subcommand(app,
                      "policy_sched_cfg",
-                     "Policy scheduler expert configuration. By default, time-domain round-robin is used.")
+                     "Policy scheduler expert configuration. By default, time-domain QoS-aware policy is used.")
           ->configurable();
   configure_cli11_policy_scheduler_expert_args(*policy_sched_cfg_subcmd, expert_params.policy_sched_expert_cfg);
   CLI::App* ta_sched_cfg_subcmd =
@@ -2218,7 +2219,7 @@ static void derive_cell_auto_params(du_high_unit_base_cell_config& cell_cfg)
     cell_cfg.band = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_f_ref_arfcn);
   }
   if (not cell_cfg.sched_expert_cfg.policy_sched_expert_cfg.has_value()) {
-    cell_cfg.sched_expert_cfg.policy_sched_expert_cfg.emplace(time_rr_scheduler_expert_config{});
+    cell_cfg.sched_expert_cfg.policy_sched_expert_cfg.emplace(time_qos_scheduler_expert_config{});
   }
 
   // If in TDD mode, and pattern was not set, generate a pattern DDDDDDXUUU.

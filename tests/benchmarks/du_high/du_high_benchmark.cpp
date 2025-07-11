@@ -43,6 +43,7 @@
 #include "srsran/du/du_high/du_qos_config_helpers.h"
 #include "srsran/f1u/du/f1u_gateway.h"
 #include "srsran/mac/mac_cell_timing_context.h"
+#include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/rtsan.h"
@@ -79,7 +80,7 @@ struct bench_params {
   /// \brief Logical cores used by the "du_cell" thread.
   std::vector<unsigned> du_cell_cores = {};
   /// \brief Policy scheduler type.
-  policy_scheduler_expert_config strategy_cfg = time_rr_scheduler_expert_config{};
+  policy_scheduler_expert_config strategy_cfg = time_qos_scheduler_expert_config{};
   /// \brief Whether the trace is enabled. This gives more diagnostics of the scheduler latency, at the cost of some
   /// slowdown.
   bool sched_trace_enabled = false;
