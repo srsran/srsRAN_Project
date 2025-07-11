@@ -1914,7 +1914,8 @@ static void configure_cli11_feeder_link(CLI::App& app, feeder_link_info_t& feede
       ->check(CLI::Range(0.0, 100e9));
 }
 
-static void configure_cli11_geodetic_coordinates(CLI::App& app, geodetic_coordinates_t& location)
+static void
+configure_cli11_geodetic_coordinates(CLI::App& app, geodetic_coordinates_t& location, bool with_altitude = true)
 {
   add_option(app, "--latitude", location.latitude, "Latitude [degree]")
       ->capture_default_str()
@@ -1922,81 +1923,105 @@ static void configure_cli11_geodetic_coordinates(CLI::App& app, geodetic_coordin
   add_option(app, "--longitude", location.longitude, "Longitude [degree]")
       ->capture_default_str()
       ->check(CLI::Range(-180.0, 180.0));
-  add_option(app, "--altitude", location.altitude, "Altitude [m]")
-      ->capture_default_str()
-      ->check(CLI::Range(-1000.0, 20000.0));
+  if (with_altitude) {
+    add_option(app, "--altitude", location.altitude, "Altitude [m]")
+        ->capture_default_str()
+        ->check(CLI::Range(-1000.0, 20000.0));
+  }
 }
 
-static void configure_cli11_ntn_args(CLI::App&                  app,
-                                     std::optional<ntn_config>& ntn,
-                                     epoch_time_t&              epoch_time,
-                                     ta_info_t&                 ta_info,
-                                     orbital_coordinates_t&     orbital_coordinates,
-                                     ecef_coordinates_t&        ecef_coordinates,
-                                     feeder_link_info_t&        feeder_link_info,
-                                     geodetic_coordinates_t&    ntn_gateway_location)
+static void configure_cli11_ntn_args(CLI::App& app, ntn_config& config)
 {
-  ntn_config& config = ntn.emplace();
-
   add_option(app, "--cell_specific_koffset", config.cell_specific_koffset, "Cell-specific k-offset to be used for NTN.")
       ->capture_default_str()
       ->check(CLI::Range(0, 1023));
 
-  app.add_option("--ntn_ul_sync_validity_dur", ntn->ntn_ul_sync_validity_dur, "An UL sync validity duration")
+  app.add_option("--ntn_ul_sync_validity_dur", config.ntn_ul_sync_validity_dur, "An UL sync validity duration")
       ->capture_default_str()
       ->check(CLI::IsMember({5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 120, 180, 240, 900}));
 
   // Epoch timestamp.
   app.add_option("--epoch_timestamp",
-                 ntn->epoch_timestamp,
+                 config.epoch_timestamp,
                  "Epoch timestamp for the NTN assistance information in ms unit of Unix time")
       ->capture_default_str();
 
   // Epoch time offset in nof SFNs.
   app.add_option("--epoch_sfn_offset",
-                 ntn->epoch_sfn_offset,
+                 config.epoch_sfn_offset,
                  "Optional offset (in SFN) between the SIB19 tx slot and the epoch time of the NTN assistance info")
       ->capture_default_str();
 
   // Epoch time offset in nof SFNs.
   app.add_option(
          "--use_state_vector",
-         ntn->use_state_vector,
+         config.use_state_vector,
          "Whether to broadcast EphemerisInfo as ECEF state vectors (if true) or ECI Orbital parameters (if false)")
       ->capture_default_str();
 
   // Epoch time.
+  static epoch_time_t epoch_time;
   CLI::App* epoch_time_subcmd = add_subcommand(app, "epoch_time", "Epoch time for the NTN assistance information");
   configure_cli11_epoch_time(*epoch_time_subcmd, epoch_time);
+  epoch_time_subcmd->parse_complete_callback([&]() {
+    if (app.get_subcommand("epoch_time")->count() != 0) {
+      config.epoch_time = epoch_time;
+    }
+  });
 
   // TA-info
-  CLI::App* ta_info_subcmd = add_subcommand(app, "ta_info", "TA Info for the NTN assistance information");
+  static ta_info_t ta_info;
+  CLI::App*        ta_info_subcmd = add_subcommand(app, "ta_info", "TA Info for the NTN assistance information");
   configure_cli11_ta_info(*ta_info_subcmd, ta_info);
+  ta_info_subcmd->parse_complete_callback([&]() {
+    if (app.get_subcommand("ta_info")->count() != 0) {
+      config.ta_info = ta_info;
+    }
+  });
 
-  // ephemeris configuration.
-  CLI::App* ephem_subcmd_ecef =
+  // Ephemeris configuration: ECEF state vector.
+  static ecef_coordinates_t ecef_coordinates;
+  CLI::App*                 ephem_subcmd_ecef =
       add_subcommand(app, "ephemeris_info_ecef", "Ephermeris information of the satellite in ecef coordinates");
   configure_cli11_ephemeris_info_ecef(*ephem_subcmd_ecef, ecef_coordinates);
+  ephem_subcmd_ecef->parse_complete_callback([&]() {
+    if (app.get_subcommand("ephemeris_info_ecef")->count() != 0) {
+      config.ephemeris_info = ecef_coordinates;
+    }
+  });
 
-  CLI::App* ephem_subcmd_orbital =
+  // Ephemeris configuration: Orbital parameters.
+  static orbital_coordinates_t orbital_coordinates;
+  CLI::App*                    ephem_subcmd_orbital =
       add_subcommand(app, "ephemeris_orbital", "Ephermeris information of the satellite in orbital coordinates");
   configure_cli11_ephemeris_info_orbital(*ephem_subcmd_orbital, orbital_coordinates);
+  ephem_subcmd_orbital->parse_complete_callback([&]() {
+    if (app.get_subcommand("ephemeris_orbital")->count() != 0) {
+      config.ephemeris_info = orbital_coordinates;
+    }
+  });
 
-  CLI::App* feeder_link_subcmd =
+  // Feeder link info.
+  static feeder_link_info_t feeder_link_info;
+  CLI::App*                 feeder_link_subcmd =
       add_subcommand(app, "feeder_link", "Feeder link parameters used to compensate Doppler shifts");
   configure_cli11_feeder_link(*feeder_link_subcmd, feeder_link_info);
-
-  CLI::App* gateway_location_subcmd =
+  feeder_link_subcmd->parse_complete_callback([&]() {
+    if (app.get_subcommand("feeder_link")->count() != 0) {
+      config.feeder_link_info = feeder_link_info;
+    }
+  });
+  // NTN-Gateway Location info.
+  static geodetic_coordinates_t ntn_gateway_location;
+  CLI::App*                     gateway_location_subcmd =
       add_subcommand(app, "gateway_location", "Geoderic coordinates of the NTN Gateway location");
   configure_cli11_geodetic_coordinates(*gateway_location_subcmd, ntn_gateway_location);
+  gateway_location_subcmd->parse_complete_callback([&]() {
+    if (app.get_subcommand("gateway_location")->count() != 0) {
+      config.ntn_gateway_location = ntn_gateway_location;
+    }
+  });
 }
-
-static epoch_time_t           epoch_time;
-static ta_info_t              ta_info;
-static ecef_coordinates_t     ecef_coordinates;
-static orbital_coordinates_t  orbital_coordinates;
-static feeder_link_info_t     feeder_link_info;
-static geodetic_coordinates_t ntn_gateway_location;
 
 static void configure_cli11_rlc_um_args(CLI::App& app, du_high_unit_rlc_um_config& rlc_um_params)
 {
@@ -2095,15 +2120,20 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
   configure_cli11_expert_execution_args(*expert_subcmd, parsed_cfg.config.expert_execution_cfg);
 
   // NTN section.
-  CLI::App* ntn_subcmd = add_subcommand(app, "ntn", "NTN parameters")->configurable();
-  configure_cli11_ntn_args(*ntn_subcmd,
-                           parsed_cfg.config.ntn_cfg,
-                           epoch_time,
-                           ta_info,
-                           orbital_coordinates,
-                           ecef_coordinates,
-                           feeder_link_info,
-                           ntn_gateway_location);
+  static ntn_config ntn_cfg;
+  CLI::App*         ntn_subcmd = add_subcommand(app, "ntn", "NTN parameters")->configurable();
+  configure_cli11_ntn_args(*ntn_subcmd, ntn_cfg);
+  auto ntn_verify_callback = [&]() {
+    CLI::App* ntn_sub_cmd = app.get_subcommand("ntn");
+    if (ntn_sub_cmd->count() != 0) {
+      parsed_cfg.config.ntn_cfg.emplace(ntn_cfg);
+    } else {
+      parsed_cfg.config.ntn_cfg.reset();
+      // As NTN configuration is optional, disable the command when it is not present in the configuration.
+      ntn_sub_cmd->disabled();
+    }
+  };
+  ntn_subcmd->parse_complete_callback(ntn_verify_callback);
 
   // Cell section.
   add_option_cell(
@@ -2167,48 +2197,6 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
   // Test mode section.
   CLI::App* test_mode_subcmd = add_subcommand(app, "test_mode", "Test mode configuration")->configurable();
   configure_cli11_test_mode_args(*test_mode_subcmd, parsed_cfg.config.test_mode_cfg);
-}
-
-static void manage_ntn_optional(CLI::App& app, du_high_unit_config& gnb_cfg)
-{
-  auto     ntn_app                = app.get_subcommand_ptr("ntn");
-  unsigned nof_epoch_entries      = ntn_app->get_subcommand("epoch_time")->count_all();
-  unsigned nof_ta_info_entries    = ntn_app->get_subcommand("ta_info")->count_all();
-  unsigned nof_ecef_entries       = ntn_app->get_subcommand("ephemeris_info_ecef")->count_all();
-  unsigned nof_orbital_entries    = ntn_app->get_subcommand("ephemeris_orbital")->count_all();
-  unsigned nof_fl_entries         = ntn_app->get_subcommand("feeder_link")->count_all();
-  unsigned nof_ground_loc_entries = ntn_app->get_subcommand("gateway_location")->count_all();
-  if (nof_epoch_entries) {
-    gnb_cfg.ntn_cfg->epoch_time = epoch_time;
-  }
-
-  if (nof_ta_info_entries) {
-    gnb_cfg.ntn_cfg->ta_info = ta_info;
-  }
-
-  if (nof_ecef_entries) {
-    gnb_cfg.ntn_cfg->ephemeris_info = ecef_coordinates;
-  } else if (nof_orbital_entries) {
-    gnb_cfg.ntn_cfg->ephemeris_info = orbital_coordinates;
-  }
-
-  if (not gnb_cfg.ntn_cfg->use_state_vector.has_value()) {
-    gnb_cfg.ntn_cfg->use_state_vector = nof_ecef_entries != 0;
-  }
-
-  if (nof_fl_entries) {
-    gnb_cfg.ntn_cfg->feeder_link_info = feeder_link_info;
-  }
-
-  if (nof_ground_loc_entries) {
-    gnb_cfg.ntn_cfg->ntn_gateway_location = ntn_gateway_location;
-  }
-
-  if (app.get_subcommand("ntn")->count_all() == 0) {
-    gnb_cfg.ntn_cfg.reset();
-    // As NTN configuration is optional, disable the command when it is not present in the configuration.
-    ntn_app->disabled();
-  }
 }
 
 // Derive the parameters set to "auto"-derived for a cell.
@@ -2297,6 +2285,5 @@ static void derive_auto_params(du_high_unit_config& config)
 
 void srsran::autoderive_du_high_parameters_after_parsing(CLI::App& app, du_high_unit_config& unit_cfg)
 {
-  manage_ntn_optional(app, unit_cfg);
   derive_auto_params(unit_cfg);
 }
