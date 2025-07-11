@@ -245,7 +245,6 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
       noise_var += srsvec::average_power(noise_help) * noise_help.size();
     }
   }
-
   // At this point, noise_var contains the sum of all the squared errors between the received signal and the
   // reconstructed one. For each Rx port, the number of degrees of freedom used to estimate the channel coefficients
   // is usually equal nof_antenna_ports, but when pilots are interleaved, in which case it's 2. Also, when
@@ -253,6 +252,13 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
   unsigned nof_estimates     = (interleaved_pilots ? 2 : nof_antenna_ports);
   unsigned correction_factor = (interleaved_pilots ? 2 : 1);
   noise_var /= static_cast<float>((nof_symbols * sequence_length - nof_estimates) * correction_factor * nof_rx_ports);
+
+  // Normalize the wideband channel matrix with respect to the noise standard deviation, so that the Frobenius norm
+  // square will give us a rough estimate of the SNR. Avoid huge coefficients if the noise variance is too low
+  // (keep SNR <= 40 dB).
+  float noise_std = std::max(std::sqrt(noise_var), std::sqrt(rsrp) * 0.01F);
+  result.channel_matrix *= 1 / noise_std;
+
   epre /= static_cast<float>(nof_symbols * correction_factor * nof_rx_ports);
   rsrp /= static_cast<float>(nof_antenna_ports * nof_rx_ports);
 

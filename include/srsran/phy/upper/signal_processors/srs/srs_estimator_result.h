@@ -18,7 +18,12 @@ namespace srsran {
 
 /// Sounding Reference Signals propagation channel estimation results.
 struct srs_estimator_result {
-  /// Wideband estimated channel matrix.
+  /// \brief Wideband estimated channel matrix.
+  ///
+  /// The channel matrix is normalized by the noise variance, so that its Frobenius norm square gives a rough estimate
+  /// of the SNR for the sounding reference signals.
+  /// \note The SNR inferred from the channel matrix is only meant as a qualitative indicator of the SRS reception and
+  /// does not provide meaningful information about the achievable throughput.
   srs_channel_matrix channel_matrix;
   /// Wideband energy per resource element (EPRE), in decibel.
   std::optional<float> epre_dB;
