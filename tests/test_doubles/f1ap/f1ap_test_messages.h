@@ -232,8 +232,9 @@ generate_positioning_measurement_request(trp_id_t                               
 
 /// \brief Generates dummy F1AP POSITIONING MEASUREMENT RESPONSE message, sent by the DU to the CU, as per
 /// TS 38.473 section 8.13.3.2.
-f1ap_message
-generate_positioning_measurement_response(trp_id_t trp_id, lmf_meas_id_t lmf_meas_id, ran_meas_id_t ran_meas_id);
+f1ap_message generate_positioning_measurement_response(lmf_meas_id_t                lmf_meas_id,
+                                                       ran_meas_id_t                ran_meas_id,
+                                                       const std::vector<trp_id_t>& trp_ids);
 
 /// \brief Generates dummy F1AP POSITIONING MEASUREMENT FAILURE message, sent by the DU to the CU, as per
 /// TS 38.473 section 8.13.3.3.
