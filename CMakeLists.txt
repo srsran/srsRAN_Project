@@ -274,6 +274,7 @@ endif()
 ########################################################################
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/external/cmake-sbom")
 include(sbom)
+include(copyright)
 include(GNUInstallDirs)
 
 sbom_generate(
@@ -284,6 +285,7 @@ sbom_generate(
     DOWNLOAD_URL "https://github.com/srsran/srsRAN_Project.git"
     LICENSE      "LicenseRef-srsRAN"
 )
+parse_copyright_file("${CMAKE_SOURCE_DIR}/COPYRIGHT")
 
 ########################################################################
 # Find dependencies
