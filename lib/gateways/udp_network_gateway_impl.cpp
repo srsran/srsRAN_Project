@@ -31,7 +31,13 @@ udp_network_gateway_impl::udp_network_gateway_impl(udp_network_gateway_config   
   logger(srslog::fetch_basic_logger("UDP-GW")),
   io_tx_executor(io_tx_executor_),
   io_rx_executor(io_rx_executor_),
-  batched_queue(256, io_tx_executor, logger, [this](span<udp_tx_pdu_t> pdus) { handle_pdu_impl(std::move(pdus)); })
+  tx_ctx(config.tx_max_mmsg, config.tx_max_segments),
+  batched_queue(
+      8192,
+      io_tx_executor,
+      logger,
+      [this](span<udp_tx_pdu_t> pdus) { handle_pdu_impl(pdus); },
+      config.tx_max_mmsg)
 {
   logger.info("UDP GW configured. rx_max_mmsg={} pool_thres={} ext_bind_addr={}",
               config.rx_max_mmsg,
@@ -56,7 +62,9 @@ bool udp_network_gateway_impl::subscribe_to(io_broker& broker)
 
 void udp_network_gateway_impl::handle_pdu(byte_buffer pdu, const sockaddr_storage& dest_addr)
 {
-  batched_queue.try_push(udp_tx_pdu_t{std::move(pdu), dest_addr});
+  if (not batched_queue.try_push(udp_tx_pdu_t{std::move(pdu), dest_addr})) {
+    logger.info("Dropped PDU, queue is full.");
+  }
 }
 
 void udp_network_gateway_impl::handle_pdu_impl(span<udp_tx_pdu_t> pdus)
@@ -66,8 +74,6 @@ void udp_network_gateway_impl::handle_pdu_impl(span<udp_tx_pdu_t> pdus)
     return;
   }
 
-  mmsghdr  mmsg[256];
-  iovec    msgs[256][256];
   unsigned msg_index     = 0;
   unsigned segment_index = 0;
   for (const auto& pdu : pdus) {
@@ -76,24 +82,24 @@ void udp_network_gateway_impl::handle_pdu_impl(span<udp_tx_pdu_t> pdus)
       break;
     }
     for (span segment : pdu.pdu.segments()) {
-      const unsigned char* data               = segment.begin();
-      unsigned             size               = segment.size();
-      msgs[msg_index][segment_index].iov_base = (void*)data;
-      msgs[msg_index][segment_index].iov_len  = size;
+      const unsigned char* data                      = segment.begin();
+      unsigned             size                      = segment.size();
+      tx_ctx.msgs[msg_index][segment_index].iov_base = (void*)data;
+      tx_ctx.msgs[msg_index][segment_index].iov_len  = size;
       segment_index++;
-      if (segment_index >= 256) {
+      if (segment_index >= config.tx_max_segments) {
         logger.error("Too many segments. Truncating PDU.");
         break;
       }
     }
 
-    mmsg[msg_index].msg_hdr.msg_iov        = &msgs[msg_index][0];
-    mmsg[msg_index].msg_hdr.msg_iovlen     = segment_index;
-    mmsg[msg_index].msg_hdr.msg_name       = (void*)&pdu.dst_addr;
-    mmsg[msg_index].msg_hdr.msg_namelen    = sizeof(pdu.dst_addr);
-    mmsg[msg_index].msg_hdr.msg_control    = nullptr;
-    mmsg[msg_index].msg_hdr.msg_controllen = 0;
-    mmsg[msg_index].msg_hdr.msg_flags      = 0;
+    tx_ctx.mmsg[msg_index].msg_hdr.msg_iov        = tx_ctx.msgs[msg_index].data();
+    tx_ctx.mmsg[msg_index].msg_hdr.msg_iovlen     = segment_index;
+    tx_ctx.mmsg[msg_index].msg_hdr.msg_name       = (void*)&pdu.dst_addr;
+    tx_ctx.mmsg[msg_index].msg_hdr.msg_namelen    = sizeof(pdu.dst_addr);
+    tx_ctx.mmsg[msg_index].msg_hdr.msg_control    = nullptr;
+    tx_ctx.mmsg[msg_index].msg_hdr.msg_controllen = 0;
+    tx_ctx.mmsg[msg_index].msg_hdr.msg_flags      = 0;
 
     segment_index = 0;
     msg_index++;
@@ -101,50 +107,20 @@ void udp_network_gateway_impl::handle_pdu_impl(span<udp_tx_pdu_t> pdus)
       logger.error("Too many SDUs to send in a single burst, dropping.");
       break;
     }
+    if (logger.debug.enabled()) {
+      std::string local_addr_str;
+      std::string dest_addr_str;
+      uint16_t    dest_port = sockaddr_to_port((sockaddr*)&pdu.dst_addr, logger);
+      sockaddr_to_ip_str((sockaddr*)&pdu.dst_addr, dest_addr_str, logger);
+      sockaddr_to_ip_str((sockaddr*)&local_addr, local_addr_str, logger);
+      logger.debug(
+          "Sent PDU of {} bytes. local_ip={} dest={}:{}", pdu.pdu.length(), local_addr_str, dest_addr_str, dest_port);
+    }
   }
 
-  int ret = sendmmsg(sock_fd.value(), mmsg, msg_index, 0);
+  int ret = sendmmsg(sock_fd.value(), tx_ctx.mmsg.data(), msg_index, 0);
   if (ret < 0) {
-    logger.error("error in sendmmsg ret={}, error={}", msg_index, ret, strerror(errno));
-  }
-}
-
-void udp_network_gateway_impl::handle_pdu_impl(const byte_buffer& pdu, const sockaddr_storage& dest_addr)
-{
-  if (not sock_fd.is_open()) {
-    logger.error("Socket not initialized");
-    return;
-  }
-
-  if (pdu.length() > network_gateway_udp_max_len) {
-    logger.error("PDU of {} bytes exceeds maximum length of {} bytes", pdu.length(), network_gateway_udp_max_len);
-    return;
-  }
-
-  span<const uint8_t> pdu_span = to_span(pdu, tx_mem);
-
-  int bytes_sent = sendto(
-      sock_fd.value(), pdu_span.data(), pdu_span.size_bytes(), 0, (sockaddr*)&dest_addr, sizeof(sockaddr_storage));
-  if (bytes_sent == -1) {
-    std::string local_addr_str;
-    std::string dest_addr_str;
-    sockaddr_to_ip_str((sockaddr*)&dest_addr, dest_addr_str, logger);
-    sockaddr_to_ip_str((sockaddr*)&local_addr, local_addr_str, logger);
-    logger.error("Couldn't send {} B of data on UDP socket: local_ip={} dest_ip={} error=\"{}\"",
-                 pdu_span.size_bytes(),
-                 local_addr_str,
-                 dest_addr_str,
-                 strerror(errno));
-  }
-
-  if (logger.debug.enabled()) {
-    std::string local_addr_str;
-    std::string dest_addr_str;
-    uint16_t    dest_port = sockaddr_to_port((sockaddr*)&dest_addr, logger);
-    sockaddr_to_ip_str((sockaddr*)&dest_addr, dest_addr_str, logger);
-    sockaddr_to_ip_str((sockaddr*)&local_addr, local_addr_str, logger);
-    logger.debug(
-        "Sent PDU of {} bytes. local_ip={} dest={}:{}", pdu.length(), local_addr_str, dest_addr_str, dest_port);
+    logger.error("Could not send {} packets to socket. ret={} error={}", msg_index, ret, strerror(errno));
   }
 }
 
