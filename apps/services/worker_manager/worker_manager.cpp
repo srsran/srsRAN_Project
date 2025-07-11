@@ -355,7 +355,8 @@ void worker_manager::create_low_prio_worker_pool(const worker_manager_config& wo
       // TODO: Fix config.
       worker_cfg.nof_low_prio_threads +
       (worker_cfg.du_low_cfg.has_value()
-           ? worker_cfg.du_low_cfg->nof_pusch_decoder_threads * worker_cfg.du_low_cfg->nof_cells
+           ? (worker_cfg.du_low_cfg->nof_pusch_decoder_threads + worker_cfg.du_low_cfg->nof_ul_threads) *
+                 worker_cfg.du_low_cfg->nof_cells
            : 0);
   const std::chrono::microseconds sleep_time{50};
   const auto                      worker_pool_prio = os_thread_realtime_priority::min();
@@ -451,53 +452,26 @@ worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::
 
   } else {
     // RF case.
-    unsigned nof_ul_workers = du_low.nof_ul_threads;
     unsigned nof_dl_workers = du_low.nof_dl_threads;
 
     std::vector<task_executor*> l2_execs;
 
     for (unsigned cell_id = 0, cell_end = nof_cells; cell_id != cell_end; ++cell_id) {
       const std::string               cell_id_str         = std::to_string(cell_id);
-      const std::string               name_ul             = "up_phy_ul#" + cell_id_str;
       const std::string               name_dl             = "up_phy_dl#" + cell_id_str;
       const std::string               l1_dl_exec_name     = "du_low_dl_exec#" + cell_id_str;
       const std::string               l1_pdsch_exec_name  = "du_low_pdsch_exec#" + cell_id_str;
-      const std::string               l1_pucch_exec_name  = "du_low_pucch_exec#" + cell_id_str;
-      const std::string               l1_pusch_exec_name  = "du_low_pusch_exec#" + cell_id_str;
-      const std::string               l1_srs_exec_name    = "du_low_srs_exec#" + cell_id_str;
+      const std::string               l1_pucch_exec_name  = "high_prio_exec";
+      const std::string               l1_pusch_exec_name  = "medium_prio_exec";
+      const std::string               l1_srs_exec_name    = "medium_prio_exec";
       const std::string               l2_exec_name        = "l2_exec#" + cell_id_str;
       const std::string               l1_high_prio_name   = "l1_high_prio#" + cell_id_str;
-      const auto                      ul_worker_pool_prio = os_thread_realtime_priority::max() - 15;
       const auto                      dl_worker_pool_prio = os_thread_realtime_priority::max() - 2;
-      const std::chrono::microseconds ul_worker_sleep_time{20};
       const std::chrono::microseconds dl_worker_sleep_time{50};
-
-      std::vector<os_sched_affinity_bitmask> ul_cpu_masks;
-      for (unsigned w = 0; w != nof_ul_workers; ++w) {
-        ul_cpu_masks.push_back(affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::l1_ul));
-      }
 
       std::vector<os_sched_affinity_bitmask> dl_cpu_masks;
       for (unsigned w = 0; w != nof_dl_workers; ++w) {
         dl_cpu_masks.push_back(affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::l1_dl));
-      }
-
-      // Instantiate dedicated worker pool for the upper physical layer uplink processing such as PUCCH, PUSCH, and
-      // SRS processing. This worker pool comprises three different priority queues.
-      const worker_pool ul_worker_pool{name_ul,
-                                       nof_ul_workers,
-                                       {{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-                                        {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-                                        {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
-                                       {{l1_pucch_exec_name, task_priority::max},
-                                        {l1_pusch_exec_name, task_priority::max - 1},
-                                        {l1_srs_exec_name, task_priority::max - 2}},
-                                       ul_worker_sleep_time,
-                                       ul_worker_pool_prio,
-                                       ul_cpu_masks};
-
-      if (not exec_mng.add_execution_context(create_execution_context(ul_worker_pool))) {
-        report_fatal_error("Failed to instantiate {} execution context", ul_worker_pool.name);
       }
 
       // Instantiate dedicated worker pool for high priority tasks such as L2, the upper physical layer downlink
