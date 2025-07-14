@@ -28,8 +28,7 @@ TEST_F(fork_limit_executor_test, max_forks_limit_are_respected)
 
   static const unsigned max_forks = 4;
   const unsigned        nof_tasks = 5000;
-  auto                  limiter   = make_task_fork_limiter_ptr<concurrent_queue_policy::lockfree_mpmc>(
-      make_task_worker_pool_executor(pool), max_forks, nof_tasks + 1000);
+  auto limiter = make_task_fork_limiter_ptr(make_task_worker_pool_executor(pool), max_forks, nof_tasks + 1000);
 
   std::atomic<unsigned> active_forks{0};
   std::atomic<unsigned> max_active_forks{0};

@@ -167,8 +167,7 @@ private:
     }
 
     srsran_assert(base_executor != nullptr, "Invalid executor.");
-    executors.emplace_back(make_task_fork_limiter_ptr<concurrent_queue_policy::lockfree_mpmc>(
-        *base_executor, max_nof_threads, default_queue_size));
+    executors.emplace_back(make_task_fork_limiter_ptr(*base_executor, max_nof_threads, default_queue_size));
     return executors.back().get();
   }
 

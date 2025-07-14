@@ -11,12 +11,14 @@
 #pragma once
 
 #include "srsran/adt/detail/concurrent_queue_params.h"
+#include "srsran/adt/moodycamel_mpmc_queue.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/cpu_architecture_info.h"
 #include "srsran/support/executors/detail/task_executor_utils.h"
 #include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
-template <typename ExecType, concurrent_queue_policy QueuePolicy>
+template <typename ExecType>
 class task_fork_limiter final : public task_executor
 {
 public:
@@ -25,7 +27,10 @@ public:
                     unsigned max_forks_,
                     unsigned qsize_,
                     unsigned max_batch_ = std::numeric_limits<unsigned>::max()) :
-    max_forks(max_forks_), max_batch(max_batch_), out_exec(std::forward<E>(exec)), queue(qsize_)
+    max_forks(max_forks_),
+    max_batch(max_batch_),
+    out_exec(std::forward<E>(exec)),
+    queue(qsize_, cpu_architecture_info::get().get_host_nof_available_cpus())
   {
     report_fatal_error_if_not(max_forks > 0, "Fork limit executor must have a positive max_forks value.");
     report_fatal_error_if_not(max_batch > 0, "Fork limit executor must have a positive max_batch value.");
@@ -112,7 +117,7 @@ private:
 
   bool pop_task(unique_task& task)
   {
-    static constexpr unsigned max_pop_failures = 5000;
+    static constexpr unsigned max_pop_failures = 10;
     static constexpr unsigned max_attempts     = 5;
 
     unsigned attempts_count = 0;
@@ -193,7 +198,10 @@ private:
   ExecType out_exec;
 
   /// Queue of pending tasks.
-  concurrent_queue<unique_task, QueuePolicy, concurrent_queue_wait_policy::non_blocking> queue;
+  concurrent_queue<unique_task,
+                   concurrent_queue_policy::moodycamel_lockfree_mpmc,
+                   concurrent_queue_wait_policy::non_blocking>
+      queue;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("ALL");
 
@@ -209,11 +217,10 @@ private:
 /// \param[in] out_exec Executor to which tasks are ultimately dispatched.
 /// \param[in] max_fork_size Maximum number of concurrent tasks that can run concurrently in the wrapped executor.
 /// \param[in] qsize Size of the internal queue
-template <concurrent_queue_policy QueuePolicy, typename OutExec = task_executor*>
+template <typename OutExec = task_executor*>
 std::unique_ptr<task_executor> make_task_fork_limiter_ptr(OutExec&& out_exec, unsigned max_fork_size, unsigned qsize)
 {
-  return std::make_unique<task_fork_limiter<OutExec, QueuePolicy>>(
-      std::forward<OutExec>(out_exec), max_fork_size, qsize);
+  return std::make_unique<task_fork_limiter<OutExec>>(std::forward<OutExec>(out_exec), max_fork_size, qsize);
 }
 
 } // namespace srsran
