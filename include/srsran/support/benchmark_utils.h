@@ -10,8 +10,10 @@
 
 #pragma once
 
+#include "fmt/format.h"
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <string>
 #include <vector>
 

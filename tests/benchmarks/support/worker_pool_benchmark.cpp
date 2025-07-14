@@ -8,6 +8,7 @@
  *
  */
 
+#include "srsran/support/benchmark_utils.h"
 #include "srsran/support/executors/task_worker_pool.h"
 #include <getopt.h>
 #include <variant>
@@ -133,7 +134,11 @@ private:
   void run_task()
   {
     if (running.load(std::memory_order_relaxed)) {
-      std::this_thread::sleep_for(std::chrono::microseconds{task_dur});
+      auto task_start = std::chrono::high_resolution_clock::now();
+      while (std::chrono::high_resolution_clock::now() - task_start < task_dur) {
+        // Simulate some work.
+        do_not_optimize(start_time);
+      }
       task_counter.fetch_add(1, std::memory_order_relaxed);
       bool success = false;
       for (unsigned nof_attempts = 100000; nof_attempts > 0; --nof_attempts) {
