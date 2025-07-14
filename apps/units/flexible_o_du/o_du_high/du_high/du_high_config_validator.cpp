@@ -1231,21 +1231,6 @@ static bool validate_ntn_config(const ntn_config& ntn_cfg)
     }
   }
 
-#ifndef SRSRAN_HAS_ENTERPRISE_NTN
-  if (ntn_cfg.use_state_vector.has_value()) {
-    bool is_state_vector_format = std::holds_alternative<ecef_coordinates_t>(ntn_cfg.ephemeris_info);
-    bool conversion_required    = *ntn_cfg.use_state_vector && not is_state_vector_format;
-    conversion_required |= not *ntn_cfg.use_state_vector && is_state_vector_format;
-    if (conversion_required) {
-      fmt::print("NTN Ephemeris Info format mismatch: configuration requests to use {} format in SIB19, but Ephemeris "
-                 "Info is provided as {}. Conversion between formats is required but not supported in this build.\n",
-                 *ntn_cfg.use_state_vector ? "ECEF State Vector" : "ECI Orbital Elements",
-                 is_state_vector_format ? "ECEF State Vector" : "ECI Orbital Elements");
-      valid = false;
-    }
-  }
-#endif // SRSRAN_HAS_ENTERPRISE_NTN
-
   return valid;
 }
 
