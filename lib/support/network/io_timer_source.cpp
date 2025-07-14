@@ -40,16 +40,19 @@ io_timer_source::io_timer_source(timer_manager&            tick_sink_,
 
 void io_timer_source::read_time()
 {
-  char read_buffer[8];
-  int  n = ::read(io_sub.value(), read_buffer, sizeof(read_buffer));
+  uint64_t nof_expirations = 0;
+  int      n               = ::read(io_sub.value(), &nof_expirations, sizeof(nof_expirations));
   if (n < 0) {
     logger.error("Failed to read timerfd (errno={})", ::strerror(errno));
     return;
   }
   if (n == 0) {
     logger.warning("Timerfd read returned 0");
+    return;
   }
 
-  // Tick timers.
-  tick_sink.tick();
+  while (nof_expirations-- > 0) {
+    // Tick timers.
+    tick_sink.tick();
+  }
 }
