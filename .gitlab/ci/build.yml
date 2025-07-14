@@ -1622,6 +1622,8 @@ rhel-8 amd64 native:
   variables:
     OS: rhel-8
     INFRASTRUCTURE_TAG: amd64
+    KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "50G"
+    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"    
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1637,6 +1639,8 @@ rhel-8 amd64 avx512:
     OS: rhel-8
     MARCH: x86-64-v4
     INFRASTRUCTURE_TAG: amd64-avx2-avx512
+    KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "50G"
+    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"    
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1651,6 +1655,8 @@ rhel-8 arm native:
   variables:
     OS: rhel-8
     INFRASTRUCTURE_TAG: arm64
+    KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "50G"
+    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"    
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1666,6 +1672,8 @@ rhel-8 arm neon:
     OS: rhel-8
     MARCH: armv8.2-a+crypto+fp16+dotprod
     INFRASTRUCTURE_TAG: arm64
+    KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "50G"
+    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"    
   parallel:
     matrix:
       - <<: *basic_combinations
