@@ -20,8 +20,8 @@ using namespace srsran;
 io_timer_source::io_timer_source(timer_manager&            tick_sink_,
                                  io_broker&                broker,
                                  task_executor&            executor,
-                                 std::chrono::milliseconds tick_period) :
-  tick_sink(tick_sink_), logger(srslog::fetch_basic_logger("IO-EPOLL"))
+                                 std::chrono::milliseconds tick_period_) :
+  tick_period(tick_period_), tick_sink(tick_sink_), logger(srslog::fetch_basic_logger("IO-EPOLL"))
 {
   using namespace std::chrono;
 
@@ -38,8 +38,23 @@ io_timer_source::io_timer_source(timer_manager&            tick_sink_,
   report_fatal_error_if_not(io_sub.value() > 0, "Failed to create timer source");
 }
 
+io_timer_source::~io_timer_source()
+{
+  while (io_sub.registered()) {
+    stop_requested.store(true, std::memory_order_relaxed);
+    std::this_thread::sleep_for(tick_period);
+  }
+}
+
 void io_timer_source::read_time()
 {
+  if (stop_requested.load(std::memory_order_relaxed)) {
+    // Request to stop the timer source.
+    logger.info("Stopping timer source");
+    io_sub.reset();
+    return;
+  }
+
   uint64_t nof_expirations = 0;
   int      n               = ::read(io_sub.value(), &nof_expirations, sizeof(nof_expirations));
   if (n < 0) {
