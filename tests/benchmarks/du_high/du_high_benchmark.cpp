@@ -40,6 +40,7 @@
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_high/du_high_configuration.h"
 #include "srsran/du/du_high/du_high_executor_mapper.h"
+#include "srsran/du/du_high/du_metrics_notifier.h"
 #include "srsran/du/du_high/du_qos_config_helpers.h"
 #include "srsran/f1u/du/f1u_gateway.h"
 #include "srsran/mac/mac_cell_timing_context.h"
@@ -225,7 +226,7 @@ static void print_args(const bench_params& params)
   fmt::print("- Scheduler tracing: {}\n", params.sched_trace_enabled ? "enabled" : "disabled");
 }
 
-class dummy_metrics_handler : public scheduler_metrics_notifier
+class dummy_metrics_handler : public srs_du::du_metrics_notifier
 {
 public:
   dummy_metrics_handler() :
@@ -233,7 +234,16 @@ public:
   {
   }
 
-  void report_metrics(const scheduler_cell_metrics& metrics) override
+  void on_new_metric_report(const srs_du::du_metrics_report& report) override
+  {
+    if (report.mac.has_value()) {
+      for (const scheduler_cell_metrics& cell : report.mac->sched.cells) {
+        handle_cell_metrics(cell);
+      }
+    }
+  }
+
+  void handle_cell_metrics(const scheduler_cell_metrics& metrics)
   {
     unsigned sum_dl_bs = 0;
     for (const auto& ue : metrics.ue_metrics) {
@@ -594,6 +604,7 @@ public:
     dependencies.f1u_gw      = &sim_cu_up;
     dependencies.phy_adapter = &sim_phy;
     dependencies.timers      = &timers;
+    dependencies.du_notifier = &metrics_handler;
     dependencies.mac_p       = &mac_pcap;
     dependencies.rlc_p       = &rlc_pcap;
 
@@ -1290,13 +1301,13 @@ static void configure_main_thread(span<const unsigned> du_cell_cores)
 
   int prio_level = ::sched_get_priority_max(SCHED_FIFO);
   if (prio_level == -1) {
-    fmt::print("Warning: Unable to get the max thread priority. Falling back to normal priority.");
+    fmt::print("Warning: Unable to get the max thread priority. Falling back to normal priority.\n");
     return;
   }
   // set priority to -1 less than RT to avoid interfering with kernel.
   ::sched_param sch{prio_level - 1};
   if (::pthread_setschedparam(self, SCHED_FIFO, &sch)) {
-    fmt::print("Warning: Unable to set the test thread priority to max. Falling back to normal priority.");
+    fmt::print("Warning: Unable to set the test thread priority to max. Falling back to normal priority.\n");
     return;
   }
 
