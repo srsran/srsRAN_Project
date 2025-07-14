@@ -336,10 +336,28 @@ static float to_prach_rssi_dB(int fapi_rssi)
   return (fapi_rssi - 140000) * 0.001F;
 }
 
+/// Converts the given FAPI RACH occasion RSSI to dB as per SCF-222 v4.0 section 3.4.11.
+static std::optional<float> convert_fapi_to_mac_rssi_dB(uint32_t fapi_rssi)
+{
+  if (fapi_rssi != std::numeric_limits<decltype(fapi_rssi)>::max()) {
+    return to_prach_rssi_dB(fapi_rssi);
+  }
+  return std::nullopt;
+}
+
 /// Converts the given FAPI RACH preamble power to dB as per SCF-222 v4.0 section 3.4.11.
 static float to_prach_preamble_power_dB(int fapi_power)
 {
   return static_cast<float>(fapi_power - 140000) * 0.001F;
+}
+
+/// Converts the given FAPI RACH preamble power to dB as per SCF-222 v4.0 section 3.4.11.
+static std::optional<float> convert_fapi_to_mac_preamble_power_dB(uint32_t fapi_power)
+{
+  if (fapi_power != std::numeric_limits<decltype(fapi_power)>::max()) {
+    return to_prach_preamble_power_dB(fapi_power);
+  }
+  return std::nullopt;
 }
 
 /// Converts the given FAPI RACH preamble SNR to dB as per SCF-222 v4.0 section 3.4.11.
@@ -348,29 +366,32 @@ static float to_prach_preamble_snr_dB(int fapi_snr)
   return (fapi_snr - 128) * 0.5F;
 }
 
+/// Converts the given FAPI RACH preamble SNR to dB as per SCF-222 v4.0 section 3.4.11.
+static std::optional<float> convert_fapi_to_mac_preamble_snr_dB(uint8_t fapi_snr)
+{
+  if (fapi_snr != std::numeric_limits<decltype(fapi_snr)>::max()) {
+    return to_prach_preamble_snr_dB(fapi_snr);
+  }
+  return std::nullopt;
+}
+
 void fapi_to_mac_data_msg_translator::on_rach_indication(const fapi::rach_indication_message& msg)
 {
   mac_rach_indication indication;
   indication.slot_rx = slot_point(scs, msg.sfn, msg.slot);
   for (const auto& pdu : msg.pdus) {
-    srsran_assert(pdu.avg_rssi != std::numeric_limits<decltype(pdu.avg_rssi)>::max(), "Average RSSI field not set");
-
     mac_rach_indication::rach_occasion& occas = indication.occasions.emplace_back();
     occas.frequency_index                     = pdu.ra_index;
     occas.slot_index                          = pdu.slot_index;
     occas.start_symbol                        = pdu.symbol_index;
-    occas.rssi_dBFS                           = to_prach_rssi_dB(pdu.avg_rssi);
-    for (const auto& preamble : pdu.preambles) {
-      srsran_assert(preamble.preamble_pwr != std::numeric_limits<decltype(preamble.preamble_pwr)>::max(),
-                    "Preamble power field not set");
-      srsran_assert(preamble.preamble_snr != std::numeric_limits<decltype(preamble.preamble_snr)>::max(),
-                    "Preamble SNR field not set");
+    occas.rssi_dBFS                           = convert_fapi_to_mac_rssi_dB(pdu.avg_rssi);
 
+    for (const auto& preamble : pdu.preambles) {
       mac_rach_indication::rach_preamble& mac_pream = occas.preambles.emplace_back();
       mac_pream.index                               = preamble.preamble_index;
       mac_pream.time_advance = phy_time_unit::from_seconds(preamble.timing_advance_offset_ns * 1e-9);
-      mac_pream.pwr_dBFS     = to_prach_preamble_power_dB(preamble.preamble_pwr);
-      mac_pream.snr_dB       = to_prach_preamble_snr_dB(preamble.preamble_snr);
+      mac_pream.pwr_dBFS     = convert_fapi_to_mac_preamble_power_dB(preamble.preamble_pwr);
+      mac_pream.snr_dB       = convert_fapi_to_mac_preamble_snr_dB(preamble.preamble_snr);
     }
   }
 
