@@ -16,22 +16,27 @@ using namespace srsran;
 
 struct bench_params {
   std::chrono::milliseconds duration{1};
+  unsigned                  max_workers = 16;
 };
 
 static void usage(const char* prog, const bench_params& params)
 {
   fmt::print("Usage: {} [-R repetitions]\n", prog);
   fmt::print("\t-D Duration in milliseconds [Default {}]\n", params.duration.count());
+  fmt::print("\t-t Maximum number of workers [Default {}]\n", params.max_workers);
   fmt::print("\t-h Show this message\n");
 }
 
 static void parse_args(int argc, char** argv, bench_params& params)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "D:h")) != -1) {
+  while ((opt = getopt(argc, argv, "D:t:h")) != -1) {
     switch (opt) {
       case 'D':
         params.duration = std::chrono::milliseconds{std::strtol(optarg, nullptr, 10)};
+        break;
+      case 't':
+        params.max_workers = std::strtol(optarg, nullptr, 10);
         break;
       case 'h':
       default:
@@ -176,7 +181,14 @@ benchmark_result run_throughput_benchmark(benchmark_environment& env, const benc
 
 void run_benchmarks(const bench_params& params)
 {
-  std::vector<unsigned>                nof_workers_list{1, 2, 4, 8, 16};
+  std::vector<unsigned> nof_workers_list{1};
+  while (true) {
+    unsigned next_nof_workers = nof_workers_list.back() * 2;
+    if (next_nof_workers > params.max_workers) {
+      break;
+    }
+    nof_workers_list.push_back(next_nof_workers);
+  }
   std::vector<concurrent_queue_policy> policies = {
       concurrent_queue_policy::lockfree_mpmc,
       concurrent_queue_policy::moodycamel_lockfree_mpmc,
