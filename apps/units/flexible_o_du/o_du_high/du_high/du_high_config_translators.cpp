@@ -163,12 +163,15 @@ static sib19_info create_sib19_info(const du_high_unit_config& config)
   if (config.ntn_cfg.has_value()) {
     sib19.distance_thres           = config.ntn_cfg.value().distance_threshold;
     sib19.ref_location             = config.ntn_cfg.value().reference_location;
+    sib19.t_service                = config.ntn_cfg.value().t_service;
     sib19.cell_specific_koffset    = config.ntn_cfg.value().cell_specific_koffset;
     sib19.ephemeris_info           = config.ntn_cfg.value().ephemeris_info;
     sib19.epoch_time               = config.ntn_cfg.value().epoch_time;
     sib19.k_mac                    = config.ntn_cfg.value().k_mac;
     sib19.ta_info                  = config.ntn_cfg.value().ta_info;
     sib19.ntn_ul_sync_validity_dur = config.ntn_cfg.value().ntn_ul_sync_validity_dur;
+    sib19.polarization             = config.ntn_cfg.value().polarization;
+    sib19.ta_report                = config.ntn_cfg.value().ta_report;
   }
   return sib19;
 }

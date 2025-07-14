@@ -92,12 +92,24 @@ struct geodetic_coordinates_t {
   double altitude;
 };
 
+/// Indicates polarization information for downlink/uplink transmission on service link.
+struct ntn_polarization_t {
+  enum class polarization_type { rhcp, lhcp, linear };
+  /// If present, this parameter indicates polarization information for downlink transmission on service link.
+  std::optional<polarization_type> dl;
+  /// If present, this parameter indicates Polarization information for uplink service link.
+  std::optional<polarization_type> ul;
+};
+
 struct ntn_config {
   /// SIB 19 values
-  /// Reference location of the serving cell provided via NTN quasi-Earth fixed system. (TS 38.304)
-  std::optional<std::string> reference_location;
+  /// Reference location of the serving cell in geodetic coordinates format (in degrees).
+  std::optional<geodetic_coordinates_t> reference_location;
   /// Distance from the serving cell reference location, as defined in TS 38.304. Each step represents 50m.
   std::optional<unsigned> distance_threshold;
+  /// Indicates the time information on when a cell provided via NTN is going to stop serving the area it is currently
+  /// covering. It represents a timestamp in ms unit of Unix time (UTC time since 1970-01-01)
+  std::optional<uint64_t> t_service;
   /// NTN-config values
   /// Indicate the epoch time for the NTN assistance information passed in the config file.
   /// It represents a timestamp in ms unit of Unix time (UTC time since 1970-01-01)
@@ -131,6 +143,10 @@ struct ntn_config {
   std::optional<feeder_link_info_t> feeder_link_info;
   /// Geodetic coordinates (in degrees) of the NTN Gateway location.
   std::optional<geodetic_coordinates_t> ntn_gateway_location;
+  /// Indicates polarization information for downlink/uplink transmission on service link.
+  std::optional<ntn_polarization_t> polarization;
+  /// When this field is included in SIB19, it indicates reporting of timing advanced is enabled.
+  std::optional<bool> ta_report;
   /// SIB19 scheduling information.
   unsigned                si_msg_idx;
   unsigned                si_period_rf;

@@ -661,11 +661,6 @@ static asn1::rrc_nr::sib19_r17_s make_asn1_rrc_cell_sib19(const sib19_info& sib1
     sib19.distance_thresh_r17         = static_cast<uint16_t>(sib19_params.distance_thres.value() / 50);
   }
 
-  // Reference Location.
-  if (sib19_params.ref_location.has_value()) {
-    sib19.ref_location_r17.from_string(sib19_params.ref_location.value());
-  }
-
   // T-Service, currently not supported.
   sib19.t_service_r17_present = false;
 
