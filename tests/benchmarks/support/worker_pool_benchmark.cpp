@@ -1,0 +1,219 @@
+/*
+ *
+ * Copyright 2021-2025 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#include "srsran/support/executors/task_worker_pool.h"
+#include <getopt.h>
+#include <variant>
+
+using namespace srsran;
+
+struct bench_params {
+  std::chrono::milliseconds duration{1};
+};
+
+static void usage(const char* prog, const bench_params& params)
+{
+  fmt::print("Usage: {} [-R repetitions]\n", prog);
+  fmt::print("\t-D Duration in milliseconds [Default {}]\n", params.duration.count());
+  fmt::print("\t-h Show this message\n");
+}
+
+static void parse_args(int argc, char** argv, bench_params& params)
+{
+  int opt = 0;
+  while ((opt = getopt(argc, argv, "D:h")) != -1) {
+    switch (opt) {
+      case 'D':
+        params.duration = std::chrono::milliseconds{std::strtol(optarg, nullptr, 10)};
+        break;
+      case 'h':
+      default:
+        usage(argv[0], params);
+        exit(0);
+    }
+  }
+}
+
+struct benchmark_result {
+  std::string               description;
+  int64_t                   task_count{0};
+  std::chrono::microseconds duration{0};
+};
+
+class benchmark_environment
+{
+public:
+  using pool_storage =
+      std::variant<std::unique_ptr<task_worker_pool<concurrent_queue_policy::lockfree_mpmc>>,
+                   std::unique_ptr<task_worker_pool<concurrent_queue_policy::moodycamel_lockfree_mpmc>>>;
+
+  benchmark_environment(concurrent_queue_policy   policy,
+                        unsigned                  nof_workers_,
+                        unsigned                  qsize_,
+                        std::chrono::microseconds task_dur_) :
+    nof_workers(nof_workers_), qsize(qsize_), task_dur(task_dur_)
+  {
+    if (policy == concurrent_queue_policy::lockfree_mpmc) {
+      auto pool =
+          std::make_unique<task_worker_pool<concurrent_queue_policy::lockfree_mpmc>>("mpmc", nof_workers, qsize);
+      task_exec   = make_task_worker_pool_executor_ptr(*pool);
+      storage     = std::move(pool);
+      description = "lockfree_mpmc";
+    } else if (policy == concurrent_queue_policy::moodycamel_lockfree_mpmc) {
+      auto pool = std::make_unique<task_worker_pool<concurrent_queue_policy::moodycamel_lockfree_mpmc>>(
+          "moodyl_mpmc", nof_workers, qsize);
+      task_exec   = make_task_worker_pool_executor_ptr(*pool);
+      storage     = std::move(pool);
+      description = "moodycamel_mpmc";
+    } else {
+      throw std::invalid_argument("Unsupported queue policy");
+    }
+    description += ",workers=" + std::to_string(nof_workers) + ",task_dur=" + std::to_string(task_dur.count()) + "us";
+  }
+
+  task_executor& executor() { return *task_exec; }
+
+  const std::string& get_description() const { return description; }
+
+  void start()
+  {
+    fmt::print("STATUS: Starting {}...", description);
+    unsigned nof_initial_tasks = std::min(nof_workers * 4, qsize);
+    for (unsigned i = 0; i != nof_initial_tasks; ++i) {
+      bool success = task_exec->defer([this]() { run_task(); });
+      report_fatal_error_if_not(success, "Unexpected failure to defer initial task");
+    }
+    reset_counters();
+  }
+
+  void reset_counters()
+  {
+    task_counter.store(0, std::memory_order_relaxed);
+    start_time = std::chrono::high_resolution_clock::now();
+  }
+
+  void stop()
+  {
+    auto stop_time     = std::chrono::high_resolution_clock::now();
+    result.task_count  = task_counter.load(std::memory_order_relaxed);
+    result.duration    = std::chrono::duration_cast<std::chrono::microseconds>(stop_time - start_time);
+    result.description = description;
+    running.store(false, std::memory_order_relaxed);
+
+    fmt::print(" Done.\n");
+
+    if (auto* pool = std::get_if<std::unique_ptr<task_worker_pool<concurrent_queue_policy::lockfree_mpmc>>>(&storage)) {
+      (*pool)->wait_pending_tasks();
+      (*pool)->stop();
+    } else if (auto* moody_pool =
+                   std::get_if<std::unique_ptr<task_worker_pool<concurrent_queue_policy::moodycamel_lockfree_mpmc>>>(
+                       &storage)) {
+      (*moody_pool)->wait_pending_tasks();
+      (*moody_pool)->stop();
+    } else {
+      report_fatal_error("Unexpected storage type in benchmark_environment");
+    }
+  }
+
+  benchmark_result get_result() const { return result; }
+
+private:
+  void run_task()
+  {
+    if (running.load(std::memory_order_relaxed)) {
+      std::this_thread::sleep_for(std::chrono::microseconds{task_dur});
+      task_counter.fetch_add(1, std::memory_order_relaxed);
+      bool success = false;
+      for (unsigned nof_attempts = 100000; nof_attempts > 0; --nof_attempts) {
+        success = task_exec->defer([this]() { run_task(); });
+        if (success) {
+          break;
+        }
+        if (nof_attempts % 1000 == 0) {
+          std::this_thread::yield(); // Yield to avoid busy waiting.
+        }
+      }
+      report_fatal_error_if_not(success, "Unexpected failure to defer task");
+    }
+  }
+
+  const unsigned                  nof_workers;
+  const unsigned                  qsize;
+  pool_storage                    storage;
+  std::unique_ptr<task_executor>  task_exec;
+  std::string                     description;
+  const std::chrono::microseconds task_dur;
+
+  std::atomic<bool>                              running{true};
+  std::chrono::high_resolution_clock::time_point start_time;
+  std::atomic<uint64_t>                          task_counter{0};
+
+  benchmark_result result;
+};
+
+benchmark_result run_throughput_benchmark(benchmark_environment& env, const bench_params& params)
+{
+  env.start();
+
+  // Let it warm up.
+  auto warmup_duration = std::min(std::chrono::milliseconds{100}, params.duration);
+  std::this_thread::sleep_for(warmup_duration);
+  env.reset_counters();
+
+  // Collect results...
+  std::this_thread::sleep_for(params.duration);
+  env.stop();
+
+  return env.get_result();
+}
+
+void run_benchmarks(const bench_params& params)
+{
+  std::vector<unsigned>                nof_workers_list{1, 2, 4, 8, 16};
+  std::vector<concurrent_queue_policy> policies = {
+      concurrent_queue_policy::lockfree_mpmc,
+      concurrent_queue_policy::moodycamel_lockfree_mpmc,
+  };
+  std::vector<std::chrono::microseconds> task_durations{std::chrono::microseconds{0}, std::chrono::microseconds{10}};
+  const unsigned                         qsize = 2048;
+
+  fmt::print("Running benchmark with parameters: duration={}msec\n", params.duration.count());
+
+  std::vector<benchmark_result> results;
+  for (concurrent_queue_policy policy : policies) {
+    for (unsigned nof_workers : nof_workers_list) {
+      for (std::chrono::microseconds task_dur : task_durations) {
+        benchmark_environment env{policy, nof_workers, qsize, task_dur};
+        results.push_back(run_throughput_benchmark(env, params));
+      }
+    }
+  }
+
+  fmt::print("\nBenchmark results:\n");
+  for (const benchmark_result& result : results) {
+    fmt::print("{}: task_count={}, duration={} usec, tasks-per-sec={}\n",
+               result.description,
+               result.task_count,
+               result.duration.count(),
+               result.task_count * 1000000 / result.duration.count());
+  }
+}
+
+int main(int argc, char** argv)
+{
+  srslog::fetch_basic_logger("ALL").set_level(srslog::basic_levels::warning);
+  srslog::init();
+
+  bench_params params{};
+  parse_args(argc, argv, params);
+
+  // Run benchmarks for different queue policies.
+  run_benchmarks(params);
+}
