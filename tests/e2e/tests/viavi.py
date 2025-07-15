@@ -116,6 +116,8 @@ def _convert_extra_config_into_command(extra_config: dict) -> str:
     for key, value in sorted(extra_config.items(), key=lambda item: isinstance(item[1], dict)):
         if isinstance(value, dict):
             cmd_args += f"{key} " + _convert_extra_config_into_command(value)
+        elif value is None:
+            cmd_args += f"{key} "
         else:
             cmd_args += f"--{key}={value} "
     return cmd_args
