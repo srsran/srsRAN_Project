@@ -46,9 +46,6 @@ void scheduler_impl::handle_cell_removal_request(du_cell_index_t cell_index)
   srsran_assert(cells.contains(cell_index), "cell={} does not exist", fmt::underlying(cell_index));
   srsran_assert(not cells[cell_index]->is_running(), "cell={} is not stopped", fmt::underlying(cell_index));
 
-  // Remove cell from ue scheduler.
-  groups[cells[cell_index]->cell_cfg.cell_group_index]->rem_cell(cell_index);
-
   // Remove cell.
   cells.erase(cell_index);
 
@@ -151,7 +148,7 @@ void scheduler_impl::handle_ul_phr_indication(const ul_phr_indication_message& p
     return;
   }
 
-  cells[phr_ind.cell_index]->ue_sched.get_feedback_handler().handle_ul_phr_indication(phr_ind);
+  cells[phr_ind.cell_index]->get_feedback_handler().handle_ul_phr_indication(phr_ind);
 }
 
 void scheduler_impl::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
@@ -176,14 +173,14 @@ void scheduler_impl::handle_uci_indication(const uci_indication& uci)
 {
   srsran_assert(cells.contains(uci.cell_index), "cell={} does not exist", fmt::underlying(uci.cell_index));
 
-  cells[uci.cell_index]->ue_sched.get_feedback_handler().handle_uci_indication(uci);
+  cells[uci.cell_index]->get_feedback_handler().handle_uci_indication(uci);
 }
 
 void scheduler_impl::handle_srs_indication(const srs_indication& srs)
 {
   srsran_assert(cells.contains(srs.cell_index), "cell={} does not exist", fmt::underlying(srs.cell_index));
 
-  cells[srs.cell_index]->ue_sched.get_feedback_handler().handle_srs_indication(srs);
+  cells[srs.cell_index]->get_feedback_handler().handle_srs_indication(srs);
 }
 
 void scheduler_impl::handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce)

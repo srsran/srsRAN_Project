@@ -88,22 +88,8 @@ void ue_repository::slot_indication(slot_point sl_tx)
       continue;
     }
 
-    // Remove UE from lookup.
-    auto it = search_rnti(rnti_to_ue_index_lookup, crnti);
-    if (it != rnti_to_ue_index_lookup.end()) {
-      rnti_to_ue_index_lookup.erase(it);
-    } else {
-      logger.error("ue={} rnti={}: UE with provided c-rnti not found in RNTI-to-UE-index lookup table.",
-                   fmt::underlying(ue_idx),
-                   crnti);
-    }
-
-    // Take the UE from the repository and schedule its destruction outside the critical section.
-    auto ue_ptr = ues.take(ue_idx);
-    ue_ptr->release_resources();
-    if (not ues_to_destroy.try_push(std::move(ue_ptr))) {
-      logger.warning("Failed to offload UE destruction. Performance may be affected");
-    }
+    // Remove UE from the repository.
+    rem_ue(u);
 
     // Marks UE config removal as complete.
     rem_ev.reset();
@@ -166,5 +152,55 @@ const ue* ue_repository::find_by_rnti(rnti_t rnti) const
 void ue_repository::destroy_pending_ues()
 {
   while (ues_to_destroy.try_pop()) {
+  }
+}
+
+void ue_repository::rem_ue(const ue& u)
+{
+  const rnti_t        crnti  = u.crnti;
+  const du_ue_index_t ue_idx = u.ue_index;
+
+  // Remove UE from lookup.
+  auto it = search_rnti(rnti_to_ue_index_lookup, crnti);
+  if (it != rnti_to_ue_index_lookup.end()) {
+    rnti_to_ue_index_lookup.erase(it);
+  } else {
+    logger.error("ue={} rnti={}: UE with provided c-rnti not found in RNTI-to-UE-index lookup table.",
+                 fmt::underlying(ue_idx),
+                 crnti);
+  }
+
+  // Take the UE from the repository and schedule its destruction outside the critical section.
+  auto ue_ptr = ues.take(ue_idx);
+  ue_ptr->release_resources();
+  if (not ues_to_destroy.try_push(std::move(ue_ptr))) {
+    logger.warning("Failed to offload UE destruction. Performance may be affected");
+  }
+}
+
+void ue_repository::handle_cell_removal(du_cell_index_t cell_index)
+{
+  for (std::unique_ptr<ue>& u : ues) {
+    ue_cell* ue_cc = u->find_cell(cell_index);
+    if (ue_cc == nullptr) {
+      // UE does not have this cell, so we can skip it.
+      continue;
+    }
+
+    // Note: We now remove the UE from the repository, indepedently of whether it is a PCell or SCell. It would be very
+    // hard to handle a UE that has a config for a cell that is not active.
+    rem_ue(*u);
+  }
+
+  // We may have removed UEs that were scheduled for removal in an earlier slot. We need to clean up the ues_to_rem.
+  for (std::pair<slot_point, ue_config_delete_event>& p : ues_to_rem) {
+    auto& rem_ev = p.second;
+    if (rem_ev.valid()) {
+      const du_ue_index_t ue_idx = rem_ev.ue_index();
+      if (not ues.contains(ue_idx)) {
+        // UE removed in the previous loop, so we need to clear this event.
+        rem_ev.reset();
+      }
+    }
   }
 }

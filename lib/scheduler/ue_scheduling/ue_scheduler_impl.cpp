@@ -18,9 +18,9 @@ ue_scheduler_impl::ue_scheduler_impl(const scheduler_ue_expert_config& expert_cf
 {
 }
 
-void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
+ue_cell_scheduler* ue_scheduler_impl::do_add_cell(const ue_scheduler_cell_params& params)
 {
-  cells.emplace(params.cell_index, expert_cfg, ue_db, params);
+  cells.emplace(params.cell_index, *this, params);
   auto& cell = cells[params.cell_index];
 
   event_mng.add_cell(cell_creation_event{*params.cell_res_alloc,
@@ -31,12 +31,19 @@ void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
                                          cell.srs_sched,
                                          *params.cell_metrics,
                                          *params.ev_logger});
+
+  return &cell;
 }
 
-void ue_scheduler_impl::rem_cell(du_cell_index_t cell_index)
+void ue_scheduler_impl::do_rem_cell(du_cell_index_t cell_index)
 {
+  srsran_assert(cells.contains(cell_index), "Cell reference not found in the scheduler");
+
   // Remove cell from UE event manager.
   event_mng.rem_cell(cell_index);
+
+  // Remove UEs from the UE repository associated with this cell.
+  ue_db.handle_cell_removal(cell_index);
 
   // Remove cell from UE scheduler.
   cells.erase(cell_index);
@@ -130,7 +137,7 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
   return true;
 }
 
-void ue_scheduler_impl::run_slot(slot_point slot_tx)
+void ue_scheduler_impl::run_slot_impl(slot_point slot_tx)
 {
   std::unique_lock<std::mutex> lock(cell_group_mutex, std::defer_lock);
   if (cells.size() > 1) {
@@ -202,33 +209,33 @@ private:
 
 } // namespace
 
-ue_scheduler_impl::cell_context::cell_context(const scheduler_ue_expert_config& expert_cfg,
-                                              ue_repository&                    ues,
-                                              const ue_scheduler_cell_params&   params) :
+ue_scheduler_impl::cell_context::cell_context(ue_scheduler_impl& parent_, const ue_scheduler_cell_params& params) :
+  parent(parent_),
   cell_res_alloc(params.cell_res_alloc),
-  cell_harqs(MAX_NOF_DU_UES,
-             MAX_NOF_HARQS,
-             std::make_unique<harq_manager_timeout_notifier>(*params.cell_metrics),
-             expert_cfg.dl_harq_retx_timeout.count() * get_nof_slots_per_subframe(cell_res_alloc->cfg.scs_common),
-             expert_cfg.ul_harq_retx_timeout.count() * get_nof_slots_per_subframe(cell_res_alloc->cfg.scs_common),
-             cell_harq_manager::DEFAULT_ACK_TIMEOUT_SLOTS,
-             params.cell_res_alloc->cfg.ntn_cs_koffset),
-  uci_sched(params.cell_res_alloc->cfg, *params.uci_alloc, ues),
-  fallback_sched(expert_cfg,
+  cell_harqs(
+      MAX_NOF_DU_UES,
+      MAX_NOF_HARQS,
+      std::make_unique<harq_manager_timeout_notifier>(*params.cell_metrics),
+      parent.expert_cfg.dl_harq_retx_timeout.count() * get_nof_slots_per_subframe(cell_res_alloc->cfg.scs_common),
+      parent.expert_cfg.ul_harq_retx_timeout.count() * get_nof_slots_per_subframe(cell_res_alloc->cfg.scs_common),
+      cell_harq_manager::DEFAULT_ACK_TIMEOUT_SLOTS,
+      params.cell_res_alloc->cfg.ntn_cs_koffset),
+  uci_sched(params.cell_res_alloc->cfg, *params.uci_alloc, parent.ue_db),
+  fallback_sched(parent.expert_cfg,
                  params.cell_res_alloc->cfg,
                  *params.pdcch_sched,
                  *params.pucch_alloc,
                  *params.uci_alloc,
-                 ues),
-  slice_sched(params.cell_res_alloc->cfg, ues),
-  intra_slice_sched(expert_cfg,
-                    ues,
+                 parent.ue_db),
+  slice_sched(params.cell_res_alloc->cfg, parent.ue_db),
+  intra_slice_sched(parent.expert_cfg,
+                    parent.ue_db,
                     *params.pdcch_sched,
                     *params.uci_alloc,
                     *params.cell_res_alloc,
                     *params.cell_metrics,
                     cell_harqs,
                     srslog::fetch_basic_logger("SCHED")),
-  srs_sched(params.cell_res_alloc->cfg, ues)
+  srs_sched(params.cell_res_alloc->cfg, parent.ue_db)
 {
 }

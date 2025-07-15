@@ -65,7 +65,13 @@ public:
 
   void destroy_pending_ues();
 
+  /// Handle cell removal by removing all UEs that are associated with the cell.
+  void handle_cell_removal(du_cell_index_t cell_index);
+
 private:
+  /// Force the removal of the UE without waiting for the flushing of pending events.
+  void rem_ue(const ue& u);
+
   srslog::basic_logger& logger;
 
   // Repository of UEs.

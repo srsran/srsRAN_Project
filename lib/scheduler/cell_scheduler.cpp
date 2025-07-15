@@ -20,7 +20,6 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
                                ue_scheduler&                                   ue_sched_,
                                cell_metrics_handler&                           metrics_handler) :
   cell_cfg(cell_cfg_),
-  ue_sched(ue_sched_),
   res_grid(cell_cfg),
   event_logger(cell_cfg.cell_index, cell_cfg.pci),
   metrics(metrics_handler),
@@ -38,7 +37,7 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   pg_sch(sched_cfg, cell_cfg, pdcch_sch, msg)
 {
   // Register new cell in the UE scheduler.
-  ue_sched.add_cell(ue_scheduler_cell_params{
+  ue_sched = ue_sched_.add_cell(ue_scheduler_cell_params{
       msg.cell_index, &pdcch_sch, &pucch_alloc, &uci_alloc, &res_grid, &metrics, &event_logger});
 }
 
@@ -68,9 +67,9 @@ void cell_scheduler::handle_crc_indication(const ul_crc_indication& crc_ind)
     // Forward CRC to Msg3 HARQs that has no ueId yet associated.
     ra_sch.handle_crc_indication(msg3_crcs);
     // Forward remaining CRCs to UE scheduler.
-    ue_sched.get_feedback_handler().handle_crc_indication(ue_crcs);
+    ue_sched->get_feedback_handler().handle_crc_indication(ue_crcs);
   } else {
-    ue_sched.get_feedback_handler().handle_crc_indication(crc_ind);
+    ue_sched->get_feedback_handler().handle_crc_indication(crc_ind);
   }
 }
 
@@ -121,7 +120,7 @@ void cell_scheduler::run_slot(slot_point sl_tx)
   pg_sch.run_slot(res_grid);
 
   // > Schedule UE DL and UL data.
-  ue_sched.run_slot(sl_tx);
+  ue_sched->run_slot(sl_tx);
 
   // > Mark stop of the slot processing
   auto slot_stop_tp = std::chrono::high_resolution_clock::now();

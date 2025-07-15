@@ -34,11 +34,7 @@ class ue_scheduler_impl final : public ue_scheduler
 public:
   explicit ue_scheduler_impl(const scheduler_ue_expert_config& expert_cfg_);
 
-  void add_cell(const ue_scheduler_cell_params& params) override;
-  void rem_cell(du_cell_index_t cell_index) override;
-
-  /// Schedule UE DL grants for a given {slot, cell}.
-  void run_slot(slot_point slot_tx) override;
+  ue_cell_scheduler* do_add_cell(const ue_scheduler_cell_params& params) override;
 
   void handle_error_indication(slot_point                            sl_tx,
                                du_cell_index_t                       cell_index,
@@ -56,12 +52,18 @@ public:
   scheduler_positioning_handler& get_positioning_handler() override { return event_mng; }
 
 private:
+  void do_rem_cell(du_cell_index_t cell_index) override;
+
+  void run_slot_impl(slot_point sl_tx);
+
   void run_sched_strategy(du_cell_index_t cell_index);
 
   /// Counts the number of PUCCH grants that are allocated for a given user at a specific slot.
   void update_harq_pucch_counter(cell_resource_allocator& cell_alloc);
 
-  struct cell_context {
+  struct cell_context : public ue_cell_scheduler {
+    ue_scheduler_impl& parent;
+
     cell_resource_allocator* cell_res_alloc;
 
     /// HARQ pool for this cell.
@@ -82,9 +84,11 @@ private:
     /// SRS scheduler
     srs_scheduler_impl srs_sched;
 
-    cell_context(const scheduler_ue_expert_config& expert_cfg,
-                 ue_repository&                    ues,
-                 const ue_scheduler_cell_params&   params);
+    cell_context(ue_scheduler_impl& parent, const ue_scheduler_cell_params& params);
+
+    void run_slot(slot_point sl_tx) override { parent.run_slot_impl(sl_tx); }
+
+    scheduler_feedback_handler& get_feedback_handler() override { return parent.get_feedback_handler(); }
   };
 
   const scheduler_ue_expert_config& expert_cfg;
