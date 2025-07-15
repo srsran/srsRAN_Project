@@ -18,7 +18,7 @@ ue_scheduler_impl::ue_scheduler_impl(const scheduler_ue_expert_config& expert_cf
 {
 }
 
-ue_cell_scheduler* ue_scheduler_impl::do_add_cell(const ue_scheduler_cell_params& params)
+ue_cell_scheduler* ue_scheduler_impl::do_add_cell(const ue_cell_scheduler_creation_request& params)
 {
   cells.emplace(params.cell_index, *this, params);
   auto& cell = cells[params.cell_index];
@@ -209,7 +209,8 @@ private:
 
 } // namespace
 
-ue_scheduler_impl::cell_context::cell_context(ue_scheduler_impl& parent_, const ue_scheduler_cell_params& params) :
+ue_scheduler_impl::cell_context::cell_context(ue_scheduler_impl&                        parent_,
+                                              const ue_cell_scheduler_creation_request& params) :
   parent(parent_),
   cell_res_alloc(params.cell_res_alloc),
   cell_harqs(

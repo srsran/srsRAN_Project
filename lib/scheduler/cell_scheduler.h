@@ -41,7 +41,11 @@ public:
                           ue_scheduler&                                   ue_sched,
                           cell_metrics_handler&                           metrics);
 
+  /// Handle a slot indication for this cell.
   void run_slot(slot_point sl_tx);
+
+  /// Handle an error indication for this cell.
+  void handle_error_indication(slot_point sl_tx, scheduler_slot_handler::error_outcome event);
 
   /// Activate cell.
   void start();

@@ -37,7 +37,7 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   pg_sch(sched_cfg, cell_cfg, pdcch_sch, msg)
 {
   // Register new cell in the UE scheduler.
-  ue_sched = ue_sched_.add_cell(ue_scheduler_cell_params{
+  ue_sched = ue_sched_.add_cell(ue_cell_scheduler_creation_request{
       msg.cell_index, &pdcch_sch, &pucch_alloc, &uci_alloc, &res_grid, &metrics, &event_logger});
 }
 
@@ -134,6 +134,11 @@ void cell_scheduler::run_slot(slot_point sl_tx)
 
   // > Push the scheduler results to the metrics handler.
   metrics.push_result(sl_tx, last_result(), slot_dur);
+}
+
+void cell_scheduler::handle_error_indication(slot_point sl_tx, scheduler_slot_handler::error_outcome event)
+{
+  ue_sched->handle_error_indication(sl_tx, event);
 }
 
 void cell_scheduler::reset_resource_grid(slot_point sl_tx)

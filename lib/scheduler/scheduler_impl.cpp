@@ -214,10 +214,9 @@ const sched_result& scheduler_impl::slot_indication(slot_point      sl_tx,
 
 void scheduler_impl::handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index, error_outcome event)
 {
-  du_cell_group_index_t group_idx = cfg_mng.get_cell_group_index(cell_index);
-  srsran_assert(group_idx != INVALID_DU_CELL_GROUP_INDEX, "cell={} does not exist", fmt::underlying(cell_index));
-  ue_scheduler& ue_sched = *groups[group_idx];
-  ue_sched.handle_error_indication(sl_tx, cell_index, event);
+  srsran_assert(cells.contains(cell_index), "cell={} does not exist", fmt::underlying(cell_index));
+  cell_scheduler& cell = *cells[cell_index];
+  cell.handle_error_indication(sl_tx, event);
 }
 
 void scheduler_impl::handle_paging_information(const sched_paging_information& pi)
