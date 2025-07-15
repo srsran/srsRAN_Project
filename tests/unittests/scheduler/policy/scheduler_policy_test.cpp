@@ -19,6 +19,7 @@
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
+#include "srsran/adt/unique_function.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/ran/qos/five_qi_qos_mapping.h"
 #include "srsran/scheduler/config/logical_channel_config_factory.h"

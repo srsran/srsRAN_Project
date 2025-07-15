@@ -20,13 +20,14 @@
 #include "lib/scheduler/ue_context/ue.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
+#include "tests/test_doubles/scheduler/scheduler_result_test.h"
+#include "srsran/adt/unique_function.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/scheduler/config/logical_channel_config_factory.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include <gtest/gtest.h>
-#include <tests/test_doubles/scheduler/scheduler_result_test.h>
 
 using namespace srsran;
 

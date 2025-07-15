@@ -49,16 +49,6 @@ static bool is_ue_ready_for_removal(ue& u)
   return true;
 }
 
-// Helper function to search in lookup.
-static auto search_rnti(const std::vector<std::pair<rnti_t, du_ue_index_t>>& rnti_to_ue_index, rnti_t rnti)
-{
-  auto it =
-      std::lower_bound(rnti_to_ue_index.begin(), rnti_to_ue_index.end(), rnti, [](const auto& lhs, rnti_t rnti_v) {
-        return lhs.first < rnti_v;
-      });
-  return it != rnti_to_ue_index.end() and it->first == rnti ? it : rnti_to_ue_index.end();
-}
-
 void ue_repository::slot_indication(slot_point sl_tx)
 {
   last_sl_tx = sl_tx;
@@ -116,8 +106,7 @@ void ue_repository::add_ue(std::unique_ptr<ue> u)
   ues.insert(ue_index, std::move(u));
 
   // Update RNTI -> UE index lookup.
-  rnti_to_ue_index_lookup.emplace_back(rnti, ue_index);
-  std::sort(rnti_to_ue_index_lookup.begin(), rnti_to_ue_index_lookup.end());
+  rnti_to_ue_index_lookup.insert(std::make_pair(rnti, ue_index));
 }
 
 void ue_repository::schedule_ue_rem(ue_config_delete_event ev)
@@ -139,13 +128,13 @@ void ue_repository::schedule_ue_rem(ue_config_delete_event ev)
 
 ue* ue_repository::find_by_rnti(rnti_t rnti)
 {
-  auto it = search_rnti(rnti_to_ue_index_lookup, rnti);
+  auto it = rnti_to_ue_index_lookup.find(rnti);
   return it != rnti_to_ue_index_lookup.end() ? ues[it->second].get() : nullptr;
 }
 
 const ue* ue_repository::find_by_rnti(rnti_t rnti) const
 {
-  auto it = search_rnti(rnti_to_ue_index_lookup, rnti);
+  auto it = rnti_to_ue_index_lookup.find(rnti);
   return it != rnti_to_ue_index_lookup.end() ? ues[it->second].get() : nullptr;
 }
 
@@ -161,7 +150,7 @@ void ue_repository::rem_ue(const ue& u)
   const du_ue_index_t ue_idx = u.ue_index;
 
   // Remove UE from lookup.
-  auto it = search_rnti(rnti_to_ue_index_lookup, crnti);
+  auto it = rnti_to_ue_index_lookup.find(crnti);
   if (it != rnti_to_ue_index_lookup.end()) {
     rnti_to_ue_index_lookup.erase(it);
   } else {
