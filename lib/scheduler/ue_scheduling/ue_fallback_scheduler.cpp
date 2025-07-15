@@ -1303,11 +1303,13 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
 {
   // If there is any skipped slot, reset \ref slots_with_no_pdxch_space for all the skipped slots.
   if (SRSRAN_LIKELY(last_sl_ind.valid())) {
-    while (SRSRAN_UNLIKELY(last_sl_ind + 1 != sl)) {
-      logger.info("UE fallback scheduler: Detected skipped slot={}.", last_sl_ind + 1);
-      // Reset the flag that indicates that there are no resources for the slot that has passed.
-      slots_with_no_pdxch_space[last_sl_ind.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = false;
-      ++last_sl_ind;
+    if (SRSRAN_UNLIKELY(last_sl_ind + 1 != sl)) {
+      logger.info("UE fallback scheduler: Detected skipped slots within [{}, {}).", last_sl_ind + 1, sl);
+      while (last_sl_ind + 1 != sl) {
+        // Reset the flag that indicates that there are no resources for the slot that has passed.
+        slots_with_no_pdxch_space[last_sl_ind.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = false;
+        ++last_sl_ind;
+      }
     }
   }
 
