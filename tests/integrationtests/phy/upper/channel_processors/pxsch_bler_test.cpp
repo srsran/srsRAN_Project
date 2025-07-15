@@ -126,7 +126,11 @@ std::optional<pusch_mcs_table> to_mcs_table(const char* str)
 class pxsch_bler_test
 {
 public:
-  pxsch_bler_test() { setup(); }
+  pxsch_bler_test()
+  {
+    srslog::init();
+    setup();
+  }
 
   void run() { loop(); }
 

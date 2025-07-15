@@ -11,6 +11,7 @@
 #include "pdsch_processor_flexible_impl.h"
 #include "pdsch_processor_helpers.h"
 #include "pdsch_processor_validator_impl.h"
+#include "srsran/adt/scope_exit.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/ran/ptrs/ptrs_pattern.h"
 #include "srsran/support/rtsan.h"
@@ -54,9 +55,20 @@ void pdsch_processor_flexible_impl::process(resource_grid_writer&               
     float scaling = convert_dB_to_amplitude(-config.ratio_pdsch_data_to_sss_dB);
 
     // Apply scaling to the precoding matrix.
-    scaling *= block_processor_pool->get().get_scaling(config.codewords.front().modulation);
-    precoding = config.precoding;
-    precoding *= scaling;
+    {
+      auto processor = block_processor_pool->get();
+      if (!processor) {
+        logger.error(
+            pdu_.slot.sfn(), pdu_.slot.slot_index(), "Failed to retrieve PDSCH codeblock processor (scaling).");
+        data.release();
+        notifier_.on_finish_processing();
+        return;
+      }
+
+      scaling *= processor->get_scaling(config.codewords.front().modulation);
+      precoding = config.precoding;
+      precoding *= scaling;
+    }
 
     // Set the number of asynchronous tasks. It counts as CB processing and DM-RS generation.
     async_task_counter = 2;
@@ -67,13 +79,21 @@ void pdsch_processor_flexible_impl::process(resource_grid_writer&               
 
       // Process PT-RS concurrently.
       auto ptrs_task = [this]() SRSRAN_RTSAN_NONBLOCKING {
-        pdsch_process_ptrs(*grid, ptrs_generator_pool->get(), config);
+        auto execute_on_exit = make_scope_exit([this]() {
+          // Decrement asynchronous task counter.
+          if (async_task_counter.fetch_sub(1) == 1) {
+            // Notify end of the processing.
+            notifier->on_finish_processing();
+          }
+        });
 
-        // Decrement asynchronous task counter.
-        if (async_task_counter.fetch_sub(1) == 1) {
-          // Notify end of the processing.
-          notifier->on_finish_processing();
+        auto ptrs_generator = ptrs_generator_pool->get();
+        if (!ptrs_generator) {
+          logger.error("Failed to retrieve PT-RS generator (async).");
+          return;
         }
+
+        pdsch_process_ptrs(*grid, *ptrs_generator, config);
       };
 
       bool success_ptrs = executor.execute(ptrs_task);
@@ -84,13 +104,21 @@ void pdsch_processor_flexible_impl::process(resource_grid_writer&               
 
     // Process DM-RS concurrently.
     auto dmrs_task = [this]() SRSRAN_RTSAN_NONBLOCKING {
-      pdsch_process_dmrs(*grid, dmrs_generator_pool->get(), config);
+      auto execute_on_exit = make_scope_exit([this]() {
+        // Decrement asynchronous task counter.
+        if (async_task_counter.fetch_sub(1) == 1) {
+          // Notify end of the processing.
+          notifier->on_finish_processing();
+        }
+      });
 
-      // Decrement asynchronous task counter.
-      if (async_task_counter.fetch_sub(1) == 1) {
-        // Notify end of the processing.
-        notifier->on_finish_processing();
+      auto dmrs_generator = dmrs_generator_pool->get();
+      if (!dmrs_generator) {
+        logger.error("Failed to retrieve DM-RS generator (async).");
+        return;
       }
+
+      pdsch_process_dmrs(*grid, *dmrs_generator, config);
     };
 
     bool success_dmrs = executor.execute(dmrs_task);
@@ -147,7 +175,7 @@ void pdsch_processor_flexible_impl::initialize_new_transmission(
   segment_buffer = &segmenter->new_transmission(data.get_buffer(), segmenter_cfg);
 
   // The processing of this transmission is synchronous if the number of codeblocks is smaller than the batch size.
-  async_proc = (nof_cb > cb_batch_length);
+  async_proc = (nof_cb > max_nof_codeblocks_per_batch);
 
   if (async_proc) {
     units::bits bits_per_symbol(get_bits_per_symbol(modulation));
@@ -214,37 +242,57 @@ void pdsch_processor_flexible_impl::initialize_new_transmission(
 
 void pdsch_processor_flexible_impl::sync_pdsch_cb_processing()
 {
+  auto execute_on_exit = make_scope_exit([this]() {
+    // No more code block tasks pending to execute, it is now safe to discard the TB buffer.
+    data.release();
+
+    // Notify end of the processing.
+    notifier->on_finish_processing();
+  });
+
   // Select codeblock processor.
-  pdsch_block_processor& block_processor = block_processor_pool->get();
+  auto block_processor = block_processor_pool->get();
+  if (!block_processor) {
+    logger.error("Failed to retrieve PDSCH block processor.");
+    return;
+  }
 
   // Calculate modulation scaling.
   float scaling = convert_dB_to_amplitude(-config.ratio_pdsch_data_to_sss_dB);
 
   // Apply scaling to the precoding matrix.
-  scaling *= block_processor.get_scaling(config.codewords.front().modulation);
+  scaling *= block_processor->get_scaling(config.codewords.front().modulation);
   precoding = config.precoding;
   precoding *= scaling;
 
   // Configure new transmission. Codeword index, start CB index and CB batch length are fixed.
   resource_grid_mapper::symbol_buffer& grid_buffer =
-      block_processor.configure_new_transmission(data.get_buffer(), 0, config, *segment_buffer, 0, nof_cb);
+      block_processor->configure_new_transmission(data.get_buffer(), 0, config, *segment_buffer, 0, nof_cb);
 
   // Map PDSCH.
   mapper->map(*grid, grid_buffer, allocation, reserved, precoding);
 
   // Prepare PT-RS configuration and generate.
   if (config.ptrs) {
-    pdsch_process_ptrs(*grid, ptrs_generator_pool->get(), config);
+    auto ptrs_generator = ptrs_generator_pool->get();
+    if (!ptrs_generator) {
+      logger.error("Failed to retrieve PT-RS generator.");
+      return;
+    }
+
+    pdsch_process_ptrs(*grid, *ptrs_generator, config);
   }
 
   // Process DM-RS.
-  pdsch_process_dmrs(*grid, dmrs_generator_pool->get(), config);
+  {
+    auto dmrs_generator = dmrs_generator_pool->get();
+    if (!dmrs_generator) {
+      logger.error("Failed to retrieve DM-RS generator.");
+      return;
+    }
 
-  // No more code block tasks pending to execute, it is now safe to discard the TB buffer.
-  data.release();
-
-  // Notify end of the processing.
-  notifier->on_finish_processing();
+    pdsch_process_dmrs(*grid, *dmrs_generator, config);
+  }
 }
 
 void pdsch_processor_flexible_impl::fork_cb_batches()
@@ -252,26 +300,40 @@ void pdsch_processor_flexible_impl::fork_cb_batches()
   // Codeword index is fix.
   static constexpr unsigned i_cw = 0;
 
-  // Create a task for each thread in the pool.
-  unsigned nof_cb_tasks = block_processor_pool->capacity();
-
   // Homogeneous batches of CBs will be processed per thread, unless otherwise specified.
-  unsigned nof_cb_per_batch = cb_batch_length;
+  unsigned nof_cb_per_batch = max_nof_codeblocks_per_batch;
   if (nof_cb_per_batch == 0) {
-    nof_cb_per_batch = divide_ceil(nof_cb, nof_cb_tasks);
+    nof_cb_per_batch = divide_ceil(nof_cb, max_nof_concurrent_tasks);
   }
 
   // Limit the number of tasks to the number of codeblock batches.
   unsigned nof_cb_batches = divide_ceil(nof_cb, nof_cb_per_batch);
-  nof_cb_tasks            = std::min(nof_cb_tasks, nof_cb_batches);
+  unsigned nof_cb_tasks   = std::min(max_nof_concurrent_tasks, nof_cb_batches);
 
   // Set number of codeblock batches.
   cb_task_counter  = nof_cb_tasks;
   cb_batch_counter = 0;
 
   auto async_task = [this, nof_cb_per_batch]() SRSRAN_RTSAN_NONBLOCKING {
+    // Code to execute when returning.
+    auto exec_at_exit = make_scope_exit([this]() { // Decrement code block batch counter.
+      if (cb_task_counter.fetch_sub(1) == 1) {
+        // No more code block tasks pending to execute, it is now safe to discard the TB buffer.
+        data.release();
+        // Decrement asynchronous task counter.
+        if (async_task_counter.fetch_sub(1) == 1) {
+          // Notify end of the processing.
+          notifier->on_finish_processing();
+        }
+      }
+    });
+
     // Select codeblock processor.
-    pdsch_block_processor& block_processor = block_processor_pool->get();
+    auto block_processor = block_processor_pool->get();
+    if (!block_processor) {
+      logger.error("Failed to retrieve PDSCH codeblock processor.");
+      return;
+    }
 
     // Process batches of segments until all the segments are depleted.
     unsigned absolute_i_cb;
@@ -282,7 +344,7 @@ void pdsch_processor_flexible_impl::fork_cb_batches()
       unsigned next_cb_batch_length = std::min(nof_cb - absolute_i_cb, nof_cb_per_batch);
 
       // Configure new transmission.
-      resource_grid_mapper::symbol_buffer& grid_buffer = block_processor.configure_new_transmission(
+      resource_grid_mapper::symbol_buffer& grid_buffer = block_processor->configure_new_transmission(
           data.get_buffer(), i_cw, config, *segment_buffer, absolute_i_cb, next_cb_batch_length);
 
       // Map PDSCH.
@@ -290,17 +352,6 @@ void pdsch_processor_flexible_impl::fork_cb_batches()
 
       l1_dl_tracer << trace_event(
           ((absolute_i_cb + next_cb_batch_length) == nof_cb) ? "Last PDSCH CB batch" : "CB batch", process_pdsch_tp);
-    }
-
-    // Decrement code block batch counter.
-    if (cb_task_counter.fetch_sub(1) == 1) {
-      // No more code block tasks pending to execute, it is now safe to discard the TB buffer.
-      data.release();
-      // Decrement asynchronous task counter.
-      if (async_task_counter.fetch_sub(1) == 1) {
-        // Notify end of the processing.
-        notifier->on_finish_processing();
-      }
     }
   };
 

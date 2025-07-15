@@ -21,7 +21,8 @@
 #include "srsran/phy/upper/signal_processors/dmrs_pusch_estimator.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/ran/pusch/ulsch_info.h"
-#include "srsran/support/memory_pool/concurrent_thread_local_object_pool.h"
+#include "srsran/srslog/srslog.h"
+#include "srsran/support/memory_pool/bounded_object_pool.h"
 #include <memory>
 
 namespace srsran {
@@ -90,7 +91,7 @@ public:
   };
 
   /// Dependencies pool class.
-  using concurrent_dependencies_pool_type = concurrent_thread_local_object_pool<concurrent_dependencies>;
+  using concurrent_dependencies_pool_type = bounded_object_pool<concurrent_dependencies>;
 
   /// Collects the necessary parameters for creating a PUSCH processor.
   struct configuration {
@@ -118,6 +119,7 @@ public:
                const pdu_t&                     pdu) override;
 
 private:
+  srslog::basic_logger& logger;
   /// Thread local dependencies pool.
   std::shared_ptr<concurrent_dependencies_pool_type> thread_local_dependencies_pool;
   /// UL-SCH transport block decoder.

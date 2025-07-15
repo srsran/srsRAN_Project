@@ -124,7 +124,7 @@ public:
     }
 
     // Creates the hardware decoder pool. The pool is common among all the PUSCH decoders.
-    hw_decoder_pool = std::make_unique<pusch_decoder_hw_impl::hw_decoder_pool>(std::move(hw_decoders));
+    hw_decoder_pool = std::make_unique<pusch_decoder_hw_impl::hw_decoder_pool>(hw_decoders);
   }
 
   std::unique_ptr<pusch_decoder> create() override
@@ -225,8 +225,7 @@ public:
     });
 
     // Create common dependencies pool.
-    dependencies_pool =
-        std::make_shared<pusch_processor_impl::concurrent_dependencies_pool_type>(std::move(dependencies));
+    dependencies_pool = std::make_shared<pusch_processor_impl::concurrent_dependencies_pool_type>(dependencies);
   }
 
   std::unique_ptr<pusch_processor> create() override

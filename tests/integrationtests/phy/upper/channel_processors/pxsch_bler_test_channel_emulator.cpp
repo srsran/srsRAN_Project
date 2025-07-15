@@ -215,7 +215,9 @@ void channel_emulator::run(resource_grid_writer& rx_grid, const resource_grid_re
     // Run channel for each symbol with the same frequency response.
     for (unsigned i_symbol = 0; i_symbol != nof_ofdm_symbols; ++i_symbol) {
       bool success = executor.execute([this, &rx_grid, &tx_grid, i_rx_port, i_symbol, &completed]() {
-        emulators.get().run(rx_grid, tx_grid, freq_domain_channel, cfo_coeffs[i_symbol], i_rx_port, i_symbol);
+        auto emulator = emulators.get();
+        report_fatal_error_if_not(emulator, "Failed to retrieve channel emulator.");
+        emulator->run(rx_grid, tx_grid, freq_domain_channel, cfo_coeffs[i_symbol], i_rx_port, i_symbol);
         ++completed;
       });
       report_fatal_error_if_not(success, "Failed to enqueue concurrent channel emulate.");

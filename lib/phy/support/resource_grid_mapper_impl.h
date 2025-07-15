@@ -14,7 +14,6 @@
 #include "srsran/phy/support/re_buffer.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/support/resource_grid_writer.h"
-#include "srsran/support/memory_pool/concurrent_thread_local_object_pool.h"
 
 namespace srsran {
 

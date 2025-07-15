@@ -27,7 +27,11 @@ public:
   {
     // Transition to accepting PDUs only if the current state is idle.
     uint32_t expected_idle = state_pending_pdus_idle;
-    return state_pending_pdus.compare_exchange_weak(expected_idle, state_pending_pdus_mask_accepting_pdus);
+    bool     ret = state_pending_pdus.compare_exchange_weak(expected_idle, state_pending_pdus_mask_accepting_pdus);
+    if (!ret) {
+      fmt::print("state={:08x}\n", expected_idle);
+    }
+    return ret;
   }
 
   /// \brief Notifies that all PDUs have already been queued and no more PDUs are accepted.

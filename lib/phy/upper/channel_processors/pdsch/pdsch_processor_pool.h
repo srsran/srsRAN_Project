@@ -25,11 +25,11 @@ class pdsch_processor_pool : public pdsch_processor
 {
 public:
   /// PDSCH processor pool type.
-  using pdsch_processor_pool_type = concurrent_thread_local_object_pool<pdsch_processor>;
+  using pdsch_processor_pool_type = bounded_object_pool<pdsch_processor>;
 
   /// Creates a PDSCH processor pool from a list of processors. Ownership is transferred to the pool.
   explicit pdsch_processor_pool(std::shared_ptr<pdsch_processor_pool_type> processors_) :
-    processors(std::move(processors_))
+    logger(srslog::fetch_basic_logger("PHY")), processors(std::move(processors_))
   {
     srsran_assert(processors, "Invalid processor pool.");
   }
@@ -40,11 +40,17 @@ public:
                static_vector<shared_transport_block, MAX_NOF_TRANSPORT_BLOCKS> data,
                const pdu_t&                                                    pdu) override
   {
-    pdsch_processor& processor = processors->get();
-    processor.process(grid, notifier, std::move(data), pdu);
+    auto processor = processors->get();
+    if (!processor) {
+      logger.error("Failed to retrieve PDSCH processor.");
+      notifier.on_finish_processing();
+      return;
+    }
+    processor->process(grid, notifier, std::move(data), pdu);
   }
 
 private:
+  srslog::basic_logger&                      logger;
   std::shared_ptr<pdsch_processor_pool_type> processors;
 };
 

@@ -119,12 +119,8 @@ public:
   {
     if (!processors) {
       std::vector<std::unique_ptr<pdcch_processor>> procs(nof_concurrent_threads);
-
-      for (auto& processor : procs) {
-        processor = factory->create();
-      }
-
-      processors = std::make_shared<pdcch_processor_pool::pdcch_processor_pool_type>(std::move(procs));
+      std::generate(procs.begin(), procs.end(), [this]() { return factory->create(); });
+      processors = std::make_shared<pdcch_processor_pool::pdcch_processor_pool_type>(procs);
     }
 
     return std::make_unique<pdcch_processor_pool>(std::move(processors));
@@ -134,12 +130,10 @@ public:
   {
     if (!processors) {
       std::vector<std::unique_ptr<pdcch_processor>> procs(nof_concurrent_threads);
-
-      for (auto& processor : procs) {
-        processor = factory->create(logger, enable_logging_broadcast);
-      }
-
-      processors = std::make_shared<pdcch_processor_pool::pdcch_processor_pool_type>(std::move(procs));
+      std::generate(procs.begin(), procs.end(), [this, &logger, enable_logging_broadcast]() {
+        return factory->create(logger, enable_logging_broadcast);
+      });
+      processors = std::make_shared<pdcch_processor_pool::pdcch_processor_pool_type>(procs);
     }
 
     return std::make_unique<pdcch_processor_pool>(std::move(processors));

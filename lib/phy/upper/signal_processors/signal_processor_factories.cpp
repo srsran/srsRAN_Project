@@ -215,7 +215,7 @@ public:
         processor = factory->create();
       }
 
-      generators = std::make_shared<nzp_csi_rs_generator_pool::generator_pool_type>(std::move(instances));
+      generators = std::make_shared<nzp_csi_rs_generator_pool::generator_pool_type>(instances);
     }
 
     return std::make_unique<nzp_csi_rs_generator_pool>(generators);
@@ -225,12 +225,8 @@ public:
   {
     if (!generators) {
       std::vector<std::unique_ptr<nzp_csi_rs_generator>> instances(nof_concurrent_threads);
-
-      for (auto& processor : instances) {
-        processor = factory->create(logger);
-      }
-
-      generators = std::make_shared<nzp_csi_rs_generator_pool::generator_pool_type>(std::move(instances));
+      std::generate(instances.begin(), instances.end(), [this, &logger]() { return factory->create(logger); });
+      generators = std::make_shared<nzp_csi_rs_generator_pool::generator_pool_type>(instances);
     }
 
     return std::make_unique<nzp_csi_rs_generator_pool>(generators);
