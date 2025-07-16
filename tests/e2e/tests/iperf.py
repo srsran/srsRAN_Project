@@ -1058,10 +1058,10 @@ def _iperf(
         ric_validate_e2_interface(ric, kpm_expected=True, rc_expected=True)
 
     stop(
-        ue_array,
-        gnb,
-        fivegc,
-        retina_data,
+        ue_array=ue_array,
+        gnb=gnb,
+        fivegc=fivegc,
+        retina_data=retina_data,
         ue_stop_timeout=ue_stop_timeout,
         warning_as_errors=warning_as_errors,
         ric=ric,

@@ -17,6 +17,7 @@ from google.protobuf.empty_pb2 import Empty
 from retina.launcher.public import MetricsSummary
 from retina.protocol import RanStub
 from retina.protocol.base_pb2 import Metrics
+from retina.protocol.gnb_pb2_grpc import DUStub
 from retina.viavi.client import ViaviKPIs
 
 
@@ -47,8 +48,9 @@ class KPIs:
 
 # pylint: disable=too-many-locals
 def get_kpis(
-    gnb: RanStub,
     ue_array: Sequence[RanStub] = (),
+    gnb: Optional[RanStub] = None,
+    du: Optional[DUStub] = None,
     viavi_kpis: Optional[ViaviKPIs] = None,
     metrics_summary: Optional[MetricsSummary] = None,
 ) -> KPIs:
@@ -58,30 +60,37 @@ def get_kpis(
 
     kpis = KPIs()
 
+    metrics: Metrics = Metrics()
+
     # GNB
-    gnb_metrics: Metrics = gnb.GetMetrics(Empty())
+    if gnb:
+        metrics = gnb.GetMetrics(Empty())
+    elif du:
+        metrics = du.GetMetrics(Empty())
+    else:
+        raise ValueError("At least one of gnb or du must be provided")
 
-    kpis.ul_brate_aggregate = gnb_metrics.total.ul_bitrate
-    kpis.ul_brate_min = gnb_metrics.total.ul_bitrate_min
-    kpis.ul_brate_max = gnb_metrics.total.ul_bitrate_max
+    kpis.ul_brate_aggregate = metrics.total.ul_bitrate
+    kpis.ul_brate_min = metrics.total.ul_bitrate_min
+    kpis.ul_brate_max = metrics.total.ul_bitrate_max
 
-    kpis.dl_brate_aggregate = gnb_metrics.total.dl_bitrate
-    kpis.dl_brate_min = gnb_metrics.total.dl_bitrate_min
-    kpis.dl_brate_max = gnb_metrics.total.dl_bitrate_max
+    kpis.dl_brate_aggregate = metrics.total.dl_bitrate
+    kpis.dl_brate_min = metrics.total.dl_bitrate_min
+    kpis.dl_brate_max = metrics.total.dl_bitrate_max
 
-    kpis.nof_ko_dl = gnb_metrics.total.dl_nof_ko
-    kpis.nof_ko_ul = gnb_metrics.total.ul_nof_ko
+    kpis.nof_ko_dl = metrics.total.dl_nof_ko
+    kpis.nof_ko_ul = metrics.total.ul_nof_ko
 
-    total_ul_ko_ok = gnb_metrics.total.ul_nof_ok + gnb_metrics.total.ul_nof_ko
-    total_dl_ko_ok = gnb_metrics.total.dl_nof_ok + gnb_metrics.total.dl_nof_ko
+    total_ul_ko_ok = metrics.total.ul_nof_ok + metrics.total.ul_nof_ko
+    total_dl_ko_ok = metrics.total.dl_nof_ok + metrics.total.dl_nof_ko
 
-    kpis.ul_bler_aggregate = 0 if not total_ul_ko_ok else gnb_metrics.total.ul_nof_ko / total_ul_ko_ok
-    kpis.dl_bler_aggregate = 0 if not total_dl_ko_ok else gnb_metrics.total.dl_nof_ko / total_dl_ko_ok
+    kpis.ul_bler_aggregate = 0 if not total_ul_ko_ok else metrics.total.ul_nof_ko / total_ul_ko_ok
+    kpis.dl_bler_aggregate = 0 if not total_dl_ko_ok else metrics.total.dl_nof_ko / total_dl_ko_ok
 
-    kpis.nof_error_indications = gnb_metrics.cell.error_indication_cnt
+    kpis.nof_error_indications = metrics.cell.error_indication_cnt
 
-    kpis.max_late_dl_harqs = gnb_metrics.cell.max_late_dl_harqs
-    kpis.max_late_ul_harqs = gnb_metrics.cell.max_late_ul_harqs
+    kpis.max_late_dl_harqs = metrics.cell.max_late_dl_harqs
+    kpis.max_late_ul_harqs = metrics.cell.max_late_ul_harqs
 
     # UE
     for ue in ue_array:

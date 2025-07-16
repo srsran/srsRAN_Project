@@ -15,13 +15,15 @@ from time import sleep
 from typing import Dict, Generator, Optional, Sequence, Tuple, Union
 
 import pytest
+from google.protobuf.empty_pb2 import Empty
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.public import MetricsSummary
 from retina.launcher.utils import configure_artifacts, param
+from retina.protocol.base_pb2 import DUDefinition
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
-from retina.protocol.gnb_pb2_grpc import GNBStub
+from retina.protocol.gnb_pb2_grpc import CUStub, DUStub, GNBStub
 from retina.protocol.ue_pb2 import IPerfDir, IPerfProto, UEAttachedInfo
 from retina.protocol.ue_pb2_grpc import UEStub
 
@@ -150,13 +152,15 @@ def _handover_sequentially(
     retina_data: RetinaTestData,
     ue_array: UEStub,
     fivegc: FiveGCStub,
-    gnb: GNBStub,
-    metrics_summary: Optional[MetricsSummary],
     band: int,
     common_scs: int,
     bandwidth: int,
     noise_spd: int,
     sleep_between_movement_steps,
+    gnb: Optional[GNBStub] = None,
+    cu: Optional[CUStub] = None,
+    du_array: Optional[Sequence[DUStub]] = None,
+    metrics_summary: Optional[MetricsSummary] = None,
     always_download_artifacts: bool = True,
     nof_antennas_dl: int = 1,
     prach_config_index: int = -1,
@@ -164,11 +168,29 @@ def _handover_sequentially(
     stop_gnb_first: bool = False,
     verbose_cu_mac: bool = True,
 ):
+    if not gnb and not du_array and not cu:
+        logging.error("Invalid configuration: either gNB or CU and DU(s) are required")
+        return
+
+    if gnb:
+        if cu or du_array:
+            logging.error("Invalid configuration: either gNB or CU and DU array must be provided, not both")
+            return
+    else:
+        if cu and not du_array:
+            logging.error("Invalid configuration: If CU is provided, DU array must also be provided")
+            return
+        if not cu and du_array:
+            logging.error("Invalid configuration: If DU array is provided, CU must also be provided")
+            return
+
     with _handover_multi_ues(
         retina_manager=retina_manager,
         retina_data=retina_data,
         ue_array=ue_array,
         gnb=gnb,
+        cu=cu,
+        du_array=du_array,
         fivegc=fivegc,
         metrics_summary=metrics_summary,
         band=band,
@@ -268,8 +290,6 @@ def _handover_multi_ues(
     retina_data: RetinaTestData,
     ue_array: Sequence[UEStub],
     fivegc: FiveGCStub,
-    gnb: GNBStub,
-    metrics_summary: Optional[MetricsSummary],
     band: int,
     common_scs: int,
     bandwidth: int,
@@ -278,6 +298,10 @@ def _handover_multi_ues(
     time_alignment_calibration: Union[int, str],
     always_download_artifacts: bool,
     noise_spd: int,
+    gnb: Optional[GNBStub] = None,
+    cu: Optional[CUStub] = None,
+    du_array: Optional[Sequence[DUStub]] = None,
+    metrics_summary: Optional[MetricsSummary] = None,
     nof_antennas_dl: int = 1,
     prach_config_index: int = -1,
     warning_as_errors: bool = True,
@@ -295,7 +319,10 @@ def _handover_multi_ues(
     None,
     None,
 ]:
-    logging.info("Handover Test (Ping)")
+    if gnb:
+        logging.info("Handover Test (Ping)")
+    else:
+        logging.info("Inter-DU Handover Test (Ping)")
 
     original_position = (0, 0, 0)
 
@@ -320,14 +347,36 @@ def _handover_multi_ues(
         retina_data=retina_data,
         always_download_artifacts=always_download_artifacts,
     )
+
     start_network(
-        ue_array,
-        gnb,
-        fivegc,
+        ue_array=ue_array,
+        gnb=gnb,
+        cu=cu,
+        du_array=du_array,
+        fivegc=fivegc,
         gnb_post_cmd=(("log --cu_level=debug --hex_max_size=32", "log --mac_level=debug") if verbose_cu_mac else ()),
+        cu_post_cmd=(
+            ("log --cu_level=debug --f1ap_level=debug --ngap_level=debug --hex_max_size=32",) if verbose_cu_mac else ()
+        ),
+        du_post_cmd=(("log --mac_level=debug",) if verbose_cu_mac else ()),
     )
 
-    ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
+    if gnb:
+        du_definition = [gnb.GetDefinition(Empty())]
+    elif du_array and cu:
+        port_array = list(range(31000, 31008))
+        du_definition = [
+            DUDefinition(
+                zmq_ip=du.GetDefinition(Empty()).zmq_ip,
+                zmq_port_array=[port_array[i] for i in range(2)],
+            )
+            for du in du_array
+        ]
+
+    else:
+        raise ValueError("Either gnb or du_array and cu must be provided")
+
+    ue_attach_info_dict = ue_start_and_attach(ue_array, du_definition, fivegc)
 
     try:
         # HO while pings
@@ -350,16 +399,24 @@ def _handover_multi_ues(
             ue_validate_no_reattaches(ue_stub)
 
         stop(
-            ue_array,
-            gnb,
-            fivegc,
-            retina_data,
+            ue_array=ue_array,
+            gnb=gnb,
+            cu=cu,
+            du_array=du_array,
+            fivegc=fivegc,
+            retina_data=retina_data,
             ue_stop_timeout=16,
             warning_as_errors=warning_as_errors,
             stop_gnb_first=stop_gnb_first,
         )
     finally:
-        get_kpis(gnb, ue_array=ue_array, metrics_summary=metrics_summary)
+
+        du = None
+        if du_array:
+            # TODO: get kpis for all DUs
+            du = du_array[0]
+
+        get_kpis(gnb=gnb, du=du, ue_array=ue_array, metrics_summary=metrics_summary)
 
 
 @mark.parametrize(
@@ -573,10 +630,13 @@ def _handover_multi_ues_iperf(
     )
 
     start_network(
-        ue_array, gnb, fivegc, gnb_post_cmd=("log --cu_level=debug --hex_max_size=32", "log --mac_level=debug")
+        ue_array=ue_array,
+        gnb=gnb,
+        fivegc=fivegc,
+        gnb_post_cmd=("log --cu_level=debug --hex_max_size=32", "log --mac_level=debug"),
     )
 
-    ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
+    ue_attach_info_dict = ue_start_and_attach(ue_array, gnb.GetDefinition(Empty()), fivegc)
 
     try:
         # HO while iPerf
@@ -623,9 +683,16 @@ def _handover_multi_ues_iperf(
             for ue_stub in ue_array:
                 ue_validate_no_reattaches(ue_stub)
 
-        stop(ue_array, gnb, fivegc, retina_data, ue_stop_timeout=16, warning_as_errors=warning_as_errors)
+        stop(
+            ue_array=ue_array,
+            gnb=gnb,
+            fivegc=fivegc,
+            retina_data=retina_data,
+            ue_stop_timeout=16,
+            warning_as_errors=warning_as_errors,
+        )
     finally:
-        get_kpis(gnb, ue_array=ue_array, metrics_summary=metrics_summary)
+        get_kpis(gnb=gnb, ue_array=ue_array, metrics_summary=metrics_summary)
 
 
 def _do_ho(

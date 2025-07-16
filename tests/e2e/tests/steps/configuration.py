@@ -190,6 +190,36 @@ def configure_test_parameters(
                 ),
             },
         },
+        "du": {
+            "parameters": {
+                "band": band,
+                "dl_arfcn": _get_dl_arfcn(band),
+                "common_scs": common_scs,
+                "bandwidth": bandwidth,
+                "time_alignment_calibration": time_alignment_calibration,
+                "common_search_space_enable": common_search_space_enable,
+                "prach_config_index": prach_config_index,
+                "enable_channel_noise": noise_spd != 0,
+                "enable_qos_reestablishment": enable_qos_reestablishment,
+                "enable_dddsu": enable_dddsu,
+                "nof_antennas_dl": nof_antennas_dl,
+                "nof_antennas_ul": nof_antennas_ul,
+                "enable_drx": enable_drx,
+                "pdsch_mcs_table": pdsch_mcs_table,
+                "pusch_mcs_table": pusch_mcs_table,
+                "use_format_0": use_format_0,
+                "pucch_set1_format": pucch_set1_format,
+                "pdsch_interleaving_bundle_size": pdsch_interleaving_bundle_size,
+                "slices": slices if slices is not None else [],
+            },
+        },
+        "cu": {
+            "parameters": {
+                "enable_security_mode": enable_security_mode,
+                "cu_cp_inactivity_timer": cu_cp_inactivity_timer,
+                "num_cells": num_cells,
+            },
+        },
         "5gc": {
             "parameters": {
                 "ims_mode": ims_mode,

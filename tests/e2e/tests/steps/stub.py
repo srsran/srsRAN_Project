@@ -13,7 +13,7 @@ import logging
 from concurrent.futures import as_completed, ThreadPoolExecutor
 from contextlib import contextmanager, suppress
 from time import sleep, time
-from typing import Dict, Generator, List, Optional, Sequence, Tuple, Union
+from typing import Dict, Generator, List, Optional, Sequence, Tuple
 
 import grpc
 import pytest
@@ -26,6 +26,7 @@ from retina.launcher.artifacts import RetinaTestData
 from retina.protocol import RanStub
 from retina.protocol.base_pb2 import (
     ChannelEmulatorType,
+    DUDefinition,
     Metrics,
     PingRequest,
     PingResponse,
@@ -39,8 +40,8 @@ from retina.protocol.channel_emulator_pb2_grpc import ChannelEmulatorStub
 from retina.protocol.exit_codes import exit_code_to_message
 from retina.protocol.fivegc_pb2 import FiveGCStartInfo, IPerfResponse
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
-from retina.protocol.gnb_pb2 import GNBStartInfo
-from retina.protocol.gnb_pb2_grpc import DUStub, GNBStub
+from retina.protocol.gnb_pb2 import CUStartInfo, DUStartInfo, GNBStartInfo
+from retina.protocol.gnb_pb2_grpc import CUStub, DUStub, GNBStub
 from retina.protocol.ric_pb2 import KpmMonXappRequest, NearRtRicStartInfo, RcXappRequest
 from retina.protocol.ric_pb2_grpc import NearRtRicStub
 from retina.protocol.ue_pb2 import (
@@ -129,13 +130,13 @@ def start_and_attach(
     Start stubs & wait until attach
     """
     start_network(
-        ue_array,
-        gnb,
-        fivegc,
-        gnb_startup_timeout,
-        fivegc_startup_timeout,
-        gnb_pre_cmd,
-        gnb_post_cmd,
+        ue_array=ue_array,
+        gnb=gnb,
+        fivegc=fivegc,
+        gnb_startup_timeout=gnb_startup_timeout,
+        fivegc_startup_timeout=fivegc_startup_timeout,
+        gnb_pre_cmd=gnb_pre_cmd,
+        gnb_post_cmd=gnb_post_cmd,
         plmn=plmn,
         ric=ric,
         channel_emulator=channel_emulator,
@@ -143,7 +144,7 @@ def start_and_attach(
 
     return ue_start_and_attach(
         ue_array,
-        gnb,
+        gnb.GetDefinition(Empty()),
         fivegc,
         ue_startup_timeout=ue_startup_timeout,
         attach_timeout=attach_timeout,
@@ -165,19 +166,31 @@ def _get_hplmn(imsi: str) -> PLMN:
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def start_network(
     ue_array: Sequence[UEStub],
-    gnb: GNBStub,
     fivegc: FiveGCStub,
+    gnb: Optional[GNBStub] = None,
+    cu: Optional[CUStub] = None,
+    du_array: Optional[Sequence[DUStub]] = None,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
     fivegc_startup_timeout: int = FIVEGC_STARTUP_TIMEOUT,
     gnb_pre_cmd: Tuple[str, ...] = tuple(),
     gnb_post_cmd: Tuple[str, ...] = tuple(),
+    cu_pre_cmd: Tuple[str, ...] = tuple(),
+    cu_post_cmd: Tuple[str, ...] = tuple(),
+    du_pre_cmd: Tuple[str, ...] = tuple(),
+    du_post_cmd: Tuple[str, ...] = tuple(),
     plmn: Optional[PLMN] = None,
     ric: Optional[NearRtRicStub] = None,
     channel_emulator: Optional[ChannelEmulatorStub] = None,
 ):
     """
-    Start Network (5GC + gNB + RIC(optional))
+    Start Network (5GC + gNB/CU+DU + RIC(optional))
     """
+
+    if gnb and (cu or du_array):
+        pytest.fail("Either gNB or CU and DU array must be provided, not both")
+
+    if (cu and not du_array) or (not cu and du_array):
+        pytest.fail("CU and DU must be provided together")
 
     ue_def_for_gnb = UEDefinition()
     for ue_stub in ue_array:
@@ -228,26 +241,67 @@ def start_network(
             ric_definition = ric.GetDefinition(Empty())
             logging.info("RIC: %s", MessageToString(ric_definition, indent=2))
 
-    with handle_start_error(name=f"GNB [{id(gnb)}]"):
-        # GNB Start
-        gnb.Start(
-            GNBStartInfo(
-                plmn=plmn,
-                ue_definition=ue_def_for_gnb,
-                fivegc_definition=fivegc.GetDefinition(Empty()),
-                ric_definition=ric_definition,
-                start_info=StartInfo(
-                    timeout=gnb_startup_timeout,
-                    pre_commands=gnb_pre_cmd,
-                    post_commands=gnb_post_cmd,
-                ),
+    if gnb:
+        with handle_start_error(name=f"GNB [{id(gnb)}]"):
+            # GNB Start
+            gnb.Start(
+                GNBStartInfo(
+                    plmn=plmn,
+                    ue_definition=ue_def_for_gnb,
+                    fivegc_definition=fivegc.GetDefinition(Empty()),
+                    ric_definition=ric_definition,
+                    start_info=StartInfo(
+                        timeout=gnb_startup_timeout,
+                        pre_commands=gnb_pre_cmd,
+                        post_commands=gnb_post_cmd,
+                    ),
+                )
             )
-        )
+        return
+
+    if cu and du_array:
+        cu_def_for_du = cu.GetDefinition(Empty())
+        with handle_start_error(name=f"CU [{id(cu)}]"):
+            # CU Start
+            cu.Start(
+                CUStartInfo(
+                    plmn=plmn,
+                    fivegc_definition=fivegc.GetDefinition(Empty()),
+                    start_info=StartInfo(
+                        timeout=gnb_startup_timeout,
+                        pre_commands=cu_pre_cmd,
+                        post_commands=cu_post_cmd,
+                    ),
+                )
+            )
+
+        du_id = 0
+        for du_stub in du_array:
+            with handle_start_error(name=f"DU [{id(du_stub)}]"):
+                # DU Start
+                du_stub.Start(
+                    DUStartInfo(
+                        gnb_du_id=du_id,
+                        plmn=plmn,
+                        num_cells=1,
+                        cell_offset=du_id,
+                        cu_definition=cu_def_for_du,
+                        ue_definition=ue_def_for_gnb,
+                        ric_definition=ric_definition,
+                        start_info=StartInfo(
+                            timeout=gnb_startup_timeout,
+                            pre_commands=du_pre_cmd,
+                            post_commands=du_post_cmd,
+                        ),
+                    )
+                )
+
+            du_id += 1
 
 
 def ue_start_and_attach(
     ue_array: Sequence[UEStub],
-    gnb: Union[GNBStub, DUStub],
+    du_definition: Sequence[DUDefinition],
     fivegc: FiveGCStub,
     ue_startup_timeout: int = UE_STARTUP_TIMEOUT,
     attach_timeout: int = ATTACH_TIMEOUT,
@@ -258,18 +312,17 @@ def ue_start_and_attach(
     Start an array of UEs and wait until attached to already running gnb and 5gc
     """
 
-    gnb_definition = gnb.GetDefinition(Empty())
-    if channel_emulator and gnb_definition.zmq_ip is not None:
+    if channel_emulator and du_definition[0].zmq_ip is not None:
         # Overwrite the ZMQ IP and port, so the UE connects to the channel emulator.
         channel_emulator_definition = channel_emulator.GetDefinition(Empty())
-        gnb_definition.zmq_ip = channel_emulator_definition.zmq_ip
-        gnb_definition.zmq_port_array[0] = channel_emulator_definition.dl_zmq_port
+        du_definition[0].zmq_ip = channel_emulator_definition.zmq_ip
+        du_definition[0].zmq_port_array[0] = channel_emulator_definition.dl_zmq_port
 
     for ue_stub in ue_array:
         with handle_start_error(name=f"UE [{id(ue_stub)}]"):
             ue_stub.Start(
                 UEStartInfo(
-                    gnb_definition=gnb_definition,
+                    du_definition=du_definition,
                     fivegc_definition=fivegc.GetDefinition(Empty()),
                     start_info=StartInfo(timeout=ue_startup_timeout),
                 )
@@ -829,11 +882,14 @@ def ric_validate_e2_interface(ric: NearRtRicStub, kpm_expected: bool = False, rc
             pytest.fail("Different number of RIC Control Request and Replies.")
 
 
+# pylint: disable=too-many-branches
 def stop(
     ue_array: Sequence[UEStub],
-    gnb: Optional[GNBStub],
-    fivegc: Optional[FiveGCStub],
     retina_data: RetinaTestData,
+    gnb: Optional[GNBStub] = None,
+    cu: Optional[CUStub] = None,
+    du_array: Optional[Sequence[DUStub]] = None,
+    fivegc: Optional[FiveGCStub] = None,
     ue_stop_timeout: int = 0,  # Auto
     gnb_stop_timeout: int = 0,
     fivegc_stop_timeout: int = 0,
@@ -866,6 +922,29 @@ def stop(
 
     if (stop_gnb_first is False) and (gnb is not None):
         error_message, _ = _stop_stub(gnb, "GNB", retina_data, gnb_stop_timeout, log_search, warning_as_errors)
+        error_msg_array.append(error_message)
+
+    if du_array is not None:
+        for index, du_stub in enumerate(du_array):
+            error_message, _ = _stop_stub(
+                du_stub,
+                f"DU_{index+1}",
+                retina_data,
+                gnb_stop_timeout,
+                log_search,
+                warning_as_errors,
+            )
+            error_msg_array.append(error_message)
+
+    if cu is not None:
+        error_message, _ = _stop_stub(
+            cu,
+            "CU",
+            retina_data,
+            gnb_stop_timeout,
+            log_search,
+            warning_as_errors,
+        )
         error_msg_array.append(error_message)
 
     if fivegc is not None:

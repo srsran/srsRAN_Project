@@ -15,6 +15,7 @@ from typing import Optional, Sequence, Tuple, Union
 
 import grpc
 from _pytest.outcomes import Failed
+from google.protobuf.empty_pb2 import Empty
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
@@ -532,10 +533,10 @@ def test_zmq_valgrind(
             gnb_stop_timeout=gnb_stop_timeout,
         )
     stop(
-        ue_4,
-        gnb,
-        fivegc,
-        retina_data,
+        ue_array=ue_4,
+        gnb=gnb,
+        fivegc=fivegc,
+        retina_data=retina_data,
         gnb_stop_timeout=gnb_stop_timeout,
         log_search=False,
     )
@@ -626,7 +627,7 @@ def test_rf_does_not_crash(
             log_search=False,
             always_download_artifacts=True,
         )
-    stop(ue_4, gnb, fivegc, retina_data, log_search=False)
+    stop(ue_array=ue_4, gnb=gnb, fivegc=fivegc, retina_data=retina_data, log_search=False)
 
 
 @mark.parametrize(
@@ -756,23 +757,25 @@ def _ping(
     )
 
     start_network(
-        ue_array,
-        gnb,
-        fivegc,
+        ue_array=ue_array,
+        gnb=gnb,
+        fivegc=fivegc,
         gnb_pre_cmd=pre_command,
         gnb_post_cmd=post_command,
         plmn=plmn,
         channel_emulator=channel_emulator,
     )
-    ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc, channel_emulator=channel_emulator)
+    ue_attach_info_dict = ue_start_and_attach(
+        ue_array, gnb.GetDefinition(Empty()), fivegc, channel_emulator=channel_emulator
+    )
 
     try:
         ping(ue_attach_info_dict, fivegc, ping_count, ping_interval=ping_interval)
 
         # reattach and repeat if requested
         for _ in range(reattach_count):
-            ue_stop(ue_array, retina_data)
-            ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
+            ue_stop(ue_array=ue_array, retina_data=retina_data)
+            ue_attach_info_dict = ue_start_and_attach(ue_array, gnb.GetDefinition(Empty()), fivegc)
             ping(ue_attach_info_dict, fivegc, ping_count, ping_interval=ping_interval)
     except Failed as err:
         if not ims_mode or ims_mode == "enabled":

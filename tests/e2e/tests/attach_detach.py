@@ -13,6 +13,7 @@ import logging
 from time import sleep
 from typing import Optional, Sequence, Tuple, Union
 
+from google.protobuf.empty_pb2 import Empty
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
@@ -215,8 +216,8 @@ def _attach_and_detach_multi_ues(
         always_download_artifacts=always_download_artifacts,
     )
 
-    start_network(ue_array, gnb, fivegc)
-    ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
+    start_network(ue_array=ue_array, gnb=gnb, fivegc=fivegc)
+    ue_attach_info_dict = ue_start_and_attach(ue_array, gnb.GetDefinition(Empty()), fivegc)
 
     ue_array_to_iperf = ue_array[::2]
     ue_array_to_attach = ue_array[1::2]
@@ -245,11 +246,18 @@ def _attach_and_detach_multi_ues(
     for _ in range(reattach_count):
         ue_stop(ue_array_to_attach, retina_data, ue_stop_timeout=ue_stop_timeout)
         sleep(ue_settle_time)
-        ue_attach_info_dict = ue_start_and_attach(ue_array_to_attach, gnb, fivegc)
+        ue_attach_info_dict = ue_start_and_attach(ue_array_to_attach, gnb.GetDefinition(Empty()), fivegc)
     # final stop will be triggered by teardown
 
     # Stop and validate iperfs
     for ue_attached_info, task, iperf_request in iperf_array:
         iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request, BITRATE_THRESHOLD)
 
-    stop(ue_array, gnb, fivegc, retina_data, ue_stop_timeout=ue_stop_timeout, warning_as_errors=warning_as_errors)
+    stop(
+        ue_array=ue_array,
+        gnb=gnb,
+        fivegc=fivegc,
+        retina_data=retina_data,
+        ue_stop_timeout=ue_stop_timeout,
+        warning_as_errors=warning_as_errors,
+    )

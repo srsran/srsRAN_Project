@@ -12,6 +12,7 @@ Paging Tests
 import logging
 from time import sleep
 
+from google.protobuf.empty_pb2 import Empty
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
@@ -64,15 +65,15 @@ def test_cots_paging(
     )
 
     logging.info("Paging Test")
-    start_network([ue], gnb, fivegc)
-    ue_attach_info_dict = ue_start_and_attach([ue], gnb, fivegc)
+    start_network(ue_array=[ue], gnb=gnb, fivegc=fivegc)
+    ue_attach_info_dict = ue_start_and_attach([ue], gnb.GetDefinition(Empty()), fivegc)
     ping(ue_attach_info_dict, fivegc, 10)
     sleep(5)
     ping_from_5gc(ue_attach_info_dict, fivegc, 10)
     stop(
-        [ue],
-        gnb,
-        fivegc,
-        retina_data,
+        ue_array=[ue],
+        gnb=gnb,
+        fivegc=fivegc,
+        retina_data=retina_data,
         warning_as_errors=False,
     )

@@ -428,10 +428,10 @@ def _test_viavi(
             # Final stop
             logging.info("Stopping GNB")
             stop(
-                (),
-                gnb,
-                None,
-                retina_data,
+                ue_array=(),
+                gnb=gnb,
+                fivegc=None,
+                retina_data=retina_data,
                 gnb_stop_timeout=gnb_stop_timeout,
                 log_search=log_search,
                 warning_as_errors=test_declaration.warning_as_errors,
@@ -490,7 +490,7 @@ def check_metrics_criteria(
     # Check metrics
     viavi_kpis: ViaviKPIs = viavi.get_test_kpis()
     viavi_kpis.print_procedure_failures(_OMIT_VIAVI_FAILURE_LIST)
-    kpis: KPIs = get_kpis(gnb, viavi_kpis=viavi_kpis, metrics_summary=metrics_summary)
+    kpis: KPIs = get_kpis(gnb=gnb, viavi_kpis=viavi_kpis, metrics_summary=metrics_summary)
 
     criteria_result = [
         _create_viavi_result(
