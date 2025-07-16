@@ -319,7 +319,7 @@ void fapi_to_mac_data_msg_translator::on_srs_indication(const fapi::srs_indicati
         mac_pdu.report = mac_srs_pdu::normalized_channel_iq_matrix{pdu.matrix};
         break;
       case fapi::srs_report_type::positioning:
-        mac_pdu.report = mac_srs_pdu::positioning_report{pdu.positioning.ul_relative_toa};
+        mac_pdu.report = mac_srs_pdu::positioning_report{pdu.positioning.ul_relative_toa, pdu.positioning.rsrp};
         break;
       default:
         srsran_assert(0, "Unsupported SRS report type '{}'", fapi::to_value(pdu.report_type));

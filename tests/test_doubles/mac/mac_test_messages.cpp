@@ -174,7 +174,8 @@ mac_srs_pdu test_helpers::create_srs_pdu(const srs_info& srs)
   if (srs.positioning_report_requested) {
     // Set a random number, just to test the values are passed to the positioning report.
     phy_time_unit rtoa = phy_time_unit::from_units_of_Tc(test_rgen::uniform_int<unsigned>(0, 1000));
-    return mac_srs_pdu(srs.crnti, ta, rtoa);
+    const float   rsrp = -84.6f;
+    return mac_srs_pdu(srs.crnti, ta, rtoa, rsrp);
   } else {
     srs_channel_matrix ch_matrix(1, 1);
     return mac_srs_pdu(srs.crnti, ta, ch_matrix);

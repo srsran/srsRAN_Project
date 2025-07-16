@@ -49,7 +49,11 @@ struct du_positioning_info_response {
   std::vector<srs_carrier> srs_carriers;
 };
 
+enum class pos_meas_type { gnb_rx_tx, ul_srs_rsrp, ul_aoa, ul_rtoa, multiple_ul_aoa, ul_srs_rsrpp };
+
 struct positioning_meas_quantity {
+  /// Positioning measurement type.
+  pos_meas_type meas_type;
   /// Granularity factor. Values: (-6, ..., 5).
   std::optional<int8_t> granularity_factor;
 };
@@ -65,14 +69,24 @@ struct du_positioning_meas_request {
   std::vector<srs_carrier>               srs_carriers;
 };
 
-struct pos_meas_result_item {
+struct pos_meas_result_ul_rtoa {
   uint8_t  granularity;
   uint32_t ul_rtoa;
 };
 
+struct pos_meas_result_ul_rsrp {
+  /// Values {0,..,126}, as per TS 38.473, Section 9.3.1.166.
+  uint8_t ul_rsrp;
+};
+
+using pos_meas_result_item = std::variant<pos_meas_result_ul_rtoa, pos_meas_result_ul_rsrp>;
+
 struct pos_meas_result {
   trp_id_t trp_id;
   /// Slot point at which the measurement (SRS) was received at PHY layer.
+  /// \remark TS 38.473 Section 9.3.1.166 defines a time-stamp per result item; unlike the TS, here we keep 1 slot
+  /// (timestamp) common for all result items, as this timestamp comes from the same SRS indication that contains all
+  /// the measurement results.
   slot_point                        sl_rx;
   std::vector<pos_meas_result_item> results;
 };
