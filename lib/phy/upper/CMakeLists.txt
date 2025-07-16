@@ -15,7 +15,7 @@ add_subdirectory(sequence_generators)
 add_subdirectory(signal_processors)
 
 add_library(srsran_downlink_processor
-        downlink_processor_single_executor_impl.cpp
+        downlink_processor_multi_executor_impl.cpp
         downlink_processor_pool_impl.cpp)
 target_link_libraries(srsran_downlink_processor
         srsran_instrumentation

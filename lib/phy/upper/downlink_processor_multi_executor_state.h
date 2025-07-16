@@ -18,7 +18,7 @@ namespace srsran {
 /// \brief Downlink processor state management class.
 ///
 /// Represents the internal state of the upper PHY downlink processor single executor implementation.
-class downlink_processor_single_executor_state
+class downlink_processor_multi_executor_state
 {
 public:
   /// \brief Reserves the downlink processor upon the configuration of the resource grid.
@@ -27,11 +27,7 @@ public:
   {
     // Transition to accepting PDUs only if the current state is idle.
     uint32_t expected_idle = state_pending_pdus_idle;
-    bool     ret = state_pending_pdus.compare_exchange_weak(expected_idle, state_pending_pdus_mask_accepting_pdus);
-    if (!ret) {
-      fmt::print("state={:08x}\n", expected_idle);
-    }
-    return ret;
+    return state_pending_pdus.compare_exchange_weak(expected_idle, state_pending_pdus_mask_accepting_pdus);
   }
 
   /// \brief Notifies that all PDUs have already been queued and no more PDUs are accepted.

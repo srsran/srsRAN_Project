@@ -23,15 +23,25 @@ namespace {
 class du_low_cell_executor_mapper_impl : public du_low_cell_executor_mapper
 {
 public:
-  du_low_cell_executor_mapper_impl(task_executor& dl_exec_,
+  du_low_cell_executor_mapper_impl(task_executor& pdcch_exec_,
                                    task_executor& pdsch_exec_,
+                                   task_executor& ssb_exec_,
+                                   task_executor& csi_rs_exec_,
+                                   task_executor& prs_exec_,
+                                   task_executor& dl_grid_exec_,
+                                   task_executor& pdsch_codeblock_exec_,
                                    task_executor& prach_exec_,
                                    task_executor& pusch_exec_,
                                    task_executor& pusch_decoder_exec_,
                                    task_executor& pucch_exec_,
                                    task_executor& srs_exec_) :
-    dl_exec(dl_exec_),
+    pdcch_exec(pdcch_exec_),
     pdsch_exec(pdsch_exec_),
+    ssb_exec(ssb_exec_),
+    csi_rs_exec(csi_rs_exec_),
+    prs_exec(prs_exec_),
+    dl_grid_exec(dl_grid_exec_),
+    pdsch_codeblock_exec(pdsch_codeblock_exec_),
     prach_exec(prach_exec_),
     pusch_exec(pusch_exec_),
     pusch_decoder_exec(pusch_decoder_exec_),
@@ -41,10 +51,25 @@ public:
   }
 
   // See interface for documentation.
-  task_executor& downlink_executor() override { return dl_exec; }
+  task_executor& pdcch_executor() override { return pdcch_exec; }
 
   // See interface for documentation.
   task_executor& pdsch_executor() override { return pdsch_exec; }
+
+  // See interface for documentation.
+  task_executor& ssb_executor() override { return ssb_exec; }
+
+  // See interface for documentation.
+  task_executor& csi_rs_executor() override { return csi_rs_exec; }
+
+  // See interface for documentation.
+  task_executor& prs_executor() override { return prs_exec; }
+
+  // See interface for documentation.
+  task_executor& dl_grid_pool_executor() override { return dl_grid_exec; }
+
+  // See interface for documentation.
+  task_executor& pdsch_codeblock_executor() override { return pdsch_codeblock_exec; }
 
   // See interface for documentation.
   task_executor& prach_executor() override { return prach_exec; }
@@ -62,8 +87,14 @@ public:
   task_executor& srs_executor() override { return srs_exec; }
 
 private:
-  task_executor& dl_exec;
+  task_executor& pdcch_exec;
   task_executor& pdsch_exec;
+  task_executor& ssb_exec;
+  task_executor& csi_rs_exec;
+  task_executor& prs_exec;
+  task_executor& dl_grid_exec;
+
+  task_executor& pdsch_codeblock_exec;
   task_executor& prach_exec;
   task_executor& pusch_exec;
   task_executor& pusch_decoder_exec;
@@ -80,40 +111,60 @@ public:
     for (unsigned cell_idx = 0, end = config.cells.size(); cell_idx != end; ++cell_idx) {
       const auto& cell_config = config.cells[cell_idx];
 
-      task_executor* dl_exec        = nullptr;
-      task_executor* pdsch_exec     = nullptr;
-      task_executor* prach_exec     = nullptr;
-      task_executor* pusch_exec     = nullptr;
-      task_executor* pusch_dec_exec = nullptr;
-      task_executor* pucch_exec     = nullptr;
-      task_executor* srs_exec       = nullptr;
+      task_executor* pdcch_exec           = nullptr;
+      task_executor* pdsch_exec           = nullptr;
+      task_executor* ssb_exec             = nullptr;
+      task_executor* csi_rs_exec          = nullptr;
+      task_executor* prs_exec             = nullptr;
+      task_executor* dl_grid_exec         = nullptr;
+      task_executor* pdsch_codeblock_exec = nullptr;
+      task_executor* prach_exec           = nullptr;
+      task_executor* pusch_exec           = nullptr;
+      task_executor* pusch_dec_exec       = nullptr;
+      task_executor* pucch_exec           = nullptr;
+      task_executor* srs_exec             = nullptr;
 
       if (std::holds_alternative<du_low_executor_mapper_single_exec_config>(cell_config)) {
         const auto& single = std::get<du_low_executor_mapper_single_exec_config>(cell_config);
 
         srsran_assert(single.common_executor != nullptr, "Invalid common executor.");
 
-        dl_exec        = single.common_executor;
-        pdsch_exec     = single.common_executor;
-        prach_exec     = single.common_executor;
-        pusch_exec     = single.common_executor;
-        pusch_dec_exec = single.common_executor;
-        pucch_exec     = single.common_executor;
-        srs_exec       = single.common_executor;
+        pdcch_exec           = single.common_executor;
+        pdsch_exec           = single.common_executor;
+        ssb_exec             = single.common_executor;
+        csi_rs_exec          = single.common_executor;
+        prs_exec             = single.common_executor;
+        dl_grid_exec         = single.common_executor;
+        pdsch_codeblock_exec = single.common_executor;
+        prach_exec           = single.common_executor;
+        pusch_exec           = single.common_executor;
+        pusch_dec_exec       = single.common_executor;
+        pucch_exec           = single.common_executor;
+        srs_exec             = single.common_executor;
       } else if (std::holds_alternative<du_low_executor_mapper_manual_exec_config>(cell_config)) {
-        const auto& manual = std::get<du_low_executor_mapper_manual_exec_config>(cell_config);
-        dl_exec            = manual.dl_executor;
-        pdsch_exec         = manual.pdsch_executor;
-        prach_exec         = create_strand(manual.high_priority_executor);
-        pusch_exec         = manual.pusch_executor;
+        const auto& manual   = std::get<du_low_executor_mapper_manual_exec_config>(cell_config);
+        pdcch_exec           = manual.dl_executor;
+        pdsch_exec           = manual.dl_executor;
+        ssb_exec             = manual.dl_executor;
+        csi_rs_exec          = manual.dl_executor;
+        prs_exec             = manual.dl_executor;
+        dl_grid_exec         = manual.dl_executor;
+        pdsch_codeblock_exec = manual.pdsch_executor;
+        prach_exec           = create_strand(manual.high_priority_executor);
+        pusch_exec           = manual.pusch_executor;
         pusch_dec_exec =
             create_task_fork_limiter(manual.medium_priority_executor, manual.max_concurrent_pusch_decoders);
         pucch_exec = manual.pucch_executor;
         srs_exec   = manual.srs_executor;
       }
 
-      srsran_assert(dl_exec != nullptr, "Invalid DL executor.");
+      srsran_assert(pdcch_exec != nullptr, "Invalid PDCCH executor.");
       srsran_assert(pdsch_exec != nullptr, "Invalid PDSCH executor.");
+      srsran_assert(ssb_exec != nullptr, "Invalid SSB executor.");
+      srsran_assert(csi_rs_exec != nullptr, "Invalid NZP-CSI-RS executor.");
+      srsran_assert(prs_exec != nullptr, "Invalid PRS executor.");
+      srsran_assert(dl_grid_exec != nullptr, "Invalid DL grid pool executor.");
+      srsran_assert(pdsch_codeblock_exec != nullptr, "Invalid PDSCH executor.");
       srsran_assert(prach_exec != nullptr, "Invalid PRACH executor.");
       srsran_assert(pusch_exec != nullptr, "Invalid PUSCH executor.");
       srsran_assert(pusch_dec_exec != nullptr, "Invalid PUSCH decoder executor.");
@@ -122,8 +173,11 @@ public:
 
       if (config.metrics.has_value()) {
         const du_low_executor_mapper_metric_config& metrics_config = *config.metrics;
-        dl_exec    = wrap_executor_with_metric(dl_exec, fmt::format("dl_exec#{}", cell_idx), metrics_config);
+        pdcch_exec = wrap_executor_with_metric(pdcch_exec, fmt::format("pdcch_exec#{}", cell_idx), metrics_config);
         pdsch_exec = wrap_executor_with_metric(pdsch_exec, fmt::format("pdsch_exec#{}", cell_idx), metrics_config);
+        pdsch_exec = wrap_executor_with_metric(pdsch_exec, fmt::format("pdsch_exec#{}", cell_idx), metrics_config);
+        pdsch_codeblock_exec = wrap_executor_with_metric(
+            pdsch_codeblock_exec, fmt::format("pdsch_codeblock_exec#{}", cell_idx), metrics_config);
         prach_exec = wrap_executor_with_metric(prach_exec, fmt::format("prach_exec#{}", cell_idx), metrics_config);
         pusch_exec = wrap_executor_with_metric(pusch_exec, fmt::format("pusch_exec#{}", cell_idx), metrics_config);
         pusch_dec_exec =
@@ -132,8 +186,18 @@ public:
         srs_exec   = wrap_executor_with_metric(srs_exec, fmt::format("srs_exec#{}", cell_idx), metrics_config);
       }
 
-      cell_mappers.emplace_back(std::make_unique<du_low_cell_executor_mapper_impl>(
-          *dl_exec, *pdsch_exec, *prach_exec, *pusch_exec, *pusch_dec_exec, *pucch_exec, *srs_exec));
+      cell_mappers.emplace_back(std::make_unique<du_low_cell_executor_mapper_impl>(*pdcch_exec,
+                                                                                   *pdsch_exec,
+                                                                                   *ssb_exec,
+                                                                                   *csi_rs_exec,
+                                                                                   *prs_exec,
+                                                                                   *dl_grid_exec,
+                                                                                   *pdsch_codeblock_exec,
+                                                                                   *prach_exec,
+                                                                                   *pusch_exec,
+                                                                                   *pusch_dec_exec,
+                                                                                   *pucch_exec,
+                                                                                   *srs_exec));
     }
   }
 

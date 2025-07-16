@@ -8,7 +8,7 @@
  *
  */
 
-#include "downlink_processor_single_executor_impl.h"
+#include "downlink_processor_multi_executor_impl.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/upper/channel_processors/pdcch/formatters.h"
 #include "srsran/phy/upper/channel_processors/pdsch/formatters.h"
@@ -23,14 +23,18 @@
 
 using namespace srsran;
 
-downlink_processor_single_executor_impl::downlink_processor_single_executor_impl(
+downlink_processor_multi_executor_impl::downlink_processor_multi_executor_impl(
     upper_phy_rg_gateway&                 gateway_,
     std::unique_ptr<pdcch_processor>      pdcch_proc_,
     std::unique_ptr<pdsch_processor>      pdsch_proc_,
     std::unique_ptr<ssb_processor>        ssb_proc_,
     std::unique_ptr<nzp_csi_rs_generator> csi_rs_proc_,
     std::unique_ptr<prs_generator>        prs_gen_,
-    task_executor&                        executor_,
+    task_executor&                        pdcch_executor_,
+    task_executor&                        pdsch_executor_,
+    task_executor&                        ssb_executor_,
+    task_executor&                        csi_rs_executor_,
+    task_executor&                        prs_executor_,
     srslog::basic_logger&                 logger_) :
   gateway(gateway_),
   pdcch_proc(std::move(pdcch_proc_)),
@@ -38,7 +42,11 @@ downlink_processor_single_executor_impl::downlink_processor_single_executor_impl
   ssb_proc(std::move(ssb_proc_)),
   csi_rs_proc(std::move(csi_rs_proc_)),
   prs_gen(std::move(prs_gen_)),
-  executor(executor_),
+  pdcch_executor(pdcch_executor_),
+  pdsch_executor(pdsch_executor_),
+  ssb_executor(ssb_executor_),
+  csi_rs_executor(csi_rs_executor_),
+  prs_executor(prs_executor_),
   logger(logger_),
   pdsch_notifier(*this)
 {
@@ -49,7 +57,7 @@ downlink_processor_single_executor_impl::downlink_processor_single_executor_impl
   srsran_assert(prs_gen, "Invalid PRS generator received.");
 }
 
-void downlink_processor_single_executor_impl::process_pdcch(const pdcch_processor::pdu_t& pdu)
+void downlink_processor_multi_executor_impl::process_pdcch(const pdcch_processor::pdu_t& pdu)
 {
   // Notify to the state the creation of a new task.
   state.on_task_creation();
@@ -58,7 +66,7 @@ void downlink_processor_single_executor_impl::process_pdcch(const pdcch_processo
   pdcch_processor::pdu_t& pdu_ref = pdcch_list.emplace_back(pdu);
 
   // Try to enqueue the PDU processing task.
-  bool enqueued = executor.execute([this, &pdu_ref]() SRSRAN_RTSAN_NONBLOCKING {
+  bool enqueued = pdcch_executor.execute([this, &pdu_ref]() SRSRAN_RTSAN_NONBLOCKING {
     trace_point process_pdcch_tp = l1_dl_tracer.now();
 
     // Do not execute if the grid is not available.
@@ -81,7 +89,7 @@ void downlink_processor_single_executor_impl::process_pdcch(const pdcch_processo
   }
 }
 
-void downlink_processor_single_executor_impl::process_pdsch(
+void downlink_processor_multi_executor_impl::process_pdsch(
     static_vector<shared_transport_block, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data_,
     const pdsch_processor::pdu_t&                                                    pdu)
 {
@@ -92,7 +100,7 @@ void downlink_processor_single_executor_impl::process_pdsch(
   pdsch_proc_args& pdsch_args = pdsch_list.emplace_back(pdu, std::move(data_));
 
   // Try to enqueue the PDU processing task.
-  bool enqueued = executor.execute([this, &pdsch_args]() mutable SRSRAN_RTSAN_NONBLOCKING {
+  bool enqueued = pdsch_executor.execute([this, &pdsch_args]() mutable SRSRAN_RTSAN_NONBLOCKING {
     trace_point process_pdsch_tp = l1_dl_tracer.now();
 
     // Do not execute if the grid is not available.
@@ -121,7 +129,7 @@ void downlink_processor_single_executor_impl::process_pdsch(
   }
 }
 
-void downlink_processor_single_executor_impl::process_ssb(const ssb_processor::pdu_t& pdu)
+void downlink_processor_multi_executor_impl::process_ssb(const ssb_processor::pdu_t& pdu)
 {
   // Notify to the state the creation of a new task.
   state.on_task_creation();
@@ -130,7 +138,7 @@ void downlink_processor_single_executor_impl::process_ssb(const ssb_processor::p
   ssb_processor::pdu_t& pdu_ref = ssb_list.emplace_back(pdu);
 
   // Try to enqueue the PDU processing task.
-  bool enqueued = executor.execute([this, &pdu_ref]() SRSRAN_RTSAN_NONBLOCKING {
+  bool enqueued = ssb_executor.execute([this, &pdu_ref]() SRSRAN_RTSAN_NONBLOCKING {
     trace_point process_ssb_tp = l1_dl_tracer.now();
 
     // Do not execute if the grid is not available.
@@ -153,7 +161,7 @@ void downlink_processor_single_executor_impl::process_ssb(const ssb_processor::p
   }
 }
 
-void downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config)
+void downlink_processor_multi_executor_impl::process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config)
 {
   // Notify to the state the creation of a new task.
   state.on_task_creation();
@@ -162,7 +170,7 @@ void downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_r
   nzp_csi_rs_generator::config_t& config_ref = nzp_csi_rs_list.emplace_back(config);
 
   // Try to enqueue the PDU processing task.
-  bool enqueued = executor.execute([this, &config_ref]() SRSRAN_RTSAN_NONBLOCKING {
+  bool enqueued = csi_rs_executor.execute([this, &config_ref]() SRSRAN_RTSAN_NONBLOCKING {
     trace_point process_nzp_csi_rs_tp = l1_dl_tracer.now();
 
     // Do not execute if the grid is not available.
@@ -185,7 +193,7 @@ void downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_r
   }
 }
 
-void downlink_processor_single_executor_impl::process_prs(const prs_generator_configuration& config)
+void downlink_processor_multi_executor_impl::process_prs(const prs_generator_configuration& config)
 {
   // Notify to the state the creation of a new task.
   state.on_task_creation();
@@ -194,7 +202,7 @@ void downlink_processor_single_executor_impl::process_prs(const prs_generator_co
   prs_generator_configuration& config_ref = prs_list.emplace_back(config);
 
   // Try to enqueue the PDU processing task.
-  bool enqueued = executor.execute([this, &config_ref]() SRSRAN_RTSAN_NONBLOCKING {
+  bool enqueued = prs_executor.execute([this, &config_ref]() SRSRAN_RTSAN_NONBLOCKING {
     trace_point process_prs_tp = l1_dl_tracer.now();
 
     // Do not execute if the grid is not available.
@@ -218,8 +226,8 @@ void downlink_processor_single_executor_impl::process_prs(const prs_generator_co
 }
 
 unique_downlink_processor
-downlink_processor_single_executor_impl::configure_resource_grid(const resource_grid_context& context,
-                                                                 shared_resource_grid         grid)
+downlink_processor_multi_executor_impl::configure_resource_grid(const resource_grid_context& context,
+                                                                shared_resource_grid         grid)
 {
   // Try to reserve the downlink processor.
   if (!state.reserve_on_resource_grid_configure()) {
@@ -243,7 +251,7 @@ downlink_processor_single_executor_impl::configure_resource_grid(const resource_
   return unique_downlink_processor(*this);
 }
 
-void downlink_processor_single_executor_impl::finish_processing_pdus()
+void downlink_processor_multi_executor_impl::finish_processing_pdus()
 {
   l1_dl_tracer << instant_trace_event("finish_processing_pdus", instant_trace_event::cpu_scope::thread);
 
@@ -253,7 +261,7 @@ void downlink_processor_single_executor_impl::finish_processing_pdus()
   }
 }
 
-void downlink_processor_single_executor_impl::send_resource_grid()
+void downlink_processor_multi_executor_impl::send_resource_grid()
 {
   l1_dl_tracer << instant_trace_event("send_resource_grid", instant_trace_event::cpu_scope::global);
 
@@ -266,7 +274,7 @@ void downlink_processor_single_executor_impl::send_resource_grid()
   state.on_grid_sent();
 }
 
-void downlink_processor_single_executor_impl::on_task_completion()
+void downlink_processor_multi_executor_impl::on_task_completion()
 {
   // Notify the task completion and send the resource grid if allowed.
   if (state.on_task_completion()) {

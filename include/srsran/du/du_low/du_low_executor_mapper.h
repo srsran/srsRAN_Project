@@ -28,19 +28,28 @@ class du_low_cell_executor_mapper
 public:
   virtual ~du_low_cell_executor_mapper() = default;
 
-  /// \brief Retrieves the common downlink processor executor.
-  ///
-  /// The common downlink processor executor is in charge of dispatching physical layer transmissions such as PDCCH,
-  /// PDSCH, SS/PBCH block, and NZP-CSI-RS.
-  ///
-  /// If PDSCH processing is configured for being concurrent, the PDSCH transmissions start with the downlink processor
-  /// and then concurrent tasks are enqueued in the PDSCH executor.
-  virtual task_executor& downlink_executor() = 0;
+  /// Retrieves the task executor for processing PDCCH.
+  virtual task_executor& pdcch_executor() = 0;
+
+  /// Retrieves the task executor for processing PDSCH.
+  virtual task_executor& pdsch_executor() = 0;
+
+  /// Retrieves the task executor for processing SSB.
+  virtual task_executor& ssb_executor() = 0;
+
+  /// Retrieves the task executor for processing NZP-CSI-RS.
+  virtual task_executor& csi_rs_executor() = 0;
+
+  /// Retrieves the task executor for processing PRS.
+  virtual task_executor& prs_executor() = 0;
+
+  /// Retrieves the task executor for DL resource grid pool housekeeping.
+  virtual task_executor& dl_grid_pool_executor() = 0;
 
   /// \brief Retrieves the PDSCH asynchronous executor.
   ///
   /// The PDSCH asynchronous executor is in charge of processing PDSCH transmissions concurrently (if configured).
-  virtual task_executor& pdsch_executor() = 0;
+  virtual task_executor& pdsch_codeblock_executor() = 0;
 
   /// \brief Retrieves the Preamble for Random Access Channel (PRACH) task executor.
   ///

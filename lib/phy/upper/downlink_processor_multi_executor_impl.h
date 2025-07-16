@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "downlink_processor_single_executor_state.h"
+#include "downlink_processor_multi_executor_state.h"
 #include "srsran/adt/unique_function.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/resource_grid_context.h"
@@ -53,30 +53,38 @@ public:
 /// the gateway as soon as every enqueued PDU before finish_processing_pdus() is processed . This is controlled counting
 /// the PDUs that are processed and finished processing.
 ///  \note Thread safe class.
-class downlink_processor_single_executor_impl : public downlink_processor_base,
-                                                private downlink_processor_controller,
-                                                private unique_downlink_processor::downlink_processor_callback,
-                                                private detail::downlink_processor_callback
+class downlink_processor_multi_executor_impl : public downlink_processor_base,
+                                               private downlink_processor_controller,
+                                               private unique_downlink_processor::downlink_processor_callback,
+                                               private detail::downlink_processor_callback
 {
 public:
   /// \brief Builds a downlink processor single executor impl object with the given parameters.
   ///
-  /// \param gateway_     Gateway that will be used to send the resource grids.
-  /// \param pdcch_proc_  PDSCH processor used to process PDSCH PDUs.
-  /// \param pdsch_proc_  PDCCH processor used to process PDCCH PDUs.
-  /// \param ssb_proc_    SSB processor used to process SSB PDUs.
-  /// \param csi_rs_proc_ CSI-RS processor used to process CSI-RS transmissions.
-  /// \param prs_gen_     PRS generator used to process PRS transmissions.
-  /// \param executor_    Task executor that will be used to process every PDU.
-  /// \param logger_      Logger instance.
-  downlink_processor_single_executor_impl(upper_phy_rg_gateway&                 gateway_,
-                                          std::unique_ptr<pdcch_processor>      pdcch_proc_,
-                                          std::unique_ptr<pdsch_processor>      pdsch_proc_,
-                                          std::unique_ptr<ssb_processor>        ssb_proc_,
-                                          std::unique_ptr<nzp_csi_rs_generator> csi_rs_proc_,
-                                          std::unique_ptr<prs_generator>        prs_gen_,
-                                          task_executor&                        executor_,
-                                          srslog::basic_logger&                 logger_);
+  /// \param gateway_         Gateway that will be used to send the resource grids.
+  /// \param pdcch_proc_      Processor for PDCCH PDUs.
+  /// \param pdsch_proc_      Processor for PDSCH PDUs.
+  /// \param ssb_proc_        Processor for SSB PDUs.
+  /// \param csi_rs_proc_     Processor for CSI-RS processor used PDUs.
+  /// \param prs_gen_         Processor for PRS PDUs.
+  /// \param pdcch_executor_  Task executor that will be used to process PDCCH.
+  /// \param pdsch_executor_  Task executor that will be used to process PDSCH.
+  /// \param ssb_executor_    Task executor that will be used to process SS/PBCH block.
+  /// \param csi_rs_executor_ Task executor that will be used to process NZP-CSI-RS.
+  /// \param prs_executor_    Task executor that will be used to process PRS.
+  /// \param logger_          Logger instance.
+  downlink_processor_multi_executor_impl(upper_phy_rg_gateway&                 gateway_,
+                                         std::unique_ptr<pdcch_processor>      pdcch_proc_,
+                                         std::unique_ptr<pdsch_processor>      pdsch_proc_,
+                                         std::unique_ptr<ssb_processor>        ssb_proc_,
+                                         std::unique_ptr<nzp_csi_rs_generator> csi_rs_proc_,
+                                         std::unique_ptr<prs_generator>        prs_gen_,
+                                         task_executor&                        pdcch_executor_,
+                                         task_executor&                        pdsch_executor_,
+                                         task_executor&                        ssb_executor_,
+                                         task_executor&                        csi_rs_executor_,
+                                         task_executor&                        prs_executor_,
+                                         srslog::basic_logger&                 logger_);
 
   // See downlink_processor_base interface for documentation.
   downlink_processor_controller& get_controller() override { return *this; }
@@ -187,12 +195,19 @@ private:
   std::unique_ptr<nzp_csi_rs_generator> csi_rs_proc;
   std::unique_ptr<prs_generator>        prs_gen;
   /// @}
-  /// Asynchronous task executor.
-  downlink_task_executor executor;
+  /// \defgroup phy_chan_executors
+  /// \brief Physical channel executors.
+  /// @{
+  downlink_task_executor pdcch_executor;
+  downlink_task_executor pdsch_executor;
+  downlink_task_executor ssb_executor;
+  downlink_task_executor csi_rs_executor;
+  downlink_task_executor prs_executor;
+  /// @}
   /// Logger.
   srslog::basic_logger& logger;
   /// DL processor internal state.
-  downlink_processor_single_executor_state state;
+  downlink_processor_multi_executor_state state;
   /// PDSCH notifier wrapper.
   pdsch_processor_notifier_wrapper pdsch_notifier;
 };

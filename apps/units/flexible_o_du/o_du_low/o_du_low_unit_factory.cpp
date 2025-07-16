@@ -100,8 +100,10 @@ o_du_low_unit o_du_low_unit_factory::create(const o_du_low_unit_config&       pa
 
     srs_du::du_low_cell_config& cell = o_du_low_cfg.du_low_cfg.cells[i];
 
-    generate_dl_processor_config(
-        cell.dl_proc_cfg, params.du_low_unit_cfg, cell_exec_map.pdsch_executor(), hal_dependencies.hw_encoder_factory);
+    generate_dl_processor_config(cell.dl_proc_cfg,
+                                 params.du_low_unit_cfg,
+                                 cell_exec_map.pdsch_codeblock_executor(),
+                                 hal_dependencies.hw_encoder_factory);
 
     upper_phy_config& upper          = cell.upper_phy_cfg;
     upper.rg_gateway                 = &dependencies.rg_gateway;
@@ -115,7 +117,12 @@ o_du_low_unit o_du_low_unit_factory::create(const o_du_low_unit_config&       pa
     if (hal_dependencies.hw_decoder_factory) {
       upper.hw_decoder_factory = hal_dependencies.hw_decoder_factory;
     }
-    upper.dl_executor = &cell_exec_map.downlink_executor();
+    upper.pdcch_executor   = &cell_exec_map.pdcch_executor();
+    upper.pdsch_executor   = &cell_exec_map.pdsch_executor();
+    upper.ssb_executor     = &cell_exec_map.ssb_executor();
+    upper.csi_rs_executor  = &cell_exec_map.csi_rs_executor();
+    upper.prs_executor     = &cell_exec_map.prs_executor();
+    upper.dl_grid_executor = &cell_exec_map.dl_grid_pool_executor();
   }
 
   o_du_low_unit unit;
