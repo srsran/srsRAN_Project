@@ -14,7 +14,7 @@
 #include "srsran/support/math/math_utils.h"
 #include <atomic>
 #include <memory>
-#include <thread>
+#include <sched.h>
 #include <utility>
 
 namespace srsran {
@@ -77,7 +77,7 @@ public:
   {
     unsigned offset = 0;
     if (segments.size() > 1) {
-      offset = std::hash<std::thread::id>{}(std::this_thread::get_id()) % segments.size();
+      offset = sched_getcpu() % segments.size();
     }
 
     for (unsigned i = 0; i != segments.size(); ++i) {
@@ -127,7 +127,7 @@ public:
 ///
 /// The objects are stored in a vector of segments, each segment containing a fixed number of objects. Each segment
 /// additionally contains a bitmap that tracks which objects are currently allocated within the same segment.
-/// The thread_id is used as a hash to select the starting position in the vector of segments to search for free
+/// The cpu_id is used as a hash to select the starting position in the vector of segments to search for free
 /// objects.
 template <typename T>
 class bounded_object_pool
