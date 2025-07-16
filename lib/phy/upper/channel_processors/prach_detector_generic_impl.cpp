@@ -248,7 +248,7 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
 
         // Normalize the signal: we divide by the DFT size to compensate for the inherent scaling of the DFT, and by
         // L_ra^2 to compensate for the amplitude of the ZC sequence in the frequency domain.
-        srsvec::sc_prod(mod_square, 1.0F / static_cast<float>(dft_size * L_ra * L_ra), mod_square);
+        srsvec::sc_prod(mod_square, mod_square, 1.0F / static_cast<float>(dft_size * L_ra * L_ra));
 
         // Process each shift of the sequence.
         for (unsigned i_window = 0; i_window != nof_shifts; ++i_window) {
@@ -270,9 +270,9 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
           span<float> window_mod_square = span<float>(temp2).first(win_width);
 
           // Scale window.
-          srsvec::sc_prod(mod_square.subspan(window_start, win_width),
-                          static_cast<float>(dft_size) / static_cast<float>(L_ra),
-                          window_mod_square);
+          srsvec::sc_prod(window_mod_square,
+                          mod_square.subspan(window_start, win_width),
+                          static_cast<float>(dft_size) / static_cast<float>(L_ra));
 
           // Select metric global numerator.
           span<float> window_metric_global_num = metric_global_num.get_view({i_window});

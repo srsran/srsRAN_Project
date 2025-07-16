@@ -138,7 +138,7 @@ void dmrs_pusch_estimator_impl::generate(dmrs_symbol_list&        symbols,
         // If a time weight is required...
         if ((params.w_t[0] != params.w_t[1]) && (i_symbol % 2 == 1)) {
           // apply the weight...
-          srsvec::sc_prod(dmrs_layer0, params.w_t[1], dmrs);
+          srsvec::sc_prod(dmrs, dmrs_layer0, params.w_t[1]);
         } else {
           // otherwise, copy symbols from layer 0 to the current layer.
           srsvec::copy(dmrs, dmrs_layer0);

@@ -40,7 +40,7 @@ void pdcch_modulator_impl::modulate(span<cf_t> d_pdcch, span<const uint8_t> b_ha
 
   // Apply scaling to conform power.
   if (std::isnormal(scaling)) {
-    srsvec::sc_prod(d_pdcch, scaling, d_pdcch);
+    srsvec::sc_prod(d_pdcch, d_pdcch, scaling);
   }
 }
 

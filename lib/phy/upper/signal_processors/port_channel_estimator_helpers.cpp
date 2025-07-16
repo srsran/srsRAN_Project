@@ -91,8 +91,8 @@ public:
       n += stride;
     }
     // Normalize the filter so that the sum of its coefficients is 1 and the tail correction coefficients accordingly.
-    srsvec::sc_prod(rc_filter, 1 / total, rc_filter);
-    srsvec::sc_prod(tail_correction, total, tail_correction);
+    srsvec::sc_prod(rc_filter, rc_filter, 1 / total);
+    srsvec::sc_prod(tail_correction, tail_correction, total);
 
     tail_correction = tail_correction.subspan(nof_coefs_out / 2, nof_coefs_out / 2);
   }

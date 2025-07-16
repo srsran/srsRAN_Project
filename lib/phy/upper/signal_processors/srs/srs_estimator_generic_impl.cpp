@@ -172,7 +172,7 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
 
       // Scale accumulated LSE.
       if (nof_symbols > 1) {
-        srsvec::sc_prod(mean_lse, 1.0 / static_cast<float>(nof_symbols), mean_lse);
+        srsvec::sc_prod(mean_lse, mean_lse, 1.0 / static_cast<float>(nof_symbols));
       }
 
       port_lse.set_slice(i_rx_port_index, mean_lse);
@@ -234,7 +234,7 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
       // also be counted nof_symbols times.
       static_vector<cf_t, max_seq_length> recovered_signal(noise_help.size());
       srsvec::sc_prod(
-          all_sequences.get_view({i_antenna_port}), static_cast<float>(nof_symbols) * coefficient, recovered_signal);
+          recovered_signal, all_sequences.get_view({i_antenna_port}), static_cast<float>(nof_symbols) * coefficient);
       srsvec::subtract(noise_help, noise_help, recovered_signal);
     }
     span<cf_t> noise_help = temp_noise.get_view({0U, i_rx_port});

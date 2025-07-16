@@ -30,7 +30,7 @@ void test_sc_prod_ccc(std::size_t N)
 
   std::vector<cf_t> z(N);
 
-  srsvec::sc_prod(x, h, z);
+  srsvec::sc_prod(z, x, h);
 
   for (size_t i = 0; i != N; i++) {
     cf_t  gold_z = x[i] * h;
@@ -50,7 +50,7 @@ void test_sc_prod_ccc_bf16(std::size_t N)
 
   std::vector<cbf16_t> z(N);
 
-  srsvec::sc_prod(x, h, z);
+  srsvec::sc_prod(z, x, h);
 
   std::vector<cf_t> expected(N);
   std::transform(x.begin(), x.end(), expected.begin(), [&h](cbf16_t value) { return h * to_cf(value); });
@@ -75,7 +75,7 @@ void test_sc_prod_cfc(std::size_t N)
 
   std::vector<cf_t> z(N);
 
-  srsvec::sc_prod(x, h, z);
+  srsvec::sc_prod(z, x, h);
 
   for (size_t i = 0; i != N; i++) {
     cf_t  gold_z = x[i] * h;
@@ -97,7 +97,7 @@ void test_sc_prod_fff(std::size_t N)
 
   std::vector<float> z(N);
 
-  srsvec::sc_prod(x, h, z);
+  srsvec::sc_prod(z, x, h);
 
   for (size_t i = 0; i != N; i++) {
     cf_t  gold_z = x[i] * h;

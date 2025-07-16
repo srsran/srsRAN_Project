@@ -90,7 +90,7 @@ void ofdm_symbol_modulator_impl::modulate(span<cf_t>                  output,
   cf_t phase_compensation = phase_compensation_table.get_coefficient(symbol_index);
 
   // Apply scaling and phase compensation.
-  srsvec::sc_prod(dft_output, phase_compensation * scale, output.last(dft_size));
+  srsvec::sc_prod(output.last(dft_size), dft_output, phase_compensation * scale);
 
   // Copy cyclic prefix.
   srsvec::copy(output.first(cp_len), output.last(cp_len));

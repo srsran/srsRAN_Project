@@ -119,7 +119,7 @@ void ofdm_symbol_demodulator_impl::demodulate(resource_grid_writer& grid,
   cf_t phase_compensation = phase_compensation_table.get_coefficient(symbol_index);
 
   // Apply scaling and phase compensation.
-  srsvec::sc_prod(dft_output, phase_compensation * scale, compensated_output);
+  srsvec::sc_prod(compensated_output, dft_output, phase_compensation * scale);
 
   // Compensate DFT window offset phase shift.
   if (!window_phase_compensation.empty()) {

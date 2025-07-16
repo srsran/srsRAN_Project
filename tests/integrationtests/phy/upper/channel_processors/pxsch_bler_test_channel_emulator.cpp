@@ -203,7 +203,7 @@ void channel_emulator::run(resource_grid_writer& rx_grid, const resource_grid_re
         }
 
         // Multiply tap frequency response by a fading distribution tap.
-        srsvec::sc_prod(taps_channel_response.get_view({i_tap}), tap, tap_channel);
+        srsvec::sc_prod(tap_channel, taps_channel_response.get_view({i_tap}), tap);
 
         // Accumulate tap frequency response. Bypass accumulation for the first tap.
         if (i_tap != 0) {
@@ -262,7 +262,7 @@ void channel_emulator::concurrent_channel_emulator::run(resource_grid_writer&   
   }
 
   // Apply time-domain coefficient.
-  srsvec::sc_prod(temp_ofdm_symbol, time_coeff, temp_ofdm_symbol);
+  srsvec::sc_prod(temp_ofdm_symbol, temp_ofdm_symbol, time_coeff);
 
   // Apply AWGN.
   std::generate(temp_single_ofdm_symbol.begin(), temp_single_ofdm_symbol.end(), [this]() { return dist_awgn(rgen); });
