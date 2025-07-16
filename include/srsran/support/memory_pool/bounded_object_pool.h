@@ -62,7 +62,8 @@ public:
   /// enqueuing them into the internal queue for future use.
   ///
   /// \param objects_ A view containing initial \c unique_ptr<T> objects to populate the pool.
-  bounded_object_pool(span<std::unique_ptr<T>> objects_) : objects(objects_.size())
+  bounded_object_pool(span<std::unique_ptr<T>> objects_) :
+    objects(objects_.size(), 0, std::thread::hardware_concurrency())
   {
     for (auto& obj : objects_) {
       report_error_if_not(objects.enqueue(std::move(obj)), "Failed to enqueue element.");
