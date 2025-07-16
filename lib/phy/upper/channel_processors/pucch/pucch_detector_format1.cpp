@@ -303,7 +303,7 @@ combine_symbols(static_tensor<2, cf_t, NSHIFTS * MAX_PORTS>&                    
     srsvec::sc_prod(in.get_view({0, i_port}), w[0] * normalizer, out.get_view({i_port}));
     for (unsigned i_symbol = 1; i_symbol != n_symbols; ++i_symbol) {
       srsvec::sc_prod(in.get_view({i_symbol, i_port}), w[i_symbol] * normalizer, scaled);
-      srsvec::add(scaled, out.get_view({i_port}), out.get_view({i_port}));
+      srsvec::add(out.get_view({i_port}), scaled, out.get_view({i_port}));
     }
   }
 }

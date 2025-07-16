@@ -34,7 +34,7 @@ void test_cf_add(std::size_t N)
 
   std::vector<cf_t> z(N);
 
-  srsvec::add(x, y, z);
+  srsvec::add(z, x, y);
 
   for (size_t i = 0; i != N; i++) {
     cf_t  gold_z = x[i] + y[i];
@@ -59,7 +59,7 @@ void test_float_add(std::size_t N)
 
   std::vector<float> z(N);
 
-  srsvec::add(x, y, z);
+  srsvec::add(z, x, y);
 
   for (size_t i = 0; i != N; i++) {
     float gold_z = x[i] + y[i];
@@ -84,7 +84,7 @@ void test_i16_add(std::size_t N)
 
   std::vector<int16_t> z(N);
 
-  srsvec::add(x, y, z);
+  srsvec::add(z, x, y);
 
   for (size_t i = 0; i != N; i++) {
     int gold_z = x[i] + y[i];
@@ -109,7 +109,7 @@ void test_i8_add(std::size_t N)
 
   std::vector<int8_t> z(N);
 
-  srsvec::add(x, y, z);
+  srsvec::add(z, x, y);
 
   for (size_t i = 0; i != N; i++) {
     int gold_z = x[i] + y[i];

@@ -225,8 +225,8 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
         if (combine_symbols && (nof_symbols > 1)) {
           for (unsigned i_comb_symbol = 1; i_comb_symbol != nof_symbols; ++i_comb_symbol) {
             srsvec::add(combined_symbols,
-                        input.get_symbol(i_port, i_td_occasion, i_fd_occasion, i_comb_symbol),
-                        combined_symbols);
+                        combined_symbols,
+                        input.get_symbol(i_port, i_td_occasion, i_fd_occasion, i_comb_symbol));
           }
         }
 
