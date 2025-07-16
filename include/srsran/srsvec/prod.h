@@ -15,13 +15,13 @@
 namespace srsran {
 namespace srsvec {
 
-void prod(span<const cf_t> x, span<const cf_t> y, span<cf_t> z);
-void prod(span<const cf_t> x, span<const float> y, span<cf_t> z);
-void prod(span<const float> x, span<const cf_t> y, span<cf_t> z);
-void prod(span<const float> x, span<const float> y, span<float> z);
-void prod(span<const int16_t> x, span<const int16_t> y, span<int16_t> z);
+void prod(span<cf_t> z, span<const cf_t> x, span<const cf_t> y);
+void prod(span<cf_t> z, span<const cf_t> x, span<const float> y);
+void prod(span<cf_t> z, span<const float> x, span<const cf_t> y);
+void prod(span<float> z, span<const float> x, span<const float> y);
+void prod(span<int16_t> z, span<const int16_t> x, span<const int16_t> y);
 
-void prod_conj(span<const cf_t> x, span<const cf_t> y, span<cf_t> z);
+void prod_conj(span<cf_t> z, span<const cf_t> x, span<const cf_t> y);
 
 /// \brief Multiplies a given signal by a complex exponential.
 ///

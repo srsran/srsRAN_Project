@@ -168,7 +168,7 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
       }
 
       // Calculate LSE.
-      srsvec::prod_conj(mean_lse, sequence, mean_lse);
+      srsvec::prod_conj(mean_lse, mean_lse, sequence);
 
       // Scale accumulated LSE.
       if (nof_symbols > 1) {

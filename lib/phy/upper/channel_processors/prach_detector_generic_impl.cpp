@@ -233,7 +233,7 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
         // Multiply the preamble by the complex conjugate of the root sequence.
         std::array<cf_t, prach_constants::LONG_SEQUENCE_LENGTH> no_root_temp;
         span<cf_t>                                              no_root = span<cf_t>(no_root_temp).first(L_ra);
-        srsvec::prod_conj(combined_symbols, root, no_root);
+        srsvec::prod_conj(no_root, combined_symbols, root);
 
         // Prepare IDFT for correlation.
         srsvec::copy(idft_input.first(L_ra / 2 + 1), no_root.last(L_ra / 2 + 1));

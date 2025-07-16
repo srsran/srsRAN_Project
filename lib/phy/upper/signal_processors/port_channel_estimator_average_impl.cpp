@@ -323,7 +323,7 @@ std::optional<float> port_channel_estimator_average_impl::preprocess_pilots_and_
 
   // Match received and transmitted pilots in the first DM-RS symbol.
   srsvec::prod_conj(
-      rx_pilots.get_symbol(0, layer0), pilots.get_symbol(hop_offset, layer0), pilots_lse.get_symbol(0, layer0));
+      pilots_lse.get_symbol(0, layer0), rx_pilots.get_symbol(0, layer0), pilots.get_symbol(hop_offset, layer0));
 
   // Skip CFO measurement if only one OFDM symbol contains DM-RS.
   if (nof_dmrs_symbols == 1) {
@@ -341,7 +341,7 @@ std::optional<float> port_channel_estimator_average_impl::preprocess_pilots_and_
   if (td_interpolation_strategy != port_channel_estimator_td_interpolation_strategy::average) {
     temp_pilot_products = pilots_lse.get_symbol(1, layer0);
   }
-  srsvec::prod_conj(rx_pilots.get_symbol(1, layer0), pilots.get_symbol(hop_offset + 1, layer0), temp_pilot_products);
+  srsvec::prod_conj(temp_pilot_products, rx_pilots.get_symbol(1, layer0), pilots.get_symbol(hop_offset + 1, layer0));
 
   noisy_phase_acc += srsvec::dot_prod(temp_pilot_products, pilots_lse.get_symbol(0, layer0));
 
@@ -374,7 +374,7 @@ std::optional<float> port_channel_estimator_average_impl::preprocess_pilots_and_
 
       // Match received and transmitted pilots in the current DM-RS symbol.
       srsvec::prod_conj(
-          rx_pilots.get_symbol(i_dmrs, 0), pilots.get_symbol(hop_offset + i_dmrs, layer0), temp_pilot_products);
+          temp_pilot_products, rx_pilots.get_symbol(i_dmrs, 0), pilots.get_symbol(hop_offset + i_dmrs, layer0));
 
       // Compensate the CFO in the current DM-RS symbol.
       if (compensate_cfo) {
@@ -457,7 +457,7 @@ static float estimate_noise(const dmrs_symbol_list&                   pilots,
     span<const cf_t> symbol_pilots = pilots.get_symbol(hop_offset + i_dmrs, layer0);
 
     // Apply estimated channel response to the original symbol pilots.
-    srsvec::prod(scaled_estimates.get_slice(layer0), symbol_pilots, predicted_obs);
+    srsvec::prod(predicted_obs, scaled_estimates.get_slice(layer0), symbol_pilots);
 
     // Compensate for CFO only if present.
     if (compensate_cfo && cfo.has_value()) {

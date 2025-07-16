@@ -484,7 +484,7 @@ static void compute_contributions(span<float>                                   
   srsvec::modulus_square_and_add(main_contributions, dmrs.get_view({0}), main_contributions);
 
   // Cross contributions are the cross conjugated product of the two components.
-  srsvec::prod_conj(dmrs.get_view({0}), data.get_view({0}), cross_contributions);
+  srsvec::prod_conj(cross_contributions, dmrs.get_view({0}), data.get_view({0}));
   std::array<cf_t, NSHIFTS> support_cross;
 
   // Accumulate the contributions from all ports.
@@ -492,7 +492,7 @@ static void compute_contributions(span<float>                                   
     srsvec::modulus_square_and_add(main_contributions, data.get_view({i_port}), main_contributions);
     srsvec::modulus_square_and_add(main_contributions, dmrs.get_view({i_port}), main_contributions);
 
-    srsvec::prod_conj(dmrs.get_view({i_port}), data.get_view({i_port}), support_cross);
+    srsvec::prod_conj(support_cross, dmrs.get_view({i_port}), data.get_view({i_port}));
     srsvec::add(cross_contributions, support_cross, cross_contributions);
   }
 }
@@ -552,7 +552,7 @@ pucch_detector_format1::hop_contribution_common pucch_detector_format1::process_
         span<cf_t> dmrs_help = dmrs_lse.get_view({i_dmrs, i_port});
         grid.get(dmrs_help, i_port, i_symbol, first_subcarrier);
         epre += srsvec::average_power(dmrs_help) * dmrs_help.size();
-        srsvec::prod_conj(dmrs_help, seq_r, dmrs_help);
+        srsvec::prod_conj(dmrs_help, dmrs_help, seq_r);
 
         span<cf_t> dft_input = dft->get_input();
         srsvec::copy(dft_input, dmrs_help);
@@ -565,7 +565,7 @@ pucch_detector_format1::hop_contribution_common pucch_detector_format1::process_
         span<cf_t> data_help = data_lse.get_view({i_data, i_port});
         grid.get(data_help, i_port, i_symbol, first_subcarrier);
         epre += srsvec::average_power(data_help) * data_help.size();
-        srsvec::prod_conj(data_help, seq_r, data_help);
+        srsvec::prod_conj(data_help, data_help, seq_r);
 
         span<cf_t> dft_input = dft->get_input();
         srsvec::copy(dft_input, data_help);
