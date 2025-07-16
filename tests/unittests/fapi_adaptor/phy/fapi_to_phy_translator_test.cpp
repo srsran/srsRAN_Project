@@ -278,9 +278,10 @@ TEST_F(fapi_to_phy_translator_fixture, downlink_processor_is_configured_on_new_d
   ASSERT_EQ(rg_pool.get_getter_count(), 0);
 
   fapi::dl_tti_request_message msg;
-  msg.sfn                        = slot.sfn();
-  msg.slot                       = slot.slot_index();
-  msg.is_last_dl_message_in_slot = false;
+  msg.sfn  = slot.sfn();
+  msg.slot = slot.slot_index();
+  // Add a PDU to the message.
+  msg.pdus.emplace_back();
 
   translator.dl_tti_request(msg);
 
@@ -288,30 +289,6 @@ TEST_F(fapi_to_phy_translator_fixture, downlink_processor_is_configured_on_new_d
   ASSERT_TRUE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
 
   ASSERT_FALSE(error_notifier_spy.has_on_error_indication_been_called());
-}
-
-TEST_F(fapi_to_phy_translator_fixture,
-       when_is_last_message_in_slot_flag_is_enabled_controller_is_released_at_the_dl_tti_handling)
-{
-  ASSERT_FALSE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
-  ASSERT_EQ(rg_pool.get_getter_count(), 0);
-
-  fapi::dl_tti_request_message         msg;
-  fapi::dl_tti_request_message_builder builder(msg);
-  builder.add_ssb_pdu().set_bch_payload_phy_timing_info(0);
-  msg.sfn                        = slot.sfn();
-  msg.slot                       = slot.slot_index();
-  msg.is_last_dl_message_in_slot = true;
-
-  translator.dl_tti_request(msg);
-
-  // Assert that the downlink processor is configured.
-  ASSERT_TRUE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
-
-  // Assert that the resource grid has not been set to zero.
-  ASSERT_EQ(rg_pool.get_getter_count(), 0);
-  ASSERT_FALSE(error_notifier_spy.has_on_error_indication_been_called());
-  ASSERT_TRUE(dl_processor_pool.processor(slot).has_finish_processing_pdus_method_been_called());
 }
 
 TEST_F(fapi_to_phy_translator_fixture, dl_ssb_pdu_is_processed)
@@ -373,9 +350,10 @@ TEST_F(fapi_to_phy_translator_fixture, receiving_a_dl_tti_request_sends_previous
   ASSERT_EQ(rg_pool.get_getter_count(), 0);
 
   fapi::dl_tti_request_message msg;
-  msg.sfn                        = slot.sfn();
-  msg.slot                       = slot.slot_index();
-  msg.is_last_dl_message_in_slot = false;
+  msg.sfn  = slot.sfn();
+  msg.slot = slot.slot_index();
+  // Add a pdu to the message.
+  msg.pdus.emplace_back();
 
   // Increase the slots.
   for (unsigned i = 1; i != headroom_in_slots; ++i) {
@@ -406,9 +384,8 @@ TEST_F(fapi_to_phy_translator_fixture, receiving_a_dl_tti_request_from_a_slot_de
   translator.handle_new_slot(current_slot);
 
   fapi::dl_tti_request_message msg;
-  msg.sfn                        = current_slot.sfn();
-  msg.slot                       = current_slot.slot_index();
-  msg.is_last_dl_message_in_slot = false;
+  msg.sfn  = current_slot.sfn();
+  msg.slot = current_slot.slot_index();
 
   // Increase the slots.
   for (unsigned i = 0, e = headroom_in_slots + 1; i != e; ++i) {
@@ -436,9 +413,10 @@ TEST_F(fapi_to_phy_translator_fixture, message_received_is_sended_when_a_message
   ASSERT_EQ(rg_pool.get_getter_count(), 0);
 
   fapi::dl_tti_request_message msg;
-  msg.sfn                        = slot.sfn();
-  msg.slot                       = slot.slot_index();
-  msg.is_last_dl_message_in_slot = false;
+  msg.sfn  = slot.sfn();
+  msg.slot = slot.slot_index();
+  // Add a PDU to the message.
+  msg.pdus.emplace_back();
 
   // Send a DL_TTI.request.
   translator.dl_tti_request(msg);

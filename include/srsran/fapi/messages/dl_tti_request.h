@@ -316,8 +316,6 @@ struct dl_tti_request_message : public base_message {
   static_vector<dl_tti_request_pdu, MAX_DL_PDUS_PER_SLOT> pdus;
   //: TODO: groups array
   //: TODO: top level rate match patterns
-  /// Vendor specific parameters.
-  bool is_last_dl_message_in_slot;
 };
 
 } // namespace fapi

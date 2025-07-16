@@ -112,8 +112,7 @@ static bool operator==(const dl_tti_request_pdu& lhs, const dl_tti_request_pdu& 
 static bool operator==(const dl_tti_request_message& lhs, const dl_tti_request_message& rhs)
 {
   return lhs.sfn == rhs.sfn && lhs.slot == rhs.slot && lhs.num_pdus_of_each_type == rhs.num_pdus_of_each_type &&
-         lhs.num_groups == rhs.num_groups && lhs.is_last_dl_message_in_slot == rhs.is_last_dl_message_in_slot &&
-         lhs.pdus == rhs.pdus;
+         lhs.num_groups == rhs.num_groups && lhs.pdus == rhs.pdus;
 }
 
 static bool operator==(const ul_prach_pdu& lhs, const ul_prach_pdu& rhs)
@@ -193,7 +192,7 @@ static bool operator==(const ul_dci_pdu& lhs, const ul_dci_pdu& rhs)
 static bool operator==(const ul_dci_request_message& lhs, const ul_dci_request_message& rhs)
 {
   return lhs.sfn == rhs.sfn && lhs.slot == rhs.slot && lhs.num_pdus_of_each_type == rhs.num_pdus_of_each_type &&
-         lhs.pdus == rhs.pdus && lhs.is_last_message_in_slot == rhs.is_last_message_in_slot;
+         lhs.pdus == rhs.pdus;
 }
 
 static bool operator==(const tx_data_req_pdu& lhs, const tx_data_req_pdu& rhs)

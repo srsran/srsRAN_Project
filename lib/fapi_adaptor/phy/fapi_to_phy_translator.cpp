@@ -134,6 +134,8 @@ fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_co
   if (!dl_processor.is_valid()) {
     dl_processor = unique_downlink_processor(dummy_dl_processor);
   }
+
+  initialized = true;
 }
 
 fapi_to_phy_translator::slot_based_upper_phy_controller&
@@ -142,6 +144,7 @@ fapi_to_phy_translator::slot_based_upper_phy_controller::operator=(
 {
   using std::swap;
   swap(slot, other.slot);
+  swap(initialized, other.initialized);
   swap(dl_processor, other.dl_processor);
   return *this;
 }
@@ -149,6 +152,7 @@ fapi_to_phy_translator::slot_based_upper_phy_controller::operator=(
 fapi_to_phy_translator::slot_based_upper_phy_controller::~slot_based_upper_phy_controller()
 {
   dl_processor = unique_downlink_processor(dummy_dl_processor);
+  initialized  = false;
 }
 
 namespace {
@@ -354,12 +358,12 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
   }
 
   // Ignore FAPI request message when there are no PDUs to process.
-  if (msg.is_last_dl_message_in_slot && msg.pdus.empty()) {
+  if (msg.pdus.empty()) {
     return;
   }
 
-  // Create controller for the current slot.
-  slot_based_upper_phy_controller& controller = slot_controller_mngr.acquire_controller(slot);
+  // Get controller for the current slot.
+  slot_based_upper_phy_controller& controller = slot_controller_mngr.get_controller(slot);
 
   // Translate the downlink PDUs.
   expected<downlink_pdus> pdus =
@@ -395,15 +399,6 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
     pdsch_repository.pdus.push_back(pdsch);
   }
 
-  if (msg.is_last_dl_message_in_slot) {
-    srsran_assert(
-        pdsch_repository.empty(),
-        "Sector#{}: The DL_TTI.request message in slot '{}' has been marked as the last message in the slot, but a "
-        "TX_Data.request message is also being expected",
-        sector_id,
-        slot);
-    slot_controller_mngr.release_controller(slot);
-  }
   l1_dl_tracer << trace_event("dl_tti_request", tp);
 }
 
@@ -526,20 +521,6 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
   slot_point  current_slot = get_current_slot();
   trace_point tp           = l1_ul_tracer.now();
 
-  // Obtain the PDU repository for the message slot.
-  unique_uplink_pdu_slot_repository ul_pdu_slot_repository = ul_pdu_repository.get_pdu_slot_repository(slot);
-
-  // Verify UL PDU repository is valid.
-  if (!ul_pdu_slot_repository.is_valid()) {
-    logger.warning(
-        "Sector#{}: Real-time failure in FAPI: UL processor is busy for slot {}.{}.", sector_id, msg.sfn, msg.slot);
-    // Raise out of sync error.
-    error_notifier.get().on_error_indication(
-        fapi::build_msg_slot_error_indication(msg.sfn, msg.slot, fapi::message_type_id::ul_tti_request));
-    l2_tracer << instant_trace_event{"ul_tti_req_busy", instant_trace_event::cpu_scope::global};
-    return;
-  }
-
   // Release the controller of the previous slot in case that it has not been released before. In case that it already
   // is released, this call will do nothing.
   slot_controller_mngr.release_controller(slot - 1);
@@ -554,6 +535,25 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
     error_notifier.get().on_error_indication(fapi::build_out_of_sync_error_indication(
         msg.sfn, msg.slot, fapi::message_type_id::ul_tti_request, current_slot.sfn(), current_slot.slot_index()));
     l2_tracer << instant_trace_event{"ul_tti_req_late", instant_trace_event::cpu_scope::global};
+    return;
+  }
+
+  // No PDUs to process.
+  if (msg.pdus.empty() && !allow_request_on_empty_ul_tti) {
+    return;
+  }
+
+  // Obtain the PDU repository for the message slot.
+  unique_uplink_pdu_slot_repository ul_pdu_slot_repository = ul_pdu_repository.get_pdu_slot_repository(slot);
+
+  // Verify UL PDU repository is valid.
+  if (!ul_pdu_slot_repository.is_valid()) {
+    logger.warning(
+        "Sector#{}: Real-time failure in FAPI: UL processor is busy for slot {}.{}.", sector_id, msg.sfn, msg.slot);
+    // Raise out of sync error.
+    error_notifier.get().on_error_indication(
+        fapi::build_msg_slot_error_indication(msg.sfn, msg.slot, fapi::message_type_id::ul_tti_request));
+    l2_tracer << instant_trace_event{"ul_tti_req_busy", instant_trace_event::cpu_scope::global};
     return;
   }
 
@@ -632,6 +632,10 @@ void fapi_to_phy_translator::ul_dci_request(const fapi::ul_dci_request_message& 
     return;
   }
 
+  if (msg.pdus.empty()) {
+    return;
+  }
+
   static_vector<pdcch_processor::pdu_t, MAX_PUCCH_PDUS_PER_SLOT> pdus;
   for (const auto& pdu : msg.pdus) {
     // For each DCI in the PDCCH PDU, create a pdcch_processor::pdu_t.
@@ -656,16 +660,6 @@ void fapi_to_phy_translator::ul_dci_request(const fapi::ul_dci_request_message& 
     controller->process_pdcch(pdcch_pdu);
   }
 
-  // No more data to process, controller can be removed.
-  if (msg.is_last_message_in_slot) {
-    srsran_assert(
-        pdsch_repository.empty(),
-        "Sector#{}: The UL_DCI.request message in slot '{}' has been marked as the last message in the slot, but a "
-        "TX_Data.request message is also being expected",
-        sector_id,
-        slot);
-    slot_controller_mngr.release_controller(slot);
-  }
   l1_ul_tracer << trace_event("ul_dci_request", tp);
 }
 
@@ -716,6 +710,18 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
     return;
   }
 
+  // Message with no PDUs.
+  if (msg.pdus.empty()) {
+    // Check the repo for PDUs
+    if (!pdsch_repository.pdus.empty()) {
+      // Raise invalid format error.
+      error_notifier.get().on_error_indication(fapi::build_msg_tx_error_indication(msg.sfn, msg.slot));
+
+      pdsch_repository.clear();
+    }
+    return;
+  }
+
   // Skip message if there are no PDSCH PDUs inside the repository. This may be caused by an unsupported PDU in the
   // DL_TTI.request.
   if (pdsch_repository.empty()) {
@@ -732,12 +738,14 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
         pdsch_repository.pdus[i]);
   }
 
-  slot_controller_mngr.release_controller(slot);
-
   // All the PDSCH PDUs have been processed. Clear the repository.
   pdsch_repository.clear();
 
   l1_dl_tracer << trace_event("tx_data_request", tp);
+}
+void fapi_to_phy_translator::on_last_message(slot_point slot)
+{
+  slot_controller_mngr.release_controller(slot);
 }
 
 void fapi_to_phy_translator::handle_new_slot(slot_point slot)
@@ -765,7 +773,11 @@ bool fapi_to_phy_translator::is_message_in_time(const T& msg) const
 fapi_to_phy_translator::slot_based_upper_phy_controller&
 fapi_to_phy_translator::slot_based_upper_phy_controller_manager::get_controller(slot_point slot)
 {
-  return controller(slot);
+  if (auto& controller_slot = controller(slot); controller_slot.is_initialized()) {
+    return controller_slot;
+  }
+
+  return acquire_controller(slot);
 }
 
 void fapi_to_phy_translator::slot_based_upper_phy_controller_manager::release_controller(slot_point slot)

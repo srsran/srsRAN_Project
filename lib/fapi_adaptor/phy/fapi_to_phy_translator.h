@@ -16,6 +16,7 @@
 #include "srsran/fapi/messages/ul_dci_request.h"
 #include "srsran/fapi/messages/ul_tti_request.h"
 #include "srsran/fapi/slot_error_message_notifier.h"
+#include "srsran/fapi/slot_last_message_notifier.h"
 #include "srsran/fapi/slot_message_gateway.h"
 #include "srsran/fapi_adaptor/precoding_matrix_repository.h"
 #include "srsran/fapi_adaptor/uci_part2_correspondence_repository.h"
@@ -94,7 +95,7 @@ struct fapi_to_phy_translator_dependencies {
 /// messages of the same type in one slot results in undefined behavior.
 /// \note The translator is designed to work for a sector and subcarrier spacing. Supporting more than one sector and/or
 /// subcarrier spacing will require more instances of the translator.
-class fapi_to_phy_translator : public fapi::slot_message_gateway
+class fapi_to_phy_translator : public fapi::slot_message_gateway, public fapi::slot_last_message_notifier
 {
   /// \brief Slot-based upper PHY controller.
   ///
@@ -106,6 +107,7 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway
   {
     slot_point                slot;
     unique_downlink_processor dl_processor;
+    bool                      initialized = false;
 
   public:
     slot_based_upper_phy_controller() = default;
@@ -121,6 +123,8 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway
 
     ~slot_based_upper_phy_controller();
 
+    bool is_initialized() const { return initialized; }
+
     /// Overloaded member of pointer operator.
     downlink_processor* operator->() { return &dl_processor.get(); }
   };
@@ -128,7 +132,6 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway
   /// Manages slot based controllers.
   class slot_based_upper_phy_controller_manager
   {
-    slot_based_upper_phy_controller              dummy;
     downlink_processor_pool&                     dl_processor_pool;
     resource_grid_pool&                          rg_pool;
     const unsigned                               sector_id;
@@ -146,21 +149,22 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway
       return controllers[slot.system_slot() % controllers.size()];
     }
 
+    /// Acquires and returns the controller for the given slot.
+    slot_based_upper_phy_controller& acquire_controller(slot_point slot);
+
   public:
     slot_based_upper_phy_controller_manager(downlink_processor_pool& dl_processor_pool_,
                                             resource_grid_pool&      rg_pool_,
                                             unsigned                 sector_id_,
                                             unsigned                 nof_slots_request_headroom);
 
-    /// Acquires and returns the controller for the given slot.
-    slot_based_upper_phy_controller& acquire_controller(slot_point slot);
-
     /// \brief Releases the controller for the given slot.
     ///
     /// If the controller has already been released, this function does nothing.
     void release_controller(slot_point slot);
 
-    /// Returns the controller for the given slot.
+    /// Returns the controller for the given slot. If the controller is not initialized, it acquires a new controller
+    /// and returns it.
     slot_based_upper_phy_controller& get_controller(slot_point slot);
   };
 
@@ -204,6 +208,9 @@ public:
 
   // See interface for documentation.
   void tx_data_request(const fapi::tx_data_request_message& msg) override;
+
+  // See interface for documentation.
+  void on_last_message(slot_point slot) override;
 
   /// \brief Handles a new slot.
   ///

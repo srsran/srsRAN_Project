@@ -14,19 +14,6 @@
 using namespace srsran;
 using namespace fapi_adaptor;
 
-namespace {
-
-/// Slot last message notifier dummy implementation.
-class slot_last_message_notifier_dummy : public fapi::slot_last_message_notifier
-{
-public:
-  void on_last_message(slot_point slot) override {}
-};
-
-} // namespace
-
-static slot_last_message_notifier_dummy dummy_notifier;
-
 /// Generates and returns a FAPI-to-PHY translator configuration from the given PHY adaptor configuration.
 static fapi_to_phy_translator_config
 generate_fapi_to_phy_translator_config(const phy_fapi_sector_adaptor_config& config)
@@ -98,7 +85,7 @@ void phy_fapi_sector_adaptor_impl::set_slot_data_message_notifier(fapi::slot_dat
 
 fapi::slot_last_message_notifier& phy_fapi_sector_adaptor_impl::get_slot_last_message_notifier()
 {
-  return dummy_notifier;
+  return fapi_translator;
 }
 
 fapi::slot_message_gateway& phy_fapi_sector_adaptor_impl::get_slot_message_gateway()

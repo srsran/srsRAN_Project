@@ -861,10 +861,7 @@ class dl_tti_request_message_builder
 {
 public:
   /// Constructs a builder that will help to fill the given DL TTI request message.
-  explicit dl_tti_request_message_builder(dl_tti_request_message& msg_) : msg(msg_)
-  {
-    msg.is_last_dl_message_in_slot = false;
-  }
+  explicit dl_tti_request_message_builder(dl_tti_request_message& msg_) : msg(msg_) {}
 
   /// Sets the DL_TTI.request basic parameters and returns a reference to the builder.
   /// \note nPDUs and nPDUsOfEachType properties are filled by the add_*_pdu() functions.
@@ -1023,13 +1020,6 @@ public:
     return builder;
   }
 
-  /// Sets the flag of the last message in slot.
-  dl_tti_request_message_builder& set_last_message_in_slot_flag()
-  {
-    msg.is_last_dl_message_in_slot = true;
-    return *this;
-  }
-
   //: TODO: PDU groups array
   //: TODO: top level rate match patterns
 
@@ -1046,7 +1036,6 @@ public:
   explicit ul_dci_request_message_builder(ul_dci_request_message& msg_) : msg(msg_)
   {
     msg.num_pdus_of_each_type.fill(0);
-    msg.is_last_message_in_slot = false;
   }
 
   /// Sets the UL_DCI.request basic parameters and returns a reference to the builder.
@@ -1079,13 +1068,6 @@ public:
     dl_pdcch_pdu_builder builder(pdu.pdu);
 
     return builder;
-  }
-
-  /// Sets the flag of the last message in slot.
-  ul_dci_request_message_builder& set_last_message_in_slot_flag()
-  {
-    msg.is_last_message_in_slot = true;
-    return *this;
   }
 };
 
