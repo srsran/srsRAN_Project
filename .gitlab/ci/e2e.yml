@@ -287,10 +287,14 @@ cudu amari 8UE:
   timeout: 2h
   variables:
     TESTBED: zmq_cudu
-    E2E_FILE_OR_DIR: tests/reestablishment.py
-    KEYWORDS: sequentially
     MARKERS: "zmq and not smoke"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+  parallel:
+    matrix:
+      - E2E_FILE_OR_DIR: tests/reestablishment.py
+        KEYWORDS: sequentially
+      - E2E_FILE_OR_DIR: tests/inter_du_handover.py
+        KEYWORDS: sequentially
 
 cudu amari 32UE:
   extends: .zmq
@@ -311,6 +315,18 @@ cudu amari 64UE:
     KEYWORDS: "64"
     MARKERS: "zmq and not smoke"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+
+cu2du amari 8UE:
+  extends: .zmq
+  timeout: 2h
+  variables:
+    TESTBED: zmq_cu2du
+    MARKERS: "zmq and not smoke"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+  parallel:
+    matrix:
+      - E2E_FILE_OR_DIR: tests/inter_du_handover.py
+        KEYWORDS: sequentially
 
 ric:
   extends: .zmq
