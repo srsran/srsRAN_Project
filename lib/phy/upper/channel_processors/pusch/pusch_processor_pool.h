@@ -14,7 +14,7 @@
 #include "srsran/phy/upper/channel_processors/pusch/formatters.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor.h"
 #include "srsran/srslog/logger.h"
-#include "srsran/support/memory_pool/bounded_object_pool.h"
+#include "srsran/support/memory_pool/bounded_queue_object_pool.h"
 
 namespace srsran {
 
@@ -174,7 +174,7 @@ private:
   /// Actual PUSCH processor pool.
   std::vector<detail::pusch_processor_wrapper> processors;
   /// Synchronous PUSCH processor. It only processes UCI.
-  bounded_object_pool<pusch_processor> uci_processors;
+  bounded_queue_object_pool<pusch_processor> uci_processors;
   /// List containing the indices of free PUSCH processors.
   detail::pusch_processor_free_list free_list;
   /// Set to true for blocking upon the the selection of a PUSCH processor.

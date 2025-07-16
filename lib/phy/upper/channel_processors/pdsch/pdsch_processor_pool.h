@@ -25,7 +25,7 @@ class pdsch_processor_pool : public pdsch_processor
 {
 public:
   /// PDSCH processor pool type.
-  using pdsch_processor_pool_type = bounded_object_pool<pdsch_processor>;
+  using pdsch_processor_pool_type = bounded_queue_object_pool<pdsch_processor>;
 
   /// Creates a PDSCH processor pool from a list of processors. Ownership is transferred to the pool.
   explicit pdsch_processor_pool(std::shared_ptr<pdsch_processor_pool_type> processors_) :

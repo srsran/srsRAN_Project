@@ -25,7 +25,7 @@
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/memory_pool/bounded_object_pool.h"
+#include "srsran/support/memory_pool/bounded_queue_object_pool.h"
 
 namespace srsran {
 
@@ -43,7 +43,7 @@ class pusch_decoder_hw_impl : public pusch_decoder, private pusch_decoder_buffer
 {
 public:
   /// Code block decoder pool type.
-  using hw_decoder_pool = bounded_object_pool<hal::hw_accelerator_pusch_dec>;
+  using hw_decoder_pool = bounded_queue_object_pool<hal::hw_accelerator_pusch_dec>;
 
   /// CRC calculators used in shared channels.
   struct sch_crc {

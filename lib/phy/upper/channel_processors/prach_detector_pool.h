@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/phy/upper/channel_processors/prach_detector.h"
-#include "srsran/support/memory_pool/bounded_object_pool.h"
+#include "srsran/support/memory_pool/bounded_queue_object_pool.h"
 
 namespace srsran {
 
@@ -19,7 +19,7 @@ namespace srsran {
 class prach_detector_pool : public prach_detector
 {
 public:
-  using detector_pool = bounded_object_pool<prach_detector>;
+  using detector_pool = bounded_queue_object_pool<prach_detector>;
 
   /// Creates a PRACH detector pool from a shared detector pool.
   explicit prach_detector_pool(std::shared_ptr<detector_pool> detectors_) : detectors(std::move(detectors_)) {}

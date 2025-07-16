@@ -9,30 +9,30 @@
  */
 
 #include "srsran/support/executors/task_worker_pool.h"
-#include "srsran/support/memory_pool/bounded_bitmap_object_pool.h"
+#include "srsran/support/memory_pool/bounded_object_pool.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
 
-class bounded_bitmap_object_pool_test : public ::testing::Test
+class bounded_object_pool_test : public ::testing::Test
 {
 protected:
-  static constexpr size_t         pool_capacity = 1024;
-  bounded_bitmap_object_pool<int> pool{pool_capacity};
+  static constexpr size_t  pool_capacity = 1024;
+  bounded_object_pool<int> pool{pool_capacity};
 };
 
-TEST_F(bounded_bitmap_object_pool_test, pool_initiated_with_provided_capacity)
+TEST_F(bounded_object_pool_test, pool_initiated_with_provided_capacity)
 {
   ASSERT_EQ(pool.capacity(), pool_capacity);
 }
 
-TEST_F(bounded_bitmap_object_pool_test, pool_initiated_is_full)
+TEST_F(bounded_object_pool_test, pool_initiated_is_full)
 {
   ASSERT_EQ(pool.size_approx(), pool.capacity());
 }
 
-TEST_F(bounded_bitmap_object_pool_test, one_allocation_works)
+TEST_F(bounded_object_pool_test, one_allocation_works)
 {
   auto obj = pool.get();
   ASSERT_NE(obj, nullptr);
@@ -40,9 +40,9 @@ TEST_F(bounded_bitmap_object_pool_test, one_allocation_works)
   obj.reset();
 }
 
-TEST_F(bounded_bitmap_object_pool_test, depleted_pool_returns_null)
+TEST_F(bounded_object_pool_test, depleted_pool_returns_null)
 {
-  std::vector<bounded_bitmap_object_pool<int>::ptr> objs;
+  std::vector<bounded_object_pool<int>::ptr> objs;
   for (unsigned i = 0; i != pool.capacity(); ++i) {
     objs.push_back(pool.get());
     ASSERT_NE(objs.back(), nullptr);
@@ -59,7 +59,7 @@ TEST_F(bounded_bitmap_object_pool_test, depleted_pool_returns_null)
   ASSERT_NE(obj, nullptr);
 }
 
-TEST_F(bounded_bitmap_object_pool_test, stress_pool)
+TEST_F(bounded_object_pool_test, stress_pool)
 {
   unsigned                                                 nof_workers = 8;
   task_worker_pool<concurrent_queue_policy::lockfree_mpmc> worker_pool{"pool", nof_workers, 128};
@@ -87,7 +87,7 @@ TEST_F(bounded_bitmap_object_pool_test, stress_pool)
   }
   avg_latency /= nof_workers;
 
-  std::vector<bounded_bitmap_object_pool<int>::ptr> objs;
+  std::vector<bounded_object_pool<int>::ptr> objs;
   for (unsigned i = 0; i != pool.capacity(); ++i) {
     objs.push_back(pool.get());
     ASSERT_NE(objs.back(), nullptr);

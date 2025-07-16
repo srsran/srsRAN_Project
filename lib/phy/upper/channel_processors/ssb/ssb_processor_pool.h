@@ -12,7 +12,7 @@
 
 #include "srsran/phy/upper/channel_processors/ssb/ssb_processor.h"
 #include "srsran/srslog/srslog.h"
-#include "srsran/support/memory_pool/bounded_object_pool.h"
+#include "srsran/support/memory_pool/bounded_queue_object_pool.h"
 
 namespace srsran {
 
@@ -23,7 +23,7 @@ class ssb_processor_pool : public ssb_processor
 {
 public:
   /// SSB processor pool type.
-  using ssb_processor_pool_type = bounded_object_pool<ssb_processor>;
+  using ssb_processor_pool_type = bounded_queue_object_pool<ssb_processor>;
 
   /// Creates a SSB processor pool from a list of processors. Ownership is transferred to the pool.
   explicit ssb_processor_pool(std::shared_ptr<ssb_processor_pool_type> processors_) :

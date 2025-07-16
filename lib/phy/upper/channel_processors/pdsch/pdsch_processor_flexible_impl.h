@@ -17,7 +17,7 @@
 #include "srsran/phy/upper/signal_processors/ptrs/ptrs_pdsch_generator.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/memory_pool/bounded_object_pool.h"
+#include "srsran/support/memory_pool/bounded_queue_object_pool.h"
 
 namespace srsran {
 
@@ -30,11 +30,11 @@ class pdsch_processor_flexible_impl : public pdsch_processor
 {
 public:
   /// PDSCH block processor pool type.
-  using pdsch_block_processor_pool = bounded_object_pool<pdsch_block_processor>;
+  using pdsch_block_processor_pool = bounded_queue_object_pool<pdsch_block_processor>;
   /// PDSCH DM-RS generator pool type.
-  using pdsch_dmrs_generator_pool = bounded_object_pool<dmrs_pdsch_processor>;
+  using pdsch_dmrs_generator_pool = bounded_queue_object_pool<dmrs_pdsch_processor>;
   /// PDSCH PT-RS generator pool type.
-  using pdsch_ptrs_generator_pool = bounded_object_pool<ptrs_pdsch_generator>;
+  using pdsch_ptrs_generator_pool = bounded_queue_object_pool<ptrs_pdsch_generator>;
 
   /// \brief Creates a flexible PDSCH processor with all the dependencies.
   /// \param[in] segmenter_                    LDPC segmenter.
