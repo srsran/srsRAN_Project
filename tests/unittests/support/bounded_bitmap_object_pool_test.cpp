@@ -18,18 +18,25 @@ using namespace srsran;
 class bounded_bitmap_object_pool_test : public ::testing::Test
 {
 protected:
-  bounded_bitmap_object_pool<int> pool{1024};
+  static constexpr size_t         pool_capacity = 1024;
+  bounded_bitmap_object_pool<int> pool{pool_capacity};
 };
 
 TEST_F(bounded_bitmap_object_pool_test, pool_initiated_with_provided_capacity)
 {
-  ASSERT_EQ(pool.capacity(), 1024);
+  ASSERT_EQ(pool.capacity(), pool_capacity);
+}
+
+TEST_F(bounded_bitmap_object_pool_test, pool_initiated_is_full)
+{
+  ASSERT_EQ(pool.size_approx(), pool.capacity());
 }
 
 TEST_F(bounded_bitmap_object_pool_test, one_allocation_works)
 {
   auto obj = pool.get();
   ASSERT_NE(obj, nullptr);
+  ASSERT_EQ(pool.size_approx(), pool.capacity() - 1);
   obj.reset();
 }
 

@@ -18,6 +18,12 @@
 
 namespace srsran {
 
+/// \brief A bounded object pool that uses bitmaps to track the allocation status of objects.
+///
+/// The objects are stored in a vector of segments, each segment containing a fixed number of objects. Each segment
+/// additionally contains a bitmap that tracks which objects are currently allocated within the same segment.
+/// The thread_id is used as a hash to select the starting position in the vector of segments to search for free
+/// objects.
 template <typename T>
 class bounded_bitmap_object_pool
 {
@@ -48,6 +54,7 @@ public:
     }
   }
 
+  /// \brief Retrieves a RAII pointer to an object of the pool.
   ptr get()
   {
     unsigned offset = 0;
@@ -82,7 +89,19 @@ public:
     return {nullptr, obj_reclaimer{}}; // No free objects available.
   }
 
+  /// Maximum number of objects that can be allocated in the pool.
   size_t capacity() const { return segments.size() * segment::capacity(); }
+
+  /// Gets approximate number of objects currently allocated in the pool.
+  size_t size_approx() const
+  {
+    size_t sum_used = 0;
+    for (unsigned i = 0; i != segments.size(); ++i) {
+      uint64_t used_bitmap = segments[i]->used_bitmap.load(std::memory_order_relaxed);
+      sum_used += count_ones(used_bitmap);
+    }
+    return capacity() - sum_used;
+  }
 
 private:
   struct segment {
