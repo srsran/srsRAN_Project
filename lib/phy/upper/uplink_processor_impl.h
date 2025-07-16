@@ -12,6 +12,7 @@
 
 #include "rx_payload_buffer_pool.h"
 #include "uplink_pdu_slot_repository_impl.h"
+#include "uplink_processor_fsm.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/shared_resource_grid.h"
@@ -243,6 +244,8 @@ private:
   /// Helper method for notifying a discarded PUCCH Format 1 collection.
   void notify_discard_pucch(const uplink_pdu_slot_repository_impl::pucch_f1_collection& collection);
 
+  /// Uplink processor finite-state machine.
+  uplink_processor_fsm state_machine;
   /// Resource grid reference counter.
   std::atomic<unsigned>& grid_ref_counter;
   /// PDU repository.

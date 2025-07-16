@@ -84,7 +84,7 @@ public:
   {
   public:
     /// Default destructor.
-    virtual ~uplink_pdu_slot_repository_callback() = default;
+    ~uplink_pdu_slot_repository_callback() override = default;
 
     /// Stops adding PDUs.
     virtual shared_resource_grid finish_adding_pdus() = 0;

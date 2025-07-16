@@ -48,7 +48,7 @@ uplink_processor_impl::uplink_processor_impl(std::unique_ptr<prach_detector>  pr
                                              unsigned                         max_nof_prb,
                                              unsigned                         max_nof_layers) :
   grid_ref_counter(get_grid_ref_counter()),
-  pdu_repository(*grid_, grid_ref_counter),
+  pdu_repository(*grid_, grid_ref_counter, state_machine),
   prach(std::move(prach_)),
   pusch_proc(std::move(pusch_proc_)),
   pucch_proc(std::move(pucch_proc_)),
@@ -69,8 +69,8 @@ uplink_processor_impl::uplink_processor_impl(std::unique_ptr<prach_detector>  pr
 
 uplink_slot_processor& uplink_processor_impl::get_slot_processor(slot_point slot)
 {
-  // If the PDU repository configured slot does not match with the slot, then give the dummy instance.
-  if (!pdu_repository.is_slot_valid(slot)) {
+  // If the slot configured in the state machine does not match the given slot, give the dummy instance.
+  if (!state_machine.is_slot_valid(slot)) {
     return dummy;
   }
 
@@ -79,7 +79,7 @@ uplink_slot_processor& uplink_processor_impl::get_slot_processor(slot_point slot
 
 void uplink_processor_impl::stop()
 {
-  pdu_repository.stop();
+  state_machine.stop();
 }
 
 unique_uplink_pdu_slot_repository uplink_processor_impl::get_pdu_slot_repository(slot_point slot)
@@ -93,7 +93,7 @@ unique_uplink_pdu_slot_repository uplink_processor_impl::get_pdu_slot_repository
   discard_slot();
 
   // Try to configure a new slot.
-  if (!pdu_repository.reserve_on_new_slot(slot)) {
+  if (!state_machine.start_new_slot(slot)) {
     // Return an invalid repository.
     return {};
   }
@@ -103,6 +103,7 @@ unique_uplink_pdu_slot_repository uplink_processor_impl::get_pdu_slot_repository
   count_pusch_adaptors  = 0;
   nof_processed_symbols = 0;
   rx_payload_pool.reset();
+  pdu_repository.clear_queues();
 
   // Create a valid unique PDU slot repository.
   return unique_uplink_pdu_slot_repository(pdu_repository);
@@ -112,7 +113,7 @@ void uplink_processor_impl::handle_rx_symbol(unsigned end_symbol_index)
 {
   // Try locking the slot processor. This prevents that the processor handle symbols and discards from different
   // threads concurrently.
-  if (!pdu_repository.start_handle_rx_symbol()) {
+  if (!state_machine.start_handle_rx_symbol()) {
     return;
   }
 
@@ -123,7 +124,7 @@ void uplink_processor_impl::handle_rx_symbol(unsigned end_symbol_index)
                    "Unexpected symbol index {} is back in time, expected {}.",
                    end_symbol_index,
                    nof_processed_symbols);
-    pdu_repository.finish_handle_rx_symbol();
+    state_machine.finish_handle_rx_symbol();
     return;
   }
 
@@ -153,7 +154,7 @@ void uplink_processor_impl::handle_rx_symbol(unsigned end_symbol_index)
   }
 
   // Unlock the slot processor.
-  pdu_repository.finish_handle_rx_symbol();
+  state_machine.finish_handle_rx_symbol();
 }
 
 void uplink_processor_impl::process_prach(const prach_buffer& buffer, const prach_buffer_context& context_)
@@ -179,7 +180,7 @@ void uplink_processor_impl::process_prach(const prach_buffer& buffer, const prac
 void uplink_processor_impl::process_pusch(const uplink_pdu_slot_repository::pusch_pdu& pdu)
 {
   // Notify the creation of the execution task.
-  if (!pdu_repository.on_create_pdu_task()) {
+  if (!state_machine.on_create_pdu_task()) {
     return;
   }
 
@@ -227,7 +228,7 @@ void uplink_processor_impl::process_pusch(const uplink_pdu_slot_repository::pusc
     unsigned                         notifier_adaptor_id = count_pusch_adaptors.fetch_add(1);
     pusch_processor_result_notifier& processor_notifier  = pusch_adaptors[notifier_adaptor_id].configure(
         notifier, to_rnti(pdu.pdu.rnti), pdu.pdu.slot, to_harq_id(pdu.harq_id), data, [this]() {
-          pdu_repository.on_finish_processing_pdu();
+          state_machine.on_finish_processing_pdu();
         });
 
     trace_point tp = l1_ul_tracer.now();
@@ -247,7 +248,7 @@ void uplink_processor_impl::process_pusch(const uplink_pdu_slot_repository::pusc
 void uplink_processor_impl::process_pucch(const uplink_pdu_slot_repository::pucch_pdu& pdu)
 {
   // Notify the creation of the execution task.
-  if (!pdu_repository.on_create_pdu_task()) {
+  if (!state_machine.on_create_pdu_task()) {
     return;
   }
 
@@ -291,7 +292,7 @@ void uplink_processor_impl::process_pucch(const uplink_pdu_slot_repository::pucc
 
     // Notify the PUCCH results.
     notifier.on_new_pucch_results(result);
-    pdu_repository.on_finish_processing_pdu();
+    state_machine.on_finish_processing_pdu();
   });
 
   // Report failed execution.
@@ -305,7 +306,7 @@ void uplink_processor_impl::process_pucch(const uplink_pdu_slot_repository::pucc
 void uplink_processor_impl::process_pucch_f1(const uplink_pdu_slot_repository_impl::pucch_f1_collection& collection)
 {
   // Notify the creation of the execution task.
-  if (!pdu_repository.on_create_pdu_task()) {
+  if (!state_machine.on_create_pdu_task()) {
     return;
   }
 
@@ -348,7 +349,7 @@ void uplink_processor_impl::process_pucch_f1(const uplink_pdu_slot_repository_im
       notifier.on_new_pucch_results(notifier_result);
     }
     l1_ul_tracer << trace_event("pucch1", tp);
-    pdu_repository.on_finish_processing_pdu();
+    state_machine.on_finish_processing_pdu();
   });
 
   // Notify the discarded transmissions if the executor failed.
@@ -363,7 +364,7 @@ void uplink_processor_impl::process_pucch_f1(const uplink_pdu_slot_repository_im
 void uplink_processor_impl::process_srs(const uplink_pdu_slot_repository::srs_pdu& pdu)
 {
   // Notify the creation of the execution task.
-  if (!pdu_repository.on_create_pdu_task()) {
+  if (!state_machine.on_create_pdu_task()) {
     return;
   }
 
@@ -377,13 +378,13 @@ void uplink_processor_impl::process_srs(const uplink_pdu_slot_repository::srs_pd
     l1_ul_tracer << trace_event("process_srs", tp);
 
     notifier.on_new_srs_results(result);
-    pdu_repository.on_finish_processing_pdu();
+    state_machine.on_finish_processing_pdu();
   });
 
   if (!success) {
     logger.warning(
         pdu.context.slot.sfn(), pdu.context.slot.slot_index(), "Failed to execute SRS. Ignoring processing.");
-    pdu_repository.on_finish_processing_pdu();
+    state_machine.on_finish_processing_pdu();
   }
 }
 
@@ -403,7 +404,7 @@ void uplink_processor_impl::notify_discard_pusch(const uplink_pdu_slot_repositor
     notifier.on_new_pusch_results_control(discarded_results);
   }
 
-  pdu_repository.on_finish_processing_pdu();
+  state_machine.on_finish_processing_pdu();
 }
 
 void uplink_processor_impl::notify_discard_pucch(const uplink_pdu_slot_repository::pucch_pdu& pdu)
@@ -416,7 +417,7 @@ void uplink_processor_impl::notify_discard_pucch(const uplink_pdu_slot_repositor
     ul_pucch_results discarded_results = ul_pucch_results::create_discarded(pdu.context, nof_harq_ack);
     notifier.on_new_pucch_results(discarded_results);
   }
-  pdu_repository.on_finish_processing_pdu();
+  state_machine.on_finish_processing_pdu();
 }
 
 void uplink_processor_impl::notify_discard_pucch(const uplink_pdu_slot_repository_impl::pucch_f1_collection& collection)
@@ -433,13 +434,13 @@ void uplink_processor_impl::notify_discard_pucch(const uplink_pdu_slot_repositor
       notifier.on_new_pucch_results(discarded_results);
     }
   }
-  pdu_repository.on_finish_processing_pdu();
+  state_machine.on_finish_processing_pdu();
 }
 
 void uplink_processor_impl::discard_slot()
 {
   // Notify to the repository the discard of the slot. It skips the discard if the current state does not require it.
-  if (!pdu_repository.start_discard_slot()) {
+  if (!state_machine.start_discard_slot()) {
     return;
   }
 
@@ -460,12 +461,12 @@ void uplink_processor_impl::discard_slot()
     }
 
     for ([[maybe_unused]] const auto& pdu : pdu_repository.get_srs_pdus(i_symbol)) {
-      pdu_repository.on_finish_processing_pdu();
+      state_machine.on_finish_processing_pdu();
     }
   }
 
   // Notify the end of discarding slot. The processor becomes idle.
-  pdu_repository.finish_discard_slot();
+  state_machine.finish_discard_slot();
 }
 
 std::atomic<unsigned>& uplink_processor_impl::get_grid_ref_counter()

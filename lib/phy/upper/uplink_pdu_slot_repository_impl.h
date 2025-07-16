@@ -10,38 +10,35 @@
 
 #pragma once
 
+#include "uplink_processor_fsm.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/upper/uplink_pdu_slot_repository.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include <array>
-#include <thread>
 #include <variant>
 
 namespace srsran {
 
 /// \brief Implements an the uplink slot repository.
 ///
-/// The implementation is build with an internal finite state machine with the following states:
-/// - Idle: the repository does not contain any PDU and it is not processing;
-/// - Accepting: the repository accepts the enqueueing of new PDUs;
-/// - Waiting: the repository contains PDUs but it has not processed any yet;
-/// - Processing: the repository contains PDUs and it is processing PDUs;
-/// - Locked: the repository is executing a sequential procedure and it does not accept any transitions; and
-/// - Stopped: the repository does not accept transitioning to any other state.
+/// It relies on a finite-state machine to decide whether new PDUs can be accepted and to know whether the registered
+/// PDUs are being processed.
 class uplink_pdu_slot_repository_impl : public unique_uplink_pdu_slot_repository::uplink_pdu_slot_repository_callback,
                                         private shared_resource_grid::pool_interface
 {
 public:
   /// Creates an uplink PDU slot repository.
-  uplink_pdu_slot_repository_impl(resource_grid& grid_, std::atomic<unsigned>& grid_ref_counter_) :
-    grid(grid_), grid_ref_counter(grid_ref_counter_)
+  uplink_pdu_slot_repository_impl(resource_grid&                 grid_,
+                                  std::atomic<unsigned>&         grid_ref_counter_,
+                                  uplink_processor_fsm_notifier& fsm_) :
+    grid(grid_), grid_ref_counter(grid_ref_counter_), fsm_notifier(fsm_)
   {
   }
 
   /// Uplink slot repository destructor.
   ~uplink_pdu_slot_repository_impl() override
   {
-    // Sets the resource grid reference counter to a value that indicates the grid has been destroyed.
+    // Set the resource grid reference counter to a value that indicates the grid has been destroyed.
     grid_ref_counter = shared_resource_grid::pool_interface::ref_counter_destroyed;
   }
 
@@ -69,7 +66,7 @@ public:
     srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index {}.", end_symbol_index);
 
     pusch_repository[end_symbol_index].push_back(pdu);
-    increment_pending_pdu_count();
+    fsm_notifier.increment_pending_pdu_count();
   }
 
   // See the uplink_pdu_slot_repository interface for documentation.
@@ -85,7 +82,7 @@ public:
 
     if (!std::holds_alternative<pucch_processor::format1_configuration>(pdu.config)) {
       pucch_repository[end_symbol_index].push_back(pdu);
-      increment_pending_pdu_count();
+      fsm_notifier.increment_pending_pdu_count();
       return;
     }
 
@@ -119,7 +116,7 @@ public:
         pucch_f1_collection{.config = pucch_processor::format1_batch_configuration(config), .ue_contexts = {ue_entry}});
 
     // Only increment per collection.
-    increment_pending_pdu_count();
+    fsm_notifier.increment_pending_pdu_count();
   }
 
   // See the uplink_pdu_slot_repository interface for documentation.
@@ -129,25 +126,12 @@ public:
         pdu.config.resource.start_symbol.to_uint() + static_cast<unsigned>(pdu.config.resource.nof_symbols) - 1;
     srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index {}.", end_symbol_index);
     srs_repository[end_symbol_index].push_back(pdu);
-    increment_pending_pdu_count();
+    fsm_notifier.increment_pending_pdu_count();
   }
 
-  /// \brief Reserves the repository for a new slot context.
-  ///
-  /// A reservation is not successful if the current state is not idle.
-  ///
-  /// \return \c true if the reservation is successful, otherwise \c false.
-  bool reserve_on_new_slot(slot_point new_slot)
+  /// \brief Clears all the PDU queues of the repository.
+  void clear_queues()
   {
-    // Try transitioning state from idle to accepting PDU.
-    uint32_t expected_pending_pdu_count = pending_pdu_count_idle;
-    if (!pending_pdu_count.compare_exchange_weak(expected_pending_pdu_count, accepting_pdu_mask)) {
-      return false;
-    }
-
-    // Overwrite configured slot.
-    configured_slot = new_slot;
-
     // Clear all entries.
     for (auto& entry : pusch_repository) {
       entry.clear();
@@ -161,17 +145,12 @@ public:
     for (auto& entry : srs_repository) {
       entry.clear();
     }
-
-    // Success.
-    return true;
   }
 
   // See the unique_uplink_pdu_slot_repository::uplink_pdu_slot_repository_callback interface for documentation.
   shared_resource_grid finish_adding_pdus() override
   {
-    // Remove accepting PDU mask and verify the previous state was accepting PDU.
-    [[maybe_unused]] uint32_t prev = pending_pdu_count.fetch_xor(accepting_pdu_mask);
-    srsran_assert(is_state_accepting_pdu(prev), "Unexpected prev={:08x} finishing PDUs.", prev);
+    fsm_notifier.stop_accepting_pdu();
 
     // Set grid reference counter to one.
     grid_ref_counter = 1;
@@ -179,173 +158,9 @@ public:
     return {*this, grid_ref_counter, 0};
   }
 
-  /// \brief Notifies the start of a slot discard.
-  ///
-  /// The current state does not allow discarding the slot if:
-  /// - the state is stopped;
-  /// - the state is locked (handling receive symbols or discarding);
-  /// - there are no pending PDUs to discard; or
-  /// - there are pending asynchronous tasks.
-  ///
-  /// \return \c true if the current state allows to discard the slot, otherwise \c false.
-  bool start_discard_slot()
-  {
-    // Get current state.
-    uint32_t current_state = pending_pdu_count.load();
-
-    uint32_t nof_pending_pdu_in_queue = current_state & 0xfff;
-
-    // Skip function - returns true if the slot discard is not necessary.
-    auto skip_function = [&current_state]() {
-      return is_state_stopped(current_state) || is_state_locked(current_state) ||
-             !has_state_pending_pdu_in_queue(current_state) || has_state_pending_pdu_in_exec(current_state);
-    };
-
-    // Try to set the number of pending execute PDU equal to the number of enqueued tasks and set the discarding slot
-    // mask.
-    bool success = false;
-    while (!skip_function() && !success) {
-      success = pending_pdu_count.compare_exchange_weak(
-          current_state, current_state | (nof_pending_pdu_in_queue * pending_pdu_inc_exec) | locked_mask);
-    }
-
-    return success;
-  }
-
-  /// \brief Notifies the completion of the slot discard.
-  ///
-  /// Transitions the state to idle.
-  ///
-  /// \remark An assertion is triggered if there are still PDUs to notify or the state is not locked.
-  void finish_discard_slot()
-  {
-    [[maybe_unused]] uint32_t prev_state = pending_pdu_count.exchange(pending_pdu_count_idle);
-    srsran_assert(!has_state_pending_pdu_in_queue(prev_state) && !has_state_pending_pdu_in_exec(prev_state) &&
-                      is_state_locked(prev_state),
-                  "Unexpected state after discarding slot 0x{:08x}",
-                  prev_state);
-  }
-
-  /// \brief Notifies the start of handling a receive symbol.
-  ///
-  /// The current state does not allow discarding the slot if:
-  /// - is stopped;
-  /// - state is locked (a different procedure is running); or
-  /// - there are no pending PDUs to discard.
-  ///
-  /// \return \c true if the current state allows to discard the slot, otherwise \c false.
-  bool start_handle_rx_symbol()
-  {
-    // Get current state.
-    uint32_t current_state = pending_pdu_count.load();
-
-    // Skip function - returns true if the slot processing lock is not possible.
-    auto skip_function = [&current_state]() {
-      // It is not possible to lock if the state is stopped, locked or there are no pending PDU.
-      return is_state_stopped(current_state) || is_state_locked(current_state) ||
-             !has_state_pending_pdu_in_queue(current_state);
-    };
-
-    // Try to set the number of pending execute PDU equal to the number of enqueued tasks and set the discarding slot
-    // mask.
-    bool success = false;
-    while (!skip_function() && !success) {
-      success = pending_pdu_count.compare_exchange_weak(current_state, current_state | locked_mask);
-    }
-
-    return success;
-  }
-
-  /// \brief Notifies the completion of handling a receive symbol.
-  ///
-  /// Removes the locking mask.
-  ///
-  /// \remark An assertion is triggered if the current state is not locked.
-  void finish_handle_rx_symbol()
-  {
-    [[maybe_unused]] uint32_t prev_state = pending_pdu_count.fetch_xor(locked_mask);
-    srsran_assert(is_state_locked(prev_state), "Unexpected state after discarding slot 0x{:08x}", prev_state);
-  }
-
-  /// \brief Returns \c true if the repository is configured with the given slot and ready to process PDUs.
-  ///
-  /// The slot is considered invalid if :
-  /// - the current state is accepting PDUs, idle, locked, or stopped; or
-  /// - the given slot is not equal to the configured one.
-  bool is_slot_valid(slot_point slot) const
-  {
-    // Verify that the repository is in a valid state to process PDUs.
-    uint32_t current_state = pending_pdu_count.load();
-    if (is_state_idle(current_state) || is_state_accepting_pdu(current_state) || is_state_locked(current_state) ||
-        is_state_stopped(current_state)) {
-      return false;
-    }
-
-    // Checks the slot validity.
-    return configured_slot == slot;
-  }
-
-  /// \brief Notifies the event of creating a new asynchronous execution task. It increments the PDU being executed
-  /// count.
-  /// \return \c true if the internal state allows the creation of the task, otherwise \c false.
-  /// \remark An assertion is triggered if the state is accepting PDUs or there are no pending PDUs to process.
-  bool on_create_pdu_task()
-  {
-    // Get current state.
-    uint32_t current_state = pending_pdu_count.load();
-
-    // Stop function - returns true if the current state is stopped, and it triggers an assertion if the current state
-    // is unexpected.
-    auto stop_function = [&current_state]() {
-      if (is_state_stopped(current_state)) {
-        return true;
-      }
-
-      srsran_assert(!is_state_accepting_pdu(current_state) && has_state_pending_pdu_in_queue(current_state),
-                    "The slot repository is in an unexpected state 0x{:08x}.",
-                    current_state);
-
-      return false;
-    };
-
-    // Try to increment the number of PDUs to execute.
-    bool success = false;
-    while (!stop_function() && !success) {
-      success = pending_pdu_count.compare_exchange_weak(current_state, current_state + pending_pdu_inc_exec);
-    }
-
-    // Return true if the exchange was successful.
-    return success;
-  }
-
-  /// \brief Notifies the completion of a PDU processing.
-  ///
-  /// Decrements the pending PDU counter.
-  ///
-  /// \remark An assertion is triggered if:
-  /// - the current state is accepting PDUs; or
-  /// - the current state is stopped; or
-  /// - any of the pending counters are not zero.
-  void on_finish_processing_pdu()
-  {
-    [[maybe_unused]] uint32_t prev = pending_pdu_count.fetch_sub(pending_pdu_inc_queue + pending_pdu_inc_exec);
-
-    // Assert previous state.
-    srsran_assert(!is_state_accepting_pdu(prev) && !is_state_stopped(prev) && has_state_pending_pdu_in_exec(prev) &&
-                      has_state_pending_pdu_in_queue(prev),
-                  "The slot repository is in an unexpected state 0x{:08x}.",
-                  prev);
-  }
-
   /// Returns a span that contains the PUSCH PDUs for the given slot and symbol index.
   span<const pusch_pdu> get_pusch_pdus(unsigned end_symbol_index) const
   {
-    // Skip if there are no pending PDUs. It could transition to idle and queue new PDUs any time, resulting in a race
-    // condition.
-    if (!has_state_pending_pdu_in_queue(pending_pdu_count.load())) {
-      return {};
-    }
-
     srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index {}.", end_symbol_index);
     return pusch_repository[end_symbol_index];
   }
@@ -353,12 +168,6 @@ public:
   /// Returns a span that contains the PUCCH PDUs for the given slot and symbol index.
   span<const pucch_pdu> get_pucch_pdus(unsigned end_symbol_index) const
   {
-    // Skip if there are no pending PDUs. It could transition to idle and queue new PDUs any time, resulting in a race
-    // condition.
-    if (!has_state_pending_pdu_in_queue(pending_pdu_count.load())) {
-      return {};
-    }
-
     srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index {}.", end_symbol_index);
     return pucch_repository[end_symbol_index];
   }
@@ -366,12 +175,6 @@ public:
   /// Returns a span that contains the PUCCH PDUs for the given slot and symbol index.
   span<const pucch_f1_collection> get_pucch_f1_repository(unsigned end_symbol_index) const
   {
-    // Skip if there are no pending PDUs. It could transition to idle and queue new PDUs any time, resulting in a race
-    // condition.
-    if (!has_state_pending_pdu_in_queue(pending_pdu_count.load())) {
-      return {};
-    }
-
     srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index {}.", end_symbol_index);
     return pucch_f1_repository[end_symbol_index];
   }
@@ -379,75 +182,11 @@ public:
   /// Returns a span that contains the SRS PDUs for the given slot and symbol index.
   span<const srs_pdu> get_srs_pdus(unsigned end_symbol_index) const
   {
-    // Skip if there are no pending PDUs. It could transition to idle and queue new PDUs any time, resulting in a race
-    // condition.
-    if (!has_state_pending_pdu_in_queue(pending_pdu_count.load())) {
-      return {};
-    }
-
     srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index {}.", end_symbol_index);
     return srs_repository[end_symbol_index];
   }
 
-  /// \brief Stops the uplink PDU slot repository.
-  ///
-  /// It waits as long as:
-  /// - the repository is active accepting PDUs;
-  /// - there are asynchronous tasks being executed; or
-  /// - the state is locked.
-  void stop()
-  {
-    // As long as there are pending asynchronous tasks, wait for them to finish.
-    for (uint32_t current_state = pending_pdu_count.load();
-         is_state_accepting_pdu(current_state) || has_state_pending_pdu_in_exec(current_state) ||
-         is_state_locked(current_state) ||
-         !pending_pdu_count.compare_exchange_weak(current_state, pending_pdu_count_stopped);
-         current_state = pending_pdu_count.load()) {
-      std::this_thread::sleep_for(std::chrono::microseconds(10));
-    }
-  }
-
 private:
-  /// Accepting PDU state mask in the pending PDU count.
-  static constexpr uint32_t accepting_pdu_mask = 0x80000000;
-  /// The current state is locked. The state is locked if a certain sequential procedure is executed (i.e., discarding
-  /// slot).
-  static constexpr uint32_t locked_mask = 0x40000000;
-  /// Pending PDU value when the processor is idle.
-  static constexpr uint32_t pending_pdu_count_idle = 0x0;
-  /// Pending PDU value when the processor is stopped.
-  static constexpr uint32_t pending_pdu_count_stopped = 0x7fffffff;
-  /// PDU pending increment.
-  static constexpr uint32_t pending_pdu_inc_queue = 0x1;
-  /// PDU execution increment.
-  static constexpr uint32_t pending_pdu_inc_exec = 0x1000;
-
-  /// Returns \c true if a state is idle.
-  static constexpr bool is_state_idle(uint32_t state) { return state == pending_pdu_count_idle; }
-
-  /// Returns \c true if a state is stopped.
-  static constexpr bool is_state_stopped(uint32_t state) { return state == pending_pdu_count_stopped; }
-
-  /// Returns \c true if a state is locked.
-  static constexpr bool is_state_locked(uint32_t state) { return state & locked_mask; }
-
-  /// Returns \c true if a state is accepting PDU.
-  static constexpr bool is_state_accepting_pdu(uint32_t state) { return state & accepting_pdu_mask; }
-
-  /// Returns \c true if a state contains pending PDUs in queues.
-  static constexpr bool has_state_pending_pdu_in_queue(uint32_t state) { return state & 0xfff; }
-
-  /// Returns \c true if a state contains pending PDUs in execution.
-  static constexpr bool has_state_pending_pdu_in_exec(uint32_t state) { return state & 0xfff000; }
-
-  /// \brief Increment the pending PDU count.
-  /// \remark An assertion is triggered if the pending PDU count contains the accepting PDU mask.
-  void increment_pending_pdu_count()
-  {
-    [[maybe_unused]] uint32_t prev = pending_pdu_count.fetch_add(pending_pdu_inc_queue);
-    srsran_assert((prev & accepting_pdu_mask) != 0, "The slot repository is the invalid state of NOT accepting PDUs.");
-  }
-
   // See the shared_resource_grid::pool_interface interface for documentation.
   resource_grid& get(unsigned identifier) override { return grid; }
 
@@ -462,13 +201,11 @@ private:
   std::array<static_vector<pucch_f1_collection, MAX_PUCCH_PDUS_PER_SLOT>, MAX_NSYMB_PER_SLOT> pucch_f1_repository;
   /// Repository that contains SRS PDUs.
   std::array<static_vector<srs_pdu, MAX_SRS_PDUS_PER_SLOT>, MAX_NSYMB_PER_SLOT> srs_repository;
-  /// Counts the number of pending PDUs.
-  std::atomic<uint32_t> pending_pdu_count = {};
-  /// Current configured slot.
-  slot_point configured_slot;
   /// Resource grid associated to the uplink slot.
   resource_grid& grid;
   /// Resource grid reference counter.
   std::atomic<unsigned>& grid_ref_counter;
+  /// Notifier for the uplink processor finite-state machine.
+  uplink_processor_fsm_notifier& fsm_notifier;
 };
 } // namespace srsran
