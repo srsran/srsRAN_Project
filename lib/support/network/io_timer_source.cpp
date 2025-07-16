@@ -40,9 +40,14 @@ io_timer_source::io_timer_source(timer_manager&            tick_sink_,
 
 io_timer_source::~io_timer_source()
 {
-  while (io_sub.registered()) {
+  const std::chrono::milliseconds max_wait_time(500);
+  for (std::chrono::milliseconds elapsed_time(0); io_sub.registered() and elapsed_time < max_wait_time;
+       elapsed_time += tick_period) {
     stop_requested.store(true, std::memory_order_relaxed);
     std::this_thread::sleep_for(tick_period);
+  }
+  if (io_sub.registered()) {
+    logger.error("Timer source did not stop within {} ms. Forcing its shutdown...", max_wait_time.count());
   }
 }
 
