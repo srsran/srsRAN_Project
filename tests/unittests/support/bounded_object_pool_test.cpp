@@ -22,14 +22,15 @@
 
 using namespace srsran;
 
-template <typename T>
+template <typename Pool>
 class common_bounded_object_pool_test : public ::testing::Test
 {
 protected:
-  static constexpr size_t  pool_capacity = 1024;
-  bounded_object_pool<int> pool{pool_capacity};
+  using pool_type                       = Pool;
+  static constexpr size_t pool_capacity = 1024;
+  Pool                    pool{pool_capacity};
 };
-using test_value_types = ::testing::Types<bounded_object_pool<int>, bounded_object_ptr_pool<int>>;
+using test_value_types = ::testing::Types<bounded_object_ptr_pool<int>, bounded_object_pool<int>>;
 TYPED_TEST_SUITE(common_bounded_object_pool_test, test_value_types);
 
 TYPED_TEST(common_bounded_object_pool_test, pool_initiated_with_provided_capacity)
@@ -52,7 +53,7 @@ TYPED_TEST(common_bounded_object_pool_test, one_allocation_works)
 
 TYPED_TEST(common_bounded_object_pool_test, depleted_pool_returns_null)
 {
-  std::vector<bounded_object_pool<int>::ptr> objs;
+  std::vector<typename decltype(this->pool)::ptr> objs;
   for (unsigned i = 0; i != this->pool.capacity(); ++i) {
     objs.push_back(this->pool.get());
     ASSERT_NE(objs.back(), nullptr);
@@ -117,37 +118,33 @@ TYPED_TEST(common_bounded_object_pool_test, stress_pool)
   fmt::print("Average get() latency: {} ns\n", avg_latency.count() / nof_operations);
 }
 
-class bounded_object_ptr_pool_test : public ::testing::Test
+template <typename Pool>
+class bounded_object_pool_non_pwr2_test : public ::testing::Test
 {
 protected:
-  static constexpr size_t      pool_capacity = 1000;
-  bounded_object_ptr_pool<int> pool{pool_capacity};
+  static constexpr size_t pool_capacity = 1000;
+  Pool                    pool{pool_capacity};
 };
+TYPED_TEST_SUITE(bounded_object_pool_non_pwr2_test, test_value_types);
 
-TEST_F(bounded_object_ptr_pool_test, non_power2_capacity_is_respected)
+TYPED_TEST(bounded_object_pool_non_pwr2_test, non_power2_capacity_is_respected)
 {
-  ASSERT_EQ(pool.capacity(), pool_capacity);
-  ASSERT_EQ(pool.size_approx(), pool.capacity());
+  ASSERT_EQ(this->pool.capacity(), this->pool_capacity);
+  ASSERT_EQ(this->pool.size_approx(), this->pool.capacity());
 
-  std::vector<bounded_object_ptr_pool<int>::ptr> objs;
-  for (unsigned i = 0; i != pool.capacity(); ++i) {
-    objs.push_back(pool.get());
+  std::vector<typename decltype(this->pool)::ptr> objs;
+  for (unsigned i = 0; i != this->pool.capacity(); ++i) {
+    objs.push_back(this->pool.get());
     ASSERT_NE(objs.back(), nullptr);
+    *objs.back() = i;
   }
-  auto obj = pool.get();
+  auto obj = this->pool.get();
   ASSERT_EQ(obj, nullptr);
-}
+  for (unsigned i = 0; i != this->pool.capacity(); ++i) {
+    ASSERT_EQ(*objs[i], i);
+  }
 
-class bounded_object_pool_test : public ::testing::Test
-{
-protected:
-  static constexpr size_t      initial_pool_capacity = 1000;
-  static constexpr size_t      pool_capacity         = 1024;
-  bounded_object_ptr_pool<int> pool{initial_pool_capacity};
-};
-
-TEST_F(bounded_object_ptr_pool_test, non_power2_nof_objects_gets_rounded_up_to_closest_power_of_2)
-{
-  ASSERT_EQ(pool.capacity(), pool_capacity);
-  ASSERT_EQ(pool.size_approx(), pool.capacity());
+  objs.pop_back();
+  obj = this->pool.get();
+  ASSERT_NE(obj, nullptr);
 }
