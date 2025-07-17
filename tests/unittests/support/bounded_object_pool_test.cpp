@@ -30,7 +30,7 @@ protected:
   static constexpr size_t pool_capacity = 1024;
   Pool                    pool{pool_capacity};
 };
-using test_value_types = ::testing::Types<bounded_object_ptr_pool<int>, bounded_object_pool<int>>;
+using test_value_types = ::testing::Types<bounded_unique_object_pool<int>, bounded_object_pool<int>>;
 TYPED_TEST_SUITE(common_bounded_object_pool_test, test_value_types);
 
 TYPED_TEST(common_bounded_object_pool_test, pool_initiated_with_provided_capacity)
@@ -111,7 +111,7 @@ TYPED_TEST(common_bounded_object_pool_test, stress_pool)
   }
 
   double         latency_secs = avg_latency.count() / 1.0e9;
-  constexpr bool is_ptr_pool  = std::is_same_v<TypeParam, bounded_object_ptr_pool<int>>;
+  constexpr bool is_ptr_pool  = std::is_same_v<TypeParam, bounded_unique_object_pool<int>>;
   fmt::print("Result for \"{}\":\n", is_ptr_pool ? "bounded_object_ptr_pool" : "bounded_object_pool");
   fmt::print("Time elapsed: {:.2} s\n", latency_secs);
   fmt::print("Rate: {:.2} calls/sec\n", nof_operations / latency_secs);

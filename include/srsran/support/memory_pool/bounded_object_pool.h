@@ -45,11 +45,38 @@ public:
     uint32_t                  obj_idx = static_cast<uint32_t>(-1);
   };
 
+  struct base_segment {
+    /// Bitmap to track allocated objects in the segment.
+    std::atomic<uint64_t> busy_bitmap{0};
+    /// Number of objects in the segment.
+    unsigned nof_objs_in_segment;
+
+    base_segment(unsigned nof_objects_) : nof_objs_in_segment(nof_objects_)
+    {
+      srsran_assert(size() > 0 and size() <= max_size(), "Number of objects exceeds segment capacity");
+
+      if (this->size() < this->max_size()) {
+        // Mark remaining positions of the bitmap as unavailable.
+        auto       remaining        = max_size() - size();
+        const auto mark_unavailable = mask_msb_ones<uint64_t>(remaining);
+        this->busy_bitmap.fetch_or(mark_unavailable, std::memory_order_relaxed);
+      }
+    }
+    base_segment(const base_segment&)            = delete;
+    base_segment(base_segment&&)                 = delete;
+    base_segment& operator=(const base_segment&) = delete;
+    base_segment& operator=(base_segment&&)      = delete;
+
+    size_t size() const { return nof_objs_in_segment; }
+
+    static size_t max_size() { return 64; }
+  };
+
   template <typename Factory>
   bounded_object_pool_impl(unsigned nof_objects, Factory&& factory) : nof_objs(nof_objects)
   {
     report_fatal_error_if_not(capacity() > 0, "Number of objects must be greater than zero");
-    const unsigned nof_segments = divide_ceil(capacity(), SegmentType::max_size());
+    const unsigned nof_segments = divide_ceil(capacity(), base_segment::max_size());
 
     // Compute the CPU offset scatter coefficient.
     cpu_offset_scatter_coeff =
@@ -83,7 +110,7 @@ public:
   {
     unsigned offset = 0;
     if (segments.size() > 1) {
-      offset = (sched_getcpu() * cpu_offset_scatter_coeff) % segments.size();
+      offset = (::sched_getcpu() * cpu_offset_scatter_coeff) % segments.size();
     }
 
     for (unsigned i = 0; i != segments.size(); ++i) {
@@ -92,7 +119,8 @@ public:
 
       uint64_t busy_bitmap = seg.busy_bitmap.load(std::memory_order_acquire);
       if (busy_bitmap == static_cast<uint64_t>(-1)) {
-        continue; // No free objects in this segment.
+        // No free objects in this segment.
+        continue;
       }
 
       // Find the first free object.
@@ -102,7 +130,7 @@ public:
           // No free objects found in this segment.
           break;
         }
-        // Mark the object as used.
+        // Mark the object as used and verify that it was not marked as used previously.
         busy_bitmap = seg.busy_bitmap.fetch_or((1ULL << obj_idx), std::memory_order_acq_rel);
         if ((busy_bitmap & (1ULL << obj_idx)) == 0) {
           // We successfully marked this position.
@@ -142,56 +170,42 @@ public:
 template <typename T>
 class bounded_object_pool
 {
-  struct segment {
+  struct segment : public detail::bounded_object_pool_impl<T>::base_segment {
+    using base_type  = typename detail::bounded_object_pool_impl<T>::base_segment;
     using value_type = T;
 
-    std::atomic<uint64_t> busy_bitmap{0};
-    unsigned              nof_objects;
-    T*                    objects;
+    /// Array of objects in the segment.
+    T* objects;
 
     template <typename... Args>
-    segment(unsigned nof_objects_, Args... args) : nof_objects(nof_objects_)
+    segment(unsigned nof_objects_, Args... args) : base_type(nof_objects_)
     {
-      srsran_assert(size() <= max_size(), "Number of objects exceeds segment capacity");
       // Create objs.
-      objects = static_cast<T*>(::operator new(size() * sizeof(T)));
-      for (unsigned i = 0; i != size(); ++i) {
+      objects = static_cast<T*>(::operator new(this->size() * sizeof(T)));
+      for (unsigned i = 0; i != this->size(); ++i) {
         new (objects + i) T(args...);
       }
-      if (size() < max_size()) {
-        // Mark remaining positions as unavailable.
-        unsigned remaining        = max_size() - nof_objects;
-        uint64_t mark_unavailable = ((1ULL << remaining) - 1) << nof_objects;
-        busy_bitmap.fetch_or(mark_unavailable, std::memory_order_relaxed);
-      }
     }
-    segment(const segment&)            = delete;
-    segment(segment&&)                 = delete;
-    segment& operator=(const segment&) = delete;
-    segment& operator=(segment&&)      = delete;
     ~segment()
     {
-      for (unsigned i = 0; i != size(); ++i) {
+      for (unsigned i = 0; i != this->size(); ++i) {
         objects[i].~T();
       }
       ::operator delete(objects);
     }
-
-    size_t size() const { return nof_objects; }
-
-    static constexpr size_t max_size() { return 64; }
   };
 
   using obj_reclaimer = typename detail::bounded_object_pool_impl<segment>::obj_reclaimer;
 
 public:
+  /// Unique pointer type that holds an object from the pool and reclaims it when the pointer goes out of scope.
   using ptr = std::unique_ptr<T, obj_reclaimer>;
 
   /// Creates an object pool with capacity equal to \c nof_objects.
   template <typename... Args>
   bounded_object_pool(size_t nof_objects, Args... args) :
     impl(nof_objects,
-         [args...](unsigned seg_idx, unsigned seg_size) { return std::make_unique<segment>(seg_size, args...); })
+         [args...](unsigned /* unused */, unsigned seg_size) { return std::make_unique<segment>(seg_size, args...); })
   {
   }
 
@@ -219,49 +233,32 @@ private:
 /// \brief A bounded thread-safe object pool. Unlike \c bounded_object_pool, this pool stores objects in unique_ptr<T>,
 /// so it allows storing polymorphic objects.
 template <typename T>
-class bounded_object_ptr_pool
+class bounded_unique_object_pool
 {
-  struct segment {
+  struct segment : public detail::bounded_object_pool_impl<T>::base_segment {
+    using base_type  = typename detail::bounded_object_pool_impl<T>::base_segment;
     using value_type = T;
 
-    std::atomic<uint64_t>           busy_bitmap{0};
+    /// Vector of unique pointers to objects in the segment.
     std::vector<std::unique_ptr<T>> objects;
 
     template <typename... Args>
-    segment(unsigned nof_objects, Args... args)
+    segment(unsigned nof_objects, Args... args) : base_type(nof_objects)
     {
-      srsran_assert(nof_objects <= max_size(), "Number of objects exceeds segment capacity");
-      // Create objs.
+      // Create obj.
       objects.reserve(nof_objects);
       for (unsigned i = 0; i != nof_objects; ++i) {
         objects.emplace_back(std::make_unique<T>(args...));
       }
-      if (nof_objects < max_size()) {
-        // Mark remaining positions as unavailable.
-        unsigned remaining        = max_size() - nof_objects;
-        uint64_t mark_unavailable = ((1ULL << remaining) - 1) << nof_objects;
-        busy_bitmap.fetch_or(mark_unavailable, std::memory_order_relaxed);
-      }
     }
-    segment(unsigned nof_objects, span<std::unique_ptr<T>> objects_)
+    segment(span<std::unique_ptr<T>> objects_) : base_type(objects_.size())
     {
-      srsran_assert(nof_objects <= max_size(), "Number of objects exceeds segment capacity");
-      // Create objs.
-      objects.reserve(nof_objects);
-      for (unsigned i = 0; i != nof_objects; ++i) {
+      // Move already created objects to segment.
+      objects.reserve(this->size());
+      for (unsigned i = 0; i != this->size(); ++i) {
         objects.emplace_back(std::move(objects_[i]));
       }
-      if (nof_objects < max_size()) {
-        // Mark remaining positions as unavailable.
-        unsigned remaining        = max_size() - nof_objects;
-        uint64_t mark_unavailable = ((1ULL << remaining) - 1) << nof_objects;
-        busy_bitmap.fetch_or(mark_unavailable, std::memory_order_relaxed);
-      }
     }
-
-    size_t size() const { return objects.size(); }
-
-    static constexpr size_t max_size() { return 64; }
   };
 
   using obj_reclaimer = typename detail::bounded_object_pool_impl<segment>::obj_reclaimer;
@@ -270,17 +267,17 @@ public:
   using ptr = std::unique_ptr<T, obj_reclaimer>;
 
   /// Creates an object pool with the objects passed in the ctor.
-  bounded_object_ptr_pool(span<std::unique_ptr<T>> objects_) :
+  bounded_unique_object_pool(span<std::unique_ptr<T>> objects_) :
     impl(objects_.size(), [&objects_](unsigned seg_idx, unsigned seg_nof_objs) {
-      return std::make_unique<segment>(seg_nof_objs, objects_.subspan(seg_idx * segment::max_size(), seg_nof_objs));
+      return std::make_unique<segment>(objects_.subspan(seg_idx * segment::max_size(), seg_nof_objs));
     })
   {
   }
 
   /// Creates an object pool with capacity equal to \c nof_objects.
   template <typename... Args>
-  bounded_object_ptr_pool(unsigned nof_objects, Args... args) :
-    impl(nof_objects, [args...](unsigned seg_idx, unsigned seg_nof_objs) {
+  bounded_unique_object_pool(unsigned nof_objects, Args... args) :
+    impl(nof_objects, [args...](unsigned /* unused */, unsigned seg_nof_objs) {
       return std::make_unique<segment>(seg_nof_objs, args...);
     })
   {
