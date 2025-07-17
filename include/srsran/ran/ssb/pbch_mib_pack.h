@@ -34,8 +34,7 @@ uint8_t pbch_timing_pack(uint32_t              sfn,
 /// Information Element \e MIB in TS38.331 Section 6.2.2.
 ///
 /// \param[in] msg   PBCH Message containing an MIB for packing.
-/// \param[in] L_max Maximum number of SS/PBCH block candidates in a 5ms burst, described in TS38.213 Section 4.1.
 /// \return Packed PBCH payload.
-uint32_t pbch_mib_pack(const pbch_mib_message& msg, unsigned L_max);
+uint32_t pbch_mib_pack(const pbch_mib_message& msg);
 
 } // namespace srsran

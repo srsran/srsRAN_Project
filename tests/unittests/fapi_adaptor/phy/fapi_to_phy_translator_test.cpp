@@ -298,7 +298,7 @@ TEST_F(fapi_to_phy_translator_fixture,
 
   fapi::dl_tti_request_message         msg;
   fapi::dl_tti_request_message_builder builder(msg);
-  builder.add_ssb_pdu();
+  builder.add_ssb_pdu().set_bch_payload_phy_timing_info(0);
   msg.sfn                        = slot.sfn();
   msg.slot                       = slot.slot_index();
   msg.is_last_dl_message_in_slot = true;

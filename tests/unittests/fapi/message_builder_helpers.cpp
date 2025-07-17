@@ -144,21 +144,18 @@ dl_ssb_pdu unittest::build_valid_dl_ssb_pdu()
 {
   dl_ssb_pdu pdu;
 
-  pdu.phys_cell_id                                  = generate_pci();
-  pdu.beta_pss_profile_nr                           = beta_pss_profile_type::dB_0;
-  pdu.ssb_block_index                               = generate_block_index();
-  pdu.ssb_subcarrier_offset                         = generate_subcarrier_offset();
-  pdu.ssb_offset_pointA                             = generate_offset_point_A();
-  pdu.bch_payload_flag                              = bch_payload_type::phy_full;
-  pdu.bch_payload.phy_mib_pdu.cell_barred           = generate_bool();
-  pdu.bch_payload.phy_mib_pdu.intrafreq_reselection = generate_bool();
-  pdu.bch_payload.phy_mib_pdu.dmrs_typeA_position   = static_cast<dmrs_typeA_pos>(generate_bool());
-  pdu.bch_payload.phy_mib_pdu.pdcch_config_sib1     = 43;
-  pdu.ssb_maintenance_v3.ssb_pdu_index              = 0;
-  pdu.ssb_maintenance_v3.case_type                  = generate_case_pattern();
-  pdu.ssb_maintenance_v3.scs                        = subcarrier_spacing::kHz240;
-  pdu.ssb_maintenance_v3.L_max                      = 4;
-  pdu.precoding_and_beamforming                     = build_valid_tx_precoding_and_beamforming_pdu();
+  pdu.phys_cell_id                     = generate_pci();
+  pdu.beta_pss_profile_nr              = beta_pss_profile_type::dB_0;
+  pdu.ssb_block_index                  = generate_block_index();
+  pdu.ssb_subcarrier_offset            = generate_subcarrier_offset();
+  pdu.ssb_offset_pointA                = generate_offset_point_A();
+  pdu.bch_payload_flag                 = bch_payload_type::phy_timing_info;
+  pdu.bch_payload.bch_payload          = 0;
+  pdu.ssb_maintenance_v3.ssb_pdu_index = 0;
+  pdu.ssb_maintenance_v3.case_type     = generate_case_pattern();
+  pdu.ssb_maintenance_v3.scs           = subcarrier_spacing::kHz240;
+  pdu.ssb_maintenance_v3.L_max         = 4;
+  pdu.precoding_and_beamforming        = build_valid_tx_precoding_and_beamforming_pdu();
 
   return pdu;
 }
