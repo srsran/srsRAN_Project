@@ -16,7 +16,7 @@
 using namespace srsran;
 
 struct bench_params {
-  std::chrono::milliseconds duration{1};
+  std::chrono::milliseconds duration{10};
   unsigned                  max_workers = 16;
 };
 
@@ -91,7 +91,7 @@ public:
   void start()
   {
     fmt::print("STATUS: Starting {}...", description);
-    unsigned nof_initial_tasks = std::min(nof_workers * 4, qsize);
+    unsigned nof_initial_tasks = nof_workers;
     for (unsigned i = 0; i != nof_initial_tasks; ++i) {
       bool success = task_exec->defer([this]() { run_task(); });
       report_fatal_error_if_not(success, "Unexpected failure to defer initial task");
@@ -137,7 +137,7 @@ private:
       auto task_start = std::chrono::high_resolution_clock::now();
       while (std::chrono::high_resolution_clock::now() - task_start < task_dur) {
         // Simulate some work.
-        do_not_optimize(start_time);
+        do_not_optimize(running.load(std::memory_order_relaxed));
       }
       task_counter.fetch_add(1, std::memory_order_relaxed);
       bool success = false;
@@ -146,9 +146,8 @@ private:
         if (success) {
           break;
         }
-        if (nof_attempts % 1000 == 0) {
-          std::this_thread::yield(); // Yield to avoid busy waiting.
-        }
+        // Yield to avoid busy waiting.
+        std::this_thread::sleep_for(std::chrono::microseconds{1});
       }
       report_fatal_error_if_not(success, "Unexpected failure to defer task");
     }
@@ -199,7 +198,7 @@ void run_benchmarks(const bench_params& params)
       concurrent_queue_policy::moodycamel_lockfree_mpmc,
   };
   std::vector<std::chrono::microseconds> task_durations{std::chrono::microseconds{0}, std::chrono::microseconds{10}};
-  const unsigned                         qsize = 2048;
+  const unsigned                         qsize = 8192;
 
   fmt::print("Running benchmark with parameters: duration={}msec\n", params.duration.count());
 
