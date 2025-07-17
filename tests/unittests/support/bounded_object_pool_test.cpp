@@ -22,18 +22,7 @@
 
 using namespace srsran;
 
-struct big_int {
-  big_int& operator=(int v)
-  {
-    val = v;
-    return *this;
-  }
-  bool operator==(const big_int& other) const { return val == other.val; }
-  bool operator==(int other) const { return val == other; }
-
-  int                                 val;
-  std::array<char, 128 - sizeof(int)> padding;
-};
+static constexpr bool EnableMetrics = true;
 
 template <typename Pool>
 class common_bounded_object_pool_test : public ::testing::Test
@@ -43,7 +32,8 @@ protected:
   static constexpr size_t pool_capacity = 1024;
   Pool                    pool{pool_capacity};
 };
-using test_value_types = ::testing::Types<bounded_unique_object_pool<int>, bounded_object_pool<int>>;
+using test_value_types =
+    ::testing::Types<bounded_unique_object_pool<int, EnableMetrics>, bounded_object_pool<int, EnableMetrics>>;
 TYPED_TEST_SUITE(common_bounded_object_pool_test, test_value_types);
 
 TYPED_TEST(common_bounded_object_pool_test, pool_initiated_with_provided_capacity)
@@ -92,11 +82,21 @@ TYPED_TEST(common_bounded_object_pool_test, stress_pool)
   std::vector<std::chrono::nanoseconds> latencies(nof_workers);
   for (unsigned i = 0; i != nof_workers; ++i) {
     worker_pool.push_task_blocking([&, worker_id = i]() {
-      auto start_tp = std::chrono::high_resolution_clock::now();
+      auto                                 start_tp = std::chrono::high_resolution_clock::now();
+      std::vector<typename TypeParam::ptr> allocated_objs;
+      allocated_objs.reserve(nof_operations);
       for (unsigned j = 0; j != nof_operations; ++j) {
-        auto obj = this->pool.get();
-        if (obj != nullptr) {
-          *obj = test_rgen::uniform_int(0, 100);
+        int randn = test_rgen::uniform_int(0, 100);
+        if (randn < 50) {
+          auto obj = this->pool.get();
+          if (obj != nullptr) {
+            *obj = randn;
+          }
+          allocated_objs.push_back(std::move(obj));
+        } else {
+          if (not allocated_objs.empty()) {
+            allocated_objs.pop_back();
+          }
         }
       }
       auto end_tp          = std::chrono::high_resolution_clock::now();
@@ -124,11 +124,14 @@ TYPED_TEST(common_bounded_object_pool_test, stress_pool)
   }
 
   double         latency_secs = avg_latency.count() / 1.0e9;
-  constexpr bool is_ptr_pool  = std::is_same_v<TypeParam, bounded_unique_object_pool<typename TypeParam::value_type>>;
+  constexpr bool is_ptr_pool =
+      std::is_same_v<TypeParam, bounded_unique_object_pool<typename TypeParam::value_type, EnableMetrics>>;
   fmt::print("Result for \"{}\":\n", is_ptr_pool ? "bounded_object_ptr_pool" : "bounded_object_pool");
   fmt::print("Time elapsed: {:.2} s\n", latency_secs);
   fmt::print("Rate: {:.2} calls/sec\n", nof_operations / latency_secs);
   fmt::print("Average get() latency: {} ns\n", avg_latency.count() / nof_operations);
+  fmt::print("Nof scanned elements: {}\n", this->pool.nof_scanned_segments());
+  fmt::print("Nof alloc reattempts: {}\n", this->pool.nof_alloc_reattempts());
 }
 
 template <typename Pool>

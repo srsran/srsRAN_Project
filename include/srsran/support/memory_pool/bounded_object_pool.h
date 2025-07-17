@@ -22,10 +22,38 @@ namespace srsran {
 
 namespace detail {
 
-template <typename SegmentType>
-class bounded_object_pool_impl
+/// Helper class to collect pool metrics.
+template <bool Enabled = false>
+class bounded_object_pool_metrics_collector
 {
 public:
+  static bool metrics_active() { return false; }
+  uint64_t    nof_alloc_reattempts() const { return 0; }
+  uint64_t    nof_scanned_segments() const { return 0; }
+  void        increment_alloc_reattempts() {}
+  void        increment_scanned_segments() {}
+};
+
+template <>
+class bounded_object_pool_metrics_collector<true>
+{
+  std::atomic<uint64_t> failed_fetch_ors{0};
+  std::atomic<uint64_t> scanned_segment_counter{0};
+
+public:
+  static bool metrics_active() { return true; }
+  uint64_t    nof_alloc_reattempts() const { return failed_fetch_ors.load(std::memory_order_relaxed); }
+  uint64_t    nof_scanned_segments() const { return scanned_segment_counter.load(std::memory_order_relaxed); }
+  void        increment_alloc_reattempts() { failed_fetch_ors.fetch_add(1, std::memory_order_relaxed); }
+  void        increment_scanned_segments() { scanned_segment_counter.fetch_add(1, std::memory_order_relaxed); }
+};
+
+template <typename SegmentType, bool MetricsEnabled = false>
+class bounded_object_pool_impl : public bounded_object_pool_metrics_collector<MetricsEnabled>
+{
+public:
+  using metrics_collector_type = bounded_object_pool_metrics_collector<MetricsEnabled>;
+
   struct obj_reclaimer {
     obj_reclaimer() = default;
     obj_reclaimer(bounded_object_pool_impl& parent_, uint32_t seg_idx_, uint32_t obj_idx_) :
@@ -122,6 +150,7 @@ public:
       uint64_t busy_bitmap = seg.busy_bitmap.load(std::memory_order_acquire);
       if (busy_bitmap == static_cast<uint64_t>(-1)) {
         // No free objects in this segment.
+        metrics_collector_type::increment_scanned_segments();
         continue;
       }
 
@@ -134,6 +163,7 @@ public:
         uint64_t obj_idx = find_first_lsb_one(available_rotated);
         if (obj_idx >= base_segment::max_size()) {
           // No free objects found in this segment.
+          metrics_collector_type::increment_scanned_segments();
           break;
         }
         // Rotate the object index back to the original position.
@@ -145,6 +175,7 @@ public:
           // We successfully marked this position.
           return std::make_pair(idx, obj_idx);
         }
+        metrics_collector_type::increment_alloc_reattempts();
       }
     }
     // No free objects available.
@@ -176,7 +207,7 @@ public:
 /// additionally contains a bitmap that tracks which objects are currently allocated within the same segment.
 /// The cpu_id is used as a hash to select the starting position in the vector of segments to search for free
 /// objects.
-template <typename T>
+template <typename T, bool MetricsEnabled = false>
 class bounded_object_pool
 {
   struct segment : public detail::bounded_object_pool_impl<T>::base_segment {
@@ -204,7 +235,7 @@ class bounded_object_pool
     }
   };
 
-  using obj_reclaimer = typename detail::bounded_object_pool_impl<segment>::obj_reclaimer;
+  using obj_reclaimer = typename detail::bounded_object_pool_impl<segment, MetricsEnabled>::obj_reclaimer;
 
 public:
   using value_type = T;
@@ -236,13 +267,18 @@ public:
   /// Gets approximate number of objects currently allocated in the pool.
   size_t size_approx() const { return impl.size_approx(); }
 
+  /// Collect metrics from the pool.
+  bool     are_metrics_activate() const { return impl.metrics_active(); }
+  uint64_t nof_alloc_reattempts() const { return impl.nof_alloc_reattempts(); }
+  uint64_t nof_scanned_segments() const { return impl.nof_scanned_segments(); }
+
 private:
-  detail::bounded_object_pool_impl<segment> impl;
+  detail::bounded_object_pool_impl<segment, MetricsEnabled> impl;
 };
 
 /// \brief A bounded thread-safe object pool. Unlike \c bounded_object_pool, this pool stores objects in unique_ptr<T>,
 /// so it allows storing polymorphic objects.
-template <typename T>
+template <typename T, bool MetricsEnabled = false>
 class bounded_unique_object_pool
 {
   struct segment : public detail::bounded_object_pool_impl<T>::base_segment {
@@ -271,11 +307,12 @@ class bounded_unique_object_pool
     }
   };
 
-  using obj_reclaimer = typename detail::bounded_object_pool_impl<segment>::obj_reclaimer;
+  using obj_reclaimer = typename detail::bounded_object_pool_impl<segment, MetricsEnabled>::obj_reclaimer;
 
 public:
-  using value_type = T;
-  using ptr        = std::unique_ptr<T, obj_reclaimer>;
+  using value_type             = T;
+  using ptr                    = std::unique_ptr<T, obj_reclaimer>;
+  using metrics_collector_type = detail::bounded_object_pool_metrics_collector<true>;
 
   /// Creates an object pool with the objects passed in the ctor.
   bounded_unique_object_pool(span<std::unique_ptr<T>> objects_) :
@@ -312,8 +349,13 @@ public:
   /// Gets approximate number of objects currently allocated in the pool.
   size_t size_approx() const { return impl.size_approx(); }
 
+  /// Collect metrics from the pool.
+  bool     are_metrics_activate() const { return impl.metrics_active(); }
+  uint64_t nof_alloc_reattempts() const { return impl.nof_alloc_reattempts(); }
+  uint64_t nof_scanned_segments() const { return impl.nof_scanned_segments(); }
+
 private:
-  detail::bounded_object_pool_impl<segment> impl;
+  detail::bounded_object_pool_impl<segment, MetricsEnabled> impl;
 };
 
 } // namespace srsran
