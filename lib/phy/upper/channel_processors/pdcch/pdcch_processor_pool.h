@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/phy/upper/channel_processors/pdcch/pdcch_processor.h"
-#include "srsran/support/memory_pool/bounded_queue_object_pool.h"
+#include "srsran/support/memory_pool/bounded_object_pool.h"
 
 namespace srsran {
 
@@ -22,7 +22,7 @@ class pdcch_processor_pool : public pdcch_processor
 {
 public:
   /// PDCCH processor pool type.
-  using pdcch_processor_pool_type = bounded_queue_object_pool<pdcch_processor>;
+  using pdcch_processor_pool_type = bounded_unique_object_pool<pdcch_processor>;
 
   /// Creates a PDCCH processor pool from a list of processors. Ownership is transferred to the pool.
   explicit pdcch_processor_pool(std::shared_ptr<pdcch_processor_pool_type> processors_) :

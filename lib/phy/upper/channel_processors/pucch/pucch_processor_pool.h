@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/phy/upper/channel_processors/pucch/pucch_processor.h"
-#include "srsran/support/memory_pool/bounded_queue_object_pool.h"
+#include "srsran/support/memory_pool/bounded_object_pool.h"
 
 namespace srsran {
 
@@ -19,7 +19,7 @@ namespace srsran {
 class pucch_processor_pool : public pucch_processor
 {
 public:
-  using processor_pool = bounded_queue_object_pool<pucch_processor>;
+  using processor_pool = bounded_unique_object_pool<pucch_processor>;
 
   /// Creates a PUCCH processor pool from a shared pool of processors.
   explicit pucch_processor_pool(std::shared_ptr<processor_pool> processors_) :

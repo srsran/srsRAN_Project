@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/phy/upper/signal_processors/nzp_csi_rs_generator.h"
-#include "srsran/support/memory_pool/bounded_queue_object_pool.h"
+#include "srsran/support/memory_pool/bounded_object_pool.h"
 
 namespace srsran {
 
@@ -22,7 +22,7 @@ class nzp_csi_rs_generator_pool : public nzp_csi_rs_generator
 {
 public:
   /// NZP-CSI-RS generator pool type.
-  using generator_pool_type = bounded_queue_object_pool<nzp_csi_rs_generator>;
+  using generator_pool_type = bounded_unique_object_pool<nzp_csi_rs_generator>;
 
   /// Creates a NZP-CSI-RS generator pool from a list of processors. Ownership is transferred to the pool.
   explicit nzp_csi_rs_generator_pool(std::shared_ptr<generator_pool_type> generators_) :

@@ -13,6 +13,7 @@
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
 #include "srsran/srslog/logger.h"
+#include "srsran/support/memory_pool/bounded_object_pool.h"
 
 namespace srsran {
 
@@ -25,7 +26,7 @@ class pdsch_processor_pool : public pdsch_processor
 {
 public:
   /// PDSCH processor pool type.
-  using pdsch_processor_pool_type = bounded_queue_object_pool<pdsch_processor>;
+  using pdsch_processor_pool_type = bounded_unique_object_pool<pdsch_processor>;
 
   /// Creates a PDSCH processor pool from a list of processors. Ownership is transferred to the pool.
   explicit pdsch_processor_pool(std::shared_ptr<pdsch_processor_pool_type> processors_) :

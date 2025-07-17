@@ -12,7 +12,7 @@
 
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator.h"
 #include "srsran/srslog/srslog.h"
-#include "srsran/support/memory_pool/bounded_queue_object_pool.h"
+#include "srsran/support/memory_pool/bounded_object_pool.h"
 
 namespace srsran {
 
@@ -20,7 +20,7 @@ namespace srsran {
 class srs_estimator_pool : public srs_estimator
 {
 public:
-  using estimator_pool = bounded_queue_object_pool<srs_estimator>;
+  using estimator_pool = bounded_unique_object_pool<srs_estimator>;
 
   /// Creates a pool from a list of estimators. Ownership is transferred to the pool.
   explicit srs_estimator_pool(std::shared_ptr<estimator_pool> estimators_) :

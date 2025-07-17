@@ -22,7 +22,7 @@
 #include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/ran/pusch/ulsch_info.h"
 #include "srsran/srslog/srslog.h"
-#include "srsran/support/memory_pool/bounded_queue_object_pool.h"
+#include "srsran/support/memory_pool/bounded_object_pool.h"
 #include <memory>
 
 namespace srsran {
@@ -91,7 +91,7 @@ public:
   };
 
   /// Dependencies pool class.
-  using concurrent_dependencies_pool_type = bounded_queue_object_pool<concurrent_dependencies>;
+  using concurrent_dependencies_pool_type = bounded_unique_object_pool<concurrent_dependencies>;
 
   /// Collects the necessary parameters for creating a PUSCH processor.
   struct configuration {

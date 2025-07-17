@@ -12,7 +12,7 @@
 
 #include "srsran/phy/upper/signal_processors/prs/prs_generator.h"
 #include "srsran/srslog/srslog.h"
-#include "srsran/support/memory_pool/bounded_queue_object_pool.h"
+#include "srsran/support/memory_pool/bounded_object_pool.h"
 
 namespace srsran {
 
@@ -23,7 +23,7 @@ class prs_generator_pool : public prs_generator
 {
 public:
   /// PRS generator pool type.
-  using generator_pool_type = bounded_queue_object_pool<prs_generator>;
+  using generator_pool_type = bounded_unique_object_pool<prs_generator>;
 
   /// Creates a SSB processor pool from a list of processors. Ownership is transferred to the pool.
   explicit prs_generator_pool(std::shared_ptr<generator_pool_type> processors_) :
