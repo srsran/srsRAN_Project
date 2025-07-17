@@ -410,13 +410,10 @@ def _handover_multi_ues(
             stop_gnb_first=stop_gnb_first,
         )
     finally:
-
-        du = None
+        if gnb:
+            get_kpis(du_or_gnb_array=[gnb], ue_array=ue_array, metrics_summary=metrics_summary)
         if du_array:
-            # TODO: get kpis for all DUs
-            du = du_array[0]
-
-        get_kpis(gnb=gnb, du=du, ue_array=ue_array, metrics_summary=metrics_summary)
+            get_kpis(du_or_gnb_array=du_array, ue_array=ue_array, metrics_summary=metrics_summary)
 
 
 @mark.parametrize(
@@ -692,7 +689,7 @@ def _handover_multi_ues_iperf(
             warning_as_errors=warning_as_errors,
         )
     finally:
-        get_kpis(gnb=gnb, ue_array=ue_array, metrics_summary=metrics_summary)
+        get_kpis(du_or_gnb_array=[gnb], ue_array=ue_array, metrics_summary=metrics_summary)
 
 
 def _do_ho(

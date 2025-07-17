@@ -490,7 +490,7 @@ def check_metrics_criteria(
     # Check metrics
     viavi_kpis: ViaviKPIs = viavi.get_test_kpis()
     viavi_kpis.print_procedure_failures(_OMIT_VIAVI_FAILURE_LIST)
-    kpis: KPIs = get_kpis(gnb=gnb, viavi_kpis=viavi_kpis, metrics_summary=metrics_summary)
+    kpis: KPIs = get_kpis(du_or_gnb_array=[gnb], viavi_kpis=viavi_kpis, metrics_summary=metrics_summary)
 
     criteria_result = [
         _create_viavi_result(

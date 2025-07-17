@@ -587,4 +587,4 @@ def _test_reestablishments(
         stop(ue_array=ue_array, gnb=gnb, fivegc=fivegc, retina_data=retina_data, warning_as_errors=warning_as_errors)
 
     finally:
-        get_kpis(gnb=gnb, ue_array=ue_array, metrics_summary=metrics_summary)
+        get_kpis(du_or_gnb_array=[gnb], ue_array=ue_array, metrics_summary=metrics_summary)
