@@ -22,6 +22,19 @@
 
 using namespace srsran;
 
+struct big_int {
+  big_int& operator=(int v)
+  {
+    val = v;
+    return *this;
+  }
+  bool operator==(const big_int& other) const { return val == other.val; }
+  bool operator==(int other) const { return val == other; }
+
+  int                                 val;
+  std::array<char, 128 - sizeof(int)> padding;
+};
+
 template <typename Pool>
 class common_bounded_object_pool_test : public ::testing::Test
 {
@@ -111,7 +124,7 @@ TYPED_TEST(common_bounded_object_pool_test, stress_pool)
   }
 
   double         latency_secs = avg_latency.count() / 1.0e9;
-  constexpr bool is_ptr_pool  = std::is_same_v<TypeParam, bounded_unique_object_pool<int>>;
+  constexpr bool is_ptr_pool  = std::is_same_v<TypeParam, bounded_unique_object_pool<typename TypeParam::value_type>>;
   fmt::print("Result for \"{}\":\n", is_ptr_pool ? "bounded_object_ptr_pool" : "bounded_object_pool");
   fmt::print("Time elapsed: {:.2} s\n", latency_secs);
   fmt::print("Rate: {:.2} calls/sec\n", nof_operations / latency_secs);

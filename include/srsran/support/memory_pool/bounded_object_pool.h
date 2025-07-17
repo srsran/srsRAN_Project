@@ -85,10 +85,10 @@ public:
     // Initialize segments.
     segments.reserve(nof_segments);
     for (unsigned i = 0; i != nof_segments; ++i) {
-      unsigned seg_nof_objs = SegmentType::max_size();
+      unsigned seg_nof_objs = base_segment::max_size();
       if (i == nof_segments - 1) {
         // Last segment may have fewer objects.
-        seg_nof_objs = ((nof_objects - 1) % SegmentType::max_size()) + 1;
+        seg_nof_objs = ((nof_objects - 1) % base_segment::max_size()) + 1;
       }
       segments.emplace_back(factory(i, seg_nof_objs));
     }
@@ -103,18 +103,20 @@ public:
       uint64_t busy_bitmap = segments[i]->busy_bitmap.load(std::memory_order_relaxed);
       sum_used += count_ones(busy_bitmap);
     }
-    return segments.size() * SegmentType::max_size() - sum_used;
+    return segments.size() * base_segment::max_size() - sum_used;
   }
 
   std::pair<unsigned, unsigned> get()
   {
-    unsigned offset = 0;
+    const unsigned cpuid      = std::max(::sched_getcpu(), 0);
+    unsigned       seg_offset = 0;
     if (segments.size() > 1) {
-      offset = (::sched_getcpu() * cpu_offset_scatter_coeff) % segments.size();
+      seg_offset = (cpuid * cpu_offset_scatter_coeff) % segments.size();
     }
+    const unsigned bit_shift = cpuid % base_segment::max_size();
 
     for (unsigned i = 0; i != segments.size(); ++i) {
-      unsigned     idx = (offset + i) % segments.size();
+      unsigned     idx = (seg_offset + i) % segments.size();
       SegmentType& seg = *segments[idx];
 
       uint64_t busy_bitmap = seg.busy_bitmap.load(std::memory_order_acquire);
@@ -125,11 +127,18 @@ public:
 
       // Find the first free object.
       while (true) {
-        unsigned obj_idx = find_first_lsb_one(~busy_bitmap);
-        if (obj_idx >= SegmentType::max_size()) {
+        // Convert the busy bitmap into an available bitmap, but circularly rotated by the bit_shift amount.
+        uint64_t available_rotated = ~((busy_bitmap >> bit_shift) | (busy_bitmap << (64 - bit_shift)));
+
+        // Find the first bit set to one in the available bitmap.
+        uint64_t obj_idx = find_first_lsb_one(available_rotated);
+        if (obj_idx >= base_segment::max_size()) {
           // No free objects found in this segment.
           break;
         }
+        // Rotate the object index back to the original position.
+        obj_idx = (obj_idx + bit_shift) % base_segment::max_size();
+
         // Mark the object as used and verify that it was not marked as used previously.
         busy_bitmap = seg.busy_bitmap.fetch_or((1ULL << obj_idx), std::memory_order_acq_rel);
         if ((busy_bitmap & (1ULL << obj_idx)) == 0) {
@@ -198,6 +207,7 @@ class bounded_object_pool
   using obj_reclaimer = typename detail::bounded_object_pool_impl<segment>::obj_reclaimer;
 
 public:
+  using value_type = T;
   /// Unique pointer type that holds an object from the pool and reclaims it when the pointer goes out of scope.
   using ptr = std::unique_ptr<T, obj_reclaimer>;
 
@@ -264,7 +274,8 @@ class bounded_unique_object_pool
   using obj_reclaimer = typename detail::bounded_object_pool_impl<segment>::obj_reclaimer;
 
 public:
-  using ptr = std::unique_ptr<T, obj_reclaimer>;
+  using value_type = T;
+  using ptr        = std::unique_ptr<T, obj_reclaimer>;
 
   /// Creates an object pool with the objects passed in the ctor.
   bounded_unique_object_pool(span<std::unique_ptr<T>> objects_) :
