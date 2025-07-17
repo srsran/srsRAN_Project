@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/adt/bounded_bitset.h"
+#include "srsran/support/cpu_architecture_info.h"
 #include "srsran/support/math/math_utils.h"
 #include <atomic>
 #include <memory>
@@ -48,9 +49,14 @@ public:
   bounded_object_pool_impl(unsigned nof_objects, Factory&& factory) : nof_objs(nof_objects)
   {
     report_fatal_error_if_not(capacity() > 0, "Number of objects must be greater than zero");
-    unsigned nof_segments = divide_ceil(capacity(), SegmentType::max_size());
-    segments.reserve(nof_segments);
+    const unsigned nof_segments = divide_ceil(capacity(), SegmentType::max_size());
 
+    // Compute the CPU offset scatter coefficient.
+    cpu_offset_scatter_coeff =
+        std::max(static_cast<size_t>(1U), cpu_architecture_info::get().get_host_nof_available_cpus() / nof_segments);
+
+    // Initialize segments.
+    segments.reserve(nof_segments);
     for (unsigned i = 0; i != nof_segments; ++i) {
       unsigned seg_nof_objs = SegmentType::max_size();
       if (i == nof_segments - 1) {
@@ -77,7 +83,7 @@ public:
   {
     unsigned offset = 0;
     if (segments.size() > 1) {
-      offset = sched_getcpu() % segments.size();
+      offset = (sched_getcpu() * cpu_offset_scatter_coeff) % segments.size();
     }
 
     for (unsigned i = 0; i != segments.size(); ++i) {
@@ -117,7 +123,11 @@ public:
     srsran_assert(prev & (1ULL << obj_idx), "Reclaiming an object that was not allocated");
   }
 
-  const unsigned                            nof_objs;
+  /// Number of objects that exist in the pool.
+  const unsigned nof_objs;
+  /// Used to determine the starting segment for allocation based on CPU ID.
+  unsigned cpu_offset_scatter_coeff;
+  /// List of segments that contain the objects.
   std::vector<std::unique_ptr<SegmentType>> segments;
 };
 
