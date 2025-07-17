@@ -374,7 +374,7 @@ std::unique_ptr<radio_unit> split6_flexible_o_du_low_factory::create_radio_unit(
 
 #ifndef SRSRAN_HAS_SPLIT6_ENTERPRISE
 std::unique_ptr<split6_flexible_o_du_low_factory>
-srsran::create_split6_flexible_o_du_low_factory(split6_o_du_low_unit_config                unit_config,
+srsran::create_split6_flexible_o_du_low_factory(const split6_o_du_low_unit_config&         unit_config,
                                                 worker_manager&                            workers,
                                                 timer_manager&                             timers,
                                                 split6_flexible_o_du_low_metrics_notifier* notifier)
