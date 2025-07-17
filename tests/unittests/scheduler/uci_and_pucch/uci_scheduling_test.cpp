@@ -12,7 +12,6 @@
 #include "uci_test_utils.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
-#include <random>
 
 using namespace srsran;
 

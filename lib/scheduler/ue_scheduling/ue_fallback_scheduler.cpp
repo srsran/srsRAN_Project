@@ -617,13 +617,14 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
   // Note: The confirmation of UE fallback exit coming from higher layers may be late. In such case, we err on the side
   // of caution and allocate a dedicated PUCCH as well. We do not need to do this for the CON RES CE or SRB0
   // allocations.
-  // Note: \c u.is_reestablished() is only set at the start of the RRC Reconfiguration procedure.
+  // Note: \c u.is_reestablished() is only set at the start of the RRC Reconfiguration procedure following a
+  // re-establishment.
   const bool use_common    = not u.is_reconfig_ongoing() or u.is_reestablished();
   bool       use_dedicated = u.is_reconfig_ongoing();
   if (u.ue_cfg_dedicated()->is_ue_cfg_complete()) {
     // Note: this check is meant for the case of the GNB missing the ACK for RRCSetup and then retransmitting it. In
     // this case, we need to schedule also on dedicated because the UE already has a dedicated configuration, even
-    // though we don't know that.
+    // though the gNB doesn't know that.
     // As a side effect, this will make the GNB also schedule on dedicated resources for the case of missing the ACK for
     // RRCReestablishment and then retransmitting it. This is not optimal, but not critical.
     use_dedicated |= is_retx;

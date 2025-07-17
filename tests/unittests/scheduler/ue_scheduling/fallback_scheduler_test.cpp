@@ -1561,7 +1561,7 @@ protected:
   }
 
   // Helper that generates the slot for the SRB0 buffer update.
-  static unsigned generate_srb0_traffic_slot() { return test_rgen::uniform_int(20U, 30U); }
+  static unsigned generate_srb_traffic_slot() { return test_rgen::uniform_int(20U, 30U); }
 
   const unsigned MAC_SRB_SDU_SIZE   = 101;
   const unsigned MAX_TEST_RUN_SLOTS = 50;
@@ -1574,7 +1574,7 @@ TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_srb0_is_retx_ed_only_pucch_common
 
   ASSERT_FALSE(u.get_pcell().cfg().init_bwp().ul_ded.has_value());
 
-  slot_point slot_update_srb_traffic{current_slot.numerology(), generate_srb0_traffic_slot()};
+  slot_point slot_update_srb_traffic{current_slot.numerology(), generate_srb_traffic_slot()};
 
   // Check if the SRB0 gets transmitted at least once.
   bool srb_transmitted = false;
@@ -1597,6 +1597,64 @@ TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_srb0_is_retx_ed_only_pucch_common
       ASSERT_EQ(1, std::count_if(pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) {
                   return pucch.crnti == rnti;
                 }));
+    }
+
+    // NACK the HARQ processes that are waiting for ACK to trigger a retransmissions.
+    const unsigned                        bit_index_1_harq_only = 0U;
+    std::optional<dl_harq_process_handle> dl_harq =
+        u.get_pcell().harqs.find_dl_harq_waiting_ack(current_slot, bit_index_1_harq_only);
+    if (dl_harq.has_value()) {
+      dl_harq->dl_ack_info(mac_harq_ack_report_status::nack, {});
+    }
+  }
+
+  ASSERT_TRUE(srb_transmitted);
+}
+
+TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_reconf_is_after_reest_both_common_and_ded_pucch_are_scheduled)
+{
+  const auto rnti        = to_rnti(0x4601);
+  const auto du_ue_index = to_du_ue_index(0);
+  ASSERT_TRUE(add_ue(rnti, du_ue_index));
+  auto& u = bench->ue_db[to_du_ue_index(0)];
+  ASSERT_TRUE(u.get_pcell().cfg().init_bwp().ul_ded.has_value());
+
+  // Signal a UE reconfiguration that happens after re-establishment.
+  auto ue_cfg = sched_config_helper::create_default_sched_ue_creation_request(bench->builder_params);
+  sched_ue_reconfiguration_message reconf_msg{
+      .ue_index = du_ue_index, .crnti = rnti, .cfg = ue_cfg.cfg, .reestablished = true};
+  auto ev = bench->cfg_mng.update_ue(reconf_msg);
+  u.handle_reconfiguration_request(ue_reconf_command{.cfg = ev.next_config()}, true);
+
+  slot_point slot_update_srb_traffic{current_slot.numerology(), generate_srb_traffic_slot()};
+
+  // Check if the SRB0 gets transmitted at least once.
+  bool srb_transmitted = false;
+  for (unsigned idx = 1; idx < MAX_TEST_RUN_SLOTS * (1U << current_slot.numerology()); idx++) {
+    run_slot();
+
+    // Allocate buffer for SRB1.
+    if (current_slot == slot_update_srb_traffic) {
+      push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, MAC_SRB_SDU_SIZE, false);
+    }
+
+    // If PUCCH is detected, then it must be 1 grant only (PUCCH common).
+    auto& pucchs = bench->res_grid[0].result.ul.pucchs;
+    if (not pucchs.empty()) {
+      srb_transmitted = true;
+      ASSERT_EQ(2, std::count_if(pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) {
+                  return pucch.crnti == rnti;
+                }));
+
+      const auto* pucch_common = std::find_if(pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) {
+        return pucch.crnti == rnti and pucch.pdu_context.is_common;
+      });
+      ASSERT_TRUE(pucch_common != pucchs.end());
+
+      const auto* pucch_ded = std::find_if(pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) {
+        return pucch.crnti == rnti and not pucch.pdu_context.is_common;
+      });
+      ASSERT_TRUE(pucch_ded != pucchs.end());
     }
 
     // NACK the HARQ processes that are waiting for ACK to trigger a retransmissions.
