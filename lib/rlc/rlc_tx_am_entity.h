@@ -169,9 +169,15 @@ public:
   {
     // Stop all timers. Any queued handlers of timers that just expired before this call are canceled automatically
     if (not stopped) {
-      poll_retransmit_timer.stop();
       high_metrics_timer.stop();
-      low_metrics_timer.stop();
+      // stop lower timers from cell executor
+      auto stop_low_timers = TRACE_TASK([this]() {
+        poll_retransmit_timer.stop();
+        low_metrics_timer.stop();
+      });
+      if (!pcell_executor.execute(std::move(stop_low_timers))) {
+        logger.log_error("Unable to stop lower timers.");
+      }
       stopped = true;
     }
   }
