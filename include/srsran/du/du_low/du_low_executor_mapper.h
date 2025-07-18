@@ -121,12 +121,12 @@ struct du_low_executor_mapper_manual_exec_config {
   task_executor* dl_executor = nullptr;
   /// Executor for PDSCH concurrent processing.
   task_executor* pdsch_executor = nullptr;
-  /// Executor for PUSCH reception.
-  task_executor* pusch_executor = nullptr;
-  /// Executor for PUCCH reception.
-  task_executor* pucch_executor = nullptr;
-  /// Executor for SRS reception.
-  task_executor* srs_executor = nullptr;
+  /// Limits the number of threads that can concurrently process PUCCH.
+  unsigned max_concurrent_pucch = 2;
+  /// Limits the number of threads that can concurrently process PUSCH.
+  unsigned max_concurrent_pusch = 2;
+  /// Limits the number of threads that can concurrently process SRS.
+  unsigned max_concurrent_srs = 2;
   /// Limits the number of threads that can decode PUSCH concurrently.
   unsigned max_concurrent_pusch_decoders = 2;
 };

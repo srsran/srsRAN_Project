@@ -128,8 +128,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   auto dependencies = thread_local_dependencies_pool->get();
 
   if (!dependencies) {
-    logger.error("Failed to retrieve PUSCH processor.");
-    notifier.on_sch({});
+    logger.error("Failed to retrieve PUSCH processor dependencies.");
 
     // Notify
     if (pdu.uci.nof_harq_ack != 0) {

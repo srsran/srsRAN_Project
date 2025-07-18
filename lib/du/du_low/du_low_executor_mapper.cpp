@@ -93,7 +93,6 @@ private:
   task_executor& csi_rs_exec;
   task_executor& prs_exec;
   task_executor& dl_grid_exec;
-
   task_executor& pdsch_codeblock_exec;
   task_executor& prach_exec;
   task_executor& pusch_exec;
@@ -151,11 +150,11 @@ public:
         dl_grid_exec         = manual.dl_executor;
         pdsch_codeblock_exec = manual.pdsch_executor;
         prach_exec           = create_strand(manual.high_priority_executor);
-        pusch_exec           = manual.pusch_executor;
+        pusch_exec = create_task_fork_limiter(manual.medium_priority_executor, manual.max_concurrent_pusch);
         pusch_dec_exec =
             create_task_fork_limiter(manual.medium_priority_executor, manual.max_concurrent_pusch_decoders);
-        pucch_exec = manual.pucch_executor;
-        srs_exec   = manual.srs_executor;
+        pucch_exec = create_task_fork_limiter(manual.high_priority_executor, manual.max_concurrent_pucch);
+        srs_exec   = create_task_fork_limiter(manual.low_priority_executor, manual.max_concurrent_srs);
       }
 
       srsran_assert(pdcch_exec != nullptr, "Invalid PDCCH executor.");

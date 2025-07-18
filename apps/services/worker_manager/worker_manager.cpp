@@ -501,9 +501,9 @@ worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::
           .low_priority_executor         = non_rt_low_prio_exec,
           .dl_executor                   = exec_mng.executors().at(l1_dl_exec_name),
           .pdsch_executor                = exec_mng.executors().at(l1_pdsch_exec_name),
-          .pusch_executor                = exec_mng.executors().at(l1_pusch_exec_name),
-          .pucch_executor                = exec_mng.executors().at(l1_pucch_exec_name),
-          .srs_executor                  = exec_mng.executors().at(l1_srs_exec_name),
+          .max_concurrent_pucch          = du_low.nof_ul_threads,
+          .max_concurrent_pusch          = du_low.nof_ul_threads,
+          .max_concurrent_srs            = du_low.nof_ul_threads,
           .max_concurrent_pusch_decoders = du_low.nof_pusch_decoder_threads});
 
       // Save DL executors for the higher layers.
