@@ -141,6 +141,10 @@ public:
   /// \brief Notifies about the reception of a Bearer Context Inactivity Notification message.
   /// \param[in] msg The received Bearer Context Inactivity Notification message.
   virtual void on_bearer_context_inactivity_notification_received(const cu_cp_inactivity_notification& msg) = 0;
+
+  /// \brief Notifies about the reception of an E1 Release Request message.
+  /// \param[in] ue_list The indices of the UEs connected to the CU-UP.
+  virtual void on_e1_release_request_received(const std::vector<ue_index_t>& ue_list) = 0;
 };
 
 /// Combined entry point for E1AP handling.

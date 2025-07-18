@@ -152,6 +152,10 @@ public:
   /// \brief Handle the reception of an Bearer Context Inactivity Notification message.
   /// \param[in] msg The received Bearer Context Inactivity Notification message.
   virtual void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) = 0;
+
+  /// \brief Handles the reception of an E1 Release Request message.
+  /// \param[in] ue_list The indices of the UEs connected to the CU-UP.
+  virtual void handle_e1_release_request(const std::vector<ue_index_t>& ue_list) = 0;
 };
 
 /// Interface used to handle DU specific procedures.

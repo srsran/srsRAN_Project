@@ -1,0 +1,64 @@
+/*
+ *
+ * Copyright 2021-2025 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#include "e1_release_procedure.h"
+#include "../ue_context/e1ap_cu_cp_ue_context.h"
+#include "cu_cp/ue_context/e1ap_cu_cp_ue_context.h"
+#include "srsran/e1ap/common/e1ap_message.h"
+#include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
+
+using namespace srsran;
+using namespace srs_cu_cp;
+
+e1_release_procedure::e1_release_procedure(const asn1::e1ap::e1_release_request_s& request_,
+                                           e1ap_message_notifier&                  pdu_notifier_,
+                                           e1ap_cu_cp_notifier&                    cu_cp_notifier_,
+                                           e1ap_ue_context_list&                   ue_list_,
+                                           srslog::basic_logger&                   logger_) :
+  request(request_), pdu_notifier(pdu_notifier_), cu_cp_notifier(cu_cp_notifier_), ue_list(ue_list_), logger(logger_)
+{
+}
+
+void e1_release_procedure::operator()(coro_context<async_task<void>>& ctx)
+{
+  CORO_BEGIN(ctx);
+
+  logger.debug("\"{}\" started...", name());
+
+  // If there are still active UEs, release them.
+  if (ue_list.size() > 0) {
+    request_ue_release();
+  }
+
+  // Send E1 Release Response
+  send_e1_release_response();
+
+  logger.info("\"{}\" finished successfully", name());
+
+  CORO_RETURN();
+}
+
+void e1_release_procedure::request_ue_release()
+{
+  for (auto& ue : ue_list) {
+    ues_to_release.push_back(ue.second.ue_ids.ue_index);
+  }
+
+  cu_cp_notifier.on_e1_release_request_received(ues_to_release);
+}
+
+void e1_release_procedure::send_e1_release_response()
+{
+  e1ap_message resp;
+  resp.pdu.set_successful_outcome().load_info_obj(ASN1_E1AP_ID_E1_RELEASE);
+  asn1::e1ap::e1_release_resp_s& rel_resp = resp.pdu.successful_outcome().value.e1_release_resp();
+  rel_resp->transaction_id                = request->transaction_id;
+  pdu_notifier.on_new_message(resp);
+}

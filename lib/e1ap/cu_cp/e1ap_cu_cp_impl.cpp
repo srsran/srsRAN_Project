@@ -11,6 +11,7 @@
 #include "e1ap_cu_cp_impl.h"
 #include "../common/e1ap_asn1_helpers.h"
 #include "../common/log_helpers.h"
+#include "cu_cp/procedures/e1_release_procedure.h"
 #include "e1ap_cu_cp_asn1_helpers.h"
 #include "procedures/bearer_context_modification_procedure.h"
 #include "procedures/bearer_context_release_procedure.h"
@@ -215,6 +216,10 @@ void e1ap_cu_cp_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& ms
     } break;
     case init_types::bearer_context_inactivity_notif: {
       handle_bearer_context_inactivity_notification(msg.value.bearer_context_inactivity_notif());
+    } break;
+    case init_types::e1_release_request: {
+      cu_up_processor_notifier.schedule_async_task(launch_async<e1_release_procedure>(
+          msg.value.e1_release_request(), pdu_notifier, cu_cp_notifier, ue_ctxt_list, logger));
     } break;
     default:
       logger.warning("Initiating message of type {} is not supported", msg.value.type().to_string());

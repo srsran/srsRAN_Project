@@ -40,6 +40,11 @@ public:
     logger.info("Received an inactivity notification");
   }
 
+  void on_e1_release_request_received(const std::vector<srs_cu_cp::ue_index_t>& ue_list) override
+  {
+    logger.info("Received E1 Release Request for {} UEs", ue_list.size());
+  }
+
   bool schedule_async_task(ue_index_t ue_index, async_task<void> task) override
   {
     srsran_assert(ue_mng.find_ue_task_scheduler(ue_index) != nullptr, "UE task scheduler must be present");
