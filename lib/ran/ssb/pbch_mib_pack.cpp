@@ -73,3 +73,8 @@ uint32_t srsran::pbch_mib_pack(const pbch_mib_message& msg)
 
   return payload;
 }
+
+uint32_t srsran::pbch_mib_and_timing_pack(const pbch_mib_message& msg, unsigned L_max)
+{
+  return (pbch_mib_pack(msg) | pbch_timing_pack(msg.sfn, msg.hrf, msg.ssb_block_index, msg.subcarrier_offset, L_max));
+}
