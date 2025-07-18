@@ -25,7 +25,6 @@ namespace srsran {
 /// PBCH encoder implementation.
 class pbch_encoder_impl : public pbch_encoder
 {
-private:
   std::unique_ptr<crc_calculator>          crc24c;
   std::unique_ptr<pseudo_random_generator> scrambler;
   std::unique_ptr<polar_interleaver>       interleaver;
@@ -84,6 +83,7 @@ public:
     report_fatal_error_if_not(code, "Invalid Polar code.");
     report_fatal_error_if_not(encoder, "Invalid Polar encoder.");
     report_fatal_error_if_not(rm, "Invalid Polar RM.");
+
     code->set(B, E, POLAR_N_MAX_LOG, polar_code_ibil::not_present);
   }
 

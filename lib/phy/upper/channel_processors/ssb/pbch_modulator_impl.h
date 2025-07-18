@@ -19,7 +19,6 @@ namespace srsran {
 /// PBCH modulator implementation.
 class pbch_modulator_impl : public pbch_modulator
 {
-private:
   std::unique_ptr<modulation_mapper>       modulator;
   std::unique_ptr<pseudo_random_generator> scrambler;
 

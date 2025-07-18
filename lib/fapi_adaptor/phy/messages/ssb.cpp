@@ -19,7 +19,7 @@ using namespace fapi_adaptor;
 static void unpack_bch_payload(span<uint8_t> dest, const fapi::dl_ssb_pdu& fapi_pdu)
 {
   report_error_if_not(fapi_pdu.bch_payload_flag == fapi::bch_payload_type::phy_timing_info, "Invalid BCH payload flag");
-  srsvec::bit_unpack(dest, fapi_pdu.bch_payload.bch_payload << 8, dest.size());
+  srsvec::bit_unpack(dest, fapi_pdu.bch_payload.bch_payload, dest.size());
 }
 
 /// Returns the coefficient \f$\beta_{PSS}\f$ from the given SSB PDU (see TS38.213, Section 4.1).
@@ -57,7 +57,7 @@ void srsran::fapi_adaptor::convert_ssb_fapi_to_phy(ssb_processor::pdu_t&   proc_
   proc_pdu.pattern_case      = fapi_pdu.ssb_maintenance_v3.case_type;
   proc_pdu.common_scs        = scs_common;
 
-  unpack_bch_payload(proc_pdu.bch_payload, fapi_pdu);
+  unpack_bch_payload(proc_pdu.mib_payload, fapi_pdu);
 
   // Use only a single port for SSB.
   proc_pdu.ports = {0};

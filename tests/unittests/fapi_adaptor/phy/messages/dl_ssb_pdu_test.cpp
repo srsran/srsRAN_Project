@@ -133,9 +133,9 @@ TEST(fapi_to_phy_ssb_conversion_test, valid_pdu_conversion_success)
               ASSERT_EQ(pdu.pattern_case, pattern_case);
               ASSERT_TRUE(srsvec::equal(pdu.ports, std::vector<uint8_t>{0}));
 
-              std::array<uint8_t, ssb_processor::BCH_PAYLOAD_SIZE> dest;
-              srsvec::bit_unpack(dest, mib_payload << 8, dest.size());
-              ASSERT_EQ(pdu.bch_payload, dest);
+              std::array<uint8_t, ssb_processor::MIB_PAYLOAD_SIZE> dest;
+              srsvec::bit_unpack(dest, mib_payload, dest.size());
+              ASSERT_EQ(pdu.mib_payload, dest);
             }
           }
         }

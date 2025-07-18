@@ -43,9 +43,9 @@ public:
 
     std::chrono::nanoseconds time_ns = time_execution(func);
 
-    static_bit_buffer<BCH_PAYLOAD_SIZE> data(pdu.bch_payload.size());
+    static_bit_buffer<MIB_PAYLOAD_SIZE> data(pdu.mib_payload.size());
     srsvec::zero(data.get_buffer());
-    srsvec::bit_pack(data, pdu.bch_payload);
+    srsvec::bit_pack(data, pdu.mib_payload);
 
     if (logger.debug.enabled()) {
       // Detailed log information, including a list of all SSB PDU fields.
