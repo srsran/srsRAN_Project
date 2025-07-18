@@ -14,10 +14,28 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
+/// Adapter between E1AP and CU-UP processor
+class cu_up_processor_impl::e1ap_cu_up_processor_adapter : public e1ap_cu_up_processor_notifier
+{
+public:
+  e1ap_cu_up_processor_adapter(cu_up_processor_impl& parent_) : parent(parent_) {}
+
+  void on_cu_up_e1_setup_request_received(const cu_up_e1_setup_request& msg) override
+  {
+    parent.handle_cu_up_e1_setup_request(msg);
+  }
+
+private:
+  cu_up_processor_impl& parent;
+};
+
 cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config_t cu_up_processor_config_,
                                            e1ap_message_notifier&         e1ap_notifier_,
                                            e1ap_cu_cp_notifier&           cu_cp_notifier_) :
-  cfg(cu_up_processor_config_), e1ap_notifier(e1ap_notifier_), cu_cp_notifier(cu_cp_notifier_)
+  cfg(cu_up_processor_config_),
+  e1ap_notifier(e1ap_notifier_),
+  cu_cp_notifier(cu_cp_notifier_),
+  e1ap_ev_notifier(std::make_unique<e1ap_cu_up_processor_adapter>(*this))
 {
   context.cu_cp_name  = cfg.name;
   context.cu_up_index = cfg.cu_up_index;
@@ -25,12 +43,11 @@ cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config_t cu_up_
   // create e1
   e1ap = create_e1ap(cfg.cu_cp_cfg.e1ap,
                      e1ap_notifier,
-                     e1ap_ev_notifier,
+                     *e1ap_ev_notifier,
                      cu_cp_notifier,
                      *cfg.cu_cp_cfg.services.timers,
                      *cfg.cu_cp_cfg.services.cu_cp_executor,
                      cfg.cu_cp_cfg.admission.max_nof_ues);
-  e1ap_ev_notifier.connect_cu_up_processor(*this);
 }
 
 void cu_up_processor_impl::stop(ue_index_t ue_idx)

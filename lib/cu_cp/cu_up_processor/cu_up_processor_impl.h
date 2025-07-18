@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "../adapters/e1ap_adapters.h"
 #include "cu_up_processor_config.h"
+#include "cu_up_processor_impl_interface.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include <string>
@@ -42,6 +42,8 @@ public:
   void update_ue_index(ue_index_t ue_index, ue_index_t old_ue_index) override;
 
 private:
+  class e1ap_cu_up_processor_adapter;
+
   // E1AP senders
 
   /// \brief Create and transmit the GNB-CU-UP E1 Setup response message.
@@ -60,11 +62,11 @@ private:
 
   cu_up_processor_context context;
 
+  // E1AP to CU-UP processor adapter
+  std::unique_ptr<e1ap_cu_up_processor_notifier> e1ap_ev_notifier;
+
   // Components
   std::unique_ptr<e1ap_interface> e1ap;
-
-  // E1AP to CU-UP processor adapter
-  e1ap_cu_up_processor_adapter e1ap_ev_notifier;
 };
 
 } // namespace srs_cu_cp
