@@ -22,7 +22,8 @@
 
 using namespace srsran;
 
-static constexpr bool EnableMetrics = true;
+/// Colllect metrics on the bounded object pool operations.
+static constexpr bool EnableMetrics = false;
 
 template <typename Pool>
 class common_bounded_object_pool_test : public ::testing::Test
@@ -110,6 +111,8 @@ TYPED_TEST(common_bounded_object_pool_test, stress_pool)
     avg_latency += latencies[i];
   }
   avg_latency /= nof_workers;
+  uint64_t nof_alloc_reattempts = this->pool.nof_alloc_reattempts();
+  uint64_t nof_scanned_segments = this->pool.nof_scanned_segments();
 
   std::vector<typename decltype(this->pool)::ptr> objs;
   for (unsigned i = 0; i != this->pool.capacity(); ++i) {
@@ -130,8 +133,8 @@ TYPED_TEST(common_bounded_object_pool_test, stress_pool)
   fmt::print("Time elapsed: {:.2} s\n", latency_secs);
   fmt::print("Rate: {:.2} calls/sec\n", nof_operations / latency_secs);
   fmt::print("Average get() latency: {} ns\n", avg_latency.count() / nof_operations);
-  fmt::print("Nof scanned elements: {}\n", this->pool.nof_scanned_segments());
-  fmt::print("Nof alloc reattempts: {}\n", this->pool.nof_alloc_reattempts());
+  fmt::print("Nof scanned elements: {}\n", nof_scanned_segments);
+  fmt::print("Nof alloc reattempts: {}\n", nof_alloc_reattempts);
 }
 
 template <typename Pool>

@@ -107,8 +107,9 @@ public:
     const unsigned nof_segments = divide_ceil(capacity(), base_segment::max_size());
 
     // Compute the CPU offset scatter coefficient.
-    cpu_offset_scatter_coeff =
-        std::max(static_cast<size_t>(1U), cpu_architecture_info::get().get_host_nof_available_cpus() / nof_segments);
+    const unsigned nof_available_cpus = cpu_architecture_info::get().get_host_nof_available_cpus();
+    cpu_seg_offset_dist_coeff         = std::max(1U, nof_segments / nof_available_cpus);
+    cpu_bit_shift_dist_coeff = std::max(1U, static_cast<unsigned>(base_segment::max_size()) / nof_available_cpus);
 
     // Initialize segments.
     segments.reserve(nof_segments);
@@ -139,9 +140,9 @@ public:
     const unsigned cpuid      = std::max(::sched_getcpu(), 0);
     unsigned       seg_offset = 0;
     if (segments.size() > 1) {
-      seg_offset = (cpuid * cpu_offset_scatter_coeff) % segments.size();
+      seg_offset = (cpuid * cpu_seg_offset_dist_coeff) % segments.size();
     }
-    const unsigned bit_shift = cpuid % base_segment::max_size();
+    const unsigned bit_shift = (cpuid * cpu_bit_shift_dist_coeff) % base_segment::max_size();
 
     for (unsigned i = 0; i != segments.size(); ++i) {
       unsigned     idx = (seg_offset + i) % segments.size();
@@ -194,7 +195,9 @@ public:
   /// Number of objects that exist in the pool.
   const unsigned nof_objs;
   /// Used to determine the starting segment for allocation based on CPU ID.
-  unsigned cpu_offset_scatter_coeff;
+  unsigned cpu_seg_offset_dist_coeff;
+  /// Used to determine the bit shift distance between contiguous CPUs.
+  unsigned cpu_bit_shift_dist_coeff;
   /// List of segments that contain the objects.
   std::vector<std::unique_ptr<SegmentType>> segments;
 };
