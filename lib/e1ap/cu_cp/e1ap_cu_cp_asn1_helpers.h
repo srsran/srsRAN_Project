@@ -127,8 +127,8 @@ inline void fill_asn1_qos_flow_info_item(asn1::e1ap::qos_flow_qos_param_item_s& 
 
   // Fill paging policy indication.
   if (qos_flow_level_params.paging_policy_ind.has_value()) {
-    asn1_qos_flow_info_item.qos_flow_level_qos_params.paging_policy_ind_present = true;
-    asn1_qos_flow_info_item.qos_flow_level_qos_params.paging_policy_ind =
+    asn1_qos_flow_info_item.qos_flow_level_qos_params.paging_policy_idx_present = true;
+    asn1_qos_flow_info_item.qos_flow_level_qos_params.paging_policy_idx =
         qos_flow_level_params.paging_policy_ind.value();
   }
 
