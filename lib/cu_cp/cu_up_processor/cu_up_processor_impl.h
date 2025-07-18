@@ -12,6 +12,7 @@
 
 #include "cu_up_processor_config.h"
 #include "cu_up_processor_impl_interface.h"
+#include "srsran/cu_cp/common_task_scheduler.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include <string>
@@ -24,7 +25,8 @@ class cu_up_processor_impl : public cu_up_processor_impl_interface
 public:
   cu_up_processor_impl(const cu_up_processor_config_t cu_up_processor_config_,
                        e1ap_message_notifier&         e1ap_notifier_,
-                       e1ap_cu_cp_notifier&           cu_cp_notifier_);
+                       e1ap_cu_cp_notifier&           cu_cp_notifier_,
+                       common_task_scheduler&         common_task_sched_);
 
   void stop(ue_index_t ue_index) override;
 

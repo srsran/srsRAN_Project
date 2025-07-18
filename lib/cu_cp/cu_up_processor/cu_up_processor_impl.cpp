@@ -18,24 +18,34 @@ using namespace srs_cu_cp;
 class cu_up_processor_impl::e1ap_cu_up_processor_adapter : public e1ap_cu_up_processor_notifier
 {
 public:
-  e1ap_cu_up_processor_adapter(cu_up_processor_impl& parent_) : parent(parent_) {}
+  e1ap_cu_up_processor_adapter(cu_up_processor_impl& parent_, common_task_scheduler& common_task_sched_) :
+    parent(parent_), common_task_sched(&common_task_sched_)
+  {
+  }
 
   void on_cu_up_e1_setup_request_received(const cu_up_e1_setup_request& msg) override
   {
     parent.handle_cu_up_e1_setup_request(msg);
   }
 
+  bool schedule_async_task(async_task<void> task) override
+  {
+    return common_task_sched->schedule_async_task(std::move(task));
+  }
+
 private:
-  cu_up_processor_impl& parent;
+  cu_up_processor_impl&  parent;
+  common_task_scheduler* common_task_sched = nullptr;
 };
 
 cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config_t cu_up_processor_config_,
                                            e1ap_message_notifier&         e1ap_notifier_,
-                                           e1ap_cu_cp_notifier&           cu_cp_notifier_) :
+                                           e1ap_cu_cp_notifier&           cu_cp_notifier_,
+                                           common_task_scheduler&         common_task_sched_) :
   cfg(cu_up_processor_config_),
   e1ap_notifier(e1ap_notifier_),
   cu_cp_notifier(cu_cp_notifier_),
-  e1ap_ev_notifier(std::make_unique<e1ap_cu_up_processor_adapter>(*this))
+  e1ap_ev_notifier(std::make_unique<e1ap_cu_up_processor_adapter>(*this, common_task_sched_))
 {
   context.cu_cp_name  = cfg.name;
   context.cu_up_index = cfg.cu_up_index;

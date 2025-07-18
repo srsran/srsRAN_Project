@@ -19,9 +19,10 @@ using namespace srs_cu_cp;
 std::unique_ptr<cu_up_processor_impl_interface>
 srsran::srs_cu_cp::create_cu_up_processor(const cu_up_processor_config_t cu_up_processor_config_,
                                           e1ap_message_notifier&         e1ap_notifier_,
-                                          e1ap_cu_cp_notifier&           cu_cp_notifier_)
+                                          e1ap_cu_cp_notifier&           cu_cp_notifier_,
+                                          common_task_scheduler&         common_task_sched_)
 {
-  auto cu_up_processor =
-      std::make_unique<cu_up_processor_impl>(cu_up_processor_config_, e1ap_notifier_, cu_cp_notifier_);
+  auto cu_up_processor = std::make_unique<cu_up_processor_impl>(
+      cu_up_processor_config_, e1ap_notifier_, cu_cp_notifier_, common_task_sched_);
   return cu_up_processor;
 }

@@ -41,6 +41,7 @@ protected:
 
   ue_manager                                      ue_mng{cu_cp_cfg};
   dummy_e1ap_cu_cp_notifier                       cu_cp_notifier{ue_mng};
+  std::unique_ptr<common_task_scheduler>          common_task_sched;
   std::unique_ptr<cu_up_processor_impl_interface> cu_up_processor_obj;
 };
 

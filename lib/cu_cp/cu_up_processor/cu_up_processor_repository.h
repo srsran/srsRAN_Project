@@ -11,7 +11,7 @@
 #pragma once
 
 #include "cu_up_processor_impl_interface.h"
-#include "srsran/cu_cp/cu_cp_e1_handler.h"
+#include "srsran/cu_cp/common_task_scheduler.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include <map>
 
@@ -23,6 +23,7 @@ struct cu_cp_configuration;
 struct cu_up_repository_config {
   const cu_cp_configuration& cu_cp;
   e1ap_cu_cp_notifier&       e1ap_ev_notifier;
+  common_task_scheduler&     common_task_sched;
   srslog::basic_logger&      logger;
 };
 

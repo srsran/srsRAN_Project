@@ -60,8 +60,18 @@ struct bearer_creation_complete_message {
   ue_index_t ue_index;
 };
 
+/// Scheduler of E1AP async tasks using common signalling.
+class e1ap_common_cu_up_task_notifier
+{
+public:
+  virtual ~e1ap_common_cu_up_task_notifier() = default;
+
+  /// Schedule common E1AP task.
+  virtual bool schedule_async_task(async_task<void> task) = 0;
+};
+
 /// Methods used by E1AP to notify the CU-UP processor.
-class e1ap_cu_up_processor_notifier
+class e1ap_cu_up_processor_notifier : public e1ap_common_cu_up_task_notifier
 {
 public:
   virtual ~e1ap_cu_up_processor_notifier() = default;
