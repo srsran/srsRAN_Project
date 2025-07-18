@@ -16,14 +16,8 @@ using namespace srs_cu_cp;
 
 cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config_t cu_up_processor_config_,
                                            e1ap_message_notifier&         e1ap_notifier_,
-                                           e1ap_cu_cp_notifier&           cu_cp_notifier_,
-                                           cu_up_task_scheduler&          task_sched_,
-                                           task_executor&                 ctrl_exec_) :
-  cfg(cu_up_processor_config_),
-  e1ap_notifier(e1ap_notifier_),
-  cu_cp_notifier(cu_cp_notifier_),
-  task_sched(task_sched_),
-  ctrl_exec(ctrl_exec_)
+                                           e1ap_cu_cp_notifier&           cu_cp_notifier_) :
+  cfg(cu_up_processor_config_), e1ap_notifier(e1ap_notifier_), cu_cp_notifier(cu_cp_notifier_)
 {
   context.cu_cp_name  = cfg.name;
   context.cu_up_index = cfg.cu_up_index;
@@ -33,8 +27,8 @@ cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config_t cu_up_
                      e1ap_notifier,
                      e1ap_ev_notifier,
                      cu_cp_notifier,
-                     task_sched.get_timer_manager(),
-                     ctrl_exec,
+                     *cfg.cu_cp_cfg.services.timers,
+                     *cfg.cu_cp_cfg.services.cu_cp_executor,
                      cfg.cu_cp_cfg.admission.max_nof_ues);
   e1ap_ev_notifier.connect_cu_up_processor(*this);
 }

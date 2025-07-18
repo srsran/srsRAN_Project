@@ -10,12 +10,10 @@
 
 #pragma once
 
-#include "../task_schedulers/cu_up_task_scheduler.h"
 #include "cu_up_processor_impl_interface.h"
 #include "srsran/cu_cp/cu_cp_e1_handler.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include <map>
-#include <unordered_map>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -66,8 +64,6 @@ private:
 
   cu_up_repository_config cfg;
   srslog::basic_logger&   logger;
-
-  cu_up_task_scheduler cu_up_task_sched;
 
   std::map<cu_up_index_t, cu_up_context> cu_up_db;
 
