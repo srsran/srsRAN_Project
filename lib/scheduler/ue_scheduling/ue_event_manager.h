@@ -95,7 +95,7 @@ private:
     }
   };
   struct cell_event_t {
-    using callback_type = unique_function<void(ue_cell&), 32, true>;
+    using callback_type = unique_function<void(ue_cell&), 42, true>;
 
     du_ue_index_t ue_index = MAX_NOF_DU_UES;
     callback_type callback;
