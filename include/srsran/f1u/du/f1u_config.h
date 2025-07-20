@@ -20,7 +20,8 @@ namespace srsran::srs_du {
 struct f1u_config {
   uint32_t t_notify;              ///< Timer used for periodic transmission of uplink notifications
   uint32_t rlc_queue_bytes_limit; ///< RLC queue limit in bytes. Used for initial report of buffer space to the CU-UP.
-  bool     warn_on_drop = true;   ///< Log a warning instead of an info message whenever a PDU is dropped
+  bool     warn_on_drop         = true;  ///< Log a warning instead of an info message whenever a PDU is dropped
+  bool     buffer_ul_on_startup = false; ///< Buffer UL SDUs on startup. Useful during handover to avoid losses.
 
   bool operator==(const f1u_config& other) const
   {

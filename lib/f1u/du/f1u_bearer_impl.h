@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/ring_buffer.h"
 #include "srsran/f1u/du/f1u_bearer.h"
 #include "srsran/f1u/du/f1u_bearer_logger.h"
 #include "srsran/f1u/du/f1u_config.h"
@@ -59,6 +60,10 @@ private:
   /// Config storage
   const f1u_config              cfg;
   const up_transport_layer_info dl_tnl_info;
+
+  /// Buffering
+  bool                              buffering;
+  ring_buffer<nru_ul_message, true> ul_buffer;
 
   f1u_rx_sdu_notifier& rx_sdu_notifier;
   f1u_tx_pdu_notifier& tx_pdu_notifier;

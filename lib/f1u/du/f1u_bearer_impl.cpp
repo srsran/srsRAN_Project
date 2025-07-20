@@ -25,6 +25,8 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
   logger("DU-F1-U", {ue_index, drb_id_, dl_tnl_info_}),
   cfg(config),
   dl_tnl_info(dl_tnl_info_),
+  buffering(cfg.buffer_ul_on_startup),
+  ul_buffer(4096),
   rx_sdu_notifier(rx_sdu_notifier_),
   tx_pdu_notifier(tx_pdu_notifier_),
   ue_executor(ue_executor_),
@@ -50,7 +52,11 @@ void f1u_bearer_impl::handle_sdu(byte_buffer_chain sdu)
   // attach data delivery status (if anything has changed)
   fill_data_delivery_status(msg);
 
-  tx_pdu_notifier.on_new_pdu(std::move(msg));
+  if (buffering) {
+    ul_buffer.push(std::move(msg));
+  } else {
+    tx_pdu_notifier.on_new_pdu(std::move(msg));
+  }
 }
 
 void f1u_bearer_impl::handle_pdu(nru_dl_message msg)
