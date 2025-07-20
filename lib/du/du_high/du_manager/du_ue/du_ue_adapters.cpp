@@ -55,6 +55,7 @@ public:
   void handle_retransmit_notification(uint32_t highest_pdcp_sn) override {}
   void handle_delivery_retransmitted_notification(uint32_t highest_pdcp_sn) override {}
   void handle_sdu(byte_buffer_chain sdu) override {}
+  void flush_ul_buffer() override {}
   void stop() override {}
 } null_f1u_bearer;
 

@@ -117,6 +117,13 @@ void f1ap_du_ue_context_modification_procedure::create_du_request(const asn1::f1
     // >> Pass UE capabilities.
     du_request.ue_cap_rat_list = msg->cu_to_du_rrc_info.ue_cap_rat_container_list.copy();
   }
+
+  if (msg->rrc_recfg_complete_ind_present) {
+    // >>RRC Reconfiguration Complete Indicator IE.
+    // [TS 38.473, 9.3.1.30] This IE indicates the result of the reconfiguration performed towards the UE.
+    du_request.rrc_recfg_complete_ind =
+        msg->rrc_recfg_complete_ind == asn1::f1ap::rrc_recfg_complete_ind_opts::options::true_value;
+  }
 }
 
 void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_response()

@@ -40,10 +40,13 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
   ul_notif_timer.run();
 
   ul_buffer_timer.set(std::chrono::milliseconds(500), [this](timer_id_t tid) {
+    logger.log_warning("UL buffering timed out. Flushing PDus. {} {}", cfg, dl_tnl_info);
     flush_ul_buffer();
     buffering = false;
   });
-  ul_buffer_timer.run();
+  if (cfg.buffer_ul_on_startup) {
+    ul_buffer_timer.run();
+  }
   logger.log_info("F1-U bearer configured. {} {}", cfg, dl_tnl_info);
 }
 
@@ -59,7 +62,7 @@ void f1u_bearer_impl::handle_sdu(byte_buffer_chain sdu)
   fill_data_delivery_status(msg);
 
   if (buffering) {
-    logger.log_error("Buffering UL PDU. ul_buffer_size={}", ul_buffer.size());
+    logger.log_debug("Buffering UL PDU. ul_buffer_size={}", ul_buffer.size());
     ul_buffer.try_push(std::move(msg));
   } else {
     tx_pdu_notifier.on_new_pdu(std::move(msg));
@@ -119,12 +122,17 @@ void f1u_bearer_impl::handle_pdu_impl(nru_dl_message msg)
 
 void f1u_bearer_impl::flush_ul_buffer()
 {
-  logger.log_error("Flushing UL PDUs. ul_buffer_size={}", ul_buffer.size());
+  if (not buffering) {
+    return;
+  }
+  logger.log_debug("Flushing UL PDUs. ul_buffer_size={}", ul_buffer.size());
   span<nru_ul_message> ul_msg_span;
   ul_buffer.pop_into(ul_msg_span);
   for (auto& ul_msg : ul_msg_span) {
     tx_pdu_notifier.on_new_pdu(std::move(ul_msg));
   }
+  buffering = false;
+  ul_buffer_timer.stop();
 }
 void f1u_bearer_impl::handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t desired_buf_size)
 {

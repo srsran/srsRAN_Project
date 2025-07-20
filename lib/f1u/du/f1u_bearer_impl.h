@@ -45,6 +45,7 @@ public:
   f1u_rx_pdu_handler&      get_rx_pdu_handler() override { return *this; }
 
   void handle_sdu(byte_buffer_chain sdu) override;
+  void flush_ul_buffer() override;
   void handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t desired_buf_size) override;
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override;
   void handle_retransmit_notification(uint32_t highest_pdcp_sn) override;
@@ -78,7 +79,7 @@ private:
   /// lower layers.
   unique_timer ul_notif_timer;
 
-  /// Time used to limit the handover buffering while waiting for the DU to notify that the handover is finished. 
+  /// Time used to limit the handover buffering while waiting for the DU to notify that the handover is finished.
   unique_timer ul_buffer_timer;
 
   /// Holds the most recent information of the available space in the RLC SDU queue
@@ -110,7 +111,6 @@ private:
   bool send_data_delivery_status();
 
   void handle_pdu_impl(nru_dl_message msg);
-  void flush_ul_buffer();
 
   void on_expired_ul_notif_timer();
 };

@@ -61,6 +61,11 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   // > Destroy old DU UE bearers that are now detached from remaining layers.
   clear_old_ue_context();
 
+  // > Flush any buffering F1-U bearers when HO is finalized.
+  if (request.rrc_recfg_complete_ind) {
+    handle_rrc_reconfiguration_complete_ind();
+  }
+
   proc_logger.log_proc_completed();
 
   CORO_RETURN(mac_res.result ? make_ue_config_response() : make_ue_config_failure());
@@ -441,4 +446,13 @@ bool ue_configuration_procedure::changed_detected() const
   return !request.drbs_to_setup.empty() || !request.drbs_to_mod.empty() || !request.srbs_to_setup.empty() ||
          !request.drbs_to_rem.empty() || !request.scells_to_setup.empty() || !request.scells_to_rem.empty() ||
          !request.ho_prep_info.empty() || request.full_config_required;
+}
+
+void ue_configuration_procedure::handle_rrc_reconfiguration_complete_ind()
+{
+  for (auto& [bearer_id, bearer] : ue->bearers.drbs()) {
+    if (bearer != nullptr && bearer->drb_f1u != nullptr) {
+      bearer->drb_f1u->get_tx_sdu_handler().flush_ul_buffer();
+    }
+  }
 }
