@@ -31,6 +31,7 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
   tx_pdu_notifier(tx_pdu_notifier_),
   ue_executor(ue_executor_),
   ul_notif_timer(timers.create_timer()),
+  ul_buffer_timer(timers.create_timer()),
   desired_buffer_size_for_data_radio_bearer(cfg.rlc_queue_bytes_limit),
   notif_desired_buffer_size_for_data_radio_bearer(
       0) // make sure that we send an initial buffer report, even if there is no data
@@ -38,6 +39,11 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
   ul_notif_timer.set(std::chrono::milliseconds(cfg.t_notify), [this](timer_id_t tid) { on_expired_ul_notif_timer(); });
   ul_notif_timer.run();
 
+  ul_buffer_timer.set(std::chrono::milliseconds(500), [this](timer_id_t tid) {
+    flush_ul_buffer();
+    buffering = false;
+  });
+  ul_buffer_timer.run();
   logger.log_info("F1-U bearer configured. {} {}", cfg, dl_tnl_info);
 }
 
@@ -53,7 +59,8 @@ void f1u_bearer_impl::handle_sdu(byte_buffer_chain sdu)
   fill_data_delivery_status(msg);
 
   if (buffering) {
-    ul_buffer.push(std::move(msg));
+    logger.log_error("Buffering UL PDU. ul_buffer_size={}", ul_buffer.size());
+    ul_buffer.try_push(std::move(msg));
   } else {
     tx_pdu_notifier.on_new_pdu(std::move(msg));
   }
@@ -110,6 +117,15 @@ void f1u_bearer_impl::handle_pdu_impl(nru_dl_message msg)
   }
 }
 
+void f1u_bearer_impl::flush_ul_buffer()
+{
+  logger.log_error("Flushing UL PDUs. ul_buffer_size={}", ul_buffer.size());
+  span<nru_ul_message> ul_msg_span;
+  ul_buffer.pop_into(ul_msg_span);
+  for (auto& ul_msg : ul_msg_span) {
+    tx_pdu_notifier.on_new_pdu(std::move(ul_msg));
+  }
+}
 void f1u_bearer_impl::handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t desired_buf_size)
 {
   // This function may be called from pcell_executor, since it only writes to an atomic variable
@@ -158,8 +174,8 @@ bool f1u_bearer_impl::fill_highest_transmitted_pdcp_sn(nru_dl_data_delivery_stat
   // TS 38.425 Sec. 5.4.2.1
   // (...)
   // In case the DL DATA DELIVERY STATUS frame is sent before any NR PDCP PDU is transferred to lower layers, the
-  // information on the highest NR PDCP PDU sequence number successfully delivered in sequence to the UE and the highest
-  // NR PDCP PDU sequence number transmitted to the lower layers may not be provided.
+  // information on the highest NR PDCP PDU sequence number successfully delivered in sequence to the UE and the
+  // highest NR PDCP PDU sequence number transmitted to the lower layers may not be provided.
   if (cur_highest_transmitted_pdcp_sn != unset_pdcp_sn) {
     logger.log_debug("Adding highest transmitted pdcp_sn={}", cur_highest_transmitted_pdcp_sn);
     status.highest_transmitted_pdcp_sn = cur_highest_transmitted_pdcp_sn;
@@ -180,8 +196,8 @@ bool f1u_bearer_impl::fill_highest_delivered_pdcp_sn(nru_dl_data_delivery_status
   // PDUs;
   // (...)
   // In case the DL DATA DELIVERY STATUS frame is sent before any NR PDCP PDU is transferred to lower layers, the
-  // information on the highest NR PDCP PDU sequence number successfully delivered in sequence to the UE and the highest
-  // NR PDCP PDU sequence number transmitted to the lower layers may not be provided.
+  // information on the highest NR PDCP PDU sequence number successfully delivered in sequence to the UE and the
+  // highest NR PDCP PDU sequence number transmitted to the lower layers may not be provided.
   if (cur_highest_delivered_pdcp_sn != unset_pdcp_sn) {
     logger.log_debug("Adding highest delivered pdcp_sn={}", cur_highest_delivered_pdcp_sn);
     status.highest_delivered_pdcp_sn = cur_highest_delivered_pdcp_sn;

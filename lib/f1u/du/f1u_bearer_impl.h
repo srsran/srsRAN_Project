@@ -78,6 +78,9 @@ private:
   /// lower layers.
   unique_timer ul_notif_timer;
 
+  /// Time used to limit the handover buffering while waiting for the DU to notify that the handover is finished. 
+  unique_timer ul_buffer_timer;
+
   /// Holds the most recent information of the available space in the RLC SDU queue
   std::atomic<uint32_t> desired_buffer_size_for_data_radio_bearer;
   /// Holds the most recent highest transmitted PDCP SN that is frequently updated by lower layers (i.e. by RLC AM/UM)
@@ -107,6 +110,7 @@ private:
   bool send_data_delivery_status();
 
   void handle_pdu_impl(nru_dl_message msg);
+  void flush_ul_buffer();
 
   void on_expired_ul_notif_timer();
 };

@@ -150,7 +150,7 @@ void ue_configuration_procedure::update_ue_context()
                                                                   drb_cfg.qos.qos_desc.get_5qi(),
                                                                   drb_cfg.rlc_cfg,
                                                                   drb_cfg.f1u,
-                                                                  request.ho_prep_info.empty(),
+                                                                  not request.ho_prep_info.empty(),
                                                                   drbtoadd.uluptnl_info_list,
                                                                   ue_mng.get_f1u_teid_pool(),
                                                                   du_params,
