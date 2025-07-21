@@ -269,8 +269,15 @@ protected:
             .value();
     request.non_crit_ext = recfg_v1530_ies;
 
-    t = launch_async<handover_reconfiguration_routine>(
-        request, target_ue->get_ue_index(), *source_ue, source_f1ap_ue_ctxt_mng, cu_cp_handler, test_logger);
+    e1ap_bearer_context_modification_request target_bearer_context_modification_request;
+
+    t = launch_async<handover_reconfiguration_routine>(request,
+                                                       target_bearer_context_modification_request,
+                                                       target_ue->get_ue_index(),
+                                                       *source_ue,
+                                                       source_f1ap_ue_ctxt_mng,
+                                                       cu_cp_handler,
+                                                       test_logger);
     t_launcher.emplace(t);
   }
 

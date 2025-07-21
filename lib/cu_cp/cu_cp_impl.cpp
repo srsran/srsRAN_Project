@@ -402,7 +402,15 @@ void cu_cp_impl::handle_handover_reconfiguration_sent(const cu_cp_intra_cu_hando
   cu_cp_ue* ue = ue_mng.find_du_ue(request.target_ue_index);
 
   ue->get_task_sched().schedule_async_task(launch_async<intra_cu_handover_target_routine>(
-      request, *this, get_cu_cp_ue_context_handler(), ue_mng, mobility_mng, logger));
+      request,
+      cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
+      du_db.get_du_processor(ue->get_du_index()).get_f1ap_handler(),
+      *this,
+      get_cu_cp_ue_removal_handler(),
+      *this,
+      ue_mng,
+      mobility_mng,
+      logger));
 }
 
 void cu_cp_impl::handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index)
@@ -717,18 +725,16 @@ cu_cp_impl::handle_intra_cu_handover_request(const cu_cp_intra_cu_handover_reque
 
   byte_buffer sib1 = du_db.get_du_processor(target_du_index).get_mobility_handler().get_packed_sib1(request.cgi);
 
-  return launch_async<intra_cu_handover_routine>(
-      request,
-      std::move(sib1),
-      cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
-      du_db.get_du_processor(source_du_index).get_f1ap_handler(),
-      du_db.get_du_processor(target_du_index).get_f1ap_handler(),
-      *this,
-      get_cu_cp_ue_removal_handler(),
-      *this,
-      ue_mng,
-      mobility_mng,
-      logger);
+  return launch_async<intra_cu_handover_routine>(request,
+                                                 std::move(sib1),
+                                                 du_db.get_du_processor(source_du_index).get_f1ap_handler(),
+                                                 du_db.get_du_processor(target_du_index).get_f1ap_handler(),
+                                                 *this,
+                                                 get_cu_cp_ue_removal_handler(),
+                                                 *this,
+                                                 ue_mng,
+                                                 mobility_mng,
+                                                 logger);
 }
 
 async_task<void> cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)

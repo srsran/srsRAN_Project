@@ -211,6 +211,15 @@ public:
   virtual async_task<void> handle_ue_context_release(const cu_cp_ue_context_release_request& request) = 0;
 };
 
+// Request with information for the target handler of the intra cu handover.
+struct cu_cp_intra_cu_handover_target_request {
+  ue_index_t                               target_ue_index = ue_index_t::invalid;
+  ue_index_t                               source_ue_index = ue_index_t::invalid;
+  uint8_t                                  transaction_id;
+  std::chrono::milliseconds                timeout;
+  e1ap_bearer_context_modification_request bearer_context_modification_request;
+};
+
 /// Interface for entities (e.g. DU processor) that wish to manipulate the context of a UE.
 class cu_cp_ue_context_manipulation_handler
 {

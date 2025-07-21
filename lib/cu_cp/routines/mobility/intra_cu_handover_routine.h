@@ -26,7 +26,6 @@ class intra_cu_handover_routine
 public:
   intra_cu_handover_routine(const cu_cp_intra_cu_handover_request& request_,
                             const byte_buffer&                     target_cell_sib1_,
-                            e1ap_bearer_context_manager&           e1ap_bearer_ctxt_mng_,
                             f1ap_ue_context_manager&               source_du_f1ap_ue_ctxt_mng_,
                             f1ap_ue_context_manager&               target_du_f1ap_ue_ctxt_mng_,
                             cu_cp_ue_context_release_handler&      ue_context_release_handler_,
@@ -56,7 +55,6 @@ private:
 
   rrc_ue_transfer_context source_rrc_context;
 
-  e1ap_bearer_context_manager&           e1ap_bearer_ctxt_mng;       // to trigger bearer context modification at CU-UP
   f1ap_ue_context_manager&               source_du_f1ap_ue_ctxt_mng; // to trigger UE context modification at source DU
   f1ap_ue_context_manager&               target_du_f1ap_ue_ctxt_mng; // to trigger UE context creation at target DU
   cu_cp_ue_context_release_handler&      ue_context_release_handler; // to release UE contexts
@@ -70,16 +68,14 @@ private:
   // (sub-)routine requests
   f1ap_ue_context_setup_request            target_ue_context_setup_request;
   f1ap_ue_context_modification_request     source_ue_context_mod_request;
-  e1ap_bearer_context_modification_request bearer_context_modification_request;
   rrc_reconfiguration_procedure_request    rrc_reconfig_args;
+  e1ap_bearer_context_modification_request bearer_context_modification_request;
   f1ap_ue_context_release_command          ue_context_release_cmd; // If HO fails target UE context needs to be removed.
   cu_cp_ue_context_release_command ue_context_release_command;     // After succesfull HO source UE needs to be removed.
 
   // (sub-)routine results
-  cu_cp_intra_cu_handover_response response_msg;
-  f1ap_ue_context_setup_response   target_ue_context_setup_response;
-  e1ap_bearer_context_modification_response
-      bearer_context_modification_response; // to inform CU-UP about the new TEID for UL F1u traffic
+  cu_cp_intra_cu_handover_response      response_msg;
+  f1ap_ue_context_setup_response        target_ue_context_setup_response;
   f1ap_ue_context_modification_response source_ue_context_modification_response;
   bool                                  rrc_reconfig_sent = false;
 };
