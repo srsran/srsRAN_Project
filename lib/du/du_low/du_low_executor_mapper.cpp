@@ -150,7 +150,7 @@ public:
         dl_grid_exec         = manual.dl_executor;
         pdsch_codeblock_exec = manual.pdsch_executor;
         prach_exec           = create_strand(manual.high_priority_executor);
-        pusch_exec = create_task_fork_limiter(manual.medium_priority_executor, manual.max_concurrent_pusch);
+        pusch_exec           = create_task_fork_limiter(manual.medium_priority_executor, manual.max_concurrent_pusch);
         pusch_dec_exec =
             create_task_fork_limiter(manual.medium_priority_executor, manual.max_concurrent_pusch_decoders);
         pucch_exec = create_task_fork_limiter(manual.high_priority_executor, manual.max_concurrent_pucch);
