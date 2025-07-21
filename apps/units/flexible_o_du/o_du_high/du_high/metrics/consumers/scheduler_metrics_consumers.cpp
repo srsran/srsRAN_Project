@@ -522,7 +522,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
       fmt::format_to(std::back_inserter(buffer), " dl_bs={}", scaled_fmt_integer(ue.dl_bs, false));
       fmt::format_to(std::back_inserter(buffer), " dl_nof_prbs={}", ue.tot_pdsch_prbs_used);
       if (ue.last_dl_olla.has_value()) {
-        fmt::format_to(std::back_inserter(buffer), " dl_olla={}", ue.last_dl_olla.value());
+        fmt::format_to(std::back_inserter(buffer), " dl_olla={:.4}", ue.last_dl_olla.value());
       }
 
       if (!std::isnan(ue.pusch_snr_db) && !iszero(ue.pusch_snr_db)) {
@@ -570,7 +570,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
       fmt::format_to(out_it, " pusch_invalid_harqs={}", ue.nof_pusch_invalid_harqs);
       fmt::format_to(out_it, " pusch_invalid_csis={}", ue.nof_pusch_invalid_csis);
       if (ue.last_ul_olla.has_value()) {
-        fmt::format_to(out_it, " ul_olla={}", ue.last_ul_olla.value());
+        fmt::format_to(out_it, " ul_olla={:.4}", ue.last_ul_olla.value());
       }
       if (ue.ta_stats.get_nof_observations() > 0) {
         fmt::format_to(out_it, " ta={}s", float_to_eng_string(ue.ta_stats.get_mean(), 0, false));
