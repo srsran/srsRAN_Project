@@ -42,10 +42,10 @@ private:
   std::unique_ptr<pseudo_random_generator> prg;
   std::unique_ptr<resource_grid_mapper>    mapper;
 
-  /// \brief Implements TS38.211 section 7.4.1.1.1 Sequence generation.
+  /// \brief Implements TS38.211 Section 7.4.1.1.1 Sequence generation.
   ///
-  /// This method generates the sequence described in TS38.211 section 7.4.1.1.1, considering the only values required
-  /// in TS38.211 section 7.4.1.1.2.
+  /// This method generates the sequence described in TS38.211 Section 7.4.1.1.1, considering the only values required
+  /// in TS38.211 Section 7.4.1.1.2.
   ///
   /// \param[out] sequence Provides the sequence destination.
   /// \param[in] symbol Denotes the symbol index.

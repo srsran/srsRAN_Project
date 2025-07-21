@@ -27,7 +27,7 @@ class resource_grid_mapper;
 
 /// \brief Describes a PDSCH modulator interface.
 ///
-/// The PDSCH modulator shall modulate PDSCH according to TS38.211 section 7.3.1 Physical downlink shared channel. It
+/// The PDSCH modulator shall modulate PDSCH according to TS38.211 Section 7.3.1 Physical downlink shared channel. It
 /// provides two possible modulation granularities:
 /// - Codeword: it modulates a codeword and maps it.
 /// - Codeblock: it modulates a single codeblock from a codeword.
@@ -36,7 +36,7 @@ class pdsch_modulator
 public:
   /// Describes the necessary parameters to modulate a PDSCH transmission.
   struct config_t {
-    /// Provides \f$n_{RNTI}\f$ from TS38.211 section 7.3.1.1 Scrambling.
+    /// Provides \f$n_{RNTI}\f$ from TS38.211 Section 7.3.1.1 Scrambling.
     uint16_t rnti;
     /// \brief Bandwidth part location within the resource grid.
     ///
@@ -62,7 +62,7 @@ public:
     dmrs_type dmrs_config_type;
     /// Number of DMRS CDM groups without data.
     unsigned nof_cdm_groups_without_data;
-    /// Provides \f$n_{ID}\f$ from TS38.211 section 7.3.1.1 Scrambling. Range is (0...1023).
+    /// Provides \f$n_{ID}\f$ from TS38.211 Section 7.3.1.1 Scrambling. Range is (0...1023).
     unsigned n_id;
     /// Scaling factor to apply to the resource elements according to PDSCH power allocation in TS38.214.
     float scaling;
@@ -75,7 +75,7 @@ public:
   /// Default destructor.
   virtual ~pdsch_modulator() = default;
 
-  /// \brief Modulates a PDSCH codeword according to TS38.211 section 7.3.1 Physical downlink shared channel.
+  /// \brief Modulates a PDSCH codeword according to TS38.211 Section 7.3.1 Physical downlink shared channel.
   ///
   /// \param[out] grid     Resource grid writer interface.
   /// \param[in] codewords The encoded codewords to modulate.

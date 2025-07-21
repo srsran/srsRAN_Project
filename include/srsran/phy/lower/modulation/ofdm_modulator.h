@@ -35,9 +35,9 @@ struct ofdm_modulator_configuration {
 };
 
 /// \brief Describes an OFDM modulator that modulates at symbol granularity.
-/// \remark Performs OFDM modulation as per TS38.211 section 5.3.1 OFDM baseband signal generation for all channels
+/// \remark Performs OFDM modulation as per TS38.211 Section 5.3.1 OFDM baseband signal generation for all channels
 /// except PRACH.
-/// \remark In addition to modulation, it applies phase compensation as per TS38.211 section 5.4 Modulation and
+/// \remark In addition to modulation, it applies phase compensation as per TS38.211 Section 5.4 Modulation and
 /// upconversion
 class ofdm_symbol_modulator
 {
@@ -70,9 +70,9 @@ public:
 };
 
 /// \brief Describes an OFDM modulator with slot granularity.
-/// \remark Performs OFDM modulation as per TS38.211 section 5.3.1 OFDM baseband signal generation for all channels
+/// \remark Performs OFDM modulation as per TS38.211 Section 5.3.1 OFDM baseband signal generation for all channels
 /// except PRACH.
-/// \remark In addition to modulation, it applies phase compensation as per TS38.211 section 5.4 Modulation and
+/// \remark In addition to modulation, it applies phase compensation as per TS38.211 Section 5.4 Modulation and
 /// upconversion.
 class ofdm_slot_modulator
 {

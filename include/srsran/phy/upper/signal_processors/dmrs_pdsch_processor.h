@@ -22,7 +22,7 @@ class resource_grid_writer;
 class dmrs_pdsch_processor
 {
 public:
-  /// Describes the required parameters to generate the signal as described in 3GPP TS38.211 section 7.4.1.1.
+  /// Describes the required parameters to generate the signal as described in 3GPP TS38.211 Section 7.4.1.1.
   struct config_t {
     /// Slot context for sequence initialization.
     slot_point slot;
