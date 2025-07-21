@@ -72,8 +72,8 @@ async_task<void> cu_up_processor_repository::remove_cu_up(cu_up_index_t cu_up_in
 
     // Remove CU-UP
     if (cu_up_db.find(cu_up_index) == cu_up_db.end()) {
-      logger.warning("Remove CU-UP called for non-existent cu_up_index={}", cu_up_index);
-      return;
+      logger.debug("Remove CU-UP called for non-existent cu_up_index={}", cu_up_index);
+      CORO_EARLY_RETURN();
     }
 
     // Stop CU-UP activity, eliminating pending transactions for the CU-UP and respective UEs.

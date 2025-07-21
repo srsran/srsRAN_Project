@@ -76,7 +76,7 @@ public:
 
   // CU-UP handler.
   void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
-  void handle_e1_release_request(const std::vector<ue_index_t>& ue_list) override;
+  void handle_e1_release_request(cu_up_index_t cu_up_index, const std::vector<ue_index_t>& ue_list) override;
 
   // cu_cp_rrc_ue_interface.
   rrc_ue_reestablishment_context_response

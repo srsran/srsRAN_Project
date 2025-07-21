@@ -34,10 +34,10 @@ public:
     cu_cp_handler->handle_bearer_context_inactivity_notification(msg);
   }
 
-  void on_e1_release_request_received(const std::vector<ue_index_t>& ue_list) override
+  void on_e1_release_request_received(cu_up_index_t cu_up_index, const std::vector<ue_index_t>& ue_list) override
   {
     srsran_assert(cu_cp_handler != nullptr, "E1AP handler must not be nullptr");
-    cu_cp_handler->handle_e1_release_request(ue_list);
+    cu_cp_handler->handle_e1_release_request(cu_up_index, ue_list);
   }
 
 private:

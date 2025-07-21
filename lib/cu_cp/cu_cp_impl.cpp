@@ -30,6 +30,7 @@
 #include "srsran/nrppa/nrppa.h"
 #include "srsran/nrppa/nrppa_factory.h"
 #include "srsran/rrc/rrc_du.h"
+#include "srsran/support/async/coroutine.h"
 #include "srsran/support/compiler.h"
 #include <chrono>
 #include <dlfcn.h>
@@ -216,7 +217,7 @@ void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inact
   }
 }
 
-void cu_cp_impl::handle_e1_release_request(const std::vector<ue_index_t>& ue_list)
+void cu_cp_impl::handle_e1_release_request(cu_up_index_t cu_up_index, const std::vector<ue_index_t>& ue_list)
 {
   for (const auto& ue_index : ue_list) {
     cu_cp_ue* ue = ue_mng.find_du_ue(ue_index);
@@ -240,6 +241,13 @@ void cu_cp_impl::handle_e1_release_request(const std::vector<ue_index_t>& ue_lis
       CORO_RETURN();
     }));
   }
+
+  // Schedule removal of CU-UP processor.
+  common_task_sched.schedule_async_task(launch_async([this, cu_up_index](coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT(cu_up_db.remove_cu_up(cu_up_index));
+    CORO_RETURN();
+  }));
 }
 
 rrc_ue_reestablishment_context_response

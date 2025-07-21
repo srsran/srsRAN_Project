@@ -18,11 +18,17 @@ using namespace srsran;
 using namespace srs_cu_cp;
 
 e1_release_procedure::e1_release_procedure(const asn1::e1ap::e1_release_request_s& request_,
+                                           cu_up_index_t                           cu_up_index_,
                                            e1ap_message_notifier&                  pdu_notifier_,
                                            e1ap_cu_cp_notifier&                    cu_cp_notifier_,
                                            e1ap_ue_context_list&                   ue_list_,
                                            srslog::basic_logger&                   logger_) :
-  request(request_), pdu_notifier(pdu_notifier_), cu_cp_notifier(cu_cp_notifier_), ue_list(ue_list_), logger(logger_)
+  request(request_),
+  cu_up_index(cu_up_index_),
+  pdu_notifier(pdu_notifier_),
+  cu_cp_notifier(cu_cp_notifier_),
+  ue_list(ue_list_),
+  logger(logger_)
 {
 }
 
@@ -34,8 +40,13 @@ void e1_release_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   // If there are still active UEs, release them.
   if (ue_list.size() > 0) {
-    request_ue_release();
+    for (auto& ue : ue_list) {
+      ues_to_release.push_back(ue.second.ue_ids.ue_index);
+    }
   }
+
+  // Notify CU-CP about the E1 Release Request.
+  cu_cp_notifier.on_e1_release_request_received(cu_up_index, ues_to_release);
 
   // Send E1 Release Response
   send_e1_release_response();
@@ -43,15 +54,6 @@ void e1_release_procedure::operator()(coro_context<async_task<void>>& ctx)
   logger.info("\"{}\" finished successfully", name());
 
   CORO_RETURN();
-}
-
-void e1_release_procedure::request_ue_release()
-{
-  for (auto& ue : ue_list) {
-    ues_to_release.push_back(ue.second.ue_ids.ue_index);
-  }
-
-  cu_cp_notifier.on_e1_release_request_received(ues_to_release);
 }
 
 void e1_release_procedure::send_e1_release_response()

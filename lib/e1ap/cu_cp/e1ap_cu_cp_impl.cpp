@@ -17,6 +17,7 @@
 #include "procedures/bearer_context_release_procedure.h"
 #include "procedures/bearer_context_setup_procedure.h"
 #include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ran/cause/e1ap_cause.h"
 
 using namespace srsran;
@@ -26,6 +27,7 @@ using namespace srs_cu_cp;
 // ------ e1ap_cu_cp_impl ------
 
 e1ap_cu_cp_impl::e1ap_cu_cp_impl(const e1ap_configuration&      e1ap_cfg_,
+                                 cu_up_index_t                  cu_up_index_,
                                  e1ap_message_notifier&         e1ap_pdu_notifier_,
                                  e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
                                  e1ap_cu_cp_notifier&           cu_cp_notifier_,
@@ -33,6 +35,7 @@ e1ap_cu_cp_impl::e1ap_cu_cp_impl(const e1ap_configuration&      e1ap_cfg_,
                                  task_executor&                 ctrl_exec_,
                                  unsigned                       max_nof_supported_ues_) :
   e1ap_cfg(e1ap_cfg_),
+  cu_up_index(cu_up_index_),
   logger(srslog::fetch_basic_logger("CU-CP-E1")),
   pdu_notifier(e1ap_message_notifier_with_logging(*this, e1ap_pdu_notifier_)),
   cu_up_processor_notifier(e1ap_cu_up_processor_notifier_),
@@ -155,7 +158,15 @@ async_task<void>
 e1ap_cu_cp_impl::handle_bearer_context_release_command(const e1ap_bearer_context_release_command& command)
 {
   if (!ue_ctxt_list.contains(command.ue_index)) {
-    logger.info("ue={}: Dropping BearerContextReleaseCommand. Bearer context does not exist", command.ue_index);
+    logger.info("ue={}: Dropping BearerContextReleaseCommand. Cause: Bearer context does not exist", command.ue_index);
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
+  if (e1_release_in_progress) {
+    logger.debug("ue={}:Dropping BearerContextReleaseCommand. Cause: E1 Release in progress", command.ue_index);
     return launch_async([](coro_context<async_task<void>>& ctx) mutable {
       CORO_BEGIN(ctx);
       CORO_RETURN();
@@ -218,8 +229,10 @@ void e1ap_cu_cp_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& ms
       handle_bearer_context_inactivity_notification(msg.value.bearer_context_inactivity_notif());
     } break;
     case init_types::e1_release_request: {
+      // Set E1 Release in progress flag.
+      e1_release_in_progress = true;
       cu_up_processor_notifier.schedule_async_task(launch_async<e1_release_procedure>(
-          msg.value.e1_release_request(), pdu_notifier, cu_cp_notifier, ue_ctxt_list, logger));
+          msg.value.e1_release_request(), cu_up_index, pdu_notifier, cu_cp_notifier, ue_ctxt_list, logger));
     } break;
     default:
       logger.warning("Initiating message of type {} is not supported", msg.value.type().to_string());

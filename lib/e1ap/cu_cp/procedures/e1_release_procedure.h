@@ -26,20 +26,21 @@ class e1ap_ue_context_list;
 class e1_release_procedure
 {
 public:
-  e1_release_procedure(const asn1::e1ap::e1_release_request_s& request,
-                       e1ap_message_notifier&                  pdu_notifier,
-                       e1ap_cu_cp_notifier&                    cu_cp_notifier,
-                       e1ap_ue_context_list&                   ue_list,
-                       srslog::basic_logger&                   logger);
+  e1_release_procedure(const asn1::e1ap::e1_release_request_s& request_,
+                       cu_up_index_t                           cu_up_index_,
+                       e1ap_message_notifier&                  pdu_notifier_,
+                       e1ap_cu_cp_notifier&                    cu_cp_notifier_,
+                       e1ap_ue_context_list&                   ue_list_,
+                       srslog::basic_logger&                   logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
 private:
   const char* name() const { return "E1 Release"; }
-  void        request_ue_release();
   void        send_e1_release_response();
 
   const asn1::e1ap::e1_release_request_s request;
+  cu_up_index_t                          cu_up_index;
   e1ap_message_notifier&                 pdu_notifier;
   e1ap_cu_cp_notifier&                   cu_cp_notifier;
   e1ap_ue_context_list&                  ue_list;

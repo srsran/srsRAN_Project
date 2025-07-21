@@ -52,6 +52,7 @@ cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config_t cu_up_
 
   // create e1
   e1ap = create_e1ap(cfg.cu_cp_cfg.e1ap,
+                     context.cu_up_index,
                      e1ap_notifier,
                      *e1ap_ev_notifier,
                      cu_cp_notifier,
