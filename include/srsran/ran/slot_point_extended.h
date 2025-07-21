@@ -105,12 +105,12 @@ public:
 
   constexpr slot_difference operator-(const slot_point_extended& other) const
   {
-    int      a = static_cast<int>(count_val) - static_cast<int>(other.count_val);
-    uint32_t N = nof_slots_in_all_hyper_sfns();
-    if (a >= static_cast<int>(N / 2)) {
+    int a = static_cast<int>(count_val) - static_cast<int>(other.count_val);
+    int N = nof_slots_in_all_hyper_sfns();
+    if (a >= N / 2) {
       return a - N;
     }
-    if (a < -static_cast<int>(N / 2)) {
+    if (a < -N / 2) {
       return a + N;
     }
     return a;

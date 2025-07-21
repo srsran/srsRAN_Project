@@ -161,7 +161,7 @@ slot_point_extended du_time_controller::handle_slot_ind(du_cell_index_t cell_ind
   } while (cell_sl_counter > master_sl and not master_count.compare_exchange_weak(master_cpy, cell_sl_counter.count()));
 
   // Compute the number of skipped subframes.
-  int nof_skipped = (cell_sl_counter - master_sl) / sl_tx.nof_slots_per_subframe();
+  int nof_skipped = (cell_sl_counter - master_sl) / static_cast<int>(sl_tx.nof_slots_per_subframe());
 
   // If nof_skipped > 0, this is the cell responsible for ticking.
   if (nof_skipped <= 0) {
