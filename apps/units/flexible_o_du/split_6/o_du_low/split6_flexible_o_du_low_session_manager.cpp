@@ -8,15 +8,15 @@
  *
  */
 
-#include "cell_operation_request_impl.h"
-#include "split6_flexible_o_du_low_factory.h"
+#include "split6_flexible_o_du_low_session_manager.h"
+#include "split6_flexible_o_du_low_session_factory.h"
 
 using namespace srsran;
 
-bool cell_operation_request_handler_impl::on_start_request(const fapi::fapi_cell_config& config)
+bool split6_flexible_o_du_low_session_manager::on_start_request(const fapi::fapi_cell_config& config)
 {
   // Call the factory.
-  flexible_odu_low = factory_odu_low.create_split6_flexible_o_du_low(config);
+  flexible_odu_low = odu_low_session_factory->create_o_du_low_session(config);
 
   // Return true when the flexible O-DU low was successfully created, otherwise false.
   return flexible_odu_low != nullptr;

@@ -24,10 +24,9 @@ void fapi_config_message_interface_collection_impl::set_config_message_notifier(
   gateway.set_config_message_notifier(config_notifier);
 }
 
-void fapi_config_message_interface_collection_impl::set_slot_error_message_notifier(
-    slot_error_message_notifier& err_notifier)
+void fapi_config_message_interface_collection_impl::set_error_message_notifier(error_message_notifier& err_notifier)
 {
-  gateway.set_slot_error_message_notifier(err_notifier);
+  gateway.set_error_message_notifier(err_notifier);
 }
 
 void fapi_config_message_interface_collection_impl::set_cell_operation_request_notifier(

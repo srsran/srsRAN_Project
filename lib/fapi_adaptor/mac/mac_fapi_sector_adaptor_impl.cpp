@@ -47,7 +47,7 @@ fapi::slot_time_message_notifier& mac_fapi_sector_adaptor_impl::get_slot_time_me
   return fapi_time_translator;
 }
 
-fapi::slot_error_message_notifier& mac_fapi_sector_adaptor_impl::get_slot_error_message_notifier()
+fapi::error_message_notifier& mac_fapi_sector_adaptor_impl::get_error_message_notifier()
 {
   return fapi_error_translator;
 }

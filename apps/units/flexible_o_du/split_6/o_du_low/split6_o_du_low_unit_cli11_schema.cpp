@@ -37,7 +37,7 @@ void srsran::configure_cli11_with_split6_o_du_low_unit_config_schema(CLI::App& a
       ->check(CLI::Range(0, 10240));
 }
 
-static void manage_ru(CLI::App& app, split6_o_du_low_unit_config& config)
+static void manage_ru(const CLI::App& app, split6_o_du_low_unit_config& config)
 {
   // Manage the RU optionals
   auto     ofh_subcmd      = app.get_subcommand("ru_ofh");
@@ -81,7 +81,7 @@ void srsran::autoderive_split6_o_du_low_parameters_after_parsing(CLI::App& app, 
   manage_ru(app, config);
 
   // Auto derive DU low parameters.
-  const bool is_zmq_rf_driver = false;
+  constexpr bool is_zmq_rf_driver = false;
   // NOTE: TDD is hardcoded because it does not matter as max proc delay parameter is mandatory in this application
   // unit.
   autoderive_du_low_parameters_after_parsing(

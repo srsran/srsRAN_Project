@@ -1979,7 +1979,7 @@ inline error_indication_message build_invalid_sfn_error_indication(uint16_t     
 /// \brief Builds and returns an ERROR.indication message with the given parameters, as per SCF-222 v4.0 section 3.3.6.1
 /// in table ERROR.indication message body
 /// \note This builder is used to build only a MSG_SLOT_ERR error code.
-inline error_indication_message build_msg_slot_error_indication(uint16_t sfn, uint16_t slot, message_type_id msg_id)
+inline error_indication_message build_msg_error_indication(uint16_t sfn, uint16_t slot, message_type_id msg_id)
 {
   error_indication_message msg;
 

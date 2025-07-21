@@ -8,7 +8,7 @@
  *
  */
 
-#include "split6_flexible_o_du_low_factory.h"
+#include "split6_flexible_o_du_low_session_factory.h"
 #include "apps/services/metrics/metrics_config.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/flexible_o_du/o_du_low/du_low_config_validator.h"
@@ -18,10 +18,8 @@
 #include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_config_validator.h"
 #include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_factories.h"
 #include "apps/units/flexible_o_du/split_helpers/flexible_o_du_configs.h"
-#include "split6_cell_configurator_plugin_dummy.h"
 #include "split6_constants.h"
-#include "split6_flexible_o_du_low_impl.h"
-#include "split6_slot_configurator_plugin_dummy.h"
+#include "split6_flexible_o_du_low_session.h"
 #include "srsran/du/du_low/o_du_low_config.h"
 #include "srsran/fapi/cell_config.h"
 #include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
@@ -31,44 +29,11 @@
 
 using namespace srsran;
 
-namespace {
-
-/// Split 6 flexible O-DU low factory dummy implementation.
-class split6_flexible_o_du_low_factory_dummy : public split6_flexible_o_du_low_factory
+std::unique_ptr<split6_flexible_o_du_low_session>
+split6_flexible_o_du_low_session_factory::create_o_du_low_session(const fapi::fapi_cell_config& config)
 {
-public:
-  split6_flexible_o_du_low_factory_dummy(split6_o_du_low_unit_config                unit_config_,
-                                         worker_manager&                            workers_,
-                                         timer_manager&                             timers_,
-                                         split6_flexible_o_du_low_metrics_notifier* notifier_) :
-    split6_flexible_o_du_low_factory(unit_config_, workers_, timers_, notifier_)
-  {
-  }
-
-  std::unique_ptr<fapi::cell_configurator_plugin>
-  create_fapi_cell_configurator_plugin(srslog::basic_logger& logger, fapi::config_message_gateway& gateway) override
-  {
-    return std::make_unique<split6_cell_configurator_plugin_dummy>();
-  }
-
-private:
-  // See interface for documentation.
-  std::unique_ptr<fapi::slot_configurator_plugin>
-  create_plugin(const fapi::fapi_cell_config&     config,
-                fapi::slot_message_gateway&       gateway,
-                fapi::slot_last_message_notifier& last_msg_notifier) override
-  {
-    return std::make_unique<split6_slot_configurator_plugin_dummy>();
-  }
-};
-
-} // namespace
-
-std::unique_ptr<split6_flexible_o_du_low_impl>
-split6_flexible_o_du_low_factory::create_split6_flexible_o_du_low(const fapi::fapi_cell_config& config)
-{
-  auto odu = std::make_unique<split6_flexible_o_du_low_impl>(notifier,
-                                                             std::chrono::milliseconds(unit_config.du_report_period));
+  auto odu = std::make_unique<split6_flexible_o_du_low_session>(
+      notifier, std::chrono::milliseconds(unit_config.du_report_period));
 
   // Create Radio Unit.
   auto ru = create_radio_unit(*odu, config);
@@ -89,16 +54,19 @@ split6_flexible_o_du_low_factory::create_split6_flexible_o_du_low(const fapi::fa
   // Get the FAPI sector adaptor to get the dependencies.
   auto& fapi_sector_adaptor = odu_low.o_du_lo->get_phy_fapi_adaptor().get_sector_adaptor(split6_du_low::CELL_ID);
 
-  // Create split 6 slot messages plugin.
-  auto plugin = create_plugin(
-      config, fapi_sector_adaptor.get_slot_message_gateway(), fapi_sector_adaptor.get_slot_last_message_notifier());
+  // Create FAPI slot messages adaptor.
+  auto adaptor =
+      slot_messages_adaptor_factory->create_slot_messages_adaptor(config,
+                                                                  fapi_sector_adaptor.get_slot_message_gateway(),
+                                                                  fapi_sector_adaptor.get_slot_last_message_notifier(),
+                                                                  error_notifier);
 
-  if (!plugin) {
+  if (!adaptor) {
     return nullptr;
   }
 
   odu->set_dependencies(
-      std::move(plugin), std::move(odu_low.o_du_lo), std::move(ru), timers.create_unique_timer(*workers.metrics_exec));
+      std::move(adaptor), std::move(odu_low.o_du_lo), std::move(ru), timers.create_unique_timer(*workers.metrics_exec));
 
   return odu;
 }
@@ -177,7 +145,7 @@ static tdd_ul_dl_config_common generate_tdd_pattern(subcarrier_spacing scs, cons
         pattern1.nof_dl_symbols = std::distance(I, slot.crend());
       }
 
-      if (auto I = std::find_if(
+      if (const auto* I = std::find_if(
               slot.cbegin(),
               slot.cend(),
               [](const fapi::tdd_slot_symbol_type& value) { return value == fapi::tdd_slot_symbol_type::ul_symbol; });
@@ -220,8 +188,9 @@ get_du_low_validation_dependencies(const fapi::fapi_cell_config& config)
   return out_cfg;
 }
 
-o_du_low_unit split6_flexible_o_du_low_factory::create_o_du_low(const fapi::fapi_cell_config& config,
-                                                                o_du_low_unit_dependencies&&  odu_low_dependencies)
+o_du_low_unit
+split6_flexible_o_du_low_session_factory::create_o_du_low(const fapi::fapi_cell_config& config,
+                                                          o_du_low_unit_dependencies&&  odu_low_dependencies)
 {
   srs_du::cell_prach_ports_entry prach_ports = {split6_du_low::PRACH_PORT};
 
@@ -270,7 +239,7 @@ o_du_low_unit split6_flexible_o_du_low_factory::create_o_du_low(const fapi::fapi
 
   o_du_low_unit_factory odu_low_factory(unit_config.du_low_cfg.hal_config, split6_du_low::NOF_CELLS_SUPPORTED);
 
-  return odu_low_factory.create(odu_low_cfg, std::move(odu_low_dependencies));
+  return odu_low_factory.create(odu_low_cfg, odu_low_dependencies);
 }
 
 static flexible_o_du_ru_config generate_o_du_ru_config(const fapi::fapi_cell_config& config, unsigned max_prox_delay)
@@ -340,8 +309,9 @@ get_ru_sdr_validation_dependencies(const fapi::fapi_cell_config& config)
   return out_cfg;
 }
 
-std::unique_ptr<radio_unit> split6_flexible_o_du_low_factory::create_radio_unit(split6_flexible_o_du_low_impl& odu_low,
-                                                                                const fapi::fapi_cell_config&  config)
+std::unique_ptr<radio_unit>
+split6_flexible_o_du_low_session_factory::create_radio_unit(split6_flexible_o_du_low_session& odu_low,
+                                                            const fapi::fapi_cell_config&     config)
 {
   auto ru_config = generate_o_du_ru_config(config, unit_config.du_low_cfg.expert_phy_cfg.max_processing_delay_slots);
   const auto& ru_cfg = unit_config.ru_cfg;
@@ -371,14 +341,3 @@ std::unique_ptr<radio_unit> split6_flexible_o_du_low_factory::create_radio_unit(
 
   report_error("Could not detect valid Radio Unit configuration");
 }
-
-#ifndef SRSRAN_HAS_SPLIT6_ENTERPRISE
-std::unique_ptr<split6_flexible_o_du_low_factory>
-srsran::create_split6_flexible_o_du_low_factory(const split6_o_du_low_unit_config&         unit_config,
-                                                worker_manager&                            workers,
-                                                timer_manager&                             timers,
-                                                split6_flexible_o_du_low_metrics_notifier* notifier)
-{
-  return std::make_unique<split6_flexible_o_du_low_factory_dummy>(unit_config, workers, timers, notifier);
-}
-#endif

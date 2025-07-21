@@ -410,7 +410,7 @@ error_indication_message unittest::build_valid_invalid_sfn_error_indication()
   return msg;
 }
 
-error_indication_message unittest::build_valid_msg_slot_error_indication()
+error_indication_message unittest::build_valid_msg_error_indication()
 {
   error_indication_message msg;
   msg.message_type  = message_type_id::error_indication;

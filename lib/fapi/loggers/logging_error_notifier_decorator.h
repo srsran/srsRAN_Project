@@ -10,23 +10,23 @@
 
 #pragma once
 
-#include "srsran/fapi/slot_error_message_notifier.h"
+#include "srsran/fapi/error_message_notifier.h"
 #include "srsran/srslog/srslog.h"
 
 namespace srsran {
 namespace fapi {
 
 /// Adds logging information over the implemented interface.
-class logging_slot_error_notifier_decorator : public slot_error_message_notifier
+class logging_error_notifier_decorator : public error_message_notifier
 {
 public:
-  logging_slot_error_notifier_decorator(unsigned sector_id_, srslog::basic_logger& logger_);
+  logging_error_notifier_decorator(unsigned sector_id_, srslog::basic_logger& logger_);
 
   // See interface for documentation.
   void on_error_indication(const error_indication_message& msg) override;
 
-  /// Sets the slot error message notifier to the given one.
-  void set_slot_error_message_notifier(slot_error_message_notifier& error_notifier);
+  /// Sets the error message notifier to the given one.
+  void set_error_message_notifier(error_message_notifier& error_notifier);
 
 private:
   /// Sector identifier.
@@ -34,7 +34,7 @@ private:
   /// FAPI logger.
   srslog::basic_logger& logger;
   /// Error notifier.
-  slot_error_message_notifier* notifier;
+  error_message_notifier* notifier;
 };
 
 } // namespace fapi

@@ -8,12 +8,12 @@
  *
  */
 
-#include "slot_error_notifier_dummy.h"
+#include "error_notifier_dummy.h"
 #include "srsran/support/error_handling.h"
 
 using namespace srsran;
 
-void fapi::slot_error_message_notifier_dummy::on_error_indication(const error_indication_message& msg)
+void fapi::error_message_notifier_dummy::on_error_indication(const error_indication_message& msg)
 {
   report_error("Dummy FAPI slot error message notifier cannot handle given error indication");
 }

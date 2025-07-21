@@ -29,8 +29,8 @@ using namespace unittest;
 
 namespace {
 
-/// Slot error message notifier spy implementation.
-class slot_error_message_notifier_spy : public fapi::slot_error_message_notifier
+/// Error message notifier spy implementation.
+class error_message_notifier_spy : public fapi::error_message_notifier
 {
   fapi::error_indication_message message;
   bool                           error_indication_detected = false;
@@ -230,21 +230,21 @@ private:
 class fapi_to_phy_translator_fixture : public ::testing::Test
 {
 protected:
-  downlink_processor_pool_dummy   dl_processor_pool;
-  resource_grid_pool_dummy        rg_pool;
-  uplink_request_processor_spy    ul_request_processor;
-  uplink_pdu_slot_repository_spy  pdu_repo;
-  const unsigned                  sector_id         = 0;
-  const unsigned                  headroom_in_slots = 2;
-  const subcarrier_spacing        scs               = subcarrier_spacing::kHz15;
-  const slot_point                slot              = {scs, 1, 0};
-  fapi::prach_config              prach_cfg;
-  fapi::carrier_config            carrier_cfg = {0, 0, {}, {11, 51, 106, 0, 0}, 0, 0, 0, {}, {}, 0, 0, 0, 0};
-  downlink_pdu_validator_dummy    dl_pdu_validator;
-  uplink_pdu_validator_dummy      ul_pdu_validator;
-  slot_error_message_notifier_spy error_notifier_spy;
-  manual_task_worker              worker;
-  fapi_to_phy_translator_config   config = {sector_id, headroom_in_slots, false, scs, scs, prach_cfg, carrier_cfg, {0}};
+  downlink_processor_pool_dummy  dl_processor_pool;
+  resource_grid_pool_dummy       rg_pool;
+  uplink_request_processor_spy   ul_request_processor;
+  uplink_pdu_slot_repository_spy pdu_repo;
+  const unsigned                 sector_id         = 0;
+  const unsigned                 headroom_in_slots = 2;
+  const subcarrier_spacing       scs               = subcarrier_spacing::kHz15;
+  const slot_point               slot              = {scs, 1, 0};
+  fapi::prach_config             prach_cfg;
+  fapi::carrier_config           carrier_cfg = {0, 0, {}, {11, 51, 106, 0, 0}, 0, 0, 0, {}, {}, 0, 0, 0, 0};
+  downlink_pdu_validator_dummy   dl_pdu_validator;
+  uplink_pdu_validator_dummy     ul_pdu_validator;
+  error_message_notifier_spy     error_notifier_spy;
+  manual_task_worker             worker;
+  fapi_to_phy_translator_config  config = {sector_id, headroom_in_slots, false, scs, scs, prach_cfg, carrier_cfg, {0}};
   fapi_to_phy_translator_dependencies dependencies = {
       &srslog::fetch_basic_logger("FAPI"),
       &dl_processor_pool,
@@ -260,7 +260,7 @@ protected:
 public:
   fapi_to_phy_translator_fixture() : worker(1), translator(config, std::move(dependencies))
   {
-    translator.set_slot_error_message_notifier(error_notifier_spy);
+    translator.set_error_message_notifier(error_notifier_spy);
     translator.handle_new_slot(slot);
   }
 };

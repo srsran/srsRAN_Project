@@ -15,13 +15,13 @@ namespace fapi {
 
 struct error_indication_message;
 
-/// \brief Slot-based, error-specific message notifier interface.
+/// \brief Error-specific message notifier interface.
 ///
-/// This interface notifies the reception of slot-based, error-specific FAPI messages from the underlying PHY.
-class slot_error_message_notifier
+/// This interface notifies the reception of error-specific FAPI messages from the underlying PHY.
+class error_message_notifier
 {
 public:
-  virtual ~slot_error_message_notifier() = default;
+  virtual ~error_message_notifier() = default;
 
   /// \brief Notifies the reception of an error indication message.
   ///

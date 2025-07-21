@@ -10,12 +10,12 @@
 
 #pragma once
 
+#include "srsran/fapi/error_message_notifier.h"
 #include "srsran/fapi/messages/config_request_tlvs.h"
 #include "srsran/fapi/messages/dl_tti_request.h"
 #include "srsran/fapi/messages/tx_data_request.h"
 #include "srsran/fapi/messages/ul_dci_request.h"
 #include "srsran/fapi/messages/ul_tti_request.h"
-#include "srsran/fapi/slot_error_message_notifier.h"
 #include "srsran/fapi/slot_last_message_notifier.h"
 #include "srsran/fapi/slot_message_gateway.h"
 #include "srsran/fapi_adaptor/precoding_matrix_repository.h"
@@ -223,8 +223,8 @@ public:
   /// \note This method is thread safe and may be called from different threads.
   void handle_new_slot(slot_point slot);
 
-  /// Configures the FAPI slot-based, error-specific notifier to the given one.
-  void set_slot_error_message_notifier(fapi::slot_error_message_notifier& fapi_error_notifier)
+  /// Configures the FAPI error-specific notifier to the given one.
+  void set_error_message_notifier(fapi::error_message_notifier& fapi_error_notifier)
   {
     error_notifier = std::ref(fapi_error_notifier);
   }
@@ -273,7 +273,7 @@ private:
   /// UCI Part2 correspondence repository.
   std::unique_ptr<uci_part2_correspondence_repository> part2_repo;
   /// Error indication notifier.
-  std::reference_wrapper<fapi::slot_error_message_notifier> error_notifier;
+  std::reference_wrapper<fapi::error_message_notifier> error_notifier;
   /// Subcarrier spacing as per TS38.211 Section 4.2.
   const subcarrier_spacing scs;
   /// Common subcarrier spacing as per TS38.331 Section 6.2.2.

@@ -9,18 +9,17 @@
 add_subdirectory(metrics)
 
 set(SOURCES
-            cell_operation_request_impl.cpp
-            split6_flexible_o_du_low_factory.cpp
-            split6_flexible_o_du_low_impl.cpp
-            split6_flexible_o_du_low_manager.cpp
+            split6_flexible_o_du_low.cpp
+            split6_flexible_o_du_low_session.cpp
+            split6_flexible_o_du_low_session_factory.cpp
+            split6_flexible_o_du_low_session_manager.cpp
             split6_o_du_low_application_unit_impl.cpp
             split6_o_du_low_metrics_collector_impl.cpp
             split6_o_du_low_unit_cli11_schema.cpp
             split6_o_du_low_unit_config_validator.cpp)
 
-add_library(srsran_split6_o_du_low_plugin STATIC split6_o_du_low_plugin_dummy.cpp
-                                                 split6_cell_configurator_plugin_dummy.cpp
-                                                 split6_slot_configurator_plugin_dummy.cpp)
+add_library(srsran_split6_o_du_low_plugin STATIC split6_o_du_low_plugin_dummy.cpp)
+target_include_directories(srsran_split6_o_du_low_plugin PRIVATE ${CMAKE_SOURCE_DIR})
 
 add_library(srsran_flexible_o_du_low_split_6 STATIC ${SOURCES})
 target_include_directories(srsran_flexible_o_du_low_split_6 PRIVATE ${CMAKE_SOURCE_DIR})

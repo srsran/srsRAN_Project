@@ -11,7 +11,6 @@
 #pragma once
 
 #include "metrics/split6_flexible_o_du_low_metrics_notifier.h"
-#include "split6_o_du_low_metrics_collector.h"
 #include "srsran/ru/ru.h"
 #include "srsran/support/timers.h"
 
@@ -33,7 +32,7 @@ public:
                                          unique_timer                               timer_,
                                          std::chrono::milliseconds                  report_period_);
 
-  split6_o_du_low_metrics_collector_impl& operator=(split6_o_du_low_metrics_collector_impl&& other);
+  split6_o_du_low_metrics_collector_impl& operator=(split6_o_du_low_metrics_collector_impl&& other) noexcept;
 
   /// Delete unused constructors.
   split6_o_du_low_metrics_collector_impl(const split6_o_du_low_metrics_collector_impl&)            = delete;

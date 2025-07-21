@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/fapi/slot_error_message_notifier.h"
+#include "srsran/fapi/error_message_notifier.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include <functional>
 
@@ -24,7 +24,7 @@ namespace fapi_adaptor {
 ///
 /// This class listens to slot-based, error-specific FAPI message events and translates them to the suitable data types
 /// for the MAC layer.
-class fapi_to_mac_error_msg_translator : public fapi::slot_error_message_notifier
+class fapi_to_mac_error_msg_translator : public fapi::error_message_notifier
 {
 public:
   explicit fapi_to_mac_error_msg_translator(subcarrier_spacing scs_);

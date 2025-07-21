@@ -63,7 +63,7 @@ public:
   void finish_processing_pdus() override {}
 };
 
-class slot_error_notifier_dummy : public fapi::slot_error_message_notifier
+class error_notifier_dummy : public fapi::error_message_notifier
 {
 public:
   void on_error_indication(const fapi::error_indication_message& msg) override {}
@@ -77,7 +77,7 @@ static downlink_processor_dummy dummy_dl_processor;
 
 /// This dummy object is passed to the constructor of the FAPI-to-PHY translator as a placeholder for the actual error
 /// notifier.
-static slot_error_notifier_dummy dummy_error_notifier;
+static error_notifier_dummy dummy_error_notifier;
 
 fapi_to_phy_translator::fapi_to_phy_translator(const fapi_to_phy_translator_config&  config,
                                                fapi_to_phy_translator_dependencies&& dependencies) :
@@ -378,7 +378,7 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
   // Raise invalid format error.
   if (!pdus.has_value()) {
     error_notifier.get().on_error_indication(
-        fapi::build_msg_slot_error_indication(msg.sfn, msg.slot, fapi::message_type_id::dl_tti_request));
+        fapi::build_msg_error_indication(msg.sfn, msg.slot, fapi::message_type_id::dl_tti_request));
     return;
   }
 
@@ -552,7 +552,7 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
         "Sector#{}: Real-time failure in FAPI: UL processor is busy for slot {}.{}.", sector_id, msg.sfn, msg.slot);
     // Raise out of sync error.
     error_notifier.get().on_error_indication(
-        fapi::build_msg_slot_error_indication(msg.sfn, msg.slot, fapi::message_type_id::ul_tti_request));
+        fapi::build_msg_error_indication(msg.sfn, msg.slot, fapi::message_type_id::ul_tti_request));
     l2_tracer << instant_trace_event{"ul_tti_req_busy", instant_trace_event::cpu_scope::global};
     return;
   }
@@ -563,7 +563,7 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
   // Raise invalid format error.
   if (!pdus.has_value()) {
     error_notifier.get().on_error_indication(
-        fapi::build_msg_slot_error_indication(msg.sfn, msg.slot, fapi::message_type_id::ul_tti_request));
+        fapi::build_msg_error_indication(msg.sfn, msg.slot, fapi::message_type_id::ul_tti_request));
     return;
   }
 

@@ -219,7 +219,7 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
 
     // Connect O-DU low with O-DU high.
     odu_lo.set_slot_time_message_notifier(odu_hi.get_slot_time_message_notifier());
-    odu_lo.set_slot_error_message_notifier(odu_hi.get_slot_error_message_notifier());
+    odu_lo.set_error_message_notifier(odu_hi.get_error_message_notifier());
     odu_lo.set_slot_data_message_notifier(odu_hi.get_slot_data_message_notifier());
   }
 

@@ -10,17 +10,24 @@
 
 #pragma once
 
-#include "srsran/fapi//slot_error_message_notifier.h"
+#include "srsran/fapi/error_message_notifier.h"
 
 namespace srsran {
 namespace fapi {
 
-/// Dummy FAPI slot error message notifier that will close the application if its methods are called.
-class slot_error_message_notifier_dummy : public slot_error_message_notifier
+/// Error message notifier dispatcher that forwards error messages to the configured notifier.
+class error_message_notifier_dispatcher : public error_message_notifier
 {
+  error_message_notifier* notifier = nullptr;
+
 public:
+  error_message_notifier_dispatcher();
+
   // See interface for documentation.
   void on_error_indication(const error_indication_message& msg) override;
+
+  /// Sets the error message notifier to the given one.
+  void set_error_message_notifier(error_message_notifier& error_notifier);
 };
 
 } // namespace fapi

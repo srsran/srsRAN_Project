@@ -60,7 +60,7 @@ split6_o_du_low_metrics_collector_impl::split6_o_du_low_metrics_collector_impl(
 }
 
 split6_o_du_low_metrics_collector_impl&
-split6_o_du_low_metrics_collector_impl::operator=(split6_o_du_low_metrics_collector_impl&& other)
+split6_o_du_low_metrics_collector_impl::operator=(split6_o_du_low_metrics_collector_impl&& other) noexcept
 {
   // Stop others timer to put it into known state.
   other.stopped.store(true, std::memory_order_relaxed);

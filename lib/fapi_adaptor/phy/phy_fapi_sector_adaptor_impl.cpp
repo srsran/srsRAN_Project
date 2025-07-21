@@ -71,11 +71,10 @@ void phy_fapi_sector_adaptor_impl::set_slot_time_message_notifier(
   time_translator.set_slot_time_message_notifier(fapi_time_slot_notifier);
 }
 
-void phy_fapi_sector_adaptor_impl::set_slot_error_message_notifier(
-    fapi::slot_error_message_notifier& fapi_error_notifier)
+void phy_fapi_sector_adaptor_impl::set_error_message_notifier(fapi::error_message_notifier& fapi_error_notifier)
 {
-  fapi_translator.set_slot_error_message_notifier(fapi_error_notifier);
-  error_translator.set_slot_error_message_notifier(fapi_error_notifier);
+  fapi_translator.set_error_message_notifier(fapi_error_notifier);
+  error_translator.set_error_message_notifier(fapi_error_notifier);
 }
 
 void phy_fapi_sector_adaptor_impl::set_slot_data_message_notifier(fapi::slot_data_message_notifier& fapi_data_notifier)

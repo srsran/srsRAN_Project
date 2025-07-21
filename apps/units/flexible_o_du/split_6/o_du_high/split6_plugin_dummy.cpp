@@ -11,6 +11,7 @@
 #include "split6_plugin_dummy.h"
 #include "srsran/fapi/slot_last_message_notifier.h"
 #include "srsran/fapi/slot_message_gateway.h"
+#include "srsran/fapi_adaptor/fapi_operation_controller.h"
 
 namespace srsran::fapi {
 struct dl_tti_request_message;
@@ -25,7 +26,7 @@ namespace {
 /// Dummy FAPI adaptor implementation.
 class fapi_adaptor_dummy : public fapi::fapi_adaptor,
                            fapi::fapi_message_interface_collection,
-                           fapi::fapi_operation_controller
+                           fapi::operation_controller
 {
   /// Dummy slot message gateway implementation.
   class slot_message_gateway_dummy : public fapi::slot_message_gateway
@@ -54,7 +55,7 @@ class fapi_adaptor_dummy : public fapi::fapi_adaptor,
 
 public:
   // See interface for documentation.
-  fapi_operation_controller& get_operation_controller() override { return *this; }
+  fapi::operation_controller& get_operation_controller() override { return *this; }
 
   // See interface for documentation.
   fapi_message_interface_collection& get_message_interface_collection() override { return *this; }
@@ -78,7 +79,7 @@ public:
   void set_slot_data_message_notifier(fapi::slot_data_message_notifier& notifier_) override {}
 
   // See interface for documentation.
-  void set_slot_error_message_notifier(fapi::slot_error_message_notifier& notifier_) override {}
+  void set_error_message_notifier(fapi::error_message_notifier& notifier_) override {}
 };
 
 } // namespace

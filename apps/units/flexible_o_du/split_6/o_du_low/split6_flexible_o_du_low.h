@@ -10,31 +10,31 @@
 
 #pragma once
 
-#include "cell_operation_request_impl.h"
+#include "split6_flexible_o_du_low_session_manager.h"
 #include "srsran/du/du_operation_controller.h"
-#include "srsran/fapi/cell_configurator_plugin.h"
 #include "srsran/fapi/fapi_config_message_interface_collection.h"
+#include "srsran/fapi_adaptor/fapi_config_messages_adaptor.h"
 #include <memory>
 
 namespace srsran {
 
-/// Split 6 flexible O-DU low manager dependencies.
-struct split6_flexible_o_du_low_manager_dependencies {
-  std::unique_ptr<split6_flexible_o_du_low_factory>               factory_odu_low;
-  std::unique_ptr<fapi::cell_configurator_plugin>                 cell_plugin;
+/// Split 6 flexible O-DU low dependencies.
+struct split6_flexible_o_du_low_dependencies {
+  std::unique_ptr<split6_flexible_o_du_low_session_factory>       odu_low_session_factory;
+  std::unique_ptr<fapi::config_messages_adaptor>                  config_adaptor;
   std::unique_ptr<fapi::fapi_config_message_interface_collection> config_interface_collection;
 };
 
-/// \brief Split 6 flexible O-DU low manager.
+/// \brief Split 6 flexible O-DU low.
 ///
 /// This is the class returned by the application unit when it creates the O-DU low.
 /// This object:
-///  - Manages/owns the configuration plugin and the FAPI configuration related objects.
+///  - Manages/owns the configuration adaptor and the FAPI configuration related objects.
 ///  - Controls the cell creation/destruction using the cell operation request handler implementation.
-class split6_flexible_o_du_low_manager : public du_operation_controller
+class split6_flexible_o_du_low : public du_operation_controller
 {
 public:
-  explicit split6_flexible_o_du_low_manager(split6_flexible_o_du_low_manager_dependencies&& dependencies);
+  explicit split6_flexible_o_du_low(split6_flexible_o_du_low_dependencies&& dependencies);
 
   // See interface for documentation.
   void start() override;
@@ -43,9 +43,8 @@ public:
   void stop() override;
 
 private:
-  std::unique_ptr<split6_flexible_o_du_low_factory>               factory_odu_low;
-  cell_operation_request_handler_impl                             cell_controller;
-  std::unique_ptr<fapi::cell_configurator_plugin>                 cell_plugin;
+  split6_flexible_o_du_low_session_manager                        odu_low_session_manager;
+  std::unique_ptr<fapi::config_messages_adaptor>                  config_msg_adaptor;
   std::unique_ptr<fapi::fapi_config_message_interface_collection> config_interface_collection;
 };
 

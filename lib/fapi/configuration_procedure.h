@@ -18,16 +18,16 @@
 namespace srsran {
 namespace fapi {
 
-class slot_error_message_notifier;
+class error_message_notifier;
 class config_message_notifier;
 
-/// FAPI configuration message gateway implementation.
-class config_message_gateway_impl : public config_message_gateway
+/// FAPI configuration procedure.
+class configuration_procedure : public config_message_gateway
 {
   enum class cell_status : uint8_t { IDLE, CONFIGURED, RUNNING };
 
 public:
-  explicit config_message_gateway_impl(srslog::basic_logger& logger_);
+  explicit configuration_procedure(srslog::basic_logger& logger_);
 
   // See interface for documentation.
   void param_request(const fapi::param_request& msg) override;
@@ -44,8 +44,8 @@ public:
   /// Sets the config message notifier to the given one.
   void set_config_message_notifier(config_message_notifier& config_notifier) { notifier = &config_notifier; }
 
-  /// Sets the slot error message notifier to the given one.
-  void set_slot_error_message_notifier(slot_error_message_notifier& err_notifier) { error_notifier = &err_notifier; }
+  /// Sets the error message notifier to the given one.
+  void set_error_message_notifier(error_message_notifier& err_notifier) { error_notifier = &err_notifier; }
 
   /// Sets the cell operation request notifier to the given one.
   void set_cell_operation_request_notifier(cell_operation_request_notifier& cell_notifier)
@@ -62,7 +62,7 @@ private:
   srslog::basic_logger&            logger;
   fapi_cell_config                 cell_cfg;
   config_message_notifier*         notifier                = nullptr;
-  slot_error_message_notifier*     error_notifier          = nullptr;
+  error_message_notifier*          error_notifier          = nullptr;
   cell_operation_request_notifier* cell_operation_notifier = nullptr;
   cell_status                      status                  = cell_status::IDLE;
 };
