@@ -1365,7 +1365,16 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
           logger.warning("ue={} rnti={}: ra-ContentionResolutionTimer expired before UE's ConRes was scheduled",
                          fmt::underlying(u.ue_index),
                          u.crnti);
-          // TODO: remove the UE and continue with the next one.
+          // Remove the UE from the fallback scheduler.
+          ue_it = pending_dl_ues_new_tx.erase(ue_it);
+          pending_ul_ues.erase(std::remove(pending_ul_ues.begin(), pending_ul_ues.end(), u.ue_index),
+                               pending_ul_ues.end());
+          ongoing_ues_ack_retxs.erase(
+              std::remove_if(ongoing_ues_ack_retxs.begin(),
+                             ongoing_ues_ack_retxs.end(),
+                             [&u](const ack_and_retx_tracker& tracker) { return tracker.ue_index == u.ue_index; }),
+              ongoing_ues_ack_retxs.end());
+          continue;
         }
       }
     }
@@ -1424,11 +1433,22 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       if (slot_diff < 0 or
           divide_ceil<uint32_t, uint32_t>(static_cast<uint32_t>(slot_diff), sl_tx.nof_slots_per_subframe()) >
               ra_conres_timer_subframes) {
+        const auto  ue_index = it_ue_harq->ue_index;
+        const auto& u        = ues[ue_index];
         logger.warning(
             "ue={} rnti={}: ra-ContentionResolutionTimer expired before the UE has received and acked ConRes",
-            fmt::underlying(ues[it_ue_harq->ue_index].ue_index),
-            ues[it_ue_harq->ue_index].crnti);
-        // TODO: remove the UE and continue with the next one.
+            fmt::underlying(u.ue_index),
+            u.crnti);
+        // Remove the UE from the fallback scheduler.
+        it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
+        pending_dl_ues_new_tx.erase(
+            std::remove_if(pending_dl_ues_new_tx.begin(),
+                           pending_dl_ues_new_tx.end(),
+                           [ue_index = u.ue_index](const fallback_ue& ue) { return ue.ue_index == ue_index; }),
+            pending_dl_ues_new_tx.end());
+        pending_ul_ues.erase(std::remove(pending_ul_ues.begin(), pending_ul_ues.end(), u.ue_index),
+                             pending_ul_ues.end());
+        continue;
       }
     }
     ++it_ue_harq;
