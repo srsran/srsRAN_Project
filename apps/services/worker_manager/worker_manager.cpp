@@ -653,12 +653,14 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
 {
   using namespace execution_config_helper;
 
+  ru_generic_executor_mapper_configuration ru_sdr_exec_map_config;
+
   // Radio Unit worker and executor. As the radio is unique per application, use the first cell of the affinity manager.
   create_prio_worker("radio",
                      task_worker_queue_size,
                      {{"radio_exec"}},
                      affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::ru));
-  radio_exec = exec_mng.executors().at("radio_exec");
+  ru_sdr_exec_map_config.radio_exec = exec_mng.executors().at("radio_exec");
 
   for (unsigned cell_id = 0; cell_id != config.nof_cells; ++cell_id) {
     switch (config.profile) {
@@ -668,11 +670,13 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
         std::string exec_name = "phy_exec";
 
         task_executor* phy_exec = exec_mng.executors().at(exec_name);
-        lower_prach_exec.push_back(phy_exec);
-        lower_phy_tx_exec.push_back(phy_exec);
-        lower_phy_rx_exec.push_back(phy_exec);
-        lower_phy_dl_exec.push_back(phy_exec);
-        lower_phy_ul_exec.push_back(phy_exec);
+        ru_sdr_exec_map_config.sectors.emplace_back();
+        ru_generic_executor_mapper_sector_configuration& sector_config = ru_sdr_exec_map_config.sectors.back();
+        sector_config.dl_exec                                          = phy_exec;
+        sector_config.ul_exec                                          = phy_exec;
+        sector_config.prach_exec                                       = phy_exec;
+        sector_config.tx_exec                                          = phy_exec;
+        sector_config.rx_exec                                          = phy_exec;
         break;
       }
       case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::single: {
@@ -687,12 +691,13 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
                            os_thread_realtime_priority::max());
 
         task_executor* phy_exec = exec_mng.executors().at(exec_name);
-        lower_phy_tx_exec.push_back(phy_exec);
-        lower_phy_rx_exec.push_back(phy_exec);
-        lower_phy_dl_exec.push_back(phy_exec);
-        lower_phy_ul_exec.push_back(phy_exec);
-
-        lower_prach_exec.push_back(&du_low_exec_mapper->get_cell_mapper(cell_id).prach_executor());
+        ru_sdr_exec_map_config.sectors.emplace_back();
+        ru_generic_executor_mapper_sector_configuration& sector_config = ru_sdr_exec_map_config.sectors.back();
+        sector_config.dl_exec                                          = phy_exec;
+        sector_config.ul_exec                                          = phy_exec;
+        sector_config.tx_exec                                          = phy_exec;
+        sector_config.rx_exec                                          = phy_exec;
+        sector_config.prach_exec = &du_low_exec_mapper->get_cell_mapper(cell_id).prach_executor();
         break;
       }
       case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::dual: {
@@ -713,12 +718,13 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
                            affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
                            os_thread_realtime_priority::max() - 1);
 
-        lower_phy_tx_exec.push_back(exec_mng.executors().at(exec_dl));
-        lower_phy_rx_exec.push_back(exec_mng.executors().at(exec_ul));
-        lower_phy_dl_exec.push_back(exec_mng.executors().at(exec_dl));
-        lower_phy_ul_exec.push_back(exec_mng.executors().at(exec_ul));
-
-        lower_prach_exec.push_back(&du_low_exec_mapper->get_cell_mapper(cell_id).prach_executor());
+        ru_sdr_exec_map_config.sectors.emplace_back();
+        ru_generic_executor_mapper_sector_configuration& sector_config = ru_sdr_exec_map_config.sectors.back();
+        sector_config.dl_exec                                          = exec_mng.executors().at(exec_dl);
+        sector_config.ul_exec                                          = exec_mng.executors().at(exec_ul);
+        sector_config.tx_exec                                          = exec_mng.executors().at(exec_dl);
+        sector_config.rx_exec                                          = exec_mng.executors().at(exec_ul);
+        sector_config.prach_exec = &du_low_exec_mapper->get_cell_mapper(cell_id).prach_executor();
         break;
       }
       case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::quad: {
@@ -753,16 +759,19 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
                            affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
                            os_thread_realtime_priority::max() - 3);
 
-        lower_phy_tx_exec.push_back(exec_mng.executors().at(exec_tx));
-        lower_phy_rx_exec.push_back(exec_mng.executors().at(exec_rx));
-        lower_phy_dl_exec.push_back(exec_mng.executors().at(exec_dl));
-        lower_phy_ul_exec.push_back(exec_mng.executors().at(exec_ul));
-
-        lower_prach_exec.push_back(&du_low_exec_mapper->get_cell_mapper(cell_id).prach_executor());
+        ru_sdr_exec_map_config.sectors.emplace_back();
+        ru_generic_executor_mapper_sector_configuration& sector_config = ru_sdr_exec_map_config.sectors.back();
+        sector_config.dl_exec                                          = exec_mng.executors().at(exec_dl);
+        sector_config.ul_exec                                          = exec_mng.executors().at(exec_ul);
+        sector_config.tx_exec                                          = exec_mng.executors().at(exec_tx);
+        sector_config.rx_exec                                          = exec_mng.executors().at(exec_rx);
+        sector_config.prach_exec = &du_low_exec_mapper->get_cell_mapper(cell_id).prach_executor();
         break;
       }
     }
   }
+
+  sdr_exec_mapper = create_ru_generic_executor_mapper(ru_sdr_exec_map_config);
 }
 
 void worker_manager::create_ru_dummy_executors()
@@ -773,7 +782,7 @@ void worker_manager::create_ru_dummy_executors()
                      {{"ru_dummy"}},
                      affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::ru),
                      os_thread_realtime_priority::max());
-  radio_exec = exec_mng.executors().at("ru_dummy");
+  dummy_exec_mapper = create_ru_dummy_executor_mapper(*exec_mng.executors().at("ru_dummy"));
 }
 
 task_executor& worker_manager::get_du_low_dl_executor(unsigned sector_id) const

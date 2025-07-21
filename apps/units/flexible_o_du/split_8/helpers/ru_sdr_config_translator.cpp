@@ -24,10 +24,19 @@ static lower_phy_configuration generate_low_phy_config(const flexible_o_du_ru_co
   /// Static configuration that the gnb supports.
   static constexpr cyclic_prefix cp = cyclic_prefix::NORMAL;
 
+  const frequency_range freq_range = band_helper::get_freq_range(config.band);
+  const unsigned        bandwidth_sc =
+      NOF_SUBCARRIERS_PER_RB * band_helper::get_n_rbs_from_bw(config.bw, config.scs, freq_range);
+
   lower_phy_configuration out_cfg;
 
   out_cfg.scs                        = config.scs;
   out_cfg.cp                         = cp;
+  out_cfg.bandwidth_rb               = band_helper::get_n_rbs_from_bw(config.bw, config.scs, freq_range);
+  out_cfg.dl_freq_hz                 = band_helper::nr_arfcn_to_freq(config.dl_arfcn);
+  out_cfg.ul_freq_hz                 = band_helper::nr_arfcn_to_freq(config.ul_arfcn);
+  out_cfg.nof_rx_ports               = config.nof_rx_antennas;
+  out_cfg.nof_tx_ports               = config.nof_tx_antennas;
   out_cfg.sector_id                  = sector_id;
   out_cfg.dft_window_offset          = 0.5F;
   out_cfg.max_processing_delay_slots = max_processing_delay_slot;
@@ -75,10 +84,6 @@ static lower_phy_configuration generate_low_phy_config(const flexible_o_du_ru_co
   // Get lower PHY system time throttling.
   out_cfg.system_time_throttling = ru_cfg.expert_cfg.lphy_dl_throttling;
 
-  const frequency_range freq_range = band_helper::get_freq_range(config.band);
-  const unsigned        bandwidth_sc =
-      NOF_SUBCARRIERS_PER_RB * band_helper::get_n_rbs_from_bw(config.bw, config.scs, freq_range);
-
   // Apply gain back-off to account for the PAPR of the signal and the DFT power normalization.
   out_cfg.amplitude_config.input_gain_dB =
       -convert_power_to_dB(static_cast<float>(bandwidth_sc)) - ru_cfg.amplitude_cfg.gain_backoff_dB;
@@ -91,14 +96,6 @@ static lower_phy_configuration generate_low_phy_config(const flexible_o_du_ru_co
 
   // Set the full scale amplitude reference to 1.
   out_cfg.amplitude_config.full_scale_lin = 1.0F;
-
-  lower_phy_sector_description sector_config;
-  sector_config.bandwidth_rb = band_helper::get_n_rbs_from_bw(config.bw, config.scs, freq_range);
-  sector_config.dl_freq_hz   = band_helper::nr_arfcn_to_freq(config.dl_arfcn);
-  sector_config.ul_freq_hz   = band_helper::nr_arfcn_to_freq(config.ul_arfcn);
-  sector_config.nof_rx_ports = config.nof_rx_antennas;
-  sector_config.nof_tx_ports = config.nof_tx_antennas;
-  out_cfg.sectors.push_back(sector_config);
 
   if (!is_valid_lower_phy_config(out_cfg)) {
     report_error("Invalid lower PHY configuration.\n");

@@ -22,20 +22,24 @@ std::unique_ptr<radio_unit> srsran::create_sdr_radio_unit(const ru_sdr_unit_conf
 {
   ru_generic_configuration config = generate_ru_sdr_config(ru_cfg, ru_config.cells, ru_config.max_processing_delay);
 
+  ru_generic_executor_mapper& exec_map = ru_dependencies.workers.get_sdr_ru_executor_mapper();
+
   config.rf_logger       = &srslog::fetch_basic_logger("RF");
-  config.radio_exec      = ru_dependencies.workers.radio_exec;
+  config.radio_exec      = &exec_map.asynchronous_radio_executor();
   config.timing_notifier = &ru_dependencies.timing_notifier;
   config.symbol_notifier = &ru_dependencies.symbol_notifier;
   config.error_notifier  = &ru_dependencies.error_notifier;
 
   for (unsigned i = 0, e = config.lower_phy_config.size(); i != e; ++i) {
+    ru_sdr_sector_executor_mapper& sector_exec_map = exec_map[i];
+
     lower_phy_configuration& low_phy_cfg = config.lower_phy_config[i];
     low_phy_cfg.logger                   = &srslog::fetch_basic_logger("PHY");
-    low_phy_cfg.tx_task_executor         = ru_dependencies.workers.lower_phy_tx_exec[i];
-    low_phy_cfg.rx_task_executor         = ru_dependencies.workers.lower_phy_rx_exec[i];
-    low_phy_cfg.dl_task_executor         = ru_dependencies.workers.lower_phy_dl_exec[i];
-    low_phy_cfg.ul_task_executor         = ru_dependencies.workers.lower_phy_ul_exec[i];
-    low_phy_cfg.prach_async_executor     = ru_dependencies.workers.lower_prach_exec[i];
+    low_phy_cfg.tx_task_executor         = &sector_exec_map.transmitter_executor();
+    low_phy_cfg.rx_task_executor         = &sector_exec_map.receiver_executor();
+    low_phy_cfg.dl_task_executor         = &sector_exec_map.downlink_executor();
+    low_phy_cfg.ul_task_executor         = &sector_exec_map.uplink_executor();
+    low_phy_cfg.prach_async_executor     = &sector_exec_map.prach_executor();
 
     low_phy_cfg.logger->set_level(ru_cfg.loggers.phy_level);
   }

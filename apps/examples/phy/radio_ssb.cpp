@@ -464,6 +464,11 @@ lower_phy_configuration create_lower_phy_configuration(task_executor*           
   phy_config.system_time_throttling         = 0.0F;
   phy_config.ta_offset                      = n_ta_offset::n0;
   phy_config.cp                             = cy_prefix;
+  phy_config.bandwidth_rb                   = bw_rb;
+  phy_config.dl_freq_hz                     = dl_center_freq;
+  phy_config.ul_freq_hz                     = rx_freq;
+  phy_config.nof_tx_ports                   = nof_ports;
+  phy_config.nof_rx_ports                   = nof_ports;
   phy_config.dft_window_offset              = 0.5F;
   phy_config.bb_gateway                     = &bb_gateway;
   phy_config.rx_symbol_notifier             = rx_symbol_notifier;
@@ -486,16 +491,6 @@ lower_phy_configuration create_lower_phy_configuration(task_executor*           
   // Baseband gain includes normalization to unitary power (according to the number of subcarriers) and the additional
   // back-off to account for signal PAPR.
   phy_config.amplitude_config.input_gain_dB = -convert_power_to_dB(bw_rb * NRE) - baseband_backoff_dB;
-
-  for (unsigned sector_id = 0; sector_id != nof_sectors; ++sector_id) {
-    lower_phy_sector_description sector_config;
-    sector_config.bandwidth_rb = bw_rb;
-    sector_config.dl_freq_hz   = dl_center_freq;
-    sector_config.ul_freq_hz   = rx_freq;
-    sector_config.nof_tx_ports = nof_ports;
-    sector_config.nof_rx_ports = nof_ports;
-    phy_config.sectors.push_back(sector_config);
-  }
 
   // Logger for amplitude control metrics.
   phy_config.logger = logger;
