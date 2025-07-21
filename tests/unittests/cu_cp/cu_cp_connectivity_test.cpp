@@ -10,6 +10,7 @@
 
 #include "cu_cp_test_environment.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
+#include "tests/test_doubles/ngap/ngap_test_message_validators.h"
 #include "tests/test_doubles/rrc/rrc_test_messages.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
@@ -393,6 +394,95 @@ TEST_F(
   // A new CU-UP can now be created.
   auto ret = connect_new_cu_up();
   ASSERT_TRUE(ret.has_value());
+}
+
+TEST_F(cu_cp_connectivity_test,
+       when_e1_release_request_is_received_and_no_ues_are_connected_then_release_response_is_sent)
+{
+  // Run NG setup to completion.
+  run_ng_setup();
+
+  // Setup DU.
+  auto ret = connect_new_du();
+  ASSERT_TRUE(ret.has_value());
+  unsigned du_idx = ret.value();
+  ASSERT_TRUE(this->run_f1_setup(du_idx));
+
+  // Setup CU-UP.
+  ret = connect_new_cu_up();
+  ASSERT_TRUE(ret.has_value());
+  unsigned cu_up_idx = ret.value();
+  ASSERT_TRUE(this->run_e1_setup(cu_up_idx));
+
+  // Check no UEs.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_TRUE(report.ues.empty());
+
+  // CU-UP sends E1 Release Request.
+  get_cu_up(cu_up_idx).push_tx_pdu(generate_valid_e1_release_request());
+
+  // Ensure the E1 Release Response is received and correct.
+  e1ap_message e1ap_pdu;
+  ASSERT_TRUE(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu, std::chrono::milliseconds{1000}))
+      << "E1 Release Response was not received by the CU-UP";
+  ASSERT_EQ(e1ap_pdu.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome);
+  ASSERT_EQ(e1ap_pdu.pdu.successful_outcome().value.type().value,
+            asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::e1_release_resp);
+}
+
+TEST_F(cu_cp_connectivity_test,
+       when_e1_release_request_is_received_and_ues_are_connected_then_ues_are_released_and_release_response_is_sent)
+{
+  // Run NG setup to completion.
+  run_ng_setup();
+
+  // Setup DU.
+  auto ret = connect_new_du();
+  ASSERT_TRUE(ret.has_value());
+  unsigned du_idx = ret.value();
+  ASSERT_TRUE(this->run_f1_setup(du_idx));
+
+  // Setup CU-UP.
+  ret = connect_new_cu_up();
+  ASSERT_TRUE(ret.has_value());
+  unsigned cu_up_idx = ret.value();
+  ASSERT_TRUE(this->run_e1_setup(cu_up_idx));
+
+  ASSERT_TRUE(
+      attach_ue(du_idx, cu_up_idx, gnb_du_ue_f1ap_id_t(0), to_rnti(0x4601), amf_ue_id_t(0), gnb_cu_up_ue_e1ap_id_t(0)));
+
+  // CU-UP sends E1 Release Request.
+  get_cu_up(cu_up_idx).push_tx_pdu(generate_valid_e1_release_request());
+
+  // TEST: Verify NGAP UE Context Release Request is sent to NGAP.
+  ngap_message ngap_pdu;
+  ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu, std::chrono::milliseconds{1000}));
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_release_request(ngap_pdu));
+
+  // AMF sends NGAP UE Context Release Command.
+  get_amf().push_tx_pdu(generate_valid_ue_context_release_command_with_amf_ue_ngap_id(amf_ue_id_t(0)));
+
+  // TEST: Verify F1AP UE Context Release Command is sent to DU.
+  f1ap_message f1ap_pdu;
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000}));
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_release_command(f1ap_pdu));
+
+  // DU sends F1AP UE Context Release Complete.
+  get_du(du_idx).push_ul_pdu(
+      test_helpers::generate_ue_context_release_complete(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0)));
+
+  // TEST: Verify NGAP UE Context Release Complete is sent to AMF.
+  ngap_message ngap_pdu2;
+  ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu2, std::chrono::milliseconds{1000}));
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_release_complete(ngap_pdu2));
+
+  // TEST: Verify E1 Release Response is sent to CU-UP.
+  e1ap_message e1ap_pdu;
+  ASSERT_TRUE(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu, std::chrono::milliseconds{1000}))
+      << "E1 Release Response was not received by the CU-UP";
+  ASSERT_EQ(e1ap_pdu.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome);
+  ASSERT_EQ(e1ap_pdu.pdu.successful_outcome().value.type().value,
+            asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::e1_release_resp);
 }
 
 //----------------------------------------------------------------------------------//

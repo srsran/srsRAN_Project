@@ -9,6 +9,7 @@
  */
 
 #include "e1ap_cu_cp_test_messages.h"
+#include "srsran/asn1/e1ap/e1ap.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -73,6 +74,19 @@ e1ap_message srsran::srs_cu_cp::generate_cu_up_e1_setup_respose(unsigned transac
   setup_resp->gnb_cu_cp_name.from_string("srsCU-CP");
 
   return e1_setup_response;
+}
+
+e1ap_message srsran::srs_cu_cp::generate_valid_e1_release_request()
+{
+  e1ap_message e1_release_request = {};
+  e1_release_request.pdu.set_init_msg();
+  e1_release_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_E1_RELEASE);
+
+  auto& release_req             = e1_release_request.pdu.init_msg().value.e1_release_request();
+  release_req->transaction_id   = 99;
+  release_req->cause.set_misc() = asn1::e1ap::cause_misc_opts::options::unspecified;
+
+  return e1_release_request;
 }
 
 e1ap_bearer_context_setup_request srsran::srs_cu_cp::generate_bearer_context_setup_request(ue_index_t ue_index)

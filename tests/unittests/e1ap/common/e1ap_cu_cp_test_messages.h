@@ -38,6 +38,10 @@ e1ap_message generate_valid_cu_up_e1_setup_request();
 /// \return The CU-UP E1 Setup Response.
 e1ap_message generate_cu_up_e1_setup_respose(unsigned transaction_id);
 
+/// \brief Generate a valid dummy E1 Release Request.
+/// \return The E1 Release Request.
+e1ap_message generate_valid_e1_release_request();
+
 /// \brief Generate a dummy Bearer Context Setup Request.
 /// \param[in] ue_index The UE Index.
 /// \return The Bearer Context Setup Request.
