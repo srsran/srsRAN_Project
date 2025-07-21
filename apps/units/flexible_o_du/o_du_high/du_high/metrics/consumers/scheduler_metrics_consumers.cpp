@@ -424,13 +424,14 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
     }
 
     // log cell-wide metrics
-    fmt::format_to(std::back_inserter(buffer), "Cell Scheduler Metrics:");
     fmt::format_to(
         std::back_inserter(buffer),
+        "Scheduler cell pci={} metrics:"
         " total_dl_brate={}bps total_ul_brate={}bps nof_prbs={} nof_dl_slots={} nof_ul_slots={} nof_prach_preambles={} "
         "error_indications={} pdsch_rbs_per_slot={} pusch_rbs_per_slot={} pdschs_per_slot={:.3} puschs_per_slot={:.3} "
         "failed_pdcch={} failed_uci={} nof_ues={} mean_latency={}usec max_latency={}usec max_latency_slot={} "
         "latency_hist=[{}] msg3_ok={} msg3_nok={} late_dl_harqs={} late_ul_harqs={}",
+        cell.pci,
         float_to_eng_string(sum_dl_bitrate_kbps * 1e3, 2, false),
         float_to_eng_string(sum_ul_bitrate_kbps * 1e3, 2, false),
         cell.nof_prbs,
