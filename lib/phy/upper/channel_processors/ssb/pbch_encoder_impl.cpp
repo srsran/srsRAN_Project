@@ -15,7 +15,7 @@
 
 using namespace srsran;
 
-/// Implements TS 38.212 Table 7.1.1-1: Value of PBCH payload interleaver pattern G (j).
+/// Implements TS38.212 Table 7.1.1-1: Value of PBCH payload interleaver pattern G (j).
 static const std::array<uint32_t, pbch_encoder::A> G = {16, 23, 18, 17, 8,  30, 10, 6,  24, 7,  0,  5,  3,  2,  1,  4,
                                                         9,  11, 12, 13, 14, 15, 19, 20, 21, 22, 25, 26, 27, 28, 29, 31};
 
@@ -86,11 +86,11 @@ void pbch_encoder_impl::scramble(span<uint8_t>                           a_prime
   for (unsigned i = 0, j = 0; i != A; ++i) {
     uint8_t s_i = c.extract(j, 1);
 
-    // Check if i belongs to a SS/PBCH block index which is only multiplexed when L_max is 64.
+    // Check if i belongs to an SS/PBCH block index which is only multiplexed when L_max is 64.
     bool is_ssb_idx = (i == G[11] || i == G[12] || i == G[13]) && msg.L_max == 64;
 
-    // a_i corresponds to any one of the bits belonging to the SS/PBCH block index, the half frame index, and 2 nd and
-    // 3 rd least significant bits of the system frame number.
+    // a_i corresponds to any one of the bits belonging to the SS/PBCH block index, the half frame index, and 2nd and
+    // 3rd least significant bits of the system frame number.
     if (is_ssb_idx || i == G[10] || i == PBCH_SFN_2ND_LSB_G || i == PBCH_SFN_3RD_LSB_G) {
       s_i = 0;
     } else {
