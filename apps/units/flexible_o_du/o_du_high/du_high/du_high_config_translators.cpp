@@ -953,7 +953,9 @@ static std::map<five_qi_t, srs_du::du_qos_config> generate_du_qos_config(const d
     out_f1u.t_notify = qos.f1u_du.t_notify;
     out_f1u.rlc_queue_bytes_limit =
         qos.rlc.mode == "am" ? qos.rlc.am.tx.queue_size_bytes : qos.rlc.um.tx.queue_size_bytes;
-    out_f1u.warn_on_drop = config.warn_on_drop;
+    out_f1u.warn_on_drop      = config.warn_on_drop;
+    out_f1u.ul_buffer_timeout = std::chrono::milliseconds(qos.f1u_du.ul_buffer_timeout);
+    out_f1u.ul_buffer_size    = qos.f1u_du.ul_buffer_size;
   }
   return out_cfg;
 }

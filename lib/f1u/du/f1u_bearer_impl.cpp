@@ -26,7 +26,7 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
   cfg(config),
   dl_tnl_info(dl_tnl_info_),
   buffering(cfg.buffer_ul_on_startup),
-  ul_buffer(4096),
+  ul_buffer(cfg.ul_buffer_size),
   rx_sdu_notifier(rx_sdu_notifier_),
   tx_pdu_notifier(tx_pdu_notifier_),
   ue_executor(ue_executor_),
@@ -39,10 +39,11 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
   ul_notif_timer.set(std::chrono::milliseconds(cfg.t_notify), [this](timer_id_t tid) { on_expired_ul_notif_timer(); });
   ul_notif_timer.run();
 
-  ul_buffer_timer.set(std::chrono::milliseconds(500), [this](timer_id_t tid) {
-    logger.log_warning("UL buffering timed out. Flushing PDus. {} {}", cfg, dl_tnl_info);
+  ul_buffer_timer.set(cfg.ul_buffer_timeout, [this](timer_id_t tid) {
+    logger.log_warning("UL buffering timed out, flushing PDUs. ul_buffer_size={} ul_buffer_timeout={}ms",
+                       cfg.ul_buffer_size,
+                       cfg.ul_buffer_timeout.count());
     flush_ul_buffer();
-    buffering = false;
   });
   if (cfg.buffer_ul_on_startup) {
     ul_buffer_timer.run();
@@ -63,7 +64,15 @@ void f1u_bearer_impl::handle_sdu(byte_buffer_chain sdu)
 
   if (buffering) {
     logger.log_debug("Buffering UL PDU. ul_buffer_size={}", ul_buffer.size());
-    ul_buffer.try_push(std::move(msg));
+    if (not ul_buffer.try_push(std::move(msg))) {
+      if (cfg.warn_on_drop) {
+        logger.log_warning("Dropped UL PDU, UL buffer full. ul_buffer_size={}", ul_buffer.size());
+      } else {
+        logger.log_debug("Dropped UL PDU. ul_buffer_size={}", ul_buffer.size());
+      }
+    } else {
+      logger.log_debug("Buffering UL PDU. ul_buffer_size={}", ul_buffer.size());
+    }
   } else {
     tx_pdu_notifier.on_new_pdu(std::move(msg));
   }
