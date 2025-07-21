@@ -987,6 +987,15 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
                  sib_cfg.si_window_len_slots);
       return false;
     }
+
+    // Check if SIB19 is included together with any other SIB, which is not allowed.
+    const auto sib19_included = std::find(si_msg.sib_mapping_info.begin(),
+                                          si_msg.sib_mapping_info.end(),
+                                          static_cast<std::underlying_type_t<sib_type>>(sib_type::sib19));
+    if (sib19_included != si_msg.sib_mapping_info.end() && si_msg.sib_mapping_info.size() > 1) {
+      fmt::print("SIB19 cannot be included in the SI messages together with other SIBs.\n");
+      return false;
+    }
   }
 
   std::vector<uint8_t>  sibs_included;
@@ -1012,15 +1021,9 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
     return false;
   }
 
-  // Check if SIB19 is included together with any other SIB, which is not allowed.
+  // If NTN-config present, check if SIB19 sched info is provided.
   const auto sib19_included = std::find(
       sibs_included.begin(), sibs_included.end(), static_cast<std::underlying_type_t<sib_type>>(sib_type::sib19));
-  if (sib19_included != sibs_included.end() && sibs_included.size() > 1) {
-    fmt::print("SIB19 cannot be included in the SI messages together with other SIBs.\n");
-    return false;
-  }
-
-  // If NTN-config present, check if SIB19 sched info is provided.
   if (cell_cfg.ntn_cfg.has_value() and sib19_included == sibs_included.end()) {
     fmt::print("NTN-Config is present, but SIB19 scheduling information was not provided.\n");
     return false;
