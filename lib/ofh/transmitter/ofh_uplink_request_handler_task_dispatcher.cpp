@@ -11,6 +11,7 @@
 #include "ofh_uplink_request_handler_task_dispatcher.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/shared_resource_grid.h"
+#include "srsran/support/rtsan.h"
 
 using namespace srsran;
 using namespace ofh;
@@ -18,7 +19,8 @@ using namespace ofh;
 void uplink_request_handler_task_dispatcher::handle_prach_occasion(const prach_buffer_context& context,
                                                                    prach_buffer&               buffer)
 {
-  if (!executor.execute([context, &buffer, this]() { uplink_handler.handle_prach_occasion(context, buffer); })) {
+  if (!executor.execute([context, &buffer, this]()
+                            SRSRAN_RTSAN_NONBLOCKING { uplink_handler.handle_prach_occasion(context, buffer); })) {
     logger.warning(
         "Sector#{}: failed to handle PRACH in the uplink request handler for slot '{}'", sector_id, context.slot);
   }
@@ -27,7 +29,8 @@ void uplink_request_handler_task_dispatcher::handle_prach_occasion(const prach_b
 void uplink_request_handler_task_dispatcher::handle_new_uplink_slot(const resource_grid_context& context,
                                                                     const shared_resource_grid&  grid)
 {
-  if (!executor.execute([context, rg = grid.copy(), this]() { uplink_handler.handle_new_uplink_slot(context, rg); })) {
+  if (!executor.execute([context, rg = grid.copy(), this]()
+                            SRSRAN_RTSAN_NONBLOCKING { uplink_handler.handle_new_uplink_slot(context, rg); })) {
     logger.warning(
         "Sector#{}: failed to handle uplink slot in the uplink request handler for slot '{}'", sector_id, context.slot);
   }

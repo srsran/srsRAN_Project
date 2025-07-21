@@ -12,6 +12,7 @@
 
 #include "ofh_data_flow_cplane_scheduling_commands.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/rtsan.h"
 #include <memory>
 
 namespace srsran {
@@ -33,7 +34,9 @@ public:
   // See interface for documentation.
   void enqueue_section_type_1_message(const data_flow_cplane_type_1_context& context) override
   {
-    if (!executor.execute([this, context]() { data_flow_cplane->enqueue_section_type_1_message(context); })) {
+    if (!executor.execute([this, context]() SRSRAN_RTSAN_NONBLOCKING {
+          data_flow_cplane->enqueue_section_type_1_message(context);
+        })) {
       logger.warning(
           "Sector#{}: failed to dispatch Control-Plane type 1 message for slot '{}'", sector_id, context.slot);
     }
@@ -42,7 +45,9 @@ public:
   // See interface for documentation.
   void enqueue_section_type_3_prach_message(const data_flow_cplane_scheduling_prach_context& context) override
   {
-    if (!executor.execute([this, context]() { data_flow_cplane->enqueue_section_type_3_prach_message(context); })) {
+    if (!executor.execute([this, context]() SRSRAN_RTSAN_NONBLOCKING {
+          data_flow_cplane->enqueue_section_type_3_prach_message(context);
+        })) {
       logger.warning(
           "Sector#{}: failed to dispatch Control-Plane type 3 message for slot '{}'", sector_id, context.slot);
     }

@@ -13,6 +13,7 @@
 #include "srsran/adt/span.h"
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/rtsan.h"
 
 namespace srsran {
 namespace ofh {
@@ -39,7 +40,8 @@ public:
     dl_window_checker.on_new_symbol(symbol_point_context);
     ul_window_checker.on_new_symbol(symbol_point_context);
 
-    if (!executor.execute([&, symbol_point_context]() { symbol_handler.on_new_symbol(symbol_point_context); })) {
+    if (!executor.execute([&, symbol_point_context]()
+                              SRSRAN_RTSAN_NONBLOCKING { symbol_handler.on_new_symbol(symbol_point_context); })) {
       logger.warning("Failed to dispatch new symbol task in the message transmitter for slot '{}' and symbol '{}'",
                      symbol_point_context.symbol_point.get_slot(),
                      symbol_point_context.symbol_point.get_symbol_index());
