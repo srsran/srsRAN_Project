@@ -115,7 +115,7 @@ void ofdm_symbol_demodulator_impl::demodulate(resource_grid_writer& grid,
   // Execute DFT.
   span<const cf_t> dft_output = dft->run();
 
-  // Get phase correction (TS 138.211, Section 5.4)
+  // Get phase correction (TS138.211, Section 5.4)
   cf_t phase_compensation = phase_compensation_table.get_coefficient(symbol_index);
 
   // Apply scaling and phase compensation.

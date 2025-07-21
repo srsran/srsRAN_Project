@@ -78,7 +78,7 @@ public:
     /// - a value in {0,1, ... ,65535} given by the higher-layer parameters \e scramblingID0 and \e scramblingID1,
     /// - \f$N^{cell}_{ID}\f$ otherwise.
     unsigned scrambling_id;
-    /// \brief Parameter \f$n_{SCID}\f$ from TS 38.211 section 6.4.1.1.1.
+    /// \brief Parameter \f$n_{SCID}\f$ from TS38.211 section 6.4.1.1.1.
     ///
     /// It is equal to:
     /// - \c true or \c false according to the DM-RS sequence initialization field, in the DCI associated with the PUSCH
@@ -107,7 +107,7 @@ public:
     std::optional<pusch_context> context;
     /// Indicates the slot and numerology.
     slot_point slot;
-    /// Provides \f$n_{RNTI}\f$ from TS 38.211 section 6.3.1.1 Scrambling.
+    /// Provides \f$n_{RNTI}\f$ from TS38.211 section 6.3.1.1 Scrambling.
     uint16_t rnti;
     /// Number of contiguous PRBs allocated to the BWP {1...275}.
     unsigned bwp_size_rb;
@@ -121,7 +121,7 @@ public:
     std::optional<codeword_description> codeword;
     /// Uplink control information parameters.
     uci_description uci;
-    /// \brief Parameter \f$n_{ID}\f$ from TS 38.211 section 6.3.1.1.
+    /// \brief Parameter \f$n_{ID}\f$ from TS38.211 section 6.3.1.1.
     ///
     /// It is equal to:
     /// - {0...1023} if the higher-layer parameter dataScramblingIdentityPUSCH if configured,

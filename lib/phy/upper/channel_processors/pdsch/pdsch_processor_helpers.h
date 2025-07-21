@@ -23,7 +23,7 @@
 
 namespace srsran {
 
-/// \brief Generates and maps DM-RS for the PDSCH transmission as per TS 38.211 section 7.4.1.1.
+/// \brief Generates and maps DM-RS for the PDSCH transmission as per TS38.211 section 7.4.1.1.
 /// \param[out] grid Resource grid writer interface.
 /// \param[out] dmrs DM-RS PDSCH processor interface.
 /// \param[in]  pdu  Provides the PDSCH processor PDU.
@@ -58,7 +58,7 @@ pdsch_process_dmrs(resource_grid_writer& grid, dmrs_pdsch_processor& dmrs, const
   l1_dl_tracer << trace_event("process_dmrs", process_dmrs_tp);
 }
 
-/// \brief Generates and maps PT-RS for the PDSCH transmission as per TS 38.211 section 7.4.1.2.
+/// \brief Generates and maps PT-RS for the PDSCH transmission as per TS38.211 section 7.4.1.2.
 /// \param[out] grid           Resource grid writer interface.
 /// \param[out] ptrs_generator PT-RS PDSCH generator interface.
 /// \param[in]  pdu            Provides the PDSCH processor PDU.

@@ -56,7 +56,7 @@ private:
   /// Buffer for DM-RS symbol coordinates.
   std::array<layer_dmrs_pattern, MAX_TX_LAYERS> temp_pattern;
 
-  /// \brief Generates the sequence described in TS 38.211 section 6.4.1.1.1, considering the only values required
+  /// \brief Generates the sequence described in TS38.211 section 6.4.1.1.1, considering the only values required
   /// in TS38.211 section 6.4.1.1.2.
   ///
   /// \param[out] sequence Sequence destination.
