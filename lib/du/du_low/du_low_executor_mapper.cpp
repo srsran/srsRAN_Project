@@ -172,9 +172,11 @@ public:
 
       if (config.metrics.has_value()) {
         const du_low_executor_mapper_metric_config& metrics_config = *config.metrics;
-        pdcch_exec = wrap_executor_with_metric(pdcch_exec, fmt::format("pdcch_exec#{}", cell_idx), metrics_config);
-        pdsch_exec = wrap_executor_with_metric(pdsch_exec, fmt::format("pdsch_exec#{}", cell_idx), metrics_config);
-        pdsch_exec = wrap_executor_with_metric(pdsch_exec, fmt::format("pdsch_exec#{}", cell_idx), metrics_config);
+        pdcch_exec  = wrap_executor_with_metric(pdcch_exec, fmt::format("pdcch_exec#{}", cell_idx), metrics_config);
+        pdsch_exec  = wrap_executor_with_metric(pdsch_exec, fmt::format("pdsch_exec#{}", cell_idx), metrics_config);
+        ssb_exec    = wrap_executor_with_metric(ssb_exec, fmt::format("ssb_exec#{}", cell_idx), metrics_config);
+        csi_rs_exec = wrap_executor_with_metric(csi_rs_exec, fmt::format("csi_rs_exec#{}", cell_idx), metrics_config);
+        prs_exec    = wrap_executor_with_metric(prs_exec, fmt::format("prs_exec#{}", cell_idx), metrics_config);
         pdsch_codeblock_exec = wrap_executor_with_metric(
             pdsch_codeblock_exec, fmt::format("pdsch_codeblock_exec#{}", cell_idx), metrics_config);
         prach_exec = wrap_executor_with_metric(prach_exec, fmt::format("prach_exec#{}", cell_idx), metrics_config);
