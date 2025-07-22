@@ -99,6 +99,9 @@ void pdcp_entity_tx::stop()
 /// \ref TS 38.323 section 5.2.1: Transmit operation
 void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 {
+  metrics.add_sdus(1, buf.length());
+  logger.log_debug(buf.begin(), buf.end(), "TX SDU. sdu_len={}", buf.length());
+
   if (SRSRAN_UNLIKELY(stopped)) {
     if (not cfg.custom.warn_on_drop) {
       logger.log_info("Dropping SDU. Entity is stopped");
@@ -136,9 +139,6 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
       warn_on_drop_count = 0;
     }
   }
-
-  metrics.add_sdus(1, buf.length());
-  logger.log_debug(buf.begin(), buf.end(), "TX SDU. sdu_len={}", buf.length());
 
   // The PDCP is not allowed to use the same COUNT value more than once for a given security key,
   // see TS 38.331, section 5.3.1.2. To avoid this, we notify the RRC once we exceed a "maximum"
