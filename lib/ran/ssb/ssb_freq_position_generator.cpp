@@ -12,6 +12,7 @@
 #include "srsran/adt/span.h"
 #include "srsran/ran/band_helper_constants.h"
 #include "srsran/ran/ssb/ssb_gscn.h"
+#include "srsran/support/math/math_utils.h"
 
 using namespace srsran;
 
@@ -34,30 +35,25 @@ static double get_f_ssb_ub_hz(double ss_ref, subcarrier_spacing scs_ssb)
 static ssb_offset_to_pointA
 compute_offset_to_pointA(double f_ssb_0_hz, double point_A_hz, subcarrier_spacing scs_common)
 {
-  ssb_offset_to_pointA offset_to_pA{0};
-  if (scs_common == subcarrier_spacing::kHz15) {
-    offset_to_pA = static_cast<unsigned>((f_ssb_0_hz - point_A_hz) * band_helper::HZ_TO_KHZ) /
-                   (NOF_SUBCARRIERS_PER_RB * scs_to_khz(subcarrier_spacing::kHz15));
-  } else if (scs_common == subcarrier_spacing::kHz30) {
-    offset_to_pA = 2 * (static_cast<unsigned>((f_ssb_0_hz - point_A_hz) * band_helper::HZ_TO_KHZ) /
-                        (2 * NOF_SUBCARRIERS_PER_RB * scs_to_khz(subcarrier_spacing::kHz15)));
-  } else {
-    srsran_assert(scs_common <= subcarrier_spacing::kHz30, "FR2 not supported");
-  }
+  subcarrier_spacing   scs_ref   = band_helper::get_ssb_ref_scs(scs_common);
+  uint64_t             scs_ratio = pow2(to_numerology_value(scs_common) - to_numerology_value(scs_ref));
+  ssb_offset_to_pointA offset_to_pA =
+      scs_ratio * (static_cast<uint64_t>((f_ssb_0_hz - point_A_hz) * band_helper::HZ_TO_KHZ) /
+                   (scs_ratio * NOF_SUBCARRIERS_PER_RB * scs_to_khz(scs_ref)));
   return offset_to_pA;
 }
 
 // Compute the k_SSB, depending on the SCScommon.
-static ssb_subcarrier_offset compute_k_ssb(double f_ssb_0_hz, double point_A_hz, ssb_offset_to_pointA offset_to_pA)
+static ssb_subcarrier_offset
+compute_k_ssb(double f_ssb_0_hz, double point_A_hz, ssb_offset_to_pointA offset_to_pA, subcarrier_spacing scs_common)
 {
-  ssb_subcarrier_offset k_ssb;
-  const double          f_crb_ssb_khz =
-      point_A_hz * band_helper::HZ_TO_KHZ +
-      static_cast<double>(NOF_SUBCARRIERS_PER_RB * scs_to_khz(subcarrier_spacing::kHz15) * offset_to_pA.to_uint());
-  k_ssb = static_cast<unsigned>(f_ssb_0_hz * band_helper::HZ_TO_KHZ - f_crb_ssb_khz) /
-          scs_to_khz(subcarrier_spacing::kHz15);
+  subcarrier_spacing scs_ref = band_helper::get_ssb_ref_scs(scs_common);
 
-  return k_ssb;
+  const double f_crb_ssb_kHz =
+      point_A_hz * band_helper::HZ_TO_KHZ +
+      static_cast<double>(NOF_SUBCARRIERS_PER_RB * scs_to_khz(scs_ref) * offset_to_pA.to_uint());
+
+  return static_cast<uint64_t>(f_ssb_0_hz * band_helper::HZ_TO_KHZ - f_crb_ssb_kHz) / scs_to_khz(scs_ref);
 }
 
 ssb_freq_position_generator::ssb_freq_position_generator(unsigned           dl_arfcn_,
@@ -118,7 +114,8 @@ ssb_freq_position_generator::ssb_freq_position_generator(unsigned           dl_a
                                                   band_helper::N_SIZE_SYNC_RASTER_2_HZ));
     }
   } else {
-    srsran_assert(dl_arfcn < band_helper::MIN_ARFCN_24_5_GHZ_100_GHZ, "FR2 frequencies not supported");
+    N_raster = static_cast<unsigned>(std::floor((ss_ref_l_bound_hz - band_helper::N_REF_OFFSET_24_5_GHZ_100_GHZ) /
+                                                band_helper::N_SIZE_SYNC_RASTER_3_HZ));
   }
 
   // This constraint comes from the scheduler, which cannot allocate PDCCH starting at symbols different from 0;
@@ -127,22 +124,44 @@ ssb_freq_position_generator::ssb_freq_position_generator(unsigned           dl_a
   max_ss0_idx = 9;
 
   // As per TS38.213, Section 4.1.
-  ssb_first_symbol = ssb_case == ssb_pattern_case::B ? 4 : 2;
+  switch (ssb_case) {
+    case ssb_pattern_case::A:
+    case ssb_pattern_case::invalid:
+      ssb_first_symbol = 2;
+      break;
+    case ssb_pattern_case::C:
+    case ssb_pattern_case::B:
+    case ssb_pattern_case::D:
+      ssb_first_symbol = 4;
+      break;
+    case ssb_pattern_case::E:
+      ssb_first_symbol = 8;
+      break;
+  }
 }
 
 double ssb_freq_position_generator::get_ss_ref_hz(unsigned N, unsigned M) const
 {
   // Get SS_ref given the parameters N, M, as per Table 5.4.3.1-1, TS 38.104.
-  const double ss_ref =
-      dl_arfcn < band_helper::MIN_ARFCN_3_GHZ_24_5_GHZ
-          ? static_cast<double>(N) * band_helper::N_SIZE_SYNC_RASTER_1_HZ +
-                static_cast<double>(M) * band_helper::M_SIZE_SYNC_RASTER_1_HZ
-          : band_helper::N_REF_OFFSET_3_GHZ_24_5_GHZ + static_cast<double>(N) * band_helper::N_SIZE_SYNC_RASTER_2_HZ;
-  return ss_ref;
+  if (dl_arfcn >= band_helper::MIN_ARFCN_24_5_GHZ_100_GHZ) {
+    return band_helper::N_REF_OFFSET_24_5_GHZ_100_GHZ + static_cast<double>(N) * band_helper::N_SIZE_SYNC_RASTER_3_HZ;
+  }
+
+  if (dl_arfcn >= band_helper::MIN_ARFCN_3_GHZ_24_5_GHZ) {
+    return band_helper::N_REF_OFFSET_3_GHZ_24_5_GHZ + static_cast<double>(N) * band_helper::N_SIZE_SYNC_RASTER_2_HZ;
+  }
+
+  return static_cast<double>(N) * band_helper::N_SIZE_SYNC_RASTER_1_HZ +
+         static_cast<double>(M) * band_helper::M_SIZE_SYNC_RASTER_1_HZ;
 }
 
 unsigned ssb_freq_position_generator::find_M_raster()
 {
+  // M raster does not apply above 3GHz.
+  if (dl_arfcn >= band_helper::MIN_ARFCN_3_GHZ_24_5_GHZ) {
+    return 0;
+  }
+
   // If M_raster > 0, no need  to find the same value again.
   if (M_raster > 0) {
     return M_raster;
@@ -210,9 +229,12 @@ ssb_freq_location ssb_freq_position_generator::get_next_ssb_location()
 
   ssb_freq_location ssb{.is_valid = false};
 
-  static const unsigned N_raster_max = dl_arfcn < band_helper::MIN_ARFCN_3_GHZ_24_5_GHZ
-                                           ? band_helper::N_UB_SYNC_RASTER_1
-                                           : band_helper::N_UB_SYNC_RASTER_2;
+  unsigned N_raster_max = band_helper::N_UB_SYNC_RASTER_1;
+  if (dl_arfcn >= band_helper::MIN_ARFCN_24_5_GHZ_100_GHZ) {
+    N_raster_max = band_helper::N_UB_SYNC_RASTER_3;
+  } else if (dl_arfcn >= band_helper::MIN_ARFCN_3_GHZ_24_5_GHZ) {
+    N_raster_max = band_helper::N_UB_SYNC_RASTER_2;
+  }
 
   while (N_raster < N_raster_max) {
     // If M_raster > 0, no need  to find the same value again.
@@ -240,16 +262,13 @@ ssb_freq_location ssb_freq_position_generator::get_next_ssb_location()
     const bool is_ssb_inside_band = (f_ssb_0_hz >= point_A_hz) && (f_ssb_ub_hz <= bw_ub_hz);
 
     if (is_ssb_inside_band) {
-      const bool is_scs_30khz_spacing = scs_common == subcarrier_spacing::kHz30 && scs_ssb == subcarrier_spacing::kHz30;
-      const bool is_multiple_of_scs =
-          is_scs_30khz_spacing
-              ? fmod(f_ssb_0_hz - point_A_hz,
-                     static_cast<double>(scs_to_khz(subcarrier_spacing::kHz30) * band_helper::KHZ_TO_HZ)) == 0.0
-              : fmod(f_ssb_0_hz - point_A_hz, scs_to_khz(subcarrier_spacing::kHz15) * band_helper::KHZ_TO_HZ) == 0.0;
+      const subcarrier_spacing ref_scs = (scs_common == scs_ssb) ? scs_ssb : band_helper::get_ssb_ref_scs(scs_ssb);
+      const bool               is_multiple_of_scs =
+          fmod(f_ssb_0_hz - point_A_hz, static_cast<double>(scs_to_khz(ref_scs) * band_helper::KHZ_TO_HZ)) == 0.0;
 
       if (is_multiple_of_scs) {
         ssb.offset_to_point_A = compute_offset_to_pointA(f_ssb_0_hz, point_A_hz, scs_common);
-        ssb.k_ssb             = compute_k_ssb(f_ssb_0_hz, point_A_hz, ssb.offset_to_point_A);
+        ssb.k_ssb             = compute_k_ssb(f_ssb_0_hz, point_A_hz, ssb.offset_to_point_A, scs_ssb);
         ssb.is_valid          = true;
         ssb.ss_ref            = f_ssb_N_M_hz;
         // Increment N_raster according to the band.
@@ -304,7 +323,7 @@ ssb_freq_location ssb_freq_position_generator::get_next_ssb_location_special_ras
 
       if (is_multiple_of_scs) {
         ssb.offset_to_point_A = compute_offset_to_pointA(f_ssb_0_hz, point_A_hz, scs_common);
-        ssb.k_ssb             = compute_k_ssb(f_ssb_0_hz, point_A_hz, ssb.offset_to_point_A);
+        ssb.k_ssb             = compute_k_ssb(f_ssb_0_hz, point_A_hz, ssb.offset_to_point_A, scs_ssb);
         ssb.is_valid          = true;
         ssb.ss_ref            = f_ssb_N_M_hz;
         // Increment N_raster according to the band.

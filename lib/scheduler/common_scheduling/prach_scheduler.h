@@ -61,8 +61,8 @@ private:
   /// PRACH Configuration parameters derived from the cell configuration.
   prach_configuration prach_cfg;
 
-  /// Bitset that defines whether PRACH is enabled for a given subframe.
-  std::bitset<NOF_SUBFRAMES_PER_FRAME> prach_subframe_occasion_bitmap;
+  /// Bitset that defines whether PRACH is enabled for a given slot.
+  std::bitset<prach_configuration::max_nof_slots_60kHz_frame> prach_slot_occasion_bitmap;
 
   /// Pre-generated PRACH occasions.
   static_vector<cached_prach_occasion, MAX_PRACH_OCCASIONS_PER_SLOT> cached_prachs;

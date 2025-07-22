@@ -31,7 +31,7 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
 
   // Convert list of PRACH subframe occasions to bitmap.
   for (const unsigned pos : prach_cfg.slots) {
-    prach_subframe_occasion_bitmap.set(pos, true);
+    prach_slot_occasion_bitmap.set(pos, true);
   }
 
   prach_symbols_slots_duration prach_duration_info =
@@ -151,7 +151,7 @@ void prach_scheduler::allocate_slot_prach_pdus(cell_resource_allocator& res_grid
     // PRACH does not start in this slot.
     return;
   }
-  if (not prach_subframe_occasion_bitmap.test(sl.subframe_index())) {
+  if (not prach_slot_occasion_bitmap.test(sl.subframe_index())) {
     // PRACH is not enabled in this subframe.
     return;
   }

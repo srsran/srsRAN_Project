@@ -292,9 +292,14 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
            "SSB SCS must be equal to SCS common. Mixed numerologies are not supported.");
 
   // Only FR1 SCS supported (for now).
-  CHECK_EQ_OR_BELOW(fmt::underlying(ssb_cfg.scs),
-                    fmt::underlying(subcarrier_spacing::kHz30),
-                    "SSB SCS must be kHz15 or kHz30.  FR2 frequencies are not supported yet in the SSB scheduler.");
+  if (band_helper::get_freq_range(cell_cfg.dl_carrier.band) == frequency_range::FR1) {
+    CHECK_EQ_OR_BELOW(fmt::underlying(ssb_cfg.scs),
+                      fmt::underlying(subcarrier_spacing::kHz30),
+                      "SSB SCS must be 15kHz or 30kHz for FR1.");
+  } else {
+    CHECK_EQ(
+        fmt::underlying(ssb_cfg.scs), fmt::underlying(subcarrier_spacing::kHz120), "SSB SCS must be 120kHz for FR2.");
+  }
 
   CHECK_EQ(ssb_cfg.ssb_bitmap,
            static_cast<uint64_t>(1U) << static_cast<uint64_t>(63U),
