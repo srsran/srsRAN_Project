@@ -450,9 +450,18 @@ bool ue_configuration_procedure::changed_detected() const
 
 void ue_configuration_procedure::handle_rrc_reconfiguration_complete_ind()
 {
-  for (auto& [bearer_id, bearer] : ue->bearers.drbs()) {
-    if (bearer != nullptr && bearer->drb_f1u != nullptr) {
-      bearer->drb_f1u->get_tx_sdu_handler().flush_ul_buffer();
+  // Dispatch DRB context destruction to the respective UE executor.
+  task_executor& exec     = du_params.services.ue_execs.mac_ul_pdu_executor(ue->ue_index);
+  auto           flush_fn = TRACE_TASK([this]() mutable {
+    for (auto& [bearer_id, bearer] : ue->bearers.drbs()) {
+      if (bearer != nullptr && bearer->drb_f1u != nullptr) {
+        bearer->drb_f1u->get_tx_sdu_handler().flush_ul_buffer();
+      }
     }
+  });
+  if (not exec.defer(std::move(flush_fn))) {
+    logger.warning("ue={}: Could not dispatch DRB removal task to UE executor. Destroying it the main DU manager "
+                   "execution context",
+                   fmt::underlying(ue->ue_index));
   }
 }
