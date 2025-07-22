@@ -185,10 +185,11 @@ static void fill_csi_resources(serving_cell_config& out_cell, const du_high_unit
   const auto& csi_cfg = cell_cfg.csi_cfg;
 
   csi_helper::csi_builder_params csi_params{};
-  csi_params.pci           = cell_cfg.pci;
-  csi_params.nof_rbs       = get_nof_rbs(cell_cfg);
-  csi_params.nof_ports     = cell_cfg.nof_antennas_dl;
-  csi_params.csi_rs_period = static_cast<csi_resource_periodicity>(csi_cfg.csi_rs_period_msec *
+  csi_params.pci            = cell_cfg.pci;
+  csi_params.nof_rbs        = get_nof_rbs(cell_cfg);
+  csi_params.nof_ports      = cell_cfg.nof_antennas_dl;
+  csi_params.max_nof_layers = cell_cfg.pdsch_cfg.max_rank.value_or(cell_cfg.nof_antennas_dl);
+  csi_params.csi_rs_period  = static_cast<csi_resource_periodicity>(csi_cfg.csi_rs_period_msec *
                                                                    get_nof_slots_per_subframe(cell_cfg.common_scs));
 
   // [Implementation-defined] The default CSI symbols are in symbols 4 and 8, the DM-RS for PDSCH might collide in
@@ -295,6 +296,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     // Enable CSI-RS if the PDSCH mcs is dynamic (min_ue_mcs != max_ue_mcs).
     param.csi_rs_enabled      = base_cell.csi_cfg.csi_rs_enabled;
     param.nof_dl_ports        = base_cell.nof_antennas_dl;
+    param.max_nof_layers      = base_cell.pdsch_cfg.max_rank;
     param.search_space0_index = base_cell.pdcch_cfg.common.ss0_index;
     param.min_k1              = base_cell.pucch_cfg.min_k1;
     param.min_k2              = base_cell.pusch_cfg.min_k2;

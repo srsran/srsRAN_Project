@@ -693,10 +693,11 @@ static csi_helper::csi_builder_params make_default_csi_builder_params(const cell
 {
   // Parameters used to generate list of CSI resources.
   csi_helper::csi_builder_params csi_params{};
-  csi_params.pci           = params.pci;
-  csi_params.nof_rbs       = params.cell_nof_crbs;
-  csi_params.nof_ports     = params.nof_dl_ports;
-  csi_params.csi_rs_period = csi_helper::get_max_csi_rs_period(params.scs_common);
+  csi_params.pci            = params.pci;
+  csi_params.nof_rbs        = params.cell_nof_crbs;
+  csi_params.nof_ports      = params.nof_dl_ports;
+  csi_params.max_nof_layers = params.max_nof_layers.value_or(params.nof_dl_ports);
+  csi_params.csi_rs_period  = csi_helper::get_max_csi_rs_period(params.scs_common);
 
   if (band_helper::get_duplex_mode(params.band.value()) == duplex_mode::TDD) {
     // Set a default CSI report slot offset that falls in an UL slot.

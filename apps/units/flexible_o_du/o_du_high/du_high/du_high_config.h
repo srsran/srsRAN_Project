@@ -188,6 +188,8 @@ struct du_high_unit_pdsch_config {
   /// Controls the bundle size used for interleaving for PDSCH transmissions scheduled on dedicated search spaces. If
   /// set to zero, interleaving will be disabled. All other PDSCH transmissions will be always non-interleaved.
   vrb_to_prb::mapping_type interleaving_bundle_size{vrb_to_prb::mapping_type::non_interleaved};
+  /// Limits the maximum rank UEs can report. It must not exceed the number of transmit antennas.
+  std::optional<unsigned> max_rank;
 };
 
 /// PUSCH application configuration.

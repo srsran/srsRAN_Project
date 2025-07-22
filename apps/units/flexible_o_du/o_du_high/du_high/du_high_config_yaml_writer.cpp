@@ -369,6 +369,10 @@ static YAML::Node build_du_high_pdsch_section(const du_high_unit_pdsch_config& c
   node["dmrs_additional_position"]   = config.dmrs_add_pos;
   node["interleaving_bundle_size"]   = static_cast<unsigned>(config.interleaving_bundle_size);
 
+  if (config.max_rank.has_value()) {
+    node["max_rank"] = *config.max_rank;
+  }
+
   for (auto rv : config.rv_sequence) {
     node["rv_sequence"].push_back(rv);
   }

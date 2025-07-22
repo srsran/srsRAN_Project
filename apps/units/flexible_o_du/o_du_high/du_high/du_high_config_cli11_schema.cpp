@@ -389,6 +389,13 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
              "PDSCH interleaving bundle size. Valid values: [0, 2, 4]")
       ->capture_default_str()
       ->check(CLI::IsMember({0, 2, 4}));
+  add_option(app,
+             "--max_rank",
+             pdsch_params.max_rank,
+             "Maximum number of PDSCH "
+             "transmission layers. The actual maximum is limited by the number of DL antennas.")
+      ->capture_default_str()
+      ->check(CLI::NonNegativeNumber);
 }
 
 static void configure_cli11_du_args(CLI::App& app, bool& warn_on_drop)

@@ -276,7 +276,9 @@ static bool validate_rv_sequence(span<const unsigned> rv_sequence)
 }
 
 /// Validates the given PDSCH cell application configuration. Returns true on success, otherwise false.
-static bool validate_pdsch_cell_unit_config(const du_high_unit_pdsch_config& config, unsigned cell_bw_crbs)
+static bool validate_pdsch_cell_unit_config(const du_high_unit_pdsch_config& config,
+                                            unsigned                         cell_bw_crbs,
+                                            unsigned                         nof_antennas_dl)
 {
   if (config.min_ue_mcs > config.max_ue_mcs) {
     fmt::print("Invalid UE MCS range (i.e., [{}, {}]). The min UE MCS must be less than or equal to the max UE MCS.\n",
@@ -318,6 +320,21 @@ static bool validate_pdsch_cell_unit_config(const du_high_unit_pdsch_config& con
   if (config.start_rb >= cell_bw_crbs) {
     fmt::print("Invalid start RB {} for UE PDSCHs. The start_rb must be less than the cell BW", config.start_rb);
     return false;
+  }
+
+  if (config.max_rank.has_value()) {
+    if (*config.max_rank > nof_antennas_dl) {
+      fmt::print("Invalid maximum rank value (i.e., {}). It cannot be greater than number of available downlink "
+                 "antennas (i.e., {}).\n",
+                 *config.max_rank,
+                 nof_antennas_dl);
+      return false;
+    }
+
+    if (*config.max_rank == 0) {
+      fmt::print("Invalid maximum rank value (i.e., {}). It must be a positive non-zero value.\n", *config.max_rank);
+      return false;
+    }
   }
 
   return true;
@@ -1100,7 +1117,7 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
   const unsigned nof_crbs =
       band_helper::get_n_rbs_from_bw(config.channel_bw_mhz, config.common_scs, band_helper::get_freq_range(band));
 
-  if (!validate_pdsch_cell_unit_config(config.pdsch_cfg, nof_crbs)) {
+  if (!validate_pdsch_cell_unit_config(config.pdsch_cfg, nof_crbs, config.nof_antennas_dl)) {
     return false;
   }
 
