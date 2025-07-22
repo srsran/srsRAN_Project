@@ -55,15 +55,23 @@ struct pdcp_tx_state {
   /// NOTE: This is a custom state variable, not specified by the standard.
   uint32_t tx_next_ack = 0;
 
-  pdcp_tx_state(uint32_t tx_next_, uint32_t tx_trans_crypto_, uint32_t tx_trans_, uint32_t tx_next_ack_) :
-    tx_next(tx_next_), tx_trans_crypto(tx_trans_crypto_), tx_trans(tx_trans_), tx_next_ack(tx_next_ack_)
+  pdcp_tx_state(uint32_t tx_next_,
+                uint32_t tx_trans_crypto_,
+                uint32_t tx_reord_crypto_,
+                uint32_t tx_trans_,
+                uint32_t tx_next_ack_) :
+    tx_next(tx_next_),
+    tx_trans_crypto(tx_trans_crypto_),
+    tx_reord_crypto(tx_reord_crypto_),
+    tx_trans(tx_trans_),
+    tx_next_ack(tx_next_ack_)
   {
   }
 
   bool operator==(const pdcp_tx_state& other) const
   {
-    return tx_next == other.tx_next && tx_trans == other.tx_trans && tx_trans_crypto == other.tx_trans_crypto &&
-           tx_next_ack == other.tx_next_ack;
+    return tx_next == other.tx_next && tx_trans == other.tx_trans && tx_reord_crypto == other.tx_reord_crypto &&
+           tx_trans_crypto == other.tx_trans_crypto && tx_next_ack == other.tx_next_ack;
   }
 };
 
@@ -202,7 +210,7 @@ private:
   task_executor& ue_dl_executor;
   task_executor& crypto_executor;
 
-  pdcp_tx_state st                  = {0, 0, 0, 0};
+  pdcp_tx_state st                  = {0, 0, 0, 0, 0};
   uint32_t      desired_buffer_size = 0;
   uint32_t      max_nof_crypto_workers;
 
@@ -296,9 +304,10 @@ struct formatter<srsran::pdcp_tx_state> {
   auto format(const srsran::pdcp_tx_state& st, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
-                     "tx_next_ack={} tx_trans_pending={} tx_trans={} tx_next={}",
+                     "tx_next_ack={} tx_trans_crypto={} tx_reord_crypto={} tx_trans={} tx_next={}",
                      st.tx_next_ack,
                      st.tx_trans_crypto,
+                     st.tx_reord_crypto,
                      st.tx_trans,
                      st.tx_next);
   }

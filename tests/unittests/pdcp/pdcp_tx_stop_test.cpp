@@ -25,7 +25,7 @@ TEST_P(pdcp_tx_stop_test, stop_when_there_are_no_pending_pdus)
 
   pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
 
-  // Check await rx crypto flag is not set.
+  // Check await tx crypto flag is not set.
   manual_event_flag& awaitable = pdcp_tx->crypto_awaitable();
 
   FLUSH_AND_ASSERT_FALSE(awaitable.is_set());

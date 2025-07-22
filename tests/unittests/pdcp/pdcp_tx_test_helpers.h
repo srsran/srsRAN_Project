@@ -17,10 +17,21 @@
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/executors/task_worker_pool.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <queue>
 
 namespace srsran {
+
+/// Helper class to verify the state of the PDCP entity when the order of the PDU's crypto processing
+/// is non-deterministic.
+inline void assert_pdcp_state_with_reordering(const pdcp_tx_state& st, const pdcp_tx_state& exp_st)
+{
+  FLUSH_AND_ASSERT_EQ(st.tx_next, exp_st.tx_next);
+  FLUSH_AND_ASSERT_EQ(st.tx_trans, exp_st.tx_trans);
+  FLUSH_AND_ASSERT_EQ(st.tx_trans_crypto, exp_st.tx_trans_crypto);
+  FLUSH_AND_ASSERT_EQ(st.tx_next_ack, exp_st.tx_next_ack);
+}
 
 class mock_pdcp_metrics_notifier : public pdcp_metrics_notifier
 {

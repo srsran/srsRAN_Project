@@ -62,6 +62,7 @@ static void usage(const char* prog, const bench_params& params, const app_params
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
   fmt::print("\t-w Number of crypto workers [Default {}]\n", params.nof_crypto_threads);
   fmt::print("\t-p Number of SDUs per repetition [Default {}]\n", params.nof_sdus);
+  fmt::print("\t-q Crypto engine queue size [Default {}]\n", params.crypto_queue_size);
   fmt::print("\t-s SDU length [Default {}]\n", params.sdu_len);
   fmt::print("\t-l Log level to use [Default {}, valid {{error, warning, info, debug}}]\n",
              fmt::underlying(app.log_level));

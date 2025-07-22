@@ -678,7 +678,7 @@ void pdcp_entity_tx::data_recovery()
 
 void pdcp_entity_tx::reset()
 {
-  st = {0, 0, 0, 0};
+  st = {0, 0, 0, 0, 0};
   tx_window.clear();
   logger.log_debug("Entity was reset. {}", st);
 }
