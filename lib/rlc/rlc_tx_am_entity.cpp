@@ -1129,7 +1129,8 @@ uint8_t rlc_tx_am_entity::get_polling_bit(uint32_t sn, bool is_retx, uint32_t pa
       st.poll_sn = sn;
       logger.log_debug("Updated poll_sn={}.", sn);
     }
-    if (cfg.t_poll_retx > 0) {
+    // Do not restart timer if the whole entity is stopped
+    if (cfg.t_poll_retx > 0 && !stopped_lower) {
       if (not poll_retransmit_timer.is_running()) {
         poll_retransmit_timer.run();
       } else {
