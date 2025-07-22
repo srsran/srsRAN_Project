@@ -9,6 +9,7 @@
  */
 
 #include "srsran/support/benchmark_utils.h"
+#include "srsran/support/cpu_architecture_info.h"
 #include "srsran/support/executors/task_worker_pool.h"
 #include <getopt.h>
 #include <variant>
@@ -17,7 +18,7 @@ using namespace srsran;
 
 struct bench_params {
   std::chrono::milliseconds duration{10};
-  unsigned                  max_workers = 16;
+  unsigned                  max_workers = cpu_architecture_info::get().get_host_nof_available_cpus();
 };
 
 static void usage(const char* prog, const bench_params& params)
@@ -187,7 +188,7 @@ void run_benchmarks(const bench_params& params)
 {
   std::vector<unsigned> nof_workers_list{1};
   while (true) {
-    unsigned next_nof_workers = nof_workers_list.back() * 2;
+    unsigned next_nof_workers = std::min(nof_workers_list.back() * 2, nof_workers_list.back() + 4);
     if (next_nof_workers > params.max_workers) {
       break;
     }
