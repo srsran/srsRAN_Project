@@ -285,6 +285,7 @@ void sched_config_manager::flush_ues_to_rem()
   // Note: This should be called by a thread outside of the critical path.
 
   // Clear the UEs to rem.
-  while (ues_to_rem.try_pop()) {
+  std::unique_ptr<ue_configuration> obj;
+  while (ues_to_rem.try_pop(obj)) {
   }
 }

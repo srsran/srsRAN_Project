@@ -33,15 +33,6 @@ public:
   [[nodiscard]] bool try_push(const T& elem) { return queue.try_push(elem); }
   [[nodiscard]] bool try_push(T&& elem) { return queue.try_push(std::move(elem)).has_value(); }
 
-  [[nodiscard]] std::optional<T> try_pop()
-  {
-    std::optional<T> t;
-    if (not queue.try_pop(t.emplace())) {
-      t.reset();
-    }
-    return t;
-  }
-
   [[nodiscard]] bool try_pop(T& elem) { return queue.try_pop(elem); }
 
   /// \brief Pops a batch of elements from the queue in a non-blocking fashion.

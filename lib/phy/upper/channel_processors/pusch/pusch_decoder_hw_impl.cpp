@@ -389,10 +389,8 @@ void pusch_decoder_hw_impl::copy_tb_and_notify(hw_decoder_pool::ptr decoder, spa
   stats.ldpc_decoder_stats.reset();
 
   // Calculate statistics.
-  std::optional<unsigned> cb_nof_iter = cb_stats.try_pop();
-  while (cb_nof_iter.has_value()) {
-    stats.ldpc_decoder_stats.update(*cb_nof_iter);
-    cb_nof_iter = cb_stats.try_pop();
+  for (unsigned cb_nof_iter = 0; cb_stats.try_pop(cb_nof_iter);) {
+    stats.ldpc_decoder_stats.update(cb_nof_iter);
   }
 
   if (nof_cbs == 1) {

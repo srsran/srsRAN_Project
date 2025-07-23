@@ -102,18 +102,6 @@ public:
   /// \brief Pops a batch of elements from the queue in a non-blocking fashion.
   [[nodiscard]] size_t try_pop_bulk(span<T> batch) { return detail::try_pop_bulk_generic(*this, batch); }
 
-  /// \brief Pops an element from the queue in a non-blocking fashion.
-  ///
-  /// If the queue is empty, the call returns an empty optional.
-  std::optional<T> try_pop()
-  {
-    std::optional<T> ret;
-    if (not try_pop(ret.emplace())) {
-      ret.reset();
-    }
-    return ret;
-  }
-
   /// Pops an element from the queue. If the queue is empty, the call blocks, waiting for a new element to be pushed.
   bool pop_blocking(T& elem) noexcept
   {

@@ -37,15 +37,6 @@ public:
 
   [[nodiscard]] size_t try_pop_bulk(span<T> batch) { return detail::try_pop_bulk_generic(*this, batch); }
 
-  std::optional<T> try_pop()
-  {
-    std::optional<T> result;
-    if (not queue.try_pop(result.emplace())) {
-      result.reset();
-    }
-    return result;
-  }
-
   [[nodiscard]] size_t size() const
   {
     // Note: MPMCqueue size can be negative.

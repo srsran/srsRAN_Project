@@ -121,14 +121,15 @@ public:
                const pdu_t&                     pdu) override
   {
     // Try to get an available worker.
-    std::optional<unsigned> index;
+    unsigned index;
+    bool     popped = false;
     do {
-      index = free_list.try_pop();
-    } while (blocking && !index.has_value());
+      popped = free_list.try_pop(index);
+    } while (blocking && !popped);
 
     // A PUSCH processor is selected.
-    if (index.has_value()) {
-      processors[*index].process(data, std::move(rm_buffer), notifier, grid, pdu);
+    if (popped) {
+      processors[index].process(data, std::move(rm_buffer), notifier, grid, pdu);
       return;
     }
 

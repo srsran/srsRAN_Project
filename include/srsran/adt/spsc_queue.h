@@ -46,17 +46,6 @@ public:
     return false;
   }
 
-  [[nodiscard]] std::optional<T> try_pop()
-  {
-    T*               front = queue.front();
-    std::optional<T> result;
-    if (front != nullptr) {
-      result = std::move(*front);
-      queue.pop();
-    }
-    return result;
-  }
-
   [[nodiscard]] size_t try_pop_bulk(span<T> batch) { return detail::try_pop_bulk_generic(*this, batch); }
 
   /// \brief Provides a pointer to the front element in a non-blocking fashion.

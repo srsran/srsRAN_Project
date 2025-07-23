@@ -191,8 +191,8 @@ public:
   /// Process the enqueued contexts to the repository.
   void process_pending_contexts()
   {
-    while (auto f = pending_context_to_add.try_pop()) {
-      unique_task& task = *f;
+    unique_task task;
+    while (pending_context_to_add.try_pop(task)) {
       task();
     }
   }

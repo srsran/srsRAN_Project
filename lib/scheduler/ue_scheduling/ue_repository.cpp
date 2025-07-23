@@ -140,7 +140,8 @@ const ue* ue_repository::find_by_rnti(rnti_t rnti) const
 
 void ue_repository::destroy_pending_ues()
 {
-  while (ues_to_destroy.try_pop()) {
+  std::unique_ptr<ue> removed_ue;
+  while (ues_to_destroy.try_pop(removed_ue)) {
   }
 }
 
