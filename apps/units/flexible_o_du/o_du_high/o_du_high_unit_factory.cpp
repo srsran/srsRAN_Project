@@ -135,7 +135,7 @@ static rlc_metrics_notifier* build_rlc_du_metrics(std::vector<app_services::metr
         std::make_unique<rlc_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
   }
 
-  if (metrics_config.json_config.enable_json_metrics) {
+  if (metrics_config.enable_json_metrics) {
     rlc_metrics_cfg.consumers.push_back(
         std::make_unique<rlc_metrics_consumer_json>(app_helpers::fetch_json_metrics_log_channel()));
   }
@@ -184,7 +184,7 @@ build_du_metrics(std::vector<app_services::metrics_config>& metrics,
         std::make_unique<du_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
   }
 
-  if (metrics_config.json_config.enable_json_metrics) {
+  if (metrics_config.enable_json_metrics) {
     du_metrics_cfg.consumers.push_back(
         std::make_unique<du_metrics_consumer_json>(app_helpers::fetch_json_metrics_log_channel()));
   }

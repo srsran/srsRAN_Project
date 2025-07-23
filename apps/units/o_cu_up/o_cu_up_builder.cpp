@@ -42,8 +42,8 @@ static pdcp_metrics_notifier* build_pdcp_metrics_config(std::vector<app_services
   metrics_cfg.callback                      = cu_up_pdcp_metrics_callback;
   metrics_cfg.producers.push_back(std::move(metrics_generator));
 
-  const app_helpers::metrics_json_config& json_cfg = cu_up_metrics_cfg.common_metrics_cfg.json_config;
-  if (json_cfg.enable_json_metrics) {
+  const app_helpers::metrics_config& unit_metrics_cfg = cu_up_metrics_cfg.common_metrics_cfg;
+  if (unit_metrics_cfg.enable_json_metrics) {
     metrics_cfg.consumers.push_back(
         std::make_unique<cu_up_pdcp_metrics_consumer_json>(srslog::fetch_basic_logger("APP"),
                                                            app_helpers::fetch_json_metrics_log_channel(),
@@ -51,7 +51,7 @@ static pdcp_metrics_notifier* build_pdcp_metrics_config(std::vector<app_services
                                                            timers.create_unique_timer(*workers.non_rt_medium_prio_exec),
                                                            cu_up_metrics_cfg.cu_up_report_period));
   }
-  if (cu_up_metrics_cfg.common_metrics_cfg.enable_log_metrics) {
+  if (unit_metrics_cfg.enable_log_metrics) {
     metrics_cfg.consumers.push_back(
         std::make_unique<cu_up_pdcp_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
   }

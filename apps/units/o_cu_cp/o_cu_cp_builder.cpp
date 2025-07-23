@@ -41,7 +41,7 @@ build_cu_cp_metrics_config(std::vector<app_services::metrics_config>& cu_cp_serv
   metrics_service_cfg.producers.push_back(std::move(metrics_generator));
 
   const app_helpers::metrics_config& unit_metrics_cfg = cu_cp_metrics_cfg.common_metrics_cfg;
-  if (unit_metrics_cfg.json_config.enable_json_metrics) {
+  if (unit_metrics_cfg.enable_json_metrics) {
     metrics_service_cfg.consumers.push_back(
         std::make_unique<cu_cp_metrics_consumer_json>(app_helpers::fetch_json_metrics_log_channel()));
   }

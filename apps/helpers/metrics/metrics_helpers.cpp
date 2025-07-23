@@ -38,20 +38,9 @@ static void initialize_logger_channel(unsigned hex_dump_size)
   channel.set_enabled(true);
 }
 
-static void initialize_json_channel(const metrics_json_config& config)
-{
-  srslog::sink&        json_sink    = srslog::fetch_udp_sink(config.addr, config.port, srslog::create_text_formatter());
-  srslog::log_channel& json_channel = srslog::fetch_log_channel(json_channel_name, json_sink, {});
-  json_channel.set_enabled(true);
-}
-
 void app_helpers::initialize_metrics_log_channels(const metrics_config& config, unsigned hex_dump_size)
 {
   if (config.enable_log_metrics) {
     initialize_logger_channel(hex_dump_size);
-  }
-
-  if (config.json_config.enable_json_metrics) {
-    initialize_json_channel(config.json_config);
   }
 }

@@ -12,6 +12,7 @@
 #include "apps/services/remote_control/remote_command.h"
 #include "apps/services/remote_control/remote_control_appconfig.h"
 #include "nlohmann/json.hpp"
+#include "srsran/srslog/srslog.h"
 #ifndef __clang__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
@@ -20,8 +21,10 @@
 #ifndef __clang__
 #pragma GCC diagnostic pop
 #endif
+#include "srsran/adt/scope_exit.h"
 #include "srsran/support/executors/unique_thread.h"
 #include <csignal>
+#include <utility>
 
 using namespace srsran;
 using namespace app_services;
@@ -68,14 +71,86 @@ public:
 /// Remote server implementation.
 class remote_server_impl : public remote_server
 {
+  /// WebSocket socket type alias.
+  struct dummy_type {};
+  using socket_type = uWS::WebSocket<false, true, dummy_type>;
+
+  unique_thread                                                    thread;
+  std::atomic<uWS::App*>                                           server;
+  std::atomic<uWS::Loop*>                                          server_loop;
+  std::unordered_map<std::string, std::unique_ptr<remote_command>> commands;
+  std::set<socket_type*>                                           metrics_subscribers;
+  socket_type*                                                     current_cmd_client = nullptr;
+
+  /// Metrics subscription command.
+  class metrics_subscribe_command : public remote_command
+  {
+    remote_server_impl* parent;
+
+  public:
+    explicit metrics_subscribe_command(remote_server_impl* parent_) : parent(parent_) {}
+
+    // See interface for documentation.
+    std::string_view get_name() const override { return "metrics_subscribe"; }
+
+    // See interface for documentation.
+    std::string_view get_description() const override { return "Subscribe to metrics notifications"; }
+
+    // See interface for documentation.
+    error_type<std::string> execute(const nlohmann::json& json) override
+    {
+      parent->subscribe_metrics_client();
+      return {};
+    }
+  };
+
+  /// Metrics unsubscription command.
+  class metrics_unsubscribe_command : public remote_command
+  {
+    remote_server_impl* parent;
+
+  public:
+    explicit metrics_unsubscribe_command(remote_server_impl* parent_) : parent(parent_) {}
+
+    // See interface for documentation.
+    std::string_view get_name() const override { return "metrics_unsubscribe"; }
+
+    // See interface for documentation.
+    std::string_view get_description() const override { return "Unsubscribe to metrics notifications"; }
+
+    // See interface for documentation.
+    error_type<std::string> execute(const nlohmann::json& json) override
+    {
+      parent->unsubscribe_metrics_client();
+      return {};
+    }
+  };
+
 public:
-  remote_server_impl(const std::string& bind_addr, unsigned port, span<std::unique_ptr<remote_command>> commands_)
+  remote_server_impl(const std::string&                    bind_addr,
+                     unsigned                              port,
+                     bool                                  enable_metrics_subscription,
+                     span<std::unique_ptr<remote_command>> commands_)
   {
     // Add the quit command.
     {
       auto  quit_cmd = std::make_unique<quit_remote_command>();
       auto& cmd      = commands[std::string(quit_cmd->get_name())];
       cmd            = std::move(quit_cmd);
+    }
+
+    if (enable_metrics_subscription) {
+      // Add the metrics subscription commands.
+      {
+        auto  sub_cmd = std::make_unique<metrics_subscribe_command>(this);
+        auto& cmd     = commands[std::string(sub_cmd->get_name())];
+        cmd           = std::move(sub_cmd);
+      }
+      {
+        auto  unsub_cmd = std::make_unique<metrics_unsubscribe_command>(this);
+        auto& cmd       = commands[std::string(unsub_cmd->get_name())];
+        cmd             = std::move(unsub_cmd);
+      }
     }
 
     // Store the remote commands.
@@ -86,7 +161,6 @@ public:
 
     thread = unique_thread("ws_server", [this, bind_addr, port]() {
       uWS::App ws_server;
-      struct dummy_type {};
       ws_server
           .ws<dummy_type>("/*",
                           {.compression              = uWS::CompressOptions(uWS::DISABLED),
@@ -96,9 +170,8 @@ public:
                            .closeOnBackpressureLimit = false,
                            .resetIdleTimeoutOnSend   = false,
                            .sendPingsAutomatically   = true,
-                           .upgrade                  = nullptr,
                            .message =
-                               [this](auto* ws, std::string_view message, uWS::OpCode opCode) {
+                               [this](socket_type* ws, std::string_view message, uWS::OpCode opCode) {
                                  // Only parse text based messages.
                                  if (opCode != uWS::OpCode::TEXT) {
                                    ws->send(
@@ -108,10 +181,14 @@ public:
                                    return;
                                  }
 
+                                 current_cmd_client  = ws;
+                                 auto restore_client = make_scope_exit([this]() { current_cmd_client = nullptr; });
+
                                  // Handle the incoming message and return back the response.
                                  std::string response = handle_command(message);
                                  ws->send(response, uWS::OpCode::TEXT, false);
-                               }})
+                               },
+                           .close = [this](socket_type* ws, int, std::string_view) { metrics_subscribers.erase(ws); }})
           .listen(bind_addr, port, [bind_addr, port](auto* listen_socket) {
             if (listen_socket) {
               fmt::println("Remote control server listening on {}:{}", bind_addr, port);
@@ -120,8 +197,8 @@ public:
             }
           });
 
-      server      = &ws_server;
-      server_loop = uWS::Loop::get();
+      server.store(&ws_server, std::memory_order_relaxed);
+      server_loop.store(uWS::Loop::get(), std::memory_order_relaxed);
       ws_server.run();
     });
   }
@@ -134,9 +211,36 @@ public:
   {
     // Wait for completion.
     if (thread.running()) {
-      server_loop.load()->defer([this]() { server->close(); });
+      server_loop.load(std::memory_order_relaxed)->defer([this]() { server.load(std::memory_order_relaxed)->close(); });
       thread.join();
+      server_loop.store(nullptr, std::memory_order_relaxed);
+      server.store(nullptr, std::memory_order_relaxed);
     }
+  }
+
+  /// Sends the given metrics to all registered metrics subscribers.
+  void send_metrics(std::string metrics_)
+  {
+    server_loop.load(std::memory_order_relaxed)->defer([metrics = std::move(metrics_), this]() {
+      for (auto* subscriber : metrics_subscribers) {
+        subscriber->send(metrics, uWS::OpCode::TEXT, false);
+      }
+    });
+  }
+
+private:
+  /// Adds the client that invoked this method to the metrics subscription list.
+  void subscribe_metrics_client()
+  {
+    srsran_assert(current_cmd_client, "Invalid client");
+    metrics_subscribers.emplace(current_cmd_client);
+  }
+
+  /// Removes the client that invoked this method from the metrics subscription list.
+  void unsubscribe_metrics_client()
+  {
+    srsran_assert(current_cmd_client, "Invalid client");
+    metrics_subscribers.erase(current_cmd_client);
   }
 
   /// Handles the given command.
@@ -170,15 +274,46 @@ public:
 
     return build_error_response(fmt::format("Unknown command type: {}", cmd_value), cmd_value);
   }
+};
+
+/// Receives the formatted JSON metrics from the metrics log channel.
+class remote_server_sink : public srslog::sink
+{
+public:
+  explicit remote_server_sink(std::unique_ptr<srslog::log_formatter> f) : srslog::sink(std::move(f)) {}
+
+  /// Identifier of this custom sink.
+  static const char* name() { return "remote_server_sink"; }
+
+  // See interface for documentation.
+  srslog::detail::error_string write(srslog::detail::memory_buffer buffer) override
+  {
+    server->send_metrics(std::string(buffer.data(), buffer.size()));
+    return {};
+  }
+
+  // See interface for documentation.
+  srslog::detail::error_string flush() override { return {}; }
+
+  void set_server(remote_server_impl* server_) { server = server_; }
 
 private:
-  unique_thread                                                    thread;
-  std::atomic<uWS::Loop*>                                          server_loop;
-  uWS::App*                                                        server;
-  std::unordered_map<std::string, std::unique_ptr<remote_command>> commands;
+  remote_server_impl* server;
 };
 
 } // namespace
+
+void srsran::app_services::initialize_json_channel()
+{
+  /// Log channel name for the JSON type.
+  static std::string json_channel_name = "JSON_channel";
+
+  srslog::install_custom_sink(remote_server_sink::name(),
+                              std::make_unique<remote_server_sink>(srslog::create_text_formatter()));
+  srslog::log_channel& json_channel =
+      srslog::fetch_log_channel(json_channel_name, *srslog::find_sink(remote_server_sink::name()), {});
+  json_channel.set_enabled(true);
+}
 
 std::unique_ptr<remote_server>
 srsran::app_services::create_remote_server(const remote_control_appconfig&       cfg,
@@ -187,5 +322,13 @@ srsran::app_services::create_remote_server(const remote_control_appconfig&      
   if (!cfg.enabled) {
     return nullptr;
   }
-  return std::make_unique<remote_server_impl>(cfg.bind_addr, cfg.port, commands);
+
+  auto server =
+      std::make_unique<remote_server_impl>(cfg.bind_addr, cfg.port, cfg.enable_metrics_subscription, commands);
+
+  if (cfg.enable_metrics_subscription) {
+    static_cast<remote_server_sink*>(srslog::find_sink(remote_server_sink::name()))->set_server(server.get());
+  }
+
+  return server;
 }
