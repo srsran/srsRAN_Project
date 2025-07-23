@@ -35,6 +35,13 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 
   proc_logger.log_proc_started();
 
+  // > Flush any buffering F1-U bearers when HO is finalized.
+  // > We do this before checking for changes in the config, as the RRC reconfiguration complete indicator
+  // > may not change the configuration.
+  if (request.rrc_recfg_complete_ind) {
+    handle_rrc_reconfiguration_complete_ind();
+  }
+
   if (not changed_detected()) {
     // Nothing to do (e.g. No SCells, DRBs or SRBs to setup or release)
     proc_logger.log_proc_completed();
@@ -60,11 +67,6 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 
   // > Destroy old DU UE bearers that are now detached from remaining layers.
   clear_old_ue_context();
-
-  // > Flush any buffering F1-U bearers when HO is finalized.
-  if (request.rrc_recfg_complete_ind) {
-    handle_rrc_reconfiguration_complete_ind();
-  }
 
   proc_logger.log_proc_completed();
 
