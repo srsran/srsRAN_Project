@@ -37,21 +37,21 @@ public:
   /// The queue wait policy used by this queue.
   static constexpr concurrent_queue_wait_policy wait_policy = concurrent_queue_wait_policy::non_blocking;
 
-  /// Explicit consumer class for faster dequeueing.
-  class consumer
+  /// Explicit sequential consumer class for faster dequeueing.
+  class consumer_type
   {
   public:
-    consumer(concurrent_queue& q) : queue(&q.queue), token(q.queue) {}
+    consumer_type(queue_impl& q) : queue(&q), token(q) {}
 
-    [[nodiscard]] bool try_pop(T& elem) { return queue->try_dequeue(token, elem); }
-    [[nodiscard]] bool try_pop_bulk(span<const T> batch)
+    [[nodiscard]] bool   try_pop(T& elem) { return queue->try_dequeue(token, elem); }
+    [[nodiscard]] size_t try_pop_bulk(span<T> batch)
     {
       return queue->try_dequeue_bulk(token, batch.begin(), batch.size());
     }
 
   protected:
-    queue_impl*                        queue;
-    typename queue_impl::ConsumerToken token;
+    queue_impl*               queue;
+    moodycamel::ConsumerToken token;
   };
 
   /// \brief Constructs a concurrent queue and pre-reserves the configured capacity.
@@ -78,7 +78,8 @@ public:
   /// If the queue is empty, the call returns false.
   bool try_pop(T& elem) { return queue.try_dequeue(elem); }
 
-  bool try_pop_bulk(span<const T> batch) { return queue.try_dequeue_bulk(batch); }
+  /// \brief Pops a batch of elements from the queue in a non-blocking fashion.
+  size_t try_pop_bulk(span<T> batch) { return queue.try_dequeue_bulk(batch.begin(), batch.size()); }
 
   /// Returns an estimate of the total number of elements currently in the queue.
   size_t size() const { return queue.size_approx(); }
@@ -88,6 +89,9 @@ public:
 
   /// This queue is unbounded. It allocates when current capacity is reached.
   size_t capacity() const { return std::numeric_limits<size_t>::max(); }
+
+  /// Creates a sequential consumer for this queue.
+  consumer_type create_consumer() { return consumer_type(queue); }
 
 protected:
   queue_impl queue;
@@ -114,13 +118,13 @@ public:
   static constexpr concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::sleep;
 
   /// Explicit consumer class for faster dequeueing.
-  class consumer
+  class consumer_type
   {
   public:
-    consumer(concurrent_queue& q) : queue(&q), token(q.queue) {}
+    consumer_type(concurrent_queue& q) : queue(&q), token(q.queue) {}
 
-    [[nodiscard]] bool try_pop(T& elem) { return queue->queue.try_dequeue(token, elem); }
-    [[nodiscard]] bool try_pop_bulk(span<const T> batch)
+    [[nodiscard]] bool   try_pop(T& elem) { return queue->queue.try_dequeue(token, elem); }
+    [[nodiscard]] size_t try_pop_bulk(span<const T> batch)
     {
       return queue->queue.try_pop_bulk(token, batch.begin(), batch.size());
     }
@@ -159,6 +163,9 @@ public:
     blocking_ext_base(sleep_time_), non_block_queue_base(qsize)
   {
   }
+
+  /// Creates a sequential consumer for this queue.
+  consumer_type create_consumer() { return consumer_type(*this); }
 };
 
 } // namespace srsran

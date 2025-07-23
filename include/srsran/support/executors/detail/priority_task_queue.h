@@ -41,6 +41,7 @@ using task_priority = enqueue_priority;
 ///
 /// This class performs type erasure of the concurrent_queue<> template.
 class any_task_queue;
+class any_task_consumer;
 
 /// \brief Concurrent task queue, where the caller specifies the task priority while pushing it to the queue.
 ///
@@ -51,16 +52,18 @@ class priority_task_queue
 public:
   using value_type = unique_task;
 
-  class consumer
+  class consumer_type
   {
   public:
-    consumer(priority_task_queue& parent_) : parent(&parent_) {}
-
-    bool try_pop(unique_task& t) { return parent->try_pop(t); }
-    bool pop_blocking(unique_task& t) { return parent->pop_blocking(t); }
+    explicit consumer_type(priority_task_queue& parent_);
+    ~consumer_type();
+    [[nodiscard]] bool   try_pop(unique_task& t);
+    [[nodiscard]] size_t try_pop_bulk(span<unique_task> t);
+    [[nodiscard]] bool   pop_blocking(unique_task& t);
 
   private:
-    priority_task_queue* parent;
+    priority_task_queue*                            parent;
+    std::vector<std::unique_ptr<any_task_consumer>> consumers;
   };
 
   priority_task_queue(span<const concurrent_queue_params> queues, std::chrono::microseconds wait_if_empty);
@@ -80,6 +83,9 @@ public:
   /// \brief Pop a pending task, considering its priority level. If the queues are empty, return false.
   [[nodiscard]] bool try_pop(unique_task& t);
 
+  /// \brief Pop a batch of pending tasks, considering their priority level. If the queues are empty, return false.
+  [[nodiscard]] size_t try_pop_bulk(span<unique_task> batch);
+
   /// \brief Pop a pending task, considering its priority level. If the queues are empty, this call blocks.
   /// If the queues are stopped, this function returns false.
   bool pop_blocking(unique_task& t);
@@ -90,6 +96,9 @@ public:
 
   /// Get number of pending tasks.
   size_t size() const;
+
+  /// Creats a consumer for this queue.
+  consumer_type create_consumer();
 
 private:
   size_t get_queue_idx(task_priority prio) const

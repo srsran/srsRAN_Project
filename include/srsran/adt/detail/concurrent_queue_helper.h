@@ -28,12 +28,16 @@ template <typename ConcurrentQueue, typename T>
 class basic_queue_consumer
 {
 public:
+  using value_type = T;
+
   basic_queue_consumer(ConcurrentQueue& q) : queue(&q) {}
 
   [[nodiscard]] bool try_pop(T& elem) { return queue->try_pop(elem); }
 
+  [[nodiscard]] size_t try_pop_bulk(span<T> batch) { return queue->try_pop_bulk(batch); }
+
   template <typename U = T, std::enable_if_t<has_pop_blocking<ConcurrentQueue, bool(U&)>::value, int> = 0>
-  [[nodiscard]] bool pop_blocking(T& elem)
+  [[nodiscard]] bool pop_blocking(U& elem)
   {
     return queue->pop_blocking(elem);
   }
@@ -41,6 +45,20 @@ public:
 private:
   ConcurrentQueue* queue;
 };
+
+template <typename Queue>
+size_t try_pop_bulk_generic(Queue& queue, span<typename Queue::value_type> batch)
+{
+  size_t total_popped = 0;
+  while (total_popped < batch.size()) {
+    if (queue.try_pop(batch[total_popped])) {
+      ++total_popped;
+    } else {
+      break;
+    }
+  }
+  return total_popped;
+}
 
 /// Extension of queues with blocking api based on sleeps.
 template <typename Derived>

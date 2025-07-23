@@ -37,6 +37,7 @@ public:
   using value_type                                       = T;
   static const concurrent_queue_policy      queue_policy = concurrent_queue_policy::locking_mpsc;
   static const concurrent_queue_wait_policy wait_policy  = BlockingPolicy;
+  using consumer_type                                    = detail::basic_queue_consumer<concurrent_queue, T>;
 
   template <typename... Args>
   explicit concurrent_queue(size_t qsize, Args&&... args) :
@@ -97,6 +98,9 @@ public:
     }
     return false;
   }
+
+  /// \brief Pops a batch of elements from the queue in a non-blocking fashion.
+  [[nodiscard]] size_t try_pop_bulk(span<T> batch) { return detail::try_pop_bulk_generic(*this, batch); }
 
   /// \brief Pops an element from the queue in a non-blocking fashion.
   ///
@@ -163,6 +167,9 @@ public:
 
   /// \brief Maximum capacity of the queue.
   [[nodiscard]] size_t capacity() const { return cap; }
+
+  /// Creates a sequential consumer for this queue.
+  consumer_type create_consumer() { return consumer_type(*this); }
 
 private:
   template <bool Blocking>

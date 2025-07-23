@@ -236,7 +236,7 @@ void run_benchmarks(const bench_params& params)
                result.task_count * 1000000 / result.duration.count());
   }
 
-  if (out_file != nullptr) {
+  if (out_file != stdout) {
     fclose(out_file);
     fmt::print("Results written to {}\n", params.output_file);
   }

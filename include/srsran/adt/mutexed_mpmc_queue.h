@@ -24,8 +24,7 @@ public:
   using value_type                                           = T;
   constexpr static concurrent_queue_policy      queue_policy = concurrent_queue_policy::locking_mpmc;
   constexpr static concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::non_blocking;
-
-  using consumer = detail::basic_queue_consumer<concurrent_queue, T>;
+  using consumer_type                                        = detail::basic_queue_consumer<concurrent_queue, T>;
 
   explicit concurrent_queue(size_t qsize) : queue(qsize) {}
 
@@ -45,6 +44,9 @@ public:
 
   [[nodiscard]] bool try_pop(T& elem) { return queue.try_pop(elem); }
 
+  /// \brief Pops a batch of elements from the queue in a non-blocking fashion.
+  [[nodiscard]] size_t try_pop_bulk(span<T> batch) { return detail::try_pop_bulk_generic(*this, batch); }
+
   void clear() { queue.clear(); }
 
   [[nodiscard]] size_t size() const { return queue.size(); }
@@ -52,6 +54,8 @@ public:
   [[nodiscard]] bool empty() const { return queue.empty(); }
 
   [[nodiscard]] size_t capacity() const { return queue.max_size(); }
+
+  consumer_type create_consumer() { return consumer_type(*this); }
 
 protected:
   blocking_queue<T> queue;
@@ -69,7 +73,7 @@ public:
   using value_type                                           = T;
   constexpr static concurrent_queue_policy      queue_policy = concurrent_queue_policy::locking_mpmc;
   constexpr static concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::condition_variable;
-  using consumer                                             = detail::basic_queue_consumer<concurrent_queue, T>;
+  using consumer_type                                        = detail::basic_queue_consumer<concurrent_queue, T>;
 
   // Inherited methods.
   using non_blocking_base_type::capacity;
@@ -78,6 +82,7 @@ public:
   using non_blocking_base_type::non_blocking_base_type;
   using non_blocking_base_type::size;
   using non_blocking_base_type::try_pop;
+  using non_blocking_base_type::try_pop_bulk;
   using non_blocking_base_type::try_push;
 
   /// \brief Request any blocking function to be interrupted.
@@ -102,6 +107,8 @@ public:
     }
     return ret;
   }
+
+  consumer_type create_consumer() { return consumer_type(*this); }
 };
 
 } // namespace srsran
