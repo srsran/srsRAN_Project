@@ -34,6 +34,11 @@ public:
   {
     return queue.try_push(std::forward<U>(elem));
   }
+  template <typename U>
+  [[nodiscard]] size_t try_push_bulk(span<U> batch)
+  {
+    return detail::queue_helper::try_push_bulk_generic(*this, batch);
+  }
 
   [[nodiscard]] bool try_pop(T& elem)
   {
@@ -46,7 +51,7 @@ public:
     return false;
   }
 
-  [[nodiscard]] size_t try_pop_bulk(span<T> batch) { return detail::try_pop_bulk_generic(*this, batch); }
+  [[nodiscard]] size_t try_pop_bulk(span<T> batch) { return detail::queue_helper::try_pop_bulk_generic(*this, batch); }
 
   /// \brief Provides a pointer to the front element in a non-blocking fashion.
   ///
@@ -129,12 +134,12 @@ public:
 private:
   T* front_blocking()
   {
-    while (this->running.load(std::memory_order_relaxed)) {
+    while (this->policy.is_running()) {
       T* front_val = this->queue.front();
       if (front_val != nullptr) {
         return front_val;
       }
-      std::this_thread::sleep_for(this->sleep_time);
+      this->policy.wait();
     }
     return nullptr;
   }

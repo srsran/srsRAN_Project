@@ -25,51 +25,46 @@ namespace detail {
 // Specialization for strand with multiple queues of different priorities.
 struct priority_strand_queue {
   explicit priority_strand_queue(span<const concurrent_queue_params> strand_queue_params) :
-    queue(strand_queue_params, std::chrono::microseconds{0})
+    queue(strand_queue_params, std::chrono::microseconds{1}), consumer(queue.create_consumer())
   {
   }
 
   bool try_push(enqueue_priority prio, unique_task task) { return queue.try_push(prio, std::move(task)); }
 
+  /// Called to pop tasks from the strand queue.
+  /// \remark Technically, the pop should never fail, as the strand queue is always non-empty when this function is
+  /// called. However, some MPMC queue implementations may have spurious failures, so we need to retry.
   bool pop(unique_task& task)
   {
-    constexpr std::chrono::microseconds time_to_wait{1000};
-    std::chrono::microseconds           telapsed{0};
-    do {
-      if (queue.try_pop(task)) {
-        return true;
-      }
-      std::this_thread::sleep_for(std::chrono::microseconds{1});
-      telapsed += std::chrono::microseconds{1};
-    } while (telapsed < time_to_wait);
-    return false;
+    static constexpr std::chrono::microseconds time_to_wait{1000};
+    return consumer.pop_blocking(task, time_to_wait);
   }
 
   priority_task_queue queue;
+  // Note: We use the consumer interface because we can leverage the fact that the dequeues are sequential.
+  priority_task_queue::consumer_type consumer;
 };
 
 // Specialization for strand with single queue.
 template <concurrent_queue_policy QueuePolicy>
 struct strand_queue {
+  using queue_type = concurrent_queue<unique_task, QueuePolicy, concurrent_queue_wait_policy::non_blocking>;
+
   explicit strand_queue(unsigned strand_queue_size) : queue(strand_queue_size) {}
 
   bool try_push(unique_task task) { return queue.try_push(std::move(task)); }
 
   bool pop(unique_task& task)
   {
-    constexpr std::chrono::microseconds time_to_wait{1000};
-    std::chrono::microseconds           telapsed{0};
-    do {
-      if (queue.try_pop(task)) {
-        return true;
-      }
-      std::this_thread::sleep_for(std::chrono::microseconds{1});
-      telapsed += std::chrono::microseconds{1};
-    } while (telapsed < time_to_wait);
-    return false;
+    // Note: Some MPMC implementations have spurious failures, so we need to retry.
+    static constexpr std::chrono::microseconds time_to_wait{1000};
+    return detail::queue_helper::pop_blocking_generic(consumer, task, policy, time_to_wait);
   }
 
-  concurrent_queue<unique_task, QueuePolicy, concurrent_queue_wait_policy::non_blocking> queue;
+  queue_type                              queue;
+  detail::queue_helper::sleep_wait_policy policy{std::chrono::microseconds{1}};
+  // Note: We use the consumer interface because we can leverage the fact that the dequeues are sequential.
+  typename queue_type::consumer_type consumer{queue.create_consumer()};
 };
 
 } // namespace detail
@@ -276,9 +271,10 @@ public:
   void handle_failed_task_dispatch()
   {
     // Pop enqueued tasks until number of enqueued jobs is zero.
-    // Note: Since we acquired the task_strand, the task enqueued in this call should always be the first being
-    // popped. Note: If there is a single producer, only the task enqueued in this call will be popped. Note: As we
-    // currently hold the strand, there is no concurrent thread popping tasks.
+    // Note: As we currently hold the strand, there is no concurrent thread popping tasks.
+    // Note: Since the caller acquired the task_strand, the task enqueued in this call should be often the first being
+    // popped.
+    // Note: If there is a single producer, only the task enqueued in this call will be popped.
     uint32_t queue_size = state.get_queue_size();
 
     logger.warning("Discarding {} tasks stored in strand. Cause: The strand cannot dispatch its task to executor.",

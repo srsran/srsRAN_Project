@@ -59,7 +59,7 @@ private:
   /// \brief Deletes the stored PDUs. This function shall be called from the executor in \c clear_by_executor.
   void clear()
   {
-    trace_point clear_tp   = up_tracer.now();
+    trace_point clear_tp = up_tracer.now();
     byte_buffer discard;
     while (recycle_bin->try_pop(discard)) {
     }

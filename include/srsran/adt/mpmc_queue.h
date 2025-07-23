@@ -30,12 +30,16 @@ public:
   explicit concurrent_queue(size_t qsize) : queue(qsize) {}
 
   [[nodiscard]] bool try_push(const T& elem) { return queue.try_push(elem); }
-
   [[nodiscard]] bool try_push(T&& elem) { return queue.try_push(std::move(elem)); }
+  template <typename U>
+  [[nodiscard]] size_t try_push_bulk(span<U> batch)
+  {
+    return detail::queue_helper::try_push_bulk_generic(*this, batch);
+  }
 
   [[nodiscard]] bool try_pop(T& elem) { return queue.try_pop(elem); }
 
-  [[nodiscard]] size_t try_pop_bulk(span<T> batch) { return detail::try_pop_bulk_generic(*this, batch); }
+  [[nodiscard]] size_t try_pop_bulk(span<T> batch) { return detail::queue_helper::try_pop_bulk_generic(*this, batch); }
 
   [[nodiscard]] size_t size() const
   {

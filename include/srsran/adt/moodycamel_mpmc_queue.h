@@ -65,21 +65,24 @@ public:
   }
 
   /// \brief Pushes an element to the queue. If the producer sub-queue is full, the call mallocs a new block.
-  bool try_push(const T& elem) { return queue.enqueue(elem); }
-  bool try_push(T&& elem) { return queue.enqueue(std::move(elem)); }
+  [[nodiscard]] bool try_push(const T& elem) { return queue.enqueue(elem); }
+  [[nodiscard]] bool try_push(T&& elem) { return queue.enqueue(std::move(elem)); }
   template <typename U>
-  bool try_push_bulk(span<U> batch)
+  [[nodiscard]] size_t try_push_bulk(span<U> batch)
   {
-    return queue.enqueue_bulk(batch);
+    if constexpr (std::is_const_v<U>) {
+      return queue.enqueue_bulk(batch.begin(), batch.size()) ? batch.size() : 0;
+    }
+    return queue.enqueue_bulk(std::make_move_iterator(batch.begin()), batch.size()) ? batch.size() : 0;
   }
 
   /// \brief Pops an element from the queue in a non-blocking fashion.
   ///
   /// If the queue is empty, the call returns false.
-  bool try_pop(T& elem) { return queue.try_dequeue(elem); }
+  [[nodiscard]] bool try_pop(T& elem) { return queue.try_dequeue(elem); }
 
   /// \brief Pops a batch of elements from the queue in a non-blocking fashion.
-  size_t try_pop_bulk(span<T> batch) { return queue.try_dequeue_bulk(batch.begin(), batch.size()); }
+  [[nodiscard]] size_t try_pop_bulk(span<T> batch) { return queue.try_dequeue_bulk(batch.begin(), batch.size()); }
 
   /// Returns an estimate of the total number of elements currently in the queue.
   size_t size() const { return queue.size_approx(); }
@@ -121,26 +124,20 @@ public:
   class consumer_type
   {
   public:
-    consumer_type(concurrent_queue& q) : queue(&q), token(q.queue) {}
+    consumer_type(concurrent_queue& q) : parent(&q), token(q.queue) {}
 
-    [[nodiscard]] bool   try_pop(T& elem) { return queue->queue.try_dequeue(token, elem); }
+    [[nodiscard]] bool   try_pop(T& elem) { return parent->queue.try_dequeue(token, elem); }
     [[nodiscard]] size_t try_pop_bulk(span<const T> batch)
     {
-      return queue->queue.try_pop_bulk(token, batch.begin(), batch.size());
+      return parent->queue.try_pop_bulk(token, batch.begin(), batch.size());
     }
     [[nodiscard]] bool pop_blocking(T& elem)
     {
-      while (queue->running.load(std::memory_order_relaxed)) {
-        if (try_pop(elem)) {
-          return true;
-        }
-        std::this_thread::sleep_for(queue->sleep_time);
-      }
-      return false;
+      return detail::queue_helper::pop_blocking_generic(*this, elem, parent->policy);
     }
 
   protected:
-    concurrent_queue*                  queue;
+    concurrent_queue*                  parent;
     typename moodycamel::ConsumerToken token;
   };
 

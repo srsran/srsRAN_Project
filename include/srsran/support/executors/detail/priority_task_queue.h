@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/detail/concurrent_queue_helper.h"
 #include "srsran/adt/detail/concurrent_queue_params.h"
 #include "srsran/adt/span.h"
 #include "srsran/support/executors/task_executor.h"
@@ -52,6 +53,8 @@ class priority_task_queue
 public:
   using value_type = unique_task;
 
+  /// Consumer interface to pop elements from the priority_task_queue.
+  /// \remark The consumer is not thread-safe, so it should not be used concurrently.
   class consumer_type
   {
   public:
@@ -60,6 +63,7 @@ public:
     [[nodiscard]] bool   try_pop(unique_task& t);
     [[nodiscard]] size_t try_pop_bulk(span<unique_task> t);
     [[nodiscard]] bool   pop_blocking(unique_task& t);
+    [[nodiscard]] bool   pop_blocking(unique_task& t, std::chrono::microseconds wait_time);
 
   private:
     priority_task_queue*                            parent;
@@ -89,6 +93,7 @@ public:
   /// \brief Pop a pending task, considering its priority level. If the queues are empty, this call blocks.
   /// If the queues are stopped, this function returns false.
   bool pop_blocking(unique_task& t);
+  bool pop_blocking(unique_task& t, std::chrono::microseconds wait_time);
 
   [[nodiscard]] size_t queue_capacity(task_priority prio) const;
 
@@ -106,11 +111,8 @@ private:
     return detail::enqueue_priority_to_queue_index(prio, queues.size());
   }
 
-  std::chrono::microseconds wait_on_empty;
-
   std::vector<std::unique_ptr<detail::any_task_queue>> queues;
-
-  std::atomic<bool> running{true};
+  detail::queue_helper::sleep_wait_policy              policy;
 };
 
 } // namespace detail

@@ -32,11 +32,16 @@ public:
   /// \return true if the element was pushed, false otherwise.
   [[nodiscard]] bool try_push(const T& elem) { return queue.try_push(elem); }
   [[nodiscard]] bool try_push(T&& elem) { return queue.try_push(std::move(elem)).has_value(); }
+  template <typename U>
+  [[nodiscard]] size_t try_push_bulk(span<U> batch)
+  {
+    return detail::queue_helper::try_push_bulk_generic(*this, batch);
+  }
 
   [[nodiscard]] bool try_pop(T& elem) { return queue.try_pop(elem); }
 
   /// \brief Pops a batch of elements from the queue in a non-blocking fashion.
-  [[nodiscard]] size_t try_pop_bulk(span<T> batch) { return detail::try_pop_bulk_generic(*this, batch); }
+  [[nodiscard]] size_t try_pop_bulk(span<T> batch) { return detail::queue_helper::try_pop_bulk_generic(*this, batch); }
 
   void clear() { queue.clear(); }
 
@@ -86,6 +91,12 @@ public:
   {
     bool success = false;
     elem         = this->queue.pop_blocking(&success);
+    return success;
+  }
+  bool pop_blocking(T& elem, std::chrono::microseconds wait_time)
+  {
+    bool success = false;
+    elem         = this->queue.pop_wait_for(&success, wait_time);
     return success;
   }
 

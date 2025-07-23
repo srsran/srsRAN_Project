@@ -132,7 +132,7 @@ std::unique_ptr<detail::any_task_queue> make_any_task_queue(const concurrent_que
 
 detail::priority_task_queue::priority_task_queue(span<const concurrent_queue_params> queue_params,
                                                  std::chrono::microseconds           wait_if_empty) :
-  wait_on_empty(wait_if_empty)
+  policy(wait_if_empty)
 {
   queues.resize(queue_params.size());
   for (unsigned i = 0; i != queues.size(); ++i) {
@@ -144,7 +144,7 @@ detail::priority_task_queue::~priority_task_queue() {}
 
 void detail::priority_task_queue::request_stop()
 {
-  running = false;
+  policy.request_stop();
   for (auto& q : queues) {
     q->request_stop();
   }
@@ -189,13 +189,12 @@ size_t detail::priority_task_queue::try_pop_bulk(span<unique_task> batch)
 
 bool detail::priority_task_queue::pop_blocking(unique_task& t)
 {
-  while (running.load(std::memory_order_relaxed)) {
-    if (try_pop(t)) {
-      return true;
-    }
-    std::this_thread::sleep_for(wait_on_empty);
-  }
-  return false;
+  return detail::queue_helper::pop_blocking_generic(*this, t, policy);
+}
+
+bool detail::priority_task_queue::pop_blocking(unique_task& t, std::chrono::microseconds wait_time)
+{
+  return detail::queue_helper::pop_blocking_generic(*this, t, policy, wait_time);
 }
 
 size_t detail::priority_task_queue::size() const
@@ -248,13 +247,12 @@ size_t detail::priority_task_queue::consumer_type::try_pop_bulk(span<unique_task
 
 bool detail::priority_task_queue::consumer_type::pop_blocking(unique_task& t)
 {
-  while (parent->running.load(std::memory_order_relaxed)) {
-    if (try_pop(t)) {
-      return true;
-    }
-    std::this_thread::sleep_for(parent->wait_on_empty);
-  }
-  return false;
+  return detail::queue_helper::pop_blocking_generic(*this, t, parent->policy);
+}
+
+bool detail::priority_task_queue::consumer_type::pop_blocking(unique_task& t, std::chrono::microseconds wait_time)
+{
+  return detail::queue_helper::pop_blocking_generic(*this, t, parent->policy, wait_time);
 }
 
 detail::priority_task_queue::consumer_type detail::priority_task_queue::create_consumer()

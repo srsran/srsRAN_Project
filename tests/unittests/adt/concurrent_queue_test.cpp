@@ -141,6 +141,17 @@ TYPED_TEST(all_concurrent_queue_test, checks_for_non_empty_queue)
   ASSERT_FALSE(this->queue.try_pop(val));
 }
 
+TYPED_TEST(all_concurrent_queue_test, test_consumer_api)
+{
+  auto consumer = this->queue.create_consumer();
+  ASSERT_TRUE(this->queue.try_push(5));
+
+  typename TestFixture::value_type val;
+  ASSERT_TRUE(consumer.try_pop(val));
+  ASSERT_EQ(val, 5);
+  ASSERT_FALSE(this->queue.try_pop(val));
+}
+
 TYPED_TEST(bounded_concurrent_queue_test, try_push_to_full_queue_fails)
 {
   ASSERT_EQ(this->queue.capacity(), 128);

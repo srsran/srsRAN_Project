@@ -100,7 +100,7 @@ public:
   }
 
   /// \brief Pops a batch of elements from the queue in a non-blocking fashion.
-  [[nodiscard]] size_t try_pop_bulk(span<T> batch) { return detail::try_pop_bulk_generic(*this, batch); }
+  [[nodiscard]] size_t try_pop_bulk(span<T> batch) { return detail::queue_helper::try_pop_bulk_generic(*this, batch); }
 
   /// Pops an element from the queue. If the queue is empty, the call blocks, waiting for a new element to be pushed.
   bool pop_blocking(T& elem) noexcept
@@ -172,7 +172,7 @@ private:
     }
     {
       std::unique_lock<std::mutex> lock(mutex);
-      if (Blocking) {
+      if constexpr (Blocking) {
         barrier.wait_pop(lock, [this]() { return !pushing_queue().empty(); });
         if (not barrier.is_running()) {
           return nullptr;
