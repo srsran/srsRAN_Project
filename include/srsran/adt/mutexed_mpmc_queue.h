@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/adt/blocking_queue.h"
+#include "srsran/adt/detail/concurrent_queue_helper.h"
 #include "srsran/adt/detail/concurrent_queue_params.h"
 
 namespace srsran {
@@ -23,6 +24,8 @@ public:
   using value_type                                           = T;
   constexpr static concurrent_queue_policy      queue_policy = concurrent_queue_policy::locking_mpmc;
   constexpr static concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::non_blocking;
+
+  using consumer = detail::basic_queue_consumer<concurrent_queue, T>;
 
   explicit concurrent_queue(size_t qsize) : queue(qsize) {}
 
@@ -66,6 +69,7 @@ public:
   using value_type                                           = T;
   constexpr static concurrent_queue_policy      queue_policy = concurrent_queue_policy::locking_mpmc;
   constexpr static concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::condition_variable;
+  using consumer                                             = detail::basic_queue_consumer<concurrent_queue, T>;
 
   // Inherited methods.
   using non_blocking_base_type::capacity;

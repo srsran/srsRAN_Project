@@ -49,6 +49,20 @@ class any_task_queue;
 class priority_task_queue
 {
 public:
+  using value_type = unique_task;
+
+  class consumer
+  {
+  public:
+    consumer(priority_task_queue& parent_) : parent(&parent_) {}
+
+    bool try_pop(unique_task& t) { return parent->try_pop(t); }
+    bool pop_blocking(unique_task& t) { return parent->pop_blocking(t); }
+
+  private:
+    priority_task_queue* parent;
+  };
+
   priority_task_queue(span<const concurrent_queue_params> queues, std::chrono::microseconds wait_if_empty);
   ~priority_task_queue();
 

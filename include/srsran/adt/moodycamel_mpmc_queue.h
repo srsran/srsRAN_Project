@@ -27,10 +27,32 @@ namespace srsran {
 template <typename T>
 class concurrent_queue<T, concurrent_queue_policy::moodycamel_lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>
 {
+  using queue_impl = moodycamel::ConcurrentQueue<T>;
+
 public:
-  using value_type                                           = T;
-  static constexpr concurrent_queue_policy      queue_policy = concurrent_queue_policy::moodycamel_lockfree_mpmc;
-  static constexpr concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::non_blocking;
+  /// Value stored in the queue.
+  using value_type = T;
+  /// The queue policy used by this queue.
+  static constexpr concurrent_queue_policy queue_policy = concurrent_queue_policy::moodycamel_lockfree_mpmc;
+  /// The queue wait policy used by this queue.
+  static constexpr concurrent_queue_wait_policy wait_policy = concurrent_queue_wait_policy::non_blocking;
+
+  /// Explicit consumer class for faster dequeueing.
+  class consumer
+  {
+  public:
+    consumer(concurrent_queue& q) : queue(&q.queue), token(q.queue) {}
+
+    [[nodiscard]] bool try_pop(T& elem) { return queue->try_dequeue(token, elem); }
+    [[nodiscard]] bool try_pop_bulk(span<const T> batch)
+    {
+      return queue->try_dequeue_bulk(token, batch.begin(), batch.size());
+    }
+
+  protected:
+    queue_impl*                        queue;
+    typename queue_impl::ConsumerToken token;
+  };
 
   /// \brief Constructs a concurrent queue and pre-reserves the configured capacity.
   /// \param[in] qsize The capacity to reserve.
@@ -68,7 +90,7 @@ public:
   size_t capacity() const { return std::numeric_limits<size_t>::max(); }
 
 protected:
-  moodycamel::ConcurrentQueue<T> queue;
+  queue_impl queue;
 };
 
 /// Specialization for moodycamel lockfree MPMC with a blocking mechanism based on sleeps.
@@ -90,6 +112,33 @@ public:
   using value_type                                           = T;
   static constexpr concurrent_queue_policy      queue_policy = concurrent_queue_policy::moodycamel_lockfree_mpmc;
   static constexpr concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::sleep;
+
+  /// Explicit consumer class for faster dequeueing.
+  class consumer
+  {
+  public:
+    consumer(concurrent_queue& q) : queue(&q), token(q.queue) {}
+
+    [[nodiscard]] bool try_pop(T& elem) { return queue->queue.try_dequeue(token, elem); }
+    [[nodiscard]] bool try_pop_bulk(span<const T> batch)
+    {
+      return queue->queue.try_pop_bulk(token, batch.begin(), batch.size());
+    }
+    [[nodiscard]] bool pop_blocking(T& elem)
+    {
+      while (queue->running.load(std::memory_order_relaxed)) {
+        if (try_pop(elem)) {
+          return true;
+        }
+        std::this_thread::sleep_for(queue->sleep_time);
+      }
+      return false;
+    }
+
+  protected:
+    concurrent_queue*                  queue;
+    typename moodycamel::ConsumerToken token;
+  };
 
   // Inherited non-blocking API methods.
   using non_block_queue_base::capacity;

@@ -19,26 +19,31 @@ using namespace srsran;
 struct bench_params {
   std::chrono::milliseconds duration{10};
   unsigned                  max_workers = cpu_architecture_info::get().get_host_nof_available_cpus();
+  std::string               output_file{"stdout"};
 };
 
 static void usage(const char* prog, const bench_params& params)
 {
-  fmt::print("Usage: {} [-R repetitions]\n", prog);
+  fmt::print("Usage: {} [-D duration] [-t max_workers] [-o output file]\n", prog);
   fmt::print("\t-D Duration in milliseconds [Default {}]\n", params.duration.count());
   fmt::print("\t-t Maximum number of workers [Default {}]\n", params.max_workers);
+  fmt::print("\t-o Output file [Default: stdout]\n");
   fmt::print("\t-h Show this message\n");
 }
 
 static void parse_args(int argc, char** argv, bench_params& params)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "D:t:h")) != -1) {
+  while ((opt = getopt(argc, argv, "D:t:o:h")) != -1) {
     switch (opt) {
       case 'D':
         params.duration = std::chrono::milliseconds{std::strtol(optarg, nullptr, 10)};
         break;
       case 't':
         params.max_workers = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'o':
+        params.output_file = optarg;
         break;
       case 'h':
       default:
@@ -213,13 +218,27 @@ void run_benchmarks(const bench_params& params)
     }
   }
 
-  fmt::print("\nBenchmark results:\n");
+  FILE* out_file = nullptr;
+  if (params.output_file == "stdout") {
+    out_file = stdout;
+  } else {
+    out_file = fopen(params.output_file.c_str(), "w");
+    report_fatal_error_if_not(out_file, "Failed to open output file: {}", params.output_file);
+  }
+
+  fmt::print(out_file, "\nBenchmark results:\n");
   for (const benchmark_result& result : results) {
-    fmt::print("{}: task_count={}, duration={} usec, tasks-per-sec={}\n",
+    fmt::print(out_file,
+               "{}: task_count={}, duration={} usec, tasks-per-sec={}\n",
                result.description,
                result.task_count,
                result.duration.count(),
                result.task_count * 1000000 / result.duration.count());
+  }
+
+  if (out_file != nullptr) {
+    fclose(out_file);
+    fmt::print("Results written to {}\n", params.output_file);
   }
 }
 

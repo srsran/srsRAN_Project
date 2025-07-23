@@ -26,6 +26,7 @@ public:
   using value_type                                           = T;
   constexpr static concurrent_queue_policy      queue_policy = concurrent_queue_policy::lockfree_mpmc;
   constexpr static concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::non_blocking;
+  using consumer                                             = detail::basic_queue_consumer<concurrent_queue, T>;
 
   explicit concurrent_queue(size_t qsize) : queue(qsize) {}
 
@@ -74,6 +75,7 @@ public:
   using value_type                                           = T;
   constexpr static concurrent_queue_policy      queue_policy = concurrent_queue_policy::lockfree_mpmc;
   constexpr static concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::sleep;
+  using consumer                                             = detail::basic_queue_consumer<concurrent_queue, T>;
 
   explicit concurrent_queue(size_t qsize, std::chrono::microseconds sleep_time_ = std::chrono::microseconds{0}) :
     nonblocking_base_type(qsize), sleep_base_type(sleep_time_)

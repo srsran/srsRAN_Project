@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "srsran/adt/span.h"
+#include "srsran/support/detail/has_method.h"
 #include <atomic>
 #include <optional>
 #include <thread>
@@ -17,6 +19,28 @@
 namespace srsran {
 
 namespace detail {
+
+/// Checker that the queue has a pop_blocking method.
+CREATE_TRAIT_HAS_METHOD(has_pop_blocking, pop_blocking);
+
+/// Consumer wrapper for queues that do not expose any consumer API.
+template <typename ConcurrentQueue, typename T>
+class basic_queue_consumer
+{
+public:
+  basic_queue_consumer(ConcurrentQueue& q) : queue(&q) {}
+
+  [[nodiscard]] bool try_pop(T& elem) { return queue->try_pop(elem); }
+
+  template <typename U = T, std::enable_if_t<has_pop_blocking<ConcurrentQueue, bool(U&)>::value, int> = 0>
+  [[nodiscard]] bool pop_blocking(T& elem)
+  {
+    return queue->pop_blocking(elem);
+  }
+
+private:
+  ConcurrentQueue* queue;
+};
 
 /// Extension of queues with blocking api based on sleeps.
 template <typename Derived>
