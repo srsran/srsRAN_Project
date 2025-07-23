@@ -51,7 +51,7 @@ protected:
       upper_phy_rx_symbol_context ctx = {};
       ctx.symbol                      = i;
       ctx.slot                        = slot_point(0, 0, 0);
-      rx_handler.handle_rx_symbol(ctx, shared_rg.get_grid());
+      rx_handler.handle_rx_symbol(ctx, shared_rg.get_grid(), true);
     }
   }
 

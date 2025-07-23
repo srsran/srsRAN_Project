@@ -39,7 +39,7 @@ class uplane_rx_symbol_notifier_spy : public uplane_rx_symbol_notifier
   const resource_grid_reader* rg_reader = nullptr;
 
 public:
-  void on_new_uplink_symbol(const uplane_rx_symbol_context& context, shared_resource_grid grid) override
+  void on_new_uplink_symbol(const uplane_rx_symbol_context& context, shared_resource_grid grid, bool is_valid) override
   {
     rg_reader = &(grid.get_reader());
   }

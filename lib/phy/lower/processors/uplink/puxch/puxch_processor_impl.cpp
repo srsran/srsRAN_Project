@@ -63,7 +63,7 @@ bool puxch_processor_impl::process_symbol(const baseband_gateway_buffer_reader& 
   lower_phy_rx_symbol_context rx_symbol_context;
   rx_symbol_context.slot        = current_slot;
   rx_symbol_context.nof_symbols = context.nof_symbols;
-  notifier->on_rx_symbol(current_grid, context);
+  notifier->on_rx_symbol(current_grid, context, true);
 
   // Release current grid if the slot is completed.
   if (context.nof_symbols == nof_symbols_per_slot - 1) {

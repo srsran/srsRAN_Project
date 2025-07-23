@@ -632,7 +632,7 @@ TEST_P(LowerPhyFixture, RxSymbolNotifiers)
     resource_grid_writer_spy rg_writer_spy;
     resource_grid_spy        rg_spy(rg_reader_spy, rg_writer_spy);
     shared_resource_grid_spy shared_rg(rg_spy);
-    puxch_notifier->on_rx_symbol(shared_rg.get_grid(), context);
+    puxch_notifier->on_rx_symbol(shared_rg.get_grid(), context, true);
     auto& entries = rx_symbol_notifier_spy.get_rx_symbol_events();
     ASSERT_EQ(entries.size(), 1);
     ASSERT_EQ(context, entries.back().context);

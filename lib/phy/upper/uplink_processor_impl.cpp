@@ -9,6 +9,7 @@
  */
 
 #include "uplink_processor_impl.h"
+#include "srsran/adt/scope_exit.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/prach_buffer_context.h"
@@ -109,13 +110,16 @@ unique_uplink_pdu_slot_repository uplink_processor_impl::get_pdu_slot_repository
   return unique_uplink_pdu_slot_repository(pdu_repository);
 }
 
-void uplink_processor_impl::handle_rx_symbol(unsigned end_symbol_index)
+void uplink_processor_impl::handle_rx_symbol(unsigned end_symbol_index, bool is_valid)
 {
   // Try locking the slot processor. This prevents that the processor handle symbols and discards from different
   // threads concurrently.
   if (!state_machine.start_handle_rx_symbol()) {
     return;
   }
+
+  // Unlock the slot processor when returning from this method.
+  auto execute_on_exit = make_scope_exit([this]() { state_machine.finish_handle_rx_symbol(); });
 
   // Verify that the symbol index is in increasing order.
   if (end_symbol_index < nof_processed_symbols) {
@@ -124,13 +128,46 @@ void uplink_processor_impl::handle_rx_symbol(unsigned end_symbol_index)
                    "Unexpected symbol index {} is back in time, expected {}.",
                    end_symbol_index,
                    nof_processed_symbols);
-    state_machine.finish_handle_rx_symbol();
     return;
   }
 
   // Run rate matching buffer pool only at the first symbol.
   if (nof_processed_symbols == 0) {
     rm_buffer_pool.run_slot(current_slot);
+  }
+
+  // If the OFDM symbol is not valid, discard all PDUs for the rest of the slot.
+  if (!is_valid) {
+    // Iterate all symbols that have not been processed yet. As the processor might be executing asynchronous all
+    // discarded PDUs must call state_machine.on_create_pdu_task and state_machine.on_finish_processing_pdu for managing
+    // the state machine correctly.
+    for (unsigned i_symbol = nof_processed_symbols; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
+      for (const auto& pdu : pdu_repository.get_pucch_pdus(i_symbol)) {
+        if (state_machine.on_create_pdu_task()) {
+          notify_discard_pucch(pdu);
+        }
+      }
+
+      for (const auto& collection : pdu_repository.get_pucch_f1_repository(i_symbol)) {
+        if (state_machine.on_create_pdu_task()) {
+          notify_discard_pucch(collection);
+        }
+      }
+
+      for (const auto& pdu : pdu_repository.get_pusch_pdus(i_symbol)) {
+        if (state_machine.on_create_pdu_task()) {
+          notify_discard_pusch(pdu);
+        }
+      }
+
+      for ([[maybe_unused]] const auto& pdu : pdu_repository.get_srs_pdus(i_symbol)) {
+        if (state_machine.on_create_pdu_task()) {
+          state_machine.on_finish_processing_pdu();
+        }
+      }
+    }
+
+    return;
   }
 
   for (unsigned end_processed_symbol = std::min(end_symbol_index + 1, MAX_NSYMB_PER_SLOT);
@@ -152,9 +189,6 @@ void uplink_processor_impl::handle_rx_symbol(unsigned end_symbol_index)
       process_srs(pdu);
     }
   }
-
-  // Unlock the slot processor.
-  state_machine.finish_handle_rx_symbol();
 }
 
 void uplink_processor_impl::process_prach(const prach_buffer& buffer, const prach_buffer_context& context_)

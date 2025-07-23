@@ -200,7 +200,7 @@ public:
         // Notify received resource grid for each symbol.
         for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
           rx_context.symbol_id = i_symbol;
-          symbol_notifier.on_new_uplink_symbol(rx_context, ul_grid);
+          symbol_notifier.on_new_uplink_symbol(rx_context, ul_grid, true);
         }
 
       } else {

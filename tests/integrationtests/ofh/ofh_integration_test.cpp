@@ -394,7 +394,9 @@ class dummy_rx_symbol_notifier : public ru_uplink_plane_rx_symbol_notifier
 {
 public:
   // See interface for documentation.
-  void on_new_uplink_symbol(const ru_uplink_rx_symbol_context& context, const shared_resource_grid& grid) override
+  void on_new_uplink_symbol(const ru_uplink_rx_symbol_context& context,
+                            const shared_resource_grid&        grid,
+                            bool                               is_valid) override
   {
     srsran_assert(grid, "Invalid grid.");
   }

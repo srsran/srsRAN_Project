@@ -69,7 +69,7 @@ void closed_rx_window_handler::handle_uplink_context(slot_symbol_point symbol_po
 
   uplane_rx_symbol_context notification_context = {
       ctx_value.context.slot, symbol_point.get_symbol_index(), ctx_value.context.sector};
-  notifier->on_new_uplink_symbol(notification_context, std::move(ctx_value.grid));
+  notifier->on_new_uplink_symbol(notification_context, std::move(ctx_value.grid), false);
 
   if (log_unreceived_messages) {
     logger.warning("Sector#{}: missed incoming User-Plane uplink messages for slot '{}', symbol '{}'",
