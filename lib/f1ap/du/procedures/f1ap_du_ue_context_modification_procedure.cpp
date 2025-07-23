@@ -123,6 +123,8 @@ void f1ap_du_ue_context_modification_procedure::create_du_request(const asn1::f1
     // [TS 38.473, 9.3.1.30] This IE indicates the result of the reconfiguration performed towards the UE.
     du_request.rrc_recfg_complete_ind =
         msg->rrc_recfg_complete_ind == asn1::f1ap::rrc_recfg_complete_ind_opts::options::true_value;
+  } else {
+    du_request.rrc_recfg_complete_ind = false;
   }
 }
 

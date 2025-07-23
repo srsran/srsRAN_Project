@@ -185,8 +185,8 @@ expected<unsigned> f1ap_du_ue_context_setup_procedure::get_cell_index_from_nr_cg
 async_task<f1ap_ue_context_update_response> f1ap_du_ue_context_setup_procedure::request_du_ue_config()
 {
   // Construct DU request.
-  f1ap_ue_context_update_request du_request;
-  du_request.ue_index = ue->context.ue_index;
+  f1ap_ue_context_update_request du_request = {};
+  du_request.ue_index                       = ue->context.ue_index;
 
   auto plmn = plmn_identity::from_bytes(msg->sp_cell_id.plmn_id.to_bytes());
   auto nci  = nr_cell_identity::create(msg->sp_cell_id.nr_cell_id.to_number());
