@@ -212,8 +212,7 @@ std::vector<execution_config_helper::single_worker> worker_manager::create_fapi_
     single_worker buffered_worker{name,
                                   {exec_name, concurrent_queue_policy::locking_mpsc, task_worker_queue_size},
                                   std::chrono::microseconds{50},
-                                  os_thread_realtime_priority::max() - 6,
-                                  affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::l2_cell)};
+                                  os_thread_realtime_priority::max() - 6};
 
     workers.push_back(buffered_worker);
   }
@@ -241,8 +240,7 @@ create_dedicated_du_hi_slot_worker_desc(unsigned                                
                                      {cell_exec_name, concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
                                     std::chrono::microseconds{10},
                                     rt_mode ? os_thread_realtime_priority::max() - 2
-                                            : os_thread_realtime_priority::no_realtime(),
-                                    affinity_mng[cell_index].calcute_affinity_mask(sched_affinity_mask_types::l2_cell)};
+                                            : os_thread_realtime_priority::no_realtime()};
 }
 
 static srs_du::du_high_executor_config::dedicated_cell_worker_list

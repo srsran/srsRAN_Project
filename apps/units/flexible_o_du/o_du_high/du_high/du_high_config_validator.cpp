@@ -41,41 +41,6 @@ static bool validate_pcap_configs(const du_high_unit_config& config)
   return true;
 }
 
-static bool validate_expert_execution_unit_config(const du_high_unit_config&       config,
-                                                  const os_sched_affinity_bitmask& available_cpus)
-{
-  // Configure more cells for expert execution than the number of cells is an error.
-  if (config.expert_execution_cfg.cell_affinities.size() != config.cells_cfg.size()) {
-    fmt::print(
-        "Using different number of cells for DU high expert execution '{}' than the number of defined cells '{}'\n",
-        config.expert_execution_cfg.cell_affinities.size(),
-        config.cells_cfg.size());
-
-    return false;
-  }
-
-  auto validate_cpu_range = [](const os_sched_affinity_bitmask& allowed_cpus_mask,
-                               const os_sched_affinity_bitmask& mask,
-                               const std::string&               name) {
-    auto invalid_cpu_ids = mask.subtract(allowed_cpus_mask);
-    if (not invalid_cpu_ids.empty()) {
-      fmt::print(
-          "CPU cores {} selected in '{}' option doesn't belong to the available cpuset.\n", invalid_cpu_ids, name);
-      return false;
-    }
-
-    return true;
-  };
-
-  for (const auto& cell : config.expert_execution_cfg.cell_affinities) {
-    if (!validate_cpu_range(available_cpus, cell.l2_cell_cpu_cfg.mask, "l2_cell_cpus")) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
 template <typename id_type>
 static bool validate_rlc_am_unit_config(id_type id, const du_high_unit_rlc_am_config& config)
 {
@@ -1451,10 +1416,6 @@ bool srsran::validate_du_high_config(const du_high_unit_config& config, const os
   }
 
   if (!validate_test_mode_unit_config(config)) {
-    return false;
-  }
-
-  if (!validate_expert_execution_unit_config(config, available_cpus)) {
     return false;
   }
 

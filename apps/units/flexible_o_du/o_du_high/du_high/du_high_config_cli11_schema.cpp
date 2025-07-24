@@ -87,45 +87,8 @@ static void configure_cli11_log_args(CLI::App& app, du_high_unit_logger_config& 
       ->always_capture_default();
 }
 
-static void configure_cli11_cell_affinity_args(CLI::App& app, du_high_unit_cpu_affinities_cell_config& config)
-{
-  add_option_function<std::string>(
-      app,
-      "--l2_cell_cpus",
-      [&config](const std::string& value) { parse_affinity_mask(config.l2_cell_cpu_cfg.mask, value, "l2_cell_cpus"); },
-      "CPU cores assigned to L2 cell tasks");
-
-  add_option_function<std::string>(
-      app,
-      "--l2_cell_pinning",
-      [&config](const std::string& value) {
-        config.l2_cell_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
-        if (config.l2_cell_cpu_cfg.pinning_policy == sched_affinity_mask_policy::last) {
-          report_error("Incorrect value={} used in {} property", value, "l2_cell_pinning");
-        }
-      },
-      "Policy used for assigning CPU cores to L2 cell tasks");
-}
-
 static void configure_cli11_expert_execution_args(CLI::App& app, du_high_unit_expert_execution_config& config)
 {
-  // Cell affinity section.
-  add_option_cell(
-      app,
-      "--cell_affinities",
-      [&config](const std::vector<std::string>& values) {
-        config.cell_affinities.resize(values.size());
-        for (unsigned i = 0, e = values.size(); i != e; ++i) {
-          CLI::App subapp("DU high expert execution cell CPU affinities",
-                          "DU high expert execution cell CPU affinities config, item #" + std::to_string(i));
-          subapp.config_formatter(create_yaml_config_parser());
-          subapp.allow_config_extras();
-          configure_cli11_cell_affinity_args(subapp, config.cell_affinities[i]);
-          std::istringstream ss(values[i]);
-          subapp.parse_from_stream(ss);
-        }
-      },
-      "Sets the cell CPU affinities configuration on a per cell basis");
   CLI::App* queues_subcmd = add_subcommand(app, "queues", "Task executor queue parameters")->configurable();
   add_option(*queues_subcmd,
              "--du_ue_data_executor_queue_size",
@@ -1970,8 +1933,6 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
       app,
       "--cells",
       [&parsed_cfg](const std::vector<std::string>& values) {
-        // Resize the number of cells that controls the CPU affinites.
-        parsed_cfg.config.expert_execution_cfg.cell_affinities.resize(values.size());
         // Prepare the cells from the common cell.
         parsed_cfg.config.cells_cfg.resize(values.size());
         for (auto& cell : parsed_cfg.config.cells_cfg) {

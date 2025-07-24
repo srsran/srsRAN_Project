@@ -67,26 +67,6 @@ static YAML::Node build_du_section(const du_high_unit_config& config)
   return node;
 }
 
-static void fill_du_high_expert_execution_section(YAML::Node node, const du_high_unit_expert_execution_config& config)
-{
-  auto cell_affinities_node = node["cell_affinities"];
-  while (config.cell_affinities.size() > cell_affinities_node.size()) {
-    cell_affinities_node.push_back(YAML::Node());
-  }
-
-  unsigned index = 0;
-  for (auto cell : cell_affinities_node) {
-    const auto& expert = config.cell_affinities[index];
-
-    if (expert.l2_cell_cpu_cfg.mask.any()) {
-      cell["l2_cell_cpus"] = fmt::format("{:,}", span<const size_t>(expert.l2_cell_cpu_cfg.mask.get_cpu_ids()));
-    }
-    cell["l2_cell_pinning"] = to_string(expert.l2_cell_cpu_cfg.pinning_policy);
-
-    ++index;
-  }
-}
-
 static YAML::Node build_du_high_ntn_section(const ntn_config& config)
 {
   YAML::Node node;
@@ -854,7 +834,6 @@ void srsran::fill_du_high_config_in_yaml_schema(YAML::Node& node, const du_high_
     node["test_mode"] = build_du_high_testmode_section(config.test_mode_cfg);
   }
 
-  fill_du_high_expert_execution_section(node["expert_execution"], config.expert_execution_cfg);
   fill_qos_section(node, config.qos_cfg);
   build_du_high_cells_section(node, config.cells_cfg);
   build_du_high_sbr_section(node, config.srb_cfg);

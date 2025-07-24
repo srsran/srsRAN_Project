@@ -964,11 +964,6 @@ struct du_high_unit_execution_queues_config {
   uint32_t ue_data_executor_queue_size = 8192;
 };
 
-/// CPU affinities configuration for the cell.
-struct du_high_unit_cpu_affinities_cell_config {
-  os_sched_affinity_config l2_cell_cpu_cfg = {sched_affinity_mask_types::l2_cell, {}, sched_affinity_mask_policy::mask};
-};
-
 /// Expert configuration of the DU high.
 struct du_high_unit_expert_execution_config {
   /// \brief Task executor configuration for the DU.
@@ -976,11 +971,6 @@ struct du_high_unit_expert_execution_config {
 
   /// \brief Whether to enable tracing of the DU-high executors.
   bool executor_tracing_enable = false;
-
-  /// \brief CPU affinities per cell of the gNB app.
-  ///
-  /// \note Add one cell by default.
-  std::vector<du_high_unit_cpu_affinities_cell_config> cell_affinities = {{}};
 };
 
 /// RLC UM TX configuration
