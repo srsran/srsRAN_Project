@@ -157,20 +157,19 @@ void worker_manager::stop()
   exec_mng.stop();
 }
 
-void worker_manager::create_worker_pool(const std::string&                                    name,
-                                        unsigned                                              nof_workers,
-                                        unsigned                                              queue_size,
-                                        const std::vector<execution_config_helper::executor>& execs,
-                                        os_thread_realtime_priority                           prio,
-                                        span<const os_sched_affinity_bitmask>                 cpu_masks,
-                                        concurrent_queue_policy                               queue_policy)
+void worker_manager::create_worker_pool(const std::string&                    name,
+                                        unsigned                              nof_workers,
+                                        const std::string&                    exec_name,
+                                        unsigned                              queue_size,
+                                        os_thread_realtime_priority           prio,
+                                        span<const os_sched_affinity_bitmask> cpu_masks,
+                                        concurrent_queue_policy               queue_policy)
 {
   using namespace execution_config_helper;
 
   const worker_pool pool{name,
                          nof_workers,
-                         {{queue_policy, queue_size}},
-                         execs,
+                         {{exec_name, queue_policy, queue_size}},
                          std::chrono::microseconds{queue_policy == concurrent_queue_policy::locking_mpmc ? 0 : 20},
                          prio,
                          std::vector<os_sched_affinity_bitmask>{cpu_masks.begin(), cpu_masks.end()}};
@@ -179,16 +178,16 @@ void worker_manager::create_worker_pool(const std::string&                      
   }
 }
 
-void worker_manager::create_prio_worker(const std::string&                                    name,
-                                        unsigned                                              queue_size,
-                                        const std::vector<execution_config_helper::executor>& execs,
-                                        const os_sched_affinity_bitmask&                      mask,
-                                        os_thread_realtime_priority                           prio)
+void worker_manager::create_prio_worker(const std::string&               name,
+                                        const std::string&               exec_name,
+                                        unsigned                         queue_size,
+                                        const os_sched_affinity_bitmask& mask,
+                                        os_thread_realtime_priority      prio)
 {
   using namespace execution_config_helper;
 
   const single_worker worker_desc{
-      name, {concurrent_queue_policy::locking_mpsc, queue_size}, execs, std::nullopt, prio, mask};
+      name, {exec_name, concurrent_queue_policy::locking_mpsc, queue_size}, std::nullopt, prio, mask};
   if (not exec_mng.add_execution_context(create_execution_context(worker_desc))) {
     report_fatal_error("Failed to instantiate {} execution context", worker_desc.name);
   }
@@ -207,12 +206,11 @@ std::vector<execution_config_helper::single_worker> worker_manager::create_fapi_
   std::vector<single_worker> workers;
 
   for (unsigned cell_id = 0; cell_id != nof_cells; ++cell_id) {
-    const std::string name = "fapi#" + std::to_string(cell_id);
+    const std::string name      = "fapi#" + std::to_string(cell_id);
+    const std::string exec_name = "fapi_exec#" + std::to_string(cell_id);
 
     single_worker buffered_worker{name,
-                                  {concurrent_queue_policy::locking_mpsc, task_worker_queue_size},
-                                  // Left empty, is filled later.
-                                  {},
+                                  {exec_name, concurrent_queue_policy::locking_mpsc, task_worker_queue_size},
                                   std::chrono::microseconds{50},
                                   os_thread_realtime_priority::max() - 6,
                                   affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::l2_cell)};
@@ -238,14 +236,13 @@ create_dedicated_du_hi_slot_worker_desc(unsigned                                
   std::string slot_exec_name = "slot_exec#" + std::to_string(cell_index);
 
   // Description of a single worker.
-  return priority_multiqueue_worker{
-      worker_name,
-      {{concurrent_queue_policy::lockfree_spsc, 4}, {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
-      std::chrono::microseconds{10},
-      {{cell_exec_name, task_priority::max - 1, {}, std::nullopt, !rt_mode},
-       {slot_exec_name, task_priority::max, {}, std::nullopt, !rt_mode}},
-      rt_mode ? os_thread_realtime_priority::max() - 2 : os_thread_realtime_priority::no_realtime(),
-      affinity_mng[cell_index].calcute_affinity_mask(sched_affinity_mask_types::l2_cell)};
+  return priority_multiqueue_worker{worker_name,
+                                    {{slot_exec_name, concurrent_queue_policy::lockfree_spsc, 4},
+                                     {cell_exec_name, concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
+                                    std::chrono::microseconds{10},
+                                    rt_mode ? os_thread_realtime_priority::max() - 2
+                                            : os_thread_realtime_priority::no_realtime(),
+                                    affinity_mng[cell_index].calcute_affinity_mask(sched_affinity_mask_types::l2_cell)};
 }
 
 static srs_du::du_high_executor_config::dedicated_cell_worker_list
@@ -313,15 +310,13 @@ void worker_manager::create_du_executors(const worker_manager_config::du_high_co
     auto workers = create_fapi_workers(fapi_cfg.value().nof_cells);
 
     for (unsigned cell_id = 0; cell_id != fapi_cfg.value().nof_cells; ++cell_id) {
-      const std::string exec_name = "fapi_exec#" + std::to_string(cell_id);
-      workers[cell_id].executors.emplace_back(exec_name);
       // Create executor and associated workers.
       if (!exec_mng.add_execution_context(create_execution_context(workers[cell_id]))) {
         report_fatal_error("Failed to instantiate {} execution context", workers[cell_id].name);
       }
 
       // Associate executor.
-      fapi_exec[cell_id] = exec_mng.executors().at(exec_name);
+      fapi_exec[cell_id] = exec_mng.executors().at(workers[cell_id].queue.name);
     }
   }
 
@@ -360,17 +355,16 @@ void worker_manager::create_low_prio_worker_pool(const worker_manager_config& wo
            : 0);
   const std::chrono::microseconds sleep_time{50};
   const auto                      worker_pool_prio = os_thread_realtime_priority::min();
-  const task_queue                qparams{concurrent_queue_policy::lockfree_mpmc, worker_cfg.low_prio_task_queue_size};
+  const unsigned                  qsize            = worker_cfg.low_prio_task_queue_size;
 
   worker_pool non_rt_pool{"non_rt_pool",
                           nof_workers,
-                          {qparams, qparams, qparams},
                           // Used for control plane and timer management.
-                          {{"high_prio_exec", task_priority::max},
+                          {{"high_prio_exec", concurrent_queue_policy::lockfree_mpmc, qsize},
                            // Used for PCAP writing and CU-UP.
-                           {"medium_prio_exec", task_priority::max - 1},
+                           {"medium_prio_exec", concurrent_queue_policy::lockfree_mpmc, qsize},
                            // Used for receiving data from external nodes.
-                           {"low_prio_exec", task_priority::max - 2}},
+                           {"low_prio_exec", concurrent_queue_policy::lockfree_mpmc, qsize}},
                           sleep_time,
                           worker_pool_prio,
                           {worker_cfg.low_prio_sched_config.mask}};
@@ -428,8 +422,8 @@ worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::
     // Create a single worker, shared by the whole PHY. As it is shared for all the PHY, pick the first cell of the
     // affinity manager.
     create_prio_worker("phy_worker",
+                       "phy_exec",
                        task_worker_queue_size,
-                       {{"phy_exec"}},
                        affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::l1_dl),
                        os_thread_realtime_priority::no_realtime());
 
@@ -465,9 +459,10 @@ worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::
       const std::string               l1_pusch_exec_name  = "medium_prio_exec";
       const std::string               l1_srs_exec_name    = "medium_prio_exec";
       const std::string               l2_exec_name        = "l2_exec#" + cell_id_str;
-      const std::string               l1_high_prio_name   = "l1_high_prio#" + cell_id_str;
+      const std::string               l1_high_prio_name   = l1_pdsch_exec_name;
       const auto                      dl_worker_pool_prio = os_thread_realtime_priority::max() - 2;
       const std::chrono::microseconds dl_worker_sleep_time{50};
+      const unsigned                  qsize = task_worker_queue_size;
 
       std::vector<os_sched_affinity_bitmask> dl_cpu_masks;
       for (unsigned w = 0; w != nof_dl_workers; ++w) {
@@ -479,13 +474,9 @@ worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::
       // the PRACH detector queues have the highest priority.
       const worker_pool dl_worker_pool{name_dl,
                                        nof_dl_workers,
-                                       {{concurrent_queue_policy::moodycamel_lockfree_mpmc, task_worker_queue_size},
-                                        {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-                                        {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
-                                       {{l2_exec_name, task_priority::max},
-                                        {l1_dl_exec_name, task_priority::max - 1},
-                                        {l1_pdsch_exec_name, task_priority::max - 2},
-                                        {l1_high_prio_name, task_priority::max - 2}},
+                                       {{l2_exec_name, concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize},
+                                        {l1_dl_exec_name, concurrent_queue_policy::lockfree_mpmc, qsize},
+                                        {l1_pdsch_exec_name, concurrent_queue_policy::lockfree_mpmc, qsize}},
                                        dl_worker_sleep_time,
                                        dl_worker_pool_prio,
                                        dl_cpu_masks};
@@ -551,8 +542,7 @@ void worker_manager::create_ofh_executors(const worker_manager_config::ru_ofh_co
         ru_timing_mask.any() ? ru_timing_mask
                              : affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::ru);
     const single_worker ru_worker{name,
-                                  {concurrent_queue_policy::locking_mpsc, 4},
-                                  {{exec_name}},
+                                  {exec_name, concurrent_queue_policy::locking_mpsc, 4},
                                   std::nullopt,
                                   os_thread_realtime_priority::max() - 0,
                                   ru_timing_cpu_mask};
@@ -577,8 +567,8 @@ void worker_manager::create_ofh_executors(const worker_manager_config::ru_ofh_co
       }
       create_worker_pool(name,
                          nof_ofh_dl_workers,
+                         exec_name,
                          task_worker_queue_size,
-                         {{exec_name}},
                          prio,
                          cpu_masks,
                          concurrent_queue_policy::lockfree_mpmc);
@@ -592,8 +582,7 @@ void worker_manager::create_ofh_executors(const worker_manager_config::ru_ofh_co
       // The generic locking queue type is used here to avoid polling for new tasks and thus for saving CPU resources
       // with a price of higher latency (it is acceptable for UL tasks that have lower priority compared to DL).
       const single_worker ru_worker{name,
-                                    {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-                                    {{exec_name}},
+                                    {exec_name, concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
                                     std::chrono::microseconds{15},
                                     os_thread_realtime_priority::max() - 5,
                                     affinity_mng[i].calcute_affinity_mask(sched_affinity_mask_types::ru)};
@@ -610,8 +599,7 @@ void worker_manager::create_ofh_executors(const worker_manager_config::ru_ofh_co
       const std::string exec_name = "ru_txrx_exec_#" + std::to_string(i);
 
       const single_worker ru_worker{name,
-                                    {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-                                    {{exec_name}},
+                                    {exec_name, concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
                                     std::chrono::microseconds{1},
                                     os_thread_realtime_priority::max() - 1,
                                     ru_txrx_affinity_masks[i]};
@@ -637,8 +625,7 @@ void worker_manager::create_split6_executors()
 
   const single_worker split6_worker{
       name,
-      {concurrent_queue_policy::lockfree_spsc, task_worker_queue_size},
-      {{exec_name}},
+      {exec_name, concurrent_queue_policy::lockfree_spsc, task_worker_queue_size},
       std::chrono::microseconds{50},
       os_thread_realtime_priority::max() - 6,
       low_prio_affinity_mng.calcute_affinity_mask(sched_affinity_mask_types::low_priority)};
@@ -657,8 +644,8 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
 
   // Radio Unit worker and executor. As the radio is unique per application, use the first cell of the affinity manager.
   create_prio_worker("radio",
+                     "radio_exec",
                      task_worker_queue_size,
-                     {{"radio_exec"}},
                      affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::ru));
   ru_sdr_exec_map_config.radio_exec = exec_mng.executors().at("radio_exec");
 
@@ -685,8 +672,8 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
         const std::string exec_name = "lower_phy_exec#" + std::to_string(cell_id);
 
         create_prio_worker(name,
+                           exec_name,
                            128,
-                           {{exec_name}},
                            affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
                            os_thread_realtime_priority::max());
 
@@ -708,13 +695,13 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
         const std::string exec_ul = "lower_phy_ul_exec#" + std::to_string(cell_id);
 
         create_prio_worker(name_dl,
+                           exec_dl,
                            128,
-                           {{exec_dl}},
                            affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
                            os_thread_realtime_priority::max());
         create_prio_worker(name_ul,
+                           exec_ul,
                            2,
-                           {{exec_ul}},
                            affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
                            os_thread_realtime_priority::max() - 1);
 
@@ -739,23 +726,23 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
         const std::string exec_rx = "lower_phy_rx_exec#" + std::to_string(cell_id);
 
         create_prio_worker(name_tx,
+                           exec_tx,
                            128,
-                           {{exec_tx}},
                            affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
                            os_thread_realtime_priority::max());
         create_prio_worker(name_rx,
+                           exec_rx,
                            1,
-                           {{exec_rx}},
                            affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
                            os_thread_realtime_priority::max() - 2);
         create_prio_worker(name_dl,
+                           exec_dl,
                            128,
-                           {{exec_dl}},
                            affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
                            os_thread_realtime_priority::max() - 1);
         create_prio_worker(name_ul,
+                           exec_ul,
                            128,
-                           {{exec_ul}},
                            affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
                            os_thread_realtime_priority::max() - 3);
 
@@ -778,11 +765,11 @@ void worker_manager::create_ru_dummy_executors()
 {
   // Use the first cell of the affinity manager for the dummy RU.
   create_prio_worker("ru_dummy",
+                     "ru_dummy_exec",
                      task_worker_queue_size,
-                     {{"ru_dummy"}},
                      affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::ru),
                      os_thread_realtime_priority::max());
-  dummy_exec_mapper = create_ru_dummy_executor_mapper(*exec_mng.executors().at("ru_dummy"));
+  dummy_exec_mapper = create_ru_dummy_executor_mapper(*exec_mng.executors().at("ru_dummy_exec"));
 }
 
 task_executor& worker_manager::get_du_low_dl_executor(unsigned sector_id) const

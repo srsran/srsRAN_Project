@@ -160,6 +160,12 @@ public:
     blocking_ext_base(sleep_time_), non_block_queue_base(qsize)
   {
   }
+  explicit concurrent_queue(size_t                    qsize,
+                            size_t                    nof_prereserved_producers = 2,
+                            std::chrono::microseconds sleep_time_               = std::chrono::microseconds{0}) :
+    blocking_ext_base(sleep_time_), non_block_queue_base(qsize, nof_prereserved_producers)
+  {
+  }
 
   /// Creates a sequential consumer for this queue.
   consumer_type create_consumer() { return consumer_type(*this); }

@@ -106,7 +106,6 @@ protected:
   queue_impl q;
 };
 
-template <typename... Args>
 std::unique_ptr<detail::any_task_queue> make_any_task_queue(const concurrent_queue_params& params)
 {
   switch (params.policy) {
@@ -121,7 +120,8 @@ std::unique_ptr<detail::any_task_queue> make_any_task_queue(const concurrent_que
           any_task_queue_impl<concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::condition_variable>>(
           params.size);
     case concurrent_queue_policy::moodycamel_lockfree_mpmc:
-      return std::make_unique<any_task_queue_impl<concurrent_queue_policy::moodycamel_lockfree_mpmc>>(params.size);
+      return std::make_unique<any_task_queue_impl<concurrent_queue_policy::moodycamel_lockfree_mpmc>>(
+          params.size, params.nof_prereserved_producers);
     default:
       report_fatal_error("Unknown concurrent_queue_policy");
   }

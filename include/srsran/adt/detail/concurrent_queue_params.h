@@ -11,6 +11,7 @@
 #pragma once
 
 #include <limits>
+#include <optional>
 
 namespace srsran {
 
@@ -46,6 +47,8 @@ struct concurrent_queue_params {
   concurrent_queue_policy policy;
   /// Task queue size.
   unsigned size;
+  /// In case of moodycamel MPMC, the number of pre-reserved producers can be set.
+  unsigned nof_prereserved_producers = 2;
 };
 
 /// \brief Queue priority used to map to specific queue of the \c priority_multiqueue_task_worker. The higher the

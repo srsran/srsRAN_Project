@@ -165,9 +165,10 @@ task_worker_pool<QueuePolicy>::task_worker_pool(std::string                     
                                                 unsigned                              nof_workers_,
                                                 unsigned                              qsize_,
                                                 std::chrono::microseconds             wait_sleep_time,
+                                                unsigned                              nof_prereserved_producers,
                                                 os_thread_realtime_priority           prio,
                                                 span<const os_sched_affinity_bitmask> cpu_masks) :
-  detail::base_task_queue<QueuePolicy>(qsize_, wait_sleep_time),
+  detail::base_task_queue<QueuePolicy>(qsize_, wait_sleep_time, nof_prereserved_producers),
   detail::base_worker_pool(
       nof_workers_,
       std::move(worker_pool_name),
