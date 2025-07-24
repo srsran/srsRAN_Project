@@ -135,10 +135,10 @@ void f1u_bearer_impl::flush_ul_buffer()
     return;
   }
   logger.log_debug("Flushing UL PDUs. ul_buffer_size={}", ul_buffer.size());
-  span<nru_ul_message> ul_msg_span;
-  ul_buffer.pop_into(ul_msg_span);
-  for (auto& ul_msg : ul_msg_span) {
+  while (not ul_buffer.empty()) {
+    nru_ul_message& ul_msg = ul_buffer.top();
     tx_pdu_notifier.on_new_pdu(std::move(ul_msg));
+    ul_buffer.pop();
   }
   buffering = false;
   ul_buffer_timer.stop();

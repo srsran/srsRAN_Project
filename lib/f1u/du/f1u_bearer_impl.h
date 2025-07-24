@@ -63,8 +63,8 @@ private:
   const up_transport_layer_info dl_tnl_info;
 
   /// Buffering
-  bool                              buffering;
-  ring_buffer<nru_ul_message, true> ul_buffer;
+  bool                               buffering;
+  ring_buffer<nru_ul_message, false> ul_buffer;
 
   f1u_rx_sdu_notifier& rx_sdu_notifier;
   f1u_tx_pdu_notifier& tx_pdu_notifier;
