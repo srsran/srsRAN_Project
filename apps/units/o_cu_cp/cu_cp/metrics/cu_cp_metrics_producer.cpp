@@ -8,12 +8,12 @@
  *
  */
 
-#include "cu_cp_pdcp_metrics_producer.h"
-#include "cu_cp_pdcp_metrics.h"
+#include "cu_cp_metrics_producer.h"
+#include "cu_cp_metrics.h"
 
 using namespace srsran;
 
-void cu_cp_pdcp_metrics_producer_impl::report_metrics(const pdcp_metrics_container& report)
+void cu_cp_metrics_producer_impl::notify_metrics_report_request(const srs_cu_cp::metrics_report& report)
 {
-  notifier.on_new_metric(cu_cp_pdcp_metrics_impl(report));
+  notifier.on_new_metric(cu_cp_metrics_impl(report));
 }

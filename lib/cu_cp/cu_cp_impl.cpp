@@ -103,6 +103,10 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   statistics_report_timer.set(cfg.metrics.statistics_report_period,
                               [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
   statistics_report_timer.run();
+  if (cfg.metrics_notifier != nullptr and cfg.metrics.metrics_report_period.count() != 0) {
+    periodic_metric_report_request metric_cfg{cfg.metrics.metrics_report_period, cfg.metrics_notifier};
+    metrics_session = metrics_hdlr->create_periodic_report_session(metric_cfg);
+  }
 }
 
 cu_cp_impl::~cu_cp_impl()

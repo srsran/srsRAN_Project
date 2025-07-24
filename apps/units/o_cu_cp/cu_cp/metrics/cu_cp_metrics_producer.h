@@ -12,18 +12,18 @@
 
 #include "apps/services/metrics/metrics_notifier.h"
 #include "apps/services/metrics/metrics_producer.h"
-#include "srsran/pdcp/pdcp_metrics.h"
+#include "srsran/cu_cp/cu_cp_metrics_notifier.h"
 
 namespace srsran {
 
-/// CU-CP PDCP metrics producer implementation.
-class cu_cp_pdcp_metrics_producer_impl : public pdcp_metrics_notifier, public app_services::metrics_producer
+/// CU-CP metrics producer implementation.
+class cu_cp_metrics_producer_impl : public srs_cu_cp::metrics_report_notifier, public app_services::metrics_producer
 {
 public:
-  explicit cu_cp_pdcp_metrics_producer_impl(app_services::metrics_notifier& notifier_) : notifier(notifier_) {}
+  explicit cu_cp_metrics_producer_impl(app_services::metrics_notifier& notifier_) : notifier(notifier_) {}
 
   // See interface for documentation.
-  void report_metrics(const pdcp_metrics_container& metrics) override;
+  void notify_metrics_report_request(const srs_cu_cp::metrics_report& metrics) override;
 
   // See interface for documentation.
   void on_new_report_period() override {}
