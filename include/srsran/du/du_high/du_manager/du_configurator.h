@@ -20,16 +20,19 @@
 namespace srsran {
 namespace srs_du {
 
+/// UE-level parameters of a cell MAC scheduler that need to be configured during the DU cell operation.
 struct du_mac_sched_control_config {
+  /// DU-UE-F1AP-ID of the UE being reconfigured.
   gnb_du_ue_f1ap_id_t ue_id;
-  // Sets the number of HARQ processes to be used.
+  /// Sets the number of HARQ processes to be used.
   std::optional<unsigned> num_harq_processes;
-  // Sets the number of HARQ retransmissions to be used.
+  /// Sets the number of HARQ retransmissions to be used.
   std::optional<unsigned> num_harq_retransmissions;
-  // Set the radio resource management policy list.
+  /// Set the radio resource management policy list.
   std::vector<rrm_policy_ratio_group> rrm_policy_ratio_list;
 };
 
+/// Result of a UE-level cell MAC scheduler parameter configuration procedure.
 struct du_mac_sched_control_config_response {
   bool harq_processes_result;
   bool min_prb_alloc_result;
@@ -48,6 +51,8 @@ struct du_cell_param_config_request {
   nr_cell_global_id_t nr_cgi;
   /// SSB power modification to be applied to the cell. If absent, no modification is applied.
   std::optional<int> ssb_pwr_mod;
+  /// Radio resource management policy list to be applied to the cell, If empty, no modification is applied.
+  std::vector<rrm_policy_ratio_group> rrm_policy_ratio_list;
 };
 
 /// Parameters of the DU that need to be configured during operation.
