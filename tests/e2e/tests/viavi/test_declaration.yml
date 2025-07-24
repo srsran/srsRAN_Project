@@ -273,9 +273,9 @@ tests:
       expert_execution:
         threads:
           upper_phy:
-            nof_dl_threads: 3
+            nof_dl_threads: 4
             nof_ul_threads: 2
-            nof_pusch_decoder_threads: 3
+            nof_pusch_decoder_threads: 2
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
@@ -304,9 +304,9 @@ tests:
       expert_execution:
         threads:
           upper_phy:
-            nof_dl_threads: 3
+            nof_dl_threads: 4
             nof_ul_threads: 2
-            nof_pusch_decoder_threads: 3
+            nof_pusch_decoder_threads: 2
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
