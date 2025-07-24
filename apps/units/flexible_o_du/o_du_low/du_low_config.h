@@ -92,8 +92,6 @@ struct du_low_unit_logger_config {
 
 /// CPU affinities configuration for the cell.
 struct du_low_unit_cpu_affinities_cell_config {
-  /// L1 uplink CPU affinity mask.
-  os_sched_affinity_config l1_ul_cpu_cfg = {sched_affinity_mask_types::l1_ul, {}, sched_affinity_mask_policy::mask};
   /// L1 downlink workers CPU affinity mask.
   os_sched_affinity_config l1_dl_cpu_cfg = {sched_affinity_mask_types::l1_dl, {}, sched_affinity_mask_policy::mask};
 };

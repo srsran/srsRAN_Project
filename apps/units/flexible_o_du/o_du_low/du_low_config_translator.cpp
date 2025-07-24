@@ -174,6 +174,5 @@ void srsran::fill_du_low_worker_manager_config(worker_manager_config&    config,
 
   for (unsigned i = 0, e = nof_cells; i != e; ++i) {
     config.config_affinities[i].push_back(unit_cfg.expert_execution_cfg.cell_affinities[i].l1_dl_cpu_cfg);
-    config.config_affinities[i].push_back(unit_cfg.expert_execution_cfg.cell_affinities[i].l1_ul_cpu_cfg);
   }
 }

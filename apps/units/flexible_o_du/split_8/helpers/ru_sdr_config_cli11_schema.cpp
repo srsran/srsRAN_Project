@@ -141,12 +141,6 @@ static void configure_cli11_cell_affinity_args(CLI::App& app, ru_sdr_unit_cpu_af
 
   add_option_function<std::string>(
       app,
-      "--l1_ul_cpus",
-      [&config](const std::string& value) { parse_affinity_mask(config.l1_ul_cpu_cfg.mask, value, "l1_ul_cpus"); },
-      "CPU cores assigned to L1 uplink tasks");
-
-  add_option_function<std::string>(
-      app,
       "--l1_dl_pinning",
       [&config](const std::string& value) {
         config.l1_dl_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
@@ -155,17 +149,6 @@ static void configure_cli11_cell_affinity_args(CLI::App& app, ru_sdr_unit_cpu_af
         }
       },
       "Policy used for assigning CPU cores to L1 downlink tasks");
-
-  add_option_function<std::string>(
-      app,
-      "--l1_ul_pinning",
-      [&config](const std::string& value) {
-        config.l1_ul_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
-        if (config.l1_ul_cpu_cfg.pinning_policy == sched_affinity_mask_policy::last) {
-          report_error("Incorrect value={} used in {} property", value, "l1_ul_pinning");
-        }
-      },
-      "Policy used for assigning CPU cores to L1 uplink tasks");
 
   add_option_function<std::string>(
       app,

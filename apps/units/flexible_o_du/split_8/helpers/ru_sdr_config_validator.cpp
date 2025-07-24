@@ -42,9 +42,6 @@ static bool validate_expert_execution_unit_config(const ru_sdr_unit_config&     
     if (!validate_cpu_range(available_cpus, cell.l1_dl_cpu_cfg.mask, "l1_dl_cpus")) {
       return false;
     }
-    if (!validate_cpu_range(available_cpus, cell.l1_ul_cpu_cfg.mask, "l1_ul_cpus")) {
-      return false;
-    }
   }
   return true;
 }
