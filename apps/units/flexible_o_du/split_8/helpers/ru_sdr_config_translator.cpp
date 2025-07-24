@@ -246,6 +246,7 @@ ru_generic_configuration srsran::generate_ru_sdr_config(const ru_sdr_unit_config
   ru_generic_configuration out_cfg;
   out_cfg.are_metrics_enabled = ru_cfg.metrics_cfg.enable_ru_metrics;
   out_cfg.device_driver       = ru_cfg.device_driver;
+  out_cfg.start_time          = ru_cfg.start_time;
   generate_radio_config(out_cfg.radio_cfg, ru_cfg, cells);
 
   unsigned sector_id = 0;

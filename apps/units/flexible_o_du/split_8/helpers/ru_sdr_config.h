@@ -162,6 +162,11 @@ struct ru_sdr_unit_config {
   /// example, a value of -1000 at a sample rate of 61.44 MHz increases the transmission delay and causes an incoming
   /// PRACH to be detected 16.3 us later within the reception window.
   std::optional<int> time_alignment_calibration;
+  /// \brief Optional starting time.
+  ///
+  /// Starts radio operation at the given time. The use of this parameter is for starting radio operation of several
+  /// instances at same time.
+  std::optional<std::chrono::system_clock::time_point> start_time;
   /// Synchronization source.
   std::string synch_source = "default";
   /// Clock source.

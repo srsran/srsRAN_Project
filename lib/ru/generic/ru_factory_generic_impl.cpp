@@ -45,7 +45,8 @@ std::unique_ptr<radio_unit> srsran::create_generic_ru(ru_generic_configuration& 
     return nullptr;
   }
 
-  ru_generic_impl_config       ru_config = {config.lower_phy_config.front().srate.to_MHz(), config.are_metrics_enabled};
+  ru_generic_impl_config ru_config = {
+      config.lower_phy_config.front().srate.to_MHz(), config.start_time, config.are_metrics_enabled};
   ru_generic_impl_dependencies ru_dependencies = {*config.symbol_notifier,
                                                   *config.timing_notifier,
                                                   *config.lower_phy_config.front().logger,

@@ -78,6 +78,8 @@ static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_unit_expert
 
 static void configure_cli11_ru_sdr_args(CLI::App& app, ru_sdr_unit_config& config)
 {
+  static const char* time_format = "%Y-%m-%d %H:%M:%S";
+
   add_option(app, "--srate", config.srate_MHz, "Sample rate in MHz")->capture_default_str();
   add_option(app, "--device_driver", config.device_driver, "Device driver name")->capture_default_str();
   add_option(app, "--device_args", config.device_arguments, "Optional device arguments")->capture_default_str();
@@ -113,6 +115,45 @@ static void configure_cli11_ru_sdr_args(CLI::App& app, ru_sdr_unit_config& confi
         // Check for a valid integer number;
         CLI::TypeValidator<int> IntegerValidator("INTEGER");
         return IntegerValidator(value);
+      })
+      ->default_str("auto");
+  add_option_function<std::string>(
+      app,
+      "--start_time",
+      [&config](std::string value) {
+        //
+        if (value.empty()) {
+          config.start_time = std::nullopt;
+          return;
+        }
+
+        //
+        std::tm            tm;
+        std::istringstream ss(value);
+        ss >> std::get_time(&tm, time_format);
+
+        if (ss.fail()) {
+          config.start_time = std::nullopt;
+          return;
+        }
+
+        config.start_time.emplace(std::chrono::system_clock::from_time_t(std::mktime(&tm)));
+      },
+      "Optional radio start time.\n"
+      "The time must be with format %Y-%m-%d %H:%M:%S.")
+      ->check([](std::string value) -> std::string {
+        // Try parsing the time.
+        std::tm            tm;
+        std::istringstream ss(value);
+        ss >> std::get_time(&tm, time_format);
+
+        if (ss.fail()) {
+          return fmt::format(
+              "The starting time '{}' format does not match the expected format: '{}'.\n", value, time_format);
+        }
+
+        // Success.
+        return {};
       })
       ->default_str("auto");
 
