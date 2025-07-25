@@ -454,7 +454,7 @@ void ue_configuration_procedure::handle_rrc_reconfiguration_complete_ind()
 {
   // Dispatch DRB context destruction to the respective UE executor.
   task_executor& exec     = du_params.services.ue_execs.mac_ul_pdu_executor(ue->ue_index);
-  auto           flush_fn = TRACE_TASK([this]() mutable {
+  auto           flush_fn = TRACE_TASK([ue = ue]() mutable {
     for (auto& [bearer_id, bearer] : ue->bearers.drbs()) {
       if (bearer != nullptr && bearer->drb_f1u != nullptr) {
         bearer->drb_f1u->get_tx_sdu_handler().flush_ul_buffer();
