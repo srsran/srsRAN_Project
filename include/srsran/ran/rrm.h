@@ -29,7 +29,11 @@ struct rrm_policy_member {
 };
 
 struct rrm_policy_ratio_group {
-  /// Used to identify the group to which the policy is applied.
+  /// The resource type of interest for an RRM Policy
+  /// \remark See 3GPP TS 28.541, Section 4.4.1 Attribute properties.
+  enum class resource_type_t { prb, prb_ul, prb_dl };
+  resource_type_t resource_type = resource_type_t::prb;
+  /// List of RRM policy members (PLMN + S-NSSAI combinations).
   std::vector<rrm_policy_member> policy_members_list;
   /// Sets the minimum percentage of PRBs to be allocated to this group.
   std::optional<unsigned> min_prb_policy_ratio;
