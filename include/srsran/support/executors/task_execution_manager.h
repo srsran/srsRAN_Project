@@ -34,7 +34,7 @@ struct task_queue {
   /// Size of the queue used.
   unsigned size;
   /// Number of pre-reserved producers in the case of the moodycamel lockfree MPMC queue.
-  unsigned nof_prereserved_producers = 2;
+  unsigned nof_prereserved_producers = std::thread::hardware_concurrency();
 };
 
 /// Arguments for a single task worker creation.

@@ -462,7 +462,8 @@ worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::
       const std::string               l1_high_prio_name   = l1_pdsch_exec_name;
       const auto                      dl_worker_pool_prio = os_thread_realtime_priority::max() - 2;
       const std::chrono::microseconds dl_worker_sleep_time{50};
-      const unsigned                  qsize = task_worker_queue_size;
+      const unsigned                  qsize                    = task_worker_queue_size;
+      const unsigned                  prereserved_l2_producers = 2;
 
       std::vector<os_sched_affinity_bitmask> dl_cpu_masks;
       for (unsigned w = 0; w != nof_dl_workers; ++w) {
@@ -472,14 +473,15 @@ worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::
       // Instantiate dedicated worker pool for high priority tasks such as L2, the upper physical layer downlink
       // processing, and the PRACH detector. This worker pool comprises four different priority queues where the L2 and
       // the PRACH detector queues have the highest priority.
-      const worker_pool dl_worker_pool{name_dl,
-                                       nof_dl_workers,
-                                       {{l2_exec_name, concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize},
-                                        {l1_dl_exec_name, concurrent_queue_policy::lockfree_mpmc, qsize},
-                                        {l1_pdsch_exec_name, concurrent_queue_policy::lockfree_mpmc, qsize}},
-                                       dl_worker_sleep_time,
-                                       dl_worker_pool_prio,
-                                       dl_cpu_masks};
+      const worker_pool dl_worker_pool{
+          name_dl,
+          nof_dl_workers,
+          {{l2_exec_name, concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize, prereserved_l2_producers},
+           {l1_dl_exec_name, concurrent_queue_policy::lockfree_mpmc, qsize},
+           {l1_pdsch_exec_name, concurrent_queue_policy::lockfree_mpmc, qsize}},
+          dl_worker_sleep_time,
+          dl_worker_pool_prio,
+          dl_cpu_masks};
 
       if (not exec_mng.add_execution_context(create_execution_context(dl_worker_pool))) {
         report_fatal_error("Failed to instantiate {} execution context", dl_worker_pool.name);
