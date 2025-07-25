@@ -61,15 +61,18 @@ public:
   /// \brief get action id associated with the control action executor.
   /// \return Returns action id.
   virtual uint32_t get_action_id() = 0;
+  /// \brief get action name associated with the control action executor.
+  /// \return Returns action name.
+  virtual std::string get_action_name() = 0;
   /// \brief get control action definition to be used in RAN Function Description.
   /// \return Returns ran function definition ctrl action item.
   virtual asn1::e2sm::ran_function_definition_ctrl_action_item_s get_control_action_definition() = 0;
   /// \brief check if the requested RIC control action is supported.
-  /// \param[in] req is a RIC control action request (with control header and message).
+  /// \param req is a RIC control action request (with control header and message).
   /// \return Returns true if action supported by control action executor.
   virtual bool ric_control_action_supported(const e2sm_ric_control_request& req) = 0;
   /// \brief trigger execution of the RIC control action.
-  /// \param[in] req is a RIC control action request (with control header and message).
+  /// \param req is a RIC control action request (with control header and message).
   /// \return Returns RIC control response.
   virtual async_task<e2sm_ric_control_response> execute_ric_control_action(const e2sm_ric_control_request& req) = 0;
 
@@ -102,7 +105,6 @@ public:
   }
 
 protected:
-  std::string                     action_name;
   std::map<uint32_t, std::string> action_params;
 };
 
