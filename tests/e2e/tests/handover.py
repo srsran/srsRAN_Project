@@ -109,8 +109,6 @@ def test_s72_sequentially(
     (
         param(3, 15, 50, 0, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
         param(41, 30, 50, 0, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
-        # param(3, 15, 50, -74, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
-        # param(41, 30, 50, -74, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
     ),
 )
 @mark.zmq
@@ -209,8 +207,6 @@ def _handover_sequentially(
     (
         param(3, 15, 50, 0, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
         param(41, 30, 50, 0, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
-        # param(3, 15, 50, -74, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
-        # param(41, 30, 50, -74, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
     ),
 )
 @mark.zmq
@@ -378,8 +374,6 @@ def _handover_multi_ues(
     (
         param(3, 15, 50, 0, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
         param(41, 30, 50, 0, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
-        # param(3, 15, 50, -74, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
-        # param(41, 30, 50, -74, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
     ),
 )
 @mark.zmq_single_ue
@@ -435,6 +429,81 @@ def test_zmq_handover_iperf(
                 _do_ho((ue_stub,), _from_position, _to_position, _movement_steps, _sleep_between_movement_steps)
 
 
+@mark.parametrize(
+    "protocol",
+    (
+        param(IPerfProto.UDP, id="udp", marks=mark.udp),
+        param(IPerfProto.TCP, id="tcp", marks=mark.tcp),
+    ),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth, noise_spd",
+    (
+        param(3, 15, 50, -74, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
+        param(41, 30, 50, -74, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
+    ),
+)
+@mark.zmq_single_ue
+@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED"])
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def test_zmq_handover_noise(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue: UEStub,
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    metrics_summary: MetricsSummary,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    noise_spd: int,
+    protocol: IPerfProto,
+):
+    """
+    ZMQ Handover noise test
+    """
+
+    with _handover_multi_ues_iperf(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=[ue],
+        gnb=gnb,
+        fivegc=fivegc,
+        metrics_summary=metrics_summary,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        bitrate=HIGH_BITRATE,
+        protocol=protocol,
+        direction=IPerfDir.BIDIRECTIONAL,
+        sample_rate=None,  # default from testbed
+        global_timing_advance=0,
+        time_alignment_calibration=0,
+        always_download_artifacts=True,
+        noise_spd=noise_spd,
+        sleep_between_movement_steps=10,
+        warning_as_errors=True,
+        allow_failure=True,
+    ) as (ue_attach_info_dict, movements, _):
+
+        for ue_stub, ue_attach_info in ue_attach_info_dict.items():
+            logging.info(
+                "Zigzag HO for UE [%s] (%s) + iPerf running in background for all UEs",
+                id(ue_stub),
+                ue_attach_info.ipv4,
+            )
+
+            for _from_position, _to_position, _movement_steps, _sleep_between_movement_steps in movements:
+                _do_ho(
+                    ue_array=(ue_stub,),
+                    from_position=_from_position,
+                    to_position=_to_position,
+                    steps=_movement_steps,
+                    sleep_between_steps=_sleep_between_movement_steps,
+                    allow_failure=True,
+                )
+
+
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 @contextmanager
 def _handover_multi_ues_iperf(
@@ -459,6 +528,7 @@ def _handover_multi_ues_iperf(
     movement_steps: int = 10,
     sleep_between_movement_steps: int = 2,
     cell_position_offset: Tuple[float, float, float] = (1000, 0, 0),
+    allow_failure: bool = False,
 ) -> Generator[
     Tuple[
         Dict[UEStub, UEAttachedInfo],
@@ -468,7 +538,7 @@ def _handover_multi_ues_iperf(
     None,
     None,
 ]:
-    logging.info("Handover Test (iPerf)")
+    logging.info("Handover Test (iPerf%s)", ", allowing failure)" if allow_failure else "")
 
     original_position = (0, 0, 0)
 
@@ -529,12 +599,19 @@ def _handover_multi_ues_iperf(
 
         yield ue_attach_info_dict, movements, traffic_seconds
 
-        # Stop and validate iperfs
-        for ue_attached_info, task, iperf_request in iperf_array:
-            iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request, BITRATE_THRESHOLD)
+        # Stop and validate iperfs.
+        if allow_failure:
+            # The BITRATE_THRESHOLD is reduced because of noise and possible handover failures
+            bitrate_threshold = BITRATE_THRESHOLD * 0.05
+        else:
+            bitrate_threshold = BITRATE_THRESHOLD
 
-        for ue_stub in ue_array:
-            ue_validate_no_reattaches(ue_stub)
+        for ue_attached_info, task, iperf_request in iperf_array:
+            iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request, bitrate_threshold)
+
+        if not allow_failure:
+            for ue_stub in ue_array:
+                ue_validate_no_reattaches(ue_stub)
 
         stop(ue_array, gnb, fivegc, retina_data, ue_stop_timeout=16, warning_as_errors=warning_as_errors)
     finally:
@@ -548,13 +625,21 @@ def _do_ho(
     steps: int,
     sleep_between_steps: int,
     extra_time: int = 10,
+    allow_failure: bool = False,
 ):
     for ue_stub in ue_array:
-        logging.info("Moving UE [%s] from %s to %s", id(ue_stub), from_position, to_position)
+        logging.info(
+            "Moving UE [%s] from %s to %s%s",
+            id(ue_stub),
+            from_position,
+            to_position,
+            " (allowing handover failure)" if allow_failure else "",
+        )
 
-    ho_task_array = [
-        ue_expect_handover(ue_stub, ((steps + 1) * sleep_between_steps) + extra_time) for ue_stub in ue_array
-    ]
+    if not allow_failure:
+        ho_task_array = [
+            ue_expect_handover(ue_stub, ((steps + 1) * sleep_between_steps) + extra_time) for ue_stub in ue_array
+        ]
 
     for i in range(steps + 1):
         for ue_stub in ue_array:
@@ -565,6 +650,9 @@ def _do_ho(
                 (int(round(from_position[2] + (i * (to_position[2] - from_position[2]) / steps)))),
             )
         sleep(sleep_between_steps)
+
+    if allow_failure:
+        return
 
     # We check again the future's result here so it can raise an exception if the HO failed
     if not all((task.result().status for task in ho_task_array)):
