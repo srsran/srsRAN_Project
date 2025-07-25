@@ -767,7 +767,7 @@ def _log_handover(future: grpc.Future, ue_stub: UEStub):
         log_fn = logging.info if result.status else logging.error
         log_fn("Handover UE [%s]:\n%s", id(ue_stub), MessageToString(result, indent=2))
     except grpc.RpcError as err:
-        logging.error("Handover UE [%s] failed: %s", id(ue_stub), ErrorReportedByAgent(err))
+        logging.error("Handover UE [%s] failed: %s\n", id(ue_stub), ErrorReportedByAgent(err))
 
 
 def ue_validate_no_reattaches(ue_stub: UEStub):
