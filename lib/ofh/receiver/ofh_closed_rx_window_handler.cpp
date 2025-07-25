@@ -62,11 +62,6 @@ void closed_rx_window_handler::handle_uplink_context(slot_symbol_point symbol_po
 
   uplink_context::uplink_context_resource_grid_info& ctx_value = *context;
 
-  // Fill REs corresponding to the missing symbol with zeros.
-  for (unsigned port = 0, e = ctx_value.grid->get_writer().get_nof_ports(); port != e; ++port) {
-    srsvec::zero(ctx_value.grid->get_writer().get_view(port, symbol_point.get_symbol_index()));
-  }
-
   uplane_rx_symbol_context notification_context = {
       ctx_value.context.slot, symbol_point.get_symbol_index(), ctx_value.context.sector};
   notifier->on_new_uplink_symbol(notification_context, std::move(ctx_value.grid), false);

@@ -20,7 +20,7 @@ TEST(uplink_notified_grid_symbol_repository, slot_not_added_to_repo_do_not_retur
   slot_point                             slot(subcarrier_spacing::kHz30, 0, 1);
 
   for (unsigned i = 0; i != MAX_NSYMB_PER_SLOT; ++i) {
-    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i);
+    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i, true);
     ASSERT_FALSE(symbols_to_notify);
   }
 }
@@ -33,9 +33,10 @@ TEST(uplink_notified_grid_symbol_repository, symbols_arriving_in_order_return_on
   repo.add(slot);
 
   for (unsigned i = 0; i != MAX_NSYMB_PER_SLOT; ++i) {
-    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i);
+    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i, i % 2);
     ASSERT_TRUE(symbols_to_notify);
-    ASSERT_EQ(*symbols_to_notify, interval<unsigned>::start_and_len(i, 1));
+    ASSERT_EQ(symbols_to_notify->symbols, interval<unsigned>::start_and_len(i, 1));
+    ASSERT_EQ(i % 2, symbols_to_notify->valid_symbols.test(i));
   }
 }
 
@@ -48,13 +49,16 @@ TEST(uplink_notified_grid_symbol_repository,
   repo.add(slot);
 
   for (unsigned i = MAX_NSYMB_PER_SLOT - 1; i; --i) {
-    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i);
+    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i, true);
     ASSERT_FALSE(symbols_to_notify);
   }
 
-  auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, 0);
+  auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, 0, true);
   ASSERT_TRUE(symbols_to_notify);
-  ASSERT_EQ(*symbols_to_notify, interval<unsigned>::start_and_len(0, MAX_NSYMB_PER_SLOT));
+  ASSERT_EQ(symbols_to_notify->symbols, interval<unsigned>::start_and_len(0, MAX_NSYMB_PER_SLOT));
+  for (unsigned i = 0; i != MAX_NSYMB_PER_SLOT; ++i) {
+    ASSERT_TRUE(symbols_to_notify->valid_symbols.test(i));
+  }
 }
 
 TEST(uplink_notified_grid_symbol_repository, first_four_symbols_delayed_rest_on_time)
@@ -66,29 +70,34 @@ TEST(uplink_notified_grid_symbol_repository, first_four_symbols_delayed_rest_on_
 
   // Symbols 4-10
   for (unsigned i = 4, e = 11; i != e; ++i) {
-    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i);
+    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i, i % 2);
     ASSERT_FALSE(symbols_to_notify);
   }
 
   // Symbols 0-2
   for (unsigned i = 0, e = 3; i != e; ++i) {
-    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i);
+    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i, false);
     ASSERT_TRUE(symbols_to_notify);
-    ASSERT_EQ(*symbols_to_notify, interval<unsigned>::start_and_len(i, 1));
+    ASSERT_EQ(symbols_to_notify->symbols, interval<unsigned>::start_and_len(i, 1));
+    ASSERT_FALSE(symbols_to_notify->valid_symbols.test(i));
   }
 
   // Symbol 3.
   {
-    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, 3);
+    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, 3, true);
     ASSERT_TRUE(symbols_to_notify);
-    ASSERT_EQ(*symbols_to_notify, interval<unsigned>::start_and_len(3, 11 - 3));
+    ASSERT_EQ(symbols_to_notify->symbols, interval<unsigned>::start_and_len(3, 11 - 3));
+    for (unsigned i = 3, e = 11; i != e; ++i) {
+      ASSERT_EQ(i % 2, symbols_to_notify->valid_symbols.test(i));
+    }
   }
 
   // Symbols 11-13
   for (unsigned i = 11; i != MAX_NSYMB_PER_SLOT; ++i) {
-    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i);
+    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i, true);
     ASSERT_TRUE(symbols_to_notify);
-    ASSERT_EQ(*symbols_to_notify, interval<unsigned>::start_and_len(i, 1));
+    ASSERT_EQ(symbols_to_notify->symbols, interval<unsigned>::start_and_len(i, 1));
+    ASSERT_TRUE(symbols_to_notify->valid_symbols.test(i));
   }
 }
 
@@ -101,9 +110,9 @@ TEST(uplink_notified_grid_symbol_repository, special_slot_notified_correctly)
   repo.add(slot, start_symbol);
 
   for (unsigned i = start_symbol; i != MAX_NSYMB_PER_SLOT; ++i) {
-    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i);
+    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i, true);
     ASSERT_TRUE(symbols_to_notify);
-    ASSERT_EQ(*symbols_to_notify, interval<unsigned>::start_and_len(i, 1));
+    ASSERT_EQ(symbols_to_notify->symbols, interval<unsigned>::start_and_len(i, 1));
   }
 }
 
@@ -116,10 +125,10 @@ TEST(uplink_notified_grid_symbol_repository, extended_cyclic_prefix_notified)
   repo.add(slot, 0, cyclic_prefix::EXTENDED);
 
   for (unsigned i = 0; i != nof_symbols; ++i) {
-    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i);
+    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i, true);
     ASSERT_TRUE(symbols_to_notify);
-    ASSERT_EQ(symbols_to_notify->length(), 1);
-    ASSERT_EQ(*symbols_to_notify, interval<unsigned>::start_and_len(i, 1));
+    ASSERT_EQ(symbols_to_notify->symbols.length(), 1);
+    ASSERT_EQ(symbols_to_notify->symbols, interval<unsigned>::start_and_len(i, 1));
   }
 }
 
@@ -132,14 +141,14 @@ TEST(uplink_notified_grid_symbol_repository, extended_cyclic_prefix_symbol_in_re
   repo.add(slot, 0, cyclic_prefix::EXTENDED);
 
   for (unsigned i = nof_symbols - 1; i; --i) {
-    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i);
+    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i, true);
     ASSERT_FALSE(symbols_to_notify);
   }
 
-  auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, 0);
+  auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, 0, true);
   ASSERT_TRUE(symbols_to_notify);
-  ASSERT_EQ(symbols_to_notify->length(), nof_symbols);
-  ASSERT_EQ(*symbols_to_notify, interval<unsigned>::start_and_len(0, nof_symbols));
+  ASSERT_EQ(symbols_to_notify->symbols.length(), nof_symbols);
+  ASSERT_EQ(symbols_to_notify->symbols, interval<unsigned>::start_and_len(0, nof_symbols));
 }
 
 TEST(uplink_notified_grid_symbol_repository, extended_cyclic_prefix_receives_more_symbols_no_not_notify_extra_symbols)
@@ -152,21 +161,21 @@ TEST(uplink_notified_grid_symbol_repository, extended_cyclic_prefix_receives_mor
 
   // Get last 4 symbols of slot 1.
   for (unsigned i = 10; i != MAX_NSYMB_PER_SLOT; ++i) {
-    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i);
+    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i, true);
     ASSERT_FALSE(symbols_to_notify);
   }
 
   // Get the rest of the symbols for slot 1.
   for (unsigned i = 0, e = 10 - 1; i != e; ++i) {
-    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i);
+    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i, true);
     ASSERT_TRUE(symbols_to_notify);
-    ASSERT_EQ(*symbols_to_notify, interval<unsigned>::start_and_len(i, 1));
+    ASSERT_EQ(symbols_to_notify->symbols, interval<unsigned>::start_and_len(i, 1));
   }
 
   // Last symbol for slot 1 triggers the send of the stored ones.
-  auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, 9);
+  auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, 9, true);
   ASSERT_TRUE(symbols_to_notify);
-  ASSERT_EQ(*symbols_to_notify, interval<unsigned>::start_and_len(9, nof_symbols - 9));
+  ASSERT_EQ(symbols_to_notify->symbols, interval<unsigned>::start_and_len(9, nof_symbols - 9));
 }
 
 TEST(uplink_notified_grid_symbol_repository, different_slots_with_previous_slot_finishing_later)
@@ -179,7 +188,7 @@ TEST(uplink_notified_grid_symbol_repository, different_slots_with_previous_slot_
 
   // Get last 4 symbols of slot 1.
   for (unsigned i = 10; i != MAX_NSYMB_PER_SLOT; ++i) {
-    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i);
+    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i, true);
     ASSERT_FALSE(symbols_to_notify);
   }
 
@@ -187,20 +196,20 @@ TEST(uplink_notified_grid_symbol_repository, different_slots_with_previous_slot_
 
   // Get all symbols for slot 2.
   for (unsigned i = 0; i != MAX_NSYMB_PER_SLOT; ++i) {
-    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot2, i);
+    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot2, i, true);
     ASSERT_TRUE(symbols_to_notify);
-    ASSERT_EQ(*symbols_to_notify, interval<unsigned>::start_and_len(i, 1));
+    ASSERT_EQ(symbols_to_notify->symbols, interval<unsigned>::start_and_len(i, 1));
   }
 
   // Get the rest of the symbols for slot 1.
   for (unsigned i = 0, e = 10 - 1; i != e; ++i) {
-    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i);
+    auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, i, true);
     ASSERT_TRUE(symbols_to_notify);
-    ASSERT_EQ(*symbols_to_notify, interval<unsigned>::start_and_len(i, 1));
+    ASSERT_EQ(symbols_to_notify->symbols, interval<unsigned>::start_and_len(i, 1));
   }
 
   // Last symbol for slot 1 triggers the send of the stored ones.
-  auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, 9);
+  auto symbols_to_notify = repo.update_rx_symbol_and_compute_symbols_to_notify(slot, 9, true);
   ASSERT_TRUE(symbols_to_notify);
-  ASSERT_EQ(*symbols_to_notify, interval<unsigned>::start_and_len(9, MAX_NSYMB_PER_SLOT - 9));
+  ASSERT_EQ(symbols_to_notify->symbols, interval<unsigned>::start_and_len(9, MAX_NSYMB_PER_SLOT - 9));
 }
