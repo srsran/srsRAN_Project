@@ -305,12 +305,10 @@ public:
     block_pool_factory(std::move(block_processor_factory), nof_concurrent_threads_),
     dmrs_pool_factory(std::move(dmrs_factory), nof_concurrent_threads_),
     ptrs_pool_factory(std::move(ptrs_factory), nof_concurrent_threads_),
-    nof_concurrent_threads(nof_concurrent_threads_),
     cb_batch_length(cb_batch_length_)
   {
     srsran_assert(segmenter_factory, "Invalid segmenter factory.");
     srsran_assert(rg_mapper_factory, "Invalid resource grid mapper factory.");
-    srsran_assert(nof_concurrent_threads > 0, "Number of concurrent threads must be greater or equal to one.");
   }
 
   std::unique_ptr<pdsch_processor> create() override
@@ -321,7 +319,6 @@ public:
                                                            dmrs_pool_factory.create(),
                                                            ptrs_pool_factory.create(),
                                                            executor,
-                                                           nof_concurrent_threads,
                                                            cb_batch_length);
   }
 
@@ -337,7 +334,6 @@ private:
   pdsch_block_processor_pool_factory_sw         block_pool_factory;
   dmrs_generator_pool_factory_sw                dmrs_pool_factory;
   ptrs_generator_pool_factory_sw                ptrs_pool_factory;
-  unsigned                                      nof_concurrent_threads;
   unsigned                                      cb_batch_length;
 };
 

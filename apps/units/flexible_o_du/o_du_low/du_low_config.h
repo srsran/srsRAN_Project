@@ -120,6 +120,8 @@ struct du_low_unit_expert_threads_config {
 
   /// Codeblock batch length for ensuring synchronous processing within the flexible PDSCH processor implementation.
   static constexpr unsigned synchronous_cb_batch_length = std::numeric_limits<unsigned>::max();
+  /// Codeblock default batch length.
+  static constexpr unsigned default_cb_batch_length = 4;
 
   /// \brief PDSCH processor type.
   ///
@@ -131,9 +133,9 @@ struct du_low_unit_expert_threads_config {
   std::string pdsch_processor_type = "auto";
   /// \brief PDSCH codeblock-batch length per thread (flexible PDSCH processor only).
   ///
-  /// Set it to 0 (default) for an homogeneous split of codeblocks per thread. Set it to \c pdsch_cb_batch_length_sync
-  /// for guaranteeing synchronous processing with the most memory-optimized processor.
-  unsigned pdsch_cb_batch_length = 0;
+  /// Set it to \c pdsch_cb_batch_length_sync for guaranteeing synchronous processing with the most memory-optimized
+  /// processor.
+  unsigned pdsch_cb_batch_length = default_cb_batch_length;
   /// \brief Maximum concurrency level for PUCCH.
   ///
   /// Maximum number of threads that can concurrently process Physical Uplink Control Channel (PUCCH). Set to zero for

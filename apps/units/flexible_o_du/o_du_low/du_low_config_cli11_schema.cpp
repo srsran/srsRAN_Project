@@ -103,8 +103,8 @@ static void configure_cli11_upper_phy_threads_args(CLI::App& app, du_low_unit_ex
 
   auto pdsch_cb_batch_length_transform = [](const std::string& value) -> std::string {
     unsigned pdsch_cb_batch_length;
-    if (value == "auto") {
-      pdsch_cb_batch_length = 0;
+    if ((value == "auto") || (value == "default")) {
+      pdsch_cb_batch_length = du_low_unit_expert_threads_config::default_cb_batch_length;
     } else if (value == "synchronous") {
       pdsch_cb_batch_length = du_low_unit_expert_threads_config::synchronous_cb_batch_length;
     } else {

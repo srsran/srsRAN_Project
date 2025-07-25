@@ -301,65 +301,64 @@ void pdsch_processor_flexible_impl::fork_cb_batches()
   static constexpr unsigned i_cw = 0;
 
   // Homogeneous batches of CBs will be processed per thread, unless otherwise specified.
-  unsigned nof_cb_per_batch = max_nof_codeblocks_per_batch;
-  if (nof_cb_per_batch == 0) {
-    nof_cb_per_batch = divide_ceil(nof_cb, max_nof_concurrent_tasks);
-  }
+  unsigned nof_cb_per_batch = std::max(1U, max_nof_codeblocks_per_batch);
 
   // Limit the number of tasks to the number of codeblock batches.
   unsigned nof_cb_batches = divide_ceil(nof_cb, nof_cb_per_batch);
-  unsigned nof_cb_tasks   = std::min(max_nof_concurrent_tasks, nof_cb_batches);
 
   // Set number of codeblock batches.
-  cb_task_counter  = nof_cb_tasks;
-  cb_batch_counter = 0;
+  cb_task_counter = nof_cb_batches;
 
-  auto async_task = [this, nof_cb_per_batch]() SRSRAN_RTSAN_NONBLOCKING {
-    // Code to execute when returning.
-    auto exec_at_exit = make_scope_exit([this]() { // Decrement code block batch counter.
-      if (cb_task_counter.fetch_sub(1) == 1) {
-        // No more code block tasks pending to execute, it is now safe to discard the TB buffer.
-        data.release();
-        // Decrement asynchronous task counter.
-        if (async_task_counter.fetch_sub(1) == 1) {
-          // Notify end of the processing.
-          notifier->on_finish_processing();
+  // Spawn a task for each codeblock bactch.
+  for (unsigned i_task = 0; i_task != nof_cb_batches; ++i_task) {
+    // Queue batches in reverse order.
+    unsigned i_batch = nof_cb_batches - 1 - i_task;
+
+    // Create asynchronous task for the codeblock batch.
+    auto async_task = [this, nof_cb_per_batch, i_batch]() SRSRAN_RTSAN_NONBLOCKING {
+      // Start PDSCH codeblock batch tracing.
+      trace_point cb_batch_pdsch_tp = l1_dl_tracer.now();
+
+      // Code to execute when returning.
+      auto exec_at_exit = make_scope_exit([this]() { // Decrement code block batch counter.
+        if (cb_task_counter.fetch_sub(1) == 1) {
+          // No more code block tasks pending to execute, it is now safe to discard the TB buffer.
+          data.release();
+          // Decrement asynchronous task counter.
+          if (async_task_counter.fetch_sub(1) == 1) {
+            // Notify end of the processing.
+            notifier->on_finish_processing();
+          }
         }
+      });
+
+      // Select codeblock processor.
+      auto block_processor = block_processor_pool->get();
+      if (!block_processor) {
+        logger.error("Failed to retrieve PDSCH codeblock processor.");
+        return;
       }
-    });
 
-    // Select codeblock processor.
-    auto block_processor = block_processor_pool->get();
-    if (!block_processor) {
-      logger.error("Failed to retrieve PDSCH codeblock processor.");
-      return;
-    }
-
-    // Process batches of segments until all the segments are depleted.
-    unsigned absolute_i_cb;
-    while ((absolute_i_cb = cb_batch_counter.fetch_add(nof_cb_per_batch)) < nof_cb) {
-      trace_point process_pdsch_tp = l1_dl_tracer.now();
+      // Calculate the first codeblock index within the batch.
+      unsigned first_cb_index = i_batch * nof_cb_per_batch;
 
       // Limit batch size for the last batch.
-      unsigned next_cb_batch_length = std::min(nof_cb - absolute_i_cb, nof_cb_per_batch);
+      unsigned next_cb_batch_length = std::min(nof_cb - first_cb_index, nof_cb_per_batch);
 
       // Configure new transmission.
       resource_grid_mapper::symbol_buffer& grid_buffer = block_processor->configure_new_transmission(
-          data.get_buffer(), i_cw, config, *segment_buffer, absolute_i_cb, next_cb_batch_length);
+          data.get_buffer(), i_cw, config, *segment_buffer, first_cb_index, next_cb_batch_length);
 
       // Map PDSCH.
-      mapper->map(*grid, grid_buffer, allocation, reserved, precoding, re_offset[absolute_i_cb]);
+      mapper->map(*grid, grid_buffer, allocation, reserved, precoding, re_offset[first_cb_index]);
 
-      l1_dl_tracer << trace_event(
-          ((absolute_i_cb + next_cb_batch_length) == nof_cb) ? "Last PDSCH CB batch" : "CB batch", process_pdsch_tp);
-    }
-  };
+      // Trace PDSCH.
+      l1_dl_tracer << trace_event("CB batch", cb_batch_pdsch_tp);
+    };
 
-  // Spawn tasks.
-  for (unsigned i_task = 0; i_task != nof_cb_tasks; ++i_task) {
     // Try to execute task asynchronously.
     bool successful = false;
-    if (nof_cb_tasks > 1) {
+    if (nof_cb_batches > 1) {
       successful = executor.execute(async_task);
     }
 
