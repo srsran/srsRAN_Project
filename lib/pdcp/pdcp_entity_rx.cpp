@@ -266,11 +266,10 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu, std::chrono::system_clock:
                             .token           = pdcp_crypto_token(token_mngr)};
 
   // apply security in crypto executor
-  auto fn = [this, pdu_info = std::move(pdu_info)]() mutable {
-    apply_security(std::move(pdu_info)); // we should not use the PDCP entity past this point, as we possibly no longer
-                                         // hold the crypto token causing races upon deletion.
-  };
-  if (not crypto_executor.execute(std::move(fn))) {
+  if (not crypto_executor.execute([this, pdu_info = std::move(pdu_info)]() mutable {
+        apply_security(std::move(pdu_info)); // we should not use the PDCP entity past this point, as we possibly no
+                                             // longer hold the crypto token causing races upon deletion.
+      })) {
     logger.log_warning("Dropped PDU, crypto executor queue is full. count={}", rcvd_count);
   }
 }
@@ -326,11 +325,10 @@ void pdcp_entity_rx::apply_security(pdcp_rx_pdu_info&& pdu_info)
   metrics.add_crypto_processing_latency(sdu_latency_ns.count());
 
   // apply reordering in UE executor
-  auto fn = [this, pdu_info = std::move(pdu_info)]() mutable {
-    metrics.add_integrity_verified_pdus(1);
-    apply_reordering(std::move(pdu_info));
-  };
-  if (not ue_ul_executor.execute(std::move(fn))) {
+  if (not ue_ul_executor.execute([this, pdu_info = std::move(pdu_info)]() mutable {
+        metrics.add_integrity_verified_pdus(1);
+        apply_reordering(std::move(pdu_info));
+      })) {
     logger.log_warning("Dropped PDU, UE executor queue is full. count={}", rcvd_count);
   }
 }

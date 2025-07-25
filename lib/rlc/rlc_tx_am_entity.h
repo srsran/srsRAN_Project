@@ -175,12 +175,11 @@ public:
       stopped_upper = true;
       high_metrics_timer.stop();
       // stop lower part (e.g. timers) from cell executor
-      auto stop_lower_part = TRACE_TASK([this]() {
-        stopped_lower = true;
-        poll_retransmit_timer.stop();
-        low_metrics_timer.stop();
-      });
-      if (!pcell_executor.execute(std::move(stop_lower_part))) {
+      if (!pcell_executor.execute([this]() {
+            stopped_lower = true;
+            poll_retransmit_timer.stop();
+            low_metrics_timer.stop();
+          })) {
         logger.log_error("Unable to stop lower timers.");
       }
     }

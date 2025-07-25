@@ -195,10 +195,9 @@ size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf) noexcept SRSRAN_RTS
   // Release SDU if needed
   if (header.si == rlc_si_field::full_sdu || header.si == rlc_si_field::last_segment) {
     // Recycle SDU buffer in non real-time UE executor
-    auto release_sdu_func = TRACE_TASK([sdu = std::move(sdu.buf)]() mutable {
-      // leaving this scope will implicitly delete the SDU
-    });
-    if (!ue_executor.defer(std::move(release_sdu_func))) {
+    if (!ue_executor.defer([sdu = std::move(sdu.buf)]() mutable {
+          // leaving this scope will implicitly delete the SDU
+        })) {
       logger.log_warning("Cannot release transmitted SDU in UE executor. Releasing from pcell executor.");
       sdu.buf.clear();
     }
@@ -285,7 +284,7 @@ void rlc_tx_um_entity::handle_changed_buffer_state()
   if (not pending_buffer_state.test_and_set(std::memory_order_seq_cst)) {
     logger.log_debug("Triggering buffer state update to lower layer");
     // Redirect handling of status to pcell_executor
-    if (not pcell_executor.defer(TRACE_TASK([this]() { update_mac_buffer_state(); }))) {
+    if (not pcell_executor.defer([this]() { update_mac_buffer_state(); })) {
       logger.log_error("Failed to enqueue buffer state update");
     }
   } else {

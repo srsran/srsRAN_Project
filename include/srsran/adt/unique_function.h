@@ -135,17 +135,12 @@ public:
     oper_ptr     = rhs.oper_ptr;
     rhs.oper_ptr = &empty_table;
     oper_ptr->move(&rhs.buffer, &buffer);
-    lineno = rhs.lineno;
-    file   = rhs.file;
   }
 
   template <size_t Capacity2, bool F>
   unique_function(unique_function<R(Args...), Capacity2, F>&& rhs) noexcept
   {
     using OtherFunT = unique_function<R(Args...), Capacity2, F>;
-
-    lineno = rhs.lineno;
-    file   = rhs.file;
 
     if (rhs.oper_ptr == &empty_table) {
       oper_ptr = &empty_table;
@@ -176,12 +171,9 @@ public:
   }
 
   template <typename T, std::enable_if_t<not task_details::is_unique_function<std::decay_t<T>>::value, bool> = true>
-  unique_function(T&& rhs, const char* f = nullptr, int l = 0) noexcept(std::is_nothrow_move_constructible_v<T>)
+  unique_function(T&& rhs) noexcept(std::is_nothrow_move_constructible_v<T>)
   {
     using FunT = typename std::decay_t<T>;
-
-    file   = f;
-    lineno = l;
 
     if constexpr (sizeof(FunT) <= capacity) {
       // Fits in small buffer.
@@ -209,8 +201,6 @@ public:
     oper_ptr     = rhs.oper_ptr;
     rhs.oper_ptr = &empty_table;
     oper_ptr->move(&rhs.buffer, &buffer);
-    lineno = rhs.lineno;
-    file   = rhs.file;
     return *this;
   }
 
@@ -218,9 +208,6 @@ public:
   unique_function& operator=(unique_function<R(Args...), Capacity2, F>&& rhs) noexcept
   {
     using OtherFunT = unique_function<R(Args...), Capacity2, F>;
-
-    lineno = rhs.lineno;
-    file   = rhs.file;
 
     oper_ptr->dtor(&buffer);
     if (rhs.oper_ptr == &empty_table) {
@@ -277,9 +264,6 @@ public:
   bool is_empty() const noexcept { return oper_ptr == &empty_table; }
   bool is_in_small_buffer() const noexcept { return oper_ptr->is_in_small_buffer(); }
 
-  const char* file   = nullptr;
-  int         lineno = -1;
-
 private:
   template <typename Signature, size_t C, bool F>
   friend class unique_function;
@@ -298,7 +282,5 @@ constexpr size_t default_unique_task_buffer_size = 64;
 
 /// Generic moveable task
 using unique_task = unique_function<void(), default_unique_task_buffer_size>;
-
-#define TRACE_TASK(...) unique_task(__VA_ARGS__, __FILE__, __LINE__)
 
 } // namespace srsran

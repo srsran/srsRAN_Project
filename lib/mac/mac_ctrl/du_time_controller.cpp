@@ -178,11 +178,11 @@ slot_point_extended du_time_controller::handle_slot_ind(du_cell_index_t cell_ind
   nof_skipped += missed_slots.exchange(0, std::memory_order_relaxed);
 
   // Initiate operation to tick timers.
-  if (not tick_exec.defer(TRACE_TASK([this, nof_skipped]() {
+  if (not tick_exec.defer([this, nof_skipped]() {
         for (int i = 0; i != nof_skipped; ++i) {
           timers.tick();
         }
-      }))) {
+      })) {
     // Defer operation failed. The queue is full.
     // We accumulate the number of skipped slots, so that we can tick them later.
     missed_slots.store(nof_skipped, std::memory_order_relaxed);

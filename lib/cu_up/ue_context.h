@@ -186,13 +186,11 @@ private:
   /// therefore it handovers the handling to control executor.
   void on_ue_inactivity_timer_expired()
   {
-    auto fn = [this]() mutable {
-      e1ap_bearer_context_inactivity_notification msg = {};
-      msg.ue_index                                    = index;
-      e1ap.handle_bearer_context_inactivity_notification(msg);
-    };
-
-    if (!ue_exec_mapper->ctrl_executor().execute(std::move(fn))) {
+    if (!ue_exec_mapper->ctrl_executor().execute([this]() mutable {
+          e1ap_bearer_context_inactivity_notification msg = {};
+          msg.ue_index                                    = index;
+          e1ap.handle_bearer_context_inactivity_notification(msg);
+        })) {
       logger.log_warning("Could not handle expired UE inactivity handler, queue is full. ue={}",
                          fmt::underlying(index));
     }

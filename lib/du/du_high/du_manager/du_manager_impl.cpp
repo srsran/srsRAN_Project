@@ -57,7 +57,7 @@ void du_manager_impl::start()
 
   logger.info("DU manager starting...");
 
-  if (not params.services.du_mng_exec.execute(TRACE_TASK([this]() {
+  if (not params.services.du_mng_exec.execute([this]() {
         main_ctrl_loop.schedule([this](coro_context<async_task<void>>& ctx) {
           CORO_BEGIN(ctx);
 
@@ -71,7 +71,7 @@ void du_manager_impl::start()
 
           CORO_RETURN();
         });
-      }))) {
+      })) {
     report_fatal_error("Unable to initiate DU setup procedure");
   }
 
@@ -92,7 +92,7 @@ void du_manager_impl::stop()
     }
   }
 
-  while (not params.services.du_mng_exec.execute(TRACE_TASK([this]() { handle_du_stop_request(); }))) {
+  while (not params.services.du_mng_exec.execute([this]() { handle_du_stop_request(); })) {
     logger.error("Unable to dispatch DU Manager shutdown. Retrying...");
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     return;
@@ -106,10 +106,10 @@ void du_manager_impl::stop()
 void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message& msg)
 {
   // Switch DU Manager exec context
-  if (not params.services.du_mng_exec.execute(TRACE_TASK([this, msg = std::move(msg)]() {
+  if (not params.services.du_mng_exec.execute([this, msg = std::move(msg)]() {
         // Start UE create procedure
         ue_mng.handle_ue_create_request(msg);
-      }))) {
+      })) {
     logger.warning("Discarding UL-CCCH message cell={} tc-rnti={} slot_rx={}. Cause: DU manager task queue is full",
                    fmt::underlying(msg.cell_index),
                    msg.tc_rnti,
@@ -138,14 +138,14 @@ void du_manager_impl::handle_du_stop_request()
 
     // DU stop successfully finished.
     // Dispatch main async task loop destruction via defer so that the current coroutine ends successfully.
-    while (not params.services.du_mng_exec.defer(TRACE_TASK([this]() {
+    while (not params.services.du_mng_exec.defer([this]() {
       // Let main loop go out of scope and be destroyed.
       auto main_loop = main_ctrl_loop.request_stop();
 
       std::lock_guard<std::mutex> lock(mutex);
       running = false;
       cvar.notify_all();
-    }))) {
+    })) {
       logger.warning("Unable to stop DU Manager. Retrying...");
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
@@ -207,7 +207,7 @@ size_t du_manager_impl::nof_ues()
   // TODO: This is temporary code.
   std::promise<size_t> p;
   std::future<size_t>  fut = p.get_future();
-  if (not params.services.du_mng_exec.execute(TRACE_TASK([this, &p]() { p.set_value(ue_mng.nof_ues()); }))) {
+  if (not params.services.du_mng_exec.execute([this, &p]() { p.set_value(ue_mng.nof_ues()); })) {
     logger.warning("Unable to compute the number of UEs active in the DU");
     return std::numeric_limits<size_t>::max();
   }

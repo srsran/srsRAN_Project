@@ -215,7 +215,7 @@ void ue_configuration_procedure::clear_old_ue_context()
   if (not drbs_to_rem.empty()) {
     // Dispatch DRB context destruction to the respective UE executor.
     task_executor& exec = du_params.services.ue_execs.ctrl_executor(ue->ue_index);
-    if (not exec.defer(TRACE_TASK([drbs = std::move(drbs_to_rem)]() mutable { drbs.clear(); }))) {
+    if (not exec.defer([drbs = std::move(drbs_to_rem)]() mutable { drbs.clear(); })) {
       logger.warning("ue={}: Could not dispatch DRB removal task to UE executor. Destroying it the main DU manager "
                      "execution context",
                      fmt::underlying(ue->ue_index));
@@ -453,15 +453,14 @@ bool ue_configuration_procedure::changed_detected() const
 void ue_configuration_procedure::handle_rrc_reconfiguration_complete_ind()
 {
   // Dispatch DRB context destruction to the respective UE executor.
-  task_executor& exec     = du_params.services.ue_execs.mac_ul_pdu_executor(ue->ue_index);
-  auto           flush_fn = TRACE_TASK([ue = ue]() mutable {
-    for (auto& [bearer_id, bearer] : ue->bearers.drbs()) {
-      if (bearer != nullptr && bearer->drb_f1u != nullptr) {
-        bearer->drb_f1u->get_tx_sdu_handler().flush_ul_buffer();
-      }
-    }
-  });
-  if (not exec.defer(std::move(flush_fn))) {
+  task_executor& exec = du_params.services.ue_execs.mac_ul_pdu_executor(ue->ue_index);
+  if (not exec.defer([ue = ue]() mutable {
+        for (auto& [bearer_id, bearer] : ue->bearers.drbs()) {
+          if (bearer != nullptr && bearer->drb_f1u != nullptr) {
+            bearer->drb_f1u->get_tx_sdu_handler().flush_ul_buffer();
+          }
+        }
+      })) {
     logger.warning("ue={}: Could not dispatch DRB removal task to UE executor. Destroying it the main DU manager "
                    "execution context",
                    fmt::underlying(ue->ue_index));
