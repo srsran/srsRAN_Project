@@ -260,6 +260,10 @@ private:
   std::atomic<bool> stopped{false};
 
   cu_configurator_impl cu_cp_cfgtr;
+
+  // Metrics report session for the lifetime of the CU-CP.
+  // Used, e.g., for logging metrics and JSON metrics.
+  std::unique_ptr<metrics_report_session> metrics_session;
 };
 
 } // namespace srs_cu_cp

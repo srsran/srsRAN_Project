@@ -24,8 +24,8 @@
 
 #include "srsran/adt/expected.h"
 #include "srsran/adt/static_vector.h"
+#include "srsran/phy/support/rb_allocation.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
-#include "srsran/phy/upper/rb_allocation.h"
 #include "srsran/ran/pusch/pusch_context.h"
 #include "srsran/ran/sch/ldpc_base_graph.h"
 #include "srsran/ran/sch/sch_mcs.h"
@@ -90,7 +90,7 @@ public:
     /// - a value in {0,1, ... ,65535} given by the higher-layer parameters \e scramblingID0 and \e scramblingID1,
     /// - \f$N^{cell}_{ID}\f$ otherwise.
     unsigned scrambling_id;
-    /// \brief Parameter \f$n_{SCID}\f$ from TS 38.211 section 6.4.1.1.1.
+    /// \brief Parameter \f$n_{SCID}\f$ from TS38.211 Section 6.4.1.1.1.
     ///
     /// It is equal to:
     /// - \c true or \c false according to the DM-RS sequence initialization field, in the DCI associated with the PUSCH
@@ -119,7 +119,7 @@ public:
     std::optional<pusch_context> context;
     /// Indicates the slot and numerology.
     slot_point slot;
-    /// Provides \f$n_{RNTI}\f$ from TS 38.211 section 6.3.1.1 Scrambling.
+    /// Provides \f$n_{RNTI}\f$ from TS38.211 Section 6.3.1.1 Scrambling.
     uint16_t rnti;
     /// Number of contiguous PRBs allocated to the BWP {1...275}.
     unsigned bwp_size_rb;
@@ -133,7 +133,7 @@ public:
     std::optional<codeword_description> codeword;
     /// Uplink control information parameters.
     uci_description uci;
-    /// \brief Parameter \f$n_{ID}\f$ from TS 38.211 section 6.3.1.1.
+    /// \brief Parameter \f$n_{ID}\f$ from TS38.211 Section 6.3.1.1.
     ///
     /// It is equal to:
     /// - {0...1023} if the higher-layer parameter dataScramblingIdentityPUSCH if configured,
@@ -155,7 +155,7 @@ public:
     unsigned nof_symbols;
     /// \brief Transport block size for limited buffer rate match.
     ///
-    /// Parameter \f$TBS_{LBRM}\f$ from 3GPP TS38.212 section 5.4.2.1, for computing the size of the circular buffer.
+    /// Parameter \f$TBS_{LBRM}\f$ from 3GPP TS38.212 Section 5.4.2.1, for computing the size of the circular buffer.
     /// \remark Use <tt> tbs_lbrm_default </tt> for maximum length.
     /// \remark Zero is reserved.
     units::bytes tbs_lbrm;

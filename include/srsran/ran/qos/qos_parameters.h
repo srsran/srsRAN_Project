@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/ran/qos/arp_prio_level.h"
 #include "srsran/ran/qos/five_qi.h"
 #include "srsran/ran/qos/packet_error_rate.h"
 #include "srsran/ran/qos/qos_prio_level.h"
@@ -122,9 +123,9 @@ struct gbr_qos_flow_information {
 
 struct alloc_and_retention_priority {
   /// Priority level, where highest is 1, lowest is 14, no-priority is 15. The value 0 is reserved.
-  uint8_t prio_level_arp         = 15;
-  bool    may_trigger_preemption = false;
-  bool    is_preemptable         = false;
+  arp_prio_level_t prio_level_arp         = 15;
+  bool             may_trigger_preemption = false;
+  bool             is_preemptable         = false;
 
   bool operator==(const alloc_and_retention_priority& other) const
   {

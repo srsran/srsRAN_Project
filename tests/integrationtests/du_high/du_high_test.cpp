@@ -212,7 +212,7 @@ TEST_F(du_high_tester, when_f1ap_reset_received_then_ues_are_removed)
 
   // DU receives F1 RESET.
   cu_notifier.last_f1ap_msgs.clear();
-  f1ap_message msg = test_helpers::create_f1ap_reset_message();
+  f1ap_message msg = test_helpers::generate_f1ap_reset_message();
   this->du_hi->get_f1ap_du().handle_message(msg);
   this->test_logger.info("STATUS: RESET received by DU. Waiting for F1AP RESET ACK...");
 
@@ -257,7 +257,7 @@ TEST_F(du_high_tester, when_ue_context_setup_received_for_inexistent_ue_then_ue_
 
   gnb_cu_ue_f1ap_id_t cu_ue_id =
       int_to_gnb_cu_ue_f1ap_id(test_rgen::uniform_int<uint64_t>(0, (uint64_t)gnb_cu_ue_f1ap_id_t::max));
-  f1ap_message cu_cp_msg = test_helpers::create_ue_context_setup_request(
+  f1ap_message cu_cp_msg = test_helpers::generate_ue_context_setup_request(
       cu_ue_id, std::nullopt, 0, {drb_id_t::drb1}, {plmn_identity::test_value(), nr_cell_identity::create(0).value()});
   this->du_hi->get_f1ap_du().handle_message(cu_cp_msg);
 

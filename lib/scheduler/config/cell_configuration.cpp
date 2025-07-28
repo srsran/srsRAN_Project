@@ -36,8 +36,10 @@ cell_configuration::cell_configuration(const scheduler_expert_config&           
   cell_group_index(msg.cell_group_index),
   pci(msg.pci),
   scs_common(msg.scs_common),
-  nof_dl_prbs(get_max_Nprb(msg.dl_carrier.carrier_bw_mhz, scs_common, frequency_range::FR1)),
-  nof_ul_prbs(get_max_Nprb(msg.ul_carrier.carrier_bw_mhz, scs_common, frequency_range::FR1)),
+  nof_dl_prbs(
+      get_max_Nprb(msg.dl_carrier.carrier_bw_mhz, scs_common, band_helper::get_freq_range(msg.dl_carrier.band))),
+  nof_ul_prbs(
+      get_max_Nprb(msg.ul_carrier.carrier_bw_mhz, scs_common, band_helper::get_freq_range(msg.dl_carrier.band))),
   nof_slots_per_frame(get_nof_slots_per_subframe(msg.dl_cfg_common.init_dl_bwp.generic_params.scs) *
                       NOF_SUBFRAMES_PER_FRAME),
   dl_cfg_common(msg.dl_cfg_common),

@@ -52,7 +52,7 @@ public:
     demodulator_config.dft_size                  = config.srate.get_dft_size(config.scs);
     demodulator_config.cp                        = config.cp;
     demodulator_config.nof_samples_window_offset = nof_samples_window_offset;
-    demodulator_config.center_freq_hz            = config.center_freq_Hz;
+    demodulator_config.center_freq_Hz            = config.center_freq_Hz;
 
     // Scale the DFT results to normalize the DFT output power.
     demodulator_config.scale = 1.0F / std::sqrt(config.bandwidth_rb * nof_subcarriers_rb);

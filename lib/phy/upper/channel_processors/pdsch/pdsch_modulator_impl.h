@@ -30,7 +30,7 @@
 
 namespace srsran {
 
-/// Describes a generic implementation of a PDSCH modulator, defined by TS 38.211 section 7.3.1
+/// Describes a generic implementation of a PDSCH modulator, defined by TS38.211 Section 7.3.1
 class pdsch_modulator_impl : public pdsch_modulator
 {
 private:
@@ -38,7 +38,7 @@ private:
   std::unique_ptr<pseudo_random_generator> scrambler;
   std::unique_ptr<resource_grid_mapper>    mapper;
 
-  /// \brief Scrambles a codeword. Implements TS 38.211 section 7.3.1.1 Scrambling.
+  /// \brief Scrambles a codeword. Implements TS38.211 Section 7.3.1.1 Scrambling.
   ///
   /// \param[in] b Inputs bits to scramble.
   /// \param[in] q Codeword index {0,1}.
@@ -46,7 +46,7 @@ private:
   /// \return Output bits after scrambling.
   const bit_buffer& scramble(const bit_buffer& b, unsigned q, const config_t& config);
 
-  /// \brief Modulates a codeword. Implements TS 38.211 section 7.3.1.2 Modulation.
+  /// \brief Modulates a codeword. Implements TS38.211 Section 7.3.1.2 Modulation.
   ///
   /// \param[out] d_pdsch Output symbols.
   /// \param[in] b_hat Inputs bits to perform the modulation mapping.
@@ -56,7 +56,7 @@ private:
 
   /// \brief Maps resource elements into the resource grid.
   ///
-  /// Implements TS 38.211 sections 7.3.1.4 Antenna port mapping, 7.3.1.5 Layer mapping, 7.3.1.5 Mapping to virtual
+  /// Implements TS38.211 sections 7.3.1.4 Antenna port mapping, 7.3.1.5 Layer mapping, 7.3.1.5 Mapping to virtual
   /// resource blocks and 7.3.1.6 Mapping from virtual to physical resource blocks.
   ///
   /// \param[out] grid   Resource grid writer interface.

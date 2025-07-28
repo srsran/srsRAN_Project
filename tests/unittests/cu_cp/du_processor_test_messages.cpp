@@ -24,7 +24,7 @@
 #include "lib/f1ap/asn1_helpers.h"
 #include "lib/f1ap/cu_cp/f1ap_asn1_helpers.h"
 #include "lib/f1ap/cu_cp/procedures/f1_setup_procedure.h"
-#include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
+#include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "srsran/f1ap/f1ap_message.h"
 
 using namespace srsran;

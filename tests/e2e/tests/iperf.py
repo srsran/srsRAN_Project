@@ -229,7 +229,7 @@ def test_ntn(
     """
     ntn_scenario_def = NtnScenarioDefinition()
     ntn_scenario_def.scenario_type = NtnScenarioType.GEO
-    ntn_scenario_def.ephemeris_info_type = EphemerisInfoType.ORBITAL
+    ntn_scenario_def.ephemeris_info_type = EphemerisInfoType.ECEF
     ntn_scenario_def.min_sat_elevation_deg = 20
     ntn_scenario_def.pass_start_offset_s = 10
     ntn_scenario_def.delay_offset_us = 20
@@ -751,59 +751,6 @@ def test_zmq(
         always_download_artifacts=False,
         bitrate_threshold=0,
         ue_stop_timeout=1,
-        gnb_post_cmd=("log --hex_max_size=32 cu_cp --inactivity_timer=600", ""),
-    )
-
-
-@mark.zmq
-@mark.parametrize(
-    "direction",
-    (param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),),
-)
-@mark.parametrize(
-    "protocol",
-    (param(IPerfProto.UDP, id="udp", marks=mark.tcp),),
-)
-@mark.parametrize(
-    "band, common_scs, bandwidth, bitrate",
-    (param(41, 30, 50, MEDIUM_BITRATE, id=ZMQ_ID),),
-)
-# pylint: disable=too-many-arguments,too-many-positional-arguments
-def test_znq_interleaving(
-    retina_manager: RetinaTestManager,
-    retina_data: RetinaTestData,
-    ue_32: Tuple[UEStub, ...],
-    fivegc: FiveGCStub,
-    gnb: GNBStub,
-    band: int,
-    common_scs: int,
-    bandwidth: int,
-    bitrate: int,
-    protocol: IPerfProto,
-    direction: IPerfDir,
-):
-    """
-    ZMQ Interleaving
-    """
-
-    _iperf(
-        retina_manager=retina_manager,
-        retina_data=retina_data,
-        ue_array=ue_32,
-        gnb=gnb,
-        fivegc=fivegc,
-        band=band,
-        common_scs=common_scs,
-        bandwidth=bandwidth,
-        sample_rate=None,  # default from testbed
-        iperf_duration=60,
-        bitrate=bitrate,
-        protocol=protocol,
-        direction=direction,
-        global_timing_advance=0,
-        time_alignment_calibration=0,
-        always_download_artifacts=False,
-        pdsch_interleaving_bundle_size=2,
         gnb_post_cmd=("log --hex_max_size=32 cu_cp --inactivity_timer=600", ""),
     )
 

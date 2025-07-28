@@ -33,14 +33,14 @@ namespace srsran {
 class pbch_encoder
 {
 public:
-  /// BCH payload size.
-  static const unsigned PAYLOAD_SIZE = 32;
   /// Generated payload length. TS38.212 refers to it as \e A.
   static const unsigned A = 32;
+  /// Higher layer generated payload length. TS38.212 refers to it as \e A_hat.
+  static const unsigned A_HAT = 24;
   /// CRC length in bits.
   static const unsigned CRC_LEN = 24;
   /// Payload size plus CRC length.
-  static const unsigned B = (PAYLOAD_SIZE + CRC_LEN);
+  static const unsigned B = (A + CRC_LEN);
   /// Number of rate matched bits.
   static const unsigned E = 864;
   /// Polar encoder order, logarithmic representation.
@@ -59,7 +59,7 @@ public:
     /// Flag: true if the SS/PBCH block transmission is in an odd half frame, false otherwise.
     bool hrf;
     /// Actual PBCH payload provided by higher layers.
-    std::array<uint8_t, A> payload;
+    std::array<uint8_t, A_HAT> payload;
     /// System Frame Number.
     unsigned sfn;
     /// \brief Subcarrier offset.

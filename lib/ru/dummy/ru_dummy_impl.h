@@ -62,17 +62,20 @@ public:
   /// Creates a dummy radio unit from its configuration.
   explicit ru_dummy_impl(const ru_dummy_configuration& config, ru_dummy_dependencies dependencies) noexcept;
 
-  // See radio_unit interface for documentation.
+  // See the radio_unit interface for documentation.
   ru_controller& get_controller() override { return *this; }
 
-  // See radio_unit interface for documentation.
+  // See the radio_unit interface for documentation.
   ru_downlink_plane_handler& get_downlink_plane_handler() override { return *this; }
 
-  // See radio_unit interface for documentation.
+  // See the radio_unit interface for documentation.
   ru_uplink_plane_handler& get_uplink_plane_handler() override { return *this; }
 
-  // See interface for documentation.
+  // See the radio_unit interface for documentation.
   ru_metrics_collector* get_metrics_collector() override { return are_metrics_enabled ? &metrics_collector : nullptr; }
+
+  // See the radio_unit interface for documentation.
+  ru_center_frequency_controller* get_center_frequency_controller() override { return nullptr; }
 
 private:
   /// State value in idle.
@@ -100,6 +103,9 @@ private:
 
   // See interface for documentation.
   ru_cfo_controller* get_cfo_controller() override { return nullptr; }
+
+  // See interface for documentation.
+  ru_tx_time_offset_controller* get_tx_time_offset_controller() override { return nullptr; }
 
   // See ru_downlink_plane_handler for documentation.
   void handle_dl_data(const resource_grid_context& context, const shared_resource_grid& grid) override

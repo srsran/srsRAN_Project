@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "../common/f1ap_cu_test_messages.h"
 #include "../common/test_helpers.h"
 #include "tests/test_doubles/f1ap/f1c_test_local_gateway.h"
 #include "srsran/cu_cp/cu_cp_types.h"

@@ -200,13 +200,13 @@ public:
   /// nullptr.
   scoped_frame_buffer reserve(ofh::slot_symbol_point symbol_point)
   {
-    auto idx = free_list.try_pop();
-    if (!idx) {
+    unsigned idx;
+    if (!free_list.try_pop(idx)) {
       logger.warning("Ethernet frame pool: failed to reserve a buffer");
       return {};
     }
     // Peek the free buffer.
-    frame_buffer& buffer = *entries[*idx];
+    frame_buffer& buffer = *entries[idx];
 
     // Change state to 'reserved'.
     auto current_state = buffer.state.load(std::memory_order_acquire);
@@ -219,7 +219,7 @@ public:
     buffer.clear();
     buffer.set_slot_symbol(symbol_point);
 
-    return scoped_frame_buffer{&entries[*idx], buffer_deleter{this}};
+    return scoped_frame_buffer{&entries[idx], buffer_deleter{this}};
   }
 
   /// \brief Enqueues buffers in \c state::pending into the given vector.

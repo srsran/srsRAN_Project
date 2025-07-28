@@ -20,6 +20,9 @@
  *
  */
 
+/// \file
+/// \brief Product of a vector by a scalar.
+
 #pragma once
 
 #include "srsran/srsvec/types.h"
@@ -27,11 +30,18 @@
 namespace srsran {
 namespace srsvec {
 
-void sc_prod(span<const cf_t> x, cf_t h, span<cf_t> z);
-void sc_prod(span<const cbf16_t> x, cf_t h, span<cbf16_t> z);
-void sc_prod(span<const cf_t> x, float h, span<cf_t> z);
-void sc_prod(span<const float> x, float h, span<float> z);
-void sc_prod(span<const int16_t> x, int16_t h, span<int16_t> z);
+///@{
+/// \brief Product of a vector by a scalar.
+/// \param[out]  Output vector.
+/// \param[in]   Input vector.
+/// \param[in]   Scalar factor.
+/// \warning An assertion is triggered if the input and output vectors have different sizes.
+void sc_prod(span<cf_t> z, span<const cf_t> x, cf_t h);
+void sc_prod(span<cbf16_t> z, span<const cbf16_t> x, cf_t h);
+void sc_prod(span<cf_t> z, span<const cf_t> x, float h);
+void sc_prod(span<float> z, span<const float> x, float h);
+void sc_prod(span<int16_t> z, span<const int16_t> x, int16_t h);
+///@}
 
 } // namespace srsvec
 } // namespace srsran

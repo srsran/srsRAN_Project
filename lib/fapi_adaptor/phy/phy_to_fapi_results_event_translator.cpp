@@ -299,8 +299,8 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
   // Extract the RSRP which is optional and clamp it if available.
   std::optional<float> rsrp = result.csi.get_rsrp_dB();
   if (rsrp.has_value()) {
-    rsrp = convert_to_dBFS(std::clamp(rsrp.value(), MIN_UL_RSRP_VALUE_DBFS, MAX_UL_RSRP_VALUE_DBFS),
-                           dBFS_calibration_value);
+    rsrp = std::clamp(
+        convert_to_dBFS(rsrp.value(), dBFS_calibration_value), MIN_UL_RSRP_VALUE_DBFS, MAX_UL_RSRP_VALUE_DBFS);
   }
 
   builder.add_pdu(handle,
@@ -586,8 +586,20 @@ void phy_to_fapi_results_event_translator::on_new_srs_results(const ul_srs_resul
     static const unsigned            handle          = 0;
     fapi::srs_indication_pdu_builder srs_pdu_builder = builder.add_srs_pdu(handle, context.rnti);
     srs_pdu_builder.set_metrics_parameters({}, result.processor_result.time_alignment.time_alignment * 1e9);
+
+    // Extract the RSRP which is optional and clamp it if available.
+    std::optional<float> rsrp = result.processor_result.rsrp_dB;
+    if (rsrp.has_value()) {
+      // NOTE: Clamp values defined in SCF-222 v222.08.00 Section 3.4.10 Table 3-209 SRS-based Positioning Report.
+      static constexpr float MIN_UL_SRS_RSRP_VALUE_DBFS = -144.0F;
+      static constexpr float MAX_UL_SRS_RSRP_VALUE_DBFS = -0.0F;
+      rsrp = std::clamp(convert_to_dBFS(rsrp.value(), dBFS_calibration_value),
+                        MIN_UL_SRS_RSRP_VALUE_DBFS,
+                        MAX_UL_SRS_RSRP_VALUE_DBFS);
+    }
+
     srs_pdu_builder.set_positioning_report_parameters(
-        {phy_time_unit::from_seconds(result.processor_result.time_alignment.time_alignment)}, {}, {}, {});
+        {phy_time_unit::from_seconds(result.processor_result.time_alignment.time_alignment)}, {}, {}, rsrp);
   }
 
   error_type<fapi::validator_report> validation_result = validate_srs_indication(msg);

@@ -19,6 +19,7 @@
 #
 
 set(SOURCES
+        du_low_executor_mapper.cpp
         du_low_factory.cpp
         du_low_impl.cpp
         du_low_metrics_collector_impl.cpp

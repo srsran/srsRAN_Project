@@ -361,10 +361,10 @@ std::uniform_int_distribution<unsigned> CsiReportPucchFixture::nof_csi_rs_resour
 TEST_P(CsiReportPucchFixture, CsiReportPucchUnpacking)
 {
   // Get report size.
-  units::bits csi_report_size = get_csi_report_pucch_size(configuration);
+  csi_report_size csi_report_size = get_csi_report_pucch_size(configuration);
 
   // Assert report size.
-  ASSERT_EQ(csi_report_size, units::bits(packed_pucch_data.size()));
+  ASSERT_EQ(csi_report_size.part1_size, units::bits(packed_pucch_data.size()));
 
   // Unpack.
   ASSERT_TRUE(validate_pucch_csi_payload(packed_pucch_data, configuration));

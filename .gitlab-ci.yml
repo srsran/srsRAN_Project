@@ -25,19 +25,16 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "21"
+    ref: "22"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "21"
+    ref: "22"
     file: .gitlab/ci-shared/features/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "21"
+    ref: "22"
     file: .gitlab/ci-shared/tools/python.yml
   - project: softwareradiosystems/ci/tools
-    ref: "21"
-    file: .gitlab/ci-shared/tools/test_reporter.yml
-  - project: softwareradiosystems/ci/tools
-    ref: "21"
+    ref: "22"
     file: .gitlab/ci-shared/tools/tagger.yml
   - local: .gitlab/ci/builders/version.yml
   - local: .gitlab/ci/build.yml
@@ -582,7 +579,7 @@ unit coverage:
       echo "coverage${metric_prefix},pipeline=${CI_PIPELINE_ID},os=${OS} value=${coverage_value}" >> build/build_time_metrics.txt
     - |
       influx write --host $INFLUXDB_URL --token $INFLUXDB_TOKEN --org $INFLUXDB_ORG \
-        --bucket ci --file build/build_time_metrics.txt
+        --bucket ci --file build/build_time_metrics.txt || true
   coverage: /^\s*Line coverage:\s*\d+.\d+\%/
   artifacts: &unit_coverage_artifacts
     paths:

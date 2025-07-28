@@ -45,7 +45,7 @@ slot_last_message_notifier& message_bufferer_decorator_impl::get_slot_last_messa
   return last_msg_notifier;
 }
 
-slot_error_message_notifier& message_bufferer_decorator_impl::get_slot_error_message_notifier_from_this_decorator()
+error_message_notifier& message_bufferer_decorator_impl::get_error_message_notifier_from_this_decorator()
 {
   return error_notifier;
 }
@@ -60,7 +60,7 @@ void message_bufferer_decorator_impl::set_slot_data_message_notifier(slot_data_m
   data_notifier.set_slot_data_message_notifier(notifier);
 }
 
-void message_bufferer_decorator_impl::set_slot_error_message_notifier(slot_error_message_notifier& notifier)
+void message_bufferer_decorator_impl::set_error_message_notifier(error_message_notifier& notifier)
 {
-  error_notifier.set_slot_error_message_notifier(notifier);
+  error_notifier.set_error_message_notifier(notifier);
 }

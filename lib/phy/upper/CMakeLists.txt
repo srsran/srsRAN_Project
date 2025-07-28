@@ -27,7 +27,7 @@ add_subdirectory(sequence_generators)
 add_subdirectory(signal_processors)
 
 add_library(srsran_downlink_processor
-        downlink_processor_single_executor_impl.cpp
+        downlink_processor_multi_executor_impl.cpp
         downlink_processor_pool_impl.cpp)
 target_link_libraries(srsran_downlink_processor
         srsran_instrumentation
@@ -52,7 +52,7 @@ target_link_libraries(srsran_upper_phy
         srsran_channel_processors
         srsran_downlink_processor
         srsran_signal_processors
-        srsran_generic_funcs
+        srsran_dft
         srsran_instrumentation
         srsran_phy_metrics
         srsran_phy_support
@@ -64,9 +64,7 @@ add_library(log_likelihood_ratio log_likelihood_ratio.cpp)
 target_link_libraries(log_likelihood_ratio srsvec)
 
 add_library(srsran_upper_phy_support
-        rb_allocation.cpp
         rx_buffer_pool_impl.cpp
 )
-target_link_libraries(srsran_upper_phy_support srsran_ran)
 
 add_to_exported_libs(log_likelihood_ratio srsran_upper_phy_support)

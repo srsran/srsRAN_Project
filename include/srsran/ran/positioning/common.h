@@ -165,6 +165,14 @@ struct active_ul_bwp_t {
   uint16_t            tx_direct_current_location;
   std::optional<bool> shift7dot5k_hz;
   srs_config          srs_cfg;
+
+  bool operator==(const active_ul_bwp_t& rhs) const
+  {
+    return location_and_bw == rhs.location_and_bw && scs == rhs.scs && cp == rhs.cp &&
+           tx_direct_current_location == rhs.tx_direct_current_location && shift7dot5k_hz == rhs.shift7dot5k_hz &&
+           srs_cfg == rhs.srs_cfg;
+  }
+  bool operator!=(const active_ul_bwp_t& rhs) const { return !(rhs == *this); }
 };
 
 struct srs_carrier_list_item_t {
@@ -172,10 +180,20 @@ struct srs_carrier_list_item_t {
   std::vector<scs_specific_carrier> ul_ch_bw_per_scs_list;
   active_ul_bwp_t                   active_ul_bwp;
   std::optional<pci_t>              pci_nr;
+
+  bool operator==(const srs_carrier_list_item_t& rhs) const
+  {
+    return point_a == rhs.point_a && ul_ch_bw_per_scs_list == rhs.ul_ch_bw_per_scs_list &&
+           active_ul_bwp == rhs.active_ul_bwp && pci_nr == rhs.pci_nr;
+  }
+  bool operator!=(const srs_carrier_list_item_t& rhs) const { return !(rhs == *this); }
 };
 
 struct srs_configuration_t {
   std::vector<srs_carrier_list_item_t> srs_carrier_list;
+
+  bool operator==(const srs_configuration_t& rhs) const { return srs_carrier_list == rhs.srs_carrier_list; }
+  bool operator!=(const srs_configuration_t& rhs) const { return !(rhs == *this); }
 };
 
 struct trp_tx_teg_info_t {

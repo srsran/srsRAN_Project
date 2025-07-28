@@ -193,11 +193,29 @@ TEST(dl_pdsch_pdu_builder, valid_tx_power_info_parameters_passes)
 
     power_control_offset_ss ss_profile = power_control_offset_ss::dB0;
 
-    builder.set_tx_power_info_parameters(power, ss_profile);
+    builder.set_profile_nr_tx_power_info_parameters(power, ss_profile);
 
-    ASSERT_EQ(power, pdu.power_control_offset_profile_nr);
-    ASSERT_EQ(ss_profile, pdu.power_control_offset_ss_profile_nr);
+    const auto* profile_nr = std::get_if<dl_pdsch_pdu::power_profile_nr>(&pdu.power_config);
+    ASSERT_TRUE(profile_nr != nullptr);
+    ASSERT_EQ(power, profile_nr->power_control_offset_profile_nr);
+    ASSERT_EQ(ss_profile, profile_nr->power_control_offset_ss_profile_nr);
   }
+}
+
+TEST(dl_pdsch_pdu_builder, valid_tx_power_profile_sss_info_parameters_passes)
+{
+  dl_pdsch_pdu         pdu;
+  dl_pdsch_pdu_builder builder(pdu);
+
+  float dmrs = 22.5;
+  float data = -10.99;
+
+  builder.set_profile_sss_tx_power_info_parameters(dmrs, data);
+
+  const auto* profile_sss = std::get_if<dl_pdsch_pdu::power_profile_sss>(&pdu.power_config);
+  ASSERT_TRUE(profile_sss != nullptr);
+  ASSERT_FLOAT_EQ(dmrs, profile_sss->dmrs_power_offset_sss_db);
+  ASSERT_FLOAT_EQ(data, profile_sss->data_power_offset_sss_db);
 }
 
 TEST(dl_pdsch_pdu_builder, valid_cdb_retx_ctrl_parameters_passes)

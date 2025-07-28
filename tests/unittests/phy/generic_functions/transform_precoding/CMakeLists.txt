@@ -26,7 +26,7 @@ if (USE_PHY_TESTVECTORS)
     target_link_libraries(
             transform_precoder_vectortest
             srsran_transform_precoding
-            srsran_generic_funcs
+            srsran_dft
             srslog
             srsvec
             gtest

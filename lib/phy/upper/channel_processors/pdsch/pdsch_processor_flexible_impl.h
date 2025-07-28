@@ -27,8 +27,9 @@
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_block_processor.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
 #include "srsran/phy/upper/signal_processors/ptrs/ptrs_pdsch_generator.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/memory_pool/concurrent_thread_local_object_pool.h"
+#include "srsran/support/memory_pool/bounded_object_pool.h"
 
 namespace srsran {
 
@@ -41,34 +42,38 @@ class pdsch_processor_flexible_impl : public pdsch_processor
 {
 public:
   /// PDSCH block processor pool type.
-  using pdsch_block_processor_pool = concurrent_thread_local_object_pool<pdsch_block_processor>;
+  using pdsch_block_processor_pool = bounded_unique_object_pool<pdsch_block_processor>;
   /// PDSCH DM-RS generator pool type.
-  using pdsch_dmrs_generator_pool = concurrent_thread_local_object_pool<dmrs_pdsch_processor>;
+  using pdsch_dmrs_generator_pool = bounded_unique_object_pool<dmrs_pdsch_processor>;
   /// PDSCH PT-RS generator pool type.
-  using pdsch_ptrs_generator_pool = concurrent_thread_local_object_pool<ptrs_pdsch_generator>;
+  using pdsch_ptrs_generator_pool = bounded_unique_object_pool<ptrs_pdsch_generator>;
 
   /// \brief Creates a flexible PDSCH processor with all the dependencies.
-  /// \param[in] segmenter_             LDPC segmenter.
-  /// \param[in] mapper_                Grid mapper.
-  /// \param[in] block_processor_pool_  Block processor pool.
-  /// \param[in] dmrs_generator_pool_   DM-RS for PDSCH generator.
-  /// \param[in] ptrs_generator_pool_   PT-RS for PDSCH generator.
-  /// \param[in] executor_              Asynchronous task executor.
-  /// \param[in] cb_batch_length_       Codeblock-batch length.
+  /// \param[in] segmenter_                    LDPC segmenter.
+  /// \param[in] mapper_                       Grid mapper.
+  /// \param[in] block_processor_pool_         Block processor pool.
+  /// \param[in] dmrs_generator_pool_          DM-RS for PDSCH generator.
+  /// \param[in] ptrs_generator_pool_          PT-RS for PDSCH generator.
+  /// \param[in] executor_                     Asynchronous task executor.
+  /// \param[in] max_nof_concurrent_tasks_     Maximum number of concurrent tasks.
+  /// \param[in] max_nof_codeblocks_per_batch_ Maximum number of codeblocks per processing batch.
   pdsch_processor_flexible_impl(std::unique_ptr<ldpc_segmenter_tx>          segmenter_,
                                 std::unique_ptr<resource_grid_mapper>       mapper_,
                                 std::shared_ptr<pdsch_block_processor_pool> block_processor_pool_,
                                 std::shared_ptr<pdsch_dmrs_generator_pool>  dmrs_generator_pool_,
                                 std::shared_ptr<pdsch_ptrs_generator_pool>  ptrs_generator_pool_,
                                 task_executor&                              executor_,
-                                unsigned                                    cb_batch_length_) :
+                                unsigned                                    max_nof_concurrent_tasks_,
+                                unsigned                                    max_nof_codeblocks_per_batch_) :
+    logger(srslog::fetch_basic_logger("PHY")),
     segmenter(std::move(segmenter_)),
     mapper(std::move(mapper_)),
     block_processor_pool(std::move(block_processor_pool_)),
     dmrs_generator_pool(std::move(dmrs_generator_pool_)),
     ptrs_generator_pool(std::move(ptrs_generator_pool_)),
     executor(executor_),
-    cb_batch_length(cb_batch_length_)
+    max_nof_concurrent_tasks(max_nof_concurrent_tasks_),
+    max_nof_codeblocks_per_batch(max_nof_codeblocks_per_batch_)
   {
     srsran_assert(segmenter, "Invalid LDPC segmenter pointer.");
     srsran_assert(mapper, "Invalid resource grid mapper pointer.");
@@ -96,6 +101,7 @@ private:
   /// Creates code block processing batches and starts the asynchronous processing.
   void fork_cb_batches();
 
+  srslog::basic_logger& logger;
   /// Pointer to an LDPC segmenter.
   std::unique_ptr<ldpc_segmenter_tx> segmenter;
   /// Resource grid mapper.
@@ -118,12 +124,14 @@ private:
 
   /// Number of codeblocks of the current transmission.
   unsigned nof_cb = 0;
-  /// Codeblock-batch length to be used by the block processor pool.
-  unsigned cb_batch_length;
+  /// Maximum number of concurrent batches.
+  unsigned max_nof_concurrent_tasks;
+  /// Maximum number of codeblocks per batch.
+  unsigned max_nof_codeblocks_per_batch;
   /// Indicates whether the current transmission is concurrent (true) or not.
   bool async_proc = false;
   /// PDSCH transmission allocation pattern.
-  re_pattern_list allocation;
+  resource_grid_mapper::allocation_configuration allocation;
   /// PDSCH transmission reserved elements pattern.
   re_pattern_list reserved;
   /// Precoding configuration scaled.

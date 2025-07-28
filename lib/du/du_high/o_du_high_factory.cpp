@@ -29,6 +29,7 @@
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor_factory.h"
 #include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
 #include "srsran/fapi_adaptor/uci_part2_correspondence_generator.h"
+#include "srsran/ran/band_helper.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -39,7 +40,8 @@ static fapi_adaptor::mac_fapi_adaptor_config generate_fapi_adaptor_config(const 
 
   for (unsigned i = 0, e = config.du_hi.ran.cells.size(); i != e; ++i) {
     const auto& du_cell = config.du_hi.ran.cells[i];
-    unsigned    nof_prb = get_max_Nprb(du_cell.dl_carrier.carrier_bw_mhz, du_cell.scs_common, frequency_range::FR1);
+    unsigned    nof_prb = get_max_Nprb(
+        du_cell.dl_carrier.carrier_bw_mhz, du_cell.scs_common, band_helper::get_freq_range(du_cell.dl_carrier.band));
     out_config.sectors.push_back(
         {i, nof_prb, du_cell.scs_common, config.fapi.log_level, config.fapi.l2_nof_slots_ahead});
   }

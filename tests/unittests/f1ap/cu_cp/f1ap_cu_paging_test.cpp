@@ -30,6 +30,70 @@ using namespace srs_cu_cp;
 class f1ap_paging_test : public f1ap_cu_test
 {
 protected:
+  /// \brief Generate a dummy PAGING message.
+  static cu_cp_paging_message generate_paging_message()
+  {
+    cu_cp_paging_message paging_msg;
+
+    // add ue paging id
+    bounded_bitset<48> five_g_s_tmsi(48);
+    five_g_s_tmsi.from_uint64(((uint64_t)1U << 38U) + ((uint64_t)0U << 32U) + 4211117727);
+    paging_msg.ue_paging_id = cu_cp_five_g_s_tmsi{five_g_s_tmsi};
+
+    // add paging drx
+    paging_msg.paging_drx = 64;
+
+    // add tai list for paging
+    cu_cp_tai_list_for_paging_item tai_item;
+    tai_item.tai.plmn_id = plmn_identity::test_value();
+    tai_item.tai.tac     = 7;
+    paging_msg.tai_list_for_paging.push_back(tai_item);
+
+    // add paging prio
+    paging_msg.paging_prio = 5;
+
+    // add ue radio cap for paging
+    cu_cp_ue_radio_cap_for_paging ue_radio_cap_for_paging;
+    ue_radio_cap_for_paging.ue_radio_cap_for_paging_of_nr = make_byte_buffer("deadbeef").value();
+    paging_msg.ue_radio_cap_for_paging                    = ue_radio_cap_for_paging;
+
+    // add paging origin
+    paging_msg.paging_origin = true;
+
+    // add assist data for paging
+    cu_cp_assist_data_for_paging assist_data_for_paging;
+
+    // add assist data for recommended cells
+    cu_cp_assist_data_for_recommended_cells assist_data_for_recommended_cells;
+
+    cu_cp_recommended_cell_item recommended_cell_item;
+
+    // add ngran cgi
+    recommended_cell_item.ngran_cgi.nci     = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
+    recommended_cell_item.ngran_cgi.plmn_id = plmn_identity::test_value();
+
+    // add time stayed in cell
+    recommended_cell_item.time_stayed_in_cell = 5;
+
+    assist_data_for_recommended_cells.recommended_cells_for_paging.recommended_cell_list.push_back(
+        recommended_cell_item);
+
+    assist_data_for_paging.assist_data_for_recommended_cells = assist_data_for_recommended_cells;
+
+    // add paging attempt info
+    cu_cp_paging_attempt_info paging_attempt_info;
+
+    paging_attempt_info.paging_attempt_count         = 3;
+    paging_attempt_info.intended_nof_paging_attempts = 4;
+    paging_attempt_info.next_paging_area_scope       = "changed";
+
+    assist_data_for_paging.paging_attempt_info = paging_attempt_info;
+
+    paging_msg.assist_data_for_paging = assist_data_for_paging;
+
+    return paging_msg;
+  }
+
   bool was_conversion_successful() const
   {
     auto& paging_msg = f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.paging();

@@ -94,13 +94,13 @@ public:
 
     // Apply d0 sequence with scaling.
     span<const cf_t> d0 = sequence0;
-    srsvec::sc_prod(d0.last(sequence_length - m0), amplitude, out.first(sequence_length - m0));
-    srsvec::sc_prod(d0.first(m0), amplitude, out.last(m0));
+    srsvec::sc_prod(out.first(sequence_length - m0), d0.last(sequence_length - m0), amplitude);
+    srsvec::sc_prod(out.last(m0), d0.first(m0), amplitude);
 
     // Apply d1 sequence.
     span<const cf_t> d1 = sequence1;
-    srsvec::prod(d1.last(sequence_length - m1), out.first(sequence_length - m1), out.first(sequence_length - m1));
-    srsvec::prod(d1.first(m1), out.last(m1), out.last(m1));
+    srsvec::prod(out.first(sequence_length - m1), d1.last(sequence_length - m1), out.first(sequence_length - m1));
+    srsvec::prod(out.last(m1), d1.first(m1), out.last(m1));
   }
 
 private:

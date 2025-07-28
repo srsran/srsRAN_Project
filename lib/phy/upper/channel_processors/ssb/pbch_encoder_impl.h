@@ -37,7 +37,6 @@ namespace srsran {
 /// PBCH encoder implementation.
 class pbch_encoder_impl : public pbch_encoder
 {
-private:
   std::unique_ptr<crc_calculator>          crc24c;
   std::unique_ptr<pseudo_random_generator> scrambler;
   std::unique_ptr<polar_interleaver>       interleaver;
@@ -46,28 +45,28 @@ private:
   std::unique_ptr<polar_encoder>           encoder;
   std::unique_ptr<polar_rate_matcher>      rm;
 
-  /// \brief Implements TS 38.312 section 7.1.1 PBCH payload generation.
+  /// \brief Implements TS38.312 Section 7.1.1 PBCH payload generation.
   /// \param[out] a Generated payload.
   /// \param[in] msg PBCH message.
   void payload_generate(span<uint8_t> a, const srsran::pbch_encoder::pbch_msg_t& msg);
 
-  /// \brief Implements TS 38.312 section 7.1.2 Scrambling.
+  /// \brief Implements TS38.312 Section 7.1.2 Scrambling.
   /// \param[out] a_prime Scrambled payload.
   /// \param[in] msg PBCH message.
   /// \param[in] a Payload.
   void scramble(span<uint8_t> a_prime, const srsran::pbch_encoder::pbch_msg_t& msg, span<const uint8_t> a);
 
-  /// \brief Implements TS 38.312 section 7.1.3 Transport block CRC attachment.
+  /// \brief Implements TS38.312 Section 7.1.3 Transport block CRC attachment.
   /// \param[in] b Data with CRC attached.
   /// \param[in] a_prime Payload after scrambling.
   void crc_attach(span<uint8_t> b, span<const uint8_t> a_prime);
 
-  /// \brief Implements TS 38.312 section 7.1.4 Channel coding.
+  /// \brief Implements TS38.312 Section 7.1.4 Channel coding.
   /// \param[out] d Encoded data.
   /// \param[in] c Payload after scrambling.
   void channel_coding(span<uint8_t> d, span<const uint8_t> c);
 
-  /// \brief Implements TS 38.312 section 7.1.5 Rate matching.
+  /// \brief Implements TS38.312 Section 7.1.5 Rate matching.
   /// \param[out] f Rate matched data.
   /// \param[in] d Encoded data.
   void rate_matching(span<uint8_t> f, span<const uint8_t> d);
@@ -96,6 +95,7 @@ public:
     report_fatal_error_if_not(code, "Invalid Polar code.");
     report_fatal_error_if_not(encoder, "Invalid Polar encoder.");
     report_fatal_error_if_not(rm, "Invalid Polar RM.");
+
     code->set(B, E, POLAR_N_MAX_LOG, polar_code_ibil::not_present);
   }
 

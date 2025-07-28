@@ -26,7 +26,7 @@
 #include "../srs/srs_scheduler.h"
 #include "../support/sr_helper.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
-#include "srsran/support/memory_pool/unbounded_object_pool.h"
+#include "srsran/support/memory_pool/bounded_object_pool.h"
 
 using namespace srsran;
 
@@ -131,79 +131,64 @@ private:
 
 class srsran::pdu_indication_pool
 {
-  // The indications from the PHY can arrive with some delay; we assume that, in a slot, we can receive the indication
-  // from max 4 slots.
+  // We use this value as a safety margin to account for skipped slot indications.
   static constexpr size_t MAX_EXPECTED_SLOTS        = 4;
   static constexpr size_t UCI_INITIAL_POOL_SIZE     = MAX_PUCCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
   static constexpr size_t PHR_INITIAL_POOL_SIZE     = MAX_PUSCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
   static constexpr size_t CRC_INITIAL_POOL_SIZE     = MAX_PUSCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
   static constexpr size_t SRS_INITIAL_POOL_SIZE     = MAX_SRS_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
   static constexpr size_t BSR_INITIAL_POOL_SIZE     = MAX_PUSCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
-  static constexpr size_t EXPECTED_NOF_DEALLOCATORS = 8;
+  static constexpr size_t POSITIONING_REQ_POOL_SIZE = 1 * MAX_EXPECTED_SLOTS;
+
+  using uci_pool     = bounded_object_pool<uci_indication::uci_pdu>;
+  using phr_pool     = bounded_object_pool<ul_phr_indication_message>;
+  using crc_pool     = bounded_object_pool<ul_crc_pdu_indication>;
+  using srs_pool     = bounded_object_pool<srs_indication::srs_indication_pdu>;
+  using bsr_pool     = bounded_object_pool<ul_bsr_indication_message>;
+  using pos_req_pool = bounded_object_pool<positioning_measurement_request>;
 
 public:
-  using uci_ptr     = unbounded_object_pool<uci_indication::uci_pdu>::ptr;
-  using phr_ptr     = unbounded_object_pool<ul_phr_indication_message>::ptr;
-  using crc_ptr     = unbounded_object_pool<ul_crc_pdu_indication>::ptr;
-  using srs_ptr     = unbounded_object_pool<srs_indication::srs_indication_pdu>::ptr;
-  using bsr_ptr     = unbounded_object_pool<ul_bsr_indication_message>::ptr;
-  using pos_req_ptr = unbounded_object_pool<positioning_measurement_request>::ptr;
-
-  pdu_indication_pool() :
-    pending_ucis(UCI_INITIAL_POOL_SIZE, EXPECTED_NOF_DEALLOCATORS),
-    pending_phrs(PHR_INITIAL_POOL_SIZE, EXPECTED_NOF_DEALLOCATORS),
-    pending_crcs(CRC_INITIAL_POOL_SIZE, EXPECTED_NOF_DEALLOCATORS),
-    pending_srss(SRS_INITIAL_POOL_SIZE, EXPECTED_NOF_DEALLOCATORS),
-    pending_bsrs(BSR_INITIAL_POOL_SIZE, EXPECTED_NOF_DEALLOCATORS),
-    pending_pos_reqs(0)
+  pdu_indication_pool(srslog::basic_logger& logger_) :
+    logger(logger_),
+    pending_ucis(UCI_INITIAL_POOL_SIZE),
+    pending_phrs(PHR_INITIAL_POOL_SIZE),
+    pending_crcs(CRC_INITIAL_POOL_SIZE),
+    pending_srss(SRS_INITIAL_POOL_SIZE),
+    pending_bsrs(BSR_INITIAL_POOL_SIZE),
+    pending_pos_reqs(POSITIONING_REQ_POOL_SIZE)
   {
   }
 
-  uci_ptr create_uci(const uci_indication::uci_pdu& pdu)
+  /// Create a PDU managed by an object pool.
+  template <typename PDUType>
+  auto create_pdu(const PDUType& pdu)
   {
-    auto ret = pending_ucis.get();
-    *ret     = pdu;
-    return ret;
-  }
-  phr_ptr create_phr(const ul_phr_indication_message& phr_ind)
-  {
-    auto ret = pending_phrs.get();
-    *ret     = phr_ind;
-    return ret;
-  }
-  crc_ptr create_crc(const ul_crc_pdu_indication& crc_ind)
-  {
-    auto ret = pending_crcs.get();
-    *ret     = crc_ind;
-    return ret;
-  }
-  srs_ptr create_srs(const srs_indication::srs_indication_pdu& srs_ind)
-  {
-    auto ret = pending_srss.get();
-    *ret     = srs_ind;
-    return ret;
-  }
-  bsr_ptr create_bsr(const ul_bsr_indication_message& bsr_ind)
-  {
-    auto ret = pending_bsrs.get();
-    *ret     = bsr_ind;
-    return ret;
-  }
-
-  pos_req_ptr create_positioning_measurement_request(const positioning_measurement_request& req)
-  {
-    auto ret = pending_pos_reqs.get();
-    *ret     = req;
+    auto* pool = std::get<bounded_object_pool<std::decay_t<PDUType>>*>(pools);
+    auto  ret  = pool->get();
+    if (ret != nullptr) {
+      *ret = pdu;
+    } else {
+      logger.warning("Discarding indication PDU. Cause: PDU pool is empty");
+    }
     return ret;
   }
 
 private:
-  unbounded_object_pool<uci_indication::uci_pdu>            pending_ucis;
-  unbounded_object_pool<ul_phr_indication_message>          pending_phrs;
-  unbounded_object_pool<ul_crc_pdu_indication>              pending_crcs;
-  unbounded_object_pool<srs_indication::srs_indication_pdu> pending_srss;
-  unbounded_object_pool<ul_bsr_indication_message>          pending_bsrs;
-  unbounded_object_pool<positioning_measurement_request>    pending_pos_reqs;
+  srslog::basic_logger& logger;
+
+  uci_pool     pending_ucis;
+  phr_pool     pending_phrs;
+  crc_pool     pending_crcs;
+  srs_pool     pending_srss;
+  bsr_pool     pending_bsrs;
+  pos_req_pool pending_pos_reqs;
+
+  std::tuple<uci_pool*, phr_pool*, crc_pool*, srs_pool*, bsr_pool*, pos_req_pool*> pools{&pending_ucis,
+                                                                                         &pending_phrs,
+                                                                                         &pending_crcs,
+                                                                                         &pending_srss,
+                                                                                         &pending_bsrs,
+                                                                                         &pending_pos_reqs};
 };
 
 // Initial capacity for the common and cell event lists, in order to avoid std::vector reallocations. We use the max
@@ -214,7 +199,7 @@ static constexpr size_t CELL_EVENT_LIST_SIZE   = MAX_NOF_DU_UES * 2;
 ue_event_manager::ue_event_manager(ue_repository& ue_db_) :
   ue_db(ue_db_),
   logger(srslog::fetch_basic_logger("SCHED")),
-  ind_pdu_pool(std::make_unique<pdu_indication_pool>()),
+  ind_pdu_pool(std::make_unique<pdu_indication_pool>(logger)),
   common_events(COMMON_EVENT_LIST_SIZE),
   dl_bo_mng(std::make_unique<ue_dl_buffer_occupancy_manager>(*this))
 {
@@ -317,7 +302,7 @@ void ue_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
     }
 
     // Configure existing UE.
-    ue_db[ue_idx].handle_reconfiguration_request(ue_reconf_command{ev.next_config()});
+    ue_db[ue_idx].handle_reconfiguration_request(ue_reconf_command{ev.next_config()}, ev.is_reestablished());
 
     // Update slice scheduler.
     for (unsigned i = 0, e = u.nof_cells(); i != e; ++i) {
@@ -403,7 +388,11 @@ void ue_event_manager::handle_ue_config_applied(du_ue_index_t ue_idx)
 
 void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr_ind)
 {
-  auto handle_ul_bsr_ind_impl = [this, bsr_ind = ind_pdu_pool->create_bsr(bsr_ind)]() {
+  auto bsr_ind_ptr = ind_pdu_pool->create_pdu(bsr_ind);
+  if (bsr_ind_ptr == nullptr) {
+    return;
+  }
+  auto handle_ul_bsr_ind_impl = [this, bsr_ind = std::move(bsr_ind_ptr)]() {
     if (not cell_exists(bsr_ind->cell_index)) {
       logger.warning("ue={}: Detected invalide cell index={} in BSR",
                      fmt::underlying(bsr_ind->ue_index),
@@ -447,7 +436,12 @@ void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message&
 
 void ue_event_manager::handle_ul_phr_indication(const ul_phr_indication_message& phr_ind)
 {
-  auto handle_phr_impl = [this, phr_ind = ind_pdu_pool->create_phr(phr_ind)]() {
+  auto phr_ind_ptr = ind_pdu_pool->create_pdu(phr_ind);
+  if (phr_ind_ptr == nullptr) {
+    return;
+  }
+
+  auto handle_phr_impl = [this, phr_ind = std::move(phr_ind_ptr)]() {
     auto& u = ue_db[phr_ind->ue_index];
     for (const cell_ph_report& cell_phr : phr_ind->phr.get_phr()) {
       srsran_sanity_check(cell_phr.serv_cell_id < u.nof_cells(),
@@ -480,9 +474,14 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 {
   srsran_assert(cell_exists(crc_ind.cell_index), "Invalid cell index");
   for (unsigned i = 0, e = crc_ind.crcs.size(); i != e; ++i) {
+    auto crc_ind_ptr = ind_pdu_pool->create_pdu(crc_ind.crcs[i]);
+    if (crc_ind_ptr == nullptr) {
+      return;
+    }
+
     if (not cell_specific_events[crc_ind.cell_index].try_push(cell_event_t{
             crc_ind.crcs[i].ue_index,
-            [this, sl_rx = crc_ind.sl_rx, crc_ptr = ind_pdu_pool->create_crc(crc_ind.crcs[i])](ue_cell& ue_cc) {
+            [this, sl_rx = crc_ind.sl_rx, crc_ptr = std::move(crc_ind_ptr)](ue_cell& ue_cc) {
               // Update HARQ.
               const int tbs = ue_cc.handle_crc_pdu(sl_rx, *crc_ptr);
               if (tbs < 0) {
@@ -533,6 +532,13 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
       du_cells[ue_cc.cell_index].ev_logger->enqueue(scheduler_event_logger::harq_ack_event{
           ue_cc.ue_index, ue_cc.rnti(), ue_cc.cell_index, uci_sl, result->h_dl.id(), harq_bits[harq_idx], tbs});
 
+      // NOTE: this is for the first attachment only. In this case, the first ACK is the one that acks the ConRes or the
+      // ConRes + MSG4; there is only 1 HARQ process waiting for ACKs, which acks the ConRes. Until this is acked, no
+      // other DL grant should be scheduled.
+      if (not ue_cc.is_conres_complete() and result->update == dl_harq_process_handle::status_update::acked) {
+        ue_cc.set_conres_state(true);
+      }
+
       // In case the HARQ process is not waiting for more HARQ-ACK bits. Notify metrics handler with HARQ outcome.
       if (result->update == dl_harq_process_handle::status_update::acked or
           result->update == dl_harq_process_handle::status_update::nacked) {
@@ -558,7 +564,10 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
   srsran_sanity_check(cell_exists(ind.cell_index), "Invalid cell index");
 
   for (unsigned i = 0, e = ind.ucis.size(); i != e; ++i) {
-    auto uci_ptr = ind_pdu_pool->create_uci(ind.ucis[i]);
+    auto uci_ptr = ind_pdu_pool->create_pdu(ind.ucis[i]);
+    if (uci_ptr == nullptr) {
+      return;
+    }
 
     if (not cell_specific_events[ind.cell_index].try_push(cell_event_t{
             ind.ucis[i].ue_index,
@@ -691,11 +700,15 @@ void ue_event_manager::handle_srs_indication(const srs_indication& ind)
   srsran_sanity_check(cell_exists(ind.cell_index), "Invalid cell index");
 
   for (unsigned i = 0, e = ind.srss.size(); i != e; ++i) {
-    const srs_indication::srs_indication_pdu& srs_pdu = ind.srss[i];
+    const srs_indication::srs_indication_pdu& srs_pdu     = ind.srss[i];
+    auto                                      srs_pdu_ptr = ind_pdu_pool->create_pdu(srs_pdu);
+    if (srs_pdu_ptr == nullptr) {
+      return;
+    }
 
     if (not cell_specific_events[ind.cell_index].try_push(cell_event_t{
             srs_pdu.ue_index,
-            [this, srs_ptr = ind_pdu_pool->create_srs(ind.srss[i])](ue_cell& ue_cc) {
+            [this, srs_ptr = std::move(srs_pdu_ptr)](ue_cell& ue_cc) {
               // Indicate the channel matrix.
               ue_cc.handle_srs_channel_matrix(srs_ptr->channel_matrix);
 
@@ -740,6 +753,8 @@ void ue_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& c
     // Notify SRB fallback scheduler upon receiving ConRes CE indication.
     if (ce.ce_lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
       du_cells[ue_db[ce.ue_index].get_pcell().cell_index].fallback_sched->handle_conres_indication(ce.ue_index);
+      // Set the ConRes procedure state to "Started" in the pCell.
+      ue_db[ce.ue_index].get_pcell().set_conres_state(false);
     }
 
     // Log event.
@@ -759,7 +774,10 @@ void ue_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_i
 
 void ue_event_manager::handle_positioning_measurement_request(const positioning_measurement_request& req)
 {
-  auto req_ptr = ind_pdu_pool->create_positioning_measurement_request(req);
+  auto req_ptr = ind_pdu_pool->create_pdu(req);
+  if (req_ptr == nullptr) {
+    return;
+  }
   if (not common_events.try_push(
           common_event_t{INVALID_DU_UE_INDEX, [this, req_ptr = std::move(req_ptr)]() {
                            srsran_sanity_check(cell_exists(req_ptr->cell_index), "Invalid cell index");

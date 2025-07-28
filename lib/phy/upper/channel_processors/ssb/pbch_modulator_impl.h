@@ -31,22 +31,21 @@ namespace srsran {
 /// PBCH modulator implementation.
 class pbch_modulator_impl : public pbch_modulator
 {
-private:
   std::unique_ptr<modulation_mapper>       modulator;
   std::unique_ptr<pseudo_random_generator> scrambler;
 
-  /// Implements TS 38.211 section 7.3.3.1 Scrambling
+  /// Implements TS38.211 Section 7.3.3.1 Scrambling
   /// \param [in] b Inputs bits to scramble
   /// \param [out] b_hat Output bits after scrambling
   /// \param [in] config PBCH modulator arguments
   void scramble(span<const uint8_t> b, span<uint8_t> b_hat, const config_t& config);
 
-  /// Implements TS 38.211 section 7.3.3.2 Modulation
+  /// Implements TS38.211 Section 7.3.3.2 Modulation
   /// \param [in] b_hat Inputs bits to scramble
   /// \param [out] d_pbch Output symbols
   void modulate(span<const uint8_t> b_hat, span<cf_t> d_pbch);
 
-  /// Implements TS 38.211 section 7.3.3.3 Mapping to physical resources
+  /// Implements TS38.211 Section 7.3.3.3 Mapping to physical resources
   /// \param [in] d_pbch Provides the symbols to map
   /// \param [in, out] grid is the destination resource grid
   /// \param [in] config PBCH modulator arguments

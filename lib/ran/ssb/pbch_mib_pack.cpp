@@ -49,7 +49,7 @@ uint8_t srsran::pbch_timing_pack(uint32_t                      sfn,
   return payload;
 }
 
-uint32_t srsran::pbch_mib_pack(const pbch_mib_message& msg, unsigned L_max)
+uint32_t srsran::pbch_mib_pack(const pbch_mib_message& msg)
 {
   uint32_t payload = 0;
 
@@ -83,8 +83,10 @@ uint32_t srsran::pbch_mib_pack(const pbch_mib_message& msg, unsigned L_max)
   // Spare - 1 bit.
   // Leave to zero.
 
-  // Add packed timing parameters.
-  payload |= pbch_timing_pack(msg.sfn, msg.hrf, msg.ssb_block_index, msg.subcarrier_offset, L_max);
-
   return payload;
+}
+
+uint32_t srsran::pbch_mib_and_timing_pack(const pbch_mib_message& msg, unsigned L_max)
+{
+  return (pbch_mib_pack(msg) | pbch_timing_pack(msg.sfn, msg.hrf, msg.ssb_block_index, msg.subcarrier_offset, L_max));
 }

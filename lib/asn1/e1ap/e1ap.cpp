@@ -32,14 +32,14 @@ using namespace asn1::e1ap;
 // E1AP-ELEMENTARY-PROCEDURES ::= OBJECT SET OF E1AP-ELEMENTARY-PROCEDURE
 uint16_t e1ap_elem_procs_o::idx_to_proc_code(uint32_t idx)
 {
-  static const uint16_t names[] = {0,  3,  4,  5,  6,  7,  8,  9,  10, 11, 22, 24, 1,  12, 13,
-                                   14, 18, 15, 16, 17, 19, 21, 20, 2,  25, 23, 26, 27, 28};
-  return map_enum_number(names, 29, idx, "proc_code");
+  static const uint16_t names[] = {0, 3,  4,  5,  6,  7,  8,  9,  10, 11, 22, 24, 29, 30, 31, 32, 34, 35, 36, 37,
+                                   1, 12, 13, 14, 18, 15, 16, 17, 19, 21, 20, 2,  25, 23, 26, 27, 28, 33, 38, 39};
+  return map_enum_number(names, 40, idx, "proc_code");
 }
 bool e1ap_elem_procs_o::is_proc_code_valid(const uint16_t& proc_code)
 {
-  static const uint16_t names[] = {0,  3,  4,  5,  6,  7,  8,  9,  10, 11, 22, 24, 1,  12, 13,
-                                   14, 18, 15, 16, 17, 19, 21, 20, 2,  25, 23, 26, 27, 28};
+  static const uint16_t names[] = {0, 3,  4,  5,  6,  7,  8,  9,  10, 11, 22, 24, 29, 30, 31, 32, 34, 35, 36, 37,
+                                   1, 12, 13, 14, 18, 15, 16, 17, 19, 21, 20, 2,  25, 23, 26, 27, 28, 33, 38, 39};
   for (const auto& o : names) {
     if (o == proc_code) {
       return true;
@@ -86,6 +86,30 @@ e1ap_elem_procs_o::init_msg_c e1ap_elem_procs_o::get_init_msg(const uint16_t& pr
       break;
     case 24:
       ret.set(init_msg_c::types::iab_up_tnl_address_upd);
+      break;
+    case 29:
+      ret.set(init_msg_c::types::bc_bearer_context_setup_request);
+      break;
+    case 30:
+      ret.set(init_msg_c::types::bc_bearer_context_mod_request);
+      break;
+    case 31:
+      ret.set(init_msg_c::types::bc_bearer_context_mod_required);
+      break;
+    case 32:
+      ret.set(init_msg_c::types::bc_bearer_context_release_cmd);
+      break;
+    case 34:
+      ret.set(init_msg_c::types::mc_bearer_context_setup_request);
+      break;
+    case 35:
+      ret.set(init_msg_c::types::mc_bearer_context_mod_request);
+      break;
+    case 36:
+      ret.set(init_msg_c::types::mc_bearer_context_mod_required);
+      break;
+    case 37:
+      ret.set(init_msg_c::types::mc_bearer_context_release_cmd);
       break;
     case 1:
       ret.set(init_msg_c::types::error_ind);
@@ -138,6 +162,15 @@ e1ap_elem_procs_o::init_msg_c e1ap_elem_procs_o::get_init_msg(const uint16_t& pr
     case 28:
       ret.set(init_msg_c::types::iabpsk_notif);
       break;
+    case 33:
+      ret.set(init_msg_c::types::bc_bearer_context_release_request);
+      break;
+    case 38:
+      ret.set(init_msg_c::types::mc_bearer_context_release_request);
+      break;
+    case 39:
+      ret.set(init_msg_c::types::mc_bearer_notif);
+      break;
     default:
       asn1::log_error("The proc_code={} is not recognized", proc_code);
   }
@@ -183,6 +216,30 @@ e1ap_elem_procs_o::successful_outcome_c e1ap_elem_procs_o::get_successful_outcom
     case 24:
       ret.set(successful_outcome_c::types::iab_up_tnl_address_upd_ack);
       break;
+    case 29:
+      ret.set(successful_outcome_c::types::bc_bearer_context_setup_resp);
+      break;
+    case 30:
+      ret.set(successful_outcome_c::types::bc_bearer_context_mod_resp);
+      break;
+    case 31:
+      ret.set(successful_outcome_c::types::bc_bearer_context_mod_confirm);
+      break;
+    case 32:
+      ret.set(successful_outcome_c::types::bc_bearer_context_release_complete);
+      break;
+    case 34:
+      ret.set(successful_outcome_c::types::mc_bearer_context_setup_resp);
+      break;
+    case 35:
+      ret.set(successful_outcome_c::types::mc_bearer_context_mod_resp);
+      break;
+    case 36:
+      ret.set(successful_outcome_c::types::mc_bearer_context_mod_confirm);
+      break;
+    case 37:
+      ret.set(successful_outcome_c::types::mc_bearer_context_release_complete);
+      break;
     default:
       asn1::log_error("The proc_code={} is not recognized", proc_code);
   }
@@ -216,6 +273,18 @@ e1ap_elem_procs_o::unsuccessful_outcome_c e1ap_elem_procs_o::get_unsuccessful_ou
     case 24:
       ret.set(unsuccessful_outcome_c::types::iab_up_tnl_address_upd_fail);
       break;
+    case 29:
+      ret.set(unsuccessful_outcome_c::types::bc_bearer_context_setup_fail);
+      break;
+    case 30:
+      ret.set(unsuccessful_outcome_c::types::bc_bearer_context_mod_fail);
+      break;
+    case 34:
+      ret.set(unsuccessful_outcome_c::types::mc_bearer_context_setup_fail);
+      break;
+    case 35:
+      ret.set(unsuccessful_outcome_c::types::mc_bearer_context_mod_fail);
+      break;
     default:
       asn1::log_error("The proc_code={} is not recognized", proc_code);
   }
@@ -247,6 +316,22 @@ crit_e e1ap_elem_procs_o::get_crit(const uint16_t& proc_code)
     case 22:
       return crit_e::reject;
     case 24:
+      return crit_e::reject;
+    case 29:
+      return crit_e::reject;
+    case 30:
+      return crit_e::reject;
+    case 31:
+      return crit_e::reject;
+    case 32:
+      return crit_e::reject;
+    case 34:
+      return crit_e::reject;
+    case 35:
+      return crit_e::reject;
+    case 36:
+      return crit_e::reject;
+    case 37:
       return crit_e::reject;
     case 1:
       return crit_e::ignore;
@@ -281,6 +366,12 @@ crit_e e1ap_elem_procs_o::get_crit(const uint16_t& proc_code)
     case 27:
       return crit_e::ignore;
     case 28:
+      return crit_e::reject;
+    case 33:
+      return crit_e::reject;
+    case 38:
+      return crit_e::reject;
+    case 39:
       return crit_e::reject;
     default:
       asn1::log_error("The proc_code={} is not recognized", proc_code);
@@ -328,6 +419,30 @@ void e1ap_elem_procs_o::init_msg_c::set(types::options e)
       break;
     case types::iab_up_tnl_address_upd:
       c = iab_up_tnl_address_upd_s{};
+      break;
+    case types::bc_bearer_context_setup_request:
+      c = bc_bearer_context_setup_request_s{};
+      break;
+    case types::bc_bearer_context_mod_request:
+      c = bc_bearer_context_mod_request_s{};
+      break;
+    case types::bc_bearer_context_mod_required:
+      c = bc_bearer_context_mod_required_s{};
+      break;
+    case types::bc_bearer_context_release_cmd:
+      c = bc_bearer_context_release_cmd_s{};
+      break;
+    case types::mc_bearer_context_setup_request:
+      c = mc_bearer_context_setup_request_s{};
+      break;
+    case types::mc_bearer_context_mod_request:
+      c = mc_bearer_context_mod_request_s{};
+      break;
+    case types::mc_bearer_context_mod_required:
+      c = mc_bearer_context_mod_required_s{};
+      break;
+    case types::mc_bearer_context_release_cmd:
+      c = mc_bearer_context_release_cmd_s{};
       break;
     case types::error_ind:
       c = error_ind_s{};
@@ -379,6 +494,15 @@ void e1ap_elem_procs_o::init_msg_c::set(types::options e)
       break;
     case types::iabpsk_notif:
       c = iabpsk_notif_s{};
+      break;
+    case types::bc_bearer_context_release_request:
+      c = bc_bearer_context_release_request_s{};
+      break;
+    case types::mc_bearer_context_release_request:
+      c = mc_bearer_context_release_request_s{};
+      break;
+    case types::mc_bearer_notif:
+      c = mc_bearer_notif_s{};
       break;
     case types::nulltype:
       break;
@@ -445,6 +569,46 @@ iab_up_tnl_address_upd_s& e1ap_elem_procs_o::init_msg_c::iab_up_tnl_address_upd(
 {
   assert_choice_type(types::iab_up_tnl_address_upd, type_, "InitiatingMessage");
   return c.get<iab_up_tnl_address_upd_s>();
+}
+bc_bearer_context_setup_request_s& e1ap_elem_procs_o::init_msg_c::bc_bearer_context_setup_request()
+{
+  assert_choice_type(types::bc_bearer_context_setup_request, type_, "InitiatingMessage");
+  return c.get<bc_bearer_context_setup_request_s>();
+}
+bc_bearer_context_mod_request_s& e1ap_elem_procs_o::init_msg_c::bc_bearer_context_mod_request()
+{
+  assert_choice_type(types::bc_bearer_context_mod_request, type_, "InitiatingMessage");
+  return c.get<bc_bearer_context_mod_request_s>();
+}
+bc_bearer_context_mod_required_s& e1ap_elem_procs_o::init_msg_c::bc_bearer_context_mod_required()
+{
+  assert_choice_type(types::bc_bearer_context_mod_required, type_, "InitiatingMessage");
+  return c.get<bc_bearer_context_mod_required_s>();
+}
+bc_bearer_context_release_cmd_s& e1ap_elem_procs_o::init_msg_c::bc_bearer_context_release_cmd()
+{
+  assert_choice_type(types::bc_bearer_context_release_cmd, type_, "InitiatingMessage");
+  return c.get<bc_bearer_context_release_cmd_s>();
+}
+mc_bearer_context_setup_request_s& e1ap_elem_procs_o::init_msg_c::mc_bearer_context_setup_request()
+{
+  assert_choice_type(types::mc_bearer_context_setup_request, type_, "InitiatingMessage");
+  return c.get<mc_bearer_context_setup_request_s>();
+}
+mc_bearer_context_mod_request_s& e1ap_elem_procs_o::init_msg_c::mc_bearer_context_mod_request()
+{
+  assert_choice_type(types::mc_bearer_context_mod_request, type_, "InitiatingMessage");
+  return c.get<mc_bearer_context_mod_request_s>();
+}
+mc_bearer_context_mod_required_s& e1ap_elem_procs_o::init_msg_c::mc_bearer_context_mod_required()
+{
+  assert_choice_type(types::mc_bearer_context_mod_required, type_, "InitiatingMessage");
+  return c.get<mc_bearer_context_mod_required_s>();
+}
+mc_bearer_context_release_cmd_s& e1ap_elem_procs_o::init_msg_c::mc_bearer_context_release_cmd()
+{
+  assert_choice_type(types::mc_bearer_context_release_cmd, type_, "InitiatingMessage");
+  return c.get<mc_bearer_context_release_cmd_s>();
 }
 error_ind_s& e1ap_elem_procs_o::init_msg_c::error_ind()
 {
@@ -531,6 +695,21 @@ iabpsk_notif_s& e1ap_elem_procs_o::init_msg_c::iabpsk_notif()
   assert_choice_type(types::iabpsk_notif, type_, "InitiatingMessage");
   return c.get<iabpsk_notif_s>();
 }
+bc_bearer_context_release_request_s& e1ap_elem_procs_o::init_msg_c::bc_bearer_context_release_request()
+{
+  assert_choice_type(types::bc_bearer_context_release_request, type_, "InitiatingMessage");
+  return c.get<bc_bearer_context_release_request_s>();
+}
+mc_bearer_context_release_request_s& e1ap_elem_procs_o::init_msg_c::mc_bearer_context_release_request()
+{
+  assert_choice_type(types::mc_bearer_context_release_request, type_, "InitiatingMessage");
+  return c.get<mc_bearer_context_release_request_s>();
+}
+mc_bearer_notif_s& e1ap_elem_procs_o::init_msg_c::mc_bearer_notif()
+{
+  assert_choice_type(types::mc_bearer_notif, type_, "InitiatingMessage");
+  return c.get<mc_bearer_notif_s>();
+}
 const reset_s& e1ap_elem_procs_o::init_msg_c::reset() const
 {
   assert_choice_type(types::reset, type_, "InitiatingMessage");
@@ -590,6 +769,46 @@ const iab_up_tnl_address_upd_s& e1ap_elem_procs_o::init_msg_c::iab_up_tnl_addres
 {
   assert_choice_type(types::iab_up_tnl_address_upd, type_, "InitiatingMessage");
   return c.get<iab_up_tnl_address_upd_s>();
+}
+const bc_bearer_context_setup_request_s& e1ap_elem_procs_o::init_msg_c::bc_bearer_context_setup_request() const
+{
+  assert_choice_type(types::bc_bearer_context_setup_request, type_, "InitiatingMessage");
+  return c.get<bc_bearer_context_setup_request_s>();
+}
+const bc_bearer_context_mod_request_s& e1ap_elem_procs_o::init_msg_c::bc_bearer_context_mod_request() const
+{
+  assert_choice_type(types::bc_bearer_context_mod_request, type_, "InitiatingMessage");
+  return c.get<bc_bearer_context_mod_request_s>();
+}
+const bc_bearer_context_mod_required_s& e1ap_elem_procs_o::init_msg_c::bc_bearer_context_mod_required() const
+{
+  assert_choice_type(types::bc_bearer_context_mod_required, type_, "InitiatingMessage");
+  return c.get<bc_bearer_context_mod_required_s>();
+}
+const bc_bearer_context_release_cmd_s& e1ap_elem_procs_o::init_msg_c::bc_bearer_context_release_cmd() const
+{
+  assert_choice_type(types::bc_bearer_context_release_cmd, type_, "InitiatingMessage");
+  return c.get<bc_bearer_context_release_cmd_s>();
+}
+const mc_bearer_context_setup_request_s& e1ap_elem_procs_o::init_msg_c::mc_bearer_context_setup_request() const
+{
+  assert_choice_type(types::mc_bearer_context_setup_request, type_, "InitiatingMessage");
+  return c.get<mc_bearer_context_setup_request_s>();
+}
+const mc_bearer_context_mod_request_s& e1ap_elem_procs_o::init_msg_c::mc_bearer_context_mod_request() const
+{
+  assert_choice_type(types::mc_bearer_context_mod_request, type_, "InitiatingMessage");
+  return c.get<mc_bearer_context_mod_request_s>();
+}
+const mc_bearer_context_mod_required_s& e1ap_elem_procs_o::init_msg_c::mc_bearer_context_mod_required() const
+{
+  assert_choice_type(types::mc_bearer_context_mod_required, type_, "InitiatingMessage");
+  return c.get<mc_bearer_context_mod_required_s>();
+}
+const mc_bearer_context_release_cmd_s& e1ap_elem_procs_o::init_msg_c::mc_bearer_context_release_cmd() const
+{
+  assert_choice_type(types::mc_bearer_context_release_cmd, type_, "InitiatingMessage");
+  return c.get<mc_bearer_context_release_cmd_s>();
 }
 const error_ind_s& e1ap_elem_procs_o::init_msg_c::error_ind() const
 {
@@ -676,6 +895,21 @@ const iabpsk_notif_s& e1ap_elem_procs_o::init_msg_c::iabpsk_notif() const
   assert_choice_type(types::iabpsk_notif, type_, "InitiatingMessage");
   return c.get<iabpsk_notif_s>();
 }
+const bc_bearer_context_release_request_s& e1ap_elem_procs_o::init_msg_c::bc_bearer_context_release_request() const
+{
+  assert_choice_type(types::bc_bearer_context_release_request, type_, "InitiatingMessage");
+  return c.get<bc_bearer_context_release_request_s>();
+}
+const mc_bearer_context_release_request_s& e1ap_elem_procs_o::init_msg_c::mc_bearer_context_release_request() const
+{
+  assert_choice_type(types::mc_bearer_context_release_request, type_, "InitiatingMessage");
+  return c.get<mc_bearer_context_release_request_s>();
+}
+const mc_bearer_notif_s& e1ap_elem_procs_o::init_msg_c::mc_bearer_notif() const
+{
+  assert_choice_type(types::mc_bearer_notif, type_, "InitiatingMessage");
+  return c.get<mc_bearer_notif_s>();
+}
 void e1ap_elem_procs_o::init_msg_c::to_json(json_writer& j) const
 {
   j.start_obj();
@@ -727,6 +961,38 @@ void e1ap_elem_procs_o::init_msg_c::to_json(json_writer& j) const
     case types::iab_up_tnl_address_upd:
       j.write_fieldname("IAB-UPTNLAddressUpdate");
       c.get<iab_up_tnl_address_upd_s>().to_json(j);
+      break;
+    case types::bc_bearer_context_setup_request:
+      j.write_fieldname("BCBearerContextSetupRequest");
+      c.get<bc_bearer_context_setup_request_s>().to_json(j);
+      break;
+    case types::bc_bearer_context_mod_request:
+      j.write_fieldname("BCBearerContextModificationRequest");
+      c.get<bc_bearer_context_mod_request_s>().to_json(j);
+      break;
+    case types::bc_bearer_context_mod_required:
+      j.write_fieldname("BCBearerContextModificationRequired");
+      c.get<bc_bearer_context_mod_required_s>().to_json(j);
+      break;
+    case types::bc_bearer_context_release_cmd:
+      j.write_fieldname("BCBearerContextReleaseCommand");
+      c.get<bc_bearer_context_release_cmd_s>().to_json(j);
+      break;
+    case types::mc_bearer_context_setup_request:
+      j.write_fieldname("MCBearerContextSetupRequest");
+      c.get<mc_bearer_context_setup_request_s>().to_json(j);
+      break;
+    case types::mc_bearer_context_mod_request:
+      j.write_fieldname("MCBearerContextModificationRequest");
+      c.get<mc_bearer_context_mod_request_s>().to_json(j);
+      break;
+    case types::mc_bearer_context_mod_required:
+      j.write_fieldname("MCBearerContextModificationRequired");
+      c.get<mc_bearer_context_mod_required_s>().to_json(j);
+      break;
+    case types::mc_bearer_context_release_cmd:
+      j.write_fieldname("MCBearerContextReleaseCommand");
+      c.get<mc_bearer_context_release_cmd_s>().to_json(j);
       break;
     case types::error_ind:
       j.write_fieldname("ErrorIndication");
@@ -796,6 +1062,18 @@ void e1ap_elem_procs_o::init_msg_c::to_json(json_writer& j) const
       j.write_fieldname("IABPSKNotification");
       c.get<iabpsk_notif_s>().to_json(j);
       break;
+    case types::bc_bearer_context_release_request:
+      j.write_fieldname("BCBearerContextReleaseRequest");
+      c.get<bc_bearer_context_release_request_s>().to_json(j);
+      break;
+    case types::mc_bearer_context_release_request:
+      j.write_fieldname("MCBearerContextReleaseRequest");
+      c.get<mc_bearer_context_release_request_s>().to_json(j);
+      break;
+    case types::mc_bearer_notif:
+      j.write_fieldname("MCBearerNotification");
+      c.get<mc_bearer_notif_s>().to_json(j);
+      break;
     default:
       log_invalid_choice_id(type_, "e1ap_elem_procs_o::init_msg_c");
   }
@@ -840,6 +1118,30 @@ SRSASN_CODE e1ap_elem_procs_o::init_msg_c::pack(bit_ref& bref) const
       break;
     case types::iab_up_tnl_address_upd:
       HANDLE_CODE(c.get<iab_up_tnl_address_upd_s>().pack(bref));
+      break;
+    case types::bc_bearer_context_setup_request:
+      HANDLE_CODE(c.get<bc_bearer_context_setup_request_s>().pack(bref));
+      break;
+    case types::bc_bearer_context_mod_request:
+      HANDLE_CODE(c.get<bc_bearer_context_mod_request_s>().pack(bref));
+      break;
+    case types::bc_bearer_context_mod_required:
+      HANDLE_CODE(c.get<bc_bearer_context_mod_required_s>().pack(bref));
+      break;
+    case types::bc_bearer_context_release_cmd:
+      HANDLE_CODE(c.get<bc_bearer_context_release_cmd_s>().pack(bref));
+      break;
+    case types::mc_bearer_context_setup_request:
+      HANDLE_CODE(c.get<mc_bearer_context_setup_request_s>().pack(bref));
+      break;
+    case types::mc_bearer_context_mod_request:
+      HANDLE_CODE(c.get<mc_bearer_context_mod_request_s>().pack(bref));
+      break;
+    case types::mc_bearer_context_mod_required:
+      HANDLE_CODE(c.get<mc_bearer_context_mod_required_s>().pack(bref));
+      break;
+    case types::mc_bearer_context_release_cmd:
+      HANDLE_CODE(c.get<mc_bearer_context_release_cmd_s>().pack(bref));
       break;
     case types::error_ind:
       HANDLE_CODE(c.get<error_ind_s>().pack(bref));
@@ -892,6 +1194,15 @@ SRSASN_CODE e1ap_elem_procs_o::init_msg_c::pack(bit_ref& bref) const
     case types::iabpsk_notif:
       HANDLE_CODE(c.get<iabpsk_notif_s>().pack(bref));
       break;
+    case types::bc_bearer_context_release_request:
+      HANDLE_CODE(c.get<bc_bearer_context_release_request_s>().pack(bref));
+      break;
+    case types::mc_bearer_context_release_request:
+      HANDLE_CODE(c.get<mc_bearer_context_release_request_s>().pack(bref));
+      break;
+    case types::mc_bearer_notif:
+      HANDLE_CODE(c.get<mc_bearer_notif_s>().pack(bref));
+      break;
     default:
       log_invalid_choice_id(type_, "e1ap_elem_procs_o::init_msg_c");
       return SRSASN_ERROR_ENCODE_FAIL;
@@ -937,6 +1248,30 @@ SRSASN_CODE e1ap_elem_procs_o::init_msg_c::unpack(cbit_ref& bref)
       break;
     case types::iab_up_tnl_address_upd:
       HANDLE_CODE(c.get<iab_up_tnl_address_upd_s>().unpack(bref));
+      break;
+    case types::bc_bearer_context_setup_request:
+      HANDLE_CODE(c.get<bc_bearer_context_setup_request_s>().unpack(bref));
+      break;
+    case types::bc_bearer_context_mod_request:
+      HANDLE_CODE(c.get<bc_bearer_context_mod_request_s>().unpack(bref));
+      break;
+    case types::bc_bearer_context_mod_required:
+      HANDLE_CODE(c.get<bc_bearer_context_mod_required_s>().unpack(bref));
+      break;
+    case types::bc_bearer_context_release_cmd:
+      HANDLE_CODE(c.get<bc_bearer_context_release_cmd_s>().unpack(bref));
+      break;
+    case types::mc_bearer_context_setup_request:
+      HANDLE_CODE(c.get<mc_bearer_context_setup_request_s>().unpack(bref));
+      break;
+    case types::mc_bearer_context_mod_request:
+      HANDLE_CODE(c.get<mc_bearer_context_mod_request_s>().unpack(bref));
+      break;
+    case types::mc_bearer_context_mod_required:
+      HANDLE_CODE(c.get<mc_bearer_context_mod_required_s>().unpack(bref));
+      break;
+    case types::mc_bearer_context_release_cmd:
+      HANDLE_CODE(c.get<mc_bearer_context_release_cmd_s>().unpack(bref));
       break;
     case types::error_ind:
       HANDLE_CODE(c.get<error_ind_s>().unpack(bref));
@@ -989,6 +1324,15 @@ SRSASN_CODE e1ap_elem_procs_o::init_msg_c::unpack(cbit_ref& bref)
     case types::iabpsk_notif:
       HANDLE_CODE(c.get<iabpsk_notif_s>().unpack(bref));
       break;
+    case types::bc_bearer_context_release_request:
+      HANDLE_CODE(c.get<bc_bearer_context_release_request_s>().unpack(bref));
+      break;
+    case types::mc_bearer_context_release_request:
+      HANDLE_CODE(c.get<mc_bearer_context_release_request_s>().unpack(bref));
+      break;
+    case types::mc_bearer_notif:
+      HANDLE_CODE(c.get<mc_bearer_notif_s>().unpack(bref));
+      break;
     default:
       log_invalid_choice_id(type_, "e1ap_elem_procs_o::init_msg_c");
       return SRSASN_ERROR_DECODE_FAIL;
@@ -1010,6 +1354,14 @@ const char* e1ap_elem_procs_o::init_msg_c::types_opts::to_string() const
                                 "BearerContextReleaseCommand",
                                 "ResourceStatusRequest",
                                 "IAB-UPTNLAddressUpdate",
+                                "BCBearerContextSetupRequest",
+                                "BCBearerContextModificationRequest",
+                                "BCBearerContextModificationRequired",
+                                "BCBearerContextReleaseCommand",
+                                "MCBearerContextSetupRequest",
+                                "MCBearerContextModificationRequest",
+                                "MCBearerContextModificationRequired",
+                                "MCBearerContextReleaseCommand",
                                 "ErrorIndication",
                                 "BearerContextReleaseRequest",
                                 "BearerContextInactivityNotification",
@@ -1026,8 +1378,11 @@ const char* e1ap_elem_procs_o::init_msg_c::types_opts::to_string() const
                                 "ResourceStatusUpdate",
                                 "EarlyForwardingSNTransfer",
                                 "GNB-CU-CPMeasurementResultsInformation",
-                                "IABPSKNotification"};
-  return convert_enum_idx(names, 29, value, "e1ap_elem_procs_o::init_msg_c::types");
+                                "IABPSKNotification",
+                                "BCBearerContextReleaseRequest",
+                                "MCBearerContextReleaseRequest",
+                                "MCBearerNotification"};
+  return convert_enum_idx(names, 40, value, "e1ap_elem_procs_o::init_msg_c::types");
 }
 
 // SuccessfulOutcome ::= OPEN TYPE
@@ -1070,6 +1425,30 @@ void e1ap_elem_procs_o::successful_outcome_c::set(types::options e)
       break;
     case types::iab_up_tnl_address_upd_ack:
       c = iab_up_tnl_address_upd_ack_s{};
+      break;
+    case types::bc_bearer_context_setup_resp:
+      c = bc_bearer_context_setup_resp_s{};
+      break;
+    case types::bc_bearer_context_mod_resp:
+      c = bc_bearer_context_mod_resp_s{};
+      break;
+    case types::bc_bearer_context_mod_confirm:
+      c = bc_bearer_context_mod_confirm_s{};
+      break;
+    case types::bc_bearer_context_release_complete:
+      c = bc_bearer_context_release_complete_s{};
+      break;
+    case types::mc_bearer_context_setup_resp:
+      c = mc_bearer_context_setup_resp_s{};
+      break;
+    case types::mc_bearer_context_mod_resp:
+      c = mc_bearer_context_mod_resp_s{};
+      break;
+    case types::mc_bearer_context_mod_confirm:
+      c = mc_bearer_context_mod_confirm_s{};
+      break;
+    case types::mc_bearer_context_release_complete:
+      c = mc_bearer_context_release_complete_s{};
       break;
     case types::nulltype:
       break;
@@ -1137,6 +1516,46 @@ iab_up_tnl_address_upd_ack_s& e1ap_elem_procs_o::successful_outcome_c::iab_up_tn
   assert_choice_type(types::iab_up_tnl_address_upd_ack, type_, "SuccessfulOutcome");
   return c.get<iab_up_tnl_address_upd_ack_s>();
 }
+bc_bearer_context_setup_resp_s& e1ap_elem_procs_o::successful_outcome_c::bc_bearer_context_setup_resp()
+{
+  assert_choice_type(types::bc_bearer_context_setup_resp, type_, "SuccessfulOutcome");
+  return c.get<bc_bearer_context_setup_resp_s>();
+}
+bc_bearer_context_mod_resp_s& e1ap_elem_procs_o::successful_outcome_c::bc_bearer_context_mod_resp()
+{
+  assert_choice_type(types::bc_bearer_context_mod_resp, type_, "SuccessfulOutcome");
+  return c.get<bc_bearer_context_mod_resp_s>();
+}
+bc_bearer_context_mod_confirm_s& e1ap_elem_procs_o::successful_outcome_c::bc_bearer_context_mod_confirm()
+{
+  assert_choice_type(types::bc_bearer_context_mod_confirm, type_, "SuccessfulOutcome");
+  return c.get<bc_bearer_context_mod_confirm_s>();
+}
+bc_bearer_context_release_complete_s& e1ap_elem_procs_o::successful_outcome_c::bc_bearer_context_release_complete()
+{
+  assert_choice_type(types::bc_bearer_context_release_complete, type_, "SuccessfulOutcome");
+  return c.get<bc_bearer_context_release_complete_s>();
+}
+mc_bearer_context_setup_resp_s& e1ap_elem_procs_o::successful_outcome_c::mc_bearer_context_setup_resp()
+{
+  assert_choice_type(types::mc_bearer_context_setup_resp, type_, "SuccessfulOutcome");
+  return c.get<mc_bearer_context_setup_resp_s>();
+}
+mc_bearer_context_mod_resp_s& e1ap_elem_procs_o::successful_outcome_c::mc_bearer_context_mod_resp()
+{
+  assert_choice_type(types::mc_bearer_context_mod_resp, type_, "SuccessfulOutcome");
+  return c.get<mc_bearer_context_mod_resp_s>();
+}
+mc_bearer_context_mod_confirm_s& e1ap_elem_procs_o::successful_outcome_c::mc_bearer_context_mod_confirm()
+{
+  assert_choice_type(types::mc_bearer_context_mod_confirm, type_, "SuccessfulOutcome");
+  return c.get<mc_bearer_context_mod_confirm_s>();
+}
+mc_bearer_context_release_complete_s& e1ap_elem_procs_o::successful_outcome_c::mc_bearer_context_release_complete()
+{
+  assert_choice_type(types::mc_bearer_context_release_complete, type_, "SuccessfulOutcome");
+  return c.get<mc_bearer_context_release_complete_s>();
+}
 const reset_ack_s& e1ap_elem_procs_o::successful_outcome_c::reset_ack() const
 {
   assert_choice_type(types::reset_ack, type_, "SuccessfulOutcome");
@@ -1198,6 +1617,48 @@ const iab_up_tnl_address_upd_ack_s& e1ap_elem_procs_o::successful_outcome_c::iab
   assert_choice_type(types::iab_up_tnl_address_upd_ack, type_, "SuccessfulOutcome");
   return c.get<iab_up_tnl_address_upd_ack_s>();
 }
+const bc_bearer_context_setup_resp_s& e1ap_elem_procs_o::successful_outcome_c::bc_bearer_context_setup_resp() const
+{
+  assert_choice_type(types::bc_bearer_context_setup_resp, type_, "SuccessfulOutcome");
+  return c.get<bc_bearer_context_setup_resp_s>();
+}
+const bc_bearer_context_mod_resp_s& e1ap_elem_procs_o::successful_outcome_c::bc_bearer_context_mod_resp() const
+{
+  assert_choice_type(types::bc_bearer_context_mod_resp, type_, "SuccessfulOutcome");
+  return c.get<bc_bearer_context_mod_resp_s>();
+}
+const bc_bearer_context_mod_confirm_s& e1ap_elem_procs_o::successful_outcome_c::bc_bearer_context_mod_confirm() const
+{
+  assert_choice_type(types::bc_bearer_context_mod_confirm, type_, "SuccessfulOutcome");
+  return c.get<bc_bearer_context_mod_confirm_s>();
+}
+const bc_bearer_context_release_complete_s&
+e1ap_elem_procs_o::successful_outcome_c::bc_bearer_context_release_complete() const
+{
+  assert_choice_type(types::bc_bearer_context_release_complete, type_, "SuccessfulOutcome");
+  return c.get<bc_bearer_context_release_complete_s>();
+}
+const mc_bearer_context_setup_resp_s& e1ap_elem_procs_o::successful_outcome_c::mc_bearer_context_setup_resp() const
+{
+  assert_choice_type(types::mc_bearer_context_setup_resp, type_, "SuccessfulOutcome");
+  return c.get<mc_bearer_context_setup_resp_s>();
+}
+const mc_bearer_context_mod_resp_s& e1ap_elem_procs_o::successful_outcome_c::mc_bearer_context_mod_resp() const
+{
+  assert_choice_type(types::mc_bearer_context_mod_resp, type_, "SuccessfulOutcome");
+  return c.get<mc_bearer_context_mod_resp_s>();
+}
+const mc_bearer_context_mod_confirm_s& e1ap_elem_procs_o::successful_outcome_c::mc_bearer_context_mod_confirm() const
+{
+  assert_choice_type(types::mc_bearer_context_mod_confirm, type_, "SuccessfulOutcome");
+  return c.get<mc_bearer_context_mod_confirm_s>();
+}
+const mc_bearer_context_release_complete_s&
+e1ap_elem_procs_o::successful_outcome_c::mc_bearer_context_release_complete() const
+{
+  assert_choice_type(types::mc_bearer_context_release_complete, type_, "SuccessfulOutcome");
+  return c.get<mc_bearer_context_release_complete_s>();
+}
 void e1ap_elem_procs_o::successful_outcome_c::to_json(json_writer& j) const
 {
   j.start_obj();
@@ -1250,6 +1711,38 @@ void e1ap_elem_procs_o::successful_outcome_c::to_json(json_writer& j) const
       j.write_fieldname("IAB-UPTNLAddressUpdateAcknowledge");
       c.get<iab_up_tnl_address_upd_ack_s>().to_json(j);
       break;
+    case types::bc_bearer_context_setup_resp:
+      j.write_fieldname("BCBearerContextSetupResponse");
+      c.get<bc_bearer_context_setup_resp_s>().to_json(j);
+      break;
+    case types::bc_bearer_context_mod_resp:
+      j.write_fieldname("BCBearerContextModificationResponse");
+      c.get<bc_bearer_context_mod_resp_s>().to_json(j);
+      break;
+    case types::bc_bearer_context_mod_confirm:
+      j.write_fieldname("BCBearerContextModificationConfirm");
+      c.get<bc_bearer_context_mod_confirm_s>().to_json(j);
+      break;
+    case types::bc_bearer_context_release_complete:
+      j.write_fieldname("BCBearerContextReleaseComplete");
+      c.get<bc_bearer_context_release_complete_s>().to_json(j);
+      break;
+    case types::mc_bearer_context_setup_resp:
+      j.write_fieldname("MCBearerContextSetupResponse");
+      c.get<mc_bearer_context_setup_resp_s>().to_json(j);
+      break;
+    case types::mc_bearer_context_mod_resp:
+      j.write_fieldname("MCBearerContextModificationResponse");
+      c.get<mc_bearer_context_mod_resp_s>().to_json(j);
+      break;
+    case types::mc_bearer_context_mod_confirm:
+      j.write_fieldname("MCBearerContextModificationConfirm");
+      c.get<mc_bearer_context_mod_confirm_s>().to_json(j);
+      break;
+    case types::mc_bearer_context_release_complete:
+      j.write_fieldname("MCBearerContextReleaseComplete");
+      c.get<mc_bearer_context_release_complete_s>().to_json(j);
+      break;
     default:
       log_invalid_choice_id(type_, "e1ap_elem_procs_o::successful_outcome_c");
   }
@@ -1294,6 +1787,30 @@ SRSASN_CODE e1ap_elem_procs_o::successful_outcome_c::pack(bit_ref& bref) const
       break;
     case types::iab_up_tnl_address_upd_ack:
       HANDLE_CODE(c.get<iab_up_tnl_address_upd_ack_s>().pack(bref));
+      break;
+    case types::bc_bearer_context_setup_resp:
+      HANDLE_CODE(c.get<bc_bearer_context_setup_resp_s>().pack(bref));
+      break;
+    case types::bc_bearer_context_mod_resp:
+      HANDLE_CODE(c.get<bc_bearer_context_mod_resp_s>().pack(bref));
+      break;
+    case types::bc_bearer_context_mod_confirm:
+      HANDLE_CODE(c.get<bc_bearer_context_mod_confirm_s>().pack(bref));
+      break;
+    case types::bc_bearer_context_release_complete:
+      HANDLE_CODE(c.get<bc_bearer_context_release_complete_s>().pack(bref));
+      break;
+    case types::mc_bearer_context_setup_resp:
+      HANDLE_CODE(c.get<mc_bearer_context_setup_resp_s>().pack(bref));
+      break;
+    case types::mc_bearer_context_mod_resp:
+      HANDLE_CODE(c.get<mc_bearer_context_mod_resp_s>().pack(bref));
+      break;
+    case types::mc_bearer_context_mod_confirm:
+      HANDLE_CODE(c.get<mc_bearer_context_mod_confirm_s>().pack(bref));
+      break;
+    case types::mc_bearer_context_release_complete:
+      HANDLE_CODE(c.get<mc_bearer_context_release_complete_s>().pack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "e1ap_elem_procs_o::successful_outcome_c");
@@ -1341,6 +1858,30 @@ SRSASN_CODE e1ap_elem_procs_o::successful_outcome_c::unpack(cbit_ref& bref)
     case types::iab_up_tnl_address_upd_ack:
       HANDLE_CODE(c.get<iab_up_tnl_address_upd_ack_s>().unpack(bref));
       break;
+    case types::bc_bearer_context_setup_resp:
+      HANDLE_CODE(c.get<bc_bearer_context_setup_resp_s>().unpack(bref));
+      break;
+    case types::bc_bearer_context_mod_resp:
+      HANDLE_CODE(c.get<bc_bearer_context_mod_resp_s>().unpack(bref));
+      break;
+    case types::bc_bearer_context_mod_confirm:
+      HANDLE_CODE(c.get<bc_bearer_context_mod_confirm_s>().unpack(bref));
+      break;
+    case types::bc_bearer_context_release_complete:
+      HANDLE_CODE(c.get<bc_bearer_context_release_complete_s>().unpack(bref));
+      break;
+    case types::mc_bearer_context_setup_resp:
+      HANDLE_CODE(c.get<mc_bearer_context_setup_resp_s>().unpack(bref));
+      break;
+    case types::mc_bearer_context_mod_resp:
+      HANDLE_CODE(c.get<mc_bearer_context_mod_resp_s>().unpack(bref));
+      break;
+    case types::mc_bearer_context_mod_confirm:
+      HANDLE_CODE(c.get<mc_bearer_context_mod_confirm_s>().unpack(bref));
+      break;
+    case types::mc_bearer_context_release_complete:
+      HANDLE_CODE(c.get<mc_bearer_context_release_complete_s>().unpack(bref));
+      break;
     default:
       log_invalid_choice_id(type_, "e1ap_elem_procs_o::successful_outcome_c");
       return SRSASN_ERROR_DECODE_FAIL;
@@ -1361,8 +1902,16 @@ const char* e1ap_elem_procs_o::successful_outcome_c::types_opts::to_string() con
                                 "BearerContextModificationConfirm",
                                 "BearerContextReleaseComplete",
                                 "ResourceStatusResponse",
-                                "IAB-UPTNLAddressUpdateAcknowledge"};
-  return convert_enum_idx(names, 12, value, "e1ap_elem_procs_o::successful_outcome_c::types");
+                                "IAB-UPTNLAddressUpdateAcknowledge",
+                                "BCBearerContextSetupResponse",
+                                "BCBearerContextModificationResponse",
+                                "BCBearerContextModificationConfirm",
+                                "BCBearerContextReleaseComplete",
+                                "MCBearerContextSetupResponse",
+                                "MCBearerContextModificationResponse",
+                                "MCBearerContextModificationConfirm",
+                                "MCBearerContextReleaseComplete"};
+  return convert_enum_idx(names, 20, value, "e1ap_elem_procs_o::successful_outcome_c::types");
 }
 
 // UnsuccessfulOutcome ::= OPEN TYPE
@@ -1393,6 +1942,18 @@ void e1ap_elem_procs_o::unsuccessful_outcome_c::set(types::options e)
       break;
     case types::iab_up_tnl_address_upd_fail:
       c = iab_up_tnl_address_upd_fail_s{};
+      break;
+    case types::bc_bearer_context_setup_fail:
+      c = bc_bearer_context_setup_fail_s{};
+      break;
+    case types::bc_bearer_context_mod_fail:
+      c = bc_bearer_context_mod_fail_s{};
+      break;
+    case types::mc_bearer_context_setup_fail:
+      c = mc_bearer_context_setup_fail_s{};
+      break;
+    case types::mc_bearer_context_mod_fail:
+      c = mc_bearer_context_mod_fail_s{};
       break;
     case types::nulltype:
       break;
@@ -1440,6 +2001,26 @@ iab_up_tnl_address_upd_fail_s& e1ap_elem_procs_o::unsuccessful_outcome_c::iab_up
   assert_choice_type(types::iab_up_tnl_address_upd_fail, type_, "UnsuccessfulOutcome");
   return c.get<iab_up_tnl_address_upd_fail_s>();
 }
+bc_bearer_context_setup_fail_s& e1ap_elem_procs_o::unsuccessful_outcome_c::bc_bearer_context_setup_fail()
+{
+  assert_choice_type(types::bc_bearer_context_setup_fail, type_, "UnsuccessfulOutcome");
+  return c.get<bc_bearer_context_setup_fail_s>();
+}
+bc_bearer_context_mod_fail_s& e1ap_elem_procs_o::unsuccessful_outcome_c::bc_bearer_context_mod_fail()
+{
+  assert_choice_type(types::bc_bearer_context_mod_fail, type_, "UnsuccessfulOutcome");
+  return c.get<bc_bearer_context_mod_fail_s>();
+}
+mc_bearer_context_setup_fail_s& e1ap_elem_procs_o::unsuccessful_outcome_c::mc_bearer_context_setup_fail()
+{
+  assert_choice_type(types::mc_bearer_context_setup_fail, type_, "UnsuccessfulOutcome");
+  return c.get<mc_bearer_context_setup_fail_s>();
+}
+mc_bearer_context_mod_fail_s& e1ap_elem_procs_o::unsuccessful_outcome_c::mc_bearer_context_mod_fail()
+{
+  assert_choice_type(types::mc_bearer_context_mod_fail, type_, "UnsuccessfulOutcome");
+  return c.get<mc_bearer_context_mod_fail_s>();
+}
 const gnb_cu_up_e1_setup_fail_s& e1ap_elem_procs_o::unsuccessful_outcome_c::gnb_cu_up_e1_setup_fail() const
 {
   assert_choice_type(types::gnb_cu_up_e1_setup_fail, type_, "UnsuccessfulOutcome");
@@ -1480,6 +2061,26 @@ const iab_up_tnl_address_upd_fail_s& e1ap_elem_procs_o::unsuccessful_outcome_c::
   assert_choice_type(types::iab_up_tnl_address_upd_fail, type_, "UnsuccessfulOutcome");
   return c.get<iab_up_tnl_address_upd_fail_s>();
 }
+const bc_bearer_context_setup_fail_s& e1ap_elem_procs_o::unsuccessful_outcome_c::bc_bearer_context_setup_fail() const
+{
+  assert_choice_type(types::bc_bearer_context_setup_fail, type_, "UnsuccessfulOutcome");
+  return c.get<bc_bearer_context_setup_fail_s>();
+}
+const bc_bearer_context_mod_fail_s& e1ap_elem_procs_o::unsuccessful_outcome_c::bc_bearer_context_mod_fail() const
+{
+  assert_choice_type(types::bc_bearer_context_mod_fail, type_, "UnsuccessfulOutcome");
+  return c.get<bc_bearer_context_mod_fail_s>();
+}
+const mc_bearer_context_setup_fail_s& e1ap_elem_procs_o::unsuccessful_outcome_c::mc_bearer_context_setup_fail() const
+{
+  assert_choice_type(types::mc_bearer_context_setup_fail, type_, "UnsuccessfulOutcome");
+  return c.get<mc_bearer_context_setup_fail_s>();
+}
+const mc_bearer_context_mod_fail_s& e1ap_elem_procs_o::unsuccessful_outcome_c::mc_bearer_context_mod_fail() const
+{
+  assert_choice_type(types::mc_bearer_context_mod_fail, type_, "UnsuccessfulOutcome");
+  return c.get<mc_bearer_context_mod_fail_s>();
+}
 void e1ap_elem_procs_o::unsuccessful_outcome_c::to_json(json_writer& j) const
 {
   j.start_obj();
@@ -1516,6 +2117,22 @@ void e1ap_elem_procs_o::unsuccessful_outcome_c::to_json(json_writer& j) const
       j.write_fieldname("IAB-UPTNLAddressUpdateFailure");
       c.get<iab_up_tnl_address_upd_fail_s>().to_json(j);
       break;
+    case types::bc_bearer_context_setup_fail:
+      j.write_fieldname("BCBearerContextSetupFailure");
+      c.get<bc_bearer_context_setup_fail_s>().to_json(j);
+      break;
+    case types::bc_bearer_context_mod_fail:
+      j.write_fieldname("BCBearerContextModificationFailure");
+      c.get<bc_bearer_context_mod_fail_s>().to_json(j);
+      break;
+    case types::mc_bearer_context_setup_fail:
+      j.write_fieldname("MCBearerContextSetupFailure");
+      c.get<mc_bearer_context_setup_fail_s>().to_json(j);
+      break;
+    case types::mc_bearer_context_mod_fail:
+      j.write_fieldname("MCBearerContextModificationFailure");
+      c.get<mc_bearer_context_mod_fail_s>().to_json(j);
+      break;
     default:
       log_invalid_choice_id(type_, "e1ap_elem_procs_o::unsuccessful_outcome_c");
   }
@@ -1548,6 +2165,18 @@ SRSASN_CODE e1ap_elem_procs_o::unsuccessful_outcome_c::pack(bit_ref& bref) const
       break;
     case types::iab_up_tnl_address_upd_fail:
       HANDLE_CODE(c.get<iab_up_tnl_address_upd_fail_s>().pack(bref));
+      break;
+    case types::bc_bearer_context_setup_fail:
+      HANDLE_CODE(c.get<bc_bearer_context_setup_fail_s>().pack(bref));
+      break;
+    case types::bc_bearer_context_mod_fail:
+      HANDLE_CODE(c.get<bc_bearer_context_mod_fail_s>().pack(bref));
+      break;
+    case types::mc_bearer_context_setup_fail:
+      HANDLE_CODE(c.get<mc_bearer_context_setup_fail_s>().pack(bref));
+      break;
+    case types::mc_bearer_context_mod_fail:
+      HANDLE_CODE(c.get<mc_bearer_context_mod_fail_s>().pack(bref));
       break;
     default:
       log_invalid_choice_id(type_, "e1ap_elem_procs_o::unsuccessful_outcome_c");
@@ -1583,6 +2212,18 @@ SRSASN_CODE e1ap_elem_procs_o::unsuccessful_outcome_c::unpack(cbit_ref& bref)
     case types::iab_up_tnl_address_upd_fail:
       HANDLE_CODE(c.get<iab_up_tnl_address_upd_fail_s>().unpack(bref));
       break;
+    case types::bc_bearer_context_setup_fail:
+      HANDLE_CODE(c.get<bc_bearer_context_setup_fail_s>().unpack(bref));
+      break;
+    case types::bc_bearer_context_mod_fail:
+      HANDLE_CODE(c.get<bc_bearer_context_mod_fail_s>().unpack(bref));
+      break;
+    case types::mc_bearer_context_setup_fail:
+      HANDLE_CODE(c.get<mc_bearer_context_setup_fail_s>().unpack(bref));
+      break;
+    case types::mc_bearer_context_mod_fail:
+      HANDLE_CODE(c.get<mc_bearer_context_mod_fail_s>().unpack(bref));
+      break;
     default:
       log_invalid_choice_id(type_, "e1ap_elem_procs_o::unsuccessful_outcome_c");
       return SRSASN_ERROR_DECODE_FAIL;
@@ -1599,8 +2240,12 @@ const char* e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::to_string() c
                                 "BearerContextSetupFailure",
                                 "BearerContextModificationFailure",
                                 "ResourceStatusFailure",
-                                "IAB-UPTNLAddressUpdateFailure"};
-  return convert_enum_idx(names, 8, value, "e1ap_elem_procs_o::unsuccessful_outcome_c::types");
+                                "IAB-UPTNLAddressUpdateFailure",
+                                "BCBearerContextSetupFailure",
+                                "BCBearerContextModificationFailure",
+                                "MCBearerContextSetupFailure",
+                                "MCBearerContextModificationFailure"};
+  return convert_enum_idx(names, 12, value, "e1ap_elem_procs_o::unsuccessful_outcome_c::types");
 }
 
 // InitiatingMessage ::= SEQUENCE{{E1AP-ELEMENTARY-PROCEDURE}}

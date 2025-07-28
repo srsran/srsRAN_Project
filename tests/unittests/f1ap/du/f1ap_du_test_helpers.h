@@ -149,7 +149,13 @@ public:
 
   f1ap_du_positioning_handler& get_positioning_handler() override { return *this; }
 
-  du_trp_info_response request_trp_info() override { return du_trp_info_response{}; }
+  du_trp_info_response request_trp_info() override
+  {
+    return du_trp_info_response{
+        {{.trp_id = trp_id_t{1}, .pci = MIN_PCI},
+         {.trp_id = trp_id_t{1}, .cgi = nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::min()}},
+         {.trp_id = trp_id_t{1}, .arfcn = 368500}}};
+  }
 
   async_task<du_positioning_info_response> request_positioning_info(const du_positioning_info_request& req) override
   {
@@ -266,8 +272,8 @@ public:
 
 protected:
   struct f1c_test_bearer {
-    // This user provided constructor is added here to fix a Clang compilation error related to the use of nested types
-    // with std::optional.
+    // This user provided constructor is added here to fix a Clang compilation error related to the use of nested
+    // types with std::optional.
     f1c_test_bearer() {}
 
     srb_id_t                  srb_id = srb_id_t::nulltype;
@@ -275,8 +281,8 @@ protected:
     f1c_bearer*               bearer = nullptr;
   };
   struct f1u_test_bearer {
-    // This user provided constructor is added here to fix a Clang compilation error related to the use of nested types
-    // with std::optional.
+    // This user provided constructor is added here to fix a Clang compilation error related to the use of nested
+    // types with std::optional.
     f1u_test_bearer() {}
 
     drb_id_t                  drb_id = drb_id_t::invalid;

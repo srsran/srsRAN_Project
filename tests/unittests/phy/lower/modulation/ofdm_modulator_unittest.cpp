@@ -153,7 +153,7 @@ int main()
                 cp.get_length(nsymb * slot_idx + symbol_idx, scs).to_samples(to_sampling_rate_Hz(scs, dft_size));
             std::vector<cf_t> expected_output_data(dft_size + cp_len);
             span<cf_t>        expected_output = expected_output_data;
-            srsvec::sc_prod(dft_entries[symbol_idx].output, ofdm_config.scale, expected_output.last(dft_size));
+            srsvec::sc_prod(expected_output.last(dft_size), dft_entries[symbol_idx].output, ofdm_config.scale);
             srsvec::copy(expected_output.first(cp_len), expected_output.last(cp_len));
 
             // Select a view of the OFDM modulator output.

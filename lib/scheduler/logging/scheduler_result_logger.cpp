@@ -33,15 +33,15 @@ namespace {
 
 auto make_dl_dci_log_entry(const dci_dl_info& dci)
 {
-  bool                                    is_formattable = true;
-  uint8_t                                 h_id           = 0;
-  bool                                    ndi            = false;
-  uint8_t                                 rv             = 0;
-  uint8_t                                 mcs            = 0;
-  uint8_t                                 pucch_res_id   = 0;
-  std::optional<int8_t>                   tpc_cmd;
-  std::optional<uint8_t>                  dai;
-  std::optional<vrb_to_prb::mapping_type> vrb_prb;
+  bool                   is_formattable = true;
+  uint8_t                h_id           = 0;
+  bool                   ndi            = false;
+  uint8_t                rv             = 0;
+  uint8_t                mcs            = 0;
+  uint8_t                pucch_res_id   = 0;
+  std::optional<int8_t>  tpc_cmd;
+  std::optional<uint8_t> dai;
+  std::optional<bool>    vrb_prb;
 
   switch (dci.type) {
     case dci_dl_rnti_config_type::c_rnti_f1_0: {
@@ -88,7 +88,7 @@ auto make_dl_dci_log_entry(const dci_dl_info& dci)
         fmt::format_to(ctx.out(), " dai={}", dai.value());
       }
       if (vrb_prb.has_value()) {
-        fmt::format_to(ctx.out(), " vrb_prb_map={}", fmt::underlying(vrb_prb.value()));
+        fmt::format_to(ctx.out(), " vrb_prb_map_used={}", vrb_prb.value() ? "yes" : "no");
       }
     }
     return ctx.out();
@@ -660,16 +660,19 @@ auto make_pucch_debug_log_entry(const pucch_info& pucch)
 auto make_srs_debug_log_entry(const srs_info& srs)
 {
   return make_formattable([srs](auto& ctx) {
-    fmt::format_to(ctx.out(),
-                   "\n- SRS: c-rnti={} symb={} tx-comb=(n{} o={} cs={}) c_srs={} f_sh={} seq_id={}",
-                   srs.crnti,
-                   srs.symbols,
-                   static_cast<unsigned>(srs.tx_comb),
-                   srs.comb_offset,
-                   srs.cyclic_shift,
-                   srs.config_index,
-                   srs.freq_shift,
-                   srs.sequence_id);
+    fmt::format_to(
+        ctx.out(),
+        "\n- SRS: c-rnti={} symb={} tx-comb=(n{} o={} cs={}) c_srs={} f_sh={} seq_id={} requests=[ch_mtx={} pos={}]",
+        srs.crnti,
+        srs.symbols,
+        static_cast<unsigned>(srs.tx_comb),
+        srs.comb_offset,
+        srs.cyclic_shift,
+        srs.config_index,
+        srs.freq_shift,
+        srs.sequence_id,
+        srs.normalized_channel_iq_matrix_requested ? "yes" : "no",
+        srs.positioning_report_requested ? "yes" : "no");
     return ctx.out();
   });
 }
@@ -735,7 +738,7 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
                    result.dl.dl_pdcchs.end(),
                    [](const pdcch_dl_information& pdcch) { return pdcch.ctx.rnti != rnti_t::SI_RNTI; }) and
       result.dl.ul_pdcchs.empty() and result.dl.paging_grants.empty() and result.dl.rar_grants.empty() and
-      result.dl.ue_grants.empty() and result.ul.puschs.empty() and result.ul.pucchs.empty();
+      result.dl.ue_grants.empty() and result.ul.puschs.empty() and result.ul.pucchs.empty() and result.ul.srss.empty();
 
   const bool failed_attempts = result.failed_attempts.pdcch + result.failed_attempts.uci > 0;
   const bool slot_is_logged =

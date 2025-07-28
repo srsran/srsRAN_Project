@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/cu_cp/cell_meas_manager_config.h"
+#include "srsran/cu_cp/cu_cp_metrics_notifier.h"
 #include "srsran/cu_cp/mobility_manager_config.h"
 #include "srsran/cu_cp/ue_configuration.h"
 #include "srsran/e1ap/cu_cp/e1ap_configuration.h"
@@ -124,7 +125,8 @@ struct cu_cp_configuration {
   };
   struct metrics_params {
     /// CU-CP statistics report period.
-    std::chrono::seconds statistics_report_period{1};
+    std::chrono::seconds      statistics_report_period{1};
+    std::chrono::milliseconds metrics_report_period{0};
   };
 
   /// NG-RAN node parameters.
@@ -151,8 +153,8 @@ struct cu_cp_configuration {
   metrics_params metrics;
   /// Timers, executors, and other services used by the CU-CP.
   service_params services;
-  /// PDCP metrics notifier.
-  pdcp_metrics_notifier* pdcp_metric_notifier = nullptr;
+  /// CU-CP metrics notifier.
+  metrics_report_notifier* metrics_notifier = nullptr;
 };
 
 } // namespace srs_cu_cp

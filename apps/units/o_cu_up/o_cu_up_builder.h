@@ -46,7 +46,6 @@ class e2_connection_client;
 /// O-RAN CU-UP unit dependencies.
 struct o_cu_up_unit_dependencies {
   worker_manager*                  workers;
-  task_executor*                   cu_up_e2_exec    = nullptr;
   e2_connection_client*            e2_gw            = nullptr;
   app_services::metrics_notifier*  metrics_notifier = nullptr;
   srs_cu_up::e1_connection_client* e1ap_conn_client = nullptr;

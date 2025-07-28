@@ -25,6 +25,7 @@
 #include "srsran/ran/csi_report/csi_report_configuration.h"
 #include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/ran/csi_report/csi_report_packed.h"
+#include "srsran/ran/csi_report/csi_report_size.h"
 #include "srsran/support/units.h"
 
 namespace srsran {
@@ -35,7 +36,7 @@ namespace srsran {
 ///
 /// \param[in] config CSI report configuration.
 /// \return The report size in bits.
-units::bits get_csi_report_pucch_size(const csi_report_configuration& config);
+csi_report_size get_csi_report_pucch_size(const csi_report_configuration& config);
 
 /// \brief Checks that the CSI payload carried over PUCCH is valid given a CSI report configuration.
 ///

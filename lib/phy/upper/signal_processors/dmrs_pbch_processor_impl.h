@@ -50,12 +50,12 @@ private:
   /// \return the initial pseudo-random state
   static unsigned c_init(const config_t& config);
 
-  /// \brief Implements TS 38.211 section 7.4.1.4.1 Sequence generation
+  /// \brief Implements TS38.211 Section 7.4.1.4.1 Sequence generation
   /// \param [out] sequence provides the destination of the sequence generation
   /// \param [in] config provides the required fields to generate the signal
   void generation(std::array<cf_t, NOF_RE>& sequence, const config_t& config) const;
 
-  /// \brief Implements TS 38.211 section 7.4.1.4.2 Mapping to physical resources
+  /// \brief Implements TS38.211 Section 7.4.1.4.2 Mapping to physical resources
   /// \param [in] sequence provides the source of the sequence
   /// \param [out] grid provides the grid destination to map the signal
   /// \param [in] config provides the required fields to map the signal

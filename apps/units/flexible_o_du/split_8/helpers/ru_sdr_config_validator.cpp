@@ -27,22 +27,11 @@
 using namespace srsran;
 
 static bool validate_expert_execution_unit_config(const ru_sdr_unit_config&        config,
-                                                  unsigned                         nof_cells,
                                                   const os_sched_affinity_bitmask& available_cpus)
 {
   if ((config.expert_execution_cfg.threads.execution_profile == lower_phy_thread_profile::single) &&
       (config.expert_cfg.dl_buffer_size_policy != "auto")) {
     fmt::print("DL buffer size policy must be set to auto when single thread lower PHY profile is used.\n");
-    return false;
-  }
-
-  // Configure more cells for expert execution than the number of cells is an error.
-  if (config.expert_execution_cfg.cell_affinities.size() != nof_cells) {
-    fmt::print("Using different number of cells for SDR expert execution '{}' than the number of defined "
-               "cells '{}'\n",
-               config.expert_execution_cfg.cell_affinities.size(),
-               nof_cells);
-
     return false;
   }
 
@@ -93,6 +82,13 @@ static bool validate_amplitude_control_unit_config(const amplitude_control_unit_
 static bool validate_ru_sdr_appconfig(const ru_sdr_unit_config&                 config,
                                       span<const ru_sdr_cell_validation_config> cell_config)
 {
+  if (config.expert_execution_cfg.cell_affinities.size() != cell_config.size()) {
+    fmt::println("Using different number of cells for SDR expert execution '{}' than the number of defined cells '{}'",
+                 config.expert_execution_cfg.cell_affinities.size(),
+                 cell_config.size());
+    return false;
+  }
+
   static constexpr phy_time_unit reference_time = phy_time_unit::from_units_of_kappa(16);
 
   if (!reference_time.is_sample_accurate(config.srate_MHz * 1e6)) {
@@ -169,8 +165,7 @@ static bool validate_ru_sdr_appconfig(const ru_sdr_unit_config&                 
 }
 
 bool srsran::validate_ru_sdr_config(const ru_sdr_unit_config&                 config,
-                                    span<const ru_sdr_cell_validation_config> cell_config,
-                                    const os_sched_affinity_bitmask&          available_cpus)
+                                    span<const ru_sdr_cell_validation_config> cell_config)
 {
   if (!validate_ru_sdr_appconfig(config, cell_config)) {
     return false;
@@ -182,9 +177,10 @@ bool srsran::validate_ru_sdr_config(const ru_sdr_unit_config&                 co
     return false;
   }
 
-  if (!validate_expert_execution_unit_config(config, cell_config.size(), available_cpus)) {
-    return false;
-  }
-
   return true;
+}
+
+bool srsran::validate_ru_sdr_cpus(const ru_sdr_unit_config& config, const os_sched_affinity_bitmask& available_cpus)
+{
+  return validate_expert_execution_unit_config(config, available_cpus);
 }

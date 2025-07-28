@@ -91,7 +91,7 @@ tests:
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
-  - id: "32UE ideal UDP bidirectional PF Scheduler"
+  - id: "32UE ideal UDP bidirectional RR Scheduler"
     campaign_filename: *campaign_filename
     test_name: "32UE ideal UDP bidirectional"
     test_timeout: *test_timeout
@@ -101,8 +101,7 @@ tests:
       cell_cfg:
         sched_expert_cfg:
           policy_sched_cfg:
-            qos_sched:
-              pf_fairness_coeff: 2
+            rr_sched:
     # Pass / Fail Criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 72.0e+6
@@ -286,7 +285,7 @@ tests:
       expert_execution:
         threads:
           upper_phy:
-            nof_dl_threads: 3
+            nof_dl_threads: 4
             nof_ul_threads: 2
             nof_pusch_decoder_threads: 3
     # Pass / Fail Criteria
@@ -317,7 +316,7 @@ tests:
       expert_execution:
         threads:
           upper_phy:
-            nof_dl_threads: 3
+            nof_dl_threads: 4
             nof_ul_threads: 2
             nof_pusch_decoder_threads: 3
     # Pass / Fail Criteria

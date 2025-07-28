@@ -44322,7 +44322,7 @@ SRSASN_CODE trp_info_s::pack(bit_ref& bref) const
 {
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(pack_integer(bref, trp_id, (uint32_t)0u, (uint32_t)65535u, true, true));
+  HANDLE_CODE(pack_integer(bref, trp_id, (uint32_t)1u, (uint32_t)65535u, true, true));
   HANDLE_CODE(pack_dyn_seq_of(bref, trp_info_type_resp_list, 1, 64, true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
@@ -44334,7 +44334,7 @@ SRSASN_CODE trp_info_s::unpack(cbit_ref& bref)
 {
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(unpack_integer(trp_id, bref, (uint32_t)0u, (uint32_t)65535u, true, true));
+  HANDLE_CODE(unpack_integer(trp_id, bref, (uint32_t)1u, (uint32_t)65535u, true, true));
   HANDLE_CODE(unpack_dyn_seq_of(trp_info_type_resp_list, bref, 1, 64, true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));

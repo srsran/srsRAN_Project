@@ -77,9 +77,9 @@ add_executable(ring_buffer_pool_test ring_buffer_pool_test.cpp)
 target_link_libraries(ring_buffer_pool_test srsran_support gtest gtest_main)
 add_test(ring_buffer_pool_test ring_buffer_pool_test)
 
-add_executable(unbounded_object_pool_test unbounded_object_pool_test.cpp)
-target_link_libraries(unbounded_object_pool_test srsran_support gtest gtest_main)
-add_test(unbounded_object_pool_test unbounded_object_pool_test)
+add_executable(object_pool_test unbounded_object_pool_test.cpp bounded_object_pool_test.cpp)
+target_link_libraries(object_pool_test srsran_support gtest gtest_main)
+add_test(object_pool_test object_pool_test)
 
 add_executable(fixed_size_memory_pool_test fixed_size_memory_pool_test.cpp)
 target_link_libraries(fixed_size_memory_pool_test srsran_support gtest gtest_main)

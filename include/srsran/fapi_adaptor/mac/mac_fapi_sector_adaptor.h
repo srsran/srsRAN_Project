@@ -26,7 +26,7 @@ namespace srsran {
 
 namespace fapi {
 class slot_data_message_notifier;
-class slot_error_message_notifier;
+class error_message_notifier;
 class slot_time_message_notifier;
 } // namespace fapi
 
@@ -52,8 +52,8 @@ public:
   /// \brief Returns a reference to the slot time notifier used by the adaptor.
   virtual fapi::slot_time_message_notifier& get_slot_time_message_notifier() = 0;
 
-  /// \brief Returns a reference to the slot error notifier used by the adaptor.
-  virtual fapi::slot_error_message_notifier& get_slot_error_message_notifier() = 0;
+  /// \brief Returns a reference to the error notifier used by the adaptor.
+  virtual fapi::error_message_notifier& get_error_message_notifier() = 0;
 
   /// \brief Returns a reference to the slot data notifier used by the adaptor.
   virtual fapi::slot_data_message_notifier& get_slot_data_message_notifier() = 0;

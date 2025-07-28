@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/phy/upper/channel_processors/prach_detector.h"
-#include "srsran/support/memory_pool/concurrent_thread_local_object_pool.h"
+#include "srsran/support/memory_pool/bounded_object_pool.h"
 
 namespace srsran {
 
@@ -31,21 +31,21 @@ namespace srsran {
 class prach_detector_pool : public prach_detector
 {
 public:
-  /// Creates a PRACH detector pool from a list of detectors. Ownership is transferred to the pool.
-  explicit prach_detector_pool(std::vector<std::unique_ptr<prach_detector>> processors_) :
-    processors(std::move(processors_))
-  {
-  }
+  using detector_pool = bounded_unique_object_pool<prach_detector>;
+
+  /// Creates a PRACH detector pool from a shared detector pool.
+  explicit prach_detector_pool(std::shared_ptr<detector_pool> detectors_) : detectors(std::move(detectors_)) {}
 
   // See interface for documentation.
   prach_detection_result detect(const prach_buffer& input, const configuration& config) override
   {
-    prach_detector& detector = processors.get();
-    return detector.detect(input, config);
+    auto detector = detectors->get();
+    report_fatal_error_if_not(detector, "Failed to retrieve PRACH detector.");
+    return detector->detect(input, config);
   }
 
 private:
-  concurrent_thread_local_object_pool<prach_detector> processors;
+  std::shared_ptr<detector_pool> detectors;
 };
 
 } // namespace srsran

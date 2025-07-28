@@ -136,35 +136,35 @@ static void sc_prod_sss_simd(const int16_t* x, int16_t h, int16_t* z, std::size_
   }
 }
 
-void srsran::srsvec::sc_prod(span<const cf_t> x, cf_t h, span<cf_t> z)
+void srsran::srsvec::sc_prod(span<cf_t> z, span<const cf_t> x, cf_t h)
 {
   srsran_srsvec_assert_size(x, z);
 
   sc_prod_ccc_simd(x.data(), h, z.data(), x.size());
 }
 
-void srsran::srsvec::sc_prod(span<const cf_t> x, float h, span<cf_t> z)
+void srsran::srsvec::sc_prod(span<cf_t> z, span<const cf_t> x, float h)
 {
   srsran_srsvec_assert_size(x, z);
 
   sc_prod_fff_simd(reinterpret_cast<const float*>(x.data()), h, reinterpret_cast<float*>(z.data()), 2 * x.size());
 }
 
-void srsran::srsvec::sc_prod(span<const float> x, float h, span<float> z)
+void srsran::srsvec::sc_prod(span<float> z, span<const float> x, float h)
 {
   srsran_srsvec_assert_size(x, z);
 
   sc_prod_fff_simd(x.data(), h, z.data(), x.size());
 }
 
-void srsran::srsvec::sc_prod(span<const cbf16_t> x, cf_t h, span<cbf16_t> z)
+void srsran::srsvec::sc_prod(span<cbf16_t> z, span<const cbf16_t> x, cf_t h)
 {
   srsran_srsvec_assert_size(x, z);
 
   sc_prod_ccc_simd(x.data(), h, z.data(), x.size());
 }
 
-void srsran::srsvec::sc_prod(span<const int16_t> x, int16_t h, span<int16_t> z)
+void srsran::srsvec::sc_prod(span<int16_t> z, span<const int16_t> x, int16_t h)
 {
   srsran_srsvec_assert_size(x, z);
 

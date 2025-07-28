@@ -134,6 +134,11 @@ void log_error_code(SRSASN_CODE code, const char* filename, int line);
   } while (0)
 
 const char* convert_enum_idx(const char* array[], uint32_t nof_types, uint32_t enum_val, const char* enum_type);
+bool        convert_enum_str(const char* array[],
+                             uint32_t    nof_types,
+                             const char* str,
+                             uint32_t&   enum_val,
+                             const char* enum_type);
 template <class ItemType>
 ItemType map_enum_number(ItemType* array, uint32_t nof_types, uint32_t enum_val, const char* enum_type);
 

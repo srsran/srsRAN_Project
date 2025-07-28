@@ -100,7 +100,7 @@ void dmrs_pdsch_processor_impl::apply_cdm(span<cf_t>       sequence,
 
   // Apply w_t weight can be +1 or -1 depending on l_prime and port.
   if (params.w_t[l_prime] != +1.0F) {
-    srsvec::sc_prod(base_sequence, -1, sequence);
+    srsvec::sc_prod(sequence, base_sequence, -1);
   } else {
     srsvec::copy(sequence, base_sequence);
   }

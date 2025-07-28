@@ -100,7 +100,7 @@ public:
 
 private:
   const gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_tx_config cfg;
-  sockaddr_storage                                        peer_sockaddr;
-  bool                                                    stopped = false;
+  sockaddr_storage                                        peer_sockaddr = {};
+  bool                                                    stopped       = false;
 };
 } // namespace srsran

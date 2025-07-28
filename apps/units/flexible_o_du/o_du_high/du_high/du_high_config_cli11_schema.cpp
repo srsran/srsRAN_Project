@@ -25,11 +25,13 @@
 #include "apps/helpers/metrics/metrics_config_cli11_schema.h"
 #include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "du_high_config.h"
+#include "du_high_config_cli11_ntn_schema.h"
 #include "srsran/adt/ranges/transform.h"
 #include "srsran/ran/drx_config.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/slot_point_extended.h"
+#include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/support/cli11_utils.h"
 #include "srsran/support/config_parsers.h"
 #include "srsran/support/format/fmt_to_c_str.h"
@@ -399,6 +401,13 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
              "PDSCH interleaving bundle size. Valid values: [0, 2, 4]")
       ->capture_default_str()
       ->check(CLI::IsMember({0, 2, 4}));
+  add_option(app,
+             "--max_rank",
+             pdsch_params.max_rank,
+             "Maximum number of PDSCH "
+             "transmission layers. The actual maximum is limited by the number of DL antennas.")
+      ->capture_default_str()
+      ->check(CLI::NonNegativeNumber);
 }
 
 static void configure_cli11_du_args(CLI::App& app, bool& warn_on_drop)
@@ -691,7 +700,7 @@ static void configure_cli11_scheduler_expert_args(CLI::App& app, du_high_unit_sc
   CLI::App* policy_sched_cfg_subcmd =
       add_subcommand(app,
                      "policy_sched_cfg",
-                     "Policy scheduler expert configuration. By default, time-domain round-robin is used.")
+                     "Policy scheduler expert configuration. By default, time-domain QoS-aware policy is used.")
           ->configurable();
   configure_cli11_policy_scheduler_expert_args(*policy_sched_cfg_subcmd, expert_params.policy_sched_expert_cfg);
   CLI::App* ta_sched_cfg_subcmd =
@@ -1845,151 +1854,6 @@ static void configure_cli11_metrics_args(CLI::App& app, du_high_unit_metrics_con
   configure_cli11_metrics_layers_args(*layers_subcmd, metrics_params.layers_cfg);
 }
 
-static void configure_cli11_epoch_time(CLI::App& app, epoch_time_t& epoch_time)
-{
-  add_option(app, "--sfn", epoch_time.sfn, "SFN Part")->capture_default_str()->check(CLI::Range(0, 1023));
-  add_option(app, "--subframe_number", epoch_time.subframe_number, "Sub-frame number Part")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 9));
-}
-
-static void configure_cli11_ta_info(CLI::App& app, ta_info_t& ta_info)
-{
-  add_option(app, "--ta_common", ta_info.ta_common, "TA common offset")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 66485757));
-  add_option(app, "--ta_common_drift", ta_info.ta_common_drift, "Drift rate of the common TA")
-      ->capture_default_str()
-      ->check(CLI::Range(-257303, 257303));
-  add_option(app, "--ta_common_drift_variant", ta_info.ta_common_drift_variant, "Drift rate variation of the common TA")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 28949));
-}
-
-static void configure_cli11_ephemeris_info_ecef(CLI::App& app, ecef_coordinates_t& ephemeris_info)
-{
-  add_option(app, "--pos_x", ephemeris_info.position_x, "X Position of the satellite [m]")
-      ->capture_default_str()
-      ->check(CLI::Range(-67108864, 67108863));
-  add_option(app, "--pos_y", ephemeris_info.position_y, "Y Position of the satellite [m]")
-      ->capture_default_str()
-      ->check(CLI::Range(-67108864, 67108863));
-  add_option(app, "--pos_z", ephemeris_info.position_z, "Z Position of the satellite [m]")
-      ->capture_default_str()
-      ->check(CLI::Range(-67108864, 67108863));
-  add_option(app, "--vel_x", ephemeris_info.velocity_vx, "X Velocity of the satellite [m/s]")
-      ->capture_default_str()
-      ->check(CLI::Range(-32768, 32767));
-  add_option(app, "--vel_y", ephemeris_info.velocity_vy, "Y Velocity of the satellite [m/s]")
-      ->capture_default_str()
-      ->check(CLI::Range(-32768, 32767));
-  add_option(app, "--vel_z", ephemeris_info.velocity_vz, "Z Velocity of the satellite [m/s]")
-      ->capture_default_str()
-      ->check(CLI::Range(-32768, 32767));
-}
-
-static void configure_cli11_ephemeris_info_orbital(CLI::App& app, orbital_coordinates_t& ephemeris_info)
-{
-  add_option(app, "--semi_major_axis", ephemeris_info.semi_major_axis, "Semi-major axis of the satellite [m]")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 1000000000));
-  add_option(app, "--eccentricity", ephemeris_info.eccentricity, "Eccentricity of the satellite [-]")
-      ->capture_default_str();
-  add_option(app, "--periapsis", ephemeris_info.periapsis, "Periapsis of the satellite [rad]")->capture_default_str();
-  add_option(app, "--longitude", ephemeris_info.longitude, "Longitude of the satellites angle of ascending node [rad]")
-      ->capture_default_str();
-  add_option(app, "--inclination", ephemeris_info.inclination, "Inclination of the satellite [rad]")
-      ->capture_default_str();
-  add_option(app, "--mean_anomaly", ephemeris_info.mean_anomaly, "Mean anomaly of the satellite [rad]")
-      ->capture_default_str();
-}
-
-static void configure_cli11_feeder_link(CLI::App& app, feeder_link_info_t& feeder_link_info)
-{
-  add_option(app,
-             "--enable_doppler_compensation",
-             feeder_link_info.enable_doppler_compensation,
-             "Enable/disable Feeder Link Doppler compensation.")
-      ->capture_default_str();
-  add_option(app, "--dl_freq", feeder_link_info.dl_freq, "Downlink feeder link carrier frequency (gnb->sat) [Hz]")
-      ->capture_default_str()
-      ->check(CLI::Range(0.0, 100e9));
-  add_option(app, "--ul_freq", feeder_link_info.ul_freq, "Uplink feeder link carrier frequency (sat->gnb) [Hz]")
-      ->capture_default_str()
-      ->check(CLI::Range(0.0, 100e9));
-}
-
-static void configure_cli11_geodetic_coordinates(CLI::App& app, geodetic_coordinates_t& location)
-{
-  add_option(app, "--latitude", location.latitude, "Latitude [degree]")
-      ->capture_default_str()
-      ->check(CLI::Range(-90.0, 90.0));
-  add_option(app, "--longitude", location.longitude, "Longitude [degree]")
-      ->capture_default_str()
-      ->check(CLI::Range(-180.0, 180.0));
-  add_option(app, "--altitude", location.altitude, "Altitude [m]")
-      ->capture_default_str()
-      ->check(CLI::Range(-1000.0, 20000.0));
-}
-
-static void configure_cli11_ntn_args(CLI::App&                  app,
-                                     std::optional<ntn_config>& ntn,
-                                     epoch_time_t&              epoch_time,
-                                     ta_info_t&                 ta_info,
-                                     orbital_coordinates_t&     orbital_coordinates,
-                                     ecef_coordinates_t&        ecef_coordinates,
-                                     feeder_link_info_t&        feeder_link_info,
-                                     geodetic_coordinates_t&    ntn_gateway_location)
-{
-  ntn_config& config = ntn.emplace();
-
-  add_option(app, "--cell_specific_koffset", config.cell_specific_koffset, "Cell-specific k-offset to be used for NTN.")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 1023));
-
-  app.add_option("--ntn_ul_sync_validity_dur", ntn->ntn_ul_sync_validity_dur, "An UL sync validity duration")
-      ->capture_default_str()
-      ->check(CLI::IsMember({5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 120, 180, 240, 900}));
-
-  // Epoch timestamp.
-  app.add_option("--epoch_timestamp",
-                 ntn->epoch_timestamp,
-                 "Epoch timestamp for the NTN assistance information in ms unit of Unix time")
-      ->capture_default_str();
-
-  // Epoch time.
-  CLI::App* epoch_time_subcmd = add_subcommand(app, "epoch_time", "Epoch time for the NTN assistance information");
-  configure_cli11_epoch_time(*epoch_time_subcmd, epoch_time);
-
-  // TA-info
-  CLI::App* ta_info_subcmd = add_subcommand(app, "ta_info", "TA Info for the NTN assistance information");
-  configure_cli11_ta_info(*ta_info_subcmd, ta_info);
-
-  // ephemeris configuration.
-  CLI::App* ephem_subcmd_ecef =
-      add_subcommand(app, "ephemeris_info_ecef", "Ephermeris information of the satellite in ecef coordinates");
-  configure_cli11_ephemeris_info_ecef(*ephem_subcmd_ecef, ecef_coordinates);
-
-  CLI::App* ephem_subcmd_orbital =
-      add_subcommand(app, "ephemeris_orbital", "Ephermeris information of the satellite in orbital coordinates");
-  configure_cli11_ephemeris_info_orbital(*ephem_subcmd_orbital, orbital_coordinates);
-
-  CLI::App* feeder_link_subcmd =
-      add_subcommand(app, "feeder_link", "Feeder link parameters used to compensate Doppler shifts");
-  configure_cli11_feeder_link(*feeder_link_subcmd, feeder_link_info);
-
-  CLI::App* gateway_location_subcmd =
-      add_subcommand(app, "gateway_location", "Geoderic coordinates of the NTN Gateway location");
-  configure_cli11_geodetic_coordinates(*gateway_location_subcmd, ntn_gateway_location);
-}
-
-static epoch_time_t           epoch_time;
-static ta_info_t              ta_info;
-static ecef_coordinates_t     ecef_coordinates;
-static orbital_coordinates_t  orbital_coordinates;
-static feeder_link_info_t     feeder_link_info;
-static geodetic_coordinates_t ntn_gateway_location;
-
 static void configure_cli11_rlc_um_args(CLI::App& app, du_high_unit_rlc_um_config& rlc_um_params)
 {
   CLI::App* rlc_tx_um_subcmd = app.add_subcommand("tx", "UM TX parameters");
@@ -2020,6 +1884,9 @@ static void configure_cli11_rlc_args(CLI::App& app, du_high_unit_rlc_config& rlc
 static void configure_cli11_f1u_du_args(CLI::App& app, du_high_unit_f1u_du_config& f1u_du_params)
 {
   add_option(app, "--backoff_timer", f1u_du_params.t_notify, "F1-U backoff timer (ms)")->capture_default_str();
+  add_option(app, "--ul_buffer_timeout", f1u_du_params.ul_buffer_timeout, "F1-U handover buffering timeout (ms)")
+      ->capture_default_str();
+  add_option(app, "--ul_buffer_size", f1u_du_params.ul_buffer_size, "F1-U handover buffer size")->capture_default_str();
 }
 
 static void configure_cli11_qos_args(CLI::App& app, du_high_unit_qos_config& qos_params)
@@ -2087,15 +1954,28 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
   configure_cli11_expert_execution_args(*expert_subcmd, parsed_cfg.config.expert_execution_cfg);
 
   // NTN section.
-  CLI::App* ntn_subcmd = add_subcommand(app, "ntn", "NTN parameters")->configurable();
-  configure_cli11_ntn_args(*ntn_subcmd,
-                           parsed_cfg.config.ntn_cfg,
-                           epoch_time,
-                           ta_info,
-                           orbital_coordinates,
-                           ecef_coordinates,
-                           feeder_link_info,
-                           ntn_gateway_location);
+  static ntn_config ntn_cfg;
+  CLI::App*         ntn_subcmd = add_subcommand(app, "ntn", "Default NTN configuration")->configurable();
+  configure_cli11_ntn_args(*ntn_subcmd, ntn_cfg);
+  ntn_subcmd->parse_complete_callback([&]() {
+    CLI::App* ntn_sub_cmd = app.get_subcommand("ntn");
+    if (ntn_sub_cmd->count() != 0) {
+      parsed_cfg.common_cell_cfg.ntn_cfg.emplace(ntn_cfg);
+      for (auto& cell : parsed_cfg.config.cells_cfg) {
+        cell.cell.ntn_cfg.emplace(ntn_cfg);
+      }
+      // Run the callback again for the cells if the option callback is already run once.
+      if (app.get_option("--cells")->get_callback_run()) {
+        app.get_option("--cells")->run_callback();
+      }
+    } else {
+      for (auto& cell : parsed_cfg.config.cells_cfg) {
+        cell.cell.ntn_cfg.reset();
+      }
+      // As NTN configuration is optional, disable the command when it is not present in the configuration.
+      ntn_sub_cmd->disabled();
+    };
+  });
 
   // Cell section.
   add_option_cell(
@@ -2116,6 +1996,7 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
           subapp.config_formatter(create_yaml_config_parser());
           subapp.allow_config_extras(CLI::config_extras_mode::capture);
           configure_cli11_cells_args(subapp, parsed_cfg.config.cells_cfg[i]);
+          configure_cli11_cell_ntn_args(subapp, parsed_cfg.config.cells_cfg[i].cell.ntn_cfg);
           std::istringstream ss(values[i]);
           subapp.parse_from_stream(ss);
         }
@@ -2161,44 +2042,6 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
   configure_cli11_test_mode_args(*test_mode_subcmd, parsed_cfg.config.test_mode_cfg);
 }
 
-static void manage_ntn_optional(CLI::App& app, du_high_unit_config& gnb_cfg)
-{
-  auto     ntn_app                = app.get_subcommand_ptr("ntn");
-  unsigned nof_epoch_entries      = ntn_app->get_subcommand("epoch_time")->count_all();
-  unsigned nof_ta_info_entries    = ntn_app->get_subcommand("ta_info")->count_all();
-  unsigned nof_ecef_entries       = ntn_app->get_subcommand("ephemeris_info_ecef")->count_all();
-  unsigned nof_orbital_entries    = ntn_app->get_subcommand("ephemeris_orbital")->count_all();
-  unsigned nof_fl_entries         = ntn_app->get_subcommand("feeder_link")->count_all();
-  unsigned nof_ground_loc_entries = ntn_app->get_subcommand("gateway_location")->count_all();
-  if (nof_epoch_entries) {
-    gnb_cfg.ntn_cfg.value().epoch_time = epoch_time;
-  }
-
-  if (nof_ta_info_entries) {
-    gnb_cfg.ntn_cfg.value().ta_info = ta_info;
-  }
-
-  if (nof_ecef_entries) {
-    gnb_cfg.ntn_cfg.value().ephemeris_info = ecef_coordinates;
-  } else if (nof_orbital_entries) {
-    gnb_cfg.ntn_cfg.value().ephemeris_info = orbital_coordinates;
-  }
-
-  if (nof_fl_entries) {
-    gnb_cfg.ntn_cfg.value().feeder_link_info = feeder_link_info;
-  }
-
-  if (nof_ground_loc_entries) {
-    gnb_cfg.ntn_cfg.value().ntn_gateway_location = ntn_gateway_location;
-  }
-
-  if (app.get_subcommand("ntn")->count_all() == 0) {
-    gnb_cfg.ntn_cfg.reset();
-    // As NTN configuration is optional, disable the command when it is not present in the configuration.
-    ntn_app->disabled();
-  }
-}
-
 // Derive the parameters set to "auto"-derived for a cell.
 static void derive_cell_auto_params(du_high_unit_base_cell_config& cell_cfg)
 {
@@ -2207,7 +2050,7 @@ static void derive_cell_auto_params(du_high_unit_base_cell_config& cell_cfg)
     cell_cfg.band = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_f_ref_arfcn);
   }
   if (not cell_cfg.sched_expert_cfg.policy_sched_expert_cfg.has_value()) {
-    cell_cfg.sched_expert_cfg.policy_sched_expert_cfg.emplace(time_rr_scheduler_expert_config{});
+    cell_cfg.sched_expert_cfg.policy_sched_expert_cfg.emplace(time_qos_scheduler_expert_config{});
   }
 
   // If in TDD mode, and pattern was not set, generate a pattern DDDDDDXUUU.
@@ -2225,9 +2068,11 @@ static void derive_cell_auto_params(du_high_unit_base_cell_config& cell_cfg)
   if (not cell_cfg.prach_cfg.prach_config_index.has_value()) {
     if (band_helper::get_duplex_mode(cell_cfg.band.value()) == duplex_mode::FDD) {
       cell_cfg.prach_cfg.prach_config_index = 16;
-    } else {
+    } else if (band_helper::get_freq_range(cell_cfg.band.value()) == frequency_range::FR1) {
       // Valid for TDD period of 5 ms. And, PRACH index 159 is well tested.
       cell_cfg.prach_cfg.prach_config_index = 159;
+    } else {
+      cell_cfg.prach_cfg.prach_config_index = 112;
     }
   }
 
@@ -2254,24 +2099,36 @@ static void derive_auto_params(du_high_unit_config& config)
   }
 
   // Auto derive NTN SIB19 scheduling info.
-  if (config.ntn_cfg.has_value()) {
-    auto& sib_cfg = config.cells_cfg.front().cell.sib_cfg;
-    auto& ntn_cfg = config.ntn_cfg;
-    for (const auto& si_msg : sib_cfg.si_sched_info) {
-      for (unsigned j = 0, je = si_msg.sib_mapping_info.size(); j != je; ++j) {
-        if (si_msg.sib_mapping_info[j] == 19) {
-          ntn_cfg->si_msg_idx          = j;
-          ntn_cfg->si_period_rf        = si_msg.si_period_rf;
-          ntn_cfg->si_window_len_slots = sib_cfg.si_window_len_slots;
-          ntn_cfg->si_window_position  = si_msg.si_window_position;
+  for (auto& cell : config.cells_cfg) {
+    if (cell.cell.ntn_cfg.has_value()) {
+      auto& sib_cfg = cell.cell.sib_cfg;
+      auto& ntn_cfg = cell.cell.ntn_cfg;
+      for (const auto& si_msg : sib_cfg.si_sched_info) {
+        for (unsigned j = 0, je = si_msg.sib_mapping_info.size(); j != je; ++j) {
+          if (si_msg.sib_mapping_info[j] == 19) {
+            ntn_cfg->si_msg_idx          = j;
+            ntn_cfg->si_period_rf        = si_msg.si_period_rf;
+            ntn_cfg->si_window_len_slots = sib_cfg.si_window_len_slots;
+            ntn_cfg->si_window_position  = si_msg.si_window_position;
+          }
         }
       }
+      auto&                      cell_cfg = cell.cell;
+      expected<plmn_identity>    plmn     = plmn_identity::parse(cell_cfg.plmn);
+      expected<nr_cell_identity> nci      = nr_cell_identity::create(config.gnb_id, cell_cfg.sector_id.value());
+      if (not plmn.has_value()) {
+        report_error("Invalid PLMN: {}", cell_cfg.plmn);
+      }
+      if (not nci.has_value()) {
+        report_error("Invalid NR-NCI");
+      }
+      ntn_cfg->nr_cgi.plmn_id = plmn.value();
+      ntn_cfg->nr_cgi.nci     = nci.value();
     }
   }
 }
 
 void srsran::autoderive_du_high_parameters_after_parsing(CLI::App& app, du_high_unit_config& unit_cfg)
 {
-  manage_ntn_optional(app, unit_cfg);
   derive_auto_params(unit_cfg);
 }

@@ -23,8 +23,8 @@
 #pragma once
 
 #include "decorator_helpers/slot_last_message_notifier_dispatcher.h"
+#include "logging_error_notifier_decorator.h"
 #include "logging_slot_data_notifier_decorator.h"
-#include "logging_slot_error_notifier_decorator.h"
 #include "logging_slot_gateway_decorator.h"
 #include "logging_slot_time_notifier_decorator.h"
 #include "srsran/fapi/decorator.h"
@@ -54,7 +54,7 @@ public:
   void set_slot_data_message_notifier(slot_data_message_notifier& notifier) override;
 
   // See interface for documentation.
-  void set_slot_error_message_notifier(slot_error_message_notifier& notifier) override;
+  void set_error_message_notifier(error_message_notifier& notifier) override;
 
   // See interface for documentation.
   void set_slot_time_message_notifier(slot_time_message_notifier& notifier) override;
@@ -64,14 +64,14 @@ private:
   slot_data_message_notifier& get_slot_data_message_notifier_from_this_decorator() override;
 
   // See interface for documentation.
-  slot_error_message_notifier& get_slot_error_message_notifier_from_this_decorator() override;
+  error_message_notifier& get_error_message_notifier_from_this_decorator() override;
 
   // See interface for documentation.
   slot_time_message_notifier& get_slot_time_message_notifier_from_this_decorator() override;
 
 private:
   logging_slot_data_notifier_decorator  data_notifier;
-  logging_slot_error_notifier_decorator error_notifier;
+  logging_error_notifier_decorator      error_notifier;
   logging_slot_time_notifier_decorator  time_notifier;
   slot_last_message_notifier_dispatcher last_msg_notifier;
   logging_slot_gateway_decorator        gateway;

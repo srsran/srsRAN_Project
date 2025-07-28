@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "nr_cgi.h"
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -103,16 +104,32 @@ struct geodetic_coordinates_t {
   double altitude;
 };
 
+/// Indicates polarization information for downlink/uplink transmission on service link.
+struct ntn_polarization_t {
+  enum class polarization_type { rhcp, lhcp, linear };
+  /// If present, this parameter indicates polarization information for downlink transmission on service link.
+  std::optional<polarization_type> dl;
+  /// If present, this parameter indicates Polarization information for uplink service link.
+  std::optional<polarization_type> ul;
+};
+
 struct ntn_config {
   /// SIB 19 values
-  /// Reference location of the serving cell provided via NTN quasi-Earth fixed system. (TS 38.304)
-  std::optional<std::string> reference_location;
+  /// Reference location of the serving cell in geodetic coordinates format (in degrees).
+  std::optional<geodetic_coordinates_t> reference_location;
   /// Distance from the serving cell reference location, as defined in TS 38.304. Each step represents 50m.
   std::optional<unsigned> distance_threshold;
+  /// Indicates the time information on when a cell provided via NTN is going to stop serving the area it is currently
+  /// covering. It represents a timestamp in ms unit of Unix time (UTC time since 1970-01-01)
+  std::optional<uint64_t> t_service;
   /// NTN-config values
-  /// Indicate the epoch time for the NTN assistance information.
+  /// Indicate the epoch time for the NTN assistance information passed in the config file.
   /// It represents a timestamp in ms unit of Unix time (UTC time since 1970-01-01)
   std::optional<uint64_t> epoch_timestamp;
+  /// Optional offset (in SFN) between the SIB19 transmission slot and the epoch time (EpochTime IE) of the NTN
+  /// assistance info. Allows sending NTN assistance information that will become valid epoch_sfn_offset number of
+  /// system frames after SIB19 Tx slot.
+  std::optional<uint64_t> epoch_sfn_offset;
   /// If provided it will be used to fill the EpochTime section in SIB19.
   std::optional<epoch_time_t> epoch_time;
   /// Scheduling offset used for the timing relationships that are modified for NTN (see TS 38.213). The unit of the
@@ -124,6 +141,10 @@ struct ntn_config {
   /// (from epochTime) during which the UE can apply assistance information without having acquired new assistance
   /// information. Values {5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 120, 180, 240, 900} seconds.
   std::optional<unsigned> ntn_ul_sync_validity_dur;
+  /// Whether to broadcast Ephemeris information as ECEF state vectors (if true) or ECI Orbital parameters (if false).
+  /// If not provided, the value is derived from the variant of ephemeris_info.
+  /// If provided and does not match the variant of ephemeris_info, the ephemeris_info is converted accordingly.
+  std::optional<bool> use_state_vector;
   /// This field provides satellite ephemeris either in format of position and velocity state vector or in format of
   /// orbital parameters.
   std::variant<ecef_coordinates_t, orbital_coordinates_t> ephemeris_info;
@@ -134,11 +155,17 @@ struct ntn_config {
   std::optional<feeder_link_info_t> feeder_link_info;
   /// Geodetic coordinates (in degrees) of the NTN Gateway location.
   std::optional<geodetic_coordinates_t> ntn_gateway_location;
+  /// Indicates polarization information for downlink/uplink transmission on service link.
+  std::optional<ntn_polarization_t> polarization;
+  /// When this field is included in SIB19, it indicates reporting of timing advanced is enabled.
+  std::optional<bool> ta_report;
   /// SIB19 scheduling information.
   unsigned                si_msg_idx;
   unsigned                si_period_rf;
   unsigned                si_window_len_slots;
   std::optional<unsigned> si_window_position;
+  // NR-CGI
+  nr_cell_global_id_t nr_cgi;
 };
 
 } // namespace srsran

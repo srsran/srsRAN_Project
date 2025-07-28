@@ -23,6 +23,7 @@
 #include "test_helpers.h"
 #include "srsran/gateways/udp_network_gateway.h"
 #include "srsran/gateways/udp_network_gateway_factory.h"
+#include "srsran/support/executors/inline_task_executor.h"
 #include "srsran/support/executors/manual_task_worker.h"
 
 using namespace srsran;
@@ -107,7 +108,7 @@ protected:
 
   std::unique_ptr<udp_network_gateway> server, client;
 
-  manual_task_worker io_tx_executor{128};
+  inline_task_executor io_tx_executor;
 
   std::string server_address_v4 = "127.0.0.1";
   std::string client_address_v4 = "127.0.1.1";

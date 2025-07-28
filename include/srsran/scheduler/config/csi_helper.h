@@ -60,6 +60,8 @@ struct csi_builder_params {
   unsigned zp_csi_slot_offset = 2;
   /// Report slot offset.
   unsigned csi_report_slot_offset = 9;
+  /// Maximum number of DL layers.
+  unsigned max_nof_layers = 1;
 };
 
 /// \brief Compute default CSI-RS signalling period to use, while constrained by TS38.214, 5.1.6.1.1.

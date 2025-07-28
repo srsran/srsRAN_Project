@@ -68,8 +68,8 @@ public:
   pucch_processor_result process(const resource_grid_reader& grid, const format0_configuration& config) override;
 
   // See pucch_processor interface for documentation.
-  const pucch_format1_map<pucch_processor_result>& process(const resource_grid_reader&        grid,
-                                                           const format1_batch_configuration& config) override;
+  pucch_format1_map<pucch_processor_result> process(const resource_grid_reader&        grid,
+                                                    const format1_batch_configuration& config) override;
 
   // See pucch_processor interface for documentation.
   pucch_processor_result process(const resource_grid_reader& grid, const format2_configuration& config) override;
@@ -115,8 +115,6 @@ private:
   channel_estimate estimates;
   /// Temporal LLR storage.
   std::array<log_likelihood_ratio, pucch_constants::MAX_NOF_LLR> temp_llr;
-  /// PUCCH batch results.
-  pucch_format1_map<pucch_processor_result> batch_results;
 };
 
 } // namespace srsran

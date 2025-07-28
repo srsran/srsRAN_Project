@@ -56,7 +56,7 @@ private:
   /// \brief Look-up table of possible transmitted sequences of 32 bits.
   ///
   /// Row \f$r\f$ corresponds to the codeword obtained by encoding the binary expansion of \f$2r\f$ as described in
-  /// TS 38.211 Section 5.3.3.3.
+  /// TS38.211 Section 5.3.3.3.
   /// \note The codeword corresponding to the binary expansion of \f$ 2r + 1 \f$ can be obtained from the codeword with
   /// index \f$ r \f$ by inverting all the signs.
   static const std::array<std::array<int8_t, MAX_BLOCK_LENGTH>, MAX_NOF_CODEWORDS_2> DETECT_TABLE;

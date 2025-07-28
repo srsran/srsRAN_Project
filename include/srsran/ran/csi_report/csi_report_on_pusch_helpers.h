@@ -25,14 +25,14 @@
 #include "srsran/ran/csi_report/csi_report_configuration.h"
 #include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/ran/csi_report/csi_report_packed.h"
-#include "srsran/ran/csi_report/csi_report_pusch_size.h"
+#include "srsran/ran/csi_report/csi_report_size.h"
 
 namespace srsran {
 
 /// \brief Calculates the Channel State Information (CSI) payload sizes when the CSI report is transmitted in PUSCH.
 ///
 /// Field widths are defined in TS38.212 Section 6.3.2.1.2.
-csi_report_pusch_size get_csi_report_pusch_size(const csi_report_configuration& config);
+csi_report_size get_csi_report_pusch_size(const csi_report_configuration& config);
 
 /// \brief Checks that the CSI payload carried over PUSCH is valid given a CSI report configuration.
 ///

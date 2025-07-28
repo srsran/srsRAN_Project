@@ -55,7 +55,7 @@ TEST_P(SrsVecProdFixture, ProdCCC)
 
   std::vector<cf_t> z(N);
 
-  srsvec::prod(x, y, z);
+  srsvec::prod(z, x, y);
 
   for (size_t i = 0; i != N; ++i) {
     cf_t  gold_z = x[i] * y[i];
@@ -80,7 +80,7 @@ TEST_P(SrsVecProdFixture, ProdFFF)
 
   std::vector<float> z(N);
 
-  srsvec::prod(x, y, z);
+  srsvec::prod(z, x, y);
 
   for (size_t i = 0; i != N; ++i) {
     cf_t  gold_z = x[i] * y[i];

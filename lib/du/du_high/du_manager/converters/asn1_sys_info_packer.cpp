@@ -21,6 +21,7 @@
  */
 
 #include "asn1_sys_info_packer.h"
+#include "asn1_ntn_config_helpers.h"
 #include "asn1_rrc_config_helpers.h"
 #include "srsran/asn1/rrc_nr/bcch_bch_msg.h"
 #include "srsran/asn1/rrc_nr/bcch_dl_sch_msg.h"
@@ -262,20 +263,25 @@ static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_ce
   asn1::number_to_enum(cell.ssb_periodicity_serving_cell, ssb_periodicity_to_value(du_cfg.ssb_cfg.ssb_period));
   cell.ss_pbch_block_pwr = du_cfg.ssb_cfg.ssb_block_power;
 
-  n_ta_offset ta_offset                = band_helper::get_ta_offset(du_cfg.dl_carrier.band);
-  cell.n_timing_advance_offset_present = true;
+  n_ta_offset ta_offset = band_helper::get_ta_offset(du_cfg.dl_carrier.band);
   switch (ta_offset) {
     case n_ta_offset::n0:
+      cell.n_timing_advance_offset_present = true;
       cell.n_timing_advance_offset.value =
           asn1::rrc_nr::serving_cell_cfg_common_sib_s::n_timing_advance_offset_opts::n0;
       break;
     case n_ta_offset::n25600:
+      cell.n_timing_advance_offset_present = true;
       cell.n_timing_advance_offset.value =
           asn1::rrc_nr::serving_cell_cfg_common_sib_s::n_timing_advance_offset_opts::n25600;
       break;
     case n_ta_offset::n39936:
+      cell.n_timing_advance_offset_present = true;
       cell.n_timing_advance_offset.value =
           asn1::rrc_nr::serving_cell_cfg_common_sib_s::n_timing_advance_offset_opts::n39936;
+      break;
+    case n_ta_offset::n13792:
+      // The parameter is ignored.
       break;
     default:
       report_fatal_error("Invalid timing advance offset");
@@ -655,133 +661,6 @@ static std::vector<asn1::rrc_nr::sib8_s> make_asn1_rrc_cell_sib8(const sib8_info
   }
 
   return sib_segments;
-}
-
-static asn1::rrc_nr::sib19_r17_s make_asn1_rrc_cell_sib19(const sib19_info& sib19_params)
-{
-  using namespace asn1::rrc_nr;
-  sib19_r17_s sib19;
-
-  if (sib19_params.distance_thres.has_value()) {
-    sib19.distance_thresh_r17_present = true;
-    sib19.distance_thresh_r17         = sib19_params.distance_thres.value();
-  }
-  if (sib19_params.ref_location.has_value()) {
-    sib19.ref_location_r17.from_string(sib19_params.ref_location.value());
-  }
-
-  sib19.t_service_r17_present = false;
-  sib19.ntn_cfg_r17_present   = true;
-
-  if (sib19_params.cell_specific_koffset.has_value()) {
-    sib19.ntn_cfg_r17.cell_specific_koffset_r17_present = true;
-    sib19.ntn_cfg_r17.cell_specific_koffset_r17         = sib19_params.cell_specific_koffset.value();
-  }
-
-  if (sib19_params.ephemeris_info.has_value()) {
-    if (const auto* pos_vel = std::get_if<ecef_coordinates_t>(&sib19_params.ephemeris_info.value())) {
-      sib19.ntn_cfg_r17.ephemeris_info_r17_present = true;
-      sib19.ntn_cfg_r17.ephemeris_info_r17.set_position_velocity_r17();
-      position_velocity_r17_s& rv = sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17();
-      rv.position_x_r17           = static_cast<int32_t>(pos_vel->position_x);
-      rv.position_y_r17           = static_cast<int32_t>(pos_vel->position_y);
-      rv.position_z_r17           = static_cast<int32_t>(pos_vel->position_z);
-      rv.velocity_vx_r17          = static_cast<int32_t>(pos_vel->velocity_vx);
-      rv.velocity_vy_r17          = static_cast<int32_t>(pos_vel->velocity_vy);
-      rv.velocity_vz_r17          = static_cast<int32_t>(pos_vel->velocity_vz);
-    } else {
-      const auto& orbital_elem = std::get<orbital_coordinates_t>(sib19_params.ephemeris_info.value());
-      sib19.ntn_cfg_r17.ephemeris_info_r17_present = true;
-      sib19.ntn_cfg_r17.ephemeris_info_r17.set_orbital_r17();
-      orbital_r17_s& orbit      = sib19.ntn_cfg_r17.ephemeris_info_r17.orbital_r17();
-      orbit.semi_major_axis_r17 = static_cast<uint64_t>(orbital_elem.semi_major_axis);
-      orbit.eccentricity_r17    = static_cast<uint32_t>(orbital_elem.eccentricity);
-      orbit.periapsis_r17       = static_cast<uint32_t>(orbital_elem.periapsis);
-      orbit.longitude_r17       = static_cast<uint32_t>(orbital_elem.longitude);
-      orbit.inclination_r17     = static_cast<int32_t>(orbital_elem.inclination);
-      orbit.mean_anomaly_r17    = static_cast<uint32_t>(orbital_elem.mean_anomaly);
-    }
-  }
-  if (sib19_params.epoch_time.has_value()) {
-    sib19.ntn_cfg_r17.epoch_time_r17_present          = true;
-    sib19.ntn_cfg_r17.epoch_time_r17.sfn_r17          = sib19_params.epoch_time.value().sfn;
-    sib19.ntn_cfg_r17.epoch_time_r17.sub_frame_nr_r17 = sib19_params.epoch_time.value().subframe_number;
-  }
-  if (sib19_params.k_mac.has_value()) {
-    sib19.ntn_cfg_r17.kmac_r17_present = true;
-    sib19.ntn_cfg_r17.kmac_r17         = sib19_params.k_mac.value();
-  }
-
-  sib19.ntn_cfg_r17.ntn_polarization_dl_r17_present = false;
-  sib19.ntn_cfg_r17.ntn_polarization_ul_r17_present = false;
-
-  if (sib19_params.ta_info.has_value()) {
-    sib19.ntn_cfg_r17.ta_info_r17_present       = true;
-    ta_info_r17_s& ta_info                      = sib19.ntn_cfg_r17.ta_info_r17;
-    ta_info.ta_common_r17                       = static_cast<uint32_t>(sib19_params.ta_info.value().ta_common);
-    ta_info.ta_common_drift_r17_present         = true;
-    ta_info.ta_common_drift_r17                 = static_cast<int32_t>(sib19_params.ta_info.value().ta_common_drift);
-    ta_info.ta_common_drift_variant_r17_present = true;
-    ta_info.ta_common_drift_variant_r17 = static_cast<uint16_t>(sib19_params.ta_info.value().ta_common_drift_variant);
-  }
-
-  if (sib19_params.ntn_ul_sync_validity_dur.has_value()) {
-    sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17_present = true;
-    switch (sib19_params.ntn_ul_sync_validity_dur.value()) {
-      case 5:
-        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s5;
-        break;
-      case 10:
-        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s10;
-        break;
-      case 15:
-        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s15;
-        break;
-      case 20:
-        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s20;
-        break;
-      case 25:
-        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s25;
-        break;
-      case 30:
-        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s30;
-        break;
-      case 35:
-        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s35;
-        break;
-      case 40:
-        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s40;
-        break;
-      case 45:
-        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s45;
-        break;
-      case 50:
-        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s50;
-        break;
-      case 55:
-        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s55;
-        break;
-      case 60:
-        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s60;
-        break;
-      case 120:
-        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s120;
-        break;
-      case 180:
-        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s180;
-        break;
-      case 240:
-        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s240;
-        break;
-      case 900:
-        sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17.value = ntn_cfg_r17_s::ntn_ul_sync_validity_dur_r17_opts::s900;
-        break;
-      default:
-        report_fatal_error("Invalid ntn_ul_sync_validity_dur {}.", sib19_params.ntn_ul_sync_validity_dur.value());
-    }
-  }
-
-  return sib19;
 }
 
 byte_buffer asn1_packer::pack_sib19(const sib19_info& sib19_params, std::string* js_str)

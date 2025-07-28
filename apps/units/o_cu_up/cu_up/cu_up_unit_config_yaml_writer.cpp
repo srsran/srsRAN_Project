@@ -30,10 +30,12 @@ using namespace srsran;
 
 static void fill_cu_up_ngu_gtpu_section(YAML::Node& node, const cu_up_unit_ngu_gtpu_config& config)
 {
-  auto gtpu_node                     = node["gtpu"];
-  gtpu_node["gtpu_queue_size"]       = config.gtpu_queue_size;
-  gtpu_node["gtpu_reordering_timer"] = config.gtpu_reordering_timer_ms;
-  gtpu_node["rate_limiter_period"]   = config.rate_limiter_period.count();
+  auto gtpu_node                   = node["gtpu"];
+  gtpu_node["queue_size"]          = config.gtpu_queue_size;
+  gtpu_node["batch_size"]          = config.gtpu_batch_size;
+  gtpu_node["reordering_timer"]    = config.gtpu_reordering_timer_ms;
+  gtpu_node["rate_limiter_period"] = config.rate_limiter_period.count();
+  gtpu_node["ignore_ue_ambr"]      = config.ignore_ue_ambr;
 }
 
 static void fill_cu_up_ngu_socket_entry(YAML::Node& node, const cu_up_unit_ngu_socket_config& config)

@@ -59,8 +59,11 @@ public:
   /// Gets the PUxCH request handler.
   virtual puxch_processor_request_handler& get_puxch_request_handler() = 0;
 
-  /// \brief Gets the carrier frequency offset processor interface.
-  virtual lower_phy_cfo_controller& get_cfo_handler() = 0;
+  /// Gets the carrier frequency offset controller interface.
+  virtual lower_phy_cfo_controller& get_cfo_control() = 0;
+
+  /// Gets the carrier center frequency controller interface.
+  virtual lower_phy_center_freq_controller& get_carrier_center_frequency_control() = 0;
 
   /// \brief Gets the uplink processor baseband interface.
   /// \return A reference to the internal uplink processor baseband interface.

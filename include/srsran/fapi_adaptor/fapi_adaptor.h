@@ -25,8 +25,9 @@
 namespace srsran {
 namespace fapi {
 
+class operation_controller;
 class slot_data_message_notifier;
-class slot_error_message_notifier;
+class error_message_notifier;
 class slot_last_message_notifier;
 class slot_message_gateway;
 class slot_time_message_notifier;
@@ -52,20 +53,7 @@ public:
   virtual void set_slot_data_message_notifier(slot_data_message_notifier& notifier_) = 0;
 
   /// Sets the error message notifier to the given notifier.
-  virtual void set_slot_error_message_notifier(slot_error_message_notifier& notifier_) = 0;
-};
-
-/// FAPI operation controller interface.
-class fapi_operation_controller
-{
-public:
-  virtual ~fapi_operation_controller() = default;
-
-  /// Starts the underlying PHY. Returns true on success, false otherwise.
-  virtual bool start() = 0;
-
-  /// Stops the underlying PHY. Returns true on success, false otherwise.
-  virtual bool stop() = 0;
+  virtual void set_error_message_notifier(error_message_notifier& notifier_) = 0;
 };
 
 /// \brief FAPI adaptor interface.
@@ -78,7 +66,7 @@ public:
   virtual ~fapi_adaptor() = default;
 
   /// Returns the operation controller of this FAPI adaptor.
-  virtual fapi_operation_controller& get_operation_controller() = 0;
+  virtual operation_controller& get_operation_controller() = 0;
 
   /// Returns the message interface collection of this FAPI adaptor.
   virtual fapi_message_interface_collection& get_message_interface_collection() = 0;

@@ -553,11 +553,16 @@ static std::vector<csi_report_config> make_csi_report_configs(const csi_builder_
     } else {
       report_error("Unsupported number of antenna ports {}", params.nof_ports);
     }
-    // Enable all layer options for the given number of ports. As per TS 38.214, section 5.2.2.2.1, this can be done
-    // by setting the RI restriction bitmap to 0b11...11, where the number of 1s is set to be equal to the number of
-    // ports.
+
+    // Maximum number of layers must be in line with available number of ports.
+    srsran_assert(params.max_nof_layers <= params.nof_ports,
+                  "Maximum number of layers cannot be greater than number of ports");
+
+    // Limit the number of DL layers that can be requested by the UE via the Rank Indicator (RI).
+    // As per TS 38.214, section 5.2.2.2.1, this can be done by setting the RI restriction bitmap to 0b11...11,
+    // where the number of 1s is set to be equal to the number of desired layers.
     single_panel.typei_single_panel_ri_restriction.resize(8);
-    single_panel.typei_single_panel_ri_restriction.from_uint64((1U << params.nof_ports) - 1U);
+    single_panel.typei_single_panel_ri_restriction.from_uint64((1U << params.max_nof_layers) - 1U);
     type1.sub_type                      = single_panel;
     type1.codebook_mode                 = 1;
     reps[0].codebook_cfg->codebook_type = type1;

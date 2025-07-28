@@ -177,6 +177,7 @@ protected:
       FAIL();
     }
     udp_tester->handle_pdu(std::move(pdu), addr_storage);
+    io_tx_executor.run_pending_tasks();
   }
 
   // spawn a thread to receive data

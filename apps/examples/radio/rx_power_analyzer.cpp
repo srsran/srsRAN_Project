@@ -58,7 +58,7 @@ static std::string              driver_name          = "uhd";
 static std::string              device_arguments     = "type=b200";
 static std::vector<std::string> tx_channel_arguments = {};
 static std::vector<std::string> rx_channel_arguments = {};
-static double                   sampling_rate_hz     = 61.44e6;
+static double                   sampling_rate_Hz     = 61.44e6;
 static unsigned                 nof_channels         = 1;
 static double                   tx_gain              = 20.0;
 static double                   tx_rx_freq           = 3.5e9;
@@ -101,7 +101,7 @@ static void usage(std::string_view prog)
   fmt::print("\t-d Driver name. [Default {}]\n", driver_name);
   fmt::print("\t-a Device arguments. [Default {}]\n", device_arguments);
   fmt::print("\t-p Number of radio ports. [Default {}]\n", nof_channels);
-  fmt::print("\t-s Sampling rate. [Default {}]\n", sampling_rate_hz);
+  fmt::print("\t-s Sampling rate. [Default {}]\n", sampling_rate_Hz);
   fmt::print("\t-f Tx/Rx frequency. [Default {}]\n", tx_rx_freq);
   fmt::print("\t-t Step time in seconds. [Default {}]\n", step_time_s);
   fmt::print("\t-m Minimum Rx gain. [Default {}]\n", rx_gain_min);
@@ -134,7 +134,7 @@ static void parse_args(int argc, char** argv)
         break;
       case 's':
         if (optarg != nullptr) {
-          sampling_rate_hz = std::strtod(optarg, nullptr);
+          sampling_rate_Hz = std::strtod(optarg, nullptr);
         }
         break;
       case 'f':
@@ -241,7 +241,7 @@ int main(int argc, char** argv)
   // Parse arguments.
   parse_args(argc, argv);
 
-  unsigned tx_rx_delay_samples = static_cast<unsigned>(sampling_rate_hz * tx_rx_delay_s);
+  unsigned tx_rx_delay_samples = static_cast<unsigned>(sampling_rate_Hz * tx_rx_delay_s);
 
   // Asynchronous task executor.
   task_worker                    async_task_worker("async_thread", RADIO_MAX_NOF_PORTS);
@@ -255,7 +255,7 @@ int main(int argc, char** argv)
   radio_configuration::radio config;
   config.clock.sync       = radio_configuration::clock_sources::source::DEFAULT;
   config.clock.clock      = radio_configuration::clock_sources::source::DEFAULT;
-  config.sampling_rate_hz = sampling_rate_hz;
+  config.sampling_rate_Hz = sampling_rate_Hz;
   config.otw_format       = otw_format;
   config.tx_mode          = radio_configuration::transmission_mode::continuous;
   config.power_ramping_us = 0;
@@ -270,7 +270,7 @@ int main(int argc, char** argv)
   for (unsigned channel_idx = 0; channel_idx != nof_channels; ++channel_idx) {
     // Create channel configuration and append it to the previous ones.
     radio_configuration::channel ch_config;
-    ch_config.freq.center_frequency_hz = tx_rx_freq;
+    ch_config.freq.center_frequency_Hz = tx_rx_freq;
     ch_config.gain_dB                  = tx_gain;
     if (!tx_channel_arguments.empty()) {
       ch_config.args = tx_channel_arguments[channel_idx];
@@ -280,7 +280,7 @@ int main(int argc, char** argv)
   config.tx_streams.emplace_back(tx_stream_config);
 
   // Compute the total number of samples to receive for each sweep point.
-  uint64_t total_nof_samples = static_cast<uint64_t>(step_time_s * sampling_rate_hz);
+  uint64_t total_nof_samples = static_cast<uint64_t>(step_time_s * sampling_rate_Hz);
 
   // Create receive baseband buffer for the stream.
   baseband_gateway_buffer_dynamic rx_baseband_buffer(nof_channels, 0);
@@ -292,7 +292,7 @@ int main(int argc, char** argv)
   radio_configuration::stream rx_stream_config;
   for (unsigned channel_idx = 0; channel_idx != nof_channels; ++channel_idx) {
     radio_configuration::channel ch_config;
-    ch_config.freq.center_frequency_hz = tx_rx_freq;
+    ch_config.freq.center_frequency_Hz = tx_rx_freq;
     ch_config.gain_dB                  = rx_gain_min;
     if (!rx_channel_arguments.empty()) {
       ch_config.args = rx_channel_arguments[channel_idx];
@@ -329,7 +329,7 @@ int main(int argc, char** argv)
     // Calculate starting time.
     double                     delay_s      = 0.1;
     baseband_gateway_timestamp current_time = radio->read_current_time();
-    baseband_gateway_timestamp start_time   = current_time + static_cast<uint64_t>(delay_s * sampling_rate_hz);
+    baseband_gateway_timestamp start_time   = current_time + static_cast<uint64_t>(delay_s * sampling_rate_Hz);
 
     // Start processing.
     {

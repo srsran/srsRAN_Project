@@ -61,19 +61,19 @@ private:
   /// \return The initial pseudo-random state.
   static unsigned c_init(unsigned symbol, const config_t& config);
 
-  /// \brief Sequence generation as per TS 38.211 Section 7.4.1.3.1.
+  /// \brief Sequence generation as per TS38.211 Section 7.4.1.3.1.
   ///
-  /// This method generates the sequence described in TS 38.211 Section 7.4.1.3.1, considering the only values required
-  /// to fill the resource blocks according to TS 38.211 Section 7.3.2.
+  /// This method generates the sequence described in TS38.211 Section 7.4.1.3.1, considering the only values required
+  /// to fill the resource blocks according to TS38.211 Section 7.3.2.
   ///
   /// \param[out] sequence Sequence destination.
   /// \param[in] symbol    Symbol index within the slot.
   /// \param[in] config    Required parameters to calculate the sequences.
   void sequence_generation(span<cf_t> sequence, unsigned symbol, const config_t& config) const;
 
-  /// \brief Mapping to physical resources as per TS 38.211 Section 7.4.1.3.2.
+  /// \brief Mapping to physical resources as per TS38.211 Section 7.4.1.3.2.
   ///
-  /// This method implements the signal mapping as described in TS 38.211 Section 7.4.1.3.2.
+  /// This method implements the signal mapping as described in TS38.211 Section 7.4.1.3.2.
   ///
   /// \param[out] grid   Resource grid writer interface.
   /// \param[in] d_pdcch PDCCH resource elements to map in the resource grid.

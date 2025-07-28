@@ -27,7 +27,6 @@
 #include "tests/test_doubles/rrc/rrc_test_message_validators.h"
 #include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
-#include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/f1ap/f1ap_message.h"
@@ -165,7 +164,7 @@ public:
   {
     // Inject UE Context Modification Failure and wait for PDU Session Resource Setup Response
     get_du(du_idx).push_ul_pdu(
-        generate_ue_context_modification_failure(ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value()));
+        test_helpers::generate_ue_context_modification_failure(ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value()));
     report_fatal_error_if_not(this->wait_for_ngap_tx_pdu(ngap_pdu),
                               "Failed to receive PDU Session Resource Setup Response");
     report_fatal_error_if_not(test_helpers::is_valid_pdu_session_resource_setup_response(ngap_pdu),
@@ -453,7 +452,7 @@ TEST_F(
   }
 
   // Inject RRC Reconfiguration Complete and await successful PDU Session Resource Setup Response
-  get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
+  get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
       du_ue_id, ue_ctx->cu_ue_id.value(), srb_id_t::srb1, make_byte_buffer("00070e00cc6fcda5").value()));
   ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu));
   ASSERT_TRUE(test_helpers::is_valid_pdu_session_resource_setup_response(ngap_pdu));

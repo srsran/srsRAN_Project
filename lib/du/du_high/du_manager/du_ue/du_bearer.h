@@ -125,6 +125,7 @@ struct drb_creation_info {
   five_qi_t                            five_qi;
   const rlc_config&                    rlc_cfg;
   const f1u_config&                    f1u_cfg;
+  bool                                 is_handover;
   span<const up_transport_layer_info>  uluptnl_info_list;
   gtpu_teid_pool&                      teid_pool;
   const du_manager_params&             du_params;

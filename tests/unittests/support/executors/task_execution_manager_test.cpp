@@ -36,7 +36,7 @@ public:
 TEST_F(task_execution_manager_test, creation_of_single_task_worker)
 {
   using namespace execution_config_helper;
-  single_worker cfg{"WORKER", {concurrent_queue_policy::lockfree_spsc, 8}, {{"EXEC"}}, std::chrono::microseconds{100}};
+  single_worker cfg{"WORKER", {"EXEC", concurrent_queue_policy::lockfree_spsc, 8}, std::chrono::microseconds{100}};
 
   task_execution_manager mng;
   ASSERT_TRUE(mng.add_execution_context(create_execution_context(cfg)));
@@ -56,7 +56,7 @@ TEST_F(task_execution_manager_test, creation_of_single_task_worker)
 TEST_F(task_execution_manager_test, creation_of_task_worker_pool)
 {
   using namespace execution_config_helper;
-  worker_pool cfg{"WORKER_POOL", 4, {{concurrent_queue_policy::locking_mpmc, 8}}, {{"EXEC"}}};
+  worker_pool cfg{"WORKER_POOL", 4, {{"EXEC", concurrent_queue_policy::locking_mpmc, 8}}};
 
   task_execution_manager mng;
   ASSERT_TRUE(mng.add_execution_context(create_execution_context(cfg)));
@@ -78,9 +78,10 @@ TEST_F(task_execution_manager_test, worker_with_queues_of_different_priorities)
   using namespace execution_config_helper;
   priority_multiqueue_worker cfg{
       "WORKER",
-      {task_queue{concurrent_queue_policy::lockfree_spsc, 8}, task_queue{concurrent_queue_policy::locking_mpsc, 8}},
+      {task_queue{"EXEC1", concurrent_queue_policy::lockfree_spsc, 8},
+       task_queue{"EXEC2", concurrent_queue_policy::locking_mpsc, 8}},
       std::chrono::microseconds{10},
-      {executor{"EXEC1", enqueue_priority::max}, executor{"EXEC2", enqueue_priority::min}}};
+  };
 
   task_execution_manager mng;
   ASSERT_TRUE(mng.add_execution_context(create_execution_context(cfg)));
@@ -110,25 +111,4 @@ TEST_F(task_execution_manager_test, worker_with_queues_of_different_priorities)
 
   std::vector<int> expected{1, 2};
   ASSERT_EQ(execs_called, expected) << "The highest priority executed should have been called first";
-}
-
-TEST_F(task_execution_manager_test, decorate_executor_as_synchronous)
-{
-  using namespace execution_config_helper;
-  worker_pool cfg{
-      "WORKER", 2, {task_queue{concurrent_queue_policy::locking_mpmc, 8}}, {executor{"EXEC", {}, std::nullopt, true}}};
-
-  task_execution_manager mng;
-  ASSERT_TRUE(mng.add_execution_context(create_execution_context(cfg)));
-
-  ASSERT_EQ(mng.executors().size(), 1);
-  ASSERT_EQ(mng.executors().count("EXEC"), 1);
-
-  // Run single task in created execution environment.
-  // Note: Given that the executor was decorated as synchronous, the "execute" call will only return once the task
-  // has completed.
-  bool done    = false;
-  bool success = mng.executors().at("EXEC")->execute([&done]() { done = true; });
-  ASSERT_TRUE(success);
-  ASSERT_TRUE(done);
 }

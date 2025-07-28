@@ -32,20 +32,9 @@ static void configure_cli11_log_args(CLI::App& app, fapi_unit_config& log_params
   app_helpers::add_log_option(app, log_params.fapi_level, "--fapi_level", "FAPI log level");
 }
 
-static void configure_cli11_fapi_args(CLI::App& app, fapi_unit_config& config)
-{
-  app.add_option("--l2_nof_slots_ahead", config.l2_nof_slots_ahead, "Number of slots the L2 is running ahead of the L1")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 5));
-}
-
 void srsran::configure_cli11_with_fapi_config_schema(CLI::App& app, fapi_unit_config& parsed_cfg)
 {
   // Loggers section.
   CLI::App* log_subcmd = add_subcommand(app, "log", "Logging configuration")->configurable();
   configure_cli11_log_args(*log_subcmd, parsed_cfg);
-
-  // FAPI section.
-  CLI::App* fapi_subcmd = add_subcommand(app, "fapi", "FAPI configuration")->configurable();
-  configure_cli11_fapi_args(*fapi_subcmd, parsed_cfg);
 }

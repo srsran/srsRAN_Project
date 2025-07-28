@@ -667,7 +667,7 @@ def test_ntn(
     """
     ntn_scenario_def = NtnScenarioDefinition()
     ntn_scenario_def.scenario_type = NtnScenarioType.GEO
-    ntn_scenario_def.ephemeris_info_type = EphemerisInfoType.ORBITAL
+    ntn_scenario_def.ephemeris_info_type = EphemerisInfoType.ECEF
     ntn_scenario_def.min_sat_elevation_deg = 20
     ntn_scenario_def.pass_start_offset_s = 10
     ntn_scenario_def.delay_offset_us = 20

@@ -143,8 +143,7 @@ public:
 ///
 /// For numerology \f$\mu\in\{3,4\}\f$:
 /// - the range is {0, ..., 11}, and
-/// - the reference SS/PBCH subcarrier spacing is provided by the higher layers parameter \e subCarrierSpacingCommon
-/// (see TS38.331 Section 6.2.2, Information Element \e MIB).
+/// - the reference SS/PBCH subcarrier spacing is 60 kHz.
 ///
 /// The reader is referred to [this page](https://www.sharetechnote.com/html/5G/5G_ResourceBlockIndexing.html) and [this
 /// page](http://nrexplained.com/rbs) for a more details about resource block indexing.

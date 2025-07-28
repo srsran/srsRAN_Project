@@ -50,7 +50,6 @@ public:
 /// SSB processor implementation.
 class ssb_processor_impl : public ssb_processor
 {
-private:
   std::unique_ptr<pbch_encoder>        encoder;
   std::unique_ptr<pbch_modulator>      modulator;
   std::unique_ptr<dmrs_pbch_processor> dmrs;

@@ -564,13 +564,14 @@ include_directories(external)
 # List of directories that contain header files
 set(ALL_HEADER_DIRS
   apps
+  external
   lib
   include
   tests/unittests
 )
 set(ALL_HEADER_FILES "")
 foreach(TMP_DIR ${ALL_HEADER_DIRS})
-  file(GLOB_RECURSE TMP_HEADERS "${TMP_DIR}/*.h")
+  file(GLOB_RECURSE TMP_HEADERS "${TMP_DIR}/*.h" "${TMP_DIR}/*.hpp")
   list(APPEND ALL_HEADER_FILES ${TMP_HEADERS})
 endforeach()
 add_custom_target(all_srsran_headers SOURCES ${ALL_HEADER_FILES})

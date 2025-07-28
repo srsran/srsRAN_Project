@@ -304,9 +304,14 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
            "SSB SCS must be equal to SCS common. Mixed numerologies are not supported.");
 
   // Only FR1 SCS supported (for now).
-  CHECK_EQ_OR_BELOW(fmt::underlying(ssb_cfg.scs),
-                    fmt::underlying(subcarrier_spacing::kHz30),
-                    "SSB SCS must be kHz15 or kHz30.  FR2 frequencies are not supported yet in the SSB scheduler.");
+  if (band_helper::get_freq_range(cell_cfg.dl_carrier.band) == frequency_range::FR1) {
+    CHECK_EQ_OR_BELOW(fmt::underlying(ssb_cfg.scs),
+                      fmt::underlying(subcarrier_spacing::kHz30),
+                      "SSB SCS must be 15kHz or 30kHz for FR1.");
+  } else {
+    CHECK_EQ(
+        fmt::underlying(ssb_cfg.scs), fmt::underlying(subcarrier_spacing::kHz120), "SSB SCS must be 120kHz for FR2.");
+  }
 
   CHECK_EQ(ssb_cfg.ssb_bitmap,
            static_cast<uint64_t>(1U) << static_cast<uint64_t>(63U),
@@ -368,6 +373,8 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
     } else {
       CHECK_EQ(L_max, 8, "For SSB case C and frequency > {}MHz, L_max must be 8", cutoff_freq_mhz_case_c_unpaired);
     }
+  } else if (ssb_case == ssb_pattern_case::D) {
+    CHECK_EQ(L_max, 64, "For SSB case D L_max must be 64");
   } else {
     if (cell_cfg.dl_carrier.arfcn_f_ref <= CUTOFF_FREQ_ARFCN_CASE_A_B_C) {
       CHECK_EQ(L_max, 4, "For SSB case A and B and frequency <= {}MHz, L_max must be 4", cutoff_freq_mhz_case_a_b_c);
@@ -625,7 +632,7 @@ static check_outcome check_prach_config(const du_cell_config& cell_cfg)
 
   const rach_config_common& rach_cfg = cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value();
 
-  const auto prach_cfg = prach_configuration_get(frequency_range::FR1,
+  const auto prach_cfg = prach_configuration_get(band_helper::get_freq_range(cell_cfg.dl_carrier.band),
                                                  band_helper::get_duplex_mode(cell_cfg.dl_carrier.band),
                                                  rach_cfg.rach_cfg_generic.prach_config_index);
   CHECK_NEQ(fmt::underlying(prach_cfg.format),

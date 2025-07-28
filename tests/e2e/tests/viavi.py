@@ -128,6 +128,8 @@ def _convert_extra_config_into_command(extra_config: dict) -> str:
     for key, value in sorted(extra_config.items(), key=lambda item: isinstance(item[1], dict)):
         if isinstance(value, dict):
             cmd_args += f"{key} " + _convert_extra_config_into_command(value)
+        elif value is None:
+            cmd_args += f"{key} "
         else:
             cmd_args += f"--{key}={value} "
     return cmd_args
@@ -183,6 +185,7 @@ def test_viavi_manual(
     # Clients
     gnb: GNBStub,
     viavi: Viavi,
+    metrics_server: MetricServerInfo,
     # Test info
     viavi_manual_campaign_filename: str,  # pylint: disable=redefined-outer-name
     viavi_manual_test_name: str,  # pylint: disable=redefined-outer-name
@@ -213,7 +216,7 @@ def test_viavi_manual(
         # Clients
         gnb=gnb,
         viavi=viavi,
-        metrics_server=None,
+        metrics_server=metrics_server,
         # Test info
         metrics_summary=None,
         test_declaration=test_declaration,

@@ -255,7 +255,7 @@ void scheduler_cell_metrics_consumer_stdout::handle_metric(const std::optional<s
 
       fmt::print("   {:>2}", ue.ul_mcs.to_uint());
       if (ue.ul_brate_kbps > 0) {
-        fmt::print(" {:>6.6}", float_to_eng_string(ue.ul_brate_kbps * 1e3, 1, true));
+        fmt::print(" {:>6.6}", float_to_eng_string(ue.ul_brate_kbps * 1e3, 2, true));
       } else {
         fmt::print(" {:>6}", 0);
       }
@@ -308,9 +308,13 @@ void scheduler_cell_metrics_consumer_json::handle_metric(const std::optional<sch
       }
       if (ue.dl_ri_stats.get_nof_observations() > 0) {
         output.write<metric_dl_ri>(ue.dl_ri_stats.get_mean());
+      } else {
+        output.write<metric_dl_ri>(1);
       }
       if (ue.ul_ri_stats.get_nof_observations() > 0) {
         output.write<metric_ul_ri>(ue.ul_ri_stats.get_mean());
+      } else {
+        output.write<metric_ul_ri>(1);
       }
       output.write<metric_dl_mcs>(ue.dl_mcs.to_uint());
       output.write<metric_dl_brate>(ue.dl_brate_kbps * 1e3);
@@ -432,15 +436,16 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
     }
 
     // log cell-wide metrics
-    fmt::format_to(std::back_inserter(buffer), "Cell Scheduler Metrics:");
     fmt::format_to(
         std::back_inserter(buffer),
+        "Scheduler cell pci={} metrics:"
         " total_dl_brate={}bps total_ul_brate={}bps nof_prbs={} nof_dl_slots={} nof_ul_slots={} nof_prach_preambles={} "
         "error_indications={} pdsch_rbs_per_slot={} pusch_rbs_per_slot={} pdschs_per_slot={:.3} puschs_per_slot={:.3} "
         "failed_pdcch={} failed_uci={} nof_ues={} mean_latency={}usec max_latency={}usec max_latency_slot={} "
         "latency_hist=[{}] msg3_ok={} msg3_nok={} late_dl_harqs={} late_ul_harqs={}",
-        float_to_eng_string(sum_dl_bitrate_kbps * 1e3, 1, false),
-        float_to_eng_string(sum_ul_bitrate_kbps * 1e3, 1, false),
+        cell.pci,
+        float_to_eng_string(sum_dl_bitrate_kbps * 1e3, 2, false),
+        float_to_eng_string(sum_ul_bitrate_kbps * 1e3, 2, false),
         cell.nof_prbs,
         cell.nof_dl_slots,
         cell.nof_ul_slots,
@@ -497,9 +502,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
 
     // log ue-specific metrics
     for (const auto& ue : cell.ue_metrics) {
-      fmt::format_to(std::back_inserter(buffer), "Scheduler UE Metrics:");
-      fmt::format_to(std::back_inserter(buffer), " pci={}", ue.pci);
-      fmt::format_to(std::back_inserter(buffer), " rnti={}", ue.rnti);
+      fmt::format_to(std::back_inserter(buffer), "Scheduler UE pci={} rnti={} metrics:", ue.pci, ue.rnti);
       if (ue.cqi_stats.get_nof_observations() > 0) {
         fmt::format_to(
             std::back_inserter(buffer), " cqi={}", static_cast<unsigned>(std::roundf(ue.cqi_stats.get_mean())));
@@ -516,7 +519,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
       fmt::format_to(std::back_inserter(buffer), " dl_mcs={}", int(ue.dl_mcs.to_uint()));
       if (ue.dl_brate_kbps > 0) {
         fmt::format_to(
-            std::back_inserter(buffer), " dl_brate={}bps", float_to_eng_string(ue.dl_brate_kbps * 1e3, 1, false));
+            std::back_inserter(buffer), " dl_brate={}bps", float_to_eng_string(ue.dl_brate_kbps * 1e3, 2, false));
       } else {
         fmt::format_to(std::back_inserter(buffer), " dl_brate={}bps", 0);
       }
@@ -529,7 +532,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
       fmt::format_to(std::back_inserter(buffer), " dl_bs={}", scaled_fmt_integer(ue.dl_bs, false));
       fmt::format_to(std::back_inserter(buffer), " dl_nof_prbs={}", ue.tot_pdsch_prbs_used);
       if (ue.last_dl_olla.has_value()) {
-        fmt::format_to(std::back_inserter(buffer), " dl_olla={}", ue.last_dl_olla.value());
+        fmt::format_to(std::back_inserter(buffer), " dl_olla={:.4}", ue.last_dl_olla.value());
       }
 
       if (!std::isnan(ue.pusch_snr_db) && !iszero(ue.pusch_snr_db)) {
@@ -558,7 +561,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
       fmt::format_to(std::back_inserter(buffer), " ul_mcs={}", ue.ul_mcs.to_uint());
       if (ue.ul_brate_kbps > 0) {
         fmt::format_to(
-            std::back_inserter(buffer), " ul_brate={}bps", float_to_eng_string(ue.ul_brate_kbps * 1e3, 1, false));
+            std::back_inserter(buffer), " ul_brate={}bps", float_to_eng_string(ue.ul_brate_kbps * 1e3, 2, false));
       } else {
         fmt::format_to(std::back_inserter(buffer), " ul_brate={}bps", 0);
       }
@@ -577,7 +580,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
       fmt::format_to(out_it, " pusch_invalid_harqs={}", ue.nof_pusch_invalid_harqs);
       fmt::format_to(out_it, " pusch_invalid_csis={}", ue.nof_pusch_invalid_csis);
       if (ue.last_ul_olla.has_value()) {
-        fmt::format_to(out_it, " ul_olla={}", ue.last_ul_olla.value());
+        fmt::format_to(out_it, " ul_olla={:.4}", ue.last_ul_olla.value());
       }
       if (ue.ta_stats.get_nof_observations() > 0) {
         fmt::format_to(out_it, " ta={}s", float_to_eng_string(ue.ta_stats.get_mean(), 0, false));

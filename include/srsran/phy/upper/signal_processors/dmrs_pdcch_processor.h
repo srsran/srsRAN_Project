@@ -61,7 +61,7 @@ public:
   /// Default destructor.
   virtual ~dmrs_pdcch_processor() = default;
 
-  /// \brief Generates and maps DMRS for PDCCH according to TS 38.211 section 7.4.1.3.
+  /// \brief Generates and maps DMRS for PDCCH according to TS38.211 Section 7.4.1.3.
   ///
   /// \param[out] grid   Resource grid writer interface.
   /// \param[in] config  Required configuration to generate and map the signal.

@@ -85,7 +85,10 @@ template <>
 class base_task_queue<concurrent_queue_policy::lockfree_mpmc>
 {
 protected:
-  base_task_queue(size_t qsize, std::chrono::microseconds wait_sleep_time) : queue(qsize, wait_sleep_time) {}
+  base_task_queue(size_t qsize, std::chrono::microseconds wait_sleep_time, unsigned /* unused */) :
+    queue(qsize, wait_sleep_time)
+  {
+  }
 
   // Queue of pending tasks.
   concurrent_queue<unique_task, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::sleep> queue;
@@ -95,9 +98,7 @@ template <>
 class base_task_queue<concurrent_queue_policy::locking_mpmc>
 {
 protected:
-  base_task_queue(size_t qsize, std::chrono::microseconds wait_sleep_time = std::chrono::microseconds{0}) : queue(qsize)
-  {
-  }
+  base_task_queue(size_t qsize, std::chrono::microseconds wait_sleep_time, unsigned /* unused */) : queue(qsize) {}
 
   // Queue of pending tasks.
   concurrent_queue<unique_task, concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::condition_variable>
@@ -108,8 +109,8 @@ template <>
 class base_task_queue<concurrent_queue_policy::moodycamel_lockfree_mpmc>
 {
 protected:
-  base_task_queue(size_t qsize, std::chrono::microseconds wait_sleep_time = std::chrono::microseconds{0}) :
-    queue(qsize, wait_sleep_time)
+  base_task_queue(size_t qsize, std::chrono::microseconds wait_sleep_time, unsigned nof_prereserved_producers) :
+    queue(qsize, nof_prereserved_producers, wait_sleep_time)
   {
   }
 
@@ -187,9 +188,10 @@ public:
   task_worker_pool(std::string                           worker_pool_name,
                    unsigned                              nof_workers_,
                    unsigned                              qsize_,
-                   std::chrono::microseconds             wait_sleep_time = std::chrono::microseconds{100},
-                   os_thread_realtime_priority           prio            = os_thread_realtime_priority::no_realtime(),
-                   span<const os_sched_affinity_bitmask> cpu_masks       = {});
+                   std::chrono::microseconds             wait_sleep_time           = std::chrono::microseconds{100},
+                   unsigned                              nof_prereserved_producers = 2,
+                   os_thread_realtime_priority           prio      = os_thread_realtime_priority::no_realtime(),
+                   span<const os_sched_affinity_bitmask> cpu_masks = {});
   ~task_worker_pool();
 
   /// \brief Push a new task to be processed by the worker pool. If the task queue is full, it skips the task and

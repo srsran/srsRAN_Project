@@ -66,8 +66,9 @@ public:
   /// Tries to get an ID of a free buffer from the pre-allocated storage.
   std::optional<ethernet_rx_buffer_impl> reserve()
   {
-    if (auto buffer_id = free_list.try_pop()) {
-      return std::make_optional<ethernet_rx_buffer_impl>(*this, *buffer_id);
+    unsigned buffer_id;
+    if (free_list.try_pop(buffer_id)) {
+      return std::make_optional<ethernet_rx_buffer_impl>(*this, buffer_id);
     }
     return std::nullopt;
   }

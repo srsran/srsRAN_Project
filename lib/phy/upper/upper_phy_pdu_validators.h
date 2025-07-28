@@ -88,7 +88,7 @@ private:
   std::unique_ptr<srs_estimator_configuration_validator> srs;
 };
 
-/// Implements the downlink PDU validator for \ref downlink_processor_single_executor_impl.
+/// Implements the downlink PDU validator for \ref downlink_processor_multi_executor_impl.
 class downlink_processor_validator_impl : public downlink_pdu_validator
 {
 public:

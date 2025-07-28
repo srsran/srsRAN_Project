@@ -27,13 +27,16 @@ add_subdirectory(precoding)
 add_subdirectory(transform_precoding)
 
 add_executable(dft_processor_test dft_processor_test.cpp)
-target_link_libraries(dft_processor_test srslog srsran_generic_funcs)
+target_link_libraries(dft_processor_test srslog srsran_dft gtest gtest_main)
 
-add_test(dft_processor_generic_test dft_processor_test -F generic -R 10)
-add_test(dft_processor_fftw_test dft_processor_test -F fftw -R 10)
+add_test(dft_processor_test dft_processor_test)
+
+if ((ENABLE_MKL AND MKL_FOUND) OR (ENABLE_ARMPL AND ARMPL_FOUND) OR (ENABLE_FFTW AND FFTW3F_FOUND))
+    target_compile_definitions(dft_processor_test PRIVATE HAVE_FFTW)
+endif ((ENABLE_MKL AND MKL_FOUND) OR (ENABLE_ARMPL AND ARMPL_FOUND) OR (ENABLE_FFTW AND FFTW3F_FOUND))
 
 if (USE_PHY_TESTVECTORS)
     add_executable(dft_processor_vectortest dft_processor_vectortest.cpp)
-    target_link_libraries(dft_processor_vectortest srslog srsran_generic_funcs gtest gtest_main)
+    target_link_libraries(dft_processor_vectortest srslog srsran_dft gtest gtest_main)
     add_test_vector(dft_processor_vectortest dft_processor_test_data.tar.gz "")
 endif (USE_PHY_TESTVECTORS)

@@ -59,7 +59,6 @@ bool verify_ho_request(const cu_cp_intra_cu_handover_request& request,
 
 intra_cu_handover_routine::intra_cu_handover_routine(const cu_cp_intra_cu_handover_request& request_,
                                                      const byte_buffer&                     target_cell_sib1_,
-                                                     e1ap_bearer_context_manager&           e1ap_bearer_ctxt_mng_,
                                                      f1ap_ue_context_manager&               source_du_f1ap_ue_ctxt_mng_,
                                                      f1ap_ue_context_manager&               target_du_f1ap_ue_ctxt_mng_,
                                                      cu_cp_ue_context_release_handler&      ue_context_release_handler_,
@@ -70,7 +69,6 @@ intra_cu_handover_routine::intra_cu_handover_routine(const cu_cp_intra_cu_handov
                                                      srslog::basic_logger&                  logger_) :
   request(request_),
   target_cell_sib1(target_cell_sib1_),
-  e1ap_bearer_ctxt_mng(e1ap_bearer_ctxt_mng_),
   source_du_f1ap_ue_ctxt_mng(source_du_f1ap_ue_ctxt_mng_),
   target_du_f1ap_ue_ctxt_mng(target_du_f1ap_ue_ctxt_mng_),
   ue_context_release_handler(ue_context_release_handler_),
@@ -99,17 +97,17 @@ void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_c
     next_config        = to_config_update(source_rrc_context.up_ctx);
   }
 
-  logger.debug("ue={}: \"{}\" initialized", request.source_ue_index, name());
+  logger.debug("ue={}: \"{}\" started...", request.source_ue_index, name());
 
   {
-    // Allocate UE index at target DU
+    // Allocate UE index at target DU.
     target_ue_context_setup_request.ue_index = ue_mng.add_ue(request.target_du_index, request.cgi.plmn_id);
     if (target_ue_context_setup_request.ue_index == ue_index_t::invalid) {
       logger.warning("ue={}: \"{}\" failed to allocate UE index at target DU", request.source_ue_index, name());
       CORO_EARLY_RETURN(response_msg);
     }
 
-    // prepare F1AP UE Context Setup Command and call F1AP notifier of target DU
+    // Prepare F1AP UE Context Setup Command and call F1AP notifier of target DU.
     if (!generate_ue_context_setup_request(
             target_ue_context_setup_request, source_ue->get_rrc_ue()->get_srbs(), source_rrc_context)) {
       logger.warning("ue={}: \"{}\" failed to generate UeContextSetupRequest", request.source_ue_index, name());
@@ -121,7 +119,7 @@ void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_c
                      target_du_f1ap_ue_ctxt_mng.handle_ue_context_setup_request(target_ue_context_setup_request,
                                                                                 source_rrc_context));
 
-    // Handle UE Context Setup Response
+    // Handle UE Context Setup Response.
     if (!handle_context_setup_response(response_msg,
                                        bearer_context_modification_request,
                                        target_ue_context_setup_response,
@@ -139,60 +137,17 @@ void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_c
   target_ue = ue_mng.find_du_ue(target_ue_context_setup_response.ue_index);
   srsran_assert(target_ue != nullptr, "Couldn't find ue={} in target DU", target_ue_context_setup_response.ue_index);
 
-  // Setup SRB1 and initialize security context in RRC
+  // Setup SRB1 and initialize security context in RRC.
   {
     for (const auto& srb_id : source_rrc_context.srbs) {
       create_srb(target_ue, srb_id);
     }
   }
 
-  // Inform CU-UP about new DL tunnels.
   {
-    // get security context of target UE
-    if (!target_ue->get_security_manager().is_security_context_initialized()) {
-      logger.warning(
-          "ue={}: \"{}\" failed. Cause: Security context not initialized", target_ue->get_ue_index(), name());
-      CORO_EARLY_RETURN(response_msg);
-    }
-
-    if (!add_security_context_to_bearer_context_modification(target_ue->get_security_manager().get_up_as_config())) {
-      logger.warning("ue={}: \"{}\" failed to create UE context at target DU", request.source_ue_index, name());
-      CORO_AWAIT(ue_removal_handler.handle_ue_removal_request(target_ue_context_setup_request.ue_index));
-      // Note: From this point the UE is removed and only the stored context can be accessed.
-      CORO_EARLY_RETURN(response_msg);
-    }
-
-    // prepare Bearer Context Modification Request and call E1AP notifier
-    bearer_context_modification_request.ue_index = request.source_ue_index;
-
-    // call E1AP procedure and wait for BearerContextModificationResponse
-    CORO_AWAIT_VALUE(
-        bearer_context_modification_response,
-        e1ap_bearer_ctxt_mng.handle_bearer_context_modification_request(bearer_context_modification_request));
-
-    // Handle Bearer Context Modification Response
-    if (!handle_bearer_context_modification_response(
-            response_msg, source_ue_context_mod_request, bearer_context_modification_response, next_config, logger)) {
-      logger.warning("ue={}: \"{}\" failed to modify bearer context at target CU-UP", request.source_ue_index, name());
-
-      {
-        // Remove target UE context if Bearer Context Modification failed.
-        {
-          ue_context_release_command.ue_index = target_ue_context_setup_response.ue_index;
-          ue_context_release_command.cause    = ngap_cause_radio_network_t::unspecified;
-          CORO_AWAIT(ue_context_release_handler.handle_ue_context_release_command(ue_context_release_command));
-        }
-
-        logger.debug("ue={}: \"{}\" removed target UE context", request.source_ue_index, name());
-      }
-
-      CORO_EARLY_RETURN(response_msg);
-    }
-  }
-
-  {
-    // prepare RRC Reconfiguration and call RRC UE notifier
-    // if default DRB is being setup, SRB2 needs to be setup as well
+    // Prepare RRC Reconfiguration and call RRC UE notifier.
+    // If default DRB is being setup, SRB2 needs to be setup as well.
+    // This will also stop the UE data traffic on the source DU.
     {
       if (!fill_rrc_reconfig_args(rrc_reconfig_args,
                                   target_ue_context_setup_request.srbs_to_be_setup_list,
@@ -211,9 +166,10 @@ void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_c
       }
     }
 
-    // Trigger RRC Reconfiguration
+    // Trigger RRC Reconfiguration.
     CORO_AWAIT_VALUE(rrc_reconfig_sent,
                      launch_async<handover_reconfiguration_routine>(rrc_reconfig_args,
+                                                                    bearer_context_modification_request,
                                                                     target_ue_context_setup_response.ue_index,
                                                                     *source_ue,
                                                                     source_du_f1ap_ue_ctxt_mng,
@@ -246,7 +202,7 @@ void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_c
     target_ue->get_up_resource_manager().apply_config_update(result);
   }
 
-  logger.debug("ue={}: \"{}\" finalized", request.source_ue_index, name());
+  logger.debug("ue={}: \"{}\" finished successfully", request.source_ue_index, name());
   response_msg.success = true;
 
   CORO_RETURN(response_msg);
@@ -311,31 +267,4 @@ void intra_cu_handover_routine::create_srb(cu_cp_ue* ue, srb_id_t srb_id)
   srb_msg.enable_security = true;
   // TODO: add support for non-default PDCP config.
   ue->get_rrc_ue()->create_srb(srb_msg);
-}
-
-bool intra_cu_handover_routine::add_security_context_to_bearer_context_modification(
-    const srsran::security::sec_as_config& security_cfg)
-{
-  // Fill security info
-  bearer_context_modification_request.security_info.emplace();
-  bearer_context_modification_request.security_info->security_algorithm.ciphering_algo = security_cfg.cipher_algo;
-  bearer_context_modification_request.security_info->security_algorithm.integrity_protection_algorithm =
-      security_cfg.integ_algo;
-  auto k_enc_buffer = byte_buffer::create(security_cfg.k_enc);
-  if (not k_enc_buffer.has_value()) {
-    logger.warning("Unable to allocate byte_buffer");
-    return false;
-  }
-  bearer_context_modification_request.security_info->up_security_key.encryption_key = std::move(k_enc_buffer.value());
-  if (security_cfg.k_int.has_value()) {
-    auto k_int_buffer = byte_buffer::create(security_cfg.k_int.value());
-    if (not k_int_buffer.has_value()) {
-      logger.warning("Unable to allocate byte_buffer");
-      return false;
-    }
-    bearer_context_modification_request.security_info->up_security_key.integrity_protection_key =
-        std::move(k_int_buffer.value());
-  }
-
-  return true;
 }

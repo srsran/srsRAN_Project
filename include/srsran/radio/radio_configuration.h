@@ -57,9 +57,9 @@ struct clock_sources {
 /// \note Not all driver and/or devices support a different \c lo_frequency_hz.
 struct lo_frequency {
   /// Baseband center frequency in Hz.
-  double center_frequency_hz;
+  double center_frequency_Hz;
   /// Local oscillator frequency in Hz. Set to zero to let the driver select it according to \c center_frequency_hz.
-  double lo_frequency_hz;
+  double lo_frequency_Hz;
 };
 
 /// Describes a channel configuration common for transmit and receive chains.
@@ -118,7 +118,7 @@ struct radio {
   /// streams.
   static_vector<stream, RADIO_MAX_NOF_STREAMS> rx_streams;
   /// Sampling rate in Hz common for all transmit and receive chains.
-  double sampling_rate_hz;
+  double sampling_rate_Hz;
   /// Indicates the baseband signal transport format between the device and the host.
   over_the_wire_format otw_format;
   /// \brief Transmission mode.

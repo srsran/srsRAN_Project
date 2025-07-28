@@ -29,6 +29,7 @@
 #include "ofh_tx_window_checker.h"
 #include "ofh_uplink_request_handler_metrics_collector.h"
 #include "srsran/ofh/ethernet/ethernet_frame_pool.h"
+#include "srsran/ofh/serdes/ofh_cplane_message_properties.h"
 #include "srsran/ofh/transmitter/ofh_transmitter_timing_parameters.h"
 #include "srsran/ofh/transmitter/ofh_uplink_request_handler.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"

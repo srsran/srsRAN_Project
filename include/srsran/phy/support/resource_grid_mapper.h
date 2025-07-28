@@ -24,8 +24,10 @@
 
 #include "srsran/adt/complex.h"
 #include "srsran/adt/span.h"
+#include "srsran/phy/support/rb_allocation.h"
 #include "srsran/phy/support/re_buffer.h"
 #include "srsran/phy/support/resource_grid_writer.h"
+#include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 #include "srsran/support/srsran_assert.h"
 
 namespace srsran {
@@ -108,19 +110,37 @@ public:
                    const re_pattern&              pattern,
                    const precoding_configuration& precoding) = 0;
 
+  /// Collects the parameters that describe a physical channel generic resource grid allocation.
+  struct allocation_configuration {
+    /// \brief Bandwidth part location within the resource grid.
+    ///
+    /// The BWP start common resource block index is relative to Point A and must be in the range {0, ..., 274}. The BWP
+    /// length is expressed as a number of contiguous common resource blocks and must be in the range {1, ..., 275}.
+    crb_interval bwp;
+    /// Frequency-domain allocation.
+    rb_allocation freq_alloc;
+    /// \brief Time-domain allocation within a slot.
+    ///
+    /// The start symbol index and the number of symbols within the slot must be in the range {0, ..., 12} and {1, ...,
+    /// 14}, respectively.
+    ///
+    /// The time allocation must not exceed the maximum number of OFDM symbols in a slot.
+    ofdm_symbol_range time_alloc;
+  };
+
   /// \brief Maps complex symbols onto the resource grid.
   /// \param[out] grid       Resource grid writer interface.
   /// \param[in]  buffer     Buffer containing the complex symbols to map.
-  /// \param[in]  pattern    Data allocation pattern in the resource grid.
+  /// \param[in]  allocation Resource allocation parameters.
   /// \param[in]  reserved   Reserved resource elements, to be excluded from the allocation pattern.
   /// \param[in]  precoding  Precoding configuration.
   /// \param[in]  re_skip    Number of RE to skip before start mapping the buffer.
-  virtual void map(resource_grid_writer&          grid,
-                   symbol_buffer&                 buffer,
-                   const re_pattern_list&         pattern,
-                   const re_pattern_list&         reserved,
-                   const precoding_configuration& precoding,
-                   unsigned                       re_skip = 0) = 0;
+  virtual void map(resource_grid_writer&           grid,
+                   symbol_buffer&                  buffer,
+                   const allocation_configuration& allocation,
+                   const re_pattern_list&          reserved,
+                   const precoding_configuration&  precoding,
+                   unsigned                        re_skip = 0) = 0;
 };
 
 } // namespace srsran

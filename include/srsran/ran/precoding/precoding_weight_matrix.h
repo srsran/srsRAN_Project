@@ -239,7 +239,7 @@ public:
   /// Scales all the weights by a scaling factor.
   precoding_weight_matrix& operator*=(float scale)
   {
-    srsvec::sc_prod(data.get_data(), scale, data.get_data());
+    srsvec::sc_prod(data.get_data(), data.get_data(), scale);
     return *this;
   }
 

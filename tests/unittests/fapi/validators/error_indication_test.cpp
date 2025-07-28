@@ -195,9 +195,9 @@ TEST(validate_invalid_sfn_error_indication, valid_message_passes)
   ASSERT_TRUE(result);
 }
 
-TEST(validate_msg_slot_error_indication, valid_message_passes)
+TEST(validate_msg_error_indication, valid_message_passes)
 {
-  const auto& msg = build_valid_msg_slot_error_indication();
+  const auto& msg = build_valid_msg_error_indication();
 
   const auto& result = validate_error_indication(msg);
 

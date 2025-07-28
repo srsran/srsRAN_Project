@@ -65,7 +65,7 @@ public:
                                  nw_config.connect_port,
                                  std::make_unique<my_dummy_sctp_association_sdu_notifier>(*this));
     if (sctp_sender == nullptr) {
-      test_logger.error("Failed to establish E2 connection to Near-RT RIC on {}:{}.\n",
+      test_logger.error("Failed to establish E2 connection to Near-RT RIC on {}:{}.",
                         nw_config.connect_address,
                         nw_config.connect_port);
       return;

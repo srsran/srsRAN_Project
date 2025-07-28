@@ -18,13 +18,14 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-ARG GRAFANA_VERSION=11.5.1
-FROM grafana/grafana-oss:${GRAFANA_VERSION}
+ARG GF_VERSION=12.0.2
+FROM grafana/grafana-oss:${GF_VERSION}
 
 ADD provisioning /etc/grafana/provisioning
 ADD dashboards   /etc/dashboards
 
 USER root
+RUN rm -rf /usr/share/grafana/public/app/plugins/panel/table
 ARG LOGO_SRC=https://raw.githubusercontent.com/srsran/srsRAN_Project_docs/main/docs/source/.imgs/logo.png
 # If LOGO_SRC is a valid path inside the container, then move it to the correct location
 # Otherwise, download it from the URL

@@ -19,6 +19,7 @@
 #
 
 set(SOURCES
+        ru_dummy_executor_mapper.cpp
         ru_dummy_factory.cpp
         ru_dummy_impl.cpp
         ru_dummy_metrics_collector.cpp)

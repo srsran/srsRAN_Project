@@ -200,6 +200,8 @@ struct du_high_unit_pdsch_config {
   /// Controls the bundle size used for interleaving for PDSCH transmissions scheduled on dedicated search spaces. If
   /// set to zero, interleaving will be disabled. All other PDSCH transmissions will be always non-interleaved.
   vrb_to_prb::mapping_type interleaving_bundle_size{vrb_to_prb::mapping_type::non_interleaved};
+  /// Limits the maximum rank UEs can report. It must not exceed the number of transmit antennas.
+  std::optional<unsigned> max_rank;
 };
 
 /// PUSCH application configuration.
@@ -584,7 +586,7 @@ struct du_high_unit_sib_config {
     /// Periodicity of the SI-message in radio frames. Values: {8, 16, 32, 64, 128, 256, 512}.
     unsigned si_period_rf = 32;
     /// SI window position of the associated SI-message. See TS 38.331, \c SchedulingInfo2-r17. Values: {1,...,256}.
-    /// \remark This field is only applicable for release 17 \c SI-SchedulingInfo.
+    /// \remark This field is only applicable for release 17 \c SI-SchedulingInfo2.
     std::optional<unsigned> si_window_position;
   };
 
@@ -877,6 +879,8 @@ struct du_high_unit_base_cell_config {
   du_high_unit_drx_config drx_cfg;
   /// Network slice configuration.
   std::vector<du_high_unit_cell_slice_config> slice_cfg;
+  /// NTN configuration.
+  std::optional<ntn_config> ntn_cfg;
 };
 
 struct du_high_unit_test_mode_ue_config {
@@ -1028,7 +1032,9 @@ struct du_high_unit_srb_config {
 
 /// F1-U configuration at DU side
 struct du_high_unit_f1u_du_config {
-  int32_t t_notify; ///< Maximum backoff time for transmit/delivery notifications from DU to CU_UP (ms)
+  int32_t  t_notify;          ///< Maximum backoff time for transmit/delivery notifications from DU to CU_UP (ms)
+  uint32_t ul_buffer_timeout; ///< Timeout for UL buffering that waits for the handover to fully finish.
+  uint32_t ul_buffer_size;    ///< UL buffer size to be used during handover.
 };
 
 /// RLC UM TX configuration
@@ -1079,8 +1085,6 @@ struct du_high_unit_config {
   du_high_unit_logger_config loggers;
   /// Configuration for testing purposes.
   du_high_unit_test_mode_config test_mode_cfg = {};
-  /// NTN configuration.
-  std::optional<ntn_config> ntn_cfg;
   /// \brief Cell configuration.
   ///
   /// \note Add one cell by default.

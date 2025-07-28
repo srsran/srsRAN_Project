@@ -44,7 +44,7 @@ public:
 class nzp_csi_rs_generator_impl : public nzp_csi_rs_generator
 {
 private:
-  /// Maximum number of PRB subcarriers that the CSI-RS can occupy, deduced from TS 38.211 Table 7.4.1.5.3-1.
+  /// Maximum number of PRB subcarriers that the CSI-RS can occupy, deduced from TS38.211 Table 7.4.1.5.3-1.
   static constexpr unsigned MAX_SUBCS_PRB = 4;
   /// Maximum currently supported ports for the CSI-RS generation.
   static constexpr unsigned CSI_RS_MAX_PORTS = 16;
@@ -63,11 +63,11 @@ private:
   /// Temporary RE storage.
   static_re_buffer<CSI_RS_MAX_PORTS, MAX_SEQ_LEN * MAX_NSYMB_PER_SLOT> data;
 
-  /// FD-CDM2 sequence table, as defined in TS 38.211 Table 7.4.1.5.3-3.
+  /// FD-CDM2 sequence table, as defined in TS38.211 Table 7.4.1.5.3-3.
   static const std::array<const cdm_sequence, 2> fd_cdm2_table;
-  /// CDM4-FD2-TD2 sequence table, as defined in TS 38.211 Table 7.4.1.5.3-4.
+  /// CDM4-FD2-TD2 sequence table, as defined in TS38.211 Table 7.4.1.5.3-4.
   static const std::array<const cdm_sequence, 4> cdm4_fd2_td2_table;
-  /// CDM8-FD2-TD4 sequence table, as defined in TS 38.211 Table 7.4.1.5.3-5.
+  /// CDM8-FD2-TD4 sequence table, as defined in TS38.211 Table 7.4.1.5.3-5.
   static const std::array<const cdm_sequence, 8> cdm8_fd2_td4_table;
 
   /// Pseudo-random sequece generator for the NZP-CSI-RS signal.
@@ -77,7 +77,7 @@ private:
 
   /// \brief Generates the NZP-CSI-RS sequence.
   ///
-  /// This method implements the NZP-CSI-RS sequence generation, as described in TS 38.211 Section 7.4.1.5.2.
+  /// This method implements the NZP-CSI-RS sequence generation, as described in TS38.211 Section 7.4.1.5.2.
   /// The generated sequence does not include the CDM processing.
   ///
   /// \param[out] sequence The returned NZP-CSI-RS sequence.
@@ -90,7 +90,7 @@ private:
   /// \brief Applies the CDM codes to the NZP-CSI-RS sequence.
   ///
   /// This helper method takes an NZP-CSI-RS sequence pertaining to a single OFDM symbol, and applies the corresponding
-  /// CDM code, as defined in TS 38.211 Section 7.4.1.5.3.
+  /// CDM code, as defined in TS38.211 Section 7.4.1.5.3.
   ///
   /// \param[out] seq_out The returned NZP-CSI-RS sequence with CDM.
   /// \param[in] seq_in The input sequence.

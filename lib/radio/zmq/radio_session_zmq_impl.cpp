@@ -154,3 +154,11 @@ baseband_gateway_timestamp radio_session_zmq_impl::read_current_time()
 {
   return 0;
 }
+bool radio_session_zmq_impl::set_tx_freq(unsigned stream_id, double center_freq_Hz)
+{
+  return false;
+}
+bool radio_session_zmq_impl::set_rx_freq(unsigned stream_id, double center_freq_Hz)
+{
+  return false;
+}

@@ -49,7 +49,7 @@ TEST_F(f1ap_du_gnbcu_config_update_test, when_gnbcu_config_request_is_received_t
   std::vector<nr_cell_global_id_t> cgis = {
       nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(0).value()},
       nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(1).value()}};
-  f1ap_message msg = test_helpers::create_gnb_cu_configuration_update_request(0, cgis);
+  f1ap_message msg = test_helpers::generate_gnb_cu_configuration_update_request(0, cgis);
   this->f1ap->handle_message(msg);
 
   ASSERT_TRUE(this->f1ap_du_cfg_handler.last_cu_upd_req.has_value());
@@ -72,7 +72,7 @@ TEST_F(f1ap_du_gnbcu_config_update_test, when_du_fails_to_start_cell_then_du_add
   this->f1ap_du_cfg_handler.next_cu_upd_resp.cells_failed_to_activate.push_back(cgis[0]);
 
   // DU receives GNB-CU Config Update Request.
-  f1ap_message msg = test_helpers::create_gnb_cu_configuration_update_request(0, cgis);
+  f1ap_message msg = test_helpers::generate_gnb_cu_configuration_update_request(0, cgis);
   this->f1ap->handle_message(msg);
   ASSERT_TRUE(this->f1ap_du_cfg_handler.last_cu_upd_req.has_value());
   ASSERT_EQ(this->f1ap_du_cfg_handler.last_cu_upd_req.value().cells_to_activate.size(), 2);
@@ -95,7 +95,7 @@ TEST_F(f1ap_du_gnbcu_config_update_test, when_du_fails_to_start_all_cells_then_d
   this->f1ap_du_cfg_handler.next_cu_upd_resp.cells_failed_to_activate.push_back(cgis[1]);
 
   // DU receives GNB-CU Config Update Request.
-  f1ap_message msg = test_helpers::create_gnb_cu_configuration_update_request(0, cgis);
+  f1ap_message msg = test_helpers::generate_gnb_cu_configuration_update_request(0, cgis);
   this->f1ap->handle_message(msg);
   ASSERT_TRUE(this->f1ap_du_cfg_handler.last_cu_upd_req.has_value());
   ASSERT_EQ(this->f1ap_du_cfg_handler.last_cu_upd_req.value().cells_to_activate.size(), 2);

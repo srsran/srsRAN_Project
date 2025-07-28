@@ -24,8 +24,8 @@
 
 #include "../config/sched_config_manager.h"
 #include "../ue_context/ue.h"
+#include "srsran/adt/flat_map.h"
 #include "srsran/adt/ring_buffer.h"
-#include "srsran/adt/unique_function.h"
 
 namespace srsran {
 
@@ -77,14 +77,20 @@ public:
 
   void destroy_pending_ues();
 
+  /// Handle cell removal by removing all UEs that are associated with the cell.
+  void handle_cell_removal(du_cell_index_t cell_index);
+
 private:
+  /// Force the removal of the UE without waiting for the flushing of pending events.
+  void rem_ue(const ue& u);
+
   srslog::basic_logger& logger;
 
   // Repository of UEs.
   ue_list ues;
 
   // Mapping of RNTIs to UE indexes.
-  std::vector<std::pair<rnti_t, du_ue_index_t>> rnti_to_ue_index_lookup;
+  flat_map<rnti_t, du_ue_index_t> rnti_to_ue_index_lookup;
 
   // Queue of UEs marked for later removal. For each UE, we store the slot after which its removal can be safely
   // carried out, and the original UE removal command.

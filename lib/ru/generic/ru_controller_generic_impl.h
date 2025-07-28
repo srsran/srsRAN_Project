@@ -60,10 +60,48 @@ public:
   ru_cfo_controller_generic_impl(std::vector<lower_phy_sector*> phy_sectors_) : phy_sectors(std::move(phy_sectors_)) {}
 
   // See interface for documentation.
-  bool set_tx_cfo(unsigned port_id, const cfo_compensation_request& cfo_request) override;
+  bool set_tx_cfo(unsigned sector_id, const cfo_compensation_request& cfo_request) override;
 
   // See interface for documentation.
-  bool set_rx_cfo(unsigned port_id, const cfo_compensation_request& cfo_request) override;
+  bool set_rx_cfo(unsigned sector_id, const cfo_compensation_request& cfo_request) override;
+};
+
+/// Radio Unit carrier frequency offset controller generic implementation.
+class ru_center_frequency_controller_generic_impl : public ru_center_frequency_controller
+{
+  std::vector<lower_phy_sector*> phy_sectors;
+  radio_session*                 radio;
+
+public:
+  ru_center_frequency_controller_generic_impl() = default;
+
+  ru_center_frequency_controller_generic_impl(std::vector<lower_phy_sector*> phy_sectors_, radio_session* radio_) :
+    phy_sectors(std::move(phy_sectors_)), radio(radio_)
+  {
+  }
+
+  // See interface for documentation.
+  bool set_tx_center_frequency(unsigned sector_id, double center_freq_Hz) override;
+
+  // See interface for documentation.
+  bool set_rx_center_frequency(unsigned sector_id, double center_freq_Hz) override;
+};
+
+/// Radio Unit carrier frequency offset controller generic implementation.
+class ru_tx_time_offset_controller_generic_impl : public ru_tx_time_offset_controller
+{
+  std::vector<lower_phy_sector*> phy_sectors;
+
+public:
+  ru_tx_time_offset_controller_generic_impl() = default;
+
+  explicit ru_tx_time_offset_controller_generic_impl(std::vector<lower_phy_sector*> phy_sectors_) :
+    phy_sectors(std::move(phy_sectors_))
+  {
+  }
+
+  // See interface for documentation.
+  bool set_tx_time_offset(unsigned sector_id, phy_time_unit tx_time_offset) override;
 };
 
 /// Radio Unit controller generic implementation.
@@ -81,6 +119,11 @@ public:
   // See interface for documentation.
   ru_cfo_controller* get_cfo_controller() override { return &cfo_controller; }
 
+  ru_center_frequency_controller* get_center_frequency_controller() override;
+
+  // See interface for documentation.
+  ru_tx_time_offset_controller* get_tx_time_offset_controller() override { return &tx_time_offset_controller; }
+
   // See interface for documentation.
   void start() override;
 
@@ -88,17 +131,23 @@ public:
   void stop() override;
 
   /// Sets the radio session of this controller.
-  void set_radio(radio_session& session) { radio = &session; }
+  void set_radio(radio_session& session)
+  {
+    radio                  = &session;
+    center_freq_controller = ru_center_frequency_controller_generic_impl(low_phy_crtl, radio);
+  }
 
   /// Set low phy sectors.
   void set_lower_phy_sectors(std::vector<lower_phy_sector*> sectors);
 
 private:
-  double                          srate_MHz;
-  radio_session*                  radio;
-  ru_gain_controller_generic_impl gain_controller;
-  std::vector<lower_phy_sector*>  low_phy_crtl;
-  ru_cfo_controller_generic_impl  cfo_controller;
+  double                                      srate_MHz;
+  radio_session*                              radio;
+  ru_gain_controller_generic_impl             gain_controller;
+  std::vector<lower_phy_sector*>              low_phy_crtl;
+  ru_cfo_controller_generic_impl              cfo_controller;
+  ru_center_frequency_controller_generic_impl center_freq_controller;
+  ru_tx_time_offset_controller_generic_impl   tx_time_offset_controller;
 };
 
 } // namespace srsran

@@ -256,6 +256,28 @@ static bool validate_power_control_offset_profile_nr(int power_control_offset, v
       MIN_VALUE, MAX_VALUE, power_control_offset, "Ratio PDSCH EPRE to NZP CSI-RS EPRE", msg_type, pdu_type, report);
 }
 
+/// Validates the ratio of PDSCH DMRS EPRE to SSS property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
+static bool validate_power_profile_sss_dmrs(float power, validator_report& report)
+{
+  static constexpr int MIN_VALUE = -32767;
+  static constexpr int MAX_VALUE = 32767;
+
+  int value = power * 1000;
+
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Ratio PDSCH DMRS EPRE to SSS EPRE", msg_type, pdu_type, report);
+}
+
+/// Validates the ratio of PDSCH Data EPRE to SSS property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
+static bool validate_power_profile_sss_data(float power, validator_report& report)
+{
+  static constexpr int MIN_VALUE = -32767;
+  static constexpr int MAX_VALUE = 32767;
+
+  int value = power * 1000;
+
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Ratio PDSCH data EPRE to SSS EPRE", msg_type, pdu_type, report);
+}
+
 /// Validates the ratio of NZP CSI-RS EPRE to SSB/PBCH block EPRE property of the PDSCH PDU, as per SCF-222 v4.0
 /// section 3.4.2.2.
 static bool validate_power_control_offset_ss_profile_nr(unsigned          power_control_offset_ss_profile_nr,
@@ -386,9 +408,17 @@ bool srsran::fapi::validate_dl_pdsch_pdu(const dl_pdsch_pdu& pdu, validator_repo
   result &= validate_start_symbol_index(pdu.start_symbol_index, report);
   result &= validate_nr_of_symbols(pdu.nr_of_symbols, report);
 
-  result &= validate_power_control_offset_profile_nr(pdu.power_control_offset_profile_nr, report);
-  result &= validate_power_control_offset_ss_profile_nr(static_cast<unsigned>(pdu.power_control_offset_ss_profile_nr),
-                                                        report);
+  if (const auto* profile_nr = std::get_if<dl_pdsch_pdu::power_profile_nr>(&pdu.power_config)) {
+    result &= validate_power_control_offset_profile_nr(profile_nr->power_control_offset_profile_nr, report);
+    result &= validate_power_control_offset_ss_profile_nr(
+        static_cast<unsigned>(profile_nr->power_control_offset_ss_profile_nr), report);
+  } else if (const auto* profile_sss = std::get_if<dl_pdsch_pdu::power_profile_sss>(&pdu.power_config)) {
+    result &= validate_power_profile_sss_dmrs(profile_sss->dmrs_power_offset_sss_db, report);
+    result &= validate_power_profile_sss_data(profile_sss->data_power_offset_sss_db, report);
+  } else {
+    report.append(0, "Power configuration not present in the PDSCH PDU", msg_type, pdu_type);
+    result = false;
+  }
 
   if (pdu.pdu_bitmap[dl_pdsch_pdu::PDU_BITMAP_CBG_RETX_CTRL_BIT]) {
     // NOTE: Is last CB present bitmap property will not be validated.

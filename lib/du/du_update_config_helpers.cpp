@@ -221,7 +221,7 @@ void config_helpers::recompute_pusch_time_domain_resources(
       td_alloc_list.push_back(
           pusch_time_domain_resource_allocation{res_full_symbols.k2,
                                                 res_full_symbols.map_type,
-                                                ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - symb_per_srs}});
+                                                ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - srs_sym}});
     }
   }
 

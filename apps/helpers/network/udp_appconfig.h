@@ -31,6 +31,12 @@ namespace srsran {
 struct udp_appconfig {
   /// Maximum amount of messages RX in a single syscall.
   unsigned rx_max_msgs = 256;
+  /// Batched queue size.
+  unsigned tx_qsize = 4096;
+  /// Maximum amount of messages TX in a single syscall.
+  unsigned tx_max_msgs = 256;
+  /// Maximum amount of segments in a single TX SDU.
+  unsigned tx_max_segments = 256;
   /// Pool accupancy threshold after which packets are dropped.
   float pool_threshold = 0.9;
   /// Differentiated Services Code Point value.

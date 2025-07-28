@@ -43,6 +43,18 @@ public:
   /// \return True if the operation is successful. Otherwise, false.
   /// \note The port identifier is indexed from stream ascending order and then port.
   virtual bool set_rx_gain(unsigned port_id, double gain_dB) = 0;
+
+  /// \brief Set the transmission center frequency of all ports related to a stream.
+  /// \param[in] stream_id      Radio stream identifier.
+  /// \param[in] center_freq_Hz New center frequency in Hertz.
+  /// \return True if the operation is successful. Otherwise, false.
+  virtual bool set_tx_freq(unsigned stream_id, double center_freq_Hz) = 0;
+
+  /// \brief Set the reception center frequency of all ports related to a stream.
+  /// \param[in] stream_id      Radio stream identifier.
+  /// \param[in] center_freq_Hz New center frequency in Hertz.
+  /// \return True if the operation is successful. Otherwise, false.
+  virtual bool set_rx_freq(unsigned stream_id, double center_freq_Hz) = 0;
 };
 
 } // namespace srsran

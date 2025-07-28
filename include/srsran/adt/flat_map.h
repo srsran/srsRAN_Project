@@ -356,7 +356,7 @@ public:
   const_iterator find(const key_type& key) const noexcept
   {
     auto it = std::lower_bound(conts.keys.cbegin(), conts.keys.cend(), key, this->key_comp);
-    if (it != conts.keys.cend() and not this->comp(key, *it)) {
+    if (it != conts.keys.cend() and not this->key_comp(key, *it)) {
       return const_iterator{&conts, it};
     }
     return cend();

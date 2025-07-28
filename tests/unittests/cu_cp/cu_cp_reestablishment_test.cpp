@@ -28,7 +28,6 @@
 #include "tests/test_doubles/rrc/rrc_test_message_validators.h"
 #include "tests/test_doubles/rrc/rrc_test_messages.h"
 #include "tests/unittests/cu_cp/test_helpers.h"
-#include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
@@ -83,9 +82,9 @@ public:
                               "Invalid DL RRC message transfer");
 
     // Inject UL RRC msg transfer (authentication response)
-    get_du(du_idx).push_ul_pdu(generate_ul_rrc_message_transfer(
-        cu_ue_id,
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
         du_ue_id,
+        cu_ue_id,
         srb_id_t::srb1,
         make_byte_buffer("00013a0abf002b96882dac46355c4f34464ddaf7b43fde37ae8000000000").value()));
 
@@ -106,9 +105,9 @@ public:
                               "Invalid DL RRC message transfer");
 
     // Inject UL RRC msg transfer (ue security mode complete)
-    get_du(du_idx).push_ul_pdu(generate_ul_rrc_message_transfer(
-        cu_ue_id,
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
         du_ue_id,
+        cu_ue_id,
         srb_id_t::srb1,
         make_byte_buffer(
             "00023a1cbf0243241cb5003f002f3b80048290a1b283800000f8b880103f0020bc800680807888787f800008192a3b4"
@@ -137,11 +136,11 @@ public:
     }
 
     // Inject UE Context Setup Response
-    get_du(du_idx).push_ul_pdu(generate_ue_context_setup_response(cu_ue_id, du_ue_id));
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ue_context_setup_response(cu_ue_id, du_ue_id));
 
     // Inject RRC Security Mode Complete
-    get_du(du_idx).push_ul_pdu(generate_ul_rrc_message_transfer(
-        cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00032a00fd5ec7ff").value()));
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
+        du_ue_id, cu_ue_id, srb_id_t::srb1, make_byte_buffer("00032a00fd5ec7ff").value()));
 
     // Wait for UE Capability Enquiry
     result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
@@ -156,7 +155,7 @@ public:
     }
 
     // Inject UL RRC Message Transfer (containing UE Capability Info)
-    get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
         du_ue_id,
         cu_ue_id,
         srb_id_t::srb1,
@@ -185,13 +184,13 @@ public:
                               "Invalid UE Radio Capability Info Indication");
 
     // Inject Registration Complete and wait UL NAS message.
-    get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
         du_ue_id, cu_ue_id, srb_id_t::srb1, make_byte_buffer("00053a053f015362c51680bf00218086b09a5b").value()));
     result = this->wait_for_ngap_tx_pdu(ngap_pdu);
     report_fatal_error_if_not(result, "Failed to receive Registration Complete");
 
     // Inject PDU Session Establishment Request and wait UL NAS message.
-    get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
         du_ue_id,
         cu_ue_id,
         srb_id_t::srb1,
@@ -256,7 +255,7 @@ public:
     }
 
     // Inject UL RRC Message (containing RRC Reconfiguration Complete) and wait for PDU Session Resource Setup Response
-    get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
         du_ue_id, cu_ue_id, srb_id_t::srb1, make_byte_buffer("00070e00cc6fcda5").value()));
     result = this->wait_for_ngap_tx_pdu(ngap_pdu);
     report_fatal_error_if_not(result, "Failed to receive PDU Session Resource Setup Response");
@@ -281,7 +280,7 @@ public:
 
     // Send Initial UL RRC Message to CU-CP.
     f1ap_message f1ap_init_ul_rrc_msg =
-        test_helpers::create_init_ul_rrc_message_transfer(new_du_ue_id, new_rnti, {}, std::move(rrc_container));
+        test_helpers::generate_init_ul_rrc_message_transfer(new_du_ue_id, new_rnti, {}, std::move(rrc_container));
     get_du(du_idx).push_ul_pdu(f1ap_init_ul_rrc_msg);
 
     // Wait for DL RRC message transfer
@@ -307,7 +306,7 @@ public:
     srsran_assert(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu), "there are still F1AP DL messages to pop from DU");
 
     // Inject Initial UL RRC message
-    f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
+    f1ap_message init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
     test_logger.info("c-rnti={} du_ue_id={}: Injecting Initial UL RRC message", crnti, fmt::underlying(du_ue_id));
     get_du(du_idx).push_ul_pdu(init_ul_rrc_msg);
 
@@ -342,7 +341,7 @@ public:
 
     // Send UL RRC Message to CU-CP.
     f1ap_message f1ap_ul_rrc_msg =
-        test_helpers::create_ul_rrc_message_transfer(du_ue_id, cu_ue_id, srb_id_t::srb1, std::move(pdu));
+        test_helpers::generate_ul_rrc_message_transfer(du_ue_id, cu_ue_id, srb_id_t::srb1, std::move(pdu));
     get_du(du_idx).push_ul_pdu(f1ap_ul_rrc_msg);
     return true;
   }
@@ -362,7 +361,7 @@ public:
 
     // Send UL RRC Message to CU-CP.
     f1ap_message f1ap_ul_rrc_msg =
-        test_helpers::create_ul_rrc_message_transfer(du_ue_id, cu_ue_id, srb_id_t::srb1, std::move(pdu));
+        test_helpers::generate_ul_rrc_message_transfer(du_ue_id, cu_ue_id, srb_id_t::srb1, std::move(pdu));
     get_du(du_idx).push_ul_pdu(f1ap_ul_rrc_msg);
     return true;
   }

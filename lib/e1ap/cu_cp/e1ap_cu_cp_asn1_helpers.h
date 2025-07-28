@@ -26,7 +26,6 @@
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/e1ap/e1ap_ies.h"
 #include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
-#include "srsran/ran/bcd_helper.h"
 #include "srsran/ran/qos/qos_prio_level.h"
 
 namespace srsran {
@@ -91,7 +90,7 @@ inline void fill_asn1_qos_flow_info_item(asn1::e1ap::qos_flow_qos_param_item_s& 
 
   // Fill NG RAN alloc retention prio.
   asn1_qos_flow_info_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.prio_level =
-      qos_flow_level_params.ng_ran_alloc_retention.prio_level_arp;
+      qos_flow_level_params.ng_ran_alloc_retention.prio_level_arp.value();
   asn1_qos_flow_info_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.pre_emption_cap.value =
       qos_flow_level_params.ng_ran_alloc_retention.may_trigger_preemption
           ? asn1::e1ap::pre_emption_cap_opts::may_trigger_pre_emption
@@ -140,8 +139,8 @@ inline void fill_asn1_qos_flow_info_item(asn1::e1ap::qos_flow_qos_param_item_s& 
 
   // Fill paging policy indication.
   if (qos_flow_level_params.paging_policy_ind.has_value()) {
-    asn1_qos_flow_info_item.qos_flow_level_qos_params.paging_policy_ind_present = true;
-    asn1_qos_flow_info_item.qos_flow_level_qos_params.paging_policy_ind =
+    asn1_qos_flow_info_item.qos_flow_level_qos_params.paging_policy_idx_present = true;
+    asn1_qos_flow_info_item.qos_flow_level_qos_params.paging_policy_idx =
         qos_flow_level_params.paging_policy_ind.value();
   }
 

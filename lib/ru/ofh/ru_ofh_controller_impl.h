@@ -38,20 +38,26 @@ class ru_ofh_controller_impl : public ru_controller, public ru_operation_control
 public:
   ru_ofh_controller_impl(srslog::basic_logger& logger_) : logger(logger_) {}
 
-  // See interface for documentation.
+  // See the ru_operation_controller interface for documentation.
   void start() override;
 
-  // See interface for documentation.
+  // See the ru_operation_controller interface for documentation.
   void stop() override;
 
-  // See interface for documentation.
+  // See the ru_controller interface for documentation.
   ru_operation_controller& get_operation_controller() override { return *this; }
 
-  // See interface for documentation.
+  // See the ru_controller interface for documentation.
   ru_gain_controller* get_gain_controller() override { return nullptr; }
 
-  // See interface for documentation.
+  // See the ru_controller interface for documentation.
   ru_cfo_controller* get_cfo_controller() override { return nullptr; }
+
+  // See the ru_controller interface for documentation.
+  ru_center_frequency_controller* get_center_frequency_controller() override { return nullptr; }
+
+  // See the ru_controller interface for documentation.
+  ru_tx_time_offset_controller* get_tx_time_offset_controller() override { return nullptr; }
 
   /// Sets the sectors controllers.
   void set_sector_controllers(std::vector<ofh::operation_controller*> controllers);

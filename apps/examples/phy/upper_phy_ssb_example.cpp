@@ -213,7 +213,7 @@ public:
         pdu.subcarrier_offset = ssb_config.subcarrier_offset;
         pdu.offset_to_pointA  = ssb_config.offset_pointA;
         pdu.pattern_case      = ssb_config.pattern_case;
-        pdu.bch_payload       = {};
+        pdu.mib_payload       = {};
         pdu.ports             = {0};
 
         ssb->process(rg.get().get_writer(), pdu);

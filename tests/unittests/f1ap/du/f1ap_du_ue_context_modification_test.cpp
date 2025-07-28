@@ -38,7 +38,7 @@ protected:
     // Test Preamble.
     run_f1_setup_procedure();
     run_f1ap_ue_create(test_ue_index);
-    f1ap_message msg = test_helpers::create_ue_context_setup_request(
+    f1ap_message msg = test_helpers::generate_ue_context_setup_request(
         gnb_cu_ue_f1ap_id_t{0}, gnb_du_ue_f1ap_id_t{0}, 1, {}, config_helpers::make_default_du_cell_config().nr_cgi);
     run_ue_context_setup_procedure(test_ue_index, msg);
 

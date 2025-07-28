@@ -58,21 +58,21 @@ private:
   /// Provides an implementation of the resource grid mapper.
   std::unique_ptr<resource_grid_mapper> mapper;
 
-  /// \brief Scrambles a codeword. Implements TS 38.211 section 7.3.2.3 Scrambling.
+  /// \brief Scrambles a codeword. Implements TS38.211 Section 7.3.2.3 Scrambling.
   ///
   /// \param[out] b_hat Output bits after scrambling.
   /// \param[in] b Inputs bits to scramble.
   /// \param[in] config Provides the scrambler configuration.
   void scramble(span<uint8_t> b_hat, span<const uint8_t> b, const config_t& config);
 
-  /// \brief Modulates a codeword. Implements TS 38.211 section 7.3.2.4 PDCCH modulation.
+  /// \brief Modulates a codeword. Implements TS38.211 Section 7.3.2.4 PDCCH modulation.
   ///
   /// \param[out] d_pdcch Output symbols.
   /// \param[in] b_hat Inputs bits to perform the modulation mapping.
   /// \param[in] scaling Indicates the signal scaling if the value is valid (not 0, NAN nor INF).
   void modulate(span<cf_t> d_pdcch, span<const uint8_t> b_hat, float scaling);
 
-  /// \brief Maps the modulated symbols to resource elements in the grid. Implements TS 38.211 section 7.3.2.5 Mapping
+  /// \brief Maps the modulated symbols to resource elements in the grid. Implements TS38.211 Section 7.3.2.5 Mapping
   /// to physical resources.
   ///
   /// \param[out] grid   Provides the destination resource grid.

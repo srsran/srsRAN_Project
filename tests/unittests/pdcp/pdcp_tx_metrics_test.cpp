@@ -132,7 +132,7 @@ TEST_F(pdcp_tx_metrics_container_test, values)
     std::string    exp_str =
         "num_sdus=4.6k sdu_rate=156Mbps dropped_sdus=12 num_pdus=9.4k pdu_rate=278Mbps num_discard_timeouts=7 "
         "avg_pdu_latency=0.01us pdu_latency_hist=[ 999  20  400 8.0k 160k 3.2M 64M  128] "
-        "min_pdu_latency=1.2us max_pdu_latency=54.322us crypto_cpu_usage=50.00\%";
+        "min_pdu_latency=1.20us max_pdu_latency=54.32us crypto_cpu_usage=50.00\%";
     srslog::fetch_basic_logger("TEST", false).info("out_str={}", out_str);
     srslog::fetch_basic_logger("TEST", false).info("exp_str={}", exp_str);
     EXPECT_EQ(out_str, exp_str);

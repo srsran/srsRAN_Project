@@ -82,8 +82,7 @@ du_high_impl::du_high_impl(const du_high_configuration& config_, const du_high_d
                                                                  cfg.metrics.enable_mac,
                                                                  cfg.metrics.enable_sched,
                                                                  cfg.metrics.max_nof_sched_ue_events,
-                                                                 adapters->mac_ev_notifier,
-                                                                 dependencies.sched_metrics_notifier},
+                                                                 adapters->mac_ev_notifier},
                                       cfg.ran.sched_cfg},
                            cfg.test_cfg,
                            cfg.ran.cells.size());

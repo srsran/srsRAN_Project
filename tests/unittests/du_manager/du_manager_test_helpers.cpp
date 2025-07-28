@@ -100,7 +100,7 @@ srsran::srs_du::create_f1ap_ue_context_update_request(du_ue_index_t             
                                                       std::initializer_list<drb_id_t> drbs_to_add,
                                                       std::initializer_list<drb_id_t> drbs_to_mod)
 {
-  f1ap_ue_context_update_request req;
+  f1ap_ue_context_update_request req = {};
 
   req.ue_index             = ue_idx;
   req.full_config_required = false;

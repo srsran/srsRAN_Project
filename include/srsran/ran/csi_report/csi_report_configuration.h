@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/bounded_bitset.h"
+#include "srsran/adt/bounded_integer.h"
 
 namespace srsran {
 
@@ -58,6 +59,18 @@ enum class csi_report_quantities {
   other
 };
 
+/// Collects Channel State Information (CSI) report subband configuration parameters.
+struct csi_report_subband_configuration {
+  /// Enable subband CQI field.
+  bool cqi;
+  /// Enabled subband PMI field.
+  bool pmi;
+  /// \brief Number of subbands in {5..18}.
+  ///
+  /// Range deduced from TS38.214 Table 5.2.1.4-2. The minimum number of subbands is 5 and the maximum 18.
+  bounded_integer<uint8_t, 5, 18> nof_subbands;
+};
+
 /// Collects Channel State Information (CSI) report configuration parameters.
 struct csi_report_configuration {
   /// \brief Number of CSI-RS resources in the corresponding resource set.
@@ -70,6 +83,8 @@ struct csi_report_configuration {
   ri_restriction_type ri_restriction;
   /// Select CSI report quantities.
   csi_report_quantities quantities;
+  /// Subband configuration parameters. Set to \c std::nullopt for no subband reporting.
+  std::optional<csi_report_subband_configuration> subband;
 };
 
 inline const char* to_string(pmi_codebook_type codebook)

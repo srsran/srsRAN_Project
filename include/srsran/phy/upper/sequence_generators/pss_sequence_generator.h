@@ -74,10 +74,10 @@ public:
     unsigned         m             = M(phys_cell_id::NID_2(pci));
 
     // Copy sequence from offset to the end
-    srsvec::sc_prod(sequence_view.last(sequence_length - m), amplitude, out.first(sequence_length - m));
+    srsvec::sc_prod(out.first(sequence_length - m), sequence_view.last(sequence_length - m), amplitude);
 
     // Copy sequence from 0 to offset
-    srsvec::sc_prod(sequence_view.first(m), amplitude, out.last(m));
+    srsvec::sc_prod(out.last(m), sequence_view.first(m), amplitude);
   }
 
 private:

@@ -49,10 +49,12 @@ const double M_SIZE_SYNC_RASTER_1_HZ = 50e3;
 const double N_SIZE_SYNC_RASTER_2_HZ = 1440e3;
 /// Freq. step in Hz, corresponding to \f$M\f$ for 24.25GHz-100GHz freq. range, as per Table 5.4.3.1-1, TS 38.104.
 const double N_SIZE_SYNC_RASTER_3_HZ = 17280e3;
-/// Upper-bound for \f$N\f$ within 0GHz-3GHz freq. range, as per Table 5.4.3.1-1, TS 38.104.
+/// Upper-bound for \f$N\f$ within the 0GHz-3GHz frequency range, as per Table 5.4.3.1-1, TS 38.104.
 const unsigned N_UB_SYNC_RASTER_1 = 2500;
-/// Upper-bound for \f$N\f$ within 3GHz-24.25GHz freq. range, as per Table 5.4.3.1-1, TS 38.104.
+/// Upper-bound for \f$N\f$ within the 3GHz-24.25GHz frequency range, as per Table 5.4.3.1-1, TS 38.104.
 const unsigned N_UB_SYNC_RASTER_2 = 14757;
+/// Upper-bound for \f$N\f$ within the 24.25GHz-100GHz frequency range, as per Table 5.4.3.1-1, TS 38.104.
+const unsigned N_UB_SYNC_RASTER_3 = 4383;
 /// Minimum GSCN value for the freq range 0GHz - 3GHz, as per Table 5.4.3.1-1, TS 38.104.
 const unsigned MIN_GSCN_FREQ_0_3GHZ = 2;
 /// Minimum GSCN value for the freq range 3GHz - 24.5GHz, as per Table 5.4.3.1-1, TS 38.104.

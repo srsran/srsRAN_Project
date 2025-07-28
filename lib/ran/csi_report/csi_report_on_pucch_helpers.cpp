@@ -79,17 +79,17 @@ static csi_report_data csi_report_unpack_pucch_cri_ri_li_pmi_cqi(const csi_repor
   csi_report_data data{.valid = true};
 
   // Validate input size.
-  units::bits csi_report_size = get_csi_report_pucch_size(config);
-  srsran_assert(csi_report_size <= csi_report_max_size,
+  csi_report_size csi_report_size = get_csi_report_pucch_size(config);
+  srsran_assert(csi_report_size.part1_size <= csi_report_max_size,
                 "The report size (i.e., {}) exceeds the maximum report size (i.e., {}).",
-                csi_report_size,
+                csi_report_size.part1_size,
                 csi_report_max_size);
 
   // Verify the CSI payload size.
-  srsran_assert(packed.size() == csi_report_size.value(),
+  srsran_assert(packed.size() == csi_report_size.part1_size.value(),
                 "The number of packed bits (i.e., {}) is not equal to the CSI report size (i.e., {}).",
                 units::bits(packed.size()),
-                csi_report_size);
+                csi_report_size.part1_size);
 
   // Gets RI, LI, CQI and CRI field sizes as the rank was one.
   ri_li_cqi_cri_sizes sizes =
@@ -129,11 +129,11 @@ static csi_report_data csi_report_unpack_pucch_cri_ri_li_pmi_cqi(const csi_repor
   // Padding.
   units::bits csi_report_size_ri = get_csi_report_pucch_size_cri_ri_li_pmi_cqi(config, ri);
   srsran_assert(
-      csi_report_size >= csi_report_size_ri,
+      csi_report_size.part1_size >= csi_report_size_ri,
       "The report size (i.e., {}) must be equal to or greater than the report size without padding (i.e., {}).",
-      csi_report_size,
+      csi_report_size.part1_size,
       csi_report_size_ri);
-  count += csi_report_size.value() - csi_report_size_ri.value();
+  count += csi_report_size.part1_size.value() - csi_report_size_ri.value();
 
   // PMI.
   if ((config.quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
@@ -163,10 +163,10 @@ static csi_report_data csi_report_unpack_pucch_cri_ri_li_pmi_cqi(const csi_repor
     }
   }
 
-  srsran_assert(count == csi_report_size.value(),
+  srsran_assert(count == csi_report_size.part1_size.value(),
                 "The number of read bits (i.e., {}) is not equal to the CSI report size (i.e., {})",
                 units::bits(count),
-                csi_report_size);
+                csi_report_size.part1_size);
 
   return data;
 }
@@ -185,17 +185,27 @@ static units::bits get_csi_report_size_ri(const csi_report_configuration& config
   }
 }
 
-units::bits srsran::get_csi_report_pucch_size(const csi_report_configuration& config)
+csi_report_size srsran::get_csi_report_pucch_size(const csi_report_configuration& config)
 {
-  units::bits csi_report_size(0);
-  unsigned    nof_csi_antenna_ports = csi_report_get_nof_csi_rs_antenna_ports(config.pmi_codebook);
+  srsran_assert(!config.subband.has_value(), "Subbands CSI reports are not supported on PUCCH.");
+  using namespace units::literals;
 
-  // For each possible RI, find the largest CSI report size.
-  for (unsigned ri = 1, ri_end = nof_csi_antenna_ports + 1; ri != ri_end; ++ri) {
-    csi_report_size = std::max(csi_report_size, get_csi_report_size_ri(config, ri));
+  unsigned nof_csi_antenna_ports = csi_report_get_nof_csi_rs_antenna_ports(config.pmi_codebook);
+
+  // Case for wideband PMI and CQI, TS38.214 Table 6.3.1.1.2-7.
+  if (!config.subband.has_value()) {
+    units::bits csi_report_size(0);
+
+    // For each possible RI, find the largest CSI report size.
+    for (unsigned ri = 1, ri_end = nof_csi_antenna_ports + 1; ri != ri_end; ++ri) {
+      csi_report_size = std::max(csi_report_size, get_csi_report_size_ri(config, ri));
+    }
+
+    return {
+        .part1_size = csi_report_size, .part2_correspondence = {}, .part2_min_size = 0_bits, .part2_max_size = 0_bits};
   }
 
-  return csi_report_size;
+  return {};
 }
 
 bool srsran::validate_pucch_csi_payload(const csi_report_packed& packed, const csi_report_configuration& config)
@@ -206,7 +216,7 @@ bool srsran::validate_pucch_csi_payload(const csi_report_packed& packed, const c
   }
 
   // The number of packed bits does not match the expected CSI report size.
-  if (packed.size() != get_csi_report_pucch_size(config).value()) {
+  if (packed.size() != get_csi_report_pucch_size(config).part1_size.value()) {
     return false;
   }
 

@@ -22,13 +22,15 @@
 
 #pragma once
 
+#include <memory>
+
 namespace srsran {
 namespace fapi {
 
 class cell_operation_request_notifier;
 class config_message_gateway;
 class config_message_notifier;
-class slot_error_message_notifier;
+class error_message_notifier;
 
 /// \brief FAPI configuration message interface collection interface.
 ///
@@ -45,11 +47,15 @@ public:
   virtual void set_config_message_notifier(config_message_notifier& config_notifier) = 0;
 
   /// Sets the error message notifier of this FAPI cell configurator.
-  virtual void set_slot_error_message_notifier(slot_error_message_notifier& err_notifier) = 0;
+  virtual void set_error_message_notifier(error_message_notifier& err_notifier) = 0;
 
   /// Sets the cell operation request notifier of this FAPI cell configurator.
   virtual void set_cell_operation_request_notifier(cell_operation_request_notifier& cell_notifier) = 0;
 };
+
+/// Creates a FAPI configuration message interface collection.
+std::unique_ptr<fapi_config_message_interface_collection>
+create_fapi_config_message_interface_collection(srslog::basic_logger& logger);
 
 } // namespace fapi
 } // namespace srsran

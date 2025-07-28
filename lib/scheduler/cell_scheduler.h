@@ -53,7 +53,11 @@ public:
                           ue_scheduler&                                   ue_sched,
                           cell_metrics_handler&                           metrics);
 
+  /// Handle a slot indication for this cell.
   void run_slot(slot_point sl_tx);
+
+  /// Handle an error indication for this cell.
+  void handle_error_indication(slot_point sl_tx, scheduler_slot_handler::error_outcome event);
 
   /// Activate cell.
   void start();
@@ -74,10 +78,9 @@ public:
 
   void handle_paging_information(const sched_paging_information& pi) { pg_sch.handle_paging_information(pi); }
 
-  const cell_configuration& cell_cfg;
+  scheduler_feedback_handler& get_feedback_handler() { return ue_sched->get_feedback_handler(); }
 
-  /// Reference to UE scheduler whose DU cell group contains this cell.
-  ue_scheduler& ue_sched;
+  const cell_configuration& cell_cfg;
 
 private:
   void handle_pending_cell_activity_commands();
@@ -103,6 +106,9 @@ private:
   uci_allocator_impl            uci_alloc;
   pucch_guardbands_scheduler    pucch_guard_sch;
   paging_scheduler              pg_sch;
+
+  /// Reference to UE scheduler whose DU cell group contains this cell.
+  ue_scheduler::unique_cell_ptr ue_sched;
 
   // Current state of the cell.
   bool active = true;

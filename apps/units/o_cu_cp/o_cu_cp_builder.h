@@ -40,8 +40,11 @@ struct o_cu_cp_unit_config;
 struct worker_manager;
 
 namespace srs_cu_cp {
+
 class n2_connection_client;
-}
+class cu_cp_executor_mapper;
+
+} // namespace srs_cu_cp
 
 template <typename ConnectorType, typename NotifierType, typename InterfaceType>
 class e2_metric_connector_manager;
@@ -50,14 +53,12 @@ class e2_gateway_remote_connector;
 
 /// O-RAN CU-CP build dependencies.
 struct o_cu_cp_unit_dependencies {
-  task_executor*                  cu_cp_executor       = nullptr;
-  task_executor*                  cu_cp_n2_rx_executor = nullptr;
-  task_executor*                  cu_cp_e2_exec        = nullptr;
-  timer_manager*                  timers               = nullptr;
-  dlt_pcap*                       ngap_pcap            = nullptr;
-  io_broker*                      broker               = nullptr;
-  e2_connection_client*           e2_gw                = nullptr;
-  app_services::metrics_notifier* metrics_notifier     = nullptr;
+  srs_cu_cp::cu_cp_executor_mapper* executor_mapper  = nullptr;
+  timer_manager*                    timers           = nullptr;
+  dlt_pcap*                         ngap_pcap        = nullptr;
+  io_broker*                        broker           = nullptr;
+  e2_connection_client*             e2_gw            = nullptr;
+  app_services::metrics_notifier*   metrics_notifier = nullptr;
 };
 
 /// O-RAN CU-CP unit.

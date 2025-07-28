@@ -32,8 +32,8 @@ using namespace srsran;
 io_timer_source::io_timer_source(timer_manager&            tick_sink_,
                                  io_broker&                broker,
                                  task_executor&            executor,
-                                 std::chrono::milliseconds tick_period) :
-  tick_sink(tick_sink_), logger(srslog::fetch_basic_logger("IO-EPOLL"))
+                                 std::chrono::milliseconds tick_period_) :
+  tick_period(tick_period_), tick_sink(tick_sink_), logger(srslog::fetch_basic_logger("IO-EPOLL"))
 {
   using namespace std::chrono;
 
@@ -50,18 +50,41 @@ io_timer_source::io_timer_source(timer_manager&            tick_sink_,
   report_fatal_error_if_not(io_sub.value() > 0, "Failed to create timer source");
 }
 
+io_timer_source::~io_timer_source()
+{
+  const std::chrono::milliseconds max_wait_time(500);
+  for (std::chrono::milliseconds elapsed_time(0); io_sub.registered() and elapsed_time < max_wait_time;
+       elapsed_time += tick_period) {
+    stop_requested.store(true, std::memory_order_relaxed);
+    std::this_thread::sleep_for(tick_period);
+  }
+  if (io_sub.registered()) {
+    logger.error("Timer source did not stop within {} ms. Forcing its shutdown...", max_wait_time.count());
+  }
+}
+
 void io_timer_source::read_time()
 {
-  char read_buffer[8];
-  int  n = ::read(io_sub.value(), read_buffer, sizeof(read_buffer));
+  if (stop_requested.load(std::memory_order_relaxed)) {
+    // Request to stop the timer source.
+    logger.info("Stopping timer source");
+    io_sub.reset();
+    return;
+  }
+
+  uint64_t nof_expirations = 0;
+  int      n               = ::read(io_sub.value(), &nof_expirations, sizeof(nof_expirations));
   if (n < 0) {
     logger.error("Failed to read timerfd (errno={})", ::strerror(errno));
     return;
   }
   if (n == 0) {
     logger.warning("Timerfd read returned 0");
+    return;
   }
 
-  // Tick timers.
-  tick_sink.tick();
+  while (nof_expirations-- > 0) {
+    // Tick timers.
+    tick_sink.tick();
+  }
 }

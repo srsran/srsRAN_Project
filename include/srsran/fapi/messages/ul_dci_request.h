@@ -51,7 +51,6 @@ struct ul_dci_request_message : public base_message {
   std::array<uint16_t, MAX_NUM_DL_TYPES>         num_pdus_of_each_type;
   static_vector<ul_dci_pdu, MAX_NUM_UL_DCI_PDUS> pdus;
   // Vendor specific parameters.
-  bool is_last_message_in_slot;
 };
 
 } // namespace fapi

@@ -22,6 +22,7 @@
 
 #include "f1ap_cu_test_helpers.h"
 #include "lib/f1ap/asn1_helpers.h"
+#include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
@@ -176,7 +177,7 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_invalid_then_reject_du)
 TEST_F(f1ap_cu_test, when_init_ul_rrc_correct_then_ue_added)
 {
   // Generate F1 Initial UL RRC Message
-  f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
+  f1ap_message init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
 
   // Pass message to F1AP
   f1ap->handle_message(init_ul_rrc_msg);
@@ -187,7 +188,7 @@ TEST_F(f1ap_cu_test, when_init_ul_rrc_correct_then_ue_added)
 TEST_F(f1ap_cu_test, when_cgi_invalid_then_ue_not_added)
 {
   // Generate F1 Initial UL RRC Message
-  f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
+  f1ap_message init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
   // Set PLMN to invalid value
   init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->nr_cgi.plmn_id.from_number(0xa);
 
@@ -200,7 +201,7 @@ TEST_F(f1ap_cu_test, when_cgi_invalid_then_ue_not_added)
 TEST_F(f1ap_cu_test, when_rnti_invalid_then_ue_not_added)
 {
   // Generate F1 Initial UL RRC Message
-  f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
+  f1ap_message init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
   // Set RNTI to invalid value
   init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->c_rnti = 0;
 
@@ -219,7 +220,8 @@ TEST_F(f1ap_cu_test, when_max_nof_ues_exceeded_then_ue_not_added)
   // Add the maximum number of UEs
   for (unsigned du_ue_id = 0; du_ue_id < max_nof_ues; du_ue_id++) {
     // Generate ue_creation message
-    f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(du_ue_id));
+    f1ap_message init_ul_rrc_msg =
+        test_helpers::generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(du_ue_id));
 
     // Pass message to F1AP
     f1ap->handle_message(init_ul_rrc_msg);
@@ -233,7 +235,8 @@ TEST_F(f1ap_cu_test, when_max_nof_ues_exceeded_then_ue_not_added)
 
   // Add one more UE to F1AP
   // Generate ue_creation message
-  f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(max_nof_ues + 1));
+  f1ap_message init_ul_rrc_msg =
+      test_helpers::generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(max_nof_ues + 1));
 
   // Pass message to F1AP
   f1ap->handle_message(init_ul_rrc_msg);
@@ -248,7 +251,7 @@ TEST_F(f1ap_cu_test, when_ue_creation_fails_then_ue_not_added)
 
   // Add one more UE to F1AP
   // Generate F1 Initial UL RRC Message
-  f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
+  f1ap_message init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
 
   // Pass message to F1AP
   f1ap->handle_message(init_ul_rrc_msg);

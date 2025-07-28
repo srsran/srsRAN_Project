@@ -103,6 +103,21 @@ void scheduler_test_simulator::push_dl_buffer_state(const dl_buffer_state_indica
   sched->handle_dl_buffer_state_indication(upd);
 }
 
+void scheduler_test_simulator::push_uci_indication(du_cell_index_t cell_idx, slot_point slot_uci)
+{
+  uci_indication uci;
+  uci.cell_index = cell_idx;
+  uci.slot_rx    = slot_uci;
+
+  uci_indication::uci_pdu uci_pdu{};
+  auto&                   uci_pucch_f1 = uci_pdu.pdu.emplace<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>();
+  uci_pucch_f1.sr_detected             = false;
+  uci_pucch_f1.harqs.emplace_back(mac_harq_ack_report_status::ack);
+  uci.ucis.emplace_back(uci_pdu);
+
+  sched->handle_uci_indication(uci);
+}
+
 void scheduler_test_simulator::run_slot(du_cell_index_t cell_idx)
 {
   srsran_assert(cell_cfg_list.size() > cell_idx, "Invalid cellId={}", fmt::underlying(cell_idx));

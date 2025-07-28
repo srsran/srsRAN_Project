@@ -35,8 +35,8 @@ class resource_grid_writer;
 class ssb_processor
 {
 public:
-  /// Defines the BCH payload size.
-  static constexpr unsigned BCH_PAYLOAD_SIZE = 32;
+  /// Defines the MIB payload size.
+  static constexpr unsigned MIB_PAYLOAD_SIZE = 24;
 
   /// Describes the SS/PBCH Block PDU.
   struct pdu_t {
@@ -60,14 +60,9 @@ public:
     ssb_offset_to_pointA offset_to_pointA;
     /// SS/PBCH pattern case.
     ssb_pattern_case pattern_case;
-    /// \brief PBCH payload.
-    /// The first 24 bits correspond to the packed MIB, while the last 8 bits are:
-    /// - SFN (4 bit),
-    /// - half-radio frame (1 bit), and
-    /// - SS/PBCH block index (3 bit) for L_max=64, otherwise
-    /// - SS/PBCH subcarrier offset (1 bit) and 2 padding bits.
-    /// \remark Bit order is specified in 3GPP TS38.212 Section 7.1.1.
-    std::array<uint8_t, BCH_PAYLOAD_SIZE> bch_payload;
+    /// \brief Packed MIB payload.
+    /// \remark The MIB contents are described by the Information Element \e MIB in TS38.331 Section 6.2.2.
+    std::array<uint8_t, MIB_PAYLOAD_SIZE> mib_payload;
     /// Port indexes to map the SS/PBCH transmission.
     static_vector<uint8_t, MAX_PORTS> ports;
   };
@@ -77,7 +72,7 @@ public:
 
   /// \brief Processes the SS/PBCH Block PDU and writes the resultant signal in the given grid.
   /// \param[out] grid Destination resource grid.
-  /// \param[in]  pdu Properties to generate the SSB message.
+  /// \param[in]  pdu  Properties to generate the SSB message.
   virtual void process(resource_grid_writer& grid, const pdu_t& pdu) = 0;
 };
 

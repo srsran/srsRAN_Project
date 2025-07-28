@@ -18,7 +18,7 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-add_library(f1ap_test_helpers f1ap_cu_test_messages.cpp f1ap_du_test_messages.cpp)
+add_library(f1ap_test_helpers f1ap_du_test_messages.cpp)
 target_include_directories(f1ap_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(f1ap_test_helpers srsran_support f1ap_asn1 srslog)
 

@@ -312,10 +312,10 @@ combine_symbols(static_tensor<2, cf_t, NSHIFTS * MAX_PORTS>&                    
   std::array<cf_t, NSHIFTS> scaled;
   float                     normalizer = 1.0F / std::sqrt(static_cast<float>(n_symbols));
   for (unsigned i_port = 0; i_port != n_ports; ++i_port) {
-    srsvec::sc_prod(in.get_view({0, i_port}), w[0] * normalizer, out.get_view({i_port}));
+    srsvec::sc_prod(out.get_view({i_port}), in.get_view({0, i_port}), w[0] * normalizer);
     for (unsigned i_symbol = 1; i_symbol != n_symbols; ++i_symbol) {
-      srsvec::sc_prod(in.get_view({i_symbol, i_port}), w[i_symbol] * normalizer, scaled);
-      srsvec::add(scaled, out.get_view({i_port}), out.get_view({i_port}));
+      srsvec::sc_prod(scaled, in.get_view({i_symbol, i_port}), w[i_symbol] * normalizer);
+      srsvec::add(out.get_view({i_port}), scaled, out.get_view({i_port}));
     }
   }
 }
@@ -350,7 +350,7 @@ static void estimate_channels(static_tensor<2, cf_t, NSHIFTS * MAX_PORTS>&      
                 n_ports);
 
   // Normalize the input to take into account the spreading factor.
-  srsvec::sc_prod(in.get_data(), 1.0F / static_cast<float>(std::sqrt(nof_dmrs_symbols_hop) * NSHIFTS), ch.get_data());
+  srsvec::sc_prod(ch.get_data(), in.get_data(), 1.0F / static_cast<float>(std::sqrt(nof_dmrs_symbols_hop) * NSHIFTS));
 
   // Estimate the total channel energy (across ports) for all ICSs.
   srsvec::modulus_square(rsrp, ch.get_view({0}));
@@ -369,7 +369,7 @@ static void estimate_channels(static_tensor<2, cf_t, NSHIFTS * MAX_PORTS>&      
     }
   }
 
-  srsvec::sc_prod(rsrp, 1.0F / n_ports, rsrp);
+  srsvec::sc_prod(rsrp, rsrp, 1.0F / n_ports);
 }
 
 /// Estimates the noise by looking at the difference between the received and the reconstructed signal.
@@ -437,9 +437,9 @@ void pucch_detector_format1::combine_reconstructed_contributions(
     for (unsigned i_symbol = 0; i_symbol != n_symbols; ++i_symbol) {
       // Now copy (or combine) the result to each output symbol after applying the OCC.
       if (is_first) {
-        srsvec::sc_prod(idft_output, std::conj(w_star_dmrs[i_symbol]), dmrs_reconstructed.get_view({i_symbol, i_port}));
+        srsvec::sc_prod(dmrs_reconstructed.get_view({i_symbol, i_port}), idft_output, std::conj(w_star_dmrs[i_symbol]));
       } else {
-        srsvec::sc_prod(idft_output, std::conj(w_star_dmrs[i_symbol]), reconstructed);
+        srsvec::sc_prod(reconstructed, idft_output, std::conj(w_star_dmrs[i_symbol]));
         srsvec::add(dmrs_reconstructed.get_view({i_symbol, i_port}),
                     reconstructed,
                     dmrs_reconstructed.get_view({i_symbol, i_port}));
@@ -496,7 +496,7 @@ static void compute_contributions(span<float>                                   
   srsvec::modulus_square_and_add(main_contributions, dmrs.get_view({0}), main_contributions);
 
   // Cross contributions are the cross conjugated product of the two components.
-  srsvec::prod_conj(dmrs.get_view({0}), data.get_view({0}), cross_contributions);
+  srsvec::prod_conj(cross_contributions, dmrs.get_view({0}), data.get_view({0}));
   std::array<cf_t, NSHIFTS> support_cross;
 
   // Accumulate the contributions from all ports.
@@ -504,7 +504,7 @@ static void compute_contributions(span<float>                                   
     srsvec::modulus_square_and_add(main_contributions, data.get_view({i_port}), main_contributions);
     srsvec::modulus_square_and_add(main_contributions, dmrs.get_view({i_port}), main_contributions);
 
-    srsvec::prod_conj(dmrs.get_view({i_port}), data.get_view({i_port}), support_cross);
+    srsvec::prod_conj(support_cross, dmrs.get_view({i_port}), data.get_view({i_port}));
     srsvec::add(cross_contributions, support_cross, cross_contributions);
   }
 }
@@ -564,7 +564,7 @@ pucch_detector_format1::hop_contribution_common pucch_detector_format1::process_
         span<cf_t> dmrs_help = dmrs_lse.get_view({i_dmrs, i_port});
         grid.get(dmrs_help, i_port, i_symbol, first_subcarrier);
         epre += srsvec::average_power(dmrs_help) * dmrs_help.size();
-        srsvec::prod_conj(dmrs_help, seq_r, dmrs_help);
+        srsvec::prod_conj(dmrs_help, dmrs_help, seq_r);
 
         span<cf_t> dft_input = dft->get_input();
         srsvec::copy(dft_input, dmrs_help);
@@ -577,7 +577,7 @@ pucch_detector_format1::hop_contribution_common pucch_detector_format1::process_
         span<cf_t> data_help = data_lse.get_view({i_data, i_port});
         grid.get(data_help, i_port, i_symbol, first_subcarrier);
         epre += srsvec::average_power(data_help) * data_help.size();
-        srsvec::prod_conj(data_help, seq_r, data_help);
+        srsvec::prod_conj(data_help, data_help, seq_r);
 
         span<cf_t> dft_input = dft->get_input();
         srsvec::copy(dft_input, data_help);
@@ -620,8 +620,8 @@ pucch_detector_format1::hop_contribution_common pucch_detector_format1::process_
 
     float normalizer = 1.0F / static_cast<float>(NSHIFTS * (nof_dmrs_symbols_hop + nof_data_symbols_hop));
 
-    srsvec::sc_prod(main_contributions, normalizer, main_contributions);
-    srsvec::sc_prod(cross_contributions, normalizer, cross_contributions);
+    srsvec::sc_prod(main_contributions, main_contributions, normalizer);
+    srsvec::sc_prod(cross_contributions, cross_contributions, normalizer);
 
     // Estimate the channels from the DM-RS symbols.
     static_tensor<2, cf_t, MAX_PORTS * NSHIFTS> estimated_channels({NSHIFTS, nof_ports});

@@ -14,16 +14,16 @@ jobs:
     strategy:
       matrix:
         include:
-          # --> metrics server
+          # --> telegraf
           - TAGNAME: ""
-            REPOSITORY: metrics-server
+            REPOSITORY: telegraf
             EXTRA_CMAKE_ARGS: ""
             MARCH: ""
             PLATFORM: amd64
             UHD_VERSION: ""
             DPDK_VERSION: ""
-            DOCKERFILE: ./docker/metrics_server/Dockerfile
-            CONTEXT: ./docker/metrics_server
+            DOCKERFILE: ./docker/telegraf/Dockerfile
+            CONTEXT: ./docker/telegraf
           # --> grafana
           - TAGNAME: ""
             REPOSITORY: grafana

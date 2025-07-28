@@ -138,7 +138,6 @@ static void generate_config(ru_ofh_configuration&                            out
                                                   ofh_cell_cfg.cell.compression_bitwidth_dl};
     sector_cfg.prach_compression_params        = {ofh::to_compression_type(ofh_cell_cfg.cell.compression_method_prach),
                                                   ofh_cell_cfg.cell.compression_bitwidth_prach};
-    sector_cfg.iq_scaling                      = ofh_cell_cfg.cell.iq_scaling;
 
     sector_cfg.tci_cp = ofh_cell_cfg.vlan_tag_cp;
     sector_cfg.tci_up = ofh_cell_cfg.vlan_tag_up;
@@ -148,6 +147,27 @@ static void generate_config(ru_ofh_configuration&                            out
 
     // TDD UL DL config.
     sector_cfg.tdd_config = cell.tdd_config;
+
+    // IQ scaling config.
+    if (const auto* legacy_scaling_config =
+            std::get_if<ru_ofh_legacy_scaling_config>(&ofh_cell_cfg.cell.iq_scaling_config)) {
+      // Set the IQ scaling with bandwidth normalization.
+      unsigned nof_prbs =
+          get_max_Nprb(bs_channel_bandwidth_to_MHz(sector_cfg.bw), sector_cfg.scs, frequency_range::FR1);
+      sector_cfg.iq_scaling =
+          legacy_scaling_config->iq_scaling / std::sqrt(static_cast<float>(nof_prbs * NOF_SUBCARRIERS_PER_RB));
+    } else if (const auto* scaling_config = std::get_if<ru_ofh_scaling_config>(&ofh_cell_cfg.cell.iq_scaling_config)) {
+      // Take the RU reference level, apply the configured subcarrier back-off and convert the result into a linear
+      // scaling factor. Do not apply any bandwidth normalization.
+      sector_cfg.iq_scaling =
+          convert_dB_to_amplitude(scaling_config->ru_reference_level_dBFS - scaling_config->subcarrier_rms_backoff_dB);
+    } else {
+      report_fatal_error(
+          "Either the iq_scaling or the RU reference level and subarrier RMS backoff must be configured.");
+    }
+
+    // C-Plane PRACH FFT config.
+    sector_cfg.c_plane_prach_fft_len = ofh_cell_cfg.cell.c_plane_prach_fft_len;
   }
 
   if (!is_valid_ru_ofh_config(out_cfg)) {

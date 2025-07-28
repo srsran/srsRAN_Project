@@ -40,6 +40,7 @@ downlink_processor_baseband_impl::downlink_processor_baseband_impl(
   nof_slot_tti_in_advance_ns(config.nof_slot_tti_in_advance * 1000000 /
                              slot_point(config.scs, 0).nof_slots_per_subframe()),
   sector_id(config.sector_id),
+  rate(config.rate),
   scs(config.scs),
   nof_rx_ports(config.nof_tx_ports),
   nof_samples_per_subframe(config.rate.to_kHz()),
@@ -120,7 +121,7 @@ baseband_gateway_transmitter_metadata downlink_processor_baseband_impl::process(
   srsran_assert(nof_rx_ports == buffer.get_nof_channels(), "Invalid number of channels.");
   unsigned nof_output_samples = buffer.get_nof_samples();
 
-  // Ouput buffer writing position index.
+  // Output buffer writing position index.
   unsigned writing_index = 0;
 
   // Output buffer metadata.
@@ -141,11 +142,22 @@ baseband_gateway_transmitter_metadata downlink_processor_baseband_impl::process(
 
     // If there are no samples available in the temporary buffer, process a new symbol.
     if (temp_buffer.get_nof_available_samples(proc_timestamp) == 0) {
+      // Calculate an adjusted timestamp for the samples to be generated. The transmit time offset is subtracted from
+      // the requested buffer timestamp to shift the signal in time. The generated signal will then be stored in the
+      // destination buffer according to the timestamp at which it should be transmitted.
+      baseband_gateway_timestamp proc_timestamp_offset  = proc_timestamp;
+      int                        current_tx_time_offset = tx_time_offset.load(std::memory_order::memory_order_relaxed);
+      if ((current_tx_time_offset < 0) ||
+          (static_cast<baseband_gateway_timestamp>(current_tx_time_offset) < proc_timestamp_offset)) {
+        // Make sure the subtraction does not overflow.
+        proc_timestamp_offset -= current_tx_time_offset;
+      }
+
       // Calculate the subframe index.
-      auto i_sf =
-          static_cast<unsigned>((proc_timestamp / nof_samples_per_subframe) % (NOF_SFNS * NOF_SUBFRAMES_PER_FRAME));
+      auto i_sf = static_cast<unsigned>((proc_timestamp_offset / nof_samples_per_subframe) %
+                                        (NOF_SFNS * NOF_SUBFRAMES_PER_FRAME));
       // Calculate the sample index within the subframe.
-      unsigned i_sample_sf = proc_timestamp % nof_samples_per_subframe;
+      unsigned i_sample_sf = proc_timestamp_offset % nof_samples_per_subframe;
 
       // Calculate symbol index within the subframe and the sample index within the OFDM symbol.
       unsigned i_sample_symbol = i_sample_sf;
@@ -282,4 +294,9 @@ bool downlink_processor_baseband_impl::process_new_symbol(baseband_gateway_buffe
   cfo_processor.advance(buffer.get_nof_samples());
 
   return true;
+}
+
+void downlink_processor_baseband_impl::set_tx_time_offset(phy_time_unit tx_time_offset_)
+{
+  tx_time_offset = tx_time_offset_.to_nearest_samples(rate.to_Hz());
 }

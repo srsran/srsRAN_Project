@@ -111,6 +111,7 @@ static transmitter_config generate_transmitter_config(const sector_configuration
   tx_config.tdd_config                           = sector_cfg.tdd_config;
   tx_config.uses_dpdk                            = sector_cfg.uses_dpdk;
   tx_config.are_metrics_enabled                  = sector_cfg.are_metrics_enabled;
+  tx_config.c_plane_prach_fft_len                = sector_cfg.c_plane_prach_fft_len;
 
   return tx_config;
 }

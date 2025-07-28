@@ -26,7 +26,7 @@
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pusch_helpers.h"
-#include "srsran/ran/csi_report/csi_report_pusch_size.h"
+#include "srsran/ran/csi_report/csi_report_size.h"
 #include "srsran/scheduler/config/serving_cell_config.h"
 
 using namespace srsran;
@@ -120,11 +120,11 @@ pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const cell_configuratio
     // "For both Type I and Type II reports configured for PUCCH but transmitted on PUSCH, the determination of the
     // payload for CSI part 1 and CSI part 2 follows that of PUCCH as described in clause 5.2.4."
     if (is_pusch_configured(*ue_cell_cfg->csi_meas_cfg())) {
-      csi_report_pusch_size csi_size = get_csi_report_pusch_size(csi_rep_cfg);
-      pusch.nof_csi_part1_bits       = csi_size.part1_size.value();
-      pusch.max_nof_csi_part2_bits   = csi_size.part2_max_size.value();
+      csi_report_size csi_size     = get_csi_report_pusch_size(csi_rep_cfg);
+      pusch.nof_csi_part1_bits     = csi_size.part1_size.value();
+      pusch.max_nof_csi_part2_bits = csi_size.part2_max_size.value();
     } else {
-      pusch.nof_csi_part1_bits = get_csi_report_pucch_size(csi_rep_cfg).value();
+      pusch.nof_csi_part1_bits = get_csi_report_pucch_size(csi_rep_cfg).part1_size.value();
     }
   }
 
@@ -181,11 +181,11 @@ pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const ue_cell_configura
     // "For both Type I and Type II reports configured for PUCCH but transmitted on PUSCH, the determination of the
     // payload for CSI part 1 and CSI part 2 follows that of PUCCH as described in clause 5.2.4."
     if (is_pusch_configured(*ue_cell_cfg.csi_meas_cfg())) {
-      csi_report_pusch_size csi_size = get_csi_report_pusch_size(csi_rep_cfg);
-      pusch.nof_csi_part1_bits       = csi_size.part1_size.value();
-      pusch.max_nof_csi_part2_bits   = csi_size.part2_max_size.value();
+      csi_report_size csi_size     = get_csi_report_pusch_size(csi_rep_cfg);
+      pusch.nof_csi_part1_bits     = csi_size.part1_size.value();
+      pusch.max_nof_csi_part2_bits = csi_size.part2_max_size.value();
     } else {
-      pusch.nof_csi_part1_bits = get_csi_report_pucch_size(csi_rep_cfg).value();
+      pusch.nof_csi_part1_bits = get_csi_report_pucch_size(csi_rep_cfg).part1_size.value();
     }
   }
 
@@ -461,11 +461,12 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
   pdsch.bwp_cfg     = &active_bwp_cfg;
   pdsch.coreset_cfg = &cs_cfg;
 
-  pdsch.rbs     = vrbs;
-  pdsch.symbols = pdsch_cfg.symbols;
-  pdsch.dmrs    = pdsch_cfg.dmrs;
-  pdsch.vrb_prb_mapping =
-      dci_cfg.vrb_prb_mapping.has_value() ? dci_cfg.vrb_prb_mapping.value() : vrb_to_prb::mapping_type::non_interleaved;
+  pdsch.rbs             = vrbs;
+  pdsch.symbols         = pdsch_cfg.symbols;
+  pdsch.dmrs            = pdsch_cfg.dmrs;
+  pdsch.vrb_prb_mapping = dci_cfg.vrb_prb_mapping.has_value() and dci_cfg.vrb_prb_mapping.value()
+                              ? ue_cell_cfg.init_bwp().dl_ded.value()->pdsch_cfg->vrb_to_prb_interleaving
+                              : vrb_to_prb::mapping_type::non_interleaved;
   // See TS38.213, 10.1.
   pdsch.ss_set_type = search_space_set_type::ue_specific;
   pdsch.dci_fmt     = dci_dl_format::f1_1;

@@ -56,7 +56,7 @@ public:
     }
   }
 
-  /// Remaining bytes to allocate for the given slice.
+  /// Remaining RBs available for allocation for the given slice.
   [[nodiscard]] unsigned remaining_rbs() const
   {
     if constexpr (IsDl) {

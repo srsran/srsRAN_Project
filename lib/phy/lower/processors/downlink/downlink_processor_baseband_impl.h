@@ -31,6 +31,7 @@
 #include "srsran/phy/lower/processors/downlink/downlink_processor_notifier.h"
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor.h"
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_baseband.h"
+#include "srsran/phy/lower/processors/lower_phy_tx_time_offset_controller.h"
 #include "srsran/phy/lower/sampling_rate.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/srsvec/copy.h"
@@ -182,7 +183,7 @@ private:
 } // namespace detail
 
 /// Implements a software generic lower PHY downlink baseband processor.
-class downlink_processor_baseband_impl : public downlink_processor_baseband
+class downlink_processor_baseband_impl : public downlink_processor_baseband, public lower_phy_tx_time_offset_controller
 {
 public:
   /// \brief Constructs a software generic lower PHY downlink processor that can process downlink resource grids.
@@ -203,6 +204,9 @@ public:
   baseband_gateway_transmitter_metadata process(baseband_gateway_buffer_writer& buffer,
                                                 baseband_gateway_timestamp      timestamp) override;
 
+  // See the lower_phy_tx_time_offset_controller interface for documentation.
+  void set_tx_time_offset(phy_time_unit tx_time_offset) override;
+
 private:
   /// \brief Processes a new symbol.
   ///
@@ -212,6 +216,8 @@ private:
   /// \return \c true if the symbol has been processed, \c false otherwise.
   bool process_new_symbol(baseband_gateway_buffer_writer& buffer, slot_point slot, unsigned i_symbol);
 
+  /// Transmit time offset in samples.
+  std::atomic<int> tx_time_offset = 0;
   /// PDxCH baseband processor.
   pdxch_processor_baseband& pdxch_proc_baseband;
   /// Amplitude control.
@@ -222,6 +228,8 @@ private:
   std::chrono::nanoseconds nof_slot_tti_in_advance_ns;
   /// Sector identifier.
   unsigned sector_id;
+  /// Baseband sampling rate.
+  sampling_rate rate;
   /// Subcarrier spacing.
   subcarrier_spacing scs;
   /// Number of receive ports.

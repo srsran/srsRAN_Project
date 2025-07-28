@@ -133,7 +133,7 @@ void port_channel_estimator_average_impl::do_compute(channel_estimate&          
          ++i_symbol) {
       span<cbf16_t> symbol_ch_estimate = estimate.get_symbol_ch_estimate(i_symbol, port, layer0);
       srsvec::sc_prod(
-          symbol_ch_estimate, std::polar(1.0F, TWOPI * symbol_start_epochs[i_symbol] * cfo), symbol_ch_estimate);
+          symbol_ch_estimate, symbol_ch_estimate, std::polar(1.0F, TWOPI * symbol_start_epochs[i_symbol] * cfo));
     }
   }
 
@@ -239,7 +239,7 @@ void port_channel_estimator_average_impl::compute_hop(srsran::channel_estimate& 
     total_scaling /= static_cast<float>(nof_dmrs_symbols);
   }
   for (unsigned i_symbol = 0; i_symbol != nof_lse_symbols; ++i_symbol) {
-    srsvec::sc_prod(pilots_lse.get_symbol(i_symbol, layer0), total_scaling, pilots_lse.get_symbol(i_symbol, layer0));
+    srsvec::sc_prod(pilots_lse.get_symbol(i_symbol, layer0), pilots_lse.get_symbol(i_symbol, layer0), total_scaling);
   }
 
   // Extract RB mask lowest and highest RB. Also, determine if the allocation is contiguous.
@@ -335,7 +335,7 @@ std::optional<float> port_channel_estimator_average_impl::preprocess_pilots_and_
 
   // Match received and transmitted pilots in the first DM-RS symbol.
   srsvec::prod_conj(
-      rx_pilots.get_symbol(0, layer0), pilots.get_symbol(hop_offset, layer0), pilots_lse.get_symbol(0, layer0));
+      pilots_lse.get_symbol(0, layer0), rx_pilots.get_symbol(0, layer0), pilots.get_symbol(hop_offset, layer0));
 
   // Skip CFO measurement if only one OFDM symbol contains DM-RS.
   if (nof_dmrs_symbols == 1) {
@@ -353,7 +353,7 @@ std::optional<float> port_channel_estimator_average_impl::preprocess_pilots_and_
   if (td_interpolation_strategy != port_channel_estimator_td_interpolation_strategy::average) {
     temp_pilot_products = pilots_lse.get_symbol(1, layer0);
   }
-  srsvec::prod_conj(rx_pilots.get_symbol(1, layer0), pilots.get_symbol(hop_offset + 1, layer0), temp_pilot_products);
+  srsvec::prod_conj(temp_pilot_products, rx_pilots.get_symbol(1, layer0), pilots.get_symbol(hop_offset + 1, layer0));
 
   noisy_phase_acc += srsvec::dot_prod(temp_pilot_products, pilots_lse.get_symbol(0, layer0));
 
@@ -363,10 +363,10 @@ std::optional<float> port_channel_estimator_average_impl::preprocess_pilots_and_
   // Compensate the CFO in the first two DM-RS symbols.
   if (compensate_cfo) {
     srsvec::sc_prod(pilots_lse.get_symbol(0, layer0),
-                    std::polar(1.0F, -TWOPI * symbol_start_epochs[i_dmrs_0] * cfo),
-                    pilots_lse.get_symbol(0, layer0));
+                    pilots_lse.get_symbol(0, layer0),
+                    std::polar(1.0F, -TWOPI * symbol_start_epochs[i_dmrs_0] * cfo));
     srsvec::sc_prod(
-        temp_pilot_products, std::polar(1.0F, -TWOPI * symbol_start_epochs[i_dmrs_1] * cfo), temp_pilot_products);
+        temp_pilot_products, temp_pilot_products, std::polar(1.0F, -TWOPI * symbol_start_epochs[i_dmrs_1] * cfo));
   }
 
   // Combine first two DM-RS symbols if the time-domain strategy is set to average.
@@ -386,12 +386,12 @@ std::optional<float> port_channel_estimator_average_impl::preprocess_pilots_and_
 
       // Match received and transmitted pilots in the current DM-RS symbol.
       srsvec::prod_conj(
-          rx_pilots.get_symbol(i_dmrs, 0), pilots.get_symbol(hop_offset + i_dmrs, layer0), temp_pilot_products);
+          temp_pilot_products, rx_pilots.get_symbol(i_dmrs, 0), pilots.get_symbol(hop_offset + i_dmrs, layer0));
 
       // Compensate the CFO in the current DM-RS symbol.
       if (compensate_cfo) {
         srsvec::sc_prod(
-            temp_pilot_products, std::polar(1.0F, -TWOPI * symbol_start_epochs[i_symbol] * cfo), temp_pilot_products);
+            temp_pilot_products, temp_pilot_products, std::polar(1.0F, -TWOPI * symbol_start_epochs[i_symbol] * cfo));
       }
 
       // Combine the remaining pilots if the time-domain strategy is set to average.
@@ -443,7 +443,7 @@ static float estimate_noise(const dmrs_symbol_list&                   pilots,
   // Scale channel estimates and average in time domain.
   float                                     scaling_factor = beta / static_cast<float>(nof_lse_symbols);
   static_re_buffer<one_layer, MAX_RB * NRE> scaled_estimates(one_layer, nof_re);
-  srsvec::sc_prod(estimates.get_symbol(0, layer0), scaling_factor, scaled_estimates.get_slice(layer0));
+  srsvec::sc_prod(scaled_estimates.get_slice(layer0), estimates.get_symbol(0, layer0), scaling_factor);
   for (unsigned i_symbol = 1; i_symbol != nof_lse_symbols; ++i_symbol) {
     span<cf_t>       scaled           = scaled_estimates.get_slice(layer0);
     span<const cf_t> estimates_symbol = estimates.get_symbol(i_symbol, layer0);
@@ -469,11 +469,11 @@ static float estimate_noise(const dmrs_symbol_list&                   pilots,
     span<const cf_t> symbol_pilots = pilots.get_symbol(hop_offset + i_dmrs, layer0);
 
     // Apply estimated channel response to the original symbol pilots.
-    srsvec::prod(scaled_estimates.get_slice(layer0), symbol_pilots, predicted_obs);
+    srsvec::prod(predicted_obs, scaled_estimates.get_slice(layer0), symbol_pilots);
 
     // Compensate for CFO only if present.
     if (compensate_cfo && cfo.has_value()) {
-      srsvec::sc_prod(predicted_obs, std::polar(1.0F, TWOPI * symbol_start_epochs[i_symbol] * *cfo), predicted_obs);
+      srsvec::sc_prod(predicted_obs, predicted_obs, std::polar(1.0F, TWOPI * symbol_start_epochs[i_symbol] * *cfo));
     }
 
     // Estimate receiver error as the subtraction of the regenerated symbols to the received pilots.

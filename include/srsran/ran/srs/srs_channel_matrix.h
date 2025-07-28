@@ -219,14 +219,14 @@ public:
   /// Scales all the coefficients by a real scaling factor.
   srs_channel_matrix& operator*=(float scale)
   {
-    srsvec::sc_prod(data.get_data(), scale, data.get_data());
+    srsvec::sc_prod(data.get_data(), data.get_data(), scale);
     return *this;
   }
 
   /// Scales all the coefficients by a complex scaling factor.
   srs_channel_matrix& operator*=(cf_t scale)
   {
-    srsvec::sc_prod(data.get_data(), scale, data.get_data());
+    srsvec::sc_prod(data.get_data(), data.get_data(), scale);
     return *this;
   }
 

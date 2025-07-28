@@ -142,6 +142,6 @@ private:
   nru_packing packer;
 
   const gtpu_tunnel_nru_config::gtpu_tunnel_nru_tx_config cfg;
-  sockaddr_storage                                        peer_sockaddr;
+  sockaddr_storage                                        peer_sockaddr = {};
 };
 } // namespace srsran

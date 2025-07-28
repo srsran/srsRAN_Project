@@ -478,7 +478,7 @@ TEST_P(mac_test_mode_auto_uci_test, when_uci_is_forwarded_to_mac_then_test_mode_
     ASSERT_TRUE(f2_or_f3_or_f4.csi_part1_info.has_value());
     ASSERT_TRUE(f2_or_f3_or_f4.csi_part1_info->is_valid);
     // Check that the payload size is the same as the expected, given the UE config.
-    units::bits expected_payload_size = get_csi_report_pucch_size(this->csi_cfg);
+    units::bits expected_payload_size = get_csi_report_pucch_size(this->csi_cfg).part1_size;
     ASSERT_EQ(f2_or_f3_or_f4.csi_part1_info->payload.size(), expected_payload_size.value());
     // Decode the CSI report and check that the CQI is the same as the one in the test config.
     csi_report_packed csi_bits(expected_payload_size.value());

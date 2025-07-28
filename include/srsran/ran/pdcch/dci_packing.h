@@ -318,11 +318,12 @@ struct dci_size_config {
   ///
   /// \remark Required if \c pdsch_res_allocation_type is either \e resourceAllocationType0 or \e dynamicSwitch.
   std::optional<unsigned> nof_dl_rb_groups;
-  /// \brief Interleaved VRB-to-PRB mapping flag.
+  /// \brief Interleaved VRB-to-PRB mapping configured flag.
   ///
-  /// Set to \c true if interleaved VRB-to-PRB mapping is configured, \c false otherwise.
-  ///
-  /// \remark Required if \c pdsch_res_allocation_type is either \e resourceAllocationType1 or \e dynamicSwitch.
+  /// Determines whether interleaved VRB-to-PRB mapping is configured by high layers.
+  /// \remark Required if \c pdsch_res_allocation_type is either \e resourceAllocationType1 or \e dynamicSwitch; in this
+  /// case, set to \c true if interleaved VRB-to-PRB mapping is configured by high layers, \c false otherwise.
+  /// \remark Don't set this for \e resourceAllocationType0, which doesn't support interleaved VRB-to-PRB mapping.
   std::optional<bool> interleaved_vrb_prb_mapping;
   /// \brief DM-RS type for PDSCH DM-RS mapping type A.
   ///
@@ -998,11 +999,15 @@ struct dci_1_1_configuration {
   unsigned time_resource;
   /// \brief VRB-to-PRB mapping - 1 bit if present.
   ///
-  /// Indicates if non-interleaved or interleaved VRB to PRB mapping is used. Set as per TS38.212 Table 7.3.1.2.2-5 if
-  /// resource allocation type 1 and interleaved VRB-to-PRB mapping are configured (see \ref
-  /// dci_size_config::pdsch_res_allocation_type and \ref dci_size_config::interleaved_vrb_prb_mapping). Otherwise,
-  /// leave it unset.
-  std::optional<vrb_to_prb::mapping_type> vrb_prb_mapping;
+  /// This must be set if resource allocation type 1 and interleaved VRB-to-PRB mapping are configured by high layers
+  /// (see \ref dci_size_config::pdsch_res_allocation_type and \ref dci_size_config::interleaved_vrb_prb_mapping).
+  /// It must be present if and only if \ref dci_size_config::interleaved_vrb_prb_mapping is present.
+  /// In this case, "true" indicates that interleaved VRB-to-PRB mapping is used for the PDSCH relative to this DCI;
+  /// "false" otherwise, as per TS38.212 Table 7.3.1.2.2-5. NOTE: interleaved VRB-to-PRB mapping can be configured by
+  /// high layers but not used on a given slot.
+  ///
+  /// Don't set this for resource allocation type 0, as it doesn't support interleaved VRB-to-PRB mapping.
+  std::optional<bool> vrb_prb_mapping;
   /// \brief PRB bundling size indicator - 1 bit if present.
   ///
   /// Dynamically selects between the configured PRB bundling size sets 1 and 2. Set as per TS38.214 Section 5.1.2.3 if

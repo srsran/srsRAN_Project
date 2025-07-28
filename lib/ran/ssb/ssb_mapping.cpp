@@ -36,20 +36,27 @@ uint8_t srsran::ssb_get_L_max(subcarrier_spacing ssb_scs, unsigned dl_arfcn, std
   const nr_band gnb_band = band.value_or(band_helper::get_band_from_dl_arfcn(dl_arfcn));
   srsran_assert(gnb_band != nr_band::invalid, "Invalid NR band index");
   ssb_pattern_case ssb_case = band_helper::get_ssb_pattern(gnb_band, ssb_scs);
+
   // Flag indicating whether cell is on paired spectrum (FDD) or unpaired (TDD, SDL, SUL).
   bool paired_spectrum = band_helper::is_paired_spectrum(gnb_band);
 
   // Get L_max from SSB pattern case and carrier frequency and paired spectrum flag.
   uint32_t f_arfcn = dl_arfcn;
-  if (ssb_case == ssb_pattern_case::A or ssb_case == ssb_pattern_case::B) {
-    // See TS 38.311, Section 4.1, "Case A" and "Case B".
-    L_max = f_arfcn < CUTOFF_FREQ_ARFCN_CASE_A_B_C ? 4 : 8;
-  } else if (ssb_case == ssb_pattern_case::C) {
-    // See TS 38.311, Section 4.1, "Case C".
-    uint32_t ssb_cutoff_freq = paired_spectrum ? CUTOFF_FREQ_ARFCN_CASE_A_B_C : CUTOFF_FREQ_ARFCN_CASE_C_UNPAIRED;
-    L_max                    = f_arfcn < ssb_cutoff_freq ? 4 : 8;
-  } else {
-    srsran_assert(ssb_case < ssb_pattern_case::invalid, "Invalid SSB case");
+  switch (ssb_case) {
+    case ssb_pattern_case::A:
+    case ssb_pattern_case::B:
+      L_max = (f_arfcn < CUTOFF_FREQ_ARFCN_CASE_A_B_C) ? 4 : 8;
+      break;
+    case ssb_pattern_case::C: {
+      uint32_t ssb_cutoff_freq = paired_spectrum ? CUTOFF_FREQ_ARFCN_CASE_A_B_C : CUTOFF_FREQ_ARFCN_CASE_C_UNPAIRED;
+      L_max                    = (f_arfcn < ssb_cutoff_freq) ? 4 : 8;
+    } break;
+    case ssb_pattern_case::D:
+    case ssb_pattern_case::E:
+      L_max = 64;
+      break;
+    case ssb_pattern_case::invalid:
+      report_fatal_error("Invalid SS/PBCH block case for n{} and {}.", nr_band_to_uint(gnb_band), to_string(ssb_scs));
   }
 
   return L_max;

@@ -80,6 +80,8 @@ struct f1ap_ue_context_update_request {
   byte_buffer source_cell_group_cfg;
   /// Container with the UE-CapabilityRAT-ContainerList, as per TS 38.331.
   byte_buffer ue_cap_rat_list;
+  /// Indiction that the CU-CP has received the RRC reconfiguration complete.
+  bool rrc_recfg_complete_ind;
 };
 
 /// \brief Response from DU manager to DU F1AP with the result of the UE context update.

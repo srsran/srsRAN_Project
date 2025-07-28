@@ -340,7 +340,7 @@ qos_flow_level_qos_params_to_f1ap_asn1(const qos_flow_level_qos_parameters qos_p
   asn1_qos_params.qos_characteristics = qos_characteristics_to_f1ap_asn1(qos_params.qos_desc);
 
   // Fill alloc and retention prio.
-  asn1_qos_params.ngra_nalloc_retention_prio.prio_level = qos_params.alloc_retention_prio.prio_level_arp;
+  asn1_qos_params.ngra_nalloc_retention_prio.prio_level = qos_params.alloc_retention_prio.prio_level_arp.value();
   asn1_qos_params.ngra_nalloc_retention_prio.pre_emption_cap.value =
       qos_params.alloc_retention_prio.may_trigger_preemption
           ? asn1::f1ap::pre_emption_cap_opts::may_trigger_pre_emption

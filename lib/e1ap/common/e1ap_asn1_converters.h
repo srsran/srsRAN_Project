@@ -1198,9 +1198,9 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
     }
 
     // Fill paging policy indication.
-    if (asn1_flow_map_item.qos_flow_level_qos_params.paging_policy_ind_present) {
+    if (asn1_flow_map_item.qos_flow_level_qos_params.paging_policy_idx_present) {
       flow_map_item.qos_flow_level_qos_params.paging_policy_ind =
-          asn1_flow_map_item.qos_flow_level_qos_params.paging_policy_ind;
+          asn1_flow_map_item.qos_flow_level_qos_params.paging_policy_idx;
     }
 
     // Fill reflective QoS indication.

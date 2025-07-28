@@ -116,6 +116,7 @@ private:
 static pusch_decoder_buffer_dummy decoder_buffer_dummy;
 
 pusch_processor_impl::pusch_processor_impl(configuration& config) :
+  logger(srslog::fetch_basic_logger("PHY")),
   thread_local_dependencies_pool(std::move(config.thread_local_dependencies_pool)),
   decoder(std::move(config.decoder)),
   dec_nof_iterations(config.dec_nof_iterations),
@@ -136,10 +137,29 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   using namespace units::literals;
 
   // Get thread local dependencies.
-  concurrent_dependencies& dependencies = thread_local_dependencies_pool->get();
+  auto dependencies = thread_local_dependencies_pool->get();
+
+  if (!dependencies) {
+    logger.error("Failed to retrieve PUSCH processor dependencies.");
+
+    // Notify
+    if (pdu.uci.nof_harq_ack != 0) {
+      notifier.on_uci({.harq_ack  = {.payload = uci_payload_type(pdu.uci.nof_harq_ack), .status = uci_status::invalid},
+                       .csi_part1 = {},
+                       .csi_part2 = {},
+                       .csi       = {}});
+    }
+
+    // Notify the completion of the data processing as the CRC check is KO.
+    if (pdu.codeword.has_value()) {
+      notifier.on_sch({});
+    }
+
+    return;
+  }
 
   // Get channel estimates.
-  channel_estimate& ch_estimate = dependencies.get_channel_estimate();
+  channel_estimate& ch_estimate = dependencies->get_channel_estimate();
 
   // Assert PDU.
   [[maybe_unused]] std::string msg;
@@ -214,7 +234,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   ch_est_config.first_symbol = pdu.start_symbol_index;
   ch_est_config.nof_symbols  = pdu.nof_symbols;
   ch_est_config.rx_ports.assign(pdu.rx_ports.begin(), pdu.rx_ports.end());
-  dependencies.get_estimator().estimate(ch_estimate, grid, ch_est_config);
+  dependencies->get_estimator().estimate(ch_estimate, grid, ch_est_config);
 
   // Set the DC (Direct Current) subcarrier to zero if its position is within the resource grid and transform precoding
   // is disabled. This step is skipped when transform precoding is used, as forcing the DC to zero in that case may
@@ -264,9 +284,9 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   std::reference_wrapper<pusch_decoder_buffer> csi_part1_buffer(decoder_buffer_dummy);
 
   // Prepare CSI Part 1 feedback.
-  pusch_processor_csi_part1_feedback_impl csi_part1_feedback(dependencies.get_csi_part2_decoder(),
+  pusch_processor_csi_part1_feedback_impl csi_part1_feedback(dependencies->get_csi_part2_decoder(),
                                                              *decoder,
-                                                             dependencies.get_demultiplex(),
+                                                             dependencies->get_demultiplex(),
                                                              pdu.mcs_descr.modulation,
                                                              pdu.uci.csi_part2_size,
                                                              ulsch_config);
@@ -304,19 +324,19 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
 
   // Prepares HARQ-ACK notifier and buffer.
   if (pdu.uci.nof_harq_ack != 0) {
-    harq_ack_buffer = dependencies.get_harq_ack_decoder().new_transmission(
+    harq_ack_buffer = dependencies->get_harq_ack_decoder().new_transmission(
         pdu.uci.nof_harq_ack, pdu.mcs_descr.modulation, notifier_adaptor.get_harq_ack_notifier());
   }
 
   // Prepares CSI Part 1 notifier and buffer.
   if (pdu.uci.nof_csi_part1 != 0) {
-    csi_part1_buffer = dependencies.get_csi_part1_decoder().new_transmission(
+    csi_part1_buffer = dependencies->get_csi_part1_decoder().new_transmission(
         pdu.uci.nof_csi_part1, pdu.mcs_descr.modulation, notifier_adaptor.get_csi_part1_notifier());
   }
 
   // Demultiplex SCH data, HARQ-ACK and CSI Part 1.
   pusch_codeword_buffer& demodulator_buffer =
-      dependencies.get_demultiplex().demultiplex(decoder_buffer, harq_ack_buffer, csi_part1_buffer, demux_config);
+      dependencies->get_demultiplex().demultiplex(decoder_buffer, harq_ack_buffer, csi_part1_buffer, demux_config);
 
   // Demodulate.
   pusch_demodulator::configuration demod_config;
@@ -332,6 +352,6 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   demod_config.nof_tx_layers               = pdu.nof_tx_layers;
   demod_config.enable_transform_precoding  = enable_transform_precoding;
   demod_config.rx_ports                    = pdu.rx_ports;
-  dependencies.get_demodulator().demodulate(
+  dependencies->get_demodulator().demodulate(
       demodulator_buffer, notifier_adaptor.get_demodulator_notifier(), grid, ch_estimate, demod_config);
 }

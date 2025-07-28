@@ -23,7 +23,6 @@
 #include "du_low_appconfig_translators.h"
 #include "apps/services/worker_manager/worker_manager_config.h"
 #include "du_low_appconfig.h"
-#include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
 using namespace std::chrono_literals;

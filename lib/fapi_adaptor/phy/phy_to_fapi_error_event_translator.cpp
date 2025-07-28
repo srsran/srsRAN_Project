@@ -27,7 +27,7 @@ using namespace srsran;
 using namespace fapi_adaptor;
 
 namespace {
-class slot_error_notifier_dummy : public fapi::slot_error_message_notifier
+class error_notifier_dummy : public fapi::error_message_notifier
 {
 public:
   void on_error_indication(const fapi::error_indication_message& msg) override {}
@@ -35,7 +35,7 @@ public:
 
 } // namespace
 
-static slot_error_notifier_dummy dummy_notifier;
+static error_notifier_dummy dummy_notifier;
 
 phy_to_fapi_error_event_translator::phy_to_fapi_error_event_translator() : error_notifier(dummy_notifier) {}
 

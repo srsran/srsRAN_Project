@@ -83,6 +83,22 @@ const char* convert_enum_idx(const char* array[], uint32_t nof_types, uint32_t e
   return array[enum_val];
 }
 
+bool convert_enum_str(const char* array[],
+                      uint32_t    nof_types,
+                      const char* str,
+                      uint32_t&   enum_val,
+                      const char* enum_type)
+{
+  for (uint32_t i = 0; i < nof_types; ++i) {
+    if (strcmp(str, array[i]) == 0) {
+      enum_val = i;
+      return true;
+    }
+  }
+  log_error("The string '{}' is not a valid value for enum type {}.", str, enum_type);
+  return false;
+}
+
 template <class ItemType>
 ItemType map_enum_number(ItemType* array, uint32_t nof_types, uint32_t enum_val, const char* enum_type)
 {

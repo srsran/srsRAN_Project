@@ -40,20 +40,6 @@
 
 namespace srsran {
 
-/// Describes a sector configuration.
-struct lower_phy_sector_description {
-  /// Indicates the sector bandwidth in resource blocks.
-  unsigned bandwidth_rb;
-  /// Indicates the downlink frequency.
-  double dl_freq_hz;
-  /// Indicates the uplink frequency.
-  double ul_freq_hz;
-  /// Number of transmit ports.
-  unsigned nof_tx_ports;
-  /// Number of receive ports.
-  unsigned nof_rx_ports;
-};
-
 /// \brief Lower physical layer baseband gateway buffer size policy.
 ///
 /// Determines the policy to select the baseband gateway buffer size.
@@ -81,6 +67,16 @@ struct lower_phy_configuration {
   subcarrier_spacing scs;
   /// Cyclic prefix.
   cyclic_prefix cp;
+  /// Indicates the sector bandwidth in resource blocks.
+  unsigned bandwidth_rb;
+  /// Indicates the downlink frequency.
+  double dl_freq_hz;
+  /// Indicates the uplink frequency.
+  double ul_freq_hz;
+  /// Number of transmit ports.
+  unsigned nof_tx_ports;
+  /// Number of receive ports.
+  unsigned nof_rx_ports;
   /// Shifts the DFT window by a fraction of the cyclic prefix [0, 1).
   float dft_window_offset;
   /// \brief Number of slots the timing handler is notified in advance of the transmission time.
@@ -113,8 +109,6 @@ struct lower_phy_configuration {
   lower_phy_baseband_buffer_size_policy baseband_rx_buffer_size_policy;
   /// Amplitude control parameters, including baseband gain and clipping.
   amplitude_controller_clipping_config amplitude_config;
-  /// Provides the sectors configuration.
-  std::vector<lower_phy_sector_description> sectors;
   /// Provides the baseband gateway.
   baseband_gateway* bb_gateway;
   /// Provides a symbol handler to notify the reception of symbols.

@@ -21,6 +21,7 @@
  */
 
 #include "split6_o_du_impl.h"
+#include "srsran/fapi_adaptor/fapi_operation_controller.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_sector_adaptor.h"
 #include "srsran/support/srsran_assert.h"
@@ -39,8 +40,8 @@ split6_o_du_impl::split6_o_du_impl(std::vector<std::unique_ptr<fapi::fapi_adapto
 
     adaptors[i]->get_message_interface_collection().set_slot_data_message_notifier(
         fapi_sector.get_slot_data_message_notifier());
-    adaptors[i]->get_message_interface_collection().set_slot_error_message_notifier(
-        fapi_sector.get_slot_error_message_notifier());
+    adaptors[i]->get_message_interface_collection().set_error_message_notifier(
+        fapi_sector.get_error_message_notifier());
     adaptors[i]->get_message_interface_collection().set_slot_time_message_notifier(
         fapi_sector.get_slot_time_message_notifier());
   }

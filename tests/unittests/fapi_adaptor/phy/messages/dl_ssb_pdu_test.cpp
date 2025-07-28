@@ -22,6 +22,8 @@
 
 #include "srsran/fapi/message_builders.h"
 #include "srsran/fapi_adaptor/phy/messages/ssb.h"
+#include "srsran/ran/ssb/pbch_mib_pack.h"
+#include "srsran/srsvec/bit.h"
 #include "srsran/srsvec/compare.h"
 #include <chrono>
 #include <gtest/gtest.h>
@@ -32,15 +34,37 @@ using namespace fapi_adaptor;
 
 static std::mt19937 gen(0);
 
-/// Benchmark that measures the performance converting SSB data structures from MAC -> FAPI -> PHY.
+static uint32_t generate_bch_payload(unsigned            ssb_subcarrier_offset,
+                                     dmrs_typeA_position dmrs_type_a_position,
+                                     uint8_t             pdcch_config_sib1,
+                                     bool                cell_barred,
+                                     bool                intra_freq_reselection,
+                                     uint32_t            sfn,
+                                     bool                hrf,
+                                     subcarrier_spacing  scs_common)
+{
+  // Prepare message parameters.
+  pbch_mib_message msg = {.sfn                   = sfn,
+                          .hrf                   = hrf,
+                          .scs_common            = scs_common,
+                          .subcarrier_offset     = ssb_subcarrier_offset,
+                          .dmrs_typeA_pos        = dmrs_type_a_position,
+                          .pdcch_config_sib1     = pdcch_config_sib1,
+                          .cell_barred           = cell_barred,
+                          .intrafreq_reselection = intra_freq_reselection,
+                          .ssb_block_index       = 0};
+
+  // Generate payload.
+  return pbch_mib_pack(msg);
+}
+
 TEST(fapi_to_phy_ssb_conversion_test, valid_pdu_conversion_success)
 {
   // Random generators.
   std::uniform_int_distribution<unsigned> sfn_dist(0, 1023);
   std::uniform_int_distribution<unsigned> slot_dist(0, 160);
   std::uniform_int_distribution<unsigned> pci_dist(0, 3000);
-  std::uniform_int_distribution<uint8_t>  binary_1bit_dist(0, 1);
-  std::uniform_int_distribution<uint8_t>  binary_8bit_dist(0, UINT8_MAX);
+  std::uniform_int_distribution<uint8_t>  eight_bit_dist(0, UINT8_MAX);
   std::uniform_int_distribution<unsigned> binary_dist(0, 1);
   std::uniform_int_distribution<unsigned> dmrs_type_A_dist(2, 3);
   std::uniform_int_distribution<unsigned> subcarrier_offset_dist(0, 23);
@@ -68,24 +92,30 @@ TEST(fapi_to_phy_ssb_conversion_test, valid_pdu_conversion_success)
                                                   ssb_pattern_case::E}) {
               slot_point slot(
                   static_cast<uint32_t>(scs), sfn_dist(gen), slot_dist(gen) % (10 << static_cast<uint32_t>(scs)));
+
               unsigned            sfn                    = slot.sfn();
               unsigned            pci                    = pci_dist(gen);
               unsigned            ssb_subcarrier_offset  = subcarrier_offset_dist(gen);
               unsigned            offset_pointA          = offset_pointA_dist(gen);
               dmrs_typeA_position dmrs_type_a_position   = static_cast<dmrs_typeA_position>(dmrs_type_A_dist(gen));
-              uint8_t             pdcch_config_sib1      = binary_8bit_dist(gen);
+              uint8_t             pdcch_config_sib1      = eight_bit_dist(gen);
               bool                cell_barred            = binary_dist(gen);
               bool                intra_freq_reselection = binary_dist(gen);
 
-              // :TODO: Begin with the MAC structure when it is defined.
-              fapi::dl_tti_request_message         msg = {};
+              fapi::dl_tti_request_message         msg;
               fapi::dl_tti_request_message_builder builder(msg);
-              // :TODO: when the groups are available, add them.
               builder.set_basic_parameters(slot.sfn(), slot.slot_index(), 0);
-              auto ssb_builder = builder.add_ssb_pdu(pci, beta_pss, ssb_idx, ssb_subcarrier_offset, offset_pointA);
-
-              ssb_builder.set_bch_payload_phy_full(
-                  dmrs_type_a_position, pdcch_config_sib1, cell_barred, intra_freq_reselection);
+              auto     ssb_builder = builder.add_ssb_pdu(pci, beta_pss, ssb_idx, ssb_subcarrier_offset, offset_pointA);
+              uint32_t mib_payload = generate_bch_payload(ssb_subcarrier_offset,
+                                                          dmrs_type_a_position,
+                                                          pdcch_config_sib1,
+                                                          cell_barred,
+                                                          intra_freq_reselection,
+                                                          sfn,
+                                                          slot.is_odd_hrf(),
+                                                          slot.scs()) >>
+                                     8;
+              ssb_builder.set_bch_payload_phy_timing_info(mib_payload);
               ssb_builder.set_maintenance_v3_basic_parameters(pattern_case, scs, lmax);
 
               // PHY processor PDU.
@@ -115,70 +145,9 @@ TEST(fapi_to_phy_ssb_conversion_test, valid_pdu_conversion_success)
               ASSERT_EQ(pdu.pattern_case, pattern_case);
               ASSERT_TRUE(srsvec::equal(pdu.ports, std::vector<uint8_t>{0}));
 
-              // MIB - 1 bit
-              ASSERT_EQ(pdu.bch_payload[0], 0);
-              // systemFrameNumber - 6 bits MSB
-              ASSERT_EQ(pdu.bch_payload[1], (sfn >> 9U) & 1U);
-              ASSERT_EQ(pdu.bch_payload[2], (sfn >> 8U) & 1U);
-              ASSERT_EQ(pdu.bch_payload[3], (sfn >> 7U) & 1U);
-              ASSERT_EQ(pdu.bch_payload[4], (sfn >> 6U) & 1U);
-              ASSERT_EQ(pdu.bch_payload[5], (sfn >> 5U) & 1U);
-              ASSERT_EQ(pdu.bch_payload[6], (sfn >> 4U) & 1U);
-              // subCarrierSpacingCommon - 1 bit
-              ASSERT_EQ(pdu.bch_payload[7],
-                        (common_scs == subcarrier_spacing::kHz15 || common_scs == subcarrier_spacing::kHz60) ? 0 : 1);
-              // ssb-SubcarrierOffset - 4 bits
-              ASSERT_EQ(pdu.bch_payload[8], (ssb_subcarrier_offset >> 3U) & 1U);
-              ASSERT_EQ(pdu.bch_payload[9], (ssb_subcarrier_offset >> 2U) & 1U);
-              ASSERT_EQ(pdu.bch_payload[10], (ssb_subcarrier_offset >> 1U) & 1U);
-              ASSERT_EQ(pdu.bch_payload[11], (ssb_subcarrier_offset >> 0U) & 1U);
-
-              // dmrs-TypeA-Position - 1 bit
-              ASSERT_EQ(pdu.bch_payload[12],
-                        static_cast<unsigned>(dmrs_type_a_position == dmrs_typeA_position::pos2) ? 0 : 1);
-
-              // pdcch-ConfigSIB1
-              // controlResourceSetZero - 4 bits
-              ASSERT_EQ(pdu.bch_payload[13], (pdcch_config_sib1 >> 7U) & 1U);
-              ASSERT_EQ(pdu.bch_payload[14], (pdcch_config_sib1 >> 6U) & 1U);
-              ASSERT_EQ(pdu.bch_payload[15], (pdcch_config_sib1 >> 5U) & 1U);
-              ASSERT_EQ(pdu.bch_payload[16], (pdcch_config_sib1 >> 4U) & 1U);
-
-              // searchSpaceZero - 4 bits
-              ASSERT_EQ(pdu.bch_payload[17], (pdcch_config_sib1 >> 3U) & 1U);
-              ASSERT_EQ(pdu.bch_payload[18], (pdcch_config_sib1 >> 2U) & 1U);
-              ASSERT_EQ(pdu.bch_payload[19], (pdcch_config_sib1 >> 1U) & 1U);
-              ASSERT_EQ(pdu.bch_payload[20], (pdcch_config_sib1 >> 0U) & 1U);
-
-              // Barred - 1 bit
-              ASSERT_EQ(pdu.bch_payload[21], cell_barred ? 0U : 1U);
-
-              // intraFreqReselection - 1 bit
-              ASSERT_EQ(pdu.bch_payload[22], intra_freq_reselection ? 0U : 1U);
-
-              // Spare - 1 bit
-              ASSERT_EQ(pdu.bch_payload[23], 0);
-
-              // systemFrameNumber - 4 bits LSB
-              ASSERT_EQ(pdu.bch_payload[24], (sfn >> 3U) & 1U);
-              ASSERT_EQ(pdu.bch_payload[25], (sfn >> 2U) & 1U);
-              ASSERT_EQ(pdu.bch_payload[26], (sfn >> 1U) & 1U);
-              ASSERT_EQ(pdu.bch_payload[27], (sfn >> 0U) & 1U);
-
-              // Half radio frame - 1 bit
-              ASSERT_EQ(pdu.bch_payload[28], slot.is_odd_hrf());
-
-              if (lmax == 64) {
-                // SS/PBCH block index - 3 MSB
-                ASSERT_EQ(pdu.bch_payload[29], (ssb_idx >> 5U) & 1U);
-                ASSERT_EQ(pdu.bch_payload[30], (ssb_idx >> 4U) & 1U);
-                ASSERT_EQ(pdu.bch_payload[31], (ssb_idx >> 3U) & 1U);
-              } else {
-                // 3rd LSB set to MSB of SSB subcarrier offset. 2nd and 1st bits reserved.
-                ASSERT_EQ(pdu.bch_payload[29], (ssb_subcarrier_offset >> 4U) & 1U);
-                ASSERT_EQ(pdu.bch_payload[30], 0);
-                ASSERT_EQ(pdu.bch_payload[31], 0);
-              }
+              std::array<uint8_t, ssb_processor::MIB_PAYLOAD_SIZE> dest;
+              srsvec::bit_unpack(dest, mib_payload, dest.size());
+              ASSERT_EQ(pdu.mib_payload, dest);
             }
           }
         }

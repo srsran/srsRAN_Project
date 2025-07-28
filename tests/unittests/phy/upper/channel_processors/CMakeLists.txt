@@ -32,10 +32,10 @@ set_directory_properties(PROPERTIES LABELS "phy")
 
 if (USE_PHY_TESTVECTORS)
     add_executable(prach_detector_vectortest prach_detector_vectortest.cpp)
-    target_link_libraries(prach_detector_vectortest srsran_channel_processors srsran_generic_funcs srsran_phy_support srslog gtest gtest_main)
+    target_link_libraries(prach_detector_vectortest srsran_channel_processors srsran_dft srsran_phy_support srslog gtest gtest_main)
     add_test_vector(prach_detector_vectortest prach_detector_test_data.tar.gz "")
 
     add_executable(prach_generator_vectortest prach_generator_vectortest.cpp)
-    target_link_libraries(prach_generator_vectortest srsran_channel_processors srsran_generic_funcs srslog gtest gtest_main)
+    target_link_libraries(prach_generator_vectortest srsran_channel_processors srsran_dft srslog gtest gtest_main)
     add_test_vector(prach_generator_vectortest prach_generator_test_data.tar.gz "")
 endif (USE_PHY_TESTVECTORS)

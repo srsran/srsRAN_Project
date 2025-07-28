@@ -359,7 +359,7 @@ srsran::config_helpers::make_default_ul_config_common(const cell_config_builder_
   cfg.freq_info_ul.freq_band_list.back().band = *params.band;
   cfg.init_ul_bwp.generic_params              = make_default_init_bwp(params);
   cfg.init_ul_bwp.rach_cfg_common.emplace();
-  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.zero_correlation_zone_config = 15;
+  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.zero_correlation_zone_config = 0;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index           = 16;
   if (band_helper::get_duplex_mode(params.band.value()) == duplex_mode::TDD) {
     std::optional<uint8_t> idx_found = prach_helper::find_valid_prach_config_index(
@@ -705,10 +705,11 @@ static csi_helper::csi_builder_params make_default_csi_builder_params(const cell
 {
   // Parameters used to generate list of CSI resources.
   csi_helper::csi_builder_params csi_params{};
-  csi_params.pci           = params.pci;
-  csi_params.nof_rbs       = params.cell_nof_crbs;
-  csi_params.nof_ports     = params.nof_dl_ports;
-  csi_params.csi_rs_period = csi_helper::get_max_csi_rs_period(params.scs_common);
+  csi_params.pci            = params.pci;
+  csi_params.nof_rbs        = params.cell_nof_crbs;
+  csi_params.nof_ports      = params.nof_dl_ports;
+  csi_params.max_nof_layers = params.max_nof_layers.value_or(params.nof_dl_ports);
+  csi_params.csi_rs_period  = csi_helper::get_max_csi_rs_period(params.scs_common);
 
   if (band_helper::get_duplex_mode(params.band.value()) == duplex_mode::TDD) {
     // Set a default CSI report slot offset that falls in an UL slot.
@@ -751,6 +752,8 @@ pdsch_config srsran::config_helpers::make_default_pdsch_config(const cell_config
   pdsch_cfg.rbg_sz    = rbg_size::config1;
   pdsch_cfg.prb_bndlg.bundling.emplace<prb_bundling::static_bundling>(
       prb_bundling::static_bundling({.sz = prb_bundling::static_bundling::bundling_size::wideband}));
+
+  pdsch_cfg.vrb_to_prb_interleaving = vrb_to_prb::mapping_type::non_interleaved;
 
   if (params.csi_rs_enabled) {
     const csi_helper::csi_builder_params csi_params = make_default_csi_builder_params(params);

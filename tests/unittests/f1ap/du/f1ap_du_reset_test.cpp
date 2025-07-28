@@ -44,7 +44,7 @@ public:
 
 TEST_F(f1_reset_test, when_f1_reset_is_received_but_no_ue_is_created_then_no_request_is_forwarded_to_du)
 {
-  auto req = test_helpers::create_f1ap_reset_message();
+  auto req = test_helpers::generate_f1ap_reset_message();
   this->f1ap->handle_message(req);
 
   ASSERT_FALSE(this->f1ap_du_cfg_handler.last_ues_to_reset.has_value());
@@ -57,7 +57,7 @@ TEST_F(f1_reset_test, when_f1_reset_is_received_then_reset_request_is_forwarded_
   du_ue_index_t test_ue_index = to_du_ue_index(0);
   this->run_f1ap_ue_create(test_ue_index);
 
-  auto req = test_helpers::create_f1ap_reset_message();
+  auto req = test_helpers::generate_f1ap_reset_message();
   this->f1ap->handle_message(req);
 
   ASSERT_TRUE(this->f1ap_du_cfg_handler.last_ues_to_reset.has_value());
@@ -71,7 +71,7 @@ TEST_F(f1_reset_test, when_f1_reset_is_received_for_a_specific_ue_then_reset_req
   du_ue_index_t test_ue_index = to_du_ue_index(0);
   this->run_f1ap_ue_create(test_ue_index);
 
-  auto req = test_helpers::create_f1ap_reset_message({{gnb_du_ue_f1ap_id_t{0}, std::nullopt}});
+  auto req = test_helpers::generate_f1ap_reset_message({{gnb_du_ue_f1ap_id_t{0}, std::nullopt}});
   this->f1ap->handle_message(req);
 
   ASSERT_TRUE(this->f1ap_du_cfg_handler.last_ues_to_reset.has_value());

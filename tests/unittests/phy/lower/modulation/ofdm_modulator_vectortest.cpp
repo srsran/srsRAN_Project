@@ -39,7 +39,7 @@ static std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
              test_case.test_config.config.dft_size,
              test_case.test_config.config.cp.to_string(),
              test_case.test_config.config.scale,
-             test_case.test_config.config.center_freq_hz / 1e6);
+             test_case.test_config.config.center_freq_Hz / 1e6);
   return os;
 }
 

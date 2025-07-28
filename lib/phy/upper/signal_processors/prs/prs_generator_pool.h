@@ -23,7 +23,8 @@
 #pragma once
 
 #include "srsran/phy/upper/signal_processors/prs/prs_generator.h"
-#include "srsran/support/memory_pool/concurrent_thread_local_object_pool.h"
+#include "srsran/srslog/srslog.h"
+#include "srsran/support/memory_pool/bounded_object_pool.h"
 
 namespace srsran {
 
@@ -34,10 +35,11 @@ class prs_generator_pool : public prs_generator
 {
 public:
   /// PRS generator pool type.
-  using generator_pool_type = concurrent_thread_local_object_pool<prs_generator>;
+  using generator_pool_type = bounded_unique_object_pool<prs_generator>;
 
   /// Creates a SSB processor pool from a list of processors. Ownership is transferred to the pool.
-  explicit prs_generator_pool(std::shared_ptr<generator_pool_type> processors_) : processors(std::move(processors_))
+  explicit prs_generator_pool(std::shared_ptr<generator_pool_type> processors_) :
+    logger(srslog::fetch_basic_logger("PHY")), processors(std::move(processors_))
   {
     srsran_assert(processors, "Invalid processor pool.");
   }
@@ -45,11 +47,16 @@ public:
   // See interface for documentation.
   void generate(resource_grid_writer& grid, const prs_generator_configuration& config) override
   {
-    prs_generator& processor = processors->get();
-    return processor.generate(grid, config);
+    auto processor = processors->get();
+    if (!processor) {
+      logger.error("Failed to retrieve PRS generator.");
+      return;
+    }
+    return processor->generate(grid, config);
   }
 
 private:
+  srslog::basic_logger&                logger;
   std::shared_ptr<generator_pool_type> processors;
 };
 

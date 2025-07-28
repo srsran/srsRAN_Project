@@ -131,7 +131,7 @@ public:
         sctp_params.connect_port,
         std::make_unique<sctp_to_e1_pdu_notifier>(std::move(cu_up_rx_pdu_notifier), pcap_writer, logger));
     if (sctp_sender == nullptr) {
-      logger.error("Failed to establish E1 TNL connection to CU-CP on {}:{}.\n",
+      logger.error("Failed to establish E1 TNL connection to CU-CP on {}:{}.",
                    sctp_params.connect_address,
                    sctp_params.connect_port);
       return nullptr;

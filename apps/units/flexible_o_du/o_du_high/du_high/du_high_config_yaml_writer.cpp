@@ -110,9 +110,12 @@ static YAML::Node build_du_high_ntn_section(const ntn_config& config)
   }
 
   if (config.ta_info) {
-    node["ta_common"]               = config.ta_info.value().ta_common;
-    node["ta_common_drift"]         = config.ta_info.value().ta_common_drift;
-    node["ta_common_drift_variant"] = config.ta_info.value().ta_common_drift_variant;
+    YAML::Node ta_info_node;
+    ta_info_node["ta_common"]               = config.ta_info.value().ta_common;
+    ta_info_node["ta_common_drift"]         = config.ta_info.value().ta_common_drift;
+    ta_info_node["ta_common_drift_variant"] = config.ta_info.value().ta_common_drift_variant;
+
+    node["ta_info"] = ta_info_node;
   }
 
   if (config.epoch_timestamp) {
@@ -143,6 +146,14 @@ static YAML::Node build_du_high_ntn_section(const ntn_config& config)
     epoch_node["subframe_number"] = config.epoch_time.value().subframe_number;
 
     node["epoch_time"] = epoch_node;
+  }
+
+  if (config.epoch_sfn_offset) {
+    node["epoch_sfn_offset"] = config.epoch_sfn_offset.value();
+  }
+
+  if (config.use_state_vector) {
+    node["use_state_vector"] = config.use_state_vector.value();
   }
 
   if (std::holds_alternative<ecef_coordinates_t>(config.ephemeris_info)) {
@@ -369,6 +380,10 @@ static YAML::Node build_du_high_pdsch_section(const du_high_unit_pdsch_config& c
   node["harq_la_ri_drop_threshold"]  = static_cast<unsigned>(config.harq_la_ri_drop_threshold);
   node["dmrs_additional_position"]   = config.dmrs_add_pos;
   node["interleaving_bundle_size"]   = static_cast<unsigned>(config.interleaving_bundle_size);
+
+  if (config.max_rank.has_value()) {
+    node["max_rank"] = *config.max_rank;
+  }
 
   for (auto rv : config.rv_sequence) {
     node["rv_sequence"].push_back(rv);
@@ -702,6 +717,10 @@ static YAML::Node build_cell_entry(const du_high_unit_base_cell_config& config)
   }
   fill_du_high_sched_expert_section(node, config.sched_expert_cfg);
 
+  if (config.ntn_cfg) {
+    node["ntn"] = build_du_high_ntn_section(config.ntn_cfg.value());
+  }
+
   return node;
 }
 
@@ -843,9 +862,6 @@ void srsran::fill_du_high_config_in_yaml_schema(YAML::Node& node, const du_high_
   fill_du_high_metrics_section(node["metrics"], config.metrics);
   fill_du_high_pcap_section(node["pcap"], config.pcaps);
   node["du"] = build_du_section(config);
-  if (config.ntn_cfg) {
-    node["ntn"] = build_du_high_ntn_section(config.ntn_cfg.value());
-  }
   if (config.test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI) {
     node["test_mode"] = build_du_high_testmode_section(config.test_mode_cfg);
   }

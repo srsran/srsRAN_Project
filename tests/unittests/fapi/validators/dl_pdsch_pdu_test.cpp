@@ -292,7 +292,9 @@ INSTANTIATE_TEST_SUITE_P(profile_nr,
                          testing::Combine(testing::Values(pdu_field_data<dl_pdsch_pdu>{
                                               "Ratio PDSCH EPRE to NZP CSI-RS EPRE",
                                               [](dl_pdsch_pdu& pdu, int value) {
-                                                pdu.power_control_offset_profile_nr = value;
+                                                auto* power =
+                                                    std::get_if<dl_pdsch_pdu::power_profile_nr>(&pdu.power_config);
+                                                power->power_control_offset_profile_nr = value;
                                               }}),
                                           testing::Values(test_case_data{unsigned(-9), false},
                                                           test_case_data{unsigned(-8), true},
@@ -305,7 +307,9 @@ INSTANTIATE_TEST_SUITE_P(offset_ss_profile_nr,
                          testing::Combine(testing::Values(pdu_field_data<dl_pdsch_pdu>{
                                               "Ratio of NZP CSI-RS EPRE to SSB/PBCH block EPRE",
                                               [](dl_pdsch_pdu& pdu, int value) {
-                                                pdu.power_control_offset_ss_profile_nr =
+                                                auto* power =
+                                                    std::get_if<dl_pdsch_pdu::power_profile_nr>(&pdu.power_config);
+                                                power->power_control_offset_ss_profile_nr =
                                                     static_cast<power_control_offset_ss>(value);
                                               }}),
                                           testing::Values(test_case_data{0, true},
@@ -548,11 +552,10 @@ TEST(validate_pdsch_pdu, invalid_pdu_fails)
   dl_pdsch_pdu pdu = build_valid_dl_pdsch_pdu();
 
   // Force 3 errors.
-  pdu.bwp_size                        = 2690;
-  pdu.power_control_offset_profile_nr = 255;
-  pdu.cws[0].qam_mod_order            = 1;
+  pdu.bwp_size             = 2690;
+  pdu.cws[0].qam_mod_order = 1;
   validator_report report(0, 0);
   EXPECT_FALSE(validate_dl_pdsch_pdu(pdu, report));
   // Assert 3 reports were generated.
-  EXPECT_EQ(report.reports.size(), 3u);
+  EXPECT_EQ(report.reports.size(), 2u);
 }

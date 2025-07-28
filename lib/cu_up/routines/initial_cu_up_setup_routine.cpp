@@ -42,7 +42,7 @@ void initial_cu_up_setup_routine::operator()(coro_context<async_task<void>>& ctx
 
   // Connect to CU-CP.
   if (not e1ap_conn_mng.connect_to_cu_cp()) {
-    report_fatal_error("Failed to connect to CU-CP");
+    report_error("Failed to connect to CU-CP");
   }
 
   // Initiate E1 Setup.

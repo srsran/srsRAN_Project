@@ -77,7 +77,7 @@ std::ostream& operator<<(std::ostream& os, const ofdm_demodulator_configuration&
              config.cp.to_string(),
              config.nof_samples_window_offset,
              config.scale,
-             config.center_freq_hz);
+             config.center_freq_Hz);
   return os;
 }
 
@@ -90,7 +90,7 @@ bool operator==(const ofdm_demodulator_configuration& left, const ofdm_demodulat
 {
   return (left.numerology == right.numerology) && (left.bw_rb == right.bw_rb) && (left.dft_size == right.dft_size) &&
          (left.cp == right.cp) && (left.nof_samples_window_offset == right.nof_samples_window_offset) &&
-         (left.scale == right.scale) && (left.center_freq_hz == right.center_freq_hz);
+         (left.scale == right.scale) && (left.center_freq_Hz == right.center_freq_Hz);
 }
 
 bool operator==(span<const cf_t> left, span<const cf_t> right)
@@ -220,7 +220,7 @@ TEST_P(LowerPhyUplinkProcessorFixture, DemodulatorConfiguration)
   expected_demod_config.nof_samples_window_offset = static_cast<unsigned>(
       static_cast<float>(cp.get_length(1, scs).to_samples(srate.to_Hz())) * config.dft_window_offset);
   expected_demod_config.scale          = 1.0F / std::sqrt(config.bandwidth_rb * NRE);
-  expected_demod_config.center_freq_hz = config.center_freq_Hz;
+  expected_demod_config.center_freq_Hz = config.center_freq_Hz;
 
   ASSERT_EQ(ofdm_demod_spy->get_configuration(), expected_demod_config);
 }

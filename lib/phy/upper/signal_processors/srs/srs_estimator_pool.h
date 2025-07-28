@@ -23,7 +23,8 @@
 #pragma once
 
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator.h"
-#include "srsran/support/memory_pool/concurrent_thread_local_object_pool.h"
+#include "srsran/srslog/srslog.h"
+#include "srsran/support/memory_pool/bounded_object_pool.h"
 
 namespace srsran {
 
@@ -31,20 +32,28 @@ namespace srsran {
 class srs_estimator_pool : public srs_estimator
 {
 public:
+  using estimator_pool = bounded_unique_object_pool<srs_estimator>;
+
   /// Creates a pool from a list of estimators. Ownership is transferred to the pool.
-  explicit srs_estimator_pool(std::vector<std::unique_ptr<srs_estimator>> estimators_) :
-    estimators(std::move(estimators_))
+  explicit srs_estimator_pool(std::shared_ptr<estimator_pool> estimators_) :
+    logger(srslog::fetch_basic_logger("PHY")), estimators(std::move(estimators_))
   {
   }
 
   // See interface for documentation.
   srs_estimator_result estimate(const resource_grid_reader& grid, const srs_estimator_configuration& config) override
   {
-    return estimators.get().estimate(grid, config);
+    auto estimator = estimators->get();
+    if (!estimator) {
+      logger.error(config.slot.sfn(), config.slot.slot_index(), "Failed to retrieve NZP-CSI-RS generator.");
+      return {};
+    }
+    return estimator->estimate(grid, config);
   }
 
 private:
-  concurrent_thread_local_object_pool<srs_estimator> estimators;
+  srslog::basic_logger&           logger;
+  std::shared_ptr<estimator_pool> estimators;
 };
 
 } // namespace srsran

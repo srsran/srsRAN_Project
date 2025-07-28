@@ -106,8 +106,16 @@ struct downlink_processor_config {
   unsigned id;
   /// Resource grid gateway.
   upper_phy_rg_gateway* gateway;
-  /// Task executor.
-  task_executor* executor;
+  /// Task executor for processing PDCCH.
+  task_executor* pdcch_executor;
+  /// Task executor for processing PDSCH.
+  task_executor* pdsch_executor;
+  /// Task executor for processing SSB.
+  task_executor* ssb_executor;
+  /// Task executor for processing NZP-CSI-RS.
+  task_executor* csi_rs_executor;
+  /// Task executor for processing PRS.
+  task_executor* prs_executor;
 };
 
 /// Factory that allows to create downlink processors.
@@ -332,8 +340,18 @@ struct upper_phy_config {
   rx_buffer_pool_config rx_buffer_config;
   /// Upper PHY resource grid gateway.
   upper_phy_rg_gateway* rg_gateway;
-  /// Downlink task executors.
-  task_executor* dl_executor;
+  /// PDCCH task executor.
+  task_executor* pdcch_executor;
+  /// PDSCH task executor.
+  task_executor* pdsch_executor;
+  /// SSB task executor.
+  task_executor* ssb_executor;
+  /// NZP-CSI-RS task executor.
+  task_executor* csi_rs_executor;
+  /// PRS task executor.
+  task_executor* prs_executor;
+  /// Downlink grid pool task executor.
+  task_executor* dl_grid_executor;
   /// PUCCH task executor.
   task_executor* pucch_executor;
   /// PUSCH task executor.

@@ -58,9 +58,6 @@ void scheduler_impl::handle_cell_removal_request(du_cell_index_t cell_index)
   srsran_assert(cells.contains(cell_index), "cell={} does not exist", fmt::underlying(cell_index));
   srsran_assert(not cells[cell_index]->is_running(), "cell={} is not stopped", fmt::underlying(cell_index));
 
-  // Remove cell from ue scheduler.
-  groups[cells[cell_index]->cell_cfg.cell_group_index]->rem_cell(cell_index);
-
   // Remove cell.
   cells.erase(cell_index);
 
@@ -163,7 +160,7 @@ void scheduler_impl::handle_ul_phr_indication(const ul_phr_indication_message& p
     return;
   }
 
-  cells[phr_ind.cell_index]->ue_sched.get_feedback_handler().handle_ul_phr_indication(phr_ind);
+  cells[phr_ind.cell_index]->get_feedback_handler().handle_ul_phr_indication(phr_ind);
 }
 
 void scheduler_impl::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
@@ -188,14 +185,14 @@ void scheduler_impl::handle_uci_indication(const uci_indication& uci)
 {
   srsran_assert(cells.contains(uci.cell_index), "cell={} does not exist", fmt::underlying(uci.cell_index));
 
-  cells[uci.cell_index]->ue_sched.get_feedback_handler().handle_uci_indication(uci);
+  cells[uci.cell_index]->get_feedback_handler().handle_uci_indication(uci);
 }
 
 void scheduler_impl::handle_srs_indication(const srs_indication& srs)
 {
   srsran_assert(cells.contains(srs.cell_index), "cell={} does not exist", fmt::underlying(srs.cell_index));
 
-  cells[srs.cell_index]->ue_sched.get_feedback_handler().handle_srs_indication(srs);
+  cells[srs.cell_index]->get_feedback_handler().handle_srs_indication(srs);
 }
 
 void scheduler_impl::handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce)
@@ -229,10 +226,9 @@ const sched_result& scheduler_impl::slot_indication(slot_point      sl_tx,
 
 void scheduler_impl::handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index, error_outcome event)
 {
-  du_cell_group_index_t group_idx = cfg_mng.get_cell_group_index(cell_index);
-  srsran_assert(group_idx != INVALID_DU_CELL_GROUP_INDEX, "cell={} does not exist", fmt::underlying(cell_index));
-  ue_scheduler& ue_sched = *groups[group_idx];
-  ue_sched.handle_error_indication(sl_tx, cell_index, event);
+  srsran_assert(cells.contains(cell_index), "cell={} does not exist", fmt::underlying(cell_index));
+  cell_scheduler& cell = *cells[cell_index];
+  cell.handle_error_indication(sl_tx, event);
 }
 
 void scheduler_impl::handle_paging_information(const sched_paging_information& pi)

@@ -39,7 +39,7 @@ static std::vector<du_low_prach_validation_config> get_du_low_validation_depende
 
     // Get PRACH info.
     subcarrier_spacing  common_scs = in_cell.common_scs;
-    prach_configuration prach_info = prach_configuration_get(frequency_range::FR1,
+    prach_configuration prach_info = prach_configuration_get(band_helper::get_freq_range(in_cell.band.value()),
                                                              band_helper::get_duplex_mode(in_cell.band.value()),
                                                              in_cell.prach_cfg.prach_config_index.value());
 
@@ -87,10 +87,12 @@ bool srsran::validate_split_7_2_o_du_unit_config(const split_7_2_o_du_unit_confi
   }
 
   auto du_low_dependencies = get_du_low_validation_dependencies(config.odu_high_cfg.du_high_cfg.config);
-  if (!validate_du_low_config(config.du_low_cfg, du_low_dependencies, available_cpus)) {
+  if (!validate_du_low_config(config.du_low_cfg, du_low_dependencies) ||
+      !validate_du_low_cpus(config.du_low_cfg, available_cpus)) {
     return false;
   }
 
   auto ru_ofh_dependencies = get_ru_ofh_validation_dependencies(config.odu_high_cfg.du_high_cfg.config);
-  return validate_ru_ofh_config(config.ru_cfg.config, ru_ofh_dependencies, available_cpus);
+  return validate_ru_ofh_config(config.ru_cfg.config, ru_ofh_dependencies) &&
+         validate_ru_ofh_cpus(config.ru_cfg.config, available_cpus);
 }

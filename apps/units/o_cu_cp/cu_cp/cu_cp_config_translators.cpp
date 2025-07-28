@@ -519,6 +519,15 @@ srs_cu_cp::n2_connection_client_config srsran::generate_n2_client_config(bool   
 
 void srsran::fill_cu_cp_worker_manager_config(worker_manager_config& config, const cu_cp_unit_config& unit_cfg)
 {
+  // CU-CP executors are needed.
+  config.cu_cp_cfg.emplace();
+
+  // Enable metrics if configured.
+  if (unit_cfg.metrics.layers_cfg.enable_cu_cp_executor) {
+    config.cu_up_cfg.value().metrics_period = std::chrono::milliseconds(unit_cfg.metrics.cu_cp_report_period);
+  }
+
+  // Enable PCAPs.
   auto& pcap_cfg = config.pcap_cfg;
   if (unit_cfg.pcap_cfg.e1ap.enabled) {
     pcap_cfg.is_e1ap_enabled = true;

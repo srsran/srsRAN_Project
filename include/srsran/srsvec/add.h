@@ -20,6 +20,9 @@
  *
  */
 
+/// \file
+/// \brief Sum of two vectors.
+
 #pragma once
 
 #include "srsran/srsvec/types.h"
@@ -27,11 +30,18 @@
 namespace srsran {
 namespace srsvec {
 
-void add(span<const cf_t> x, span<const cf_t> y, span<cf_t> z);
-void add(span<const cf_t> x, span<const cbf16_t> y, span<cf_t> z);
-void add(span<const float> x, span<const float> y, span<float> z);
-void add(span<const int16_t> x, span<const int16_t> y, span<int16_t> z);
-void add(span<const int8_t> x, span<const int8_t> y, span<int8_t> z);
+///@{
+/// \brief Sum of two vectors.
+/// \param[out]  Output vector.
+/// \param[in]   First input vector.
+/// \param[in]   Second input vector.
+/// \warning An assertion is triggered if input and output vectors have different sizes.
+void add(span<cf_t> z, span<const cf_t> x, span<const cf_t> y);
+void add(span<cf_t> z, span<const cf_t> x, span<const cbf16_t> y);
+void add(span<float> z, span<const float> x, span<const float> y);
+void add(span<int16_t> z, span<const int16_t> x, span<const int16_t> y);
+void add(span<int8_t> z, span<const int8_t> x, span<const int8_t> y);
+///@}
 
 } // namespace srsvec
 } // namespace srsran

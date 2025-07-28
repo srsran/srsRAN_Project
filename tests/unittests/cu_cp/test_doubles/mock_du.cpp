@@ -104,7 +104,7 @@ public:
     auto&    ue_ctx  = ue_contexts.at(du_ue_id);
     uint32_t pdcp_sn = ue_ctx.srb_ul_pdcp_sn.at((unsigned)srb_id);
 
-    push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
+    push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
         ue_ctx.du_ue_id, *ue_ctx.cu_ue_id, srb_id, pdcp_sn, std::move(ul_dcch_msg)));
   }
 

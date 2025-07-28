@@ -86,7 +86,7 @@ bool operator!=(const uci_part2_size_description& left, const uci_part2_size_des
   return !(left == right);
 }
 
-bool operator==(const csi_report_pusch_size& left, const csi_report_pusch_size& right)
+bool operator==(const csi_report_size& left, const csi_report_size& right)
 {
   if (left.part1_size != right.part1_size) {
     return false;
@@ -107,7 +107,7 @@ bool operator==(const csi_report_pusch_size& left, const csi_report_pusch_size& 
   return true;
 }
 
-std::ostream& operator<<(std::ostream& os, const csi_report_pusch_size& data)
+std::ostream& operator<<(std::ostream& os, const csi_report_size& data)
 {
   fmt::print(os, "{}", data);
   return os;
@@ -149,7 +149,7 @@ class CsiReportPuschFixture : public ::testing::TestWithParam<csi_report_size_pa
 {
 protected:
   csi_report_configuration configuration            = {};
-  csi_report_pusch_size    expected_csi_report_size = {};
+  csi_report_size          expected_csi_report_size = {};
   csi_report_data          expected_unpacked_data;
   csi_report_packed        csi1_packed;
   csi_report_packed        csi2_packed;
@@ -509,7 +509,7 @@ std::uniform_int_distribution<unsigned> CsiReportPuschFixture::nof_csi_rs_resour
 TEST_P(CsiReportPuschFixture, csiReportPuschSize)
 {
   // Get report size.
-  csi_report_pusch_size csi_report_size = get_csi_report_pusch_size(configuration);
+  csi_report_size csi_report_size = get_csi_report_pusch_size(configuration);
 
   // Assert report size.
   ASSERT_EQ(csi_report_size, expected_csi_report_size);

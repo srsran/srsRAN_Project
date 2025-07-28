@@ -62,15 +62,15 @@ public:
                          radio_notification_handler&       notification_handler);
 
   /// Default destructor.
-  ~radio_session_zmq_impl();
+  ~radio_session_zmq_impl() override;
 
   /// Indicates if the instance was successfully initialized.
   bool is_successful() const { return successful; }
 
-  // See interface for documentation.
+  // See the radio_session interface for documentation.
   radio_management_plane& get_management_plane() override { return *this; }
 
-  // See interface for documentation.
+  // See the radio_session interface for documentation.
   baseband_gateway& get_baseband_gateway(unsigned stream_id) override
   {
     srsran_assert(stream_id < bb_gateways.size(),
@@ -80,20 +80,26 @@ public:
     return *bb_gateways[stream_id];
   }
 
-  // See interface documentation.
+  // See the radio_session interface for documentation.
   baseband_gateway_timestamp read_current_time() override;
 
-  // See interface for documentation.
+  // See the radio_session interface for documentation.
   void start(baseband_gateway_timestamp init_time) override;
 
-  // See interface for documentation.
+  // See the radio_session interface for documentation.
   void stop() override;
 
-  // See interface for documentation.
+  // See the radio_management_plane interface for documentation.
   bool set_tx_gain(unsigned port_id, double gain_dB) override;
 
-  // See interface for documentation.
+  // See the radio_management_plane interface for documentation.
   bool set_rx_gain(unsigned port_id, double gain_dB) override;
+
+  // See the radio_management_plane interface for documentation.
+  bool set_tx_freq(unsigned stream_id, double center_freq_Hz) override;
+
+  // See the radio_management_plane interface for documentation.
+  bool set_rx_freq(unsigned stream_id, double center_freq_Hz) override;
 };
 
 } // namespace srsran

@@ -137,6 +137,7 @@ sched_ue_config_request srsran::srs_du::create_scheduler_ue_config_request(const
     sched_lc_ch.rrm_policy.plmn_id = ue_ctx.nr_cgi.plmn_id;
     sched_lc_ch.qos.emplace();
     sched_lc_ch.qos->qos          = *get_5qi_to_qos_characteristics_mapping(drb.qos.qos_desc.get_5qi());
+    sched_lc_ch.qos->arp_priority = drb.qos.alloc_retention_prio.prio_level_arp;
     sched_lc_ch.qos->gbr_qos_info = drb.qos.gbr_qos_info;
   }
   sched_cfg.drx_cfg      = ue_res_cfg.cell_group.mcg_cfg.drx_cfg;

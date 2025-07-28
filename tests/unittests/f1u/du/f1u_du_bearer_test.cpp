@@ -64,10 +64,23 @@ public:
 };
 
 /// Fixture class for F1-U DU tests
-class f1u_du_test : public ::testing::Test, public f1u_trx_test
+class f1u_du_test_base : public f1u_trx_test
 {
 protected:
-  void SetUp() override
+  void tick()
+  {
+    timers.tick();
+    ue_worker.run_pending_tasks();
+  }
+
+  void tick_all(uint32_t ticks)
+  {
+    for (unsigned i = 0; i < ticks; ++i) {
+      tick();
+    }
+  }
+
+  void init_logger()
   {
     // init test's logger
     srslog::init();
@@ -76,15 +89,15 @@ protected:
     // init F1-U logger
     srslog::fetch_basic_logger("DU-F1-U", false).set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("DU-F1-U", false).set_hex_dump_max_size(100);
+  }
 
+  void init_f1u(f1u_config config)
+  {
     // create tester and testee
     logger.info("Creating F1-U bearer");
-    tester              = std::make_unique<f1u_du_test_frame>();
-    f1u_config config   = {};
-    config.t_notify     = f1u_ul_notif_time_ms;
-    config.warn_on_drop = true;
-    drb_id_t drb_id     = drb_id_t::drb1;
-    f1u                 = std::make_unique<f1u_bearer_impl>(
+    tester          = std::make_unique<f1u_du_test_frame>();
+    drb_id_t drb_id = drb_id_t::drb1;
+    f1u             = std::make_unique<f1u_bearer_impl>(
         0,
         drb_id,
         up_transport_layer_info{transport_layer_address::create_from_string("127.0.0.1"),
@@ -96,18 +109,6 @@ protected:
         ue_worker);
   }
 
-  void TearDown() override
-  {
-    // flush logger after each test
-    srslog::flush();
-  }
-
-  void tick()
-  {
-    timers.tick();
-    ue_worker.run_pending_tasks();
-  }
-
   srslog::basic_logger&              logger = srslog::fetch_basic_logger("TEST", false);
   timer_manager                      timers;
   manual_task_worker                 ue_worker{128};
@@ -116,6 +117,53 @@ protected:
 
   gtpu_teid_t    dl_teid_next{1234};
   const uint32_t f1u_ul_notif_time_ms = 10;
+};
+
+/// Fixture class for F1-U DU tests
+class f1u_du_test : public ::testing::Test, public f1u_du_test_base
+{
+protected:
+  void SetUp() override
+  {
+    // init test's logger
+    init_logger();
+    // create tester and testee
+    f1u_config config   = {};
+    config.t_notify     = f1u_ul_notif_time_ms;
+    config.warn_on_drop = true;
+    init_f1u(config);
+  }
+
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
+  }
+};
+
+/// Fixture class for F1-U DU tests
+class f1u_du_buffer_test : public ::testing::Test, public f1u_du_test_base
+{
+protected:
+  void SetUp() override
+  {
+    // init test's logger
+    init_logger();
+    // create tester and testee
+    f1u_config config           = {};
+    config.t_notify             = f1u_ul_notif_time_ms;
+    config.warn_on_drop         = true;
+    config.buffer_ul_on_startup = true;
+    config.ul_buffer_size       = 2;
+    config.ul_buffer_timeout    = std::chrono::milliseconds(5);
+    init_f1u(config);
+  }
+
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
+  }
 };
 
 } // namespace
@@ -610,4 +658,76 @@ TEST_F(f1u_du_test, rx_with_poll_triggers_no_ddds_when_nothing_was_notified)
   tester->rx_sdu_list.pop_front();
 
   EXPECT_TRUE(tester->rx_sdu_list.empty());
+}
+
+TEST_F(f1u_du_buffer_test, buffer_ul_pdus)
+{
+  constexpr uint32_t pdu_size = 10;
+  constexpr uint32_t pdcp_sn  = 123;
+
+  byte_buffer tx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_sn);
+  auto        chain1       = byte_buffer_chain::create(tx_pdcp_pdu1.deep_copy().value());
+  ASSERT_TRUE(chain1.has_value());
+  f1u->handle_sdu(std::move(chain1.value()));
+
+  byte_buffer tx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, pdcp_sn + 1);
+  auto        chain2       = byte_buffer_chain::create(tx_pdcp_pdu2.deep_copy().value());
+  ASSERT_TRUE(chain2.has_value());
+  f1u->handle_sdu(std::move(chain2.value()));
+
+  byte_buffer tx_pdcp_pdu3 = create_sdu_byte_buffer(pdu_size, pdcp_sn + 2);
+  auto        chain3       = byte_buffer_chain::create(tx_pdcp_pdu3.deep_copy().value());
+  ASSERT_TRUE(chain3.has_value());
+  f1u->handle_sdu(std::move(chain2.value())); // This should be dropped at the UL buffer, as the queue size is only 2.
+
+  // Check F1-U is buffering.
+  ASSERT_TRUE(tester->tx_msg_list.empty());
+  f1u->flush_ul_buffer();
+
+  // Check flushing is correct.
+  ASSERT_EQ(tester->tx_msg_list.size(), 2);
+
+  // Check flush was in order.
+  byte_buffer t_pdu1 = tester->tx_msg_list.front().t_pdu.value().deep_copy().value();
+  ASSERT_EQ(t_pdu1[0], pdcp_sn);
+  tester->tx_msg_list.pop_front();
+  byte_buffer t_pdu2 = tester->tx_msg_list.front().t_pdu.value().deep_copy().value();
+  ASSERT_EQ(t_pdu2[0], pdcp_sn + 1);
+  tester->tx_msg_list.pop_front();
+}
+
+TEST_F(f1u_du_buffer_test, buffer_ul_pdus_timeout)
+{
+  constexpr uint32_t pdu_size = 10;
+  constexpr uint32_t pdcp_sn  = 123;
+
+  byte_buffer tx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_sn);
+  auto        chain1       = byte_buffer_chain::create(tx_pdcp_pdu1.deep_copy().value());
+  ASSERT_TRUE(chain1.has_value());
+  f1u->handle_sdu(std::move(chain1.value()));
+
+  byte_buffer tx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, pdcp_sn + 1);
+  auto        chain2       = byte_buffer_chain::create(tx_pdcp_pdu2.deep_copy().value());
+  ASSERT_TRUE(chain2.has_value());
+  f1u->handle_sdu(std::move(chain2.value()));
+
+  byte_buffer tx_pdcp_pdu3 = create_sdu_byte_buffer(pdu_size, pdcp_sn + 2);
+  auto        chain3       = byte_buffer_chain::create(tx_pdcp_pdu3.deep_copy().value());
+  ASSERT_TRUE(chain3.has_value());
+  f1u->handle_sdu(std::move(chain2.value())); // This should be dropped at the UL buffer, as the queue size is only 2.
+
+  // Check F1-U is buffering.
+  ASSERT_TRUE(tester->tx_msg_list.empty());
+  tick_all(5);
+
+  // Check flushing is correct.
+  ASSERT_EQ(tester->tx_msg_list.size(), 2);
+
+  // Check flush was in order.
+  byte_buffer t_pdu1 = tester->tx_msg_list.front().t_pdu.value().deep_copy().value();
+  ASSERT_EQ(t_pdu1[0], pdcp_sn);
+  tester->tx_msg_list.pop_front();
+  byte_buffer t_pdu2 = tester->tx_msg_list.front().t_pdu.value().deep_copy().value();
+  ASSERT_EQ(t_pdu2[0], pdcp_sn + 1);
+  tester->tx_msg_list.pop_front();
 }

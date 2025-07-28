@@ -32,7 +32,6 @@
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
   labels: ["kubernetes.io/hostname=sdr4"]
-  host_network: retina.srs.io/secondary-ip
   requirements:
     arch: amd64
     cpu:
@@ -57,8 +56,7 @@
 - name: open5gs
   type: 5gc
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
-  taints: ["purpose=corenetworks"]
-  host_network: retina.srs.io/secondary-ip
+  taints: ["purpose=retina"]
   requirements:
     arch: amd64
     cpu:

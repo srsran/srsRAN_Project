@@ -82,6 +82,7 @@ protected:
                                         five_qi_t{9},
                                         rlc_config{},
                                         f1u_config{},
+                                        false,
                                         ul_tnls,
                                         teid_pool,
                                         du_mng->params,

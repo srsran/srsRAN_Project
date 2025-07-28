@@ -28,7 +28,7 @@ namespace srsran {
 namespace fapi {
 
 class slot_data_message_notifier;
-class slot_error_message_notifier;
+class error_message_notifier;
 class slot_last_message_notifier;
 class slot_message_gateway;
 class slot_time_message_notifier;
@@ -57,10 +57,10 @@ public:
   }
 
   /// Returns the slot error message notifier of this FAPI decorator.
-  slot_error_message_notifier& get_slot_error_message_notifier()
+  error_message_notifier& get_error_message_notifier()
   {
-    return next_decorator ? next_decorator->get_slot_error_message_notifier()
-                          : get_slot_error_message_notifier_from_this_decorator();
+    return next_decorator ? next_decorator->get_error_message_notifier()
+                          : get_error_message_notifier_from_this_decorator();
   }
 
   /// Returns the slot time message notifier of this FAPI decorator.
@@ -73,8 +73,8 @@ public:
   /// Sets the slot data message notifier of this FAPI decorator.
   virtual void set_slot_data_message_notifier(slot_data_message_notifier& notifier) = 0;
 
-  /// Sets the slot error message notifier of this FAPI decorator.
-  virtual void set_slot_error_message_notifier(slot_error_message_notifier& notifier) = 0;
+  /// Sets the error message notifier of this FAPI decorator.
+  virtual void set_error_message_notifier(error_message_notifier& notifier) = 0;
 
   /// Sets the slot time message notifier of this FAPI decorator.
   virtual void set_slot_time_message_notifier(slot_time_message_notifier& notifier) = 0;
@@ -84,7 +84,7 @@ protected:
   void connect_notifiers()
   {
     next_decorator->set_slot_data_message_notifier(get_slot_data_message_notifier_from_this_decorator());
-    next_decorator->set_slot_error_message_notifier(get_slot_error_message_notifier_from_this_decorator());
+    next_decorator->set_error_message_notifier(get_error_message_notifier_from_this_decorator());
     next_decorator->set_slot_time_message_notifier(get_slot_time_message_notifier_from_this_decorator());
   }
 
@@ -92,8 +92,8 @@ private:
   /// Returns the slot data message notifier of this FAPI decorator.
   virtual slot_data_message_notifier& get_slot_data_message_notifier_from_this_decorator() = 0;
 
-  /// Returns the slot error message notifier of this FAPI decorator.
-  virtual slot_error_message_notifier& get_slot_error_message_notifier_from_this_decorator() = 0;
+  /// Returns the error message notifier of this FAPI decorator.
+  virtual error_message_notifier& get_error_message_notifier_from_this_decorator() = 0;
 
   /// Returns the slot time message notifier of this FAPI decorator.
   virtual slot_time_message_notifier& get_slot_time_message_notifier_from_this_decorator() = 0;

@@ -131,7 +131,7 @@ public:
         sctp_params.connect_port,
         std::make_unique<sctp_to_e2_pdu_notifier>(std::move(e2_rx_pdu_notifier), pcap_writer, logger));
     if (sctp_sender == nullptr) {
-      logger.error("Failed to establish E2 connection to Near-RT RIC on {}:{}.\n",
+      logger.error("Failed to establish E2 connection to Near-RT RIC on {}:{}.",
                    sctp_params.connect_address,
                    sctp_params.connect_port);
       return nullptr;

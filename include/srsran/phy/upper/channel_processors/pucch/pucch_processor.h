@@ -409,8 +409,8 @@ public:
   /// \param[in] grid   Resource grid.
   /// \param[in] config PUCCH Format 1 batch configuration.
   /// \return A map the PUCCH Format 1 detection results.
-  virtual const pucch_format1_map<pucch_processor_result>& process(const resource_grid_reader&        grid,
-                                                                   const format1_batch_configuration& config) = 0;
+  virtual pucch_format1_map<pucch_processor_result> process(const resource_grid_reader&        grid,
+                                                            const format1_batch_configuration& config) = 0;
 
   /// \brief Processes a PUCCH Format 2 message.
   /// \param[in] grid    Resource grid.

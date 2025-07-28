@@ -26,7 +26,6 @@
 #include "tests/test_doubles/ngap/ngap_test_message_validators.h"
 #include "tests/test_doubles/rrc/rrc_test_messages.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
-#include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/e1ap/common/e1ap_types.h"
@@ -73,11 +72,11 @@ public:
   [[nodiscard]] bool send_rrc_measurement_report_and_await_ue_context_setup_request()
   {
     // Inject UL RRC Message (containing RRC Measurement Report) and wait for UE Context Setup Request.
-    get_du(du_idx).push_ul_pdu(
-        generate_ul_rrc_message_transfer(ue_ctx->cu_ue_id.value(),
-                                         ue_ctx->du_ue_id.value(),
-                                         srb_id_t::srb1,
-                                         make_byte_buffer("000800410004015f741fe0804bf183fcaa6e9699").value()));
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
+        ue_ctx->du_ue_id.value(),
+        ue_ctx->cu_ue_id.value(),
+        srb_id_t::srb1,
+        make_byte_buffer("000800410004015f741fe0804bf183fcaa6e9699").value()));
     report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
                               "Failed to receive UE Context Setup Request");
     report_fatal_error_if_not(test_helpers::is_valid_ue_context_setup_request_with_ue_capabilities(f1ap_pdu),
@@ -92,61 +91,35 @@ public:
   [[nodiscard]] bool send_ue_context_setup_failure()
   {
     // Inject UE Context Setup Failure.
-    get_du(du_idx).push_ul_pdu(generate_ue_context_setup_failure(target_cu_ue_id, target_du_ue_id));
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ue_context_setup_failure(target_cu_ue_id, target_du_ue_id));
     return true;
   }
 
-  [[nodiscard]] bool send_ue_context_setup_response_and_await_bearer_context_modification_request()
+  [[nodiscard]] bool send_ue_context_setup_response_and_await_ue_context_modification_request()
   {
-    // Inject UE Context Setup Response and await Bearer Context Modification Request.
-    get_du(du_idx).push_ul_pdu(
-        generate_ue_context_setup_response(target_cu_ue_id,
-                                           target_du_ue_id,
-                                           crnti,
-                                           make_byte_buffer("5c06c0060030258380f80408d07810000929dc601349798002692f"
-                                                            "1200000464c6b6c61b3704020000080800041a235246c0134978"
-                                                            "90000023271adb19127c03033255878092748837146e30dc71b963"
-                                                            "7dfab6387580221603400c162300e20981950001ff0000000003"
-                                                            "06e10840000402ca0041904000040d31a01100102000e388844800"
-                                                            "4080038e2221400102000e3888c60004080038e24060088681aa"
-                                                            "b2420e0008206102860e4a60c9a3670e8f00000850000800b50001"
-                                                            "000850101800b50102000850202800b50203000850303800b503"
-                                                            "0b8c8b5040c00504032014120d00505036014160e0050603a0141a"
-                                                            "120c506a0496302a72fd159e26f2681d2083c5df81821c000000"
-                                                            "38ffd294a5294f28160000219760000000000005000001456aa280"
-                                                            "23800c00041000710804e20070101084000e21009c200e040220"
-                                                            "8001c420138401c0c042100038840270c038200882000710804e18"
-                                                            "004000000410c04080c100e0d0000e388000000400800100c001"
-                                                            "0120044014c00004620090e3800c")
-                                               .value()));
-    report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu),
-                              "Failed to receive Bearer Context Modification Request");
-    report_fatal_error_if_not(
-        test_helpers::is_valid_bearer_context_modification_request_with_ue_security_info(e1ap_pdu),
-        "Invalid Bearer Context Modification Request");
-
-    return true;
-  }
-
-  [[nodiscard]] bool send_bearer_context_modification_failure_and_await_f1ap_ue_context_release_command()
-  {
-    // Inject Bearer Context Modification Failure and wait for UE Context Release Command.
-    get_cu_up(cu_up_idx).push_tx_pdu(
-        generate_bearer_context_modification_failure(ue_ctx->cu_cp_e1ap_id.value(), ue_ctx->cu_up_e1ap_id.value()));
+    // Inject UE Context Setup Response and await UE Context Modification Request.
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ue_context_setup_response(
+        target_cu_ue_id,
+        target_du_ue_id,
+        crnti,
+        make_byte_buffer("5c06c0060030258380f80408d07810000929dc601349798002692f"
+                         "1200000464c6b6c61b3704020000080800041a235246c0134978"
+                         "90000023271adb19127c03033255878092748837146e30dc71b963"
+                         "7dfab6387580221603400c162300e20981950001ff0000000003"
+                         "06e10840000402ca0041904000040d31a01100102000e388844800"
+                         "4080038e2221400102000e3888c60004080038e24060088681aa"
+                         "b2420e0008206102860e4a60c9a3670e8f00000850000800b50001"
+                         "000850101800b50102000850202800b50203000850303800b503"
+                         "0b8c8b5040c00504032014120d00505036014160e0050603a0141a"
+                         "120c506a0496302a72fd159e26f2681d2083c5df81821c000000"
+                         "38ffd294a5294f28160000219760000000000005000001456aa280"
+                         "23800c00041000710804e20070101084000e21009c200e040220"
+                         "8001c420138401c0c042100038840270c038200882000710804e18"
+                         "004000000410c04080c100e0d0000e388000000400800100c001"
+                         "0120044014c00004620090e3800c")
+            .value()));
     report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
-                              "Failed to receive UE Context Release Command");
-    report_fatal_error_if_not(test_helpers::is_valid_ue_context_release_command(f1ap_pdu),
-                              "Invalid UE Context Release Command");
-    return true;
-  }
-
-  [[nodiscard]] bool send_bearer_context_modification_response_and_await_ue_context_modification_request()
-  {
-    // Inject Bearer Context Modification Response and wait for RRC Reconfiguration.
-    get_cu_up(cu_up_idx).push_tx_pdu(
-        generate_bearer_context_modification_response(ue_ctx->cu_cp_e1ap_id.value(), ue_ctx->cu_up_e1ap_id.value()));
-    bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
-    report_fatal_error_if_not(result, "Failed to receive UE Context Modification Request");
+                              "Failed to receive UE Context Modification Request");
     report_fatal_error_if_not(test_helpers::is_valid_ue_context_modification_request(f1ap_pdu),
                               "Invalid UE Context Modification Request");
     {
@@ -164,11 +137,60 @@ public:
     return true;
   }
 
+  // Inject RRC Reconfiguration Complete and await Bearer Context Modification Request.
+  [[nodiscard]] bool send_rrc_reconfiguration_complete_and_await_bearer_context_modification_request()
+  {
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
+        target_du_ue_id, target_cu_ue_id, srb_id_t::srb1, make_byte_buffer("8000080035c41efd").value()));
+    report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu),
+                              "Failed to receive Bearer Context Modification Request");
+    report_fatal_error_if_not(test_helpers::is_valid_bearer_context_modification_request(e1ap_pdu),
+                              "Invalid Bearer Context Modification Request");
+
+    return true;
+  }
+
+  [[nodiscard]] bool send_bearer_context_modification_failure_and_await_bearer_context_release_command()
+  {
+    // Inject Bearer Context Modification Failure and wait for UE Context Release Command.
+    get_cu_up(cu_up_idx).push_tx_pdu(
+        generate_bearer_context_modification_failure(ue_ctx->cu_cp_e1ap_id.value(), ue_ctx->cu_up_e1ap_id.value()));
+    report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu),
+                              "Failed to receive Bearer Context Release Command");
+    report_fatal_error_if_not(test_helpers::is_valid_bearer_context_release_command(e1ap_pdu),
+                              "Invalid Bearer Context Release Command");
+    return true;
+  }
+
+  [[nodiscard]] bool send_bearer_context_release_complete_and_await_ue_context_release_command()
+  {
+    // Inject Bearer Context Release Complete and wait for UE Context Release Command.
+    get_cu_up(cu_up_idx).push_tx_pdu(
+        generate_bearer_context_release_complete(ue_ctx->cu_cp_e1ap_id.value(), ue_ctx->cu_up_e1ap_id.value()));
+    report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
+                              "Failed to receive UE Context Release Command");
+    report_fatal_error_if_not(test_helpers::is_valid_ue_context_release_command(f1ap_pdu),
+                              "Invalid UE Context Release Command");
+    return true;
+  }
+
+  [[nodiscard]] bool send_bearer_context_modification_response_and_await_ue_context_modification_request()
+  {
+    // Inject Bearer Context Modification Response and wait for RRC Reconfiguration.
+    get_cu_up(cu_up_idx).push_tx_pdu(
+        generate_bearer_context_modification_response(ue_ctx->cu_cp_e1ap_id.value(), ue_ctx->cu_up_e1ap_id.value()));
+    bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
+    report_fatal_error_if_not(result, "Failed to receive UE Context Modification Request");
+    report_fatal_error_if_not(test_helpers::is_valid_ue_context_modification_request(f1ap_pdu),
+                              "Invalid UE Context Modification Request");
+    return true;
+  }
+
   [[nodiscard]] bool send_ue_context_modification_response()
   {
     // Inject UE Context Modification Response and wait for UE Context Release Command.
-    get_du(du_idx).push_ul_pdu(
-        generate_ue_context_modification_response(ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value(), crnti));
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ue_context_modification_response(
+        ue_ctx->du_ue_id.value(), ue_ctx->cu_ue_id.value(), crnti));
     return true;
   }
 
@@ -187,8 +209,20 @@ public:
 
   [[nodiscard]] bool send_rrc_reconfiguration_complete()
   {
-    get_du(du_idx).push_ul_pdu(generate_ul_rrc_message_transfer(
-        target_cu_ue_id, target_du_ue_id, srb_id_t::srb1, make_byte_buffer("8000080035c41efd").value()));
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
+        target_du_ue_id, target_cu_ue_id, srb_id_t::srb1, make_byte_buffer("8000080035c41efd").value()));
+    return true;
+  }
+
+  [[nodiscard]] bool send_ue_context_modification_response_and_await_ue_context_release_command()
+  {
+    // Inject UE Context Modification Response and wait for UE Context Release Command.
+    get_du(du_idx).push_ul_pdu(
+        test_helpers::generate_ue_context_modification_response(target_du_ue_id, target_cu_ue_id, crnti));
+    report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
+                              "Failed to receive UE Context Release Command");
+    report_fatal_error_if_not(test_helpers::is_valid_ue_context_release_command(f1ap_pdu),
+                              "Invalid UE Context Release Command");
     return true;
   }
 
@@ -196,7 +230,7 @@ public:
                                                            gnb_du_ue_f1ap_id_t du_ue_f1ap_id)
   {
     // Inject F1AP UE Context Release Complete.
-    get_du(du_idx).push_ul_pdu(generate_ue_context_release_complete(cu_ue_f1ap_id, du_ue_f1ap_id));
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ue_context_release_complete(cu_ue_f1ap_id, du_ue_f1ap_id));
     return true;
   }
 
@@ -262,7 +296,7 @@ public:
     byte_buffer rrc_container =
         pack_ul_ccch_msg(create_rrc_reestablishment_request(old_crnti, old_pci, "1111010001000010"));
     f1ap_message f1ap_init_ul_rrc_msg =
-        test_helpers::create_init_ul_rrc_message_transfer(new_du_ue_id, new_crnti, {}, std::move(rrc_container));
+        test_helpers::generate_init_ul_rrc_message_transfer(new_du_ue_id, new_crnti, {}, std::move(rrc_container));
     get_du(du_idx).push_ul_pdu(f1ap_init_ul_rrc_msg);
 
     // Wait for DL RRC message transfer (F1AP UE Context Release Command).
@@ -282,7 +316,7 @@ public:
 
     // Inject F1AP UE Context Release Complete for target UE.
     get_du(du_idx).push_ul_pdu(
-        generate_ue_context_release_complete(int_to_gnb_cu_ue_f1ap_id(1), int_to_gnb_du_ue_f1ap_id(1)));
+        test_helpers::generate_ue_context_release_complete(int_to_gnb_cu_ue_f1ap_id(1), int_to_gnb_du_ue_f1ap_id(1)));
 
     ue_context old_ue;
     old_ue.du_ue_id = new_du_ue_id;
@@ -297,7 +331,7 @@ public:
     report_error_if_not(pdu.append(std::array<uint8_t, 4>{0x01, 0x1d, 0x37, 0x38}), "bad alloc");
     // > Send UL RRC Message to CU-CP.
     get_du(du_idx).push_ul_pdu(
-        test_helpers::create_ul_rrc_message_transfer(new_du_ue_id, *old_ue.cu_ue_id, srb_id_t::srb1, std::move(pdu)));
+        test_helpers::generate_ul_rrc_message_transfer(new_du_ue_id, *old_ue.cu_ue_id, srb_id_t::srb1, std::move(pdu)));
 
     // STATUS: CU-CP sends E1AP Bearer Context Modification Request.
     report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(0, e1ap_pdu),
@@ -344,7 +378,7 @@ public:
     report_error_if_not(pdu.prepend(std::array<uint8_t, 2>{0x00U, 0x01U}), "bad alloc");
     report_error_if_not(pdu.append(std::array<uint8_t, 4>{0xd3, 0x69, 0xb8, 0xf7}), "bad alloc");
     get_du(du_idx).push_ul_pdu(
-        test_helpers::create_ul_rrc_message_transfer(new_du_ue_id, *old_ue.cu_ue_id, srb_id_t::srb1, std::move(pdu)));
+        test_helpers::generate_ul_rrc_message_transfer(new_du_ue_id, *old_ue.cu_ue_id, srb_id_t::srb1, std::move(pdu)));
 
     return true;
   }
@@ -390,11 +424,20 @@ TEST_F(cu_cp_intra_du_handover_test, when_bearer_context_modification_fails_then
   // Inject Measurement Report and await F1AP UE Context Setup Request.
   ASSERT_TRUE(send_rrc_measurement_report_and_await_ue_context_setup_request());
 
-  // Inject UE Context Setup Response and await Bearer Context Modification Request.
-  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
+  // Inject UE Context Setup Response and await UE Context Modification Request.
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_ue_context_modification_request());
 
-  // Inject Bearer Context Modification Failure.
-  ASSERT_TRUE(send_bearer_context_modification_failure_and_await_f1ap_ue_context_release_command());
+  // Inject UE Context Modification Response.
+  ASSERT_TRUE(send_ue_context_modification_response());
+
+  // Inject RRC Reconfiguration Complete and await Bearer Context Modification Request.
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_bearer_context_modification_request());
+
+  // Inject Bearer Context Modification Failure and await Bearer Context Release Command.
+  ASSERT_TRUE(send_bearer_context_modification_failure_and_await_bearer_context_release_command());
+
+  // Inject Bearer Context Release Complete and await F1AP UE Context Release Command.
+  ASSERT_TRUE(send_bearer_context_release_complete_and_await_ue_context_release_command());
 
   // Inject F1AP UE Context Release Complete.
   ASSERT_TRUE(send_f1ap_ue_context_release_complete(target_cu_ue_id, target_du_ue_id));
@@ -410,10 +453,7 @@ TEST_F(cu_cp_intra_du_handover_test, when_rrc_reconfiguration_fails_then_ho_fail
   ASSERT_TRUE(send_rrc_measurement_report_and_await_ue_context_setup_request());
 
   // Inject UE Context Setup Response and await Bearer Context Modification Request.
-  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
-
-  // Inject Bearer Context Modification Response and await UE Context Modification Request.
-  ASSERT_TRUE(send_bearer_context_modification_response_and_await_ue_context_modification_request());
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_ue_context_modification_request());
 
   // Inject UE Context Modification Response.
   ASSERT_TRUE(send_ue_context_modification_response());
@@ -431,26 +471,41 @@ TEST_F(cu_cp_intra_du_handover_test, when_rrc_reconfiguration_fails_then_ho_fail
 
 TEST_F(cu_cp_intra_du_handover_test, when_ho_succeeds_then_source_ue_is_removed)
 {
+  // Check that the metrics report doesn't contain a requested/successful handover execution.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.mobility.nof_handover_executions_requested, 0U);
+  ASSERT_EQ(report.mobility.nof_successful_handover_executions, 0U);
+
   // Inject Measurement Report and await F1AP UE Context Setup Request.
   ASSERT_TRUE(send_rrc_measurement_report_and_await_ue_context_setup_request());
 
-  // Inject UE Context Setup Response and await Bearer Context Modification Request.
-  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
-
-  // Inject Bearer Context Modification Response and await UE Context Modification Request.
-  ASSERT_TRUE(send_bearer_context_modification_response_and_await_ue_context_modification_request());
+  // Inject UE Context Setup Response and await UE Context Modification Request.
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_ue_context_modification_request());
 
   // Inject UE Context Modification Response.
   ASSERT_TRUE(send_ue_context_modification_response());
 
-  // Inject RRC Reconfiguration Complete.
-  ASSERT_TRUE(send_rrc_reconfiguration_complete());
+  // Check that the metrics report contains a requested handover execution.
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.mobility.nof_handover_executions_requested, 1U);
+
+  // Inject RRC Reconfiguration Complete and await Bearer Context Modification Request.
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_bearer_context_modification_request());
+
+  // Inject Bearer Context Modification Response and await UE Context Modification Request.
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_ue_context_modification_request());
+
+  // Inject UE Context Modification Response and await UE Context Release Command.
+  ASSERT_TRUE(send_ue_context_modification_response_and_await_ue_context_release_command());
 
   // Inject F1AP UE Context Release Complete.
   ASSERT_TRUE(send_f1ap_ue_context_release_complete(ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value()));
 
+  // Check that the metrics report contains a successful handover execution.
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.mobility.nof_successful_handover_executions, 1U);
+
   // STATUS: Source UE should be removed from DU.
-  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 1) << "Source UE should be removed";
 }
 
@@ -459,11 +514,8 @@ TEST_F(cu_cp_intra_du_handover_test, when_ho_fails_and_ue_is_gone_then_source_an
   // Inject Measurement Report and await F1AP UE Context Setup Request.
   ASSERT_TRUE(send_rrc_measurement_report_and_await_ue_context_setup_request());
 
-  // Inject UE Context Setup Response and await Bearer Context Modification Request.
-  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
-
-  // Inject Bearer Context Modification Response and await UE Context Modification Request.
-  ASSERT_TRUE(send_bearer_context_modification_response_and_await_ue_context_modification_request());
+  // Inject UE Context Setup Response and await UE Context Modification Request.
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_ue_context_modification_request());
 
   // Inject UE Context Modification Response.
   ASSERT_TRUE(send_ue_context_modification_response());
@@ -497,10 +549,7 @@ TEST_F(cu_cp_intra_du_handover_test, when_ho_fails_then_reestablishment_to_sourc
   ASSERT_TRUE(send_rrc_measurement_report_and_await_ue_context_setup_request());
 
   // Inject UE Context Setup Response and await Bearer Context Modification Request.
-  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
-
-  // Inject Bearer Context Modification Response and await UE Context Modification Request.
-  ASSERT_TRUE(send_bearer_context_modification_response_and_await_ue_context_modification_request());
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_ue_context_modification_request());
 
   // Inject UE Context Modification Response.
   ASSERT_TRUE(send_ue_context_modification_response());
@@ -526,11 +575,8 @@ TEST_F(cu_cp_intra_du_handover_test, when_ho_fails_then_reestablishment_to_targe
   // Inject Measurement Report and await F1AP UE Context Setup Request.
   ASSERT_TRUE(send_rrc_measurement_report_and_await_ue_context_setup_request());
 
-  // Inject UE Context Setup Response and await Bearer Context Modification Request.
-  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
-
-  // Inject Bearer Context Modification Response and await UE Context Modification Request.
-  ASSERT_TRUE(send_bearer_context_modification_response_and_await_ue_context_modification_request());
+  // Inject UE Context Setup Response and await UE Context Modification Request.
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_ue_context_modification_request());
 
   // Inject UE Context Modification Response.
   ASSERT_TRUE(send_ue_context_modification_response());

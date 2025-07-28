@@ -55,7 +55,7 @@ struct time_qos_scheduler_expert_config {
   weight_function qos_weight_func = weight_function::gbr_prioritized;
   /// Fairness Coefficient to use in Proportional Fair weight of the QoS-aware policy.
   double pf_fairness_coeff = 2.0;
-  /// Whether to take into account or ignore the QoS Flow priority in the QoS-aware scheduling.
+  /// Whether to take into account or ignore the QoS Flow priority and ARP priority in the QoS-aware scheduling.
   bool priority_enabled = true;
   /// Whether to take into account or ignore the QoS Flow Packet Delay Budget (PDB) in the QoS-aware scheduling.
   bool pdb_enabled = true;
@@ -67,7 +67,7 @@ struct time_qos_scheduler_expert_config {
 struct time_rr_scheduler_expert_config {};
 
 /// \brief Policy scheduler expert parameters.
-using policy_scheduler_expert_config = std::variant<time_rr_scheduler_expert_config, time_qos_scheduler_expert_config>;
+using policy_scheduler_expert_config = std::variant<time_qos_scheduler_expert_config, time_rr_scheduler_expert_config>;
 
 struct ul_power_control {
   /// Enable closed-loop PUSCH power control.
@@ -197,7 +197,7 @@ struct scheduler_ue_expert_config {
   /// Boundaries in RB interval for resource allocation of UE PUSCHs.
   crb_interval pusch_crb_limits{0, MAX_NOF_PRBS};
   /// Expert parameters to be passed to the policy scheduler.
-  policy_scheduler_expert_config strategy_cfg = time_rr_scheduler_expert_config{};
+  policy_scheduler_expert_config strategy_cfg = time_qos_scheduler_expert_config{};
   /// \brief Size of the group of UEs that is considered for newTx DL allocation in a given slot. The groups of UEs
   /// will rotate in a round-robin fashion.
   /// To minimize computation load, a lower group size can be used. If the QoS scheduler policy is used, this will

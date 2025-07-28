@@ -122,13 +122,16 @@ public:
   }
 
   /// Called when a new UE configuration is passed to the scheduler, as part of the RRC Reconfiguration procedure.
-  void handle_reconfiguration_request(const ue_reconf_command& params);
+  void handle_reconfiguration_request(const ue_reconf_command& params, bool reestablished_);
 
   /// Called when the UE confirms that it applied the new configuration.
   void handle_config_applied();
 
   /// Determines whether a UE reconfiguration is being processed.
   bool is_reconfig_ongoing() const { return reconf_ongoing; }
+
+  /// Determines whether the UE has been reestablished.
+  bool is_reestablished() const { return reestablished; }
 
   /// \brief Handles DL Buffer State indication.
   void handle_dl_buffer_state_indication(lcid_t lcid, unsigned bs, slot_point hol_toa = {});
@@ -198,7 +201,7 @@ public:
 
 private:
   /// Update UE configuration.
-  void set_config(const ue_configuration& new_cfg);
+  void set_config(const ue_configuration& new_cfg, std::optional<slot_point> msg3_rx_slot = std::nullopt);
 
   // Expert config parameters used for UE scheduler.
   const scheduler_ue_expert_config& expert_cfg;
@@ -228,6 +231,9 @@ private:
 
   /// Whether a UE reconfiguration is taking place.
   bool reconf_ongoing = false;
+
+  /// Whether the UE has been reestablished.
+  bool reestablished = false;
 
   /// UE Timing Advance Manager.
   ta_manager ta_mgr;

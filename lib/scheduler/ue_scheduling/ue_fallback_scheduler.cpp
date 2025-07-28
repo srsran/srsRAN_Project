@@ -273,6 +273,14 @@ bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_allo
       continue;
     }
 
+    const bool srb0_or_srb1_only = alloc_type != dl_new_tx_alloc_type::conres_only and not u.is_conres_ce_pending();
+    if (srb0_or_srb1_only and not u.get_pcell().is_conres_complete()) {
+      // If the UE hasn't acked the ConRes, we cannot schedule the SRB0 or SRB1, as any MAC PDU received without ConRes
+      // MAC CE would make the Contention Resolution fail, as per TS 38.331, Section 5.1.5.
+      ++next_ue;
+      continue;
+    }
+
     // Make the scheduling attempt.
     dl_sched_outcome outcome = schedule_dl_srb(res_alloc, u, std::nullopt);
     if (outcome == dl_sched_outcome::next_ue) {
@@ -567,7 +575,7 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
     }
     if (chosen_tbs < min_pending_bytes) {
       // We could not even fulfill the minimum pending bytes.
-      logger.debug("rnti={}: Fallback newTx allocation postponed. Cause: Pending non-segmentable bytes exceed TBS "
+      logger.debug("rnti={}: Fallback newTx allocation postponed. Cause: Pending non-segmentable bytes ({}) exceed TBS "
                    "calculated ({})",
                    u.crnti,
                    min_pending_bytes,
@@ -616,16 +624,22 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
   // the UE already has a dedicated config.
   // Note: In case the UE has no full config (RRC Reject), dedicated PUCCH is not required.
   // Note: If the actual UE has received the RRCSetup (with config) but the gNB doesn't receive an ACK=1, the UE can use
-  // the PUCCH dedicated resource to ACK the RRCSetup Retx (as per ts 38.213, section 9.2.1, "if a ue has dedicated
+  // the PUCCH dedicated resource to ACK the RRCSetup Retx (as per TS 38.213, section 9.2.1, "if a ue has dedicated
   // PUCCH resource configuration, the UE is provided by higher layers with one or more PUCCH resources [...]")
   // Note: The confirmation of UE fallback exit coming from higher layers may be late. In such case, we err on the side
   // of caution and allocate a dedicated PUCCH as well. We do not need to do this for the CON RES CE or SRB0
   // allocations.
-  const bool use_common    = not u.is_reconfig_ongoing();
-  bool       use_dedicated = not use_common;
+  // Note: \c u.is_reestablished() is only set at the start of the RRC Reconfiguration procedure following a
+  // re-establishment.
+  const bool use_common    = not u.is_reconfig_ongoing() or u.is_reestablished();
+  bool       use_dedicated = u.is_reconfig_ongoing();
   if (u.ue_cfg_dedicated()->is_ue_cfg_complete()) {
-    use_dedicated |=
-        is_retx or (dci_type == dci_dl_rnti_config_type::c_rnti_f1_0 and u.has_pending_dl_newtx_bytes(LCID_SRB1));
+    // Note: this check is meant for the case of the GNB missing the ACK for RRCSetup and then retransmitting it. In
+    // this case, we need to schedule also on dedicated because the UE already has a dedicated configuration, even
+    // though the gNB doesn't know that.
+    // As a side effect, this will make the GNB also schedule on dedicated resources for the case of missing the ACK for
+    // RRCReestablishment and then retransmitting it. This is not optimal, but not critical.
+    use_dedicated |= is_retx;
   }
   std::optional<uci_allocation> uci = allocate_ue_fallback_pucch(u,
                                                                  res_alloc,
@@ -1307,11 +1321,13 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
 {
   // If there is any skipped slot, reset \ref slots_with_no_pdxch_space for all the skipped slots.
   if (SRSRAN_LIKELY(last_sl_ind.valid())) {
-    while (SRSRAN_UNLIKELY(last_sl_ind + 1 != sl)) {
-      logger.info("UE fallback scheduler: Detected skipped slot={}.", last_sl_ind + 1);
-      // Reset the flag that indicates that there are no resources for the slot that has passed.
-      slots_with_no_pdxch_space[last_sl_ind.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = false;
-      ++last_sl_ind;
+    if (SRSRAN_UNLIKELY(last_sl_ind + 1 != sl)) {
+      logger.info("UE fallback scheduler: Detected skipped slots within [{}, {}).", last_sl_ind + 1, sl);
+      while (last_sl_ind + 1 != sl) {
+        // Reset the flag that indicates that there are no resources for the slot that has passed.
+        slots_with_no_pdxch_space[last_sl_ind.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = false;
+        ++last_sl_ind;
+      }
     }
   }
 
@@ -1324,19 +1340,55 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
   for (auto ue_it = pending_dl_ues_new_tx.begin(); ue_it != pending_dl_ues_new_tx.end();) {
     if (not ues.contains(ue_it->ue_index)) {
       // UE was removed in the meantime.
+      logger.debug("ue={}: will be removed", fmt::underlying(ue_it->ue_index));
       ue_it = pending_dl_ues_new_tx.erase(ue_it);
       continue;
     }
     auto& u = ues[ue_it->ue_index];
     if (not u.get_pcell().is_in_fallback_mode()) {
       // UE exited fallback.
+      logger.debug("ue={}: will be removed", fmt::underlying(ue_it->ue_index));
       ue_it = pending_dl_ues_new_tx.erase(ue_it);
       continue;
     }
     if (not u.has_pending_dl_newtx_bytes()) {
       // UE has no new txs pending. It can be removed.
+      logger.debug("ue={}: will be removed", fmt::underlying(ue_it->ue_index));
       ue_it = pending_dl_ues_new_tx.erase(ue_it);
       continue;
+    }
+
+    // Check if the \c ra-ContentionResolutionTimer has expired before the ConRes has been scheduled.
+    if (not u.get_pcell().is_conres_complete() and u.get_pcell().get_msg3_rx_slot().valid()) {
+      // We need to check if the UE has pending ACKs. If not and the ConRes procedure is not completed yes, it means
+      // ra-ContentionResolutionTimer has expired.
+      // NOTE If the gNB is waiting for a pending ACK, we'll handle it in the loop at the end of this function.
+      const bool waiting_for_pending_acks =
+          std::find_if(
+              ongoing_ues_ack_retxs.begin(), ongoing_ues_ack_retxs.end(), [&u](const ack_and_retx_tracker& ue_tx) {
+                return ue_tx.ue_index == u.ue_index and ue_tx.h_dl.is_waiting_ack();
+              }) != ongoing_ues_ack_retxs.end();
+      if (not waiting_for_pending_acks) {
+        const auto ra_conres_timer_subframes = static_cast<uint32_t>(
+            u.get_pcell().cfg().init_bwp().ul_common.value()->rach_cfg_common.value().ra_con_res_timer.count());
+        const int slot_diff = sl - u.get_pcell().get_msg3_rx_slot();
+        if (slot_diff < 0 or divide_ceil<uint32_t, uint32_t>(static_cast<uint32_t>(slot_diff),
+                                                             sl.nof_slots_per_subframe()) > ra_conres_timer_subframes) {
+          logger.warning("ue={} rnti={}: ra-ContentionResolutionTimer expired before UE's ConRes was scheduled",
+                         fmt::underlying(u.ue_index),
+                         u.crnti);
+          // Remove the UE from the fallback scheduler.
+          ue_it = pending_dl_ues_new_tx.erase(ue_it);
+          pending_ul_ues.erase(std::remove(pending_ul_ues.begin(), pending_ul_ues.end(), u.ue_index),
+                               pending_ul_ues.end());
+          ongoing_ues_ack_retxs.erase(
+              std::remove_if(ongoing_ues_ack_retxs.begin(),
+                             ongoing_ues_ack_retxs.end(),
+                             [&u](const ack_and_retx_tracker& tracker) { return tracker.ue_index == u.ue_index; }),
+              ongoing_ues_ack_retxs.end());
+          continue;
+        }
+      }
     }
 
     ++ue_it;
@@ -1365,7 +1417,7 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
   }
 
   // Only remove the {UE, HARQ-process} elements that have been retransmitted and positively acked. The rest of the
-  // elements are potential candidate for retransmissions.
+  // elements are potential candidates for retransmissions.
   for (auto it_ue_harq = ongoing_ues_ack_retxs.begin(); it_ue_harq != ongoing_ues_ack_retxs.end();) {
     if (not ues.contains(it_ue_harq->ue_index) or not ues[it_ue_harq->ue_index].get_pcell().is_in_fallback_mode()) {
       it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
@@ -1374,6 +1426,42 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
     if (it_ue_harq->h_dl.empty()) {
       it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
       continue;
+    }
+
+    // Check if the \c ra-ContentionResolutionTimer has expired before the ConRes has been tx-ed and acked.
+    if (not ues[it_ue_harq->ue_index].get_pcell().is_conres_complete() and
+        ues[it_ue_harq->ue_index].get_pcell().get_msg3_rx_slot().valid()) {
+      // If the gNB is waiting for a pending ACK, we need to check if the slot at which the PDSCH will be sent is before
+      // the ra-ContentionResolutionTimer will expire.
+      const slot_point sl_tx                     = it_ue_harq->h_dl.pdsch_slot();
+      const auto       ra_conres_timer_subframes = static_cast<uint32_t>(ues[it_ue_harq->ue_index]
+                                                                       .get_pcell()
+                                                                       .cfg()
+                                                                       .init_bwp()
+                                                                       .ul_common.value()
+                                                                       ->rach_cfg_common.value()
+                                                                       .ra_con_res_timer.count());
+      const int        slot_diff                 = sl_tx - ues[it_ue_harq->ue_index].get_pcell().get_msg3_rx_slot();
+      if (slot_diff < 0 or
+          divide_ceil<uint32_t, uint32_t>(static_cast<uint32_t>(slot_diff), sl_tx.nof_slots_per_subframe()) >
+              ra_conres_timer_subframes) {
+        const auto  ue_index = it_ue_harq->ue_index;
+        const auto& u        = ues[ue_index];
+        logger.warning(
+            "ue={} rnti={}: ra-ContentionResolutionTimer expired before the UE has received and acked ConRes",
+            fmt::underlying(u.ue_index),
+            u.crnti);
+        // Remove the UE from the fallback scheduler.
+        it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
+        pending_dl_ues_new_tx.erase(
+            std::remove_if(pending_dl_ues_new_tx.begin(),
+                           pending_dl_ues_new_tx.end(),
+                           [ue_index = u.ue_index](const fallback_ue& ue) { return ue.ue_index == ue_index; }),
+            pending_dl_ues_new_tx.end());
+        pending_ul_ues.erase(std::remove(pending_ul_ues.begin(), pending_ul_ues.end(), u.ue_index),
+                             pending_ul_ues.end());
+        continue;
+      }
     }
     ++it_ue_harq;
   }

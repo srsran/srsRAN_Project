@@ -141,12 +141,8 @@ public:
   {
     if (!processors) {
       std::vector<std::unique_ptr<ssb_processor>> instances(nof_concurrent_threads);
-
-      for (auto& processor : instances) {
-        processor = factory->create();
-      }
-
-      processors = std::make_shared<ssb_processor_pool::ssb_processor_pool_type>(std::move(instances));
+      std::generate(instances.begin(), instances.end(), [this]() { return factory->create(); });
+      processors = std::make_shared<ssb_processor_pool::ssb_processor_pool_type>(instances);
     }
 
     return std::make_unique<ssb_processor_pool>(std::move(processors));
@@ -156,12 +152,8 @@ public:
   {
     if (!processors) {
       std::vector<std::unique_ptr<ssb_processor>> instances(nof_concurrent_threads);
-
-      for (auto& processor : instances) {
-        processor = factory->create(logger);
-      }
-
-      processors = std::make_shared<ssb_processor_pool::ssb_processor_pool_type>(std::move(instances));
+      std::generate(instances.begin(), instances.end(), [this, &logger]() { return factory->create(logger); });
+      processors = std::make_shared<ssb_processor_pool::ssb_processor_pool_type>(instances);
     }
 
     return std::make_unique<ssb_processor_pool>(std::move(processors));

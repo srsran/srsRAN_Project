@@ -30,6 +30,11 @@ static void configure_cli11_udp_args(CLI::App& app, udp_appconfig& udp_params)
 {
   add_option(app, "--max_rx_msgs", udp_params.rx_max_msgs, "Maximum amount of messages RX in a single syscall")
       ->capture_default_str();
+  add_option(app, "--tx_qsize", udp_params.tx_qsize, "Size of TX queue used for batching SDUs.")->capture_default_str();
+  add_option(app, "--max_tx_msgs", udp_params.tx_max_msgs, "Maximum amount of messages TX in a single syscall")
+      ->capture_default_str();
+  add_option(app, "--max_tx_segments", udp_params.tx_max_segments, "Maximum amount of segments TX in a single SDU")
+      ->capture_default_str();
   add_option(
       app, "--pool_threshold", udp_params.pool_threshold, "Pool accupancy threshold after which packets are dropped")
       ->capture_default_str();

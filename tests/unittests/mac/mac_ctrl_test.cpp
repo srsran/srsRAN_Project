@@ -58,7 +58,7 @@ protected:
                             worker,
                             worker,
                             timers,
-                            mac_control_config::metrics_config{std::chrono::milliseconds{1000}, mac_notifier, nullptr}};
+                            mac_control_config::metrics_config{std::chrono::milliseconds{1000}, mac_notifier}};
   mac_ul_dummy_configurer     ul_unit;
   mac_dl_dummy_configurer     dl_unit;
   rnti_manager                rnti_table;

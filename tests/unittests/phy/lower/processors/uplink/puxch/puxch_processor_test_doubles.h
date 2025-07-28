@@ -24,6 +24,7 @@
 
 #include "../../../../../gateways/baseband/baseband_gateway_buffer_test_doubles.h"
 #include "srsran/phy/lower/lower_phy_rx_symbol_context.h"
+#include "srsran/phy/lower/processors/lower_phy_center_freq_controller.h"
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_baseband.h"
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_factories.h"
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_notifier.h"
@@ -83,7 +84,7 @@ private:
   std::vector<entry_t> entries;
 };
 
-class puxch_processor_spy : public puxch_processor
+class puxch_processor_spy : public puxch_processor, private lower_phy_center_freq_controller
 {
 public:
   puxch_processor_spy(const puxch_processor_configuration& config_) : config(config_) {}
@@ -95,6 +96,8 @@ public:
   puxch_processor_request_handler& get_request_handler() override { return request_handler; }
 
   puxch_processor_baseband& get_baseband() override { return baseband; }
+
+  lower_phy_center_freq_controller& get_center_freq_control() override { return *this; }
 
   const puxch_processor_configuration& get_configuration() const { return config; }
 
@@ -108,6 +111,8 @@ public:
   void clear() { baseband.clear(); }
 
 private:
+  bool set_carrier_center_frequency(double carrier_center_frequency_Hz) override { return false; }
+
   puxch_processor_notifier*           notifier = nullptr;
   puxch_processor_configuration       config;
   puxch_processor_request_handler_spy request_handler;

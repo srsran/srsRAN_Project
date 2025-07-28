@@ -178,6 +178,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
   f1u_msg.ue_index                    = ue_index;
   f1u_msg.drb_id                      = drb->drb_id;
   f1u_msg.config                      = drb_info.f1u_cfg;
+  f1u_msg.config.buffer_ul_on_startup = drb_info.is_handover;
   f1u_msg.dl_tnl_info                 = drb->dluptnl_info_list[0];
   f1u_msg.rx_sdu_notifier             = &drb->connector.f1u_rx_sdu_notif;
   f1u_msg.tx_pdu_notifier             = drb->f1u_gw_bearer.get();

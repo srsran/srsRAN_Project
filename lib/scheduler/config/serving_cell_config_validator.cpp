@@ -365,7 +365,7 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
     // Verify the CSI/SR bits do not exceed the PUCCH F2/F3/F4 payload.
     unsigned       pucch_f2_f3_f4_max_payload = pucch_cfg.get_max_payload(csi_pucch_res->format);
     const auto     csi_report_cfg             = create_csi_report_configuration(ue_cell_cfg.csi_meas_cfg.value());
-    const unsigned csi_report_size            = get_csi_report_pucch_size(csi_report_cfg).value();
+    const unsigned csi_report_size            = get_csi_report_pucch_size(csi_report_cfg).part1_size.value();
     unsigned       sr_offset                  = pucch_cfg.sr_res_list.front().offset;
     const bool     csi_sr_collision =
         csi_offset_colliding_with_sr(sr_offset,

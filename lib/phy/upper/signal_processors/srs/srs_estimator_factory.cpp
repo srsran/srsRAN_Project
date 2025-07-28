@@ -79,13 +79,17 @@ public:
   // See interface for documentation.
   std::unique_ptr<srs_estimator> create() override
   {
-    std::vector<std::unique_ptr<srs_estimator>> estimators(nof_concurrent_threads);
+    if (!pool) {
+      std::vector<std::unique_ptr<srs_estimator>> estimators(nof_concurrent_threads);
 
-    for (auto& estimator : estimators) {
-      estimator = factory->create();
+      for (auto& estimator : estimators) {
+        estimator = factory->create();
+      }
+
+      pool = std::make_shared<srs_estimator_pool::estimator_pool>(estimators);
     }
 
-    return std::make_unique<srs_estimator_pool>(std::move(estimators));
+    return std::make_unique<srs_estimator_pool>(pool);
   }
 
   // See interface for documentation.
@@ -95,8 +99,9 @@ public:
   }
 
 private:
-  std::shared_ptr<srs_estimator_factory> factory;
-  unsigned                               nof_concurrent_threads;
+  std::shared_ptr<srs_estimator_factory>              factory;
+  std::shared_ptr<srs_estimator_pool::estimator_pool> pool;
+  unsigned                                            nof_concurrent_threads;
 };
 
 } // namespace

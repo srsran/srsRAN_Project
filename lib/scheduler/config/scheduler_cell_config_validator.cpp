@@ -79,18 +79,18 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
   VERIFY((unsigned)mcs_descr.modulation < (unsigned)modulation_scheme::QAM64,
          "Modulation order for PDSCH scheduled with RA-RNTI cannot be > 2");
 
-  duplex_mode dplx_mode = band_helper::get_duplex_mode(msg.dl_carrier.band);
+  frequency_range freq_range = band_helper::get_freq_range(msg.dl_carrier.band);
+  duplex_mode     dplx_mode  = band_helper::get_duplex_mode(msg.dl_carrier.band);
 
   // Check PRACH config index.
-  auto code = prach_helper::prach_config_index_is_valid(rach_cfg_cmn.rach_cfg_generic.prach_config_index, dplx_mode);
+  auto code = prach_helper::prach_config_index_is_valid(
+      rach_cfg_cmn.rach_cfg_generic.prach_config_index, freq_range, dplx_mode);
   if (not code.has_value()) {
     return code;
   }
 
   const prach_configuration prach_cfg =
-      prach_configuration_get(frequency_range::FR1,
-                              msg.tdd_ul_dl_cfg_common.has_value() ? duplex_mode::TDD : duplex_mode::FDD,
-                              rach_cfg_cmn.rach_cfg_generic.prach_config_index);
+      prach_configuration_get(freq_range, dplx_mode, rach_cfg_cmn.rach_cfg_generic.prach_config_index);
   VERIFY(prach_cfg.format < prach_format_type::invalid, "Invalid PRACH format");
 
   subcarrier_spacing pusch_scs = msg.ul_cfg_common.init_ul_bwp.generic_params.scs;
@@ -114,6 +114,7 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
   // Check zero correlation zone validity.
   code = prach_helper::zero_correlation_zone_is_valid(rach_cfg_cmn.rach_cfg_generic.zero_correlation_zone_config,
                                                       rach_cfg_cmn.rach_cfg_generic.prach_config_index,
+                                                      freq_range,
                                                       dplx_mode);
   if (not code.has_value()) {
     return code;

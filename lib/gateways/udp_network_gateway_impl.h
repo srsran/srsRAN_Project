@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/adt/batched_dispatch_queue.h"
 #include "srsran/gateways/udp_network_gateway.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/io/unique_fd.h"
@@ -33,6 +34,26 @@
 namespace srsran {
 
 constexpr uint32_t network_gateway_udp_max_len = 9100;
+
+struct udp_tx_pdu_t {
+  byte_buffer      pdu;
+  sockaddr_storage dst_addr;
+};
+
+/// Transmit context used by the sendmmsg syscall.
+struct transmit_context {
+  explicit transmit_context(unsigned tx_max_mmsg, unsigned tx_max_segments)
+  {
+    mmsg.resize(tx_max_mmsg);
+    msgs.resize(tx_max_mmsg);
+    for (unsigned i = 0; i < tx_max_mmsg; i++) {
+      msgs[i].resize(tx_max_segments);
+    }
+  }
+
+  std::vector<::mmsghdr>            mmsg;
+  std::vector<std::vector<::iovec>> msgs;
+};
 
 class udp_network_gateway_impl final : public udp_network_gateway
 {
@@ -52,7 +73,7 @@ private:
   void handle_pdu(byte_buffer pdu, const sockaddr_storage& dest_addr) override;
 
   // Actual PDU handling, shall run in IO executor.
-  void handle_pdu_impl(const byte_buffer& pdu, const sockaddr_storage& dest_addr);
+  void handle_pdu_impl(span<udp_tx_pdu_t> pdus);
 
   // Handle error detected by io_broker that led to the io deregistration.
   void handle_io_error(io_broker::error_code code);
@@ -80,14 +101,14 @@ private:
   unique_fd             sock_fd;
   io_broker::subscriber io_subcriber;
 
+  transmit_context                     tx_ctx;
+  batched_dispatch_queue<udp_tx_pdu_t> batched_queue;
+
   sockaddr_storage local_addr        = {}; // the local address
   socklen_t        local_addrlen     = 0;
   int              local_ai_family   = 0;
   int              local_ai_socktype = 0;
   int              local_ai_protocol = 0;
-
-  // Temporary Tx buffer for transmission.
-  std::array<uint8_t, network_gateway_udp_max_len> tx_mem;
 
   // Helper boolean to avoid spamming the logs in case of buffer pool depletion
   bool warn_low_buffer_pool = true;

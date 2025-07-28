@@ -55,6 +55,10 @@ private:
   std::unique_ptr<dft_processor> dft;
   /// Phase compensation look-up table.
   phase_compensation_lut phase_compensation_table;
+  /// Current center frequency in Hertz.
+  double current_center_freq_Hz;
+  /// Next center frequency in Hertz.
+  std::atomic<double> next_center_freq_Hz;
 
 public:
   /// \brief Constructs an OFDM symbol modulator.
@@ -63,13 +67,16 @@ public:
   ofdm_symbol_modulator_impl(ofdm_modulator_common_configuration& common_config,
                              const ofdm_modulator_configuration&  ofdm_config);
 
-  // See interface for documentation.
+  // See the interface for documentation.
   unsigned get_symbol_size(unsigned symbol_index) const override
   {
     return cp.get_length(symbol_index, scs).to_samples(sampling_rate_Hz) + dft_size;
   }
 
-  // See interface for documentation.
+  // See the interface for documentation.
+  void set_center_frequency(double center_frequency_Hz) override { next_center_freq_Hz = center_frequency_Hz; }
+
+  // See the interface for documentation.
   void
   modulate(span<cf_t> ouput, const resource_grid_reader& grid, unsigned port_index, unsigned symbol_index) override;
 };

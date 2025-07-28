@@ -206,7 +206,14 @@ size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf) noexcept SRSRAN_RTS
 
   // Release SDU if needed
   if (header.si == rlc_si_field::full_sdu || header.si == rlc_si_field::last_segment) {
-    sdu.buf.clear();
+    // Recycle SDU buffer in non real-time UE executor
+    auto release_sdu_func = TRACE_TASK([sdu = std::move(sdu.buf)]() mutable {
+      // leaving this scope will implicitly delete the SDU
+    });
+    if (!ue_executor.defer(std::move(release_sdu_func))) {
+      logger.log_warning("Cannot release transmitted SDU in UE executor. Releasing from pcell executor.");
+      sdu.buf.clear();
+    }
     next_so = 0;
     if (metrics_low.is_enabled()) {
       auto sdu_latency =

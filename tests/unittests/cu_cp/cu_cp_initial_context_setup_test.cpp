@@ -27,7 +27,6 @@
 #include "tests/test_doubles/rrc/rrc_test_message_validators.h"
 #include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
-#include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/e1ap/common/e1ap_types.h"
@@ -108,7 +107,8 @@ public:
         "Invalid Security Mode Command");
 
     // Inject UE Context Setup Response
-    f1ap_message ue_ctxt_setup_response = generate_ue_context_setup_response(ue_ctx->cu_ue_id.value(), du_ue_id);
+    f1ap_message ue_ctxt_setup_response =
+        test_helpers::generate_ue_context_setup_response(ue_ctx->cu_ue_id.value(), du_ue_id);
     get_du(du_idx).push_ul_pdu(ue_ctxt_setup_response);
     return true;
   }
@@ -116,8 +116,8 @@ public:
   [[nodiscard]] bool send_security_mode_complete_and_await_ue_capability_enquiry()
   {
     // Inject Security Mode Complete
-    f1ap_message ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
-        ue_ctx->cu_ue_id.value(), du_ue_id, srb_id_t::srb1, make_byte_buffer("00032a00fd5ec7ff").value());
+    f1ap_message ul_rrc_msg_transfer = test_helpers::generate_ul_rrc_message_transfer(
+        du_ue_id, ue_ctx->cu_ue_id.value(), srb_id_t::srb1, make_byte_buffer("00032a00fd5ec7ff").value());
     get_du(du_idx).push_ul_pdu(ul_rrc_msg_transfer);
 
     // Wait for UE Capability Enquiry
@@ -134,7 +134,7 @@ public:
   [[nodiscard]] bool send_ue_capability_info_and_await_registration_accept_and_initial_context_setup_response()
   {
     // Inject UL RRC Message Transfer (containing UE Capability Info)
-    get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
         du_ue_id,
         ue_ctx->cu_ue_id.value(),
         srb_id_t::srb1,
@@ -160,8 +160,8 @@ public:
   [[nodiscard]] bool send_security_mode_complete_and_await_registration_accept_and_initial_context_setup_response()
   {
     // Inject Security Mode Complete
-    f1ap_message ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
-        ue_ctx->cu_ue_id.value(), du_ue_id, srb_id_t::srb1, make_byte_buffer("00032a00fd5ec7ff").value());
+    f1ap_message ul_rrc_msg_transfer = test_helpers::generate_ul_rrc_message_transfer(
+        du_ue_id, ue_ctx->cu_ue_id.value(), srb_id_t::srb1, make_byte_buffer("00032a00fd5ec7ff").value());
     get_du(du_idx).push_ul_pdu(ul_rrc_msg_transfer);
 
     // Wait for DL RRC Message Transfer (containing NAS Registration Accept)
@@ -180,7 +180,7 @@ public:
   [[nodiscard]] bool send_ue_capability_info_and_handle_pdu_session_resource_setup_request()
   {
     // Inject UL RRC Message Transfer (containing UE Capability Info)
-    get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
         du_ue_id,
         ue_ctx->cu_ue_id.value(),
         srb_id_t::srb1,
@@ -233,8 +233,8 @@ public:
   [[nodiscard]] bool send_rrc_reconfiguration_complete_and_await_initial_context_setup_response()
   {
     // Inject UL RRC Message Transfer (containing RRC Reconfiguration Complete)
-    f1ap_message ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
-        ue_ctx->cu_ue_id.value(), du_ue_id, srb_id_t::srb1, generate_rrc_reconfiguration_complete_pdu(3, 5));
+    f1ap_message ul_rrc_msg_transfer = test_helpers::generate_ul_rrc_message_transfer(
+        du_ue_id, ue_ctx->cu_ue_id.value(), srb_id_t::srb1, generate_rrc_reconfiguration_complete_pdu(3, 5));
     get_du(du_idx).push_ul_pdu(ul_rrc_msg_transfer);
 
     // Wait for Initial Context Setup Response
@@ -294,7 +294,7 @@ TEST_F(cu_cp_initial_context_setup_test, when_ue_context_setup_fails_then_initia
 
   // Inject UE Context Setup Failure
   f1ap_message ue_ctxt_setup_failure =
-      generate_ue_context_setup_failure(find_ue_context(du_idx, du_ue_id)->cu_ue_id.value(), du_ue_id);
+      test_helpers::generate_ue_context_setup_failure(find_ue_context(du_idx, du_ue_id)->cu_ue_id.value(), du_ue_id);
   get_du(du_idx).push_ul_pdu(ue_ctxt_setup_failure);
 
   // Wait for NGAP Initial Context Setup Failure
@@ -310,8 +310,8 @@ TEST_F(cu_cp_initial_context_setup_test, when_security_mode_command_fails_then_i
   ASSERT_TRUE(send_ue_context_setup_request_and_await_response());
 
   // Inject Security Mode Failure
-  f1ap_message ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
-      ue_ctx->cu_ue_id.value(), du_ue_id, srb_id_t::srb1, make_byte_buffer("00033200c1bf019d").value());
+  f1ap_message ul_rrc_msg_transfer = test_helpers::generate_ul_rrc_message_transfer(
+      du_ue_id, ue_ctx->cu_ue_id.value(), srb_id_t::srb1, make_byte_buffer("00033200c1bf019d").value());
   get_du(du_idx).push_ul_pdu(ul_rrc_msg_transfer);
 
   // Wait for NGAP Initial Context Setup Failure

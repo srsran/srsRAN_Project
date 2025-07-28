@@ -21,6 +21,7 @@
  */
 
 #include "srsran/du/du_high/du_high_executor_mapper.h"
+#include "srsran/adt/mpmc_queue.h"
 #include "srsran/support/executors/executor_decoration_factory.h"
 #include "srsran/support/executors/strand_executor.h"
 
@@ -370,30 +371,20 @@ std::unique_ptr<du_high_ue_executor_mapper> create_du_high_ue_executor_mapper(co
 /// the lower layers from running faster than this strand.
 class ctrl_executor_mapper
 {
-  using ctrl_strand_type = priority_task_strand<task_executor*>;
+  using ctrl_strand_type = task_strand<task_executor*, concurrent_queue_policy::lockfree_mpmc>;
 
 public:
   ctrl_executor_mapper(const du_high_executor_config::control_executor_config& cfg,
-                       bool                                                    rt_mode_enabled,
                        bool                                                    trace_enabled,
                        const std::optional<std::chrono::milliseconds>&         metrics_period) :
-    strand(cfg.pool_executor,
-           std::array<concurrent_queue_params, 2>{
-               concurrent_queue_params{concurrent_queue_policy::lockfree_mpmc, cfg.task_queue_size},
-               concurrent_queue_params{concurrent_queue_policy::lockfree_mpmc, cfg.task_queue_size}}),
-    timer_exec(decorator.decorate(strand.get_executors()[0],
-                                  false,
-                                  trace_enabled,
-                                  rt_mode_enabled ? std::nullopt : std::optional<unsigned>(1),
-                                  metrics_period,
-                                  trace_enabled or metrics_period ? "du_timer_exec" : "")),
-    ctrl_exec(decorator.decorate(strand.get_executors()[1],
+    strand(cfg.pool_executor, cfg.task_queue_size),
+    ctrl_exec(decorator.decorate(strand,
                                  false,
                                  trace_enabled,
                                  std::nullopt,
                                  metrics_period,
                                  trace_enabled or metrics_period ? "du_ctrl_exec" : "")),
-    e2_exec(decorator.decorate(strand.get_executors()[1],
+    e2_exec(decorator.decorate(strand,
                                false,
                                trace_enabled,
                                std::nullopt,
@@ -405,7 +396,6 @@ public:
   ctrl_strand_type   strand;
   executor_decorator decorator;
 
-  task_executor& timer_exec;
   task_executor& ctrl_exec;
   task_executor& e2_exec;
 };
@@ -414,26 +404,49 @@ public:
 
 class du_high_executor_mapper_impl final : public du_high_executor_mapper
 {
+  using tick_strand_type = task_strand<task_executor*, concurrent_queue_policy::lockfree_mpmc>;
+
 public:
-  explicit du_high_executor_mapper_impl(std::unique_ptr<du_high_cell_executor_mapper>           cell_mapper_,
-                                        std::unique_ptr<du_high_ue_executor_mapper>             ue_mapper_,
-                                        const du_high_executor_config::control_executor_config& ctrl_cfg,
-                                        bool                                                    rt_mode_enabled,
-                                        bool                                                    trace_enabled,
-                                        const std::optional<std::chrono::milliseconds>&         metrics_period) :
-    cell_mapper_ptr(std::move(cell_mapper_)),
-    ue_mapper_ptr(std::move(ue_mapper_)),
-    ctrl_mapper(ctrl_cfg, rt_mode_enabled, trace_enabled, metrics_period)
+  explicit du_high_executor_mapper_impl(const du_high_executor_config& config) :
+    tick_exec(create_time_exec(config)),
+    cell_mapper_ptr(create_du_high_cell_executor_mapper(config)),
+    ue_mapper_ptr(create_du_high_ue_executor_mapper(config)),
+    ctrl_mapper(config.ctrl_executors, config.trace_exec_tasks, config.metrics_period)
   {
   }
 
   du_high_cell_executor_mapper& cell_mapper() override { return *cell_mapper_ptr; }
   du_high_ue_executor_mapper&   ue_mapper() override { return *ue_mapper_ptr; }
   task_executor&                du_control_executor() override { return ctrl_mapper.ctrl_exec; }
-  task_executor&                du_timer_executor() override { return ctrl_mapper.timer_exec; }
+  task_executor&                du_timer_executor() override { return tick_exec; }
   task_executor&                du_e2_executor() override { return ctrl_mapper.e2_exec; }
 
 private:
+  task_executor& create_time_exec(const du_high_executor_config& config)
+  {
+    // Create a strand pointing to the same pool used by the control executors.
+    tick_strand =
+        std::make_unique<tick_strand_type>(config.ctrl_executors.pool_executor, config.ctrl_executors.task_queue_size);
+    task_executor& base_time_exec = *tick_strand;
+
+    // Decorate base_time_exec.
+    return decorator.decorate(base_time_exec,
+                              false,
+                              config.trace_exec_tasks,
+                              // Throttle the timer tick caller in non-RT mode
+                              config.is_rt_mode_enabled ? std::nullopt : std::optional<unsigned>(1),
+                              config.metrics_period,
+                              config.trace_exec_tasks or config.metrics_period ? "du_timer_exec" : "");
+  }
+
+  /// Decorator for executors.
+  executor_decorator decorator;
+
+  /// Strand used to tick the application timers.
+  std::unique_ptr<tick_strand_type> tick_strand;
+  /// Decorated tick_executor.
+  task_executor& tick_exec;
+
   std::unique_ptr<du_high_cell_executor_mapper> cell_mapper_ptr;
   std::unique_ptr<du_high_ue_executor_mapper>   ue_mapper_ptr;
   ctrl_executor_mapper                          ctrl_mapper;
@@ -444,10 +457,5 @@ private:
 std::unique_ptr<du_high_executor_mapper>
 srsran::srs_du::create_du_high_executor_mapper(const du_high_executor_config& config)
 {
-  return std::make_unique<du_high_executor_mapper_impl>(create_du_high_cell_executor_mapper(config),
-                                                        create_du_high_ue_executor_mapper(config),
-                                                        config.ctrl_executors,
-                                                        config.is_rt_mode_enabled,
-                                                        config.trace_exec_tasks,
-                                                        config.metrics_period);
+  return std::make_unique<du_high_executor_mapper_impl>(config);
 }

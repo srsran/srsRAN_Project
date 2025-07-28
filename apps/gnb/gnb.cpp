@@ -380,9 +380,9 @@ int main(int argc, char** argv)
   o_cu_up_app_unit->get_o_cu_up_unit_config().cu_up_cfg.pcap_cfg.disable_e1_pcaps();
   o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config.pcaps.disable_f1_pcaps();
   o_cu_cp_dlt_pcaps cu_cp_dlt_pcaps = create_o_cu_cp_dlt_pcap(
-      o_cu_cp_app_unit->get_o_cu_cp_unit_config(), *workers.get_executor_getter(), cleanup_signal_dispatcher);
+      o_cu_cp_app_unit->get_o_cu_cp_unit_config(), workers.get_cu_cp_pcap_executors(), cleanup_signal_dispatcher);
   o_cu_up_dlt_pcaps cu_up_dlt_pcaps = create_o_cu_up_dlt_pcaps(
-      o_cu_up_app_unit->get_o_cu_up_unit_config(), *workers.get_executor_getter(), cleanup_signal_dispatcher);
+      o_cu_up_app_unit->get_o_cu_up_unit_config(), workers.get_cu_up_pcap_executors(), cleanup_signal_dispatcher);
   flexible_o_du_pcaps du_pcaps =
       create_o_du_pcaps(o_du_app_unit->get_o_du_high_unit_config(), workers, cleanup_signal_dispatcher);
 
@@ -433,14 +433,12 @@ int main(int argc, char** argv)
 
   // Create O-CU-CP dependencies.
   o_cu_cp_unit_dependencies o_cucp_deps;
-  o_cucp_deps.cu_cp_executor       = workers.cu_cp_exec;
-  o_cucp_deps.cu_cp_n2_rx_executor = workers.non_rt_hi_prio_exec;
-  o_cucp_deps.cu_cp_e2_exec        = workers.cu_e2_exec;
-  o_cucp_deps.timers               = cu_timers;
-  o_cucp_deps.ngap_pcap            = cu_cp_dlt_pcaps.ngap.get();
-  o_cucp_deps.broker               = epoll_broker.get();
-  o_cucp_deps.metrics_notifier     = &metrics_notifier_forwarder;
-  o_cucp_deps.e2_gw                = e2_gw_cu_cp.get();
+  o_cucp_deps.executor_mapper  = &workers.get_cu_cp_executor_mapper();
+  o_cucp_deps.timers           = cu_timers;
+  o_cucp_deps.ngap_pcap        = cu_cp_dlt_pcaps.ngap.get();
+  o_cucp_deps.broker           = epoll_broker.get();
+  o_cucp_deps.metrics_notifier = &metrics_notifier_forwarder;
+  o_cucp_deps.e2_gw            = e2_gw_cu_cp.get();
 
   // create O-CU-CP.
   auto                o_cucp_unit = o_cu_cp_app_unit->create_o_cu_cp(o_cucp_deps);
@@ -452,7 +450,6 @@ int main(int argc, char** argv)
   // Create CU-UP
   o_cu_up_unit_dependencies o_cuup_unit_deps;
   o_cuup_unit_deps.workers          = &workers;
-  o_cuup_unit_deps.cu_up_e2_exec    = workers.cu_e2_exec;
   o_cuup_unit_deps.e1ap_conn_client = e1_gw.get();
   o_cuup_unit_deps.f1u_gateway      = f1u_conn->get_f1u_cu_up_gateway();
   o_cuup_unit_deps.gtpu_pcap        = cu_up_dlt_pcaps.n3.get();

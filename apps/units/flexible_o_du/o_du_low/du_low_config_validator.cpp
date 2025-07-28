@@ -84,7 +84,6 @@ static bool validate_upper_phy_threads_appconfig(const du_low_unit_expert_thread
 }
 
 static bool validate_expert_execution_unit_config(const du_low_unit_config&        config,
-                                                  unsigned                         nof_cells,
                                                   const os_sched_affinity_bitmask& available_cpus)
 {
   unsigned nof_hwacc_pdsch = 0;
@@ -97,16 +96,6 @@ static bool validate_expert_execution_unit_config(const du_low_unit_config&     
                                             config.expert_phy_cfg.max_processing_delay_slots,
                                             nof_hwacc_pdsch,
                                             nof_hwacc_pusch)) {
-    return false;
-  }
-
-  // Configure more cells for expert execution than the number of cells is an error.
-  if (config.expert_execution_cfg.cell_affinities.size() != nof_cells) {
-    fmt::print(
-        "Using different number of cells for DU low expert execution '{}' than the number of defined cells '{}'\n",
-        config.expert_execution_cfg.cell_affinities.size(),
-        nof_cells);
-
     return false;
   }
 
@@ -183,9 +172,18 @@ static bool validate_log_options(const du_low_unit_logger_config& config, const 
 }
 
 bool srsran::validate_du_low_config(const du_low_unit_config&                  config,
-                                    span<const du_low_prach_validation_config> prach_cells_config,
-                                    const os_sched_affinity_bitmask&           available_cpus)
+                                    span<const du_low_prach_validation_config> prach_cells_config)
 {
+  // Configure more cells for expert execution than the number of cells is an error.
+  if (config.expert_execution_cfg.cell_affinities.size() != prach_cells_config.size()) {
+    fmt::print(
+        "Using different number of cells for DU low expert execution '{}' than the number of defined cells '{}'\n",
+        config.expert_execution_cfg.cell_affinities.size(),
+        prach_cells_config.size());
+
+    return false;
+  }
+
   if (!validate_log_options(config.loggers, prach_cells_config.front())) {
     return false;
   }
@@ -198,9 +196,10 @@ bool srsran::validate_du_low_config(const du_low_unit_config&                  c
     return false;
   }
 
-  if (!validate_expert_execution_unit_config(config, prach_cells_config.size(), available_cpus)) {
-    return false;
-  }
-
   return true;
+}
+
+bool srsran::validate_du_low_cpus(const du_low_unit_config& config, const os_sched_affinity_bitmask& available_cpus)
+{
+  return validate_expert_execution_unit_config(config, available_cpus);
 }

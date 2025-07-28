@@ -19,8 +19,8 @@
 #
 
 set(SOURCES
-        cu_cp_pdcp_metrics_producer.cpp
-        cu_cp_pdcp_metrics_consumers.cpp)
+        cu_cp_metrics_producer.cpp
+        cu_cp_metrics_consumers.cpp)
 
 add_library(srsran_cu_cp_unit_metrics_helpers STATIC ${SOURCES})
 target_include_directories(srsran_cu_cp_unit_metrics_helpers PRIVATE ${CMAKE_SOURCE_DIR})

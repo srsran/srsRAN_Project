@@ -22,13 +22,13 @@
 
 /*******************************************************************************
  *
- *                     3GPP TS ASN1 E1AP v16.10.0 (2022-06)
+ *                     3GPP TS ASN1 E1AP v18.5.0 (2025-06)
  *
  ******************************************************************************/
 
 #pragma once
 
-#include "srsran/asn1/e1ap/e1ap_ies.h"
+#include "e1ap_ies.h"
 
 namespace asn1 {
 namespace e1ap {
@@ -36,6 +36,653 @@ namespace e1ap {
 /*******************************************************************************
  *                              Struct Definitions
  ******************************************************************************/
+
+// BCBearerContextModificationConfirmIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct bc_bearer_context_mod_confirm_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options {
+        gnb_cu_cp_mbs_e1ap_id,
+        gnb_cu_up_mbs_e1ap_id,
+        bc_bearer_context_to_modify_confirm,
+        crit_diagnostics,
+        nulltype
+      } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&                                    gnb_cu_cp_mbs_e1ap_id();
+    uint32_t&                                    gnb_cu_up_mbs_e1ap_id();
+    bc_bearer_context_to_modify_confirm_s&       bc_bearer_context_to_modify_confirm();
+    crit_diagnostics_s&                          crit_diagnostics();
+    const uint32_t&                              gnb_cu_cp_mbs_e1ap_id() const;
+    const uint32_t&                              gnb_cu_up_mbs_e1ap_id() const;
+    const bc_bearer_context_to_modify_confirm_s& bc_bearer_context_to_modify_confirm() const;
+    const crit_diagnostics_s&                    crit_diagnostics() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+struct bc_bearer_context_mod_confirm_ies_container {
+  bool                                  crit_diagnostics_present = false;
+  uint32_t                              gnb_cu_cp_mbs_e1ap_id;
+  uint32_t                              gnb_cu_up_mbs_e1ap_id;
+  bc_bearer_context_to_modify_confirm_s bc_bearer_context_to_modify_confirm;
+  crit_diagnostics_s                    crit_diagnostics;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// BCBearerContextModificationConfirm ::= SEQUENCE
+using bc_bearer_context_mod_confirm_s = elementary_procedure_option<bc_bearer_context_mod_confirm_ies_container>;
+
+// BCBearerContextModificationFailureIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct bc_bearer_context_mod_fail_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options { gnb_cu_cp_mbs_e1ap_id, gnb_cu_up_mbs_e1ap_id, cause, crit_diagnostics, nulltype } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&                 gnb_cu_cp_mbs_e1ap_id();
+    uint32_t&                 gnb_cu_up_mbs_e1ap_id();
+    cause_c&                  cause();
+    crit_diagnostics_s&       crit_diagnostics();
+    const uint32_t&           gnb_cu_cp_mbs_e1ap_id() const;
+    const uint32_t&           gnb_cu_up_mbs_e1ap_id() const;
+    const cause_c&            cause() const;
+    const crit_diagnostics_s& crit_diagnostics() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+struct bc_bearer_context_mod_fail_ies_container {
+  bool               crit_diagnostics_present = false;
+  uint32_t           gnb_cu_cp_mbs_e1ap_id;
+  uint32_t           gnb_cu_up_mbs_e1ap_id;
+  cause_c            cause;
+  crit_diagnostics_s crit_diagnostics;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// BCBearerContextModificationFailure ::= SEQUENCE
+using bc_bearer_context_mod_fail_s = elementary_procedure_option<bc_bearer_context_mod_fail_ies_container>;
+
+// BCBearerContextModificationRequestIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct bc_bearer_context_mod_request_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options { gnb_cu_cp_mbs_e1ap_id, gnb_cu_up_mbs_e1ap_id, bc_bearer_context_to_modify, nulltype } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&                            gnb_cu_cp_mbs_e1ap_id();
+    uint32_t&                            gnb_cu_up_mbs_e1ap_id();
+    bc_bearer_context_to_modify_s&       bc_bearer_context_to_modify();
+    const uint32_t&                      gnb_cu_cp_mbs_e1ap_id() const;
+    const uint32_t&                      gnb_cu_up_mbs_e1ap_id() const;
+    const bc_bearer_context_to_modify_s& bc_bearer_context_to_modify() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+struct bc_bearer_context_mod_request_ies_container {
+  uint32_t                      gnb_cu_cp_mbs_e1ap_id;
+  uint32_t                      gnb_cu_up_mbs_e1ap_id;
+  bc_bearer_context_to_modify_s bc_bearer_context_to_modify;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// BCBearerContextModificationRequest ::= SEQUENCE
+using bc_bearer_context_mod_request_s = elementary_procedure_option<bc_bearer_context_mod_request_ies_container>;
+
+// BCBearerContextModificationRequiredIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct bc_bearer_context_mod_required_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options {
+        gnb_cu_cp_mbs_e1ap_id,
+        gnb_cu_up_mbs_e1ap_id,
+        bc_bearer_context_to_modify_required,
+        nulltype
+      } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&                                     gnb_cu_cp_mbs_e1ap_id();
+    uint32_t&                                     gnb_cu_up_mbs_e1ap_id();
+    bc_bearer_context_to_modify_required_s&       bc_bearer_context_to_modify_required();
+    const uint32_t&                               gnb_cu_cp_mbs_e1ap_id() const;
+    const uint32_t&                               gnb_cu_up_mbs_e1ap_id() const;
+    const bc_bearer_context_to_modify_required_s& bc_bearer_context_to_modify_required() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+struct bc_bearer_context_mod_required_ies_container {
+  uint32_t                               gnb_cu_cp_mbs_e1ap_id;
+  uint32_t                               gnb_cu_up_mbs_e1ap_id;
+  bc_bearer_context_to_modify_required_s bc_bearer_context_to_modify_required;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// BCBearerContextModificationRequired ::= SEQUENCE
+using bc_bearer_context_mod_required_s = elementary_procedure_option<bc_bearer_context_mod_required_ies_container>;
+
+// BCBearerContextModificationResponseIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct bc_bearer_context_mod_resp_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options {
+        gnb_cu_cp_mbs_e1ap_id,
+        gnb_cu_up_mbs_e1ap_id,
+        bc_bearer_context_to_modify_resp,
+        crit_diagnostics,
+        nulltype
+      } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&                                 gnb_cu_cp_mbs_e1ap_id();
+    uint32_t&                                 gnb_cu_up_mbs_e1ap_id();
+    bc_bearer_context_to_modify_resp_s&       bc_bearer_context_to_modify_resp();
+    crit_diagnostics_s&                       crit_diagnostics();
+    const uint32_t&                           gnb_cu_cp_mbs_e1ap_id() const;
+    const uint32_t&                           gnb_cu_up_mbs_e1ap_id() const;
+    const bc_bearer_context_to_modify_resp_s& bc_bearer_context_to_modify_resp() const;
+    const crit_diagnostics_s&                 crit_diagnostics() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+struct bc_bearer_context_mod_resp_ies_container {
+  bool                               crit_diagnostics_present = false;
+  uint32_t                           gnb_cu_cp_mbs_e1ap_id;
+  uint32_t                           gnb_cu_up_mbs_e1ap_id;
+  bc_bearer_context_to_modify_resp_s bc_bearer_context_to_modify_resp;
+  crit_diagnostics_s                 crit_diagnostics;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// BCBearerContextModificationResponse ::= SEQUENCE
+using bc_bearer_context_mod_resp_s = elementary_procedure_option<bc_bearer_context_mod_resp_ies_container>;
+
+// BCBearerContextReleaseCommandIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct bc_bearer_context_release_cmd_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options { gnb_cu_cp_mbs_e1ap_id, gnb_cu_up_mbs_e1ap_id, cause, nulltype } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&       gnb_cu_cp_mbs_e1ap_id();
+    uint32_t&       gnb_cu_up_mbs_e1ap_id();
+    cause_c&        cause();
+    const uint32_t& gnb_cu_cp_mbs_e1ap_id() const;
+    const uint32_t& gnb_cu_up_mbs_e1ap_id() const;
+    const cause_c&  cause() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+struct bc_bearer_context_release_cmd_ies_container {
+  uint32_t gnb_cu_cp_mbs_e1ap_id;
+  uint32_t gnb_cu_up_mbs_e1ap_id;
+  cause_c  cause;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// BCBearerContextReleaseCommand ::= SEQUENCE
+using bc_bearer_context_release_cmd_s = elementary_procedure_option<bc_bearer_context_release_cmd_ies_container>;
+
+// BCBearerContextReleaseCompleteIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct bc_bearer_context_release_complete_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options { gnb_cu_cp_mbs_e1ap_id, gnb_cu_up_mbs_e1ap_id, crit_diagnostics, nulltype } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&                 gnb_cu_cp_mbs_e1ap_id();
+    uint32_t&                 gnb_cu_up_mbs_e1ap_id();
+    crit_diagnostics_s&       crit_diagnostics();
+    const uint32_t&           gnb_cu_cp_mbs_e1ap_id() const;
+    const uint32_t&           gnb_cu_up_mbs_e1ap_id() const;
+    const crit_diagnostics_s& crit_diagnostics() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+struct bc_bearer_context_release_complete_ies_container {
+  bool               crit_diagnostics_present = false;
+  uint32_t           gnb_cu_cp_mbs_e1ap_id;
+  uint32_t           gnb_cu_up_mbs_e1ap_id;
+  crit_diagnostics_s crit_diagnostics;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// BCBearerContextReleaseComplete ::= SEQUENCE
+using bc_bearer_context_release_complete_s =
+    elementary_procedure_option<bc_bearer_context_release_complete_ies_container>;
+
+// BCBearerContextReleaseRequestIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct bc_bearer_context_release_request_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options { gnb_cu_cp_mbs_e1ap_id, gnb_cu_up_mbs_e1ap_id, cause, nulltype } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&       gnb_cu_cp_mbs_e1ap_id();
+    uint32_t&       gnb_cu_up_mbs_e1ap_id();
+    cause_c&        cause();
+    const uint32_t& gnb_cu_cp_mbs_e1ap_id() const;
+    const uint32_t& gnb_cu_up_mbs_e1ap_id() const;
+    const cause_c&  cause() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+struct bc_bearer_context_release_request_ies_container {
+  uint32_t gnb_cu_cp_mbs_e1ap_id;
+  uint32_t gnb_cu_up_mbs_e1ap_id;
+  cause_c  cause;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// BCBearerContextReleaseRequest ::= SEQUENCE
+using bc_bearer_context_release_request_s =
+    elementary_procedure_option<bc_bearer_context_release_request_ies_container>;
+
+// BCBearerContextSetupFailureIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct bc_bearer_context_setup_fail_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options { gnb_cu_cp_mbs_e1ap_id, gnb_cu_up_mbs_e1ap_id, cause, crit_diagnostics, nulltype } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&                 gnb_cu_cp_mbs_e1ap_id();
+    uint32_t&                 gnb_cu_up_mbs_e1ap_id();
+    cause_c&                  cause();
+    crit_diagnostics_s&       crit_diagnostics();
+    const uint32_t&           gnb_cu_cp_mbs_e1ap_id() const;
+    const uint32_t&           gnb_cu_up_mbs_e1ap_id() const;
+    const cause_c&            cause() const;
+    const crit_diagnostics_s& crit_diagnostics() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+struct bc_bearer_context_setup_fail_ies_container {
+  bool               gnb_cu_up_mbs_e1ap_id_present = false;
+  bool               crit_diagnostics_present      = false;
+  uint32_t           gnb_cu_cp_mbs_e1ap_id;
+  uint32_t           gnb_cu_up_mbs_e1ap_id;
+  cause_c            cause;
+  crit_diagnostics_s crit_diagnostics;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// BCBearerContextSetupFailure ::= SEQUENCE
+using bc_bearer_context_setup_fail_s = elementary_procedure_option<bc_bearer_context_setup_fail_ies_container>;
+
+// BCBearerContextSetupRequestIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct bc_bearer_context_setup_request_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options {
+        gnb_cu_cp_mbs_e1ap_id,
+        global_mbs_session_id,
+        bc_bearer_context_to_setup,
+        associated_session_id,
+        mbs_service_area,
+        nulltype
+      } value;
+      typedef uint8_t number_type;
+
+      const char* to_string() const;
+      uint8_t     to_number() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&                           gnb_cu_cp_mbs_e1ap_id();
+    global_mbs_session_id_s&            global_mbs_session_id();
+    bc_bearer_context_to_setup_s&       bc_bearer_context_to_setup();
+    unbounded_octstring<true>&          associated_session_id();
+    mbs_service_area_s&                 mbs_service_area();
+    const uint32_t&                     gnb_cu_cp_mbs_e1ap_id() const;
+    const global_mbs_session_id_s&      global_mbs_session_id() const;
+    const bc_bearer_context_to_setup_s& bc_bearer_context_to_setup() const;
+    const unbounded_octstring<true>&    associated_session_id() const;
+    const mbs_service_area_s&           mbs_service_area() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+struct bc_bearer_context_setup_request_ies_container {
+  bool                         associated_session_id_present = false;
+  bool                         mbs_service_area_present      = false;
+  uint32_t                     gnb_cu_cp_mbs_e1ap_id;
+  global_mbs_session_id_s      global_mbs_session_id;
+  bc_bearer_context_to_setup_s bc_bearer_context_to_setup;
+  unbounded_octstring<true>    associated_session_id;
+  mbs_service_area_s           mbs_service_area;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// BCBearerContextSetupRequest ::= SEQUENCE
+using bc_bearer_context_setup_request_s = elementary_procedure_option<bc_bearer_context_setup_request_ies_container>;
+
+// BCBearerContextSetupResponseIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct bc_bearer_context_setup_resp_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options {
+        gnb_cu_cp_mbs_e1ap_id,
+        gnb_cu_up_mbs_e1ap_id,
+        bc_bearer_context_to_setup_resp,
+        crit_diagnostics,
+        nulltype
+      } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&                                gnb_cu_cp_mbs_e1ap_id();
+    uint32_t&                                gnb_cu_up_mbs_e1ap_id();
+    bc_bearer_context_to_setup_resp_s&       bc_bearer_context_to_setup_resp();
+    crit_diagnostics_s&                      crit_diagnostics();
+    const uint32_t&                          gnb_cu_cp_mbs_e1ap_id() const;
+    const uint32_t&                          gnb_cu_up_mbs_e1ap_id() const;
+    const bc_bearer_context_to_setup_resp_s& bc_bearer_context_to_setup_resp() const;
+    const crit_diagnostics_s&                crit_diagnostics() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+struct bc_bearer_context_setup_resp_ies_container {
+  bool                              crit_diagnostics_present = false;
+  uint32_t                          gnb_cu_cp_mbs_e1ap_id;
+  uint32_t                          gnb_cu_up_mbs_e1ap_id;
+  bc_bearer_context_to_setup_resp_s bc_bearer_context_to_setup_resp;
+  crit_diagnostics_s                crit_diagnostics;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// BCBearerContextSetupResponse ::= SEQUENCE
+using bc_bearer_context_setup_resp_s = elementary_procedure_option<bc_bearer_context_setup_resp_ies_container>;
 
 // BearerContextInactivityNotificationIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 struct bearer_context_inactivity_notif_ies_o {
@@ -226,7 +873,13 @@ struct bearer_context_mod_confirm_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { gnb_cu_cp_ue_e1ap_id, gnb_cu_up_ue_e1ap_id, sys_bearer_context_mod_confirm, nulltype } value;
+      enum options {
+        gnb_cu_cp_ue_e1ap_id,
+        gnb_cu_up_ue_e1ap_id,
+        sys_bearer_context_mod_confirm,
+        crit_diagnostics,
+        nulltype
+      } value;
 
       const char* to_string() const;
     };
@@ -243,9 +896,11 @@ struct bearer_context_mod_confirm_ies_o {
     uint64_t&                               gnb_cu_cp_ue_e1ap_id();
     uint64_t&                               gnb_cu_up_ue_e1ap_id();
     sys_bearer_context_mod_confirm_c&       sys_bearer_context_mod_confirm();
+    crit_diagnostics_s&                     crit_diagnostics();
     const uint64_t&                         gnb_cu_cp_ue_e1ap_id() const;
     const uint64_t&                         gnb_cu_up_ue_e1ap_id() const;
     const sys_bearer_context_mod_confirm_c& sys_bearer_context_mod_confirm() const;
+    const crit_diagnostics_s&               crit_diagnostics() const;
 
   private:
     types             type_;
@@ -262,9 +917,11 @@ struct bearer_context_mod_confirm_ies_o {
 
 struct bearer_context_mod_confirm_ies_container {
   bool                             sys_bearer_context_mod_confirm_present = false;
+  bool                             crit_diagnostics_present               = false;
   uint64_t                         gnb_cu_cp_ue_e1ap_id;
   uint64_t                         gnb_cu_up_ue_e1ap_id;
   sys_bearer_context_mod_confirm_c sys_bearer_context_mod_confirm;
+  crit_diagnostics_s               crit_diagnostics;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -546,6 +1203,14 @@ struct bearer_context_mod_request_ies_o {
         ran_ue_id,
         gnb_du_id,
         activity_notif_level,
+        mdt_polluted_meas_ind,
+        ue_slice_max_bit_rate_list,
+        scg_activation_status,
+        sdt_continue_rohc,
+        management_based_mdt_plmn_mod_list,
+        inactivity_info_request,
+        mt_sdt_info_request,
+        sdt_data_size_thres,
         nulltype
       } value;
 
@@ -574,6 +1239,14 @@ struct bearer_context_mod_request_ies_o {
     fixed_octstring<8, true>&               ran_ue_id();
     uint64_t&                               gnb_du_id();
     activity_notif_level_e&                 activity_notif_level();
+    mdt_polluted_meas_ind_e&                mdt_polluted_meas_ind();
+    ue_slice_max_bit_rate_list_l&           ue_slice_max_bit_rate_list();
+    scg_activation_status_e&                scg_activation_status();
+    sdt_continue_rohc_e&                    sdt_continue_rohc();
+    mdt_plmn_mod_list_l&                    management_based_mdt_plmn_mod_list();
+    inactivity_info_request_e&              inactivity_info_request();
+    mt_sdt_info_request_e&                  mt_sdt_info_request();
+    uint32_t&                               sdt_data_size_thres();
     const uint64_t&                         gnb_cu_cp_ue_e1ap_id() const;
     const uint64_t&                         gnb_cu_up_ue_e1ap_id() const;
     const security_info_s&                  security_info() const;
@@ -587,6 +1260,14 @@ struct bearer_context_mod_request_ies_o {
     const fixed_octstring<8, true>&         ran_ue_id() const;
     const uint64_t&                         gnb_du_id() const;
     const activity_notif_level_e&           activity_notif_level() const;
+    const mdt_polluted_meas_ind_e&          mdt_polluted_meas_ind() const;
+    const ue_slice_max_bit_rate_list_l&     ue_slice_max_bit_rate_list() const;
+    const scg_activation_status_e&          scg_activation_status() const;
+    const sdt_continue_rohc_e&              sdt_continue_rohc() const;
+    const mdt_plmn_mod_list_l&              management_based_mdt_plmn_mod_list() const;
+    const inactivity_info_request_e&        inactivity_info_request() const;
+    const mt_sdt_info_request_e&            mt_sdt_info_request() const;
+    const uint32_t&                         sdt_data_size_thres() const;
 
   private:
     types             type_;
@@ -613,6 +1294,14 @@ struct bearer_context_mod_request_ies_container {
   bool                             ran_ue_id_present                               = false;
   bool                             gnb_du_id_present                               = false;
   bool                             activity_notif_level_present                    = false;
+  bool                             mdt_polluted_meas_ind_present                   = false;
+  bool                             ue_slice_max_bit_rate_list_present              = false;
+  bool                             scg_activation_status_present                   = false;
+  bool                             sdt_continue_rohc_present                       = false;
+  bool                             management_based_mdt_plmn_mod_list_present      = false;
+  bool                             inactivity_info_request_present                 = false;
+  bool                             mt_sdt_info_request_present                     = false;
+  bool                             sdt_data_size_thres_present                     = false;
   uint64_t                         gnb_cu_cp_ue_e1ap_id;
   uint64_t                         gnb_cu_up_ue_e1ap_id;
   security_info_s                  security_info;
@@ -626,6 +1315,14 @@ struct bearer_context_mod_request_ies_container {
   fixed_octstring<8, true>         ran_ue_id;
   uint64_t                         gnb_du_id;
   activity_notif_level_e           activity_notif_level;
+  mdt_polluted_meas_ind_e          mdt_polluted_meas_ind;
+  ue_slice_max_bit_rate_list_l     ue_slice_max_bit_rate_list;
+  scg_activation_status_e          scg_activation_status;
+  sdt_continue_rohc_e              sdt_continue_rohc;
+  mdt_plmn_mod_list_l              management_based_mdt_plmn_mod_list;
+  inactivity_info_request_e        inactivity_info_request;
+  mt_sdt_info_request_e            mt_sdt_info_request;
+  uint32_t                         sdt_data_size_thres;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -1067,7 +1764,14 @@ struct bearer_context_mod_resp_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { gnb_cu_cp_ue_e1ap_id, gnb_cu_up_ue_e1ap_id, sys_bearer_context_mod_resp, nulltype } value;
+      enum options {
+        gnb_cu_cp_ue_e1ap_id,
+        gnb_cu_up_ue_e1ap_id,
+        sys_bearer_context_mod_resp,
+        crit_diagnostics,
+        ue_inactivity_info,
+        nulltype
+      } value;
 
       const char* to_string() const;
     };
@@ -1084,9 +1788,13 @@ struct bearer_context_mod_resp_ies_o {
     uint64_t&                            gnb_cu_cp_ue_e1ap_id();
     uint64_t&                            gnb_cu_up_ue_e1ap_id();
     sys_bearer_context_mod_resp_c&       sys_bearer_context_mod_resp();
+    crit_diagnostics_s&                  crit_diagnostics();
+    uint16_t&                            ue_inactivity_info();
     const uint64_t&                      gnb_cu_cp_ue_e1ap_id() const;
     const uint64_t&                      gnb_cu_up_ue_e1ap_id() const;
     const sys_bearer_context_mod_resp_c& sys_bearer_context_mod_resp() const;
+    const crit_diagnostics_s&            crit_diagnostics() const;
+    const uint16_t&                      ue_inactivity_info() const;
 
   private:
     types             type_;
@@ -1103,9 +1811,13 @@ struct bearer_context_mod_resp_ies_o {
 
 struct bearer_context_mod_resp_ies_container {
   bool                          sys_bearer_context_mod_resp_present = false;
+  bool                          crit_diagnostics_present            = false;
+  bool                          ue_inactivity_info_present          = false;
   uint64_t                      gnb_cu_cp_ue_e1ap_id;
   uint64_t                      gnb_cu_up_ue_e1ap_id;
   sys_bearer_context_mod_resp_c sys_bearer_context_mod_resp;
+  crit_diagnostics_s            crit_diagnostics;
+  uint16_t                      ue_inactivity_info;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -1533,6 +2245,11 @@ struct bearer_context_setup_request_ies_o {
         add_ho_info,
         direct_forwarding_path_availability,
         gnb_cu_up_ue_e1ap_id,
+        mdt_polluted_meas_ind,
+        ue_slice_max_bit_rate_list,
+        scg_activation_status,
+        mt_sdt_info_request,
+        sdt_data_size_thres,
         nulltype
       } value;
 
@@ -1566,6 +2283,11 @@ struct bearer_context_setup_request_ies_o {
     add_ho_info_e&                               add_ho_info();
     direct_forwarding_path_availability_e&       direct_forwarding_path_availability();
     uint64_t&                                    gnb_cu_up_ue_e1ap_id();
+    mdt_polluted_meas_ind_e&                     mdt_polluted_meas_ind();
+    ue_slice_max_bit_rate_list_l&                ue_slice_max_bit_rate_list();
+    scg_activation_status_e&                     scg_activation_status();
+    mt_sdt_info_request_e&                       mt_sdt_info_request();
+    uint32_t&                                    sdt_data_size_thres();
     const uint64_t&                              gnb_cu_cp_ue_e1ap_id() const;
     const security_info_s&                       security_info() const;
     const uint64_t&                              ue_dl_aggr_max_bit_rate() const;
@@ -1584,6 +2306,11 @@ struct bearer_context_setup_request_ies_o {
     const add_ho_info_e&                         add_ho_info() const;
     const direct_forwarding_path_availability_e& direct_forwarding_path_availability() const;
     const uint64_t&                              gnb_cu_up_ue_e1ap_id() const;
+    const mdt_polluted_meas_ind_e&               mdt_polluted_meas_ind() const;
+    const ue_slice_max_bit_rate_list_l&          ue_slice_max_bit_rate_list() const;
+    const scg_activation_status_e&               scg_activation_status() const;
+    const mt_sdt_info_request_e&                 mt_sdt_info_request() const;
+    const uint32_t&                              sdt_data_size_thres() const;
 
   private:
     types             type_;
@@ -1611,6 +2338,11 @@ struct bearer_context_setup_request_ies_container {
   bool                                  add_ho_info_present                             = false;
   bool                                  direct_forwarding_path_availability_present     = false;
   bool                                  gnb_cu_up_ue_e1ap_id_present                    = false;
+  bool                                  mdt_polluted_meas_ind_present                   = false;
+  bool                                  ue_slice_max_bit_rate_list_present              = false;
+  bool                                  scg_activation_status_present                   = false;
+  bool                                  mt_sdt_info_request_present                     = false;
+  bool                                  sdt_data_size_thres_present                     = false;
   uint64_t                              gnb_cu_cp_ue_e1ap_id;
   security_info_s                       security_info;
   uint64_t                              ue_dl_aggr_max_bit_rate;
@@ -1629,6 +2361,11 @@ struct bearer_context_setup_request_ies_container {
   add_ho_info_e                         add_ho_info;
   direct_forwarding_path_availability_e direct_forwarding_path_availability;
   uint64_t                              gnb_cu_up_ue_e1ap_id;
+  mdt_polluted_meas_ind_e               mdt_polluted_meas_ind;
+  ue_slice_max_bit_rate_list_l          ue_slice_max_bit_rate_list;
+  scg_activation_status_e               scg_activation_status;
+  mt_sdt_info_request_e                 mt_sdt_info_request;
+  uint32_t                              sdt_data_size_thres;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -1807,7 +2544,13 @@ struct bearer_context_setup_resp_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { gnb_cu_cp_ue_e1ap_id, gnb_cu_up_ue_e1ap_id, sys_bearer_context_setup_resp, nulltype } value;
+      enum options {
+        gnb_cu_cp_ue_e1ap_id,
+        gnb_cu_up_ue_e1ap_id,
+        sys_bearer_context_setup_resp,
+        crit_diagnostics,
+        nulltype
+      } value;
 
       const char* to_string() const;
     };
@@ -1824,9 +2567,11 @@ struct bearer_context_setup_resp_ies_o {
     uint64_t&                              gnb_cu_cp_ue_e1ap_id();
     uint64_t&                              gnb_cu_up_ue_e1ap_id();
     sys_bearer_context_setup_resp_c&       sys_bearer_context_setup_resp();
+    crit_diagnostics_s&                    crit_diagnostics();
     const uint64_t&                        gnb_cu_cp_ue_e1ap_id() const;
     const uint64_t&                        gnb_cu_up_ue_e1ap_id() const;
     const sys_bearer_context_setup_resp_c& sys_bearer_context_setup_resp() const;
+    const crit_diagnostics_s&              crit_diagnostics() const;
 
   private:
     types             type_;
@@ -1842,9 +2587,11 @@ struct bearer_context_setup_resp_ies_o {
 };
 
 struct bearer_context_setup_resp_ies_container {
+  bool                            crit_diagnostics_present = false;
   uint64_t                        gnb_cu_cp_ue_e1ap_id;
   uint64_t                        gnb_cu_up_ue_e1ap_id;
   sys_bearer_context_setup_resp_c sys_bearer_context_setup_resp;
+  crit_diagnostics_s              crit_diagnostics;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -1932,7 +2679,15 @@ struct dl_data_notif_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { gnb_cu_cp_ue_e1ap_id, gnb_cu_up_ue_e1ap_id, ppi, pdu_session_to_notify_list, nulltype } value;
+      enum options {
+        gnb_cu_cp_ue_e1ap_id,
+        gnb_cu_up_ue_e1ap_id,
+        ppi,
+        pdu_session_to_notify_list,
+        mt_sdt_info,
+        sdt_data_size_thres_crossed,
+        nulltype
+      } value;
 
       const char* to_string() const;
     };
@@ -1946,14 +2701,18 @@ struct dl_data_notif_ies_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint64_t&                           gnb_cu_cp_ue_e1ap_id();
-    uint64_t&                           gnb_cu_up_ue_e1ap_id();
-    uint8_t&                            ppi();
-    pdu_session_to_notify_list_l&       pdu_session_to_notify_list();
-    const uint64_t&                     gnb_cu_cp_ue_e1ap_id() const;
-    const uint64_t&                     gnb_cu_up_ue_e1ap_id() const;
-    const uint8_t&                      ppi() const;
-    const pdu_session_to_notify_list_l& pdu_session_to_notify_list() const;
+    uint64_t&                            gnb_cu_cp_ue_e1ap_id();
+    uint64_t&                            gnb_cu_up_ue_e1ap_id();
+    uint8_t&                             ppi();
+    pdu_session_to_notify_list_l&        pdu_session_to_notify_list();
+    mt_sdt_info_s&                       mt_sdt_info();
+    sdt_data_size_thres_crossed_e&       sdt_data_size_thres_crossed();
+    const uint64_t&                      gnb_cu_cp_ue_e1ap_id() const;
+    const uint64_t&                      gnb_cu_up_ue_e1ap_id() const;
+    const uint8_t&                       ppi() const;
+    const pdu_session_to_notify_list_l&  pdu_session_to_notify_list() const;
+    const mt_sdt_info_s&                 mt_sdt_info() const;
+    const sdt_data_size_thres_crossed_e& sdt_data_size_thres_crossed() const;
 
   private:
     types             type_;
@@ -1969,12 +2728,16 @@ struct dl_data_notif_ies_o {
 };
 
 struct dl_data_notif_ies_container {
-  bool                         ppi_present                        = false;
-  bool                         pdu_session_to_notify_list_present = false;
-  uint64_t                     gnb_cu_cp_ue_e1ap_id;
-  uint64_t                     gnb_cu_up_ue_e1ap_id;
-  uint8_t                      ppi;
-  pdu_session_to_notify_list_l pdu_session_to_notify_list;
+  bool                          ppi_present                         = false;
+  bool                          pdu_session_to_notify_list_present  = false;
+  bool                          mt_sdt_info_present                 = false;
+  bool                          sdt_data_size_thres_crossed_present = false;
+  uint64_t                      gnb_cu_cp_ue_e1ap_id;
+  uint64_t                      gnb_cu_up_ue_e1ap_id;
+  uint8_t                       ppi;
+  pdu_session_to_notify_list_l  pdu_session_to_notify_list;
+  mt_sdt_info_s                 mt_sdt_info;
+  sdt_data_size_thres_crossed_e sdt_data_size_thres_crossed;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -2099,7 +2862,13 @@ struct supported_plmns_ext_ies_o {
   // Extension ::= OPEN TYPE
   struct ext_c {
     struct types_opts {
-      enum options { npn_support_info, extended_slice_support_list, extended_nr_cgi_support_list, nulltype } value;
+      enum options {
+        npn_support_info,
+        extended_slice_support_list,
+        extended_nr_cgi_support_list,
+        ecgi_support_list,
+        nulltype
+      } value;
 
       const char* to_string() const;
     };
@@ -2116,9 +2885,11 @@ struct supported_plmns_ext_ies_o {
     npn_support_info_c&                   npn_support_info();
     extended_slice_support_list_l&        extended_slice_support_list();
     extended_nr_cgi_support_list_l&       extended_nr_cgi_support_list();
+    ecgi_support_list_l&                  ecgi_support_list();
     const npn_support_info_c&             npn_support_info() const;
     const extended_slice_support_list_l&  extended_slice_support_list() const;
     const extended_nr_cgi_support_list_l& extended_nr_cgi_support_list() const;
+    const ecgi_support_list_l&            ecgi_support_list() const;
 
   private:
     types             type_;
@@ -2246,9 +3017,11 @@ struct supported_plmns_ext_ies_container {
   bool                           npn_support_info_present             = false;
   bool                           extended_slice_support_list_present  = false;
   bool                           extended_nr_cgi_support_list_present = false;
+  bool                           ecgi_support_list_present            = false;
   npn_support_info_c             npn_support_info;
   extended_slice_support_list_l  extended_slice_support_list;
   extended_nr_cgi_support_list_l extended_nr_cgi_support_list;
+  ecgi_support_list_l            ecgi_support_list;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -2524,7 +3297,7 @@ struct e1_release_resp_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { transaction_id, nulltype } value;
+      enum options { transaction_id, crit_diagnostics, nulltype } value;
       typedef uint8_t number_type;
 
       const char* to_string() const;
@@ -2533,16 +3306,21 @@ struct e1_release_resp_ies_o {
     using types = enumerated<types_opts>;
 
     // choice methods
-    types       type() const { return types::transaction_id; }
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
     SRSASN_CODE pack(bit_ref& bref) const;
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    uint16_t&       transaction_id() { return c; }
-    const uint16_t& transaction_id() const { return c; }
+    uint16_t&                 transaction_id();
+    crit_diagnostics_s&       crit_diagnostics();
+    const uint16_t&           transaction_id() const;
+    const crit_diagnostics_s& crit_diagnostics() const;
 
   private:
-    uint16_t c;
+    types             type_;
+    choice_buffer_ptr c;
   };
 
   // members lookup methods
@@ -2608,6 +3386,8 @@ struct error_ind_ies_o {
         gnb_cu_up_ue_e1ap_id,
         cause,
         crit_diagnostics,
+        gnb_cu_cp_mbs_e1ap_id,
+        gnb_cu_up_mbs_e1ap_id,
         nulltype
       } value;
 
@@ -2628,11 +3408,15 @@ struct error_ind_ies_o {
     uint64_t&                 gnb_cu_up_ue_e1ap_id();
     cause_c&                  cause();
     crit_diagnostics_s&       crit_diagnostics();
+    uint32_t&                 gnb_cu_cp_mbs_e1ap_id();
+    uint32_t&                 gnb_cu_up_mbs_e1ap_id();
     const uint16_t&           transaction_id() const;
     const uint64_t&           gnb_cu_cp_ue_e1ap_id() const;
     const uint64_t&           gnb_cu_up_ue_e1ap_id() const;
     const cause_c&            cause() const;
     const crit_diagnostics_s& crit_diagnostics() const;
+    const uint32_t&           gnb_cu_cp_mbs_e1ap_id() const;
+    const uint32_t&           gnb_cu_up_mbs_e1ap_id() const;
 
   private:
     types             type_;
@@ -2906,6 +3690,7 @@ struct gnb_cu_cp_e1_setup_resp_ies_o {
         gnb_cu_up_capacity,
         transport_layer_address_info,
         extended_gnb_cu_up_name,
+        crit_diagnostics,
         nulltype
       } value;
 
@@ -2929,6 +3714,7 @@ struct gnb_cu_cp_e1_setup_resp_ies_o {
     uint16_t&                                   gnb_cu_up_capacity();
     transport_layer_address_info_s&             transport_layer_address_info();
     extended_gnb_cu_up_name_s&                  extended_gnb_cu_up_name();
+    crit_diagnostics_s&                         crit_diagnostics();
     const uint16_t&                             transaction_id() const;
     const uint64_t&                             gnb_cu_up_id() const;
     const printable_string<1, 150, true, true>& gnb_cu_up_name() const;
@@ -2937,6 +3723,7 @@ struct gnb_cu_cp_e1_setup_resp_ies_o {
     const uint16_t&                             gnb_cu_up_capacity() const;
     const transport_layer_address_info_s&       transport_layer_address_info() const;
     const extended_gnb_cu_up_name_s&            extended_gnb_cu_up_name() const;
+    const crit_diagnostics_s&                   crit_diagnostics() const;
 
   private:
     types             type_;
@@ -3088,6 +3875,7 @@ struct gnb_cu_up_cfg_upd_ies_o {
         gnb_cu_up_tnl_a_to_rem_list,
         transport_layer_address_info,
         extended_gnb_cu_up_name,
+        gnb_cu_up_mbs_support_info,
         nulltype
       } value;
 
@@ -3111,6 +3899,7 @@ struct gnb_cu_up_cfg_upd_ies_o {
     gnb_cu_up_tnl_a_to_rem_list_l&              gnb_cu_up_tnl_a_to_rem_list();
     transport_layer_address_info_s&             transport_layer_address_info();
     extended_gnb_cu_up_name_s&                  extended_gnb_cu_up_name();
+    gnb_cu_up_mbs_support_info_s&               gnb_cu_up_mbs_support_info();
     const uint16_t&                             transaction_id() const;
     const uint64_t&                             gnb_cu_up_id() const;
     const printable_string<1, 150, true, true>& gnb_cu_up_name() const;
@@ -3119,6 +3908,7 @@ struct gnb_cu_up_cfg_upd_ies_o {
     const gnb_cu_up_tnl_a_to_rem_list_l&        gnb_cu_up_tnl_a_to_rem_list() const;
     const transport_layer_address_info_s&       transport_layer_address_info() const;
     const extended_gnb_cu_up_name_s&            extended_gnb_cu_up_name() const;
+    const gnb_cu_up_mbs_support_info_s&         gnb_cu_up_mbs_support_info() const;
 
   private:
     types             type_;
@@ -3229,6 +4019,7 @@ struct gnb_cu_up_e1_setup_request_ies_o {
         gnb_cu_up_capacity,
         transport_layer_address_info,
         extended_gnb_cu_up_name,
+        gnb_cu_up_mbs_support_info,
         nulltype
       } value;
 
@@ -3252,6 +4043,7 @@ struct gnb_cu_up_e1_setup_request_ies_o {
     uint16_t&                                   gnb_cu_up_capacity();
     transport_layer_address_info_s&             transport_layer_address_info();
     extended_gnb_cu_up_name_s&                  extended_gnb_cu_up_name();
+    gnb_cu_up_mbs_support_info_s&               gnb_cu_up_mbs_support_info();
     const uint16_t&                             transaction_id() const;
     const uint64_t&                             gnb_cu_up_id() const;
     const printable_string<1, 150, true, true>& gnb_cu_up_name() const;
@@ -3260,6 +4052,7 @@ struct gnb_cu_up_e1_setup_request_ies_o {
     const uint16_t&                             gnb_cu_up_capacity() const;
     const transport_layer_address_info_s&       transport_layer_address_info() const;
     const extended_gnb_cu_up_name_s&            extended_gnb_cu_up_name() const;
+    const gnb_cu_up_mbs_support_info_s&         gnb_cu_up_mbs_support_info() const;
 
   private:
     types             type_;
@@ -3284,6 +4077,7 @@ struct gnb_cu_up_e1_setup_resp_ies_o {
         gnb_cu_cp_name,
         transport_layer_address_info,
         extended_gnb_cu_cp_name,
+        crit_diagnostics,
         nulltype
       } value;
       typedef uint8_t number_type;
@@ -3305,10 +4099,12 @@ struct gnb_cu_up_e1_setup_resp_ies_o {
     printable_string<1, 150, true, true>&       gnb_cu_cp_name();
     transport_layer_address_info_s&             transport_layer_address_info();
     extended_gnb_cu_cp_name_s&                  extended_gnb_cu_cp_name();
+    crit_diagnostics_s&                         crit_diagnostics();
     const uint16_t&                             transaction_id() const;
     const printable_string<1, 150, true, true>& gnb_cu_cp_name() const;
     const transport_layer_address_info_s&       transport_layer_address_info() const;
     const extended_gnb_cu_cp_name_s&            extended_gnb_cu_cp_name() const;
+    const crit_diagnostics_s&                   crit_diagnostics() const;
 
   private:
     types             type_;
@@ -3510,6 +4306,518 @@ struct iabpsk_notif_ies_o {
     iab_donor_cu_up_psk_info_l&       iab_donor_cu_up_psk_info();
     const uint16_t&                   transaction_id() const;
     const iab_donor_cu_up_psk_info_l& iab_donor_cu_up_psk_info() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+// MCBearerContextModificationConfirmIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct mc_bearer_context_mod_confirm_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options {
+        gnb_cu_cp_mbs_e1ap_id,
+        gnb_cu_up_mbs_e1ap_id,
+        mc_bearer_context_to_modify_confirm,
+        crit_diagnostics,
+        nulltype
+      } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&                                    gnb_cu_cp_mbs_e1ap_id();
+    uint32_t&                                    gnb_cu_up_mbs_e1ap_id();
+    mc_bearer_context_to_modify_confirm_s&       mc_bearer_context_to_modify_confirm();
+    crit_diagnostics_s&                          crit_diagnostics();
+    const uint32_t&                              gnb_cu_cp_mbs_e1ap_id() const;
+    const uint32_t&                              gnb_cu_up_mbs_e1ap_id() const;
+    const mc_bearer_context_to_modify_confirm_s& mc_bearer_context_to_modify_confirm() const;
+    const crit_diagnostics_s&                    crit_diagnostics() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+// MCBearerContextModificationFailureIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct mc_bearer_context_mod_fail_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options {
+        gnb_cu_cp_mbs_e1ap_id,
+        gnb_cu_up_mbs_e1ap_id,
+        mbs_multicast_f1_u_context_descriptor,
+        cause,
+        crit_diagnostics,
+        nulltype
+      } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&                                      gnb_cu_cp_mbs_e1ap_id();
+    uint32_t&                                      gnb_cu_up_mbs_e1ap_id();
+    mbs_multicast_f1_u_context_descriptor_s&       mbs_multicast_f1_u_context_descriptor();
+    cause_c&                                       cause();
+    crit_diagnostics_s&                            crit_diagnostics();
+    const uint32_t&                                gnb_cu_cp_mbs_e1ap_id() const;
+    const uint32_t&                                gnb_cu_up_mbs_e1ap_id() const;
+    const mbs_multicast_f1_u_context_descriptor_s& mbs_multicast_f1_u_context_descriptor() const;
+    const cause_c&                                 cause() const;
+    const crit_diagnostics_s&                      crit_diagnostics() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+// MCBearerContextModificationRequestIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct mc_bearer_context_mod_request_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options { gnb_cu_cp_mbs_e1ap_id, gnb_cu_up_mbs_e1ap_id, mc_bearer_context_to_modify, nulltype } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&                            gnb_cu_cp_mbs_e1ap_id();
+    uint32_t&                            gnb_cu_up_mbs_e1ap_id();
+    mc_bearer_context_to_modify_s&       mc_bearer_context_to_modify();
+    const uint32_t&                      gnb_cu_cp_mbs_e1ap_id() const;
+    const uint32_t&                      gnb_cu_up_mbs_e1ap_id() const;
+    const mc_bearer_context_to_modify_s& mc_bearer_context_to_modify() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+// MCBearerContextModificationRequiredIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct mc_bearer_context_mod_required_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options {
+        gnb_cu_cp_mbs_e1ap_id,
+        gnb_cu_up_mbs_e1ap_id,
+        mc_bearer_context_to_modify_required,
+        nulltype
+      } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&                                     gnb_cu_cp_mbs_e1ap_id();
+    uint32_t&                                     gnb_cu_up_mbs_e1ap_id();
+    mc_bearer_context_to_modify_required_s&       mc_bearer_context_to_modify_required();
+    const uint32_t&                               gnb_cu_cp_mbs_e1ap_id() const;
+    const uint32_t&                               gnb_cu_up_mbs_e1ap_id() const;
+    const mc_bearer_context_to_modify_required_s& mc_bearer_context_to_modify_required() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+// MCBearerContextModificationResponseIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct mc_bearer_context_mod_resp_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options {
+        gnb_cu_cp_mbs_e1ap_id,
+        gnb_cu_up_mbs_e1ap_id,
+        mc_bearer_context_to_modify_resp,
+        crit_diagnostics,
+        nulltype
+      } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&                                 gnb_cu_cp_mbs_e1ap_id();
+    uint32_t&                                 gnb_cu_up_mbs_e1ap_id();
+    mc_bearer_context_to_modify_resp_s&       mc_bearer_context_to_modify_resp();
+    crit_diagnostics_s&                       crit_diagnostics();
+    const uint32_t&                           gnb_cu_cp_mbs_e1ap_id() const;
+    const uint32_t&                           gnb_cu_up_mbs_e1ap_id() const;
+    const mc_bearer_context_to_modify_resp_s& mc_bearer_context_to_modify_resp() const;
+    const crit_diagnostics_s&                 crit_diagnostics() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+// MCBearerContextReleaseCommandIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct mc_bearer_context_release_cmd_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options { gnb_cu_cp_mbs_e1ap_id, gnb_cu_up_mbs_e1ap_id, cause, nulltype } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&       gnb_cu_cp_mbs_e1ap_id();
+    uint32_t&       gnb_cu_up_mbs_e1ap_id();
+    cause_c&        cause();
+    const uint32_t& gnb_cu_cp_mbs_e1ap_id() const;
+    const uint32_t& gnb_cu_up_mbs_e1ap_id() const;
+    const cause_c&  cause() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+// MCBearerContextReleaseCompleteIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct mc_bearer_context_release_complete_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options { gnb_cu_cp_mbs_e1ap_id, gnb_cu_up_mbs_e1ap_id, crit_diagnostics, nulltype } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&                 gnb_cu_cp_mbs_e1ap_id();
+    uint32_t&                 gnb_cu_up_mbs_e1ap_id();
+    crit_diagnostics_s&       crit_diagnostics();
+    const uint32_t&           gnb_cu_cp_mbs_e1ap_id() const;
+    const uint32_t&           gnb_cu_up_mbs_e1ap_id() const;
+    const crit_diagnostics_s& crit_diagnostics() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+// MCBearerContextReleaseRequestIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct mc_bearer_context_release_request_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options { gnb_cu_cp_mbs_e1ap_id, gnb_cu_up_mbs_e1ap_id, cause, nulltype } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&       gnb_cu_cp_mbs_e1ap_id();
+    uint32_t&       gnb_cu_up_mbs_e1ap_id();
+    cause_c&        cause();
+    const uint32_t& gnb_cu_cp_mbs_e1ap_id() const;
+    const uint32_t& gnb_cu_up_mbs_e1ap_id() const;
+    const cause_c&  cause() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+// MCBearerContextSetupFailureIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct mc_bearer_context_setup_fail_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options { gnb_cu_cp_mbs_e1ap_id, gnb_cu_up_mbs_e1ap_id, cause, crit_diagnostics, nulltype } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&                 gnb_cu_cp_mbs_e1ap_id();
+    uint32_t&                 gnb_cu_up_mbs_e1ap_id();
+    cause_c&                  cause();
+    crit_diagnostics_s&       crit_diagnostics();
+    const uint32_t&           gnb_cu_cp_mbs_e1ap_id() const;
+    const uint32_t&           gnb_cu_up_mbs_e1ap_id() const;
+    const cause_c&            cause() const;
+    const crit_diagnostics_s& crit_diagnostics() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+// MCBearerContextSetupRequestIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct mc_bearer_context_setup_request_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options { gnb_cu_cp_mbs_e1ap_id, global_mbs_session_id, mc_bearer_context_to_setup, nulltype } value;
+      typedef uint8_t number_type;
+
+      const char* to_string() const;
+      uint8_t     to_number() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&                           gnb_cu_cp_mbs_e1ap_id();
+    global_mbs_session_id_s&            global_mbs_session_id();
+    mc_bearer_context_to_setup_s&       mc_bearer_context_to_setup();
+    const uint32_t&                     gnb_cu_cp_mbs_e1ap_id() const;
+    const global_mbs_session_id_s&      global_mbs_session_id() const;
+    const mc_bearer_context_to_setup_s& mc_bearer_context_to_setup() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+// MCBearerContextSetupResponseIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct mc_bearer_context_setup_resp_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options {
+        gnb_cu_cp_mbs_e1ap_id,
+        gnb_cu_up_mbs_e1ap_id,
+        mc_bearer_context_to_setup_resp,
+        crit_diagnostics,
+        nulltype
+      } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&                                gnb_cu_cp_mbs_e1ap_id();
+    uint32_t&                                gnb_cu_up_mbs_e1ap_id();
+    mc_bearer_context_to_setup_resp_s&       mc_bearer_context_to_setup_resp();
+    crit_diagnostics_s&                      crit_diagnostics();
+    const uint32_t&                          gnb_cu_cp_mbs_e1ap_id() const;
+    const uint32_t&                          gnb_cu_up_mbs_e1ap_id() const;
+    const mc_bearer_context_to_setup_resp_s& mc_bearer_context_to_setup_resp() const;
+    const crit_diagnostics_s&                crit_diagnostics() const;
+
+  private:
+    types             type_;
+    choice_buffer_ptr c;
+  };
+
+  // members lookup methods
+  static uint32_t   idx_to_id(uint32_t idx);
+  static bool       is_id_valid(const uint32_t& id);
+  static crit_e     get_crit(const uint32_t& id);
+  static value_c    get_value(const uint32_t& id);
+  static presence_e get_presence(const uint32_t& id);
+};
+
+// MCBearerNotificationIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
+struct mc_bearer_notif_ies_o {
+  // Value ::= OPEN TYPE
+  struct value_c {
+    struct types_opts {
+      enum options { gnb_cu_cp_mbs_e1ap_id, gnb_cu_up_mbs_e1ap_id, mbs_session_res_notif, nulltype } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts>;
+
+    // choice methods
+    value_c() = default;
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint32_t&                      gnb_cu_cp_mbs_e1ap_id();
+    uint32_t&                      gnb_cu_up_mbs_e1ap_id();
+    mbs_session_res_notif_c&       mbs_session_res_notif();
+    const uint32_t&                gnb_cu_cp_mbs_e1ap_id() const;
+    const uint32_t&                gnb_cu_up_mbs_e1ap_id() const;
+    const mbs_session_res_notif_c& mbs_session_res_notif() const;
 
   private:
     types             type_;
@@ -3943,8 +5251,19 @@ struct e1_release_request_ies_container {
 // E1ReleaseRequest ::= SEQUENCE
 using e1_release_request_s = elementary_procedure_option<e1_release_request_ies_container>;
 
+struct e1_release_resp_ies_container {
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  crit_diagnostics_s crit_diagnostics;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
 // E1ReleaseResponse ::= SEQUENCE
-using e1_release_resp_s = elementary_procedure_option<protocol_ie_container_l<e1_release_resp_ies_o>>;
+using e1_release_resp_s = elementary_procedure_option<e1_release_resp_ies_container>;
 
 struct early_forwarding_sn_transfer_ies_container {
   uint64_t                                gnb_cu_cp_ue_e1ap_id;
@@ -3961,15 +5280,19 @@ struct early_forwarding_sn_transfer_ies_container {
 using early_forwarding_sn_transfer_s = elementary_procedure_option<early_forwarding_sn_transfer_ies_container>;
 
 struct error_ind_ies_container {
-  bool               gnb_cu_cp_ue_e1ap_id_present = false;
-  bool               gnb_cu_up_ue_e1ap_id_present = false;
-  bool               cause_present                = false;
-  bool               crit_diagnostics_present     = false;
+  bool               gnb_cu_cp_ue_e1ap_id_present  = false;
+  bool               gnb_cu_up_ue_e1ap_id_present  = false;
+  bool               cause_present                 = false;
+  bool               crit_diagnostics_present      = false;
+  bool               gnb_cu_cp_mbs_e1ap_id_present = false;
+  bool               gnb_cu_up_mbs_e1ap_id_present = false;
   uint16_t           transaction_id;
   uint64_t           gnb_cu_cp_ue_e1ap_id;
   uint64_t           gnb_cu_up_ue_e1ap_id;
   cause_c            cause;
   crit_diagnostics_s crit_diagnostics;
+  uint32_t           gnb_cu_cp_mbs_e1ap_id;
+  uint32_t           gnb_cu_up_mbs_e1ap_id;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -4081,6 +5404,7 @@ struct gnb_cu_cp_e1_setup_resp_ies_container {
   bool                                 gnb_cu_up_capacity_present           = false;
   bool                                 transport_layer_address_info_present = false;
   bool                                 extended_gnb_cu_up_name_present      = false;
+  bool                                 crit_diagnostics_present             = false;
   uint16_t                             transaction_id;
   uint64_t                             gnb_cu_up_id;
   printable_string<1, 150, true, true> gnb_cu_up_name;
@@ -4089,6 +5413,7 @@ struct gnb_cu_cp_e1_setup_resp_ies_container {
   uint16_t                             gnb_cu_up_capacity;
   transport_layer_address_info_s       transport_layer_address_info;
   extended_gnb_cu_up_name_s            extended_gnb_cu_up_name;
+  crit_diagnostics_s                   crit_diagnostics;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -4120,6 +5445,7 @@ struct gnb_cu_up_cfg_upd_ies_container {
   bool                                 gnb_cu_up_tnl_a_to_rem_list_present  = false;
   bool                                 transport_layer_address_info_present = false;
   bool                                 extended_gnb_cu_up_name_present      = false;
+  bool                                 gnb_cu_up_mbs_support_info_present   = false;
   uint16_t                             transaction_id;
   uint64_t                             gnb_cu_up_id;
   printable_string<1, 150, true, true> gnb_cu_up_name;
@@ -4128,6 +5454,7 @@ struct gnb_cu_up_cfg_upd_ies_container {
   gnb_cu_up_tnl_a_to_rem_list_l        gnb_cu_up_tnl_a_to_rem_list;
   transport_layer_address_info_s       transport_layer_address_info;
   extended_gnb_cu_up_name_s            extended_gnb_cu_up_name;
+  gnb_cu_up_mbs_support_info_s         gnb_cu_up_mbs_support_info;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -4207,6 +5534,7 @@ struct gnb_cu_up_e1_setup_request_ies_container {
   bool                                 gnb_cu_up_capacity_present           = false;
   bool                                 transport_layer_address_info_present = false;
   bool                                 extended_gnb_cu_up_name_present      = false;
+  bool                                 gnb_cu_up_mbs_support_info_present   = false;
   uint16_t                             transaction_id;
   uint64_t                             gnb_cu_up_id;
   printable_string<1, 150, true, true> gnb_cu_up_name;
@@ -4215,6 +5543,7 @@ struct gnb_cu_up_e1_setup_request_ies_container {
   uint16_t                             gnb_cu_up_capacity;
   transport_layer_address_info_s       transport_layer_address_info;
   extended_gnb_cu_up_name_s            extended_gnb_cu_up_name;
+  gnb_cu_up_mbs_support_info_s         gnb_cu_up_mbs_support_info;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -4229,10 +5558,12 @@ struct gnb_cu_up_e1_setup_resp_ies_container {
   bool                                 gnb_cu_cp_name_present               = false;
   bool                                 transport_layer_address_info_present = false;
   bool                                 extended_gnb_cu_cp_name_present      = false;
+  bool                                 crit_diagnostics_present             = false;
   uint16_t                             transaction_id;
   printable_string<1, 150, true, true> gnb_cu_cp_name;
   transport_layer_address_info_s       transport_layer_address_info;
   extended_gnb_cu_cp_name_s            extended_gnb_cu_cp_name;
+  crit_diagnostics_s                   crit_diagnostics;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -4315,6 +5646,190 @@ struct iabpsk_notif_ies_container {
 
 // IABPSKNotification ::= SEQUENCE
 using iabpsk_notif_s = elementary_procedure_option<iabpsk_notif_ies_container>;
+
+struct mc_bearer_context_mod_confirm_ies_container {
+  bool                                  crit_diagnostics_present = false;
+  uint32_t                              gnb_cu_cp_mbs_e1ap_id;
+  uint32_t                              gnb_cu_up_mbs_e1ap_id;
+  mc_bearer_context_to_modify_confirm_s mc_bearer_context_to_modify_confirm;
+  crit_diagnostics_s                    crit_diagnostics;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MCBearerContextModificationConfirm ::= SEQUENCE
+using mc_bearer_context_mod_confirm_s = elementary_procedure_option<mc_bearer_context_mod_confirm_ies_container>;
+
+struct mc_bearer_context_mod_fail_ies_container {
+  bool                                    mbs_multicast_f1_u_context_descriptor_present = false;
+  bool                                    crit_diagnostics_present                      = false;
+  uint32_t                                gnb_cu_cp_mbs_e1ap_id;
+  uint32_t                                gnb_cu_up_mbs_e1ap_id;
+  mbs_multicast_f1_u_context_descriptor_s mbs_multicast_f1_u_context_descriptor;
+  cause_c                                 cause;
+  crit_diagnostics_s                      crit_diagnostics;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MCBearerContextModificationFailure ::= SEQUENCE
+using mc_bearer_context_mod_fail_s = elementary_procedure_option<mc_bearer_context_mod_fail_ies_container>;
+
+struct mc_bearer_context_mod_request_ies_container {
+  uint32_t                      gnb_cu_cp_mbs_e1ap_id;
+  uint32_t                      gnb_cu_up_mbs_e1ap_id;
+  mc_bearer_context_to_modify_s mc_bearer_context_to_modify;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MCBearerContextModificationRequest ::= SEQUENCE
+using mc_bearer_context_mod_request_s = elementary_procedure_option<mc_bearer_context_mod_request_ies_container>;
+
+struct mc_bearer_context_mod_required_ies_container {
+  uint32_t                               gnb_cu_cp_mbs_e1ap_id;
+  uint32_t                               gnb_cu_up_mbs_e1ap_id;
+  mc_bearer_context_to_modify_required_s mc_bearer_context_to_modify_required;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MCBearerContextModificationRequired ::= SEQUENCE
+using mc_bearer_context_mod_required_s = elementary_procedure_option<mc_bearer_context_mod_required_ies_container>;
+
+struct mc_bearer_context_mod_resp_ies_container {
+  bool                               crit_diagnostics_present = false;
+  uint32_t                           gnb_cu_cp_mbs_e1ap_id;
+  uint32_t                           gnb_cu_up_mbs_e1ap_id;
+  mc_bearer_context_to_modify_resp_s mc_bearer_context_to_modify_resp;
+  crit_diagnostics_s                 crit_diagnostics;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MCBearerContextModificationResponse ::= SEQUENCE
+using mc_bearer_context_mod_resp_s = elementary_procedure_option<mc_bearer_context_mod_resp_ies_container>;
+
+struct mc_bearer_context_release_cmd_ies_container {
+  uint32_t gnb_cu_cp_mbs_e1ap_id;
+  uint32_t gnb_cu_up_mbs_e1ap_id;
+  cause_c  cause;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MCBearerContextReleaseCommand ::= SEQUENCE
+using mc_bearer_context_release_cmd_s = elementary_procedure_option<mc_bearer_context_release_cmd_ies_container>;
+
+struct mc_bearer_context_release_complete_ies_container {
+  bool               crit_diagnostics_present = false;
+  uint32_t           gnb_cu_cp_mbs_e1ap_id;
+  uint32_t           gnb_cu_up_mbs_e1ap_id;
+  crit_diagnostics_s crit_diagnostics;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MCBearerContextReleaseComplete ::= SEQUENCE
+using mc_bearer_context_release_complete_s =
+    elementary_procedure_option<mc_bearer_context_release_complete_ies_container>;
+
+struct mc_bearer_context_release_request_ies_container {
+  uint32_t gnb_cu_cp_mbs_e1ap_id;
+  uint32_t gnb_cu_up_mbs_e1ap_id;
+  cause_c  cause;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MCBearerContextReleaseRequest ::= SEQUENCE
+using mc_bearer_context_release_request_s =
+    elementary_procedure_option<mc_bearer_context_release_request_ies_container>;
+
+struct mc_bearer_context_setup_fail_ies_container {
+  bool               gnb_cu_up_mbs_e1ap_id_present = false;
+  bool               crit_diagnostics_present      = false;
+  uint32_t           gnb_cu_cp_mbs_e1ap_id;
+  uint32_t           gnb_cu_up_mbs_e1ap_id;
+  cause_c            cause;
+  crit_diagnostics_s crit_diagnostics;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MCBearerContextSetupFailure ::= SEQUENCE
+using mc_bearer_context_setup_fail_s = elementary_procedure_option<mc_bearer_context_setup_fail_ies_container>;
+
+struct mc_bearer_context_setup_request_ies_container {
+  uint32_t                     gnb_cu_cp_mbs_e1ap_id;
+  global_mbs_session_id_s      global_mbs_session_id;
+  mc_bearer_context_to_setup_s mc_bearer_context_to_setup;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MCBearerContextSetupRequest ::= SEQUENCE
+using mc_bearer_context_setup_request_s = elementary_procedure_option<mc_bearer_context_setup_request_ies_container>;
+
+struct mc_bearer_context_setup_resp_ies_container {
+  bool                              crit_diagnostics_present = false;
+  uint32_t                          gnb_cu_cp_mbs_e1ap_id;
+  uint32_t                          gnb_cu_up_mbs_e1ap_id;
+  mc_bearer_context_to_setup_resp_s mc_bearer_context_to_setup_resp;
+  crit_diagnostics_s                crit_diagnostics;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MCBearerContextSetupResponse ::= SEQUENCE
+using mc_bearer_context_setup_resp_s = elementary_procedure_option<mc_bearer_context_setup_resp_ies_container>;
+
+struct mc_bearer_notif_ies_container {
+  uint32_t                gnb_cu_cp_mbs_e1ap_id;
+  uint32_t                gnb_cu_up_mbs_e1ap_id;
+  mbs_session_res_notif_c mbs_session_res_notif;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MCBearerNotification ::= SEQUENCE
+using mc_bearer_notif_s = elementary_procedure_option<mc_bearer_notif_ies_container>;
 
 struct mrdc_data_usage_report_ies_container {
   uint64_t                          gnb_cu_cp_ue_e1ap_id;
@@ -4435,8 +5950,8 @@ struct res_status_resp_ies_container {
 using res_status_resp_s = elementary_procedure_option<res_status_resp_ies_container>;
 
 struct res_status_upd_ies_container {
-  bool                         gnb_cu_up_meas_id_present          = false;
   bool                         tnl_available_capacity_ind_present = false;
+  bool                         hw_capacity_ind_present            = false;
   uint16_t                     transaction_id;
   uint16_t                     gnb_cu_cp_meas_id;
   uint16_t                     gnb_cu_up_meas_id;
@@ -4483,6 +5998,17 @@ using ul_data_notif_s = elementary_procedure_option<ul_data_notif_ies_container>
 } // namespace e1ap
 } // namespace asn1
 
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::bc_bearer_context_mod_confirm_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::bc_bearer_context_mod_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::bc_bearer_context_mod_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::bc_bearer_context_mod_required_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::bc_bearer_context_mod_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::bc_bearer_context_release_cmd_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::bc_bearer_context_release_complete_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::bc_bearer_context_release_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::bc_bearer_context_setup_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::bc_bearer_context_setup_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::bc_bearer_context_setup_resp_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::e1ap::bearer_context_inactivity_notif_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::e1ap::bearer_context_mod_confirm_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::e1ap::bearer_context_mod_fail_ies_o>;
@@ -4512,6 +6038,7 @@ extern template struct asn1::protocol_ext_field_s<asn1::e1ap::supported_plmns_ex
 extern template struct asn1::protocol_ie_single_container_s<asn1::e1ap::ue_associated_lc_e1_conn_item_res_o>;
 extern template struct asn1::protocol_ie_single_container_s<asn1::e1ap::ue_associated_lc_e1_conn_item_res_ack_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::e1ap::e1_release_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::e1_release_resp_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::e1ap::early_forwarding_sn_transfer_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::e1ap::error_ind_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::e1ap::gnb_cu_cp_cfg_upd_ies_o>;
@@ -4533,6 +6060,18 @@ extern template struct asn1::protocol_ie_field_s<asn1::e1ap::iab_up_tnl_address_
 extern template struct asn1::protocol_ie_field_s<asn1::e1ap::iab_up_tnl_address_upd_ack_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::e1ap::iab_up_tnl_address_upd_fail_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::e1ap::iabpsk_notif_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::mc_bearer_context_mod_confirm_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::mc_bearer_context_mod_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::mc_bearer_context_mod_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::mc_bearer_context_mod_required_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::mc_bearer_context_mod_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::mc_bearer_context_release_cmd_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::mc_bearer_context_release_complete_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::mc_bearer_context_release_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::mc_bearer_context_setup_fail_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::mc_bearer_context_setup_request_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::mc_bearer_context_setup_resp_ies_o>;
+extern template struct asn1::protocol_ie_field_s<asn1::e1ap::mc_bearer_notif_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::e1ap::mrdc_data_usage_report_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::e1ap::reset_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::e1ap::reset_ack_ies_o>;

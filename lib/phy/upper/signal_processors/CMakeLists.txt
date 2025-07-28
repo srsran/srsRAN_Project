@@ -24,7 +24,6 @@ set(SOURCES
         prs/prs_generator_impl.cpp
         ptrs/ptrs_pdsch_generator_impl.cpp
         ptrs/ptrs_pdsch_generator_factory.cpp
-        pucch/dmrs_pucch_estimator_format1.cpp
         pucch/dmrs_pucch_estimator_format2.cpp
         pucch/dmrs_pucch_estimator_formats3_4.cpp
         srs/srs_estimator_factory.cpp
@@ -43,6 +42,6 @@ set(SOURCES
 )
 
 add_library(srsran_signal_processors STATIC ${SOURCES})
-target_link_libraries(srsran_signal_processors srsvec srsran_phy_support srsran_upper_phy_support srsran_ran srsran_generic_funcs)
+target_link_libraries(srsran_signal_processors srsvec srsran_phy_support srsran_upper_phy_support srsran_ran srsran_dft)
 
 add_to_exported_libs(srsran_signal_processors)

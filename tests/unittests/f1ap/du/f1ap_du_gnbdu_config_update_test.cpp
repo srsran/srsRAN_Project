@@ -79,7 +79,7 @@ TEST_F(f1ap_du_gnbdu_config_update_test, when_du_receives_config_ack_then_proced
   // Status: Procedure not yet ready.
   ASSERT_FALSE(t.ready());
 
-  auto ack = test_helpers::create_gnb_du_configuration_update_acknowledge(f1c_gw.last_tx_pdu());
+  auto ack = test_helpers::generate_gnb_du_configuration_update_acknowledge(f1c_gw.last_tx_pdu());
   this->f1ap->handle_message(ack);
 
   // Status: Procedure is complete.
@@ -96,7 +96,7 @@ TEST_F(f1ap_du_gnbdu_config_update_test, when_du_receives_config_failure_then_pr
   // Status: Procedure not yet ready.
   ASSERT_FALSE(t.ready());
 
-  auto fail = test_helpers::create_gnb_du_configuration_update_failure(f1c_gw.last_tx_pdu());
+  auto fail = test_helpers::generate_gnb_du_configuration_update_failure(f1c_gw.last_tx_pdu());
   this->f1ap->handle_message(fail);
 
   // Status: Procedure is complete.

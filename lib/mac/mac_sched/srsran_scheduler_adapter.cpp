@@ -44,9 +44,10 @@ static sched_ue_reconfiguration_message
 make_scheduler_ue_reconfiguration_request(const mac_ue_reconfiguration_request& request)
 {
   sched_ue_reconfiguration_message ret{};
-  ret.ue_index = request.ue_index;
-  ret.crnti    = request.crnti;
-  ret.cfg      = request.sched_cfg;
+  ret.ue_index      = request.ue_index;
+  ret.crnti         = request.crnti;
+  ret.cfg           = request.sched_cfg;
+  ret.reestablished = request.reestablished;
   return ret;
 }
 

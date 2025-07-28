@@ -19,13 +19,13 @@
 #
 
 set(SOURCES
+        error_notifier_dispatcher.cpp
+        error_notifier_dummy.cpp
+        slot_data_message_notifier_dispatcher.cpp
         slot_data_message_notifier_dummy.cpp
-        slot_error_notifier_dummy.cpp
+        slot_last_message_notifier_dispatcher.cpp
         slot_last_message_notifier_dummy.cpp
         slot_time_notifier_dummy.cpp
-        slot_data_message_notifier_dispatcher.cpp
-        slot_error_notifier_dispatcher.cpp
-        slot_last_message_notifier_dispatcher.cpp
 )
 
 add_library(srsran_fapi_decorator_helpers STATIC ${SOURCES})

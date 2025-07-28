@@ -1424,7 +1424,7 @@ public:
     srsran_assert(t_bench.get_main_ue().get_pcell().cfg().csi_meas_cfg() != nullptr,
                   "CSI configuration needed for this test");
     auto csi_report_cfg = create_csi_report_configuration(*t_bench.get_main_ue().get_pcell().cfg().csi_meas_cfg());
-    csi_report_size     = get_csi_report_pucch_size(csi_report_cfg).value();
+    csi_report_size     = get_csi_report_pucch_size(csi_report_cfg).part1_size.value();
   }
 
 protected:

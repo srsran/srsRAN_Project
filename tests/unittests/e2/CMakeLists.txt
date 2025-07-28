@@ -78,3 +78,8 @@ add_executable(e2_conn_upd_procedure_test e2_conn_upd_procedure_test.cpp)
 target_link_libraries(e2_conn_upd_procedure_test srslog srsran_e2 e2ap_asn1 srsran_pcap srsran_gateway srsran_support e2_test_helpers gtest gtest_main)
 target_include_directories(e2_conn_upd_procedure_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(e2_conn_upd_procedure_test)
+
+add_executable(asn1_e2sm_ccc_test asn1_e2sm_ccc_test.cpp)
+target_link_libraries(asn1_e2sm_ccc_test srslog srsran_e2 e2ap_asn1 srsran_pcap srsran_support e2_test_helpers gtest gtest_main)
+target_include_directories(asn1_e2sm_ccc_test PRIVATE ${CMAKE_SOURCE_DIR})
+gtest_discover_tests(asn1_e2sm_ccc_test)

@@ -38,7 +38,7 @@ target_compile_options(e1ap_asn1 PRIVATE -Os -fno-exceptions)
 target_link_libraries(e1ap_asn1 asn1_utils)
 
 # E2AP ASN1
-add_library(e2ap_asn1 STATIC e2ap/e2ap.cpp e2sm/e2sm_common_ies.cpp e2sm/e2sm_kpm_ies.cpp e2sm/e2sm_rc_ies.cpp)
+add_library(e2ap_asn1 STATIC e2ap/e2ap.cpp e2sm/e2sm_common_ies.cpp e2sm/e2sm_kpm_ies.cpp e2sm/e2sm_rc_ies.cpp e2sm/e2sm_ccc.cpp)
 target_compile_options(e2ap_asn1 PRIVATE -Os -fno-exceptions)
 target_link_libraries(e2ap_asn1 asn1_utils)
 

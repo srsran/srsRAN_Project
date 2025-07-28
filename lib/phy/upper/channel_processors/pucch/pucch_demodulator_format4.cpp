@@ -126,5 +126,5 @@ void pucch_demodulator_format4::inverse_blockwise_spreading(span<cf_t>        or
   }
 
   // Scale according to the spreading factor.
-  srsvec::sc_prod(original, 1.0F / config.occ_length, original);
+  srsvec::sc_prod(original, original, 1.0F / config.occ_length);
 }

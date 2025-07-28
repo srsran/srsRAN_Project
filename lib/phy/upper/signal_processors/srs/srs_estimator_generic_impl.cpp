@@ -171,31 +171,29 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
           epre += srsvec::average_power(rx_sequence);
         }
 
-        // Temporary LSE.
-        span<cf_t> lse = rx_sequence;
-
         // Avoid accumulation for the first symbol containing SRS.
         if (i_symbol == config.resource.start_symbol.value()) {
-          lse = mean_lse;
-        }
-
-        // Calculate LSE.
-        srsvec::prod_conj(rx_sequence, sequence, lse);
-
-        // Accumulate LSE for the averaging.
-        if (lse.data() != mean_lse.data()) {
-          srsvec::add(mean_lse, lse, mean_lse);
+          srsvec::copy(mean_lse, rx_sequence);
+        } else {
+          srsvec::add(mean_lse, rx_sequence, mean_lse);
         }
       }
 
+      // Calculate LSE.
+      srsvec::prod_conj(mean_lse, mean_lse, sequence);
+
       // Scale accumulated LSE.
       if (nof_symbols > 1) {
-        srsvec::sc_prod(mean_lse, 1.0 / static_cast<float>(nof_symbols), mean_lse);
+        srsvec::sc_prod(mean_lse, mean_lse, 1.0 / static_cast<float>(nof_symbols));
       }
 
       port_lse.set_slice(i_rx_port_index, mean_lse);
     }
-    // Estimate TA.
+
+    // Estimate TA. Note that, since port_lse still contains the contributions of the other Tx ports (which cancel out
+    // only when averaging across subcarriers), the channel impulse response of the channel will show a number of
+    // replicas. However, since the TA estimator picks the peak closest to the origin (i.e., the one corresponding to
+    // the first replica), the estimation is still valid.
     time_alignment_measurement ta_meas = deps.ta_estimator->estimate(port_lse, info.comb_size, scs, max_ta);
 
     // Combine time alignment measurements.
@@ -209,6 +207,7 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
   result.time_alignment.time_alignment /= nof_antenna_ports;
 
   float noise_var = 0;
+  float rsrp      = 0;
   // Compensate time alignment and estimate channel coefficients.
   for (unsigned i_rx_port = 0; i_rx_port != nof_rx_ports; ++i_rx_port) {
     for (unsigned i_antenna_port = 0; i_antenna_port != nof_antenna_ports; ++i_antenna_port) {
@@ -223,7 +222,8 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
           static_cast<float>(TWOPI * result.time_alignment.time_alignment * scs_to_khz(scs) * 1000 * comb_size);
 
       // Calculate the initial phase shift in radians.
-      float phase_shift_offset = phase_shift_subcarrier * (info.mapping_initial_subcarrier % comb_size) / comb_size;
+      float phase_shift_offset =
+          phase_shift_subcarrier * static_cast<float>(info.mapping_initial_subcarrier) / static_cast<float>(comb_size);
 
       // Compensate phase shift.
       compensate_phase_shift(mean_lse, phase_shift_subcarrier, phase_shift_offset);
@@ -231,9 +231,10 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
       // Calculate channel wideband coefficient.
       cf_t coefficient = srsvec::mean(mean_lse);
       result.channel_matrix.set_coefficient(coefficient, i_rx_port, i_antenna_port);
+      rsrp += std::norm(coefficient);
 
-      // View for noise computation: with interleaved pilots, we need to keep track of two different sets of REs - those
-      // for odd-indexed ports and those for even-indexed ports.
+      // View for noise computation: with interleaved pilots, we need to keep track of two different sets of REs -
+      // those for odd-indexed ports and those for even-indexed ports.
       span<cf_t> noise_help = temp_noise.get_view({(interleaved_pilots) ? i_antenna_port % 2 : 0U, i_rx_port});
 
       if ((i_antenna_port == 0) || (interleaved_pilots && (i_antenna_port == 1))) {
@@ -245,8 +246,8 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
       // also be counted nof_symbols times.
       static_vector<cf_t, max_seq_length> recovered_signal(noise_help.size());
       srsvec::sc_prod(
-          all_sequences.get_view({i_antenna_port}), static_cast<float>(nof_symbols) * coefficient, recovered_signal);
-      srsvec::subtract(noise_help, recovered_signal, noise_help);
+          recovered_signal, all_sequences.get_view({i_antenna_port}), static_cast<float>(nof_symbols) * coefficient);
+      srsvec::subtract(noise_help, noise_help, recovered_signal);
     }
     span<cf_t> noise_help = temp_noise.get_view({0U, i_rx_port});
     noise_var += srsvec::average_power(noise_help) * noise_help.size();
@@ -256,19 +257,27 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
       noise_var += srsvec::average_power(noise_help) * noise_help.size();
     }
   }
-
   // At this point, noise_var contains the sum of all the squared errors between the received signal and the
-  // reconstructed one. For each Rx port, the number of degrees of freedom used to estimate the channel coefficients is
-  // usually equal nof_antenna_ports, but when pilots are interleaved, in which case it's 2. Also, when interleaving
-  // pilots, we look at double the samples.
+  // reconstructed one. For each Rx port, the number of degrees of freedom used to estimate the channel coefficients
+  // is usually equal nof_antenna_ports, but when pilots are interleaved, in which case it's 2. Also, when
+  // interleaving pilots, we look at double the samples.
   unsigned nof_estimates     = (interleaved_pilots ? 2 : nof_antenna_ports);
   unsigned correction_factor = (interleaved_pilots ? 2 : 1);
   noise_var /= static_cast<float>((nof_symbols * sequence_length - nof_estimates) * correction_factor * nof_rx_ports);
-  epre /= static_cast<float>(nof_symbols * correction_factor * nof_rx_ports);
 
-  // Set noise variance and EPRE.
+  // Normalize the wideband channel matrix with respect to the noise standard deviation, so that the Frobenius norm
+  // square will give us a rough estimate of the SNR. Avoid huge coefficients if the noise variance is too low
+  // (keep SNR <= 40 dB).
+  float noise_std = std::max(std::sqrt(noise_var), std::sqrt(rsrp) * 0.01F);
+  result.channel_matrix *= 1 / noise_std;
+
+  epre /= static_cast<float>(nof_symbols * correction_factor * nof_rx_ports);
+  rsrp /= static_cast<float>(nof_antenna_ports * nof_rx_ports);
+
+  // Set noise variance, EPRE and RSRP.
   result.noise_variance = noise_var;
   result.epre_dB        = convert_power_to_dB(epre);
+  result.rsrp_dB        = convert_power_to_dB(rsrp);
 
   return result;
 }

@@ -22,7 +22,7 @@
 
 /*******************************************************************************
  *
- *                     3GPP TS ASN1 E1AP v16.10.0 (2022-06)
+ *                     3GPP TS ASN1 E1AP v18.5.0 (2025-06)
  *
  ******************************************************************************/
 
@@ -66,6 +66,17 @@ namespace e1ap {
 #define ASN1_E1AP_ID_EARLY_FORWARDING_SN_TRANSFER 26
 #define ASN1_E1AP_ID_GNB_CU_CP_MEAS_RESULTS_INFO 27
 #define ASN1_E1AP_ID_I_ABPSK_NOTIF 28
+#define ASN1_E1AP_ID_BC_BEARER_CONTEXT_SETUP 29
+#define ASN1_E1AP_ID_BC_BEARER_CONTEXT_MOD 30
+#define ASN1_E1AP_ID_BC_BEARER_CONTEXT_MOD_REQUIRED 31
+#define ASN1_E1AP_ID_BC_BEARER_CONTEXT_RELEASE 32
+#define ASN1_E1AP_ID_BC_BEARER_CONTEXT_RELEASE_REQUEST 33
+#define ASN1_E1AP_ID_MC_BEARER_CONTEXT_SETUP 34
+#define ASN1_E1AP_ID_MC_BEARER_CONTEXT_MOD 35
+#define ASN1_E1AP_ID_MC_BEARER_CONTEXT_MOD_REQUIRED 36
+#define ASN1_E1AP_ID_MC_BEARER_CONTEXT_RELEASE 37
+#define ASN1_E1AP_ID_MC_BEARER_CONTEXT_RELEASE_REQUEST 38
+#define ASN1_E1AP_ID_MC_BEARER_NOTIF 39
 #define ASN1_E1AP_MAXNOOF_ERRORS 256
 #define ASN1_E1AP_MAXNOOF_SPLMNS 12
 #define ASN1_E1AP_MAXNOOF_SLICE_ITEMS 1024
@@ -89,6 +100,16 @@ namespace e1ap {
 #define ASN1_E1AP_MAXNOOF_DATA_FORWARDING_TUNNELTO_E_UTRAN 256
 #define ASN1_E1AP_MAXNOOF_EXT_NR_CGI 16384
 #define ASN1_E1AP_MAXNOOF_PS_KS 256
+#define ASN1_E1AP_MAXNOOF_ECGI 512
+#define ASN1_E1AP_MAXNOOF_SMBR_VALUES 8
+#define ASN1_E1AP_MAXNOOF_MBS_AREA_SESSION_IDS 256
+#define ASN1_E1AP_MAXNOOF_SHARED_NG_U_TERMINATIONS 8
+#define ASN1_E1AP_MAXNOOF_M_RBS 32
+#define ASN1_E1AP_MAXNOOF_MBS_SESSION_IDS 512
+#define ASN1_E1AP_MAXNOOF_CELLSFOR_MBS 512
+#define ASN1_E1AP_MAXNOOF_TAI_FOR_MBS 512
+#define ASN1_E1AP_MAXNOOF_MBS_SERVICE_AREA_INFO 256
+#define ASN1_E1AP_MAXNOOF_DU_S 512
 #define ASN1_E1AP_ID_CAUSE 0
 #define ASN1_E1AP_ID_CRIT_DIAGNOSTICS 1
 #define ASN1_E1AP_ID_GNB_CU_CP_UE_E1AP_ID 2
@@ -234,7 +255,81 @@ namespace e1ap {
 #define ASN1_E1AP_ID_DATA_FORWARDING_SOURCE_IP_ADDRESS 142
 #define ASN1_E1AP_ID_SECURITY_IND_MODIFY 143
 #define ASN1_E1AP_ID_IAB_DONOR_CU_UP_PSK_INFO 144
+#define ASN1_E1AP_ID_ECGI_SUPPORT_LIST 145
+#define ASN1_E1AP_ID_MDT_POLLUTED_MEAS_IND 146
+#define ASN1_E1AP_ID_M4_REPORT_AMOUNT 147
+#define ASN1_E1AP_ID_M6_REPORT_AMOUNT 148
+#define ASN1_E1AP_ID_M7_REPORT_AMOUNT 149
+#define ASN1_E1AP_ID_UE_SLICE_MAX_BIT_RATE_LIST 150
+#define ASN1_E1AP_ID_PDU_SESSION_PAIR_ID 151
+#define ASN1_E1AP_ID_SURVIVAL_TIME 152
+#define ASN1_E1AP_ID_UDC_PARAMS 153
+#define ASN1_E1AP_ID_SCG_ACTIVATION_STATUS 154
+#define ASN1_E1AP_ID_GNB_CU_CP_MBS_E1AP_ID 155
+#define ASN1_E1AP_ID_GNB_CU_UP_MBS_E1AP_ID 156
+#define ASN1_E1AP_ID_GLOBAL_MBS_SESSION_ID 157
+#define ASN1_E1AP_ID_BC_BEARER_CONTEXT_TO_SETUP 158
+#define ASN1_E1AP_ID_BC_BEARER_CONTEXT_TO_SETUP_RESP 159
+#define ASN1_E1AP_ID_BC_BEARER_CONTEXT_TO_MODIFY 160
+#define ASN1_E1AP_ID_BC_BEARER_CONTEXT_TO_MODIFY_RESP 161
+#define ASN1_E1AP_ID_BC_BEARER_CONTEXT_TO_MODIFY_REQUIRED 162
+#define ASN1_E1AP_ID_BC_BEARER_CONTEXT_TO_MODIFY_CONFIRM 163
+#define ASN1_E1AP_ID_MC_BEARER_CONTEXT_TO_SETUP 164
+#define ASN1_E1AP_ID_MC_BEARER_CONTEXT_TO_SETUP_RESP 165
+#define ASN1_E1AP_ID_MC_BEARER_CONTEXT_TO_MODIFY 166
+#define ASN1_E1AP_ID_MC_BEARER_CONTEXT_TO_MODIFY_RESP 167
+#define ASN1_E1AP_ID_MC_BEARER_CONTEXT_TO_MODIFY_REQUIRED 168
+#define ASN1_E1AP_ID_MC_BEARER_CONTEXT_TO_MODIFY_CONFIRM 169
+#define ASN1_E1AP_ID_MBS_MULTICAST_F1_U_CONTEXT_DESCRIPTOR 170
+#define ASN1_E1AP_ID_GNB_CU_UP_MBS_SUPPORT_INFO 171
+#define ASN1_E1AP_ID_SECURITY_IND 172
+#define ASN1_E1AP_ID_SECURITY_RESULT 173
+#define ASN1_E1AP_ID_SDT_CONTINUE_ROHC 174
+#define ASN1_E1AP_ID_SD_TIND_SETUP 175
+#define ASN1_E1AP_ID_SD_TIND_MOD 176
 #define ASN1_E1AP_ID_DISCARD_TIMER_EXTENDED 177
+#define ASN1_E1AP_ID_MANAGEMENT_BASED_MDT_PLMN_MOD_LIST 178
+#define ASN1_E1AP_ID_MC_FORWARDING_RES_REQUEST 179
+#define ASN1_E1AP_ID_MC_FORWARDING_RES_IND 180
+#define ASN1_E1AP_ID_MC_FORWARDING_RES_RESP 181
+#define ASN1_E1AP_ID_MC_FORWARDING_RES_RELEASE 182
+#define ASN1_E1AP_ID_MC_FORWARDING_RES_RELEASE_IND 183
+#define ASN1_E1AP_ID_PDCP_COUNT_RESET 184
+#define ASN1_E1AP_ID_MBS_SESSION_ASSOCIATED_INFO_NON_SUPPORT_TO_SUPPORT 185
+#define ASN1_E1AP_ID_VERSION_ID 186
+#define ASN1_E1AP_ID_INACTIVITY_INFO_REQUEST 187
+#define ASN1_E1AP_ID_UE_INACTIVITY_INFO 188
+#define ASN1_E1AP_ID_MBS_AREA_SESSION_ID 189
+#define ASN1_E1AP_ID_SECONDARY_PDU_SESSION_DATA_FORWARDING_INFO 190
+#define ASN1_E1AP_ID_MBS_SESSION_RES_NOTIF 191
+#define ASN1_E1AP_ID_MC_BEARER_CONTEXT_INACTIVITY_TIMER 192
+#define ASN1_E1AP_ID_MC_BEARER_CONTEXT_STATUS_CHANGE 193
+#define ASN1_E1AP_ID_MT_SDT_INFO 194
+#define ASN1_E1AP_ID_MT_SDT_INFO_REQUEST 195
+#define ASN1_E1AP_ID_SDT_DATA_SIZE_THRES 196
+#define ASN1_E1AP_ID_SDT_DATA_SIZE_THRES_CROSSED 197
+#define ASN1_E1AP_ID_SPECIAL_TRIGGER_PURPOSE 198
+#define ASN1_E1AP_ID_ASSOCIATED_SESSION_ID 199
+#define ASN1_E1AP_ID_MBS_SERVICE_AREA 200
+#define ASN1_E1AP_ID_PDU_SET_QOS_PARAMS 201
+#define ASN1_E1AP_ID_N6_JITTER_INFO 202
+#define ASN1_E1AP_ID_ECN_MARKINGOR_CONGESTION_INFO_REPORT_REQUEST 203
+#define ASN1_E1AP_ID_ECN_MARKINGOR_CONGESTION_INFO_REPORT_STATUS 204
+#define ASN1_E1AP_ID_PDU_SETBASED_HANDLING_IND 205
+#define ASN1_E1AP_ID_INDIRECT_PATH_IND 206
+#define ASN1_E1AP_ID_F1_U_TUNNEL_NOT_ESTABLISHED 207
+#define ASN1_E1AP_ID_F1_U_TNL_INFO_TO_ADD_LIST 208
+#define ASN1_E1AP_ID_F1_U_TNL_INFO_ADDED_LIST 209
+#define ASN1_E1AP_ID_F1_U_TNL_INFO_TO_ADD_OR_MODIFY_LIST 210
+#define ASN1_E1AP_ID_F1_U_TNL_INFO_ADDED_OR_MODIFIED_LIST 211
+#define ASN1_E1AP_ID_F1_U_TNL_INFO_TO_RELEASE_LIST 212
+#define ASN1_E1AP_ID_BROADCAST_F1_U_CONTEXT_REF_E1 213
+#define ASN1_E1AP_ID_PSI_BASED_DISCARD_TIMER 214
+#define ASN1_E1AP_ID_USER_PLANE_ERROR_IND 215
+#define ASN1_E1AP_ID_MAX_DATA_BURST_VOLUME 216
+#define ASN1_E1AP_ID_BC_BEARER_CONTEXT_NGU_TNL_INFOAT_NGRAN_REQUEST 217
+#define ASN1_E1AP_ID_PDCP_SN_GAP_REPORT 218
+#define ASN1_E1AP_ID_USER_PLANE_FAIL_IND 219
 #define ASN1_E1AP_MAX_PRIVATE_IES 65535
 #define ASN1_E1AP_MAX_PROTOCOL_EXTS 65535
 #define ASN1_E1AP_MAX_PROTOCOL_IES 65535
@@ -262,6 +357,22 @@ struct res_status_request_ies_container;
 using res_status_request_s = elementary_procedure_option<res_status_request_ies_container>;
 struct iab_up_tnl_address_upd_ies_container;
 using iab_up_tnl_address_upd_s = elementary_procedure_option<iab_up_tnl_address_upd_ies_container>;
+struct bc_bearer_context_setup_request_ies_container;
+using bc_bearer_context_setup_request_s = elementary_procedure_option<bc_bearer_context_setup_request_ies_container>;
+struct bc_bearer_context_mod_request_ies_container;
+using bc_bearer_context_mod_request_s = elementary_procedure_option<bc_bearer_context_mod_request_ies_container>;
+struct bc_bearer_context_mod_required_ies_container;
+using bc_bearer_context_mod_required_s = elementary_procedure_option<bc_bearer_context_mod_required_ies_container>;
+struct bc_bearer_context_release_cmd_ies_container;
+using bc_bearer_context_release_cmd_s = elementary_procedure_option<bc_bearer_context_release_cmd_ies_container>;
+struct mc_bearer_context_setup_request_ies_container;
+using mc_bearer_context_setup_request_s = elementary_procedure_option<mc_bearer_context_setup_request_ies_container>;
+struct mc_bearer_context_mod_request_ies_container;
+using mc_bearer_context_mod_request_s = elementary_procedure_option<mc_bearer_context_mod_request_ies_container>;
+struct mc_bearer_context_mod_required_ies_container;
+using mc_bearer_context_mod_required_s = elementary_procedure_option<mc_bearer_context_mod_required_ies_container>;
+struct mc_bearer_context_release_cmd_ies_container;
+using mc_bearer_context_release_cmd_s = elementary_procedure_option<mc_bearer_context_release_cmd_ies_container>;
 struct error_ind_ies_container;
 using error_ind_s = elementary_procedure_option<error_ind_ies_container>;
 struct bearer_context_release_request_ies_container;
@@ -295,6 +406,14 @@ struct gnb_cu_cp_meas_results_info_ies_container;
 using gnb_cu_cp_meas_results_info_s = elementary_procedure_option<gnb_cu_cp_meas_results_info_ies_container>;
 struct iabpsk_notif_ies_container;
 using iabpsk_notif_s = elementary_procedure_option<iabpsk_notif_ies_container>;
+struct bc_bearer_context_release_request_ies_container;
+using bc_bearer_context_release_request_s =
+    elementary_procedure_option<bc_bearer_context_release_request_ies_container>;
+struct mc_bearer_context_release_request_ies_container;
+using mc_bearer_context_release_request_s =
+    elementary_procedure_option<mc_bearer_context_release_request_ies_container>;
+struct mc_bearer_notif_ies_container;
+using mc_bearer_notif_s = elementary_procedure_option<mc_bearer_notif_ies_container>;
 struct reset_ack_ies_container;
 using reset_ack_s = elementary_procedure_option<reset_ack_ies_container>;
 struct gnb_cu_up_e1_setup_resp_ies_container;
@@ -305,8 +424,8 @@ struct gnb_cu_up_cfg_upd_ack_ies_container;
 using gnb_cu_up_cfg_upd_ack_s = elementary_procedure_option<gnb_cu_up_cfg_upd_ack_ies_container>;
 struct gnb_cu_cp_cfg_upd_ack_ies_container;
 using gnb_cu_cp_cfg_upd_ack_s = elementary_procedure_option<gnb_cu_cp_cfg_upd_ack_ies_container>;
-struct e1_release_resp_ies_o;
-using e1_release_resp_s = elementary_procedure_option<protocol_ie_container_l<e1_release_resp_ies_o>>;
+struct e1_release_resp_ies_container;
+using e1_release_resp_s = elementary_procedure_option<e1_release_resp_ies_container>;
 struct bearer_context_setup_resp_ies_container;
 using bearer_context_setup_resp_s = elementary_procedure_option<bearer_context_setup_resp_ies_container>;
 struct bearer_context_mod_resp_ies_container;
@@ -319,6 +438,24 @@ struct res_status_resp_ies_container;
 using res_status_resp_s = elementary_procedure_option<res_status_resp_ies_container>;
 struct iab_up_tnl_address_upd_ack_ies_container;
 using iab_up_tnl_address_upd_ack_s = elementary_procedure_option<iab_up_tnl_address_upd_ack_ies_container>;
+struct bc_bearer_context_setup_resp_ies_container;
+using bc_bearer_context_setup_resp_s = elementary_procedure_option<bc_bearer_context_setup_resp_ies_container>;
+struct bc_bearer_context_mod_resp_ies_container;
+using bc_bearer_context_mod_resp_s = elementary_procedure_option<bc_bearer_context_mod_resp_ies_container>;
+struct bc_bearer_context_mod_confirm_ies_container;
+using bc_bearer_context_mod_confirm_s = elementary_procedure_option<bc_bearer_context_mod_confirm_ies_container>;
+struct bc_bearer_context_release_complete_ies_container;
+using bc_bearer_context_release_complete_s =
+    elementary_procedure_option<bc_bearer_context_release_complete_ies_container>;
+struct mc_bearer_context_setup_resp_ies_container;
+using mc_bearer_context_setup_resp_s = elementary_procedure_option<mc_bearer_context_setup_resp_ies_container>;
+struct mc_bearer_context_mod_resp_ies_container;
+using mc_bearer_context_mod_resp_s = elementary_procedure_option<mc_bearer_context_mod_resp_ies_container>;
+struct mc_bearer_context_mod_confirm_ies_container;
+using mc_bearer_context_mod_confirm_s = elementary_procedure_option<mc_bearer_context_mod_confirm_ies_container>;
+struct mc_bearer_context_release_complete_ies_container;
+using mc_bearer_context_release_complete_s =
+    elementary_procedure_option<mc_bearer_context_release_complete_ies_container>;
 struct gnb_cu_up_e1_setup_fail_ies_container;
 using gnb_cu_up_e1_setup_fail_s = elementary_procedure_option<gnb_cu_up_e1_setup_fail_ies_container>;
 struct gnb_cu_cp_e1_setup_fail_ies_container;
@@ -335,6 +472,14 @@ struct res_status_fail_ies_container;
 using res_status_fail_s = elementary_procedure_option<res_status_fail_ies_container>;
 struct iab_up_tnl_address_upd_fail_ies_container;
 using iab_up_tnl_address_upd_fail_s = elementary_procedure_option<iab_up_tnl_address_upd_fail_ies_container>;
+struct bc_bearer_context_setup_fail_ies_container;
+using bc_bearer_context_setup_fail_s = elementary_procedure_option<bc_bearer_context_setup_fail_ies_container>;
+struct bc_bearer_context_mod_fail_ies_container;
+using bc_bearer_context_mod_fail_s = elementary_procedure_option<bc_bearer_context_mod_fail_ies_container>;
+struct mc_bearer_context_setup_fail_ies_container;
+using mc_bearer_context_setup_fail_s = elementary_procedure_option<mc_bearer_context_setup_fail_ies_container>;
+struct mc_bearer_context_mod_fail_ies_container;
+using mc_bearer_context_mod_fail_s = elementary_procedure_option<mc_bearer_context_mod_fail_ies_container>;
 
 /*******************************************************************************
  *                              Struct Definitions
@@ -358,6 +503,14 @@ struct e1ap_elem_procs_o {
         bearer_context_release_cmd,
         res_status_request,
         iab_up_tnl_address_upd,
+        bc_bearer_context_setup_request,
+        bc_bearer_context_mod_request,
+        bc_bearer_context_mod_required,
+        bc_bearer_context_release_cmd,
+        mc_bearer_context_setup_request,
+        mc_bearer_context_mod_request,
+        mc_bearer_context_mod_required,
+        mc_bearer_context_release_cmd,
         error_ind,
         bearer_context_release_request,
         bearer_context_inactivity_notif,
@@ -375,6 +528,9 @@ struct e1ap_elem_procs_o {
         early_forwarding_sn_transfer,
         gnb_cu_cp_meas_results_info,
         iabpsk_notif,
+        bc_bearer_context_release_request,
+        mc_bearer_context_release_request,
+        mc_bearer_notif,
         nulltype
       } value;
 
@@ -390,64 +546,86 @@ struct e1ap_elem_procs_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    reset_s&                                 reset();
-    gnb_cu_up_e1_setup_request_s&            gnb_cu_up_e1_setup_request();
-    gnb_cu_cp_e1_setup_request_s&            gnb_cu_cp_e1_setup_request();
-    gnb_cu_up_cfg_upd_s&                     gnb_cu_up_cfg_upd();
-    gnb_cu_cp_cfg_upd_s&                     gnb_cu_cp_cfg_upd();
-    e1_release_request_s&                    e1_release_request();
-    bearer_context_setup_request_s&          bearer_context_setup_request();
-    bearer_context_mod_request_s&            bearer_context_mod_request();
-    bearer_context_mod_required_s&           bearer_context_mod_required();
-    bearer_context_release_cmd_s&            bearer_context_release_cmd();
-    res_status_request_s&                    res_status_request();
-    iab_up_tnl_address_upd_s&                iab_up_tnl_address_upd();
-    error_ind_s&                             error_ind();
-    bearer_context_release_request_s&        bearer_context_release_request();
-    bearer_context_inactivity_notif_s&       bearer_context_inactivity_notif();
-    dl_data_notif_s&                         dl_data_notif();
-    ul_data_notif_s&                         ul_data_notif();
-    data_usage_report_s&                     data_usage_report();
-    gnb_cu_up_counter_check_request_s&       gnb_cu_up_counter_check_request();
-    gnb_cu_up_status_ind_s&                  gnb_cu_up_status_ind();
-    mrdc_data_usage_report_s&                mrdc_data_usage_report();
-    deactiv_trace_s&                         deactiv_trace();
-    trace_start_s&                           trace_start();
-    private_msg_s&                           private_msg();
-    cell_traffic_trace_s&                    cell_traffic_trace();
-    res_status_upd_s&                        res_status_upd();
-    early_forwarding_sn_transfer_s&          early_forwarding_sn_transfer();
-    gnb_cu_cp_meas_results_info_s&           gnb_cu_cp_meas_results_info();
-    iabpsk_notif_s&                          iabpsk_notif();
-    const reset_s&                           reset() const;
-    const gnb_cu_up_e1_setup_request_s&      gnb_cu_up_e1_setup_request() const;
-    const gnb_cu_cp_e1_setup_request_s&      gnb_cu_cp_e1_setup_request() const;
-    const gnb_cu_up_cfg_upd_s&               gnb_cu_up_cfg_upd() const;
-    const gnb_cu_cp_cfg_upd_s&               gnb_cu_cp_cfg_upd() const;
-    const e1_release_request_s&              e1_release_request() const;
-    const bearer_context_setup_request_s&    bearer_context_setup_request() const;
-    const bearer_context_mod_request_s&      bearer_context_mod_request() const;
-    const bearer_context_mod_required_s&     bearer_context_mod_required() const;
-    const bearer_context_release_cmd_s&      bearer_context_release_cmd() const;
-    const res_status_request_s&              res_status_request() const;
-    const iab_up_tnl_address_upd_s&          iab_up_tnl_address_upd() const;
-    const error_ind_s&                       error_ind() const;
-    const bearer_context_release_request_s&  bearer_context_release_request() const;
-    const bearer_context_inactivity_notif_s& bearer_context_inactivity_notif() const;
-    const dl_data_notif_s&                   dl_data_notif() const;
-    const ul_data_notif_s&                   ul_data_notif() const;
-    const data_usage_report_s&               data_usage_report() const;
-    const gnb_cu_up_counter_check_request_s& gnb_cu_up_counter_check_request() const;
-    const gnb_cu_up_status_ind_s&            gnb_cu_up_status_ind() const;
-    const mrdc_data_usage_report_s&          mrdc_data_usage_report() const;
-    const deactiv_trace_s&                   deactiv_trace() const;
-    const trace_start_s&                     trace_start() const;
-    const private_msg_s&                     private_msg() const;
-    const cell_traffic_trace_s&              cell_traffic_trace() const;
-    const res_status_upd_s&                  res_status_upd() const;
-    const early_forwarding_sn_transfer_s&    early_forwarding_sn_transfer() const;
-    const gnb_cu_cp_meas_results_info_s&     gnb_cu_cp_meas_results_info() const;
-    const iabpsk_notif_s&                    iabpsk_notif() const;
+    reset_s&                                   reset();
+    gnb_cu_up_e1_setup_request_s&              gnb_cu_up_e1_setup_request();
+    gnb_cu_cp_e1_setup_request_s&              gnb_cu_cp_e1_setup_request();
+    gnb_cu_up_cfg_upd_s&                       gnb_cu_up_cfg_upd();
+    gnb_cu_cp_cfg_upd_s&                       gnb_cu_cp_cfg_upd();
+    e1_release_request_s&                      e1_release_request();
+    bearer_context_setup_request_s&            bearer_context_setup_request();
+    bearer_context_mod_request_s&              bearer_context_mod_request();
+    bearer_context_mod_required_s&             bearer_context_mod_required();
+    bearer_context_release_cmd_s&              bearer_context_release_cmd();
+    res_status_request_s&                      res_status_request();
+    iab_up_tnl_address_upd_s&                  iab_up_tnl_address_upd();
+    bc_bearer_context_setup_request_s&         bc_bearer_context_setup_request();
+    bc_bearer_context_mod_request_s&           bc_bearer_context_mod_request();
+    bc_bearer_context_mod_required_s&          bc_bearer_context_mod_required();
+    bc_bearer_context_release_cmd_s&           bc_bearer_context_release_cmd();
+    mc_bearer_context_setup_request_s&         mc_bearer_context_setup_request();
+    mc_bearer_context_mod_request_s&           mc_bearer_context_mod_request();
+    mc_bearer_context_mod_required_s&          mc_bearer_context_mod_required();
+    mc_bearer_context_release_cmd_s&           mc_bearer_context_release_cmd();
+    error_ind_s&                               error_ind();
+    bearer_context_release_request_s&          bearer_context_release_request();
+    bearer_context_inactivity_notif_s&         bearer_context_inactivity_notif();
+    dl_data_notif_s&                           dl_data_notif();
+    ul_data_notif_s&                           ul_data_notif();
+    data_usage_report_s&                       data_usage_report();
+    gnb_cu_up_counter_check_request_s&         gnb_cu_up_counter_check_request();
+    gnb_cu_up_status_ind_s&                    gnb_cu_up_status_ind();
+    mrdc_data_usage_report_s&                  mrdc_data_usage_report();
+    deactiv_trace_s&                           deactiv_trace();
+    trace_start_s&                             trace_start();
+    private_msg_s&                             private_msg();
+    cell_traffic_trace_s&                      cell_traffic_trace();
+    res_status_upd_s&                          res_status_upd();
+    early_forwarding_sn_transfer_s&            early_forwarding_sn_transfer();
+    gnb_cu_cp_meas_results_info_s&             gnb_cu_cp_meas_results_info();
+    iabpsk_notif_s&                            iabpsk_notif();
+    bc_bearer_context_release_request_s&       bc_bearer_context_release_request();
+    mc_bearer_context_release_request_s&       mc_bearer_context_release_request();
+    mc_bearer_notif_s&                         mc_bearer_notif();
+    const reset_s&                             reset() const;
+    const gnb_cu_up_e1_setup_request_s&        gnb_cu_up_e1_setup_request() const;
+    const gnb_cu_cp_e1_setup_request_s&        gnb_cu_cp_e1_setup_request() const;
+    const gnb_cu_up_cfg_upd_s&                 gnb_cu_up_cfg_upd() const;
+    const gnb_cu_cp_cfg_upd_s&                 gnb_cu_cp_cfg_upd() const;
+    const e1_release_request_s&                e1_release_request() const;
+    const bearer_context_setup_request_s&      bearer_context_setup_request() const;
+    const bearer_context_mod_request_s&        bearer_context_mod_request() const;
+    const bearer_context_mod_required_s&       bearer_context_mod_required() const;
+    const bearer_context_release_cmd_s&        bearer_context_release_cmd() const;
+    const res_status_request_s&                res_status_request() const;
+    const iab_up_tnl_address_upd_s&            iab_up_tnl_address_upd() const;
+    const bc_bearer_context_setup_request_s&   bc_bearer_context_setup_request() const;
+    const bc_bearer_context_mod_request_s&     bc_bearer_context_mod_request() const;
+    const bc_bearer_context_mod_required_s&    bc_bearer_context_mod_required() const;
+    const bc_bearer_context_release_cmd_s&     bc_bearer_context_release_cmd() const;
+    const mc_bearer_context_setup_request_s&   mc_bearer_context_setup_request() const;
+    const mc_bearer_context_mod_request_s&     mc_bearer_context_mod_request() const;
+    const mc_bearer_context_mod_required_s&    mc_bearer_context_mod_required() const;
+    const mc_bearer_context_release_cmd_s&     mc_bearer_context_release_cmd() const;
+    const error_ind_s&                         error_ind() const;
+    const bearer_context_release_request_s&    bearer_context_release_request() const;
+    const bearer_context_inactivity_notif_s&   bearer_context_inactivity_notif() const;
+    const dl_data_notif_s&                     dl_data_notif() const;
+    const ul_data_notif_s&                     ul_data_notif() const;
+    const data_usage_report_s&                 data_usage_report() const;
+    const gnb_cu_up_counter_check_request_s&   gnb_cu_up_counter_check_request() const;
+    const gnb_cu_up_status_ind_s&              gnb_cu_up_status_ind() const;
+    const mrdc_data_usage_report_s&            mrdc_data_usage_report() const;
+    const deactiv_trace_s&                     deactiv_trace() const;
+    const trace_start_s&                       trace_start() const;
+    const private_msg_s&                       private_msg() const;
+    const cell_traffic_trace_s&                cell_traffic_trace() const;
+    const res_status_upd_s&                    res_status_upd() const;
+    const early_forwarding_sn_transfer_s&      early_forwarding_sn_transfer() const;
+    const gnb_cu_cp_meas_results_info_s&       gnb_cu_cp_meas_results_info() const;
+    const iabpsk_notif_s&                      iabpsk_notif() const;
+    const bc_bearer_context_release_request_s& bc_bearer_context_release_request() const;
+    const mc_bearer_context_release_request_s& mc_bearer_context_release_request() const;
+    const mc_bearer_notif_s&                   mc_bearer_notif() const;
 
   private:
     types             type_;
@@ -469,6 +647,14 @@ struct e1ap_elem_procs_o {
         bearer_context_release_complete,
         res_status_resp,
         iab_up_tnl_address_upd_ack,
+        bc_bearer_context_setup_resp,
+        bc_bearer_context_mod_resp,
+        bc_bearer_context_mod_confirm,
+        bc_bearer_context_release_complete,
+        mc_bearer_context_setup_resp,
+        mc_bearer_context_mod_resp,
+        mc_bearer_context_mod_confirm,
+        mc_bearer_context_release_complete,
         nulltype
       } value;
 
@@ -484,30 +670,46 @@ struct e1ap_elem_procs_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    reset_ack_s&                             reset_ack();
-    gnb_cu_up_e1_setup_resp_s&               gnb_cu_up_e1_setup_resp();
-    gnb_cu_cp_e1_setup_resp_s&               gnb_cu_cp_e1_setup_resp();
-    gnb_cu_up_cfg_upd_ack_s&                 gnb_cu_up_cfg_upd_ack();
-    gnb_cu_cp_cfg_upd_ack_s&                 gnb_cu_cp_cfg_upd_ack();
-    e1_release_resp_s&                       e1_release_resp();
-    bearer_context_setup_resp_s&             bearer_context_setup_resp();
-    bearer_context_mod_resp_s&               bearer_context_mod_resp();
-    bearer_context_mod_confirm_s&            bearer_context_mod_confirm();
-    bearer_context_release_complete_s&       bearer_context_release_complete();
-    res_status_resp_s&                       res_status_resp();
-    iab_up_tnl_address_upd_ack_s&            iab_up_tnl_address_upd_ack();
-    const reset_ack_s&                       reset_ack() const;
-    const gnb_cu_up_e1_setup_resp_s&         gnb_cu_up_e1_setup_resp() const;
-    const gnb_cu_cp_e1_setup_resp_s&         gnb_cu_cp_e1_setup_resp() const;
-    const gnb_cu_up_cfg_upd_ack_s&           gnb_cu_up_cfg_upd_ack() const;
-    const gnb_cu_cp_cfg_upd_ack_s&           gnb_cu_cp_cfg_upd_ack() const;
-    const e1_release_resp_s&                 e1_release_resp() const;
-    const bearer_context_setup_resp_s&       bearer_context_setup_resp() const;
-    const bearer_context_mod_resp_s&         bearer_context_mod_resp() const;
-    const bearer_context_mod_confirm_s&      bearer_context_mod_confirm() const;
-    const bearer_context_release_complete_s& bearer_context_release_complete() const;
-    const res_status_resp_s&                 res_status_resp() const;
-    const iab_up_tnl_address_upd_ack_s&      iab_up_tnl_address_upd_ack() const;
+    reset_ack_s&                                reset_ack();
+    gnb_cu_up_e1_setup_resp_s&                  gnb_cu_up_e1_setup_resp();
+    gnb_cu_cp_e1_setup_resp_s&                  gnb_cu_cp_e1_setup_resp();
+    gnb_cu_up_cfg_upd_ack_s&                    gnb_cu_up_cfg_upd_ack();
+    gnb_cu_cp_cfg_upd_ack_s&                    gnb_cu_cp_cfg_upd_ack();
+    e1_release_resp_s&                          e1_release_resp();
+    bearer_context_setup_resp_s&                bearer_context_setup_resp();
+    bearer_context_mod_resp_s&                  bearer_context_mod_resp();
+    bearer_context_mod_confirm_s&               bearer_context_mod_confirm();
+    bearer_context_release_complete_s&          bearer_context_release_complete();
+    res_status_resp_s&                          res_status_resp();
+    iab_up_tnl_address_upd_ack_s&               iab_up_tnl_address_upd_ack();
+    bc_bearer_context_setup_resp_s&             bc_bearer_context_setup_resp();
+    bc_bearer_context_mod_resp_s&               bc_bearer_context_mod_resp();
+    bc_bearer_context_mod_confirm_s&            bc_bearer_context_mod_confirm();
+    bc_bearer_context_release_complete_s&       bc_bearer_context_release_complete();
+    mc_bearer_context_setup_resp_s&             mc_bearer_context_setup_resp();
+    mc_bearer_context_mod_resp_s&               mc_bearer_context_mod_resp();
+    mc_bearer_context_mod_confirm_s&            mc_bearer_context_mod_confirm();
+    mc_bearer_context_release_complete_s&       mc_bearer_context_release_complete();
+    const reset_ack_s&                          reset_ack() const;
+    const gnb_cu_up_e1_setup_resp_s&            gnb_cu_up_e1_setup_resp() const;
+    const gnb_cu_cp_e1_setup_resp_s&            gnb_cu_cp_e1_setup_resp() const;
+    const gnb_cu_up_cfg_upd_ack_s&              gnb_cu_up_cfg_upd_ack() const;
+    const gnb_cu_cp_cfg_upd_ack_s&              gnb_cu_cp_cfg_upd_ack() const;
+    const e1_release_resp_s&                    e1_release_resp() const;
+    const bearer_context_setup_resp_s&          bearer_context_setup_resp() const;
+    const bearer_context_mod_resp_s&            bearer_context_mod_resp() const;
+    const bearer_context_mod_confirm_s&         bearer_context_mod_confirm() const;
+    const bearer_context_release_complete_s&    bearer_context_release_complete() const;
+    const res_status_resp_s&                    res_status_resp() const;
+    const iab_up_tnl_address_upd_ack_s&         iab_up_tnl_address_upd_ack() const;
+    const bc_bearer_context_setup_resp_s&       bc_bearer_context_setup_resp() const;
+    const bc_bearer_context_mod_resp_s&         bc_bearer_context_mod_resp() const;
+    const bc_bearer_context_mod_confirm_s&      bc_bearer_context_mod_confirm() const;
+    const bc_bearer_context_release_complete_s& bc_bearer_context_release_complete() const;
+    const mc_bearer_context_setup_resp_s&       mc_bearer_context_setup_resp() const;
+    const mc_bearer_context_mod_resp_s&         mc_bearer_context_mod_resp() const;
+    const mc_bearer_context_mod_confirm_s&      mc_bearer_context_mod_confirm() const;
+    const mc_bearer_context_release_complete_s& mc_bearer_context_release_complete() const;
 
   private:
     types             type_;
@@ -525,6 +727,10 @@ struct e1ap_elem_procs_o {
         bearer_context_mod_fail,
         res_status_fail,
         iab_up_tnl_address_upd_fail,
+        bc_bearer_context_setup_fail,
+        bc_bearer_context_mod_fail,
+        mc_bearer_context_setup_fail,
+        mc_bearer_context_mod_fail,
         nulltype
       } value;
 
@@ -540,22 +746,30 @@ struct e1ap_elem_procs_o {
     SRSASN_CODE unpack(cbit_ref& bref);
     void        to_json(json_writer& j) const;
     // getters
-    gnb_cu_up_e1_setup_fail_s&           gnb_cu_up_e1_setup_fail();
-    gnb_cu_cp_e1_setup_fail_s&           gnb_cu_cp_e1_setup_fail();
-    gnb_cu_up_cfg_upd_fail_s&            gnb_cu_up_cfg_upd_fail();
-    gnb_cu_cp_cfg_upd_fail_s&            gnb_cu_cp_cfg_upd_fail();
-    bearer_context_setup_fail_s&         bearer_context_setup_fail();
-    bearer_context_mod_fail_s&           bearer_context_mod_fail();
-    res_status_fail_s&                   res_status_fail();
-    iab_up_tnl_address_upd_fail_s&       iab_up_tnl_address_upd_fail();
-    const gnb_cu_up_e1_setup_fail_s&     gnb_cu_up_e1_setup_fail() const;
-    const gnb_cu_cp_e1_setup_fail_s&     gnb_cu_cp_e1_setup_fail() const;
-    const gnb_cu_up_cfg_upd_fail_s&      gnb_cu_up_cfg_upd_fail() const;
-    const gnb_cu_cp_cfg_upd_fail_s&      gnb_cu_cp_cfg_upd_fail() const;
-    const bearer_context_setup_fail_s&   bearer_context_setup_fail() const;
-    const bearer_context_mod_fail_s&     bearer_context_mod_fail() const;
-    const res_status_fail_s&             res_status_fail() const;
-    const iab_up_tnl_address_upd_fail_s& iab_up_tnl_address_upd_fail() const;
+    gnb_cu_up_e1_setup_fail_s&            gnb_cu_up_e1_setup_fail();
+    gnb_cu_cp_e1_setup_fail_s&            gnb_cu_cp_e1_setup_fail();
+    gnb_cu_up_cfg_upd_fail_s&             gnb_cu_up_cfg_upd_fail();
+    gnb_cu_cp_cfg_upd_fail_s&             gnb_cu_cp_cfg_upd_fail();
+    bearer_context_setup_fail_s&          bearer_context_setup_fail();
+    bearer_context_mod_fail_s&            bearer_context_mod_fail();
+    res_status_fail_s&                    res_status_fail();
+    iab_up_tnl_address_upd_fail_s&        iab_up_tnl_address_upd_fail();
+    bc_bearer_context_setup_fail_s&       bc_bearer_context_setup_fail();
+    bc_bearer_context_mod_fail_s&         bc_bearer_context_mod_fail();
+    mc_bearer_context_setup_fail_s&       mc_bearer_context_setup_fail();
+    mc_bearer_context_mod_fail_s&         mc_bearer_context_mod_fail();
+    const gnb_cu_up_e1_setup_fail_s&      gnb_cu_up_e1_setup_fail() const;
+    const gnb_cu_cp_e1_setup_fail_s&      gnb_cu_cp_e1_setup_fail() const;
+    const gnb_cu_up_cfg_upd_fail_s&       gnb_cu_up_cfg_upd_fail() const;
+    const gnb_cu_cp_cfg_upd_fail_s&       gnb_cu_cp_cfg_upd_fail() const;
+    const bearer_context_setup_fail_s&    bearer_context_setup_fail() const;
+    const bearer_context_mod_fail_s&      bearer_context_mod_fail() const;
+    const res_status_fail_s&              res_status_fail() const;
+    const iab_up_tnl_address_upd_fail_s&  iab_up_tnl_address_upd_fail() const;
+    const bc_bearer_context_setup_fail_s& bc_bearer_context_setup_fail() const;
+    const bc_bearer_context_mod_fail_s&   bc_bearer_context_mod_fail() const;
+    const mc_bearer_context_setup_fail_s& mc_bearer_context_setup_fail() const;
+    const mc_bearer_context_mod_fail_s&   mc_bearer_context_mod_fail() const;
 
   private:
     types             type_;

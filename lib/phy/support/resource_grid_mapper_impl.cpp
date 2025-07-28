@@ -132,6 +132,46 @@ static void map_dmrs_type1_contiguous(resource_grid_writer&          writer,
   }
 }
 
+void resource_grid_mapper_impl::map_re_block(resource_grid_writer&                      writer,
+                                             const bounded_bitset<max_nof_subcarriers>& block_mask,
+                                             const precoding_weight_matrix&             prg_weights,
+                                             span<const ci8_t>                          block,
+                                             unsigned                                   i_symbol,
+                                             unsigned                                   i_subc)
+{
+  // Temporary intermediate buffer for storing precoded symbols.
+  static_re_buffer<precoding_constants::MAX_NOF_PORTS, NRE * MAX_RB, cbf16_t> precoding_buffer_copy;
+  modular_re_buffer<cbf16_t, MAX_PORTS>                                       precoding_buffer_view;
+
+  unsigned nof_antennas = prg_weights.get_nof_ports();
+  unsigned nof_re_block = block_mask.count();
+
+  // Prepare buffers.
+  bool                                              is_contiguous    = block_mask.is_contiguous();
+  std::reference_wrapper<re_buffer_writer<cbf16_t>> precoding_buffer = precoding_buffer_view;
+  if (SRSRAN_LIKELY(is_contiguous)) {
+    precoding_buffer_view.resize(nof_antennas, nof_re_block);
+    int i_subc_begin = block_mask.find_lowest();
+    for (unsigned i_port = 0; i_port != nof_antennas; ++i_port) {
+      precoding_buffer_view.set_slice(i_port,
+                                      writer.get_view(i_port, i_symbol).subspan(i_subc + i_subc_begin, nof_re_block));
+    }
+  } else {
+    precoding_buffer_copy.resize(nof_antennas, nof_re_block);
+    precoding_buffer = precoding_buffer_copy;
+  }
+
+  // Layer map and precoding.
+  precoder->apply_layer_map_and_precoding(precoding_buffer, block, prg_weights);
+
+  // Map for each port it the allocation is not contiguous.
+  if (!is_contiguous) {
+    for (unsigned i_port = 0; i_port != nof_antennas; ++i_port) {
+      writer.put(i_port, i_symbol, i_subc, block_mask, precoding_buffer.get().get_slice(i_port));
+    }
+  }
+}
+
 resource_grid_mapper_impl::resource_grid_mapper_impl(std::unique_ptr<channel_precoder> precoder_) :
   precoder(std::move(precoder_))
 {
@@ -266,22 +306,21 @@ void resource_grid_mapper_impl::map(resource_grid_writer&          writer,
                 input.get_nof_re());
 }
 
-void resource_grid_mapper_impl::map(resource_grid_writer&          writer,
-                                    symbol_buffer&                 buffer,
-                                    const re_pattern_list&         pattern,
-                                    const re_pattern_list&         reserved,
-                                    const precoding_configuration& precoding,
-                                    unsigned                       re_skip)
+void resource_grid_mapper_impl::map(resource_grid_writer&           writer,
+                                    symbol_buffer&                  buffer,
+                                    const allocation_configuration& allocation,
+                                    const re_pattern_list&          reserved,
+                                    const precoding_configuration&  precoding,
+                                    unsigned                        re_skip)
 {
-  // Temporary intermediate buffer for storing precoded symbols.
-  static_re_buffer<precoding_constants::MAX_NOF_PORTS, NRE * MAX_RB, cbf16_t> precoding_buffer_copy;
-  modular_re_buffer<cbf16_t, MAX_PORTS>                                       precoding_buffer_view;
-
   // The number of layers is equal to the number of ports.
   unsigned nof_layers = precoding.get_nof_layers();
 
   // Extract number of antennas.
   unsigned nof_antennas = precoding.get_nof_ports();
+
+  // Get the precoding matrix for the first PRG (only one precoding PRG is supported).
+  const precoding_weight_matrix& prg_weights = precoding.get_prg_coefficients(0);
 
   // Verify that the number of layers is consistent with the number of ports.
   interval<unsigned, true> nof_antennas_range(1, writer.get_nof_ports());
@@ -295,11 +334,35 @@ void resource_grid_mapper_impl::map(resource_grid_writer&          writer,
                 nof_layers,
                 nof_layers_range);
 
+  // Obtain CRB indices.
+  auto crb_indices = allocation.freq_alloc.get_crb_indices(allocation.bwp.start(), allocation.bwp.length());
+
+  // Group CRB indices in intervals.
+  static_vector<interval<unsigned>, MAX_NOF_PRBS> crb_intervals;
+  unsigned                                        interval_start = crb_indices.front();
+  for (unsigned i = 0, end = crb_indices.size() - 1; i != end; ++i) {
+    unsigned i_crb      = crb_indices[i];
+    unsigned i_crb_next = crb_indices[i + 1];
+    if (i_crb + 1 != i_crb_next) {
+      crb_intervals.emplace_back(interval<unsigned>{interval_start, i_crb + 1});
+      interval_start = i_crb_next;
+    }
+  }
+  crb_intervals.emplace_back(interval<unsigned>{interval_start, crb_indices.back() + 1});
+
+  // Generate the base resource element allocation mask from the CRB indices.
+  bounded_bitset<max_nof_subcarriers> base_crb_re_mask(allocation.bwp.stop() * NOF_SUBCARRIERS_PER_RB);
+  std::for_each(crb_indices.begin(), crb_indices.end(), [&base_crb_re_mask](uint16_t crb_idx) {
+    base_crb_re_mask.fill(crb_idx * NOF_SUBCARRIERS_PER_RB, (crb_idx + 1) * NOF_SUBCARRIERS_PER_RB);
+  });
+
+  // Iterate each allocated OFDM symbol.
   unsigned re_count = 0;
-  for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
-    // Get the symbol RE mask.
-    bounded_bitset<max_nof_subcarriers> symbol_re_mask(max_nof_subcarriers);
-    pattern.get_inclusion_mask(symbol_re_mask, i_symbol);
+  for (unsigned i_symbol = allocation.time_alloc.start(), i_symbol_end = allocation.time_alloc.stop();
+       i_symbol != i_symbol_end;
+       ++i_symbol) {
+    // Generate mask of resource elements for the OFDM symbol that exclude the reserved elements.
+    bounded_bitset<max_nof_subcarriers> symbol_re_mask = base_crb_re_mask;
     reserved.get_exclusion_mask(symbol_re_mask, i_symbol);
 
     // Get the number of active RE in the OFDM symbol.
@@ -308,84 +371,68 @@ void resource_grid_mapper_impl::map(resource_grid_writer&          writer,
       continue;
     }
 
-    // Skip the current symbol if the number of active RE does not reach the skip size.
-    if (re_count + nof_re_symbol < re_skip) {
+    // Skip the current symbol if the RE count does not reach the number of RE to skip.
+    if (re_count + nof_re_symbol <= re_skip) {
       re_count += nof_re_symbol;
       continue;
     }
 
-    // Iterate all precoding PRGs.
-    unsigned prg_size = precoding.get_prg_size() * NRE;
-    for (unsigned i_prg = 0, nof_prg = precoding.get_nof_prg(); i_prg != nof_prg; ++i_prg) {
-      // Get the precoding matrix for the current PRG.
-      const precoding_weight_matrix& prg_weights = precoding.get_prg_coefficients(i_prg);
+    // Iterate all CRB indices used in the allocation.
+    for (const auto& crb_map_interval : crb_intervals) {
+      // Convert interval to subcarrier indices.
+      interval<unsigned, false> map_subc_interval(crb_map_interval.start() * NOF_SUBCARRIERS_PER_RB,
+                                                  crb_map_interval.stop() * NOF_SUBCARRIERS_PER_RB);
 
-      // Get the subcarrier interval for the PRG.
-      unsigned i_subc = i_prg * prg_size;
+      // Get allocation slice for the CRB interval.
+      bounded_bitset<max_nof_subcarriers> crb_re_mask =
+          symbol_re_mask.slice(map_subc_interval.start(), map_subc_interval.stop());
 
-      // Number of grid RE belonging to the current PRG for the provided allocation pattern dimensions.
-      unsigned nof_subc_prg = std::min(prg_size, static_cast<unsigned>(symbol_re_mask.size()) - i_subc);
+      // Count the number of RE to map in the CRB interval.
+      unsigned crb_re_count = crb_re_mask.count();
 
-      // Find lowest and highest active subcarriers within the PRG range.
-      int lowest_i_subc  = symbol_re_mask.find_lowest(i_subc, i_subc + nof_subc_prg);
-      int highest_i_subc = symbol_re_mask.find_highest(i_subc, i_subc + nof_subc_prg);
-
-      // Skips the PRG if no active subcarrier is found.
-      if ((lowest_i_subc < 0) || (highest_i_subc < lowest_i_subc)) {
+      // Skip CRB interval if the number of RE to map does not reach the RE offset.
+      if (crb_re_count + re_count <= re_skip) {
+        re_count += crb_re_count;
         continue;
       }
 
-      // Cuts the PRB to the active subcarriers.
-      i_subc += lowest_i_subc;
-      nof_subc_prg = highest_i_subc + 1 - lowest_i_subc;
-
-      // Mask for the RE belonging to the current PRG.
-      bounded_bitset<max_nof_subcarriers> prg_re_mask = symbol_re_mask.slice(i_subc, i_subc + nof_subc_prg);
-
-      // Get the number of active RE in the PRG. Skip PRG if the number of active RE does not reach the skip.
-      unsigned nof_re_prg = prg_re_mask.count();
-      if (re_count + nof_re_prg < re_skip) {
-        re_count += nof_re_prg;
-        continue;
-      }
-
-      // Advance subcarrier offset to reach the skip count.
-      unsigned subc_offset = 0;
+      // Discard subcarriers until the RE counter reaches the RE skip.
       while (re_count < re_skip) {
+        // The CRC subcarrier interval for mapping must not be empty to avoid an infinite loop.
+        srsran_assert(!map_subc_interval.empty(), "The subcarriers interval must not be zero.");
+
         // Calculate the maximum number of subcarriers that can be processed in one block.
         unsigned max_nof_subc_block = re_skip - re_count;
 
-        // Calculate the number of pending subcarriers to process.
-        unsigned nof_subc_pending = nof_subc_prg - subc_offset;
-        srsran_assert(nof_subc_pending != 0, "The number of pending subcarriers cannot be zero.");
+        // Select the number of subcarriers to discard in a block.
+        unsigned nof_subc_skip = std::min(max_nof_subc_block, map_subc_interval.length());
 
-        // Select the number of subcarriers to process in a block.
-        unsigned nof_subc_block = std::min(nof_subc_pending, max_nof_subc_block);
+        // Get the allocation mask for the block to discard.
+        bounded_bitset<max_nof_subcarriers> discarded_re_mask =
+            symbol_re_mask.slice(map_subc_interval.start(), map_subc_interval.start() + nof_subc_skip);
 
-        // Get the allocation mask for the block.
-        bounded_bitset<max_nof_subcarriers> block_mask = prg_re_mask.slice(subc_offset, subc_offset + nof_subc_block);
+        // Count the number of resource elements skipped.
+        re_count += discarded_re_mask.count();
 
-        // Count the number of resource elements to map in the block.
-        unsigned nof_re_block = block_mask.count();
-
-        re_count += nof_re_block;
-        subc_offset += nof_subc_block;
+        // Advance subcarrier interval.
+        map_subc_interval = {map_subc_interval.start() + nof_subc_skip, map_subc_interval.stop()};
       }
 
-      // Process PRG in blocks smaller than or equal to max_block_size subcarriers.
-      while (subc_offset != nof_subc_prg) {
+      // Process remaining subcarriers within the CRB interval.
+      while (!map_subc_interval.empty()) {
         // Calculate the maximum number of subcarriers that can be processed in one block.
         unsigned max_nof_subc_block = buffer.get_max_block_size() / nof_layers;
 
         // Calculate the number of pending subcarriers to process.
-        unsigned nof_subc_pending = nof_subc_prg - subc_offset;
+        unsigned nof_subc_pending = map_subc_interval.length();
 
         // Select the number of subcarriers to process in a block.
         unsigned nof_subc_block = std::min(nof_subc_pending, max_nof_subc_block);
         srsran_assert(nof_subc_block != 0, "The number of pending subcarriers cannot be zero.");
 
         // Get the allocation mask for the block.
-        bounded_bitset<max_nof_subcarriers> block_mask = prg_re_mask.slice(subc_offset, subc_offset + nof_subc_block);
+        bounded_bitset<max_nof_subcarriers> block_mask =
+            symbol_re_mask.slice(map_subc_interval.start(), map_subc_interval.start() + nof_subc_block);
 
         // Count the number of resource elements to map in the block.
         unsigned nof_re_block = block_mask.count();
@@ -396,39 +443,17 @@ void resource_grid_mapper_impl::map(resource_grid_writer&          writer,
           // Prepare destination of the modulation buffer.
           span<const ci8_t> block = buffer.pop_symbols(nof_symbols_block);
 
-          // Prepare buffers.
-          bool                                              is_contiguous    = block_mask.is_contiguous();
-          std::reference_wrapper<re_buffer_writer<cbf16_t>> precoding_buffer = precoding_buffer_view;
-          if (SRSRAN_LIKELY(is_contiguous)) {
-            precoding_buffer_view.resize(nof_antennas, nof_re_block);
-            int i_subc_begin = block_mask.find_lowest();
-            for (unsigned i_port = 0; i_port != nof_antennas; ++i_port) {
-              precoding_buffer_view.set_slice(
-                  i_port, writer.get_view(i_port, i_symbol).subspan(i_subc + subc_offset + i_subc_begin, nof_re_block));
-            }
-          } else {
-            precoding_buffer_copy.resize(nof_antennas, nof_re_block);
-            precoding_buffer = precoding_buffer_copy;
-          }
-
-          // Layer map and precoding.
-          precoder->apply_layer_map_and_precoding(precoding_buffer, block, prg_weights);
-
-          // Map for each port it the allocation is not contiguous.
-          if (!is_contiguous) {
-            for (unsigned i_port = 0; i_port != nof_antennas; ++i_port) {
-              writer.put(i_port, i_symbol, i_subc + subc_offset, block_mask, precoding_buffer.get().get_slice(i_port));
-            }
-          }
-
-          // Early return  if the buffer is empty.
-          if (buffer.empty()) {
-            return;
-          }
+          // Apply layer mapping, precoding and map the resources in the grid.
+          map_re_block(writer, block_mask, prg_weights, block, i_symbol, map_subc_interval.start());
         }
 
-        // Increment the subcarrier offset.
-        subc_offset += nof_subc_block;
+        // Advance subcarrier interval.
+        map_subc_interval = {map_subc_interval.start() + nof_subc_block, map_subc_interval.stop()};
+
+        // Early return  if the buffer is empty.
+        if (buffer.empty()) {
+          return;
+        }
       }
     }
   }

@@ -41,7 +41,7 @@ private:
   /// Internal PSS sequence generator.
   static const pss_sequence_generator sequence_generator;
 
-  /// \brief Implements TS 38.211 section 7.4.2.2.2 Mapping to physical resources
+  /// \brief Implements TS38.211 Section 7.4.2.2.2 Mapping to physical resources
   /// \param [in] sequence provides the source of the sequence
   /// \param [out] grid provides the destination of the sequence mapping
   /// \param [in] config provides the necessary parameters to generate the sequence

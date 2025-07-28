@@ -31,8 +31,13 @@ using namespace srsran;
 ue_config_update_event::ue_config_update_event(du_ue_index_t                     ue_index_,
                                                sched_config_manager&             parent_,
                                                std::unique_ptr<ue_configuration> next_cfg,
-                                               const std::optional<bool>&        set_fallback) :
-  ue_index(ue_index_), parent(&parent_), next_ded_cfg(std::move(next_cfg)), set_fallback_mode(set_fallback)
+                                               const std::optional<bool>&        set_fallback,
+                                               bool                              reestablished_) :
+  ue_index(ue_index_),
+  parent(&parent_),
+  next_ded_cfg(std::move(next_cfg)),
+  set_fallback_mode(set_fallback),
+  reestablished(reestablished_)
 {
 }
 
@@ -194,7 +199,7 @@ ue_config_update_event sched_config_manager::update_ue(const sched_ue_reconfigur
     logger.error("ue={} c-rnti={}: Discarding UE configuration. Cause: UE with provided C-RNTI does not exist.",
                  fmt::underlying(cfg_req.ue_index),
                  cfg_req.crnti);
-    return ue_config_update_event{cfg_req.ue_index, *this};
+    return ue_config_update_event{cfg_req.ue_index, *this, nullptr, {}, cfg_req.reestablished};
   }
 
   // Make a copy of the current UE dedicated config.
@@ -204,7 +209,7 @@ ue_config_update_event sched_config_manager::update_ue(const sched_ue_reconfigur
   next_ded_cfg->update(added_cells, group_cfg_pool[group_idx]->reconf_ue(cfg_req));
 
   // Return RAII event.
-  return ue_config_update_event{cfg_req.ue_index, *this, std::move(next_ded_cfg)};
+  return ue_config_update_event{cfg_req.ue_index, *this, std::move(next_ded_cfg), {}, cfg_req.reestablished};
 }
 
 ue_config_delete_event sched_config_manager::remove_ue(du_ue_index_t ue_index)
@@ -292,6 +297,7 @@ void sched_config_manager::flush_ues_to_rem()
   // Note: This should be called by a thread outside of the critical path.
 
   // Clear the UEs to rem.
-  while (ues_to_rem.try_pop()) {
+  std::unique_ptr<ue_configuration> obj;
+  while (ues_to_rem.try_pop(obj)) {
   }
 }

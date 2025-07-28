@@ -68,7 +68,7 @@ private:
   /// \param[in]  a     Payload
   /// \param[in]  rnti  RNTI used for CRC bits scrambling
   ///
-  /// \remark CRC attachment follows TS 38.312 section 7.3.2
+  /// \remark CRC attachment follows TS38.312 Section 7.3.2
   void crc_attach(span<uint8_t>& c, span<const uint8_t> a, unsigned rnti);
 
   /// \brief Payload encoding
@@ -76,7 +76,7 @@ private:
   /// \param[out] d Data after encoding
   /// \param[in]  c Payload after CRC attachment
   ///
-  /// \remark Channel codding follows TS 38.312 section 7.3.3
+  /// \remark Channel codding follows TS38.312 Section 7.3.3
   void channel_coding(span<uint8_t> d, span<const uint8_t> c);
 
   /// \brief Rate matching of the encoded data
@@ -84,7 +84,7 @@ private:
   /// \param[out] f Data after rate matching
   /// \param[in]  d Data after encoding
   ///
-  /// \remark Rate matching follows TS 38.312 section 7.3.4
+  /// \remark Rate matching follows TS38.312 Section 7.3.4
   void rate_matching(span<uint8_t> f, span<const uint8_t> d);
 
 public:

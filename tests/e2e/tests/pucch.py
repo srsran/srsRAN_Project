@@ -67,7 +67,7 @@ def test_pucch(
 
     ue_array = ue_32
 
-    band = 78
+    band = 41
     common_scs = 30
     bandwidth = 50
     iperf_duration = 10

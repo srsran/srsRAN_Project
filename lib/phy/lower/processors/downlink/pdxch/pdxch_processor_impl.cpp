@@ -42,6 +42,11 @@ pdxch_processor_baseband& pdxch_processor_impl::get_baseband()
   return *this;
 }
 
+lower_phy_center_freq_controller& pdxch_processor_impl::get_center_freq_control()
+{
+  return *this;
+}
+
 bool pdxch_processor_impl::process_symbol(baseband_gateway_buffer_writer&                 samples,
                                           const pdxch_processor_baseband::symbol_context& context)
 {
@@ -117,4 +122,10 @@ void pdxch_processor_impl::handle_request(const shared_resource_grid& grid, cons
     notifier->on_pdxch_request_late(late_context);
     l1_dl_tracer << instant_trace_event{"on_pdxch_request_late", instant_trace_event::cpu_scope::thread};
   }
+}
+
+bool pdxch_processor_impl::set_carrier_center_frequency(double carrier_center_frequency_Hz)
+{
+  modulator->set_center_frequency(carrier_center_frequency_Hz);
+  return true;
 }

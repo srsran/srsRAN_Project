@@ -175,12 +175,7 @@ void srsran::fapi::log_dl_tti_request(const dl_tti_request_message& msg,
                                       srslog::basic_logger&         logger)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(std::back_inserter(buffer),
-                 "Sector#{}: DL_TTI.request slot={}.{}, is_last_message_in_slot={}",
-                 sector_id,
-                 msg.sfn,
-                 msg.slot,
-                 msg.is_last_dl_message_in_slot);
+  fmt::format_to(std::back_inserter(buffer), "Sector#{}: DL_TTI.request slot={}.{}", sector_id, msg.sfn, msg.slot);
 
   for (const auto& pdu : msg.pdus) {
     switch (pdu.pdu_type) {
@@ -562,12 +557,7 @@ void srsran::fapi::log_ul_dci_request(const ul_dci_request_message& msg,
                                       srslog::basic_logger&         logger)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(std::back_inserter(buffer),
-                 "Sector#{}: UL_DCI.request slot={}.{}, is_last_message_in_slot={}",
-                 sector_id,
-                 msg.sfn,
-                 msg.slot,
-                 msg.is_last_message_in_slot);
+  fmt::format_to(std::back_inserter(buffer), "Sector#{}: UL_DCI.request slot={}.{}", sector_id, msg.sfn, msg.slot);
 
   for (const auto& pdu : msg.pdus) {
     switch (pdu.pdu_type) {

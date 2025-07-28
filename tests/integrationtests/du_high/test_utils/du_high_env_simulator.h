@@ -78,6 +78,7 @@ struct du_high_env_sim_params {
   std::optional<cell_config_builder_params> builder_params;
   std::optional<pucch_builder_params>       pucch_cfg;
   std::optional<unsigned>                   prach_frequency_start;
+  std::optional<srs_periodicity>            srs_period;
   bool                                      active_cells_on_start = true;
 };
 

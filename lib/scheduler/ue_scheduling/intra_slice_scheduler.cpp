@@ -753,10 +753,10 @@ unsigned intra_slice_scheduler::max_pdschs_to_alloc(const dl_ran_slice_candidate
   }
 
   // Determine how many PDCCHs can be allocated in this slot.
-  const auto& pdcch_res = cell_alloc[pdcch_slot].result;
-  pdschs_to_alloc       = std::min({pdschs_to_alloc,
-                                    static_cast<int>(MAX_DL_PDCCH_PDUS_PER_SLOT - pdcch_res.dl.dl_pdcchs.size()),
-                                    static_cast<int>(expert_cfg.max_pdcch_alloc_attempts_per_slot - dl_attempts_count)});
+  const auto& pdcch_res  = cell_alloc[pdcch_slot].result;
+  const int   max_pdcchs = std::min(static_cast<int>(MAX_DL_PDCCH_PDUS_PER_SLOT - pdcch_res.dl.dl_pdcchs.size()),
+                                  static_cast<int>(expert_cfg.max_pdcch_alloc_attempts_per_slot - dl_attempts_count));
+  pdschs_to_alloc        = std::min(pdschs_to_alloc, max_pdcchs);
   if (pdschs_to_alloc <= 0) {
     return 0;
   }
@@ -772,7 +772,7 @@ unsigned intra_slice_scheduler::max_pdschs_to_alloc(const dl_ran_slice_candidate
   }
 
   // Assume at least one RB per UE.
-  pdschs_to_alloc = std::min(pdschs_to_alloc, (int)slice.remaining_rbs());
+  pdschs_to_alloc = std::min(pdschs_to_alloc, static_cast<int>(slice.remaining_rbs()));
 
   return std::max(pdschs_to_alloc, 0);
 }
@@ -786,13 +786,12 @@ unsigned intra_slice_scheduler::max_puschs_to_alloc(const ul_ran_slice_candidate
   // We cannot allocate more than the number of UEs available.
   int puschs_to_alloc = slice.get_slice_ues().size();
 
-  // The max PUSCHs-per-slot limit cannot be exceeded.
+  // Determine how many PUSCHs can be allocated in this slot.
   const auto& pusch_res = cell_alloc[pusch_slot].result;
+  // The max PUSCHs-per-slot limit cannot be exceeded.
   // Note: We use signed integer to avoid unsigned overflow.
-  const int max_puschs = std::min(
-      static_cast<int>(std::min(static_cast<unsigned>(MAX_PUSCH_PDUS_PER_SLOT), expert_cfg.max_puschs_per_slot)),
-      puschs_to_alloc);
-  puschs_to_alloc = max_puschs - static_cast<int>(pusch_res.ul.puschs.size());
+  const int max_puschs = std::min(static_cast<unsigned>(MAX_PUSCH_PDUS_PER_SLOT), expert_cfg.max_puschs_per_slot);
+  puschs_to_alloc      = std::min(puschs_to_alloc, max_puschs - static_cast<int>(pusch_res.ul.puschs.size()));
   if (puschs_to_alloc <= 0) {
     return 0;
   }
@@ -805,17 +804,18 @@ unsigned intra_slice_scheduler::max_puschs_to_alloc(const ul_ran_slice_candidate
     return 0;
   }
 
-  // Assume at least one RB per UE.
-  puschs_to_alloc = std::min(puschs_to_alloc, static_cast<int>(slice.remaining_rbs()));
+  // Determine how many PDCCHs can be allocated in this slot.
+  const auto& pdcch_res  = cell_alloc[pdcch_slot].result;
+  const auto  max_pdcchs = std::min(static_cast<int>(MAX_UL_PDCCH_PDUS_PER_SLOT - pdcch_res.ul.puschs.size()),
+                                   static_cast<int>(expert_cfg.max_pdcch_alloc_attempts_per_slot - ul_attempts_count));
+  puschs_to_alloc        = std::min(puschs_to_alloc, max_pdcchs);
   if (puschs_to_alloc <= 0) {
     return 0;
   }
 
-  // Determine how many PDCCHs can be allocated in this slot.
-  const auto& pdcch_res = cell_alloc[pdcch_slot].result;
-  puschs_to_alloc       = std::min({puschs_to_alloc,
-                                    static_cast<int>(MAX_UL_PDCCH_PDUS_PER_SLOT - pdcch_res.dl.ul_pdcchs.size()),
-                                    static_cast<int>(expert_cfg.max_pdcch_alloc_attempts_per_slot - ul_attempts_count)});
+  // Assume at least one RB per UE.
+  puschs_to_alloc = std::min(puschs_to_alloc, static_cast<int>(slice.remaining_rbs()));
+
   return std::max(puschs_to_alloc, 0);
 }
 
@@ -826,7 +826,6 @@ void intra_slice_scheduler::update_used_dl_vrbs(const dl_ran_slice_candidate& sl
   const slice_ue_repository&       slice_ues    = slice.get_slice_ues();
   static constexpr search_space_id ue_ded_ss_id = to_search_space_id(2);
   const search_space_info&         ss_info      = slice_ues.begin()->get_cc().cfg().search_space(ue_ded_ss_id);
-  const auto&                      dl_crb_lims  = ss_info.dl_crb_lims;
 
   // [Implementation defined] We use the common PDSCH TD resources as a reference for the computation of RBs
   // unavailable for PDSCH. This assumes that these resources are not colliding with PDCCH.
@@ -845,8 +844,16 @@ void intra_slice_scheduler::update_used_dl_vrbs(const dl_ran_slice_candidate& sl
     }
   }
 
-  const prb_bitmap used_prbs =
-      cell_alloc[pdsch_slot].dl_res_grid.used_prbs(init_dl_bwp.generic_params.scs, dl_crb_lims, symbols_to_check);
+  prb_bitmap used_prbs = cell_alloc[pdsch_slot].dl_res_grid.used_prbs(
+      init_dl_bwp.generic_params.scs, ss_info.dl_crb_lims, symbols_to_check);
+  // Mark as used the PRBs that fall outside the CRB limits.
+  const auto prb_lims = crb_to_prb(ss_info.dl_crb_lims,
+                                   slice_ues.begin()->get_cc().cfg().cell_cfg_common.expert_cfg.ue.pdsch_crb_limits &
+                                       ss_info.dl_crb_lims);
+  if (not prb_lims.empty()) {
+    used_prbs.fill(0, prb_lims.start());
+    used_prbs.fill(prb_lims.stop(), used_prbs.size());
+  }
 
   // Perform inverse VRB-to-PRB mapping when interleaving is enabled for this slice/BWP.
   if (enable_pdsch_interleaving) {

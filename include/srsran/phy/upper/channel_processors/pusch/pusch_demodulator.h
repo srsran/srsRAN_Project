@@ -25,10 +25,10 @@
 
 #pragma once
 
+#include "srsran/phy/support/rb_allocation.h"
 #include "srsran/phy/upper/channel_estimation.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"
-#include "srsran/phy/upper/rb_allocation.h"
 #include "srsran/ran/sch/modulation_scheme.h"
 
 namespace srsran {

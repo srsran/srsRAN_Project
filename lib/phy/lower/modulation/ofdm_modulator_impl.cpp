@@ -42,8 +42,10 @@ ofdm_symbol_modulator_impl::ofdm_symbol_modulator_impl(ofdm_modulator_common_con
   phase_compensation_table(to_subcarrier_spacing(ofdm_config.numerology),
                            ofdm_config.cp,
                            ofdm_config.dft_size,
-                           ofdm_config.center_freq_hz,
-                           true)
+                           ofdm_config.center_freq_Hz,
+                           true),
+  current_center_freq_Hz(ofdm_config.center_freq_Hz),
+  next_center_freq_Hz(ofdm_config.center_freq_Hz)
 {
   srsran_assert(std::isnormal(scale), "Invalid scaling factor {}", scale);
   srsran_assert(
@@ -58,6 +60,13 @@ void ofdm_symbol_modulator_impl::modulate(span<cf_t>                  output,
                                           unsigned                    port_index,
                                           unsigned                    symbol_index)
 {
+  // Recalculate phase compensation if the center frequency has changed.
+  double center_freq_Hz = next_center_freq_Hz.load(std::memory_order::memory_order_relaxed);
+  if (center_freq_Hz != current_center_freq_Hz) {
+    phase_compensation_table = phase_compensation_lut(scs, cp, dft_size, center_freq_Hz, false);
+    current_center_freq_Hz   = center_freq_Hz;
+  }
+
   // Calculate number of symbols per slot.
   unsigned nsymb = get_nsymb_per_slot(cp);
 
@@ -89,11 +98,11 @@ void ofdm_symbol_modulator_impl::modulate(span<cf_t>                  output,
   // Execute DFT.
   span<const cf_t> dft_output = dft->run();
 
-  // Get phase correction (TS 138.211, Section 5.4)
+  // Get phase correction (TS138.211, Section 5.4)
   cf_t phase_compensation = phase_compensation_table.get_coefficient(symbol_index);
 
   // Apply scaling and phase compensation.
-  srsvec::sc_prod(dft_output, phase_compensation * scale, output.last(dft_size));
+  srsvec::sc_prod(output.last(dft_size), dft_output, phase_compensation * scale);
 
   // Copy cyclic prefix.
   srsvec::copy(output.first(cp_len), output.last(cp_len));

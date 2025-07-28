@@ -37,8 +37,10 @@ served_cell_info_s srsran::srs_du::make_asn1_served_cell_info(const du_served_ce
   f1ap_cell.five_gs_tac_present = true;
   f1ap_cell.five_gs_tac.from_number(served_cell.tac);
 
+  frequency_range freq_range = band_helper::get_freq_range(served_cell.dl_carrier.band);
+
   const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
-      MHz_to_bs_channel_bandwidth(served_cell.dl_carrier.carrier_bw_mhz), served_cell.scs_common, frequency_range::FR1);
+      MHz_to_bs_channel_bandwidth(served_cell.dl_carrier.carrier_bw_mhz), served_cell.scs_common, freq_range);
   const double absolute_freq_point_a = band_helper::get_abs_freq_point_a_from_f_ref(
       band_helper::nr_arfcn_to_freq(served_cell.dl_carrier.arfcn_f_ref), nof_crbs, served_cell.scs_common);
   if (served_cell.duplx_mode == duplex_mode::TDD) {
@@ -63,17 +65,13 @@ served_cell_info_s srsran::srs_du::make_asn1_served_cell_info(const du_served_ce
     fdd.ul_nr_freq_info.freq_band_list_nr[0].freq_band_ind_nr = nr_band_to_uint(served_cell.ul_carrier->band);
 
     fdd.dl_tx_bw.nr_scs.value = (nr_scs_opts::options)to_numerology_value(served_cell.scs_common);
-    unsigned nof_dl_crbs =
-        band_helper::get_n_rbs_from_bw(MHz_to_bs_channel_bandwidth(served_cell.dl_carrier.carrier_bw_mhz),
-                                       served_cell.scs_common,
-                                       frequency_range::FR1);
+    unsigned nof_dl_crbs      = band_helper::get_n_rbs_from_bw(
+        MHz_to_bs_channel_bandwidth(served_cell.dl_carrier.carrier_bw_mhz), served_cell.scs_common, freq_range);
     bool res = asn1::number_to_enum(fdd.dl_tx_bw.nr_nrb, nof_dl_crbs);
     srsran_assert(res, "Invalid number of CRBs for DL carrier BW");
     fdd.ul_tx_bw.nr_scs.value = (nr_scs_opts::options)to_numerology_value(served_cell.scs_common);
-    unsigned nof_ul_crbs =
-        band_helper::get_n_rbs_from_bw(MHz_to_bs_channel_bandwidth(served_cell.ul_carrier->carrier_bw_mhz),
-                                       served_cell.scs_common,
-                                       frequency_range::FR1);
+    unsigned nof_ul_crbs      = band_helper::get_n_rbs_from_bw(
+        MHz_to_bs_channel_bandwidth(served_cell.ul_carrier->carrier_bw_mhz), served_cell.scs_common, freq_range);
     res = asn1::number_to_enum(fdd.ul_tx_bw.nr_nrb, nof_ul_crbs);
     srsran_assert(res, "Invalid number of CRBs for DL carrier BW");
   }

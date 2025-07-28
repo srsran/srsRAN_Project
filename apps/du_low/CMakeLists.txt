@@ -34,9 +34,15 @@ target_link_libraries(srsdu_low_base PRIVATE
 
 target_include_directories(srsdu_low_base PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/external)
 
+if (DPDK_FOUND)
+    add_definitions(-DDPDK_FOUND)
+    target_link_libraries(srsdu_low_base PRIVATE hal_dpdk)
+endif (DPDK_FOUND)
+
+
 add_executable(srsdu_low du_low.cpp)
 add_backward(srsdu_low)
 target_include_directories(srsdu_low PRIVATE ${CMAKE_SOURCE_DIR})
 install(TARGETS srsdu_low RUNTIME)
-target_link_libraries(srsdu_low PRIVATE srsdu_low_base)
+target_link_libraries(srsdu_low PRIVATE srsdu_low_base srsran_flexible_o_du_low_split_6)
 notify_binary_target(srsdu_low)

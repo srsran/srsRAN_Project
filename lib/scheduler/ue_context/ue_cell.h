@@ -47,7 +47,8 @@ public:
           rnti_t                       crnti_val,
           const ue_cell_configuration& ue_cell_cfg_,
           cell_harq_manager&           cell_harq_pool,
-          ue_drx_controller&           drx_ctrl);
+          ue_drx_controller&           drx_ctrl,
+          std::optional<slot_point>    msg3_slot_rx);
 
   const du_ue_index_t   ue_index;
   const du_cell_index_t cell_index;
@@ -168,6 +169,14 @@ public:
   /// \brief Returns an estimated UL rate in bytes per slot based on the given input parameters.
   double get_estimated_ul_rate(const pusch_config_params& pusch_cfg, sch_mcs_index mcs, unsigned nof_prbs) const;
 
+  bool is_conres_complete() const { return conres_procedure.complete; }
+
+  /// Sets the Contention Resolution procedure state as started (if "false") or complete (if "true").
+  void set_conres_state(bool state);
+
+  /// Returns the slot in which the MSG3 was received, if available; if not, returns a non-valid slot_point.
+  slot_point get_msg3_rx_slot() const { return conres_procedure.msg3_rx_slot.value_or(slot_point{}); }
+
 private:
   /// \brief Performs link adaptation procedures such as cancelling HARQs etc.
   void apply_link_adaptation_procedures(const csi_report_data& csi_report);
@@ -179,12 +188,24 @@ private:
   ue_drx_controller&                drx_ctrl;
   srslog::basic_logger&             logger;
 
+  /// \brief Tracks state of the Contention Resolution procedure for RACHs where MSG3 contains a MAC CE with ConRes.
+  struct conres_state {
+    /// \brief Whether the MAC CE Contention Resolution has been transmitted and acked by the UE.
+    bool complete = false;
+
+    /// MSG3 rx-slot, if available. Used to issue a warning if the ConRes doesn't get scheduled on time.
+    std::optional<slot_point> msg3_rx_slot = std::nullopt;
+  };
+
   /// \brief Whether cell is currently active.
   bool active = true;
 
   /// Fallback state of the UE. When in "fallback" mode, only the search spaces and the configuration of
   /// cellConfigCommon are used.
   bool in_fallback_mode = true;
+
+  // This is not used in case of RACH followed by a MSG3 with MAC CE C-RNTI.
+  conres_state conres_procedure;
 
   ue_channel_state_manager channel_state;
 

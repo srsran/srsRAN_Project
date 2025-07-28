@@ -35,6 +35,7 @@ public:
   virtual ~f1u_tx_sdu_handler() = default;
 
   virtual void handle_sdu(byte_buffer_chain sdu) = 0;
+  virtual void flush_ul_buffer()                 = 0;
 };
 
 } // namespace srs_du

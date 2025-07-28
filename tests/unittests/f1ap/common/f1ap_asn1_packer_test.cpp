@@ -22,13 +22,12 @@
 
 #include "lib/f1ap/f1ap_asn1_packer.h"
 #include "test_helpers.h"
-#include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
+#include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/unittests/gateways/test_helpers.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
-using namespace srs_cu_cp;
 
 /// Fixture class for F1AP ASN1 packer
 class f1ap_asn1_packer_test : public ::testing::Test

@@ -119,14 +119,14 @@ public:
                const pdu_t&                                                    pdu) override
   {
     // Try to get a worker.
-    std::optional<unsigned> index;
-
+    unsigned index;
+    bool     popped = false;
     do {
-      index = free_list.try_pop();
-    } while (blocking && !index.has_value());
+      popped = free_list.try_pop(index);
+    } while (blocking && !popped);
 
     // If no worker is available.
-    if (!index.has_value()) {
+    if (!popped) {
       logger.warning(
           pdu.slot.sfn(), pdu.slot.slot_index(), "Insufficient number of PDSCH processors. Dropping PDSCH {:s}.", pdu);
       notifier.on_finish_processing();
@@ -134,7 +134,7 @@ public:
     }
 
     // Process PDSCH.
-    processors[*index].process(grid, notifier, std::move(data), pdu);
+    processors[index].process(grid, notifier, std::move(data), pdu);
   }
 
 private:

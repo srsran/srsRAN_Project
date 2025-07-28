@@ -30,13 +30,15 @@ using namespace srsran::srs_cu_cp;
 using namespace asn1::rrc_nr;
 
 handover_reconfiguration_routine::handover_reconfiguration_routine(
-    const rrc_reconfiguration_procedure_request& request_,
-    const ue_index_t&                            target_ue_index_,
-    cu_cp_ue&                                    source_ue_,
-    f1ap_ue_context_manager&                     source_f1ap_ue_ctxt_mng_,
-    cu_cp_ue_context_manipulation_handler&       cu_cp_handler_,
-    srslog::basic_logger&                        logger_) :
+    const rrc_reconfiguration_procedure_request&    request_,
+    const e1ap_bearer_context_modification_request& target_bearer_context_modification_request_,
+    const ue_index_t&                               target_ue_index_,
+    cu_cp_ue&                                       source_ue_,
+    f1ap_ue_context_manager&                        source_f1ap_ue_ctxt_mng_,
+    cu_cp_ue_context_manipulation_handler&          cu_cp_handler_,
+    srslog::basic_logger&                           logger_) :
   request(request_),
+  target_bearer_context_modification_request(target_bearer_context_modification_request_),
   target_ue_index(target_ue_index_),
   source_ue(source_ue_),
   source_f1ap_ue_ctxt_mng(source_f1ap_ue_ctxt_mng_),
@@ -51,7 +53,7 @@ void handover_reconfiguration_routine::operator()(coro_context<async_task<bool>>
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("source_ue={} target_ue={}: \"{}\" initialized", source_ue.get_ue_index(), target_ue_index, name());
+  logger.debug("source_ue={} target_ue={}: \"{}\" started...", source_ue.get_ue_index(), target_ue_index, name());
 
   // Get RRC handover reconfiguration context.
   ho_reconf_ctxt = source_ue.get_rrc_ue()->get_rrc_ue_handover_reconfiguration_context(request);
@@ -73,8 +75,11 @@ void handover_reconfiguration_routine::operator()(coro_context<async_task<bool>>
   initialize_handover_ue_release_timer(source_ue.get_ue_index());
 
   // Notify CU-CP that RRC reconfiguration was sent.
-  cu_cp_handler.handle_handover_reconfiguration_sent(
-      {target_ue_index, source_ue.get_ue_index(), (uint8_t)ho_reconf_ctxt.transaction_id, target_ue_release_timeout});
+  cu_cp_handler.handle_handover_reconfiguration_sent({target_ue_index,
+                                                      source_ue.get_ue_index(),
+                                                      (uint8_t)ho_reconf_ctxt.transaction_id,
+                                                      target_ue_release_timeout,
+                                                      target_bearer_context_modification_request});
 
   // Store handover context in case of for possible re-establishment.
   logger.debug("ue={}: Storing handover context", source_ue.get_ue_index());
@@ -83,7 +88,8 @@ void handover_reconfiguration_routine::operator()(coro_context<async_task<bool>>
   ue_ho_ctxt.rrc_reconfig_transaction_id = (uint8_t)ho_reconf_ctxt.transaction_id;
   source_ue.get_ho_context()             = ue_ho_ctxt;
 
-  logger.debug("source_ue={} target_ue={}: \"{}\" finalized", source_ue.get_ue_index(), target_ue_index, name());
+  logger.debug(
+      "source_ue={} target_ue={}: \"{}\" finished successfully", source_ue.get_ue_index(), target_ue_index, name());
 
   CORO_RETURN(true);
 }

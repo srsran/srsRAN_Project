@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/blocking_queue.h"
+#include "srsran/adt/detail/concurrent_queue_helper.h"
 #include "srsran/adt/detail/concurrent_queue_params.h"
 
 namespace srsran {
@@ -35,6 +36,7 @@ public:
   using value_type                                           = T;
   constexpr static concurrent_queue_policy      queue_policy = concurrent_queue_policy::locking_mpmc;
   constexpr static concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::non_blocking;
+  using consumer_type                                        = detail::basic_queue_consumer<concurrent_queue, T>;
 
   explicit concurrent_queue(size_t qsize) : queue(qsize) {}
 
@@ -42,17 +44,16 @@ public:
   /// \return true if the element was pushed, false otherwise.
   [[nodiscard]] bool try_push(const T& elem) { return queue.try_push(elem); }
   [[nodiscard]] bool try_push(T&& elem) { return queue.try_push(std::move(elem)).has_value(); }
-
-  [[nodiscard]] std::optional<T> try_pop()
+  template <typename U>
+  [[nodiscard]] size_t try_push_bulk(span<U> batch)
   {
-    std::optional<T> t;
-    if (not queue.try_pop(t.emplace())) {
-      t.reset();
-    }
-    return t;
+    return detail::queue_helper::try_push_bulk_generic(*this, batch);
   }
 
   [[nodiscard]] bool try_pop(T& elem) { return queue.try_pop(elem); }
+
+  /// \brief Pops a batch of elements from the queue in a non-blocking fashion.
+  [[nodiscard]] size_t try_pop_bulk(span<T> batch) { return detail::queue_helper::try_pop_bulk_generic(*this, batch); }
 
   void clear() { queue.clear(); }
 
@@ -61,6 +62,8 @@ public:
   [[nodiscard]] bool empty() const { return queue.empty(); }
 
   [[nodiscard]] size_t capacity() const { return queue.max_size(); }
+
+  consumer_type create_consumer() { return consumer_type(*this); }
 
 protected:
   blocking_queue<T> queue;
@@ -78,6 +81,7 @@ public:
   using value_type                                           = T;
   constexpr static concurrent_queue_policy      queue_policy = concurrent_queue_policy::locking_mpmc;
   constexpr static concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::condition_variable;
+  using consumer_type                                        = detail::basic_queue_consumer<concurrent_queue, T>;
 
   // Inherited methods.
   using non_blocking_base_type::capacity;
@@ -86,6 +90,7 @@ public:
   using non_blocking_base_type::non_blocking_base_type;
   using non_blocking_base_type::size;
   using non_blocking_base_type::try_pop;
+  using non_blocking_base_type::try_pop_bulk;
   using non_blocking_base_type::try_push;
 
   /// \brief Request any blocking function to be interrupted.
@@ -100,6 +105,12 @@ public:
     elem         = this->queue.pop_blocking(&success);
     return success;
   }
+  bool pop_blocking(T& elem, std::chrono::microseconds wait_time)
+  {
+    bool success = false;
+    elem         = this->queue.pop_wait_for(&success, wait_time);
+    return success;
+  }
 
   /// Pops an element from the queue. If the queue is empty, the call blocks, waiting for a new element to be pushed.
   std::optional<T> pop_blocking() noexcept
@@ -110,6 +121,8 @@ public:
     }
     return ret;
   }
+
+  consumer_type create_consumer() { return consumer_type(*this); }
 };
 
 } // namespace srsran

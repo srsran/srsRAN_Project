@@ -60,15 +60,15 @@ protected:
   /// Indicates the number of channels per stream.
   unsigned nof_channels;
   /// Indicates the transmit center frequency for all ports.
-  double tx_freq_hz;
+  double tx_freq_Hz;
   /// Indicates the transmit gain for all ports in decibels.
   double tx_gain_db;
   /// Provides a list for all the transmit ports addresses.
   std::vector<std::string> tx_addresses;
   /// Sampling rate in hertz.
-  double sample_rate_hz;
+  double sampling_rate_Hz;
   /// Indicates the receive center frequency for all ports.
-  double rx_freq_hz;
+  double rx_freq_Hz;
   /// Indicates the receive gain for all ports in decibels.
   double rx_gain_db;
   /// Provides a list for all the receive ports addresses.
@@ -138,11 +138,11 @@ protected:
     rx_addresses       = get_zmq_ports(nof_ports);
 
     // Fix parameters.
-    sample_rate_hz = 3.84e6;
-    tx_freq_hz     = 3.5e9;
-    tx_gain_db     = 60.0;
-    rx_freq_hz     = 3.5e9;
-    rx_gain_db     = 60.0;
+    sampling_rate_Hz = 3.84e6;
+    tx_freq_Hz       = 3.5e9;
+    tx_gain_db       = 60.0;
+    rx_freq_Hz       = 3.5e9;
+    rx_gain_db       = 60.0;
 
     // Setup random generators.
     for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
@@ -173,7 +173,7 @@ TEST_P(RadioZmqE2EFixture, RadioZmqE2EFlow)
     radio_configuration::stream stream_config;
     for (unsigned channel_id = 0; channel_id != nof_channels; ++channel_id, ++port_index) {
       radio_configuration::channel channel_config;
-      channel_config.freq.center_frequency_hz = tx_freq_hz;
+      channel_config.freq.center_frequency_Hz = tx_freq_Hz;
       channel_config.gain_dB                  = tx_gain_db;
       channel_config.args                     = tx_addresses[port_index];
       stream_config.channels.push_back(channel_config);
@@ -185,7 +185,7 @@ TEST_P(RadioZmqE2EFixture, RadioZmqE2EFlow)
     radio_configuration::stream stream_config;
     for (unsigned channel_id = 0; channel_id != nof_channels; ++channel_id, ++port_index) {
       radio_configuration::channel channel_config;
-      channel_config.freq.center_frequency_hz = rx_freq_hz;
+      channel_config.freq.center_frequency_Hz = rx_freq_Hz;
       channel_config.gain_dB                  = rx_gain_db;
       channel_config.args                     = rx_addresses[port_index];
       stream_config.channels.push_back(channel_config);
@@ -193,7 +193,7 @@ TEST_P(RadioZmqE2EFixture, RadioZmqE2EFlow)
     radio_config.rx_streams.push_back(stream_config);
   }
   radio_config.log_level        = log_level;
-  radio_config.sampling_rate_hz = sample_rate_hz;
+  radio_config.sampling_rate_Hz = sampling_rate_Hz;
   radio_config.tx_mode          = radio_configuration::transmission_mode::continuous;
 
   // Notifier.
@@ -206,7 +206,7 @@ TEST_P(RadioZmqE2EFixture, RadioZmqE2EFlow)
   // Calculate starting time.
   double                     delay_s      = 0.1;
   baseband_gateway_timestamp current_time = session->read_current_time();
-  baseband_gateway_timestamp start_time = current_time + static_cast<uint64_t>(delay_s * radio_config.sampling_rate_hz);
+  baseband_gateway_timestamp start_time = current_time + static_cast<uint64_t>(delay_s * radio_config.sampling_rate_Hz);
 
   // Start processing.
   session->start(start_time);

@@ -24,7 +24,6 @@
 #include "du_processor_test_helpers.h"
 #include "lib/cu_cp/du_processor/du_processor.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
-#include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include <gtest/gtest.h>
@@ -115,7 +114,7 @@ protected:
 
   static f1ap_message create_valid_ue_creation_message()
   {
-    return test_helpers::create_init_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t{0}, rnti_t::MIN_CRNTI);
+    return test_helpers::generate_init_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t{0}, rnti_t::MIN_CRNTI);
   }
 };
 

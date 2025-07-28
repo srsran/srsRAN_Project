@@ -22,19 +22,26 @@
 
 #pragma once
 
-#include "srsran/asn1/asn1_utils.h"
 #include "srsran/du/du_high/du_manager/du_configurator.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2sm/e2sm.h"
-#include <map>
 
 namespace srsran {
+
+namespace srs_du {
+
+class du_configurator;
+class f1ap_ue_id_translator;
+
+} // namespace srs_du
 
 class e2sm_rc_control_action_du_executor_base : public e2sm_control_action_executor
 {
 public:
   e2sm_rc_control_action_du_executor_base() = delete;
-  e2sm_rc_control_action_du_executor_base(srs_du::du_configurator& du_configurator_, uint32_t action_id_);
+  e2sm_rc_control_action_du_executor_base(srs_du::du_configurator&       du_configurator_,
+                                          srs_du::f1ap_ue_id_translator& f1ap_ue_id_translator_,
+                                          uint32_t                       action_id_);
   virtual ~e2sm_rc_control_action_du_executor_base() = default;
 
   asn1::e2sm::ran_function_definition_ctrl_action_item_s get_control_action_definition() override;
@@ -46,15 +53,17 @@ public:
   async_task<e2sm_ric_control_response> return_ctrl_failure(const e2sm_ric_control_request& req);
 
 protected:
-  srslog::basic_logger&    logger;
-  uint32_t                 action_id;
-  srs_du::du_configurator& du_param_configurator;
+  srslog::basic_logger&          logger;
+  uint32_t                       action_id;
+  srs_du::du_configurator&       du_param_configurator;
+  srs_du::f1ap_ue_id_translator& f1ap_ue_id_provider;
 };
 
 class e2sm_rc_control_action_2_6_du_executor : public e2sm_rc_control_action_du_executor_base
 {
 public:
-  e2sm_rc_control_action_2_6_du_executor(srs_du::du_configurator& du_configurator_);
+  e2sm_rc_control_action_2_6_du_executor(srs_du::du_configurator&       du_configurator_,
+                                         srs_du::f1ap_ue_id_translator& f1ap_ue_id_translator_);
   virtual ~e2sm_rc_control_action_2_6_du_executor() = default;
 
   /// e2sm_control_request_executor functions.

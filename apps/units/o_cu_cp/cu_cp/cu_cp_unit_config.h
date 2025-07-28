@@ -52,7 +52,7 @@ struct cu_cp_unit_supported_ta_item {
 };
 
 struct cu_cp_unit_amf_config_item {
-  std::string ip_addr                = "127.0.0.1";
+  std::string ip_addr                = "127.0.1.100";
   uint16_t    port                   = 38412;
   std::string bind_addr              = "127.0.0.1";
   std::string bind_interface         = "auto";
@@ -267,7 +267,8 @@ struct cu_cp_unit_qos_config {
 
 /// Configuration to enable/disable metrics per layer.
 struct cu_cp_unit_metrics_layer_config {
-  bool enable_pdcp = false;
+  bool enable_pdcp           = false;
+  bool enable_cu_cp_executor = false;
 
   /// Returns true if one or more layers are enabled, false otherwise.
   bool are_metrics_enabled() const { return enable_pdcp; }

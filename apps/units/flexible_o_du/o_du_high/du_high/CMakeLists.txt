@@ -22,6 +22,7 @@ add_subdirectory(metrics)
 
 set(SOURCES
         du_high_config_cli11_schema.cpp
+        du_high_config_cli11_ntn_schema.cpp
         du_high_config_translators.cpp
         du_high_config_validator.cpp
         du_high_config_yaml_writer.cpp

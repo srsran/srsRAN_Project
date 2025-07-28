@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/fapi/slot_error_message_notifier.h"
+#include "srsran/fapi/error_message_notifier.h"
 #include "srsran/phy/upper/upper_phy_error_notifier.h"
 #include <functional>
 
@@ -47,15 +47,15 @@ public:
   // See interface for documentation.
   void on_late_prach_message(slot_point prach_msg_slot) override;
 
-  /// Configures the FAPI slot-based, error-specific notifier to the given one.
-  void set_slot_error_message_notifier(fapi::slot_error_message_notifier& fapi_error_notifier)
+  /// Configures the FAPI error-specific notifier to the given one.
+  void set_error_message_notifier(fapi::error_message_notifier& fapi_error_notifier)
   {
     error_notifier = std::ref(fapi_error_notifier);
   }
 
 private:
   /// Error indication notifier.
-  std::reference_wrapper<fapi::slot_error_message_notifier> error_notifier;
+  std::reference_wrapper<fapi::error_message_notifier> error_notifier;
 };
 
 } // namespace fapi_adaptor

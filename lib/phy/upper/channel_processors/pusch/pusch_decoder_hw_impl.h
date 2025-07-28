@@ -35,8 +35,9 @@
 #include "srsran/phy/upper/codeblock_metadata.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/memory_pool/concurrent_thread_local_object_pool.h"
+#include "srsran/support/memory_pool/bounded_object_pool.h"
 
 namespace srsran {
 
@@ -54,7 +55,7 @@ class pusch_decoder_hw_impl : public pusch_decoder, private pusch_decoder_buffer
 {
 public:
   /// Code block decoder pool type.
-  using hw_decoder_pool = concurrent_thread_local_object_pool<hal::hw_accelerator_pusch_dec>;
+  using hw_decoder_pool = bounded_unique_object_pool<hal::hw_accelerator_pusch_dec>;
 
   /// CRC calculators used in shared channels.
   struct sch_crc {
@@ -80,6 +81,7 @@ public:
                         sch_crc&                           c,
                         std::shared_ptr<hw_decoder_pool>   decoder_pool_,
                         task_executor*                     executor_) :
+    logger(srslog::fetch_basic_logger("PHY")),
     segmenter(std::move(seg)),
     crc_set({std::move(c.crc16), std::move(c.crc24A), std::move(c.crc24B)}),
     decoder_pool(std::move(decoder_pool_)),
@@ -114,6 +116,7 @@ public:
   }
 
 private:
+  srslog::basic_logger& logger;
   /// Pointer to an LDPC segmenter.
   std::unique_ptr<ldpc_segmenter_rx> segmenter;
   /// \brief Pointer to a CRC calculator for TB-wise checksum.
@@ -177,7 +180,7 @@ private:
   /// \brief Copies the decoded bits and notifies the end of the operation.
   /// \param[in,out] decoder Hardware decoder used to process the codeblocks.
   /// \param[in]     cb_crcs Set of CRC flags.
-  void copy_tb_and_notify(hal::hw_accelerator_pusch_dec& decoder, span<const bool> cb_crcs);
+  void copy_tb_and_notify(hw_decoder_pool::ptr decoder, span<const bool> cb_crcs);
 
   /// \brief Sets the segmentation and decoding parameters required by the hardware-accelerated PUSCH decoder function.
   /// \param[in,out] decoder          Selected hardware decoder to configure.

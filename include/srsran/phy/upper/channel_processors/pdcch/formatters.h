@@ -54,15 +54,15 @@ struct formatter<srsran::pdcch_processor::coreset_description> {
 
     switch (coreset.cce_to_reg_mapping) {
       case srsran::pdcch_processor::cce_to_reg_mapping_type::CORESET0:
-        helper.format_if_verbose(ctx, "mapping=coreset0");
+        helper.format_if_verbose(ctx, "cce_to_reg_map=coreset0");
         break;
       case srsran::pdcch_processor::cce_to_reg_mapping_type::INTERLEAVED:
-        helper.format_if_verbose(ctx, "mapping=interleaved");
+        helper.format_if_verbose(ctx, "cce_to_reg_map=interleaved");
         helper.format_if_verbose(ctx, "reg_bundle_size={}", coreset.reg_bundle_size);
         helper.format_if_verbose(ctx, "interleaver_size={}", coreset.interleaver_size);
         break;
       case srsran::pdcch_processor::cce_to_reg_mapping_type::NON_INTERLEAVED:
-        helper.format_if_verbose(ctx, "mapping=non-interleaved");
+        helper.format_if_verbose(ctx, "cce_to_reg_map=non-interleaved");
         break;
     }
 

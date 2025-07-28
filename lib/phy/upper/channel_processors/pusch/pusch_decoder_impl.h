@@ -28,8 +28,9 @@
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/ran/pusch/pusch_constants.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/memory_pool/concurrent_thread_local_object_pool.h"
+#include "srsran/support/memory_pool/bounded_object_pool.h"
 #include <atomic>
 
 namespace srsran {
@@ -45,7 +46,7 @@ class pusch_decoder_impl : public pusch_decoder, private pusch_decoder_buffer
 {
 public:
   /// Code block decoder pool type.
-  using codeblock_decoder_pool = concurrent_thread_local_object_pool<pusch_codeblock_decoder>;
+  using codeblock_decoder_pool = bounded_unique_object_pool<pusch_codeblock_decoder>;
 
   /// CRC calculators used in shared channels.
   struct sch_crc {
@@ -76,7 +77,7 @@ public:
                      task_executor*                          executor_,
                      unsigned                                nof_prb,
                      unsigned                                nof_layers) :
-
+    logger(srslog::fetch_basic_logger("PHY")),
     segmenter(std::move(segmenter_)),
     decoder_pool(std::move(decoder_pool_)),
     crc_set(std::move(crc_set_)),
@@ -91,11 +92,6 @@ public:
     srsran_assert(crc_set.crc16->get_generator_poly() == crc_generator_poly::CRC16, "Wrong TB CRC calculator.");
     srsran_assert(crc_set.crc24A->get_generator_poly() == crc_generator_poly::CRC24A, "Wrong TB CRC calculator.");
     srsran_assert(crc_set.crc24B->get_generator_poly() == crc_generator_poly::CRC24B, "Wrong TB CRC calculator.");
-    if (executor != nullptr) {
-      srsran_assert(decoder_pool->capacity() > 1,
-                    "The number of PUSCH code block decoder in the pool (i.e., {}) must be greater than one.",
-                    decoder_pool->capacity());
-    }
   }
 
   // See interface for the documentation.
@@ -151,6 +147,7 @@ private:
     }
   }
 
+  srslog::basic_logger& logger;
   /// Current internal state.
   std::atomic<internal_states> current_state = {internal_states::idle};
   /// Pointer to an LDPC segmenter.

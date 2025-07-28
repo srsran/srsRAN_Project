@@ -31,6 +31,8 @@ slot_point srsran::precompute_type0_pdcch_css_n0(uint8_t                   searc
                                                  subcarrier_spacing        scs_common,
                                                  unsigned                  ssb_index)
 {
+  bool is_fr2 = band_helper::get_freq_range(cell_cfg.band) == frequency_range::FR2;
+
   const pdcch_type0_css_coreset_description coreset0_param =
       pdcch_type0_css_coreset_get(cell_cfg.dl_carrier.band,
                                   cell_cfg.ssb_cfg.scs,
@@ -44,12 +46,9 @@ slot_point srsran::precompute_type0_pdcch_css_n0(uint8_t                   searc
   // Get Coreset0 num of symbols from Coreset0 config.
   const unsigned nof_symb_coreset0 = coreset0_param.nof_rb_coreset;
 
-  srsran_assert(band_helper::get_freq_range(cell_cfg.dl_carrier.band) == frequency_range::FR1,
-                "Only bands in FR1 supported.");
-
   const pdcch_type0_css_occasion_pattern1_description ss0_config_occasion_param =
       pdcch_type0_css_occasions_get_pattern1(pdcch_type0_css_occasion_pattern1_configuration{
-          .is_fr2 = false, .ss_zero_index = searchspace0, .nof_symb_coreset = nof_symb_coreset0});
+          .is_fr2 = is_fr2, .ss_zero_index = searchspace0, .nof_symb_coreset = nof_symb_coreset0});
 
   const auto pdcch_slot = get_type0_pdcch_css_n0(
       static_cast<unsigned>(ss0_config_occasion_param.offset), ss0_config_occasion_param.M, scs_common, ssb_index);

@@ -48,16 +48,16 @@ private:
   /// Defines the maximum number of short sequences.
   static constexpr unsigned NOF_ZC_SEQ = 30;
 
-  /// Defines Phi values for M_sc=6 Table 5.2.2.2-1 in TS 38.211.
+  /// Defines Phi values for M_sc=6 Table 5.2.2.2-1 in TS38.211.
   static const std::array<std::array<int, 6>, NOF_ZC_SEQ> phi_M_sc_6;
 
-  /// Defines Phi values for M_sc=12 Table 5.2.2.2-2 in TS 38.211.
+  /// Defines Phi values for M_sc=12 Table 5.2.2.2-2 in TS38.211.
   static const std::array<std::array<int, 12>, NOF_ZC_SEQ> phi_M_sc_12;
 
-  /// Defines Phi values for M_sc=18 Table 5.2.2.2-3 in TS 38.211.
+  /// Defines Phi values for M_sc=18 Table 5.2.2.2-3 in TS38.211.
   static const std::array<std::array<int, 18>, NOF_ZC_SEQ> phi_M_sc_18;
 
-  /// Defines Phi values for M_sc=24 Table 5.2.2.2-4 in TS 38.211.
+  /// Defines Phi values for M_sc=24 Table 5.2.2.2-4 in TS38.211.
   static const std::array<std::array<int, 24>, NOF_ZC_SEQ> phi_M_sc_24;
 
   /// \brief Gets argument for the sequence \f$r^{(\alpha, \beta)}_{u,v}(n)\f$ for base sequences of length 30.

@@ -20,12 +20,12 @@
  *
  */
 
-#include "config_message_gateway_impl.h"
 #include "config_message_validator.h"
+#include "configuration_procedure.h"
 #include "srsran/fapi/config_message_notifier.h"
+#include "srsran/fapi/error_message_notifier.h"
 #include "srsran/fapi/messages/config_messages.h"
 #include "srsran/fapi/messages/error_indication.h"
-#include "srsran/fapi/slot_error_message_notifier.h"
 
 using namespace srsran;
 using namespace fapi;
@@ -52,7 +52,7 @@ public:
   }
 };
 
-class slot_error_message_notifier_dummy : public slot_error_message_notifier
+class error_message_notifier_dummy : public error_message_notifier
 {
 public:
   void on_error_indication(const error_indication_message& msg) override
@@ -71,10 +71,10 @@ public:
 } // namespace
 
 static config_message_notifier_dummy         dummy_msg_notifier;
-static slot_error_message_notifier_dummy     dummy_error_msg_notifier;
+static error_message_notifier_dummy          dummy_error_msg_notifier;
 static cell_operation_request_notifier_dummy dummy_cell_operation_notifier;
 
-config_message_gateway_impl::config_message_gateway_impl(srslog::basic_logger& logger_) :
+configuration_procedure::configuration_procedure(srslog::basic_logger& logger_) :
   logger(logger_),
   notifier(&dummy_msg_notifier),
   error_notifier(&dummy_error_msg_notifier),
@@ -82,7 +82,7 @@ config_message_gateway_impl::config_message_gateway_impl(srslog::basic_logger& l
 {
 }
 
-void config_message_gateway_impl::param_request(const fapi::param_request& msg)
+void configuration_procedure::param_request(const fapi::param_request& msg)
 {
   // Do nothing for the PARAM.response.
   param_response reponse;
@@ -94,7 +94,7 @@ void config_message_gateway_impl::param_request(const fapi::param_request& msg)
   notifier->on_param_response(reponse);
 }
 
-void config_message_gateway_impl::config_request(const fapi::config_request& msg)
+void configuration_procedure::config_request(const fapi::config_request& msg)
 {
   cell_status current_status = status;
 
@@ -116,7 +116,7 @@ void config_message_gateway_impl::config_request(const fapi::config_request& msg
   notifier->on_config_response(reponse);
 }
 
-void config_message_gateway_impl::start_request(const fapi::start_request& msg)
+void configuration_procedure::start_request(const fapi::start_request& msg)
 {
   cell_status current_status = status;
 
@@ -143,7 +143,7 @@ void config_message_gateway_impl::start_request(const fapi::start_request& msg)
   status = cell_status::RUNNING;
 }
 
-void config_message_gateway_impl::stop_request(const fapi::stop_request& msg)
+void configuration_procedure::stop_request(const fapi::stop_request& msg)
 {
   cell_status current_status = status;
 
@@ -166,7 +166,7 @@ void config_message_gateway_impl::stop_request(const fapi::stop_request& msg)
   notifier->on_stop_indication(indication);
 }
 
-bool config_message_gateway_impl::update_cell_config(const fapi::config_request& msg)
+bool configuration_procedure::update_cell_config(const fapi::config_request& msg)
 {
   // Validate the config request message contents before updating.
   if (!validate_config_request_message(msg, logger)) {

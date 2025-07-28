@@ -65,6 +65,8 @@ struct ue_capability_summary {
   bool long_drx_cycle_supported = false;
   /// Set to true if Short DRX cycle is supported.
   bool short_drx_cycle_supported = false;
+  /// Set to true if UE supports \c interleavingVRB-ToPRB-PDSCH, as per TS 38.306, Section 4.2.7.10.
+  bool pdsch_interleaving_vrb_to_prb_supported = false;
 };
 
 } // namespace srs_du

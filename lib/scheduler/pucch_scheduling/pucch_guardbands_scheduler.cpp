@@ -29,6 +29,15 @@ using namespace srsran;
 pucch_guardbands_scheduler::pucch_guardbands_scheduler(const cell_configuration& cell_cfg_) :
   cell_cfg{cell_cfg_}, logger(srslog::fetch_basic_logger("SCHED"))
 {
+  prb_bitmap pucch_prbs(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
+
+  for (const auto& pucch_res : cell_cfg.pucch_guardbands) {
+    for (unsigned prb = pucch_res.prbs.start(), prb_end = pucch_res.prbs.stop(); prb != prb_end; ++prb) {
+      pucch_prbs.set(prb);
+    }
+  }
+
+  logger.info("Available PRBs for PUSCH in cell with pci={} are {:i}.", cell_cfg.pci, ~pucch_prbs);
 }
 
 void pucch_guardbands_scheduler::allocate_pucch_guardbands(cell_slot_resource_allocator& slot_alloc)

@@ -21,8 +21,8 @@
  */
 
 #include "srsran/phy/upper/upper_phy_factories.h"
+#include "downlink_processor_multi_executor_impl.h"
 #include "downlink_processor_pool_impl.h"
-#include "downlink_processor_single_executor_impl.h"
 #include "metrics/upper_phy_metrics_collector_impl.h"
 #include "uplink_processor_impl.h"
 #include "uplink_processor_pool_impl.h"
@@ -189,14 +189,18 @@ public:
     std::unique_ptr<prs_generator> prs_gen = prs_gen_factory->create();
     report_fatal_error_if_not(prs_gen, "Invalid PRS generator.");
 
-    return std::make_unique<downlink_processor_single_executor_impl>(*config.gateway,
-                                                                     std::move(pdcch),
-                                                                     std::move(pdsch),
-                                                                     std::move(ssb),
-                                                                     std::move(nzp_csi),
-                                                                     std::move(prs_gen),
-                                                                     *config.executor,
-                                                                     srslog::fetch_basic_logger("PHY"));
+    return std::make_unique<downlink_processor_multi_executor_impl>(*config.gateway,
+                                                                    std::move(pdcch),
+                                                                    std::move(pdsch),
+                                                                    std::move(ssb),
+                                                                    std::move(nzp_csi),
+                                                                    std::move(prs_gen),
+                                                                    *config.pdcch_executor,
+                                                                    *config.pdsch_executor,
+                                                                    *config.ssb_executor,
+                                                                    *config.csi_rs_executor,
+                                                                    *config.prs_executor,
+                                                                    srslog::fetch_basic_logger("PHY"));
   }
 
   // See interface for documentation.
@@ -233,14 +237,18 @@ public:
     }
     report_fatal_error_if_not(prs_gen, "Invalid PRS generator.");
 
-    return std::make_unique<downlink_processor_single_executor_impl>(*config.gateway,
-                                                                     std::move(pdcch),
-                                                                     std::move(pdsch),
-                                                                     std::move(ssb),
-                                                                     std::move(nzp_csi),
-                                                                     std::move(prs_gen),
-                                                                     *config.executor,
-                                                                     srslog::fetch_basic_logger("PHY"));
+    return std::make_unique<downlink_processor_multi_executor_impl>(*config.gateway,
+                                                                    std::move(pdcch),
+                                                                    std::move(pdsch),
+                                                                    std::move(ssb),
+                                                                    std::move(nzp_csi),
+                                                                    std::move(prs_gen),
+                                                                    *config.pdcch_executor,
+                                                                    *config.pdsch_executor,
+                                                                    *config.ssb_executor,
+                                                                    *config.csi_rs_executor,
+                                                                    *config.prs_executor,
+                                                                    srslog::fetch_basic_logger("PHY"));
   }
 
   std::unique_ptr<downlink_pdu_validator> create_pdu_validator() override
@@ -280,12 +288,13 @@ create_downlink_processor_pool(std::shared_ptr<downlink_processor_factory> facto
     downlink_processor_pool_config::downlink_processor_set info = {to_subcarrier_spacing(numerology), {}};
 
     for (unsigned i_proc = 0, nof_procs = config.nof_dl_processors; i_proc != nof_procs; ++i_proc) {
-      downlink_processor_config processor_config;
-      processor_config.id      = i_proc;
-      processor_config.gateway = config.rg_gateway;
-
-      // Assign the same executor to each DL processor.
-      processor_config.executor = config.dl_executor;
+      downlink_processor_config processor_config = {.id              = i_proc,
+                                                    .gateway         = config.rg_gateway,
+                                                    .pdcch_executor  = config.pdcch_executor,
+                                                    .pdsch_executor  = config.pdsch_executor,
+                                                    .ssb_executor    = config.ssb_executor,
+                                                    .csi_rs_executor = config.csi_rs_executor,
+                                                    .prs_executor    = config.prs_executor};
 
       std::unique_ptr<downlink_processor_base> dl_proc;
       if (config.log_level == srslog::basic_levels::none) {
@@ -313,7 +322,7 @@ create_dl_resource_grid_pool(const upper_phy_config& config, std::shared_ptr<res
 {
   // Configure one pool per upper PHY.
   report_fatal_error_if_not(rg_factory, "Invalid resource grid factory.");
-  report_fatal_error_if_not(config.dl_executor != nullptr, "Invalid task executor.");
+  report_fatal_error_if_not(config.dl_grid_executor != nullptr, "Invalid task executor.");
 
   // Generate resource grid instances.
   std::vector<std::unique_ptr<resource_grid>> grids(config.nof_dl_rg);
@@ -322,7 +331,7 @@ create_dl_resource_grid_pool(const upper_phy_config& config, std::shared_ptr<res
         return rg_factory->create(nof_tx_ports, MAX_NSYMB_PER_SLOT, dl_bw_rb * NRE);
       });
 
-  return create_asynchronous_resource_grid_pool(*config.dl_executor, std::move(grids));
+  return create_asynchronous_resource_grid_pool(*config.dl_grid_executor, std::move(grids));
 }
 
 static std::shared_ptr<uplink_processor_factory>

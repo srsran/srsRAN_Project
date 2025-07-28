@@ -263,11 +263,20 @@ struct mac_srs_pdu {
   struct positioning_report {
     /// UL relative Time of Arrival. Values: {-985024Tc,...,985024Tc}.
     std::optional<phy_time_unit> ul_rtoa;
+    /// RSRP report in dBFS.
+    std::optional<float> ul_rsrp_dBFS;
   };
 
   mac_srs_pdu() = default;
   mac_srs_pdu(rnti_t rnti_, std::optional<phy_time_unit> ta, srs_channel_matrix& matrix) :
     rnti(rnti_), time_advance_offset(ta), report(normalized_channel_iq_matrix{matrix})
+  {
+  }
+  mac_srs_pdu(rnti_t                       rnti_,
+              std::optional<phy_time_unit> ta,
+              std::optional<phy_time_unit> rtoa,
+              std::optional<float>         rsrp_dbfs) :
+    rnti(rnti_), time_advance_offset(ta), report(positioning_report{rtoa, rsrp_dbfs})
   {
   }
 

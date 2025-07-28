@@ -40,16 +40,6 @@ std::ostream& operator<<(std::ostream& os, const dmrs_pucch_estimator::common_co
   return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const dmrs_pucch_estimator::format1_configuration& config)
-{
-  fmt::print(os,
-             "PUCCH Format 1 {}, CP {}, OCC {}",
-             static_cast<const dmrs_pucch_estimator::common_configuration&>(config),
-             config.initial_cyclic_shift,
-             config.time_domain_occ);
-  return os;
-}
-
 std::ostream& operator<<(std::ostream& os, const dmrs_pucch_estimator::format2_configuration& config)
 {
   fmt::print(os,
@@ -90,8 +80,6 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 
 template <>
 struct fmt::formatter<srsran::dmrs_pucch_estimator::common_configuration> : ostream_formatter {};
-template <>
-struct fmt::formatter<srsran::dmrs_pucch_estimator::format1_configuration> : ostream_formatter {};
 template <>
 struct fmt::formatter<srsran::dmrs_pucch_estimator::format2_configuration> : ostream_formatter {};
 template <>

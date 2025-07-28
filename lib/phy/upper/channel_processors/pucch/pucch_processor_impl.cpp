@@ -71,8 +71,8 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   return result;
 }
 
-const pucch_format1_map<pucch_processor_result>&
-pucch_processor_impl::process(const resource_grid_reader& grid, const format1_batch_configuration& batch_config)
+pucch_format1_map<pucch_processor_result> pucch_processor_impl::process(const resource_grid_reader&        grid,
+                                                                        const format1_batch_configuration& batch_config)
 {
   const format1_common_configuration& common_config = batch_config.common_config;
   format1_configuration               proc_config   = {.context              = {},
@@ -128,9 +128,8 @@ pucch_processor_impl::process(const resource_grid_reader& grid, const format1_ba
   const pucch_format1_map<pucch_detector::pucch_detection_result_csi>& detection_results =
       detector->detect(grid, detector_config, mux_harq_size);
 
-  // Clear all results from previous processing.
-  batch_results.clear();
-
+  // Create the detection results for this detection batch.
+  pucch_format1_map<pucch_processor_result> batch_results;
   for (const auto& this_result : detection_results) {
     batch_results.insert(this_result.initial_cyclic_shift,
                          this_result.time_domain_occ,
@@ -138,7 +137,6 @@ pucch_processor_impl::process(const resource_grid_reader& grid, const format1_ba
                           .message          = this_result.value.detection_result.uci_message,
                           .detection_metric = this_result.value.detection_result.detection_metric});
   }
-
   return batch_results;
 }
 

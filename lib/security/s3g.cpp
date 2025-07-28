@@ -408,6 +408,50 @@ uint64_t s3g_MUL64(uint64_t V, uint64_t P, uint64_t c)
   return result;
 }
 
+/// \brief Initializes the lookup tables for the MUL operation.
+/// \param[out] PM lookup tables to be generated.
+/// \param[in] P a 64-bit input.
+/// \param[in] c a 64-bit input.
+/// Implemented as specified in "Specification of the 3GPP Confidentiality and Integrity Algorithms UEA2 & UIA2 D1 v2.1"
+/// Annex 2.
+static void s3g_PRE_MUL_P(std::array<std::array<uint64_t, 256>, 8>& PM, uint64_t P, uint64_t c)
+{
+  for (uint8_t i = 0; i != 8; ++i) {
+    PM[i][0] = 0;
+  }
+  PM[0][1] = P;
+
+  for (uint8_t i = 1; i != 64; ++i) {
+    uint64_t a                 = PM[(i - 1) >> 3][1 << ((i - 1) & 0x7)];
+    PM[i >> 3][1 << (i & 0x7)] = a << 1;
+    // If the leftmost bit...
+    static constexpr uint64_t leftmost_bit_mask = 1L << 63;
+    if (a & leftmost_bit_mask) {
+      PM[i >> 3][1 << (i & 0x7)] ^= c;
+    }
+  }
+
+  for (uint8_t i = 0; i != 8; ++i) {
+    for (uint8_t j = 1; j != 8; ++j) {
+      for (uint8_t k = 1, k_end = (1 << j); k != k_end; ++k) {
+        PM[i][(1 << j) + k] = PM[i][1 << j] ^ PM[i][k];
+      }
+    }
+  }
+}
+
+/// \brief Performs the MUL operation using the precomputed lookup tables.
+/// \param[in] PM lookup tables to be generated.
+/// \param[in] X a 64-bit input.
+/// \returns the result of the MUL operation.
+/// Implemented as specified in "Specification of the 3GPP Confidentiality and Integrity Algorithms UEA2 & UIA2 D1 v2.1"
+/// Annex 2.
+static uint64_t s3g_MUL_P(const std::array<std::array<uint64_t, 256>, 8>& PM, uint64_t X)
+{
+  return PM[0][X & 0xff] ^ PM[1][(X >> 8) & 0xff] ^ PM[2][(X >> 16) & 0xff] ^ PM[3][(X >> 24) & 0xff] ^
+         PM[4][(X >> 32) & 0xff] ^ PM[5][(X >> 40) & 0xff] ^ PM[6][(X >> 48) & 0xff] ^ PM[7][(X >> 56) & 0xff];
+}
+
 /* mask8bit.
  * Input n: an integer in 1-7.
  * Output : an 8 bit mask.
@@ -475,13 +519,16 @@ void srsran::security::s3g_f9(srsran::security::sec_mac& mac,
     D = (length >> 6) + 2;
   EVAL = 0;
   c    = 0x1b;
+  // Compute the lookup tables for the MUL operation.
+  std::array<std::array<uint64_t, 256>, 8> PM;
+  s3g_PRE_MUL_P(PM, P, c);
 
   /* for 0 <= i <= D-3 */
   for (i = 0; i < D - 2; i++) {
     V    = EVAL ^ ((uint64_t)data[8 * i] << 56 | (uint64_t)data[8 * i + 1] << 48 | (uint64_t)data[8 * i + 2] << 40 |
                 (uint64_t)data[8 * i + 3] << 32 | (uint64_t)data[8 * i + 4] << 24 | (uint64_t)data[8 * i + 5] << 16 |
                 (uint64_t)data[8 * i + 6] << 8 | (uint64_t)data[8 * i + 7]);
-    EVAL = s3g_MUL64(V, P, c);
+    EVAL = s3g_MUL_P(PM, V);
   }
 
   /* for D-2 */
@@ -500,12 +547,13 @@ void srsran::security::s3g_f9(srsran::security::sec_mac& mac,
     M_D_2 |= (uint64_t)(data[8 * (D - 2) + i] & mask8bit(rem_bits)) << (8 * (7 - i));
 
   V    = EVAL ^ M_D_2;
-  EVAL = s3g_MUL64(V, P, c);
+  EVAL = s3g_MUL_P(PM, V);
 
   /* for D-1 */
   EVAL ^= length;
 
   /* Multiply by Q */
+  // Note: s3g_MUL_P is not used here because the lookup tables were generated for P, not Q.
   EVAL = s3g_MUL64(EVAL, Q, c);
 
   /* XOR with z_5: this is a modification to the reference C code,

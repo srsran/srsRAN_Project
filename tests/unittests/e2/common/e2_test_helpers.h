@@ -169,10 +169,11 @@ inline e2_message generate_e2_setup_request(std::string oid)
   return e2_msg;
 }
 
-inline e2_message generate_ric_control_request_style2_action6(srslog::basic_logger& logger)
+inline e2_message
+generate_ric_control_request_style2_action6(srslog::basic_logger&                      logger,
+                                            const std::vector<rrm_policy_ratio_group>& rrm_policy_ratio_list_def)
 {
   using namespace asn1::e2ap;
-  using r_param = asn1::e2sm::e2sm_rc_ctrl_msg_format1_item_s;
 
   e2_message  e2_msg;
   init_msg_s& initmsg = e2_msg.pdu.set_init_msg();
@@ -208,80 +209,106 @@ inline e2_message generate_ric_control_request_style2_action6(srslog::basic_logg
   ctrl_msg.ric_ctrl_msg_formats.set_ctrl_msg_format1();
   asn1::e2sm::e2sm_rc_ctrl_msg_format1_s& ctrl_msg_f1 = ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format1();
 
-  // 1 RRM Policy Ratio List (no need to parse).
-  r_param pol_ratio_param;
-  pol_ratio_param.ran_param_id                                                                   = 1;
-  pol_ratio_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present     = true;
-  pol_ratio_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() = 1;
-  ctrl_msg_f1.ran_p_list.push_back(pol_ratio_param);
-  // 2 RRM Policy Ratio Group.
-  r_param pol_group_param;
-  pol_group_param.ran_param_id                                                                   = 2;
-  pol_group_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present     = true;
-  pol_group_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() = 1;
-  ctrl_msg_f1.ran_p_list.push_back(pol_group_param);
-  // 3 RRM Policy (no need to parse).
-  r_param policy_param;
-  policy_param.ran_param_id                                                                   = 3;
-  policy_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present     = true;
-  policy_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() = 1;
-  ctrl_msg_f1.ran_p_list.push_back(policy_param);
-  // Note: 4 missing/skipped in TS.
-  // 5 RRM Policy Member (no need to parse).
-  r_param pol_mem_param;
-  pol_mem_param.ran_param_id                                                                   = 5;
-  pol_mem_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present     = true;
-  pol_mem_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() = 1;
-  ctrl_msg_f1.ran_p_list.push_back(pol_mem_param);
-  // 6 RRM Policy Ratio List (no need to parse).
-  r_param pol_ratio_list_param;
-  pol_ratio_list_param.ran_param_id                                                                   = 6;
-  pol_ratio_list_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present     = true;
-  pol_ratio_list_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() = 1;
-  ctrl_msg_f1.ran_p_list.push_back(pol_ratio_list_param);
-  // 7 PLMN Identity.
-  r_param plmn_param;
-  plmn_param.ran_param_id                                                               = 7;
-  plmn_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present = true;
-  plmn_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s().from_bytes(
-      plmn_identity::parse("00101")->to_bytes());
-  ctrl_msg_f1.ran_p_list.push_back(plmn_param);
-  // 8 S-NSSAI (no need to parse).
-  r_param nssai_param;
-  nssai_param.ran_param_id                                                                   = 8;
-  nssai_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present     = true;
-  nssai_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() = 1;
-  ctrl_msg_f1.ran_p_list.push_back(nssai_param);
-  // 9 SST.
-  r_param sst_param;
-  sst_param.ran_param_id                                                               = 9;
-  sst_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present = true;
-  sst_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s().from_number(1);
-  ctrl_msg_f1.ran_p_list.push_back(sst_param);
-  // 10 SD.
-  r_param sd_param;
-  sd_param.ran_param_id                                                               = 10;
-  sd_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present = true;
-  sd_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s().from_number(1);
-  ctrl_msg_f1.ran_p_list.push_back(sd_param);
-  // 11 Min PRB Policy Ratio.
-  r_param min_prb_param;
-  min_prb_param.ran_param_id                                                                   = 11;
-  min_prb_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present     = true;
-  min_prb_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() = 5;
-  ctrl_msg_f1.ran_p_list.push_back(min_prb_param);
-  // 12 Max PRB Policy Ratio.
-  r_param max_prb_param;
-  max_prb_param.ran_param_id                                                                   = 12;
-  max_prb_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present     = true;
-  max_prb_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() = 25;
-  ctrl_msg_f1.ran_p_list.push_back(max_prb_param);
-  // 13 Dedicated PRB Policy Ratio.
-  r_param ded_prb_param;
-  ded_prb_param.ran_param_id                                                                   = 13;
-  ded_prb_param.ran_param_value_type.set_ran_p_choice_elem_false().ran_param_value_present     = true;
-  ded_prb_param.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() = 50;
-  ctrl_msg_f1.ran_p_list.push_back(ded_prb_param);
+  unsigned nof_policy_groups = rrm_policy_ratio_list_def.size();
+  // 1 - RRM Policy Ratio List.
+  ctrl_msg_f1.ran_p_list.resize(nof_policy_groups);
+  for (unsigned g = 0; g < nof_policy_groups; ++g) {
+    const auto& rrm_policy_ratio_grp   = rrm_policy_ratio_list_def[g];
+    unsigned    nof_members            = rrm_policy_ratio_grp.policy_members_list.size();
+    auto&       rrm_policy_ratio_list  = ctrl_msg_f1.ran_p_list[g];
+    rrm_policy_ratio_list.ran_param_id = 1;
+    rrm_policy_ratio_list.ran_param_value_type.set_ran_p_choice_list().ran_param_list.list_of_ran_param.resize(1);
+    rrm_policy_ratio_list.ran_param_value_type.ran_p_choice_list()
+        .ran_param_list.list_of_ran_param[0]
+        .seq_of_ran_params.resize(1);
+
+    // 2 - RRM Policy Ratio Group.
+    auto& rrm_policy_ratio_list_group = rrm_policy_ratio_list.ran_param_value_type.ran_p_choice_list()
+                                            .ran_param_list.list_of_ran_param[0]
+                                            .seq_of_ran_params[0];
+    rrm_policy_ratio_list_group.ran_param_id = 2;
+    rrm_policy_ratio_list_group.ran_param_value_type.set_ran_p_choice_structure()
+        .ran_param_structure.seq_of_ran_params.resize(4); // policy, min, max, ded.
+    // 3 - RRM Policy.
+    auto& rrm_policy = rrm_policy_ratio_list_group.ran_param_value_type.ran_p_choice_structure()
+                           .ran_param_structure.seq_of_ran_params[0];
+    rrm_policy.ran_param_id = 3;
+    rrm_policy.ran_param_value_type.set_ran_p_choice_structure().ran_param_structure.seq_of_ran_params.resize(1);
+    // 5 - RRM Policy Member List.
+    auto& rrm_policy_member_list =
+        rrm_policy.ran_param_value_type.ran_p_choice_structure().ran_param_structure.seq_of_ran_params.back();
+    rrm_policy_member_list.ran_param_id = 5;
+    rrm_policy_member_list.ran_param_value_type.set_ran_p_choice_list().ran_param_list.list_of_ran_param.resize(
+        1); // 1 policy member
+    rrm_policy_member_list.ran_param_value_type.ran_p_choice_list()
+        .ran_param_list.list_of_ran_param[0]
+        .seq_of_ran_params.resize(nof_members);
+
+    for (unsigned i = 0; i < nof_members; ++i) {
+      auto& policy_member_def = rrm_policy_ratio_grp.policy_members_list[i];
+      // 6 - RRM Policy Member.
+      auto& rrm_policy_member = rrm_policy_member_list.ran_param_value_type.ran_p_choice_list()
+                                    .ran_param_list.list_of_ran_param[0]
+                                    .seq_of_ran_params[i];
+      rrm_policy_member.ran_param_id = 6;
+      rrm_policy_member.ran_param_value_type.set_ran_p_choice_structure().ran_param_structure.seq_of_ran_params.resize(
+          2); // plmn, nssai
+      // 7 - PLMN Identity.
+      auto& plmn =
+          rrm_policy_member.ran_param_value_type.ran_p_choice_structure().ran_param_structure.seq_of_ran_params[0];
+      plmn.ran_param_id = 7;
+      plmn.ran_param_value_type.set_ran_p_choice_elem_false();
+      plmn.ran_param_value_type.ran_p_choice_elem_false().ran_param_value_present = true;
+      asn1::unbounded_octstring<true> plmn_id_asn;
+      plmn_id_asn.from_bytes(policy_member_def.plmn_id.to_bytes());
+      plmn.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s() = plmn_id_asn;
+      //  8 - S-NSSAI.
+      auto& nssai =
+          rrm_policy_member.ran_param_value_type.ran_p_choice_structure().ran_param_structure.seq_of_ran_params[1];
+      nssai.ran_param_id = 8;
+      nssai.ran_param_value_type.set_ran_p_choice_structure().ran_param_structure.seq_of_ran_params.resize(
+          2); // sst, sd
+      // 9 - SST.
+      auto& sst        = nssai.ran_param_value_type.ran_p_choice_structure().ran_param_structure.seq_of_ran_params[0];
+      sst.ran_param_id = 9;
+      sst.ran_param_value_type.set_ran_p_choice_elem_false();
+      sst.ran_param_value_type.ran_p_choice_elem_false().ran_param_value_present = true;
+      sst.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s().from_number(
+          policy_member_def.s_nssai.sst.value());
+      // 10 - SD.
+      auto& sd        = nssai.ran_param_value_type.ran_p_choice_structure().ran_param_structure.seq_of_ran_params[1];
+      sd.ran_param_id = 10;
+      sd.ran_param_value_type.set_ran_p_choice_elem_false();
+      sd.ran_param_value_type.ran_p_choice_elem_false().ran_param_value_present = true;
+      sd.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s().from_number(
+          policy_member_def.s_nssai.sd.value());
+    }
+
+    // 11 - Min PRB Policy Ratio.
+    auto& min_prb = rrm_policy_ratio_list_group.ran_param_value_type.ran_p_choice_structure()
+                        .ran_param_structure.seq_of_ran_params[1];
+    min_prb.ran_param_id = 11;
+    min_prb.ran_param_value_type.set_ran_p_choice_elem_false();
+    min_prb.ran_param_value_type.ran_p_choice_elem_false().ran_param_value_present = true;
+    min_prb.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() =
+        *rrm_policy_ratio_grp.min_prb_policy_ratio;
+    // 12 - Max PRB Policy Ratio.
+    auto& max_prb = rrm_policy_ratio_list_group.ran_param_value_type.ran_p_choice_structure()
+                        .ran_param_structure.seq_of_ran_params[2];
+    max_prb.ran_param_id = 12;
+    max_prb.ran_param_value_type.set_ran_p_choice_elem_false();
+    max_prb.ran_param_value_type.ran_p_choice_elem_false().ran_param_value_present = true;
+    max_prb.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() =
+        *rrm_policy_ratio_grp.max_prb_policy_ratio;
+    // 13 - Dedicated PRB Policy Ratio.
+    auto& ded_prb = rrm_policy_ratio_list_group.ran_param_value_type.ran_p_choice_structure()
+                        .ran_param_structure.seq_of_ran_params[3];
+    ded_prb.ran_param_id = 13;
+    ded_prb.ran_param_value_type.set_ran_p_choice_elem_false();
+    ded_prb.ran_param_value_type.ran_p_choice_elem_false().ran_param_value_present = true;
+    ded_prb.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() =
+        *rrm_policy_ratio_grp.ded_prb_policy_ratio;
+  }
 
   srsran::byte_buffer ctrl_msg_buff;
   asn1::bit_ref       bref_msg1(ctrl_msg_buff);
@@ -889,7 +916,6 @@ public:
   async_task<srs_du::du_mac_sched_control_config_response>
   configure_ue_mac_scheduler(srs_du::du_mac_sched_control_config reconf) override
   {
-    srs_du::du_mac_sched_control_config config;
     config = reconf;
     return launch_async([](coro_context<async_task<srs_du::du_mac_sched_control_config_response>>& ctx) {
       CORO_BEGIN(ctx);
@@ -901,6 +927,8 @@ public:
     return srs_du::du_param_config_response{};
   }
   void handle_si_pdu_update(const srs_du::du_si_pdu_update_request& req) override {}
+
+  srs_du::du_mac_sched_control_config config;
 };
 
 /// Dummy implementation of the CU configurator interface.
@@ -964,7 +992,7 @@ protected:
   std::unique_ptr<srs_cu_cp::mobility_manager_cu_cp_notifier> mobility_notifier;
   std::unique_ptr<e2sm_handler>                               e2sm_kpm_packer;
   std::unique_ptr<e2sm_rc_asn1_packer>                        e2sm_rc_packer;
-  std::unique_ptr<srs_du::du_configurator>                    du_rc_param_configurator;
+  std::unique_ptr<dummy_du_configurator>                      du_rc_param_configurator;
   std::unique_ptr<cu_configurator>                            cu_rc_param_configurator;
   std::unique_ptr<e2_subscription_manager>                    e2_subscription_mngr;
   std::unique_ptr<e2_du_metrics_interface>                    du_metrics;
@@ -1102,8 +1130,9 @@ class e2_test_setup : public e2_test_base
     e2sm_rc_iface                  = std::make_unique<e2sm_rc_impl>(test_logger, *e2sm_rc_packer);
     e2sm_rc_control_service_style2 = std::make_unique<e2sm_rc_control_service>(2);
     e2sm_rc_control_service_style3 = std::make_unique<e2sm_rc_control_service>(3);
+    f1ap_ue_id_mapper              = std::make_unique<dummy_f1ap_ue_id_translator>();
     rc_control_action_2_6_executor =
-        std::make_unique<e2sm_rc_control_action_2_6_du_executor>(*du_rc_param_configurator);
+        std::make_unique<e2sm_rc_control_action_2_6_du_executor>(*du_rc_param_configurator, *f1ap_ue_id_mapper);
     rc_control_action_3_1_executor =
         std::make_unique<e2sm_rc_control_action_3_1_cu_executor>(*cu_rc_param_configurator);
     e2sm_rc_control_service_style2->add_e2sm_rc_control_action_executor(std::move(rc_control_action_2_6_executor));

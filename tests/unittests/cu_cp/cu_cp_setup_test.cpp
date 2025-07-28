@@ -24,7 +24,6 @@
 #include "test_helpers.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
-#include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
@@ -67,7 +66,7 @@ TEST_F(cu_cp_setup_test, when_new_ue_sends_rrc_setup_request_then_dl_rrc_message
   // Create UE by sending Initial UL RRC Message.
   gnb_du_ue_f1ap_id_t du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(0);
   rnti_t              crnti         = to_rnti(0x4601);
-  get_du(du_idx).push_ul_pdu(generate_init_ul_rrc_message_transfer(du_ue_f1ap_id, crnti));
+  get_du(du_idx).push_ul_pdu(test_helpers::generate_init_ul_rrc_message_transfer(du_ue_f1ap_id, crnti));
 
   // Verify F1AP DL RRC Message is sent with RRC Setup.
   f1ap_message f1ap_pdu;
@@ -93,7 +92,7 @@ TEST_F(cu_cp_setup_test, when_cu_cp_receives_f1_removal_request_then_rrc_setup_p
   // Create UE by sending Initial UL RRC Message.
   gnb_du_ue_f1ap_id_t du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(0);
   rnti_t              crnti         = to_rnti(0x4601);
-  get_du(du_idx).push_ul_pdu(generate_init_ul_rrc_message_transfer(du_ue_f1ap_id, crnti));
+  get_du(du_idx).push_ul_pdu(test_helpers::generate_init_ul_rrc_message_transfer(du_ue_f1ap_id, crnti));
 
   // Verify F1AP DL RRC Message is sent with RRC Setup.
   f1ap_message f1ap_pdu;
@@ -115,7 +114,7 @@ TEST_F(cu_cp_setup_test, when_du_hangs_up_then_rrc_setup_procedure_is_cancelled)
   // Create UE by sending Initial UL RRC Message.
   gnb_du_ue_f1ap_id_t du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(0);
   rnti_t              crnti         = to_rnti(0x4601);
-  get_du(du_idx).push_ul_pdu(generate_init_ul_rrc_message_transfer(du_ue_f1ap_id, crnti));
+  get_du(du_idx).push_ul_pdu(test_helpers::generate_init_ul_rrc_message_transfer(du_ue_f1ap_id, crnti));
 
   // Verify F1AP DL RRC Message is sent with RRC Setup.
   f1ap_message f1ap_pdu;
@@ -134,7 +133,7 @@ TEST_F(cu_cp_setup_test, when_initial_ul_rrc_message_has_no_rrc_container_then_u
   // Event: DU sends Initial UL RRC Message without DU-to-CU-RRC container.
   gnb_du_ue_f1ap_id_t du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(0);
   rnti_t              crnti         = to_rnti(0x4601);
-  f1ap_message        init_rrc_msg  = generate_init_ul_rrc_message_transfer(du_ue_f1ap_id, crnti);
+  f1ap_message        init_rrc_msg  = test_helpers::generate_init_ul_rrc_message_transfer(du_ue_f1ap_id, crnti);
   init_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->du_to_cu_rrc_container_present = false;
   get_du(du_idx).push_ul_pdu(init_rrc_msg);
 
@@ -164,8 +163,8 @@ TEST_F(cu_cp_setup_test, when_initial_ul_rrc_message_has_no_rrc_container_then_u
   ASSERT_EQ(report.ues[0].rnti, to_rnti(0x4601));
 
   // EVENT: DU sends F1AP UE Context Release Complete.
-  auto rel_complete =
-      generate_ue_context_release_complete(int_to_gnb_cu_ue_f1ap_id(ue_rel->gnb_cu_ue_f1ap_id), du_ue_f1ap_id);
+  auto rel_complete = test_helpers::generate_ue_context_release_complete(
+      int_to_gnb_cu_ue_f1ap_id(ue_rel->gnb_cu_ue_f1ap_id), du_ue_f1ap_id);
   get_du(du_idx).push_ul_pdu(rel_complete);
 
   // TEST: UE context removed from CU-CP.
@@ -182,7 +181,7 @@ TEST_F(cu_cp_setup_test, when_rrc_setup_completes_then_initial_message_sent_to_a
   // Create UE by sending Initial UL RRC Message.
   gnb_du_ue_f1ap_id_t du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(0);
   rnti_t              crnti         = to_rnti(0x4601);
-  get_du(du_idx).push_ul_pdu(generate_init_ul_rrc_message_transfer(du_ue_f1ap_id, crnti));
+  get_du(du_idx).push_ul_pdu(test_helpers::generate_init_ul_rrc_message_transfer(du_ue_f1ap_id, crnti));
 
   // Verify F1AP DL RRC Message is sent with RRC Setup.
   f1ap_message f1ap_pdu;
@@ -198,8 +197,8 @@ TEST_F(cu_cp_setup_test, when_rrc_setup_completes_then_initial_message_sent_to_a
   ASSERT_FALSE(this->get_amf().try_pop_rx_pdu(ngap_pdu));
 
   // UE sends UL RRC Message with RRC Setup Complete.
-  f1ap_message ul_rrc_msg =
-      generate_ul_rrc_message_transfer(cu_ue_id.value(), du_ue_f1ap_id, srb_id_t::srb1, generate_rrc_setup_complete());
+  f1ap_message ul_rrc_msg = test_helpers::generate_ul_rrc_message_transfer(
+      du_ue_f1ap_id, cu_ue_id.value(), srb_id_t::srb1, generate_rrc_setup_complete());
   test_logger.info("Injecting UL RRC message (RRC Setup Complete)");
   get_du(du_idx).push_ul_pdu(ul_rrc_msg);
 

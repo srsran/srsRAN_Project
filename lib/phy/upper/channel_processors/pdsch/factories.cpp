@@ -230,11 +230,9 @@ public:
   {
     if (!pool) {
       // Create vector of PDSCH block processors.
-      std::vector<std::unique_ptr<pdsch_block_processor>> block_processors;
-      for (unsigned i_encoder = 0; i_encoder != nof_concurrent_threads; ++i_encoder) {
-        block_processors.emplace_back(block_processor_factory->create());
-      }
-      pool = std::make_unique<pdsch_processor_flexible_impl::pdsch_block_processor_pool>(std::move(block_processors));
+      std::vector<std::unique_ptr<pdsch_block_processor>> instances(nof_concurrent_threads);
+      std::generate(instances.begin(), instances.end(), [this]() { return block_processor_factory->create(); });
+      pool = std::make_shared<pdsch_processor_flexible_impl::pdsch_block_processor_pool>(instances);
     }
 
     return pool;
@@ -261,12 +259,9 @@ public:
   {
     if (!pool) {
       // Create vector of PDSCH DM-RS generators.
-      std::vector<std::unique_ptr<dmrs_pdsch_processor>> dmrs_generators;
-      for (unsigned i_encoder = 0; i_encoder != nof_concurrent_threads; ++i_encoder) {
-        dmrs_generators.emplace_back(dmrs_factory->create());
-      }
-
-      pool = std::make_shared<pdsch_processor_flexible_impl::pdsch_dmrs_generator_pool>(std::move(dmrs_generators));
+      std::vector<std::unique_ptr<dmrs_pdsch_processor>> instances(nof_concurrent_threads);
+      std::generate(instances.begin(), instances.end(), [this]() { return dmrs_factory->create(); });
+      pool = std::make_shared<pdsch_processor_flexible_impl::pdsch_dmrs_generator_pool>(instances);
     }
     return pool;
   }
@@ -292,11 +287,9 @@ public:
   {
     if (!pool) {
       // Create vector of PDSCH PT-RS generators.
-      std::vector<std::unique_ptr<ptrs_pdsch_generator>> ptrs_generators;
-      for (unsigned i_encoder = 0; i_encoder != nof_concurrent_threads; ++i_encoder) {
-        ptrs_generators.emplace_back(ptrs_factory->create());
-      }
-      pool = std::make_shared<pdsch_processor_flexible_impl::pdsch_ptrs_generator_pool>(std::move(ptrs_generators));
+      std::vector<std::unique_ptr<ptrs_pdsch_generator>> instances(nof_concurrent_threads);
+      std::generate(instances.begin(), instances.end(), [this]() { return ptrs_factory->create(); });
+      pool = std::make_shared<pdsch_processor_flexible_impl::pdsch_ptrs_generator_pool>(instances);
     }
     return pool;
   }
@@ -311,47 +304,36 @@ class pdsch_processor_flexible_factory_sw : public pdsch_processor_factory
 {
 public:
   pdsch_processor_flexible_factory_sw(std::shared_ptr<ldpc_segmenter_tx_factory>     segmenter_factory_,
-                                      std::shared_ptr<pdsch_block_processor_factory> block_processor_factory_,
+                                      std::shared_ptr<pdsch_block_processor_factory> block_processor_factory,
                                       std::shared_ptr<resource_grid_mapper_factory>  rg_mapper_factory_,
-                                      std::shared_ptr<dmrs_pdsch_processor_factory>  dmrs_factory_,
-                                      std::shared_ptr<ptrs_pdsch_generator_factory>  ptrs_factory_,
+                                      std::shared_ptr<dmrs_pdsch_processor_factory>  dmrs_factory,
+                                      std::shared_ptr<ptrs_pdsch_generator_factory>  ptrs_factory,
                                       task_executor&                                 executor_,
-                                      unsigned                                       nof_concurrent_threads,
+                                      unsigned                                       nof_concurrent_threads_,
                                       unsigned                                       cb_batch_length_) :
     segmenter_factory(std::move(segmenter_factory_)),
-    block_processor_factory(std::move(block_processor_factory_)),
     rg_mapper_factory(std::move(rg_mapper_factory_)),
-    dmrs_factory(std::move(dmrs_factory_)),
-    ptrs_factory(std::move(ptrs_factory_)),
     executor(executor_),
+    block_pool_factory(std::move(block_processor_factory), nof_concurrent_threads_),
+    dmrs_pool_factory(std::move(dmrs_factory), nof_concurrent_threads_),
+    ptrs_pool_factory(std::move(ptrs_factory), nof_concurrent_threads_),
+    nof_concurrent_threads(nof_concurrent_threads_),
     cb_batch_length(cb_batch_length_)
   {
     srsran_assert(segmenter_factory, "Invalid segmenter factory.");
-    srsran_assert(block_processor_factory, "Invalid PDSCH block processor factory.");
     srsran_assert(rg_mapper_factory, "Invalid resource grid mapper factory.");
-    srsran_assert(dmrs_factory, "Invalid DM-RS factory.");
-    srsran_assert(ptrs_factory, "Invalid PT-RS factory.");
     srsran_assert(nof_concurrent_threads > 0, "Number of concurrent threads must be greater or equal to one.");
-
-    // Create a PDSCH block processor pool factory.
-    block_pool_factory =
-        std::make_unique<pdsch_block_processor_pool_factory_sw>(block_processor_factory, nof_concurrent_threads);
-
-    // Create a PDSCH DM-RS generator factory.
-    dmrs_pool_factory = std::make_unique<dmrs_generator_pool_factory_sw>(dmrs_factory, nof_concurrent_threads);
-
-    // Create a PDSCH PT-RS generator factory.
-    ptrs_pool_factory = std::make_unique<ptrs_generator_pool_factory_sw>(ptrs_factory, nof_concurrent_threads);
   }
 
   std::unique_ptr<pdsch_processor> create() override
   {
     return std::make_unique<pdsch_processor_flexible_impl>(segmenter_factory->create(),
                                                            rg_mapper_factory->create(),
-                                                           block_pool_factory->create(),
-                                                           dmrs_pool_factory->create(),
-                                                           ptrs_pool_factory->create(),
+                                                           block_pool_factory.create(),
+                                                           dmrs_pool_factory.create(),
+                                                           ptrs_pool_factory.create(),
                                                            executor,
+                                                           nof_concurrent_threads,
                                                            cb_batch_length);
   }
 
@@ -361,16 +343,14 @@ public:
   }
 
 private:
-  std::shared_ptr<ldpc_segmenter_tx_factory>             segmenter_factory;
-  std::shared_ptr<pdsch_block_processor_factory>         block_processor_factory;
-  std::shared_ptr<resource_grid_mapper_factory>          rg_mapper_factory;
-  std::shared_ptr<dmrs_pdsch_processor_factory>          dmrs_factory;
-  std::shared_ptr<ptrs_pdsch_generator_factory>          ptrs_factory;
-  task_executor&                                         executor;
-  std::unique_ptr<pdsch_block_processor_pool_factory_sw> block_pool_factory;
-  std::unique_ptr<dmrs_generator_pool_factory_sw>        dmrs_pool_factory;
-  std::unique_ptr<ptrs_generator_pool_factory_sw>        ptrs_pool_factory;
-  unsigned                                               cb_batch_length;
+  std::shared_ptr<ldpc_segmenter_tx_factory>    segmenter_factory;
+  std::shared_ptr<resource_grid_mapper_factory> rg_mapper_factory;
+  task_executor&                                executor;
+  pdsch_block_processor_pool_factory_sw         block_pool_factory;
+  dmrs_generator_pool_factory_sw                dmrs_pool_factory;
+  ptrs_generator_pool_factory_sw                ptrs_pool_factory;
+  unsigned                                      nof_concurrent_threads;
+  unsigned                                      cb_batch_length;
 };
 
 class pdsch_processor_asynchronous_pool_factory : public pdsch_processor_factory
@@ -427,33 +407,23 @@ public:
 
   std::unique_ptr<pdsch_processor> create() override
   {
-    // Creates the processors without logging.
     if (!processors) {
-      // Create PDSCH processsor instances.
       std::vector<std::unique_ptr<pdsch_processor>> instances(max_nof_processors);
       std::generate(instances.begin(), instances.end(), [this]() { return factory->create(); });
-
-      // Create pool.
-      processors = std::make_shared<pdsch_processor_pool::pdsch_processor_pool_type>(std::move(instances));
+      processors = std::make_shared<pdsch_processor_pool::pdsch_processor_pool_type>(instances);
     }
-
     return std::make_unique<pdsch_processor_pool>(processors);
   }
 
   std::unique_ptr<pdsch_processor> create(srslog::basic_logger& logger, bool enable_logging_broadcast) override
   {
-    // Creates the processors with logging.
     if (!processors) {
-      // Create PDSCH processor instances.
       std::vector<std::unique_ptr<pdsch_processor>> instances(max_nof_processors);
-      std::generate(instances.begin(), instances.end(), [this, &logger, &enable_logging_broadcast]() {
+      std::generate(instances.begin(), instances.end(), [this, &logger, enable_logging_broadcast]() {
         return factory->create(logger, enable_logging_broadcast);
       });
-
-      // Create pool.
-      processors = std::make_shared<pdsch_processor_pool::pdsch_processor_pool_type>(std::move(instances));
+      processors = std::make_shared<pdsch_processor_pool::pdsch_processor_pool_type>(instances);
     }
-
     return std::make_unique<pdsch_processor_pool>(processors);
   }
 

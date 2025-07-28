@@ -26,7 +26,6 @@
 #include "srsran/adt/detail/concurrent_queue_helper.h"
 #include "srsran/adt/detail/concurrent_queue_params.h"
 #include <chrono>
-#include <thread>
 
 namespace srsran {
 
@@ -38,23 +37,21 @@ public:
   using value_type                                           = T;
   constexpr static concurrent_queue_policy      queue_policy = concurrent_queue_policy::lockfree_mpmc;
   constexpr static concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::non_blocking;
+  using consumer_type                                        = detail::basic_queue_consumer<concurrent_queue, T>;
 
   explicit concurrent_queue(size_t qsize) : queue(qsize) {}
 
   [[nodiscard]] bool try_push(const T& elem) { return queue.try_push(elem); }
-
   [[nodiscard]] bool try_push(T&& elem) { return queue.try_push(std::move(elem)); }
+  template <typename U>
+  [[nodiscard]] size_t try_push_bulk(span<U> batch)
+  {
+    return detail::queue_helper::try_push_bulk_generic(*this, batch);
+  }
 
   [[nodiscard]] bool try_pop(T& elem) { return queue.try_pop(elem); }
 
-  std::optional<T> try_pop()
-  {
-    std::optional<T> result;
-    if (not queue.try_pop(result.emplace())) {
-      result.reset();
-    }
-    return result;
-  }
+  [[nodiscard]] size_t try_pop_bulk(span<T> batch) { return detail::queue_helper::try_pop_bulk_generic(*this, batch); }
 
   [[nodiscard]] size_t size() const
   {
@@ -66,6 +63,9 @@ public:
   [[nodiscard]] bool empty() const { return queue.empty(); }
 
   [[nodiscard]] size_t capacity() const { return queue.capacity(); }
+
+  /// Creates a consumer for this queue.
+  consumer_type create_consumer() { return consumer_type(*this); }
 
 protected:
   ::rigtorp::MPMCQueue<T> queue;
@@ -86,6 +86,7 @@ public:
   using value_type                                           = T;
   constexpr static concurrent_queue_policy      queue_policy = concurrent_queue_policy::lockfree_mpmc;
   constexpr static concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::sleep;
+  using consumer_type                                        = detail::basic_queue_consumer<concurrent_queue, T>;
 
   explicit concurrent_queue(size_t qsize, std::chrono::microseconds sleep_time_ = std::chrono::microseconds{0}) :
     nonblocking_base_type(qsize), sleep_base_type(sleep_time_)
@@ -101,6 +102,9 @@ public:
   using sleep_base_type::pop_blocking;
   using sleep_base_type::push_blocking;
   using sleep_base_type::request_stop;
+
+  /// Creates a consumer for this queue.
+  consumer_type create_consumer() { return consumer_type(*this); }
 };
 
 } // namespace srsran

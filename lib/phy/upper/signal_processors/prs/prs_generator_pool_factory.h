@@ -40,33 +40,25 @@ public:
   // See interface for documentation.
   std::unique_ptr<prs_generator> create() override
   {
-    if (!generators) {
-      std::vector<std::unique_ptr<prs_generator>> instances(nof_concurrent_threads);
-
-      for (auto& processor : instances) {
-        processor = factory->create();
-      }
-
-      generators = std::make_shared<prs_generator_pool::generator_pool_type>(std::move(instances));
+    if (!pool) {
+      std::vector<std::unique_ptr<prs_generator>> generators(nof_concurrent_threads);
+      std::generate(generators.begin(), generators.end(), [this]() { return factory->create(); });
+      pool = std::make_shared<prs_generator_pool::generator_pool_type>(generators);
     }
 
-    return std::make_unique<prs_generator_pool>(generators);
+    return std::make_unique<prs_generator_pool>(pool);
   }
 
   // See interface for documentation.
   std::unique_ptr<prs_generator> create(srslog::basic_logger& logger) override
   {
-    if (!generators) {
-      std::vector<std::unique_ptr<prs_generator>> instances(nof_concurrent_threads);
-
-      for (auto& processor : instances) {
-        processor = factory->create(logger);
-      }
-
-      generators = std::make_shared<prs_generator_pool::generator_pool_type>(std::move(instances));
+    if (!pool) {
+      std::vector<std::unique_ptr<prs_generator>> generators(nof_concurrent_threads);
+      std::generate(generators.begin(), generators.end(), [this, &logger]() { return factory->create(logger); });
+      pool = std::make_shared<prs_generator_pool::generator_pool_type>(generators);
     }
 
-    return std::make_unique<prs_generator_pool>(generators);
+    return std::make_unique<prs_generator_pool>(pool);
   }
 
   // See interface for documentation.
@@ -78,7 +70,7 @@ private:
   /// Number of threads that use the instance.
   unsigned nof_concurrent_threads;
   /// Collection of PRS generators.
-  std::shared_ptr<prs_generator_pool::generator_pool_type> generators;
+  std::shared_ptr<prs_generator_pool::generator_pool_type> pool;
 };
 
 } // namespace srsran

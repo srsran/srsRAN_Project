@@ -27,7 +27,9 @@ namespace srsran {
 class downlink_processor_baseband;
 class downlink_processor_notifier;
 class downlink_processor_notifier;
+class lower_phy_center_freq_controller;
 class lower_phy_cfo_controller;
+class lower_phy_tx_time_offset_controller;
 class pdxch_processor_notifier;
 class pdxch_processor_request_handler;
 
@@ -50,11 +52,17 @@ public:
   /// Stops the processor.
   virtual void stop() = 0;
 
-  /// Gets the carrier frequency offset processor interface.
-  virtual lower_phy_cfo_controller& get_cfo_handler() = 0;
+  /// Gets the carrier frequency offset controller interface.
+  virtual lower_phy_cfo_controller& get_cfo_control() = 0;
+
+  /// Gets the carrier center frequency controller interface.
+  virtual lower_phy_center_freq_controller& get_carrier_center_frequency_control() = 0;
 
   /// Gets the downlink processor request handler.
   virtual pdxch_processor_request_handler& get_downlink_request_handler() = 0;
+
+  /// Gets the transmit time offset controller interface.
+  virtual lower_phy_tx_time_offset_controller& get_tx_time_offset_control() = 0;
 
   /// \brief Gets the downlink processor baseband interface.
   /// \return A reference to the internal downlink processor baseband interface.

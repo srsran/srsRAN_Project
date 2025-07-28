@@ -29,6 +29,7 @@
 #include "srsran/phy/generic_functions/transform_precoding/transform_precoder.h"
 #include "srsran/phy/support/mask_types.h"
 #include "srsran/phy/support/resource_grid_reader.h"
+#include "srsran/phy/upper/channel_estimation.h"
 #include "srsran/phy/upper/equalization/modular_ch_est_list.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 

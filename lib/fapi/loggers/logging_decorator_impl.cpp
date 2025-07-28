@@ -66,7 +66,7 @@ slot_message_gateway& logging_decorator_impl::get_slot_message_gateway()
   return gateway;
 }
 
-slot_error_message_notifier& logging_decorator_impl::get_slot_error_message_notifier_from_this_decorator()
+error_message_notifier& logging_decorator_impl::get_error_message_notifier_from_this_decorator()
 {
   return error_notifier;
 }
@@ -81,9 +81,9 @@ void logging_decorator_impl::set_slot_data_message_notifier(slot_data_message_no
   data_notifier.set_slot_data_message_notifier(notifier);
 }
 
-void logging_decorator_impl::set_slot_error_message_notifier(slot_error_message_notifier& notifier)
+void logging_decorator_impl::set_error_message_notifier(error_message_notifier& notifier)
 {
-  error_notifier.set_slot_error_message_notifier(notifier);
+  error_notifier.set_error_message_notifier(notifier);
 }
 
 void logging_decorator_impl::set_slot_time_message_notifier(slot_time_message_notifier& notifier)

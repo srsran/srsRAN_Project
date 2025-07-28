@@ -27,7 +27,7 @@ namespace srsran {
 class puxch_processor_notifier;
 class puxch_processor_request_handler;
 class puxch_processor_baseband;
-class slot_point;
+class lower_phy_center_freq_controller;
 
 /// \brief PUCCH and PUSCH processor main interface.
 ///
@@ -55,6 +55,9 @@ public:
   /// \brief Gets the PUxCH processor baseband interface.
   /// \return A reference to the internal PUxCH processor baseband interface.
   virtual puxch_processor_baseband& get_baseband() = 0;
+
+  /// Gets the carrier center frequency control interface.
+  virtual lower_phy_center_freq_controller& get_center_freq_control() = 0;
 };
 
 } // namespace srsran

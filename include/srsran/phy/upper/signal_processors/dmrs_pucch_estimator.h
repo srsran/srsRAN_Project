@@ -58,19 +58,6 @@ public:
     static_vector<uint8_t, DMRS_MAX_NPORTS> ports;
   };
 
-  /// Collects specific PUCCH Format 1 parameters.
-  struct format1_configuration : common_configuration {
-    /// \brief Parameter \f$n_{ID}\f$ in TS38.211 Section 6.3.2.2.2.
-    ///
-    /// Higher layer parameter \e hoppingID if configured (Cell-specific scrambling ID for group hopping and sequence
-    /// hopping), otherwise the physical cell identifier.
-    unsigned n_id;
-    /// Initial cyclic shift, as defined in TS38.211 Section 6.3.2.2.2.
-    unsigned initial_cyclic_shift;
-    /// Orthogonal Cover Code Index.
-    unsigned time_domain_occ;
-  };
-
   /// Collects specific PUCCH Format 2 parameters.
   struct format2_configuration : common_configuration {
     /// Number of PRBs, see PUCCH-Resource IE in TS38.331.
@@ -112,15 +99,6 @@ public:
 
   /// Default destructor.
   virtual ~dmrs_pucch_estimator() = default;
-
-  /// \brief Estimates the propagation channel for PUCCH Format 1.
-  ///
-  /// \param[out] estimate Channel estimation results.
-  /// \param[in]  grid     Received resource grid.
-  /// \param[in]  config   PUCCH Format 1 configuration.
-  /// \note The \c estimate dimensions must be consistent with the \grid dimensions.
-  virtual void
-  estimate(channel_estimate& estimate, const resource_grid_reader& grid, const format1_configuration& config) = 0;
 
   /// \brief Estimates the propagation channel for PUCCH Format 2.
   ///

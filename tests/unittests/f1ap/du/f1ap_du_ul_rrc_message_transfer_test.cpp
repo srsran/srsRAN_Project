@@ -36,7 +36,7 @@ TEST_F(f1ap_du_test, when_sdu_is_received_then_sdu_is_forwarded_to_tx_pdu_notifi
   // Run Test Preamble.
   run_f1_setup_procedure();
   ue_test_context* ue  = run_f1ap_ue_create(to_du_ue_index(0));
-  f1ap_message     msg = test_helpers::create_ue_context_setup_request(
+  f1ap_message     msg = test_helpers::generate_ue_context_setup_request(
       gnb_cu_ue_f1ap_id_t{0}, gnb_du_ue_f1ap_id_t{0}, 1, {}, config_helpers::make_default_du_cell_config().nr_cgi);
   run_ue_context_setup_procedure(ue->ue_index, msg);
   this->f1c_gw.clear_tx_pdus();

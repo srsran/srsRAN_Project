@@ -44,7 +44,7 @@ public:
   fapi::slot_time_message_notifier& get_slot_time_message_notifier() override;
 
   // See interface for documentation.
-  fapi::slot_error_message_notifier& get_slot_error_message_notifier() override;
+  fapi::error_message_notifier& get_error_message_notifier() override;
 
   // See interface for documentation.
   fapi::slot_data_message_notifier& get_slot_data_message_notifier() override;

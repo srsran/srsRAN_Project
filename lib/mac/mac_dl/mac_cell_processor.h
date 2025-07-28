@@ -140,7 +140,8 @@ private:
 
   mac_cell_time_mapper_impl slot_time_mapper;
 
-  bool sib1_pcap_dumped = false;
+  unsigned                              sib1_pcap_dumped_version;
+  std::array<unsigned, MAX_SI_MESSAGES> si_pcap_dumped_version;
 };
 
 } // namespace srsran

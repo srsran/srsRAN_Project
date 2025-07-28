@@ -39,10 +39,32 @@ namespace srsran {
 template <typename T>
 class concurrent_queue<T, concurrent_queue_policy::moodycamel_lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>
 {
+  using queue_impl = moodycamel::ConcurrentQueue<T>;
+
 public:
-  using value_type                                           = T;
-  static constexpr concurrent_queue_policy      queue_policy = concurrent_queue_policy::moodycamel_lockfree_mpmc;
-  static constexpr concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::non_blocking;
+  /// Value stored in the queue.
+  using value_type = T;
+  /// The queue policy used by this queue.
+  static constexpr concurrent_queue_policy queue_policy = concurrent_queue_policy::moodycamel_lockfree_mpmc;
+  /// The queue wait policy used by this queue.
+  static constexpr concurrent_queue_wait_policy wait_policy = concurrent_queue_wait_policy::non_blocking;
+
+  /// Explicit sequential consumer class for faster dequeueing.
+  class consumer_type
+  {
+  public:
+    consumer_type(queue_impl& q) : queue(&q), token(q) {}
+
+    [[nodiscard]] bool   try_pop(T& elem) { return queue->try_dequeue(token, elem); }
+    [[nodiscard]] size_t try_pop_bulk(span<T> batch)
+    {
+      return queue->try_dequeue_bulk(token, batch.begin(), batch.size());
+    }
+
+  protected:
+    queue_impl*               queue;
+    moodycamel::ConsumerToken token;
+  };
 
   /// \brief Constructs a concurrent queue and pre-reserves the configured capacity.
   /// \param[in] qsize The capacity to reserve.
@@ -55,20 +77,24 @@ public:
   }
 
   /// \brief Pushes an element to the queue. If the producer sub-queue is full, the call mallocs a new block.
-  bool try_push(const T& elem) { return queue.enqueue(elem); }
-  bool try_push(T&& elem) { return queue.enqueue(std::move(elem)); }
+  [[nodiscard]] bool try_push(const T& elem) { return queue.enqueue(elem); }
+  [[nodiscard]] bool try_push(T&& elem) { return queue.enqueue(std::move(elem)); }
   template <typename U>
-  bool try_push_bulk(span<U> batch)
+  [[nodiscard]] size_t try_push_bulk(span<U> batch)
   {
-    return queue.enqueue_bulk(batch);
+    if constexpr (std::is_const_v<U>) {
+      return queue.enqueue_bulk(batch.begin(), batch.size()) ? batch.size() : 0;
+    }
+    return queue.enqueue_bulk(std::make_move_iterator(batch.begin()), batch.size()) ? batch.size() : 0;
   }
 
   /// \brief Pops an element from the queue in a non-blocking fashion.
   ///
   /// If the queue is empty, the call returns false.
-  bool try_pop(T& elem) { return queue.try_dequeue(elem); }
+  [[nodiscard]] bool try_pop(T& elem) { return queue.try_dequeue(elem); }
 
-  bool try_pop_bulk(span<const T> batch) { return queue.try_dequeue_bulk(batch); }
+  /// \brief Pops a batch of elements from the queue in a non-blocking fashion.
+  [[nodiscard]] size_t try_pop_bulk(span<T> batch) { return queue.try_dequeue_bulk(batch.begin(), batch.size()); }
 
   /// Returns an estimate of the total number of elements currently in the queue.
   size_t size() const { return queue.size_approx(); }
@@ -79,8 +105,11 @@ public:
   /// This queue is unbounded. It allocates when current capacity is reached.
   size_t capacity() const { return std::numeric_limits<size_t>::max(); }
 
+  /// Creates a sequential consumer for this queue.
+  consumer_type create_consumer() { return consumer_type(queue); }
+
 protected:
-  moodycamel::ConcurrentQueue<T> queue;
+  queue_impl queue;
 };
 
 /// Specialization for moodycamel lockfree MPMC with a blocking mechanism based on sleeps.
@@ -103,6 +132,27 @@ public:
   static constexpr concurrent_queue_policy      queue_policy = concurrent_queue_policy::moodycamel_lockfree_mpmc;
   static constexpr concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::sleep;
 
+  /// Explicit consumer class for faster dequeueing.
+  class consumer_type
+  {
+  public:
+    consumer_type(concurrent_queue& q) : parent(&q), token(q.queue) {}
+
+    [[nodiscard]] bool   try_pop(T& elem) { return parent->queue.try_dequeue(token, elem); }
+    [[nodiscard]] size_t try_pop_bulk(span<const T> batch)
+    {
+      return parent->queue.try_pop_bulk(token, batch.begin(), batch.size());
+    }
+    [[nodiscard]] bool pop_blocking(T& elem)
+    {
+      return detail::queue_helper::pop_blocking_generic(*this, elem, parent->policy);
+    }
+
+  protected:
+    concurrent_queue*                  parent;
+    typename moodycamel::ConsumerToken token;
+  };
+
   // Inherited non-blocking API methods.
   using non_block_queue_base::capacity;
   using non_block_queue_base::empty;
@@ -122,6 +172,15 @@ public:
     blocking_ext_base(sleep_time_), non_block_queue_base(qsize)
   {
   }
+  explicit concurrent_queue(size_t                    qsize,
+                            size_t                    nof_prereserved_producers = 2,
+                            std::chrono::microseconds sleep_time_               = std::chrono::microseconds{0}) :
+    blocking_ext_base(sleep_time_), non_block_queue_base(qsize, nof_prereserved_producers)
+  {
+  }
+
+  /// Creates a sequential consumer for this queue.
+  consumer_type create_consumer() { return consumer_type(*this); }
 };
 
 } // namespace srsran

@@ -53,7 +53,7 @@ void du_ue_ric_configuration_procedure::operator()(coro_context<async_task<du_ma
 manual_event<du_mac_sched_control_config_response>& du_ue_ric_configuration_procedure::dispatch_ue_config_task()
 {
   // Find UE context based on F1AP UE ID.
-  ue = ue_mng.find_f1ap_ue_id(int_to_gnb_du_ue_f1ap_id(request.ue_id));
+  ue = ue_mng.find_f1ap_ue_id(request.ue_id);
   if (ue == nullptr) {
     du_mac_sched_control_config_response fail{false, false, false};
     ue_config_completed.set(fail);

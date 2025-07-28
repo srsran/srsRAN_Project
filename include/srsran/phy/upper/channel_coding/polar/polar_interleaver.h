@@ -39,7 +39,7 @@ class polar_interleaver
 public:
   virtual ~polar_interleaver() = default;
 
-  /// \brief Implements Polar code interleaver as described in TS 38.212 V15.9.0 Section 5.3.1.1
+  /// \brief Implements Polar code interleaver as described in TS38.212 V15.9.0 Section 5.3.1.1
   ///
   /// \attention The input and output data cannot be the same.
   ///

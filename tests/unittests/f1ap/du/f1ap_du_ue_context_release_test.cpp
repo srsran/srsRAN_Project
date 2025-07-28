@@ -37,7 +37,7 @@ protected:
     run_f1_setup_procedure();
     du_ue_index_t ue_index = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX));
     test_ue                = run_f1ap_ue_create(ue_index);
-    f1ap_message msg       = test_helpers::create_ue_context_setup_request(
+    f1ap_message msg       = test_helpers::generate_ue_context_setup_request(
         gnb_cu_ue_f1ap_id_t{0}, gnb_du_ue_f1ap_id_t{0}, 1, {}, config_helpers::make_default_du_cell_config().nr_cgi);
     run_ue_context_setup_procedure(ue_index, msg);
   }

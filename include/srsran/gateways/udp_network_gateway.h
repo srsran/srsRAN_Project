@@ -33,6 +33,9 @@ namespace srsran {
 
 struct udp_network_gateway_config : common_network_gateway_config {
   unsigned               rx_max_mmsg              = 256;
+  unsigned               tx_qsize                 = 4096;
+  unsigned               tx_max_mmsg              = 256;
+  unsigned               tx_max_segments          = 256;
   float                  pool_occupancy_threshold = 0.9;
   std::optional<uint8_t> dscp;
   std::string            ext_bind_addr = "auto";

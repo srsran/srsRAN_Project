@@ -73,12 +73,20 @@ static float get_power_control_offset_ss_dB(fapi::power_control_offset_ss power_
 /// Fills the power related parameters in the PDSCH PDU.
 static void fill_power_values(pdsch_processor::pdu_t& proc_pdu, const fapi::dl_pdsch_pdu& fapi_pdu)
 {
-  proc_pdu.ratio_pdsch_data_to_sss_dB = get_power_control_offset_ss_dB(fapi_pdu.power_control_offset_ss_profile_nr) +
-                                        static_cast<float>(fapi_pdu.power_control_offset_profile_nr);
+  if (const auto* profile_nr = std::get_if<fapi::dl_pdsch_pdu::power_profile_nr>(&fapi_pdu.power_config)) {
+    proc_pdu.ratio_pdsch_data_to_sss_dB =
+        get_power_control_offset_ss_dB(profile_nr->power_control_offset_ss_profile_nr) +
+        static_cast<float>(profile_nr->power_control_offset_profile_nr);
 
-  // Determine the PDSCH DMRS power from the PDSCH data power as per TS38.214 Table 4.1-1.
-  proc_pdu.ratio_pdsch_dmrs_to_sss_dB =
-      proc_pdu.ratio_pdsch_data_to_sss_dB + get_sch_to_dmrs_ratio_dB(fapi_pdu.num_dmrs_cdm_grps_no_data);
+    // Determine the PDSCH DMRS power from the PDSCH data power as per TS38.214 Table 4.1-1.
+    proc_pdu.ratio_pdsch_dmrs_to_sss_dB =
+        proc_pdu.ratio_pdsch_data_to_sss_dB + get_sch_to_dmrs_ratio_dB(fapi_pdu.num_dmrs_cdm_grps_no_data);
+  } else if (const auto* profile_sss = std::get_if<fapi::dl_pdsch_pdu::power_profile_sss>(&fapi_pdu.power_config)) {
+    proc_pdu.ratio_pdsch_dmrs_to_sss_dB = profile_sss->dmrs_power_offset_sss_db;
+    proc_pdu.ratio_pdsch_data_to_sss_dB = profile_sss->data_power_offset_sss_db;
+  } else {
+    report_error("PDCH PDU power values are not configured");
+  }
 }
 
 static vrb_to_prb::mapping_type get_mapping_type(fapi::vrb_to_prb_mapping_type vrb_to_prb_mapping)

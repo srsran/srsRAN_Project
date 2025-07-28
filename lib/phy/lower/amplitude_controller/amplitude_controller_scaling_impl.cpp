@@ -30,7 +30,7 @@ amplitude_controller_metrics amplitude_controller_scaling_impl::process(span<cf_
   srsran_srsvec_assert_size(output, input);
 
   // Apply scaling factor.
-  srsvec::sc_prod(input, amplitude_gain, output);
+  srsvec::sc_prod(output, input, amplitude_gain);
 
   // Return empty metrics.
   return {0.0F, 0.0F, 0.0F, 0.0F, 0UL, 0UL, 0.0, false};

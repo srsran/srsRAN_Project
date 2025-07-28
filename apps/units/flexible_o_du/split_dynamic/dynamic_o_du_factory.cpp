@@ -59,7 +59,7 @@ static std::unique_ptr<radio_unit> create_dummy_radio_unit(const ru_dummy_unit_c
 {
   ru_dummy_dependencies dependencies{
       .logger          = srslog::fetch_basic_logger("RU", true),
-      .executor        = ru_dependencies.workers.radio_exec,
+      .executor        = &ru_dependencies.workers.get_dummy_ru_executor_mapper().common_executor(),
       .symbol_notifier = ru_dependencies.symbol_notifier,
       .timing_notifier = ru_dependencies.timing_notifier,
       .error_notifier  = ru_dependencies.error_notifier,

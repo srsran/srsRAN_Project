@@ -24,7 +24,7 @@
 
 #include "srsran/ran/csi_report/csi_report_configuration.h"
 #include "srsran/ran/csi_report/csi_report_data.h"
-#include "srsran/ran/csi_report/csi_report_pusch_size.h"
+#include "srsran/ran/csi_report/csi_report_size.h"
 #include "srsran/ran/uci/uci_formatters.h"
 #include "fmt/std.h"
 
@@ -135,7 +135,7 @@ struct fmt::formatter<srsran::csi_report_data> {
 
 /// Custom formatter for \c srsran::csi_report_pusch_size.
 template <>
-struct fmt::formatter<srsran::csi_report_pusch_size> {
+struct fmt::formatter<srsran::csi_report_size> {
   /// Helper used to parse formatting options and format fields.
   srsran::delimited_formatter helper;
 
@@ -149,7 +149,7 @@ struct fmt::formatter<srsran::csi_report_pusch_size> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::csi_report_pusch_size& data, FormatContext& ctx) const
+  auto format(const srsran::csi_report_size& data, FormatContext& ctx) const
   {
     helper.format_always(ctx, "part1={}", data.part1_size.value());
     helper.format_always(ctx, "part2={{{}}}", data.part2_correspondence);

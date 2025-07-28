@@ -54,7 +54,7 @@ void transform_precoder_dft_impl::deprecode_ofdm_symbol(span<cf_t> x, span<const
   span<const cf_t> out = dft.run();
 
   // Convert DFT output to DFT output data.
-  srsvec::sc_prod(out, scaling_factor, x);
+  srsvec::sc_prod(x, out, scaling_factor);
 }
 
 void transform_precoder_dft_impl::deprecode_ofdm_symbol_noise(span<float> out, span<const float> in)

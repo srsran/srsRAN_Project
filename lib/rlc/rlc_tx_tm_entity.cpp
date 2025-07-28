@@ -126,8 +126,14 @@ size_t rlc_tx_tm_entity::pull_pdu(span<uint8_t> mac_sdu_buf) noexcept SRSRAN_RTS
   size_t pdu_len = out_it - mac_sdu_buf.begin();
   logger.log_info(mac_sdu_buf.data(), pdu_len, "TX PDU. pdu_len={} grant_len={}", pdu_len, grant_len);
 
-  // Release SDU
-  sdu.buf.clear();
+  // Recycle SDU buffer in non real-time UE executor
+  auto release_sdu_func = TRACE_TASK([sdu = std::move(sdu.buf)]() mutable {
+    // leaving this scope will implicitly delete the SDU
+  });
+  if (!ue_executor.defer(std::move(release_sdu_func))) {
+    logger.log_warning("Cannot release transmitted SDU in UE executor. Releasing from pcell executor.");
+    sdu.buf.clear();
+  }
 
   // Push PDU into PCAP.
   pcap.push_pdu(pcap_context, mac_sdu_buf.subspan(0, pdu_len));

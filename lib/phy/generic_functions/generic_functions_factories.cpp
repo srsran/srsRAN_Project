@@ -21,9 +21,12 @@
  */
 
 #include "srsran/phy/generic_functions/generic_functions_factories.h"
-#include "dft_processor_fftw_impl.h"
 #include "dft_processor_generic_impl.h"
 #include "srsran/support/error_handling.h"
+
+#ifdef HAVE_FFTW
+#include "dft_processor_fftw_impl.h"
+#endif // HAVE_FFTW
 
 using namespace srsran;
 
@@ -42,6 +45,7 @@ public:
   }
 };
 
+#ifdef HAVE_FFTW
 class dft_processor_factory_fftw : public dft_processor_factory
 {
   dft_processor_fftw_configuration fftw_config;
@@ -73,6 +77,7 @@ private:
     return std::make_unique<dft_processor_fftw_impl>(fftw_config, dft_config);
   }
 };
+#endif // HAVE_FFTW
 
 } // namespace
 
@@ -86,6 +91,10 @@ std::shared_ptr<dft_processor_factory> srsran::create_dft_processor_factory_fftw
                                                                                  bool   avoid_wisdom,
                                                                                  const std::string& wisdom_filename)
 {
+#ifdef HAVE_FFTW
   return std::make_shared<dft_processor_factory_fftw>(
       optimization_flag, plan_creation_timeout_s, avoid_wisdom, wisdom_filename);
+#else  // HAVE_FFTW
+  return nullptr;
+#endif // HAVE_FFTW
 }

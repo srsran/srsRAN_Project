@@ -108,25 +108,33 @@ o_du_low_unit o_du_low_unit_factory::create(const o_du_low_unit_config&       pa
 
   // Fill the workers information.
   for (unsigned i = 0, e = o_du_low_cfg.du_low_cfg.cells.size(); i != e; ++i) {
+    srs_du::du_low_cell_executor_mapper& cell_exec_map = dependencies.workers[i];
+
     srs_du::du_low_cell_config& cell = o_du_low_cfg.du_low_cfg.cells[i];
 
     generate_dl_processor_config(cell.dl_proc_cfg,
                                  params.du_low_unit_cfg,
-                                 *dependencies.workers.upper_pdsch_exec[i],
+                                 cell_exec_map.pdsch_codeblock_executor(),
                                  hal_dependencies.hw_encoder_factory);
 
     upper_phy_config& upper          = cell.upper_phy_cfg;
     upper.rg_gateway                 = &dependencies.rg_gateway;
     upper.rx_symbol_request_notifier = &dependencies.rx_symbol_request_notifier;
-    upper.pucch_executor             = dependencies.workers.upper_pucch_exec[i];
-    upper.pusch_executor             = dependencies.workers.upper_pusch_exec[i];
-    upper.pusch_decoder_executor     = dependencies.workers.upper_pusch_decoder_exec[i];
-    upper.prach_executor             = dependencies.workers.upper_prach_exec[i];
-    upper.srs_executor               = dependencies.workers.upper_srs_exec[i];
+    upper.pucch_executor             = &cell_exec_map.pucch_executor();
+    upper.pusch_executor             = &cell_exec_map.pusch_executor();
+    upper.pusch_decoder_executor =
+        (upper.nof_pusch_decoder_threads > 1) ? &cell_exec_map.pusch_decoder_executor() : nullptr;
+    upper.prach_executor = &cell_exec_map.prach_executor();
+    upper.srs_executor   = &cell_exec_map.srs_executor();
     if (hal_dependencies.hw_decoder_factory) {
       upper.hw_decoder_factory = hal_dependencies.hw_decoder_factory;
     }
-    upper.dl_executor = &dependencies.workers.get_du_low_dl_executor(i);
+    upper.pdcch_executor   = &cell_exec_map.pdcch_executor();
+    upper.pdsch_executor   = &cell_exec_map.pdsch_executor();
+    upper.ssb_executor     = &cell_exec_map.ssb_executor();
+    upper.csi_rs_executor  = &cell_exec_map.csi_rs_executor();
+    upper.prs_executor     = &cell_exec_map.prs_executor();
+    upper.dl_grid_executor = &cell_exec_map.dl_grid_pool_executor();
   }
 
   o_du_low_unit unit;

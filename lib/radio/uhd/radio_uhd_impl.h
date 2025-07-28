@@ -139,6 +139,12 @@ public:
 
   // See interface for documentation.
   bool set_rx_gain(unsigned port_idx, double gain_dB) override { return set_rx_gain_unprotected(port_idx, gain_dB); }
+
+  // See interface for documentation.
+  bool set_tx_freq(unsigned stream_id, double center_freq_Hz) override;
+
+  // See interface for documentation.
+  bool set_rx_freq(unsigned stream_id, double center_freq_Hz) override;
 };
 
 /// Factory for UHD radio session.

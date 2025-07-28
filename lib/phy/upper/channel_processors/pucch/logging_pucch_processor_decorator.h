@@ -44,7 +44,8 @@ class logging_pucch_processor_decorator : public pucch_processor
   {
     pucch_processor_result result;
 
-    std::chrono::nanoseconds time_ns = time_execution([&]() { result = processor->process(grid, config); });
+    std::chrono::nanoseconds time_ns =
+        time_execution([this, &result, &grid, &config]() { result = processor->process(grid, config); });
     if (logger.debug.enabled()) {
       // Detailed log information, including a list of all PUCCH configuration and result fields.
       logger.debug(config.slot.sfn(),
@@ -75,16 +76,17 @@ public:
     return process_(grid, config);
   }
 
-  const pucch_format1_map<pucch_processor_result>& process(const resource_grid_reader&        grid,
-                                                           const format1_batch_configuration& config) override
+  pucch_format1_map<pucch_processor_result> process(const resource_grid_reader&        grid,
+                                                    const format1_batch_configuration& config) override
   {
     if (!logger.debug.enabled() && !logger.info.enabled()) {
       return processor->process(grid, config);
     }
 
-    const pucch_format1_map<pucch_processor_result>* results = nullptr;
+    pucch_format1_map<pucch_processor_result> results;
 
-    std::chrono::nanoseconds time_ns = time_execution([&]() { results = &processor->process(grid, config); });
+    std::chrono::nanoseconds time_ns =
+        time_execution([this, &results, &grid, &config]() { results = processor->process(grid, config); });
 
     // Iterate each of the UE dedicated configuration.
     for (unsigned initial_cyclic_shift = pucch_constants::format1_initial_cyclic_shift_range.start();
@@ -95,14 +97,14 @@ public:
            ++time_domain_occ) {
         // Skip result if it is not available.
         if (!config.entries.contains(initial_cyclic_shift, time_domain_occ) ||
-            !results->contains(initial_cyclic_shift, time_domain_occ)) {
+            !results.contains(initial_cyclic_shift, time_domain_occ)) {
           continue;
         }
 
         // Select configuration and results->
         const auto& common_config = config.common_config;
         const auto& ue_config     = config.entries.get(initial_cyclic_shift, time_domain_occ);
-        const auto& result        = results->get(initial_cyclic_shift, time_domain_occ);
+        const auto& result        = results.get(initial_cyclic_shift, time_domain_occ);
 
         // Build formateable Format 1 configuraton.
         format1_configuration all_config = {.context              = ue_config.context,
@@ -142,7 +144,7 @@ public:
       }
     }
 
-    return *results;
+    return results;
   }
   pucch_processor_result process(const resource_grid_reader& grid, const format2_configuration& config) override
   {

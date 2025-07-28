@@ -17136,7 +17136,7 @@ using trp_info_ext_ies_container = protocol_ext_container_empty_l;
 // TRPInformation ::= SEQUENCE
 struct trp_info_s {
   bool                       ie_exts_present = false;
-  uint32_t                   trp_id          = 0;
+  uint32_t                   trp_id          = 1;
   trp_info_type_resp_list_l  trp_info_type_resp_list;
   trp_info_ext_ies_container ie_exts;
 

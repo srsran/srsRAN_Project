@@ -265,14 +265,17 @@ struct sib19_info {
   // with std::optional.
   sib19_info() {}
 
-  std::optional<uint16_t>                                                distance_thres;
-  std::optional<std::string>                                             ref_location;
+  std::optional<unsigned>                                                distance_thres;
+  std::optional<geodetic_coordinates_t>                                  ref_location;
+  std::optional<uint64_t>                                                t_service;
   std::optional<uint16_t>                                                cell_specific_koffset;
   std::optional<std::variant<ecef_coordinates_t, orbital_coordinates_t>> ephemeris_info;
   std::optional<epoch_time_t>                                            epoch_time;
   std::optional<uint16_t>                                                k_mac;
   std::optional<ta_info_t>                                               ta_info;
   std::optional<uint16_t>                                                ntn_ul_sync_validity_dur;
+  std::optional<ntn_polarization_t>                                      polarization;
+  std::optional<bool>                                                    ta_report;
 };
 
 /// \brief Variant type that can hold different types of SIBs that go in a SI message.

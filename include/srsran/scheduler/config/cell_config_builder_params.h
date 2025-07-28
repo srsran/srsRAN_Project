@@ -72,6 +72,8 @@ struct cell_config_builder_params {
   uint8_t min_k2 = 4;
   /// Defines the TDD DL-UL pattern and periodicity. If no value is set, the cell is in FDD mode.
   std::optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common;
+  /// Maximum number of DL layers.
+  std::optional<unsigned> max_nof_layers;
 };
 
 } // namespace srsran

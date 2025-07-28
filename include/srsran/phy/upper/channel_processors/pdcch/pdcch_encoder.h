@@ -36,7 +36,7 @@ public:
   struct config_t {
     /// Number of rate-matched bits.
     unsigned E;
-    /// RNTI used for CRC bits scrambling according to TS 38.212 section 7.3.2.
+    /// RNTI used for CRC bits scrambling according to TS38.212 Section 7.3.2.
     unsigned rnti;
   };
 

@@ -84,6 +84,11 @@ static void configure_cli11_log_args(CLI::App& app, logger_appconfig& log_params
         }
       }
 
+      // Skip setting options that are not directly related to the stack.
+      if (option->check_name("--lib_level")) {
+        continue;
+      }
+
       option->default_val<std::string>(srslog::basic_level_to_string(log_params.all_level));
     }
   });

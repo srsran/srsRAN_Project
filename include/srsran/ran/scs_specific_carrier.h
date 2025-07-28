@@ -40,6 +40,13 @@ struct scs_specific_carrier {
   /// subcarrier index within the carrier. The values in the value range 3301..4095 are reserved and ignored by the UE.
   /// If this field is absent, the UE assumes the default value of 3300 (i.e. "Outside the carrier").
   std::optional<unsigned> tx_direct_current_location;
+
+  bool operator==(const scs_specific_carrier& rhs) const
+  {
+    return offset_to_carrier == rhs.offset_to_carrier && scs == rhs.scs && carrier_bandwidth == rhs.carrier_bandwidth &&
+           tx_direct_current_location == rhs.tx_direct_current_location;
+  }
+  bool operator!=(const scs_specific_carrier& rhs) const { return !(rhs == *this); }
 };
 
 } // namespace srsran

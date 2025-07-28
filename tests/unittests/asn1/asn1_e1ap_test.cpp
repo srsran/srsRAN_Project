@@ -20,6 +20,7 @@
  *
  */
 
+#include "srsran/asn1/e1ap/common.h"
 #include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
 #include "srsran/pcap/dlt_pcap.h"

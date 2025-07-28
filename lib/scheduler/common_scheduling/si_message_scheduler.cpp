@@ -138,8 +138,8 @@ void si_message_scheduler::schedule_pending_si_messages(cell_slot_resource_alloc
   for (unsigned i = 0; i != pending_messages.size(); ++i) {
     message_window_context& si_ctxt = pending_messages[i];
 
-    if (si_ctxt.window.empty()) {
-      // SI window is inactive.
+    if (si_ctxt.window.empty() or si_ctxt.nof_tx_in_current_window > 0) {
+      // SI window is inactive or SI message was already transmitted.
       continue;
     }
 

@@ -90,31 +90,34 @@ public:
 
   std::unique_ptr<prach_detector> create() override
   {
-    std::vector<std::unique_ptr<prach_detector>> detectors(nof_concurrent_threads);
-
-    for (auto& detector : detectors) {
-      detector = factory->create();
+    if (!pool) {
+      std::vector<std::unique_ptr<prach_detector>> detectors(nof_concurrent_threads);
+      std::generate(detectors.begin(), detectors.end(), [this]() { return factory->create(); });
+      pool = std::make_shared<prach_detector_pool::detector_pool>(detectors);
     }
 
-    return std::make_unique<prach_detector_pool>(std::move(detectors));
+    return std::make_unique<prach_detector_pool>(pool);
   }
 
   std::unique_ptr<prach_detector> create(srslog::basic_logger& logger, bool log_all_opportunities) override
   {
-    std::vector<std::unique_ptr<prach_detector>> detectors(nof_concurrent_threads);
-
-    for (auto& detector : detectors) {
-      detector = factory->create(logger, log_all_opportunities);
+    if (!pool) {
+      std::vector<std::unique_ptr<prach_detector>> detectors(nof_concurrent_threads);
+      std::generate(detectors.begin(), detectors.end(), [this, &logger, log_all_opportunities]() {
+        return factory->create(logger, log_all_opportunities);
+      });
+      pool = std::make_shared<prach_detector_pool::detector_pool>(detectors);
     }
 
-    return std::make_unique<prach_detector_pool>(std::move(detectors));
+    return std::make_unique<prach_detector_pool>(pool);
   }
 
   std::unique_ptr<prach_detector_validator> create_validator() override { return factory->create_validator(); }
 
 private:
-  std::shared_ptr<prach_detector_factory> factory;
-  unsigned                                nof_concurrent_threads;
+  std::shared_ptr<prach_detector_factory>             factory;
+  std::shared_ptr<prach_detector_pool::detector_pool> pool;
+  unsigned                                            nof_concurrent_threads;
 };
 
 class prach_generator_factory_sw : public prach_generator_factory

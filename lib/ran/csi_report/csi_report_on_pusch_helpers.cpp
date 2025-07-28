@@ -187,10 +187,12 @@ static csi_report_data unpack_pusch_csi_cri_ri_li_pmi_cqi(const csi_report_packe
   return data;
 }
 
-csi_report_pusch_size srsran::get_csi_report_pusch_size(const csi_report_configuration& config)
+csi_report_size srsran::get_csi_report_pusch_size(const csi_report_configuration& config)
 {
-  csi_report_pusch_size result                = {};
-  unsigned              nof_csi_antenna_ports = csi_report_get_nof_csi_rs_antenna_ports(config.pmi_codebook);
+  srsran_assert(!config.subband.has_value(), "Subbands CSI reports are not supported on PUSCH.");
+
+  csi_report_size result                = {};
+  unsigned        nof_csi_antenna_ports = csi_report_get_nof_csi_rs_antenna_ports(config.pmi_codebook);
 
   // Get CSI Part 1 field sizes which do not depend on the number of layers.
   ri_li_cqi_cri_sizes part1_sizes =
@@ -281,6 +283,7 @@ csi_report_data srsran::csi_report_unpack_pusch(const csi_report_packed&        
                                                 const csi_report_packed&        csi2_packed,
                                                 const csi_report_configuration& config)
 {
+  srsran_assert(!config.subband.has_value(), "Subbands CSI reports are not supported on PUSCH.");
   srsran_assert(config.pmi_codebook != pmi_codebook_type::other, "Unsupported PMI codebook type.");
 
   srsran_assert((config.pmi_codebook == pmi_codebook_type::one) ||

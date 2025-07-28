@@ -35,14 +35,17 @@ struct tdd_ul_dl_config_common;
 
 namespace prach_helper {
 
-/// Checks whether the PRACH config index is valid for a given band.
-/// \return In case config is not supported, a string with an error message is provided.
-error_type<std::string> prach_config_index_is_valid(uint8_t prach_cfg_idx, duplex_mode dplx_mode);
+/// \brief Checks whether a given PRACH configuration index is valid for a given frequency range and duplex mode.
+/// \return \c default_success_t if the given parameters are supported, otherwise an error message is provided.
+error_type<std::string> prach_config_index_is_valid(uint8_t prach_cfg_idx, frequency_range fr, duplex_mode dplx_mode);
 
-/// Checks whether the PRACH zero correlation zone is valid for a given PRACH config index and duplex mode.
-/// \return In case config is not supported, a string with an error message is provided.
-error_type<std::string>
-zero_correlation_zone_is_valid(uint8_t zero_correlation_zone, uint8_t prach_cfg_idx, duplex_mode dplx_mode);
+/// \brief Checks whether a given PRACH Zero Correlation Zone (ZCZ) is valid for a given PRACH config index, frequency
+/// range, and duplex mode.
+/// \return \c default_success_t if the given parameters are supported, otherwise an error message is provided.
+error_type<std::string> zero_correlation_zone_is_valid(uint8_t         zero_correlation_zone,
+                                                       uint8_t         prach_cfg_idx,
+                                                       frequency_range freq_range,
+                                                       duplex_mode     dplx_mode);
 
 /// \brief Finds whether a PRACH config index fits in the provided TDD pattern.
 /// \return In case of failure, returns the range of PRACH slots that did not fit in the TDD pattern. If the PRACH

@@ -56,12 +56,11 @@ class du_high_cu_test_simulator
 {
 public:
   struct du_sim {
-    srs_du::du_high_configuration       du_high_cfg;
-    phy_test_dummy                      phy;
-    null_mac_pcap                       mac_pcap;
-    null_rlc_pcap                       rlc_pcap;
-    dummy_scheduler_ue_metrics_notifier ue_metrics_notifier;
-    std::unique_ptr<srs_du::du_high>    du_high_inst;
+    srs_du::du_high_configuration    du_high_cfg;
+    phy_test_dummy                   phy;
+    null_mac_pcap                    mac_pcap;
+    null_rlc_pcap                    rlc_pcap;
+    std::unique_ptr<srs_du::du_high> du_high_inst;
 
     slot_point next_slot;
 

@@ -60,7 +60,7 @@ TEST(UnwrapTest, RampUp)
   constexpr unsigned        length = 10;
   std::array<float, length> phases = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
-  srsvec::sc_prod(phases, M_PI / 4, phases);
+  srsvec::sc_prod(phases, phases, M_PI / 4);
 
   std::array<cf_t, length> c_numbers;
 
@@ -78,7 +78,7 @@ TEST(UnwrapTest, RampDown)
   constexpr unsigned        length = 10;
   std::array<float, length> phases = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
-  srsvec::sc_prod(phases, -M_PI / 4, phases);
+  srsvec::sc_prod(phases, phases, -M_PI / 4);
 
   std::array<cf_t, length> c_numbers;
 

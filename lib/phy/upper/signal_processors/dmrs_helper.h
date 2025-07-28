@@ -69,7 +69,7 @@ struct dmrs_pxsch_parameters {
 /// The DM-RS parameters for PUSCH type 1 and 2 configuration are given in TS38.211 Table 6.4.1.1.3-1 and Table
 /// 6.4.1.1.3-2, respectively.
 ///
-/// The DM-RS parameters for PDSCH type 1 and 2 configuration are given in TS 38.211 Table 7.4.1.1.2-1 and Table
+/// The DM-RS parameters for PDSCH type 1 and 2 configuration are given in TS38.211 Table 7.4.1.1.2-1 and Table
 /// 7.4.1.1.2-2, respectively.
 ///
 /// \param type        Specifies the DM-RS configuration type.

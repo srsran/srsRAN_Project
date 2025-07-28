@@ -44,12 +44,12 @@ static bool validate_clock_sources(const radio_configuration::clock_sources& sou
 
 static bool validate_lo_freq(const radio_configuration::lo_frequency& lo_freq)
 {
-  if (!std::isnormal(lo_freq.center_frequency_hz)) {
+  if (!std::isnormal(lo_freq.center_frequency_Hz)) {
     fmt::print("The center frequency must be non-zero, NAN nor infinite.\n");
     return false;
   }
 
-  if (lo_freq.lo_frequency_hz != 0.0) {
+  if (lo_freq.lo_frequency_Hz != 0.0) {
     fmt::print("The custom LO frequency is not currently supported.\n");
     return false;
   }
@@ -163,7 +163,7 @@ bool radio_config_zmq_config_validator::is_configuration_valid(const radio_confi
     }
   }
 
-  if (!validate_sampling_rate(config.sampling_rate_hz)) {
+  if (!validate_sampling_rate(config.sampling_rate_Hz)) {
     return false;
   }
 

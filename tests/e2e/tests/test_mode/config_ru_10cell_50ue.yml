@@ -1,0 +1,95 @@
+#
+# Copyright 2021-2025 Software Radio Systems Limited
+#
+# This file is part of srsRAN
+#
+# srsRAN is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of
+# the License, or (at your option) any later version.
+#
+# srsRAN is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# A copy of the GNU Affero General Public License can be found in
+# the LICENSE file in the top-level directory of this distribution
+# and at http://www.gnu.org/licenses/.
+#
+
+metrics:
+  layers:
+    enable_app_usage: true
+    enable_pdcp: true
+    enable_sched: true
+    enable_rlc: true
+    enable_mac: true
+    enable_du_low: true
+    enable_ru: true
+  periodicity:
+    app_usage_report_period: 10000
+    cu_cp_report_period: 5000
+    cu_up_report_period: 5000
+    du_report_period: 1000
+
+cu_up:
+  warn_on_drop: False
+
+buffer_pool:
+  nof_segments: 1048576
+
+cell_cfg:
+  dl_arfcn: 437000
+  band: 256
+  channel_bandwidth_MHz: 5
+  common_scs: 15
+  tac: 7
+  pucch:
+    sr_period_ms: 80
+    nof_ue_res_harq_per_set: 8
+    f0_or_f1_nof_cell_res_sr: 2
+    f0_intraslot_freq_hop: false
+    f1_enable_occ: true
+    f1_nof_cyclic_shifts: 12
+  ul_common:
+    max_pucchs_per_slot: 31
+    max_ul_grants_per_slot: 32
+  ssb:
+    ssb_period: 20
+  pusch:
+    enable_transform_precoding: true
+
+cells:
+  - pci: 1
+  - pci: 2
+  - pci: 3
+  - pci: 4
+  - pci: 5
+  - pci: 6
+  - pci: 7
+  - pci: 8
+  - pci: 9
+  - pci: 10
+
+ru_dummy:
+  time_scaling: 10
+
+test_mode:
+  test_ue:
+    rnti: 0x1234
+    ri: 1
+    cqi: 15
+    pdsch_active: true
+    pusch_active: true
+    nof_ues: 50
+
+expert_execution:
+  threads:
+    upper_phy:
+      nof_dl_threads: 2
+      nof_ul_threads: 1
+      nof_pusch_decoder_threads: 2
+
+expert_phy:
+  max_proc_delay: 6

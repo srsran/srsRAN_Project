@@ -45,6 +45,9 @@ public:
 
   /// \brief Deallocate the SRS resources for a given UE and return the used resource to the common pool.
   virtual void dealloc_resources(cell_group_config& cell_grp_cfg) = 0;
+
+  /// Gets the current number of free SRS resource ID and offset pairs.
+  virtual unsigned get_nof_srs_free_res_offsets(du_cell_index_t cell_idx) const = 0;
 };
 
 /// This class implements the MAX UL throughput policy for the SRS allocation. The SRS resources are allocated with the
@@ -65,6 +68,11 @@ public:
   bool alloc_resources(cell_group_config& cell_grp_cfg) override;
 
   void dealloc_resources(cell_group_config& cell_grp_cfg) override;
+
+  unsigned get_nof_srs_free_res_offsets(du_cell_index_t cell_idx) const override
+  {
+    return cells[cell_idx].srs_res_offset_free_list.size();
+  }
 
 private:
   struct cell_context {

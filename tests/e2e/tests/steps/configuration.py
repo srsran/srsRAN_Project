@@ -33,7 +33,7 @@ from retina.launcher.public import MetricServerInfo
 from retina.protocol.channel_emulator_pb2 import EphemerisInfoType, NtnScenarioConfig, NtnScenarioType
 
 
-def configure_ntn_parameters(retina_data: RetinaTestData, ntn_config: NtnScenarioConfig = None):
+def configure_ntn_parameters(retina_data: RetinaTestData, ntn_config: NtnScenarioConfig):
     """
     Configure test NTN parameters
     """
@@ -60,11 +60,11 @@ def configure_ntn_parameters(retina_data: RetinaTestData, ntn_config: NtnScenari
     retina_data.test_config["gnb"]["parameters"]["sib19"][
         "cell_specific_koffset"
     ] = ntn_config.sib19_cfg.cell_specific_koffset
-    retina_data.test_config["gnb"]["parameters"]["sib19"]["ta_common"] = int(ntn_config.sib19_cfg.ta_common)
-    retina_data.test_config["gnb"]["parameters"]["sib19"]["ta_common_drift"] = int(ntn_config.sib19_cfg.ta_common_drift)
-    retina_data.test_config["gnb"]["parameters"]["sib19"]["ta_common_drift_variant"] = int(
-        ntn_config.sib19_cfg.ta_common_drift_variant
-    )
+    retina_data.test_config["gnb"]["parameters"]["sib19"]["ta_common"] = ntn_config.sib19_cfg.ta_common
+    retina_data.test_config["gnb"]["parameters"]["sib19"]["ta_common_drift"] = ntn_config.sib19_cfg.ta_common_drift
+    retina_data.test_config["gnb"]["parameters"]["sib19"][
+        "ta_common_drift_variant"
+    ] = ntn_config.sib19_cfg.ta_common_drift_variant
     if ntn_config.sib19_cfg.ephemeris_info_type == EphemerisInfoType.ORBITAL:
         retina_data.test_config["gnb"]["parameters"]["sib19"]["use_ephemeris_orbital"] = True
         retina_data.test_config["gnb"]["parameters"]["sib19"][
@@ -141,8 +141,10 @@ def configure_test_parameters(
     use_format_0: bool = False,
     pucch_set1_format: int = 2,
     pdsch_interleaving_bundle_size: int = 0,
-    ntn_config: NtnScenarioConfig = None,
+    ntn_config: Optional[NtnScenarioConfig] = None,
     pdcch_log: bool = False,
+    slices: Optional[List[dict]] = None,
+    ue_sds: Optional[List[str]] = None,
 ):
     """
     Configure test parameters
@@ -166,6 +168,7 @@ def configure_test_parameters(
                 "nof_antennas_dl": nof_antennas_dl,
                 "nof_antennas_ul": nof_antennas_ul,
                 "pdcch_log": pdcch_log,
+                "ue_sds": ue_sds if ue_sds is not None else [],
             },
         },
         "gnb": {
@@ -191,9 +194,15 @@ def configure_test_parameters(
                 "use_format_0": use_format_0,
                 "pucch_set1_format": pucch_set1_format,
                 "pdsch_interleaving_bundle_size": pdsch_interleaving_bundle_size,
+                "slices": slices if slices is not None else [],
             },
         },
-        "5gc": {"parameters": {"ims_mode": ims_mode}},
+        "5gc": {
+            "parameters": {
+                "ims_mode": ims_mode,
+                "slices": [slice["sd"] for slice in slices] if slices is not None else [],
+            }
+        },
     }
     if n3_enable is not None and n3_enable:
         retina_data.test_config["gnb"]["parameters"]["pcap"] = True
@@ -207,15 +216,14 @@ def configure_test_parameters(
     if ntn_config is not None:
         configure_ntn_parameters(retina_data, ntn_config)
 
-    metrics_server = None
     for node_name in retina_manager.get_testbed_info().get("generic", {}).keys():
         if "metrics-server" in node_name:
-            metrics_server = retina_manager.get_testbed_info()["generic"][node_name]
-
-    if metrics_server is not None and metrics_server.metadata.get("ip", None) is not None:
-        retina_data.test_config["gnb"]["parameters"]["metrics_hostname"] = metrics_server.metadata["ip"]
-        retina_data.test_config["gnb"]["parameters"]["metrics_port"] = metrics_server.port
-        logging.info("Metrics Server in %s:%s will be used for this test.", metrics_server.address, metrics_server.port)
+            metrics_server_dict = retina_manager.get_testbed_info()["generic"][node_name]
+            metrics_server = MetricServerInfo(metrics_server_dict.metadata["ip"], metrics_server_dict.port)
+            logging.info(
+                "Metrics Server in %s:%s will be used for this test.", metrics_server.address, metrics_server.port
+            )
+            configure_metric_server_for_gnb(retina_manager, retina_data, metrics_server)
 
     logging.info("Test config: \n%s", pformat(retina_data.test_config))
     retina_manager.parse_configuration(retina_data.test_config)

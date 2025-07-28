@@ -23,12 +23,11 @@
 #pragma once
 
 #include "srsran/adt/bounded_integer.h"
-#include "srsran/support/srsran_assert.h"
 #include "fmt/format.h"
 
 namespace srsran {
 
-/// \brief QoS Priority Level. See TS 38.473 Qos Priority Level. Values: (0..127).
+/// \brief QoS Priority Level. See TS 38.473 QoS Priority Level. Values: (0..127).
 struct qos_prio_level_t : public bounded_integer<uint8_t, 0, 127> {
   using bounded_integer::bounded_integer;
 };

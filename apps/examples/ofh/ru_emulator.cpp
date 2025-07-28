@@ -863,8 +863,7 @@ struct worker_manager {
         const std::string exec_name = "ru_rx_exec_#" + std::to_string(i);
 
         const single_worker ru_worker{name,
-                                      {concurrent_queue_policy::lockfree_spsc, 2},
-                                      {{exec_name}},
+                                      {exec_name, concurrent_queue_policy::lockfree_spsc, 2},
                                       std::chrono::microseconds{1},
                                       os_thread_realtime_priority::max() - 1};
         if (!exec_mng.add_execution_context(create_execution_context(ru_worker))) {
@@ -878,8 +877,7 @@ struct worker_manager {
         const std::string   name      = "ru_emu_#" + std::to_string(i);
         const std::string   exec_name = "ru_emu_exec_#" + std::to_string(i);
         const single_worker ru_worker{name,
-                                      {concurrent_queue_policy::lockfree_spsc, task_worker_queue_size},
-                                      {{exec_name}},
+                                      {exec_name, concurrent_queue_policy::lockfree_spsc, task_worker_queue_size},
                                       std::chrono::microseconds{1},
                                       os_thread_realtime_priority::max() - 1};
         if (!exec_mng.add_execution_context(create_execution_context(ru_worker))) {
@@ -895,8 +893,7 @@ struct worker_manager {
       const std::string exec_name = "ru_timing_exec";
 
       const single_worker ru_worker{name,
-                                    {concurrent_queue_policy::lockfree_spsc, 4},
-                                    {{exec_name}},
+                                    {exec_name, concurrent_queue_policy::lockfree_spsc, 4},
                                     std::chrono::microseconds{1},
                                     os_thread_realtime_priority::max() - 0};
       if (!exec_mng.add_execution_context(create_execution_context(ru_worker))) {

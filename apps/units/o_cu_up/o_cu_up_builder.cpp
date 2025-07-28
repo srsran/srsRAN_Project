@@ -83,7 +83,7 @@ o_cu_up_unit srsran::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_
   config.cu_up_cfg.qos = generate_cu_up_qos_config(unit_cfg.cu_up_cfg);
 
   srs_cu_up::o_cu_up_dependencies ocu_up_dependencies;
-  ocu_up_dependencies.cu_dependencies.exec_mapper    = dependencies.workers->cu_up_exec_mapper.get();
+  ocu_up_dependencies.cu_dependencies.exec_mapper    = &dependencies.workers->get_cu_up_executor_mapper();
   ocu_up_dependencies.cu_dependencies.e1_conn_client = dependencies.e1ap_conn_client;
   ocu_up_dependencies.cu_dependencies.f1u_gateway    = dependencies.f1u_gateway;
   ocu_up_dependencies.cu_dependencies.gtpu_pcap      = dependencies.gtpu_pcap;
@@ -99,6 +99,9 @@ o_cu_up_unit srsran::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_
       n3_udp_cfg.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;
       n3_udp_cfg.bind_port                  = GTPU_PORT;
       n3_udp_cfg.rx_max_mmsg                = sock_cfg.udp_config.rx_max_msgs;
+      n3_udp_cfg.tx_qsize                   = sock_cfg.udp_config.tx_qsize;
+      n3_udp_cfg.tx_max_mmsg                = sock_cfg.udp_config.tx_max_msgs;
+      n3_udp_cfg.tx_max_segments            = sock_cfg.udp_config.tx_max_segments;
       n3_udp_cfg.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;
       n3_udp_cfg.reuse_addr                 = false; // TODO allow reuse_addr for multiple sockets
       n3_udp_cfg.dscp                       = sock_cfg.udp_config.dscp;
@@ -106,8 +109,8 @@ o_cu_up_unit srsran::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_
       std::unique_ptr<gtpu_gateway> ngu_gw =
           create_udp_gtpu_gateway(n3_udp_cfg,
                                   *dependencies.io_brk,
-                                  dependencies.workers->cu_up_exec_mapper->io_ul_executor(),
-                                  dependencies.workers->cu_up_exec_mapper->n3_executor());
+                                  dependencies.workers->get_cu_up_executor_mapper().io_ul_executor(),
+                                  dependencies.workers->get_cu_up_executor_mapper().n3_executor());
       ngu_gws.push_back(std::move(ngu_gw));
     }
   } else {

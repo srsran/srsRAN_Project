@@ -25,6 +25,7 @@
 #include "../baseband_cfo_processor.h"
 #include "srsran/adt/tensor.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
+#include "srsran/phy/lower/processors/lower_phy_center_freq_controller.h"
 #include "srsran/phy/lower/processors/uplink/prach/prach_processor.h"
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor.h"
 #include "srsran/phy/lower/processors/uplink/uplink_processor.h"
@@ -84,6 +85,12 @@ public:
   // See interface for documentation.
   uplink_processor_baseband& get_baseband() override;
 
+  // See interface for documentation.
+  baseband_cfo_processor& get_cfo_control() override;
+
+  // See interface for documentation.
+  lower_phy_center_freq_controller& get_carrier_center_frequency_control() override;
+
 private:
   /// States.
   enum class fsm_states {
@@ -93,11 +100,6 @@ private:
     collecting
   };
 
-  // See interface for documentation.
-public:
-  baseband_cfo_processor& get_cfo_handler() override;
-
-private:
   // See interface for documentation.
   void process(const baseband_gateway_buffer_reader& samples, baseband_gateway_timestamp timestamp) override;
 

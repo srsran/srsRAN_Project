@@ -44,14 +44,14 @@ struct ofdm_demodulator_configuration {
   unsigned nof_samples_window_offset;
   /// Scaling factor at the DFT output.
   float scale;
-  /// Indicates the center frequency of the carrier in Hz.
-  double center_freq_hz;
+  /// Carrier center frequency in Hertz.
+  double center_freq_Hz;
 };
 
 /// \brief Describes an OFDM demodulator that demodulates at symbol granularity.
-/// \remark Performs OFDM demodulation as per TS 38.211 section 5.3.1 OFDM baseband signal generation for all channels
+/// \remark Performs OFDM demodulation as per TS38.211 Section 5.3.1 OFDM baseband signal generation for all channels
 /// except PRACH.
-/// \remark In addition to demodulation, it applies phase compensation as per TS 38.211 section 5.4 Modulation and
+/// \remark In addition to demodulation, it applies phase compensation as per TS38.211 Section 5.4 Modulation and
 /// upconversion
 class ofdm_symbol_demodulator
 {
@@ -63,6 +63,14 @@ public:
   /// \param[in] symbol_index Indicates the symbol index within the subframe.
   /// \return The number of samples for the given symbol index.
   virtual unsigned get_symbol_size(unsigned symbol_index) const = 0;
+
+  /// \brief Sets the center frequency.
+  ///
+  /// The implementation of this method must be thread safe and the new center frequency takes effect in the next call
+  /// to demodulate().
+  ///
+  /// \param[in] center_frequency_Hz Given center frequency in Hertz.
+  virtual void set_center_frequency(double center_frequency_Hz) = 0;
 
   /// \brief Demodulates an OFDM signal with symbol granularity.
   /// \param[out] grid Provides the output as frequency-domain signal corresponding to one slot.
@@ -76,9 +84,9 @@ public:
 };
 
 /// \brief Describes an OFDM demodulator with slot granularity.
-/// \remark Performs OFDM demodulation as per TS 38.211 section 5.3.1 OFDM baseband signal generation for all channels
+/// \remark Performs OFDM demodulation as per TS38.211 Section 5.3.1 OFDM baseband signal generation for all channels
 /// except PRACH.
-/// \remark In addition to demodulation, it applies phase compensation as per TS 38.211 section 5.4 Modulation and
+/// \remark In addition to demodulation, it applies phase compensation as per TS38.211 Section 5.4 Modulation and
 /// upconversion.
 class ofdm_slot_demodulator
 {

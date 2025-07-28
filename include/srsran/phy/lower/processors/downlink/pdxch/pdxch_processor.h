@@ -27,6 +27,7 @@ namespace srsran {
 class pdxch_processor_notifier;
 class pdxch_processor_request_handler;
 class pdxch_processor_baseband;
+class lower_phy_center_freq_controller;
 class slot_point;
 
 /// \brief PDxCH processor main interface.
@@ -52,6 +53,9 @@ public:
   /// \brief Gets the PDxCH processor baseband interface.
   /// \return A reference to the internal PDxCH processor baseband interface.
   virtual pdxch_processor_baseband& get_baseband() = 0;
+
+  /// Gets the carrier center frequency control interface.
+  virtual lower_phy_center_freq_controller& get_center_freq_control() = 0;
 
   /// Stops the processor.
   virtual void stop() = 0;

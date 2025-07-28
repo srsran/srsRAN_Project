@@ -35,10 +35,10 @@ inline void register_split6_o_du_low_loggers(const split6_o_du_low_unit_config& 
 {
   register_du_low_loggers(config.du_low_cfg.loggers);
 
-  if (auto* ru_cfg = std::get_if<ru_sdr_unit_config>(&config.ru_cfg)) {
-    register_ru_sdr_logs(ru_cfg->loggers);
-  } else if (auto* ru_cfg = std::get_if<ru_ofh_unit_parsed_config>(&config.ru_cfg)) {
-    register_ru_ofh_loggers(ru_cfg->config.loggers);
+  if (const auto* ru_sdr = std::get_if<ru_sdr_unit_config>(&config.ru_cfg)) {
+    register_ru_sdr_logs(ru_sdr->loggers);
+  } else if (const auto* ru_ofh = std::get_if<ru_ofh_unit_parsed_config>(&config.ru_cfg)) {
+    register_ru_ofh_loggers(ru_ofh->config.loggers);
   }
 }
 

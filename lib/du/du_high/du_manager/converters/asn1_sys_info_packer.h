@@ -46,6 +46,10 @@ byte_buffer pack_mib(const du_cell_config& du_cfg);
 byte_buffer pack_sib1(const du_cell_config& du_cfg, std::string* js_str = nullptr);
 
 /// \brief Derive and pack cell SIB19.
+/// \param[in] sib19_params content of SIB19 msg.
+///\param[out] json_string String where the RRC ASN.1 SIB1 is stored in json format. If nullptr, no conversion takes
+/// place.
+/// \return byte buffer with packed cell SIB19.
 byte_buffer pack_sib19(const sib19_info& sib19_params, std::string* js_str = nullptr);
 
 /// \brief Pack all cell BCCH-DL-SCH messages (SIB1 + SI messages) from DU cell configuration.

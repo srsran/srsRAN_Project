@@ -50,6 +50,8 @@ public:
     // Do nothing.
   }
 
+  void set_center_frequency(double center_frequency_Hz) override {}
+
   unsigned get_symbol_size(unsigned symbol_index) const override
   {
     unsigned sampling_rate_Hz = (configuration.dft_size * 15000) << configuration.numerology;

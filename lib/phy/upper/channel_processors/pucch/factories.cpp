@@ -156,31 +156,30 @@ public:
 
   std::unique_ptr<pucch_processor> create() override
   {
-    std::vector<std::unique_ptr<pucch_processor>> processors(nof_concurrent_threads);
-
-    for (auto& processor : processors) {
-      processor = factory->create();
+    if (!processors) {
+      std::vector<std::unique_ptr<pucch_processor>> instances(nof_concurrent_threads);
+      std::generate(instances.begin(), instances.end(), [this]() { return factory->create(); });
+      processors = std::make_shared<pucch_processor_pool::processor_pool>(instances);
     }
-
-    return std::make_unique<pucch_processor_pool>(std::move(processors));
+    return std::make_unique<pucch_processor_pool>(processors);
   }
 
   std::unique_ptr<pucch_processor> create(srslog::basic_logger& logger) override
   {
-    std::vector<std::unique_ptr<pucch_processor>> processors(nof_concurrent_threads);
-
-    for (auto& processor : processors) {
-      processor = factory->create(logger);
+    if (!processors) {
+      std::vector<std::unique_ptr<pucch_processor>> instances(nof_concurrent_threads);
+      std::generate(instances.begin(), instances.end(), [this, &logger]() { return factory->create(logger); });
+      processors = std::make_shared<pucch_processor_pool::processor_pool>(instances);
     }
-
-    return std::make_unique<pucch_processor_pool>(std::move(processors));
+    return std::make_unique<pucch_processor_pool>(processors);
   }
 
   std::unique_ptr<pucch_pdu_validator> create_validator() override { return factory->create_validator(); }
 
 private:
-  std::shared_ptr<pucch_processor_factory> factory;
-  unsigned                                 nof_concurrent_threads;
+  std::shared_ptr<pucch_processor_factory>              factory;
+  unsigned                                              nof_concurrent_threads;
+  std::shared_ptr<pucch_processor_pool::processor_pool> processors;
 };
 
 class pucch_demodulator_factory_sw : public pucch_demodulator_factory

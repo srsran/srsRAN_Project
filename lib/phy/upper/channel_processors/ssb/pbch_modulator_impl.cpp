@@ -32,10 +32,10 @@ void pbch_modulator_impl::scramble(span<const uint8_t> b, span<uint8_t> b_hat, c
   // Initialize sequence.
   scrambler->init(config.phys_cell_id);
 
-  // Advance sequence
+  // Advance sequence.
   scrambler->advance((config.ssb_idx & 0x7) * M_bit);
 
-  // Apply XOR
+  // Apply XOR.
   scrambler->apply_xor(b_hat, b);
 }
 
@@ -68,7 +68,7 @@ void pbch_modulator_impl::map(span<const cf_t> d_pbch, resource_grid_writer& gri
   bounded_bitset<NRE * MAX_RB> full_mask    = rb_full_mask.kronecker_product<NRE>(re_mask);
 
   // Edges SS/PBCH block bandwidth resource blocks.
-  bounded_bitset<MAX_RB> rb_edge_mask = bounded_bitset<MAX_RB>(SSB_BW_RB);
+  bounded_bitset<MAX_RB> rb_edge_mask(SSB_BW_RB);
   rb_edge_mask.fill(0, 4);
   rb_edge_mask.fill(16, 20);
   bounded_bitset<NRE * MAX_RB> edge_mask = rb_edge_mask.kronecker_product<NRE>(re_mask);
@@ -96,14 +96,14 @@ void pbch_modulator_impl::put(span<const uint8_t>             bits,
 {
   srsran_assert(bits.size() == M_bit, "Input span size must equal M_bit");
 
-  // Scramble
+  // Scramble.
   std::array<uint8_t, M_bit> b_hat;
   scramble(bits, b_hat, args);
 
-  // Modulate
+  // Modulate.
   std::array<cf_t, M_symb> d_pbch;
   modulate(b_hat, d_pbch);
 
-  // Map
+  // Map.
   map(d_pbch, grid, args);
 }

@@ -28,7 +28,9 @@
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_reader.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_writer.h"
 #include "srsran/phy/lower/lower_phy_controller.h"
+#include "srsran/phy/lower/processors/lower_phy_center_freq_controller.h"
 #include "srsran/phy/lower/processors/lower_phy_cfo_controller.h"
+#include "srsran/phy/lower/processors/lower_phy_tx_time_offset_controller.h"
 #include "srsran/radio/radio_session.h"
 #include "srsran/support/math/math_utils.h"
 
@@ -41,6 +43,8 @@ class radio_management_plane_dummy : public radio_management_plane
 public:
   bool set_tx_gain(unsigned port_id, double gain_dB) override { return false; }
   bool set_rx_gain(unsigned port_id, double gain_dB) override { return false; }
+  bool set_tx_freq(unsigned stream_id, double center_freq_Hz) override { return false; }
+  bool set_rx_freq(unsigned stream_id, double center_freq_Hz) override { return false; }
 };
 
 class baseband_gateway_transmitter_dummy : public baseband_gateway_transmitter
@@ -121,8 +125,15 @@ void ru_controller_generic_impl::set_lower_phy_sectors(std::vector<lower_phy_sec
 {
   srsran_assert(!sectors.empty(), "Could not set empty sectors");
 
-  low_phy_crtl   = std::move(sectors);
-  cfo_controller = ru_cfo_controller_generic_impl(low_phy_crtl);
+  low_phy_crtl              = std::move(sectors);
+  cfo_controller            = ru_cfo_controller_generic_impl(low_phy_crtl);
+  center_freq_controller    = ru_center_frequency_controller_generic_impl(low_phy_crtl, radio);
+  tx_time_offset_controller = ru_tx_time_offset_controller_generic_impl(low_phy_crtl);
+}
+
+ru_center_frequency_controller* ru_controller_generic_impl::get_center_frequency_controller()
+{
+  return nullptr;
 }
 
 bool ru_gain_controller_generic_impl::set_tx_gain(unsigned port_id, double gain_dB)
@@ -153,6 +164,33 @@ bool ru_cfo_controller_generic_impl::set_rx_cfo(unsigned sector_id, const cfo_co
         cfo_request.start_timestamp.value_or(std::chrono::system_clock::now()),
         cfo_request.cfo_hz,
         cfo_request.cfo_drift_hz_s);
+  }
+  return false;
+}
+
+bool ru_center_frequency_controller_generic_impl::set_tx_center_frequency(unsigned sector_id, double center_freq_Hz)
+{
+  radio->get_management_plane().set_tx_freq(sector_id, center_freq_Hz);
+  if (sector_id < phy_sectors.size()) {
+    return phy_sectors[sector_id]->get_tx_center_freq_control().set_carrier_center_frequency(center_freq_Hz);
+  }
+  return false;
+}
+
+bool ru_center_frequency_controller_generic_impl::set_rx_center_frequency(unsigned sector_id, double center_freq_Hz)
+{
+  radio->get_management_plane().set_rx_freq(sector_id, center_freq_Hz);
+  if (sector_id < phy_sectors.size()) {
+    return phy_sectors[sector_id]->get_rx_center_freq_control().set_carrier_center_frequency(center_freq_Hz);
+  }
+  return false;
+}
+
+bool ru_tx_time_offset_controller_generic_impl::set_tx_time_offset(unsigned sector_id, phy_time_unit tx_time_offset)
+{
+  if (sector_id < phy_sectors.size()) {
+    phy_sectors[sector_id]->get_tx_time_offset_control().set_tx_time_offset(tx_time_offset);
+    return true;
   }
   return false;
 }

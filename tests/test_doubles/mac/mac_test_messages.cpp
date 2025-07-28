@@ -23,6 +23,8 @@
 #include "mac_test_messages.h"
 #include "srsran/scheduler/result/pucch_info.h"
 #include "srsran/scheduler/result/pusch_info.h"
+#include "srsran/scheduler/result/srs_info.h"
+#include "srsran/support/test_utils.h"
 
 using namespace srsran;
 
@@ -176,4 +178,28 @@ std::optional<mac_uci_indication_message> srsran::test_helpers::create_uci_indic
     }
   }
   return uci_ind.ucis.empty() ? std::nullopt : std::make_optional(uci_ind);
+}
+
+mac_srs_pdu test_helpers::create_srs_pdu(const srs_info& srs)
+{
+  phy_time_unit ta = phy_time_unit::from_timing_advance(test_rgen::uniform_int<unsigned>(0, 60), srs.bwp_cfg->scs);
+  if (srs.positioning_report_requested) {
+    // Set a random number, just to test the values are passed to the positioning report.
+    phy_time_unit rtoa = phy_time_unit::from_units_of_Tc(test_rgen::uniform_int<unsigned>(0, 1000));
+    const float   rsrp = -84.6f;
+    return mac_srs_pdu(srs.crnti, ta, rtoa, rsrp);
+  } else {
+    srs_channel_matrix ch_matrix(1, 1);
+    return mac_srs_pdu(srs.crnti, ta, ch_matrix);
+  }
+}
+
+mac_srs_indication_message test_helpers::create_srs_indication(slot_point sl_rx, span<const srs_info> srss)
+{
+  mac_srs_indication_message srs_ind;
+  srs_ind.sl_rx = sl_rx;
+  for (const auto& srs : srss) {
+    srs_ind.srss.push_back(create_srs_pdu(srs));
+  }
+  return srs_ind;
 }

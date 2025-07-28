@@ -232,6 +232,54 @@ public:
   }
 };
 
+/// Application command to set the transmit time offset.
+class tx_time_offset_app_command : public app_services::cmdline_command
+{
+  ru_tx_time_offset_controller& controller;
+
+public:
+  explicit tx_time_offset_app_command(ru_tx_time_offset_controller& controller_) : controller(controller_) {}
+
+  // See interface for documentation.
+  std::string_view get_name() const override { return "tx_time_offset"; }
+
+  // See interface for documentation.
+  std::string_view get_description() const override
+  {
+    return " <sector_id> <tx_time_offset>:     set transmit time offset in microseconds";
+  }
+
+  // See interface for documentation.
+  void execute(span<const std::string> args) override
+  {
+    if (args.size() != 2) {
+      fmt::print("Invalid transmit time offset command structure. Usage: tx_time_offset <sector_id> <Time offset in "
+                 "microseconds>\n");
+      return;
+    }
+
+    expected<unsigned, std::string> sector_id = app_services::parse_int<unsigned>(args.front());
+    if (not sector_id.has_value()) {
+      fmt::print("Invalid sector identifier.\n");
+      return;
+    }
+    expected<double, std::string> tx_time_offset_us = app_services::parse_double(args.back());
+    if (not tx_time_offset_us.has_value()) {
+      fmt::print("Invalid transmit time offset format.\n");
+      return;
+    }
+
+    phy_time_unit tx_time_offset = phy_time_unit::from_seconds(*tx_time_offset_us * 1e-6);
+    if (!controller.set_tx_time_offset(sector_id.value(), tx_time_offset)) {
+      fmt::print("Setting TX time offset was not successful. The radio may not support this feature.\n");
+      return;
+    }
+
+    fmt::print(
+        "Transmit time offset set to {:.3f} us for sector {}.\n", tx_time_offset.to_seconds() * 1e6, sector_id.value());
+  }
+};
+
 /// STDOUT metrics subcommand to print RU metrics.
 class ru_metrics_subcommand_stdout : public app_services::toggle_stdout_metrics_app_command::metrics_subcommand
 {

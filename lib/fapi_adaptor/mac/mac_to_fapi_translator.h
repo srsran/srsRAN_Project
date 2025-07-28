@@ -86,10 +86,8 @@ public:
 
 private:
   /// Handles the UL_DCI.request message.
-  void handle_ul_dci_request(span<const pdcch_ul_information> pdcch_info,
-                             span<const dci_payload>          payloads,
-                             slot_point                       slot,
-                             bool                             is_last_message_in_slot);
+  void
+  handle_ul_dci_request(span<const pdcch_ul_information> pdcch_info, span<const dci_payload> payloads, slot_point slot);
 
 private:
   /// Radio sector identifier.

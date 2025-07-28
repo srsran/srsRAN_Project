@@ -26,6 +26,7 @@ set(SOURCES
         ru_controller_generic_impl.cpp
         ru_downlink_handler_generic_impl.cpp
         ru_factory_generic_impl.cpp
+        ru_generic_executor_mapper.cpp
         ru_generic_impl.cpp
         ru_metrics_collector_generic_impl.cpp
         ru_radio_metrics_collector.cpp

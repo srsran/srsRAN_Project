@@ -37,11 +37,11 @@ namespace srsran {
 class rlc_pdu_recycler
 {
 public:
-  rlc_pdu_recycler(size_t rlc_window_size, rlc_bearer_logger& logger_) : logger(logger_)
+  rlc_pdu_recycler(size_t recycler_size, rlc_bearer_logger& logger_) : logger(logger_)
   {
     recycle_bin = std::make_unique<concurrent_queue<byte_buffer,
                                                     concurrent_queue_policy::lockfree_spsc,
-                                                    concurrent_queue_wait_policy::non_blocking>>(rlc_window_size);
+                                                    concurrent_queue_wait_policy::non_blocking>>(recycler_size);
   }
 
   /// \brief Adds a discarded PDU to the recycler which shall be deleted later by another executor
@@ -71,11 +71,9 @@ private:
   /// \brief Deletes the stored PDUs. This function shall be called from the executor in \c clear_by_executor.
   void clear()
   {
-    trace_point clear_tp   = up_tracer.now();
-    uint32_t    queue_size = recycle_bin->size();
-    for (uint32_t i = 0; i < queue_size; ++i) {
-      auto discard = recycle_bin->try_pop();
-      (void)discard;
+    trace_point clear_tp = up_tracer.now();
+    byte_buffer discard;
+    while (recycle_bin->try_pop(discard)) {
     }
 
     up_tracer << trace_event{"rlc_clear_pdus", clear_tp};

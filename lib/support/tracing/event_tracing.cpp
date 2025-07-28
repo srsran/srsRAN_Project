@@ -137,7 +137,7 @@ struct trace_event_extended : public trace_event {
   trace_duration duration;
 
   trace_event_extended(const trace_event& event, trace_duration duration_) :
-    trace_event(event), cpu(sched_getcpu()), thread_name(this_thread_name()), duration(duration_)
+    trace_event(event), cpu(::sched_getcpu()), thread_name(this_thread_name()), duration(duration_)
   {
   }
 };
@@ -148,7 +148,7 @@ struct instant_trace_event_extended : public instant_trace_event {
   trace_point tp;
 
   instant_trace_event_extended(const instant_trace_event& event) :
-    instant_trace_event(event), cpu(sched_getcpu()), thread_name(this_thread_name()), tp(trace_point::clock::now())
+    instant_trace_event(event), cpu(::sched_getcpu()), thread_name(this_thread_name()), tp(trace_point::clock::now())
   {
   }
 };

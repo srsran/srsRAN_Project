@@ -26,7 +26,7 @@
 #include "srsran/phy/upper/channel_processors/pusch/formatters.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor.h"
 #include "srsran/srslog/logger.h"
-#include "srsran/support/memory_pool/concurrent_thread_local_object_pool.h"
+#include "srsran/support/memory_pool/bounded_object_pool.h"
 
 namespace srsran {
 
@@ -114,7 +114,7 @@ public:
                        std::vector<std::unique_ptr<pusch_processor>> uci_processors_,
                        bool                                          blocking_) :
     logger(srslog::fetch_basic_logger("PHY")),
-    uci_processors(std::move(uci_processors_)),
+    uci_processors(uci_processors_),
     free_list(processors_.size()),
     blocking(blocking_)
   {
@@ -133,39 +133,52 @@ public:
                const pdu_t&                     pdu) override
   {
     // Try to get an available worker.
-    std::optional<unsigned> index;
+    unsigned index;
+    bool     popped = false;
     do {
-      index = free_list.try_pop();
-    } while (blocking && !index.has_value());
+      popped = free_list.try_pop(index);
+    } while (blocking && !popped);
 
-    // If no worker is available.
-    if (!index.has_value()) {
-      // Process UCI synchronously if UCI is present.
-      if ((pdu.uci.nof_harq_ack > 0) || (pdu.uci.nof_csi_part1 > 0)) {
-        srslog::fetch_basic_logger("PHY").warning(
-            pdu.slot.sfn(), pdu.slot.slot_index(), "PUSCH processing queue is full. Processing UCI {:s}.", pdu);
-        uci_processors.get().process(data, std::move(rm_buffer), notifier, grid, pdu);
-        return;
-      }
+    // A PUSCH processor is selected.
+    if (popped) {
+      processors[index].process(data, std::move(rm_buffer), notifier, grid, pdu);
+      return;
+    }
 
+    // No PUSCH processor is available and no UCI is present. Drop PUSCH reception.
+    if ((pdu.uci.nof_harq_ack == 0) && (pdu.uci.nof_csi_part1 == 0)) {
       logger.warning(
           pdu.slot.sfn(), pdu.slot.slot_index(), "PUSCH processing queue is full. Dropping PUSCH {:s}.", pdu);
 
       // Report data-related discarded result if shared channel data is present.
       if (pdu.codeword.has_value()) {
-        pusch_processor_result_data discarded_results;
-        discarded_results.data.tb_crc_ok            = false;
-        discarded_results.data.nof_codeblocks_total = 0;
-        discarded_results.data.ldpc_decoder_stats.reset();
-        discarded_results.csi = channel_state_information();
-        notifier.on_sch(discarded_results);
+        notifier.on_sch({.data = {.tb_crc_ok = false, .nof_codeblocks_total = 0, .ldpc_decoder_stats = {}}, .csi = {}});
       }
 
       return;
     }
 
-    // Process pusch.
-    processors[*index].process(data, std::move(rm_buffer), notifier, grid, pdu);
+    // Process UCI synchronously if UCI is present.
+    auto uci_processor = uci_processors.get();
+    if (uci_processor) {
+      logger.warning(
+          pdu.slot.sfn(), pdu.slot.slot_index(), "PUSCH processing queue is full. Processing UCI {:s}.", pdu);
+      uci_processor->process(data, std::move(rm_buffer), notifier, grid, pdu);
+    } else {
+      logger.warning(
+          pdu.slot.sfn(), pdu.slot.slot_index(), "PUSCH processing queue is full. Failed processing UCI {:s}.", pdu);
+
+      // Report data-related discarded result if shared channel data is present.
+      if (pdu.codeword.has_value()) {
+        notifier.on_sch({.data = {.tb_crc_ok = false, .nof_codeblocks_total = 0, .ldpc_decoder_stats = {}}, .csi = {}});
+      }
+
+      pusch_processor_result_data discarded_results;
+      notifier.on_uci({.harq_ack  = {.payload = uci_payload_type(pdu.uci.nof_harq_ack), .status = uci_status::invalid},
+                       .csi_part1 = {},
+                       .csi_part2 = {},
+                       .csi       = {}});
+    }
   }
 
 private:
@@ -174,7 +187,7 @@ private:
   /// Actual PUSCH processor pool.
   std::vector<detail::pusch_processor_wrapper> processors;
   /// Synchronous PUSCH processor. It only processes UCI.
-  concurrent_thread_local_object_pool<pusch_processor> uci_processors;
+  bounded_unique_object_pool<pusch_processor> uci_processors;
   /// List containing the indices of free PUSCH processors.
   detail::pusch_processor_free_list free_list;
   /// Set to true for blocking upon the the selection of a PUSCH processor.

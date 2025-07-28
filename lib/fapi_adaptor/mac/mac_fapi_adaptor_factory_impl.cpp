@@ -44,7 +44,7 @@ public:
 
     if (decorator) {
       decorator->set_slot_data_message_notifier(adaptor->get_slot_data_message_notifier());
-      decorator->set_slot_error_message_notifier(adaptor->get_slot_error_message_notifier());
+      decorator->set_error_message_notifier(adaptor->get_error_message_notifier());
       decorator->set_slot_time_message_notifier(adaptor->get_slot_time_message_notifier());
     }
   }
@@ -56,9 +56,9 @@ public:
   }
 
   // See interface for documentation.
-  fapi::slot_error_message_notifier& get_slot_error_message_notifier() override
+  fapi::error_message_notifier& get_error_message_notifier() override
   {
-    return decorator ? decorator->get_slot_error_message_notifier() : adaptor->get_slot_error_message_notifier();
+    return decorator ? decorator->get_error_message_notifier() : adaptor->get_error_message_notifier();
   }
 
   // See interface for documentation.

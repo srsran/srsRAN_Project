@@ -25,7 +25,6 @@
 #include "srsran/mac/mac_metrics_notifier.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/support/executors/execute_until_success.h"
-#include "srsran/support/memory_pool/unbounded_object_pool.h"
 
 using namespace srsran;
 using namespace srs_du;

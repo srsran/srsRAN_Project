@@ -18,12 +18,13 @@
 # and at http://www.gnu.org/licenses/.
 #
 
+add_subdirectory(consumers)
+
 set(SOURCES
-        consumers/o_du_low_metrics_consumers.cpp
-        consumers/ru_metrics_consumers.cpp
         flexible_o_du_metrics_builder.cpp
         flexible_o_du_metrics_consumers.cpp
         flexible_o_du_metrics_producer.cpp)
 
 add_library(srsran_flexible_o_du_unit_metrics_helpers STATIC ${SOURCES})
 target_include_directories(srsran_flexible_o_du_unit_metrics_helpers PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(srsran_flexible_o_du_unit_metrics_helpers PRIVATE srsran_flexible_o_du_split_helpers_metrics_consumers)

@@ -47,6 +47,13 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 
   proc_logger.log_proc_started();
 
+  // > Flush any buffering F1-U bearers when HO is finalized.
+  // > We do this before checking for changes in the config, as the RRC reconfiguration complete indicator
+  // > may not change the configuration.
+  if (request.rrc_recfg_complete_ind) {
+    handle_rrc_reconfiguration_complete_ind();
+  }
+
   if (not changed_detected()) {
     // Nothing to do (e.g. No SCells, DRBs or SRBs to setup or release)
     proc_logger.log_proc_completed();
@@ -162,6 +169,7 @@ void ue_configuration_procedure::update_ue_context()
                                                                   drb_cfg.qos.qos_desc.get_5qi(),
                                                                   drb_cfg.rlc_cfg,
                                                                   drb_cfg.f1u,
+                                                                  not request.ho_prep_info.empty(),
                                                                   drbtoadd.uluptnl_info_list,
                                                                   ue_mng.get_f1u_teid_pool(),
                                                                   du_params,
@@ -196,6 +204,7 @@ void ue_configuration_procedure::update_ue_context()
                                                                     drb_cfg.qos.qos_desc.get_5qi(),
                                                                     drb_cfg.rlc_cfg,
                                                                     drb_cfg.f1u,
+                                                                    false,
                                                                     drbtomod.uluptnl_info_list,
                                                                     ue_mng.get_f1u_teid_pool(),
                                                                     du_params,
@@ -275,8 +284,9 @@ async_task<mac_ue_reconfiguration_response> ue_configuration_procedure::update_m
     lc_ch.dl_bearer = &bearer.connector.mac_tx_sdu_notifier;
   }
 
-  // Create Scheduler UE Reconfig Request that will be embedded in the mac configuration request.
-  mac_ue_reconf_req.sched_cfg = create_scheduler_ue_config_request(*ue, *ue->resources);
+  // Create Scheduler UE Reconfig Request that will be embedded in the MAC configuration request.
+  mac_ue_reconf_req.sched_cfg     = create_scheduler_ue_config_request(*ue, *ue->resources);
+  mac_ue_reconf_req.reestablished = ue->reestablished_cfg_pending != nullptr;
 
   return du_params.mac.ue_cfg.handle_ue_reconfiguration_request(mac_ue_reconf_req);
 }
@@ -450,4 +460,22 @@ bool ue_configuration_procedure::changed_detected() const
   return !request.drbs_to_setup.empty() || !request.drbs_to_mod.empty() || !request.srbs_to_setup.empty() ||
          !request.drbs_to_rem.empty() || !request.scells_to_setup.empty() || !request.scells_to_rem.empty() ||
          !request.ho_prep_info.empty() || request.full_config_required;
+}
+
+void ue_configuration_procedure::handle_rrc_reconfiguration_complete_ind()
+{
+  // Dispatch DRB context destruction to the respective UE executor.
+  task_executor& exec     = du_params.services.ue_execs.mac_ul_pdu_executor(ue->ue_index);
+  auto           flush_fn = TRACE_TASK([ue = ue]() mutable {
+    for (auto& [bearer_id, bearer] : ue->bearers.drbs()) {
+      if (bearer != nullptr && bearer->drb_f1u != nullptr) {
+        bearer->drb_f1u->get_tx_sdu_handler().flush_ul_buffer();
+      }
+    }
+  });
+  if (not exec.defer(std::move(flush_fn))) {
+    logger.warning("ue={}: Could not dispatch DRB removal task to UE executor. Destroying it the main DU manager "
+                   "execution context",
+                   fmt::underlying(ue->ue_index));
+  }
 }

@@ -42,14 +42,14 @@ struct ofdm_modulator_configuration {
   cyclic_prefix cp;
   /// Scaling factor at the DFT output.
   float scale;
-  /// Indicates the center frequency of the carrier in Hz.
-  double center_freq_hz;
+  /// Carrier center frequency in Hertz.
+  double center_freq_Hz;
 };
 
 /// \brief Describes an OFDM modulator that modulates at symbol granularity.
-/// \remark Performs OFDM modulation as per TS 38.211 section 5.3.1 OFDM baseband signal generation for all channels
+/// \remark Performs OFDM modulation as per TS38.211 Section 5.3.1 OFDM baseband signal generation for all channels
 /// except PRACH.
-/// \remark In addition to modulation, it applies phase compensation as per TS 38.211 section 5.4 Modulation and
+/// \remark In addition to modulation, it applies phase compensation as per TS38.211 Section 5.4 Modulation and
 /// upconversion
 class ofdm_symbol_modulator
 {
@@ -61,6 +61,14 @@ public:
   /// \param[in] symbol_index Indicates the symbol index within the subframe.
   /// \return The number of samples for the given symbol index.
   virtual unsigned get_symbol_size(unsigned symbol_index) const = 0;
+
+  /// \brief Sets the center frequency.
+  ///
+  /// The implementation of this method must be thread safe and the new center frequency takes effect in the next call
+  /// to modulate().
+  ///
+  /// \param[in] center_frequency_Hz Given center frequency in Hertz.
+  virtual void set_center_frequency(double center_frequency_Hz) = 0;
 
   /// \brief Modulates an OFDM signal with symbol granularity.
   /// \param[out] output Provides the time domain modulated signal.
@@ -74,9 +82,9 @@ public:
 };
 
 /// \brief Describes an OFDM modulator with slot granularity.
-/// \remark Performs OFDM modulation as per TS 38.211 section 5.3.1 OFDM baseband signal generation for all channels
+/// \remark Performs OFDM modulation as per TS38.211 Section 5.3.1 OFDM baseband signal generation for all channels
 /// except PRACH.
-/// \remark In addition to modulation, it applies phase compensation as per TS 38.211 section 5.4 Modulation and
+/// \remark In addition to modulation, it applies phase compensation as per TS38.211 Section 5.4 Modulation and
 /// upconversion.
 class ofdm_slot_modulator
 {

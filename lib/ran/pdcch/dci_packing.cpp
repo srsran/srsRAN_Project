@@ -525,6 +525,11 @@ static dci_1_1_size dci_f1_1_bits_before_padding(const dci_size_config& dci_conf
   sizes.total += sizes.time_resource;
 
   // VRB-to-PRB mapping - 0 or 1 bit.
+  // As per TS 38.212, Section 7.3.1.2.2, the VRB-to-PRB mapping size is "0 bit if only resource allocation type 0 is
+  // configured or if interleaved VRB-to-PRB mapping is not configured by high layers". In the following,
+  // dci_config.interleaved_vrb_prb_mapping (if present) is used to determine if the interleaved VRB-to-PRB mapping is
+  // configured by high layers; dci_config.interleaved_vrb_prb_mapping is not required to be present for
+  // resource_allocation_type_0.
   sizes.vrb_prb_mapping = (dci_config.pdsch_res_allocation_type != resource_allocation::resource_allocation_type_0) &&
                                   dci_config.interleaved_vrb_prb_mapping.value()
                               ? units::bits(1)
@@ -1371,8 +1376,7 @@ dci_payload srsran::dci_1_1_pack(const dci_1_1_configuration& config)
 
   // VRB-to-PRB mapping - 0 or 1 bit.
   if (config.vrb_prb_mapping.has_value()) {
-    payload.push_back(config.vrb_prb_mapping.value() != vrb_to_prb::mapping_type::non_interleaved ? 1U : 0U,
-                      config.payload_size.vrb_prb_mapping.value());
+    payload.push_back(config.vrb_prb_mapping.value() ? 1U : 0U, config.payload_size.vrb_prb_mapping.value());
   }
 
   // PRB bundling size indicator - 0 or 1 bit.

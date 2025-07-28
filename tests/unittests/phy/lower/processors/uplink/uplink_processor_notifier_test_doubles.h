@@ -88,7 +88,7 @@ public:
   bool schedule_cfo_command(time_point time, float cfo_Hz, float cfo_drift_Hz_s) override { return false; }
 };
 
-class lower_phy_uplink_processor_spy : public lower_phy_uplink_processor
+class lower_phy_uplink_processor_spy : public lower_phy_uplink_processor, private lower_phy_center_freq_controller
 {
 public:
   lower_phy_uplink_processor_spy(const uplink_processor_configuration& config_) : config(config_) {}
@@ -104,7 +104,7 @@ public:
 
   void stop() override {}
 
-  lower_phy_cfo_controller& get_cfo_handler() override { return cfo_processor_spy; }
+  lower_phy_cfo_controller& get_cfo_control() override { return cfo_processor_spy; }
 
   const uplink_processor_configuration& get_config() const { return config; }
 
@@ -113,6 +113,8 @@ public:
   puxch_processor_request_handler& get_puxch_request_handler() override { return puxch_req_handler_spy; }
 
   uplink_processor_baseband& get_baseband() override { return uplink_proc_baseband_spy; }
+
+  lower_phy_center_freq_controller& get_carrier_center_frequency_control() override { return *this; }
 
   uplink_processor_notifier* get_notifier() { return notifier; }
 
@@ -136,6 +138,9 @@ public:
   }
 
 private:
+  // See interface for documentation.
+  bool set_carrier_center_frequency(double carrier_center_frequency_Hz) override { return false; }
+
   uplink_processor_configuration      config;
   uplink_processor_notifier*          notifier       = nullptr;
   prach_processor_notifier*           prach_notifier = nullptr;

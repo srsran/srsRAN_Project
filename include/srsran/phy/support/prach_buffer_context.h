@@ -79,7 +79,7 @@ struct prach_buffer_context {
   uint16_t root_sequence_index;
   /// Restricted set configuration.
   restricted_set_config restricted_set;
-  /// Zero-correlation zone configuration index to calculate \f$N_{CS}\f$ as per TS38.211 section 6.3.3.1. Range {0,
+  /// Zero-correlation zone configuration index to calculate \f$N_{CS}\f$ as per TS38.211 Section 6.3.3.1. Range {0,
   /// ..., 15}.
   uint8_t zero_correlation_zone;
   /// Start of preamble logical index to monitor the PRACH occasions signaled in this slot. Range {0, ..., 63}.

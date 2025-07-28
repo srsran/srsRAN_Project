@@ -23,6 +23,7 @@ add_library(srsran_phy_support STATIC
         time_alignment_estimator/time_alignment_estimator_dft_impl.cpp
         time_alignment_estimator/time_alignment_estimator_factories.cpp
         prach_buffer_pool_impl.cpp
+        rb_allocation.cpp
         re_pattern.cpp
         resource_grid_impl.cpp
         resource_grid_mapper_impl.cpp
@@ -30,6 +31,6 @@ add_library(srsran_phy_support STATIC
         resource_grid_reader_impl.cpp
         resource_grid_writer_impl.cpp
         support_factories.cpp)
-target_link_libraries(srsran_phy_support srsvec srsran_instrumentation)
+target_link_libraries(srsran_phy_support srsvec srsran_instrumentation srsran_ran)
 
 add_to_exported_libs(srsran_phy_support)

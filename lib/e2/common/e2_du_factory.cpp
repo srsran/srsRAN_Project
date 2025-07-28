@@ -71,7 +71,7 @@ std::unique_ptr<e2_agent> srsran::create_e2_du_agent(const e2ap_configuration&  
   std::unique_ptr<e2sm_control_service> rc_control_service_style =
       std::make_unique<e2sm_rc_control_service>(control_service_style_id);
   std::unique_ptr<e2sm_control_action_executor> rc_control_action_executor =
-      std::make_unique<e2sm_rc_control_action_2_6_du_executor>(*du_configurator_);
+      std::make_unique<e2sm_rc_control_action_2_6_du_executor>(*du_configurator_, *f1ap_ue_id_translator_);
   rc_control_service_style->add_e2sm_rc_control_action_executor(std::move(rc_control_action_executor));
   e2sm_rc_packer->add_e2sm_control_service(rc_control_service_style.get());
   e2sm_rc_iface->add_e2sm_control_service(std::move(rc_control_service_style));

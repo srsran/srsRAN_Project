@@ -31,6 +31,7 @@
 #include "srsran/ran/pucch/srs_tpc.h"
 #include "srsran/ran/pusch/pusch_configuration.h"
 #include "srsran/ran/pusch/pusch_tpc.h"
+#include "srsran/ran/resource_allocation/vrb_to_prb.h"
 #include "srsran/ran/serv_cell_index.h"
 #include "srsran/ran/srs/srs_configuration.h"
 #include "srsran/ran/tci.h"
@@ -85,10 +86,6 @@ struct pdcch_config {
 
 /// "PDSCH-Config" - UE-dedicated PDSCH Configuration as per TS38.331.
 struct pdsch_config {
-  /// \brief Interleaving unit configurable between 2 and 4 PRBs.
-  /// \remark See TS 38.211, clause 7.3.1.6.
-  enum class vrb_to_prb_interleaver { n2 = 2, n4 = 4 };
-
   /// \brief Resource allocation type of to DCI format 1_1.
   /// \remark See TS 38.214, clause 5.1.2.2.
   enum class resource_allocation { resource_allocation_type_0, resource_allocation_type_1, dynamic_switch };
@@ -108,9 +105,8 @@ struct pdsch_config {
   /// DMRS configuration for PDSCH transmissions using PDSCH mapping type B (chosen dynamically via
   /// PDSCH-TimeDomainResourceAllocation).
   std::optional<dmrs_downlink_config> pdsch_mapping_type_b_dmrs;
-  /// Interleaving unit. If field is absent, the UE performs non-interleaved VRB-to-PRB mapping. The field
-  /// vrb-ToPRB-Interleaver applies to DCI format 1_1.
-  std::optional<vrb_to_prb_interleaver> vrb_to_prb_itlvr;
+  /// VRB-to-PRB mapping type for PDSCH. The field vrb-ToPRB-Interleaver applies to DCI format 1_1.
+  vrb_to_prb::mapping_type vrb_to_prb_interleaving;
   /// A list of Transmission Configuration Indicator (TCI) states indicating a transmission configuration which includes
   /// QCL-relationships between the DL RSs in one RS set and the PDSCH DMRS ports (see TS 38.214, clause 5.1.5).
   static_vector<tci_state, MAX_NOF_TCI_STATES> tci_states;
@@ -151,8 +147,9 @@ struct pdsch_config {
   {
     return data_scrambling_id_pdsch == rhs.data_scrambling_id_pdsch &&
            pdsch_mapping_type_a_dmrs == rhs.pdsch_mapping_type_a_dmrs &&
-           pdsch_mapping_type_b_dmrs == rhs.pdsch_mapping_type_b_dmrs && vrb_to_prb_itlvr == rhs.vrb_to_prb_itlvr &&
-           tci_states == rhs.tci_states && res_alloc == rhs.res_alloc && aggr_factor == rhs.aggr_factor &&
+           pdsch_mapping_type_b_dmrs == rhs.pdsch_mapping_type_b_dmrs &&
+           vrb_to_prb_interleaving == rhs.vrb_to_prb_interleaving && tci_states == rhs.tci_states &&
+           res_alloc == rhs.res_alloc && aggr_factor == rhs.aggr_factor &&
            pdsch_td_alloc_list == rhs.pdsch_td_alloc_list && rate_match_pattrn == rhs.rate_match_pattrn &&
            rbg_sz == rhs.rbg_sz && mcs_table == rhs.mcs_table &&
            is_max_cw_sched_by_dci_is_two == rhs.is_max_cw_sched_by_dci_is_two && prb_bndlg == rhs.prb_bndlg &&

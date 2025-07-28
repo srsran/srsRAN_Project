@@ -289,7 +289,12 @@ void lower_phy_uplink_processor_impl::process_collecting(const baseband_gateway_
   process_symbol_boundary(samples2, timestamp + nof_samples);
 }
 
-baseband_cfo_processor& lower_phy_uplink_processor_impl::get_cfo_handler()
+baseband_cfo_processor& lower_phy_uplink_processor_impl::get_cfo_control()
 {
   return cfo_processor;
+}
+
+lower_phy_center_freq_controller& lower_phy_uplink_processor_impl::get_carrier_center_frequency_control()
+{
+  return puxch_proc->get_center_freq_control();
 }

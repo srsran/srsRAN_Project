@@ -115,6 +115,8 @@ variables:
     - |
       echo "" >> .gitlab/ci/e2e/.env
       cat $RETINA_CONFIG_ENV >> .gitlab/ci/e2e/.env
+      echo "" >> .gitlab/ci/e2e/.env
+      printenv | grep CI >> .gitlab/ci/e2e/.env
     # Modify request to shared the complete folder with the gnb container
     - |
       if [ "$CI_JOB_NAME_SLUG" != "smoke-zmq" ] && [ "$TESTBED" != "zmq_deb" ]; then
@@ -135,9 +137,9 @@ variables:
     - retina-delete-orchestration-network --user-name ci_${GROUP}
     # Push test metrics
     - |
-      find . -iname "test_metrics.csv" -exec \
-        influx write --host $INFLUXDB_URL --token $INFLUXDB_TOKEN --org $INFLUXDB_ORG \
-        --bucket ci --file {} \;
+      find . -iname "test_metrics.csv" -exec sh -c \
+        'influx write --host "$INFLUXDB_URL" --token "$INFLUXDB_TOKEN" --org "$INFLUXDB_ORG" \
+        --bucket ci --file "$1" || true' _ {} \;
     # Artifact size
     - echo -e "\e[0Ksection_start:`date +%s`:e2e_folder_section[collapsed=true]\r\e[0KLog folder's tree"
     - |
@@ -160,6 +162,11 @@ variables:
       }
       print_tree "${SRSRANDIR}/tests/e2e/log/" ""
     - echo -e "\e[0Ksection_end:`date +%s`:e2e_folder_section\r\e[0K"
+    # UI Link
+    - |
+      echo "*******************************************************************************************************************************"
+      echo "UI Link ---> ${RETINA_METRICS_UI_URL}&from=$(date -u -d $CI_JOB_STARTED_AT '+%Y-%m-%dT%H:%M:%S.%3NZ')&to=$(date -u '+%Y-%m-%dT%H:%M:%S.%3NZ')"
+      echo "*******************************************************************************************************************************"
     # Report link
     - |
       subpath=$(echo "$SRSRANDIR" | sed "s|^$CI_PROJECT_DIR||")

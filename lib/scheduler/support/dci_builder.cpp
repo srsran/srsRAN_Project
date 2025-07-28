@@ -248,7 +248,6 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
   const bwp_downlink_common& active_dl_bwp_cmn = *ss_info.bwp->dl_common.value();
   const bwp_configuration&   active_dl_bwp     = active_dl_bwp_cmn.generic_params;
   const auto                 k1_candidates     = ss_info.get_k1_candidates();
-  const auto&                opt_pdsch_cfg     = ue_cell_cfg.bwp(to_bwp_id(0)).dl_ded.value()->pdsch_cfg;
 
   dci.type                    = dci_dl_rnti_config_type::c_rnti_f1_1;
   dci.c_rnti_f1_1             = {};
@@ -279,11 +278,7 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
   f1_1.payload_size = dci_sz.format1_1_ue_size.value();
 
   if (dci_sz_cfg.interleaved_vrb_prb_mapping.has_value() and dci_sz_cfg.interleaved_vrb_prb_mapping.value()) {
-    if (opt_pdsch_cfg.value().vrb_to_prb_itlvr.has_value()) {
-      f1_1.vrb_prb_mapping = enable_interleaving
-                                 ? static_cast<vrb_to_prb::mapping_type>(opt_pdsch_cfg.value().vrb_to_prb_itlvr.value())
-                                 : vrb_to_prb::mapping_type::non_interleaved;
-    }
+    f1_1.vrb_prb_mapping = enable_interleaving;
   }
 
   // TODO:

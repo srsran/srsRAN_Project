@@ -28,7 +28,6 @@
 #include "tests/test_doubles/rrc/rrc_test_message_validators.h"
 #include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
-#include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/e1ap/common/e1ap_types.h"
@@ -233,7 +232,7 @@ public:
   {
     // Inject UE Context Modification Failure and wait for PDU Session Resource Setup Response
     get_du(du_idx).push_ul_pdu(
-        generate_ue_context_modification_failure(ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value()));
+        test_helpers::generate_ue_context_modification_failure(ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value()));
     report_fatal_error_if_not(this->wait_for_ngap_tx_pdu(ngap_pdu),
                               "Failed to receive PDU Session Resource Modify Response");
     report_fatal_error_if_not(test_helpers::is_valid_pdu_session_resource_modify_response(ngap_pdu),
@@ -248,8 +247,8 @@ public:
       const std::vector<drb_id_t>& drbs_modified_list  = {})
   {
     // Inject UE Context Modification Response and wait for DL RRC Message (containing RRC Reconfiguration)
-    get_du(du_idx).push_ul_pdu(generate_ue_context_modification_response(
-        ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value(), crnti, drbs_setup_mod_list, drbs_modified_list));
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ue_context_modification_response(
+        ue_ctx->du_ue_id.value(), ue_ctx->cu_ue_id.value(), crnti, drbs_setup_mod_list, drbs_modified_list));
     report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu),
                               "Failed to receive Bearer Context Modification Request");
     report_fatal_error_if_not(test_helpers::is_valid_bearer_context_modification_request(e1ap_pdu),
@@ -314,7 +313,7 @@ public:
       byte_buffer rrc_reconfiguration_complete = make_byte_buffer("00080800e6847bbd").value())
   {
     // Inject UL RRC Message (containing RRC Reconfiguration Complete) and wait for PDU Session Resource Modify Response
-    get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
         du_ue_id, ue_ctx->cu_ue_id.value(), srb_id_t::srb1, std::move(rrc_reconfiguration_complete)));
     report_fatal_error_if_not(this->wait_for_ngap_tx_pdu(ngap_pdu),
                               "Failed to receive PDU Session Resource Modify Response");

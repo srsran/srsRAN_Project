@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/ran/logical_channel/lcid.h"
+#include "srsran/ran/qos/arp_prio_level.h"
 #include "srsran/ran/qos/five_qi_qos_mapping.h"
 #include "srsran/ran/qos/qos_parameters.h"
 #include "srsran/ran/rrm.h"
@@ -38,10 +39,16 @@ struct logical_channel_config {
   struct qos_info {
     /// QoS characteristics associated with the logical channel.
     standardized_qos_characteristics qos;
+    /// The ARP Priority Level indicates a priority in scheduling resources among QoS Flows. The lowest Priority Level
+    /// value corresponds to the highest priority. See TS 23.501, clause 5.7.2.2.
+    arp_prio_level_t arp_priority;
     /// QoS information present only for GBR QoS flows.
     std::optional<gbr_qos_flow_information> gbr_qos_info;
 
-    bool operator==(const qos_info& rhs) const { return qos == rhs.qos && gbr_qos_info == rhs.gbr_qos_info; }
+    bool operator==(const qos_info& rhs) const
+    {
+      return qos == rhs.qos && arp_priority == rhs.arp_priority && gbr_qos_info == rhs.gbr_qos_info;
+    }
   };
 
   lcid_t   lcid;

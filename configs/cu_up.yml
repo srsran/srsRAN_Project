@@ -1,0 +1,26 @@
+# Example config for a locally deployed CU-UP
+
+cu_up:
+  e1ap:
+    cu_cp_addr: 127.0.20.1
+    bind_addr: 127.0.20.2
+  ngu:
+    socket:
+      -
+        bind_addr: 127.0.0.1
+  f1u:
+    socket:
+      -
+        bind_addr: 127.0.10.1
+
+log:
+  filename: /tmp/cu_up.log
+  all_level: warning
+
+pcap:
+  e1ap_enable: true
+  e1ap_filename: /tmp/cu_up_e1ap.pcap
+  f1u_enable: true
+  f1u_filename: /tmp/cu_up_f1u.pcap
+  n3_enable: true
+  n3_filename: /tmp/cu_up_n3.pcap

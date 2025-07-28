@@ -57,6 +57,8 @@ private:
   f1ap_ue_context_update_response make_empty_ue_config_response();
   f1ap_ue_context_update_response make_ue_config_failure();
 
+  void handle_rrc_reconfiguration_complete_ind();
+
   const f1ap_ue_context_update_request request;
   du_ue_manager_repository&            ue_mng;
   const du_manager_params&             du_params;

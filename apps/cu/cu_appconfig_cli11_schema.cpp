@@ -59,7 +59,7 @@ void srsran::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfi
   app_services::configure_cli11_with_metrics_appconfig_schema(app, cu_cfg.metrics_cfg.metrics_service_cfg);
 
   // F1AP section.
-  CLI::App* cu_cp_subcmd = add_subcommand(app, "cu_cp", "CU-UP parameters")->configurable();
+  CLI::App* cu_cp_subcmd = add_subcommand(app, "cu_cp", "CU-CP parameters")->configurable();
   CLI::App* f1ap_subcmd  = add_subcommand(*cu_cp_subcmd, "f1ap", "F1AP parameters")->configurable();
   configure_cli11_f1ap_args(*f1ap_subcmd, cu_cfg.f1ap_cfg);
 

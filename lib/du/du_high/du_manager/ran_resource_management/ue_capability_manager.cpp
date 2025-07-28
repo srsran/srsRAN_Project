@@ -47,6 +47,10 @@ srsran::srs_du::decode_ue_nr_cap_container(const byte_buffer& ue_cap_container)
     ue_caps.pdsch_qam64lowse_supported = ue_cap.phy_params.phy_params_frx_diff.dl_64_qam_mcs_table_alt_present;
     ue_caps.pusch_qam64lowse_supported = ue_cap.phy_params.phy_params_frx_diff.ul_64_qam_mcs_table_alt_present;
   }
+  if (ue_cap.phy_params.phy_params_common_present) {
+    ue_caps.pdsch_interleaving_vrb_to_prb_supported =
+        ue_cap.phy_params.phy_params_common.interleaving_vrb_to_prb_pdsch_present;
+  }
   for (const auto& band : ue_cap.rf_params.supported_band_list_nr) {
     // Create and convert band capability.
     ue_capability_summary::supported_band band_cap;
@@ -139,6 +143,14 @@ static void set_ul_mimo(serving_cell_config&      cell_cfg,
   }
 }
 
+static void set_pdsch_interleaving(serving_cell_config& cell_cfg, vrb_to_prb::mapping_type interleaving_opt)
+{
+  // Set \c vrb-ToPRB-Interleaver for PDSCH, as per TS 38.331, \c PDSCH-Config.
+  if (cell_cfg.init_dl_bwp.pdsch_cfg.has_value()) {
+    cell_cfg.init_dl_bwp.pdsch_cfg->vrb_to_prb_interleaving = interleaving_opt;
+  }
+}
+
 ue_capability_manager::ue_capability_manager(span<const du_cell_config> cell_cfg_list_,
                                              du_drx_resource_manager&   drx_mng_,
                                              srslog::basic_logger&      logger_,
@@ -155,6 +167,7 @@ void ue_capability_manager::handle_ue_creation(du_ue_resource_config& ue_res_cfg
   // Set default MCS tables and disable UL MIMO.
   set_pdsch_mcs_table(pcell_cfg, select_pdsch_mcs_table(cell_idx));
   set_pusch_mcs_table(pcell_cfg, select_pusch_mcs_table(cell_idx));
+  set_pdsch_interleaving(pcell_cfg, select_pdsch_interleaving(cell_idx));
   set_ul_mimo(
       pcell_cfg, select_pusch_max_rank(cell_idx), select_srs_nof_ports(cell_idx), select_tx_codebook_subset(cell_idx));
 
@@ -192,6 +205,9 @@ void ue_capability_manager::update_impl(du_ue_resource_config& ue_res_cfg)
 
   // Enable 256QAM for PUSCH, if supported.
   set_pusch_mcs_table(pcell_cfg, select_pusch_mcs_table(cell_idx));
+
+  // Enable VRB-to-PRB interleaving for PDSCH, if supported.
+  set_pdsch_interleaving(pcell_cfg, select_pdsch_interleaving(cell_idx));
 
   // Setup UL MIMO parameters.
   set_ul_mimo(
@@ -303,6 +319,27 @@ pusch_mcs_table ue_capability_manager::select_pusch_mcs_table(du_cell_index_t ce
   }
 
   return base_ul_cfg->init_ul_bwp.pusch_cfg->mcs_table;
+}
+
+vrb_to_prb::mapping_type ue_capability_manager::select_pdsch_interleaving(du_cell_index_t cell_idx) const
+{
+  const auto& init_dl_bwp = base_cell_cfg_list[cell_idx].ue_ded_serv_cell_cfg.init_dl_bwp;
+
+  if (init_dl_bwp.pdsch_cfg.has_value()) {
+    vrb_to_prb::mapping_type app_pdsch_interleaving = init_dl_bwp.pdsch_cfg.value().vrb_to_prb_interleaving;
+    if (ue_caps.has_value()) {
+      if (ue_caps->pdsch_interleaving_vrb_to_prb_supported) {
+        // If the PDSCH interleaving is enabled in the application configuration and supported by the UE, return it.
+        return app_pdsch_interleaving;
+      }
+    } else if (test_cfg.test_ue.has_value() and test_cfg.test_ue->rnti != rnti_t::INVALID_RNTI) {
+      // Has no capabilities but the UE is in test mode.
+      return app_pdsch_interleaving;
+    }
+  }
+
+  // Default to \c non-interleaved if no base cell PDSCH config or if the UE capabilities are not available.
+  return vrb_to_prb::mapping_type::non_interleaved;
 }
 
 tx_scheme_codebook_subset ue_capability_manager::select_tx_codebook_subset(du_cell_index_t cell_idx) const

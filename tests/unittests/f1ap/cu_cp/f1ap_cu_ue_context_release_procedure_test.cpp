@@ -21,6 +21,7 @@
  */
 
 #include "f1ap_cu_test_helpers.h"
+#include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "srsran/support/async/async_test_utils.h"
 #include <gtest/gtest.h>
 
@@ -32,7 +33,7 @@ TEST_F(f1ap_cu_test, when_ue_release_command_received_then_procedure_succeeds)
 {
   // Action 1: Add UE
   test_logger.info("Injecting Initial UL RRC message");
-  f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
+  f1ap_message init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
   f1ap->handle_message(init_ul_rrc_msg);
 
   // Action 2: Start UE Context Release procedure
@@ -51,7 +52,7 @@ TEST_F(f1ap_cu_test, when_ue_release_command_received_then_procedure_succeeds)
   // Action 3: Inject UE Context Release Complete message
   test_logger.info("Injecting UE Context Release Complete message");
   f1ap_message ue_ctxt_rel_complete_msg =
-      generate_ue_context_release_complete(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(41255));
+      test_helpers::generate_ue_context_release_complete(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(41255));
   f1ap->handle_message(ue_ctxt_rel_complete_msg);
 
   ASSERT_TRUE(t.ready());

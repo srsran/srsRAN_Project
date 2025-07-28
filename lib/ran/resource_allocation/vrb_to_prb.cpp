@@ -87,8 +87,25 @@ crb_bitmap non_interleaved_mapping::vrb_to_crb(unsigned bwp_start, unsigned bwp_
                 bwp_size);
 
   crb_bitmap crbs(bwp_start + bwp_size);
-  vrbs.for_each(0, vrbs.size(), [&](unsigned vrb) { crbs.set(bwp_start + config.coreset_start + vrb, true); });
+  for_each_interval(vrbs, 0, vrbs.size(), [&](size_t vrb_begin, size_t vrb_end) {
+    crbs.fill(bwp_start + config.coreset_start + vrb_begin, bwp_start + config.coreset_start + vrb_end, true);
+  });
   return crbs;
+}
+
+static_vector<uint16_t, MAX_NOF_PRBS>
+non_interleaved_mapping::vrb_to_crb_indices(unsigned bwp_start, unsigned bwp_size, const srsran::vrb_bitmap& vrbs) const
+{
+  srsran_assert(config.coreset_start + vrbs.size() <= bwp_size,
+                "This non-interleaved mapping ({} VRBs with CORESET start at {}) is not suitable for a BWP of size {}.",
+                vrbs.size(),
+                config.coreset_start,
+                bwp_size);
+
+  static_vector<uint16_t, MAX_NOF_PRBS> result;
+  crb_bitmap                            crbs(bwp_start + bwp_size);
+  vrbs.for_each(0, vrbs.size(), [&](unsigned vrb) { result.emplace_back(bwp_start + vrb_to_prb(vrb)); });
+  return result;
 }
 
 static void vrb_to_prb_mapper_get_interleaved_prb(span<uint16_t> prb_indices,
@@ -255,4 +272,13 @@ crb_bitmap interleaved_mapping::vrb_to_crb(unsigned bwp_start, unsigned bwp_size
   crb_bitmap crbs(bwp_start + bwp_size);
   vrbs.for_each(0, vrbs.size(), [&](unsigned vrb) { crbs.set(bwp_start + vrb_to_prb(vrb)); });
   return crbs;
+}
+
+static_vector<uint16_t, MAX_NOF_PRBS>
+interleaved_mapping::vrb_to_crb_indices(unsigned bwp_start, unsigned bwp_size, const srsran::vrb_bitmap& vrbs) const
+{
+  static_vector<uint16_t, MAX_NOF_PRBS> result;
+  crb_bitmap                            crbs(bwp_start + bwp_size);
+  vrbs.for_each(0, vrbs.size(), [&](unsigned vrb) { result.emplace_back(bwp_start + vrb_to_prb(vrb)); });
+  return result;
 }

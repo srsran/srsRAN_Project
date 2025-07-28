@@ -193,6 +193,9 @@ du_high_configuration srs_du::create_du_high_configuration(const du_high_env_sim
       cfg.ran.cells.back().pucch_cfg = params.pucch_cfg.value();
     }
     cfg.ran.mac_cfg.configs.push_back({10000, 10000, 10000});
+    if (params.srs_period.has_value()) {
+      cfg.ran.cells.back().srs_cfg.srs_period = params.srs_period;
+    }
   }
 
   cfg.ran.qos       = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 0);
@@ -466,12 +469,12 @@ bool du_high_env_simulator::run_ue_context_setup(rnti_t rnti)
 
   // DU receives UE Context Setup Request.
   cu_notifier.last_f1ap_msgs.clear();
-  f1ap_message msg =
-      test_helpers::create_ue_context_setup_request(*u.cu_ue_id,
-                                                    u.du_ue_id,
-                                                    u.srbs[LCID_SRB1].next_pdcp_sn++,
-                                                    {drb_id_t::drb1},
-                                                    {plmn_identity::test_value(), nr_cell_identity::create(0).value()});
+  f1ap_message msg = test_helpers::generate_ue_context_setup_request(
+      *u.cu_ue_id,
+      u.du_ue_id,
+      u.srbs[LCID_SRB1].next_pdcp_sn++,
+      {drb_id_t::drb1},
+      {plmn_identity::test_value(), nr_cell_identity::create(0).value()});
   asn1::f1ap::ue_context_setup_request_s& cmd = msg.pdu.init_msg().value.ue_context_setup_request();
   cmd->drbs_to_be_setup_list[0]
       .value()
@@ -641,6 +644,11 @@ void du_high_env_simulator::handle_slot_results(du_cell_index_t cell_index)
       if (uci_ind.has_value()) {
         this->du_hi->get_control_info_handler(cell_index).handle_uci(uci_ind.value());
       }
+    }
+
+    if (not ul_res.srss.empty()) {
+      mac_srs_indication_message srs_ind = test_helpers::create_srs_indication(sl_rx, ul_res.srss);
+      this->du_hi->get_control_info_handler(cell_index).handle_srs(srs_ind);
     }
   }
 }

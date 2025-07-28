@@ -105,3 +105,14 @@ void puxch_processor_impl::handle_request(const shared_resource_grid& grid, cons
     notifier->on_puxch_request_late(late_context);
   }
 }
+
+lower_phy_center_freq_controller& puxch_processor_impl::get_center_freq_control()
+{
+  return *this;
+}
+
+bool puxch_processor_impl::set_carrier_center_frequency(double carrier_center_frequency_Hz)
+{
+  demodulator->set_center_frequency(carrier_center_frequency_Hz);
+  return true;
+}

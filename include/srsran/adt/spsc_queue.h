@@ -37,6 +37,7 @@ public:
   using value_type                                           = T;
   constexpr static concurrent_queue_policy      queue_policy = concurrent_queue_policy::lockfree_spsc;
   constexpr static concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::non_blocking;
+  using consumer_type                                        = detail::basic_queue_consumer<concurrent_queue, T>;
 
   explicit concurrent_queue(size_t qsize) : queue(qsize) {}
 
@@ -44,6 +45,11 @@ public:
   [[nodiscard]] bool try_push(U&& elem)
   {
     return queue.try_push(std::forward<U>(elem));
+  }
+  template <typename U>
+  [[nodiscard]] size_t try_push_bulk(span<U> batch)
+  {
+    return detail::queue_helper::try_push_bulk_generic(*this, batch);
   }
 
   [[nodiscard]] bool try_pop(T& elem)
@@ -57,16 +63,7 @@ public:
     return false;
   }
 
-  [[nodiscard]] std::optional<T> try_pop()
-  {
-    T*               front = queue.front();
-    std::optional<T> result;
-    if (front != nullptr) {
-      result = std::move(*front);
-      queue.pop();
-    }
-    return result;
-  }
+  [[nodiscard]] size_t try_pop_bulk(span<T> batch) { return detail::queue_helper::try_pop_bulk_generic(*this, batch); }
 
   /// \brief Provides a pointer to the front element in a non-blocking fashion.
   ///
@@ -78,6 +75,9 @@ public:
   [[nodiscard]] bool empty() const { return queue.empty(); }
 
   [[nodiscard]] size_t capacity() const { return queue.capacity(); }
+
+  /// Creates a sequential consumer for this queue.
+  consumer_type create_consumer() { return consumer_type(*this); }
 
 protected:
   ::rigtorp::SPSCQueue<T> queue;
@@ -98,6 +98,7 @@ public:
   using value_type                                           = T;
   constexpr static concurrent_queue_policy      queue_policy = concurrent_queue_policy::lockfree_spsc;
   constexpr static concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::sleep;
+  using consumer_type                                        = detail::basic_queue_consumer<concurrent_queue, T>;
 
   template <typename... Args>
   explicit concurrent_queue(size_t qsize, std::chrono::microseconds sleep_time_) :
@@ -139,15 +140,18 @@ public:
     return false;
   }
 
+  /// Creates a consumer for this queue.
+  consumer_type create_consumer() { return consumer_type(*this); }
+
 private:
   T* front_blocking()
   {
-    while (this->running.load(std::memory_order_relaxed)) {
+    while (this->policy.is_running()) {
       T* front_val = this->queue.front();
       if (front_val != nullptr) {
         return front_val;
       }
-      std::this_thread::sleep_for(this->sleep_time);
+      this->policy.wait();
     }
     return nullptr;
   }

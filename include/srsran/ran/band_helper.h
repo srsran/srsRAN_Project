@@ -146,6 +146,26 @@ ssb_pattern_case get_ssb_pattern(nr_band band, subcarrier_spacing scs);
 /// \param[in] nr_arfcn The DL ARFCN of \c F_REF, as per TS 38.104, Section 5.4.2.1.
 uint8_t get_ssb_l_max(nr_band band, subcarrier_spacing scs, uint32_t nr_arfcn);
 
+/// \brief  Gets the SS/PBCH block reference subcarrier spacing from a given frequency range.
+///
+/// The reference subcarrier spacing is 15 kHz for frequency range 1 where the SS/PBCH block subcarrier spacing is
+/// either 15 kHz or 30 kHz.
+///
+/// The reference subcarrier spacing is 60 kHz for frequency range 2 where the SS/PBCH block subcarrier spacing is
+/// either 120 kHz or 240 kHz.
+///
+/// See TS 38.104 Table 5.4.3.3-1 and Table 5.4.3.3-2 for frequency range 1 and 2 respectively.
+inline subcarrier_spacing get_ssb_ref_scs(frequency_range freq_range)
+{
+  return (freq_range == frequency_range::FR2) ? subcarrier_spacing::kHz60 : subcarrier_spacing::kHz15;
+}
+
+/// \brief  Gets the SS/PBCH reference subcarrier spacing from a SS/PBCH block subcarrier spacing.
+inline subcarrier_spacing get_ssb_ref_scs(subcarrier_spacing scs_ssb)
+{
+  return get_ssb_ref_scs((scs_ssb >= subcarrier_spacing::kHz60) ? frequency_range::FR2 : frequency_range::FR1);
+}
+
 /// \brief Selects the most suitable SSB subcarrier spacing valid for this band.
 ///
 /// The most suitable SSB subcarrier spacing will be the one matching with the common subcarrier spacing if possible,

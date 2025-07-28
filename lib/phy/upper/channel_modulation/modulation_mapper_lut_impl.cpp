@@ -61,7 +61,7 @@ struct modulator_table_s {
 
     // Perform scaling.
     scaling = std::sqrt(1 / avg_power);
-    srsvec::sc_prod(cf_table, scaling, cf_table);
+    srsvec::sc_prod(cf_table, cf_table, scaling);
   }
 
   // Modulates the input bits.

@@ -150,11 +150,6 @@ public:
 
   mac_cell_time_mapper& get_time_mapper(du_cell_index_t cell_index) override;
 
-  mac_cell_rach_handler& get_rach_handler(du_cell_index_t cell_index) override
-  {
-    return mac_adapted->get_rach_handler(cell_index);
-  }
-
   mac_cell_slot_handler& get_slot_handler(du_cell_index_t cell_index) override
   {
     return *cell_info_handler[cell_index];
@@ -172,6 +167,18 @@ public:
   }
 
   mac_ue_configurator& get_ue_configurator() override { return *this; }
+
+  mac_cell_rach_handler& get_rach_handler(du_cell_index_t cell_index) override
+  {
+    struct dummy_mac_cell_rach_handler : public mac_cell_rach_handler {
+      void handle_rach_indication(const mac_rach_indication& rach_ind) override
+      {
+        // do nothing
+      }
+    };
+    static dummy_mac_cell_rach_handler rach_ignorer;
+    return rach_ignorer;
+  }
 
   mac_cell_control_information_handler& get_control_info_handler(du_cell_index_t cell_index) override;
 

@@ -45,7 +45,7 @@ public:
     srsran_assert(prg, "Invalid PRG.");
   }
 
-  /// Computes the NR-PUCCH group sequence (TS 38.211 clause 6.3.2.2.1 Group and sequence hopping).
+  /// Computes the NR-PUCCH group sequence (TS38.211 clause 6.3.2.2.1 Group and sequence hopping).
   /// \param[in] group_hopping Group hopping configuration.
   /// \param[in] n_id          Scrambling identifier.
   /// \return A pair of sequence group u and sequence number v.
@@ -69,7 +69,7 @@ public:
     return {u, v};
   }
 
-  /// \brief Computes the NR alpha index (1-NRE) (TS 38.211 clause 6.3.2.2.2 Cyclic shift hopping)
+  /// \brief Computes the NR alpha index (1-NRE) (TS38.211 clause 6.3.2.2.2 Cyclic shift hopping)
   ///
   /// \param slot[in]    Current slot
   /// \param cp[in]      Cyclic prefix type

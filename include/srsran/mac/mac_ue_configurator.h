@@ -105,6 +105,7 @@ struct mac_ue_reconfiguration_request {
   std::optional<physical_cell_group_config> phy_cell_group_cfg;
   // Scheduler-only params.
   sched_ue_config_request sched_cfg;
+  bool                    reestablished;
 };
 
 /// \brief Outcome of a MAC UE reconfiguration request procedure.

@@ -46,12 +46,12 @@ public:
   }
 
   /// Estimates the channel of a PUCCH Format 3 transmission. See \ref dmrs_pucch_estimator for more details.
-  void estimate(channel_estimate&                                  ce_,
+  void estimate(channel_estimate&                                  ch_estimate,
                 const resource_grid_reader&                        grid,
                 const dmrs_pucch_estimator::format3_configuration& config);
 
   /// Estimates the channel of a PUCCH Format 4 transmission. See \ref dmrs_pucch_estimator for more details.
-  void estimate(channel_estimate&                                  ce_,
+  void estimate(channel_estimate&                                  ch_estimate,
                 const resource_grid_reader&                        grid,
                 const dmrs_pucch_estimator::format4_configuration& config);
 
@@ -96,7 +96,7 @@ private:
   };
 
   /// Performs the actual channel estimation of a PUCCH Format 3 or Format 4 transmission.
-  void estimate(channel_estimate& ce_, const resource_grid_reader& grid, const estimate_config& config);
+  void estimate(channel_estimate& estimate, const resource_grid_reader& grid, const estimate_config& config);
 
   /// \brief Generates a DM-RS sequence according to TS38.211 Section 6.4.1.3.2.1.
   ///

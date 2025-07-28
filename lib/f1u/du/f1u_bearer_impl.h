@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/adt/ring_buffer.h"
 #include "srsran/f1u/du/f1u_bearer.h"
 #include "srsran/f1u/du/f1u_bearer_logger.h"
 #include "srsran/f1u/du/f1u_config.h"
@@ -56,6 +57,7 @@ public:
   f1u_rx_pdu_handler&      get_rx_pdu_handler() override { return *this; }
 
   void handle_sdu(byte_buffer_chain sdu) override;
+  void flush_ul_buffer() override;
   void handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t desired_buf_size) override;
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override;
   void handle_retransmit_notification(uint32_t highest_pdcp_sn) override;
@@ -72,6 +74,10 @@ private:
   const f1u_config              cfg;
   const up_transport_layer_info dl_tnl_info;
 
+  /// Buffering
+  bool                               buffering;
+  ring_buffer<nru_ul_message, false> ul_buffer;
+
   f1u_rx_sdu_notifier& rx_sdu_notifier;
   f1u_tx_pdu_notifier& tx_pdu_notifier;
 
@@ -84,6 +90,9 @@ private:
   /// layers. The purpose of this timer is to avoid excessive uplink notifications for every PDCP SN that is notified by
   /// lower layers.
   unique_timer ul_notif_timer;
+
+  /// Time used to limit the handover buffering while waiting for the DU to notify that the handover is finished.
+  unique_timer ul_buffer_timer;
 
   /// Holds the most recent information of the available space in the RLC SDU queue
   std::atomic<uint32_t> desired_buffer_size_for_data_radio_bearer;

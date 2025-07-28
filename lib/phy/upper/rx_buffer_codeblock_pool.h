@@ -80,7 +80,11 @@ public:
   std::optional<unsigned> reserve()
   {
     // Try to get an available codeblock.
-    return free_list.try_pop();
+    unsigned obj;
+    if (free_list.try_pop(obj)) {
+      return obj;
+    }
+    return std::nullopt;
   }
 
   /// \brief Frees a codeblock buffer.

@@ -135,15 +135,13 @@ void pdsch_processor_impl::modulate(resource_grid_writer& grid, span<const bit_b
   unsigned nof_codewords = codewords.size();
 
   pdsch_modulator::config_t modulator_config;
-  modulator_config.rnti               = pdu.rnti;
-  modulator_config.bwp_size_rb        = pdu.bwp_size_rb;
-  modulator_config.bwp_start_rb       = pdu.bwp_start_rb;
-  modulator_config.modulation1        = pdu.codewords[0].modulation;
-  modulator_config.modulation2        = nof_codewords > 1 ? pdu.codewords[1].modulation : modulation_scheme::BPSK;
-  modulator_config.freq_allocation    = pdu.freq_alloc;
-  modulator_config.start_symbol_index = pdu.start_symbol_index;
-  modulator_config.nof_symbols        = pdu.nof_symbols;
-  modulator_config.dmrs_symb_pos      = pdu.dmrs_symbol_mask;
+  modulator_config.rnti            = pdu.rnti;
+  modulator_config.bwp             = {pdu.bwp_start_rb, pdu.bwp_start_rb + pdu.bwp_size_rb};
+  modulator_config.modulation1     = pdu.codewords[0].modulation;
+  modulator_config.modulation2     = nof_codewords > 1 ? pdu.codewords[1].modulation : modulation_scheme::BPSK;
+  modulator_config.freq_allocation = pdu.freq_alloc;
+  modulator_config.time_alloc      = {pdu.start_symbol_index, pdu.start_symbol_index + pdu.nof_symbols};
+  modulator_config.dmrs_symb_pos   = pdu.dmrs_symbol_mask;
   modulator_config.nof_cdm_groups_without_data = pdu.nof_cdm_groups_without_data;
   modulator_config.n_id                        = pdu.n_id;
   modulator_config.scaling                     = convert_dB_to_amplitude(-pdu.ratio_pdsch_data_to_sss_dB);

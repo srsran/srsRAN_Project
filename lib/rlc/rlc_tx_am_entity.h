@@ -159,7 +159,10 @@ private:
   /// latest buffer state upon execution.
   std::atomic_flag pending_buffer_state = ATOMIC_FLAG_INIT;
 
-  bool stopped = false;
+  /// Flag that indicates whether the upper part of the RLC entity is stopped. Access from ue_executor.
+  bool stopped_upper = false;
+  /// Flag that indicates whether the upper part of the RLC entity is stopped. Access from pcell_executor.
+  bool stopped_lower = false;
 
   bool max_retx_reached = false;
 
@@ -180,11 +183,18 @@ public:
   void stop() final
   {
     // Stop all timers. Any queued handlers of timers that just expired before this call are canceled automatically
-    if (not stopped) {
-      poll_retransmit_timer.stop();
+    if (not stopped_upper) {
+      stopped_upper = true;
       high_metrics_timer.stop();
-      low_metrics_timer.stop();
-      stopped = true;
+      // stop lower part (e.g. timers) from cell executor
+      auto stop_lower_part = TRACE_TASK([this]() {
+        stopped_lower = true;
+        poll_retransmit_timer.stop();
+        low_metrics_timer.stop();
+      });
+      if (!pcell_executor.execute(std::move(stop_lower_part))) {
+        logger.log_error("Unable to stop lower timers.");
+      }
     }
   }
 

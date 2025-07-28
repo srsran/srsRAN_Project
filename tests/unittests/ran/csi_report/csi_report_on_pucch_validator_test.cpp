@@ -44,7 +44,8 @@ const csi_report_configuration base_csi_configuration = {
     csi_report_quantities::cri_ri_cqi};
 
 // Valid CSI payload.
-const csi_report_packed base_csi_packed = csi_report_packed(get_csi_report_pucch_size(base_csi_configuration).value());
+const csi_report_packed base_csi_packed =
+    csi_report_packed(get_csi_report_pucch_size(base_csi_configuration).part1_size.value());
 
 // CSI validator test case parameters.
 struct csi_validator_test_params {
@@ -119,7 +120,7 @@ const std::vector<csi_validator_test_case> csi_pucch_validator_test_data = {
         [] {
           csi_validator_test_params entry = {};
 
-          units::bits csi_size         = get_csi_report_pucch_size(base_csi_configuration);
+          units::bits csi_size         = get_csi_report_pucch_size(base_csi_configuration).part1_size;
           units::bits invalid_csi_size = csi_size + units::bits(1);
           entry.csi_packed             = csi_report_packed(invalid_csi_size.value());
           entry.assert_message         = fmt::format(

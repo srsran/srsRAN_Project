@@ -31,15 +31,18 @@ namespace srsran {
 /// \brief Interface for a timer source.
 class io_timer_source
 {
-  timer_manager&        tick_sink;
-  srslog::basic_logger& logger;
-  io_broker::subscriber io_sub;
+  const std::chrono::milliseconds tick_period;
+  timer_manager&                  tick_sink;
+  srslog::basic_logger&           logger;
+  io_broker::subscriber           io_sub;
+  std::atomic<bool>               stop_requested{false};
 
 public:
   io_timer_source(timer_manager&            tick_sink_,
                   io_broker&                broker_,
                   task_executor&            executor,
                   std::chrono::milliseconds tick_period);
+  ~io_timer_source();
 
 private:
   void read_time();

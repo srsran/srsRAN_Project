@@ -138,7 +138,7 @@ int main()
               pdu.offset_to_pointA     = offset_pointA;
               pdu.pattern_case         = pattern_case;
               pdu.ports.emplace_back(port_dist(rgen));
-              for (uint8_t& bit : pdu.bch_payload) {
+              for (uint8_t& bit : pdu.mib_payload) {
                 bit = bit_dist(rgen);
               }
 

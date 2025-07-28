@@ -31,6 +31,7 @@ namespace srsran {
 struct pucch_info;
 struct uci_info;
 struct ul_sched_info;
+struct srs_info;
 
 namespace test_helpers {
 
@@ -54,6 +55,10 @@ std::optional<mac_uci_indication_message> create_uci_indication(slot_point sl_rx
 mac_crc_indication_message create_crc_indication(slot_point sl_rx, rnti_t rnti, harq_id_t h_id);
 
 mac_crc_indication_message create_crc_indication(slot_point sl_rx, span<const ul_sched_info> puschs);
+
+mac_srs_pdu create_srs_pdu(const srs_info& srs);
+
+mac_srs_indication_message create_srs_indication(slot_point sl_rx, span<const srs_info> srss);
 
 } // namespace test_helpers
 } // namespace srsran
