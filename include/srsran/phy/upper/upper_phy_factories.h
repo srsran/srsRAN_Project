@@ -20,6 +20,7 @@
 #include "srsran/phy/upper/rx_buffer_pool.h"
 #include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/phy/upper/upper_phy.h"
+#include "srsran/phy/upper/upper_phy_execution_configuration.h"
 #include <memory>
 #include <variant>
 
@@ -94,16 +95,6 @@ struct downlink_processor_config {
   unsigned id;
   /// Resource grid gateway.
   upper_phy_rg_gateway* gateway;
-  /// Task executor for processing PDCCH.
-  task_executor* pdcch_executor;
-  /// Task executor for processing PDSCH.
-  task_executor* pdsch_executor;
-  /// Task executor for processing SSB.
-  task_executor* ssb_executor;
-  /// Task executor for processing NZP-CSI-RS.
-  task_executor* csi_rs_executor;
-  /// Task executor for processing PRS.
-  task_executor* prs_executor;
 };
 
 /// Factory that allows to create downlink processors.
@@ -182,12 +173,20 @@ struct downlink_processor_factory_sw_config {
   /// - \c generic: for using unoptimized PDSCH processing, or
   /// - \c flexible: for using configurable processor that optimizes memory or performance via concurrency.
   std::variant<pdsch_processor_generic_configuration, pdsch_processor_flexible_configuration> pdsch_processor;
-  /// Number of concurrent threads processing downlink transmissions.
-  unsigned nof_concurrent_threads;
   /// \brief Optional hardware-accelerated PDSCH encoder factory.
   ///
   /// if the optional is not set, a software PDSCH encoder factory will be used.
   std::optional<std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory>> hw_encoder_factory;
+  /// Task executor for processing PDCCH.
+  upper_phy_executor pdcch_executor;
+  /// Task executor for processing PDSCH.
+  upper_phy_executor pdsch_executor;
+  /// Task executor for processing SSB.
+  upper_phy_executor ssb_executor;
+  /// Task executor for processing NZP-CSI-RS.
+  upper_phy_executor csi_rs_executor;
+  /// Task executor for processing PRS.
+  upper_phy_executor prs_executor;
 };
 
 /// Creates a full software based downlink processor factory.
@@ -304,14 +303,8 @@ struct upper_phy_config {
   bool is_prach_long_format;
   /// Maximum number of concurrent downlink processes.
   unsigned nof_dl_processors;
-  /// Maximum PRACH detector thread concurrency.
-  unsigned max_prach_thread_concurrency;
-  /// Maximum uplink processor thread concurrency.
-  unsigned max_ul_thread_concurrency;
-  /// Maximum asynchronous PUSCH processing concurrency for each UL processor.
-  unsigned max_pusch_concurrency;
-  /// Number of threads that simultaneously use a PUSCH decoder.
-  unsigned nof_pusch_decoder_threads;
+  /// Execution configuration
+  upper_phy_execution_configuration executors;
   /// Number of RBs for downlink.
   unsigned dl_bw_rb;
   /// Number of RBs for uplink.
@@ -328,28 +321,6 @@ struct upper_phy_config {
   rx_buffer_pool_config rx_buffer_config;
   /// Upper PHY resource grid gateway.
   upper_phy_rg_gateway* rg_gateway;
-  /// PDCCH task executor.
-  task_executor* pdcch_executor;
-  /// PDSCH task executor.
-  task_executor* pdsch_executor;
-  /// SSB task executor.
-  task_executor* ssb_executor;
-  /// NZP-CSI-RS task executor.
-  task_executor* csi_rs_executor;
-  /// PRS task executor.
-  task_executor* prs_executor;
-  /// Downlink grid pool task executor.
-  task_executor* dl_grid_executor;
-  /// PUCCH task executor.
-  task_executor* pucch_executor;
-  /// PUSCH task executor.
-  task_executor* pusch_executor;
-  /// PUSCH decoder task executor.
-  task_executor* pusch_decoder_executor;
-  /// PRACH task executor.
-  task_executor* prach_executor;
-  /// SRS task executor.
-  task_executor* srs_executor;
   /// Received symbol request notifier.
   upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier;
   /// \brief Optional hardware-accelerated PUSCH decoder factory.

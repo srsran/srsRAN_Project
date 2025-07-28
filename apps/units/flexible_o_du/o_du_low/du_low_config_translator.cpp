@@ -95,14 +95,6 @@ static void generate_du_low_config(srs_du::du_low_config&                       
                   to_string(cell.freq_range),
                   to_string(cell.duplex));
 
-    // Maximum number of concurrent PUSCH transmissions. It is the maximum number of PUSCH transmissions that can be
-    // processed simultaneously in one slot. If there are no dedicated threads for PUSCH decoding, it sets the queue
-    // size to one. Otherwise, it is set to the maximum number of PUSCH transmissions that can be scheduled in one slot.
-    unsigned max_pusch_concurrency = 1;
-    if (du_low.expert_execution_cfg.threads.nof_pusch_decoder_threads > 0) {
-      max_pusch_concurrency = MAX_PUSCH_PDUS_PER_SLOT;
-    }
-
     upper_phy_cell.nof_slots_request_headroom         = du_low.expert_phy_cfg.nof_slots_request_headroom;
     upper_phy_cell.allow_request_on_empty_uplink_slot = du_low.expert_phy_cfg.allow_request_on_empty_uplink_slot;
     upper_phy_cell.pusch_max_nof_layers               = cell.pusch_max_nof_layers;
@@ -120,15 +112,10 @@ static void generate_du_low_config(srs_du::du_low_config&                       
     upper_phy_cell.nof_dl_rg                          = dl_pipeline_depth + 2;
     upper_phy_cell.nof_dl_processors                  = dl_pipeline_depth;
     upper_phy_cell.nof_ul_rg                          = ul_pipeline_depth;
-    upper_phy_cell.max_prach_thread_concurrency       = 1;
-    upper_phy_cell.max_ul_thread_concurrency          = du_low.expert_execution_cfg.threads.nof_ul_threads + 1;
-    upper_phy_cell.max_pusch_concurrency              = max_pusch_concurrency;
-    upper_phy_cell.nof_pusch_decoder_threads          = du_low.expert_execution_cfg.threads.nof_pusch_decoder_threads +
-                                               du_low.expert_execution_cfg.threads.nof_ul_threads;
-    upper_phy_cell.nof_prach_buffer           = prach_pipeline_depth * nof_slots_per_subframe;
-    upper_phy_cell.max_nof_td_prach_occasions = prach_cfg.nof_occasions_within_slot;
-    upper_phy_cell.max_nof_fd_prach_occasions = 1;
-    upper_phy_cell.is_prach_long_format       = is_long_preamble(prach_cfg.format);
+    upper_phy_cell.nof_prach_buffer                   = prach_pipeline_depth * nof_slots_per_subframe;
+    upper_phy_cell.max_nof_td_prach_occasions         = prach_cfg.nof_occasions_within_slot;
+    upper_phy_cell.max_nof_fd_prach_occasions         = 1;
+    upper_phy_cell.is_prach_long_format               = is_long_preamble(prach_cfg.format);
     upper_phy_cell.pusch_sinr_calc_method =
         channel_state_information::sinr_type_from_string(du_low.expert_phy_cfg.pusch_sinr_calc_method);
 
@@ -175,9 +162,9 @@ void srsran::fill_du_low_worker_manager_config(worker_manager_config&    config,
   du_low_cfg.is_blocking_mode_active = is_blocking_mode_active;
   du_low_cfg.nof_cells               = nof_cells;
 
-  du_low_cfg.nof_dl_threads            = unit_cfg.expert_execution_cfg.threads.nof_dl_threads;
-  du_low_cfg.nof_ul_threads            = unit_cfg.expert_execution_cfg.threads.nof_ul_threads;
-  du_low_cfg.nof_pusch_decoder_threads = unit_cfg.expert_execution_cfg.threads.nof_pusch_decoder_threads;
+  du_low_cfg.nof_dl_threads                = unit_cfg.expert_execution_cfg.threads.nof_dl_threads;
+  du_low_cfg.max_pucch_concurrency         = unit_cfg.expert_execution_cfg.threads.max_pucch_concurrency;
+  du_low_cfg.max_pusch_and_srs_concurrency = unit_cfg.expert_execution_cfg.threads.max_pusch_and_srs_concurrency;
   if (unit_cfg.metrics_cfg.enable_du_low) {
     du_low_cfg.metrics_period.emplace(unit_cfg.metrics_cfg.du_report_period);
   }

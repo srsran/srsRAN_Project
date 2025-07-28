@@ -32,13 +32,13 @@ static void fill_du_low_log_section(YAML::Node node, const du_low_unit_logger_co
 static void fill_du_low_expert_execution_section(YAML::Node node, const du_low_unit_expert_execution_config& config)
 {
   {
-    YAML::Node threads_node                 = node["threads"];
-    YAML::Node upper_node                   = threads_node["upper_phy"];
-    upper_node["pdsch_processor_type"]      = config.threads.pdsch_processor_type;
-    upper_node["pdsch_cb_batch_length"]     = config.threads.pdsch_cb_batch_length;
-    upper_node["nof_pusch_decoder_threads"] = config.threads.nof_pusch_decoder_threads;
-    upper_node["nof_ul_threads"]            = config.threads.nof_ul_threads;
-    upper_node["nof_dl_threads"]            = config.threads.nof_dl_threads;
+    YAML::Node threads_node                     = node["threads"];
+    YAML::Node upper_node                       = threads_node["upper_phy"];
+    upper_node["pdsch_processor_type"]          = config.threads.pdsch_processor_type;
+    upper_node["pdsch_cb_batch_length"]         = config.threads.pdsch_cb_batch_length;
+    upper_node["max_pucch_concurrency"]         = config.threads.max_pucch_concurrency;
+    upper_node["max_pusch_and_srs_concurrency"] = config.threads.max_pusch_and_srs_concurrency;
+    upper_node["nof_dl_threads"]                = config.threads.nof_dl_threads;
   }
 
   auto cell_affinities_node = node["cell_affinities"];

@@ -15,18 +15,26 @@
 using namespace srsran;
 
 static bool validate_upper_phy_threads_appconfig(const du_low_unit_expert_threads_config& config,
-                                                 unsigned                                 max_processing_delay_slots,
                                                  unsigned                                 nof_hwacc_pdsch,
                                                  unsigned                                 nof_hwacc_pusch)
 {
-  static const interval<unsigned, true> nof_ul_dl_threads_range(1, std::thread::hardware_concurrency());
+  static const interval<unsigned, true> nof_dl_threads_range(1, std::thread::hardware_concurrency());
   static const interval<unsigned, true> nof_pdsch_threads_range(2, std::thread::hardware_concurrency());
+  static const interval<unsigned, true> max_concurrency_range(0, std::thread::hardware_concurrency());
 
   bool valid = true;
 
-  if (!nof_ul_dl_threads_range.contains(config.nof_ul_threads)) {
-    fmt::print(
-        "Number of PHY UL threads (i.e., {}) must be in range {}.\n", config.nof_ul_threads, nof_ul_dl_threads_range);
+  if (!max_concurrency_range.contains(config.max_pucch_concurrency)) {
+    fmt::print("Maximum PUCCH concurrency (i.e., {}) must be in range {}.\n",
+               config.max_pucch_concurrency,
+               max_concurrency_range);
+    valid = false;
+  }
+
+  if (!max_concurrency_range.contains(config.max_pusch_and_srs_concurrency)) {
+    fmt::print("Maximum joint PUSCH and SRS concurrency (i.e., {}) must be in range {}.\n",
+               config.max_pusch_and_srs_concurrency,
+               max_concurrency_range);
     valid = false;
   }
 
@@ -44,9 +52,9 @@ static bool validate_upper_phy_threads_appconfig(const du_low_unit_expert_thread
                nof_pdsch_threads_range);
   }
 
-  if (!nof_ul_dl_threads_range.contains(config.nof_dl_threads)) {
+  if (!nof_dl_threads_range.contains(config.nof_dl_threads)) {
     fmt::print(
-        "Number of PHY DL threads (i.e., {}) must be in range {}.\n", config.nof_dl_threads, nof_ul_dl_threads_range);
+        "Number of PHY DL threads (i.e., {}) must be in range {}.\n", config.nof_dl_threads, nof_dl_threads_range);
     valid = false;
   }
 
@@ -80,10 +88,7 @@ static bool validate_expert_execution_unit_config(const du_low_unit_config&     
   nof_hwacc_pdsch = config.hal_config->bbdev_hwacc->pdsch_enc->nof_hwacc;
   nof_hwacc_pusch = config.hal_config->bbdev_hwacc->pusch_dec->nof_hwacc;
 #endif // DPDK_FOUND
-  if (!validate_upper_phy_threads_appconfig(config.expert_execution_cfg.threads,
-                                            config.expert_phy_cfg.max_processing_delay_slots,
-                                            nof_hwacc_pdsch,
-                                            nof_hwacc_pusch)) {
+  if (!validate_upper_phy_threads_appconfig(config.expert_execution_cfg.threads, nof_hwacc_pdsch, nof_hwacc_pusch)) {
     return false;
   }
 

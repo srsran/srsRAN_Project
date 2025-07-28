@@ -54,7 +54,8 @@ tests:
             non_rt_task_queue_size: 8192
           upper_phy:
             nof_dl_threads: 4
-            nof_ul_threads: 1
+            max_pucch_concurrency: 1
+            max_pusch_and_srs_concurrency: 1
             nof_pusch_decoder_threads: 3
     # Pass / Fail Criteria
     expected_dl_bitrate: 1.2e+9
@@ -274,8 +275,8 @@ tests:
         threads:
           upper_phy:
             nof_dl_threads: 4
-            nof_ul_threads: 2
-            nof_pusch_decoder_threads: 3
+            max_pucch_concurrency: 1
+            max_pusch_and_srs_concurrency: 4
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
@@ -305,8 +306,8 @@ tests:
         threads:
           upper_phy:
             nof_dl_threads: 4
-            nof_ul_threads: 2
-            nof_pusch_decoder_threads: 3
+            max_pucch_concurrency: 2
+            max_pusch_and_srs_concurrency: 3
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3

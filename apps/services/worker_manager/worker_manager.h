@@ -114,6 +114,10 @@ struct worker_manager {
   }
 
 private:
+  /// Total number of workers for the general task worker pool. Necessary for providing maximum concurrency level to
+  /// the physical layer.
+  unsigned nof_workers_general_pool = 0;
+
   struct du_crit_path_executor_desc {
     // Description of L2 executors for the DU-high.
     srs_du::du_high_executor_config::cell_executor_config l2_execs;

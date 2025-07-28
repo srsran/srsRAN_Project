@@ -104,22 +104,19 @@ struct du_low_unit_expert_threads_config {
   {
     unsigned nof_threads = cpu_architecture_info::get().get_host_nof_available_cpus();
 
+    max_pucch_concurrency = 0;
     if (nof_threads <= 4) {
-      nof_ul_threads            = 1;
-      nof_pusch_decoder_threads = 0;
-      nof_dl_threads            = 3;
+      max_pusch_and_srs_concurrency = 1;
+      nof_dl_threads                = 3;
     } else if (nof_threads < 8) {
-      nof_ul_threads            = 1;
-      nof_pusch_decoder_threads = 1;
-      nof_dl_threads            = 5;
+      max_pusch_and_srs_concurrency = 2;
+      nof_dl_threads                = 5;
     } else if (nof_threads < 16) {
-      nof_ul_threads            = 1;
-      nof_pusch_decoder_threads = 1;
-      nof_dl_threads            = 5;
+      max_pusch_and_srs_concurrency = 2;
+      nof_dl_threads                = 5;
     } else {
-      nof_ul_threads            = 2;
-      nof_pusch_decoder_threads = 2;
-      nof_dl_threads            = 7;
+      max_pusch_and_srs_concurrency = 4;
+      nof_dl_threads                = 7;
     }
   }
 
@@ -139,16 +136,16 @@ struct du_low_unit_expert_threads_config {
   /// Set it to 0 (default) for an homogeneous split of codeblocks per thread. Set it to \c pdsch_cb_batch_length_sync
   /// for guaranteeing synchronous processing with the most memory-optimized processor.
   unsigned pdsch_cb_batch_length = 0;
-  /// \brief Number of threads for concurrent PUSCH decoding.
+  /// \brief Maximum concurrency level for PUCCH.
   ///
-  /// If the number of PUSCH decoder threads is greater than zero, the PUSCH decoder will enqueue received soft bits and
-  /// process them asynchronously. Otherwise, PUSCH decoding will be performed synchronously.
+  /// Maximum number of threads that can concurrently process Physical Uplink Control Channel (PUCCH). Set to zero for
+  /// no limitation.
+  unsigned max_pucch_concurrency = 0;
+  /// \brief Maximum joint concurrency level for PUSCH and SRS.
   ///
-  /// In non-real-time operations (e.g., when using ZeroMQ), setting this parameter to a non-zero value can potentially
-  /// introduce delays in uplink HARQ feedback.
-  unsigned nof_pusch_decoder_threads = 0;
-  /// Number of threads for processing PUSCH and PUCCH.
-  unsigned nof_ul_threads = 1;
+  /// Maximum number of threads that can concurrently process Physical Uplink Shared Channel (PUSCH) and Sounding
+  /// Reference Signals (SRS). Set to zero for no limitation.
+  unsigned max_pusch_and_srs_concurrency = 1;
   /// Number of threads for processing PDSCH, PDCCH, NZP CSI-RS and SSB. It is set to 1 by default.
   unsigned nof_dl_threads = 1;
 };

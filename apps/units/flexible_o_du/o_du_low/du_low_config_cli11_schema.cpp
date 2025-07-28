@@ -147,10 +147,20 @@ static void configure_cli11_upper_phy_threads_args(CLI::App& app, du_low_unit_ex
              "calling thread without parallelization.")
       ->capture_default_str()
       ->transform(pdsch_cb_batch_length_transform);
-  add_option(app, "--nof_pusch_decoder_threads", config.nof_pusch_decoder_threads, "Number of threads to decode PUSCH.")
+  add_option(app,
+             "--max_pucch_concurrency",
+             config.max_pucch_concurrency,
+             "Maximum PUCCH processing concurrency.\n"
+             "Limits the maximum number of threads that can concurrently process Physical Uplink Control Channel\n"
+             "(PUCCH). Set it to zero for no limit of threads.")
       ->capture_default_str()
       ->check(CLI::Number);
-  add_option(app, "--nof_ul_threads", config.nof_ul_threads, "Number of upper PHY threads to process uplink.")
+  add_option(app,
+             "--max_pusch_and_srs_concurrency",
+             config.max_pusch_and_srs_concurrency,
+             "Maximum PUSCH and SRS processing concurrency.\n"
+             "Limits the maximum number of threads that can concurrently process Physical Uplink Shared Channel \n"
+             "(PUSCH) and Sounding Reference Signals (SRS). Set it to zero for no limitation.")
       ->capture_default_str()
       ->check(CLI::Number);
   add_option(app, "--nof_dl_threads", config.nof_dl_threads, "Number of upper PHY threads to process downlink.")
@@ -443,8 +453,8 @@ void srsran::autoderive_du_low_parameters_after_parsing(CLI::App&           app,
   // Ignore the default settings based in the number of CPU cores for ZMQ.
   if (is_blocking_mode_enabled) {
     du_low_unit_expert_threads_config& upper = parsed_cfg.expert_execution_cfg.threads;
-    upper.nof_pusch_decoder_threads          = 0;
-    upper.nof_ul_threads                     = 1;
+    upper.max_pucch_concurrency              = 1;
+    upper.max_pusch_and_srs_concurrency      = 1;
     upper.nof_dl_threads                     = 1;
   }
 

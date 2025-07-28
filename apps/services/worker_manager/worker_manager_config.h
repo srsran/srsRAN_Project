@@ -59,9 +59,9 @@ struct worker_manager_config {
   /// DU low worker configuration.
   struct du_low_config {
     bool                                     is_blocking_mode_active;
-    unsigned                                 nof_ul_threads;
+    unsigned                                 max_pucch_concurrency;
+    unsigned                                 max_pusch_and_srs_concurrency;
     unsigned                                 nof_dl_threads;
-    unsigned                                 nof_pusch_decoder_threads;
     unsigned                                 nof_cells;
     std::optional<std::chrono::milliseconds> metrics_period;
   };

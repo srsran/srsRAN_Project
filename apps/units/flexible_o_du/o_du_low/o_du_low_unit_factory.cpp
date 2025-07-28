@@ -18,9 +18,9 @@
 
 using namespace srsran;
 
-static void generate_dl_processor_config(downlink_processor_factory_sw_config& out_cfg,
-                                         const du_low_unit_config&             unit_cfg,
-                                         task_executor&                        pdsch_codeblock_executor,
+static void generate_dl_processor_config(downlink_processor_factory_sw_config&                  out_cfg,
+                                         const du_low_unit_config&                              unit_cfg,
+                                         const upper_phy_execution_configuration&               exec_config,
                                          std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> hw_encoder_factory)
 {
   out_cfg.ldpc_encoder_type   = "auto";
@@ -37,9 +37,6 @@ static void generate_dl_processor_config(downlink_processor_factory_sw_config& o
   // The flexible PDSCH processor implementation will be used by default.
   if ((upper_phy_threads_cfg.pdsch_processor_type == "auto") ||
       (upper_phy_threads_cfg.pdsch_processor_type == "flexible")) {
-    // The worker pool in charge of processing PDSCH CBs is shared with the rest of the DL processors.
-    unsigned nof_pdsch_codeblock_threads = upper_phy_threads_cfg.nof_dl_threads;
-
     // Setup parameters for synchronous operation:
     // - the batch size must be the maximum to avoid more than one batch; and
     // - the maximum number of simultaneous PDSCH equals to the number of DL processing threads.
@@ -57,13 +54,12 @@ static void generate_dl_processor_config(downlink_processor_factory_sw_config& o
     }
 
     // Emplace configuration parameters.
-    out_cfg.pdsch_processor.emplace<pdsch_processor_flexible_configuration>(
-        pdsch_processor_flexible_configuration{.nof_pdsch_codeblock_threads   = nof_pdsch_codeblock_threads,
-                                               .cb_batch_length               = cb_batch_length,
-                                               .max_nof_simultaneous_pdsch    = max_nof_simultaneous_pdsch,
-                                               .pdsch_codeblock_task_executor = pdsch_codeblock_executor
-
-        });
+    pdsch_processor_flexible_configuration pdsch_proc_config = {
+        .nof_pdsch_codeblock_threads   = exec_config.pdsch_codeblock_executor.max_concurrency,
+        .cb_batch_length               = cb_batch_length,
+        .max_nof_simultaneous_pdsch    = max_nof_simultaneous_pdsch,
+        .pdsch_codeblock_task_executor = *exec_config.pdsch_codeblock_executor.executor};
+    out_cfg.pdsch_processor.emplace<pdsch_processor_flexible_configuration>(pdsch_proc_config);
   } else if (upper_phy_threads_cfg.pdsch_processor_type == "generic") {
     out_cfg.pdsch_processor.emplace<pdsch_processor_generic_configuration>();
   } else {
@@ -72,7 +68,12 @@ static void generate_dl_processor_config(downlink_processor_factory_sw_config& o
                   hwacc_pdsch_processor ? "hardware-accelerated " : "",
                   upper_phy_threads_cfg.pdsch_processor_type);
   }
-  out_cfg.nof_concurrent_threads = upper_phy_threads_cfg.nof_dl_threads;
+
+  out_cfg.pdcch_executor  = exec_config.pdcch_executor;
+  out_cfg.pdsch_executor  = exec_config.pdsch_executor;
+  out_cfg.ssb_executor    = exec_config.ssb_executor;
+  out_cfg.csi_rs_executor = exec_config.csi_rs_executor;
+  out_cfg.prs_executor    = exec_config.prs_executor;
 }
 
 o_du_low_unit_factory::o_du_low_unit_factory(const std::optional<du_low_unit_hal_config>& hal_config,
@@ -102,27 +103,16 @@ o_du_low_unit o_du_low_unit_factory::create(const o_du_low_unit_config&       pa
 
     generate_dl_processor_config(cell.dl_proc_cfg,
                                  params.du_low_unit_cfg,
-                                 cell_exec_map.pdsch_codeblock_executor(),
+                                 cell_exec_map.get_upper_phy_execution_config(),
                                  hal_dependencies.hw_encoder_factory);
 
     upper_phy_config& upper          = cell.upper_phy_cfg;
     upper.rg_gateway                 = &dependencies.rg_gateway;
     upper.rx_symbol_request_notifier = &dependencies.rx_symbol_request_notifier;
-    upper.pucch_executor             = &cell_exec_map.pucch_executor();
-    upper.pusch_executor             = &cell_exec_map.pusch_executor();
-    upper.pusch_decoder_executor =
-        (upper.nof_pusch_decoder_threads > 1) ? &cell_exec_map.pusch_decoder_executor() : nullptr;
-    upper.prach_executor = &cell_exec_map.prach_executor();
-    upper.srs_executor   = &cell_exec_map.srs_executor();
+    upper.executors                  = cell_exec_map.get_upper_phy_execution_config();
     if (hal_dependencies.hw_decoder_factory) {
       upper.hw_decoder_factory = hal_dependencies.hw_decoder_factory;
     }
-    upper.pdcch_executor   = &cell_exec_map.pdcch_executor();
-    upper.pdsch_executor   = &cell_exec_map.pdsch_executor();
-    upper.ssb_executor     = &cell_exec_map.ssb_executor();
-    upper.csi_rs_executor  = &cell_exec_map.csi_rs_executor();
-    upper.prs_executor     = &cell_exec_map.prs_executor();
-    upper.dl_grid_executor = &cell_exec_map.dl_grid_pool_executor();
   }
 
   o_du_low_unit unit;
