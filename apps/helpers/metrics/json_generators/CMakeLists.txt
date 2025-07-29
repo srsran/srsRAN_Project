@@ -16,7 +16,7 @@ set(SOURCES
         resource_usage.cpp)
 
 add_library(srsran_metrics_json_generators STATIC ${SOURCES})
-target_include_directories(srsran_metrics_json_generators PRIVATE ${CMAKE_SOURCE_DIR})
+target_include_directories(srsran_metrics_json_generators PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/apps/helpers/metrics)
 target_link_libraries(srsran_metrics_json_generators PRIVATE srsran_cu_up_metrics_json_generators_helpers
                                                              srsran_du_high_metrics_json_generators_helpers
                                                              srsran_ru_metrics_json_generators_helpers)

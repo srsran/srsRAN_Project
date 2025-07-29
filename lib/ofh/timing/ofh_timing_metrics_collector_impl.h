@@ -27,8 +27,8 @@ public:
   void update_metrics(unsigned num_skipped_symbols);
 
 private:
-  std::atomic<uint64_t> nof_skipped_symbols               = {0};
-  std::atomic<unsigned> max_nof_continuous_skipped_symbol = {0};
+  std::atomic<uint64_t> nof_skipped_symbols       = {0};
+  std::atomic<unsigned> skipped_symbols_max_burst = {0};
 };
 
 } // namespace ofh

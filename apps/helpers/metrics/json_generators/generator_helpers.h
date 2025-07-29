@@ -10,14 +10,13 @@
 
 #pragma once
 
+#include "srsran/ran/slot_point.h"
+
 namespace srsran {
-namespace ofh {
 
-/// Open Fronthaul timing metrics.
-struct timing_metrics {
-  unsigned nof_skipped_symbols;
-  unsigned skipped_symbols_max_burst;
-};
+inline void to_json(nlohmann::json& json, slot_point slot)
+{
+  json = fmt::format("{}", slot);
+}
 
-} // namespace ofh
 } // namespace srsran

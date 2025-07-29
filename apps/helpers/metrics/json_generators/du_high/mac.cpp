@@ -9,7 +9,7 @@
  */
 
 #include "mac.h"
-#include "../helpers.h"
+#include "helpers.h"
 #include "srsran/mac/mac_metrics.h"
 
 using namespace srsran;

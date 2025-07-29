@@ -12,4 +12,4 @@ set(SOURCES
         scheduler.cpp)
 
 add_library(srsran_du_high_metrics_json_generators_helpers STATIC ${SOURCES})
-target_include_directories(srsran_du_high_metrics_json_generators_helpers PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/apps/helpers/metrics/json_generators)
+target_include_directories(srsran_du_high_metrics_json_generators_helpers PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/apps/helpers/metrics)

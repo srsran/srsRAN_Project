@@ -16,8 +16,8 @@ using namespace ofh;
 
 void timing_metrics_collector_impl::collect_metrics(timing_metrics& metrics)
 {
-  metrics.nof_skipped_symbols               = nof_skipped_symbols.exchange(0, std::memory_order_relaxed);
-  metrics.max_nof_continuous_skipped_symbol = max_nof_continuous_skipped_symbol.exchange(0, std::memory_order_relaxed);
+  metrics.nof_skipped_symbols       = nof_skipped_symbols.exchange(0, std::memory_order_relaxed);
+  metrics.skipped_symbols_max_burst = skipped_symbols_max_burst.exchange(0, std::memory_order_relaxed);
 }
 
 void timing_metrics_collector_impl::update_metrics(unsigned num_skipped_symbols)
@@ -25,8 +25,8 @@ void timing_metrics_collector_impl::update_metrics(unsigned num_skipped_symbols)
   nof_skipped_symbols.fetch_add(num_skipped_symbols, std::memory_order_relaxed);
 
   // Update the maximum number of continuous symbols skipped.
-  unsigned current_max = max_nof_continuous_skipped_symbol.load(std::memory_order_relaxed);
+  unsigned current_max = skipped_symbols_max_burst.load(std::memory_order_relaxed);
   while (num_skipped_symbols > current_max &&
-         !max_nof_continuous_skipped_symbol.compare_exchange_weak(current_max, num_skipped_symbols)) {
+         !skipped_symbols_max_burst.compare_exchange_weak(current_max, num_skipped_symbols)) {
   }
 }

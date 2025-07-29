@@ -10,4 +10,4 @@ set(SOURCES
         pdcp.cpp)
 
 add_library(srsran_cu_up_metrics_json_generators_helpers STATIC ${SOURCES})
-target_include_directories(srsran_cu_up_metrics_json_generators_helpers PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/apps/helpers/metrics/json_generators)
+target_include_directories(srsran_cu_up_metrics_json_generators_helpers PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/apps/helpers/metrics)

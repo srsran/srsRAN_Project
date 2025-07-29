@@ -24,8 +24,6 @@ class ru_ofh_metrics_collector_impl : public ru_metrics_collector
   std::vector<ofh::metrics_collector*> sector_metrics_collectors;
 
 public:
-  ru_ofh_metrics_collector_impl() = delete;
-
   explicit ru_ofh_metrics_collector_impl(ofh::timing_metrics_collector& timing_collector_) :
     timing_collector(&timing_collector_)
   {

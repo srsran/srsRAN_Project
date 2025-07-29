@@ -24,10 +24,10 @@ struct received_messages_metrics {
   unsigned nof_early_messages;
   /// Number of OFH messages received late.
   unsigned nof_late_messages;
-  /// Earliest received message in symbols unit.
-  int ealiest_rx_msg_in_symbols;
-  /// Latest received message in symbols unit.
-  unsigned latest_rx_msg_in_symbols;
+  /// Earliest received message in symbol units respect OTA.
+  int earliest_rx_msg_in_symbols;
+  /// Latest received message in symbol units respect OTA.
+  int latest_rx_msg_in_symbols;
 };
 
 /// Open Fronthaul reception window closing metrics.

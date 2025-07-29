@@ -9,6 +9,7 @@
  */
 
 #include "ofh_rx_window_checker.h"
+#include "support/metrics_helpers.h"
 #include "srsran/ofh/receiver/ofh_receiver_metrics.h"
 
 using namespace srsran;
@@ -79,18 +80,20 @@ void rx_window_checker::update_rx_window_statistics(slot_symbol_point symbol_poi
 
   // Calculate the distance between the 2 slot symbol points in symbols.
   int diff = calculate_slot_symbol_point_distance(ota_point, symbol_point);
+  // Update earliest and latest
+  statistics.update_rx_timing_stats(diff);
 
   // Late detected.
   if (int symb_end = timing_parameters.sym_end; diff > symb_end) {
     statistics.increment_late_counter();
-    statistics.update_latest_packet(diff - symb_end);
+
     return;
   }
 
   // Early detected.
   if (int symb_start = timing_parameters.sym_start; diff < symb_start) {
     statistics.increment_early_counter();
-    statistics.update_earliest_packet(diff - symb_start);
+
     return;
   }
 
@@ -111,14 +114,20 @@ void rx_window_checker::rx_window_checker_statistics::collect_metrics(received_m
   uint64_t current_nof_early   = nof_early_messages();
 
   // Calculate the difference since last print.
-  metrics.nof_on_time_messages      = current_nof_on_time - last_on_time_value_printed;
-  metrics.nof_early_messages        = current_nof_early - last_early_value_printed;
-  metrics.nof_late_messages         = current_nof_late - last_late_value_printed;
-  metrics.ealiest_rx_msg_in_symbols = earliest_packet_in_symbols.exchange(0, std::memory_order_relaxed);
-  metrics.latest_rx_msg_in_symbols  = latest_packet_in_symbols.exchange(0, std::memory_order_relaxed);
+  metrics.nof_on_time_messages = current_nof_on_time - last_on_time_value_printed;
+  metrics.nof_early_messages   = current_nof_early - last_early_value_printed;
+  metrics.nof_late_messages    = current_nof_late - last_late_value_printed;
+  metrics.earliest_rx_msg_in_symbols =
+      earliest_packet_in_symbols.exchange(EARLIEST_INITIAL_VALUE, std::memory_order_relaxed);
+  metrics.latest_rx_msg_in_symbols = latest_packet_in_symbols.exchange(0, std::memory_order_relaxed);
 
   // Update last print.
   last_late_value_printed    = current_nof_late;
   last_early_value_printed   = current_nof_early;
   last_on_time_value_printed = current_nof_on_time;
+}
+
+void rx_window_checker::rx_window_checker_statistics::update_rx_timing_stats(int32_t value)
+{
+  update_minmax(value, latest_packet_in_symbols, earliest_packet_in_symbols);
 }

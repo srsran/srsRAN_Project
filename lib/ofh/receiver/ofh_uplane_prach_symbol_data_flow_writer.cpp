@@ -37,9 +37,9 @@ bool uplane_prach_symbol_data_flow_writer::write_to_prach_buffer(unsigned       
                 eaxc,
                 prach_context.get_max_nof_ports());
 
-    // This port is not needed for the PRACH, so the message is not counted as an error for PRACH. A case of use for
-    // this is configure OFH with 4 ports, 2 rx antennas and only one port for PRACH. eCRPI decoder will filter 2 of the
-    // eAxCs as not being used (only 2 rx antennas), and the other is checked here.
+    // This port is not needed for the PRACH, the message is not counted as an error for PRACH. A possible use case is
+    // to configure OFH with four ports, two Rx antennas and only one port for PRACH. The eCRPI decoder will filter two
+    // of the unused eAxCs (only two Rx antennas), and the other is checked here.
     return true;
   }
 

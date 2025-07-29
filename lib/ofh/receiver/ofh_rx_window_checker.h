@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsran/ofh/receiver/ofh_receiver_metrics.h"
-#include "srsran/ofh/receiver/ofh_receiver_metrics_collector.h"
 #include "srsran/ofh/receiver/ofh_receiver_timing_parameters.h"
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
 #include "srsran/srslog/logger.h"
@@ -29,18 +28,17 @@ class rx_window_checker : public ota_symbol_boundary_notifier
   /// Helper class that represents the reception window statistics.
   class rx_window_checker_statistics
   {
-    static constexpr unsigned NOF_BITS_PER_COUNTER = 21U;
+    static constexpr unsigned NOF_BITS_PER_COUNTER   = 21U;
+    static constexpr int32_t  EARLIEST_INITIAL_VALUE = std::numeric_limits<int32_t>::max();
 
     /// \brief Latest packet received.
     ///
-    /// This value represents the number of symbols after the reception window closed when a packet was received. A
-    /// value of 0 means all the packets were received within the reception window.
+    /// This value represents the highest number of symbols from OTA when a packet was received.
     std::atomic<int32_t> latest_packet_in_symbols{0};
     /// \brief Earliest packet received.
     ///
-    /// This value represents the number of symbols before the reception window opened when a packet was received. A
-    /// value of 0 means all the packets were received within the reception window.
-    std::atomic<int32_t>  earliest_packet_in_symbols{0};
+    /// This value represents the smallest number of symbols from OTA when a packet was received.
+    std::atomic<int32_t>  earliest_packet_in_symbols{EARLIEST_INITIAL_VALUE};
     std::atomic<uint64_t> on_time_counter{0};
     std::atomic<uint64_t> early_counter{0};
     std::atomic<uint64_t> late_counter{0};
@@ -56,31 +54,7 @@ class rx_window_checker : public ota_symbol_boundary_notifier
     void increment_on_time_counter() { on_time_counter.fetch_add(1, std::memory_order_relaxed); }
     void increment_early_counter() { early_counter.fetch_add(1, std::memory_order_relaxed); }
     void increment_late_counter() { late_counter.fetch_add(1, std::memory_order_relaxed); }
-    void update_latest_packet(int32_t value)
-    {
-      int32_t latest = latest_packet_in_symbols.load(std::memory_order_relaxed);
-      if (value < latest) {
-        return;
-      }
-
-      // Update value.
-      if (!latest_packet_in_symbols.compare_exchange_strong(latest, value, std::memory_order_relaxed)) {
-        latest_packet_in_symbols.compare_exchange_strong(latest, value, std::memory_order_relaxed);
-      }
-    }
-
-    void update_earliest_packet(int value)
-    {
-      int32_t earliest = earliest_packet_in_symbols.load(std::memory_order_relaxed);
-      if (value < earliest) {
-        return;
-      }
-
-      // Update value.
-      if (!earliest_packet_in_symbols.compare_exchange_strong(earliest, value, std::memory_order_relaxed)) {
-        earliest_packet_in_symbols.compare_exchange_strong(earliest, value, std::memory_order_relaxed);
-      }
-    }
+    void update_rx_timing_stats(int32_t value);
 
     /// Getters to the message counters.
     uint64_t nof_on_time_messages() const { return on_time_counter.load(std::memory_order_relaxed); }

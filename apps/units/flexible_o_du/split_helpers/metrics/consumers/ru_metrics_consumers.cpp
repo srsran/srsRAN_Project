@@ -9,29 +9,22 @@
  */
 
 #include "ru_metrics_consumers.h"
+#include "apps/helpers/metrics/helpers.h"
 #include "apps/helpers/metrics/json_generators/ru/ofh.h"
 #include "srsran/ru/ru_metrics.h"
 #include "srsran/support/format/fmt_to_c_str.h"
 #include "srsran/support/units.h"
 
 using namespace srsran;
+using namespace app_helpers;
 
 /// Size in bytes of the buffer used to prepare the metrics before logging.
 static constexpr unsigned str_buffer_size = 2048;
 
-/// Return the given value if it is not a Nan or Inf, otherwise returns 0.
-static double validate_fp_value(double value)
-{
-  if (!std::isnan(value) && !std::isinf(value)) {
-    return value;
-  }
-  return 0.0;
-}
-
-static void log_ru_ofh_metrics_json(srslog::log_channel&            log_chan,
-                                    const ofh::metrics&             metrics,
-                                    span<const pci_t>               pci_sector_map,
-                                    const std::chrono::nanoseconds& symbol_duration)
+static void log_ru_ofh_metrics_json(srslog::log_channel&     log_chan,
+                                    const ofh::metrics&      metrics,
+                                    span<const pci_t>        pci_sector_map,
+                                    std::chrono::nanoseconds symbol_duration)
 {
   log_chan("{}", app_helpers::json_generators::generate_string(metrics, pci_sector_map, 2));
 }
@@ -155,18 +148,18 @@ static void log_ru_ofh_performance_metrics_verbose(fmt::basic_memory_buffer<char
                  cell_metrics.tx_metrics.ul_metrics.nof_late_cp_ul);
 }
 
-static void log_ru_ofh_metrics(srslog::log_channel&            log_chan,
-                               const ofh::metrics&             metrics,
-                               span<const pci_t>               pci_sector_map,
-                               bool                            verbose,
-                               const std::chrono::nanoseconds& symbol_duration)
+static void log_ru_ofh_metrics(srslog::log_channel&     log_chan,
+                               const ofh::metrics&      metrics,
+                               span<const pci_t>        pci_sector_map,
+                               bool                     verbose,
+                               std::chrono::nanoseconds symbol_duration)
 {
   fmt::basic_memory_buffer<char, str_buffer_size> buffer;
 
   fmt::format_to(std::back_inserter(buffer),
                  "OFH metrics: timing metrics: nof_skipped_symbols={} skipped_symbols_max_burst={}; ",
                  metrics.timing.nof_skipped_symbols,
-                 metrics.timing.max_nof_continuous_skipped_symbol);
+                 metrics.timing.skipped_symbols_max_burst);
 
   for (const auto& cell_metrics : metrics.sectors) {
     const ofh::received_messages_metrics& rx_ofh_metrics    = cell_metrics.rx_metrics.rx_messages_metrics;
@@ -183,7 +176,7 @@ static void log_ru_ofh_metrics(srslog::log_channel&            log_chan,
         rx_ofh_metrics.nof_early_messages,
         rx_ofh_metrics.nof_on_time_messages,
         rx_ofh_metrics.nof_late_messages,
-        validate_fp_value(static_cast<float>(rx_ofh_metrics.ealiest_rx_msg_in_symbols) * symbol_duration.count() *
+        validate_fp_value(static_cast<float>(rx_ofh_metrics.earliest_rx_msg_in_symbols) * symbol_duration.count() *
                           1e-3),
         validate_fp_value(static_cast<float>(rx_ofh_metrics.latest_rx_msg_in_symbols) * symbol_duration.count() * 1e-3),
         rx_closed_metrics.nof_missing_uplink_symbols,
@@ -325,7 +318,7 @@ void ru_metrics_handler_stdout::log_ru_ofh_metrics_in_stdout(const ofh::metrics&
         rx_metrics.nof_early_messages,
         rx_metrics.nof_on_time_messages,
         rx_metrics.nof_late_messages,
-        validate_fp_value(static_cast<float>(rx_metrics.ealiest_rx_msg_in_symbols) * symbol_duration.count() * 1e-3),
+        validate_fp_value(static_cast<float>(rx_metrics.earliest_rx_msg_in_symbols) * symbol_duration.count() * 1e-3),
         validate_fp_value(static_cast<float>(rx_metrics.latest_rx_msg_in_symbols) * symbol_duration.count() * 1e-3));
   }
 }

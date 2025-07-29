@@ -9,7 +9,6 @@
  */
 
 #include "pdcp.h"
-#include "apps/helpers/metrics/helpers.h"
 #include "helpers.h"
 #include "srsran/pdcp/pdcp_entity.h"
 #include "srsran/pdcp/pdcp_rx_metrics.h"

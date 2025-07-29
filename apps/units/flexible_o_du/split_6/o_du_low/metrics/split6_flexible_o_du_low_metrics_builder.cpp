@@ -22,7 +22,7 @@ srsran::build_split6_flexible_o_du_low_metrics_config(std::vector<app_services::
                                                       app_services::metrics_notifier&            notifier,
                                                       const app_helpers::metrics_config&         metrics_cfg,
                                                       std::vector<pci_t>                         pci_cell_map,
-                                                      const std::chrono::nanoseconds&            symbol_duration)
+                                                      std::chrono::nanoseconds                   symbol_duration)
 {
   split6_flexible_o_du_low_metrics_notifier* output = nullptr;
   if (!metrics_cfg.enabled()) {

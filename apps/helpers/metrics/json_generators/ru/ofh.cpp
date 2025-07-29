@@ -26,7 +26,7 @@ void to_json(nlohmann::json& json, const received_messages_metrics& metrics)
   json["early"]           = metrics.nof_early_messages;
   json["on_time"]         = metrics.nof_on_time_messages;
   json["late"]            = metrics.nof_late_messages;
-  json["earliest_msg_us"] = metrics.ealiest_rx_msg_in_symbols;
+  json["earliest_msg_us"] = metrics.earliest_rx_msg_in_symbols;
   json["latest_msg_us"]   = metrics.latest_rx_msg_in_symbols;
 }
 
@@ -34,6 +34,12 @@ void to_json(nlohmann::json& json, const closed_rx_window_metrics& metrics)
 {
   json["nof_missed_uplink_symbols"]  = metrics.nof_missing_uplink_symbols;
   json["nof_missed_prach_occasions"] = metrics.nof_missing_prach_contexts;
+}
+
+void to_json(nlohmann::json& json, const timing_metrics& metrics)
+{
+  json["nof_skipped_symbols"]       = metrics.nof_skipped_symbols;
+  json["skipped_symbols_max_burst"] = metrics.skipped_symbols_max_burst;
 }
 
 } // namespace ofh
@@ -146,11 +152,11 @@ static nlohmann::json generate_transmitter_statistics(const ofh::transmitter_met
 {
   nlohmann::json json;
 
-  json["late_dl_rgs"]         = metrics.dl_metrics.nof_late_dl_grids;
-  json["late_ul_requests"]    = metrics.ul_metrics.nof_late_ul_requests;
-  json["late_cp_dl_messages"] = metrics.dl_metrics.nof_late_cp_dl;
-  json["late_up_dl_messages"] = metrics.dl_metrics.nof_late_up_dl;
-  json["late_cp_ul_messages"] = metrics.ul_metrics.nof_late_cp_ul;
+  json["late_dl_slots"]         = metrics.dl_metrics.nof_late_dl_grids;
+  json["late_ul_slot_requests"] = metrics.ul_metrics.nof_late_ul_requests;
+  json["late_cp_dl_messages"]   = metrics.dl_metrics.nof_late_cp_dl;
+  json["late_up_dl_messages"]   = metrics.dl_metrics.nof_late_up_dl;
+  json["late_cp_ul_messages"]   = metrics.ul_metrics.nof_late_cp_ul;
 
   return json;
 }
@@ -182,16 +188,18 @@ nlohmann::json json_generators::generate(const ofh::metrics& metrics, span<const
 {
   nlohmann::json json;
 
-  json["timestamp"] = get_time_stamp();
-  auto& json_ru     = json["ru"];
-  auto& json_ofh    = json_ru["ofh"];
+  json["timestamp"]        = get_time_stamp();
+  auto& json_ru            = json["ru"];
+  auto& json_ofh           = json_ru["ofh"];
+  json_ofh["timing_stats"] = metrics.timing;
+  auto& cells_ofh          = json_ofh["cells"];
 
   for (const auto& cell : metrics.sectors) {
     srsran_assert(cell.sector_id < pci_sector_map.size(),
                   "Sector id '{}' out of range of the pci-sector mapper. Size of the mapper is '{}' ",
                   cell.sector_id,
                   pci_sector_map.size());
-    json_ofh.emplace_back(generate_ofh_cell(cell, pci_sector_map[cell.sector_id]));
+    cells_ofh.emplace_back(generate_ofh_cell(cell, pci_sector_map[cell.sector_id]));
   }
 
   return json;

@@ -9,23 +9,16 @@
  */
 
 #include "o_du_low_metrics_consumers.h"
+#include "apps/helpers/metrics/helpers.h"
 #include "apps/helpers/metrics/json_generators/o_du_low.h"
 #include "srsran/du/du_low/o_du_low_metrics.h"
 #include "srsran/support/format/fmt_to_c_str.h"
 
 using namespace srsran;
+using namespace app_helpers;
 
 /// Size in bytes of the buffer used to prepare the metrics before logging.
 static constexpr unsigned str_buffer_size = 4096;
-
-/// Return the given value if it is not a Nan or Inf, otherwise returns 0.
-static double validate_fp_value(double value)
-{
-  if (!std::isnan(value) && !std::isinf(value)) {
-    return value;
-  }
-  return 0.0;
-}
 
 void o_du_low_metrics_consumer_json::handle_metric(const srs_du::o_du_low_metrics& metric)
 {
