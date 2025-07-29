@@ -109,6 +109,7 @@ static void generate_du_low_config(srs_du::du_low_config&                       
     upper_phy_cell.nof_rx_ports                       = cell.nof_rx_antennas;
     upper_phy_cell.ldpc_decoder_iterations            = du_low.expert_phy_cfg.pusch_decoder_max_iterations;
     upper_phy_cell.ldpc_decoder_early_stop            = du_low.expert_phy_cfg.pusch_decoder_early_stop;
+    upper_phy_cell.ldpc_decoder_force_decoding        = du_low.expert_phy_cfg.pusch_decoder_force_decoding;
     upper_phy_cell.nof_dl_rg                          = dl_pipeline_depth + 2;
     upper_phy_cell.nof_dl_processors                  = dl_pipeline_depth;
     upper_phy_cell.nof_ul_rg                          = ul_pipeline_depth;

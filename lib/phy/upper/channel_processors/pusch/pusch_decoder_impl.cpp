@@ -348,6 +348,7 @@ void pusch_decoder_impl::fork_codeblock_task(unsigned cb_id)
                                       block_crc->get_generator_poly(),
                                       current_config.use_early_stop,
                                       current_config.nof_ldpc_iterations,
+                                      current_config.force_decoding,
                                       cb_meta);
     } else {
       logger.error("Not enough codeblock decoder instances.");

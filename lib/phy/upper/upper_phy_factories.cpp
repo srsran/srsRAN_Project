@@ -596,6 +596,7 @@ create_ul_processor_factory(const upper_phy_config&                config,
   pusch_config.uci_dec_factory            = uci_dec_factory;
   pusch_config.dec_nof_iterations         = config.ldpc_decoder_iterations;
   pusch_config.dec_enable_early_stop      = config.ldpc_decoder_early_stop;
+  pusch_config.dec_force_decoding         = config.ldpc_decoder_force_decoding;
   pusch_config.csi_sinr_calc_method       = config.pusch_sinr_calc_method;
   pusch_config.max_nof_concurrent_threads = config.executors.pusch_executor.max_concurrency;
 

@@ -225,6 +225,11 @@ static void configure_cli11_expert_phy_args(CLI::App& app, du_low_unit_expert_up
              "Enables PUSCH LDPC decoder early stop")
       ->capture_default_str();
   add_option(app,
+             "--pusch_decoder_force_decoding",
+             expert_phy_params.pusch_decoder_force_decoding,
+             "Forces PUSCH LDPC decoder to decode always")
+      ->capture_default_str();
+  add_option(app,
              "--pusch_sinr_calc_method",
              expert_phy_params.pusch_sinr_calc_method,
              "PUSCH SINR calculation method: channel_estimator, post_equalization and evm.")

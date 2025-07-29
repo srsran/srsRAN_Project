@@ -104,6 +104,7 @@ struct pusch_processor_factory_sw_configuration {
   channel_estimate::channel_estimate_dimensions ch_estimate_dimensions;
   unsigned                                      dec_nof_iterations    = 10;
   bool                                          dec_enable_early_stop = true;
+  bool                                          dec_force_decoding    = false;
   unsigned                                      max_nof_concurrent_threads;
   channel_state_information::sinr_type csi_sinr_calc_method = channel_state_information::sinr_type::channel_estimator;
 };

@@ -284,6 +284,8 @@ struct upper_phy_config {
   unsigned ldpc_decoder_iterations;
   /// Set to true to enable the LDPC decoder early stop.
   bool ldpc_decoder_early_stop;
+  /// Set to true for forcing the LDPC decoder to decode even if the number of soft bits is insufficient.
+  bool ldpc_decoder_force_decoding;
   /// Number of transmit antenna ports.
   unsigned nof_tx_ports;
   /// Number of receive antenna ports.

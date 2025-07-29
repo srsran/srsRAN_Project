@@ -64,6 +64,7 @@ static void fill_du_low_expert_section(YAML::Node node, const du_low_unit_expert
   node["max_proc_delay"]                           = config.max_processing_delay_slots;
   node["pusch_dec_max_iterations"]                 = config.pusch_decoder_max_iterations;
   node["pusch_dec_enable_early_stop"]              = config.pusch_decoder_early_stop;
+  node["pusch_decoder_force_decoding"]             = config.pusch_decoder_force_decoding;
   node["pusch_sinr_calc_method"]                   = config.pusch_sinr_calc_method;
   node["pusch_channel_estimator_fd_strategy"]      = config.pusch_channel_estimator_fd_strategy;
   node["pusch_channel_estimator_td_strategy"]      = config.pusch_channel_estimator_td_strategy;

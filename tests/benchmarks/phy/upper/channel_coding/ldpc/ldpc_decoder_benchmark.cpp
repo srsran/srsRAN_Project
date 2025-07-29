@@ -175,7 +175,7 @@ int main(int argc, char** argv)
                        fmt::underlying(ls),
                        cb_length);
         perf_meas_generic.new_measure(to_string(descr_buffer), codeblock.size(), [&]() {
-          decoder->decode(message, codeblock, crc16.get(), {cfg_dec, {nof_iterations, 0.8}});
+          decoder->decode(message, codeblock, crc16.get(), {cfg_dec, {false, nof_iterations, 0.8}});
           do_not_optimize(codeblock);
         });
       }

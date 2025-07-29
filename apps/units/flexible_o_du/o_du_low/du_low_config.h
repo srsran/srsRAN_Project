@@ -30,6 +30,8 @@ struct du_low_unit_expert_upper_phy_config {
   unsigned pusch_decoder_max_iterations = 6;
   /// Set to true to enable the PUSCH LDPC decoder early stop.
   bool pusch_decoder_early_stop = true;
+  /// Set to true for forcing the LDPC decoder to decode even if the number of soft bits is insufficient.
+  bool pusch_decoder_force_decoding = false;
   /// \brief Selects a PUSCH SINR calculation method.
   ///
   /// Available methods:
