@@ -2569,6 +2569,7 @@ private:
 			}
 
 			// Enqueue
+                        TSAN_ACQUIRE((*this->tailBlock)[currentTailIndex]);
 			new ((*this->tailBlock)[currentTailIndex]) T(std::forward<U>(element));
                         TSAN_RELEASE((*this->tailBlock)[currentTailIndex]);
 
@@ -2621,10 +2622,12 @@ private:
 						} guard = { block, index, entry, this->parent };
 
 						element = std::move(el); // NOLINT
+                                                TSAN_RELEASE(&el);
 					}
 					else {
 						element = std::move(el); // NOLINT
 						el.~T(); // NOLINT
+                                                TSAN_RELEASE(&el);
 
 						if (block->ConcurrentQueue::Block::template set_empty<implicit_context>(index)) {
 							{
