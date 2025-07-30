@@ -357,7 +357,7 @@ void worker_manager::create_low_prio_worker_pool(const worker_manager_config& wo
   worker_pool non_rt_pool{"non_rt_pool",
                           nof_workers_general_pool,
                           // Used for control plane and timer management.
-                          {{"high_prio_exec", concurrent_queue_policy::lockfree_mpmc, qsize},
+                          {{"high_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize},
                            // Used for PCAP writing and CU-UP.
                            {"medium_prio_exec", concurrent_queue_policy::lockfree_mpmc, qsize},
                            // Used for receiving data from external nodes.
@@ -471,8 +471,8 @@ worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::
           name_dl,
           nof_dl_workers,
           {{l2_exec_name, concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize, prereserved_l2_producers},
-           {l1_dl_exec_name, concurrent_queue_policy::lockfree_mpmc, qsize},
-           {l1_pdsch_exec_name, concurrent_queue_policy::lockfree_mpmc, qsize}},
+           {l1_dl_exec_name, concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize},
+           {l1_pdsch_exec_name, concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize}},
           dl_worker_sleep_time,
           dl_worker_pool_prio,
           dl_cpu_masks};
