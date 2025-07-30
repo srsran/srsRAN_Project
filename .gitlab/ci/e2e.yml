@@ -242,8 +242,6 @@ amari 8UE beta:
         KEYWORDS: "not sequentially"
       - E2E_FILE_OR_DIR: tests/handover.py
         KEYWORDS: "not sequentially"
-  when: manual
-  allow_failure: true
 
 amari 32UE:
   extends: .zmq
@@ -279,8 +277,6 @@ amari 32UE 2x2 mimo:
 
 amari 64UE 2x2 mimo:
   extends: .zmq
-  when: manual
-  allow_failure: true
   variables:
     E2E_FILE_OR_DIR: tests/iperf.py
     MARKERS: "64"
@@ -427,8 +423,6 @@ test mode ru acc100:
   extends: test mode ru
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
-      when: manual
-      allow_failure: true
   variables:
     TESTBED: test_mode_acc100
     MARKERS: test_mode_acc100
