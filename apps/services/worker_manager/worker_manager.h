@@ -155,6 +155,8 @@ private:
   /// CPU affinity bitmask manager per cell.
   std::vector<os_sched_affinity_manager> affinity_mng;
 
+  void create_main_worker_pool(const worker_manager_config& worker_cfg);
+
   /// Helper method to create workers with non zero priority.
   void create_prio_worker(const std::string&               name,
                           const std::string&               exec_name,
@@ -171,7 +173,6 @@ private:
                           span<const os_sched_affinity_bitmask> cpu_masks = {},
                           concurrent_queue_policy               queue_policy = concurrent_queue_policy::locking_mpmc);
 
-  void create_low_prio_worker_pool(const worker_manager_config& config);
   void add_low_prio_strands(const worker_manager_config& config);
 
   void add_pcap_strands(const worker_manager_config::pcap_config& config);

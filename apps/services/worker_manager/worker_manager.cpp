@@ -115,7 +115,7 @@ worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
     affinity_mng.emplace_back(cell_affinities);
   }
 
-  create_low_prio_worker_pool(worker_cfg);
+  create_main_worker_pool(worker_cfg);
 
   add_low_prio_strands(worker_cfg);
 
@@ -339,32 +339,26 @@ void worker_manager::create_du_executors(const worker_manager_config::du_high_co
   du_high_exec_mapper = create_du_high_executor_mapper(cfg);
 }
 
-void worker_manager::create_low_prio_worker_pool(const worker_manager_config& worker_cfg)
+void worker_manager::create_main_worker_pool(const worker_manager_config& worker_cfg)
 {
   using namespace execution_config_helper;
 
   // Configure non-RT worker pool.
-  nof_workers_general_pool =
-      // TODO: Fix config.
-      worker_cfg.nof_low_prio_threads +
-      (worker_cfg.du_low_cfg.has_value()
-           ? worker_cfg.du_low_cfg->max_pusch_and_srs_concurrency * worker_cfg.du_low_cfg->nof_cells
-           : 0);
+  nof_workers_general_pool = std::thread::hardware_concurrency() - 2;
   const std::chrono::microseconds sleep_time{50};
-  const auto                      worker_pool_prio = os_thread_realtime_priority::min();
+  const auto                      worker_pool_prio = os_thread_realtime_priority::max() - 50;
   const unsigned                  qsize            = worker_cfg.low_prio_task_queue_size;
 
-  worker_pool non_rt_pool{"non_rt_pool",
+  worker_pool non_rt_pool{"main_pool",
                           nof_workers_general_pool,
                           // Used for control plane and timer management.
                           {{"high_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize},
                            // Used for PCAP writing and CU-UP.
-                           {"medium_prio_exec", concurrent_queue_policy::lockfree_mpmc, qsize},
+                           {"medium_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize},
                            // Used for receiving data from external nodes.
-                           {"low_prio_exec", concurrent_queue_policy::lockfree_mpmc, qsize}},
+                           {"low_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize}},
                           sleep_time,
-                          worker_pool_prio,
-                          {worker_cfg.low_prio_sched_config.mask}};
+                          worker_pool_prio};
 
   // Create non-RT worker pool.
   if (not exec_mng.add_execution_context(create_execution_context(non_rt_pool))) {
@@ -443,51 +437,19 @@ worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::
 
   } else {
     // RF case.
-    unsigned                        nof_dl_workers     = du_low.nof_dl_threads * nof_cells;
-    const unsigned                  qsize              = task_worker_queue_size;
-    const std::string               l2_exec_name       = "l2_exec";
-    const std::string               l1_dl_exec_name    = "du_low_dl_exec";
-    const std::string               l1_pdsch_exec_name = "du_low_pdsch_exec";
-    const std::string               l1_high_prio_name  = l1_pdsch_exec_name;
-    const std::chrono::microseconds dl_worker_sleep_time{50};
-    const auto                      dl_worker_pool_prio = os_thread_realtime_priority::max() - 2;
-
-    // Setup DL CPU masks.
-    std::vector<os_sched_affinity_bitmask> dl_cpu_masks;
-    for (unsigned cell_id = 0, cell_end = nof_cells; cell_id != cell_end; ++cell_id) {
-      for (unsigned w = 0; w != du_low.nof_dl_threads; ++w) {
-        dl_cpu_masks.push_back(affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::l1_dl));
-      }
-    }
-
-    // Instantiate dedicated worker pool for high priority tasks such as L2, the upper physical layer downlink
-    // processing, and the PRACH detector. This worker pool comprises three different priority queues where the L2
-    // has the highest priority.
-    const worker_pool dl_worker_pool{"dl_pool",
-                                     nof_dl_workers,
-                                     {{l2_exec_name, concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize},
-                                      {l1_dl_exec_name, concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize},
-                                      {l1_pdsch_exec_name, concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize}},
-                                     dl_worker_sleep_time,
-                                     dl_worker_pool_prio,
-                                     dl_cpu_masks};
-    if (not exec_mng.add_execution_context(create_execution_context(dl_worker_pool))) {
-      report_fatal_error("Failed to instantiate {} execution context", dl_worker_pool.name);
-    }
 
     for (unsigned cell_id = 0, cell_end = nof_cells; cell_id != cell_end; ++cell_id) {
       // Fill the task executors for each cell.
       du_low_exec_mapper_config.cells.emplace_back(srs_du::du_low_executor_mapper_flexible_exec_config{
-          .high_priority_executor        = {exec_mng.executors().at(l1_high_prio_name), nof_workers_general_pool},
+          .high_priority_executor        = {non_rt_hi_prio_exec, nof_workers_general_pool},
           .medium_priority_executor      = {non_rt_medium_prio_exec, nof_workers_general_pool},
           .low_priority_executor         = {non_rt_low_prio_exec, nof_workers_general_pool},
-          .dl_executor                   = {exec_mng.executors().at(l1_dl_exec_name), nof_dl_workers},
-          .pdsch_executor                = {exec_mng.executors().at(l1_pdsch_exec_name), nof_dl_workers},
+          .dl_executor                   = {non_rt_hi_prio_exec, nof_workers_general_pool},
+          .pdsch_executor                = {non_rt_medium_prio_exec, nof_workers_general_pool},
           .max_pucch_concurrency         = du_low.max_pucch_concurrency,
           .max_pusch_and_srs_concurrency = du_low.max_pusch_and_srs_concurrency});
 
-      // Save DL executors for the higher layers.
-      crit_path_prio_executors.push_back(exec_mng.executors().at(l1_dl_exec_name));
+      crit_path_prio_executors.push_back(non_rt_medium_prio_exec);
     }
 
     // Setup metrics configuration.
@@ -502,7 +464,7 @@ worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::
     srs_du::du_high_executor_config::strand_based_worker_pool pool_desc;
     pool_desc.nof_cells               = nof_cells;
     pool_desc.default_task_queue_size = task_worker_queue_size;
-    pool_desc.pool_executors          = {exec_mng.executors().at(l2_exec_name)};
+    pool_desc.pool_executors          = {exec_mng.executors().at("high_prio_exec")};
     desc.l2_execs                     = pool_desc;
   }
 
