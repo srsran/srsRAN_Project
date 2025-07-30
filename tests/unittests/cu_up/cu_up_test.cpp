@@ -46,7 +46,7 @@ public:
 
         e1ap_message response;
         if (msg.pdu.init_msg().value.type().value ==
-            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cp_e1_setup_request) {
+            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_up_e1_setup_request) {
           // Generate a dummy CU-UP E1 Setup response message and pass it back to the CU-UP.
           response.pdu.set_successful_outcome();
           response.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_UP_E1_SETUP);
@@ -87,6 +87,7 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
+    srslog::fetch_basic_logger("CU-UP").set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("GTPU").set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("E1AP").set_level(srslog::basic_levels::debug);
 
@@ -140,6 +141,7 @@ protected:
   {
     auto cfg_copy = cfg;
     cu_up         = std::make_unique<srs_cu_up::cu_up>(cfg_copy, std::move(deps));
+    cu_up->start();
   }
 
   void TearDown() override
@@ -148,22 +150,23 @@ protected:
     srslog::flush();
   }
 
+  std::unique_ptr<task_worker>                 worker;
+  std::unique_ptr<task_executor>               executor;
+  std::unique_ptr<dummy_cu_up_executor_mapper> exec_pool;
+
   std::unique_ptr<timer_manager> app_timers;
 
-  dummy_cu_cp_handler                          e1ap_client;
-  dummy_inner_f1u_bearer                       f1u_bearer;
-  std::unique_ptr<dummy_f1u_gateway>           f1u_gw;
-  std::unique_ptr<io_broker>                   broker;
-  std::unique_ptr<gtpu_gateway>                ngu_gw;
-  std::unique_ptr<dummy_cu_up_executor_mapper> exec_pool;
-  std::unique_ptr<srs_cu_up::cu_up>            cu_up;
-  srslog::basic_logger&                        test_logger = srslog::fetch_basic_logger("TEST");
+  dummy_cu_cp_handler                e1ap_client;
+  dummy_inner_f1u_bearer             f1u_bearer;
+  std::unique_ptr<dummy_f1u_gateway> f1u_gw;
+  std::unique_ptr<io_broker>         broker;
+  std::unique_ptr<gtpu_gateway>      ngu_gw;
+  std::unique_ptr<srs_cu_up::cu_up>  cu_up;
+  srslog::basic_logger&              test_logger = srslog::fetch_basic_logger("TEST");
 
   udp_network_gateway_config cu_up_udp_cfg{};
 
-  std::unique_ptr<task_worker>   worker;
-  std::unique_ptr<task_executor> executor;
-  null_dlt_pcap                  dummy_pcap;
+  null_dlt_pcap dummy_pcap;
 
   std::string upf_addr_str;
 
