@@ -628,6 +628,9 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
     // As a side effect, this will make the GNB also schedule on dedicated resources for the case of missing the ACK for
     // RRCReestablishment and then retransmitting it. This is not optimal, but not critical.
     use_dedicated |= is_retx;
+    // Make sure the possible PDSCH grants that are scheduled after RRCSetupComplete use dedicated resources, while the
+    // notification to remove the UE from the fallback scheduler hasn't arrived yet.
+    use_dedicated |= (dci_type == dci_dl_rnti_config_type::c_rnti_f1_0 and u.has_pending_dl_newtx_bytes(LCID_SRB1));
   }
   std::optional<uci_allocation> uci = allocate_ue_fallback_pucch(u,
                                                                  res_alloc,
