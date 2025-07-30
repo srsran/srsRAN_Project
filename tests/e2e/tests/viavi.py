@@ -383,9 +383,7 @@ def _test_viavi(
         },
     }
     if metrics_server is not None:
-        configure_metric_server_for_gnb(
-            retina_manager=retina_manager, retina_data=retina_data, metrics_server=metrics_server
-        )
+        configure_metric_server_for_gnb(retina_manager=retina_manager, metrics_server=metrics_server)
 
     retina_manager.parse_configuration(retina_data.test_config)
     retina_manager.push_all_config()

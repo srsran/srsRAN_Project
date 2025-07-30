@@ -87,15 +87,6 @@ services:
       - .env
     # volumes:
     #   - /tmp/metrics.txt:/etc/telegraf/metrics.txt:ro # Uncomment to use an input metrics file
-    ports:
-      - 55555:${TELEGRAF_LISTENER_PORT}/udp
-    healthcheck:
-      test: >
-        CMD-SHELL
-         grep -q ':0FA0 ' /proc/net/udp /proc/net/udp6
-      # 0FA0 is 4000 in hex, which is the default Telegraf listener port
-      timeout: 5s
-      interval: 1s
     networks:
       metrics:
         ipv4_address: 172.19.1.4
@@ -136,7 +127,7 @@ services:
       - .env
     depends_on:
       telegraf:
-        condition: service_healthy      
+        condition: service_started    
     ports:
       - 3300:${GF_PORT}
     networks:

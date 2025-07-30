@@ -11,6 +11,7 @@ Configuration related steps
 """
 
 import logging
+import socket
 from collections import defaultdict
 from pprint import pformat
 from typing import List, NamedTuple, Optional, Tuple, Union
@@ -211,7 +212,7 @@ def configure_test_parameters(
             logging.info(
                 "Metrics Server in %s:%s will be used for this test.", metrics_server.address, metrics_server.port
             )
-            configure_metric_server_for_gnb(retina_manager, retina_data, metrics_server)
+            configure_metric_server_for_gnb(retina_manager, metrics_server)
 
     logging.info("Test config: \n%s", pformat(retina_data.test_config))
     retina_manager.parse_configuration(retina_data.test_config)
@@ -301,24 +302,26 @@ def get_minimum_sample_rate_for_bandwidth(bandwidth: int) -> int:
     return f_s_min
 
 
-def configure_metric_server_for_gnb(
-    retina_manager: RetinaTestManager, retina_data: RetinaTestData, metrics_server: MetricServerInfo
-):
+def configure_metric_server_for_gnb(retina_manager: RetinaTestManager, metrics_server: MetricServerInfo):
     """
-    Set parameters to set up a metrics server
+    Report gnb ip and port to the metrics-server configuration
     """
+    # Send a UDP packet to the metrics-server with the gnb's ip:port
 
-    if "gnb" not in retina_data.test_config:
-        retina_data.test_config["gnb"] = {}
-    if "parameters" not in retina_data.test_config["gnb"]:
-        retina_data.test_config["gnb"]["parameters"] = {}
+    for item in retina_manager.get_testbed_info().get("gnb", {}).values():
+        gnb_ip = item.address
+        break
 
-    retina_data.test_config["gnb"]["parameters"]["metrics_hostname"] = metrics_server.address
-    retina_data.test_config["gnb"]["parameters"]["metrics_port"] = metrics_server.port
+    message = f"{gnb_ip}:8001"
 
-    logging.info("Test config: \n%s", pformat(retina_data.test_config))
-    retina_manager.parse_configuration(retina_data.test_config)
-    retina_manager.push_all_config()
+    try:
+        # Create UDP socket and send message to metrics server
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.sendto(message.encode("utf-8"), (metrics_server.address, metrics_server.port))
+        sock.close()
+        logging.info("Sent gnb info '%s' to metrics server %s:%s", message, metrics_server.address, metrics_server.port)
+    except socket.error as e:
+        logging.error("Failed to send gnb info to metrics server: %s", e)
 
 
 class NrRasterParams(NamedTuple):
