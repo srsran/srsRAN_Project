@@ -33,10 +33,10 @@ public:
   std::unique_ptr<e1ap_message_notifier>
   handle_cu_up_connection_request(std::unique_ptr<e1ap_message_notifier> cu_up_rx_pdu_notifier_) override
   {
-    class dummy_du_tx_pdu_notifier : public e1ap_message_notifier
+    class dummy_cu_up_tx_pdu_notifier : public e1ap_message_notifier
     {
     public:
-      dummy_du_tx_pdu_notifier(dummy_cu_cp_handler& parent_) : parent(parent_) {}
+      dummy_cu_up_tx_pdu_notifier(dummy_cu_cp_handler& parent_) : parent(parent_) {}
 
       void on_new_message(const e1ap_message& msg) override
       {
@@ -71,7 +71,7 @@ public:
 
     cu_up_rx_pdu_notifier = std::move(cu_up_rx_pdu_notifier_);
 
-    return std::make_unique<dummy_du_tx_pdu_notifier>(*this);
+    return std::make_unique<dummy_cu_up_tx_pdu_notifier>(*this);
   }
 
 private:
