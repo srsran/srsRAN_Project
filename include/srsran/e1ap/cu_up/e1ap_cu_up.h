@@ -36,6 +36,9 @@ public:
   /// successful outcome, 'false' otherwise. \remark The CU-UP transmits the E1SetupRequest as per TS 38.463
   /// section 8.2.3 and awaits the response. If a E1SetupFailure is received the E1AP will handle the failure.
   virtual async_task<cu_up_e1_setup_response> handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& request) = 0;
+
+  /// \brief Launches the E1 Release procedure as per TS 38.483, Section 8.2.7.2.2.
+  virtual async_task<void> handle_cu_up_e1ap_release_request() = 0;
 };
 
 /// Handle E1AP control messages

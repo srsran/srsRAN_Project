@@ -10,10 +10,11 @@
 
 #include "e1ap_cu_up_impl.h"
 #include "../common/log_helpers.h"
-#include "cu_up/procedures/bearer_context_modification_procedure.h"
-#include "cu_up/procedures/bearer_context_release_procedure.h"
-#include "cu_up/procedures/e1ap_cu_up_event_manager.h"
 #include "e1ap_cu_up_asn1_helpers.h"
+#include "procedures/bearer_context_modification_procedure.h"
+#include "procedures/bearer_context_release_procedure.h"
+#include "procedures/e1ap_cu_up_event_manager.h"
+#include "procedures/e1ap_cu_up_release_procedure.h"
 #include "procedures/e1ap_cu_up_setup_procedure.h"
 #include "srsran/e1ap/common/e1ap_message.h"
 #include "srsran/ran/bcd_helper.h"
@@ -88,6 +89,11 @@ e1ap_cu_up_impl::handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& req
 {
   return launch_async<e1ap_cu_up_setup_procedure>(
       request, *pdu_notifier, *ev_mng, timer_factory{timers, cu_up_exec}, logger);
+}
+
+async_task<void> e1ap_cu_up_impl::handle_cu_up_e1ap_release_request()
+{
+  return launch_async<e1ap_cu_up_release_procedure>(connection_handler, *pdu_notifier, *ev_mng, logger);
 }
 
 void e1ap_cu_up_impl::handle_bearer_context_inactivity_notification(

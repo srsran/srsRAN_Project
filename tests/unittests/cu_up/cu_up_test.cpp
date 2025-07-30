@@ -53,9 +53,16 @@ public:
 
           auto& setup_res = response.pdu.successful_outcome().value.gnb_cu_up_e1_setup_resp();
           // Use the same transaction ID as in the request message.
-          setup_res->transaction_id         = msg.pdu.init_msg().value.gnb_cu_up_e1_setup_request()->transaction_id;
-          setup_res->gnb_cu_cp_name_present = true;
-          setup_res->gnb_cu_cp_name.from_string("srsCU-CP");
+          setup_res->transaction_id = msg.pdu.init_msg().value.gnb_cu_up_e1_setup_request()->transaction_id;
+        } else if (msg.pdu.init_msg().value.type().value ==
+                   asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::e1_release_request) {
+          // Generate a dummy E1 Release response message and pass it back to the CU-UP.
+          response.pdu.set_successful_outcome();
+          response.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_E1_RELEASE);
+
+          auto& release_res = response.pdu.successful_outcome().value.e1_release_resp();
+          // Use the same transaction ID as in the request message.
+          release_res->transaction_id = msg.pdu.init_msg().value.e1_release_request()->transaction_id;
         } else {
           // do nothing
           return;
