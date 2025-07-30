@@ -41,7 +41,7 @@ jobs:
             MARCH: x86-64-v3
             PLATFORM: amd64
             UHD_VERSION: "4.7.0.0"
-            DPDK_VERSION: "23.11.1"
+            DPDK_VERSION: "24.11.2"
             DOCKERFILE: ./docker/Dockerfile
             CONTEXT: ./
           - TAGNAME: release_with_debug_avx2
@@ -50,7 +50,7 @@ jobs:
             MARCH: x86-64-v3
             PLATFORM: amd64
             UHD_VERSION: "4.7.0.0"
-            DPDK_VERSION: "23.11.1"
+            DPDK_VERSION: "24.11.2"
             DOCKERFILE: ./docker/Dockerfile
             CONTEXT: ./
           # AMD AVX512
@@ -59,7 +59,7 @@ jobs:
             MARCH: x86-64-v4
             PLATFORM: amd64
             UHD_VERSION: "4.7.0.0"
-            DPDK_VERSION: "23.11.1"
+            DPDK_VERSION: "24.11.2"
             DOCKERFILE: ./docker/Dockerfile
             CONTEXT: ./
           - TAGNAME: release_with_debug_avx512
@@ -68,7 +68,7 @@ jobs:
             MARCH: x86-64-v4
             PLATFORM: amd64
             UHD_VERSION: "4.7.0.0"
-            DPDK_VERSION: "23.11.1"
+            DPDK_VERSION: "24.11.2"
             DOCKERFILE: ./docker/Dockerfile
             CONTEXT: ./
     env:

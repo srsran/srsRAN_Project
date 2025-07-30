@@ -569,7 +569,7 @@ srsran image:
     MODE: publish
     # Arguments
     DOCKER_UHD_VERSION: "4.7.0.0"
-    DOCKER_DPDK_VERSION: "23.11.1"
+    DOCKER_DPDK_VERSION: "24.11.2"
   timeout: 2 hours
   tags:
     - ${TAG}-docker
