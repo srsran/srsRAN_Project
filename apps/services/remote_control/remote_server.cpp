@@ -21,6 +21,7 @@
 #ifndef __clang__
 #pragma GCC diagnostic pop
 #endif
+#include "apps/helpers/metrics/helpers.h"
 #include "srsran/adt/scope_exit.h"
 #include "srsran/support/executors/unique_thread.h"
 #include <csignal>
@@ -37,6 +38,7 @@ static std::string build_error_response(std::string_view error, std::optional<st
   if (cmd) {
     response["cmd"] = std::move(*cmd);
   }
+  response["timestamp"] = app_helpers::get_time_stamp();
   return response.dump();
 }
 
@@ -44,7 +46,8 @@ static std::string build_error_response(std::string_view error, std::optional<st
 static std::string build_success_response(std::string_view cmd)
 {
   nlohmann::json response;
-  response["cmd"] = cmd;
+  response["cmd"]       = cmd;
+  response["timestamp"] = app_helpers::get_time_stamp();
   return response.dump();
 }
 

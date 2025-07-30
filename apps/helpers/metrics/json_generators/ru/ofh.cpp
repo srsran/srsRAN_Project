@@ -9,6 +9,7 @@
  */
 
 #include "ofh.h"
+#include "apps/helpers/metrics/helpers.h"
 #include "helpers.h"
 #include "srsran/ofh/ofh_metrics.h"
 

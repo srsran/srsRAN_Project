@@ -9,7 +9,8 @@
  */
 
 #include "rlc.h"
-#include "../helpers.h"
+#include "apps/helpers/metrics/helpers.h"
+#include "helpers.h"
 #include "srsran/rlc/rlc_metrics.h"
 
 using namespace srsran;

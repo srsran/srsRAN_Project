@@ -9,6 +9,7 @@
  */
 
 #include "o_du_low.h"
+#include "apps/helpers/metrics/helpers.h"
 #include "helpers.h"
 #include "srsran/du/du_low/o_du_low_metrics.h"
 

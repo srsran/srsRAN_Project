@@ -9,7 +9,8 @@
  */
 
 #include "scheduler.h"
-#include "../helpers.h"
+#include "apps/helpers/metrics/helpers.h"
+#include "helpers.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 
 using namespace srsran;

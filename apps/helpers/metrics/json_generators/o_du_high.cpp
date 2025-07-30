@@ -9,6 +9,7 @@
  */
 
 #include "o_du_high.h"
+#include "apps/helpers/metrics/helpers.h"
 #include "du_high/mac.h"
 #include "helpers.h"
 #include "srsran/du/du_high/du_metrics_report.h"
