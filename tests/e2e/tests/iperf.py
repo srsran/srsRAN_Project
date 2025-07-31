@@ -925,7 +925,7 @@ def test_s72(
         protocol=protocol,
         direction=direction,
         gnb_post_cmd=(
-            "expert_execution threads non_rt --non_rt_task_queue_size=4096",
+            "expert_execution threads main_pool --task_queue_size=4096",
             "expert_phy --max_proc_delay=4",
         ),
         nof_antennas_dl=4,

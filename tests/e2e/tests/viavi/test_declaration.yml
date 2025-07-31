@@ -49,9 +49,8 @@ tests:
         queues:
           du_ue_data_executor_queue_size: 16384
         threads:
-          non_rt:
-            nof_non_rt_threads: 3
-            non_rt_task_queue_size: 8192
+          main_pool:
+            task_queue_size: 8192
           upper_phy:
             nof_dl_threads: 4
             max_pucch_concurrency: 1

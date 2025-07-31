@@ -90,7 +90,7 @@ private:
 } // namespace
 
 worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
-  low_prio_affinity_mng({worker_cfg.low_prio_sched_config})
+  low_prio_affinity_mng({worker_cfg.main_pool_affinity_cfg})
 {
   // Add preinitialization of resources to created threads.
   unique_thread::add_observer(std::make_unique<thread_resource_preinitializer>(*worker_cfg.app_timers));
@@ -343,26 +343,27 @@ void worker_manager::create_main_worker_pool(const worker_manager_config& worker
 {
   using namespace execution_config_helper;
 
-  // Configure non-RT worker pool.
-  nof_workers_general_pool = std::thread::hardware_concurrency() - 2;
+  // Configure main worker pool.
+  nof_workers_general_pool = worker_cfg.nof_main_pool_threads.has_value() ? worker_cfg.nof_main_pool_threads.value()
+                                                                          : std::thread::hardware_concurrency() - 2;
   const std::chrono::microseconds sleep_time{50};
   const auto                      worker_pool_prio = os_thread_realtime_priority::max() - 50;
-  const unsigned                  qsize            = worker_cfg.low_prio_task_queue_size;
+  const unsigned                  qsize            = worker_cfg.main_pool_task_queue_size;
 
-  worker_pool non_rt_pool{"main_pool",
-                          nof_workers_general_pool,
-                          // Used for control plane and timer management.
-                          {{"high_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize},
-                           // Used for PCAP writing and CU-UP.
-                           {"medium_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize},
-                           // Used for receiving data from external nodes.
-                           {"low_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize}},
-                          sleep_time,
-                          worker_pool_prio};
+  worker_pool main_pool{"main_pool",
+                        nof_workers_general_pool,
+                        // Used for control plane and timer management.
+                        {{"high_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize},
+                         // Used for PCAP writing and CU-UP.
+                         {"medium_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize},
+                         // Used for receiving data from external nodes.
+                         {"low_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize}},
+                        sleep_time,
+                        worker_pool_prio};
 
-  // Create non-RT worker pool.
-  if (not exec_mng.add_execution_context(create_execution_context(non_rt_pool))) {
-    report_fatal_error("Failed to instantiate {} execution context", non_rt_pool.name);
+  // Create main worker pool.
+  if (not exec_mng.add_execution_context(create_execution_context(main_pool))) {
+    report_fatal_error("Failed to instantiate {} execution context", main_pool.name);
   }
 }
 
@@ -573,12 +574,11 @@ void worker_manager::create_split6_executors()
   const std::string name      = "split6";
   const std::string exec_name = "split6_exec";
 
-  const single_worker split6_worker{
-      name,
-      {exec_name, concurrent_queue_policy::lockfree_spsc, task_worker_queue_size},
-      std::chrono::microseconds{50},
-      os_thread_realtime_priority::max() - 6,
-      low_prio_affinity_mng.calcute_affinity_mask(sched_affinity_mask_types::low_priority)};
+  const single_worker split6_worker{name,
+                                    {exec_name, concurrent_queue_policy::lockfree_spsc, task_worker_queue_size},
+                                    std::chrono::microseconds{50},
+                                    os_thread_realtime_priority::max() - 6,
+                                    low_prio_affinity_mng.calcute_affinity_mask(sched_affinity_mask_types::main)};
   if (!exec_mng.add_execution_context(create_execution_context(split6_worker))) {
     report_fatal_error("Failed to instantiate {} execution context", split6_worker.name);
   }

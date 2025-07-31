@@ -148,9 +148,9 @@ static void register_app_logs(const cu_up_appconfig& cu_up_cfg, o_cu_up_applicat
 
 static void fill_cu_worker_manager_config(worker_manager_config& config, const cu_up_appconfig& unit_cfg)
 {
-  config.nof_low_prio_threads     = unit_cfg.expert_execution_cfg.threads.non_rt_threads.nof_non_rt_threads;
-  config.low_prio_task_queue_size = unit_cfg.expert_execution_cfg.threads.non_rt_threads.non_rt_task_queue_size;
-  config.low_prio_sched_config    = unit_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg;
+  config.nof_main_pool_threads     = unit_cfg.expert_execution_cfg.threads.main_pool.nof_threads;
+  config.main_pool_task_queue_size = unit_cfg.expert_execution_cfg.threads.main_pool.task_queue_size;
+  config.main_pool_affinity_cfg    = unit_cfg.expert_execution_cfg.affinities.main_pool_cpu_cfg;
 }
 
 static void autoderive_cu_up_parameters_after_parsing(cu_up_appconfig& cu_up_config, o_cu_up_unit_config& o_cu_up_cfg)
@@ -281,8 +281,8 @@ int main(int argc, char** argv)
       o_cu_up_app_unit->get_o_cu_up_unit_config(), workers.get_cu_up_pcap_executors(), cleanup_signal_dispatcher);
 
   // Create IO broker.
-  const auto&                low_prio_cpu_mask = cu_up_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
-  io_broker_config           io_broker_cfg(low_prio_cpu_mask);
+  const auto&                main_pool_cpu_mask = cu_up_cfg.expert_execution_cfg.affinities.main_pool_cpu_cfg.mask;
+  io_broker_config           io_broker_cfg(main_pool_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
   // Create F1-U GW.

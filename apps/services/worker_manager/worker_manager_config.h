@@ -115,12 +115,12 @@ struct worker_manager_config {
     bool is_rlc_enabled  = false;
   };
 
-  /// Number of low priority threads.
-  unsigned nof_low_prio_threads = 4;
-  /// Low priority task worker queue size.
-  unsigned low_prio_task_queue_size;
-  /// Low priority CPU bitmasks.
-  os_sched_affinity_config low_prio_sched_config;
+  /// Size, in number of threads, of the main thread pool.
+  std::optional<unsigned> nof_main_pool_threads;
+  /// Main thread pool task queue size.
+  unsigned main_pool_task_queue_size;
+  /// Main thread pool CPU bitmasks.
+  os_sched_affinity_config main_pool_affinity_cfg;
   /// PCAP configuration.
   pcap_config pcap_cfg;
   /// Timer config.
