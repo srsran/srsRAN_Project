@@ -488,10 +488,13 @@ std::unique_ptr<task_executor> make_task_strand_ptr(OutExec&& out_exec, const co
 template <concurrent_queue_policy QueuePolicy,
           typename StrandType = basic_strand_lock,
           typename OutExec    = task_executor*>
-std::unique_ptr<task_executor> make_task_strand_ptr(OutExec&& out_exec, unsigned strand_queue_size)
+std::unique_ptr<task_executor>
+make_task_strand_ptr(OutExec&& out_exec,
+                     unsigned  strand_queue_size,
+                     unsigned  max_batch = task_strand<OutExec, QueuePolicy, StrandType>::default_strand_batch_size)
 {
-  return std::make_unique<task_strand<OutExec, QueuePolicy, StrandType>>(std::forward<OutExec>(out_exec),
-                                                                         strand_queue_size);
+  return std::make_unique<task_strand<OutExec, QueuePolicy, StrandType>>(
+      std::forward<OutExec>(out_exec), strand_queue_size, max_batch);
 }
 
 /// \brief Creates a task strand instance with several priority task levels.

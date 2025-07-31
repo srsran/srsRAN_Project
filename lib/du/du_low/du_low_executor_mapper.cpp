@@ -64,6 +64,9 @@ public:
         phy_config.pucch_executor           = single.common_executor;
         phy_config.srs_executor             = single.common_executor;
       } else if (std::holds_alternative<du_low_executor_mapper_flexible_exec_config>(cell_config)) {
+        const unsigned                           max_prach_batch_size = 1;
+        const unsigned                           max_pucch_batch_size = 16;
+        const unsigned                           max_pusch_batch_size = 1;
         static constexpr std::array<unsigned, 1> pucch_queue_sizes{default_queue_size};
         static constexpr std::array<unsigned, 1> prach_queue_sizes{default_queue_size};
         static constexpr std::array<unsigned, 2> pusch_srs_queue_sizes{default_queue_size, default_queue_size};
@@ -76,12 +79,17 @@ public:
         phy_config.prs_executor             = flexible.dl_executor;
         phy_config.dl_grid_executor         = flexible.dl_executor;
         phy_config.pdsch_codeblock_executor = flexible.pdsch_executor;
-        phy_config.prach_executor           = create_strand(flexible.high_priority_executor, prach_queue_sizes).front();
-        phy_config.pucch_executor =
-            create_task_fork_limiter(flexible.high_priority_executor, flexible.max_pucch_concurrency, pucch_queue_sizes)
-                .front();
-        auto pusch_srs_execs = create_task_fork_limiter(
-            flexible.medium_priority_executor, flexible.max_pusch_and_srs_concurrency, pusch_srs_queue_sizes);
+        phy_config.prach_executor =
+            create_strand(flexible.high_priority_executor, prach_queue_sizes, max_prach_batch_size).front();
+        phy_config.pucch_executor = create_task_fork_limiter(flexible.high_priority_executor,
+                                                             flexible.max_pucch_concurrency,
+                                                             pucch_queue_sizes,
+                                                             max_pucch_batch_size)
+                                        .front();
+        auto pusch_srs_execs              = create_task_fork_limiter(flexible.medium_priority_executor,
+                                                        flexible.max_pusch_and_srs_concurrency,
+                                                        pusch_srs_queue_sizes,
+                                                        max_pusch_batch_size);
         phy_config.pusch_executor         = pusch_srs_execs[0];
         phy_config.pusch_decoder_executor = pusch_srs_execs[1];
         phy_config.srs_executor           = pusch_srs_execs[1];
@@ -145,7 +153,8 @@ private:
   static constexpr unsigned default_queue_size = 2048;
 
   /// Creates a strand on the top of a given executor.
-  std::vector<upper_phy_executor> create_strand(upper_phy_executor base_executor, span<const unsigned> queue_sizes)
+  std::vector<upper_phy_executor>
+  create_strand(upper_phy_executor base_executor, span<const unsigned> queue_sizes, unsigned max_batch)
   {
     srsran_assert(base_executor.executor != nullptr, "Invalid executor.");
     srsran_assert(!queue_sizes.empty(), "Queue sizes must not be empty.");
@@ -158,8 +167,8 @@ private:
       }
 
       // Create strand without priority queues.
-      executors.emplace_back(
-          make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(*base_executor.executor, queue_sizes[0]));
+      executors.emplace_back(make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(
+          *base_executor.executor, queue_sizes[0], max_batch));
       return {{executors.back().get(), 1}};
     }
 
@@ -183,8 +192,10 @@ private:
   }
 
   /// Creates a task fork limiter on the top of a given executor.
-  std::vector<upper_phy_executor>
-  create_task_fork_limiter(upper_phy_executor base_executor, unsigned max_nof_threads, span<const unsigned> queue_sizes)
+  std::vector<upper_phy_executor> create_task_fork_limiter(upper_phy_executor   base_executor,
+                                                           unsigned             max_nof_threads,
+                                                           span<const unsigned> queue_sizes,
+                                                           unsigned             max_batch)
   {
     srsran_assert(base_executor.executor != nullptr, "Invalid executor.");
     srsran_assert(!queue_sizes.empty(), "Queue sizes must not be empty.");
@@ -196,7 +207,7 @@ private:
 
     // If the resultant maximum number of threads is one, create a strand.
     if (max_nof_threads <= 1) {
-      return create_strand(base_executor, queue_sizes);
+      return create_strand(base_executor, queue_sizes, max_batch);
     }
 
     // Skip creation of the fork limiter if there is only one queue and the maximum number of threads is equal to the
@@ -206,8 +217,8 @@ private:
     }
 
     // Create fork limiter.
-    auto fork_limiter =
-        std::make_unique<task_fork_limiter<task_executor&>>(*base_executor.executor, max_nof_threads, queue_sizes);
+    auto fork_limiter = std::make_unique<task_fork_limiter<task_executor&>>(
+        *base_executor.executor, max_nof_threads, queue_sizes, max_batch);
     auto execs = fork_limiter->get_executors();
     adaptors.emplace_back(std::move(fork_limiter));
 
