@@ -19,6 +19,14 @@ using namespace srsran;
 
 namespace {
 
+/// FAPI operation controller dummy implementation.
+class operation_controller_dummy : public fapi::operation_controller
+{
+public:
+  bool start() override { return false; }
+  bool stop() override { return false; }
+};
+
 /// FAPI error message notifier dummy implementation.
 class error_message_notifier_dummy : public fapi::error_message_notifier
 {
@@ -50,8 +58,12 @@ class split6_slot_messages_adaptor_dummy : public fapi::slot_messages_adaptor
   slot_data_message_notifier_dummy dummy_data_notifier;
   slot_time_message_notifier_dummy dummy_time_notifier;
   error_message_notifier_dummy     dummy_error_notifier;
+  operation_controller_dummy       dummy_controller;
 
 public:
+  // See interface for documentation.
+  fapi::operation_controller& get_operation_controller() override { return dummy_controller; }
+
   // See interface for documentation.
   fapi::slot_data_message_notifier& get_slot_data_message_notifier() override { return dummy_data_notifier; }
 
@@ -83,13 +95,6 @@ public:
   void on_param_response(const fapi::param_response& msg) override {}
   void on_config_response(const fapi::config_response& msg) override {}
   void on_stop_indication(const fapi::stop_indication& msg) override {}
-};
-
-class operation_controller_dummy : public fapi::operation_controller
-{
-public:
-  bool start() override { return false; }
-  bool stop() override { return false; }
 };
 
 /// Configuration messages adaptor dummy implementation.
