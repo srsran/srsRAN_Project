@@ -70,11 +70,11 @@ void lower_phy_baseband_processor::start(baseband_gateway_timestamp init_time)
   last_rx_timestamp = init_time;
 
   rx_state.start();
-  report_fatal_error_if_not(rx_executor.execute([this]() { ul_process(); }), "Failed to execute initial uplink task.");
+  report_fatal_error_if_not(rx_executor.defer([this]() { ul_process(); }), "Failed to execute initial uplink task.");
 
   tx_state.start();
   report_fatal_error_if_not(
-      downlink_executor.execute([this, init_time]() { dl_process(init_time + rx_to_tx_max_delay); }),
+      downlink_executor.defer([this, init_time]() { dl_process(init_time + rx_to_tx_max_delay); }),
       "Failed to execute initial downlink task.");
 }
 
@@ -134,7 +134,7 @@ void lower_phy_baseband_processor::dl_process(baseband_gateway_timestamp timesta
   baseband_md.ts = timestamp + tx_time_offset;
 
   // Enqueue transmission.
-  report_fatal_error_if_not(tx_executor.execute([this, tx_buffer = std::move(dl_buffer), baseband_md]() mutable {
+  report_fatal_error_if_not(tx_executor.defer([this, tx_buffer = std::move(dl_buffer), baseband_md]() mutable {
     trace_point tx_tp = ru_tracer.now();
 
     // Transmit buffer.
@@ -171,7 +171,7 @@ void lower_phy_baseband_processor::ul_process()
   last_rx_timestamp.store(rx_metadata.ts + rx_buffer->get_nof_samples(), std::memory_order_release);
 
   // Queue uplink buffer processing.
-  report_fatal_error_if_not(uplink_executor.execute([this, ul_buffer = std::move(rx_buffer), rx_metadata]() mutable {
+  report_fatal_error_if_not(uplink_executor.defer([this, ul_buffer = std::move(rx_buffer), rx_metadata]() mutable {
     trace_point ul_tp = ru_tracer.now();
 
     // Process UL.

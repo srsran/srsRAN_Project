@@ -148,7 +148,7 @@ public:
 
     uplink_task_executor(uplink_task_executor&& other) : executor(other.executor) {}
 
-    bool execute(task_type&& task) { return executor.execute(std::move(task)); }
+    bool defer(task_type&& task) { return executor.defer(std::move(task)); }
 
   private:
     task_executor& executor;

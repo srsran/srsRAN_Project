@@ -96,7 +96,7 @@ void pdsch_processor_flexible_impl::process(resource_grid_writer&               
         pdsch_process_ptrs(*grid, *ptrs_generator, config);
       };
 
-      bool success_ptrs = executor.execute(ptrs_task);
+      bool success_ptrs = executor.defer(ptrs_task);
       if (!success_ptrs) {
         ptrs_task();
       }
@@ -121,7 +121,7 @@ void pdsch_processor_flexible_impl::process(resource_grid_writer&               
       pdsch_process_dmrs(*grid, *dmrs_generator, config);
     };
 
-    bool success_dmrs = executor.execute(dmrs_task);
+    bool success_dmrs = executor.defer(dmrs_task);
     if (!success_dmrs) {
       dmrs_task();
     }
@@ -359,7 +359,7 @@ void pdsch_processor_flexible_impl::fork_cb_batches()
     // Try to execute task asynchronously.
     bool successful = false;
     if (nof_cb_batches > 1) {
-      successful = executor.execute(async_task);
+      successful = executor.defer(async_task);
     }
 
     // Execute task locally if it was not enqueued.

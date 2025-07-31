@@ -193,7 +193,7 @@ void uplink_processor_impl::handle_rx_symbol(unsigned end_symbol_index, bool is_
 
 void uplink_processor_impl::process_prach(const prach_buffer& buffer, const prach_buffer_context& context_)
 {
-  bool success = task_executors.prach_executor.execute([this, &buffer, context_]() SRSRAN_RTSAN_NONBLOCKING {
+  bool success = task_executors.prach_executor.defer([this, &buffer, context_]() SRSRAN_RTSAN_NONBLOCKING {
     trace_point tp = l1_ul_tracer.now();
 
     ul_prach_results ul_results;
@@ -256,7 +256,7 @@ void uplink_processor_impl::process_pusch(const uplink_pdu_slot_repository::pusc
   }
 
   // Try to enqueue asynchronous processing.
-  bool success = task_executors.pusch_executor.execute([this, data, rm_buffer2 = std::move(rm_buffer), &pdu]() mutable {
+  bool success = task_executors.pusch_executor.defer([this, data, rm_buffer2 = std::move(rm_buffer), &pdu]() mutable {
     // Select and configure notifier adaptor.
     // Assume that count_pusch_adaptors will not exceed MAX_PUSCH_PDUS_PER_SLOT.
     unsigned                         notifier_adaptor_id = count_pusch_adaptors.fetch_add(1);
@@ -286,7 +286,7 @@ void uplink_processor_impl::process_pucch(const uplink_pdu_slot_repository::pucc
     return;
   }
 
-  bool success = task_executors.pucch_executor.execute([this, &pdu]() {
+  bool success = task_executors.pucch_executor.defer([this, &pdu]() {
     trace_point tp = l1_ul_tracer.now();
 
     pucch_processor_result proc_result;
@@ -344,7 +344,7 @@ void uplink_processor_impl::process_pucch_f1(const uplink_pdu_slot_repository_im
     return;
   }
 
-  bool success = task_executors.pucch_executor.execute([this, &collection]() {
+  bool success = task_executors.pucch_executor.defer([this, &collection]() {
     trace_point tp = l1_ul_tracer.now();
 
     // Process all PUCCH Format 1 in one go.
@@ -402,7 +402,7 @@ void uplink_processor_impl::process_srs(const uplink_pdu_slot_repository::srs_pd
     return;
   }
 
-  bool success = task_executors.srs_executor.execute([this, &pdu]() {
+  bool success = task_executors.srs_executor.defer([this, &pdu]() {
     trace_point tp = l1_ul_tracer.now();
 
     ul_srs_results result;
