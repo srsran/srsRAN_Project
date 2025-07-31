@@ -214,14 +214,10 @@ split6_flexible_o_du_low_session_factory::create_o_du_low(const fapi::fapi_cell_
   // instance.
   fapi_sector.sector_id = 0;
 
-  auto&  du_low_cell = odu_low_cfg.cells.emplace_back();
-  double dl_freq_ref = band_helper::get_f_ref_from_abs_freq_point_a(
-      config.carrier_cfg.dl_freq * 1e3,
-      get_max_Nprb(config.carrier_cfg.dl_bandwidth, config.phy_cfg.scs, frequency_range::FR1),
-      config.phy_cfg.scs);
-  nr_band band                     = band_helper::get_band_from_dl_arfcn(band_helper::freq_to_nr_arfcn(dl_freq_ref));
+  auto& du_low_cell = odu_low_cfg.cells.emplace_back();
+
   du_low_cell.duplex               = static_cast<duplex_mode>(config.cell_cfg.frame_duplex_type);
-  du_low_cell.freq_range           = band_helper::get_freq_range(band);
+  du_low_cell.freq_range           = frequency_range::FR1;
   du_low_cell.bw_rb                = config.carrier_cfg.dl_grid_size[to_numerology_value(config.phy_cfg.scs)];
   du_low_cell.nof_rx_antennas      = config.carrier_cfg.num_rx_ant;
   du_low_cell.nof_tx_antennas      = config.carrier_cfg.num_tx_ant;
