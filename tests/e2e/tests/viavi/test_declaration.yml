@@ -55,8 +55,7 @@ tests:
           upper_phy:
             nof_dl_threads: 4
             max_pucch_concurrency: 1
-            max_pusch_and_srs_concurrency: 1
-            nof_pusch_decoder_threads: 3
+            max_pusch_and_srs_concurrency: 3
     # Pass / Fail Criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6
