@@ -119,6 +119,8 @@ struct worker_manager_config {
   std::optional<unsigned> nof_main_pool_threads;
   /// Main thread pool task queue size.
   unsigned main_pool_task_queue_size;
+  /// Main thread pool back-off period, in microseconds, when the task queue is empty.
+  std::chrono::microseconds main_pool_backoff_period{50};
   /// Main thread pool CPU bitmasks.
   os_sched_affinity_config main_pool_affinity_cfg;
   /// PCAP configuration.

@@ -28,6 +28,8 @@ struct main_thread_pool_appconfig {
   std::optional<unsigned> nof_threads;
   /// Task worker pool queue size.
   unsigned task_queue_size = 2048;
+  /// Thread back-off period, in microseconds, when the task queue is empty.
+  unsigned backoff_period = 50;
 };
 
 /// Expert threads configuration of the application.

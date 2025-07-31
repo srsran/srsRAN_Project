@@ -346,9 +346,8 @@ void worker_manager::create_main_worker_pool(const worker_manager_config& worker
   // Configure main worker pool.
   nof_workers_general_pool = worker_cfg.nof_main_pool_threads.has_value() ? worker_cfg.nof_main_pool_threads.value()
                                                                           : std::thread::hardware_concurrency() - 2;
-  const std::chrono::microseconds sleep_time{50};
-  const auto                      worker_pool_prio = os_thread_realtime_priority::max() - 50;
-  const unsigned                  qsize            = worker_cfg.main_pool_task_queue_size;
+  const auto     worker_pool_prio = os_thread_realtime_priority::max() - 50;
+  const unsigned qsize            = worker_cfg.main_pool_task_queue_size;
 
   worker_pool main_pool{"main_pool",
                         nof_workers_general_pool,
@@ -358,7 +357,7 @@ void worker_manager::create_main_worker_pool(const worker_manager_config& worker
                          {"medium_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize},
                          // Used for receiving data from external nodes.
                          {"low_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize}},
-                        sleep_time,
+                        worker_cfg.main_pool_backoff_period,
                         worker_pool_prio};
 
   // Create main worker pool.

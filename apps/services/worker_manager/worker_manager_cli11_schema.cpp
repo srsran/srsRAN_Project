@@ -25,6 +25,9 @@ static void configure_cli11_main_pool_threads_args(CLI::App& app, main_thread_po
   add_option(app, "--task_queue_size", config.task_queue_size, "Main thread pool task queue size.")
       ->capture_default_str()
       ->check(CLI::Number);
+  add_option(app, "--backoff_period", config.backoff_period, "Main thread pool back-off period, in microseconds.")
+      ->capture_default_str()
+      ->check(CLI::Number);
 }
 
 static void configure_cli11_cpu_affinities_args(CLI::App& app, cpu_affinities_appconfig& config)
