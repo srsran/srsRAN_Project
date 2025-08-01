@@ -65,18 +65,20 @@ void srsran::fill_dynamic_du_worker_manager_config(worker_manager_config&       
   if (std::holds_alternative<ru_sdr_unit_config>(unit_cfg.ru_cfg)) {
     is_blocking_mode_enable = std::get<ru_sdr_unit_config>(unit_cfg.ru_cfg).device_driver == "zmq";
   }
-  unsigned nof_cells = unit_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg.size();
   fill_o_du_high_worker_manager_config(config, unit_cfg.odu_high_cfg, is_blocking_mode_enable);
-  fill_du_low_worker_manager_config(config, unit_cfg.du_low_cfg, is_blocking_mode_enable, nof_cells);
+  std::vector<unsigned> nof_dl_antennas;
+  std::vector<unsigned> nof_ul_antennas;
+  for (const auto& cell : unit_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg) {
+    nof_dl_antennas.push_back(cell.cell.nof_antennas_dl);
+    nof_ul_antennas.push_back(cell.cell.nof_antennas_ul);
+  }
+  fill_du_low_worker_manager_config(
+      config, unit_cfg.du_low_cfg, is_blocking_mode_enable, nof_dl_antennas, nof_ul_antennas);
 
   if (auto* ru_sdr = std::get_if<ru_sdr_unit_config>(&unit_cfg.ru_cfg)) {
     fill_sdr_worker_manager_config(config, *ru_sdr);
   } else if (auto* ru_ofh = std::get_if<ru_ofh_unit_parsed_config>(&unit_cfg.ru_cfg)) {
-    std::vector<unsigned> nof_dl_antennas;
-    for (const auto& cell : unit_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg) {
-      nof_dl_antennas.push_back(cell.cell.nof_antennas_dl);
-    }
-    fill_ofh_worker_manager_config(config, ru_ofh->config, std::move(nof_dl_antennas));
+    fill_ofh_worker_manager_config(config, ru_ofh->config, nof_dl_antennas);
   } else if (auto* ru_dummy = std::get_if<ru_dummy_unit_config>(&unit_cfg.ru_cfg)) {
     fill_dummy_worker_manager_config(config, *ru_dummy);
   }

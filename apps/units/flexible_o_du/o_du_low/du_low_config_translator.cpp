@@ -156,12 +156,20 @@ void srsran::generate_o_du_low_config(srs_du::o_du_low_config&                  
 void srsran::fill_du_low_worker_manager_config(worker_manager_config&    config,
                                                const du_low_unit_config& unit_cfg,
                                                unsigned                  is_blocking_mode_active,
-                                               unsigned                  nof_cells)
+                                               span<const unsigned>      nof_dl_antennas,
+                                               span<const unsigned>      nof_ul_antennas)
 {
+  report_error_if_not(nof_dl_antennas.size() == nof_ul_antennas.size(),
+                      "The length of nof_dl_antennas ({}) must be equal to the length of nof_ul_antennas ({}), which "
+                      "should match the number of cells.",
+                      nof_dl_antennas.size(),
+                      nof_ul_antennas.size());
+
   auto& du_low_cfg = config.du_low_cfg.emplace();
 
   du_low_cfg.is_blocking_mode_active = is_blocking_mode_active;
-  du_low_cfg.nof_cells               = nof_cells;
+  du_low_cfg.cell_nof_dl_antennas.assign(nof_dl_antennas.begin(), nof_dl_antennas.end());
+  du_low_cfg.cell_nof_ul_antennas.assign(nof_ul_antennas.begin(), nof_ul_antennas.end());
 
   du_low_cfg.nof_dl_threads                = unit_cfg.expert_execution_cfg.threads.nof_dl_threads;
   du_low_cfg.max_pucch_concurrency         = unit_cfg.expert_execution_cfg.threads.max_pucch_concurrency;
@@ -170,8 +178,8 @@ void srsran::fill_du_low_worker_manager_config(worker_manager_config&    config,
     du_low_cfg.metrics_period.emplace(unit_cfg.metrics_cfg.du_report_period);
   }
 
-  config.config_affinities.resize(nof_cells);
-  for (unsigned i = 0, e = nof_cells; i != e; ++i) {
+  config.config_affinities.resize(nof_dl_antennas.size());
+  for (unsigned i = 0, e = du_low_cfg.cell_nof_dl_antennas.size(); i != e; ++i) {
     config.config_affinities[i].push_back(unit_cfg.expert_execution_cfg.cell_affinities[i].l1_dl_cpu_cfg);
   }
 }
