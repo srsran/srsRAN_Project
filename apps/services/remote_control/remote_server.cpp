@@ -291,7 +291,9 @@ public:
   // See interface for documentation.
   srslog::detail::error_string write(srslog::detail::memory_buffer buffer) override
   {
-    server->send_metrics(std::string(buffer.data(), buffer.size()));
+    if (server) {
+      server->send_metrics(std::string(buffer.data(), buffer.size()));
+    }
     return {};
   }
 
@@ -301,7 +303,7 @@ public:
   void set_server(remote_server_impl* server_) { server = server_; }
 
 private:
-  remote_server_impl* server;
+  remote_server_impl* server = nullptr;
 };
 
 } // namespace

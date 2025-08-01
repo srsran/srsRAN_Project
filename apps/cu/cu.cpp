@@ -230,6 +230,11 @@ int main(int argc, char** argv)
     return 0;
   }
 
+  if (cu_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg.enable_json_metrics &&
+      !cu_cfg.remote_control_config.enabled) {
+    fmt::println("NOTE: No JSON metrics will be generated as the remote server is disabled");
+  }
+
   // Check the modified configuration.
   if (!validate_cu_appconfig(cu_cfg) ||
       !o_cu_cp_app_unit->on_configuration_validation(os_sched_affinity_bitmask::available_cpus()) ||

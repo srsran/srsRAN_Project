@@ -264,6 +264,11 @@ int main(int argc, char** argv)
     return 0;
   }
 
+  if (gnb_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg.enable_json_metrics &&
+      !gnb_cfg.remote_control_config.enabled) {
+    fmt::println("NOTE: No JSON metrics will be generated as the remote server is disabled");
+  }
+
   auto available_cpu_mask = (gnb_cfg.expert_execution_cfg.affinities.isolated_cpus)
                                 ? gnb_cfg.expert_execution_cfg.affinities.isolated_cpus.value()
                                 : os_sched_affinity_bitmask::available_cpus();

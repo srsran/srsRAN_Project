@@ -188,6 +188,11 @@ int main(int argc, char** argv)
     return 0;
   }
 
+  if (cu_cp_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg.enable_json_metrics &&
+      !cu_cp_cfg.remote_control_config.enabled) {
+    fmt::println("NOTE: No JSON metrics will be generated as the remote server is disabled");
+  }
+
   // TODO: validate appconfig
 
   // Set up logging.
