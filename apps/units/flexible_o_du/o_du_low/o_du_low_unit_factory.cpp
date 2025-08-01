@@ -47,10 +47,9 @@ static void generate_dl_processor_config(downlink_processor_factory_sw_config&  
     if (upper_phy_threads_cfg.pdsch_cb_batch_length != du_low_unit_expert_threads_config::synchronous_cb_batch_length) {
       // For asynchronous operation:
       // - Use the given CB batch length;
-      // - The number of simultaneous PDSCH is equal to the maximum number of PDSCH per slot times the maximum allowed
-      //   processing time.
+      // - The number of simultaneous PDSCH is equal to the total number of PDSCH per slot.
       cb_batch_length            = upper_phy_threads_cfg.pdsch_cb_batch_length;
-      max_nof_simultaneous_pdsch = (MAX_UE_PDUS_PER_SLOT + 1) * unit_cfg.expert_phy_cfg.max_processing_delay_slots;
+      max_nof_simultaneous_pdsch = MAX_PDSCH_PDUS_PER_SLOT;
     }
 
     // Emplace configuration parameters.

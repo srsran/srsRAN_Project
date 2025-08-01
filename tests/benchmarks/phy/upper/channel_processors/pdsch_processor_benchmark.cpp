@@ -687,7 +687,7 @@ static pdsch_processor_factory& get_processor_factory()
   // Initialize task executors for asynchronous PDSCH processors only.
   unsigned nof_concurrent_pdsch = nof_threads;
   if (nof_pdsch_processor_concurrent_threads > 0) {
-    nof_concurrent_pdsch = nof_pdsch_processor_concurrent_threads;
+    nof_concurrent_pdsch += nof_pdsch_processor_concurrent_threads;
   } else {
     cb_worker_pool = std::make_unique<task_worker_pool<queue_policy>>("pdsch_proc", 1, 1024);
   }
@@ -702,8 +702,7 @@ static pdsch_processor_factory& get_processor_factory()
                                                                   nof_concurrent_pdsch,
                                                                   cb_batch_length);
 
-  // Wrap the PDSCH processor with a synchronous PDSCH processor pool. It assumes that each thread will only spawn one
-  // PDSCH transmission.
+  // Wrap the PDSCH processor with a pool. It assumes that each thread will only spawn one PDSCH transmission.
   pdsch_proc_factory = create_pdsch_processor_pool(std::move(pdsch_proc_factory), nof_threads);
 
   TESTASSERT(pdsch_proc_factory);

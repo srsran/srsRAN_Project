@@ -107,10 +107,6 @@ create_pdsch_flexible_processor_factory_sw(std::shared_ptr<ldpc_segmenter_tx_fac
                                            unsigned                                       cb_batch_length = 0);
 
 std::shared_ptr<pdsch_processor_factory>
-create_pdsch_processor_asynchronous_pool(std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory,
-                                         unsigned                                 max_nof_processors);
-
-std::shared_ptr<pdsch_processor_factory>
 create_pdsch_processor_pool(std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory, unsigned max_nof_processors);
 
 } // namespace srsran
