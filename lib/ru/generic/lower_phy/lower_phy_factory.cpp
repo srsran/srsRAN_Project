@@ -12,8 +12,7 @@
 
 using namespace srsran;
 
-static std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_configuration& config,
-                                                                   unsigned max_nof_prach_concurrent_requests)
+static std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_configuration& config)
 {
   // Deduce frequency range from the subcarrier spacing.
   frequency_range fr = frequency_range::FR1;
@@ -56,7 +55,7 @@ static std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_con
                                         *config.prach_async_executor,
                                         config.srate,
                                         config.nof_rx_ports,
-                                        max_nof_prach_concurrent_requests);
+                                        config.max_nof_prach_concurrent_requests);
   report_fatal_error_if_not(prach_proc_factory, "Failed to create PRACH processor factory.");
 
   // Create PUxCH processor factory.
@@ -86,8 +85,7 @@ static std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_con
   return create_lower_phy_factory_sw(downlink_proc_factory, uplink_proc_factory);
 }
 
-std::unique_ptr<lower_phy_sector> srsran::create_low_phy_sector(unsigned max_nof_prach_concurrent_requests,
-                                                                lower_phy_configuration&   low_cfg,
+std::unique_ptr<lower_phy_sector> srsran::create_low_phy_sector(lower_phy_configuration&   low_cfg,
                                                                 lower_phy_error_notifier&  error_notifier,
                                                                 lower_phy_timing_notifier* timing_notifier)
 {
@@ -99,7 +97,7 @@ std::unique_ptr<lower_phy_sector> srsran::create_low_phy_sector(unsigned max_nof
   low_cfg.metric_notifier = &sector->get_metrics_collector();
 
   // Create lower PHY factory.
-  auto lphy_factory = create_lower_phy_factory(low_cfg, max_nof_prach_concurrent_requests);
+  auto lphy_factory = create_lower_phy_factory(low_cfg);
   report_error_if_not(lphy_factory, "Failed to create lower PHY factory.");
 
   // Create lower PHY.

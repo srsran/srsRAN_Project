@@ -22,8 +22,6 @@ namespace srsran {
 struct ru_generic_configuration {
   /// Metrics enabled flag.
   bool are_metrics_enabled;
-  /// Maximum number of PRACH concurrent requests.
-  unsigned max_nof_prach_concurrent_requests = 11;
   /// Device driver.
   std::string device_driver;
   /// Radio configuration.

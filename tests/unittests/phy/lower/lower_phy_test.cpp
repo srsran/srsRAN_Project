@@ -255,33 +255,34 @@ protected:
 
     // Prepare configuration.
     lower_phy_configuration config;
-    config.sector_id                      = 0U;
-    config.scs                            = scs;
-    config.cp                             = cp;
-    config.bandwidth_rb                   = bandwidth_rb;
-    config.dl_freq_hz                     = dl_freq_hz;
-    config.ul_freq_hz                     = ul_freq_hz;
-    config.nof_tx_ports                   = nof_tx_ports;
-    config.nof_rx_ports                   = nof_rx_ports;
-    config.dft_window_offset              = dft_window_offset;
-    config.max_processing_delay_slots     = max_processing_delay_slots;
-    config.srate                          = srate;
-    config.ta_offset                      = ta_offset;
-    config.time_alignment_calibration     = time_alignment_calibration;
-    config.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::slot;
-    config.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::slot;
-    config.amplitude_config               = {};
-    config.bb_gateway                     = &bb_gateway_spy;
-    config.rx_symbol_notifier             = &rx_symbol_notifier_spy;
-    config.timing_notifier                = &timing_notifier_spy;
-    config.error_notifier                 = &error_notifier_spy;
-    config.metric_notifier                = &metrics_notifier_spy;
-    config.tx_task_executor               = &tx_task_executor;
-    config.rx_task_executor               = &rx_task_executor;
-    config.dl_task_executor               = &dl_task_executor;
-    config.ul_task_executor               = &ul_task_executor;
-    config.prach_async_executor           = &prach_task_executor;
-    config.system_time_throttling         = 0.1;
+    config.sector_id                         = 0U;
+    config.scs                               = scs;
+    config.cp                                = cp;
+    config.bandwidth_rb                      = bandwidth_rb;
+    config.dl_freq_hz                        = dl_freq_hz;
+    config.ul_freq_hz                        = ul_freq_hz;
+    config.nof_tx_ports                      = nof_tx_ports;
+    config.nof_rx_ports                      = nof_rx_ports;
+    config.dft_window_offset                 = dft_window_offset;
+    config.max_processing_delay_slots        = max_processing_delay_slots;
+    config.srate                             = srate;
+    config.ta_offset                         = ta_offset;
+    config.time_alignment_calibration        = time_alignment_calibration;
+    config.baseband_tx_buffer_size_policy    = lower_phy_baseband_buffer_size_policy::slot;
+    config.baseband_rx_buffer_size_policy    = lower_phy_baseband_buffer_size_policy::slot;
+    config.amplitude_config                  = {};
+    config.bb_gateway                        = &bb_gateway_spy;
+    config.rx_symbol_notifier                = &rx_symbol_notifier_spy;
+    config.timing_notifier                   = &timing_notifier_spy;
+    config.error_notifier                    = &error_notifier_spy;
+    config.metric_notifier                   = &metrics_notifier_spy;
+    config.tx_task_executor                  = &tx_task_executor;
+    config.rx_task_executor                  = &rx_task_executor;
+    config.dl_task_executor                  = &dl_task_executor;
+    config.ul_task_executor                  = &ul_task_executor;
+    config.prach_async_executor              = &prach_task_executor;
+    config.system_time_throttling            = 0.1;
+    config.max_nof_prach_concurrent_requests = 1;
 
     // Prepare downlink processor factory.
     std::shared_ptr<lower_phy_downlink_processor_factory_spy> lphy_dl_proc_factory =

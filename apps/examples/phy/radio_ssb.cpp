@@ -457,31 +457,32 @@ lower_phy_configuration create_lower_phy_configuration(task_executor*           
                                                        srslog::basic_logger*         logger)
 {
   lower_phy_configuration phy_config;
-  phy_config.srate                          = srate;
-  phy_config.scs                            = scs;
-  phy_config.max_processing_delay_slots     = max_processing_delay_slots;
-  phy_config.time_alignment_calibration     = 0;
-  phy_config.system_time_throttling         = 0.0F;
-  phy_config.ta_offset                      = n_ta_offset::n0;
-  phy_config.cp                             = cy_prefix;
-  phy_config.bandwidth_rb                   = bw_rb;
-  phy_config.dl_freq_hz                     = dl_center_freq;
-  phy_config.ul_freq_hz                     = rx_freq;
-  phy_config.nof_tx_ports                   = nof_ports;
-  phy_config.nof_rx_ports                   = nof_ports;
-  phy_config.dft_window_offset              = 0.5F;
-  phy_config.bb_gateway                     = &bb_gateway;
-  phy_config.rx_symbol_notifier             = rx_symbol_notifier;
-  phy_config.timing_notifier                = timing_notifier;
-  phy_config.error_notifier                 = error_notifier;
-  phy_config.metric_notifier                = metrics_notifier;
-  phy_config.rx_task_executor               = rx_task_executor;
-  phy_config.tx_task_executor               = tx_task_executor;
-  phy_config.ul_task_executor               = ul_task_executor;
-  phy_config.dl_task_executor               = dl_task_executor;
-  phy_config.prach_async_executor           = prach_task_executor;
-  phy_config.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
-  phy_config.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
+  phy_config.srate                             = srate;
+  phy_config.scs                               = scs;
+  phy_config.max_processing_delay_slots        = max_processing_delay_slots;
+  phy_config.time_alignment_calibration        = 0;
+  phy_config.system_time_throttling            = 0.0F;
+  phy_config.max_nof_prach_concurrent_requests = 1;
+  phy_config.ta_offset                         = n_ta_offset::n0;
+  phy_config.cp                                = cy_prefix;
+  phy_config.bandwidth_rb                      = bw_rb;
+  phy_config.dl_freq_hz                        = dl_center_freq;
+  phy_config.ul_freq_hz                        = rx_freq;
+  phy_config.nof_tx_ports                      = nof_ports;
+  phy_config.nof_rx_ports                      = nof_ports;
+  phy_config.dft_window_offset                 = 0.5F;
+  phy_config.bb_gateway                        = &bb_gateway;
+  phy_config.rx_symbol_notifier                = rx_symbol_notifier;
+  phy_config.timing_notifier                   = timing_notifier;
+  phy_config.error_notifier                    = error_notifier;
+  phy_config.metric_notifier                   = metrics_notifier;
+  phy_config.rx_task_executor                  = rx_task_executor;
+  phy_config.tx_task_executor                  = tx_task_executor;
+  phy_config.ul_task_executor                  = ul_task_executor;
+  phy_config.dl_task_executor                  = dl_task_executor;
+  phy_config.prach_async_executor              = prach_task_executor;
+  phy_config.baseband_rx_buffer_size_policy    = lower_phy_baseband_buffer_size_policy::half_slot;
+  phy_config.baseband_tx_buffer_size_policy    = lower_phy_baseband_buffer_size_policy::half_slot;
 
   // Amplitude controller configuration.
   phy_config.amplitude_config.full_scale_lin  = full_scale_amplitude;

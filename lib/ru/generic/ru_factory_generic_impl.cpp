@@ -69,10 +69,8 @@ std::unique_ptr<radio_unit> srsran::create_generic_ru(ru_generic_configuration& 
     low_cfg.bb_gateway         = &ru->get_baseband_gateway(sector_id);
     low_cfg.rx_symbol_notifier = &ru->get_rx_symbol_notifier();
 
-    phy_sectors.push_back(create_low_phy_sector(config.max_nof_prach_concurrent_requests,
-                                                low_cfg,
-                                                ru->get_error_notifier(),
-                                                sector_id ? nullptr : &ru->get_timing_notifier()));
+    phy_sectors.push_back(
+        create_low_phy_sector(low_cfg, ru->get_error_notifier(), sector_id ? nullptr : &ru->get_timing_notifier()));
   }
 
   // Add lower PHY sector dependencies.
