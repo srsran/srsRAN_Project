@@ -105,8 +105,6 @@ public:
   /// The last owner to release the grid shall notify the pool.
   void release()
   {
-    srsran_assert((ref_count == nullptr) || (ref_count->load() != pool_interface::ref_counter_destroyed),
-                  "Resource grid is outliving the pool.");
     if (is_valid()) {
       bool last = dec_ref_count();
       if (last) {

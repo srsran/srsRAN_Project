@@ -64,9 +64,10 @@ resource_grid_pool_impl::~resource_grid_pool_impl()
 {
   // Ensure that all the grids returned to the pool. Log a warning message if any resource grid is left in an active
   // scope.
-  if (!std::all_of(
-          grids_scope_count.begin(), grids_scope_count.end(), [](auto& e) { return e == ref_counter_available; })) {
-    logger.warning("Not all the resource grids have returned to the pool.");
+  unsigned count = std::count_if(
+      grids_scope_count.begin(), grids_scope_count.end(), [](auto& e) { return e != ref_counter_available; });
+  if (count > 0) {
+    logger.warning("{} Resource grids have not returned to the pool.");
   }
 
   // Ensure that all the grids see that the pool has been destroyed and prevent any further operations involving the
