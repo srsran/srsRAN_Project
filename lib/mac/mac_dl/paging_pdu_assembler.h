@@ -20,7 +20,8 @@ struct dl_paging_allocation;
 class paging_pdu_assembler
 {
 public:
-  paging_pdu_assembler(ticking_ring_buffer_pool& pdu_pool_) : pdu_pool(pdu_pool_) {}
+  paging_pdu_assembler(ticking_ring_buffer_pool& pdu_pool_);
+  ~paging_pdu_assembler();
 
   /// \brief Encode Paging MAC PDU from Paging grant information.
   /// \param[in] pg Paging grant information.
@@ -28,8 +29,13 @@ public:
   span<const uint8_t> encode_paging_pdu(const dl_paging_allocation& pg);
 
 private:
+  struct paging_message_buffer;
+
   /// Buffer pool holding Paging PDUs.
   ticking_ring_buffer_pool& pdu_pool;
+
+  /// Local buffer storage to hold Paging PDUs.
+  std::unique_ptr<paging_message_buffer> buffer;
 };
 
 } // namespace srsran

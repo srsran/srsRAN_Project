@@ -240,6 +240,18 @@ public:
     std::copy(other.data(), other.data() + other.size(), data());
     return *this;
   }
+  void reserve(uint32_t new_cap)
+  {
+    if (new_cap > cap_) {
+      T* new_data = new T[new_cap];
+      if (data_ != nullptr) {
+        std::move(data_, data_ + size_, new_data);
+      }
+      cap_ = new_cap;
+      delete[] data_;
+      data_ = new_data;
+    }
+  }
   void resize(uint32_t new_size, uint32_t new_cap = 0)
   {
     if (new_size == size_) {
