@@ -897,7 +897,7 @@ byte_buffer cu_cp_impl::handle_target_cell_sib1_required(du_index_t du_index, nr
 
 async_task<void> cu_cp_impl::handle_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev)
 {
-  return launch_async<ue_transaction_info_release_routine>(ev.ues_lost, ue_mng, *this);
+  return launch_async<ue_transaction_info_release_routine>(ev, ue_mng, ngap_db, *this, logger);
 }
 
 ngap_cu_cp_ue_notifier* cu_cp_impl::handle_new_ngap_ue(ue_index_t ue_index)

@@ -924,6 +924,9 @@ void ngap_impl::handle_successful_outcome(const successful_outcome_s& outcome)
     case ngap_elem_procs_o::successful_outcome_c::types_opts::ng_setup_resp: {
       ev_mng.ng_setup_outcome.set(outcome.value.ng_setup_resp());
     } break;
+    case ngap_elem_procs_o::successful_outcome_c::types_opts::ng_reset_ack: {
+      ev_mng.ng_reset_outcome.set(outcome.value.ng_reset_ack());
+    } break;
     case ngap_elem_procs_o::successful_outcome_c::types_opts::ho_cmd: {
       ev_mng.handover_preparation_outcome.set(outcome.value.ho_cmd());
     } break;
