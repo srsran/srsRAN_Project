@@ -102,7 +102,7 @@ void ru_controller_generic_impl::start()
     // Start radio and lower physical layer at the given timestamp.
     radio->start(start_ts);
     for (auto& low_phy : low_phy_crtl) {
-      low_phy->get_controller().start(start_ts);
+      low_phy->get_controller().start(start_ts, true);
     }
 
     return;
@@ -120,7 +120,7 @@ void ru_controller_generic_impl::start()
   // Start radio and lower physical layer at the given timestamp.
   radio->start(start_ts);
   for (auto& low_phy : low_phy_crtl) {
-    low_phy->get_controller().start(start_ts);
+    low_phy->get_controller().start(start_ts, false);
   }
 }
 

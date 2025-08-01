@@ -11,6 +11,7 @@
 #include "lower_phy_baseband_processor.h"
 #include "srsran/adt/interval.h"
 #include "srsran/instrumentation/traces/ru_traces.h"
+#include "srsran/ran/slot_point.h"
 
 using namespace srsran;
 
@@ -65,8 +66,10 @@ lower_phy_baseband_processor::lower_phy_baseband_processor(const lower_phy_baseb
   }
 }
 
-void lower_phy_baseband_processor::start(baseband_gateway_timestamp init_time)
+void lower_phy_baseband_processor::start(baseband_gateway_timestamp init_time, bool start_with_sfn0)
 {
+  // If it is required to start with system frame number 0, then set a time offset to start an SFN earlier.
+  start_time_sfn0   = start_with_sfn0 ? (init_time - NOF_SUBFRAMES_PER_FRAME * srate.to_kHz()) : 0;
   last_rx_timestamp = init_time;
 
   rx_state.start();
@@ -126,8 +129,9 @@ void lower_phy_baseband_processor::dl_process(baseband_gateway_timestamp timesta
   last_tx_time.emplace(std::chrono::high_resolution_clock::now());
 
   // Process downlink buffer.
-  trace_point                           tp          = ru_tracer.now();
-  baseband_gateway_transmitter_metadata baseband_md = downlink_processor.process(dl_buffer->get_writer(), timestamp);
+  trace_point                           tp = ru_tracer.now();
+  baseband_gateway_transmitter_metadata baseband_md =
+      downlink_processor.process(dl_buffer->get_writer(), timestamp - start_time_sfn0);
   ru_tracer << trace_event("downlink_baseband", tp);
 
   // Set transmission timestamp.
@@ -175,7 +179,7 @@ void lower_phy_baseband_processor::ul_process()
     trace_point ul_tp = ru_tracer.now();
 
     // Process UL.
-    uplink_processor.process(ul_buffer->get_reader(), rx_metadata.ts);
+    uplink_processor.process(ul_buffer->get_reader(), rx_metadata.ts - start_time_sfn0);
 
     // Return buffer to receive.
     rx_buffers.push_blocking(std::move(ul_buffer));

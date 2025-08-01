@@ -84,7 +84,7 @@ public:
   explicit lower_phy_baseband_processor(const configuration& config);
 
   // See interface for documentation.
-  void start(baseband_gateway_timestamp init_time) override;
+  void start(baseband_gateway_timestamp init_time, bool start_with_sfn0) override;
 
   // See interface for documentation.
   void stop() override;
@@ -187,6 +187,7 @@ private:
   blocking_queue<std::unique_ptr<baseband_gateway_buffer_dynamic>>           tx_buffers;
   baseband_gateway_timestamp                                                 tx_time_offset;
   baseband_gateway_timestamp                                                 rx_to_tx_max_delay;
+  baseband_gateway_timestamp                                                 start_time_sfn0;
   internal_fsm                                                               tx_state;
   internal_fsm                                                               rx_state;
   std::atomic<baseband_gateway_timestamp>                                    last_rx_timestamp;

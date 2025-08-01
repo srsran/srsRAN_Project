@@ -767,7 +767,7 @@ TEST_P(LowerPhyFixture, BasebandDownlinkFlow)
   // Set initial time and start streaming.
   baseband_gateway_timestamp init_time = 100;
   bb_gateway_spy.set_receiver_current_timestamp(init_time);
-  lphy_controller.start(init_time);
+  lphy_controller.start(init_time, false);
 
   // Repeat for a number of baseband blocks.
   for (unsigned i_repetition = 0; i_repetition != nof_repetitions; ++i_repetition) {
@@ -822,7 +822,7 @@ TEST_P(LowerPhyFixture, BasebandUplinkFlow)
   // Set initial time and start streaming.
   baseband_gateway_timestamp init_time = 100;
   bb_gateway_spy.set_receiver_current_timestamp(init_time);
-  lphy_controller.start(init_time);
+  lphy_controller.start(init_time, false);
 
   // Repeat for a number of baseband blocks.
   for (unsigned i_repetition = 0; i_repetition != nof_repetitions; ++i_repetition) {
