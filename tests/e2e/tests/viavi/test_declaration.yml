@@ -34,14 +34,6 @@ tests:
           enable_executor: true
           enable_rlc: true
           enable_ru: true
-      cell_cfg:
-        pdsch:
-          max_pdschs_per_slot: 4
-        ul_common:
-          max_ul_grants_per_slot: 12
-          max_pucchs_per_slot: 10
-        pusch:
-          max_puschs_per_slot: 2
       cu_cp:
         rrc:
           rrc_procedure_timeout_ms: 2000
