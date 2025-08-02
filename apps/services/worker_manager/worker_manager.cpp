@@ -463,7 +463,7 @@ worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::
           .medium_priority_executor      = {non_rt_medium_prio_exec, nof_workers_general_pool},
           .low_priority_executor         = {non_rt_low_prio_exec, nof_workers_general_pool},
           .dl_executor                   = {non_rt_hi_prio_exec, nof_workers_general_pool},
-          .pdsch_executor                = {non_rt_medium_prio_exec, nof_workers_general_pool},
+          .pdsch_executor                = {non_rt_hi_prio_exec, nof_workers_general_pool},
           .max_pucch_concurrency         = du_low.max_pucch_concurrency,
           .max_pusch_and_srs_concurrency = du_low.max_pusch_and_srs_concurrency});
 
