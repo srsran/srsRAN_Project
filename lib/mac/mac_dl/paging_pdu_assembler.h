@@ -29,7 +29,7 @@ public:
   span<const uint8_t> encode_paging_pdu(const dl_paging_allocation& pg);
 
 private:
-  struct paging_message_buffer;
+  class paging_message_buffer;
 
   /// Buffer pool holding Paging PDUs.
   ticking_ring_buffer_pool& pdu_pool;
