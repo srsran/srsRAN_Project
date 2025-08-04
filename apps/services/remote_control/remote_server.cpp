@@ -71,6 +71,33 @@ public:
   }
 };
 
+class remote_server_impl;
+/// Receives the formatted JSON metrics from the metrics log channel.
+class remote_server_sink : public srslog::sink
+{
+public:
+  explicit remote_server_sink(std::unique_ptr<srslog::log_formatter> f) : srslog::sink(std::move(f)) {}
+
+  /// Identifier of this custom sink.
+  static const char* name() { return "remote_server_sink"; }
+
+  // See interface for documentation.
+  srslog::detail::error_string write(srslog::detail::memory_buffer buffer) override;
+
+  // See interface for documentation.
+  srslog::detail::error_string flush() override { return {}; }
+
+  void set_server(remote_server_impl* server_)
+  {
+    std::scoped_lock lock(mutex);
+    server = server_;
+  }
+
+private:
+  remote_server_impl* server = nullptr;
+  std::mutex          mutex;
+};
+
 /// Remote server implementation.
 class remote_server_impl : public remote_server
 {
@@ -214,7 +241,11 @@ public:
   {
     // Wait for completion.
     if (thread.running()) {
-      server_loop.load(std::memory_order_relaxed)->defer([this]() { server.load(std::memory_order_relaxed)->close(); });
+      server_loop.load(std::memory_order_relaxed)->defer([this]() {
+        // Disconnect remote sink from the server, this will prevent metrics being processed after the server is closed.
+        static_cast<remote_server_sink*>(srslog::find_sink(remote_server_sink::name()))->set_server(nullptr);
+        server.load()->close();
+      });
       thread.join();
       server_loop.store(nullptr, std::memory_order_relaxed);
       server.store(nullptr, std::memory_order_relaxed);
@@ -279,32 +310,14 @@ private:
   }
 };
 
-/// Receives the formatted JSON metrics from the metrics log channel.
-class remote_server_sink : public srslog::sink
+srslog::detail::error_string remote_server_sink::write(srslog::detail::memory_buffer buffer)
 {
-public:
-  explicit remote_server_sink(std::unique_ptr<srslog::log_formatter> f) : srslog::sink(std::move(f)) {}
-
-  /// Identifier of this custom sink.
-  static const char* name() { return "remote_server_sink"; }
-
-  // See interface for documentation.
-  srslog::detail::error_string write(srslog::detail::memory_buffer buffer) override
-  {
-    if (server) {
-      server->send_metrics(std::string(buffer.data(), buffer.size()));
-    }
-    return {};
+  std::scoped_lock lock(mutex);
+  if (server) {
+    server->send_metrics(std::string(buffer.data(), buffer.size()));
   }
-
-  // See interface for documentation.
-  srslog::detail::error_string flush() override { return {}; }
-
-  void set_server(remote_server_impl* server_) { server = server_; }
-
-private:
-  remote_server_impl* server = nullptr;
-};
+  return {};
+}
 
 } // namespace
 
