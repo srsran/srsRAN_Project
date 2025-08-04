@@ -33,13 +33,18 @@ public:
   // See pusch_processor interface for documentation.
   void process(span<uint8_t>                    data_,
                unique_rx_buffer                 rm_buffer,
-               pusch_processor_result_notifier& notifier_,
+               pusch_processor_result_notifier& proc_notifier,
                const resource_grid_reader&      grid,
                const pdu_t&                     pdu_) override
   {
-    notifier = &notifier_;
-    data     = data_;
-    pdu      = pdu_;
+    // Save reference to the notifier for this transmission. It must be nullptr to ensure that the processor was
+    // released from previous processing.
+    [[maybe_unused]] pusch_processor_result_notifier* prev_proc_notifier = std::exchange(notifier, &proc_notifier);
+    srsran_assert(prev_proc_notifier == nullptr, "The PUSCH processor is in use.");
+
+    // Save processing inputs.
+    data = data_;
+    pdu  = pdu_;
 
     // Setup times.
     time_start        = std::chrono::steady_clock::now();
@@ -87,23 +92,17 @@ private:
 
     // Notify metrics.
     notify_metrics();
-
-    // Exchanges the notifier before notifying the reception of SCH.
-    pusch_processor_result_notifier* notifier_ = nullptr;
-    std::exchange(notifier_, notifier);
-
-    // Notify the SCH reception.
-    notifier_->on_sch(sch);
   }
 
-  /// Notifies the gathered metrics through the given notifier.
+  /// Reports the PUSCH processing metrics if the underlying PUSCH processor has returned and notified the completion of
+  /// the data decoding.
   void notify_metrics()
   {
     static float invalid_sinr_and_evm = std::numeric_limits<float>::quiet_NaN();
     uint64_t     local_elapsed_return_ns(elapsed_return_ns);
     uint64_t     local_elapsed_data_ns(elapsed_data_ns);
 
-    // Make sure that the processor returned and notified the completion of data.
+    // The processing is considered complete if the processor has returned and notified the completion.
     if ((local_elapsed_return_ns == 0) || (local_elapsed_data_ns == 0)) {
       return;
     }
@@ -134,6 +133,11 @@ private:
                                    .cpu_time_usage_ns = cpu_time_usage_ns,
                                    .sinr_dB           = sinr_dB,
                                    .evm               = evm});
+
+    // Notify the completion of the PUSCH processing. From now on, the processor might become available.
+    pusch_processor_result_notifier* current_proc_notifier = std::exchange(notifier, nullptr);
+    srsran_assert(current_proc_notifier != nullptr, "PUSCH processor is still busy.");
+    current_proc_notifier->on_sch(sch_result);
   }
 
   std::unique_ptr<pusch_processor>      processor;
