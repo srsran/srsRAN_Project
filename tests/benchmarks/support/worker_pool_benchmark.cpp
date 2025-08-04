@@ -17,7 +17,7 @@
 using namespace srsran;
 
 struct bench_params {
-  std::chrono::milliseconds duration{10};
+  std::chrono::milliseconds duration{0};
   unsigned                  max_workers = cpu_architecture_info::get().get_host_nof_available_cpus();
   std::string               output_file{"stdout"};
 };
@@ -233,7 +233,7 @@ void run_benchmarks(const bench_params& params)
                result.description,
                result.task_count,
                result.duration.count(),
-               result.task_count * 1000000 / result.duration.count());
+               result.duration.count() > 0 ? result.task_count * 1000000 / result.duration.count() : 0);
   }
 
   if (out_file != stdout) {
