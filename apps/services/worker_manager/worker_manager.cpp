@@ -592,8 +592,8 @@ void worker_manager::create_split6_executors()
   const std::string exec_name = "split6_exec";
 
   const single_worker split6_worker{name,
-                                    {exec_name, concurrent_queue_policy::lockfree_spsc, task_worker_queue_size},
-                                    std::chrono::microseconds{50},
+                                    {exec_name, concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+                                    std::chrono::microseconds{10},
                                     os_thread_realtime_priority::max() - 6,
                                     low_prio_affinity_mng.calcute_affinity_mask(sched_affinity_mask_types::main)};
   if (!exec_mng.add_execution_context(create_execution_context(split6_worker))) {
