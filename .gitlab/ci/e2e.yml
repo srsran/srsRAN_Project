@@ -279,7 +279,7 @@ amari 64UE 2x2 mimo:
   extends: .zmq
   variables:
     E2E_FILE_OR_DIR: tests/iperf.py
-    MARKERS: "64"
+    KEYWORDS: "64"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
 
 cudu amari 8UE:
