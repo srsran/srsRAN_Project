@@ -137,7 +137,7 @@ static flexible_o_du_ru_config generate_o_du_ru_config(span<const srs_du::du_cel
     out_cell.ul_arfcn        = cell.ul_carrier.arfcn_f_ref;
     out_cell.tdd_config      = cell.tdd_ul_dl_cfg_common;
     out_cell.bw              = MHz_to_bs_channel_bandwidth(cell.dl_carrier.carrier_bw_mhz);
-    out_cell.band            = cell.dl_carrier.band;
+    out_cell.freq_range      = band_helper::get_freq_range(cell.dl_carrier.band);
     out_cell.cp              = cell.dl_cfg_common.init_dl_bwp.generic_params.cp;
   }
 

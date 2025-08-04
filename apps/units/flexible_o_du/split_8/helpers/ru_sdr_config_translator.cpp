@@ -24,15 +24,14 @@ static lower_phy_configuration generate_low_phy_config(const flexible_o_du_ru_co
   /// Static configuration that the gnb supports.
   static constexpr cyclic_prefix cp = cyclic_prefix::NORMAL;
 
-  const frequency_range freq_range = band_helper::get_freq_range(config.band);
-  const unsigned        bandwidth_sc =
-      NOF_SUBCARRIERS_PER_RB * band_helper::get_n_rbs_from_bw(config.bw, config.scs, freq_range);
+  const unsigned bandwidth_sc =
+      NOF_SUBCARRIERS_PER_RB * band_helper::get_n_rbs_from_bw(config.bw, config.scs, config.freq_range);
 
   lower_phy_configuration out_cfg;
 
   out_cfg.scs                        = config.scs;
   out_cfg.cp                         = cp;
-  out_cfg.bandwidth_rb               = band_helper::get_n_rbs_from_bw(config.bw, config.scs, freq_range);
+  out_cfg.bandwidth_rb               = band_helper::get_n_rbs_from_bw(config.bw, config.scs, config.freq_range);
   out_cfg.dl_freq_hz                 = band_helper::nr_arfcn_to_freq(config.dl_arfcn);
   out_cfg.ul_freq_hz                 = band_helper::nr_arfcn_to_freq(config.ul_arfcn);
   out_cfg.nof_rx_ports               = config.nof_rx_antennas;
@@ -43,7 +42,7 @@ static lower_phy_configuration generate_low_phy_config(const flexible_o_du_ru_co
 
   out_cfg.srate = sampling_rate::from_MHz(ru_cfg.srate_MHz);
 
-  out_cfg.ta_offset = band_helper::get_ta_offset(config.band);
+  out_cfg.ta_offset = band_helper::get_ta_offset(config.freq_range);
   if (ru_cfg.time_alignment_calibration.has_value()) {
     // Selects the user specific value.
     out_cfg.time_alignment_calibration = ru_cfg.time_alignment_calibration.value();

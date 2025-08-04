@@ -168,7 +168,7 @@ get_du_low_validation_dependencies(const fapi::fapi_cell_config& config)
   // Get PRACH info.
   subcarrier_spacing common_scs = config.phy_cfg.scs;
 
-  prach_configuration prach_info = prach_configuration_get(frequency_range::FR1,
+  prach_configuration prach_info = prach_configuration_get(split6_du_low::freq_range,
                                                            static_cast<duplex_mode>(config.cell_cfg.frame_duplex_type),
                                                            config.prach_cfg.prach_config_index);
   // PRACH format type.
@@ -217,7 +217,7 @@ split6_flexible_o_du_low_session_factory::create_o_du_low(const fapi::fapi_cell_
   auto& du_low_cell = odu_low_cfg.cells.emplace_back();
 
   du_low_cell.duplex               = static_cast<duplex_mode>(config.cell_cfg.frame_duplex_type);
-  du_low_cell.freq_range           = frequency_range::FR1;
+  du_low_cell.freq_range           = split6_du_low::freq_range;
   du_low_cell.bw_rb                = config.carrier_cfg.dl_grid_size[to_numerology_value(config.phy_cfg.scs)];
   du_low_cell.nof_rx_antennas      = config.carrier_cfg.num_rx_ant;
   du_low_cell.nof_tx_antennas      = config.carrier_cfg.num_tx_ant;
@@ -249,11 +249,11 @@ static flexible_o_du_ru_config generate_o_du_ru_config(const fapi::fapi_cell_con
   out_cell.nof_rx_antennas = config.carrier_cfg.num_rx_ant;
   out_cell.nof_tx_antennas = config.carrier_cfg.num_tx_ant;
   out_cell.scs             = config.phy_cfg.scs;
-  out_cell.dl_arfcn        = band_helper::freq_to_nr_arfcn(config.carrier_cfg.dl_freq);
-  out_cell.ul_arfcn        = band_helper::freq_to_nr_arfcn(config.carrier_cfg.ul_freq);
+  out_cell.dl_arfcn        = config.carrier_cfg.dl_f_ref_arfcn;
+  out_cell.ul_arfcn        = config.carrier_cfg.ul_f_ref_arfcn;
   out_cell.bw              = MHz_to_bs_channel_bandwidth(config.carrier_cfg.dl_bandwidth);
-  out_cell.band = band_helper::get_band_from_dl_arfcn(band_helper::freq_to_nr_arfcn(config.carrier_cfg.dl_freq));
-  out_cell.cp   = config.phy_cfg.cp;
+  out_cell.cp              = config.phy_cfg.cp;
+  out_cell.freq_range      = split6_du_low::freq_range;
 
   // TDD pattern.
   if (config.cell_cfg.frame_duplex_type == 1) {
