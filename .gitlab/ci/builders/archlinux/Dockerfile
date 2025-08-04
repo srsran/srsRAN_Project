@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-ARG VERSION=base-20250706.0.377547
+ARG VERSION=base-20250727.0.390543
 FROM archlinux:$VERSION
 
 ADD install_dependencies.sh /usr/local/bin
