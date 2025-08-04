@@ -266,6 +266,10 @@ bool mac_metrics_aggregator::pop_report(cell_metric_handler& cell)
     return false;
   }
 
+  if (not next_report_start_slot.valid()) {
+    return false;
+  }
+
   slot_point_extended start_slot{next_ev->sched.slot, next_report_start_slot.hyper_sfn()};
   if (std::abs(start_slot - next_report_start_slot) >= next_ev->sched.slot.nof_slots_per_hyper_system_frame() / 2) {
     if (start_slot < next_report_start_slot) {
