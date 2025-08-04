@@ -134,6 +134,7 @@ def configure_test_parameters(
     pdcch_log: bool = False,
     slices: Optional[List[dict]] = None,
     ue_sds: Optional[List[str]] = None,
+    warning_allowlist: Optional[List[str]] = None,
 ):
     """
     Configure test parameters
@@ -184,6 +185,9 @@ def configure_test_parameters(
                 "pucch_set1_format": pucch_set1_format,
                 "pdsch_interleaving_bundle_size": pdsch_interleaving_bundle_size,
                 "slices": slices if slices is not None else [],
+                "warning_extra_regex": (
+                    (r"(?!.*" + r")(?!.*".join(warning_allowlist) + r")") if warning_allowlist else ""
+                ),
             },
         },
         "5gc": {
