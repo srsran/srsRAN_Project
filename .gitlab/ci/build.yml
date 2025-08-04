@@ -287,7 +287,7 @@ variables:
     ENABLE_DPDK: "True"
     ASSERT_LEVEL: PARANOID
     ENABLE_FFTW: "True"
-    DPDK_VERSION: "23.11.1_avx2"
+    DPDK_VERSION: "24.11.2_avx2"
     MARCH: x86-64-v3
     INFRASTRUCTURE_TAG: amd64-avx2
 
@@ -1057,16 +1057,16 @@ ubuntu dpdk:
     matrix:
       - OS: ubuntu-25.04
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["24.11.1_avx2"]
+        DPDK_VERSION: ["24.11.2_avx2"]
       - OS: ubuntu-24.10
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["23.11.1_avx2", "24.11.1_avx2"]
+        DPDK_VERSION: ["23.11.4_avx2", "24.11.2_avx2"]
       - OS: ubuntu-24.04
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["23.11.1_avx2", "24.11.1_avx2"]
+        DPDK_VERSION: ["23.11.4_avx2", "24.11.2_avx2"]
       - OS: ubuntu-22.04
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["22.11.6_avx2", "23.11.1_avx2", "24.11.1_avx2"]
+        DPDK_VERSION: ["22.11.8_avx2", "23.11.4_avx2", "24.11.2_avx2"]
 
 # Nightly Sanitizers
 
@@ -1701,7 +1701,7 @@ ubuntu-22.04 amd64 avx2 dpdk:
   parallel:
     matrix:
       - <<: *basic_combinations_dpdk
-        DPDK_VERSION: ["22.11.6_avx2", "23.11.1_avx2", "24.11.1_avx2"]
+        DPDK_VERSION: ["22.11.8_avx2", "23.11.4_avx2", "24.11.2_avx2"]
 
 ubuntu-22.04 amd64 avx512 dpdk:
   extends: .build_and_unit
@@ -1717,7 +1717,7 @@ ubuntu-22.04 amd64 avx512 dpdk:
   parallel:
     matrix:
       - <<: *basic_combinations_dpdk
-        DPDK_VERSION: ["22.11.6_avx512", "23.11.1_avx512", "24.11.1_avx512"]
+        DPDK_VERSION: ["22.11.8_avx512", "23.11.4_avx512", "24.11.2_avx512"]
 
 ubuntu-24.04 amd64 avx2 dpdk:
   extends: .build_and_unit
@@ -1733,15 +1733,15 @@ ubuntu-24.04 amd64 avx2 dpdk:
   parallel:
     matrix:
       - <<: *basic_combinations_dpdk
-        DPDK_VERSION: "23.11.1_avx2"
+        DPDK_VERSION: "23.11.4_avx2"
       - <<: *basic_combinations
-        DPDK_VERSION: "23.11.1_avx2"
+        DPDK_VERSION: "23.11.4_avx2"
         ENABLE_FFTW: "False"
         ENABLE_MKL: "True"
       - <<: *basic_combinations_dpdk
-        DPDK_VERSION: "24.11.1_avx2"
+        DPDK_VERSION: "24.11.2_avx2"
       - <<: *basic_combinations
-        DPDK_VERSION: "24.11.1_avx2"
+        DPDK_VERSION: "24.11.2_avx2"
         ENABLE_FFTW: "False"
         ENABLE_MKL: "True"
 
@@ -1759,15 +1759,15 @@ ubuntu-24.04 amd64 avx512 dpdk:
   parallel:
     matrix:
       - <<: *basic_combinations_dpdk
-        DPDK_VERSION: "23.11.1_avx512"
+        DPDK_VERSION: "23.11.4_avx512"
       - <<: *basic_combinations
-        DPDK_VERSION: "23.11.1_avx512"
+        DPDK_VERSION: "23.11.4_avx512"
         ENABLE_FFTW: "False"
         ENABLE_MKL: "True"
       - <<: *basic_combinations_dpdk
-        DPDK_VERSION: "24.11.1_avx512"
+        DPDK_VERSION: "24.11.2_avx512"
       - <<: *basic_combinations
-        DPDK_VERSION: "24.11.1_avx512"
+        DPDK_VERSION: "24.11.2_avx512"
         ENABLE_FFTW: "False"
         ENABLE_MKL: "True"
 
@@ -1785,9 +1785,9 @@ ubuntu-24.10 amd64 avx2 dpdk:
   parallel:
     matrix:
       - <<: *basic_combinations_dpdk
-        DPDK_VERSION: "23.11.1_avx2"
+        DPDK_VERSION: "23.11.4_avx2"
       - <<: *basic_combinations_dpdk
-        DPDK_VERSION: "24.11.1_avx2"
+        DPDK_VERSION: "24.11.2_avx2"
 
 ubuntu-24.10 amd64 avx512 dpdk:
   extends: .build_and_unit
@@ -1803,9 +1803,9 @@ ubuntu-24.10 amd64 avx512 dpdk:
   parallel:
     matrix:
       - <<: *basic_combinations_dpdk
-        DPDK_VERSION: "23.11.1_avx512"
+        DPDK_VERSION: "23.11.4_avx512"
       - <<: *basic_combinations_dpdk
-        DPDK_VERSION: "24.11.1_avx512"
+        DPDK_VERSION: "24.11.2_avx512"
 
 ubuntu-25.04 amd64 avx2 dpdk:
   extends: .build_and_unit
@@ -1821,7 +1821,7 @@ ubuntu-25.04 amd64 avx2 dpdk:
   parallel:
     matrix:
       - <<: *basic_combinations_dpdk
-        DPDK_VERSION: "24.11.1_avx2"
+        DPDK_VERSION: "24.11.2_avx2"
 
 ubuntu-25.04 amd64 avx512 dpdk:
   extends: .build_and_unit
@@ -1837,7 +1837,7 @@ ubuntu-25.04 amd64 avx512 dpdk:
   parallel:
     matrix:
       - <<: *basic_combinations_dpdk
-        DPDK_VERSION: "24.11.1_avx512"
+        DPDK_VERSION: "24.11.2_avx512"
 
 ###############
 # E2E Nightly #
@@ -1980,7 +1980,7 @@ basic ru dummy:
     ENABLE_UHD: "False"
     ENABLE_ZEROMQ: "False"
     ENABLE_DPDK: "True"
-    DPDK_VERSION: "23.11.1_avx512"
+    DPDK_VERSION: "24.11.2_avx512"
     MARCH: x86-64-v4
     FORCE_DEBUG_INFO: "True"
     ASSERT_LEVEL: AUTO
@@ -2012,7 +2012,7 @@ basic avx2 dpdk rtsan:
     ENABLE_DPDK: "True"
     ENABLE_RTSAN: "True"
     ENABLE_WERROR: "False"
-    DPDK_VERSION: "23.11.1_avx2"
+    DPDK_VERSION: "24.11.2_avx2"
     MARCH: x86-64-v3
     FORCE_DEBUG_INFO: "True"
     ASSERT_LEVEL: AUTO
@@ -2047,7 +2047,7 @@ basic avx512 dpdk:
     ENABLE_UHD: "False"
     ENABLE_ZEROMQ: "False"
     ENABLE_DPDK: "True"
-    DPDK_VERSION: "23.11.1_avx512"
+    DPDK_VERSION: "24.11.2_avx512"
     MARCH: x86-64-v4
     FORCE_DEBUG_INFO: "True"
     ASSERT_LEVEL: AUTO
