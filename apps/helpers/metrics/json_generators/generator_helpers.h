@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "external/nlohmann/json.hpp"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {

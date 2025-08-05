@@ -66,7 +66,7 @@ void to_json(nlohmann::json& json, const rlc_metrics& metrics)
 
 } // namespace srsran
 
-nlohmann::json json_generators::generate(const rlc_metrics& metrics)
+nlohmann::json srsran::app_helpers::json_generators::generate(const rlc_metrics& metrics)
 {
   nlohmann::json json;
 

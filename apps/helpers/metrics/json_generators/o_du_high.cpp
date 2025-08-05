@@ -11,7 +11,6 @@
 #include "o_du_high.h"
 #include "apps/helpers/metrics/helpers.h"
 #include "du_high/mac.h"
-#include "helpers.h"
 #include "srsran/du/du_high/du_metrics_report.h"
 
 using namespace srsran;
@@ -33,7 +32,7 @@ nlohmann::json srsran::app_helpers::json_generators::generate(const srs_du::du_m
   return json;
 }
 
-std::string json_generators::generate_string(const srs_du::du_metrics_report& metrics, int indent)
+std::string srsran::app_helpers::json_generators::generate_string(const srs_du::du_metrics_report& metrics, int indent)
 {
   return generate(metrics).dump(indent);
 }

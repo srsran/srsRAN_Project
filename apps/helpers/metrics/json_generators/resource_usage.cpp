@@ -10,7 +10,6 @@
 
 #include "resource_usage.h"
 #include "apps/helpers/metrics/helpers.h"
-#include "helpers.h"
 #include "srsran/support/resource_usage/resource_usage_metrics.h"
 
 using namespace srsran;

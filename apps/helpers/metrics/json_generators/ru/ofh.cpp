@@ -184,7 +184,8 @@ static nlohmann::json generate_ofh_cell(const ofh::sector_metrics& metrics, pci_
   return json;
 }
 
-nlohmann::json json_generators::generate(const ofh::metrics& metrics, span<const pci_t> pci_sector_map)
+nlohmann::json srsran::app_helpers::json_generators::generate(const ofh::metrics& metrics,
+                                                              span<const pci_t>   pci_sector_map)
 {
   nlohmann::json json;
 
@@ -205,7 +206,9 @@ nlohmann::json json_generators::generate(const ofh::metrics& metrics, span<const
   return json;
 }
 
-std::string json_generators::generate_string(const ofh::metrics& metrics, span<const pci_t> pci_sector_map, int indent)
+std::string srsran::app_helpers::json_generators::generate_string(const ofh::metrics& metrics,
+                                                                  span<const pci_t>   pci_sector_map,
+                                                                  int                 indent)
 {
   return generate(metrics, pci_sector_map).dump(indent);
 }

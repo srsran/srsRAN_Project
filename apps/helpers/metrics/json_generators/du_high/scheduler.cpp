@@ -125,7 +125,7 @@ void to_json(nlohmann::json& json, const scheduler_cell_metrics& metrics)
 
 } // namespace srsran
 
-nlohmann::json json_generators::generate(const scheduler_metrics_report& metrics)
+nlohmann::json srsran::app_helpers::json_generators::generate(const scheduler_metrics_report& metrics)
 {
   nlohmann::json json;
 
@@ -135,7 +135,7 @@ nlohmann::json json_generators::generate(const scheduler_metrics_report& metrics
   return json;
 }
 
-std::string json_generators::generate_string(const scheduler_metrics_report& metrics, int indent)
+std::string srsran::app_helpers::json_generators::generate_string(const scheduler_metrics_report& metrics, int indent)
 {
   return generate(metrics).dump(indent);
 }

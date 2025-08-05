@@ -34,7 +34,7 @@ void to_json(nlohmann::json& json, const mac_dl_cell_metric_report& metrics)
 
 } // namespace srsran
 
-nlohmann::json json_generators::generate(const mac_dl_metric_report& metrics)
+nlohmann::json srsran::app_helpers::json_generators::generate(const mac_dl_metric_report& metrics)
 {
   nlohmann::json json;
 
