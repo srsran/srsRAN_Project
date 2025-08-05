@@ -384,12 +384,21 @@ void worker_manager::create_main_worker_pool(const worker_manager_config& worker
                          // Used for receiving data from external nodes.
                          {"low_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize}},
                         worker_cfg.main_pool_backoff_period,
-                        worker_pool_prio};
+                        worker_pool_prio,
+                        std::vector<os_sched_affinity_bitmask>{worker_cfg.main_pool_affinity_cfg.mask}};
 
   // Create main worker pool.
   if (not exec_mng.add_execution_context(create_execution_context(main_pool))) {
     report_fatal_error("Failed to instantiate {} execution context", main_pool.name);
   }
+
+  srslog::fetch_basic_logger("CONFIG").info("Worker pool \"{}\" instantiated with #workers={}, "
+                                            "task_queue_size={}, backoff_period={}us and priority={}.",
+                                            main_pool.name,
+                                            nof_workers_general_pool,
+                                            qsize,
+                                            worker_cfg.main_pool_backoff_period.count(),
+                                            worker_pool_prio.native());
 }
 
 void worker_manager::add_low_prio_strands(const worker_manager_config& worker_cfg)
