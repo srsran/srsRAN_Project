@@ -1331,20 +1331,26 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
   for (auto ue_it = pending_dl_ues_new_tx.begin(); ue_it != pending_dl_ues_new_tx.end();) {
     if (not ues.contains(ue_it->ue_index)) {
       // UE was removed in the meantime.
-      logger.debug("ue={}: will be removed", fmt::underlying(ue_it->ue_index));
+      logger.debug(
+          "ue={}: will be removed from fallback scheduler. Cause: not present anymore in the scheduler UE repository",
+          fmt::underlying(ue_it->ue_index));
       ue_it = pending_dl_ues_new_tx.erase(ue_it);
       continue;
     }
     auto& u = ues[ue_it->ue_index];
     if (not u.get_pcell().is_in_fallback_mode()) {
       // UE exited fallback.
-      logger.debug("ue={}: will be removed", fmt::underlying(ue_it->ue_index));
+      logger.debug("ue={} rnti={}: will be removed from fallback scheduler. Cause: UE exited fallback mode",
+                   fmt::underlying(ue_it->ue_index),
+                   u.crnti);
       ue_it = pending_dl_ues_new_tx.erase(ue_it);
       continue;
     }
     if (not u.has_pending_dl_newtx_bytes()) {
       // UE has no new txs pending. It can be removed.
-      logger.debug("ue={}: will be removed", fmt::underlying(ue_it->ue_index));
+      logger.debug("ue={} rnti={}: will be removed from fallback scheduler. Cause: no pending new transmissions",
+                   fmt::underlying(ue_it->ue_index),
+                   u.crnti);
       ue_it = pending_dl_ues_new_tx.erase(ue_it);
       continue;
     }
@@ -1365,7 +1371,8 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
         const int slot_diff = sl - u.get_pcell().get_msg3_rx_slot();
         if (slot_diff < 0 or divide_ceil<uint32_t, uint32_t>(static_cast<uint32_t>(slot_diff),
                                                              sl.nof_slots_per_subframe()) > ra_conres_timer_subframes) {
-          logger.warning("ue={} rnti={}: ra-ContentionResolutionTimer expired before UE's ConRes was scheduled",
+          logger.warning("ue={} rnti={}: ra-ContentionResolutionTimer expired before UE's ConRes was scheduled. UE "
+                         "will be removed from fallback scheduler",
                          fmt::underlying(u.ue_index),
                          u.crnti);
           // Remove the UE from the fallback scheduler.
@@ -1438,10 +1445,10 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
               ra_conres_timer_subframes) {
         const auto  ue_index = it_ue_harq->ue_index;
         const auto& u        = ues[ue_index];
-        logger.warning(
-            "ue={} rnti={}: ra-ContentionResolutionTimer expired before the UE has received and acked ConRes",
-            fmt::underlying(u.ue_index),
-            u.crnti);
+        logger.warning("ue={} rnti={}: ra-ContentionResolutionTimer expired before the UE has received and acked "
+                       "ConRes. UE will be removed from fallback scheduler",
+                       fmt::underlying(u.ue_index),
+                       u.crnti);
         // Remove the UE from the fallback scheduler.
         it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
         pending_dl_ues_new_tx.erase(
