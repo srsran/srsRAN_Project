@@ -133,32 +133,29 @@ jobs:
           logout: true
           ecr: false
 
-      - name: Build and push
-        id: build_and_push
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          tags: ${{ steps.tags.outputs.tags }}
-          file: ${{ matrix.DOCKERFILE }}
-          platforms: ${{ matrix.PLATFORM }}
-          context: ${{ matrix.CONTEXT }}
-          build-args: |
-            NAME="${{ env.NAME }}"
-            UHD_VERSION=${{ matrix.UHD_VERSION }}
-            DPDK_VERSION=${{ matrix.DPDK_VERSION }}
-            MARCH=${{ matrix.MARCH }}
+      # - name: Build and push
+      #   id: build_and_push
+      #   uses: docker/build-push-action@v6
+      #   with:
+      #     push: true
+      #     tags: ${{ steps.tags.outputs.tags }}
+      #     file: ${{ matrix.DOCKERFILE }}
+      #     platforms: ${{ matrix.PLATFORM }}
+      #     context: ${{ matrix.CONTEXT }}
+      #     build-args: |
+      #       NAME="${{ env.NAME }}"
+      #       UHD_VERSION=${{ matrix.UHD_VERSION }}
+      #       DPDK_VERSION=${{ matrix.DPDK_VERSION }}
+      #       MARCH=${{ matrix.MARCH }}
 
       - name: Attest image
         if: ${{ matrix.ATTESTATION_FILE != '' }}
         run: |
-          IFS=',' read -ra TAG_LIST <<< "${{ steps.tags.outputs.tags }}"
-          DIGEST=${{ steps.build_and_push.outputs.digest }}
-          
-          for IMAGE_TAG in "${TAG_LIST[@]}"; do
-            IMAGE_DIGEST="$IMAGE_TAG@$DIGEST"
-            regctl image get-file "$IMAGE_TAG" ${{ matrix.ATTESTATION_FILE }} > image.spdx
-            cosign attest --predicate image.spdx --type spdx "$IMAGE_DIGEST"
-          done
+          IMAGE_TAG=softwareradiosystems/srsran-project:release_avx512-next
+          DIGEST=sha256:8ab92fc078327db5aec08fcfa4ba67d46a0080b34910696ad1bac530280ec98f
+          IMAGE_DIGEST="$IMAGE_TAG@$DIGEST"
+          regctl image get-file "$IMAGE_TAG" ${{ matrix.ATTESTATION_FILE }} > image.spdx
+          cosign attest --predicate image.spdx --type spdx "$IMAGE_DIGEST"
         shell: bash
         env:
           COSIGN_EXPERIMENTAL: 1
