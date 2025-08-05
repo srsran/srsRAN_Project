@@ -11,20 +11,22 @@ jobs:
   docker:
     if: ${{ vars.SKIP_DOCKER_JOB != 'true' }}
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     strategy:
       matrix:
         include:
           # --> telegraf
-          - TAGNAME: ""
-            REPOSITORY: telegraf
-            EXTRA_CMAKE_ARGS: ""
-            MARCH: ""
-            PLATFORM: amd64
-            UHD_VERSION: ""
-            DPDK_VERSION: ""
-            DOCKERFILE: ./docker/telegraf/Dockerfile
-            CONTEXT: ./docker/telegraf
-            ATTESTATION_FILE: ""
+          # - TAGNAME: ""
+          #   REPOSITORY: telegraf
+          #   EXTRA_CMAKE_ARGS: ""
+          #   MARCH: ""
+          #   PLATFORM: amd64
+          #   UHD_VERSION: ""
+          #   DPDK_VERSION: ""
+          #   DOCKERFILE: ./docker/telegraf/Dockerfile
+          #   CONTEXT: ./docker/telegraf
+          #   ATTESTATION_FILE: ""
           # --> grafana
           # - TAGNAME: ""
           #   REPOSITORY: grafana
@@ -158,3 +160,6 @@ jobs:
             cosign attest --predicate image.spdx --type spdx "$IMAGE_DIGEST"
           done
         shell: bash
+        env:
+          COSIGN_EXPERIMENTAL: 1
+          COSIGN_YES: 1
