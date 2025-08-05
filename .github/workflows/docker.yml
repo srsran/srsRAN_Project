@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - main
-      - test
+      - test_attest
   release:
     types: [published]
 
@@ -41,7 +41,7 @@ jobs:
             MARCH: x86-64-v3
             PLATFORM: amd64
             UHD_VERSION: "4.7.0.0"
-            DPDK_VERSION: "23.11.1"
+            DPDK_VERSION: "24.11.2"
             DOCKERFILE: ./docker/Dockerfile
             CONTEXT: ./
           - TAGNAME: release_with_debug_avx2
@@ -50,7 +50,7 @@ jobs:
             MARCH: x86-64-v3
             PLATFORM: amd64
             UHD_VERSION: "4.7.0.0"
-            DPDK_VERSION: "23.11.1"
+            DPDK_VERSION: "24.11.2"
             DOCKERFILE: ./docker/Dockerfile
             CONTEXT: ./
           # AMD AVX512
@@ -59,7 +59,7 @@ jobs:
             MARCH: x86-64-v4
             PLATFORM: amd64
             UHD_VERSION: "4.7.0.0"
-            DPDK_VERSION: "23.11.1"
+            DPDK_VERSION: "24.11.2"
             DOCKERFILE: ./docker/Dockerfile
             CONTEXT: ./
           - TAGNAME: release_with_debug_avx512
@@ -68,7 +68,7 @@ jobs:
             MARCH: x86-64-v4
             PLATFORM: amd64
             UHD_VERSION: "4.7.0.0"
-            DPDK_VERSION: "23.11.1"
+            DPDK_VERSION: "24.11.2"
             DOCKERFILE: ./docker/Dockerfile
             CONTEXT: ./
     env:
@@ -84,6 +84,18 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Set up cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Install regctl
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.x'
+      - name: Set up regctl
+        run: |
+          go install github.com/regclient/regclient/cmd/regctl@latest
+        shell: bash
+
       - name: Determine tags based on branch
         id: tags
         run: |
@@ -97,7 +109,7 @@ jobs:
           else
             if [ "$BRANCH_NAME" == "main" ]; then
               tags="${{ env.PREFIX }}-${DATE_TAG},${{ env.PREFIX }}-latest"
-            elif [ "$BRANCH_NAME" == "test" ]; then
+            elif [ "$BRANCH_NAME" == "test_attest" ]; then
               tags="${{ env.PREFIX }}-${DATE_TAG},${{ env.PREFIX }}-next"
             fi
           fi
@@ -114,6 +126,7 @@ jobs:
           ecr: false
 
       - name: Build and push
+        id: build_and_push
         uses: docker/build-push-action@v6
         with:
           push: true
@@ -126,3 +139,13 @@ jobs:
             UHD_VERSION=${{ matrix.UHD_VERSION }}
             DPDK_VERSION=${{ matrix.DPDK_VERSION }}
             MARCH=${{ matrix.MARCH }}
+
+      - name: Attest image
+        run: |
+          IMAGE_TAG=${{ steps.tags.outputs.tags }}
+          DIGEST=${{ steps.build_and_push.outputs.digest }}
+          IMAGE_DIGEST="$IMAGE_TAG@$DIGEST"
+
+          regctl image get-file "$IMAGE_TAG" /usr/local/etc/srsran_image.spdx > image.spdx
+          cosign attest --predicate image.spdx --type spdx "$IMAGE_DIGEST"
+        shell: bash
