@@ -372,7 +372,7 @@ void worker_manager::create_main_worker_pool(const worker_manager_config& worker
 
   // Configure main worker pool.
   nof_workers_general_pool        = get_default_nof_workers(worker_cfg);
-  const auto     worker_pool_prio = os_thread_realtime_priority::max() - 50;
+  const auto     worker_pool_prio = os_thread_realtime_priority::max() - 2;
   const unsigned qsize            = worker_cfg.main_pool_task_queue_size;
 
   worker_pool main_pool{"main_pool",
