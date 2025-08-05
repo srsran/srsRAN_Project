@@ -60,6 +60,7 @@ def test_pucch(
     bandwidth = 50
     iperf_duration = 10
     iperf_bitrate = int(1e6)
+    pucch_set0_format = 0 if use_format_0 else 1
 
     configure_test_parameters(
         retina_manager=retina_manager,
@@ -75,7 +76,7 @@ def test_pucch(
         pucch_set1_format=pucch_set1_format,
     )
 
-    logging.info("PUCCH F%d+F%d Test", 0 if use_format_0 else 1, pucch_set1_format)
+    logging.info("PUCCH F%d+F%d Test", pucch_set0_format, pucch_set1_format)
 
     start_network(ue_array, gnb, fivegc)
     ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
@@ -95,16 +96,16 @@ def test_pucch(
     )
 
     metrics: Metrics = gnb.GetMetrics(Empty())
-    invalid_pucch = False
-    if metrics.total.nof_pucch_f0f1_invalid_harqs > 0:
-        logging.error("There are invalid PUCCH F%d HARQ-ACK transmissions", 0 if use_format_0 else 1)
-        invalid_pucch = True
-    if metrics.total.nof_pucch_f2f3f4_invalid_harqs > 0:
-        logging.error("There are invalid PUCCH F%d HARQ-ACK transmissions", pucch_set1_format)
-        invalid_pucch = True
-    if metrics.total.nof_pucch_f2f3f4_invalid_csis > 0:
-        logging.error("There are invalid PUCCH F%d CSI transmissions", pucch_set1_format)
-        invalid_pucch = True
+    invalid_pucchs = (
+        metrics.total.nof_pucch_f0f1_invalid_harqs > 0
+        or metrics.total.nof_pucch_f2f3f4_invalid_harqs > 0
+        or metrics.total.nof_pucch_f2f3f4_invalid_csis > 0
+    )
 
-    if invalid_pucch:
-        fail("Invalid PUCCH transmissions have been registered during the test")
+    if invalid_pucchs:
+        fail(
+            f"Invalid PUCCH transmissions during the test: "
+            f"harq_f{pucch_set0_format}={metrics.total.nof_pucch_f0f1_invalid_harqs} "
+            f"harq_f{pucch_set1_format}={metrics.total.nof_pucch_f2f3f4_invalid_harqs} "
+            f"csi_f{pucch_set1_format}={metrics.total.nof_pucch_f2f3f4_invalid_csis}"
+        )
