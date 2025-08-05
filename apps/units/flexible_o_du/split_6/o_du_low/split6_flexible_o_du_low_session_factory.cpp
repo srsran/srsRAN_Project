@@ -238,11 +238,19 @@ split6_flexible_o_du_low_session_factory::create_o_du_low(const fapi::fapi_cell_
   return odu_low_factory.create(odu_low_cfg, odu_low_dependencies);
 }
 
-static flexible_o_du_ru_config generate_o_du_ru_config(const fapi::fapi_cell_config& config, unsigned max_prox_delay)
+static flexible_o_du_ru_config
+generate_o_du_ru_config(const fapi::fapi_cell_config& config, unsigned expected_max_proc_delay, bool uses_ofh)
 {
   flexible_o_du_ru_config out_cfg;
-  out_cfg.prach_nof_ports      = split6_du_low::PRACH_NOF_PORTS;
-  out_cfg.max_processing_delay = max_prox_delay;
+  out_cfg.prach_nof_ports = split6_du_low::PRACH_NOF_PORTS;
+
+  // Open Fronthaul notifies OTA + max_proc_delay.
+  if (uses_ofh) {
+    out_cfg.max_processing_delay = expected_max_proc_delay;
+  } else {
+    // Split 8 notifies OTA + max_proc_delay + 1m.
+    out_cfg.max_processing_delay = expected_max_proc_delay - get_nof_slots_per_subframe(config.phy_cfg.scs);
+  }
 
   // Add one cell.
   auto& out_cell           = out_cfg.cells.emplace_back();
@@ -309,7 +317,10 @@ std::unique_ptr<radio_unit>
 split6_flexible_o_du_low_session_factory::create_radio_unit(split6_flexible_o_du_low_session& odu_low,
                                                             const fapi::fapi_cell_config&     config)
 {
-  auto ru_config = generate_o_du_ru_config(config, unit_config.du_low_cfg.expert_phy_cfg.max_processing_delay_slots);
+  auto ru_config = generate_o_du_ru_config(config,
+                                           unit_config.du_low_cfg.expert_phy_cfg.max_processing_delay_slots,
+                                           std::holds_alternative<ru_ofh_unit_parsed_config>(unit_config.ru_cfg));
+
   const auto& ru_cfg = unit_config.ru_cfg;
 
   flexible_o_du_ru_dependencies ru_dependencies{workers,
