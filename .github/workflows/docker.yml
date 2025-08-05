@@ -24,35 +24,39 @@ jobs:
             DPDK_VERSION: ""
             DOCKERFILE: ./docker/telegraf/Dockerfile
             CONTEXT: ./docker/telegraf
+            ATTESTATION_FILE: ""
           # --> grafana
-          - TAGNAME: ""
-            REPOSITORY: grafana
-            EXTRA_CMAKE_ARGS: ""
-            MARCH: ""
-            PLATFORM: amd64
-            UHD_VERSION: ""
-            DPDK_VERSION: ""
-            DOCKERFILE: ./docker/grafana/Dockerfile
-            CONTEXT: ./docker/grafana
-          # --> gnb
-          # AMD AVX2
-          - TAGNAME: release_avx2
-            REPOSITORY: srsran-project
-            MARCH: x86-64-v3
-            PLATFORM: amd64
-            UHD_VERSION: "4.7.0.0"
-            DPDK_VERSION: "24.11.2"
-            DOCKERFILE: ./docker/Dockerfile
-            CONTEXT: ./
-          - TAGNAME: release_with_debug_avx2
-            REPOSITORY: srsran-project
-            EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
-            MARCH: x86-64-v3
-            PLATFORM: amd64
-            UHD_VERSION: "4.7.0.0"
-            DPDK_VERSION: "24.11.2"
-            DOCKERFILE: ./docker/Dockerfile
-            CONTEXT: ./
+          # - TAGNAME: ""
+          #   REPOSITORY: grafana
+          #   EXTRA_CMAKE_ARGS: ""
+          #   MARCH: ""
+          #   PLATFORM: amd64
+          #   UHD_VERSION: ""
+          #   DPDK_VERSION: ""
+          #   DOCKERFILE: ./docker/grafana/Dockerfile
+          #   CONTEXT: ./docker/grafana
+          #   ATTESTATION_FILE: ""
+          # # --> gnb
+          # # AMD AVX2
+          # - TAGNAME: release_avx2
+          #   REPOSITORY: srsran-project
+          #   MARCH: x86-64-v3
+          #   PLATFORM: amd64
+          #   UHD_VERSION: "4.7.0.0"
+          #   DPDK_VERSION: "24.11.2"
+          #   DOCKERFILE: ./docker/Dockerfile
+          #   CONTEXT: ./
+          #   ATTESTATION_FILE: /usr/local/etc/srsran_image.spdx
+          # - TAGNAME: release_with_debug_avx2
+          #   REPOSITORY: srsran-project
+          #   EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
+          #   MARCH: x86-64-v3
+          #   PLATFORM: amd64
+          #   UHD_VERSION: "4.7.0.0"
+          #   DPDK_VERSION: "24.11.2"
+          #   DOCKERFILE: ./docker/Dockerfile
+          #   CONTEXT: ./
+          #   ATTESTATION_FILE: /usr/local/etc/srsran_image.spdx
           # AMD AVX512
           - TAGNAME: release_avx512
             REPOSITORY: srsran-project
@@ -62,15 +66,17 @@ jobs:
             DPDK_VERSION: "24.11.2"
             DOCKERFILE: ./docker/Dockerfile
             CONTEXT: ./
-          - TAGNAME: release_with_debug_avx512
-            REPOSITORY: srsran-project
-            EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
-            MARCH: x86-64-v4
-            PLATFORM: amd64
-            UHD_VERSION: "4.7.0.0"
-            DPDK_VERSION: "24.11.2"
-            DOCKERFILE: ./docker/Dockerfile
-            CONTEXT: ./
+            ATTESTATION_FILE: /usr/local/etc/srsran_image.spdx
+          # - TAGNAME: release_with_debug_avx512
+          #   REPOSITORY: srsran-project
+          #   EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
+          #   MARCH: x86-64-v4
+          #   PLATFORM: amd64
+          #   UHD_VERSION: "4.7.0.0"
+          #   DPDK_VERSION: "24.11.2"
+          #   DOCKERFILE: ./docker/Dockerfile
+          #   CONTEXT: ./
+          #   ATTESTATION_FILE: /usr/local/etc/srsran_image.spdx
     env:
       PREFIX: softwareradiosystems/${{ matrix.REPOSITORY }}:${{ matrix.TAGNAME }}
     environment: dockerhub
@@ -141,11 +147,14 @@ jobs:
             MARCH=${{ matrix.MARCH }}
 
       - name: Attest image
+        if: ${{ matrix.ATTESTATION_FILE != '' }}
         run: |
-          IMAGE_TAG=${{ steps.tags.outputs.tags }}
+          IFS=',' read -ra TAG_LIST <<< "${{ steps.tags.outputs.tags }}"
           DIGEST=${{ steps.build_and_push.outputs.digest }}
-          IMAGE_DIGEST="$IMAGE_TAG@$DIGEST"
-
-          regctl image get-file "$IMAGE_TAG" /usr/local/etc/srsran_image.spdx > image.spdx
-          cosign attest --predicate image.spdx --type spdx "$IMAGE_DIGEST"
+          
+          for IMAGE_TAG in "${TAG_LIST[@]}"; do
+            IMAGE_DIGEST="$IMAGE_TAG@$DIGEST"
+            regctl image get-file "$IMAGE_TAG" ${{ matrix.ATTESTATION_FILE }} > image.spdx
+            cosign attest --predicate image.spdx --type spdx "$IMAGE_DIGEST"
+          done
         shell: bash
