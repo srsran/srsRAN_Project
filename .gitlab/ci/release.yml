@@ -8,13 +8,13 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "22"
+    ref: "23"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "22"
+    ref: "23"
     file: .gitlab/ci-shared/features/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "22"
+    ref: "23"
     file: .gitlab/ci-shared/tools/docker.yml
 
 stages:
@@ -77,32 +77,32 @@ generate plugin pipeline:
     GIT_STRATEGY: none
   script:
     - |
-        echo """
-        include:
-          - project: softwareradiosystems/ci/tools
-            ref: \"21\"
-            file: .gitlab/ci-shared/setup/all.yml
+      echo """
+      include:
+        - project: softwareradiosystems/ci/tools
+          ref: \"21\"
+          file: .gitlab/ci-shared/setup/all.yml
 
-        stages:
-          - private
-        """ >> update_plugin.yml
+      stages:
+        - private
+      """ >> update_plugin.yml
 
-        while IFS='|' read -r PLUGIN_PATH PLUGIN_REPO PLUGIN_REF; do
-            echo """
-        update ${PLUGIN_PATH}:
-          stage: private
-          interruptible: false
-          variables:
-            ON_SCHEDULE: "true"
-            CI_DESCRIPTION: Release
-          inherit:
-            variables: false
-          trigger:
-            project: ${PLUGIN_REPO}
-            branch: main
-            strategy: depend
-        """ >> update_plugin.yml
-        done < <(grep -v '^#' "$PLUGINS_DATA_FILE")
+      while IFS='|' read -r PLUGIN_PATH PLUGIN_REPO PLUGIN_REF; do
+          echo """
+      update ${PLUGIN_PATH}:
+        stage: private
+        interruptible: false
+        variables:
+          ON_SCHEDULE: "true"
+          CI_DESCRIPTION: Release
+        inherit:
+          variables: false
+        trigger:
+          project: ${PLUGIN_REPO}
+          branch: main
+          strategy: depend
+      """ >> update_plugin.yml
+      done < <(grep -v '^#' "$PLUGINS_DATA_FILE")
     - cat update_plugin.yml
   artifacts:
     paths:
@@ -292,7 +292,7 @@ basic build final branch:
   tags: ["amd64-avx2"]
   needs:
     - job: download final build env
-      artifacts: true  
+      artifacts: true
     - job: download final branch
       optional: false
       artifacts: true
@@ -567,6 +567,7 @@ srsran image:
     CONTEXT: ${CI_PROJECT_DIR}
     DOCKERFILE: docker
     MODE: publish
+    ATTESTATION_FILE: /usr/local/etc/srsran_image.spdx
     # Arguments
     DOCKER_UHD_VERSION: "4.7.0.0"
     DOCKER_DPDK_VERSION: "24.11.2"
