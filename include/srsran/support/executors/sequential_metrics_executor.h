@@ -127,7 +127,7 @@ private:
   void handle_metrics(bool                                           is_exec,
                       time_point                                     enqueue_tp,
                       time_point                                     start_tp,
-                      const expected<resource_usage::snapshot, int>& start_rusg) SRSRAN_RTSAN_NONBLOCKING
+                      const expected<resource_usage::snapshot, int>& start_rusg) noexcept SRSRAN_RTSAN_NONBLOCKING
   {
     using namespace std::chrono;
 

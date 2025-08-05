@@ -133,7 +133,7 @@ void realtime_timing_worker::stop()
   logger.info("Stopped the realtime timing worker");
 }
 
-void realtime_timing_worker::timing_loop() SRSRAN_RTSAN_NONBLOCKING
+void realtime_timing_worker::timing_loop() noexcept SRSRAN_RTSAN_NONBLOCKING
 {
   while (SRSRAN_LIKELY(status.load(std::memory_order_relaxed) == worker_status::running)) {
     poll();

@@ -135,7 +135,7 @@ void resource_grid_pool_impl::notify_release_scope(unsigned identifier)
   }
 
   // Create lambda function for setting the grid to zero.
-  auto set_all_zero_func = [this, identifier]() SRSRAN_RTSAN_NONBLOCKING {
+  auto set_all_zero_func = [this, identifier]() noexcept SRSRAN_RTSAN_NONBLOCKING {
     trace_point tp = l1_common_tracer.now();
 
     // Set grid to zero.

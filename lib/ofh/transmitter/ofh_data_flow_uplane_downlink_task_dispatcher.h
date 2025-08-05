@@ -36,7 +36,7 @@ public:
   void enqueue_section_type_1_message(const data_flow_uplane_resource_grid_context& context,
                                       const shared_resource_grid&                   grid) override
   {
-    if (!executor.execute([this, context, rg = grid.copy()]() SRSRAN_RTSAN_NONBLOCKING {
+    if (!executor.execute([this, context, rg = grid.copy()]() noexcept SRSRAN_RTSAN_NONBLOCKING {
           data_flow_uplane->enqueue_section_type_1_message(context, rg);
         })) {
       logger.warning("Sector#{}: failed to dispatch message in the downlink data flow User-Plane for slot '{}'",

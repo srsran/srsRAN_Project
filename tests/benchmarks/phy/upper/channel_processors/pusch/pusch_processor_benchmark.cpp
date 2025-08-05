@@ -708,7 +708,9 @@ static void thread_process(pusch_processor&              proc,
     unique_rx_buffer rm_buffer = buffer_pool->get_pool().reserve(config.slot, buffer_id, nof_codeblocks, true);
 
     // Process PDU.
-    [&]() SRSRAN_RTSAN_NONBLOCKING { proc.process(data, std::move(rm_buffer), result_notifier, grid, config); }();
+    [&]() noexcept SRSRAN_RTSAN_NONBLOCKING {
+      proc.process(data, std::move(rm_buffer), result_notifier, grid, config);
+    }();
 
     // Wait for finish the task.
     result_notifier.wait_for_completion();

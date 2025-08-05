@@ -34,7 +34,7 @@ public:
   // See interface for documentation.
   void enqueue_section_type_1_message(const data_flow_cplane_type_1_context& context) override
   {
-    if (!executor.execute([this, context]() SRSRAN_RTSAN_NONBLOCKING {
+    if (!executor.execute([this, context]() noexcept SRSRAN_RTSAN_NONBLOCKING {
           data_flow_cplane->enqueue_section_type_1_message(context);
         })) {
       logger.warning(
@@ -45,7 +45,7 @@ public:
   // See interface for documentation.
   void enqueue_section_type_3_prach_message(const data_flow_cplane_scheduling_prach_context& context) override
   {
-    if (!executor.execute([this, context]() SRSRAN_RTSAN_NONBLOCKING {
+    if (!executor.execute([this, context]() noexcept SRSRAN_RTSAN_NONBLOCKING {
           data_flow_cplane->enqueue_section_type_3_prach_message(context);
         })) {
       logger.warning(

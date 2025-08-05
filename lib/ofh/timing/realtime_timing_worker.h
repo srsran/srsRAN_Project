@@ -71,7 +71,7 @@ public:
 
 private:
   /// Main timing loop.
-  void timing_loop();
+  void timing_loop() noexcept;
 
   /// Polls the system time checking for the start of a new OTA symbol.
   void poll();

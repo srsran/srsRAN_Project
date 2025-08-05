@@ -162,7 +162,7 @@ private:
                       unsigned                                   enqueue_latency_ns,
                       unsigned                                   task_latency_ns,
                       time_point                                 end_tp,
-                      const expected<resource_usage::diff, int>& diff_rusg) SRSRAN_RTSAN_NONBLOCKING
+                      const expected<resource_usage::diff, int>& diff_rusg) noexcept SRSRAN_RTSAN_NONBLOCKING
   {
     using namespace std::chrono;
 

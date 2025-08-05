@@ -78,7 +78,7 @@ void pdsch_processor_flexible_impl::process(resource_grid_writer&               
       ++async_task_counter;
 
       // Process PT-RS concurrently.
-      auto ptrs_task = [this]() SRSRAN_RTSAN_NONBLOCKING {
+      auto ptrs_task = [this]() noexcept SRSRAN_RTSAN_NONBLOCKING {
         auto execute_on_exit = make_scope_exit([this]() {
           // Decrement asynchronous task counter.
           if (async_task_counter.fetch_sub(1) == 1) {
@@ -103,7 +103,7 @@ void pdsch_processor_flexible_impl::process(resource_grid_writer&               
     }
 
     // Process DM-RS concurrently.
-    auto dmrs_task = [this]() SRSRAN_RTSAN_NONBLOCKING {
+    auto dmrs_task = [this]() noexcept SRSRAN_RTSAN_NONBLOCKING {
       auto execute_on_exit = make_scope_exit([this]() {
         // Decrement asynchronous task counter.
         if (async_task_counter.fetch_sub(1) == 1) {
@@ -315,7 +315,7 @@ void pdsch_processor_flexible_impl::fork_cb_batches()
     unsigned i_batch = nof_cb_batches - 1 - i_task;
 
     // Create asynchronous task for the codeblock batch.
-    auto async_task = [this, nof_cb_per_batch, i_batch]() SRSRAN_RTSAN_NONBLOCKING {
+    auto async_task = [this, nof_cb_per_batch, i_batch]() noexcept SRSRAN_RTSAN_NONBLOCKING {
       // Start PDSCH codeblock batch tracing.
       trace_point cb_batch_pdsch_tp = l1_dl_tracer.now();
 

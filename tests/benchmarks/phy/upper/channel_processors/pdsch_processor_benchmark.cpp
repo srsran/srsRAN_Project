@@ -848,45 +848,46 @@ int main(int argc, char** argv)
     std::atomic<unsigned> completion_counter = 0;
 
     // Create benchmark routine.
-    auto benchmark_task = [&notifiers, &grids, &data, &config, &proc, &completion_counter]() SRSRAN_RTSAN_NONBLOCKING {
-      // Reset counter.
-      completion_counter = 0;
+    auto benchmark_task =
+        [&notifiers, &grids, &data, &config, &proc, &completion_counter]() noexcept SRSRAN_RTSAN_NONBLOCKING {
+          // Reset counter.
+          completion_counter = 0;
 
-      // Spawn tasks for each therad.
-      for (unsigned i_thread = 0; i_thread != nof_threads; ++i_thread) {
-        // Select notifier.
-        pdsch_processor_notifier_spy& notifier = notifiers[i_thread];
+          // Spawn tasks for each therad.
+          for (unsigned i_thread = 0; i_thread != nof_threads; ++i_thread) {
+            // Select notifier.
+            pdsch_processor_notifier_spy& notifier = notifiers[i_thread];
 
-        bool success = pdsch_executor->execute(
-            [&notifier, &grids, &data, &config, &proc, &completion_counter]() SRSRAN_RTSAN_NONBLOCKING {
-              // Get a resource grid.
-              auto grid = grids.get();
-              report_fatal_error_if_not(grid, "Failed to retrieve resource grid.");
+            bool success = pdsch_executor->execute(
+                [&notifier, &grids, &data, &config, &proc, &completion_counter]() noexcept SRSRAN_RTSAN_NONBLOCKING {
+                  // Get a resource grid.
+                  auto grid = grids.get();
+                  report_fatal_error_if_not(grid, "Failed to retrieve resource grid.");
 
-              // Repeat PDSCH transmission.
-              for (unsigned i_pdsch = 0; i_pdsch != batch_size_per_thread; ++i_pdsch) {
-                // Reset notifier.
-                notifier.reset();
+                  // Repeat PDSCH transmission.
+                  for (unsigned i_pdsch = 0; i_pdsch != batch_size_per_thread; ++i_pdsch) {
+                    // Reset notifier.
+                    notifier.reset();
 
-                // Process PDSCH transmission.
-                proc->process(grid->get_writer(), notifier, {shared_transport_block(data)}, config);
+                    // Process PDSCH transmission.
+                    proc->process(grid->get_writer(), notifier, {shared_transport_block(data)}, config);
 
-                // Wait for notifier before starting next PDSCH transmission.
-                notifier.wait_for_finished();
-              }
+                    // Wait for notifier before starting next PDSCH transmission.
+                    notifier.wait_for_finished();
+                  }
 
-              // Count the completion of the thread.
-              ++completion_counter;
-            });
+                  // Count the completion of the thread.
+                  ++completion_counter;
+                });
 
-        report_fatal_error_if_not(success, "Failed to execute.");
-      }
+            report_fatal_error_if_not(success, "Failed to execute.");
+          }
 
-      // Wait for completion.
-      while (completion_counter != nof_threads) {
-        std::this_thread::sleep_for(sleep_duration);
-      }
-    };
+          // Wait for completion.
+          while (completion_counter != nof_threads) {
+            std::this_thread::sleep_for(sleep_duration);
+          }
+        };
 
     // Run the benchmark.
     perf_meas.new_measure(to_string(meas_description), nof_threads * batch_size_per_thread * tbs, benchmark_task);
