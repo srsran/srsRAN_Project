@@ -267,8 +267,7 @@ public:
     regular_factory(config.factory),
     uci_factory(config.uci_factory),
     nof_regular_processors(config.nof_regular_processors),
-    nof_uci_processors(config.nof_uci_processors),
-    blocking(config.blocking)
+    nof_uci_processors(config.nof_uci_processors)
   {
     srsran_assert(regular_factory, "Invalid PUSCH factory.");
     srsran_assert(uci_factory, "Invalid PUSCH factory for UCI.");
@@ -280,9 +279,9 @@ public:
       return regular_factory->create();
     }
 
-    std::vector<std::unique_ptr<pusch_processor>> processors(nof_regular_processors);
-    for (std::unique_ptr<pusch_processor>& processor : processors) {
-      processor = regular_factory->create();
+    std::vector<std::unique_ptr<pusch_processor_wrapper>> processors(nof_regular_processors);
+    for (std::unique_ptr<pusch_processor_wrapper>& processor : processors) {
+      processor = std::make_unique<pusch_processor_wrapper>(regular_factory->create());
     }
 
     std::vector<std::unique_ptr<pusch_processor>> uci_processors(nof_uci_processors);
@@ -290,7 +289,7 @@ public:
       processor = uci_factory->create();
     }
 
-    return std::make_unique<pusch_processor_pool>(std::move(processors), std::move(uci_processors), blocking);
+    return std::make_unique<pusch_processor_pool>(processors, uci_processors);
   }
 
   std::unique_ptr<pusch_processor> create(srslog::basic_logger& logger) override
@@ -299,9 +298,9 @@ public:
       return regular_factory->create(logger);
     }
 
-    std::vector<std::unique_ptr<pusch_processor>> processors(nof_regular_processors);
-    for (std::unique_ptr<pusch_processor>& processor : processors) {
-      processor = regular_factory->create(logger);
+    std::vector<std::unique_ptr<pusch_processor_wrapper>> processors(nof_regular_processors);
+    for (std::unique_ptr<pusch_processor_wrapper>& processor : processors) {
+      processor = std::make_unique<pusch_processor_wrapper>(regular_factory->create(logger));
     }
 
     std::vector<std::unique_ptr<pusch_processor>> uci_processors(nof_uci_processors);
@@ -309,7 +308,7 @@ public:
       processor = uci_factory->create(logger);
     }
 
-    return std::make_unique<pusch_processor_pool>(std::move(processors), std::move(uci_processors), blocking);
+    return std::make_unique<pusch_processor_pool>(processors, uci_processors);
   }
 
   std::unique_ptr<pusch_pdu_validator> create_validator() override { return regular_factory->create_validator(); }
@@ -319,7 +318,6 @@ private:
   std::shared_ptr<pusch_processor_factory> uci_factory;
   unsigned                                 nof_regular_processors;
   unsigned                                 nof_uci_processors;
-  bool                                     blocking;
 };
 
 class ulsch_demultiplex_factory_sw : public ulsch_demultiplex_factory

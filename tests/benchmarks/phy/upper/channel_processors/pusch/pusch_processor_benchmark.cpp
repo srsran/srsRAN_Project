@@ -637,7 +637,6 @@ static std::shared_ptr<pusch_processor_factory> create_pusch_processor_factory()
   pusch_proc_pool_config.uci_factory            = uci_proc_factory;
   pusch_proc_pool_config.nof_regular_processors = nof_threads;
   pusch_proc_pool_config.nof_uci_processors     = nof_threads;
-  pusch_proc_pool_config.blocking               = true;
 
   pusch_proc_factory = create_pusch_processor_pool(pusch_proc_pool_config);
   TESTASSERT(pusch_proc_factory);

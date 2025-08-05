@@ -36,7 +36,7 @@ public:
 
   /// Creates a PDSCH processor wrapper from another PDSCH processor wrapper.
   pdsch_processor_wrapper(pdsch_processor_wrapper&& other) noexcept :
-    unique_token(std::move(other.unique_token)), notifier(other.notifier), processor(std::move(other.processor))
+    unique_pool_ptr(std::move(other.unique_pool_ptr)), notifier(other.notifier), processor(std::move(other.processor))
   {
     other.notifier = nullptr;
   }
@@ -55,7 +55,7 @@ public:
   }
 
   /// Sets the unique pointer that will be released upon the completion of the PDSCH processing.
-  void set_unique_ptr(pool::ptr unique_token_) { unique_token = std::move(unique_token_); }
+  void set_unique_ptr(pool::ptr unique_token_) { unique_pool_ptr = std::move(unique_token_); }
 
 private:
   // See pdsch_processor_notifier for documentation.
@@ -67,11 +67,11 @@ private:
     notifier->on_finish_processing();
 
     // Return the PDSCH processor identifier to the free list.
-    unique_token = nullptr;
+    unique_pool_ptr = nullptr;
   }
 
   /// Processor identifier within the pool.
-  pool::ptr unique_token;
+  pool::ptr unique_pool_ptr;
   /// Current PDSCH processor notifier.
   pdsch_processor_notifier* notifier = nullptr;
   /// Wrapped PDSCH processor.
@@ -95,10 +95,10 @@ public:
                static_vector<shared_transport_block, MAX_NOF_TRANSPORT_BLOCKS> data,
                const pdu_t&                                                    pdu) override
   {
-    // Get a worker.
+    // Get a processor from the pool.
     auto unique_processor = pool.get();
 
-    // If no worker is available.
+    // If no processor is available.
     if (!unique_processor) {
       logger.warning(
           pdu.slot.sfn(), pdu.slot.slot_index(), "Insufficient number of PDSCH processors. Dropping PDSCH {:s}.", pdu);
@@ -109,7 +109,7 @@ public:
     // Save reference to the processor.
     pdsch_processor& processor = *unique_processor;
 
-    // Set unique pointer
+    // Set unique pointer, it will be returned to the pool when the processing is completed.
     unique_processor->set_unique_ptr(std::move(unique_processor));
 
     // Process PDSCH.
