@@ -342,20 +342,28 @@ void worker_manager::create_du_executors(const worker_manager_config::du_high_co
 /// Makes an estimation of the needed number of threads for the application.
 static unsigned get_default_nof_workers(const worker_manager_config& worker_cfg)
 {
-  // Estimation of minimum number of workers needed for the application using the formula:
-  // nof_workers = nof_cells * (nof_dl_antennas + nof_ul_antennas + 1) + 2
   unsigned nof_workers = 0;
-  if (worker_cfg.du_low_cfg.has_value()) {
-    for (unsigned i = 0, e = worker_cfg.du_low_cfg->cell_nof_dl_antennas.size(); i != e; ++i) {
-      nof_workers += worker_cfg.du_low_cfg->cell_nof_dl_antennas[i] + worker_cfg.du_low_cfg->cell_nof_ul_antennas[i];
+  if (worker_cfg.nof_main_pool_threads.has_value()) {
+    nof_workers = worker_cfg.nof_main_pool_threads.value();
+  } else {
+    // Estimation of minimum number of workers needed for the application using the formula:
+    // nof_workers = nof_cells * (nof_dl_antennas + nof_ul_antennas + 1) + 2
+    if (worker_cfg.du_low_cfg.has_value()) {
+      for (unsigned i = 0, e = worker_cfg.du_low_cfg->cell_nof_dl_antennas.size(); i != e; ++i) {
+        nof_workers += worker_cfg.du_low_cfg->cell_nof_dl_antennas[i] + worker_cfg.du_low_cfg->cell_nof_ul_antennas[i];
+      }
     }
+    if (worker_cfg.du_hi_cfg.has_value()) {
+      nof_workers += worker_cfg.du_hi_cfg->nof_cells * 1;
+    }
+    nof_workers += 2;
   }
-  if (worker_cfg.du_hi_cfg.has_value()) {
-    nof_workers += worker_cfg.du_hi_cfg->nof_cells * 1;
-  }
-  nof_workers += 2;
 
-  return std::min(nof_workers, std::thread::hardware_concurrency() - 1);
+  unsigned max_cpus = worker_cfg.main_pool_affinity_cfg.mask.count();
+  if (max_cpus == 0) {
+    max_cpus = cpu_architecture_info::get().get_host_total_nof_cpus();
+  }
+  return std::min(nof_workers, max_cpus - 1);
 }
 
 void worker_manager::create_main_worker_pool(const worker_manager_config& worker_cfg)
@@ -363,7 +371,7 @@ void worker_manager::create_main_worker_pool(const worker_manager_config& worker
   using namespace execution_config_helper;
 
   // Configure main worker pool.
-  nof_workers_general_pool        = worker_cfg.nof_main_pool_threads.value_or(get_default_nof_workers(worker_cfg));
+  nof_workers_general_pool        = get_default_nof_workers(worker_cfg);
   const auto     worker_pool_prio = os_thread_realtime_priority::max() - 50;
   const unsigned qsize            = worker_cfg.main_pool_task_queue_size;
 
