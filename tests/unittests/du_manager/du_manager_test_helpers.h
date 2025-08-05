@@ -57,7 +57,8 @@ class dummy_cell_executor_mapper : public du_high_cell_executor_mapper
 {
 public:
   explicit dummy_cell_executor_mapper(task_executor& exec_) : exec(exec_) {}
-  task_executor& executor(du_cell_index_t cell_index) override { return exec; }
+  task_executor& mac_cell_executor(du_cell_index_t cell_index) override { return exec; }
+  task_executor& rlc_lower_executor(du_cell_index_t cell_index) override { return exec; }
   task_executor& slot_ind_executor(du_cell_index_t cell_index) override { return exec; }
 
   task_executor& exec;

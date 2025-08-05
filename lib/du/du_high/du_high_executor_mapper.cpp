@@ -79,7 +79,12 @@ public:
     }
   }
 
-  task_executor& executor(du_cell_index_t cell_index) override
+  task_executor& mac_cell_executor(du_cell_index_t cell_index) override
+  {
+    return *cell_execs[cell_index % cell_execs.size()].low_prio_executor;
+  }
+
+  task_executor& rlc_lower_executor(du_cell_index_t cell_index) override
   {
     return *cell_execs[cell_index % cell_execs.size()].low_prio_executor;
   }
@@ -118,15 +123,23 @@ public:
       std::string exec_name = trace_enabled or metrics_period ? fmt::format("slot_ind_exec#{}", i) : "";
       cell_strands[i].slot_ind_exec =
           &decorator.decorate(execs[0], is_sync, trace_enabled, std::nullopt, metrics_period, exec_name);
-      exec_name = trace_enabled or metrics_period ? fmt::format("cell_exec#{}", i) : "";
-      cell_strands[i].cell_exec =
+      exec_name = trace_enabled or metrics_period ? fmt::format("mac_cell_exec#{}", i) : "";
+      cell_strands[i].mac_cell_exec =
+          &decorator.decorate(execs[1], is_sync, trace_enabled, std::nullopt, metrics_period, exec_name);
+      exec_name = trace_enabled or metrics_period ? fmt::format("rlc_lower_exec#{}", i) : "";
+      cell_strands[i].rlc_lower_exec =
           &decorator.decorate(execs[1], is_sync, trace_enabled, std::nullopt, metrics_period, exec_name);
     }
   }
 
-  task_executor& executor(du_cell_index_t cell_index) override
+  task_executor& mac_cell_executor(du_cell_index_t cell_index) override
   {
-    return *cell_strands[cell_index % cell_strands.size()].cell_exec;
+    return *cell_strands[cell_index % cell_strands.size()].mac_cell_exec;
+  }
+
+  task_executor& rlc_lower_executor(du_cell_index_t cell_index) override
+  {
+    return *cell_strands[cell_index % cell_strands.size()].rlc_lower_exec;
   }
 
   task_executor& slot_ind_executor(du_cell_index_t cell_index) override
@@ -139,7 +152,8 @@ private:
   struct strand_context {
     std::unique_ptr<cell_strand_type> strand;
     task_executor*                    slot_ind_exec;
-    task_executor*                    cell_exec;
+    task_executor*                    mac_cell_exec;
+    task_executor*                    rlc_lower_exec;
   };
 
   std::vector<strand_context> cell_strands;

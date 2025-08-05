@@ -120,7 +120,8 @@ class dummy_dl_executor_mapper : public srs_du::du_high_cell_executor_mapper
 public:
   dummy_dl_executor_mapper(const std::initializer_list<task_executor*>& execs_) : execs(execs_.begin(), execs_.end()) {}
 
-  task_executor& executor(du_cell_index_t cell_index) override { return *execs[cell_index % execs.size()]; }
+  task_executor& mac_cell_executor(du_cell_index_t cell_index) override { return *execs[cell_index % execs.size()]; }
+  task_executor& rlc_lower_executor(du_cell_index_t cell_index) override { return *execs[cell_index % execs.size()]; }
   task_executor& slot_ind_executor(du_cell_index_t cell_index) override { return *execs[cell_index % execs.size()]; }
 
   std::vector<task_executor*> execs;
