@@ -351,4 +351,38 @@ public:
 /// Creates and returns an upper PHY factory.
 std::unique_ptr<upper_phy_factory> create_upper_phy_factory(const downlink_processor_factory_sw_config& dl_fact_config);
 
+/// Factory interface for creating upper PHY RX symbol handlers.
+class upper_phy_rx_symbol_handler_factory
+{
+public:
+  /// Default destructor.
+  virtual ~upper_phy_rx_symbol_handler_factory() = default;
+
+  /// \brief Creates a new upper PHY RX symbol handler.
+  ///
+  /// \param[in] ul_processor_pool_ Uplink slot processor pool.
+  virtual std::unique_ptr<upper_phy_rx_symbol_handler> create(uplink_slot_processor_pool& ul_processor_pool_) = 0;
+};
+
+/// Creates an RX symbol handler factory.
+std::unique_ptr<upper_phy_rx_symbol_handler_factory> create_rx_symbol_handler_factory();
+
+/// \brief Creates an RX symbol handler printer decorator factory.
+///
+/// This factory is used to create an RX symbol handler that prints the received symbols to a file.
+std::unique_ptr<upper_phy_rx_symbol_handler_factory>
+create_rx_symbol_handler_printer_decorator_factory(std::unique_ptr<upper_phy_rx_symbol_handler_factory> factory_,
+                                                   srslog::basic_logger&                                logger_,
+                                                   const std::string&                                   filename_,
+                                                   unsigned                                             nof_rb_,
+                                                   interval<unsigned>                                   ul_print_ports_,
+                                                   bool                                                 print_prach_);
+
+/// \brief Creates an RX symbol handler tap factory.
+///
+/// This factory is used to create an RX symbol handler that exposes the received symbols to external applications.
+std::unique_ptr<upper_phy_rx_symbol_handler_factory>
+create_rx_symbol_handler_tap_factory(std::unique_ptr<upper_phy_rx_symbol_handler_factory> factory,
+                                     srslog::basic_logger&                                logger_);
+
 } // namespace srsran

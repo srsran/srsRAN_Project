@@ -29,10 +29,6 @@
 namespace srsran {
 /// Upper PHY implementation configuration.
 struct upper_phy_impl_config {
-  /// Uplink bandwidth in resource blocks.
-  unsigned ul_bw_rb;
-  /// Number of receive antenna ports.
-  unsigned nof_rx_ports;
   /// Maximum number of layers for PUSCH transmissions.
   unsigned pusch_max_nof_layers;
   /// Downlink processor pool.
@@ -51,12 +47,6 @@ struct upper_phy_impl_config {
   upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier;
   /// Log level.
   srslog::basic_levels log_level;
-  /// Receive symbol printer. Leave empty to disable.
-  std::string rx_symbol_printer_filename;
-  /// Receive port the symbols are dumped from. Leave emtpy for all ports.
-  std::optional<unsigned> rx_symbol_printer_port;
-  /// Boolean flag for dumping PRACH symbols when set to true.
-  bool rx_symbol_printer_prach;
   /// Number of slots supported by the uplink PDU repository.
   size_t nof_slots_ul_pdu_repository;
   /// Downlink PDU validator.
@@ -65,6 +55,8 @@ struct upper_phy_impl_config {
   std::unique_ptr<uplink_pdu_validator> ul_pdu_validator;
   /// Metrics collector.
   std::unique_ptr<upper_phy_metrics_collector> metrics_collector;
+  /// RX symbol handler.
+  std::unique_ptr<upper_phy_rx_symbol_handler> rx_symbol_handler;
 };
 
 /// \brief Implementation of the upper PHY interface.

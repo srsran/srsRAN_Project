@@ -275,6 +275,59 @@ private:
   task_executor&                                prs_executor;
 };
 
+/// Generic upper PHY RX symbol handler factory.
+class upper_phy_rx_symbol_handler_factory_impl : public upper_phy_rx_symbol_handler_factory
+{
+public:
+  // See interface for documentation.
+  std::unique_ptr<upper_phy_rx_symbol_handler> create(uplink_slot_processor_pool& ul_processor_pool_) override
+  {
+    return std::make_unique<upper_phy_rx_symbol_handler_impl>(ul_processor_pool_);
+  }
+};
+
+/// Upper PHY RX symbol handler factory with printer decorator.
+class upper_phy_rx_symbol_handler_printer_decorator_factory : public upper_phy_rx_symbol_handler_factory
+{
+public:
+  explicit upper_phy_rx_symbol_handler_printer_decorator_factory(
+      std::unique_ptr<upper_phy_rx_symbol_handler_factory> factory_,
+      srslog::basic_logger&                                logger_,
+      const std::string&                                   filename_,
+      unsigned                                             nof_rb_,
+      interval<unsigned>                                   ul_print_ports_,
+      bool                                                 print_prach_) :
+    rx_symbol_handler_factory(std::move(factory_)),
+    logger(logger_),
+    filename(filename_),
+    nof_rb(nof_rb_),
+    ul_print_ports(ul_print_ports_),
+    print_prach(print_prach_)
+  {
+    srsran_assert(rx_symbol_handler_factory, "Invalid Rx symbol handler factory.");
+  }
+
+  // See interface for documentation.
+  std::unique_ptr<upper_phy_rx_symbol_handler> create(uplink_slot_processor_pool& ul_processor_pool_) override
+  {
+    // Create the RX symbol handler.
+    std::unique_ptr<upper_phy_rx_symbol_handler> rx_symbol_handler =
+        rx_symbol_handler_factory->create(ul_processor_pool_);
+
+    // Create and return the RX symbol handler printer decorator.
+    return std::make_unique<upper_phy_rx_symbol_handler_printer_decorator>(
+        std::move(rx_symbol_handler), logger, filename, nof_rb, ul_print_ports, print_prach);
+  }
+
+private:
+  std::unique_ptr<upper_phy_rx_symbol_handler_factory> rx_symbol_handler_factory;
+  srslog::basic_logger&                                logger;
+  const std::string&                                   filename;
+  unsigned                                             nof_rb;
+  interval<unsigned>                                   ul_print_ports;
+  bool                                                 print_prach;
+};
+
 static std::unique_ptr<downlink_processor_pool>
 create_downlink_processor_pool(std::shared_ptr<downlink_processor_factory> factory, const upper_phy_config& config)
 {
@@ -792,13 +845,8 @@ public:
     report_fatal_error_if_not(downlink_proc_factory, "Invalid DL processor factory.");
 
     upper_phy_impl_config phy_config;
-    phy_config.ul_bw_rb                    = config.ul_bw_rb;
     phy_config.pusch_max_nof_layers        = config.pusch_max_nof_layers;
-    phy_config.nof_rx_ports                = config.nof_rx_ports;
     phy_config.log_level                   = config.log_level;
-    phy_config.rx_symbol_printer_filename  = config.rx_symbol_printer_filename;
-    phy_config.rx_symbol_printer_port      = config.rx_symbol_printer_port;
-    phy_config.rx_symbol_printer_prach     = config.rx_symbol_printer_prach;
     phy_config.rx_symbol_request_notifier  = config.rx_symbol_request_notifier;
     phy_config.nof_slots_ul_pdu_repository = config.nof_ul_rg;
 
@@ -836,6 +884,40 @@ public:
     // Add the metrics collector.
     phy_config.metrics_collector = std::move(metrics_collector);
 
+    std::unique_ptr<upper_phy_rx_symbol_handler_factory> rx_symbol_handler_factory = create_rx_symbol_handler_factory();
+    report_fatal_error_if_not(rx_symbol_handler_factory, "Invalid Rx symbol handler factory.");
+
+    // If the RX symbol filename is set, create an RX symbol handler printer decorator.
+    if (!config.rx_symbol_printer_filename.empty()) {
+      interval<unsigned> ul_ports(0, config.nof_rx_ports);
+      if (config.rx_symbol_printer_port.has_value()) {
+        ul_ports.set(*config.rx_symbol_printer_port, *config.rx_symbol_printer_port + 1);
+      }
+      // Configure RX symbol handler for printing the resource grid.
+      srslog::basic_logger& logger = srslog::fetch_basic_logger("PHY", true);
+      logger.set_level(config.log_level);
+      rx_symbol_handler_factory =
+          create_rx_symbol_handler_printer_decorator_factory(std::move(rx_symbol_handler_factory),
+                                                             logger,
+                                                             config.rx_symbol_printer_filename,
+                                                             config.ul_bw_rb,
+                                                             ul_ports,
+                                                             config.rx_symbol_printer_prach);
+      report_fatal_error_if_not(rx_symbol_handler_factory, "Invalid Rx symbol handler printer decorator factory.");
+    }
+
+#ifdef SRSRAN_HAS_PHY_TAP
+    // Create the RX symbol handler with the PHY tap decorator.
+    srslog::basic_logger& logger = srslog::fetch_basic_logger("PHY_TAP", true);
+    logger.set_level(config.log_level);
+    rx_symbol_handler_factory = create_rx_symbol_handler_tap_factory(std::move(rx_symbol_handler_factory), logger);
+    report_fatal_error_if_not(rx_symbol_handler_factory, "Invalid Rx symbol handler tap factory.");
+#endif
+
+    // Create the RX symbol handler.
+    phy_config.rx_symbol_handler =
+        rx_symbol_handler_factory->create(phy_config.ul_processor_pool->get_slot_processor_pool());
+
     return std::make_unique<upper_phy_impl>(std::move(phy_config));
   }
 
@@ -845,6 +927,32 @@ private:
 };
 
 } // namespace
+
+std::unique_ptr<upper_phy_rx_symbol_handler_factory> srsran::create_rx_symbol_handler_factory()
+{
+  return std::make_unique<upper_phy_rx_symbol_handler_factory_impl>();
+}
+
+#ifndef SRSRAN_HAS_PHY_TAP
+std::unique_ptr<upper_phy_rx_symbol_handler_factory> create_rx_symbol_handler_tap_factory(srslog::basic_logger& logger_)
+{
+  report_fatal_error("The upper phy tap is not supported in this build. Please include the srsRAN upper phy tap plugin "
+                     "while building srsRAN "
+                     "to enable this feature.");
+}
+#endif
+
+std::unique_ptr<upper_phy_rx_symbol_handler_factory> srsran::create_rx_symbol_handler_printer_decorator_factory(
+    std::unique_ptr<upper_phy_rx_symbol_handler_factory> factory_,
+    srslog::basic_logger&                                logger_,
+    const std::string&                                   filename,
+    unsigned                                             nof_rb,
+    interval<unsigned>                                   ul_print_ports,
+    bool                                                 print_prach_)
+{
+  return std::make_unique<upper_phy_rx_symbol_handler_printer_decorator_factory>(
+      std::move(factory_), logger_, filename, nof_rb, ul_print_ports, print_prach_);
+}
 
 std::shared_ptr<downlink_processor_factory>
 srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw_config& config,
