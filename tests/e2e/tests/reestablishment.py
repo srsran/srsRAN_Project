@@ -564,7 +564,16 @@ def _test_reestablishments(
         always_download_artifacts=always_download_artifacts,
     )
 
-    start_network(ue_array, gnb, fivegc, gnb_post_cmd=("log --cu_level=debug", "log --mac_level=debug"))
+    start_network(
+        ue_array,
+        gnb,
+        fivegc,
+        gnb_post_cmd=(
+            "log --cu_level=debug",
+            "log --mac_level=debug",
+            "cell_cfg pdcch common --ss1_n_candidates=0 0 2 0 0",
+        ),
+    )
 
     ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
 
