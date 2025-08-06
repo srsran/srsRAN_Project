@@ -202,9 +202,7 @@ inline std::string format_rlc_tx_metrics(timer_duration metrics_period, const rl
         std::back_inserter(buffer),
         " num_pdus_with_segm={} pdu_rate_with_segm={}bps num_retx={}"
         " retx_rate={}bps ctrl_pdus={} ctrl_rate={}bps pull_latency_avg={} pull_latency_sum={}s"
-        " num_ack_latency_meas={} ack_latency_min={}ms ack_latency_avg={}s ack_latency_max={}ms"
-        " num_handle_status_latency_meas={} min_handle_status_latency={}us handle_status_latency_avg={}s"
-        " max_handle_status_latency_us={}us max_processed_acks={} max_processed_nacks={}",
+        " num_ack_latency_meas={}",
         scaled_fmt_integer(am.num_pdus_with_segmentation, false),
         float_to_eng_string(
             static_cast<float>(am.num_pdu_bytes_with_segmentation) * 8 * 1000 / metrics_period.count(), 1, false),
@@ -219,23 +217,52 @@ inline std::string format_rlc_tx_metrics(timer_duration metrics_period, const rl
                             1,
                             false),
         float_to_eng_string(static_cast<float>(m.tx_low.sum_pdu_latency_ns) * 1e-9, 1, false),
-        scaled_fmt_integer(am.num_ack_latency_meas, false),
-        am.min_ack_latency_ms,
-        float_to_eng_string(static_cast<float>(am.sum_ack_latency_ms * 1e-3) / am.num_ack_latency_meas, 1, false),
-        am.max_ack_latency_ms,
-        scaled_fmt_integer(am.num_handle_status_latency_meas, false),
-        am.min_handle_status_latency_us,
-        float_to_eng_string(
-            static_cast<float>(am.sum_handle_status_latency_us * 1e-6) / am.num_handle_status_latency_meas, 1, false),
-        am.max_handle_status_latency_us,
-        am.max_processed_acks,
-        am.max_processed_nacks);
+        scaled_fmt_integer(am.num_ack_latency_meas, false));
+    if (am.min_ack_latency_ms.has_value()) {
+      fmt::format_to(std::back_inserter(buffer), " ack_latency_min={}ms", am.min_ack_latency_ms.value());
+    }
+    if (am.num_ack_latency_meas > 0) {
+      fmt::format_to(
+          std::back_inserter(buffer),
+          " ack_latency_avg={}s",
+          float_to_eng_string(static_cast<float>(am.sum_ack_latency_ms * 1e-3) / am.num_ack_latency_meas, 1, false));
+    }
+    if (am.max_ack_latency_ms.has_value()) {
+      fmt::format_to(std::back_inserter(buffer), " ack_latency_max={}ms", am.max_ack_latency_ms.value());
+    }
+    fmt::format_to(std::back_inserter(buffer),
+                   " num_handle_status_latency_meas={}",
+                   scaled_fmt_integer(am.num_handle_status_latency_meas, false));
+    if (am.min_handle_status_latency_us.has_value()) {
+      fmt::format_to(
+          std::back_inserter(buffer), " min_handle_status_latency={}us", am.min_handle_status_latency_us.value());
+    }
+    if (am.max_handle_status_latency_us.has_value()) {
+      fmt::format_to(
+          std::back_inserter(buffer), " max_handle_status_latency={}us", am.max_handle_status_latency_us.value());
+    }
+    if (am.num_handle_status_latency_meas > 0) {
+      fmt::format_to(std::back_inserter(buffer),
+                     " handle_status_latency_avg={}s",
+                     float_to_eng_string(static_cast<float>(am.sum_handle_status_latency_us * 1e-6) /
+                                             am.num_handle_status_latency_meas,
+                                         1,
+                                         false));
+    }
+    if (am.max_processed_acks.has_value()) {
+      fmt::format_to(std::back_inserter(buffer), " max_processed_acks={}", am.max_processed_acks.value());
+    }
+    if (am.max_processed_nacks.has_value()) {
+      fmt::format_to(std::back_inserter(buffer), " max_processed_nacks={}", am.max_processed_nacks.value());
+    }
   }
   fmt::format_to(std::back_inserter(buffer), " pdu_latency_hist=[");
   for (unsigned i = 0; i < rlc_tx_metrics_lower::pdu_latency_hist_bins; i++) {
     fmt::format_to(std::back_inserter(buffer), " {}", float_to_eng_string(m.tx_low.pdu_latency_hist_ns[i], 1, false));
   }
-  fmt::format_to(std::back_inserter(buffer), "] max_pull_latency={}us", m.tx_low.max_pdu_latency_ns * 1e-3);
+  fmt::format_to(std::back_inserter(buffer),
+                 "] max_pull_latency={:.2f}us",
+                 static_cast<float>(m.tx_low.max_pdu_latency_ns * 1e-3));
   return to_c_str(buffer);
 }
 } // namespace srsran
