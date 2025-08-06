@@ -183,7 +183,7 @@ public:
   }
 
   // Called once task is enqueued in the strand queue to assess whether the strand should be locked and dispatched.
-  bool handle_enqueued_task(enqueue_priority prio, bool is_execute)
+  bool handle_enqueued_task(enqueue_priority prio)
   {
     // If the task_strand is acquired, it means that no other thread is running the pending tasks and we need to
     // dispatch a job to run them to the wrapped executor.
@@ -194,19 +194,14 @@ public:
       return true;
     }
 
-    // Check if the adapted executor gives us permission to run pending tasks inline. An example of when this may
-    // happen is when the caller is running in the same execution context of the underlying task worker or task worker
-    // pool. However, this permission is still not a sufficient condition to simply call the task inline. For
-    // instance, if the execution context is a thread pool, we have to ensure that the task_strand is not already
-    // acquired by another thread of the same pool. If we do not do this, running the task inline would conflict with
-    // the task_strand strict serialization requirements. For this reason, we will always enqueue the task and try to
-    // acquire the task_strand.
-    bool dispatch_successful;
-    if (is_execute) {
-      dispatch_successful = detail::get_task_executor_ref(out_exec).execute([this]() { run_enqueued_tasks(); });
-    } else {
-      dispatch_successful = detail::get_task_executor_ref(out_exec).defer([this]() { run_enqueued_tasks(); });
-    }
+    // We always resort to "defer" to dispatch the enqueued tasks.
+    // Note: The adapted executor giving us permission to run pending tasks inline is not a sufficient condition to
+    // do so, in case of strands. Why? If strands run inline tasks of other strands, we will start chaining tasks and
+    // entangling the strands, ending up limiting parallelization.
+    // Note: We should only allow inline execution if the caller is using the exact same strand executor, but
+    // to detect this situation, we would need to save the caller executor in a thread-local stack. I am not sure if it
+    // is worth it to implement this feature.
+    bool dispatch_successful = detail::get_task_executor_ref(out_exec).defer([this]() { run_enqueued_tasks(); });
     if (not dispatch_successful) {
       // Unable to dispatch executor job to run enqueued tasks.
       this->handle_failed_task_dispatch();
@@ -354,17 +349,10 @@ public:
     if (not impl.queue.try_push(std::move(task))) {
       return false;
     }
-    return impl.handle_enqueued_task(enqueue_priority::max, true);
+    return impl.handle_enqueued_task(enqueue_priority::max);
   }
 
-  [[nodiscard]] bool defer(unique_task task) override
-  {
-    // Enqueue task in task_strand queue.
-    if (not impl.queue.try_push(std::move(task))) {
-      return false;
-    }
-    return impl.handle_enqueued_task(enqueue_priority::max, false);
-  }
+  [[nodiscard]] bool defer(unique_task task) override { return execute(std::move(task)); }
 
   /// Number of priority levels supported by this strand.
   size_t nof_priority_levels() { return 1; }
@@ -434,18 +422,11 @@ public:
     if (not impl.queue.try_push(prio, std::move(task))) {
       return false;
     }
-    return impl.handle_enqueued_task(prio, true);
+    return impl.handle_enqueued_task(prio);
   }
 
   /// \brief Dispatch task with priority \c prio. The task is never run inline.
-  [[nodiscard]] bool defer(enqueue_priority prio, unique_task task)
-  {
-    // Enqueue task in task_strand queue.
-    if (not impl.queue.try_push(prio, std::move(task))) {
-      return false;
-    }
-    return impl.handle_enqueued_task(prio, false);
-  }
+  [[nodiscard]] bool defer(enqueue_priority prio, unique_task task) { return execute(prio, std::move(task)); }
 
   /// Number of priority levels supported by this strand.
   size_t nof_priority_levels() { return impl.queue.queue.nof_priority_levels(); }
