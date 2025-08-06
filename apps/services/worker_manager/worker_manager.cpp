@@ -361,7 +361,7 @@ static unsigned get_default_nof_workers(const worker_manager_config& worker_cfg)
 
   unsigned max_cpus = worker_cfg.main_pool_affinity_cfg.mask.count();
   if (max_cpus == 0) {
-    max_cpus = cpu_architecture_info::get().get_host_total_nof_cpus();
+    max_cpus = cpu_architecture_info::get().get_host_nof_available_cpus();
   }
   return std::min(nof_workers, max_cpus - 1);
 }
