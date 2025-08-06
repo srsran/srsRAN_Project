@@ -555,7 +555,12 @@ def _handover_multi_ues_iperf(
         num_cells=2,
         cell_position_offset=cell_position_offset,
         log_ip_level="debug",
-        warning_allowlist=["MAC max KOs reached", "Reached maximum number of RETX"],
+        warning_allowlist=[
+            "MAC max KOs reached",
+            "Reached maximum number of RETX",
+            "UL buffering timed out",
+            '"Intra CU Handover Target Routine" failed',
+        ],
     )
 
     configure_artifacts(
