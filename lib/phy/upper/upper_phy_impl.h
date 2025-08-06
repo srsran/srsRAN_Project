@@ -54,7 +54,7 @@ struct upper_phy_impl_config {
   /// Uplink PDU validator.
   std::unique_ptr<uplink_pdu_validator> ul_pdu_validator;
   /// Metrics collector.
-  std::unique_ptr<upper_phy_metrics_collector> metrics_collector;
+  std::shared_ptr<upper_phy_metrics_collector> metrics_collector;
   /// RX symbol handler.
   std::unique_ptr<upper_phy_rx_symbol_handler> rx_symbol_handler;
 };
@@ -137,7 +137,7 @@ private:
   /// Upper PHY logger.
   srslog::basic_logger& logger;
   /// Metrics collector.
-  std::unique_ptr<upper_phy_metrics_collector> metrics_collector;
+  std::shared_ptr<upper_phy_metrics_collector> metrics_collector;
   /// Receive buffer pool.
   std::unique_ptr<rx_buffer_pool_controller> rx_buf_pool;
   /// Downlink resource grid pool.

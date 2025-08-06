@@ -23,16 +23,6 @@
 namespace srsran {
 namespace srs_du {
 
-/// \brief Interface used to access different executors used in the DU-Low.
-class du_low_cell_executor_mapper
-{
-public:
-  virtual ~du_low_cell_executor_mapper() = default;
-
-  /// Retrieves the upper physical layer execution configuration.
-  virtual const upper_phy_execution_configuration& get_upper_phy_execution_config() const = 0;
-};
-
 /// \brief DU low executor mapper interface.
 ///
 /// Provides access to the different cell executor mappers.
@@ -42,13 +32,8 @@ public:
   /// Default destructor.
   virtual ~du_low_executor_mapper() = default;
 
-  /// \brief Retrieves the DU low cell executor mapper for a given cell index.
-  ///
-  /// \remark An assertion is triggered the cell index exceeds the number of executor configurations.
-  virtual du_low_cell_executor_mapper& get_cell_mapper(unsigned cell_index) = 0;
-
-  /// Retrieves the DU low cell executor mapper via closed braces operator.
-  du_low_cell_executor_mapper& operator[](unsigned cell_index) { return get_cell_mapper(cell_index); }
+  /// Retrieves the upper physical layer execution configuration.
+  virtual const upper_phy_execution_configuration& get_upper_phy_execution_config() const = 0;
 };
 
 /// \brief Collects the task executor mapper for using a single task executor.
@@ -111,10 +96,8 @@ struct du_low_executor_mapper_metric_config {
 
 /// Configuration of DU-low executor mapper.
 struct du_low_executor_mapper_config {
-  /// \brief Executor configuration for each cell.
-  ///
-  /// \remark An assertion is triggered if it is empty.
-  std::vector<du_low_executor_mapper_exec_config> cells;
+  /// Common executor configuration.
+  du_low_executor_mapper_exec_config executors;
   /// \brief Optional executor metric configuration.
   ///
   /// If it is present, the executor mapper wraps the executors with metric decorators.

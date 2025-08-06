@@ -104,9 +104,6 @@ struct worker_manager {
   cu_cp_pcap_executor_mapper& get_cu_cp_pcap_executors() { return *pcap_exec_mapper; }
   cu_up_pcap_executor_mapper& get_cu_up_pcap_executors() { return *pcap_exec_mapper; }
 
-  // Gets the DU-low downlink executors.
-  task_executor& get_du_low_dl_executor(unsigned sector_id) const;
-
   /// Get executor based on the name.
   task_executor* find_executor(const std::string& name) const
   {
@@ -128,10 +125,8 @@ private:
     // Description of L1 executors for DU-low.
     // TODO
   };
-  std::unique_ptr<srs_du::du_high_executor_mapper> du_high_exec_mapper;
-  std::unique_ptr<srs_du::du_low_executor_mapper>  du_low_exec_mapper;
-  std::vector<task_executor*>                      crit_path_prio_executors;
-
+  std::unique_ptr<srs_du::du_high_executor_mapper>  du_high_exec_mapper;
+  std::unique_ptr<srs_du::du_low_executor_mapper>   du_low_exec_mapper;
   std::unique_ptr<srs_cu_cp::cu_cp_executor_mapper> cu_cp_exec_mapper;
   std::unique_ptr<srs_cu_up::cu_up_executor_mapper> cu_up_exec_mapper;
 

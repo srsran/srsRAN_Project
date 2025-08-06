@@ -18,15 +18,83 @@
 
 using namespace srsran;
 
-static void generate_du_low_config(srs_du::du_low_config&                          out_config,
-                                   const du_low_unit_config&                       du_low,
-                                   span<const o_du_low_unit_config::du_low_config> cells)
+static srs_du::du_low_config generate_du_low_config(const du_low_unit_config&                       du_low,
+                                                    span<const o_du_low_unit_config::du_low_config> cells)
 {
+  srs_du::du_low_config out_config;
   out_config.cells.reserve(cells.size());
+
+  unsigned max_ul_bw_rb         = 0;
+  unsigned pusch_max_nof_layers = 0;
+  unsigned max_nof_rx_antennas  = 0;
+  for (unsigned i = 0, e = cells.size(); i != e; ++i) {
+    const o_du_low_unit_config::du_low_config& cell = cells[i];
+    max_ul_bw_rb                                    = std::max(cell.bw_rb, max_ul_bw_rb);
+    pusch_max_nof_layers                            = std::max(cell.pusch_max_nof_layers, pusch_max_nof_layers);
+    max_nof_rx_antennas                             = std::max(cell.nof_rx_antennas, max_nof_rx_antennas);
+  }
+
+  upper_phy_factory_configuration& upper_phy_factory_config = out_config.upper_phy_common_config;
+  upper_phy_factory_config.log_level                        = du_low.loggers.phy_level;
+  upper_phy_factory_config.enable_logging_broadcast         = du_low.loggers.broadcast_enabled;
+  upper_phy_factory_config.logger_max_hex_size              = du_low.loggers.hex_max_size;
+  upper_phy_factory_config.enable_metrics                   = du_low.metrics_cfg.enable_du_low;
+  upper_phy_factory_config.pusch_sinr_calc_method =
+      channel_state_information::sinr_type_from_string(du_low.expert_phy_cfg.pusch_sinr_calc_method);
+  upper_phy_factory_config.rx_symbol_printer_filename = du_low.expert_phy_cfg.nof_slots_request_headroom;
+  upper_phy_factory_config.rx_symbol_printer_port     = du_low.loggers.phy_rx_symbols_port;
+  upper_phy_factory_config.rx_symbol_printer_prach    = du_low.loggers.phy_rx_symbols_prach;
+  upper_phy_factory_config.ldpc_encoder_type          = "auto";
+  upper_phy_factory_config.ldpc_decoder_type          = "auto";
+  upper_phy_factory_config.ldpc_rate_dematcher_type   = "auto";
+  upper_phy_factory_config.crc_calculator_type        = "auto";
+  upper_phy_factory_config.pusch_channel_estimator_fd_strategy =
+      du_low.expert_phy_cfg.pusch_channel_estimator_fd_strategy;
+  upper_phy_factory_config.pusch_channel_estimator_td_strategy =
+      du_low.expert_phy_cfg.pusch_channel_estimator_td_strategy;
+  upper_phy_factory_config.pusch_channel_estimator_compensate_cfo =
+      du_low.expert_phy_cfg.pusch_channel_estimator_cfo_compensation;
+  upper_phy_factory_config.pusch_channel_equalizer_algorithm = du_low.expert_phy_cfg.pusch_channel_equalizer_algorithm;
+  upper_phy_factory_config.ldpc_decoder_iterations           = du_low.expert_phy_cfg.pusch_decoder_max_iterations;
+  upper_phy_factory_config.ldpc_decoder_early_stop           = du_low.expert_phy_cfg.pusch_decoder_early_stop;
+  upper_phy_factory_config.ldpc_decoder_force_decoding       = du_low.expert_phy_cfg.pusch_decoder_force_decoding;
+  upper_phy_factory_config.nof_rx_ports                      = max_nof_rx_antennas;
+  upper_phy_factory_config.ul_bw_rb                          = max_ul_bw_rb;
+  upper_phy_factory_config.pusch_max_nof_layers              = pusch_max_nof_layers;
+  upper_phy_factory_config.enable_metrics                    = du_low.metrics_cfg.enable_du_low;
+  upper_phy_factory_config.ldpc_decoder_type                 = "auto";
+  upper_phy_factory_config.enable_phy_tap                    = du_low.expert_phy_cfg.enable_phy_tap;
+
+  // The flexible PDSCH processor implementation will be used by default.
+  const auto& upper_phy_threads_cfg = du_low.expert_execution_cfg.threads;
+  if ((upper_phy_threads_cfg.pdsch_processor_type == "auto") ||
+      (upper_phy_threads_cfg.pdsch_processor_type == "flexible")) {
+    // Setup parameters for synchronous operation:
+    // - the batch size must be the maximum to avoid more than one batch; and
+    // - the maximum number of simultaneous PDSCH equals to the number of DL processing threads.
+    unsigned cb_batch_length            = pdsch_processor_flexible_configuration::synchronous_cb_batch_length;
+    unsigned max_nof_simultaneous_pdsch = upper_phy_threads_cfg.nof_dl_threads;
+
+    // Override default parameters if the CB batch length is set for asynchronous concurrent operation.
+    if (upper_phy_threads_cfg.pdsch_cb_batch_length != du_low_unit_expert_threads_config::synchronous_cb_batch_length) {
+      // For asynchronous operation:
+      // - Use the given CB batch length;
+      // - The number of simultaneous PDSCH is equal to the total number of PDSCH per slot.
+      cb_batch_length            = upper_phy_threads_cfg.pdsch_cb_batch_length;
+      max_nof_simultaneous_pdsch = MAX_PDSCH_PDUS_PER_SLOT;
+    }
+
+    // Emplace configuration parameters.
+    pdsch_processor_flexible_configuration pdsch_proc_config = {
+        .cb_batch_length = cb_batch_length, .max_nof_simultaneous_pdsch = max_nof_simultaneous_pdsch};
+    upper_phy_factory_config.pdsch_processor.emplace<pdsch_processor_flexible_configuration>(pdsch_proc_config);
+  } else if (upper_phy_threads_cfg.pdsch_processor_type == "generic") {
+    upper_phy_factory_config.pdsch_processor.emplace<pdsch_processor_generic_configuration>();
+  }
 
   for (unsigned i = 0, e = cells.size(); i != e; ++i) {
     const o_du_low_unit_config::du_low_config& cell           = cells[i];
-    upper_phy_config&                          upper_phy_cell = out_config.cells.emplace_back().upper_phy_cfg;
+    upper_phy_configuration&                   upper_phy_cell = out_config.cells.emplace_back().upper_phy_cfg;
 
     // Get bandwidth in PRB.
     const unsigned bw_rb = cell.bw_rb;
@@ -95,62 +163,39 @@ static void generate_du_low_config(srs_du::du_low_config&                       
                   to_string(cell.freq_range),
                   to_string(cell.duplex));
 
-    upper_phy_cell.nof_slots_request_headroom         = du_low.expert_phy_cfg.nof_slots_request_headroom;
-    upper_phy_cell.allow_request_on_empty_uplink_slot = du_low.expert_phy_cfg.allow_request_on_empty_uplink_slot;
-    upper_phy_cell.pusch_max_nof_layers               = cell.pusch_max_nof_layers;
-    upper_phy_cell.log_level                          = du_low.loggers.phy_level;
-    upper_phy_cell.enable_logging_broadcast           = du_low.loggers.broadcast_enabled;
-    upper_phy_cell.rx_symbol_printer_filename         = du_low.loggers.phy_rx_symbols_filename;
-    upper_phy_cell.rx_symbol_printer_port             = du_low.loggers.phy_rx_symbols_port;
-    upper_phy_cell.rx_symbol_printer_prach            = du_low.loggers.phy_rx_symbols_prach;
-    upper_phy_cell.logger_max_hex_size                = du_low.loggers.hex_max_size;
-    upper_phy_cell.enable_metrics                     = du_low.metrics_cfg.enable_du_low;
-    upper_phy_cell.nof_tx_ports                       = cell.nof_tx_antennas;
-    upper_phy_cell.nof_rx_ports                       = cell.nof_rx_antennas;
-    upper_phy_cell.ldpc_decoder_iterations            = du_low.expert_phy_cfg.pusch_decoder_max_iterations;
-    upper_phy_cell.ldpc_decoder_early_stop            = du_low.expert_phy_cfg.pusch_decoder_early_stop;
-    upper_phy_cell.ldpc_decoder_force_decoding        = du_low.expert_phy_cfg.pusch_decoder_force_decoding;
-    upper_phy_cell.nof_dl_rg                          = dl_pipeline_depth + 2;
-    upper_phy_cell.nof_dl_processors                  = dl_pipeline_depth;
-    upper_phy_cell.nof_ul_rg                          = ul_pipeline_depth;
-    upper_phy_cell.nof_prach_buffer                   = prach_pipeline_depth * nof_slots_per_subframe;
-    upper_phy_cell.max_nof_td_prach_occasions         = prach_cfg.nof_occasions_within_slot;
-    upper_phy_cell.max_nof_fd_prach_occasions         = 1;
-    upper_phy_cell.is_prach_long_format               = is_long_preamble(prach_cfg.format);
-    upper_phy_cell.pusch_sinr_calc_method =
-        channel_state_information::sinr_type_from_string(du_low.expert_phy_cfg.pusch_sinr_calc_method);
-
+    upper_phy_cell.nof_tx_ports                                     = cell.nof_tx_antennas;
+    upper_phy_cell.nof_rx_ports                                     = cell.nof_rx_antennas;
+    upper_phy_cell.nof_dl_rg                                        = dl_pipeline_depth + 2;
+    upper_phy_cell.nof_ul_rg                                        = ul_pipeline_depth;
+    upper_phy_cell.nof_prach_buffer                                 = prach_pipeline_depth * nof_slots_per_subframe;
+    upper_phy_cell.max_nof_td_prach_occasions                       = prach_cfg.nof_occasions_within_slot;
+    upper_phy_cell.max_nof_fd_prach_occasions                       = 1;
+    upper_phy_cell.is_prach_long_format                             = is_long_preamble(prach_cfg.format);
+    upper_phy_cell.nof_dl_processors                                = dl_pipeline_depth;
+    upper_phy_cell.dl_bw_rb                                         = bw_rb;
+    upper_phy_cell.ul_bw_rb                                         = bw_rb;
+    upper_phy_cell.pusch_max_nof_layers                             = cell.pusch_max_nof_layers;
     upper_phy_cell.active_scs                                       = {};
     upper_phy_cell.active_scs[to_numerology_value(cell.scs_common)] = true;
+    upper_phy_cell.rx_buffer_config.nof_buffers                     = nof_buffers;
+    upper_phy_cell.rx_buffer_config.nof_codeblocks                  = max_rx_nof_codeblocks;
+    upper_phy_cell.rx_buffer_config.max_codeblock_size              = ldpc::MAX_CODEBLOCK_SIZE;
+    upper_phy_cell.rx_buffer_config.expire_timeout_slots            = expire_pusch_harq_timeout_slots;
+    upper_phy_cell.rx_buffer_config.external_soft_bits              = false;
 
-    upper_phy_cell.dl_bw_rb = bw_rb;
-    upper_phy_cell.ul_bw_rb = bw_rb;
-
-    upper_phy_cell.rx_buffer_config.nof_buffers          = nof_buffers;
-    upper_phy_cell.rx_buffer_config.nof_codeblocks       = max_rx_nof_codeblocks;
-    upper_phy_cell.rx_buffer_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
-    upper_phy_cell.rx_buffer_config.expire_timeout_slots = expire_pusch_harq_timeout_slots;
-    upper_phy_cell.rx_buffer_config.external_soft_bits   = false;
-    upper_phy_cell.crc_calculator_type                   = "auto";
-    upper_phy_cell.ldpc_rate_dematcher_type              = "auto";
-    upper_phy_cell.ldpc_decoder_type                     = "auto";
-    upper_phy_cell.pusch_channel_estimator_fd_strategy   = du_low.expert_phy_cfg.pusch_channel_estimator_fd_strategy;
-    upper_phy_cell.pusch_channel_estimator_td_strategy   = du_low.expert_phy_cfg.pusch_channel_estimator_td_strategy;
-    upper_phy_cell.pusch_channel_estimator_compensate_cfo =
-        du_low.expert_phy_cfg.pusch_channel_estimator_cfo_compensation;
-    upper_phy_cell.pusch_channel_equalizer_algorithm = du_low.expert_phy_cfg.pusch_channel_equalizer_algorithm;
-    upper_phy_cell.enable_phy_tap                    = du_low.expert_phy_cfg.enable_phy_tap;
     if (!is_valid_upper_phy_config(upper_phy_cell)) {
       report_error("Invalid upper PHY configuration.\n");
     }
   }
+
+  return out_config;
 }
 
 void srsran::generate_o_du_low_config(srs_du::o_du_low_config&                        out_config,
                                       const du_low_unit_config&                       du_low_unit_cfg,
                                       span<const o_du_low_unit_config::du_low_config> cells)
 {
-  generate_du_low_config(out_config.du_low_cfg, du_low_unit_cfg, cells);
+  out_config.du_low_cfg = generate_du_low_config(du_low_unit_cfg, cells);
 }
 
 void srsran::fill_du_low_worker_manager_config(worker_manager_config&    config,

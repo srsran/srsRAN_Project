@@ -92,9 +92,13 @@ private:
 class pusch_processor_pool : public pusch_processor
 {
 public:
+  /// Alias for the common UCI processor pool. The processors of this pool operate synchronously from the thread that
+  /// calls processing.
+  using uci_processor_pool = bounded_unique_object_pool<pusch_processor>;
+
   /// Creates a PUSCH processor pool from a list of processors. Ownership is transferred to the pool.
   pusch_processor_pool(span<std::unique_ptr<pusch_processor_wrapper>> processors_,
-                       span<std::unique_ptr<pusch_processor>>         uci_processors_) :
+                       std::shared_ptr<uci_processor_pool>            uci_processors_) :
     logger(srslog::fetch_basic_logger("PHY")), processors(processors_), uci_processors(uci_processors_)
   {
   }
@@ -134,7 +138,7 @@ public:
     }
 
     // Process UCI synchronously if UCI is present.
-    auto uci_processor = uci_processors.get();
+    uci_processor_pool::ptr uci_processor = uci_processors->get();
     if (uci_processor) {
       logger.warning(
           pdu.slot.sfn(), pdu.slot.slot_index(), "PUSCH processing queue is full. Processing UCI {:s}.", pdu);
@@ -161,8 +165,9 @@ private:
   srslog::basic_logger& logger;
   /// Actual PUSCH processor pool.
   pusch_processor_wrapper::pool processors;
-  /// Synchronous PUSCH processor. It only processes UCI.
-  bounded_unique_object_pool<pusch_processor> uci_processors;
+  /// UCI processor pool, used only the normal processor pool runs out of processors or the PUSCH transmission only
+  /// contains UCI.
+  std::shared_ptr<uci_processor_pool> uci_processors;
 };
 
 } // namespace srsran

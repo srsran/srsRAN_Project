@@ -485,16 +485,9 @@ worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::
     // Get common physical layer executor.
     task_executor* phy_exec = exec_mng.executors().at("phy_exec");
 
-    // Fill the task executors for each cell.
-    for (unsigned cell_id = 0, cell_end = nof_cells; cell_id != cell_end; ++cell_id) {
-      du_low_exec_mapper_config.cells.emplace_back(
-          srs_du::du_low_executor_mapper_single_exec_config{.common_executor = {phy_exec, nof_workers_general_pool}});
-    }
-
-    // Save DL executors for the higher layers.
-    for (unsigned cell_id = 0, cell_end = nof_cells; cell_id != cell_end; ++cell_id) {
-      crit_path_prio_executors.push_back(exec_mng.executors().at("phy_exec"));
-    }
+    // Fill the task executors.
+    du_low_exec_mapper_config.executors =
+        srs_du::du_low_executor_mapper_single_exec_config{.common_executor = {phy_exec, nof_workers_general_pool}};
 
     // Need to create dedicated DU-high L2 threads as there is only one DU-low thread.
     desc.l2_execs = create_dedicated_du_hi_cell_executors(exec_mng, nof_cells, rt_mode, affinity_mng);
@@ -502,19 +495,15 @@ worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::
   } else {
     // RF case.
 
-    for (unsigned cell_id = 0, cell_end = nof_cells; cell_id != cell_end; ++cell_id) {
-      // Fill the task executors for each cell.
-      du_low_exec_mapper_config.cells.emplace_back(srs_du::du_low_executor_mapper_flexible_exec_config{
-          .high_priority_executor        = {rt_hi_prio_exec, nof_workers_general_pool},
-          .medium_priority_executor      = {non_rt_medium_prio_exec, nof_workers_general_pool},
-          .low_priority_executor         = {non_rt_low_prio_exec, nof_workers_general_pool},
-          .dl_executor                   = {rt_hi_prio_exec, nof_workers_general_pool},
-          .pdsch_executor                = {rt_hi_prio_exec, nof_workers_general_pool},
-          .max_pucch_concurrency         = du_low.max_pucch_concurrency,
-          .max_pusch_and_srs_concurrency = du_low.max_pusch_and_srs_concurrency});
-
-      crit_path_prio_executors.push_back(non_rt_medium_prio_exec);
-    }
+    // Fill the task executors for each cell.
+    du_low_exec_mapper_config.executors = srs_du::du_low_executor_mapper_flexible_exec_config{
+        .high_priority_executor        = {rt_hi_prio_exec, nof_workers_general_pool},
+        .medium_priority_executor      = {non_rt_medium_prio_exec, nof_workers_general_pool},
+        .low_priority_executor         = {non_rt_low_prio_exec, nof_workers_general_pool},
+        .dl_executor                   = {rt_hi_prio_exec, nof_workers_general_pool},
+        .pdsch_executor                = {rt_hi_prio_exec, nof_workers_general_pool},
+        .max_pucch_concurrency         = du_low.max_pucch_concurrency,
+        .max_pusch_and_srs_concurrency = du_low.max_pusch_and_srs_concurrency};
 
     // Setup metrics configuration.
     if (du_low.metrics_period.has_value()) {
@@ -702,8 +691,7 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
         sector_config.ul_exec                                          = phy_exec;
         sector_config.tx_exec                                          = phy_exec;
         sector_config.rx_exec                                          = phy_exec;
-        sector_config.prach_exec =
-            du_low_exec_mapper->get_cell_mapper(cell_id).get_upper_phy_execution_config().prach_executor.executor;
+        sector_config.prach_exec = du_low_exec_mapper->get_upper_phy_execution_config().prach_executor.executor;
         break;
       }
       case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::dual: {
@@ -730,8 +718,7 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
         sector_config.ul_exec                                          = exec_mng.executors().at(exec_ul);
         sector_config.tx_exec                                          = exec_mng.executors().at(exec_dl);
         sector_config.rx_exec                                          = exec_mng.executors().at(exec_ul);
-        sector_config.prach_exec =
-            du_low_exec_mapper->get_cell_mapper(cell_id).get_upper_phy_execution_config().prach_executor.executor;
+        sector_config.prach_exec = du_low_exec_mapper->get_upper_phy_execution_config().prach_executor.executor;
         break;
       }
       case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::quad: {
@@ -772,8 +759,7 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
         sector_config.ul_exec                                          = exec_mng.executors().at(exec_ul);
         sector_config.tx_exec                                          = exec_mng.executors().at(exec_tx);
         sector_config.rx_exec                                          = exec_mng.executors().at(exec_rx);
-        sector_config.prach_exec =
-            du_low_exec_mapper->get_cell_mapper(cell_id).get_upper_phy_execution_config().prach_executor.executor;
+        sector_config.prach_exec = du_low_exec_mapper->get_upper_phy_execution_config().prach_executor.executor;
         break;
       }
     }
@@ -791,10 +777,4 @@ void worker_manager::create_ru_dummy_executors()
                      affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::ru),
                      os_thread_realtime_priority::max());
   dummy_exec_mapper = create_ru_dummy_executor_mapper(*exec_mng.executors().at("ru_dummy_exec"));
-}
-
-task_executor& worker_manager::get_du_low_dl_executor(unsigned sector_id) const
-{
-  srsran_assert(sector_id < crit_path_prio_executors.size(), "Invalid sector configuration");
-  return *crit_path_prio_executors[sector_id];
 }

@@ -284,12 +284,15 @@ public:
       processor = std::make_unique<pusch_processor_wrapper>(regular_factory->create());
     }
 
-    std::vector<std::unique_ptr<pusch_processor>> uci_processors(nof_uci_processors);
-    for (std::unique_ptr<pusch_processor>& processor : uci_processors) {
-      processor = uci_factory->create();
+    if (!uci_processor_pool) {
+      std::vector<std::unique_ptr<pusch_processor>> uci_processors(nof_uci_processors);
+      for (std::unique_ptr<pusch_processor>& processor : uci_processors) {
+        processor = uci_factory->create();
+      }
+      uci_processor_pool = std::make_shared<pusch_processor_pool::uci_processor_pool>(uci_processors);
     }
 
-    return std::make_unique<pusch_processor_pool>(processors, uci_processors);
+    return std::make_unique<pusch_processor_pool>(processors, uci_processor_pool);
   }
 
   std::unique_ptr<pusch_processor> create(srslog::basic_logger& logger) override
@@ -303,21 +306,25 @@ public:
       processor = std::make_unique<pusch_processor_wrapper>(regular_factory->create(logger));
     }
 
-    std::vector<std::unique_ptr<pusch_processor>> uci_processors(nof_uci_processors);
-    for (std::unique_ptr<pusch_processor>& processor : uci_processors) {
-      processor = uci_factory->create(logger);
+    if (!uci_processor_pool) {
+      std::vector<std::unique_ptr<pusch_processor>> uci_processors(nof_uci_processors);
+      for (std::unique_ptr<pusch_processor>& processor : uci_processors) {
+        processor = uci_factory->create(logger);
+      }
+      uci_processor_pool = std::make_shared<pusch_processor_pool::uci_processor_pool>(uci_processors);
     }
 
-    return std::make_unique<pusch_processor_pool>(processors, uci_processors);
+    return std::make_unique<pusch_processor_pool>(processors, uci_processor_pool);
   }
 
   std::unique_ptr<pusch_pdu_validator> create_validator() override { return regular_factory->create_validator(); }
 
 private:
-  std::shared_ptr<pusch_processor_factory> regular_factory;
-  std::shared_ptr<pusch_processor_factory> uci_factory;
-  unsigned                                 nof_regular_processors;
-  unsigned                                 nof_uci_processors;
+  std::shared_ptr<pusch_processor_factory>                  regular_factory;
+  std::shared_ptr<pusch_processor_factory>                  uci_factory;
+  std::shared_ptr<pusch_processor_pool::uci_processor_pool> uci_processor_pool;
+  unsigned                                                  nof_regular_processors;
+  unsigned                                                  nof_uci_processors;
 };
 
 class ulsch_demultiplex_factory_sw : public ulsch_demultiplex_factory

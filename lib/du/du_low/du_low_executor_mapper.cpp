@@ -21,132 +21,93 @@ using namespace srs_du;
 
 namespace {
 
-class du_low_cell_executor_mapper_impl : public du_low_cell_executor_mapper
-{
-public:
-  explicit du_low_cell_executor_mapper_impl(const upper_phy_execution_configuration& config_) : config(config_) {}
-
-  // See interface for documentation.
-  const upper_phy_execution_configuration& get_upper_phy_execution_config() const override { return config; }
-
-private:
-  upper_phy_execution_configuration config;
-};
-
 class du_low_executor_mapper_impl : public du_low_executor_mapper
 {
 public:
   du_low_executor_mapper_impl(const du_low_executor_mapper_config& config)
   {
-    srsran_assert(!config.cells.empty(), "Cells in the executor mapper configuration must not be empty.");
-    for (unsigned cell_idx = 0, end = config.cells.size(); cell_idx != end; ++cell_idx) {
-      const auto& cell_config = config.cells[cell_idx];
+    if (std::holds_alternative<du_low_executor_mapper_single_exec_config>(config.executors)) {
+      const auto& single = std::get<du_low_executor_mapper_single_exec_config>(config.executors);
 
-      // Upper physical layer executor configuration.
-      upper_phy_execution_configuration phy_config;
+      srsran_assert(single.common_executor.executor != nullptr, "Invalid common executor.");
+      srsran_assert(single.common_executor.max_concurrency != 0, "Invalid common executor maximum concurrency.");
 
-      if (std::holds_alternative<du_low_executor_mapper_single_exec_config>(cell_config)) {
-        const auto& single = std::get<du_low_executor_mapper_single_exec_config>(cell_config);
+      phy_config.pdcch_executor           = single.common_executor;
+      phy_config.pdsch_executor           = single.common_executor;
+      phy_config.ssb_executor             = single.common_executor;
+      phy_config.csi_rs_executor          = single.common_executor;
+      phy_config.prs_executor             = single.common_executor;
+      phy_config.dl_grid_executor         = single.common_executor;
+      phy_config.pdsch_codeblock_executor = single.common_executor;
+      phy_config.prach_executor           = single.common_executor;
+      phy_config.pusch_executor           = single.common_executor;
+      phy_config.pusch_decoder_executor   = single.common_executor;
+      phy_config.pucch_executor           = single.common_executor;
+      phy_config.srs_executor             = single.common_executor;
+    } else if (std::holds_alternative<du_low_executor_mapper_flexible_exec_config>(config.executors)) {
+      const unsigned                           max_prach_batch_size = 1;
+      const unsigned                           max_pucch_batch_size = 16;
+      const unsigned                           max_pusch_batch_size = 1;
+      static constexpr std::array<unsigned, 1> pucch_queue_sizes{default_queue_size};
+      static constexpr std::array<unsigned, 1> prach_queue_sizes{default_queue_size};
+      static constexpr std::array<unsigned, 2> pusch_srs_queue_sizes{default_queue_size, default_queue_size};
 
-        srsran_assert(single.common_executor.executor != nullptr, "Invalid common executor.");
-        srsran_assert(single.common_executor.max_concurrency != 0, "Invalid common executor maximum concurrency.");
+      const auto& flexible                = std::get<du_low_executor_mapper_flexible_exec_config>(config.executors);
+      phy_config.pdcch_executor           = flexible.dl_executor;
+      phy_config.pdsch_executor           = flexible.dl_executor;
+      phy_config.ssb_executor             = flexible.dl_executor;
+      phy_config.csi_rs_executor          = flexible.dl_executor;
+      phy_config.prs_executor             = flexible.dl_executor;
+      phy_config.dl_grid_executor         = flexible.dl_executor;
+      phy_config.pdsch_codeblock_executor = flexible.pdsch_executor;
+      phy_config.prach_executor =
+          create_strand(flexible.high_priority_executor, prach_queue_sizes, max_prach_batch_size).front();
+      phy_config.pucch_executor =
+          create_task_fork_limiter(
+              flexible.high_priority_executor, flexible.max_pucch_concurrency, pucch_queue_sizes, max_pucch_batch_size)
+              .front();
+      auto pusch_srs_execs              = create_task_fork_limiter(flexible.medium_priority_executor,
+                                                      flexible.max_pusch_and_srs_concurrency,
+                                                      pusch_srs_queue_sizes,
+                                                      max_pusch_batch_size);
+      phy_config.pusch_executor         = pusch_srs_execs[0];
+      phy_config.pusch_decoder_executor = pusch_srs_execs[1];
+      phy_config.srs_executor           = pusch_srs_execs[1];
+    }
 
-        phy_config.pdcch_executor           = single.common_executor;
-        phy_config.pdsch_executor           = single.common_executor;
-        phy_config.ssb_executor             = single.common_executor;
-        phy_config.csi_rs_executor          = single.common_executor;
-        phy_config.prs_executor             = single.common_executor;
-        phy_config.dl_grid_executor         = single.common_executor;
-        phy_config.pdsch_codeblock_executor = single.common_executor;
-        phy_config.prach_executor           = single.common_executor;
-        phy_config.pusch_executor           = single.common_executor;
-        phy_config.pusch_decoder_executor   = single.common_executor;
-        phy_config.pucch_executor           = single.common_executor;
-        phy_config.srs_executor             = single.common_executor;
-      } else if (std::holds_alternative<du_low_executor_mapper_flexible_exec_config>(cell_config)) {
-        const unsigned                           max_prach_batch_size = 1;
-        const unsigned                           max_pucch_batch_size = 16;
-        const unsigned                           max_pusch_batch_size = 1;
-        static constexpr std::array<unsigned, 1> pucch_queue_sizes{default_queue_size};
-        static constexpr std::array<unsigned, 1> prach_queue_sizes{default_queue_size};
-        static constexpr std::array<unsigned, 2> pusch_srs_queue_sizes{default_queue_size, default_queue_size};
+    srsran_assert(phy_config.pdcch_executor.executor != nullptr, "Invalid PDCCH executor.");
+    srsran_assert(phy_config.pdsch_executor.executor != nullptr, "Invalid PDSCH executor.");
+    srsran_assert(phy_config.pdsch_codeblock_executor.executor != nullptr, "Invalid PDSCH codeblock executor.");
+    srsran_assert(phy_config.ssb_executor.executor != nullptr, "Invalid SSB executor.");
+    srsran_assert(phy_config.csi_rs_executor.executor != nullptr, "Invalid NZP-CSI-RS executor.");
+    srsran_assert(phy_config.prs_executor.executor != nullptr, "Invalid PRS executor.");
+    srsran_assert(phy_config.dl_grid_executor.executor != nullptr, "Invalid DL grid pool executor.");
+    srsran_assert(phy_config.pucch_executor.executor != nullptr, "Invalid PUCCH executor.");
+    srsran_assert(phy_config.pusch_executor.executor != nullptr, "Invalid PUSCH executor.");
+    srsran_assert(phy_config.pusch_decoder_executor.executor != nullptr, "Invalid PUSCH decoder executor.");
+    srsran_assert(phy_config.prach_executor.executor != nullptr, "Invalid PRACH executor.");
+    srsran_assert(phy_config.srs_executor.executor != nullptr, "Invalid SRS executor.");
 
-        const auto& flexible                = std::get<du_low_executor_mapper_flexible_exec_config>(cell_config);
-        phy_config.pdcch_executor           = flexible.dl_executor;
-        phy_config.pdsch_executor           = flexible.dl_executor;
-        phy_config.ssb_executor             = flexible.dl_executor;
-        phy_config.csi_rs_executor          = flexible.dl_executor;
-        phy_config.prs_executor             = flexible.dl_executor;
-        phy_config.dl_grid_executor         = flexible.dl_executor;
-        phy_config.pdsch_codeblock_executor = flexible.pdsch_executor;
-        phy_config.prach_executor =
-            create_strand(flexible.high_priority_executor, prach_queue_sizes, max_prach_batch_size).front();
-        phy_config.pucch_executor = create_task_fork_limiter(flexible.high_priority_executor,
-                                                             flexible.max_pucch_concurrency,
-                                                             pucch_queue_sizes,
-                                                             max_pucch_batch_size)
-                                        .front();
-        auto pusch_srs_execs              = create_task_fork_limiter(flexible.medium_priority_executor,
-                                                        flexible.max_pusch_and_srs_concurrency,
-                                                        pusch_srs_queue_sizes,
-                                                        max_pusch_batch_size);
-        phy_config.pusch_executor         = pusch_srs_execs[0];
-        phy_config.pusch_decoder_executor = pusch_srs_execs[1];
-        phy_config.srs_executor           = pusch_srs_execs[1];
-      }
-
-      srsran_assert(phy_config.pdcch_executor.executor != nullptr, "Invalid PDCCH executor.");
-      srsran_assert(phy_config.pdsch_executor.executor != nullptr, "Invalid PDSCH executor.");
-      srsran_assert(phy_config.pdsch_codeblock_executor.executor != nullptr, "Invalid PDSCH codeblock executor.");
-      srsran_assert(phy_config.ssb_executor.executor != nullptr, "Invalid SSB executor.");
-      srsran_assert(phy_config.csi_rs_executor.executor != nullptr, "Invalid NZP-CSI-RS executor.");
-      srsran_assert(phy_config.prs_executor.executor != nullptr, "Invalid PRS executor.");
-      srsran_assert(phy_config.dl_grid_executor.executor != nullptr, "Invalid DL grid pool executor.");
-      srsran_assert(phy_config.pucch_executor.executor != nullptr, "Invalid PUCCH executor.");
-      srsran_assert(phy_config.pusch_executor.executor != nullptr, "Invalid PUSCH executor.");
-      srsran_assert(phy_config.pusch_decoder_executor.executor != nullptr, "Invalid PUSCH decoder executor.");
-      srsran_assert(phy_config.prach_executor.executor != nullptr, "Invalid PRACH executor.");
-      srsran_assert(phy_config.srs_executor.executor != nullptr, "Invalid SRS executor.");
-
-      if (config.metrics.has_value()) {
-        const du_low_executor_mapper_metric_config& metrics_config = *config.metrics;
-        phy_config.pdcch_executor                                  = wrap_executor_with_metric(
-            phy_config.pdcch_executor, fmt::format("pdcch_exec#{}", cell_idx), metrics_config);
-        phy_config.pdsch_executor = wrap_executor_with_metric(
-            phy_config.pdsch_executor, fmt::format("pdsch_exec#{}", cell_idx), metrics_config);
-        phy_config.ssb_executor =
-            wrap_executor_with_metric(phy_config.ssb_executor, fmt::format("ssb_exec#{}", cell_idx), metrics_config);
-        phy_config.csi_rs_executor = wrap_executor_with_metric(
-            phy_config.csi_rs_executor, fmt::format("csi_rs_exec#{}", cell_idx), metrics_config);
-        phy_config.prs_executor =
-            wrap_executor_with_metric(phy_config.prs_executor, fmt::format("prs_exec#{}", cell_idx), metrics_config);
-        phy_config.pdsch_codeblock_executor = wrap_executor_with_metric(
-            phy_config.pdsch_codeblock_executor, fmt::format("pdsch_codeblock_exec#{}", cell_idx), metrics_config);
-        phy_config.prach_executor = wrap_executor_with_metric(
-            phy_config.prach_executor, fmt::format("prach_exec#{}", cell_idx), metrics_config);
-        phy_config.pusch_executor = wrap_executor_with_metric(
-            phy_config.pusch_executor, fmt::format("pusch_exec#{}", cell_idx), metrics_config);
-        phy_config.pusch_decoder_executor = wrap_executor_with_metric(
-            phy_config.pusch_decoder_executor, fmt::format("pusch_dec_exec#{}", cell_idx), metrics_config);
-        phy_config.pucch_executor = wrap_executor_with_metric(
-            phy_config.pucch_executor, fmt::format("pucch_exec#{}", cell_idx), metrics_config);
-        phy_config.srs_executor =
-            wrap_executor_with_metric(phy_config.srs_executor, fmt::format("srs_exec#{}", cell_idx), metrics_config);
-      }
-
-      cell_mappers.emplace_back(std::make_unique<du_low_cell_executor_mapper_impl>(phy_config));
+    if (config.metrics.has_value()) {
+      const du_low_executor_mapper_metric_config& metrics_config = *config.metrics;
+      phy_config.pdcch_executor  = wrap_executor_with_metric(phy_config.pdcch_executor, "pdcch_exec", metrics_config);
+      phy_config.pdsch_executor  = wrap_executor_with_metric(phy_config.pdsch_executor, "pdsch_exec", metrics_config);
+      phy_config.ssb_executor    = wrap_executor_with_metric(phy_config.ssb_executor, "ssb_exec", metrics_config);
+      phy_config.csi_rs_executor = wrap_executor_with_metric(phy_config.csi_rs_executor, "csi_rs_exec", metrics_config);
+      phy_config.prs_executor    = wrap_executor_with_metric(phy_config.prs_executor, "prs_exec", metrics_config);
+      phy_config.pdsch_codeblock_executor =
+          wrap_executor_with_metric(phy_config.pdsch_codeblock_executor, "pdsch_codeblock_exec", metrics_config);
+      phy_config.prach_executor = wrap_executor_with_metric(phy_config.prach_executor, "prach_exec", metrics_config);
+      phy_config.pusch_executor = wrap_executor_with_metric(phy_config.pusch_executor, "pusch_exec", metrics_config);
+      phy_config.pusch_decoder_executor =
+          wrap_executor_with_metric(phy_config.pusch_decoder_executor, "pusch_dec_exec", metrics_config);
+      phy_config.pucch_executor = wrap_executor_with_metric(phy_config.pucch_executor, "pucch_exec", metrics_config);
+      phy_config.srs_executor   = wrap_executor_with_metric(phy_config.srs_executor, "srs_exec", metrics_config);
     }
   }
 
   // See interface for documentation.
-  du_low_cell_executor_mapper& get_cell_mapper(unsigned cell_index) override
-  {
-    srsran_assert(cell_index < cell_mappers.size(),
-                  "The cell index {} exceeds the number of cells {}",
-                  cell_index,
-                  cell_mappers.size());
-    return *cell_mappers[cell_index];
-  }
+  const upper_phy_execution_configuration& get_upper_phy_execution_config() const override { return phy_config; }
 
 private:
   /// Default queue size for DU low executors.
@@ -240,8 +201,8 @@ private:
     return {executors.back().get(), base_executor.max_concurrency};
   }
 
-  /// Actual executor map indexed per cell basis.
-  std::vector<std::unique_ptr<du_low_cell_executor_mapper>> cell_mappers;
+  /// Upper physical layer executor configuration.
+  upper_phy_execution_configuration phy_config;
   /// List of internal executor instances.
   std::vector<std::unique_ptr<task_executor>> executors;
   /// Strands and task fork limiters used by the mapper.
