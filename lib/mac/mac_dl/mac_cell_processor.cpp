@@ -196,7 +196,7 @@ async_task<bool> mac_cell_processor::add_ue(const mac_ue_create_request& request
   mac_dl_ue_context ue_inst(request);
 
   // > Update the UE context inside the cell executor.
-  return execute_and_continue_on_blocking(
+  return defer_and_continue_on_blocking(
       cell_exec,
       ctrl_exec,
       timers,
@@ -221,7 +221,7 @@ async_task<void> mac_cell_processor::remove_ue(const mac_ue_delete_request& requ
 
     // Change to respective DL cell executor.
     // Note: Caller (ctrl exec) blocks if the cell executor is full.
-    CORO_AWAIT(execute_on_blocking(cell_exec, timers, log_dispatch_failure));
+    CORO_AWAIT(defer_on_blocking(cell_exec, timers, log_dispatch_failure));
 
     {
       SRSRAN_RTSAN_SCOPED_ENABLER;
@@ -232,7 +232,7 @@ async_task<void> mac_cell_processor::remove_ue(const mac_ue_delete_request& requ
 
     // Change back to CTRL executor before returning
     // Note: Blocks if the executor is full (which should never happen).
-    CORO_AWAIT(execute_on_blocking(ctrl_exec, timers, log_dispatch_failure));
+    CORO_AWAIT(defer_on_blocking(ctrl_exec, timers, log_dispatch_failure));
 
     // Deallocate DL HARQ buffers back in the CTRL executor.
     dl_harq_buffers.deallocate_ue_buffers(request.ue_index);
@@ -246,7 +246,7 @@ async_task<bool> mac_cell_processor::addmod_bearers(du_ue_index_t               
 {
   // Note: logical_channels must outlive the returned async_task completion.
 
-  return execute_and_continue_on_blocking(
+  return defer_and_continue_on_blocking(
       cell_exec,
       ctrl_exec,
       timers,
@@ -265,7 +265,7 @@ async_task<bool> mac_cell_processor::remove_bearers(du_ue_index_t ue_index, span
   // Use bitset to minimize capture size.
   auto lcids_to_rem_bset = bit_positions_to_bitset<MAX_NOF_RB_LCIDS>(lcids_to_rem);
 
-  return execute_and_continue_on_blocking(
+  return defer_and_continue_on_blocking(
       cell_exec,
       ctrl_exec,
       timers,
