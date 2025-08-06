@@ -197,7 +197,7 @@ void worker_manager::add_pcap_strands(const worker_manager_config::pcap_config& 
 {
   using namespace execution_config_helper;
 
-  pcap_exec_mapper = std::make_unique<pcap_executor_mapper_impl>(config, *exec_mng.executors().at("medium_prio_exec"));
+  pcap_exec_mapper = std::make_unique<pcap_executor_mapper_impl>(config, *non_rt_medium_prio_exec);
 }
 
 std::vector<execution_config_helper::single_worker> worker_manager::create_fapi_workers(unsigned nof_cells)
@@ -269,13 +269,12 @@ create_dedicated_du_hi_cell_executors(task_execution_manager&                   
 void worker_manager::create_cu_cp_executors(const worker_manager_config::cu_cp_config& config, timer_manager& timers)
 {
   cu_cp_exec_mapper = srs_cu_cp::make_cu_cp_executor_mapper(
-      srs_cu_cp::strand_based_executor_config{*exec_mng.executors().at("high_prio_exec"), config.metrics_period});
+      srs_cu_cp::strand_based_executor_config{*non_rt_hi_prio_exec, config.metrics_period});
 }
 
 void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_config& config, timer_manager& timers)
 {
   using namespace execution_config_helper;
-  const auto& exec_map = exec_mng.executors();
 
   cu_up_exec_mapper =
       srs_cu_up::make_cu_up_executor_mapper(srs_cu_up::strand_based_executor_config{config.max_nof_ue_strands,
@@ -284,8 +283,8 @@ void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_c
                                                                                     config.ul_ue_executor_queue_size,
                                                                                     config.ctrl_ue_executor_queue_size,
                                                                                     config.strand_batch_size,
-                                                                                    *exec_map.at("medium_prio_exec"),
-                                                                                    *exec_map.at("low_prio_exec"),
+                                                                                    *non_rt_medium_prio_exec,
+                                                                                    *non_rt_low_prio_exec,
                                                                                     config.dedicated_io_ul_strand,
                                                                                     &timers,
                                                                                     config.executor_tracing_enable,
@@ -298,7 +297,6 @@ void worker_manager::create_du_executors(const worker_manager_config::du_high_co
                                          timer_manager&                                      timer)
 {
   using namespace execution_config_helper;
-  const auto& exec_map = exec_mng.executors();
 
   // FAPI message buffering executors.
   if (fapi_cfg) {
@@ -329,9 +327,9 @@ void worker_manager::create_du_executors(const worker_manager_config::du_high_co
   cfg.ue_executors.max_nof_strands   = 1;
   cfg.ue_executors.ctrl_queue_size   = task_worker_queue_size;
   cfg.ue_executors.pdu_queue_size    = du_hi.ue_data_tasks_queue_size;
-  cfg.ue_executors.pool_executor     = exec_map.at("medium_prio_exec");
+  cfg.ue_executors.pool_executor     = non_rt_medium_prio_exec;
   cfg.ctrl_executors.task_queue_size = task_worker_queue_size;
-  cfg.ctrl_executors.pool_executor   = exec_map.at("high_prio_exec");
+  cfg.ctrl_executors.pool_executor   = non_rt_hi_prio_exec;
   cfg.is_rt_mode_enabled             = du_hi.is_rt_mode_enabled;
   cfg.trace_exec_tasks               = du_hi.executor_tracing_enable;
   cfg.metrics_period                 = du_hi.metrics_period;
@@ -377,8 +375,10 @@ void worker_manager::create_main_worker_pool(const worker_manager_config& worker
 
   worker_pool main_pool{"main_pool",
                         nof_workers_general_pool,
-                        // Used for control plane and timer management.
-                        {{"high_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize},
+                        // Used for upper PHY DL and MAC scheduling
+                        {{"rt_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize},
+                         // Used for control plane and timer management.
+                         {"high_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize},
                          // Used for PCAP writing and CU-UP.
                          {"medium_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize},
                          // Used for receiving data from external nodes.
@@ -392,6 +392,11 @@ void worker_manager::create_main_worker_pool(const worker_manager_config& worker
     report_fatal_error("Failed to instantiate {} execution context", main_pool.name);
   }
 
+  non_rt_low_prio_exec    = exec_mng.executors().at("low_prio_exec");
+  non_rt_medium_prio_exec = exec_mng.executors().at("medium_prio_exec");
+  non_rt_hi_prio_exec     = exec_mng.executors().at("high_prio_exec");
+  rt_hi_prio_exec         = exec_mng.executors().at("rt_prio_exec");
+
   srslog::fetch_basic_logger("CONFIG").info("Worker pool \"{}\" instantiated with #workers={}, "
                                             "task_queue_size={}, backoff_period={}us and priority={}.",
                                             main_pool.name,
@@ -404,9 +409,6 @@ void worker_manager::create_main_worker_pool(const worker_manager_config& worker
 void worker_manager::add_low_prio_strands(const worker_manager_config& worker_cfg)
 {
   using namespace execution_config_helper;
-  non_rt_low_prio_exec    = exec_mng.executors().at("low_prio_exec");
-  non_rt_medium_prio_exec = exec_mng.executors().at("medium_prio_exec");
-  non_rt_hi_prio_exec     = exec_mng.executors().at("high_prio_exec");
 
   // Configuration of strands for PCAP writing. These strands will use the low priority executor.
   add_pcap_strands(worker_cfg.pcap_cfg);
@@ -476,11 +478,11 @@ worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::
     for (unsigned cell_id = 0, cell_end = nof_cells; cell_id != cell_end; ++cell_id) {
       // Fill the task executors for each cell.
       du_low_exec_mapper_config.cells.emplace_back(srs_du::du_low_executor_mapper_flexible_exec_config{
-          .high_priority_executor        = {non_rt_hi_prio_exec, nof_workers_general_pool},
+          .high_priority_executor        = {rt_hi_prio_exec, nof_workers_general_pool},
           .medium_priority_executor      = {non_rt_medium_prio_exec, nof_workers_general_pool},
           .low_priority_executor         = {non_rt_low_prio_exec, nof_workers_general_pool},
-          .dl_executor                   = {non_rt_hi_prio_exec, nof_workers_general_pool},
-          .pdsch_executor                = {non_rt_hi_prio_exec, nof_workers_general_pool},
+          .dl_executor                   = {rt_hi_prio_exec, nof_workers_general_pool},
+          .pdsch_executor                = {rt_hi_prio_exec, nof_workers_general_pool},
           .max_pucch_concurrency         = du_low.max_pucch_concurrency,
           .max_pusch_and_srs_concurrency = du_low.max_pusch_and_srs_concurrency});
 
@@ -495,11 +497,10 @@ worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::
                                                        .logger = app_helpers::fetch_logger_metrics_log_channel()});
     }
 
-    // Reuse DU-low DL executors for L2 critical path.
     srs_du::du_high_executor_config::strand_based_worker_pool pool_desc;
     pool_desc.nof_cells               = nof_cells;
     pool_desc.default_task_queue_size = task_worker_queue_size;
-    pool_desc.pool_executors          = {exec_mng.executors().at("high_prio_exec")};
+    pool_desc.pool_executors          = {rt_hi_prio_exec};
     desc.l2_execs                     = pool_desc;
   }
 
