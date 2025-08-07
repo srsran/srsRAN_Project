@@ -119,13 +119,15 @@ public:
 
 std::unique_ptr<fapi::config_messages_adaptor>
 split6_o_du_low_plugin_dummy::create_config_messages_adaptor(fapi::config_message_gateway& gateway,
-                                                             task_executor&                executor)
+                                                             task_executor&                executor,
+                                                             task_executor&                control_executor)
 {
   return std::make_unique<config_messages_adaptor_dummy>();
 }
 
 std::unique_ptr<fapi::slot_messages_adaptor_factory>
-split6_o_du_low_plugin_dummy::create_slot_messages_adaptor_factory(task_executor& executor)
+split6_o_du_low_plugin_dummy::create_slot_messages_adaptor_factory(task_executor& executor,
+                                                                   task_executor& control_executor)
 {
   return std::make_unique<slot_messages_adaptor_factory_dummy>();
 }

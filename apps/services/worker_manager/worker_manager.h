@@ -55,6 +55,7 @@ struct worker_manager {
   task_executor*              non_rt_medium_prio_exec = nullptr;
   task_executor*              non_rt_hi_prio_exec     = nullptr;
   task_executor*              split6_exec             = nullptr;
+  task_executor*              split6_crtl_exec        = nullptr;
   task_executor*              metrics_exec            = nullptr;
 
   srs_du::du_high_executor_mapper& get_du_high_executor_mapper()

@@ -248,7 +248,7 @@ generate_o_du_ru_config(const fapi::fapi_cell_config& config, unsigned expected_
   if (uses_ofh) {
     out_cfg.max_processing_delay = expected_max_proc_delay;
   } else {
-    // Split 8 notifies OTA + max_proc_delay + 1m.
+    // Split 8 notifies OTA + max_proc_delay + 1ms.
     out_cfg.max_processing_delay = expected_max_proc_delay - get_nof_slots_per_subframe(config.phy_cfg.scs);
   }
 

@@ -120,15 +120,17 @@ split6_o_du_low_application_unit_impl::create_flexible_o_du_low(worker_manager& 
   // Split 6 flexible O-DU low manager dependencies.
   split6_flexible_o_du_low_dependencies dependencies;
   dependencies.config_interface_collection = fapi::create_fapi_config_message_interface_collection(logger);
-  dependencies.config_adaptor              = plugin->create_config_messages_adaptor(
-      dependencies.config_interface_collection->get_config_message_gateway(), *workers.split6_exec);
+  dependencies.config_adaptor =
+      plugin->create_config_messages_adaptor(dependencies.config_interface_collection->get_config_message_gateway(),
+                                             *workers.split6_exec,
+                                             *workers.split6_crtl_exec);
   dependencies.odu_low_session_factory = std::make_unique<split6_flexible_o_du_low_session_factory>(
       unit_cfg,
       workers,
       timers,
       dependencies.config_adaptor->get_error_message_notifier(),
       notifier,
-      plugin->create_slot_messages_adaptor_factory(*workers.split6_exec));
+      plugin->create_slot_messages_adaptor_factory(*workers.split6_exec, *workers.split6_crtl_exec));
 
   auto odu_low = std::make_unique<split6_flexible_o_du_low>(std::move(dependencies));
 

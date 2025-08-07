@@ -619,6 +619,12 @@ void worker_manager::create_split6_executors()
   }
 
   split6_exec = exec_mng.executors().at(exec_name);
+
+  // Split6 control executor.
+  auto split6_ctrl_strand =
+      make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(non_rt_medium_prio_exec, task_worker_queue_size);
+  split6_crtl_exec = split6_ctrl_strand.get();
+  executor_decorators_exec.push_back(std::move(split6_ctrl_strand));
 }
 
 void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_sdr_config& config)
