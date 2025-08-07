@@ -373,9 +373,9 @@ void worker_manager::create_main_worker_pool(const worker_manager_config& worker
   const auto     worker_pool_prio = os_thread_realtime_priority::max() - 2;
   const unsigned qsize            = worker_cfg.main_pool_task_queue_size;
   // Estimation of an upper bound on the number of implicit producers that are required.
-  const unsigned nof_producers = nof_workers_general_pool + 2 + 4 * worker_cfg.du_low_cfg.has_value()
-                                     ? worker_cfg.du_low_cfg->cell_nof_dl_antennas.size()
-                                     : 0;
+  const unsigned nof_producers =
+      nof_workers_general_pool + 2 +
+      6 * (worker_cfg.du_low_cfg.has_value() ? worker_cfg.du_low_cfg->cell_nof_dl_antennas.size() : 0);
 
   worker_pool main_pool{"main_pool",
                         nof_workers_general_pool,
