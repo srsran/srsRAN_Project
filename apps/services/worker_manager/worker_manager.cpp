@@ -44,24 +44,6 @@ private:
   timer_manager& timers;
 };
 
-/// Called to preinitialize the implicit producers of moodycamel queue.
-class moodycamel_queue_preinitializer final : public unique_thread::observer
-{
-public:
-  moodycamel_queue_preinitializer(std::vector<task_executor*> execs_) : execs(std::move(execs_)) {}
-
-  void on_thread_creation() override
-  {
-    for (task_executor* exec : execs) {
-      (void)exec->defer([]() {});
-    }
-  }
-  void on_thread_destruction() override {}
-
-private:
-  std::vector<task_executor*> execs;
-};
-
 class pcap_executor_mapper_impl final : public gnb_pcap_executor_mapper
 {
 public:
@@ -390,17 +372,21 @@ void worker_manager::create_main_worker_pool(const worker_manager_config& worker
   nof_workers_general_pool        = get_default_nof_workers(worker_cfg);
   const auto     worker_pool_prio = os_thread_realtime_priority::max() - 2;
   const unsigned qsize            = worker_cfg.main_pool_task_queue_size;
+  // Estimation of an upper bound on the number of implicit producers that are required.
+  const unsigned nof_producers = nof_workers_general_pool + 2 + 4 * worker_cfg.du_low_cfg.has_value()
+                                     ? worker_cfg.du_low_cfg->cell_nof_dl_antennas.size()
+                                     : 0;
 
   worker_pool main_pool{"main_pool",
                         nof_workers_general_pool,
                         // Used for upper PHY DL and MAC scheduling
-                        {{"rt_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize},
+                        {{"rt_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize, nof_producers},
                          // Used for control plane and timer management.
-                         {"high_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize},
+                         {"high_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize, nof_producers},
                          // Used for PCAP writing and CU-UP.
-                         {"medium_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize},
+                         {"medium_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize, nof_producers},
                          // Used for receiving data from external nodes.
-                         {"low_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize}},
+                         {"low_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize, nof_producers}},
                         worker_cfg.main_pool_backoff_period,
                         worker_pool_prio,
                         std::vector<os_sched_affinity_bitmask>{worker_cfg.main_pool_affinity_cfg.mask}};
@@ -422,11 +408,6 @@ void worker_manager::create_main_worker_pool(const worker_manager_config& worker
                                             qsize,
                                             worker_cfg.main_pool_backoff_period.count(),
                                             worker_pool_prio.native());
-
-  // The next threads to be created will force the creation of a moodycamel implicit producer, to avoid mallocs
-  // in the critical path.
-  unique_thread::add_observer(std::make_unique<moodycamel_queue_preinitializer>(std::vector<task_executor*>{
-      non_rt_low_prio_exec, non_rt_medium_prio_exec, non_rt_hi_prio_exec, rt_hi_prio_exec}));
 }
 
 void worker_manager::add_low_prio_strands(const worker_manager_config& worker_cfg)
