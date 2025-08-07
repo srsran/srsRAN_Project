@@ -88,8 +88,8 @@ void mac_test_mode_cell_adapter::handle_slot_indication(const mac_cell_timing_co
 {
   if (test_ue_cfg.auto_ack_indication_delay.has_value()) {
     // auto-generation of CRC/UCI indication is enabled.
-    slot_point  sl_rx = context.sl_tx - test_ue_cfg.auto_ack_indication_delay.value();
-    const auto* entry = history.read(sl_rx);
+    slot_point sl_rx = context.sl_tx - test_ue_cfg.auto_ack_indication_delay.value();
+    const auto entry = history.read(sl_rx);
     if (entry != nullptr) {
       // Handle auto-generation of pending CRC indications.
       if (not entry->puschs.empty()) {
@@ -158,7 +158,7 @@ void mac_test_mode_cell_adapter::handle_crc(const mac_crc_indication_message& ms
 
   if (not test_ue_cfg.auto_ack_indication_delay.has_value()) {
     // Acquire history.
-    const auto* entry = history.read(msg.sl_rx);
+    const auto entry = history.read(msg.sl_rx);
     if (entry != nullptr) {
       // Forward CRC to MAC, but remove the UCI for the test mode UE.
       for (mac_crc_pdu& crc : msg_copy.crcs) {
@@ -244,7 +244,7 @@ void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& ms
   mac_uci_indication_message msg_copy{msg};
 
   if (not test_ue_cfg.auto_ack_indication_delay.has_value()) {
-    const auto* entry = history.read(msg.sl_rx);
+    const auto entry = history.read(msg.sl_rx);
     if (entry != nullptr) {
       // Forward UCI to MAC, but alter the UCI for the test mode UE.
       for (mac_uci_pdu& test_uci : msg_copy.ucis) {
@@ -361,22 +361,24 @@ void mac_test_mode_cell_adapter::on_new_uplink_scheduler_results(const mac_ul_sc
 
   // Update history.
   {
-    auto& entry = history.write(ul_res.slot);
-
-    // Fill the ring element with the scheduler decisions.
-    for (const pucch_info& pucch : ul_res.ul_res->pucchs) {
-      if (ue_info_mgr.is_cell_test_ue(cell_index, pucch.crnti)) {
-        entry.pucchs.push_back(pucch);
+    auto entry = history.write(ul_res.slot);
+    if (entry != nullptr) {
+      // Fill the ring element with the scheduler decisions.
+      for (const pucch_info& pucch : ul_res.ul_res->pucchs) {
+        if (ue_info_mgr.is_cell_test_ue(cell_index, pucch.crnti)) {
+          entry->pucchs.push_back(pucch);
+        }
       }
-    }
-    for (const ul_sched_info& pusch : ul_res.ul_res->puschs) {
-      if (ue_info_mgr.is_cell_test_ue(cell_index, pusch.pusch_cfg.rnti)) {
-        entry.puschs.push_back(pusch);
+      for (const ul_sched_info& pusch : ul_res.ul_res->puschs) {
+        if (ue_info_mgr.is_cell_test_ue(cell_index, pusch.pusch_cfg.rnti)) {
+          entry->puschs.push_back(pusch);
+        }
       }
+    } else {
+      logger.warning("TEST_MODE: Unable to write UL results for slot={}. Cause: Overflow detected in test mode "
+                     "internal storage",
+                     ul_res.slot);
     }
-
-    // Commit changes.
-    history.commit(ul_res.slot);
   }
 
   // Forward results to PHY.
