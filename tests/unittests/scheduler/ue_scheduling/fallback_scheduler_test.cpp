@@ -224,7 +224,9 @@ protected:
   }
 
   sched_cell_configuration_request_message
-  create_custom_cell_config_request(unsigned k0, const std::optional<tdd_ul_dl_config_common>& tdd_cfg = {})
+  create_custom_cell_config_request(unsigned                                      k0,
+                                    const std::optional<tdd_ul_dl_config_common>& tdd_cfg                   = {},
+                                    bool                                          add_extra_pdcch_candidate = false)
   {
     if (duplx_mode == duplex_mode::TDD and tdd_cfg.has_value()) {
       builder_params.tdd_ul_dl_cfg_common = *tdd_cfg;
@@ -232,6 +234,12 @@ protected:
     sched_cell_configuration_request_message msg =
         sched_config_helper::make_default_sched_cell_configuration_request(builder_params);
     msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0 = k0;
+
+    if (add_extra_pdcch_candidate) {
+      srsran_assert(msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.size() > 1U,
+                    "This test assumes that the cell configuration has at least 2 search spaces");
+      msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].set_non_ss0_nof_candidates({0, 0, 2, 0, 0});
+    }
     return msg;
   }
 
@@ -255,6 +263,13 @@ protected:
     return std::any_of(bench->res_grid[0].result.dl.ue_grants.begin(),
                        bench->res_grid[0].result.dl.ue_grants.end(),
                        [&u](const dl_msg_alloc& grant) { return grant.pdsch_cfg.rnti == u.crnti; });
+  }
+
+  bool ue_is_allocated_pusch(const ue& u)
+  {
+    return std::any_of(bench->res_grid[0].result.ul.puschs.begin(),
+                       bench->res_grid[0].result.ul.puschs.end(),
+                       [&u](const ul_sched_info& grant) { return grant.pusch_cfg.rnti == u.crnti; });
   }
 
   const dl_msg_alloc* get_ue_allocated_pdsch(const ue& u)
@@ -650,6 +665,49 @@ TEST_P(fallback_scheduler_tester, when_conres_and_msg4_srb1_scheduled_separately
     }
   }
   ASSERT_TRUE(msg4_srb1_pdcch.has_value());
+}
+
+TEST_P(fallback_scheduler_tester, in_ul_and_dl_allocation_pucch_cannot_collide_with_pusch_for_same_ue)
+{
+  // Simulate the case in the fallback scheduler first schedules a PUSCH grant for a given slot, and then there is an
+  // opportunity to schedule a PDSCH whose corresponding PUCCH falls in the same slot as the PUSCH. Verify that in this
+  // case the PUCCH is allocated in the next available slot.
+
+  // Add an extra PDCCH candidate for SS#1 to enable 2 PDCCHs (1 UL and 1 DL) to be allocated in the same slot.
+  const bool add_extra_pdcch_candidate = true;
+  setup_sched(create_expert_config(1), create_custom_cell_config_request(params.k0, {}, add_extra_pdcch_candidate));
+
+  // Add UE 1.
+  add_ue(to_rnti(0x4601), to_du_ue_index(0));
+
+  // Advance the slot count, so that the UL slot (corresponding to the PDCCH) for PUSCH (with k2=4) and PUCCH
+  // (with k2=4) are on an UL slot (e.g. slot with idx 8) in both FDD and TDD.
+  while (current_slot.slot_index() != 3U) {
+    run_slot();
+  }
+
+  // Push both DL and UL buffer state for the UE.
+  unsigned ue1_mac_srb1_sdu_size = 99;
+  push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, ue1_mac_srb1_sdu_size, false);
+  push_buffer_state_to_ul_ue(to_du_ue_index(0), current_slot, ue1_mac_srb1_sdu_size);
+
+  const auto&    test_ue            = get_ue(to_du_ue_index(0));
+  bool           pdsch_allocated    = false;
+  bool           pusch_allocated    = false;
+  unsigned       sl_idx             = 0;
+  const unsigned max_test_run_slots = 10U * (1U << current_slot.numerology());
+  for (; sl_idx != max_test_run_slots; ++sl_idx) {
+    run_slot();
+
+    ASSERT_FALSE(ue_is_allocated_pusch(test_ue) and ue_is_allocated_pucch(test_ue))
+        << fmt::format("PUSCH and PUCCH allocated at slot {} ", current_slot);
+
+    pdsch_allocated |= ue_is_allocated_pdsch(test_ue);
+    pusch_allocated |= ue_is_allocated_pusch(test_ue);
+  }
+
+  ASSERT_TRUE(pdsch_allocated);
+  ASSERT_TRUE(pusch_allocated);
 }
 
 TEST_P(fallback_scheduler_tester, test_large_srb0_buffer_size)
