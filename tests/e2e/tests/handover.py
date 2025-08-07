@@ -633,7 +633,7 @@ def _handover_multi_ues_iperf(
         gnb_post_cmd=("log --cu_level=debug --hex_max_size=32", "log --mac_level=debug"),
     )
 
-    ue_attach_info_dict = ue_start_and_attach(ue_array, gnb.GetDefinition(Empty()), fivegc)
+    ue_attach_info_dict = ue_start_and_attach(ue_array, [gnb.GetDefinition(Empty())], fivegc)
 
     try:
         # HO while iPerf

@@ -217,7 +217,7 @@ def _attach_and_detach_multi_ues(
     )
 
     start_network(ue_array=ue_array, gnb=gnb, fivegc=fivegc)
-    ue_attach_info_dict = ue_start_and_attach(ue_array, gnb.GetDefinition(Empty()), fivegc)
+    ue_attach_info_dict = ue_start_and_attach(ue_array, [gnb.GetDefinition(Empty())], fivegc)
 
     ue_array_to_iperf = ue_array[::2]
     ue_array_to_attach = ue_array[1::2]
@@ -246,7 +246,7 @@ def _attach_and_detach_multi_ues(
     for _ in range(reattach_count):
         ue_stop(ue_array_to_attach, retina_data, ue_stop_timeout=ue_stop_timeout)
         sleep(ue_settle_time)
-        ue_attach_info_dict = ue_start_and_attach(ue_array_to_attach, gnb.GetDefinition(Empty()), fivegc)
+        ue_attach_info_dict = ue_start_and_attach(ue_array_to_attach, [gnb.GetDefinition(Empty())], fivegc)
     # final stop will be triggered by teardown
 
     # Stop and validate iperfs

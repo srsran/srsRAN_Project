@@ -79,7 +79,7 @@ def test_pucch(
     logging.info("PUCCH F%d+F%d Test", pucch_set0_format, pucch_set1_format)
 
     start_network(ue_array=ue_array, gnb=gnb, fivegc=fivegc)
-    ue_attach_info_dict = ue_start_and_attach(ue_array, gnb.GetDefinition(Empty()), fivegc)
+    ue_attach_info_dict = ue_start_and_attach(ue_array, [gnb.GetDefinition(Empty())], fivegc)
 
     # DL iperf test
     iperf_parallel(ue_attach_info_dict, fivegc, IPerfProto.UDP, IPerfDir.DOWNLINK, iperf_duration, iperf_bitrate)

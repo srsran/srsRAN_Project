@@ -766,7 +766,7 @@ def _ping(
         channel_emulator=channel_emulator,
     )
     ue_attach_info_dict = ue_start_and_attach(
-        ue_array, gnb.GetDefinition(Empty()), fivegc, channel_emulator=channel_emulator
+        ue_array, [gnb.GetDefinition(Empty())], fivegc, channel_emulator=channel_emulator
     )
 
     try:
@@ -775,7 +775,7 @@ def _ping(
         # reattach and repeat if requested
         for _ in range(reattach_count):
             ue_stop(ue_array=ue_array, retina_data=retina_data)
-            ue_attach_info_dict = ue_start_and_attach(ue_array, gnb.GetDefinition(Empty()), fivegc)
+            ue_attach_info_dict = ue_start_and_attach(ue_array, [gnb.GetDefinition(Empty())], fivegc)
             ping(ue_attach_info_dict, fivegc, ping_count, ping_interval=ping_interval)
     except Failed as err:
         if not ims_mode or ims_mode == "enabled":
@@ -786,10 +786,10 @@ def _ping(
 
     # final stop
     stop(
-        ue_array,
-        gnb,
-        fivegc,
-        retina_data,
+        ue_array=ue_array,
+        gnb=gnb,
+        fivegc=fivegc,
+        retina_data=retina_data,
         gnb_stop_timeout=gnb_stop_timeout,
         log_search=log_search,
         ue_stop_timeout=ue_stop_timeout,

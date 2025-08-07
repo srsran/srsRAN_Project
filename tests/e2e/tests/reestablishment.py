@@ -576,7 +576,7 @@ def _test_reestablishments(
         ),
     )
 
-    ue_attach_info_dict = ue_start_and_attach(ue_array, gnb.GetDefinition(Empty()), fivegc)
+    ue_attach_info_dict = ue_start_and_attach(ue_array, [gnb.GetDefinition(Empty())], fivegc)
 
     try:
         yield ue_attach_info_dict

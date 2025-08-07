@@ -66,7 +66,7 @@ def test_slicing(
     logging.info("Slicing Test")
 
     start_network(ue_array=ue_4, gnb=gnb, fivegc=fivegc)
-    ue_attach_info_dict = ue_start_and_attach(ue_4, gnb, fivegc)
+    ue_attach_info_dict = ue_start_and_attach(ue_4, [gnb], fivegc)
     slice1_ue_rnti = ue_attach_info_dict[ue_4[0]].rnti
 
     # DL iperf test

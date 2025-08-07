@@ -144,7 +144,7 @@ def start_and_attach(
 
     return ue_start_and_attach(
         ue_array,
-        gnb.GetDefinition(Empty()),
+        [gnb.GetDefinition(Empty())],
         fivegc,
         ue_startup_timeout=ue_startup_timeout,
         attach_timeout=attach_timeout,
