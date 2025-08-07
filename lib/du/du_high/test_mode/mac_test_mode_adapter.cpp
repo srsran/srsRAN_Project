@@ -15,7 +15,6 @@
 #include "srsran/mac/mac_cell_timing_context.h"
 #include "srsran/mac/mac_factory.h"
 #include "srsran/scheduler/harq_id.h"
-#include "srsran/scheduler/resource_grid_util.h"
 #include "srsran/scheduler/result/sched_result.h"
 #include <functional>
 #include <utility>
@@ -59,16 +58,6 @@ private:
   byte_buffer tx_sdu;
 };
 
-size_t get_ring_size(const mac_cell_creation_request& cell_cfg)
-{
-  // Estimation of the time it takes the UL lower-layers to process and forward CRC/UCI indications.
-  static constexpr unsigned MAX_UL_PHY_DELAY = 40;
-  // Note: The history ring size has to be a multiple of the TDD frame size in slots.
-  // Number of slots managed by this container.
-  return get_allocator_ring_size_gt_min(get_max_slot_ul_alloc_delay(cell_cfg.sched_req.ntn_cs_koffset) +
-                                        MAX_UL_PHY_DELAY);
-}
-
 } // namespace
 
 mac_test_mode_cell_adapter::mac_test_mode_cell_adapter(
@@ -79,6 +68,7 @@ mac_test_mode_cell_adapter::mac_test_mode_cell_adapter(
     mac_cell_slot_handler&                                  slot_handler_,
     mac_cell_result_notifier&                               result_notifier_,
     std::function<void(rnti_t)>                             dl_bs_notifier_,
+    mac_test_mode_event_handler&                            event_handler_,
     mac_test_mode_ue_repository&                            ue_info_mgr_) :
   cell_index(cell_cfg.cell_index),
   test_ue_cfg(test_ue_cfg_),
@@ -88,7 +78,8 @@ mac_test_mode_cell_adapter::mac_test_mode_cell_adapter(
   result_notifier(result_notifier_),
   dl_bs_notifier(std::move(dl_bs_notifier_)),
   logger(srslog::fetch_basic_logger("MAC")),
-  sched_decision_history(get_ring_size(cell_cfg)),
+  history(cell_cfg),
+  event_handler(event_handler_),
   ue_info_mgr(ue_info_mgr_)
 {
 }
@@ -97,16 +88,15 @@ void mac_test_mode_cell_adapter::handle_slot_indication(const mac_cell_timing_co
 {
   if (test_ue_cfg.auto_ack_indication_delay.has_value()) {
     // auto-generation of CRC/UCI indication is enabled.
-    slot_point                   sl_rx = context.sl_tx - test_ue_cfg.auto_ack_indication_delay.value();
-    const slot_decision_history& entry = sched_decision_history[get_ring_idx(sl_rx)];
-    std::unique_lock<std::mutex> lock(entry.mutex);
-    if (entry.slot == sl_rx) {
+    slot_point  sl_rx = context.sl_tx - test_ue_cfg.auto_ack_indication_delay.value();
+    const auto* entry = history.read(sl_rx);
+    if (entry != nullptr) {
       // Handle auto-generation of pending CRC indications.
-      if (not entry.puschs.empty()) {
+      if (not entry->puschs.empty()) {
         mac_crc_indication_message crc_ind{};
         crc_ind.sl_rx = sl_rx;
 
-        for (const ul_sched_info& pusch : entry.puschs) {
+        for (const ul_sched_info& pusch : entry->puschs) {
           auto& crc_pdu   = crc_ind.crcs.emplace_back();
           crc_pdu.rnti    = pusch.pusch_cfg.rnti;
           crc_pdu.harq_id = pusch.pusch_cfg.harq_id;
@@ -116,13 +106,8 @@ void mac_test_mode_cell_adapter::handle_slot_indication(const mac_cell_timing_co
           crc_pdu.ul_sinr_dB = 100;
         }
 
-        // Unlock before forward CRC indication
-        lock.unlock();
-
         // Forward CRC to the real MAC.
         forward_crc_ind_to_mac(crc_ind);
-
-        lock.lock();
       }
 
       // Handle auto-generation of pending UCI indications.
@@ -130,19 +115,16 @@ void mac_test_mode_cell_adapter::handle_slot_indication(const mac_cell_timing_co
       uci_ind.sl_rx = sl_rx;
 
       // > Handle pending PUCCHs.
-      for (const pucch_info& pucch : entry.pucchs) {
+      for (const pucch_info& pucch : entry->pucchs) {
         uci_ind.ucis.emplace_back(create_uci_pdu(pucch, test_ue_cfg));
       }
 
       // > Handle pending PUSCHs.
-      for (const ul_sched_info& pusch : entry.puschs) {
+      for (const ul_sched_info& pusch : entry->puschs) {
         if (pusch.uci.has_value()) {
           uci_ind.ucis.emplace_back(create_uci_pdu(pusch, test_ue_cfg));
         }
       }
-
-      // Unlock before forward UCI indication
-      lock.unlock();
 
       // Forward UCI indication to real MAC.
       forward_uci_ind_to_mac(uci_ind);
@@ -158,21 +140,16 @@ void mac_test_mode_cell_adapter::handle_slot_indication(const mac_cell_timing_co
 
 void mac_test_mode_cell_adapter::handle_error_indication(slot_point sl_tx, error_event event)
 {
+  slot_handler.handle_error_indication(sl_tx, event);
+
   if (event.pusch_and_pucch_discarded) {
-    slot_decision_history&      entry = sched_decision_history[get_ring_idx(sl_tx)];
-    std::lock_guard<std::mutex> lock(entry.mutex);
-    if (entry.slot == sl_tx) {
-      // Delete expected UCI and CRC indications that resulted from the scheduler decisions for this slot.
-      entry.puschs.clear();
-      entry.pucchs.clear();
-    } else {
+    // Dispatch clearing of the history to the slot ind executor.
+    if (not event_handler.schedule(cell_index, [this, sl_tx]() { history.clear(sl_tx); })) {
       logger.warning("TEST_MODE: Failed to handle error indication for slot={}. Cause: Overflow of the test mode "
                      "internal storage detected",
                      sl_tx);
     }
   }
-
-  slot_handler.handle_error_indication(sl_tx, event);
 }
 
 void mac_test_mode_cell_adapter::handle_crc(const mac_crc_indication_message& msg)
@@ -181,16 +158,15 @@ void mac_test_mode_cell_adapter::handle_crc(const mac_crc_indication_message& ms
 
   if (not test_ue_cfg.auto_ack_indication_delay.has_value()) {
     // Acquire history.
-    const slot_decision_history& entry = sched_decision_history[get_ring_idx(msg.sl_rx)];
-    std::lock_guard<std::mutex>  lock(entry.mutex);
-    if (entry.slot == msg.sl_rx) {
+    const auto* entry = history.read(msg.sl_rx);
+    if (entry != nullptr) {
       // Forward CRC to MAC, but remove the UCI for the test mode UE.
       for (mac_crc_pdu& crc : msg_copy.crcs) {
         if (ue_info_mgr.is_cell_test_ue(cell_index, crc.rnti)) {
           // test mode UE case.
 
           // Find respective PUSCH PDU that was previously scheduled.
-          bool found = std::any_of(entry.puschs.begin(), entry.puschs.end(), [&](const ul_sched_info& pusch) {
+          bool found = std::any_of(entry->puschs.begin(), entry->puschs.end(), [&](const ul_sched_info& pusch) {
             return pusch.pusch_cfg.rnti == crc.rnti and pusch.pusch_cfg.harq_id == crc.harq_id;
           });
           if (not found) {
@@ -268,15 +244,14 @@ void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& ms
   mac_uci_indication_message msg_copy{msg};
 
   if (not test_ue_cfg.auto_ack_indication_delay.has_value()) {
-    const slot_decision_history& entry = sched_decision_history[get_ring_idx(msg.sl_rx)];
-    std::unique_lock<std::mutex> lock(entry.mutex);
-    if (entry.slot == msg_copy.sl_rx) {
+    const auto* entry = history.read(msg.sl_rx);
+    if (entry != nullptr) {
       // Forward UCI to MAC, but alter the UCI for the test mode UE.
       for (mac_uci_pdu& test_uci : msg_copy.ucis) {
         if (ue_info_mgr.is_cell_test_ue(cell_index, test_uci.rnti)) {
           bool entry_found = false;
           if (std::holds_alternative<mac_uci_pdu::pusch_type>(test_uci.pdu)) {
-            for (const ul_sched_info& pusch : entry.puschs) {
+            for (const ul_sched_info& pusch : entry->puschs) {
               if (pusch.pusch_cfg.rnti == test_uci.rnti and pusch.uci.has_value()) {
                 test_uci    = create_uci_pdu(pusch, test_ue_cfg);
                 entry_found = true;
@@ -284,7 +259,7 @@ void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& ms
             }
           } else {
             // PUCCH case.
-            for (const pucch_info& pucch : entry.pucchs) {
+            for (const pucch_info& pucch : entry->pucchs) {
               if (pucch_info_and_uci_ind_match(pucch, test_uci)) {
                 // Intercept the UCI indication and force HARQ-ACK=ACK and UCI.
                 test_uci    = create_uci_pdu(pucch, test_ue_cfg);
@@ -330,8 +305,8 @@ void mac_test_mode_cell_adapter::handle_srs(const mac_srs_indication_message& ms
 void mac_test_mode_cell_adapter::on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res)
 {
   if (last_slot_ind != dl_res.slot) {
-    // Process any pending tasks for the test mode UE manager asynchronously.
-    ue_info_mgr.process_pending_tasks(cell_index);
+    // Process any pending tasks for the test mode asynchronously.
+    event_handler.process_pending_tasks(cell_index);
     last_slot_ind = dl_res.slot;
   }
 
@@ -379,19 +354,14 @@ void mac_test_mode_cell_adapter::on_new_downlink_scheduler_results(const mac_dl_
 void mac_test_mode_cell_adapter::on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res)
 {
   if (last_slot_ind != ul_res.slot) {
-    // Process any pending tasks for the test mode UE manager asynchronously.
-    ue_info_mgr.process_pending_tasks(cell_index);
+    // Process any pending tasks for the test mode asynchronously.
+    event_handler.process_pending_tasks(cell_index);
     last_slot_ind = ul_res.slot;
   }
 
+  // Update history.
   {
-    slot_decision_history&       entry = sched_decision_history[get_ring_idx(ul_res.slot)];
-    std::unique_lock<std::mutex> lock(entry.mutex);
-    entry.slot = ul_res.slot;
-
-    // Resets the history for this ring element.
-    entry.pucchs.clear();
-    entry.puschs.clear();
+    auto& entry = history.write(ul_res.slot);
 
     // Fill the ring element with the scheduler decisions.
     for (const pucch_info& pucch : ul_res.ul_res->pucchs) {
@@ -404,6 +374,9 @@ void mac_test_mode_cell_adapter::on_new_uplink_scheduler_results(const mac_ul_sc
         entry.puschs.push_back(pusch);
       }
     }
+
+    // Commit changes.
+    history.commit(ul_res.slot);
   }
 
   // Forward results to PHY.
@@ -448,7 +421,8 @@ mac_test_mode_adapter::mac_test_mode_adapter(const srs_du::du_test_mode_config::
                                              mac_result_notifier&                                    phy_notifier_,
                                              unsigned                                                nof_cells) :
   test_ue(test_ue_cfg_),
-  ue_info_mgr(test_ue.rnti, test_ue.nof_ues, nof_cells),
+  event_handler(nof_cells),
+  ue_info_mgr(event_handler, test_ue.rnti, test_ue.nof_ues, nof_cells),
   phy_notifier(std::make_unique<phy_test_mode_adapter>(phy_notifier_))
 {
 }
@@ -478,6 +452,7 @@ mac_cell_controller& mac_test_mode_adapter::add_cell(const mac_cell_creation_req
                                                    mac_adapted->get_slot_handler(cell_cfg.cell_index),
                                                    phy_notifier->adapted_phy.get_cell(cell_cfg.cell_index),
                                                    func_dl_bs_push,
+                                                   event_handler,
                                                    ue_info_mgr);
 
   if (cell_info_handler.size() <= cell_cfg.cell_index) {

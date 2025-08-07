@@ -14,12 +14,18 @@
 
 using namespace srsran;
 
-mac_test_mode_ue_repository::mac_test_mode_ue_repository(rnti_t rnti_start_, uint16_t nof_ues_, uint16_t nof_cells) :
-  rnti_start(static_cast<unsigned>(rnti_start_)), nof_ues(nof_ues_), rnti_end(rnti_start + nof_ues * nof_cells)
+mac_test_mode_ue_repository::mac_test_mode_ue_repository(mac_test_mode_event_handler& event_handler_,
+                                                         rnti_t                       rnti_start_,
+                                                         uint16_t                     nof_ues_,
+                                                         uint16_t                     nof_cells) :
+  event_handler(event_handler_),
+  rnti_start(static_cast<unsigned>(rnti_start_)),
+  nof_ues(nof_ues_),
+  rnti_end(rnti_start + nof_ues * nof_cells)
 {
   cells.reserve(nof_cells);
   for (unsigned i = 0, e = nof_cells; i < e; ++i) {
-    cells.emplace_back(std::make_unique<cell_info>(128U));
+    cells.emplace_back(std::make_unique<cell_info>());
   }
 }
 
@@ -93,7 +99,7 @@ void mac_test_mode_ue_repository::add_ue(rnti_t                         rnti,
   unsigned cell_idx = get_cell_index(ue_idx);
 
   // Dispatch creation of UE to du_cell thread.
-  while (not cells[cell_idx]->pending_tasks.try_push([this, rnti, ue_idx, cfg = sched_ue_cfg_req]() mutable {
+  while (not event_handler.schedule(to_du_cell_index(cell_idx), [this, rnti, ue_idx, cfg = sched_ue_cfg_req]() mutable {
     unsigned idx = get_cell_index(ue_idx);
     cells[idx]->rnti_to_ue_info_lookup.emplace(
         rnti, test_ue_info{.ue_idx = ue_idx, .sched_ue_cfg_req = std::move(cfg), .msg4_rx_flag = false});
@@ -105,20 +111,12 @@ void mac_test_mode_ue_repository::add_ue(rnti_t                         rnti,
 void mac_test_mode_ue_repository::remove_ue(rnti_t rnti)
 {
   unsigned cell_idx = get_cell_index(rnti);
-  while (not cells[cell_idx]->pending_tasks.try_push([this, rnti]() {
+  while (not event_handler.schedule(to_du_cell_index(cell_idx), [this, rnti]() {
     unsigned idx = get_cell_index(rnti);
     if (cells[idx]->rnti_to_ue_info_lookup.find(rnti) != cells[idx]->rnti_to_ue_info_lookup.end()) {
       cells[idx]->rnti_to_ue_info_lookup.erase(rnti);
     }
   })) {
     srslog::fetch_basic_logger("MAC").warning("Failed to remove test mode UE. Retrying...");
-  }
-}
-
-void mac_test_mode_ue_repository::process_pending_tasks(du_cell_index_t cell_index)
-{
-  unique_task task;
-  while (cells[cell_index]->pending_tasks.try_pop(task)) {
-    task();
   }
 }
