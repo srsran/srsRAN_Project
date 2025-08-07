@@ -175,9 +175,8 @@ public:
   virtual void           reset_metrics()         = 0;
 };
 
-inline std::string format_rlc_tx_metrics(timer_duration metrics_period, const rlc_tx_metrics& m)
+inline void format_rlc_tx_metrics(fmt::memory_buffer& buffer, timer_duration metrics_period, const rlc_tx_metrics& m)
 {
-  fmt::memory_buffer buffer;
   fmt::format_to(
       std::back_inserter(buffer),
       "num_sdus={} sdu_rate={}bps dropped_sdus={} discarded_sdus={} "
@@ -263,7 +262,6 @@ inline std::string format_rlc_tx_metrics(timer_duration metrics_period, const rl
   fmt::format_to(std::back_inserter(buffer),
                  "] max_pull_latency={:.2f}us",
                  static_cast<float>(m.tx_low.max_pdu_latency_ns * 1e-3));
-  return to_c_str(buffer);
 }
 } // namespace srsran
 

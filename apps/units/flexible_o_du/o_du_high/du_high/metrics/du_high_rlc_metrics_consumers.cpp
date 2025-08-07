@@ -30,9 +30,11 @@ void rlc_metrics_consumer_log::handle_metric(const app_services::metrics_set& me
   fmt::format_to(std::back_inserter(buffer), " du={}", static_cast<uint32_t>(drb.du_index));
   fmt::format_to(std::back_inserter(buffer), " ue={}", static_cast<uint32_t>(drb.ue_index));
   fmt::format_to(std::back_inserter(buffer), " rb={}", drb.rb_id);
-  fmt::format_to(std::back_inserter(buffer), " mode={}", drb.rx.mode);
-  fmt::format_to(std::back_inserter(buffer), " TX=[{}]", format_rlc_tx_metrics(drb.metrics_period, drb.tx));
-  fmt::format_to(std::back_inserter(buffer), " RX=[{}]  ", format_rlc_rx_metrics(drb.metrics_period, drb.rx));
+  fmt::format_to(std::back_inserter(buffer), " mode={} TX=[", drb.rx.mode);
+  format_rlc_tx_metrics(buffer, drb.metrics_period, drb.tx);
+  fmt::format_to(std::back_inserter(buffer), "] RX=[");
+  format_rlc_rx_metrics(buffer, drb.metrics_period, drb.rx);
+  fmt::format_to(std::back_inserter(buffer), "]");
   log_chan("{}", to_c_str(buffer));
 }
 
