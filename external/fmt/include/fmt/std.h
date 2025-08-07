@@ -222,11 +222,8 @@ struct formatter<std::optional<T>, Char,
                  std::enable_if_t<is_formattable<T, Char>::value>> {
  private:
   formatter<T, Char> underlying_;
-  static constexpr basic_string_view<Char> optional =
-      detail::string_literal<Char, 'o', 'p', 't', 'i', 'o', 'n', 'a', 'l',
-                             '('>{};
   static constexpr basic_string_view<Char> none =
-      detail::string_literal<Char, 'n', 'o', 'n', 'e'>{};
+      detail::string_literal<Char, '{', 'n', 'a', '}'>{};
 
   template <class U>
   FMT_CONSTEXPR static auto maybe_set_debug_format(U& u, bool set)
@@ -247,12 +244,7 @@ struct formatter<std::optional<T>, Char,
   auto format(const std::optional<T>& opt, FormatContext& ctx) const
       -> decltype(ctx.out()) {
     if (!opt) return detail::write<Char>(ctx.out(), none);
-
-    auto out = ctx.out();
-    out = detail::write<Char>(out, optional);
-    ctx.advance_to(out);
-    out = underlying_.format(*opt, ctx);
-    return detail::write(out, ')');
+    return underlying_.format(*opt, ctx);
   }
 };
 FMT_END_NAMESPACE
