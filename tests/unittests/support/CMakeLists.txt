@@ -10,6 +10,7 @@ set_directory_properties(PROPERTIES LABELS "support")
 
 add_subdirectory(network)
 add_subdirectory(executors)
+add_subdirectory(format)
 add_subdirectory(rate_limiting)
 
 add_executable(timer_test timer_test.cpp)
