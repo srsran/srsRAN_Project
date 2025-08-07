@@ -72,6 +72,7 @@ static void fill_du_low_expert_section(YAML::Node node, const du_low_unit_expert
   node["pusch_channel_equalizer_algorithm"]        = config.pusch_channel_equalizer_algorithm;
   node["max_request_headroom_slots"]               = config.nof_slots_request_headroom;
   node["allow_request_on_empty_uplink_slot"]       = config.allow_request_on_empty_uplink_slot;
+  node["enable_phy_tap"]                           = config.enable_phy_tap;
 }
 
 static void fill_du_low_bbdev_pdsch_enc_section(YAML::Node node, const hwacc_pdsch_appconfig& config)

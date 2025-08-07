@@ -329,6 +329,8 @@ struct upper_phy_config {
   ///
   /// if the optional is not set, a software PUSCH decoder factory will be used.
   std::optional<std::shared_ptr<hal::hw_accelerator_pusch_dec_factory>> hw_decoder_factory;
+  /// Enables the PHY tap plugin if present.
+  bool enable_phy_tap;
 };
 
 /// Returns true if the given upper PHY configuration is valid, otherwise false.
@@ -351,27 +353,27 @@ public:
 /// Creates and returns an upper PHY factory.
 std::unique_ptr<upper_phy_factory> create_upper_phy_factory(const downlink_processor_factory_sw_config& dl_fact_config);
 
-/// Factory interface for creating upper PHY RX symbol handlers.
+/// Factory interface for creating upper physical layer receive symbol handlers.
 class upper_phy_rx_symbol_handler_factory
 {
 public:
   /// Default destructor.
   virtual ~upper_phy_rx_symbol_handler_factory() = default;
 
-  /// \brief Creates a new upper PHY RX symbol handler.
+  /// \brief Creates a new upper physical layer receive symbol handler.
   ///
   /// \param[in] ul_processor_pool_ Uplink slot processor pool.
   virtual std::unique_ptr<upper_phy_rx_symbol_handler> create(uplink_slot_processor_pool& ul_processor_pool_) = 0;
 };
 
 /// Creates an RX symbol handler factory.
-std::unique_ptr<upper_phy_rx_symbol_handler_factory> create_rx_symbol_handler_factory();
+std::shared_ptr<upper_phy_rx_symbol_handler_factory> create_rx_symbol_handler_factory();
 
 /// \brief Creates an RX symbol handler printer decorator factory.
 ///
 /// This factory is used to create an RX symbol handler that prints the received symbols to a file.
-std::unique_ptr<upper_phy_rx_symbol_handler_factory>
-create_rx_symbol_handler_printer_decorator_factory(std::unique_ptr<upper_phy_rx_symbol_handler_factory> factory_,
+std::shared_ptr<upper_phy_rx_symbol_handler_factory>
+create_rx_symbol_handler_printer_decorator_factory(std::shared_ptr<upper_phy_rx_symbol_handler_factory> factory_,
                                                    srslog::basic_logger&                                logger_,
                                                    const std::string&                                   filename_,
                                                    unsigned                                             nof_rb_,
@@ -381,8 +383,15 @@ create_rx_symbol_handler_printer_decorator_factory(std::unique_ptr<upper_phy_rx_
 /// \brief Creates an RX symbol handler tap factory.
 ///
 /// This factory is used to create an RX symbol handler that exposes the received symbols to external applications.
-std::unique_ptr<upper_phy_rx_symbol_handler_factory>
-create_rx_symbol_handler_tap_factory(std::unique_ptr<upper_phy_rx_symbol_handler_factory> factory,
-                                     srslog::basic_logger&                                logger_);
+///
+/// \param[in] factory             The RX symbol handler base factory.
+/// \param[in] nof_rb              The number of resource blocks to process in the resource grid.
+/// \param[in] nof_ports           The number of ports to process.
+/// \param[in] processor_arguments Custom arguments for the external processor, if any.
+std::shared_ptr<upper_phy_rx_symbol_handler_factory>
+create_rx_symbol_handler_tap_factory(std::shared_ptr<upper_phy_rx_symbol_handler_factory> factory,
+                                     unsigned                                             nof_rb,
+                                     unsigned                                             nof_ports,
+                                     const std::string&                                   processor_arguments = "");
 
 } // namespace srsran

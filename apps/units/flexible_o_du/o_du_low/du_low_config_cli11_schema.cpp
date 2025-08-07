@@ -264,11 +264,15 @@ static void configure_cli11_expert_phy_args(CLI::App& app, du_low_unit_expert_up
              "Maximum request headroom size in slots.")
       ->capture_default_str()
       ->check(CLI::Range(0, 30));
-
   add_option(app,
              "--allow_request_on_empty_uplink_slot",
              expert_phy_params.allow_request_on_empty_uplink_slot,
              "Generates an uplink request in an uplink slot with no PUCCH/PUSCH/SRS PDUs")
+      ->capture_default_str();
+  add_option(app,
+             "--enable_phy_tap",
+             expert_phy_params.enable_phy_tap,
+             "Enables or disables the PHY tap plugin if it is present while building the application.")
       ->capture_default_str();
 }
 
