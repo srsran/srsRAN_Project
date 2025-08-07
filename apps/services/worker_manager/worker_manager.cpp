@@ -21,8 +21,10 @@ using namespace srsran;
 
 static const uint32_t task_worker_queue_size = 2048;
 
+namespace {
+
 /// Observer that preinitializes the byte buffer pool and timers resources in each created thread.
-class thread_resource_preinitializer : public unique_thread::observer
+class thread_resource_preinitializer final : public unique_thread::observer
 {
 public:
   thread_resource_preinitializer(timer_manager& timers_) : timers(timers_) {}
@@ -42,7 +44,23 @@ private:
   timer_manager& timers;
 };
 
-namespace {
+/// Called to preinitialize the implicit producers of moodycamel queue.
+class moodycamel_queue_preinitializer final : public unique_thread::observer
+{
+public:
+  moodycamel_queue_preinitializer(std::vector<task_executor*> execs_) : execs(std::move(execs_)) {}
+
+  void on_thread_creation() override
+  {
+    for (task_executor* exec : execs) {
+      (void)exec->defer([]() {});
+    }
+  }
+  void on_thread_destruction() override {}
+
+private:
+  std::vector<task_executor*> execs;
+};
 
 class pcap_executor_mapper_impl final : public gnb_pcap_executor_mapper
 {
@@ -404,6 +422,11 @@ void worker_manager::create_main_worker_pool(const worker_manager_config& worker
                                             qsize,
                                             worker_cfg.main_pool_backoff_period.count(),
                                             worker_pool_prio.native());
+
+  // The next threads to be created will force the creation of a moodycamel implicit producer, to avoid mallocs
+  // in the critical path.
+  unique_thread::add_observer(std::make_unique<moodycamel_queue_preinitializer>(std::vector<task_executor*>{
+      non_rt_low_prio_exec, non_rt_medium_prio_exec, non_rt_hi_prio_exec, rt_hi_prio_exec}));
 }
 
 void worker_manager::add_low_prio_strands(const worker_manager_config& worker_cfg)
