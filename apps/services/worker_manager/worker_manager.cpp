@@ -364,6 +364,31 @@ static unsigned get_default_nof_workers(const worker_manager_config& worker_cfg)
   return std::min(nof_workers, max_cpus - 1);
 }
 
+/// Helper to calculate an upper bound on the number of preallocated producers for the main worker pool.
+static unsigned get_nof_prealloc_producers(const worker_manager_config& worker_cfg, unsigned nof_workers_main_pool)
+{
+  // +2 to account for epoll broker and main.
+  unsigned nof_producers = nof_workers_main_pool + 2;
+  if (worker_cfg.ru_ofh_cfg.has_value()) {
+    // Include RU timing thread.
+    nof_producers += 1;
+    // Include threads for each RU cell (sum of DL antennas + one Rx + TxRx).
+    for (unsigned int nof_downlink_antenna : worker_cfg.ru_ofh_cfg->nof_downlink_antennas) {
+      nof_producers += 2 + nof_downlink_antenna;
+    }
+  }
+  if (worker_cfg.ru_dummy_cfg.has_value()) {
+    // Include RU dummy thread.
+    nof_producers += 1;
+  }
+  if (worker_cfg.ru_sdr_cfg.has_value()) {
+    // Include threads for each SDR cell and layer.
+    nof_producers += 4 * worker_cfg.ru_sdr_cfg->nof_cells;
+  }
+
+  return nof_producers;
+}
+
 void worker_manager::create_main_worker_pool(const worker_manager_config& worker_cfg)
 {
   using namespace execution_config_helper;
@@ -373,9 +398,7 @@ void worker_manager::create_main_worker_pool(const worker_manager_config& worker
   const auto     worker_pool_prio = os_thread_realtime_priority::max() - 2;
   const unsigned qsize            = worker_cfg.main_pool_task_queue_size;
   // Estimation of an upper bound on the number of implicit producers that are required.
-  const unsigned nof_producers =
-      nof_workers_general_pool + 2 +
-      6 * (worker_cfg.du_low_cfg.has_value() ? worker_cfg.du_low_cfg->cell_nof_dl_antennas.size() : 0);
+  const unsigned nof_producers = get_nof_prealloc_producers(worker_cfg, nof_workers_general_pool);
 
   worker_pool main_pool{"main_pool",
                         nof_workers_general_pool,
