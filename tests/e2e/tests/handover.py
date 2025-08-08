@@ -148,6 +148,7 @@ def test_zmq_handover_sequentially(
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def _handover_sequentially(
+    *,  # This enforces keyword-only arguments
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_array: UEStub,
@@ -216,10 +217,18 @@ def _handover_sequentially(
                 ue_attach_info.ipv4,
             )
 
-            ping_task_array = ping_start(ue_attach_info_dict, fivegc, traffic_seconds)
+            ping_task_array = ping_start(
+                ue_attach_info_dict=ue_attach_info_dict, fivegc=fivegc, ping_count=traffic_seconds
+            )
 
             for _from_position, _to_position, _movement_steps, _sleep_between_movement_steps in movements:
-                _do_ho((ue_stub,), _from_position, _to_position, _movement_steps, _sleep_between_movement_steps)
+                _do_ho(
+                    ue_array=(ue_stub,),
+                    from_position=_from_position,
+                    to_position=_to_position,
+                    steps=_movement_steps,
+                    sleep_between_steps=_sleep_between_movement_steps,
+                )
 
             ping_wait_until_finish(ping_task_array)
 
@@ -275,10 +284,16 @@ def test_zmq_handover_parallel(
             "Zigzag HO for all UEs + Pings running in background for all UEs",
         )
 
-        ping_task_array = ping_start(ue_attach_info_dict, fivegc, traffic_seconds)
+        ping_task_array = ping_start(ue_attach_info_dict=ue_attach_info_dict, fivegc=fivegc, ping_count=traffic_seconds)
 
         for from_position, to_position, movement_steps, sleep_between_movement_steps in movements:
-            _do_ho(ue_8, from_position, to_position, movement_steps, sleep_between_movement_steps)
+            _do_ho(
+                ue_array=ue_8,
+                from_position=from_position,
+                to_position=to_position,
+                steps=movement_steps,
+                sleep_between_steps=sleep_between_movement_steps,
+            )
 
         ping_wait_until_finish(ping_task_array)
 
@@ -286,6 +301,7 @@ def test_zmq_handover_parallel(
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 @contextmanager
 def _handover_multi_ues(
+    *,  # This enforces keyword-only arguments
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_array: Sequence[UEStub],
@@ -376,7 +392,7 @@ def _handover_multi_ues(
     else:
         raise ValueError("Either gnb or du_array and cu must be provided")
 
-    ue_attach_info_dict = ue_start_and_attach(ue_array, du_definition, fivegc)
+    ue_attach_info_dict = ue_start_and_attach(ue_array=ue_array, du_definition=du_definition, fivegc=fivegc)
 
     try:
         # HO while pings
@@ -393,7 +409,9 @@ def _handover_multi_ues(
 
         # Pings after handover
         logging.info("Starting Pings after all HO have been completed")
-        ping_wait_until_finish(ping_start(ue_attach_info_dict, fivegc, movement_duration))
+        ping_wait_until_finish(
+            ping_start(ue_attach_info_dict=ue_attach_info_dict, fivegc=fivegc, ping_count=movement_duration)
+        )
 
         for ue_stub in ue_array:
             ue_validate_no_reattaches(ue_stub)
@@ -480,7 +498,13 @@ def test_zmq_handover_iperf(
             )
 
             for _from_position, _to_position, _movement_steps, _sleep_between_movement_steps in movements:
-                _do_ho((ue_stub,), _from_position, _to_position, _movement_steps, _sleep_between_movement_steps)
+                _do_ho(
+                    ue_array=(ue_stub,),
+                    from_position=_from_position,
+                    to_position=_to_position,
+                    steps=_movement_steps,
+                    sleep_between_steps=_sleep_between_movement_steps,
+                )
 
 
 @mark.parametrize(
@@ -561,6 +585,7 @@ def test_zmq_handover_noise(
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 @contextmanager
 def _handover_multi_ues_iperf(
+    *,  # This enforces keyword-only arguments
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_array: Sequence[UEStub],
@@ -633,7 +658,9 @@ def _handover_multi_ues_iperf(
         gnb_post_cmd=("log --cu_level=debug --hex_max_size=32", "log --mac_level=debug"),
     )
 
-    ue_attach_info_dict = ue_start_and_attach(ue_array, [gnb.GetDefinition(Empty())], fivegc)
+    ue_attach_info_dict = ue_start_and_attach(
+        ue_array=ue_array, du_definition=[gnb.GetDefinition(Empty())], fivegc=fivegc
+    )
 
     try:
         # HO while iPerf
@@ -653,12 +680,12 @@ def _handover_multi_ues_iperf(
                 (
                     ue_attach_info_dict[ue_stub],
                     *iperf_start(
-                        ue_stub,
-                        ue_attach_info_dict[ue_stub],
-                        fivegc,
-                        duration=traffic_seconds,
-                        direction=direction,
+                        ue_stub=ue_stub,
+                        ue_attached_info=ue_attach_info_dict[ue_stub],
+                        fivegc=fivegc,
                         protocol=protocol,
+                        direction=direction,
+                        duration=traffic_seconds,
                         bitrate=bitrate,
                     ),
                 )
@@ -674,7 +701,13 @@ def _handover_multi_ues_iperf(
             bitrate_threshold = BITRATE_THRESHOLD
 
         for ue_attached_info, task, iperf_request in iperf_array:
-            iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request, bitrate_threshold)
+            iperf_wait_until_finish(
+                ue_attached_info=ue_attached_info,
+                fivegc=fivegc,
+                task=task,
+                iperf_request=iperf_request,
+                bitrate_threshold_ratio=bitrate_threshold,
+            )
 
         if not allow_failure:
             for ue_stub in ue_array:
@@ -693,6 +726,7 @@ def _handover_multi_ues_iperf(
 
 
 def _do_ho(
+    *,  # This enforces keyword-only arguments
     ue_array: Tuple[UEStub, ...],
     from_position: Tuple[float, float, float],
     to_position: Tuple[float, float, float],
@@ -712,16 +746,17 @@ def _do_ho(
 
     if not allow_failure:
         ho_task_array = [
-            ue_expect_handover(ue_stub, ((steps + 1) * sleep_between_steps) + extra_time) for ue_stub in ue_array
+            ue_expect_handover(ue_stub=ue_stub, timeout=((steps + 1) * sleep_between_steps) + extra_time)
+            for ue_stub in ue_array
         ]
 
     for i in range(steps + 1):
         for ue_stub in ue_array:
             ue_move(
-                ue_stub,
-                (int(round(from_position[0] + (i * (to_position[0] - from_position[0]) / steps)))),
-                (int(round(from_position[1] + (i * (to_position[1] - from_position[1]) / steps)))),
-                (int(round(from_position[2] + (i * (to_position[2] - from_position[2]) / steps)))),
+                ue_stub=ue_stub,
+                x_coordinate=(int(round(from_position[0] + (i * (to_position[0] - from_position[0]) / steps)))),
+                y_coordinate=(int(round(from_position[1] + (i * (to_position[1] - from_position[1]) / steps)))),
+                z_coordinate=(int(round(from_position[2] + (i * (to_position[2] - from_position[2]) / steps)))),
             )
         sleep(sleep_between_steps)
 

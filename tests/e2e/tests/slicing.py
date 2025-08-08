@@ -66,11 +66,18 @@ def test_slicing(
     logging.info("Slicing Test")
 
     start_network(ue_array=ue_4, gnb=gnb, fivegc=fivegc)
-    ue_attach_info_dict = ue_start_and_attach(ue_4, [gnb], fivegc)
+    ue_attach_info_dict = ue_start_and_attach(ue_array=ue_4, du_definition=[gnb], fivegc=fivegc)
     slice1_ue_rnti = ue_attach_info_dict[ue_4[0]].rnti
 
     # DL iperf test
-    iperf_parallel(ue_attach_info_dict, fivegc, IPerfProto.UDP, IPerfDir.BIDIRECTIONAL, iperf_duration, iperf_bitrate)
+    iperf_parallel(
+        ue_attach_info_dict=ue_attach_info_dict,
+        fivegc=fivegc,
+        protocol=IPerfProto.UDP,
+        direction=IPerfDir.BIDIRECTIONAL,
+        iperf_duration=iperf_duration,
+        bitrate=iperf_bitrate,
+    )
 
     stop(
         ue_array=ue_4,

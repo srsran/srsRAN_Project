@@ -689,6 +689,7 @@ def test_ntn(
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals
 def _ping(
+    *,  # This enforces keyword-only arguments
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_array: Sequence[UEStub],
@@ -728,7 +729,9 @@ def _ping(
         if not is_ntn_channel_emulator(channel_emulator):
             logging.info("The channel emulator is not a NTN emulator.")
             return
-        start_ntn_channel_emulator(ue_array, gnb, channel_emulator, ntn_scenario_def)
+        start_ntn_channel_emulator(
+            ue_array=ue_array, gnb=gnb, channel_emulator=channel_emulator, ntn_scenario_def=ntn_scenario_def
+        )
         ntn_config = get_ntn_configs(channel_emulator)
 
     configure_test_parameters(
@@ -766,23 +769,30 @@ def _ping(
         channel_emulator=channel_emulator,
     )
     ue_attach_info_dict = ue_start_and_attach(
-        ue_array, [gnb.GetDefinition(Empty())], fivegc, channel_emulator=channel_emulator
+        ue_array=ue_array, du_definition=[gnb.GetDefinition(Empty())], fivegc=fivegc, channel_emulator=channel_emulator
     )
 
     try:
-        ping(ue_attach_info_dict, fivegc, ping_count, ping_interval=ping_interval)
+        ping(ue_attach_info_dict=ue_attach_info_dict, fivegc=fivegc, ping_count=ping_count, ping_interval=ping_interval)
 
         # reattach and repeat if requested
         for _ in range(reattach_count):
             ue_stop(ue_array=ue_array, retina_data=retina_data)
-            ue_attach_info_dict = ue_start_and_attach(ue_array, [gnb.GetDefinition(Empty())], fivegc)
-            ping(ue_attach_info_dict, fivegc, ping_count, ping_interval=ping_interval)
+            ue_attach_info_dict = ue_start_and_attach(
+                ue_array=ue_array, du_definition=[gnb.GetDefinition(Empty())], fivegc=fivegc
+            )
+            ping(
+                ue_attach_info_dict=ue_attach_info_dict,
+                fivegc=fivegc,
+                ping_count=ping_count,
+                ping_interval=ping_interval,
+            )
     except Failed as err:
         if not ims_mode or ims_mode == "enabled":
             raise err from None
 
     if ims_mode:
-        validate_ue_registered_via_ims(ue_array if ims_mode == "enabled" else tuple(), fivegc)
+        validate_ue_registered_via_ims(ue_stub_array=ue_array if ims_mode == "enabled" else tuple(), core=fivegc)
 
     # final stop
     stop(

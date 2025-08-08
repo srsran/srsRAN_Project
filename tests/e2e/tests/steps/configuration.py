@@ -22,7 +22,9 @@ from retina.launcher.public import MetricServerInfo
 from retina.protocol.channel_emulator_pb2 import EphemerisInfoType, NtnScenarioConfig, NtnScenarioType
 
 
-def configure_ntn_parameters(retina_data: RetinaTestData, ntn_config: NtnScenarioConfig):
+def configure_ntn_parameters(
+    *, retina_data: RetinaTestData, ntn_config: NtnScenarioConfig  # The "*" enforces keyword-only arguments
+):
     """
     Configure test NTN parameters
     """
@@ -100,6 +102,7 @@ def configure_ntn_parameters(retina_data: RetinaTestData, ntn_config: NtnScenari
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 # pylint: disable=too-many-locals
 def configure_test_parameters(
+    *,  # This enforces keyword-only arguments
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     band: int,
@@ -237,7 +240,7 @@ def configure_test_parameters(
         retina_data.test_config["ue"]["parameters"]["rx_ant"] = "rx"
 
     if ntn_config is not None:
-        configure_ntn_parameters(retina_data, ntn_config)
+        configure_ntn_parameters(retina_data=retina_data, ntn_config=ntn_config)
 
     for node_name in retina_manager.get_testbed_info().get("generic", {}).keys():
         if "metrics-server" in node_name:
@@ -246,7 +249,7 @@ def configure_test_parameters(
             logging.info(
                 "Metrics Server in %s:%s will be used for this test.", metrics_server.address, metrics_server.port
             )
-            configure_metric_server_for_gnb(retina_manager, metrics_server)
+            configure_metric_server_for_gnb(retina_manager=retina_manager, metrics_server=metrics_server)
 
     logging.info("Test config: \n%s", pformat(retina_data.test_config))
     retina_manager.parse_configuration(retina_data.test_config)
@@ -336,7 +339,9 @@ def get_minimum_sample_rate_for_bandwidth(bandwidth: int) -> int:
     return f_s_min
 
 
-def configure_metric_server_for_gnb(retina_manager: RetinaTestManager, metrics_server: MetricServerInfo):
+def configure_metric_server_for_gnb(
+    *, retina_manager: RetinaTestManager, metrics_server: MetricServerInfo  # The "*" enforces keyword-only arguments
+):
     """
     Report gnb ip and port to the metrics-server configuration
     """

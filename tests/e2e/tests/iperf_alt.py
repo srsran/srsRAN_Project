@@ -78,15 +78,15 @@ def test_multiple_configs_zmq(
         always_download_artifacts=False,
     )
 
-    ue_attach_info_dict = start_and_attach((ue,), gnb, fivegc, gnb_post_cmd=(config,))
+    ue_attach_info_dict = start_and_attach(ue_array=(ue,), gnb=gnb, fivegc=fivegc, gnb_post_cmd=(config,))
 
     iperf_parallel(
-        ue_attach_info_dict,
-        fivegc,
-        protocol,
-        direction,
-        iperf_duration,
-        bitrate,
+        ue_attach_info_dict=ue_attach_info_dict,
+        fivegc=fivegc,
+        protocol=protocol,
+        direction=direction,
+        iperf_duration=iperf_duration,
+        bitrate=bitrate,
         bitrate_threshold_ratio=0,  # bitrate != 0
     )
     sleep(wait_before_power_off)

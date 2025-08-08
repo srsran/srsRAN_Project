@@ -79,13 +79,29 @@ def test_pucch(
     logging.info("PUCCH F%d+F%d Test", pucch_set0_format, pucch_set1_format)
 
     start_network(ue_array=ue_array, gnb=gnb, fivegc=fivegc)
-    ue_attach_info_dict = ue_start_and_attach(ue_array, [gnb.GetDefinition(Empty())], fivegc)
+    ue_attach_info_dict = ue_start_and_attach(
+        ue_array=ue_array, du_definition=[gnb.GetDefinition(Empty())], fivegc=fivegc
+    )
 
     # DL iperf test
-    iperf_parallel(ue_attach_info_dict, fivegc, IPerfProto.UDP, IPerfDir.DOWNLINK, iperf_duration, iperf_bitrate)
+    iperf_parallel(
+        ue_attach_info_dict=ue_attach_info_dict,
+        fivegc=fivegc,
+        protocol=IPerfProto.UDP,
+        direction=IPerfDir.DOWNLINK,
+        iperf_duration=iperf_duration,
+        bitrate=iperf_bitrate,
+    )
 
     # Bidirectional iperf test
-    iperf_parallel(ue_attach_info_dict, fivegc, IPerfProto.UDP, IPerfDir.BIDIRECTIONAL, iperf_duration, iperf_bitrate)
+    iperf_parallel(
+        ue_attach_info_dict=ue_attach_info_dict,
+        fivegc=fivegc,
+        protocol=IPerfProto.UDP,
+        direction=IPerfDir.BIDIRECTIONAL,
+        iperf_duration=iperf_duration,
+        bitrate=iperf_bitrate,
+    )
 
     stop(
         ue_array=ue_array,

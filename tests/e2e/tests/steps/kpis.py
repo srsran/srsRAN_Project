@@ -48,6 +48,7 @@ class KPIs:
 
 # pylint: disable=too-many-locals
 def get_kpis(
+    *,  # This enforces keyword-only arguments
     du_or_gnb_array: Sequence[RanStub] = (),
     ue_array: Sequence[RanStub] = (),
     viavi_kpis: Optional[ViaviKPIs] = None,

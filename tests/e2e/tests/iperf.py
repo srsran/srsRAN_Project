@@ -319,7 +319,7 @@ def test_android(
         sample_rate=get_minimum_sample_rate_for_bandwidth(bandwidth),
         iperf_duration=SHORT_DURATION,
         protocol=protocol,
-        bitrate=get_maximum_throughput(bandwidth, band, direction, protocol),
+        bitrate=get_maximum_throughput(bandwidth=bandwidth, band=band, direction=direction, protocol=protocol),
         direction=direction,
         global_timing_advance=-1,
         time_alignment_calibration="auto",
@@ -374,7 +374,7 @@ def test_android_interleaving(
         sample_rate=get_minimum_sample_rate_for_bandwidth(bandwidth),
         iperf_duration=SHORT_DURATION,
         protocol=protocol,
-        bitrate=get_maximum_throughput(bandwidth, band, direction, protocol),
+        bitrate=get_maximum_throughput(bandwidth=bandwidth, band=band, direction=direction, protocol=protocol),
         direction=direction,
         global_timing_advance=-1,
         time_alignment_calibration="auto",
@@ -446,7 +446,7 @@ def test_android_hp(
         sample_rate=None,
         iperf_duration=SHORT_DURATION,
         protocol=protocol,
-        bitrate=get_maximum_throughput(bandwidth, band, direction, protocol),
+        bitrate=get_maximum_throughput(bandwidth=bandwidth, band=band, direction=direction, protocol=protocol),
         direction=direction,
         global_timing_advance=-1,
         time_alignment_calibration="auto",
@@ -945,6 +945,7 @@ def test_s72(
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals
 def _iperf(
+    *,  # This enforces keyword-only arguments
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_array: Sequence[UEStub],
@@ -994,7 +995,9 @@ def _iperf(
         if not is_ntn_channel_emulator(channel_emulator):
             logging.info("The channel emulator is not a NTN emulator.")
             return
-        start_ntn_channel_emulator(ue_array, gnb, channel_emulator, ntn_scenario_def)
+        start_ntn_channel_emulator(
+            ue_array=ue_array, gnb=gnb, channel_emulator=channel_emulator, ntn_scenario_def=ntn_scenario_def
+        )
         ntn_config = get_ntn_configs(channel_emulator)
 
     configure_test_parameters(
@@ -1024,9 +1027,9 @@ def _iperf(
     )
 
     ue_attach_info_dict = start_and_attach(
-        ue_array,
-        gnb,
-        fivegc,
+        ue_array=ue_array,
+        gnb=gnb,
+        fivegc=fivegc,
         gnb_post_cmd=gnb_post_cmd,
         plmn=plmn,
         inter_ue_start_period=inter_ue_start_period,
@@ -1035,18 +1038,18 @@ def _iperf(
     )
 
     if ric:
-        start_rc_xapp(ric, control_service_style=2, action_id=6)
-        start_kpm_mon_xapp(ric, report_service_style=1, metrics="DRB.UEThpDl,DRB.UEThpUl")
+        start_rc_xapp(ric=ric, control_service_style=2, action_id=6)
+        start_kpm_mon_xapp(ric=ric, report_service_style=1, metrics="DRB.UEThpDl,DRB.UEThpUl")
 
     iperf_parallel(
-        ue_attach_info_dict,
-        fivegc,
-        protocol,
-        direction,
-        iperf_duration,
-        bitrate,
-        packet_length,
-        bitrate_threshold,
+        ue_attach_info_dict=ue_attach_info_dict,
+        fivegc=fivegc,
+        protocol=protocol,
+        direction=direction,
+        iperf_duration=iperf_duration,
+        bitrate=bitrate,
+        packet_length=packet_length,
+        bitrate_threshold_ratio=bitrate_threshold,
     )
 
     if ric:
@@ -1055,7 +1058,7 @@ def _iperf(
 
     sleep(wait_before_power_off)
     if ric:
-        ric_validate_e2_interface(ric, kpm_expected=True, rc_expected=True)
+        ric_validate_e2_interface(ric=ric, kpm_expected=True, rc_expected=True)
 
     stop(
         ue_array=ue_array,

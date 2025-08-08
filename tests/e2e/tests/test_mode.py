@@ -152,9 +152,9 @@ def test_ru_acc100(
     Run gnb in test mode ru dummy.
     """
     _test_ru(
-        retina_manager,
-        retina_data,
-        gnb,
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        gnb=gnb,
         ru_config="config_ru_acc100.yml",
         min_dl_bitrate=1e6,
         warning_allowlist=(
@@ -176,7 +176,7 @@ def test_ru(
     """
     Run gnb in test mode ru dummy.
     """
-    _test_ru(retina_manager, retina_data, gnb, ru_config="config_ru.yml")
+    _test_ru(retina_manager=retina_manager, retina_data=retina_data, gnb=gnb, ru_config="config_ru.yml")
 
 
 @mark.test_mode
@@ -191,9 +191,9 @@ def test_ru_10cell_50ue(
     Run gnb in test mode ru dummy.
     """
     _test_ru(
-        retina_manager,
-        retina_data,
-        gnb,
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        gnb=gnb,
         ru_config="config_ru_10cell_50ue.yml",
         duration=10 * 60,
         warning_as_errors=False,
@@ -213,9 +213,9 @@ def test_ru_not_crash(
     It ignores warnings and KOs, so it will fail if the gnb+sanitizer fails
     """
     _test_ru(
-        retina_manager,
-        retina_data,
-        gnb,
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        gnb=gnb,
         ru_config="config_ru.yml",
         gnb_stop_timeout=150,
         warning_as_errors=False,
@@ -236,9 +236,9 @@ def test_ru_10cell_50ue_not_crash(
     It ignores warnings and KOs, so it will fail if the gnb+sanitizer fails
     """
     _test_ru(
-        retina_manager,
-        retina_data,
-        gnb,
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        gnb=gnb,
         ru_config="config_ru_10cell_50ue.yml",
         duration=15 * 60,
         gnb_stop_timeout=150,
@@ -249,6 +249,7 @@ def test_ru_10cell_50ue_not_crash(
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def _test_ru(
+    *,  # This enforces keyword-only arguments
     # Retina
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
