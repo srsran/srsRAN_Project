@@ -189,7 +189,7 @@ public:
       cmd       = std::move(remote_cmd);
     }
 
-    thread = unique_thread("ws_server", [this, bind_addr, port]() {
+    thread = unique_thread("ws_server", [this, bind_addr, port, enable_metrics_subscription]() {
       uWS::App ws_server;
       ws_server
           .ws<dummy_type>("/*",
@@ -229,6 +229,9 @@ public:
 
       server.store(&ws_server, std::memory_order_relaxed);
       server_loop.store(uWS::Loop::get(), std::memory_order_relaxed);
+      if (enable_metrics_subscription) {
+        static_cast<remote_server_sink*>(srslog::find_sink(remote_server_sink::name()))->set_server(this);
+      }
       ws_server.run();
     });
   }
@@ -341,12 +344,5 @@ srsran::app_services::create_remote_server(const remote_control_appconfig&      
     return nullptr;
   }
 
-  auto server =
-      std::make_unique<remote_server_impl>(cfg.bind_addr, cfg.port, cfg.enable_metrics_subscription, commands);
-
-  if (cfg.enable_metrics_subscription) {
-    static_cast<remote_server_sink*>(srslog::find_sink(remote_server_sink::name()))->set_server(server.get());
-  }
-
-  return server;
+  return std::make_unique<remote_server_impl>(cfg.bind_addr, cfg.port, cfg.enable_metrics_subscription, commands);
 }
