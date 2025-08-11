@@ -692,6 +692,8 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
   if (msg.pdus.empty()) {
     // Check the repo for PDUs
     if (!pdsch_repository.pdus.empty()) {
+      logger.warning("Sector#{}: Invalid TX_Data.request. Number of PDUs does not match repository size", sector_id);
+
       // Raise invalid format error.
       error_notifier.get().on_error_indication(fapi::build_msg_tx_error_indication(msg.sfn, msg.slot));
 
@@ -703,6 +705,8 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
   // Skip message if there are no PDSCH PDUs inside the repository. This may be caused by an unsupported PDU in the
   // DL_TTI.request.
   if (pdsch_repository.empty()) {
+    logger.warning("Sector#{}: Invalid TX_Data.request. Empty PDU repository", sector_id);
+
     // Raise invalid format error.
     error_notifier.get().on_error_indication(fapi::build_msg_tx_error_indication(msg.sfn, msg.slot));
     return;
