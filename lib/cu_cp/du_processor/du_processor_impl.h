@@ -63,7 +63,7 @@ public:
   async_task<f1ap_gnb_cu_configuration_update_response>
   handle_configuration_update(const f1ap_gnb_cu_configuration_update& request) override;
 
-  metrics_report::du_info handle_du_metrics_report_request() const override;
+  cu_cp_metrics_report::du_info handle_du_metrics_report_request() const override;
 
   du_processor_mobility_handler& get_mobility_handler() override { return *this; }
   du_metrics_handler&            get_metrics_handler() override { return *this; }

@@ -27,7 +27,7 @@ struct rrc_connection_establishment_counter_with_cause {
 
   unsigned size() const { return counters_by_cause.size(); }
 
-  unsigned get_count(establishment_cause_t cause) { return counters_by_cause[static_cast<unsigned>(cause)]; }
+  unsigned get_count(establishment_cause_t cause) const { return counters_by_cause[static_cast<unsigned>(cause)]; }
 
   unsigned get_count(unsigned index) const { return counters_by_cause[index]; }
 

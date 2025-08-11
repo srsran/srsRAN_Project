@@ -26,12 +26,12 @@
 
 using namespace srsran;
 
-static srs_cu_cp::metrics_report_notifier*
+static cu_cp_metrics_report_notifier*
 build_cu_cp_metrics_config(std::vector<app_services::metrics_config>& cu_cp_services_cfg,
                            app_services::metrics_notifier&            metrics_notifier,
                            const cu_cp_unit_metrics_config&           cu_cp_metrics_cfg)
 {
-  srs_cu_cp::metrics_report_notifier* out = nullptr;
+  cu_cp_metrics_report_notifier* out = nullptr;
 
   auto metrics_generator                            = std::make_unique<cu_cp_metrics_producer_impl>(metrics_notifier);
   out                                               = &(*metrics_generator);

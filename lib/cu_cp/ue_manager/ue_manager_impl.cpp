@@ -275,14 +275,14 @@ size_t ue_manager::get_nof_du_ues(du_index_t du_index)
   return ue_count;
 }
 
-std::vector<metrics_report::ue_info> ue_manager::handle_ue_metrics_report_request() const
+std::vector<cu_cp_metrics_report::ue_info> ue_manager::handle_ue_metrics_report_request() const
 {
-  std::vector<metrics_report::ue_info> report;
+  std::vector<cu_cp_metrics_report::ue_info> report;
   report.reserve(ues.size());
 
   for (const auto& ue : ues) {
     report.emplace_back();
-    metrics_report::ue_info& ue_report = report.back();
+    cu_cp_metrics_report::ue_info& ue_report = report.back();
 
     ue_report.rnti  = ue.second.get_c_rnti();
     ue_report.du_id = ue.second.get_du_id();

@@ -22,7 +22,7 @@ struct periodic_metric_report_request {
   /// sent once.
   std::chrono::milliseconds period{0};
   /// \brief The notifier used by the CU-CP to report metrics.
-  metrics_report_notifier* report_notifier = nullptr;
+  cu_cp_metrics_report_notifier* report_notifier = nullptr;
 };
 
 /// Metric Report session instance.
@@ -54,7 +54,7 @@ public:
   ///
   /// Note: Given its blocking nature, avoid calling this method in contexts other than unit tests.
   /// \return The metrics report.
-  virtual metrics_report request_metrics_report() const = 0;
+  virtual cu_cp_metrics_report request_metrics_report() const = 0;
 };
 
 } // namespace srsran::srs_cu_cp

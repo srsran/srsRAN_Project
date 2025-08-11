@@ -300,9 +300,9 @@ byte_buffer du_processor_impl::get_packed_sib1(nr_cell_global_id_t cgi)
   return byte_buffer{};
 }
 
-metrics_report::du_info du_processor_impl::handle_du_metrics_report_request() const
+cu_cp_metrics_report::du_info du_processor_impl::handle_du_metrics_report_request() const
 {
-  metrics_report::du_info report;
+  cu_cp_metrics_report::du_info report;
   report.id = gnb_du_id_t::invalid;
   if (cfg.du_cfg_hdlr->has_context()) {
     report.id         = cfg.du_cfg_hdlr->get_context().id;

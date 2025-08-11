@@ -18,10 +18,10 @@
 #include "srsran/rrc/rrc_metrics.h"
 #include "srsran/rrc/rrc_ue.h"
 
-namespace srsran::srs_cu_cp {
+namespace srsran {
 
 /// CU-CP Metrics report.
-struct metrics_report {
+struct cu_cp_metrics_report {
   struct ue_info {
     /// Current C-RNTI of the UE.
     rnti_t rnti;
@@ -30,7 +30,7 @@ struct metrics_report {
     /// PCI of the UE's PCell.
     pci_t pci;
     /// RRC connection state of the UE.
-    rrc_state rrc_connection_state;
+    srs_cu_cp::rrc_state rrc_connection_state;
   };
   struct cell_info {
     nr_cell_global_id_t cgi;
@@ -52,13 +52,13 @@ struct metrics_report {
 };
 
 /// Interface used by the CU-CP to report metrics.
-class metrics_report_notifier
+class cu_cp_metrics_report_notifier
 {
 public:
-  virtual ~metrics_report_notifier() = default;
+  virtual ~cu_cp_metrics_report_notifier() = default;
 
   /// \brief Used to notify a new metrics report.
-  virtual void notify_metrics_report_request(const metrics_report& report) = 0;
+  virtual void notify_metrics_report_request(const cu_cp_metrics_report& report) = 0;
 };
 
-} // namespace srsran::srs_cu_cp
+} // namespace srsran

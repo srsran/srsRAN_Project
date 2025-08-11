@@ -142,7 +142,7 @@ struct cu_cp_configuration {
   /// Timers, executors, and other services used by the CU-CP.
   service_params services;
   /// CU-CP metrics notifier.
-  metrics_report_notifier* metrics_notifier = nullptr;
+  cu_cp_metrics_report_notifier* metrics_notifier = nullptr;
 };
 
 } // namespace srs_cu_cp

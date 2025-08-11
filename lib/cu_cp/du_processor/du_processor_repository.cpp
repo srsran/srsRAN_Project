@@ -148,9 +148,9 @@ std::vector<du_index_t> du_processor_repository::get_du_processor_indexes() cons
   return du_indexes;
 }
 
-std::vector<metrics_report::du_info> du_processor_repository::handle_du_metrics_report_request() const
+std::vector<cu_cp_metrics_report::du_info> du_processor_repository::handle_du_metrics_report_request() const
 {
-  std::vector<metrics_report::du_info> du_reports;
+  std::vector<cu_cp_metrics_report::du_info> du_reports;
   du_reports.reserve(du_db.size());
   for (const auto& du : du_db) {
     du_reports.emplace_back(du.second.processor->get_metrics_handler().handle_du_metrics_report_request());

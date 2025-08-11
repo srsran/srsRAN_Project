@@ -15,7 +15,7 @@ using namespace srsran;
 
 void cu_cp_metrics_consumer_json::handle_metric(const app_services::metrics_set& metric)
 {
-  const srs_cu_cp::metrics_report& cp_metrics = static_cast<const cu_cp_metrics_impl&>(metric).get_metrics();
+  const cu_cp_metrics_report& cp_metrics = static_cast<const cu_cp_metrics_impl&>(metric).get_metrics();
   (void)cp_metrics;
   /// TODO write to JSON file.
   log_chan.enabled();
@@ -23,7 +23,7 @@ void cu_cp_metrics_consumer_json::handle_metric(const app_services::metrics_set&
 
 void cu_cp_metrics_consumer_log::handle_metric(const app_services::metrics_set& metric)
 {
-  const srs_cu_cp::metrics_report& cp_metrics = static_cast<const cu_cp_metrics_impl&>(metric).get_metrics();
+  const cu_cp_metrics_report& cp_metrics = static_cast<const cu_cp_metrics_impl&>(metric).get_metrics();
   (void)cp_metrics;
   /// TODO write to log file.
   log_chan.enabled();

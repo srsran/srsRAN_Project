@@ -24,23 +24,29 @@ class dummy_ue_metrics_handler : public ue_metrics_handler,
                                  public mobility_manager_metrics_handler
 {
 public:
-  metrics_report next_metrics;
+  cu_cp_metrics_report next_metrics;
 
-  std::vector<metrics_report::ue_info> handle_ue_metrics_report_request() const override { return next_metrics.ues; }
+  std::vector<cu_cp_metrics_report::ue_info> handle_ue_metrics_report_request() const override
+  {
+    return next_metrics.ues;
+  }
 
-  std::vector<metrics_report::du_info> handle_du_metrics_report_request() const override { return next_metrics.dus; }
+  std::vector<cu_cp_metrics_report::du_info> handle_du_metrics_report_request() const override
+  {
+    return next_metrics.dus;
+  }
 
   std::vector<ngap_info> handle_ngap_metrics_report_request() const override { return next_metrics.ngaps; }
 
   mobility_management_metrics handle_mobility_metrics_report_request() const override { return next_metrics.mobility; }
 };
 
-class dummy_metrics_notifier : public metrics_report_notifier
+class dummy_metrics_notifier : public cu_cp_metrics_report_notifier
 {
 public:
-  std::optional<metrics_report> last_metrics_report;
+  std::optional<cu_cp_metrics_report> last_metrics_report;
 
-  void notify_metrics_report_request(const metrics_report& report) override { last_metrics_report = report; }
+  void notify_metrics_report_request(const cu_cp_metrics_report& report) override { last_metrics_report = report; }
 };
 
 TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
@@ -56,15 +62,16 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
 
   // First report.
   metrics_hdlr.next_metrics.ues.emplace_back(
-      metrics_report::ue_info{to_rnti(1), int_to_gnb_du_id(0), pci_t{2}, rrc_state::connected});
+      cu_cp_metrics_report::ue_info{to_rnti(1), int_to_gnb_du_id(0), pci_t{2}, rrc_state::connected});
 
-  metrics_report::cell_info cell_info{
+  cu_cp_metrics_report::cell_info cell_info{
       nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(0x22).value()}, pci_t{2}};
   establishment_cause_t connection_cause{establishment_cause_t::mt_access};
   rrc_du_metrics        rrc_metrics{2, 4, {}, {}, 1, 2, 3};
   rrc_metrics.attempted_rrc_connection_establishments.increase(connection_cause);
   rrc_metrics.successful_rrc_connection_establishments.increase(connection_cause);
-  metrics_hdlr.next_metrics.dus.emplace_back(metrics_report::du_info{int_to_gnb_du_id(0), {cell_info}, rrc_metrics});
+  metrics_hdlr.next_metrics.dus.emplace_back(
+      cu_cp_metrics_report::du_info{int_to_gnb_du_id(0), {cell_info}, rrc_metrics});
 
   ngap_cause_t          cause{ngap_cause_radio_network_t::multiple_pdu_session_id_instances};
   pdu_session_metrics_t pdu_session_metrics{2, 1, {}};
@@ -131,7 +138,7 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
   // Second report.
   metrics_notifier.last_metrics_report.reset();
   metrics_hdlr.next_metrics.ues.emplace_back(
-      metrics_report::ue_info{to_rnti(2), int_to_gnb_du_id(0), pci_t{3}, rrc_state::connected});
+      cu_cp_metrics_report::ue_info{to_rnti(2), int_to_gnb_du_id(0), pci_t{3}, rrc_state::connected});
   for (unsigned i = 0; i != period.count(); ++i) {
     ASSERT_FALSE(metrics_notifier.last_metrics_report.has_value());
     timers.tick();
