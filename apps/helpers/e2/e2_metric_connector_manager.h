@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/support/srsran_assert.h"
 #include <cassert>
 #include <memory>
 #include <vector>
@@ -37,12 +38,12 @@ public:
 
   NotifierType& get_e2_metric_notifier(unsigned index)
   {
-    assert(index < e2_metric_connectors.size() && "Invalid index");
+    srsran_assert(index < e2_metric_connectors.size(), "Invalid index");
     return *(e2_metric_connectors[index]);
   }
   InterfaceType& get_e2_metrics_interface(unsigned index)
   {
-    assert(index < e2_metric_connectors.size() && "Invalid index");
+    srsran_assert(index < e2_metric_connectors.size(), "Invalid index");
     return *(e2_metric_connectors[index]);
   }
 

@@ -11,7 +11,7 @@
 #include "srsran/psup/psup_packing.h"
 #include "srsran/support/bit_encoding.h"
 
-namespace srsran {
+using namespace srsran;
 
 bool psup_packing::unpack(psup_dl_pdu_session_information& dl_pdu_session_information, byte_buffer_view container) const
 {
@@ -137,5 +137,3 @@ bool psup_packing::pack(byte_buffer& out_buf, const psup_dl_pdu_session_informat
   }
   return true;
 }
-
-} // namespace srsran

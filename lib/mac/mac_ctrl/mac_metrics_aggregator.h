@@ -33,7 +33,7 @@ class mac_metrics_aggregator
 public:
   /// \brief Maximum delay between the first and last report in the aggregation period.
   /// \remark The value is an heuristic to compensate for cells that get too delayed.
-  constexpr static std::chrono::milliseconds aggregation_timeout{8};
+  static constexpr std::chrono::milliseconds aggregation_timeout{8};
 
   mac_metrics_aggregator(const mac_control_config::metrics_config& cfg,
                          task_executor&                            ctrl_exec_,

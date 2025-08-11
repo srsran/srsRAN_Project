@@ -33,13 +33,13 @@ io_broker_epoll::io_broker_epoll(const io_broker_config& config) :
   // Init epoll socket
   epoll_fd = unique_fd{::epoll_create1(0)};
   if (not epoll_fd.is_open()) {
-    report_fatal_error("IO broker: failed to create epoll file descriptor. error={}", strerror(errno));
+    report_fatal_error("IO broker: failed to create epoll file descriptor. error={}", ::strerror(errno));
   }
 
   // Register fd and event_handler to handle stops, fd registrations and fd deregistrations.
   auto ctrl_event_fd = unique_fd{::eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK)};
   if (not ctrl_event_fd.is_open()) {
-    report_fatal_error("IO broker: failed to create control event file descriptor. error={}", strerror(errno));
+    report_fatal_error("IO broker: failed to create control event file descriptor. error={}", ::strerror(errno));
   }
   auto data_handler  = [this]() { handle_enqueued_events(); };
   auto error_handler = [this](error_code code) {
@@ -76,7 +76,7 @@ io_broker_epoll::~io_broker_epoll()
 
   // Close epoll socket.
   if (not epoll_fd.close()) {
-    logger.error("Failed to close io epoll broker file descriptor: {}", strerror(errno));
+    logger.error("Failed to close io epoll broker file descriptor: {}", ::strerror(errno));
   }
 
   logger.info("Closed io_broker");
@@ -121,7 +121,7 @@ void io_broker_epoll::thread_loop()
     if (nof_events == -1) {
       // Note: "Interrupted system call" can happen while debugging.
       if (errno != EINTR) {
-        logger.error("epoll_wait(): {}", strerror(errno));
+        logger.error("epoll_wait(): {}", ::strerror(errno));
       }
       continue;
     }
@@ -279,7 +279,7 @@ bool io_broker_epoll::handle_fd_registration(unique_fd               fd,
   epoll_ev.events             = EPOLLIN | EPOLLONESHOT;
   if (::epoll_ctl(epoll_fd.value(), EPOLL_CTL_ADD, raw_fd, &epoll_ev) == -1) {
     logger.error(
-        "fd={}: Failed to register file descriptor. Cause: epoll_ctl failed with \"{}\"", raw_fd, strerror(errno));
+        "fd={}: Failed to register file descriptor. Cause: epoll_ctl failed with \"{}\"", raw_fd, ::strerror(errno));
     if (complete_notifier != nullptr) {
       complete_notifier->set_value(false);
     }
@@ -328,7 +328,7 @@ bool io_broker_epoll::handle_fd_epoll_removal(int                       fd,
   epoll_ev.events             = EPOLLIN;
   if (::epoll_ctl(epoll_fd.value(), EPOLL_CTL_DEL, fd, &epoll_ev) == -1) {
     logger.error(
-        "fd={}: Failed to deregister file descriptor. Cause: epoll_ctl failed with \"{}\"", fd, strerror(errno));
+        "fd={}: Failed to deregister file descriptor. Cause: epoll_ctl failed with \"{}\"", fd, ::strerror(errno));
     event_handler.erase(ev_it);
     if (complete_notifier != nullptr) {
       complete_notifier->set_value(false);
@@ -458,7 +458,7 @@ void io_broker_epoll::stop_impl()
     if (::epoll_ctl(epoll_fd.value(), EPOLL_CTL_DEL, it->first, &epoll_ev) == -1) {
       logger.error("fd={}: Failed to deregister file descriptor. Cause: epoll_ctl failed with \"{}\"",
                    it->first,
-                   strerror(errno));
+                   ::strerror(errno));
     }
     it = event_handler.erase(it);
   }

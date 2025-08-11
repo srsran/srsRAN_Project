@@ -526,9 +526,9 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   ret.rnti                = rnti;
   ret.cqi_stats           = data.cqi;
   ret.dl_ri_stats         = data.dl_ri;
-  uint8_t mcs             = data.nof_dl_cws > 0 ? std::roundf(static_cast<float>(data.dl_mcs) / data.nof_dl_cws) : 0;
+  uint8_t mcs             = data.nof_dl_cws > 0 ? std::round(static_cast<float>(data.dl_mcs) / data.nof_dl_cws) : 0;
   ret.dl_mcs              = sch_mcs_index{mcs};
-  mcs                     = data.nof_puschs > 0 ? std::roundf(static_cast<float>(data.ul_mcs) / data.nof_puschs) : 0;
+  mcs                     = data.nof_puschs > 0 ? std::round(static_cast<float>(data.ul_mcs) / data.nof_puschs) : 0;
   ret.ul_mcs              = sch_mcs_index{mcs};
   ret.tot_pdsch_prbs_used = data.tot_dl_prbs_used;
   ret.tot_pusch_prbs_used = data.tot_ul_prbs_used;

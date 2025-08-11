@@ -128,7 +128,7 @@ void du_time_controller::handle_cell_deactivation(du_cell_index_t cell_index)
 
 slot_point_extended du_time_controller::handle_slot_ind(du_cell_index_t cell_index, slot_point sl_tx)
 {
-  constexpr static int MAX_SKIPPED = 128;
+  static constexpr int MAX_SKIPPED = 128;
 
   // Set logger context.
   logger.set_context(sl_tx.sfn(), sl_tx.slot_index());

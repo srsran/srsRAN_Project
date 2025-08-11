@@ -103,7 +103,7 @@ double compute_pf_metric(double estim_rate, double avg_rate, double fairness_coe
         // rate, as its impact is minimal.
         pf_weight = 1 / avg_rate;
       } else {
-        pf_weight = estim_rate / pow(avg_rate, fairness_coeff);
+        pf_weight = estim_rate / std::pow(avg_rate, fairness_coeff);
       }
     } else {
       // In case the avg rate is zero, the division would be inf. Instead, we give the highest priority to the UE.

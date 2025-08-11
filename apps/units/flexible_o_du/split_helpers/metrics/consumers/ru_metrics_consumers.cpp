@@ -165,7 +165,7 @@ static void log_ru_ofh_metrics(srslog::log_channel&     log_chan,
     fmt::format_to(
         std::back_inserter(buffer),
         "sector#{} pci={} received messages stats: rx_total={} rx_early={} "
-        "rx_on_time={} rx_late={} earliest_msg_us={} latest_msg_us={}, nof_missed_uplink_symbols={} "
+        "rx_on_time={} rx_late={} earliest_msg_us={:.2f} latest_msg_us={:.2f}, nof_missed_uplink_symbols={} "
         "nof_missed_prach_occasions={}; ",
         cell_metrics.sector_id,
         static_cast<unsigned>(pci_sector_map[cell_metrics.sector_id]),

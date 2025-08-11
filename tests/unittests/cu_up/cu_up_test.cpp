@@ -198,7 +198,7 @@ protected:
 
   upf_info_t init_upf()
   {
-    int sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    int sock_fd = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (sock_fd < 0) {
       return {sock_fd, {}};
     }
@@ -211,21 +211,21 @@ protected:
 
     int ret = 0;
 
-    ret = bind(sock_fd, (sockaddr*)&upf_addr, sizeof(upf_addr));
+    ret = ::bind(sock_fd, (sockaddr*)&upf_addr, sizeof(upf_addr));
     if (ret < 0) {
-      fmt::print(stderr, "Failed to bind socket to `{}:{}` - {}\n", upf_addr_str, upf_port, strerror(errno));
+      fmt::print(stderr, "Failed to bind socket to `{}:{}` - {}\n", upf_addr_str, upf_port, ::strerror(errno));
       return {ret, {}};
     }
 
     // Find out the port that was assigned
     socklen_t upf_addr_len = sizeof(upf_addr);
-    ret                    = getsockname(sock_fd, (struct sockaddr*)&upf_addr, &upf_addr_len);
+    ret                    = ::getsockname(sock_fd, (struct sockaddr*)&upf_addr, &upf_addr_len);
     if (ret < 0) {
-      fmt::print(stderr, "Failed to read port of socket bound to `{}:0` - {}", upf_addr_str, strerror(errno));
+      fmt::print(stderr, "Failed to read port of socket bound to `{}:0` - {}", upf_addr_str, ::strerror(errno));
       return {ret, {}};
     }
     if (upf_addr_len != sizeof(upf_addr)) {
-      fmt::print(stderr, "Mismatching upf_addr_len after getsockname()");
+      fmt::print(stderr, "Mismatching upf_addr_len after ::getsockname()");
       return {-1, {}};
     }
     return {sock_fd, upf_addr};
@@ -293,7 +293,7 @@ TEST_F(cu_up_test, dl_data_flow)
   // receive message 1
   std::array<uint8_t, 128> rx_buf;
   int                      ret;
-  ret = recv(upf_info.sock_fd, rx_buf.data(), rx_buf.size(), 0);
+  ret = ::recv(upf_info.sock_fd, rx_buf.data(), rx_buf.size(), 0);
 
   test_logger.info("Processed UL PDU. DDDS is updated");
 
@@ -316,14 +316,14 @@ TEST_F(cu_up_test, dl_data_flow)
   ret = sendto(upf_info.sock_fd, gtpu_ping_vec, sizeof(gtpu_ping_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
   ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << upf_info.sock_fd << " to `"
                     << cu_up_udp_cfg.bind_address << ":" << cu_up->get_n3_bind_port().value() << "` - "
-                    << strerror(errno);
+                    << ::strerror(errno);
 
   // send message 2
   ret = sendto(upf_info.sock_fd, gtpu_ping_vec, sizeof(gtpu_ping_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
   ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << upf_info.sock_fd << " to `"
                     << cu_up_udp_cfg.bind_address << ":" << cu_up->get_n3_bind_port().value() << "` - "
-                    << strerror(errno);
-  close(upf_info.sock_fd);
+                    << ::strerror(errno);
+  ::close(upf_info.sock_fd);
 
   // check reception of message 1
   nru_dl_message          sdu1 = f1u_bearer.wait_tx_sdu();
@@ -393,16 +393,16 @@ TEST_F(cu_up_test, ul_data_flow)
   uint16_t gtpu_hdr_len = 16;
 
   // receive message 1
-  int ret = recv(upf_info.sock_fd, rx_buf.data(), rx_buf.size(), 0);
+  int ret = ::recv(upf_info.sock_fd, rx_buf.data(), rx_buf.size(), 0);
   ASSERT_EQ(ret, exp_len);
   EXPECT_TRUE(std::equal(t_pdu_span1.begin() + f1u_hdr_len, t_pdu_span1.end(), rx_buf.begin() + gtpu_hdr_len));
 
   // receive message 2
-  ret = recv(upf_info.sock_fd, rx_buf.data(), rx_buf.size(), 0);
+  ret = ::recv(upf_info.sock_fd, rx_buf.data(), rx_buf.size(), 0);
   ASSERT_EQ(ret, exp_len);
   EXPECT_TRUE(std::equal(t_pdu_span2.begin() + f1u_hdr_len, t_pdu_span2.end(), rx_buf.begin() + gtpu_hdr_len));
 
-  close(upf_info.sock_fd);
+  ::close(upf_info.sock_fd);
 }
 
 TEST_F(cu_up_test, echo_data_flow)
@@ -431,7 +431,7 @@ TEST_F(cu_up_test, echo_data_flow)
       upf_info.sock_fd, gtpu_echo_req_vec, sizeof(gtpu_echo_req_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
   ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << upf_info.sock_fd << " to `"
                     << cu_up_udp_cfg.bind_address << ":" << cu_up->get_n3_bind_port().value() << "` - "
-                    << strerror(errno);
+                    << ::strerror(errno);
 
   // Receive GTP-U echo response message and check result.
   constexpr uint16_t           exp_len            = 14;
@@ -443,7 +443,7 @@ TEST_F(cu_up_test, echo_data_flow)
   ASSERT_EQ(ret, exp_len);
   EXPECT_TRUE(std::equal(gtpu_echo_resp_vec.begin(), gtpu_echo_resp_vec.end(), rx_buf.begin()));
 
-  close(upf_info.sock_fd);
+  ::close(upf_info.sock_fd);
 }
 
 int main(int argc, char** argv)

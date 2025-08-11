@@ -7,6 +7,7 @@
  * the distribution.
  *
  */
+
 #pragma once
 
 #include "srsran/phy/support/resource_grid_mapper.h"

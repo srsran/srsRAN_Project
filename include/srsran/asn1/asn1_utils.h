@@ -963,7 +963,7 @@ public:
   explicit bitstring(const std::string& s)
   {
     resize(s.size());
-    memset(&octets_[0], 0, nof_octets());
+    std::memset(&octets_[0], 0, nof_octets());
     for (uint32_t i = 0; i < s.size(); ++i)
       set(s.size() - i - 1, s[i] == '1');
   }
@@ -979,7 +979,7 @@ public:
   {
     nof_bits = new_size;
     octets_.resize(nof_octets());
-    memset(data(), 0, nof_octets()); // resize always resets content
+    std::memset(data(), 0, nof_octets()); // resize always resets content
   }
 
   // comparison
@@ -1011,7 +1011,7 @@ public:
   uint64_t   to_number() const { return bitstring_utils::to_number(data(), length()); }
   this_type& from_number(uint64_t val)
   {
-    auto nof_bits_ = std::max((uint32_t)ceilf(log2(std::max(val, (uint64_t)1u))), LB);
+    auto nof_bits_ = std::max((uint32_t)std::ceil(std::log2(std::max(val, (uint64_t)1u))), LB);
     if (nof_bits_ > UB) {
       log_error("The provided bitstring value {} does not fit the bounds [{}, {}]", val, uint32_t(lb), uint32_t(ub));
       return *this;

@@ -13,6 +13,7 @@
 #include "srsran/ran/cause/common.h"
 #include "srsran/support/srsran_assert.h"
 #include <array>
+
 namespace srsran {
 
 struct rrc_connection_establishment_counter_with_cause {

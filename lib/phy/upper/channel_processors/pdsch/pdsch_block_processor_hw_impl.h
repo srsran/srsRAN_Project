@@ -7,6 +7,7 @@
  * the distribution.
  *
  */
+
 #pragma once
 
 #include "srsran/hal/phy/upper/channel_processors/hw_accelerator_pdsch_enc.h"

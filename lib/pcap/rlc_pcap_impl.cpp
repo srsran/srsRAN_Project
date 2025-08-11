@@ -149,7 +149,7 @@ int nr_pcap_pack_rlc_context_to_buffer(const pcap_rlc_pdu_context& context, uint
   /* UEID */
   buffer[offset++] = PCAP_RLC_NR_UEID_TAG;
   tmp16            = htons(context.ueid);
-  memcpy(buffer + offset, &tmp16, 2);
+  std::memcpy(buffer + offset, &tmp16, 2);
   offset += 2;
 
   /* Bearer type */

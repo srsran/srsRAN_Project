@@ -75,7 +75,7 @@ void ldpc_rate_matcher_impl::init(const codeblock_metadata& cfg, unsigned block_
   srsran_assert(get_lifting_index(static_cast<lifting_size_t>(lifting_size)) != VOID_LIFTSIZE,
                 "LDPC rate matching: invalid input length.");
   double tmp = (shift_factor[rv] * buffer_length) / block_length;
-  shift_k0   = static_cast<uint16_t>(floor(tmp)) * lifting_size;
+  shift_k0   = static_cast<uint16_t>(std::floor(tmp)) * lifting_size;
 }
 
 void ldpc_rate_matcher_impl::rate_match(bit_buffer&                output,

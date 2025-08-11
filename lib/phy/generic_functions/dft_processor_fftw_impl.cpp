@@ -87,7 +87,7 @@ dft_processor_fftw_impl::fftw_wisdom_filename::fftw_wisdom_filename()
     // Get user entry in users database.
     const passwd* pwuid = getpwuid(getuid());
     if (pwuid == nullptr) {
-      printf("Failed to load home directory: %s. Skipping wisdom load/save.\n", strerror(errno));
+      printf("Failed to load home directory: %s. Skipping wisdom load/save.\n", ::strerror(errno));
       return;
     }
 

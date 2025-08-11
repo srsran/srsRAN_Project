@@ -49,21 +49,21 @@ public:
     span<const uint8_t> pdu_span = to_span(sdu, send_buffer);
 
     auto dest_addr  = server_addr.native();
-    int  bytes_sent = sctp_sendmsg(fd,
-                                  pdu_span.data(),
-                                  pdu_span.size(),
-                                  const_cast<struct sockaddr*>(dest_addr.addr),
-                                  dest_addr.addrlen,
-                                  htonl(ppid),
-                                  0,
-                                  stream_no,
-                                  0,
-                                  0);
+    int  bytes_sent = ::sctp_sendmsg(fd,
+                                    pdu_span.data(),
+                                    pdu_span.size(),
+                                    const_cast<struct sockaddr*>(dest_addr.addr),
+                                    dest_addr.addrlen,
+                                    htonl(ppid),
+                                    0,
+                                    stream_no,
+                                    0,
+                                    0);
     if (bytes_sent == -1) {
       logger.error("{}: Closing SCTP association. Cause: Couldn't send {} B of data. errno={}",
                    client_name,
                    pdu_span.size_bytes(),
-                   strerror(errno));
+                   ::strerror(errno));
       close();
       return false;
     }
@@ -81,22 +81,22 @@ private:
 
     // Send EOF to SCTP server.
     auto dest_addr  = server_addr.native();
-    int  bytes_sent = sctp_sendmsg(fd,
-                                  nullptr,
-                                  0,
-                                  const_cast<struct sockaddr*>(dest_addr.addr),
-                                  dest_addr.addrlen,
-                                  htonl(ppid),
-                                  SCTP_EOF,
-                                  stream_no,
-                                  0,
-                                  0);
+    int  bytes_sent = ::sctp_sendmsg(fd,
+                                    nullptr,
+                                    0,
+                                    const_cast<struct sockaddr*>(dest_addr.addr),
+                                    dest_addr.addrlen,
+                                    htonl(ppid),
+                                    SCTP_EOF,
+                                    stream_no,
+                                    0,
+                                    0);
 
     if (bytes_sent == -1) {
       // Failed to send EOF.
       // Note: It may happen when the sender notifier is removed just before the SCTP shutdown event is handled in
       // the server recv thread.
-      logger.info("{}: Couldn't send EOF during shut down (errno=\"{}\")", client_name, strerror(errno));
+      logger.info("{}: Couldn't send EOF during shut down (errno=\"{}\")", client_name, ::strerror(errno));
     } else {
       logger.debug("{}: Sent EOF to SCTP client and closed SCTP association", client_name);
     }
@@ -142,16 +142,16 @@ sctp_network_client_impl::~sctp_network_client_impl()
 
   // Signal that the upper layer sender should stop sending new SCTP data (including the EOF).
   if (eof_needed) {
-    sctp_sendmsg(socket.fd().value(),
-                 nullptr,
-                 0,
-                 const_cast<struct sockaddr*>(server_addr_cpy.native().addr),
-                 server_addr_cpy.native().addrlen,
-                 htonl(node_cfg.ppid),
-                 SCTP_EOF,
-                 stream_no,
-                 0,
-                 0);
+    ::sctp_sendmsg(socket.fd().value(),
+                   nullptr,
+                   0,
+                   const_cast<struct sockaddr*>(server_addr_cpy.native().addr),
+                   server_addr_cpy.native().addrlen,
+                   htonl(node_cfg.ppid),
+                   SCTP_EOF,
+                   stream_no,
+                   0,
+                   0);
   }
 
   // No subscription is on-going. It is now safe to close the socket.
@@ -219,7 +219,7 @@ sctp_network_client_impl::connect_to(const std::string&                         
   if (result == nullptr) {
     auto        end    = std::chrono::steady_clock::now();
     auto        now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    std::string cause  = strerror(errno);
+    std::string cause  = ::strerror(errno);
     if (errno == 0) {
       cause = "IO broker could not register socket";
     }
@@ -300,7 +300,7 @@ void sctp_network_client_impl::receive()
   // Handle error.
   if (rx_bytes == -1) {
     if (errno != EAGAIN) {
-      std::string cause = fmt::format("Error reading from SCTP socket: {}", strerror(errno));
+      std::string cause = fmt::format("Error reading from SCTP socket: {}", ::strerror(errno));
       handle_connection_terminated(cause.c_str());
     } else {
       if (!node_cfg.non_blocking_mode) {

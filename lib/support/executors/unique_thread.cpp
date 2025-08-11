@@ -52,7 +52,7 @@ static bool thread_set_affinity(pthread_t t, const os_sched_affinity_bitmask& bi
   }
   int ret;
   if ((ret = pthread_setaffinity_np(t, cpuset_size, cpusetp)) != 0) {
-    fmt::print("Couldn't set affinity for {} thread. Cause: '{}'\n", name, strerror(ret));
+    fmt::print("Couldn't set affinity for {} thread. Cause: '{}'\n", name, ::strerror(ret));
     CPU_FREE(cpusetp);
     return false;
   }
@@ -88,7 +88,7 @@ static void print_thread_priority(pthread_t t, const char* tname, std::thread::i
 
   s = pthread_getaffinity_np(t, sizeof(::cpu_set_t), &cpuset);
   if (s != 0) {
-    printf("error pthread_getaffinity_np: %s\n", strerror(s));
+    printf("error pthread_getaffinity_np: %s\n", ::strerror(s));
   }
 
   printf("Set returned by pthread_getaffinity_np() contained:\n");
@@ -100,7 +100,7 @@ static void print_thread_priority(pthread_t t, const char* tname, std::thread::i
 
   s = pthread_getschedparam(t, &policy, &param);
   if (s != 0) {
-    printf("error pthread_getaffinity_np: %s\n", strerror(s));
+    printf("error pthread_getaffinity_np: %s\n", ::strerror(s));
   }
 
   switch (policy) {

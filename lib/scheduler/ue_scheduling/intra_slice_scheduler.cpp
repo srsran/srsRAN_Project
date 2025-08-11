@@ -515,7 +515,7 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
     }
 
     // Compute the corresponding CRBs.
-    constexpr static search_space_id      ue_ded_ss_id = to_search_space_id(2);
+    static constexpr search_space_id      ue_ded_ss_id = to_search_space_id(2);
     const auto&                           ss_info      = grant_builder.ue().get_cc().cfg().search_space(ue_ded_ss_id);
     std::pair<crb_interval, crb_interval> alloc_crbs;
     if (enable_pdsch_interleaving) {

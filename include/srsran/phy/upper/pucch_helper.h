@@ -66,7 +66,7 @@ public:
   /// \param m0[in]      Initial cyclic shift
   /// \param m_cs[in]    Cyclic shift
   /// \return NR alpha index
-  unsigned get_alpha_index(const slot_point&    slot,
+  unsigned get_alpha_index(slot_point           slot,
                            const cyclic_prefix& cp,
                            unsigned             n_id,
                            unsigned             symbol,

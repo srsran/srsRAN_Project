@@ -10,9 +10,9 @@
 
 #pragma once
 
+#include "srsran/ran/du_types.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/async/manual_event.h"
-#include <srsran/ran/du_types.h>
 #include <vector>
 
 namespace srsran {

@@ -1320,7 +1320,7 @@ static void configure_main_thread(span<const unsigned> du_cell_cores)
     }
     int ret;
     if ((ret = pthread_setaffinity_np(self, sizeof(cpuset), &cpuset)) != 0) {
-      fmt::print("Warning: Unable to set affinity for test thread. Cause: '{}'\n", strerror(ret));
+      fmt::print("Warning: Unable to set affinity for test thread. Cause: '{}'\n", ::strerror(ret));
       return;
     }
   }

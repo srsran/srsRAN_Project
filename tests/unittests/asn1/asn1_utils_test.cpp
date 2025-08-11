@@ -424,7 +424,7 @@ TEST(asn1_seq_of_test, pack_unpack_and_operators)
   }
 
   int      lb = 0, ub = 40;
-  uint32_t n_bits = ceil(log2(ub - lb + 1));
+  uint32_t n_bits = std::ceil(std::log2(ub - lb + 1));
 
   srsran::byte_buffer buffer;
   bit_ref             b{buffer};
@@ -441,7 +441,7 @@ TEST(asn1_seq_of_test, pack_unpack_and_operators)
   TESTASSERT(bseq.size() == 0);
   bseq.resize(fixed_list_size);
   TESTASSERT(bseq.size() == fixed_list_size);
-  memcpy(&bseq[0], &fixed_list[0], fixed_list_size * sizeof(uint32_t));
+  std::memcpy(&bseq[0], &fixed_list[0], fixed_list_size * sizeof(uint32_t));
   b = {buffer};
   pack_dyn_seq_of(b, bseq, 0, 33, integer_packer<uint32_t>(lb, ub, false));
   TESTASSERT(b.distance() == (int)((fixed_list_size + 1) * n_bits)); // unaligned
@@ -503,13 +503,13 @@ TEST(asn1_copy_ptr_test, memory_safety)
   copy_ptr<TestType> cptr(s);
   copy_ptr<TestType> cptr2;
 
-  memcpy(&(*cptr)[0], buffer, N);
+  std::memcpy(&(*cptr)[0], buffer, N);
 
   TESTASSERT(cptr2.get() == NULL);
-  TESTASSERT(memcmp(&(*s)[0], buffer, s->size()) == 0);
+  TESTASSERT(std::memcmp(&(*s)[0], buffer, s->size()) == 0);
   TESTASSERT(*cptr == *s);
   TESTASSERT(cptr.get() == s);
-  TESTASSERT(memcmp(&(*cptr)[0], buffer, cptr->size()) == 0);
+  TESTASSERT(std::memcmp(&(*cptr)[0], buffer, cptr->size()) == 0);
   TESTASSERT(cptr2.get() == NULL);
   TESTASSERT(cptr.get() != NULL);
 
@@ -518,7 +518,7 @@ TEST(asn1_copy_ptr_test, memory_safety)
     TESTASSERT(cptr3 == cptr);
     TESTASSERT(*cptr3 == *s);
     TESTASSERT(cptr3.get() != cptr.get()); // different addresses
-    TESTASSERT(memcmp(&(*cptr3)[0], buffer, cptr3->size()) == 0);
+    TESTASSERT(std::memcmp(&(*cptr3)[0], buffer, cptr3->size()) == 0);
     // call dtor
   }
   TESTASSERT(*cptr == *s);
@@ -596,7 +596,7 @@ TEST(asn1_enumerated, pack_unpack)
   srsran::byte_buffer buffer;
   bit_ref             bref(buffer);
   TESTASSERT(pack_enum(bref, e) == SRSASN_SUCCESS);
-  TESTASSERT(bref.distance() == (int)(floor(log2(e.nof_types)) + 1));
+  TESTASSERT(bref.distance() == (int)(std::floor(std::log2(e.nof_types)) + 1));
 
   cbit_ref bref2(buffer);
   TESTASSERT(unpack_enum(e2, bref2) == SRSASN_SUCCESS);
@@ -758,7 +758,7 @@ TEST(asn1_real_test, real_positive_number_pack_unpack)
     for (size_t j = 3; j < out_bytes.size(); ++j) {
       N = (N << 8) | out_bytes[j];
     }
-    float val = static_cast<float>(1.0 * S * N * pow(2, E));
+    float val = static_cast<float>(1.0 * S * N * std::pow(2, E));
     TESTASSERT(real_number.value == val);
 
     real_s   real_number2;
@@ -796,7 +796,7 @@ TEST(asn1_real_test, real_negative_number_pack_unpack)
     for (size_t j = 3; j < out_bytes.size(); ++j) {
       N = (N << 8) | out_bytes[j];
     }
-    float val = static_cast<float>(1.0 * S * N * pow(2, E));
+    float val = static_cast<float>(1.0 * S * N * std::pow(2, E));
     TESTASSERT(real_number.value == val);
 
     real_s   real_number2;

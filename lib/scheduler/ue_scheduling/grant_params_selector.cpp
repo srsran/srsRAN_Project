@@ -199,7 +199,7 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
   unsigned                     slot_nof_symbols = cell_cfg.get_nof_dl_symbol_per_slot(pdsch_slot);
 
   // TODO: Support more search spaces.
-  constexpr static search_space_id ue_ded_ss_id = to_search_space_id(2);
+  static constexpr search_space_id ue_ded_ss_id = to_search_space_id(2);
   const search_space_info&         ss           = ue_cc.cfg().search_space(ue_ded_ss_id);
 
   if (h_dl != nullptr) {

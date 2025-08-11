@@ -373,7 +373,7 @@ static unsigned get_nof_prealloc_producers(const worker_manager_config& worker_c
     // Include RU timing thread.
     nof_producers += 1;
     // Include threads for each RU cell (sum of DL antennas + one Rx + TxRx).
-    for (unsigned int nof_downlink_antenna : worker_cfg.ru_ofh_cfg->nof_downlink_antennas) {
+    for (unsigned nof_downlink_antenna : worker_cfg.ru_ofh_cfg->nof_downlink_antennas) {
       nof_producers += 2 + nof_downlink_antenna;
     }
   }

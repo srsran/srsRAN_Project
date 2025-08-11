@@ -390,7 +390,7 @@ bool pdu_rx_handler::handle_crnti_ce(const decoded_mac_rx_pdu& ctx, const mac_ul
   return true;
 }
 
-void pdu_rx_handler::write_pcap_rx_pdu(const slot_point& sl_rx, const mac_rx_pdu& pdu)
+void pdu_rx_handler::write_pcap_rx_pdu(slot_point sl_rx, const mac_rx_pdu& pdu)
 {
   if (not pcap.is_write_enabled()) {
     return;

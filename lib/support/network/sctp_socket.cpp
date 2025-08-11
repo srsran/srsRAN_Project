@@ -55,7 +55,7 @@ bool sctp_set_rto_opts(const unique_fd&                         fd,
   socklen_t    rto_sz    = sizeof(sctp_rtoinfo);
   rto_opts.srto_assoc_id = SCTP_FUTURE_ASSOC;
   if (getsockopt(fd.value(), SOL_SCTP, SCTP_RTOINFO, &rto_opts, &rto_sz) < 0) {
-    logger.error("{}: Error getting RTO_INFO sockopts. errno={}", if_name, strerror(errno));
+    logger.error("{}: Error getting RTO_INFO sockopts. errno={}", if_name, ::strerror(errno));
     return false; // Responsibility of closing the socket is on the caller
   }
 
@@ -78,7 +78,7 @@ bool sctp_set_rto_opts(const unique_fd&                         fd,
       rto_opts.srto_max);
 
   if (::setsockopt(fd.value(), SOL_SCTP, SCTP_RTOINFO, &rto_opts, rto_sz) < 0) {
-    logger.error("{}: Error setting RTO_INFO sockopts. errno={}", if_name, strerror(errno));
+    logger.error("{}: Error setting RTO_INFO sockopts. errno={}", if_name, ::strerror(errno));
     return false;
   }
   return true;
@@ -104,7 +104,7 @@ bool sctp_set_init_msg_opts(const unique_fd&                         fd,
   sctp_initmsg init_opts = {};
   socklen_t    init_sz   = sizeof(sctp_initmsg);
   if (getsockopt(fd.value(), SOL_SCTP, SCTP_INITMSG, &init_opts, &init_sz) < 0) {
-    logger.error("{}: Error getting sockopts. errno={}", if_name, strerror(errno));
+    logger.error("{}: Error getting sockopts. errno={}", if_name, ::strerror(errno));
     return false; // Responsibility of closing the socket is on the caller
   }
 
@@ -120,7 +120,7 @@ bool sctp_set_init_msg_opts(const unique_fd&                         fd,
                init_opts.sinit_max_attempts,
                init_opts.sinit_max_init_timeo);
   if (::setsockopt(fd.value(), SOL_SCTP, SCTP_INITMSG, &init_opts, init_sz) < 0) {
-    logger.error("{}: Error setting SCTP_INITMSG sockopts. errno={}\n", if_name, strerror(errno));
+    logger.error("{}: Error setting SCTP_INITMSG sockopts. errno={}\n", if_name, ::strerror(errno));
     return false; // Responsibility of closing the socket is on the caller
   }
   return true;
@@ -145,7 +145,7 @@ bool sctp_set_paddr_opts(const unique_fd&                         fd,
   socklen_t        paddr_sz   = sizeof(sctp_paddrparams);
   paddr_opts.spp_assoc_id     = SCTP_FUTURE_ASSOC;
   if (getsockopt(fd.value(), SOL_SCTP, SCTP_PEER_ADDR_PARAMS, &paddr_opts, &paddr_sz) < 0) {
-    logger.error("{}: Error getting SCTP_PEER_ADDR_PARAMS sockopts. errno={}", if_name, strerror(errno));
+    logger.error("{}: Error getting SCTP_PEER_ADDR_PARAMS sockopts. errno={}", if_name, ::strerror(errno));
     return false; // Responsibility of closing the socket is on the caller
   }
 
@@ -158,7 +158,7 @@ bool sctp_set_paddr_opts(const unique_fd&                         fd,
                (unsigned)paddr_opts.spp_hbinterval);
 
   if (::setsockopt(fd.value(), SOL_SCTP, SCTP_PEER_ADDR_PARAMS, &paddr_opts, paddr_sz) < 0) {
-    logger.error("{}: Error setting SCTP_PEER_ADDR_PARAMS sockopts. errno={}", if_name, strerror(errno));
+    logger.error("{}: Error setting SCTP_PEER_ADDR_PARAMS sockopts. errno={}", if_name, ::strerror(errno));
     return false;
   }
   return true;
@@ -183,7 +183,7 @@ bool sctp_set_assoc_opts(const unique_fd&      fd,
   socklen_t        assoc_sz   = sizeof(sctp_assocparams);
   assoc_opts.sasoc_assoc_id   = SCTP_FUTURE_ASSOC;
   if (getsockopt(fd.value(), SOL_SCTP, SCTP_ASSOCINFO, &assoc_opts, &assoc_sz) < 0) {
-    logger.error("{}: Error getting SCTP_ASSOCINFO sockopts. errno={}", if_name, strerror(errno));
+    logger.error("{}: Error getting SCTP_ASSOCINFO sockopts. errno={}", if_name, ::strerror(errno));
     return false; // Responsibility of closing the socket is on the caller
   }
 
@@ -196,7 +196,7 @@ bool sctp_set_assoc_opts(const unique_fd&      fd,
                assoc_opts.sasoc_asocmaxrxt);
 
   if (::setsockopt(fd.value(), SOL_SCTP, SCTP_ASSOCINFO, &assoc_opts, assoc_sz) < 0) {
-    logger.error("{}: Error setting SCTP_ASSOCINFO sockopts. errno={}", if_name, strerror(errno));
+    logger.error("{}: Error setting SCTP_ASSOCINFO sockopts. errno={}", if_name, ::strerror(errno));
     return false;
   }
   return true;
@@ -241,11 +241,11 @@ expected<sctp_socket> sctp_socket::create(const sctp_socket_params& params)
       socket.logger.error(
           "{}: Failed to create SCTP socket: {}. Hint: Please ensure 'sctp' kernel module is available on the system.",
           socket.if_name,
-          strerror(ret));
+          ::strerror(ret));
       report_error("{}: Failed to create SCTP socket: {}. Hint: Please ensure 'sctp' kernel module is available on the "
                    "system.\n",
                    socket.if_name,
-                   strerror(ret));
+                   ::strerror(ret));
     }
     return make_unexpected(default_error_t{});
   }
@@ -275,7 +275,7 @@ bool sctp_socket::close()
     return true;
   }
   if (not sock_fd.close()) {
-    logger.error("{}: Error closing SCTP socket: {}", if_name, strerror(errno));
+    logger.error("{}: Error closing SCTP socket: {}", if_name, ::strerror(errno));
     return false;
   }
   logger.info("{}: SCTP socket closed", if_name);
@@ -297,7 +297,7 @@ bool sctp_socket::bind(struct sockaddr& ai_addr, const socklen_t& ai_addrlen, co
   logger.debug("{}: Binding to {}...", if_name, get_nameinfo(ai_addr, ai_addrlen));
 
   if (::bind(fd().value(), &ai_addr, ai_addrlen) == -1) {
-    logger.error("{}: Failed to bind to {}. Cause: {}", if_name, get_nameinfo(ai_addr, ai_addrlen), strerror(errno));
+    logger.error("{}: Failed to bind to {}. Cause: {}", if_name, get_nameinfo(ai_addr, ai_addrlen), ::strerror(errno));
     return false;
   }
 
@@ -322,7 +322,7 @@ bool sctp_socket::connect(struct sockaddr& ai_addr, const socklen_t& ai_addrlen)
   }
 
   if (::connect(sock_fd.value(), &ai_addr, ai_addrlen) == -1) {
-    logger.debug("{}: Failed to connect to {} - {}", if_name, get_nameinfo(ai_addr, ai_addrlen), strerror(errno));
+    logger.debug("{}: Failed to connect to {} - {}", if_name, get_nameinfo(ai_addr, ai_addrlen), ::strerror(errno));
     return false;
   }
 
@@ -345,7 +345,7 @@ bool sctp_socket::listen()
   // Listen for connections
   int ret = ::listen(sock_fd.value(), SOMAXCONN);
   if (ret != 0) {
-    logger.error("{}: Error in SCTP socket listen: {}", if_name, strerror(errno));
+    logger.error("{}: Error in SCTP socket listen: {}", if_name, ::strerror(errno));
     return false;
   }
   if (logger.info.enabled()) {
@@ -366,7 +366,7 @@ bool sctp_socket::set_sockopts(const sctp_socket_params& params)
   logger.debug("Setting socket options. params=[{}]", params);
   if (not sctp_subscribe_to_events(sock_fd)) {
     logger.error(
-        "{}: SCTP failed to be created. Cause: Subscribing to SCTP events failed: {}", if_name, strerror(errno));
+        "{}: SCTP failed to be created. Cause: Subscribing to SCTP events failed: {}", if_name, ::strerror(errno));
     return false;
   }
 
@@ -398,8 +398,10 @@ bool sctp_socket::set_sockopts(const sctp_socket_params& params)
 
   // Set SCTP NODELAY option
   if (not sctp_set_nodelay(sock_fd, params.nodelay)) {
-    logger.error(
-        "{}: Could not set SCTP_NODELAY. optval={} error={}", if_name, params.nodelay.value() ? 1 : 0, strerror(errno));
+    logger.error("{}: Could not set SCTP_NODELAY. optval={} error={}",
+                 if_name,
+                 params.nodelay.value() ? 1 : 0,
+                 ::strerror(errno));
     return false;
   }
 
@@ -423,12 +425,12 @@ std::optional<uint16_t> sctp_socket::get_listen_port() const
   sockaddr*        gw_addr     = (sockaddr*)&gw_addr_storage;
   socklen_t        gw_addr_len = sizeof(gw_addr_storage);
 
-  int ret = getsockname(sock_fd.value(), gw_addr, &gw_addr_len);
+  int ret = ::getsockname(sock_fd.value(), gw_addr, &gw_addr_len);
   if (ret != 0) {
     logger.error("{}: Failed `getsockname` in SCTP network gateway with sock_fd={}: {}",
                  if_name,
                  sock_fd.value(),
-                 strerror(errno));
+                 ::strerror(errno));
     return {};
   }
 

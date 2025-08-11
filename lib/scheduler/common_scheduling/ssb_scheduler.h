@@ -37,7 +37,7 @@ public:
   /// \param[in]  sl_point       Slot point carrying information about current slot.
   ///
   /// \remark This function only works for FR1, or L_max = 4 or 8.
-  void run_slot(cell_resource_allocator& res_allocator, const slot_point& sl_point);
+  void run_slot(cell_resource_allocator& res_allocator, slot_point sl_point);
 
   /// \brief Schedule grant for SSB.
   ///
@@ -51,10 +51,10 @@ public:
 
 private:
   /// \brief Perform allocation for case A and C (both paired and unpaired spectrum) - TS 38.213, Section 4.1.
-  void ssb_alloc_case_A_C(ssb_information_list& ssb_list, uint32_t freq_arfcn_cut_off, const slot_point& sl_point_mod);
+  void ssb_alloc_case_A_C(ssb_information_list& ssb_list, uint32_t freq_arfcn_cut_off, slot_point sl_point_mod);
 
   /// \brief Perform SSB allocation for case B (both paired and unpaired spectrum) - TS 38.213, Section 4.1.
-  void ssb_alloc_case_B(ssb_information_list& ssb_list, const slot_point& sl_point_mod);
+  void ssb_alloc_case_B(ssb_information_list& ssb_list, slot_point sl_point_mod);
 
   static void fill_ssb_parameters(ssb_information_list& ssb_list,
                                   ssb_offset_to_pointA  offset_to_point_A,

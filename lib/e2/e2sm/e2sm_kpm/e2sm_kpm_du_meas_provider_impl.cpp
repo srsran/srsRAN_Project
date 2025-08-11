@@ -306,7 +306,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_cqi(const asn1::e2sm::label_info_list_l
 
   meas_record_item_c meas_record_item;
   meas_record_item.set_integer() = ue_metrics.cqi_stats.get_nof_observations() > 0
-                                       ? static_cast<uint64_t>(std::roundf(ue_metrics.cqi_stats.get_mean()))
+                                       ? static_cast<uint64_t>(std::round(ue_metrics.cqi_stats.get_mean()))
                                        : 0;
   items.push_back(meas_record_item);
   meas_collected = true;

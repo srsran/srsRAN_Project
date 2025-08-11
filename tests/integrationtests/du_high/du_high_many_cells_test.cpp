@@ -297,7 +297,7 @@ INSTANTIATE_TEST_SUITE_P(du_high_many_cells_test_suite,
 class du_high_many_cells_deferred_activation_test : public du_high_env_simulator, public testing::Test
 {
 protected:
-  constexpr static unsigned nof_cells = 4;
+  static constexpr unsigned nof_cells = 4;
 
   du_high_many_cells_deferred_activation_test() :
     du_high_env_simulator(
@@ -380,8 +380,8 @@ TEST_F(du_high_many_cells_deferred_activation_test, when_cell_starts_deactivated
 class du_high_many_cells_metrics_test : public du_high_env_simulator, public testing::Test
 {
 protected:
-  constexpr static std::chrono::milliseconds METRICS_PERIOD{100};
-  constexpr static unsigned                  nof_cells = 4;
+  static constexpr std::chrono::milliseconds METRICS_PERIOD{100};
+  static constexpr unsigned                  nof_cells = 4;
 
   du_high_many_cells_metrics_test() :
     du_high_env_simulator([]() {

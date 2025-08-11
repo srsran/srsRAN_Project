@@ -331,8 +331,8 @@ template <typename OutExec, concurrent_queue_policy QueuePolicy, typename Strand
 class task_strand final : public task_executor
 {
 public:
-  constexpr static bool     is_basic_lock             = std::is_same_v<StrandLockPolicy, basic_strand_lock>;
-  constexpr static unsigned default_strand_batch_size = is_basic_lock ? 256 : std::numeric_limits<unsigned>::max();
+  static constexpr bool     is_basic_lock             = std::is_same_v<StrandLockPolicy, basic_strand_lock>;
+  static constexpr unsigned default_strand_batch_size = is_basic_lock ? 256 : std::numeric_limits<unsigned>::max();
   using executor_type                                 = task_strand_executor<OutExec, QueuePolicy, StrandLockPolicy>;
 
   template <typename ExecType>
@@ -394,8 +394,8 @@ template <typename OutExec, typename StrandLockPolicy = basic_strand_lock>
 class priority_task_strand
 {
 public:
-  constexpr static bool     is_basic_lock             = std::is_same_v<StrandLockPolicy, basic_strand_lock>;
-  constexpr static unsigned default_strand_batch_size = is_basic_lock ? 256 : std::numeric_limits<unsigned>::max();
+  static constexpr bool     is_basic_lock             = std::is_same_v<StrandLockPolicy, basic_strand_lock>;
+  static constexpr unsigned default_strand_batch_size = is_basic_lock ? 256 : std::numeric_limits<unsigned>::max();
   using strand_type                                   = priority_task_strand<OutExec, StrandLockPolicy>;
   using executor_type                                 = priority_task_strand_executor<strand_type&>;
 

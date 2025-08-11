@@ -63,7 +63,7 @@ void scheduler_cell_metrics_consumer_stdout::handle_metric(const std::optional<s
       fmt::print("{:>5x}", to_value(ue.rnti));
 
       if (ue.cqi_stats.get_nof_observations() > 0) {
-        fmt::print(" | {:>3}", static_cast<unsigned>(std::roundf(ue.cqi_stats.get_mean())));
+        fmt::print(" | {:>3}", static_cast<unsigned>(std::round(ue.cqi_stats.get_mean())));
       } else {
         fmt::print(" | {:>3.3}", "n/a");
       }
@@ -262,7 +262,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
       fmt::format_to(std::back_inserter(buffer), "Scheduler UE pci={} rnti={} metrics:", ue.pci, ue.rnti);
       if (ue.cqi_stats.get_nof_observations() > 0) {
         fmt::format_to(
-            std::back_inserter(buffer), " cqi={}", static_cast<unsigned>(std::roundf(ue.cqi_stats.get_mean())));
+            std::back_inserter(buffer), " cqi={}", static_cast<unsigned>(std::round(ue.cqi_stats.get_mean())));
       } else {
         fmt::format_to(std::back_inserter(buffer), " cqi=n/a");
       }

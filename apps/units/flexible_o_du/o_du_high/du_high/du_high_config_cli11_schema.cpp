@@ -1867,7 +1867,7 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
       ->check(CLI::Range(22, 32));
   add_option(app, "--gnb_du_id", parsed_cfg.config.gnb_du_id, "gNB-DU Id")
       ->capture_default_str()
-      ->check(CLI::Range(static_cast<uint64_t>(0U), static_cast<uint64_t>(pow(2, 36) - 1)));
+      ->check(CLI::Range(static_cast<uint64_t>(0U), static_cast<uint64_t>((uint64_t(1) << 36) - 1)));
 
   // Loggers section.
   CLI::App* log_subcmd = add_subcommand(app, "log", "Logging configuration")->configurable();

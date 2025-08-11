@@ -49,7 +49,7 @@ receiver_impl::receiver_impl(const receiver_config& config, task_executor& execu
 {
   socket_fd = ::socket(AF_PACKET, SOCK_RAW, htons(ECPRI_ETH_TYPE));
   if (socket_fd < 0) {
-    report_error("Unable to open raw socket for Ethernet receiver: {}", strerror(errno));
+    report_error("Unable to open raw socket for Ethernet receiver: {}", ::strerror(errno));
   }
 
   if (config.interface.size() > (IFNAMSIZ - 1)) {

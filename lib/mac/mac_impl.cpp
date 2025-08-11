@@ -11,7 +11,7 @@
 #include "mac_impl.h"
 #include "mac_sched/srsran_scheduler_adapter.h"
 
-namespace srsran {
+using namespace srsran;
 
 mac_impl::mac_impl(const mac_config& params) :
   rnti_table(params.mac_cfg.initial_crnti),
@@ -46,5 +46,3 @@ mac_impl::mac_impl(const mac_config& params) :
             *mac_sched)
 {
 }
-
-} // namespace srsran

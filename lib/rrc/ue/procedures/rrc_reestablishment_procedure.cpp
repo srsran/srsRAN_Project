@@ -215,7 +215,7 @@ bool rrc_reestablishment_procedure::verify_security_context()
   // Get RX short MAC.
   security::sec_short_mac_i short_mac = {};
   uint16_t short_mac_int              = htons(reestablishment_request.rrc_reest_request.ue_id.short_mac_i.to_number());
-  memcpy(short_mac.data(), &short_mac_int, 2);
+  std::memcpy(short_mac.data(), &short_mac_int, 2);
 
   // Get packed varShortMAC-Input.
   asn1::rrc_nr::var_short_mac_input_s var_short_mac_input = {};
