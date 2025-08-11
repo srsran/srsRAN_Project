@@ -45,12 +45,10 @@ private:
 class split6_flexible_o_du_low_metrics_consumer_json : public app_services::metrics_consumer
 {
 public:
-  split6_flexible_o_du_low_metrics_consumer_json(srslog::log_channel&     log_chan,
-                                                 std::vector<pci_t>       pci_sector_map_,
-                                                 std::chrono::nanoseconds symbol_duration) :
+  split6_flexible_o_du_low_metrics_consumer_json(srslog::log_channel& log_chan, std::vector<pci_t> pci_sector_map_) :
     pci_sector_map(std::move(pci_sector_map_)),
     odu_low_metrics_handler(log_chan, pci_sector_map),
-    ru_metrics_handler(log_chan, pci_sector_map, symbol_duration)
+    ru_metrics_handler(log_chan, pci_sector_map)
   {
     srsran_assert(log_chan.enabled(), "JSON log channel is not enabled");
   }

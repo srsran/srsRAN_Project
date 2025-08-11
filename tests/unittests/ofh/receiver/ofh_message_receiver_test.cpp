@@ -185,11 +185,12 @@ public:
   message_receiver_config generate_config()
   {
     message_receiver_config config;
-    config.nof_symbols = 14;
-    config.scs         = subcarrier_spacing::kHz30;
-    config.vlan_params = vlan_params;
-    config.ul_eaxc     = ul_eaxc;
-    config.prach_eaxc  = ul_prach_eaxc;
+    config.nof_symbols                   = 14;
+    config.scs                           = subcarrier_spacing::kHz30;
+    config.vlan_params                   = vlan_params;
+    config.ul_eaxc                       = ul_eaxc;
+    config.prach_eaxc                    = ul_prach_eaxc;
+    config.enable_log_warnings_for_lates = true;
 
     return config;
   }

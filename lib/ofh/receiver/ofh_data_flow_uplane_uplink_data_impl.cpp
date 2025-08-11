@@ -64,7 +64,7 @@ bool data_flow_uplane_uplink_data_impl::should_uplane_packet_be_filtered(
   if (SRSRAN_UNLIKELY(results.params.filter_index == filter_index_type::reserved ||
                       is_a_prach_message(results.params.filter_index))) {
     logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet for slot '{}' and symbol '{}' as decoded "
-                "filter  index value '{}' is not valid",
+                "filter index value '{}' is not valid",
                 sector_id,
                 results.params.slot,
                 results.params.symbol_id,

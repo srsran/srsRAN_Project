@@ -9,6 +9,7 @@
  */
 
 #include "ofh_message_receiver_impl.h"
+#include "../support/logger_utils.h"
 #include "ofh_rx_window_checker.h"
 #include "srsran/instrumentation/traces/ofh_traces.h"
 
@@ -36,7 +37,8 @@ message_receiver_impl::message_receiver_impl(const message_receiver_config&  con
   eth_receiver(std::move(dependencies.eth_receiver)),
   metrics_collector(config.are_metrics_enabled,
                     data_flow_uplink->get_metrics_collector(),
-                    data_flow_prach->get_metrics_collector())
+                    data_flow_prach->get_metrics_collector()),
+  enable_log_warnings_for_lates(config.enable_log_warnings_for_lates)
 {
   srsran_assert(vlan_decoder, "Invalid VLAN decoder");
   srsran_assert(ecpri_decoder, "Invalid eCPRI decoder");
@@ -93,7 +95,11 @@ void message_receiver_impl::process_new_frame(ether::unique_rx_buffer buffer)
   if (SRSRAN_UNLIKELY(nof_skipped_seq_id > 0)) {
     metrics_collector.update_skipped_messages(nof_skipped_seq_id);
 
-    logger.info("Sector#{}: potentially lost '{}' messages sent by the RU", sector_id, nof_skipped_seq_id);
+    log_conditional_warning(logger,
+                            enable_log_warnings_for_lates,
+                            "Sector#{}: potentially lost '{}' messages sent by the RU",
+                            sector_id,
+                            nof_skipped_seq_id);
   }
 
   std::optional<slot_symbol_point> slot_point = uplane_peeker::peek_slot_symbol_point(ofh_pdu, nof_symbols, scs);

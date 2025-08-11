@@ -9,6 +9,7 @@
  */
 
 #include "ofh_downlink_handler_impl.h"
+#include "../support/logger_utils.h"
 #include "helpers.h"
 #include "srsran/instrumentation/traces/ofh_traces.h"
 #include "srsran/ofh/ofh_error_notifier.h"
@@ -36,7 +37,8 @@ downlink_handler_impl::downlink_handler_impl(const downlink_handler_impl_config&
   frame_pool_dl_cp(std::move(dependencies.frame_pool_dl_cp)),
   frame_pool_dl_up(std::move(dependencies.frame_pool_dl_up)),
   err_notifier(dependencies.err_notifier),
-  metrics_collector(*data_flow_cplane, *data_flow_uplane, window_checker)
+  metrics_collector(*data_flow_cplane, *data_flow_uplane, window_checker),
+  enable_log_warnings_for_lates(config.enable_log_warnings_for_lates)
 {
   srsran_assert(data_flow_cplane, "Invalid Control-Plane data flow");
   srsran_assert(data_flow_uplane, "Invalid User-Plane data flow");
@@ -64,7 +66,9 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
   }
 
   if (window_checker.is_late(context.slot)) {
-    logger.info(
+    log_conditional_warning(
+        logger,
+        enable_log_warnings_for_lates,
         "Sector#{}: dropped late downlink resource grid in slot '{}'. No OFH data will be transmitted for this slot",
         sector_id,
         context.slot);

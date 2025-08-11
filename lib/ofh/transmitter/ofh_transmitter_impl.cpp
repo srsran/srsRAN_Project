@@ -17,15 +17,16 @@ using namespace ofh;
 static uplink_request_handler_impl_config generate_uplink_request_handler_config(const transmitter_config& tx_config)
 {
   uplink_request_handler_impl_config config;
-  config.sector              = tx_config.sector;
-  config.is_prach_cp_enabled = tx_config.is_prach_cp_enabled;
-  config.prach_eaxc          = tx_config.prach_eaxc;
-  config.ul_data_eaxc        = tx_config.ul_eaxc;
-  config.tdd_config          = tx_config.tdd_config;
-  config.cp                  = tx_config.cp;
-  config.scs                 = tx_config.scs;
-  config.tx_timing_params    = tx_config.tx_timing_params;
-  config.ul_processing_time  = tx_config.ul_processing_time;
+  config.sector                        = tx_config.sector;
+  config.is_prach_cp_enabled           = tx_config.is_prach_cp_enabled;
+  config.prach_eaxc                    = tx_config.prach_eaxc;
+  config.ul_data_eaxc                  = tx_config.ul_eaxc;
+  config.tdd_config                    = tx_config.tdd_config;
+  config.cp                            = tx_config.cp;
+  config.scs                           = tx_config.scs;
+  config.tx_timing_params              = tx_config.tx_timing_params;
+  config.ul_processing_time            = tx_config.ul_processing_time;
+  config.enable_log_warnings_for_lates = tx_config.enable_log_warnings_for_lates;
 
   return config;
 }
@@ -48,13 +49,14 @@ resolve_uplink_request_handler_dependencies(transmitter_impl_dependencies& tx_de
 static downlink_handler_impl_config generate_downlink_handler_config(const transmitter_config& tx_config)
 {
   downlink_handler_impl_config out_cfg;
-  out_cfg.sector             = tx_config.sector;
-  out_cfg.dl_eaxc            = tx_config.dl_eaxc;
-  out_cfg.tdd_config         = tx_config.tdd_config;
-  out_cfg.cp                 = tx_config.cp;
-  out_cfg.scs                = tx_config.scs;
-  out_cfg.dl_processing_time = tx_config.dl_processing_time;
-  out_cfg.tx_timing_params   = tx_config.tx_timing_params;
+  out_cfg.sector                        = tx_config.sector;
+  out_cfg.dl_eaxc                       = tx_config.dl_eaxc;
+  out_cfg.tdd_config                    = tx_config.tdd_config;
+  out_cfg.cp                            = tx_config.cp;
+  out_cfg.scs                           = tx_config.scs;
+  out_cfg.dl_processing_time            = tx_config.dl_processing_time;
+  out_cfg.tx_timing_params              = tx_config.tx_timing_params;
+  out_cfg.enable_log_warnings_for_lates = tx_config.enable_log_warnings_for_lates;
 
   return out_cfg;
 }

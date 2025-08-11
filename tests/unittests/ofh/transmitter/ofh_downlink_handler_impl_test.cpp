@@ -82,11 +82,12 @@ static constexpr units::bytes mtu_size{9000};
 static downlink_handler_impl_config generate_default_config()
 {
   downlink_handler_impl_config config;
-  config.dl_eaxc            = {24};
-  config.sector             = 0;
-  config.cp                 = cyclic_prefix::NORMAL;
-  config.scs                = subcarrier_spacing::kHz30;
-  config.dl_processing_time = std::chrono::milliseconds(400);
+  config.dl_eaxc                       = {24};
+  config.sector                        = 0;
+  config.cp                            = cyclic_prefix::NORMAL;
+  config.scs                           = subcarrier_spacing::kHz30;
+  config.dl_processing_time            = std::chrono::milliseconds(400);
+  config.enable_log_warnings_for_lates = true;
   // Transmission timing parameters corresponding to:
   // T1a_max_cp_dl=500us, T1a_min_cp_dl=200us,
   // T1a_max_cp_ul=300us, T1a_min_cp_ul=150us,

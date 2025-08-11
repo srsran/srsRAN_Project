@@ -116,6 +116,9 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_unit_bas
              "Ignore the start symbol field in the PRACH U-Plane packets")
       ->capture_default_str();
 
+  add_option(app, "--log_lates_as_warnings", config.enable_log_warnings_for_lates, "Log late events as warnings")
+      ->capture_default_str();
+
   add_option_function<std::string>(
       app,
       "--warn_unreceived_ru_frames",

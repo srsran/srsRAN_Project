@@ -180,8 +180,9 @@ protected:
     config.cp                  = cyclic_prefix::NORMAL;
     config.scs                 = subcarrier_spacing::kHz30;
     config.tdd_config.emplace(ttd_pattern);
-    config.ul_processing_time = ul_processing_time;
-    config.tx_timing_params   = tx_timing_params;
+    config.ul_processing_time            = ul_processing_time;
+    config.tx_timing_params              = tx_timing_params;
+    config.enable_log_warnings_for_lates = true;
 
     return config;
   }
@@ -189,14 +190,15 @@ protected:
   uplink_request_handler_impl_config get_config_prach_cp_enabled()
   {
     uplink_request_handler_impl_config config;
-    config.sector              = 0;
-    config.prach_eaxc          = prach_eaxc;
-    config.ul_data_eaxc        = {};
-    config.is_prach_cp_enabled = true;
-    config.cp                  = cyclic_prefix::NORMAL;
-    config.scs                 = subcarrier_spacing::kHz30;
-    config.ul_processing_time  = ul_processing_time;
-    config.tx_timing_params    = tx_timing_params;
+    config.sector                        = 0;
+    config.prach_eaxc                    = prach_eaxc;
+    config.ul_data_eaxc                  = {};
+    config.is_prach_cp_enabled           = true;
+    config.cp                            = cyclic_prefix::NORMAL;
+    config.scs                           = subcarrier_spacing::kHz30;
+    config.ul_processing_time            = ul_processing_time;
+    config.tx_timing_params              = tx_timing_params;
+    config.enable_log_warnings_for_lates = true;
 
     return config;
   }

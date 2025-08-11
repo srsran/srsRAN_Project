@@ -13,7 +13,6 @@
 #include "apps/helpers/metrics/json_generators/ru/ofh.h"
 #include "srsran/ru/ru_metrics.h"
 #include "srsran/support/format/fmt_to_c_str.h"
-#include "srsran/support/units.h"
 
 using namespace srsran;
 using namespace app_helpers;
@@ -21,18 +20,16 @@ using namespace app_helpers;
 /// Size in bytes of the buffer used to prepare the metrics before logging.
 static constexpr unsigned str_buffer_size = 2048;
 
-static void log_ru_ofh_metrics_json(srslog::log_channel&     log_chan,
-                                    const ofh::metrics&      metrics,
-                                    span<const pci_t>        pci_sector_map,
-                                    std::chrono::nanoseconds symbol_duration)
+static void
+log_ru_ofh_metrics_json(srslog::log_channel& log_chan, const ofh::metrics& metrics, span<const pci_t> pci_sector_map)
 {
   log_chan("{}", app_helpers::json_generators::generate_string(metrics, pci_sector_map, 2));
 }
 
 void ru_metrics_consumer_json::handle_metric(const ru_metrics& metric)
 {
-  if (auto* ofh_metrics = std::get_if<ofh::metrics>(&metric.metrics)) {
-    log_ru_ofh_metrics_json(log_chan, *ofh_metrics, pci_sector_map, symbol_duration);
+  if (const auto* ofh_metrics = std::get_if<ofh::metrics>(&metric.metrics)) {
+    log_ru_ofh_metrics_json(log_chan, *ofh_metrics, pci_sector_map);
   }
 }
 
@@ -51,7 +48,7 @@ static void log_ru_ofh_performance_metrics_verbose(fmt::basic_memory_buffer<char
       static_cast<float>(cell_metrics.metrics_period_ms.count() * 1e3);
 
   fmt::format_to(std::back_inserter(buffer),
-                 "; {} cpu_usage={:.1f}% max_latency={:.2f}us avg_latency={:.2f}us throughput={:.2f}Mbps "
+                 "{} cpu_usage={:.1f}% max_latency={:.2f}us avg_latency={:.2f}us throughput={:.2f}Mbps "
                  "rx_bytes={}; ",
                  "ether_rx:",
                  validate_fp_value(ether_rx_cpu_usage),
@@ -191,7 +188,7 @@ static void log_ru_ofh_metrics(srslog::log_channel&     log_chan,
 
 void ru_metrics_consumer_log::handle_metric(const ru_metrics& metric)
 {
-  if (auto* ofh_metrics = std::get_if<ofh::metrics>(&metric.metrics)) {
+  if (const auto* ofh_metrics = std::get_if<ofh::metrics>(&metric.metrics)) {
     log_ru_ofh_metrics(log_chan, *ofh_metrics, pci_sector_map, verbose, symbol_duration);
   }
 }
@@ -204,15 +201,15 @@ static void print_sdr_header()
 
 void ru_metrics_handler_stdout::handle_metric(const ru_metrics& metric)
 {
-  if (auto* sdr_metrics = std::get_if<ru_generic_metrics>(&metric.metrics)) {
+  if (const auto* sdr_metrics = std::get_if<ru_generic_metrics>(&metric.metrics)) {
     log_ru_sdr_metrics_in_stdout(*sdr_metrics);
   }
 
-  if (auto* dummy_metrics = std::get_if<ru_dummy_metrics>(&metric.metrics)) {
+  if (const auto* dummy_metrics = std::get_if<ru_dummy_metrics>(&metric.metrics)) {
     log_ru_dummy_metrics_in_stdout(*dummy_metrics);
   }
 
-  if (auto* ofh_metrics = std::get_if<ofh::metrics>(&metric.metrics)) {
+  if (const auto* ofh_metrics = std::get_if<ofh::metrics>(&metric.metrics)) {
     log_ru_ofh_metrics_in_stdout(*ofh_metrics);
   }
 }

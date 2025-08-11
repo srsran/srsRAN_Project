@@ -95,6 +95,8 @@ struct ru_ofh_unit_base_cell_config {
   bool ignore_ecpri_payload_size_field = false;
   /// If set to true, the sequence id encoded in a eCPRI packet is ignored.
   bool ignore_ecpri_seq_id_field = false;
+  /// If set to true, logs late events as warnings, otherwise as info.
+  bool enable_log_warnings_for_lates = true;
   /// Warn of unreceived Radio Unit frames status.
   ofh::warn_unreceived_ru_frames log_unreceived_ru_frames = ofh::warn_unreceived_ru_frames::after_traffic_detection;
   /// Uplink compression method.

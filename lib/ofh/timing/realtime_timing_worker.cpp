@@ -9,6 +9,7 @@
  */
 
 #include "realtime_timing_worker.h"
+#include "../support/logger_utils.h"
 #include "srsran/instrumentation/traces/ofh_traces.h"
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
 #include "srsran/support/rtsan.h"
@@ -68,7 +69,8 @@ realtime_timing_worker::realtime_timing_worker(srslog::basic_logger&      logger
   nof_symbols_per_slot(get_nsymb_per_slot(cfg.cp)),
   nof_symbols_per_sec(nof_symbols_per_slot * get_nof_slots_per_subframe(scs) * NOF_SUBFRAMES_PER_FRAME * 100),
   symbol_duration(1e9 / nof_symbols_per_sec),
-  sleep_time(std::chrono::duration_cast<std::chrono::nanoseconds>(symbol_duration) / 15)
+  sleep_time(std::chrono::duration_cast<std::chrono::nanoseconds>(symbol_duration) / 15),
+  enable_log_warnings_for_lates(cfg.enable_log_warnings_for_lates)
 {
   // The GPS time epoch starts on 1980.1.6 so make sure that the system time is set after this date.
   // For simplicity reasons, only allow dates after 1981.
@@ -181,13 +183,16 @@ void realtime_timing_worker::poll()
 
   // Check if we have missed more than one symbol.
   if (SRSRAN_UNLIKELY(delta > 1)) {
-    logger.debug("Real-time timing worker woke up late, skipped '{}' symbols", delta);
+    logger.info("Real-time timing worker woke up late, skipped '{}' symbols", delta);
     metrics_collector.update_metrics(delta);
   }
   if (SRSRAN_UNLIKELY(delta >= nof_symbols_per_slot)) {
-    logger.info("Real-time timing worker woke up late, sleep time has been '{}us', or equivalently, '{}' symbols",
-                std::chrono::duration_cast<std::chrono::microseconds>(delta * symbol_duration).count(),
-                delta);
+    log_conditional_warning(
+        logger,
+        enable_log_warnings_for_lates,
+        "Real-time timing worker woke up late, sleep time has been '{}us', or equivalently, '{}' symbols",
+        std::chrono::duration_cast<std::chrono::microseconds>(delta * symbol_duration).count(),
+        delta);
   }
 
   slot_symbol_point symbol_point(
