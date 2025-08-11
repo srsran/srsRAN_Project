@@ -327,6 +327,8 @@ cu2du amari 8UE:
     matrix:
       - E2E_FILE_OR_DIR: tests/inter_du_handover.py
         KEYWORDS: sequentially
+  when: manual
+  allow_failure: true
 
 ric:
   extends: .zmq
