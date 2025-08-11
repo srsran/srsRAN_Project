@@ -638,11 +638,13 @@ def _handover_multi_ues_iperf(
             "MAC max KOs reached",
             "Reached maximum number of RETX",
             "UL buffering timed out",
+            'RRC Setup Procedure" timed out',
             'RRC Reconfiguration Procedure" timed out',
             'Intra CU Handover Target Routine" failed',
             "RRC reconfiguration failed",
             "Some or all PDUSessionResourceSetupItems failed to setup",
             "UL buffering timed out",
+            "Discarding SDU",
         ],
     )
 
