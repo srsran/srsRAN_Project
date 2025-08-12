@@ -44,7 +44,6 @@ tests:
           main_pool:
             task_queue_size: 8192
           upper_phy:
-            nof_dl_threads: 4
             max_pucch_concurrency: 1
             max_pusch_and_srs_concurrency: 3
     # Pass / Fail Criteria
@@ -264,7 +263,6 @@ tests:
       expert_execution:
         threads:
           upper_phy:
-            nof_dl_threads: 4
             max_pucch_concurrency: 1
             max_pusch_and_srs_concurrency: 4
     # Pass / Fail Criteria
@@ -295,7 +293,6 @@ tests:
       expert_execution:
         threads:
           upper_phy:
-            nof_dl_threads: 4
             max_pucch_concurrency: 2
             max_pusch_and_srs_concurrency: 3
     # Pass / Fail Criteria
@@ -332,7 +329,6 @@ tests:
       expert_execution:
         threads:
           upper_phy:
-            nof_dl_threads: 4
             max_pucch_concurrency: 1
             max_pusch_and_srs_concurrency: 4
     # Pass / Fail Criteria

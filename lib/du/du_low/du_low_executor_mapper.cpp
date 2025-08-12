@@ -45,23 +45,26 @@ public:
       phy_config.pucch_executor           = single.common_executor;
       phy_config.srs_executor             = single.common_executor;
     } else if (std::holds_alternative<du_low_executor_mapper_flexible_exec_config>(config.executors)) {
-      const unsigned                           max_prach_batch_size = 1;
       const unsigned                           max_pucch_batch_size = 16;
       const unsigned                           max_pusch_batch_size = 1;
+      const unsigned                           max_pdsch_batch_size = 16;
+      static constexpr std::array<unsigned, 1> pdsch_queue_sizes{default_queue_size};
       static constexpr std::array<unsigned, 1> pucch_queue_sizes{default_queue_size};
-      static constexpr std::array<unsigned, 1> prach_queue_sizes{default_queue_size};
       static constexpr std::array<unsigned, 2> pusch_srs_queue_sizes{default_queue_size, default_queue_size};
 
-      const auto& flexible                = std::get<du_low_executor_mapper_flexible_exec_config>(config.executors);
-      phy_config.pdcch_executor           = flexible.dl_executor;
-      phy_config.pdsch_executor           = flexible.dl_executor;
-      phy_config.ssb_executor             = flexible.dl_executor;
-      phy_config.csi_rs_executor          = flexible.dl_executor;
-      phy_config.prs_executor             = flexible.dl_executor;
-      phy_config.dl_grid_executor         = flexible.dl_executor;
-      phy_config.pdsch_codeblock_executor = flexible.pdsch_executor;
-      phy_config.prach_executor =
-          create_strand(flexible.high_priority_executor, prach_queue_sizes, max_prach_batch_size).front();
+      const auto& flexible = std::get<du_low_executor_mapper_flexible_exec_config>(config.executors);
+
+      auto pdsch_executors = create_task_fork_limiter(
+          flexible.high_priority_executor, flexible.max_pdsch_concurrency, pdsch_queue_sizes, max_pdsch_batch_size);
+
+      phy_config.pdcch_executor           = flexible.high_priority_executor;
+      phy_config.pdsch_executor           = pdsch_executors[0];
+      phy_config.ssb_executor             = flexible.high_priority_executor;
+      phy_config.csi_rs_executor          = flexible.high_priority_executor;
+      phy_config.prs_executor             = flexible.high_priority_executor;
+      phy_config.dl_grid_executor         = flexible.high_priority_executor;
+      phy_config.pdsch_codeblock_executor = pdsch_executors[0];
+      phy_config.prach_executor           = flexible.high_priority_executor;
       phy_config.pucch_executor =
           create_task_fork_limiter(
               flexible.high_priority_executor, flexible.max_pucch_concurrency, pucch_queue_sizes, max_pucch_batch_size)

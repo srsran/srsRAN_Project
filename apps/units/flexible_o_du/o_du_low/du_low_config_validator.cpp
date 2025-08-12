@@ -18,8 +18,6 @@ static bool validate_upper_phy_threads_appconfig(const du_low_unit_expert_thread
                                                  unsigned                                 nof_hwacc_pdsch,
                                                  unsigned                                 nof_hwacc_pusch)
 {
-  static const interval<unsigned, true> nof_dl_threads_range(1, std::thread::hardware_concurrency());
-  static const interval<unsigned, true> nof_pdsch_threads_range(2, std::thread::hardware_concurrency());
   static const interval<unsigned, true> max_concurrency_range(0, std::thread::hardware_concurrency());
 
   bool valid = true;
@@ -44,35 +42,43 @@ static bool validate_upper_phy_threads_appconfig(const du_low_unit_expert_thread
     valid = false;
   }
 
-  // To run the concurrent PDSCH processor with a single thread isn't optimal, although possible.
-  if ((config.pdsch_processor_type == "concurrent") && !nof_pdsch_threads_range.contains(config.nof_dl_threads)) {
-    fmt::print("For concurrent PDSCH processor. Number of PHY DL threads (i.e., {}) must be in range {} for better "
-               "performance.\n",
-               config.nof_dl_threads,
-               nof_pdsch_threads_range);
-  }
-
-  if (!nof_dl_threads_range.contains(config.nof_dl_threads)) {
-    fmt::print(
-        "Number of PHY DL threads (i.e., {}) must be in range {}.\n", config.nof_dl_threads, nof_dl_threads_range);
+  if (!max_concurrency_range.contains(config.max_pdsch_concurrency)) {
+    fmt::print("Maximum PDSCH concurrency (i.e., {}) must be in range {}.\n",
+               config.max_pdsch_concurrency,
+               max_concurrency_range);
     valid = false;
   }
 
 #ifdef DPDK_FOUND
-  if ((nof_hwacc_pdsch > 0) && (config.nof_dl_threads > nof_hwacc_pdsch)) {
-    fmt::print("Not enough hardware-accelerated PDSCH encoder functions. Number of PHY DL threads (i.e., {}) must be "
-               "in range {}.\n",
-               config.nof_dl_threads,
-               nof_hwacc_pdsch);
-    valid = false;
+
+  // Verify hardware accelerated PDSCH.
+  if (nof_hwacc_pdsch != 0) {
+    if (config.max_pdsch_concurrency == 0) {
+      fmt::print("Maximum PDSCH concurrency must be set to a value equal to or greater than one.\n");
+      valid = false;
+    } else if (config.max_pdsch_concurrency > nof_hwacc_pdsch) {
+      fmt::print(
+          "Not enough hardware-accelerated PDSCH encoder functions. The maximum PDSCH concurrency (i.e., {}) must "
+          "be in range {}.\n",
+          config.max_pdsch_concurrency,
+          interval<unsigned>(1, nof_hwacc_pdsch));
+      valid = false;
+    }
   }
-  if ((nof_hwacc_pusch > 0) && ((config.nof_ul_threads + config.nof_pusch_decoder_threads) > nof_hwacc_pusch)) {
-    fmt::print("Not enough hardware-accelerated PUSCH decoder functions. Combined number of PHY UL threads (i.e., {}) "
-               "and PUSCH decoder threads (i.e., {}) must be in range {}.\n",
-               config.nof_ul_threads,
-               config.nof_pusch_decoder_threads,
-               nof_hwacc_pusch);
-    valid = false;
+
+  // Verify hardware accelerated PUSCH.
+  if (nof_hwacc_pusch != 0) {
+    if (config.max_pusch_and_srs_concurrency == 0) {
+      fmt::print("Maximum PUSCH concurrency must be set to a value equal to or greater than one.\n");
+      valid = false;
+    } else if (config.max_pusch_and_srs_concurrency > nof_hwacc_pusch) {
+      fmt::print(
+          "Not enough hardware-accelerated PUSCH decoder functions. The maximum PUSCH concurrency (i.e., {}) must "
+          "be in range {}.\n",
+          config.max_pusch_and_srs_concurrency,
+          interval<unsigned>(1, nof_hwacc_pusch));
+      valid = false;
+    }
   }
 #endif // DPDK_FOUND
 

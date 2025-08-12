@@ -73,7 +73,7 @@ static srs_du::du_low_config generate_du_low_config(const du_low_unit_config&   
     // - the batch size must be the maximum to avoid more than one batch; and
     // - the maximum number of simultaneous PDSCH equals to the number of DL processing threads.
     unsigned cb_batch_length            = pdsch_processor_flexible_configuration::synchronous_cb_batch_length;
-    unsigned max_nof_simultaneous_pdsch = upper_phy_threads_cfg.nof_dl_threads;
+    unsigned max_nof_simultaneous_pdsch = upper_phy_threads_cfg.max_pdsch_concurrency;
 
     // Override default parameters if the CB batch length is set for asynchronous concurrent operation.
     if (upper_phy_threads_cfg.pdsch_cb_batch_length != du_low_unit_expert_threads_config::synchronous_cb_batch_length) {
@@ -216,7 +216,7 @@ void srsran::fill_du_low_worker_manager_config(worker_manager_config&    config,
   du_low_cfg.cell_nof_dl_antennas.assign(nof_dl_antennas.begin(), nof_dl_antennas.end());
   du_low_cfg.cell_nof_ul_antennas.assign(nof_ul_antennas.begin(), nof_ul_antennas.end());
 
-  du_low_cfg.nof_dl_threads                = unit_cfg.expert_execution_cfg.threads.nof_dl_threads;
+  du_low_cfg.max_pdsch_concurrency         = unit_cfg.expert_execution_cfg.threads.max_pdsch_concurrency;
   du_low_cfg.max_pucch_concurrency         = unit_cfg.expert_execution_cfg.threads.max_pucch_concurrency;
   du_low_cfg.max_pusch_and_srs_concurrency = unit_cfg.expert_execution_cfg.threads.max_pusch_and_srs_concurrency;
   if (unit_cfg.metrics_cfg.enable_du_low) {

@@ -61,7 +61,7 @@ struct worker_manager_config {
     bool     is_blocking_mode_active;
     unsigned max_pucch_concurrency;
     unsigned max_pusch_and_srs_concurrency;
-    unsigned nof_dl_threads;
+    unsigned max_pdsch_concurrency;
     /// Number of downlink antennas indexed by cell. The vector size must match the number of cells.
     std::vector<unsigned> cell_nof_dl_antennas;
     /// Number of uplink antennas indexed by cell. The vector size must match the number of cells.

@@ -57,10 +57,6 @@ struct du_low_executor_mapper_flexible_exec_config {
   upper_phy_executor medium_priority_executor;
   /// Low priority executor.
   upper_phy_executor low_priority_executor;
-  /// Executor for downlink transmissions.
-  upper_phy_executor dl_executor;
-  /// Executor for PDSCH concurrent processing.
-  upper_phy_executor pdsch_executor;
   /// \brief Maximum PUCCH processing concurrency.
   ///
   /// The Physical Uplink Control Channel (PUCCH) is processed using the high priority executor. This parameter limits
@@ -77,7 +73,18 @@ struct du_low_executor_mapper_flexible_exec_config {
   ///
   /// No limit in concurrency is imposed if this parameter is zero, greater than or equal to the medium priority
   /// executor maximum concurrency.
+  ///
+  /// This parameter is necessary when hardware acceleration is used for decoding PUSCH. This parameter must not exceed
+  /// the capacity of the accelerator.
   unsigned max_pusch_and_srs_concurrency = 1;
+  /// \brief Maximum concurrency level for PDSCH processing.
+  ///
+  /// Maximum number of threads that can concurrently process Physical Downlink Shared Channel (PDSCH). Set to zero for
+  /// no limitation.
+  ///
+  /// This parameter is necessary when hardware acceleration is used for encoding PDSCH. This parameter must not exceed
+  /// the capacity of the accelerator.
+  unsigned max_pdsch_concurrency = 0;
 };
 
 /// Variant of the DU low executor mapping configuration.

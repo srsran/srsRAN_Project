@@ -38,7 +38,7 @@ static void fill_du_low_expert_execution_section(YAML::Node node, const du_low_u
     upper_node["pdsch_cb_batch_length"]         = config.threads.pdsch_cb_batch_length;
     upper_node["max_pucch_concurrency"]         = config.threads.max_pucch_concurrency;
     upper_node["max_pusch_and_srs_concurrency"] = config.threads.max_pusch_and_srs_concurrency;
-    upper_node["nof_dl_threads"]                = config.threads.nof_dl_threads;
+    upper_node["max_pdsch_concurrency"]         = config.threads.max_pdsch_concurrency;
   }
 
   auto cell_affinities_node = node["cell_affinities"];

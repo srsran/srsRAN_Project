@@ -133,7 +133,7 @@ static void configure_cli11_upper_phy_threads_args(CLI::App& app, du_low_unit_ex
   add_option(app,
              "--max_pucch_concurrency",
              config.max_pucch_concurrency,
-             "Maximum PUCCH processing concurrency.\n"
+             "Maximum PUCCH processing concurrency for all cells.\n"
              "Limits the maximum number of threads that can concurrently process Physical Uplink Control Channel\n"
              "(PUCCH). Set it to zero for no limit of threads.")
       ->capture_default_str()
@@ -141,12 +141,20 @@ static void configure_cli11_upper_phy_threads_args(CLI::App& app, du_low_unit_ex
   add_option(app,
              "--max_pusch_and_srs_concurrency",
              config.max_pusch_and_srs_concurrency,
-             "Maximum PUSCH and SRS processing concurrency.\n"
+             "Maximum PUSCH and SRS processing concurrency for all cells.\n"
              "Limits the maximum number of threads that can concurrently process Physical Uplink Shared Channel \n"
-             "(PUSCH) and Sounding Reference Signals (SRS). Set it to zero for no limitation.")
+             "(PUSCH) and Sounding Reference Signals (SRS). Set it to zero for no limitation. This parameter is\n"
+             "required when hardware acceleration is used. It must not exceed the number of available queues for the \n"
+             "accelerator.\")")
       ->capture_default_str()
       ->check(CLI::Number);
-  add_option(app, "--nof_dl_threads", config.nof_dl_threads, "Number of upper PHY threads to process downlink.")
+  add_option(app,
+             "--max_pdsch_concurrency",
+             config.max_pdsch_concurrency,
+             "Maximum concurrency level for PDSCH processing for all cells.\n"
+             "Limits the number of threads that can concurrently process Physical Downlink Shared Channel (PDSCH).\n"
+             "Set to zero for no limitation. This parameter is required when hardware acceleration is used. It must \n"
+             "not exceed the number of available queues for the accelerator.")
       ->capture_default_str()
       ->check(CLI::Number);
 }
@@ -419,7 +427,6 @@ void srsran::configure_cli11_with_du_low_config_schema(CLI::App& app, du_low_uni
 void srsran::autoderive_du_low_parameters_after_parsing(CLI::App&           app,
                                                         du_low_unit_config& parsed_cfg,
                                                         duplex_mode         mode,
-                                                        bool                is_blocking_mode_enabled,
                                                         unsigned            nof_cells)
 {
   // If max proc delay property is not present in the config, configure the default value.
@@ -440,14 +447,6 @@ void srsran::autoderive_du_low_parameters_after_parsing(CLI::App&           app,
   // If max request headroom slots property is present in the config, do nothing.
   if (expert_cmd->count_all() == 0 || expert_cmd->count("--max_request_headroom_slots") == 0) {
     parsed_cfg.expert_phy_cfg.nof_slots_request_headroom = parsed_cfg.expert_phy_cfg.max_processing_delay_slots;
-  }
-
-  // Ignore the default settings based in the number of CPU cores for ZMQ.
-  if (is_blocking_mode_enabled) {
-    du_low_unit_expert_threads_config& upper = parsed_cfg.expert_execution_cfg.threads;
-    upper.max_pucch_concurrency              = 1;
-    upper.max_pusch_and_srs_concurrency      = 1;
-    upper.nof_dl_threads                     = 1;
   }
 
   if (parsed_cfg.expert_execution_cfg.cell_affinities.size() < nof_cells) {

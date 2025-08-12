@@ -80,10 +80,8 @@ void srsran::autoderive_split6_o_du_low_parameters_after_parsing(CLI::App& app, 
   // Set the parsed RU.
   manage_ru(app, config);
 
-  // Auto derive DU low parameters.
-  constexpr bool is_zmq_rf_driver = false;
   // NOTE: TDD is hardcoded because it does not matter as max proc delay parameter is mandatory in this application
   // unit.
   autoderive_du_low_parameters_after_parsing(
-      app, config.du_low_cfg, duplex_mode::TDD, is_zmq_rf_driver, split6_du_low::NOF_CELLS_SUPPORTED);
+      app, config.du_low_cfg, duplex_mode::TDD, split6_du_low::NOF_CELLS_SUPPORTED);
 }

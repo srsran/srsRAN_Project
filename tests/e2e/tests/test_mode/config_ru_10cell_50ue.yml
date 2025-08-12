@@ -75,7 +75,6 @@ test_mode:
 expert_execution:
   threads:
     upper_phy:
-      nof_dl_threads: 2
       max_pucch_concurrency: 1
       max_pusch_and_srs_concurrency: 3
 
