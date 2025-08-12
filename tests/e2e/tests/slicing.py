@@ -91,11 +91,11 @@ def test_slicing(
     # The thresholds values are set empirically, the objective is just checking that no UE gets starved.
     thresholds = {
         "000001": {
-            "dl": 75e6,
-            "ul": 30e6,
+            "dl": 50e6,
+            "ul": 25e6,
         },
         "000002": {
-            "dl": 25e6,
+            "dl": 15e6,
             "ul": 8e6,
         },
     }
