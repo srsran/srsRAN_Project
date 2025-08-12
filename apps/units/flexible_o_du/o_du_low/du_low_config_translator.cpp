@@ -41,7 +41,7 @@ static srs_du::du_low_config generate_du_low_config(const du_low_unit_config&   
   upper_phy_factory_config.enable_metrics                   = du_low.metrics_cfg.enable_du_low;
   upper_phy_factory_config.pusch_sinr_calc_method =
       channel_state_information::sinr_type_from_string(du_low.expert_phy_cfg.pusch_sinr_calc_method);
-  upper_phy_factory_config.rx_symbol_printer_filename = du_low.expert_phy_cfg.nof_slots_request_headroom;
+  upper_phy_factory_config.rx_symbol_printer_filename = du_low.loggers.phy_rx_symbols_filename;
   upper_phy_factory_config.rx_symbol_printer_port     = du_low.loggers.phy_rx_symbols_port;
   upper_phy_factory_config.rx_symbol_printer_prach    = du_low.loggers.phy_rx_symbols_prach;
   upper_phy_factory_config.ldpc_encoder_type          = "auto";
