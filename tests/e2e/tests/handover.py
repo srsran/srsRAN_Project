@@ -645,6 +645,7 @@ def _handover_multi_ues_iperf(
             "Some or all PDUSessionResourceSetupItems failed to setup",
             "UL buffering timed out",
             "Discarding SDU",
+            "Discarding PDU",
         ],
     )
 
