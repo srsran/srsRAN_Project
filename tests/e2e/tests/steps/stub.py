@@ -90,9 +90,9 @@ def start_ntn_channel_emulator(
         if ue_def.zmq_ip is not None:
             ue_def_for_gnb = ue_def
 
-    gnb_definition = gnb.GetDefinition(Empty())
+    du_definition = gnb.GetDefinition(Empty())
     channel_emulator_start_info = ChannelEmulatorStartInfo(
-        gnb_definition=gnb_definition,
+        du_definition=du_definition,
         ue_definition=ue_def_for_gnb,
         ntn_scenario=ntn_scenario_def,
         start_info=StartInfo(timeout=20),
