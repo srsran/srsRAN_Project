@@ -26,6 +26,11 @@ struct upper_phy_executor {
   /// For example, if the PUCCH processing has a maximum concurrency of two, the upper physical layer factory will
   /// create two instances of PUCCH processors which will be assigned to the two different threads processing PUCCH.
   unsigned max_concurrency = 0;
+
+  /// \brief Determines whether the executor is valid.
+  ///
+  /// An executor is valid if the executor pointer is not nullptr and the maximum concurrency is not zero.
+  bool is_valid() const { return (executor != nullptr) && (max_concurrency != 0); }
 };
 
 /// Collects task executors and their maximum concurrency levels.

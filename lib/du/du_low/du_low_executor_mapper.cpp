@@ -32,18 +32,20 @@ public:
       srsran_assert(single.common_executor.executor != nullptr, "Invalid common executor.");
       srsran_assert(single.common_executor.max_concurrency != 0, "Invalid common executor maximum concurrency.");
 
-      phy_config.pdcch_executor           = single.common_executor;
-      phy_config.pdsch_executor           = single.common_executor;
-      phy_config.ssb_executor             = single.common_executor;
-      phy_config.csi_rs_executor          = single.common_executor;
-      phy_config.prs_executor             = single.common_executor;
-      phy_config.dl_grid_executor         = single.common_executor;
-      phy_config.pdsch_codeblock_executor = single.common_executor;
-      phy_config.prach_executor           = single.common_executor;
-      phy_config.pusch_executor           = single.common_executor;
-      phy_config.pusch_decoder_executor   = single.common_executor;
-      phy_config.pucch_executor           = single.common_executor;
-      phy_config.srs_executor             = single.common_executor;
+      phy_config.pdcch_executor   = single.common_executor;
+      phy_config.pdsch_executor   = single.common_executor;
+      phy_config.ssb_executor     = single.common_executor;
+      phy_config.csi_rs_executor  = single.common_executor;
+      phy_config.prs_executor     = single.common_executor;
+      phy_config.dl_grid_executor = single.common_executor;
+      phy_config.prach_executor   = single.common_executor;
+      phy_config.pusch_executor   = single.common_executor;
+      phy_config.pucch_executor   = single.common_executor;
+      phy_config.srs_executor     = single.common_executor;
+
+      // The PDSCH processor and the PUSCH decoder shall work synchronously.
+      phy_config.pdsch_codeblock_executor = {};
+      phy_config.pusch_decoder_executor   = {};
     } else if (std::holds_alternative<du_low_executor_mapper_flexible_exec_config>(config.executors)) {
       const unsigned                           max_pucch_batch_size = 16;
       const unsigned                           max_pusch_batch_size = 1;
@@ -78,18 +80,16 @@ public:
       phy_config.srs_executor           = pusch_srs_execs[1];
     }
 
-    srsran_assert(phy_config.pdcch_executor.executor != nullptr, "Invalid PDCCH executor.");
-    srsran_assert(phy_config.pdsch_executor.executor != nullptr, "Invalid PDSCH executor.");
-    srsran_assert(phy_config.pdsch_codeblock_executor.executor != nullptr, "Invalid PDSCH codeblock executor.");
-    srsran_assert(phy_config.ssb_executor.executor != nullptr, "Invalid SSB executor.");
-    srsran_assert(phy_config.csi_rs_executor.executor != nullptr, "Invalid NZP-CSI-RS executor.");
-    srsran_assert(phy_config.prs_executor.executor != nullptr, "Invalid PRS executor.");
-    srsran_assert(phy_config.dl_grid_executor.executor != nullptr, "Invalid DL grid pool executor.");
-    srsran_assert(phy_config.pucch_executor.executor != nullptr, "Invalid PUCCH executor.");
-    srsran_assert(phy_config.pusch_executor.executor != nullptr, "Invalid PUSCH executor.");
-    srsran_assert(phy_config.pusch_decoder_executor.executor != nullptr, "Invalid PUSCH decoder executor.");
-    srsran_assert(phy_config.prach_executor.executor != nullptr, "Invalid PRACH executor.");
-    srsran_assert(phy_config.srs_executor.executor != nullptr, "Invalid SRS executor.");
+    srsran_assert(phy_config.pdcch_executor.is_valid(), "Invalid PDCCH executor.");
+    srsran_assert(phy_config.pdsch_executor.is_valid(), "Invalid PDSCH executor.");
+    srsran_assert(phy_config.ssb_executor.is_valid(), "Invalid SSB executor.");
+    srsran_assert(phy_config.csi_rs_executor.is_valid(), "Invalid NZP-CSI-RS executor.");
+    srsran_assert(phy_config.prs_executor.is_valid(), "Invalid PRS executor.");
+    srsran_assert(phy_config.dl_grid_executor.is_valid(), "Invalid DL grid pool executor.");
+    srsran_assert(phy_config.pucch_executor.is_valid(), "Invalid PUCCH executor.");
+    srsran_assert(phy_config.pusch_executor.is_valid(), "Invalid PUSCH executor.");
+    srsran_assert(phy_config.prach_executor.is_valid(), "Invalid PRACH executor.");
+    srsran_assert(phy_config.srs_executor.is_valid(), "Invalid SRS executor.");
 
     if (config.metrics.has_value()) {
       const du_low_executor_mapper_metric_config& metrics_config = *config.metrics;
@@ -98,12 +98,16 @@ public:
       phy_config.ssb_executor    = wrap_executor_with_metric(phy_config.ssb_executor, "ssb_exec", metrics_config);
       phy_config.csi_rs_executor = wrap_executor_with_metric(phy_config.csi_rs_executor, "csi_rs_exec", metrics_config);
       phy_config.prs_executor    = wrap_executor_with_metric(phy_config.prs_executor, "prs_exec", metrics_config);
-      phy_config.pdsch_codeblock_executor =
-          wrap_executor_with_metric(phy_config.pdsch_codeblock_executor, "pdsch_codeblock_exec", metrics_config);
+      if (phy_config.pdsch_codeblock_executor.is_valid()) {
+        phy_config.pdsch_codeblock_executor =
+            wrap_executor_with_metric(phy_config.pdsch_codeblock_executor, "pdsch_codeblock_exec", metrics_config);
+      }
       phy_config.prach_executor = wrap_executor_with_metric(phy_config.prach_executor, "prach_exec", metrics_config);
       phy_config.pusch_executor = wrap_executor_with_metric(phy_config.pusch_executor, "pusch_exec", metrics_config);
-      phy_config.pusch_decoder_executor =
-          wrap_executor_with_metric(phy_config.pusch_decoder_executor, "pusch_dec_exec", metrics_config);
+      if (phy_config.pusch_decoder_executor.is_valid()) {
+        phy_config.pusch_decoder_executor =
+            wrap_executor_with_metric(phy_config.pusch_decoder_executor, "pusch_dec_exec", metrics_config);
+      }
       phy_config.pucch_executor = wrap_executor_with_metric(phy_config.pucch_executor, "pucch_exec", metrics_config);
       phy_config.srs_executor   = wrap_executor_with_metric(phy_config.srs_executor, "srs_exec", metrics_config);
     }
@@ -120,7 +124,7 @@ private:
   std::vector<upper_phy_executor>
   create_strand(upper_phy_executor base_executor, span<const unsigned> queue_sizes, unsigned max_batch)
   {
-    srsran_assert(base_executor.executor != nullptr, "Invalid executor.");
+    srsran_assert(base_executor.is_valid(), "Invalid executor.");
     srsran_assert(!queue_sizes.empty(), "Queue sizes must not be empty.");
 
     // Only one priority level is requested.
@@ -161,7 +165,7 @@ private:
                                                            span<const unsigned> queue_sizes,
                                                            unsigned             max_batch)
   {
-    srsran_assert(base_executor.executor != nullptr, "Invalid executor.");
+    srsran_assert(base_executor.is_valid(), "Invalid executor.");
     srsran_assert(!queue_sizes.empty(), "Queue sizes must not be empty.");
 
     // Limit maximum number of threads to the base executor maximum concurrency.
@@ -198,7 +202,7 @@ private:
                                                std::string                                 exec_name,
                                                const du_low_executor_mapper_metric_config& config)
   {
-    srsran_assert(base_executor.executor != nullptr, "Invalid executor.");
+    srsran_assert(base_executor.is_valid(), "Invalid executor.");
     executors.emplace_back(make_concurrent_metrics_executor_ptr(
         exec_name, *base_executor.executor, config.sequential_executor, config.logger, config.period));
     return {executors.back().get(), base_executor.max_concurrency};

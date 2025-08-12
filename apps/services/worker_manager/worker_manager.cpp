@@ -659,7 +659,6 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
     switch (config.profile) {
       case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::blocking: {
         fmt::print("Lower PHY in executor blocking mode.\n");
-        std::string name      = "phy_worker";
         std::string exec_name = "phy_exec";
 
         task_executor* phy_exec = exec_mng.executors().at(exec_name);

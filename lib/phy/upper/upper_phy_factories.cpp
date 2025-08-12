@@ -1153,8 +1153,9 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
 
   // Create channel processors - PDSCH
   std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory;
-  unsigned                                 max_nof_simultaneous_pdsch = config.pdsch_executor.max_concurrency;
-  if (std::holds_alternative<pdsch_processor_generic_configuration>(config.pdsch_processor)) {
+  unsigned                                 pdsch_processor_pool_size = config.pdsch_executor.max_concurrency;
+  if (std::holds_alternative<pdsch_processor_generic_configuration>(config.pdsch_processor) ||
+      !dependencies.pdsch_codeblock_executor.is_valid()) {
     pdsch_proc_factory = create_pdsch_processor_factory_sw(
         pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_proc_factory, ptrs_pdsch_gen_factory);
     report_fatal_error_if_not(pdsch_proc_factory, "Invalid generic PDSCH processor factory.");
@@ -1175,10 +1176,10 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
                                                    dependencies.pdsch_codeblock_executor.max_concurrency,
                                                    pdsch_processor_config.cb_batch_length);
 
-    // Set a maximum number of simultaneous active PDSCH transmissions if the batch length could result in an
-    // asynchronous operation of the PDSCH processor.
+    // The number of required processors in the pool must be equal to the maximum number of PDSCH that can be enqueued
+    // in a single slot if the PDSCH processor operates asynchronously.
     if (pdsch_processor_config.cb_batch_length != pdsch_processor_flexible_configuration::synchronous_cb_batch_length) {
-      max_nof_simultaneous_pdsch = pdsch_processor_config.max_nof_simultaneous_pdsch;
+      pdsch_processor_pool_size = MAX_PDSCH_PDUS_PER_SLOT;
     }
     report_fatal_error_if_not(pdsch_proc_factory, "Invalid flexible PDSCH processor factory.");
   }
@@ -1211,8 +1212,8 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
   report_fatal_error_if_not(prs_gen_factory, "Invalid PRS generator factory.");
 
   // Wrap PDSCH processor factory with a concurrent pool.
-  if (max_nof_simultaneous_pdsch != 0) {
-    pdsch_proc_factory = create_pdsch_processor_pool(std::move(pdsch_proc_factory), max_nof_simultaneous_pdsch);
+  if (pdsch_processor_pool_size > 1) {
+    pdsch_proc_factory = create_pdsch_processor_pool(std::move(pdsch_proc_factory), pdsch_processor_pool_size);
     report_fatal_error_if_not(pdsch_proc_factory, "Invalid asynchronous PDSCH processor pool factory.");
   }
 

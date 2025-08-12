@@ -69,25 +69,16 @@ static srs_du::du_low_config generate_du_low_config(const du_low_unit_config&   
   const auto& upper_phy_threads_cfg = du_low.expert_execution_cfg.threads;
   if ((upper_phy_threads_cfg.pdsch_processor_type == "auto") ||
       (upper_phy_threads_cfg.pdsch_processor_type == "flexible")) {
-    // Setup parameters for synchronous operation:
-    // - the batch size must be the maximum to avoid more than one batch; and
-    // - the maximum number of simultaneous PDSCH equals to the number of DL processing threads.
-    unsigned cb_batch_length            = pdsch_processor_flexible_configuration::synchronous_cb_batch_length;
-    unsigned max_nof_simultaneous_pdsch = upper_phy_threads_cfg.max_pdsch_concurrency;
-
-    // Override default parameters if the CB batch length is set for asynchronous concurrent operation.
+    // Set the batch size for synchronous operation by default. Override it if the PDSCH codeblock processor operation
+    // is asynchronous.
+    unsigned cb_batch_length = pdsch_processor_flexible_configuration::synchronous_cb_batch_length;
     if (upper_phy_threads_cfg.pdsch_cb_batch_length != du_low_unit_expert_threads_config::synchronous_cb_batch_length) {
-      // For asynchronous operation:
-      // - Use the given CB batch length;
-      // - The number of simultaneous PDSCH is equal to the total number of PDSCH per slot.
-      cb_batch_length            = upper_phy_threads_cfg.pdsch_cb_batch_length;
-      max_nof_simultaneous_pdsch = MAX_PDSCH_PDUS_PER_SLOT;
+      cb_batch_length = upper_phy_threads_cfg.pdsch_cb_batch_length;
     }
 
     // Emplace configuration parameters.
-    pdsch_processor_flexible_configuration pdsch_proc_config = {
-        .cb_batch_length = cb_batch_length, .max_nof_simultaneous_pdsch = max_nof_simultaneous_pdsch};
-    upper_phy_factory_config.pdsch_processor.emplace<pdsch_processor_flexible_configuration>(pdsch_proc_config);
+    upper_phy_factory_config.pdsch_processor.emplace<pdsch_processor_flexible_configuration>(
+        pdsch_processor_flexible_configuration{.cb_batch_length = cb_batch_length});
   } else if (upper_phy_threads_cfg.pdsch_processor_type == "generic") {
     upper_phy_factory_config.pdsch_processor.emplace<pdsch_processor_generic_configuration>();
   }

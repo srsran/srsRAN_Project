@@ -132,10 +132,6 @@ struct pdsch_processor_flexible_configuration {
   /// Set to zero if not initialized, which splits the codeblocks homogeneously amongst all threads. Set to
   /// \ref synchronous_cb_batch_length for guaranteeing a memory-optimized synchronous operation.
   unsigned cb_batch_length = 0;
-  /// \brief Maximum number of simultaneous active PDSCH transmissions.
-  ///
-  /// Sets the maximum number of PDSCH processor instances that can be used simultaneously.
-  unsigned max_nof_simultaneous_pdsch = 0;
 };
 
 /// \brief Downlink processor software factory configuration.
@@ -183,7 +179,7 @@ struct downlink_processor_factory_sw_config {
 ///
 /// \remark Default values are empty strings which are invalid.
 struct downlink_processor_factory_sw_dependencies {
-  /// PDSCH codeblock executor (only used for PDSCH processor in flexible configuration).
+  /// PDSCH codeblock executor. The generic PDSCH processor is used if this is invalid.
   upper_phy_executor pdsch_codeblock_executor;
   /// Optional metric notifier.
   upper_phy_metrics_notifiers* metric_notifier;
