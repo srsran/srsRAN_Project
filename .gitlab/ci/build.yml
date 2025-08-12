@@ -253,7 +253,7 @@ variables:
 .smoke tsan:
   extends: .build_and_unit
   variables:
-    OS: ubuntu-24.10
+    OS: ubuntu-25.10
     COMPILER: clang
     CMAKE_BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
@@ -856,8 +856,8 @@ package:
     matrix:
       - OS_VERSION: "22.04"
       - OS_VERSION: "24.04"
-      - OS_VERSION: "24.10"
       - OS_VERSION: "25.04"
+      - OS_VERSION: "25.10"
   needs: []
 
 install-package:
@@ -875,8 +875,8 @@ install-package:
     matrix:
       - OS_VERSION: "22.04"
       - OS_VERSION: "24.04"
-      - OS_VERSION: "24.10"
       - OS_VERSION: "25.04"
+      - OS_VERSION: "25.10"
   needs:
     - package
 
@@ -904,8 +904,8 @@ export on amd64:
     INFRASTRUCTURE_TAG: amd64-avx2
   parallel:
     matrix:
-      - OS: [ubuntu-25.04, ubuntu-24.10, ubuntu-24.04, ubuntu-22.04]
-      - OS: [ubuntu-25.04, ubuntu-24.10, ubuntu-24.04, ubuntu-22.04]
+      - OS: [ubuntu-25.10, ubuntu-25.04, ubuntu-24.04, ubuntu-22.04]
+      - OS: [ubuntu-25.10, ubuntu-25.04, ubuntu-24.04, ubuntu-22.04]
         MARCH: x86-64-v3
 
 export on amd64 avx512:
@@ -914,7 +914,7 @@ export on amd64 avx512:
     INFRASTRUCTURE_TAG: amd64-avx2-avx512
   parallel:
     matrix:
-      - OS: [ubuntu-25.04, ubuntu-24.10, ubuntu-24.04, ubuntu-22.04]
+      - OS: [ubuntu-25.10, ubuntu-25.04, ubuntu-24.04, ubuntu-22.04]
         MARCH: x86-64-v4
 
 # Build + unit tests combinations
@@ -934,7 +934,7 @@ ubuntu-25.04 amd64 avx2:
     matrix:
       - <<: *basic_combinations
 
-ubuntu-24.10 amd64 avx2:
+ubuntu-25.10 amd64 avx2:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
@@ -942,7 +942,7 @@ ubuntu-24.10 amd64 avx2:
       start_in: 105 minutes
   interruptible: false
   variables:
-    OS: ubuntu-24.10
+    OS: ubuntu-25.10
     MARCH: x86-64-v3
     INFRASTRUCTURE_TAG: amd64-avx2
   parallel:
@@ -1055,12 +1055,12 @@ ubuntu dpdk:
     INFRASTRUCTURE_TAG: amd64-avx2
   parallel:
     matrix:
+      - OS: ubuntu-25.10
+        COMPILER: [gcc, clang]
+        DPDK_VERSION: ["24.11.2_avx2"]
       - OS: ubuntu-25.04
         COMPILER: [gcc, clang]
         DPDK_VERSION: ["24.11.2_avx2"]
-      - OS: ubuntu-24.10
-        COMPILER: [gcc, clang]
-        DPDK_VERSION: ["23.11.4_avx2", "24.11.2_avx2"]
       - OS: ubuntu-24.04
         COMPILER: [gcc, clang]
         DPDK_VERSION: ["23.11.4_avx2", "24.11.2_avx2"]
@@ -1182,6 +1182,53 @@ debian 12 amd64 avx512:
     matrix:
       - <<: *basic_combinations
 
+debian 13 amd64 native:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
+      when: delayed
+      start_in: 120 minutes
+  interruptible: false
+  variables:
+    OS: debian-13
+    ENABLE_WERROR: "False"
+    INFRASTRUCTURE_TAG: amd64
+  parallel:
+    matrix:
+      - <<: *basic_combinations
+
+debian 13 amd64 avx2:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
+      when: delayed
+      start_in: 150 minutes
+  interruptible: false
+  variables:
+    OS: debian-13
+    ENABLE_WERROR: "False"
+    MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
+  parallel:
+    matrix:
+      - <<: *basic_combinations
+
+debian 13 amd64 avx512:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
+      when: delayed
+      start_in: 90 minutes
+  interruptible: false
+  variables:
+    OS: debian-13
+    ENABLE_WERROR: "False"
+    MARCH: x86-64-v4
+    INFRASTRUCTURE_TAG: amd64-avx2-avx512
+  parallel:
+    matrix:
+      - <<: *basic_combinations
+
 ##########
 # Weekly #
 ##########
@@ -1206,7 +1253,7 @@ sanitizers amd64 native:
   parallel:
     matrix:
       # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
-      - OS: [ubuntu-25.04, ubuntu-24.10, ubuntu-24.04]
+      - OS: [ubuntu-25.10, ubuntu-25.04, ubuntu-24.04]
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
@@ -1216,13 +1263,13 @@ sanitizers amd64 native:
         COMPILER: [gcc, clang]
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-25.04, ubuntu-24.10, ubuntu-24.04]
+      - OS: [ubuntu-25.10, ubuntu-25.04, ubuntu-24.04]
         SANITIZER: asan
         COMPILER: clang
         ENABLE_ASAN: "True"
         TEST_MODE: default
       # Valgrind doesn't support AVX512 instruction set
-      - OS: [ubuntu-25.04, ubuntu-24.10, ubuntu-24.04]
+      - OS: [ubuntu-25.10, ubuntu-25.04, ubuntu-24.04]
         SANITIZER: ubsan
         COMPILER: [gcc, clang]
         ENABLE_UBSAN: "True"
@@ -1239,7 +1286,7 @@ sanitizers amd64 avx2:
   parallel:
     matrix:
       # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
-      - OS: [ubuntu-25.04, ubuntu-24.10, ubuntu-24.04]
+      - OS: [ubuntu-25.10, ubuntu-25.04, ubuntu-24.04]
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
@@ -1249,16 +1296,16 @@ sanitizers amd64 avx2:
         COMPILER: [gcc, clang]
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-25.04, ubuntu-24.10, ubuntu-24.04]
+      - OS: [ubuntu-25.10, ubuntu-25.04, ubuntu-24.04]
         SANITIZER: asan
         COMPILER: clang
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-25.04, ubuntu-24.10, ubuntu-24.04]
+      - OS: [ubuntu-25.10, ubuntu-25.04, ubuntu-24.04]
         SANITIZER: valgrind
         COMPILER: gcc
         TEST_MODE: valgrind
-      - OS: [ubuntu-25.04, ubuntu-24.10, ubuntu-24.04]
+      - OS: [ubuntu-25.10, ubuntu-25.04, ubuntu-24.04]
         SANITIZER: ubsan
         COMPILER: [gcc, clang]
         ENABLE_UBSAN: "True"
@@ -1275,7 +1322,7 @@ sanitizers amd64 avx512:
   parallel:
     matrix:
       # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
-      - OS: [ubuntu-25.04, ubuntu-24.10, ubuntu-24.04]
+      - OS: [ubuntu-25.10, ubuntu-25.04, ubuntu-24.04]
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
@@ -1285,13 +1332,13 @@ sanitizers amd64 avx512:
         COMPILER: [gcc, clang]
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-25.04, ubuntu-24.10, ubuntu-24.04]
+      - OS: [ubuntu-25.10, ubuntu-25.04, ubuntu-24.04]
         SANITIZER: asan
         COMPILER: clang
         ENABLE_ASAN: "True"
         TEST_MODE: default
       # Valgrind doesn't support AVX512 instruction set
-      - OS: [ubuntu-25.04, ubuntu-24.10, ubuntu-24.04]
+      - OS: [ubuntu-25.10, ubuntu-25.04, ubuntu-24.04]
         SANITIZER: ubsan
         COMPILER: [gcc, clang]
         ENABLE_UBSAN: "True"
@@ -1307,7 +1354,7 @@ sanitizers arm native:
   parallel:
     matrix:
       # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
-      - OS: [ubuntu-25.04, ubuntu-24.10, ubuntu-24.04]
+      - OS: [ubuntu-25.10, ubuntu-25.04, ubuntu-24.04]
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
@@ -1317,16 +1364,16 @@ sanitizers arm native:
         COMPILER: [gcc, clang]
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-25.04, ubuntu-24.10, ubuntu-24.04]
+      - OS: [ubuntu-25.10, ubuntu-25.04, ubuntu-24.04]
         SANITIZER: asan
         COMPILER: clang
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-25.04, ubuntu-24.10, ubuntu-24.04]
+      - OS: [ubuntu-25.10, ubuntu-25.04, ubuntu-24.04]
         SANITIZER: valgrind
         COMPILER: gcc
         TEST_MODE: valgrind
-      - OS: [ubuntu-25.04, ubuntu-24.10, ubuntu-24.04]
+      - OS: [ubuntu-25.10, ubuntu-25.04, ubuntu-24.04]
         SANITIZER: ubsan
         COMPILER: [gcc, clang]
         ENABLE_UBSAN: "True"
@@ -1354,7 +1401,10 @@ build uhd alt:
     INFRASTRUCTURE_TAG: amd64-avx2
   parallel:
     matrix:
-      - OS: [ubuntu-25.04, ubuntu-24.10]
+      - OS: [ubuntu-25.10]
+        COMPILER: [gcc, clang]
+        UHD_VERSION: ["4.8.0.0"]
+      - OS: [ubuntu-25.04]
         COMPILER: [gcc, clang]
         UHD_VERSION: ["4.8.0.0", "4.7.0.0"]
       - OS: ubuntu-24.04
@@ -1425,7 +1475,7 @@ ubuntu-25.04 arm neon:
     matrix:
       - <<: *basic_combinations
 
-ubuntu-24.10 amd64 native:
+ubuntu-25.10 amd64 native:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
@@ -1433,13 +1483,13 @@ ubuntu-24.10 amd64 native:
       start_in: 30 minutes
   interruptible: false
   variables:
-    OS: ubuntu-24.10
+    OS: ubuntu-25.10
     INFRASTRUCTURE_TAG: amd64
   parallel:
     matrix:
       - <<: *basic_combinations
 
-ubuntu-24.10 amd64 avx512:
+ubuntu-25.10 amd64 avx512:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
@@ -1447,14 +1497,14 @@ ubuntu-24.10 amd64 avx512:
       start_in: 30 minutes
   interruptible: false
   variables:
-    OS: ubuntu-24.10
+    OS: ubuntu-25.10
     MARCH: x86-64-v4
     INFRASTRUCTURE_TAG: amd64-avx2-avx512
   parallel:
     matrix:
       - <<: *basic_combinations
 
-ubuntu-24.10 arm native:
+ubuntu-25.10 arm native:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
@@ -1462,13 +1512,13 @@ ubuntu-24.10 arm native:
       start_in: 30 minutes
   interruptible: false
   variables:
-    OS: ubuntu-24.10
+    OS: ubuntu-25.10
     INFRASTRUCTURE_TAG: arm64
   parallel:
     matrix:
       - <<: *basic_combinations
 
-ubuntu-24.10 arm neon:
+ubuntu-25.10 arm neon:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
@@ -1476,7 +1526,7 @@ ubuntu-24.10 arm neon:
       start_in: 30 minutes
   interruptible: false
   variables:
-    OS: ubuntu-24.10
+    OS: ubuntu-25.10
     MARCH: armv8.2-a+crypto+fp16+dotprod
     INFRASTRUCTURE_TAG: arm64
   parallel:
@@ -1623,7 +1673,7 @@ rhel-8 amd64 native:
     OS: rhel-8
     INFRASTRUCTURE_TAG: amd64
     KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "50G"
-    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"    
+    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1640,7 +1690,7 @@ rhel-8 amd64 avx512:
     MARCH: x86-64-v4
     INFRASTRUCTURE_TAG: amd64-avx2-avx512
     KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "50G"
-    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"    
+    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1656,7 +1706,7 @@ rhel-8 arm native:
     OS: rhel-8
     INFRASTRUCTURE_TAG: arm64
     KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "50G"
-    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"    
+    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1673,7 +1723,7 @@ rhel-8 arm neon:
     MARCH: armv8.2-a+crypto+fp16+dotprod
     INFRASTRUCTURE_TAG: arm64
     KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "50G"
-    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"    
+    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"
   parallel:
     matrix:
       - <<: *basic_combinations
@@ -1771,7 +1821,7 @@ ubuntu-24.04 amd64 avx512 dpdk:
         ENABLE_FFTW: "False"
         ENABLE_MKL: "True"
 
-ubuntu-24.10 amd64 avx2 dpdk:
+ubuntu-25.10 amd64 avx2 dpdk:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
@@ -1779,17 +1829,15 @@ ubuntu-24.10 amd64 avx2 dpdk:
       start_in: 360 minutes
   interruptible: false
   variables:
-    OS: ubuntu-24.10
+    OS: ubuntu-25.10
     MARCH: x86-64-v3
     INFRASTRUCTURE_TAG: amd64-avx2
   parallel:
     matrix:
       - <<: *basic_combinations_dpdk
-        DPDK_VERSION: "23.11.4_avx2"
-      - <<: *basic_combinations_dpdk
         DPDK_VERSION: "24.11.2_avx2"
 
-ubuntu-24.10 amd64 avx512 dpdk:
+ubuntu-25.10 amd64 avx512 dpdk:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
@@ -1797,13 +1845,11 @@ ubuntu-24.10 amd64 avx512 dpdk:
       start_in: 360 minutes
   interruptible: false
   variables:
-    OS: ubuntu-24.10
+    OS: ubuntu-25.10
     MARCH: x86-64-v4
     INFRASTRUCTURE_TAG: amd64-avx2-avx512
   parallel:
     matrix:
-      - <<: *basic_combinations_dpdk
-        DPDK_VERSION: "23.11.4_avx512"
       - <<: *basic_combinations_dpdk
         DPDK_VERSION: "24.11.2_avx512"
 
