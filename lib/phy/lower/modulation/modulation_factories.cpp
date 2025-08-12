@@ -11,11 +11,13 @@
 #include "srsran/phy/lower/modulation/modulation_factories.h"
 #include "ofdm_demodulator_impl.h"
 #include "ofdm_modulator_impl.h"
+#include "ofdm_modulator_pool.h"
 #include "ofdm_prach_demodulator_impl.h"
 
 using namespace srsran;
 
 namespace {
+
 class ofdm_modulator_factory_generic : public ofdm_modulator_factory
 {
 private:
@@ -42,6 +44,42 @@ public:
     common_config.dft = dft_factory->create({config.dft_size, dft_processor::direction::INVERSE});
     return std::make_unique<ofdm_slot_modulator_impl>(common_config, config);
   }
+};
+
+class ofdm_modulator_pool_factory : public ofdm_modulator_factory
+{
+public:
+  explicit ofdm_modulator_pool_factory(std::shared_ptr<ofdm_modulator_factory> base_, unsigned max_nof_threads_) :
+    base(std::move(base_)), max_nof_threads(max_nof_threads_)
+  {
+    srsran_assert(base, "Invalid base factory.");
+  }
+
+  std::unique_ptr<ofdm_symbol_modulator>
+  create_ofdm_symbol_modulator(const ofdm_modulator_configuration& config) override
+  {
+    // Create pool instances.
+    std::vector<std::unique_ptr<ofdm_symbol_modulator>> instances(max_nof_threads);
+    std::generate(
+        instances.begin(), instances.end(), [this, &config]() { return base->create_ofdm_symbol_modulator(config); });
+
+    // Create pool of modulators. As the configuration might change, it cannot be shared.
+    std::shared_ptr<ofdm_symbol_modulator_pool::modulator_pool> modulators =
+        std::make_shared<ofdm_symbol_modulator_pool::modulator_pool>(instances);
+
+    return std::make_unique<ofdm_symbol_modulator_pool>(base->create_ofdm_symbol_modulator(config),
+                                                        std::move(modulators));
+  }
+
+  std::unique_ptr<ofdm_slot_modulator> create_ofdm_slot_modulator(const ofdm_modulator_configuration& config) override
+  {
+    // Unused.
+    return nullptr;
+  }
+
+private:
+  std::shared_ptr<ofdm_modulator_factory> base;
+  unsigned                                max_nof_threads;
 };
 
 class ofdm_demodulator_factory_generic : public ofdm_demodulator_factory
