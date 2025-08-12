@@ -373,21 +373,24 @@ publish main:
 publish matlab:
   stage: public
   interruptible: false
+  inherit:
+    variables: false
+  variables:
+    ON_SCHEDULE: "true"
+    CI_DESCRIPTION: Release
+    NOTIFY_SLACK: "false"
+    SRSRAN_REPO_URL: https://github.com/srsran/srsRAN_Project.git
+    SRSRAN_COMMIT: main
+    DOCKER_BUILDER_VERSION: ${DOCKER_BUILDER_VERSION}
+    CI_DISABLE_PLUGINS: "True"
   rules:
     - if: *on_public_push
-      variables: &matlab_release_var
-        ON_SCHEDULE: "true"
-        CI_DESCRIPTION: Release
-        NOTIFY_SLACK: "false"
-        SRSRAN_REPO_URL: https://github.com/srsran/srsRAN_Project.git
-        SRSRAN_COMMIT: main
-        DOCKER_BUILDER_VERSION: latest
-        CI_DISABLE_PLUGINS: "True"
     - if: *on_public_release
-      variables:
-        <<: *matlab_release_var
   needs:
+    - job: builder version
+      artifacts: true
     - job: publish main
+      artifacts: false
   trigger:
     project: softwareradiosystems/srsgnb_matlab
     branch: master
