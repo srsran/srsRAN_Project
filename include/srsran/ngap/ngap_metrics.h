@@ -57,19 +57,19 @@ constexpr ngap_cause_t index_to_cause(unsigned index)
 {
   srsran_assert(index < NOF_CAUSES, "Invalid cause");
 
-  if (index < CAUSE_RADIO_NETWORK_OFFSET) {
+  if (index < CAUSE_TRANSPORT_OFFSET) {
     return ngap_cause_radio_network_t(index);
   }
 
-  if (index < CAUSE_TRANSPORT_OFFSET) {
+  if (index < CAUSE_NAS_OFFSET) {
     return ngap_cause_transport_t(index - CAUSE_TRANSPORT_OFFSET);
   }
 
-  if (index < CAUSE_NAS_OFFSET) {
+  if (index < CAUSE_PROTOCOL_OFFSET) {
     return cause_nas_t(index - CAUSE_NAS_OFFSET);
   }
 
-  if (index < CAUSE_PROTOCOL_OFFSET) {
+  if (index < CAUSE_MISC_OFFSET) {
     return cause_protocol_t(index - CAUSE_PROTOCOL_OFFSET);
   }
 
@@ -82,17 +82,8 @@ struct ngap_counter_with_cause {
 
   void increase(ngap_cause_t cause)
   {
-    if (std::holds_alternative<ngap_cause_radio_network_t>(cause)) {
-      ++counters_by_cause[cause_to_index(cause)];
-    } else if (std::holds_alternative<ngap_cause_transport_t>(cause)) {
-      ++counters_by_cause[cause_to_index(cause)];
-    } else if (std::holds_alternative<cause_nas_t>(cause)) {
-      ++counters_by_cause[cause_to_index(cause)];
-    } else if (std::holds_alternative<cause_protocol_t>(cause)) {
-      ++counters_by_cause[cause_to_index(cause)];
-    } else {
-      ++counters_by_cause[cause_to_index(cause)];
-    }
+    srsran_assert(cause_to_index(cause) < counters_by_cause.size(), "Invalid cause");
+    ++counters_by_cause[cause_to_index(cause)];
   }
 
   unsigned size() const { return counters_by_cause.size(); }
@@ -102,6 +93,14 @@ struct ngap_counter_with_cause {
   unsigned get_count(unsigned index) const { return counters_by_cause[index]; }
 
   ngap_cause_t get_cause(unsigned index) const { return index_to_cause(index); }
+
+  /// Returns a const iterator to the beginning of the container.
+  std::array<unsigned, NOF_CAUSES>::const_iterator begin() const { return counters_by_cause.begin(); }
+  std::array<unsigned, NOF_CAUSES>::const_iterator cbegin() const { return counters_by_cause.cbegin(); }
+
+  /// Returns a const iterator to the end of the container.
+  std::array<unsigned, NOF_CAUSES>::const_iterator end() const { return counters_by_cause.end(); }
+  std::array<unsigned, NOF_CAUSES>::const_iterator cend() const { return counters_by_cause.cend(); }
 
 private:
   // The counters indexed by a cause.
