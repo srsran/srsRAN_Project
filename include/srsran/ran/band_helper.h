@@ -42,12 +42,12 @@ const std::array<nr_band, 60> all_nr_bands_fr1 = std::array<nr_band, 60>{
      nr_band::n92,  nr_band::n93,  nr_band::n94,  nr_band::n95, nr_band::n96, nr_band::n97, nr_band::n98, nr_band::n99,
      nr_band::n100, nr_band::n101, nr_band::n102, nr_band::n104}};
 
-constexpr inline uint16_t nr_band_to_uint(nr_band band)
+constexpr uint16_t nr_band_to_uint(nr_band band)
 {
   return static_cast<uint16_t>(band);
 }
 
-constexpr inline nr_band uint_to_nr_band(unsigned band)
+constexpr nr_band uint_to_nr_band(unsigned band)
 {
   return static_cast<nr_band>(band);
 }

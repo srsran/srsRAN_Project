@@ -142,7 +142,7 @@ static std::ostream& operator<<(std::ostream& os, const subcarrier_spacing& scs)
   return os;
 }
 
-static std::ostream& operator<<(std::ostream& os, const cyclic_prefix& cp)
+static std::ostream& operator<<(std::ostream& os, cyclic_prefix cp)
 {
   fmt::print(os, "{}", cp.to_string());
   return os;

@@ -15,9 +15,7 @@
 using namespace srsran;
 using namespace srs_du;
 
-namespace {
-
-const char* get_rlf_cause_str(rlf_cause cause)
+static const char* get_rlf_cause_str(rlf_cause cause)
 {
   switch (cause) {
     case rlf_cause::max_mac_kos_reached:
@@ -31,6 +29,8 @@ const char* get_rlf_cause_str(rlf_cause cause)
   }
   return "unknown";
 }
+
+namespace {
 
 /// Adapter between MAC and DU manager RLF detection handler.
 class mac_rlf_du_adapter final : public mac_ue_radio_link_notifier

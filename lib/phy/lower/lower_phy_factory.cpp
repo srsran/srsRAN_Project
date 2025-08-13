@@ -53,6 +53,8 @@ static int get_tx_time_offset(int time_alignment_calibration, n_ta_offset ta_off
   return time_alignment_offset.to_samples(srate.to_Hz()) - time_alignment_calibration;
 }
 
+namespace {
+
 class lower_phy_factory_sw : public lower_phy_factory
 {
 public:
@@ -192,6 +194,8 @@ private:
   std::shared_ptr<lower_phy_downlink_processor_factory> downlink_proc_factory;
   std::shared_ptr<lower_phy_uplink_processor_factory>   uplink_proc_factory;
 };
+
+} // namespace
 
 std::shared_ptr<lower_phy_factory>
 srsran::create_lower_phy_factory_sw(std::shared_ptr<lower_phy_downlink_processor_factory> downlink_proc_factory,

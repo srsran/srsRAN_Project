@@ -385,7 +385,7 @@ using coro_context = detail::base_coro_frame<typename FutureType::promise_type>;
   auto& coro_context__ = x;                                                                                            \
   switch (coro_context__.state_index) {                                                                                \
     default:                                                                                                           \
-      printf("Jumping to invalid label %d\n", (coro_context__).state_index);                                           \
+      std::printf("Jumping to invalid label %d\n", (coro_context__).state_index);                                      \
       return;                                                                                                          \
     case detail::tag_init:                                                                                             \
       CORO_AWAIT(coro_context__.promise().initial_suspend())

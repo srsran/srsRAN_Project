@@ -96,7 +96,7 @@ static void parse_args(int argc, char** argv, bench_params& params, app_params& 
       case 'h':
       default:
         usage(argv[0], params, app);
-        exit(0);
+        std::exit(0);
     }
   }
 }

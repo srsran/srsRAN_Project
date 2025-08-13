@@ -599,7 +599,9 @@ static bool sr_id_match(const pucch_resource& pucch_res_cfg_lhs, const pucch_inf
          f1_cfg.time_domain_occ == rhs_format_1.time_domain_occ;
 }
 
-// Contains the existing PUCCH grants currently allocated to a given UE.
+namespace {
+
+/// Contains the existing PUCCH grants currently allocated to a given UE.
 class existing_pucch_pdus_handler
 {
 public:
@@ -625,6 +627,8 @@ private:
   unsigned pdus_cnt = 0;
   unsigned pdu_id   = 0;
 };
+
+} // namespace
 
 existing_pucch_pdus_handler::existing_pucch_pdus_handler(rnti_t                crnti,
                                                          span<pucch_info>      pucchs,

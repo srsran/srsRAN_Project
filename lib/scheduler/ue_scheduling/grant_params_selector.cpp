@@ -20,6 +20,8 @@
 using namespace srsran;
 using namespace sched_helper;
 
+namespace {
+
 /// Estimation of the number of PRBs and MCS to use for a given number of pending bytes and channel state.
 struct mcs_prbs_selection {
   /// Recommended MCS to use.
@@ -27,6 +29,8 @@ struct mcs_prbs_selection {
   /// Number of recommended PRBs for the PDSCH grant given the number of pending bytes and chosen MCS.
   unsigned nof_prbs;
 };
+
+} // namespace
 
 static std::optional<mcs_prbs_selection> compute_newtx_required_mcs_and_prbs(const pdsch_config_params& pdsch_cfg,
                                                                              const ue_cell&             ue_cc,

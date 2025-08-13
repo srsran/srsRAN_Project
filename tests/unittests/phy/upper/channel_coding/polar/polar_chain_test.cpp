@@ -104,7 +104,7 @@ void parse_args(int argc, char** argv)
         break;
       default:
         usage(argv[0]);
-        exit(-1);
+        std::exit(-1);
     }
   }
 }

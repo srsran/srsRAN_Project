@@ -15,6 +15,8 @@
 
 using namespace srsran;
 
+namespace {
+
 // Implements a DFT of any arbitrary size.
 template <unsigned N, typename Enable = void>
 class generic_dft_dit : public generic_dft_N
@@ -464,6 +466,8 @@ public:
     }
   }
 };
+
+} // namespace
 
 #define CREATE_GENERIC_DFT_DIT(SIZE)                                                                                   \
   do {                                                                                                                 \

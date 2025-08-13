@@ -35,13 +35,13 @@ constexpr Integer ceil_frac(Integer n, Integer d)
 
 namespace detail {
 
-inline constexpr std::size_t max_size_impl(std::size_t lhs, std::size_t rhs)
+constexpr std::size_t max_size_impl(std::size_t lhs, std::size_t rhs)
 {
   return lhs < rhs ? rhs : lhs;
 }
 
 template <typename ItBegin, typename ItEnd>
-inline constexpr std::size_t max_array_impl(ItBegin b, ItEnd e)
+constexpr std::size_t max_array_impl(ItBegin b, ItEnd e)
 {
   return b + 1 == e ? *b : max_size_impl(*b, max_array_impl(b + 1, e));
 }
@@ -50,7 +50,7 @@ inline constexpr std::size_t max_array_impl(ItBegin b, ItEnd e)
 
 /// \brief Compute maximum value of an array of std::size.
 template <std::size_t N>
-inline constexpr std::size_t max_size(const std::size_t (&arr)[N])
+constexpr std::size_t max_size(const std::size_t (&arr)[N])
 {
   return detail::max_array_impl(arr, arr + N);
 }

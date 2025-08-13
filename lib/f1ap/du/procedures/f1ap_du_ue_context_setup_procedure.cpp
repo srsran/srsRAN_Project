@@ -20,8 +20,8 @@ using namespace srsran;
 using namespace srs_du;
 using namespace asn1::f1ap;
 
-// Time waiting for RRC container delivery.
-constexpr std::chrono::milliseconds rrc_container_delivery_timeout{120};
+/// Time waiting for RRC container delivery.
+static constexpr std::chrono::milliseconds rrc_container_delivery_timeout{120};
 
 static bool requires_ue_ran_config_update(const ue_context_setup_request_s& msg)
 {

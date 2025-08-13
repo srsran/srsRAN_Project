@@ -17,7 +17,7 @@
 using namespace srsran;
 
 // TODO: parameterize
-const unsigned event_queue_size = 32;
+static constexpr unsigned event_queue_size = 32;
 
 /// Tracks the FD that is currently being read in the receive callback.
 thread_local int fd_read_in_callback = -1;

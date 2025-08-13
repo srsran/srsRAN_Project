@@ -993,7 +993,7 @@ void octet_string_helper::to_octet_string(srsran::byte_buffer& buf, uint64_t num
 
 static void to_hex(char* cstr, uint8_t val)
 {
-  sprintf(cstr, "%02x", val);
+  std::sprintf(cstr, "%02x", val);
 }
 
 std::string octet_string_helper::to_hex_string(srsran::span<const uint8_t> buf)

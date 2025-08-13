@@ -18,12 +18,12 @@
 namespace srsran {
 
 /// Offsets for the cause values to use them as index for failure counters.
-static constexpr unsigned CAUSE_RADIO_NETWORK_OFFSET = 0;
-static constexpr unsigned CAUSE_TRANSPORT_OFFSET     = 57;
-static constexpr unsigned CAUSE_NAS_OFFSET           = 59;
-static constexpr unsigned CAUSE_PROTOCOL_OFFSET      = 63;
-static constexpr unsigned CAUSE_MISC_OFFSET          = 70;
-static constexpr unsigned NOF_CAUSES                 = 75;
+constexpr unsigned CAUSE_RADIO_NETWORK_OFFSET = 0;
+constexpr unsigned CAUSE_TRANSPORT_OFFSET     = 57;
+constexpr unsigned CAUSE_NAS_OFFSET           = 59;
+constexpr unsigned CAUSE_PROTOCOL_OFFSET      = 63;
+constexpr unsigned CAUSE_MISC_OFFSET          = 70;
+constexpr unsigned NOF_CAUSES                 = 75;
 
 /// \brief Convert a cause value to an index.
 /// \param cause The cause value to convert.

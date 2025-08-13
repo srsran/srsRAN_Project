@@ -28,7 +28,9 @@ struct full_cell_report {
   std::optional<mac_dl_cell_metric_report> mac;
 };
 
-full_cell_report report_preinit(unsigned max_ue_events = 64)
+} // namespace
+
+static full_cell_report report_preinit(unsigned max_ue_events = 64)
 {
   full_cell_report report{};
   // Pre-reserve space for UE metrics.
@@ -38,8 +40,6 @@ full_cell_report report_preinit(unsigned max_ue_events = 64)
   report.sched.events.reserve(ue_event_capacity);
   return report;
 }
-
-} // namespace
 
 class mac_metrics_aggregator::cell_metric_handler final : public mac_cell_metric_notifier,
                                                           public scheduler_cell_metrics_notifier

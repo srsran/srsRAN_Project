@@ -15,8 +15,8 @@
 
 using namespace srsran;
 
-// the stream number to use for sending
-const unsigned stream_no = 0;
+/// Stream number to use for sending.
+static constexpr unsigned stream_no = 0;
 
 class sctp_network_client_impl::sctp_send_notifier final : public sctp_association_sdu_notifier
 {

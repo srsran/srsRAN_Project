@@ -253,11 +253,11 @@ static void parse_args(int argc, char** argv)
       case 'h':
       default:
         usage(argv[0]);
-        ::exit(0);
+        std::exit(0);
     }
     if (invalid_arg) {
       usage(argv[0]);
-      ::exit(0);
+      std::exit(0);
     }
     nof_antennas_dl = test_params.dl_port_id.size();
     nof_antennas_ul = test_params.ul_port_id.size();

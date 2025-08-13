@@ -20,8 +20,8 @@
 
 using namespace srsran;
 
-static const char* isolated_cgroup_path     = "/sys/fs/cgroup/srs_isolated";
-static const char* housekeeping_cgroup_path = "/sys/fs/cgroup/srs_housekeeping";
+static constexpr const char* isolated_cgroup_path     = "/sys/fs/cgroup/srs_isolated";
+static constexpr const char* housekeeping_cgroup_path = "/sys/fs/cgroup/srs_housekeeping";
 
 /// Executes a system command and deletes the given path if the command fails.
 static bool exec_system_command(const std::string& command, const std::string& cleanup_path = "")

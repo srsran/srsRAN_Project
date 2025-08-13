@@ -34,9 +34,9 @@ private:
   scheduler_cell_metrics null_report{};
 };
 
-null_metrics_notifier null_notifier;
-
 } // namespace
+
+static null_metrics_notifier null_notifier;
 
 cell_metrics_handler::cell_metrics_handler(
     const cell_configuration&                                                      cell_cfg_,

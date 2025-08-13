@@ -17,9 +17,9 @@ using namespace srsran;
 using namespace app_helpers;
 
 /// Log channel name for the logger type.
-static std::string logger_channel_name = "METRICS";
+static const std::string logger_channel_name = "METRICS";
 /// Log channel name for the JSON type.
-static std::string json_channel_name = "JSON_channel";
+static const std::string json_channel_name = "JSON_channel";
 
 srslog::log_channel& app_helpers::fetch_logger_metrics_log_channel()
 {

@@ -133,10 +133,8 @@ void ldpc_rate_matcher_impl::select_bits(span<uint8_t> out, const ldpc_encoder_b
   }
 }
 
-namespace {
-
 template <unsigned Qm>
-void interleave_bits_Qm(bit_buffer& out, span<const uint8_t> in)
+static void interleave_bits_Qm(bit_buffer& out, span<const uint8_t> in)
 {
   unsigned E = out.size();
   unsigned K = E / Qm;
@@ -258,8 +256,6 @@ void interleave_bits_Qm<8>(bit_buffer& out, span<const uint8_t> in)
     }
   }
 }
-
-} // namespace
 
 void ldpc_rate_matcher_impl::interleave_bits(bit_buffer& out, span<const uint8_t> in) const
 {

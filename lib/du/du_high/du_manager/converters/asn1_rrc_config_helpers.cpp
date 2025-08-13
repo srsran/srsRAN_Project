@@ -35,7 +35,9 @@ struct rlc_bearer_config {
   }
 };
 
-rlc_bearer_cfg_s make_asn1_rrc_rlc_bearer(const rlc_bearer_config& cfg)
+} // namespace
+
+static rlc_bearer_cfg_s make_asn1_rrc_rlc_bearer(const rlc_bearer_config& cfg)
 {
   rlc_bearer_cfg_s out;
 
@@ -207,8 +209,6 @@ rlc_bearer_cfg_s make_asn1_rrc_rlc_bearer(const rlc_bearer_config& cfg)
 
   return out;
 }
-
-} // namespace
 
 asn1::rrc_nr::coreset_s srsran::srs_du::make_asn1_rrc_coreset(const coreset_configuration& cfg)
 {

@@ -97,7 +97,7 @@ bool radio_uhd_rx_stream::start(const uhd::time_spec_t& time_spec)
 
         stream->issue_stream_cmd(stream_cmd);
       })) {
-    printf("Error: failed to start receive stream %d. %s.", id, get_error_message().c_str());
+    fmt::println("Error: failed to start receive stream {}. {}.", id, get_error_message().c_str());
   }
 
   // Transition to streaming state.
@@ -118,7 +118,7 @@ baseband_gateway_receiver::metadata radio_uhd_rx_stream::receive(baseband_gatewa
   while (rxd_samples_total < nsamples) {
     unsigned rxd_samples = 0;
     if (!receive_block(rxd_samples, buffs, rxd_samples_total, md)) {
-      printf("Error: failed receiving packet. %s.\n", get_error_message().c_str());
+      fmt::println("Error: failed receiving packet. {}.", get_error_message().c_str());
       return {};
     }
 
@@ -142,7 +142,7 @@ baseband_gateway_receiver::metadata radio_uhd_rx_stream::receive(baseband_gatewa
       case uhd::rx_metadata_t::ERROR_CODE_TIMEOUT:
         ++timeout_trial_count;
         if (timeout_trial_count >= 10) {
-          printf("Error: exceeded maximum number of timed out transmissions.\n");
+          fmt::println("Error: exceeded maximum number of timed out transmissions.");
           return ret;
         }
         break;
@@ -158,7 +158,7 @@ baseband_gateway_receiver::metadata radio_uhd_rx_stream::receive(baseband_gatewa
       case uhd::rx_metadata_t::ERROR_CODE_BROKEN_CHAIN:
       case uhd::rx_metadata_t::ERROR_CODE_ALIGNMENT:
       case uhd::rx_metadata_t::ERROR_CODE_BAD_PACKET:
-        printf("Error: unhandled error in Rx metadata %s.", md.strerror().c_str());
+        fmt::println("Error: unhandled error in Rx metadata {}.", md.strerror().c_str());
         return ret;
     }
 
@@ -188,7 +188,7 @@ bool radio_uhd_rx_stream::stop()
 
         stream->issue_stream_cmd(stream_cmd);
       })) {
-    printf("Error: failed to stop stream %d. %s.", id, get_error_message().c_str());
+    fmt::println("Error: failed to stop stream {}. {}.", id, get_error_message().c_str());
     return false;
   }
 

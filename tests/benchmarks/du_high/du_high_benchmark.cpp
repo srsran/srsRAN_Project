@@ -141,7 +141,7 @@ static void parse_args(int argc, char** argv, bench_params& params)
           params.dplx_mode = duplex_mode::TDD;
         } else {
           usage(argv[0], params);
-          exit(0);
+          std::exit(0);
         }
         break;
       }
@@ -178,7 +178,7 @@ static void parse_args(int argc, char** argv, bench_params& params)
           params.strategy_cfg = time_rr_scheduler_expert_config{};
         } else {
           usage(argv[0], params);
-          exit(0);
+          std::exit(0);
         }
       } break;
       case 't':
@@ -187,7 +187,7 @@ static void parse_args(int argc, char** argv, bench_params& params)
       case 'h':
       default:
         usage(argv[0], params);
-        exit(0);
+        std::exit(0);
     }
   }
 
@@ -1319,7 +1319,7 @@ static void configure_main_thread(span<const unsigned> du_cell_cores)
       CPU_SET(i, &cpuset);
     }
     int ret;
-    if ((ret = pthread_setaffinity_np(self, sizeof(cpuset), &cpuset)) != 0) {
+    if ((ret = ::pthread_setaffinity_np(self, sizeof(cpuset), &cpuset)) != 0) {
       fmt::print("Warning: Unable to set affinity for test thread. Cause: '{}'\n", ::strerror(ret));
       return;
     }
