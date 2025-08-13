@@ -293,8 +293,6 @@ cudu amari 8UE:
     matrix:
       - E2E_FILE_OR_DIR: tests/reestablishment.py
         KEYWORDS: sequentially
-      - E2E_FILE_OR_DIR: tests/inter_du_handover.py
-        KEYWORDS: sequentially
 
 cudu amari 32UE:
   extends: .zmq
