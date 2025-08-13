@@ -320,7 +320,7 @@ static gbr_qos_flow_info_s gbr_qos_info_to_f1ap_asn1(const gbr_qos_flow_informat
 }
 
 static qos_flow_level_qos_params_s
-qos_flow_level_qos_params_to_f1ap_asn1(const qos_flow_level_qos_parameters qos_params)
+qos_flow_level_qos_params_to_f1ap_asn1(const qos_flow_level_qos_parameters& qos_params)
 {
   qos_flow_level_qos_params_s asn1_qos_params;
 

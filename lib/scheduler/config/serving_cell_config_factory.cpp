@@ -836,10 +836,10 @@ uint8_t srsran::config_helpers::compute_max_nof_candidates(aggregation_level    
 }
 
 std::vector<pdsch_time_domain_resource_allocation>
-srsran::config_helpers::make_pdsch_time_domain_resource(uint8_t                                ss0_idx,
-                                                        const pdcch_config_common&             common_pdcch_cfg,
-                                                        std::optional<pdcch_config>            ded_pdcch_cfg,
-                                                        std::optional<tdd_ul_dl_config_common> tdd_cfg)
+srsran::config_helpers::make_pdsch_time_domain_resource(uint8_t                                       ss0_idx,
+                                                        const pdcch_config_common&                    common_pdcch_cfg,
+                                                        const std::optional<pdcch_config>&            ded_pdcch_cfg,
+                                                        const std::optional<tdd_ul_dl_config_common>& tdd_cfg)
 {
   const std::optional<coreset_configuration> coreset0                                = common_pdcch_cfg.coreset0;
   const std::optional<coreset_configuration> common_coreset                          = common_pdcch_cfg.common_coreset;

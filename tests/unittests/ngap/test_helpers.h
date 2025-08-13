@@ -172,7 +172,7 @@ public:
     return ue_mng.find_ue_task_scheduler(ue_index)->schedule_async_task(std::move(task));
   }
 
-  bool on_handover_request_received(ue_index_t ue_index, security::security_context sec_ctxt) override
+  bool on_handover_request_received(ue_index_t ue_index, const security::security_context& sec_ctxt) override
   {
     srsran_assert(ue_mng.find_ue(ue_index) != nullptr, "UE must be present");
     logger.info("Received a handover request");
@@ -445,7 +445,7 @@ public:
   /// \brief Notify the CU-CP about a security context
   /// \param[in] sec_ctxt The received security context
   /// \return True if the security context was successfully initialized, false otherwise
-  bool init_security_context(security::security_context sec_ctxt) override { return true; }
+  bool init_security_context(const security::security_context& sec_ctxt) override { return true; }
 
   /// \brief Check if security is enabled
   [[nodiscard]] bool is_security_enabled() const override { return true; }

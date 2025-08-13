@@ -126,7 +126,7 @@ public:
   /// \brief Notify the CU-CP about a security context
   /// \param[in] sec_ctxt The received security context
   /// \return True if the security context was successfully initialized, false otherwise
-  virtual bool init_security_context(security::security_context sec_ctxt) = 0;
+  virtual bool init_security_context(const security::security_context& sec_ctxt) = 0;
 
   /// \brief Check if security is enabled
   [[nodiscard]] virtual bool is_security_enabled() const = 0;
@@ -153,7 +153,7 @@ public:
   /// \param[in] ue_index Index of the UE.
   /// \param[in] sec_ctxt The received security context.
   /// \return True if the security context was successfully initialized, false otherwise.
-  virtual bool on_handover_request_received(ue_index_t ue_index, security::security_context sec_ctxt) = 0;
+  virtual bool on_handover_request_received(ue_index_t ue_index, const security::security_context& sec_ctxt) = 0;
 
   /// \brief Notify about the reception of a new Initial Context Setup Request.
   /// \param[in] request The received Initial Context Setup Request.

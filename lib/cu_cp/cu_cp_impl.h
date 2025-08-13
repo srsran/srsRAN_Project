@@ -97,7 +97,7 @@ public:
                                        const cu_cp_ue_context_release_request& ue_context_release_request) override;
 
   // cu_cp_ngap_handler.
-  bool handle_handover_request(ue_index_t ue_index, security::security_context sec_ctxt) override;
+  bool handle_handover_request(ue_index_t ue_index, const security::security_context& sec_ctxt) override;
   async_task<expected<ngap_init_context_setup_response, ngap_init_context_setup_failure>>
   handle_new_initial_context_setup_request(const ngap_init_context_setup_request& request) override;
   async_task<cu_cp_pdu_session_resource_setup_response>
@@ -126,9 +126,9 @@ public:
 
   // cu_cp_measurement_handler.
   std::optional<rrc_meas_cfg>
-       handle_measurement_config_request(ue_index_t                  ue_index,
-                                         nr_cell_identity            nci,
-                                         std::optional<rrc_meas_cfg> current_meas_config = std::nullopt) override;
+       handle_measurement_config_request(ue_index_t                         ue_index,
+                                         nr_cell_identity                   nci,
+                                         const std::optional<rrc_meas_cfg>& current_meas_config = std::nullopt) override;
   void handle_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) override;
 
   // cu_cp_measurement_config_handler.

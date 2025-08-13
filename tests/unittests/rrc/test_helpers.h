@@ -118,7 +118,7 @@ public:
     });
   }
 
-  void on_up_context_setup_required(up_context ctxt) override { logger.info("UP context setup requested"); }
+  void on_up_context_setup_required(const up_context& ctxt) override { logger.info("UP context setup requested"); }
 
   up_context on_up_context_required() override
   {
@@ -136,8 +136,8 @@ public:
   }
 
   std::optional<rrc_meas_cfg>
-  on_measurement_config_request(nr_cell_identity            nci,
-                                std::optional<rrc_meas_cfg> current_meas_config = std::nullopt) override
+  on_measurement_config_request(nr_cell_identity                   nci,
+                                const std::optional<rrc_meas_cfg>& current_meas_config = std::nullopt) override
   {
     std::optional<rrc_meas_cfg> meas_cfg;
     return meas_cfg;

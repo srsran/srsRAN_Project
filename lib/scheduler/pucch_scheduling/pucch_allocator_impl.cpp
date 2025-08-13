@@ -1567,7 +1567,7 @@ static unsigned get_pucch_resource_ind_f0_sr_csi(pucch_uci_bits bits, const pucc
 std::optional<pucch_allocator_impl::pucch_grant_list>
 pucch_allocator_impl::get_pucch_res_pre_multiplexing(slot_point                   sl_tx,
                                                      pucch_uci_bits               new_bits,
-                                                     ue_grants                    ue_current_grants,
+                                                     const ue_grants&             ue_current_grants,
                                                      const ue_cell_configuration& ue_cell_cfg)
 {
   pucch_grant_list candidate_resources;
@@ -1885,7 +1885,7 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
 pucch_allocator_impl::pucch_grant_list
 pucch_allocator_impl::multiplex_resources(slot_point                   sl_tx,
                                           rnti_t                       crnti,
-                                          pucch_grant_list             candidate_grants,
+                                          const pucch_grant_list&      candidate_grants,
                                           const ue_cell_configuration& ue_cell_cfg,
                                           std::optional<uint8_t>       preserve_res_indicator)
 {
@@ -2214,7 +2214,7 @@ pucch_allocator_impl::merge_pucch_resources(span<const pucch_grant> resources_to
 std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource_allocator& pucch_slot_alloc,
                                                               ue_grants&                    existing_pucchs,
                                                               rnti_t                        crnti,
-                                                              pucch_grant_list              grants_to_tx,
+                                                              const pucch_grant_list&       grants_to_tx,
                                                               const ue_cell_configuration&  ue_cell_cfg)
 {
   auto& pucch_pdus = pucch_slot_alloc.result.ul.pucchs;

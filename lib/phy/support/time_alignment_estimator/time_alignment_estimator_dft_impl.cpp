@@ -99,10 +99,10 @@ time_alignment_estimator_dft_impl::time_alignment_estimator_dft_impl(
   }
 }
 
-time_alignment_measurement time_alignment_estimator_dft_impl::estimate(const re_buffer_reader<cf_t>&   symbols,
-                                                                       bounded_bitset<max_nof_symbols> mask,
-                                                                       subcarrier_spacing              scs,
-                                                                       double                          max_ta)
+time_alignment_measurement time_alignment_estimator_dft_impl::estimate(const re_buffer_reader<cf_t>&          symbols,
+                                                                       const bounded_bitset<max_nof_symbols>& mask,
+                                                                       subcarrier_spacing                     scs,
+                                                                       double                                 max_ta)
 {
   srsran_assert(mask.count() == symbols.get_slice(0).size(),
                 "The number of complex symbols per port {} does not match the mask size {}.",
@@ -148,10 +148,10 @@ time_alignment_measurement time_alignment_estimator_dft_impl::estimate(const re_
   return estimate_ta_correlation(correlation, /* stride = */ 1, scs, max_ta);
 }
 
-time_alignment_measurement time_alignment_estimator_dft_impl::estimate(span<const cf_t>                symbols,
-                                                                       bounded_bitset<max_nof_symbols> mask,
-                                                                       subcarrier_spacing              scs,
-                                                                       double                          max_ta)
+time_alignment_measurement time_alignment_estimator_dft_impl::estimate(span<const cf_t>                       symbols,
+                                                                       const bounded_bitset<max_nof_symbols>& mask,
+                                                                       subcarrier_spacing                     scs,
+                                                                       double                                 max_ta)
 {
   modular_re_buffer_reader<cf_t, 1> symbols_view(1, symbols.size());
   symbols_view.set_slice(0, symbols);

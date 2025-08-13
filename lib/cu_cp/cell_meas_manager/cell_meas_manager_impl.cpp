@@ -29,9 +29,10 @@ cell_meas_manager::cell_meas_manager(const cell_meas_manager_cfg&         cfg_,
   log_cells(logger, cfg);
 }
 
-std::optional<rrc_meas_cfg> cell_meas_manager::get_measurement_config(ue_index_t                  ue_index,
-                                                                      nr_cell_identity            serving_nci,
-                                                                      std::optional<rrc_meas_cfg> current_meas_config)
+std::optional<rrc_meas_cfg>
+cell_meas_manager::get_measurement_config(ue_index_t                         ue_index,
+                                          nr_cell_identity                   serving_nci,
+                                          const std::optional<rrc_meas_cfg>& current_meas_config)
 {
   std::optional<rrc_meas_cfg> meas_cfg;
 

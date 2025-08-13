@@ -57,7 +57,7 @@ struct formatter<srsran::pdcp_metrics_container> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_metrics_container m, FormatContext& ctx) const
+  auto format(const srsran::pdcp_metrics_container& m, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "ue={} rb={} tx=[{}] rx=[{}]",

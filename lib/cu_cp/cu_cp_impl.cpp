@@ -498,7 +498,7 @@ async_task<void> cu_cp_impl::handle_ue_context_release(const cu_cp_ue_context_re
       request, ngap->get_ngap_control_message_handler(), *this, logger);
 }
 
-bool cu_cp_impl::handle_handover_request(ue_index_t ue_index, security::security_context sec_ctxt)
+bool cu_cp_impl::handle_handover_request(ue_index_t ue_index, const security::security_context& sec_ctxt)
 {
   cu_cp_ue* ue = ue_mng.find_ue(ue_index);
   if (ue == nullptr) {
@@ -736,9 +736,9 @@ void cu_cp_impl::handle_n2_disconnection(amf_index_t amf_index)
 }
 
 std::optional<rrc_meas_cfg>
-cu_cp_impl::handle_measurement_config_request(ue_index_t                  ue_index,
-                                              nr_cell_identity            nci,
-                                              std::optional<rrc_meas_cfg> current_meas_config)
+cu_cp_impl::handle_measurement_config_request(ue_index_t                         ue_index,
+                                              nr_cell_identity                   nci,
+                                              const std::optional<rrc_meas_cfg>& current_meas_config)
 {
   return cell_meas_mng.get_measurement_config(ue_index, nci, current_meas_config);
 }

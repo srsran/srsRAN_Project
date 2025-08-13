@@ -113,7 +113,7 @@ struct formatter<srsran::pdcp_rx_metrics_container> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_rx_metrics_container m, FormatContext& ctx) const
+  auto format(const srsran::pdcp_rx_metrics_container& m, FormatContext& ctx) const
   {
     return format_to(
         ctx.out(),

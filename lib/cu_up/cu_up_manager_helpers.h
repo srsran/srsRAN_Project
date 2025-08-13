@@ -199,7 +199,7 @@ fill_test_mode_bearer_context_setup_request(cu_up_test_mode_config test_mode_cfg
 }
 
 inline e1ap_bearer_context_modification_request
-fill_test_mode_bearer_context_modification_request(e1ap_bearer_context_setup_response setup_resp)
+fill_test_mode_bearer_context_modification_request(const e1ap_bearer_context_setup_response& setup_resp)
 {
   // Modifiy bearer
   e1ap_bearer_context_modification_request bearer_modify = {};

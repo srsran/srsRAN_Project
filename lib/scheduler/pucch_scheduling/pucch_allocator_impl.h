@@ -182,13 +182,13 @@ private:
   // Computes which resources are expected to be sent, depending on the UCI bits to be sent, before any multiplexing.
   std::optional<pucch_grant_list> get_pucch_res_pre_multiplexing(slot_point                   sl_tx,
                                                                  pucch_uci_bits               new_bits,
-                                                                 ue_grants                    ue_current_grants,
+                                                                 const ue_grants&             ue_current_grants,
                                                                  const ue_cell_configuration& ue_cell_cfg);
 
   // Execute the multiplexing algorithm as defined in TS 38.213, Section 9.2.5.
   pucch_grant_list multiplex_resources(slot_point                   sl_tx,
                                        rnti_t                       crnti,
-                                       pucch_grant_list             candidate_grants,
+                                       const pucch_grant_list&      candidate_grants,
                                        const ue_cell_configuration& ue_cell_cfg,
                                        std::optional<uint8_t>       preserve_res_indicator);
 
@@ -204,7 +204,7 @@ private:
   std::optional<unsigned> allocate_grants(cell_slot_resource_allocator& pucch_slot_alloc,
                                           ue_grants&                    existing_pucchs,
                                           rnti_t                        crnti,
-                                          pucch_grant_list              grants_to_tx,
+                                          const pucch_grant_list&       grants_to_tx,
                                           const ue_cell_configuration&  ue_cell_cfg);
 
   // Fills the PUCCH HARQ PDU for common resources.

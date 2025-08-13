@@ -544,7 +544,7 @@ struct formatter<srsran::srs_cu_cp::rrc_meas_obj_nr> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::srs_cu_cp::rrc_meas_obj_nr meas_object, FormatContext& ctx) const
+  auto format(const srsran::srs_cu_cp::rrc_meas_obj_nr& meas_object, FormatContext& ctx) const
   {
     std::string smtc1_str;
     std::string smtc2_str;

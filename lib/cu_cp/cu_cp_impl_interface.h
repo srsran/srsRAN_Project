@@ -63,7 +63,7 @@ public:
   /// \param[in] ue_index Index of the UE.
   /// \param[in] sec_ctxt The received security context.
   /// \return True if the security context was successfully initialized, false otherwise.
-  virtual bool handle_handover_request(ue_index_t ue_index, security::security_context sec_ctxt) = 0;
+  virtual bool handle_handover_request(ue_index_t ue_index, const security::security_context& sec_ctxt) = 0;
 
   /// \brief Handle the reception of a new Initial Context Setup Request.
   /// \param[in] request The received Initial Context Setup Request.
@@ -281,9 +281,9 @@ public:
   /// \param[in] nci The cell id of the serving cell to update.
   /// \param[in] current_meas_config The current meas config of the UE (if applicable).
   virtual std::optional<rrc_meas_cfg>
-  handle_measurement_config_request(ue_index_t                  ue_index,
-                                    nr_cell_identity            nci,
-                                    std::optional<rrc_meas_cfg> current_meas_config = std::nullopt) = 0;
+  handle_measurement_config_request(ue_index_t                         ue_index,
+                                    nr_cell_identity                   nci,
+                                    const std::optional<rrc_meas_cfg>& current_meas_config = std::nullopt) = 0;
 
   /// \brief Handle a measurement report for given UE.
   virtual void handle_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) = 0;

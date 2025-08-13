@@ -121,7 +121,7 @@ public:
   }
 
   std::optional<rrc_meas_cfg>
-  generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config = std::nullopt) override
+  generate_meas_config(const std::optional<rrc_meas_cfg>& current_meas_config = std::nullopt) override
   {
     logger.info("Received a new request to generate RRC UE meas config");
     std::optional<rrc_meas_cfg> meas_config;

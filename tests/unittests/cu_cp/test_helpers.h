@@ -442,8 +442,8 @@ public:
   }
 
   async_task<f1ap_ue_context_setup_response>
-  handle_ue_context_setup_request(const f1ap_ue_context_setup_request&   request,
-                                  std::optional<rrc_ue_transfer_context> rrc_context) override
+  handle_ue_context_setup_request(const f1ap_ue_context_setup_request&          request,
+                                  const std::optional<rrc_ue_transfer_context>& rrc_context) override
   {
     logger.info("Received a new UE context setup request");
 

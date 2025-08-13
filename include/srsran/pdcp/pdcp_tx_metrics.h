@@ -104,7 +104,7 @@ struct formatter<srsran::pdcp_tx_metrics_container> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_tx_metrics_container m, FormatContext& ctx) const
+  auto format(const srsran::pdcp_tx_metrics_container& m, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "num_sdus={} num_sdu_bytes={} num_dropped_sdus={} num_pdus={} num_pdu_bytes={} "

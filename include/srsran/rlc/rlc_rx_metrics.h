@@ -174,7 +174,7 @@ struct formatter<srsran::rlc_rx_metrics> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::rlc_rx_metrics m, FormatContext& ctx) const
+  auto format(const srsran::rlc_rx_metrics& m, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "num_pdus={} num_pdu_bytes={} num_lost_pdus={} num_malformed_pdus={} num_sdus={} num_sdu_bytes={}",
