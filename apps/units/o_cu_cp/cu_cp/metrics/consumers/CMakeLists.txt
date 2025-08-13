@@ -8,6 +8,7 @@
 
 set(SOURCES
         ngap_metrics_consumers.cpp
+        rrc_metrics_consumers.cpp
 )
 
 add_library(srsran_cu_cp_unit_metrics_consumers STATIC ${SOURCES})

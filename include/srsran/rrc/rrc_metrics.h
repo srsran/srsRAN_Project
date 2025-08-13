@@ -33,6 +33,14 @@ struct rrc_connection_establishment_counter_with_cause {
 
   establishment_cause_t get_cause(unsigned index) const { return establishment_cause_t(index); }
 
+  /// Returns a const iterator to the beginning of the container.
+  std::array<unsigned, 10>::const_iterator begin() const { return counters_by_cause.begin(); }
+  std::array<unsigned, 10>::const_iterator cbegin() const { return counters_by_cause.cbegin(); }
+
+  /// Returns a const iterator to the end of the container.
+  std::array<unsigned, 10>::const_iterator end() const { return counters_by_cause.end(); }
+  std::array<unsigned, 10>::const_iterator cend() const { return counters_by_cause.cend(); }
+
 private:
   // The RRC setup request/complete counters indexed by the establishment cause.
   std::array<unsigned, 10> counters_by_cause = {};

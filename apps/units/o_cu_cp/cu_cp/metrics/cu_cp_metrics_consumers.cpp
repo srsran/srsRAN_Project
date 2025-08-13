@@ -25,7 +25,6 @@ void cu_cp_metrics_consumer_log::handle_metric(const app_services::metrics_set& 
 {
   const cu_cp_metrics_report& cp_metrics = static_cast<const cu_cp_metrics_impl&>(metric).get_metrics();
 
-  log_chan.enabled();
-
   ngap_consumer.handle_metric(cp_metrics.ngaps, cp_metrics.mobility);
+  rrc_consumer.handle_metric(cp_metrics.dus, cp_metrics.mobility);
 }
