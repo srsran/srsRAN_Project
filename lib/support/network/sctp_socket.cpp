@@ -20,10 +20,8 @@
 
 using namespace srsran;
 
-namespace {
-
 /// Subscribes to various SCTP events to handle association and shutdown gracefully.
-bool sctp_subscribe_to_events(const unique_fd& fd)
+static bool sctp_subscribe_to_events(const unique_fd& fd)
 {
   srsran_sanity_check(fd.is_open(), "Invalid FD");
   struct sctp_event_subscribe events = {};
@@ -36,12 +34,12 @@ bool sctp_subscribe_to_events(const unique_fd& fd)
 
 /// \brief Modify SCTP default parameters for quicker detection of broken links.
 /// Changes to the maximum re-transmission timeout (rto_max).
-bool sctp_set_rto_opts(const unique_fd&                         fd,
-                       std::optional<std::chrono::milliseconds> rto_initial,
-                       std::optional<std::chrono::milliseconds> rto_min,
-                       std::optional<std::chrono::milliseconds> rto_max,
-                       const std::string&                       if_name,
-                       srslog::basic_logger&                    logger)
+static bool sctp_set_rto_opts(const unique_fd&                         fd,
+                              std::optional<std::chrono::milliseconds> rto_initial,
+                              std::optional<std::chrono::milliseconds> rto_min,
+                              std::optional<std::chrono::milliseconds> rto_max,
+                              const std::string&                       if_name,
+                              srslog::basic_logger&                    logger)
 {
   srsran_sanity_check(fd.is_open(), "Invalid FD");
 
@@ -86,11 +84,11 @@ bool sctp_set_rto_opts(const unique_fd&                         fd,
 
 /// \brief Modify SCTP default parameters for quicker detection of broken links.
 /// Changes to the SCTP_INITMSG parameters (to control the timeout of the connect() syscall)
-bool sctp_set_init_msg_opts(const unique_fd&                         fd,
-                            std::optional<int>                       init_max_attempts,
-                            std::optional<std::chrono::milliseconds> max_init_timeo,
-                            const std::string&                       if_name,
-                            srslog::basic_logger&                    logger)
+static bool sctp_set_init_msg_opts(const unique_fd&                         fd,
+                                   std::optional<int>                       init_max_attempts,
+                                   std::optional<std::chrono::milliseconds> max_init_timeo,
+                                   const std::string&                       if_name,
+                                   srslog::basic_logger&                    logger)
 {
   srsran_sanity_check(fd.is_open(), "Invalid FD");
 
@@ -128,10 +126,10 @@ bool sctp_set_init_msg_opts(const unique_fd&                         fd,
 
 /// \brief Modify SCTP default Peer Address parameters for quicker detection of broken links.
 /// Changes to the heartbeat interval.
-bool sctp_set_paddr_opts(const unique_fd&                         fd,
-                         std::optional<std::chrono::milliseconds> hb_interval,
-                         const std::string&                       if_name,
-                         srslog::basic_logger&                    logger)
+static bool sctp_set_paddr_opts(const unique_fd&                         fd,
+                                std::optional<std::chrono::milliseconds> hb_interval,
+                                const std::string&                       if_name,
+                                srslog::basic_logger&                    logger)
 {
   srsran_sanity_check(fd.is_open(), "Invalid FD");
 
@@ -166,10 +164,10 @@ bool sctp_set_paddr_opts(const unique_fd&                         fd,
 
 /// \brief Modify SCTP default Assocination parameters for quicker detection of broken links.
 /// Changes to the maximum number of re-transmission sent before a address is considered unreachable.
-bool sctp_set_assoc_opts(const unique_fd&      fd,
-                         std::optional<int>    assoc_max_rxt,
-                         const std::string&    if_name,
-                         srslog::basic_logger& logger)
+static bool sctp_set_assoc_opts(const unique_fd&      fd,
+                                std::optional<int>    assoc_max_rxt,
+                                const std::string&    if_name,
+                                srslog::basic_logger& logger)
 {
   srsran_sanity_check(fd.is_open(), "Invalid FD");
 
@@ -208,7 +206,7 @@ bool sctp_set_assoc_opts(const unique_fd&      fd,
 ///
 /// Note: If the local interface supports jumbo frames (MTU size > 1500) but not the receiver, then the receiver might
 /// discard big PDUs and the stream might get stuck.
-bool sctp_set_nodelay(const unique_fd& fd, std::optional<bool> nodelay)
+static bool sctp_set_nodelay(const unique_fd& fd, std::optional<bool> nodelay)
 {
   if (not nodelay.has_value()) {
     // no need to change anything
@@ -218,8 +216,6 @@ bool sctp_set_nodelay(const unique_fd& fd, std::optional<bool> nodelay)
   int optval = nodelay.value() ? 1 : 0;
   return ::setsockopt(fd.value(), IPPROTO_SCTP, SCTP_NODELAY, &optval, sizeof(optval)) == 0;
 }
-
-} // namespace
 
 // sctp_socket class.
 

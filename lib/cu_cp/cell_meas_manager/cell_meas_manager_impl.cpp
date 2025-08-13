@@ -173,7 +173,7 @@ bool cell_meas_manager::update_cell_config(nr_cell_identity nci, const serving_c
   return true;
 }
 
-std::optional<uint8_t> get_ssb_rsrp(const rrc_meas_result_nr& meas_result)
+static std::optional<uint8_t> get_ssb_rsrp(const rrc_meas_result_nr& meas_result)
 {
   std::optional<uint8_t> rsrp;
   if (meas_result.cell_results.results_ssb_cell.has_value()) {

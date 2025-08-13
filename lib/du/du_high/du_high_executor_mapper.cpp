@@ -160,10 +160,12 @@ private:
   executor_decorator          decorator;
 };
 
-std::unique_ptr<du_high_cell_executor_mapper> create_du_high_cell_executor_mapper(const du_high_executor_config& config)
+static std::unique_ptr<du_high_cell_executor_mapper>
+create_du_high_cell_executor_mapper(const du_high_executor_config& config)
 {
   std::unique_ptr<du_high_cell_executor_mapper> cell_mapper;
-  if (auto* ded_workers = std::get_if<du_high_executor_config::dedicated_cell_worker_list>(&config.cell_executors)) {
+  if (const auto* ded_workers =
+          std::get_if<du_high_executor_config::dedicated_cell_worker_list>(&config.cell_executors)) {
     cell_mapper = std::make_unique<dedicated_cell_worker_executor_mapper>(
         *ded_workers, config.is_rt_mode_enabled, config.trace_exec_tasks, config.metrics_period);
   } else {
@@ -342,7 +344,8 @@ private:
   std::array<unsigned, MAX_NOF_DU_UES> ue_idx_to_exec_index;
 };
 
-std::unique_ptr<du_high_ue_executor_mapper> create_du_high_ue_executor_mapper(const du_high_executor_config& config)
+static std::unique_ptr<du_high_ue_executor_mapper>
+create_du_high_ue_executor_mapper(const du_high_executor_config& config)
 {
   std::unique_ptr<du_high_ue_executor_mapper> ue_mapper;
   if (config.ue_executors.policy == du_high_executor_config::ue_executor_config::map_policy::per_cell) {

@@ -1159,12 +1159,12 @@ namespace bitstring_utils {
 /**
  * Pack ASN1 bitstring length prefix. Accommodates for cases: fixed/unbounded/bounded, aligned/unaligned, with/out ext
  */
-SRSASN_CODE pack_length_prefix(bit_ref& bref,
-                               uint32_t len,
-                               uint32_t lb         = 0,
-                               uint32_t ub         = std::numeric_limits<uint32_t>::max(),
-                               bool     has_ext    = false,
-                               bool     is_aligned = false)
+static SRSASN_CODE pack_length_prefix(bit_ref& bref,
+                                      uint32_t len,
+                                      uint32_t lb         = 0,
+                                      uint32_t ub         = std::numeric_limits<uint32_t>::max(),
+                                      bool     has_ext    = false,
+                                      bool     is_aligned = false)
 {
   if (has_ext and ub == std::numeric_limits<uint32_t>::max()) {
     log_error("has extension marker but it is an unbounded prefix size");
@@ -1200,7 +1200,8 @@ SRSASN_CODE pack_length_prefix(bit_ref& bref,
   return SRSASN_SUCCESS;
 }
 
-SRSASN_CODE pack_bitfield(bit_ref& bref, const uint8_t* buf, uint32_t nbits, uint32_t lb, uint32_t ub, bool is_aligned)
+static SRSASN_CODE
+pack_bitfield(bit_ref& bref, const uint8_t* buf, uint32_t nbits, uint32_t lb, uint32_t ub, bool is_aligned)
 {
   if (nbits == 0) {
     log_error("Invalid bitstring size={}", nbits);
@@ -1345,7 +1346,7 @@ void log_invalid_choice_id(uint32_t val, const char* choice_type)
 
 namespace asn_string_utils {
 
-size_t get_nof_bits_per_char(size_t lb, size_t ub, bool aligned)
+static size_t get_nof_bits_per_char(size_t lb, size_t ub, bool aligned)
 {
   size_t N = ub - lb + 1;
   auto   b = (size_t)std::ceil(std::log2(N)); // B
@@ -1355,13 +1356,13 @@ size_t get_nof_bits_per_char(size_t lb, size_t ub, bool aligned)
   return b;
 }
 
-bool is_octet_aligned(size_t bits_per_char, size_t alb, size_t aub, bool aligned)
+static bool is_octet_aligned(size_t bits_per_char, size_t alb, size_t aub, bool aligned)
 {
   size_t max_nof_bits = bits_per_char * aub;
   return aligned and (max_nof_bits > 16 or (alb != aub and max_nof_bits == 16));
 }
 
-constexpr bool is_length_encoded(size_t alb, size_t aub, bool aligned)
+static constexpr bool is_length_encoded(size_t alb, size_t aub, bool aligned)
 {
   return alb != aub or aub >= ASN_64K;
 }

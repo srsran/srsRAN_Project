@@ -18,9 +18,9 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-bool verify_ho_request(const cu_cp_intra_cu_handover_request& request,
-                       ue_manager&                            ue_mng,
-                       const srslog::basic_logger&            logger)
+static bool verify_ho_request(const cu_cp_intra_cu_handover_request& request,
+                              ue_manager&                            ue_mng,
+                              const srslog::basic_logger&            logger)
 {
   if (request.target_pci == INVALID_PCI) {
     logger.warning("Target PCI must not be invalid");

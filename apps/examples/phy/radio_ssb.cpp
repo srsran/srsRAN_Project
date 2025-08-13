@@ -444,17 +444,17 @@ static radio_configuration::radio create_radio_configuration()
   return radio_config;
 }
 
-lower_phy_configuration create_lower_phy_configuration(task_executor*                rx_task_executor,
-                                                       task_executor*                tx_task_executor,
-                                                       task_executor*                ul_task_executor,
-                                                       task_executor*                dl_task_executor,
-                                                       task_executor*                prach_task_executor,
-                                                       lower_phy_error_notifier*     error_notifier,
-                                                       lower_phy_metrics_notifier*   metrics_notifier,
-                                                       lower_phy_rx_symbol_notifier* rx_symbol_notifier,
-                                                       lower_phy_timing_notifier*    timing_notifier,
-                                                       baseband_gateway&             bb_gateway,
-                                                       srslog::basic_logger*         logger)
+static lower_phy_configuration create_lower_phy_configuration(task_executor*                rx_task_executor,
+                                                              task_executor*                tx_task_executor,
+                                                              task_executor*                ul_task_executor,
+                                                              task_executor*                dl_task_executor,
+                                                              task_executor*                prach_task_executor,
+                                                              lower_phy_error_notifier*     error_notifier,
+                                                              lower_phy_metrics_notifier*   metrics_notifier,
+                                                              lower_phy_rx_symbol_notifier* rx_symbol_notifier,
+                                                              lower_phy_timing_notifier*    timing_notifier,
+                                                              baseband_gateway&             bb_gateway,
+                                                              srslog::basic_logger*         logger)
 {
   lower_phy_configuration phy_config;
   phy_config.srate                             = srate;

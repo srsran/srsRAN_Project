@@ -1015,7 +1015,7 @@ static void make_asn1_rrc_qcl_info(asn1::rrc_nr::qcl_info_s& out, const qcl_info
   }
 }
 
-asn1::rrc_nr::pdsch_time_domain_res_alloc_s
+static asn1::rrc_nr::pdsch_time_domain_res_alloc_s
 make_asn1_rrc_pdsch_time_domain_alloc_list(const pdsch_time_domain_resource_allocation& cfg)
 {
   pdsch_time_domain_res_alloc_s out{};
@@ -1924,7 +1924,7 @@ static void fill_uci_on_pusch(asn1::rrc_nr::uci_on_pusch_s& uci_asn1, const uci_
   }
 }
 
-asn1::rrc_nr::pusch_time_domain_res_alloc_s
+static asn1::rrc_nr::pusch_time_domain_res_alloc_s
 make_asn1_rrc_pusch_time_domain_alloc_list(const pusch_time_domain_resource_allocation& cfg)
 {
   pusch_time_domain_res_alloc_s out{};

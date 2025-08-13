@@ -351,7 +351,7 @@ void srsran::security::s3g_generate_keystream(S3G_STATE* state, uint32_t n, uint
  * function.
  * See section 4.3.2 for details.
  */
-uint64_t s3g_MUL64x(uint64_t V, uint64_t c)
+static uint64_t s3g_MUL64x(uint64_t V, uint64_t c)
 {
   if (V & 0x8000000000000000)
     return (V << 1) ^ c;
@@ -367,7 +367,7 @@ uint64_t s3g_MUL64x(uint64_t V, uint64_t c)
  * A 64-bit memory is allocated which is to be freed by the calling function.
  * See section 4.3.3 for details.
  */
-uint64_t s3g_MUL64xPOW(uint64_t V, uint8_t i, uint64_t c)
+static uint64_t s3g_MUL64xPOW(uint64_t V, uint8_t i, uint64_t c)
 {
   if (i == 0)
     return V;
@@ -384,7 +384,7 @@ uint64_t s3g_MUL64xPOW(uint64_t V, uint8_t i, uint64_t c)
  * function.
  * See section 4.3.4 for details.
  */
-uint64_t s3g_MUL64(uint64_t V, uint64_t P, uint64_t c)
+static uint64_t s3g_MUL64(uint64_t V, uint64_t P, uint64_t c)
 {
   uint64_t result = 0;
   int      i      = 0;
@@ -445,7 +445,7 @@ static uint64_t s3g_MUL_P(const std::array<std::array<uint64_t, 256>, 8>& PM, ui
  * Output : an 8 bit mask.
  * Prepares an 8 bit mask with required number of 1 bits on the MSB side.
  */
-uint8_t mask8bit(int n)
+static uint8_t mask8bit(int n)
 {
   return 0xff ^ ((1 << (8 - n)) - 1);
 }

@@ -20,7 +20,7 @@
 using namespace srsran;
 
 // Select the CRC for the decoder based on the TBS and the number of codeblocks.
-crc_calculator* select_crc(pusch_decoder_impl::sch_crc& crcs, unsigned tbs, unsigned nof_blocks)
+static crc_calculator* select_crc(pusch_decoder_impl::sch_crc& crcs, unsigned tbs, unsigned nof_blocks)
 {
   if (nof_blocks > 1) {
     return crcs.crc24B.get();

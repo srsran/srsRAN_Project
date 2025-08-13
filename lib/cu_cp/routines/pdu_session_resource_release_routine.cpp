@@ -36,10 +36,10 @@ pdu_session_resource_release_routine::pdu_session_resource_release_routine(
 }
 
 // Handle RRC reconfiguration result.
-bool handle_rrc_reconfiguration_response(cu_cp_pdu_session_resource_release_response&      response_msg,
-                                         const cu_cp_pdu_session_resource_release_command& release_cmd,
-                                         bool                                              rrc_reconfig_result,
-                                         const srslog::basic_logger&                       logger)
+static bool handle_rrc_reconfiguration_response(cu_cp_pdu_session_resource_release_response&      response_msg,
+                                                const cu_cp_pdu_session_resource_release_command& release_cmd,
+                                                bool                                              rrc_reconfig_result,
+                                                const srslog::basic_logger&                       logger)
 {
   // Let all PDU sessions fail if response is negative.
   if (!rrc_reconfig_result) {

@@ -60,7 +60,7 @@ async_task<bool> cu_configuration_procedure::start_cell(const nr_cell_global_id_
   return cell_mng.start(cell_index);
 }
 
-async_task<void> force_ue_release(du_ue_manager& ue_mng, du_cell_index_t cell_index)
+static async_task<void> force_ue_release(du_ue_manager& ue_mng, du_cell_index_t cell_index)
 {
   std::vector<du_ue_index_t> ues_to_force_rem;
   for (const auto& u : ue_mng.get_du_ues()) {

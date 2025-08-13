@@ -212,7 +212,7 @@ asn1::rrc_nr::zp_csi_rs_res_set_s srsran::srs_du::make_asn1_zp_csi_rs_resource_s
   return out;
 }
 
-asn1::rrc_nr::nzp_csi_rs_res_s make_asn1_nzp_csi_rs_resource(const nzp_csi_rs_resource& cfg)
+static asn1::rrc_nr::nzp_csi_rs_res_s make_asn1_nzp_csi_rs_resource(const nzp_csi_rs_resource& cfg)
 {
   nzp_csi_rs_res_s out{};
   out.nzp_csi_rs_res_id = cfg.res_id;
@@ -253,7 +253,7 @@ asn1::rrc_nr::nzp_csi_rs_res_s make_asn1_nzp_csi_rs_resource(const nzp_csi_rs_re
   return out;
 }
 
-asn1::rrc_nr::nzp_csi_rs_res_set_s make_asn1_nzp_csi_rs_resource_set(const nzp_csi_rs_resource_set& cfg)
+static asn1::rrc_nr::nzp_csi_rs_res_set_s make_asn1_nzp_csi_rs_resource_set(const nzp_csi_rs_resource_set& cfg)
 {
   nzp_csi_rs_res_set_s out{};
   out.nzp_csi_res_set_id = cfg.res_set_id;
@@ -277,7 +277,7 @@ asn1::rrc_nr::nzp_csi_rs_res_set_s make_asn1_nzp_csi_rs_resource_set(const nzp_c
   return out;
 }
 
-asn1::rrc_nr::csi_im_res_s make_asn1_csi_im_resource(const csi_im_resource& cfg)
+static asn1::rrc_nr::csi_im_res_s make_asn1_csi_im_resource(const csi_im_resource& cfg)
 {
   csi_im_res_s out{};
   out.csi_im_res_id = cfg.res_id;

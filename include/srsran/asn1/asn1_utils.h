@@ -467,7 +467,7 @@ private:
 *********************/
 
 SRSASN_CODE pack_unsupported_ext_flag(bit_ref& bref, bool ext);
-SRSASN_CODE unpack_unsupported_ext_flag(bool& ext, bit_ref& bref);
+SRSASN_CODE unpack_unsupported_ext_flag(bool& ext, cbit_ref& bref);
 
 /************************
     asn1 null packing

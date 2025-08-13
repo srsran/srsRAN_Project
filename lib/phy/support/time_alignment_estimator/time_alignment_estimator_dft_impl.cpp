@@ -36,7 +36,7 @@ using namespace srsran;
 ///
 /// \param[in] peak_center_correlation Odd number of samples containing a peak maximum in the center.
 /// \return The fractional sample estimation where the maximum is located if the result is valid.
-float fractional_sample_delay(span<const float> peak_center_correlation)
+static float fractional_sample_delay(span<const float> peak_center_correlation)
 {
   // Calculation coefficients for solving the equations.
   static constexpr std::array<float, 5> num_weights_5 = {{-0.400000, -0.200000, 0.000000, 0.200000, 0.400000}};

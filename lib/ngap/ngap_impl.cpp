@@ -785,7 +785,7 @@ void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
 }
 
 // Free function to generate a handover failure message.
-ngap_message generate_handover_failure(uint64_t amf_ue_id)
+static ngap_message generate_handover_failure(uint64_t amf_ue_id)
 {
   ngap_message ngap_msg;
   ngap_msg.pdu.set_unsuccessful_outcome();
