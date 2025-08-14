@@ -174,15 +174,12 @@ ru_ofh_configuration srsran::generate_ru_ofh_config(const ru_ofh_unit_config&   
   return out_cfg;
 }
 
-void srsran::fill_ofh_worker_manager_config(worker_manager_config&    config,
-                                            const ru_ofh_unit_config& ru_cfg,
-                                            std::vector<unsigned>     nof_downlink_antennas)
+void srsran::fill_ofh_worker_manager_config(worker_manager_config& config, const ru_ofh_unit_config& ru_cfg)
 {
-  auto& ofh_cfg                    = config.ru_ofh_cfg.emplace();
-  ofh_cfg.is_downlink_parallelized = ru_cfg.expert_execution_cfg.threads.is_downlink_parallelized;
-  ofh_cfg.nof_downlink_antennas    = std::move(nof_downlink_antennas);
-  ofh_cfg.ru_timing_cpu            = ru_cfg.expert_execution_cfg.ru_timing_cpu;
-  ofh_cfg.txrx_affinities          = ru_cfg.expert_execution_cfg.txrx_affinities;
+  auto& ofh_cfg           = config.ru_ofh_cfg.emplace();
+  ofh_cfg.nof_cells       = ru_cfg.cells.size();
+  ofh_cfg.ru_timing_cpu   = ru_cfg.expert_execution_cfg.ru_timing_cpu;
+  ofh_cfg.txrx_affinities = ru_cfg.expert_execution_cfg.txrx_affinities;
 
   // If ru_txrx_cpus parameters are not specified, use the affinities of ru_cpus parameters of the cells.
   if (ofh_cfg.txrx_affinities.empty()) {

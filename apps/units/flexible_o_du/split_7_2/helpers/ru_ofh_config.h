@@ -160,24 +160,10 @@ struct ru_ofh_unit_cpu_affinities_cell_config {
   os_sched_affinity_config ru_cpu_cfg = {sched_affinity_mask_types::ru, {}, sched_affinity_mask_policy::mask};
 };
 
-/// Expert threads configuration.
-struct ru_ofh_unit_expert_threads_config {
-  ru_ofh_unit_expert_threads_config()
-  {
-    unsigned nof_threads     = cpu_architecture_info::get().get_host_nof_available_cpus();
-    is_downlink_parallelized = nof_threads > 3;
-  }
-
-  /// Open Fronthaul thread configuration.
-  bool is_downlink_parallelized = true;
-};
-
 /// Expert configuration.
 struct ru_ofh_unit_expert_execution_config {
   /// RU timing thread.
   os_sched_affinity_bitmask ru_timing_cpu;
-  /// Expert thread configuration of the Open Fronthaul Radio Unit.
-  ru_ofh_unit_expert_threads_config threads;
   /// CPU affinities per RU txrx thread.
   std::vector<os_sched_affinity_bitmask> txrx_affinities;
   /// CPU affinities per cell.

@@ -372,10 +372,8 @@ static unsigned get_nof_prealloc_producers(const worker_manager_config& worker_c
   if (worker_cfg.ru_ofh_cfg.has_value()) {
     // Include RU timing thread.
     nof_producers += 1;
-    // Include threads for each RU cell (sum of DL antennas + one Rx + TxRx).
-    for (unsigned nof_downlink_antenna : worker_cfg.ru_ofh_cfg->nof_downlink_antennas) {
-      nof_producers += 2 + nof_downlink_antenna;
-    }
+    // Include a TxRx thread for each RU cell.
+    nof_producers += worker_cfg.ru_ofh_cfg->nof_cells;
   }
   if (worker_cfg.ru_dummy_cfg.has_value()) {
     // Include RU dummy thread.
@@ -528,7 +526,6 @@ worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::
 void worker_manager::create_ofh_executors(const worker_manager_config::ru_ofh_config& config)
 {
   using namespace execution_config_helper;
-  const unsigned nof_cells = config.nof_downlink_antennas.size();
 
   ru_ofh_executor_mapper_config exec_mapper_config;
 
@@ -553,46 +550,10 @@ void worker_manager::create_ofh_executors(const worker_manager_config::ru_ofh_co
     exec_mapper_config.timing_executor = exec_mng.executors().at(exec_name);
   }
 
-  for (unsigned i = 0, e = nof_cells; i != e; ++i) {
-    // Executor for the Open Fronthaul User and Control messages codification.
-    {
-      unsigned nof_ofh_dl_workers =
-          (config.is_downlink_parallelized) ? std::max(config.nof_downlink_antennas[i] / 2U, 1U) : 1U;
-      const std::string name      = "ru_dl_#" + std::to_string(i);
-      const std::string exec_name = "ru_dl_exec_#" + std::to_string(i);
+  // Downlink and uplink executors.
+  exec_mapper_config.downlink_executor = rt_hi_prio_exec;
+  exec_mapper_config.uplink_executor   = rt_hi_prio_exec;
 
-      const auto                             prio = os_thread_realtime_priority::max() - 5;
-      std::vector<os_sched_affinity_bitmask> cpu_masks;
-      for (unsigned w = 0; w != nof_ofh_dl_workers; ++w) {
-        cpu_masks.push_back(affinity_mng[i].calcute_affinity_mask(sched_affinity_mask_types::ru));
-      }
-      create_worker_pool(name,
-                         nof_ofh_dl_workers,
-                         exec_name,
-                         task_worker_queue_size,
-                         prio,
-                         cpu_masks,
-                         concurrent_queue_policy::lockfree_mpmc);
-      exec_mapper_config.downlink_executors.push_back(exec_mng.executors().at(exec_name));
-    }
-    // Executor for Open Fronthaul messages decoding.
-    {
-      const std::string name      = "ru_rx_" + std::to_string(i);
-      const std::string exec_name = "ru_rx_exec_" + std::to_string(i);
-
-      // The generic locking queue type is used here to avoid polling for new tasks and thus for saving CPU resources
-      // with a price of higher latency (it is acceptable for UL tasks that have lower priority compared to DL).
-      const single_worker ru_worker{name,
-                                    {exec_name, concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-                                    std::chrono::microseconds{15},
-                                    os_thread_realtime_priority::max() - 5,
-                                    affinity_mng[i].calcute_affinity_mask(sched_affinity_mask_types::ru)};
-      if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
-        report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
-      }
-      exec_mapper_config.uplink_executors.push_back(exec_mng.executors().at(exec_name));
-    }
-  }
   // Executor for Open Fronthaul messages transmission and reception.
   {
     for (unsigned i = 0, e = ru_txrx_affinity_masks.size(); i != e; ++i) {
@@ -611,7 +572,7 @@ void worker_manager::create_ofh_executors(const worker_manager_config::ru_ofh_co
     }
   }
 
-  exec_mapper_config.nof_sectors = nof_cells;
+  exec_mapper_config.nof_sectors = config.nof_cells;
 
   // Create executor mapper.
   ofh_exec_mapper = create_ofh_ru_executor_mapper(exec_mapper_config);

@@ -334,7 +334,7 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_unit_parsed_config
   add_option(app, "--gps_beta", ofh_cfg.gps_Beta, "GPS Beta")->capture_default_str()->check(CLI::Range(-32768, 32767));
 
   // Common cell parameters.
-  auto base_cell_group = app.add_option_group("base_cell");
+  auto* base_cell_group = app.add_option_group("base_cell");
   configure_cli11_ru_ofh_base_cell_args(*base_cell_group, config.base_cell_cfg);
   base_cell_group->parse_complete_callback([&config, &app]() {
     for (auto& cell : config.config.cells) {
@@ -392,15 +392,6 @@ static void configure_cli11_cell_affinity_args(CLI::App& app, ru_ofh_unit_cpu_af
       "Policy used for assigning CPU cores to the Radio Unit tasks");
 }
 
-static void configure_cli11_ofh_threads_args(CLI::App& app, ru_ofh_unit_expert_threads_config& config)
-{
-  add_option(app,
-             "--enable_dl_parallelization",
-             config.is_downlink_parallelized,
-             "Open Fronthaul downlink parallelization flag")
-      ->capture_default_str();
-}
-
 static void configure_cli11_txrx_affinity_args(CLI::App& app, os_sched_affinity_bitmask& mask)
 {
   add_option_function<std::string>(
@@ -412,21 +403,13 @@ static void configure_cli11_txrx_affinity_args(CLI::App& app, os_sched_affinity_
 
 static void configure_cli11_expert_execution_args(CLI::App& app, ru_ofh_unit_expert_execution_config& config)
 {
-  // Affinity section.
+  // Affinities section.
   CLI::App* affinities_subcmd = add_subcommand(app, "affinities", "gNB CPU affinities configuration")->configurable();
   add_option_function<std::string>(
       *affinities_subcmd,
       "--ru_timing_cpu",
       [&config](const std::string& value) { parse_affinity_mask(config.ru_timing_cpu, value, "ru_timing_cpu"); },
       "CPU used for timing in the Radio Unit");
-
-  // Threads section.
-  CLI::App* threads_subcmd = add_subcommand(app, "threads", "Threads configuration")->configurable();
-
-  // OFH threads.
-  CLI::App* ofh_threads_subcmd =
-      add_subcommand(*threads_subcmd, "ofh", "Open Fronthaul thread configuration")->configurable();
-  configure_cli11_ofh_threads_args(*ofh_threads_subcmd, config.threads);
 
   // RU txrx affinity section.
   add_option_cell(

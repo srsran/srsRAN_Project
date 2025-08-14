@@ -95,7 +95,7 @@ void split6_o_du_low_application_unit_impl::fill_worker_manager_config(worker_ma
   if (auto* ru_sdr = std::get_if<ru_sdr_unit_config>(&unit_cfg.ru_cfg)) {
     fill_sdr_worker_manager_config(config, *ru_sdr);
   } else if (auto* ru_ofh = std::get_if<ru_ofh_unit_parsed_config>(&unit_cfg.ru_cfg)) {
-    fill_ofh_worker_manager_config(config, ru_ofh->config, max_antennas_supported_per_cell);
+    fill_ofh_worker_manager_config(config, ru_ofh->config);
   }
 }
 

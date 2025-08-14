@@ -10,13 +10,11 @@
 
 #include "dynamic_o_du_translators.h"
 #include "apps/services/worker_manager/worker_manager_config.h"
-#include "apps/units/flexible_o_du/o_du_high/du_high/du_high_config_translators.h"
 #include "apps/units/flexible_o_du/o_du_high/o_du_high_unit_config_translators.h"
 #include "apps/units/flexible_o_du/o_du_low/du_low_config_translator.h"
 #include "apps/units/flexible_o_du/split_7_2/helpers/ru_ofh_config_translator.h"
 #include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_config_translator.h"
 #include "dynamic_o_du_unit_config.h"
-#include "srsran/du/du_cell_config.h"
 
 using namespace srsran;
 
@@ -74,11 +72,11 @@ void srsran::fill_dynamic_du_worker_manager_config(worker_manager_config&       
   fill_du_low_worker_manager_config(
       config, unit_cfg.du_low_cfg, is_blocking_mode_enable, nof_dl_antennas, nof_ul_antennas);
 
-  if (auto* ru_sdr = std::get_if<ru_sdr_unit_config>(&unit_cfg.ru_cfg)) {
+  if (const auto* ru_sdr = std::get_if<ru_sdr_unit_config>(&unit_cfg.ru_cfg)) {
     fill_sdr_worker_manager_config(config, *ru_sdr);
-  } else if (auto* ru_ofh = std::get_if<ru_ofh_unit_parsed_config>(&unit_cfg.ru_cfg)) {
-    fill_ofh_worker_manager_config(config, ru_ofh->config, nof_dl_antennas);
-  } else if (auto* ru_dummy = std::get_if<ru_dummy_unit_config>(&unit_cfg.ru_cfg)) {
+  } else if (const auto* ru_ofh = std::get_if<ru_ofh_unit_parsed_config>(&unit_cfg.ru_cfg)) {
+    fill_ofh_worker_manager_config(config, ru_ofh->config);
+  } else if (const auto* ru_dummy = std::get_if<ru_dummy_unit_config>(&unit_cfg.ru_cfg)) {
     fill_dummy_worker_manager_config(config, *ru_dummy);
   }
 }

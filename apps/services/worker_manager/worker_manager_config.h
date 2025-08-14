@@ -20,9 +20,8 @@ class timer_manager;
 struct worker_manager_config {
   /// RU OFH worker configuration.
   struct ru_ofh_config {
-    bool is_downlink_parallelized;
-    /// Number of downlink antennas indexed by cell.
-    std::vector<unsigned> nof_downlink_antennas;
+    /// Number of cells.
+    unsigned nof_cells;
     /// RU timing CPU affinity mask.
     os_sched_affinity_bitmask ru_timing_cpu;
     /// Vector of affinities for the txrx workers.

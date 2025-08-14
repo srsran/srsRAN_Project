@@ -9,8 +9,10 @@
  */
 
 #include "srsran/ru/ofh/ru_ofh_executor_mapper.h"
+#include "srsran/adt/mpmc_queue.h"
 #include "srsran/ru/ofh/ru_ofh_executor_mapper_factory.h"
 #include "srsran/support/error_handling.h"
+#include "srsran/support/executors/strand_executor.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/srsran_assert.h"
 #include <algorithm>
@@ -49,23 +51,22 @@ private:
 /// Open Fronthaul RU executor mapper implementation managing executor mappers of the configured sectors.
 class ru_ofh_executor_mapper_impl : public ru_ofh_executor_mapper
 {
+  /// Default queue size.
+  static constexpr unsigned default_queue_size = 2048;
+
 public:
   explicit ru_ofh_executor_mapper_impl(const ru_ofh_executor_mapper_config& config) :
     timing_exec(config.timing_executor)
   {
-    report_error_if_not(timing_exec, "Timing executor for OFH must be instantiated");
-    report_error_if_not(!config.txrx_executors.empty(), "TXRX executors for OFH must not be empty");
+    report_error_if_not(config.downlink_executor, "Invalid Downlink executor");
+    report_error_if_not(config.uplink_executor, "Invalid Uplink executor");
+    report_error_if_not(config.timing_executor, "Invalid Timing executor");
 
+    report_error_if_not(!config.txrx_executors.empty(), "TXRX executors for OFH must not be empty");
     report_error_if_not(std::all_of(config.txrx_executors.begin(),
                                     config.txrx_executors.end(),
                                     [](auto& exec) { return exec != nullptr; }),
                         "TXRX executors are not initialized properly");
-
-    report_error_if_not((config.downlink_executors.size() == config.uplink_executors.size()) &&
-                            (config.downlink_executors.size() == config.nof_sectors) &&
-                            !config.downlink_executors.empty(),
-                        "Number of downlink and uplink executors must match the number of configured sectors and "
-                        "must be greater than zero");
 
     // Number of OFH sectors served by a single executor for transmitter and receiver tasks.
     unsigned nof_txrx_threads = config.txrx_executors.size();
@@ -75,9 +76,10 @@ public:
             : 1;
 
     for (unsigned i = 0; i != config.nof_sectors; ++i) {
-      sector_mappers.emplace_back(*config.txrx_executors[i / nof_sectors_per_txrx_thread],
-                                  *config.downlink_executors[i],
-                                  *config.uplink_executors[i]);
+      auto& ul_strand = ul_strands.emplace_back(
+          make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(*config.uplink_executor, default_queue_size));
+      sector_mappers.emplace_back(
+          *config.txrx_executors[i / nof_sectors_per_txrx_thread], *config.downlink_executor, *ul_strand);
     }
   }
 
@@ -96,6 +98,7 @@ public:
 
 private:
   task_executor*                                  timing_exec;
+  std::vector<std::unique_ptr<task_executor>>     ul_strands;
   std::vector<ru_ofh_sector_executor_mapper_impl> sector_mappers;
 };
 

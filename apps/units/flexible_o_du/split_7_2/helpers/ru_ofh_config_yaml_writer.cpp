@@ -26,12 +26,6 @@ static void fill_ru_ofh_expert_execution_section(YAML::Node node, const ru_ofh_u
     affinities_node["ru_timing_cpu"] = fmt::format("{:,}", span<const size_t>(config.ru_timing_cpu.get_cpu_ids()));
   }
 
-  {
-    YAML::Node threads_node               = node["threads"];
-    YAML::Node ofh_node                   = threads_node["ofh"];
-    ofh_node["enable_dl_parallelization"] = config.threads.is_downlink_parallelized;
-  }
-
   if (config.txrx_affinities.size() > 0) {
     YAML::Node affinities_node = node["affinities"];
     YAML::Node ofh_node        = affinities_node["ofh"];
