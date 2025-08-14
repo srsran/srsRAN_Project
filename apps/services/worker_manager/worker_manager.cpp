@@ -435,7 +435,7 @@ void worker_manager::add_low_prio_strands(const worker_manager_config& worker_cf
 {
   using namespace execution_config_helper;
 
-  // Configuration of strands for PCAP writing. These strands will use the low priority executor.
+  // Configuration of strands for PCAP writing. These strands will use the medium priority executor.
   add_pcap_strands(worker_cfg.pcap_cfg);
 
   // Metrics strand configuration and instantiation.
