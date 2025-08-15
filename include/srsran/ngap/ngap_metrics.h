@@ -10,8 +10,10 @@
 
 #pragma once
 
+#include "srsran/cu_cp/mobility_management_metrics.h"
 #include "srsran/ran/cause/ngap_cause.h"
 #include "srsran/ran/s_nssai.h"
+#include "srsran/support/format/fmt_to_c_str.h"
 #include "srsran/support/srsran_assert.h"
 #include <map>
 
@@ -129,5 +131,53 @@ struct ngap_info {
   std::string  amf_name;
   ngap_metrics metrics;
 };
+
+inline std::string format_ngap_metrics(const std::vector<ngap_info>&      report,
+                                       const mobility_management_metrics& mobility_metrics)
+{
+  fmt::memory_buffer buffer;
+
+  for (const auto& ngap_info : report) {
+    // log ngap metrics
+    fmt::format_to(std::back_inserter(buffer), "[");
+    fmt::format_to(std::back_inserter(buffer), " amf_name={}", ngap_info.amf_name);
+
+    for (const auto& pdu_session_metric : ngap_info.metrics.pdu_session_metrics) {
+      fmt::format_to(std::back_inserter(buffer),
+                     " s-nssai=(sst={} sd={})",
+                     pdu_session_metric.first.sst.value(),
+                     pdu_session_metric.first.sd.is_set() ? fmt::format("{}", pdu_session_metric.first.sd.value())
+                                                          : "na");
+
+      fmt::format_to(std::back_inserter(buffer),
+                     " nof_pdu_sessions_requested_to_setup={} nof_pdu_sessions_successfully_setup={}",
+                     pdu_session_metric.second.nof_pdu_sessions_requested_to_setup,
+                     pdu_session_metric.second.nof_pdu_sessions_successfully_setup);
+
+      fmt::format_to(std::back_inserter(buffer), " nof_pdu_sessions_failed_to_setup=[");
+      unsigned cause_index = 0;
+      for (const auto& cause_count : pdu_session_metric.second.nof_pdu_sessions_failed_to_setup) {
+        fmt::format_to(std::back_inserter(buffer),
+                       " {}={}",
+                       pdu_session_metric.second.nof_pdu_sessions_failed_to_setup.get_cause(cause_index),
+                       cause_count);
+        ++cause_index;
+      }
+      fmt::format_to(std::back_inserter(buffer), " ]");
+    }
+    fmt::format_to(std::back_inserter(buffer),
+                   " nof_cn_initiated_paging_requests={}",
+                   ngap_info.metrics.nof_cn_initiated_paging_requests);
+
+    fmt::format_to(std::back_inserter(buffer), " ],");
+  }
+
+  fmt::format_to(std::back_inserter(buffer),
+                 " nof_handover_preparations_requested={} nof_successful_handover_preparations={}",
+                 mobility_metrics.nof_handover_preparations_requested,
+                 mobility_metrics.nof_successful_handover_preparations);
+
+  return to_c_str(buffer);
+}
 
 } // namespace srsran
