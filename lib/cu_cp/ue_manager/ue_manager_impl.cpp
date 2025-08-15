@@ -277,6 +277,10 @@ size_t ue_manager::get_nof_du_ues(du_index_t du_index)
 
 std::vector<cu_cp_metrics_report::ue_info> ue_manager::handle_ue_metrics_report_request() const
 {
+  if (!cu_cp_config.metrics.layers_cfg.enable_rrc) {
+    return {};
+  }
+
   std::vector<cu_cp_metrics_report::ue_info> report;
   report.reserve(ues.size());
 

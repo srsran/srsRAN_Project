@@ -388,9 +388,15 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
   out_cfg.ue.request_pdu_session_timeout   = std::chrono::seconds{cu_cfg.request_pdu_session_timeout};
   out_cfg.metrics.statistics_report_period = std::chrono::seconds{cu_cfg.metrics.cu_cp_report_period};
 
+  // Metrics
+  out_cfg.metrics.layers_cfg.enable_ngap = cu_cfg.metrics.layers_cfg.enable_ngap;
+  out_cfg.metrics.layers_cfg.enable_rrc  = cu_cfg.metrics.layers_cfg.enable_rrc;
+
   // Mobility
   out_cfg.mobility.mobility_manager_config.trigger_handover_from_measurements =
       cu_cfg.mobility_config.trigger_handover_from_measurements;
+  out_cfg.mobility.mobility_manager_config.enable_ngap_metrics = cu_cfg.metrics.layers_cfg.enable_ngap;
+  out_cfg.mobility.mobility_manager_config.enable_rrc_metrics  = cu_cfg.metrics.layers_cfg.enable_rrc;
 
   // F1AP-CU config.
   out_cfg.f1ap.proc_timeout     = std::chrono::milliseconds{cu_cfg.f1ap_config.procedure_timeout};

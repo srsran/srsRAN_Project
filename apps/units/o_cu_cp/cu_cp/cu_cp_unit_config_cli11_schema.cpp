@@ -556,7 +556,9 @@ static void configure_cli11_qos_args(CLI::App& app, cu_cp_unit_qos_config& qos_p
 
 static void configure_cli11_metrics_layers_args(CLI::App& app, cu_cp_unit_metrics_layer_config& metrics_params)
 {
+  add_option(app, "--enable_ngap", metrics_params.enable_ngap, "Enable NGAP metrics")->capture_default_str();
   add_option(app, "--enable_pdcp", metrics_params.enable_pdcp, "Enable PDCP metrics")->capture_default_str();
+  add_option(app, "--enable_rrc", metrics_params.enable_rrc, "Enable CU-CP RRC metrics")->capture_default_str();
 }
 
 static void configure_cli11_metrics_args(CLI::App& app, cu_cp_unit_metrics_config& metrics_params)

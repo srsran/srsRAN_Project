@@ -20,6 +20,8 @@ namespace srs_cu_cp {
 /// \brief Mobility manager configuration.
 struct mobility_manager_cfg {
   bool trigger_handover_from_measurements = false; ///< Set to true to trigger HO when neighbor becomes stronger.
+  bool enable_ngap_metrics                = false; ///< Set to true to enable inter gNB handover metrics collection.
+  bool enable_rrc_metrics                 = false; ///< Set to true to enable intra gNB metrics collection.
 };
 
 /// Methods used by mobility manager to signal handover events to the CU-CP.

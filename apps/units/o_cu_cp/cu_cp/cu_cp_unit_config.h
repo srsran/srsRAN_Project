@@ -255,11 +255,13 @@ struct cu_cp_unit_qos_config {
 
 /// Configuration to enable/disable metrics per layer.
 struct cu_cp_unit_metrics_layer_config {
+  bool enable_ngap           = false;
   bool enable_pdcp           = false;
+  bool enable_rrc            = false;
   bool enable_cu_cp_executor = false;
 
   /// Returns true if one or more layers are enabled, false otherwise.
-  bool are_metrics_enabled() const { return enable_pdcp; }
+  bool are_metrics_enabled() const { return enable_ngap || enable_pdcp || enable_rrc; }
 };
 
 /// Metrics configuration.

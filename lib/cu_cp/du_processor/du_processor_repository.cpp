@@ -150,6 +150,10 @@ std::vector<du_index_t> du_processor_repository::get_du_processor_indexes() cons
 
 std::vector<cu_cp_metrics_report::du_info> du_processor_repository::handle_du_metrics_report_request() const
 {
+  if (!cfg.cu_cp.metrics.layers_cfg.enable_rrc) {
+    return {};
+  }
+
   std::vector<cu_cp_metrics_report::du_info> du_reports;
   du_reports.reserve(du_db.size());
   for (const auto& du : du_db) {

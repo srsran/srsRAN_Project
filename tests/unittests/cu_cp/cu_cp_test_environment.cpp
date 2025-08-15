@@ -91,8 +91,11 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
                                            security::ciphering_algorithm::nea1,
                                            security::ciphering_algorithm::nea3};
 
-  cu_cp_cfg.f1ap.json_log_enabled = true;
-  cu_cp_cfg.e1ap.json_log_enabled = true;
+  // > Logging and metrics config.
+  cu_cp_cfg.f1ap.json_log_enabled          = true;
+  cu_cp_cfg.e1ap.json_log_enabled          = true;
+  cu_cp_cfg.metrics.layers_cfg.enable_ngap = true;
+  cu_cp_cfg.metrics.layers_cfg.enable_rrc  = true;
 
   // > Mobility config
   cu_cp_cfg.mobility.mobility_manager_config.trigger_handover_from_measurements = params.trigger_ho_from_measurements;
