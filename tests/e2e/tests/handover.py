@@ -16,12 +16,12 @@ from typing import Dict, Generator, Optional, Sequence, Tuple, Union
 
 import pytest
 from google.protobuf.empty_pb2 import Empty
+from google.protobuf.wrappers_pb2 import UInt32Value
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.public import MetricsSummary
 from retina.launcher.utils import configure_artifacts, param
-from retina.protocol.base_pb2 import DUDefinition
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import CUStub, DUStub, GNBStub
 from retina.protocol.ue_pb2 import IPerfDir, IPerfProto, UEAttachedInfo
@@ -380,14 +380,7 @@ def _handover_multi_ues(
     if gnb:
         du_definition = [gnb.GetDefinition(Empty())]
     elif du_array and cu:
-        port_array = list(range(31000, 31008))
-        du_definition = [
-            DUDefinition(
-                zmq_ip=du.GetDefinition(Empty()).zmq_ip,
-                zmq_port_array=[port_array[i] for i in range(2)],
-            )
-            for du in du_array
-        ]
+        du_definition = [du.GetDefinition(UInt32Value(value=idx)) for idx, du in enumerate(du_array)]
 
     else:
         raise ValueError("Either gnb or du_array and cu must be provided")
