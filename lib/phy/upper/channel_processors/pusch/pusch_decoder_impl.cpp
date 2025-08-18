@@ -372,7 +372,7 @@ void pusch_decoder_impl::fork_codeblock_task(unsigned cb_id)
   // Execute task asynchronously if an executor is available and the number of codeblocks is larger than one.
   bool enqueued = false;
   if ((executor != nullptr) && (nof_codeblocks > 1)) {
-    enqueued = executor->execute(cb_process_task);
+    enqueued = executor->defer(cb_process_task);
   }
 
   // Process task synchronously if is not successfully enqueued.

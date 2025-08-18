@@ -148,7 +148,7 @@ void resource_grid_pool_impl::notify_release_scope(unsigned identifier)
   };
 
   // Try to execute the asynchronous housekeeping task.
-  bool success = async_executor->execute(set_all_zero_func);
+  bool success = async_executor->defer(set_all_zero_func);
 
   // Ensure the resource grid is marked as available even if it is not empty.
   // Avoid warnings about failure to prevent false alarms during gNb teardown.
