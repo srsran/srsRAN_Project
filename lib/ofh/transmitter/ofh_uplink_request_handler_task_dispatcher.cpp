@@ -19,7 +19,7 @@ using namespace ofh;
 void uplink_request_handler_task_dispatcher::handle_prach_occasion(const prach_buffer_context& context,
                                                                    prach_buffer&               buffer)
 {
-  if (!executor.execute([context, &buffer, this]() noexcept SRSRAN_RTSAN_NONBLOCKING {
+  if (!executor.defer([context, &buffer, this]() noexcept SRSRAN_RTSAN_NONBLOCKING {
         uplink_handler.handle_prach_occasion(context, buffer);
       })) {
     logger.warning(
@@ -30,7 +30,7 @@ void uplink_request_handler_task_dispatcher::handle_prach_occasion(const prach_b
 void uplink_request_handler_task_dispatcher::handle_new_uplink_slot(const resource_grid_context& context,
                                                                     const shared_resource_grid&  grid)
 {
-  if (!executor.execute([context, rg = grid.copy(), this]() noexcept SRSRAN_RTSAN_NONBLOCKING {
+  if (!executor.defer([context, rg = grid.copy(), this]() noexcept SRSRAN_RTSAN_NONBLOCKING {
         uplink_handler.handle_new_uplink_slot(context, rg);
       })) {
     logger.warning(

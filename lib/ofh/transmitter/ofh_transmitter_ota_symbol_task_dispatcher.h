@@ -40,7 +40,7 @@ public:
     dl_window_checker.on_new_symbol(symbol_point_context);
     ul_window_checker.on_new_symbol(symbol_point_context);
 
-    if (!executor.execute([&, symbol_point_context]() noexcept SRSRAN_RTSAN_NONBLOCKING {
+    if (!executor.defer([&, symbol_point_context]() noexcept SRSRAN_RTSAN_NONBLOCKING {
           symbol_handler.on_new_symbol(symbol_point_context);
         })) {
       logger.warning("Failed to dispatch new symbol task in the message transmitter for slot '{}' and symbol '{}'",

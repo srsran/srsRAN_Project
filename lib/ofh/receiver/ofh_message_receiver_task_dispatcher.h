@@ -32,7 +32,7 @@ public:
   // See interface for documentation.
   void on_new_frame(ether::unique_rx_buffer buffer) override
   {
-    if (!executor.execute([this, buff = std::move(buffer)]() mutable { msg_receiver.on_new_frame(std::move(buff)); })) {
+    if (!executor.defer([this, buff = std::move(buffer)]() mutable { msg_receiver.on_new_frame(std::move(buff)); })) {
       logger.warning("Failed to dispatch receiver task for sector#{}", sector);
     }
   }
