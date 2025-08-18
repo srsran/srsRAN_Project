@@ -646,6 +646,8 @@ def _handover_multi_ues_iperf(
             "UL buffering timed out",
             "Discarding SDU",
             "Discarding PDU",
+            "PDCP unpacking did not provide any SDU",
+            "Could not allocate Paging's DCI in PDCCH",
         ],
     )
 
