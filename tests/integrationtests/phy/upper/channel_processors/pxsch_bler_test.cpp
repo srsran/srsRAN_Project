@@ -232,7 +232,7 @@ private:
     // Create PDSCH processor factory.
     std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory =
         create_sw_pdsch_processor_factory(*executor, max_nof_threads + 1, eal_arguments, pxsch_type);
-    report_fatal_error_if_not(pdsch_proc_factory, "Failted to create PDSCH processor factory.");
+    report_fatal_error_if_not(pdsch_proc_factory, "Failed to create PDSCH processor factory.");
 
     // Create PUSCH processor factory.
     std::shared_ptr<pusch_processor_factory> pusch_proc_factory =
@@ -243,7 +243,7 @@ private:
                                           pxsch_type,
                                           port_channel_estimator_td_interpolation_strategy::average,
                                           channel_equalizer_algorithm_type::zf);
-    report_fatal_error_if_not(pusch_proc_factory, "Failted to create PUSCH processor factory.");
+    report_fatal_error_if_not(pusch_proc_factory, "Failed to create PUSCH processor factory.");
 
     // Create resource grid factory.
     std::shared_ptr<resource_grid_factory> grid_factory = create_grid_factory();
