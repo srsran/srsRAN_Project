@@ -166,7 +166,7 @@ bool du_processor_impl::create_rrc_ue(cu_cp_ue&                              ue,
   rrc_ue_create_msg.cu_cp_ue_notifier     = &ue.get_rrc_ue_cu_cp_ue_notifier();
   rrc_ue_create_msg.du_to_cu_container    = std::move(du_to_cu_rrc_container);
   rrc_ue_create_msg.rrc_context           = std::move(rrc_context);
-  auto* rrc_ue                            = rrc->add_ue(std::move(rrc_ue_create_msg));
+  auto* rrc_ue                            = rrc->add_ue(rrc_ue_create_msg);
   if (rrc_ue == nullptr) {
     logger.warning("Could not create RRC UE");
     return false;
