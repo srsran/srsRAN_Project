@@ -34,6 +34,11 @@ static std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_con
   std::shared_ptr<ofdm_modulator_factory> modulator_factory = create_ofdm_modulator_factory_generic(ofdm_common_config);
   report_fatal_error_if_not(modulator_factory, "Failed to create OFDM modulator factory.");
 
+  // Wrap the OFDM modulator factory with a pool factory.
+  modulator_factory =
+      create_ofdm_modulator_pool_factory(std::move(modulator_factory), MAX_NSYMB_PER_SLOT * config.nof_tx_ports);
+  report_fatal_error_if_not(modulator_factory, "Failed to create OFDM modulator pool factory.");
+
   // Create OFDM demodulator factory.
   std::shared_ptr<ofdm_demodulator_factory> demodulator_factory =
       create_ofdm_demodulator_factory_generic(ofdm_common_config);
@@ -44,9 +49,18 @@ static std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_con
       create_ofdm_prach_demodulator_factory_sw(dft_factory, config.srate, fr);
   report_fatal_error_if_not(prach_demodulator_factory, "Failed to create PRACH demodulator factory.");
 
+  // Create amplitude control factory.
+  std::shared_ptr<amplitude_controller_factory> amplitude_control_factory;
+  if (config.amplitude_config.enable_clipping) {
+    amplitude_control_factory = create_amplitude_controller_clipping_factory(config.amplitude_config);
+  } else {
+    amplitude_control_factory = create_amplitude_controller_scaling_factory(config.amplitude_config.input_gain_dB);
+  }
+  report_fatal_error_if_not(amplitude_control_factory, "Failed to create amplitude controller factory.");
+
   // Create PDxCH processor factory.
   std::shared_ptr<pdxch_processor_factory> pdxch_proc_factory =
-      create_pdxch_processor_factory_sw(config.max_processing_delay_slots, modulator_factory);
+      create_pdxch_processor_factory_sw(modulator_factory, amplitude_control_factory);
   report_fatal_error_if_not(pdxch_proc_factory, "Failed to create PDxCH processor factory.");
 
   // Create PRACH processor factory.
@@ -63,18 +77,9 @@ static std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_con
       create_puxch_processor_factory_sw(10, demodulator_factory);
   report_fatal_error_if_not(puxch_proc_factory, "Failed to create PUxCH processor factory.");
 
-  // Create amplitude control factory.
-  std::shared_ptr<amplitude_controller_factory> amplitude_control_factory;
-  if (config.amplitude_config.enable_clipping) {
-    amplitude_control_factory = create_amplitude_controller_clipping_factory(config.amplitude_config);
-  } else {
-    amplitude_control_factory = create_amplitude_controller_scaling_factory(config.amplitude_config.input_gain_dB);
-  }
-  report_fatal_error_if_not(amplitude_control_factory, "Failed to create amplitude controller factory.");
-
   // Create Downlink processor factory.
   std::shared_ptr<lower_phy_downlink_processor_factory> downlink_proc_factory =
-      create_downlink_processor_factory_sw(pdxch_proc_factory, amplitude_control_factory);
+      create_downlink_processor_factory_sw(pdxch_proc_factory);
   report_fatal_error_if_not(downlink_proc_factory, "Failed to create downlink processor factory.");
 
   // Create Uplink processor factory.

@@ -482,7 +482,6 @@ static lower_phy_configuration create_lower_phy_configuration(task_executor*    
   phy_config.dl_task_executor                  = dl_task_executor;
   phy_config.prach_async_executor              = prach_task_executor;
   phy_config.baseband_rx_buffer_size_policy    = lower_phy_baseband_buffer_size_policy::half_slot;
-  phy_config.baseband_tx_buffer_size_policy    = lower_phy_baseband_buffer_size_policy::half_slot;
 
   // Amplitude controller configuration.
   phy_config.amplitude_config.full_scale_lin  = full_scale_amplitude;
@@ -501,6 +500,9 @@ static lower_phy_configuration create_lower_phy_configuration(task_executor*    
 
 int main(int argc, char** argv)
 {
+  // Default task worker queue size.
+  static constexpr unsigned default_queue_size = 2048;
+
   // Set interrupt and cleanup signal handlers.
   register_interrupt_signal_handler(interrupt_signal_handler);
   register_cleanup_signal_handler(cleanup_signal_handler);
@@ -529,7 +531,7 @@ int main(int argc, char** argv)
   std::unique_ptr<task_executor>                                prach_task_executor;
   if (thread_profile_name == "single") {
     workers.emplace("async_thread", std::make_unique<task_worker>("async_thread", 2 * nof_sectors * nof_ports));
-    workers.emplace("low_phy", std::make_unique<task_worker>("low_phy", 4));
+    workers.emplace("low_phy", std::make_unique<task_worker>("low_phy", default_queue_size));
 
     async_task_executor = make_task_executor_ptr(*workers["async_thread"]);
     rx_task_executor    = make_task_executor_ptr(*workers["low_phy"]);
@@ -545,8 +547,10 @@ int main(int argc, char** argv)
     low_dl_affinity.set(1);
 
     workers.emplace("async_thread", std::make_unique<task_worker>("async_thread", 2 * nof_sectors * nof_ports));
-    workers.emplace("low_phy_ul", std::make_unique<task_worker>("low_phy_ul", 128, low_ul_priority, low_ul_affinity));
-    workers.emplace("low_phy_dl", std::make_unique<task_worker>("low_phy_dl", 128, low_dl_priority, low_dl_affinity));
+    workers.emplace("low_phy_ul",
+                    std::make_unique<task_worker>("low_phy_ul", default_queue_size, low_ul_priority, low_ul_affinity));
+    workers.emplace("low_phy_dl",
+                    std::make_unique<task_worker>("low_phy_dl", default_queue_size, low_dl_priority, low_dl_affinity));
 
     async_task_executor = make_task_executor_ptr(*workers["async_thread"]);
     rx_task_executor    = make_task_executor_ptr(*workers["low_phy_ul"]);
@@ -568,9 +572,12 @@ int main(int argc, char** argv)
     low_dl_affinity.set(3);
     workers.emplace("async_thread", std::make_unique<task_worker>("async_thread", 2 * nof_sectors * nof_ports));
     workers.emplace("low_rx", std::make_unique<task_worker>("low_rx", 1, low_rx_priority, low_rx_affinity));
-    workers.emplace("low_tx", std::make_unique<task_worker>("low_tx", 128, low_tx_priority, low_tx_affinity));
-    workers.emplace("low_dl", std::make_unique<task_worker>("low_dl", 128, low_dl_priority, low_dl_affinity));
-    workers.emplace("low_ul", std::make_unique<task_worker>("low_ul", 128, low_ul_priority, low_ul_affinity));
+    workers.emplace("low_tx",
+                    std::make_unique<task_worker>("low_tx", default_queue_size, low_tx_priority, low_tx_affinity));
+    workers.emplace("low_dl",
+                    std::make_unique<task_worker>("low_dl", default_queue_size, low_dl_priority, low_dl_affinity));
+    workers.emplace("low_ul",
+                    std::make_unique<task_worker>("low_ul", default_queue_size, low_ul_priority, low_ul_affinity));
 
     async_task_executor = make_task_executor_ptr(*workers["async_thread"]);
     rx_task_executor    = make_task_executor_ptr(*workers["low_rx"]);

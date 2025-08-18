@@ -17,12 +17,6 @@ using namespace srsran;
 static bool validate_expert_execution_unit_config(const ru_sdr_unit_config&        config,
                                                   const os_sched_affinity_bitmask& available_cpus)
 {
-  if ((config.expert_execution_cfg.threads.execution_profile == lower_phy_thread_profile::single) &&
-      (config.expert_cfg.dl_buffer_size_policy != "auto")) {
-    fmt::print("DL buffer size policy must be set to auto when single thread lower PHY profile is used.\n");
-    return false;
-  }
-
   auto validate_cpu_range = [](const os_sched_affinity_bitmask& allowed_cpus_mask,
                                const os_sched_affinity_bitmask& mask,
                                const std::string&               name) {

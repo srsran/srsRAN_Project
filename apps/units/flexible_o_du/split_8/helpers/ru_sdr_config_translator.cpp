@@ -53,7 +53,7 @@ static lower_phy_configuration generate_low_phy_config(const flexible_o_du_ru_co
 
   // Select RX buffer size policy.
   if (ru_cfg.device_driver == "zmq") {
-    out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
+    out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::slot;
   } else if (ru_cfg.expert_execution_cfg.threads.execution_profile == lower_phy_thread_profile::single) {
     // For single executor, the same executor processes uplink and downlink. In this case, the processing is blocked
     // by the signal reception. The buffers must be smaller than a slot duration considering the downlink baseband
@@ -61,23 +61,6 @@ static lower_phy_configuration generate_low_phy_config(const flexible_o_du_ru_co
     out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
   } else {
     out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
-  }
-
-  // Select TX buffer size policy.
-  if (ru_cfg.expert_cfg.dl_buffer_size_policy == "auto") {
-    if (ru_cfg.device_driver == "zmq") {
-      out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
-    } else if (ru_cfg.expert_execution_cfg.threads.execution_profile == lower_phy_thread_profile::single) {
-      // For single executor, the same executor processes uplink and downlink. In this case, the processing is blocked
-      // by the signal reception. The buffers must be smaller than a slot duration considering the downlink baseband
-      // samples must arrive to the baseband device before the transmission time passes.
-      out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
-    } else {
-      out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::slot;
-    }
-  } else {
-    // Manual selection of the TX buffer size policy.
-    out_cfg.baseband_tx_buffer_size_policy = to_buffer_size_policy(ru_cfg.expert_cfg.dl_buffer_size_policy);
   }
 
   // Get lower PHY system time throttling.

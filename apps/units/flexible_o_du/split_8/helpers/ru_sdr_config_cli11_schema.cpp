@@ -32,14 +32,6 @@ static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_cont
 
 static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_unit_expert_config& config)
 {
-  auto buffer_size_policy_check = [](const std::string& value) -> std::string {
-    if (value == "auto" || value == "single-packet" || value == "half-slot" || value == "slot" ||
-        value == "optimal-slot") {
-      return {};
-    }
-    return "Invalid DL buffer size policy. Accepted values [auto,single-packet,half-slot,slot,optimal-slot]";
-  };
-
   auto tx_mode_check = [](const std::string& value) -> std::string {
     if (value == "continuous" || value == "discontinuous" || value == "same-port") {
       return {};
@@ -68,12 +60,6 @@ static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_unit_expert
              "Specifies the power ramping time in microseconds, it proactively initiates the transmission and "
              "mitigates transient effects.")
       ->capture_default_str();
-  add_option(app,
-             "--dl_buffer_size_policy",
-             config.dl_buffer_size_policy,
-             "Selects the size policy of the baseband buffers that pass DL samples from the lower PHY to the radio.")
-      ->capture_default_str()
-      ->check(buffer_size_policy_check);
 }
 
 static void configure_cli11_ru_sdr_args(CLI::App& app, ru_sdr_unit_config& config)

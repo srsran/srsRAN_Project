@@ -11,26 +11,29 @@
 #pragma once
 
 #include "srsran/adt/circular_array.h"
-#include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/ran/slot_point.h"
 #include <mutex>
 #include <utility>
 
 namespace srsran {
 
-/// \brief Thread-safe resource grid request pool.
+/// \brief Thread-safe resource request pool.
 ///
-/// Contains a pool of requests of slot points and resource grids indexed by slots. A request consist of a slot point a
-/// resource grid. The pool access is thread-safe and it is done by exchange requests.
+/// Contains a pool of requests. A request consist of a slot point and a templated resource. Requests are indexed by
+/// slots. The pool access is thread-safe and it is done by exchange requests.
 ///
-/// \tparam GridType Resource grid type.
-class resource_grid_request_pool
+/// \tparam ResourceType Resource type.
+template <typename ResourceType>
+class resource_request_pool
 {
 public:
+  /// Maximum number of requests contained in the array.
+  static constexpr unsigned request_array_size = 16;
+
   /// Internal storage type.
   struct request_type {
-    slot_point           slot;
-    shared_resource_grid grid;
+    slot_point   slot;
+    ResourceType resource;
   };
 
   /// \brief Exchanges a request from the pool by the given one.
@@ -42,15 +45,12 @@ public:
   }
 
 private:
-  /// Number of requests contained in the array.
-  static constexpr unsigned REQUEST_ARRAY_SIZE = 16;
-
   /// Wraps the request in a thread-safe access.
   class request_wrapper
   {
   public:
     /// Default constructor - constructs an empty request.
-    request_wrapper() : request({slot_point(), shared_resource_grid()}) {}
+    request_wrapper() : request({slot_point(), ResourceType()}) {}
 
     /// \brief Exchanges the previous request with a new request.
     /// \param[in] new_request New request.
@@ -69,7 +69,7 @@ private:
   };
 
   /// Request storage, indexed by slots.
-  circular_array<request_wrapper, REQUEST_ARRAY_SIZE> requests;
+  circular_array<request_wrapper, request_array_size> requests;
 };
 
 } // namespace srsran

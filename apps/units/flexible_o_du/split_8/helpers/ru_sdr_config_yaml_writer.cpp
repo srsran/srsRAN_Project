@@ -99,7 +99,6 @@ static void fill_ru_sdr_section(YAML::Node node, const ru_sdr_unit_config& confi
     expert_node["low_phy_dl_throttling"] = config.expert_cfg.lphy_dl_throttling;
     expert_node["tx_mode"]               = config.expert_cfg.transmission_mode;
     expert_node["power_ramping_time_us"] = config.expert_cfg.power_ramping_time_us;
-    expert_node["dl_buffer_size_policy"] = config.expert_cfg.dl_buffer_size_policy;
   }
 }
 

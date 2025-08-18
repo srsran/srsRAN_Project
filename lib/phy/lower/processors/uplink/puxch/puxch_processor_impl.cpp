@@ -29,7 +29,7 @@ bool puxch_processor_impl::process_symbol(const baseband_gateway_buffer_reader& 
     auto request = requests.exchange({context.slot, shared_resource_grid()});
 
     // Handle the returned request.
-    if (!request.grid) {
+    if (!request.resource) {
       // If the request resource grid pointer is invalid, the request is empty.
       current_grid.release();
     } else if (current_slot != request.slot) {
@@ -41,7 +41,7 @@ bool puxch_processor_impl::process_symbol(const baseband_gateway_buffer_reader& 
       current_grid.release();
     } else {
       // If the request is valid, then select request grid.
-      current_grid = std::move(request.grid);
+      current_grid = std::move(request.resource);
     }
   }
 
@@ -86,7 +86,7 @@ void puxch_processor_impl::handle_request(const shared_resource_grid& grid, cons
   auto request = requests.exchange({context.slot, grid.copy()});
 
   // If there was a request at the same request index, notify a late event with the context of the discarded request.
-  if (request.grid) {
+  if (request.resource) {
     resource_grid_context late_context;
     late_context.slot   = request.slot;
     late_context.sector = context.sector;

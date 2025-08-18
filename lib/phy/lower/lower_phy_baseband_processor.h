@@ -33,6 +33,8 @@ public:
   struct configuration {
     /// Sampling rate.
     sampling_rate srate;
+    /// Subcarrier spacing.
+    subcarrier_spacing scs;
     /// \brief Receive task executor.
     ///
     /// Receives baseband samples from the \ref baseband_gateway_receiver, reserves baseband buffers and pushes
@@ -46,10 +48,6 @@ public:
     ///
     /// Notifies uplink-related time boundaries, runs the baseband demodulation and notifies availability of data.
     task_executor* ul_task_executor;
-    /// \brief Downlink task executor.
-    ///
-    /// Notifies downlink-related time boundaries and runs the baseband modulation.
-    task_executor* dl_task_executor;
     /// Baseband receiver gateway.
     baseband_gateway_receiver* receiver;
     /// Baseband transmitter gateway.
@@ -66,10 +64,6 @@ public:
     baseband_gateway_timestamp tx_time_offset;
     /// Maximum number of samples between the last received sample and the next sample to transmit time instants.
     baseband_gateway_timestamp rx_to_tx_max_delay;
-    /// Transmit buffers size.
-    unsigned tx_buffer_size;
-    /// Number of transmit buffers of size \c nof_tx_buffers.
-    unsigned nof_tx_buffers;
     /// Receive buffers size.
     unsigned rx_buffer_size;
     /// Number of receive buffers of size \c rx_buffer_size.
@@ -172,19 +166,17 @@ private:
   void ul_process();
 
   sampling_rate                                                              srate;
-  unsigned                                                                   tx_buffer_size;
   unsigned                                                                   rx_buffer_size;
+  std::chrono::microseconds                                                  slot_duration;
   std::chrono::nanoseconds                                                   cpu_throttling_time;
   task_executor&                                                             rx_executor;
   task_executor&                                                             tx_executor;
   task_executor&                                                             uplink_executor;
-  task_executor&                                                             downlink_executor;
   baseband_gateway_receiver&                                                 receiver;
   baseband_gateway_transmitter&                                              transmitter;
   uplink_processor_baseband&                                                 uplink_processor;
   downlink_processor_baseband&                                               downlink_processor;
   blocking_queue<std::unique_ptr<baseband_gateway_buffer_dynamic>>           rx_buffers;
-  blocking_queue<std::unique_ptr<baseband_gateway_buffer_dynamic>>           tx_buffers;
   baseband_gateway_timestamp                                                 tx_time_offset;
   baseband_gateway_timestamp                                                 rx_to_tx_max_delay;
   baseband_gateway_timestamp                                                 start_time_sfn0;

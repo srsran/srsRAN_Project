@@ -29,7 +29,7 @@ public:
   }
 
   task_executor& downlink_executor() override { return dl_exec; }
-  task_executor& uplink_executor() override { return ul_exec; } // namespace
+  task_executor& uplink_executor() override { return ul_exec; }
   task_executor& prach_executor() override { return prach_exec; }
   task_executor& transmitter_executor() override { return tx_exec; }
   task_executor& receiver_executor() override { return rx_exec; }

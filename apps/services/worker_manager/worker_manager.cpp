@@ -593,37 +593,6 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
       }
       case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::dual: {
         fmt::print("Lower PHY in dual executor mode.\n");
-        const std::string name_dl = "lower_phy_dl#" + std::to_string(cell_id);
-        const std::string exec_dl = "lower_phy_dl_exec#" + std::to_string(cell_id);
-        const std::string name_ul = "lower_phy_ul#" + std::to_string(cell_id);
-        const std::string exec_ul = "lower_phy_ul_exec#" + std::to_string(cell_id);
-
-        create_prio_worker(name_dl,
-                           exec_dl,
-                           128,
-                           affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
-                           os_thread_realtime_priority::max());
-        create_prio_worker(name_ul,
-                           exec_ul,
-                           2,
-                           affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
-                           os_thread_realtime_priority::max() - 1);
-
-        ru_sdr_exec_map_config.sectors.emplace_back();
-        ru_generic_executor_mapper_sector_configuration& sector_config = ru_sdr_exec_map_config.sectors.back();
-        sector_config.dl_exec                                          = exec_mng.executors().at(exec_dl);
-        sector_config.ul_exec                                          = exec_mng.executors().at(exec_ul);
-        sector_config.tx_exec                                          = exec_mng.executors().at(exec_dl);
-        sector_config.rx_exec                                          = exec_mng.executors().at(exec_ul);
-        sector_config.prach_exec = du_low_exec_mapper->get_upper_phy_execution_config().prach_executor.executor;
-        break;
-      }
-      case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::quad: {
-        fmt::print("Lower PHY in quad executor mode.\n");
-        const std::string name_dl = "lower_phy_dl#" + std::to_string(cell_id);
-        const std::string exec_dl = "lower_phy_dl_exec#" + std::to_string(cell_id);
-        const std::string name_ul = "lower_phy_ul#" + std::to_string(cell_id);
-        const std::string exec_ul = "lower_phy_ul_exec#" + std::to_string(cell_id);
         const std::string name_tx = "lower_phy_tx#" + std::to_string(cell_id);
         const std::string exec_tx = "lower_phy_tx_exec#" + std::to_string(cell_id);
         const std::string name_rx = "lower_phy_rx#" + std::to_string(cell_id);
@@ -636,14 +605,39 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
                            os_thread_realtime_priority::max());
         create_prio_worker(name_rx,
                            exec_rx,
+                           2,
+                           affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
+                           os_thread_realtime_priority::max() - 1);
+
+        ru_sdr_exec_map_config.sectors.emplace_back();
+        ru_generic_executor_mapper_sector_configuration& sector_config = ru_sdr_exec_map_config.sectors.back();
+        sector_config.dl_exec                                          = rt_hi_prio_exec;
+        sector_config.ul_exec                                          = exec_mng.executors().at(exec_rx);
+        sector_config.tx_exec                                          = exec_mng.executors().at(exec_tx);
+        sector_config.rx_exec                                          = exec_mng.executors().at(exec_rx);
+        sector_config.prach_exec = du_low_exec_mapper->get_upper_phy_execution_config().prach_executor.executor;
+        break;
+      }
+      case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::quad: {
+        fmt::print("Lower PHY in quad executor mode.\n");
+        const std::string cell_id_str = std::to_string(cell_id);
+        const std::string name_ul     = "lower_phy_ul#" + cell_id_str;
+        const std::string exec_ul     = "lower_phy_ul_exec#" + cell_id_str;
+        const std::string name_tx     = "lower_phy_tx#" + cell_id_str;
+        const std::string exec_tx     = "lower_phy_tx_exec#" + cell_id_str;
+        const std::string name_rx     = "lower_phy_rx#" + cell_id_str;
+        const std::string exec_rx     = "lower_phy_rx_exec#" + cell_id_str;
+
+        create_prio_worker(name_tx,
+                           exec_tx,
+                           128,
+                           affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
+                           os_thread_realtime_priority::max());
+        create_prio_worker(name_rx,
+                           exec_rx,
                            1,
                            affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
                            os_thread_realtime_priority::max() - 2);
-        create_prio_worker(name_dl,
-                           exec_dl,
-                           128,
-                           affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
-                           os_thread_realtime_priority::max() - 1);
         create_prio_worker(name_ul,
                            exec_ul,
                            128,
@@ -652,7 +646,7 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
 
         ru_sdr_exec_map_config.sectors.emplace_back();
         ru_generic_executor_mapper_sector_configuration& sector_config = ru_sdr_exec_map_config.sectors.back();
-        sector_config.dl_exec                                          = exec_mng.executors().at(exec_dl);
+        sector_config.dl_exec                                          = rt_hi_prio_exec;
         sector_config.ul_exec                                          = exec_mng.executors().at(exec_ul);
         sector_config.tx_exec                                          = exec_mng.executors().at(exec_tx);
         sector_config.rx_exec                                          = exec_mng.executors().at(exec_rx);

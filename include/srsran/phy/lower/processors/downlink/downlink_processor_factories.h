@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/phy/lower/amplitude_controller/amplitude_controller_factories.h"
 #include "srsran/phy/lower/processors/downlink/downlink_processor.h"
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_factories.h"
 #include "srsran/phy/lower/sampling_rate.h"
@@ -36,6 +35,8 @@ struct downlink_processor_configuration {
   unsigned nof_tx_ports;
   /// Number of slots notified in advance in the TTI boundary event.
   unsigned nof_slot_tti_in_advance;
+  /// Task executor for asynchronous modulation.
+  task_executor& modulation_executor;
 };
 
 /// Lower physical layer downlink processor - Factory interface.
@@ -51,7 +52,6 @@ public:
 
 /// Creates a software based downlink processor factory.
 std::shared_ptr<lower_phy_downlink_processor_factory>
-create_downlink_processor_factory_sw(std::shared_ptr<pdxch_processor_factory>      pdxch_proc_factory,
-                                     std::shared_ptr<amplitude_controller_factory> amplitude_control_factory);
+create_downlink_processor_factory_sw(std::shared_ptr<pdxch_processor_factory> pdxch_proc_factory);
 
 } // namespace srsran

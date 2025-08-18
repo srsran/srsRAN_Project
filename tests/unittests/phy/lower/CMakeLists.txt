@@ -6,6 +6,8 @@
 # the distribution.
 #
 
+set_directory_properties(PROPERTIES LABELS "phy")
+
 add_subdirectory(modulation)
 add_subdirectory(processors)
 
