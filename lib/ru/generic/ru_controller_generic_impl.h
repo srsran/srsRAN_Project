@@ -124,6 +124,7 @@ public:
   {
     radio                  = &session;
     center_freq_controller = ru_center_frequency_controller_generic_impl(low_phy_crtl, radio);
+    gain_controller        = ru_gain_controller_generic_impl(radio);
   }
 
   /// Set low phy sectors.
