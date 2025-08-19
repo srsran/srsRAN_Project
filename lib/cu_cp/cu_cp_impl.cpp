@@ -350,6 +350,33 @@ void cu_cp_impl::handle_rrc_reestablishment_complete(ue_index_t old_ue_index)
   };
 }
 
+void cu_cp_impl::handle_rrc_reconf_complete_indicator(ue_index_t ue_index)
+{
+  cu_cp_ue* ue = ue_mng.find_du_ue(ue_index);
+  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", ue_index);
+
+  if (ue != nullptr) {
+    ue->get_task_sched().schedule_async_task(
+        launch_async([this, ue_index, ue_context_mod_request = f1ap_ue_context_modification_request{}](
+                         coro_context<async_task<void>>& ctx) mutable {
+          CORO_BEGIN(ctx);
+
+          if (ue_mng.find_du_ue(ue_index) == nullptr) {
+            CORO_EARLY_RETURN();
+          }
+
+          ue_context_mod_request.ue_index               = ue_index;
+          ue_context_mod_request.rrc_recfg_complete_ind = f1ap_rrc_recfg_complete_ind::true_value;
+
+          CORO_AWAIT(du_db.get_du_processor(ue_mng.find_du_ue(ue_index)->get_du_index())
+                         .get_f1ap_handler()
+                         .handle_ue_context_modification_request(ue_context_mod_request));
+
+          CORO_RETURN();
+        }));
+  }
+}
+
 async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index)
 {
   srsran_assert(cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0)) != nullptr,

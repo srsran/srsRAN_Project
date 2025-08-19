@@ -70,6 +70,8 @@ struct dummy_cu_cp_rrc_ue_interface : public cu_cp_rrc_ue_interface {
   {
     return launch_no_op_task();
   }
+
+  void handle_rrc_reconf_complete_indicator(ue_index_t ue_index) override {}
 };
 
 struct dummy_cu_cp_du_event_handler : public cu_cp_du_event_handler {

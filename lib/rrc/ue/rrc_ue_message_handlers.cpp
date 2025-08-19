@@ -167,6 +167,7 @@ void rrc_ue_impl::handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu)
         logger.log_debug("Received a RRC Reconfiguration Complete during inter CU handover. Notifying NGAP");
         ngap_notifier.on_inter_cu_ho_rrc_recfg_complete_received(context.ue_index, context.cell.cgi, context.cell.tac);
         context.transfer_context.value().is_inter_cu_handover = false;
+        cu_cp_notifier.on_rrc_reconfiguration_complete_indicator();
       } else {
         handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_recfg_complete().rrc_transaction_id);
       }

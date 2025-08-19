@@ -388,6 +388,11 @@ public:
   /// \param[in] old_ue_index The index of the old UE to remove.
   virtual void on_rrc_reestablishment_complete(ue_index_t old_ue_index) = 0;
 
+  /// \brief Notify the CU-CP that RRC Reconfiguration has been received, so that the CU-CP can notify the DU if
+  /// required.
+  /// \param[in] ue_index The index of the UE that received the reconfiguration complete.
+  virtual void on_rrc_reconfiguration_complete_indicator() = 0;
+
   /// \brief Notify the CU-CP to transfer and remove ue contexts.
   /// \param[in] old_ue_index The old UE index of the UE that sent the Reestablishment Request.
   virtual async_task<bool> on_ue_transfer_required(ue_index_t old_ue_index) = 0;

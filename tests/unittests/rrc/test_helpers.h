@@ -145,6 +145,8 @@ public:
 
   void on_measurement_report(const rrc_meas_results& meas_results) override {}
 
+  virtual void on_rrc_reconfiguration_complete_indicator() override {}
+
   cu_cp_ue_context_release_request last_cu_cp_ue_context_release_request;
 
 private:

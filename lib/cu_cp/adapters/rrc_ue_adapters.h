@@ -208,6 +208,12 @@ public:
     return cu_cp_rrc_ue_handler->handle_rrc_reestablishment_complete(old_ue_index);
   }
 
+  virtual void on_rrc_reconfiguration_complete_indicator() override
+  {
+    srsran_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");
+    return cu_cp_rrc_ue_handler->handle_rrc_reconf_complete_indicator(ue_index);
+  }
+
   async_task<bool> on_ue_transfer_required(ue_index_t old_ue_index) override
   {
     srsran_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");
