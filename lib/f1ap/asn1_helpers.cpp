@@ -11,6 +11,7 @@
 #include "asn1_helpers.h"
 #include "cu_cp/f1ap_asn1_converters.h"
 #include "srsran/asn1/f1ap/common.h"
+#include "srsran/asn1/f1ap/f1ap_ies.h"
 
 using namespace srsran;
 using namespace asn1::f1ap;
@@ -674,6 +675,16 @@ srsran::make_drbs_failed_to_be_modified_list(span<const f1ap_drb_failed_to_setup
   for (unsigned i = 0; i != failed_drbs.size(); ++i) {
     list[i].load_info_obj(ASN1_F1AP_ID_DRBS_FAILED_TO_BE_MODIFIED_ITEM);
     fill_drb_failed_item(list[i]->drbs_failed_to_be_modified_item(), failed_drbs[i]);
+  }
+  return list;
+}
+
+asn1::f1ap::serving_cell_mo_encoded_in_cgc_list_l
+srsran::make_serving_cell_mo_encoded_in_cgc_list(span<const uint8_t> serving_cell_mos)
+{
+  asn1::f1ap::serving_cell_mo_encoded_in_cgc_list_l list(serving_cell_mos.size());
+  for (unsigned i = 0; i != serving_cell_mos.size(); ++i) {
+    list[i].serving_cell_mo = serving_cell_mos[i];
   }
   return list;
 }
