@@ -14,4 +14,4 @@ set(SOURCES
 
 add_library(srsran_cu_cp_unit_metrics_helpers STATIC ${SOURCES})
 target_include_directories(srsran_cu_cp_unit_metrics_helpers PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(srsran_cu_cp_unit_metrics_helpers PRIVATE srsran_cu_cp_unit_metrics_consumers)
+target_link_libraries(srsran_cu_cp_unit_metrics_helpers PRIVATE srsran_cu_cp_unit_metrics_consumers srsran_cu_cp_metrics_json_generators_helpers)

@@ -6,6 +6,7 @@
 # the distribution.
 #
 
+add_subdirectory(cu_cp)
 add_subdirectory(cu_up)
 add_subdirectory(du_high)
 add_subdirectory(ru)
@@ -17,6 +18,7 @@ set(SOURCES
 
 add_library(srsran_metrics_json_generators STATIC ${SOURCES})
 target_include_directories(srsran_metrics_json_generators PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(srsran_metrics_json_generators PRIVATE srsran_cu_up_metrics_json_generators_helpers
+target_link_libraries(srsran_metrics_json_generators PRIVATE srsran_cu_cp_metrics_json_generators_helpers
+                                                             srsran_cu_up_metrics_json_generators_helpers
                                                              srsran_du_high_metrics_json_generators_helpers
                                                              srsran_ru_metrics_json_generators_helpers)
