@@ -1054,6 +1054,7 @@ static scheduler_expert_config generate_scheduler_expert_config(const du_high_un
   }
   out_cfg.ue.ul_mcs = {pusch.min_ue_mcs, pusch.max_ue_mcs};
   out_cfg.ue.pusch_rv_sequence.assign(pusch.rv_sequence.begin(), pusch.rv_sequence.end());
+  out_cfg.ue.enable_csi_rs_pdsch_multiplexing = pdsch.enable_csi_rs_pdsch_multiplexing;
   out_cfg.ue.initial_ul_dc_offset             = pusch.dc_offset;
   out_cfg.ue.max_puschs_per_slot              = pusch.max_puschs_per_slot;
   out_cfg.ue.pre_policy_rr_ul_ue_group_size   = pusch.nof_preselected_newtx_ues;

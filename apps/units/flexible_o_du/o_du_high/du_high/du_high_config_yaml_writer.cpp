@@ -327,27 +327,28 @@ static YAML::Node build_du_high_pdsch_section(const du_high_unit_pdsch_config& c
 {
   YAML::Node node;
 
-  node["min_ue_mcs"]                 = config.min_ue_mcs;
-  node["max_ue_mcs"]                 = config.max_ue_mcs;
-  node["fixed_rar_mcs"]              = config.fixed_rar_mcs;
-  node["fixed_sib1_mcs"]             = config.fixed_sib1_mcs;
-  node["nof_harqs"]                  = config.nof_harqs;
-  node["max_nof_harq_retxs"]         = config.max_nof_harq_retxs;
-  node["max_consecutive_kos"]        = config.max_consecutive_kos;
-  node["mcs_table"]                  = to_string(config.mcs_table);
-  node["min_rb_size"]                = config.min_rb_size;
-  node["max_rb_size"]                = config.max_rb_size;
-  node["start_rb"]                   = config.start_rb;
-  node["end_rb"]                     = config.end_rb;
-  node["max_pdschs_per_slot"]        = config.max_pdschs_per_slot;
-  node["olla_cqi_inc_step"]          = config.olla_cqi_inc;
-  node["olla_target_bler"]           = config.olla_target_bler;
-  node["olla_max_cqi_offset"]        = config.olla_max_cqi_offset;
-  node["dc_offset"]                  = to_string(config.dc_offset);
-  node["harq_la_cqi_drop_threshold"] = static_cast<unsigned>(config.harq_la_cqi_drop_threshold);
-  node["harq_la_ri_drop_threshold"]  = static_cast<unsigned>(config.harq_la_ri_drop_threshold);
-  node["dmrs_additional_position"]   = config.dmrs_add_pos;
-  node["interleaving_bundle_size"]   = static_cast<unsigned>(config.interleaving_bundle_size);
+  node["min_ue_mcs"]                       = config.min_ue_mcs;
+  node["max_ue_mcs"]                       = config.max_ue_mcs;
+  node["fixed_rar_mcs"]                    = config.fixed_rar_mcs;
+  node["fixed_sib1_mcs"]                   = config.fixed_sib1_mcs;
+  node["nof_harqs"]                        = config.nof_harqs;
+  node["max_nof_harq_retxs"]               = config.max_nof_harq_retxs;
+  node["max_consecutive_kos"]              = config.max_consecutive_kos;
+  node["mcs_table"]                        = to_string(config.mcs_table);
+  node["min_rb_size"]                      = config.min_rb_size;
+  node["max_rb_size"]                      = config.max_rb_size;
+  node["start_rb"]                         = config.start_rb;
+  node["end_rb"]                           = config.end_rb;
+  node["max_pdschs_per_slot"]              = config.max_pdschs_per_slot;
+  node["olla_cqi_inc_step"]                = config.olla_cqi_inc;
+  node["olla_target_bler"]                 = config.olla_target_bler;
+  node["olla_max_cqi_offset"]              = config.olla_max_cqi_offset;
+  node["dc_offset"]                        = to_string(config.dc_offset);
+  node["harq_la_cqi_drop_threshold"]       = static_cast<unsigned>(config.harq_la_cqi_drop_threshold);
+  node["harq_la_ri_drop_threshold"]        = static_cast<unsigned>(config.harq_la_ri_drop_threshold);
+  node["dmrs_additional_position"]         = config.dmrs_add_pos;
+  node["interleaving_bundle_size"]         = static_cast<unsigned>(config.interleaving_bundle_size);
+  node["enable_csi_rs_pdsch_multiplexing"] = config.enable_csi_rs_pdsch_multiplexing;
 
   if (config.max_rank.has_value()) {
     node["max_rank"] = *config.max_rank;

@@ -190,6 +190,8 @@ struct du_high_unit_pdsch_config {
   vrb_to_prb::mapping_type interleaving_bundle_size{vrb_to_prb::mapping_type::non_interleaved};
   /// Limits the maximum rank UEs can report. It must not exceed the number of transmit antennas.
   std::optional<unsigned> max_rank;
+  /// Enable multiplexing of CSI-RS and PDSCH.
+  bool enable_csi_rs_pdsch_multiplexing = true;
 };
 
 /// PUSCH application configuration.

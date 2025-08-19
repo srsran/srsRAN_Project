@@ -359,6 +359,11 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
              "transmission layers. The actual maximum is limited by the number of DL antennas.")
       ->capture_default_str()
       ->check(CLI::NonNegativeNumber);
+  add_option(app,
+             "--enable_csi_rs_pdsch_multiplexing",
+             pdsch_params.enable_csi_rs_pdsch_multiplexing,
+             "Enable multiplexing of CSI-RS and PDSCH")
+      ->capture_default_str();
 }
 
 static void configure_cli11_du_args(CLI::App& app, bool& warn_on_drop)
