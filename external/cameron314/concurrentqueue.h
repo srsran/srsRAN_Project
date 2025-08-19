@@ -844,12 +844,21 @@ public:
 		nextExplicitConsumerId(0),
 		globalExplicitConsumerOffset(0)
 	{
+	        // Pre-reserve space in hash table for implicit producers.
+	        // > Find lowest power of 2 equal or higher, and then double it to avoid mallocs.
+	        size_t prealloc_hash_capacity = 1;
+	        while (prealloc_hash_capacity < maxImplicitProducers) {
+	                prealloc_hash_capacity <<= 1;
+	        }
+	        prealloc_hash_capacity <<= 1;
 		implicitProducerHashResizeInProgress.clear(std::memory_order_relaxed);
-		populate_initial_implicit_producer_hash();
+		populate_initial_implicit_producer_hash(prealloc_hash_capacity);
+
+		// Pre-reserve blocks.
 		size_t blocks = (((minCapacity + BLOCK_SIZE - 1) / BLOCK_SIZE) - 1) * (maxExplicitProducers + 1) + 2 * (maxExplicitProducers + maxImplicitProducers);
 		populate_initial_block_list(blocks);
 
-		// Pre-allocate implicit producers in a separate linked list to avoid paying the O(N) complexity
+		// Pre-allocate implicit producers in a separate list to avoid paying the O(N) complexity
 		// on dequeue if we overallocate the number of producers.
 	        preallocProducerPoolSize = maxImplicitProducers;
 	        preallocProducerPool = new ImplicitProducer*[preallocProducerPoolSize];
@@ -904,6 +913,10 @@ public:
 			}
 		}
 
+	        if (initialImplicitProducerHashEntries != nullptr) {
+	          destroy_array(initialImplicitProducerHashEntries, initialImplicitProducerHashSize);
+	        }
+
 		// Destroy global free list
 		auto block = freeList.head_unsafe();
 		while (block != nullptr) {
@@ -943,7 +956,7 @@ public:
 	{
 		// Move the other one into this, and leave the other one as an empty queue
 		implicitProducerHashResizeInProgress.clear(std::memory_order_relaxed);
-		populate_initial_implicit_producer_hash();
+		populate_initial_implicit_producer_hash(other.initialImplicitProducerHashSize);
 		swap_implicit_producer_hashes(other);
 
 		other.producerListTail.store(nullptr, std::memory_order_relaxed);
@@ -3377,17 +3390,20 @@ private:
 		ImplicitProducerHash* prev;
 	};
 
-	inline void populate_initial_implicit_producer_hash()
+	inline void populate_initial_implicit_producer_hash(size_t init_cap = INITIAL_IMPLICIT_PRODUCER_HASH_SIZE)
 	{
 		MOODYCAMEL_CONSTEXPR_IF (INITIAL_IMPLICIT_PRODUCER_HASH_SIZE == 0) {
 			return;
 		}
 		else {
+		        init_cap = std::max(init_cap, static_cast<size_t>(INITIAL_IMPLICIT_PRODUCER_HASH_SIZE));
+                        initialImplicitProducerHashSize = init_cap;
+		        initialImplicitProducerHashEntries = create_array<ImplicitProducerKVP>(init_cap);
 			implicitProducerHashCount.store(0, std::memory_order_relaxed);
 			auto hash = &initialImplicitProducerHash;
-			hash->capacity = INITIAL_IMPLICIT_PRODUCER_HASH_SIZE;
+			hash->capacity = init_cap;
 			hash->entries = &initialImplicitProducerHashEntries[0];
-			for (size_t i = 0; i != INITIAL_IMPLICIT_PRODUCER_HASH_SIZE; ++i) {
+			for (size_t i = 0, sz = hash->capacity; i != sz; ++i) {
 				initialImplicitProducerHashEntries[i].key.store(details::invalid_thread_id, std::memory_order_relaxed);
 			}
 			hash->prev = nullptr;
@@ -3402,7 +3418,8 @@ private:
 		}
 		else {
 			// Swap (assumes our implicit producer hash is initialized)
-			initialImplicitProducerHashEntries.swap(other.initialImplicitProducerHashEntries);
+			std::swap(initialImplicitProducerHashEntries, other.initialImplicitProducerHashEntries);
+		        std::swap(initialImplicitProducerHashSize, other.initialImplicitProducerHashSize);
 			initialImplicitProducerHash.entries = &initialImplicitProducerHashEntries[0];
 			other.initialImplicitProducerHash.entries = &other.initialImplicitProducerHashEntries[0];
 
@@ -3511,7 +3528,7 @@ private:
 					while (newCount >= (newCapacity >> 1)) {
 						newCapacity <<= 1;
 					}
-					auto raw = static_cast<char*>((Traits::malloc)(sizeof(ImplicitProducerHash) + std::alignment_of<ImplicitProducerKVP>::value - 1 + sizeof(ImplicitProducerKVP) * newCapacity));
+				        auto raw = static_cast<char*>((Traits::malloc)(sizeof(ImplicitProducerHash) + std::alignment_of<ImplicitProducerKVP>::value - 1 + sizeof(ImplicitProducerKVP) * newCapacity));
 					if (raw == nullptr) {
 						// Allocation failed
 						implicitProducerHashCount.fetch_sub(1, std::memory_order_relaxed);
@@ -3716,7 +3733,8 @@ private:
 	std::atomic<ImplicitProducerHash*> implicitProducerHash;
 	std::atomic<size_t> implicitProducerHashCount;		// Number of slots logically used
 	ImplicitProducerHash initialImplicitProducerHash;
-	std::array<ImplicitProducerKVP, INITIAL_IMPLICIT_PRODUCER_HASH_SIZE> initialImplicitProducerHashEntries;
+        ImplicitProducerKVP* initialImplicitProducerHashEntries = nullptr;
+        size_t               initialImplicitProducerHashSize{0};
 	std::atomic_flag implicitProducerHashResizeInProgress;
 
 	std::atomic<std::uint32_t> nextExplicitConsumerId;
