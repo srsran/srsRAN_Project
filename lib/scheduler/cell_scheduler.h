@@ -56,7 +56,10 @@ public:
   const sched_result& last_result() const { return res_grid[0].result; }
 
   /// Check if the cell is running.
-  bool is_running() const { return active; }
+  bool is_running() const
+  {
+    return active and activ_cmd.load(std::memory_order_relaxed) != activation_command::stop_cmd;
+  }
 
   void handle_si_update_request(const si_scheduling_update_request& msg);
 

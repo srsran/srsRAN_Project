@@ -165,6 +165,10 @@ async_task<void> du_cell_manager::stop()
       }
     }
 
+    for (i = 0; i != cells.size(); ++i) {
+      cfg.mac.cell_mng.remove_cell(to_du_cell_index(i));
+    }
+
     CORO_RETURN();
   });
 }
