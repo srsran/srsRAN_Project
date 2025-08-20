@@ -285,7 +285,7 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
   }
 
   // Extract the RSRP which is optional and clamp it if available.
-  std::optional<float> rsrp = result.csi.get_rsrp_dB();
+  std::optional<float> rsrp = result.csi.get_global_rsrp_dB();
   if (rsrp.has_value()) {
     rsrp = std::clamp(
         convert_to_dBFS(rsrp.value(), dBFS_calibration_value), MIN_UL_RSRP_VALUE_DBFS, MAX_UL_RSRP_VALUE_DBFS);

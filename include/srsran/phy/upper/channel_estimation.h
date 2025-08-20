@@ -225,6 +225,9 @@ public:
   /// \param[out] csi Channel State Information object where the CSI parameters are stored.
   void get_channel_state_information(channel_state_information& csi) const
   {
+    // Set the number of Rx ports for RSRP reporting.
+    csi.set_nof_ports(nof_rx_ports);
+
     // EPRE and RSRP are reported as a linear average of the results for all Rx ports.
     float    epre_lin      = 0.0F;
     float    rsrp_lin      = 0.0F;
@@ -232,8 +235,12 @@ public:
     float    best_path_snr = 0.0F;
     for (unsigned i_rx_port = 0; i_rx_port != nof_rx_ports; ++i_rx_port) {
       // Accumulate EPRE and RSRP values.
+      float i_port_rsrp = get_rsrp(i_rx_port, 0);
       epre_lin += get_epre(i_rx_port);
-      rsrp_lin += get_rsrp(i_rx_port, 0);
+      rsrp_lin += i_port_rsrp;
+
+      // Store the RSRP for the current port.
+      csi.set_port_rsrp(i_rx_port, convert_power_to_dB(i_port_rsrp));
 
       // Determine the Rx port with better SNR.
       float port_snr = get_snr(i_rx_port);
@@ -247,7 +254,7 @@ public:
     rsrp_lin /= static_cast<float>(nof_rx_ports);
 
     csi.set_epre(convert_power_to_dB(epre_lin));
-    csi.set_rsrp(convert_power_to_dB(rsrp_lin));
+    csi.set_global_rsrp(convert_power_to_dB(rsrp_lin));
 
     // Use the time alignment of the channel path with best SNR.
     csi.set_time_alignment(get_time_alignment(best_rx_port, 0));

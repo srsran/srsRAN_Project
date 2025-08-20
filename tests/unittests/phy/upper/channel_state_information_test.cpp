@@ -49,7 +49,7 @@ protected:
       csi.set_total_evm(real_dist(rgen));
     }
     if (enable_rsrp) {
-      csi.set_rsrp(real_dist(rgen));
+      csi.set_global_rsrp(real_dist(rgen));
     }
     if (enable_epre) {
       csi.set_epre(real_dist(rgen));

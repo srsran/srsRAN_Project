@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/phy/constants.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/phy_time_unit.h"
 #include <optional>
@@ -195,10 +196,11 @@ public:
   /// \return The measured EPRE if present, otherwise \c std::nullopt.
   std::optional<float> get_epre_dB() const { return epre_dB; }
 
-  /// \brief Sets the Reference Signal Received Power (RSRP) in normalized dB units.
+  /// \brief Sets the global Reference Signal Received Power (RSRP) in normalized dB units.
   ///
-  /// The RSRP value is ignored if it is NaN.
-  void set_rsrp(float rsrp_dB_)
+  /// Sets an RSRP value that is representative of the received reference signal power across all ports. The RSRP value
+  /// is ignored if it is NaN.
+  void set_global_rsrp(float rsrp_dB_)
   {
     if (std::isnan(rsrp_dB_)) {
       return;
@@ -207,9 +209,9 @@ public:
     rsrp_dB.emplace(rsrp_dB_);
   }
 
-  /// \brief Gets the Reference Signal Received Power (RSRP) in normalized dB units.
+  /// \brief Gets the global Reference Signal Received Power (RSRP) in normalized dB units.
   /// \return The measured RSRP if present, otherwise \c std::nullopt.
-  std::optional<float> get_rsrp_dB() const { return rsrp_dB; }
+  std::optional<float> get_global_rsrp_dB() const { return rsrp_dB; }
 
   /// \brief Sets the measured Carrier Frequency Offset (CFO) in hertz.
   ///
@@ -221,6 +223,37 @@ public:
     }
 
     cfo_Hz.emplace(cfo_Hz_);
+  }
+
+  /// \brief Sets the Reference Signal Received Power (RSRP) for a specific antenna port in normalized dB units.
+  ///
+  /// The RSRP value is ignored if it is NaN.
+  void set_port_rsrp(unsigned i_port, float rsrp_dB_)
+  {
+    // Ignore measurement if it is NaN.
+    if (std::isnan(rsrp_dB_)) {
+      return;
+    }
+
+    srsran_assert(i_port < port_rsrp_dB.size(), "The port index (i.e., {}) exceeds the number of ports.");
+    port_rsrp_dB[i_port].emplace(rsrp_dB_);
+  }
+
+  /// Sets the number of ports for which RSRP measurements are stored.
+  void set_nof_ports(unsigned nof_ports)
+  {
+    srsran_assert(nof_ports <= MAX_PORTS,
+                  "The number of ports (i.e., {}) exceeds the maximum allowed (i.e., {})",
+                  nof_ports,
+                  MAX_PORTS);
+    port_rsrp_dB.resize(nof_ports);
+  }
+
+  /// \brief Gets the Reference Signal Received Power (RSRP) in normalized dB units, for each receive port.
+  /// \return The measured RSRP for each port.
+  span<const std::optional<float>> get_port_rsrp_dB() const
+  {
+    return span<const std::optional<float>>(port_rsrp_dB.begin(), port_rsrp_dB.end());
   }
 
   /// \brief Gets the measured Carrier Frequency Offset (CFO) in hertz.
@@ -248,8 +281,10 @@ private:
   std::optional<float> sinr_ch_estimator_dB;
   /// Average EPRE in decibels.
   std::optional<float> epre_dB;
-  /// Average RSRP in decibels.
+  /// Global RSRP in decibels.
   std::optional<float> rsrp_dB;
+  /// RSRP per antenna port in decibels.
+  static_vector<std::optional<float>, MAX_PORTS> port_rsrp_dB;
   /// CFO measurement in hertz.
   std::optional<float> cfo_Hz;
 };

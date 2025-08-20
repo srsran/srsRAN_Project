@@ -55,7 +55,7 @@ public:
 
       channel_state_information csi;
       csi.set_epre(0);
-      csi.set_rsrp(0);
+      csi.set_global_rsrp(0);
       csi.set_sinr_dB(channel_state_information::sinr_type::channel_estimator, 0);
       csi.reset_time_alignment();
 
