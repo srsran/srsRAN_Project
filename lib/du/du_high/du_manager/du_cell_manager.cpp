@@ -152,7 +152,7 @@ async_task<void> du_cell_manager::stop(du_cell_index_t cell_index)
   });
 }
 
-async_task<void> du_cell_manager::stop()
+async_task<void> du_cell_manager::stop_all()
 {
   return launch_async([this, i = 0U](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
@@ -163,10 +163,6 @@ async_task<void> du_cell_manager::stop()
 
         CORO_AWAIT(cfg.mac.cell_mng.get_cell_controller(to_du_cell_index(i)).stop());
       }
-    }
-
-    for (i = 0; i != cells.size(); ++i) {
-      cfg.mac.cell_mng.remove_cell(to_du_cell_index(i));
     }
 
     CORO_RETURN();

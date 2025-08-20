@@ -83,11 +83,14 @@ public:
     return cells[cell_index]->si_cfg;
   }
 
+  /// Start a specific cell in the DU.
   async_task<bool> start(du_cell_index_t cell_index);
 
+  /// Stop a specific cell in the DU.
   async_task<void> stop(du_cell_index_t cell_index);
 
-  async_task<void> stop();
+  /// Stop all cells in the DU.
+  async_task<void> stop_all();
 
 private:
   void assert_cell_exists(du_cell_index_t cell_index) const

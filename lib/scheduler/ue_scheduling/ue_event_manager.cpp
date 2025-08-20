@@ -986,6 +986,12 @@ void ue_event_manager::rem_cell(du_cell_index_t cell_index)
   while (cell_specific_events[cell_index].try_pop(ev)) {
   }
 
+  // Flush pending common events.
+  // TODO: Fix this for carrier aggregation.
+  common_event_t common_ev{INVALID_DU_UE_INDEX, [](void) {}};
+  while (common_events.try_pop(common_ev)) {
+  }
+
   // Remove cell entry.
   du_cells[cell_index] = {};
 }
