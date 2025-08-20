@@ -20,11 +20,13 @@ ue_config_update_event::ue_config_update_event(du_ue_index_t                    
                                                sched_config_manager&             parent_,
                                                std::unique_ptr<ue_configuration> next_cfg,
                                                const std::optional<bool>&        set_fallback,
+                                               slot_point                        ul_ccch_slot_rx_,
                                                bool                              reestablished_) :
   ue_index(ue_index_),
   parent(&parent_),
   next_ded_cfg(std::move(next_cfg)),
   set_fallback_mode(set_fallback),
+  ul_ccch_slot_rx(ul_ccch_slot_rx_),
   reestablished(reestablished_)
 {
 }
@@ -167,7 +169,11 @@ ue_config_update_event sched_config_manager::add_ue(const sched_ue_creation_requ
   auto                        next_ded_cfg   = std::make_unique<ue_configuration>(
       cfg_req.ue_index, cfg_req.crnti, added_cells, group_cfg_pool[target_grp_idx]->add_ue(cfg_req));
 
-  return ue_config_update_event{cfg_req.ue_index, *this, std::move(next_ded_cfg), cfg_req.starts_in_fallback};
+  return ue_config_update_event{cfg_req.ue_index,
+                                *this,
+                                std::move(next_ded_cfg),
+                                cfg_req.starts_in_fallback,
+                                cfg_req.ul_ccch_slot_rx.value_or(slot_point())};
 }
 
 ue_config_update_event sched_config_manager::update_ue(const sched_ue_reconfiguration_message& cfg_req)
@@ -190,7 +196,7 @@ ue_config_update_event sched_config_manager::update_ue(const sched_ue_reconfigur
     logger.error("ue={} c-rnti={}: Discarding UE configuration. Cause: UE with provided C-RNTI does not exist.",
                  fmt::underlying(cfg_req.ue_index),
                  cfg_req.crnti);
-    return ue_config_update_event{cfg_req.ue_index, *this, nullptr, {}, cfg_req.reestablished};
+    return ue_config_update_event{cfg_req.ue_index, *this, nullptr, {}, slot_point(), cfg_req.reestablished};
   }
 
   // Make a copy of the current UE dedicated config.
@@ -200,7 +206,8 @@ ue_config_update_event sched_config_manager::update_ue(const sched_ue_reconfigur
   next_ded_cfg->update(added_cells, group_cfg_pool[group_idx]->reconf_ue(cfg_req));
 
   // Return RAII event.
-  return ue_config_update_event{cfg_req.ue_index, *this, std::move(next_ded_cfg), {}, cfg_req.reestablished};
+  return ue_config_update_event{
+      cfg_req.ue_index, *this, std::move(next_ded_cfg), {}, slot_point(), cfg_req.reestablished};
 }
 
 ue_config_delete_event sched_config_manager::remove_ue(du_ue_index_t ue_index)
