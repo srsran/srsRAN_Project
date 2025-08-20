@@ -30,6 +30,11 @@ rrc_du_impl::rrc_du_impl(const rrc_cfg_t& cfg_, rrc_du_measurement_config_notifi
 bool rrc_du_impl::handle_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list)
 {
   for (const auto& served_cell : served_cell_list) {
+    if (!served_cell.gnb_du_sys_info.has_value()) {
+      logger.error("Missing gnb_du_sys_info for served cell");
+      return false;
+    }
+
     rrc_cell_info cell_info;
 
     // TODO: which freq band to use here?
@@ -46,20 +51,31 @@ bool rrc_du_impl::handle_served_cell_list(const std::vector<cu_cp_du_served_cell
     asn1::cbit_ref                  bref_meas{served_cell.served_cell_info.meas_timing_cfg};
     asn1::rrc_nr::meas_timing_cfg_s asn1_meas_timing_cfg;
     if (asn1_meas_timing_cfg.unpack(bref_meas) != asn1::SRSASN_SUCCESS) {
-      logger.error("Failed to unpack Measurement Timing Config container.");
+      logger.error("Failed to unpack Measurement Timing Config container");
       return false;
     }
     if (asn1_meas_timing_cfg.crit_exts.type() != meas_timing_cfg_s::crit_exts_c_::types_opts::c1 ||
         asn1_meas_timing_cfg.crit_exts.c1().type() !=
             meas_timing_cfg_s::crit_exts_c_::c1_c_::types_opts::meas_timing_conf ||
         asn1_meas_timing_cfg.crit_exts.c1().meas_timing_conf().meas_timing.size() == 0) {
-      logger.error("Invalid Measurement Timing Config container.");
+      logger.error("Invalid Measurement Timing Config container");
       return false;
     }
 
     for (const auto& asn1_meas_timing : asn1_meas_timing_cfg.crit_exts.c1().meas_timing_conf().meas_timing) {
       cell_info.meas_timings.push_back(asn1_to_meas_timing(asn1_meas_timing));
     }
+
+    // Unpack SIB1 to store timers.
+    asn1::rrc_nr::sib1_s sib1_msg;
+    asn1::cbit_ref       bref2(served_cell.gnb_du_sys_info.value().sib1_msg);
+    if (sib1_msg.unpack(bref2) != asn1::SRSASN_SUCCESS) {
+      report_fatal_error("Failed to unpack SIB1");
+    }
+    cell_info.timers.t300 = std::chrono::milliseconds{sib1_msg.ue_timers_and_consts.t300.to_number()};
+    cell_info.timers.t301 = std::chrono::milliseconds{sib1_msg.ue_timers_and_consts.t301.to_number()};
+    cell_info.timers.t310 = std::chrono::milliseconds{sib1_msg.ue_timers_and_consts.t310.to_number()};
+    cell_info.timers.t311 = std::chrono::milliseconds{sib1_msg.ue_timers_and_consts.t311.to_number()};
 
     cell_info_db.emplace(served_cell.served_cell_info.nr_cgi.nci, cell_info);
 

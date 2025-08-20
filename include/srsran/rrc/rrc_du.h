@@ -15,6 +15,7 @@
 #include "srsran/rrc/rrc_cell_context.h"
 #include "srsran/rrc/rrc_metrics.h"
 #include "srsran/rrc/rrc_ue.h"
+#include <chrono>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -22,6 +23,7 @@ namespace srs_cu_cp {
 struct rrc_cell_info {
   nr_band                      band;
   std::vector<rrc_meas_timing> meas_timings;
+  rrc_timers_t                 timers;
 };
 
 class rrc_du_cell_manager
