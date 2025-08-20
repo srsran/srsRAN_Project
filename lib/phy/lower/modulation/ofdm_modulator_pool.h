@@ -10,9 +10,8 @@
 
 #pragma once
 
-#include "phase_compensation_lut.h"
-#include "srsran/phy/generic_functions/dft_processor.h"
 #include "srsran/phy/lower/modulation/ofdm_modulator.h"
+#include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/srsvec/zero.h"
 #include "srsran/support/memory_pool/bounded_object_pool.h"
@@ -23,6 +22,7 @@ namespace srsran {
 class ofdm_symbol_modulator_pool : public ofdm_symbol_modulator
 {
 public:
+  /// Internal pool of modulators.
   using modulator_pool = bounded_unique_object_pool<ofdm_symbol_modulator>;
 
   /// \brief Constructs an OFDM symbol modulator concurrent pool.

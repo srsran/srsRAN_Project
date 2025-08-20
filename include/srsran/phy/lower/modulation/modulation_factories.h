@@ -87,6 +87,10 @@ std::shared_ptr<ofdm_modulator_factory> create_ofdm_modulator_pool_factory(std::
 std::shared_ptr<ofdm_demodulator_factory>
 create_ofdm_demodulator_factory_generic(ofdm_factory_generic_configuration& config);
 
+/// Creates a generic OFDM demodulator concurrent pool factory.
+std::shared_ptr<ofdm_demodulator_factory>
+create_ofdm_demodulator_pool_factory(std::shared_ptr<ofdm_demodulator_factory> base, unsigned max_nof_threads);
+
 /// \brief Creates a software generic PRACH demodulator.
 /// \param[in] dft_factory DFT factory.
 /// \param[in] srate       Sampling rate.
