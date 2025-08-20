@@ -354,6 +354,25 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
       continue;
     }
 
+    // If the UE hasn't acked (or received) the ConRes (for a new tx or retx) and ra-ContentionResolutionTimer will
+    // expire by the slot it will receive the ConRes, abort the allocation; the \ref slot_indication function will take
+    // care of removing the UE.
+    if (u.get_pcell().get_msg3_rx_slot().valid() and not u.get_pcell().is_conres_complete()) {
+      const auto ra_conres_timer_subframes = static_cast<uint32_t>(
+          u.get_pcell().cfg().init_bwp().ul_common.value()->rach_cfg_common.value().ra_con_res_timer.count());
+      const int conres_msg3_slot_diff = pdsch_alloc.slot - u.get_pcell().get_msg3_rx_slot();
+      if (conres_msg3_slot_diff < 0 or
+          divide_ceil<uint32_t, uint32_t>(static_cast<uint32_t>(conres_msg3_slot_diff),
+                                          pdsch_alloc.slot.nof_slots_per_subframe()) > ra_conres_timer_subframes) {
+        // If the slot difference is larger than the RA ConRes timer, then it's too late to schedule the ConRes.
+        logger.debug(
+            "rnti={}: Fallback PDSCH allocation in slot {} aborted. Cause: ra-ContentionResolutionTimer expired",
+            u.crnti,
+            pdsch_alloc.slot);
+        return dl_sched_outcome::next_ue;
+      }
+    }
+
     // Instead of looping through all pdsch_time_res_idx values, pick the one with the largest number of symbols that
     // fits within the current DL slots.
     std::optional<unsigned> time_res_idx =
@@ -621,7 +640,7 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
   // the UE already has a dedicated config.
   // Note: In case the UE has no full config (RRC Reject), dedicated PUCCH is not required.
   // Note: If the actual UE has received the RRCSetup (with config) but the gNB doesn't receive an ACK=1, the UE can use
-  // the PUCCH dedicated resource to ACK the RRCSetup Retx (as per TS 38.213, section 9.2.1, "if a ue has dedicated
+  // the PUCCH dedicated resource to ACK the RRCSetup Retx (as per TS 38.213, section 9.2.1, "if a UE has dedicated
   // PUCCH resource configuration, the UE is provided by higher layers with one or more PUCCH resources [...]")
   // Note: The confirmation of UE fallback exit coming from higher layers may be late. In such case, we err on the side
   // of caution and allocate a dedicated PUCCH as well. We do not need to do this for the CON RES CE or SRB0
@@ -1366,7 +1385,7 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
 
     // Check if the \c ra-ContentionResolutionTimer has expired before the ConRes has been scheduled.
     if (not u.get_pcell().is_conres_complete() and u.get_pcell().get_msg3_rx_slot().valid()) {
-      // We need to check if the UE has pending ACKs. If not and the ConRes procedure is not completed yes, it means
+      // We need to check if the UE has pending ACKs. If not and the ConRes procedure is not completed yet, it means
       // ra-ContentionResolutionTimer has expired.
       // NOTE If the gNB is waiting for a pending ACK, we'll handle it in the loop at the end of this function.
       const bool waiting_for_pending_acks =
@@ -1459,6 +1478,8 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
                        fmt::underlying(u.ue_index),
                        u.crnti);
         // Remove the UE from the fallback scheduler.
+        // NOTE: No need to cancel the retransmissions here, as this UE won't be scheduled anymore by the fallback or
+        // normal scheduler.
         it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
         pending_dl_ues_new_tx.erase(
             std::remove_if(pending_dl_ues_new_tx.begin(),
