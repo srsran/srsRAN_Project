@@ -348,6 +348,7 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
     out_cfg.ngap.ngaps.push_back(srs_cu_cp::cu_cp_configuration::ngap_config{nullptr, supported_tas});
   }
 
+#ifndef SRSRAN_HAS_ENTERPRISE
   for (const auto& cfg : cu_cfg.extra_amfs) {
     std::vector<srs_cu_cp::supported_tracking_area> supported_tas;
     for (const auto& supported_ta : cfg.supported_tas) {
@@ -365,6 +366,11 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
     }
     out_cfg.ngap.ngaps.push_back(srs_cu_cp::cu_cp_configuration::ngap_config{nullptr, supported_tas});
   }
+#else
+  if (!cu_cfg.extra_amfs.empty()) {
+    report_error("Invalid CU-CP configuration. \"extra_amfs\" parameter is only supported in Enterprise version.\n");
+  }
+#endif // SRSRAN_HAS_ENTERPRISE
 
   out_cfg.rrc.force_reestablishment_fallback = cu_cfg.rrc_config.force_reestablishment_fallback;
   out_cfg.rrc.rrc_procedure_timeout_ms       = std::chrono::milliseconds{cu_cfg.rrc_config.rrc_procedure_timeout_ms};
@@ -375,11 +381,11 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
   out_cfg.security.enc_algo_pref_list = generate_preferred_ciphering_algorithms_list(cu_cfg);
   if (!from_string(out_cfg.security.default_security_indication.integrity_protection_ind,
                    cu_cfg.security_config.integrity_protection)) {
-    report_error("Invalid value for integrity_protection={}\n", cu_cfg.security_config.integrity_protection);
+    report_error("Invalid value for integrity_protection={}.\n", cu_cfg.security_config.integrity_protection);
   }
   if (!from_string(out_cfg.security.default_security_indication.confidentiality_protection_ind,
                    cu_cfg.security_config.confidentiality_protection)) {
-    report_error("Invalid value for confidentiality_protection={}\n",
+    report_error("Invalid value for confidentiality_protection={}.\n",
                  cu_cfg.security_config.confidentiality_protection);
   }
 
