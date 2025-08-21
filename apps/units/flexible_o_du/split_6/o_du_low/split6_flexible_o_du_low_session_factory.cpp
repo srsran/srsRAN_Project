@@ -65,8 +65,10 @@ split6_flexible_o_du_low_session_factory::create_o_du_low_session(const fapi::fa
     return nullptr;
   }
 
-  odu->set_dependencies(
-      std::move(adaptor), std::move(odu_low.o_du_lo), std::move(ru), timers.create_unique_timer(*workers.metrics_exec));
+  odu->set_dependencies(std::move(adaptor),
+                        std::move(odu_low.o_du_lo),
+                        std::move(ru),
+                        timers.create_unique_timer(workers.get_metrics_executor()));
 
   return odu;
 }

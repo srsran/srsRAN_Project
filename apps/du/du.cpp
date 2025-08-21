@@ -368,7 +368,7 @@ int main(int argc, char** argv)
   // Only DU has metrics now.
   app_services::metrics_manager metrics_mngr(
       srslog::fetch_basic_logger("GNB"),
-      *workers.metrics_exec,
+      workers.get_metrics_executor(),
       app_metrics,
       app_timers,
       std::chrono::milliseconds(du_cfg.metrics_cfg.metrics_service_cfg.app_usage_report_period));
@@ -386,7 +386,7 @@ int main(int argc, char** argv)
 
   // Register the commands.
   app_services::cmdline_command_dispatcher command_parser(
-      *epoll_broker, *workers.non_rt_medium_prio_exec, du_inst_and_cmds.commands.cmdline.commands);
+      *epoll_broker, workers.get_cmd_line_executor(), du_inst_and_cmds.commands.cmdline.commands);
 
   // Start processing.
   du_inst.get_operation_controller().start();

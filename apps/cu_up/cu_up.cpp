@@ -331,7 +331,7 @@ int main(int argc, char** argv)
 
   // Create time source that ticks the timers.
   std::optional<io_timer_source> time_source(
-      std::in_place_t{}, app_timers, *epoll_broker, *workers.non_rt_hi_prio_exec, std::chrono::milliseconds{1});
+      std::in_place_t{}, app_timers, *epoll_broker, workers.get_timer_source_executor(), std::chrono::milliseconds{1});
 
   // Instantiate E2AP client gateway.
   std::unique_ptr<e2_connection_client> e2_gw_cu_up = create_e2_gateway_client(
@@ -368,7 +368,7 @@ int main(int argc, char** argv)
   }
   app_services::metrics_manager metrics_mngr(
       srslog::fetch_basic_logger("CU-UP"),
-      *workers.metrics_exec,
+      workers.get_metrics_executor(),
       metrics_configs,
       app_timers,
       std::chrono::milliseconds(cu_up_cfg.metrics_cfg.metrics_service_cfg.app_usage_report_period));

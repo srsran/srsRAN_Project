@@ -40,11 +40,8 @@ struct worker_manager {
   void stop();
 
   std::vector<task_executor*> fapi_exec;
-  task_executor*              non_rt_medium_prio_exec = nullptr;
-  task_executor*              non_rt_hi_prio_exec     = nullptr;
-  task_executor*              split6_exec             = nullptr;
-  task_executor*              split6_crtl_exec        = nullptr;
-  task_executor*              metrics_exec            = nullptr;
+  task_executor*              split6_exec      = nullptr;
+  task_executor*              split6_crtl_exec = nullptr;
 
   srs_du::du_high_executor_mapper& get_du_high_executor_mapper()
   {
@@ -92,19 +89,28 @@ struct worker_manager {
   cu_cp_pcap_executor_mapper& get_cu_cp_pcap_executors() { return *pcap_exec_mapper; }
   cu_up_pcap_executor_mapper& get_cu_up_pcap_executors() { return *pcap_exec_mapper; }
 
+  task_executor& get_cmd_line_executor() const { return *non_rt_medium_prio_exec; }
+  task_executor& get_timer_source_executor() const { return *non_rt_hi_prio_exec; }
+  task_executor& get_metrics_executor() const { return *metrics_exec; }
+
 private:
   /// Total number of workers for the general task worker pool. Necessary for providing maximum concurrency level to
   /// the physical layer.
   unsigned nof_workers_general_pool = 0;
 
   /// Instantiated raw executors.
-  task_executor* non_rt_low_prio_exec = nullptr;
-  task_executor* rt_hi_prio_exec      = nullptr;
+  task_executor* non_rt_low_prio_exec    = nullptr;
+  task_executor* non_rt_medium_prio_exec = nullptr;
+  task_executor* non_rt_hi_prio_exec     = nullptr;
+  task_executor* rt_hi_prio_exec         = nullptr;
 
   std::unique_ptr<srs_du::du_high_executor_mapper>  du_high_exec_mapper;
   std::unique_ptr<srs_du::du_low_executor_mapper>   du_low_exec_mapper;
   std::unique_ptr<srs_cu_cp::cu_cp_executor_mapper> cu_cp_exec_mapper;
   std::unique_ptr<srs_cu_up::cu_up_executor_mapper> cu_up_exec_mapper;
+
+  /// Serialized Executor used for metrics.
+  task_executor* metrics_exec = nullptr;
 
   std::unique_ptr<gnb_pcap_executor_mapper> pcap_exec_mapper;
 
