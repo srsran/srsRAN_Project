@@ -14,9 +14,7 @@
 
 using namespace srsran;
 
-static bool validate_upper_phy_threads_appconfig(const du_low_unit_expert_threads_config& config,
-                                                 unsigned                                 nof_hwacc_pdsch,
-                                                 unsigned                                 nof_hwacc_pusch)
+static bool validate_upper_phy_threads_appconfig(const du_low_unit_expert_threads_config& config)
 {
   static const interval<unsigned, true> max_concurrency_range(0, std::thread::hardware_concurrency());
 
@@ -55,13 +53,7 @@ static bool validate_upper_phy_threads_appconfig(const du_low_unit_expert_thread
 static bool validate_expert_execution_unit_config(const du_low_unit_config&        config,
                                                   const os_sched_affinity_bitmask& available_cpus)
 {
-  unsigned nof_hwacc_pdsch = 0;
-  unsigned nof_hwacc_pusch = 0;
-#ifdef DPDK_FOUND
-  nof_hwacc_pdsch = config.hal_config->bbdev_hwacc->pdsch_enc->nof_hwacc;
-  nof_hwacc_pusch = config.hal_config->bbdev_hwacc->pusch_dec->nof_hwacc;
-#endif // DPDK_FOUND
-  if (!validate_upper_phy_threads_appconfig(config.expert_execution_cfg.threads, nof_hwacc_pdsch, nof_hwacc_pusch)) {
+  if (!validate_upper_phy_threads_appconfig(config.expert_execution_cfg.threads)) {
     return false;
   }
 
