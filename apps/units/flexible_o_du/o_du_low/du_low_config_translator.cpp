@@ -207,9 +207,41 @@ void srsran::fill_du_low_worker_manager_config(worker_manager_config&    config,
   du_low_cfg.cell_nof_dl_antennas.assign(nof_dl_antennas.begin(), nof_dl_antennas.end());
   du_low_cfg.cell_nof_ul_antennas.assign(nof_ul_antennas.begin(), nof_ul_antennas.end());
 
-  du_low_cfg.max_pdsch_concurrency         = unit_cfg.expert_execution_cfg.threads.max_pdsch_concurrency;
+  unsigned max_pdsch_concurrency         = unit_cfg.expert_execution_cfg.threads.max_pdsch_concurrency;
+  unsigned max_pusch_and_srs_concurrency = unit_cfg.expert_execution_cfg.threads.max_pusch_and_srs_concurrency;
+
+  // Override PDSCH and PUSCH maximum concurrency if hardware acceleration is present.
+  if (unit_cfg.hal_config.has_value()) {
+    const du_low_unit_hal_config& hal_config = *unit_cfg.hal_config;
+    if (hal_config.bbdev_hwacc.has_value()) {
+      const bbdev_appconfig& bbdev_hwacc = *hal_config.bbdev_hwacc;
+      if (bbdev_hwacc.pdsch_enc.has_value()) {
+        const hwacc_pdsch_appconfig& pdsch_enc = *bbdev_hwacc.pdsch_enc;
+        if (max_pdsch_concurrency != pdsch_enc.nof_hwacc) {
+          fmt::print("Warning: the configured maximum PDSCH concurrency ({}) is overridden by the number of PDSCH "
+                     "encoder hardware accelerated functions ({})\n",
+                     max_pdsch_concurrency,
+                     pdsch_enc.nof_hwacc);
+          max_pdsch_concurrency = pdsch_enc.nof_hwacc;
+        }
+      }
+      if (bbdev_hwacc.pusch_dec.has_value()) {
+        const hwacc_pusch_appconfig& pusch_dec = *bbdev_hwacc.pusch_dec;
+        if (max_pusch_and_srs_concurrency != pusch_dec.nof_hwacc) {
+          fmt::print("Warning: the configured maximum PUSCH and SRS concurrency ({}) is overridden by the number of "
+                     "PUSCH decoder hardware accelerated functions ({})\n",
+                     max_pusch_and_srs_concurrency,
+                     pusch_dec.nof_hwacc);
+          max_pusch_and_srs_concurrency = pusch_dec.nof_hwacc;
+        }
+      }
+    }
+  }
+
+  du_low_cfg.max_pdsch_concurrency         = max_pdsch_concurrency;
   du_low_cfg.max_pucch_concurrency         = unit_cfg.expert_execution_cfg.threads.max_pucch_concurrency;
-  du_low_cfg.max_pusch_and_srs_concurrency = unit_cfg.expert_execution_cfg.threads.max_pusch_and_srs_concurrency;
+  du_low_cfg.max_pusch_and_srs_concurrency = max_pusch_and_srs_concurrency;
+
   if (unit_cfg.metrics_cfg.enable_du_low) {
     du_low_cfg.metrics_period.emplace(unit_cfg.metrics_cfg.du_report_period);
   }

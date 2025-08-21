@@ -54,21 +54,10 @@ void pdsch_processor_flexible_impl::process(resource_grid_writer&               
     // Calculate modulation scaling.
     float scaling = convert_dB_to_amplitude(-config.ratio_pdsch_data_to_sss_dB);
 
-    // Apply scaling to the precoding matrix.
-    {
-      auto processor = block_processor_pool->get();
-      if (!processor) {
-        logger.error(
-            pdu_.slot.sfn(), pdu_.slot.slot_index(), "Failed to retrieve PDSCH codeblock processor (scaling).");
-        data.release();
-        notifier_.on_finish_processing();
-        return;
-      }
-
-      scaling *= processor->get_scaling(config.codewords.front().modulation);
-      precoding = config.precoding;
-      precoding *= scaling;
-    }
+    // Apply modulation mapper scaling to the precoding matrix.
+    scaling *= modulation_mapper::get_modulation_scaling(config.codewords.front().modulation);
+    precoding = config.precoding;
+    precoding *= scaling;
 
     // Set the number of asynchronous tasks. It counts as CB processing and DM-RS generation.
     async_task_counter = 2;
@@ -261,7 +250,7 @@ void pdsch_processor_flexible_impl::sync_pdsch_cb_processing()
   float scaling = convert_dB_to_amplitude(-config.ratio_pdsch_data_to_sss_dB);
 
   // Apply scaling to the precoding matrix.
-  scaling *= block_processor->get_scaling(config.codewords.front().modulation);
+  scaling *= modulation_mapper::get_modulation_scaling(config.codewords.front().modulation);
   precoding = config.precoding;
   precoding *= scaling;
 

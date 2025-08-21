@@ -49,39 +49,6 @@ static bool validate_upper_phy_threads_appconfig(const du_low_unit_expert_thread
     valid = false;
   }
 
-#ifdef DPDK_FOUND
-
-  // Verify hardware accelerated PDSCH.
-  if (nof_hwacc_pdsch != 0) {
-    if (config.max_pdsch_concurrency == 0) {
-      fmt::print("Maximum PDSCH concurrency must be set to a value equal to or greater than one.\n");
-      valid = false;
-    } else if (config.max_pdsch_concurrency > nof_hwacc_pdsch) {
-      fmt::print(
-          "Not enough hardware-accelerated PDSCH encoder functions. The maximum PDSCH concurrency (i.e., {}) must "
-          "be in range {}.\n",
-          config.max_pdsch_concurrency,
-          interval<unsigned>(1, nof_hwacc_pdsch));
-      valid = false;
-    }
-  }
-
-  // Verify hardware accelerated PUSCH.
-  if (nof_hwacc_pusch != 0) {
-    if (config.max_pusch_and_srs_concurrency == 0) {
-      fmt::print("Maximum PUSCH concurrency must be set to a value equal to or greater than one.\n");
-      valid = false;
-    } else if (config.max_pusch_and_srs_concurrency > nof_hwacc_pusch) {
-      fmt::print(
-          "Not enough hardware-accelerated PUSCH decoder functions. The maximum PUSCH concurrency (i.e., {}) must "
-          "be in range {}.\n",
-          config.max_pusch_and_srs_concurrency,
-          interval<unsigned>(1, nof_hwacc_pusch));
-      valid = false;
-    }
-  }
-#endif // DPDK_FOUND
-
   return valid;
 }
 

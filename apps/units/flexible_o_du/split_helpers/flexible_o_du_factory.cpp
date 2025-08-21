@@ -185,7 +185,7 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
                                                      .rx_symbol_request_notifier =
                                                          du_impl->get_upper_ru_ul_request_adapter(),
                                                      .workers = dependencies.workers->get_du_low_executor_mapper()};
-  o_du_low_unit_factory      odu_low_factory(du_lo.hal_config, nof_cells);
+  o_du_low_unit_factory      odu_low_factory(du_lo.hal_config);
   auto                       odu_lo_unit = odu_low_factory.create(odu_low_cfg, odu_low_dependencies);
 
   std::for_each(odu_lo_unit.metrics.begin(), odu_lo_unit.metrics.end(), [&](auto& e) {

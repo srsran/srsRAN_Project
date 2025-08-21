@@ -233,7 +233,7 @@ split6_flexible_o_du_low_session_factory::create_o_du_low(const fapi::fapi_cell_
     du_low_cell.tdd_pattern.emplace(generate_tdd_pattern(config.phy_cfg.scs, config.tdd_cfg));
   }
 
-  o_du_low_unit_factory odu_low_factory(unit_config.du_low_cfg.hal_config, split6_du_low::NOF_CELLS_SUPPORTED);
+  o_du_low_unit_factory odu_low_factory(unit_config.du_low_cfg.hal_config);
 
   return odu_low_factory.create(odu_low_cfg, odu_low_dependencies);
 }
