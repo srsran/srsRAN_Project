@@ -39,17 +39,6 @@ struct worker_manager {
 
   void stop();
 
-  /// du ctrl exec points to general ctrl_worker
-  /// du ue exec points to the general ue_worker
-  /// cu-cp ctrl exec points to general ctrl_worker (just like the du ctrl exec)
-  /// cu-up ue exec points to the general ue_worker (just like the du ue exec)
-  ///
-  /// The handler side is responsible for executor dispatching:
-  /// - ngap::handle_message calls cu-cp ctrl exec
-  /// - f1ap_cu::handle_message calls cu-cp ctrl exec
-  /// - e1ap_cu_cp::handle_message calls cu-cp ctrl exec
-  /// - e1ap_cu_up::handle_message calls cu-up ue exec
-
   std::vector<task_executor*> fapi_exec;
   task_executor*              non_rt_low_prio_exec    = nullptr;
   task_executor*              non_rt_medium_prio_exec = nullptr;

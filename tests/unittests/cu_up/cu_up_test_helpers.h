@@ -66,6 +66,10 @@ public:
 
   task_executor& n3_executor() override { return *test_executor; }
 
+  task_executor& io_sctp_rx_executor() override { return *test_executor; }
+
+  task_executor& io_udp_rx_executor() override { return *test_executor; }
+
   std::unique_ptr<srs_cu_up::ue_executor_mapper> create_ue_executor_mapper() override
   {
     return std::make_unique<dummy_pdu_session_executor_mapper_impl>(*test_executor);

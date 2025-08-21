@@ -275,6 +275,8 @@ class strand_based_cu_up_executor_mapper final : public cu_up_executor_mapper
 {
 public:
   strand_based_cu_up_executor_mapper(const strand_based_executor_config& config) :
+    e1_io_reader_exec(config.sctp_io_reader_executor),
+    gtpu_io_reader_exec(config.udp_io_reader_executor),
     cu_up_strand(&config.medium_prio_executor,
                  std::array<concurrent_queue_params, 2>{
                      {{concurrent_queue_policy::lockfree_mpmc, config.default_task_queue_size},
@@ -300,6 +302,10 @@ public:
   task_executor& e2_executor() override { return ctrl_exec; }
 
   task_executor& n3_executor() override { return n3_exec; }
+
+  task_executor& io_sctp_rx_executor() override { return e1_io_reader_exec; }
+
+  task_executor& io_udp_rx_executor() override { return gtpu_io_reader_exec; }
 
   std::unique_ptr<ue_executor_mapper> create_ue_executor_mapper() override
   {
@@ -354,6 +360,9 @@ private:
   }
   // Tracing helpers.
   executor_decorator decorator = {};
+
+  task_executor& e1_io_reader_exec;
+  task_executor& gtpu_io_reader_exec;
 
   // Base strand that sequentializes accesses to the worker pool executor.
   cu_up_strand_type cu_up_strand;
