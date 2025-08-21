@@ -9,6 +9,7 @@
  */
 
 #include "tests/integrationtests/du_high/test_utils/du_high_worker_manager.h"
+#include "tests/test_doubles/du/dummy_du_timer_controller.h"
 #include "tests/test_doubles/f1ap/f1c_test_local_gateway.h"
 #include "tests/unittests/cu_cp/test_doubles/mock_amf.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
@@ -81,7 +82,7 @@ protected:
     du_dependencies.f1c_client  = &f1c_gw;
     du_dependencies.f1u_gw      = &f1u_gw;
     du_dependencies.phy_adapter = &phy;
-    du_dependencies.timers      = &timers;
+    du_dependencies.timer_ctrl  = &timer_ctrl;
 
     // create DU object
     du_obj = make_du_high(std::move(du_cfg), du_dependencies);
@@ -97,11 +98,12 @@ protected:
   }
 
 public:
-  du_high_worker_manager workers;
-  timer_manager          timers;
-  srslog::basic_logger&  test_logger = srslog::fetch_basic_logger("TEST");
-  f1c_test_local_gateway f1c_gw{};
-  f1u_test_local_gateway f1u_gw{};
+  du_high_worker_manager    workers;
+  timer_manager             timers;
+  dummy_du_timer_controller timer_ctrl{timers};
+  srslog::basic_logger&     test_logger = srslog::fetch_basic_logger("TEST");
+  f1c_test_local_gateway    f1c_gw{};
+  f1u_test_local_gateway    f1u_gw{};
 
   std::unique_ptr<srs_cu_cp::mock_amf> amf{srs_cu_cp::create_mock_amf()};
   std::unique_ptr<srs_cu_cp::cu_cp>    cu_cp_obj;

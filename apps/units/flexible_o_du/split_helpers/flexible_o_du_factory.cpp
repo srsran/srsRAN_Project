@@ -19,6 +19,7 @@
 #include "flexible_o_du_impl.h"
 #include "metrics/flexible_o_du_metrics_builder.h"
 #include "srsran/du/du_high/du_high.h"
+#include "srsran/du/du_high/du_timer_controller.h"
 #include "srsran/du/o_du_factory.h"
 #include "srsran/e2/e2_du_metrics_connector.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor.h"
@@ -195,7 +196,7 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
   o_du_high_unit_dependencies odu_hi_unit_dependencies = {dependencies.workers->get_du_high_executor_mapper(),
                                                           *dependencies.f1c_client_handler,
                                                           *dependencies.f1u_gw,
-                                                          *dependencies.timer_mng,
+                                                          *dependencies.timer_ctrl,
                                                           *dependencies.mac_p,
                                                           *dependencies.rlc_p,
                                                           *dependencies.e2_client_handler,
@@ -287,7 +288,7 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
         odu_instance->get_o_du_high().get_du_high().get_du_configurator(),
         odu_instance->get_o_du_high().get_du_high().get_du_manager_time_mapper_accessor(),
         ru->get_controller(),
-        *dependencies.timer_mng,
+        dependencies.timer_ctrl->get_timer_manager(),
         dependencies.workers->get_du_high_executor_mapper().du_control_executor());
   }
 

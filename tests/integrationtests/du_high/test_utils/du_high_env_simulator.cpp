@@ -214,7 +214,7 @@ du_high_env_simulator::du_high_env_simulator(const du_high_configuration& du_hi_
     dependencies.f1u_gw      = &cu_up_sim;
     dependencies.du_notifier = &du_metrics;
     dependencies.phy_adapter = &phy;
-    dependencies.timers      = &timers;
+    dependencies.timer_ctrl  = &du_timer_ctrl;
     dependencies.mac_p       = &mac_pcap;
     dependencies.rlc_p       = &rlc_pcap;
     return dependencies;

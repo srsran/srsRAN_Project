@@ -29,6 +29,7 @@
 
 #include "lib/du/du_high/du_high_impl.h"
 #include "lib/mac/mac_ul/ul_bsr.h"
+#include "tests/test_doubles/du/dummy_du_timer_controller.h"
 #include "tests/test_doubles/du/test_du_high_worker_manager.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/mac/mac_test_messages.h"
@@ -603,7 +604,7 @@ public:
     dependencies.f1c_client  = &sim_cu_cp;
     dependencies.f1u_gw      = &sim_cu_up;
     dependencies.phy_adapter = &sim_phy;
-    dependencies.timers      = &timers;
+    dependencies.timer_ctrl  = &timer_ctrl;
     dependencies.du_notifier = &metrics_handler;
     dependencies.mac_p       = &mac_pcap;
     dependencies.rlc_p       = &rlc_pcap;
@@ -1118,6 +1119,7 @@ public:
   srslog::basic_logger&                                 test_logger = srslog::fetch_basic_logger("TEST");
   dummy_metrics_handler                                 metrics_handler;
   timer_manager                                         timers{2048};
+  dummy_du_timer_controller                             timer_ctrl{timers};
   std::unique_ptr<test_helpers::du_high_worker_manager> workers;
   null_mac_pcap                                         mac_pcap;
   null_rlc_pcap                                         rlc_pcap;

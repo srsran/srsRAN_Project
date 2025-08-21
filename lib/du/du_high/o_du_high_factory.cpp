@@ -11,6 +11,7 @@
 #include "srsran/du/du_high/o_du_high_factory.h"
 #include "o_du_high_impl.h"
 #include "srsran/du/du_high/du_high_factory.h"
+#include "srsran/du/du_high/du_timer_controller.h"
 #include "srsran/du/du_high/o_du_high_config.h"
 #include "srsran/e2/e2_du_factory.h"
 #include "srsran/fapi/decorator_factory.h"
@@ -85,14 +86,14 @@ std::unique_ptr<o_du_high> srsran::srs_du::make_o_du_high(const o_du_high_config
 
   auto du_hi = make_du_high(du_hi_cfg, odu_dependencies.du_hi);
 
-  auto e2agent = create_e2_du_agent(
-      config.e2ap_config,
-      *odu_dependencies.e2_client,
-      odu_dependencies.e2_du_metric_iface,
-      &du_hi->get_f1ap_du(),
-      &du_hi->get_du_configurator(),
-      timer_factory{*odu_dependencies.du_hi.timers, odu_dependencies.du_hi.exec_mapper->du_e2_executor()},
-      odu_dependencies.du_hi.exec_mapper->du_e2_executor());
+  auto e2agent = create_e2_du_agent(config.e2ap_config,
+                                    *odu_dependencies.e2_client,
+                                    odu_dependencies.e2_du_metric_iface,
+                                    &du_hi->get_f1ap_du(),
+                                    &du_hi->get_du_configurator(),
+                                    timer_factory{odu_dependencies.du_hi.timer_ctrl->get_timer_manager(),
+                                                  odu_dependencies.du_hi.exec_mapper->du_e2_executor()},
+                                    odu_dependencies.du_hi.exec_mapper->du_e2_executor());
 
   odu->set_e2_agent(std::move(e2agent));
   odu->set_du_high(std::move(du_hi));

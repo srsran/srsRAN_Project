@@ -215,7 +215,7 @@ o_du_high_unit srsran::make_o_du_high_unit(const o_du_high_unit_config&  o_du_hi
   du_hi_deps.f1c_client                    = &dependencies.f1c_client_handler;
   du_hi_deps.f1u_gw                        = &dependencies.f1u_gw;
   du_hi_deps.phy_adapter                   = nullptr;
-  du_hi_deps.timers                        = &dependencies.timer_mng;
+  du_hi_deps.timer_ctrl                    = &dependencies.timer_ctrl;
   du_hi_deps.mac_p                         = &dependencies.mac_p;
   du_hi_deps.rlc_p                         = &dependencies.rlc_p;
 

@@ -468,7 +468,7 @@ int main(int argc, char** argv)
   odu_dependencies.workers            = &workers;
   odu_dependencies.f1c_client_handler = f1c_gw.get();
   odu_dependencies.f1u_gw             = f1u_conn->get_f1u_du_gateway();
-  odu_dependencies.timer_mng          = &app_timers;
+  odu_dependencies.timer_ctrl         = ticking_source.get();
   odu_dependencies.mac_p              = du_pcaps.mac.get();
   odu_dependencies.rlc_p              = du_pcaps.rlc.get();
   odu_dependencies.e2_client_handler  = e2_gw_du.get();

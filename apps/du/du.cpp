@@ -359,7 +359,7 @@ int main(int argc, char** argv)
   du_dependencies.workers            = &workers;
   du_dependencies.f1c_client_handler = f1c_gw.get();
   du_dependencies.f1u_gw             = du_f1u_conn.get();
-  du_dependencies.timer_mng          = &app_timers;
+  du_dependencies.timer_ctrl         = ticking_source.get();
   du_dependencies.mac_p              = du_pcaps.mac.get();
   du_dependencies.rlc_p              = du_pcaps.rlc.get();
   du_dependencies.e2_client_handler  = e2_gw.get();

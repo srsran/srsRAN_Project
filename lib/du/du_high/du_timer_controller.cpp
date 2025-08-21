@@ -18,7 +18,7 @@ using namespace srs_du;
 
 namespace {
 
-class du_timer_source_impl final : public du_timer_source
+class du_timer_source_impl final : public du_timer_controller
 {
 public:
   du_timer_source_impl(timer_manager& timers_, io_broker& broker, task_executor& tick_exec_) :
@@ -36,6 +36,8 @@ public:
     }
     return ret;
   }
+
+  timer_manager& get_timer_manager() override { return timers; }
 
 private:
   void do_reset_ticker() override
@@ -67,7 +69,7 @@ private:
 
 } // namespace
 
-std::unique_ptr<du_timer_source>
+std::unique_ptr<du_timer_controller>
 srs_du::create_du_timer_controller(timer_manager& timers, io_broker& broker, task_executor& tick_exec)
 {
   return std::make_unique<du_timer_source_impl>(timers, broker, tick_exec);

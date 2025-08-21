@@ -145,7 +145,7 @@ void du_high_cu_test_simulator::start_dus()
     du_dependencies.f1c_client  = &f1c_gw;
     du_dependencies.f1u_gw      = nullptr;
     du_dependencies.phy_adapter = &du_ctxt.phy;
-    du_dependencies.timers      = &timers;
+    du_dependencies.timer_ctrl  = &du_timer_ctrl;
     du_dependencies.mac_p       = &du_ctxt.mac_pcap;
     du_dependencies.rlc_p       = &du_ctxt.rlc_pcap;
 

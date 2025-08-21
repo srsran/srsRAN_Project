@@ -26,6 +26,7 @@ class metrics_notifier;
 namespace srs_du {
 class f1u_du_gateway;
 class f1c_connection_client;
+class du_timer_controller;
 } // namespace srs_du
 
 class e2_connection_client;
@@ -51,7 +52,7 @@ struct o_du_unit_dependencies {
   worker_manager*                 workers            = nullptr;
   srs_du::f1c_connection_client*  f1c_client_handler = nullptr;
   srs_du::f1u_du_gateway*         f1u_gw             = nullptr;
-  timer_manager*                  timer_mng          = nullptr;
+  srs_du::du_timer_controller*    timer_ctrl         = nullptr;
   mac_pcap*                       mac_p              = nullptr;
   rlc_pcap*                       rlc_p              = nullptr;
   e2_connection_client*           e2_client_handler  = nullptr;
