@@ -1144,6 +1144,19 @@ uint8_t rlc_tx_am_entity::get_polling_bit(uint32_t sn, bool is_retx, uint32_t pa
 
 void rlc_tx_am_entity::on_expired_poll_retransmit_timer() noexcept SRSRAN_RTSAN_NONBLOCKING
 {
+  std::chrono::time_point<std::chrono::steady_clock> t_start;
+  if (metrics_low.is_enabled()) {
+    t_start = std::chrono::steady_clock::now();
+  }
+
+  auto on_function_exit = make_scope_exit([&]() {
+    if (metrics_low.is_enabled()) {
+      auto t_end    = std::chrono::steady_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
+      metrics_low.metrics_add_t_poll_retransmission_expiry_latency_us(duration.count());
+    }
+  });
+
   // t-PollRetransmit
   logger.log_info("Poll retransmit timer expired after {}ms.", poll_retransmit_timer.duration().count());
   log_state(srslog::basic_levels::debug);

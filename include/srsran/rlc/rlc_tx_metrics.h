@@ -85,6 +85,11 @@ struct rlc_am_tx_metrics_lower {
   std::optional<uint32_t> max_processed_acks;             ///< Processed ACKs in slowest handle status.
   std::optional<uint32_t> max_processed_nacks;            ///< Processed NACKs in slowest handle status.
 
+  uint32_t                num_t_poll_latency_meas; ///< Number of handle status latency measurements
+  uint32_t                sum_t_poll_latency_us;   ///< Total handle status latency over a (in us)
+  std::optional<uint32_t> min_t_poll_latency_us;   ///< Minimum handle status latency (in us)
+  std::optional<uint32_t> max_t_poll_latency_us;   ///< Maximum handle status latency (in us)
+
   void reset()
   {
     num_pdus_with_segmentation      = {};
@@ -177,6 +182,7 @@ public:
 
 inline void format_rlc_tx_metrics(fmt::memory_buffer& buffer, timer_duration metrics_period, const rlc_tx_metrics& m)
 {
+  /// Common metrics
   fmt::format_to(
       std::back_inserter(buffer),
       "num_sdus={} sdu_rate={}bps dropped_sdus={} discarded_sdus={} "
@@ -189,13 +195,16 @@ inline void format_rlc_tx_metrics(fmt::memory_buffer& buffer, timer_duration met
       float_to_eng_string(
           static_cast<float>(m.tx_low.num_pdu_bytes_no_segmentation) * 8 * 1000 / metrics_period.count(), 1, false));
 
+  /// Mode specific metrics
   if (std::holds_alternative<rlc_um_tx_metrics_lower>(m.tx_low.mode_specific)) {
+    /// UM metrics
     auto& um = std::get<rlc_um_tx_metrics_lower>(m.tx_low.mode_specific);
     fmt::format_to(std::back_inserter(buffer),
                    " num_pdus_with_segm={} pdu_with_segm_rate={}bps",
                    um.num_pdus_with_segmentation,
                    static_cast<float>(um.num_pdu_bytes_with_segmentation) * 8 / metrics_period.count());
   } else if (std::holds_alternative<rlc_am_tx_metrics_lower>(m.tx_low.mode_specific)) {
+    /// AM metrics
     auto& am = std::get<rlc_am_tx_metrics_lower>(m.tx_low.mode_specific);
     fmt::format_to(
         std::back_inserter(buffer),
@@ -254,6 +263,18 @@ inline void format_rlc_tx_metrics(fmt::memory_buffer& buffer, timer_duration met
     if (am.max_processed_nacks.has_value()) {
       fmt::format_to(std::back_inserter(buffer), " max_processed_nacks={}", am.max_processed_nacks.value());
     }
+
+    // > t-PollRetransmission latency metrics
+    fmt::format_to(std::back_inserter(buffer),
+                   " t_poll_latency_avg={}",
+                   am.num_t_poll_latency_meas > 0
+                       ? float_to_eng_string(
+                             static_cast<float>(am.sum_t_poll_latency_us * 1e-3) / am.num_t_poll_latency_meas, 1, false)
+                       : "n/a");
+    fmt::format_to(std::back_inserter(buffer),
+                   " t_poll_latency_min={}us t_poll_latency_max={}us",
+                   am.min_t_poll_latency_us,
+                   am.max_t_poll_latency_us);
   }
   fmt::format_to(std::back_inserter(buffer), " pdu_latency_hist=[");
   for (unsigned i = 0; i < rlc_tx_metrics_lower::pdu_latency_hist_bins; i++) {
