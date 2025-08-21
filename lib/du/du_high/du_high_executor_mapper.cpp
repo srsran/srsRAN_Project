@@ -413,6 +413,8 @@ class du_high_executor_mapper_impl final : public du_high_executor_mapper
 
 public:
   explicit du_high_executor_mapper_impl(const du_high_executor_config& config) :
+    raw_non_rt_hi_prio_exec(*config.ctrl_executors.pool_executor),
+    raw_low_prio_exec(*config.ue_executors.f1u_reader_executor),
     tick_exec(create_time_exec(config)),
     cell_mapper_ptr(create_du_high_cell_executor_mapper(config)),
     ue_mapper_ptr(create_du_high_ue_executor_mapper(config)),
@@ -425,6 +427,8 @@ public:
   task_executor&                du_control_executor() override { return ctrl_mapper.ctrl_exec; }
   task_executor&                du_timer_executor() override { return tick_exec; }
   task_executor&                du_e2_executor() override { return ctrl_mapper.e2_exec; }
+  task_executor&                sctp_gw_reader() override { return raw_non_rt_hi_prio_exec; }
+  task_executor&                udp_gw_reader() override { return raw_low_prio_exec; }
 
 private:
   task_executor& create_time_exec(const du_high_executor_config& config)
@@ -446,6 +450,10 @@ private:
 
   /// Decorator for executors.
   executor_decorator decorator;
+
+  /// Raw control-plane executor.
+  task_executor& raw_non_rt_hi_prio_exec;
+  task_executor& raw_low_prio_exec;
 
   /// Strand used to tick the application timers.
   std::unique_ptr<tick_strand_type> tick_strand;

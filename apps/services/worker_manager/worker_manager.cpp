@@ -255,20 +255,21 @@ void worker_manager::create_du_high_executors(const worker_manager_config::du_hi
   srs_du::du_high_executor_config cfg;
 
   srs_du::du_high_executor_config::strand_based_worker_pool pool_desc;
-  pool_desc.nof_cells                = du_hi.nof_cells;
-  pool_desc.default_task_queue_size  = task_worker_queue_size;
-  pool_desc.pool_executors           = {rt_hi_prio_exec};
-  cfg.cell_executors                 = pool_desc;
-  cfg.ue_executors.policy            = srs_du::du_high_executor_config::ue_executor_config::map_policy::per_cell;
-  cfg.ue_executors.max_nof_strands   = 1;
-  cfg.ue_executors.ctrl_queue_size   = task_worker_queue_size;
-  cfg.ue_executors.pdu_queue_size    = du_hi.ue_data_tasks_queue_size;
-  cfg.ue_executors.pool_executor     = non_rt_medium_prio_exec;
-  cfg.ctrl_executors.task_queue_size = task_worker_queue_size;
-  cfg.ctrl_executors.pool_executor   = non_rt_hi_prio_exec;
-  cfg.is_rt_mode_enabled             = du_hi.is_rt_mode_enabled;
-  cfg.trace_exec_tasks               = du_hi.executor_tracing_enable;
-  cfg.metrics_period                 = du_hi.metrics_period;
+  pool_desc.nof_cells                  = du_hi.nof_cells;
+  pool_desc.default_task_queue_size    = task_worker_queue_size;
+  pool_desc.pool_executors             = {rt_hi_prio_exec};
+  cfg.cell_executors                   = pool_desc;
+  cfg.ue_executors.policy              = srs_du::du_high_executor_config::ue_executor_config::map_policy::per_cell;
+  cfg.ue_executors.max_nof_strands     = 1;
+  cfg.ue_executors.ctrl_queue_size     = task_worker_queue_size;
+  cfg.ue_executors.pdu_queue_size      = du_hi.ue_data_tasks_queue_size;
+  cfg.ue_executors.pool_executor       = non_rt_medium_prio_exec;
+  cfg.ue_executors.f1u_reader_executor = non_rt_low_prio_exec;
+  cfg.ctrl_executors.task_queue_size   = task_worker_queue_size;
+  cfg.ctrl_executors.pool_executor     = non_rt_hi_prio_exec;
+  cfg.is_rt_mode_enabled               = du_hi.is_rt_mode_enabled;
+  cfg.trace_exec_tasks                 = du_hi.executor_tracing_enable;
+  cfg.metrics_period                   = du_hi.metrics_period;
 
   du_high_exec_mapper = create_du_high_executor_mapper(cfg);
 }

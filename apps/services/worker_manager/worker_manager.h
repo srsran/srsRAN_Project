@@ -104,13 +104,6 @@ struct worker_manager {
   cu_cp_pcap_executor_mapper& get_cu_cp_pcap_executors() { return *pcap_exec_mapper; }
   cu_up_pcap_executor_mapper& get_cu_up_pcap_executors() { return *pcap_exec_mapper; }
 
-  /// Get executor based on the name.
-  task_executor* find_executor(const std::string& name) const
-  {
-    auto it = exec_mng.executors().find(name);
-    return it != exec_mng.executors().end() ? it->second : nullptr;
-  }
-
 private:
   /// Total number of workers for the general task worker pool. Necessary for providing maximum concurrency level to
   /// the physical layer.

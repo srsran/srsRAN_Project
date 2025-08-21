@@ -93,6 +93,12 @@ public:
 
   /// \brief Retrieve E2 control executor.
   virtual task_executor& du_e2_executor() = 0;
+
+  /// \brief Retrieve executor used for reading messages from the F1-C or E2 SCTP sockets.
+  virtual task_executor& sctp_gw_reader() = 0;
+
+  /// \brief Retrieve executor used for reading messages from the F1-U UDP sockets.
+  virtual task_executor& udp_gw_reader() = 0;
 };
 
 /// Configuration of DU-high executor mapper.
@@ -136,6 +142,8 @@ struct du_high_executor_config {
     unsigned pdu_queue_size;
     /// Executor of a thread pool to which strands will point to.
     task_executor* pool_executor;
+    /// Executor used to read the F1-U UDP socket.
+    task_executor* f1u_reader_executor;
   };
   /// \brief Configuration of strand for control-plane tasks of the DU-high.
   struct control_executor_config {
