@@ -115,6 +115,7 @@ worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
     affinity_mng.emplace_back(cell_affinities);
   }
 
+  // Create the main worker pool for the application.
   create_main_worker_pool(worker_cfg);
 
   add_low_prio_strands(worker_cfg);
@@ -124,25 +125,29 @@ worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
   }
 
   if (worker_cfg.cu_cp_cfg) {
-    create_cu_cp_executors(worker_cfg.cu_cp_cfg.value(), *worker_cfg.app_timers);
+    create_cu_cp_executors(*worker_cfg.cu_cp_cfg, *worker_cfg.app_timers);
   }
 
   if (worker_cfg.cu_up_cfg) {
-    create_cu_up_executors(worker_cfg.cu_up_cfg.value(), *worker_cfg.app_timers);
+    create_cu_up_executors(*worker_cfg.cu_up_cfg, *worker_cfg.app_timers);
   }
 
   if (worker_cfg.du_hi_cfg) {
-    create_du_executors(
-        worker_cfg.du_hi_cfg.value(), worker_cfg.du_low_cfg, worker_cfg.fapi_cfg, *worker_cfg.app_timers);
-  } else if (worker_cfg.du_low_cfg) {
-    create_du_crit_path_prio_executors(*worker_cfg.du_low_cfg);
+    create_du_high_executors(*worker_cfg.du_hi_cfg);
+  }
+
+  if (worker_cfg.fapi_cfg) {
+    create_fapi_executors(*worker_cfg.fapi_cfg);
+  }
+
+  if (worker_cfg.du_low_cfg) {
+    create_du_low_executors(*worker_cfg.du_low_cfg);
   }
 
   if (worker_cfg.ru_ofh_cfg) {
-    ru_timing_mask         = worker_cfg.ru_ofh_cfg.value().ru_timing_cpu;
-    ru_txrx_affinity_masks = worker_cfg.ru_ofh_cfg.value().txrx_affinities;
-    create_ofh_executors(worker_cfg.ru_ofh_cfg.value());
+    create_ofh_executors(*worker_cfg.ru_ofh_cfg);
   }
+
   if (worker_cfg.ru_sdr_cfg) {
     create_lower_phy_executors(worker_cfg.ru_sdr_cfg.value());
   }
@@ -220,52 +225,6 @@ std::vector<execution_config_helper::single_worker> worker_manager::create_fapi_
   return workers;
 }
 
-/// Description of a dedicated single thread worker used for a single DU-high cell tasks (e.g. scheduling, RLC DL).
-static execution_config_helper::priority_multiqueue_worker
-create_dedicated_du_hi_slot_worker_desc(unsigned                                      cell_index,
-                                        bool                                          rt_mode,
-                                        const std::vector<os_sched_affinity_manager>& affinity_mng)
-{
-  using namespace execution_config_helper;
-
-  const std::string cell_id_str = std::to_string(cell_index);
-
-  std::string worker_name    = "du_cell#" + std::to_string(cell_index);
-  std::string cell_exec_name = "cell_exec#" + std::to_string(cell_index);
-  std::string slot_exec_name = "slot_exec#" + std::to_string(cell_index);
-
-  // Description of a single worker.
-  return priority_multiqueue_worker{worker_name,
-                                    {{slot_exec_name, concurrent_queue_policy::lockfree_spsc, 4},
-                                     {cell_exec_name, concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
-                                    std::chrono::microseconds{10},
-                                    rt_mode ? os_thread_realtime_priority::max() - 2
-                                            : os_thread_realtime_priority::no_realtime()};
-}
-
-static srs_du::du_high_executor_config::dedicated_cell_worker_list
-create_dedicated_du_hi_cell_executors(task_execution_manager&                       exec_mng,
-                                      unsigned                                      nof_cells,
-                                      bool                                          rt_mode,
-                                      const std::vector<os_sched_affinity_manager>& affinity_mng)
-{
-  const auto& exec_map = exec_mng.executors();
-
-  srs_du::du_high_executor_config::dedicated_cell_worker_list cell_workers;
-  cell_workers.reserve(nof_cells);
-
-  // Add one worker per cell.
-  for (unsigned cell_idx = 0; cell_idx != nof_cells; ++cell_idx) {
-    auto worker_desc = create_dedicated_du_hi_slot_worker_desc(cell_idx, rt_mode, affinity_mng);
-    if (!exec_mng.add_execution_context(create_execution_context(worker_desc))) {
-      report_fatal_error("Failed to instantiate {} execution context", worker_desc.name);
-    }
-    cell_workers.push_back(srs_du::du_high_executor_config::dedicated_cell_worker{
-        exec_map.at("slot_exec#" + std::to_string(cell_idx)), exec_map.at("cell_exec#" + std::to_string(cell_idx))});
-  }
-  return cell_workers;
-}
-
 void worker_manager::create_cu_cp_executors(const worker_manager_config::cu_cp_config& config, timer_manager& timers)
 {
   cu_cp_exec_mapper = srs_cu_cp::make_cu_cp_executor_mapper(
@@ -291,38 +250,15 @@ void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_c
                                                                                     config.metrics_period});
 }
 
-void worker_manager::create_du_executors(const worker_manager_config::du_high_config&        du_hi,
-                                         std::optional<worker_manager_config::du_low_config> du_low,
-                                         std::optional<worker_manager_config::fapi_config>   fapi_cfg,
-                                         timer_manager&                                      timer)
+void worker_manager::create_du_high_executors(const worker_manager_config::du_high_config& du_hi)
 {
-  using namespace execution_config_helper;
-
-  // FAPI message buffering executors.
-  if (fapi_cfg) {
-    fapi_exec.resize(fapi_cfg.value().nof_cells);
-    std::fill(fapi_exec.begin(), fapi_exec.end(), nullptr);
-    // Create workers.
-    auto workers = create_fapi_workers(fapi_cfg.value().nof_cells);
-
-    for (unsigned cell_id = 0; cell_id != fapi_cfg.value().nof_cells; ++cell_id) {
-      // Create executor and associated workers.
-      if (!exec_mng.add_execution_context(create_execution_context(workers[cell_id]))) {
-        report_fatal_error("Failed to instantiate {} execution context", workers[cell_id].name);
-      }
-
-      // Associate executor.
-      fapi_exec[cell_id] = exec_mng.executors().at(workers[cell_id].queue.name);
-    }
-  }
-
-  // Create L1 and L2 critical path executors.
-  auto crit_path_exec_desc = du_low ? create_du_crit_path_prio_executors(*du_low)
-                                    : create_du_crit_path_prio_executors(du_hi.nof_cells, du_hi.is_rt_mode_enabled);
-
-  // Instantiate DU-high executor mapper.
   srs_du::du_high_executor_config cfg;
-  cfg.cell_executors                 = crit_path_exec_desc.l2_execs;
+
+  srs_du::du_high_executor_config::strand_based_worker_pool pool_desc;
+  pool_desc.nof_cells                = du_hi.nof_cells;
+  pool_desc.default_task_queue_size  = task_worker_queue_size;
+  pool_desc.pool_executors           = {rt_hi_prio_exec};
+  cfg.cell_executors                 = pool_desc;
   cfg.ue_executors.policy            = srs_du::du_high_executor_config::ue_executor_config::map_policy::per_cell;
   cfg.ue_executors.max_nof_strands   = 1;
   cfg.ue_executors.ctrl_queue_size   = task_worker_queue_size;
@@ -335,6 +271,26 @@ void worker_manager::create_du_executors(const worker_manager_config::du_high_co
   cfg.metrics_period                 = du_hi.metrics_period;
 
   du_high_exec_mapper = create_du_high_executor_mapper(cfg);
+}
+
+void worker_manager::create_fapi_executors(const worker_manager_config::fapi_config& fapi_cfg)
+{
+  // FAPI message buffering executors.
+  // TODO: Use executor mapper and main pool.
+  fapi_exec.resize(fapi_cfg.nof_cells);
+  std::fill(fapi_exec.begin(), fapi_exec.end(), nullptr);
+  // Create workers.
+  auto workers = create_fapi_workers(fapi_cfg.nof_cells);
+
+  for (unsigned cell_id = 0; cell_id != fapi_cfg.nof_cells; ++cell_id) {
+    // Create executor and associated workers.
+    if (!exec_mng.add_execution_context(create_execution_context(workers[cell_id]))) {
+      report_fatal_error("Failed to instantiate {} execution context", workers[cell_id].name);
+    }
+
+    // Associate executor.
+    fapi_exec[cell_id] = exec_mng.executors().at(workers[cell_id].queue.name);
+  }
 }
 
 /// Makes an estimation of the needed number of threads for the application.
@@ -445,30 +401,14 @@ void worker_manager::add_low_prio_strands(const worker_manager_config& worker_cf
   executor_decorators_exec.push_back(std::move(metric_strand));
 }
 
-worker_manager::du_crit_path_executor_desc worker_manager::create_du_crit_path_prio_executors(unsigned nof_cells,
-                                                                                              bool     rt_mode)
+void worker_manager::create_du_low_executors(const worker_manager_config::du_low_config& du_low)
 {
   using namespace execution_config_helper;
-
-  du_crit_path_executor_desc desc;
-  // Need to create dedicated DU-high L2 threads as there is no DU-low.
-  desc.l2_execs = create_dedicated_du_hi_cell_executors(exec_mng, nof_cells, rt_mode, affinity_mng);
-
-  return desc;
-}
-
-worker_manager::du_crit_path_executor_desc
-worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::du_low_config& du_low)
-{
-  using namespace execution_config_helper;
-
-  du_crit_path_executor_desc desc;
 
   // DU low executor mapper configuration.
   srs_du::du_low_executor_mapper_config du_low_exec_mapper_config;
 
-  const unsigned nof_cells = du_low.cell_nof_dl_antennas.size();
-  const bool     rt_mode   = !du_low.is_blocking_mode_active;
+  const bool rt_mode = !du_low.is_blocking_mode_active;
 
   // Instantiate workers for the DU-low.
   if (not rt_mode) {
@@ -486,9 +426,6 @@ worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::
     // Fill the task executors.
     du_low_exec_mapper_config.executors =
         srs_du::du_low_executor_mapper_single_exec_config{.common_executor = {phy_exec, nof_workers_general_pool}};
-
-    // Need to create dedicated DU-high L2 threads as there is only one DU-low thread.
-    desc.l2_execs = create_dedicated_du_hi_cell_executors(exec_mng, nof_cells, rt_mode, affinity_mng);
 
   } else {
     // RF case.
@@ -509,23 +446,18 @@ worker_manager::create_du_crit_path_prio_executors(const worker_manager_config::
                                                        .sequential_executor = *metrics_exec,
                                                        .logger = app_helpers::fetch_logger_metrics_log_channel()});
     }
-
-    srs_du::du_high_executor_config::strand_based_worker_pool pool_desc;
-    pool_desc.nof_cells               = nof_cells;
-    pool_desc.default_task_queue_size = task_worker_queue_size;
-    pool_desc.pool_executors          = {rt_hi_prio_exec};
-    desc.l2_execs                     = pool_desc;
   }
 
   // Create DU low executor mapper.
   du_low_exec_mapper = srs_du::create_du_low_executor_mapper(du_low_exec_mapper_config);
-
-  return desc;
 }
 
 void worker_manager::create_ofh_executors(const worker_manager_config::ru_ofh_config& config)
 {
   using namespace execution_config_helper;
+
+  ru_timing_mask         = config.ru_timing_cpu;
+  ru_txrx_affinity_masks = config.txrx_affinities;
 
   ru_ofh_executor_mapper_config exec_mapper_config;
 

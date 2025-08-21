@@ -119,12 +119,6 @@ private:
   /// Real-time executor.
   task_executor* rt_hi_prio_exec = nullptr;
 
-  struct du_crit_path_executor_desc {
-    // Description of L2 executors for the DU-high.
-    srs_du::du_high_executor_config::cell_executor_config l2_execs;
-    // Description of L1 executors for DU-low.
-    // TODO
-  };
   std::unique_ptr<srs_du::du_high_executor_mapper>  du_high_exec_mapper;
   std::unique_ptr<srs_du::du_low_executor_mapper>   du_low_exec_mapper;
   std::unique_ptr<srs_cu_cp::cu_cp_executor_mapper> cu_cp_exec_mapper;
@@ -184,15 +178,14 @@ private:
   /// Helper method that creates the CU-UP executors.
   void create_cu_up_executors(const worker_manager_config::cu_up_config& config, timer_manager& timers);
 
-  /// Helper method that creates the Distributed Unit executors.
-  void create_du_executors(const worker_manager_config::du_high_config&        du_hi,
-                           std::optional<worker_manager_config::du_low_config> du_low,
-                           std::optional<worker_manager_config::fapi_config>   fapi_cfg,
-                           timer_manager&                                      timers);
+  /// Helper method that creates the DU-high executors.
+  void create_du_high_executors(const worker_manager_config::du_high_config& config);
+
+  /// Helper method that creates the FAPI executors.
+  void create_fapi_executors(const worker_manager_config::fapi_config& config);
 
   /// Helper method that creates the low Distributed Unit executors.
-  du_crit_path_executor_desc create_du_crit_path_prio_executors(unsigned nof_cells, bool rt_mode);
-  du_crit_path_executor_desc create_du_crit_path_prio_executors(const worker_manager_config::du_low_config& du_low);
+  void create_du_low_executors(const worker_manager_config::du_low_config& du_low);
 
   /// Helper method that creates the Radio Unit dummy executors.
   void create_ru_dummy_executors();
