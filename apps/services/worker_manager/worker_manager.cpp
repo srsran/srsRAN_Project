@@ -245,7 +245,6 @@ void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_c
                                                                                     *non_rt_medium_prio_exec,
                                                                                     *non_rt_low_prio_exec,
                                                                                     *non_rt_hi_prio_exec,
-                                                                                    *non_rt_low_prio_exec,
                                                                                     config.dedicated_io_ul_strand,
                                                                                     &timers,
                                                                                     config.executor_tracing_enable,

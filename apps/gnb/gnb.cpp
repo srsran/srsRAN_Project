@@ -417,13 +417,13 @@ int main(int argc, char** argv)
   std::unique_ptr<e2_connection_client> e2_gw_cu_cp = create_e2_gateway_client(
       generate_e2_client_gateway_config(o_cu_cp_app_unit->get_o_cu_cp_unit_config().e2_cfg.base_config,
                                         *epoll_broker,
-                                        *workers.non_rt_hi_prio_exec,
+                                        workers.get_cu_cp_executor_mapper().e2_rx_executor(),
                                         *cu_cp_dlt_pcaps.e2ap,
                                         E2_CP_PPID));
   std::unique_ptr<e2_connection_client> e2_gw_cu_up = create_e2_gateway_client(
       generate_e2_client_gateway_config(o_cu_up_app_unit->get_o_cu_up_unit_config().e2_cfg.base_config,
                                         *epoll_broker,
-                                        workers.get_cu_up_executor_mapper().io_sctp_rx_executor(),
+                                        workers.get_cu_up_executor_mapper().e2_rx_executor(),
                                         *cu_up_dlt_pcaps.e2ap,
                                         E2_UP_PPID));
 

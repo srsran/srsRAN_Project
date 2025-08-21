@@ -65,13 +65,17 @@ public:
   /// \brief Gets task executor that is used by the E2 CU-UP agent.
   virtual task_executor& e2_executor() = 0;
 
-  virtual task_executor& n3_executor() = 0;
+  /// \brief Gets task executor used to read N3 data from the IO. This executor allows parallelization.
+  virtual task_executor& n3_rx_executor() = 0;
 
-  /// \brief Gets task executor used to read E1/E2 data from the IO. This executor allows parallelization.
-  virtual task_executor& io_sctp_rx_executor() = 0;
+  /// \brief Gets task executor used to read E1 data from the IO. This executor allows parallelization.
+  virtual task_executor& e1_rx_executor() = 0;
 
-  /// \brief Gets task executor used to read F1-U and N3 packets from the IO. This executor allows parallelization.
-  virtual task_executor& io_udp_rx_executor() = 0;
+  /// \brief Gets task executor used to read E2 data from the IO. This executor allows parallelization.
+  virtual task_executor& e2_rx_executor() = 0;
+
+  /// \brief Gets task executor used to read F1-U data from the IO. This executor allows parallelization.
+  virtual task_executor& f1u_rx_executor() = 0;
 
   /// \brief Instantiate executors for a created UE in the CU-UP.
   virtual std::unique_ptr<ue_executor_mapper> create_ue_executor_mapper() = 0;
@@ -100,8 +104,6 @@ struct strand_based_executor_config {
   task_executor& low_prio_executor;
   /// \brief Executor used to read SCTP messages from the E1/E2 sockets.
   task_executor& sctp_io_reader_executor;
-  /// \brief Executor used to read UDP messages from the F1-U/N3 sockets.
-  task_executor& udp_io_reader_executor;
   /// \brief Whether to instantiate a dedicated strand for sending UL PDUs to the IO.
   bool dedicated_io_strand;
   /// \brief Timers used by the application.

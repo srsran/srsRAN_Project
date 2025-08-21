@@ -40,7 +40,6 @@ struct worker_manager {
   void stop();
 
   std::vector<task_executor*> fapi_exec;
-  task_executor*              non_rt_low_prio_exec    = nullptr;
   task_executor*              non_rt_medium_prio_exec = nullptr;
   task_executor*              non_rt_hi_prio_exec     = nullptr;
   task_executor*              split6_exec             = nullptr;
@@ -98,8 +97,9 @@ private:
   /// the physical layer.
   unsigned nof_workers_general_pool = 0;
 
-  /// Real-time executor.
-  task_executor* rt_hi_prio_exec = nullptr;
+  /// Instantiated raw executors.
+  task_executor* non_rt_low_prio_exec = nullptr;
+  task_executor* rt_hi_prio_exec      = nullptr;
 
   std::unique_ptr<srs_du::du_high_executor_mapper>  du_high_exec_mapper;
   std::unique_ptr<srs_du::du_low_executor_mapper>   du_low_exec_mapper;

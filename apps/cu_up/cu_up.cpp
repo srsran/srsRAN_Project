@@ -306,7 +306,7 @@ int main(int argc, char** argv)
         create_udp_gtpu_gateway(cu_f1u_gw_config,
                                 *epoll_broker,
                                 workers.get_cu_up_executor_mapper().io_ul_executor(),
-                                *workers.non_rt_low_prio_exec);
+                                workers.get_cu_up_executor_mapper().f1u_rx_executor());
     if (not sock_cfg.five_qi.has_value()) {
       f1u_gw_maps.default_gws.push_back(std::move(cu_f1u_gw));
     } else {
@@ -327,7 +327,7 @@ int main(int argc, char** argv)
   e1_sctp.bind_address    = cu_up_cfg.e1ap_cfg.bind_address;
   // > Create E1 gateway
   std::unique_ptr<srs_cu_up::e1_connection_client> e1_gw = create_e1_gateway_client(e1_cu_up_sctp_gateway_config{
-      e1_sctp, *epoll_broker, workers.get_cu_up_executor_mapper().io_sctp_rx_executor(), *cu_up_dlt_pcaps.e1ap});
+      e1_sctp, *epoll_broker, workers.get_cu_up_executor_mapper().e1_rx_executor(), *cu_up_dlt_pcaps.e1ap});
 
   // Create time source that ticks the timers.
   std::optional<io_timer_source> time_source(
@@ -337,7 +337,7 @@ int main(int argc, char** argv)
   std::unique_ptr<e2_connection_client> e2_gw_cu_up = create_e2_gateway_client(
       generate_e2_client_gateway_config(o_cu_up_app_unit->get_o_cu_up_unit_config().e2_cfg.base_config,
                                         *epoll_broker,
-                                        workers.get_cu_up_executor_mapper().io_sctp_rx_executor(),
+                                        workers.get_cu_up_executor_mapper().e2_rx_executor(),
                                         *cu_up_dlt_pcaps.e2ap,
                                         E2_UP_PPID));
 

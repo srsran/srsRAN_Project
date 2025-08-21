@@ -261,7 +261,7 @@ int main(int argc, char** argv)
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
   // Register the commands.
-  app_services::cmdline_command_dispatcher command_parser(*epoll_broker, *workers.non_rt_low_prio_exec, {});
+  app_services::cmdline_command_dispatcher command_parser(*epoll_broker, *workers.non_rt_medium_prio_exec, {});
 
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
 

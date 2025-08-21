@@ -64,11 +64,13 @@ public:
 
   task_executor& e2_executor() override { return *test_executor; }
 
-  task_executor& n3_executor() override { return *test_executor; }
+  task_executor& n3_rx_executor() override { return *test_executor; }
 
-  task_executor& io_sctp_rx_executor() override { return *test_executor; }
+  task_executor& e1_rx_executor() override { return *test_executor; }
 
-  task_executor& io_udp_rx_executor() override { return *test_executor; }
+  task_executor& e2_rx_executor() override { return *test_executor; }
+
+  task_executor& f1u_rx_executor() override { return *test_executor; }
 
   std::unique_ptr<srs_cu_up::ue_executor_mapper> create_ue_executor_mapper() override
   {

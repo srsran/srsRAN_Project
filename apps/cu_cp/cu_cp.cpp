@@ -271,7 +271,7 @@ int main(int argc, char** argv)
   f1c_sctp_cfg.bind_port                   = F1AP_PORT;
   f1c_sctp_cfg.ppid                        = F1AP_PPID;
   f1c_cu_sctp_gateway_config f1c_server_cfg(
-      {f1c_sctp_cfg, *epoll_broker, *workers.non_rt_hi_prio_exec, *cu_cp_dlt_pcaps.f1ap});
+      {f1c_sctp_cfg, *epoll_broker, workers.get_cu_cp_executor_mapper().f1c_rx_executor(), *cu_cp_dlt_pcaps.f1ap});
   std::unique_ptr<srs_cu_cp::f1c_connection_server> cu_f1c_gw = srsran::create_f1c_gateway_server(f1c_server_cfg);
 
   // Instantiate E1 GW
@@ -282,8 +282,8 @@ int main(int argc, char** argv)
   e1_sctp_cfg.bind_port    = E1AP_PORT;
   e1_sctp_cfg.ppid         = E1AP_PPID;
   // > Create E1 gateway
-  std::unique_ptr<srs_cu_cp::e1_connection_server> e1_gw = create_e1_gateway_server(
-      e1_cu_cp_sctp_gateway_config{e1_sctp_cfg, *epoll_broker, *workers.non_rt_hi_prio_exec, *cu_cp_dlt_pcaps.e1ap});
+  std::unique_ptr<srs_cu_cp::e1_connection_server> e1_gw = create_e1_gateway_server(e1_cu_cp_sctp_gateway_config{
+      e1_sctp_cfg, *epoll_broker, workers.get_cu_cp_executor_mapper().e1_rx_executor(), *cu_cp_dlt_pcaps.e1ap});
 
   // Create time source that ticks the timers.
   std::optional<io_timer_source> time_source(
@@ -293,7 +293,7 @@ int main(int argc, char** argv)
   std::unique_ptr<e2_connection_client> e2_gw_cu_cp = create_e2_gateway_client(
       generate_e2_client_gateway_config(o_cu_cp_app_unit->get_o_cu_cp_unit_config().e2_cfg.base_config,
                                         *epoll_broker,
-                                        *workers.non_rt_hi_prio_exec,
+                                        workers.get_cu_cp_executor_mapper().e2_rx_executor(),
                                         *cu_cp_dlt_pcaps.e2ap,
                                         E2_CP_PPID));
 

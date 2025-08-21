@@ -329,7 +329,7 @@ int main(int argc, char** argv)
   f1c_sctp_cfg.bind_port                   = F1AP_PORT;
   f1c_sctp_cfg.ppid                        = F1AP_PPID;
   f1c_cu_sctp_gateway_config f1c_server_cfg(
-      {f1c_sctp_cfg, *epoll_broker, *workers.non_rt_hi_prio_exec, *cu_cp_dlt_pcaps.f1ap});
+      {f1c_sctp_cfg, *epoll_broker, workers.get_cu_cp_executor_mapper().f1c_rx_executor(), *cu_cp_dlt_pcaps.f1ap});
   std::unique_ptr<srs_cu_cp::f1c_connection_server> cu_f1c_gw = srsran::create_f1c_gateway_server(f1c_server_cfg);
 
   // Create F1-U GW.
@@ -353,7 +353,7 @@ int main(int argc, char** argv)
         create_udp_gtpu_gateway(cu_f1u_gw_config,
                                 *epoll_broker,
                                 workers.get_cu_up_executor_mapper().io_ul_executor(),
-                                *workers.non_rt_low_prio_exec);
+                                workers.get_cu_up_executor_mapper().f1u_rx_executor());
     if (not sock_cfg.five_qi.has_value()) {
       f1u_gw_maps.default_gws.push_back(std::move(cu_f1u_gw));
     } else {
@@ -375,13 +375,13 @@ int main(int argc, char** argv)
   std::unique_ptr<e2_connection_client> e2_gw_cu_cp = create_e2_gateway_client(
       generate_e2_client_gateway_config(o_cu_cp_app_unit->get_o_cu_cp_unit_config().e2_cfg.base_config,
                                         *epoll_broker,
-                                        *workers.non_rt_hi_prio_exec,
+                                        workers.get_cu_cp_executor_mapper().e2_rx_executor(),
                                         *cu_cp_dlt_pcaps.e2ap,
                                         E2_CP_PPID));
   std::unique_ptr<e2_connection_client> e2_gw_cu_up = create_e2_gateway_client(
       generate_e2_client_gateway_config(o_cu_up_app_unit->get_o_cu_up_unit_config().e2_cfg.base_config,
                                         *epoll_broker,
-                                        workers.get_cu_up_executor_mapper().io_sctp_rx_executor(),
+                                        workers.get_cu_up_executor_mapper().e2_rx_executor(),
                                         *cu_up_dlt_pcaps.e2ap,
                                         E2_UP_PPID));
 

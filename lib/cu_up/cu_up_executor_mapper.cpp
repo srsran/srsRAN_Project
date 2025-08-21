@@ -275,8 +275,6 @@ class strand_based_cu_up_executor_mapper final : public cu_up_executor_mapper
 {
 public:
   strand_based_cu_up_executor_mapper(const strand_based_executor_config& config) :
-    e1_io_reader_exec(config.sctp_io_reader_executor),
-    gtpu_io_reader_exec(config.udp_io_reader_executor),
     cu_up_strand(&config.medium_prio_executor,
                  std::array<concurrent_queue_params, 2>{
                      {{concurrent_queue_policy::lockfree_mpmc, config.default_task_queue_size},
@@ -291,6 +289,9 @@ public:
     n3_exec(
         decorator
             .decorate(config.low_prio_executor, false, config.tracing_enabled, std::nullopt, std::nullopt, "n3_exec")),
+    f1u_exec(config.low_prio_executor),
+    e1_exec(config.sctp_io_reader_executor),
+    e2_exec(config.sctp_io_reader_executor),
     cu_up_exec_pool(create_strands(config))
   {
   }
@@ -301,11 +302,13 @@ public:
 
   task_executor& e2_executor() override { return ctrl_exec; }
 
-  task_executor& n3_executor() override { return n3_exec; }
+  task_executor& n3_rx_executor() override { return n3_exec; }
 
-  task_executor& io_sctp_rx_executor() override { return e1_io_reader_exec; }
+  task_executor& e1_rx_executor() override { return e1_exec; }
 
-  task_executor& io_udp_rx_executor() override { return gtpu_io_reader_exec; }
+  task_executor& e2_rx_executor() override { return e2_exec; }
+
+  task_executor& f1u_rx_executor() override { return f1u_exec; }
 
   std::unique_ptr<ue_executor_mapper> create_ue_executor_mapper() override
   {
@@ -361,9 +364,6 @@ private:
   // Tracing helpers.
   executor_decorator decorator = {};
 
-  task_executor& e1_io_reader_exec;
-  task_executor& gtpu_io_reader_exec;
-
   // Base strand that sequentializes accesses to the worker pool executor.
   cu_up_strand_type cu_up_strand;
   task_executor&    ctrl_exec; // Executor associated with CU-UP control tasks of the CU-UP strand.
@@ -372,7 +372,11 @@ private:
   std::variant<inline_task_executor, io_dedicated_strand_type> io_ul_exec;
   task_executor*                                               io_ul_exec_ptr;
 
-  task_executor& n3_exec; // Executor reception of N3 packets from io_broker.
+  // Executors for reception of data from the IO.
+  task_executor& n3_exec;
+  task_executor& f1u_exec;
+  task_executor& e1_exec;
+  task_executor& e2_exec;
 
   // UE strands and respective executors.
   std::vector<std::unique_ptr<ue_strand_type>> ue_strands;
