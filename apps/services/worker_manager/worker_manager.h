@@ -90,7 +90,7 @@ struct worker_manager {
   cu_up_pcap_executor_mapper& get_cu_up_pcap_executors() { return *pcap_exec_mapper; }
 
   task_executor& get_cmd_line_executor() const { return *non_rt_medium_prio_exec; }
-  task_executor& get_timer_source_executor() const { return *non_rt_hi_prio_exec; }
+  task_executor& get_timer_source_executor() const { return *timer_source_exec; }
   task_executor& get_metrics_executor() const { return *metrics_exec; }
 
 private:
@@ -111,6 +111,9 @@ private:
 
   /// Serialized Executor used for metrics.
   task_executor* metrics_exec = nullptr;
+
+  /// Serialized Executor used for timer ticking.
+  task_executor* timer_source_exec = nullptr;
 
   std::unique_ptr<gnb_pcap_executor_mapper> pcap_exec_mapper;
 
@@ -154,7 +157,7 @@ private:
                           span<const os_sched_affinity_bitmask> cpu_masks = {},
                           concurrent_queue_policy               queue_policy = concurrent_queue_policy::locking_mpmc);
 
-  void add_low_prio_strands(const worker_manager_config& config);
+  void create_support_strands(const worker_manager_config& config);
 
   void add_pcap_strands(const worker_manager_config::pcap_config& config);
 

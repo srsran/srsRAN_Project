@@ -118,7 +118,7 @@ worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
   // Create the main worker pool for the application.
   create_main_worker_pool(worker_cfg);
 
-  add_low_prio_strands(worker_cfg);
+  create_support_strands(worker_cfg);
 
   if (worker_cfg.is_split6_enabled) {
     create_split6_executors();
@@ -393,7 +393,7 @@ void worker_manager::create_main_worker_pool(const worker_manager_config& worker
                                             worker_pool_prio.native());
 }
 
-void worker_manager::add_low_prio_strands(const worker_manager_config& worker_cfg)
+void worker_manager::create_support_strands(const worker_manager_config& worker_cfg)
 {
   using namespace execution_config_helper;
 
@@ -405,6 +405,12 @@ void worker_manager::add_low_prio_strands(const worker_manager_config& worker_cf
       make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(non_rt_medium_prio_exec, task_worker_queue_size);
   metrics_exec = metric_strand.get();
   executor_decorators_exec.push_back(std::move(metric_strand));
+
+  // Timer source strand configuration and instantiation.
+  auto timer_source_strand =
+      make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(non_rt_hi_prio_exec, task_worker_queue_size);
+  timer_source_exec = timer_source_strand.get();
+  executor_decorators_exec.push_back(std::move(timer_source_strand));
 }
 
 void worker_manager::create_du_low_executors(const worker_manager_config::du_low_config& du_low)

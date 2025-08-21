@@ -17,11 +17,7 @@
 
 using namespace srsran;
 
-io_timer_source::io_timer_source(timer_manager&            tick_sink_,
-                                 io_broker&                broker,
-                                 task_executor&            executor,
-                                 std::chrono::milliseconds tick_period_) :
-  tick_period(tick_period_), tick_sink(tick_sink_), logger(srslog::fetch_basic_logger("IO-EPOLL"))
+static unique_fd create_timer_fd(std::chrono::milliseconds tick_period)
 {
   using namespace std::chrono;
 
@@ -34,16 +30,34 @@ io_timer_source::io_timer_source(timer_manager&            tick_sink_,
   ::itimerspec timerspec = {period, period};
   ::timerfd_settime(timer_fd.value(), 0, &timerspec, nullptr);
 
-  io_sub = broker.register_fd(std::move(timer_fd), executor, [this]() { read_time(); });
-  report_fatal_error_if_not(io_sub.value() > 0, "Failed to create timer source");
+  return timer_fd;
+}
+
+io_timer_source::io_timer_source(timer_manager&            tick_sink_,
+                                 io_broker&                broker_,
+                                 task_executor&            executor,
+                                 std::chrono::milliseconds tick_period_,
+                                 bool                      auto_start) :
+  tick_period(tick_period_),
+  tick_sink(tick_sink_),
+  broker(broker_),
+  tick_exec(executor),
+  logger(srslog::fetch_basic_logger("IO-EPOLL"))
+{
+  if (auto_start) {
+    create_subscriber();
+  }
 }
 
 io_timer_source::~io_timer_source()
 {
   const std::chrono::milliseconds max_wait_time(500);
+
+  request_stop();
+
+  // Block waiting for the last read_time() to finish.
   for (std::chrono::milliseconds elapsed_time(0); io_sub.registered() and elapsed_time < max_wait_time;
        elapsed_time += tick_period) {
-    stop_requested.store(true, std::memory_order_relaxed);
     std::this_thread::sleep_for(tick_period);
   }
   if (io_sub.registered()) {
@@ -51,10 +65,45 @@ io_timer_source::~io_timer_source()
   }
 }
 
+void io_timer_source::resume()
+{
+  // Cancel any pending stop command.
+  pending_stop_cmd.store(false, std::memory_order_release);
+
+  // Dispatch task to start ticking.
+  while (not tick_exec.defer([this]() { create_subscriber(); })) {
+    std::this_thread::sleep_for(std::chrono::milliseconds{1});
+  }
+}
+
+void io_timer_source::request_stop()
+{
+  pending_stop_cmd.store(true, std::memory_order_release);
+}
+
+void io_timer_source::create_subscriber()
+{
+  // Note: Called inside the ticking executor, except for in the ctor.
+
+  if (io_sub.registered()) {
+    // Someone already created the subscriber.
+    return;
+  }
+  if (pending_stop_cmd.exchange(false, std::memory_order_acq_rel)) {
+    // If a stop command was pending, we should not create the subscriber.
+    return;
+  }
+  logger.info("Starting IO timer ticking source...");
+  io_sub = broker.register_fd(create_timer_fd(tick_period), tick_exec, [this]() { read_time(); });
+  report_fatal_error_if_not(io_sub.value() > 0, "Failed to create timer source");
+}
+
 void io_timer_source::read_time()
 {
-  if (stop_requested.load(std::memory_order_relaxed)) {
-    // Request to stop the timer source.
+  // Note: Called inside the ticking executor.
+
+  if (pending_stop_cmd.exchange(false, std::memory_order_relaxed)) {
+    // Stop the timer source.
     logger.info("Stopping timer source");
     io_sub.reset();
     return;
