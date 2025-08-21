@@ -49,22 +49,6 @@ io_timer_source::io_timer_source(timer_manager&            tick_sink_,
   }
 }
 
-io_timer_source::~io_timer_source()
-{
-  const std::chrono::milliseconds max_wait_time(500);
-
-  request_stop();
-
-  // Block waiting for the last read_time() to finish.
-  for (std::chrono::milliseconds elapsed_time(0); io_sub.registered() and elapsed_time < max_wait_time;
-       elapsed_time += tick_period) {
-    std::this_thread::sleep_for(tick_period);
-  }
-  if (io_sub.registered()) {
-    logger.error("Timer source did not stop within {} ms. Forcing its shutdown...", max_wait_time.count());
-  }
-}
-
 void io_timer_source::resume()
 {
   // Cancel any pending stop command.
@@ -79,6 +63,22 @@ void io_timer_source::resume()
 void io_timer_source::request_stop()
 {
   pending_stop_cmd.store(true, std::memory_order_release);
+}
+
+void io_timer_source::wait_for_stop()
+{
+  const std::chrono::milliseconds max_wait_time(500);
+
+  request_stop();
+
+  // Block waiting for the last read_time() to finish.
+  for (std::chrono::milliseconds elapsed_time(0); io_sub.registered() and elapsed_time < max_wait_time;
+       elapsed_time += tick_period) {
+    std::this_thread::sleep_for(tick_period);
+  }
+  if (io_sub.registered()) {
+    logger.error("Timer source did not stop within {} ms. Forcing its shutdown...", max_wait_time.count());
+  }
 }
 
 void io_timer_source::create_subscriber()

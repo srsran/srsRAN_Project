@@ -28,6 +28,7 @@
 #include "du_appconfig_translators.h"
 #include "du_appconfig_validators.h"
 #include "du_appconfig_yaml_writer.h"
+#include "srsran/du/du_high/du_timer_controller.h"
 #include "srsran/du/du_operation_controller.h"
 #include "srsran/e2/e2ap_config_translators.h"
 #include "srsran/e2/gateways/e2_connection_client.h"
@@ -288,6 +289,10 @@ int main(int argc, char** argv)
   io_broker_config           io_broker_cfg(main_pool_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
+  // Create a IO timer source.
+  auto ticking_source =
+      srs_du::create_du_timer_controller(app_timers, *epoll_broker, workers.get_timer_source_executor());
+
   flexible_o_du_pcaps du_pcaps =
       create_o_du_pcaps(o_du_app_unit->get_o_du_high_unit_config(), workers, cleanup_signal_dispatcher);
 
@@ -411,6 +416,9 @@ int main(int argc, char** argv)
 
   // Stop DU activity.
   du_inst.get_operation_controller().stop();
+
+  // Stop the timer source before stopping the workers.
+  ticking_source.reset();
 
   du_logger.info("Closing PCAP files...");
   du_pcaps.reset();

@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsran/support/io/io_broker.h"
-#include "srsran/support/io/unique_fd.h"
 #include "srsran/support/timers.h"
 
 namespace srsran {
@@ -26,7 +25,7 @@ public:
                   std::chrono::milliseconds tick_period,
                   bool                      auto_start = true);
   /// This call blocks until the last tick is processed.
-  ~io_timer_source();
+  ~io_timer_source() { wait_for_stop(); }
 
   /// Resume ticking in case it was previously halted.
   void resume();
@@ -34,6 +33,9 @@ public:
   /// \brief Request the timer source to stop ticking.
   /// Note: This call does not block, so a tick might take place after this call.
   void request_stop();
+
+  /// Requests a stop and waits until the last tick is processed.
+  void wait_for_stop();
 
 private:
   void create_subscriber();
