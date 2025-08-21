@@ -11,6 +11,7 @@
 #pragma once
 
 #include "apps/helpers/network/udp_appconfig.h"
+#include "srsran/gtpu/gtpu_config.h"
 #include "srsran/ran/qos/five_qi.h"
 #include <vector>
 
@@ -27,6 +28,8 @@ struct f1u_socket_appconfig {
 
 /// F1-U configuration.
 struct f1u_sockets_appconfig {
+  /// Port used by the F1-U interface.
+  uint16_t                          f1u_port = GTPU_PORT;
   std::vector<f1u_socket_appconfig> f1u_socket_cfg;
 };
 

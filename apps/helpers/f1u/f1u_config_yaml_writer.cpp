@@ -36,5 +36,6 @@ static void fill_f1u_socket_section(YAML::Node& node, const std::vector<f1u_sock
 void srsran::fill_f1u_config_yaml_schema(YAML::Node& node, const f1u_sockets_appconfig& config)
 {
   YAML::Node f1u_node = node["f1u"];
+  node["f1u_port"]    = config.f1u_port;
   fill_f1u_socket_section(f1u_node, config.f1u_socket_cfg);
 }

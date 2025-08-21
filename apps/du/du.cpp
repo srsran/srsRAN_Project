@@ -313,7 +313,7 @@ int main(int argc, char** argv)
     udp_network_gateway_config f1u_gw_config = {};
     f1u_gw_config.bind_address               = sock_cfg.bind_addr;
     f1u_gw_config.ext_bind_addr              = sock_cfg.udp_config.ext_addr;
-    f1u_gw_config.bind_port                  = GTPU_PORT;
+    f1u_gw_config.bind_port                  = du_cfg.f1u_cfg.f1u_sockets.f1u_port;
     f1u_gw_config.reuse_addr                 = false;
     f1u_gw_config.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;
     f1u_gw_config.rx_max_mmsg                = sock_cfg.udp_config.rx_max_msgs;
@@ -331,8 +331,8 @@ int main(int argc, char** argv)
   }
 
   // > Create F1-U split connector.
-  std::unique_ptr<srs_du::f1u_du_udp_gateway> du_f1u_conn =
-      srs_du::create_split_f1u_gw({f1u_gw_maps, du_f1u_gtpu_demux.get(), *du_pcaps.f1u, GTPU_PORT});
+  std::unique_ptr<srs_du::f1u_du_udp_gateway> du_f1u_conn = srs_du::create_split_f1u_gw(
+      {f1u_gw_maps, du_f1u_gtpu_demux.get(), *du_pcaps.f1u, du_cfg.f1u_cfg.f1u_sockets.f1u_port});
 
   // Instantiate E2AP client gateway.
   std::unique_ptr<e2_connection_client> e2_gw = create_e2_gateway_client(
