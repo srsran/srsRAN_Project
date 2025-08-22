@@ -319,7 +319,7 @@ TEST_F(cu_cp_initial_context_setup_test, when_ue_capability_enquiry_fails_then_i
 
   // Fail UE Capability Enquiry (UE doesn't respond)
   ASSERT_FALSE(tick_until(
-      rrc_procedure_extra_time + this->get_cu_cp_cfg().rrc.rrc_procedure_guard_time_ms,
+      RRC_PROCEDURE_EXTRA_TIME + this->get_cu_cp_cfg().rrc.rrc_procedure_guard_time_ms,
       [&]() { return false; },
       false));
 

@@ -280,12 +280,11 @@ protected:
               rrc_ue->get_srbs().end());
   }
 
-  std::chrono::milliseconds rrc_procedure_extra_time{500};
   std::chrono::milliseconds t300{400};
 
   void tick_timer()
   {
-    for (unsigned i = 0; i < (t300 + rrc_procedure_extra_time + cu_cp_cfg.rrc.rrc_procedure_guard_time_ms).count();
+    for (unsigned i = 0; i < (t300 + RRC_PROCEDURE_EXTRA_TIME + cu_cp_cfg.rrc.rrc_procedure_guard_time_ms).count();
          ++i) {
       task_sched_handle.tick_timer();
       ctrl_worker.run_pending_tasks();

@@ -45,8 +45,7 @@ rrc_reestablishment_procedure::rrc_reestablishment_procedure(
   event_mng(event_mng_),
   logger(logger_)
 {
-  procedure_timeout =
-      context.cell.timers.t311 + std::chrono::milliseconds(500) + context.cfg.rrc_procedure_guard_time_ms;
+  procedure_timeout = context.cell.timers.t311 + RRC_PROCEDURE_EXTRA_TIME + context.cfg.rrc_procedure_guard_time_ms;
 }
 
 void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& ctx)

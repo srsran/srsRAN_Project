@@ -37,8 +37,7 @@ rrc_setup_procedure::rrc_setup_procedure(rrc_ue_context_t&               context
   is_reestablishment_fallback(is_reestablishment_fallback_),
   logger(logger_)
 {
-  procedure_timeout =
-      context.cell.timers.t300 + std::chrono::milliseconds(500) + context.cfg.rrc_procedure_guard_time_ms;
+  procedure_timeout = context.cell.timers.t300 + RRC_PROCEDURE_EXTRA_TIME + context.cfg.rrc_procedure_guard_time_ms;
 }
 
 void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)

@@ -283,7 +283,7 @@ public:
   {
     // Fail RRC Reconfiguration (UE doesn't respond) and wait for PDU Session Resource Setup Response
     if (tick_until(
-            rrc_test_timer_values.t310 + rrc_test_timer_values.t311 + rrc_procedure_extra_time +
+            rrc_test_timer_values.t310 + rrc_test_timer_values.t311 + RRC_PROCEDURE_EXTRA_TIME +
                 this->get_cu_cp_cfg().rrc.rrc_procedure_guard_time_ms,
             [&]() { return false; },
             false)) {
