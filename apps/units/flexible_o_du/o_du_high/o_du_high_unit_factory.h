@@ -28,7 +28,6 @@ struct o_du_high_config;
 struct o_du_high_dependencies;
 class f1c_connection_client;
 class f1u_du_gateway;
-class du_timer_controller;
 } // namespace srs_du
 
 class du_high_executor_mapper;
@@ -62,7 +61,7 @@ struct o_du_high_unit_dependencies {
   srs_du::du_high_executor_mapper& execution_mapper;
   srs_du::f1c_connection_client&   f1c_client_handler;
   srs_du::f1u_du_gateway&          f1u_gw;
-  srs_du::du_timer_controller&     timer_ctrl;
+  mac_clock_controller&            timer_ctrl;
   mac_pcap&                        mac_p;
   rlc_pcap&                        rlc_p;
   e2_connection_client&            e2_client_handler;

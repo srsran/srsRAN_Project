@@ -9,7 +9,6 @@
  */
 
 #include "tests/integrationtests/du_high/test_utils/du_high_worker_manager.h"
-#include "tests/test_doubles/du/dummy_du_timer_controller.h"
 #include "tests/test_doubles/f1ap/f1c_test_local_gateway.h"
 #include "tests/unittests/cu_cp/test_doubles/mock_amf.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
@@ -18,8 +17,10 @@
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/cu_cp/cu_cp_factory.h"
 #include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/du/du_high/du_high_clock_controller.h"
 #include "srsran/du/du_high/du_high_factory.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
+#include "srsran/support/io/io_broker_factory.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -82,7 +83,7 @@ protected:
     du_dependencies.f1c_client  = &f1c_gw;
     du_dependencies.f1u_gw      = &f1u_gw;
     du_dependencies.phy_adapter = &phy;
-    du_dependencies.timer_ctrl  = &timer_ctrl;
+    du_dependencies.timer_ctrl  = timer_ctrl.get();
 
     // create DU object
     du_obj = make_du_high(std::move(du_cfg), du_dependencies);
@@ -98,12 +99,14 @@ protected:
   }
 
 public:
-  du_high_worker_manager    workers;
-  timer_manager             timers;
-  dummy_du_timer_controller timer_ctrl{timers};
-  srslog::basic_logger&     test_logger = srslog::fetch_basic_logger("TEST");
-  f1c_test_local_gateway    f1c_gw{};
-  f1u_test_local_gateway    f1u_gw{};
+  du_high_worker_manager                workers;
+  timer_manager                         timers;
+  std::unique_ptr<io_broker>            broker{create_io_broker(io_broker_type::epoll)};
+  std::unique_ptr<mac_clock_controller> timer_ctrl{
+      srs_du::create_du_high_clock_controller(timers, *broker, workers.exec_mapper->du_timer_executor())};
+  srslog::basic_logger&  test_logger = srslog::fetch_basic_logger("TEST");
+  f1c_test_local_gateway f1c_gw{};
+  f1u_test_local_gateway f1u_gw{};
 
   std::unique_ptr<srs_cu_cp::mock_amf> amf{srs_cu_cp::create_mock_amf()};
   std::unique_ptr<srs_cu_cp::cu_cp>    cu_cp_obj;

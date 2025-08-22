@@ -10,8 +10,8 @@
 
 #include "srsran/du/du_high/o_du_high_factory.h"
 #include "o_du_high_impl.h"
+#include "srsran/du/du_high/du_high_clock_controller.h"
 #include "srsran/du/du_high/du_high_factory.h"
-#include "srsran/du/du_high/du_timer_controller.h"
 #include "srsran/du/du_high/o_du_high_config.h"
 #include "srsran/e2/e2_du_factory.h"
 #include "srsran/fapi/decorator_factory.h"

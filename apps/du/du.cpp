@@ -28,7 +28,7 @@
 #include "du_appconfig_translators.h"
 #include "du_appconfig_validators.h"
 #include "du_appconfig_yaml_writer.h"
-#include "srsran/du/du_high/du_timer_controller.h"
+#include "srsran/du/du_high/du_high_clock_controller.h"
 #include "srsran/du/du_operation_controller.h"
 #include "srsran/e2/e2ap_config_translators.h"
 #include "srsran/e2/gateways/e2_connection_client.h"
@@ -290,8 +290,8 @@ int main(int argc, char** argv)
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
   // Create a IO timer source.
-  auto ticking_source =
-      srs_du::create_du_timer_controller(app_timers, *epoll_broker, workers.get_timer_source_executor());
+  auto time_ctrl =
+      srs_du::create_du_high_clock_controller(app_timers, *epoll_broker, workers.get_timer_source_executor());
 
   flexible_o_du_pcaps du_pcaps =
       create_o_du_pcaps(o_du_app_unit->get_o_du_high_unit_config(), workers, cleanup_signal_dispatcher);
@@ -359,7 +359,7 @@ int main(int argc, char** argv)
   du_dependencies.workers            = &workers;
   du_dependencies.f1c_client_handler = f1c_gw.get();
   du_dependencies.f1u_gw             = du_f1u_conn.get();
-  du_dependencies.timer_ctrl         = ticking_source.get();
+  du_dependencies.timer_ctrl         = time_ctrl.get();
   du_dependencies.mac_p              = du_pcaps.mac.get();
   du_dependencies.rlc_p              = du_pcaps.rlc.get();
   du_dependencies.e2_client_handler  = e2_gw.get();
@@ -418,7 +418,7 @@ int main(int argc, char** argv)
   du_inst.get_operation_controller().stop();
 
   // Stop the timer source before stopping the workers.
-  ticking_source.reset();
+  time_ctrl.reset();
 
   du_logger.info("Closing PCAP files...");
   du_pcaps.reset();

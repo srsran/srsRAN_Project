@@ -20,7 +20,6 @@
 #include "rar_pdu_assembler.h"
 #include "sib_pdu_assembler.h"
 #include "ssb_assembler.h"
-#include "srsran/mac/mac.h"
 #include "srsran/support/memory_pool/ring_buffer_pool.h"
 
 namespace srsran {
@@ -116,7 +115,7 @@ private:
 
   mac_scheduler_cell_info_handler& sched;
 
-  std::unique_ptr<du_cell_timer_source> time_source;
+  std::unique_ptr<mac_cell_clock_controller> time_source;
 
   // Handler of cell metrics
   mac_dl_cell_metric_handler metrics;

@@ -36,7 +36,7 @@
 #include "gnb_appconfig_validators.h"
 #include "gnb_appconfig_yaml_writer.h"
 #include "srsran/cu_cp/cu_cp_operation_controller.h"
-#include "srsran/du/du_high/du_timer_controller.h"
+#include "srsran/du/du_high/du_high_clock_controller.h"
 #include "srsran/du/du_operation_controller.h"
 #include "srsran/e1ap/gateways/e1_local_connector_factory.h"
 #include "srsran/e2/e2ap_config_translators.h"
@@ -372,8 +372,8 @@ int main(int argc, char** argv)
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
   // Create a DU-high timer source.
-  auto ticking_source =
-      srs_du::create_du_timer_controller(app_timers, *epoll_broker, workers.get_timer_source_executor());
+  auto time_ctrl =
+      srs_du::create_du_high_clock_controller(app_timers, *epoll_broker, workers.get_timer_source_executor());
 
   // Create layer specific PCAPs.
   // In the gNB app, there is no point in instantiating two pcaps for each node of E1 and F1.
@@ -468,7 +468,7 @@ int main(int argc, char** argv)
   odu_dependencies.workers            = &workers;
   odu_dependencies.f1c_client_handler = f1c_gw.get();
   odu_dependencies.f1u_gw             = f1u_conn->get_f1u_du_gateway();
-  odu_dependencies.timer_ctrl         = ticking_source.get();
+  odu_dependencies.timer_ctrl         = time_ctrl.get();
   odu_dependencies.mac_p              = du_pcaps.mac.get();
   odu_dependencies.rlc_p              = du_pcaps.rlc.get();
   odu_dependencies.e2_client_handler  = e2_gw_du.get();
@@ -558,7 +558,7 @@ int main(int argc, char** argv)
   o_cucp_obj.get_operation_controller().stop();
 
   // Stop the timer source before stopping the workers.
-  ticking_source.reset();
+  time_ctrl.reset();
 
   gnb_logger.info("Closing PCAP files...");
   cu_cp_dlt_pcaps.reset();

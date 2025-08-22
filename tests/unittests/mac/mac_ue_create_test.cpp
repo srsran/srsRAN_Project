@@ -64,14 +64,15 @@ protected:
   void set_sched_ue_unit_result(bool result) { sched_cfg_adapter.ue_created_ev.set(result); }
 
   // Run all async tasks in same thread.
-  manual_task_worker         worker{128};
-  dummy_ue_executor_mapper   ul_exec_mapper{worker};
-  dummy_dl_executor_mapper   dl_exec_mapper{&worker};
-  dummy_mac_event_indicator  du_mng_notif;
-  dummy_mac_result_notifier  phy_notifier;
-  null_mac_pcap              pcap;
-  timer_manager              timers;
-  dummy_mac_metrics_notifier mac_notifier;
+  manual_task_worker                       worker{128};
+  dummy_ue_executor_mapper                 ul_exec_mapper{worker};
+  dummy_dl_executor_mapper                 dl_exec_mapper{&worker};
+  dummy_mac_event_indicator                du_mng_notif;
+  dummy_mac_result_notifier                phy_notifier;
+  null_mac_pcap                            pcap;
+  timer_manager                            timers;
+  test_helpers::dummy_mac_clock_controller clock_ctrl{timers};
+  dummy_mac_metrics_notifier               mac_notifier;
 
   // Create a MAC config object.
   mac_control_config          mac_cfg{du_mng_notif,
@@ -79,7 +80,7 @@ protected:
                              dl_exec_mapper,
                              worker,
                              worker,
-                             timers,
+                             clock_ctrl,
                              mac_control_config::metrics_config{.mac_notifier = mac_notifier}};
   mac_ctrl_dummy_configurer   mac_ctrl;
   mac_ul_dummy_configurer     mac_ul;

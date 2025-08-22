@@ -35,7 +35,6 @@ namespace srs_du {
 
 class f1u_du_gateway;
 class du_metrics_notifier;
-class du_timer_controller;
 
 /// RAN-specific parameters of the DU-high.
 struct du_high_ran_config {
@@ -70,7 +69,7 @@ struct du_high_dependencies {
   f1c_connection_client*   f1c_client        = nullptr;
   f1u_du_gateway*          f1u_gw            = nullptr;
   mac_result_notifier*     phy_adapter       = nullptr;
-  du_timer_controller*     timer_ctrl        = nullptr;
+  mac_clock_controller*    timer_ctrl        = nullptr;
   du_metrics_notifier*     du_notifier       = nullptr;
   rlc_metrics_notifier*    rlc_metrics_notif = nullptr;
   mac_pcap*                mac_p             = nullptr;

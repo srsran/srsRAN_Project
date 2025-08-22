@@ -284,7 +284,9 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point               sl
 {
   // * Start of Critical Path * //
 
-  // Tick DU timers on subframe boundaries. Retrieve the combination of HFN, SFN and slot.
+  logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
+
+  // Tick DU timers.
   time_source->on_slot_indication(sl_tx);
 
   if (SRSRAN_UNLIKELY(state == cell_state::inactive)) {

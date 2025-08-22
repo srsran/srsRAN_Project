@@ -19,7 +19,7 @@
 #include "flexible_o_du_impl.h"
 #include "metrics/flexible_o_du_metrics_builder.h"
 #include "srsran/du/du_high/du_high.h"
-#include "srsran/du/du_high/du_timer_controller.h"
+#include "srsran/du/du_high/du_high_clock_controller.h"
 #include "srsran/du/o_du_factory.h"
 #include "srsran/e2/e2_du_metrics_connector.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor.h"

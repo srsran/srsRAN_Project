@@ -13,8 +13,8 @@
 #include "adapters/du_high_adapter_factories.h"
 #include "adapters/f1ap_adapters.h"
 #include "test_mode/f1ap_test_mode_adapter.h"
+#include "srsran/du/du_high/du_high_clock_controller.h"
 #include "srsran/du/du_high/du_manager/du_manager_factory.h"
-#include "srsran/du/du_high/du_timer_controller.h"
 #include "srsran/mac/mac_cell_timing_context.h"
 #include "srsran/mac/mac_metrics_notifier.h"
 #include "srsran/srslog/srslog.h"
@@ -65,7 +65,7 @@ du_high_impl::du_high_impl(const du_high_configuration& config_, const du_high_d
                                       *dependencies.phy_adapter,
                                       cfg.ran.mac_cfg,
                                       *dependencies.mac_p,
-                                      timers,
+                                      *dependencies.timer_ctrl,
                                       mac_config::metrics_config{cfg.metrics.period,
                                                                  cfg.metrics.enable_mac,
                                                                  cfg.metrics.enable_sched,

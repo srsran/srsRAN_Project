@@ -13,6 +13,7 @@
 #include "ue_creation_procedure.h"
 #include "ue_delete_procedure.h"
 #include "ue_reconfiguration_procedure.h"
+#include "srsran/mac/mac_clock_controller.h"
 
 using namespace srsran;
 
@@ -27,8 +28,8 @@ mac_controller::mac_controller(const mac_control_config&   cfg_,
   dl_unit(dl_unit_),
   rnti_table(rnti_table_),
   sched_cfg(sched_cfg_),
-  time_ctrl(cfg.timers, cfg.timer_exec, srslog::fetch_basic_logger("MAC")),
-  metrics(cfg.metrics, cfg.ctrl_exec, cfg.timers, logger)
+  time_ctrl(cfg.time_source),
+  metrics(cfg.metrics, cfg.ctrl_exec, cfg.time_source.get_timer_manager(), logger)
 {
 }
 

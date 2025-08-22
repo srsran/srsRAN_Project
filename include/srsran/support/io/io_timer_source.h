@@ -11,9 +11,10 @@
 #pragma once
 
 #include "srsran/support/io/io_broker.h"
-#include "srsran/support/timers.h"
 
 namespace srsran {
+
+class timer_manager;
 
 /// \brief Interface for a timer source.
 class io_timer_source
@@ -24,6 +25,7 @@ public:
                   task_executor&            executor,
                   std::chrono::milliseconds tick_period,
                   bool                      auto_start = true);
+
   /// This call blocks until the last tick is processed.
   ~io_timer_source() { wait_for_stop(); }
 

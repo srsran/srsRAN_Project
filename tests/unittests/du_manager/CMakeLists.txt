@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-set_directory_properties(PROPERTIES LABELS "du_manager")
+set_directory_properties(PROPERTIES LABELS "du_manager;du_high")
 
 include_directories(../../..)
 

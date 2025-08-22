@@ -8,7 +8,6 @@
  *
  */
 
-#include "lib/mac/mac_ctrl/du_time_controller.h"
 #include "lib/mac/mac_dl/mac_cell_processor.h"
 #include "mac_test_helpers.h"
 #include "srsran/mac/mac_cell_timing_context.h"
@@ -49,7 +48,7 @@ public:
   manual_task_worker                           task_worker{128};
   null_mac_pcap                                pcap;
   timer_manager                                timers;
-  du_time_controller                           timer_ctrl{timers, task_worker, srslog::fetch_basic_logger("MAC")};
+  test_helpers::dummy_mac_clock_controller     timer_ctrl{timers};
   cell_config_builder_params                   builder_params;
   mac_cell_processor                           mac_cell;
 

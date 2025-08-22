@@ -42,7 +42,7 @@ public:
   ~mac_metrics_aggregator();
 
   cell_metric_report_config
-  add_cell(du_cell_index_t cell_index, subcarrier_spacing scs_common, du_cell_timer_source& time_source);
+  add_cell(du_cell_index_t cell_index, subcarrier_spacing scs_common, mac_cell_clock_controller& time_source);
 
   void rem_cell(du_cell_index_t cell_index);
 

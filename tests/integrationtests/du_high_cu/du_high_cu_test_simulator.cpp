@@ -16,9 +16,11 @@
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/cu_cp/cu_cp_factory.h"
 #include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/du/du_high/du_high_clock_controller.h"
 #include "srsran/du/du_high/du_high_factory.h"
 #include "srsran/mac/mac_cell_timing_context.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
+#include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -71,7 +73,12 @@ void du_high_cu_cp_worker_manager::stop()
 }
 
 du_high_cu_test_simulator::du_high_cu_test_simulator(const du_high_cu_cp_test_simulator_config& cfg_) :
-  cfg(cfg_), logger(srslog::fetch_basic_logger("TEST")), workers(cfg.dus.size(), timers)
+  cfg(cfg_),
+  logger(srslog::fetch_basic_logger("TEST")),
+  workers(cfg.dus.size(), timers),
+  broker(create_io_broker(io_broker_type::epoll)),
+  timer_ctrl(
+      srs_du::create_du_high_clock_controller(timers, *broker, workers.dus[0]->get_exec_mapper().du_timer_executor()))
 {
   // Prepare CU-CP config.
   srs_cu_cp::cu_cp_configuration cu_cfg = config_helpers::make_default_cu_cp_config();
@@ -145,7 +152,7 @@ void du_high_cu_test_simulator::start_dus()
     du_dependencies.f1c_client  = &f1c_gw;
     du_dependencies.f1u_gw      = nullptr;
     du_dependencies.phy_adapter = &du_ctxt.phy;
-    du_dependencies.timer_ctrl  = &du_timer_ctrl;
+    du_dependencies.timer_ctrl  = timer_ctrl.get();
     du_dependencies.mac_p       = &du_ctxt.mac_pcap;
     du_dependencies.rlc_p       = &du_ctxt.rlc_pcap;
 

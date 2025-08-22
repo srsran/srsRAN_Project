@@ -21,6 +21,7 @@ namespace srsran {
 
 struct io_broker_config {
   explicit io_broker_config(os_sched_affinity_bitmask mask_ = {}) : cpu_mask(std::move(mask_)) {}
+  explicit io_broker_config(os_thread_realtime_priority prio) : thread_prio(prio) {}
 
   std::string                 thread_name = "io_broker_epoll";
   os_thread_realtime_priority thread_prio = os_thread_realtime_priority::min() + 5;
