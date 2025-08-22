@@ -269,13 +269,14 @@ public:
     srsran_assert(std::holds_alternative<rlc_am_tx_metrics_lower>(metrics_lo.mode_specific),
                   "Wrong mode for AM metrics.");
     auto& am = std::get<rlc_am_tx_metrics_lower>(metrics_lo.mode_specific);
-    am.sum_t_poll_latency_us += t_poll_latency_us;
-    am.num_t_poll_latency_meas++;
+    am.poll_latency.sum_latency_us += t_poll_latency_us;
+    am.poll_latency.num_latency_meas++;
 
-    am.min_t_poll_latency_us =
-        am.min_handle_status_latency_us ? std::min(*am.min_t_poll_latency_us, t_poll_latency_us) : t_poll_latency_us;
-    if (am.max_t_poll_latency_us < t_poll_latency_us) {
-      am.max_t_poll_latency_us = t_poll_latency_us;
+    am.poll_latency.min_latency_us = am.poll_latency.min_latency_us
+                                         ? std::min(*am.poll_latency.min_latency_us, t_poll_latency_us)
+                                         : t_poll_latency_us;
+    if (am.poll_latency.max_latency_us < t_poll_latency_us) {
+      am.poll_latency.max_latency_us = t_poll_latency_us;
     }
   }
 

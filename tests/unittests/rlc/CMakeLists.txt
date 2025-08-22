@@ -62,3 +62,8 @@ add_executable(rlc_bearer_metrics_collector_test rlc_bearer_metrics_collector_te
 target_link_libraries(rlc_bearer_metrics_collector_test srsran_rlc srsran_support srslog gtest gtest_main)
 target_include_directories(rlc_bearer_metrics_collector_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(rlc_bearer_metrics_collector_test)
+
+add_executable(rlc_tx_metrics_test rlc_tx_metrics_test.cpp)
+target_link_libraries(rlc_tx_metrics_test srsran_rlc srsran_support srslog gtest gtest_main)
+target_include_directories(rlc_tx_metrics_test PRIVATE ${CMAKE_SOURCE_DIR})
+gtest_discover_tests(rlc_tx_metrics_test)
