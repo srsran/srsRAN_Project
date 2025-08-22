@@ -28,14 +28,11 @@ struct mac_control_config {
     unsigned                  max_nof_ue_events;
   };
 
-  mac_ul_ccch_notifier&                 event_notifier;
-  srs_du::du_high_ue_executor_mapper&   ue_exec_mapper;
-  srs_du::du_high_cell_executor_mapper& cell_exec_mapper;
-  task_executor&                        ctrl_exec;
-  task_executor&                        timer_exec;
-  mac_clock_controller&                 time_source;
-  metrics_config                        metrics;
-  srslog::basic_logger&                 logger = srslog::fetch_basic_logger("MAC", true);
+  mac_ul_ccch_notifier& event_notifier;
+  task_executor&        ctrl_exec;
+  mac_clock_controller& time_source;
+  metrics_config        metrics;
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("MAC", true);
 };
 
 } // namespace srsran

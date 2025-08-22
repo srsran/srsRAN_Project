@@ -301,7 +301,7 @@ int main(int argc, char** argv)
       create_f1c_client_gateway(du_cfg.f1ap_cfg.cu_cp_address,
                                 du_cfg.f1ap_cfg.bind_address,
                                 *epoll_broker,
-                                workers.get_du_high_executor_mapper().sctp_gw_reader(),
+                                workers.get_du_high_executor_mapper().f1c_rx_executor(),
                                 *du_pcaps.f1ap);
 
   // Create F1-U GW.
@@ -327,7 +327,7 @@ int main(int argc, char** argv)
         f1u_gw_config,
         *epoll_broker,
         workers.get_du_high_executor_mapper().ue_mapper().mac_ul_pdu_executor(to_du_ue_index(0)),
-        workers.get_du_high_executor_mapper().udp_gw_reader());
+        workers.get_du_high_executor_mapper().f1u_rx_executor());
     if (not sock_cfg.five_qi.has_value()) {
       f1u_gw_maps.default_gws.push_back(std::move(f1u_gw));
     } else {
@@ -343,7 +343,7 @@ int main(int argc, char** argv)
   std::unique_ptr<e2_connection_client> e2_gw = create_e2_gateway_client(
       generate_e2_client_gateway_config(o_du_app_unit->get_o_du_high_unit_config().e2_cfg.base_cfg,
                                         *epoll_broker,
-                                        workers.get_du_high_executor_mapper().sctp_gw_reader(),
+                                        workers.get_du_high_executor_mapper().e2_rx_executor(),
                                         *du_pcaps.e2ap,
                                         E2_DU_PPID));
 

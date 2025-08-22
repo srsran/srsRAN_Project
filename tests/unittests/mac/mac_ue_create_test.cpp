@@ -76,9 +76,6 @@ protected:
 
   // Create a MAC config object.
   mac_control_config          mac_cfg{du_mng_notif,
-                             ul_exec_mapper,
-                             dl_exec_mapper,
-                             worker,
                              worker,
                              clock_ctrl,
                              mac_control_config::metrics_config{.mac_notifier = mac_notifier}};

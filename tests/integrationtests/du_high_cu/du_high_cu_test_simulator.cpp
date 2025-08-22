@@ -77,8 +77,7 @@ du_high_cu_test_simulator::du_high_cu_test_simulator(const du_high_cu_cp_test_si
   logger(srslog::fetch_basic_logger("TEST")),
   workers(cfg.dus.size(), timers),
   broker(create_io_broker(io_broker_type::epoll)),
-  timer_ctrl(
-      srs_du::create_du_high_clock_controller(timers, *broker, workers.dus[0]->get_exec_mapper().du_timer_executor()))
+  timer_ctrl(srs_du::create_du_high_clock_controller(timers, *broker, workers.dus[0]->timer_executor()))
 {
   // Prepare CU-CP config.
   srs_cu_cp::cu_cp_configuration cu_cfg = config_helpers::make_default_cu_cp_config();

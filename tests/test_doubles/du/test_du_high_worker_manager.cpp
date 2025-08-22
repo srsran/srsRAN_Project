@@ -102,6 +102,8 @@ public:
 
   du_high_executor_mapper& get_exec_mapper() override { return *exec_mapper; }
 
+  task_executor& timer_executor() override { return high_prio_exec; }
+
 private:
   // instantiated workers.
   priority_task_worker_pool                          worker_pool;

@@ -44,9 +44,6 @@ protected:
   mac_scheduler_dummy_adapter              sched_cfg_adapter;
   dummy_mac_metrics_notifier               mac_notifier;
   mac_control_config                       maccfg{du_mng_notifier,
-                            ul_exec_mapper,
-                            dl_exec_mapper,
-                            worker,
                             worker,
                             clock_ctrl,
                             mac_control_config::metrics_config{std::chrono::milliseconds{1000}, mac_notifier}};

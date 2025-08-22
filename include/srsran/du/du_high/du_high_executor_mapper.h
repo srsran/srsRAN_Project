@@ -88,17 +88,17 @@ public:
   /// \brief Retrieve DU control executor.
   virtual task_executor& du_control_executor() = 0;
 
-  /// \brief Retrieve DU timer tick dispatching executor.
-  virtual task_executor& du_timer_executor() = 0;
-
   /// \brief Retrieve E2 control executor.
   virtual task_executor& du_e2_executor() = 0;
 
-  /// \brief Retrieve executor used for reading messages from the F1-C or E2 SCTP sockets.
-  virtual task_executor& sctp_gw_reader() = 0;
+  /// \brief Retrieve executor used for reading messages from the F1-C SCTP socket.
+  virtual task_executor& f1c_rx_executor() = 0;
+
+  /// \brief Retrieve executor used for reading messages from the E2 SCTP socket.
+  virtual task_executor& e2_rx_executor() = 0;
 
   /// \brief Retrieve executor used for reading messages from the F1-U UDP sockets.
-  virtual task_executor& udp_gw_reader() = 0;
+  virtual task_executor& f1u_rx_executor() = 0;
 };
 
 /// Configuration of DU-high executor mapper.

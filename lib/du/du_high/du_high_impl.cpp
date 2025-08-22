@@ -61,7 +61,6 @@ du_high_impl::du_high_impl(const du_high_configuration& config_, const du_high_d
                                       dependencies.exec_mapper->ue_mapper(),
                                       dependencies.exec_mapper->cell_mapper(),
                                       dependencies.exec_mapper->du_control_executor(),
-                                      dependencies.exec_mapper->du_timer_executor(),
                                       *dependencies.phy_adapter,
                                       cfg.ran.mac_cfg,
                                       *dependencies.mac_p,

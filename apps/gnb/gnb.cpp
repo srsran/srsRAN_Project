@@ -416,7 +416,7 @@ int main(int argc, char** argv)
   std::unique_ptr<e2_connection_client> e2_gw_du = create_e2_gateway_client(
       generate_e2_client_gateway_config(o_du_app_unit->get_o_du_high_unit_config().e2_cfg.base_cfg,
                                         *epoll_broker,
-                                        workers.get_du_high_executor_mapper().sctp_gw_reader(),
+                                        workers.get_du_high_executor_mapper().e2_rx_executor(),
                                         *du_pcaps.e2ap,
                                         E2_DU_PPID));
   std::unique_ptr<e2_connection_client> e2_gw_cu_cp = create_e2_gateway_client(

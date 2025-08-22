@@ -103,7 +103,7 @@ public:
   timer_manager                         timers;
   std::unique_ptr<io_broker>            broker{create_io_broker(io_broker_type::epoll)};
   std::unique_ptr<mac_clock_controller> timer_ctrl{
-      srs_du::create_du_high_clock_controller(timers, *broker, workers.exec_mapper->du_timer_executor())};
+      srs_du::create_du_high_clock_controller(timers, *broker, workers.high_prio_exec)};
   srslog::basic_logger&  test_logger = srslog::fetch_basic_logger("TEST");
   f1c_test_local_gateway f1c_gw{};
   f1u_test_local_gateway f1u_gw{};

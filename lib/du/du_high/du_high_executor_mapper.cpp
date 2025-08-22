@@ -415,7 +415,6 @@ public:
   explicit du_high_executor_mapper_impl(const du_high_executor_config& config) :
     raw_non_rt_hi_prio_exec(*config.ctrl_executors.pool_executor),
     raw_low_prio_exec(*config.ue_executors.f1u_reader_executor),
-    tick_exec(create_time_exec(config)),
     cell_mapper_ptr(create_du_high_cell_executor_mapper(config)),
     ue_mapper_ptr(create_du_high_ue_executor_mapper(config)),
     ctrl_mapper(config.ctrl_executors, config.trace_exec_tasks, config.metrics_period)
@@ -425,40 +424,15 @@ public:
   du_high_cell_executor_mapper& cell_mapper() override { return *cell_mapper_ptr; }
   du_high_ue_executor_mapper&   ue_mapper() override { return *ue_mapper_ptr; }
   task_executor&                du_control_executor() override { return ctrl_mapper.ctrl_exec; }
-  task_executor&                du_timer_executor() override { return tick_exec; }
   task_executor&                du_e2_executor() override { return ctrl_mapper.e2_exec; }
-  task_executor&                sctp_gw_reader() override { return raw_non_rt_hi_prio_exec; }
-  task_executor&                udp_gw_reader() override { return raw_low_prio_exec; }
+  task_executor&                f1c_rx_executor() override { return raw_non_rt_hi_prio_exec; }
+  task_executor&                e2_rx_executor() override { return raw_non_rt_hi_prio_exec; }
+  task_executor&                f1u_rx_executor() override { return raw_low_prio_exec; }
 
 private:
-  task_executor& create_time_exec(const du_high_executor_config& config)
-  {
-    // Create a strand pointing to the same pool used by the control executors.
-    tick_strand =
-        std::make_unique<tick_strand_type>(config.ctrl_executors.pool_executor, config.ctrl_executors.task_queue_size);
-    task_executor& base_time_exec = *tick_strand;
-
-    // Decorate base_time_exec.
-    return decorator.decorate(base_time_exec,
-                              false,
-                              config.trace_exec_tasks,
-                              // Throttle the timer tick caller in non-RT mode
-                              config.is_rt_mode_enabled ? std::nullopt : std::optional<unsigned>(1),
-                              config.metrics_period,
-                              config.trace_exec_tasks or config.metrics_period ? "du_timer_exec" : "");
-  }
-
-  /// Decorator for executors.
-  executor_decorator decorator;
-
   /// Raw control-plane executor.
   task_executor& raw_non_rt_hi_prio_exec;
   task_executor& raw_low_prio_exec;
-
-  /// Strand used to tick the application timers.
-  std::unique_ptr<tick_strand_type> tick_strand;
-  /// Decorated tick_executor.
-  task_executor& tick_exec;
 
   std::unique_ptr<du_high_cell_executor_mapper> cell_mapper_ptr;
   std::unique_ptr<du_high_ue_executor_mapper>   ue_mapper_ptr;
