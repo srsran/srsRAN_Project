@@ -200,7 +200,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   }
 
   // > RRC config
-  cu_cp_cfg.rrc.rrc_procedure_timeout_ms =
+  cu_cp_cfg.rrc.rrc_procedure_guard_time_ms =
       std::chrono::milliseconds(10000); // procedure timeouts should only occur intentionally
 
   // > F1AP config

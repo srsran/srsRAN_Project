@@ -273,6 +273,8 @@ public:
   ngap_message ngap_pdu;
   f1ap_message f1ap_pdu;
   e1ap_message e1ap_pdu;
+
+  std::chrono::milliseconds rrc_procedure_extra_time{500};
 };
 
 TEST_F(cu_cp_initial_context_setup_test, when_ue_context_setup_fails_then_initial_context_setup_fails)
@@ -319,7 +321,9 @@ TEST_F(cu_cp_initial_context_setup_test, when_ue_capability_enquiry_fails_then_i
 
   // Fail UE Capability Enquiry (UE doesn't respond)
   ASSERT_FALSE(tick_until(
-      std::chrono::milliseconds(this->get_cu_cp_cfg().rrc.rrc_procedure_timeout_ms), [&]() { return false; }, false));
+      rrc_procedure_extra_time + this->get_cu_cp_cfg().rrc.rrc_procedure_guard_time_ms,
+      [&]() { return false; },
+      false));
 
   // Wait for NGAP Initial Context Setup Failure
   ASSERT_TRUE(await_initial_context_setup_failure());

@@ -29,6 +29,8 @@ rrc_reconfiguration_procedure::rrc_reconfiguration_procedure(rrc_ue_context_t&  
   srb_notifier(srb_notifier_),
   logger(logger_)
 {
+  procedure_timeout =
+      context.cell.timers.t311 + std::chrono::milliseconds(500) + context.cfg.rrc_procedure_guard_time_ms;
 }
 
 void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& ctx)
@@ -42,8 +44,7 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
 
   logger.log_debug("\"{}\" initialized", name());
   // create new transaction for RRC Reconfiguration procedure
-  transaction =
-      event_mng.transactions.create_transaction(std::chrono::milliseconds(context.cfg.rrc_procedure_timeout_ms));
+  transaction = event_mng.transactions.create_transaction(procedure_timeout);
 
   if (args.radio_bearer_cfg.has_value()) {
     for (const rrc_srb_to_add_mod& srb_to_add_mod : args.radio_bearer_cfg->srb_to_add_mod_list) {
@@ -61,7 +62,7 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
     logger.log_debug("\"{}\" finished successfully", name());
     procedure_result = true;
   } else {
-    logger.log_warning("\"{}\" timed out after {}ms", name(), context.cfg.rrc_procedure_timeout_ms.count());
+    logger.log_warning("\"{}\" timed out after {}ms", name(), procedure_timeout.count());
   }
 
   CORO_RETURN(procedure_result);

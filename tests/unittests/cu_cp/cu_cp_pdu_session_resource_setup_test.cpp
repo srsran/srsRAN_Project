@@ -200,11 +200,15 @@ public:
         pdu_sessions_failed_to_modify);
   }
 
+  std::chrono::milliseconds rrc_procedure_extra_time{500};
+  std::chrono::milliseconds t310{1000};
+  std::chrono::milliseconds t311{3000};
+
   [[nodiscard]] bool timeout_rrc_reconfiguration_and_await_pdu_session_setup_response()
   {
     // Fail RRC Reconfiguration (UE doesn't respond) and wait for PDU Session Resource Setup Response
     if (tick_until(
-            std::chrono::milliseconds(this->get_cu_cp_cfg().rrc.rrc_procedure_timeout_ms),
+            t310 + t311 + rrc_procedure_extra_time + this->get_cu_cp_cfg().rrc.rrc_procedure_guard_time_ms,
             [&]() { return false; },
             false)) {
       return false;

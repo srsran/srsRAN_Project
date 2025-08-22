@@ -93,8 +93,8 @@ struct cu_cp_configuration {
   struct rrc_params {
     /// Force re-establishment fallback.
     bool force_reestablishment_fallback = false;
-    /// Timeout for RRC procedures.
-    std::chrono::milliseconds rrc_procedure_timeout_ms{360};
+    /// Guard time for RRC procedures.
+    std::chrono::milliseconds rrc_procedure_guard_time_ms{500};
     /// Version of the RRC.
     unsigned rrc_version = 2;
   };

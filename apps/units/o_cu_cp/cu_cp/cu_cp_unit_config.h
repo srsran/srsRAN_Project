@@ -133,9 +133,8 @@ struct cu_cp_unit_mobility_config {
 /// RRC specific configuration parameters.
 struct cu_cp_unit_rrc_config {
   bool force_reestablishment_fallback = false;
-  /// Timeout for RRC procedures (2 * default SRB maxRetxThreshold * t-PollRetransmit = 2 * 8 * 45ms = 720ms, see
-  /// TS 38.331 Sec 9.2.1).
-  unsigned rrc_procedure_timeout_ms = 720;
+  /// Guard time for RRC procedures.
+  unsigned rrc_procedure_guard_time_ms = 500;
 };
 
 /// Security configuration parameters.

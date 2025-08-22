@@ -21,6 +21,7 @@
 #include "srsran/asn1/rrc_nr/meas_cfg.h"
 #include "srsran/asn1/rrc_nr/ul_ccch_msg.h"
 #include "srsran/ran/rb_id.h"
+#include <chrono>
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -319,7 +320,7 @@ rrc_ue_security_mode_command_context rrc_ue_impl::get_security_mode_command_cont
 async_task<bool> rrc_ue_impl::handle_security_mode_complete_expected(uint8_t transaction_id)
 {
   return launch_async([this,
-                       timeout_ms = context.cfg.rrc_procedure_timeout_ms,
+                       timeout_ms = std::chrono::milliseconds{500} + context.cfg.rrc_procedure_guard_time_ms,
                        transaction_id,
                        transaction = rrc_transaction{}](coro_context<async_task<bool>>& ctx) mutable {
     CORO_BEGIN(ctx);

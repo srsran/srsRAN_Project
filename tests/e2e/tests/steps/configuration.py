@@ -33,15 +33,15 @@ def configure_ntn_parameters(
     if ntn_config.scenario_type == NtnScenarioType.GEO:
         retina_data.test_config["gnb"]["parameters"]["cu_cp_inactivity_timer"] = 120
         retina_data.test_config["gnb"]["parameters"]["request_pdu_session_timeout"] = 12
-        retina_data.test_config["gnb"]["parameters"]["rrc_procedure_timeout_ms"] = 12800
+        retina_data.test_config["gnb"]["parameters"]["rrc_procedure_guard_time_ms"] = 12800
     elif ntn_config.scenario_type == NtnScenarioType.MEO:
         retina_data.test_config["gnb"]["parameters"]["cu_cp_inactivity_timer"] = 90
         retina_data.test_config["gnb"]["parameters"]["request_pdu_session_timeout"] = 9
-        retina_data.test_config["gnb"]["parameters"]["rrc_procedure_timeout_ms"] = 12800
+        retina_data.test_config["gnb"]["parameters"]["rrc_procedure_guard_time_ms"] = 12800
     else:  # LEO
         retina_data.test_config["gnb"]["parameters"]["cu_cp_inactivity_timer"] = 60
         retina_data.test_config["gnb"]["parameters"]["request_pdu_session_timeout"] = 6
-        retina_data.test_config["gnb"]["parameters"]["rrc_procedure_timeout_ms"] = 10000
+        retina_data.test_config["gnb"]["parameters"]["rrc_procedure_guard_time_ms"] = 10000
 
     # DU NTN parameters.
     retina_data.test_config["gnb"]["parameters"]["sib19"] = {}

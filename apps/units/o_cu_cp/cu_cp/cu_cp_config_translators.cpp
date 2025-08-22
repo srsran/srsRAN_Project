@@ -375,7 +375,7 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
 #endif // SRSRAN_HAS_ENTERPRISE
 
   out_cfg.rrc.force_reestablishment_fallback = cu_cfg.rrc_config.force_reestablishment_fallback;
-  out_cfg.rrc.rrc_procedure_timeout_ms       = std::chrono::milliseconds{cu_cfg.rrc_config.rrc_procedure_timeout_ms};
+  out_cfg.rrc.rrc_procedure_guard_time_ms    = std::chrono::milliseconds{cu_cfg.rrc_config.rrc_procedure_guard_time_ms};
 
   out_cfg.bearers.drb_config = generate_cu_cp_qos_config(cu_cfg);
 

@@ -138,12 +138,13 @@ rrc_ue_interface* rrc_du_impl::add_ue(const rrc_ue_creation_message& msg)
   ue_index_t   ue_index                 = msg.ue_index;
   rrc_ue_cfg_t ue_cfg                   = {};
   ue_cfg.force_reestablishment_fallback = cfg.force_reestablishment_fallback;
-  ue_cfg.rrc_procedure_timeout_ms       = cfg.rrc_procedure_timeout_ms;
+  ue_cfg.rrc_procedure_guard_time_ms    = cfg.rrc_procedure_guard_time_ms;
   ue_cfg.meas_timings                   = cell_info_db.at(msg.cell.cgi.nci).meas_timings;
 
   // Copy RRC cell and add SSB ARFCN.
   rrc_cell_context rrc_cell = msg.cell;
   rrc_cell.ssb_arfcn        = ue_cfg.meas_timings.front().freq_and_timing.value().carrier_freq;
+  rrc_cell.timers           = cell_info_db.at(msg.cell.cgi.nci).timers;
 
   // Add RRC UE to RRC DU adapter.
   rrc_ue_rrc_du_adapters.emplace(ue_index, rrc_ue_rrc_du_adapter{get_rrc_du_connection_event_handler()});

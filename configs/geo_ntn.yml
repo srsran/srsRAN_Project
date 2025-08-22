@@ -25,5 +25,5 @@ cell_cfg:
     max_msg3_harq_retx: 0
 
 cu_cp:
-  rrc: # sets the RRC timeout to 12.8 seconds to allow for the larger channel delay
-    rrc_procedure_timeout_ms: 12800
+  rrc: # sets the RRC guard time to 12.8 seconds to allow for the larger channel delay
+    rrc_procedure_guard_time_ms: 12800

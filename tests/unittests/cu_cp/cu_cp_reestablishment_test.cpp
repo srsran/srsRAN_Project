@@ -362,6 +362,9 @@ public:
   pci_t                  old_pci       = 0;
   amf_ue_id_t            amf_ue_id     = amf_ue_id_t::min;
   gnb_cu_up_ue_e1ap_id_t cu_up_e1ap_id = gnb_cu_up_ue_e1ap_id_t::min;
+
+  std::chrono::milliseconds rrc_procedure_extra_time{500};
+  std::chrono::milliseconds t300{400};
 };
 
 TEST_F(cu_cp_reestablishment_test, when_old_ue_does_not_exist_then_reestablishment_fails)
@@ -514,7 +517,8 @@ TEST_F(cu_cp_reestablishment_test, when_old_ue_is_busy_with_a_procedure_then_ree
   ASSERT_TRUE(finish_ue_attach(new_du_ue_id, cu_ue_id, new_crnti, ran_ue_id_t::min));
 
   // RRC Setup timeout for old UE.
-  std::chrono::milliseconds timeout{this->get_cu_cp_cfg().rrc.rrc_procedure_timeout_ms};
+  std::chrono::milliseconds timeout =
+      t300 + rrc_procedure_extra_time + this->get_cu_cp_cfg().rrc.rrc_procedure_guard_time_ms;
   for (unsigned i = 0; i != timeout.count(); ++i) {
     this->tick();
   }
