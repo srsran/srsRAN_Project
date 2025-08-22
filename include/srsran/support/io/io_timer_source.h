@@ -41,8 +41,12 @@ public:
 
 private:
   void create_subscriber();
+  void destroy_subscriber();
 
   void read_time();
+
+  void update_state(bool start);
+  void handle_state_update(bool defer_stop);
 
   const std::chrono::milliseconds tick_period;
   timer_manager&                  tick_sink;
@@ -51,7 +55,10 @@ private:
   srslog::basic_logger&           logger;
   io_broker::subscriber           io_sub;
 
-  std::atomic<bool> pending_stop_cmd{false};
+  std::atomic<bool>     running{false};
+  std::atomic<uint32_t> job_count{0};
+
+  bool request_to_stop = false;
 };
 
 } // namespace srsran

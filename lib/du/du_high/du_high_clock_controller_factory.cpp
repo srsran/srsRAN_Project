@@ -134,12 +134,7 @@ public:
     {
     }
 
-    ~cell_ticker() override
-    {
-      if (parent != nullptr) {
-        on_cell_deactivation();
-      }
-    }
+    ~cell_ticker() override { on_cell_deactivation(); }
 
     void on_cell_deactivation() override
     {

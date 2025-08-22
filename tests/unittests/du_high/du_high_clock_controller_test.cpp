@@ -13,6 +13,7 @@
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/io/io_broker_factory.h"
+#include "srsran/support/test_utils.h"
 #include "srsran/support/timers.h"
 #include <gtest/gtest.h>
 
@@ -39,6 +40,28 @@ protected:
     }
   }
 
+  bool is_clock_running_automatically()
+  {
+    auto                      prev         = timers.now();
+    static constexpr unsigned test_timeout = 1000000;
+    for (unsigned i = 0; i != test_timeout; ++i) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      timer_worker.run_pending_tasks();
+      if (timers.now() > prev) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool is_clock_running_manually()
+  {
+    auto prev = timers.now();
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    timer_worker.run_pending_tasks();
+    return prev == timers.now();
+  }
+
   timer_manager              timers;
   manual_task_worker         timer_worker{128};
   task_worker                shutdown_worker{"WORKER", 128};
@@ -47,7 +70,7 @@ protected:
   std::unique_ptr<mac_clock_controller> timer_ctrl = create_du_high_clock_controller(timers, *broker, timer_worker);
 };
 
-TEST_F(du_high_time_source_test, time_ticks_when_no_cells)
+TEST_F(du_high_time_source_test, time_ticks_when_no_cells_were_added)
 {
   auto                  timer = timers.create_unique_timer(timer_worker);
   std::atomic<unsigned> count{0};
@@ -55,10 +78,11 @@ TEST_F(du_high_time_source_test, time_ticks_when_no_cells)
   auto prev = timers.now();
 
   std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  timer_worker.run_pending_tasks();
   ASSERT_EQ(count, 0);
 
   timer.run();
-  static constexpr unsigned test_timeout = 100000;
+  static constexpr unsigned test_timeout = 1000000;
   for (unsigned i = 0; i != test_timeout; ++i) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
     timer_worker.run_pending_tasks();
@@ -70,7 +94,25 @@ TEST_F(du_high_time_source_test, time_ticks_when_no_cells)
   ASSERT_GT(timers.now(), prev);
 }
 
-TEST_F(du_high_time_source_test, add_cell)
+TEST_F(du_high_time_source_test, when_cell_is_activated_then_ticking_becomes_manual)
+{
+  auto cell_source = timer_ctrl->add_cell(to_du_cell_index(0));
+  ASSERT_NE(cell_source, nullptr);
+  ASSERT_FALSE(cell_source->now().valid());
+
+  // Timer is still advancing, until cell is activated (!= created).
+  ASSERT_TRUE(is_clock_running_automatically());
+
+  // Activate cell.
+  slot_point cur_sl_tx = {subcarrier_spacing::kHz30, 0};
+  cell_source->on_slot_indication(cur_sl_tx);
+  timer_worker.run_pending_tasks();
+
+  // Ticking is now manual, so unless we call slot_indication, the clock doesn't advance.
+  ASSERT_TRUE(is_clock_running_manually());
+}
+
+TEST_F(du_high_time_source_test, cell_slot_now_is_updated_on_slot_indication)
 {
   auto cell_source = timer_ctrl->add_cell(to_du_cell_index(0));
   ASSERT_NE(cell_source, nullptr);
@@ -82,6 +124,25 @@ TEST_F(du_high_time_source_test, add_cell)
 
   ASSERT_TRUE(cell_source->now().valid());
   ASSERT_EQ(cell_source->now(), cur_sl_tx);
+}
+
+TEST_F(du_high_time_source_test, when_cell_is_deactivated_then_ticking_becomes_automatic)
+{
+  std::vector<std::unique_ptr<mac_cell_clock_controller>> cells(test_rgen::uniform_int<unsigned>(1, 5));
+  slot_point                                              cur_sl_tx = {subcarrier_spacing::kHz30, 0};
+  for (auto& cell : cells) {
+    cell = timer_ctrl->add_cell(to_du_cell_index(std::distance(cells.data(), &cell)));
+    cell->on_slot_indication(cur_sl_tx);
+    timer_worker.run_pending_tasks();
+  }
+
+  ASSERT_TRUE(is_clock_running_manually());
+
+  // Deactivate cells.
+  cells.clear();
+
+  // Timer is now automatic again.
+  ASSERT_TRUE(is_clock_running_automatically());
 }
 
 TEST_F(du_high_time_source_test, tick_periodicity_for_scs15khz_is_1msec)
