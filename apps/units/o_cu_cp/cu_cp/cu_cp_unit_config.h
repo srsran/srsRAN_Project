@@ -133,7 +133,7 @@ struct cu_cp_unit_mobility_config {
 /// RRC specific configuration parameters.
 struct cu_cp_unit_rrc_config {
   bool force_reestablishment_fallback = false;
-  /// Guard time for RRC procedures.
+  /// Guard time in ms that is added to the RRC procedure timeout.
   unsigned rrc_procedure_guard_time_ms = 500;
 };
 
