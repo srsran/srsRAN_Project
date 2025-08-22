@@ -273,8 +273,6 @@ public:
   ngap_message ngap_pdu;
   f1ap_message f1ap_pdu;
   e1ap_message e1ap_pdu;
-
-  std::chrono::milliseconds rrc_procedure_extra_time{500};
 };
 
 TEST_F(cu_cp_initial_context_setup_test, when_ue_context_setup_fails_then_initial_context_setup_fails)

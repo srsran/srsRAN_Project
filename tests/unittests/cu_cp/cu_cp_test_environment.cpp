@@ -15,8 +15,10 @@
 #include "tests/test_doubles/rrc/rrc_test_message_validators.h"
 #include "tests/test_doubles/rrc/rrc_test_messages.h"
 #include "tests/unittests/cu_cp/test_doubles/mock_cu_up.h"
+#include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
@@ -361,7 +363,9 @@ bool cu_cp_test_environment::run_f1_setup(unsigned                              
                                           gnb_du_id_t                                      gnb_du_id,
                                           std::vector<test_helpers::served_cell_item_info> cells)
 {
-  get_du(du_idx).push_ul_pdu(test_helpers::generate_f1_setup_request(gnb_du_id, std::move(cells)));
+  f1ap_message f1_setup_req = test_helpers::generate_f1_setup_request(gnb_du_id, cells);
+  rrc_test_timer_values     = get_timers(f1_setup_req.pdu.init_msg().value.f1_setup_request());
+  get_du(du_idx).push_ul_pdu(f1_setup_req);
   f1ap_message f1ap_pdu;
   bool         result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
   return result;

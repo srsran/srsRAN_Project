@@ -15,6 +15,7 @@
 #include "lib/cu_cp/cu_up_processor/cu_up_processor_impl_interface.h"
 #include "lib/cu_cp/du_processor/du_processor.h"
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
+#include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
@@ -34,6 +35,9 @@ byte_buffer generate_rrc_setup_complete();
 
 // Generate RRC Reconfiguration Complete PDU.
 byte_buffer generate_rrc_reconfiguration_complete_pdu(unsigned transaction_id, uint8_t count);
+
+// Extract RRC timers from F1 Setup Request.
+rrc_timers_t get_timers(const asn1::f1ap::f1_setup_request_s& f1_setup_req);
 
 struct dummy_du_processor_cu_cp_notifier : public du_processor_cu_cp_notifier {
 public:
