@@ -29,7 +29,7 @@ rrc_reconfiguration_procedure::rrc_reconfiguration_procedure(rrc_ue_context_t&  
   srb_notifier(srb_notifier_),
   logger(logger_)
 {
-  procedure_timeout = context.cell.timers.t311 + RRC_PROCEDURE_EXTRA_TIME + context.cfg.rrc_procedure_guard_time_ms;
+  procedure_timeout = context.cell.timers.t311 + context.cfg.rrc_procedure_guard_time_ms;
 }
 
 void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& ctx)

@@ -515,7 +515,7 @@ TEST_F(cu_cp_reestablishment_test, when_old_ue_is_busy_with_a_procedure_then_ree
 
   // RRC Setup timeout for old UE.
   std::chrono::milliseconds timeout =
-      rrc_test_timer_values.t300 + RRC_PROCEDURE_EXTRA_TIME + this->get_cu_cp_cfg().rrc.rrc_procedure_guard_time_ms;
+      rrc_test_timer_values.t300 + this->get_cu_cp_cfg().rrc.rrc_procedure_guard_time_ms;
   for (unsigned i = 0; i != timeout.count(); ++i) {
     this->tick();
   }

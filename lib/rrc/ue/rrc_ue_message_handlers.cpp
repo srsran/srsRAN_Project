@@ -320,7 +320,7 @@ rrc_ue_security_mode_command_context rrc_ue_impl::get_security_mode_command_cont
 async_task<bool> rrc_ue_impl::handle_security_mode_complete_expected(uint8_t transaction_id)
 {
   return launch_async([this,
-                       timeout_ms = RRC_PROCEDURE_EXTRA_TIME + context.cfg.rrc_procedure_guard_time_ms,
+                       timeout_ms = context.cfg.rrc_procedure_guard_time_ms,
                        transaction_id,
                        transaction = rrc_transaction{}](coro_context<async_task<bool>>& ctx) mutable {
     CORO_BEGIN(ctx);

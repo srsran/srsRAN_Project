@@ -22,7 +22,7 @@ rrc_ue_capability_transfer_procedure::rrc_ue_capability_transfer_procedure(
     rrc_ue_logger&                              logger_) :
   context(context_), rrc_ue(rrc_ue_notifier_), event_mng(event_mng_), logger(logger_)
 {
-  procedure_timeout = RRC_PROCEDURE_EXTRA_TIME + context.cfg.rrc_procedure_guard_time_ms;
+  procedure_timeout = context.cfg.rrc_procedure_guard_time_ms;
 }
 
 void rrc_ue_capability_transfer_procedure::operator()(coro_context<async_task<bool>>& ctx)

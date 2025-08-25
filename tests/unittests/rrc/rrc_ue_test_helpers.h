@@ -284,8 +284,7 @@ protected:
 
   void tick_timer()
   {
-    for (unsigned i = 0; i < (t300 + RRC_PROCEDURE_EXTRA_TIME + cu_cp_cfg.rrc.rrc_procedure_guard_time_ms).count();
-         ++i) {
+    for (unsigned i = 0; i < (t300 + cu_cp_cfg.rrc.rrc_procedure_guard_time_ms).count(); ++i) {
       task_sched_handle.tick_timer();
       ctrl_worker.run_pending_tasks();
     }

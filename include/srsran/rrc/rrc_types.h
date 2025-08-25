@@ -23,9 +23,6 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-// Extra time that is added to RRC procedures to make sure procedures can complete.
-constexpr std::chrono::milliseconds RRC_PROCEDURE_EXTRA_TIME{500};
-
 /// Arguments for the RRC Reconfiguration procedure.
 
 struct rrc_srb_to_add_mod {
