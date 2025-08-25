@@ -35,15 +35,25 @@ ue_cell_scheduler* ue_scheduler_impl::do_add_cell(const ue_cell_scheduler_creati
   return &cell;
 }
 
+void ue_scheduler_impl::do_stop_cell(du_cell_index_t cell_index)
+{
+  srsran_assert(cells.contains(cell_index), "Cell reference not found in the scheduler");
+
+  // Halt any pending events associated with this cell.
+  event_mng.stop_cell(cell_index);
+
+  // Remove UEs from the UE repository associated with this cell.
+  ue_db.handle_cell_deactivation(cell_index);
+}
+
 void ue_scheduler_impl::do_rem_cell(du_cell_index_t cell_index)
 {
   srsran_assert(cells.contains(cell_index), "Cell reference not found in the scheduler");
 
+  do_stop_cell(cell_index);
+
   // Remove cell from UE event manager.
   event_mng.rem_cell(cell_index);
-
-  // Remove UEs from the UE repository associated with this cell.
-  ue_db.handle_cell_removal(cell_index);
 
   // Remove cell from UE scheduler.
   cells.erase(cell_index);

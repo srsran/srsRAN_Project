@@ -52,6 +52,7 @@ public:
 
   void add_cell(const cell_creation_event& cell_ev);
   void rem_cell(du_cell_index_t cell_index);
+  void stop_cell(du_cell_index_t cell_index);
 
   /// UE Add/Mod/Remove interface.
   void handle_ue_creation(ue_config_update_event ev) override;

@@ -103,16 +103,17 @@ async_task<void> mac_cell_processor::stop()
           return;
         }
 
+        // Set cell state as inactive to stop answering to slot indications.
+        // Note: No more slot indications will reach the scheduler after this point.
+        state = cell_state::inactive;
+
+        // TODO: Call time_source->on_cell_deactivation() once FAPI supports stop procedure.
+
         // Notify scheduler about activation.
         sched.stop_cell(cell_cfg.cell_index);
 
         // Notify that cell metrics stopped being collected.
         metrics.on_cell_deactivation();
-
-        // TODO: Call time_source->on_cell_deactivation() once FAPI supports stop procedure.
-
-        // Set cell state as inactive to stop answering to slot indications.
-        state = cell_state::inactive;
 
         // Signal time source that the cell is being deactivated.
         time_source->on_cell_deactivation();

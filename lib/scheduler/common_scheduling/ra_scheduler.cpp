@@ -409,6 +409,18 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
   }
 }
 
+void ra_scheduler::stop()
+{
+  rach_indication_message rach;
+  while (pending_rachs.try_pop(rach)) {
+  }
+  ul_crc_indication crc;
+  while (pending_crcs.try_pop(crc)) {
+  }
+  pending_rars.clear();
+  pending_msg3s.clear();
+}
+
 void ra_scheduler::update_pending_rars(slot_point pdcch_slot)
 {
   for (auto it = pending_rars.begin(); it != pending_rars.end();) {

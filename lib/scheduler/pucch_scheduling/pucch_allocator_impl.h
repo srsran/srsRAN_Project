@@ -14,8 +14,6 @@
 #include "../config/ue_configuration.h"
 #include "pucch_allocator.h"
 #include "pucch_resource_manager.h"
-#include "srsran/scheduler/result/dci_info.h"
-#include <variant>
 
 namespace srsran {
 
@@ -31,6 +29,9 @@ public:
 
   /// Updates the internal slot_point and tracking of PUCCH resource usage; and resets the PUCCH common allocation grid.
   void slot_indication(slot_point sl_tx) override;
+
+  /// Called on cell deactivation.
+  void stop();
 
   std::optional<unsigned> alloc_common_pucch_harq_ack_ue(cell_resource_allocator&    res_alloc,
                                                          rnti_t                      tcrnti,

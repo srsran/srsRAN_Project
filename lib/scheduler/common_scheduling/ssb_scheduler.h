@@ -21,7 +21,7 @@ namespace srsran {
 enum class ssb_pattern_case;
 struct cell_slot_resource_allocator;
 
-using ssb_information_list = srsran::static_vector<ssb_information, MAX_SSB_PER_SLOT>;
+using ssb_information_list = static_vector<ssb_information, MAX_SSB_PER_SLOT>;
 
 class ssb_scheduler
 {
@@ -48,6 +48,9 @@ public:
   ///
   /// \remark This function only works for FR1, or L_max = 4 or 8.
   void schedule_ssb(cell_slot_resource_allocator& slot_allocator);
+
+  /// Called when cell is deactivated.
+  void stop();
 
 private:
   /// \brief Perform allocation for case A and C (both paired and unpaired spectrum) - TS 38.213, Section 4.1.

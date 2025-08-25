@@ -85,18 +85,16 @@ void cell_scheduler::run_slot(slot_point sl_tx)
       logger.info("Status: Detected skipped slot={}.", skipped_slot);
       reset_resource_grid(skipped_slot);
     }
+  } else {
+    // Implicitly active cell on slot_indication.
+    if (not active) {
+      logger.info("cell={}: Cell scheduling was activated.", fmt::underlying(cell_cfg.cell_index));
+      active = true;
+    }
   }
 
   // > Start with clearing old allocations from the grid.
   reset_resource_grid(sl_tx);
-
-  // > Handle commands to start/stop cell if any.
-  handle_pending_cell_activity_commands();
-
-  if (SRSRAN_UNLIKELY(not is_running())) {
-    return;
-  }
-  // Cell is active. Run the cell sub-schedulers.
 
   // > SSB scheduling.
   ssb_sch.run_slot(res_grid, sl_tx);
@@ -156,32 +154,32 @@ void cell_scheduler::reset_resource_grid(slot_point sl_tx)
   uci_alloc.slot_indication(sl_tx);
 }
 
-void cell_scheduler::handle_pending_cell_activity_commands()
-{
-  auto cmd = activ_cmd.exchange(activation_command::no_cmd, std::memory_order_relaxed);
-  if (SRSRAN_LIKELY(cmd == activation_command::no_cmd)) {
-    // No-op.
-    return;
-  }
-  if ((cmd == activation_command::start_cmd and active) or (cmd == activation_command::stop_cmd and not active)) {
-    // No-op.
-    return;
-  }
-
-  if (cmd == activation_command::start_cmd) {
-    active = true;
-  } else {
-    active = false;
-    metrics.handle_cell_deactivation();
-  }
-}
-
 void cell_scheduler::start()
 {
-  activ_cmd.store(activation_command::start_cmd, std::memory_order_relaxed);
+  active = true;
 }
 
 void cell_scheduler::stop()
 {
-  activ_cmd.store(activation_command::stop_cmd, std::memory_order_relaxed);
+  // From this point onwards, no slot indications are expected until the cell is reenabled.
+
+  if (not active) {
+    // Do nothing.
+    return;
+  }
+  active = false;
+
+  // Stop sub-schedulers.
+  ssb_sch.stop();
+  si_sch.stop();
+  prach_sch.stop();
+  ra_sch.stop();
+  pg_sch.stop();
+  ue_sched->stop();
+
+  // Reset resource grid and sub-allocators.
+  res_grid.stop();
+  pdcch_sch.stop();
+  pucch_alloc.stop();
+  uci_alloc.stop();
 }

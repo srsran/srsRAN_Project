@@ -171,6 +171,13 @@ void uci_allocator_impl::slot_indication(slot_point sl_tx)
   uci_alloc_grid[(sl_tx - 1).to_uint()].ucis.clear();
 }
 
+void uci_allocator_impl::stop()
+{
+  for (auto& sl_grid : uci_alloc_grid) {
+    sl_grid.ucis.clear();
+  }
+}
+
 std::optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,
                                                                     rnti_t                       crnti,
                                                                     const ue_cell_configuration& ue_cell_cfg,

@@ -53,6 +53,9 @@ public:
 
   /// Retrieves handler of UE feedback for a given cell.
   virtual scheduler_feedback_handler& get_feedback_handler() = 0;
+
+  /// Called when cell is deactivated.
+  virtual void stop() = 0;
 };
 
 /// Interface of data scheduler that is used to allocate UE DL and UL grants in a given slot

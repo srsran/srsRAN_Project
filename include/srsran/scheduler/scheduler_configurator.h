@@ -213,9 +213,11 @@ public:
   virtual void handle_rach_indication(const rach_indication_message& msg) = 0;
 
   /// \brief Activate a configured cell. This method has no effect if the cell is already active.
+  /// \remark This method needs to be called in the same thread as the slot_indication() method.
   virtual void handle_cell_activation_request(du_cell_index_t cell_index) = 0;
 
   /// \brief Deactivate a configured cell. This method has no effect if the cell is already deactivated.
+  /// \remark This method needs to be called after the last slot_indication() call.
   virtual void handle_cell_deactivation_request(du_cell_index_t cell_index) = 0;
 };
 

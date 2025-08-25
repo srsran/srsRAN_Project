@@ -74,6 +74,20 @@ void pucch_resource_manager::slot_indication(slot_point slot_tx)
   }
 }
 
+void pucch_resource_manager::stop()
+{
+  for (auto& res_counter : resource_slots) {
+    for (auto& ue_rec : res_counter.ues_using_pucch_res) {
+      ue_rec.rnti           = rnti_t::INVALID_RNTI;
+      ue_rec.resource_usage = pucch_resource_usage::NOT_USED;
+    }
+    for (auto& res : res_counter.used_common_resources) {
+      res = false;
+    }
+  }
+  last_sl_ind = {};
+}
+
 bool pucch_resource_manager::is_common_resource_available(slot_point sl, size_t r_pucch)
 {
   srsran_assert(r_pucch < 16, "r_PUCCH must be less than 16");

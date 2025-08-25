@@ -55,12 +55,6 @@ public:
 
   const sched_result& last_result() const { return res_grid[0].result; }
 
-  /// Check if the cell is running.
-  bool is_running() const
-  {
-    return active and activ_cmd.load(std::memory_order_relaxed) != activation_command::stop_cmd;
-  }
-
   void handle_si_update_request(const si_scheduling_update_request& msg);
 
   void handle_rach_indication(const rach_indication_message& msg) { ra_sch.handle_rach_indication(msg); }
@@ -74,8 +68,6 @@ public:
   const cell_configuration& cell_cfg;
 
 private:
-  void handle_pending_cell_activity_commands();
-
   void reset_resource_grid(slot_point sl_tx);
 
   /// Resource grid of this cell.
@@ -101,12 +93,8 @@ private:
   /// Reference to UE scheduler whose DU cell group contains this cell.
   ue_scheduler::unique_cell_ptr ue_sched;
 
-  // Current state of the cell.
-  bool active = true;
-
-  // Pending command for cell start/stop.
-  enum class activation_command { no_cmd, start_cmd, stop_cmd };
-  std::atomic<activation_command> activ_cmd{activation_command::no_cmd};
+  /// Current state of the cell.
+  bool active = false;
 };
 
 } // namespace srsran

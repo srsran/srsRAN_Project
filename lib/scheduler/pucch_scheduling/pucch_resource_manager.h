@@ -49,6 +49,8 @@ public:
   /// Reset all resources to "unused".
   void slot_indication(slot_point slot_tx);
 
+  void stop();
+
   /// Returns true if the common PUCCH resource indexed by r_pucch is available at the given slot.
   bool is_common_resource_available(slot_point sl, size_t r_pucch);
 

@@ -489,6 +489,15 @@ void pucch_allocator_impl::slot_indication(slot_point sl_tx)
   pucch_grants_alloc_grid[(sl_tx - 1).to_uint()].clear();
 }
 
+void pucch_allocator_impl::stop()
+{
+  resource_manager.stop();
+  for (auto& grants : pucch_grants_alloc_grid) {
+    grants.clear();
+  }
+  last_sl_ind = {};
+}
+
 //////////////     Sub-class definitions       //////////////
 
 void pucch_allocator_impl::pucch_grant::set_res_config(const pucch_resource& res_cfg)

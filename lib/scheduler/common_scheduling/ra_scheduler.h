@@ -60,6 +60,8 @@ public:
   /// Allocate pending RARs + Msg3s
   void run_slot(cell_resource_allocator& res_alloc);
 
+  void stop();
+
 private:
   class msg3_harq_timeout_notifier;
 

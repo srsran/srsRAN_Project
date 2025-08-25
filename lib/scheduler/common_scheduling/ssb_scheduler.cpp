@@ -37,6 +37,11 @@ void ssb_scheduler::run_slot(cell_resource_allocator& res_alloc, slot_point sl_p
   }
 }
 
+void ssb_scheduler::stop()
+{
+  first_run_slot = true;
+}
+
 void ssb_scheduler::schedule_ssb(cell_slot_resource_allocator& res_grid)
 {
   slot_point            sl_point = res_grid.slot;

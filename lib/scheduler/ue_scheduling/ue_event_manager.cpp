@@ -979,7 +979,7 @@ void ue_event_manager::add_cell(const cell_creation_event& cell_ev)
   }
 }
 
-void ue_event_manager::rem_cell(du_cell_index_t cell_index)
+void ue_event_manager::stop_cell(du_cell_index_t cell_index)
 {
   // Flush pending cell-specific events.
   cell_event_t ev{INVALID_DU_UE_INDEX, [](ue_cell&) {}, "invalid", true};
@@ -988,9 +988,15 @@ void ue_event_manager::rem_cell(du_cell_index_t cell_index)
 
   // Flush pending common events.
   // TODO: Fix this for carrier aggregation.
-  common_event_t common_ev{INVALID_DU_UE_INDEX, [](void) {}};
+  common_event_t common_ev{INVALID_DU_UE_INDEX, []() {}};
   while (common_events.try_pop(common_ev)) {
   }
+}
+
+void ue_event_manager::rem_cell(du_cell_index_t cell_index)
+{
+  // Stop cell if it has not been stopped yet.
+  stop_cell(cell_index);
 
   // Remove cell entry.
   du_cells[cell_index] = {};

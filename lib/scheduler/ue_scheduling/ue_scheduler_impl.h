@@ -45,6 +45,8 @@ public:
 private:
   ue_cell_scheduler* do_add_cell(const ue_cell_scheduler_creation_request& params) override;
 
+  void do_stop_cell(du_cell_index_t cell_index);
+
   void do_rem_cell(du_cell_index_t cell_index) override;
 
   void run_slot_impl(slot_point sl_tx);
@@ -92,6 +94,8 @@ private:
     }
 
     scheduler_feedback_handler& get_feedback_handler() override { return parent.get_feedback_handler(); }
+
+    void stop() override { parent.do_stop_cell(cell_res_alloc->cfg.cell_index); }
   };
 
   const scheduler_ue_expert_config& expert_cfg;
