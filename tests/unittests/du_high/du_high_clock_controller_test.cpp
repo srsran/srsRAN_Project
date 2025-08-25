@@ -42,7 +42,8 @@ protected:
 
   bool is_clock_running_automatically()
   {
-    auto                      prev         = timers.now();
+    auto prev = timers.now();
+    // Very high timeout to avoid hanging the test in case of failure.
     static constexpr unsigned test_timeout = 1000000;
     for (unsigned i = 0; i != test_timeout; ++i) {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));

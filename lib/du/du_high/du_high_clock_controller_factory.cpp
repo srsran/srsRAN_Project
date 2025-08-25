@@ -278,7 +278,8 @@ private:
   static slot_point_extended unpack_slot_ext(uint64_t state)
   {
     uint32_t numerology = (state >> 29U) & 0b111U;
-    uint32_t count      = state & 0x1fffffffU; // 29 bits for the count
+    // 29 bits for the count
+    uint32_t count = state & 0x1fffffffU;
     return slot_point_extended{to_subcarrier_spacing(numerology), count};
   }
   static uint64_t pack_slot_ext(slot_point_extended sl)
@@ -301,7 +302,8 @@ private:
   std::array<cell_context, MAX_NOF_DU_CELLS> cells;
 
   /// Representation of the state of the DU-high time source. The upper 32 bits represent the number of active cells,
-  /// while the lower 32 bits represent the latest slot point.
+  /// while the lower 32 bits represent the latest slot point. The latest time point is represented using 3 bits for the
+  /// the numerology and 29 bits for the slot count.
   std::atomic<uint64_t> master_state{0};
 };
 

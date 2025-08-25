@@ -105,7 +105,7 @@ public:
   task_executor& timer_executor() override { return high_prio_exec; }
 
 private:
-  // instantiated workers.
+  // Instantiated workers.
   priority_task_worker_pool                          worker_pool;
   priority_task_worker_pool_executor                 high_prio_exec{enqueue_priority::max, worker_pool};
   priority_task_worker_pool_executor                 low_prio_exec{enqueue_priority::max - 1, worker_pool};
