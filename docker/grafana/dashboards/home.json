@@ -437,7 +437,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time, pci, rnti, dl_brate, ul_brate, ((100.0 * dl_nof_nok) / (dl_nof_ok + dl_nof_nok)) AS dl_bler, ((100.0 * ul_nof_nok) / (ul_nof_ok + ul_nof_nok)) AS ul_bler, dl_mcs, ul_mcs, dl_bs, bsr, dl_ri, ul_ri, cqi, pusch_snr_db, ta_ns, pusch_rsrp_db, last_phr FROM ue WHERE time >= $__timeFrom AND time <= $__timeTo ORDER BY time",
+          "rawSql": "SELECT time, pci, to_hex(CAST(rnti AS INT)) as rnti, dl_brate, ul_brate, ((100.0 * dl_nof_nok) / (dl_nof_ok + dl_nof_nok)) AS dl_bler, ((100.0 * ul_nof_nok) / (ul_nof_ok + ul_nof_nok)) AS ul_bler, dl_mcs, ul_mcs, dl_bs, bsr, dl_ri, ul_ri, cqi, pusch_snr_db, ta_ns, pusch_rsrp_db, last_phr FROM ue WHERE time >= $__timeFrom AND time <= $__timeTo ORDER BY time",
           "refId": "AllUEInfo",
           "sql": {
             "columns": [
