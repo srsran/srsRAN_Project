@@ -21,6 +21,9 @@ class du_ue_manager;
 class du_cell_manager;
 struct du_manager_params;
 
+/// \brief Procedure used to stop an active DU cell.
+/// The UEs associated with the cell being deactivated will be released in the process, either via F1AP UE CONTEXT
+/// RELEASE REQUEST, F1 RESET, or silently depending on the configured policy.
 class du_cell_stop_procedure
 {
 public:

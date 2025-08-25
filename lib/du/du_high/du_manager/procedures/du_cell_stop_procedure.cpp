@@ -39,6 +39,11 @@ void du_cell_stop_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   proc_logger.log_proc_started();
 
+  if (not cell_mng.is_cell_active(cell_index)) {
+    // Cell is not active. Nothing to do.
+    CORO_EARLY_RETURN();
+  }
+
   // Check if there are still UEs attached to this cell that need to be released.
   CORO_AWAIT(rem_ues_with_matching_pcell());
 
