@@ -467,7 +467,9 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
       return;
     }
 
-    if (not cell_specific_events[crc_ind.cell_index].try_push(cell_event_t{
+    push_cell_event(
+        crc_ind.cell_index,
+        cell_event_t{
             crc_ind.crcs[i].ue_index,
             [this, sl_rx = crc_ind.sl_rx, crc_ptr = std::move(crc_ind_ptr)](ue_cell& ue_cc) {
               // Update HARQ.
@@ -496,9 +498,7 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
               du_cells[ue_cc.cell_index].metrics->handle_crc_indication(sl_rx, *crc_ptr, units::bytes{(unsigned)tbs});
             },
             "CRC",
-            true})) {
-      logger.warning("Discarding CRC. Cause: Event queue is full");
-    }
+            true});
   }
 }
 
@@ -557,7 +557,9 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
       return;
     }
 
-    if (not cell_specific_events[ind.cell_index].try_push(cell_event_t{
+    push_cell_event(
+        ind.cell_index,
+        cell_event_t{
             ind.ucis[i].ue_index,
             [this, uci_sl = ind.slot_rx, uci_pdu = std::move(uci_ptr)](ue_cell& ue_cc) {
               bool is_sr_opportunity_and_f1 = false;
@@ -677,9 +679,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
             // is about to receive and process the RRC Release, but it is still sending CSI or SR in the PUCCH. If we
             // stop the PUCCH scheduling for the UE about to be released, we could risk interference between UEs in
             // the PUCCH.
-            false})) {
-      logger.warning("UCI discarded. Cause: Event queue is full");
-    }
+            false});
   }
 }
 
@@ -694,7 +694,9 @@ void ue_event_manager::handle_srs_indication(const srs_indication& ind)
       return;
     }
 
-    if (not cell_specific_events[ind.cell_index].try_push(cell_event_t{
+    push_cell_event(
+        ind.cell_index,
+        cell_event_t{
             srs_pdu.ue_index,
             [this, srs_ptr = std::move(srs_pdu_ptr)](ue_cell& ue_cc) {
               // Indicate the channel matrix.
@@ -722,9 +724,7 @@ void ue_event_manager::handle_srs_indication(const srs_indication& ind)
               }
             },
             "SRS",
-            false})) {
-      logger.warning("SRS indication discarded. Cause: Event queue is full");
-    }
+            false});
   }
 }
 
@@ -979,7 +979,18 @@ void ue_event_manager::add_cell(const cell_creation_event& cell_ev)
   }
 }
 
+void ue_event_manager::start_cell(du_cell_index_t cell_index)
+{
+  du_cells[cell_index].active = true;
+}
+
 void ue_event_manager::stop_cell(du_cell_index_t cell_index)
+{
+  clear_cell_events(cell_index);
+  du_cells[cell_index].active = false;
+}
+
+void ue_event_manager::clear_cell_events(du_cell_index_t cell_index)
 {
   // Flush pending cell-specific events.
   cell_event_t ev{INVALID_DU_UE_INDEX, [](ue_cell&) {}, "invalid", true};
@@ -1000,6 +1011,23 @@ void ue_event_manager::rem_cell(du_cell_index_t cell_index)
 
   // Remove cell entry.
   du_cells[cell_index] = {};
+}
+
+void ue_event_manager::push_cell_event(du_cell_index_t cell_index, cell_event_t event)
+{
+  if (SRSRAN_UNLIKELY(not du_cells[cell_index].active)) {
+    // Note: Some PHY events may arrive after the cell has been stopped.
+    logger.warning("cell={} ue={}: Discarding {} event. Cause: Cell is not active",
+                   fmt::underlying(cell_index),
+                   fmt::underlying(event.ue_index),
+                   event.event_name);
+  }
+  if (not cell_specific_events[cell_index].try_push(std::move(event))) {
+    logger.warning("cell={} ue={}: Discarding {} event. Cause: Event queue is full",
+                   fmt::underlying(cell_index),
+                   fmt::underlying(event.ue_index),
+                   event.event_name);
+  }
 }
 
 bool ue_event_manager::cell_exists(du_cell_index_t cell_index) const

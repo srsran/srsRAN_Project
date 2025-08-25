@@ -35,6 +35,14 @@ ue_cell_scheduler* ue_scheduler_impl::do_add_cell(const ue_cell_scheduler_creati
   return &cell;
 }
 
+void ue_scheduler_impl::do_start_cell(du_cell_index_t cell_index)
+{
+  srsran_assert(cells.contains(cell_index), "Cell reference not found in the scheduler");
+
+  // Signal event manager that new events can be processed for this cell.
+  event_mng.start_cell(cell_index);
+}
+
 void ue_scheduler_impl::do_stop_cell(du_cell_index_t cell_index)
 {
   srsran_assert(cells.contains(cell_index), "Cell reference not found in the scheduler");

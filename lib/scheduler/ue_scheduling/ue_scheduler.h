@@ -54,6 +54,9 @@ public:
   /// Retrieves handler of UE feedback for a given cell.
   virtual scheduler_feedback_handler& get_feedback_handler() = 0;
 
+  /// Called when cell is activated.
+  virtual void start() = 0;
+
   /// Called when cell is deactivated.
   virtual void stop() = 0;
 };

@@ -52,6 +52,7 @@ public:
 
   void add_cell(const cell_creation_event& cell_ev);
   void rem_cell(du_cell_index_t cell_index);
+  void start_cell(du_cell_index_t cell_index);
   void stop_cell(du_cell_index_t cell_index);
 
   /// UE Add/Mod/Remove interface.
@@ -122,7 +123,10 @@ private:
 
   void process_common(slot_point sl, du_cell_index_t cell_index);
   void process_cell_specific(du_cell_index_t cell_index);
+  void clear_cell_events(du_cell_index_t cell_index);
   bool cell_exists(du_cell_index_t cell_index) const;
+
+  void push_cell_event(du_cell_index_t cell_index, cell_event_t callable);
 
   void
   log_invalid_ue_index(du_ue_index_t ue_index, const char* event_name = "Event", bool warn_if_ignored = true) const;
@@ -145,6 +149,7 @@ private:
     srs_scheduler*            srs_sched      = nullptr;
     cell_metrics_handler*     metrics        = nullptr;
     scheduler_event_logger*   ev_logger      = nullptr;
+    bool                      active         = false;
   };
 
   ue_repository&        ue_db;

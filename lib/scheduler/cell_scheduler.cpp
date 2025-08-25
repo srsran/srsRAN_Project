@@ -86,10 +86,9 @@ void cell_scheduler::run_slot(slot_point sl_tx)
       reset_resource_grid(skipped_slot);
     }
   } else {
-    // Implicitly active cell on slot_indication.
-    if (not active) {
-      logger.info("cell={}: Cell scheduling was activated.", fmt::underlying(cell_cfg.cell_index));
-      active = true;
+    if (SRSRAN_UNLIKELY(not active)) {
+      // Implicitly activate cell on slot_indication.
+      start();
     }
   }
 
@@ -156,7 +155,13 @@ void cell_scheduler::reset_resource_grid(slot_point sl_tx)
 
 void cell_scheduler::start()
 {
+  if (active) {
+    return;
+  }
   active = true;
+  logger.info("cell={}: Cell scheduling was activated.", fmt::underlying(cell_cfg.cell_index));
+
+  ue_sched->start();
 }
 
 void cell_scheduler::stop()
@@ -168,6 +173,7 @@ void cell_scheduler::stop()
     return;
   }
   active = false;
+  logger.info("cell={}: Cell scheduling was deactivated.", fmt::underlying(cell_cfg.cell_index));
 
   // Stop sub-schedulers.
   ssb_sch.stop();

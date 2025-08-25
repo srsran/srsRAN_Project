@@ -45,6 +45,7 @@ public:
 private:
   ue_cell_scheduler* do_add_cell(const ue_cell_scheduler_creation_request& params) override;
 
+  void do_start_cell(du_cell_index_t cell_index);
   void do_stop_cell(du_cell_index_t cell_index);
 
   void do_rem_cell(du_cell_index_t cell_index) override;
@@ -94,6 +95,8 @@ private:
     }
 
     scheduler_feedback_handler& get_feedback_handler() override { return parent.get_feedback_handler(); }
+
+    void start() override { parent.do_start_cell(cell_res_alloc->cfg.cell_index); }
 
     void stop() override { parent.do_stop_cell(cell_res_alloc->cfg.cell_index); }
   };
