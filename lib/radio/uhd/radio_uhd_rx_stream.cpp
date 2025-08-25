@@ -158,8 +158,8 @@ baseband_gateway_receiver::metadata radio_uhd_rx_stream::receive(baseband_gatewa
       case uhd::rx_metadata_t::ERROR_CODE_BROKEN_CHAIN:
       case uhd::rx_metadata_t::ERROR_CODE_ALIGNMENT:
       case uhd::rx_metadata_t::ERROR_CODE_BAD_PACKET:
-        fmt::println("Error: unhandled error in Rx metadata {}.", md.strerror().c_str());
-        return ret;
+        event.type = radio_notification_handler::event_type::OTHER;
+        break;
     }
 
     // Notify if the event type was set.
