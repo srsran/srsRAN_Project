@@ -101,6 +101,14 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
   schedule_dl_new_tx(res_alloc, dl_new_tx_alloc_type::srb1);
 }
 
+void ue_fallback_scheduler::stop()
+{
+  ongoing_ues_ack_retxs.clear();
+  slots_with_no_pdxch_space = {};
+  pending_dl_ues_new_tx.clear();
+  pending_ul_ues.clear();
+}
+
 void ue_fallback_scheduler::handle_dl_buffer_state_indication(du_ue_index_t ue_index)
 {
   if (not ues.contains(ue_index)) {

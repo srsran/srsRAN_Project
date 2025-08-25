@@ -38,9 +38,16 @@ ue_cell_scheduler* ue_scheduler_impl::do_add_cell(const ue_cell_scheduler_creati
 void ue_scheduler_impl::do_stop_cell(du_cell_index_t cell_index)
 {
   srsran_assert(cells.contains(cell_index), "Cell reference not found in the scheduler");
+  auto& c = cells[cell_index];
 
   // Halt any pending events associated with this cell.
   event_mng.stop_cell(cell_index);
+
+  // Stop sub-schedulers.
+  c.fallback_sched.stop();
+  c.srs_sched.stop();
+  c.uci_sched.stop();
+  c.cell_harqs.stop();
 
   // Remove UEs from the UE repository associated with this cell.
   ue_db.handle_cell_deactivation(cell_index);

@@ -9,6 +9,7 @@
  */
 
 #include "intra_slice_scheduler.h"
+#include "../logging/scheduler_metrics_handler.h"
 #include "srsran/ran/pdcch/search_space.h"
 
 using namespace srsran;
