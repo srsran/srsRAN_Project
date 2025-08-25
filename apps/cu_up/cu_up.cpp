@@ -297,7 +297,7 @@ int main(int argc, char** argv)
     udp_network_gateway_config cu_f1u_gw_config = {};
     cu_f1u_gw_config.bind_address               = sock_cfg.bind_addr;
     cu_f1u_gw_config.ext_bind_addr              = sock_cfg.udp_config.ext_addr;
-    cu_f1u_gw_config.bind_port                  = cu_up_cfg.f1u_cfg.f1u_port;
+    cu_f1u_gw_config.bind_port                  = cu_up_cfg.f1u_cfg.bind_port;
     cu_f1u_gw_config.reuse_addr                 = false;
     cu_f1u_gw_config.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;
     cu_f1u_gw_config.rx_max_mmsg                = sock_cfg.udp_config.rx_max_msgs;
@@ -314,7 +314,7 @@ int main(int argc, char** argv)
     }
   }
   std::unique_ptr<f1u_cu_up_udp_gateway> cu_f1u_conn = srs_cu_up::create_split_f1u_gw(
-      {f1u_gw_maps, *cu_f1u_gtpu_demux, *cu_up_dlt_pcaps.f1u, cu_up_cfg.f1u_cfg.f1u_port});
+      {f1u_gw_maps, *cu_f1u_gtpu_demux, *cu_up_dlt_pcaps.f1u, cu_up_cfg.f1u_cfg.peer_port});
 
   // Instantiate E1 client gateway.
   // > Create E1 config
