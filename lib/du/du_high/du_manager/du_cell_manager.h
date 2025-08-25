@@ -21,12 +21,14 @@ struct du_cell_param_config_request;
 
 /// Current DU cell context.
 struct du_cell_context {
+  enum class state_t { active, inactive, deactivating };
+
   /// Current configuration.
   du_cell_config cfg;
   /// Encoded System Information being currently sent by the DU cell.
   mac_cell_sys_info_config si_cfg;
-  /// Whether the cell is active.
-  bool active = false;
+  /// Current cell state.
+  state_t state;
 };
 
 /// Result of the reconfiguration of a DU cell.
@@ -52,7 +54,7 @@ public:
   bool is_cell_active(du_cell_index_t cell_index) const
   {
     assert_cell_exists(cell_index);
-    return cells[cell_index]->active;
+    return cells[cell_index]->state == du_cell_context::state_t::active;
   }
 
   du_cell_index_t get_cell_index(nr_cell_global_id_t nr_cgi) const;
@@ -70,6 +72,12 @@ public:
   {
     assert_cell_exists(cell_index);
     return cells[cell_index]->cfg;
+  }
+
+  /// Stop accepting new UE creations in the given cell.
+  void stop_accepting_ues(du_cell_index_t cell_index)
+  {
+    cells[cell_index]->state = du_cell_context::state_t::deactivating;
   }
 
   /// Handle request to update a cell configuration.

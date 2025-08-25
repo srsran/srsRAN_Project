@@ -71,7 +71,7 @@ void du_cell_manager::add_cell(const du_cell_config& cell_cfg)
   // Save config.
   auto& cell       = *cells.emplace_back(std::make_unique<du_cell_context>());
   cell.cfg         = cell_cfg;
-  cell.active      = false;
+  cell.state       = du_cell_context::state_t::inactive;
   cell.si_cfg.sib1 = sib1.copy();
   cell.si_cfg.si_messages.assign(si_messages.begin(), si_messages.end());
   cell.si_cfg.si_sched_cfg = std::move(si_sched_req);
@@ -115,7 +115,7 @@ async_task<bool> du_cell_manager::start(du_cell_index_t cell_index)
       logger.warning("cell={}: Start called for a cell that does not exist.", fmt::underlying(cell_index));
       CORO_EARLY_RETURN(false);
     }
-    if (cells[cell_index]->active) {
+    if (cells[cell_index]->state != du_cell_context::state_t::inactive) {
       logger.warning("cell={}: Start called for an already active cell.", fmt::underlying(cell_index));
       CORO_EARLY_RETURN(false);
     }
@@ -123,7 +123,7 @@ async_task<bool> du_cell_manager::start(du_cell_index_t cell_index)
     // Start cell in the MAC.
     CORO_AWAIT(cfg.mac.cell_mng.get_cell_controller(cell_index).start());
 
-    cells[cell_index]->active = true;
+    cells[cell_index]->state = du_cell_context::state_t::active;
 
     CORO_RETURN(true);
   });
@@ -138,12 +138,11 @@ async_task<void> du_cell_manager::stop(du_cell_index_t cell_index)
       logger.warning("cell={}: Stop called for a cell that does not exist.", fmt::underlying(cell_index));
       CORO_EARLY_RETURN();
     }
-    if (not cells[cell_index]->active) {
+    if (cells[cell_index]->state == du_cell_context::state_t::inactive) {
       // Ignore.
       CORO_EARLY_RETURN();
     }
-
-    cells[cell_index]->active = false;
+    cells[cell_index]->state = du_cell_context::state_t::inactive;
 
     // Stop cell in the MAC.
     CORO_AWAIT(cfg.mac.cell_mng.get_cell_controller(cell_index).stop());
@@ -158,8 +157,8 @@ async_task<void> du_cell_manager::stop_all()
     CORO_BEGIN(ctx);
 
     for (; i != cells.size(); ++i) {
-      if (cells[i] != nullptr and cells[i]->active) {
-        cells[i]->active = false;
+      if (cells[i] != nullptr and cells[i]->state == du_cell_context::state_t::active) {
+        cells[i]->state = du_cell_context::state_t::inactive;
 
         CORO_AWAIT(cfg.mac.cell_mng.get_cell_controller(to_du_cell_index(i)).stop());
       }

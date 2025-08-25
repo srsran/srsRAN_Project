@@ -27,7 +27,8 @@ class du_ue_reset_procedure
 public:
   du_ue_reset_procedure(const std::vector<du_ue_index_t>& ues_to_reset_,
                         du_ue_manager&                    ue_mng_,
-                        const du_manager_params&          du_params);
+                        const du_manager_params&          du_params,
+                        bool                              trigger_f1_reset);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -39,6 +40,7 @@ private:
   std::vector<du_ue_index_t> ues_to_reset;
   du_ue_manager&             ue_mng;
   const du_manager_params&   du_params;
+  const bool                 trigger_f1_reset;
 
   unsigned          ue_rem = 0;
   manual_event_flag complete_flag;

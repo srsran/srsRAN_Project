@@ -8,6 +8,7 @@
 
 set(SOURCES
         du_stop_procedure.cpp
+        du_cell_stop_procedure.cpp
         du_ue_ric_configuration_procedure.cpp
         du_param_config_procedure.cpp
         du_mac_si_pdu_update_procedure.cpp

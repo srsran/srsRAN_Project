@@ -12,6 +12,7 @@
 #include "../du_cell_manager.h"
 #include "../du_metrics_aggregator_impl.h"
 #include "../du_ue/du_ue_manager.h"
+#include "du_ue_reset_procedure.h"
 #include "srsran/support/async/async_no_op_task.h"
 #include "srsran/support/async/async_timer.h"
 
@@ -60,7 +61,8 @@ async_task<bool> cu_configuration_procedure::start_cell(const nr_cell_global_id_
   return cell_mng.start(cell_index);
 }
 
-static async_task<void> force_ue_release(du_ue_manager& ue_mng, du_cell_index_t cell_index)
+static async_task<void>
+force_ue_release(du_ue_manager& ue_mng, const du_manager_params& du_params, du_cell_index_t cell_index)
 {
   std::vector<du_ue_index_t> ues_to_force_rem;
   for (const auto& u : ue_mng.get_du_ues()) {
@@ -71,7 +73,7 @@ static async_task<void> force_ue_release(du_ue_manager& ue_mng, du_cell_index_t 
   if (ues_to_force_rem.empty()) {
     return launch_no_op_task();
   }
-  return ue_mng.handle_f1_reset_request(ues_to_force_rem);
+  return launch_async<du_ue_reset_procedure>(ues_to_force_rem, ue_mng, du_params, true);
 }
 
 async_task<void> cu_configuration_procedure::stop_cell(const nr_cell_global_id_t& cgi)
@@ -124,7 +126,7 @@ async_task<void> cu_configuration_procedure::stop_cell(const nr_cell_global_id_t
 
         if (count == nof_checks) {
           // Timeout reached and there are still UEs attached to the cell. Force their removal.
-          CORO_AWAIT(force_ue_release(ue_mng, cell_index));
+          CORO_AWAIT(force_ue_release(ue_mng, du_params, cell_index));
         }
 
         // Stop cell.

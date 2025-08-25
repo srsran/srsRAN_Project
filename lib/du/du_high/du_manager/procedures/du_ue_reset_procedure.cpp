@@ -17,8 +17,9 @@ using namespace srs_du;
 
 du_ue_reset_procedure::du_ue_reset_procedure(const std::vector<du_ue_index_t>& ues_to_reset_,
                                              du_ue_manager&                    ue_mng_,
-                                             const du_manager_params&          du_params_) :
-  ues_to_reset(ues_to_reset_), ue_mng(ue_mng_), du_params(du_params_)
+                                             const du_manager_params&          du_params_,
+                                             bool                              trigger_f1_reset_) :
+  ues_to_reset(ues_to_reset_), ue_mng(ue_mng_), du_params(du_params_), trigger_f1_reset(trigger_f1_reset_)
 {
 }
 
@@ -32,6 +33,11 @@ void du_ue_reset_procedure::operator()(coro_context<async_task<void>>& ctx)
   // Wait for all removal tasks to complete.
   CORO_AWAIT(complete_flag);
 
+  if (trigger_f1_reset) {
+    // Trigger F1 Reset towards CU.
+    CORO_AWAIT(du_params.f1ap.conn_mng.handle_f1_reset_request(f1_reset_request{ues_to_reset}));
+  }
+
   CORO_RETURN();
 }
 
@@ -39,15 +45,10 @@ void du_ue_reset_procedure::launch_rem_ues_tasks()
 {
   if (ues_to_reset.empty()) {
     // Need to delete all UEs. Update ues_to_reset with current UEs.
-    unsigned nof_ues = ue_mng.nof_ues();
-    ues_to_reset.reserve(nof_ues);
-    for (unsigned i = 0; i != MAX_NOF_DU_UES; ++i) {
-      if (ue_mng.find_ue(to_du_ue_index(i)) != nullptr) {
-        ues_to_reset.push_back(to_du_ue_index(i));
-        if (ues_to_reset.size() == nof_ues) {
-          break;
-        }
-      }
+    auto& ue_db = ue_mng.get_du_ues();
+    ues_to_reset.reserve(ue_db.size());
+    for (const auto& u : ue_db) {
+      ues_to_reset.push_back(u.ue_index);
     }
   }
 

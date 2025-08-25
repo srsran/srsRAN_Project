@@ -130,6 +130,11 @@ public:
 
   async_task<void> handle_f1_removal_request() override { return wait_f1_removal.launch(); }
 
+  async_task<f1_reset_acknowledgement> handle_f1_reset_request(const f1_reset_request& req) override
+  {
+    return launch_no_op_task(f1_reset_acknowledgement{true});
+  }
+
   async_task<gnbdu_config_update_response> handle_du_config_update(const gnbdu_config_update_request& request) override
   {
     last_du_cfg_req = gnbdu_config_update_request{request};

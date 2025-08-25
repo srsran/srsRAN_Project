@@ -14,6 +14,7 @@
 #include "f1ap_du_connection_handler.h"
 #include "log_helpers.h"
 #include "procedures/f1ap_du_gnbdu_config_update_procedure.h"
+#include "procedures/f1ap_du_initiated_reset_procedure.h"
 #include "procedures/f1ap_du_positioning_procedures.h"
 #include "procedures/f1ap_du_removal_procedure.h"
 #include "procedures/f1ap_du_reset_procedure.h"
@@ -101,6 +102,11 @@ async_task<f1_setup_result> f1ap_du_impl::handle_f1_setup_request(const f1_setup
 async_task<void> f1ap_du_impl::handle_f1_removal_request()
 {
   return launch_async<f1ap_du_removal_procedure>(connection_handler, *tx_pdu_notifier, *events);
+}
+
+async_task<f1_reset_acknowledgement> f1ap_du_impl::handle_f1_reset_request(const f1_reset_request& req)
+{
+  return launch_async<f1ap_du_initiated_reset_procedure>(req, *tx_pdu_notifier, *events, ues);
 }
 
 async_task<gnbdu_config_update_response>
