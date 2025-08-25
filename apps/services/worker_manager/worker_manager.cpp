@@ -319,7 +319,11 @@ static unsigned get_default_nof_workers(const worker_manager_config& worker_cfg)
   if (max_cpus == 0) {
     max_cpus = cpu_architecture_info::get().get_host_nof_available_cpus();
   }
-  return std::min(nof_workers, max_cpus - 1);
+
+  // Allow some spare capacity for, e.g., processing of packets by the kernel, RU timing, etc.
+  const unsigned spare_cpus  = 3;
+  const unsigned min_workers = 4;
+  return std::max(std::min(nof_workers, max_cpus - spare_cpus), min_workers);
 }
 
 /// Helper to calculate an upper bound on the number of preallocated producers for the main worker pool.
