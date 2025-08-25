@@ -142,24 +142,76 @@ protected:
   resource_grid_spy*       grid_spy;
 };
 
-TEST_F(UplinkProcessorFixture, prach_workflow)
+TEST_F(UplinkProcessorFixture, prach_normal_workflow)
 {
   slot_point slot;
   ul_processor->get_pdu_slot_repository(slot);
 
+  // Request PRACH processing.
   prach_buffer_spy buffer;
   ul_processor->get_slot_processor(slot).process_prach(buffer, {});
 
-  // Check PRACH detection has been enqueued and the detector was not called.
-  ASSERT_TRUE(prach_executor.has_pending_tasks());
-  ASSERT_FALSE(prach_spy->has_detect_method_been_called());
+  // Create asynchronous task - it will block until all tasks are completed.
+  std::atomic<bool> stop_thread_started = false;
+  std::thread       stop_thread([this, &stop_thread_started]() {
+    stop_thread_started = true;
+    ul_processor->stop();
+  });
+
+  // Wait for thread to start.
+  while (!stop_thread_started) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
 
   // Execute tasks.
-  prach_executor.run_pending_tasks();
+  ASSERT_TRUE(prach_executor.run_pending_tasks());
 
   // Check the detector has been called and the result notified.
   ASSERT_TRUE(prach_spy->has_detect_method_been_called());
   ASSERT_TRUE(results_notifier.has_prach_result_been_notified());
+
+  // Synchronize stopping thread.
+  stop_thread.join();
+}
+
+TEST_F(UplinkProcessorFixture, prach_fail_defer_workflow)
+{
+  slot_point slot;
+  ul_processor->get_pdu_slot_repository(slot);
+
+  // Stop PRACH executor.
+  prach_executor.stop();
+
+  // Request PRACH processing.
+  prach_buffer_spy buffer;
+  ul_processor->get_slot_processor(slot).process_prach(buffer, {});
+
+  // Request processor to stop. There is no pending task, so it should not block.
+  ul_processor->stop();
+
+  // Check the detector has not been called nor the result notified.
+  ASSERT_FALSE(prach_spy->has_detect_method_been_called());
+  ASSERT_FALSE(results_notifier.has_prach_result_been_notified());
+}
+
+TEST_F(UplinkProcessorFixture, prach_request_after_stop)
+{
+  slot_point slot;
+  ul_processor->get_pdu_slot_repository(slot);
+
+  // Request processor to stop. There is no pending task, so it should not block.
+  ul_processor->stop();
+
+  // Request PRACH processing.
+  prach_buffer_spy buffer;
+  ul_processor->get_slot_processor(slot).process_prach(buffer, {});
+
+  // The UL processor must not create an asynchronous task.
+  ASSERT_FALSE(prach_executor.run_pending_tasks());
+
+  // Check the detector has not been called nor the result notified.
+  ASSERT_FALSE(prach_spy->has_detect_method_been_called());
+  ASSERT_FALSE(results_notifier.has_prach_result_been_notified());
 }
 
 TEST_F(UplinkProcessorFixture, pusch_normal_workflow)
