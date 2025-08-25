@@ -88,6 +88,7 @@ private:
 
   void write_tx_pdu_pcap(slot_point sl_tx, const sched_result& sl_res, const mac_dl_data_result& dl_res);
 
+  // Dependencies.
   srslog::basic_logger&           logger;
   const mac_cell_creation_request cell_cfg;
   task_executor&                  cell_exec;
@@ -115,6 +116,7 @@ private:
 
   mac_scheduler_cell_info_handler& sched;
 
+  /// Ticks the APP clock based on the received slot indications for this cell.
   std::unique_ptr<mac_cell_clock_controller> time_source;
 
   // Handler of cell metrics

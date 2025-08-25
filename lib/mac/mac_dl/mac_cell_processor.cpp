@@ -109,14 +109,17 @@ async_task<void> mac_cell_processor::stop()
 
         // TODO: Call time_source->on_cell_deactivation() once FAPI supports stop procedure.
 
+        // Signal time source that the cell is being deactivated.
+        time_source->on_cell_deactivation();
+
         // Notify scheduler about activation.
         sched.stop_cell(cell_cfg.cell_index);
 
         // Notify that cell metrics stopped being collected.
         metrics.on_cell_deactivation();
 
-        // Signal time source that the cell is being deactivated.
-        time_source->on_cell_deactivation();
+        // Clear all UEs.
+        ue_mng.clear();
 
         logger.info("cell={}: Cell was stopped.", fmt::underlying(cell_cfg.cell_index));
       },
@@ -206,8 +209,14 @@ async_task<bool> mac_cell_processor::add_ue(const mac_ue_create_request& request
       timers,
       [this, ue_inst = std::move(ue_inst)]() mutable noexcept SRSRAN_RTSAN_NONBLOCKING {
         // > Insert UE and DL bearers.
+
         // Note: Ensure we only do so if the cell is active.
-        return state == cell_state::active and ue_mng.add_ue(std::move(ue_inst));
+        if (state != cell_state::active) {
+          dl_harq_buffers.deallocate_ue_buffers(ue_inst.get_ue_index());
+          return false;
+        }
+
+        return ue_mng.add_ue(std::move(ue_inst));
       },
       [this, ue_index = request.ue_index]() {
         logger.warning("ue={}: Postponed UE creation. Cause: Task queue is full", fmt::underlying(ue_index));
@@ -275,7 +284,7 @@ async_task<bool> mac_cell_processor::remove_bearers(du_ue_index_t ue_index, span
       timers,
       [this, ue_index, lcids_to_rem_bset]() noexcept SRSRAN_RTSAN_NONBLOCKING -> bool {
         // Remove logical channels.
-        return ue_mng.remove_bearers(ue_index, lcids_to_rem_bset);
+        return state == cell_state::active and ue_mng.remove_bearers(ue_index, lcids_to_rem_bset);
       },
       [this, ue_index]() {
         logger.warning("ue={}: Postponed UE bearer removal. Cause: Task queue is full", fmt::underlying(ue_index));

@@ -16,15 +16,16 @@
 
 namespace srsran {
 
-class mac_ue_delete_procedure
+/// Procedure to remove UE from MAC UL, MAC DL, MAC CTRL and MAC scheduler.
+class mac_ue_removal_procedure
 {
 public:
-  explicit mac_ue_delete_procedure(const mac_ue_delete_request& msg,
-                                   mac_control_config&          cfg_,
-                                   mac_ctrl_configurator&       mac_ctrl_,
-                                   mac_ul_configurator&         mac_ul_,
-                                   mac_dl_configurator&         mac_dl_,
-                                   mac_scheduler_configurator&  sched_configurator_) :
+  explicit mac_ue_removal_procedure(const mac_ue_delete_request& msg,
+                                    mac_control_config&          cfg_,
+                                    mac_ctrl_configurator&       mac_ctrl_,
+                                    mac_ul_configurator&         mac_ul_,
+                                    mac_dl_configurator&         mac_dl_,
+                                    mac_scheduler_configurator&  sched_configurator_) :
     req(msg),
     cfg(cfg_),
     logger(cfg.logger),

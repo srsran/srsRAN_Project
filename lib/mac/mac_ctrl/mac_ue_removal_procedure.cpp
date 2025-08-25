@@ -8,12 +8,12 @@
  *
  */
 
-#include "ue_delete_procedure.h"
+#include "mac_ue_removal_procedure.h"
 #include "proc_logger.h"
 
 using namespace srsran;
 
-void mac_ue_delete_procedure::operator()(coro_context<async_task<mac_ue_delete_response>>& ctx)
+void mac_ue_removal_procedure::operator()(coro_context<async_task<mac_ue_delete_response>>& ctx)
 {
   CORO_BEGIN(ctx);
 

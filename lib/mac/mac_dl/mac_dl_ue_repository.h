@@ -132,6 +132,9 @@ public:
     return false;
   }
 
+  /// Remove all UEs.
+  void clear();
+
 private:
   du_rnti_table& rnti_table;
 

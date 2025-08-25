@@ -43,6 +43,7 @@ public:
   static const char* name() { return "MAC UE Creation"; }
 
 private:
+  async_task<void>       cancel_ue_creation();
   mac_ue_create_response handle_mac_ue_create_result(bool result);
 
   mac_ue_create_request       req;
@@ -53,8 +54,10 @@ private:
   mac_dl_configurator&        dl_unit;
   mac_scheduler_configurator& sched_configurator;
 
-  rnti_t crnti_assigned = rnti_t::INVALID_RNTI;
-  bool   add_ue_result  = false;
+  rnti_t crnti_assigned      = rnti_t::INVALID_RNTI;
+  bool   add_ul_ue_result    = false;
+  bool   add_dl_ue_result    = false;
+  bool   add_sched_ue_result = false;
 };
 
 } // namespace srsran
