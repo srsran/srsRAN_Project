@@ -20,7 +20,7 @@ namespace srs_du {
 
 class f1ap_du_ue_manager;
 
-/// Implementation of the F1AP gNB-DU-initiated RESET procedure as per TS 38.473, section 8.2.1.2.
+/// Implementation of the gNB-DU-initiated F1 RESET procedure as per TS 38.473, section 8.2.1.2.
 class f1ap_du_initiated_reset_procedure
 {
 public:

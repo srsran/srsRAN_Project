@@ -73,7 +73,7 @@ force_ue_release(du_ue_manager& ue_mng, const du_manager_params& du_params, du_c
   if (ues_to_force_rem.empty()) {
     return launch_no_op_task();
   }
-  return launch_async<du_ue_reset_procedure>(ues_to_force_rem, ue_mng, du_params, true);
+  return launch_async<du_ue_reset_procedure>(ues_to_force_rem, ue_mng, du_params, std::nullopt);
 }
 
 async_task<void> cu_configuration_procedure::stop_cell(const nr_cell_global_id_t& cgi)

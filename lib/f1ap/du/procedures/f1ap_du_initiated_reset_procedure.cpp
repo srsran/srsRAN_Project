@@ -54,8 +54,17 @@ void f1ap_du_initiated_reset_procedure::send_f1_reset()
   msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_RESET);
   reset_s& ie = msg.pdu.init_msg().value.reset();
 
-  ie->transaction_id                  = transaction.id();
-  ie->cause.set_radio_network().value = cause_radio_network_opts::cell_not_available;
+  ie->transaction_id = transaction.id();
+
+  switch (req.cause) {
+    case f1_reset_request::cause_type::cell_removal:
+      ie->cause.set_radio_network().value = cause_radio_network_opts::cell_not_available;
+      break;
+    case f1_reset_request::cause_type::other:
+    default:
+      ie->cause.set_misc().value = cause_misc_opts::unspecified;
+      break;
+  }
 
   if (not req.ues_reset.empty()) {
     // Fill UEs to be reset.

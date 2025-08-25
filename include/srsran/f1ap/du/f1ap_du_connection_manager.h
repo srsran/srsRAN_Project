@@ -28,7 +28,12 @@ namespace srsran {
 namespace srs_du {
 
 struct f1_reset_request {
+  enum class cause_type { cell_removal, other };
+
+  /// UEs to reset. If empty, all UEs will be reset.
   std::vector<du_ue_index_t> ues_reset;
+  /// Cause for the F1 Reset.
+  cause_type cause;
 };
 
 struct f1_reset_acknowledgement {

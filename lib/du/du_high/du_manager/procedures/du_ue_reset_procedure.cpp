@@ -15,11 +15,11 @@
 using namespace srsran;
 using namespace srs_du;
 
-du_ue_reset_procedure::du_ue_reset_procedure(const std::vector<du_ue_index_t>& ues_to_reset_,
-                                             du_ue_manager&                    ue_mng_,
-                                             const du_manager_params&          du_params_,
-                                             bool                              trigger_f1_reset_) :
-  ues_to_reset(ues_to_reset_), ue_mng(ue_mng_), du_params(du_params_), trigger_f1_reset(trigger_f1_reset_)
+du_ue_reset_procedure::du_ue_reset_procedure(const std::vector<du_ue_index_t>&                  ues_to_reset_,
+                                             du_ue_manager&                                     ue_mng_,
+                                             const du_manager_params&                           du_params_,
+                                             const std::optional<f1_reset_request::cause_type>& cause_) :
+  ues_to_reset(ues_to_reset_), ue_mng(ue_mng_), du_params(du_params_), cause(cause_)
 {
 }
 
@@ -33,9 +33,9 @@ void du_ue_reset_procedure::operator()(coro_context<async_task<void>>& ctx)
   // Wait for all removal tasks to complete.
   CORO_AWAIT(complete_flag);
 
-  if (trigger_f1_reset) {
+  if (cause.has_value()) {
     // Trigger F1 Reset towards CU.
-    CORO_AWAIT(du_params.f1ap.conn_mng.handle_f1_reset_request(f1_reset_request{ues_to_reset}));
+    CORO_AWAIT(du_params.f1ap.conn_mng.handle_f1_reset_request(f1_reset_request{ues_to_reset, cause.value()}));
   }
 
   CORO_RETURN();

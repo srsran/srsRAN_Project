@@ -74,7 +74,11 @@ async_task<void> du_cell_stop_procedure::force_ue_removal()
     // There are no UEs associated with this cell. Nothing to do.
     return launch_no_op_task();
   }
-  return launch_async<du_ue_reset_procedure>(ues_to_rem, ue_mng, du_params, mode == ue_removal_mode::trigger_f1_reset);
+  std::optional<f1_reset_request::cause_type> cause;
+  if (mode == ue_removal_mode::trigger_f1_reset) {
+    cause = f1_reset_request::cause_type::cell_removal;
+  }
+  return launch_async<du_ue_reset_procedure>(ues_to_rem, ue_mng, du_params, cause);
 }
 
 async_task<void> du_cell_stop_procedure::rem_ues_with_matching_pcell()

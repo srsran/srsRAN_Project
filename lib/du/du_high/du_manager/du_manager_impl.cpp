@@ -162,7 +162,7 @@ du_ue_index_t du_manager_impl::find_unused_du_ue_index()
 
 async_task<void> du_manager_impl::handle_f1_reset_request(const std::vector<du_ue_index_t>& ues_to_reset)
 {
-  return launch_async<du_ue_reset_procedure>(ues_to_reset, ue_mng, params, false);
+  return launch_async<du_ue_reset_procedure>(ues_to_reset, ue_mng, params, std::nullopt);
 }
 
 async_task<gnbcu_config_update_response>
