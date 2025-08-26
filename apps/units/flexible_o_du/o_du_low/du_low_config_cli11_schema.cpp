@@ -143,9 +143,8 @@ static void configure_cli11_upper_phy_threads_args(CLI::App& app, du_low_unit_ex
              config.max_pusch_and_srs_concurrency,
              "Maximum PUSCH and SRS processing concurrency for all cells.\n"
              "Limits the maximum number of threads that can concurrently process Physical Uplink Shared Channel \n"
-             "(PUSCH) and Sounding Reference Signals (SRS). Set it to zero for no limitation. This parameter is\n"
-             "required when hardware acceleration is used. It must not exceed the number of available queues for the \n"
-             "accelerator.\")")
+             "(PUSCH) and Sounding Reference Signals (SRS). Set it to zero for no limitation. If hardware \n"
+             "acceleration is enabled, this parameter is set to the number of the accelerator queues.")
       ->capture_default_str()
       ->check(CLI::Number);
   add_option(app,
@@ -153,8 +152,8 @@ static void configure_cli11_upper_phy_threads_args(CLI::App& app, du_low_unit_ex
              config.max_pdsch_concurrency,
              "Maximum concurrency level for PDSCH processing for all cells.\n"
              "Limits the number of threads that can concurrently process Physical Downlink Shared Channel (PDSCH).\n"
-             "Set to zero for no limitation. This parameter is required when hardware acceleration is used. It must \n"
-             "not exceed the number of available queues for the accelerator.")
+             "Set to zero for no limitation. If hardware acceleration is enabled, this parameter is set to the\n"
+             "number of the accelerator queues.")
       ->capture_default_str()
       ->check(CLI::Number);
 }
