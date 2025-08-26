@@ -152,6 +152,8 @@ struct scheduler_cell_metrics {
   unsigned nof_failed_pusch_allocs_late_harqs = 0;
   /// Number of UE events not reported because the maximum number of events was reached.
   unsigned nof_filtered_events = 0;
+  /// Average number of RBs used for PUCCH per UL slot.
+  float pucch_tot_rb_usage_avg = 0.0f;
 
   unsigned                                nof_error_indications = 0;
   std::chrono::microseconds               average_decision_latency{0};
