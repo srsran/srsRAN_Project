@@ -102,6 +102,10 @@ smoke zmq:
     RETINA_LAUNCHER_ARGS: -x ${EXTRA_SMOKE_ZMQ}
     RETINA_PARAM_ARGS: gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True
     E2E_LOG_LEVEL: info
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG_LAB_BCN"
+    KUBECONFIG_VAR_NAME_EXTRA: ""
+  tags:
+    - new-retina-e2e-amd64
   before_script:
     - |
       export TESTBED=zmq
@@ -125,6 +129,10 @@ smoke zmq:
   variables:
     TESTBED: zmq
     E2E_LOG_LEVEL: info
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG_LAB_BCN"
+    KUBECONFIG_VAR_NAME_EXTRA: ""
+  tags:
+    - new-retina-e2e-amd64
   needs:
     - job: basic relwithdeb
       artifacts: true
@@ -361,6 +369,10 @@ test mode ue:
     MARKERS: test_mode
     KEYWORDS: test_ue
     E2E_LOG_LEVEL: warning
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG_LAB_BCN"
+    KUBECONFIG_VAR_NAME_EXTRA: ""
+  tags:
+    - new-retina-e2e-amd64
   needs:
     - job: basic relwithdeb
       artifacts: true
