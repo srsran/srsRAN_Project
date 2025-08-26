@@ -212,21 +212,21 @@ private:
   void fill_pucch_harq_common_grant(pucch_info& pucch_info, rnti_t rnti, const pucch_res_alloc_cfg& pucch_res) const;
 
   // Fills the PUCCH Format 0 PDU.
-  void fill_pucch_ded_format0_grant(pucch_info&           pucch_grant,
+  void fill_pucch_ded_format0_grant(pucch_info&           pucch_pdu,
                                     rnti_t                crnti,
                                     const pucch_resource& pucch_ded_res_cfg,
                                     unsigned              harq_ack_bits,
                                     sr_nof_bits           sr_bits) const;
 
   // Fills the PUCCH Format 1 PDU.
-  void fill_pucch_ded_format1_grant(pucch_info&           pucch_grant,
+  void fill_pucch_ded_format1_grant(pucch_info&           pucch_pdu,
                                     rnti_t                crnti,
                                     const pucch_resource& pucch_ded_res_cfg,
                                     unsigned              harq_ack_bits,
                                     sr_nof_bits           sr_bits) const;
 
   // Fills the PUCCH Format 2 PDU.
-  void fill_pucch_format2_grant(pucch_info&                  pucch_grant,
+  void fill_pucch_format2_grant(pucch_info&                  pucch_pdu,
                                 rnti_t                       crnti,
                                 const pucch_resource&        pucch_ded_res_cfg,
                                 const ue_cell_configuration& ue_cell_cfg,
@@ -236,7 +236,7 @@ private:
                                 unsigned                     csi_part1_bits) const;
 
   // Fills the PUCCH Format 3 PDU.
-  void fill_pucch_format3_grant(pucch_info&                  pucch_grant,
+  void fill_pucch_format3_grant(pucch_info&                  pucch_pdu,
                                 rnti_t                       crnti,
                                 const pucch_resource&        pucch_ded_res_cfg,
                                 const ue_cell_configuration& ue_cell_cfg,
@@ -246,7 +246,7 @@ private:
                                 unsigned                     csi_part1_bits) const;
 
   // Fills the PUCCH Format 4 PDU.
-  void fill_pucch_format4_grant(pucch_info&                  pucch_grant,
+  void fill_pucch_format4_grant(pucch_info&                  pucch_pdu,
                                 rnti_t                       crnti,
                                 const pucch_resource&        pucch_ded_res_cfg,
                                 const ue_cell_configuration& ue_cell_cfg,

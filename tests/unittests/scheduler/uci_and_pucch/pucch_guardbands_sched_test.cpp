@@ -12,6 +12,7 @@
 #include "lib/scheduler/pucch_scheduling/pucch_guardbands_scheduler.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "tests/unittests/scheduler/uci_and_pucch/uci_test_utils.h"
+#include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

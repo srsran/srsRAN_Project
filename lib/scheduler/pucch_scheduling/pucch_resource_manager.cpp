@@ -186,6 +186,7 @@ pucch_resource_manager::reserve_sr_res_available(slot_point slot_sr, rnti_t crnt
 
   // We assume each UE only has 1 SR Resource Config configured.
   const unsigned sr_pucch_res_id = pucch_cfg.sr_res_list[0].pucch_res_id.cell_res_id;
+  // Check if the wanted resource is already allocated to another UE in this slot.
   if (sr_pucch_res_id >= slot_record.ues_using_pucch_res.size() or
       (slot_record.ues_using_pucch_res[sr_pucch_res_id].rnti != rnti_t::INVALID_RNTI and
        slot_record.ues_using_pucch_res[sr_pucch_res_id].rnti != crnti)) {
@@ -205,7 +206,7 @@ pucch_resource_manager::reserve_sr_res_available(slot_point slot_sr, rnti_t crnt
 
   // If the PUCCH res with correct ID was not allocated to the UE's RNTI, allocate it to this RNTI; otherwise, it means
   // the resource had already been allocated, just return it.
-  if (slot_record.ues_using_pucch_res[sr_pucch_res_id].rnti != crnti and res_cfg != pucch_res_list.end()) {
+  if (slot_record.ues_using_pucch_res[sr_pucch_res_id].rnti != crnti) {
     slot_record.ues_using_pucch_res[sr_pucch_res_id].rnti           = crnti;
     slot_record.ues_using_pucch_res[sr_pucch_res_id].resource_usage = pucch_resource_usage::SR;
   }
