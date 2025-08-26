@@ -28,6 +28,7 @@
 #include "du_appconfig_translators.h"
 #include "du_appconfig_validators.h"
 #include "du_appconfig_yaml_writer.h"
+#include "srsran/adt/scope_exit.h"
 #include "srsran/du/du_high/du_high_clock_controller.h"
 #include "srsran/du/du_operation_controller.h"
 #include "srsran/e2/e2ap_config_translators.h"
@@ -206,6 +207,7 @@ int main(int argc, char** argv)
 
   // Set up logging.
   initialize_log(du_cfg.log_cfg.filename);
+  auto log_flusher = make_scope_exit([]() { srslog::flush(); });
   register_app_logs(du_cfg, *o_du_app_unit);
 
   // Check the metrics and metrics consumers.
@@ -423,12 +425,6 @@ int main(int argc, char** argv)
   du_logger.info("Closing PCAP files...");
   du_pcaps.reset();
   du_logger.info("PCAP files successfully closed.");
-
-  du_logger.info("Stopping executors...");
-  workers.stop();
-  du_logger.info("Executors closed successfully.");
-
-  srslog::flush();
 
   return 0;
 }

@@ -90,7 +90,7 @@ private:
 } // namespace
 
 worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
-  low_prio_affinity_mng({worker_cfg.main_pool_affinity_cfg})
+  app_logger(*worker_cfg.logger), low_prio_affinity_mng({worker_cfg.main_pool_affinity_cfg})
 {
   // Add preinitialization of resources to created threads.
   unique_thread::add_observer(std::make_unique<thread_resource_preinitializer>(*worker_cfg.app_timers));
@@ -157,9 +157,19 @@ worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
   }
 }
 
+worker_manager::~worker_manager()
+{
+  stop();
+}
+
 void worker_manager::stop()
 {
-  exec_mng.stop();
+  if (running) {
+    running = false;
+    app_logger.info("Stopping workers...");
+    exec_mng.stop();
+    app_logger.info("Workers stopped successfully.");
+  }
 }
 
 void worker_manager::create_worker_pool(const std::string&                    name,

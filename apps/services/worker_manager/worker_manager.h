@@ -36,6 +36,7 @@ public:
 /// Manages the workers of the app.
 struct worker_manager {
   worker_manager(const worker_manager_config& config);
+  ~worker_manager();
 
   void stop();
 
@@ -94,6 +95,8 @@ struct worker_manager {
   task_executor& get_metrics_executor() const { return *metrics_exec; }
 
 private:
+  srslog::basic_logger& app_logger;
+
   /// Total number of workers for the general task worker pool. Necessary for providing maximum concurrency level to
   /// the physical layer.
   unsigned nof_workers_general_pool = 0;
@@ -138,6 +141,9 @@ private:
 
   /// CPU affinity bitmask manager per cell.
   std::vector<os_sched_affinity_manager> affinity_mng;
+
+  /// State of worker_manager.
+  bool running = true;
 
   void create_main_worker_pool(const worker_manager_config& worker_cfg);
 

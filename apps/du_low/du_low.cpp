@@ -25,13 +25,13 @@
 #include "du_low_appconfig_translators.h"
 #include "du_low_appconfig_validators.h"
 #include "du_low_appconfig_yaml_writer.h"
+#include "srsran/adt/scope_exit.h"
 #include "srsran/support/backtrace.h"
 #include "srsran/support/config_parsers.h"
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/signal_handling.h"
 #include "srsran/support/signal_observer.h"
-#include "srsran/support/tracing/event_tracing.h"
 #include "srsran/support/versioning/build_info.h"
 #include "srsran/support/versioning/version.h"
 #include <atomic>
@@ -181,6 +181,7 @@ int main(int argc, char** argv)
 
   // Set up logging.
   initialize_log(du_low_cfg.log_cfg.filename);
+  auto log_flusher = make_scope_exit([]() { srslog::flush(); });
   register_app_logs(du_low_cfg, *o_du_app_unit);
 
   // Check the metrics and metrics consumers.
@@ -304,10 +305,6 @@ int main(int argc, char** argv)
 
   du.odu_low->stop();
   metrics_mngr.stop();
-
-  workers.stop();
-
-  srslog::flush();
 
   return 0;
 }

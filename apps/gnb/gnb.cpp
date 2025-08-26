@@ -35,6 +35,7 @@
 #include "gnb_appconfig_translators.h"
 #include "gnb_appconfig_validators.h"
 #include "gnb_appconfig_yaml_writer.h"
+#include "srsran/adt/scope_exit.h"
 #include "srsran/cu_cp/cu_cp_operation_controller.h"
 #include "srsran/du/du_high/du_high_clock_controller.h"
 #include "srsran/du/du_operation_controller.h"
@@ -50,7 +51,6 @@
 #include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/signal_handling.h"
 #include "srsran/support/signal_observer.h"
-#include "srsran/support/tracing/event_tracing.h"
 #include "srsran/support/versioning/build_info.h"
 #include "srsran/support/versioning/version.h"
 #include <atomic>
@@ -284,6 +284,7 @@ int main(int argc, char** argv)
 
   // Set up logging.
   initialize_log(gnb_cfg.log_cfg.filename);
+  auto log_flusher = make_scope_exit([]() { srslog::flush(); });
   register_app_logs(gnb_cfg, *o_cu_cp_app_unit, *o_cu_up_app_unit, *o_du_app_unit);
 
   // Check the metrics and metrics consumers.
@@ -356,6 +357,7 @@ int main(int argc, char** argv)
 
   // Instantiate worker manager.
   worker_manager_config worker_manager_cfg;
+  worker_manager_cfg.logger = &gnb_logger;
   o_cu_cp_app_unit->fill_worker_manager_config(worker_manager_cfg);
   o_cu_up_app_unit->fill_worker_manager_config(worker_manager_cfg);
   o_du_app_unit->fill_worker_manager_config(worker_manager_cfg);
@@ -565,12 +567,6 @@ int main(int argc, char** argv)
   cu_up_dlt_pcaps.reset();
   du_pcaps.reset();
   gnb_logger.info("PCAP files successfully closed.");
-
-  gnb_logger.info("Stopping executors...");
-  workers.stop();
-  gnb_logger.info("Executors closed successfully.");
-
-  srslog::flush();
 
   return 0;
 }

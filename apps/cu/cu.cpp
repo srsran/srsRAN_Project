@@ -30,6 +30,7 @@
 #include "cu_appconfig.h"
 #include "cu_appconfig_validator.h"
 #include "cu_appconfig_yaml_writer.h"
+#include "srsran/adt/scope_exit.h"
 #include "srsran/cu_cp/cu_cp_operation_controller.h"
 #include "srsran/e1ap/gateways/e1_local_connector_factory.h"
 #include "srsran/e2/e2ap_config_translators.h"
@@ -246,6 +247,7 @@ int main(int argc, char** argv)
 
   // Set up logging.
   initialize_log(cu_cfg.log_cfg.filename);
+  auto log_flusher = make_scope_exit([]() { srslog::flush(); });
   register_app_logs(cu_cfg, *o_cu_cp_app_unit, *o_cu_up_app_unit);
 
   // Check the metrics and metrics consumers.
@@ -496,13 +498,6 @@ int main(int argc, char** argv)
   cu_cp_dlt_pcaps.reset();
   cu_up_dlt_pcaps.reset();
   cu_logger.info("PCAP files successfully closed.");
-
-  // Stop workers
-  cu_logger.info("Stopping executors...");
-  workers.stop();
-  cu_logger.info("Executors closed successfully.");
-
-  srslog::flush();
 
   return 0;
 }
