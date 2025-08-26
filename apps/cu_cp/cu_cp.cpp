@@ -261,7 +261,7 @@ int main(int argc, char** argv)
 
   // Create IO broker.
   const auto&                main_pool_cpu_mask = cu_cp_cfg.expert_execution_cfg.affinities.main_pool_cpu_cfg.mask;
-  io_broker_config           io_broker_cfg(main_pool_cpu_mask);
+  io_broker_config           io_broker_cfg(os_thread_realtime_priority::min() + 5, main_pool_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
   // Create F1-C GW (TODO cleanup port and PPID args with factory)

@@ -1122,8 +1122,9 @@ public:
   dummy_metrics_handler                                 metrics_handler;
   timer_manager                                         timers{2048};
   std::unique_ptr<test_helpers::du_high_worker_manager> workers;
-  std::unique_ptr<io_broker>                            broker{create_io_broker(io_broker_type::epoll)};
-  std::unique_ptr<mac_clock_controller>                 timer_ctrl{
+  std::unique_ptr<io_broker>                            broker{
+      create_io_broker(io_broker_type::epoll, io_broker_config{os_thread_realtime_priority::min() + 5})};
+  std::unique_ptr<mac_clock_controller> timer_ctrl{
       srs_du::create_du_high_clock_controller(timers, *broker, workers->timer_executor())};
   null_mac_pcap                 mac_pcap;
   null_rlc_pcap                 rlc_pcap;

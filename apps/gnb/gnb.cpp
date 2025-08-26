@@ -368,7 +368,7 @@ int main(int argc, char** argv)
   const auto& main_pool_cpu_mask = gnb_cfg.expert_execution_cfg.affinities.main_pool_cpu_cfg.mask;
 
   // Create IO broker.
-  io_broker_config           io_broker_cfg(main_pool_cpu_mask);
+  io_broker_config           io_broker_cfg(os_thread_realtime_priority::min() + 5, main_pool_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
   // Create a DU-high timer source.
