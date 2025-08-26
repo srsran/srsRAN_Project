@@ -116,11 +116,11 @@ private:
   task_executor&        tick_exec;
   srslog::basic_logger& logger;
 
-  // IO time source enabled when not in manual mode.
-  io_timer_source io_source;
-
   std::atomic<unsigned> nof_tickers{0};
   std::atomic<unsigned> missed_ticks{0};
+
+  // IO time source enabled when not in manual mode.
+  io_timer_source io_source;
 };
 
 class du_high_time_source_impl final : public mac_clock_controller
@@ -138,22 +138,21 @@ public:
 
     void on_cell_deactivation() override
     {
-      if (parent != nullptr) {
+      if (parent != nullptr and this->cached_now.valid()) {
         parent->handle_cell_deactivation(cell_index);
-        parent.reset();
+        this->cached_now = {};
       }
     }
 
   private:
     slot_point_extended do_on_slot_indication(slot_point sl_tx) override
     {
-      srsran_assert(parent != nullptr, "Slot indication arrived after cell deactivation");
+      srsran_assert(parent != nullptr, "Slot indication for a deleted cell");
       return parent->handle_slot_indication(cell_index, sl_tx);
     }
 
     std::unique_ptr<du_high_time_source_impl, noop_operation> parent;
     du_cell_index_t                                           cell_index;
-    slot_point_extended                                       cached_now;
   };
 
   du_high_time_source_impl(timer_manager& timers_, io_broker& broker, task_executor& tick_exec_) :
@@ -297,14 +296,14 @@ private:
   task_executor&        tick_exec;
   srslog::basic_logger& logger;
 
-  io_timer_multi_source io_source;
-
   std::array<cell_context, MAX_NOF_DU_CELLS> cells;
 
   /// Representation of the state of the DU-high time source. The upper 32 bits represent the number of active cells,
   /// while the lower 32 bits represent the latest slot point. The latest time point is represented using 3 bits for the
   /// the numerology and 29 bits for the slot count.
   std::atomic<uint64_t> master_state{0};
+
+  io_timer_multi_source io_source;
 };
 
 } // namespace

@@ -114,6 +114,9 @@ async_task<void> mac_cell_processor::stop()
         // Set cell state as inactive to stop answering to slot indications.
         state = cell_state::inactive;
 
+        // Signal time source that the cell is being deactivated.
+        time_source->on_cell_deactivation();
+
         logger.info("cell={}: Cell was stopped.", fmt::underlying(cell_cfg.cell_index));
       },
       [this, cell_index = cell_cfg.cell_index]() {
@@ -286,14 +289,14 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point               sl
 
   logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
 
-  // Tick DU timers.
-  time_source->on_slot_indication(sl_tx);
-
   if (SRSRAN_UNLIKELY(state == cell_state::inactive)) {
     // Ignore slot indication if cell is inactive.
     phy_cell.on_cell_results_completion(sl_tx);
     return;
   }
+
+  // Tick DU timers.
+  time_source->on_slot_indication(sl_tx);
 
   // Initiate metric capturing.
   auto        metrics_meas = metrics.start_slot(sl_tx, enqueue_slot_tp);

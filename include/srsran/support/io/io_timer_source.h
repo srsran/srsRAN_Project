@@ -46,7 +46,7 @@ private:
   void read_time();
 
   void update_state(bool start);
-  void handle_state_update(bool defer_stop);
+  bool handle_state_update(bool defer_stop);
 
   const std::chrono::milliseconds tick_period;
   timer_manager&                  tick_sink;

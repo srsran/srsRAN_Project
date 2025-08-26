@@ -75,6 +75,7 @@ void io_timer_source::wait_for_stop()
   if (job_count.load(std::memory_order_acquire) > 0) {
     logger.error("Timer source did not stop within {} ms. Forcing its shutdown...", max_wait_time.count());
   }
+  logger.info("IO timer source stopped.");
 }
 
 void io_timer_source::create_subscriber()
@@ -120,23 +121,29 @@ void io_timer_source::update_state(bool start)
   }
 }
 
-void io_timer_source::handle_state_update(bool defer_stop)
+bool io_timer_source::handle_state_update(bool defer_stop)
 {
   // Check if there are new commands.
-  uint32_t pending = job_count.load(std::memory_order_acquire);
+  uint32_t pending       = job_count.load(std::memory_order_acquire);
+  bool     sub_destroyed = false;
   while (pending > 0) {
     if (running.load(std::memory_order_acquire)) {
+      request_to_stop = false;
       create_subscriber();
     } else {
       if (defer_stop and io_sub.registered()) {
         // Note: If read_time() is currently running, we need to unsubscribe from within it to avoid a deadlock.
         request_to_stop = true;
-        return;
+        return false;
       }
+      // Called from within read_time(). We can finally destroy the subscriber.
+      request_to_stop = false;
       destroy_subscriber();
+      sub_destroyed = true;
     }
     pending = job_count.fetch_sub(pending, std::memory_order_acq_rel) - pending;
   }
+  return sub_destroyed;
 }
 
 void io_timer_source::read_time()
@@ -144,9 +151,9 @@ void io_timer_source::read_time()
   // Note: Called inside the ticking executor.
 
   if (request_to_stop) {
-    request_to_stop = false;
-    handle_state_update(false);
-    if (not io_sub.registered()) {
+    if (handle_state_update(false)) {
+      // Subscriber was destroyed. Return.
+      // Note: Do not touch any variable here as the ~io_timer_source() might be running concurrently.
       return;
     }
   }

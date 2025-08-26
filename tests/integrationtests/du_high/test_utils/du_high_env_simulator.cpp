@@ -206,7 +206,7 @@ du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
 
 du_high_env_simulator::du_high_env_simulator(const du_high_configuration& du_hi_cfg_, bool active_cells_on_start) :
   broker(create_io_broker(io_broker_type::epoll)),
-  timer_ctrl(srs_du::create_du_high_clock_controller(timers, *broker, workers.high_prio_exec)),
+  timer_ctrl(srs_du::create_du_high_clock_controller(timers, *broker, *workers.time_exec)),
   cu_notifier(workers.test_worker, active_cells_on_start),
   du_metrics(workers.test_worker),
   du_high_cfg(du_hi_cfg_),
@@ -239,6 +239,8 @@ du_high_env_simulator::du_high_env_simulator(const du_high_configuration& du_hi_
 du_high_env_simulator::~du_high_env_simulator()
 {
   du_hi->stop();
+
+  timer_ctrl.reset();
 
   // Stop workers before starting to take down other components.
   workers.stop();

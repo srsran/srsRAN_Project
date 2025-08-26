@@ -644,6 +644,7 @@ public:
   void stop()
   {
     du_hi->stop();
+    timer_ctrl.reset();
     workers->stop();
   }
 
