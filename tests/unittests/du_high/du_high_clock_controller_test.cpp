@@ -29,11 +29,10 @@ protected:
     // The timer_ctrl.reset() is blocking, and since timer_worker is manual, we have to dispatch the reset to a separate
     // thread.
     std::atomic<bool> stopped{false};
-    bool              ret = shutdown_worker.push_task([this, &stopped]() {
+    shutdown_worker.push_task_blocking([this, &stopped]() {
       timer_ctrl.reset();
       stopped = true;
     });
-    report_fatal_error_if_not(ret, "Failed to push task to worker");
     while (not stopped) {
       timer_worker.run_pending_tasks();
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -78,10 +77,12 @@ TEST_F(du_high_time_source_test, time_ticks_when_no_cells_were_added)
   timer.set(std::chrono::milliseconds(1), [&](timer_id_t /* unused */) { count++; });
   auto prev = timers.now();
 
+  // Timer is not running yet.
   std::this_thread::sleep_for(std::chrono::milliseconds(10));
   timer_worker.run_pending_tasks();
   ASSERT_EQ(count, 0);
 
+  // Timer is now being triggered.
   timer.run();
   static constexpr unsigned test_timeout = 1000000;
   for (unsigned i = 0; i != test_timeout; ++i) {
@@ -97,6 +98,7 @@ TEST_F(du_high_time_source_test, time_ticks_when_no_cells_were_added)
 
 TEST_F(du_high_time_source_test, when_cell_is_activated_then_ticking_becomes_manual)
 {
+  // Create a cell ticker.
   auto cell_source = timer_ctrl->add_cell(to_du_cell_index(0));
   ASSERT_NE(cell_source, nullptr);
   ASSERT_FALSE(cell_source->now().valid());
@@ -150,7 +152,12 @@ TEST_F(du_high_time_source_test, tick_periodicity_for_scs15khz_is_1msec)
 {
   auto cell_source = timer_ctrl->add_cell(to_du_cell_index(0));
 
-  slot_point     cur_sl_tx = {subcarrier_spacing::kHz15, 0};
+  // Cells get activated with slot_indication.
+  slot_point cur_sl_tx = {subcarrier_spacing::kHz15, 0};
+  cell_source->on_slot_indication(cur_sl_tx++);
+  timer_worker.run_pending_tasks();
+
+  auto           start_now = timers.now();
   const unsigned nof_slots = 40;
   for (unsigned i = 0; i != nof_slots; ++i) {
     cell_source->on_slot_indication(cur_sl_tx);
@@ -159,15 +166,22 @@ TEST_F(du_high_time_source_test, tick_periodicity_for_scs15khz_is_1msec)
     ++cur_sl_tx;
   }
 
-  ASSERT_EQ(timers.now(), nof_slots);
+  ASSERT_EQ(timers.now() - start_now, nof_slots);
 }
 
 TEST_F(du_high_time_source_test, tick_periodicity_for_scs30khz_is_1msec)
 {
   auto cell_source = timer_ctrl->add_cell(to_du_cell_index(0));
 
-  slot_point     cur_sl_tx = {subcarrier_spacing::kHz30, 0};
+  // Cells get activated with slot_indication.
+  slot_point cur_sl_tx = {subcarrier_spacing::kHz30, 0};
+  cell_source->on_slot_indication(cur_sl_tx++);
+  // Note: We advance twice to start next check in an even slot index.
+  cell_source->on_slot_indication(cur_sl_tx++);
+  timer_worker.run_pending_tasks();
+
   const unsigned nof_slots = 40;
+  auto           start_now = timers.now();
   for (unsigned i = 0; i != nof_slots; ++i) {
     cell_source->on_slot_indication(cur_sl_tx);
     timer_worker.run_pending_tasks();
@@ -175,7 +189,7 @@ TEST_F(du_high_time_source_test, tick_periodicity_for_scs30khz_is_1msec)
     ++cur_sl_tx;
   }
 
-  ASSERT_EQ(timers.now(), nof_slots / 2 - 1);
+  ASSERT_EQ(timers.now() - start_now, nof_slots / 2);
 }
 
 TEST_F(du_high_time_source_test, only_one_tick_per_msec_for_multiple_cells)
@@ -183,7 +197,16 @@ TEST_F(du_high_time_source_test, only_one_tick_per_msec_for_multiple_cells)
   auto cell_source1 = timer_ctrl->add_cell(to_du_cell_index(0));
   auto cell_source2 = timer_ctrl->add_cell(to_du_cell_index(1));
 
-  slot_point     cur_sl_tx = {subcarrier_spacing::kHz30, 0};
+  // Cells get activated with slot_indication.
+  slot_point cur_sl_tx = {subcarrier_spacing::kHz30, 0};
+  cell_source1->on_slot_indication(cur_sl_tx);
+  cell_source2->on_slot_indication(cur_sl_tx++);
+  // Note: We advance twice to start next check in an even slot index.
+  cell_source1->on_slot_indication(cur_sl_tx);
+  cell_source2->on_slot_indication(cur_sl_tx++);
+  timer_worker.run_pending_tasks();
+
+  auto           start_now = timers.now();
   const unsigned nof_slots = 40;
   for (unsigned i = 0; i != nof_slots; ++i) {
     cell_source1->on_slot_indication(cur_sl_tx);
@@ -194,5 +217,5 @@ TEST_F(du_high_time_source_test, only_one_tick_per_msec_for_multiple_cells)
     ++cur_sl_tx;
   }
 
-  ASSERT_EQ(timers.now(), nof_slots / 2 - 1);
+  ASSERT_EQ(timers.now() - start_now, nof_slots / 2);
 }
