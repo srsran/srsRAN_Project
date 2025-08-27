@@ -82,6 +82,10 @@ if (BUILD_TESTING)
 option(USE_PHY_TESTVECTORS   "Enable testvector PHY tests"                ON)
 endif(BUILD_TESTING)
 
+# Set linker options and default value.
+set(LINKER "default" CACHE STRING "Which linker to use")
+set_property(CACHE LINKER PROPERTY STRINGS default bfd lld)
+
 # Set assertion level options and default value.
 set(ASSERT_LEVEL "AUTO" CACHE STRING "Assertion paranoia level")
 set_property(CACHE ASSERT_LEVEL PROPERTY STRINGS AUTO MINIMAL NORMAL PARANOID)
@@ -235,6 +239,18 @@ if (ENABLE_GCOV)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-arcs -ftest-coverage")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
 endif (ENABLE_GCOV)
+
+if(NOT LINKER STREQUAL "default")
+    if (LINKER STREQUAL "bfd")
+        add_link_options(-fuse-ld=bfd)
+        message(STATUS "Linker set to BFD")
+    elseif (LINKER STREQUAL "lld")
+        add_link_options(-fuse-ld=lld)
+        message(STATUS "Linker set to LLD")
+    else ()
+        message(FATAL_ERROR "Unsupported compiler for lld linker: ${CMAKE_CXX_COMPILER_ID}")
+    endif ()
+endif ()
 
 if(NOT ASSERT_LEVEL STREQUAL "MINIMAL")
     # asserts are enabled.
