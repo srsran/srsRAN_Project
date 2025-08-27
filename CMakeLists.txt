@@ -9,9 +9,9 @@
 ########################################################################
 # Prevent in-tree builds
 ########################################################################
-if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+if (${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
     message(FATAL_ERROR "Prevented in-tree build. This is bad practice.")
-endif(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+endif (${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 
 ########################################################################
 # Project setup
@@ -248,7 +248,7 @@ if(NOT LINKER STREQUAL "default")
         add_link_options(-fuse-ld=lld)
         message(STATUS "Linker set to LLD")
     else ()
-        message(FATAL_ERROR "Unsupported compiler for lld linker: ${CMAKE_CXX_COMPILER_ID}")
+        message(FATAL_ERROR "Unsupported linker ${LINKER} for compiler ${CMAKE_CXX_COMPILER_ID}")
     endif ()
 endif ()
 
