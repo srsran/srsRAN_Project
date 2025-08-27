@@ -16,7 +16,7 @@ RUN TZ=Europe/Madrid && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
     git git-lfs \
-    clang llvm \
+    clang llvm lld \
     ccache gcovr valgrind \
     python3-dev python3-venv && \
     (apt-get install -y --no-install-recommends libclang-rt-dev || true) && \
