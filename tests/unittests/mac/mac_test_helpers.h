@@ -124,9 +124,9 @@ public:
 
   void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs) override {}
 
-  void start_cell(du_cell_index_t cell_idx) override { active = true; }
+  void handle_cell_activation(du_cell_index_t cell_idx) override { active = true; }
 
-  void stop_cell(du_cell_index_t cell_idx) override { active = false; }
+  void handle_cell_deactivation(du_cell_index_t cell_idx) override { active = false; }
 
   const sched_result& slot_indication(slot_point slot_tx, du_cell_index_t cell_idx) override
   {

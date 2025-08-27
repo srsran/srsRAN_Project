@@ -43,9 +43,15 @@ public:
 
   void remove_cell(du_cell_index_t cell_index) override;
 
-  void start_cell(du_cell_index_t cell_index) override { sched_impl->handle_cell_activation_request(cell_index); }
+  void handle_cell_activation(du_cell_index_t cell_index) override
+  {
+    sched_impl->handle_cell_activation_request(cell_index);
+  }
 
-  void stop_cell(du_cell_index_t cell_index) override { sched_impl->handle_cell_deactivation_request(cell_index); }
+  void handle_cell_deactivation(du_cell_index_t cell_index) override
+  {
+    sched_impl->handle_cell_deactivation_request(cell_index);
+  }
 
   async_task<bool> handle_ue_creation_request(const mac_ue_create_request& msg) override;
 

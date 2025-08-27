@@ -17,7 +17,9 @@
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/scheduler/result/sched_result.h"
+#include "srsran/support/async/async_timer.h"
 #include "srsran/support/async/execute_on_blocking.h"
+#include "srsran/support/executors/execute_until_success.h"
 #include "srsran/support/rtsan.h"
 
 using namespace srsran;
@@ -81,7 +83,7 @@ async_task<void> mac_cell_processor::start()
         }
 
         // Notify scheduler about activation.
-        sched.start_cell(cell_cfg.cell_index);
+        sched.handle_cell_activation(cell_cfg.cell_index);
 
         state = cell_state::active;
         logger.info("cell={}: Cell was activated", fmt::underlying(cell_cfg.cell_index));
@@ -94,39 +96,46 @@ async_task<void> mac_cell_processor::start()
 
 async_task<void> mac_cell_processor::stop()
 {
-  return execute_and_continue_on_blocking(
-      cell_exec,
-      ctrl_exec,
-      timers,
-      [this]() noexcept SRSRAN_RTSAN_NONBLOCKING {
-        if (state == cell_state::inactive) {
-          return;
-        }
+  return launch_async([this](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
 
-        // Set cell state as inactive to stop answering to slot indications.
-        // Note: No more slot indications will reach the scheduler after this point.
-        state = cell_state::inactive;
+    // Switch to respective cell executor context.
+    CORO_AWAIT(defer_on_blocking(cell_exec, timers));
 
-        // TODO: Call time_source->on_cell_deactivation() once FAPI supports stop procedure.
+    if (state == cell_state::inactive) {
+      // No state change detected.
+      CORO_EARLY_RETURN();
+    }
+    // Set cell state as inactive.
+    // Note: No more slot indications will reach the scheduler after this point. So, we will stop observing new
+    // scheduled grants.
+    state = cell_state::inactive;
 
-        // Signal time source that the cell is being deactivated.
-        time_source->on_cell_deactivation();
+    // Notify time source that the cell is being deactivated and no slot indications will be received anymore.
+    time_source->on_cell_deactivation();
 
-        // Notify scheduler about activation.
-        sched.stop_cell(cell_cfg.cell_index);
+    // Notify lower layers that the cell is being stopped.
+    // TODO: Rely on FAPI STOP procedure to signal the cell stop. For now, we just call it directly.
+    stop_completed.reset();
+    handle_stop_indication();
+    CORO_AWAIT(stop_completed);
 
-        // Notify that cell metrics stopped being collected.
-        metrics.on_cell_deactivation();
+    // Signal to the scheduler that the cell was successfully stopped in the lower layers.
+    sched.handle_cell_deactivation(cell_cfg.cell_index);
 
-        // Clear all UEs.
-        ue_mng.clear();
+    // Notify that cell metrics stopped being collected.
+    metrics.on_cell_deactivation();
 
-        logger.info("cell={}: Cell was stopped.", fmt::underlying(cell_cfg.cell_index));
-      },
-      [this, cell_index = cell_cfg.cell_index]() {
-        logger.warning("cell={}: Postponed cell stop operation. Cause: Task queue is full",
-                       fmt::underlying(cell_index));
-      });
+    // Clear all UEs.
+    ue_mng.clear();
+
+    // Switch back to respective ctrl executor context.
+    CORO_AWAIT(defer_on_blocking(ctrl_exec, timers));
+
+    logger.info("cell={}: Cell was stopped.", fmt::underlying(cell_cfg.cell_index));
+
+    CORO_RETURN();
+  });
 }
 
 async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac_cell_reconfig_request& request)
@@ -137,7 +146,7 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
 
     if (request.new_sys_info.has_value()) {
       // Change to respective DL cell executor context.
-      CORO_AWAIT(execute_on_blocking(cell_exec, timers));
+      CORO_AWAIT(defer_on_blocking(cell_exec, timers));
 
       {
         SRSRAN_RTSAN_SCOPED_ENABLER;
@@ -154,7 +163,7 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
       }
 
       // Change back to CTRL executor context.
-      CORO_AWAIT(execute_on_blocking(ctrl_exec, timers));
+      CORO_AWAIT(defer_on_blocking(ctrl_exec, timers));
     }
 
     if (request.positioning.has_value()) {
@@ -190,6 +199,14 @@ void mac_cell_processor::handle_error_indication(slot_point sl_tx, error_event e
 {
   // Forward error indication to the scheduler to be processed asynchronously.
   sched.handle_error_indication(sl_tx, cell_cfg.cell_index, event);
+}
+
+void mac_cell_processor::handle_stop_indication() noexcept
+{
+  defer_until_success(cell_exec, timers, [this]() {
+    // Signal the cell stop procedure that the FAPI completed the FAPI STOP procedure.
+    stop_completed.set();
+  });
 }
 
 async_task<bool> mac_cell_processor::add_ue(const mac_ue_create_request& request)

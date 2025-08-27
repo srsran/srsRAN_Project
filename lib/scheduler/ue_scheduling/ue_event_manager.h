@@ -149,7 +149,6 @@ private:
     srs_scheduler*            srs_sched      = nullptr;
     cell_metrics_handler*     metrics        = nullptr;
     scheduler_event_logger*   ev_logger      = nullptr;
-    bool                      active         = false;
   };
 
   ue_repository&        ue_db;
@@ -157,7 +156,8 @@ private:
 
   std::unique_ptr<pdu_indication_pool> ind_pdu_pool;
 
-  std::array<du_cell, MAX_NOF_DU_CELLS> du_cells{};
+  std::array<std::atomic<bool>, MAX_NOF_DU_CELLS> cell_active{false};
+  std::array<du_cell, MAX_NOF_DU_CELLS>           du_cells{};
 
   /// Pending Events list per cell.
   static_vector<cell_event_queue, MAX_NOF_DU_CELLS> cell_specific_events;

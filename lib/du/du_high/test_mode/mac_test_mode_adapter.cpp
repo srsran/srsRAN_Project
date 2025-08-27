@@ -152,6 +152,11 @@ void mac_test_mode_cell_adapter::handle_error_indication(slot_point sl_tx, error
   }
 }
 
+void mac_test_mode_cell_adapter::handle_stop_indication()
+{
+  slot_handler.handle_stop_indication();
+}
+
 void mac_test_mode_cell_adapter::handle_crc(const mac_crc_indication_message& msg)
 {
   mac_crc_indication_message msg_copy = msg;

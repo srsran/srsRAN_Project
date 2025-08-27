@@ -981,13 +981,13 @@ void ue_event_manager::add_cell(const cell_creation_event& cell_ev)
 
 void ue_event_manager::start_cell(du_cell_index_t cell_index)
 {
-  du_cells[cell_index].active = true;
+  cell_active[cell_index].store(true, std::memory_order_relaxed);
 }
 
 void ue_event_manager::stop_cell(du_cell_index_t cell_index)
 {
+  cell_active[cell_index].store(false, std::memory_order_relaxed);
   clear_cell_events(cell_index);
-  du_cells[cell_index].active = false;
 }
 
 void ue_event_manager::clear_cell_events(du_cell_index_t cell_index)
@@ -1015,8 +1015,8 @@ void ue_event_manager::rem_cell(du_cell_index_t cell_index)
 
 void ue_event_manager::push_cell_event(du_cell_index_t cell_index, cell_event_t event)
 {
-  if (SRSRAN_UNLIKELY(not du_cells[cell_index].active)) {
-    // Note: Some PHY events may arrive after the cell has been stopped.
+  if (SRSRAN_UNLIKELY(not cell_active[cell_index].load(std::memory_order_relaxed))) {
+    // Note: PHY events should not arrive after the cell has been stopped.
     logger.warning("cell={} ue={}: Discarding {} event. Cause: Cell is not active",
                    fmt::underlying(cell_index),
                    fmt::underlying(event.ue_index),

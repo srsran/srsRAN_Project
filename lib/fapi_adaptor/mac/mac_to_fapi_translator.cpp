@@ -60,6 +60,8 @@ public:
   {
     report_error("Dummy MAC cell slot handler cannot handle error indication");
   }
+
+  void handle_stop_indication() override { report_error("Dummy MAC cell slot handler cannot handle stop indication"); }
 };
 
 } // namespace

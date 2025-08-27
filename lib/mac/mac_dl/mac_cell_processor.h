@@ -20,6 +20,7 @@
 #include "rar_pdu_assembler.h"
 #include "sib_pdu_assembler.h"
 #include "ssb_assembler.h"
+#include "srsran/support/async/manual_event.h"
 #include "srsran/support/memory_pool/ring_buffer_pool.h"
 
 namespace srsran {
@@ -52,6 +53,7 @@ public:
 
   void handle_slot_indication(const mac_cell_timing_context& context) noexcept override;
   void handle_error_indication(slot_point sl_tx, error_event event) noexcept override;
+  void handle_stop_indication() noexcept override;
 
   /// Creates new UE DL context, updates logical channel MUX, adds UE in scheduler.
   async_task<bool> add_ue(const mac_ue_create_request& request);
@@ -124,6 +126,7 @@ private:
 
   // Represents cell activation state.
   enum class cell_state { inactive, active } state = cell_state::inactive;
+  manual_event_flag stop_completed;
 
   mac_pcap& pcap;
 

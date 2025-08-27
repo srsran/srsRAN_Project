@@ -34,6 +34,12 @@ public:
   /// This indication may occur when the MAC took too long to send its slot result to the lower layers or when the
   /// lower layers were not able to process that slot result.
   virtual void handle_error_indication(slot_point sl_tx, error_event event) = 0;
+
+  /// \brief Handles a stop indication sent by the lower layers for a given slot.
+  ///
+  /// This function is called after the lower layers receive a STOP request for a cell in RUNNING state and after
+  /// the lower layers stop all the pending RX/TX operations.
+  virtual void handle_stop_indication() = 0;
 };
 
 } // namespace srsran
