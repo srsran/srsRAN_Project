@@ -14,6 +14,7 @@
 #include "routines/amf_connection_loss_routine.h"
 #include "routines/cell_activation_routine.h"
 #include "routines/initial_context_setup_routine.h"
+#include "routines/mobility/inter_cu_handover_source_routine.h"
 #include "routines/mobility/inter_cu_handover_target_routine.h"
 #include "routines/mobility/intra_cu_handover_routine.h"
 #include "routines/mobility/intra_cu_handover_target_routine.h"
@@ -675,37 +676,7 @@ async_task<bool> cu_cp_impl::handle_new_handover_command(ue_index_t ue_index, by
   // Notify mobility manager metrics handler about the successful handover preparation.
   mobility_mng.get_metrics_handler().aggregate_successful_handover_preparation();
 
-  return launch_async([this,
-                       ue_index,
-                       command,
-                       ho_reconfig_pdu         = byte_buffer{},
-                       ue_context_mod_response = f1ap_ue_context_modification_response{},
-                       ue_context_mod_request =
-                           f1ap_ue_context_modification_request{}](coro_context<async_task<bool>>& ctx) mutable {
-    CORO_BEGIN(ctx);
-
-    if (ue_mng.find_du_ue(ue_index) == nullptr) {
-      CORO_EARLY_RETURN(false);
-    }
-
-    // Unpack Handover Command PDU at RRC, to get RRC Reconfig PDU.
-    ho_reconfig_pdu = ue_mng.find_du_ue(ue_index)->get_rrc_ue()->handle_rrc_handover_command(std::move(command));
-    if (ho_reconfig_pdu.empty()) {
-      logger.warning("ue={}: Could not unpack Handover Command PDU", ue_index);
-      CORO_EARLY_RETURN(false);
-    }
-
-    ue_context_mod_request.ue_index                 = ue_index;
-    ue_context_mod_request.drbs_to_be_released_list = ue_mng.find_du_ue(ue_index)->get_up_resource_manager().get_drbs();
-    ue_context_mod_request.rrc_container            = ho_reconfig_pdu.copy();
-
-    CORO_AWAIT_VALUE(ue_context_mod_response,
-                     du_db.get_du_processor(ue_mng.find_du_ue(ue_index)->get_du_index())
-                         .get_f1ap_handler()
-                         .handle_ue_context_modification_request(ue_context_mod_request));
-
-    CORO_RETURN(ue_context_mod_response.success);
-  });
+  return start_inter_cu_handover_source_routine(ue_index, std::move(command), ue_mng, du_db, cu_up_db, logger);
 }
 
 ue_index_t cu_cp_impl::handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi)
