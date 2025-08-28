@@ -11,6 +11,7 @@
 #include "pucch_allocator_impl.h"
 #include "../support/pucch/pucch_default_resource.h"
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
+#include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/ran/pucch/pucch_info.h"
 #include "srsran/srslog/srslog.h"
 #include <algorithm>
@@ -1249,12 +1250,13 @@ void pucch_allocator_impl::fill_pucch_ded_format0_grant(pucch_info&           pu
   // Set PRBs and symbols, first.
   // The number of PRBs is not explicitly stated in the TS, but it can be inferred it's 1.
   pucch_pdu.resources.prbs.set(pucch_ded_res_cfg.starting_prb,
-                               +pucch_ded_res_cfg.starting_prb + PUCCH_FORMAT_0_1_4_NOF_PRBS);
+                               +pucch_ded_res_cfg.starting_prb + pucch_constants::FORMAT0_1_4_MAX_NPRB);
   pucch_pdu.resources.symbols.set(pucch_ded_res_cfg.starting_sym_idx,
                                   pucch_ded_res_cfg.starting_sym_idx + pucch_ded_res_cfg.nof_symbols);
   if (pucch_ded_res_cfg.second_hop_prb.has_value()) {
     pucch_pdu.resources.second_hop_prbs.set(pucch_ded_res_cfg.second_hop_prb.value(),
-                                            pucch_ded_res_cfg.second_hop_prb.value() + PUCCH_FORMAT_0_1_4_NOF_PRBS);
+                                            pucch_ded_res_cfg.second_hop_prb.value() +
+                                                pucch_constants::FORMAT0_1_4_MAX_NPRB);
   }
   // \c pucch-GroupHopping and \c hoppingId are set as per TS 38.211, Section 6.3.2.2.1.
   format_0.group_hopping        = cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common->group_hopping;
@@ -1281,12 +1283,13 @@ void pucch_allocator_impl::fill_pucch_ded_format1_grant(pucch_info&           pu
   // Set PRBs and symbols, first.
   // The number of PRBs is not explicitly stated in the TS, but it can be inferred it's 1.
   pucch_pdu.resources.prbs.set(pucch_ded_res_cfg.starting_prb,
-                               pucch_ded_res_cfg.starting_prb + PUCCH_FORMAT_0_1_4_NOF_PRBS);
+                               pucch_ded_res_cfg.starting_prb + pucch_constants::FORMAT0_1_4_MAX_NPRB);
   pucch_pdu.resources.symbols.set(pucch_ded_res_cfg.starting_sym_idx,
                                   pucch_ded_res_cfg.starting_sym_idx + pucch_ded_res_cfg.nof_symbols);
   if (pucch_ded_res_cfg.second_hop_prb.has_value()) {
     pucch_pdu.resources.second_hop_prbs.set(pucch_ded_res_cfg.second_hop_prb.value(),
-                                            pucch_ded_res_cfg.second_hop_prb.value() + PUCCH_FORMAT_0_1_4_NOF_PRBS);
+                                            pucch_ded_res_cfg.second_hop_prb.value() +
+                                                pucch_constants::FORMAT0_1_4_MAX_NPRB);
   }
   // \c pucch-GroupHopping and \c hoppingId are set as per TS 38.211, Section 6.3.2.2.1.
   format_1.group_hopping        = cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common->group_hopping;

@@ -32,6 +32,9 @@ constexpr interval<unsigned, true> format0_nof_harq_ack_range(0, 2);
 /// PUCCH Format 0 initial cyclic shift range.
 constexpr interval<unsigned, false> format0_initial_cyclic_shift_range(0, 12);
 
+/// Maximum number of PRBs allocated for PUCCH Formats 0, 1 and 4.
+constexpr unsigned FORMAT0_1_4_MAX_NPRB = 1;
+
 /// Maximum number of symbols (without DM-RS) that PUCCH Format 1 can transmit.
 constexpr unsigned FORMAT1_N_MAX = 7;
 
@@ -73,9 +76,6 @@ constexpr unsigned FORMAT4_MIN_NSYMB = 4;
 
 /// Maximum number of symbols that PUCCH Format 4 can transmit.
 constexpr unsigned FORMAT4_MAX_NSYMB = 14;
-
-/// Maximum number of PRBs allocated for PUCCH Format 4.
-constexpr unsigned FORMAT4_MAX_NPRB = 1;
 
 /// Minimum number of UCI payload bits carried by a PUCCH Format 4 resource.
 constexpr unsigned FORMAT4_MIN_UCI_NBITS = 3;
