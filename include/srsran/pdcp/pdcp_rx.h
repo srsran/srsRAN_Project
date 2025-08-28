@@ -107,6 +107,9 @@ public:
   /// Trigger re-establishment
   virtual void reestablish(security::sec_128_as_config sec_cfg) = 0;
 
+  /// Get the RX count for status transfer
+  virtual pdcp_count_info get_count() const = 0;
+
   /// Tell the PDCP entity to notify when it is finished with processing
   /// the currently in-flight PDUs. No further PDUs should be push after calling
   /// this function until after calling `restart_pdu_processing()`.

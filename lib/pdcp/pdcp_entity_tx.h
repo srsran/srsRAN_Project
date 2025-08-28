@@ -125,6 +125,16 @@ public:
   /// \brief Triggers re-establishment as specified in TS 38.323, section 5.1.2
   void reestablish(security::sec_128_as_config sec_cfg) override;
 
+  /// \brief Get the TX count for status transfer
+  pdcp_count_info get_count() const override
+  {
+    pdcp_count_info count_info;
+    uint32_t        count = st.tx_next;
+    count_info.sn         = SN(count);
+    count_info.hfn        = HFN(count);
+    return count_info;
+  }
+
   // Tx/Rx interconnect
   void set_status_provider(pdcp_rx_status_provider* status_provider_) { status_provider = status_provider_; }
 

@@ -402,16 +402,16 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
   // > DRB To Modify List
   for (const auto& drb_to_mod : session.drb_to_modify_list_ng_ran) {
     // prepare DRB modification result
-    drb_setup_result drb_result = {};
-    drb_result.success          = false;
-    drb_result.cause            = e1ap_cause_radio_network_t::unspecified;
-    drb_result.drb_id           = drb_to_mod.drb_id;
+    drb_modified_result drb_result = {};
+    drb_result.success             = false;
+    drb_result.cause               = e1ap_cause_radio_network_t::unspecified;
+    drb_result.drb_id              = drb_to_mod.drb_id;
 
     // find DRB in PDU session
     auto drb_iter = pdu_session->drbs.find(drb_to_mod.drb_id);
     if (drb_iter == pdu_session->drbs.end()) {
       logger.log_warning("Cannot modify {} not found in {}", drb_to_mod.drb_id, session.pdu_session_id);
-      pdu_session_result.drb_setup_results.push_back(drb_result);
+      pdu_session_result.drb_modification_results.push_back(drb_result);
       continue;
     }
     srsran_assert(drb_to_mod.drb_id == drb_iter->second->drb_id,
@@ -502,6 +502,17 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                             drb_to_mod.dl_up_params[0].up_tnl_info);
 
       drb_iter->second->pdcp_to_f1u_adapter.connect_f1u(drb_iter->second->f1u->get_tx_sdu_handler());
+    }
+
+    // Extract PDCP status and add it to the response
+    if (drb_to_mod.pdcp_sn_status_request.has_value() && drb_to_mod.pdcp_sn_status_request.value()) {
+      drb_result.pdcp_sn_status.emplace();
+
+      auto& pdcp_rx_ctrl                  = drb->pdcp->get_rx_upper_control_interface();
+      drb_result.pdcp_sn_status->ul_count = pdcp_rx_ctrl.get_count();
+
+      auto& pdcp_tx_ctrl                  = drb->pdcp->get_tx_upper_control_interface();
+      drb_result.pdcp_sn_status->dl_count = pdcp_tx_ctrl.get_count();
     }
 
     // Apply re-establishment at PDCP

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/pdcp/pdcp_config.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/qos/five_qi.h"
 #include "srsran/ran/qos/qos_flow_id.h"
