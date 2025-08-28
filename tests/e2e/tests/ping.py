@@ -208,6 +208,7 @@ def test_android_hp(
         warning_as_errors=False,
         always_download_artifacts=True,
         reattach_count=reattach_count,
+        post_command=("ru_sdr expert_cfg --low_phy_dl_throttling=0.5",),
     )
 
 

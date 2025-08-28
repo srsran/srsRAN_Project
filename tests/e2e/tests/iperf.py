@@ -452,6 +452,7 @@ def test_android_hp(
         time_alignment_calibration="auto",
         always_download_artifacts=True,
         warning_as_errors=False,
+        gnb_post_cmd=("ru_sdr expert_cfg --low_phy_dl_throttling=0.5",),
     )
 
 
