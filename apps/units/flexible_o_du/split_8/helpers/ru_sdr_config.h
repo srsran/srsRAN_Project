@@ -80,9 +80,8 @@ enum class lower_phy_thread_profile {
   single,
   /// Two task workers - one for the downlink and one for the uplink.
   dual,
-  /// Dedicated task workers for each of the subtasks (downlink processing, uplink processing, reception and
-  /// transmission).
-  quad
+  /// Dedicated task workers for each of the subtasks (demodulation, reception and transmission).
+  triple
 };
 
 /// Expert threads configuration of the SDR Radio Unit.
@@ -93,12 +92,10 @@ struct ru_sdr_unit_expert_threads_config {
 
     if (nof_threads < 4) {
       execution_profile = lower_phy_thread_profile::single;
-
     } else if (nof_threads < 8) {
       execution_profile = lower_phy_thread_profile::dual;
-
     } else {
-      execution_profile = lower_phy_thread_profile::quad;
+      execution_profile = lower_phy_thread_profile::triple;
     }
   }
 

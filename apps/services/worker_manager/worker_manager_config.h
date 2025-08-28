@@ -34,13 +34,12 @@ struct worker_manager_config {
     enum class lower_phy_thread_profile {
       /// Same task worker as the rest of the PHY (ZMQ only).
       blocking = 0,
-      /// Single task worker for all the lower physical layer task executors.
+      /// Single task worker for all the baseband processing.
       single,
-      /// Two task workers - one for the downlink and one for the uplink.
+      /// Two task workers - one for baseband reception and another for baseband transmission.
       dual,
-      /// Dedicated task workers for each of the subtasks (downlink processing, uplink processing, reception and
-      /// transmission).
-      quad
+      /// Dedicated task workers for each of the subtasks (transmission, reception and demodulation).
+      triple
     };
 
     lower_phy_thread_profile profile;

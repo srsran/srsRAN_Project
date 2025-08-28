@@ -26,12 +26,12 @@ static std::string to_string(lower_phy_thread_profile profile)
     case lower_phy_thread_profile::blocking:
       // Blocking is an internal profile for ZMQ. Output 'single' for the configuration.
       return "single";
-    case lower_phy_thread_profile::dual:
-      return "dual";
-    case lower_phy_thread_profile::quad:
-      return "quad";
     case lower_phy_thread_profile::single:
       return "single";
+    case lower_phy_thread_profile::dual:
+      return "dual";
+    case lower_phy_thread_profile::triple:
+      return "triple";
     default:
       srsran_assert(0, "Invalid low PHY profile");
       break;
