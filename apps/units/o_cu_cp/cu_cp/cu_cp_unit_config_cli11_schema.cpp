@@ -197,6 +197,14 @@ static void configure_cli11_report_args(CLI::App& app, cu_cp_unit_report_config&
       ->check(
           CLI::IsMember({120, 240, 480, 640, 1024, 2048, 5120, 10240, 20480, 40960, 60000, 360000, 720000, 1800000}));
   add_option(app,
+             "--periodic_ho_rsrp_offset_db",
+             report_params.periodic_ho_rsrp_offset,
+             "Measurement trigger quantity offset in dB used to trigger handovers by periodic measurement reports. "
+             "When set to -1 no handover will be triggered from periodical measurements. Note the "
+             "actual value is field value * 0.5 dB")
+      ->check(CLI::Range(-1, 30))
+      ->capture_default_str();
+  add_option(app,
              "--meas_trigger_quantity",
              report_params.meas_trigger_quantity,
              "Measurement trigger quantity (RSRP/RSRQ/SINR)")

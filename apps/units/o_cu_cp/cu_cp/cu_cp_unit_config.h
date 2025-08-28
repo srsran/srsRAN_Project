@@ -80,6 +80,9 @@ struct cu_cp_unit_report_config {
                                                       ///< putting a value of -6 here results in -3dB offset.
   std::optional<unsigned> hysteresis_db;
   std::optional<unsigned> time_to_trigger_ms;
+  int                     periodic_ho_rsrp_offset =
+      -1; ///< -1 disables handovers from periodic measurements. [0..30] Note the actual value is field value * 0.5 dB.
+          ///< E.g. putting a value of -6 here results in -3dB offset.
 };
 
 struct cu_cp_unit_neighbor_cell_config_item {

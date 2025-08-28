@@ -197,6 +197,8 @@ generate_cu_cp_periodical_report_config(const cu_cp_unit_report_config& report_c
   periodical.include_beam_meass          = true;
   periodical.use_allowed_cell_list       = false;
 
+  periodical.periodic_ho_rsrp_offset = report_cfg_item.periodic_ho_rsrp_offset;
+
   return periodical;
 }
 
