@@ -273,6 +273,7 @@ struct e1ap_drb_to_modify_item_ng_ran {
   std::optional<e1ap_pdcp_config>                                pdcp_cfg;
   std::optional<e1ap_data_forwarding_info>                       drb_data_forwarding_info;
   std::optional<bool>                                            pdcp_sn_status_request;
+  std::optional<e1ap_pdcp_sn_status_info>                        pdcp_sn_status_info;
   std::vector<e1ap_up_params_item>                               dl_up_params;
   std::vector<e1ap_cell_group_info_item>                         cell_group_to_add;
   std::vector<e1ap_cell_group_info_item>                         cell_group_to_modify;
