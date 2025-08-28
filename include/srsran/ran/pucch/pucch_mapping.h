@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsran/phy/constants.h"
+#include <cstdint>
 
 #pragma once
 

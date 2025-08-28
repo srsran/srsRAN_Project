@@ -41,6 +41,7 @@ ue_fallback_scheduler::ue_fallback_scheduler(const scheduler_ue_expert_config& e
   ss_cfg(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common
              .search_spaces[cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id]),
   cs_cfg(cell_cfg.get_common_coreset(ss_cfg.get_coreset_id())),
+  pucch_crbs(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length()),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
   // Pre-reserve memory to avoid allocations in RT.
@@ -59,6 +60,12 @@ ue_fallback_scheduler::ue_fallback_scheduler(const scheduler_ue_expert_config& e
     dci_1_0_k1_values.push_back(k1_value);
   }
   slots_with_no_pdxch_space.fill(false);
+
+  // Compute the PRBs that might be used for PUCCH transmissions, to avoid scheduling PUSCH over them.
+  for (const auto& pucch_res : cell_cfg.pucch_guardbands) {
+    // TODO: Convert PRBs to CRBs once multiple BWPs are supported.
+    pucch_crbs.fill(pucch_res.prbs.start(), pucch_res.prbs.stop());
+  }
 }
 
 void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
@@ -917,7 +924,7 @@ ue_fallback_scheduler::ul_srb_sched_outcome ue_fallback_scheduler::schedule_ul_u
     return ul_srb_sched_outcome::next_ue;
   }
 
-  // The caller ensures the slot is Ul enabled.
+  // The caller ensures the slot is UL enabled.
   const cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
   slot_point                          pdcch_slot  = pdcch_alloc.slot;
 
@@ -1046,8 +1053,10 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
 
   const crb_interval init_ul_bwp_crbs = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs;
 
-  const crb_bitmap used_crbs = pusch_alloc.ul_res_grid.used_crbs(
+  crb_bitmap used_crbs = pusch_alloc.ul_res_grid.used_crbs(
       cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, init_ul_bwp_crbs, pusch_td.symbols);
+  // Mark the CRBs used by PUCCH as occupied.
+  used_crbs |= pucch_crbs;
 
   const bool is_retx = h_ul_retx.has_value();
 

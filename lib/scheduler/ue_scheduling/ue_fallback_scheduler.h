@@ -12,6 +12,7 @@
 
 #include "../support/sch_pdu_builder.h"
 #include "ue_repository.h"
+#include "srsran/ran/resource_allocation/rb_bitmap.h"
 
 namespace srsran {
 
@@ -220,6 +221,9 @@ private:
   std::array<bool, FALLBACK_SCHED_RING_BUFFER_SIZE> slots_with_no_pdxch_space;
   // Keeps track of the last slot_point used by \ref slots_with_no_pdxch_space.
   slot_point last_sl_ind;
+
+  // Bitmap of CRBs that might be used for PUCCH transmissions, to avoid scheduling PUSCH over them.
+  crb_bitmap pucch_crbs;
 
   std::vector<uint8_t> dci_1_0_k1_values;
 

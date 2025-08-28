@@ -90,16 +90,15 @@ static void validates_derived_du_params(span<const srs_du::du_cell_config> cells
     const unsigned pucch_to_prach_guardband = is_long_preamble(prach_cfg.format) ? 0U : 3U;
 
     if (rach_cfg.rach_cfg_generic.msg1_frequency_start < prb_interval_no_pucch.start() + pucch_to_prach_guardband) {
-      fmt::print(
-          "Warning: With the given prach_frequency_start={}, the PRACH opportunities overlap with the PUCCH "
-          "resources/guardband in prbs=[0, {}). Some interference between PUCCH and PRACH interference should be "
-          "expected\n",
-          rach_cfg.rach_cfg_generic.msg1_frequency_start,
-          prb_interval_no_pucch.start() + pucch_to_prach_guardband);
+      fmt::print("Warning: With the given prach_frequency_start={}, the PRACH opportunities overlap with the PUCCH "
+                 "resources/guardband in prbs=[0, {}). Some interference between PUCCH and PRACH should be "
+                 "expected\n",
+                 rach_cfg.rach_cfg_generic.msg1_frequency_start,
+                 prb_interval_no_pucch.start() + pucch_to_prach_guardband);
 
       logger.warning(
           "With the given prach_frequency_start={}, the PRACH opportunities overlap with the PUCCH resources/guardband "
-          "in prbs=[0, {}). Some interference between PUCCH and PRACH interference should be expected",
+          "in prbs=[0, {}). Some interference between PUCCH and PRACH should be expected",
           rach_cfg.rach_cfg_generic.msg1_frequency_start,
           prb_interval_no_pucch.start() + pucch_to_prach_guardband);
     }

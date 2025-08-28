@@ -19,7 +19,6 @@
 #include "srsran/ran/sr_configuration.h"
 #include <cstdint>
 #include <variant>
-#include <vector>
 
 namespace srsran {
 
