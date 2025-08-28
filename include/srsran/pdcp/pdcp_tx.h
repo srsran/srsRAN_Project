@@ -158,6 +158,9 @@ public:
   /// Get the TX count for status transfer
   virtual pdcp_count_info get_count() const = 0;
 
+  /// Set the TX count for status transfer
+  virtual void set_count(pdcp_count_info count_info) = 0;
+
   /// Tell the PDCP entity to notify when it is finished with processing
   /// the currently in-flight PDUs. No further PDUs should be push after calling
   /// this function until after calling `restart_pdu_processing()`.
