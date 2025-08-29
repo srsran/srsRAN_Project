@@ -152,15 +152,16 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
       // Add periodic event
       {
         rrc_periodical_report_cfg periodical_cfg;
-        periodical_cfg.rs_type                = srs_cu_cp::rrc_nr_rs_type::ssb;
-        periodical_cfg.report_interv          = 1024;
-        periodical_cfg.report_amount          = -1;
-        periodical_cfg.report_quant_cell.rsrp = true;
-        periodical_cfg.report_quant_cell.rsrq = true;
-        periodical_cfg.report_quant_cell.sinr = true;
-        periodical_cfg.max_report_cells       = 4;
-        periodical_cfg.include_beam_meass     = true;
-        periodical_cfg.use_allowed_cell_list  = false;
+        periodical_cfg.rs_type                 = srs_cu_cp::rrc_nr_rs_type::ssb;
+        periodical_cfg.report_interv           = 1024;
+        periodical_cfg.report_amount           = -1;
+        periodical_cfg.report_quant_cell.rsrp  = true;
+        periodical_cfg.report_quant_cell.rsrq  = true;
+        periodical_cfg.report_quant_cell.sinr  = true;
+        periodical_cfg.max_report_cells        = 4;
+        periodical_cfg.include_beam_meass      = true;
+        periodical_cfg.use_allowed_cell_list   = false;
+        periodical_cfg.periodic_ho_rsrp_offset = 2;
 
         meas_mng_cfg.report_config_ids.emplace(uint_to_report_cfg_id(1), rrc_report_cfg_nr{periodical_cfg});
       }
