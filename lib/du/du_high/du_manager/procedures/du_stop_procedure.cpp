@@ -33,6 +33,7 @@ void du_stop_procedure::operator()(coro_context<async_task<void>>& ctx)
   proc_logger.log_proc_started();
 
   // Stop all cells.
+  // Note: This will stop all scheduling activity and unlock any pending scheduler UE update procedure.
   CORO_AWAIT(cell_mng.stop_all());
 
   proc_logger.log_progress("Stopped all cells");

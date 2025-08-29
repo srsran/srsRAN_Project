@@ -40,18 +40,13 @@ public:
   void operator()(coro_context<async_task<void>>& ctx);
 
 private:
-  void launch_rem_ues_tasks();
-
-  async_task<void> launch_ue_rem_task(du_ue_index_t ue_index);
+  async_task<void> reset_ues();
 
   std::vector<du_ue_index_t> ues_to_reset;
   du_ue_manager&             ue_mng;
   const du_manager_params&   du_params;
   /// Whether to trigger F1 Reset towards CU after removing UEs.
   const std::optional<f1_reset_request::cause_type> cause;
-
-  unsigned          ue_rem = 0;
-  manual_event_flag complete_flag;
 };
 } // namespace srs_du
 } // namespace srsran

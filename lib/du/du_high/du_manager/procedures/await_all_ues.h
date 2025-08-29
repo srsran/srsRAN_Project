@@ -27,8 +27,10 @@ template <typename TaskFactory>
 class await_all_ues_impl
 {
 public:
-  await_all_ues_impl(du_ue_manager& ue_mng_, TaskFactory ue_task_factory_) :
-    ue_mng(ue_mng_), ue_task_factory(std::move(ue_task_factory_))
+  await_all_ues_impl(du_ue_manager& ue_mng_, span<const du_ue_index_t> ues_to_update_, TaskFactory ue_task_factory_) :
+    ue_mng(ue_mng_),
+    ue_task_factory(std::move(ue_task_factory_)),
+    ues_to_update(ues_to_update_.begin(), ues_to_update_.end())
   {
   }
 
@@ -48,13 +50,6 @@ public:
 private:
   void launch_ue_tasks()
   {
-    // Fill list of UEs to update.
-    auto& ue_db = ue_mng.get_du_ues();
-    ues_to_update.reserve(ue_db.size());
-    for (const auto& u : ue_db) {
-      ues_to_update.push_back(u.ue_index);
-    }
-
     // Check how many UEs need to be updated.
     remaining_ues = ues_to_update.size();
     if (remaining_ues == 0) {
@@ -104,12 +99,27 @@ private:
 
 } // namespace detail
 
+/// \brief Runs an async_task in the respective task scheduler of a list of UEs.
+template <typename AsyncTaskFactory>
+auto await_all_ues(du_ue_manager&            ue_mng,
+                   span<const du_ue_index_t> ues_to_update,
+                   AsyncTaskFactory          ue_task_factory) -> async_task<void>
+{
+  return launch_async<detail::await_all_ues_impl<AsyncTaskFactory>>(ue_mng, ues_to_update, std::move(ue_task_factory));
+}
+
 /// \brief Runs an async_task in the respective task scheduler of all UEs.
 template <typename AsyncTaskFactory>
-auto await_all_ues(du_ue_manager& ue_mng, AsyncTaskFactory&& ue_task_factory) -> async_task<void>
+auto await_all_ues(du_ue_manager& ue_mng, AsyncTaskFactory ue_task_factory) -> async_task<void>
 {
-  return launch_async<detail::await_all_ues_impl<std::decay_t<decltype(ue_task_factory)>>>(
-      ue_mng, std::forward<decltype(ue_task_factory)>(ue_task_factory));
+  // Fill list of UEs to update.
+  const auto&                ue_db = ue_mng.get_du_ues();
+  std::vector<du_ue_index_t> ues_to_update;
+  ues_to_update.reserve(ue_db.size());
+  for (const auto& u : ue_db) {
+    ues_to_update.push_back(u.ue_index);
+  }
+  return await_all_ues(ue_mng, ues_to_update, std::forward<AsyncTaskFactory>(ue_task_factory));
 }
 
 } // namespace srs_du

@@ -10,6 +10,7 @@
 
 #include "du_ue_reset_procedure.h"
 #include "../du_ue/du_ue_manager.h"
+#include "await_all_ues.h"
 #include "ue_deletion_procedure.h"
 
 using namespace srsran;
@@ -28,10 +29,7 @@ void du_ue_reset_procedure::operator()(coro_context<async_task<void>>& ctx)
   CORO_BEGIN(ctx);
 
   // Launch tasks to remove UEs in their respective schedulers.
-  launch_rem_ues_tasks();
-
-  // Wait for all removal tasks to complete.
-  CORO_AWAIT(complete_flag);
+  CORO_AWAIT(reset_ues());
 
   if (cause.has_value()) {
     // Trigger F1 Reset towards CU.
@@ -41,7 +39,7 @@ void du_ue_reset_procedure::operator()(coro_context<async_task<void>>& ctx)
   CORO_RETURN();
 }
 
-void du_ue_reset_procedure::launch_rem_ues_tasks()
+async_task<void> du_ue_reset_procedure::reset_ues()
 {
   if (ues_to_reset.empty()) {
     // Need to delete all UEs. Update ues_to_reset with current UEs.
@@ -52,25 +50,9 @@ void du_ue_reset_procedure::launch_rem_ues_tasks()
     }
   }
 
-  ue_rem = ues_to_reset.size();
-  for (unsigned ue_count = 0; ue_count != ues_to_reset.size(); ++ue_count) {
-    ue_mng.schedule_async_task(ues_to_reset[ue_count], launch_ue_rem_task(ues_to_reset[ue_count]));
-  }
-}
-
-async_task<void> du_ue_reset_procedure::launch_ue_rem_task(du_ue_index_t ue_index)
-{
-  return launch_async([this, ue_index](coro_context<async_task<void>>& ctx) {
-    CORO_BEGIN(ctx);
-
-    CORO_AWAIT(launch_async<ue_deletion_procedure>(ue_index, ue_mng, du_params));
-
-    ue_rem--;
-    if (ue_rem == 0) {
-      // This is the last task to remove UEs. Flag completion.
-      complete_flag.set();
-    }
-
-    CORO_RETURN();
+  // Remove UEs from within their own task scheduler.
+  // Note: This is needed to ensure sequential handling of the UE procedures and state.
+  return await_all_ues(ue_mng, ues_to_reset, [this](du_ue& u) {
+    return launch_async<ue_deletion_procedure>(u.ue_index, ue_mng, du_params);
   });
 }
