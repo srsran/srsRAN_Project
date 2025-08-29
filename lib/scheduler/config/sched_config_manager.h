@@ -29,10 +29,9 @@ public:
   ue_config_update_event() = default;
   ue_config_update_event(du_ue_index_t                     ue_index_,
                          sched_config_manager&             parent_,
-                         std::unique_ptr<ue_configuration> next_cfg         = nullptr,
-                         const std::optional<bool>&        set_fallback     = {},
-                         slot_point                        ul_ccch_slot_rx_ = slot_point(),
-                         bool                              reestablished_   = false);
+                         std::unique_ptr<ue_configuration> next_cfg       = nullptr,
+                         const std::optional<bool>&        set_fallback   = {},
+                         bool                              reestablished_ = false);
   ue_config_update_event(ue_config_update_event&&) noexcept            = default;
   ue_config_update_event& operator=(ue_config_update_event&&) noexcept = default;
   ~ue_config_update_event();
