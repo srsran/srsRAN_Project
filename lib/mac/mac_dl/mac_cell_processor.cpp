@@ -115,10 +115,7 @@ async_task<void> mac_cell_processor::stop()
     time_source->on_cell_deactivation();
 
     // Notify lower layers that the cell is being stopped.
-    // TODO: Rely on FAPI STOP procedure to signal the cell stop. For now, we just call it directly.
-    stop_completed.reset();
-    handle_stop_indication();
-    CORO_AWAIT(stop_completed);
+    // TODO: Rely on FAPI STOP procedure to signal the cell stop. For now, we just skip this step.
 
     // Signal to the scheduler that the cell was successfully stopped in the lower layers.
     sched.handle_cell_deactivation(cell_cfg.cell_index);
