@@ -390,6 +390,41 @@ void mac_test_mode_cell_adapter::on_new_uplink_scheduler_results(const mac_ul_sc
   result_notifier.on_new_uplink_scheduler_results(ul_res);
 }
 
+void mac_test_mode_cell_adapter::on_cell_results_completion(slot_point slot)
+{
+  // Wait in slots between consecutive UL-CCCH messages to create test mode UEs.
+  static constexpr unsigned wait_between_ul_ccchs = 5;
+
+  // Forward results to lower layers.
+  result_notifier.on_cell_results_completion(slot);
+
+  // Check if more test mode UEs need to be created.
+  // Note: The UE creation should only start after last_slot_ind is valid, i.e., after we have the guarantee that
+  // the cell is active.
+  if (nof_test_ues_created < test_ue_cfg.nof_ues and last_slot_ind.valid() and
+      slot.count() % wait_between_ul_ccchs == 0) {
+    auto ulcch_buf = byte_buffer::create({0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00});
+    if (not ulcch_buf.has_value()) {
+      logger.warning("TEST_MODE: Postponing creation of test mode ue={}. Cause: Unable to allocate byte_buffer for "
+                     "UL-CCCH message",
+                     nof_test_ues_created);
+    }
+
+    // Inject UL-CCCH message that will trigger the test mode UE creation.
+    pdu_handler.handle_rx_data_indication(mac_rx_data_indication{
+        slot,
+        cell_index,
+        {mac_rx_pdu{to_rnti(to_value(test_ue_cfg.rnti) + (cell_index * test_ue_cfg.nof_ues) + nof_test_ues_created),
+                    0,
+                    0,
+                    ulcch_buf.value().copy()}}});
+
+    // UL-CCCH message injected. Update counter.
+    logger.info("TEST_MODE: Starting ue={} creation on cell={}", nof_test_ues_created, fmt::underlying(cell_index));
+    nof_test_ues_created++;
+  }
+}
+
 // ----
 
 mac_cell_result_notifier& phy_test_mode_adapter::get_cell(du_cell_index_t cell_index)

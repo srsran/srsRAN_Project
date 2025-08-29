@@ -15,8 +15,6 @@
 #include "srsran/du/du_high/du_test_mode_config.h"
 #include "srsran/mac/mac.h"
 #include "srsran/mac/mac_cell_result.h"
-#include "srsran/scheduler/result/pucch_info.h"
-#include "srsran/scheduler/result/pusch_info.h"
 #include "srsran/srslog/srslog.h"
 
 namespace srsran {
@@ -75,8 +73,7 @@ public:
 
   // Intercepts the calls coming from the real MAC.
   void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override;
-
-  void on_cell_results_completion(slot_point slot) override { result_notifier.on_cell_results_completion(slot); }
+  void on_cell_results_completion(slot_point slot) override;
 
   void handle_slot_indication(const mac_cell_timing_context& context) override;
   void handle_error_indication(slot_point sl_tx, error_event event) override;
@@ -108,6 +105,9 @@ private:
   mac_test_mode_ue_repository& ue_info_mgr;
 
   slot_point last_slot_ind;
+
+  // Counter of how many test UEs have been created in this cell.
+  unsigned nof_test_ues_created = 0;
 };
 
 class mac_test_mode_adapter final : public mac_interface,
