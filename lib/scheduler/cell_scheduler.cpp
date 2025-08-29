@@ -33,7 +33,6 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   prach_sch(cell_cfg),
   pucch_alloc(cell_cfg, sched_cfg.ue.max_pucchs_per_slot, sched_cfg.ue.max_ul_grants_per_slot),
   uci_alloc(pucch_alloc),
-  pucch_guard_sch(cell_cfg),
   pg_sch(sched_cfg, cell_cfg, pdcch_sch, msg)
 {
   // Register new cell in the UE scheduler.
@@ -103,9 +102,6 @@ void cell_scheduler::run_slot(slot_point sl_tx)
 
   // > Schedule SIB1 and SI-message signalling.
   si_sch.run_slot(res_grid);
-
-  // > Schedule PUCCH guardbands.
-  pucch_guard_sch.run_slot(res_grid);
 
   // > Schedule PRACH PDUs.
   prach_sch.run_slot(res_grid);
