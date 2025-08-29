@@ -380,6 +380,7 @@ int main(int argc, char** argv)
   // Create layer specific PCAPs.
   // In the gNB app, there is no point in instantiating two pcaps for each node of E1 and F1.
   // We disable one accordingly.
+  auto on_pcap_close = make_scope_exit([&gnb_logger]() { gnb_logger.info("PCAP files successfully closed."); });
   o_cu_up_app_unit->get_o_cu_up_unit_config().cu_up_cfg.pcap_cfg.disable_e1_pcaps();
   o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config.pcaps.disable_f1_pcaps();
   o_cu_cp_dlt_pcaps cu_cp_dlt_pcaps = create_o_cu_cp_dlt_pcap(
@@ -388,6 +389,7 @@ int main(int argc, char** argv)
       o_cu_up_app_unit->get_o_cu_up_unit_config(), workers.get_cu_up_pcap_executors(), cleanup_signal_dispatcher);
   flexible_o_du_pcaps du_pcaps = create_o_du_pcaps(
       o_du_app_unit->get_o_du_high_unit_config(), workers.get_du_pcap_executors(), cleanup_signal_dispatcher);
+  auto on_pcap_close_init = make_scope_exit([&gnb_logger]() { gnb_logger.info("Closing PCAP files..."); });
 
   std::unique_ptr<f1c_local_connector> f1c_gw =
       create_f1c_local_connector(f1c_local_connector_config{*cu_cp_dlt_pcaps.f1ap});
@@ -558,15 +560,6 @@ int main(int argc, char** argv)
 
   // Stop O-CU-CP activity.
   o_cucp_obj.get_operation_controller().stop();
-
-  // Stop the timer source before stopping the workers.
-  time_ctrl.reset();
-
-  gnb_logger.info("Closing PCAP files...");
-  cu_cp_dlt_pcaps.reset();
-  cu_up_dlt_pcaps.reset();
-  du_pcaps.reset();
-  gnb_logger.info("PCAP files successfully closed.");
 
   return 0;
 }

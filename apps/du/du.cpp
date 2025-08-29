@@ -295,8 +295,10 @@ int main(int argc, char** argv)
   auto time_ctrl =
       srs_du::create_du_high_clock_controller(app_timers, *epoll_broker, workers.get_timer_source_executor());
 
+  auto on_pcap_close = make_scope_exit([&gnb_logger]() { gnb_logger.info("PCAP files successfully closed."); });
   flexible_o_du_pcaps du_pcaps = create_o_du_pcaps(
       o_du_app_unit->get_o_du_high_unit_config(), workers.get_du_pcap_executors(), cleanup_signal_dispatcher);
+  auto on_pcap_close_init = make_scope_exit([&gnb_logger]() { gnb_logger.info("Closing PCAP files..."); });
 
   // Instantiate F1-C client gateway.
   std::unique_ptr<srs_du::f1c_connection_client> f1c_gw =
@@ -418,13 +420,6 @@ int main(int argc, char** argv)
 
   // Stop DU activity.
   du_inst.get_operation_controller().stop();
-
-  // Stop the timer source before stopping the workers.
-  time_ctrl.reset();
-
-  du_logger.info("Closing PCAP files...");
-  du_pcaps.reset();
-  du_logger.info("PCAP files successfully closed.");
 
   return 0;
 }

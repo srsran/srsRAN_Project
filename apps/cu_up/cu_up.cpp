@@ -279,8 +279,10 @@ int main(int argc, char** argv)
   worker_manager workers{worker_manager_cfg};
 
   // Create layer specific PCAPs.
+  auto on_pcap_close = make_scope_exit([&cu_up_logger]() { cu_up_logger.info("PCAP files successfully closed."); });
   o_cu_up_dlt_pcaps cu_up_dlt_pcaps = create_o_cu_up_dlt_pcaps(
       o_cu_up_app_unit->get_o_cu_up_unit_config(), workers.get_cu_up_pcap_executors(), cleanup_signal_dispatcher);
+  auto on_pcap_close_init = make_scope_exit([&cu_up_logger]() { cu_up_logger.info("Closing PCAP files..."); });
 
   // Create IO broker.
   const auto&                main_pool_cpu_mask = cu_up_cfg.expert_execution_cfg.affinities.main_pool_cpu_cfg.mask;
@@ -405,14 +407,6 @@ int main(int argc, char** argv)
 
   // FIXME: closing the E1 gateway should be part of the E1 Release procedure
   e1_gw.reset();
-
-  // Stop the timer source before stopping the workers.
-  time_source.reset();
-
-  // Close PCAPs
-  cu_up_logger.info("Closing PCAP files...");
-  cu_up_dlt_pcaps.reset();
-  cu_up_logger.info("PCAP files successfully closed.");
 
   return 0;
 }
