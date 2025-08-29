@@ -102,6 +102,7 @@ async_task<void> du_cell_stop_procedure::rem_ues_with_matching_pcell()
 
 async_task<void> du_cell_stop_procedure::await_cu_to_release_ues()
 {
+  // Implementation-defined timeout for graceful UE removal. After which, we will force UE removal.
   static const std::chrono::milliseconds periodic_check_timeout{10};
   static const unsigned                  nof_checks = std::chrono::milliseconds{500} / periodic_check_timeout;
 

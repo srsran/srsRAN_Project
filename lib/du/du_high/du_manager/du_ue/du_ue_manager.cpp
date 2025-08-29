@@ -247,6 +247,7 @@ void du_ue_manager::remove_ue(du_ue_index_t ue_index)
 
   srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue index={}", fmt::underlying(ue_index));
   logger.debug("ue={}: Scheduled deletion of UE context", fmt::underlying(ue_index));
+  ue_ctrl_loop[ue_index].clear_pending_tasks();
 
   // Schedule UE removal task
   ue_ctrl_loop[ue_index].schedule([this, ue_index](coro_context<async_task<void>>& ctx) {
