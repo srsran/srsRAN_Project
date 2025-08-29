@@ -99,8 +99,10 @@ public:
     fmt::print("STATUS: Starting {}...", description);
     unsigned nof_initial_tasks = nof_workers;
     for (unsigned i = 0; i != nof_initial_tasks; ++i) {
-      bool success = task_exec->defer([this]() { run_task(); });
-      report_fatal_error_if_not(success, "Unexpected failure to defer initial task");
+      while (not task_exec->defer([this]() { run_task(); })) {
+        fmt::print("Unexpected failure to defer initial task, retrying...\n");
+        std::this_thread::sleep_for(std::chrono::microseconds{1});
+      }
     }
     reset_counters();
   }
