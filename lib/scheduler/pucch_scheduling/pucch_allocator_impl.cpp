@@ -11,10 +11,13 @@
 #include "pucch_allocator_impl.h"
 #include "../support/pucch/pucch_default_resource.h"
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
+#include "srsran/ran/pucch/pucch_configuration.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/ran/pucch/pucch_info.h"
+#include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 #include "srsran/srslog/srslog.h"
 #include <algorithm>
+#include <variant>
 
 //////////////     Helper functions       //////////////
 
@@ -55,6 +58,40 @@ static pucch_resource* get_sr_pucch_res_cfg(const pucch_config& pucch_cfg)
       });
 
   return res_cfg != pucch_res_list.end() ? const_cast<pucch_resource*>(res_cfg) : nullptr;
+}
+
+static void mark_pucch_in_resource_grid(cell_slot_resource_allocator& pucch_slot_alloc,
+                                        const pucch_resource&         pucch_res,
+                                        const ue_cell_configuration&  ue_cell_cfg)
+{
+  const auto init_ul_bwp = ue_cell_cfg.init_bwp().ul_common.value()->generic_params;
+  unsigned   nof_prbs    = 1;
+  if (const auto* format_2_3 = std::get_if<pucch_format_2_3_cfg>(&pucch_res.format_params)) {
+    nof_prbs = format_2_3->nof_prbs;
+  }
+
+  grant_info                first_hop_grant;
+  std::optional<grant_info> second_hop_grant;
+  if (pucch_res.second_hop_prb.has_value()) {
+    crb_interval first_hop_crbs = prb_to_crb(init_ul_bwp, {pucch_res.starting_prb, pucch_res.starting_prb + nof_prbs});
+    ofdm_symbol_range first_hop_symbols{pucch_res.starting_sym_idx,
+                                        pucch_res.starting_sym_idx + pucch_res.nof_symbols / 2};
+    crb_interval      second_hop_crbs =
+        prb_to_crb(init_ul_bwp, {pucch_res.second_hop_prb.value(), pucch_res.second_hop_prb.value() + nof_prbs});
+    ofdm_symbol_range second_hop_symbols{pucch_res.starting_sym_idx + pucch_res.nof_symbols / 2,
+                                         pucch_res.starting_sym_idx + pucch_res.nof_symbols};
+    first_hop_grant  = {init_ul_bwp.scs, first_hop_symbols, first_hop_crbs};
+    second_hop_grant = {init_ul_bwp.scs, second_hop_symbols, second_hop_crbs};
+  } else {
+    ofdm_symbol_range symbols{pucch_res.starting_sym_idx, pucch_res.starting_sym_idx + pucch_res.nof_symbols};
+    crb_interval      crbs = prb_to_crb(init_ul_bwp, {pucch_res.starting_prb, pucch_res.starting_prb + nof_prbs});
+    first_hop_grant        = {init_ul_bwp.scs, symbols, crbs};
+  }
+
+  pucch_slot_alloc.ul_res_grid.fill(first_hop_grant);
+  if (second_hop_grant.has_value()) {
+    pucch_slot_alloc.ul_res_grid.fill(second_hop_grant.value());
+  }
 }
 
 //////////////    Public functions       //////////////
@@ -351,6 +388,9 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
   } else {
     srsran_assertion_failure("Only PUCCH Format 0 and Format 1 are supported for SR dedicated grant");
   }
+
+  // TODO: unmark on multiplexing (take into account CS/OCC).
+  mark_pucch_in_resource_grid(pucch_slot_alloc, *pucch_sr_res, ue_cell_cfg);
 
   // Save the info in the scheduler list of PUCCH grants.
   auto& sr_pucch_grant = pucch_grants_alloc_grid[sl_tx.to_uint()].emplace_back(ue_grants{.rnti = crnti});
@@ -1147,6 +1187,9 @@ std::optional<unsigned> pucch_allocator_impl::allocate_harq_grant(cell_slot_reso
   grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind  = pucch_res_indicator;
   grants.pucch_grants.harq_resource.value().bits.harq_ack_nof_bits = harq_bits_in_new_pucch_grant;
 
+  // TODO: unmark on multiplexing (take into account CS/OCC).
+  mark_pucch_in_resource_grid(pucch_slot_alloc, *pucch_harq_res_info.pucch_res, ue_cell_cfg);
+
   return pucch_res_indicator;
 }
 
@@ -1228,6 +1271,9 @@ void pucch_allocator_impl::allocate_csi_grant(cell_slot_resource_allocator& pucc
     default:
       srsran_assertion_failure("PUCCH resource for CSI must be of Formats 2, 3 or 4");
   }
+
+  // TODO: unmark on multiplexing (take into account CS/OCC).
+  mark_pucch_in_resource_grid(pucch_slot_alloc, *csi_f2_f3_f4_res, ue_cell_cfg);
 
   // Save the info in the scheduler list of PUCCH grants.
   auto& csi_pucch_grant = pucch_grants_alloc_grid[sl_tx.to_uint()].emplace_back(ue_grants{.rnti = crnti});
