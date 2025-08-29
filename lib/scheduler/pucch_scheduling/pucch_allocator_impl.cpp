@@ -64,8 +64,8 @@ static void mark_pucch_in_resource_grid(cell_slot_resource_allocator& pucch_slot
                                         const pucch_resource&         pucch_res,
                                         const ue_cell_configuration&  ue_cell_cfg)
 {
-  const auto init_ul_bwp = ue_cell_cfg.init_bwp().ul_common.value()->generic_params;
-  unsigned   nof_prbs    = 1;
+  const auto& init_ul_bwp = ue_cell_cfg.init_bwp().ul_common.value()->generic_params;
+  unsigned    nof_prbs    = 1;
   if (const auto* format_2_3 = std::get_if<pucch_format_2_3_cfg>(&pucch_res.format_params)) {
     nof_prbs = format_2_3->nof_prbs;
   }
