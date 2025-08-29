@@ -295,8 +295,8 @@ int main(int argc, char** argv)
   auto time_ctrl =
       srs_du::create_du_high_clock_controller(app_timers, *epoll_broker, workers.get_timer_source_executor());
 
-  flexible_o_du_pcaps du_pcaps =
-      create_o_du_pcaps(o_du_app_unit->get_o_du_high_unit_config(), workers, cleanup_signal_dispatcher);
+  flexible_o_du_pcaps du_pcaps = create_o_du_pcaps(
+      o_du_app_unit->get_o_du_high_unit_config(), workers.get_du_pcap_executors(), cleanup_signal_dispatcher);
 
   // Instantiate F1-C client gateway.
   std::unique_ptr<srs_du::f1c_connection_client> f1c_gw =

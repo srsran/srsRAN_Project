@@ -386,8 +386,8 @@ int main(int argc, char** argv)
       o_cu_cp_app_unit->get_o_cu_cp_unit_config(), workers.get_cu_cp_pcap_executors(), cleanup_signal_dispatcher);
   o_cu_up_dlt_pcaps cu_up_dlt_pcaps = create_o_cu_up_dlt_pcaps(
       o_cu_up_app_unit->get_o_cu_up_unit_config(), workers.get_cu_up_pcap_executors(), cleanup_signal_dispatcher);
-  flexible_o_du_pcaps du_pcaps =
-      create_o_du_pcaps(o_du_app_unit->get_o_du_high_unit_config(), workers, cleanup_signal_dispatcher);
+  flexible_o_du_pcaps du_pcaps = create_o_du_pcaps(
+      o_du_app_unit->get_o_du_high_unit_config(), workers.get_du_pcap_executors(), cleanup_signal_dispatcher);
 
   std::unique_ptr<f1c_local_connector> f1c_gw =
       create_f1c_local_connector(f1c_local_connector_config{*cu_cp_dlt_pcaps.f1ap});
