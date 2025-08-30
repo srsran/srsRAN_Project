@@ -88,6 +88,19 @@ static void mark_pucch_in_resource_grid(cell_slot_resource_allocator& pucch_slot
     first_hop_grant        = {init_ul_bwp.scs, symbols, crbs};
   }
 
+  // Add guard band to the allocated grid resources to minimize cross PUCCH-PUSCH interference.
+  const unsigned guard_rbs = ue_cell_cfg.cell_cfg_common.expert_cfg.ue.min_pucch_pusch_prb_distance;
+  if (guard_rbs > 0) {
+    unsigned start       = first_hop_grant.crbs.start() >= guard_rbs ? first_hop_grant.crbs.start() - guard_rbs : 0;
+    first_hop_grant.crbs = {start, first_hop_grant.crbs.stop() + guard_rbs};
+    first_hop_grant.crbs.intersect(init_ul_bwp.crbs);
+    if (second_hop_grant.has_value()) {
+      start = second_hop_grant->crbs.start() >= guard_rbs ? second_hop_grant->crbs.start() - guard_rbs : 0;
+      second_hop_grant->crbs = {start, second_hop_grant->crbs.stop() + guard_rbs};
+      second_hop_grant->crbs.intersect(init_ul_bwp.crbs);
+    }
+  }
+
   pucch_slot_alloc.ul_res_grid.fill(first_hop_grant);
   if (second_hop_grant.has_value()) {
     pucch_slot_alloc.ul_res_grid.fill(second_hop_grant.value());
