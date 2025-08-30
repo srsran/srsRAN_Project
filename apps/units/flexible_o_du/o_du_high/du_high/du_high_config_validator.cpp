@@ -673,10 +673,19 @@ static bool validate_srs_cell_unit_config(const du_high_unit_srs_config& config,
 }
 
 /// Validates the given PUCCH cell application configuration. Returns true on success, otherwise false.
-static bool validate_ul_common_unit_config(const du_high_unit_ul_common_config& config)
+static bool validate_ul_common_unit_config(const du_high_unit_ul_common_config& config, unsigned nof_crbs)
 {
   if (config.max_ul_grants_per_slot <= config.max_pucchs_per_slot) {
     fmt::print("The max number of UL grants per slot should be greater than the maximum number of PUCCH grants.\n");
+    return false;
+  }
+
+  if (config.min_pucch_pusch_prb_distance >= nof_crbs / 2) {
+    fmt::print("The minimum distance between PUCCH and PUSCH PRBs ({}) should be less than half of the BWP size "
+               "({}/2 = {}).\n",
+               config.min_pucch_pusch_prb_distance,
+               nof_crbs,
+               nof_crbs / 2);
     return false;
   }
 
@@ -1098,7 +1107,7 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     return false;
   }
 
-  if (!validate_ul_common_unit_config(config.ul_common_cfg)) {
+  if (!validate_ul_common_unit_config(config.ul_common_cfg, nof_crbs)) {
     return false;
   }
 

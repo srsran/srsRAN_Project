@@ -116,6 +116,8 @@ struct du_high_unit_ul_common_config {
   unsigned max_pucchs_per_slot = 31U;
   /// Maximum number of PUSCH + PUCCH grants per slot.
   unsigned max_ul_grants_per_slot = 32U;
+  /// Minimum distance in PRBs between PUCCH and UE-dedicated PUSCH grants.
+  unsigned min_pucch_pusch_prb_distance = 1U;
 };
 
 /// PDSCH application configuration.

@@ -717,6 +717,12 @@ static void configure_cli11_ul_common_args(CLI::App& app, du_high_unit_ul_common
              "Maximum number of UL grants that can be allocated per slot")
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)(MAX_PUSCH_PDUS_PER_SLOT + MAX_PUCCH_PDUS_PER_SLOT)));
+  add_option(app,
+             "--min_pucch_pusch_prb_distance",
+             ul_common_params.min_pucch_pusch_prb_distance,
+             "Minimum PRB distance between PUCCH and UE-dedicated PUSCH grants")
+      ->capture_default_str()
+      ->check(CLI::Range(0U, (unsigned)MAX_NOF_PRBS / 2U));
 }
 
 static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config& pusch_params)
