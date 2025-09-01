@@ -288,6 +288,10 @@ int main(int argc, char** argv)
   std::unique_ptr<srs_cu_cp::e1_connection_server> e1_gw = create_e1_gateway_server(e1_cu_cp_sctp_gateway_config{
       e1_sctp_cfg, *epoll_broker, workers.get_cu_cp_executor_mapper().e1_rx_executor(), *cu_cp_dlt_pcaps.e1ap});
 
+  // Stop workers on exit.
+  // TODO: Remove this and rely on worker_manager dtor.
+  auto worker_stopper = make_scope_exit([&workers]() { workers.stop(); });
+
   // Create time source that ticks the timers.
   std::optional<io_timer_source> time_source(
       std::in_place_t{}, app_timers, *epoll_broker, workers.get_timer_source_executor(), std::chrono::milliseconds{1});

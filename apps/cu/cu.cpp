@@ -326,6 +326,10 @@ int main(int argc, char** argv)
   io_broker_config           io_broker_cfg(os_thread_realtime_priority::min() + 5, main_pool_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
+  // Stop workers on exit.
+  // TODO: Remove this and rely on worker_manager dtor.
+  auto worker_stopper = make_scope_exit([&workers]() { workers.stop(); });
+
   // Create F1-C GW (TODO cleanup port and PPID args with factory)
   sctp_network_gateway_config f1c_sctp_cfg = {};
   f1c_sctp_cfg.if_name                     = "F1-C";
