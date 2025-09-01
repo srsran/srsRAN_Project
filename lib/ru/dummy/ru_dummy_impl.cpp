@@ -31,7 +31,6 @@ static inline uint64_t get_current_system_slot(std::chrono::microseconds slot_du
 }
 
 ru_dummy_impl::ru_dummy_impl(const ru_dummy_configuration& config, ru_dummy_dependencies dependencies) noexcept :
-  state_stopped(state_wait_stop + 2 * config.max_processing_delay_slots),
   are_metrics_enabled(config.are_metrics_enabled),
   logger(dependencies.logger),
   executor(*dependencies.executor),
@@ -65,9 +64,7 @@ void ru_dummy_impl::start()
       get_current_system_slot(slot_duration, current_slot.nof_slots_per_hyper_system_frame());
   current_slot = slot_point(current_slot.numerology(), initial_system_slot);
 
-  uint32_t              expected_state = state_idle;
-  [[maybe_unused]] bool success        = internal_state.compare_exchange_strong(expected_state, state_running);
-  srsran_assert(success, "Invalid state 0x{:08x}.", expected_state);
+  // Start the loop execution.
   report_fatal_error_if_not(executor.execute([this]() { loop(); }), "Failed to execute loop method.");
 }
 
@@ -79,18 +76,19 @@ void ru_dummy_impl::stop()
   }
 
   // Signal stop to asynchronous thread.
-  uint32_t              expected_state = state_running;
-  [[maybe_unused]] bool success        = internal_state.compare_exchange_strong(expected_state, state_wait_stop);
-  srsran_assert(success, "Invalid state 0x{:08x}.", expected_state);
-
-  // Wait for the state to transition to stop.
-  while (internal_state.load(std::memory_order_relaxed) < state_stopped) {
-    std::this_thread::sleep_for(std::chrono::microseconds(10));
-  }
+  stop_request = true;
+  auto ft      = stop_promise.get_future();
+  ft.wait();
 }
 
 void ru_dummy_impl::loop()
 {
+  // If stop has been requested, then return without deferring the loop task.
+  if (stop_request) {
+    stop_promise.set_value();
+    return;
+  }
+
   // Get the current system slot from the system time.
   uint64_t slot_count = get_current_system_slot(slot_duration, current_slot.nof_slots_per_hyper_system_frame());
 
@@ -101,14 +99,6 @@ void ru_dummy_impl::loop()
 
   // Advance the current slot until it is equal to the slot given by the system time.
   while (slot_count != current_slot.system_slot()) {
-    // Detect stop mask.
-    if ((internal_state.load(std::memory_order_relaxed) & state_wait_stop) != 0) {
-      uint32_t current_state = internal_state.fetch_add(1, std::memory_order_relaxed) + 1;
-      if (current_state >= state_stopped) {
-        return;
-      }
-    }
-
     // Increment current slot.
     ++current_slot;
 

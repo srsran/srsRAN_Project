@@ -30,6 +30,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
+#include <future>
 #include <vector>
 
 namespace srsran {
@@ -66,14 +67,6 @@ public:
   ru_center_frequency_controller* get_center_frequency_controller() override { return nullptr; }
 
 private:
-  /// State value in idle.
-  static constexpr uint32_t state_idle = 0xffffffff;
-  /// State value while running.
-  static constexpr uint32_t state_running = 0x80000000;
-  /// State value while the RU is stopping.
-  static constexpr uint32_t state_wait_stop = 0x40000000;
-  /// Stopped state, depends on the maximum processing delay number of slots.
-  const uint32_t state_stopped;
   /// Minimum loop time.
   const std::chrono::microseconds minimum_loop_time = std::chrono::microseconds(10);
 
@@ -139,8 +132,10 @@ private:
   task_executor& executor;
   /// Radio Unit timing notifier.
   ru_timing_notifier& timing_notifier;
-  /// Internal state.
-  std::atomic<uint32_t> internal_state = state_idle;
+  /// Set to true if stopping is requested.
+  std::atomic<bool> stop_request = false;
+  /// Stopping promise for controlling the stop of the RU.
+  std::promise<void> stop_promise;
   /// Slot time in microseconds.
   std::chrono::microseconds slot_duration;
   /// Number of slots is notified in advance of the transmission time.
