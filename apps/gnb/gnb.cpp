@@ -363,13 +363,10 @@ int main(int argc, char** argv)
   o_du_app_unit->fill_worker_manager_config(worker_manager_cfg);
   fill_gnb_worker_manager_config(worker_manager_cfg, gnb_cfg);
   worker_manager_cfg.app_timers = &app_timers;
-
   worker_manager workers{worker_manager_cfg};
 
-  // Set layer-specific pcap options.
-  const auto& main_pool_cpu_mask = gnb_cfg.expert_execution_cfg.affinities.main_pool_cpu_cfg.mask;
-
   // Create IO broker.
+  const auto&                main_pool_cpu_mask = gnb_cfg.expert_execution_cfg.affinities.main_pool_cpu_cfg.mask;
   io_broker_config           io_broker_cfg(os_thread_realtime_priority::min() + 5, main_pool_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 

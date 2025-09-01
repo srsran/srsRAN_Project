@@ -256,16 +256,24 @@ int main(int argc, char** argv)
   worker_manager_cfg.app_timers = &app_timers;
   worker_manager workers{worker_manager_cfg};
 
+  // Create IO broker.
+  const auto&                main_pool_cpu_mask = cu_cp_cfg.expert_execution_cfg.affinities.main_pool_cpu_cfg.mask;
+  io_broker_config           io_broker_cfg(os_thread_realtime_priority::min() + 5, main_pool_cpu_mask);
+  std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
+
+  // Stop workers on exit.
+  // TODO: Remove this and rely on worker_manager dtor.
+  auto worker_stopper = make_scope_exit([&workers]() { workers.stop(); });
+
+  // Create time source that ticks the timers.
+  std::optional<io_timer_source> time_source(
+      std::in_place_t{}, app_timers, *epoll_broker, workers.get_timer_source_executor(), std::chrono::milliseconds{1});
+
   // Create layer specific PCAPs.
   auto on_pcap_close = make_scope_exit([&cu_cp_logger]() { cu_cp_logger.info("PCAP files successfully closed."); });
   o_cu_cp_dlt_pcaps cu_cp_dlt_pcaps = create_o_cu_cp_dlt_pcap(
       o_cu_cp_app_unit->get_o_cu_cp_unit_config(), workers.get_cu_cp_pcap_executors(), cleanup_signal_dispatcher);
   auto on_pcap_close_init = make_scope_exit([&cu_cp_logger]() { cu_cp_logger.info("Closing PCAP files..."); });
-
-  // Create IO broker.
-  const auto&                main_pool_cpu_mask = cu_cp_cfg.expert_execution_cfg.affinities.main_pool_cpu_cfg.mask;
-  io_broker_config           io_broker_cfg(os_thread_realtime_priority::min() + 5, main_pool_cpu_mask);
-  std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
   // Create F1-C GW (TODO cleanup port and PPID args with factory)
   sctp_network_gateway_config f1c_sctp_cfg = {};
@@ -287,14 +295,6 @@ int main(int argc, char** argv)
   // > Create E1 gateway
   std::unique_ptr<srs_cu_cp::e1_connection_server> e1_gw = create_e1_gateway_server(e1_cu_cp_sctp_gateway_config{
       e1_sctp_cfg, *epoll_broker, workers.get_cu_cp_executor_mapper().e1_rx_executor(), *cu_cp_dlt_pcaps.e1ap});
-
-  // Stop workers on exit.
-  // TODO: Remove this and rely on worker_manager dtor.
-  auto worker_stopper = make_scope_exit([&workers]() { workers.stop(); });
-
-  // Create time source that ticks the timers.
-  std::optional<io_timer_source> time_source(
-      std::in_place_t{}, app_timers, *epoll_broker, workers.get_timer_source_executor(), std::chrono::milliseconds{1});
 
   // Instantiate E2AP client gateway.
   std::unique_ptr<e2_connection_client> e2_gw_cu_cp = create_e2_gateway_client(

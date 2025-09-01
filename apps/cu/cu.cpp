@@ -313,14 +313,6 @@ int main(int argc, char** argv)
   worker_manager_cfg.app_timers = &app_timers;
   worker_manager workers{worker_manager_cfg};
 
-  // Create layer specific PCAPs.
-  auto on_pcap_close = make_scope_exit([&cu_logger]() { cu_logger.info("PCAP files successfully closed."); });
-  o_cu_cp_dlt_pcaps cu_cp_dlt_pcaps = create_o_cu_cp_dlt_pcap(
-      o_cu_cp_app_unit->get_o_cu_cp_unit_config(), workers.get_cu_cp_pcap_executors(), cleanup_signal_dispatcher);
-  o_cu_up_dlt_pcaps cu_up_dlt_pcaps = create_o_cu_up_dlt_pcaps(
-      o_cu_up_app_unit->get_o_cu_up_unit_config(), workers.get_cu_up_pcap_executors(), cleanup_signal_dispatcher);
-  auto on_pcap_close_init = make_scope_exit([&cu_logger]() { cu_logger.info("Closing PCAP files..."); });
-
   // Create IO broker.
   const auto&                main_pool_cpu_mask = cu_cfg.expert_execution_cfg.affinities.main_pool_cpu_cfg.mask;
   io_broker_config           io_broker_cfg(os_thread_realtime_priority::min() + 5, main_pool_cpu_mask);
@@ -329,6 +321,18 @@ int main(int argc, char** argv)
   // Stop workers on exit.
   // TODO: Remove this and rely on worker_manager dtor.
   auto worker_stopper = make_scope_exit([&workers]() { workers.stop(); });
+
+  // Create time source that ticks the timers.
+  std::optional<io_timer_source> time_source(
+      std::in_place_t{}, app_timers, *epoll_broker, workers.get_timer_source_executor(), std::chrono::milliseconds{1});
+
+  // Create layer specific PCAPs.
+  auto on_pcap_close = make_scope_exit([&cu_logger]() { cu_logger.info("PCAP files successfully closed."); });
+  o_cu_cp_dlt_pcaps cu_cp_dlt_pcaps = create_o_cu_cp_dlt_pcap(
+      o_cu_cp_app_unit->get_o_cu_cp_unit_config(), workers.get_cu_cp_pcap_executors(), cleanup_signal_dispatcher);
+  o_cu_up_dlt_pcaps cu_up_dlt_pcaps = create_o_cu_up_dlt_pcaps(
+      o_cu_up_app_unit->get_o_cu_up_unit_config(), workers.get_cu_up_pcap_executors(), cleanup_signal_dispatcher);
+  auto on_pcap_close_init = make_scope_exit([&cu_logger]() { cu_logger.info("Closing PCAP files..."); });
 
   // Create F1-C GW (TODO cleanup port and PPID args with factory)
   sctp_network_gateway_config f1c_sctp_cfg = {};
@@ -374,10 +378,6 @@ int main(int argc, char** argv)
   // Create E1AP local connector
   std::unique_ptr<e1_local_connector> e1_gw =
       create_e1_local_connector(e1_local_connector_config{*cu_up_dlt_pcaps.e1ap});
-
-  // Create time source that ticks the timers.
-  std::optional<io_timer_source> time_source(
-      std::in_place_t{}, app_timers, *epoll_broker, workers.get_timer_source_executor(), std::chrono::milliseconds{1});
 
   // Instantiate E2AP client gateway.
   std::unique_ptr<e2_connection_client> e2_gw_cu_cp = create_e2_gateway_client(
