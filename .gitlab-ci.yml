@@ -210,6 +210,28 @@ pr reminder:
       when: never
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
 
+handle stale issues:
+  extends: .handle_stale_issues
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
+  variables:
+    WARN_LABEL: "not seen in a while"
+    CLOSE_MESSAGE: "Issue closed due to inactivity. Please reopen it if it happens again."
+  parallel:
+    matrix:
+      - LABELS_INCLUDE: "bug::ci"
+        LABELS_EXCLUDE: "low_priority,mid_priority"
+        WARN_THRESHOLD: 10
+        CLOSE_THRESHOLD: 30
+      - LABELS_INCLUDE: "bug::ci,mid_priority"
+        LABELS_EXCLUDE: "low_priority"
+        WARN_THRESHOLD: 20
+        CLOSE_THRESHOLD: 60
+      - LABELS_INCLUDE: "bug::ci,low_priority"
+        LABELS_EXCLUDE: ""
+        WARN_THRESHOLD: 30
+        CLOSE_THRESHOLD: 90
+
 matlab nightly:
   stage: ci
   rules:
