@@ -250,7 +250,7 @@ void srsran::fill_sdr_worker_manager_config(worker_manager_config& config, const
   sdr_cfg.profile   = (ru_cfg.device_driver != "zmq")
                           ? static_cast<worker_manager_config::ru_sdr_config::lower_phy_thread_profile>(
                               ru_cfg.expert_execution_cfg.threads.execution_profile)
-                          : worker_manager_config::ru_sdr_config::lower_phy_thread_profile::blocking;
+                          : worker_manager_config::ru_sdr_config::lower_phy_thread_profile::sequential;
 
   srsran_assert(config.config_affinities.size() == ru_cfg.expert_execution_cfg.cell_affinities.size(),
                 "Invalid number of cell affinities");

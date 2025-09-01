@@ -430,7 +430,7 @@ void worker_manager::create_du_low_executors(const worker_manager_config::du_low
   // DU low executor mapper configuration.
   srs_du::du_low_executor_mapper_config du_low_exec_mapper_config;
 
-  const bool rt_mode = !du_low.is_blocking_mode_active;
+  const bool rt_mode = !du_low.is_sequential_mode_active;
 
   // Instantiate workers for the DU-low.
   if (not rt_mode) {
@@ -568,12 +568,12 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
                      affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::ru));
 
   switch (config.profile) {
-    case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::blocking: {
-      fmt::print("Lower PHY in executor blocking mode.\n");
+    case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::sequential: {
+      fmt::print("Lower PHY in executor sequential baseband mode.\n");
       std::string    exec_name = "phy_exec";
       task_executor* phy_exec  = exec_mng.executors().at(exec_name);
 
-      ru_generic_executor_mapper_blocking_configuration ru_sdr_exec_map_config;
+      ru_generic_executor_mapper_sequential_configuration ru_sdr_exec_map_config;
       ru_sdr_exec_map_config.asynchronous_exec = exec_mng.executors().at("radio_exec");
       ru_sdr_exec_map_config.common_exec       = phy_exec;
       ru_sdr_exec_map_config.nof_sectors       = config.nof_cells;
@@ -581,7 +581,7 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
       break;
     }
     case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::single: {
-      fmt::print("Lower PHY in single executor mode.\n");
+      fmt::print("Lower PHY in single baseband executor mode.\n");
       ru_generic_executor_mapper_single_configuration ru_sdr_exec_map_config;
       ru_sdr_exec_map_config.radio_exec         = exec_mng.executors().at("radio_exec");
       ru_sdr_exec_map_config.high_prio_executor = rt_hi_prio_exec;
@@ -603,7 +603,7 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
       break;
     }
     case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::dual: {
-      fmt::print("Lower PHY in dual executor mode.\n");
+      fmt::print("Lower PHY in dual baseband executor mode.\n");
       ru_generic_executor_mapper_dual_configuration ru_sdr_exec_map_config;
       ru_sdr_exec_map_config.radio_exec         = exec_mng.executors().at("radio_exec");
       ru_sdr_exec_map_config.high_prio_executor = rt_hi_prio_exec;

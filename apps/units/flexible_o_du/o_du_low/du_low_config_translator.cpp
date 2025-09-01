@@ -203,7 +203,7 @@ void srsran::fill_du_low_worker_manager_config(worker_manager_config&    config,
 
   auto& du_low_cfg = config.du_low_cfg.emplace();
 
-  du_low_cfg.is_blocking_mode_active = is_blocking_mode_active;
+  du_low_cfg.is_sequential_mode_active = is_blocking_mode_active;
   du_low_cfg.cell_nof_dl_antennas.assign(nof_dl_antennas.begin(), nof_dl_antennas.end());
   du_low_cfg.cell_nof_ul_antennas.assign(nof_ul_antennas.begin(), nof_ul_antennas.end());
 

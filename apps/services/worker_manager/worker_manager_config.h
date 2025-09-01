@@ -32,8 +32,9 @@ struct worker_manager_config {
   struct ru_sdr_config {
     /// Lower physical layer thread profiles.
     enum class lower_phy_thread_profile {
-      /// Same task worker as the rest of the PHY (ZMQ only).
-      blocking = 0,
+      /// Sequential mode - it guarantees that the entire physical layer operates in sequential mode using a single
+      /// executor. This mode might not satisfy with real-time timings.
+      sequential = 0,
       /// Single task worker for all the baseband processing.
       single,
       /// Two task workers - one for baseband reception and another for baseband transmission.
@@ -56,7 +57,7 @@ struct worker_manager_config {
 
   /// DU low worker configuration.
   struct du_low_config {
-    bool     is_blocking_mode_active;
+    bool     is_sequential_mode_active;
     unsigned max_pucch_concurrency;
     unsigned max_pusch_and_srs_concurrency;
     unsigned max_pdsch_concurrency;

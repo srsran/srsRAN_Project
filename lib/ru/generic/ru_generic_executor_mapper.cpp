@@ -46,7 +46,7 @@ private:
 class ru_generic_executor_mapper_impl : public ru_generic_executor_mapper
 {
 public:
-  ru_generic_executor_mapper_impl(const ru_generic_executor_mapper_blocking_configuration& config)
+  ru_generic_executor_mapper_impl(const ru_generic_executor_mapper_sequential_configuration& config)
   {
     srsran_assert(config.asynchronous_exec != nullptr, "Invalid asynchronous executor.");
     srsran_assert(config.common_exec != nullptr, "Invalid common executor.");
@@ -139,7 +139,7 @@ private:
 } // namespace
 
 std::unique_ptr<ru_generic_executor_mapper>
-srsran::create_ru_generic_executor_mapper(const ru_generic_executor_mapper_blocking_configuration& config)
+srsran::create_ru_generic_executor_mapper(const ru_generic_executor_mapper_sequential_configuration& config)
 {
   return std::make_unique<ru_generic_executor_mapper_impl>(config);
 }

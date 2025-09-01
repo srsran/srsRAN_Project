@@ -62,8 +62,8 @@ public:
   virtual task_executor& asynchronous_radio_executor() = 0;
 };
 
-/// Collects the generic RU executor mapper dependencies for blocking operation.
-struct ru_generic_executor_mapper_blocking_configuration {
+/// Collects the generic RU executor mapper dependencies for sequential baseband operation.
+struct ru_generic_executor_mapper_sequential_configuration {
   /// Asynchronous executor.
   task_executor* asynchronous_exec;
   /// Common executor for all sectors.
@@ -120,9 +120,9 @@ struct ru_generic_executor_mapper_triple_configuration {
   std::vector<cell_executors> baseband_exec;
 };
 
-/// Creates a generic RU executor mapper from a blocking configuration.
+/// Creates a generic RU executor mapper from a sequential baseband executor configuration.
 std::unique_ptr<ru_generic_executor_mapper>
-create_ru_generic_executor_mapper(const ru_generic_executor_mapper_blocking_configuration& config);
+create_ru_generic_executor_mapper(const ru_generic_executor_mapper_sequential_configuration& config);
 
 /// Creates a generic RU executor mapper from a single baseband executor configuration.
 std::unique_ptr<ru_generic_executor_mapper>
