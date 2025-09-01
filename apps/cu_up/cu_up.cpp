@@ -283,10 +283,6 @@ int main(int argc, char** argv)
   io_broker_config           io_broker_cfg(os_thread_realtime_priority::min() + 5, main_pool_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
-  // Stop workers on exit.
-  // TODO: Remove this and rely on worker_manager dtor.
-  auto worker_stopper = make_scope_exit([&workers]() { workers.stop(); });
-
   // Create time source that ticks the timers.
   std::optional<io_timer_source> time_source(
       std::in_place_t{}, app_timers, *epoll_broker, workers.get_timer_source_executor(), std::chrono::milliseconds{1});
