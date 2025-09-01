@@ -51,21 +51,32 @@ public:
   row_id id() const { return row_id{table->index_reverse_map[offset]}; }
 
   /// Retrieves a cell from the table for column I.
-  template <std::size_t I>
+  template <std::size_t ColIndex>
   auto& at()
   {
-    static_assert(I < nof_columns(), "Column index out of range");
-    auto& cols = std::get<I>(table->columns);
-    srsran_assert(offset < cols.size(), "Row offset out of range");
+    static_assert(ColIndex < nof_columns(), "Column index out of range");
+    auto& cols = std::get<ColIndex>(table->columns);
+    srsran_sanity_check(offset < cols.size(), "Row offset out of range");
     return cols[offset];
   }
-  template <std::size_t I>
+  template <std::size_t ColIndex>
   const auto& at() const
   {
-    static_assert(I < nof_columns(), "Column index out of range");
-    auto& cols = std::get<I>(table->columns);
-    srsran_assert(offset < cols.size(), "Row offset out of range");
+    static_assert(ColIndex < nof_columns(), "Column index out of range");
+    auto& cols = std::get<ColIndex>(table->columns);
+    srsran_sanity_check(offset < cols.size(), "Row offset out of range");
     return cols[offset];
+  }
+
+  template <std::size_t ColIndex>
+  friend auto& get(const row_view& rv)
+  {
+    return rv.at<ColIndex>();
+  }
+  template <std::size_t ColIndex>
+  friend auto& get(row_view&& rv)
+  {
+    return rv.at<ColIndex>();
   }
 
   bool operator==(const row_view& other) const
@@ -334,6 +345,14 @@ public:
     erase(index_reverse_map[it.offset]);
   }
 
+  void clear()
+  {
+    std::apply([](auto&... cols) { (cols.clear(), ...); }, columns);
+    index_map.clear();
+    index_reverse_map.clear();
+    free_list_head = 0;
+  }
+
   void reserve(unsigned size)
   {
     std::apply([size](auto&... cols) { (cols.reserve(size), ...); }, columns);
@@ -381,3 +400,11 @@ private:
 
 } // namespace soa
 } // namespace srsran
+
+template <std::size_t ColIndex, typename Table>
+struct std::tuple_element<ColIndex, srsran::soa::row_view<Table>> {
+  using type = typename Table::template column_type<ColIndex>;
+};
+
+template <typename Table>
+struct std::tuple_size<srsran::soa::row_view<Table>> : std::integral_constant<std::size_t, Table::nof_columns()> {};

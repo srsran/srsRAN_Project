@@ -203,4 +203,21 @@ TEST(soa_table_test, iterator)
   ASSERT_NE(it, table.end());
   ASSERT_EQ(*it, table.row(row1));
   ASSERT_EQ(it->at<0>(), 43);
+
+  table.erase(it);
+  ASSERT_EQ(table.end(), table.begin());
+}
+
+TEST(soa_table_test, destructuring)
+{
+  soa::table<int, float> table;
+  auto                   rowid0 = table.insert(42, 3.14f);
+
+  auto [i, f] = table.row(rowid0);
+  ASSERT_EQ(i, 42);
+  ASSERT_EQ(f, 3.14f);
+  auto rowlv    = table.row(rowid0);
+  auto [i2, f2] = rowlv;
+  ASSERT_EQ(i2, 42);
+  ASSERT_EQ(f2, 3.14f);
 }
