@@ -13,6 +13,7 @@
 #include "include/srsran/support/srsran_assert.h"
 #include "include/srsran/support/timers.h"
 #include "metrics_producer.h"
+#include <future>
 
 namespace srsran {
 namespace app_services {
@@ -48,8 +49,13 @@ public:
     if (!report_period.count()) {
       return;
     }
-    stopped.store(true, std::memory_order_relaxed);
-    timer.stop();
+    if (not stopped.exchange(true, std::memory_order_relaxed)) {
+      auto fut = exit_signal.get_future();
+      if (fut.wait_for(std::chrono::seconds(1)) == std::future_status::timeout) {
+        srslog::fetch_basic_logger("ALL").warning("Timeout waiting for metrics report controller to stop");
+      }
+      timer.stop();
+    }
   }
 
 private:
@@ -57,6 +63,7 @@ private:
   void report_metrics()
   {
     if (stopped.load(std::memory_order_relaxed)) {
+      exit_signal.set_value();
       return;
     }
     // Rearm the timer.
@@ -75,6 +82,8 @@ private:
   std::atomic<bool>         stopped{true};
   /// List of metrics producers managed by this controller.
   std::vector<metrics_producer*> producers;
+
+  std::promise<void> exit_signal;
 };
 
 } // namespace app_services
