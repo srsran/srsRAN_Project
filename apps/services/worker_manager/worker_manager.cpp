@@ -90,7 +90,7 @@ private:
 } // namespace
 
 worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
-  app_logger(*worker_cfg.logger), low_prio_affinity_mng({worker_cfg.main_pool_affinity_cfg})
+  app_logger(srslog::fetch_basic_logger("ALL")), low_prio_affinity_mng({worker_cfg.main_pool_affinity_cfg})
 {
   // Add preinitialization of resources to created threads.
   unique_thread::add_observer(std::make_unique<thread_resource_preinitializer>(*worker_cfg.app_timers));

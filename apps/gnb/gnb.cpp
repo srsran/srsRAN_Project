@@ -357,7 +357,6 @@ int main(int argc, char** argv)
 
   // Instantiate worker manager.
   worker_manager_config worker_manager_cfg;
-  worker_manager_cfg.logger = &gnb_logger;
   o_cu_cp_app_unit->fill_worker_manager_config(worker_manager_cfg);
   o_cu_up_app_unit->fill_worker_manager_config(worker_manager_cfg);
   o_du_app_unit->fill_worker_manager_config(worker_manager_cfg);

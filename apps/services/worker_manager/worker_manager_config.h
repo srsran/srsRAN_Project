@@ -117,8 +117,6 @@ struct worker_manager_config {
     bool is_rlc_enabled  = false;
   };
 
-  /// Logger used by worker_manager.
-  srslog::basic_logger* logger = nullptr;
   /// Size, in number of threads, of the main thread pool.
   std::optional<unsigned> nof_main_pool_threads;
   /// Main thread pool task queue size.
