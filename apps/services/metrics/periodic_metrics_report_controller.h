@@ -13,6 +13,7 @@
 #include "include/srsran/support/srsran_assert.h"
 #include "include/srsran/support/timers.h"
 #include "metrics_producer.h"
+#include "srsran/support/executors/execute_until_success.h"
 #include <future>
 
 namespace srsran {
@@ -25,9 +26,14 @@ class periodic_metrics_report_controller
 public:
   /// Constructor receives timer object, report period and application metric configs.
   periodic_metrics_report_controller(std::vector<metrics_producer*> producers_,
-                                     unique_timer                   timer_,
+                                     timer_manager&                 timers_,
+                                     task_executor&                 executor_,
                                      std::chrono::milliseconds      report_period_) :
-    timer(std::move(timer_)), report_period(report_period_), producers(std::move(producers_))
+    executor(executor_),
+    timers(timers_),
+    timer(timers.create_unique_timer(executor)),
+    report_period(report_period_),
+    producers(std::move(producers_))
   {
     srsran_assert(timer.is_valid(), "Invalid timer passed to metrics controller");
     timer.set(report_period, [this](timer_id_t tid) { report_metrics(); });
@@ -39,8 +45,15 @@ public:
     if (!report_period.count()) {
       return;
     }
-    stopped.store(false, std::memory_order_relaxed);
-    timer.run();
+    if (stopped.exchange(false, std::memory_order_relaxed)) {
+      std::promise<void> exit_signal;
+      auto               fut = exit_signal.get_future();
+      defer_until_success(executor, timers, [this, &exit_signal]() mutable {
+        timer.run();
+        exit_signal.set_value();
+      });
+      fut.wait();
+    }
   }
 
   /// Stops the metrics report timer.
@@ -50,11 +63,13 @@ public:
       return;
     }
     if (not stopped.exchange(true, std::memory_order_relaxed)) {
-      auto fut = exit_signal.get_future();
-      if (fut.wait_for(std::chrono::seconds(1)) == std::future_status::timeout) {
-        srslog::fetch_basic_logger("ALL").warning("Timeout waiting for metrics report controller to stop");
-      }
-      timer.stop();
+      std::promise<void> exit_signal;
+      auto               fut = exit_signal.get_future();
+      defer_until_success(executor, timers, [this, &exit_signal]() mutable {
+        timer.stop();
+        exit_signal.set_value();
+      });
+      fut.wait();
     }
   }
 
@@ -63,7 +78,6 @@ private:
   void report_metrics()
   {
     if (stopped.load(std::memory_order_relaxed)) {
-      exit_signal.set_value();
       return;
     }
     // Rearm the timer.
@@ -75,6 +89,9 @@ private:
     }
   }
 
+  task_executor& executor;
+  timer_manager& timers;
+
   /// Timer object armed for configured report period.
   unique_timer timer;
   /// Metrics report period.
@@ -82,8 +99,6 @@ private:
   std::atomic<bool>         stopped{true};
   /// List of metrics producers managed by this controller.
   std::vector<metrics_producer*> producers;
-
-  std::promise<void> exit_signal;
 };
 
 } // namespace app_services

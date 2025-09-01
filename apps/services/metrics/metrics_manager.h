@@ -57,7 +57,8 @@ public:
                           }
                           return producers;
                         }(metrics_info)),
-                        timers.create_unique_timer(executor_),
+                        timers,
+                        executor_,
                         report_period)
   {
     for (auto& info : metrics_info) {
