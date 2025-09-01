@@ -17,7 +17,6 @@
 #include "srsran/support/executors/task_executor.h"
 #include <arpa/inet.h>
 #include <cstring>
-#include <future>
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <thread>
@@ -110,20 +109,20 @@ void receiver_impl::start(frame_notifier& notifier_)
 void receiver_impl::stop()
 {
   logger.info("Requesting stop of the ethernet frame receiver with fd = '{}'", socket_fd);
-  rx_status.store(receiver_status::stop_requested, std::memory_order_relaxed);
+  stop_requested.store(true, std::memory_order_relaxed);
 
   // Wait for the receiver thread to stop.
-  while (rx_status.load(std::memory_order_acquire) != receiver_status::stopped) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  }
+  auto ft = stop_promise.get_future();
+  ft.wait();
 
   logger.info("Stopped the ethernet frame receiver with fd = '{}'", socket_fd);
 }
 
 void receiver_impl::receive_loop()
 {
-  if (rx_status.load(std::memory_order_relaxed) == receiver_status::stop_requested) {
-    rx_status.store(receiver_status::stopped, std::memory_order_release);
+  if (stop_requested.load(std::memory_order_relaxed)) {
+    stop_promise.set_value();
+    stop_requested.store(false, std::memory_order_relaxed);
     return;
   }
 

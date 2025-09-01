@@ -18,6 +18,7 @@
 #include "srsran/srslog/logger.h"
 #include "srsran/support/executors/task_executor.h"
 #include <atomic>
+#include <future>
 
 namespace srsran {
 namespace ofh {
@@ -42,8 +43,6 @@ struct realtime_worker_cfg {
 /// Realtime worker that generates OTA symbol notifications.
 class realtime_timing_worker : public operation_controller, public ota_symbol_boundary_notifier_manager
 {
-  enum class worker_status { running, stop_requested, stopped };
-
   srslog::basic_logger&                          logger;
   std::vector<ota_symbol_boundary_notifier*>     ota_notifiers;
   task_executor&                                 executor;
@@ -54,7 +53,8 @@ class realtime_timing_worker : public operation_controller, public ota_symbol_bo
   const std::chrono::nanoseconds                 sleep_time;
   bool                                           enable_log_warnings_for_lates;
   unsigned                                       previous_symb_index = 0;
-  std::atomic<worker_status>                     status{worker_status::running};
+  std::atomic<bool>                              stop_requested{false};
+  std::promise<void>                             stop_promise;
   timing_metrics_collector_impl                  metrics_collector;
 
 public:

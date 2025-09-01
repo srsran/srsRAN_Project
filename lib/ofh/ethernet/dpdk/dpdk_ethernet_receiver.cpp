@@ -13,7 +13,6 @@
 #include "srsran/ofh/ethernet/dpdk/dpdk_ethernet_rx_buffer.h"
 #include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
 #include "srsran/support/executors/task_executor.h"
-#include <future>
 #include <rte_ethdev.h>
 #include <thread>
 
@@ -71,20 +70,20 @@ void dpdk_receiver_impl::start(frame_notifier& notifier_)
 void dpdk_receiver_impl::stop()
 {
   logger.info("Requesting stop of the DPDK ethernet frame receiver on port '{}'", port_ctx->get_port_id());
-  rx_status.store(receiver_status::stop_requested, std::memory_order_relaxed);
+  stop_requested.store(true, std::memory_order_relaxed);
 
   // Wait for the receiver thread to stop.
-  while (rx_status.load(std::memory_order_acquire) != receiver_status::stopped) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-  }
+  auto ft = stop_promise.get_future();
+  ft.wait();
 
   logger.info("Stopped the DPDK ethernet frame receiver on port '{}'", port_ctx->get_port_id());
 }
 
 void dpdk_receiver_impl::receive_loop()
 {
-  if (rx_status.load(std::memory_order_relaxed) == receiver_status::stop_requested) {
-    rx_status.store(receiver_status::stopped, std::memory_order_release);
+  if (stop_requested.load(std::memory_order_relaxed)) {
+    stop_promise.set_value();
+    stop_requested.store(false, std::memory_order_relaxed);
     return;
   }
 

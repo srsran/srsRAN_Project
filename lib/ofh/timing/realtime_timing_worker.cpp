@@ -13,7 +13,6 @@
 #include "srsran/instrumentation/traces/ofh_traces.h"
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
 #include "srsran/support/rtsan.h"
-#include <future>
 #include <thread>
 
 using namespace srsran;
@@ -121,13 +120,11 @@ void realtime_timing_worker::start()
 void realtime_timing_worker::stop()
 {
   logger.info("Requesting stop of the realtime timing worker");
-  status.store(worker_status::stop_requested, std::memory_order_relaxed);
+  stop_requested.store(true, std::memory_order_relaxed);
 
-  // Wait for the timing thread to stop - this line also introduces a happens-before relationship with the clear on
-  // ota_notifier.
-  while (status.load(std::memory_order_acquire) != worker_status::stopped) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-  }
+  // Wait for the timing thread to stop.
+  auto ft = stop_promise.get_future();
+  ft.wait();
 
   // Clear the subscribed notifiers.
   ota_notifiers.clear();
@@ -137,12 +134,12 @@ void realtime_timing_worker::stop()
 
 void realtime_timing_worker::timing_loop() noexcept SRSRAN_RTSAN_NONBLOCKING
 {
-  while (SRSRAN_LIKELY(status.load(std::memory_order_relaxed) == worker_status::running)) {
+  while (SRSRAN_LIKELY(!stop_requested.load(std::memory_order_relaxed))) {
     poll();
   }
 
-  // Acquire/Release semantics - ota_notifiers is cleared and destructed by a different thread.
-  status.store(worker_status::stopped, std::memory_order_release);
+  stop_promise.set_value();
+  stop_requested.store(false, std::memory_order_relaxed);
 }
 
 /// Returns the difference between cur and prev taking into account a potential wrap around of the values.
