@@ -19,6 +19,7 @@
 #include "srsran/phy/lower/processors/downlink/downlink_processor_baseband.h"
 #include "srsran/phy/lower/processors/uplink/uplink_processor_baseband.h"
 #include "srsran/phy/lower/sampling_rate.h"
+#include <future>
 
 namespace srsran {
 
@@ -124,9 +125,7 @@ private:
       report_fatal_error_if_not((state.load() & state_wait_stop) != 0, "Unexpected state.");
 
       // Wait for the state to transition to stop.
-      while (state.load() < state_stopped) {
-        std::this_thread::sleep_for(std::chrono::microseconds(10));
-      }
+      stop_control.get_future().wait();
     }
 
     /// \brief Call on the event of processing.
@@ -138,6 +137,7 @@ private:
         // Increment the process count before considering stopped.
         uint32_t current_state = state.fetch_add(1) + 1;
         if (current_state >= state_stopped) {
+          stop_control.set_value();
           return false;
         }
       }
@@ -156,6 +156,8 @@ private:
 
     /// Actual state.
     std::atomic<uint32_t> state{state_idle};
+    /// Promise for controlling the stop sequence.
+    std::promise<void> stop_control;
   };
 
   /// \brief Processes downlink baseband.

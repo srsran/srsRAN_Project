@@ -324,6 +324,14 @@ protected:
 
   void TearDown() override
   {
+    // No need to stop if there are no pending tasks.
+    bool rx_task = rx_task_executor.try_run_next();
+    bool tx_task = tx_task_executor.try_run_next();
+    ul_task_executor.run_pending_tasks();
+    if (!rx_task && !tx_task) {
+      return;
+    }
+
     // Request stop streaming asynchronously. As executors run in the main thread, it avoids deadlock.
     std::atomic<bool> stop_thread_started = false;
     std::thread       stop_thread([&lphy_controller = lphy->get_controller(), &stop_thread_started]() {
@@ -337,14 +345,10 @@ protected:
     }
 
     // Flush pending tasks until no task is left.
-    bool rx_task;
-    bool tx_task;
     do {
       rx_task = rx_task_executor.try_run_next();
       tx_task = tx_task_executor.try_run_next();
-      if (rx_task) {
-        ul_task_executor.run_pending_tasks();
-      }
+      ul_task_executor.run_pending_tasks();
 
       // Let the stop thread run after running the pending tasks.
       std::this_thread::yield();
