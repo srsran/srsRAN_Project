@@ -60,7 +60,7 @@ public:
   }
 
 private:
-  std::atomic<double>                      center_frequency_Hz;
+  std::atomic<double>                      center_frequency_Hz = {};
   srslog::basic_logger&                    logger;
   std::unique_ptr<ofdm_symbol_demodulator> base;
   std::shared_ptr<demodulator_pool>        demodulators;

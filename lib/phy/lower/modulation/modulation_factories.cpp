@@ -41,9 +41,7 @@ public:
 
   std::unique_ptr<ofdm_slot_modulator> create_ofdm_slot_modulator(const ofdm_modulator_configuration& config) override
   {
-    ofdm_modulator_common_configuration common_config;
-    common_config.dft = dft_factory->create({config.dft_size, dft_processor::direction::INVERSE});
-    return std::make_unique<ofdm_slot_modulator_impl>(common_config, config);
+    return std::make_unique<ofdm_slot_modulator_impl>(config, create_ofdm_symbol_modulator(config));
   }
 };
 
@@ -74,8 +72,7 @@ public:
 
   std::unique_ptr<ofdm_slot_modulator> create_ofdm_slot_modulator(const ofdm_modulator_configuration& config) override
   {
-    // Unused.
-    return nullptr;
+    return std::make_unique<ofdm_slot_modulator_impl>(config, create_ofdm_symbol_modulator(config));
   }
 
 private:
@@ -111,8 +108,7 @@ public:
   std::unique_ptr<ofdm_slot_demodulator>
   create_ofdm_slot_demodulator(const ofdm_demodulator_configuration& config) override
   {
-    // Unused.
-    return nullptr;
+    return std::make_unique<ofdm_slot_demodulator_impl>(config, create_ofdm_symbol_demodulator(config));
   }
 
 private:
@@ -143,9 +139,7 @@ public:
   std::unique_ptr<ofdm_slot_demodulator>
   create_ofdm_slot_demodulator(const ofdm_demodulator_configuration& config) override
   {
-    ofdm_demodulator_common_configuration common_config;
-    common_config.dft = dft_factory->create({config.dft_size, dft_processor::direction::DIRECT});
-    return std::make_unique<ofdm_slot_demodulator_impl>(common_config, config);
+    return std::make_unique<ofdm_slot_demodulator_impl>(config, create_ofdm_symbol_demodulator(config));
   }
 };
 
