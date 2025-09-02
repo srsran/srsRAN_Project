@@ -82,6 +82,7 @@ static YAML::Node build_du_high_ntn_section(const ntn_config& config)
     ta_info_node["ta_common"]               = config.ta_info.value().ta_common;
     ta_info_node["ta_common_drift"]         = config.ta_info.value().ta_common_drift;
     ta_info_node["ta_common_drift_variant"] = config.ta_info.value().ta_common_drift_variant;
+    ta_info_node["ta_common_offset"]        = config.ta_info.value().ta_common_offset;
 
     node["ta_info"] = ta_info_node;
   }
