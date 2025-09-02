@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/support/synchronization/futex_util.h"
 #include <atomic>
 #include <cstdint>
 
@@ -64,22 +65,21 @@ public:
     if (count_ptr != nullptr) {
       auto cur = count_ptr->fetch_sub(1, std::memory_order_acq_rel) - 1;
       if (cur == stop_bit) {
-        // Count is zero and stop has been requested.
-        wake_all();
+        // Stop has been requested and count reached zero. Wake all stoppers.
+        futex_util::wake_all(*count_ptr);
       }
       count_ptr = nullptr;
     }
   }
 
 private:
-  /// Wakes all waiters on the associated stop_event_source.
-  void wake_all();
-
   std::atomic<uint32_t>* count_ptr = nullptr;
 };
 
 /// \brief Event to signal stop to multiple observers.
 /// The stop_event blocks on stop() until all observers are gone.
+/// This class is similar to \c sync_event. However, it also supports the ability to notify a stop request that is
+/// visible to the tokens and allows checking if a stop was requested.
 class stop_event_source
 {
   static constexpr uint32_t stop_bit   = 1U << 31U;
@@ -127,11 +127,11 @@ public:
 
   [[nodiscard]] bool stop_was_requested() const { return state.load(std::memory_order_acquire) >= stop_bit; }
 
-  [[nodiscard]] uint32_t nof_tokens_approx() const { return state.load(std::memory_order_acquire) & count_mask; }
+  [[nodiscard]] uint32_t nof_tokens_approx() const { return state.load(std::memory_order_relaxed) & count_mask; }
 
 private:
   /// Waits until state changes from expected.
-  void wait(uint32_t expected);
+  void wait(uint32_t expected) { futex_util::wait(state, expected); }
 
   /// State variable composed by 1 MSB bit for signalling stop and 31 LSB bits for counting observers.
   std::atomic<uint32_t> state{0};

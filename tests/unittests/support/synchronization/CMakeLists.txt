@@ -8,6 +8,6 @@
 
 set_directory_properties(PROPERTIES LABELS "support")
 
-add_executable(synchronization_test stop_event_test.cpp)
+add_executable(synchronization_test stop_event_test.cpp sync_event_test.cpp)
 target_link_libraries(synchronization_test srsran_support srslog gtest gtest_main)
 add_test(synchronization_test synchronization_test)

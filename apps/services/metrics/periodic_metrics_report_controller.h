@@ -14,7 +14,7 @@
 #include "include/srsran/support/timers.h"
 #include "metrics_producer.h"
 #include "srsran/support/executors/execute_until_success.h"
-#include "srsran/support/synchronization/stop_event.h"
+#include "srsran/support/synchronization/sync_event.h"
 
 namespace srsran {
 namespace app_services {
@@ -63,8 +63,8 @@ public:
       return;
     }
     if (not stopped.exchange(true, std::memory_order_relaxed)) {
-      stop_event_source stop_ev;
-      defer_until_success(executor, timers, [this, stop_obs = stop_ev.get_token()]() mutable { timer.stop(); });
+      sync_event wait_all;
+      defer_until_success(executor, timers, [this, token = wait_all.get_token()]() mutable { timer.stop(); });
     }
   }
 
