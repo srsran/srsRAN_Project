@@ -12,6 +12,7 @@
 
 #include "../cell/cell_harq_manager.h"
 #include "../logging/scheduler_event_logger.h"
+#include "../pucch_scheduling/pucch_guardbands_scheduler.h"
 #include "../slicing/inter_slice_scheduler.h"
 #include "../srs/srs_scheduler_impl.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
