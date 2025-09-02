@@ -46,8 +46,32 @@ downlink_handler_impl::downlink_handler_impl(const downlink_handler_impl_config&
   srsran_assert(frame_pool_dl_up, "Invalid downlink User-Plane frame pool");
 }
 
+void downlink_handler_impl::start()
+{
+  is_running.store(true, std::memory_order_relaxed);
+}
+
+void downlink_handler_impl::stop()
+{
+  if (!is_running.load(std::memory_order_relaxed)) {
+    return;
+  }
+
+  // Stop accepting grids.
+  is_running.store(false, std::memory_order_relaxed);
+
+  // Stop the data flows.
+  data_flow_cplane->get_operation_controller().stop();
+  data_flow_uplane->get_operation_controller().stop();
+}
+
 void downlink_handler_impl::handle_dl_data(const resource_grid_context& context, const shared_resource_grid& grid)
 {
+  // Do nothing if handler is not running.
+  if (!is_running.load(std::memory_order_relaxed)) {
+    return;
+  }
+
   const resource_grid_reader& reader = grid.get_reader();
   srsran_assert(reader.get_nof_ports() <= dl_eaxc.size(),
                 "Number of RU ports is '{}' and must be equal or greater than the number of cell ports which is '{}'",

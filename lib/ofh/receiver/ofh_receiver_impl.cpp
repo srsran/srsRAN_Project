@@ -45,9 +45,7 @@ get_message_receiver_dependencies(receiver_impl_dependencies::message_rx_depende
   dependencies.logger         = rx_dependencies.logger;
   dependencies.window_checker = &window_checker;
   dependencies.window_handler = &window_handler;
-  dependencies.eth_receiver   = std::move(rx_dependencies.eth_receiver);
-  srsran_assert(dependencies.eth_receiver, "Invalid ethernet receiver");
-  dependencies.ecpri_decoder = std::move(rx_dependencies.ecpri_decoder);
+  dependencies.ecpri_decoder  = std::move(rx_dependencies.ecpri_decoder);
   srsran_assert(dependencies.ecpri_decoder, "Invalid eCPRI decoder");
   dependencies.eth_frame_decoder = std::move(rx_dependencies.eth_frame_decoder);
   srsran_assert(dependencies.eth_frame_decoder, "Invalid Ethernet frame decoder");
@@ -119,9 +117,13 @@ receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_depend
                     closed_window_handler,
                     window_checker,
                     msg_receiver.get_metrics_collector(),
-                    msg_receiver.get_ethernet_receiver().get_metrics_collector()),
-  rcv_task_dispatcher(*dependencies.logger, msg_receiver, *dependencies.executor, config.sector),
-  ctrl(rcv_task_dispatcher)
+                    dependencies.eth_receiver->get_metrics_collector()),
+  rcv_task_dispatcher(*dependencies.logger,
+                      msg_receiver,
+                      *dependencies.executor,
+                      config.sector,
+                      std::move(dependencies.eth_receiver)),
+  ctrl(rcv_task_dispatcher, closed_window_handler)
 {
 }
 

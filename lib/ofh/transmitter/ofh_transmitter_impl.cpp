@@ -87,7 +87,8 @@ transmitter_impl::transmitter_impl(const transmitter_config& config, transmitter
                   std::move(dependencies.frame_pool_dl_cp),
                   std::move(dependencies.frame_pool_ul_cp),
                   std::move(dependencies.frame_pool_dl_up)),
-  ota_dispatcher(*dependencies.logger,
+  ota_dispatcher(config.sector,
+                 *dependencies.logger,
                  *dependencies.executor,
                  dl_handler.get_ota_symbol_boundary_notifier(),
                  ul_request_handler.get_ota_symbol_boundary_notifier(),
@@ -98,6 +99,20 @@ transmitter_impl::transmitter_impl(const transmitter_config& config, transmitter
                     msg_transmitter.get_metrics_collector(),
                     msg_transmitter.get_ethernet_transmitter().get_metrics_collector())
 {
+}
+
+void transmitter_impl::start()
+{
+  ota_dispatcher.start();
+  ul_task_dispatcher.start();
+  dl_handler.start();
+}
+
+void transmitter_impl::stop()
+{
+  ul_task_dispatcher.stop();
+  dl_handler.stop();
+  ota_dispatcher.stop();
 }
 
 uplink_request_handler& transmitter_impl::get_uplink_request_handler()

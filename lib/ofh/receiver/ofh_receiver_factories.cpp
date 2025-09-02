@@ -154,7 +154,7 @@ resolve_receiver_dependencies(const receiver_config&                            
           ? static_cast<std::unique_ptr<sequence_id_checker>>(std::make_unique<sequence_id_checker_dummy_impl>())
           : static_cast<std::unique_ptr<sequence_id_checker>>(std::make_unique<sequence_id_checker_impl>());
 
-  msg_rx_dependencies.eth_receiver = std::move(eth_receiver);
+  dependencies.eth_receiver = std::move(eth_receiver);
 
   return dependencies;
 }

@@ -9,7 +9,6 @@
  */
 
 #include "ofh_closed_rx_window_handler.h"
-#include "srsran/srsvec/zero.h"
 #include "srsran/support/executors/task_executor.h"
 
 using namespace srsran;
@@ -34,7 +33,13 @@ closed_rx_window_handler::closed_rx_window_handler(const closed_rx_window_handle
 
 void closed_rx_window_handler::on_new_symbol(const slot_symbol_point_context& symbol_point_context)
 {
-  if (!executor.defer([internal_slot = symbol_point_context.symbol_point - notification_delay_in_symbols, this]() {
+  if (stop_manager.stop_was_requested()) {
+    return;
+  }
+
+  if (!executor.defer([internal_slot = symbol_point_context.symbol_point - notification_delay_in_symbols,
+                       this,
+                       token = stop_manager.get_token()]() {
         // Add pending contexts to the repository.
         uplink_repo->process_pending_contexts();
         prach_repo->process_pending_contexts();

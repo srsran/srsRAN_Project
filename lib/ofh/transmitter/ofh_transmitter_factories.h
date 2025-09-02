@@ -25,7 +25,7 @@ class task_executor;
 
 namespace ether {
 class eth_frame_pool;
-}
+} // namespace ether
 
 namespace ofh {
 

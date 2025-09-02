@@ -34,7 +34,6 @@ message_receiver_impl::message_receiver_impl(const message_receiver_config&  con
   ecpri_decoder(std::move(dependencies.ecpri_decoder)),
   data_flow_uplink(std::move(dependencies.data_flow_uplink)),
   data_flow_prach(std::move(dependencies.data_flow_prach)),
-  eth_receiver(std::move(dependencies.eth_receiver)),
   metrics_collector(config.are_metrics_enabled,
                     data_flow_uplink->get_metrics_collector(),
                     data_flow_prach->get_metrics_collector()),
@@ -45,7 +44,6 @@ message_receiver_impl::message_receiver_impl(const message_receiver_config&  con
   srsran_assert(data_flow_uplink, "Invalid uplink IQ data flow");
   srsran_assert(data_flow_prach, "Invalid uplink PRACH IQ data flow");
   srsran_assert(seq_id_checker, "Invalid sequence id checker");
-  srsran_assert(eth_receiver, "Invalid Ethernet receiver");
 }
 
 void message_receiver_impl::on_new_frame(ether::unique_rx_buffer buffer)

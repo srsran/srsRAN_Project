@@ -26,12 +26,21 @@ using namespace std::chrono_literals;
 namespace {
 
 /// Spy User-Plane downlink data data flow.
-class data_flow_uplane_downlink_data_spy : public data_flow_uplane_downlink_data
+class data_flow_uplane_downlink_data_spy : public data_flow_uplane_downlink_data, public operation_controller
 {
   bool     has_enqueue_section_type_1_message_method_been_called = false;
   unsigned eaxc                                                  = -1;
 
 public:
+  // See interface for documentation.
+  void start() override {}
+
+  // See interface for documentation.
+  void stop() override {}
+
+  // See interface for documentation.
+  operation_controller& get_operation_controller() override { return *this; }
+
   // See interface for documentation.
   void enqueue_section_type_1_message(const data_flow_uplane_resource_grid_context& context,
                                       const shared_resource_grid&                   grid) override
