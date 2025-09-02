@@ -94,6 +94,9 @@ public:
   cell_dl_harq_buffer_pool(unsigned cell_nof_prbs, unsigned nof_ports, task_executor& ctrl_exec);
   ~cell_dl_harq_buffer_pool();
 
+  /// Called on cell deactivation to clear all available buffers.
+  void clear();
+
   /// Allocate DL HARQ buffers for a newly created UE.
   void allocate_ue_buffers(du_ue_index_t ue_index, unsigned nof_harqs);
 

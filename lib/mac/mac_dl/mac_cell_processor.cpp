@@ -129,6 +129,9 @@ async_task<void> mac_cell_processor::stop()
     // Switch back to respective ctrl executor context.
     CORO_AWAIT(defer_on_blocking(ctrl_exec, timers));
 
+    // Clear DL buffers associated with this cell.
+    dl_harq_buffers.clear();
+
     logger.info("cell={}: Cell was stopped.", fmt::underlying(cell_cfg.cell_index));
 
     CORO_RETURN();
@@ -226,7 +229,8 @@ async_task<bool> mac_cell_processor::add_ue(const mac_ue_create_request& request
 
         // Note: Ensure we only do so if the cell is active.
         if (state != cell_state::active) {
-          dl_harq_buffers.deallocate_ue_buffers(ue_inst.get_ue_index());
+          // Note: We do not need to call dl_harq_buffers.deallocate_ue_buffers(...) because the buffers were reset
+          // on cell deactivation.
           return false;
         }
 
