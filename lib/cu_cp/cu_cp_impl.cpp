@@ -710,7 +710,24 @@ async_task<bool> cu_cp_impl::handle_new_handover_command(ue_index_t ue_index, by
   // Notify mobility manager metrics handler about the successful handover preparation.
   mobility_mng.get_metrics_handler().aggregate_successful_handover_preparation();
 
-  return start_inter_cu_handover_source_routine(ue_index, std::move(command), ue_mng, du_db, cu_up_db, logger);
+  cu_cp_ue* ue = ue_mng.find_du_ue(ue_index);
+  if (ue == nullptr) {
+    logger.warning("UE not found for handover command handling. ue={}", ue_index);
+    return launch_async([](coro_context<async_task<bool>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(false);
+    });
+  }
+  ngap_interface* ngap = ngap_db.find_ngap(ue->get_ue_context().plmn);
+  if (ngap == nullptr) {
+    logger.warning("NGAP not found for PLMN={}. ue={}", ue->get_ue_context().plmn, ue_index);
+    return launch_async([](coro_context<async_task<bool>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(false);
+    });
+  }
+  return start_inter_cu_handover_source_routine(
+      ue_index, std::move(command), ue_mng, du_db, cu_up_db, ngap->get_ngap_control_message_handler(), logger);
 }
 
 ue_index_t cu_cp_impl::handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi)

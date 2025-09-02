@@ -15,12 +15,13 @@ using namespace srs_cu_cp;
 
 #ifndef SRSRAN_HAS_ENTERPRISE
 
-async_task<bool> srsran::srs_cu_cp::start_inter_cu_handover_source_routine(ue_index_t                  ue_index,
-                                                                           byte_buffer                 command,
-                                                                           ue_manager&                 ue_mng,
-                                                                           du_processor_repository&    du_db,
-                                                                           cu_up_processor_repository& cu_up_db,
-                                                                           srslog::basic_logger&       logger)
+async_task<bool> srsran::srs_cu_cp::start_inter_cu_handover_source_routine(ue_index_t                    ue_index,
+                                                                           byte_buffer                   command,
+                                                                           ue_manager&                   ue_mng,
+                                                                           du_processor_repository&      du_db,
+                                                                           cu_up_processor_repository&   cu_up_db,
+                                                                           ngap_control_message_handler& ngap,
+                                                                           srslog::basic_logger&         logger)
 {
   logger.error("Inter-CU handover source routine failed. Cause: Inter-CU handover not supported");
 

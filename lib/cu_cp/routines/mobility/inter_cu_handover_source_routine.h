@@ -19,11 +19,12 @@
 
 namespace srsran::srs_cu_cp {
 
-async_task<bool> start_inter_cu_handover_source_routine(ue_index_t                  ue_index_,
-                                                        byte_buffer                 command,
-                                                        ue_manager&                 ue_mng_,
-                                                        du_processor_repository&    du_db_,
-                                                        cu_up_processor_repository& cu_up_db_,
-                                                        srslog::basic_logger&       logger_);
+async_task<bool> start_inter_cu_handover_source_routine(ue_index_t                    ue_index,
+                                                        byte_buffer                   command,
+                                                        ue_manager&                   ue_mng,
+                                                        du_processor_repository&      du_db,
+                                                        cu_up_processor_repository&   cu_up_db,
+                                                        ngap_control_message_handler& ngap,
+                                                        srslog::basic_logger&         logger);
 
 } // namespace srsran::srs_cu_cp
