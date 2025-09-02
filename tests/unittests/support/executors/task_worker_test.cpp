@@ -12,6 +12,7 @@
 #include "srsran/support/executors/priority_task_worker.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/executors/task_worker_pool.h"
+#include "srsran/support/synchronization/stop_event.h"
 #include <future>
 #include <gtest/gtest.h>
 
@@ -92,13 +93,14 @@ TYPED_TEST(task_worker_pool_test, correct_initialization)
 
 TYPED_TEST(task_worker_pool_test, worker_pool_runs_single_task)
 {
-  std::promise<void> p;
-  std::future<void>  f = p.get_future();
-  ASSERT_TRUE(this->pool.push_task([&p]() {
-    p.set_value();
+  stop_event_source stop_ev;
+  std::atomic<bool> task_ran{false};
+  ASSERT_TRUE(this->pool.push_task([token = stop_ev.get_token(), &task_ran]() {
     fmt::print("Finished in {}\n", this_thread_name());
+    task_ran = true;
   }));
-  f.get();
+  stop_ev.stop();
+  ASSERT_TRUE(task_ran);
 }
 
 TYPED_TEST(task_worker_pool_test, worker_pool_runs_tasks_in_all_workers)
@@ -172,13 +174,14 @@ TEST_P(prio_task_worker_pool_test, correct_initialization)
 
 TEST_P(prio_task_worker_pool_test, prio_worker_pool_runs_single_task)
 {
-  std::promise<void> p;
-  std::future<void>  f = p.get_future();
-  ASSERT_TRUE(this->pool.push_task(enqueue_priority::max, [&p]() {
-    p.set_value();
+  stop_event_source stop_ev;
+  std::atomic<bool> task_ran{false};
+  ASSERT_TRUE(this->pool.push_task(enqueue_priority::max, [token = stop_ev.get_token(), &task_ran]() {
     fmt::print("Finished in {}\n", this_thread_name());
+    task_ran = true;
   }));
-  f.get();
+  stop_ev.stop();
+  ASSERT_TRUE(task_ran);
 }
 
 TEST_P(prio_task_worker_pool_test, prio_worker_pool_executor_can_run_inline)

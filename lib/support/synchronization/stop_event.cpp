@@ -15,7 +15,7 @@
 
 using namespace srsran;
 
-void stop_event_observer::wake_all()
+void stop_event_token::wake_all()
 {
   // Note: Futex requires int*.
   // Note: No C++ aliasing is happening, as the kernel will just copy the uint32 bytes.
