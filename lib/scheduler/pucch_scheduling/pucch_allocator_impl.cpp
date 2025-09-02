@@ -720,6 +720,7 @@ pucch_info* existing_pucch_pdus_handler::get_next_grant(static_vector<pucch_info
     ret_grant->pdu_context.id = pdu_id++;
     --pdus_cnt;
   }
+  // NOTE: this cannot be nullptr, otherwise the function would have exited at the previous return.
   return ret_grant;
 }
 
@@ -1240,7 +1241,7 @@ void pucch_allocator_impl::allocate_csi_grant(cell_slot_resource_allocator& pucc
 
   // Allocate a PUCCH PDU in the list and fill it with the parameters.
   pucch_info& pucch_pdu = pucch_slot_alloc.result.ul.pucchs.emplace_back();
-  // Neither HARQ-ACK bits.
+  // No HARQ-ACK bits.
   static constexpr unsigned    harq_ack_bits_only_csi = 0U;
   static constexpr sr_nof_bits sr_bits_only_csi       = sr_nof_bits::no_sr;
   switch (csi_f2_f3_f4_res->format) {
@@ -2324,7 +2325,8 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
   if (grants_to_tx.csi_resource.has_value() and not csi_grant_alloc_completed) {
     const auto& csi_res = grants_to_tx.csi_resource.value();
     pucch_info* grant   = existing_pdus.get_next_grant(pucch_pdus);
-    srsran_assert(grant != nullptr, "The return grant cannot be nullptr");
+    srsran_assert(grant != nullptr and csi_res.pucch_res_cfg != nullptr,
+                  "Neither the (CSI) return grant nor the PUCCH res configuration can be nullptr");
 
     switch (csi_res.format) {
       case pucch_format::FORMAT_2: {
@@ -2388,7 +2390,8 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
   if (grants_to_tx.sr_resource.has_value() and not sr_grant_alloc_completed) {
     const auto& sr_res = grants_to_tx.sr_resource.value();
     pucch_info* grant  = existing_pdus.get_next_grant(pucch_pdus);
-    srsran_assert(grant != nullptr, "The return grant cannot be nullptr");
+    srsran_assert(grant != nullptr and sr_res.pucch_res_cfg != nullptr,
+                  "Neither the (SR) return grant nor the PUCCH res configuration can be nullptr");
 
     switch (sr_res.format) {
       case pucch_format::FORMAT_0: {
@@ -2430,6 +2433,8 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
     // Allocate HARQ-ACK grant.
     pucch_info* grant    = existing_pdus.get_next_grant(pucch_pdus);
     const auto& harq_res = grants_to_tx.harq_resource.value();
+    srsran_assert(harq_res.pucch_res_cfg != nullptr, "The PUCCH res configuration (HARQ-ACK) cannot be nullptr");
+
     switch (harq_res.format) {
       case pucch_format::FORMAT_0:
         fill_pucch_ded_format0_grant(
@@ -2543,6 +2548,23 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
 
   // Update the new grants to the UE allocation record.
   existing_pucchs.pucch_grants = grants_to_tx;
+
+  // TODO: unmark on multiplexing.
+  if (grants_to_tx.sr_resource.has_value()) {
+    srsran_assert(grants_to_tx.sr_resource.value().pucch_res_cfg != nullptr,
+                  "SR PUCCH resource cannot have null pointer");
+    mark_pucch_in_resource_grid(pucch_slot_alloc, *grants_to_tx.sr_resource.value().pucch_res_cfg, ue_cell_cfg);
+  }
+  if (grants_to_tx.csi_resource.has_value()) {
+    srsran_assert(grants_to_tx.csi_resource.value().pucch_res_cfg != nullptr,
+                  "CSI PUCCH resource cannot have null pointer");
+    mark_pucch_in_resource_grid(pucch_slot_alloc, *grants_to_tx.csi_resource.value().pucch_res_cfg, ue_cell_cfg);
+  }
+  if (grants_to_tx.harq_resource.has_value()) {
+    srsran_assert(grants_to_tx.harq_resource.value().pucch_res_cfg != nullptr,
+                  "HARQ-ACK PUCCH resource cannot have null pointer");
+    mark_pucch_in_resource_grid(pucch_slot_alloc, *grants_to_tx.harq_resource.value().pucch_res_cfg, ue_cell_cfg);
+  }
 
   // The return value is only relevant if the allocation was called for a HARQ-ACK grant.
   return grants_to_tx.harq_resource.has_value() ? grants_to_tx.harq_resource.value().harq_id.pucch_res_ind : 0U;
