@@ -23,6 +23,7 @@ set(SOURCES
         network/sctp_socket.cpp
         network/sockets.cpp
         network/transport_layer_address.cpp
+        synchronization/stop_event.cpp
         tracing/resource_usage.cpp
         tracing/event_tracing.cpp
         backtrace.cpp
