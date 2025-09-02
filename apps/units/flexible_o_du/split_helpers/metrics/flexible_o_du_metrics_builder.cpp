@@ -47,7 +47,7 @@ flexible_o_du_metrics_notifier* srsran::build_flexible_o_du_metrics_config(
 
   if (metrics_cfg.enable_json_metrics) {
     odu_metric.consumers.push_back(std::make_unique<flexible_o_du_metrics_consumer_json>(
-        app_helpers::fetch_json_metrics_log_channel(), pci_cell_map));
+        app_helpers::fetch_json_metrics_log_channel(), pci_cell_map, symbol_duration));
   }
 
   return out_value;

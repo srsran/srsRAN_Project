@@ -43,7 +43,7 @@ srsran::build_split6_flexible_o_du_low_metrics_config(std::vector<app_services::
 
   if (metrics_cfg.enable_json_metrics) {
     odu_metric.consumers.push_back(std::make_unique<split6_flexible_o_du_low_metrics_consumer_json>(
-        app_helpers::fetch_json_metrics_log_channel(), pci_cell_map));
+        app_helpers::fetch_json_metrics_log_channel(), pci_cell_map, symbol_duration));
   }
 
   return output;

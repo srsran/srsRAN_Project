@@ -20,16 +20,6 @@ using namespace json_generators;
 namespace srsran {
 namespace ofh {
 
-void to_json(nlohmann::json& json, const received_messages_metrics& metrics)
-{
-  json["total"]           = metrics.nof_early_messages + metrics.nof_late_messages + metrics.nof_on_time_messages;
-  json["early"]           = metrics.nof_early_messages;
-  json["on_time"]         = metrics.nof_on_time_messages;
-  json["late"]            = metrics.nof_late_messages;
-  json["earliest_msg_us"] = metrics.earliest_rx_msg_in_symbols;
-  json["latest_msg_us"]   = metrics.latest_rx_msg_in_symbols;
-}
-
 void to_json(nlohmann::json& json, const closed_rx_window_metrics& metrics)
 {
   json["nof_missed_uplink_symbols"]  = metrics.nof_missing_uplink_symbols;
@@ -44,6 +34,21 @@ void to_json(nlohmann::json& json, const timing_metrics& metrics)
 
 } // namespace ofh
 } // namespace srsran
+
+static nlohmann::json generate_received_messages(const ofh::received_messages_metrics& metrics,
+                                                 std::chrono::nanoseconds              symbol_duration)
+{
+  nlohmann::json json;
+
+  json["total"]           = metrics.nof_early_messages + metrics.nof_late_messages + metrics.nof_on_time_messages;
+  json["early"]           = metrics.nof_early_messages;
+  json["on_time"]         = metrics.nof_on_time_messages;
+  json["late"]            = metrics.nof_late_messages;
+  json["earliest_msg_us"] = validate_fp_value(metrics.earliest_rx_msg_in_symbols * symbol_duration.count() * 1e-3);
+  json["latest_msg_us"]   = validate_fp_value(metrics.latest_rx_msg_in_symbols * symbol_duration.count() * 1e-3);
+
+  return json;
+}
 
 static nlohmann::json generate_ethernet_rx(const ether::receiver_metrics& metrics, unsigned metrics_period_ms)
 {
@@ -86,11 +91,13 @@ static nlohmann::json generate_message_decoder(const ofh::message_decoding_perfo
   return json;
 }
 
-static nlohmann::json generate_uplink(const ofh::receiver_metrics& metrics, unsigned metrics_period_ms)
+static nlohmann::json generate_uplink(const ofh::receiver_metrics& metrics,
+                                      unsigned                     metrics_period_ms,
+                                      std::chrono::nanoseconds     symbol_duration)
 {
   nlohmann::json json;
 
-  json["received_packets"]  = metrics.rx_messages_metrics;
+  json["received_packets"]  = generate_received_messages(metrics.rx_messages_metrics, symbol_duration);
   json["ethernet_receiver"] = generate_ethernet_rx(metrics.eth_receiver_metrics, metrics_period_ms);
   json["message_decoder"]   = generate_message_decoder(metrics.rx_decoding_perf_metrics, metrics_period_ms);
   json["rx_window_stats"]   = metrics.closed_window_metrics;
@@ -173,19 +180,21 @@ static nlohmann::json generate_downlink(const ofh::transmitter_metrics& metrics,
   return json;
 }
 
-static nlohmann::json generate_ofh_cell(const ofh::sector_metrics& metrics, pci_t pci)
+static nlohmann::json
+generate_ofh_cell(const ofh::sector_metrics& metrics, pci_t pci, std::chrono::nanoseconds symbol_duration)
 {
   nlohmann::json json;
 
   json["pci"] = pci;
-  json["ul"]  = generate_uplink(metrics.rx_metrics, metrics.metrics_period_ms.count());
+  json["ul"]  = generate_uplink(metrics.rx_metrics, metrics.metrics_period_ms.count(), symbol_duration);
   json["dl"]  = generate_downlink(metrics.tx_metrics, metrics.metrics_period_ms.count());
 
   return json;
 }
 
-nlohmann::json srsran::app_helpers::json_generators::generate(const ofh::metrics& metrics,
-                                                              span<const pci_t>   pci_sector_map)
+nlohmann::json srsran::app_helpers::json_generators::generate(const ofh::metrics&      metrics,
+                                                              span<const pci_t>        pci_sector_map,
+                                                              std::chrono::nanoseconds symbol_duration)
 {
   nlohmann::json json;
 
@@ -200,15 +209,16 @@ nlohmann::json srsran::app_helpers::json_generators::generate(const ofh::metrics
                   "Sector id '{}' out of range of the pci-sector mapper. Size of the mapper is '{}' ",
                   cell.sector_id,
                   pci_sector_map.size());
-    cells_ofh.emplace_back(generate_ofh_cell(cell, pci_sector_map[cell.sector_id]));
+    cells_ofh.emplace_back(generate_ofh_cell(cell, pci_sector_map[cell.sector_id], symbol_duration));
   }
 
   return json;
 }
 
-std::string srsran::app_helpers::json_generators::generate_string(const ofh::metrics& metrics,
-                                                                  span<const pci_t>   pci_sector_map,
-                                                                  int                 indent)
+std::string srsran::app_helpers::json_generators::generate_string(const ofh::metrics&      metrics,
+                                                                  span<const pci_t>        pci_sector_map,
+                                                                  std::chrono::nanoseconds symbol_duration,
+                                                                  int                      indent)
 {
-  return generate(metrics, pci_sector_map).dump(indent);
+  return generate(metrics, pci_sector_map, symbol_duration).dump(indent);
 }
