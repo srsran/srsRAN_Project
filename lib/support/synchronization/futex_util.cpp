@@ -15,19 +15,19 @@
 
 using namespace srsran;
 
-void futex_util::wait(std::atomic<uint32_t>& state, uint32_t expected)
+long futex_util::wait(std::atomic<uint32_t>& state, uint32_t expected)
 {
   // The kernel will only sleep if *addr == expected; otherwise returns -1/EAGAIN.
   // Note: Futex requires int*.
   // Note: No C++ aliasing is happening, as the kernel will just copy the uint32 bytes.
   auto* addr = reinterpret_cast<int*>(&state);
-  ::syscall(SYS_futex, addr, FUTEX_WAIT_PRIVATE, expected, nullptr, nullptr, 0);
+  return ::syscall(SYS_futex, addr, FUTEX_WAIT_PRIVATE, expected, nullptr, nullptr, 0);
 }
 
-void futex_util::wake_all(std::atomic<uint32_t>& state)
+long futex_util::wake_all(std::atomic<uint32_t>& state)
 {
   // Note: Futex requires int*.
   // Note: No C++ aliasing is happening, as the kernel will just copy the uint32 bytes.
   auto* addr = reinterpret_cast<int*>(&state);
-  ::syscall(SYS_futex, addr, FUTEX_WAKE_PRIVATE, INT32_MAX, nullptr, nullptr, 0);
+  return ::syscall(SYS_futex, addr, FUTEX_WAKE_PRIVATE, INT32_MAX, nullptr, nullptr, 0);
 }

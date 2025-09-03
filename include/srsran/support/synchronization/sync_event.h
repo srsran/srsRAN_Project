@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/support/synchronization/futex_util.h"
+#include <utility>
 
 namespace srsran {
 
@@ -25,7 +26,7 @@ public:
       count_ptr->fetch_add(1, std::memory_order_acq_rel);
     }
   }
-  scoped_sync_token(scoped_sync_token&& other) noexcept : count_ptr(other.count_ptr) { other.count_ptr = nullptr; }
+  scoped_sync_token(scoped_sync_token&& other) noexcept : count_ptr(std::exchange(other.count_ptr, nullptr)) {}
   scoped_sync_token(std::atomic<uint32_t>& observer_count_) : count_ptr(&observer_count_)
   {
     count_ptr->fetch_add(1, std::memory_order_acq_rel);
@@ -45,8 +46,7 @@ public:
   scoped_sync_token& operator=(scoped_sync_token&& other) noexcept
   {
     reset();
-    count_ptr       = other.count_ptr;
-    other.count_ptr = nullptr;
+    count_ptr = std::exchange(other.count_ptr, nullptr);
     return *this;
   }
 
@@ -68,6 +68,7 @@ private:
 };
 
 /// \brief Synchronization event to wait until all tokens to be reset.
+///
 /// This class operates like a std::barrier, where the "arrive" call is performed by "tokens" in an RAII manner and
 /// "wait" is performed by the \c sync_event. Contrarily to the std::barrier, the number of participants is not fixed.
 class sync_event

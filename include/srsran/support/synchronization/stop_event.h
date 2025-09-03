@@ -13,6 +13,7 @@
 #include "srsran/support/synchronization/futex_util.h"
 #include <atomic>
 #include <cstdint>
+#include <utility>
 
 namespace srsran {
 
@@ -31,7 +32,7 @@ public:
       count_ptr->fetch_add(1, std::memory_order_acq_rel);
     }
   }
-  stop_event_token(stop_event_token&& other) noexcept : count_ptr(other.count_ptr) { other.count_ptr = nullptr; }
+  stop_event_token(stop_event_token&& other) noexcept : count_ptr(std::exchange(other.count_ptr, nullptr)) {}
   stop_event_token(std::atomic<uint32_t>& observer_count_) : count_ptr(&observer_count_)
   {
     count_ptr->fetch_add(1, std::memory_order_acq_rel);
@@ -51,8 +52,7 @@ public:
   stop_event_token& operator=(stop_event_token&& other) noexcept
   {
     reset();
-    count_ptr       = other.count_ptr;
-    other.count_ptr = nullptr;
+    count_ptr = std::exchange(other.count_ptr, nullptr);
     return *this;
   }
 
@@ -77,6 +77,7 @@ private:
 };
 
 /// \brief Event to signal stop to multiple observers.
+///
 /// The stop_event blocks on stop() until all observers are gone.
 /// This class is similar to \c sync_event. However, it also supports the ability to notify a stop request that is
 /// visible to the tokens and allows checking if a stop was requested.
