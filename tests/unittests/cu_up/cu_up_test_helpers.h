@@ -307,7 +307,7 @@ private:
   dummy_gtpu_gateway ngu_gw;
 };
 
-class dummy_e1ap final : public srs_cu_up::e1ap_control_message_handler
+class dummy_e1ap final : public srs_cu_up::e1ap_interface
 {
 public:
   explicit dummy_e1ap()  = default;
@@ -316,6 +316,22 @@ public:
       const srs_cu_up::e1ap_bearer_context_inactivity_notification& msg) override
   {
   }
+  void handle_connection_loss() override {}
+
+  bool connect_to_cu_cp() override { return true; }
+
+  async_task<cu_up_e1_setup_response> handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& request) override
+  {
+    return {};
+  }
+
+  async_task<void> handle_cu_up_e1ap_release_request() override { return {}; }
+
+  size_t get_nof_ues() const override { return 0; }
+
+  void handle_message(const e1ap_message& msg) override {}
+
+  void handle_pdcp_max_count_reached(srs_cu_up::ue_index_t ue_index) override {}
 };
 
 inline e1ap_message generate_bearer_context_setup_request(unsigned cu_cp_ue_e1ap_id)

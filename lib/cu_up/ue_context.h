@@ -42,7 +42,7 @@ class ue_context : public pdu_session_manager_ctrl
 public:
   ue_context(ue_index_t                          index_,
              ue_context_cfg                      cfg_,
-             e1ap_control_message_handler&       e1ap_,
+             e1ap_interface&                     e1ap_,
              const n3_interface_config&          n3_config_,
              const cu_up_test_mode_config&       test_mode_config_,
              std::unique_ptr<ue_executor_mapper> ue_exec_mapper_,
@@ -73,6 +73,7 @@ public:
                         ue_dl_timer_factory_,
                         ue_ul_timer_factory_,
                         ue_ctrl_timer_factory_,
+                        e1ap_,
                         f1u_gw_,
                         ngu_session_mngr_,
                         n3_teid_allocator_,
@@ -175,8 +176,8 @@ private:
   ue_context_cfg  cfg;
   cu_up_ue_logger logger;
 
-  e1ap_control_message_handler& e1ap;
-  pdu_session_manager_impl      pdu_session_manager;
+  e1ap_interface&          e1ap;
+  pdu_session_manager_impl pdu_session_manager;
 
   timer_factory ue_dl_timer_factory;
   timer_factory ue_ul_timer_factory;

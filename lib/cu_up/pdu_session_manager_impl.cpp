@@ -33,6 +33,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
                                                    timer_factory        ue_dl_timer_factory_,
                                                    timer_factory        ue_ul_timer_factory_,
                                                    timer_factory        ue_ctrl_timer_factory_,
+                                                   e1ap_interface&      e1ap_,
                                                    f1u_cu_up_gateway&   f1u_gw_,
                                                    ngu_session_manager& ngu_session_mngr_,
                                                    gtpu_teid_pool&      n3_teid_allocator_,
@@ -61,6 +62,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   ue_ctrl_exec(ue_ctrl_exec_),
   crypto_exec(crypto_exec_),
   gtpu_pcap(gtpu_pcap_),
+  e1ap(e1ap_),
   f1u_gw(f1u_gw_),
   ngu_session_mngr(ngu_session_mngr_)
 {
@@ -311,8 +313,8 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   }
 
   // Connect "PDCP-E1AP" adapter to E1AP
-  new_drb->pdcp_tx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler
-  new_drb->pdcp_rx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler
+  new_drb->pdcp_tx_to_e1ap_adapter.connect_e1ap(ue_index, &e1ap);
+  new_drb->pdcp_rx_to_e1ap_adapter.connect_e1ap(ue_index, &e1ap);
 
   // Create  F1-U bearer
   new_drb->f1u_cfg = qos_cfg.at(five_qi).f1u_cfg;

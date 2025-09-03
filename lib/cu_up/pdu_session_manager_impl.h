@@ -40,6 +40,7 @@ public:
                            timer_factory                                    ue_dl_timer_factory_,
                            timer_factory                                    ue_ul_timer_factory_,
                            timer_factory                                    ue_ctrl_timer_factory_,
+                           e1ap_interface&                                  e1ap_,
                            f1u_cu_up_gateway&                               f1u_gw_,
                            ngu_session_manager&                             ngu_session_mngr_,
                            gtpu_teid_pool&                                  n3_teid_allocator_,
@@ -100,6 +101,7 @@ private:
   task_executor&                                           ue_ctrl_exec;
   task_executor&                                           crypto_exec;
   dlt_pcap&                                                gtpu_pcap;
+  e1ap_interface&                                          e1ap;
   f1u_cu_up_gateway&                                       f1u_gw;
   ngu_session_manager&                                     ngu_session_mngr;
   std::map<pdu_session_id_t, std::unique_ptr<pdu_session>> pdu_sessions; // key is pdu_session_id

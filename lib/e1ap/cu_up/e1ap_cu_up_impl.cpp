@@ -131,6 +131,29 @@ void e1ap_cu_up_impl::handle_bearer_context_inactivity_notification(
   pdu_notifier->on_new_message(e1ap_msg);
 }
 
+void e1ap_cu_up_impl::handle_pdcp_max_count_reached(ue_index_t ue_index)
+{
+  if (!ue_ctxt_list.contains(ue_index)) {
+    logger.error("ue={}: Dropping PDCP max count reached. UE does not exist.", fmt::underlying(ue_index));
+    return;
+  }
+
+  // Get UE context.
+  e1ap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
+
+  e1ap_message e1ap_msg;
+  e1ap_msg.pdu.set_init_msg();
+  e1ap_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_RELEASE_REQUEST);
+  bearer_context_release_request_s& release_request = e1ap_msg.pdu.init_msg().value.bearer_context_release_request();
+  release_request->gnb_cu_cp_ue_e1ap_id             = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_cp_ue_e1ap_id);
+  release_request->gnb_cu_up_ue_e1ap_id             = gnb_cu_up_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_up_ue_e1ap_id);
+  release_request->cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::options::ppdcp_count_wrap_around;
+
+  // Send Release Request.
+  ue_ctxt.logger.log_debug("Sending BearerContextReleaseRequest");
+  pdu_notifier->on_new_message(e1ap_msg);
+}
+
 void e1ap_cu_up_impl::handle_message(const e1ap_message& msg)
 {
   // Run E1AP protocols in CU-UP executor.
