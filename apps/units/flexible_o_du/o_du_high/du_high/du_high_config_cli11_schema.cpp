@@ -2057,10 +2057,11 @@ static void derive_auto_params(du_high_unit_config& config)
     if (cell.cell.ntn_cfg.has_value()) {
       auto& sib_cfg = cell.cell.sib_cfg;
       auto& ntn_cfg = cell.cell.ntn_cfg;
-      for (const auto& si_msg : sib_cfg.si_sched_info) {
+      for (unsigned i = 0, ie = sib_cfg.si_sched_info.size(); i != ie; ++i) {
+        const auto& si_msg = sib_cfg.si_sched_info[i];
         for (unsigned j = 0, je = si_msg.sib_mapping_info.size(); j != je; ++j) {
           if (si_msg.sib_mapping_info[j] == 19) {
-            ntn_cfg->si_msg_idx          = j;
+            ntn_cfg->si_msg_idx          = i;
             ntn_cfg->si_period_rf        = si_msg.si_period_rf;
             ntn_cfg->si_window_len_slots = sib_cfg.si_window_len_slots;
             ntn_cfg->si_window_position  = si_msg.si_window_position;
