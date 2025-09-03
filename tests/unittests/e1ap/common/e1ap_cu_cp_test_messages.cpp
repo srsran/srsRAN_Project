@@ -362,6 +362,23 @@ e1ap_message srsran::srs_cu_cp::generate_bearer_context_release_complete(gnb_cu_
   return bearer_ctxt_rel_complete_msg;
 }
 
+e1ap_message srsran::srs_cu_cp::generate_bearer_context_release_request(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
+                                                                        gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
+{
+  e1ap_message release_request = {};
+
+  release_request.pdu.set_init_msg();
+  release_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_RELEASE_REQUEST);
+
+  auto& bearer_context_release_request = release_request.pdu.init_msg().value.bearer_context_release_request();
+  bearer_context_release_request->gnb_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_to_uint(cu_cp_ue_e1ap_id);
+  bearer_context_release_request->gnb_cu_up_ue_e1ap_id = gnb_cu_up_ue_e1ap_id_to_uint(cu_up_ue_e1ap_id);
+  bearer_context_release_request->cause.set_radio_network() =
+      asn1::e1ap::cause_radio_network_opts::options::ppdcp_count_wrap_around;
+
+  return release_request;
+}
+
 e1ap_message srsran::srs_cu_cp::generate_bearer_context_inactivity_notification_with_ue_level(
     gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
     gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
