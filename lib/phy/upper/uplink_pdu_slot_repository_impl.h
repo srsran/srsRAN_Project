@@ -38,8 +38,12 @@ public:
   /// Uplink slot repository destructor.
   ~uplink_pdu_slot_repository_impl() override
   {
-    // Set the resource grid reference counter to a value that indicates the grid has been destroyed.
-    grid_ref_counter = shared_resource_grid::pool_interface::ref_counter_destroyed;
+    // Wait for the resource grid to be returned to the pool.
+    for (unsigned current_grid_ref_counter = grid_ref_counter.load(std::memory_order_acquire);
+         current_grid_ref_counter != 0;
+         current_grid_ref_counter = grid_ref_counter.load(std::memory_order_acquire)) {
+      std::this_thread::sleep_for(std::chrono::microseconds(10));
+    };
   }
 
   /// PUCCH Format 1 aggregated configuration.

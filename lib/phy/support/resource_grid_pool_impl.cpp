@@ -17,35 +17,15 @@
 #include "srsran/support/rtsan.h"
 #include "srsran/support/srsran_assert.h"
 #include <mutex>
+#include <thread>
 
 using namespace srsran;
-
-/// \brief Creates a static vector that outlives the resource grid pool and returns a view to the scope counts.
-///
-/// The working principle of this mechanism is that the shared resource grid scopes outlive the resource grid pool and
-/// the instances detect that the pool has been destroyed before notifying their destruction.
-static span<std::atomic<unsigned>> get_grids_scope_count(unsigned nof_grids)
-{
-  // Mutex that protects the creation of the scopes concurrently.
-  static std::mutex common_grids_scope_count_mutex;
-  // Global static vector of created resource grid scopes.
-  static std::vector<std::vector<std::atomic<unsigned>>> common_grids_scope_count;
-
-  // Protect from concurrent creation of scopes.
-  std::lock_guard lock(common_grids_scope_count_mutex);
-
-  // Create scopes for this pool.
-  common_grids_scope_count.emplace_back(nof_grids);
-
-  // Return the reference of scopes.
-  return common_grids_scope_count.back();
-}
 
 resource_grid_pool_impl::resource_grid_pool_impl(task_executor*                 async_executor_,
                                                  std::vector<resource_grid_ptr> grids_) :
   logger(srslog::fetch_basic_logger("PHY", true)),
   grids(std::move(grids_)),
-  grids_scope_count(get_grids_scope_count(grids.size())),
+  grids_scope_count(grids.size()),
   grids_str_zero(grids.size()),
   grids_str_reserved(grids.size()),
   async_executor(async_executor_)
@@ -62,17 +42,14 @@ resource_grid_pool_impl::resource_grid_pool_impl(task_executor*                 
 
 resource_grid_pool_impl::~resource_grid_pool_impl()
 {
-  // Ensure that all the grids returned to the pool. Log a warning message if any resource grid is left in an active
-  // scope.
-  unsigned count = std::count_if(
-      grids_scope_count.begin(), grids_scope_count.end(), [](auto& e) { return e != ref_counter_available; });
-  if (count > 0) {
-    logger.warning("{} Resource grids have not returned to the pool.", count);
-  }
-
-  // Ensure that all the grids see that the pool has been destroyed and prevent any further operations involving the
-  // pool.
-  std::fill(grids_scope_count.begin(), grids_scope_count.end(), ref_counter_destroyed);
+  // Wait for all resource grid to be returned to the pool.
+  std::for_each(grids_scope_count.begin(), grids_scope_count.end(), [](auto& ref_counter) {
+    for (unsigned current_ref_counter = ref_counter.load(std::memory_order_acquire);
+         current_ref_counter != ref_counter_available;
+         current_ref_counter = ref_counter.load(std::memory_order_acquire)) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    };
+  });
 }
 
 shared_resource_grid resource_grid_pool_impl::allocate_resource_grid(slot_point slot)

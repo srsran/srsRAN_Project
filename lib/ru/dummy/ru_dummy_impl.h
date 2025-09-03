@@ -27,10 +27,10 @@
 #include "srsran/srslog/logger.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/srsran_assert.h"
+#include "srsran/support/synchronization/stop_event.h"
 #include <atomic>
 #include <chrono>
 #include <cstdint>
-#include <future>
 #include <vector>
 
 namespace srsran {
@@ -121,6 +121,10 @@ private:
     sectors[context.sector].handle_new_uplink_slot(context, grid);
   }
 
+  /// \brief Defer loop task if the RU is running.
+  /// \remark A fatal error is triggered if the executor fails to defer the loop task.
+  void defer_loop();
+
   /// Loop execution task.
   void loop();
 
@@ -132,10 +136,8 @@ private:
   task_executor& executor;
   /// Radio Unit timing notifier.
   ru_timing_notifier& timing_notifier;
-  /// Set to true if stopping is requested.
-  std::atomic<bool> stop_request = false;
-  /// Stopping promise for controlling the stop of the RU.
-  std::promise<void> stop_promise;
+  /// Stop control.
+  stop_event_source stop_control;
   /// Slot time in microseconds.
   std::chrono::microseconds slot_duration;
   /// Number of slots is notified in advance of the transmission time.

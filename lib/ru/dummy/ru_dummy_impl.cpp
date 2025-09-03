@@ -65,7 +65,7 @@ void ru_dummy_impl::start()
   current_slot = slot_point(current_slot.numerology(), initial_system_slot);
 
   // Start the loop execution.
-  report_fatal_error_if_not(executor.execute([this]() { loop(); }), "Failed to execute loop method.");
+  defer_loop();
 }
 
 void ru_dummy_impl::stop()
@@ -76,24 +76,33 @@ void ru_dummy_impl::stop()
   }
 
   // Signal stop to asynchronous thread.
-  stop_request = true;
-  auto ft      = stop_promise.get_future();
-  ft.wait();
+  stop_control.stop();
+}
+
+void ru_dummy_impl::defer_loop()
+{
+  // Do not defer if stop was requested.
+  auto token = stop_control.get_token();
+  if (stop_control.stop_was_requested()) {
+    return;
+  }
+
+  // Create loop task.
+  unique_function<void(), default_unique_task_buffer_size, true> task =
+      [this, defer_token = std::move(token)]() noexcept SRSRAN_RTSAN_NONBLOCKING { loop(); };
+
+  // Actual defer.
+  report_fatal_error_if_not(executor.defer(std::move(task)), "Failed to execute loop method.");
 }
 
 void ru_dummy_impl::loop()
 {
-  // If stop has been requested, then return without deferring the loop task.
-  if (stop_request) {
-    stop_promise.set_value();
-    return;
-  }
-
   // Get the current system slot from the system time.
   uint64_t slot_count = get_current_system_slot(slot_duration, current_slot.nof_slots_per_hyper_system_frame());
 
   // Make sure a minimum time between loop executions without crossing boundaries.
   if (slot_count == current_slot.system_slot()) {
+    SRSRAN_RTSAN_SCOPED_DISABLER(scoped_disabler);
     std::this_thread::sleep_for(minimum_loop_time);
   }
 
@@ -121,5 +130,5 @@ void ru_dummy_impl::loop()
   }
 
   // Feed back the execution of this task.
-  report_fatal_error_if_not(executor.defer([this]() { loop(); }), "Failed to execute loop method.");
+  defer_loop();
 }
