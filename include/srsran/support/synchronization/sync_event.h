@@ -10,35 +10,63 @@
 
 #pragma once
 
+#include "srsran/adt/detail/intrusive_ptr.h"
 #include "srsran/support/synchronization/futex_util.h"
 #include <utility>
 
 namespace srsran {
+
+namespace scoped_sync_detail {
+
+/// \brief Shared sync state.
+///
+/// We rely on intrusive_ptr to manage the lifetime of this object. This is necessary because it hard to make futex
+/// wake/wait operations happen before the state object is destroyed.
+class state : public intrusive_ptr_atomic_ref_counter
+{
+public:
+  friend void intrusive_ptr_inc_ref(state* ptr) { ptr->ref_count.inc_ref(); }
+  friend void intrusive_ptr_dec_ref(state* ptr)
+  {
+    if (ptr->ref_count.dec_ref()) {
+      delete ptr;
+    }
+  }
+
+  /// Count of number of current scoped_sync_token.
+  intrusive_ptr_atomic_ref_counter ref_count;
+  /// Number of non-reset scoped_sync_token instances.
+  std::atomic<uint32_t> token_count{0};
+};
+
+} // namespace scoped_sync_detail
 
 /// \brief Scoped token that notifies the associated sync_event when it gets destroyed or reset.
 class scoped_sync_token
 {
 public:
   scoped_sync_token() = default;
-  scoped_sync_token(const scoped_sync_token& other) : count_ptr(other.count_ptr)
+  scoped_sync_token(const intrusive_ptr<scoped_sync_detail::state>& state_) : state_ptr(state_)
   {
-    if (other.count_ptr != nullptr) {
-      count_ptr->fetch_add(1, std::memory_order_acq_rel);
+    if (state_ptr != nullptr) {
+      state_ptr->token_count.fetch_add(1, std::memory_order_relaxed);
     }
   }
-  scoped_sync_token(scoped_sync_token&& other) noexcept : count_ptr(std::exchange(other.count_ptr, nullptr)) {}
-  scoped_sync_token(std::atomic<uint32_t>& observer_count_) : count_ptr(&observer_count_)
+  scoped_sync_token(const scoped_sync_token& other) : state_ptr(other.state_ptr)
   {
-    count_ptr->fetch_add(1, std::memory_order_acq_rel);
+    if (state_ptr != nullptr) {
+      state_ptr->token_count.fetch_add(1, std::memory_order_relaxed);
+    }
   }
+  scoped_sync_token(scoped_sync_token&& other) noexcept : state_ptr(std::move(other.state_ptr)) {}
   ~scoped_sync_token() { reset(); }
   scoped_sync_token& operator=(const scoped_sync_token& other)
   {
     if (this != &other) {
       reset();
-      count_ptr = other.count_ptr;
-      if (other.count_ptr != nullptr) {
-        count_ptr->fetch_add(1, std::memory_order_acq_rel);
+      state_ptr = other.state_ptr;
+      if (state_ptr != nullptr) {
+        state_ptr->token_count.fetch_add(1, std::memory_order_relaxed);
       }
     }
     return *this;
@@ -46,25 +74,28 @@ public:
   scoped_sync_token& operator=(scoped_sync_token&& other) noexcept
   {
     reset();
-    count_ptr = std::exchange(other.count_ptr, nullptr);
+    state_ptr = std::move(other.state_ptr);
     return *this;
   }
 
   /// Destroys the token and potentially unlocks sync_event::wait().
   void reset()
   {
-    if (count_ptr != nullptr) {
-      auto cur = count_ptr->fetch_sub(1, std::memory_order_acq_rel) - 1;
+    if (state_ptr != nullptr) {
+      auto cur = state_ptr->token_count.fetch_sub(1, std::memory_order_acq_rel) - 1;
       if (cur == 0) {
-        // Count is zero.
-        futex_util::wake_all(*count_ptr);
+        // Count is zero. Wake all waiters.
+        // Note: The intrusive_ptr ref_count protects the use of state_ptr->token_count here, even if the waiter
+        // already called destroy on state_ptr in its dtor.
+        futex_util::wake_all(state_ptr->token_count);
       }
-      count_ptr = nullptr;
+      // Potentially destroys the state object.
+      state_ptr.reset();
     }
   }
 
 private:
-  std::atomic<uint32_t>* count_ptr = nullptr;
+  intrusive_ptr<scoped_sync_detail::state> state_ptr;
 };
 
 /// \brief Synchronization event to wait until all tokens to be reset.
@@ -77,24 +108,24 @@ public:
   ~sync_event() { wait(); }
 
   /// Creates a new observer of stop() requests.
-  scoped_sync_token get_token() { return scoped_sync_token{count}; }
+  scoped_sync_token get_token() { return scoped_sync_token{state_ptr}; }
 
-  /// Waits for all tokens to be reset.
+  /// Waits for all tokens to be reset. At the end of this call,
   void wait()
   {
     // Block waiting until all observers are gone.
-    auto cur = count.load(std::memory_order_acquire);
+    auto cur = state_ptr->token_count.load(std::memory_order_acquire);
     while (cur > 0) {
-      futex_util::wait(count, cur);
-      cur = count.load(std::memory_order_acquire);
+      futex_util::wait(state_ptr->token_count, cur);
+      cur = state_ptr->token_count.load(std::memory_order_acquire);
     }
   }
 
-  [[nodiscard]] uint32_t nof_tokens_approx() const { return count.load(std::memory_order_relaxed); }
+  [[nodiscard]] uint32_t nof_tokens_approx() const { return state_ptr->token_count.load(std::memory_order_relaxed); }
 
 private:
-  /// Number of current tokens.
-  std::atomic<uint32_t> count{0};
+  /// \brief Ref-counted pointer to the shared state.
+  intrusive_ptr<scoped_sync_detail::state> state_ptr{new scoped_sync_detail::state()};
 };
 
 } // namespace srsran
