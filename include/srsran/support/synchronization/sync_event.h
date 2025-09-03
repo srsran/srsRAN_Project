@@ -21,7 +21,7 @@ class scoped_sync_token
 {
 public:
   scoped_sync_token() = default;
-  scoped_sync_token(std::atomic<uint32_t>& token_count_, std::atomic<uint32_t>& dtor_guard_) :
+  scoped_sync_token(std::atomic<uint32_t>& token_count_, std::atomic<bool>& dtor_guard_) :
     token_count(&token_count_), dtor_guard(&dtor_guard_)
   {
     inc_token();
@@ -62,7 +62,7 @@ public:
         // Count is zero. Wake all waiters.
         futex_util::wake_all(*token_count);
         // Update dtor guard.
-        dtor_guard->fetch_sub(1, std::memory_order_acq_rel);
+        dtor_guard->store(false, std::memory_order_release);
       }
       token_count = nullptr;
       dtor_guard  = nullptr;
@@ -74,14 +74,14 @@ private:
   {
     if (token_count != nullptr) {
       if (token_count->fetch_add(1, std::memory_order_relaxed) == 0) {
-        // Transition from 0 to 1. Update dtor guard.
-        dtor_guard->fetch_add(1, std::memory_order_relaxed);
+        // Transition from 0 to 1. Lock dtor guard.
+        dtor_guard->store(true, std::memory_order_release);
       }
     }
   }
 
   std::atomic<uint32_t>* token_count = nullptr;
-  std::atomic<uint32_t>* dtor_guard  = nullptr;
+  std::atomic<bool>*     dtor_guard  = nullptr;
 };
 
 /// \brief Synchronization event to wait until all tokens to be reset.
@@ -96,7 +96,7 @@ public:
     wait();
 
     // Polite spinning in case the token got preempted between the fetch_sub and futex wake.
-    while (dtor_guard.load(std::memory_order_acquire) > 0) {
+    while (dtor_guard.load(std::memory_order_acquire)) {
       std::this_thread::yield();
     }
   }
@@ -119,7 +119,9 @@ public:
 
 private:
   std::atomic<uint32_t> token_count{0};
-  std::atomic<uint32_t> dtor_guard{0};
+  /// \brief Variable use to protect token_count from destruction when token still has to call futex wake.
+  /// Useful reference about the issue: https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2616r4.html
+  std::atomic<bool> dtor_guard{false};
 };
 
 } // namespace srsran

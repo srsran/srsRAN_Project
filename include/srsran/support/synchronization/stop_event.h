@@ -27,7 +27,7 @@ class stop_event_token
 
 public:
   stop_event_token() = default;
-  stop_event_token(std::atomic<uint32_t>& token_count_, std::atomic<uint32_t>& dtor_guard_) :
+  stop_event_token(std::atomic<uint32_t>& token_count_, std::atomic<bool>& dtor_guard_) :
     token_count(&token_count_), dtor_guard(&dtor_guard_)
   {
     inc_token();
@@ -75,7 +75,7 @@ public:
         // Wake all stoppers.
         futex_util::wake_all(*token_count);
         // Update dtor guard.
-        dtor_guard->fetch_sub(1, std::memory_order_acq_rel);
+        dtor_guard->store(false, std::memory_order_release);
       }
       token_count = nullptr;
       dtor_guard  = nullptr;
@@ -91,7 +91,7 @@ private:
     auto prev = token_count->fetch_add(1, std::memory_order_relaxed);
     if ((prev & count_mask) == 0) {
       // Transition from 0 to 1. Update dtor guard.
-      dtor_guard->fetch_add(1, std::memory_order_relaxed);
+      dtor_guard->store(true, std::memory_order_release);
     }
     if (prev & stop_bit) {
       // Stop was already requested. Release token.
@@ -100,7 +100,7 @@ private:
   }
 
   std::atomic<uint32_t>* token_count = nullptr;
-  std::atomic<uint32_t>* dtor_guard  = nullptr;
+  std::atomic<bool>*     dtor_guard  = nullptr;
 };
 
 /// \brief Event to signal stop to multiple observers.
@@ -118,7 +118,7 @@ public:
   {
     stop();
     // Polite spinning in case the token got preempted between the fetch_sub and futex wake.
-    while (dtor_guard.load(std::memory_order_acquire) > 0) {
+    while (dtor_guard.load(std::memory_order_acquire)) {
       std::this_thread::yield();
     }
   }
@@ -167,7 +167,8 @@ public:
 private:
   /// State variable composed by 1 MSB bit for signalling stop and 31 LSB bits for counting observers.
   std::atomic<uint32_t> token_count{0};
-  std::atomic<uint32_t> dtor_guard{0};
+  /// Variable use to protect token_count from destruction when token still has to call futex wake.
+  std::atomic<bool> dtor_guard{false};
 };
 
 } // namespace srsran
