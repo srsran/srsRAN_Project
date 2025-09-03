@@ -72,6 +72,10 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
 
 async_task<void> mac_cell_processor::start()
 {
+  // Notify scheduler about activation.
+  // Note: This is done in the control executor context to avoid concurrency with other CTRL procedures.
+  sched.handle_cell_activation(cell_cfg.cell_index);
+
   return execute_and_continue_on_blocking(
       cell_exec,
       ctrl_exec,
@@ -81,9 +85,6 @@ async_task<void> mac_cell_processor::start()
           // No-op.
           return;
         }
-
-        // Notify scheduler about activation.
-        sched.handle_cell_activation(cell_cfg.cell_index);
 
         state = cell_state::active;
         logger.info("cell={}: Cell was activated", fmt::underlying(cell_cfg.cell_index));
@@ -117,9 +118,6 @@ async_task<void> mac_cell_processor::stop()
     // Notify lower layers that the cell is being stopped.
     // TODO: Rely on FAPI STOP procedure to signal the cell stop. For now, we just skip this step.
 
-    // Signal to the scheduler that the cell was successfully stopped in the lower layers.
-    sched.handle_cell_deactivation(cell_cfg.cell_index);
-
     // Notify that cell metrics stopped being collected.
     metrics.on_cell_deactivation();
 
@@ -128,6 +126,10 @@ async_task<void> mac_cell_processor::stop()
 
     // Switch back to respective ctrl executor context.
     CORO_AWAIT(defer_on_blocking(ctrl_exec, timers));
+
+    // Signal to the scheduler that the cell was successfully stopped in the lower layers.
+    // Note: This is done in the control executor context to avoid concurrency with other CTRL procedures.
+    sched.handle_cell_deactivation(cell_cfg.cell_index);
 
     // Clear DL buffers associated with this cell.
     dl_harq_buffers.clear();
