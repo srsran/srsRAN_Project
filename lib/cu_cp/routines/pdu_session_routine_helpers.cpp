@@ -71,6 +71,7 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
     bool                                                             reestablish_drbs,
     std::optional<uint8_t>                                           ncc,
     byte_buffer                                                      sib1,
+    std::optional<security::sec_selected_algos>                      selected_algos,
     const srslog::basic_logger&                                      logger)
 {
   rrc_radio_bearer_config radio_bearer_config;
@@ -152,6 +153,14 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
     }
 
     radio_bearer_config.drb_to_release_list.push_back(drb_id);
+  }
+
+  // If selected security algos, fill securityConfig
+  if (selected_algos) {
+    radio_bearer_config.security_cfg.emplace();
+    radio_bearer_config.security_cfg->security_algorithm_cfg.emplace();
+    radio_bearer_config.security_cfg->security_algorithm_cfg->ciphering_algorithm      = selected_algos->cipher_algo;
+    radio_bearer_config.security_cfg->security_algorithm_cfg->integrity_prot_algorithm = selected_algos->integ_algo;
   }
 
   // Append NAS PDUs as received by AMF.

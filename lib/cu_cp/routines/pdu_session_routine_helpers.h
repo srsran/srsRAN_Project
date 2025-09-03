@@ -93,6 +93,7 @@ bool fill_rrc_reconfig_args(rrc_reconfiguration_procedure_request&              
                             bool                                                             reestablish_drbs,
                             std::optional<uint8_t>                                           ncc,
                             byte_buffer                                                      sib1,
+                            std::optional<security::sec_selected_algos>                      selected_algos,
                             const srslog::basic_logger&                                      logger);
 
 /// \brief Processes the response of a UE Context Setup Request.

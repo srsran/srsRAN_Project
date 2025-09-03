@@ -148,6 +148,7 @@ void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_c
                                   true /* Reestablish DRBs */,
                                   target_ue->get_security_manager().get_ncc(), /* Update keys */
                                   target_cell_sib1.copy(),
+                                  std::nullopt,
                                   logger)) {
         logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", request.source_ue_index, name());
         CORO_EARLY_RETURN(response_msg);

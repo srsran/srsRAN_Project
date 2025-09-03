@@ -225,6 +225,7 @@ void pdu_session_resource_setup_routine::operator()(
                                   false,
                                   std::nullopt,
                                   {},
+                                  std::nullopt,
                                   logger)) {
         logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", setup_msg.ue_index, name());
         CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
