@@ -110,7 +110,7 @@ public:
   /// Creates a new observer of stop() requests.
   scoped_sync_token get_token() { return scoped_sync_token{state_ptr}; }
 
-  /// Waits for all tokens to be reset. At the end of this call,
+  /// Waits for all tokens to be reset. At the end of this call, all tokens are guaranteed to be reset.
   void wait()
   {
     // Block waiting until all observers are gone.
