@@ -83,6 +83,15 @@ e1ap_message generate_bearer_context_modification_response(
     const std::map<pdu_session_id_t, drb_id_t>& pdu_sessions_to_modify     = {{pdu_session_id_t::min, drb_id_t::drb1}},
     const std::vector<pdu_session_id_t>&        pdu_sessions_failed_to_modify = {});
 
+/// \brief Generate a dummy Bearer Context Modification Response.
+/// \param[in] cu_cp_ue_e1ap_id The CU-CP UE E1AP ID.
+/// \param[in] cu_up_ue_e1ap_id The CU-UP UE E1AP ID.
+/// \return The Bearer Context Modification Response.
+e1ap_message generate_bearer_context_modification_response_with_pdcp_status(
+    gnb_cu_cp_ue_e1ap_id_t                      cu_cp_ue_e1ap_id,
+    gnb_cu_up_ue_e1ap_id_t                      cu_up_ue_e1ap_id,
+    const std::map<pdu_session_id_t, drb_id_t>& pdu_sessions_to_modify = {{uint_to_pdu_session_id(1), drb_id_t::drb1}});
+
 /// \brief Generate a dummy Bearer Context Modification Failure.
 /// \param[in] cu_cp_ue_e1ap_id The CU-CP UE E1AP ID.
 /// \param[in] cu_up_ue_e1ap_id The CU-UP UE E1AP ID.

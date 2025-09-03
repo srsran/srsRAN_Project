@@ -321,6 +321,39 @@ e1ap_message srsran::srs_cu_cp::generate_bearer_context_modification_response(
   return bearer_context_modification_response;
 }
 
+e1ap_message srsran::srs_cu_cp::generate_bearer_context_modification_response_with_pdcp_status(
+    gnb_cu_cp_ue_e1ap_id_t                      cu_cp_ue_e1ap_id,
+    gnb_cu_up_ue_e1ap_id_t                      cu_up_ue_e1ap_id,
+    const std::map<pdu_session_id_t, drb_id_t>& pdu_sessions_to_modify)
+{
+  e1ap_message bearer_context_modification_response = {};
+
+  bearer_context_modification_response.pdu.set_successful_outcome();
+  bearer_context_modification_response.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
+
+  auto& bearer_context_mod_resp =
+      bearer_context_modification_response.pdu.successful_outcome().value.bearer_context_mod_resp();
+  bearer_context_mod_resp->gnb_cu_cp_ue_e1ap_id                = gnb_cu_cp_ue_e1ap_id_to_uint(cu_cp_ue_e1ap_id);
+  bearer_context_mod_resp->gnb_cu_up_ue_e1ap_id                = gnb_cu_up_ue_e1ap_id_to_uint(cu_up_ue_e1ap_id);
+  bearer_context_mod_resp->sys_bearer_context_mod_resp_present = true;
+  bearer_context_mod_resp->sys_bearer_context_mod_resp.set_ng_ran_bearer_context_mod_resp();
+
+  auto& ng_ran_bearer_context_mod_resp =
+      bearer_context_mod_resp->sys_bearer_context_mod_resp.ng_ran_bearer_context_mod_resp();
+
+  ng_ran_bearer_context_mod_resp.pdu_session_res_modified_list_present = !pdu_sessions_to_modify.empty();
+  for (const auto& [psi, drb_id] : pdu_sessions_to_modify) {
+    asn1::e1ap::pdu_session_res_modified_item_s pdu_session_res_modified_item = {};
+    pdu_session_res_modified_item.pdu_session_id                              = pdu_session_id_to_uint(psi);
+    asn1::e1ap::drb_modified_item_ng_ran_s drb_modified_item_ng_ran;
+    drb_modified_item_ng_ran.drb_id                                      = drb_id_to_uint(drb_id);
+    drb_modified_item_ng_ran.pdcp_sn_status_info_present                 = true;
+    drb_modified_item_ng_ran.pdcp_sn_status_info.pdcp_status_transfer_ul = {};
+    drb_modified_item_ng_ran.pdcp_sn_status_info.pdcp_status_transfer_dl = {};
+  }
+
+  return bearer_context_modification_response;
+}
 e1ap_message srsran::srs_cu_cp::generate_bearer_context_modification_failure(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
                                                                              gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
 {
