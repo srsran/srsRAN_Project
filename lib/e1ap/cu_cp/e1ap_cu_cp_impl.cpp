@@ -19,6 +19,7 @@
 #include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ran/cause/e1ap_cause.h"
+#include "srsran/ran/cause/e1ap_cause_converters.h"
 
 using namespace srsran;
 using namespace asn1::e1ap;
@@ -52,7 +53,7 @@ e1ap_cu_cp_impl::~e1ap_cu_cp_impl() {}
 
 void e1ap_cu_cp_impl::handle_cu_up_e1_setup_response(const cu_up_e1_setup_response& msg)
 {
-  // Pack message into PDU
+  // Pack message into PDU.
   e1ap_message e1ap_msg;
   if (msg.success) {
     e1ap_msg.pdu.set_successful_outcome();
@@ -63,10 +64,10 @@ void e1ap_cu_cp_impl::handle_cu_up_e1_setup_response(const cu_up_e1_setup_respon
       setup_resp->gnb_cu_cp_name.from_string(msg.gnb_cu_cp_name.value());
     }
 
-    // set values handled by E1AP
+    // Set values handled by E1AP.
     e1ap_msg.pdu.successful_outcome().value.gnb_cu_up_e1_setup_resp()->transaction_id = current_transaction_id;
 
-    // send response
+    // Send response.
     pdu_notifier.on_new_message(e1ap_msg);
   } else {
     e1ap_msg.pdu.set_unsuccessful_outcome();
@@ -75,12 +76,12 @@ void e1ap_cu_cp_impl::handle_cu_up_e1_setup_response(const cu_up_e1_setup_respon
     auto& setup_fail  = e1ap_msg.pdu.unsuccessful_outcome().value.gnb_cu_up_e1_setup_fail();
     setup_fail->cause = cause_to_asn1(msg.cause.value());
 
-    // set values handled by E1
+    // Set values handled by E1.
     setup_fail->transaction_id = current_transaction_id;
     setup_fail->cause.set_radio_network();
     setup_fail->cause.radio_network() = asn1::e1ap::cause_radio_network_opts::options::no_radio_res_available;
 
-    // send response
+    // Send response.
     pdu_notifier.on_new_message(e1ap_msg);
   }
 }
@@ -99,7 +100,7 @@ e1ap_cu_cp_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_s
     });
   }
 
-  // add new e1ap_ue_context
+  // Add new e1ap_ue_context.
   if (ue_ctxt_list.add_ue(request.ue_index, cu_cp_ue_e1ap_id) == nullptr) {
     logger.warning("Bearer Context Setup failed. Cause: bearer context already exists");
     return launch_async([](coro_context<async_task<e1ap_bearer_context_setup_response>>& ctx) mutable {
@@ -137,7 +138,7 @@ e1ap_cu_cp_impl::handle_bearer_context_modification_request(const e1ap_bearer_co
     });
   }
 
-  // Get UE context
+  // Get UE context.
   e1ap_ue_context& ue_ctxt = ue_ctxt_list[request.ue_index];
 
   e1ap_message e1ap_msg;
@@ -173,7 +174,7 @@ e1ap_cu_cp_impl::handle_bearer_context_release_command(const e1ap_bearer_context
     });
   }
 
-  // Get UE context
+  // Get UE context.
   e1ap_ue_context& ue_ctxt = ue_ctxt_list[command.ue_index];
 
   e1ap_message e1ap_msg;
@@ -225,6 +226,9 @@ void e1ap_cu_cp_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& ms
       fill_e1ap_cu_up_e1_setup_request(req, msg.value.gnb_cu_up_e1_setup_request());
       cu_up_processor_notifier.on_cu_up_e1_setup_request_received(req);
     } break;
+    case init_types::bearer_context_release_request: {
+      handle_bearer_context_release_request(msg.value.bearer_context_release_request());
+    } break;
     case init_types::bearer_context_inactivity_notif: {
       handle_bearer_context_inactivity_notification(msg.value.bearer_context_inactivity_notif());
     } break;
@@ -239,6 +243,34 @@ void e1ap_cu_cp_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& ms
   }
 }
 
+void e1ap_cu_cp_impl::handle_bearer_context_release_request(const asn1::e1ap::bearer_context_release_request_s& msg)
+{
+  if (!ue_ctxt_list.contains(int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1ap_id))) {
+    logger.warning(
+        "cu_cp_ue_e1ap_id={} cu_up_ue_e1ap_id={}: Dropping BearerContextReleaseRequest. UE context does not exist",
+        msg->gnb_cu_cp_ue_e1ap_id,
+        msg->gnb_cu_up_ue_e1ap_id);
+    return;
+  }
+
+  // Get UE context.
+  e1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1ap_id)];
+
+  cu_cp_bearer_context_release_request release_request;
+  release_request.ue_index = ue_ctxt.ue_ids.ue_index;
+  release_request.cause    = e1ap_to_ngap_cause(asn1_to_cause(msg->cause));
+
+  // Schedule forwarding of release request.
+  if (!cu_cp_notifier.schedule_async_task(ue_ctxt.ue_ids.ue_index,
+                                          launch_async([this, release_request](coro_context<async_task<void>>& ctx) {
+                                            CORO_BEGIN(ctx);
+                                            cu_cp_notifier.on_bearer_context_release_request_received(release_request);
+                                            CORO_RETURN();
+                                          }))) {
+    logger.warning("ue={}: Dropping BearerContextReleaseRequest. UE does not exist", ue_ctxt.ue_ids.ue_index);
+  }
+}
+
 void e1ap_cu_cp_impl::handle_bearer_context_inactivity_notification(
     const asn1::e1ap::bearer_context_inactivity_notif_s& msg)
 {
@@ -250,32 +282,32 @@ void e1ap_cu_cp_impl::handle_bearer_context_inactivity_notification(
     return;
   }
 
-  // Get UE context
+  // Get UE context.
   e1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1ap_id)];
 
   cu_cp_inactivity_notification inactivity_notification;
   inactivity_notification.ue_index = ue_ctxt.ue_ids.ue_index;
 
   switch (msg->activity_info.type()) {
-    // DRB activity notification level
+    // DRB activity notification level.
     case asn1::e1ap::activity_info_c::types_opts::options::drb_activity_list: {
-      // add inactive drbs to common type message
+      // Add inactive DRBs to common type message.
       for (const auto& drb : msg->activity_info.drb_activity_list()) {
         if (drb.drb_activity == asn1::e1ap::drb_activity_opts::options::not_active) {
           inactivity_notification.inactive_drbs.emplace_back(uint_to_drb_id(drb.drb_id));
         }
       }
-      // if no drbs are inactive, return
+      // If no DRBs are inactive, return.
       if (inactivity_notification.inactive_drbs.empty()) {
         return;
       }
 
-      // if all drbs are inactive, release ue
+      // If all DRBs are inactive, release UE.
       if (inactivity_notification.inactive_drbs.size() == msg->activity_info.drb_activity_list().size()) {
         inactivity_notification.ue_inactive = true;
       }
     } break;
-    // PDU Session activity notification level
+    // PDU Session activity notification level.
     case asn1::e1ap::activity_info_c::types_opts::options::pdu_session_res_activity_list: {
       // add inactive pdu sessions to common type message
       for (const auto& pdu_session : msg->activity_info.pdu_session_res_activity_list()) {
@@ -284,21 +316,21 @@ void e1ap_cu_cp_impl::handle_bearer_context_inactivity_notification(
               uint_to_pdu_session_id(pdu_session.pdu_session_id));
         }
       }
-      // if no pdu sessions are inactive, return
+      // If no PDU sessions are inactive, return.
       if (inactivity_notification.inactive_pdu_sessions.empty()) {
         return;
       }
 
-      // if all pdu sessions are inactive, release ue
+      // If all PDU sessions are inactive, release UE.
       if (inactivity_notification.inactive_pdu_sessions.size() ==
           msg->activity_info.pdu_session_res_activity_list().size()) {
         inactivity_notification.ue_inactive = true;
       }
     } break;
-    // UE activity notification level
+    // UE activity notification level.
     case asn1::e1ap::activity_info_c::types_opts::options::ue_activity: {
       if (msg->activity_info.ue_activity() == asn1::e1ap::ue_activity_opts::options::not_active) {
-        // if ue is inactive, release ue
+        // If UE is inactive, release UE.
         inactivity_notification.ue_inactive = true;
       }
     } break;
@@ -308,7 +340,7 @@ void e1ap_cu_cp_impl::handle_bearer_context_inactivity_notification(
       return;
   }
 
-  // schedule forwarding of notification
+  // Schedule forwarding of notification.
   if (!cu_cp_notifier.schedule_async_task(
           ue_ctxt.ue_ids.ue_index, launch_async([this, inactivity_notification](coro_context<async_task<void>>& ctx) {
             CORO_BEGIN(ctx);
@@ -345,7 +377,7 @@ void e1ap_cu_cp_impl::handle_successful_outcome(const asn1::e1ap::successful_out
           outcome.value.bearer_context_release_complete());
     } break;
     default:
-      // Handle successful outcomes with transaction id
+      // Handle successful outcomes with transaction ID.
       std::optional<uint8_t> transaction_id = get_transaction_id(outcome);
       if (not transaction_id.has_value()) {
         logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
@@ -381,7 +413,7 @@ void e1ap_cu_cp_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful
       ue_ctxt_list[*cu_ue_id].bearer_ev_mng.context_modification_outcome.set(outcome.value.bearer_context_mod_fail());
     } break;
     default:
-      // Handle unsuccessful outcomes with transaction id
+      // Handle unsuccessful outcomes with transaction ID.
       std::optional<uint8_t> transaction_id = get_transaction_id(outcome);
       if (not transaction_id.has_value()) {
         logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());

@@ -75,6 +75,7 @@ public:
                                                        common_task_scheduler&     common_task_sched_);
 
   // CU-UP handler.
+  void handle_bearer_context_release_request(const cu_cp_bearer_context_release_request& msg) override;
   void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
   void handle_e1_release_request(cu_up_index_t cu_up_index, const std::vector<ue_index_t>& ue_list) override;
 

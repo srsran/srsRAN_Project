@@ -577,6 +577,11 @@ struct cu_cp_paging_message {
   std::optional<cu_cp_assist_data_for_paging>  assist_data_for_paging;
 };
 
+struct cu_cp_bearer_context_release_request {
+  ue_index_t   ue_index = ue_index_t::invalid;
+  ngap_cause_t cause;
+};
+
 struct cu_cp_inactivity_notification {
   ue_index_t                    ue_index    = ue_index_t::invalid;
   bool                          ue_inactive = false;

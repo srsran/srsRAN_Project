@@ -34,6 +34,12 @@ public:
   {
   }
 
+  void on_bearer_context_release_request_received(const srs_cu_cp::cu_cp_bearer_context_release_request& msg) override
+  {
+    last_release_request = msg;
+    logger.info("Received a bearer context release request");
+  }
+
   void on_bearer_context_inactivity_notification_received(const srs_cu_cp::cu_cp_inactivity_notification& msg) override
   {
     last_msg = msg;
@@ -52,7 +58,8 @@ public:
     return ue_mng.find_ue_task_scheduler(ue_index)->schedule_async_task(std::move(task));
   }
 
-  srs_cu_cp::cu_cp_inactivity_notification last_msg;
+  srs_cu_cp::cu_cp_bearer_context_release_request last_release_request;
+  srs_cu_cp::cu_cp_inactivity_notification        last_msg;
 
 private:
   ue_manager&           ue_mng;

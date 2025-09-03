@@ -149,6 +149,10 @@ class cu_cp_e1ap_event_handler : public cu_cp_task_scheduler_handler
 public:
   virtual ~cu_cp_e1ap_event_handler() = default;
 
+  /// \brief Handle the reception of an Bearer Context Release Request message.
+  /// \param[in] msg The received Bearer Context Release Request message.
+  virtual void handle_bearer_context_release_request(const cu_cp_bearer_context_release_request& msg) = 0;
+
   /// \brief Handle the reception of an Bearer Context Inactivity Notification message.
   /// \param[in] msg The received Bearer Context Inactivity Notification message.
   virtual void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) = 0;

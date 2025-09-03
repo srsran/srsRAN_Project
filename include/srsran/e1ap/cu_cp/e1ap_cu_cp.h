@@ -138,6 +138,10 @@ public:
   /// \returns True if the task was successfully scheduled, false otherwise.
   virtual bool schedule_async_task(ue_index_t ue_index, async_task<void> task) = 0;
 
+  /// \brief Notifies about the reception of a Bearer Context Release Request message.
+  /// \param[in] msg The received Bearer Context Release Request message.
+  virtual void on_bearer_context_release_request_received(const cu_cp_bearer_context_release_request& msg) = 0;
+
   /// \brief Notifies about the reception of a Bearer Context Inactivity Notification message.
   /// \param[in] msg The received Bearer Context Inactivity Notification message.
   virtual void on_bearer_context_inactivity_notification_received(const cu_cp_inactivity_notification& msg) = 0;
