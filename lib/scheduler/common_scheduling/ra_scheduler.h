@@ -124,7 +124,7 @@ private:
   void update_pending_rars(slot_point pdcch_slot);
 
   /// Determines whether the resource grid for the provided slot has the conditions for RAR scheduling.
-  bool is_slot_candidate_for_rar(cell_slot_resource_allocator& slot_res_alloc);
+  bool is_slot_candidate_for_rar(const cell_slot_resource_allocator& slot_res_alloc);
 
   /// Try scheduling pending RARs for the provided slot.
   void schedule_pending_rars(cell_resource_allocator& res_alloc, slot_point pdcch_slot);
@@ -148,7 +148,7 @@ private:
                       span<const msg3_alloc_candidate> msg3_candidates);
 
   /// Schedule retransmission of Msg3.
-  void schedule_msg3_retx(cell_resource_allocator& res_alloc, pending_msg3_t& msg3_ctx);
+  void schedule_msg3_retx(cell_resource_allocator& res_alloc, pending_msg3_t& msg3_ctx) const;
 
   sch_prbs_tbs get_nof_pdsch_prbs_required(unsigned time_res_idx, unsigned nof_ul_grants) const;
 
