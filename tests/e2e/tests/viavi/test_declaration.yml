@@ -28,6 +28,9 @@ tests:
     test_timeout: *test_timeout
     # Configuration
     gnb_extra_config: &base_config
+      ru_ofh:
+        t1a_max_up: 400
+        t1a_min_up: 120
       metrics:
         enable_log: true
         layers:
