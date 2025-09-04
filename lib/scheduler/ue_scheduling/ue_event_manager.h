@@ -38,6 +38,86 @@ struct cell_creation_event {
   scheduler_event_logger&  ev_logger;
 };
 
+class ue_cell_event_manager final : public scheduler_feedback_handler
+{
+public:
+  ue_cell_event_manager(const cell_creation_event& cell_ev, ue_repository& ue_db, srslog::basic_logger& logger);
+
+  void start() { active.store(true, std::memory_order_release); }
+  void stop();
+
+  void process_events(slot_point sl_tx);
+
+  // scheduler_feedback_handler methods.
+  void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override;
+  void handle_crc_indication(const ul_crc_indication& crc) override;
+  void handle_uci_indication(const uci_indication& uci) override;
+  void handle_srs_indication(const srs_indication& srs) override;
+  void handle_ul_phr_indication(const ul_phr_indication_message& phr_ind) override;
+  void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) override;
+
+private:
+  enum class event_result { processed, invalid_ue, invalid_ue_cc };
+
+  struct common_cell_event_t {
+    using callback_type = unique_function<event_result(), 64, true>;
+
+    callback_type callback;
+    const char*   ev_name = "invalid";
+    /// UE index associated with the event. If INVALID_DU_UE_INDEX, the event is not associated with any UE.
+    du_ue_index_t ue_index        = INVALID_DU_UE_INDEX;
+    bool          warn_if_ignored = true;
+
+    common_cell_event_t() = default;
+    template <typename Callable>
+    common_cell_event_t(const char* ev_name_, Callable&& callable, bool warn_if_ignored_ = true) :
+      callback(std::forward<Callable>(callable)), ev_name(ev_name_), warn_if_ignored(warn_if_ignored_)
+    {
+    }
+    template <typename Callable>
+    common_cell_event_t(const char*   ev_name_,
+                        du_ue_index_t ue_index_,
+                        Callable&&    callable,
+                        bool          warn_if_ignored_ = true) :
+      callback(std::forward<Callable>(callable)),
+      ev_name(ev_name_),
+      ue_index(ue_index_),
+      warn_if_ignored(warn_if_ignored_)
+    {
+    }
+  };
+
+  using common_cell_event_queue = concurrent_queue<common_cell_event_t,
+                                                   concurrent_queue_policy::lockfree_mpmc,
+                                                   concurrent_queue_wait_policy::non_blocking>;
+
+  void push_cell_event(du_cell_index_t cell_index, common_cell_event_t event);
+
+  void log_invalid_ue_index(du_ue_index_t ue_index, const char* event_name, bool warn_if_ignored = true) const;
+  void log_invalid_cc(du_ue_index_t ue_idx, const char* event_name, bool warn_if_ignored = true) const;
+
+  void handle_harq_ind(ue_cell&                               ue_cc,
+                       slot_point                             uci_sl,
+                       span<const mac_harq_ack_report_status> harq_bits,
+                       std::optional<float>                   pucch_snr);
+  void handle_csi(ue_cell& ue_cc, const csi_report_data& csi_rep);
+
+  ue_repository&            ue_db;
+  srslog::basic_logger&     logger;
+  const cell_configuration& cfg;
+  ue_fallback_scheduler&    fallback_sched;
+  cell_metrics_handler&     metrics;
+  scheduler_event_logger&   ev_logger;
+
+  std::unique_ptr<pdu_indication_pool> ind_pdu_pool;
+
+  common_cell_event_queue common_events;
+
+  slot_point last_sl_tx;
+
+  std::atomic<bool> active = true;
+};
+
 /// \brief Class used to manage events that arrive to the scheduler and are directed at UEs.
 /// This class acts as a facade for several of the ue_scheduler subcomponents, managing the asynchronous configuration
 /// of the UEs and logging in a thread-safe manner.
@@ -138,7 +218,7 @@ private:
                                                    concurrent_queue_wait_policy::non_blocking>;
 
   void process_common(slot_point sl, du_cell_index_t cell_index);
-  void process_cell_specific(du_cell_index_t cell_index);
+  void process_cell_specific(du_cell_index_t cell_index, slot_point sl_tx);
   void clear_cell_events(du_cell_index_t cell_index);
   bool cell_exists(du_cell_index_t cell_index) const;
 
@@ -148,12 +228,6 @@ private:
   void
   log_invalid_ue_index(du_ue_index_t ue_index, const char* event_name = "Event", bool warn_if_ignored = true) const;
   void log_invalid_cc(du_ue_index_t ue_index, du_cell_index_t cell_index) const;
-
-  void handle_harq_ind(ue_cell&                               ue_cc,
-                       slot_point                             uci_sl,
-                       span<const mac_harq_ack_report_status> harq_bits,
-                       std::optional<float>                   pucch_snr);
-  void handle_csi(ue_cell& ue_cc, const csi_report_data& csi_rep);
 
   /// List of added and configured cells.
   struct cell_context {
@@ -180,8 +254,9 @@ private:
 
   std::unique_ptr<pdu_indication_pool> ind_pdu_pool;
 
-  std::array<std::atomic<bool>, MAX_NOF_DU_CELLS>             cell_active{true};
-  std::array<std::unique_ptr<cell_context>, MAX_NOF_DU_CELLS> du_cells;
+  std::array<std::atomic<bool>, MAX_NOF_DU_CELLS>                      cell_active{true};
+  std::array<std::unique_ptr<cell_context>, MAX_NOF_DU_CELLS>          du_cells;
+  std::array<std::unique_ptr<ue_cell_event_manager>, MAX_NOF_DU_CELLS> cells;
 
   slot_point last_sl;
 
