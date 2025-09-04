@@ -712,7 +712,7 @@ async_task<bool> cu_cp_impl::handle_new_handover_command(ue_index_t ue_index, by
 
   cu_cp_ue* ue = ue_mng.find_du_ue(ue_index);
   if (ue == nullptr) {
-    logger.warning("UE not found for handover command handling. ue={}", ue_index);
+    logger.warning("ue={}: UE not found for handover command handling", ue_index);
     return launch_async([](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN(false);
@@ -720,7 +720,7 @@ async_task<bool> cu_cp_impl::handle_new_handover_command(ue_index_t ue_index, by
   }
   ngap_interface* ngap = ngap_db.find_ngap(ue->get_ue_context().plmn);
   if (ngap == nullptr) {
-    logger.warning("NGAP not found for PLMN={}. ue={}", ue->get_ue_context().plmn, ue_index);
+    logger.warning("ue={}: NGAP not found for PLMN={}", ue_index, ue->get_ue_context().plmn);
     return launch_async([](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN(false);

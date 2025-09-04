@@ -1120,8 +1120,9 @@ fill_asn1_handover_notify(asn1::ngap::ho_notify_s& asn1_msg, const nr_cell_globa
   user_loc_info_nr.tai.tac.from_number(tac);
 }
 
-/// \brief Fill the Handover Notify to ASN.1 struct.
+/// \brief Convert the UL RAN Status Transfer struct to ASN.1.
 /// \param[out] asn1_msg The UL RAN Status Transfer ASN1 struct to fill.
+/// \param[in] drb_list The list of DRB status transfer information.
 inline void
 fill_asn1_ul_ran_status_transfer(asn1::ngap::ul_ran_status_transfer_s&                                         asn1_msg,
                                  const slotted_id_vector<drb_id_t, ngap_drbs_subject_to_status_transfer_item>& drb_list)
