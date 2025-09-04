@@ -145,7 +145,9 @@ void cu_cp_impl::stop()
   while (not cfg.services.cu_cp_executor->execute([this, token = ev.get_token()]() {
     // Stop statistics gathering.
     statistics_report_timer.stop();
-    metrics_session->stop();
+    if (metrics_session != nullptr) {
+      metrics_session->stop();
+    }
   })) {
     logger.debug("Failed to dispatch CU-CP stop task. Retrying...");
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
