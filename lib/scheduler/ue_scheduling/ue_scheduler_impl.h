@@ -33,16 +33,22 @@ class ue_scheduler_impl final : public ue_scheduler
 public:
   explicit ue_scheduler_impl(const scheduler_ue_expert_config& expert_cfg_);
 
-  sched_ue_configuration_handler& get_ue_configurator() override { return event_mng; }
+  sched_ue_configuration_handler& get_ue_configurator(du_cell_index_t pcell_index) override
+  {
+    return event_mng.get_cell(pcell_index);
+  }
 
   scheduler_feedback_handler& get_feedback_handler(du_cell_index_t cell_index) override
   {
-    return event_mng.get_feedback_handler(cell_index);
+    return event_mng.get_cell(cell_index);
   }
 
   scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() override { return event_mng; }
 
-  scheduler_positioning_handler& get_positioning_handler() override { return event_mng; }
+  scheduler_positioning_handler& get_positioning_handler(du_cell_index_t cell_index) override
+  {
+    return event_mng.get_cell(cell_index);
+  }
 
 private:
   ue_cell_scheduler* do_add_cell(const ue_cell_scheduler_creation_request& params) override;
@@ -56,7 +62,7 @@ private:
 
   void handle_error_ind_impl(slot_point sl_tx, du_cell_index_t cell_index, scheduler_slot_handler::error_outcome event)
   {
-    event_mng.handle_error_indication(sl_tx, cell_index, event);
+    event_mng.get_cell(cell_index).handle_error_indication(sl_tx, event);
   }
 
   void run_sched_strategy(du_cell_index_t cell_index);

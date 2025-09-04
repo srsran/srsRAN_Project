@@ -82,24 +82,14 @@ public:
 
       // Retrieve UE.
       if (not parent.ue_db.contains(dl_bo.ue_index)) {
-        parent.log_invalid_ue_index(dl_bo.ue_index);
+        parent.logger.warning("ue={}: Discarding DL buffer occupancy update. Cause: UE not recognized",
+                              fmt::underlying(dl_bo.ue_index));
         continue;
       }
       ue& u = parent.ue_db[dl_bo.ue_index];
 
-      // Forward DL BO update to UE.
-      u.handle_dl_buffer_state_indication(dl_bo.lcid, dl_bo.bs, dl_bo.hol_toa);
-      auto& du_pcell = parent.du_cells[u.get_pcell().cell_index];
-      if (u.get_pcell().is_in_fallback_mode()) {
-        // Signal SRB fallback scheduler with the new SRB0/SRB1 buffer state.
-        du_pcell->fallback_sched->handle_dl_buffer_state_indication(dl_bo.ue_index);
-      }
-
-      // Log event.
-      du_pcell->ev_logger->enqueue(dl_bo);
-
-      // Report event.
-      du_pcell->metrics->handle_dl_buffer_state_indication(dl_bo);
+      // Forward DL BO update to the UE PCell event manager.
+      parent.cells[u.get_pcell().cell_index]->handle_dl_buffer_state_indication(dl_bo);
     }
   }
 
@@ -189,13 +179,22 @@ ue_cell_event_manager::ue_cell_event_manager(const cell_creation_event& cell_ev,
   ue_db(ue_db_),
   logger(logger_),
   cfg(cell_ev.cell_res_grid.cfg),
+  res_grid(cell_ev.cell_res_grid),
+  cell_harqs(cell_ev.cell_harqs),
   fallback_sched(cell_ev.fallback_sched),
+  uci_sched(cell_ev.uci_sched),
+  slice_sched(cell_ev.slice_sched),
   srs_sched(cell_ev.srs_sched),
   metrics(cell_ev.metrics),
   ev_logger(cell_ev.ev_logger),
   ind_pdu_pool(std::make_unique<pdu_indication_pool>(logger)),
   common_events(CELL_EVENT_LIST_SIZE)
 {
+}
+
+ue_cell_event_manager::~ue_cell_event_manager()
+{
+  stop();
 }
 
 void ue_cell_event_manager::stop()
@@ -227,6 +226,182 @@ void ue_cell_event_manager::process_events(slot_point sl_tx)
         break;
     }
   }
+}
+
+void ue_cell_event_manager::handle_ue_creation(ue_config_update_event ev)
+{
+  const du_cell_index_t ue_pcell_index = ev.next_config().pcell_common_cfg().cell_index;
+
+  // Create UE object outside the scheduler slot indication handler to minimize latency.
+  std::unique_ptr<ue> u = std::make_unique<ue>(
+      ue_creation_command{ev.next_config(),
+                          ev.get_fallback_command().has_value() and ev.get_fallback_command().value(),
+                          cell_harqs,
+                          ev.get_ul_ccch_slot_rx()});
+
+  auto handle_ue_creation_impl = [this, u = std::move(u), ev = std::move(ev)]() mutable {
+    if (ue_db.contains(u->ue_index)) {
+      logger.error("ue={} rnti={}: Discarding UE creation. Cause: A UE with the same index already exists",
+                   fmt::underlying(u->ue_index),
+                   u->crnti);
+      return event_result::processed;
+    }
+
+    // Insert UE in UE repository.
+    du_ue_index_t   ueidx       = u->ue_index;
+    rnti_t          rnti        = u->crnti;
+    du_cell_index_t pcell_index = u->get_pcell().cell_index;
+    ue_db.add_ue(std::move(u));
+
+    const auto& added_ue = ue_db[ueidx];
+    for (unsigned i = 0, e = added_ue.nof_cells(); i != e; ++i) {
+      // Update UCI scheduler with new UE UCI resources.
+      uci_sched.add_ue(added_ue.get_cell(to_ue_cell_index(i)).cfg());
+
+      // Update SRS scheduler with new UE SRS resources.
+      srs_sched.add_ue(added_ue.get_cell(to_ue_cell_index(i)).cfg());
+
+      // Add UE to slice scheduler.
+      // Note: This action only has effect when UE is created in non-fallback mode.
+      slice_sched.add_ue(ueidx);
+    }
+
+    // Log Event.
+    ev_logger.enqueue(scheduler_event_logger::ue_creation_event{ueidx, rnti, pcell_index});
+
+    // Notify config manager that creation is complete with success.
+    ev.notify_completion();
+
+    return event_result::processed;
+  };
+
+  // Defer UE object addition to ue list to the slot indication handler.
+  push_cell_event(ue_pcell_index, common_cell_event_t{"ue_add", std::move(handle_ue_creation_impl)});
+
+  // Destroy any pending UEs in the repository outside the critical section.
+  ue_db.destroy_pending_ues();
+}
+
+void ue_cell_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
+{
+  const du_cell_index_t pcell_index = ev.next_config().pcell_common_cfg().cell_index;
+  const du_ue_index_t   ue_index    = ev.get_ue_index();
+
+  auto handle_ue_reconf_impl = [this, ev = std::move(ev)]() mutable {
+    const du_ue_index_t ue_idx = ev.get_ue_index();
+    if (not ue_db.contains(ue_idx)) {
+      return event_result::invalid_ue;
+    }
+    auto& u = ue_db[ue_idx];
+
+    // If a UE carrier has been removed, remove the UE from the respective slice scheduler.
+    // Update UCI scheduler with cell changes.
+    for (unsigned i = 0, e = u.nof_cells(); i != e; ++i) {
+      auto& ue_cc = u.get_cell(to_ue_cell_index(i));
+      if (not ev.next_config().contains(ue_cc.cell_index)) {
+        // UE carrier is being removed.
+        // Update UE UCI resources in UCI scheduler.
+        uci_sched.rem_ue(ue_cc.cfg());
+        // Update UE SRS resources in SRS scheduler.
+        srs_sched.rem_ue(ue_cc.cfg());
+        // Schedule removal of UE in slice scheduler.
+        slice_sched.rem_ue(ue_idx);
+      } else {
+        // UE carrier is being reconfigured.
+        uci_sched.reconf_ue(ev.next_config().ue_cell_cfg(ue_cc.cell_index), ue_cc.cfg());
+        srs_sched.reconf_ue(ev.next_config().ue_cell_cfg(ue_cc.cell_index), ue_cc.cfg());
+      }
+    }
+    for (unsigned i = 0, e = ev.next_config().nof_cells(); i != e; ++i) {
+      const auto& new_ue_cc_cfg = ev.next_config().ue_cell_cfg(to_ue_cell_index(i));
+      auto*       ue_cc         = u.find_cell(new_ue_cc_cfg.cell_cfg_common.cell_index);
+      if (ue_cc == nullptr) {
+        // New UE carrier is being added.
+        uci_sched.add_ue(new_ue_cc_cfg);
+        srs_sched.add_ue(new_ue_cc_cfg);
+      }
+    }
+
+    // Configure existing UE.
+    ue_db[ue_idx].handle_reconfiguration_request(ue_reconf_command{ev.next_config()}, ev.is_reestablished());
+
+    // Update slice scheduler.
+    for (unsigned i = 0, e = u.nof_cells(); i != e; ++i) {
+      // Reconfigure UE in slice scheduler.
+      slice_sched.reconf_ue(u.ue_index);
+    }
+
+    // Log event.
+    ev_logger.enqueue(scheduler_event_logger::ue_reconf_event{ue_idx, u.crnti});
+
+    // Notify config manager that creation is complete with success.
+    ev.notify_completion();
+
+    return event_result::processed;
+  };
+
+  // Defer UE reconf to ue list to the slot indication handler.
+  push_cell_event(pcell_index, common_cell_event_t{"ue_reconf", ue_index, std::move(handle_ue_reconf_impl)});
+}
+
+void ue_cell_event_manager::handle_ue_deletion(ue_config_delete_event ev)
+{
+  const du_ue_index_t   ue_index    = ev.ue_index();
+  const du_cell_index_t pcell_index = ev.pcell_index();
+
+  auto handle_ue_deletion_impl = [this, ev = std::move(ev)]() mutable {
+    const du_ue_index_t ue_idx = ev.ue_index();
+    if (not ue_db.contains(ue_idx)) {
+      return event_result::invalid_ue;
+    }
+    const auto&  u    = ue_db[ue_idx];
+    const rnti_t rnti = u.crnti;
+
+    for (unsigned i = 0, e = u.nof_cells(); i != e; ++i) {
+      // Update UCI scheduling by removing existing UE UCI resources.
+      uci_sched.rem_ue(u.get_pcell().cfg());
+      // Update SRS scheduling by removing existing UE SRS resources.
+      srs_sched.rem_ue(u.get_pcell().cfg());
+      // Schedule removal of UE from slice scheduler.
+      slice_sched.rem_ue(ue_idx);
+    }
+
+    // Schedule UE removal from repository.
+    ue_db.schedule_ue_rem(std::move(ev));
+
+    // Log UE removal event.
+    ev_logger.enqueue(sched_ue_delete_message{ue_idx, rnti});
+
+    return event_result::processed;
+  };
+
+  push_cell_event(pcell_index, common_cell_event_t{"ue_rem", ue_index, std::move(handle_ue_deletion_impl)});
+
+  // Destroy any pending UEs in the repository outside the critical section.
+  ue_db.destroy_pending_ues();
+}
+
+void ue_cell_event_manager::handle_ue_config_applied(du_cell_index_t pcell_idx, du_ue_index_t ue_idx)
+{
+  auto handle_ue_config_applied_impl = [this, ue_idx]() {
+    if (not ue_db.contains(ue_idx)) {
+      return event_result::invalid_ue;
+    }
+    ue& u = ue_db[ue_idx];
+
+    // Confirm that UE applied new config.
+    u.handle_config_applied();
+
+    // Add UE to slice scheduler, once it leaves fallback mode.
+    slice_sched.config_applied(ue_idx);
+
+    // Log UE config applied event.
+    ev_logger.enqueue(scheduler_event_logger::ue_cfg_applied_event{ue_idx, u.crnti});
+
+    return event_result::processed;
+  };
+
+  push_cell_event(pcell_idx, common_cell_event_t{"ue_cfg_applied", ue_idx, std::move(handle_ue_config_applied_impl)});
 }
 
 void ue_cell_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr_ind)
@@ -604,6 +779,143 @@ void ue_cell_event_manager::handle_positioning_measurement_stop(du_cell_index_t 
   push_cell_event(cell_index, common_cell_event_t{"pos_meas_stop", std::move(task)});
 }
 
+void ue_cell_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
+{
+  // Note: DL buffer state indication is a special case. We use the ue_dl_buffer_occupancy_manager to handle the
+  // buffer state updates in a thread-safe manner and call this class from within the scheduler execution context. So,
+  // there is no need to push this event to the event queue.
+
+  // Retrieve UE.
+  if (not ue_db.contains(bs.ue_index)) {
+    log_invalid_ue_index(bs.ue_index, "DL BO");
+    return;
+  }
+  ue& u = ue_db[bs.ue_index];
+
+  // Forward DL BO update to UE.
+  u.handle_dl_buffer_state_indication(bs.lcid, bs.bs, bs.hol_toa);
+  if (u.get_pcell().is_in_fallback_mode()) {
+    // Signal SRB fallback scheduler with the new SRB0/SRB1 buffer state.
+    fallback_sched.handle_dl_buffer_state_indication(bs.ue_index);
+  }
+
+  // Log event.
+  ev_logger.enqueue(bs);
+
+  // Report event.
+  metrics.handle_dl_buffer_state_indication(bs);
+}
+
+static void handle_discarded_pusch(const cell_slot_resource_allocator& prev_slot_result, ue_repository& ue_db)
+{
+  for (const ul_sched_info& grant : prev_slot_result.result.ul.puschs) {
+    ue* u = ue_db.find_by_rnti(grant.pusch_cfg.rnti);
+    if (u == nullptr) {
+      // UE has been removed.
+      continue;
+    }
+
+    // - The lower layers will not attempt to decode the PUSCH and will not send any CRC indication.
+    std::optional<ul_harq_process_handle> h_ul = u->get_pcell().harqs.ul_harq(to_harq_id(grant.pusch_cfg.harq_id));
+    if (h_ul.has_value()) {
+      // Note: We don't use this cancellation to update the UL OLLA, as we shouldn't take lates into account in link
+      // adaptation.
+      if (h_ul->nof_retxs() == 0) {
+        // Given that the PUSCH grant was discarded before it reached the PHY, the "new_data" flag was not handled
+        // and the UL softbuffer was not reset. To avoid mixing different TBs in the softbuffer, it is important to
+        // reset the UL HARQ process.
+        h_ul->reset();
+      } else {
+        // To avoid a long UL HARQ timeout window (due to lack of CRC indication), it is important to force a NACK
+        // in the UL HARQ process.
+        h_ul->ul_crc_info(false);
+      }
+    }
+
+    // - The lower layers will not attempt to decode any UCI in the PUSCH and will not send any UCI indication.
+    if (grant.uci.has_value() and grant.uci->harq.has_value() and grant.uci->harq->harq_ack_nof_bits > 0) {
+      // To avoid a long DL HARQ timeout window (due to lack of UCI indication), it is important to NACK the
+      // DL HARQ processes with UCI falling in this slot.
+      // Note: We don't use this cancellation to update the DL OLLA, as we shouldn't take lates into account in link
+      // adaptation.
+      u->get_pcell().harqs.uci_sched_failed(prev_slot_result.slot);
+    }
+  }
+}
+
+static void handle_discarded_pucch(const cell_slot_resource_allocator& prev_slot_result, ue_repository& ue_db)
+{
+  for (const auto& pucch : prev_slot_result.result.ul.pucchs) {
+    ue* u = ue_db.find_by_rnti(pucch.crnti);
+    if (u == nullptr) {
+      // UE has been removed.
+      continue;
+    }
+
+    // - The lower layers will not attempt to decode the PUCCH and will not send any UCI indication.
+    if (pucch.uci_bits.harq_ack_nof_bits > 0) {
+      // Note: To avoid a long DL HARQ timeout window (due to lack of UCI indication), it is important to force a NACK
+      // in the DL HARQ processes with UCI falling in this slot.
+      // Note: We don't use this cancellation to update the DL OLLA, as we shouldn't take lates into account in link
+      // adaptation.
+      u->get_pcell().harqs.uci_sched_failed(prev_slot_result.slot);
+    }
+  }
+}
+
+void ue_cell_event_manager::handle_error_indication(slot_point sl_tx, scheduler_slot_handler::error_outcome event)
+{
+  auto handle_error_impl = [this, sl_tx, event]() {
+    // Handle Error Indication.
+
+    const cell_slot_resource_allocator* prev_slot_result = res_grid.get_history(sl_tx);
+    if (prev_slot_result == nullptr) {
+      logger.warning("cell={}, slot={}: Discarding error indication. Cause: Scheduler results associated with the slot "
+                     "of the error indication have already been erased (current slot={})",
+                     fmt::underlying(cfg.cell_index),
+                     sl_tx,
+                     last_sl_tx);
+      return event_result::processed;
+    }
+
+    // In case DL PDCCHs were skipped, there will be the following consequences:
+    // - The UE will not decode the PDSCH and will not send the respective UCI.
+    // - The UE won't update the HARQ NDI, if new HARQ TB.
+    // - The UCI indication coming later from the lower layers will likely contain a HARQ-ACK=DTX.
+    // In case UL PDCCHs were skipped, there will be the following consequences:
+    // - The UE will not decode the PUSCH.
+    // - The UE won't update the HARQ NDI, if new HARQ TB.
+    // - The CRC indication coming from the lower layers will likely be CRC=KO.
+    // - Any UCI in the respective PUSCH will be likely reported as HARQ-ACK=DTX.
+    // In neither of the cases, the HARQs will timeout, because we did not lose the UCI/CRC indications in the
+    // lower layers. We do not need to cancel associated PUSCH grant (in UL PDCCH case) because it is important
+    // that the PUSCH "new_data" flag reaches the lower layers, telling them whether the UL HARQ buffer needs to
+    // be reset or not. Cancelling HARQ retransmissions is dangerous as it increases the chances of NDI
+    // ambiguity.
+
+    // In case of PDSCH grants being discarded, there will be the following consequences:
+    // - If the PDCCH was not discarded,the UE will fail to decode the PDSCH and will send an HARQ-ACK=NACK. The
+    // scheduler will retransmit the respective DL HARQ. No actions required.
+
+    // In case of PUCCH and PUSCH grants being discarded.
+    if (event.pusch_and_pucch_discarded) {
+      handle_discarded_pusch(*prev_slot_result, ue_db);
+
+      handle_discarded_pucch(*prev_slot_result, ue_db);
+    }
+
+    // Log event.
+    ev_logger.enqueue(scheduler_event_logger::error_indication_event{sl_tx, event});
+
+    // Report metrics.
+    metrics.handle_error_indication();
+
+    return event_result::processed;
+  };
+
+  push_cell_event(cfg.cell_index, common_cell_event_t{"error_ind", std::move(handle_error_impl)});
+}
+
 void ue_cell_event_manager::handle_harq_ind(ue_cell&                               ue_cc,
                                             slot_point                             uci_sl,
                                             span<const mac_harq_ack_report_status> harq_bits,
@@ -702,311 +1014,13 @@ ue_event_manager::ue_event_manager(ue_repository& ue_db_) :
   logger(srslog::fetch_basic_logger("SCHED")),
   dl_bo_mng(std::make_unique<ue_dl_buffer_occupancy_manager>(*this))
 {
-  std::fill(cell_active.begin(), cell_active.end(), true);
 }
 
 ue_event_manager::~ue_event_manager() = default;
 
-void ue_event_manager::handle_ue_creation(ue_config_update_event ev)
-{
-  const du_cell_index_t ue_pcell_index = ev.next_config().pcell_common_cfg().cell_index;
-
-  // Create UE object outside the scheduler slot indication handler to minimize latency.
-  std::unique_ptr<ue> u = std::make_unique<ue>(
-      ue_creation_command{ev.next_config(),
-                          ev.get_fallback_command().has_value() and ev.get_fallback_command().value(),
-                          *du_cells[ue_pcell_index]->cell_harqs,
-                          ev.get_ul_ccch_slot_rx()});
-
-  auto handle_ue_creation_impl = [this, u = std::move(u), ev = std::move(ev)]() mutable {
-    if (ue_db.contains(u->ue_index)) {
-      logger.error("ue={} rnti={}: Discarding UE creation. Cause: A UE with the same index already exists",
-                   fmt::underlying(u->ue_index),
-                   u->crnti);
-      return;
-    }
-
-    // Insert UE in UE repository.
-    du_ue_index_t   ueidx       = u->ue_index;
-    rnti_t          rnti        = u->crnti;
-    du_cell_index_t pcell_index = u->get_pcell().cell_index;
-    ue_db.add_ue(std::move(u));
-
-    const auto& added_ue = ue_db[ueidx];
-    for (unsigned i = 0, e = added_ue.nof_cells(); i != e; ++i) {
-      // Update UCI scheduler with new UE UCI resources.
-      du_cells[pcell_index]->uci_sched->add_ue(added_ue.get_cell(to_ue_cell_index(i)).cfg());
-
-      // Update SRS scheduler with new UE SRS resources.
-      du_cells[pcell_index]->srs_sched->add_ue(added_ue.get_cell(to_ue_cell_index(i)).cfg());
-
-      // Add UE to slice scheduler.
-      // Note: This action only has effect when UE is created in non-fallback mode.
-      du_cells[pcell_index]->slice_sched->add_ue(ueidx);
-    }
-
-    // Log Event.
-    du_cells[pcell_index]->ev_logger->enqueue(scheduler_event_logger::ue_creation_event{ueidx, rnti, pcell_index});
-
-    // Notify config manager that creation is complete with success.
-    ev.notify_completion();
-  };
-
-  // Defer UE object addition to ue list to the slot indication handler.
-  push_cell_event(ue_pcell_index, common_cell_event_t{"ue_add", std::move(handle_ue_creation_impl)});
-
-  // Destroy any pending UEs in the repository outside the critical section.
-  ue_db.destroy_pending_ues();
-}
-
-void ue_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
-{
-  const du_cell_index_t pcell_index = ev.next_config().pcell_common_cfg().cell_index;
-  const du_ue_index_t   ue_index    = ev.get_ue_index();
-
-  auto handle_ue_reconf_impl = [this, ev = std::move(ev)]() mutable {
-    const du_ue_index_t ue_idx = ev.get_ue_index();
-    if (not ue_db.contains(ue_idx)) {
-      log_invalid_ue_index(ue_idx, "UE Reconfig Request");
-      return;
-    }
-    auto& u = ue_db[ue_idx];
-
-    // If a UE carrier has been removed, remove the UE from the respective slice scheduler.
-    // Update UCI scheduler with cell changes.
-    for (unsigned i = 0, e = u.nof_cells(); i != e; ++i) {
-      auto& ue_cc = u.get_cell(to_ue_cell_index(i));
-      if (not ev.next_config().contains(ue_cc.cell_index)) {
-        // UE carrier is being removed.
-        // Update UE UCI resources in UCI scheduler.
-        du_cells[ue_cc.cell_index]->uci_sched->rem_ue(ue_cc.cfg());
-        // Update UE SRS resources in SRS scheduler.
-        du_cells[ue_cc.cell_index]->srs_sched->rem_ue(ue_cc.cfg());
-        // Schedule removal of UE in slice scheduler.
-        du_cells[ue_cc.cell_index]->slice_sched->rem_ue(ue_idx);
-      } else {
-        // UE carrier is being reconfigured.
-        du_cells[ue_cc.cell_index]->uci_sched->reconf_ue(ev.next_config().ue_cell_cfg(ue_cc.cell_index), ue_cc.cfg());
-        du_cells[ue_cc.cell_index]->srs_sched->reconf_ue(ev.next_config().ue_cell_cfg(ue_cc.cell_index), ue_cc.cfg());
-      }
-    }
-    for (unsigned i = 0, e = ev.next_config().nof_cells(); i != e; ++i) {
-      const auto& new_ue_cc_cfg = ev.next_config().ue_cell_cfg(to_ue_cell_index(i));
-      auto*       ue_cc         = u.find_cell(new_ue_cc_cfg.cell_cfg_common.cell_index);
-      if (ue_cc == nullptr) {
-        // New UE carrier is being added.
-        du_cells[new_ue_cc_cfg.cell_cfg_common.cell_index]->uci_sched->add_ue(new_ue_cc_cfg);
-
-        du_cells[new_ue_cc_cfg.cell_cfg_common.cell_index]->srs_sched->add_ue(new_ue_cc_cfg);
-      }
-    }
-
-    // Configure existing UE.
-    ue_db[ue_idx].handle_reconfiguration_request(ue_reconf_command{ev.next_config()}, ev.is_reestablished());
-
-    // Update slice scheduler.
-    for (unsigned i = 0, e = u.nof_cells(); i != e; ++i) {
-      const auto& ue_cc = u.get_cell(to_ue_cell_index(i));
-      // Reconfigure UE in slice scheduler.
-      du_cells[ue_cc.cell_index]->slice_sched->reconf_ue(u.ue_index);
-    }
-
-    // Log event.
-    du_cells[u.get_pcell().cell_index]->ev_logger->enqueue(scheduler_event_logger::ue_reconf_event{ue_idx, u.crnti});
-
-    // Notify config manager that creation is complete with success.
-    ev.notify_completion();
-  };
-
-  // Defer UE reconf to ue list to the slot indication handler.
-  push_cell_event(pcell_index, common_cell_event_t{"ue_reconf", ue_index, std::move(handle_ue_reconf_impl)});
-}
-
-void ue_event_manager::handle_ue_deletion(ue_config_delete_event ev)
-{
-  const du_ue_index_t   ue_index    = ev.ue_index();
-  const du_cell_index_t pcell_index = ev.pcell_index();
-
-  auto handle_ue_deletion_impl = [this, ev = std::move(ev)]() mutable {
-    const du_ue_index_t ue_idx = ev.ue_index();
-    if (not ue_db.contains(ue_idx)) {
-      logger.warning("Received request to delete ue={} that does not exist", fmt::underlying(ue_idx));
-      return;
-    }
-    const auto&     u         = ue_db[ue_idx];
-    const rnti_t    rnti      = u.crnti;
-    du_cell_index_t pcell_idx = u.get_pcell().cell_index;
-
-    for (unsigned i = 0, e = u.nof_cells(); i != e; ++i) {
-      // Update UCI scheduling by removing existing UE UCI resources.
-      du_cells[u.get_cell(to_ue_cell_index(i)).cell_index]->uci_sched->rem_ue(u.get_pcell().cfg());
-      // Update SRS scheduling by removing existing UE SRS resources.
-      du_cells[u.get_cell(to_ue_cell_index(i)).cell_index]->srs_sched->rem_ue(u.get_pcell().cfg());
-      // Schedule removal of UE from slice scheduler.
-      du_cells[u.get_cell(to_ue_cell_index(i)).cell_index]->slice_sched->rem_ue(ue_idx);
-    }
-
-    // Schedule UE removal from repository.
-    ue_db.schedule_ue_rem(std::move(ev));
-
-    // Log UE removal event.
-    du_cells[pcell_idx]->ev_logger->enqueue(sched_ue_delete_message{ue_idx, rnti});
-  };
-
-  push_cell_event(pcell_index, common_cell_event_t{"ue_rem", ue_index, std::move(handle_ue_deletion_impl)});
-
-  // Destroy any pending UEs in the repository outside the critical section.
-  ue_db.destroy_pending_ues();
-}
-
-void ue_event_manager::handle_ue_config_applied(du_cell_index_t pcell_idx, du_ue_index_t ue_idx)
-{
-  auto handle_ue_config_applied_impl = [this, ue_idx]() {
-    if (not ue_db.contains(ue_idx)) {
-      logger.warning("Received config application confirmation for ue={} that does not exist", fmt::underlying(ue_idx));
-      return;
-    }
-    ue&   u     = ue_db[ue_idx];
-    auto& pcell = du_cells[u.get_pcell().cell_index];
-
-    // Confirm that UE applied new config.
-    u.handle_config_applied();
-
-    // Add UE to slice scheduler, once it leaves fallback mode.
-    pcell->slice_sched->config_applied(ue_idx);
-
-    // Log UE config applied event.
-    pcell->ev_logger->enqueue(scheduler_event_logger::ue_cfg_applied_event{ue_idx, u.crnti});
-  };
-
-  push_cell_event(pcell_idx, common_cell_event_t{"ue_cfg_applied", ue_idx, std::move(handle_ue_config_applied_impl)});
-}
-
 void ue_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
 {
   dl_bo_mng->handle_dl_buffer_state_indication(bs);
-}
-
-void ue_event_manager::handle_positioning_measurement_request(const positioning_measurement_request& req)
-{
-  srsran_sanity_check(cell_exists(req.cell_index), "Invalid cell index");
-  cells[req.cell_index]->handle_positioning_measurement_request(req);
-}
-
-void ue_event_manager::handle_positioning_measurement_stop(du_cell_index_t cell_index, rnti_t pos_rnti)
-{
-  srsran_sanity_check(cell_exists(cell_index), "Invalid cell index");
-  cells[cell_index]->handle_positioning_measurement_stop(cell_index, pos_rnti);
-}
-
-static void handle_discarded_pusch(const cell_slot_resource_allocator& prev_slot_result, ue_repository& ue_db)
-{
-  for (const ul_sched_info& grant : prev_slot_result.result.ul.puschs) {
-    ue* u = ue_db.find_by_rnti(grant.pusch_cfg.rnti);
-    if (u == nullptr) {
-      // UE has been removed.
-      continue;
-    }
-
-    // - The lower layers will not attempt to decode the PUSCH and will not send any CRC indication.
-    std::optional<ul_harq_process_handle> h_ul = u->get_pcell().harqs.ul_harq(to_harq_id(grant.pusch_cfg.harq_id));
-    if (h_ul.has_value()) {
-      // Note: We don't use this cancellation to update the UL OLLA, as we shouldn't take lates into account in link
-      // adaptation.
-      if (h_ul->nof_retxs() == 0) {
-        // Given that the PUSCH grant was discarded before it reached the PHY, the "new_data" flag was not handled
-        // and the UL softbuffer was not reset. To avoid mixing different TBs in the softbuffer, it is important to
-        // reset the UL HARQ process.
-        h_ul->reset();
-      } else {
-        // To avoid a long UL HARQ timeout window (due to lack of CRC indication), it is important to force a NACK
-        // in the UL HARQ process.
-        h_ul->ul_crc_info(false);
-      }
-    }
-
-    // - The lower layers will not attempt to decode any UCI in the PUSCH and will not send any UCI indication.
-    if (grant.uci.has_value() and grant.uci->harq.has_value() and grant.uci->harq->harq_ack_nof_bits > 0) {
-      // To avoid a long DL HARQ timeout window (due to lack of UCI indication), it is important to NACK the
-      // DL HARQ processes with UCI falling in this slot.
-      // Note: We don't use this cancellation to update the DL OLLA, as we shouldn't take lates into account in link
-      // adaptation.
-      u->get_pcell().harqs.uci_sched_failed(prev_slot_result.slot);
-    }
-  }
-}
-
-static void handle_discarded_pucch(const cell_slot_resource_allocator& prev_slot_result, ue_repository& ue_db)
-{
-  for (const auto& pucch : prev_slot_result.result.ul.pucchs) {
-    ue* u = ue_db.find_by_rnti(pucch.crnti);
-    if (u == nullptr) {
-      // UE has been removed.
-      continue;
-    }
-
-    // - The lower layers will not attempt to decode the PUCCH and will not send any UCI indication.
-    if (pucch.uci_bits.harq_ack_nof_bits > 0) {
-      // Note: To avoid a long DL HARQ timeout window (due to lack of UCI indication), it is important to force a NACK
-      // in the DL HARQ processes with UCI falling in this slot.
-      // Note: We don't use this cancellation to update the DL OLLA, as we shouldn't take lates into account in link
-      // adaptation.
-      u->get_pcell().harqs.uci_sched_failed(prev_slot_result.slot);
-    }
-  }
-}
-
-void ue_event_manager::handle_error_indication(slot_point                            sl_tx,
-                                               du_cell_index_t                       cell_index,
-                                               scheduler_slot_handler::error_outcome event)
-{
-  auto handle_error_impl = [this, sl_tx, cell_index, event]() {
-    // Handle Error Indication.
-
-    const cell_slot_resource_allocator* prev_slot_result = du_cells[cell_index]->res_grid->get_history(sl_tx);
-    if (prev_slot_result == nullptr) {
-      logger.warning("cell={}, slot={}: Discarding error indication. Cause: Scheduler results associated with the slot "
-                     "of the error indication have already been erased (current slot={})",
-                     fmt::underlying(cell_index),
-                     sl_tx,
-                     last_sl);
-      return;
-    }
-
-    // In case DL PDCCHs were skipped, there will be the following consequences:
-    // - The UE will not decode the PDSCH and will not send the respective UCI.
-    // - The UE won't update the HARQ NDI, if new HARQ TB.
-    // - The UCI indication coming later from the lower layers will likely contain a HARQ-ACK=DTX.
-    // In case UL PDCCHs were skipped, there will be the following consequences:
-    // - The UE will not decode the PUSCH.
-    // - The UE won't update the HARQ NDI, if new HARQ TB.
-    // - The CRC indication coming from the lower layers will likely be CRC=KO.
-    // - Any UCI in the respective PUSCH will be likely reported as HARQ-ACK=DTX.
-    // In neither of the cases, the HARQs will timeout, because we did not lose the UCI/CRC indications in the
-    // lower layers. We do not need to cancel associated PUSCH grant (in UL PDCCH case) because it is important
-    // that the PUSCH "new_data" flag reaches the lower layers, telling them whether the UL HARQ buffer needs to
-    // be reset or not. Cancelling HARQ retransmissions is dangerous as it increases the chances of NDI
-    // ambiguity.
-
-    // In case of PDSCH grants being discarded, there will be the following consequences:
-    // - If the PDCCH was not discarded,the UE will fail to decode the PDSCH and will send an HARQ-ACK=NACK. The
-    // scheduler will retransmit the respective DL HARQ. No actions required.
-
-    // In case of PUCCH and PUSCH grants being discarded.
-    if (event.pusch_and_pucch_discarded) {
-      handle_discarded_pusch(*prev_slot_result, ue_db);
-
-      handle_discarded_pucch(*prev_slot_result, ue_db);
-    }
-
-    // Log event.
-    du_cells[cell_index]->ev_logger->enqueue(scheduler_event_logger::error_indication_event{sl_tx, event});
-
-    // Report metrics.
-    du_cells[cell_index]->metrics->handle_error_indication();
-  };
-
-  push_cell_event(cell_index, common_cell_event_t{"error_ind", std::move(handle_error_impl)});
 }
 
 void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)
@@ -1022,28 +1036,12 @@ void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)
   dl_bo_mng->slot_indication(sl);
 }
 
-void ue_event_manager::process_cell_specific(du_cell_index_t cell_index, slot_point sl_tx)
-{
-  // Pop and process pending cell-specific events.
-  auto&               common_cell_events = du_cells[cell_index]->common_events;
-  common_cell_event_t cell_ev;
-  while (common_cell_events.try_pop(cell_ev)) {
-    if (cell_ev.ue_index != INVALID_DU_UE_INDEX and not ue_db.contains(cell_ev.ue_index)) {
-      log_invalid_ue_index(cell_ev.ue_index, cell_ev.ev_name, cell_ev.warn_if_ignored);
-      continue;
-    }
-    cell_ev.callback();
-  }
-
-  cells[cell_index]->process_events(sl_tx);
-}
-
 void ue_event_manager::run(slot_point sl, du_cell_index_t cell_index)
 {
   srsran_sanity_check(cell_exists(cell_index), "Invalid cell index {}", fmt::underlying(cell_index));
 
   // Process carrier specific events.
-  process_cell_specific(cell_index, sl);
+  cells[cell_index]->process_events(sl);
 
   // Process common events.
   process_common(sl, cell_index);
@@ -1054,90 +1052,16 @@ void ue_event_manager::add_cell(const cell_creation_event& cell_ev)
   const du_cell_index_t cell_index = cell_ev.cell_res_grid.cell_index();
   srsran_assert(not cell_exists(cell_index), "Overwriting cell configurations not supported");
 
-  du_cells[cell_index]                 = std::make_unique<cell_context>(CELL_EVENT_LIST_SIZE);
-  du_cells[cell_index]->cfg            = &cell_ev.cell_res_grid.cfg;
-  du_cells[cell_index]->res_grid       = &cell_ev.cell_res_grid;
-  du_cells[cell_index]->cell_harqs     = &cell_ev.cell_harqs;
-  du_cells[cell_index]->fallback_sched = &cell_ev.fallback_sched;
-  du_cells[cell_index]->uci_sched      = &cell_ev.uci_sched;
-  du_cells[cell_index]->slice_sched    = &cell_ev.slice_sched;
-  du_cells[cell_index]->srs_sched      = &cell_ev.srs_sched;
-  du_cells[cell_index]->metrics        = &cell_ev.metrics;
-  du_cells[cell_index]->ev_logger      = &cell_ev.ev_logger;
-
   cells[cell_index] = std::make_unique<ue_cell_event_manager>(cell_ev, ue_db, logger);
-}
-
-void ue_event_manager::start_cell(du_cell_index_t cell_index)
-{
-  srsran_assert(cell_exists(cell_index), "Starting non-existing cell");
-  cell_active[cell_index].store(true, std::memory_order_release);
-  cells[cell_index]->start();
-}
-
-void ue_event_manager::stop_cell(du_cell_index_t cell_index)
-{
-  cell_active[cell_index].store(false, std::memory_order_release);
-  cells[cell_index]->stop();
-  clear_cell_events(cell_index);
-}
-
-void ue_event_manager::clear_cell_events(du_cell_index_t cell_index)
-{
-  // Flush pending cell-specific events.
-  common_cell_event_t cell_ev;
-  while (du_cells[cell_index]->common_events.try_pop(cell_ev)) {
-  }
 }
 
 void ue_event_manager::rem_cell(du_cell_index_t cell_index)
 {
-  // Stop cell if it has not been stopped yet.
-  stop_cell(cell_index);
-  cells[cell_index]->stop();
-
   // Remove cell entry.
-  du_cells[cell_index] = {};
-  cells[cell_index]    = {};
-}
-
-void ue_event_manager::push_cell_event(du_cell_index_t cell_index, common_cell_event_t event)
-{
-  if (SRSRAN_UNLIKELY(not cell_active[cell_index].load(std::memory_order_acquire))) {
-    // Note: PHY events should not arrive after the cell has been stopped.
-    if (event.ue_index == INVALID_DU_UE_INDEX) {
-      logger.warning(
-          "cell={}: Discarding {} event. Cause: Cell is not active", fmt::underlying(cell_index), event.ev_name);
-    } else {
-      logger.warning("cell={} ue={}: Discarding {} event. Cause: Cell is not active",
-                     fmt::underlying(cell_index),
-                     fmt::underlying(event.ue_index),
-                     event.ev_name);
-    }
-    return;
-  }
-
-  if (not du_cells[cell_index]->common_events.try_push(std::move(event))) {
-    if (event.ue_index == INVALID_DU_UE_INDEX) {
-      logger.warning(
-          "cell={}: Discarding {} event. Cause: Event queue is full", fmt::underlying(cell_index), event.ev_name);
-    } else {
-      logger.warning("cell={} ue={}: Discarding {} event. Cause: Event queue is full",
-                     fmt::underlying(cell_index),
-                     fmt::underlying(event.ue_index),
-                     event.ev_name);
-    }
-  }
+  cells[cell_index] = {};
 }
 
 bool ue_event_manager::cell_exists(du_cell_index_t cell_index) const
 {
-  return cell_index < MAX_NOF_DU_CELLS and du_cells[cell_index] != nullptr;
-}
-
-void ue_event_manager::log_invalid_ue_index(du_ue_index_t ue_index, const char* event_name, bool warn_if_ignored) const
-{
-  srslog::log_channel& log_channel = warn_if_ignored ? logger.warning : logger.info;
-  log_channel(
-      "{} for ue={} discarded. Cause: UE with provided Id does not exist", event_name, fmt::underlying(ue_index));
+  return cell_index < MAX_NOF_DU_CELLS and cells[cell_index] != nullptr;
 }

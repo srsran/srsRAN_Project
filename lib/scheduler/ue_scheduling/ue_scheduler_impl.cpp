@@ -40,7 +40,7 @@ void ue_scheduler_impl::do_start_cell(du_cell_index_t cell_index)
   srsran_assert(cells.contains(cell_index), "Cell reference not found in the scheduler");
 
   // Signal event manager that new events can be processed for this cell.
-  event_mng.start_cell(cell_index);
+  event_mng.get_cell(cell_index).start();
 }
 
 void ue_scheduler_impl::do_stop_cell(du_cell_index_t cell_index)
@@ -49,7 +49,7 @@ void ue_scheduler_impl::do_stop_cell(du_cell_index_t cell_index)
   auto& c = cells[cell_index];
 
   // Halt any pending events associated with this cell.
-  event_mng.stop_cell(cell_index);
+  event_mng.get_cell(cell_index).stop();
 
   // Stop sub-schedulers.
   c.fallback_sched.stop();
