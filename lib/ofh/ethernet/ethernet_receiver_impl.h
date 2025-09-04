@@ -16,7 +16,7 @@
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/ofh/ethernet/ethernet_receiver_config.h"
 #include "srsran/srslog/logger.h"
-#include <future>
+#include "srsran/support/synchronization/stop_event.h"
 
 namespace srsran {
 
@@ -60,8 +60,7 @@ private:
   task_executor&                  executor;
   frame_notifier*                 notifier;
   int                             socket_fd = -1;
-  std::atomic<bool>               stop_requested{false};
-  std::promise<void>              stop_promise;
+  stop_event_source               stop_manager;
   ethernet_rx_buffer_pool         buffer_pool;
   receiver_metrics_collector_impl metrics_collector;
 };

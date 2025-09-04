@@ -16,7 +16,7 @@
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/support/srsran_assert.h"
-#include <future>
+#include "srsran/support/synchronization/stop_event.h"
 
 namespace srsran {
 
@@ -59,8 +59,7 @@ private:
   frame_notifier*                    notifier;
   std::shared_ptr<dpdk_port_context> port_ctx;
   receiver_metrics_collector_impl    metrics_collector;
-  std::atomic<bool>                  stop_requested{false};
-  std::promise<void>                 stop_promise;
+  stop_event_source                  stop_manager;
 };
 
 } // namespace ether

@@ -13,6 +13,7 @@
 #include "srsran/instrumentation/traces/ofh_traces.h"
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
 #include "srsran/support/rtsan.h"
+#include <future>
 #include <thread>
 
 using namespace srsran;
@@ -97,10 +98,12 @@ void realtime_timing_worker::start()
 {
   logger.info("Starting the realtime timing worker");
 
+  stop_manager.reset();
+
   std::promise<void> p;
   std::future<void>  fut = p.get_future();
 
-  if (!executor.defer([this, &p]() {
+  if (!executor.defer([this, &p, token = stop_manager.get_token()]() {
         // Signal start() caller thread that the operation is complete.
         p.set_value();
 
@@ -120,11 +123,7 @@ void realtime_timing_worker::start()
 void realtime_timing_worker::stop()
 {
   logger.info("Requesting stop of the realtime timing worker");
-  stop_requested.store(true, std::memory_order_relaxed);
-
-  // Wait for the timing thread to stop.
-  auto ft = stop_promise.get_future();
-  ft.wait();
+  stop_manager.stop();
 
   // Clear the subscribed notifiers.
   ota_notifiers.clear();
@@ -134,12 +133,9 @@ void realtime_timing_worker::stop()
 
 void realtime_timing_worker::timing_loop() noexcept SRSRAN_RTSAN_NONBLOCKING
 {
-  while (SRSRAN_LIKELY(!stop_requested.load(std::memory_order_relaxed))) {
+  while (SRSRAN_LIKELY(!stop_manager.stop_was_requested())) {
     poll();
   }
-
-  stop_promise.set_value();
-  stop_requested.store(false, std::memory_order_relaxed);
 }
 
 /// Returns the difference between cur and prev taking into account a potential wrap around of the values.

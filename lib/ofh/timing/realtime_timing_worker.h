@@ -17,8 +17,8 @@
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/synchronization/stop_event.h"
 #include <atomic>
-#include <future>
 
 namespace srsran {
 namespace ofh {
@@ -53,8 +53,7 @@ class realtime_timing_worker : public operation_controller, public ota_symbol_bo
   const std::chrono::nanoseconds                 sleep_time;
   bool                                           enable_log_warnings_for_lates;
   unsigned                                       previous_symb_index = 0;
-  std::atomic<bool>                              stop_requested{false};
-  std::promise<void>                             stop_promise;
+  stop_event_source                              stop_manager;
   timing_metrics_collector_impl                  metrics_collector;
 
 public:

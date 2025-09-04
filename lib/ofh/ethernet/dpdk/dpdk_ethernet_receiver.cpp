@@ -13,6 +13,7 @@
 #include "srsran/ofh/ethernet/dpdk/dpdk_ethernet_rx_buffer.h"
 #include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
 #include "srsran/support/executors/task_executor.h"
+#include <future>
 #include <rte_ethdev.h>
 #include <thread>
 
@@ -48,6 +49,8 @@ dpdk_receiver_impl::dpdk_receiver_impl(task_executor&                     execut
 
 void dpdk_receiver_impl::start(frame_notifier& notifier_)
 {
+  stop_manager.reset();
+
   notifier = &notifier_;
 
   std::promise<void> p;
@@ -70,27 +73,21 @@ void dpdk_receiver_impl::start(frame_notifier& notifier_)
 void dpdk_receiver_impl::stop()
 {
   logger.info("Requesting stop of the DPDK ethernet frame receiver on port '{}'", port_ctx->get_port_id());
-  stop_requested.store(true, std::memory_order_relaxed);
-
-  // Wait for the receiver thread to stop.
-  auto ft = stop_promise.get_future();
-  ft.wait();
+  stop_manager.stop();
 
   logger.info("Stopped the DPDK ethernet frame receiver on port '{}'", port_ctx->get_port_id());
 }
 
 void dpdk_receiver_impl::receive_loop()
 {
-  if (stop_requested.load(std::memory_order_relaxed)) {
-    stop_promise.set_value();
-    stop_requested.store(false, std::memory_order_relaxed);
+  if (stop_manager.stop_was_requested()) {
     return;
   }
 
   receive();
 
   // Retry the task deferring when it fails.
-  while (!executor.defer([this]() { receive_loop(); })) {
+  while (!executor.defer([this, token = stop_manager.get_token()]() { receive_loop(); })) {
     std::this_thread::sleep_for(std::chrono::microseconds(10));
   }
 }

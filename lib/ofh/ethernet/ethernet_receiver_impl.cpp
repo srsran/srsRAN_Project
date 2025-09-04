@@ -17,6 +17,7 @@
 #include "srsran/support/executors/task_executor.h"
 #include <arpa/inet.h>
 #include <cstring>
+#include <future>
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <thread>
@@ -85,6 +86,8 @@ receiver_impl::~receiver_impl()
 
 void receiver_impl::start(frame_notifier& notifier_)
 {
+  stop_manager.reset();
+
   logger.info("Starting the ethernet frame receiver");
 
   notifier = &notifier_;
@@ -109,27 +112,22 @@ void receiver_impl::start(frame_notifier& notifier_)
 void receiver_impl::stop()
 {
   logger.info("Requesting stop of the ethernet frame receiver with fd = '{}'", socket_fd);
-  stop_requested.store(true, std::memory_order_relaxed);
 
-  // Wait for the receiver thread to stop.
-  auto ft = stop_promise.get_future();
-  ft.wait();
+  stop_manager.stop();
 
   logger.info("Stopped the ethernet frame receiver with fd = '{}'", socket_fd);
 }
 
 void receiver_impl::receive_loop()
 {
-  if (stop_requested.load(std::memory_order_relaxed)) {
-    stop_promise.set_value();
-    stop_requested.store(false, std::memory_order_relaxed);
+  if (stop_manager.stop_was_requested()) {
     return;
   }
 
   receive();
 
   // Retry the task deferring when it fails.
-  while (!executor.defer([this]() { receive_loop(); })) {
+  while (!executor.defer([this, token = stop_manager.get_token()]() { receive_loop(); })) {
     std::this_thread::sleep_for(std::chrono::microseconds(10));
   }
 }

@@ -28,11 +28,11 @@ struct data_flow_uplane_resource_grid_context {
   /// Provides the slot context within the system frame.
   slot_point slot;
   /// Provides the sector identifier.
-  unsigned sector;
+  uint8_t sector;
   /// Provides the port identifier.
-  unsigned port;
+  uint8_t port;
   /// eAxC.
-  unsigned eaxc;
+  uint8_t eaxc;
   /// Symbol range.
   ofdm_symbol_range symbol_range;
 };
