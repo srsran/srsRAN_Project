@@ -84,6 +84,8 @@ struct uplink_processor_pool_config {
 
   /// Collection of all uplink processors, organized by numerology.
   std::vector<uplink_processor_set> ul_processors;
+  /// Default uplink processor used for handling PRACH and receive symbols when no processor has been assigned.
+  std::unique_ptr<uplink_processor> default_processor;
 };
 
 /// \brief Creates and returns an uplink processor pool.

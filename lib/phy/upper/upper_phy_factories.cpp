@@ -796,6 +796,11 @@ create_ul_processor_pool(uplink_processor_factory&              factory,
     }
 
     config_pool.ul_processors.push_back(std::move(info));
+    if (factory_config.log_level != srslog::basic_levels::none) {
+      config_pool.default_processor = factory.create(ul_proc_config, logger, factory_config.enable_logging_broadcast);
+    } else {
+      config_pool.default_processor = factory.create(ul_proc_config);
+    }
   }
 
   return create_uplink_processor_pool(std::move(config_pool));
@@ -1269,6 +1274,7 @@ std::unique_ptr<uplink_processor_pool> srsran::create_uplink_processor_pool(upli
   for (auto& proc : config.ul_processors) {
     ul_processors.procs.push_back({proc.scs, std::move(proc.procs)});
   }
+  ul_processors.default_processor = std::move(config.default_processor);
 
   return std::make_unique<uplink_processor_pool_impl>(std::move(ul_processors));
 }
