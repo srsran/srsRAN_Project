@@ -38,7 +38,7 @@ struct cell_creation_event {
   scheduler_event_logger&  ev_logger;
 };
 
-class ue_cell_event_manager final : public scheduler_feedback_handler
+class ue_cell_event_manager final : public scheduler_feedback_handler, public scheduler_positioning_handler
 {
 public:
   ue_cell_event_manager(const cell_creation_event& cell_ev, ue_repository& ue_db, srslog::basic_logger& logger);
@@ -55,6 +55,10 @@ public:
   void handle_srs_indication(const srs_indication& srs) override;
   void handle_ul_phr_indication(const ul_phr_indication_message& phr_ind) override;
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) override;
+
+  // scheduler_positioning_handler methods.
+  void handle_positioning_measurement_request(const positioning_measurement_request& req) override;
+  void handle_positioning_measurement_stop(du_cell_index_t cell_index, rnti_t pos_rnti) override;
 
 private:
   enum class event_result { processed, invalid_ue, invalid_ue_cc };
@@ -106,6 +110,7 @@ private:
   srslog::basic_logger&     logger;
   const cell_configuration& cfg;
   ue_fallback_scheduler&    fallback_sched;
+  srs_scheduler&            srs_sched;
   cell_metrics_handler&     metrics;
   scheduler_event_logger&   ev_logger;
 
@@ -122,7 +127,6 @@ private:
 /// This class acts as a facade for several of the ue_scheduler subcomponents, managing the asynchronous configuration
 /// of the UEs and logging in a thread-safe manner.
 class ue_event_manager final : public sched_ue_configuration_handler,
-                               public scheduler_feedback_handler,
                                public scheduler_dl_buffer_state_indication_handler,
                                public scheduler_positioning_handler
 {
@@ -142,12 +146,11 @@ public:
   void handle_ue_config_applied(du_cell_index_t pcell_idx, du_ue_index_t ue_idx) override;
 
   /// Scheduler feedback handler interface.
-  void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override;
-  void handle_crc_indication(const ul_crc_indication& crc) override;
-  void handle_uci_indication(const uci_indication& uci) override;
-  void handle_srs_indication(const srs_indication& srs) override;
-  void handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce) override;
-  void handle_ul_phr_indication(const ul_phr_indication_message& phr_ind) override;
+  scheduler_feedback_handler& get_feedback_handler(du_cell_index_t cell_idx)
+  {
+    srsran_sanity_check(cell_exists(cell_idx), "Invalid cell index {}", fmt::underlying(cell_idx));
+    return *cells[cell_idx];
+  }
 
   /// Scheduler DL buffer state indication handler interface.
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override;
@@ -165,23 +168,6 @@ public:
 private:
   class ue_dl_buffer_occupancy_manager;
 
-  struct cell_event_t {
-    using callback_type = unique_function<void(ue_cell&), 42, true>;
-
-    du_ue_index_t ue_index = MAX_NOF_DU_UES;
-    callback_type callback;
-    const char*   event_name;
-    bool          warn_if_ignored;
-
-    template <typename Callable>
-    cell_event_t(du_ue_index_t ue_index_, Callable&& c, const char* event_name_, bool log_warn_if_event_ignored) :
-      ue_index(ue_index_),
-      callback(std::forward<Callable>(c)),
-      event_name(event_name_),
-      warn_if_ignored(log_warn_if_event_ignored)
-    {
-    }
-  };
   struct common_cell_event_t {
     using callback_type = unique_function<void(), 64, true>;
 
@@ -210,9 +196,6 @@ private:
     }
   };
 
-  using cell_event_queue        = concurrent_queue<cell_event_t,
-                                                   concurrent_queue_policy::lockfree_mpmc,
-                                                   concurrent_queue_wait_policy::non_blocking>;
   using common_cell_event_queue = concurrent_queue<common_cell_event_t,
                                                    concurrent_queue_policy::lockfree_mpmc,
                                                    concurrent_queue_wait_policy::non_blocking>;
@@ -223,11 +206,9 @@ private:
   bool cell_exists(du_cell_index_t cell_index) const;
 
   void push_cell_event(du_cell_index_t cell_index, common_cell_event_t callable);
-  void push_cell_event(du_cell_index_t cell_index, cell_event_t callable);
 
   void
   log_invalid_ue_index(du_ue_index_t ue_index, const char* event_name = "Event", bool warn_if_ignored = true) const;
-  void log_invalid_cc(du_ue_index_t ue_index, du_cell_index_t cell_index) const;
 
   /// List of added and configured cells.
   struct cell_context {
@@ -243,16 +224,12 @@ private:
 
     /// Pending cell events.
     common_cell_event_queue common_events;
-    /// Pending UE events.
-    cell_event_queue ue_events;
 
-    cell_context(unsigned event_qsize) : common_events(event_qsize), ue_events(event_qsize) {}
+    cell_context(unsigned event_qsize) : common_events(event_qsize) {}
   };
 
   ue_repository&        ue_db;
   srslog::basic_logger& logger;
-
-  std::unique_ptr<pdu_indication_pool> ind_pdu_pool;
 
   std::array<std::atomic<bool>, MAX_NOF_DU_CELLS>                      cell_active{true};
   std::array<std::unique_ptr<cell_context>, MAX_NOF_DU_CELLS>          du_cells;

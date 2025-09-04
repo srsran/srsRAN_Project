@@ -95,7 +95,7 @@ public:
   /// Return UE configurator.
   virtual sched_ue_configuration_handler& get_ue_configurator() = 0;
 
-  virtual scheduler_feedback_handler& get_feedback_handler() = 0;
+  virtual scheduler_feedback_handler& get_feedback_handler(du_cell_index_t cell_index) = 0;
 
   virtual scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() = 0;
 

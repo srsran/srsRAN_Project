@@ -35,7 +35,10 @@ public:
 
   sched_ue_configuration_handler& get_ue_configurator() override { return event_mng; }
 
-  scheduler_feedback_handler& get_feedback_handler() override { return event_mng; }
+  scheduler_feedback_handler& get_feedback_handler(du_cell_index_t cell_index) override
+  {
+    return event_mng.get_feedback_handler(cell_index);
+  }
 
   scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() override { return event_mng; }
 
@@ -93,7 +96,10 @@ private:
       parent.handle_error_ind_impl(sl_tx, cell_res_alloc->cfg.cell_index, event);
     }
 
-    scheduler_feedback_handler& get_feedback_handler() override { return parent.get_feedback_handler(); }
+    scheduler_feedback_handler& get_feedback_handler() override
+    {
+      return parent.get_feedback_handler(cell_res_alloc->cell_index());
+    }
 
     void start() override { parent.do_start_cell(cell_res_alloc->cfg.cell_index); }
 

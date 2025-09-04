@@ -135,7 +135,7 @@ void scheduler_impl::handle_ul_bsr_indication(const ul_bsr_indication_message& b
     return;
   }
 
-  groups[grp_idx]->get_feedback_handler().handle_ul_bsr_indication(bsr);
+  groups[grp_idx]->get_feedback_handler(bsr.cell_index).handle_ul_bsr_indication(bsr);
 }
 
 void scheduler_impl::handle_ul_phr_indication(const ul_phr_indication_message& phr_ind)
@@ -195,7 +195,7 @@ void scheduler_impl::handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac
   if (cpy.cell_index == INVALID_DU_CELL_INDEX) {
     cpy.cell_index = pcell_idx;
   }
-  groups[grp_idx]->get_feedback_handler().handle_dl_mac_ce_indication(cpy);
+  groups[grp_idx]->get_feedback_handler(cpy.cell_index).handle_dl_mac_ce_indication(cpy);
 }
 
 const sched_result& scheduler_impl::slot_indication(slot_point      sl_tx,

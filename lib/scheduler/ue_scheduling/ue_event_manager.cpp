@@ -190,6 +190,7 @@ ue_cell_event_manager::ue_cell_event_manager(const cell_creation_event& cell_ev,
   logger(logger_),
   cfg(cell_ev.cell_res_grid.cfg),
   fallback_sched(cell_ev.fallback_sched),
+  srs_sched(cell_ev.srs_sched),
   metrics(cell_ev.metrics),
   ev_logger(cell_ev.ev_logger),
   ind_pdu_pool(std::make_unique<pdu_indication_pool>(logger)),
@@ -551,7 +552,7 @@ void ue_cell_event_manager::handle_ul_phr_indication(const ul_phr_indication_mes
     return event_result::processed;
   };
 
-  push_cell_event(pcell_index, common_cell_event_t{"ue_phr", ue_index, std::move(handle_phr_impl)});
+  push_cell_event(pcell_index, common_cell_event_t{"PHR", ue_index, std::move(handle_phr_impl)});
 }
 
 void ue_cell_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce)
@@ -576,7 +577,31 @@ void ue_cell_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indicati
     return event_result::processed;
   };
 
-  push_cell_event(ce.cell_index, common_cell_event_t{"dl_mac_ce", ce.ue_index, std::move(handle_mac_ce_impl)});
+  push_cell_event(ce.cell_index, common_cell_event_t{"DL MAC CE", ce.ue_index, std::move(handle_mac_ce_impl)});
+}
+
+void ue_cell_event_manager::handle_positioning_measurement_request(const positioning_measurement_request& req)
+{
+  auto req_ptr = ind_pdu_pool->create_pdu(req);
+  if (req_ptr == nullptr) {
+    return;
+  }
+  auto task = [this, req_ptr = std::move(req_ptr)]() {
+    srs_sched.handle_positioning_measurement_request(*req_ptr);
+    return event_result::processed;
+  };
+
+  push_cell_event(req.cell_index, common_cell_event_t{"POS MEAS REQ", std::move(task)});
+}
+
+void ue_cell_event_manager::handle_positioning_measurement_stop(du_cell_index_t cell_index, rnti_t pos_rnti)
+{
+  auto task = [this, cell_index, pos_rnti]() {
+    srs_sched.handle_positioning_measurement_stop(cell_index, pos_rnti);
+    return event_result::processed;
+  };
+
+  push_cell_event(cell_index, common_cell_event_t{"pos_meas_stop", std::move(task)});
 }
 
 void ue_cell_event_manager::handle_harq_ind(ue_cell&                               ue_cc,
@@ -675,7 +700,6 @@ void ue_cell_event_manager::log_invalid_cc(du_ue_index_t ue_idx, const char* eve
 ue_event_manager::ue_event_manager(ue_repository& ue_db_) :
   ue_db(ue_db_),
   logger(srslog::fetch_basic_logger("SCHED")),
-  ind_pdu_pool(std::make_unique<pdu_indication_pool>(logger)),
   dl_bo_mng(std::make_unique<ue_dl_buffer_occupancy_manager>(*this))
 {
   std::fill(cell_active.begin(), cell_active.end(), true);
@@ -858,42 +882,6 @@ void ue_event_manager::handle_ue_config_applied(du_cell_index_t pcell_idx, du_ue
   push_cell_event(pcell_idx, common_cell_event_t{"ue_cfg_applied", ue_idx, std::move(handle_ue_config_applied_impl)});
 }
 
-void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr_ind)
-{
-  srsran_assert(cell_exists(bsr_ind.cell_index), "Invalid cell index");
-  cells[bsr_ind.cell_index]->handle_ul_bsr_indication(bsr_ind);
-}
-
-void ue_event_manager::handle_ul_phr_indication(const ul_phr_indication_message& phr_ind)
-{
-  srsran_assert(cell_exists(phr_ind.cell_index), "Invalid cell index");
-  cells[phr_ind.cell_index]->handle_ul_phr_indication(phr_ind);
-}
-
-void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
-{
-  srsran_assert(cell_exists(crc_ind.cell_index), "Invalid cell index");
-  cells[crc_ind.cell_index]->handle_crc_indication(crc_ind);
-}
-
-void ue_event_manager::handle_uci_indication(const uci_indication& ind)
-{
-  srsran_sanity_check(cell_exists(ind.cell_index), "Invalid cell index");
-  cells[ind.cell_index]->handle_uci_indication(ind);
-}
-
-void ue_event_manager::handle_srs_indication(const srs_indication& ind)
-{
-  srsran_sanity_check(cell_exists(ind.cell_index), "Invalid cell index");
-  cells[ind.cell_index]->handle_srs_indication(ind);
-}
-
-void ue_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce)
-{
-  srsran_sanity_check(cell_exists(ce.cell_index), "Invalid cell index");
-  cells[ce.cell_index]->handle_dl_mac_ce_indication(ce);
-}
-
 void ue_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
 {
   dl_bo_mng->handle_dl_buffer_state_indication(bs);
@@ -901,25 +889,14 @@ void ue_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_i
 
 void ue_event_manager::handle_positioning_measurement_request(const positioning_measurement_request& req)
 {
-  auto req_ptr = ind_pdu_pool->create_pdu(req);
-  if (req_ptr == nullptr) {
-    return;
-  }
-  auto task = [this, req_ptr = std::move(req_ptr)]() {
-    srsran_sanity_check(cell_exists(req_ptr->cell_index), "Invalid cell index");
-    du_cells[req_ptr->cell_index]->srs_sched->handle_positioning_measurement_request(*req_ptr);
-  };
-
-  push_cell_event(req.cell_index, common_cell_event_t{"pos_meas_req", std::move(task)});
+  srsran_sanity_check(cell_exists(req.cell_index), "Invalid cell index");
+  cells[req.cell_index]->handle_positioning_measurement_request(req);
 }
 
 void ue_event_manager::handle_positioning_measurement_stop(du_cell_index_t cell_index, rnti_t pos_rnti)
 {
-  push_cell_event(cell_index,
-                  common_cell_event_t{"pos_meas_stop", [this, cell_index, pos_rnti]() {
-                                        du_cells[cell_index]->srs_sched->handle_positioning_measurement_stop(cell_index,
-                                                                                                             pos_rnti);
-                                      }});
+  srsran_sanity_check(cell_exists(cell_index), "Invalid cell index");
+  cells[cell_index]->handle_positioning_measurement_stop(cell_index, pos_rnti);
 }
 
 static void handle_discarded_pusch(const cell_slot_resource_allocator& prev_slot_result, ue_repository& ue_db)
@@ -1058,23 +1035,6 @@ void ue_event_manager::process_cell_specific(du_cell_index_t cell_index, slot_po
     cell_ev.callback();
   }
 
-  // Pop and process pending UE cell-specific events.
-  auto&        ue_cell_events = du_cells[cell_index]->ue_events;
-  cell_event_t ev{INVALID_DU_UE_INDEX, [](ue_cell&) {}, "invalid", true};
-  while (ue_cell_events.try_pop(ev)) {
-    if (ev.ue_index != INVALID_DU_UE_INDEX and not ue_db.contains(ev.ue_index)) {
-      log_invalid_ue_index(ev.ue_index, ev.event_name, ev.warn_if_ignored);
-      continue;
-    }
-    ue&      ue    = ue_db[ev.ue_index];
-    ue_cell* ue_cc = ue.find_cell(cell_index);
-    if (ue_cc == nullptr) {
-      log_invalid_cc(ev.ue_index, cell_index);
-      continue;
-    }
-    ev.callback(*ue_cc);
-  }
-
   cells[cell_index]->process_events(sl_tx);
 }
 
@@ -1125,9 +1085,6 @@ void ue_event_manager::stop_cell(du_cell_index_t cell_index)
 void ue_event_manager::clear_cell_events(du_cell_index_t cell_index)
 {
   // Flush pending cell-specific events.
-  cell_event_t ev{INVALID_DU_UE_INDEX, [](ue_cell&) {}, "invalid", true};
-  while (du_cells[cell_index]->ue_events.try_pop(ev)) {
-  }
   common_cell_event_t cell_ev;
   while (du_cells[cell_index]->common_events.try_pop(cell_ev)) {
   }
@@ -1173,25 +1130,6 @@ void ue_event_manager::push_cell_event(du_cell_index_t cell_index, common_cell_e
   }
 }
 
-void ue_event_manager::push_cell_event(du_cell_index_t cell_index, cell_event_t event)
-{
-  if (SRSRAN_UNLIKELY(not cell_active[cell_index].load(std::memory_order_acquire))) {
-    // Note: PHY events should not arrive after the cell has been stopped.
-    logger.warning("cell={} ue={}: Discarding {} event. Cause: Cell is not active",
-                   fmt::underlying(cell_index),
-                   fmt::underlying(event.ue_index),
-                   event.event_name);
-    return;
-  }
-
-  if (not du_cells[cell_index]->ue_events.try_push(std::move(event))) {
-    logger.warning("cell={} ue={}: Discarding {} event. Cause: Event queue is full",
-                   fmt::underlying(cell_index),
-                   fmt::underlying(event.ue_index),
-                   event.event_name);
-  }
-}
-
 bool ue_event_manager::cell_exists(du_cell_index_t cell_index) const
 {
   return cell_index < MAX_NOF_DU_CELLS and du_cells[cell_index] != nullptr;
@@ -1202,11 +1140,4 @@ void ue_event_manager::log_invalid_ue_index(du_ue_index_t ue_index, const char* 
   srslog::log_channel& log_channel = warn_if_ignored ? logger.warning : logger.info;
   log_channel(
       "{} for ue={} discarded. Cause: UE with provided Id does not exist", event_name, fmt::underlying(ue_index));
-}
-
-void ue_event_manager::log_invalid_cc(du_ue_index_t ue_index, du_cell_index_t cell_index) const
-{
-  logger.warning("Event for ue={} ignored. Cause: Cell {} is not configured.",
-                 fmt::underlying(ue_index),
-                 fmt::underlying(cell_index));
 }
