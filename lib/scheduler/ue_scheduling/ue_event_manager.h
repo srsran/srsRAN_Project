@@ -38,6 +38,8 @@ struct cell_creation_event {
   scheduler_event_logger&  ev_logger;
 };
 
+class ue_event_manager;
+
 /// Handler of UE events for a given cell.
 class ue_cell_event_manager final : public sched_ue_configuration_handler,
                                     public scheduler_feedback_handler,
@@ -45,7 +47,10 @@ class ue_cell_event_manager final : public sched_ue_configuration_handler,
                                     public scheduler_dl_buffer_state_indication_handler
 {
 public:
-  ue_cell_event_manager(const cell_creation_event& cell_ev, ue_repository& ue_db, srslog::basic_logger& logger);
+  ue_cell_event_manager(ue_event_manager&          parent_,
+                        const cell_creation_event& cell_ev,
+                        ue_repository&             ue_db,
+                        srslog::basic_logger&      logger);
   ~ue_cell_event_manager() override;
 
   /// Activate cell event processing.
@@ -54,8 +59,8 @@ public:
   /// Deactivate cell event processing and clear any pending events.
   void stop();
 
-  /// Process pending events.
-  void process_events(slot_point sl_tx);
+  /// Process pending events when a slot indication is received for the given cell.
+  void run_slot(slot_point sl_tx);
 
   /// UE Add/Mod/Remove interface.
   void handle_ue_creation(ue_config_update_event ev) override;
@@ -129,6 +134,7 @@ private:
   void handle_csi(ue_cell& ue_cc, const csi_report_data& csi_rep);
 
   // shared parameters.
+  ue_event_manager&     parent;
   ue_repository&        ue_db;
   srslog::basic_logger& logger;
   // cell parameters.
@@ -160,8 +166,7 @@ public:
   ue_event_manager(ue_repository& ue_db);
   ~ue_event_manager() override;
 
-  void add_cell(const cell_creation_event& cell_ev);
-  void rem_cell(du_cell_index_t cell_index);
+  std::unique_ptr<ue_cell_event_manager> add_cell(const cell_creation_event& cell_ev);
 
   ue_cell_event_manager& get_cell(du_cell_index_t cell_index)
   {
@@ -172,10 +177,8 @@ public:
   /// Scheduler DL buffer state indication handler interface.
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override;
 
-  /// Process events for a given slot and cell index.
-  void run(slot_point sl, du_cell_index_t cell_index);
-
 private:
+  friend class ue_cell_event_manager;
   class ue_dl_buffer_occupancy_manager;
 
   void process_common(slot_point sl, du_cell_index_t cell_index);
@@ -184,7 +187,7 @@ private:
   ue_repository&        ue_db;
   srslog::basic_logger& logger;
 
-  std::array<std::unique_ptr<ue_cell_event_manager>, MAX_NOF_DU_CELLS> cells;
+  std::array<ue_cell_event_manager*, MAX_NOF_DU_CELLS> cells;
 
   slot_point last_sl;
 

@@ -173,9 +173,11 @@ private:
 // nof UEs as a conservative estimate of the expected number of events per slot.
 static constexpr size_t CELL_EVENT_LIST_SIZE = MAX_NOF_DU_UES * 2;
 
-ue_cell_event_manager::ue_cell_event_manager(const cell_creation_event& cell_ev,
+ue_cell_event_manager::ue_cell_event_manager(ue_event_manager&          parent_,
+                                             const cell_creation_event& cell_ev,
                                              ue_repository&             ue_db_,
                                              srslog::basic_logger&      logger_) :
+  parent(parent_),
   ue_db(ue_db_),
   logger(logger_),
   cfg(cell_ev.cell_res_grid.cfg),
@@ -194,7 +196,11 @@ ue_cell_event_manager::ue_cell_event_manager(const cell_creation_event& cell_ev,
 
 ue_cell_event_manager::~ue_cell_event_manager()
 {
+  // Stop cell if not already stopped.
   stop();
+
+  // Deregister cell from ue_event_manager.
+  parent.cells[cfg.cell_index] = nullptr;
 }
 
 void ue_cell_event_manager::stop()
@@ -207,7 +213,7 @@ void ue_cell_event_manager::stop()
   }
 }
 
-void ue_cell_event_manager::process_events(slot_point sl_tx)
+void ue_cell_event_manager::run_slot(slot_point sl_tx)
 {
   last_sl_tx = sl_tx;
 
@@ -226,6 +232,9 @@ void ue_cell_event_manager::process_events(slot_point sl_tx)
         break;
     }
   }
+
+  // Process common events that are not specific to any cell.
+  parent.process_common(sl_tx, cfg.cell_index);
 }
 
 void ue_cell_event_manager::handle_ue_creation(ue_config_update_event ev)
@@ -1014,6 +1023,7 @@ ue_event_manager::ue_event_manager(ue_repository& ue_db_) :
   logger(srslog::fetch_basic_logger("SCHED")),
   dl_bo_mng(std::make_unique<ue_dl_buffer_occupancy_manager>(*this))
 {
+  std::fill(cells.begin(), cells.end(), nullptr);
 }
 
 ue_event_manager::~ue_event_manager() = default;
@@ -1036,29 +1046,18 @@ void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)
   dl_bo_mng->slot_indication(sl);
 }
 
-void ue_event_manager::run(slot_point sl, du_cell_index_t cell_index)
-{
-  srsran_sanity_check(cell_exists(cell_index), "Invalid cell index {}", fmt::underlying(cell_index));
-
-  // Process carrier specific events.
-  cells[cell_index]->process_events(sl);
-
-  // Process common events.
-  process_common(sl, cell_index);
-}
-
-void ue_event_manager::add_cell(const cell_creation_event& cell_ev)
+std::unique_ptr<ue_cell_event_manager> ue_event_manager::add_cell(const cell_creation_event& cell_ev)
 {
   const du_cell_index_t cell_index = cell_ev.cell_res_grid.cell_index();
   srsran_assert(not cell_exists(cell_index), "Overwriting cell configurations not supported");
 
-  cells[cell_index] = std::make_unique<ue_cell_event_manager>(cell_ev, ue_db, logger);
-}
+  // Create ue_cell_event_manager.
+  auto cell = std::make_unique<ue_cell_event_manager>(*this, cell_ev, ue_db, logger);
 
-void ue_event_manager::rem_cell(du_cell_index_t cell_index)
-{
-  // Remove cell entry.
-  cells[cell_index] = {};
+  // Register cell.
+  cells[cell_index] = cell.get();
+
+  return cell;
 }
 
 bool ue_event_manager::cell_exists(du_cell_index_t cell_index) const

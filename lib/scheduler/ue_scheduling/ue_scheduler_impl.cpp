@@ -23,14 +23,15 @@ ue_cell_scheduler* ue_scheduler_impl::do_add_cell(const ue_cell_scheduler_creati
   cells.emplace(params.cell_index, *this, params);
   auto& cell = cells[params.cell_index];
 
-  event_mng.add_cell(cell_creation_event{*params.cell_res_alloc,
-                                         cell.cell_harqs,
-                                         cell.fallback_sched,
-                                         cell.uci_sched,
-                                         cell.slice_sched,
-                                         cell.srs_sched,
-                                         *params.cell_metrics,
-                                         *params.ev_logger});
+  // Create a cell-specific UE event manager.
+  cell.ev_mng = event_mng.add_cell(cell_creation_event{*params.cell_res_alloc,
+                                                       cell.cell_harqs,
+                                                       cell.fallback_sched,
+                                                       cell.uci_sched,
+                                                       cell.slice_sched,
+                                                       cell.srs_sched,
+                                                       *params.cell_metrics,
+                                                       *params.ev_logger});
 
   return &cell;
 }
@@ -40,7 +41,7 @@ void ue_scheduler_impl::do_start_cell(du_cell_index_t cell_index)
   srsran_assert(cells.contains(cell_index), "Cell reference not found in the scheduler");
 
   // Signal event manager that new events can be processed for this cell.
-  event_mng.get_cell(cell_index).start();
+  cells[cell_index].ev_mng->start();
 }
 
 void ue_scheduler_impl::do_stop_cell(du_cell_index_t cell_index)
@@ -49,7 +50,7 @@ void ue_scheduler_impl::do_stop_cell(du_cell_index_t cell_index)
   auto& c = cells[cell_index];
 
   // Halt any pending events associated with this cell.
-  event_mng.get_cell(cell_index).stop();
+  cells[cell_index].ev_mng->stop();
 
   // Stop sub-schedulers.
   c.fallback_sched.stop();
@@ -66,9 +67,6 @@ void ue_scheduler_impl::do_rem_cell(du_cell_index_t cell_index)
   srsran_assert(cells.contains(cell_index), "Cell reference not found in the scheduler");
 
   do_stop_cell(cell_index);
-
-  // Remove cell from UE event manager.
-  event_mng.rem_cell(cell_index);
 
   // Remove cell from UE scheduler.
   cells.erase(cell_index);
@@ -179,7 +177,7 @@ void ue_scheduler_impl::run_slot_impl(slot_point slot_tx)
     du_cell_index_t cell_index = group_cell.cell_res_alloc->cfg.cell_index;
 
     // Process any pending events that are directed at UEs.
-    event_mng.run(slot_tx, cell_index);
+    group_cell.ev_mng->run_slot(slot_tx);
 
     // Update all UEs state.
     ue_db.slot_indication(slot_tx);

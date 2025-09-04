@@ -93,6 +93,9 @@ private:
     /// SRS scheduler
     srs_scheduler_impl srs_sched;
 
+    /// Cell-specific event manager.
+    std::unique_ptr<ue_cell_event_manager> ev_mng;
+
     cell_context(ue_scheduler_impl& parent, const ue_cell_scheduler_creation_request& params);
 
     void run_slot(slot_point sl_tx) override { parent.run_slot_impl(sl_tx); }
