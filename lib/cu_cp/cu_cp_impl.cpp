@@ -33,6 +33,7 @@
 #include "srsran/rrc/rrc_du.h"
 #include "srsran/support/async/coroutine.h"
 #include "srsran/support/compiler.h"
+#include "srsran/support/synchronization/sync_event.h"
 #include <chrono>
 #include <dlfcn.h>
 #include <future>
@@ -140,16 +141,18 @@ void cu_cp_impl::stop()
   logger.info("Stopping CU-CP...");
 
   // Shut down components from within CU-CP executor.
-  while (not cfg.services.cu_cp_executor->execute([this]() {
+  sync_event ev;
+  while (not cfg.services.cu_cp_executor->execute([this, token = ev.get_token()]() {
     // Stop statistics gathering.
     statistics_report_timer.stop();
+    metrics_session->stop();
   })) {
     logger.debug("Failed to dispatch CU-CP stop task. Retrying...");
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
+  ev.wait();
 
   controller.stop();
-
   logger.info("CU-CP stopped successfully.");
 }
 
