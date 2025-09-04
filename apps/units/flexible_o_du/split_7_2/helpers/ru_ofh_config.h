@@ -49,8 +49,11 @@ struct ru_ofh_scaling_config {
   ///
   /// \f$ $$P_{BW2}\text{ [dBFS]}=P_{BW1}\text{ [dBFS]} - 10\log_{10}{\bigg(\frac{BW2}{BW1}\bigg)}\f$
   ///
+  /// If no value is specified, then the bandwidth is normalized based on the number of subcarriers, i.e.,
+  /// the back-off is set to \f$10\log_{10}(12 N_{RB})}\f$.
+  ///
   /// \warning Check the RU documentation before settings this parameter, as incorrect values may damage the RU.
-  float subcarrier_rms_backoff_dB = 30.0f;
+  std::optional<float> subcarrier_rms_backoff_dB;
 };
 
 /// Configuration parameters related to the scaling of the IQ symbols in the DL OFH resource grid (legacy version).

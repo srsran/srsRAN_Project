@@ -43,9 +43,10 @@ static bool validate_scaling_params(
       return false;
     }
 
-    if (!backoff_range.contains(scaling_params->subcarrier_rms_backoff_dB)) {
+    if (scaling_params->subcarrier_rms_backoff_dB &&
+        !backoff_range.contains(*scaling_params->subcarrier_rms_backoff_dB)) {
       fmt::print("Subcarrier back-off, i.e., {} dB lies outside of the valid range {}\n",
-                 scaling_params->subcarrier_rms_backoff_dB,
+                 *scaling_params->subcarrier_rms_backoff_dB,
                  backoff_range);
       return false;
     }

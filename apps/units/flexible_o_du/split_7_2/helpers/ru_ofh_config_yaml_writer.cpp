@@ -99,8 +99,13 @@ static YAML::Node build_ru_ofh_cell_section(const ru_ofh_unit_cell_config& confi
   node["enable_ul_static_compr_hdr"] = config.cell.is_uplink_static_comp_hdr_enabled;
   node["enable_dl_static_compr_hdr"] = config.cell.is_downlink_static_comp_hdr_enabled;
   if (const auto* scaling_params = std::get_if<ru_ofh_scaling_config>(&config.cell.iq_scaling_config)) {
-    node["ru_reference_level_dBFS"]   = scaling_params->ru_reference_level_dBFS;
-    node["subcarrier_rms_backoff_dB"] = scaling_params->subcarrier_rms_backoff_dB;
+    node["ru_reference_level_dBFS"] = scaling_params->ru_reference_level_dBFS;
+
+    if (scaling_params->subcarrier_rms_backoff_dB) {
+      node["subcarrier_rms_backoff_dB"] = *scaling_params->subcarrier_rms_backoff_dB;
+    } else {
+      node["subcarrier_rms_backoff_dB"] = "auto";
+    }
   } else if (const auto* legacy_scaling_params =
                  std::get_if<ru_ofh_legacy_scaling_config>(&config.cell.iq_scaling_config)) {
     node["iq_scaling"] = legacy_scaling_params->iq_scaling;
