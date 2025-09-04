@@ -854,6 +854,14 @@ public:
 
     return *this;
   }
+
+  /// Returns a transmission precoding and beamforming PDU builder of this PRS PDU.
+  tx_precoding_and_beamforming_pdu_builder get_tx_precoding_and_beamforming_pdu_builder()
+  {
+    tx_precoding_and_beamforming_pdu_builder builder(pdu.precoding_and_beamforming);
+
+    return builder;
+  }
 };
 
 /// DL_TTI.request message builder that helps to fill in the parameters specified in SCF-222 v4.0 section 3.4.2.
