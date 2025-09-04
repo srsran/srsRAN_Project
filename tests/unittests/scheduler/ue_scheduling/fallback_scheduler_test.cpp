@@ -331,8 +331,7 @@ protected:
     // Notification from upper layers of DL buffer state.
     bench->ue_db[ue_idx].handle_dl_buffer_state_indication(is_srb0 ? LCID_SRB0 : LCID_SRB1, buffer_size);
     if (tx_conres) {
-      bench->ue_db[ue_idx].handle_dl_mac_ce_indication(
-          dl_mac_ce_indication{ue_idx, INVALID_DU_CELL_INDEX, lcid_dl_sch_t::UE_CON_RES_ID});
+      bench->ue_db[ue_idx].handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_idx, lcid_dl_sch_t::UE_CON_RES_ID});
       bench->fallback_sched.handle_conres_indication(ue_idx);
       bench->set_conres_state(ue_idx, false);
     }

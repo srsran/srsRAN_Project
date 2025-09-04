@@ -90,8 +90,10 @@ private:
   /// Result of processing a cell event.
   enum class event_result { processed, invalid_ue, invalid_ue_cc };
 
-  struct common_cell_event_t {
-    using callback_type = unique_function<event_result(), 64, true>;
+  /// Type of event enqueued and handled by the scheduler.
+  struct event_t {
+    static constexpr size_t callback_capacity = 64;
+    using callback_type                       = unique_function<event_result(), callback_capacity, true>;
 
     callback_type callback;
     const char*   ev_name = "invalid";
@@ -99,17 +101,14 @@ private:
     du_ue_index_t ue_index        = INVALID_DU_UE_INDEX;
     bool          warn_if_ignored = true;
 
-    common_cell_event_t() = default;
+    event_t() = default;
     template <typename Callable>
-    common_cell_event_t(const char* ev_name_, Callable&& callable, bool warn_if_ignored_ = true) :
+    event_t(const char* ev_name_, Callable&& callable, bool warn_if_ignored_ = true) :
       callback(std::forward<Callable>(callable)), ev_name(ev_name_), warn_if_ignored(warn_if_ignored_)
     {
     }
     template <typename Callable>
-    common_cell_event_t(const char*   ev_name_,
-                        du_ue_index_t ue_index_,
-                        Callable&&    callable,
-                        bool          warn_if_ignored_ = true) :
+    event_t(const char* ev_name_, du_ue_index_t ue_index_, Callable&& callable, bool warn_if_ignored_ = true) :
       callback(std::forward<Callable>(callable)),
       ev_name(ev_name_),
       ue_index(ue_index_),
@@ -118,13 +117,16 @@ private:
     }
   };
 
-  using common_cell_event_queue = concurrent_queue<common_cell_event_t,
-                                                   concurrent_queue_policy::lockfree_mpmc,
-                                                   concurrent_queue_wait_policy::non_blocking>;
+  /// Type used for the queue of pending events for a given cell.
+  using event_queue = concurrent_queue<event_t, concurrent_queue_policy::lockfree_mpmc>;
 
-  void push_cell_event(du_cell_index_t cell_index, common_cell_event_t event);
+  /// Enqueue a new cell event to be processed by the scheduler.
+  void push_event(du_cell_index_t cell_index, event_t event);
 
+  /// Log event with invalid UE index.
   void log_invalid_ue_index(du_ue_index_t ue_index, const char* event_name, bool warn_if_ignored = true) const;
+
+  /// Log event when UE does not have a carrier for this cell.
   void log_invalid_cc(du_ue_index_t ue_idx, const char* event_name, bool warn_if_ignored = true) const;
 
   void handle_harq_ind(ue_cell&                               ue_cc,
@@ -150,10 +152,11 @@ private:
 
   std::unique_ptr<pdu_indication_pool> ind_pdu_pool;
 
-  common_cell_event_queue common_events;
+  event_queue pending_events;
 
   slot_point last_sl_tx;
 
+  /// Whether the cell is currently processing events.
   std::atomic<bool> active = true;
 };
 

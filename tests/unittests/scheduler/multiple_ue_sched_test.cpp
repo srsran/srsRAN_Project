@@ -1372,8 +1372,7 @@ TEST_F(single_ue_sched_tester, successfully_schedule_srb0_retransmission_fdd)
   add_ue(to_du_ue_index(0), LCID_SRB0, static_cast<lcg_id_t>(0), duplex_mode::FDD, false, is_fallback);
 
   // Enqueue ConRes CE.
-  bench->sch.handle_dl_mac_ce_indication(
-      dl_mac_ce_indication{to_du_ue_index(0), INVALID_DU_CELL_INDEX, lcid_dl_sch_t::UE_CON_RES_ID});
+  bench->sch.handle_dl_mac_ce_indication(dl_mac_ce_indication{to_du_ue_index(0), lcid_dl_sch_t::UE_CON_RES_ID});
 
   // Notify about SRB0 message in DL of size 101 bytes.
   const unsigned mac_srb0_sdu_size = 101;

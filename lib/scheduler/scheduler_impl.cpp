@@ -193,11 +193,7 @@ void scheduler_impl::handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac
     logger.warning("ue={}: Discarding MAC CE update. Cause: UE not recognized", fmt::underlying(mac_ce.ue_index));
     return;
   }
-  dl_mac_ce_indication cpy = mac_ce;
-  if (cpy.cell_index == INVALID_DU_CELL_INDEX) {
-    cpy.cell_index = pcell_idx;
-  }
-  groups[grp_idx]->get_feedback_handler(cpy.cell_index).handle_dl_mac_ce_indication(cpy);
+  groups[grp_idx]->get_feedback_handler(pcell_idx).handle_dl_mac_ce_indication(mac_ce);
 }
 
 const sched_result& scheduler_impl::slot_indication(slot_point      sl_tx,

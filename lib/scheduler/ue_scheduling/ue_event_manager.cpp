@@ -190,7 +190,7 @@ ue_cell_event_manager::ue_cell_event_manager(ue_event_manager&          parent_,
   metrics(cell_ev.metrics),
   ev_logger(cell_ev.ev_logger),
   ind_pdu_pool(std::make_unique<pdu_indication_pool>(logger)),
-  common_events(CELL_EVENT_LIST_SIZE)
+  pending_events(CELL_EVENT_LIST_SIZE)
 {
 }
 
@@ -208,8 +208,8 @@ void ue_cell_event_manager::stop()
   active.store(false, std::memory_order_release);
 
   // Clear pending events.
-  common_cell_event_t cell_ev;
-  while (common_events.try_pop(cell_ev)) {
+  event_t cell_ev;
+  while (pending_events.try_pop(cell_ev)) {
   }
 }
 
@@ -218,8 +218,8 @@ void ue_cell_event_manager::run_slot(slot_point sl_tx)
   last_sl_tx = sl_tx;
 
   // Pop and process pending cell-specific events.
-  common_cell_event_t cell_ev;
-  while (common_events.try_pop(cell_ev)) {
+  event_t cell_ev;
+  while (pending_events.try_pop(cell_ev)) {
     const auto result = cell_ev.callback();
     switch (result) {
       case event_result::invalid_ue:
@@ -285,7 +285,7 @@ void ue_cell_event_manager::handle_ue_creation(ue_config_update_event ev)
   };
 
   // Defer UE object addition to ue list to the slot indication handler.
-  push_cell_event(ue_pcell_index, common_cell_event_t{"ue_add", std::move(handle_ue_creation_impl)});
+  push_event(ue_pcell_index, event_t{"ue_add", std::move(handle_ue_creation_impl)});
 
   // Destroy any pending UEs in the repository outside the critical section.
   ue_db.destroy_pending_ues();
@@ -350,7 +350,7 @@ void ue_cell_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
   };
 
   // Defer UE reconf to ue list to the slot indication handler.
-  push_cell_event(pcell_index, common_cell_event_t{"ue_reconf", ue_index, std::move(handle_ue_reconf_impl)});
+  push_event(pcell_index, event_t{"ue_reconf", ue_index, std::move(handle_ue_reconf_impl)});
 }
 
 void ue_cell_event_manager::handle_ue_deletion(ue_config_delete_event ev)
@@ -384,7 +384,7 @@ void ue_cell_event_manager::handle_ue_deletion(ue_config_delete_event ev)
     return event_result::processed;
   };
 
-  push_cell_event(pcell_index, common_cell_event_t{"ue_rem", ue_index, std::move(handle_ue_deletion_impl)});
+  push_event(pcell_index, event_t{"ue_rem", ue_index, std::move(handle_ue_deletion_impl)});
 
   // Destroy any pending UEs in the repository outside the critical section.
   ue_db.destroy_pending_ues();
@@ -410,7 +410,7 @@ void ue_cell_event_manager::handle_ue_config_applied(du_cell_index_t pcell_idx, 
     return event_result::processed;
   };
 
-  push_cell_event(pcell_idx, common_cell_event_t{"ue_cfg_applied", ue_idx, std::move(handle_ue_config_applied_impl)});
+  push_event(pcell_idx, event_t{"ue_cfg_applied", ue_idx, std::move(handle_ue_config_applied_impl)});
 }
 
 void ue_cell_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr_ind)
@@ -453,7 +453,7 @@ void ue_cell_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_mes
     return event_result::processed;
   };
 
-  push_cell_event(pcell_index, common_cell_event_t{"BSR", ue_index, std::move(handle_ul_bsr_ind_impl)});
+  push_event(pcell_index, event_t{"BSR", ue_index, std::move(handle_ul_bsr_ind_impl)});
 }
 
 void ue_cell_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
@@ -502,8 +502,7 @@ void ue_cell_event_manager::handle_crc_indication(const ul_crc_indication& crc_i
     };
 
     // Push UE CRC event.
-    push_cell_event(crc_ind.cell_index,
-                    common_cell_event_t{"CRC", crc_ind.crcs[i].ue_index, std::move(crc_handle_impl)});
+    push_event(crc_ind.cell_index, event_t{"CRC", crc_ind.crcs[i].ue_index, std::move(crc_handle_impl)});
   }
 }
 
@@ -635,15 +634,15 @@ void ue_cell_event_manager::handle_uci_indication(const uci_indication& ind)
       return event_result::processed;
     };
 
-    push_cell_event(ind.cell_index,
-                    common_cell_event_t{"UCI",
-                                        ind.ucis[i].ue_index,
-                                        std::move(uci_handle_impl),
-                                        // Note: We do not warn if the UE is not found, because there is this transient
-                                        // period when the UE is about to receive and process the RRC Release, but it is
-                                        // still sending CSI or SR in the PUCCH. If we stop the PUCCH scheduling for the
-                                        // UE about to be released, we could risk interference between UEs in the PUCCH.
-                                        false});
+    push_event(ind.cell_index,
+               event_t{"UCI",
+                       ind.ucis[i].ue_index,
+                       std::move(uci_handle_impl),
+                       // Note: We do not warn if the UE is not found, because there is this transient
+                       // period when the UE is about to receive and process the RRC Release, but it is
+                       // still sending CSI or SR in the PUCCH. If we stop the PUCCH scheduling for the
+                       // UE about to be released, we could risk interference between UEs in the PUCCH.
+                       false});
   }
 }
 
@@ -692,7 +691,7 @@ void ue_cell_event_manager::handle_srs_indication(const srs_indication& ind)
       return event_result::processed;
     };
 
-    push_cell_event(ind.cell_index, common_cell_event_t{"SRS", srs_pdu.ue_index, std::move(srs_handle_impl), false});
+    push_event(ind.cell_index, event_t{"SRS", srs_pdu.ue_index, std::move(srs_handle_impl), false});
   }
 }
 
@@ -736,7 +735,7 @@ void ue_cell_event_manager::handle_ul_phr_indication(const ul_phr_indication_mes
     return event_result::processed;
   };
 
-  push_cell_event(pcell_index, common_cell_event_t{"PHR", ue_index, std::move(handle_phr_impl)});
+  push_event(pcell_index, event_t{"PHR", ue_index, std::move(handle_phr_impl)});
 }
 
 void ue_cell_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce)
@@ -761,7 +760,7 @@ void ue_cell_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indicati
     return event_result::processed;
   };
 
-  push_cell_event(ce.cell_index, common_cell_event_t{"DL MAC CE", ce.ue_index, std::move(handle_mac_ce_impl)});
+  push_event(cfg.cell_index, event_t{"DL MAC CE", ce.ue_index, std::move(handle_mac_ce_impl)});
 }
 
 void ue_cell_event_manager::handle_positioning_measurement_request(const positioning_measurement_request& req)
@@ -775,7 +774,7 @@ void ue_cell_event_manager::handle_positioning_measurement_request(const positio
     return event_result::processed;
   };
 
-  push_cell_event(req.cell_index, common_cell_event_t{"POS MEAS REQ", std::move(task)});
+  push_event(req.cell_index, event_t{"POS MEAS REQ", std::move(task)});
 }
 
 void ue_cell_event_manager::handle_positioning_measurement_stop(du_cell_index_t cell_index, rnti_t pos_rnti)
@@ -785,7 +784,7 @@ void ue_cell_event_manager::handle_positioning_measurement_stop(du_cell_index_t 
     return event_result::processed;
   };
 
-  push_cell_event(cell_index, common_cell_event_t{"pos_meas_stop", std::move(task)});
+  push_event(cell_index, event_t{"pos_meas_stop", std::move(task)});
 }
 
 void ue_cell_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
@@ -922,7 +921,7 @@ void ue_cell_event_manager::handle_error_indication(slot_point sl_tx, scheduler_
     return event_result::processed;
   };
 
-  push_cell_event(cfg.cell_index, common_cell_event_t{"error_ind", std::move(handle_error_impl)});
+  push_event(cfg.cell_index, event_t{"error_ind", std::move(handle_error_impl)});
 }
 
 void ue_cell_event_manager::handle_harq_ind(ue_cell&                               ue_cc,
@@ -968,7 +967,7 @@ void ue_cell_event_manager::handle_csi(ue_cell& ue_cc, const csi_report_data& cs
   ev_logger.enqueue(scheduler_event_logger::csi_report_event{ue_cc.ue_index, ue_cc.rnti(), csi_rep});
 }
 
-void ue_cell_event_manager::push_cell_event(du_cell_index_t cell_index, common_cell_event_t event)
+void ue_cell_event_manager::push_event(du_cell_index_t cell_index, event_t event)
 {
   if (SRSRAN_UNLIKELY(not active.load(std::memory_order_acquire))) {
     // Note: PHY events should not arrive after the cell has been stopped.
@@ -986,7 +985,7 @@ void ue_cell_event_manager::push_cell_event(du_cell_index_t cell_index, common_c
 
   const du_ue_index_t ue_idx  = event.ue_index;
   const char*         ev_name = event.ev_name;
-  if (not common_events.try_push(std::move(event))) {
+  if (not pending_events.try_push(std::move(event))) {
     if (ue_idx == INVALID_DU_UE_INDEX) {
       logger.warning("cell={}: Discarding {} event. Cause: Event queue is full", fmt::underlying(cell_index), ev_name);
     } else {

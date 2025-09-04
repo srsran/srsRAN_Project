@@ -62,8 +62,7 @@ class scheduler_conres_without_pdu_test : public base_scheduler_conres_test, pub
 TEST_F(scheduler_conres_without_pdu_test, when_conres_ce_is_enqueued_and_no_msg4_is_enqueued_then_pdsch_is_scheduled)
 {
   // Enqueue ConRes CE.
-  this->sched->handle_dl_mac_ce_indication(
-      dl_mac_ce_indication{ue_index, INVALID_DU_CELL_INDEX, lcid_dl_sch_t::UE_CON_RES_ID});
+  this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
 
   // Ensure the ConRes CE is scheduled without a Msg4 SDU.
   ASSERT_TRUE(this->run_slot_until(
@@ -115,8 +114,7 @@ TEST_P(scheduler_con_res_msg4_test,
   this->run_slot_until([this]() { return this->last_sched_res_list[to_du_cell_index(0)]->dl.rar_grants.empty(); });
 
   // Enqueue ConRes CE.
-  this->sched->handle_dl_mac_ce_indication(
-      dl_mac_ce_indication{ue_index, INVALID_DU_CELL_INDEX, lcid_dl_sch_t::UE_CON_RES_ID});
+  this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
 
   // Enqueue Msg4 in SRB0/SRB1.
   this->push_dl_buffer_state(dl_buffer_state_indication_message{this->ue_index, params.msg4_lcid, msg4_size});
@@ -157,8 +155,7 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
   static const unsigned crnti_msg_size = 8;
 
   // Enqueue ConRes CE + Msg4.
-  this->sched->handle_dl_mac_ce_indication(
-      dl_mac_ce_indication{ue_index, INVALID_DU_CELL_INDEX, lcid_dl_sch_t::UE_CON_RES_ID});
+  this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
   this->push_dl_buffer_state(dl_buffer_state_indication_message{this->ue_index, params.msg4_lcid, msg4_size});
 
   // Wait for ConRes + Msg4 PDCCH, PDSCH and PUCCH to be scheduled.
@@ -257,8 +254,7 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_ss_is_us
   static const unsigned msg4_size = 128;
 
   // Enqueue ConRes CE + Msg4.
-  this->sched->handle_dl_mac_ce_indication(
-      dl_mac_ce_indication{ue_index, INVALID_DU_CELL_INDEX, lcid_dl_sch_t::UE_CON_RES_ID});
+  this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
   this->push_dl_buffer_state(dl_buffer_state_indication_message{this->ue_index, params.msg4_lcid, msg4_size});
 
   // Wait for ConRes + Msg4 PDCCH to be scheduled.

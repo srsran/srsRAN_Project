@@ -248,9 +248,7 @@ struct srs_indication {
 
 struct dl_mac_ce_indication {
   du_ue_index_t ue_index;
-  /// Cell index where the MAC CE has to be scheduled. If left as invalid, the scheduler will pick the cell.
-  du_cell_index_t cell_index;
-  lcid_dl_sch_t   ce_lcid;
+  lcid_dl_sch_t ce_lcid;
 };
 
 /// Information and context relative to PHR forwarded by MAC.
