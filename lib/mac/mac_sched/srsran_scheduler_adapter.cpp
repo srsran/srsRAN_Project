@@ -200,7 +200,7 @@ void srsran_scheduler_adapter::handle_ul_sched_command(const mac_ul_scheduling_c
 
 void srsran_scheduler_adapter::handle_dl_mac_ce_indication(const mac_ce_scheduling_command& mac_ce)
 {
-  sched_impl->handle_dl_mac_ce_indication(dl_mac_ce_indication{mac_ce.ue_index, mac_ce.ce_lcid});
+  sched_impl->handle_dl_mac_ce_indication(dl_mac_ce_indication{mac_ce.ue_index, mac_ce.cell_index, mac_ce.ce_lcid});
 }
 
 static slot_point chrono_to_slot_point(std::chrono::high_resolution_clock::time_point hol_toa,

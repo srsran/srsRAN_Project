@@ -41,6 +41,8 @@ struct mac_ul_scheduling_command {
 struct mac_ce_scheduling_command {
   du_ue_index_t ue_index;
   lcid_dl_sch_t ce_lcid;
+  /// Whether there is a preference on the cell where to schedule the MAC CE. If invalid, the scheduler will decide.
+  du_cell_index_t cell_index = INVALID_DU_CELL_INDEX;
 };
 
 /// \brief Information and context relative to a decoded MAC CE PHR.

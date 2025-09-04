@@ -115,9 +115,10 @@ void scheduler_impl::handle_ue_removal_request(du_ue_index_t ue_index)
 
 void scheduler_impl::handle_ue_config_applied(du_ue_index_t ue_index)
 {
-  du_cell_group_index_t grp_idx = cfg_mng.get_cell_group_index(ue_index);
+  const du_cell_index_t       pcell_idx = cfg_mng.get_pcell_index(ue_index);
+  const du_cell_group_index_t grp_idx   = cfg_mng.get_cell_group_index(pcell_idx);
   srsran_assert(grp_idx != INVALID_DU_CELL_GROUP_INDEX, "UE={} not yet created", fmt::underlying(ue_index));
-  groups[grp_idx]->get_ue_configurator().handle_ue_config_applied(ue_index);
+  groups[grp_idx]->get_ue_configurator().handle_ue_config_applied(pcell_idx, ue_index);
 }
 
 void scheduler_impl::handle_rach_indication(const rach_indication_message& msg)
@@ -184,13 +185,17 @@ void scheduler_impl::handle_srs_indication(const srs_indication& srs)
 
 void scheduler_impl::handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce)
 {
-  du_cell_group_index_t grp_idx = cfg_mng.get_cell_group_index(mac_ce.ue_index);
+  const du_cell_index_t       pcell_idx = cfg_mng.get_pcell_index(mac_ce.ue_index);
+  const du_cell_group_index_t grp_idx   = cfg_mng.get_cell_group_index(pcell_idx);
   if (grp_idx == INVALID_DU_CELL_GROUP_INDEX) {
     logger.warning("ue={}: Discarding MAC CE update. Cause: UE not recognized", fmt::underlying(mac_ce.ue_index));
     return;
   }
-
-  groups[grp_idx]->get_feedback_handler().handle_dl_mac_ce_indication(mac_ce);
+  dl_mac_ce_indication cpy = mac_ce;
+  if (cpy.cell_index == INVALID_DU_CELL_INDEX) {
+    cpy.cell_index = pcell_idx;
+  }
+  groups[grp_idx]->get_feedback_handler().handle_dl_mac_ce_indication(cpy);
 }
 
 const sched_result& scheduler_impl::slot_indication(slot_point      sl_tx,

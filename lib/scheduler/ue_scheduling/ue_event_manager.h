@@ -59,7 +59,7 @@ public:
   void handle_ue_creation(ue_config_update_event ev) override;
   void handle_ue_reconfiguration(ue_config_update_event ev) override;
   void handle_ue_deletion(ue_config_delete_event ev) override;
-  void handle_ue_config_applied(du_ue_index_t ue_idx) override;
+  void handle_ue_config_applied(du_cell_index_t pcell_idx, du_ue_index_t ue_idx) override;
 
   /// Scheduler feedback handler interface.
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override;
@@ -85,17 +85,6 @@ public:
 private:
   class ue_dl_buffer_occupancy_manager;
 
-  struct common_event_t {
-    using callback_type = unique_function<void(), 64, true>;
-
-    du_ue_index_t ue_index = MAX_NOF_DU_UES;
-    callback_type callback;
-
-    template <typename Callable>
-    common_event_t(du_ue_index_t ue_index_, Callable&& c) : ue_index(ue_index_), callback(std::forward<Callable>(c))
-    {
-    }
-  };
   struct cell_event_t {
     using callback_type = unique_function<void(ue_cell&), 42, true>;
 
@@ -113,19 +102,47 @@ private:
     {
     }
   };
+  struct common_cell_event_t {
+    using callback_type = unique_function<void(), 64, true>;
 
-  using common_event_queue = concurrent_queue<common_event_t,
-                                              concurrent_queue_policy::lockfree_mpmc,
-                                              concurrent_queue_wait_policy::non_blocking>;
-  using cell_event_queue   = concurrent_queue<cell_event_t,
-                                              concurrent_queue_policy::lockfree_mpmc,
-                                              concurrent_queue_wait_policy::non_blocking>;
+    callback_type callback;
+    /// UE index associated with the event. If INVALID_DU_UE_INDEX, the event is not associated with any UE.
+    du_ue_index_t ue_index        = INVALID_DU_UE_INDEX;
+    const char*   ev_name         = "invalid";
+    bool          warn_if_ignored = true;
+
+    common_cell_event_t() = default;
+    template <typename Callable>
+    common_cell_event_t(const char* ev_name_, Callable&& callable, bool warn_if_ignored_ = true) :
+      callback(std::forward<Callable>(callable)), ev_name(ev_name_), warn_if_ignored(warn_if_ignored_)
+    {
+    }
+    template <typename Callable>
+    common_cell_event_t(const char*   ev_name_,
+                        du_ue_index_t ue_index_,
+                        Callable&&    callable,
+                        bool          warn_if_ignored_ = true) :
+      callback(std::forward<Callable>(callable)),
+      ue_index(ue_index_),
+      ev_name(ev_name_),
+      warn_if_ignored(warn_if_ignored_)
+    {
+    }
+  };
+
+  using cell_event_queue        = concurrent_queue<cell_event_t,
+                                                   concurrent_queue_policy::lockfree_mpmc,
+                                                   concurrent_queue_wait_policy::non_blocking>;
+  using common_cell_event_queue = concurrent_queue<common_cell_event_t,
+                                                   concurrent_queue_policy::lockfree_mpmc,
+                                                   concurrent_queue_wait_policy::non_blocking>;
 
   void process_common(slot_point sl, du_cell_index_t cell_index);
   void process_cell_specific(du_cell_index_t cell_index);
   void clear_cell_events(du_cell_index_t cell_index);
   bool cell_exists(du_cell_index_t cell_index) const;
 
+  void push_cell_event(du_cell_index_t cell_index, common_cell_event_t callable);
   void push_cell_event(du_cell_index_t cell_index, cell_event_t callable);
 
   void
@@ -139,7 +156,7 @@ private:
   void handle_csi(ue_cell& ue_cc, const csi_report_data& csi_rep);
 
   /// List of added and configured cells.
-  struct du_cell {
+  struct cell_context {
     const cell_configuration* cfg            = nullptr;
     cell_resource_allocator*  res_grid       = nullptr;
     cell_harq_manager*        cell_harqs     = nullptr;
@@ -149,6 +166,13 @@ private:
     srs_scheduler*            srs_sched      = nullptr;
     cell_metrics_handler*     metrics        = nullptr;
     scheduler_event_logger*   ev_logger      = nullptr;
+
+    /// Pending cell events.
+    common_cell_event_queue common_events;
+    /// Pending UE events.
+    cell_event_queue ue_events;
+
+    cell_context(unsigned event_qsize) : common_events(event_qsize), ue_events(event_qsize) {}
   };
 
   ue_repository&        ue_db;
@@ -156,15 +180,8 @@ private:
 
   std::unique_ptr<pdu_indication_pool> ind_pdu_pool;
 
-  std::array<std::atomic<bool>, MAX_NOF_DU_CELLS> cell_active{false};
-  std::array<du_cell, MAX_NOF_DU_CELLS>           du_cells{};
-
-  /// Pending Events list per cell.
-  static_vector<cell_event_queue, MAX_NOF_DU_CELLS> cell_specific_events;
-
-  /// Pending Events list common to all cells. We use this list for events that require synchronization across
-  /// UE carriers when CA is enabled (e.g. SR, BSR, reconfig).
-  common_event_queue common_events;
+  std::array<std::atomic<bool>, MAX_NOF_DU_CELLS>             cell_active{true};
+  std::array<std::unique_ptr<cell_context>, MAX_NOF_DU_CELLS> du_cells;
 
   slot_point last_sl;
 
