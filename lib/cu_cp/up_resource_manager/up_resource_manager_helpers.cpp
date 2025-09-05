@@ -65,15 +65,13 @@ drb_id_t srsran::srs_cu_cp::allocate_drb_id(const up_pdu_session_context_update&
   drb_id_t new_drb_id = drb_id_t::drb1;
   // The new DRB ID must not be allocated already.
   while (contains_drb(context, new_drb_id) || contains_drb(config_update, new_drb_id) ||
-         contains_drb(new_session_context, new_drb_id)) {
+         contains_drb(new_session_context, new_drb_id) || context.drb_dirty[(unsigned)new_drb_id - 1]) {
     // Try next.
     new_drb_id = uint_to_drb_id(drb_id_to_uint(new_drb_id) + 1);
 
-    if (drb_id_to_uint(new_drb_id) > max_nof_drbs_per_ue) {
-      logger.warning("DRB creation failed. Cause: Maximum number of DRBs per UE already created ({}). To increase the "
-                     "number of allowed DRBs per UE change the \"--max_nof_drbs_per_ue\" in the CU-CP configuration\n",
-                     max_nof_drbs_per_ue);
-      return drb_id_t::invalid;
+    // Scanned all DRB IDs, none is available.
+    if (new_drb_id == drb_id_t::invalid) {
+      break;
     }
   }
 
