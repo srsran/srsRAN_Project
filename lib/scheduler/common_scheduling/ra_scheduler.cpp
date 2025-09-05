@@ -633,9 +633,7 @@ unsigned ra_scheduler::schedule_rar(pending_rar_t& rar, cell_resource_allocator&
     const unsigned          nof_rar_rbs = get_nof_pdsch_prbs_required(time_resource, rar.tc_rntis.size()).nof_prbs;
     const ofdm_symbol_range symbols     = pdsch_td_res.symbols;
     crb_bitmap              used_crbs   = pdsch_alloc.dl_res_grid.used_crbs(get_dl_bwp_cfg().scs, ra_crb_lims, symbols);
-    // Mark the CRBs used by PUCCH as occupied.
-    used_crbs |= pucch_crbs;
-    const auto available_crbs = rb_helper::find_empty_interval_of_length(used_crbs, nof_rar_rbs);
+    const auto              available_crbs = rb_helper::find_empty_interval_of_length(used_crbs, nof_rar_rbs);
     // Check how many allocations can we fit in the available interval.
     // Note: we have to call \c get_nof_pdsch_prbs_required for every nof_allocs because the number of PRBs is not
     // linear w.r.t. the payload size (all RARs are sent in the same PDSCH grant). See \ref srsran::get_nof_prbs.
@@ -694,8 +692,10 @@ unsigned ra_scheduler::schedule_rar(pending_rar_t& rar, cell_resource_allocator&
     const unsigned nof_rbs_per_msg3 = msg3_data[puschidx].pusch.rbs.type1().length();
     unsigned       nof_msg3_rbs     = nof_rbs_per_msg3 * pusch_res_max_allocs;
     crb_bitmap     used_ul_crbs     = msg3_alloc.ul_res_grid.used_crbs(get_ul_bwp_cfg(), pusch_list[puschidx].symbols);
-    crb_interval   msg3_crbs        = rb_helper::find_empty_interval_of_length(used_ul_crbs, nof_msg3_rbs);
-    pusch_res_max_allocs            = msg3_crbs.length() / nof_rbs_per_msg3;
+    // Mark the CRBs used by PUCCH as occupied.
+    used_ul_crbs |= pucch_crbs;
+    crb_interval msg3_crbs = rb_helper::find_empty_interval_of_length(used_ul_crbs, nof_msg3_rbs);
+    pusch_res_max_allocs   = msg3_crbs.length() / nof_rbs_per_msg3;
     if (pusch_res_max_allocs == 0) {
       continue;
     }
