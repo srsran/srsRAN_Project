@@ -359,6 +359,11 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     out_cell.cell_sel_info.q_rx_lev_min = base_cell.q_rx_lev_min;
     out_cell.cell_sel_info.q_qual_min   = base_cell.q_qual_min;
 
+    // Cell access Related Info parameters.
+    for (const auto& plmn : base_cell.additional_plmns) {
+      out_cell.cell_acc_rel_info.additional_plmns.push_back(plmn_identity::parse(plmn).value());
+    }
+
     // SSB config.
     out_cell.ssb_cfg.ssb_period      = static_cast<ssb_periodicity>(base_cell.ssb_cfg.ssb_period_msec);
     out_cell.ssb_cfg.ssb_block_power = base_cell.ssb_cfg.ssb_block_power;

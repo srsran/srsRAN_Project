@@ -657,6 +657,7 @@ static YAML::Node build_cell_entry(const du_high_unit_base_cell_config& config)
   node["nof_antennas_ul"]       = config.nof_antennas_ul;
   node["nof_antennas_dl"]       = config.nof_antennas_dl;
   node["plmn"]                  = config.plmn;
+  node["additional_plmns"]      = config.additional_plmns;
   node["tac"]                   = config.tac;
   node["q_rx_lev_min"]          = config.q_rx_lev_min;
   node["q_qual_min"]            = config.q_qual_min;

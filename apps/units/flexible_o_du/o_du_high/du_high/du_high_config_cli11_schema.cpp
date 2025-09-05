@@ -1552,7 +1552,13 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
       ->capture_default_str();
   add_option(app, "--nof_antennas_dl", cell_params.nof_antennas_dl, "Number of antennas in downlink")
       ->capture_default_str();
-  add_option(app, "--plmn", cell_params.plmn, "PLMN")->capture_default_str();
+  auto plmn_is_valid = [](const std::string& value) -> std::string {
+    return plmn_identity::parse(value).has_value() ? "" : "Invalid PLMN format";
+  };
+  add_option(app, "--plmn", cell_params.plmn, "PLMN")->capture_default_str()->check(plmn_is_valid);
+  add_option(app, "--additional_plmns", cell_params.additional_plmns, "List of PLMNs")
+      ->capture_default_str()
+      ->check(plmn_is_valid);
   add_option(app, "--tac", cell_params.tac, "TAC")->capture_default_str()->check([](const std::string& value) {
     std::stringstream ss(value);
     unsigned          tac;
