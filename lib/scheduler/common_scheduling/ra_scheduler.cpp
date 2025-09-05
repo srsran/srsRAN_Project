@@ -126,13 +126,20 @@ ra_scheduler::ra_scheduler(const scheduler_ra_expert_config& sched_cfg_,
              cell_cfg.ntn_cs_koffset),
   pending_rachs(RACH_IND_QUEUE_SIZE),
   pending_crcs(CRC_IND_QUEUE_SIZE),
-  pending_msg3s(MAX_NOF_MSG3)
+  pending_msg3s(MAX_NOF_MSG3),
+  pucch_crbs(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length())
 {
   // Precompute RAR PDSCH and DCI PDUs.
   precompute_rar_fields();
 
   // Precompute Msg3 PUSCH and DCI PDUs.
   precompute_msg3_pdus();
+
+  // Compute the PRBs that might be used for PUCCH transmissions, to avoid scheduling PUSCH over them.
+  for (const auto& pucch_res : cell_cfg.pucch_guardbands) {
+    // TODO: Convert PRBs to CRBs once multiple BWPs are supported.
+    pucch_crbs.fill(pucch_res.prbs.start(), pucch_res.prbs.stop());
+  }
 }
 
 void ra_scheduler::precompute_rar_fields()
@@ -625,8 +632,10 @@ unsigned ra_scheduler::schedule_rar(pending_rar_t& rar, cell_resource_allocator&
     // > Find available RBs in PDSCH for RAR grant.
     const unsigned          nof_rar_rbs = get_nof_pdsch_prbs_required(time_resource, rar.tc_rntis.size()).nof_prbs;
     const ofdm_symbol_range symbols     = pdsch_td_res.symbols;
-    const crb_bitmap        used_crbs   = pdsch_alloc.dl_res_grid.used_crbs(get_dl_bwp_cfg().scs, ra_crb_lims, symbols);
-    const auto              available_crbs = rb_helper::find_empty_interval_of_length(used_crbs, nof_rar_rbs);
+    crb_bitmap              used_crbs   = pdsch_alloc.dl_res_grid.used_crbs(get_dl_bwp_cfg().scs, ra_crb_lims, symbols);
+    // Mark the CRBs used by PUCCH as occupied.
+    used_crbs |= pucch_crbs;
+    const auto available_crbs = rb_helper::find_empty_interval_of_length(used_crbs, nof_rar_rbs);
     // Check how many allocations can we fit in the available interval.
     // Note: we have to call \c get_nof_pdsch_prbs_required for every nof_allocs because the number of PRBs is not
     // linear w.r.t. the payload size (all RARs are sent in the same PDSCH grant). See \ref srsran::get_nof_prbs.
