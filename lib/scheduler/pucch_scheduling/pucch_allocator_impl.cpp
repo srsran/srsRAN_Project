@@ -60,6 +60,38 @@ static pucch_resource* get_sr_pucch_res_cfg(const pucch_config& pucch_cfg)
   return res_cfg != pucch_res_list.end() ? const_cast<pucch_resource*>(res_cfg) : nullptr;
 }
 
+static void mark_pucch_in_resource_grid(cell_slot_resource_allocator&    pucch_slot_alloc,
+                                        const grant_info&                first_hop_grant,
+                                        const std::optional<grant_info>& second_hop_grant,
+                                        const crb_interval&              ul_bwp_crbs,
+                                        const scheduler_expert_config&   expert_cfg)
+{
+  const unsigned guard_rbs = expert_cfg.ue.min_pucch_pusch_prb_distance;
+
+  if (guard_rbs == 0) {
+    pucch_slot_alloc.ul_res_grid.fill(first_hop_grant);
+    if (second_hop_grant.has_value()) {
+      pucch_slot_alloc.ul_res_grid.fill(second_hop_grant.value());
+    }
+    return;
+  }
+
+  // Add guard band to the allocated grid resources to minimize cross PUCCH-PUSCH interference.
+  auto     grant_extended = first_hop_grant;
+  unsigned start          = first_hop_grant.crbs.start() >= guard_rbs ? first_hop_grant.crbs.start() - guard_rbs : 0;
+  grant_extended.crbs     = {start, first_hop_grant.crbs.stop() + guard_rbs};
+  grant_extended.crbs.intersect(ul_bwp_crbs);
+  pucch_slot_alloc.ul_res_grid.fill(grant_extended);
+
+  if (second_hop_grant.has_value()) {
+    start               = second_hop_grant->crbs.start() >= guard_rbs ? second_hop_grant->crbs.start() - guard_rbs : 0;
+    grant_extended      = *second_hop_grant;
+    grant_extended.crbs = {start, second_hop_grant->crbs.stop() + guard_rbs};
+    grant_extended.crbs.intersect(ul_bwp_crbs);
+    pucch_slot_alloc.ul_res_grid.fill(grant_extended);
+  }
+}
+
 static void mark_pucch_in_resource_grid(cell_slot_resource_allocator& pucch_slot_alloc,
                                         const pucch_resource&         pucch_res,
                                         const ue_cell_configuration&  ue_cell_cfg)
@@ -88,23 +120,9 @@ static void mark_pucch_in_resource_grid(cell_slot_resource_allocator& pucch_slot
     first_hop_grant        = {init_ul_bwp.scs, symbols, crbs};
   }
 
-  // Add guard band to the allocated grid resources to minimize cross PUCCH-PUSCH interference.
-  const unsigned guard_rbs = ue_cell_cfg.cell_cfg_common.expert_cfg.ue.min_pucch_pusch_prb_distance;
-  if (guard_rbs > 0) {
-    unsigned start       = first_hop_grant.crbs.start() >= guard_rbs ? first_hop_grant.crbs.start() - guard_rbs : 0;
-    first_hop_grant.crbs = {start, first_hop_grant.crbs.stop() + guard_rbs};
-    first_hop_grant.crbs.intersect(init_ul_bwp.crbs);
-    if (second_hop_grant.has_value()) {
-      start = second_hop_grant->crbs.start() >= guard_rbs ? second_hop_grant->crbs.start() - guard_rbs : 0;
-      second_hop_grant->crbs = {start, second_hop_grant->crbs.stop() + guard_rbs};
-      second_hop_grant->crbs.intersect(init_ul_bwp.crbs);
-    }
-  }
-
-  pucch_slot_alloc.ul_res_grid.fill(first_hop_grant);
-  if (second_hop_grant.has_value()) {
-    pucch_slot_alloc.ul_res_grid.fill(second_hop_grant.value());
-  }
+  // Fill Slot grid.
+  mark_pucch_in_resource_grid(
+      pucch_slot_alloc, first_hop_grant, second_hop_grant, init_ul_bwp.crbs, ue_cell_cfg.cell_cfg_common.expert_cfg);
 }
 
 //////////////    Public functions       //////////////
@@ -169,8 +187,11 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cel
   }
 
   // Fill Slot grid.
-  pucch_slot_alloc.ul_res_grid.fill(pucch_res.value().first_hop_res);
-  pucch_slot_alloc.ul_res_grid.fill(pucch_res.value().second_hop_res);
+  mark_pucch_in_resource_grid(pucch_slot_alloc,
+                              pucch_res->first_hop_res,
+                              pucch_res->second_hop_res,
+                              cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs,
+                              cell_cfg.expert_cfg);
 
   // Fill scheduler output.
   pucch_info& pucch_info = pucch_slot_alloc.result.ul.pucchs.emplace_back();
@@ -1008,8 +1029,11 @@ void pucch_allocator_impl::compute_pucch_common_params_and_alloc(cell_slot_resou
                                                    .format              = pucch_res.format});
 
   // Allocate common HARQ-ACK resource.
-  pucch_alloc.ul_res_grid.fill(first_hop_grant);
-  pucch_alloc.ul_res_grid.fill(second_hop_grant);
+  mark_pucch_in_resource_grid(pucch_alloc,
+                              first_hop_grant,
+                              second_hop_grant,
+                              cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs,
+                              cell_cfg.expert_cfg);
 
   // Update the PUCCH grants with the common resource.
   auto& pucch_grants = pucch_grants_alloc_grid[pucch_alloc.slot.to_uint()];
