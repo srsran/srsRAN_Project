@@ -632,7 +632,7 @@ unsigned ra_scheduler::schedule_rar(pending_rar_t& rar, cell_resource_allocator&
     // > Find available RBs in PDSCH for RAR grant.
     const unsigned          nof_rar_rbs = get_nof_pdsch_prbs_required(time_resource, rar.tc_rntis.size()).nof_prbs;
     const ofdm_symbol_range symbols     = pdsch_td_res.symbols;
-    crb_bitmap              used_crbs   = pdsch_alloc.dl_res_grid.used_crbs(get_dl_bwp_cfg().scs, ra_crb_lims, symbols);
+    const crb_bitmap        used_crbs   = pdsch_alloc.dl_res_grid.used_crbs(get_dl_bwp_cfg().scs, ra_crb_lims, symbols);
     const auto              available_crbs = rb_helper::find_empty_interval_of_length(used_crbs, nof_rar_rbs);
     // Check how many allocations can we fit in the available interval.
     // Note: we have to call \c get_nof_pdsch_prbs_required for every nof_allocs because the number of PRBs is not

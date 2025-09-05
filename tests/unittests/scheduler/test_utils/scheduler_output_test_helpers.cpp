@@ -202,17 +202,6 @@ std::vector<test_grant_info> srsran::get_ul_grants(const cell_configuration& cel
     }
   }
 
-  // Fill PUSCHs.
-  for (const ul_sched_info& pusch : ul_res.puschs) {
-    const bwp_configuration& bwp_cfg = *pusch.pusch_cfg.bwp_cfg;
-    prb_interval             prbs    = {pusch.pusch_cfg.rbs.type1().start(), pusch.pusch_cfg.rbs.type1().stop()};
-    crb_interval             crbs    = prb_to_crb(bwp_cfg, prbs);
-    grants.emplace_back();
-    grants.back().type  = test_grant_info::UE_UL;
-    grants.back().rnti  = rnti_t::INVALID_RNTI;
-    grants.back().grant = grant_info{pusch.pusch_cfg.bwp_cfg->scs, pusch.pusch_cfg.symbols, crbs};
-  }
-
   // Fill PUCCHs.
   for (const pucch_info& pucch : ul_res.pucchs) {
     const bwp_configuration& bwp_cfg = *pucch.bwp_cfg;
@@ -239,6 +228,17 @@ std::vector<test_grant_info> srsran::get_ul_grants(const cell_configuration& cel
       grants.back().grant =
           grant_info{bwp_cfg.scs, pucch.resources.symbols, crb_interval{crb_first_hop, crb_first_hop + 1}};
     }
+  }
+
+  // Fill PUSCHs.
+  for (const ul_sched_info& pusch : ul_res.puschs) {
+    const bwp_configuration& bwp_cfg = *pusch.pusch_cfg.bwp_cfg;
+    prb_interval             prbs    = {pusch.pusch_cfg.rbs.type1().start(), pusch.pusch_cfg.rbs.type1().stop()};
+    crb_interval             crbs    = prb_to_crb(bwp_cfg, prbs);
+    grants.emplace_back();
+    grants.back().type  = test_grant_info::UE_UL;
+    grants.back().rnti  = rnti_t::INVALID_RNTI;
+    grants.back().grant = grant_info{pusch.pusch_cfg.bwp_cfg->scs, pusch.pusch_cfg.symbols, crbs};
   }
 
   return grants;

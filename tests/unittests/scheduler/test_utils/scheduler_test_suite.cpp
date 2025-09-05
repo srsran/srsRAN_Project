@@ -446,11 +446,17 @@ void srsran::test_ul_resource_grid_collisions(const cell_configuration& cell_cfg
 
   std::vector<test_grant_info> ul_grants = get_ul_grants(cell_cfg, result);
   for (const test_grant_info& test_grant : ul_grants) {
-    if (test_grant.type != test_grant_info::PUCCH) {
+    // We do not check for collisions between PUCCHs or between PUCCHs and PRACHs.
+    if (test_grant.type != test_grant_info::UE_UL) {
+      grid.fill(test_grant.grant);
+    }
+  }
+  for (const test_grant_info& test_grant : ul_grants) {
+    if (test_grant.type == test_grant_info::UE_UL) {
       ASSERT_FALSE(grid.collides(test_grant.grant))
           << fmt::format("Resource collision for grant with rnti={}", test_grant.rnti);
+      grid.fill(test_grant.grant);
     }
-    grid.fill(test_grant.grant);
   }
 }
 
