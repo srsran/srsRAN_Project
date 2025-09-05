@@ -20,7 +20,7 @@ using namespace srsran;
 
 /// \brief More than one DL buffer occupancy update may be received per slot for the same UE and bearer. This class
 /// ensures that the UE DL buffer occupancy is updated only once per bearer per slot for efficiency reasons.
-class ue_event_manager::ue_dl_buffer_occupancy_manager final : public scheduler_dl_buffer_state_indication_handler
+class ue_cell_event_manager::ue_dl_buffer_occupancy_manager final : public scheduler_dl_buffer_state_indication_handler
 {
   using bearer_key                        = uint32_t;
   static constexpr size_t NOF_BEARER_KEYS = MAX_NOF_DU_UES * MAX_NOF_RB_LCIDS;
@@ -30,7 +30,7 @@ class ue_event_manager::ue_dl_buffer_occupancy_manager final : public scheduler_
   static lcid_t        get_lcid(bearer_key key) { return uint_to_lcid(key / MAX_NOF_DU_UES); }
 
 public:
-  ue_dl_buffer_occupancy_manager(ue_event_manager& parent_) : parent(parent_), pending_evs(NOF_BEARER_KEYS)
+  ue_dl_buffer_occupancy_manager(ue_cell_event_manager& parent_) : parent(parent_), pending_evs(NOF_BEARER_KEYS)
   {
     std::fill(ue_dl_bo_table.begin(), ue_dl_bo_table.end(), std::make_pair(-1, 0));
   }
@@ -88,8 +88,18 @@ public:
       }
       ue& u = parent.ue_db[dl_bo.ue_index];
 
-      // Forward DL BO update to the UE PCell event manager.
-      parent.cells[u.get_pcell().cell_index]->handle_dl_buffer_state_indication(dl_bo);
+      // Forward DL BO update to UE.
+      u.handle_dl_buffer_state_indication(dl_bo.lcid, dl_bo.bs, dl_bo.hol_toa);
+      if (u.get_pcell().is_in_fallback_mode()) {
+        // Signal SRB fallback scheduler with the new SRB0/SRB1 buffer state.
+        parent.fallback_sched.handle_dl_buffer_state_indication(dl_bo.ue_index);
+      }
+
+      // Log event.
+      parent.ev_logger.enqueue(dl_bo);
+
+      // Report event.
+      parent.metrics.handle_dl_buffer_state_indication(dl_bo);
     }
   }
 
@@ -97,7 +107,7 @@ private:
   using ue_event_queue =
       concurrent_queue<bearer_key, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>;
 
-  ue_event_manager& parent;
+  ue_cell_event_manager& parent;
 
   // Table of pending DL Buffer Occupancy values and HOL TOAs. DL Buffer Occupancy=-1 means that it is not set. HOL
   // ToA of 0 means it is not set.
@@ -190,6 +200,7 @@ ue_cell_event_manager::ue_cell_event_manager(ue_event_manager&          parent_,
   metrics(cell_ev.metrics),
   ev_logger(cell_ev.ev_logger),
   ind_pdu_pool(std::make_unique<pdu_indication_pool>(logger)),
+  dl_bo_mng(std::make_unique<ue_dl_buffer_occupancy_manager>(*this)),
   pending_events(CELL_EVENT_LIST_SIZE)
 {
 }
@@ -233,8 +244,8 @@ void ue_cell_event_manager::run_slot(slot_point sl_tx)
     }
   }
 
-  // Process common events that are not specific to any cell.
-  parent.process_common(sl_tx, cfg.cell_index);
+  // Process pending DL buffer occupancy updates.
+  dl_bo_mng->slot_indication(sl_tx);
 }
 
 void ue_cell_event_manager::handle_ue_creation(ue_config_update_event ev)
@@ -789,29 +800,7 @@ void ue_cell_event_manager::handle_positioning_measurement_stop(du_cell_index_t 
 
 void ue_cell_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
 {
-  // Note: DL buffer state indication is a special case. We use the ue_dl_buffer_occupancy_manager to handle the
-  // buffer state updates in a thread-safe manner and call this class from within the scheduler execution context. So,
-  // there is no need to push this event to the event queue.
-
-  // Retrieve UE.
-  if (not ue_db.contains(bs.ue_index)) {
-    log_invalid_ue_index(bs.ue_index, "DL BO");
-    return;
-  }
-  ue& u = ue_db[bs.ue_index];
-
-  // Forward DL BO update to UE.
-  u.handle_dl_buffer_state_indication(bs.lcid, bs.bs, bs.hol_toa);
-  if (u.get_pcell().is_in_fallback_mode()) {
-    // Signal SRB fallback scheduler with the new SRB0/SRB1 buffer state.
-    fallback_sched.handle_dl_buffer_state_indication(bs.ue_index);
-  }
-
-  // Log event.
-  ev_logger.enqueue(bs);
-
-  // Report event.
-  metrics.handle_dl_buffer_state_indication(bs);
+  dl_bo_mng->handle_dl_buffer_state_indication(bs);
 }
 
 static void handle_discarded_pusch(const cell_slot_resource_allocator& prev_slot_result, ue_repository& ue_db)
@@ -1017,32 +1006,9 @@ void ue_cell_event_manager::log_invalid_cc(du_ue_index_t ue_idx, const char* eve
               event_name);
 }
 
-ue_event_manager::ue_event_manager(ue_repository& ue_db_) :
-  ue_db(ue_db_),
-  logger(srslog::fetch_basic_logger("SCHED")),
-  dl_bo_mng(std::make_unique<ue_dl_buffer_occupancy_manager>(*this))
+ue_event_manager::ue_event_manager(ue_repository& ue_db_) : ue_db(ue_db_), logger(srslog::fetch_basic_logger("SCHED"))
 {
   std::fill(cells.begin(), cells.end(), nullptr);
-}
-
-ue_event_manager::~ue_event_manager() = default;
-
-void ue_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
-{
-  dl_bo_mng->handle_dl_buffer_state_indication(bs);
-}
-
-void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)
-{
-  bool new_slot_detected = last_sl != sl;
-  if (not new_slot_detected) {
-    // This slot has already been processed.
-    return;
-  }
-  last_sl = sl;
-
-  // Process pending DL Buffer Occupancy reports.
-  dl_bo_mng->slot_indication(sl);
 }
 
 std::unique_ptr<ue_cell_event_manager> ue_event_manager::add_cell(const cell_creation_event& cell_ev)

@@ -87,6 +87,8 @@ public:
   void handle_error_indication(slot_point sl_tx, scheduler_slot_handler::error_outcome event);
 
 private:
+  class ue_dl_buffer_occupancy_manager;
+
   /// Result of processing a cell event.
   enum class event_result { processed, invalid_ue, invalid_ue_cc };
 
@@ -152,6 +154,8 @@ private:
 
   std::unique_ptr<pdu_indication_pool> ind_pdu_pool;
 
+  std::unique_ptr<ue_dl_buffer_occupancy_manager> dl_bo_mng;
+
   event_queue pending_events;
 
   slot_point last_sl_tx;
@@ -163,38 +167,22 @@ private:
 /// \brief Class used to manage events that arrive to the scheduler and are directed at UEs.
 /// This class acts as a facade for several of the ue_scheduler subcomponents, managing the asynchronous configuration
 /// of the UEs and logging in a thread-safe manner.
-class ue_event_manager final : public scheduler_dl_buffer_state_indication_handler
+class ue_event_manager
 {
 public:
   ue_event_manager(ue_repository& ue_db);
-  ~ue_event_manager() override;
 
   std::unique_ptr<ue_cell_event_manager> add_cell(const cell_creation_event& cell_ev);
 
-  ue_cell_event_manager& get_cell(du_cell_index_t cell_index)
-  {
-    srsran_sanity_check(cell_exists(cell_index), "Invalid cell index {}", fmt::underlying(cell_index));
-    return *cells[cell_index];
-  }
-
-  /// Scheduler DL buffer state indication handler interface.
-  void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override;
-
 private:
   friend class ue_cell_event_manager;
-  class ue_dl_buffer_occupancy_manager;
 
-  void process_common(slot_point sl, du_cell_index_t cell_index);
   bool cell_exists(du_cell_index_t cell_index) const;
 
   ue_repository&        ue_db;
   srslog::basic_logger& logger;
 
   std::array<ue_cell_event_manager*, MAX_NOF_DU_CELLS> cells;
-
-  slot_point last_sl;
-
-  std::unique_ptr<ue_dl_buffer_occupancy_manager> dl_bo_mng;
 };
 
 } // namespace srsran

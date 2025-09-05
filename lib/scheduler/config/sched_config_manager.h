@@ -152,7 +152,7 @@ private:
   {
     return static_cast<du_cell_group_index_t>(val >> 16U);
   }
-  static du_cell_index_t unpack_pcell(uint32_t val) { return to_du_cell_index(val & (0xFFFFU)); }
+  static du_cell_index_t unpack_pcell(uint32_t val) { return to_du_cell_index(val & (0xffffU)); }
 
   void flush_ues_to_rem();
 

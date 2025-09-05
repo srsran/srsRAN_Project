@@ -62,7 +62,13 @@ public:
 
   void handle_paging_information(const sched_paging_information& pi) { pg_sch.handle_paging_information(pi); }
 
-  scheduler_feedback_handler& get_feedback_handler() { return ue_sched->get_feedback_handler(); }
+  scheduler_feedback_handler&    get_feedback_handler() { return ue_sched->get_feedback_handler(); }
+  scheduler_positioning_handler& get_positioning_handler() { return ue_sched->get_positioning_handler(); }
+  scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler()
+  {
+    return ue_sched->get_dl_buffer_state_indication_handler();
+  }
+  sched_ue_configuration_handler& get_ue_configurator() { return ue_sched->get_ue_configurator(); }
 
   const cell_configuration& cell_cfg;
 

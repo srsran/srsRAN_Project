@@ -81,9 +81,7 @@ void scheduler_impl::handle_ue_creation_request(const sched_ue_creation_request_
 
   // Dispatch UE creation to UE scheduler associated to the cell group.
   const du_cell_index_t pcell_idx = ue_cfg_ev.next_config().pcell_common_cfg().cell_index;
-  du_cell_group_index_t grp_idx   = cfg_mng.get_cell_group_index(ue_request.ue_index);
-  srsran_assert(grp_idx != INVALID_DU_CELL_GROUP_INDEX, "UE={} not yet created", fmt::underlying(ue_request.ue_index));
-  groups[grp_idx]->get_ue_configurator(pcell_idx).handle_ue_creation(std::move(ue_cfg_ev));
+  cells[pcell_idx]->get_ue_configurator().handle_ue_creation(std::move(ue_cfg_ev));
 }
 
 void scheduler_impl::handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request)
@@ -97,9 +95,7 @@ void scheduler_impl::handle_ue_reconfiguration_request(const sched_ue_reconfigur
 
   // Dispatch UE reconfiguration to UE scheduler associated to the cell group.
   const du_cell_index_t pcell_idx = ue_cfg_ev.next_config().pcell_common_cfg().cell_index;
-  du_cell_group_index_t grp_idx   = cfg_mng.get_cell_group_index(ue_request.ue_index);
-  srsran_assert(grp_idx != INVALID_DU_CELL_GROUP_INDEX, "UE={} not yet created", fmt::underlying(ue_request.ue_index));
-  groups[grp_idx]->get_ue_configurator(pcell_idx).handle_ue_reconfiguration(std::move(ue_cfg_ev));
+  cells[pcell_idx]->get_ue_configurator().handle_ue_reconfiguration(std::move(ue_cfg_ev));
 }
 
 void scheduler_impl::handle_ue_removal_request(du_ue_index_t ue_index)
@@ -109,18 +105,18 @@ void scheduler_impl::handle_ue_removal_request(du_ue_index_t ue_index)
   if (not ue_del_ev.valid()) {
     return;
   }
-
-  du_cell_group_index_t grp_idx = cfg_mng.get_cell_group_index(ue_index);
-  srsran_assert(grp_idx != INVALID_DU_CELL_GROUP_INDEX, "UE={} not yet created", fmt::underlying(ue_index));
-  groups[grp_idx]->get_ue_configurator(ue_del_ev.pcell_index()).handle_ue_deletion(std::move(ue_del_ev));
+  const du_cell_index_t pcell_idx = ue_del_ev.pcell_index();
+  cells[pcell_idx]->get_ue_configurator().handle_ue_deletion(std::move(ue_del_ev));
 }
 
 void scheduler_impl::handle_ue_config_applied(du_ue_index_t ue_index)
 {
-  const du_cell_index_t       pcell_idx = cfg_mng.get_pcell_index(ue_index);
-  const du_cell_group_index_t grp_idx   = cfg_mng.get_cell_group_index(pcell_idx);
-  srsran_assert(grp_idx != INVALID_DU_CELL_GROUP_INDEX, "UE={} not yet created", fmt::underlying(ue_index));
-  groups[grp_idx]->get_ue_configurator(pcell_idx).handle_ue_config_applied(pcell_idx, ue_index);
+  const du_cell_index_t pcell_idx = cfg_mng.get_pcell_index(ue_index);
+  if (pcell_idx == INVALID_DU_CELL_INDEX) {
+    logger.error("ue={}: Discarding ue config applied event. Cause: UE does not exist", fmt::underlying(ue_index));
+    return;
+  }
+  cells[pcell_idx]->get_ue_configurator().handle_ue_config_applied(pcell_idx, ue_index);
 }
 
 void scheduler_impl::handle_rach_indication(const rach_indication_message& msg)
@@ -131,13 +127,8 @@ void scheduler_impl::handle_rach_indication(const rach_indication_message& msg)
 
 void scheduler_impl::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr)
 {
-  du_cell_group_index_t grp_idx = cfg_mng.get_cell_group_index(bsr.ue_index);
-  if (grp_idx == INVALID_DU_CELL_GROUP_INDEX) {
-    logger.warning("ue={}: Discarding UL BSR. Cause: UE not recognized", fmt::underlying(bsr.ue_index));
-    return;
-  }
-
-  groups[grp_idx]->get_feedback_handler(bsr.cell_index).handle_ul_bsr_indication(bsr);
+  srsran_assert(cells.contains(bsr.cell_index), "cell={} does not exist", fmt::underlying(bsr.cell_index));
+  cells[bsr.cell_index]->get_feedback_handler().handle_ul_bsr_indication(bsr);
 }
 
 void scheduler_impl::handle_ul_phr_indication(const ul_phr_indication_message& phr_ind)
@@ -155,19 +146,17 @@ void scheduler_impl::handle_ul_phr_indication(const ul_phr_indication_message& p
 
 void scheduler_impl::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
 {
-  du_cell_group_index_t grp_idx = cfg_mng.get_cell_group_index(bs.ue_index);
-  if (grp_idx == INVALID_DU_CELL_GROUP_INDEX) {
+  const du_cell_index_t pcell_index = cfg_mng.get_pcell_index(bs.ue_index);
+  if (pcell_index == INVALID_DU_CELL_INDEX) {
     logger.warning("ue={}: Discarding DL buffer status update. Cause: UE not recognized", fmt::underlying(bs.ue_index));
     return;
   }
-
-  groups[grp_idx]->get_dl_buffer_state_indication_handler().handle_dl_buffer_state_indication(bs);
+  cells[pcell_index]->get_dl_buffer_state_indication_handler().handle_dl_buffer_state_indication(bs);
 }
 
 void scheduler_impl::handle_crc_indication(const ul_crc_indication& crc_ind)
 {
   srsran_assert(cells.contains(crc_ind.cell_index), "cell={} does not exist", fmt::underlying(crc_ind.cell_index));
-
   cells[crc_ind.cell_index]->handle_crc_indication(crc_ind);
 }
 
@@ -187,13 +176,12 @@ void scheduler_impl::handle_srs_indication(const srs_indication& srs)
 
 void scheduler_impl::handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce)
 {
-  const du_cell_index_t       pcell_idx = cfg_mng.get_pcell_index(mac_ce.ue_index);
-  const du_cell_group_index_t grp_idx   = cfg_mng.get_cell_group_index(pcell_idx);
-  if (grp_idx == INVALID_DU_CELL_GROUP_INDEX) {
+  const du_cell_index_t pcell_idx = cfg_mng.get_pcell_index(mac_ce.ue_index);
+  if (pcell_idx == INVALID_DU_CELL_INDEX) {
     logger.warning("ue={}: Discarding MAC CE update. Cause: UE not recognized", fmt::underlying(mac_ce.ue_index));
     return;
   }
-  groups[grp_idx]->get_feedback_handler(pcell_idx).handle_dl_mac_ce_indication(mac_ce);
+  cells[pcell_idx]->get_feedback_handler().handle_dl_mac_ce_indication(mac_ce);
 }
 
 const sched_result& scheduler_impl::slot_indication(slot_point      sl_tx,
@@ -217,8 +205,7 @@ const sched_result& scheduler_impl::slot_indication(slot_point      sl_tx,
 void scheduler_impl::handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index, error_outcome event)
 {
   srsran_assert(cells.contains(cell_index), "cell={} does not exist", fmt::underlying(cell_index));
-  cell_scheduler& cell = *cells[cell_index];
-  cell.handle_error_indication(sl_tx, event);
+  cells[cell_index]->handle_error_indication(sl_tx, event);
 }
 
 void scheduler_impl::handle_paging_information(const sched_paging_information& pi)
@@ -230,16 +217,12 @@ void scheduler_impl::handle_paging_information(const sched_paging_information& p
 
 void scheduler_impl::handle_positioning_measurement_request(const positioning_measurement_request& req)
 {
-  du_cell_group_index_t group_idx = cfg_mng.get_cell_group_index(req.cell_index);
-  srsran_assert(group_idx != INVALID_DU_CELL_GROUP_INDEX, "cell={} does not exist", fmt::underlying(req.cell_index));
-  ue_scheduler& ue_sched = *groups[group_idx];
-  ue_sched.get_positioning_handler(req.cell_index).handle_positioning_measurement_request(req);
+  srsran_assert(cells.contains(req.cell_index), "cell={} does not exist", fmt::underlying(req.cell_index));
+  cells[req.cell_index]->get_positioning_handler().handle_positioning_measurement_request(req);
 }
 
 void scheduler_impl::handle_positioning_measurement_stop(du_cell_index_t cell_index, rnti_t pos_rnti)
 {
-  du_cell_group_index_t group_idx = cfg_mng.get_cell_group_index(cell_index);
-  srsran_assert(group_idx != INVALID_DU_CELL_GROUP_INDEX, "cell={} does not exist", fmt::underlying(cell_index));
-  ue_scheduler& ue_sched = *groups[group_idx];
-  ue_sched.get_positioning_handler(cell_index).handle_positioning_measurement_stop(cell_index, pos_rnti);
+  srsran_assert(cells.contains(cell_index), "cell={} does not exist", fmt::underlying(cell_index));
+  cells[cell_index]->get_positioning_handler().handle_positioning_measurement_stop(cell_index, pos_rnti);
 }

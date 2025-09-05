@@ -54,6 +54,15 @@ public:
   /// Retrieves handler of UE feedback for a given cell.
   virtual scheduler_feedback_handler& get_feedback_handler() = 0;
 
+  /// Retrieves handler of UE positioning for a given cell.
+  virtual scheduler_positioning_handler& get_positioning_handler() = 0;
+
+  /// Retrieves handler of DL buffer state updates for a given cell.
+  virtual scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() = 0;
+
+  /// Return UE configurator.
+  virtual sched_ue_configuration_handler& get_ue_configurator() = 0;
+
   /// Called when cell is activated.
   virtual void start() = 0;
 
@@ -91,15 +100,6 @@ public:
   {
     return unique_cell_ptr{do_add_cell(params), cell_deleter{*this, params.cell_index}};
   }
-
-  /// Return UE configurator.
-  virtual sched_ue_configuration_handler& get_ue_configurator(du_cell_index_t pcell_index) = 0;
-
-  virtual scheduler_feedback_handler& get_feedback_handler(du_cell_index_t cell_index) = 0;
-
-  virtual scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() = 0;
-
-  virtual scheduler_positioning_handler& get_positioning_handler(du_cell_index_t cell_index) = 0;
 
 private:
   virtual ue_cell_scheduler* do_add_cell(const ue_cell_scheduler_creation_request& params) = 0;
