@@ -12,7 +12,6 @@
   labels: ["kubernetes.io/hostname=sdr6"]
   nof_ports: 4
   requirements:
-    arch: amd64
     cpu:
       requests: 12
       limits: 12
@@ -33,7 +32,6 @@
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
   labels: ["kubernetes.io/hostname=sdr4"]
   requirements:
-    arch: amd64
     cpu:
       requests: 8
       limits: 8
@@ -58,7 +56,6 @@
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
   taints: ["purpose=retina"]
   requirements:
-    arch: amd64
     cpu:
       requests: 4
       limits: 4

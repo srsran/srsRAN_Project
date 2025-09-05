@@ -13,7 +13,6 @@
     - ${ZMQ_HOSTLABEL_1}
   nof_ports: 4
   requirements:
-    arch: amd64
     cpu:
       requests: 4
       limits: 4
@@ -38,7 +37,6 @@
   labels:
     - ${ZMQ_HOSTLABEL_1}
   requirements:
-    arch: amd64
     cpu:
       requests: 4
       limits: 4
@@ -60,7 +58,6 @@
 - name: open5gs
   type: 5gc
   requirements:
-    arch: amd64
     cpu:
       requests: 2
       limits: 2

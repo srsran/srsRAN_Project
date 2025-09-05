@@ -14,7 +14,6 @@
     - ${ZMQ_HOSTLABEL_1}
   nof_ports: 32
   requirements:
-    arch: amd64
     cpu:
       requests: 2
       limits: 2
@@ -41,7 +40,6 @@
     - ${ZMQ_HOSTLABEL_1}
   force_external_ip: true
   requirements:
-    arch: amd64
     cpu:
       requests: 8
       limits: 8
@@ -63,7 +61,6 @@
 - name: open5gs
   type: 5gc
   requirements:
-    arch: amd64
     cpu:
       requests: 2
       limits: 2

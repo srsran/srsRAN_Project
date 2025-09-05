@@ -10,7 +10,6 @@
   type: ue
   image: ${RETINA_REGISTRY_PREFIX}/android:${RETINA_VERSION}
   requirements:
-    arch: amd64
     cpu:
       requests: 1
       limits: 1
@@ -28,7 +27,6 @@
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
   requirements:
-    arch: amd64
     cpu:
       requests: 8
       limits: 8
@@ -56,7 +54,6 @@
   labels:
     - kubernetes.io/hostname=sdr6
   requirements:
-    arch: amd64
     cpu:
       requests: 4
       limits: 4
