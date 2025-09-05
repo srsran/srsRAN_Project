@@ -57,21 +57,21 @@ public:
       const auto& flexible = std::get<du_low_executor_mapper_flexible_exec_config>(config.executors);
 
       auto pdsch_executors = create_task_fork_limiter(
-          flexible.high_priority_executor, flexible.max_pdsch_concurrency, pdsch_queue_sizes, max_pdsch_batch_size);
+          flexible.rt_hi_prio_exec, flexible.max_pdsch_concurrency, pdsch_queue_sizes, max_pdsch_batch_size);
 
-      phy_config.pdcch_executor           = flexible.high_priority_executor;
+      phy_config.pdcch_executor           = flexible.rt_hi_prio_exec;
       phy_config.pdsch_executor           = pdsch_executors[0];
-      phy_config.ssb_executor             = flexible.high_priority_executor;
-      phy_config.csi_rs_executor          = flexible.high_priority_executor;
-      phy_config.prs_executor             = flexible.high_priority_executor;
-      phy_config.dl_grid_executor         = flexible.high_priority_executor;
+      phy_config.ssb_executor             = flexible.rt_hi_prio_exec;
+      phy_config.csi_rs_executor          = flexible.rt_hi_prio_exec;
+      phy_config.prs_executor             = flexible.rt_hi_prio_exec;
+      phy_config.dl_grid_executor         = flexible.non_rt_hi_prio_exec;
       phy_config.pdsch_codeblock_executor = pdsch_executors[0];
-      phy_config.prach_executor           = flexible.high_priority_executor;
+      phy_config.prach_executor           = flexible.non_rt_hi_prio_exec;
       phy_config.pucch_executor =
           create_task_fork_limiter(
-              flexible.high_priority_executor, flexible.max_pucch_concurrency, pucch_queue_sizes, max_pucch_batch_size)
+              flexible.non_rt_hi_prio_exec, flexible.max_pucch_concurrency, pucch_queue_sizes, max_pucch_batch_size)
               .front();
-      auto pusch_srs_execs              = create_task_fork_limiter(flexible.medium_priority_executor,
+      auto pusch_srs_execs              = create_task_fork_limiter(flexible.non_rt_medium_prio_exec,
                                                       flexible.max_pusch_and_srs_concurrency,
                                                       pusch_srs_queue_sizes,
                                                       max_pusch_batch_size);

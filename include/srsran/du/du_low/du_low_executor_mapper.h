@@ -51,12 +51,14 @@ struct du_low_executor_mapper_single_exec_config {
 /// concurrency given by each executor is used for creating pools of physical layer instances. These pools ensure that
 /// a number of instances are available for processing channels simultaneously.
 struct du_low_executor_mapper_flexible_exec_config {
-  /// High priority executor.
-  upper_phy_executor high_priority_executor;
-  /// Medium priority executor.
-  upper_phy_executor medium_priority_executor;
-  /// Low priority executor.
-  upper_phy_executor low_priority_executor;
+  /// Real-time high priority executor.
+  upper_phy_executor rt_hi_prio_exec;
+  /// Non-real-time high priority executor.
+  upper_phy_executor non_rt_hi_prio_exec;
+  /// Non-real-time medium priority executor.
+  upper_phy_executor non_rt_medium_prio_exec;
+  /// Non-real-time low priority executor.
+  upper_phy_executor non_rt_low_prio_exec;
   /// \brief Maximum PUCCH processing concurrency.
   ///
   /// The Physical Uplink Control Channel (PUCCH) is processed using the high priority executor. This parameter limits

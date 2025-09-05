@@ -454,9 +454,10 @@ void worker_manager::create_du_low_executors(const worker_manager_config::du_low
 
     // Fill the task executors for each cell.
     du_low_exec_mapper_config.executors = srs_du::du_low_executor_mapper_flexible_exec_config{
-        .high_priority_executor        = {rt_hi_prio_exec, nof_workers_general_pool},
-        .medium_priority_executor      = {non_rt_medium_prio_exec, nof_workers_general_pool},
-        .low_priority_executor         = {non_rt_low_prio_exec, nof_workers_general_pool},
+        .rt_hi_prio_exec               = {rt_hi_prio_exec, nof_workers_general_pool},
+        .non_rt_hi_prio_exec           = {non_rt_hi_prio_exec, nof_workers_general_pool},
+        .non_rt_medium_prio_exec       = {non_rt_medium_prio_exec, nof_workers_general_pool},
+        .non_rt_low_prio_exec          = {non_rt_low_prio_exec, nof_workers_general_pool},
         .max_pucch_concurrency         = du_low.max_pucch_concurrency,
         .max_pusch_and_srs_concurrency = du_low.max_pusch_and_srs_concurrency,
         .max_pdsch_concurrency         = du_low.max_pdsch_concurrency};
