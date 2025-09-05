@@ -410,17 +410,19 @@ void mac_test_mode_cell_adapter::on_cell_results_completion(slot_point slot)
                      nof_test_ues_created);
     }
 
+    const rnti_t test_ue_rnti =
+        to_rnti(to_value(test_ue_cfg.rnti) + (cell_index * test_ue_cfg.nof_ues) + nof_test_ues_created);
+
     // Inject UL-CCCH message that will trigger the test mode UE creation.
-    pdu_handler.handle_rx_data_indication(mac_rx_data_indication{
-        slot,
-        cell_index,
-        {mac_rx_pdu{to_rnti(to_value(test_ue_cfg.rnti) + (cell_index * test_ue_cfg.nof_ues) + nof_test_ues_created),
-                    0,
-                    0,
-                    ulcch_buf.value().copy()}}});
+    pdu_handler.handle_rx_data_indication(
+        mac_rx_data_indication{slot, cell_index, {mac_rx_pdu{test_ue_rnti, 0, 0, ulcch_buf.value().copy()}}});
 
     // UL-CCCH message injected. Update counter.
-    logger.info("TEST_MODE: Starting ue={} creation on cell={}", nof_test_ues_created, fmt::underlying(cell_index));
+    logger.info("TEST_MODE: Starting UE with rnti={} creation on cell={}. There still {}/{} left to be created.",
+                test_ue_rnti,
+                fmt::underlying(cell_index),
+                test_ue_cfg.nof_ues - (nof_test_ues_created + 1),
+                test_ue_cfg.nof_ues);
     nof_test_ues_created++;
   }
 }

@@ -29,13 +29,6 @@ mac_test_mode_ue_repository::mac_test_mode_ue_repository(mac_test_mode_event_han
   }
 }
 
-unsigned mac_test_mode_ue_repository::get_cell_index(du_ue_index_t ue_index) const
-{
-  unsigned cell_idx = static_cast<unsigned>(ue_index) / nof_ues;
-  srsran_assert(cell_idx < cells.size(), "Invalid UE index {}", fmt::underlying(ue_index));
-  return cell_idx;
-}
-
 unsigned mac_test_mode_ue_repository::get_cell_index(rnti_t rnti) const
 {
   unsigned rnti_idx = static_cast<unsigned>(rnti) - static_cast<unsigned>(rnti_start);
@@ -90,18 +83,13 @@ void mac_test_mode_ue_repository::add_ue(rnti_t                         rnti,
   if (not is_test_ue(rnti) or not is_test_ue(ue_idx)) {
     return;
   }
-  unsigned rnti_idx = static_cast<unsigned>(rnti) - static_cast<unsigned>(rnti_start);
-  srsran_assert(rnti_idx == static_cast<unsigned>(ue_idx),
-                "rnti={}, ue={}: Invalid test mode UE identifiers",
-                rnti,
-                fmt::underlying(ue_idx));
-
-  unsigned cell_idx = get_cell_index(ue_idx);
+  const du_cell_index_t pcell_index = sched_ue_cfg_req.cells.value()[0].serv_cell_cfg.cell_index;
+  srsran_assert(is_cell_test_ue(pcell_index, rnti), "Invalid rnti={} for cell={}", rnti, fmt::underlying(pcell_index));
 
   // Dispatch creation of UE to du_cell thread.
-  while (not event_handler.schedule(to_du_cell_index(cell_idx), [this, rnti, ue_idx, cfg = sched_ue_cfg_req]() mutable {
-    unsigned idx = get_cell_index(ue_idx);
-    cells[idx]->rnti_to_ue_info_lookup.emplace(
+  while (not event_handler.schedule(pcell_index, [this, rnti, ue_idx, cfg = sched_ue_cfg_req]() mutable {
+    const du_cell_index_t cellidx = cfg.cells.value()[0].serv_cell_cfg.cell_index;
+    cells[cellidx]->rnti_to_ue_info_lookup.emplace(
         rnti, test_ue_info{.ue_idx = ue_idx, .sched_ue_cfg_req = std::move(cfg), .msg4_rx_flag = false});
   })) {
     srslog::fetch_basic_logger("MAC").warning("Failed to add test mode UE. Retrying...");

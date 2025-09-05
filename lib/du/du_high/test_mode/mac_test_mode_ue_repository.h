@@ -74,7 +74,6 @@ private:
     cell_info() { rnti_to_ue_info_lookup.reserve(MAX_NOF_DU_UES); }
   };
 
-  unsigned get_cell_index(du_ue_index_t ue_index) const;
   unsigned get_cell_index(rnti_t rnti) const;
 
   // Parameters received from configuration.
