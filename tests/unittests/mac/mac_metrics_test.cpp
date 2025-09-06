@@ -158,6 +158,23 @@ TEST_F(mac_metric_handler_test, for_single_cell_on_period_elapsed_then_report_is
   ASSERT_EQ(metric_notifier.last_report.value().dl.cells[0].slot_duration, expected_slot_dur);
 }
 
+TEST_F(mac_metric_handler_test, when_single_cell_and_deactivated_before_period_then_report_is_generated)
+{
+  add_cell(to_du_cell_index(0));
+
+  // Number of slots equal to period+timeout has elapsed.
+  unsigned wait_slots = period_slots - 1;
+  for (unsigned i = 0; i != wait_slots; ++i) {
+    ASSERT_FALSE(metric_notifier.last_report.has_value());
+    run_slot();
+  }
+  ASSERT_FALSE(metric_notifier.last_report.has_value());
+
+  deactivate_cell(to_du_cell_index(0));
+  run_slot();
+  ASSERT_TRUE(metric_notifier.last_report.has_value());
+}
+
 TEST_F(mac_metric_handler_test, when_multi_cell_then_mac_report_generated_when_all_cells_generated_report)
 {
   add_cell(to_du_cell_index(0));
