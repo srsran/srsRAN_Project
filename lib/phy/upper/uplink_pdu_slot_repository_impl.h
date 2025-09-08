@@ -159,7 +159,7 @@ public:
     // Set grid reference counter to one.
     grid_ref_counter = 1;
 
-    return {*this, grid_ref_counter, 0};
+    return {*this, grid_ref_counter};
   }
 
   /// Returns a span that contains the PUSCH PDUs for the given slot and symbol index.
@@ -192,10 +192,10 @@ public:
 
 private:
   // See the shared_resource_grid::pool_interface interface for documentation.
-  resource_grid& get(unsigned identifier) override { return grid; }
+  resource_grid& get() override { return grid; }
 
   // See the shared_resource_grid::pool_interface interface for documentation.
-  void notify_release_scope(unsigned identifier) override {}
+  void notify_release_scope() override {}
 
   /// Repository that contains PUSCH PDUs.
   std::array<static_vector<pusch_pdu, MAX_PUSCH_PDUS_PER_SLOT>, MAX_NSYMB_PER_SLOT> pusch_repository;

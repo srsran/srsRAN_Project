@@ -21,107 +21,59 @@
 
 using namespace srsran;
 
-resource_grid_pool_impl::resource_grid_pool_impl(task_executor*                 async_executor_,
-                                                 std::vector<resource_grid_ptr> grids_) :
-  logger(srslog::fetch_basic_logger("PHY", true)),
-  grids(std::move(grids_)),
-  grids_scope_count(grids.size()),
-  grids_str_zero(grids.size()),
-  grids_str_reserved(grids.size()),
-  async_executor(async_executor_)
+shared_resource_grid resource_grid_pool_wrapper::try_reserve(srsran::stop_event_token token)
 {
-  // Create tracing list.
-  for (unsigned i_grid = 0, i_grid_end = grids.size(); i_grid != i_grid_end; ++i_grid) {
-    grids_str_zero[i_grid]     = "set_all_zero#" + std::to_string(i_grid);
-    grids_str_reserved[i_grid] = "rg_reserved#" + std::to_string(i_grid);
-  }
+  // Try to transition from available to one scope.
+  unsigned expected = ref_counter_available;
+  bool     success  = scope_count.compare_exchange_strong(expected, 1, std::memory_order_acq_rel);
 
-  // All grids scopes must be zero.
-  std::fill(grids_scope_count.begin(), grids_scope_count.end(), ref_counter_available);
-}
-
-resource_grid_pool_impl::~resource_grid_pool_impl()
-{
-  // Wait for all resource grid to be returned to the pool.
-  std::for_each(grids_scope_count.begin(), grids_scope_count.end(), [](auto& ref_counter) {
-    for (unsigned current_ref_counter = ref_counter.load(std::memory_order_acquire);
-         current_ref_counter != ref_counter_available;
-         current_ref_counter = ref_counter.load(std::memory_order_acquire)) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    };
-  });
-}
-
-shared_resource_grid resource_grid_pool_impl::allocate_resource_grid(slot_point slot)
-{
-  // Trace point for grid reservation.
-  trace_point tp = l1_common_tracer.now();
-
-  // Select an identifier from the current request counter.
-  unsigned identifier = counter;
-
-  // Increment request counter and wrap it with the number of grids.
-  counter = (counter + 1) % grids.size();
-
-  // Select counter for the selected identifier.
-  std::atomic<unsigned>& ref_count = grids_scope_count[identifier];
-
-  // Try to reset the reference counter.
-  unsigned expected  = ref_counter_available;
-  bool     available = ref_count.compare_exchange_strong(expected, 1, std::memory_order_acq_rel);
-
-  // Return an invalid grid if not available.
-  if (!available) {
-    logger.warning(slot.sfn(), slot.slot_index(), "Resource grid with identifier {} is not available.", identifier);
+  // Return an invalid shared grid if the state transition is unsuccessful.
+  if (!success) {
     return {};
   }
 
-  // Trace the resource grid reservation.
-  l1_common_tracer << trace_event(grids_str_reserved[identifier].c_str(), tp);
+  // Keep token if successful.
+  stop_token = std::move(token);
 
-  return {*this, ref_count, identifier};
+  // Create valid shared resource grid.
+  return shared_resource_grid{*this, scope_count};
 }
 
-resource_grid& resource_grid_pool_impl::get(unsigned identifier)
+void resource_grid_pool_wrapper::release()
 {
-  srsran_assert(identifier < grids.size(),
-                "RG identifier (i.e., {}) is out of range {}.",
-                identifier,
-                interval<unsigned>(0, grids.size()));
-  return *grids[identifier];
+  // Move token to the scope of this method before transitioning to available.
+  stop_event_token token = std::move(stop_token);
+
+  // Transition to available.
+  [[maybe_unused]] unsigned prev_scope_count = scope_count.exchange(ref_counter_available, std::memory_order_acq_rel);
+
+  // Assert that the grid is not present in any scope before becoming available.
+  srsran_assert((prev_scope_count == ref_counter_available) || (prev_scope_count == 0),
+                "The resource grid state cannot transition to available while it is present in {} scopes.",
+                prev_scope_count);
 }
 
-void resource_grid_pool_impl::notify_release_scope(unsigned identifier)
+void resource_grid_pool_wrapper::notify_release_scope()
 {
-  // verify the identifier is valid.
-  srsran_assert(identifier < grids.size(),
-                "RG identifier (i.e., {}) is out of range {}.",
-                identifier,
-                interval<unsigned>(0, grids.size()));
-
   // Skip zeroing if the grid is empty.
-  if (grids[identifier]->get_reader().is_empty()) {
-    grids_scope_count[identifier] = ref_counter_available;
+  if (grid->get_reader().is_empty()) {
+    release();
     return;
   }
 
   // If the pool is not configured with an asynchronous executor, it skips the zeroing process.
   if (async_executor == nullptr) {
-    grids_scope_count[identifier] = ref_counter_available;
+    release();
     return;
   }
 
   // Create lambda function for setting the grid to zero.
-  auto set_all_zero_func = [this, identifier]() noexcept SRSRAN_RTSAN_NONBLOCKING {
-    trace_point tp = l1_common_tracer.now();
-
+  auto set_all_zero_func = [this]() noexcept SRSRAN_RTSAN_NONBLOCKING {
     // Set grid to zero.
-    grids[identifier]->set_all_zero();
+    grid->set_all_zero();
 
     // Make the grid available.
-    grids_scope_count[identifier] = ref_counter_available;
-
-    l1_common_tracer << trace_event(grids_str_zero[identifier].c_str(), tp);
+    release();
   };
 
   // Try to execute the asynchronous housekeeping task.
@@ -130,6 +82,41 @@ void resource_grid_pool_impl::notify_release_scope(unsigned identifier)
   // Ensure the resource grid is marked as available even if it is not empty.
   // Avoid warnings about failure to prevent false alarms during gNb teardown.
   if (!success) {
-    grids_scope_count[identifier] = ref_counter_available;
+    release();
   }
+}
+
+resource_grid& resource_grid_pool_wrapper::get()
+{
+  return *grid;
+}
+
+resource_grid_pool_impl::~resource_grid_pool_impl()
+{
+  stop_control.stop();
+}
+
+shared_resource_grid resource_grid_pool_impl::allocate_resource_grid(slot_point slot)
+{
+  // Get a stop token, return an invalid grid if it is stopping.
+  stop_event_token token = stop_control.get_token();
+  if (token.stop_requested()) {
+    return {};
+  }
+
+  // Select an identifier from the current request counter.
+  unsigned identifier = counter;
+
+  // Increment request counter and wrap it with the number of grids.
+  counter = (counter + 1) % grids.size();
+
+  // Try reserving the resource grid.
+  shared_resource_grid grid = grids[identifier].try_reserve(std::move(token));
+
+  // Log a warning message if the grid is not available.
+  if (!grid) {
+    logger.warning(slot.sfn(), slot.slot_index(), "Resource grid with identifier {} is not available.", identifier);
+  }
+
+  return grid;
 }

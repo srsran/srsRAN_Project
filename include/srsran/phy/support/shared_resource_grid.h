@@ -32,18 +32,11 @@ public:
     /// Default destructor.
     virtual ~pool_interface() = default;
 
-    /// \brief Gets the reference to the resource grid from a given identifier.
-    ///
-    /// \param[in] identifier Internal pool resource grid identifier.
-    /// \return A reference to the selected resource grid.
-    /// \remark An assertion is triggered if the identifier is invalid.
-    virtual resource_grid& get(unsigned identifier) = 0;
+    /// Gets the reference to the resource grid.
+    virtual resource_grid& get() = 0;
 
-    /// \brief Notifies the pool of the release of the resource grid.
-    ///
-    /// \param[in] identifier Internal pool resource grid identifier.
-    /// \remark An assertion is triggered if the identifier is invalid.
-    virtual void notify_release_scope(unsigned identifier) = 0;
+    /// Notifies the pool of the release of the resource grid.
+    virtual void notify_release_scope() = 0;
   };
 
   /// Default constructor creates an invalid resource grid.
@@ -52,19 +45,15 @@ public:
   /// \brief Constructs a shared resource grid.
   /// \param pool_       Reference to the resource grid pool.
   /// \param ref_count_  Reference counter.
-  /// \param identifier_ Resource grid identifier within the pool.
-  shared_resource_grid(pool_interface& pool_, std::atomic<unsigned>& ref_count_, unsigned identifier_) :
-    pool(&pool_), ref_count(&ref_count_), identifier(identifier_)
+  shared_resource_grid(pool_interface& pool_, std::atomic<unsigned>& ref_count_) : pool(&pool_), ref_count(&ref_count_)
   {
   }
 
   /// \brief Move constructor - moves the ownership of other resource grid.
   ///
-  /// Copies the pool reference, reference count and grid identifier. It invalidates the other instance without .
+  /// Copies the pool reference and reference count. It invalidates the other instance.
   shared_resource_grid(shared_resource_grid&& other) noexcept :
-    pool(std::exchange(other.pool, nullptr)),
-    ref_count(std::exchange(other.ref_count, nullptr)),
-    identifier(other.identifier)
+    pool(std::exchange(other.pool, nullptr)), ref_count(std::exchange(other.ref_count, nullptr))
   {
   }
 
@@ -102,7 +91,7 @@ public:
     if (is_valid()) {
       bool last = dec_ref_count();
       if (last) {
-        pool->notify_release_scope(identifier);
+        pool->notify_release_scope();
       }
       pool      = nullptr;
       ref_count = nullptr;
@@ -113,28 +102,28 @@ public:
   resource_grid& get()
   {
     srsran_assert(is_valid(), "The resource grid is invalid.");
-    return pool->get(identifier);
+    return pool->get();
   }
 
   /// Gets the resource grid for read-only.
   resource_grid& get() const
   {
     srsran_assert(pool != nullptr, "The resource grid is invalid.");
-    return pool->get(identifier);
+    return pool->get();
   }
 
   /// Gets the resource grid reader.
   const resource_grid_reader& get_reader() const
   {
     srsran_assert(pool != nullptr, "The resource grid is invalid.");
-    return pool->get(identifier).get_reader();
+    return pool->get().get_reader();
   }
 
   /// Gets the resource grid writer.
   resource_grid_writer& get_writer() const
   {
     srsran_assert(pool != nullptr, "The resource grid is invalid.");
-    return pool->get(identifier).get_writer();
+    return pool->get().get_writer();
   }
 
   /// Explicit copy of the resource grid.
