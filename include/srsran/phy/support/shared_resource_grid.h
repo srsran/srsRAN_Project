@@ -69,9 +69,8 @@ public:
     release();
 
     // Overwrite with the other grid.
-    pool       = other.pool;
-    ref_count  = other.ref_count;
-    identifier = other.identifier;
+    pool      = other.pool;
+    ref_count = other.ref_count;
 
     // Invalidate the other grid.
     other.pool      = nullptr;
@@ -150,7 +149,7 @@ public:
 private:
   /// Copy constructor is explicit to avoid copying unintentionally.
   explicit shared_resource_grid(const shared_resource_grid& other) noexcept :
-    pool(other.pool), ref_count(other.ref_count), identifier(other.identifier)
+    pool(other.pool), ref_count(other.ref_count)
   {
     if (is_valid()) {
       inc_ref_count();
@@ -170,8 +169,6 @@ private:
   pool_interface* pool = nullptr;
   /// Reference counter. Set to \c nullptr for invalid resource grid.
   std::atomic<unsigned>* ref_count = nullptr;
-  /// Resource grid identifier within the resource grid pool.
-  unsigned identifier = 0;
 };
 
 } // namespace srsran
