@@ -50,31 +50,9 @@ static bool validate_upper_phy_threads_appconfig(const du_low_unit_expert_thread
   return valid;
 }
 
-static bool validate_expert_execution_unit_config(const du_low_unit_config&        config,
-                                                  const os_sched_affinity_bitmask& available_cpus)
+static bool validate_expert_execution_unit_config(const du_low_unit_config& config)
 {
-  if (!validate_upper_phy_threads_appconfig(config.expert_execution_cfg.threads)) {
-    return false;
-  }
-
-  auto validate_cpu_range = [](const os_sched_affinity_bitmask& allowed_cpus_mask,
-                               const os_sched_affinity_bitmask& mask,
-                               const std::string&               name) {
-    auto invalid_cpu_ids = mask.subtract(allowed_cpus_mask);
-    if (not invalid_cpu_ids.empty()) {
-      fmt::print("CPU cores {} selected in '{}' option doesn't belong to available cpuset.\n", invalid_cpu_ids, name);
-      return false;
-    }
-
-    return true;
-  };
-
-  for (const auto& cell : config.expert_execution_cfg.cell_affinities) {
-    if (!validate_cpu_range(available_cpus, cell.l1_dl_cpu_cfg.mask, "l1_dl_cpus")) {
-      return false;
-    }
-  }
-  return true;
+  return validate_upper_phy_threads_appconfig(config.expert_execution_cfg.threads);
 }
 
 static bool validate_phy_prach_configuration(span<const du_low_prach_validation_config>& prach_cells_config)
@@ -147,14 +125,13 @@ bool srsran::validate_du_low_config(const du_low_unit_config&                  c
     return false;
   }
 
+  if (!validate_expert_execution_unit_config(config)) {
+    return false;
+  }
+
   if (!validate_phy_prach_configuration(prach_cells_config)) {
     return false;
   }
 
   return true;
-}
-
-bool srsran::validate_du_low_cpus(const du_low_unit_config& config, const os_sched_affinity_bitmask& available_cpus)
-{
-  return validate_expert_execution_unit_config(config, available_cpus);
 }

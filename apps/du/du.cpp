@@ -198,8 +198,7 @@ int main(int argc, char** argv)
   }
 
   // Check the modified configuration.
-  if (!validate_appconfig(du_cfg) ||
-      !o_du_app_unit->on_configuration_validation(os_sched_affinity_bitmask::available_cpus())) {
+  if (!validate_appconfig(du_cfg) || !o_du_app_unit->on_configuration_validation()) {
     report_error("Invalid configuration detected.\n");
   }
 

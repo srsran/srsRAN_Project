@@ -36,10 +36,9 @@ void split_8_o_du_application_unit_impl::on_configuration_parameters_autoderivat
   autoderive_split_8_o_du_parameters_after_parsing(app, unit_cfg);
 }
 
-bool split_8_o_du_application_unit_impl::on_configuration_validation(
-    const os_sched_affinity_bitmask& available_cpus) const
+bool split_8_o_du_application_unit_impl::on_configuration_validation() const
 {
-  return validate_split_8_o_du_unit_config(unit_cfg, available_cpus);
+  return validate_split_8_o_du_unit_config(unit_cfg);
 }
 
 split_8_o_du_application_unit_impl::split_8_o_du_application_unit_impl(std::string_view app_name)

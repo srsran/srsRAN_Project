@@ -1414,7 +1414,7 @@ static bool validate_qos_config(span<const du_high_unit_qos_config> config)
   return true;
 }
 
-bool srsran::validate_du_high_config(const du_high_unit_config& config, const os_sched_affinity_bitmask& available_cpus)
+bool srsran::validate_du_high_config(const du_high_unit_config& config)
 {
   if (!validate_cells_unit_config(config.cells_cfg, config.gnb_id)) {
     return false;
