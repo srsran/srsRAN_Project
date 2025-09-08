@@ -151,7 +151,11 @@ public:
 test_bench::test_bench(const test_bench_params& params,
                        unsigned                 max_pucchs_per_slot_,
                        unsigned                 max_ul_grants_per_slot_) :
-  expert_cfg{config_helpers::make_default_scheduler_expert_config()},
+  expert_cfg{[]() -> scheduler_expert_config {
+    auto default_exp_cfg                            = config_helpers::make_default_scheduler_expert_config();
+    default_exp_cfg.ue.min_pucch_pusch_prb_distance = 0U;
+    return default_exp_cfg;
+  }()},
   cell_cfg{[this, &params]() -> const cell_configuration& {
     auto cell_req = make_custom_sched_cell_configuration_request(
         params.pucch_res_common, params.is_tdd, params.cfg_for_mimo_4x4 ? 4 : 1);
