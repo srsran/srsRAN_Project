@@ -1034,6 +1034,20 @@ ngap_handover_preparation_request srsran::srs_cu_cp::generate_handover_preparati
   return request;
 }
 
+ngap_message srsran::srs_cu_cp::generate_valid_dl_ran_status_transfer(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id)
+{
+  ngap_message ngap_msg;
+
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_DL_RAN_STATUS_TRANSFER);
+
+  auto& dl_status = ngap_msg.pdu.init_msg().value.dl_ran_status_transfer();
+
+  dl_status->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
+  dl_status->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
+  return ngap_msg;
+}
+
 ngap_message srsran::srs_cu_cp::generate_handover_cancel_ack(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id)
 {
   ngap_message ngap_msg;

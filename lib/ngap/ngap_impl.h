@@ -63,9 +63,11 @@ public:
   async_task<ngap_handover_preparation_response>
        handle_handover_preparation_request(const ngap_handover_preparation_request& msg) override;
   void handle_ul_ran_status_transfer(const ngap_ul_ran_status_transfer& ul_ran_status_transfer) override;
-  void handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
-                                             const nr_cell_global_id_t& cgi,
-                                             const unsigned             tac) override;
+  async_task<expected<ngap_dl_ran_status_transfer>>
+                        handle_dl_ran_status_transfer_required(ue_index_t ue_index) override;
+  void                  handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
+                                                              const nr_cell_global_id_t& cgi,
+                                                              const unsigned             tac) override;
   const ngap_context_t& get_ngap_context() const override { return context; }
   void             handle_ul_ue_associated_nrppa_transport(ue_index_t ue_index, const byte_buffer& nrppa_pdu) override;
   async_task<void> handle_ul_non_ue_associated_nrppa_transport(const byte_buffer& nrppa_pdu) override;
@@ -165,6 +167,10 @@ private:
   /// \brief Notify about the reception of a Handover request message.
   /// \param[in] msg The received handover request message.
   void handle_handover_request(const asn1::ngap::ho_request_s& msg);
+
+  /// \brief Handle the reception of the DL RAN Status Transfer message.
+  /// \param[in] msg The received DL RAN Status Transfer.
+  void handle_dl_ran_status_transfer(const asn1::ngap::dl_ran_status_transfer_s& msg);
 
   /// \brief Notifiy about the reception of a DL UE Associated NRPPA Transport message.
   void handle_dl_ue_associated_nrppa_transport(const asn1::ngap::dl_ue_associated_nrppa_transport_s& msg);

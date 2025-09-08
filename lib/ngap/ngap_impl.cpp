@@ -16,6 +16,7 @@
 #include "procedures/ng_reset_procedure.h"
 #include "procedures/ng_setup_procedure.h"
 #include "procedures/ngap_dl_nas_message_transfer_procedure.h"
+#include "procedures/ngap_dl_ran_status_transfer_procedure.h"
 #include "procedures/ngap_handover_preparation_procedure.h"
 #include "procedures/ngap_handover_resource_allocation_procedure.h"
 #include "procedures/ngap_initial_context_setup_procedure.h"
@@ -354,6 +355,9 @@ void ngap_impl::handle_initiating_message(const init_msg_s& msg)
       break;
     case ngap_elem_procs_o::init_msg_c::types_opts::ho_request:
       handle_handover_request(msg.value.ho_request());
+      break;
+    case ngap_elem_procs_o::init_msg_c::types_opts::dl_ran_status_transfer:
+      handle_dl_ran_status_transfer(msg.value.dl_ran_status_transfer());
       break;
     case ngap_elem_procs_o::init_msg_c::types_opts::dl_ue_associated_nrppa_transport:
       handle_dl_ue_associated_nrppa_transport(msg.value.dl_ue_associated_nrppa_transport());
@@ -852,6 +856,11 @@ void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
   }
 }
 
+void ngap_impl::handle_dl_ran_status_transfer(const asn1::ngap::dl_ran_status_transfer_s& msg)
+{
+  ev_mng.dl_ran_status_transfer.set(msg);
+}
+
 void ngap_impl::handle_ul_ran_status_transfer(const ngap_ul_ran_status_transfer& ul_ran_status_transfer)
 {
   const ue_index_t ue_index = ul_ran_status_transfer.ue_index;
@@ -877,6 +886,22 @@ void ngap_impl::handle_ul_ran_status_transfer(const ngap_ul_ran_status_transfer&
     ue_ctxt.logger.log_warning("AMF notifier is not set. Cannot send UL Status Transfer");
     return;
   }
+}
+
+async_task<expected<ngap_dl_ran_status_transfer>> ngap_impl::handle_dl_ran_status_transfer_required(ue_index_t ue_index)
+{
+  if (!ue_ctxt_list.contains(ue_index)) {
+    logger.warning("ue={}: Cannot await DL RAN Status Transfer. UE context does not exist", ue_index);
+
+    auto err_function = [](coro_context<async_task<expected<ngap_dl_ran_status_transfer>>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(make_unexpected(default_error_t{}));
+    };
+    return launch_async(std::move(err_function));
+  }
+
+  ngap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
+  return start_ngap_dl_status_transfer_procedure(ue_index, ev_mng, timer_factory{timers, ctrl_exec}, ue_ctxt.logger);
 }
 
 #ifndef SRSRAN_HAS_ENTERPRISE

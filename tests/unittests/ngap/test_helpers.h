@@ -335,6 +335,8 @@ public:
     });
   }
 
+  void on_n2_handover_execution(ue_index_t ue_index) override {}
+
   void on_n2_disconnection(amf_index_t amf_index) override {}
 
   cu_cp_ue_context_release_command last_command;

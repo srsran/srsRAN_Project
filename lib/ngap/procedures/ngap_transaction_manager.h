@@ -24,7 +24,8 @@ public:
     ng_setup_outcome(timers),
     ng_reset_outcome(timers),
     handover_preparation_outcome(timers),
-    handover_cancel_outcome(timers)
+    handover_cancel_outcome(timers),
+    dl_ran_status_transfer(timers)
   {
   }
 
@@ -39,6 +40,9 @@ public:
 
   /// Handover Cancel Ack Event Source.
   protocol_transaction_event_source<asn1::ngap::ho_cancel_ack_s> handover_cancel_outcome;
+
+  /// DL RAN Status Transfer source.
+  protocol_transaction_event_source<asn1::ngap::dl_ran_status_transfer_s> dl_ran_status_transfer;
 };
 
 } // namespace srs_cu_cp

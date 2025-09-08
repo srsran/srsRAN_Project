@@ -145,6 +145,7 @@ public:
       logger.log_warning("Status transfer applied to bearer with non-zero state. st={} count={}", st, count);
     }
     st = {count, count, count, count, count};
+    logger.log_info("Setted PDCP TX state. {}", st);
   }
 
   // Tx/Rx interconnect

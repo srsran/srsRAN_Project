@@ -198,6 +198,10 @@ public:
   /// \returns True if the Handover command is valid and was successfully handled by the DU.
   virtual async_task<bool> on_new_handover_command(ue_index_t ue_index, byte_buffer command) = 0;
 
+  /// \brief Start N2 handover execution routine in target gNB.
+  /// \param[in] ue_index The index of the UE.
+  virtual void on_n2_handover_execution(ue_index_t ue_index) = 0;
+
   /// \brief Notify that the TNL connection to the AMF was lost.
   /// \param[in] amf_index The index of the lost AMF.
   virtual void on_n2_disconnection(amf_index_t amf_index) = 0;
@@ -264,6 +268,9 @@ public:
   handle_handover_preparation_request(const ngap_handover_preparation_request& msg) = 0;
 
   virtual void handle_ul_ran_status_transfer(const ngap_ul_ran_status_transfer& ul_status_transfer) = 0;
+
+  virtual async_task<expected<ngap_dl_ran_status_transfer>>
+  handle_dl_ran_status_transfer_required(ue_index_t ue_index) = 0;
 
   /// \brief Handle the reception of an inter CU handove related RRC Reconfiguration Complete.
   virtual void

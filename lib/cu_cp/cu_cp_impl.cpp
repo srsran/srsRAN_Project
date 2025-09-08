@@ -14,6 +14,7 @@
 #include "routines/amf_connection_loss_routine.h"
 #include "routines/cell_activation_routine.h"
 #include "routines/initial_context_setup_routine.h"
+#include "routines/mobility/inter_cu_handover_execution_target_routine.h"
 #include "routines/mobility/inter_cu_handover_source_routine.h"
 #include "routines/mobility/inter_cu_handover_target_routine.h"
 #include "routines/mobility/intra_cu_handover_routine.h"
@@ -731,6 +732,37 @@ cu_cp_impl::handle_ngap_handover_request(const ngap_handover_request& request)
       cell_meas_mng,
       cfg.security.default_security_indication,
       logger);
+}
+
+void cu_cp_impl::handle_n2_handover_execution(ue_index_t ue_index)
+{
+  cu_cp_ue* ue = ue_mng.find_du_ue(ue_index);
+  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", ue_index);
+  srsran_assert(cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0)) != nullptr,
+                "cu_up_index={}: could not find CU-UP",
+                uint_to_cu_up_index(0));
+
+  ngap_interface* ngap = ngap_db.find_ngap(ue->get_ue_context().plmn);
+  if (ngap == nullptr) {
+    logger.warning("ue={}: Could not start handover execution phase of handover. Cause: missing N2 interface.");
+    return;
+  }
+
+  cu_up_index_t cu_up_index = uint_to_cu_up_index(0); // TODO: Update when mapping from UE index to CU-UP exists
+  cu_up_processor_impl_interface* cu_up = cu_up_db.find_cu_up_processor(cu_up_index);
+  if (cu_up == nullptr) {
+    logger.warning("ue={}: could not find CU-UP for handover execution. cu_up={}", ue_index, cu_up_index);
+    return;
+  }
+  e1ap_bearer_context_manager& e1ap = cu_up->get_e1ap_bearer_context_manager();
+
+  e1ap_bearer_context_modification_request e1ap_request;
+  e1ap_request.ue_index = ue_index;
+
+  up_resource_manager& up_manager = ue->get_up_resource_manager();
+
+  ue->get_task_sched().schedule_async_task(
+      start_inter_cu_handover_execution_target_routine(ue_index, up_manager, e1ap, *ngap, logger));
 }
 
 void cu_cp_impl::handle_transmission_of_handover_required()
