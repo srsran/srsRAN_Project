@@ -413,7 +413,7 @@ static void s3g_PRE_MUL_P(std::array<std::array<uint64_t, 256>, 8>& PM, uint64_t
     uint64_t a                 = PM[(i - 1) >> 3][1 << ((i - 1) & 0x7)];
     PM[i >> 3][1 << (i & 0x7)] = a << 1;
     // If the leftmost bit...
-    static constexpr uint64_t leftmost_bit_mask = 1L << 63;
+    static constexpr uint64_t leftmost_bit_mask = 1UL << 63UL;
     if (a & leftmost_bit_mask) {
       PM[i >> 3][1 << (i & 0x7)] ^= c;
     }
