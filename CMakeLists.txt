@@ -403,7 +403,11 @@ if (BUILD_TESTING)
     find_package(GTest REQUIRED)
     # Alias gtest_discover_tests increase discovery the timeout.
     function(gtest_discover_tests)
-        _gtest_discover_tests(${ARGV} DISCOVERY_TIMEOUT 15)
+        _gtest_discover_tests(
+            ${ARGV}
+            DISCOVERY_MODE PRE_TEST
+            DISCOVERY_TIMEOUT 15
+        )
     endfunction()
 else()
     message(STATUS "Skipping Tests. Set BUILD_TESTING to On to compile tests.")
