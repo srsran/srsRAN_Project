@@ -185,7 +185,7 @@ struct scheduler_ue_expert_config {
   /// Boundaries in RB interval for resource allocation of UE PUSCHs.
   crb_interval pusch_crb_limits{0, MAX_NOF_PRBS};
   /// Minimum distance between PUCCH and PUSCH in number of PRBs.
-  unsigned min_pucch_pusch_prb_distance = 0;
+  unsigned min_pucch_pusch_prb_distance = 1;
   /// Expert parameters to be passed to the policy scheduler.
   policy_scheduler_expert_config strategy_cfg = time_qos_scheduler_expert_config{};
   /// \brief Size of the group of UEs that is considered for newTx DL allocation in a given slot. The groups of UEs
