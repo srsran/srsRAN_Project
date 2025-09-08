@@ -55,8 +55,11 @@ split6_flexible_o_du_low_session_factory::create_o_du_low_session(const fapi::fa
   auto& fapi_sector_adaptor = odu_low.o_du_lo->get_phy_fapi_adaptor().get_sector_adaptor(split6_du_low::CELL_ID);
 
   // Create FAPI slot messages adaptor.
-  auto adaptor = slot_messages_adaptor_factory->create_slot_messages_adaptor(
-      config, fapi_sector_adaptor.get_slot_message_gateway(), fapi_sector_adaptor.get_slot_last_message_notifier());
+  auto adaptor =
+      slot_messages_adaptor_factory->create_slot_messages_adaptor(config,
+                                                                  fapi_sector_adaptor.get_slot_message_gateway(),
+                                                                  fapi_sector_adaptor.get_slot_last_message_notifier(),
+                                                                  ru->get_controller());
 
   if (!adaptor) {
     return nullptr;
