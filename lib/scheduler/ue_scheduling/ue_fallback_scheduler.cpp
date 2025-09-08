@@ -474,13 +474,9 @@ static std::optional<uci_allocation> allocate_ue_fallback_pucch(ue&             
       // If it is not UL-enabled slot.
       continue;
     }
-    // Skip any PUCCH allocation that would fall on a slot that is already occupied by a PUSCH for the same UE.
-    const auto& puschs = res_alloc[k1_candidate].result.ul.puschs;
-    const bool  has_pusch_allocated =
-        std::any_of(puschs.begin(), puschs.end(), [rnti = u.crnti](const ul_sched_info& pusch) {
-          return pusch.pusch_cfg.rnti == rnti;
-        });
-    if (has_pusch_allocated) {
+    // There can be PUSCHs that are already allocated: to avoid potential collisions between PUCCH and PUSCH, skip this
+    // allocation if any allocated PUSCHs.
+    if (not res_alloc[k1_candidate].result.ul.puschs.empty()) {
       continue;
     }
     last_valid_k1 = k1_candidate;
