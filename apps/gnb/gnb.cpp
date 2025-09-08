@@ -16,7 +16,6 @@
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
 #include "apps/services/cmdline/cmdline_command_dispatcher.h"
 #include "apps/services/cmdline/stdout_metrics_command.h"
-#include "apps/services/core_isolation_manager.h"
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/services/remote_control/remote_server.h"
@@ -51,6 +50,7 @@
 #include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/signal_handling.h"
 #include "srsran/support/signal_observer.h"
+#include "srsran/support/sysinfo.h"
 #include "srsran/support/versioning/build_info.h"
 #include "srsran/support/versioning/version.h"
 #include <atomic>
@@ -270,9 +270,7 @@ int main(int argc, char** argv)
     fmt::println("NOTE: No JSON metrics will be generated as the remote server is disabled");
   }
 
-  auto available_cpu_mask = (gnb_cfg.expert_execution_cfg.affinities.isolated_cpus)
-                                ? gnb_cfg.expert_execution_cfg.affinities.isolated_cpus.value()
-                                : os_sched_affinity_bitmask::available_cpus();
+  auto available_cpu_mask = os_sched_affinity_bitmask::available_cpus();
   // Check the modified configuration.
   if (!validate_appconfig(gnb_cfg) || !o_cu_cp_app_unit->on_configuration_validation(available_cpu_mask) ||
       !o_cu_up_app_unit->on_configuration_validation(not gnb_cfg.log_cfg.tracing_filename.empty()) ||
@@ -313,13 +311,6 @@ int main(int argc, char** argv)
   app_services::application_tracer app_tracer;
   if (not gnb_cfg.log_cfg.tracing_filename.empty()) {
     app_tracer.enable_tracer(gnb_cfg.log_cfg.tracing_filename, gnb_logger);
-  }
-
-  app_services::core_isolation_manager core_isolation_mngr;
-  if (gnb_cfg.expert_execution_cfg.affinities.isolated_cpus) {
-    if (!core_isolation_mngr.isolate_cores(*gnb_cfg.expert_execution_cfg.affinities.isolated_cpus)) {
-      report_error("Failed to isolate specified CPUs");
-    }
   }
 
 #ifdef DPDK_FOUND

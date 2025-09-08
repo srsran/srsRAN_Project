@@ -16,8 +16,6 @@ namespace srsran {
 
 /// CPU affinities configuration for the application.
 struct cpu_affinities_appconfig {
-  /// CPUs isolation.
-  std::optional<os_sched_affinity_bitmask> isolated_cpus;
   /// Main thread pool workers CPU affinity mask.
   os_sched_affinity_config main_pool_cpu_cfg = {sched_affinity_mask_types::main, {}, sched_affinity_mask_policy::mask};
 };

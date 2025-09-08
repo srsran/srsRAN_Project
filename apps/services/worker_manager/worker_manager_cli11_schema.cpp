@@ -32,25 +32,6 @@ static void configure_cli11_main_pool_threads_args(CLI::App& app, main_thread_po
 
 static void configure_cli11_cpu_affinities_args(CLI::App& app, cpu_affinities_appconfig& config)
 {
-  auto parsing_isolated_cpus_fcn = [](std::optional<os_sched_affinity_bitmask>& isolated_cpu_cfg,
-                                      const std::string&                        value,
-                                      const std::string&                        property_name) {
-    isolated_cpu_cfg.emplace();
-    parse_affinity_mask(*isolated_cpu_cfg, value, property_name);
-
-    if (isolated_cpu_cfg->all()) {
-      report_error("Error in '{}' property: can not assign all available CPUs to the application", property_name);
-    }
-  };
-
-  add_option_function<std::string>(
-      app,
-      "--isolated_cpus",
-      [&config, &parsing_isolated_cpus_fcn](const std::string& value) {
-        parsing_isolated_cpus_fcn(config.isolated_cpus, value, "isolated_cpus");
-      },
-      "CPU cores isolated for application");
-
   add_option_function<std::string>(
       app,
       "--main_pool_cpus",

@@ -15,7 +15,6 @@
 #include "apps/services/application_tracer.h"
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
 #include "apps/services/cmdline/cmdline_command_dispatcher.h"
-#include "apps/services/core_isolation_manager.h"
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/services/remote_control/remote_server.h"
@@ -44,6 +43,7 @@
 #include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/signal_handling.h"
 #include "srsran/support/signal_observer.h"
+#include "srsran/support/sysinfo.h"
 #include "srsran/support/tracing/event_tracing.h"
 #include "srsran/support/versioning/build_info.h"
 #include "srsran/support/versioning/version.h"
@@ -199,9 +199,7 @@ int main(int argc, char** argv)
 
   // Check the modified configuration.
   if (!validate_appconfig(du_cfg) ||
-      !o_du_app_unit->on_configuration_validation((du_cfg.expert_execution_cfg.affinities.isolated_cpus)
-                                                      ? du_cfg.expert_execution_cfg.affinities.isolated_cpus.value()
-                                                      : os_sched_affinity_bitmask::available_cpus())) {
+      !o_du_app_unit->on_configuration_validation(os_sched_affinity_bitmask::available_cpus())) {
     report_error("Invalid configuration detected.\n");
   }
 
@@ -234,13 +232,6 @@ int main(int argc, char** argv)
   app_services::application_tracer app_tracer;
   if (not du_cfg.log_cfg.tracing_filename.empty()) {
     app_tracer.enable_tracer(du_cfg.log_cfg.tracing_filename, du_logger);
-  }
-
-  app_services::core_isolation_manager core_isolation_mngr;
-  if (du_cfg.expert_execution_cfg.affinities.isolated_cpus) {
-    if (!core_isolation_mngr.isolate_cores(*du_cfg.expert_execution_cfg.affinities.isolated_cpus)) {
-      report_error("Failed to isolate specified CPUs");
-    }
   }
 
 #ifdef DPDK_FOUND

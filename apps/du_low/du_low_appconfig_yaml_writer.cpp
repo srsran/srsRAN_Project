@@ -21,11 +21,6 @@ static void fill_du_appconfig_expert_execution_section(YAML::Node node, const ex
   {
     YAML::Node affinities_node = node["affinities"];
 
-    if (config.affinities.isolated_cpus.has_value()) {
-      affinities_node["isolated_cpus"] =
-          fmt::format("{:,}", span<const size_t>(config.affinities.isolated_cpus.value().get_cpu_ids()));
-    }
-
     if (config.affinities.main_pool_cpu_cfg.mask.any()) {
       affinities_node["main_pool_cpus"] =
           fmt::format("{:,}", span<const size_t>(config.affinities.main_pool_cpu_cfg.mask.get_cpu_ids()));
