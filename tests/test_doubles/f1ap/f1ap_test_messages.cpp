@@ -92,9 +92,7 @@ gnb_du_served_cells_item_s srsran::test_helpers::generate_served_cells_item(cons
 
   served_cells_item.gnb_du_sys_info_present = true;
   served_cells_item.gnb_du_sys_info.mib_msg.from_string("01c586");
-  served_cells_item.gnb_du_sys_info.sib1_msg.from_string(
-      "d20405c04100100800003800336000601584268000800119008144c831adb186cdc1008000020200010688d490484c109a4bc48000011938"
-      "d6d8c893e0181992affc0493a441b8a37186e38dcb1befd5b1c3a8021603400c162da08a");
+  served_cells_item.gnb_du_sys_info.sib1_msg.from_string(info.sib1_str);
 
   return served_cells_item;
 }
