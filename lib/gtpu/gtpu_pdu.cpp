@@ -105,10 +105,10 @@ bool srsran::gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, gtpu
     return false;
   }
 
-  pack_ok = pdu.prepend(std::move(hdr_buf));
+  uint32_t hdr_len = hdr_buf.length();
+  pack_ok          = pdu.prepend(std::move(hdr_buf));
   if (!pack_ok) {
-    logger.log_error(
-        "Failed to pack GTP-U payload. teid={} hdr_len={} pdu_len={}", header.teid, hdr_buf.length(), pdu.length());
+    logger.log_error("Failed to pack GTP-U payload. teid={} hdr_len={} pdu_len={}", header.teid, hdr_len, pdu.length());
     return false;
   }
 
