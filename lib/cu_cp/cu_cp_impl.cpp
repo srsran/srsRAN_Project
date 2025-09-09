@@ -31,9 +31,7 @@
 #include "srsran/nrppa/nrppa.h"
 #include "srsran/nrppa/nrppa_factory.h"
 #include "srsran/ran/plmn_identity.h"
-#include "srsran/rrc/rrc_du.h"
 #include "srsran/support/async/coroutine.h"
-#include "srsran/support/compiler.h"
 #include "srsran/support/synchronization/sync_event.h"
 #include <chrono>
 #include <dlfcn.h>
@@ -67,7 +65,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                              get_cu_cp_ue_context_handler(),
                              common_task_sched,
                              ue_mng,
-                             rrc_du_cu_cp_notifier,
                              conn_notifier,
                              srslog::fetch_basic_logger("CU-CP")}),
   cu_up_db(cu_up_repository_config{cfg, e1ap_ev_notifier, common_task_sched, srslog::fetch_basic_logger("CU-CP")}),
@@ -98,7 +95,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   nrppa_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_nrppa_handler());
   mobility_manager_ev_notifier.connect_cu_cp(get_cu_cp_mobility_manager_handler());
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
-  rrc_du_cu_cp_notifier.connect_cu_cp(get_cu_cp_measurement_config_handler());
   cell_meas_mobility_notifier.connect_mobility_manager(mobility_mng);
 
   conn_notifier.connect_node_connection_handler(controller);

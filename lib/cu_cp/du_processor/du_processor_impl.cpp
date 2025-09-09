@@ -11,8 +11,8 @@
 #include "du_processor_impl.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
+#include "srsran/ran/cause/f1ap_cause.h"
 #include "srsran/ran/cause/f1ap_cause_converters.h"
-#include "srsran/ran/cause/ngap_cause.h"
 #include "srsran/rrc/rrc_du_factory.h"
 #include "srsran/support/async/coroutine.h"
 
@@ -73,28 +73,26 @@ private:
 
 // du_processor_impl
 
-du_processor_impl::du_processor_impl(du_processor_config_t               du_processor_config_,
-                                     du_processor_cu_cp_notifier&        cu_cp_notifier_,
-                                     f1ap_message_notifier&              f1ap_pdu_notifier_,
-                                     rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier,
-                                     common_task_scheduler&              common_task_sched_,
-                                     ue_manager&                         ue_mng_) :
+du_processor_impl::du_processor_impl(du_processor_config_t        du_processor_config_,
+                                     du_processor_cu_cp_notifier& cu_cp_notifier_,
+                                     f1ap_message_notifier&       f1ap_pdu_notifier_,
+                                     common_task_scheduler&       common_task_sched_,
+                                     ue_manager&                  ue_mng_) :
   cfg(std::move(du_processor_config_)),
   cu_cp_notifier(cu_cp_notifier_),
   f1ap_pdu_notifier(f1ap_pdu_notifier_),
   ue_mng(ue_mng_),
   f1ap_ev_notifier(std::make_unique<f1ap_du_processor_adapter>(*this, common_task_sched_))
 {
-  // create f1ap
+  // Create F1AP.
   f1ap = create_f1ap(cfg.cu_cp_cfg.f1ap,
                      f1ap_pdu_notifier,
                      *f1ap_ev_notifier,
                      *cfg.cu_cp_cfg.services.timers,
                      *cfg.cu_cp_cfg.services.cu_cp_executor);
 
-  // create RRC
-  rrc_du_creation_message du_creation_req{create_rrc_config(cfg.cu_cp_cfg), rrc_du_cu_cp_notifier};
-  rrc = create_rrc_du(du_creation_req);
+  // Create RRC DU.
+  rrc = create_rrc_du(create_rrc_config(cfg.cu_cp_cfg));
 }
 
 du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_request& request)
@@ -163,7 +161,7 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
   accepted.gnb_cu_name        = cfg.cu_cp_cfg.node.ran_node_name;
   accepted.gnb_cu_rrc_version = cfg.cu_cp_cfg.rrc.rrc_version;
 
-  // Accept all cells
+  // Accept all cells.
   accepted.cells_to_be_activ_list.resize(request.gnb_du_served_cells_list.size());
   for (unsigned i = 0; i != accepted.cells_to_be_activ_list.size(); ++i) {
     accepted.cells_to_be_activ_list[i].nr_cgi = request.gnb_du_served_cells_list[i].served_cell_info.nr_cgi;

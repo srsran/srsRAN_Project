@@ -35,7 +35,6 @@ struct du_repository_config {
   cu_cp_ue_context_manipulation_handler& ue_context_handler;
   common_task_scheduler&                 common_task_sched;
   ue_manager&                            ue_mng;
-  rrc_du_measurement_config_notifier&    meas_config_notifier;
   du_connection_notifier&                du_conn_notif;
   srslog::basic_logger&                  logger;
 };

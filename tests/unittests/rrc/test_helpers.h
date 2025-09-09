@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/rrc/rrc_du.h"
 #include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
@@ -155,15 +154,6 @@ public:
 private:
   rrc_ue_reestablishment_context_response reest_context = {};
   srslog::basic_logger&                   logger        = srslog::fetch_basic_logger("TEST");
-};
-
-class dummy_rrc_du_cu_cp_adapter : public rrc_du_measurement_config_notifier
-{
-public:
-  bool on_cell_config_update_request(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg) override
-  {
-    return true;
-  }
 };
 
 class dummy_rrc_ue_rrc_du_adapter : public rrc_ue_event_notifier

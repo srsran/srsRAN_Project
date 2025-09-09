@@ -11,16 +11,17 @@
 #include "rrc_du_impl.h"
 #include "ue/rrc_measurement_types_asn1_converters.h"
 #include "ue/rrc_ue_helpers.h"
+#include "srsran/adt/expected.h"
 #include "srsran/asn1/rrc_nr/cell_group_config.h"
 #include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ran/plmn_identity.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-rrc_du_impl::rrc_du_impl(const rrc_cfg_t& cfg_, rrc_du_measurement_config_notifier& meas_config_notifier_) :
-  cfg(cfg_), meas_config_notifier(meas_config_notifier_), logger(srslog::fetch_basic_logger("RRC", false))
+rrc_du_impl::rrc_du_impl(const rrc_cfg_t& cfg_) : cfg(cfg_), logger(srslog::fetch_basic_logger("RRC", false))
 {
   for (const auto& qos : cfg.drb_config) {
     logger.debug("5QI DRB config: {} {}", qos.first, qos.second.pdcp);

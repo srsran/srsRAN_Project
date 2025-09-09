@@ -16,8 +16,6 @@
 #include "adapters/mobility_manager_adapters.h"
 #include "adapters/ngap_adapters.h"
 #include "adapters/nrppa_adapters.h"
-#include "adapters/rrc_du_adapters.h"
-#include "adapters/rrc_ue_adapters.h"
 #include "cu_configurator_impl.h"
 #include "cu_cp_controller/cu_cp_controller.h"
 #include "cu_cp_impl_interface.h"
@@ -35,7 +33,6 @@
 #include "srsran/ran/plmn_identity.h"
 #include <dlfcn.h>
 #include <memory>
-#include <unordered_map>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -217,9 +214,6 @@ private:
 
   // Mobility manager to CU-CP adapter.
   mobility_manager_adapter mobility_manager_ev_notifier;
-
-  // RRC DU to CU-CP adapter.
-  rrc_du_cu_cp_adapter rrc_du_cu_cp_notifier;
 
   // DU connections being managed by the CU-CP.
   du_processor_repository du_db;
