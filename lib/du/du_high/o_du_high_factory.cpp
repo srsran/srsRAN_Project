@@ -62,12 +62,13 @@ std::unique_ptr<o_du_high> srsran::srs_du::make_o_du_high(const o_du_high_config
                                                           o_du_high_dependencies&& odu_dependencies)
 {
   o_du_high_impl_dependencies dependencies;
-  dependencies.logger          = &srslog::fetch_basic_logger("DU");
-  dependencies.du_high_adaptor = fapi_adaptor::create_mac_fapi_adaptor_factory()->create(
+  srslog::basic_logger*       logger = &srslog::fetch_basic_logger("DU");
+  dependencies.logger                = logger;
+  dependencies.du_high_adaptor       = fapi_adaptor::create_mac_fapi_adaptor_factory()->create(
       generate_fapi_adaptor_config(config), generate_fapi_adaptor_dependencies(config, odu_dependencies));
   dependencies.metrics_notifier = odu_dependencies.du_hi.du_notifier;
 
-  dependencies.logger->debug("FAPI adaptors created successfully");
+  logger->debug("FAPI adaptors created successfully");
 
   srs_du::du_high_configuration du_hi_cfg = config.du_hi;
 
@@ -79,7 +80,7 @@ std::unique_ptr<o_du_high> srsran::srs_du::make_o_du_high(const o_du_high_config
 
   if (!odu_dependencies.e2_client) {
     odu->set_du_high(make_du_high(du_hi_cfg, odu_dependencies.du_hi));
-    dependencies.logger->info("DU created successfully");
+    logger->info("DU created successfully");
 
     return odu;
   }
@@ -97,7 +98,7 @@ std::unique_ptr<o_du_high> srsran::srs_du::make_o_du_high(const o_du_high_config
 
   odu->set_e2_agent(std::move(e2agent));
   odu->set_du_high(std::move(du_hi));
-  dependencies.logger->info("DU created successfully");
+  logger->info("DU created successfully");
 
   return odu;
 }
