@@ -38,12 +38,13 @@ struct rrc_timers_t {
 
 // Cell-related configuration used by the RRC.
 struct rrc_cell_context {
-  nr_cell_global_id_t  cgi;
-  tac_t                tac;
-  pci_t                pci;
-  unsigned             ssb_arfcn; ///< Absolute SSB position.
-  std::vector<nr_band> bands;     ///< Required for capability band filter.
-  rrc_timers_t         timers;
+  nr_cell_global_id_t        cgi;
+  tac_t                      tac;
+  pci_t                      pci;
+  unsigned                   ssb_arfcn; ///< Absolute SSB position.
+  std::vector<nr_band>       bands;     ///< Required for capability band filter.
+  rrc_timers_t               timers;
+  std::vector<plmn_identity> plmn_identity_list; ///< PLMN identities broadcasted in SIB1.
 };
 
 } // namespace srs_cu_cp

@@ -67,9 +67,12 @@ class dummy_rrc_ue_cu_cp_adapter : public rrc_ue_context_update_notifier, public
 public:
   void add_ue_context(rrc_ue_reestablishment_context_response context) { reest_context = context; }
 
-  bool next_ue_setup_response = true;
+  bool next_ue_setup_response          = true;
+  bool next_ue_setup_complete_response = true;
 
-  bool on_ue_setup_request(plmn_identity plmn) override { return next_ue_setup_response; }
+  bool on_ue_setup_request() override { return next_ue_setup_response; }
+
+  bool on_ue_setup_complete_received(const plmn_identity& plmn) override { return next_ue_setup_complete_response; }
 
   rrc_ue_reestablishment_context_response on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti) override
   {

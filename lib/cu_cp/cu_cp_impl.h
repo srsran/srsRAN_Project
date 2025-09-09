@@ -80,6 +80,7 @@ public:
   void handle_e1_release_request(cu_up_index_t cu_up_index, const std::vector<ue_index_t>& ue_list) override;
 
   // cu_cp_rrc_ue_interface.
+  bool handle_ue_plmn_selected(ue_index_t ue_index, const plmn_identity& plmn) override;
   rrc_ue_reestablishment_context_response
                    handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override;
   async_task<bool> handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override;
@@ -99,7 +100,9 @@ public:
                                        const cu_cp_ue_context_release_request& ue_context_release_request) override;
 
   // cu_cp_ngap_handler.
-  bool handle_handover_request(ue_index_t ue_index, const security::security_context& sec_ctxt) override;
+  std::optional<std::string> handle_handover_request(ue_index_t                        ue_index,
+                                                     const plmn_identity&              selected_plmn,
+                                                     const security::security_context& sec_ctxt) override;
   async_task<expected<ngap_init_context_setup_response, ngap_init_context_setup_failure>>
   handle_new_initial_context_setup_request(const ngap_init_context_setup_request& request) override;
   async_task<cu_cp_pdu_session_resource_setup_response>
@@ -114,7 +117,8 @@ public:
                    handle_ngap_handover_request(const ngap_handover_request& request) override;
   void             handle_transmission_of_handover_required() override;
   async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) override;
-  ue_index_t       handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi) override;
+  ue_index_t       handle_ue_index_allocation_request(const nr_cell_global_id_t&   cgi,
+                                                      std::optional<plmn_identity> plmn) override;
   void handle_dl_ue_associated_nrppa_transport_pdu(ue_index_t ue_index, const byte_buffer& nrppa_pdu) override;
   void handle_dl_non_ue_associated_nrppa_transport_pdu(amf_index_t amf_index, const byte_buffer& nrppa_pdu) override;
   void handle_n2_disconnection(amf_index_t amf_index) override;

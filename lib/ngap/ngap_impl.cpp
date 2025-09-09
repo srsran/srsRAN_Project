@@ -820,16 +820,18 @@ void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
               ho_request.source_to_target_transparent_container.target_cell_id.nci);
 
   // Create UE in target cell.
-  ho_request.ue_index =
-      cu_cp_notifier.request_new_ue_index_allocation(ho_request.source_to_target_transparent_container.target_cell_id);
+  ho_request.ue_index = cu_cp_notifier.request_new_ue_index_allocation(
+      ho_request.source_to_target_transparent_container.target_cell_id, ho_request.guami.plmn);
   if (ho_request.ue_index == ue_index_t::invalid) {
     send_handover_failure(msg->amf_ue_ngap_id, "Couldn't allocate UE index");
     return;
   }
 
   // Inititialize security context of target UE.
-  if (!cu_cp_notifier.on_handover_request_received(ho_request.ue_index, ho_request.security_context)) {
-    send_handover_failure(msg->amf_ue_ngap_id, "Couldn't initialize security context");
+  std::optional<std::string> cause = cu_cp_notifier.on_handover_request_received(
+      ho_request.ue_index, ho_request.guami.plmn, ho_request.security_context);
+  if (cause.has_value()) {
+    send_handover_failure(msg->amf_ue_ngap_id, cause.value());
     return;
   }
 

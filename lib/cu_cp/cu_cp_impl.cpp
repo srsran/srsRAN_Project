@@ -30,6 +30,7 @@
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/nrppa/nrppa.h"
 #include "srsran/nrppa/nrppa_factory.h"
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/rrc/rrc_du.h"
 #include "srsran/support/async/coroutine.h"
 #include "srsran/support/compiler.h"
@@ -61,6 +62,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cell_meas_mng(cfg.mobility.meas_manager_config, cell_meas_mobility_notifier, ue_mng),
   du_db(du_repository_config{cfg,
                              *this,
+                             get_cu_cp_measurement_config_handler(),
                              get_cu_cp_ue_removal_handler(),
                              get_cu_cp_ue_context_handler(),
                              common_task_sched,
@@ -283,6 +285,25 @@ void cu_cp_impl::handle_e1_release_request(cu_up_index_t cu_up_index, const std:
     CORO_AWAIT(cu_up_db.remove_cu_up(cu_up_index));
     CORO_RETURN();
   }));
+}
+
+bool cu_cp_impl::handle_ue_plmn_selected(ue_index_t ue_index, const plmn_identity& plmn)
+{
+  if (!controller.is_supported_plmn(plmn)) {
+    logger.warning("ue={}: PLMN {} not supported, rejecting UE", ue_index, plmn);
+    return false;
+  }
+
+  if (!ue_mng.set_plmn(ue_index, plmn)) {
+    logger.error("ue={}: Could not set PLMN {}", ue_index, plmn);
+    return false;
+  }
+
+  // Connect NGAP to RRC UE to NGAP adapter.
+  logger.debug("ue={}: Connecting NGAP (plmn={}) to RRC UE adapter", ue_index, plmn);
+  ue_mng.get_rrc_ue_ngap_adapter(ue_index).connect_ngap(ngap_db.find_ngap(plmn));
+
+  return true;
 }
 
 rrc_ue_reestablishment_context_response
@@ -560,14 +581,25 @@ async_task<void> cu_cp_impl::handle_ue_context_release(const cu_cp_ue_context_re
       request, ngap->get_ngap_control_message_handler(), *this, logger);
 }
 
-bool cu_cp_impl::handle_handover_request(ue_index_t ue_index, const security::security_context& sec_ctxt)
+std::optional<std::string> cu_cp_impl::handle_handover_request(ue_index_t                        ue_index,
+                                                               const plmn_identity&              selected_plmn,
+                                                               const security::security_context& sec_ctxt)
 {
   cu_cp_ue* ue = ue_mng.find_ue(ue_index);
   if (ue == nullptr) {
     logger.warning("ue={}: Could not find UE", ue_index);
-    return false;
+    return fmt::format("ue={}: Could not find UE", ue_index);
   }
-  return ue->get_security_manager().init_security_context(sec_ctxt);
+
+  if (!handle_ue_plmn_selected(ue_index, selected_plmn)) {
+    return fmt::format("ue={}: PLMN selection failed", ue_index);
+  }
+
+  if (!ue->get_security_manager().init_security_context(sec_ctxt)) {
+    return fmt::format("ue={}: Security context initialization failed", ue_index);
+  }
+
+  return std::nullopt;
 }
 
 async_task<expected<ngap_init_context_setup_response, ngap_init_context_setup_failure>>
@@ -730,14 +762,30 @@ async_task<bool> cu_cp_impl::handle_new_handover_command(ue_index_t ue_index, by
       ue_index, std::move(command), ue_mng, du_db, cu_up_db, ngap->get_ngap_control_message_handler(), logger);
 }
 
-ue_index_t cu_cp_impl::handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi)
+ue_index_t cu_cp_impl::handle_ue_index_allocation_request(const nr_cell_global_id_t&   cgi,
+                                                          std::optional<plmn_identity> plmn)
 {
   du_index_t du_index = du_db.find_du(cgi);
   if (du_index == du_index_t::invalid) {
     logger.warning("Could not find DU for CGI={}", cgi.nci);
     return ue_index_t::invalid;
   }
-  return ue_mng.add_ue(du_index, cgi.plmn_id);
+
+  ue_index_t ue_index = ue_mng.add_ue(du_index);
+  if (ue_index == ue_index_t::invalid) {
+    logger.warning("Could not allocate new UE index for CGI={}", cgi.nci);
+    return ue_index_t::invalid;
+  }
+
+  if (plmn.has_value()) {
+    if (!ue_mng.set_plmn(ue_index, plmn.value())) {
+      logger.warning("ue={}: Could not set PLMN {}", ue_index, plmn.value());
+      ue_mng.remove_ue(ue_index);
+      return ue_index_t::invalid;
+    }
+  }
+
+  return ue_index;
 }
 
 #ifndef SRSRAN_HAS_ENTERPRISE
@@ -929,10 +977,7 @@ void cu_cp_impl::handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& r
   // Connect RRC UE to NGAP to RRC UE adapter.
   ue_mng.get_ngap_rrc_ue_adapter(ue_index).connect_rrc_ue(rrc_ue.get_rrc_ngap_message_handler());
 
-  // Connect NGAP to RRC UE to NGAP adapter.
-  ue_mng.get_rrc_ue_ngap_adapter(ue_index).connect_ngap(ngap_db.find_ngap(ue->get_ue_context().plmn));
-
-  // Connect cu-cp to rrc ue adapters.
+  // Connect CU-CP to RRC UE adapter.
   ue_mng.get_rrc_ue_cu_cp_adapter(ue_index).connect_cu_cp(get_cu_cp_rrc_ue_interface(),
                                                           get_cu_cp_ue_removal_handler(),
                                                           controller,
