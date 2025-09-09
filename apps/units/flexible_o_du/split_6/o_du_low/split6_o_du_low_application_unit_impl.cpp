@@ -127,7 +127,6 @@ split6_o_du_low_application_unit_impl::create_flexible_o_du_low(worker_manager& 
       unit_cfg,
       workers,
       timers,
-      dependencies.config_adaptor->get_error_message_notifier(),
       notifier,
       plugin->create_slot_messages_adaptor_factory(*workers.split6_exec, *workers.split6_crtl_exec));
 

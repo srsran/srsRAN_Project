@@ -81,8 +81,7 @@ class slot_messages_adaptor_factory_dummy : public fapi::slot_messages_adaptor_f
   std::unique_ptr<fapi::slot_messages_adaptor>
   create_slot_messages_adaptor(const fapi::fapi_cell_config&     config,
                                fapi::slot_message_gateway&       gateway,
-                               fapi::slot_last_message_notifier& last_msg_notifier,
-                               fapi::error_message_notifier&     fapi_error_notifier) override
+                               fapi::slot_last_message_notifier& last_msg_notifier) override
   {
     return std::make_unique<split6_slot_messages_adaptor_dummy>();
   }

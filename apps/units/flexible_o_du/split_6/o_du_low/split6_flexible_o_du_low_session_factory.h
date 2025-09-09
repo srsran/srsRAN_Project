@@ -34,7 +34,6 @@ protected:
   worker_manager&                                      workers;
   timer_manager&                                       timers;
   split6_flexible_o_du_low_metrics_notifier*           notifier;
-  fapi::error_message_notifier&                        error_notifier;
   std::unique_ptr<fapi::slot_messages_adaptor_factory> slot_messages_adaptor_factory;
 
 public:
@@ -42,14 +41,12 @@ public:
       split6_o_du_low_unit_config                          unit_config_,
       worker_manager&                                      workers_,
       timer_manager&                                       timers_,
-      fapi::error_message_notifier&                        error_notifier_,
       split6_flexible_o_du_low_metrics_notifier*           notifier_,
       std::unique_ptr<fapi::slot_messages_adaptor_factory> slot_messages_adaptor_factory_) :
     unit_config(std::move(unit_config_)),
     workers(workers_),
     timers(timers_),
     notifier(notifier_),
-    error_notifier(error_notifier_),
     slot_messages_adaptor_factory(std::move(slot_messages_adaptor_factory_))
   {
     report_error_if_not(slot_messages_adaptor_factory, "Invalid FAPI slot messages adaptor factory");

@@ -328,8 +328,8 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
   if (!controller.is_initialized()) {
     logger.warning("Sector#{}: Could not acquire downlink processor for slot {}.{}", sector_id, msg.sfn, msg.slot);
     // Raise out of sync error.
-    error_notifier.get().on_error_indication(fapi::build_error_indication(
-        msg.sfn, msg.slot, fapi::message_type_id::dl_tti_request, fapi::error_code_id::msg_slot_err));
+    error_notifier.get().on_error_indication(
+        fapi::build_msg_error_indication(msg.sfn, msg.slot, fapi::message_type_id::dl_tti_request));
 
     return;
   }
@@ -573,7 +573,8 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
                    msg.sfn,
                    msg.slot);
     // Raise out of message transmit error.
-    error_notifier.get().on_error_indication(fapi::build_msg_tx_error_indication(msg.sfn, msg.slot));
+    error_notifier.get().on_error_indication(
+        fapi::build_msg_error_indication(msg.sfn, msg.slot, fapi::message_type_id::ul_tti_request));
     l1_ul_tracer << instant_trace_event{"ul_tti_failed_grid", instant_trace_event::cpu_scope::global};
     return;
   }
@@ -629,8 +630,7 @@ void fapi_to_phy_translator::ul_dci_request(const fapi::ul_dci_request_message& 
   if (!controller.is_initialized()) {
     logger.warning("Sector#{}: Could not acquire downlink processor for slot {}.{}", sector_id, msg.sfn, msg.slot);
     // Raise out of sync error.
-    error_notifier.get().on_error_indication(fapi::build_error_indication(
-        msg.sfn, msg.slot, fapi::message_type_id::ul_dci_request, fapi::error_code_id::msg_invalid_sfn));
+    error_notifier.get().on_error_indication(fapi::build_msg_ul_dci_error_indication(msg.sfn, msg.slot));
 
     return;
   }
@@ -717,8 +717,7 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
   if (!controller.is_initialized()) {
     logger.warning("Sector#{}: Could not acquire downlink processor for slot {}.{}", sector_id, msg.sfn, msg.slot);
     // Raise out of sync error.
-    error_notifier.get().on_error_indication(fapi::build_error_indication(
-        msg.sfn, msg.slot, fapi::message_type_id::tx_data_request, fapi::error_code_id::msg_invalid_sfn));
+    error_notifier.get().on_error_indication(fapi::build_msg_tx_error_indication(msg.sfn, msg.slot));
 
     return;
   }
