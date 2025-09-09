@@ -70,6 +70,8 @@ protected:
     }
   }
 
+  static void TearDownTestSuite() { ch_est_factory.reset(); }
+
   void SetUp() override
   {
     // Assert factories again for compatibility with GTest < 1.11.
