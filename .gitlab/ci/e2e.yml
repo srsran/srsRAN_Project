@@ -236,18 +236,13 @@ amari 8UE:
   timeout: 4h
   parallel:
     matrix:
+      - E2E_FILE_OR_DIR: tests/attach_detach.py
       - E2E_FILE_OR_DIR: tests/reestablishment.py
         KEYWORDS: sequentially
-      - E2E_FILE_OR_DIR: tests/handover.py
-        KEYWORDS: sequentially
-      - E2E_FILE_OR_DIR: tests/attach_detach.py
-
-amari 8UE beta:
-  extends: amari 8UE
-  parallel:
-    matrix:
       - E2E_FILE_OR_DIR: tests/reestablishment.py
         KEYWORDS: "not sequentially"
+      - E2E_FILE_OR_DIR: tests/handover.py
+        KEYWORDS: sequentially
       - E2E_FILE_OR_DIR: tests/handover.py
         KEYWORDS: "not sequentially"
 
