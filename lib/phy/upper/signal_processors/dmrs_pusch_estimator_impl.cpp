@@ -15,9 +15,10 @@
 
 using namespace srsran;
 
-void dmrs_pusch_estimator_impl::estimate(channel_estimate&           estimate,
-                                         const resource_grid_reader& grid,
-                                         const configuration&        config)
+void dmrs_pusch_estimator_impl::estimate(channel_estimate&              estimate,
+                                         dmrs_pusch_estimator_notifier& notifier,
+                                         const resource_grid_reader&    grid,
+                                         const configuration&           config)
 {
   dmrs_type type          = config.get_dmrs_type();
   unsigned  nof_tx_layers = config.get_nof_tx_layers();
@@ -55,6 +56,8 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&           estimate,
   for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
     ch_estimator->compute(estimate, grid, i_port, temp_symbols, est_cfg);
   }
+
+  notifier.on_estimation_complete();
 }
 
 void dmrs_pusch_estimator_impl::sequence_generation(span<cf_t>           sequence,

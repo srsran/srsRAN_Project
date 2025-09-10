@@ -52,6 +52,17 @@ struct fmt::formatter<srsran::dmrs_pusch_estimator::configuration> : ostream_for
 
 namespace {
 
+class dmrs_pusch_estimator_notifier_spy : public dmrs_pusch_estimator_notifier
+{
+public:
+  void on_estimation_complete() override { estimation_notified = true; }
+
+  bool has_notified() const { return estimation_notified; }
+
+private:
+  bool estimation_notified = false;
+};
+
 class DmrsPuschEstimatorFixture : public ::testing::TestWithParam<test_case_t>
 {
 protected:
@@ -149,8 +160,11 @@ TEST_P(DmrsPuschEstimatorFixture, Creation)
     }
   }
 
+  // Create a spy notifier.
+  dmrs_pusch_estimator_notifier_spy notifier;
+
   // Estimate.
-  estimator->estimate(ch_est, grid, config);
+  estimator->estimate(ch_est, notifier, grid, config);
 
   // First, assert the channel estimate dimensions haven't changed.
   ch_estimate_dims = ch_est.size();
@@ -158,6 +172,9 @@ TEST_P(DmrsPuschEstimatorFixture, Creation)
   ASSERT_EQ(ch_estimate_dims.nof_symbols, config.nof_symbols + config.first_symbol) << "Wrong number of symbols.";
   ASSERT_EQ(ch_estimate_dims.nof_rx_ports, config.rx_ports.size()) << "Wrong number of Rx ports.";
   ASSERT_EQ(ch_estimate_dims.nof_tx_layers, config.get_nof_tx_layers()) << "Wrong number of Tx layers.";
+
+  // Next, assert the notifier has been called.
+  ASSERT_TRUE(notifier.has_notified()) << "The estimator notifier was not called.";
 
   for (unsigned i_port = 0; i_port != ch_estimate_dims.nof_rx_ports; ++i_port) {
     for (unsigned i_layer = 0; i_layer != ch_estimate_dims.nof_tx_layers; ++i_layer) {

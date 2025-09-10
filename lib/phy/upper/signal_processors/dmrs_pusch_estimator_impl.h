@@ -37,7 +37,10 @@ public:
   }
 
   // See interface for the documentation.
-  void estimate(channel_estimate& estimate, const resource_grid_reader& grid, const configuration& config) override;
+  void estimate(channel_estimate&              estimate,
+                dmrs_pusch_estimator_notifier& notifier,
+                const resource_grid_reader&    grid,
+                const configuration&           config) override;
 
 private:
   /// Maximum supported number of transmission layers.

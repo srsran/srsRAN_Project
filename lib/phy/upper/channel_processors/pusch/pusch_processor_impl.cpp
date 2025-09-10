@@ -105,6 +105,7 @@ private:
 static pusch_decoder_buffer_dummy decoder_buffer_dummy;
 
 pusch_processor_impl::pusch_processor_impl(configuration& config) :
+  estimator_notifier_configurator(*this),
   logger(srslog::fetch_basic_logger("PHY")),
   thread_local_dependencies_pool(std::move(config.thread_local_dependencies_pool)),
   decoder(std::move(config.decoder)),
@@ -124,10 +125,8 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
                                    const resource_grid_reader&      grid,
                                    const pusch_processor::pdu_t&    pdu)
 {
-  using namespace units::literals;
-
   // Get thread local dependencies.
-  dependencies = thread_local_dependencies_pool->get();
+  concurrent_dependencies_pool_type::ptr dependencies = thread_local_dependencies_pool->get();
 
   if (!dependencies) {
     logger.error("Failed to retrieve PUSCH processor dependencies.");
@@ -149,25 +148,15 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   }
 
   // Get channel estimates.
-  auto& ch_estimate = dependencies->get_channel_estimate();
+  channel_estimate& ch_estimate = dependencies->get_channel_estimate();
 
   // Assert PDU.
   [[maybe_unused]] std::string msg;
   srsran_assert(
       handle_validation(msg, pusch_processor_validator_impl(ch_estimate.capacity()).is_valid(pdu)), "{}", msg);
 
-  // Number of RB used by this transmission.
-  unsigned nof_rb = pdu.freq_alloc.get_nof_rb();
-
   // Get RB mask relative to Point A. It assumes PUSCH is never interleaved.
   crb_bitmap rb_mask = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
-
-  // Determine if the PUSCH allocation overlaps with the position of the DC.
-  bool overlap_dc = false;
-  if (pdu.dc_position.has_value()) {
-    unsigned dc_position_prb = *pdu.dc_position / NRE;
-    overlap_dc               = rb_mask.test(dc_position_prb);
-  }
 
   bool      enable_transform_precoding  = false;
   unsigned  scrambling_id               = 0;
@@ -187,28 +176,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
     n_rs_id                    = dmrs_config.n_rs_id;
   }
 
-  // Get UL-SCH information as if there was no CSI Part 2 in the PUSCH.
-  ulsch_configuration ulsch_config;
-  ulsch_config.tbs                   = units::bytes(data.size()).to_bits();
-  ulsch_config.mcs_descr             = pdu.mcs_descr;
-  ulsch_config.nof_harq_ack_bits     = units::bits(pdu.uci.nof_harq_ack);
-  ulsch_config.nof_csi_part1_bits    = units::bits(pdu.uci.nof_csi_part1);
-  ulsch_config.nof_csi_part2_bits    = 0_bits;
-  ulsch_config.alpha_scaling         = pdu.uci.alpha_scaling;
-  ulsch_config.beta_offset_harq_ack  = pdu.uci.beta_offset_harq_ack;
-  ulsch_config.beta_offset_csi_part1 = pdu.uci.beta_offset_csi_part1;
-  ulsch_config.beta_offset_csi_part2 = pdu.uci.beta_offset_csi_part2;
-  ulsch_config.nof_rb                = nof_rb;
-  ulsch_config.start_symbol_index    = pdu.start_symbol_index;
-  ulsch_config.nof_symbols           = pdu.nof_symbols;
-  ulsch_config.dmrs_type        = (dmrs_type == dmrs_type::TYPE1 ? dmrs_config_type::type1 : dmrs_config_type::type2);
-  ulsch_config.dmrs_symbol_mask = pdu.dmrs_symbol_mask;
-  ulsch_config.nof_cdm_groups_without_data = nof_cdm_groups_without_data;
-  ulsch_config.nof_layers                  = pdu.nof_tx_layers;
-  ulsch_config.contains_dc                 = overlap_dc;
-
-  // Estimate channel. Recall that the ch_estimate object is part of the PUSCH processor dependencies and, thus, it can
-  // be later accessed by the process_data method through the dependencies object.
+  // Configure the channel estimator.
   dmrs_pusch_estimator::configuration ch_est_config;
   ch_est_config.slot = pdu.slot;
   if (enable_transform_precoding) {
@@ -224,18 +192,27 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   ch_est_config.first_symbol = pdu.start_symbol_index;
   ch_est_config.nof_symbols  = pdu.nof_symbols;
   ch_est_config.rx_ports.assign(pdu.rx_ports.begin(), pdu.rx_ports.end());
-  dependencies->get_estimator().estimate(ch_estimate, grid, ch_est_config);
 
-  process_data(data, std::move(rm_buffer), notifier, grid, pdu, ulsch_config);
+  // Configure and get the estimator notifier.
+  dmrs_pusch_estimator&          estimator          = dependencies->get_estimator();
+  dmrs_pusch_estimator_notifier& estimator_notifier = estimator_notifier_configurator.configure(
+      data, std::move(rm_buffer), std::move(dependencies), notifier, grid, pdu, dmrs_type, nof_cdm_groups_without_data);
+
+  // Run the channel estimator. When done, the notifier will trigger the remaining steps for recovering the PUSCH data.
+  estimator.estimate(ch_estimate, estimator_notifier, grid, ch_est_config);
 }
 
-void pusch_processor_impl::process_data(span<uint8_t>                    data,
-                                        unique_rx_buffer                 rm_buffer,
-                                        pusch_processor_result_notifier& notifier,
-                                        const resource_grid_reader&      grid,
-                                        const pusch_processor::pdu_t&    pdu,
-                                        const ulsch_configuration&       ulsch_config)
+void pusch_processor_impl::process_data(span<uint8_t>                          data,
+                                        unique_rx_buffer                       rm_buffer,
+                                        concurrent_dependencies_pool_type::ptr dependencies,
+                                        pusch_processor_result_notifier&       notifier,
+                                        const resource_grid_reader&            grid,
+                                        const pdu_t&                           pdu,
+                                        const dmrs_type&                       dmrs_type,
+                                        unsigned                               nof_cdm_groups_without_data)
 {
+  using namespace units::literals;
+
   // Get channel estimates. They were filled in by pusch_processor_impl::process(...).
   auto& ch_estimate = dependencies->get_channel_estimate();
 
@@ -263,16 +240,49 @@ void pusch_processor_impl::process_data(span<uint8_t>                    data,
   channel_state_information csi(csi_sinr_calc_method);
   ch_estimate.get_channel_state_information(csi);
 
+  // Number of RB used by this transmission.
+  unsigned nof_rb = pdu.freq_alloc.get_nof_rb();
+
+  // Get RB mask relative to Point A. It assumes PUSCH is never interleaved.
+  crb_bitmap rb_mask = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
+
+  // Determine if the PUSCH allocation overlaps with the position of the DC.
+  bool overlap_dc = false;
+  if (pdu.dc_position.has_value()) {
+    unsigned dc_position_prb = *pdu.dc_position / NRE;
+    overlap_dc               = rb_mask.test(dc_position_prb);
+  }
+
+  // Configure the UL SCH transmission.
+  ulsch_configuration ulsch_config;
+  ulsch_config.tbs                   = units::bytes(data.size()).to_bits();
+  ulsch_config.mcs_descr             = pdu.mcs_descr;
+  ulsch_config.nof_harq_ack_bits     = units::bits(pdu.uci.nof_harq_ack);
+  ulsch_config.nof_csi_part1_bits    = units::bits(pdu.uci.nof_csi_part1);
+  ulsch_config.nof_csi_part2_bits    = 0_bits;
+  ulsch_config.alpha_scaling         = pdu.uci.alpha_scaling;
+  ulsch_config.beta_offset_harq_ack  = pdu.uci.beta_offset_harq_ack;
+  ulsch_config.beta_offset_csi_part1 = pdu.uci.beta_offset_csi_part1;
+  ulsch_config.beta_offset_csi_part2 = pdu.uci.beta_offset_csi_part2;
+  ulsch_config.nof_rb                = nof_rb;
+  ulsch_config.start_symbol_index    = pdu.start_symbol_index;
+  ulsch_config.nof_symbols           = pdu.nof_symbols;
+  ulsch_config.dmrs_type        = (dmrs_type == dmrs_type::TYPE1 ? dmrs_config_type::type1 : dmrs_config_type::type2);
+  ulsch_config.dmrs_symbol_mask = pdu.dmrs_symbol_mask;
+  ulsch_config.nof_cdm_groups_without_data = nof_cdm_groups_without_data;
+  ulsch_config.nof_layers                  = pdu.nof_tx_layers;
+  ulsch_config.contains_dc                 = overlap_dc;
+
   // Prepare demultiplex configuration.
   ulsch_information                info = get_ulsch_information(ulsch_config);
   ulsch_demultiplex::configuration demux_config;
-  demux_config.modulation         = pdu.mcs_descr.modulation;
-  demux_config.nof_layers         = pdu.nof_tx_layers;
-  demux_config.nof_prb            = ulsch_config.nof_rb;
-  demux_config.start_symbol_index = pdu.start_symbol_index;
-  demux_config.nof_symbols        = pdu.nof_symbols;
-  demux_config.nof_harq_ack_rvd   = info.nof_harq_ack_rvd.value();
-  demux_config.dmrs = (ulsch_config.dmrs_type == dmrs_config_type::type1 ? dmrs_type::TYPE1 : dmrs_type::TYPE2);
+  demux_config.modulation                  = pdu.mcs_descr.modulation;
+  demux_config.nof_layers                  = pdu.nof_tx_layers;
+  demux_config.nof_prb                     = ulsch_config.nof_rb;
+  demux_config.start_symbol_index          = pdu.start_symbol_index;
+  demux_config.nof_symbols                 = pdu.nof_symbols;
+  demux_config.nof_harq_ack_rvd            = info.nof_harq_ack_rvd.value();
+  demux_config.dmrs                        = dmrs_type;
   demux_config.dmrs_symbol_mask            = ulsch_config.dmrs_symbol_mask;
   demux_config.nof_cdm_groups_without_data = ulsch_config.nof_cdm_groups_without_data;
   demux_config.nof_harq_ack_bits           = ulsch_config.nof_harq_ack_bits.value();
@@ -361,7 +371,4 @@ void pusch_processor_impl::process_data(span<uint8_t>                    data,
   demod_config.rx_ports                    = pdu.rx_ports;
   dependencies->get_demodulator().demodulate(
       demodulator_buffer, notifier_adaptor.get_demodulator_notifier(), grid, ch_estimate, demod_config);
-
-  // Return the dependencies to the pool.
-  dependencies.reset();
 }
