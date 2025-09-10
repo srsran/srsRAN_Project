@@ -136,19 +136,6 @@ TEST_P(scheduler_ul_tdd_tester, all_ul_slots_are_scheduled)
       ASSERT_FALSE(this->last_sched_res_list[to_du_cell_index(0)]->ul.puschs.empty()) << fmt::format(
           "The UE configuration is leading to slot {} not having UL UE grant scheduled", this->last_result_slot());
     }
-
-    for (const ul_sched_info& pusch : this->last_sched_res_list[to_du_cell_index(0)]->ul.puschs) {
-      ul_crc_indication crc{};
-      crc.cell_index = to_du_cell_index(0);
-      crc.sl_rx      = this->last_result_slot();
-      crc.crcs.resize(1);
-      crc.crcs[0].ue_index       = ue_idx;
-      crc.crcs[0].rnti           = ue_rnti;
-      crc.crcs[0].harq_id        = to_harq_id(pusch.pusch_cfg.harq_id);
-      crc.crcs[0].tb_crc_success = true;
-      crc.crcs[0].ul_sinr_dB     = 100;
-      this->sched->handle_crc_indication(crc);
-    }
   }
 }
 
