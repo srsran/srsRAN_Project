@@ -31,7 +31,9 @@ struct tdd_test_params {
 class base_scheduler_tdd_tester : public scheduler_test_simulator
 {
 protected:
-  base_scheduler_tdd_tester(const tdd_test_params& testparams) : scheduler_test_simulator(4, testparams.tdd_cfg.ref_scs)
+  base_scheduler_tdd_tester(const tdd_test_params& testparams) :
+    scheduler_test_simulator(
+        scheduler_test_sim_config{.max_scs = testparams.tdd_cfg.ref_scs, .auto_uci = true, .auto_crc = true})
   {
     params                      = cell_config_builder_profiles::tdd(testparams.tdd_cfg.ref_scs);
     params.csi_rs_enabled       = testparams.csi_rs_enabled;
@@ -100,16 +102,6 @@ TEST_P(scheduler_dl_tdd_tester, all_dl_slots_are_scheduled)
       ASSERT_FALSE(this->last_sched_res_list[to_du_cell_index(0)]->dl.ue_grants.empty()) << fmt::format(
           "The UE configuration is leading to slot {} not having DL UE grant scheduled", this->last_result_slot());
     }
-
-    for (const pucch_info& pucch : this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs) {
-      if (pucch.format() == pucch_format::FORMAT_1 and pucch.uci_bits.sr_bits != sr_nof_bits::no_sr) {
-        // Skip SRs for this test.
-        continue;
-      }
-
-      uci_indication uci_ind = test_helper::create_uci_indication(this->last_result_slot(), ue_idx, pucch);
-      this->sched->handle_uci_indication(uci_ind);
-    }
   }
 }
 
@@ -127,19 +119,6 @@ public:
     unsigned tdd_period = nof_slots_per_tdd_period(*cell_cfg_list[0].tdd_cfg_common);
     for (unsigned i = 0; i != 2 * tdd_period; ++i) {
       run_slot();
-
-      for (const ul_sched_info& pusch : this->last_sched_res_list[to_du_cell_index(0)]->ul.puschs) {
-        ul_crc_indication crc{};
-        crc.cell_index = to_du_cell_index(0);
-        crc.sl_rx      = this->last_result_slot();
-        crc.crcs.resize(1);
-        crc.crcs[0].ue_index       = ue_idx;
-        crc.crcs[0].rnti           = ue_rnti;
-        crc.crcs[0].harq_id        = to_harq_id(pusch.pusch_cfg.harq_id);
-        crc.crcs[0].tb_crc_success = true;
-        crc.crcs[0].ul_sinr_dB     = 100.0F;
-        this->sched->handle_crc_indication(crc);
-      }
     }
   }
 };
