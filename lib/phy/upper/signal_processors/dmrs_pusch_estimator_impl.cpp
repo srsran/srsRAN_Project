@@ -12,6 +12,7 @@
 #include "dmrs_helper.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/sc_prod.h"
+#include "srsran/support/executors/inline_task_executor.h"
 
 using namespace srsran;
 
@@ -53,11 +54,25 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&              estimate
   est_cfg.rx_ports     = config.rx_ports;
   est_cfg.scaling      = config.scaling;
 
-  for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
-    ch_estimator->compute(estimate, grid, i_port, temp_symbols, est_cfg);
-  }
+  // TODO: the executor should be injected to the estimator from outside.
+  inline_task_executor in_executor;
+  task_executor&       executor = in_executor;
 
-  notifier.on_estimation_complete();
+  std::atomic<unsigned> pending_ports = nof_rx_ports;
+  for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
+    bool enqueued = executor.defer([this, &estimate, &grid, i_port, &est_cfg, &pending_ports, &notifier]() {
+      ch_estimator->compute(estimate, grid, i_port, temp_symbols, est_cfg);
+      if (pending_ports.fetch_sub(1) == 1) {
+        notifier.on_estimation_complete();
+      }
+    });
+    if (!enqueued) {
+      ch_estimator->compute(estimate, grid, i_port, temp_symbols, est_cfg);
+      if (pending_ports.fetch_sub(1) == 1) {
+        notifier.on_estimation_complete();
+      }
+    }
+  }
 }
 
 void dmrs_pusch_estimator_impl::sequence_generation(span<cf_t>           sequence,

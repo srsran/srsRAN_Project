@@ -55,12 +55,12 @@ namespace {
 class dmrs_pusch_estimator_notifier_spy : public dmrs_pusch_estimator_notifier
 {
 public:
-  void on_estimation_complete() override { estimation_notified = true; }
+  void on_estimation_complete() override { ++estimation_notified; }
 
-  bool has_notified() const { return estimation_notified; }
+  bool has_notified() const { return (estimation_notified == 1); }
 
 private:
-  bool estimation_notified = false;
+  unsigned estimation_notified = 0;
 };
 
 class DmrsPuschEstimatorFixture : public ::testing::TestWithParam<test_case_t>
