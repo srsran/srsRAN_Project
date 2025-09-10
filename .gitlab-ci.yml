@@ -384,6 +384,8 @@ full-code-format:
     - |
       echo "
       -/usr/lib
+      -*CMakeTmp
+      -*CompilerIdCXX
       -*tests/unittests
       -*tests/integrationtests
       -*tests/benchmarks
@@ -413,7 +415,7 @@ full-code-format:
           done
       }
       export -f monitor_child_process
-  script:
+  script: &codechecker_script
     - nohup bash -c monitor_child_process &
     - static-analyzer.sh -i /tmp/codechecker_skip --jobs ${KUBERNETES_CPU_REQUEST} --analyzers ${ANALYZER} ${ANALYZER_ARGS} $CI_PROJECT_DIR
   after_script:
@@ -428,6 +430,17 @@ full-code-format:
 
 clang-tidy:
   extends: .codechecker
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+  interruptible: false
+  retry: 2
+  variables:
+    ANALYZER: clang-tidy
+    ANALYZER_ARGS: --analyzer-config clang-tidy:take-config-from-directory=true --tidy-config .clang-tidy
+    ARTIFACT_EXTRA_PATH: "/index.html"
+
+clang-tidy incremental:
+  extends: clang-tidy
   stage: manual
   rules:
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_TARGET_BRANCH_PROTECTED == "true" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != $CI_DEFAULT_BRANCH
@@ -437,9 +450,26 @@ clang-tidy:
       when: manual
       allow_failure: false
   variables:
-    ANALYZER: clang-tidy
-    ANALYZER_ARGS: --analyzer-config clang-tidy:take-config-from-directory=true --tidy-config .clang-tidy
-    ARTIFACT_EXTRA_PATH: "/index.html"
+    CCACHE_MAXSIZE: 3G
+    CACHE_COMPRESSION_LEVEL: slowest
+    CACHE_REQUEST_TIMEOUT: 5 # minutes - 10 by default
+  script:
+    - |
+      cd $CI_PROJECT_DIR
+      git config advice.detachedHead false
+      git config --local core.hooksPath /dev/null
+      git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
+    - |
+      for rev in $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME; do
+        git checkout $rev
+        CodeChecker log -o ${CI_PROJECT_DIR}/build/compile_commands.json --build "builder.sh -m -j${KUBERNETES_CPU_REQUEST} -c clang -DMARCH=x86-64-v3 -DENABLE_ARMPL=False -DENABLE_MKL=False -DENABLE_FFTW=True -DASSERT_LEVEL=PARANOID -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_TESTING=False $CI_PROJECT_DIR"
+      done
+    - *codechecker_script
+  cache:
+    - key: codechecker-clang-tidy
+      paths: [ccache]
+      policy: pull-push
+      when: always
 
 cppcheck:
   extends: .codechecker
