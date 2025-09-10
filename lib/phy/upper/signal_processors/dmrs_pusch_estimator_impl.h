@@ -29,10 +29,10 @@ public:
   explicit dmrs_pusch_estimator_impl(std::unique_ptr<pseudo_random_generator>     prg_,
                                      std::unique_ptr<low_papr_sequence_generator> tp_sequence_generator_,
                                      std::unique_ptr<port_channel_estimator>      ch_est) :
-    prg(std::move(prg_)), low_paper_sequence_gen(std::move(tp_sequence_generator_)), ch_estimator(std::move(ch_est))
+    prg(std::move(prg_)), low_papr_sequence_gen(std::move(tp_sequence_generator_)), ch_estimator(std::move(ch_est))
   {
     srsran_assert(prg, "Invalid PRG.");
-    srsran_assert(low_paper_sequence_gen, "Invalid sequence generator.");
+    srsran_assert(low_papr_sequence_gen, "Invalid sequence generator.");
     srsran_assert(ch_estimator, "Invalid port channel estimator.");
   }
 
@@ -51,7 +51,7 @@ private:
   /// Pseudo-random generator.
   std::unique_ptr<pseudo_random_generator> prg;
   /// Sequence generator for transform precoding.
-  std::unique_ptr<low_papr_sequence_generator> low_paper_sequence_gen;
+  std::unique_ptr<low_papr_sequence_generator> low_papr_sequence_gen;
   /// Antenna port channel estimator.
   std::unique_ptr<port_channel_estimator> ch_estimator;
   /// Buffer for DM-RS symbols.

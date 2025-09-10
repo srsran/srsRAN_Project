@@ -83,7 +83,7 @@ void dmrs_pusch_estimator_impl::sequence_generation(span<cf_t>           sequenc
   if (std::holds_alternative<low_papr_sequence_configuration>(config.sequence_config)) {
     const auto& sequence_config = std::get<low_papr_sequence_configuration>(config.sequence_config);
     unsigned    sequence_group  = sequence_config.n_rs_id % 30;
-    low_paper_sequence_gen->generate(sequence, sequence_group, 0, 0, 1);
+    low_papr_sequence_gen->generate(sequence, sequence_group, 0, 0, 1);
     return;
   }
 
