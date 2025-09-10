@@ -285,7 +285,6 @@ sbom_generate(
     DOWNLOAD_URL "https://github.com/srsran/srsRAN_Project.git"
     LICENSE      "LicenseRef-srsRAN"
 )
-parse_copyright_file("${CMAKE_SOURCE_DIR}/COPYRIGHT")
 
 ########################################################################
 # Find dependencies
@@ -645,6 +644,7 @@ message(STATUS "Building srsRAN version ${SRSRAN_VERSION_STRING}")
 ########################################################################
 # Generate SBOM
 ########################################################################
+parse_copyright_file("${CMAKE_SOURCE_DIR}/COPYRIGHT")
 sbom_add(
     LICENSE "LicenseRef-srsRAN"
     NAME    "AGPL-3.0-only"

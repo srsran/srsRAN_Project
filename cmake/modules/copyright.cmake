@@ -41,12 +41,20 @@ function(parse_copyright_file FILE)
         "${_copy_str}"
       )
 
+      # Version
+      string(TOUPPER "${_module_name}" _upper)
+      set(_var "SBOM_${_upper}_VERSION")
+      if(NOT DEFINED ${_var})
+        message(FATAL_ERROR "Required variable `${_var}` is not defined. ")
+      endif()
+      set(_version "${${_var}}")
+
       # Add to SBOM
-      message(STATUS "Adding external module: ${_module_name} with license: ${_license_str} supplier: ${_copy_clean} and version: ${_version}")
       sbom_add(
         PACKAGE "${_module_name}"
         SUPPLIER "${_copy_clean}"
         LICENSE "${_license_str}"
+        VERSION "${_version}"
       )
     endif()
   endforeach()
