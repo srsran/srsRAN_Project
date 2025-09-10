@@ -21,6 +21,7 @@
 #include "srsran/ran/sch/sch_dmrs_power.h"
 #include "srsran/ran/uci/uci_formatters.h"
 #include "srsran/ran/uci/uci_part2_size_calculator.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 
@@ -40,18 +41,18 @@ namespace {
 class pusch_processor_csi_part1_feedback_impl : public pusch_processor_csi_part1_feedback
 {
 public:
-  pusch_processor_csi_part1_feedback_impl(pusch_uci_decoder_wrapper&        csi_part2_decoder_,
-                                          pusch_decoder&                    ulsch_decoder_,
-                                          ulsch_demultiplex&                demultiplex_,
-                                          modulation_scheme                 modulation_,
-                                          const uci_part2_size_description& csi_part2_size_,
-                                          const ulsch_configuration&        ulsch_config_) :
+  pusch_processor_csi_part1_feedback_impl(pusch_uci_decoder_wrapper& csi_part2_decoder_,
+                                          pusch_decoder&             ulsch_decoder_,
+                                          ulsch_demultiplex&         demultiplex_,
+                                          modulation_scheme          modulation_,
+                                          uci_part2_size_description csi_part2_size_,
+                                          ulsch_configuration        ulsch_config_) :
     csi_part2_decoder(csi_part2_decoder_),
     ulsch_decoder(ulsch_decoder_),
     demultiplex(demultiplex_),
     modulation(modulation_),
-    csi_part2_size(csi_part2_size_),
-    ulsch_config(ulsch_config_)
+    csi_part2_size(std::move(csi_part2_size_)),
+    ulsch_config(std::move(ulsch_config_))
   {
   }
 
@@ -126,7 +127,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   using namespace units::literals;
 
   // Get thread local dependencies.
-  auto dependencies = thread_local_dependencies_pool->get();
+  dependencies = thread_local_dependencies_pool->get();
 
   if (!dependencies) {
     logger.error("Failed to retrieve PUSCH processor dependencies.");
@@ -148,7 +149,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   }
 
   // Get channel estimates.
-  channel_estimate& ch_estimate = dependencies->get_channel_estimate();
+  auto& ch_estimate = dependencies->get_channel_estimate();
 
   // Assert PDU.
   [[maybe_unused]] std::string msg;
@@ -171,7 +172,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   bool      enable_transform_precoding  = false;
   unsigned  scrambling_id               = 0;
   unsigned  n_rs_id                     = 0;
-  bool      n_scid                      = 0;
+  bool      n_scid                      = false;
   unsigned  nof_cdm_groups_without_data = 2;
   dmrs_type dmrs_type                   = srsran::dmrs_type::TYPE1;
   if (std::holds_alternative<srsran::pusch_processor::dmrs_configuration>(pdu.dmrs)) {
@@ -205,9 +206,9 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   ulsch_config.nof_cdm_groups_without_data = nof_cdm_groups_without_data;
   ulsch_config.nof_layers                  = pdu.nof_tx_layers;
   ulsch_config.contains_dc                 = overlap_dc;
-  ulsch_information info                   = get_ulsch_information(ulsch_config);
 
-  // Estimate channel.
+  // Estimate channel. Recall that the ch_estimate object is part of the PUSCH processor dependencies and, thus, it can
+  // be later accessed by the process_data method through the dependencies object.
   dmrs_pusch_estimator::configuration ch_est_config;
   ch_est_config.slot = pdu.slot;
   if (enable_transform_precoding) {
@@ -224,6 +225,19 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   ch_est_config.nof_symbols  = pdu.nof_symbols;
   ch_est_config.rx_ports.assign(pdu.rx_ports.begin(), pdu.rx_ports.end());
   dependencies->get_estimator().estimate(ch_estimate, grid, ch_est_config);
+
+  process_data(data, std::move(rm_buffer), notifier, grid, pdu, ulsch_config);
+}
+
+void pusch_processor_impl::process_data(span<uint8_t>                    data,
+                                        unique_rx_buffer                 rm_buffer,
+                                        pusch_processor_result_notifier& notifier,
+                                        const resource_grid_reader&      grid,
+                                        const pusch_processor::pdu_t&    pdu,
+                                        const ulsch_configuration&       ulsch_config)
+{
+  // Get channel estimates. They were filled in by pusch_processor_impl::process(...).
+  auto& ch_estimate = dependencies->get_channel_estimate();
 
   // Set the DC (Direct Current) subcarrier to zero if its position is within the resource grid and transform precoding
   // is disabled. This step is skipped when transform precoding is used, as forcing the DC to zero in that case may
@@ -250,14 +264,15 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   ch_estimate.get_channel_state_information(csi);
 
   // Prepare demultiplex configuration.
+  ulsch_information                info = get_ulsch_information(ulsch_config);
   ulsch_demultiplex::configuration demux_config;
-  demux_config.modulation                  = pdu.mcs_descr.modulation;
-  demux_config.nof_layers                  = pdu.nof_tx_layers;
-  demux_config.nof_prb                     = nof_rb;
-  demux_config.start_symbol_index          = pdu.start_symbol_index;
-  demux_config.nof_symbols                 = pdu.nof_symbols;
-  demux_config.nof_harq_ack_rvd            = info.nof_harq_ack_rvd.value();
-  demux_config.dmrs                        = dmrs_type;
+  demux_config.modulation         = pdu.mcs_descr.modulation;
+  demux_config.nof_layers         = pdu.nof_tx_layers;
+  demux_config.nof_prb            = ulsch_config.nof_rb;
+  demux_config.start_symbol_index = pdu.start_symbol_index;
+  demux_config.nof_symbols        = pdu.nof_symbols;
+  demux_config.nof_harq_ack_rvd   = info.nof_harq_ack_rvd.value();
+  demux_config.dmrs = (ulsch_config.dmrs_type == dmrs_config_type::type1 ? dmrs_type::TYPE1 : dmrs_type::TYPE2);
   demux_config.dmrs_symbol_mask            = ulsch_config.dmrs_symbol_mask;
   demux_config.nof_cdm_groups_without_data = ulsch_config.nof_cdm_groups_without_data;
   demux_config.nof_harq_ack_bits           = ulsch_config.nof_harq_ack_bits.value();
@@ -329,19 +344,24 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
       dependencies->get_demultiplex().demultiplex(decoder_buffer, harq_ack_buffer, csi_part1_buffer, demux_config);
 
   // Demodulate.
+  bool enable_transform_precoding = !std::holds_alternative<srsran::pusch_processor::dmrs_configuration>(pdu.dmrs);
+
   pusch_demodulator::configuration demod_config;
   demod_config.rnti                        = pdu.rnti;
-  demod_config.rb_mask                     = rb_mask;
+  demod_config.rb_mask                     = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
   demod_config.modulation                  = pdu.mcs_descr.modulation;
   demod_config.start_symbol_index          = pdu.start_symbol_index;
   demod_config.nof_symbols                 = pdu.nof_symbols;
   demod_config.dmrs_symb_pos               = pdu.dmrs_symbol_mask;
-  demod_config.dmrs_config_type            = dmrs_type;
-  demod_config.nof_cdm_groups_without_data = nof_cdm_groups_without_data;
+  demod_config.dmrs_config_type            = demux_config.dmrs;
+  demod_config.nof_cdm_groups_without_data = ulsch_config.nof_cdm_groups_without_data;
   demod_config.n_id                        = pdu.n_id;
   demod_config.nof_tx_layers               = pdu.nof_tx_layers;
   demod_config.enable_transform_precoding  = enable_transform_precoding;
   demod_config.rx_ports                    = pdu.rx_ports;
   dependencies->get_demodulator().demodulate(
       demodulator_buffer, notifier_adaptor.get_demodulator_notifier(), grid, ch_estimate, demod_config);
+
+  // Return the dependencies to the pool.
+  dependencies.reset();
 }

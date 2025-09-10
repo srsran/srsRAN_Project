@@ -11,7 +11,6 @@
 #pragma once
 
 #include "pusch_processor_notifier_adaptor.h"
-#include "pusch_uci_decoder_notifier.h"
 #include "pusch_uci_decoder_wrapper.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_demodulator.h"
@@ -21,7 +20,6 @@
 #include "srsran/phy/upper/signal_processors/dmrs_pusch_estimator.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/ran/pusch/ulsch_info.h"
-#include "srsran/srslog/srslog.h"
 #include "srsran/support/memory_pool/bounded_object_pool.h"
 #include <memory>
 
@@ -136,6 +134,23 @@ private:
   channel_state_information::sinr_type csi_sinr_calc_method;
   /// Notifier adaptor.
   pusch_processor_notifier_adaptor notifier_adaptor;
+  /// Internal pointer to the dependencies object assigned to the PUSCH processor.
+  concurrent_dependencies_pool_type::ptr dependencies = nullptr;
+
+  /// \brief Processes the data in a PUSCH transmission.
+  ///
+  /// \param[out]    data          Received transport block..
+  /// \param[in,out] rm_buffer     Rate matcher buffer.
+  /// \param[in]     notifier      Result notification interface.
+  /// \param[in]     grid          Source resource grid.
+  /// \param[in]     pdu           Necessary parameters to process the PUSCH transmission.
+  /// \param[in]     ulsch_config  Configuration of the UL shared channel.
+  void process_data(span<uint8_t>                    data,
+                    unique_rx_buffer                 rm_buffer,
+                    pusch_processor_result_notifier& notifier,
+                    const resource_grid_reader&      grid,
+                    const pdu_t&                     pdu,
+                    const ulsch_configuration&       ulsch_config);
 };
 
 } // namespace srsran
