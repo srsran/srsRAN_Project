@@ -483,7 +483,7 @@ cppcheck:
     ANALYZER_ARGS: --cppcheck-max-template-recursion 5
   artifacts:
     <<: *codechecker_artifacts
-    expire_in: 1 day
+    expire_in: 7 days
 
 clangsa:
   extends: .codechecker

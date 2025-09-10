@@ -251,6 +251,9 @@ variables:
     MARCH: x86-64-v3
     LINKER: lld
     INFRASTRUCTURE_TAG: amd64-avx2
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 3 day
 
 .smoke tsan:
   extends: .build_and_unit

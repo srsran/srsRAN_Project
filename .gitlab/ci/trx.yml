@@ -88,15 +88,12 @@ build trx driver:
   artifacts: &trx_artifacts
     paths:
       - build_trx_srsran/libtrx_srsran.so
-    expire_in: 4 hours
+    expire_in: 3 days
 
 build amariue zmq driver:
   extends: build trx driver
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
-  artifacts:
-    <<: *trx_artifacts
-    expire_in: 3 days
 
 build uesim zmq driver:
   extends: build trx driver
@@ -105,9 +102,6 @@ build uesim zmq driver:
   variables:
     OS: fedora-39
     AMARISOFT_VERSION: "2024-03-15"
-  artifacts:
-    <<: *trx_artifacts
-    expire_in: 3 days
 
 build amariue ntn zmq driver:
   extends: build trx driver
@@ -115,6 +109,3 @@ build amariue ntn zmq driver:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
   variables:
     AMARISOFT_VERSION: "2024-12-13"
-  artifacts:
-    <<: *trx_artifacts
-    expire_in: 3 days
