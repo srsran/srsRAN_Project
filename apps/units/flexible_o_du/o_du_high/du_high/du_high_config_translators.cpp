@@ -301,11 +301,11 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     param.min_k1              = base_cell.pucch_cfg.min_k1;
     param.min_k2              = base_cell.pusch_cfg.min_k2;
     param.coreset0_index      = base_cell.pdcch_cfg.common.coreset0_index;
-    // Set maximum CORESET#0 duration to 1 OFDM symbol for BW > 50Mhz to spread CORESET RBs across the BW. This results
-    // in one extra symbol to be used for PDSCH.
+    // If the CORESET#0 maximum duration is not set, set maximum CORESET#0 duration to 1 OFDM symbol for BW > 50MHz in
+    // FR1 to spread CORESET RBs across the BW. This results in one extra symbol to be used for PDSCH.
     if (base_cell.pdcch_cfg.common.max_coreset0_duration.has_value()) {
       param.max_coreset0_duration = base_cell.pdcch_cfg.common.max_coreset0_duration.value();
-    } else if (param.channel_bw_mhz > bs_channel_bandwidth::MHz50) {
+    } else if ((param.channel_bw_mhz > bs_channel_bandwidth::MHz50) && (freq_range == frequency_range::FR1)) {
       param.max_coreset0_duration = 1;
     }
     const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(base_cell.channel_bw_mhz, param.scs_common, freq_range);
