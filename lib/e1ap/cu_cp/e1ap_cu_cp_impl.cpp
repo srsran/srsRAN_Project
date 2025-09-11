@@ -236,7 +236,7 @@ void e1ap_cu_cp_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& ms
       // Set E1 Release in progress flag.
       e1_release_in_progress = true;
       cu_up_processor_notifier.schedule_async_task(launch_async<e1_release_procedure>(
-          msg.value.e1_release_request(), cu_up_index, pdu_notifier, cu_cp_notifier, ue_ctxt_list, logger));
+          msg.value.e1_release_request(), cu_up_index, pdu_notifier, cu_cp_notifier, ue_ctxt_list, timers, logger));
     } break;
     default:
       logger.warning("Initiating message of type {} is not supported", msg.value.type().to_string());

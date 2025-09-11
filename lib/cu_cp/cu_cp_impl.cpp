@@ -251,32 +251,10 @@ void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inact
   }
 }
 
-void cu_cp_impl::handle_e1_release_request(cu_up_index_t cu_up_index, const std::vector<ue_index_t>& ue_list)
+void cu_cp_impl::handle_e1_release_request(cu_up_index_t cu_up_index)
 {
-  for (const auto& ue_index : ue_list) {
-    cu_cp_ue* ue = ue_mng.find_du_ue(ue_index);
-    srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", ue_index);
-
-    cu_cp_ue_context_release_request req;
-    req.ue_index = ue_index;
-    req.cause    = ngap_cause_radio_network_t::release_due_to_ngran_generated_reason;
-
-    // Add PDU Session IDs.
-    auto& up_resource_manager            = ue->get_up_resource_manager();
-    req.pdu_session_res_list_cxt_rel_req = up_resource_manager.get_pdu_sessions();
-
-    logger.debug("ue={}: Requesting UE context release with cause={}", req.ue_index, req.cause);
-
-    // Schedule on UE task scheduler.
-    ue->get_task_sched().schedule_async_task(launch_async([this, req](coro_context<async_task<void>>& ctx) mutable {
-      CORO_BEGIN(ctx);
-      // Notify NGAP to request a release from the AMF.
-      CORO_AWAIT(handle_ue_context_release(req));
-      CORO_RETURN();
-    }));
-  }
-
-  // Schedule removal of CU-UP processor.
+  // Schedule removal of CU-UP processor. Note this must be scheduled to be executed after the E1 Release Response was
+  // sent from the calling procedure.
   common_task_sched.schedule_async_task(launch_async([this, cu_up_index](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
     CORO_AWAIT(cu_up_db.remove_cu_up(cu_up_index));

@@ -46,10 +46,18 @@ public:
     logger.info("Received an inactivity notification");
   }
 
-  void on_e1_release_request_received(cu_up_index_t                             cu_up_index,
-                                      const std::vector<srs_cu_cp::ue_index_t>& ue_list) override
+  async_task<void> on_ue_release_required(const cu_cp_ue_context_release_request& request) override
   {
-    logger.info("Received E1 Release Request for {} UEs", ue_list.size());
+    logger.info("ue={}: Requested a UE release", request.ue_index);
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
+  void on_e1_release_request_received(cu_up_index_t cu_up_index) override
+  {
+    logger.info("Received E1 Release Request for CU-UP {}", cu_up_index);
   }
 
   bool schedule_async_task(ue_index_t ue_index, async_task<void> task) override
