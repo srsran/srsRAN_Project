@@ -63,5 +63,5 @@ def test_zmq_inter_du_handover_sequentially(
         common_scs=common_scs,
         bandwidth=bandwidth,
         noise_spd=noise_spd,
-        sleep_between_movement_steps=10,
+        sleep_between_movement_steps=1,
     )
