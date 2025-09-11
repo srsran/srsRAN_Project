@@ -266,7 +266,6 @@ variables:
     ENABLE_TSAN: "True"
     TEST_MODE: tsan
     MARCH: x86-64-v3
-    LINKER: lld
     INFRASTRUCTURE_TAG: amd64-avx2
 
 .smoke archlinux:
