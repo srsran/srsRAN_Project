@@ -189,5 +189,6 @@ span<cbf16_t> resource_grid_writer_impl::get_view(unsigned port, unsigned l)
                 "Port index (i.e., {}) exceeds the maximum number of ports (i.e., {})",
                 port,
                 get_nof_ports());
+  clear_empty(port);
   return data.get_view({l, port});
 }

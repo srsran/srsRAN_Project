@@ -113,9 +113,9 @@ void srsran::srs_cu_cp::fill_asn1_rrc_smc_msg(asn1::rrc_nr::security_mode_cmd_s&
   }
 }
 
-void srsran::srs_cu_cp::fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recfg_s&            asn1_rrc_reconf,
-                                                          uint8_t                               rrc_transaction_id,
-                                                          rrc_reconfiguration_procedure_request rrc_reconf)
+void srsran::srs_cu_cp::fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recfg_s& asn1_rrc_reconf,
+                                                          uint8_t                    rrc_transaction_id,
+                                                          const rrc_reconfiguration_procedure_request& rrc_reconf)
 {
   using namespace asn1::rrc_nr;
 

@@ -76,8 +76,8 @@ public:
 class pdcp_rx_test_helper
 {
 protected:
-  pdcp_rx_test_helper(task_executor& crypto_exec_, manual_task_worker& ul_worker) :
-    worker(ul_worker), crypto_exec(crypto_exec_)
+  pdcp_rx_test_helper(uint32_t nof_crypto_threads_, task_executor& crypto_exec_, manual_task_worker& ul_worker) :
+    nof_crypto_threads(nof_crypto_threads_), worker(ul_worker), crypto_exec(crypto_exec_)
   {
   }
 
@@ -181,9 +181,9 @@ protected:
   timer_manager                       timers;
   std::unique_ptr<pdcp_rx_test_frame> test_frame;
 
-  const uint32_t nof_crypto_threads = 2;
-  unsigned       crypto_queue_size  = 128;
+  unsigned crypto_queue_size = 128;
 
+  const uint32_t      nof_crypto_threads;
   manual_task_worker& worker;
   task_executor&      crypto_exec;
 
@@ -198,15 +198,14 @@ protected:
 class pdcp_rx_test_helper_default_crypto : public pdcp_rx_test_helper
 {
 public:
-  pdcp_rx_test_helper_default_crypto() : pdcp_rx_test_helper(crypto_exec, ul_worker) {}
+  pdcp_rx_test_helper_default_crypto() : pdcp_rx_test_helper(2, crypto_exec, ul_worker) {}
 
 protected:
   void               wait_pending_crypto() { crypto_worker_pool.wait_pending_tasks(); }
   manual_task_worker ul_worker{64};
 
 private:
-  const uint32_t nof_crypto_threads = 2;
-  unsigned       crypto_queue_size  = 128;
+  unsigned crypto_queue_size = 128;
 
   task_worker_pool<concurrent_queue_policy::lockfree_mpmc>          crypto_worker_pool{"crypto",
                                                                               nof_crypto_threads,
@@ -219,7 +218,7 @@ class pdcp_rx_test_helper_manual_crypto : public pdcp_rx_test_helper
 {
 public:
   pdcp_rx_test_helper_manual_crypto() :
-    pdcp_rx_test_helper(crypto_worker, ul_worker),
+    pdcp_rx_test_helper(1, crypto_worker, ul_worker),
     crypto_worker(
         4096,
         true,
@@ -231,6 +230,7 @@ protected:
   void               wait_pending_crypto() { crypto_worker.run_pending_tasks(); }
   void               wait_one_crypto_task() { crypto_worker.try_run_next(); }
   manual_task_worker ul_worker{64, true, true};
+  const uint32_t     nof_crypto_threads = 1;
 
 private:
   manual_task_worker crypto_worker;

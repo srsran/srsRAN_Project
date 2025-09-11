@@ -31,7 +31,7 @@ namespace srsran {
 /// Cell-specific Default RAN slice configuration.
 struct slice_rrm_policy_config {
   /// Maximum RAN scheduling policy.
-  constexpr static unsigned max_priority = 255;
+  static constexpr unsigned max_priority = 255;
 
   /// RRM Policy identifier.
   rrm_policy_member rrc_member;

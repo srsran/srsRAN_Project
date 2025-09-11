@@ -39,13 +39,13 @@ enum class nru_pdu_type : uint8_t {
 };
 
 /// Convert NR-U PDU type to unsigned integer.
-constexpr inline uint8_t nru_pdu_type_to_uint(nru_pdu_type pdu_type)
+constexpr uint8_t nru_pdu_type_to_uint(nru_pdu_type pdu_type)
 {
   return static_cast<uint8_t>(pdu_type);
 }
 
 /// Convert unsigned integer to NR-U PDU type.
-constexpr inline nru_pdu_type uint_to_nru_pdu_type(uint8_t num)
+constexpr nru_pdu_type uint_to_nru_pdu_type(uint8_t num)
 {
   return static_cast<nru_pdu_type>(num);
 }

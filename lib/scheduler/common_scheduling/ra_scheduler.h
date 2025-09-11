@@ -28,6 +28,7 @@
 #include "../support/prbs_calculator.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/ran/resource_allocation/rb_bitmap.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/srslog/srslog.h"
@@ -71,6 +72,8 @@ public:
 
   /// Allocate pending RARs + Msg3s
   void run_slot(cell_resource_allocator& res_alloc);
+
+  void stop();
 
 private:
   class msg3_harq_timeout_notifier;
@@ -133,7 +136,7 @@ private:
   void update_pending_rars(slot_point pdcch_slot);
 
   /// Determines whether the resource grid for the provided slot has the conditions for RAR scheduling.
-  bool is_slot_candidate_for_rar(cell_slot_resource_allocator& slot_res_alloc);
+  bool is_slot_candidate_for_rar(const cell_slot_resource_allocator& slot_res_alloc);
 
   /// Try scheduling pending RARs for the provided slot.
   void schedule_pending_rars(cell_resource_allocator& res_alloc, slot_point pdcch_slot);
@@ -157,7 +160,7 @@ private:
                       span<const msg3_alloc_candidate> msg3_candidates);
 
   /// Schedule retransmission of Msg3.
-  void schedule_msg3_retx(cell_resource_allocator& res_alloc, pending_msg3_t& msg3_ctx);
+  void schedule_msg3_retx(cell_resource_allocator& res_alloc, pending_msg3_t& msg3_ctx) const;
 
   sch_prbs_tbs get_nof_pdsch_prbs_required(unsigned time_res_idx, unsigned nof_ul_grants) const;
 
@@ -165,14 +168,14 @@ private:
   // find PDSCH space for RAR.
   static constexpr unsigned max_dl_slots_ahead_sched = 8U;
 
-  // args
+  // Args.
   const scheduler_ra_expert_config& sched_cfg;
   const cell_configuration&         cell_cfg;
   pdcch_resource_allocator&         pdcch_sch;
   scheduler_event_logger&           ev_logger;
   cell_metrics_handler&             metrics_hdlr;
 
-  // derived from args
+  // Derived from args.
   srslog::basic_logger& logger = srslog::fetch_basic_logger("SCHED");
   /// RA window size in number of slots.
   const unsigned ra_win_nof_slots;
@@ -198,7 +201,7 @@ private:
   std::vector<msg3_param_cached_data> msg3_data;
   sch_mcs_description                 msg3_mcs_config;
 
-  // variables
+  // Variables.
   cell_harq_manager     msg3_harqs;
   rach_indication_queue pending_rachs;
   crc_indication_queue  pending_crcs;
@@ -216,6 +219,9 @@ private:
   static constexpr size_t                                                             MAX_PENDING_RARS_SLOTS = 90U;
   static_vector<pending_rar_t, MAX_PRACH_OCCASIONS_PER_SLOT * MAX_PENDING_RARS_SLOTS> pending_rars;
   std::vector<pending_msg3_t>                                                         pending_msg3s;
+
+  // Bitmap of CRBs that might be used for PUCCH transmissions, to avoid scheduling MSG3-PUSCH over them.
+  crb_bitmap pucch_crbs;
 };
 
 } // namespace srsran

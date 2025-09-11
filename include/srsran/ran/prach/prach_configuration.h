@@ -71,7 +71,7 @@ struct prach_configuration {
 };
 
 /// Reserved PRACH configuration. Indicates the configuration parameters are invalid.
-static const prach_configuration PRACH_CONFIG_RESERVED = {prach_format_type::invalid, UINT32_MAX, {}, {}, 0, 0, 0, 0};
+const prach_configuration PRACH_CONFIG_RESERVED = {prach_format_type::invalid, UINT32_MAX, {}, {}, 0, 0, 0, 0};
 
 /// \brief Gets a PRACH configuration.
 ///

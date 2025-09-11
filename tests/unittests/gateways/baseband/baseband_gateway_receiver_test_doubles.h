@@ -36,7 +36,15 @@ public:
     baseband_gateway_buffer_read_only   data;
   };
 
-  baseband_gateway_receiver_spy() : sample_dist(-1.0F, +1.0F) {}
+  baseband_gateway_receiver_spy()
+  {
+    std::mt19937                          rgen;
+    std::uniform_real_distribution<float> sample_dist(-1.0F, +1.0F);
+
+    std::generate(cached_random_samples.begin(), cached_random_samples.end(), [&rgen, &sample_dist]() {
+      return cf_t(sample_dist(rgen), sample_dist(rgen));
+    });
+  }
 
   // See interface for documentation.
   metadata receive(baseband_gateway_buffer_writer& data) override
@@ -44,7 +52,11 @@ public:
     // Fill data with random samples.
     for (unsigned channel = 0; channel != data.get_nof_channels(); ++channel) {
       span<cf_t> buffer = data[channel];
-      std::generate(buffer.begin(), buffer.end(), [this]() { return cf_t(sample_dist(rgen), sample_dist(rgen)); });
+      std::generate(buffer.begin(), buffer.end(), [this]() {
+        unsigned idx           = i_cached_random_sample;
+        i_cached_random_sample = (i_cached_random_sample + 1) % nof_cached_random_samples;
+        return cached_random_samples[idx];
+      });
     }
 
     entries.emplace_back();
@@ -66,10 +78,11 @@ public:
   void clear() { entries.clear(); }
 
 private:
-  std::mt19937                          rgen;
-  std::uniform_real_distribution<float> sample_dist;
-  baseband_gateway_timestamp            current_timestamp = 0;
-  std::vector<entry_t>                  entries;
+  static constexpr unsigned                   nof_cached_random_samples = 123;
+  std::array<cf_t, nof_cached_random_samples> cached_random_samples;
+  unsigned                                    i_cached_random_sample = 0;
+  baseband_gateway_timestamp                  current_timestamp      = 0;
+  std::vector<entry_t>                        entries;
 };
 
 } // namespace srsran

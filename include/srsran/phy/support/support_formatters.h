@@ -39,7 +39,7 @@ struct formatter<std::chrono::nanoseconds> {
   }
 
   template <typename FormatContext>
-  auto format(const std::chrono::nanoseconds& nanoseconds, FormatContext& ctx) const
+  auto format(std::chrono::nanoseconds nanoseconds, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "t={:.1f}us", static_cast<float>(nanoseconds.count()) * 1e-3F);
   }

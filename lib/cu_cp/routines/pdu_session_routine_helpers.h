@@ -100,11 +100,12 @@ bool fill_rrc_reconfig_args(rrc_reconfiguration_procedure_request&              
                             const std::vector<drb_id_t>&                                     drb_to_remove,
                             const f1ap_du_to_cu_rrc_info&                                    du_to_cu_rrc_info,
                             const std::vector<byte_buffer>&                                  nas_pdus,
-                            const std::optional<rrc_meas_cfg>                                rrc_meas_cfg,
+                            const std::optional<rrc_meas_cfg>&                               rrc_meas_cfg,
                             bool                                                             reestablish_srbs,
                             bool                                                             reestablish_drbs,
                             std::optional<uint8_t>                                           ncc,
                             byte_buffer                                                      sib1,
+                            std::optional<security::sec_selected_algos>                      selected_algos,
                             const srslog::basic_logger&                                      logger);
 
 /// \brief Processes the response of a UE Context Setup Request.

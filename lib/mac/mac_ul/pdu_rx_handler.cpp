@@ -373,7 +373,7 @@ bool pdu_rx_handler::handle_crnti_ce(const decoded_mac_rx_pdu& ctx, const mac_ul
 
   // > Dispatch continuation of subPDU handling to execution context of previous C-RNTI.
   task_executor& ue_exec = ue_exec_mapper.mac_ul_pdu_executor(new_ctx.ue_index);
-  if (not ue_exec.execute(TRACE_TASK([this, new_ctx = std::move(new_ctx)]() {
+  if (not ue_exec.execute([this, new_ctx = std::move(new_ctx)]() {
         if (ue_manager.find_ue(new_ctx.ue_index) == nullptr) {
           logger.warning(
               "{}: Discarding PDU. Cause: UE with C-RNTI in C-RNTI CE has been deleted while the CE was being handled",
@@ -395,14 +395,14 @@ bool pdu_rx_handler::handle_crnti_ce(const decoded_mac_rx_pdu& ctx, const mac_ul
           sched.handle_ul_sched_command(
               mac_ul_scheduling_command{new_ctx.cell_index_rx, new_ctx.slot_rx, new_ctx.ue_index, new_ctx.pdu_rx.rnti});
         }
-      }))) {
+      })) {
     logger.warning("{}: Discarding PDU. Cause: Task queue is full.", create_prefix(ctx, subpdu));
   }
 
   return true;
 }
 
-void pdu_rx_handler::write_pcap_rx_pdu(const slot_point& sl_rx, const mac_rx_pdu& pdu)
+void pdu_rx_handler::write_pcap_rx_pdu(slot_point sl_rx, const mac_rx_pdu& pdu)
 {
   if (not pcap.is_write_enabled()) {
     return;

@@ -161,7 +161,7 @@ radio_uhd_tx_stream::radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
         stream          = usrp->get_tx_stream(stream_args);
         max_packet_size = stream->get_max_num_samps();
       })) {
-    printf("Error:  failed to create transmit stream %d. %s.\n", stream_id, get_error_message().c_str());
+    fmt::println("Error: failed to create transmit stream {}. {}.\n", stream_id, get_error_message().c_str());
     return;
   }
 
@@ -262,7 +262,7 @@ void radio_uhd_tx_stream::transmit(const baseband_gateway_buffer_reader&        
               baseband_gateway_buffer_reader_view(power_ramping_buffer.get_reader(), 0, nof_padding_samples);
 
           if (!transmit_block(txd_samples, tx_padding, txd_padding_sps_total, power_ramping_metadata)) {
-            printf("Error: failed transmitting power ramping padding. %s.\n", get_error_message().c_str());
+            fmt::println("Error: failed transmitting power ramping padding. {}.\n", get_error_message().c_str());
             return;
           }
 
@@ -302,7 +302,7 @@ void radio_uhd_tx_stream::transmit(const baseband_gateway_buffer_reader&        
   do {
     unsigned txd_samples = 0;
     if (!transmit_block(txd_samples, tx_data, txd_samples_total, uhd_metadata)) {
-      printf("Error: failed transmitting packet. %s.\n", get_error_message().c_str());
+      fmt::println("Error: failed transmitting packet. %s.{}", get_error_message().c_str());
       return;
     }
 

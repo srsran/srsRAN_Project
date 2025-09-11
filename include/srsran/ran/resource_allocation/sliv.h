@@ -11,7 +11,7 @@ namespace srsran {
 /// \param[out] S Start.
 /// \param[out] L Length.
 template <typename Integer>
-constexpr inline void sliv_to_s_and_l(unsigned N, unsigned sliv, Integer& S, Integer& L)
+constexpr void sliv_to_s_and_l(unsigned N, unsigned sliv, Integer& S, Integer& L)
 {
   static_assert(std::is_integral<Integer>::value, "Non-integer type passed as S + L output.");
   unsigned low  = sliv % N;
@@ -30,7 +30,7 @@ constexpr inline void sliv_to_s_and_l(unsigned N, unsigned sliv, Integer& S, Int
 /// \param[out] S Start symbols.
 /// \param[out] L Length.
 /// \return An index giving a combination (jointly encoded) of start symbols and length indicator (SLIV).
-constexpr inline unsigned sliv_from_s_and_l(unsigned N, unsigned S, unsigned L)
+constexpr unsigned sliv_from_s_and_l(unsigned N, unsigned S, unsigned L)
 {
   if ((L - 1) <= N / 2) {
     return N * (L - 1) + S;

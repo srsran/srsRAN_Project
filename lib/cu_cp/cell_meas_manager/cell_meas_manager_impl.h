@@ -54,9 +54,10 @@ public:
                     ue_manager&                          ue_mng_);
   ~cell_meas_manager() = default;
 
-  std::optional<rrc_meas_cfg>     get_measurement_config(ue_index_t                  ue_index,
-                                                         nr_cell_identity            nci,
-                                                         std::optional<rrc_meas_cfg> current_meas_config = std::nullopt);
+  std::optional<rrc_meas_cfg>
+                                  get_measurement_config(ue_index_t                         ue_index,
+                                                         nr_cell_identity                   nci,
+                                                         const std::optional<rrc_meas_cfg>& current_meas_config = std::nullopt);
   std::optional<cell_meas_config> get_cell_config(nr_cell_identity nci);
   bool update_cell_config(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg);
   void report_measurement(ue_index_t ue_index, const rrc_meas_results& meas_results);

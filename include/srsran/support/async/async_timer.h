@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/support/async/coroutine.h"
+#include "srsran/support/timers.h"
 
 namespace srsran {
 

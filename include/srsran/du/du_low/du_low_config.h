@@ -27,17 +27,23 @@
 namespace srsran {
 namespace srs_du {
 
-/// DU low cell configuration
+/// DU low cell configuration.
 struct du_low_cell_config {
-  /// Parameters forwarded to DL processor factory.
-  downlink_processor_factory_sw_config dl_proc_cfg;
   /// Upper PHY configuration.
-  upper_phy_config upper_phy_cfg;
+  upper_phy_configuration upper_phy_cfg;
+};
+
+/// DU low cell dependencies.
+struct du_low_cell_dependencies {
+  /// Upper PHY dependencies.
+  upper_phy_dependencies upper_phy_deps;
 };
 
 /// Parameters used to instantiate the DU-low.
 struct du_low_config {
-  /// Cell configuration.
+  /// Upper physical layer common configuration for all cells.
+  upper_phy_factory_configuration upper_phy_common_config;
+  /// Specific cell configuration.
   std::vector<du_low_cell_config> cells;
 };
 
@@ -45,6 +51,10 @@ struct du_low_config {
 struct du_low_dependencies {
   /// Logger used to report state of the DU-low.
   srslog::basic_logger* logger;
+  /// Upper physical layer common dependencies for all cells.
+  upper_phy_factory_dependencies upper_phy_common_deps;
+  /// Specific cell dependencies.
+  std::vector<du_low_cell_dependencies> cells;
 };
 
 } // namespace srs_du

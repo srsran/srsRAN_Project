@@ -70,6 +70,7 @@ static const std::array<int, port_channel_estimator_average_impl::MAX_V_PILOTS> 
     create_index_array<port_channel_estimator_average_impl::MAX_V_PILOTS>();
 
 namespace {
+
 /// \brief Provides access to customized raised-cosine filters.
 ///
 /// Besides the FIR coefficients, the class also provides access to a correction term to be applied to the tails of the
@@ -119,6 +120,7 @@ private:
   std::array<float, MAX_FILTER_LENGTH> filter_coefs;
   std::array<float, MAX_FILTER_LENGTH> correction_coefs;
 };
+
 } // namespace
 
 /// \brief Computes some virtual pilots to improve estimation at the edges.

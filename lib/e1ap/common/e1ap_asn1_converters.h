@@ -746,7 +746,7 @@ inline asn1::e1ap::t_reordering_e pdcp_t_reordering_to_asn1(pdcp_t_reordering t_
 /// \brief Converts type \c e1ap_pdcp_config to an E1AP ASN.1 type.
 /// \param pdcp_cfg pdcp config object.
 /// \return The E1AP ASN.1 object where the result of the conversion is stored.
-inline asn1::e1ap::pdcp_cfg_s pdcp_config_to_e1ap_asn1(e1ap_pdcp_config pdcp_cfg)
+inline asn1::e1ap::pdcp_cfg_s pdcp_config_to_e1ap_asn1(const e1ap_pdcp_config& pdcp_cfg)
 {
   asn1::e1ap::pdcp_cfg_s asn1_pdcp_cfg;
 
@@ -864,7 +864,7 @@ inline asn1::e1ap::pdcp_cfg_s pdcp_config_to_e1ap_asn1(e1ap_pdcp_config pdcp_cfg
 /// \brief Converts E1AP ASN.1 type to an \c e1ap_pdcp_config type.
 /// \param asn1_pdcp_cfg E1AP ASN.1 object.
 /// \return The pdcp config object where the result of the conversion is stored.
-inline e1ap_pdcp_config e1ap_asn1_to_pdcp_config(asn1::e1ap::pdcp_cfg_s asn1_pdcp_cfg)
+inline e1ap_pdcp_config e1ap_asn1_to_pdcp_config(const asn1::e1ap::pdcp_cfg_s& asn1_pdcp_cfg)
 {
   e1ap_pdcp_config pdcp_cfg;
 

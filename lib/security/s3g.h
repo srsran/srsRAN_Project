@@ -24,7 +24,7 @@
 
 /// Rijndael S-Box $S_R$, as per "Specification of the 3GPP Confidentiality and Integrity Algorithms UEA2 & UIA2 D2
 /// v1.1", Section 5.1. Note: unused due to implementing the $S_1$ S-Box as 4 table lookups (S1_T0..S1_T3).
-static constexpr uint8_t SR[256] = {
+constexpr uint8_t SR[256] = {
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76, 0xca, 0x82, 0xc9,
     0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0, 0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f,
     0xf7, 0xcc, 0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15, 0x04, 0xc7, 0x23, 0xc3, 0x18, 0x96, 0x05, 0x9a, 0x07,
@@ -42,7 +42,7 @@ static constexpr uint8_t SR[256] = {
 
 /// Rijndael S-Box $S_Q$, as per "Specification of the 3GPP Confidentiality and Integrity Algorithms UEA2 & UIA2 D2
 /// v1.1", Section 5.2. Note: unused due to implementing the $S_2$ S-Box as 4 table lookups (S2_T0..S2_T3).
-static constexpr uint8_t SQ[256] = {
+constexpr uint8_t SQ[256] = {
     0x25, 0x24, 0x73, 0x67, 0xd7, 0xae, 0x5c, 0x30, 0xa4, 0xee, 0x6e, 0xcb, 0x7d, 0xb5, 0x82, 0xdb, 0xe4, 0x8e, 0x48,
     0x49, 0x4f, 0x5d, 0x6a, 0x78, 0x70, 0x88, 0xe8, 0x5f, 0x5e, 0x84, 0x65, 0xe2, 0xd8, 0xe9, 0xcc, 0xed, 0x40, 0x2f,
     0x11, 0x28, 0x57, 0xd2, 0xac, 0xe3, 0x4a, 0x15, 0x1b, 0xb9, 0xb2, 0x80, 0x85, 0xa6, 0x2e, 0x02, 0x47, 0x29, 0x07,
@@ -60,7 +60,7 @@ static constexpr uint8_t SQ[256] = {
 
 /// Lookup table for the $MUL_\alpha$ operation, as per "Specification of the 3GPP Confidentiality and Integrity
 /// Algorithms UEA2 & UIA2 D2 v1.1", Annex 2, Section 2.5.
-static constexpr uint32_t MUL_ALPHA[256] = {
+constexpr uint32_t MUL_ALPHA[256] = {
     0x00000000, 0xe19fcf13, 0x6b973726, 0x8a08f835, 0xd6876e4c, 0x3718a15f, 0xbd10596a, 0x5c8f9679, 0x05a7dc98,
     0xe438138b, 0x6e30ebbe, 0x8faf24ad, 0xd320b2d4, 0x32bf7dc7, 0xb8b785f2, 0x59284ae1, 0x0ae71199, 0xeb78de8a,
     0x617026bf, 0x80efe9ac, 0xdc607fd5, 0x3dffb0c6, 0xb7f748f3, 0x566887e0, 0x0f40cd01, 0xeedf0212, 0x64d7fa27,
@@ -93,7 +93,7 @@ static constexpr uint32_t MUL_ALPHA[256] = {
 
 /// Lookup table for the $DIV_\alpha$ operation, as per "Specification of the 3GPP Confidentiality and Integrity
 /// Algorithms UEA2 & UIA2 D2 v1.1", Annex 2, Section 2.5.
-static constexpr uint32_t DIV_ALPHA[256] = {
+constexpr uint32_t DIV_ALPHA[256] = {
     0x00000000, 0x180f40cd, 0x301e8033, 0x2811c0fe, 0x603ca966, 0x7833e9ab, 0x50222955, 0x482d6998, 0xc078fbcc,
     0xd877bb01, 0xf0667bff, 0xe8693b32, 0xa04452aa, 0xb84b1267, 0x905ad299, 0x88559254, 0x29f05f31, 0x31ff1ffc,
     0x19eedf02, 0x01e19fcf, 0x49ccf657, 0x51c3b69a, 0x79d27664, 0x61dd36a9, 0xe988a4fd, 0xf187e430, 0xd99624ce,
@@ -126,7 +126,7 @@ static constexpr uint32_t DIV_ALPHA[256] = {
 
 /// Lookup table used for the $S_1$ S-Box, as per "Specification of the 3GPP Confidentiality and Integrity Algorithms
 /// UEA2 & UIA2 D2 v1.1", Annex 2, Section 2.4.
-static constexpr uint32_t S1_T0[256] = {
+constexpr uint32_t S1_T0[256] = {
     0xa56363c6, 0x847c7cf8, 0x997777ee, 0x8d7b7bf6, 0x0df2f2ff, 0xbd6b6bd6, 0xb16f6fde, 0x54c5c591, 0x50303060,
     0x03010102, 0xa96767ce, 0x7d2b2b56, 0x19fefee7, 0x62d7d7b5, 0xe6abab4d, 0x9a7676ec, 0x45caca8f, 0x9d82821f,
     0x40c9c989, 0x877d7dfa, 0x15fafaef, 0xeb5959b2, 0xc947478e, 0x0bf0f0fb, 0xecadad41, 0x67d4d4b3, 0xfda2a25f,
@@ -159,7 +159,7 @@ static constexpr uint32_t S1_T0[256] = {
 
 /// Lookup table used for the $S_1$ S-Box, as per "Specification of the 3GPP Confidentiality and Integrity Algorithms
 /// UEA2 & UIA2 D2 v1.1", Annex 2, Section 2.4.
-static constexpr uint32_t S1_T1[256] = {
+constexpr uint32_t S1_T1[256] = {
     0x6363c6a5, 0x7c7cf884, 0x7777ee99, 0x7b7bf68d, 0xf2f2ff0d, 0x6b6bd6bd, 0x6f6fdeb1, 0xc5c59154, 0x30306050,
     0x01010203, 0x6767cea9, 0x2b2b567d, 0xfefee719, 0xd7d7b562, 0xabab4de6, 0x7676ec9a, 0xcaca8f45, 0x82821f9d,
     0xc9c98940, 0x7d7dfa87, 0xfafaef15, 0x5959b2eb, 0x47478ec9, 0xf0f0fb0b, 0xadad41ec, 0xd4d4b367, 0xa2a25ffd,
@@ -192,7 +192,7 @@ static constexpr uint32_t S1_T1[256] = {
 
 /// Lookup table used for the $S_1$ S-Box, as per "Specification of the 3GPP Confidentiality and Integrity Algorithms
 /// UEA2 & UIA2 D2 v1.1", Annex 2, Section 2.4.
-static constexpr uint32_t S1_T2[256] = {
+constexpr uint32_t S1_T2[256] = {
     0x63c6a563, 0x7cf8847c, 0x77ee9977, 0x7bf68d7b, 0xf2ff0df2, 0x6bd6bd6b, 0x6fdeb16f, 0xc59154c5, 0x30605030,
     0x01020301, 0x67cea967, 0x2b567d2b, 0xfee719fe, 0xd7b562d7, 0xab4de6ab, 0x76ec9a76, 0xca8f45ca, 0x821f9d82,
     0xc98940c9, 0x7dfa877d, 0xfaef15fa, 0x59b2eb59, 0x478ec947, 0xf0fb0bf0, 0xad41ecad, 0xd4b367d4, 0xa25ffda2,
@@ -225,7 +225,7 @@ static constexpr uint32_t S1_T2[256] = {
 
 /// Lookup table used for the $S_1$ S-Box, as per "Specification of the 3GPP Confidentiality and Integrity Algorithms
 /// UEA2 & UIA2 D2 v1.1", Annex 2, Section 2.4.
-static constexpr uint32_t S1_T3[256] = {
+constexpr uint32_t S1_T3[256] = {
     0xc6a56363, 0xf8847c7c, 0xee997777, 0xf68d7b7b, 0xff0df2f2, 0xd6bd6b6b, 0xdeb16f6f, 0x9154c5c5, 0x60503030,
     0x02030101, 0xcea96767, 0x567d2b2b, 0xe719fefe, 0xb562d7d7, 0x4de6abab, 0xec9a7676, 0x8f45caca, 0x1f9d8282,
     0x8940c9c9, 0xfa877d7d, 0xef15fafa, 0xb2eb5959, 0x8ec94747, 0xfb0bf0f0, 0x41ecadad, 0xb367d4d4, 0x5ffda2a2,
@@ -258,7 +258,7 @@ static constexpr uint32_t S1_T3[256] = {
 
 /// Lookup table used for the $S_2$ S-Box, as per "Specification of the 3GPP Confidentiality and Integrity Algorithms
 /// UEA2 & UIA2 D2 v1.1", Annex 2, Section 2.4.
-static constexpr uint32_t S2_T0[256] = {
+constexpr uint32_t S2_T0[256] = {
     0x6f25254a, 0x6c242448, 0x957373e6, 0xa96767ce, 0x10d7d7c7, 0x9baeae35, 0xe45c5cb8, 0x50303060, 0x85a4a421,
     0x5beeeeb5, 0xb26e6edc, 0x34cbcbff, 0x877d7dfa, 0xb6b5b503, 0xef82826d, 0x04dbdbdf, 0x45e4e4a1, 0xfb8e8e75,
     0xd8484890, 0xdb494992, 0xd14f4f9e, 0xe75d5dba, 0xbe6a6ad4, 0x887878f0, 0x907070e0, 0xf1888879, 0x51e8e8b9,
@@ -291,7 +291,7 @@ static constexpr uint32_t S2_T0[256] = {
 
 /// Lookup table used for the $S_2$ S-Box, as per "Specification of the 3GPP Confidentiality and Integrity Algorithms
 /// UEA2 & UIA2 D2 v1.1", Annex 2, Section 2.4.
-static constexpr uint32_t S2_T1[256] = {
+constexpr uint32_t S2_T1[256] = {
     0x25254a6f, 0x2424486c, 0x7373e695, 0x6767cea9, 0xd7d7c710, 0xaeae359b, 0x5c5cb8e4, 0x30306050, 0xa4a42185,
     0xeeeeb55b, 0x6e6edcb2, 0xcbcbff34, 0x7d7dfa87, 0xb5b503b6, 0x82826def, 0xdbdbdf04, 0xe4e4a145, 0x8e8e75fb,
     0x484890d8, 0x494992db, 0x4f4f9ed1, 0x5d5dbae7, 0x6a6ad4be, 0x7878f088, 0x7070e090, 0x888879f1, 0xe8e8b951,
@@ -324,7 +324,7 @@ static constexpr uint32_t S2_T1[256] = {
 
 /// Lookup table used for the $S_2$ S-Box, as per "Specification of the 3GPP Confidentiality and Integrity Algorithms
 /// UEA2 & UIA2 D2 v1.1", Annex 2, Section 2.4.
-static constexpr uint32_t S2_T2[256] = {
+constexpr uint32_t S2_T2[256] = {
     0x254a6f25, 0x24486c24, 0x73e69573, 0x67cea967, 0xd7c710d7, 0xae359bae, 0x5cb8e45c, 0x30605030, 0xa42185a4,
     0xeeb55bee, 0x6edcb26e, 0xcbff34cb, 0x7dfa877d, 0xb503b6b5, 0x826def82, 0xdbdf04db, 0xe4a145e4, 0x8e75fb8e,
     0x4890d848, 0x4992db49, 0x4f9ed14f, 0x5dbae75d, 0x6ad4be6a, 0x78f08878, 0x70e09070, 0x8879f188, 0xe8b951e8,
@@ -357,7 +357,7 @@ static constexpr uint32_t S2_T2[256] = {
 
 /// Lookup table used for the $S_2$ S-Box, as per "Specification of the 3GPP Confidentiality and Integrity Algorithms
 /// UEA2 & UIA2 D2 v1.1", Annex 2, Section 2.4.
-static constexpr uint32_t S2_T3[256] = {
+constexpr uint32_t S2_T3[256] = {
     0x4a6f2525, 0x486c2424, 0xe6957373, 0xcea96767, 0xc710d7d7, 0x359baeae, 0xb8e45c5c, 0x60503030, 0x2185a4a4,
     0xb55beeee, 0xdcb26e6e, 0xff34cbcb, 0xfa877d7d, 0x03b6b5b5, 0x6def8282, 0xdf04dbdb, 0xa145e4e4, 0x75fb8e8e,
     0x90d84848, 0x92db4949, 0x9ed14f4f, 0xbae75d5d, 0xd4be6a6a, 0xf0887878, 0xe0907070, 0x79f18888, 0xb951e8e8,

@@ -25,7 +25,6 @@
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
 #include "apps/services/cmdline/cmdline_command_dispatcher.h"
-#include "apps/services/core_isolation_manager.h"
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/services/remote_control/remote_server.h"
@@ -37,13 +36,14 @@
 #include "du_low_appconfig_translators.h"
 #include "du_low_appconfig_validators.h"
 #include "du_low_appconfig_yaml_writer.h"
+#include "srsran/adt/scope_exit.h"
 #include "srsran/support/backtrace.h"
 #include "srsran/support/config_parsers.h"
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/signal_handling.h"
 #include "srsran/support/signal_observer.h"
-#include "srsran/support/tracing/event_tracing.h"
+#include "srsran/support/sysinfo.h"
 #include "srsran/support/versioning/build_info.h"
 #include "srsran/support/versioning/version.h"
 #include <atomic>
@@ -127,6 +127,9 @@ static void register_app_logs(const du_low_appconfig& du_cfg, application_unit& 
   // Metrics log channels.
   const app_helpers::metrics_config& metrics_cfg = du_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg;
   app_helpers::initialize_metrics_log_channels(metrics_cfg, log_cfg.hex_max_size);
+  if (metrics_cfg.enable_json_metrics) {
+    app_services::initialize_json_channel();
+  }
 
   // Register units logs.
   du_low_app_unit.on_loggers_registration();
@@ -175,16 +178,19 @@ int main(int argc, char** argv)
     return 0;
   }
 
+  if (du_low_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg.enable_json_metrics &&
+      !du_low_cfg.remote_control_config.enabled) {
+    fmt::println("NOTE: No JSON metrics will be generated as the remote server is disabled");
+  }
+
   // Check the modified configuration.
-  if (!validate_du_low_appconfig(du_low_cfg) ||
-      !o_du_app_unit->on_configuration_validation((du_low_cfg.expert_execution_cfg.affinities.isolated_cpus)
-                                                      ? du_low_cfg.expert_execution_cfg.affinities.isolated_cpus.value()
-                                                      : os_sched_affinity_bitmask::available_cpus())) {
+  if (!validate_du_low_appconfig(du_low_cfg) || !o_du_app_unit->on_configuration_validation()) {
     report_error("Invalid configuration detected.\n");
   }
 
   // Set up logging.
   initialize_log(du_low_cfg.log_cfg.filename);
+  auto log_flusher = make_scope_exit([]() { srslog::flush(); });
   register_app_logs(du_low_cfg, *o_du_app_unit);
 
   // Check the metrics and metrics consumers.
@@ -210,13 +216,6 @@ int main(int argc, char** argv)
   app_services::application_tracer app_tracer;
   if (not du_low_cfg.log_cfg.tracing_filename.empty()) {
     app_tracer.enable_tracer(du_low_cfg.log_cfg.tracing_filename, app_logger);
-  }
-
-  app_services::core_isolation_manager core_isolation_mngr;
-  if (du_low_cfg.expert_execution_cfg.affinities.isolated_cpus) {
-    if (!core_isolation_mngr.isolate_cores(*du_low_cfg.expert_execution_cfg.affinities.isolated_cpus)) {
-      report_error("Failed to isolate specified CPUs");
-    }
   }
 
   // Log CPU architecture.
@@ -258,14 +257,14 @@ int main(int argc, char** argv)
   worker_manager workers{worker_manager_cfg};
 
   // Set layer-specific pcap options.
-  const auto& low_prio_cpu_mask = du_low_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
+  const auto& main_pool_cpu_mask = du_low_cfg.expert_execution_cfg.affinities.main_pool_cpu_cfg.mask;
 
   // Create IO broker.
-  io_broker_config           io_broker_cfg(low_prio_cpu_mask);
+  io_broker_config           io_broker_cfg(os_thread_realtime_priority::min() + 5, main_pool_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
   // Register the commands.
-  app_services::cmdline_command_dispatcher command_parser(*epoll_broker, *workers.non_rt_low_prio_exec, {});
+  app_services::cmdline_command_dispatcher command_parser(*epoll_broker, workers.get_cmd_line_executor(), {});
 
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
 
@@ -285,7 +284,7 @@ int main(int argc, char** argv)
   // Only DU has metrics now.
   app_services::metrics_manager metrics_mngr(
       srslog::fetch_basic_logger("APP"),
-      *workers.metrics_exec,
+      workers.get_metrics_executor(),
       app_metrics,
       app_timers,
       std::chrono::milliseconds(du_low_cfg.metrics_cfg.metrics_service_cfg.app_usage_report_period));
@@ -308,10 +307,6 @@ int main(int argc, char** argv)
 
   du.odu_low->stop();
   metrics_mngr.stop();
-
-  workers.stop();
-
-  srslog::flush();
 
   return 0;
 }

@@ -141,6 +141,7 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
                                   true /* Reestablish DRBs */,
                                   std::nullopt /* don't update keys */,
                                   {},
+                                  std::nullopt,
                                   logger)) {
         logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", ue_index, name());
         CORO_EARLY_RETURN(false);

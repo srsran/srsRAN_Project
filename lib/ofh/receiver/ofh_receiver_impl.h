@@ -45,8 +45,6 @@ struct receiver_impl_dependencies {
   struct message_rx_dependencies {
     /// Logger.
     srslog::basic_logger* logger = nullptr;
-    /// Ethernet receiver.
-    std::unique_ptr<ether::receiver> eth_receiver;
     /// eCPRI packet decoder.
     std::unique_ptr<ecpri::packet_decoder> ecpri_decoder;
     /// Ethernet frame decoder.
@@ -75,6 +73,8 @@ struct receiver_impl_dependencies {
   close_rx_window_dependencies window_handler_dependencies;
   /// Received symbol reorderer.
   std::shared_ptr<rx_symbol_reorderer> symbol_reorderer;
+  /// Ethernet receiver.
+  std::unique_ptr<ether::receiver> eth_receiver;
 };
 
 /// OTA symbol boundary dispatcher for the receiver.
@@ -98,6 +98,8 @@ class receiver_impl : public receiver
 {
 public:
   receiver_impl(const receiver_config& config, receiver_impl_dependencies&& dependencies);
+
+  ~receiver_impl() override { get_operation_controller().stop(); }
 
   // See interface for documentation.
   ota_symbol_boundary_notifier* get_ota_symbol_boundary_notifier() override;

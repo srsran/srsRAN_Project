@@ -22,7 +22,10 @@
 
 #pragma once
 
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_pool.h"
+#include "srsran/phy/lower/lower_phy_baseband_metrics.h"
 #include "srsran/ran/slot_point.h"
+#include <optional>
 
 namespace srsran {
 
@@ -31,33 +34,34 @@ struct lower_phy_rx_symbol_context;
 
 /// \brief Lower physical layer PDxCH processor - Baseband interface.
 ///
-/// Processes baseband samples with OFDM symbol granularity. The OFDM symbol size is inferred from the slot numerology.
+/// Processes baseband samples with slot granularity.
 class pdxch_processor_baseband
 {
 public:
-  /// Describes the context of a newly received symbol.
-  struct symbol_context {
+  /// Default destructor.
+  virtual ~pdxch_processor_baseband() = default;
+
+  /// Describes the context of a newly generated slot.
+  struct slot_context {
     /// Slot context.
     slot_point slot;
     /// Radio sector identifier.
     unsigned sector;
-    /// The processed symbol index within the slot.
-    unsigned symbol;
   };
 
-  /// Default destructor.
-  virtual ~pdxch_processor_baseband() = default;
+  /// Groups baseband metrics and buffer for a slot.
+  struct slot_result {
+    /// Collected baseband buffer metrics.
+    lower_phy_baseband_metrics metrics = {};
+    /// Actual baseband buffer. Set to nullptr if there was no transmit request in the given slot.
+    baseband_gateway_buffer_ptr buffer = nullptr;
+  };
 
-  /// \brief Processes a baseband OFDM symbol.
+  /// \brief Processes a baseband OFDM slot.
   ///
-  /// Modulates the OFDM symbol indicated by \c context and stores the baseband samples in \c samples. If the
-  /// resource grid is not available at the time of calling this method, the symbol processing is skipped, and the
-  /// sample buffer is not modified.
-  ///
-  /// \param[out] samples Baseband samples to process.
   /// \param[in] context OFDM Symbol context.
-  /// \return \c true if the symbol has been processed, \c false otherwise.
-  virtual bool process_symbol(baseband_gateway_buffer_writer& samples, const symbol_context& context) = 0;
+  /// \return Slot downlink baseband results.
+  virtual slot_result process_slot(slot_context context) = 0;
 };
 
 } // namespace srsran

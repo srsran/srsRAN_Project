@@ -29,21 +29,11 @@
 using namespace srsran;
 using namespace fapi_adaptor;
 
-/// Translates the \c power_controñ_offset_ss enum to a linear amplitude value.
+/// Translates the \c power_control_offset_ss enum to a linear amplitude value.
 static float translate_amplitude(fapi::power_control_offset_ss power)
 {
-  switch (power) {
-    case fapi::power_control_offset_ss::dB_minus_3:
-      return 0.5F;
-    case fapi::power_control_offset_ss::dB0:
-      return 1.F;
-    case fapi::power_control_offset_ss::dB3:
-      return 2.F;
-    case fapi::power_control_offset_ss::dB6:
-      return 4.F;
-    default:
-      return 1.F;
-  }
+  float power_dB = to_int(power);
+  return convert_dB_to_amplitude(power_dB);
 }
 
 void srsran::fapi_adaptor::convert_csi_rs_fapi_to_phy(nzp_csi_rs_generator::config_t& proc_pdu,

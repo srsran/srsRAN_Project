@@ -23,7 +23,9 @@
 #include "lib/mac/mac_ctrl/mac_controller.h"
 #include "lib/mac/rnti_manager.h"
 #include "mac_ctrl_test_dummies.h"
+#include "mac_test_helpers.h"
 #include "tests/test_doubles/mac/dummy_mac_metrics_notifier.h"
+#include "srsran/du/du_high/du_high_clock_controller.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
@@ -45,23 +47,21 @@ protected:
     t_launcher.emplace(t);
   }
 
-  manual_task_worker          worker{128};
-  dummy_ue_executor_mapper    ul_exec_mapper{worker};
-  dummy_dl_executor_mapper    dl_exec_mapper{&worker};
-  dummy_mac_event_indicator   du_mng_notifier;
-  timer_manager               timers;
-  mac_scheduler_dummy_adapter sched_cfg_adapter;
-  dummy_mac_metrics_notifier  mac_notifier;
-  mac_control_config          maccfg{du_mng_notifier,
-                            ul_exec_mapper,
-                            dl_exec_mapper,
+  manual_task_worker                       worker{128};
+  dummy_ue_executor_mapper                 ul_exec_mapper{worker};
+  dummy_dl_executor_mapper                 dl_exec_mapper{&worker};
+  dummy_mac_event_indicator                du_mng_notifier;
+  timer_manager                            timers;
+  test_helpers::dummy_mac_clock_controller clock_ctrl{timers};
+  mac_scheduler_dummy_adapter              sched_cfg_adapter;
+  dummy_mac_metrics_notifier               mac_notifier;
+  mac_control_config                       maccfg{du_mng_notifier,
                             worker,
-                            worker,
-                            timers,
+                            clock_ctrl,
                             mac_control_config::metrics_config{std::chrono::milliseconds{1000}, mac_notifier}};
-  mac_ul_dummy_configurer     ul_unit;
-  mac_dl_dummy_configurer     dl_unit;
-  rnti_manager                rnti_table;
+  mac_ul_dummy_configurer                  ul_unit;
+  mac_dl_dummy_configurer                  dl_unit;
+  rnti_manager                             rnti_table;
 
   mac_controller mac_ctrl{maccfg, ul_unit, dl_unit, rnti_table, sched_cfg_adapter};
 

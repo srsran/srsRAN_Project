@@ -29,10 +29,8 @@
 using namespace srsran;
 using namespace detail;
 
-namespace {
-
 /// Overloaded less-than comparison operator.
-inline bool operator<(const threshold_params& lhs, const threshold_params& rhs)
+static bool operator<(const threshold_params& lhs, const threshold_params& rhs)
 {
   if (lhs.nof_rx_ports < rhs.nof_rx_ports) {
     return true;
@@ -73,7 +71,7 @@ inline bool operator<(const threshold_params& lhs, const threshold_params& rhs)
 }
 
 /// Overloaded equal-to comparison operator.
-inline bool operator==(const threshold_params& lhs, const threshold_params& rhs)
+static bool operator==(const threshold_params& lhs, const threshold_params& rhs)
 {
   if (lhs.nof_rx_ports != rhs.nof_rx_ports) {
     return false;
@@ -100,6 +98,8 @@ inline bool operator==(const threshold_params& lhs, const threshold_params& rhs)
   }
   return true;
 }
+
+namespace {
 
 /// Manages the mapping between PRACH configuration and the (threshold, margin) pairs.
 class threshold_and_margin_finder

@@ -21,17 +21,18 @@
  */
 
 #include "ofh_receiver_controller.h"
-#include "srsran/ofh/ethernet/ethernet_controller.h"
 
 using namespace srsran;
 using namespace ofh;
 
 void receiver_controller::start()
 {
-  msg_receiver.get_ethernet_receiver().get_operation_controller().start(msg_receiver);
+  msg_receiver.get_operation_controller().start();
+  window_handler.start();
 }
 
 void receiver_controller::stop()
 {
-  msg_receiver.get_ethernet_receiver().get_operation_controller().stop();
+  window_handler.stop();
+  msg_receiver.get_operation_controller().stop();
 }

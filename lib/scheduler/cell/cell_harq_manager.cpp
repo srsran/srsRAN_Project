@@ -242,6 +242,19 @@ void cell_harq_repository<IsDl>::slot_indication(slot_point sl_tx)
 }
 
 template <bool IsDl>
+void cell_harq_repository<IsDl>::stop()
+{
+  for (auto& u : ues) {
+    for (auto& h : u.harqs) {
+      if (h.status != harq_state_t::empty) {
+        dealloc_harq(h);
+      }
+    }
+  }
+  last_sl_ind = {};
+}
+
+template <bool IsDl>
 void cell_harq_repository<IsDl>::handle_harq_ack_timeout(harq_type& h, slot_point sl_tx)
 {
   srsran_sanity_check(h.status == harq_state_t::waiting_ack or h.status == harq_state_t::pending_retx,
@@ -570,6 +583,12 @@ void cell_harq_manager::slot_indication(slot_point sl_tx)
 {
   dl.slot_indication(sl_tx);
   ul.slot_indication(sl_tx);
+}
+
+void cell_harq_manager::stop()
+{
+  dl.stop();
+  ul.stop();
 }
 
 bool cell_harq_manager::contains(du_ue_index_t ue_idx) const

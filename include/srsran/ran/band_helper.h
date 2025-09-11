@@ -54,12 +54,12 @@ const std::array<nr_band, 60> all_nr_bands_fr1 = std::array<nr_band, 60>{
      nr_band::n92,  nr_band::n93,  nr_band::n94,  nr_band::n95, nr_band::n96, nr_band::n97, nr_band::n98, nr_band::n99,
      nr_band::n100, nr_band::n101, nr_band::n102, nr_band::n104}};
 
-constexpr inline uint16_t nr_band_to_uint(nr_band band)
+constexpr uint16_t nr_band_to_uint(nr_band band)
 {
   return static_cast<uint16_t>(band);
 }
 
-constexpr inline nr_band uint_to_nr_band(unsigned band)
+constexpr nr_band uint_to_nr_band(unsigned band)
 {
   return static_cast<nr_band>(band);
 }
@@ -356,6 +356,9 @@ unsigned get_nof_coreset0_rbs_not_intersecting_ssb(unsigned              cset0_i
 /// \param[in] band is <em>NR operating band<\em>, as per TS 38.104, Table 5.2-1. Only FR1 values are supported.
 /// \return Value of n_ta_offset.
 n_ta_offset get_ta_offset(nr_band band);
+
+/// Returns the n_ta_offset for a given frequency range.
+n_ta_offset get_ta_offset(frequency_range freq_range);
 
 /// \brief Returns SSB ARFCN for a given cell configuration.
 /// \param[in] dl_arfcn is <em>DL-ARFCN<\em> corresponding to \f$F_{REF}\f$, as per TS 38.104, Section 5.4.2.1.

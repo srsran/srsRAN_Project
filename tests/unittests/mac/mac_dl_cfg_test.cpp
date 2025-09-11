@@ -97,39 +97,32 @@ struct add_reconf_delete_ue_test_task {
   }
 };
 
-/// In this test, we verify the correct executors are called during creation, reconfiguration and deletion of a UE.
-TEST(test_mac_dl_cfg, test_dl_ue_procedure_execution_contexts)
+class mac_dl_cfg_test : public ::testing::Test
 {
-  test_delimit_logger delimiter{"Test UE procedures execution contexts"};
-
-  auto&                                 logger = srslog::fetch_basic_logger("TEST");
-  manual_task_worker                    ctrl_worker{128};
-  manual_task_worker                    dl_worker{128};
-  std::vector<task_executor*>           dl_execs = {&dl_worker};
-  dummy_ue_executor_mapper              ul_exec_mapper{ctrl_worker};
-  dummy_dl_executor_mapper              dl_exec_mapper{dl_execs[0]};
+protected:
+  srslog::basic_logger&                 logger = srslog::fetch_basic_logger("TEST");
   dummy_mac_event_indicator             du_mng_notifier;
   dummy_mac_result_notifier             phy_notifier;
-  dummy_scheduler_cell_metrics_notifier scheduler_cell_metrics_notif;
+  dummy_scheduler_cell_metrics_notifier scheduler_cell_metrics_notif{};
   dummy_mac_metrics_notifier            mac_metrics_notif;
   null_mac_pcap                         pcap;
   timer_manager                         timers;
-  mac_dl_config mac_dl_cfg{ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap, timers};
+  mac_expert_config                     macfg{.configs = {{10000, 10000, 10000}}};
+  scheduler_expert_config               schedcfg{};
+  rnti_manager                          rnti_mng;
+};
 
-  mac_config   maccfg{du_mng_notifier,
-                    ul_exec_mapper,
-                    dl_exec_mapper,
-                    ctrl_worker,
-                    ctrl_worker,
-                    phy_notifier,
-                    mac_expert_config{.configs = {{10000, 10000, 10000}}},
-                    pcap,
-                    timers,
-                    mac_config::metrics_config{.notifier = mac_metrics_notif},
-                    scheduler_expert_config{}};
-  rnti_manager rnti_mng;
+/// In this test, we verify the correct executors are called during creation, reconfiguration and deletion of a UE.
+TEST_F(mac_dl_cfg_test, test_dl_ue_procedure_execution_contexts)
+{
+  manual_task_worker          ctrl_worker{128};
+  manual_task_worker          dl_worker{128};
+  std::vector<task_executor*> dl_execs = {&dl_worker};
+  dummy_ue_executor_mapper    ul_exec_mapper{ctrl_worker};
+  dummy_dl_executor_mapper    dl_exec_mapper{dl_execs[0]};
+  mac_dl_config               mac_dl_cfg{ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap, timers};
 
-  srsran_scheduler_adapter sched_cfg_adapter{maccfg, rnti_mng};
+  srsran_scheduler_adapter sched_cfg_adapter{srsran_mac_sched_config{macfg, ctrl_worker, schedcfg}, rnti_mng};
   mac_dl_processor         mac_dl(mac_dl_cfg, sched_cfg_adapter, rnti_mng);
 
   auto mac_cell_req      = test_helpers::make_default_mac_cell_config();
@@ -162,7 +155,7 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_execution_contexts)
   TESTASSERT(not t.empty() and t.ready());
 }
 
-TEST(test_mac_dl_cfg, test_dl_ue_procedure_tsan)
+TEST_F(mac_dl_cfg_test, test_dl_ue_procedure_tsan)
 {
   test_delimit_logger delimiter{"Test UE procedures TSAN"};
 
@@ -171,29 +164,11 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_tsan)
   task_worker_executor                  dl_execs[]   = {{dl_workers[0]}, {dl_workers[1]}};
   dummy_ue_executor_mapper              ul_exec_mapper{ctrl_worker};
   dummy_dl_executor_mapper              dl_exec_mapper{&dl_execs[0], &dl_execs[1]};
-  dummy_mac_event_indicator             du_mng_notifier;
-  dummy_mac_result_notifier             phy_notifier;
-  null_mac_pcap                         pcap;
-  timer_manager                         timers;
   dummy_scheduler_ue_metrics_notifier   sched_metrics_notif;
   dummy_scheduler_cell_metrics_notifier sched_cell_metrics_notif;
-  dummy_mac_metrics_notifier            mac_metrics_notif;
   mac_dl_config mac_dl_cfg{ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap, timers};
 
-  mac_config   maccfg{du_mng_notifier,
-                    ul_exec_mapper,
-                    dl_exec_mapper,
-                    ctrl_worker,
-                    ctrl_worker,
-                    phy_notifier,
-                    mac_expert_config{.configs = {{10000, 10000, 10000}}},
-                    pcap,
-                    timers,
-                    mac_config::metrics_config{.notifier = mac_metrics_notif},
-                    scheduler_expert_config{}};
-  rnti_manager rnti_mng;
-
-  srsran_scheduler_adapter sched_cfg_adapter{maccfg, rnti_mng};
+  srsran_scheduler_adapter sched_cfg_adapter{srsran_mac_sched_config{macfg, ctrl_worker, schedcfg}, rnti_mng};
   mac_dl_processor         mac_dl(mac_dl_cfg, sched_cfg_adapter, rnti_mng);
 
   // Action: Add Cells.

@@ -55,7 +55,7 @@ tests:
           du_ue_data_executor_queue_size: 16384
         threads:
           upper_phy:
-            nof_pusch_decoder_threads: 2          
+            max_pusch_and_srs_concurrency: 2
     # test/fail criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6

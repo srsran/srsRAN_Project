@@ -87,9 +87,8 @@ test_mode:
 expert_execution:
   threads:
     upper_phy:
-      nof_dl_threads: 2
-      nof_ul_threads: 1
-      nof_pusch_decoder_threads: 2
+      max_pucch_concurrency: 1
+      max_pusch_and_srs_concurrency: 3
 
 expert_phy:
   max_proc_delay: 6

@@ -45,6 +45,7 @@ void generate_o_du_low_config(srs_du::o_du_low_config&                        ou
 void fill_du_low_worker_manager_config(worker_manager_config&    config,
                                        const du_low_unit_config& unit_cfg,
                                        unsigned                  is_blocking_mode_active,
-                                       unsigned                  nof_cells);
+                                       span<const unsigned>      nof_dl_antennas,
+                                       span<const unsigned>      nof_ul_antennas);
 
 } // namespace srsran

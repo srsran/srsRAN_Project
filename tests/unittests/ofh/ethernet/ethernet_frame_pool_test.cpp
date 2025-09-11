@@ -35,7 +35,7 @@ std::ostream& operator<<(std::ostream& os, const subcarrier_spacing& scs)
 {
   return os << fmt::format("scs={}", to_string(scs));
 }
-std::ostream& operator<<(std::ostream& os, const cyclic_prefix& cp)
+std::ostream& operator<<(std::ostream& os, cyclic_prefix cp)
 {
   return os << fmt::format("cp={}", cp.to_string());
 }

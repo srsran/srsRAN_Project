@@ -198,7 +198,7 @@ void test_ssb_information(uint8_t                expected_sym,
 }
 
 /// This function tests SSB case A and C (both paired and unpaired spectrum).
-void test_ssb_case_A_C(const slot_point&             slot_tx,
+void test_ssb_case_A_C(slot_point                    slot_tx,
                        uint32_t                      freq_cutoff,
                        const cell_configuration&     cell_cfg,
                        cell_slot_resource_allocator& slot_alloc)
@@ -282,9 +282,7 @@ void test_ssb_case_A_C(const slot_point&             slot_tx,
 }
 
 /// This function tests SSB case B.
-void test_ssb_case_B(const slot_point&             slot_tx,
-                     const cell_configuration&     cell_cfg,
-                     cell_slot_resource_allocator& slot_alloc)
+void test_ssb_case_B(slot_point slot_tx, const cell_configuration& cell_cfg, cell_slot_resource_allocator& slot_alloc)
 {
   const ssb_configuration& ssb_cfg = cell_cfg.ssb_cfg;
 

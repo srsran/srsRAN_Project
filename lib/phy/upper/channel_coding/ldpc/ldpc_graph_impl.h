@@ -31,28 +31,28 @@ namespace srsran {
 namespace ldpc {
 
 /// Placeholder for invalid lifting-size values.
-static constexpr uint8_t VOID_LIFTSIZE = 255;
+constexpr uint8_t VOID_LIFTSIZE = 255;
 /// Placeholder for missing edges in the Tanner graph.
-static constexpr uint16_t NO_EDGE = 0xffff;
+constexpr uint16_t NO_EDGE = 0xffff;
 
 /// Number of parity-check nodes in base graph BG1.
-static constexpr unsigned BG1_M = 46;
+constexpr unsigned BG1_M = 46;
 /// Number of variable nodes in base graph BG1, before shortening.
-static constexpr unsigned BG1_N_FULL = 68;
+constexpr unsigned BG1_N_FULL = 68;
 /// Number of variable nodes in base graph BG1, after shortening.
-static constexpr unsigned BG1_N_SHORT = 66;
+constexpr unsigned BG1_N_SHORT = 66;
 /// Number of parity-check nodes in base graph BG2.
-static constexpr unsigned BG2_M = 42;
+constexpr unsigned BG2_M = 42;
 /// Number of variable nodes in base graph BG2, before shortening.
-static constexpr unsigned BG2_N_FULL = 52;
+constexpr unsigned BG2_N_FULL = 52;
 /// Number of variable nodes in base graph BG2, after shortening.
-static constexpr unsigned BG2_N_SHORT = 50;
+constexpr unsigned BG2_N_SHORT = 50;
 /// Maximum number of variable nodes in a base graph.
-static constexpr unsigned MAX_BG_N_FULL = std::max(BG1_N_FULL, BG2_N_FULL);
+constexpr unsigned MAX_BG_N_FULL = std::max(BG1_N_FULL, BG2_N_FULL);
 /// Maximum number of parity check nodes in a base graph.
-static constexpr unsigned MAX_BG_M = std::max(BG1_M, BG2_M);
+constexpr unsigned MAX_BG_M = std::max(BG1_M, BG2_M);
 /// Maximum lifting size.
-static constexpr unsigned MAX_LIFTING_SIZE = 384;
+constexpr unsigned MAX_LIFTING_SIZE = 384;
 
 /// \brief Representation of a graph, inspired by TS38.212 Tables 5.3.2-2 and 5.3.2-3.
 ///
@@ -64,7 +64,7 @@ static constexpr unsigned MAX_LIFTING_SIZE = 384;
 using BG_matrix_t = std::array<std::array<uint16_t, MAX_BG_N_FULL>, MAX_BG_M>;
 
 /// Maximum degree (number of incident edges) of a check node, in the base graphs.
-static constexpr unsigned MAX_BG_CHECK_EDGES = 20;
+constexpr unsigned MAX_BG_CHECK_EDGES = 20;
 
 /// \brief Represents a list of variable nodes connected to a check node.
 using BG_adjacency_row_t = std::array<uint16_t, MAX_BG_CHECK_EDGES>;
@@ -73,9 +73,10 @@ using BG_adjacency_row_t = std::array<uint16_t, MAX_BG_CHECK_EDGES>;
 using BG_adjacency_matrix_t = std::array<BG_adjacency_row_t, MAX_BG_M>;
 
 /// Number of base graphs.
-static constexpr unsigned NOF_BASE_GRAPHS = 2;
+constexpr unsigned NOF_BASE_GRAPHS = 2;
 /// Total number of lifted graphs.
-static constexpr unsigned TOTAL_NOF_GRAPHS = NOF_LIFTING_SIZES * NOF_BASE_GRAPHS;
+constexpr unsigned TOTAL_NOF_GRAPHS = NOF_LIFTING_SIZES * NOF_BASE_GRAPHS;
+
 } // namespace ldpc
 
 /// Describes the Tanner graph of an LDPC code (implementation).
@@ -159,6 +160,7 @@ private:
 };
 
 namespace ldpc {
+
 /// \brief Creates an array with all possible LDPC graphs.
 ///
 /// The graphs will be ordered by base graph and lifting size. For instance, the graph corresponding to BG2 and LS4 will
@@ -167,7 +169,8 @@ namespace ldpc {
 std::array<ldpc_graph_impl, TOTAL_NOF_GRAPHS> create_graph_array();
 
 /// An array with all possible LDPC graphs (see create_graph_array()).
-static const std::array<ldpc_graph_impl, TOTAL_NOF_GRAPHS> graph_array = create_graph_array();
+const std::array<ldpc_graph_impl, TOTAL_NOF_GRAPHS> graph_array = create_graph_array();
+
 } // namespace ldpc
 
 } // namespace srsran

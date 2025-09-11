@@ -33,6 +33,7 @@ void mac_ue_create_request_procedure::operator()(coro_context<async_task<mac_ue_
   // > Create UE in MAC CTRL.
   crnti_assigned = ctrl_unit.add_ue(req.ue_index, req.cell_index, req.crnti);
   if (crnti_assigned == rnti_t::INVALID_RNTI) {
+    CORO_AWAIT(cancel_ue_creation());
     CORO_EARLY_RETURN(handle_mac_ue_create_result(false));
   }
 
@@ -40,36 +41,56 @@ void mac_ue_create_request_procedure::operator()(coro_context<async_task<mac_ue_
   req.crnti = crnti_assigned;
 
   // > Create UE UL context and channels.
-  CORO_AWAIT_VALUE(add_ue_result, ul_unit.add_ue(req));
-  if (not add_ue_result) {
+  CORO_AWAIT_VALUE(add_ul_ue_result, ul_unit.add_ue(req));
+  if (not add_ul_ue_result) {
+    CORO_AWAIT(cancel_ue_creation());
     CORO_EARLY_RETURN(handle_mac_ue_create_result(false));
   }
   logger.debug("{}: UE UL context created successfully", mac_log_prefix(req.ue_index, req.crnti, name()));
 
   // > Create UE DL context and channels.
-  CORO_AWAIT_VALUE(add_ue_result, dl_unit.add_ue(req));
-  if (not add_ue_result) {
-    // >> Revert creation of UE in MAC UL.
-    CORO_AWAIT(ul_unit.remove_ue(mac_ue_delete_request{req.cell_index, req.ue_index, req.crnti}));
-
+  CORO_AWAIT_VALUE(add_dl_ue_result, dl_unit.add_ue(req));
+  if (not add_dl_ue_result) {
     // >> Terminate procedure.
+    CORO_AWAIT(cancel_ue_creation());
     CORO_EARLY_RETURN(handle_mac_ue_create_result(false));
   }
   logger.debug("{}: UE DL context created successfully", mac_log_prefix(req.ue_index, req.crnti, name()));
 
   // > Create UE context in Scheduler.
-  CORO_AWAIT_VALUE(add_ue_result, sched_configurator.handle_ue_creation_request(req));
-  if (not add_ue_result) {
-    // >> Revert creation of UE in MAC UL and MAC DL.
-    CORO_AWAIT(ul_unit.remove_ue(mac_ue_delete_request{req.cell_index, req.ue_index, req.crnti}));
-    CORO_AWAIT(dl_unit.remove_ue(mac_ue_delete_request{req.cell_index, req.ue_index, req.crnti}));
-
+  CORO_AWAIT_VALUE(add_sched_ue_result, sched_configurator.handle_ue_creation_request(req));
+  if (not add_sched_ue_result) {
     // >> Terminate procedure.
+    CORO_AWAIT(cancel_ue_creation());
     CORO_EARLY_RETURN(handle_mac_ue_create_result(false));
   }
 
   // > After UE insertion in scheduler, send response to DU manager.
-  CORO_RETURN(handle_mac_ue_create_result(add_ue_result));
+  CORO_RETURN(handle_mac_ue_create_result(true));
+}
+
+async_task<void> mac_ue_create_request_procedure::cancel_ue_creation()
+{
+  return launch_async([this](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+
+    if (add_dl_ue_result) {
+      // > Revert creation of UE in MAC DL.
+      CORO_AWAIT(dl_unit.remove_ue(mac_ue_delete_request{req.cell_index, req.ue_index, req.crnti}));
+    }
+
+    if (add_ul_ue_result) {
+      // > Revert creation of UE in MAC UL.
+      CORO_AWAIT(ul_unit.remove_ue(mac_ue_delete_request{req.cell_index, req.ue_index, req.crnti}));
+    }
+
+    if (crnti_assigned != rnti_t::INVALID_RNTI) {
+      // > Revert creation of UE in MAC CTRL.
+      ctrl_unit.remove_ue(req.ue_index);
+    }
+
+    CORO_RETURN();
+  });
 }
 
 mac_ue_create_response mac_ue_create_request_procedure::handle_mac_ue_create_result(bool result)
@@ -78,11 +99,6 @@ mac_ue_create_response mac_ue_create_request_procedure::handle_mac_ue_create_res
     logger.info("{}: finished successfully", mac_log_prefix(req.ue_index, req.crnti, name()));
   } else {
     logger.warning("{}: failed", mac_log_prefix(req.ue_index, req.crnti, name()));
-  }
-
-  if (not result and crnti_assigned != rnti_t::INVALID_RNTI) {
-    // Remove created UE object
-    ctrl_unit.remove_ue(req.ue_index);
   }
 
   // Respond back to DU manager with result

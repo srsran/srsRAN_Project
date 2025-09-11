@@ -10,10 +10,9 @@
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
   requirements:
-    arch: amd64
     cpu:
-      requests: 20
-      limits: 20
+      requests: 10
+      limits: 10
     memory:
       requests: "60G"
       limits: "60G"
@@ -28,6 +27,7 @@
       model: acc100
   environment:
     - PATH: ${PATH}:/builds/softwareradiosystems/srsgnb/build/apps/gnb
+    - LD_LIBRARY_PATH: /opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu/
   shared_files:
     - local_path: ${GNB_BUILD_PATH}/apps/gnb/gnb
       remote_path: /usr/local/bin/gnb

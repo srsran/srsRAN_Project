@@ -50,12 +50,15 @@ public:
   [[nodiscard]] bool connect_to_cu_cp() override;
   // E1AP interface management procedures functions as per TS38.463, Section 8.2.
   async_task<cu_up_e1_setup_response> handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& request) override;
+  async_task<void>                    handle_cu_up_e1ap_release_request() override;
 
   // e1ap message handler functions
   void handle_message(const e1ap_message& msg) override;
 
   // e1ap control message handler functions
   void handle_bearer_context_inactivity_notification(const e1ap_bearer_context_inactivity_notification& msg) override;
+
+  void handle_pdcp_max_count_reached(ue_index_t ue_index) override;
 
   // e1ap event handler functions
   void handle_connection_loss() override {}

@@ -39,8 +39,9 @@ namespace srsran {
 
 /// Radio Unit generic implementation configuration.
 struct ru_generic_impl_config {
-  double srate_MHz;
-  bool   are_metrics_enabled;
+  double                                               srate_MHz;
+  std::optional<std::chrono::system_clock::time_point> start_time;
+  bool                                                 are_metrics_enabled;
 };
 
 /// Radio Unit generic implementation dependencies.

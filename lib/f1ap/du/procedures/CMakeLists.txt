@@ -26,6 +26,7 @@ set(SOURCES
         f1ap_du_ue_context_modification_procedure.cpp
         f1ap_du_ue_context_release_procedure.cpp
         f1ap_du_reset_procedure.cpp
+        f1ap_du_initiated_reset_procedure.cpp
         f1ap_du_gnbdu_config_update_procedure.cpp
         f1ap_du_positioning_procedures.cpp
 )

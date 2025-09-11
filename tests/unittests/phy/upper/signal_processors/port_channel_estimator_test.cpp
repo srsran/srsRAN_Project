@@ -74,9 +74,15 @@ protected:
       ASSERT_NE(ta_estimator_factory, nullptr) << "Cannot create TA estimator factory.";
 
       ch_est_factory = create_port_channel_estimator_factory_sw(std::move(ta_estimator_factory));
+      // The concurrent version of the port channel estimator is just a collection of channel estimators which are
+      // called according to their availability. Using the concurrent estimator in the test ensures that
+      // port_channel_estimator can be called from the pool, without broadening too much the scope of the test.
+      ch_est_factory = create_port_channel_estimator_pool_factory(std::move(ch_est_factory), 2);
       ASSERT_NE(ch_est_factory, nullptr);
     }
   }
+
+  static void TearDownTestSuite() { ch_est_factory.reset(); }
 
   void SetUp() override
   {

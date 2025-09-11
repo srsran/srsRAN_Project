@@ -64,6 +64,9 @@ protected:
     std::shared_ptr<ofdm_modulator_factory> ofdm_factory = create_ofdm_modulator_factory_generic(factory_config);
     ASSERT_TRUE(ofdm_factory);
 
+    ofdm_factory = create_ofdm_modulator_pool_factory(std::move(ofdm_factory), 2);
+    ASSERT_TRUE(ofdm_factory);
+
     modulator = ofdm_factory->create_ofdm_slot_modulator(test_case.test_config.config);
     ASSERT_TRUE(modulator);
   }

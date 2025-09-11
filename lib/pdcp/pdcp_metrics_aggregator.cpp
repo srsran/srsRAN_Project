@@ -45,27 +45,27 @@ pdcp_metrics_aggregator::pdcp_metrics_aggregator(uint32_t               ue_index
   m_rx.counter = 50;
 }
 
-void pdcp_metrics_aggregator::push_tx_metrics(pdcp_tx_metrics_container m_tx_)
+void pdcp_metrics_aggregator::push_tx_metrics(const pdcp_tx_metrics_container& m_tx_)
 {
   if (not ue_executor.execute([this, m_tx_]() { push_tx_metrics_impl(m_tx_); })) {
     logger.log_error("Could not push TX metrics");
   }
 }
 
-void pdcp_metrics_aggregator::push_rx_metrics(pdcp_rx_metrics_container m_rx_)
+void pdcp_metrics_aggregator::push_rx_metrics(const pdcp_rx_metrics_container& m_rx_)
 {
   if (not ue_executor.execute([this, m_rx_]() { push_rx_metrics_impl(m_rx_); })) {
     logger.log_error("Could not push RX metrics");
   }
 }
 
-void pdcp_metrics_aggregator::push_tx_metrics_impl(pdcp_tx_metrics_container m_tx_)
+void pdcp_metrics_aggregator::push_tx_metrics_impl(const pdcp_tx_metrics_container& m_tx_)
 {
   m_tx = m_tx_;
   push_report();
 }
 
-void pdcp_metrics_aggregator::push_rx_metrics_impl(pdcp_rx_metrics_container m_rx_)
+void pdcp_metrics_aggregator::push_rx_metrics_impl(const pdcp_rx_metrics_container& m_rx_)
 {
   m_rx = m_rx_;
   push_report();

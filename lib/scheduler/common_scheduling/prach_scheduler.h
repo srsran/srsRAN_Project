@@ -38,6 +38,8 @@ public:
   /// Allocate RACH PDUs for the given slot.
   void run_slot(cell_resource_allocator& res_grid);
 
+  void stop();
+
 private:
   // [Implementation-defined] This is the maximum number of slots per PRACH preamble. It's obtained by considering the
   // longest preamble length (which can be derived from Table 6.3.3.1-1, TS 38.211 for Format 2) and the shortest slot

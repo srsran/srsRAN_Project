@@ -23,7 +23,6 @@
 #pragma once
 
 #include "../mac_config_interfaces.h"
-#include "du_time_controller.h"
 #include "mac_config.h"
 #include "mac_metrics_aggregator.h"
 #include "mac_scheduler_configurator.h"
@@ -98,9 +97,7 @@ private:
   mac_dl_configurator&        dl_unit;
   rnti_manager&               rnti_table;
   mac_scheduler_configurator& sched_cfg;
-
-  // Controller of the DU timers based on slot indication ticks.
-  du_time_controller time_ctrl;
+  mac_clock_controller&       time_ctrl;
 
   // Metrics aggregator.
   mac_metrics_aggregator metrics;

@@ -12,7 +12,6 @@
   labels:
     - kubernetes.io/hostname=dell-xr12
   requirements:
-    arch: amd64
     cpu:
       requests: 10
       limits: 10
@@ -42,7 +41,6 @@
 - name: metrics-server
   type: generic
   requirements:
-    arch: amd64
     cpu:
       requests: 1
       limits: 1

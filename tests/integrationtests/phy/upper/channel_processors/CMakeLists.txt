@@ -20,10 +20,8 @@
 
 set_directory_properties(PROPERTIES LABELS "phy;tsan;NO_MEMCHECK")
 
-add_executable(pxsch_bler_test
-        pxsch_bler_test.cpp
-        pxsch_bler_test_channel_emulator.cpp
-        pxsch_bler_test_factories.cpp)
+add_executable(pxsch_bler_test pxsch_bler_test.cpp)
+
 set(PXSCH_BLER_TEST_LIBRARIES srsran_ran
         srsran_upper_phy
         srsran_upper_phy_support
@@ -33,12 +31,17 @@ set(PXSCH_BLER_TEST_LIBRARIES srsran_ran
 
 if (ENABLE_PDSCH_HWACC AND ENABLE_PUSCH_HWACC)
     set_source_files_properties(pxsch_bler_test.cpp pxsch_bler_test_factories.cpp PROPERTIES COMPILE_DEFINITIONS "HWACC_PDSCH_ENABLED; HWACC_PUSCH_ENABLED")
-    list(APPEND PXSCH_BLER_TEST_LIBRARIES  srsran_hal_pusch
-        srsran_hal_pdsch
-        srsran_hal_bbdev)
+    list(APPEND PXSCH_BLER_TEST_LIBRARIES srsran_hal_pusch
+            srsran_hal_pdsch
+            srsran_hal_bbdev)
 endif (ENABLE_PDSCH_HWACC AND ENABLE_PUSCH_HWACC)
 
-target_link_libraries(pxsch_bler_test ${PXSCH_BLER_TEST_LIBRARIES})
+add_library(srsran_pxsch_bler_test_helpers STATIC
+        pxsch_bler_test_channel_emulator.cpp
+        pxsch_bler_test_factories.cpp)
+target_link_libraries(srsran_pxsch_bler_test_helpers ${PXSCH_BLER_TEST_LIBRARIES})
+
+target_link_libraries(pxsch_bler_test srsran_pxsch_bler_test_helpers)
 add_test(pxsch_bler_test pxsch_bler_test -R 10)
 
 add_executable(pxsch_chain_test pxsch_chain_test.cpp)

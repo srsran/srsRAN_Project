@@ -39,7 +39,7 @@ enum class crc_generator_poly : uint8_t {
 };
 
 /// Returns the CRC size from its identifier.
-inline constexpr unsigned get_crc_size(crc_generator_poly poly)
+constexpr unsigned get_crc_size(crc_generator_poly poly)
 {
   switch (poly) {
     case crc_generator_poly::CRC24A:

@@ -23,14 +23,12 @@
 /// \file
 /// \brief Unit test for scheduler using different TDD patterns.
 
-#include "test_utils/config_generators.h"
 #include "test_utils/indication_generators.h"
 #include "test_utils/scheduler_test_simulator.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "srsran/ran/pucch/pucch_info.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config_formatters.h"
-#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <ostream>
 
@@ -72,7 +70,7 @@ protected:
     srsran_assert(res_f2 != pucch_cfg.pucch_res_list.end(), "PUCCH resource F2 not found");
     pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_2)] =
         get_pucch_format2_max_payload(std::get<pucch_format_2_3_cfg>(res_f2->format_params).nof_prbs,
-                                      std::get<pucch_format_2_3_cfg>(res_f2->format_params).nof_symbols,
+                                      res_f2->nof_symbols,
                                       to_max_code_rate_float(pucch_cfg.format_2_common_param.value().max_c_rate));
 
     this->add_ue(ue_cfg);
@@ -104,7 +102,7 @@ TEST_P(scheduler_dl_tdd_tester, all_dl_slots_are_scheduled)
   dl_buffer_state_indication_message dl_buf_st{ue_idx, ue_drb_lcid, 10000000};
   this->push_dl_buffer_state(dl_buf_st);
 
-  const unsigned MAX_COUNT = 1000;
+  static constexpr unsigned MAX_COUNT = 1000;
   for (unsigned count = 0; count != MAX_COUNT; ++count) {
     this->run_slot();
 
@@ -160,7 +158,7 @@ public:
 
 TEST_P(scheduler_ul_tdd_tester, all_ul_slots_are_scheduled)
 {
-  const unsigned MAX_COUNT = 1000;
+  static constexpr unsigned MAX_COUNT = 1000;
   for (unsigned count = 0; count != MAX_COUNT; ++count) {
     this->run_slot();
 

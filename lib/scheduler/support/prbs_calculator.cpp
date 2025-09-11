@@ -25,7 +25,7 @@
 
 using namespace srsran;
 
-constexpr unsigned NOF_BITS_PER_BYTE = 8U;
+static constexpr unsigned NOF_BITS_PER_BYTE = 8U;
 
 /// \brief Estimation of the N_info for payloads above 3824 bits.
 static float estimate_nof_info_payload_higher_3824_bits(unsigned payload_bits, float tcr)

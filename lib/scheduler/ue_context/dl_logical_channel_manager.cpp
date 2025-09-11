@@ -35,10 +35,10 @@ static unsigned get_mac_sdu_size(unsigned sdu_and_subheader_bytes)
 }
 
 // Initial capacity for the sorted_channels vector.
-constexpr unsigned INITIAL_CHANNEL_VEC_CAPACITY = 8;
+static constexpr unsigned INITIAL_CHANNEL_VEC_CAPACITY = 8;
 
 // Initial capacity for the slice_lcid_list_lookup vector.
-constexpr unsigned INITIAL_SLICE_CAPACITY = 4;
+static constexpr unsigned INITIAL_SLICE_CAPACITY = 4;
 
 // Number of MAC CEs supported by the implementation.
 // - SCELL_ACTIV_4_OCTET || SCELL_ACTIV_4_OCTET
@@ -46,10 +46,10 @@ constexpr unsigned INITIAL_SLICE_CAPACITY = 4;
 // - TA_CMD
 // - UE_CON_RES_ID
 // - PADDING
-constexpr unsigned MAX_CES_PER_UE = 5;
+static constexpr unsigned MAX_CES_PER_UE = 5;
 
 // Size of the pending_ces queue.
-constexpr unsigned MAX_PENDING_CES = MAX_NOF_DU_UES * MAX_CES_PER_UE;
+static constexpr unsigned MAX_PENDING_CES = MAX_NOF_DU_UES * MAX_CES_PER_UE;
 
 dl_logical_channel_manager::dl_logical_channel_manager(subcarrier_spacing              scs_common_,
                                                        bool                            starts_in_fallback,

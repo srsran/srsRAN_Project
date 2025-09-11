@@ -49,6 +49,7 @@ protected:
     n3_allocator     = std::make_unique<dummy_gtpu_teid_pool>();
     f1u_allocator    = std::make_unique<dummy_gtpu_teid_pool>();
     ngu_session_mngr = std::make_unique<dummy_ngu_session_manager>();
+    e1ap             = std::make_unique<dummy_e1ap>();
 
     // create DUT object
     ue_inactivity_timer = timers_factory.create_timer();
@@ -70,6 +71,7 @@ protected:
                                                                  timers_factory,
                                                                  timers_factory,
                                                                  timers_factory,
+                                                                 *e1ap,
                                                                  *f1u_gw,
                                                                  *ngu_session_mngr,
                                                                  *n3_allocator,
@@ -97,6 +99,7 @@ protected:
   dummy_inner_f1u_bearer                                      f1u_bearer;
   std::unique_ptr<dummy_f1u_gateway>                          f1u_gw;
   std::unique_ptr<ngu_session_manager>                        ngu_session_mngr;
+  std::unique_ptr<e1ap_interface>                             e1ap;
   std::unique_ptr<dummy_gtpu_teid_pool>                       n3_allocator;
   std::unique_ptr<dummy_gtpu_teid_pool>                       f1u_allocator;
   std::unique_ptr<pdu_session_manager_ctrl>                   pdu_session_mng;

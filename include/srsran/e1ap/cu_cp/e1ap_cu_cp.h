@@ -72,8 +72,18 @@ struct bearer_creation_complete_message {
   ue_index_t ue_index;
 };
 
+/// Scheduler of E1AP async tasks using common signalling.
+class e1ap_common_cu_up_task_notifier
+{
+public:
+  virtual ~e1ap_common_cu_up_task_notifier() = default;
+
+  /// Schedule common E1AP task.
+  virtual bool schedule_async_task(async_task<void> task) = 0;
+};
+
 /// Methods used by E1AP to notify the CU-UP processor.
-class e1ap_cu_up_processor_notifier
+class e1ap_cu_up_processor_notifier : public e1ap_common_cu_up_task_notifier
 {
 public:
   virtual ~e1ap_cu_up_processor_notifier() = default;
@@ -140,9 +150,18 @@ public:
   /// \returns True if the task was successfully scheduled, false otherwise.
   virtual bool schedule_async_task(ue_index_t ue_index, async_task<void> task) = 0;
 
+  /// \brief Notifies about the reception of a Bearer Context Release Request message.
+  /// \param[in] msg The received Bearer Context Release Request message.
+  virtual void on_bearer_context_release_request_received(const cu_cp_bearer_context_release_request& msg) = 0;
+
   /// \brief Notifies about the reception of a Bearer Context Inactivity Notification message.
   /// \param[in] msg The received Bearer Context Inactivity Notification message.
   virtual void on_bearer_context_inactivity_notification_received(const cu_cp_inactivity_notification& msg) = 0;
+
+  /// \brief Notifies about the reception of an E1 Release Request message.
+  /// \param[in] cu_up_index The index of the CU-UP processor.
+  /// \param[in] ue_list The indices of the UEs connected to the CU-UP.
+  virtual void on_e1_release_request_received(cu_up_index_t cu_up_index, const std::vector<ue_index_t>& ue_list) = 0;
 };
 
 /// Combined entry point for E1AP handling.

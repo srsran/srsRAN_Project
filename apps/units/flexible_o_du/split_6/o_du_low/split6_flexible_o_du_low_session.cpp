@@ -23,6 +23,7 @@
 #include "split6_flexible_o_du_low_session.h"
 #include "srsran/du/du_low/du_low.h"
 #include "srsran/du/du_operation_controller.h"
+#include "srsran/fapi_adaptor/fapi_operation_controller.h"
 #include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
 #include "srsran/fapi_adaptor/phy/phy_fapi_sector_adaptor.h"
 #include "srsran/phy/upper/upper_phy.h"
@@ -33,7 +34,13 @@ using namespace srsran;
 
 split6_flexible_o_du_low_session::~split6_flexible_o_du_low_session()
 {
+  // Stop adaptor.
+  slot_adaptor->get_operation_controller().stop();
+
+  // Stop RU.
   ru->get_controller().get_operation_controller().stop();
+
+  // Stop O-DU low.
   odu_low->get_operation_controller().stop();
 }
 

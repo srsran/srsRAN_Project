@@ -33,7 +33,7 @@ constexpr bool is_alignment_valid(std::size_t alignment)
 }
 
 /// Checks whether the pointer is set with the correct alignment.
-constexpr inline bool is_aligned(std::uintptr_t ptr, std::size_t alignment)
+constexpr bool is_aligned(std::uintptr_t ptr, std::size_t alignment)
 {
   return (ptr & (alignment - 1)) == 0;
 }
@@ -43,13 +43,13 @@ inline bool is_aligned(void* ptr, std::size_t alignment)
 }
 
 /// \brief Moves the pointer by the given size in bytes.
-constexpr inline void* advance_ptr(void* pos, std::size_t sz)
+constexpr void* advance_ptr(void* pos, std::size_t sz)
 {
   return static_cast<char*>(pos) + sz;
 }
 
 /// Moves the pointer to the next aligned position.
-constexpr inline std::uintptr_t align_next(std::uintptr_t pos, std::size_t alignment)
+constexpr std::uintptr_t align_next(std::uintptr_t pos, std::size_t alignment)
 {
   return (pos + (alignment - 1)) & ~(alignment - 1);
 }

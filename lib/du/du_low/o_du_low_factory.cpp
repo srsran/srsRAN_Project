@@ -57,17 +57,13 @@ generate_fapi_adaptor_dependencies(du_low& du_low, const fapi_adaptor::phy_fapi_
   return out_dependencies;
 }
 
-std::unique_ptr<o_du_low> srsran::srs_du::make_o_du_low(const o_du_low_config& config)
+std::unique_ptr<o_du_low> srsran::srs_du::make_o_du_low(const o_du_low_config& config,
+                                                        o_du_low_dependencies& o_du_low_deps)
 {
-  auto& logger = srslog::fetch_basic_logger("DU");
-
-  du_low_dependencies du_low_deps;
-  du_low_deps.logger = &logger;
+  du_low_dependencies& du_low_deps = o_du_low_deps.du_low_deps;
 
   auto du_lo = make_du_low(config.du_low_cfg, std::move(du_low_deps));
-
   report_error_if_not(du_lo != nullptr, "Unable to create DU low.");
-  logger.debug("DU low created successfully");
 
   auto fapi = fapi_adaptor::create_phy_fapi_adaptor_factory()->create(
       config.fapi_cfg, generate_fapi_adaptor_dependencies(*du_lo, config.fapi_cfg));

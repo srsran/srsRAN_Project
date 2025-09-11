@@ -27,8 +27,10 @@
 #include "tests/test_doubles/rrc/rrc_test_message_validators.h"
 #include "tests/test_doubles/rrc/rrc_test_messages.h"
 #include "tests/unittests/cu_cp/test_doubles/mock_cu_up.h"
+#include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
@@ -103,8 +105,11 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
                                            security::ciphering_algorithm::nea1,
                                            security::ciphering_algorithm::nea3};
 
-  cu_cp_cfg.f1ap.json_log_enabled = true;
-  cu_cp_cfg.e1ap.json_log_enabled = true;
+  // > Logging and metrics config.
+  cu_cp_cfg.f1ap.json_log_enabled          = true;
+  cu_cp_cfg.e1ap.json_log_enabled          = true;
+  cu_cp_cfg.metrics.layers_cfg.enable_ngap = true;
+  cu_cp_cfg.metrics.layers_cfg.enable_rrc  = true;
 
   // > Mobility config
   cu_cp_cfg.mobility.mobility_manager_config.trigger_handover_from_measurements = params.trigger_ho_from_measurements;
@@ -161,15 +166,16 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
       // Add periodic event
       {
         rrc_periodical_report_cfg periodical_cfg;
-        periodical_cfg.rs_type                = srs_cu_cp::rrc_nr_rs_type::ssb;
-        periodical_cfg.report_interv          = 1024;
-        periodical_cfg.report_amount          = -1;
-        periodical_cfg.report_quant_cell.rsrp = true;
-        periodical_cfg.report_quant_cell.rsrq = true;
-        periodical_cfg.report_quant_cell.sinr = true;
-        periodical_cfg.max_report_cells       = 4;
-        periodical_cfg.include_beam_meass     = true;
-        periodical_cfg.use_allowed_cell_list  = false;
+        periodical_cfg.rs_type                 = srs_cu_cp::rrc_nr_rs_type::ssb;
+        periodical_cfg.report_interv           = 1024;
+        periodical_cfg.report_amount           = -1;
+        periodical_cfg.report_quant_cell.rsrp  = true;
+        periodical_cfg.report_quant_cell.rsrq  = true;
+        periodical_cfg.report_quant_cell.sinr  = true;
+        periodical_cfg.max_report_cells        = 4;
+        periodical_cfg.include_beam_meass      = true;
+        periodical_cfg.use_allowed_cell_list   = false;
+        periodical_cfg.periodic_ho_rsrp_offset = 2;
 
         meas_mng_cfg.report_config_ids.emplace(uint_to_report_cfg_id(1), rrc_report_cfg_nr{periodical_cfg});
       }
@@ -208,7 +214,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   }
 
   // > RRC config
-  cu_cp_cfg.rrc.rrc_procedure_timeout_ms =
+  cu_cp_cfg.rrc.rrc_procedure_guard_time_ms =
       std::chrono::milliseconds(10000); // procedure timeouts should only occur intentionally
 
   // > F1AP config
@@ -369,7 +375,9 @@ bool cu_cp_test_environment::run_f1_setup(unsigned                              
                                           gnb_du_id_t                                      gnb_du_id,
                                           std::vector<test_helpers::served_cell_item_info> cells)
 {
-  get_du(du_idx).push_ul_pdu(test_helpers::generate_f1_setup_request(gnb_du_id, std::move(cells)));
+  f1ap_message f1_setup_req = test_helpers::generate_f1_setup_request(gnb_du_id, cells);
+  rrc_test_timer_values     = get_timers(f1_setup_req.pdu.init_msg().value.f1_setup_request());
+  get_du(du_idx).push_ul_pdu(f1_setup_req);
   f1ap_message f1ap_pdu;
   bool         result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
   return result;

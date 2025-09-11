@@ -40,7 +40,7 @@ inline bf16_t to_bf16(float value)
 {
   // Reinterpret the value as a 32-bit unsigned integer.
   uint32_t temp_u32;
-  ::memcpy(&temp_u32, reinterpret_cast<void*>(&value), 4);
+  std::memcpy(&temp_u32, reinterpret_cast<void*>(&value), 4);
 
   // The 16 least significant bits of the fractional part are removed. The remaining 7 (most significant) bits are
   // rounded according to the "half to nearest even" method: when the removed part is exactly 0.5 (i.e., a single one
@@ -76,7 +76,7 @@ inline float to_float(bf16_t value)
 
   // Reinterpret the value as a single-precision 32-bit float.
   float ret;
-  ::memcpy(&ret, &temp_u32, 4);
+  std::memcpy(&ret, &temp_u32, 4);
 
   return ret;
 }

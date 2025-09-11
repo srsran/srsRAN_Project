@@ -66,18 +66,19 @@ expected<mac_rx_data_indication> srs_du::create_test_pdu_with_rrc_setup_complete
 static void fill_csi_bits(bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload,
                           rnti_t                                                          rnti,
                           unsigned                                                        nof_ports,
+                          unsigned                                                        nof_allowed_ri,
                           const du_test_mode_config::test_mode_ue_config&                 test_ue_cfg)
 {
   static constexpr size_t CQI_BITLEN = 4;
 
   payload.resize(0);
   if (nof_ports == 2) {
-    const size_t RI_BITLEN  = 1;
+    const size_t RI_BITLEN  = std::min(1U, log2_ceil(nof_allowed_ri));
     const size_t PMI_BITLEN = 2;
     payload.push_back(test_ue_cfg.ri - 1, RI_BITLEN);
     payload.push_back(test_ue_cfg.pmi, PMI_BITLEN);
   } else if (nof_ports > 2) {
-    const size_t RI_BITLEN    = 2;
+    const size_t RI_BITLEN    = std::min(2U, log2_ceil(nof_allowed_ri));
     const size_t I_1_1_BITLEN = 3;
     const size_t I_1_3_BITLEN = test_ue_cfg.ri == 2 ? 1 : 0;
     const size_t I_2_BITLEN   = test_ue_cfg.ri == 1 ? 2 : 1;
@@ -114,8 +115,9 @@ static void fill_csi_bits(bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PAR
                           const pucch_info&                                               pucch,
                           const du_test_mode_config::test_mode_ue_config&                 test_ue_cfg)
 {
-  unsigned nof_ports = pucch.csi_rep_cfg.has_value() ? get_nof_ports(pucch.csi_rep_cfg.value()) : 1;
-  fill_csi_bits(payload, rnti, nof_ports, test_ue_cfg);
+  unsigned nof_ports      = pucch.csi_rep_cfg.has_value() ? get_nof_ports(pucch.csi_rep_cfg.value()) : 1;
+  unsigned nof_allowed_ri = pucch.csi_rep_cfg.has_value() ? pucch.csi_rep_cfg->ri_restriction.count() : nof_ports;
+  fill_csi_bits(payload, rnti, nof_ports, nof_allowed_ri, test_ue_cfg);
 }
 
 static void fill_csi_bits(bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload,
@@ -126,9 +128,10 @@ static void fill_csi_bits(bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PAR
   if (not pusch.uci.has_value() or not pusch.uci.value().csi.has_value()) {
     return;
   }
-  const auto& csi_rep_cfg = pusch.uci.value().csi.value().csi_rep_cfg;
-  unsigned    nof_ports   = get_nof_ports(csi_rep_cfg);
-  fill_csi_bits(payload, rnti, nof_ports, test_ue_cfg);
+  const auto& csi_rep_cfg    = pusch.uci.value().csi.value().csi_rep_cfg;
+  unsigned    nof_ports      = get_nof_ports(csi_rep_cfg);
+  unsigned    nof_allowed_ri = csi_rep_cfg.ri_restriction.count();
+  fill_csi_bits(payload, rnti, nof_ports, nof_allowed_ri, test_ue_cfg);
 }
 
 static mac_uci_pdu::pucch_f0_or_f1_type make_f0f1_uci_pdu(const pucch_info&                               pucch,

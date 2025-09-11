@@ -51,7 +51,7 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   ul_pdu_validator(std::move(config.ul_pdu_validator)),
   ul_request_processor(*config.rx_symbol_request_notifier, *prach_pool),
   rx_results_notifier(std::move(config.rx_results_notifier)),
-  rx_symbol_handler(std::make_unique<upper_phy_rx_symbol_handler_impl>(ul_processor_pool->get_slot_processor_pool())),
+  rx_symbol_handler(std::move(config.rx_symbol_handler)),
   timing_handler(notifier_dummy),
   error_handler(ul_processor_pool->get_slot_processor_pool())
 {
@@ -63,23 +63,9 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   srsran_assert(dl_pdu_validator, "Invalid downlink PDU validator");
   srsran_assert(ul_pdu_validator, "Invalid uplink PDU validator");
   srsran_assert(rx_results_notifier, "Invalid receive results notifier");
+  srsran_assert(rx_symbol_handler, "Invalid Rx symbol handler");
 
   logger.set_level(config.log_level);
-
-  // Configure RX symbol handler for printing the resource grid.
-  if (!config.rx_symbol_printer_filename.empty()) {
-    interval<unsigned> ul_ports(0, config.nof_rx_ports);
-    if (config.rx_symbol_printer_port.has_value()) {
-      ul_ports.set(*config.rx_symbol_printer_port, *config.rx_symbol_printer_port + 1);
-    }
-    rx_symbol_handler =
-        std::make_unique<upper_phy_rx_symbol_handler_printer_decorator>(std::move(rx_symbol_handler),
-                                                                        logger,
-                                                                        config.rx_symbol_printer_filename,
-                                                                        config.ul_bw_rb,
-                                                                        ul_ports,
-                                                                        config.rx_symbol_printer_prach);
-  }
 }
 
 upper_phy_error_handler& upper_phy_impl::get_error_handler()

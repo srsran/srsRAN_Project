@@ -24,6 +24,7 @@
 
 #include "srsran/phy/lower/lower_phy_timing_context.h"
 #include "srsran/phy/lower/processors/downlink/downlink_processor_notifier.h"
+#include <vector>
 
 namespace srsran {
 

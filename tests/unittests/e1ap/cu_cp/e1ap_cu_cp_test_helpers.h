@@ -46,10 +46,22 @@ public:
   {
   }
 
+  void on_bearer_context_release_request_received(const srs_cu_cp::cu_cp_bearer_context_release_request& msg) override
+  {
+    last_release_request = msg;
+    logger.info("Received a bearer context release request");
+  }
+
   void on_bearer_context_inactivity_notification_received(const srs_cu_cp::cu_cp_inactivity_notification& msg) override
   {
     last_msg = msg;
     logger.info("Received an inactivity notification");
+  }
+
+  void on_e1_release_request_received(cu_up_index_t                             cu_up_index,
+                                      const std::vector<srs_cu_cp::ue_index_t>& ue_list) override
+  {
+    logger.info("Received E1 Release Request for {} UEs", ue_list.size());
   }
 
   bool schedule_async_task(ue_index_t ue_index, async_task<void> task) override
@@ -58,7 +70,8 @@ public:
     return ue_mng.find_ue_task_scheduler(ue_index)->schedule_async_task(std::move(task));
   }
 
-  srs_cu_cp::cu_cp_inactivity_notification last_msg;
+  srs_cu_cp::cu_cp_bearer_context_release_request last_release_request;
+  srs_cu_cp::cu_cp_inactivity_notification        last_msg;
 
 private:
   ue_manager&           ue_mng;

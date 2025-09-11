@@ -34,7 +34,7 @@ ssb_scheduler::ssb_scheduler(const cell_configuration& cfg_) :
   ssb_period = ssb_periodicity_to_value(cell_cfg.ssb_cfg.ssb_period);
 }
 
-void ssb_scheduler::run_slot(cell_resource_allocator& res_alloc, const slot_point& sl_point)
+void ssb_scheduler::run_slot(cell_resource_allocator& res_alloc, slot_point sl_point)
 {
   if (first_run_slot) {
     const unsigned ssb_period_slots = ssb_period * sl_point.nof_slots_per_subframe();
@@ -49,9 +49,14 @@ void ssb_scheduler::run_slot(cell_resource_allocator& res_alloc, const slot_poin
   }
 }
 
+void ssb_scheduler::stop()
+{
+  first_run_slot = true;
+}
+
 void ssb_scheduler::schedule_ssb(cell_slot_resource_allocator& res_grid)
 {
-  const slot_point&     sl_point = res_grid.slot;
+  slot_point            sl_point = res_grid.slot;
   ssb_information_list& ssb_list = res_grid.result.dl.bc.ssb_info;
 
   if (ssb_list.full()) {
@@ -90,7 +95,7 @@ void ssb_scheduler::schedule_ssb(cell_slot_resource_allocator& res_grid)
 
 void ssb_scheduler::ssb_alloc_case_A_C(ssb_information_list& ssb_list,
                                        uint32_t              freq_arfcn_cut_off,
-                                       const slot_point&     sl_point_mod)
+                                       slot_point            sl_point_mod)
 {
   uint32_t slot_idx = sl_point_mod.to_uint();
 
@@ -131,7 +136,7 @@ void ssb_scheduler::ssb_alloc_case_A_C(ssb_information_list& ssb_list,
   }
 }
 
-void ssb_scheduler::ssb_alloc_case_B(ssb_information_list& ssb_list, const slot_point& sl_point_mod)
+void ssb_scheduler::ssb_alloc_case_B(ssb_information_list& ssb_list, slot_point sl_point_mod)
 {
   uint32_t slot_idx = sl_point_mod.to_uint();
 

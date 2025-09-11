@@ -44,7 +44,7 @@ TEST(DownlingProcessorPool, ProcessorOk)
   ASSERT_EQ(static_cast<downlink_processor_spy&>(dl_processor).get_id(), id);
 }
 
-TEST(DownlingProcessorPool, SameSlotSameProcessor)
+TEST(DownlingProcessorPool, SameSlotDifferentProcessor)
 {
   downlink_processor_pool_config dl_procs;
   subcarrier_spacing             scs = subcarrier_spacing::kHz30;
@@ -63,8 +63,8 @@ TEST(DownlingProcessorPool, SameSlotSameProcessor)
   downlink_processor_controller& dl_processor_1 = dl_proc_pool->get_processor_controller(slot);
 
   ASSERT_EQ(static_cast<downlink_processor_spy&>(dl_processor_0).get_id(), id);
-  ASSERT_EQ(static_cast<downlink_processor_spy&>(dl_processor_1).get_id(), id);
-  ASSERT_TRUE(&dl_processor_0 == &dl_processor_1);
+  ASSERT_NE(static_cast<downlink_processor_spy&>(dl_processor_1).get_id(), id);
+  ASSERT_TRUE(&dl_processor_0 != &dl_processor_1);
 }
 
 TEST(DownlingProcessorPool, ConsecutiveProcessorOk)

@@ -18,5 +18,9 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-add_library(srsran_e1ap_common e1ap_asn1_packer.cpp log_helpers.cpp)
+add_library(srsran_e1ap_common
+        e1ap_asn1_packer.cpp
+        e1ap_common_messages.cpp
+        log_helpers.cpp
+        )
 target_link_libraries(srsran_e1ap_common e1ap_asn1)

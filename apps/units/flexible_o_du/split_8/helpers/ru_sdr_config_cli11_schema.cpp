@@ -44,14 +44,6 @@ static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_cont
 
 static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_unit_expert_config& config)
 {
-  auto buffer_size_policy_check = [](const std::string& value) -> std::string {
-    if (value == "auto" || value == "single-packet" || value == "half-slot" || value == "slot" ||
-        value == "optimal-slot") {
-      return {};
-    }
-    return "Invalid DL buffer size policy. Accepted values [auto,single-packet,half-slot,slot,optimal-slot]";
-  };
-
   auto tx_mode_check = [](const std::string& value) -> std::string {
     if (value == "continuous" || value == "discontinuous" || value == "same-port") {
       return {};
@@ -62,7 +54,11 @@ static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_unit_expert
   add_option(app,
              "--low_phy_dl_throttling",
              config.lphy_dl_throttling,
-             "Throttles the lower PHY DL baseband generation. The range is (0, 1). Set it to zero to disable it.")
+             "System time-based throttling.\n"
+             "Determines a minimum baseband processor period time between downlink packets. It is expressed as a \n"
+             "fraction of the time equivalent to the number of samples in the baseband buffer. Set to 0.9 to ensure \n"
+             "that the downlink packets are processed with a minimum period of 90% of the buffer duration.\n"
+             "Set to zero to disable this feature.")
       ->capture_default_str();
   add_option(app,
              "--tx_mode",
@@ -77,19 +73,15 @@ static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_unit_expert
   add_option(app,
              "--power_ramping_time_us",
              config.power_ramping_time_us,
-             "Specifies the power ramping time in microseconds, it proactively initiates the transmission and "
+             "Specifies the power ramping time in microseconds, it proactively initiates the transmission and \n"
              "mitigates transient effects.")
       ->capture_default_str();
-  add_option(app,
-             "--dl_buffer_size_policy",
-             config.dl_buffer_size_policy,
-             "Selects the size policy of the baseband buffers that pass DL samples from the lower PHY to the radio.")
-      ->capture_default_str()
-      ->check(buffer_size_policy_check);
 }
 
 static void configure_cli11_ru_sdr_args(CLI::App& app, ru_sdr_unit_config& config)
 {
+  static const char* time_format = "%Y-%m-%d %H:%M:%S";
+
   add_option(app, "--srate", config.srate_MHz, "Sample rate in MHz")->capture_default_str();
   add_option(app, "--device_driver", config.device_driver, "Device driver name")->capture_default_str();
   add_option(app, "--device_args", config.device_arguments, "Optional device arguments")->capture_default_str();
@@ -127,6 +119,45 @@ static void configure_cli11_ru_sdr_args(CLI::App& app, ru_sdr_unit_config& confi
         return IntegerValidator(value);
       })
       ->default_str("auto");
+  add_option_function<std::string>(
+      app,
+      "--start_time",
+      [&config](std::string value) {
+        //
+        if (value.empty()) {
+          config.start_time = std::nullopt;
+          return;
+        }
+
+        //
+        std::tm            tm;
+        std::istringstream ss(value);
+        ss >> std::get_time(&tm, time_format);
+
+        if (ss.fail()) {
+          config.start_time = std::nullopt;
+          return;
+        }
+
+        config.start_time.emplace(std::chrono::system_clock::from_time_t(std::mktime(&tm)));
+      },
+      "Optional radio start time.\n"
+      "The time must be with format %Y-%m-%d %H:%M:%S.")
+      ->check([](std::string value) -> std::string {
+        // Try parsing the time.
+        std::tm            tm;
+        std::istringstream ss(value);
+        ss >> std::get_time(&tm, time_format);
+
+        if (ss.fail()) {
+          return fmt::format(
+              "The starting time '{}' format does not match the expected format: '{}'.\n", value, time_format);
+        }
+
+        // Success.
+        return {};
+      })
+      ->default_str("auto");
 
   // Amplitude control configuration.
   CLI::App* amplitude_control_subcmd = add_subcommand(app, "amplitude_control", "Amplitude control parameters");
@@ -153,12 +184,6 @@ static void configure_cli11_cell_affinity_args(CLI::App& app, ru_sdr_unit_cpu_af
 
   add_option_function<std::string>(
       app,
-      "--l1_ul_cpus",
-      [&config](const std::string& value) { parse_affinity_mask(config.l1_ul_cpu_cfg.mask, value, "l1_ul_cpus"); },
-      "CPU cores assigned to L1 uplink tasks");
-
-  add_option_function<std::string>(
-      app,
       "--l1_dl_pinning",
       [&config](const std::string& value) {
         config.l1_dl_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
@@ -167,17 +192,6 @@ static void configure_cli11_cell_affinity_args(CLI::App& app, ru_sdr_unit_cpu_af
         }
       },
       "Policy used for assigning CPU cores to L1 downlink tasks");
-
-  add_option_function<std::string>(
-      app,
-      "--l1_ul_pinning",
-      [&config](const std::string& value) {
-        config.l1_ul_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
-        if (config.l1_ul_cpu_cfg.pinning_policy == sched_affinity_mask_policy::last) {
-          report_error("Incorrect value={} used in {} property", value, "l1_ul_pinning");
-        }
-      },
-      "Policy used for assigning CPU cores to L1 uplink tasks");
 
   add_option_function<std::string>(
       app,
@@ -206,28 +220,31 @@ static void configure_cli11_lower_phy_threads_args(CLI::App& app, lower_phy_thre
           execution_profile = lower_phy_thread_profile::single;
         } else if (value == "dual") {
           execution_profile = lower_phy_thread_profile::dual;
-        } else if (value == "quad") {
-          execution_profile = lower_phy_thread_profile::quad;
+        } else if (value == "triple") {
+          execution_profile = lower_phy_thread_profile::triple;
         }
       },
-      "Lower physical layer executor profile [single, dual, quad].")
+      "Lower physical layer executor profile [single, dual, triple].\n"
+      " - single: one task worker for all the lower physical layer task executors.\n"
+      " - dual: two task workers - one for the downlink and one for the uplink.\n"
+      " - triple: dedicated task workers for each of the subtasks (demodulation, reception and transmission).")
       ->check([](const std::string& value) -> std::string {
-        if ((value == "single") || (value == "dual") || (value == "quad")) {
+        if ((value == "single") || (value == "dual") || (value == "triple")) {
           return "";
         }
 
-        return "Invalid executor profile. Valid profiles are: single, dual and quad.";
+        return "Invalid executor profile. Valid profiles are: single, dual, and triple.";
       })
       ->default_function([&execution_profile]() -> std::string {
         switch (execution_profile) {
           case lower_phy_thread_profile::blocking:
             return "blocking";
-          case lower_phy_thread_profile::dual:
-            return "dual";
-          case lower_phy_thread_profile::quad:
-            return "quad";
           case lower_phy_thread_profile::single:
             return "single";
+          case lower_phy_thread_profile::dual:
+            return "dual";
+          case lower_phy_thread_profile::triple:
+            return "triple";
           default:
             break;
         }

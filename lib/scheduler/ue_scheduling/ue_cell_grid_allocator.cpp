@@ -412,7 +412,7 @@ ue_cell_grid_allocator::allocate_dl_grant(const ue_retx_dl_grant_request& reques
   }
 
   // Compute the corresponding CRBs.
-  constexpr static search_space_id      ue_ded_ss_id = to_search_space_id(2);
+  static constexpr search_space_id      ue_ded_ss_id = to_search_space_id(2);
   const auto&                           ss_info      = request.user.get_cc().cfg().search_space(ue_ded_ss_id);
   std::pair<crb_interval, crb_interval> crbs;
   if (request.interleaving_enabled) {

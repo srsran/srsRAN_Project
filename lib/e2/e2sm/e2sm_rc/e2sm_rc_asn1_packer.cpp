@@ -49,7 +49,7 @@ e2sm_rc_asn1_packer::handle_packed_e2sm_action_definition(const srsran::byte_buf
   asn1::cbit_ref bref(action_definition);
   if (std::get<asn1::e2sm::e2sm_rc_action_definition_s>(action_def.action_definition).unpack(bref) !=
       asn1::SRSASN_SUCCESS) {
-    printf("Failed to unpack E2SM RC Action Definition\n");
+    fmt::println("Failed to unpack E2SM RC Action Definition");
   }
   return action_def;
 }
@@ -70,12 +70,12 @@ e2sm_rc_asn1_packer::handle_packed_ric_control_request(const asn1::e2ap::ric_ctr
   asn1::cbit_ref bref_msg(req->ric_ctrl_msg);
   if (std::get<asn1::e2sm::e2sm_rc_ctrl_hdr_s>(ric_control_request.request_ctrl_hdr).unpack(bref_hdr) !=
       asn1::SRSASN_SUCCESS) {
-    printf("Failed to unpack E2SM RC Control Request Header\n");
+    fmt::println("Failed to unpack E2SM RC Control Request Header");
   }
 
   if (std::get<asn1::e2sm::e2sm_rc_ctrl_msg_s>(ric_control_request.request_ctrl_msg).unpack(bref_msg) !=
       asn1::SRSASN_SUCCESS) {
-    printf("Failed to unpack E2SM RC Control Request Message\n");
+    fmt::println("Failed to unpack E2SM RC Control Request Message");
   }
 
   if (ric_control_request.ric_ctrl_ack_request_present) {
@@ -97,10 +97,10 @@ e2_ric_control_response e2sm_rc_asn1_packer::pack_ric_control_response(const e2s
       srsran::byte_buffer buf;
       asn1::bit_ref       bref(buf);
       if (std::get<e2sm_rc_ctrl_outcome_s>(e2sm_response.ric_ctrl_outcome).pack(bref) != asn1::SRSASN_SUCCESS) {
-        printf("Failed to pack E2SM RC RIC Control Outcome (Ack)\n");
+        fmt::println("Failed to pack E2SM RC RIC Control Outcome (Ack)");
       }
       if (!e2_control_response.ack->ric_ctrl_outcome.resize(buf.length())) {
-        printf("Failed to resize E2SM RC RIC Control Outcome (Ack)\n");
+        fmt::println("Failed to resize E2SM RC RIC Control Outcome (Ack)");
         return {};
       }
       std::copy(buf.begin(), buf.end(), e2_control_response.ack->ric_ctrl_outcome.begin());
@@ -111,10 +111,10 @@ e2_ric_control_response e2sm_rc_asn1_packer::pack_ric_control_response(const e2s
       srsran::byte_buffer buf;
       asn1::bit_ref       bref(buf);
       if (std::get<e2sm_rc_ctrl_outcome_s>(e2sm_response.ric_ctrl_outcome).pack(bref) != asn1::SRSASN_SUCCESS) {
-        printf("Failed to pack E2SM RC RIC Control Outcome (Failure)\n");
+        fmt::println("Failed to pack E2SM RC RIC Control Outcome (Failure)");
       }
       if (!e2_control_response.failure->ric_ctrl_outcome.resize(buf.length())) {
-        printf("Failed to resize E2SM RC RIC Control Outcome (Failure)\n");
+        fmt::println("Failed to resize E2SM RC RIC Control Outcome (Failure)");
         return {};
       }
       std::copy(buf.begin(), buf.end(), e2_control_response.failure->ric_ctrl_outcome.begin());
@@ -162,12 +162,12 @@ asn1::unbounded_octstring<true> e2sm_rc_asn1_packer::pack_ran_function_descripti
   srsran::byte_buffer buf;
   asn1::bit_ref       bref(buf);
   if (ran_function_desc.pack(bref) != asn1::SRSASN_SUCCESS) {
-    printf("Failed to pack E2SM RC RAN Function Description\n");
+    fmt::println("Failed to pack E2SM RC RAN Function Description");
     return ran_function_description;
   }
 
   if (!ran_function_description.resize(buf.length())) {
-    printf("Failed to resize E2SM RC RAN Function Description\n");
+    fmt::println("Failed to resize E2SM RC RAN Function Description");
     return ran_function_description;
   }
   std::copy(buf.begin(), buf.end(), ran_function_description.begin());

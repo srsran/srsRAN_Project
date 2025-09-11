@@ -32,12 +32,13 @@ class task_executor;
 
 /// Configuration of the Open Fronthaul RU executor mapper.
 struct ru_ofh_executor_mapper_config {
+  /// Number of sectors.
   unsigned nof_sectors;
-  /// Set of executors dedicated for downlink processing in the configured sectors.
-  std::vector<task_executor*> downlink_executors;
-  /// Set of executors dedicated for uplink processing in the configured sectors.
-  std::vector<task_executor*> uplink_executors;
-  /// Set of executors dedicated for Ethernet messages reception and transmission in all configured sectors.
+  /// Executor dedicated to IQ sample compression and OFH message serialization.
+  task_executor* downlink_executor;
+  /// Executor dedicated to IQ sample decompression and OFH message deserialization.
+  task_executor* uplink_executor;
+  /// Set of executors dedicated to Ethernet messages reception and transmission for all configured sectors.
   std::vector<task_executor*> txrx_executors;
   /// A single timing executor for all sectors.
   task_executor* timing_executor = nullptr;

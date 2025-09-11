@@ -55,8 +55,8 @@ public:
   // See interface for documentation.
   void on_configuration_parameters_autoderivation(CLI::App& app) override;
 
-  // See interface for documentation.
-  bool on_configuration_validation(const os_sched_affinity_bitmask& available_cpus) const;
+  /// Validates the configuration of this application unit. Returns true on success, otherwise false.
+  bool on_configuration_validation() const;
 
   // See interface for documentation.
   void on_loggers_registration() override;

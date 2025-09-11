@@ -89,8 +89,9 @@ std::optional<unsigned> ldpc_decoder_impl::decode(bit_buffer&                   
   // Determine input length.
   unsigned input_size = std::distance(input.begin(), last);
 
-  // The input meaningful number of bits must contain the message length number of bits.
-  if (input_size < message_length) {
+  // The input meaningful number of bits must contain the message length number of bits to successfully decode the
+  // codeblock.
+  if ((input_size < message_length) && !cfg.algorithm_conf.force_decoding) {
     // If the codeblock CRC check is external, set all bits to one (so that the CRC will fail).
     if (crc == nullptr) {
       output.one();

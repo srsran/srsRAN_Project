@@ -39,6 +39,8 @@ public:
   void format(detail::log_entry_metadata&& metadata, fmt::memory_buffer& buffer) override;
 
 private:
+  virtual void format_metadata(const detail::log_entry_metadata& metadata, fmt::memory_buffer& buffer) {}
+
   void format_context_begin(const detail::log_entry_metadata& md,
                             fmt::string_view                  ctx_name,
                             unsigned                          size,
@@ -106,6 +108,16 @@ private:
   /// Flags that the formatting should take place into a single line.
   bool               do_one_line_ctx_format = false;
   std::vector<scope> scope_stack;
+};
+
+/// Text formater that adds context.
+class contextual_text_formatter : public text_formatter
+{
+public:
+  std::unique_ptr<log_formatter> clone() const override;
+
+private:
+  void format_metadata(const detail::log_entry_metadata& metadata, fmt::memory_buffer& buffer) override;
 };
 
 } // namespace srslog

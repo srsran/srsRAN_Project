@@ -46,7 +46,7 @@ struct pdcch_type0_css_coreset_description {
 };
 
 /// Reserved CORESET for Type0-PDCCH CSS.
-static constexpr pdcch_type0_css_coreset_description PDCCH_TYPE0_CSS_CORESET_RESERVED =
+constexpr pdcch_type0_css_coreset_description PDCCH_TYPE0_CSS_CORESET_RESERVED =
     {ssb_coreset0_mplex_pattern::mplex_invalid, 0, 0, 0};
 
 /// \brief Get the CORESET configuration for Type0-PDCCH CSS.

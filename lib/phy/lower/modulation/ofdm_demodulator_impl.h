@@ -104,17 +104,17 @@ private:
   /// Cyclic prefix type.
   cyclic_prefix cp;
   /// Instance of symbol demodulator.
-  ofdm_symbol_demodulator_impl symbol_demodulator;
+  std::unique_ptr<ofdm_symbol_demodulator> symbol_demodulator;
 
 public:
   /// \brief Constructs an OFDM slot demodulator.
-  /// \param[in] common_config Provides specific configuration parameters from the factory.
-  /// \param[in] ofdm_config Provides generic OFDM configuration parameters.
-  ofdm_slot_demodulator_impl(ofdm_demodulator_common_configuration& common_config,
-                             const ofdm_demodulator_configuration&  ofdm_config) :
-    cp(ofdm_config.cp), symbol_demodulator(common_config, ofdm_config)
+  /// \param[in] ofdm_config       OFDM factory parameters.
+  /// \param[in] symbol_modulator_ OFDM symbol demodulator instance.
+  ofdm_slot_demodulator_impl(const ofdm_demodulator_configuration&    ofdm_config,
+                             std::unique_ptr<ofdm_symbol_demodulator> symbol_demodulator_) :
+    cp(ofdm_config.cp), symbol_demodulator(std::move(symbol_demodulator_))
   {
-    // Do nothing.
+    srsran_assert(symbol_demodulator, "Invalid OFDM symbol demodulator.");
   }
 
   // See interface for documentation;

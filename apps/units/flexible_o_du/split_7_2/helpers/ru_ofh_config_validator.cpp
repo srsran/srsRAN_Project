@@ -25,35 +25,6 @@
 
 using namespace srsran;
 
-static bool validate_expert_execution_unit_config(const ru_ofh_unit_expert_execution_config& config,
-                                                  const os_sched_affinity_bitmask&           available_cpus)
-{
-  auto validate_cpu_range = [](const os_sched_affinity_bitmask& allowed_cpus_mask,
-                               const os_sched_affinity_bitmask& mask,
-                               const std::string&               name) {
-    auto invalid_cpu_ids = mask.subtract(allowed_cpus_mask);
-    if (not invalid_cpu_ids.empty()) {
-      fmt::print("CPU cores {} selected in '{}' option doesn't belong to available cpuset.\n", invalid_cpu_ids, name);
-      return false;
-    }
-
-    return true;
-  };
-
-  for (const auto& mask : config.txrx_affinities) {
-    if (!validate_cpu_range(available_cpus, mask, "ru_txrx_cpus")) {
-      return false;
-    }
-  }
-
-  for (const auto& cell : config.cell_affinities) {
-    if (!validate_cpu_range(available_cpus, cell.ru_cpu_cfg.mask, "ru_cpus")) {
-      return false;
-    }
-  }
-  return true;
-}
-
 /// Validates that the given ports are not duplicated. Returns true on success, otherwise false.
 template <typename T>
 [[gnu::noinline]] static bool validate_duplicated_ports(span<const T> ports)
@@ -246,9 +217,4 @@ bool srsran::validate_ru_ofh_config(const ru_ofh_unit_config&                 co
   }
 
   return true;
-}
-
-bool srsran::validate_ru_ofh_cpus(const ru_ofh_unit_config& config, const os_sched_affinity_bitmask& available_cpus)
-{
-  return validate_expert_execution_unit_config(config.expert_execution_cfg, available_cpus);
 }

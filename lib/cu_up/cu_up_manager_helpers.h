@@ -80,6 +80,18 @@ inline void process_successful_pdu_resource_modification_outcome(
       e1ap_up_params_item up_param_item;
       up_param_item.up_tnl_info = drb_modified_item.gtp_tunnel;
       e1ap_mod_item.ul_up_transport_params.push_back(up_param_item);
+
+      if (drb_modified_item.pdcp_sn_status.has_value()) {
+        auto&                    status_in = drb_modified_item.pdcp_sn_status.value();
+        e1ap_pdcp_sn_status_info status_out;
+        status_out.pdcp_status_transfer_dl.pdcp_sn             = status_in.dl_count.sn;
+        status_out.pdcp_status_transfer_dl.hfn                 = status_in.dl_count.hfn;
+        status_out.pdcp_status_transfer_ul.count_value.pdcp_sn = status_in.ul_count.sn;
+        status_out.pdcp_status_transfer_ul.count_value.hfn     = status_in.ul_count.hfn;
+        // TODO: fill optional receive_status_of_pdcp_sdu with bit string according to RX status of SDUs
+        e1ap_mod_item.pdcp_sn_status_info = status_out;
+      }
+
       modified_item.drb_modified_list_ng_ran.emplace(e1ap_mod_item.drb_id, e1ap_mod_item);
     }
 
@@ -211,7 +223,7 @@ fill_test_mode_bearer_context_setup_request(cu_up_test_mode_config test_mode_cfg
 }
 
 inline e1ap_bearer_context_modification_request
-fill_test_mode_bearer_context_modification_request(e1ap_bearer_context_setup_response setup_resp)
+fill_test_mode_bearer_context_modification_request(const e1ap_bearer_context_setup_response& setup_resp)
 {
   // Modifiy bearer
   e1ap_bearer_context_modification_request bearer_modify = {};

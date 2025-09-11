@@ -46,6 +46,15 @@ public:
 
   /// \brief Gets task executor used to parallelize the reception of N2 messages.
   virtual task_executor& n2_rx_executor() = 0;
+
+  /// \brief Gets task executor used to parallelize the reception of F1-C messages.
+  virtual task_executor& f1c_rx_executor() = 0;
+
+  /// \brief Gets task executor used to parallelize the reception of E1 messages.
+  virtual task_executor& e1_rx_executor() = 0;
+
+  /// \brief Gets task executor used to parallelize the reception of F1-C messages.
+  virtual task_executor& e2_rx_executor() = 0;
 };
 
 /// Configuration of a cu_cp_executor_mapper that instantiates strands associated with the same thread pool.

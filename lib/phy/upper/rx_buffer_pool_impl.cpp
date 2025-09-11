@@ -34,7 +34,7 @@
 using namespace srsran;
 
 unique_rx_buffer
-rx_buffer_pool_impl::reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks, bool new_data)
+rx_buffer_pool_impl::reserve(slot_point slot, trx_buffer_identifier id, unsigned nof_codeblocks, bool new_data)
 {
   // No more reservations are allowed if the pool is stopped.
   if (stopped.load(std::memory_order_acquire)) {
@@ -101,7 +101,7 @@ rx_buffer_pool_impl::reserve(const slot_point& slot, trx_buffer_identifier id, u
   return unique_rx_buffer(buffer);
 }
 
-void rx_buffer_pool_impl::run_slot(const slot_point& slot)
+void rx_buffer_pool_impl::run_slot(slot_point slot)
 {
   // Predicate for finding available buffers.
   auto pred = [](trx_buffer_identifier id) { return id != trx_buffer_identifier::invalid(); };

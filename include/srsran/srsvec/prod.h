@@ -32,9 +32,9 @@ namespace srsvec {
 
 ///@{
 /// \brief Element-wise product of two vectors.
-/// \param[out]  Output vector.
-/// \param[in]   First input vector.
-/// \param[in]   Second input vector.
+/// \param[out]  z Output vector.
+/// \param[in]   x First input vector.
+/// \param[in]   y Second input vector.
 /// \warning An assertion is triggered if input and output vectors have different sizes.
 void prod(span<cf_t> z, span<const cf_t> x, span<const cf_t> y);
 void prod(span<cf_t> z, span<const cf_t> x, span<const float> y);
@@ -45,9 +45,9 @@ void prod(span<int16_t> z, span<const int16_t> x, span<const int16_t> y);
 
 /// \brief Element-wise product of two vectors, after taking the complex conjugate of the second one.
 ///
-/// \param[out]  Output vector.
-/// \param[in]   First input vector.
-/// \param[in]   Second input vector - conjugated before multiplication.
+/// \param[out]  z Output vector.
+/// \param[in]   x First input vector.
+/// \param[in]   y Second input vector - conjugated before multiplication.
 /// \warning An assertion is triggered if input and output vectors have different sizes.
 void prod_conj(span<cf_t> z, span<const cf_t> x, span<const cf_t> y);
 

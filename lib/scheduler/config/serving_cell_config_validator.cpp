@@ -25,7 +25,7 @@
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/ran/csi_rs/csi_rs_config_helpers.h"
 #include "srsran/ran/pdcch/pdcch_candidates.h"
-#include "srsran/ran/pucch/pucch_info.h"
+#include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/scheduler/config/sched_cell_config_helpers.h"
 #include "srsran/scheduler/sched_consts.h"
 #include "srsran/support/config/validator_helpers.h"
@@ -328,13 +328,10 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
                harq_res_in_set_1_for_sr->format == pucch_format::FORMAT_2 and
                std::holds_alternative<pucch_format_2_3_cfg>(harq_res_in_set_1_for_sr->format_params),
            "With Format 0, PUCCH resource set 1 should contain a reserved HARQ-ACK resource for SR slots of Format 2");
-    const auto& sr_pucch_params_cfg = std::get<pucch_format_0_cfg>(pucch_res_sr->format_params);
-    const auto& harq_res_in_set_1_for_sr_params =
-        std::get<pucch_format_2_3_cfg>(harq_res_in_set_1_for_sr->format_params);
     VERIFY(harq_res_in_set_1_for_sr->starting_prb == pucch_res_sr->starting_prb and
                harq_res_in_set_1_for_sr->second_hop_prb == pucch_res_sr->second_hop_prb and
-               harq_res_in_set_1_for_sr_params.starting_sym_idx == sr_pucch_params_cfg.starting_sym_idx and
-               harq_res_in_set_1_for_sr_params.nof_symbols == sr_pucch_params_cfg.nof_symbols,
+               harq_res_in_set_1_for_sr->starting_sym_idx == pucch_res_sr->starting_sym_idx and
+               harq_res_in_set_1_for_sr->nof_symbols == pucch_res_sr->nof_symbols,
            "With Format 0, PUCCH resource set 1 should contain a resource Format 2 reserved for HARQ-ACK with symbols "
            " and starting PRBs that match the SR resource");
   }
@@ -413,13 +410,10 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
                  harq_res_in_set_0_for_csi->format == pucch_format::FORMAT_0 and
                  std::holds_alternative<pucch_format_0_cfg>(harq_res_in_set_0_for_csi->format_params),
              "With Format 0, PUCCH resource set 0 should contain a F2 HARQ-ACK resource reserved for CSI slots");
-      const auto& harq_res_in_set_0_for_csi_params =
-          std::get<pucch_format_0_cfg>(harq_res_in_set_0_for_csi->format_params);
-      const auto& csi_pucch_res_params = std::get<pucch_format_2_3_cfg>(csi_pucch_res->format_params);
       VERIFY(harq_res_in_set_0_for_csi->starting_prb == csi_pucch_res->starting_prb and
                  harq_res_in_set_0_for_csi->second_hop_prb == csi_pucch_res->second_hop_prb and
-                 harq_res_in_set_0_for_csi_params.starting_sym_idx == csi_pucch_res_params.starting_sym_idx and
-                 harq_res_in_set_0_for_csi_params.nof_symbols == csi_pucch_res_params.nof_symbols,
+                 harq_res_in_set_0_for_csi->starting_sym_idx == csi_pucch_res->starting_sym_idx and
+                 harq_res_in_set_0_for_csi->nof_symbols == csi_pucch_res->nof_symbols,
              "With Format 0, PUCCH resource set 0 should contain a F0 resource reserved for HARQ-ACK with symbols "
              " and starting PRBs that match the CSI resource");
     }

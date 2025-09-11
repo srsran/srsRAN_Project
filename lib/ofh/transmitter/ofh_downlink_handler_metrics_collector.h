@@ -43,6 +43,14 @@ public:
   {
   }
 
+  /// Updates the number of late messages (messages that were not transmitted) of the Control-Plane downlink by the
+  /// given value.
+  void update_cp_dl_lates(unsigned nof_lates) { nof_late_cp_dl.fetch_add(nof_lates, std::memory_order_relaxed); }
+
+  /// Updates the number of late messages (messages that were not transmitted) of the Control-Plane downlink by the
+  /// given value.
+  void update_up_dl_lates(unsigned nof_lates) { nof_late_up_dl.fetch_add(nof_lates, std::memory_order_relaxed); }
+
   /// Collects downlink handler metrics.
   void collect_metrics(transmitter_dl_metrics& metrics)
   {
@@ -53,12 +61,16 @@ public:
       df_uplane_collector->collect_metrics(metrics.dl_up_metrics);
     }
     metrics.nof_late_dl_grids = window_checker.get_nof_lates_and_reset();
+    metrics.nof_late_cp_dl    = nof_late_cp_dl.exchange(0, std::memory_order_relaxed);
+    metrics.nof_late_up_dl    = nof_late_up_dl.exchange(0, std::memory_order_relaxed);
   }
 
 private:
   data_flow_message_encoding_metrics_collector* df_cplane_collector;
   data_flow_message_encoding_metrics_collector* df_uplane_collector;
   tx_window_checker&                            window_checker;
+  std::atomic<uint32_t>                         nof_late_cp_dl = {0};
+  std::atomic<uint32_t>                         nof_late_up_dl = {0};
 };
 
 } // namespace ofh

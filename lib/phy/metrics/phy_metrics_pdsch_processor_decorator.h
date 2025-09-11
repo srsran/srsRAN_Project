@@ -48,13 +48,16 @@ public:
                static_vector<shared_transport_block, MAX_NOF_TRANSPORT_BLOCKS> data,
                const pdu_t&                                                    pdu) override
   {
+    // Save reference to the notifier for this transmission. It must be nullptr to ensure that the processor was
+    // released from previous processing.
+    [[maybe_unused]] pdsch_processor_notifier* prev_proc_notifier = std::exchange(processor_notifier, &notifier_);
+    srsran_assert(prev_proc_notifier == nullptr, "The PDSCH processor is in use.");
+
     // Prepare transmission.
-    start_time            = std::chrono::high_resolution_clock::now();
-    elapsed_return_ns     = {};
-    elapsed_completion_ns = {};
-    processor_notifier    = &notifier_;
-    slot                  = pdu.slot;
-    tbs                   = units::bytes(data.front().get_buffer().size());
+    start_time                       = std::chrono::high_resolution_clock::now();
+    elapsed_completion_and_return_ns = {};
+    slot                             = pdu.slot;
+    tbs                              = units::bytes(data.front().get_buffer().size());
 
     // Use scoped resource usage class to measure CPU usage of this block.
     resource_usage_utils::measurements measurements;
@@ -63,7 +66,8 @@ public:
       base->process(grid, *this, data, pdu);
     }
     self_cpu_usage_ns = measurements.duration.count();
-    elapsed_return_ns = std::chrono::nanoseconds(std::chrono::high_resolution_clock::now() - start_time).count();
+    elapsed_completion_and_return_ns |=
+        std::min(std::chrono::nanoseconds(std::chrono::high_resolution_clock::now() - start_time).count(), 0xffffffffL);
 
     report_metrics();
   }
@@ -72,18 +76,27 @@ private:
   // See pdsch_processor_notifier interface for documentation.
   void on_finish_processing() override
   {
-    srsran_assert(processor_notifier != nullptr, "Invalid PDSCH processor notifier.");
-    processor_notifier->on_finish_processing();
-    processor_notifier = nullptr;
+    // Update elapsed time.
+    elapsed_completion_and_return_ns |=
+        std::min(std::chrono::nanoseconds(std::chrono::high_resolution_clock::now() - start_time).count(), 0xffffffffL)
+        << 32;
 
-    elapsed_completion_ns = std::chrono::nanoseconds(std::chrono::high_resolution_clock::now() - start_time).count();
-
+    // Report metrics.
     report_metrics();
   }
 
+  /// Reports the PDSCH processing metrics if the underlying PDSCH processor has returned and notified the completion of
+  /// the processing.
   void report_metrics()
   {
+    // The processing is considered complete if the processor has returned and notified the completion.
+    uint64_t current_elapsed_completion_and_return_ns = elapsed_completion_and_return_ns;
+    uint64_t elapsed_return_ns(current_elapsed_completion_and_return_ns & 0xffffffff);
+    uint64_t elapsed_completion_ns(current_elapsed_completion_and_return_ns >> 32);
     if ((elapsed_return_ns == 0) || (elapsed_completion_ns == 0)) {
+      return;
+    }
+    if (!elapsed_completion_and_return_ns.compare_exchange_weak(current_elapsed_completion_and_return_ns, 0)) {
       return;
     }
 
@@ -93,17 +106,25 @@ private:
                                 .elapsed_return      = std::chrono::nanoseconds(elapsed_return_ns),
                                 .elapsed_completion  = std::chrono::nanoseconds(elapsed_completion_ns),
                                 .self_cpu_time_usage = std::chrono::nanoseconds(self_cpu_usage_ns)});
+
+    // Notify the completion of the PDSCH processing. From now on, the processor might become available.
+    pdsch_processor_notifier* current_proc_notifier = std::exchange(processor_notifier, nullptr);
+    srsran_assert(current_proc_notifier != nullptr, "PDSCH processor is still busy.");
+    current_proc_notifier->on_finish_processing();
   }
 
-  std::chrono::high_resolution_clock::time_point start_time            = {};
-  std::atomic<uint64_t>                          elapsed_return_ns     = {};
-  std::atomic<uint64_t>                          elapsed_completion_ns = {};
-  std::atomic<uint64_t>                          self_cpu_usage_ns     = {};
+  std::chrono::high_resolution_clock::time_point start_time                       = {};
+  std::atomic<uint64_t>                          elapsed_completion_and_return_ns = {};
+  std::atomic<uint64_t>                          self_cpu_usage_ns                = {};
+  pdsch_processor_notifier*                      processor_notifier               = nullptr;
   slot_point                                     slot;
   units::bytes                                   tbs;
-  pdsch_processor_notifier*                      processor_notifier = nullptr;
   std::unique_ptr<pdsch_processor>               base;
   pdsch_processor_metric_notifier&               notifier;
+
+  // Makes sure atomics are lock free.
+  static_assert(std::atomic<decltype(elapsed_completion_and_return_ns)>::is_always_lock_free);
+  static_assert(std::atomic<decltype(self_cpu_usage_ns)>::is_always_lock_free);
 };
 
 } // namespace srsran

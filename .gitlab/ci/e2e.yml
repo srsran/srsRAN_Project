@@ -8,7 +8,7 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "22"
+    ref: "23"
     file: .gitlab/ci-shared/setup/all.yml
   - local: .gitlab/ci-shared/e2e.yml
 
@@ -102,6 +102,10 @@ smoke zmq:
     RETINA_LAUNCHER_ARGS: -x ${EXTRA_SMOKE_ZMQ}
     RETINA_PARAM_ARGS: gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True
     E2E_LOG_LEVEL: info
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG_LAB_BCN"
+    KUBECONFIG_VAR_NAME_EXTRA: ""
+  tags:
+    - new-retina-e2e-amd64
   before_script:
     - |
       export TESTBED=zmq
@@ -125,6 +129,10 @@ smoke zmq:
   variables:
     TESTBED: zmq
     E2E_LOG_LEVEL: info
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG_LAB_BCN"
+    KUBECONFIG_VAR_NAME_EXTRA: ""
+  tags:
+    - new-retina-e2e-amd64
   needs:
     - job: basic relwithdeb
       artifacts: true
@@ -228,22 +236,15 @@ amari 8UE:
   timeout: 4h
   parallel:
     matrix:
-      - E2E_FILE_OR_DIR: tests/reestablishment.py
-        KEYWORDS: sequentially
-      - E2E_FILE_OR_DIR: tests/handover.py
-        KEYWORDS: sequentially
       - E2E_FILE_OR_DIR: tests/attach_detach.py
-
-amari 8UE beta:
-  extends: amari 8UE
-  parallel:
-    matrix:
+      - E2E_FILE_OR_DIR: tests/reestablishment.py
+        KEYWORDS: sequentially
       - E2E_FILE_OR_DIR: tests/reestablishment.py
         KEYWORDS: "not sequentially"
       - E2E_FILE_OR_DIR: tests/handover.py
+        KEYWORDS: sequentially
+      - E2E_FILE_OR_DIR: tests/handover.py
         KEYWORDS: "not sequentially"
-  when: manual
-  allow_failure: true
 
 amari 32UE:
   extends: .zmq
@@ -279,11 +280,9 @@ amari 32UE 2x2 mimo:
 
 amari 64UE 2x2 mimo:
   extends: .zmq
-  when: manual
-  allow_failure: true
   variables:
     E2E_FILE_OR_DIR: tests/iperf.py
-    MARKERS: "64"
+    KEYWORDS: "64"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
 
 cudu amari 8UE:
@@ -291,10 +290,12 @@ cudu amari 8UE:
   timeout: 2h
   variables:
     TESTBED: zmq_cudu
-    E2E_FILE_OR_DIR: tests/reestablishment.py
-    KEYWORDS: sequentially
     MARKERS: "zmq and not smoke"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+  parallel:
+    matrix:
+      - E2E_FILE_OR_DIR: tests/reestablishment.py
+        KEYWORDS: sequentially
 
 cudu amari 32UE:
   extends: .zmq
@@ -315,6 +316,18 @@ cudu amari 64UE:
     KEYWORDS: "64"
     MARKERS: "zmq and not smoke"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+
+cu2du amari 8UE:
+  extends: .zmq
+  timeout: 2h
+  variables:
+    TESTBED: zmq_cu2du
+    MARKERS: "zmq and not smoke"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+  parallel:
+    matrix:
+      - E2E_FILE_OR_DIR: tests/inter_du_handover.py
+        KEYWORDS: sequentially
 
 ric:
   extends: .zmq
@@ -350,6 +363,10 @@ test mode ue:
     MARKERS: test_mode
     KEYWORDS: test_ue
     E2E_LOG_LEVEL: warning
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG_LAB_BCN"
+    KUBECONFIG_VAR_NAME_EXTRA: ""
+  tags:
+    - new-retina-e2e-amd64
   needs:
     - job: basic relwithdeb
       artifacts: true
@@ -427,8 +444,8 @@ test mode ru acc100:
   extends: test mode ru
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
-      when: manual
-      allow_failure: true
+  when: manual
+  allow_failure: true
   variables:
     TESTBED: test_mode_acc100
     MARKERS: test_mode_acc100

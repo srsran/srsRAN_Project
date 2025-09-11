@@ -23,6 +23,8 @@
 #include "asn1_helpers.h"
 #include "cu_cp/f1ap_asn1_converters.h"
 #include "srsran/asn1/f1ap/common.h"
+#include "srsran/asn1/f1ap/f1ap_ies.h"
+#include "srsran/ran/qos/five_qi_qos_mapping.h"
 
 using namespace srsran;
 using namespace asn1::f1ap;
@@ -220,7 +222,8 @@ static f1ap_drb_info drb_info_from_f1ap_asn1(const asn1::f1ap::qos_info_c& asn1_
   f1ap_drb_info out;
 
   // TODO: Handle Dynamic 5QI.
-  const drb_info_s&               asn1_drb_info    = asn1_qos.choice_ext().value().drb_info();
+  const drb_info_s& asn1_drb_info = asn1_qos.choice_ext().value().drb_info();
+  // Convert non-dynamic 5QI descriptor.
   const non_dyn_5qi_descriptor_s& asn1_non_dyn_5qi = asn1_drb_info.drb_qos.qos_characteristics.non_dyn_5qi();
   out.drb_qos.qos_desc                             = non_dyn_5qi_descriptor{};
   non_dyn_5qi_descriptor& nondyn_5qi               = out.drb_qos.qos_desc.get_nondyn_5qi();
@@ -230,8 +233,13 @@ static f1ap_drb_info drb_info_from_f1ap_asn1(const asn1::f1ap::qos_info_c& asn1_
   if (asn1_drb_info.snssai.sd_present) {
     out.s_nssai.sd = slice_differentiator::create(asn1_drb_info.snssai.sd.to_number()).value();
   }
-  // TODO: Do not populate gbr_flow_info for non-GBR flows.
-  if (asn1_drb_info.drb_qos.gbr_qos_flow_info_present) {
+
+  const auto* five_qi_params = get_5qi_to_qos_characteristics_mapping(nondyn_5qi.five_qi);
+  const bool  is_gbr         = five_qi_params && (five_qi_params->res_type == qos_flow_resource_type::gbr ||
+                                         five_qi_params->res_type == qos_flow_resource_type::delay_critical_gbr);
+
+  // Note: As per TS 48.473, 9.3.1.45, "This IE shall be present for GBR QoS Flows only and is ignored otherwise."
+  if (is_gbr and asn1_drb_info.drb_qos.gbr_qos_flow_info_present) {
     auto& gbr     = out.drb_qos.gbr_qos_info.emplace();
     gbr.max_br_dl = asn1_drb_info.drb_qos.gbr_qos_flow_info.max_flow_bit_rate_dl;
     gbr.max_br_ul = asn1_drb_info.drb_qos.gbr_qos_flow_info.max_flow_bit_rate_ul;
@@ -332,7 +340,7 @@ static gbr_qos_flow_info_s gbr_qos_info_to_f1ap_asn1(const gbr_qos_flow_informat
 }
 
 static qos_flow_level_qos_params_s
-qos_flow_level_qos_params_to_f1ap_asn1(const qos_flow_level_qos_parameters qos_params)
+qos_flow_level_qos_params_to_f1ap_asn1(const qos_flow_level_qos_parameters& qos_params)
 {
   qos_flow_level_qos_params_s asn1_qos_params;
 
@@ -686,6 +694,16 @@ srsran::make_drbs_failed_to_be_modified_list(span<const f1ap_drb_failed_to_setup
   for (unsigned i = 0; i != failed_drbs.size(); ++i) {
     list[i].load_info_obj(ASN1_F1AP_ID_DRBS_FAILED_TO_BE_MODIFIED_ITEM);
     fill_drb_failed_item(list[i]->drbs_failed_to_be_modified_item(), failed_drbs[i]);
+  }
+  return list;
+}
+
+asn1::f1ap::serving_cell_mo_encoded_in_cgc_list_l
+srsran::make_serving_cell_mo_encoded_in_cgc_list(span<const uint8_t> serving_cell_mos)
+{
+  asn1::f1ap::serving_cell_mo_encoded_in_cgc_list_l list(serving_cell_mos.size());
+  for (unsigned i = 0; i != serving_cell_mos.size(); ++i) {
+    list[i].serving_cell_mo = serving_cell_mos[i];
   }
   return list;
 }

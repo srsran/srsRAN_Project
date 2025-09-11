@@ -154,7 +154,7 @@ private:
 
     downlink_task_executor(task_executor& executor_) : executor(executor_) {}
 
-    bool execute(task_type&& task) { return executor.execute(std::move(task)); }
+    bool defer(task_type&& task) { return executor.defer(std::move(task)); }
 
   private:
     task_executor& executor;

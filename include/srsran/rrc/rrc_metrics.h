@@ -25,6 +25,7 @@
 #include "srsran/ran/cause/common.h"
 #include "srsran/support/srsran_assert.h"
 #include <array>
+
 namespace srsran {
 
 struct rrc_connection_establishment_counter_with_cause {
@@ -38,11 +39,19 @@ struct rrc_connection_establishment_counter_with_cause {
 
   unsigned size() const { return counters_by_cause.size(); }
 
-  unsigned get_count(establishment_cause_t cause) { return counters_by_cause[static_cast<unsigned>(cause)]; }
+  unsigned get_count(establishment_cause_t cause) const { return counters_by_cause[static_cast<unsigned>(cause)]; }
 
   unsigned get_count(unsigned index) const { return counters_by_cause[index]; }
 
   establishment_cause_t get_cause(unsigned index) const { return establishment_cause_t(index); }
+
+  /// Returns a const iterator to the beginning of the container.
+  std::array<unsigned, 10>::const_iterator begin() const { return counters_by_cause.begin(); }
+  std::array<unsigned, 10>::const_iterator cbegin() const { return counters_by_cause.cbegin(); }
+
+  /// Returns a const iterator to the end of the container.
+  std::array<unsigned, 10>::const_iterator end() const { return counters_by_cause.end(); }
+  std::array<unsigned, 10>::const_iterator cend() const { return counters_by_cause.cend(); }
 
 private:
   // The RRC setup request/complete counters indexed by the establishment cause.

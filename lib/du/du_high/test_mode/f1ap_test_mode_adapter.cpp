@@ -56,6 +56,10 @@ public:
     return adapted->handle_f1_setup_request(request);
   }
   async_task<void> handle_f1_removal_request() override { return adapted->handle_f1_removal_request(); }
+  async_task<f1_reset_acknowledgement> handle_f1_reset_request(const f1_reset_request& req) override
+  {
+    return adapted->handle_f1_reset_request(req);
+  }
   async_task<gnbdu_config_update_response> handle_du_config_update(const gnbdu_config_update_request& request) override
   {
     return adapted->handle_du_config_update(request);
@@ -279,7 +283,9 @@ private:
   std::unique_ptr<f1ap_message_notifier> adapted_notif;
 };
 
-// F1-C client interface.
+} // namespace
+
+/// F1-C client interface.
 std::unique_ptr<f1ap_message_notifier>
 f1ap_test_mode_adapter::handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier)
 {
@@ -290,8 +296,6 @@ f1ap_test_mode_adapter::handle_du_connection_request(std::unique_ptr<f1ap_messag
   }
   return std::make_unique<f1ap_to_gw_pdu_interceptor>(*this);
 }
-
-} // namespace
 
 std::unique_ptr<f1ap_du> srsran::srs_du::create_du_high_f1ap(f1c_connection_client&      f1c_client_handler,
                                                              f1ap_du_configurator&       du_mng,

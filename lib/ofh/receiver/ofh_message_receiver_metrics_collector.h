@@ -32,8 +32,12 @@ namespace ofh {
 class message_receiver_metrics_collector
 {
 public:
-  explicit message_receiver_metrics_collector(bool is_enabled_) :
-    is_enabled(is_enabled_), df_uplink_metrics_collector(is_enabled), df_prach_metrics_collector(is_enabled)
+  message_receiver_metrics_collector(bool                                          is_enabled_,
+                                     data_flow_message_decoding_metrics_collector& df_uplink_metrics_collector_,
+                                     data_flow_message_decoding_metrics_collector& df_prach_metrics_collector_) :
+    is_enabled(is_enabled_),
+    df_uplink_metrics_collector(df_uplink_metrics_collector_),
+    df_prach_metrics_collector(df_prach_metrics_collector_)
   {
   }
 
@@ -53,6 +57,12 @@ public:
     df_uplink_metrics_collector.update_stats(exec_latency);
   }
 
+  /// Updates the number of skipped messages by increasing the counter the given value.
+  void update_skipped_messages(unsigned value) { nof_skipped_messages.fetch_add(value, std::memory_order_relaxed); }
+
+  /// Increases dropped messages by one.
+  void increase_dropped_messages() { nof_dropped_messages.fetch_add(1, std::memory_order_relaxed); }
+
   /// Collects message receiver performance metrics.
   void collect_metrics(message_decoding_performance_metrics& metrics)
   {
@@ -61,12 +71,24 @@ public:
 
     df_uplink_metrics_collector.collect_metrics(metrics.data_processing_metrics);
     df_prach_metrics_collector.collect_metrics(metrics.prach_processing_metrics);
+    metrics.nof_dropped_messages = nof_dropped_messages.exchange(0, std::memory_order_relaxed);
+    metrics.nof_skipped_messages = nof_skipped_messages.exchange(0, std::memory_order_relaxed);
   }
 
 private:
-  const bool                                   is_enabled;
-  data_flow_message_decoding_metrics_collector df_uplink_metrics_collector;
-  data_flow_message_decoding_metrics_collector df_prach_metrics_collector;
+  const bool                                    is_enabled;
+  data_flow_message_decoding_metrics_collector& df_uplink_metrics_collector;
+  data_flow_message_decoding_metrics_collector& df_prach_metrics_collector;
+  /// \brief Number of possible skipped OFH messages.
+  ///
+  /// A message is considered skipped when the expected sequence id does not match the  message sequence id, and the
+  /// message sequence id value is higher than expected.
+  std::atomic<unsigned> nof_skipped_messages = {0};
+  /// \brief Number of OFH messages dropped.
+  ///
+  /// A message is dropped when the expected sequence id does not match the message sequence id and the message sequence
+  /// id value is smaller than expected..
+  std::atomic<unsigned> nof_dropped_messages = {0};
 };
 
 } // namespace ofh

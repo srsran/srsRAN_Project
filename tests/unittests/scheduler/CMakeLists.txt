@@ -35,17 +35,26 @@ add_subdirectory(slicing)
 add_subdirectory(srs_scheduling)
 
 add_executable(sched_no_ue_test scheduler_no_ue_test.cpp)
-target_link_libraries(sched_no_ue_test srsran_sched
+target_link_libraries(sched_no_ue_test
+        srsran_sched
         scheduler_test_suite
         srslog
         mac_configuration_helpers
         sched_config
         sched_test_doubles
-        gtest)
+        gtest
+        gtest_main)
 add_test(sched_no_ue_test sched_no_ue_test)
 
 add_executable(pdcch_resource_allocator_test pdcch/pdcch_resource_allocator_test.cpp)
-target_link_libraries(pdcch_resource_allocator_test srsran_sched srslog mac_configuration_helpers sched_config scheduler_test_utils gtest gtest_main)
+target_link_libraries(pdcch_resource_allocator_test
+	srsran_sched
+	srslog
+	mac_configuration_helpers
+	sched_config
+	scheduler_test_utils
+	gtest
+	gtest_main)
 add_test(pdcch_resource_allocator_test pdcch_resource_allocator_test)
 
 add_executable(scheduler_test

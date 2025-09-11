@@ -92,6 +92,9 @@ struct cu_cp_unit_report_config {
                                                       ///< putting a value of -6 here results in -3dB offset.
   std::optional<unsigned> hysteresis_db;
   std::optional<unsigned> time_to_trigger_ms;
+  int                     periodic_ho_rsrp_offset =
+      -1; ///< -1 disables handovers from periodic measurements. [0..30] Note the actual value is field value * 0.5 dB.
+          ///< E.g. putting a value of -6 here results in -3dB offset.
 };
 
 struct cu_cp_unit_neighbor_cell_config_item {
@@ -142,9 +145,10 @@ struct cu_cp_unit_mobility_config {
 /// RRC specific configuration parameters.
 struct cu_cp_unit_rrc_config {
   bool force_reestablishment_fallback = false;
-  /// Timeout for RRC procedures (2 * default SRB maxRetxThreshold * t-PollRetransmit = 2 * 8 * 45ms = 720ms, see
-  /// TS 38.331 Sec 9.2.1).
-  unsigned rrc_procedure_timeout_ms = 720;
+  /// Guard time in ms that is added to the RRC procedure timeout.
+  /// NOTE: Guard time needs to be larger then SRB max retx thres * t-PollRetransmit.
+  /// (2 * default SRB maxRetxThreshold * t-PollRetransmit = 2 * 8 * 45ms = 720ms, see TS 38.331 Sec 9.2.1)
+  unsigned rrc_procedure_guard_time_ms = 1000;
 };
 
 /// Security configuration parameters.
@@ -267,11 +271,13 @@ struct cu_cp_unit_qos_config {
 
 /// Configuration to enable/disable metrics per layer.
 struct cu_cp_unit_metrics_layer_config {
+  bool enable_ngap           = false;
   bool enable_pdcp           = false;
+  bool enable_rrc            = false;
   bool enable_cu_cp_executor = false;
 
   /// Returns true if one or more layers are enabled, false otherwise.
-  bool are_metrics_enabled() const { return enable_pdcp; }
+  bool are_metrics_enabled() const { return enable_ngap || enable_pdcp || enable_rrc; }
 };
 
 /// Metrics configuration.

@@ -48,33 +48,6 @@ using namespace fapi_adaptor;
 
 namespace {
 
-class downlink_processor_dummy : public unique_downlink_processor::downlink_processor_callback
-{
-public:
-  void process_pdcch(const pdcch_processor::pdu_t& pdu) override
-  {
-    srslog::fetch_basic_logger("FAPI").warning("Could not enqueue PDCCH PDU in the downlink processor");
-  }
-  void process_pdsch(static_vector<shared_transport_block, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data,
-                     const pdsch_processor::pdu_t&                                                    pdu) override
-  {
-    srslog::fetch_basic_logger("FAPI").warning("Could not enqueue PDSCH PDU in the downlink processor");
-  }
-  void process_ssb(const ssb_processor::pdu_t& pdu) override
-  {
-    srslog::fetch_basic_logger("FAPI").warning("Could not enqueue SSB PDU in the downlink processor");
-  }
-  void process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) override
-  {
-    srslog::fetch_basic_logger("FAPI").warning("Could not enqueue NZP-CSI-RS PDU in the downlink processor");
-  }
-  void process_prs(const prs_generator_configuration& config) override
-  {
-    srslog::fetch_basic_logger("FAPI").warning("Could not enqueue PRS PDU in the downlink processor");
-  }
-  void finish_processing_pdus() override {}
-};
-
 class error_notifier_dummy : public fapi::error_message_notifier
 {
 public:
@@ -82,10 +55,6 @@ public:
 };
 
 } // namespace
-
-/// This dummy object is passed to the constructor of the FAPI-to-PHY translator as a placeholder for the actual
-/// downlink processor, which will be later set up using the downlink processor pool.
-static downlink_processor_dummy dummy_dl_processor;
 
 /// This dummy object is passed to the constructor of the FAPI-to-PHY translator as a placeholder for the actual error
 /// notifier.
@@ -132,7 +101,7 @@ fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_co
 
   // If the resource grid is not valid, all DL transmissions for this slot shall be discarded.
   if (!grid) {
-    dl_processor = unique_downlink_processor(dummy_dl_processor);
+    dl_processor = {};
     return;
   }
 
@@ -144,10 +113,8 @@ fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_co
 
   // Swap the DL processor with a dummy if it failed to configure the resource grid.
   if (!dl_processor.is_valid()) {
-    dl_processor = unique_downlink_processor(dummy_dl_processor);
+    dl_processor = {};
   }
-
-  initialized = true;
 }
 
 fapi_to_phy_translator::slot_based_upper_phy_controller&
@@ -156,15 +123,8 @@ fapi_to_phy_translator::slot_based_upper_phy_controller::operator=(
 {
   using std::swap;
   swap(slot, other.slot);
-  swap(initialized, other.initialized);
   swap(dl_processor, other.dl_processor);
   return *this;
-}
-
-fapi_to_phy_translator::slot_based_upper_phy_controller::~slot_based_upper_phy_controller()
-{
-  dl_processor = unique_downlink_processor(dummy_dl_processor);
-  initialized  = false;
 }
 
 namespace {
@@ -376,6 +336,15 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
 
   // Get controller for the current slot.
   slot_based_upper_phy_controller& controller = slot_controller_mngr.get_controller(slot);
+  // Check if the controller is valid.
+  if (!controller.is_initialized()) {
+    logger.warning("Sector#{}: Could not acquire downlink processor for slot {}.{}", sector_id, msg.sfn, msg.slot);
+    // Raise out of sync error.
+    error_notifier.get().on_error_indication(
+        fapi::build_msg_error_indication(msg.sfn, msg.slot, fapi::message_type_id::dl_tti_request));
+
+    return;
+  }
 
   // Translate the downlink PDUs.
   expected<downlink_pdus> pdus =
@@ -616,7 +585,8 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
                    msg.sfn,
                    msg.slot);
     // Raise out of message transmit error.
-    error_notifier.get().on_error_indication(fapi::build_msg_tx_error_indication(msg.sfn, msg.slot));
+    error_notifier.get().on_error_indication(
+        fapi::build_msg_error_indication(msg.sfn, msg.slot, fapi::message_type_id::ul_tti_request));
     l1_ul_tracer << instant_trace_event{"ul_tti_failed_grid", instant_trace_event::cpu_scope::global};
     return;
   }
@@ -668,6 +638,14 @@ void fapi_to_phy_translator::ul_dci_request(const fapi::ul_dci_request_message& 
 
   slot_point                       slot(scs, msg.sfn, msg.slot);
   slot_based_upper_phy_controller& controller = slot_controller_mngr.get_controller(slot);
+  // Check if the controller is valid.
+  if (!controller.is_initialized()) {
+    logger.warning("Sector#{}: Could not acquire downlink processor for slot {}.{}", sector_id, msg.sfn, msg.slot);
+    // Raise out of sync error.
+    error_notifier.get().on_error_indication(fapi::build_msg_ul_dci_error_indication(msg.sfn, msg.slot));
+
+    return;
+  }
   for (const auto& pdcch_pdu : pdus) {
     controller->process_pdcch(pdcch_pdu);
   }
@@ -726,6 +704,8 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
   if (msg.pdus.empty()) {
     // Check the repo for PDUs
     if (!pdsch_repository.pdus.empty()) {
+      logger.warning("Sector#{}: Invalid TX_Data.request. Number of PDUs does not match repository size", sector_id);
+
       // Raise invalid format error.
       error_notifier.get().on_error_indication(fapi::build_msg_tx_error_indication(msg.sfn, msg.slot));
 
@@ -737,12 +717,23 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
   // Skip message if there are no PDSCH PDUs inside the repository. This may be caused by an unsupported PDU in the
   // DL_TTI.request.
   if (pdsch_repository.empty()) {
+    logger.warning("Sector#{}: Invalid TX_Data.request. Empty PDU repository", sector_id);
+
     // Raise invalid format error.
     error_notifier.get().on_error_indication(fapi::build_msg_tx_error_indication(msg.sfn, msg.slot));
     return;
   }
 
   slot_based_upper_phy_controller& controller = slot_controller_mngr.get_controller(slot);
+  // Check if the controller is valid.
+  if (!controller.is_initialized()) {
+    logger.warning("Sector#{}: Could not acquire downlink processor for slot {}.{}", sector_id, msg.sfn, msg.slot);
+    // Raise out of sync error.
+    error_notifier.get().on_error_indication(fapi::build_msg_tx_error_indication(msg.sfn, msg.slot));
+
+    return;
+  }
+
   for (unsigned i = 0, e = msg.pdus.size(); i != e; ++i) {
     // Process PDSCH.
     controller->process_pdsch(

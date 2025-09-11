@@ -23,6 +23,7 @@
 #pragma once
 
 #include "processor_pool_helpers.h"
+#include "srsran/adt/circular_array.h"
 #include "srsran/phy/upper/uplink_pdu_slot_repository.h"
 #include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/phy/upper/uplink_slot_processor.h"
@@ -41,6 +42,8 @@ struct uplink_processor_pool_impl_config {
 
   /// Vector of \c info objects, which contains the uplink processors for a given numerology.
   std::vector<uplink_processor_set> procs;
+  /// Default uplink processor used for handling PRACH and receive symbols when no processor has been assigned.
+  std::unique_ptr<uplink_processor> default_processor;
 };
 
 /// Uplink processor pool implementation.
@@ -62,6 +65,9 @@ public:
   void stop() override;
 
 private:
+  /// Maximum number of simultaneous assigned processors.
+  static constexpr unsigned nof_assigned_processors = 16;
+
   // See uplink_slot_processor_pool interface for documentation.
   uplink_slot_processor& get_slot_processor(slot_point slot) override;
 
@@ -70,6 +76,10 @@ private:
 
   /// Repository of uplink processors.
   processor_pool_repository<uplink_processor> processors;
+  /// Default uplink processor used for handling PRACH and receive symbols when no processor has been assigned.
+  std::unique_ptr<uplink_processor> default_processor;
+  /// Circular uplink processor assignation.
+  circular_array<std::atomic<uplink_processor*>, nof_assigned_processors> assigned_processors = {};
 };
 
 } // namespace srsran

@@ -32,7 +32,7 @@
 using namespace srsran;
 
 // Select the CRC for the decoder based on the TBS and the number of codeblocks.
-crc_calculator* select_crc(pusch_decoder_impl::sch_crc& crcs, unsigned tbs, unsigned nof_blocks)
+static crc_calculator* select_crc(pusch_decoder_impl::sch_crc& crcs, unsigned tbs, unsigned nof_blocks)
 {
   if (nof_blocks > 1) {
     return crcs.crc24B.get();
@@ -360,6 +360,7 @@ void pusch_decoder_impl::fork_codeblock_task(unsigned cb_id)
                                       block_crc->get_generator_poly(),
                                       current_config.use_early_stop,
                                       current_config.nof_ldpc_iterations,
+                                      current_config.force_decoding,
                                       cb_meta);
     } else {
       logger.error("Not enough codeblock decoder instances.");
@@ -383,7 +384,7 @@ void pusch_decoder_impl::fork_codeblock_task(unsigned cb_id)
   // Execute task asynchronously if an executor is available and the number of codeblocks is larger than one.
   bool enqueued = false;
   if ((executor != nullptr) && (nof_codeblocks > 1)) {
-    enqueued = executor->execute(cb_process_task);
+    enqueued = executor->defer(cb_process_task);
   }
 
   // Process task synchronously if is not successfully enqueued.

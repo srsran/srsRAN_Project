@@ -39,6 +39,7 @@ class e1ap_cu_cp_impl final : public e1ap_interface
 {
 public:
   e1ap_cu_cp_impl(const e1ap_configuration&      e1ap_cfg_,
+                  cu_up_index_t                  cu_up_index_,
                   e1ap_message_notifier&         e1ap_pdu_notifier_,
                   e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
                   e1ap_cu_cp_notifier&           cu_cp_notifier_,
@@ -89,7 +90,11 @@ private:
   /// \param[in] msg The received initiating message.
   void handle_initiating_message(const asn1::e1ap::init_msg_s& msg);
 
-  /// \brief Handle a Bearer Context Inactivity notification as per TS 38.463 section 8.3.6.
+  /// \brief Handle a Bearer Context Release Request as per TS 38.483 section 8.3.5.
+  /// \param[in] msg The received Bearer Context Release Request message.
+  void handle_bearer_context_release_request(const asn1::e1ap::bearer_context_release_request_s& msg);
+
+  /// \brief Handle a Bearer Context Inactivity notification as per TS 38.483 section 8.3.6.
   /// \param[in] msg The received Bearer Context Inactivity notification message.
   void handle_bearer_context_inactivity_notification(const asn1::e1ap::bearer_context_inactivity_notif_s& msg);
 
@@ -105,9 +110,10 @@ private:
   void log_pdu(bool is_rx, const e1ap_message& e1ap_pdu);
 
   const e1ap_configuration e1ap_cfg;
+  cu_up_index_t            cu_up_index;
   srslog::basic_logger&    logger;
 
-  // nofifiers and handles
+  // Notifiers and handlers.
   e1ap_message_notifier_with_logging pdu_notifier;
   e1ap_cu_up_processor_notifier&     cu_up_processor_notifier;
   e1ap_cu_cp_notifier&               cu_cp_notifier;
@@ -115,12 +121,16 @@ private:
 
   timer_factory timers;
 
-  /// Repository of UE Contexts.
+  // Repository of UE Contexts.
   e1ap_ue_context_list ue_ctxt_list;
 
   e1ap_transaction_manager ev_mng;
 
-  unsigned current_transaction_id = 0; // store current E1AP transaction id
+  // Store current E1AP transaction id.
+  unsigned current_transaction_id = 0;
+
+  // Flag to indicate if E1 Release procedure is in progress.
+  bool e1_release_in_progress = false;
 };
 
 } // namespace srs_cu_cp

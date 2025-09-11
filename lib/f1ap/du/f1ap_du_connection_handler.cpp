@@ -138,7 +138,7 @@ void f1ap_du_connection_handler::handle_connection_loss()
   // executor.
   // Note: We use defer, because we want to handle all the already enqueued F1AP events before the association
   // shutdown. This way no pending task is left pointing to an inexistent F1AP context.
-  while (not ctrl_exec.defer(TRACE_TASK([this]() { handle_connection_loss_impl(); }))) {
+  while (not ctrl_exec.defer([this]() { handle_connection_loss_impl(); })) {
     // Note: This set cannot fail. Keep trying.
     logger.warning("Failed to dispatch handling of F1-C Rx path disconnection. Cause: Task queue is full. Retrying...");
     std::this_thread::sleep_for(std::chrono::microseconds{10});

@@ -67,7 +67,7 @@ asn1::rrc_nr::pdcp_cfg_s::t_reordering_e_ t_reordering_to_asn1(pdcp_t_reordering
 ///                      | field is absent.
 /// Setup2               | This field is mandatory present in case for radio bearer setup for RLC-AM and RLC-UM.
 ///                      | Otherwise, this field is absent, Need M.
-asn1::rrc_nr::pdcp_cfg_s pdcp_config_to_rrc_nr_asn1(pdcp_config pdcp_cfg);
+asn1::rrc_nr::pdcp_cfg_s pdcp_config_to_rrc_nr_asn1(const pdcp_config& pdcp_cfg);
 
 /// \brief Converts type \c sdap_hdr_ul_cfg to an RRC NR ASN.1 type.
 /// \param[in] hdr_cfg sdap ul header config object.

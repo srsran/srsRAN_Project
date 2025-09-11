@@ -44,36 +44,61 @@ static void make_asn1_rrc_cell_paging_msg(asn1::rrc_nr::paging_s& rrc_pg, const 
   }
 }
 
-/// \brief Derive packed cell PCCH-PCH Paging message.
-/// \param[in] pg Paging grant information.
-/// \return byte buffer with packed cell PCCH-PCH message.
-static byte_buffer make_asn1_rrc_cell_pcch_pch_msg(const dl_paging_allocation& pg)
+/// Class used to generate unpacked ASN.1 Paging message, while caching the allocated memory for the paging records.
+class paging_pdu_assembler::paging_message_buffer
 {
-  byte_buffer   buf{byte_buffer::fallback_allocation_tag{}};
-  asn1::bit_ref bref{buf};
+public:
+  paging_message_buffer()
+  {
+    // Set type to Paging.
+    auto& pcch_c1 = pcch_msg.msg.set_c1();
+    auto& rrc_pg  = pcch_c1.set_paging();
 
+    // Reserve capacity for Paging records.
+    rrc_pg.paging_record_list.reserve(MAX_PAGING_RECORDS_PER_PAGING_PDU);
+  }
+
+  const asn1::rrc_nr::pcch_msg_s& to_asn1(const dl_paging_allocation& pg)
+  {
+    auto& rrc_pg = pcch_msg.msg.c1().paging();
+    rrc_pg.paging_record_list.clear();
+    make_asn1_rrc_cell_paging_msg(rrc_pg, pg);
+    return pcch_msg;
+  }
+
+private:
+  /// ASN.1 PCCH-PCH Paging message.
   asn1::rrc_nr::pcch_msg_s pcch_msg{};
-  auto&                    pcch_c1 = pcch_msg.msg.set_c1();
-  auto&                    rrc_pg  = pcch_c1.set_paging();
-  make_asn1_rrc_cell_paging_msg(rrc_pg, pg);
+};
 
-  const asn1::SRSASN_CODE ret = pcch_msg.pack(bref);
-  srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack PCCH-PCH Paging message");
-  return buf;
+paging_pdu_assembler::paging_pdu_assembler(ticking_ring_buffer_pool& pdu_pool_) :
+  pdu_pool(pdu_pool_), buffer(std::make_unique<paging_message_buffer>())
+{
 }
+
+paging_pdu_assembler::~paging_pdu_assembler() = default;
 
 span<const uint8_t> paging_pdu_assembler::encode_paging_pdu(const dl_paging_allocation& pg)
 {
-  byte_buffer payload = make_asn1_rrc_cell_pcch_pch_msg(pg);
+  // Encode ASN.1 Paging message into a byte buffer.
+  byte_buffer payload{byte_buffer::fallback_allocation_tag{}};
+  {
+    asn1::bit_ref                   bref{payload};
+    const asn1::rrc_nr::pcch_msg_s& pcch_msg = buffer->to_asn1(pg);
+    const asn1::SRSASN_CODE         ret      = pcch_msg.pack(bref);
+    srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack PCCH-PCH Paging message");
+  }
   srsran_assert(pg.pdsch_cfg.codewords[0].tb_size_bytes >= payload.length(),
                 "The TBS for Paging cannot be smaller than the Paging payload");
 
   span<uint8_t> pdu_bytes = pdu_pool.allocate_buffer(pg.pdsch_cfg.codewords[0].tb_size_bytes);
-  for (unsigned idx = 0; idx < payload.length(); ++idx) {
-    pdu_bytes[idx] = payload[idx];
-  }
+
+  // Copy the Paging payload to the PDU span.
+  copy_segments(payload, pdu_bytes);
+
   // Apply RRC padding if RRC message does not fill a transport block. See TS 38.321, clause 6.1.4 and TS 38.331,
   // clause 8.5.
   std::fill(pdu_bytes.data() + payload.length(), pdu_bytes.data() + pdu_bytes.size(), 0);
+
   return pdu_bytes;
 }

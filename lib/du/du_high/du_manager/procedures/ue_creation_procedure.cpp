@@ -128,6 +128,14 @@ async_task<void> ue_creation_procedure::clear_ue()
 {
   return launch_async([this](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
+
+    if (ue_ctx == nullptr) {
+      // No UE context to clear.
+      CORO_EARLY_RETURN();
+    }
+
+    CORO_AWAIT(ue_ctx->handle_activity_stop_request(true));
+
     if (f1ap_resp.result) {
       du_params.f1ap.ue_mng.handle_ue_deletion_request(req.ue_index);
     }
@@ -137,10 +145,8 @@ async_task<void> ue_creation_procedure::clear_ue()
           mac_ue_delete_request{req.pcell_index, req.ue_index, mac_resp.allocated_crnti}));
     }
 
-    if (ue_ctx != nullptr) {
-      // Clear UE from DU Manager UE repository.
-      ue_mng.remove_ue(ue_ctx->ue_index);
-    }
+    // Clear UE from DU Manager UE repository.
+    ue_mng.remove_ue(ue_ctx->ue_index);
 
     CORO_RETURN();
   });

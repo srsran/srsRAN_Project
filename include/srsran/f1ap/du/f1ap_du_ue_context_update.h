@@ -25,7 +25,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/f1ap/ue_context_management_configs.h"
 #include "srsran/ran/du_types.h"
-#include "srsran/ran/qos/qos_parameters.h"
+#include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/serv_cell_index.h"
 
@@ -52,10 +52,17 @@ struct f1ap_scell_to_setup {
   du_cell_index_t   cell_index;
 };
 
+struct f1ap_serving_cell_mo_list_item {
+  uint8_t  serving_cell_mo;
+  uint32_t ssb_freq;
+};
+
 /// \brief Request from DU F1AP to DU manager to modify existing UE configuration.
 struct f1ap_ue_context_update_request {
-  du_ue_index_t                      ue_index;
-  std::optional<nr_cell_global_id_t> spcell_id;
+  du_ue_index_t                                              ue_index;
+  std::optional<nr_cell_global_id_t>                         spcell_id;
+  std::optional<uint8_t>                                     serving_cell_mo;
+  std::optional<std::vector<f1ap_serving_cell_mo_list_item>> serving_cell_mo_list;
   /// New SRBs to setup.
   std::vector<srb_id_t> srbs_to_setup;
   /// List of new DRBs to setup.
@@ -95,9 +102,11 @@ struct f1ap_ue_context_update_response {
   std::vector<f1ap_drb_failed_to_setupmod> failed_drbs_setups;
   /// List of DRBs that failed to be modified.
   std::vector<f1ap_drb_failed_to_setupmod> failed_drb_mods;
-  byte_buffer                              cell_group_cfg;
-  byte_buffer                              meas_gap_cfg;
-  bool                                     full_config_present = false;
+  /// List of servingCellMOs that have been encoded in CellGroupConfig IE.
+  std::vector<uint8_t> serving_cell_mo_encoded_in_cgc_list;
+  byte_buffer          cell_group_cfg;
+  byte_buffer          meas_gap_cfg;
+  bool                 full_config_present = false;
 };
 
 /// \brief Request Command for F1AP UE CONTEXT Release Request.

@@ -88,10 +88,12 @@ public:
   explicit upper_phy_ru_ul_adapter(unsigned nof_sectors) : handlers(nof_sectors) {}
 
   // See interface for documentation.
-  void on_new_uplink_symbol(const ru_uplink_rx_symbol_context& context, const shared_resource_grid& grid) override
+  void on_new_uplink_symbol(const ru_uplink_rx_symbol_context& context,
+                            const shared_resource_grid&        grid,
+                            bool                               is_valid) override
   {
     srsran_assert(context.sector < handlers.size(), "Unsupported sector {}", context.sector);
-    handlers[context.sector]->handle_rx_symbol({context.sector, context.slot, context.symbol_id}, grid);
+    handlers[context.sector]->handle_rx_symbol({context.sector, context.slot, context.symbol_id}, grid, is_valid);
   }
 
   // See interface for documentation.

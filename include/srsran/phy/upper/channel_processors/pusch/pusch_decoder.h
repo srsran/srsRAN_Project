@@ -69,6 +69,8 @@ public:
     unsigned nof_layers = 0;
     /// Maximum number of iterations of the LDPC decoder.
     unsigned nof_ldpc_iterations = 6;
+    /// Set to true for forcing the LDPC decoder to decode even if the number of soft bits is insufficient.
+    bool force_decoding = false;
     /// Flag for LDPC decoder early stopping: \c true to activate.
     bool use_early_stop = true;
     /// Flag to denote new data (first HARQ transmission).

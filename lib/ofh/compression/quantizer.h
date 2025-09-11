@@ -72,7 +72,7 @@ public:
   void to_fixed_point(span<int16_t> z, span<const float> x, float in_scale) const
   {
     float scale = gain * in_scale;
-    srsvec::convert(x, scale, z);
+    srsvec::convert(z, x, scale);
   }
 
   /// \brief Quantizes a sequence of brain float values into 16-bit integers.
@@ -105,7 +105,7 @@ public:
   void to_float(span<cf_t> z, span<const int16_t> x, int16_t in_scale) const
   {
     float scale = gain / in_scale;
-    srsvec::convert(x, scale, z);
+    srsvec::convert(z, x, scale);
   }
 
   /// \brief Converts a sequence of fixed point values to complex brain floating point values.

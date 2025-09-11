@@ -138,6 +138,11 @@ public:
   /// \brief Transfer E1AP UE context to new CU-CP specific UE index.
   void update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index);
 
+  std::unordered_map<gnb_cu_cp_ue_e1ap_id_t, e1ap_ue_context>::iterator       begin() { return ues.begin(); }
+  std::unordered_map<gnb_cu_cp_ue_e1ap_id_t, e1ap_ue_context>::const_iterator begin() const { return ues.begin(); }
+  std::unordered_map<gnb_cu_cp_ue_e1ap_id_t, e1ap_ue_context>::iterator       end() { return ues.end(); }
+  std::unordered_map<gnb_cu_cp_ue_e1ap_id_t, e1ap_ue_context>::const_iterator end() const { return ues.end(); }
+
 private:
   gnb_cu_cp_ue_e1ap_id_t next_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_t::min;
 

@@ -40,7 +40,7 @@ public:
   void on_configuration_parameters_autoderivation(CLI::App& app) override;
 
   // See interface for documentation.
-  bool on_configuration_validation(const os_sched_affinity_bitmask& available_cpus) const override;
+  bool on_configuration_validation() const override;
 
   // See interface for documentation.
   void on_loggers_registration() override;

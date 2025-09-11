@@ -65,6 +65,8 @@ static int get_tx_time_offset(int time_alignment_calibration, n_ta_offset ta_off
   return time_alignment_offset.to_samples(srate.to_Hz()) - time_alignment_calibration;
 }
 
+namespace {
+
 class lower_phy_factory_sw : public lower_phy_factory
 {
 public:
@@ -91,23 +93,6 @@ public:
                   to_string(subcarrier_spacing::kHz120));
     unsigned nof_samples_per_slot = config.srate.to_kHz() / pow2(to_numerology_value(config.scs));
 
-    unsigned tx_buffer_size = config.bb_gateway->get_transmitter_optimal_buffer_size();
-    switch (config.baseband_tx_buffer_size_policy) {
-      case lower_phy_baseband_buffer_size_policy::slot:
-        tx_buffer_size = nof_samples_per_slot;
-        break;
-      case lower_phy_baseband_buffer_size_policy::half_slot:
-        tx_buffer_size = nof_samples_per_slot / 2;
-        break;
-      case lower_phy_baseband_buffer_size_policy::single_packet:
-        report_fatal_error_if_not(tx_buffer_size > 0, "The radio does not have a transmitter optimal buffer size.");
-        break;
-      case lower_phy_baseband_buffer_size_policy::optimal_slot:
-        report_fatal_error_if_not(tx_buffer_size > 0, "The radio does not have a transmitter optimal buffer size.");
-        tx_buffer_size = (nof_samples_per_slot / tx_buffer_size) * tx_buffer_size;
-        break;
-    }
-
     unsigned rx_buffer_size = config.bb_gateway->get_receiver_optimal_buffer_size();
     switch (config.baseband_rx_buffer_size_policy) {
       case lower_phy_baseband_buffer_size_policy::slot:
@@ -132,15 +117,15 @@ public:
     unsigned rx_to_tx_max_delay = config.srate.to_kHz() + tx_time_offset;
 
     // Prepare downlink processor configuration.
-    downlink_processor_configuration dl_proc_config;
-    dl_proc_config.sector_id               = config.sector_id;
-    dl_proc_config.scs                     = config.scs;
-    dl_proc_config.cp                      = config.cp;
-    dl_proc_config.rate                    = config.srate;
-    dl_proc_config.bandwidth_prb           = config.bandwidth_rb;
-    dl_proc_config.center_frequency_Hz     = config.dl_freq_hz;
-    dl_proc_config.nof_tx_ports            = config.nof_tx_ports;
-    dl_proc_config.nof_slot_tti_in_advance = config.max_processing_delay_slots;
+    downlink_processor_configuration dl_proc_config = {.sector_id               = config.sector_id,
+                                                       .scs                     = config.scs,
+                                                       .cp                      = config.cp,
+                                                       .rate                    = config.srate,
+                                                       .bandwidth_prb           = config.bandwidth_rb,
+                                                       .center_frequency_Hz     = config.dl_freq_hz,
+                                                       .nof_tx_ports            = config.nof_tx_ports,
+                                                       .nof_slot_tti_in_advance = config.max_processing_delay_slots,
+                                                       .modulation_executor     = *config.dl_task_executor};
 
     // Create downlink processor.
     std::unique_ptr<lower_phy_downlink_processor> dl_proc = downlink_proc_factory->create(dl_proc_config);
@@ -163,10 +148,10 @@ public:
     // Prepare processor baseband adaptor configuration.
     lower_phy_baseband_processor::configuration proc_bb_adaptor_config;
     proc_bb_adaptor_config.srate                  = config.srate;
+    proc_bb_adaptor_config.scs                    = config.scs;
     proc_bb_adaptor_config.rx_task_executor       = config.rx_task_executor;
     proc_bb_adaptor_config.tx_task_executor       = config.tx_task_executor;
     proc_bb_adaptor_config.ul_task_executor       = config.ul_task_executor;
-    proc_bb_adaptor_config.dl_task_executor       = config.dl_task_executor;
     proc_bb_adaptor_config.receiver               = &config.bb_gateway->get_receiver();
     proc_bb_adaptor_config.transmitter            = &config.bb_gateway->get_transmitter();
     proc_bb_adaptor_config.ul_bb_proc             = &ul_proc->get_baseband();
@@ -177,8 +162,6 @@ public:
     proc_bb_adaptor_config.rx_to_tx_max_delay     = config.srate.to_kHz() + proc_bb_adaptor_config.tx_time_offset;
     proc_bb_adaptor_config.rx_buffer_size         = rx_buffer_size;
     proc_bb_adaptor_config.nof_rx_buffers         = std::max(4U, rx_to_tx_max_delay / rx_buffer_size);
-    proc_bb_adaptor_config.tx_buffer_size         = tx_buffer_size;
-    proc_bb_adaptor_config.nof_tx_buffers         = std::max(4U, rx_to_tx_max_delay / tx_buffer_size);
     proc_bb_adaptor_config.system_time_throttling = config.system_time_throttling;
     proc_bb_adaptor_config.stop_nof_slots         = 2 * config.max_processing_delay_slots;
 
@@ -204,6 +187,8 @@ private:
   std::shared_ptr<lower_phy_downlink_processor_factory> downlink_proc_factory;
   std::shared_ptr<lower_phy_uplink_processor_factory>   uplink_proc_factory;
 };
+
+} // namespace
 
 std::shared_ptr<lower_phy_factory>
 srsran::create_lower_phy_factory_sw(std::shared_ptr<lower_phy_downlink_processor_factory> downlink_proc_factory,

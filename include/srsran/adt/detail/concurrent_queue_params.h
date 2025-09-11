@@ -23,7 +23,6 @@
 #pragma once
 
 #include <limits>
-#include <optional>
 
 namespace srsran {
 
@@ -82,7 +81,9 @@ constexpr enqueue_priority operator-(enqueue_priority lhs, std::size_t dec)
 /// all elements in a batch to minimize the contention on the mutex from the consumer side.
 /// - moodycamel_lockfree_mpmc: Lock-free MPMC queue with unbounded capacity and that does not ensure elements
 /// enqueued by independent producers come out in the same order (not linearizable).
-template <typename T, concurrent_queue_policy Policy, concurrent_queue_wait_policy BlockingPolicy>
+template <typename T,
+          concurrent_queue_policy      Policy,
+          concurrent_queue_wait_policy BlockingPolicy = concurrent_queue_wait_policy::non_blocking>
 class concurrent_queue;
 
 } // namespace srsran

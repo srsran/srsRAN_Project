@@ -53,9 +53,12 @@ public:
 
   /// \brief Notifies the completion of an OFDM symbol for a given context.
   ///
-  /// \param[in] context Notification context.
-  /// \param[in] grid    Resource grid that belongs to the context.
-  virtual void on_new_uplink_symbol(const ru_uplink_rx_symbol_context& context, const shared_resource_grid& grid) = 0;
+  /// \param[in] context  Notification context.
+  /// \param[in] grid     Resource grid that belongs to the context.
+  /// \param[in] is_valid Set it to true if the resource grid data contains valid information. Otherwise, set it to
+  /// false.
+  virtual void
+  on_new_uplink_symbol(const ru_uplink_rx_symbol_context& context, const shared_resource_grid& grid, bool is_valid) = 0;
 
   /// \brief Notifies the completion of a PRACH window.
   ///

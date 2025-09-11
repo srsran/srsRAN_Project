@@ -89,6 +89,15 @@ void srs_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc)
   schedule_slot_srs(cell_alloc[cell_alloc.max_ul_slot_alloc_delay]);
 }
 
+void srs_scheduler_impl::stop()
+{
+  updated_ues.clear();
+  for (auto& sl : periodic_srs_slot_wheel) {
+    sl.clear();
+  }
+  pending_pos_requests.clear();
+}
+
 void srs_scheduler_impl::add_ue(const ue_cell_configuration& ue_cfg)
 {
   add_ue_to_grid(ue_cfg, false);

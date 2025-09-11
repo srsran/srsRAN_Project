@@ -102,7 +102,7 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<log_likelihood_ratio>       out
   nof_filler_bits = cfg.cb_specific.nof_filler_bits;
 
   double tmp = (shift_factor[rv] * buffer_length) / block_length;
-  shift_k0   = static_cast<uint16_t>(floor(tmp)) * lifting_size;
+  shift_k0   = static_cast<uint16_t>(std::floor(tmp)) * lifting_size;
 
   if (modulation_order == 1) {
     allot_llrs(output, input);

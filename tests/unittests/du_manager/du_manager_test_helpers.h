@@ -69,7 +69,8 @@ class dummy_cell_executor_mapper : public du_high_cell_executor_mapper
 {
 public:
   explicit dummy_cell_executor_mapper(task_executor& exec_) : exec(exec_) {}
-  task_executor& executor(du_cell_index_t cell_index) override { return exec; }
+  task_executor& mac_cell_executor(du_cell_index_t cell_index) override { return exec; }
+  task_executor& rlc_lower_executor(du_cell_index_t cell_index) override { return exec; }
   task_executor& slot_ind_executor(du_cell_index_t cell_index) override { return exec; }
 
   task_executor& exec;
@@ -140,6 +141,11 @@ public:
   }
 
   async_task<void> handle_f1_removal_request() override { return wait_f1_removal.launch(); }
+
+  async_task<f1_reset_acknowledgement> handle_f1_reset_request(const f1_reset_request& req) override
+  {
+    return launch_no_op_task(f1_reset_acknowledgement{true});
+  }
 
   async_task<gnbdu_config_update_response> handle_du_config_update(const gnbdu_config_update_request& request) override
   {

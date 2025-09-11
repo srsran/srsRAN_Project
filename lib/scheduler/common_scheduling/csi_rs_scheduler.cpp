@@ -59,7 +59,7 @@ static csi_rs_info build_csi_rs_info(const bwp_configuration& bwp_cfg, const nzp
   csi_rs_info csi_rs;
 
   csi_rs.bwp_cfg = &bwp_cfg;
-  csi_rs.type    = srsran::csi_rs_type::CSI_RS_NZP;
+  csi_rs.type    = csi_rs_type::CSI_RS_NZP;
 
   fill_csi_rs_info_res_map(csi_rs, nzp_csi_rs_res.res_mapping);
 

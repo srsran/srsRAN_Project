@@ -44,6 +44,8 @@ public:
 
   void handle_si_update_request(const si_scheduling_update_request& req);
 
+  void stop();
+
 private:
   void handle_pending_request(cell_resource_allocator& res_alloc);
 

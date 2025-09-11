@@ -32,15 +32,14 @@ namespace srsran {
 class rx_buffer_pool_spy : public rx_buffer_pool, private unique_rx_buffer::callback
 {
 public:
-  unique_rx_buffer
-  reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks, bool new_data) override
+  unique_rx_buffer reserve(slot_point slot, trx_buffer_identifier id, unsigned nof_codeblocks, bool new_data) override
   {
     if (is_locked()) {
       return unique_rx_buffer();
     }
     return unique_rx_buffer(*this);
   }
-  void run_slot(const slot_point& slot) override { current_slot = slot; }
+  void run_slot(slot_point slot) override { current_slot = slot; }
 
   slot_point get_current_slot() const { return current_slot; }
 

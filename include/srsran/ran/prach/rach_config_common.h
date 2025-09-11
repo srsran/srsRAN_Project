@@ -30,7 +30,7 @@
 namespace srsran {
 
 /// Maximum number of RA preambles used per occasion as per TS 38.331.
-static constexpr unsigned MAX_NOF_RA_PREAMBLES_PER_OCCASION = 64;
+constexpr unsigned MAX_NOF_RA_PREAMBLES_PER_OCCASION = 64;
 
 /// \remark See TS 38.331, RACH-ConfigGeneric.
 struct rach_config_generic {

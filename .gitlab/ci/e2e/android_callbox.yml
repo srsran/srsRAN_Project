@@ -10,7 +10,6 @@
   type: ue
   image: ${RETINA_REGISTRY_PREFIX}/android:${RETINA_VERSION}
   requirements:
-    arch: amd64
     cpu:
       requests: 1
       limits: 1
@@ -28,7 +27,6 @@
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
   requirements:
-    arch: amd64
     cpu:
       requests: 12
       limits: 12
@@ -56,7 +54,6 @@
   taints: ["purpose=retina"]
   force_external_ip: true
   requirements:
-    arch: amd64
     cpu:
       requests: 4
       limits: 4

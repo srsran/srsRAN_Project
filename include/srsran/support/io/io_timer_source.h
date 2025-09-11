@@ -23,29 +23,54 @@
 #pragma once
 
 #include "srsran/support/io/io_broker.h"
-#include "srsran/support/io/unique_fd.h"
-#include "srsran/support/timers.h"
 
 namespace srsran {
+
+class timer_manager;
 
 /// \brief Interface for a timer source.
 class io_timer_source
 {
-  const std::chrono::milliseconds tick_period;
-  timer_manager&                  tick_sink;
-  srslog::basic_logger&           logger;
-  io_broker::subscriber           io_sub;
-  std::atomic<bool>               stop_requested{false};
-
 public:
   io_timer_source(timer_manager&            tick_sink_,
                   io_broker&                broker_,
                   task_executor&            executor,
-                  std::chrono::milliseconds tick_period);
-  ~io_timer_source();
+                  std::chrono::milliseconds tick_period,
+                  bool                      auto_start = true);
+
+  /// This call blocks until the last tick is processed.
+  ~io_timer_source() { wait_for_stop(); }
+
+  /// Resume ticking in case it was previously halted.
+  void resume();
+
+  /// \brief Request the timer source to stop ticking.
+  /// Note: This call does not block, so a tick might take place after this call.
+  void request_stop();
+
+  /// Requests a stop and waits until the last tick is processed.
+  void wait_for_stop();
 
 private:
+  void create_subscriber();
+  void destroy_subscriber();
+
   void read_time();
+
+  void update_state(bool start);
+  bool handle_state_update(bool defer_stop);
+
+  const std::chrono::milliseconds tick_period;
+  timer_manager&                  tick_sink;
+  io_broker&                      broker;
+  task_executor&                  tick_exec;
+  srslog::basic_logger&           logger;
+  io_broker::subscriber           io_sub;
+
+  std::atomic<bool>     running{false};
+  std::atomic<uint32_t> job_count{0};
+
+  bool request_to_stop = false;
 };
 
 } // namespace srsran

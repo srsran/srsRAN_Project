@@ -58,6 +58,12 @@ public:
 
   task_executor& n2_rx_executor() override { return pool_exec; }
 
+  task_executor& f1c_rx_executor() override { return pool_exec; }
+
+  task_executor& e1_rx_executor() override { return pool_exec; }
+
+  task_executor& e2_rx_executor() override { return pool_exec; }
+
 private:
   task_executor& pool_exec;
 

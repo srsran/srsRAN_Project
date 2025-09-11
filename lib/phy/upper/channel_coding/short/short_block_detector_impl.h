@@ -30,11 +30,11 @@
 namespace srsran {
 
 /// Maximum length of a codeword.
-static constexpr unsigned MAX_BLOCK_LENGTH = 32;
+constexpr unsigned MAX_BLOCK_LENGTH = 32;
 /// Maximum length of a message.
-static constexpr unsigned MAX_MSG_LENGTH = 11;
+constexpr unsigned MAX_MSG_LENGTH = 11;
 /// Half of the maximum codebook size.
-static constexpr unsigned MAX_NOF_CODEWORDS_2 = 1U << (MAX_MSG_LENGTH - 1);
+constexpr unsigned MAX_NOF_CODEWORDS_2 = 1U << (MAX_MSG_LENGTH - 1);
 
 /// \brief Generic implementation of the short-block detector.
 ///

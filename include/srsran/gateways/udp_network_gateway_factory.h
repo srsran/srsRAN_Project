@@ -47,6 +47,6 @@ struct udp_network_gateway_creation_message {
 };
 
 /// Creates an instance of an network gateway
-std::unique_ptr<udp_network_gateway> create_udp_network_gateway(udp_network_gateway_creation_message msg);
+std::unique_ptr<udp_network_gateway> create_udp_network_gateway(const udp_network_gateway_creation_message& msg);
 
 } // namespace srsran

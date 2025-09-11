@@ -29,9 +29,10 @@ namespace srsran {
 
 /// Remote control application configuration.
 struct remote_control_appconfig {
-  bool        enabled   = false;
-  std::string bind_addr = "127.0.0.1";
-  uint16_t    port      = 8001;
+  bool        enabled                     = false;
+  std::string bind_addr                   = "127.0.0.1";
+  uint16_t    port                        = 8001;
+  bool        enable_metrics_subscription = false;
 };
 
 } // namespace srsran

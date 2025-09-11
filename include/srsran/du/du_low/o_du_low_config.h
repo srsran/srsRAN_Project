@@ -39,5 +39,11 @@ struct o_du_low_config {
   bool enable_metrics;
 };
 
+/// O-RAN DU low dependencies.
+struct o_du_low_dependencies {
+  /// DU Low dependencies.
+  du_low_dependencies du_low_deps;
+};
+
 } // namespace srs_du
 } // namespace srsran

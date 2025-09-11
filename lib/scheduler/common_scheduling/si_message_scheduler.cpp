@@ -59,6 +59,14 @@ void si_message_scheduler::run_slot(cell_slot_resource_allocator& res_grid)
   schedule_pending_si_messages(res_grid);
 }
 
+void si_message_scheduler::stop()
+{
+  // Clear all windows.
+  for (unsigned i = 0; i != pending_messages.size(); ++i) {
+    pending_messages[i] = {};
+  }
+}
+
 void si_message_scheduler::handle_si_message_update_indication(
     unsigned                                   new_version,
     const std::optional<si_scheduling_config>& new_si_sched_cfg)

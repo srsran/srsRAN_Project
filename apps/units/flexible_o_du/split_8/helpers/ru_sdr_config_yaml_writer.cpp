@@ -38,12 +38,12 @@ static std::string to_string(lower_phy_thread_profile profile)
     case lower_phy_thread_profile::blocking:
       // Blocking is an internal profile for ZMQ. Output 'single' for the configuration.
       return "single";
-    case lower_phy_thread_profile::dual:
-      return "dual";
-    case lower_phy_thread_profile::quad:
-      return "quad";
     case lower_phy_thread_profile::single:
       return "single";
+    case lower_phy_thread_profile::dual:
+      return "dual";
+    case lower_phy_thread_profile::triple:
+      return "triple";
     default:
       srsran_assert(0, "Invalid low PHY profile");
       break;
@@ -72,11 +72,6 @@ static void fill_ru_sdr_expert_execution_section(YAML::Node node, const ru_sdr_u
       cell["l1_dl_cpus"] = fmt::format("{:,}", span<const size_t>(expert.l1_dl_cpu_cfg.mask.get_cpu_ids()));
     }
     cell["l1_dl_pinning"] = to_string(expert.l1_dl_cpu_cfg.pinning_policy);
-
-    if (expert.l1_ul_cpu_cfg.mask.any()) {
-      cell["l1_ul_cpus"] = fmt::format("{:,}", span<const size_t>(expert.l1_ul_cpu_cfg.mask.get_cpu_ids()));
-    }
-    cell["l1_ul_pinning"] = to_string(expert.l1_ul_cpu_cfg.pinning_policy);
 
     if (expert.ru_cpu_cfg.mask.any()) {
       cell["l1_dl_cpus"] = fmt::format("{:,}", span<const size_t>(expert.ru_cpu_cfg.mask.get_cpu_ids()));
@@ -116,7 +111,6 @@ static void fill_ru_sdr_section(YAML::Node node, const ru_sdr_unit_config& confi
     expert_node["low_phy_dl_throttling"] = config.expert_cfg.lphy_dl_throttling;
     expert_node["tx_mode"]               = config.expert_cfg.transmission_mode;
     expert_node["power_ramping_time_us"] = config.expert_cfg.power_ramping_time_us;
-    expert_node["dl_buffer_size_policy"] = config.expert_cfg.dl_buffer_size_policy;
   }
 }
 

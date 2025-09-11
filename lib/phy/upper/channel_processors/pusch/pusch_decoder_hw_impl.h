@@ -42,13 +42,13 @@
 namespace srsran {
 
 /// Maximum accepted transport block size.
-static constexpr unsigned MAX_TBS = 1277992;
+constexpr unsigned MAX_TBS = 1277992;
 
 /// \brief Number of bits in the long CRC.
 ///
 /// A CRC of this length is used either for TB CRCs, when the TB is longer than
-// MAX_BITS_CRC16, or as a codeblock CRC, when the TB consists of multiple codeblocks.
-static constexpr unsigned LONG_CRC_LENGTH = 24;
+/// MAX_BITS_CRC16, or as a codeblock CRC, when the TB consists of multiple codeblocks.
+constexpr unsigned LONG_CRC_LENGTH = 24;
 
 /// Generic hardware-accelerated implementation of the PUSCH decoder.
 class pusch_decoder_hw_impl : public pusch_decoder, private pusch_decoder_buffer

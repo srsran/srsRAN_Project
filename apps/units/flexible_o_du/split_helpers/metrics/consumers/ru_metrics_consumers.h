@@ -36,8 +36,10 @@ struct ru_metrics;
 class ru_metrics_consumer_json
 {
 public:
-  ru_metrics_consumer_json(srslog::log_channel& log_chan_, span<const pci_t> pci_sector_map_) :
-    log_chan(log_chan_), pci_sector_map(pci_sector_map_)
+  ru_metrics_consumer_json(srslog::log_channel&     log_chan_,
+                           span<const pci_t>        pci_sector_map_,
+                           std::chrono::nanoseconds symbol_duration_) :
+    symbol_duration(symbol_duration_), log_chan(log_chan_), pci_sector_map(pci_sector_map_)
   {
     srsran_assert(log_chan.enabled(), "JSON log channel is not enabled");
   }
@@ -46,16 +48,19 @@ public:
   void handle_metric(const ru_metrics& metric);
 
 private:
-  srslog::log_channel& log_chan;
-  span<const pci_t>    pci_sector_map;
+  const std::chrono::nanoseconds symbol_duration;
+  srslog::log_channel&           log_chan;
+  span<const pci_t>              pci_sector_map;
 };
 
 /// Logger consumer for the O-RU metrics.
 class ru_metrics_consumer_log
 {
 public:
-  ru_metrics_consumer_log(srslog::log_channel& log_chan_, span<const pci_t> pci_sector_map_) :
-    log_chan(log_chan_), verbose(true), pci_sector_map(pci_sector_map_)
+  ru_metrics_consumer_log(srslog::log_channel&     log_chan_,
+                          span<const pci_t>        pci_sector_map_,
+                          std::chrono::nanoseconds symbol_duration_) :
+    symbol_duration(symbol_duration_), log_chan(log_chan_), verbose(true), pci_sector_map(pci_sector_map_)
   {
     srsran_assert(log_chan.enabled(), "JSON log channel is not enabled");
   }
@@ -64,9 +69,10 @@ public:
   void handle_metric(const ru_metrics& metric);
 
 private:
-  srslog::log_channel& log_chan;
-  const bool           verbose;
-  span<const pci_t>    pci_sector_map;
+  const std::chrono::nanoseconds symbol_duration;
+  srslog::log_channel&           log_chan;
+  const bool                     verbose;
+  span<const pci_t>              pci_sector_map;
 };
 
 /// STDOUT handler for the O-RU metrics.
@@ -77,7 +83,10 @@ class ru_metrics_handler_stdout
   static constexpr unsigned MAX_NOF_STDOUT_METRIC_LINES_WITHOUT_HEADER = 10;
 
 public:
-  explicit ru_metrics_handler_stdout(span<const pci_t> pci_sector_map_) : pci_sector_map(pci_sector_map_) {}
+  ru_metrics_handler_stdout(span<const pci_t> pci_sector_map_, std::chrono::nanoseconds symbol_duration_) :
+    symbol_duration(symbol_duration_), pci_sector_map(pci_sector_map_)
+  {
+  }
 
   // Handles the O-RU metrics.
   void handle_metric(const ru_metrics& metric);
@@ -96,8 +105,9 @@ private:
   void log_ru_ofh_metrics_in_stdout(const ofh::metrics& ofh_metrics);
 
 private:
-  unsigned          nof_lines = MAX_NOF_STDOUT_METRIC_LINES_WITHOUT_HEADER;
-  span<const pci_t> pci_sector_map;
+  const std::chrono::nanoseconds symbol_duration;
+  unsigned                       nof_lines = MAX_NOF_STDOUT_METRIC_LINES_WITHOUT_HEADER;
+  span<const pci_t>              pci_sector_map;
 };
 
 } // namespace srsran

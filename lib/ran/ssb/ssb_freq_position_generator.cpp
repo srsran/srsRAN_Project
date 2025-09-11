@@ -198,11 +198,11 @@ unsigned ssb_freq_position_generator::find_M_raster()
     // constraints.
     if (is_ssb_inside_band) {
       const bool is_scs_30khz_spacing = scs_common == subcarrier_spacing::kHz30 && scs_ssb == subcarrier_spacing::kHz30;
-      const bool is_multiple_of_scs   = is_scs_30khz_spacing
-                                            ? fmod(static_cast<unsigned>(f_ssb_0_hz - point_A_hz),
-                                                 scs_to_khz(subcarrier_spacing::kHz30) * band_helper::KHZ_TO_HZ) == 0.0
-                                            : fmod(static_cast<unsigned>(f_ssb_0_hz - point_A_hz),
-                                                 scs_to_khz(subcarrier_spacing::kHz15) * band_helper::KHZ_TO_HZ) == 0.0;
+      const bool is_multiple_of_scs =
+          is_scs_30khz_spacing ? std::fmod(static_cast<unsigned>(f_ssb_0_hz - point_A_hz),
+                                           scs_to_khz(subcarrier_spacing::kHz30) * band_helper::KHZ_TO_HZ) == 0.0
+                               : std::fmod(static_cast<unsigned>(f_ssb_0_hz - point_A_hz),
+                                           scs_to_khz(subcarrier_spacing::kHz15) * band_helper::KHZ_TO_HZ) == 0.0;
 
       if (is_multiple_of_scs) {
         M_raster = M;
@@ -276,7 +276,7 @@ ssb_freq_location ssb_freq_position_generator::get_next_ssb_location()
     if (is_ssb_inside_band) {
       const subcarrier_spacing ref_scs = (scs_common == scs_ssb) ? scs_ssb : band_helper::get_ssb_ref_scs(scs_ssb);
       const bool               is_multiple_of_scs =
-          fmod(f_ssb_0_hz - point_A_hz, static_cast<double>(scs_to_khz(ref_scs) * band_helper::KHZ_TO_HZ)) == 0.0;
+          std::fmod(f_ssb_0_hz - point_A_hz, static_cast<double>(scs_to_khz(ref_scs) * band_helper::KHZ_TO_HZ)) == 0.0;
 
       if (is_multiple_of_scs) {
         ssb.offset_to_point_A = compute_offset_to_pointA(f_ssb_0_hz, point_A_hz, scs_common);
@@ -329,9 +329,10 @@ ssb_freq_location ssb_freq_position_generator::get_next_ssb_location_special_ras
       const bool is_scs_30khz_spacing = scs_common == subcarrier_spacing::kHz30 && scs_ssb == subcarrier_spacing::kHz30;
       const bool is_multiple_of_scs =
           is_scs_30khz_spacing
-              ? fmod(f_ssb_0_hz - point_A_hz,
-                     static_cast<double>(scs_to_khz(subcarrier_spacing::kHz30) * band_helper::KHZ_TO_HZ)) == 0.0
-              : fmod(f_ssb_0_hz - point_A_hz, scs_to_khz(subcarrier_spacing::kHz15) * band_helper::KHZ_TO_HZ) == 0.0;
+              ? std::fmod(f_ssb_0_hz - point_A_hz,
+                          static_cast<double>(scs_to_khz(subcarrier_spacing::kHz30) * band_helper::KHZ_TO_HZ)) == 0.0
+              : std::fmod(f_ssb_0_hz - point_A_hz, scs_to_khz(subcarrier_spacing::kHz15) * band_helper::KHZ_TO_HZ) ==
+                    0.0;
 
       if (is_multiple_of_scs) {
         ssb.offset_to_point_A = compute_offset_to_pointA(f_ssb_0_hz, point_A_hz, scs_common);

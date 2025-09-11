@@ -38,7 +38,7 @@ inline void update_minmax(uint64_t new_value, std::atomic<uint64_t>& max, std::a
   }
 }
 
-constexpr inline uint64_t pack_slot_and_duration(slot_point slot, uint64_t duration_ns)
+constexpr uint64_t pack_slot_and_duration(slot_point slot, uint64_t duration_ns)
 {
   // Pack duration as 32 bits, maximum of approximately 4.29 seconds.
   uint64_t packed = std::min(duration_ns, 0xffffffffUL);
@@ -52,12 +52,12 @@ constexpr inline uint64_t pack_slot_and_duration(slot_point slot, uint64_t durat
   return packed;
 }
 
-constexpr inline uint64_t unpack_duration(uint64_t packed)
+constexpr uint64_t unpack_duration(uint64_t packed)
 {
   return packed & 0xffffffffUL;
 }
 
-constexpr inline slot_point unpack_slot(uint64_t packed)
+constexpr slot_point unpack_slot(uint64_t packed)
 {
   uint64_t numerology = packed >> 60UL;
   uint64_t slot_index = (packed >> 32UL) & 0xfffffUL;

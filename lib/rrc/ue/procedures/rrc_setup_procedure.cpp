@@ -49,6 +49,7 @@ rrc_setup_procedure::rrc_setup_procedure(rrc_ue_context_t&               context
   is_reestablishment_fallback(is_reestablishment_fallback_),
   logger(logger_)
 {
+  procedure_timeout = context.cell.timers.t300 + context.cfg.rrc_procedure_guard_time_ms;
 }
 
 void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
@@ -59,8 +60,7 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
   create_srb1();
 
   // create new transaction for RRCSetup
-  transaction =
-      event_mng.transactions.create_transaction(std::chrono::milliseconds(context.cfg.rrc_procedure_timeout_ms));
+  transaction = event_mng.transactions.create_transaction(procedure_timeout);
 
   // send RRC setup to UE
   send_rrc_setup();
@@ -70,7 +70,7 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   if (!transaction.has_response()) {
     if (transaction.failure_cause() == protocol_transaction_failure::timeout) {
-      logger.log_warning("\"{}\" timed out after {}ms", name(), context.cfg.rrc_procedure_timeout_ms.count());
+      logger.log_warning("\"{}\" timed out after {}ms", name(), procedure_timeout.count());
       rrc_ue.on_ue_release_required(cause_protocol_t::unspecified);
     } else {
       logger.log_warning("\"{}\" cancelled", name());

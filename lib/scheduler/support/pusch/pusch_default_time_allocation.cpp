@@ -28,15 +28,13 @@ using namespace srsran;
 /// Reserved default PUSCH time-domain allocation. It indicates the configuration is invalid.
 static constexpr pusch_time_domain_resource_allocation PUSCH_DEFAULT_TIME_ALLOCATION_RESERVED = {};
 
-namespace {
-
-// Helper to construct ofdm symbol range
-constexpr ofdm_symbol_range s_and_len(unsigned s, unsigned l)
+/// Helper to construct ofdm symbol range
+static constexpr ofdm_symbol_range s_and_len(unsigned s, unsigned l)
 {
   return ofdm_symbol_range::start_and_len(s, l);
 }
 
-constexpr unsigned pusch_default_time_allocation_default_A_get_j(subcarrier_spacing scs)
+static constexpr unsigned pusch_default_time_allocation_default_A_get_j(subcarrier_spacing scs)
 {
   // TS38.214 Table 6.1.2.1.1-4. Definition of value j.
   constexpr std::array<unsigned, 4> values = {1, 1, 2, 3};
@@ -45,8 +43,6 @@ constexpr unsigned pusch_default_time_allocation_default_A_get_j(subcarrier_spac
   srsran_assert(numerology < values.size(), "Invalid numerology.");
   return values[numerology];
 }
-
-} // namespace
 
 span<const pusch_time_domain_resource_allocation>
 srsran::pusch_default_time_allocations_default_A_table(cyclic_prefix cp, subcarrier_spacing scs)

@@ -34,14 +34,17 @@ namespace srsran {
 struct ru_generic_configuration {
   /// Metrics enabled flag.
   bool are_metrics_enabled;
-  /// Maximum number of PRACH concurrent requests.
-  unsigned max_nof_prach_concurrent_requests = 11;
   /// Device driver.
   std::string device_driver;
   /// Radio configuration.
   radio_configuration::radio radio_cfg;
   /// Lower PHY configurations.
   std::vector<lower_phy_configuration> lower_phy_config;
+  /// \brief Optional starting time.
+  ///
+  /// Starts radio operation at the given time. The use of this parameter is for starting radio operation of several
+  /// instances at same time.
+  std::optional<std::chrono::system_clock::time_point> start_time;
   /// Radio executor.
   task_executor* radio_exec = nullptr;
   /// Radio logger.

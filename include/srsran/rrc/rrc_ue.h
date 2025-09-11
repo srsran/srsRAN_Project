@@ -284,7 +284,7 @@ public:
   /// \param[in] current_meas_config The current meas config of the UE (if applicable).
   /// \return The measurement config, if present.
   virtual std::optional<rrc_meas_cfg>
-  generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config = std::nullopt) = 0;
+  generate_meas_config(const std::optional<rrc_meas_cfg>& current_meas_config = std::nullopt) = 0;
 
   /// \brief Get the packed RRC measurement config for the current serving cell of the UE.
   virtual byte_buffer get_packed_meas_config() = 0;
@@ -355,7 +355,7 @@ public:
 
   /// \brief Update the security context
   /// \param[in] sec_ctxt The new security context
-  virtual void update_security_context(security::security_context sec_ctxt) = 0;
+  virtual void update_security_context(const security::security_context& sec_ctxt) = 0;
 
   /// \brief Perform horizontal key derivation
   virtual void perform_horizontal_key_derivation(pci_t target_pci, unsigned target_ssb_arfcn) = 0;
@@ -400,6 +400,11 @@ public:
   /// \param[in] old_ue_index The index of the old UE to remove.
   virtual void on_rrc_reestablishment_complete(ue_index_t old_ue_index) = 0;
 
+  /// \brief Notify the CU-CP that RRC Reconfiguration has been received, so that the CU-CP can notify the DU if
+  /// required.
+  /// \param[in] ue_index The index of the UE that received the reconfiguration complete.
+  virtual void on_rrc_reconfiguration_complete_indicator() = 0;
+
   /// \brief Notify the CU-CP to transfer and remove ue contexts.
   /// \param[in] old_ue_index The old UE index of the UE that sent the Reestablishment Request.
   virtual async_task<bool> on_ue_transfer_required(ue_index_t old_ue_index) = 0;
@@ -410,7 +415,7 @@ public:
 
   /// \brief Notify the CU-CP to setup an UP context.
   /// \param[in] ctxt The UP context to setup.
-  virtual void on_up_context_setup_required(up_context ctxt) = 0;
+  virtual void on_up_context_setup_required(const up_context& ctxt) = 0;
 
   /// \brief Get the UP context of the UE.
   /// \returns The UP context of the UE.
@@ -430,8 +435,8 @@ public:
   /// \param[in] nci The cell id of the serving cell to update.
   /// \param[in] current_meas_config The current meas config of the UE (if applicable).
   virtual std::optional<rrc_meas_cfg>
-  on_measurement_config_request(nr_cell_identity            nci,
-                                std::optional<rrc_meas_cfg> current_meas_config = std::nullopt) = 0;
+  on_measurement_config_request(nr_cell_identity                   nci,
+                                const std::optional<rrc_meas_cfg>& current_meas_config = std::nullopt) = 0;
 
   /// \brief Submit measurement report for given UE to cell manager.
   virtual void on_measurement_report(const rrc_meas_results& meas_results) = 0;

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "pdcp_bearer_logger.h"
+#include "pdcp_crypto_token.h"
 #include "pdcp_entity_tx_rx_base.h"
 #include "pdcp_interconnect.h"
 #include "pdcp_metrics_aggregator.h"
@@ -31,7 +32,6 @@
 #include "pdcp_tx_window.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/byte_buffer_chain.h"
-#include "srsran/adt/expected.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/security/security.h"
@@ -46,6 +46,15 @@ struct pdcp_tx_state {
   /// This state variable indicates the COUNT value of the next PDCP SDU to be transmitted. The initial value is 0,
   /// except for SRBs configured with state variables continuation.
   uint32_t tx_next = 0;
+  /// This state variable indicates the next COUNT value for which transmission is
+  /// still pending. This is used for TX reordering when using parallel ciphering and integrity protection.
+  /// NOTE: This is a custom state variable, not specified by the standard.
+  uint32_t tx_trans_crypto = 0;
+  /// This state variable indicates the COUNT value following the COUNT value associated with the PDCP Data
+  /// PDU which triggered reordering. This is used for TX reordering when using parallel ciphering and
+  /// integrity protection.
+  /// NOTE: This is a custom state variable, not specified by the standard.
+  uint32_t tx_reord_crypto = 0;
   /// This state variable indicates the next COUNT value for which we will
   /// receive a transmission notification from the F1/RLC. If TX_TRANS == TX_NEXT,
   /// it means we are not currently waiting for any TX notification.
@@ -58,15 +67,39 @@ struct pdcp_tx_state {
   /// NOTE: This is a custom state variable, not specified by the standard.
   uint32_t tx_next_ack = 0;
 
-  pdcp_tx_state(uint32_t tx_next_, uint32_t tx_trans_, uint32_t tx_next_ack_) :
-    tx_next(tx_next_), tx_trans(tx_trans_), tx_next_ack(tx_next_ack_)
+  pdcp_tx_state(uint32_t tx_next_,
+                uint32_t tx_trans_crypto_,
+                uint32_t tx_reord_crypto_,
+                uint32_t tx_trans_,
+                uint32_t tx_next_ack_) :
+    tx_next(tx_next_),
+    tx_trans_crypto(tx_trans_crypto_),
+    tx_reord_crypto(tx_reord_crypto_),
+    tx_trans(tx_trans_),
+    tx_next_ack(tx_next_ack_)
   {
   }
 
   bool operator==(const pdcp_tx_state& other) const
   {
-    return tx_next == other.tx_next && tx_trans == other.tx_trans && tx_next_ack == other.tx_next_ack;
+    return tx_next == other.tx_next && tx_trans == other.tx_trans && tx_reord_crypto == other.tx_reord_crypto &&
+           tx_trans_crypto == other.tx_trans_crypto && tx_next_ack == other.tx_next_ack;
   }
+};
+
+/// Helper struct to pass buffer to security functions.
+struct pdcp_tx_buffer_info {
+  byte_buffer       buf;     /// In/Out parameter for SDU+Header/PDU.
+  uint32_t          count;   /// COUNT associated with this SDU/PDU.
+  uint32_t          retx_id; /// ID used to identify if PDU is out of date.
+  pdcp_crypto_token token;   /// Crypto token to count in-flight PDUs.
+};
+
+/// Helper struct to pass PDUs+metadata to the lower layers.
+struct pdcp_tx_pdu_info {
+  byte_buffer                           pdu;     /// Buffer for PDU.
+  uint32_t                              count;   /// COUNT associated with this SDU/PDU.
+  std::chrono::system_clock::time_point sdu_toa; /// Time of arrival of SDU.
 };
 
 /// Base class used for transmitting PDCP bearers.
@@ -86,6 +119,7 @@ public:
                  timer_factory                   ue_ctrl_timer_factory_,
                  task_executor&                  ue_dl_executor_,
                  task_executor&                  crypto_executor_,
+                 uint32_t                        max_nof_crypto_workers_,
                  pdcp_metrics_aggregator&        metrics_agg_);
 
   ~pdcp_entity_tx() override;
@@ -93,8 +127,25 @@ public:
   /// \brief Stop handling SDUs and stop timers
   void stop();
 
+  /// \brief Retrun awaitable to wait for crypto tasks to be
+  /// finished.
+  manual_event_flag& crypto_awaitable();
+
+  void notify_pdu_processing_stopped() override;
+  void restart_pdu_processing() override;
+
   /// \brief Triggers re-establishment as specified in TS 38.323, section 5.1.2
   void reestablish(security::sec_128_as_config sec_cfg) override;
+
+  /// \brief Get the TX count for status transfer
+  pdcp_count_info get_count() const override
+  {
+    pdcp_count_info count_info;
+    uint32_t        count = st.tx_next;
+    count_info.sn         = SN(count);
+    count_info.hfn        = HFN(count);
+    return count_info;
+  }
 
   // Tx/Rx interconnect
   void set_status_provider(pdcp_rx_status_provider* status_provider_) { status_provider = status_provider_; }
@@ -161,6 +212,9 @@ public:
   /// Retransmits all PDUs. Integrity protection and ciphering is re-applied.
   void retransmit_all_pdus();
 
+  /// Get metrics.
+  pdcp_tx_metrics_container get_metrics_and_reset() { return metrics.get_metrics_and_reset(); }
+
   enum class early_drop_reason { zero_dbs, full_rlc_queue, full_window, no_drop };
 
 private:
@@ -172,15 +226,21 @@ private:
   pdcp_tx_upper_control_notifier& upper_cn;
   timer_factory                   ue_ctrl_timer_factory;
   unique_timer                    discard_timer;
+  unique_timer                    crypto_reordering_timer;
   unique_timer                    metrics_timer;
 
   task_executor& ue_dl_executor;
   task_executor& crypto_executor;
 
-  pdcp_tx_state st                  = {0, 0, 0};
+  pdcp_tx_state st                  = {0, 0, 0, 0, 0};
   uint32_t      desired_buffer_size = 0;
+  uint32_t      max_nof_crypto_workers;
 
-  std::unique_ptr<security::security_engine_tx> sec_engine;
+  /// Id used to identify out of date PDUs after a retransmission.
+  uint32_t retransmit_id = 0;
+
+  using sec_engine_vec = std::vector<std::unique_ptr<security::security_engine_tx>>;
+  sec_engine_vec sec_engine_pool;
 
   security::integrity_enabled integrity_enabled = security::integrity_enabled::off;
   security::ciphering_enabled ciphering_enabled = security::ciphering_enabled::off;
@@ -188,11 +248,23 @@ private:
   early_drop_reason check_early_drop(const byte_buffer& buf);
   uint32_t          warn_on_drop_count = 0;
 
-  void write_data_pdu_to_lower_layers(pdcp_tx_buf_info&& buf_info, bool is_retx);
+  /// Crypto token manager. Used to wait for crypto engine to finish
+  /// when destroying DRB.
+  pdcp_crypto_token_manager token_mngr;
+
+  /// Apply ciphering and integrity protection to SDU+header buffer.
+  /// It will pass this buffer to the crypto engine for parallization.
+  void apply_reordering(pdcp_tx_buffer_info buf_info, bool is_retx);
+
+  void write_data_pdu_to_lower_layers(pdcp_tx_pdu_info&& pdu, bool is_retx);
+
   void write_control_pdu_to_lower_layers(byte_buffer buf);
 
+  /// TODO add docs
+  void apply_security(pdcp_tx_buffer_info buf_info, bool is_retx);
+
   /// Apply ciphering and integrity protection to the payload
-  expected<byte_buffer> apply_ciphering_and_integrity_protection(byte_buffer buf, uint32_t count);
+  security::security_result apply_ciphering_and_integrity_protection(byte_buffer buf, uint32_t count);
 
   uint32_t notification_count_estimation(uint32_t notification_sn) const;
 
@@ -218,6 +290,11 @@ private:
   /// a discard timer, it is responsible to restart the discard timer with the correct timeout.
   void discard_callback();
 
+  /// \brief Callback ran upon crypto reordering timer expiration. This will advance the TX_TRANS_PENDING
+  /// state variable to the next not missing PDU. If an in-flight PDU arrives after advancing the window, it will be
+  /// discarded.
+  void crypto_reordering_timeout();
+
   /// \brief handle_transmit_notification_impl Common implementation for transmit and retransmit notifications
   ///
   /// \param notif_sn Notified (re)transmitted PDCP PDU sequence number.
@@ -229,10 +306,11 @@ private:
   /// \param is_retx Flags whether this is a notification of a ReTx or not
   void handle_delivery_notification_impl(uint32_t notif_sn, bool is_retx);
 
+  void handle_reordering_timeout();
+
   pdcp_tx_metrics          metrics;
   pdcp_metrics_aggregator& metrics_agg;
 };
-
 } // namespace srsran
 
 namespace fmt {
@@ -247,7 +325,13 @@ struct formatter<srsran::pdcp_tx_state> {
   template <typename FormatContext>
   auto format(const srsran::pdcp_tx_state& st, FormatContext& ctx) const
   {
-    return format_to(ctx.out(), "tx_next_ack={} tx_trans={} tx_next={}", st.tx_next_ack, st.tx_trans, st.tx_next);
+    return format_to(ctx.out(),
+                     "tx_next_ack={} tx_trans_crypto={} tx_reord_crypto={} tx_trans={} tx_next={}",
+                     st.tx_next_ack,
+                     st.tx_trans_crypto,
+                     st.tx_reord_crypto,
+                     st.tx_trans,
+                     st.tx_next);
   }
 };
 

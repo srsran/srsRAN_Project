@@ -22,14 +22,18 @@
 
 #include "ue_transaction_info_release_routine.h"
 #include "srsran/adt/scope_exit.h"
+#include "srsran/support/async/coroutine.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
 
-ue_transaction_info_release_routine::ue_transaction_info_release_routine(const std::vector<ue_index_t>& ues_to_release_,
-                                                                         ue_manager&                    ue_mng_,
-                                                                         cu_cp_ue_removal_handler& ue_rem_handler_) :
-  ues_to_release(ues_to_release_), ue_mng(ue_mng_), ue_rem_handler(ue_rem_handler_)
+ue_transaction_info_release_routine::ue_transaction_info_release_routine(
+    const f1_ue_transaction_info_loss_event& loss_event_,
+    ue_manager&                              ue_mng_,
+    ngap_repository&                         ngap_db_,
+    cu_cp_ue_removal_handler&                ue_rem_handler_,
+    srslog::basic_logger&                    logger_) :
+  loss_event(loss_event_), ue_mng(ue_mng_), ngap_db(ngap_db_), ue_rem_handler(ue_rem_handler_), logger(logger_)
 {
 }
 
@@ -37,12 +41,23 @@ void ue_transaction_info_release_routine::operator()(coro_context<async_task<voi
 {
   CORO_BEGIN(ctx);
 
+  // Prepare NG Reset messages for each PLMN.
+  prepare_ng_reset_messages();
+
   // Run NG Reset to signal to the AMF the reset UEs.
-  // TODO
+  for (plmn_id_it = ng_reset_per_plmn.begin(); plmn_id_it != ng_reset_per_plmn.end(); ++plmn_id_it) {
+    ngap = ngap_db.find_ngap(plmn_id_it->first);
+    if (ngap == nullptr) {
+      logger.debug("NGAP not found for PLMN={}. Skipping NGReset", plmn_id_it->first);
+      continue;
+    }
+
+    CORO_AWAIT(ngap->handle_ng_reset_message(plmn_id_it->second));
+  }
 
   // Launch removal procedure for the provided UEs.
-  ues_remaining_count = ues_to_release.size();
-  for (ue_index_t ue_idx : ues_to_release) {
+  ues_remaining_count = loss_event.ues_lost.size();
+  for (ue_index_t ue_idx : loss_event.ues_lost) {
     launch_ue_removal(ue_idx);
   }
 
@@ -52,6 +67,26 @@ void ue_transaction_info_release_routine::operator()(coro_context<async_task<voi
   }
 
   CORO_RETURN();
+}
+
+void ue_transaction_info_release_routine::prepare_ng_reset_messages()
+{
+  for (const auto& ue_idx : loss_event.ues_lost) {
+    auto* ue = ue_mng.find_du_ue(ue_idx);
+    if (ue == nullptr) {
+      logger.debug("ue={}: UE not found in UE manager. Skipping NGReset", ue_idx);
+      continue;
+    }
+
+    if (ng_reset_per_plmn.find(ue->get_ue_context().plmn) == ng_reset_per_plmn.end()) {
+      // Create a new entry for the PLMN.
+      ngap_cause_t reset_cause                     = ngap_cause_radio_network_t::radio_conn_with_ue_lost;
+      ng_reset_per_plmn[ue->get_ue_context().plmn] = cu_cp_ng_reset{reset_cause, false, {}};
+    }
+
+    // Add reset message to the PLMN list.
+    ng_reset_per_plmn[ue->get_ue_context().plmn].ues_to_reset.push_back(ue_idx);
+  }
 }
 
 void ue_transaction_info_release_routine::launch_ue_removal(ue_index_t ue_idx)

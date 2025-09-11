@@ -97,6 +97,7 @@ public:
     result_notifier.get_cell(to_du_cell_index(0)).on_cell_results_completion(context.sl_tx);
   }
   void                               handle_error_indication(slot_point sl_tx, error_event event) override {}
+  void                               handle_stop_indication() override {}
   mac_cell_controller&               add_cell(const mac_cell_creation_request& cell_cfg) override { return *this; }
   void                               remove_cell(du_cell_index_t cell_index) override {}
   mac_cell_controller&               get_cell_controller(du_cell_index_t cell_index) override { return *this; }

@@ -36,7 +36,6 @@ void configure_cli11_with_du_low_config_schema(CLI::App& app, du_low_unit_config
 void autoderive_du_low_parameters_after_parsing(CLI::App&           app,
                                                 du_low_unit_config& parsed_cfg,
                                                 duplex_mode         mode,
-                                                bool                is_blocking_mode_enabled,
                                                 unsigned            nof_cells);
 
 } // namespace srsran

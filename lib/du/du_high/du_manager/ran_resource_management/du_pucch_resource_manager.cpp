@@ -189,13 +189,12 @@ du_pucch_resource_manager::find_optimal_csi_report_slot_offset(
       srsran_assert(std::holds_alternative<pucch_format_2_3_cfg>(candidate_csi_res_cfg.format_params),
                     "PUCCH resource for CSI must be of format 2");
 
-      const auto&             csi_params  = std::get<pucch_format_2_3_cfg>(candidate_csi_res_cfg.format_params);
-      const ofdm_symbol_range csi_symbols = {csi_params.starting_sym_idx,
-                                             csi_params.starting_sym_idx + csi_params.nof_symbols};
+      const ofdm_symbol_range csi_symbols = {candidate_csi_res_cfg.starting_sym_idx,
+                                             candidate_csi_res_cfg.starting_sym_idx +
+                                                 candidate_csi_res_cfg.nof_symbols};
 
-      const auto&             sr_params  = std::get<pucch_format_0_cfg>(sr_res_cfg.format_params);
-      const ofdm_symbol_range sr_symbols = {sr_params.starting_sym_idx,
-                                            sr_params.starting_sym_idx + sr_params.nof_symbols};
+      const ofdm_symbol_range sr_symbols = {sr_res_cfg.starting_sym_idx,
+                                            sr_res_cfg.starting_sym_idx + sr_res_cfg.nof_symbols};
 
       if (not csi_symbols.overlaps(sr_symbols)) {
         weight += 2 * csi_rs_period;
@@ -350,7 +349,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
                   "No PUCCH F2 resource found in the UE dedicated configuration");
     ue_ded_pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_2)] = get_pucch_format2_max_payload(
         std::get<pucch_format_2_3_cfg>(res_f2_it->format_params).nof_prbs,
-        std::get<pucch_format_2_3_cfg>(res_f2_it->format_params).nof_symbols,
+        res_f2_it->nof_symbols,
         to_max_code_rate_float(ue_ded_pucch_cfg.format_2_common_param.value().max_c_rate));
     ue_ded_pucch_cfg.set_1_format = pucch_format::FORMAT_2;
   } else if (std::holds_alternative<pucch_f3_params>(user_defined_pucch_cfg.f2_or_f3_or_f4_params)) {
@@ -362,7 +361,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
     const auto& f3_common_params = ue_ded_pucch_cfg.format_3_common_param.value();
     ue_ded_pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_3)] =
         get_pucch_format3_max_payload(std::get<pucch_format_2_3_cfg>(res_f3_it->format_params).nof_prbs,
-                                      std::get<pucch_format_2_3_cfg>(res_f3_it->format_params).nof_symbols,
+                                      res_f3_it->nof_symbols,
                                       to_max_code_rate_float(ue_ded_pucch_cfg.format_3_common_param.value().max_c_rate),
                                       res_f3_it->second_hop_prb.has_value(),
                                       f3_common_params.additional_dmrs,
@@ -376,7 +375,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
                   "No PUCCH F4 resource found in the UE dedicated configuration");
     const auto& f4_common_params = ue_ded_pucch_cfg.format_4_common_param.value();
     ue_ded_pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_4)] =
-        get_pucch_format4_max_payload(std::get<pucch_format_4_cfg>(res_f4_it->format_params).nof_symbols,
+        get_pucch_format4_max_payload(res_f4_it->nof_symbols,
                                       to_max_code_rate_float(ue_ded_pucch_cfg.format_4_common_param.value().max_c_rate),
                                       res_f4_it->second_hop_prb.has_value(),
                                       f4_common_params.additional_dmrs,

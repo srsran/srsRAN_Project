@@ -34,7 +34,7 @@ from pytest import mark, param
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts
-from retina.protocol.base_pb2 import FiveGCDefinition, GNBDefinition, Metrics, PLMN, StartInfo, UEDefinition
+from retina.protocol.base_pb2 import DUDefinition, FiveGCDefinition, Metrics, PLMN, StartInfo, UEDefinition
 from retina.protocol.fivegc_pb2 import FiveGCStartInfo
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2 import GNBStartInfo
@@ -120,11 +120,11 @@ def test_ue(
         )
 
     with handle_start_error(name=f"GNB [{id(gnb)}]"):
-        gnb_def: GNBDefinition = gnb.GetDefinition(Empty())
+        du_def: DUDefinition = gnb.GetDefinition(Empty())
         gnb.Start(
             GNBStartInfo(
                 plmn=PLMN(mcc="001", mnc="01"),
-                ue_definition=UEDefinition(zmq_ip=gnb_def.zmq_ip, zmq_port_array=gnb_def.zmq_port_array),
+                ue_definition=UEDefinition(zmq_ip=du_def.zmq_ip, zmq_port_array=du_def.zmq_port_array),
                 fivegc_definition=fivegc_def,
                 start_info=StartInfo(
                     timeout=gnb_startup_timeout,
@@ -141,10 +141,10 @@ def test_ue(
 
     # Stop
     stop(
-        tuple(),
-        gnb,
-        fivegc,
-        retina_data,
+        ue_array=tuple(),
+        gnb=gnb,
+        fivegc=fivegc,
+        retina_data=retina_data,
         gnb_stop_timeout=gnb_stop_timeout,
         log_search=log_search,
         warning_as_errors=warning_as_errors,
@@ -164,9 +164,9 @@ def test_ru_acc100(
     Run gnb in test mode ru dummy.
     """
     _test_ru(
-        retina_manager,
-        retina_data,
-        gnb,
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        gnb=gnb,
         ru_config="config_ru_acc100.yml",
         min_dl_bitrate=1e6,
         warning_allowlist=(
@@ -188,7 +188,7 @@ def test_ru(
     """
     Run gnb in test mode ru dummy.
     """
-    _test_ru(retina_manager, retina_data, gnb, ru_config="config_ru.yml")
+    _test_ru(retina_manager=retina_manager, retina_data=retina_data, gnb=gnb, ru_config="config_ru.yml")
 
 
 @mark.test_mode
@@ -203,9 +203,9 @@ def test_ru_10cell_50ue(
     Run gnb in test mode ru dummy.
     """
     _test_ru(
-        retina_manager,
-        retina_data,
-        gnb,
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        gnb=gnb,
         ru_config="config_ru_10cell_50ue.yml",
         duration=10 * 60,
         warning_as_errors=False,
@@ -225,9 +225,9 @@ def test_ru_not_crash(
     It ignores warnings and KOs, so it will fail if the gnb+sanitizer fails
     """
     _test_ru(
-        retina_manager,
-        retina_data,
-        gnb,
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        gnb=gnb,
         ru_config="config_ru.yml",
         gnb_stop_timeout=150,
         warning_as_errors=False,
@@ -248,9 +248,9 @@ def test_ru_10cell_50ue_not_crash(
     It ignores warnings and KOs, so it will fail if the gnb+sanitizer fails
     """
     _test_ru(
-        retina_manager,
-        retina_data,
-        gnb,
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        gnb=gnb,
         ru_config="config_ru_10cell_50ue.yml",
         duration=15 * 60,
         gnb_stop_timeout=150,
@@ -261,6 +261,7 @@ def test_ru_10cell_50ue_not_crash(
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def _test_ru(
+    *,  # This enforces keyword-only arguments
     # Retina
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -332,10 +333,10 @@ def _test_ru(
 
     # Stop
     stop(
-        tuple(),
-        gnb,
-        None,
-        retina_data,
+        ue_array=tuple(),
+        gnb=gnb,
+        fivegc=None,
+        retina_data=retina_data,
         gnb_stop_timeout=gnb_stop_timeout,
         log_search=log_search,
         warning_as_errors=warning_as_errors,
@@ -420,10 +421,10 @@ def test_mode_many_ues(
 
     # Stop
     stop(
-        tuple(),
-        gnb,
-        None,
-        retina_data,
+        ue_array=tuple(),
+        gnb=gnb,
+        fivegc=None,
+        retina_data=retina_data,
         gnb_stop_timeout=gnb_stop_timeout,
         log_search=log_search,
         warning_as_errors=warning_as_errors,

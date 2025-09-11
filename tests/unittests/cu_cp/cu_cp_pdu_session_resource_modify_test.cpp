@@ -295,7 +295,8 @@ public:
   {
     // Fail RRC Reconfiguration (UE doesn't respond) and wait for PDU Session Resource Setup Response
     if (tick_until(
-            std::chrono::milliseconds(this->get_cu_cp_cfg().rrc.rrc_procedure_timeout_ms),
+            rrc_test_timer_values.t310 + rrc_test_timer_values.t311 +
+                this->get_cu_cp_cfg().rrc.rrc_procedure_guard_time_ms,
             [&]() { return false; },
             false)) {
       return false;

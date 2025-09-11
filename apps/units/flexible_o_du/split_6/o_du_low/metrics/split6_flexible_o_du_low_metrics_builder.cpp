@@ -33,10 +33,11 @@ split6_flexible_o_du_low_metrics_notifier*
 srsran::build_split6_flexible_o_du_low_metrics_config(std::vector<app_services::metrics_config>& metrics,
                                                       app_services::metrics_notifier&            notifier,
                                                       const app_helpers::metrics_config&         metrics_cfg,
-                                                      std::vector<pci_t>                         pci_cell_map)
+                                                      const std::vector<pci_t>&                  pci_cell_map,
+                                                      std::chrono::nanoseconds                   symbol_duration)
 {
   split6_flexible_o_du_low_metrics_notifier* output = nullptr;
-  if (!metrics_cfg.enable_log_metrics && !metrics_cfg.json_config.enable_json_metrics) {
+  if (!metrics_cfg.enabled()) {
     return output;
   }
 
@@ -49,12 +50,12 @@ srsran::build_split6_flexible_o_du_low_metrics_config(std::vector<app_services::
 
   if (metrics_cfg.enable_log_metrics) {
     odu_metric.consumers.push_back(std::make_unique<split6_flexible_o_du_low_metrics_consumer_log>(
-        app_helpers::fetch_logger_metrics_log_channel(), pci_cell_map, metrics_cfg.enable_verbose));
+        app_helpers::fetch_logger_metrics_log_channel(), pci_cell_map, metrics_cfg.enable_verbose, symbol_duration));
   }
 
-  if (metrics_cfg.json_config.enable_json_metrics) {
+  if (metrics_cfg.enable_json_metrics) {
     odu_metric.consumers.push_back(std::make_unique<split6_flexible_o_du_low_metrics_consumer_json>(
-        app_helpers::fetch_json_metrics_log_channel(), pci_cell_map));
+        app_helpers::fetch_json_metrics_log_channel(), pci_cell_map, symbol_duration));
   }
 
   return output;

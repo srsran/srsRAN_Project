@@ -46,6 +46,7 @@ flexible_o_du_metrics_notifier* build_flexible_o_du_metrics_config(
                                        metrics_subcommands,
     app_services::metrics_notifier&    notifier,
     const app_helpers::metrics_config& metrics_cfg,
-    std::vector<pci_t>                 pci_cell_map);
+    const std::vector<pci_t>&          pci_cell_map,
+    std::chrono::nanoseconds           symbol_duration);
 
 } // namespace srsran

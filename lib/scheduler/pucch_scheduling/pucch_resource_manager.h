@@ -24,6 +24,7 @@
 
 #include "../config/ue_configuration.h"
 #include "srsran/ran/pucch/pucch_constants.h"
+#include "srsran/scheduler/resource_grid_util.h"
 
 namespace srsran {
 
@@ -45,14 +46,13 @@ enum class pucch_resource_usage { NOT_USED = 0, HARQ_SET_0, HARQ_SET_1, SR, CSI 
 /// (iii) The cell PUCCH resource list can have max \c MAX_NOF_CELL_PUCCH_RESOURCES PUCCH resource, including all
 ///       formats; at cell level, there is no constraint on how many resource must be F0/F1, F2/F3/F4, or for SR or for
 ///       CSI.
-/// (vi)  UEs can have different PUCCH resource lists; however the PUCCH resource ID is unique with the cell. This
+/// (iv)  UEs can have different PUCCH resource lists; however the PUCCH resource ID is unique within the cell. This
 ///       implies that if two UEs have the same PUCCH resource within their lists, their PUCCH resource ID must be the
 ///       same.
 /// (v)   Indexing of the PUCCH F0/F1 and PUCCH F2/F3/F4 resources for HARQ-ACK reporting must be contiguous within the
-/// F0/F1
-///       group and with F2/F3/F4 group. However, the last PUCCH F0/F1 group resource's and the first PUCCH F2/F3/F4
-///       group resource's indices need not be contiguous. E.g., PUCCH F0/F1 indices (for HARQ-ACK reporting) = {0, ...,
-///       7}, and PUCCH F2/F3/F4 indices (for HARQ-ACK reporting) = {10, ..., 17}.
+///       F0/F1 group and with F2/F3/F4 group. However, the last PUCCH F0/F1 group resource's and the first PUCCH
+///       F2/F3/F4 group resource's indices need not be contiguous. E.g., PUCCH F0/F1 indices (for HARQ-ACK reporting) =
+///       {0, ..., 7}, and PUCCH F2/F3/F4 indices (for HARQ-ACK reporting) = {10, ..., 17}.
 class pucch_resource_manager
 {
 public:
@@ -60,6 +60,8 @@ public:
 
   /// Reset all resources to "unused".
   void slot_indication(slot_point slot_tx);
+
+  void stop();
 
   /// Returns true if the common PUCCH resource indexed by r_pucch is available at the given slot.
   bool is_common_resource_available(slot_point sl, size_t r_pucch);

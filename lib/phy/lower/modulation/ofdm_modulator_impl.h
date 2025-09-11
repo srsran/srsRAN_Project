@@ -90,17 +90,17 @@ private:
   /// Resource grid numerology.
   unsigned numerology;
   /// Instance of symbol modulator.
-  ofdm_symbol_modulator_impl symbol_modulator;
+  std::unique_ptr<ofdm_symbol_modulator> symbol_modulator;
 
 public:
   /// \brief Constructs an OFDM slot modulator.
-  /// \param[in] common_config Provides specific configuration parameters from the factory.
-  /// \param[in] ofdm_config Provides generic OFDM configuration parameters.
-  ofdm_slot_modulator_impl(ofdm_modulator_common_configuration& common_config,
-                           const ofdm_modulator_configuration&  ofdm_config) :
-    cp(ofdm_config.cp), numerology(ofdm_config.numerology), symbol_modulator(common_config, ofdm_config)
+  /// \param[in] ofdm_config       OFDM factory parameters.
+  /// \param[in] symbol_modulator_ OFDM symbol modulator instance.
+  ofdm_slot_modulator_impl(const ofdm_modulator_configuration&    ofdm_config,
+                           std::unique_ptr<ofdm_symbol_modulator> symbol_modulator_) :
+    cp(ofdm_config.cp), numerology(ofdm_config.numerology), symbol_modulator(std::move(symbol_modulator_))
   {
-    // Do nothing.
+    srsran_assert(symbol_modulator, "Invalid OFDM symbol modulator.");
   }
 
   // See interface for documentation;

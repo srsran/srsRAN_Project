@@ -26,6 +26,7 @@ from contextlib import contextmanager
 from typing import Dict, Generator, Optional, Sequence, Tuple, Union
 
 import pytest
+from google.protobuf.empty_pb2 import Empty
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
@@ -164,13 +165,15 @@ def _reestablishment_sequentially_ping(
     ):
         # Launch pings
         ping_task_array = ping_start(
-            {**reest_ue_attach_info_dict, **other_ue_attach_info_dict}, fivegc, traffic_duration
+            ue_attach_info_dict={**reest_ue_attach_info_dict, **other_ue_attach_info_dict},
+            fivegc=fivegc,
+            ping_count=traffic_duration,
         )
 
         # Trigger reestablishments
         for ue_stub in reest_ue_attach_info_dict:
             for _ in range(int(traffic_duration / reestablishment_interval)):
-                ue_reestablishment(ue_stub, reestablishment_interval)
+                ue_reestablishment(ue_stub=ue_stub, reestablishment_interval=reestablishment_interval)
 
         # Wait and validate pings
         ping_wait_until_finish(ping_task_array)
@@ -236,7 +239,15 @@ def test_zmq_reestablishment_sequentially_full_rate(
         iperf_dict = tuple(
             (
                 ue_attached_info,
-                *iperf_start(ue_stub, ue_attached_info, fivegc, protocol, direction, traffic_duration, 0),
+                *iperf_start(
+                    ue_stub=ue_stub,
+                    ue_attached_info=ue_attached_info,
+                    fivegc=fivegc,
+                    protocol=protocol,
+                    direction=direction,
+                    duration=traffic_duration,
+                    bitrate=0,
+                ),
             )
             for ue_stub, ue_attached_info in {**reest_ue_attach_info_dict, **other_ue_attach_info_dict}.items()
         )
@@ -244,11 +255,13 @@ def test_zmq_reestablishment_sequentially_full_rate(
         # Trigger reestablishments
         for ue_stub in reest_ue_attach_info_dict:
             for _ in range(int(traffic_duration / reestablishment_interval)):
-                ue_reestablishment(ue_stub, reestablishment_interval)
+                ue_reestablishment(ue_stub=ue_stub, reestablishment_interval=reestablishment_interval)
 
         # Wait for reestablished UEs
         for ue_attached_info, task, iperf_request in iperf_dict:
-            iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request)
+            iperf_wait_until_finish(
+                ue_attached_info=ue_attached_info, fivegc=fivegc, task=task, iperf_request=iperf_request
+            )
 
 
 @mark.zmq
@@ -304,7 +317,7 @@ def test_zmq_reestablishment_sequentially_full_rate_verify_bitrate(
 
         # Reestablishment
         for _ in range(int(traffic_duration / reestablishment_interval)):
-            ue_reestablishment(ue, reestablishment_interval)
+            ue_reestablishment(ue_stub=ue, reestablishment_interval=reestablishment_interval)
 
         # Iperf after reestablishment
         _, result_after = iperf_sequentially(
@@ -391,12 +404,16 @@ def test_zmq_reestablishment_parallel(
 
         for i in range(number_of_reestablishments):
             logging.info("Starting Reestablishment for all UEs + Traffic running in background. Iteration %s", i + 1)
-            ping_task_array = ping_start(ue_attach_info_dict, fivegc, reestablishment_time)
-            ue_reestablishment_parallel(ue_8, reestablishment_time)
+            ping_task_array = ping_start(
+                ue_attach_info_dict=ue_attach_info_dict, fivegc=fivegc, ping_count=reestablishment_time
+            )
+            ue_reestablishment_parallel(ue_array=ue_8, reestablishment_interval=reestablishment_time)
             ping_wait_until_finish(ping_task_array)
 
         logging.info("Starting traffic after all reestablishments have been completed")
-        ping_task_array = ping_start(ue_attach_info_dict, fivegc, reestablishment_time)
+        ping_task_array = ping_start(
+            ue_attach_info_dict=ue_attach_info_dict, fivegc=fivegc, ping_count=reestablishment_time
+        )
         ping_wait_until_finish(ping_task_array)
 
 
@@ -464,22 +481,39 @@ def test_zmq_reestablishment_parallel_full_rate(
             iperf_dict = tuple(
                 (
                     ue_attached_info,
-                    *iperf_start(ue_stub, ue_attached_info, fivegc, protocol, direction, reestablishment_time, 0),
+                    *iperf_start(
+                        ue_stub=ue_stub,
+                        ue_attached_info=ue_attached_info,
+                        fivegc=fivegc,
+                        protocol=protocol,
+                        direction=direction,
+                        duration=reestablishment_time,
+                        bitrate=0,
+                    ),
                 )
                 for ue_stub, ue_attached_info in ue_attach_info_dict.items()
             )
-            ue_reestablishment_parallel(ue_8, reestablishment_time)
+            ue_reestablishment_parallel(ue_array=ue_8, reestablishment_interval=reestablishment_time)
             for ue_attached_info, task, iperf_request in iperf_dict:
-                iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request)
+                iperf_wait_until_finish(
+                    ue_attached_info=ue_attached_info, fivegc=fivegc, task=task, iperf_request=iperf_request
+                )
 
         logging.info("Starting traffic after all reestablishments have been completed")
         iperf_parallel(
-            ue_attach_info_dict, fivegc, protocol, direction, reestablishment_time, 0, parallel_iperfs=len(ue_8)
+            ue_attach_info_dict=ue_attach_info_dict,
+            fivegc=fivegc,
+            protocol=protocol,
+            direction=direction,
+            iperf_duration=reestablishment_time,
+            bitrate=0,
+            parallel_iperfs=len(ue_8),
         )
 
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def _iterator_over_attached_ues(
+    *,  # This enforces keyword-only arguments
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_array: Sequence[UEStub],
@@ -537,6 +571,7 @@ def _iterator_over_attached_ues(
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 @contextmanager
 def _test_reestablishments(
+    *,  # This enforces keyword-only arguments
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_array: Sequence[UEStub],
@@ -576,9 +611,19 @@ def _test_reestablishments(
         always_download_artifacts=always_download_artifacts,
     )
 
-    start_network(ue_array, gnb, fivegc, gnb_post_cmd=("log --cu_level=debug", "log --mac_level=debug"))
+    start_network(
+        ue_array=ue_array,
+        gnb=gnb,
+        fivegc=fivegc,
+        gnb_post_cmd=(
+            "log --cu_level=debug",
+            "log --mac_level=debug cell_cfg pdcch common --ss1_n_candidates=0 0 2 0 0",
+        ),
+    )
 
-    ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
+    ue_attach_info_dict = ue_start_and_attach(
+        ue_array=ue_array, du_definition=[gnb.GetDefinition(Empty())], fivegc=fivegc
+    )
 
     try:
         yield ue_attach_info_dict
@@ -586,7 +631,7 @@ def _test_reestablishments(
         for ue_stub in ue_array:
             ue_validate_no_reattaches(ue_stub)
 
-        stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)
+        stop(ue_array=ue_array, gnb=gnb, fivegc=fivegc, retina_data=retina_data, warning_as_errors=warning_as_errors)
 
     finally:
-        get_kpis(gnb, ue_array=ue_array, metrics_summary=metrics_summary)
+        get_kpis(du_or_gnb_array=[gnb], ue_array=ue_array, metrics_summary=metrics_summary)

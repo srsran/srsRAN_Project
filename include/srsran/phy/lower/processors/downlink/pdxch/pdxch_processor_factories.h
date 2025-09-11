@@ -46,6 +46,8 @@ struct pdxch_processor_configuration {
   double center_freq_Hz;
   /// Number of transmit ports.
   unsigned nof_tx_ports;
+  /// Task executor for asynchronous modulation.
+  task_executor& modulation_executor;
 };
 
 /// Lower physical layer PDxCH processor - Factory interface.
@@ -61,11 +63,11 @@ public:
 
 /// \brief Creates a software based PDxCH processor factory.
 ///
-/// \param[in] request_queue_size Number of PDxCH processing requests that can be enqueued.
-/// \param[in] ofdm_mod_factory   OFDM modulator factory.
+/// \param[in] ofdm_mod_factory          OFDM modulator factory.
+/// \param[in] amplitude_control_factory Amplitude control factory.
 /// \return A PDxCH processor factory.
 std::shared_ptr<pdxch_processor_factory>
-create_pdxch_processor_factory_sw(unsigned                                request_queue_size,
-                                  std::shared_ptr<ofdm_modulator_factory> ofdm_mod_factory);
+create_pdxch_processor_factory_sw(std::shared_ptr<ofdm_modulator_factory>       ofdm_mod_factory,
+                                  std::shared_ptr<amplitude_controller_factory> amplitude_control_factory);
 
 } // namespace srsran

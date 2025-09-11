@@ -26,11 +26,9 @@
 
 using namespace srsran;
 
-namespace {
-
-// Templated recursive stage function.
+/// Templated recursive stage function.
 template <unsigned CODE_SIZE_LOG>
-void stage_function(uint8_t* output, const uint8_t* input)
+static void stage_function(uint8_t* output, const uint8_t* input)
 {
   unsigned code_size      = (1U << (CODE_SIZE_LOG));
   unsigned code_half_size = code_size / 2;
@@ -43,7 +41,7 @@ void stage_function(uint8_t* output, const uint8_t* input)
   }
 }
 
-// Recursive stage function for 2 input bits.
+/// Recursive stage function for 2 input bits.
 template <>
 void stage_function<1>(uint8_t* output, const uint8_t* input)
 {
@@ -51,7 +49,7 @@ void stage_function<1>(uint8_t* output, const uint8_t* input)
   output[1] = input[1];
 }
 
-// Recursive polar encoder.
+/// Recursive polar encoder.
 template <unsigned MAX_CODE_SIZE_LOG>
 void polar_encode(uint8_t* output, const uint8_t* input, unsigned code_size_log)
 {
@@ -65,14 +63,12 @@ void polar_encode(uint8_t* output, const uint8_t* input, unsigned code_size_log)
   polar_encode<MAX_CODE_SIZE_LOG - 1>(output, input, code_size_log);
 }
 
-// Recursive polar encoder of size 2.
+/// Recursive polar encoder of size 2.
 template <>
 void polar_encode<1>(uint8_t* output, const uint8_t* input, unsigned /**/)
 {
   stage_function<1>(output, input);
 }
-
-} // namespace
 
 void polar_encoder_impl::encode(span<uint8_t> output, span<const uint8_t> input, unsigned code_size_log)
 {

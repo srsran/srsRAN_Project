@@ -52,6 +52,7 @@ public:
                            timer_factory                                    ue_dl_timer_factory_,
                            timer_factory                                    ue_ul_timer_factory_,
                            timer_factory                                    ue_ctrl_timer_factory_,
+                           e1ap_interface&                                  e1ap_,
                            f1u_cu_up_gateway&                               f1u_gw_,
                            ngu_session_manager&                             ngu_session_mngr_,
                            gtpu_teid_pool&                                  n3_teid_allocator_,
@@ -73,11 +74,13 @@ public:
   void disconnect_all_pdu_sessions();
   void update_security_config(const security::sec_as_config& security_info);
 
-  void             notify_pdcp_pdu_processing_stopped();
-  void             restart_pdcp_pdu_processing();
+  void notify_pdcp_pdu_processing_stopped();
+  void restart_pdcp_pdu_processing();
+
   async_task<void> await_crypto_rx_all_pdu_sessions();
   async_task<void> await_crypto_rx_all_drbs(const std::unique_ptr<pdu_session>& pdu_session);
-  async_task<void> await_crypto_drb(const std::unique_ptr<drb_context>& drb);
+  async_task<void> await_crypto_tx_all_pdu_sessions();
+  async_task<void> await_crypto_tx_all_drbs(const std::unique_ptr<pdu_session>& pdu_session);
 
   /// \brief Function used to allocate a local NG-U TEID
   /// This function allocates a new TEID based on the UE id, and PDU session ID.
@@ -110,6 +113,7 @@ private:
   task_executor&                                           ue_ctrl_exec;
   task_executor&                                           crypto_exec;
   dlt_pcap&                                                gtpu_pcap;
+  e1ap_interface&                                          e1ap;
   f1u_cu_up_gateway&                                       f1u_gw;
   ngu_session_manager&                                     ngu_session_mngr;
   std::map<pdu_session_id_t, std::unique_ptr<pdu_session>> pdu_sessions; // key is pdu_session_id

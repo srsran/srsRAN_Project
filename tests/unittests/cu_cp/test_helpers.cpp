@@ -23,6 +23,8 @@
 #include "test_helpers.h"
 #include "../rrc/rrc_ue_test_helpers.h"
 #include "tests/test_doubles/rrc/rrc_test_messages.h"
+#include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/security/integrity.h"
 
 using namespace srsran;
@@ -68,4 +70,24 @@ byte_buffer srsran::srs_cu_cp::generate_rrc_reconfiguration_complete_pdu(unsigne
   }
 
   return pdu_with_count;
+}
+
+rrc_timers_t srsran::srs_cu_cp::get_timers(const asn1::f1ap::f1_setup_request_s& f1_setup_req)
+{
+  rrc_timers_t timers;
+
+  auto& sib1_container = f1_setup_req->gnb_du_served_cells_list[0]->gnb_du_served_cells_item().gnb_du_sys_info.sib1_msg;
+
+  // Unpack SIB1 to store timers.
+  asn1::rrc_nr::sib1_s sib1_msg;
+  asn1::cbit_ref       bref2(sib1_container);
+  if (sib1_msg.unpack(bref2) != asn1::SRSASN_SUCCESS) {
+    report_fatal_error("Failed to unpack SIB1");
+  }
+  timers.t300 = std::chrono::milliseconds{sib1_msg.ue_timers_and_consts.t300.to_number()};
+  timers.t301 = std::chrono::milliseconds{sib1_msg.ue_timers_and_consts.t301.to_number()};
+  timers.t310 = std::chrono::milliseconds{sib1_msg.ue_timers_and_consts.t310.to_number()};
+  timers.t311 = std::chrono::milliseconds{sib1_msg.ue_timers_and_consts.t311.to_number()};
+
+  return timers;
 }

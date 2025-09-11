@@ -94,12 +94,6 @@ static void configure_cli11_cell_affinity_args(CLI::App& app, du_low_unit_cpu_af
 
   add_option_function<std::string>(
       app,
-      "--l1_ul_cpus",
-      [&config](const std::string& value) { parse_affinity_mask(config.l1_ul_cpu_cfg.mask, value, "l1_ul_cpus"); },
-      "CPU cores assigned to L1 uplink tasks");
-
-  add_option_function<std::string>(
-      app,
       "--l1_dl_pinning",
       [&config](const std::string& value) {
         config.l1_dl_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
@@ -108,17 +102,6 @@ static void configure_cli11_cell_affinity_args(CLI::App& app, du_low_unit_cpu_af
         }
       },
       "Policy used for assigning CPU cores to L1 downlink tasks");
-
-  add_option_function<std::string>(
-      app,
-      "--l1_ul_pinning",
-      [&config](const std::string& value) {
-        config.l1_ul_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
-        if (config.l1_ul_cpu_cfg.pinning_policy == sched_affinity_mask_policy::last) {
-          report_error("Incorrect value={} used in {} property", value, "l1_ul_pinning");
-        }
-      },
-      "Policy used for assigning CPU cores to L1 uplink tasks");
 }
 
 static void configure_cli11_upper_phy_threads_args(CLI::App& app, du_low_unit_expert_threads_config& config)
@@ -132,8 +115,8 @@ static void configure_cli11_upper_phy_threads_args(CLI::App& app, du_low_unit_ex
 
   auto pdsch_cb_batch_length_transform = [](const std::string& value) -> std::string {
     unsigned pdsch_cb_batch_length;
-    if (value == "auto") {
-      pdsch_cb_batch_length = 0;
+    if ((value == "auto") || (value == "default")) {
+      pdsch_cb_batch_length = du_low_unit_expert_threads_config::default_cb_batch_length;
     } else if (value == "synchronous") {
       pdsch_cb_batch_length = du_low_unit_expert_threads_config::synchronous_cb_batch_length;
     } else {
@@ -159,13 +142,30 @@ static void configure_cli11_upper_phy_threads_args(CLI::App& app, du_low_unit_ex
              "calling thread without parallelization.")
       ->capture_default_str()
       ->transform(pdsch_cb_batch_length_transform);
-  add_option(app, "--nof_pusch_decoder_threads", config.nof_pusch_decoder_threads, "Number of threads to decode PUSCH.")
+  add_option(app,
+             "--max_pucch_concurrency",
+             config.max_pucch_concurrency,
+             "Maximum PUCCH processing concurrency for all cells.\n"
+             "Limits the maximum number of threads that can concurrently process Physical Uplink Control Channel\n"
+             "(PUCCH). Set it to zero for no limit of threads.")
       ->capture_default_str()
       ->check(CLI::Number);
-  add_option(app, "--nof_ul_threads", config.nof_ul_threads, "Number of upper PHY threads to process uplink.")
+  add_option(app,
+             "--max_pusch_and_srs_concurrency",
+             config.max_pusch_and_srs_concurrency,
+             "Maximum PUSCH and SRS processing concurrency for all cells.\n"
+             "Limits the maximum number of threads that can concurrently process Physical Uplink Shared Channel \n"
+             "(PUSCH) and Sounding Reference Signals (SRS). Set it to zero for no limitation. If hardware \n"
+             "acceleration is enabled, this parameter is set to the number of the accelerator queues.")
       ->capture_default_str()
       ->check(CLI::Number);
-  add_option(app, "--nof_dl_threads", config.nof_dl_threads, "Number of upper PHY threads to process downlink.")
+  add_option(app,
+             "--max_pdsch_concurrency",
+             config.max_pdsch_concurrency,
+             "Maximum concurrency level for PDSCH processing for all cells.\n"
+             "Limits the number of threads that can concurrently process Physical Downlink Shared Channel (PDSCH).\n"
+             "Set to zero for no limitation. If hardware acceleration is enabled, this parameter is set to the\n"
+             "number of the accelerator queues.")
       ->capture_default_str()
       ->check(CLI::Number);
 }
@@ -244,6 +244,11 @@ static void configure_cli11_expert_phy_args(CLI::App& app, du_low_unit_expert_up
              "Enables PUSCH LDPC decoder early stop")
       ->capture_default_str();
   add_option(app,
+             "--pusch_decoder_force_decoding",
+             expert_phy_params.pusch_decoder_force_decoding,
+             "Forces PUSCH LDPC decoder to decode always")
+      ->capture_default_str();
+  add_option(app,
              "--pusch_sinr_calc_method",
              expert_phy_params.pusch_sinr_calc_method,
              "PUSCH SINR calculation method: channel_estimator, post_equalization and evm.")
@@ -278,11 +283,15 @@ static void configure_cli11_expert_phy_args(CLI::App& app, du_low_unit_expert_up
              "Maximum request headroom size in slots.")
       ->capture_default_str()
       ->check(CLI::Range(0, 30));
-
   add_option(app,
              "--allow_request_on_empty_uplink_slot",
              expert_phy_params.allow_request_on_empty_uplink_slot,
              "Generates an uplink request in an uplink slot with no PUCCH/PUSCH/SRS PDUs")
+      ->capture_default_str();
+  add_option(app,
+             "--enable_phy_tap",
+             expert_phy_params.enable_phy_tap,
+             "Enables or disables the PHY tap plugin if it is present while building the application.")
       ->capture_default_str();
 }
 
@@ -429,7 +438,6 @@ void srsran::configure_cli11_with_du_low_config_schema(CLI::App& app, du_low_uni
 void srsran::autoderive_du_low_parameters_after_parsing(CLI::App&           app,
                                                         du_low_unit_config& parsed_cfg,
                                                         duplex_mode         mode,
-                                                        bool                is_blocking_mode_enabled,
                                                         unsigned            nof_cells)
 {
   // If max proc delay property is not present in the config, configure the default value.
@@ -450,14 +458,6 @@ void srsran::autoderive_du_low_parameters_after_parsing(CLI::App&           app,
   // If max request headroom slots property is present in the config, do nothing.
   if (expert_cmd->count_all() == 0 || expert_cmd->count("--max_request_headroom_slots") == 0) {
     parsed_cfg.expert_phy_cfg.nof_slots_request_headroom = parsed_cfg.expert_phy_cfg.max_processing_delay_slots;
-  }
-
-  // Ignore the default settings based in the number of CPU cores for ZMQ.
-  if (is_blocking_mode_enabled) {
-    du_low_unit_expert_threads_config& upper = parsed_cfg.expert_execution_cfg.threads;
-    upper.nof_pusch_decoder_threads          = 0;
-    upper.nof_ul_threads                     = 1;
-    upper.nof_dl_threads                     = 1;
   }
 
   if (parsed_cfg.expert_execution_cfg.cell_affinities.size() < nof_cells) {

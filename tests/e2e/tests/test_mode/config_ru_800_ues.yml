@@ -53,7 +53,7 @@ cell_cfg:
   tdd_ul_dl_cfg:
     nof_dl_slots: 6
     nof_dl_symbols: 10
-    nof_ul_slots: 3  
+    nof_ul_slots: 3
 
 cells:
   - pci: 1
@@ -86,4 +86,5 @@ expert_phy:
 expert_execution:
   threads:
     upper_phy:
-      nof_ul_threads: 4
+      max_pucch_concurrency: 4
+      max_pusch_and_srs_concurrency: 4

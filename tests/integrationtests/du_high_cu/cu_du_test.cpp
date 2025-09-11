@@ -29,8 +29,10 @@
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/cu_cp/cu_cp_factory.h"
 #include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/du/du_high/du_high_clock_controller.h"
 #include "srsran/du/du_high/du_high_factory.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
+#include "srsran/support/io/io_broker_factory.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -65,6 +67,8 @@ protected:
     cu_cfg.services.timers                = &timers;
     cu_cfg.ngap.ngaps.push_back(srs_cu_cp::cu_cp_configuration::ngap_config{
         &*amf, {{7, {{plmn_identity::test_value(), {{slice_service_type{1}}}}}}}});
+    cu_cfg.metrics.layers_cfg.enable_ngap = true;
+    cu_cfg.metrics.layers_cfg.enable_rrc  = true;
 
     // create CU-CP.
     cu_cp_obj = create_cu_cp(cu_cfg);
@@ -91,7 +95,7 @@ protected:
     du_dependencies.f1c_client  = &f1c_gw;
     du_dependencies.f1u_gw      = &f1u_gw;
     du_dependencies.phy_adapter = &phy;
-    du_dependencies.timers      = &timers;
+    du_dependencies.timer_ctrl  = timer_ctrl.get();
 
     // create DU object
     du_obj = make_du_high(std::move(du_cfg), du_dependencies);
@@ -107,8 +111,11 @@ protected:
   }
 
 public:
-  du_high_worker_manager workers;
-  timer_manager          timers;
+  du_high_worker_manager                workers;
+  timer_manager                         timers;
+  std::unique_ptr<io_broker>            broker{create_io_broker(io_broker_type::epoll)};
+  std::unique_ptr<mac_clock_controller> timer_ctrl{
+      srs_du::create_du_high_clock_controller(timers, *broker, *workers.time_exec)};
   srslog::basic_logger&  test_logger = srslog::fetch_basic_logger("TEST");
   f1c_test_local_gateway f1c_gw{};
   f1u_test_local_gateway f1u_gw{};

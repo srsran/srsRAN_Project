@@ -52,6 +52,14 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc)
   schedule_slot_ucis(cell_alloc[cell_alloc.max_ul_slot_alloc_delay]);
 }
 
+void uci_scheduler_impl::stop()
+{
+  updated_ues.clear();
+  for (auto& sl : periodic_uci_slot_wheel) {
+    sl.clear();
+  }
+}
+
 void uci_scheduler_impl::add_resource(rnti_t crnti, unsigned res_offset, unsigned res_period, bool is_sr)
 {
   // For each offset in the periodic UCI slot wheel.

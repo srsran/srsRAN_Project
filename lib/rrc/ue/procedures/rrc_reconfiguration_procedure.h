@@ -28,6 +28,7 @@
 #include "srsran/rrc/rrc_ue.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/async/eager_async_task.h"
+#include <chrono>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -60,6 +61,7 @@ private:
   rrc_ue_control_message_handler&       srb_notifier; // For creating SRBs
   rrc_ue_logger&                        logger;
 
+  std::chrono::milliseconds     procedure_timeout{0};
   rrc_transaction               transaction;
   eager_async_task<rrc_outcome> task;
 

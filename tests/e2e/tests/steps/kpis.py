@@ -23,7 +23,8 @@ KPI related logic
 """
 
 from dataclasses import dataclass, fields
-from typing import Optional, Sequence
+from statistics import mean
+from typing import List, Optional, Sequence
 
 from google.protobuf.empty_pb2 import Empty
 from retina.launcher.public import MetricsSummary
@@ -59,7 +60,8 @@ class KPIs:
 
 # pylint: disable=too-many-locals
 def get_kpis(
-    gnb: RanStub,
+    *,  # This enforces keyword-only arguments
+    du_or_gnb_array: Sequence[RanStub] = (),
     ue_array: Sequence[RanStub] = (),
     viavi_kpis: Optional[ViaviKPIs] = None,
     metrics_summary: Optional[MetricsSummary] = None,
@@ -70,30 +72,29 @@ def get_kpis(
 
     kpis = KPIs()
 
-    # GNB
-    gnb_metrics: Metrics = gnb.GetMetrics(Empty())
+    metrics: List[Metrics] = [du_or_gnb.GetMetrics(Empty()) for du_or_gnb in du_or_gnb_array]
 
-    kpis.ul_brate_aggregate = gnb_metrics.total.ul_bitrate
-    kpis.ul_brate_min = gnb_metrics.total.ul_bitrate_min
-    kpis.ul_brate_max = gnb_metrics.total.ul_bitrate_max
+    kpis.ul_brate_aggregate = mean([m.total.ul_bitrate for m in metrics])
+    kpis.ul_brate_min = min(m.total.ul_bitrate_min for m in metrics)
+    kpis.ul_brate_max = max(m.total.ul_bitrate_max for m in metrics)
 
-    kpis.dl_brate_aggregate = gnb_metrics.total.dl_bitrate
-    kpis.dl_brate_min = gnb_metrics.total.dl_bitrate_min
-    kpis.dl_brate_max = gnb_metrics.total.dl_bitrate_max
+    kpis.dl_brate_aggregate = mean([m.total.dl_bitrate for m in metrics])
+    kpis.dl_brate_min = min(m.total.dl_bitrate_min for m in metrics)
+    kpis.dl_brate_max = max(m.total.dl_bitrate_max for m in metrics)
 
-    kpis.nof_ko_dl = gnb_metrics.total.dl_nof_ko
-    kpis.nof_ko_ul = gnb_metrics.total.ul_nof_ko
+    kpis.nof_ko_dl = sum(m.total.dl_nof_ko for m in metrics)
+    kpis.nof_ko_ul = sum(m.total.ul_nof_ko for m in metrics)
 
-    total_ul_ko_ok = gnb_metrics.total.ul_nof_ok + gnb_metrics.total.ul_nof_ko
-    total_dl_ko_ok = gnb_metrics.total.dl_nof_ok + gnb_metrics.total.dl_nof_ko
+    total_ul_ko_ok = sum(m.total.ul_nof_ok + m.total.ul_nof_ko for m in metrics)
+    total_dl_ko_ok = sum(m.total.dl_nof_ok + m.total.dl_nof_ko for m in metrics)
 
-    kpis.ul_bler_aggregate = 0 if not total_ul_ko_ok else gnb_metrics.total.ul_nof_ko / total_ul_ko_ok
-    kpis.dl_bler_aggregate = 0 if not total_dl_ko_ok else gnb_metrics.total.dl_nof_ko / total_dl_ko_ok
+    kpis.ul_bler_aggregate = 0 if not total_ul_ko_ok else sum(m.total.ul_nof_ko for m in metrics) / total_ul_ko_ok
+    kpis.dl_bler_aggregate = 0 if not total_dl_ko_ok else sum(m.total.dl_nof_ko for m in metrics) / total_dl_ko_ok
 
-    kpis.nof_error_indications = gnb_metrics.cell.error_indication_cnt
+    kpis.nof_error_indications = sum(m.cell.error_indication_cnt for m in metrics)
 
-    kpis.max_late_dl_harqs = gnb_metrics.cell.max_late_dl_harqs
-    kpis.max_late_ul_harqs = gnb_metrics.cell.max_late_ul_harqs
+    kpis.max_late_dl_harqs = sum(m.cell.max_late_dl_harqs for m in metrics)
+    kpis.max_late_ul_harqs = sum(m.cell.max_late_ul_harqs for m in metrics)
 
     # UE
     for ue in ue_array:

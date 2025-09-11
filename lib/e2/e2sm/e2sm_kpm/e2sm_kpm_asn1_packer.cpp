@@ -41,7 +41,7 @@ e2sm_kpm_asn1_packer::handle_packed_e2sm_action_definition(const srsran::byte_bu
   asn1::cbit_ref         bref(action_definition);
   action_def.service_model = e2sm_service_model_t::KPM;
   if (std::get<e2sm_kpm_action_definition_s>(action_def.action_definition).unpack(bref) != asn1::SRSASN_SUCCESS) {
-    printf("Failed to unpack E2SM KPM Action Definition\n");
+    fmt::println("Failed to unpack E2SM KPM Action Definition");
     action_def.service_model = e2sm_service_model_t::UNKNOWN_SM;
   }
   return action_def;
@@ -50,14 +50,14 @@ e2sm_kpm_asn1_packer::handle_packed_e2sm_action_definition(const srsran::byte_bu
 e2sm_ric_control_request
 e2sm_kpm_asn1_packer::handle_packed_ric_control_request(const asn1::e2ap::ric_ctrl_request_s& req)
 {
-  printf("Failure - RIC control not available in e2sm_kpm.\n");
+  fmt::println("Failure - RIC control not available in e2sm_kpm.");
   e2sm_ric_control_request control_request = {};
   return control_request;
 }
 
 e2_ric_control_response e2sm_kpm_asn1_packer::pack_ric_control_response(const e2sm_ric_control_response& e2sm_response)
 {
-  printf("Failure - RIC control not available in e2sm_kpm.\n");
+  fmt::println("Failure - RIC control not available in e2sm_kpm.");
   e2_ric_control_response control_response = {};
   return control_response;
 }
@@ -69,7 +69,7 @@ e2sm_kpm_asn1_packer::handle_packed_event_trigger_definition(const srsran::byte_
   e2sm_kpm_event_trigger_definition_s e2sm_kpm_event_trigger_def;
   asn1::cbit_ref                      bref(event_trigger_definition);
   if (e2sm_kpm_event_trigger_def.unpack(bref) != asn1::SRSASN_SUCCESS) {
-    printf("Failed to unpack E2SM KPM Event Trigger Definition\n");
+    fmt::println("Failed to unpack E2SM KPM Event Trigger Definition");
   }
 
   e2sm_event_trigger_def.ric_service_type = e2sm_event_trigger_definition::e2sm_ric_service_type_t::REPORT;
@@ -186,7 +186,7 @@ asn1::unbounded_octstring<true> e2sm_kpm_asn1_packer::pack_ran_function_descript
   srsran::byte_buffer buf;
   asn1::bit_ref       bref(buf);
   if (ran_function_desc.pack(bref) != asn1::SRSASN_SUCCESS) {
-    printf("Failed to pack E2SM KPM RAN Function Description\n");
+    fmt::println("Failed to pack E2SM KPM RAN Function Description");
     asn1::unbounded_octstring<true> err_buf;
     return err_buf;
   }

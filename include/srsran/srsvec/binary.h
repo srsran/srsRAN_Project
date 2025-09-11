@@ -20,6 +20,9 @@
  *
  */
 
+/// \file
+/// Bitwise binary operations.
+
 #pragma once
 
 #include "srsran/srsvec/type_traits.h"
@@ -28,8 +31,19 @@
 namespace srsran {
 namespace srsvec {
 
+/// \brief Binary XOR.
+///
+/// Applies the bitwise XOR operator to corresponding elements of the input sequences.
+/// \tparam T  Type of the output sequence (must be compatible with a span of integers).
+/// \tparam U  Type of the first input sequence (must be compatible with a span of integers).
+/// \tparam V  Type of the second input sequence (must be compatible with a span of integers).
+///
+/// \param[out] z  Output sequence.
+/// \param[in]  x  First input sequence.
+/// \param[in]  y  Second input sequence.
+/// \warning An assertion is triggered if input and output sequences have different sizes.
 template <typename T, typename U, typename V>
-void binary_xor(const T& x, const U& y, V&& z)
+void binary_xor(T&& z, const U& x, const V& y)
 {
   static_assert(is_integral_span_compatible<T>::value, "Template type is not compatible with a span of integers");
   static_assert(is_integral_span_compatible<U>::value, "Template type is not compatible with a span of integers");
@@ -42,8 +56,19 @@ void binary_xor(const T& x, const U& y, V&& z)
   }
 }
 
+/// \brief Binary AND.
+///
+/// Applies the bitwise AND operator to corresponding elements of the input sequences.
+/// \tparam T  Type of the output sequence (must be compatible with a span of integers).
+/// \tparam U  Type of the first input sequence (must be compatible with a span of integers).
+/// \tparam V  Type of the second input sequence (must be compatible with a span of integers).
+///
+/// \param[out] z  Output sequence.
+/// \param[in]  x  First input sequence.
+/// \param[in]  y  Second input sequence.
+/// \warning An assertion is triggered if input and output sequences have different sizes.
 template <typename T, typename U, typename V>
-void binary_and(const T& x, const U& y, V&& z)
+void binary_and(T&& z, const U& x, const V& y)
 {
   static_assert(is_integral_span_compatible<T>::value, "Template type is not compatible with a span of integers");
   static_assert(is_integral_span_compatible<U>::value, "Template type is not compatible with a span of integers");
@@ -56,8 +81,19 @@ void binary_and(const T& x, const U& y, V&& z)
   }
 }
 
+/// \brief Binary OR.
+///
+/// Applies the bitwise OR operator to corresponding elements of the input sequences.
+/// \tparam T  Type of the output sequence (must be compatible with a span of integers).
+/// \tparam U  Type of the first input sequence (must be compatible with a span of integers).
+/// \tparam V  Type of the second input sequence (must be compatible with a span of integers).
+///
+/// \param[out] z  Output sequence.
+/// \param[in]  x  First input sequence.
+/// \param[in]  y  Second input sequence.
+/// \warning An assertion is triggered if input and output sequences have different sizes.
 template <typename T, typename U, typename V>
-void binary_or(const T& x, const U& y, V&& z)
+void binary_or(T&& z, const U& x, const V& y)
 {
   static_assert(is_integral_span_compatible<T>::value, "Template type is not compatible with a span of integers");
   static_assert(is_integral_span_compatible<U>::value, "Template type is not compatible with a span of integers");

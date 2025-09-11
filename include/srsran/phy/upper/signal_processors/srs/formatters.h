@@ -75,7 +75,7 @@ struct formatter<srsran::srs_estimator_result> {
   template <typename FormatContext>
   auto format(const srsran::srs_estimator_result& config, FormatContext& ctx) const
   {
-    helper.format_always(ctx, "t_align={:+.1f}us", config.time_alignment.time_alignment * 1e6);
+    helper.format_always(ctx, "t_align={:+.1f}ns", config.time_alignment.time_alignment * 1e9);
     helper.format_always(ctx, "epre={:+.1f}dB", config.epre_dB.value_or(std::numeric_limits<float>::quiet_NaN()));
     helper.format_always(ctx, "rsrp={:+.1f}dB", config.rsrp_dB.value_or(std::numeric_limits<float>::quiet_NaN()));
     helper.format_always(

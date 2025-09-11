@@ -137,7 +137,7 @@ app_services::build_app_resource_usage_service(app_services::metrics_notifier&  
         std::make_unique<resource_usage_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
   }
 
-  if (config.metrics_consumers_cfg.json_config.enable_json_metrics) {
+  if (config.metrics_consumers_cfg.enable_json_metrics) {
     app_res_usage_metrics.consumers.push_back(
         std::make_unique<resource_usage_metrics_consumer_json>(app_helpers::fetch_json_metrics_log_channel()));
   }

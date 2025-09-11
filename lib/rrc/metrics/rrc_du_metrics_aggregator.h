@@ -32,7 +32,7 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-static std::chrono::milliseconds get_current_time()
+inline std::chrono::milliseconds get_current_time()
 {
   return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch());
 }

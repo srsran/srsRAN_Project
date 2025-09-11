@@ -27,7 +27,7 @@
 namespace srsran {
 
 /// Types of CPU affinity masks.
-enum class sched_affinity_mask_types { l1_dl, l1_ul, l2_cell, ru, low_priority, last };
+enum class sched_affinity_mask_types { l1_dl, ru, main, last };
 
 /// Thread pinning policy to a CPU affinity mask.
 enum class sched_affinity_mask_policy {

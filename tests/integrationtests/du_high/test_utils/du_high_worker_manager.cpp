@@ -21,6 +21,7 @@
  */
 
 #include "du_high_worker_manager.h"
+#include "srsran/support/executors/strand_executor.h"
 #include <future>
 
 using namespace srsran;
@@ -45,6 +46,9 @@ du_high_worker_manager::du_high_worker_manager()
   cfg.trace_exec_tasks   = false;
 
   exec_mapper = srs_du::create_du_high_executor_mapper(cfg);
+
+  time_exec = std::make_unique<task_strand<priority_task_worker_pool_executor, concurrent_queue_policy::lockfree_mpmc>>(
+      high_prio_exec, 128);
 }
 
 du_high_worker_manager::~du_high_worker_manager()

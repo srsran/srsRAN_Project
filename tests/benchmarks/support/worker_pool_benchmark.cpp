@@ -29,7 +29,7 @@
 using namespace srsran;
 
 struct bench_params {
-  std::chrono::milliseconds duration{10};
+  std::chrono::milliseconds duration{0};
   unsigned                  max_workers = cpu_architecture_info::get().get_host_nof_available_cpus();
   std::string               output_file{"stdout"};
 };
@@ -60,7 +60,7 @@ static void parse_args(int argc, char** argv, bench_params& params)
       case 'h':
       default:
         usage(argv[0], params);
-        exit(0);
+        std::exit(0);
     }
   }
 }
@@ -111,8 +111,10 @@ public:
     fmt::print("STATUS: Starting {}...", description);
     unsigned nof_initial_tasks = nof_workers;
     for (unsigned i = 0; i != nof_initial_tasks; ++i) {
-      bool success = task_exec->defer([this]() { run_task(); });
-      report_fatal_error_if_not(success, "Unexpected failure to defer initial task");
+      while (not task_exec->defer([this]() { run_task(); })) {
+        fmt::print("Unexpected failure to defer initial task, retrying...\n");
+        std::this_thread::sleep_for(std::chrono::microseconds{1});
+      }
     }
     reset_counters();
   }
@@ -245,7 +247,7 @@ void run_benchmarks(const bench_params& params)
                result.description,
                result.task_count,
                result.duration.count(),
-               result.task_count * 1000000 / result.duration.count());
+               result.duration.count() > 0 ? result.task_count * 1000000 / result.duration.count() : 0);
   }
 
   if (out_file != stdout) {

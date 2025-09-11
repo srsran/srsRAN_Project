@@ -28,10 +28,22 @@
 #include "srsran/pdcp/pdcp_entity.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/executors/task_worker_pool.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <queue>
 
 namespace srsran {
+
+/// Helper class to verify the state of the PDCP entity when the order of the PDU's crypto processing
+/// is non-deterministic.
+inline void assert_pdcp_state_with_reordering(const pdcp_tx_state& st, const pdcp_tx_state& exp_st)
+{
+  FLUSH_AND_ASSERT_EQ(st.tx_next, exp_st.tx_next);
+  FLUSH_AND_ASSERT_EQ(st.tx_trans, exp_st.tx_trans);
+  FLUSH_AND_ASSERT_EQ(st.tx_trans_crypto, exp_st.tx_trans_crypto);
+  FLUSH_AND_ASSERT_EQ(st.tx_next_ack, exp_st.tx_next_ack);
+}
 
 class mock_pdcp_metrics_notifier : public pdcp_metrics_notifier
 {
@@ -95,6 +107,10 @@ public:
 class pdcp_tx_test_helper
 {
 public:
+  pdcp_tx_test_helper(uint32_t nof_crypto_threads_, task_executor& crypto_exec_, manual_task_worker& dl_worker) :
+    nof_crypto_threads(nof_crypto_threads_), worker(dl_worker), crypto_exec(crypto_exec_)
+  {
+  }
   virtual ~pdcp_tx_test_helper() = default;
 
 protected:
@@ -155,8 +171,16 @@ protected:
     metrics_agg =
         std::make_unique<pdcp_metrics_aggregator>(0, rb_id, timer_duration{100}, &metrics_notif, worker, false);
     // Create PDCP entity
-    pdcp_tx = std::make_unique<pdcp_entity_tx>(
-        0, rb_id, config, test_frame, test_frame, timer_factory{timers, worker}, worker, worker, *metrics_agg);
+    pdcp_tx = std::make_unique<pdcp_entity_tx>(0,
+                                               rb_id,
+                                               config,
+                                               test_frame,
+                                               test_frame,
+                                               timer_factory{timers, worker},
+                                               worker,
+                                               crypto_exec,
+                                               nof_crypto_threads,
+                                               *metrics_agg);
     pdcp_tx->set_status_provider(&test_frame);
     pdcp_tx->handle_desired_buffer_size_notification(20 * (1 << 20)); // 20 MBi in RLC buffer
   }
@@ -187,7 +211,6 @@ protected:
   uint32_t           mac_hdr_len = 4;
   pdcp_tx_config     config      = {};
   timer_manager      timers;
-  manual_task_worker worker{4098};
   pdcp_tx_test_frame test_frame = {};
 
   uint32_t rlc_sdu_queue_size = 20 * (1 << 20);
@@ -199,5 +222,49 @@ protected:
   mock_pdcp_metrics_notifier metrics_notif;
   std::unique_ptr<pdcp_metrics_aggregator> metrics_agg;
   std::unique_ptr<pdcp_entity_tx>          pdcp_tx;
+
+  const uint32_t      nof_crypto_threads;
+  manual_task_worker& worker;
+  task_executor&      crypto_exec;
+};
+
+/// Fixture class for PDCP tests
+class pdcp_tx_test_helper_default_crypto : public pdcp_tx_test_helper
+{
+public:
+  pdcp_tx_test_helper_default_crypto() : pdcp_tx_test_helper(2, crypto_worker, dl_worker) {}
+
+protected:
+  void wait_pending_crypto() { crypto_worker_pool.wait_pending_tasks(); }
+
+private:
+  manual_task_worker dl_worker{64};
+  unsigned           crypto_queue_size = 128;
+
+  task_worker_pool<concurrent_queue_policy::lockfree_mpmc>          crypto_worker_pool{"crypto",
+                                                                              nof_crypto_threads,
+                                                                              crypto_queue_size};
+  task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc> crypto_worker =
+      task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc>(crypto_worker_pool);
+};
+
+class pdcp_tx_test_helper_manual_crypto : public pdcp_tx_test_helper
+{
+public:
+  pdcp_tx_test_helper_manual_crypto() : pdcp_tx_test_helper(1, crypto_worker, dl_worker) {}
+
+protected:
+  void wait_pending_crypto() { crypto_worker.run_pending_tasks(); }
+  void wait_one_crypto_task() { crypto_worker.try_run_next(); }
+
+  void wait_one_dl_worker_task() { dl_worker.try_run_next(); }
+  void wait_pending_dl() { dl_worker.run_pending_tasks(); }
+
+  const uint32_t crypto_worker_qsize{128};
+  const uint32_t dl_worker_qsize{256};
+
+private:
+  manual_task_worker dl_worker{dl_worker_qsize, false, true};
+  manual_task_worker crypto_worker{crypto_worker_qsize, false, true};
 };
 } // namespace srsran

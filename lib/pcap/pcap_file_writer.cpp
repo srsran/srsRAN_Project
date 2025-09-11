@@ -54,14 +54,14 @@ bool pcap_file_writer::open(uint32_t dlt_, const std::string& filename_)
 
   pcap_fstream.open(filename.c_str(), std::ios::out | std::ios::binary);
   if (pcap_fstream.fail()) {
-    logger.error("Failed to open file {} for writing: {}", filename, strerror(errno));
+    logger.error("Failed to open file {} for writing: {}", filename, ::strerror(errno));
     return false;
   }
   logger.debug("Opened file {} for writing. DLT={}", filename, dlt);
 
   pcap_fstream.write((char*)&file_header, sizeof(file_header));
   if (pcap_fstream.fail()) {
-    logger.error("Failed to write to PCAP: {}", strerror(errno));
+    logger.error("Failed to write to PCAP: {}", ::strerror(errno));
     return false;
   }
 
@@ -103,7 +103,7 @@ void pcap_file_writer::write_pdu_header(uint32_t length)
 
   pcap_fstream.write((char*)&packet_header, sizeof(packet_header));
   if (pcap_fstream.fail()) {
-    logger.error("Failed to write to PCAP: {}", strerror(errno));
+    logger.error("Failed to write to PCAP: {}", ::strerror(errno));
     return;
   }
 }
@@ -116,7 +116,7 @@ void pcap_file_writer::write_pdu(srsran::const_span<uint8_t> pdu)
 
   pcap_fstream.write((char*)pdu.data(), pdu.size());
   if (pcap_fstream.fail()) {
-    logger.error("Failed to write to PCAP: {}", strerror(errno));
+    logger.error("Failed to write to PCAP: {}", ::strerror(errno));
     return;
   }
 }
@@ -130,7 +130,7 @@ void pcap_file_writer::write_pdu(const byte_buffer& pdu)
   for (span<const uint8_t> seg : pdu.segments()) {
     pcap_fstream.write((char*)seg.data(), seg.size());
     if (pcap_fstream.fail()) {
-      logger.error("Failed to write to PCAP: {}", strerror(errno));
+      logger.error("Failed to write to PCAP: {}", ::strerror(errno));
       return;
     }
   }

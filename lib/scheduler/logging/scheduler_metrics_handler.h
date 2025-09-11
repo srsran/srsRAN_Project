@@ -155,6 +155,8 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
     unsigned nof_failed_pusch_allocs_late_harqs = 0;
     // Number of UE events not reported because the maximum number of events was reached.
     unsigned filtered_events_counter = 0;
+    // Number of RBs used for PUCCH in the reporting period.
+    unsigned pucch_rbs_used = 0;
   };
 
   scheduler_cell_metrics_notifier& notifier;

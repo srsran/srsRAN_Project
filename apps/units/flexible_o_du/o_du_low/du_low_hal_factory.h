@@ -36,9 +36,7 @@ struct o_du_low_hal_dependencies {
 
 /// \brief Initializes the HAL depencies of the DU low unit.
 /// \param[out] hal_config Struct defining the DU low HAL configuration
-/// \param[in]  nof_cells  Number of cells to be handled by the HAL.
 /// \return  Struct containing the DU low unit dependencies.
-o_du_low_hal_dependencies make_du_low_hal_dependencies(const std::optional<du_low_unit_hal_config>& hal_config,
-                                                       unsigned                                     nof_cells);
+o_du_low_hal_dependencies make_du_low_hal_dependencies(const std::optional<du_low_unit_hal_config>& hal_config);
 
 } // namespace srsran

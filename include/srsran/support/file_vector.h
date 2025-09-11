@@ -69,7 +69,7 @@ public:
     report_fatal_error_if_not(op != openmode::write_only, "The file_vector was created with write-only permissions.");
     std::ifstream binary_file(file_name, std::ios::in | std::ios::binary);
 
-    report_fatal_error_if_not(binary_file.is_open(), "Error opening file '{}'. {}.", file_name, strerror(errno));
+    report_fatal_error_if_not(binary_file.is_open(), "Error opening file '{}'. {}.", file_name, ::strerror(errno));
     std::vector<T> read_data;
 
     T read_value;
@@ -92,7 +92,7 @@ public:
     report_fatal_error_if_not(op != openmode::read_only, "The file_vector was created with read-only permissions.");
     std::ofstream binary_file(file_name, std::ios::out | std::ios::binary);
 
-    report_fatal_error_if_not(binary_file.is_open(), "Error opening file '{}'. {}.", file_name, strerror(errno));
+    report_fatal_error_if_not(binary_file.is_open(), "Error opening file '{}'. {}.", file_name, ::strerror(errno));
 
     binary_file.write(reinterpret_cast<const char*>(write_data.begin()), write_data.size() * sizeof(T));
   }

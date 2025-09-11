@@ -42,23 +42,23 @@ static void fill_gnb_appconfig_expert_execution_section(YAML::Node node, const e
   {
     YAML::Node affinities_node = node["affinities"];
 
-    if (config.affinities.isolated_cpus.has_value()) {
-      affinities_node["isolated_cpus"] =
-          fmt::format("{:,}", span<const size_t>(config.affinities.isolated_cpus.value().get_cpu_ids()));
+    if (config.affinities.main_pool_cpu_cfg.mask.any()) {
+      affinities_node["main_pool_cpus"] =
+          fmt::format("{:,}", span<const size_t>(config.affinities.main_pool_cpu_cfg.mask.get_cpu_ids()));
     }
-
-    if (config.affinities.low_priority_cpu_cfg.mask.any()) {
-      affinities_node["low_priority_cpus"] =
-          fmt::format("{:,}", span<const size_t>(config.affinities.low_priority_cpu_cfg.mask.get_cpu_ids()));
-    }
-    affinities_node["low_priority_pinning"] = to_string(config.affinities.low_priority_cpu_cfg.pinning_policy);
+    affinities_node["main_pool_pinning"] = to_string(config.affinities.main_pool_cpu_cfg.pinning_policy);
   }
 
   {
-    YAML::Node threads_node               = node["threads"];
-    YAML::Node non_rt_node                = threads_node["non_rt"];
-    non_rt_node["nof_non_rt_threads"]     = config.threads.non_rt_threads.nof_non_rt_threads;
-    non_rt_node["non_rt_task_queue_size"] = config.threads.non_rt_threads.non_rt_task_queue_size;
+    YAML::Node threads_node   = node["threads"];
+    YAML::Node main_pool_node = threads_node["main_pool"];
+    if (config.threads.main_pool.nof_threads.has_value()) {
+      main_pool_node["nof_threads"] = config.threads.main_pool.nof_threads.value();
+    } else {
+      main_pool_node["nof_threads"] = "auto";
+    }
+    main_pool_node["task_queue_size"] = config.threads.main_pool.task_queue_size;
+    main_pool_node["backoff_period"]  = config.threads.main_pool.backoff_period;
   }
 }
 

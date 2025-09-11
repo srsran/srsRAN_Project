@@ -25,11 +25,11 @@
 #include "adapters/du_high_adapter_factories.h"
 #include "adapters/f1ap_adapters.h"
 #include "test_mode/f1ap_test_mode_adapter.h"
+#include "srsran/du/du_high/du_high_clock_controller.h"
 #include "srsran/du/du_high/du_manager/du_manager_factory.h"
 #include "srsran/mac/mac_cell_timing_context.h"
 #include "srsran/mac/mac_metrics_notifier.h"
 #include "srsran/srslog/srslog.h"
-#include "srsran/support/executors/task_redispatcher.h"
 #include "srsran/support/timers.h"
 
 using namespace srsran;
@@ -65,19 +65,18 @@ public:
 du_high_impl::du_high_impl(const du_high_configuration& config_, const du_high_dependencies& dependencies) :
   cfg(config_),
   logger(srslog::fetch_basic_logger("DU")),
-  timers(*dependencies.timers),
-  adapters(std::make_unique<layer_connector>(*dependencies.timers, dependencies.exec_mapper->du_control_executor()))
+  timers(dependencies.timer_ctrl->get_timer_manager()),
+  adapters(std::make_unique<layer_connector>(timers, dependencies.exec_mapper->du_control_executor()))
 {
   // Create layers
   mac  = create_du_high_mac(mac_config{adapters->mac_ev_notifier,
                                       dependencies.exec_mapper->ue_mapper(),
                                       dependencies.exec_mapper->cell_mapper(),
                                       dependencies.exec_mapper->du_control_executor(),
-                                      dependencies.exec_mapper->du_timer_executor(),
                                       *dependencies.phy_adapter,
                                       cfg.ran.mac_cfg,
                                       *dependencies.mac_p,
-                                      timers,
+                                      *dependencies.timer_ctrl,
                                       mac_config::metrics_config{cfg.metrics.period,
                                                                  cfg.metrics.enable_mac,
                                                                  cfg.metrics.enable_sched,
@@ -125,31 +124,6 @@ void du_high_impl::start()
   logger.info("Starting DU-High...");
   du_manager->start();
   logger.info("DU-High started successfully");
-
-  // If test mode is enabled, create a test-mode UE by injecting a Msg3.
-  if (cfg.test_cfg.test_ue.has_value()) {
-    for (unsigned cell_id = 0, cell_end = cfg.ran.cells.size(); cell_id != cell_end; ++cell_id) {
-      if (not cfg.ran.cells[cell_id].enabled) {
-        // Skip cells not enabled at startup.
-        continue;
-      }
-      // Push an UL-CCCH message that will trigger the creation of a UE for testing purposes.
-      for (unsigned ue_num = 0, nof_ues = cfg.test_cfg.test_ue->nof_ues; ue_num != nof_ues; ++ue_num) {
-        auto rx_buf = byte_buffer::create({0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00});
-        if (not rx_buf.has_value()) {
-          logger.warning("Unable to allocate byte_buffer");
-          continue;
-        }
-        mac->get_pdu_handler().handle_rx_data_indication(mac_rx_data_indication{
-            slot_point{0, 0},
-            to_du_cell_index(cell_id),
-            {mac_rx_pdu{to_rnti(to_value(cfg.test_cfg.test_ue->rnti) + (cell_id * nof_ues) + ue_num),
-                        0,
-                        0,
-                        std::move(rx_buf.value())}}});
-      }
-    }
-  }
 }
 
 void du_high_impl::stop()

@@ -58,16 +58,16 @@ public:
   time_alignment_estimator_dft_impl(collection_dft_processors dft_processors_);
 
   // See interface for documentation.
-  time_alignment_measurement estimate(span<const cf_t>                symbols,
-                                      bounded_bitset<max_nof_symbols> mask,
-                                      subcarrier_spacing              scs,
-                                      double                          max_ta) override;
+  time_alignment_measurement estimate(span<const cf_t>                       symbols,
+                                      const bounded_bitset<max_nof_symbols>& mask,
+                                      subcarrier_spacing                     scs,
+                                      double                                 max_ta) override;
 
   // See interface for documentation.
-  time_alignment_measurement estimate(const re_buffer_reader<cf_t>&   symbols,
-                                      bounded_bitset<max_nof_symbols> mask,
-                                      subcarrier_spacing              scs,
-                                      double                          max_ta) override;
+  time_alignment_measurement estimate(const re_buffer_reader<cf_t>&          symbols,
+                                      const bounded_bitset<max_nof_symbols>& mask,
+                                      subcarrier_spacing                     scs,
+                                      double                                 max_ta) override;
 
   // See interface for documentation.
   time_alignment_measurement

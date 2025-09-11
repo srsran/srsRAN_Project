@@ -218,16 +218,12 @@ resolve_transmitter_dependencies(const transmitter_config&                      
   dependencies.frame_pool_ul_cp =
       create_eth_frame_pool(tx_config, logger, message_type::control_plane, data_direction::uplink, false);
 
-  dependencies.ul_df_cplane = std::make_unique<data_flow_cplane_downlink_task_dispatcher>(
-      logger,
-      create_data_flow_cplane_sched(tx_config,
-                                    tx_config.is_uplink_static_compr_hdr_enabled,
-                                    logger,
-                                    dependencies.frame_pool_ul_cp,
-                                    ul_cp_context_repo,
-                                    prach_cp_context_repo),
-      downlink_executor,
-      tx_config.sector);
+  dependencies.ul_df_cplane = create_data_flow_cplane_sched(tx_config,
+                                                            tx_config.is_uplink_static_compr_hdr_enabled,
+                                                            logger,
+                                                            dependencies.frame_pool_ul_cp,
+                                                            ul_cp_context_repo,
+                                                            prach_cp_context_repo);
 
   dependencies.ul_slot_repo         = std::move(ul_slot_context_repo);
   dependencies.ul_prach_repo        = std::move(prach_context_repo);

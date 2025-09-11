@@ -159,7 +159,7 @@ class ring_buffer_storage<std::vector<T>, true> : private ring_buffer_storage<st
 {
   using super_type = ring_buffer_storage<std::vector<T>, false>;
 
-  static unsigned to_next_pow2(unsigned sz) { return pow(2, ceil(log(sz) / log(2))); }
+  static unsigned to_next_pow2(unsigned sz) { return std::pow(2, std::ceil(std::log(sz) / std::log(2))); }
 
 public:
   using super_type::count;
@@ -172,7 +172,7 @@ public:
 
   void set_size(unsigned sz)
   {
-    // Round up to closest power of 2.
+    // Round up to the closest power of 2.
     super_type::set_size(to_next_pow2(sz));
   }
 

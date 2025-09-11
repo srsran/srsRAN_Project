@@ -40,7 +40,9 @@ public:
   upper_phy_rx_symbol_handler_impl(uplink_slot_processor_pool& ul_processor_pool_);
 
   // See interface for documentation.
-  void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const shared_resource_grid& grid) override;
+  void handle_rx_symbol(const upper_phy_rx_symbol_context& context,
+                        const shared_resource_grid&        grid,
+                        bool                               is_valid) override;
 
   // See interface for documentation.
   void handle_rx_prach_window(const prach_buffer_context& context, const prach_buffer& buffer) override;

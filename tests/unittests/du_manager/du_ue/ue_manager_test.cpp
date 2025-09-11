@@ -79,6 +79,7 @@ protected:
     mac_dummy.wait_ue_create.result.allocated_crnti =
         result ? mac_dummy.last_ue_create_msg->crnti : rnti_t::INVALID_RNTI;
     mac_dummy.wait_ue_create.ready_ev.set();
+    worker.run_pending_tasks();
   }
 
   void mac_completes_ue_deletion()

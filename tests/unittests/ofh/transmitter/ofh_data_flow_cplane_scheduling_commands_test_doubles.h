@@ -23,13 +23,15 @@
 #pragma once
 
 #include "../../../../lib/ofh/transmitter/ofh_data_flow_cplane_scheduling_commands.h"
+#include "srsran/ofh/ofh_controller.h"
 
 namespace srsran {
 namespace ofh {
 namespace testing {
 
 /// Spy Control-Plane scheduling commands data flow.
-class data_flow_cplane_scheduling_commands_spy : public data_flow_cplane_scheduling_commands
+class data_flow_cplane_scheduling_commands_spy : public data_flow_cplane_scheduling_commands,
+                                                 public operation_controller
 {
 public:
   struct spy_info {
@@ -38,6 +40,10 @@ public:
     slot_point        slot;
     filter_index_type filter_type;
   };
+
+  operation_controller& get_operation_controller() override { return *this; }
+  void                  start() override {}
+  void                  stop() override {}
 
   void enqueue_section_type_1_message(const data_flow_cplane_type_1_context& context) override
   {

@@ -54,7 +54,7 @@ class ue_context : public pdu_session_manager_ctrl
 public:
   ue_context(ue_index_t                          index_,
              ue_context_cfg                      cfg_,
-             e1ap_control_message_handler&       e1ap_,
+             e1ap_interface&                     e1ap_,
              const n3_interface_config&          n3_config_,
              const cu_up_test_mode_config&       test_mode_config_,
              std::unique_ptr<ue_executor_mapper> ue_exec_mapper_,
@@ -85,6 +85,7 @@ public:
                         ue_dl_timer_factory_,
                         ue_ul_timer_factory_,
                         ue_ctrl_timer_factory_,
+                        e1ap_,
                         f1u_gw_,
                         ngu_session_mngr_,
                         n3_teid_allocator_,
@@ -130,9 +131,9 @@ public:
       CORO_AWAIT(execute_on_blocking(ue_exec_mapper->ul_pdu_executor(), timers));
       CORO_AWAIT(pdu_session_manager.await_crypto_rx_all_pdu_sessions());
 
-      // Switch to UE DL executor. Flush pending DL tasks.
-      // TODO await pending DL crypto tasks.
+      // Switch to UE DL executor. Await pending DL crypto tasks.
       CORO_AWAIT(execute_on_blocking(ue_exec_mapper->dl_pdu_executor(), timers));
+      CORO_AWAIT(pdu_session_manager.await_crypto_tx_all_pdu_sessions());
 
       // Return to UE control executor and stop UE specific executors.
       CORO_AWAIT(execute_on_blocking(ue_exec_mapper->ctrl_executor(), timers));
@@ -151,10 +152,12 @@ public:
     cfg.security_info = security_info;
     pdu_session_manager.update_security_config(security_info);
   }
+
   void notify_pdcp_pdu_processing_stopped() { pdu_session_manager.notify_pdcp_pdu_processing_stopped(); }
   void restart_pdcp_pdu_processing() { pdu_session_manager.restart_pdcp_pdu_processing(); }
 
   async_task<void> await_rx_crypto_tasks() { return pdu_session_manager.await_crypto_rx_all_pdu_sessions(); }
+  async_task<void> await_tx_crypto_tasks() { return pdu_session_manager.await_crypto_tx_all_pdu_sessions(); }
 
   // pdu_session_manager_ctrl
   pdu_session_setup_result setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session) override
@@ -185,8 +188,8 @@ private:
   ue_context_cfg  cfg;
   cu_up_ue_logger logger;
 
-  e1ap_control_message_handler& e1ap;
-  pdu_session_manager_impl      pdu_session_manager;
+  e1ap_interface&          e1ap;
+  pdu_session_manager_impl pdu_session_manager;
 
   timer_factory ue_dl_timer_factory;
   timer_factory ue_ul_timer_factory;
@@ -198,13 +201,11 @@ private:
   /// therefore it handovers the handling to control executor.
   void on_ue_inactivity_timer_expired()
   {
-    auto fn = [this]() mutable {
-      e1ap_bearer_context_inactivity_notification msg = {};
-      msg.ue_index                                    = index;
-      e1ap.handle_bearer_context_inactivity_notification(msg);
-    };
-
-    if (!ue_exec_mapper->ctrl_executor().execute(std::move(fn))) {
+    if (!ue_exec_mapper->ctrl_executor().execute([this]() mutable {
+          e1ap_bearer_context_inactivity_notification msg = {};
+          msg.ue_index                                    = index;
+          e1ap.handle_bearer_context_inactivity_notification(msg);
+        })) {
       logger.log_warning("Could not handle expired UE inactivity handler, queue is full. ue={}",
                          fmt::underlying(index));
     }

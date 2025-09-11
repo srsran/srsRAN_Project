@@ -236,7 +236,7 @@ std::vector<uint8_t> cbs_encoder_impl::fill_cb_data_ucs2(const std::string& mess
                                             encoded_message.size() - static_cast<size_t>(i_message_offset));
 
     // Copy the encoded message bytes into the information page.
-    memcpy(&cb_data[i_page_offset], &encoded_message[i_message_offset], i_message_nof_bytes);
+    std::memcpy(&cb_data[i_page_offset], &encoded_message[i_message_offset], i_message_nof_bytes);
 
     // Add padding to unused information page bytes (See TS23.041 Section 9.3.19).
     if (i_message_nof_bytes < info_page_nof_bytes) {

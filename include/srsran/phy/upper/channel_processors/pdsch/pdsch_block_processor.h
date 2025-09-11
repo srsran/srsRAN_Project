@@ -19,6 +19,7 @@
  * and at http://www.gnu.org/licenses/.
  *
  */
+
 #pragma once
 
 #include "srsran/phy/support/resource_grid_mapper.h"
@@ -57,9 +58,6 @@ public:
                                                                           const ldpc_segmenter_buffer&  segment_buffer,
                                                                           unsigned                      start_i_cb,
                                                                           unsigned cb_batch_len) = 0;
-
-  /// Gets the QAM modulation scaling, as per TS38.211 Section 5.1.
-  virtual float get_scaling(modulation_scheme mod_sch) = 0;
 };
 
 } // namespace srsran

@@ -74,7 +74,7 @@ TEST_P(SrsvecConvertFixture, SrsvecConvertTestComplexInt16)
 
   float scale = 1000.0F;
 
-  srsvec::convert(x, scale, z);
+  srsvec::convert(z, x, scale);
 
   for (size_t i = 0; i != size; ++i) {
     int16_t gold_re = static_cast<int16_t>(std::round(x[i].real() * scale));
@@ -97,7 +97,7 @@ TEST_P(SrsvecConvertFixture, SrsvecConvertTestInt16Complex)
 
   float scale = 1000.0F;
 
-  srsvec::convert(x, scale, z);
+  srsvec::convert(z, x, scale);
 
   for (size_t i = 0; i != size; ++i) {
     cf_t  gold = {static_cast<float>(x[2 * i]) / scale, static_cast<float>(x[2 * i + 1]) / scale};
@@ -119,7 +119,7 @@ TEST_P(SrsvecConvertFixture, SrsvecConvertTestFloatInt16)
 
   float scale = 1000.0F;
 
-  srsvec::convert(x, scale, z);
+  srsvec::convert(z, x, scale);
 
   for (size_t i = 0; i != size; ++i) {
     int16_t gold = static_cast<int16_t>(std::round(x[i] * scale));
@@ -140,7 +140,7 @@ TEST_P(SrsvecConvertFixture, SrsvecConvertTestInt16Float)
 
   float scale = 1000.0F;
 
-  srsvec::convert(x, scale, z);
+  srsvec::convert(z, x, scale);
 
   for (size_t i = 0; i != size; ++i) {
     float gold = static_cast<float>(x[i]) / scale;
@@ -248,7 +248,7 @@ TEST_P(SrsvecConvertFixture, SrsvecConvertTestInt16Float16Random)
 
   // Convert from single precision to int16.
   std::vector<int16_t> in_int16(size);
-  srsvec::convert(in, int16_scale, in_int16);
+  srsvec::convert(in_int16, in, int16_scale);
 
   // Convert from int16 to brain float.
   std::vector<bf16_t> data_bf16(size);
@@ -270,7 +270,7 @@ TEST_P(SrsvecConvertFixture, SrsvecConvertTestInt16Float16Random)
 
   // Convert int16 to float and compare with original data.
   std::vector<float> out(size);
-  srsvec::convert(out_int16, int16_scale, out);
+  srsvec::convert(out, out_int16, int16_scale);
 
   for (size_t i = 0; i != size; ++i) {
     float tolerance = std::abs(in[i]) / 256.0F + 1 / int16_scale;

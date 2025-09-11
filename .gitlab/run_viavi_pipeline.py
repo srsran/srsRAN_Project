@@ -49,7 +49,7 @@ BUILD_DEFINITIONS: Dict[str, _BuildDefinition] = {
         compiler="gcc",
         srs_target="gnb_split_7_2",
         build_args='-DCMAKE_BUILD_TYPE=Release -DFORCE_DEBUG_INFO=True -DENABLE_UHD=False -DENABLE_DPDK=True -DENABLE_ZEROMQ=False -DENABLE_FFTW=False -DENABLE_MKL=True -DMARCH="x86-64-v4"',
-        dpdk_version="23.11.1_avx512",
+        dpdk_version="23.11.4_avx512",
         uhd_version="",
     ),
     "rtsan": _BuildDefinition(
@@ -58,7 +58,7 @@ BUILD_DEFINITIONS: Dict[str, _BuildDefinition] = {
         compiler="clang",
         srs_target="gnb_split_7_2",
         build_args='-DCMAKE_BUILD_TYPE=Release -DFORCE_DEBUG_INFO=True -DENABLE_UHD=False -DENABLE_DPDK=True -DENABLE_ZEROMQ=False -DENABLE_FFTW=False -DENABLE_MKL=True -DMARCH="x86-64-v4" -DENABLE_RTSAN=True -DENABLE_WERROR=False',
-        dpdk_version="23.11.1_avx512",
+        dpdk_version="23.11.4_avx512",
         uhd_version="",
     ),
 }

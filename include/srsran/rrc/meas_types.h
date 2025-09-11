@@ -376,6 +376,8 @@ struct rrc_periodical_report_cfg {
   std::optional<uint8_t>               max_nrof_rs_idxes_to_report;
   bool                                 include_beam_meass;
   bool                                 use_allowed_cell_list;
+  // Implementation specific config value.
+  int8_t periodic_ho_rsrp_offset;
 };
 
 struct rrc_meas_trigger_quant {
@@ -556,7 +558,7 @@ struct formatter<srsran::srs_cu_cp::rrc_meas_obj_nr> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::srs_cu_cp::rrc_meas_obj_nr meas_object, FormatContext& ctx) const
+  auto format(const srsran::srs_cu_cp::rrc_meas_obj_nr& meas_object, FormatContext& ctx) const
   {
     std::string smtc1_str;
     std::string smtc2_str;

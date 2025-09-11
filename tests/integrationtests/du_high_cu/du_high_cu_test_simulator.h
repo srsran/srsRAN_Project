@@ -25,7 +25,6 @@
 #include "tests/test_doubles/du/test_du_high_worker_manager.h"
 #include "tests/test_doubles/f1ap/f1c_test_local_gateway.h"
 #include "tests/test_doubles/mac/dummy_mac_result_notifier.h"
-#include "tests/test_doubles/mac/dummy_scheduler_ue_metric_notifier.h"
 #include "tests/unittests/ngap/test_helpers.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/du/du_high/du_high.h"
@@ -34,6 +33,8 @@
 #include "srsran/support/executors/task_worker.h"
 
 namespace srsran {
+
+class io_broker;
 
 class du_high_cu_cp_worker_manager
 {
@@ -80,11 +81,13 @@ public:
 
   const du_high_cu_cp_test_simulator_config cfg;
 
-  srslog::basic_logger&        logger;
-  timer_manager                timers;
-  du_high_cu_cp_worker_manager workers;
-  srs_cu_cp::dummy_n2_gateway  n2_gw;
-  f1c_test_local_gateway       f1c_gw;
+  srslog::basic_logger&                 logger;
+  timer_manager                         timers;
+  du_high_cu_cp_worker_manager          workers;
+  std::unique_ptr<io_broker>            broker;
+  std::unique_ptr<mac_clock_controller> timer_ctrl;
+  srs_cu_cp::dummy_n2_gateway           n2_gw;
+  f1c_test_local_gateway                f1c_gw;
 
   std::unique_ptr<srs_cu_cp::cu_cp>    cu_cp_inst;
   std::vector<std::unique_ptr<du_sim>> dus;

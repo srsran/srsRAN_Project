@@ -26,19 +26,22 @@
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/rtsan.h"
+#include "srsran/support/synchronization/stop_event.h"
 
 namespace srsran {
 namespace ofh {
 
 /// OTA symbol task dispatcher for the transmitter.
-class transmitter_ota_symbol_task_dispatcher : public ota_symbol_boundary_notifier
+class transmitter_ota_symbol_task_dispatcher : public ota_symbol_boundary_notifier, public operation_controller
 {
 public:
-  transmitter_ota_symbol_task_dispatcher(srslog::basic_logger&         logger_,
+  transmitter_ota_symbol_task_dispatcher(unsigned                      sector_id_,
+                                         srslog::basic_logger&         logger_,
                                          task_executor&                executor_,
                                          ota_symbol_boundary_notifier& dl_window_checker_,
                                          ota_symbol_boundary_notifier& ul_window_checker_,
                                          ota_symbol_boundary_notifier& symbol_handler_) :
+    sector_id(sector_id_),
     logger(logger_),
     executor(executor_),
     dl_window_checker(dl_window_checker_),
@@ -47,25 +50,42 @@ public:
   {
   }
 
+  // See interface for documentation.
+  void start() override { stop_manager.reset(); }
+
+  // See interface for documentation.
+  void stop() override { stop_manager.stop(); }
+
+  // See interface for documentation.
   void on_new_symbol(const slot_symbol_point_context& symbol_point_context) override
   {
+    if (stop_manager.stop_was_requested()) {
+      return;
+    }
+
     dl_window_checker.on_new_symbol(symbol_point_context);
     ul_window_checker.on_new_symbol(symbol_point_context);
 
-    if (!executor.execute([&, symbol_point_context]()
-                              SRSRAN_RTSAN_NONBLOCKING { symbol_handler.on_new_symbol(symbol_point_context); })) {
-      logger.warning("Failed to dispatch new symbol task in the message transmitter for slot '{}' and symbol '{}'",
-                     symbol_point_context.symbol_point.get_slot(),
-                     symbol_point_context.symbol_point.get_symbol_index());
+    if (!executor.defer(
+            [&, symbol_point_context, token = stop_manager.get_token()]() noexcept SRSRAN_RTSAN_NONBLOCKING {
+              symbol_handler.on_new_symbol(symbol_point_context);
+            })) {
+      logger.warning(
+          "Sector #{}: Failed to dispatch new symbol task in the message transmitter for slot '{}' and symbol '{}'",
+          sector_id,
+          symbol_point_context.symbol_point.get_slot(),
+          symbol_point_context.symbol_point.get_symbol_index());
     }
   }
 
 private:
+  const unsigned                sector_id;
   srslog::basic_logger&         logger;
   task_executor&                executor;
   ota_symbol_boundary_notifier& dl_window_checker;
   ota_symbol_boundary_notifier& ul_window_checker;
   ota_symbol_boundary_notifier& symbol_handler;
+  stop_event_source             stop_manager;
 };
 
 } // namespace ofh

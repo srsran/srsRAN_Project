@@ -45,10 +45,10 @@ using trace_point    = trace_clock::time_point;
 using trace_duration = std::chrono::microseconds;
 
 /// Trace point value when tracing is disabled.
-static constexpr trace_point null_trace_point = {};
+constexpr trace_point null_trace_point = {};
 
 /// Resource usaged value when tracing is disabled.
-static constexpr resource_usage::snapshot null_rusage_snapshot{};
+constexpr resource_usage::snapshot null_rusage_snapshot{};
 
 /// Open a file to write trace events to.
 /// \param[in] trace_file_name Name of the generated file.

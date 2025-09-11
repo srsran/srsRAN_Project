@@ -119,7 +119,6 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway, public fapi::s
   {
     slot_point                slot;
     unique_downlink_processor dl_processor;
-    bool                      initialized = false;
 
   public:
     slot_based_upper_phy_controller() = default;
@@ -133,9 +132,7 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway, public fapi::s
 
     slot_based_upper_phy_controller& operator=(slot_based_upper_phy_controller&& other);
 
-    ~slot_based_upper_phy_controller();
-
-    bool is_initialized() const { return initialized; }
+    bool is_initialized() const { return dl_processor.is_valid(); }
 
     /// Overloaded member of pointer operator.
     downlink_processor* operator->() { return &dl_processor.get(); }

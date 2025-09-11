@@ -24,6 +24,7 @@
 
 #include "../support/sch_pdu_builder.h"
 #include "ue_repository.h"
+#include "srsran/ran/resource_allocation/rb_bitmap.h"
 
 namespace srsran {
 
@@ -69,6 +70,9 @@ public:
   /// Schedule UE's SRB0 DL grants for a given slot and one or more cells.
   /// \param[in] res_alloc Resource Grid of the cell where the DL grant is going to be allocated.
   void run_slot(cell_resource_allocator& res_alloc);
+
+  /// Called when cell is deactivated.
+  void stop();
 
 private:
   enum class dl_new_tx_alloc_type { conres_only, srb0, srb1, skip, error };
@@ -173,12 +177,6 @@ private:
                                                  slot_point                                   sl_tx,
                                                  const std::optional<dl_harq_process_handle>& h_dl_retx) const;
 
-  /// List of UE's DU Indexes for which SRB0 and SRB1 messages needs to be scheduled.
-  std::vector<fallback_ue> pending_dl_ues_new_tx;
-
-  /// List of UE's DU Indexes that are pending for new TX or RE-TX.
-  std::vector<du_ue_index_t> pending_ul_ues;
-
   /// Class that keeps track of the UEs' that are waiting for the SRB HARQ processes to be ACKed or retransmitted.
   class ack_and_retx_tracker
   {
@@ -236,9 +234,18 @@ private:
   // Keeps track of the last slot_point used by \ref slots_with_no_pdxch_space.
   slot_point last_sl_ind;
 
+  // Bitmap of CRBs that might be used for PUCCH transmissions, to avoid scheduling PUSCH over them.
+  crb_bitmap pucch_crbs;
+
   std::vector<uint8_t> dci_1_0_k1_values;
 
   srslog::basic_logger& logger;
+
+  /// List of UE's DU Indexes for which SRB0 and SRB1 messages needs to be scheduled.
+  std::vector<fallback_ue> pending_dl_ues_new_tx;
+
+  /// List of UE's DU Indexes that are pending for new TX or RE-TX.
+  std::vector<du_ue_index_t> pending_ul_ues;
 };
 
 } // namespace srsran

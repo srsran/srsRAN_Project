@@ -20,6 +20,9 @@
  *
  */
 
+/// \file
+/// \brief Sequence copy.
+
 #pragma once
 
 #include "srsran/srsvec/type_traits.h"
@@ -28,6 +31,12 @@
 namespace srsran {
 namespace srsvec {
 
+/// \brief Copies a sequence into a different object.
+///
+/// \tparam     T    Type of the destination sequence. (must be compatible with a span).
+/// \tparam     U    Type of the original sequence (must be compatible with a span).
+/// \param[out] dst  Copied sequence.
+/// \param[in]  src  Original sequence.
 template <typename T, typename U>
 void copy(T&& dst, const U& src)
 {

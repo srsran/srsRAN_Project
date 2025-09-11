@@ -21,6 +21,7 @@
  */
 
 #include "realtime_timing_worker.h"
+#include "../support/logger_utils.h"
 #include "srsran/instrumentation/traces/ofh_traces.h"
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
 #include "srsran/support/rtsan.h"
@@ -80,7 +81,8 @@ realtime_timing_worker::realtime_timing_worker(srslog::basic_logger&      logger
   nof_symbols_per_slot(get_nsymb_per_slot(cfg.cp)),
   nof_symbols_per_sec(nof_symbols_per_slot * get_nof_slots_per_subframe(scs) * NOF_SUBFRAMES_PER_FRAME * 100),
   symbol_duration(1e9 / nof_symbols_per_sec),
-  sleep_time(std::chrono::duration_cast<std::chrono::nanoseconds>(symbol_duration) / 15)
+  sleep_time(std::chrono::duration_cast<std::chrono::nanoseconds>(symbol_duration) / 15),
+  enable_log_warnings_for_lates(cfg.enable_log_warnings_for_lates)
 {
   // The GPS time epoch starts on 1980.1.6 so make sure that the system time is set after this date.
   // For simplicity reasons, only allow dates after 1981.
@@ -108,10 +110,12 @@ void realtime_timing_worker::start()
 {
   logger.info("Starting the realtime timing worker");
 
+  stop_manager.reset();
+
   std::promise<void> p;
   std::future<void>  fut = p.get_future();
 
-  if (!executor.defer([this, &p]() {
+  if (!executor.defer([this, &p, token = stop_manager.get_token()]() {
         // Signal start() caller thread that the operation is complete.
         p.set_value();
 
@@ -131,13 +135,7 @@ void realtime_timing_worker::start()
 void realtime_timing_worker::stop()
 {
   logger.info("Requesting stop of the realtime timing worker");
-  status.store(worker_status::stop_requested, std::memory_order_relaxed);
-
-  // Wait for the timing thread to stop - this line also introduces a happens-before relationship with the clear on
-  // ota_notifier.
-  while (status.load(std::memory_order_acquire) != worker_status::stopped) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-  }
+  stop_manager.stop();
 
   // Clear the subscribed notifiers.
   ota_notifiers.clear();
@@ -145,14 +143,11 @@ void realtime_timing_worker::stop()
   logger.info("Stopped the realtime timing worker");
 }
 
-void realtime_timing_worker::timing_loop() SRSRAN_RTSAN_NONBLOCKING
+void realtime_timing_worker::timing_loop() noexcept SRSRAN_RTSAN_NONBLOCKING
 {
-  while (SRSRAN_LIKELY(status.load(std::memory_order_relaxed) == worker_status::running)) {
+  while (SRSRAN_LIKELY(!stop_manager.stop_was_requested())) {
     poll();
   }
-
-  // Acquire/Release semantics - ota_notifiers is cleared and destructed by a different thread.
-  status.store(worker_status::stopped, std::memory_order_release);
 }
 
 /// Returns the difference between cur and prev taking into account a potential wrap around of the values.
@@ -194,11 +189,15 @@ void realtime_timing_worker::poll()
   // Check if we have missed more than one symbol.
   if (SRSRAN_UNLIKELY(delta > 1)) {
     logger.info("Real-time timing worker woke up late, skipped '{}' symbols", delta);
+    metrics_collector.update_metrics(delta);
   }
   if (SRSRAN_UNLIKELY(delta >= nof_symbols_per_slot)) {
-    logger.warning("Real-time timing worker woke up late, sleep time has been '{}us', or equivalently, '{}' symbols",
-                   std::chrono::duration_cast<std::chrono::microseconds>(delta * symbol_duration).count(),
-                   delta);
+    log_conditional_warning(
+        logger,
+        enable_log_warnings_for_lates,
+        "Real-time timing worker woke up late, sleep time has been '{}us', or equivalently, '{}' symbols",
+        std::chrono::duration_cast<std::chrono::microseconds>(delta * symbol_duration).count(),
+        delta);
   }
 
   slot_symbol_point symbol_point(

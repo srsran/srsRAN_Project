@@ -188,10 +188,8 @@ class downlink_processor_baseband_impl : public downlink_processor_baseband, pub
 public:
   /// \brief Constructs a software generic lower PHY downlink processor that can process downlink resource grids.
   /// \param[in] pdxch_proc_baseband_ PDxCH processor baseband.
-  /// \param[in] amplitude_control_   Amplitude controller.
   /// \param[in] config               Downlink processor configuration.
   downlink_processor_baseband_impl(pdxch_processor_baseband&                        pdxch_proc_baseband_,
-                                   amplitude_controller&                            amplitude_control_,
                                    const downlink_processor_baseband_configuration& config);
 
   /// Connect the processor to a notifier.
@@ -201,27 +199,16 @@ public:
   baseband_cfo_processor& get_cfo_control() { return cfo_processor; }
 
   // See interface for documentation.
-  baseband_gateway_transmitter_metadata process(baseband_gateway_buffer_writer& buffer,
-                                                baseband_gateway_timestamp      timestamp) override;
+  processing_result process(baseband_gateway_timestamp timestamp) override;
 
   // See the lower_phy_tx_time_offset_controller interface for documentation.
   void set_tx_time_offset(phy_time_unit tx_time_offset) override;
 
 private:
-  /// \brief Processes a new symbol.
-  ///
-  /// \param[out] buffer Destination buffer.
-  /// \param[in]  slot Slot number.
-  /// \param[in]  i_symbol Symbol number within the current slot.
-  /// \return \c true if the symbol has been processed, \c false otherwise.
-  bool process_new_symbol(baseband_gateway_buffer_writer& buffer, slot_point slot, unsigned i_symbol);
-
   /// Transmit time offset in samples.
   std::atomic<int> tx_time_offset = 0;
   /// PDxCH baseband processor.
   pdxch_processor_baseband& pdxch_proc_baseband;
-  /// Amplitude control.
-  amplitude_controller& amplitude_control;
   /// Number of slots notified in advanced in the TTI boundary.
   unsigned nof_slot_tti_in_advance;
   /// Number of slots notified in advanced in the TTI boundary in nanoseconds.
@@ -232,24 +219,22 @@ private:
   sampling_rate rate;
   /// Subcarrier spacing.
   subcarrier_spacing scs;
-  /// Number of receive ports.
-  unsigned nof_rx_ports;
   /// Number of samples per subframe;
   unsigned nof_samples_per_subframe;
   /// Number of slots per subframe;
   unsigned nof_slots_per_subframe;
   /// Number of symbols per slot.
   unsigned nof_symbols_per_slot;
-  /// List of the symbol sizes in number samples for each symbol within the subframe.
-  std::vector<unsigned> symbol_sizes;
+  /// List of the symbol sizes in number samples for each symbol within a subframe.
+  std::vector<unsigned> symbol_sizes_sf;
   /// Reference to the downlink notifier.
   downlink_processor_notifier* notifier = nullptr;
   /// Temporal storage of baseband samples.
   detail::baseband_symbol_buffer temp_buffer;
-  /// Last notified slot boundary.
-  std::optional<slot_point> last_notified_slot;
   /// Carrier Frequency Offset processor.
   baseband_cfo_processor cfo_processor;
+  /// Baseband buffer pool for transmitting zeros.
+  baseband_gateway_buffer_pool buffer_pool;
 };
 
 } // namespace srsran

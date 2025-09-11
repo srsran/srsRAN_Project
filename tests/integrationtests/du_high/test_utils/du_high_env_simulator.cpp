@@ -29,11 +29,13 @@
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/du/du_high/du_high_clock_controller.h"
 #include "srsran/du/du_high/du_high_factory.h"
 #include "srsran/du/du_high/du_qos_config_helpers.h"
 #include "srsran/mac/mac_cell_timing_context.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/support/error_handling.h"
+#include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/test_utils.h"
 
 using namespace srsran;
@@ -215,6 +217,8 @@ du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
 }
 
 du_high_env_simulator::du_high_env_simulator(const du_high_configuration& du_hi_cfg_, bool active_cells_on_start) :
+  broker(create_io_broker(io_broker_type::epoll)),
+  timer_ctrl(srs_du::create_du_high_clock_controller(timers, *broker, *workers.time_exec)),
   cu_notifier(workers.test_worker, active_cells_on_start),
   du_metrics(workers.test_worker),
   du_high_cfg(du_hi_cfg_),
@@ -226,7 +230,7 @@ du_high_env_simulator::du_high_env_simulator(const du_high_configuration& du_hi_
     dependencies.f1u_gw      = &cu_up_sim;
     dependencies.du_notifier = &du_metrics;
     dependencies.phy_adapter = &phy;
-    dependencies.timers      = &timers;
+    dependencies.timer_ctrl  = timer_ctrl.get();
     dependencies.mac_p       = &mac_pcap;
     dependencies.rlc_p       = &rlc_pcap;
     return dependencies;
@@ -247,6 +251,8 @@ du_high_env_simulator::du_high_env_simulator(const du_high_configuration& du_hi_
 du_high_env_simulator::~du_high_env_simulator()
 {
   du_hi->stop();
+
+  timer_ctrl.reset();
 
   // Stop workers before starting to take down other components.
   workers.stop();

@@ -26,13 +26,13 @@
 using namespace srsran;
 
 /// TS 38.321, Table 6.1.3.1-1 Buffer size levels (in bytes) for 5-bit Buffer Size field, all values <= except marked
-constexpr auto buffer_size_levels_5bit = to_array<uint32_t>(
+static constexpr auto buffer_size_levels_5bit = to_array<uint32_t>(
     {/* == */ 0, 10,    14,    20,    28,    38,    53,    74,     102,    142,           198,
      276,        384,   535,   745,   1038,  1446,  2014,  2806,   3909,   5446,          7587,
      10570,      14726, 20516, 28581, 39818, 55474, 77284, 107669, 150000, /* > */ 150000});
 
 /// TS 38.321, Table 6.1.3.1-2: Buffer size levels (in bytes) for 8-bit Buffer Size field, all values <= except marked
-constexpr auto buffer_size_levels_8bit =
+static constexpr auto buffer_size_levels_8bit =
     to_array<uint32_t>({/* == */ 0, 10,       11,       12,       13,
                         14,         15,       16,       17,       18,
                         19,         20,       22,       23,       25,

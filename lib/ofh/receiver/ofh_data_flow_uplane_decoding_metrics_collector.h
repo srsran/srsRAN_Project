@@ -54,9 +54,14 @@ public:
     update_minmax(static_cast<uint32_t>(exec_latency.count()), max_latency_ns, min_latency_ns);
   }
 
+  /// Increases by one the number of dropped messages.
+  void increase_dropped_messages() { nof_dropped_messages.fetch_add(1, std::memory_order_relaxed); }
+
   /// Collect the performance metrics of a data flow.
   void collect_metrics(rx_data_flow_perf_metrics& metrics)
   {
+    metrics.nof_dropped_messages = nof_dropped_messages.exchange(0, std::memory_order_relaxed);
+
     uint32_t count_val          = count.load(std::memory_order_relaxed);
     uint32_t min_latency_val_ns = min_latency_ns.load(std::memory_order_relaxed);
     uint32_t max_latency_val_ns = max_latency_ns.load(std::memory_order_relaxed);
@@ -90,10 +95,11 @@ private:
     max_latency_ns.store(default_max_latency_ns, std::memory_order_relaxed);
   }
 
-  std::atomic<uint32_t> count          = {};
-  std::atomic<uint64_t> sum_elapsed_ns = {};
-  std::atomic<uint32_t> min_latency_ns = default_min_latency_ns;
-  std::atomic<uint32_t> max_latency_ns = default_max_latency_ns;
+  std::atomic<uint32_t> count                = {};
+  std::atomic<uint64_t> sum_elapsed_ns       = {};
+  std::atomic<uint32_t> min_latency_ns       = default_min_latency_ns;
+  std::atomic<uint32_t> max_latency_ns       = default_max_latency_ns;
+  std::atomic<uint32_t> nof_dropped_messages = {0};
 
   const bool is_disabled;
 };

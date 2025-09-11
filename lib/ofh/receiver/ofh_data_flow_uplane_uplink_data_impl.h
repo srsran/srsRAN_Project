@@ -24,6 +24,7 @@
 
 #include "../support/uplink_context_repository.h"
 #include "../support/uplink_cplane_context_repository.h"
+#include "ofh_data_flow_uplane_decoding_metrics_collector.h"
 #include "ofh_data_flow_uplane_uplink_data.h"
 #include "ofh_uplane_rx_symbol_data_flow_notifier.h"
 #include "ofh_uplane_rx_symbol_data_flow_writer.h"
@@ -38,6 +39,8 @@ namespace ofh {
 struct data_flow_uplane_uplink_data_impl_config {
   /// Radio sector identifier.
   unsigned sector;
+  /// Enabled metrics flag.
+  bool are_metrics_enabled;
   /// Uplink eAxCs.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
 };
@@ -66,6 +69,9 @@ public:
   // See interface for documentation.
   void decode_type1_message(unsigned eaxc, span<const uint8_t> message) override;
 
+  // See interface for documentation.
+  data_flow_message_decoding_metrics_collector& get_metrics_collector() override { return metrics_collector; }
+
 private:
   /// Returns true if the User-Plane packet represented by the given User-Plane results and eAxC should be filtered,
   /// otherwise false.
@@ -78,6 +84,7 @@ private:
   uplane_rx_symbol_data_flow_writer                 rx_symbol_writer;
   uplane_rx_symbol_data_flow_notifier               notification_sender;
   const unsigned                                    sector_id;
+  data_flow_message_decoding_metrics_collector      metrics_collector;
 };
 
 } // namespace ofh

@@ -1,3 +1,4 @@
+
 /*
  *
  * Copyright 2021-2025 Software Radio Systems Limited
@@ -64,7 +65,7 @@ TEST_F(pdcp_rx_metrics_container_test, init)
         "num_sdus=0 num_sdu_bytes=0 num_dropped_pdus=0 num_pdus=0 num_pdu_bytes=0 "
         "num_integrity_verified_pdus=0 num_integrity_failed_pdus=0 num_t_reordering_timeouts=0 "
         "avg_reordering_delay=0.00ms reordering_counter=0 avg_sdu_latency=0.00us sdu_latency_hist=[0 0 0 0 0 0 "
-        "0 0] min_sdu_latency=none max_sdu_latency=none avg_crypto_latency=0.00us";
+        "0 0] min_sdu_latency={na} max_sdu_latency={na} avg_crypto_latency=0.00us";
     srslog::fetch_basic_logger("TEST", false).info("out_str={}", out_str);
     srslog::fetch_basic_logger("TEST", false).info("exp_str={}", exp_str);
     EXPECT_EQ(out_str, exp_str);
@@ -78,7 +79,7 @@ TEST_F(pdcp_rx_metrics_container_test, init)
         "num_sdus=0 sdu_rate= 0bps num_dropped_pdus=0 num_pdus=0 pdu_rate= 0bps "
         "num_integrity_verified_pdus=0 num_integrity_failed_pdus=0 num_t_reordering_timeouts=0 "
         "avg_reordering_delay=0.00ms reordering_counter=0 avg_sdu_latency=0.00us sdu_latency_hist=[ 0  0  0  0 "
-        " 0  0  0  0] min_sdu_latency=none max_sdu_latency=none crypto_cpu_usage=0.00\%";
+        " 0  0  0  0] min_sdu_latency={na} max_sdu_latency={na} crypto_cpu_usage=0.00\%";
     srslog::fetch_basic_logger("TEST", false).info("out_str={}", out_str);
     srslog::fetch_basic_logger("TEST", false).info("exp_str={}", exp_str);
     EXPECT_EQ(out_str, exp_str);
@@ -139,7 +140,7 @@ TEST_F(pdcp_rx_metrics_container_test, values)
         "num_integrity_verified_pdus=449993 num_integrity_failed_pdus=865423 num_t_reordering_timeouts=4456 "
         "avg_reordering_delay=19.86ms reordering_counter=23 avg_sdu_latency=0.01us sdu_latency_hist=[999 20 400 "
         "8000 "
-        "160000 3200000 64000000 128] min_sdu_latency=optional(1200)ns max_sdu_latency=optional(54322)ns "
+        "160000 3200000 64000000 128] min_sdu_latency=1200ns max_sdu_latency=54322ns "
         "avg_crypto_latency=0.17us";
     srslog::fetch_basic_logger("TEST", false).info("out_str={}", out_str);
     srslog::fetch_basic_logger("TEST", false).info("exp_str={}", exp_str);

@@ -153,8 +153,8 @@ TEST(fapi_to_phy_pdcch_conversion_test, valid_pdu_conversion_success)
                   ASSERT_EQ(nid_dmrs, proc_pdu.dci.n_id_pdcch_dmrs);
 
                   // Test powers.
-                  ASSERT_TRUE(std::fabs((power_nr - proc_pdu.dci.dmrs_power_offset_dB)) < 0.001F);
-                  ASSERT_TRUE(std::fabs((power_nr - proc_pdu.dci.data_power_offset_dB)) < 0.001F);
+                  ASSERT_TRUE(std::abs(power_nr - proc_pdu.dci.dmrs_power_offset_dB) < 0.001F);
+                  ASSERT_TRUE(std::abs(power_nr - proc_pdu.dci.data_power_offset_dB) < 0.001F);
 
                   // Test vectors.
                   for (unsigned i = 0, e = payload.size(); i != e; ++i) {

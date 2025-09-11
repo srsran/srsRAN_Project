@@ -154,118 +154,118 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
 
     switch (c) {
       case 'h':
-        fprintf(stdout, "%s", usage);
-        exit(0);
+        std::fprintf(stdout, "%s", usage);
+        std::exit(0);
       case 'm':
         args.mode = std::string(optarg);
-        fprintf(stdout, "RLC Mode %s\n", args.mode.c_str());
+        std::fprintf(stdout, "RLC Mode %s\n", args.mode.c_str());
         break;
       case 's':
         args.sdu_size = std::strtol(optarg, nullptr, 10);
-        fprintf(stdout, "SDU size %d\n", args.sdu_size);
+        std::fprintf(stdout, "SDU size %d\n", args.sdu_size);
         break;
       case 'z':
         args.min_sdu_size = std::strtol(optarg, nullptr, 10);
-        fprintf(stdout, "Minimum SDU size %d\n", args.min_sdu_size);
+        std::fprintf(stdout, "Minimum SDU size %d\n", args.min_sdu_size);
         break;
       case 'Z':
         args.max_sdu_size = std::strtol(optarg, nullptr, 10);
-        fprintf(stdout, "Maximum SDU size %d\n", args.max_sdu_size);
+        std::fprintf(stdout, "Maximum SDU size %d\n", args.max_sdu_size);
         break;
       case 'o':
         args.const_opp = true;
-        fprintf(stdout, "Using constant-size MAC opportunities\n");
+        std::fprintf(stdout, "Using constant-size MAC opportunities\n");
         break;
       case 'p':
         args.avg_opp_size = std::strtol(optarg, nullptr, 10);
-        fprintf(stdout, "Average MAC opportunity size %d\n", args.avg_opp_size);
+        std::fprintf(stdout, "Average MAC opportunity size %d\n", args.avg_opp_size);
         break;
       case 'd':
         args.pdu_drop_rate = std::strtod(optarg, nullptr);
-        fprintf(stdout, "RLC PDU drop rate %f\n", args.pdu_drop_rate);
+        std::fprintf(stdout, "RLC PDU drop rate %f\n", args.pdu_drop_rate);
         break;
       case 'c':
         args.pdu_cut_rate = std::strtod(optarg, nullptr);
-        fprintf(stdout, "RLC PDU cut rate %f\n", args.pdu_cut_rate);
+        std::fprintf(stdout, "RLC PDU cut rate %f\n", args.pdu_cut_rate);
         break;
       case 'D':
         args.pdu_duplicate_rate = std::strtod(optarg, nullptr);
-        fprintf(stdout, "RLC PDU duplicate rate %f\n", args.pdu_duplicate_rate);
+        std::fprintf(stdout, "RLC PDU duplicate rate %f\n", args.pdu_duplicate_rate);
         break;
       case 't':
         args.nof_ttis = std::strtol(optarg, nullptr, 10);
-        fprintf(stdout, "Number of TTIs to emulate %u\n", args.nof_ttis);
+        std::fprintf(stdout, "Number of TTIs to emulate %u\n", args.nof_ttis);
         break;
       case 'l':
         args.log_filename = std::string(optarg);
-        fprintf(stdout, "Log filename %s\n", args.log_filename.c_str());
+        std::fprintf(stdout, "Log filename %s\n", args.log_filename.c_str());
         break;
       case to_number(long_only::pdcp_sn_size):
         args.pdcp_sn_size = std::strtol(optarg, nullptr, 10);
-        fprintf(stdout, "PDCP SN Size %s\n", optarg);
+        std::fprintf(stdout, "PDCP SN Size %s\n", optarg);
         break;
       case to_number(long_only::pdcp_t_reordering):
         args.pdcp_t_reordering = std::strtol(optarg, nullptr, 10);
-        fprintf(stdout, "PDCP t-Reordering %s\n", optarg);
+        std::fprintf(stdout, "PDCP t-Reordering %s\n", optarg);
         break;
       case to_number(long_only::pdcp_integrity_algo):
         args.pdcp_integrity_algo = std::strtol(optarg, nullptr, 10);
-        fprintf(stdout, "PDCP integrity algorithm %s\n", optarg);
+        std::fprintf(stdout, "PDCP integrity algorithm %s\n", optarg);
         break;
       case to_number(long_only::pdcp_ciphering_algo):
         args.pdcp_ciphering_algo = std::strtol(optarg, nullptr, 10);
-        fprintf(stdout, "PDCP ciphering algorithm %s\n", optarg);
+        std::fprintf(stdout, "PDCP ciphering algorithm %s\n", optarg);
         break;
       case to_number(long_only::log_stack_level): {
         auto value           = srslog::str_to_basic_level(std::string(optarg));
         args.log_level_stack = value.has_value() ? value.value() : srslog::basic_levels::none;
-        fprintf(stdout, "STACK log level %s\n", optarg);
+        std::fprintf(stdout, "STACK log level %s\n", optarg);
         break;
       }
       case to_number(long_only::log_traff_level): {
         auto value           = srslog::str_to_basic_level(std::string(optarg));
         args.log_level_traff = value.has_value() ? value.value() : srslog::basic_levels::none;
-        fprintf(stdout, "TRAFF log level %s\n", optarg);
+        std::fprintf(stdout, "TRAFF log level %s\n", optarg);
         break;
       }
       case to_number(long_only::log_pdcp_level): {
         auto value          = srslog::str_to_basic_level(std::string(optarg));
         args.log_level_pdcp = value.has_value() ? value.value() : srslog::basic_levels::none;
-        fprintf(stdout, "PDCP log level %s\n", optarg);
+        std::fprintf(stdout, "PDCP log level %s\n", optarg);
         break;
       }
       case to_number(long_only::log_f1_level): {
         auto value        = srslog::str_to_basic_level(std::string(optarg));
         args.log_level_f1 = value.has_value() ? value.value() : srslog::basic_levels::none;
-        fprintf(stdout, "F1 log level %s\n", optarg);
+        std::fprintf(stdout, "F1 log level %s\n", optarg);
         break;
       }
       case to_number(long_only::log_rlc_level): {
         auto value         = srslog::str_to_basic_level(std::string(optarg));
         args.log_level_rlc = value.has_value() ? value.value() : srslog::basic_levels::none;
-        fprintf(stdout, "RLC log level %s\n", optarg);
+        std::fprintf(stdout, "RLC log level %s\n", optarg);
         break;
       }
       case to_number(long_only::log_mac_level): {
         auto value         = srslog::str_to_basic_level(std::string(optarg));
         args.log_level_mac = value.has_value() ? value.value() : srslog::basic_levels::none;
-        fprintf(stdout, "MAC log level %s\n", optarg);
+        std::fprintf(stdout, "MAC log level %s\n", optarg);
         break;
       }
       case 'H':
         args.log_hex_limit = std::strtol(optarg, nullptr, 10);
-        fprintf(stdout, "Log hex limit %d\n", args.log_hex_limit);
+        std::fprintf(stdout, "Log hex limit %d\n", args.log_hex_limit);
         break;
       case 'S':
         args.seed = std::strtol(optarg, nullptr, 10);
-        fprintf(stdout, "Seed %d\n", args.seed);
+        std::fprintf(stdout, "Seed %d\n", args.seed);
         break;
       case 'T':
         args.nof_pdu_tti = std::strtol(optarg, nullptr, 10);
-        fprintf(stdout, "PDUs per TTI %d\n", args.nof_pdu_tti);
+        std::fprintf(stdout, "PDUs per TTI %d\n", args.nof_pdu_tti);
         break;
       default:
-        fprintf(stderr, "error parsing arguments\n");
+        std::fprintf(stderr, "error parsing arguments\n");
         return false;
     }
   }
@@ -301,8 +301,8 @@ inline pdcp_config get_pdcp_config_from_args(uint32_t id, const stress_test_args
     cnfg.tx.sn_size = srsran::pdcp_sn_size::size18bits;
     cnfg.rx.sn_size = srsran::pdcp_sn_size::size18bits;
   } else {
-    fprintf(stderr, "Unsupported PDCP SN %d, exiting.\n", args.pdcp_sn_size);
-    exit(-1);
+    std::fprintf(stderr, "Unsupported PDCP SN %d, exiting.\n", args.pdcp_sn_size);
+    std::exit(-1);
   }
   if (id == 0) {
     cnfg.tx.direction = srsran::pdcp_security_direction::downlink;
@@ -347,8 +347,8 @@ inline rlc_config get_rlc_config_from_args(const stress_test_args& args)
     cnfg.am.rx.t_reassembly      = 40;
     cnfg.am.rx.t_status_prohibit = 8;
   } else {
-    fprintf(stderr, "Unsupported RLC mode %s, exiting.\n", args.mode.c_str());
-    exit(-1);
+    std::fprintf(stderr, "Unsupported RLC mode %s, exiting.\n", args.mode.c_str());
+    std::exit(-1);
   }
   cnfg.metrics_period = std::chrono::milliseconds(1000);
   return cnfg;

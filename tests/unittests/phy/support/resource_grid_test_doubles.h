@@ -452,22 +452,16 @@ private:
 class shared_resource_grid_spy : private shared_resource_grid::pool_interface
 {
 private:
-  static constexpr unsigned identifier = 0;
-  resource_grid&            grid;
-  std::atomic<unsigned>     ref_count = {};
+  resource_grid&        grid;
+  std::atomic<unsigned> ref_count = {};
 
-  resource_grid& get(unsigned identifier_) override
+  resource_grid& get() override
   {
     srsran_assert(ref_count > 0, "The grid must be reserved.");
-    srsran_assert(identifier == identifier_, "Identifier miss-match.");
     return grid;
   }
 
-  void notify_release_scope(unsigned identifier_) override
-  {
-    srsran_assert(ref_count == 0, "The grid must be reserved.");
-    srsran_assert(identifier == identifier_, "Identifier miss-match.");
-  }
+  void notify_release_scope() override { srsran_assert(ref_count == 0, "The grid must be reserved."); }
 
 public:
   explicit shared_resource_grid_spy(resource_grid& grid_) : grid(grid_) {}
@@ -482,7 +476,7 @@ public:
     unsigned expected_available_ref_count = 0;
     bool     available                    = ref_count.compare_exchange_strong(expected_available_ref_count, 1);
     srsran_assert(available, "The grid must NOT be reserved.");
-    return {*this, ref_count, 0};
+    return {*this, ref_count};
   }
 };
 

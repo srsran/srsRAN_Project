@@ -58,17 +58,6 @@ struct ru_sdr_unit_expert_config {
   /// \note Powering up the transmitter ahead of time requires starting the transmission earlier, and reduces the time
   /// window for the radio to transmit the provided samples.
   float power_ramping_time_us = 0.0F;
-  /// \brief Lower PHY downlink baseband buffer size policy.
-  ///
-  /// Selects the size policy of the baseband buffers that pass DL samples from the lower PHY to the radio.
-  /// Available options:
-  ///   - auto: the size policy is automatically selected based on the SDR front-end.
-  ///   - single-packet: the buffer size matches the optimal buffer size indicated by the SDR front-end.
-  ///   - half-slot:     the buffer size matches the number of samples per half-slot.
-  ///   - slot:          the buffer size matches the number of samples per slot.
-  ///   - optimal-slot:  the buffer size is equal to the greatest multiple of the optimal buffer size indicated by the
-  ///                    SDR front-end that results in a buffer size smaller than the number of samples per slot.
-  std::string dl_buffer_size_policy = "auto";
 };
 
 /// Amplitude control application configuration.
@@ -91,8 +80,6 @@ struct ru_sdr_unit_logger_config {
 struct ru_sdr_unit_cpu_affinities_cell_config {
   /// Radio Unit workers CPU affinity mask.
   os_sched_affinity_config ru_cpu_cfg = {sched_affinity_mask_types::ru, {}, sched_affinity_mask_policy::mask};
-  /// L1 uplink CPU affinity mask.
-  os_sched_affinity_config l1_ul_cpu_cfg = {sched_affinity_mask_types::l1_ul, {}, sched_affinity_mask_policy::mask};
   /// L1 downlink workers CPU affinity mask.
   os_sched_affinity_config l1_dl_cpu_cfg = {sched_affinity_mask_types::l1_dl, {}, sched_affinity_mask_policy::mask};
 };
@@ -105,9 +92,8 @@ enum class lower_phy_thread_profile {
   single,
   /// Two task workers - one for the downlink and one for the uplink.
   dual,
-  /// Dedicated task workers for each of the subtasks (downlink processing, uplink processing, reception and
-  /// transmission).
-  quad
+  /// Dedicated task workers for each of the subtasks (demodulation, reception and transmission).
+  triple
 };
 
 /// Expert threads configuration of the SDR Radio Unit.
@@ -118,12 +104,10 @@ struct ru_sdr_unit_expert_threads_config {
 
     if (nof_threads < 4) {
       execution_profile = lower_phy_thread_profile::single;
-
     } else if (nof_threads < 8) {
       execution_profile = lower_phy_thread_profile::dual;
-
     } else {
-      execution_profile = lower_phy_thread_profile::quad;
+      execution_profile = lower_phy_thread_profile::triple;
     }
   }
 
@@ -176,6 +160,11 @@ struct ru_sdr_unit_config {
   /// example, a value of -1000 at a sample rate of 61.44 MHz increases the transmission delay and causes an incoming
   /// PRACH to be detected 16.3 us later within the reception window.
   std::optional<int> time_alignment_calibration;
+  /// \brief Optional starting time.
+  ///
+  /// Starts radio operation at the given time. The use of this parameter is for starting radio operation of several
+  /// instances at same time.
+  std::optional<std::chrono::system_clock::time_point> start_time;
   /// Synchronization source.
   std::string synch_source = "default";
   /// Clock source.

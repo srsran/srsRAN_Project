@@ -21,6 +21,7 @@
  */
 
 #include "../../../../support/resource_grid_test_doubles.h"
+#include "../../../amplitude_control/amplitude_controller_test_doubles.h"
 #include "../../../modulation/ofdm_modulator_test_doubles.h"
 #include "pdxch_processor_notifier_test_doubles.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
@@ -28,6 +29,7 @@
 #include "srsran/phy/lower/processors/downlink/downlink_processor_factories.h"
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_baseband.h"
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_request_handler.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 #include <random>
@@ -35,6 +37,20 @@
 using namespace srsran;
 
 namespace srsran {
+
+bool operator==(const lower_phy_baseband_metrics& left, const lower_phy_baseband_metrics& right)
+{
+  if (left.avg_power != right.avg_power) {
+    return false;
+  }
+  if (left.peak_power != right.peak_power) {
+    return false;
+  }
+  if (left.clipping != right.clipping) {
+    return false;
+  }
+  return true;
+}
 
 std::ostream& operator<<(std::ostream& os, subcarrier_spacing scs)
 {
@@ -60,9 +76,9 @@ std::ostream& operator<<(std::ostream& os, span<const cf_t> data)
   return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const pdxch_processor_baseband::symbol_context& context)
+std::ostream& operator<<(std::ostream& os, const pdxch_processor_baseband::slot_context& context)
 {
-  fmt::print(os, "{} {} {}", context.slot, context.symbol, context.sector);
+  fmt::print(os, "{} {}", context.slot, context.sector);
   return os;
 }
 
@@ -79,10 +95,9 @@ std::ostream& operator<<(std::ostream& os, const ofdm_modulator_configuration& c
   return os;
 }
 
-bool operator==(const pdxch_processor_baseband::symbol_context& left,
-                const pdxch_processor_baseband::symbol_context& right)
+bool operator==(const pdxch_processor_baseband::slot_context& left, const pdxch_processor_baseband::slot_context& right)
 {
-  return (left.slot == right.slot) && (left.symbol == right.symbol) && (left.sector == right.sector);
+  return (left.slot == right.slot) && (left.sector == right.sector);
 }
 
 bool operator==(const ofdm_modulator_configuration& left, const ofdm_modulator_configuration& right)
@@ -123,38 +138,55 @@ namespace {
 class LowerPhyDownlinkProcessorFixture : public ::testing::TestWithParam<LowerPhyDownlinkProcessorParams>
 {
 protected:
-  static constexpr unsigned request_queue_size = 3;
-
   static void SetUpTestSuite()
   {
+    srslog::init();
+
     if (pdxch_proc_factory == nullptr) {
       ofdm_mod_factory_spy = std::make_shared<ofdm_modulator_factory_spy>();
       ASSERT_NE(ofdm_mod_factory_spy, nullptr);
 
-      pdxch_proc_factory = create_pdxch_processor_factory_sw(request_queue_size, ofdm_mod_factory_spy);
+      amplitude_control_factory = std::make_shared<amplitude_controller_factory_spy>();
+      ASSERT_NE(amplitude_control_factory, nullptr);
+
+      pdxch_proc_factory = create_pdxch_processor_factory_sw(ofdm_mod_factory_spy, amplitude_control_factory);
       ASSERT_NE(pdxch_proc_factory, nullptr);
     }
   }
 
-  LowerPhyDownlinkProcessorFixture() : rg_spy(rg_reader_spy, rg_writer_spy), shared_rg_spy(rg_spy) {}
+  LowerPhyDownlinkProcessorFixture() :
+    ::testing::TestWithParam<LowerPhyDownlinkProcessorParams>(),
+    rg_spy(rg_reader_spy, rg_writer_spy),
+    shared_rg_spy(rg_spy),
+    modulation_executor(MAX_NSYMB_PER_SLOT * MAX_PORTS)
+  {
+  }
 
   void SetUp() override
   {
     ASSERT_NE(pdxch_proc_factory, nullptr);
 
     // Select parameters.
-    unsigned           nof_tx_ports = std::get<0>(GetParam());
-    sampling_rate      srate        = std::get<1>(GetParam());
-    subcarrier_spacing scs          = std::get<2>(GetParam());
-    cyclic_prefix      cp           = std::get<3>(GetParam());
+    nof_tx_ports = std::get<0>(GetParam());
+    srate        = std::get<1>(GetParam());
+    scs          = std::get<2>(GetParam());
+    cp           = std::get<3>(GetParam());
+
+    nof_symbols_per_slot   = get_nsymb_per_slot(cp);
+    nof_slots_per_subframe = get_nof_slots_per_subframe(scs);
+    nof_slots_per_frame    = nof_slots_per_subframe * NOF_SUBFRAMES_PER_FRAME;
+
+    bandwidth_rb   = dist_bandwidth_prb(rgen);
+    center_freq_Hz = dist_center_freq_Hz(rgen);
 
     // Prepare configurations.
-    config.cp             = cp;
-    config.scs            = scs;
-    config.srate          = srate;
-    config.bandwidth_rb   = dist_bandwidth_prb(rgen);
-    config.center_freq_Hz = dist_center_freq_Hz(rgen);
-    config.nof_tx_ports   = nof_tx_ports;
+    pdxch_processor_configuration config = {.cp                  = cp,
+                                            .scs                 = scs,
+                                            .srate               = srate,
+                                            .bandwidth_rb        = bandwidth_rb,
+                                            .center_freq_Hz      = center_freq_Hz,
+                                            .nof_tx_ports        = nof_tx_ports,
+                                            .modulation_executor = modulation_executor};
 
     // Create processor.
     pdxch_proc = pdxch_proc_factory->create(config);
@@ -164,397 +196,312 @@ protected:
     ofdm_mod_spy = ofdm_mod_factory_spy->get_modulators().back();
   }
 
-  static constexpr unsigned                          nof_frames_test    = 3;
-  static constexpr unsigned                          initial_slot_index = 0;
-  static std::mt19937                                rgen;
-  static std::uniform_int_distribution<unsigned>     dist_sector_id;
-  static std::uniform_int_distribution<unsigned>     dist_bandwidth_prb;
-  static std::uniform_real_distribution<double>      dist_center_freq_Hz;
-  static std::uniform_real_distribution<float>       dist_sample;
-  static std::shared_ptr<ofdm_modulator_factory_spy> ofdm_mod_factory_spy;
-  static std::shared_ptr<pdxch_processor_factory>    pdxch_proc_factory;
+  shared_resource_grid get_shared_grid()
+  {
+    rg_reader_spy.reset();
 
-  resource_grid_reader_spy         rg_reader_spy;
-  resource_grid_writer_spy         rg_writer_spy;
-  resource_grid_spy                rg_spy;
-  shared_resource_grid_spy         shared_rg_spy;
-  pdxch_processor_configuration    config;
+    // Add a single resource grid entry per port. This makes the grid non-empty on all ports.
+    for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
+      resource_grid_reader_spy::expected_entry_t entry;
+      entry.port       = i_port;
+      entry.symbol     = 0;
+      entry.subcarrier = 0;
+      entry.value      = cf_t(0.0F, 0.0F);
+      rg_reader_spy.write(entry);
+    }
+
+    return shared_rg_spy.get_grid();
+  }
+
+  static constexpr unsigned                                nof_frames_test    = 3;
+  static constexpr unsigned                                initial_slot_index = 0;
+  static std::mt19937                                      rgen;
+  static std::uniform_int_distribution<unsigned>           dist_sector_id;
+  static std::uniform_int_distribution<unsigned>           dist_bandwidth_prb;
+  static std::uniform_real_distribution<double>            dist_center_freq_Hz;
+  static std::uniform_real_distribution<float>             dist_sample;
+  static std::shared_ptr<ofdm_modulator_factory_spy>       ofdm_mod_factory_spy;
+  static std::shared_ptr<amplitude_controller_factory_spy> amplitude_control_factory;
+  static std::shared_ptr<pdxch_processor_factory>          pdxch_proc_factory;
+
+  resource_grid_reader_spy rg_reader_spy;
+  resource_grid_writer_spy rg_writer_spy;
+  resource_grid_spy        rg_spy;
+  shared_resource_grid_spy shared_rg_spy;
+
+  cyclic_prefix      cp;
+  subcarrier_spacing scs;
+  sampling_rate      srate;
+  unsigned           bandwidth_rb;
+  double             center_freq_Hz;
+  unsigned           nof_tx_ports;
+  unsigned           nof_symbols_per_slot;
+  unsigned           nof_slots_per_subframe;
+  unsigned           nof_slots_per_frame;
+
   std::unique_ptr<pdxch_processor> pdxch_proc   = nullptr;
   ofdm_symbol_modulator_spy*       ofdm_mod_spy = nullptr;
+  manual_task_worker               modulation_executor;
 };
 
-std::mt19937                                LowerPhyDownlinkProcessorFixture::rgen(0);
-std::uniform_int_distribution<unsigned>     LowerPhyDownlinkProcessorFixture::dist_sector_id(0, 16);
-std::uniform_int_distribution<unsigned>     LowerPhyDownlinkProcessorFixture::dist_bandwidth_prb(1, MAX_RB);
-std::uniform_real_distribution<double>      LowerPhyDownlinkProcessorFixture::dist_center_freq_Hz(1e8, 6e9);
-std::uniform_real_distribution<float>       LowerPhyDownlinkProcessorFixture::dist_sample(-1, 1);
-std::shared_ptr<ofdm_modulator_factory_spy> LowerPhyDownlinkProcessorFixture::ofdm_mod_factory_spy = nullptr;
-std::shared_ptr<pdxch_processor_factory>    LowerPhyDownlinkProcessorFixture::pdxch_proc_factory   = nullptr;
+std::mt19937                                      LowerPhyDownlinkProcessorFixture::rgen(0);
+std::uniform_int_distribution<unsigned>           LowerPhyDownlinkProcessorFixture::dist_sector_id(0, 16);
+std::uniform_int_distribution<unsigned>           LowerPhyDownlinkProcessorFixture::dist_bandwidth_prb(1, MAX_RB);
+std::uniform_real_distribution<double>            LowerPhyDownlinkProcessorFixture::dist_center_freq_Hz(1e8, 6e9);
+std::uniform_real_distribution<float>             LowerPhyDownlinkProcessorFixture::dist_sample(-1, 1);
+std::shared_ptr<ofdm_modulator_factory_spy>       LowerPhyDownlinkProcessorFixture::ofdm_mod_factory_spy      = nullptr;
+std::shared_ptr<amplitude_controller_factory_spy> LowerPhyDownlinkProcessorFixture::amplitude_control_factory = nullptr;
+std::shared_ptr<pdxch_processor_factory>          LowerPhyDownlinkProcessorFixture::pdxch_proc_factory        = nullptr;
 
 } // namespace
 
 TEST_P(LowerPhyDownlinkProcessorFixture, ModulatorConfiguration)
 {
-  sampling_rate      srate = std::get<1>(GetParam());
-  subcarrier_spacing scs   = std::get<2>(GetParam());
-  cyclic_prefix      cp    = std::get<3>(GetParam());
-
-  pdxch_processor_configuration expected_config;
-  expected_config.cp             = cp;
-  expected_config.scs            = scs;
-  expected_config.srate          = srate;
-  expected_config.bandwidth_rb   = config.bandwidth_rb;
-  expected_config.center_freq_Hz = config.center_freq_Hz;
-  expected_config.nof_tx_ports   = config.nof_tx_ports;
-
-  ofdm_modulator_configuration expected_mod_config;
-  expected_mod_config.numerology     = to_numerology_value(scs);
-  expected_mod_config.bw_rb          = config.bandwidth_rb;
-  expected_mod_config.dft_size       = srate.get_dft_size(scs);
-  expected_mod_config.cp             = cp;
-  expected_mod_config.scale          = 1.0F;
-  expected_mod_config.center_freq_Hz = config.center_freq_Hz;
+  ofdm_modulator_configuration expected_mod_config = {.numerology     = to_numerology_value(scs),
+                                                      .bw_rb          = bandwidth_rb,
+                                                      .dft_size       = srate.get_dft_size(scs),
+                                                      .cp             = cp,
+                                                      .scale          = 1.0F,
+                                                      .center_freq_Hz = center_freq_Hz};
 
   ASSERT_EQ(ofdm_mod_spy->get_configuration(), expected_mod_config);
 }
 
 TEST_P(LowerPhyDownlinkProcessorFixture, FlowNoRequest)
 {
-  unsigned           nof_tx_ports = std::get<0>(GetParam());
-  sampling_rate      srate        = std::get<1>(GetParam());
-  subcarrier_spacing scs          = std::get<2>(GetParam());
-  cyclic_prefix      cp           = std::get<3>(GetParam());
-
-  unsigned base_symbol_size = srate.get_dft_size(scs);
-
-  baseband_gateway_buffer_dynamic buffer(nof_tx_ports, 2 * base_symbol_size);
-
-  unsigned nof_symbols_per_slot   = get_nsymb_per_slot(cp);
-  unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(scs);
-
   // Create notifiers and connect.
   pdxch_processor_notifier_spy pdxch_proc_notifier_spy;
   pdxch_proc->connect(pdxch_proc_notifier_spy);
 
-  for (unsigned i_frame = 0, i_slot_frame = initial_slot_index; i_frame != nof_frames_test; ++i_frame) {
-    for (unsigned i_subframe = 0; i_subframe != NOF_SUBFRAMES_PER_FRAME; ++i_subframe) {
-      for (unsigned i_slot = 0, i_symbol_subframe = 0; i_slot != nof_slots_per_subframe; ++i_slot, ++i_slot_frame) {
-        for (unsigned i_symbol = 0; i_symbol != nof_symbols_per_slot; ++i_symbol, ++i_symbol_subframe) {
-          unsigned cp_size = cp.get_length(i_symbol_subframe, scs).to_samples(srate.to_Hz());
-          // Setup buffer.
-          buffer.resize(cp_size + base_symbol_size);
+  for (slot_point slot_begin{to_numerology_value(scs), initial_slot_index},
+       slot(slot_begin),
+       slot_end = slot_begin + NOF_SUBFRAMES_PER_FRAME * nof_slots_per_subframe * nof_frames_test;
+       slot != slot_end;
+       ++slot) {
+    // Clear spies.
+    pdxch_proc_notifier_spy.clear_notifications();
+    ofdm_mod_spy->clear_modulate_entries();
 
-          // Fill buffer.
-          for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
-            span<cf_t> port_buffer = buffer[i_port];
-            std::generate(
-                port_buffer.begin(), port_buffer.end(), []() { return cf_t(dist_sample(rgen), dist_sample(rgen)); });
-          }
+    // Prepare expected PDxCH baseband entry context.
+    pdxch_processor_baseband::slot_context context = {.slot = slot, .sector = dist_sector_id(rgen)};
 
-          // Clear spies.
-          pdxch_proc_notifier_spy.clear_notifications();
-          ofdm_mod_spy->clear_modulate_entries();
+    // Process baseband.
+    auto slot_result = pdxch_proc->get_baseband().process_slot(context);
 
-          // Prepare expected PDxCH baseband entry context.
-          pdxch_processor_baseband::symbol_context pdxch_context;
-          pdxch_context.slot   = slot_point(to_numerology_value(scs), i_slot_frame);
-          pdxch_context.sector = dist_sector_id(rgen);
-          pdxch_context.symbol = i_symbol;
+    // Verify result.
+    ASSERT_EQ(slot_result.metrics, lower_phy_baseband_metrics{});
+    ASSERT_EQ(slot_result.buffer, nullptr);
 
-          // Process baseband.
-          pdxch_proc->get_baseband().process_symbol(buffer.get_writer(), pdxch_context);
+    // Assert OFDM modulator is not called.
+    ASSERT_TRUE(ofdm_mod_spy->get_modulate_entries().empty());
 
-          // Assert OFDM modulator is not called.
-          ASSERT_TRUE(ofdm_mod_spy->get_modulate_entries().empty());
-
-          // Assert notification.
-          ASSERT_EQ(pdxch_proc_notifier_spy.get_nof_notifications(), 0);
-        }
-      }
-    }
+    // Assert notification.
+    ASSERT_EQ(pdxch_proc_notifier_spy.get_nof_notifications(), 0);
   }
 }
 
 TEST_P(LowerPhyDownlinkProcessorFixture, FlowFloodRequest)
 {
-  unsigned           nof_tx_ports = std::get<0>(GetParam());
-  sampling_rate      srate        = std::get<1>(GetParam());
-  subcarrier_spacing scs          = std::get<2>(GetParam());
-  cyclic_prefix      cp           = std::get<3>(GetParam());
-
-  unsigned base_symbol_size = srate.get_dft_size(scs);
-
-  baseband_gateway_buffer_dynamic buffer(nof_tx_ports, 2 * base_symbol_size);
-
-  unsigned nof_symbols_per_slot   = get_nsymb_per_slot(cp);
-  unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(scs);
+  unsigned sector_id = dist_sector_id(rgen);
 
   // Create notifiers and connect.
   pdxch_processor_notifier_spy pdxch_proc_notifier_spy;
   pdxch_proc->connect(pdxch_proc_notifier_spy);
 
-  shared_resource_grid shared_rg = shared_rg_spy.get_grid();
+  // Gets a grid.
+  shared_resource_grid shared_rg = get_shared_grid();
 
-  // Add a single resource grid entry per port. This makes the grid non-empty on all ports.
-  for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
-    resource_grid_reader_spy::expected_entry_t entry;
-    entry.port       = i_port;
-    entry.symbol     = 0;
-    entry.subcarrier = 0;
-    entry.value      = cf_t(0.0F, 0.0F);
-    rg_reader_spy.write(entry);
-  }
+  // Process a few slots.
+  for (slot_point slot_begin{to_numerology_value(scs), initial_slot_index},
+       slot(slot_begin),
+       slot_end = slot_begin + NOF_SUBFRAMES_PER_FRAME * nof_slots_per_subframe * nof_frames_test;
+       slot != slot_end;
+       ++slot) {
+    // Clear spies.
+    pdxch_proc_notifier_spy.clear_notifications();
+    ofdm_mod_spy->clear_modulate_entries();
 
-  for (unsigned i_frame = 0, i_slot_frame = initial_slot_index; i_frame != nof_frames_test; ++i_frame) {
-    for (unsigned i_subframe = 0; i_subframe != NOF_SUBFRAMES_PER_FRAME; ++i_subframe) {
-      for (unsigned i_slot = 0, i_symbol_subframe = 0; i_slot != nof_slots_per_subframe; ++i_slot, ++i_slot_frame) {
-        resource_grid_context rg_context;
-        rg_context.slot   = slot_point(to_numerology_value(scs), i_slot_frame);
-        rg_context.sector = dist_sector_id(rgen);
+    // Prepare expected PDxCH baseband entry context.
+    resource_grid_context                  req_context  = {.slot = slot, .sector = sector_id};
+    pdxch_processor_baseband::slot_context proc_context = {.slot = slot, .sector = sector_id};
 
-        // Request resource grid modulation for the current slot.
-        pdxch_proc->get_request_handler().handle_request(shared_rg.copy(), rg_context);
+    // Request resource grid modulation for the current slot.
+    pdxch_proc->get_request_handler().handle_request(shared_rg.copy(), req_context);
 
-        for (unsigned i_symbol = 0; i_symbol != nof_symbols_per_slot; ++i_symbol, ++i_symbol_subframe) {
-          unsigned cp_size = cp.get_length(i_symbol_subframe, scs).to_samples(srate.to_Hz());
-          // Setup buffer.
-          buffer.resize(cp_size + base_symbol_size);
+    // Modulate.
+    unsigned count = 0;
+    for (; modulation_executor.try_run_next(); ++count) {
+    }
+    ASSERT_EQ(count, nof_symbols_per_slot * nof_tx_ports);
 
-          // Clear spies.
-          pdxch_proc_notifier_spy.clear_notifications();
-          ofdm_mod_spy->clear_modulate_entries();
-
-          // Prepare expected PDxCH baseband entry context.
-          pdxch_processor_baseband::symbol_context pdxch_context;
-          pdxch_context.slot   = rg_context.slot;
-          pdxch_context.sector = rg_context.sector;
-          pdxch_context.symbol = i_symbol;
-
-          // Process baseband.
-          pdxch_proc->get_baseband().process_symbol(buffer.get_writer(), pdxch_context);
-
-          // Assert OFDM modulator call.
-          const auto& ofdm_mod_entries = ofdm_mod_spy->get_modulate_entries();
-          ASSERT_EQ(ofdm_mod_entries.size(), nof_tx_ports);
-          for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
-            const auto& ofdm_mod_entry = ofdm_mod_entries[i_port];
-            ASSERT_EQ(span<const cf_t>(ofdm_mod_entry.output), buffer[i_port]);
-            ASSERT_EQ(static_cast<const void*>(ofdm_mod_entry.grid), static_cast<const void*>(&rg_reader_spy));
-            ASSERT_EQ(ofdm_mod_entry.port_index, i_port);
-            ASSERT_EQ(ofdm_mod_entry.symbol_index, i_symbol_subframe);
-          }
-
-          // Assert notification.
-          ASSERT_EQ(pdxch_proc_notifier_spy.get_request_late().size(), 0);
-          ASSERT_EQ(pdxch_proc_notifier_spy.get_request_overflow().size(), 0);
-        }
+    // Assert OFDM modulator call.
+    const auto& ofdm_mod_entries = ofdm_mod_spy->get_modulate_entries();
+    ASSERT_EQ(ofdm_mod_entries.size(), nof_symbols_per_slot * nof_tx_ports);
+    for (unsigned i_symbol = 0, i_symbol_subframe = nof_symbols_per_slot * slot.subframe_slot_index();
+         i_symbol != nof_symbols_per_slot;
+         ++i_symbol, ++i_symbol_subframe) {
+      for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
+        const auto& ofdm_mod_entry = ofdm_mod_entries[i_symbol * nof_tx_ports + i_port];
+        ASSERT_EQ(static_cast<const void*>(ofdm_mod_entry.grid), static_cast<const void*>(&rg_reader_spy));
+        ASSERT_EQ(ofdm_mod_entry.port_index, i_port);
+        ASSERT_EQ(ofdm_mod_entry.symbol_index, i_symbol_subframe);
       }
     }
+
+    // Process baseband.
+    auto result = pdxch_proc->get_baseband().process_slot(proc_context);
+
+    // Assert notification.
+    ASSERT_EQ(pdxch_proc_notifier_spy.get_request_late().size(), 0);
   }
 }
 
 TEST_P(LowerPhyDownlinkProcessorFixture, LateRequest)
 {
-  unsigned           sector_id    = dist_sector_id(rgen);
-  unsigned           nof_tx_ports = std::get<0>(GetParam());
-  sampling_rate      srate        = std::get<1>(GetParam());
-  subcarrier_spacing scs          = std::get<2>(GetParam());
-  cyclic_prefix      cp           = std::get<3>(GetParam());
-
-  unsigned base_symbol_size = srate.get_dft_size(scs);
-
-  baseband_gateway_buffer_dynamic buffer(nof_tx_ports, 2 * base_symbol_size);
-
-  unsigned nof_symbols_per_slot   = get_nsymb_per_slot(cp);
-  unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(scs);
+  unsigned sector_id        = dist_sector_id(rgen);
+  unsigned modulation_count = 0;
 
   // Create notifiers and connect.
   pdxch_processor_notifier_spy pdxch_proc_notifier_spy;
   pdxch_proc->connect(pdxch_proc_notifier_spy);
 
-  unsigned initial_slot = 3;
-  unsigned late_slot    = 2;
-  unsigned next_slot    = 4;
-
-  shared_resource_grid shared_rg = shared_rg_spy.get_grid();
-
-  // Add a single resource grid entry per port. This makes the grid non-empty on all ports.
-  for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
-    resource_grid_reader_spy::expected_entry_t entry;
-    entry.port       = i_port;
-    entry.symbol     = 0;
-    entry.subcarrier = 0;
-    entry.value      = cf_t(0.0F, 0.0F);
-    rg_reader_spy.write(entry);
-  }
+  // Gets a grid.
+  shared_resource_grid shared_rg = get_shared_grid();
 
   // Initial request.
   resource_grid_context initial_rg_context;
-  initial_rg_context.slot   = slot_point(to_numerology_value(scs), initial_slot);
+  initial_rg_context.slot   = slot_point(to_numerology_value(scs), initial_slot_index);
   initial_rg_context.sector = sector_id;
   pdxch_proc->get_request_handler().handle_request(shared_rg.copy(), initial_rg_context);
+  for (; modulation_executor.try_run_next(); ++modulation_count) {
+  }
 
   // Late request.
   resource_grid_context late_rg_context;
-  late_rg_context.slot   = slot_point(to_numerology_value(scs), late_slot);
+  late_rg_context.slot   = initial_rg_context.slot - 1;
   late_rg_context.sector = sector_id;
   pdxch_proc->get_request_handler().handle_request(shared_rg.copy(), late_rg_context);
+  for (; modulation_executor.try_run_next(); ++modulation_count) {
+  }
 
   // Next request.
   resource_grid_context next_rg_context;
-  next_rg_context.slot   = slot_point(to_numerology_value(scs), next_slot);
+  next_rg_context.slot   = initial_rg_context.slot + 1;
   next_rg_context.sector = sector_id;
   pdxch_proc->get_request_handler().handle_request(shared_rg.copy(), next_rg_context);
+  for (; modulation_executor.try_run_next(); ++modulation_count) {
+  }
 
-  for (unsigned i_subframe = 0; i_subframe != NOF_SUBFRAMES_PER_FRAME; ++i_subframe) {
-    for (unsigned i_slot = 0, i_symbol_subframe = 0; i_slot != nof_slots_per_subframe; ++i_slot) {
-      // Process one frame.
-      for (unsigned i_symbol = 0; i_symbol != nof_symbols_per_slot; ++i_symbol, ++i_symbol_subframe) {
-        unsigned cp_size = cp.get_length(i_symbol_subframe, scs).to_samples(srate.to_Hz());
-        // Setup buffer.
-        buffer.resize(cp_size + base_symbol_size);
+  // Verify the number of modulation tasks matches with the requests.
+  ASSERT_EQ(modulation_count, 3 * nof_symbols_per_slot * nof_tx_ports);
 
-        // Fill buffer.
-        for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
-          span<cf_t> port_buffer = buffer[i_port];
-          std::generate(
-              port_buffer.begin(), port_buffer.end(), []() { return cf_t(dist_sample(rgen), dist_sample(rgen)); });
-        }
+  // Clear spies.
+  pdxch_proc_notifier_spy.clear_notifications();
+  ofdm_mod_spy->clear_modulate_entries();
 
-        // Clear spies.
-        pdxch_proc_notifier_spy.clear_notifications();
-        ofdm_mod_spy->clear_modulate_entries();
+  // Process a few slots.
+  for (slot_point slot_begin{to_numerology_value(scs), initial_slot_index},
+       slot(slot_begin),
+       slot_end = slot_begin + NOF_SUBFRAMES_PER_FRAME * nof_slots_per_subframe * nof_frames_test;
+       slot != slot_end;
+       ++slot) {
+    // Prepare expected PDxCH baseband entry context.
+    pdxch_processor_baseband::slot_context proc_context = {.slot = slot, .sector = sector_id};
 
-        // Prepare expected PDxCH baseband entry context.
-        pdxch_processor_baseband::symbol_context pdxch_context;
-        pdxch_context.slot   = slot_point(to_numerology_value(scs), i_slot);
-        pdxch_context.sector = dist_sector_id(rgen);
-        pdxch_context.symbol = i_symbol;
+    // Process baseband.
+    pdxch_processor_baseband::slot_result slot_result = pdxch_proc->get_baseband().process_slot(proc_context);
 
-        // Process baseband.
-        pdxch_proc->get_baseband().process_symbol(buffer.get_writer(), pdxch_context);
-
-        // Assert OFDM modulator call only for initial and next slot.
-        const auto&               ofdm_mod_entries  = ofdm_mod_spy->get_modulate_entries();
-        resource_grid_reader_spy* rg_reader_spy_ptr = &rg_reader_spy;
-
-        if (i_slot == initial_slot || i_slot == next_slot) {
-          ASSERT_EQ(ofdm_mod_entries.size(), nof_tx_ports);
-          for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
-            const auto& ofdm_mod_entry = ofdm_mod_entries[i_port];
-            ASSERT_EQ(span<const cf_t>(ofdm_mod_entry.output), buffer[i_port]);
-            ASSERT_EQ(static_cast<const void*>(ofdm_mod_entry.grid), static_cast<const void*>(rg_reader_spy_ptr));
-            ASSERT_EQ(ofdm_mod_entry.port_index, i_port);
-            ASSERT_EQ(ofdm_mod_entry.symbol_index, i_symbol_subframe);
-          }
-        } else {
-          ASSERT_TRUE(ofdm_mod_entries.empty());
-        }
-
-        // Assert notifications.
-        ASSERT_EQ(pdxch_proc_notifier_spy.get_request_overflow().size(), 0);
-        if (i_slot == next_slot) {
-          const auto& lates = pdxch_proc_notifier_spy.get_request_late();
-          ASSERT_EQ(lates.size(), 1);
-          ASSERT_EQ(lates.front().slot, late_rg_context.slot);
-          ASSERT_EQ(lates.front().sector, late_rg_context.sector);
-        } else {
-          ASSERT_EQ(pdxch_proc_notifier_spy.get_request_late().size(), 0);
-        }
-      }
+    // Assert results. Only two of the three request must have been processed.
+    if ((slot == initial_rg_context.slot) || (slot == next_rg_context.slot)) {
+      ASSERT_NE(slot_result.buffer, nullptr);
+    } else {
+      ASSERT_EQ(slot_result.buffer, nullptr);
     }
   }
+
+  // Assert notifications. Only one late must have been detected.
+  const auto& lates = pdxch_proc_notifier_spy.get_request_late();
+  ASSERT_EQ(lates.size(), 1);
+  ASSERT_EQ(lates.front().slot, late_rg_context.slot);
+  ASSERT_EQ(lates.front().sector, late_rg_context.sector);
 }
 
-TEST_P(LowerPhyDownlinkProcessorFixture, OverflowRequest)
+TEST_P(LowerPhyDownlinkProcessorFixture, OverflowWithRequest)
 {
-  unsigned           nof_tx_ports = std::get<0>(GetParam());
-  sampling_rate      srate        = std::get<1>(GetParam());
-  subcarrier_spacing scs          = std::get<2>(GetParam());
-  cyclic_prefix      cp           = std::get<3>(GetParam());
+  // Maximum number of requests queued in the processor.
+  static constexpr unsigned max_nof_concurrent_requests = 16;
 
-  unsigned base_symbol_size = srate.get_dft_size(scs);
-
-  baseband_gateway_buffer_dynamic buffer(nof_tx_ports, 2 * base_symbol_size);
-
-  unsigned nof_symbols_per_slot   = get_nsymb_per_slot(cp);
-  unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(scs);
+  unsigned sector_id = dist_sector_id(rgen);
 
   // Create notifiers and connect.
   pdxch_processor_notifier_spy pdxch_proc_notifier_spy;
   pdxch_proc->connect(pdxch_proc_notifier_spy);
 
-  // Add a single resource grid entry per port. This makes the grid non-empty on all ports.
-  for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
-    resource_grid_reader_spy::expected_entry_t entry;
-    entry.port       = i_port;
-    entry.symbol     = 0;
-    entry.subcarrier = 0;
-    entry.value      = cf_t(0.0F, 0.0F);
-    rg_reader_spy.write(entry);
-  }
-
-  shared_resource_grid shared_rg = shared_rg_spy.get_grid();
+  shared_resource_grid shared_rg = get_shared_grid();
+  ofdm_mod_spy->clear_modulate_entries();
 
   // Generate requests.
-  for (unsigned i_request = 0; i_request != request_queue_size + 1; ++i_request) {
-    resource_grid_context rg_context;
-    rg_context.slot   = slot_point(to_numerology_value(scs), initial_slot_index + i_request);
-    rg_context.sector = dist_sector_id(rgen);
-    pdxch_proc->get_request_handler().handle_request(shared_rg.copy(), rg_context);
-    ASSERT_EQ(pdxch_proc_notifier_spy.get_request_late().size(), 0);
+  for (unsigned i_request = 0; i_request != max_nof_concurrent_requests + 1; ++i_request) {
+    // Request grid.
+    resource_grid_context rg_context = {.slot   = {to_numerology_value(scs), initial_slot_index + i_request},
+                                        .sector = sector_id};
+    if (i_request < max_nof_concurrent_requests) {
+      pdxch_proc->get_request_handler().handle_request(shared_rg.copy(), rg_context);
+    } else {
+      pdxch_proc->get_request_handler().handle_request(shared_rg.copy(), rg_context);
+    }
 
-    unsigned nof_expected_overflows = (i_request > request_queue_size) ? (i_request - request_queue_size) : 0;
-    ASSERT_EQ(pdxch_proc_notifier_spy.get_request_late().size(), 0);
-    ASSERT_EQ(pdxch_proc_notifier_spy.get_request_overflow().size(), nof_expected_overflows);
+    // Verify the number of modulation tasks matches the number of symbols in the slot.
+    unsigned count = 0;
+    for (; modulation_executor.try_run_next(); ++count) {
+    }
+    ASSERT_EQ(count, nof_symbols_per_slot * nof_tx_ports) << "i_request=" << i_request;
+
+    // Verify the current number of lates.
+    unsigned nof_expected_lates =
+        (i_request >= max_nof_concurrent_requests) ? (i_request + 1 - max_nof_concurrent_requests) : 0;
+    ASSERT_EQ(pdxch_proc_notifier_spy.get_request_late().size(), nof_expected_lates);
   }
 
-  // Process requests for one frame.
-  for (unsigned i_slot = 0, i_symbol_subframe = 0; i_slot != nof_slots_per_subframe; ++i_slot) {
-    // Process each symbol in one frame.
+  // Assert OFDM modulator call only for the request enqueued.
+  const auto& ofdm_mod_entries = ofdm_mod_spy->get_modulate_entries();
+  ASSERT_EQ(ofdm_mod_entries.size(), (max_nof_concurrent_requests + 1) * nof_symbols_per_slot * nof_tx_ports);
+  for (unsigned i_slot = 0, i_symbol_subframe = 0, entry_index = 0; i_slot != nof_slots_per_subframe; ++i_slot) {
     for (unsigned i_symbol = 0; i_symbol != nof_symbols_per_slot; ++i_symbol, ++i_symbol_subframe) {
-      unsigned cp_size = cp.get_length(i_symbol_subframe, scs).to_samples(srate.to_Hz());
-      // Setup buffer.
-      buffer.resize(cp_size + base_symbol_size);
-
-      // Fill buffer.
-      for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
-        span<cf_t> port_buffer = buffer[i_port];
-        std::generate(
-            port_buffer.begin(), port_buffer.end(), []() { return cf_t(dist_sample(rgen), dist_sample(rgen)); });
+      for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port, ++entry_index) {
+        const auto& ofdm_mod_entry = ofdm_mod_entries[entry_index];
+        ASSERT_EQ(static_cast<const void*>(ofdm_mod_entry.grid), static_cast<const void*>(&rg_reader_spy));
+        ASSERT_EQ(ofdm_mod_entry.port_index, i_port);
+        ASSERT_EQ(ofdm_mod_entry.symbol_index, i_symbol_subframe);
       }
-
-      // Clear spies.
-      pdxch_proc_notifier_spy.clear_notifications();
-      ofdm_mod_spy->clear_modulate_entries();
-
-      // Prepare expected PDxCH baseband entry context.
-      pdxch_processor_baseband::symbol_context pdxch_context;
-      pdxch_context.slot   = slot_point(to_numerology_value(scs), i_slot);
-      pdxch_context.sector = dist_sector_id(rgen);
-      pdxch_context.symbol = i_symbol;
-
-      // Process baseband.
-      pdxch_proc->get_baseband().process_symbol(buffer.get_writer(), pdxch_context);
-
-      // Assert OFDM modulator call only for the request enqueued.
-      const auto& ofdm_mod_entries = ofdm_mod_spy->get_modulate_entries();
-      if ((i_slot >= initial_slot_index) && (i_slot < initial_slot_index + request_queue_size)) {
-        ASSERT_EQ(ofdm_mod_entries.size(), nof_tx_ports);
-        for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
-          const auto& ofdm_mod_entry = ofdm_mod_entries[i_port];
-          ASSERT_EQ(span<const cf_t>(ofdm_mod_entry.output), buffer[i_port]);
-          ASSERT_EQ(static_cast<const void*>(ofdm_mod_entry.grid), static_cast<const void*>(&rg_reader_spy));
-          ASSERT_EQ(ofdm_mod_entry.port_index, i_port);
-          ASSERT_EQ(ofdm_mod_entry.symbol_index, i_symbol_subframe);
-        }
-      } else {
-        ASSERT_EQ(ofdm_mod_entries.size(), 0);
-      }
-
-      // Assert notifications.
-      ASSERT_EQ(pdxch_proc_notifier_spy.get_request_overflow().size(), 0);
     }
+  }
+
+  // Process a few slots.
+  for (slot_point slot_begin{to_numerology_value(scs), initial_slot_index + 1},
+       slot(slot_begin),
+       slot_end = slot_begin + NOF_SUBFRAMES_PER_FRAME * nof_slots_per_subframe * nof_frames_test;
+       slot != slot_end;
+       ++slot) {
+    // Clear spies.
+    pdxch_proc_notifier_spy.clear_notifications();
+    ofdm_mod_spy->clear_modulate_entries();
+
+    // Prepare expected PDxCH baseband entry context.
+    pdxch_processor_baseband::slot_context proc_context = {.slot = slot, .sector = sector_id};
+
+    // Process baseband.
+    pdxch_processor_baseband::slot_result slot_result = pdxch_proc->get_baseband().process_slot(proc_context);
+
+    // Process baseband.
+    if (static_cast<unsigned>(slot - slot_begin) < max_nof_concurrent_requests) {
+      ASSERT_NE(slot_result.buffer, nullptr);
+    } else {
+      ASSERT_EQ(slot_result.buffer, nullptr);
+    }
+
+    // Assert notifications.
+    ASSERT_EQ(pdxch_proc_notifier_spy.get_request_late().size(), 0);
   }
 }
 

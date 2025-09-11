@@ -45,22 +45,6 @@ private:
   unsigned nof_lines = MAX_NOF_STDOUT_METRIC_LINES_WITHOUT_HEADER;
 };
 
-/// JSON consumer for the scheduler cell metrics.
-class scheduler_cell_metrics_consumer_json
-{
-public:
-  explicit scheduler_cell_metrics_consumer_json(srslog::log_channel& log_chan_) : log_chan(log_chan_)
-  {
-    srsran_assert(log_chan.enabled(), "JSON log channel is not enabled");
-  }
-
-  /// Handle scheduler metrics.
-  void handle_metric(const std::optional<scheduler_metrics_report>& report);
-
-private:
-  srslog::log_channel& log_chan;
-};
-
 /// Logger consumer for the scheduler cell metrics.
 class scheduler_cell_metrics_consumer_log
 {

@@ -144,6 +144,11 @@ void prach_scheduler::run_slot(cell_resource_allocator& res_grid)
   allocate_slot_prach_pdus(res_grid, res_grid[res_grid.max_ul_slot_alloc_delay - prach_length_slots].slot);
 }
 
+void prach_scheduler::stop()
+{
+  first_slot_ind = true;
+}
+
 void prach_scheduler::allocate_slot_prach_pdus(cell_resource_allocator& res_grid, slot_point sl)
 {
   // If any of the slots over which the PRACH preamble should be allocated isn't an UL slot, return.

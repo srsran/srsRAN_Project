@@ -57,6 +57,7 @@ rrc_reestablishment_procedure::rrc_reestablishment_procedure(
   event_mng(event_mng_),
   logger(logger_)
 {
+  procedure_timeout = context.cell.timers.t311 + context.cfg.rrc_procedure_guard_time_ms;
 }
 
 void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& ctx)
@@ -96,8 +97,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
   create_srb1();
 
   // Create new transaction for RRC Reestablishment.
-  transaction =
-      event_mng.transactions.create_transaction(std::chrono::milliseconds(context.cfg.rrc_procedure_timeout_ms));
+  transaction = event_mng.transactions.create_transaction(procedure_timeout);
 
   // Send RRC Reestablishment to UE.
   send_rrc_reestablishment();
@@ -134,10 +134,8 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
     }
 
   } else {
-    logger.log_warning("\"{}\" for old_ue={} timed out after {}ms",
-                       name(),
-                       old_ue_reest_context.ue_index,
-                       context.cfg.rrc_procedure_timeout_ms.count());
+    logger.log_warning(
+        "\"{}\" for old_ue={} timed out after {}ms", name(), old_ue_reest_context.ue_index, procedure_timeout.count());
     logger.log_debug("\"{}\" for old_ue={} failed", name(), old_ue_reest_context.ue_index);
   }
 
@@ -227,7 +225,7 @@ bool rrc_reestablishment_procedure::verify_security_context()
   // Get RX short MAC.
   security::sec_short_mac_i short_mac = {};
   uint16_t short_mac_int              = htons(reestablishment_request.rrc_reest_request.ue_id.short_mac_i.to_number());
-  memcpy(short_mac.data(), &short_mac_int, 2);
+  std::memcpy(short_mac.data(), &short_mac_int, 2);
 
   // Get packed varShortMAC-Input.
   asn1::rrc_nr::var_short_mac_input_s var_short_mac_input = {};

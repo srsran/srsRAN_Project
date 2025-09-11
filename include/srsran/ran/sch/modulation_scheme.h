@@ -31,7 +31,7 @@
 namespace srsran {
 
 /// Maximum number of bits per symbol.
-static constexpr unsigned MODULATION_MAX_BITS_PER_SYMBOL = 8;
+constexpr unsigned MODULATION_MAX_BITS_PER_SYMBOL = 8;
 
 /// \brief Modulation schemes as described in TS38.211 Section 5.1.
 ///

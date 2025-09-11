@@ -33,16 +33,18 @@ class shared_resource_grid;
 
 namespace ofh {
 
+class operation_controller;
+
 /// Open Fronthaul User-Plane downlink data flow resource grid context.
 struct data_flow_uplane_resource_grid_context {
   /// Provides the slot context within the system frame.
   slot_point slot;
   /// Provides the sector identifier.
-  unsigned sector;
+  uint8_t sector;
   /// Provides the port identifier.
-  unsigned port;
+  uint8_t port;
   /// eAxC.
-  unsigned eaxc;
+  uint8_t eaxc;
   /// Symbol range.
   ofdm_symbol_range symbol_range;
 };
@@ -53,6 +55,9 @@ class data_flow_uplane_downlink_data
 public:
   /// Default destructor.
   virtual ~data_flow_uplane_downlink_data() = default;
+
+  /// Returns the controller of this Open Fronthaul User-Plane data flow.
+  virtual operation_controller& get_operation_controller() = 0;
 
   /// Enqueues the User-Plane downlink data messages with the given context and resource grid.
   virtual void enqueue_section_type_1_message(const data_flow_uplane_resource_grid_context& context,

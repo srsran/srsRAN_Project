@@ -140,7 +140,7 @@ void fapi_to_mac_data_msg_translator::on_rx_data_indication(const fapi::rx_data_
 
   // Only invoke the MAC when there are successfully decoded PDUs available.
   if (!indication.pdus.empty()) {
-    pdu_handler.get().handle_rx_data_indication(indication);
+    pdu_handler.get().handle_rx_data_indication(std::move(indication));
   }
 }
 

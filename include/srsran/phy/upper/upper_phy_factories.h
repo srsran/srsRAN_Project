@@ -32,6 +32,7 @@
 #include "srsran/phy/upper/rx_buffer_pool.h"
 #include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/phy/upper/upper_phy.h"
+#include "srsran/phy/upper/upper_phy_execution_configuration.h"
 #include <memory>
 #include <variant>
 
@@ -95,6 +96,8 @@ struct uplink_processor_pool_config {
 
   /// Collection of all uplink processors, organized by numerology.
   std::vector<uplink_processor_set> ul_processors;
+  /// Default uplink processor used for handling PRACH and receive symbols when no processor has been assigned.
+  std::unique_ptr<uplink_processor> default_processor;
 };
 
 /// \brief Creates and returns an uplink processor pool.
@@ -106,16 +109,6 @@ struct downlink_processor_config {
   unsigned id;
   /// Resource grid gateway.
   upper_phy_rg_gateway* gateway;
-  /// Task executor for processing PDCCH.
-  task_executor* pdcch_executor;
-  /// Task executor for processing PDSCH.
-  task_executor* pdsch_executor;
-  /// Task executor for processing SSB.
-  task_executor* ssb_executor;
-  /// Task executor for processing NZP-CSI-RS.
-  task_executor* csi_rs_executor;
-  /// Task executor for processing PRS.
-  task_executor* prs_executor;
 };
 
 /// Factory that allows to create downlink processors.
@@ -148,25 +141,11 @@ struct pdsch_processor_generic_configuration {
 struct pdsch_processor_flexible_configuration {
   /// CB batch length for guaranteeing a single batch in synchronous operation mode.
   static constexpr unsigned synchronous_cb_batch_length = std::numeric_limits<unsigned>::max();
-  /// \brief Number of threads for processing PDSCH codeblocks concurrently.
-  ///
-  /// Set it to the number of threads that can potentially call the processor and the number of threads comprised in
-  /// \c pdsch_codeblock_task_executor.
-  ///
-  /// \remark An assertion is triggered if it is less than one.
-  /// \remark A failure is reported in runtime if the number of threads processing codeblocks exceed this number.
-  unsigned nof_pdsch_codeblock_threads = 0;
   /// \brief Length of the codeblock-batch per thread.
   ///
   /// Set to zero if not initialized, which splits the codeblocks homogeneously amongst all threads. Set to
   /// \ref synchronous_cb_batch_length for guaranteeing a memory-optimized synchronous operation.
   unsigned cb_batch_length = 0;
-  /// \brief Maximum number of simultaneous active PDSCH transmissions.
-  ///
-  /// Sets the maximum number of PDSCH processor instances that can be used simultaneously.
-  unsigned max_nof_simultaneous_pdsch = 0;
-  /// PDSCH codeblock task executor. Set to \c nullptr if \ref nof_pdsch_codeblock_threads is less than 2.
-  task_executor& pdsch_codeblock_task_executor;
 };
 
 /// \brief Downlink processor software factory configuration.
@@ -194,18 +173,36 @@ struct downlink_processor_factory_sw_config {
   /// - \c generic: for using unoptimized PDSCH processing, or
   /// - \c flexible: for using configurable processor that optimizes memory or performance via concurrency.
   std::variant<pdsch_processor_generic_configuration, pdsch_processor_flexible_configuration> pdsch_processor;
-  /// Number of concurrent threads processing downlink transmissions.
-  unsigned nof_concurrent_threads;
   /// \brief Optional hardware-accelerated PDSCH encoder factory.
   ///
   /// if the optional is not set, a software PDSCH encoder factory will be used.
   std::optional<std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory>> hw_encoder_factory;
+  /// Task executor for processing PDCCH.
+  upper_phy_executor pdcch_executor;
+  /// Task executor for processing PDSCH.
+  upper_phy_executor pdsch_executor;
+  /// Task executor for processing SSB.
+  upper_phy_executor ssb_executor;
+  /// Task executor for processing NZP-CSI-RS.
+  upper_phy_executor csi_rs_executor;
+  /// Task executor for processing PRS.
+  upper_phy_executor prs_executor;
+};
+
+/// \brief Downlink processor software factory configuration.
+///
+/// \remark Default values are empty strings which are invalid.
+struct downlink_processor_factory_sw_dependencies {
+  /// PDSCH codeblock executor. The generic PDSCH processor is used if this is invalid.
+  upper_phy_executor pdsch_codeblock_executor;
+  /// Optional metric notifier.
+  upper_phy_metrics_notifiers* metric_notifier;
 };
 
 /// Creates a full software based downlink processor factory.
 std::shared_ptr<downlink_processor_factory>
-create_downlink_processor_factory_sw(const downlink_processor_factory_sw_config& config,
-                                     upper_phy_metrics_notifiers*                metric_notifier);
+create_downlink_processor_factory_sw(const downlink_processor_factory_sw_config&       config,
+                                     const downlink_processor_factory_sw_dependencies& dependencies);
 
 /// Describes all downlink processors in a pool.
 struct downlink_processor_pool_config {
@@ -224,8 +221,67 @@ struct downlink_processor_pool_config {
 /// \brief Creates and returns a downlink processor pool.
 std::unique_ptr<downlink_processor_pool> create_dl_processor_pool(downlink_processor_pool_config config);
 
-/// Upper PHY configuration parameters used to create a new upper PHY object.
-struct upper_phy_config {
+/// Collects upper PHY configuration parameters used to create a new upper PHY object.
+struct upper_phy_configuration {
+  /// Number of transmit antenna ports.
+  unsigned nof_tx_ports;
+  /// Number of receive antenna ports.
+  unsigned nof_rx_ports;
+  /// Number of downlink resource grids. Downlink resource grids minimum reuse time is \c dl_rg_expire_timeout_slots
+  /// slots.
+  unsigned nof_dl_rg;
+  /// Number of uplink resource grids. They are reused after \c nof_ul_rg slots.
+  unsigned nof_ul_rg;
+  /// Number of PRACH buffer.
+  unsigned nof_prach_buffer;
+  /// Maximum number of time-domain occasions.
+  unsigned max_nof_td_prach_occasions;
+  /// Maximum number of frequency-domain occasions.
+  unsigned max_nof_fd_prach_occasions;
+  /// Set to true if the PRACH preamble is long.
+  bool is_prach_long_format;
+  /// Maximum number of concurrent downlink processes.
+  unsigned nof_dl_processors;
+  /// Number of RBs for downlink.
+  unsigned dl_bw_rb;
+  /// Number of RBs for uplink.
+  unsigned ul_bw_rb;
+  /// Maximum number of layers for PUSCH transmissions.
+  unsigned pusch_max_nof_layers;
+  /// List of active subcarrier spacing, indexed by numerology.
+  std::array<bool, to_numerology_value(subcarrier_spacing::invalid)> active_scs;
+  /// Receive buffer pool configuration.
+  rx_buffer_pool_config rx_buffer_config;
+};
+
+/// Collects the necessary dependencies for creating an upper PHY.
+struct upper_phy_dependencies {
+  /// Upper PHY resource grid gateway.
+  upper_phy_rg_gateway* rg_gateway;
+  /// Received symbol request notifier.
+  upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier;
+};
+
+/// Returns true if the given upper PHY configuration is valid, otherwise false.
+inline bool is_valid_upper_phy_config(const upper_phy_configuration& config)
+{
+  // :TODO: Implement me!
+  return true;
+}
+
+/// \brief Factory that builds upper PHY objects.
+class upper_phy_factory
+{
+public:
+  virtual ~upper_phy_factory() = default;
+
+  /// \brief Creates and returns an upper PHY object.
+  virtual std::unique_ptr<upper_phy> create(const upper_phy_configuration& config,
+                                            const upper_phy_dependencies&  dependencies) = 0;
+};
+
+/// Collects the necessary configuration parameters for creating an upper physical layer factory.
+struct upper_phy_factory_configuration {
   /// \brief Logging level.
   /// - \c none: No logging is enabled, or
   /// - \c info: all processing PDUs and their results are logged.
@@ -244,6 +300,16 @@ struct upper_phy_config {
   std::optional<unsigned> rx_symbol_printer_port;
   /// Boolean flag for dumping PRACH symbols when set to true.
   bool rx_symbol_printer_prach;
+  /// Enables the PHY tap plugin if present.
+  bool enable_phy_tap;
+  /// \brief LDPC encoder type.
+  ///
+  /// Use of these options:
+  /// - \c auto: let the factory select the most efficient given the CPU architecture, or
+  /// - \c generic: for using unoptimized LDPC encoder, or
+  /// - \c avx2: for using AVX2 optimized LDPC encoder (x86_64 CPUs only), or
+  /// - \c neon: for using NEON optimized LDPC encoder (ARM CPUs only).
+  std::string ldpc_encoder_type;
   /// \brief LDPC decoder type.
   ///
   /// Use one of these options:
@@ -297,97 +363,79 @@ struct upper_phy_config {
   unsigned ldpc_decoder_iterations;
   /// Set to true to enable the LDPC decoder early stop.
   bool ldpc_decoder_early_stop;
-  /// Number of transmit antenna ports.
-  unsigned nof_tx_ports;
+  /// Set to true for forcing the LDPC decoder to decode even if the number of soft bits is insufficient.
+  bool ldpc_decoder_force_decoding;
   /// Number of receive antenna ports.
   unsigned nof_rx_ports;
-  /// Number of downlink resource grids. Downlink resource grids minimum reuse time is \c dl_rg_expire_timeout_slots
-  /// slots.
-  unsigned nof_dl_rg;
-  /// Number of uplink resource grids. They are reused after \c nof_ul_rg slots.
-  unsigned nof_ul_rg;
-  /// Number of PRACH buffer.
-  unsigned nof_prach_buffer;
-  /// Maximum number of time-domain occasions.
-  unsigned max_nof_td_prach_occasions;
-  /// Maximum number of frequency-domain occasions.
-  unsigned max_nof_fd_prach_occasions;
-  /// Set to true if the PRACH preamble is long.
-  bool is_prach_long_format;
-  /// Maximum number of concurrent downlink processes.
-  unsigned nof_dl_processors;
-  /// Maximum PRACH detector thread concurrency.
-  unsigned max_prach_thread_concurrency;
-  /// Maximum uplink processor thread concurrency.
-  unsigned max_ul_thread_concurrency;
-  /// Maximum asynchronous PUSCH processing concurrency for each UL processor.
-  unsigned max_pusch_concurrency;
-  /// Number of threads that simultaneously use a PUSCH decoder.
-  unsigned nof_pusch_decoder_threads;
-  /// Number of RBs for downlink.
-  unsigned dl_bw_rb;
   /// Number of RBs for uplink.
   unsigned ul_bw_rb;
-  /// Request headroom size in slots.
-  unsigned nof_slots_request_headroom;
-  /// Allow request on empty uplink slots.
-  bool allow_request_on_empty_uplink_slot;
   /// Maximum number of layers for PUSCH transmissions.
   unsigned pusch_max_nof_layers;
-  /// List of active subcarrier spacing, indexed by numerology.
-  std::array<bool, to_numerology_value(subcarrier_spacing::invalid)> active_scs;
-  /// Receive buffer pool configuration.
-  rx_buffer_pool_config rx_buffer_config;
-  /// Upper PHY resource grid gateway.
-  upper_phy_rg_gateway* rg_gateway;
-  /// PDCCH task executor.
-  task_executor* pdcch_executor;
-  /// PDSCH task executor.
-  task_executor* pdsch_executor;
-  /// SSB task executor.
-  task_executor* ssb_executor;
-  /// NZP-CSI-RS task executor.
-  task_executor* csi_rs_executor;
-  /// PRS task executor.
-  task_executor* prs_executor;
-  /// Downlink grid pool task executor.
-  task_executor* dl_grid_executor;
-  /// PUCCH task executor.
-  task_executor* pucch_executor;
-  /// PUSCH task executor.
-  task_executor* pusch_executor;
-  /// PUSCH decoder task executor.
-  task_executor* pusch_decoder_executor;
-  /// PRACH task executor.
-  task_executor* prach_executor;
-  /// SRS task executor.
-  task_executor* srs_executor;
-  /// Received symbol request notifier.
-  upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier;
+  /// \brief PDSCH processor type.
+  ///
+  /// Use of these options:
+  /// - \c generic: for using unoptimized PDSCH processing, or
+  /// - \c flexible: for using configurable processor that optimizes memory or performance via concurrency.
+  std::variant<pdsch_processor_generic_configuration, pdsch_processor_flexible_configuration> pdsch_processor;
+};
+
+/// Collects the necessary dependencies for creating an upper physical layer factory.
+struct upper_phy_factory_dependencies {
+  /// Execution configuration
+  upper_phy_execution_configuration executors;
+  /// \brief Optional hardware-accelerated PDSCH encoder factory.
+  ///
+  /// if the optional is not set, a software PDSCH encoder factory will be used.
+  std::optional<std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory>> hw_encoder_factory;
   /// \brief Optional hardware-accelerated PUSCH decoder factory.
   ///
   /// if the optional is not set, a software PUSCH decoder factory will be used.
   std::optional<std::shared_ptr<hal::hw_accelerator_pusch_dec_factory>> hw_decoder_factory;
 };
 
-/// Returns true if the given upper PHY configuration is valid, otherwise false.
-inline bool is_valid_upper_phy_config(const upper_phy_config& config)
-{
-  // :TODO: Implement me!
-  return true;
-}
+/// Creates and returns an upper PHY factory.
+std::unique_ptr<upper_phy_factory> create_upper_phy_factory(const upper_phy_factory_configuration& factory_config,
+                                                            const upper_phy_factory_dependencies&  factory_deps);
 
-/// \brief Factory that builds upper PHY objects.
-class upper_phy_factory
+/// Factory interface for creating upper physical layer receive symbol handlers.
+class upper_phy_rx_symbol_handler_factory
 {
 public:
-  virtual ~upper_phy_factory() = default;
+  /// Default destructor.
+  virtual ~upper_phy_rx_symbol_handler_factory() = default;
 
-  /// \brief Creates and returns an upper PHY object.
-  virtual std::unique_ptr<upper_phy> create(const upper_phy_config& config) = 0;
+  /// \brief Creates a new upper physical layer receive symbol handler.
+  ///
+  /// \param[in] ul_processor_pool_ Uplink slot processor pool.
+  virtual std::unique_ptr<upper_phy_rx_symbol_handler> create(uplink_slot_processor_pool& ul_processor_pool_) = 0;
 };
 
-/// Creates and returns an upper PHY factory.
-std::unique_ptr<upper_phy_factory> create_upper_phy_factory(const downlink_processor_factory_sw_config& dl_fact_config);
+/// Creates an RX symbol handler factory.
+std::shared_ptr<upper_phy_rx_symbol_handler_factory> create_rx_symbol_handler_factory();
+
+/// \brief Creates an RX symbol handler printer decorator factory.
+///
+/// This factory is used to create an RX symbol handler that prints the received symbols to a file.
+std::shared_ptr<upper_phy_rx_symbol_handler_factory>
+create_rx_symbol_handler_printer_decorator_factory(std::shared_ptr<upper_phy_rx_symbol_handler_factory> factory_,
+                                                   srslog::basic_logger&                                logger_,
+                                                   const std::string&                                   filename_,
+                                                   unsigned                                             nof_rb_,
+                                                   interval<unsigned>                                   ul_print_ports_,
+                                                   bool                                                 print_prach_);
+
+/// \brief Creates an RX symbol handler tap factory.
+///
+/// This factory is used to create an RX symbol handler that exposes the received symbols to external applications.
+///
+/// \param[in] factory             The RX symbol handler base factory.
+/// \param[in] nof_rb              The number of resource blocks to process in the resource grid.
+/// \param[in] nof_ports           The number of ports to process.
+/// \param[in] processor_arguments Custom arguments for the external processor, if any.
+std::shared_ptr<upper_phy_rx_symbol_handler_factory>
+create_rx_symbol_handler_tap_factory(std::shared_ptr<upper_phy_rx_symbol_handler_factory> factory,
+                                     unsigned                                             nof_rb,
+                                     unsigned                                             nof_ports,
+                                     const std::string&                                   processor_arguments = "");
 
 } // namespace srsran

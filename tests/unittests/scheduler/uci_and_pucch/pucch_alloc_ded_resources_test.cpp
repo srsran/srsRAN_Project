@@ -1243,13 +1243,13 @@ TEST_F(test_pucch_allocator_ded_resources, test_tdd_harq_allocation_over_time)
 
 TEST_F(test_pucch_allocator_ded_resources, test_for_private_fnc_retrieving_existing_grants)
 {
-  // All the allocation allocate a HARQ-ACK grant at slot 5.
+  // All the allocation allocate a HARQ-ACK grant at slot 7.
   // t_bench.sl_tx = 0; k0 = 0; k1 = 7  =>  t_bench.sl_tx + k0 + k1 = 7.
   unsigned         k1         = 7;
   auto&            slot_grid  = t_bench.res_grid[t_bench.k0 + k1];
   const slot_point pucch_slot = slot_grid.slot;
 
-  // Allocate 1 HARQ at k1 = 5.
+  // Allocate 1 HARQ at k1 = 7.
   t_bench.add_ue();
   du_ue_index_t ue1_idx = t_bench.last_allocated_ue_idx;
   t_bench.add_ue();
@@ -1279,7 +1279,8 @@ TEST_F(test_pucch_allocator_ded_resources, test_for_private_fnc_retrieving_exist
   std::optional<unsigned> pucch_res_ind_ue0 = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, k1, t_bench.dci_info);
   ASSERT_TRUE(pucch_res_ind_ue0.has_value());
-  ASSERT_EQ(0, pucch_res_ind_ue0.value());
+  // Note: The first common PUCCH resource is on the same resources as the first dedicated PUCCH resource.
+  ASSERT_EQ(1, pucch_res_ind_ue0.value());
   ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
   ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [rnti = t_bench.get_main_ue().crnti](const pucch_info& pdu) {
     return pdu.format() == pucch_format::FORMAT_1 and pdu.crnti == rnti and pdu.uci_bits.harq_ack_nof_bits == 1U and

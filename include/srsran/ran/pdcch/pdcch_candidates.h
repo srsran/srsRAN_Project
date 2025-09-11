@@ -31,7 +31,7 @@
 namespace srsran {
 
 /// Maximum number of candidates per aggregation level in a SS as per TS38.331 SearchSpace.
-static constexpr unsigned PDCCH_MAX_NOF_CANDIDATES_SS = 8;
+constexpr unsigned PDCCH_MAX_NOF_CANDIDATES_SS = 8;
 
 /// PDCCH candidate and PDCCH candidate list data types.
 using pdcch_candidate_type = uint8_t;
@@ -41,7 +41,7 @@ using pdcch_candidate_list = static_vector<pdcch_candidate_type, PDCCH_MAX_NOF_C
 /// serving cell, as per TS 38.213, Table 10.1-2.
 inline unsigned max_nof_monitored_pdcch_candidates(subcarrier_spacing scs)
 {
-  static const std::array<uint8_t, 4> max_monitored_pdcch_candidates_per_slot = {44, 36, 22, 20};
+  static constexpr std::array<uint8_t, 4> max_monitored_pdcch_candidates_per_slot = {44, 36, 22, 20};
   return max_monitored_pdcch_candidates_per_slot[to_numerology_value(scs)];
 }
 

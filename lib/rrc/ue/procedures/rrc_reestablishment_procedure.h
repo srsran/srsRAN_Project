@@ -28,6 +28,7 @@
 #include "srsran/rrc/rrc_ue.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/async/eager_async_task.h"
+#include <chrono>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -89,6 +90,7 @@ private:
   rrc_ue_logger&                           logger;
 
   const asn1::rrc_nr::pdcp_cfg_s          srb1_pdcp_cfg;
+  std::chrono::milliseconds               procedure_timeout{0};
   rrc_transaction                         transaction;
   eager_async_task<rrc_outcome>           task;
   rrc_ue_reestablishment_context_response old_ue_reest_context;

@@ -37,9 +37,10 @@ std::function<void()> worker_task_factory(Queue& queue, unsigned nof_workers, un
     execution_context::set_execution_context_description(nof_workers, worker_idx);
 
     // start worker pop loop.
+    auto consumer = queue.create_consumer();
     while (true) {
       unique_task job;
-      if (not queue.pop_blocking(job)) {
+      if (not consumer.pop_blocking(job)) {
         break;
       }
       job();

@@ -377,7 +377,7 @@ TEST_F(sctp_network_gateway_tester, when_rto_is_set_then_rto_changes)
   sctp_rtoinfo rto_opts  = {};
   socklen_t    rto_sz    = sizeof(sctp_rtoinfo);
   rto_opts.srto_assoc_id = 0;
-  ASSERT_EQ(getsockopt(fd, SOL_SCTP, SCTP_RTOINFO, &rto_opts, &rto_sz), 0) << strerror(errno);
+  ASSERT_EQ(getsockopt(fd, SOL_SCTP, SCTP_RTOINFO, &rto_opts, &rto_sz), 0) << ::strerror(errno);
   ASSERT_EQ(rto_opts.srto_initial, rto_init.count());
   ASSERT_EQ(rto_opts.srto_min, rto_min.count());
   ASSERT_EQ(rto_opts.srto_max, rto_max.count());

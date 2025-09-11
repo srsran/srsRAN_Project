@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/phy/upper/upper_phy_execution_configuration.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/support/executors/task_executor.h"
@@ -34,67 +35,6 @@
 namespace srsran {
 namespace srs_du {
 
-/// \brief Interface used to access different executors used in the DU-Low.
-class du_low_cell_executor_mapper
-{
-public:
-  virtual ~du_low_cell_executor_mapper() = default;
-
-  /// Retrieves the task executor for processing PDCCH.
-  virtual task_executor& pdcch_executor() = 0;
-
-  /// Retrieves the task executor for processing PDSCH.
-  virtual task_executor& pdsch_executor() = 0;
-
-  /// Retrieves the task executor for processing SSB.
-  virtual task_executor& ssb_executor() = 0;
-
-  /// Retrieves the task executor for processing NZP-CSI-RS.
-  virtual task_executor& csi_rs_executor() = 0;
-
-  /// Retrieves the task executor for processing PRS.
-  virtual task_executor& prs_executor() = 0;
-
-  /// Retrieves the task executor for DL resource grid pool housekeeping.
-  virtual task_executor& dl_grid_pool_executor() = 0;
-
-  /// \brief Retrieves the PDSCH asynchronous executor.
-  ///
-  /// The PDSCH asynchronous executor is in charge of processing PDSCH transmissions concurrently (if configured).
-  virtual task_executor& pdsch_codeblock_executor() = 0;
-
-  /// \brief Retrieves the Preamble for Random Access Channel (PRACH) task executor.
-  ///
-  /// The PRACH task executor is in charge of detecting incoming PRACH transmissions.
-  virtual task_executor& prach_executor() = 0;
-
-  /// \brief Retrieves the PUSCH task executor.
-  ///
-  /// The PUSCH executor is in charge of processing PUSCH channel estimation, equalization, demodulation  mapping and
-  /// UL-SCH demultiplexing.
-  ///
-  /// If the upper physical layer is configured for decoding UL-SCH asynchronously, the UL-SCH decoding is performed by
-  /// the PUSCH decoder executor. Otherwise, this executor decodes UL-SCH too.
-  virtual task_executor& pusch_executor() = 0;
-
-  /// \brief Retrieves the PUSCH decoder task executor.
-  ///
-  /// The PUSCH decoder is in charge of decoding UL-SCH codeblocks asynchronously. Note that codeblock decoding can
-  /// have a high duration compared with other tasks. The duration is in the order of hundreds of microseconds per
-  /// codeblock.
-  virtual task_executor& pusch_decoder_executor() = 0;
-
-  /// \brief Retrieves the PUCCH reception task executor.
-  ///
-  /// The PUCCH reception executor is in charge of receiving all supported formats of PUCCH.
-  virtual task_executor& pucch_executor() = 0;
-
-  /// \brief Retrieves the Sounding Reference Signal (SRS) task executor.
-  ///
-  /// The SRS task executor is in charge of estimating the propagation channel based on SRS.
-  virtual task_executor& srs_executor() = 0;
-};
-
 /// \brief DU low executor mapper interface.
 ///
 /// Provides access to the different cell executor mappers.
@@ -104,48 +44,66 @@ public:
   /// Default destructor.
   virtual ~du_low_executor_mapper() = default;
 
-  /// \brief Retrieves the DU low cell executor mapper for a given cell index.
-  ///
-  /// \remark An assertion is triggered the cell index exceeds the number of executor configurations.
-  virtual du_low_cell_executor_mapper& get_cell_mapper(unsigned cell_index) = 0;
-
-  /// Retrieves the DU low cell executor mapper via closed braces operator.
-  du_low_cell_executor_mapper& operator[](unsigned cell_index) { return get_cell_mapper(cell_index); }
+  /// Retrieves the upper physical layer execution configuration.
+  virtual const upper_phy_execution_configuration& get_upper_phy_execution_config() const = 0;
 };
 
 /// \brief Collects the task executor mapper for using a single task executor.
 struct du_low_executor_mapper_single_exec_config {
   /// Common executor for all the DU low cell tasks.
-  task_executor* common_executor = nullptr;
+  upper_phy_executor common_executor;
 };
 
-/// \brief Collects the task executor mapper manual mapping.
+/// \brief DU low executor mapper manual configuration.
 ///
-/// All task executors are given.
-struct du_low_executor_mapper_manual_exec_config {
-  /// High priority executor.
-  task_executor* high_priority_executor = nullptr;
-  /// Medium priority executor.
-  task_executor* medium_priority_executor = nullptr;
-  /// Low priority executor.
-  task_executor* low_priority_executor = nullptr;
-  /// Executor for downlink transmissions.
-  task_executor* dl_executor = nullptr;
-  /// Executor for PDSCH concurrent processing.
-  task_executor* pdsch_executor = nullptr;
-  /// Limits the number of threads that can concurrently process PUCCH.
-  unsigned max_concurrent_pucch = 2;
-  /// Limits the number of threads that can concurrently process PUSCH.
-  unsigned max_concurrent_pusch = 2;
-  /// Limits the number of threads that can concurrently process SRS.
-  unsigned max_concurrent_srs = 2;
-  /// Limits the number of threads that can decode PUSCH concurrently.
-  unsigned max_concurrent_pusch_decoders = 2;
+/// The configuration consists of a set of executors and parameters for limiting the number of threads used for certain
+/// channels.
+///
+/// The provided executors contain a reference to a task executor and their maximum concurrency. The executor maximum
+/// concurrency given by each executor is used for creating pools of physical layer instances. These pools ensure that
+/// a number of instances are available for processing channels simultaneously.
+struct du_low_executor_mapper_flexible_exec_config {
+  /// Real-time high priority executor.
+  upper_phy_executor rt_hi_prio_exec;
+  /// Non-real-time high priority executor.
+  upper_phy_executor non_rt_hi_prio_exec;
+  /// Non-real-time medium priority executor.
+  upper_phy_executor non_rt_medium_prio_exec;
+  /// Non-real-time low priority executor.
+  upper_phy_executor non_rt_low_prio_exec;
+  /// \brief Maximum PUCCH processing concurrency.
+  ///
+  /// The Physical Uplink Control Channel (PUCCH) is processed using the high priority executor. This parameter limits
+  /// the maximum number of threads that can simultaneously process PUCCH.
+  ///
+  /// No limit in concurrency is imposed if this parameter is zero, greater than or equal to the high priority executor
+  /// maximum concurrency.
+  unsigned max_pucch_concurrency = 0;
+  /// \brief Maximum joint the PUSCH and SRS processing concurrency.
+  ///
+  /// The Physical Uplink Shared Channel (PUSCH) and Sounding Reference Signals (SRS) are processed using the medium
+  /// priority executor. This parameter limits the maximum number of threads that can simultaneously process PUSCH and
+  /// SRS.
+  ///
+  /// No limit in concurrency is imposed if this parameter is zero, greater than or equal to the medium priority
+  /// executor maximum concurrency.
+  ///
+  /// This parameter is necessary when hardware acceleration is used for decoding PUSCH. This parameter must not exceed
+  /// the capacity of the accelerator.
+  unsigned max_pusch_and_srs_concurrency = 1;
+  /// \brief Maximum concurrency level for PDSCH processing.
+  ///
+  /// Maximum number of threads that can concurrently process Physical Downlink Shared Channel (PDSCH). Set to zero for
+  /// no limitation.
+  ///
+  /// This parameter is necessary when hardware acceleration is used for encoding PDSCH. This parameter must not exceed
+  /// the capacity of the accelerator.
+  unsigned max_pdsch_concurrency = 0;
 };
 
 /// Variant of the DU low executor mapping configuration.
 using du_low_executor_mapper_exec_config =
-    std::variant<du_low_executor_mapper_single_exec_config, du_low_executor_mapper_manual_exec_config>;
+    std::variant<du_low_executor_mapper_single_exec_config, du_low_executor_mapper_flexible_exec_config>;
 
 /// Collects the DU low executor mapper metrics configuration.
 struct du_low_executor_mapper_metric_config {
@@ -159,10 +117,8 @@ struct du_low_executor_mapper_metric_config {
 
 /// Configuration of DU-low executor mapper.
 struct du_low_executor_mapper_config {
-  /// \brief Executor configuration for each cell.
-  ///
-  /// \remark An assertion is triggered if it is empty.
-  std::vector<du_low_executor_mapper_exec_config> cells;
+  /// Common executor configuration.
+  du_low_executor_mapper_exec_config executors;
   /// \brief Optional executor metric configuration.
   ///
   /// If it is present, the executor mapper wraps the executors with metric decorators.

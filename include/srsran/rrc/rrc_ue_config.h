@@ -40,10 +40,8 @@ struct rrc_ue_cfg_t {
   srb_pdcp_config              srb1_pdcp_cfg;
   std::vector<rrc_meas_timing> meas_timings;
   bool                         force_reestablishment_fallback = false;
-  /// \brief Timeout used for RRC message exchange with UE. It needs to suit the expected communication delay and
-  /// account for potential retransmissions (HARQ and RLC), UE processing delays (see Sec 12 in TS 38.331), SR delays,
-  /// etc.
-  std::chrono::milliseconds rrc_procedure_timeout_ms{360};
+  /// \brief Guard time used for RRC message exchange with UE.
+  std::chrono::milliseconds rrc_procedure_guard_time_ms{500};
 };
 
 } // namespace srs_cu_cp

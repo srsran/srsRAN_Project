@@ -58,9 +58,9 @@ void fill_asn1_rrc_smc_msg(asn1::rrc_nr::security_mode_cmd_s&   rrc_smc,
 /// \param[out] asn1_rrc_reconf The RRC Reconfiguration ASN.1 struct to fill.
 /// \param[in] rrc_transaction_id The RRC transaction id.
 /// \param[in] rrc_reconf The common type struct.
-void fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recfg_s&            asn1_rrc_reconf,
-                                       uint8_t                               rrc_transaction_id,
-                                       rrc_reconfiguration_procedure_request rrc_reconf);
+void fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recfg_s&                   asn1_rrc_reconf,
+                                       uint8_t                                      rrc_transaction_id,
+                                       const rrc_reconfiguration_procedure_request& rrc_reconf);
 
 } // namespace srs_cu_cp
 } // namespace srsran

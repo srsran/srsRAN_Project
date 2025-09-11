@@ -53,41 +53,6 @@ static bool validate_pcap_configs(const du_high_unit_config& config)
   return true;
 }
 
-static bool validate_expert_execution_unit_config(const du_high_unit_config&       config,
-                                                  const os_sched_affinity_bitmask& available_cpus)
-{
-  // Configure more cells for expert execution than the number of cells is an error.
-  if (config.expert_execution_cfg.cell_affinities.size() != config.cells_cfg.size()) {
-    fmt::print(
-        "Using different number of cells for DU high expert execution '{}' than the number of defined cells '{}'\n",
-        config.expert_execution_cfg.cell_affinities.size(),
-        config.cells_cfg.size());
-
-    return false;
-  }
-
-  auto validate_cpu_range = [](const os_sched_affinity_bitmask& allowed_cpus_mask,
-                               const os_sched_affinity_bitmask& mask,
-                               const std::string&               name) {
-    auto invalid_cpu_ids = mask.subtract(allowed_cpus_mask);
-    if (not invalid_cpu_ids.empty()) {
-      fmt::print(
-          "CPU cores {} selected in '{}' option doesn't belong to the available cpuset.\n", invalid_cpu_ids, name);
-      return false;
-    }
-
-    return true;
-  };
-
-  for (const auto& cell : config.expert_execution_cfg.cell_affinities) {
-    if (!validate_cpu_range(available_cpus, cell.l2_cell_cpu_cfg.mask, "l2_cell_cpus")) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
 template <typename id_type>
 static bool validate_rlc_am_unit_config(id_type id, const du_high_unit_rlc_am_config& config)
 {
@@ -720,10 +685,19 @@ static bool validate_srs_cell_unit_config(const du_high_unit_srs_config& config,
 }
 
 /// Validates the given PUCCH cell application configuration. Returns true on success, otherwise false.
-static bool validate_ul_common_unit_config(const du_high_unit_ul_common_config& config)
+static bool validate_ul_common_unit_config(const du_high_unit_ul_common_config& config, unsigned nof_crbs)
 {
   if (config.max_ul_grants_per_slot <= config.max_pucchs_per_slot) {
     fmt::print("The max number of UL grants per slot should be greater than the maximum number of PUCCH grants.\n");
+    return false;
+  }
+
+  if (config.min_pucch_pusch_prb_distance >= nof_crbs / 2) {
+    fmt::print("The minimum distance between PUCCH and PUSCH PRBs ({}) should be less than half of the BWP size "
+               "({}/2 = {}).\n",
+               config.min_pucch_pusch_prb_distance,
+               nof_crbs,
+               nof_crbs / 2);
     return false;
   }
 
@@ -1145,7 +1119,7 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     return false;
   }
 
-  if (!validate_ul_common_unit_config(config.ul_common_cfg)) {
+  if (!validate_ul_common_unit_config(config.ul_common_cfg, nof_crbs)) {
     return false;
   }
 
@@ -1198,8 +1172,8 @@ static bool validate_cells_unit_config(span<const du_high_unit_cell_config> conf
     const auto band          = cell.cell.band.value_or(band_helper::get_band_from_dl_arfcn(cell.cell.dl_f_ref_arfcn));
     bool       is_unlicensed = band_helper::is_unlicensed_band(band);
     // Check if the RA Response Window (in ms) is within the limits for licensed and unlicensed bands.
-    unsigned int max_ra_resp_window = is_unlicensed ? 40 : 10;
-    unsigned int ra_resp_window_ms =
+    unsigned max_ra_resp_window = is_unlicensed ? 40 : 10;
+    unsigned ra_resp_window_ms =
         cell.cell.prach_cfg.ra_resp_window.value() >> to_numerology_value(cell.cell.common_scs);
     if (ra_resp_window_ms > max_ra_resp_window) {
       fmt::print("RA Response Window ({}sl -> {}ms) must be smaller than {}ms in {} bands.\n",
@@ -1452,7 +1426,7 @@ static bool validate_qos_config(span<const du_high_unit_qos_config> config)
   return true;
 }
 
-bool srsran::validate_du_high_config(const du_high_unit_config& config, const os_sched_affinity_bitmask& available_cpus)
+bool srsran::validate_du_high_config(const du_high_unit_config& config)
 {
   if (!validate_cells_unit_config(config.cells_cfg, config.gnb_id)) {
     return false;
@@ -1463,10 +1437,6 @@ bool srsran::validate_du_high_config(const du_high_unit_config& config, const os
   }
 
   if (!validate_test_mode_unit_config(config)) {
-    return false;
-  }
-
-  if (!validate_expert_execution_unit_config(config, available_cpus)) {
     return false;
   }
 

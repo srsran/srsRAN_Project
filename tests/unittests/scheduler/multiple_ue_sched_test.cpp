@@ -446,7 +446,7 @@ protected:
     return {};
   }
 
-  uci_indication build_harq_ack_pucch_f0_f1_uci_ind(const du_ue_index_t ue_idx, const slot_point& sl_tx)
+  uci_indication build_harq_ack_pucch_f0_f1_uci_ind(const du_ue_index_t ue_idx, slot_point sl_tx)
   {
     const sched_test_ue& u = get_ue(ue_idx);
 
@@ -467,7 +467,7 @@ protected:
     return uci_ind;
   }
 
-  uci_indication build_harq_nack_pucch_f0_f1_uci_ind(const du_ue_index_t ue_idx, const slot_point& sl_tx)
+  uci_indication build_harq_nack_pucch_f0_f1_uci_ind(const du_ue_index_t ue_idx, slot_point sl_tx)
   {
     const sched_test_ue& u = get_ue(ue_idx);
 

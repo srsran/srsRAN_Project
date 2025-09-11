@@ -45,10 +45,10 @@ public:
   std::unique_ptr<e1ap_message_notifier>
   handle_cu_up_connection_request(std::unique_ptr<e1ap_message_notifier> cu_up_rx_pdu_notifier_) override
   {
-    class dummy_du_tx_pdu_notifier : public e1ap_message_notifier
+    class dummy_cu_up_tx_pdu_notifier : public e1ap_message_notifier
     {
     public:
-      dummy_du_tx_pdu_notifier(dummy_cu_cp_handler& parent_) : parent(parent_) {}
+      dummy_cu_up_tx_pdu_notifier(dummy_cu_cp_handler& parent_) : parent(parent_) {}
 
       void on_new_message(const e1ap_message& msg) override
       {
@@ -58,16 +58,23 @@ public:
 
         e1ap_message response;
         if (msg.pdu.init_msg().value.type().value ==
-            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cp_e1_setup_request) {
+            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_up_e1_setup_request) {
           // Generate a dummy CU-UP E1 Setup response message and pass it back to the CU-UP.
           response.pdu.set_successful_outcome();
           response.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_UP_E1_SETUP);
 
           auto& setup_res = response.pdu.successful_outcome().value.gnb_cu_up_e1_setup_resp();
           // Use the same transaction ID as in the request message.
-          setup_res->transaction_id         = msg.pdu.init_msg().value.gnb_cu_up_e1_setup_request()->transaction_id;
-          setup_res->gnb_cu_cp_name_present = true;
-          setup_res->gnb_cu_cp_name.from_string("srsCU-CP");
+          setup_res->transaction_id = msg.pdu.init_msg().value.gnb_cu_up_e1_setup_request()->transaction_id;
+        } else if (msg.pdu.init_msg().value.type().value ==
+                   asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::e1_release_request) {
+          // Generate a dummy E1 Release response message and pass it back to the CU-UP.
+          response.pdu.set_successful_outcome();
+          response.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_E1_RELEASE);
+
+          auto& release_res = response.pdu.successful_outcome().value.e1_release_resp();
+          // Use the same transaction ID as in the request message.
+          release_res->transaction_id = msg.pdu.init_msg().value.e1_release_request()->transaction_id;
         } else {
           // do nothing
           return;
@@ -83,7 +90,7 @@ public:
 
     cu_up_rx_pdu_notifier = std::move(cu_up_rx_pdu_notifier_);
 
-    return std::make_unique<dummy_du_tx_pdu_notifier>(*this);
+    return std::make_unique<dummy_cu_up_tx_pdu_notifier>(*this);
   }
 
 private:
@@ -99,6 +106,7 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
+    srslog::fetch_basic_logger("CU-UP").set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("GTPU").set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("E1AP").set_level(srslog::basic_levels::debug);
 
@@ -152,6 +160,7 @@ protected:
   {
     auto cfg_copy = cfg;
     cu_up         = std::make_unique<srs_cu_up::cu_up>(cfg_copy, std::move(deps));
+    cu_up->start();
   }
 
   void TearDown() override
@@ -160,22 +169,23 @@ protected:
     srslog::flush();
   }
 
+  std::unique_ptr<task_worker>                 worker;
+  std::unique_ptr<task_executor>               executor;
+  std::unique_ptr<dummy_cu_up_executor_mapper> exec_pool;
+
   std::unique_ptr<timer_manager> app_timers;
 
-  dummy_cu_cp_handler                          e1ap_client;
-  dummy_inner_f1u_bearer                       f1u_bearer;
-  std::unique_ptr<dummy_f1u_gateway>           f1u_gw;
-  std::unique_ptr<io_broker>                   broker;
-  std::unique_ptr<gtpu_gateway>                ngu_gw;
-  std::unique_ptr<dummy_cu_up_executor_mapper> exec_pool;
-  std::unique_ptr<srs_cu_up::cu_up>            cu_up;
-  srslog::basic_logger&                        test_logger = srslog::fetch_basic_logger("TEST");
+  dummy_cu_cp_handler                e1ap_client;
+  dummy_inner_f1u_bearer             f1u_bearer;
+  std::unique_ptr<dummy_f1u_gateway> f1u_gw;
+  std::unique_ptr<io_broker>         broker;
+  std::unique_ptr<gtpu_gateway>      ngu_gw;
+  std::unique_ptr<srs_cu_up::cu_up>  cu_up;
+  srslog::basic_logger&              test_logger = srslog::fetch_basic_logger("TEST");
 
   udp_network_gateway_config cu_up_udp_cfg{};
 
-  std::unique_ptr<task_worker>   worker;
-  std::unique_ptr<task_executor> executor;
-  null_dlt_pcap                  dummy_pcap;
+  null_dlt_pcap dummy_pcap;
 
   std::string upf_addr_str;
 
@@ -200,7 +210,7 @@ protected:
 
   upf_info_t init_upf()
   {
-    int sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    int sock_fd = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (sock_fd < 0) {
       return {sock_fd, {}};
     }
@@ -213,21 +223,21 @@ protected:
 
     int ret = 0;
 
-    ret = bind(sock_fd, (sockaddr*)&upf_addr, sizeof(upf_addr));
+    ret = ::bind(sock_fd, (sockaddr*)&upf_addr, sizeof(upf_addr));
     if (ret < 0) {
-      fmt::print(stderr, "Failed to bind socket to `{}:{}` - {}\n", upf_addr_str, upf_port, strerror(errno));
+      fmt::print(stderr, "Failed to bind socket to `{}:{}` - {}\n", upf_addr_str, upf_port, ::strerror(errno));
       return {ret, {}};
     }
 
     // Find out the port that was assigned
     socklen_t upf_addr_len = sizeof(upf_addr);
-    ret                    = getsockname(sock_fd, (struct sockaddr*)&upf_addr, &upf_addr_len);
+    ret                    = ::getsockname(sock_fd, (struct sockaddr*)&upf_addr, &upf_addr_len);
     if (ret < 0) {
-      fmt::print(stderr, "Failed to read port of socket bound to `{}:0` - {}", upf_addr_str, strerror(errno));
+      fmt::print(stderr, "Failed to read port of socket bound to `{}:0` - {}", upf_addr_str, ::strerror(errno));
       return {ret, {}};
     }
     if (upf_addr_len != sizeof(upf_addr)) {
-      fmt::print(stderr, "Mismatching upf_addr_len after getsockname()");
+      fmt::print(stderr, "Mismatching upf_addr_len after ::getsockname()");
       return {-1, {}};
     }
     return {sock_fd, upf_addr};
@@ -295,7 +305,7 @@ TEST_F(cu_up_test, dl_data_flow)
   // receive message 1
   std::array<uint8_t, 128> rx_buf;
   int                      ret;
-  ret = recv(upf_info.sock_fd, rx_buf.data(), rx_buf.size(), 0);
+  ret = ::recv(upf_info.sock_fd, rx_buf.data(), rx_buf.size(), 0);
 
   test_logger.info("Processed UL PDU. DDDS is updated");
 
@@ -318,14 +328,14 @@ TEST_F(cu_up_test, dl_data_flow)
   ret = sendto(upf_info.sock_fd, gtpu_ping_vec, sizeof(gtpu_ping_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
   ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << upf_info.sock_fd << " to `"
                     << cu_up_udp_cfg.bind_address << ":" << cu_up->get_n3_bind_port().value() << "` - "
-                    << strerror(errno);
+                    << ::strerror(errno);
 
   // send message 2
   ret = sendto(upf_info.sock_fd, gtpu_ping_vec, sizeof(gtpu_ping_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
   ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << upf_info.sock_fd << " to `"
                     << cu_up_udp_cfg.bind_address << ":" << cu_up->get_n3_bind_port().value() << "` - "
-                    << strerror(errno);
-  close(upf_info.sock_fd);
+                    << ::strerror(errno);
+  ::close(upf_info.sock_fd);
 
   // check reception of message 1
   nru_dl_message          sdu1 = f1u_bearer.wait_tx_sdu();
@@ -395,16 +405,16 @@ TEST_F(cu_up_test, ul_data_flow)
   uint16_t gtpu_hdr_len = 16;
 
   // receive message 1
-  int ret = recv(upf_info.sock_fd, rx_buf.data(), rx_buf.size(), 0);
+  int ret = ::recv(upf_info.sock_fd, rx_buf.data(), rx_buf.size(), 0);
   ASSERT_EQ(ret, exp_len);
   EXPECT_TRUE(std::equal(t_pdu_span1.begin() + f1u_hdr_len, t_pdu_span1.end(), rx_buf.begin() + gtpu_hdr_len));
 
   // receive message 2
-  ret = recv(upf_info.sock_fd, rx_buf.data(), rx_buf.size(), 0);
+  ret = ::recv(upf_info.sock_fd, rx_buf.data(), rx_buf.size(), 0);
   ASSERT_EQ(ret, exp_len);
   EXPECT_TRUE(std::equal(t_pdu_span2.begin() + f1u_hdr_len, t_pdu_span2.end(), rx_buf.begin() + gtpu_hdr_len));
 
-  close(upf_info.sock_fd);
+  ::close(upf_info.sock_fd);
 }
 
 TEST_F(cu_up_test, echo_data_flow)
@@ -433,7 +443,7 @@ TEST_F(cu_up_test, echo_data_flow)
       upf_info.sock_fd, gtpu_echo_req_vec, sizeof(gtpu_echo_req_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
   ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << upf_info.sock_fd << " to `"
                     << cu_up_udp_cfg.bind_address << ":" << cu_up->get_n3_bind_port().value() << "` - "
-                    << strerror(errno);
+                    << ::strerror(errno);
 
   // Receive GTP-U echo response message and check result.
   constexpr uint16_t           exp_len            = 14;
@@ -445,7 +455,7 @@ TEST_F(cu_up_test, echo_data_flow)
   ASSERT_EQ(ret, exp_len);
   EXPECT_TRUE(std::equal(gtpu_echo_resp_vec.begin(), gtpu_echo_resp_vec.end(), rx_buf.begin()));
 
-  close(upf_info.sock_fd);
+  ::close(upf_info.sock_fd);
 }
 
 int main(int argc, char** argv)

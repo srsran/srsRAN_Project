@@ -25,6 +25,7 @@
 #include "support/uplink_context_repository.h"
 #include "srsran/ofh/ofh_controller.h"
 #include "srsran/ofh/receiver/ofh_receiver.h"
+#include "srsran/ofh/transmitter/ofh_transmitter.h"
 #include <memory>
 
 namespace srsran {
@@ -34,8 +35,8 @@ namespace ofh {
 class sector_controller : public operation_controller
 {
 public:
-  sector_controller(receiver& ofh_rx_, std::shared_ptr<uplink_context_repository> slot_repo_) :
-    ofh_rx(ofh_rx_), slot_repo(std::move(slot_repo_))
+  sector_controller(transmitter& ofh_tx_, receiver& ofh_rx_, std::shared_ptr<uplink_context_repository> slot_repo_) :
+    ofh_tx(ofh_tx_), ofh_rx(ofh_rx_), slot_repo(std::move(slot_repo_))
   {
   }
 
@@ -46,6 +47,7 @@ public:
   void stop() override;
 
 private:
+  transmitter&                               ofh_tx;
   receiver&                                  ofh_rx;
   std::shared_ptr<uplink_context_repository> slot_repo;
 };

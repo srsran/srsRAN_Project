@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/pdcp/pdcp_config.h"
 #include "srsran/security/security.h"
 
 /*
@@ -165,6 +166,19 @@ public:
 
   /// Trigger re-establishment
   virtual void reestablish(security::sec_128_as_config sec_cfg) = 0;
+
+  /// Get the TX count for status transfer
+  virtual pdcp_count_info get_count() const = 0;
+
+  /// Tell the PDCP entity to notify when it is finished with processing
+  /// the currently in-flight PDUs. No further PDUs should be push after calling
+  /// this function until after calling `restart_pdu_processing()`.
+  virtual void notify_pdu_processing_stopped() = 0;
+
+  /// Tell the PDCP entity that reconfiguration is finished, and it is safe to
+  /// have in-flight PDUs again. Should not be called without previously calling
+  /// `notify_pdu_processing_stopped()`
+  virtual void restart_pdu_processing() = 0;
 };
 
 /// This interface represents the control upper layer that the

@@ -46,7 +46,4 @@ struct du_low_prach_validation_config {
 bool validate_du_low_config(const du_low_unit_config&                  config,
                             span<const du_low_prach_validation_config> prach_cells_config);
 
-/// Validates the given DU low CPUs configuration. Returns true on success, false otherwise.
-bool validate_du_low_cpus(const du_low_unit_config& config, const os_sched_affinity_bitmask& available_cpus);
-
 } // namespace srsran

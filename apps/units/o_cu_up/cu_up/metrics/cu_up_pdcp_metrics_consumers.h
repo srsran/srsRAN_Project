@@ -82,7 +82,6 @@ private:
   // Initialize timer.
   void initialize_timer();
 
-private:
   const unsigned        report_period_ms;
   srslog::basic_logger& logger;
   srslog::log_channel&  log_chan;

@@ -119,6 +119,7 @@ private:
   struct rx_symbol_event {
     lower_phy_rx_symbol_context context;
     const resource_grid_reader* grid;
+    bool                        is_valid;
   };
   std::vector<rx_symbol_event> rx_symbol_events;
 
@@ -138,7 +139,8 @@ public:
   }
 
   // See interface for documentation.
-  void on_rx_symbol(const lower_phy_rx_symbol_context& context, const shared_resource_grid& grid) override
+  void
+  on_rx_symbol(const lower_phy_rx_symbol_context& context, const shared_resource_grid& grid, bool is_valid) override
   {
     logger.debug(context.slot.sfn(),
                  context.slot.slot_index(),
@@ -149,6 +151,7 @@ public:
     rx_symbol_event& event = rx_symbol_events.back();
     event.context          = context;
     event.grid             = &grid.get_reader();
+    event.is_valid         = is_valid;
   }
 
   // See interface for documentation.

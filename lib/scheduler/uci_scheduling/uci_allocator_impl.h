@@ -36,6 +36,9 @@ public:
 
   void slot_indication(slot_point sl_tx) override;
 
+  /// Called on cell deactivation.
+  void stop();
+
   ~uci_allocator_impl() override;
 
   std::optional<uci_allocation> alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,

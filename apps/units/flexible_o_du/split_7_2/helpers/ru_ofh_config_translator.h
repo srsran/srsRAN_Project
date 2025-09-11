@@ -37,8 +37,6 @@ ru_ofh_configuration generate_ru_ofh_config(const ru_ofh_unit_config&           
                                             unsigned max_processing_delay_slots);
 
 /// Fills the OFH worker manager parameters of the given worker manager configuration.
-void fill_ofh_worker_manager_config(worker_manager_config&    config,
-                                    const ru_ofh_unit_config& ru_cfg,
-                                    std::vector<unsigned>     nof_downlink_antennas);
+void fill_ofh_worker_manager_config(worker_manager_config& config, const ru_ofh_unit_config& ru_cfg);
 
 } // namespace srsran

@@ -21,6 +21,7 @@
  */
 
 #pragma once
+
 #include "srsran/phy/metrics/phy_metrics_notifiers.h"
 #include "srsran/phy/metrics/phy_metrics_reports.h"
 #include "srsran/phy/upper/equalization/channel_equalizer.h"

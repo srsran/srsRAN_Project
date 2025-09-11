@@ -29,15 +29,7 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-cu_up_processor_repository::cu_up_processor_repository(cu_up_repository_config cfg_) :
-  cfg(cfg_),
-  logger(cfg.logger),
-  cu_up_task_sched(*cfg.cu_cp.services.timers,
-                   *cfg.cu_cp.services.cu_cp_executor,
-                   cfg.cu_cp.admission.max_nof_cu_ups,
-                   logger)
-{
-}
+cu_up_processor_repository::cu_up_processor_repository(cu_up_repository_config cfg_) : cfg(cfg_), logger(cfg.logger) {}
 
 cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier)
 {
@@ -60,11 +52,8 @@ cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message
 
   // TODO: use real config
   cu_up_processor_config_t                        cu_up_cfg = {"srs_cu_cp", cu_up_index, cfg.cu_cp, logger};
-  std::unique_ptr<cu_up_processor_impl_interface> cu_up     = create_cu_up_processor(std::move(cu_up_cfg),
-                                                                                 *cu_up_ctxt.e1ap_tx_pdu_notifier,
-                                                                                 cfg.e1ap_ev_notifier,
-                                                                                 cu_up_task_sched,
-                                                                                 *cfg.cu_cp.services.cu_cp_executor);
+  std::unique_ptr<cu_up_processor_impl_interface> cu_up     = create_cu_up_processor(
+      std::move(cu_up_cfg), *cu_up_ctxt.e1ap_tx_pdu_notifier, cfg.e1ap_ev_notifier, cfg.common_task_sched);
 
   srsran_assert(cu_up != nullptr, "Failed to create CU-UP processor");
   cu_up_ctxt.processor = std::move(cu_up);
@@ -95,8 +84,8 @@ async_task<void> cu_up_processor_repository::remove_cu_up(cu_up_index_t cu_up_in
 
     // Remove CU-UP
     if (cu_up_db.find(cu_up_index) == cu_up_db.end()) {
-      logger.warning("Remove CU-UP called for non-existent cu_up_index={}", cu_up_index);
-      return;
+      logger.debug("Remove CU-UP called for non-existent cu_up_index={}", cu_up_index);
+      CORO_EARLY_RETURN();
     }
 
     // Stop CU-UP activity, eliminating pending transactions for the CU-UP and respective UEs.

@@ -30,6 +30,7 @@ add_library(srsran_pdsch_processor STATIC
         pdsch_processor_validator_impl.cpp)
 
 target_link_libraries(srsran_pdsch_processor
+        srsran_channel_modulation
         srsran_phy_support
         srsran_ran
         srsran_upper_phy_support)

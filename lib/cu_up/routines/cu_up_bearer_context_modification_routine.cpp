@@ -51,6 +51,7 @@ void cu_up_bearer_context_modification_routine::operator()(
     // block the process of further packets to this UE.
     ue_ctxt.notify_pdcp_pdu_processing_stopped();
     CORO_AWAIT(ue_ctxt.await_rx_crypto_tasks());
+    CORO_AWAIT(ue_ctxt.await_tx_crypto_tasks());
 
     // SDU/PDU processing is finished, safely update the keys now.
     ue_ctxt.set_security_config(security_info);

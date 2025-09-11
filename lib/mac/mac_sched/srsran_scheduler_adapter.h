@@ -34,6 +34,14 @@
 
 namespace srsran {
 
+struct srsran_mac_sched_config {
+  const mac_expert_config& mac_cfg;
+  /// Executor for DU control-plane operations.
+  task_executor& ctrl_exec;
+  // Parameters passed to MAC scheduler.
+  const scheduler_expert_config& sched_cfg;
+};
+
 /// \brief This class adapts srsRAN scheduler interface to operate with srsRAN MAC.
 /// The configuration completion notification handling (e.g. ue creation complete) is deferred for later processing
 /// rather than being processed inline. We defer the processing because we do not want it to take place while
@@ -41,21 +49,27 @@ namespace srsran {
 class srsran_scheduler_adapter final : public mac_scheduler_adapter
 {
 public:
-  explicit srsran_scheduler_adapter(const mac_config& params, rnti_manager& rnti_mng_);
+  explicit srsran_scheduler_adapter(const srsran_mac_sched_config& params, rnti_manager& rnti_mng_);
 
   void add_cell(const mac_scheduler_cell_creation_request& msg) override;
 
   void remove_cell(du_cell_index_t cell_index) override;
 
-  void start_cell(du_cell_index_t cell_index) override { sched_impl->handle_cell_activation_request(cell_index); }
+  void handle_cell_activation(du_cell_index_t cell_index) override
+  {
+    sched_impl->handle_cell_activation_request(cell_index);
+  }
 
-  void stop_cell(du_cell_index_t cell_index) override { sched_impl->handle_cell_deactivation_request(cell_index); }
+  void handle_cell_deactivation(du_cell_index_t cell_index) override
+  {
+    sched_impl->handle_cell_deactivation_request(cell_index);
+  }
 
   async_task<bool> handle_ue_creation_request(const mac_ue_create_request& msg) override;
 
   async_task<bool> handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& msg) override;
 
-  async_task<bool> handle_ue_removal_request(const mac_ue_delete_request& msg) override;
+  async_task<void> handle_ue_removal_request(const mac_ue_delete_request& msg) override;
 
   void handle_ue_config_applied(du_ue_index_t ue_index) override;
 

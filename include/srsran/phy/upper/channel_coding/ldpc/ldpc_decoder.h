@@ -44,6 +44,8 @@ public:
   struct configuration {
     /// LDPC decoding algorithm configuration parameters.
     struct algorithm_details {
+      /// Forces the decoder to decode even if there are not enough soft bits at the input.
+      bool force_decoding = false;
       /// Maximum number of iterations.
       unsigned max_iterations = 6;
       /// Scaling factor of the normalized min-sum decoding algorithm.

@@ -25,6 +25,8 @@
 #include "include/srsran/support/srsran_assert.h"
 #include "include/srsran/support/timers.h"
 #include "metrics_producer.h"
+#include "srsran/support/executors/execute_until_success.h"
+#include "srsran/support/synchronization/sync_event.h"
 
 namespace srsran {
 namespace app_services {
@@ -36,9 +38,14 @@ class periodic_metrics_report_controller
 public:
   /// Constructor receives timer object, report period and application metric configs.
   periodic_metrics_report_controller(std::vector<metrics_producer*> producers_,
-                                     unique_timer                   timer_,
+                                     timer_manager&                 timers_,
+                                     task_executor&                 executor_,
                                      std::chrono::milliseconds      report_period_) :
-    timer(std::move(timer_)), report_period(report_period_), producers(std::move(producers_))
+    executor(executor_),
+    timers(timers_),
+    timer(timers.create_unique_timer(executor)),
+    report_period(report_period_),
+    producers(std::move(producers_))
   {
     srsran_assert(timer.is_valid(), "Invalid timer passed to metrics controller");
     timer.set(report_period, [this](timer_id_t tid) { report_metrics(); });
@@ -50,8 +57,15 @@ public:
     if (!report_period.count()) {
       return;
     }
-    stopped.store(false, std::memory_order_relaxed);
-    timer.run();
+    if (stopped.exchange(false, std::memory_order_relaxed)) {
+      std::promise<void> exit_signal;
+      auto               fut = exit_signal.get_future();
+      defer_until_success(executor, timers, [this, &exit_signal]() mutable {
+        timer.run();
+        exit_signal.set_value();
+      });
+      fut.wait();
+    }
   }
 
   /// Stops the metrics report timer.
@@ -60,8 +74,10 @@ public:
     if (!report_period.count()) {
       return;
     }
-    stopped.store(true, std::memory_order_relaxed);
-    timer.stop();
+    if (not stopped.exchange(true, std::memory_order_relaxed)) {
+      sync_event wait_all;
+      defer_until_success(executor, timers, [this, token = wait_all.get_token()]() mutable { timer.stop(); });
+    }
   }
 
 private:
@@ -79,6 +95,9 @@ private:
       producer->on_new_report_period();
     }
   }
+
+  task_executor& executor;
+  timer_manager& timers;
 
   /// Timer object armed for configured report period.
   unique_timer timer;

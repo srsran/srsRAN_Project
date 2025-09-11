@@ -29,58 +29,39 @@
 
 using namespace srsran;
 
-static void configure_cli11_non_rt_threads_args(CLI::App& app, non_rt_threads_appconfig& config)
+static void configure_cli11_main_pool_threads_args(CLI::App& app, main_thread_pool_appconfig& config)
 {
-  add_option(app,
-             "--nof_non_rt_threads",
-             config.nof_non_rt_threads,
-             "Number of non real time threads for processing of CP and UP data in upper layers.")
+  add_option(app, "--nof_threads", config.nof_threads, "Number of threads for processing upper PHY and upper layers.")
       ->capture_default_str()
       ->check(CLI::Number);
-  add_option(app, "--non_rt_task_queue_size", config.non_rt_task_queue_size, "Non real time task worker queue size.")
+  add_option(app, "--task_queue_size", config.task_queue_size, "Main thread pool task queue size.")
+      ->capture_default_str()
+      ->check(CLI::Number);
+  add_option(app, "--backoff_period", config.backoff_period, "Main thread pool back-off period, in microseconds.")
       ->capture_default_str()
       ->check(CLI::Number);
 }
 
 static void configure_cli11_cpu_affinities_args(CLI::App& app, cpu_affinities_appconfig& config)
 {
-  auto parsing_isolated_cpus_fcn = [](std::optional<os_sched_affinity_bitmask>& isolated_cpu_cfg,
-                                      const std::string&                        value,
-                                      const std::string&                        property_name) {
-    isolated_cpu_cfg.emplace();
-    parse_affinity_mask(*isolated_cpu_cfg, value, property_name);
-
-    if (isolated_cpu_cfg->all()) {
-      report_error("Error in '{}' property: can not assign all available CPUs to the application", property_name);
-    }
-  };
-
   add_option_function<std::string>(
       app,
-      "--isolated_cpus",
-      [&config, &parsing_isolated_cpus_fcn](const std::string& value) {
-        parsing_isolated_cpus_fcn(config.isolated_cpus, value, "isolated_cpus");
-      },
-      "CPU cores isolated for application");
-
-  add_option_function<std::string>(
-      app,
-      "--low_priority_cpus",
+      "--main_pool_cpus",
       [&config](const std::string& value) {
-        parse_affinity_mask(config.low_priority_cpu_cfg.mask, value, "low_priority_cpus");
+        parse_affinity_mask(config.main_pool_cpu_cfg.mask, value, "main_pool_cpus");
       },
-      "CPU cores assigned to low priority tasks");
+      "CPU cores assigned to main thread pool");
 
   add_option_function<std::string>(
       app,
-      "--low_priority_pinning",
+      "--main_pool_pinning",
       [&config](const std::string& value) {
-        config.low_priority_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
-        if (config.low_priority_cpu_cfg.pinning_policy == sched_affinity_mask_policy::last) {
-          report_error("Incorrect value={} used in {} property", value, "low_priority_pinning");
+        config.main_pool_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
+        if (config.main_pool_cpu_cfg.pinning_policy == sched_affinity_mask_policy::last) {
+          report_error("Incorrect value={} used in {} property", value, "main_pool_pinning");
         }
       },
-      "Policy used for assigning CPU cores to low priority tasks");
+      "Policy used for assigning CPU cores to the main thread pool");
 }
 
 static void configure_cli11_expert_execution_args(CLI::App& app, expert_execution_appconfig& config)
@@ -93,10 +74,10 @@ static void configure_cli11_expert_execution_args(CLI::App& app, expert_executio
   // Threads section.
   CLI::App* threads_subcmd = add_subcommand(app, "threads", "Threads configuration")->configurable();
 
-  // Non real time threads.
-  CLI::App* non_rt_threads_subcmd =
-      add_subcommand(*threads_subcmd, "non_rt", "Non real time thread configuration")->configurable();
-  configure_cli11_non_rt_threads_args(*non_rt_threads_subcmd, config.threads.non_rt_threads);
+  // Main pool threads.
+  CLI::App* main_threads_subcmd =
+      add_subcommand(*threads_subcmd, "main_pool", "Main thread pool configuration")->configurable();
+  configure_cli11_main_pool_threads_args(*main_threads_subcmd, config.threads.main_pool);
 }
 
 void srsran::configure_cli11_with_worker_manager_appconfig_schema(CLI::App& app, expert_execution_appconfig& config)

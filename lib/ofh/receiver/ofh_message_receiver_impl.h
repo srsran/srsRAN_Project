@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "../operation_controller_dummy.h"
 #include "ofh_closed_rx_window_handler.h"
 #include "ofh_data_flow_uplane_uplink_data.h"
 #include "ofh_data_flow_uplane_uplink_prach.h"
@@ -33,6 +34,7 @@
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/ofh/ethernet/vlan_ethernet_frame_decoder.h"
 #include "srsran/ofh/ofh_constants.h"
+#include "srsran/ofh/ofh_controller.h"
 #include "srsran/ofh/serdes/ofh_message_properties.h"
 #include "srsran/ofh/serdes/ofh_uplane_message_decoder.h"
 #include "srsran/srslog/logger.h"
@@ -60,6 +62,8 @@ struct message_receiver_config {
   warn_unreceived_ru_frames warn_unreceived_frames = warn_unreceived_ru_frames::after_traffic_detection;
   /// If set to true, metrics are enabled in the message receiver.
   bool are_metrics_enabled = false;
+  /// If set to true, logs late events as warnings, otherwise as info.
+  bool enable_log_warnings_for_lates;
 };
 
 /// Message receiver dependencies.
@@ -94,7 +98,7 @@ public:
   void on_new_frame(ether::unique_rx_buffer buffer) override;
 
   // See interface for the documentation.
-  ether::receiver& get_ethernet_receiver() override { return *eth_receiver; }
+  operation_controller& get_operation_controller() override { return controller; }
 
   // See interface for the documentation.
   message_receiver_metrics_collector* get_metrics_collector() override
@@ -128,8 +132,9 @@ private:
   std::unique_ptr<ecpri::packet_decoder>                ecpri_decoder;
   std::unique_ptr<data_flow_uplane_uplink_data>         data_flow_uplink;
   std::unique_ptr<data_flow_uplane_uplink_prach>        data_flow_prach;
-  std::unique_ptr<ether::receiver>                      eth_receiver;
   message_receiver_metrics_collector                    metrics_collector;
+  bool                                                  enable_log_warnings_for_lates;
+  operation_controller_dummy                            controller;
 };
 
 } // namespace ofh

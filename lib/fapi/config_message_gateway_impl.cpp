@@ -123,6 +123,7 @@ void configuration_procedure::start_request(const fapi::start_request& msg)
   // Unexpected status, notify error.
   if (current_status != cell_status::CONFIGURED) {
     error_indication_message indication;
+    indication.message_id = message_type_id::start_request;
     indication.error_code = error_code_id::msg_invalid_state;
     error_notifier->on_error_indication(indication);
 
@@ -133,7 +134,8 @@ void configuration_procedure::start_request(const fapi::start_request& msg)
   if (!cell_operation_notifier->on_start_request(cell_cfg)) {
     logger.error("Failed to start cell id '{}'", cell_cfg.cell_cfg.phy_cell_id);
     error_indication_message indication;
-    indication.error_code = error_code_id::msg_invalid_state;
+    indication.message_id = message_type_id::start_request;
+    indication.error_code = error_code_id::msg_invalid_config;
     error_notifier->on_error_indication(indication);
 
     return;
@@ -150,6 +152,7 @@ void configuration_procedure::stop_request(const fapi::stop_request& msg)
   // Unexpected status, notify error.
   if (current_status != cell_status::RUNNING) {
     error_indication_message indication;
+    indication.message_id = message_type_id::stop_request;
     indication.error_code = error_code_id::msg_invalid_state;
     error_notifier->on_error_indication(indication);
 

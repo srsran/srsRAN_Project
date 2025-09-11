@@ -74,6 +74,8 @@ public:
   }
 
   /// Get total number of CPUs discovered in the given host.
+  /// Note in virtualized environments the number of CPUs available to the application may be smaller.
+  /// See \c get_host_nof_available_cpus.
   size_t get_host_total_nof_cpus() const { return cpu_desc.nof_cpus; }
 
   /// Get the number of CPUs available to the application.

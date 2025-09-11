@@ -27,6 +27,6 @@
 namespace srsran {
 
 /// Validates the given DU high configuration. Returns true on success, false otherwise.
-bool validate_du_high_config(const du_high_unit_config& config, const os_sched_affinity_bitmask& available_cpus);
+bool validate_du_high_config(const du_high_unit_config& config);
 
 } // namespace srsran

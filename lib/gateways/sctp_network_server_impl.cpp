@@ -27,8 +27,8 @@
 
 using namespace srsran;
 
-// the stream number to use for sending
-const unsigned stream_no = 0;
+/// Stream number to use for sending.
+static constexpr unsigned stream_no = 0;
 
 class sctp_network_server_impl::sctp_send_notifier : public sctp_association_sdu_notifier
 {
@@ -66,22 +66,22 @@ public:
     span<const uint8_t> pdu_span = to_span(sdu, send_buffer);
 
     transport_layer_address::native_type dest_addr  = client_addr.native();
-    int                                  bytes_sent = sctp_sendmsg(fd,
-                                  pdu_span.data(),
-                                  pdu_span.size(),
-                                  const_cast<struct sockaddr*>(dest_addr.addr),
-                                  dest_addr.addrlen,
-                                  htonl(ppid),
-                                  0,
-                                  stream_no,
-                                  0,
-                                  0);
+    int                                  bytes_sent = ::sctp_sendmsg(fd,
+                                    pdu_span.data(),
+                                    pdu_span.size(),
+                                    const_cast<struct sockaddr*>(dest_addr.addr),
+                                    dest_addr.addrlen,
+                                    htonl(ppid),
+                                    0,
+                                    stream_no,
+                                    0,
+                                    0);
     if (bytes_sent == -1) {
       logger.error("{} assoc={}: Closing SCTP association. Cause: Couldn't send {} B of data. errno={}",
                    if_name,
                    assoc_id,
                    pdu_span.size_bytes(),
-                   strerror(errno));
+                   ::strerror(errno));
       close();
       return false;
     }
@@ -98,22 +98,23 @@ private:
 
     // Send EOF to SCTP client.
     transport_layer_address::native_type dest_addr  = client_addr.native();
-    int                                  bytes_sent = sctp_sendmsg(fd,
-                                  nullptr,
-                                  0,
-                                  const_cast<struct sockaddr*>(dest_addr.addr),
-                                  dest_addr.addrlen,
-                                  htonl(ppid),
-                                  SCTP_EOF,
-                                  stream_no,
-                                  0,
-                                  0);
+    int                                  bytes_sent = ::sctp_sendmsg(fd,
+                                    nullptr,
+                                    0,
+                                    const_cast<struct sockaddr*>(dest_addr.addr),
+                                    dest_addr.addrlen,
+                                    htonl(ppid),
+                                    SCTP_EOF,
+                                    stream_no,
+                                    0,
+                                    0);
 
     if (bytes_sent == -1) {
       // Failed to send EOF.
       // Note: It may happen when the sender notifier is removed just before the SCTP shutdown event is handled in
       // the server recv thread.
-      logger.info("{} assoc={}: Couldn't send EOF during shut down (errno=\"{}\")", if_name, assoc_id, strerror(errno));
+      logger.info(
+          "{} assoc={}: Couldn't send EOF during shut down (errno=\"{}\")", if_name, assoc_id, ::strerror(errno));
     } else {
       logger.debug("{} assoc={}: Sent EOF to SCTP client and closed SCTP association", if_name, assoc_id);
     }
@@ -185,7 +186,7 @@ void sctp_network_server_impl::receive()
   // Handle error.
   if (rx_bytes == -1) {
     if (errno != EAGAIN) {
-      logger.error("Error reading from SCTP socket: {}", strerror(errno));
+      logger.error("Error reading from SCTP socket: {}", ::strerror(errno));
       handle_socket_shutdown(nullptr);
     } else {
       if (!node_cfg.non_blocking_mode) {

@@ -28,6 +28,7 @@ namespace fapi {
 class slot_data_message_notifier;
 class error_message_notifier;
 class slot_time_message_notifier;
+class operation_controller;
 
 /// \brief FAPI slot messages adaptor interface.
 ///
@@ -38,6 +39,9 @@ class slot_messages_adaptor
 {
 public:
   virtual ~slot_messages_adaptor() = default;
+
+  /// Returns the operation controller of this adaptor.
+  virtual operation_controller& get_operation_controller() = 0;
 
   /// Returns the slot data message notifier of this adaptor.
   virtual slot_data_message_notifier& get_slot_data_message_notifier() = 0;

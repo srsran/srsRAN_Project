@@ -81,7 +81,7 @@ public:
 
       // Stop if no device is found.
       if (devices.empty()) {
-        printf("Error: no radio devices found.\n");
+        fmt::println("Error: no radio devices found.");
         return false;
       }
 
@@ -353,7 +353,7 @@ public:
       return stream;
     }
 
-    printf("Error: failed to create receive stream %d. %s.", description.id, stream->get_error_message().c_str());
+    fmt::println("Error: failed to create receive stream {}. {}.", description.id, stream->get_error_message().c_str());
     return nullptr;
   }
   bool set_tx_gain(unsigned ch, double gain)

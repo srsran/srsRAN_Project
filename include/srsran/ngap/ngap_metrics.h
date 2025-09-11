@@ -22,20 +22,22 @@
 
 #pragma once
 
+#include "srsran/cu_cp/mobility_management_metrics.h"
 #include "srsran/ran/cause/ngap_cause.h"
 #include "srsran/ran/s_nssai.h"
+#include "srsran/support/format/fmt_to_c_str.h"
 #include "srsran/support/srsran_assert.h"
 #include <map>
 
 namespace srsran {
 
 /// Offsets for the cause values to use them as index for failure counters.
-static constexpr unsigned CAUSE_RADIO_NETWORK_OFFSET = 0;
-static constexpr unsigned CAUSE_TRANSPORT_OFFSET     = 57;
-static constexpr unsigned CAUSE_NAS_OFFSET           = 59;
-static constexpr unsigned CAUSE_PROTOCOL_OFFSET      = 63;
-static constexpr unsigned CAUSE_MISC_OFFSET          = 70;
-static constexpr unsigned NOF_CAUSES                 = 75;
+constexpr unsigned CAUSE_RADIO_NETWORK_OFFSET = 0;
+constexpr unsigned CAUSE_TRANSPORT_OFFSET     = 57;
+constexpr unsigned CAUSE_NAS_OFFSET           = 59;
+constexpr unsigned CAUSE_PROTOCOL_OFFSET      = 63;
+constexpr unsigned CAUSE_MISC_OFFSET          = 70;
+constexpr unsigned NOF_CAUSES                 = 75;
 
 /// \brief Convert a cause value to an index.
 /// \param cause The cause value to convert.
@@ -69,19 +71,19 @@ constexpr ngap_cause_t index_to_cause(unsigned index)
 {
   srsran_assert(index < NOF_CAUSES, "Invalid cause");
 
-  if (index < CAUSE_RADIO_NETWORK_OFFSET) {
+  if (index < CAUSE_TRANSPORT_OFFSET) {
     return ngap_cause_radio_network_t(index);
   }
 
-  if (index < CAUSE_TRANSPORT_OFFSET) {
+  if (index < CAUSE_NAS_OFFSET) {
     return ngap_cause_transport_t(index - CAUSE_TRANSPORT_OFFSET);
   }
 
-  if (index < CAUSE_NAS_OFFSET) {
+  if (index < CAUSE_PROTOCOL_OFFSET) {
     return cause_nas_t(index - CAUSE_NAS_OFFSET);
   }
 
-  if (index < CAUSE_PROTOCOL_OFFSET) {
+  if (index < CAUSE_MISC_OFFSET) {
     return cause_protocol_t(index - CAUSE_PROTOCOL_OFFSET);
   }
 
@@ -94,17 +96,8 @@ struct ngap_counter_with_cause {
 
   void increase(ngap_cause_t cause)
   {
-    if (std::holds_alternative<ngap_cause_radio_network_t>(cause)) {
-      ++counters_by_cause[cause_to_index(cause)];
-    } else if (std::holds_alternative<ngap_cause_transport_t>(cause)) {
-      ++counters_by_cause[cause_to_index(cause)];
-    } else if (std::holds_alternative<cause_nas_t>(cause)) {
-      ++counters_by_cause[cause_to_index(cause)];
-    } else if (std::holds_alternative<cause_protocol_t>(cause)) {
-      ++counters_by_cause[cause_to_index(cause)];
-    } else {
-      ++counters_by_cause[cause_to_index(cause)];
-    }
+    srsran_assert(cause_to_index(cause) < counters_by_cause.size(), "Invalid cause");
+    ++counters_by_cause[cause_to_index(cause)];
   }
 
   unsigned size() const { return counters_by_cause.size(); }
@@ -114,6 +107,14 @@ struct ngap_counter_with_cause {
   unsigned get_count(unsigned index) const { return counters_by_cause[index]; }
 
   ngap_cause_t get_cause(unsigned index) const { return index_to_cause(index); }
+
+  /// Returns a const iterator to the beginning of the container.
+  std::array<unsigned, NOF_CAUSES>::const_iterator begin() const { return counters_by_cause.begin(); }
+  std::array<unsigned, NOF_CAUSES>::const_iterator cbegin() const { return counters_by_cause.cbegin(); }
+
+  /// Returns a const iterator to the end of the container.
+  std::array<unsigned, NOF_CAUSES>::const_iterator end() const { return counters_by_cause.end(); }
+  std::array<unsigned, NOF_CAUSES>::const_iterator cend() const { return counters_by_cause.cend(); }
 
 private:
   // The counters indexed by a cause.
@@ -142,5 +143,53 @@ struct ngap_info {
   std::string  amf_name;
   ngap_metrics metrics;
 };
+
+inline std::string format_ngap_metrics(const std::vector<ngap_info>&      report,
+                                       const mobility_management_metrics& mobility_metrics)
+{
+  fmt::memory_buffer buffer;
+
+  for (const auto& ngap_info : report) {
+    // log ngap metrics
+    fmt::format_to(std::back_inserter(buffer), "[");
+    fmt::format_to(std::back_inserter(buffer), " amf_name={}", ngap_info.amf_name);
+
+    for (const auto& pdu_session_metric : ngap_info.metrics.pdu_session_metrics) {
+      fmt::format_to(std::back_inserter(buffer),
+                     " s-nssai=(sst={} sd={})",
+                     pdu_session_metric.first.sst.value(),
+                     pdu_session_metric.first.sd.is_set() ? fmt::format("{}", pdu_session_metric.first.sd.value())
+                                                          : "na");
+
+      fmt::format_to(std::back_inserter(buffer),
+                     " nof_pdu_sessions_requested_to_setup={} nof_pdu_sessions_successfully_setup={}",
+                     pdu_session_metric.second.nof_pdu_sessions_requested_to_setup,
+                     pdu_session_metric.second.nof_pdu_sessions_successfully_setup);
+
+      fmt::format_to(std::back_inserter(buffer), " nof_pdu_sessions_failed_to_setup=[");
+      unsigned cause_index = 0;
+      for (const auto& cause_count : pdu_session_metric.second.nof_pdu_sessions_failed_to_setup) {
+        fmt::format_to(std::back_inserter(buffer),
+                       " {}={}",
+                       pdu_session_metric.second.nof_pdu_sessions_failed_to_setup.get_cause(cause_index),
+                       cause_count);
+        ++cause_index;
+      }
+      fmt::format_to(std::back_inserter(buffer), " ]");
+    }
+    fmt::format_to(std::back_inserter(buffer),
+                   " nof_cn_initiated_paging_requests={}",
+                   ngap_info.metrics.nof_cn_initiated_paging_requests);
+
+    fmt::format_to(std::back_inserter(buffer), " ],");
+  }
+
+  fmt::format_to(std::back_inserter(buffer),
+                 " nof_handover_preparations_requested={} nof_successful_handover_preparations={}",
+                 mobility_metrics.nof_handover_preparations_requested,
+                 mobility_metrics.nof_successful_handover_preparations);
+
+  return to_c_str(buffer);
+}
 
 } // namespace srsran

@@ -34,7 +34,7 @@ namespace hal {
 
 /// Fixed CB-offset increment used in the accelerator's HARQ memory.
 /// Note that it is assumed that the HARQ memory is organized in N slots of HARQ_INCR bytes.
-static constexpr units::bytes HARQ_INCR{32768};
+constexpr units::bytes HARQ_INCR{32768};
 
 /// External HARQ buffer context.
 struct ext_harq_buffer_context_entry {

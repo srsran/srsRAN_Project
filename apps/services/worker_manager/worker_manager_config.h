@@ -32,9 +32,8 @@ class timer_manager;
 struct worker_manager_config {
   /// RU OFH worker configuration.
   struct ru_ofh_config {
-    bool is_downlink_parallelized;
-    /// Number of downlink antennas indexed by cell.
-    std::vector<unsigned> nof_downlink_antennas;
+    /// Number of cells.
+    unsigned nof_cells;
     /// RU timing CPU affinity mask.
     os_sched_affinity_bitmask ru_timing_cpu;
     /// Vector of affinities for the txrx workers.
@@ -45,15 +44,15 @@ struct worker_manager_config {
   struct ru_sdr_config {
     /// Lower physical layer thread profiles.
     enum class lower_phy_thread_profile {
-      /// Same task worker as the rest of the PHY (ZMQ only).
-      blocking = 0,
-      /// Single task worker for all the lower physical layer task executors.
+      /// Sequential mode - it guarantees that the entire physical layer operates in sequential mode using a single
+      /// executor. This mode might not satisfy with real-time timings.
+      sequential = 0,
+      /// Single task worker for all the baseband processing.
       single,
-      /// Two task workers - one for the downlink and one for the uplink.
+      /// Two task workers - one for baseband reception and another for baseband transmission.
       dual,
-      /// Dedicated task workers for each of the subtasks (downlink processing, uplink processing, reception and
-      /// transmission).
-      quad
+      /// Dedicated task workers for each of the subtasks (transmission, reception and demodulation).
+      triple
     };
 
     lower_phy_thread_profile profile;
@@ -70,11 +69,14 @@ struct worker_manager_config {
 
   /// DU low worker configuration.
   struct du_low_config {
-    bool                                     is_blocking_mode_active;
-    unsigned                                 nof_ul_threads;
-    unsigned                                 nof_dl_threads;
-    unsigned                                 nof_pusch_decoder_threads;
-    unsigned                                 nof_cells;
+    bool     is_sequential_mode_active;
+    unsigned max_pucch_concurrency;
+    unsigned max_pusch_and_srs_concurrency;
+    unsigned max_pdsch_concurrency;
+    /// Number of downlink antennas indexed by cell. The vector size must match the number of cells.
+    std::vector<unsigned> cell_nof_dl_antennas;
+    /// Number of uplink antennas indexed by cell. The vector size must match the number of cells.
+    std::vector<unsigned>                    cell_nof_ul_antennas;
     std::optional<std::chrono::milliseconds> metrics_period;
   };
 
@@ -127,12 +129,14 @@ struct worker_manager_config {
     bool is_rlc_enabled  = false;
   };
 
-  /// Number of low priority threads.
-  unsigned nof_low_prio_threads = 4;
-  /// Low priority task worker queue size.
-  unsigned low_prio_task_queue_size;
-  /// Low priority CPU bitmasks.
-  os_sched_affinity_config low_prio_sched_config;
+  /// Size, in number of threads, of the main thread pool.
+  std::optional<unsigned> nof_main_pool_threads;
+  /// Main thread pool task queue size.
+  unsigned main_pool_task_queue_size;
+  /// Main thread pool back-off period, in microseconds, when the task queue is empty.
+  std::chrono::microseconds main_pool_backoff_period{50};
+  /// Main thread pool CPU bitmasks.
+  os_sched_affinity_config main_pool_affinity_cfg;
   /// PCAP configuration.
   pcap_config pcap_cfg;
   /// Timer config.

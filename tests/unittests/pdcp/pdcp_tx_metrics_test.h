@@ -29,7 +29,7 @@ namespace srsran {
 
 /// Fixture class for PDCP tests
 /// It requires TEST_P() and INSTANTIATE_TEST_SUITE_P() to create/spawn tests for each supported SN size
-class pdcp_tx_metrics_test : public pdcp_tx_test_helper,
+class pdcp_tx_metrics_test : public pdcp_tx_test_helper_default_crypto,
                              public ::testing::Test,
                              public ::testing::WithParamInterface<std::tuple<pdcp_sn_size, unsigned>>
 {
@@ -52,7 +52,7 @@ protected:
   }
 };
 
-class pdcp_tx_metrics_container_test : public pdcp_tx_test_helper, public ::testing::Test
+class pdcp_tx_metrics_container_test : public pdcp_tx_test_helper_default_crypto, public ::testing::Test
 {
 protected:
   void SetUp() override

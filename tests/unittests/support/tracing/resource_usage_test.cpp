@@ -50,7 +50,7 @@ TEST(resource_usage_test, snapshot_diff_is_correct)
 TEST(resource_usage_test, format_resource_usage_diff)
 {
   resource_usage::snapshot point1 = resource_usage::now().value();
-  usleep(10);
+  ::usleep(10);
   resource_usage::snapshot point2 = resource_usage::now().value();
   resource_usage::diff     d      = point2 - point1;
 

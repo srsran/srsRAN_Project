@@ -25,6 +25,7 @@
 #include "../converters/scheduler_configuration_helpers.h"
 #include "srsran/mac/mac_ue_configurator.h"
 #include "srsran/rlc/rlc_factory.h"
+#include <algorithm>
 
 using namespace srsran;
 using namespace srs_du;
@@ -227,7 +228,7 @@ void ue_configuration_procedure::clear_old_ue_context()
   if (not drbs_to_rem.empty()) {
     // Dispatch DRB context destruction to the respective UE executor.
     task_executor& exec = du_params.services.ue_execs.ctrl_executor(ue->ue_index);
-    if (not exec.defer(TRACE_TASK([drbs = std::move(drbs_to_rem)]() mutable { drbs.clear(); }))) {
+    if (not exec.defer([drbs = std::move(drbs_to_rem)]() mutable { drbs.clear(); })) {
       logger.warning("ue={}: Could not dispatch DRB removal task to UE executor. Destroying it the main DU manager "
                      "execution context",
                      fmt::underlying(ue->ue_index));
@@ -392,22 +393,47 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
       proc_logger.log_proc_failure("Failed to calculate ReconfigWithSync");
       return make_ue_config_failure();
     }
-    // Set all RLC bearer to reestablish for HO
+    // Set all RLC bearer to reestablish for HO.
     for (auto& b : asn1_cell_group.rlc_bearer_to_add_mod_list) {
       b.rlc_cfg_present         = false;
       b.mac_lc_ch_cfg_present   = false;
       b.reestablish_rlc_present = true;
     }
 
-    // TODO: Set non-hardcoded servingCellMo.
-    asn1_cell_group.sp_cell_cfg.sp_cell_cfg_ded.serving_cell_mo_present = true;
-    asn1_cell_group.sp_cell_cfg.sp_cell_cfg_ded.serving_cell_mo         = 1;
-
-    // Fill fields with -- Cond SyncAndCellAdd
+    // Fill fields with -- Cond SyncAndCellAdd.
     asn1_cell_group.sp_cell_cfg.sp_cell_cfg_ded.first_active_dl_bwp_id_present        = true;
     asn1_cell_group.sp_cell_cfg.sp_cell_cfg_ded.first_active_dl_bwp_id                = 0;
     asn1_cell_group.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg.first_active_ul_bwp_id_present = true;
     asn1_cell_group.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg.first_active_ul_bwp_id         = 0;
+  }
+
+  // Set the servingCellMO if it is present in the request.
+  if (request.serving_cell_mo.has_value()) {
+    asn1_cell_group.sp_cell_cfg.sp_cell_cfg_ded.serving_cell_mo_present = true;
+    asn1_cell_group.sp_cell_cfg.sp_cell_cfg_ded.serving_cell_mo         = *request.serving_cell_mo;
+  }
+
+  // > servingCellMO List IE.
+  // [TS 38.473, 8.3.1.2] If the servingCellMO List IE is included in the UE CONTEXT SETUP REQUEST message, the gNB-DU
+  // shall, if supported, select servingCellMO after determining the list of BWPs for the UE and include the list of
+  // servingCellMOs that have been encoded in CellGroupConfig IE as ServingCellMO-encoded-in-CGC List IE in the UE
+  // CONTEXT SETUP RESPONSE message.
+  if (request.serving_cell_mo_list.has_value()) {
+    const auto& serving_cell_mo_list = *request.serving_cell_mo_list;
+    const auto& pcell_cfg            = du_params.ran.cells[ue->pcell_index];
+
+    // Look for the SpCell ARFCN in the ServingCellMO List.
+    const auto& serving_cell_mo_it =
+        std::find_if(serving_cell_mo_list.begin(), serving_cell_mo_list.end(), [&pcell_cfg](const auto& item) {
+          return item.ssb_freq == pcell_cfg.dl_carrier.arfcn_f_ref;
+        });
+
+    if (serving_cell_mo_it != serving_cell_mo_list.end()) {
+      // If the SpCell ARFCN is found, set the servingCellMO.
+      asn1_cell_group.sp_cell_cfg.sp_cell_cfg_ded.serving_cell_mo_present = true;
+      asn1_cell_group.sp_cell_cfg.sp_cell_cfg_ded.serving_cell_mo         = serving_cell_mo_it->serving_cell_mo;
+      resp.serving_cell_mo_encoded_in_cgc_list.push_back(serving_cell_mo_it->serving_cell_mo);
+    }
   }
 
   // Pack cellGroupConfig.
@@ -444,14 +470,6 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_empty_ue_config
 {
   f1ap_ue_context_update_response resp;
   resp.result = true;
-  // > Calculate ASN.1 CellGroupConfig to be sent in DU-to-CU container.
-  asn1::rrc_nr::cell_group_cfg_s asn1_cell_group;
-  // Pack cellGroupConfig.
-  {
-    asn1::bit_ref     bref{resp.cell_group_cfg};
-    asn1::SRSASN_CODE code = asn1_cell_group.pack(bref);
-    srsran_assert(code == asn1::SRSASN_SUCCESS, "Invalid cellGroupConfig");
-  }
   return resp;
 }
 
@@ -465,15 +483,14 @@ bool ue_configuration_procedure::changed_detected() const
 void ue_configuration_procedure::handle_rrc_reconfiguration_complete_ind()
 {
   // Dispatch DRB context destruction to the respective UE executor.
-  task_executor& exec     = du_params.services.ue_execs.mac_ul_pdu_executor(ue->ue_index);
-  auto           flush_fn = TRACE_TASK([ue = ue]() mutable {
-    for (auto& [bearer_id, bearer] : ue->bearers.drbs()) {
-      if (bearer != nullptr && bearer->drb_f1u != nullptr) {
-        bearer->drb_f1u->get_tx_sdu_handler().flush_ul_buffer();
-      }
-    }
-  });
-  if (not exec.defer(std::move(flush_fn))) {
+  task_executor& exec = du_params.services.ue_execs.mac_ul_pdu_executor(ue->ue_index);
+  if (not exec.defer([ue_ptr = ue]() mutable {
+        for (const auto& [bearer_id, bearer] : ue_ptr->bearers.drbs()) {
+          if (bearer != nullptr && bearer->drb_f1u != nullptr) {
+            bearer->drb_f1u->get_tx_sdu_handler().flush_ul_buffer();
+          }
+        }
+      })) {
     logger.warning("ue={}: Could not dispatch DRB removal task to UE executor. Destroying it the main DU manager "
                    "execution context",
                    fmt::underlying(ue->ue_index));

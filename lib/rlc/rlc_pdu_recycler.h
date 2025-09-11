@@ -53,8 +53,7 @@ public:
   void clear_by_executor(task_executor& executor)
   {
     // Redirect recycling of unused byte_buffers to ue_executor
-    auto handle_func = TRACE_TASK([this]() mutable { clear(); });
-    if (not executor.execute(std::move(handle_func))) {
+    if (not executor.execute([this]() mutable { clear(); })) {
       logger.log_error("Failed to delegate deletion of PDUs to given executor.");
     }
   }

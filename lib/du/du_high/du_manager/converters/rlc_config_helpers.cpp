@@ -44,7 +44,7 @@ static void fill_rlc_entity_creation_message_common(rlc_entity_creation_message&
   msg.tx_upper_cn    = &rlc_rlf_notifier;
   msg.tx_lower_dn    = &bearer.connector.rlc_tx_buffer_state_notif;
   msg.timers         = &du_services.timers;
-  msg.pcell_executor = &du_services.cell_execs.executor(pcell_index);
+  msg.pcell_executor = &du_services.cell_execs.rlc_lower_executor(pcell_index);
   msg.ue_executor    = &du_services.ue_execs.ctrl_executor(ue_index);
   msg.pcap_writer    = &pcap_writer;
 }

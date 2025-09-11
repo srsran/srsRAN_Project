@@ -49,13 +49,13 @@ enum class bs_channel_bandwidth {
 };
 
 /// Converts the BS channel bandwidth label into the actual BW value in MHz.
-constexpr inline unsigned bs_channel_bandwidth_to_MHz(bs_channel_bandwidth bw)
+constexpr unsigned bs_channel_bandwidth_to_MHz(bs_channel_bandwidth bw)
 {
   return static_cast<unsigned>(bw);
 }
 
 /// Converts the actual BW value in MHz to the BS channel bandwidth label.
-constexpr inline bs_channel_bandwidth MHz_to_bs_channel_bandwidth(unsigned bw)
+constexpr bs_channel_bandwidth MHz_to_bs_channel_bandwidth(unsigned bw)
 {
   return static_cast<bs_channel_bandwidth>(bw);
 }
@@ -66,7 +66,7 @@ constexpr inline bs_channel_bandwidth MHz_to_bs_channel_bandwidth(unsigned bw)
 enum class min_channel_bandwidth { MHz5 = 0, MHz10, MHz20, MHz40, MHz50, invalid };
 
 /// Converts the Minimum Channel Bandwidth for FR1 into the actual BW value in MHz.
-constexpr inline unsigned min_channel_bandwidth_to_MHz(min_channel_bandwidth bw)
+constexpr unsigned min_channel_bandwidth_to_MHz(min_channel_bandwidth bw)
 {
   switch (bw) {
     case min_channel_bandwidth::MHz5:

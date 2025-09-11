@@ -31,7 +31,7 @@
 namespace srsran {
 namespace ldpc {
 /// Maximum number of information bits in a codeblock (before shortening).
-static constexpr unsigned MAX_BG_K = 22;
+constexpr unsigned MAX_BG_K = 22;
 } // namespace ldpc
 
 /// Template LDPC decoder

@@ -39,6 +39,9 @@ public:
 
   void run_slot(cell_resource_allocator& res_alloc) override;
 
+  /// Called on cell deactivation.
+  void stop();
+
   void add_ue(const ue_cell_configuration& ue_cfg);
 
   void reconf_ue(const ue_cell_configuration& new_ue_cfg, const ue_cell_configuration& old_ue_cfg);

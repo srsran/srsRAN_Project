@@ -54,6 +54,7 @@ public:
   virtual pdcp_rx_upper_control_interface& get_rx_upper_control_interface() = 0;
   virtual pdcp_rx_lower_interface&         get_rx_lower_interface()         = 0;
   virtual void                             stop()                           = 0;
+  virtual manual_event_flag&               tx_crypto_awaitable()            = 0;
   virtual manual_event_flag&               rx_crypto_awaitable()            = 0;
 };
 
@@ -69,7 +70,7 @@ struct formatter<srsran::pdcp_metrics_container> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_metrics_container m, FormatContext& ctx) const
+  auto format(const srsran::pdcp_metrics_container& m, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "ue={} rb={} tx=[{}] rx=[{}]",

@@ -98,10 +98,11 @@ unsigned srsran::type0_pdcch_css_n0_is_even_frame(double   table_13_11_and_13_12
   slot_point sl_point{numerology_mu, 0};
 
   // Compute floor( ( O * 2^mu + floor(i*M) ) / nof_slots_per_frame  ) mod 2, as per TS 38.213, Section 13.
-  unsigned is_even = static_cast<unsigned>(floor(static_cast<double>(table_13_11_and_13_12_O * (1U << numerology_mu)) +
-                                                 floor(static_cast<double>(ssb_index) * table_13_11_and_13_12_M)) /
-                                           sl_point.nof_slots_per_frame()) %
-                     2;
+  unsigned is_even =
+      static_cast<unsigned>(std::floor(static_cast<double>(table_13_11_and_13_12_O * (1U << numerology_mu)) +
+                                       std::floor(static_cast<double>(ssb_index) * table_13_11_and_13_12_M)) /
+                            sl_point.nof_slots_per_frame()) %
+      2;
   return is_even;
 }
 
@@ -116,7 +117,7 @@ slot_point srsran::get_type0_pdcch_css_n0(double             table_13_11_and_13_
 
   // Compute n0 = ( O * 2^mu + floor(i*M)  )  % nof_slots_per_frame, as per TS 38.213, Section 13.
   type0_pdcch_css_n0 += static_cast<unsigned>(static_cast<double>(table_13_11_and_13_12_O * (1U << numerology_mu)) +
-                                              floor(static_cast<double>(ssb_index) * table_13_11_and_13_12_M)) %
+                                              std::floor(static_cast<double>(ssb_index) * table_13_11_and_13_12_M)) %
                         type0_pdcch_css_n0.nof_slots_per_frame();
 
   // We want to express n0 as a value from 0 to max_nof_slots. Since the mod operation above cap n0 to

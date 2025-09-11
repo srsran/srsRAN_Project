@@ -25,7 +25,7 @@
 
 using namespace srsran;
 
-const unsigned CQI_TABLE_SIZE = 16;
+static constexpr unsigned CQI_TABLE_SIZE = 16;
 
 // The table below performs the mapping of the CQI into the closest MCS, based on the corresponding spectral efficiency.
 // The mapping works as follows:
@@ -45,7 +45,7 @@ const unsigned CQI_TABLE_SIZE = 16;
 //
 // The array cqi_to_mcs_table[MCS_table_idx][CQI] provides the mapping of the CQI to the MCS corresponding, based on
 // MCS_table_idx.
-static const int cqi_to_mcs_table[3][CQI_TABLE_SIZE] = {
+static constexpr int cqi_to_mcs_table[3][CQI_TABLE_SIZE] = {
     // clang-format off
     // CQI Table 1 and MCS_table_idx 1
     {-1, 0, 0, 2, 4, 6, 8, 11, 13, 15, 18, 20, 22, 24, 26, 28},
@@ -72,7 +72,7 @@ static const int cqi_to_mcs_table[3][CQI_TABLE_SIZE] = {
 //  NOTE: Following values were computed using SISO configuration over 20Mhz Bandwidth and TDD configuration
 
 // For 64QAM PUSCH MCS table.
-static const std::array<double, 29> ul_snr_mcs_table = {
+static constexpr std::array<double, 29> ul_snr_mcs_table = {
     // clang-format off
     /* MCS 0      1        2        3        4       5        6         7        8        9  */
      -5.7998, -3.5500,  -2.925, -2.5625, -1.0500,  0.98266,  1.6250,  2.5425,  3.4175,  4.3548,
@@ -84,7 +84,7 @@ static const std::array<double, 29> ul_snr_mcs_table = {
 };
 
 // For 256QAM PUSCH MCS table.
-static const std::array<double, 28> ul_snr_256qam_mcs_table = {
+static constexpr std::array<double, 28> ul_snr_256qam_mcs_table = {
     // clang-format off
     /* MCS 0      1        2        3        4       5        6         7        8        9  */
       1.7998,  3.5500,   4.925,  5.5625,  6.0500, 7.98266,  8.6250,  9.5425, 10.4175,  11.3548,
@@ -96,7 +96,7 @@ static const std::array<double, 28> ul_snr_256qam_mcs_table = {
 };
 
 // For 64QAM PUSCH MCS table.
-static const std::array<double, 29> ul_snr_qam64_lowse_mcs_table = {
+static constexpr std::array<double, 29> ul_snr_qam64_lowse_mcs_table = {
     // clang-format off
     /* MCS 0      1        2        3        4       5        6         7        8        9  */
      -5.7998, -3.5500,  -2.925, -2.5625, -1.0500,  0.98266,  1.6250,  2.5425,  3.4175,  4.3548,
@@ -161,7 +161,7 @@ sch_mcs_index srsran::map_snr_to_mcs_ul(double snr, pusch_mcs_table mcs_table, b
     return selected_mcs_table.size() - 1;
   }
 
-  auto it_ub = std::upper_bound(selected_mcs_table.begin(), selected_mcs_table.end(), snr);
+  const auto* it_ub = std::upper_bound(selected_mcs_table.begin(), selected_mcs_table.end(), snr);
 
   // NOTE: By design, it_ub > ul_snr_mcs_table.begin(). All SNR values such it_ub == ul_snr_mcs_table.begin() are
   // handled above, in the "if (snr <= ul_snr_mcs_table.front())" statement above.

@@ -88,20 +88,17 @@ static std::vector<ru_sdr_cell_validation_config> get_ru_sdr_validation_dependen
   return out_cfg;
 }
 
-bool srsran::validate_split_8_o_du_unit_config(const split_8_o_du_unit_config&  config,
-                                               const os_sched_affinity_bitmask& available_cpus)
+bool srsran::validate_split_8_o_du_unit_config(const split_8_o_du_unit_config& config)
 {
-  if (!validate_o_du_high_config(config.odu_high_cfg, available_cpus)) {
+  if (!validate_o_du_high_config(config.odu_high_cfg)) {
     return false;
   }
 
   auto du_low_dependencies = get_du_low_validation_dependencies(config.odu_high_cfg.du_high_cfg.config);
-  if (!validate_du_low_config(config.du_low_cfg, du_low_dependencies) ||
-      !validate_du_low_cpus(config.du_low_cfg, available_cpus)) {
+  if (!validate_du_low_config(config.du_low_cfg, du_low_dependencies)) {
     return false;
   }
 
   auto ru_sdr_dependencies = get_ru_sdr_validation_dependencies(config.odu_high_cfg.du_high_cfg.config);
-  return validate_ru_sdr_config(config.ru_cfg, ru_sdr_dependencies) &&
-         validate_ru_sdr_cpus(config.ru_cfg, available_cpus);
+  return validate_ru_sdr_config(config.ru_cfg, ru_sdr_dependencies);
 }

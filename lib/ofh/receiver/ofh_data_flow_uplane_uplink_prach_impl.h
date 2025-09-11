@@ -24,6 +24,7 @@
 
 #include "../support/prach_context_repository.h"
 #include "../support/uplink_cplane_context_repository.h"
+#include "ofh_data_flow_uplane_decoding_metrics_collector.h"
 #include "ofh_data_flow_uplane_uplink_prach.h"
 #include "ofh_uplane_prach_data_flow_notifier.h"
 #include "ofh_uplane_prach_symbol_data_flow_writer.h"
@@ -41,6 +42,8 @@ struct data_flow_uplane_uplink_prach_impl_config {
   bool is_prach_cplane_enabled;
   /// Ignore the start symbol value received in the PRACH U-Plane packets.
   bool ignore_prach_start_symbol;
+  /// Enabled metrics flag.
+  bool are_metrics_enabled;
   /// Uplink PRACH eAxCs.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxcs;
 };
@@ -69,6 +72,9 @@ public:
   // See interface for documentation.
   void decode_type1_message(unsigned eaxc, span<const uint8_t> message) override;
 
+  // See interface for documentation.
+  data_flow_message_decoding_metrics_collector& get_metrics_collector() override { return metrics_collector; }
+
 private:
   /// Returns true if the User-Plane packet represented by the given User-Plane results and eAxC should be filtered,
   /// otherwise false.
@@ -83,6 +89,7 @@ private:
   uplane_prach_data_flow_notifier                   notification_sender;
   const unsigned                                    sector_id;
   const bool                                        ignore_prach_start_symbol;
+  data_flow_message_decoding_metrics_collector      metrics_collector;
 };
 
 } // namespace ofh

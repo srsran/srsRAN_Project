@@ -67,7 +67,7 @@ public:
     report_fatal_error_if_not(op != openmode::write_only, "The file_vector was created with write-only permissions.");
     std::ifstream binary_file(file_name, std::ios::in | std::ios::binary);
 
-    report_fatal_error_if_not(binary_file.is_open(), "Error opening file '{}'. {}.", file_name, strerror(errno));
+    report_fatal_error_if_not(binary_file.is_open(), "Error opening file '{}'. {}.", file_name, ::strerror(errno));
 
     dynamic_tensor<NDIMS, T, Index_type> read_data(dimension_sizes);
     span<T>                              flat_tensor_view(read_data.get_data());

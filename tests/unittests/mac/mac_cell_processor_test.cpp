@@ -20,7 +20,6 @@
  *
  */
 
-#include "lib/mac/mac_ctrl/du_time_controller.h"
 #include "lib/mac/mac_dl/mac_cell_processor.h"
 #include "mac_test_helpers.h"
 #include "srsran/mac/mac_cell_timing_context.h"
@@ -61,7 +60,7 @@ public:
   manual_task_worker                           task_worker{128};
   null_mac_pcap                                pcap;
   timer_manager                                timers;
-  du_time_controller                           timer_ctrl{timers, task_worker, srslog::fetch_basic_logger("MAC")};
+  test_helpers::dummy_mac_clock_controller     timer_ctrl{timers};
   cell_config_builder_params                   builder_params;
   mac_cell_processor                           mac_cell;
 
@@ -161,3 +160,88 @@ INSTANTIATE_TEST_SUITE_P(
     nof_pdschs_allocated,
     mac_cell_processor_tester,
     testing::Values(test_params{0, 0, 0}, test_params{1, 0, 0}, test_params{0, 1, 0}, test_params{0, 0, 1}));
+
+class mac_cell_processor_ue_update_test : public base_mac_cell_processor_test, public ::testing::Test
+{
+protected:
+  mac_cell_processor_ue_update_test()
+  {
+    // Creates the next sched result based on test parameters.
+    sched_adapter.next_sched_result.success = true;
+
+    // Start cell.
+    auto                     t = mac_cell.start();
+    lazy_task_launcher<void> launcher{t};
+    this->mac_cell.handle_slot_indication(mac_cell_timing_context{next_slot++});
+    task_worker.run_pending_tasks();
+    report_error_if_not(launcher.ready(), "Unable to start cell");
+  }
+
+  mac_ue_create_request make_ue_create_request(du_ue_index_t ue_index)
+  {
+    mac_ue_create_request request;
+    request.cell_index   = to_du_cell_index(0);
+    request.ue_index     = ue_index;
+    request.crnti        = to_rnti(0x4601 + static_cast<unsigned>(ue_index));
+    request.rlf_notifier = &rlf_notifier;
+    request.bearers.resize(3);
+    for (unsigned i = 0; i < request.bearers.size(); ++i) {
+      request.bearers[i].lcid = uint_to_lcid(i);
+    }
+    request.ul_ccch_msg = &msg3_buffer;
+    return request;
+  }
+
+  mac_ue_delete_request make_ue_delete_request(du_ue_index_t ue_index)
+  {
+    mac_ue_delete_request request;
+    request.cell_index = to_du_cell_index(0);
+    request.ue_index   = ue_index;
+    request.rnti       = to_rnti(0x4601 + static_cast<unsigned>(ue_index));
+    return request;
+  }
+
+  test_helpers::dummy_ue_rlf_notifier rlf_notifier;
+  byte_buffer                         msg3_buffer = byte_buffer::create({0x1, 0x2, 0x3, 0x4, 0x5, 0x6}).value();
+};
+
+TEST_F(mac_cell_processor_ue_update_test, ues_created_and_removed_in_batches)
+{
+  unsigned nof_batches       = 1000;
+  unsigned nof_ues_per_batch = 32;
+  unsigned nof_ues_constant  = 10;
+
+  for (unsigned uidx = 0; uidx != nof_ues_constant; ++uidx) {
+    // Create a new UE.
+    du_ue_index_t            ue_index = to_du_ue_index(uidx);
+    auto                     t        = mac_cell.add_ue(make_ue_create_request(ue_index));
+    lazy_task_launcher<bool> launcher{t};
+    task_worker.run_pending_tasks();
+    report_error_if_not(launcher.ready(), "Unable to add UE");
+    ASSERT_TRUE(launcher.result.value());
+  }
+
+  for (unsigned batch = 0; batch != nof_batches; ++batch) {
+    // Create a new batch of UEs.
+    for (unsigned uidx = 0; uidx != nof_ues_per_batch; ++uidx) {
+      // Create a new UE.
+      du_ue_index_t            ue_index = to_du_ue_index(nof_ues_constant + uidx);
+      mac_ue_create_request    request  = make_ue_create_request(ue_index);
+      auto                     t        = mac_cell.add_ue(request);
+      lazy_task_launcher<bool> launcher{t};
+      task_worker.run_pending_tasks();
+      report_error_if_not(launcher.ready(), "Unable to add UE");
+      ASSERT_TRUE(launcher.result.value());
+    }
+
+    // Remove batch of UEs.
+    for (unsigned uidx = 0; uidx != nof_ues_per_batch; ++uidx) {
+      // Check that the UE was created.
+      du_ue_index_t            ue_index = to_du_ue_index(nof_ues_constant + uidx);
+      auto                     t        = mac_cell.remove_ue(make_ue_delete_request(ue_index));
+      lazy_task_launcher<void> launcher{t};
+      task_worker.run_pending_tasks();
+      report_error_if_not(launcher.ready(), "Unable to add UE");
+    }
+  }
+}

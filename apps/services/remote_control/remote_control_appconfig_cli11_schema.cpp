@@ -22,6 +22,7 @@
 
 #include "apps/services/remote_control/remote_control_appconfig_cli11_schema.h"
 #include "apps/services/remote_control/remote_control_appconfig.h"
+#include "srsran/support/cli11_utils.h"
 
 using namespace srsran;
 
@@ -40,4 +41,8 @@ void srsran::configure_cli11_with_remote_control_appconfig_schema(CLI::App& app,
   CLI::App* remote_control_subcmd =
       app.add_subcommand("remote_control", "Remote control configuration")->configurable();
   configure_cli11_remote_control_args(*remote_control_subcmd, config);
+  // Metrics section.
+  CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
+  add_option(*metrics_subcmd, "--enable_json", config.enable_metrics_subscription, "Enable JSON metrics reporting")
+      ->always_capture_default();
 }

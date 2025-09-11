@@ -24,8 +24,7 @@
 
 using namespace srsran;
 
-static std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_configuration& config,
-                                                                   unsigned max_nof_prach_concurrent_requests)
+static std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_configuration& config)
 {
   // Deduce frequency range from the subcarrier spacing.
   frequency_range fr = frequency_range::FR1;
@@ -47,6 +46,11 @@ static std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_con
   std::shared_ptr<ofdm_modulator_factory> modulator_factory = create_ofdm_modulator_factory_generic(ofdm_common_config);
   report_fatal_error_if_not(modulator_factory, "Failed to create OFDM modulator factory.");
 
+  // Wrap the OFDM modulator factory with a pool factory.
+  modulator_factory =
+      create_ofdm_modulator_pool_factory(std::move(modulator_factory), MAX_NSYMB_PER_SLOT * config.nof_tx_ports);
+  report_fatal_error_if_not(modulator_factory, "Failed to create OFDM modulator pool factory.");
+
   // Create OFDM demodulator factory.
   std::shared_ptr<ofdm_demodulator_factory> demodulator_factory =
       create_ofdm_demodulator_factory_generic(ofdm_common_config);
@@ -57,25 +61,6 @@ static std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_con
       create_ofdm_prach_demodulator_factory_sw(dft_factory, config.srate, fr);
   report_fatal_error_if_not(prach_demodulator_factory, "Failed to create PRACH demodulator factory.");
 
-  // Create PDxCH processor factory.
-  std::shared_ptr<pdxch_processor_factory> pdxch_proc_factory =
-      create_pdxch_processor_factory_sw(config.max_processing_delay_slots, modulator_factory);
-  report_fatal_error_if_not(pdxch_proc_factory, "Failed to create PDxCH processor factory.");
-
-  // Create PRACH processor factory.
-  std::shared_ptr<prach_processor_factory> prach_proc_factory =
-      create_prach_processor_factory_sw(prach_demodulator_factory,
-                                        *config.prach_async_executor,
-                                        config.srate,
-                                        config.nof_rx_ports,
-                                        max_nof_prach_concurrent_requests);
-  report_fatal_error_if_not(prach_proc_factory, "Failed to create PRACH processor factory.");
-
-  // Create PUxCH processor factory.
-  std::shared_ptr<puxch_processor_factory> puxch_proc_factory =
-      create_puxch_processor_factory_sw(10, demodulator_factory);
-  report_fatal_error_if_not(puxch_proc_factory, "Failed to create PUxCH processor factory.");
-
   // Create amplitude control factory.
   std::shared_ptr<amplitude_controller_factory> amplitude_control_factory;
   if (config.amplitude_config.enable_clipping) {
@@ -85,9 +70,28 @@ static std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_con
   }
   report_fatal_error_if_not(amplitude_control_factory, "Failed to create amplitude controller factory.");
 
+  // Create PDxCH processor factory.
+  std::shared_ptr<pdxch_processor_factory> pdxch_proc_factory =
+      create_pdxch_processor_factory_sw(modulator_factory, amplitude_control_factory);
+  report_fatal_error_if_not(pdxch_proc_factory, "Failed to create PDxCH processor factory.");
+
+  // Create PRACH processor factory.
+  std::shared_ptr<prach_processor_factory> prach_proc_factory =
+      create_prach_processor_factory_sw(prach_demodulator_factory,
+                                        *config.prach_async_executor,
+                                        config.srate,
+                                        config.nof_rx_ports,
+                                        config.max_nof_prach_concurrent_requests);
+  report_fatal_error_if_not(prach_proc_factory, "Failed to create PRACH processor factory.");
+
+  // Create PUxCH processor factory.
+  std::shared_ptr<puxch_processor_factory> puxch_proc_factory =
+      create_puxch_processor_factory_sw(10, demodulator_factory);
+  report_fatal_error_if_not(puxch_proc_factory, "Failed to create PUxCH processor factory.");
+
   // Create Downlink processor factory.
   std::shared_ptr<lower_phy_downlink_processor_factory> downlink_proc_factory =
-      create_downlink_processor_factory_sw(pdxch_proc_factory, amplitude_control_factory);
+      create_downlink_processor_factory_sw(pdxch_proc_factory);
   report_fatal_error_if_not(downlink_proc_factory, "Failed to create downlink processor factory.");
 
   // Create Uplink processor factory.
@@ -98,8 +102,7 @@ static std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_con
   return create_lower_phy_factory_sw(downlink_proc_factory, uplink_proc_factory);
 }
 
-std::unique_ptr<lower_phy_sector> srsran::create_low_phy_sector(unsigned max_nof_prach_concurrent_requests,
-                                                                lower_phy_configuration&   low_cfg,
+std::unique_ptr<lower_phy_sector> srsran::create_low_phy_sector(lower_phy_configuration&   low_cfg,
                                                                 lower_phy_error_notifier&  error_notifier,
                                                                 lower_phy_timing_notifier* timing_notifier)
 {
@@ -111,7 +114,7 @@ std::unique_ptr<lower_phy_sector> srsran::create_low_phy_sector(unsigned max_nof
   low_cfg.metric_notifier = &sector->get_metrics_collector();
 
   // Create lower PHY factory.
-  auto lphy_factory = create_lower_phy_factory(low_cfg, max_nof_prach_concurrent_requests);
+  auto lphy_factory = create_lower_phy_factory(low_cfg);
   report_error_if_not(lphy_factory, "Failed to create lower PHY factory.");
 
   // Create lower PHY.

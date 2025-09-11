@@ -50,7 +50,7 @@ static void configure_cli11_epoch_time(CLI::App& app, epoch_time_t& epoch_time)
 
 static void configure_cli11_ta_info(CLI::App& app, ta_info_t& ta_info)
 {
-  add_option(app, "--ta_common", ta_info.ta_common, "TA common offset")
+  add_option(app, "--ta_common", ta_info.ta_common, "TA common")
       ->capture_default_str()
       ->check(CLI::Range(0.0, 270730.0));
   add_option(app, "--ta_common_drift", ta_info.ta_common_drift, "Drift rate of the common TA")
@@ -59,6 +59,9 @@ static void configure_cli11_ta_info(CLI::App& app, ta_info_t& ta_info)
   add_option(app, "--ta_common_drift_variant", ta_info.ta_common_drift_variant, "Drift rate variation of the common TA")
       ->capture_default_str()
       ->check(CLI::Range(0.0, 0.57898));
+  add_option(app, "--ta_common_offset", ta_info.ta_common_offset, "Constant offset added to TA common")
+      ->capture_default_str()
+      ->check(CLI::Range(0.0, 10000.0));
 }
 
 static void configure_cli11_ephemeris_info_ecef(CLI::App& app, ecef_coordinates_t& ephemeris_info)

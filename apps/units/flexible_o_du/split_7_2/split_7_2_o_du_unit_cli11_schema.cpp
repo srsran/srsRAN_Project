@@ -45,10 +45,8 @@ void srsran::autoderive_split_7_2_o_du_parameters_after_parsing(CLI::App& app, s
   // Auto derive DU low parameters. Split 7.2 does not use blocking mode.
   const auto& cell = parsed_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg.front().cell;
   nr_band     band = cell.band ? cell.band.value() : band_helper::get_band_from_dl_arfcn(cell.dl_f_ref_arfcn);
-  bool        is_blocking_mode_enabled = false;
   autoderive_du_low_parameters_after_parsing(app,
                                              parsed_cfg.du_low_cfg,
                                              band_helper::get_duplex_mode(band),
-                                             is_blocking_mode_enabled,
                                              parsed_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg.size());
 }

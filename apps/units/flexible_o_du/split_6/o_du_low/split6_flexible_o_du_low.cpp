@@ -46,4 +46,6 @@ void split6_flexible_o_du_low::start()
 void split6_flexible_o_du_low::stop()
 {
   config_msg_adaptor->get_operation_controller().stop();
+  // Clear running session.
+  odu_low_session_manager.on_stop_request();
 }

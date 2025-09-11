@@ -65,6 +65,9 @@ public:
   /// \param[in] paging_info Per UE paging information to be scheduled.
   void handle_paging_information(const sched_paging_information& paging_info);
 
+  /// Called when cell is deactivated.
+  void stop();
+
 private:
   struct ue_paging_info {
     sched_paging_information  info;

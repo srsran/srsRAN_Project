@@ -92,7 +92,10 @@ public:
   lower_phy_center_freq_controller& get_rx_center_freq_control() override;
 
   // See lower_phy_controller interface for documentation.
-  void start(baseband_gateway_timestamp init_time) override { controller->start(init_time); }
+  void start(baseband_gateway_timestamp init_time, bool start_with_sfn0) override
+  {
+    controller->start(init_time, start_with_sfn0);
+  }
 
   // See lower_phy_controller interface for documentation.
   void stop() override

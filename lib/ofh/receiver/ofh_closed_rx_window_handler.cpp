@@ -21,7 +21,6 @@
  */
 
 #include "ofh_closed_rx_window_handler.h"
-#include "srsran/srsvec/zero.h"
 #include "srsran/support/executors/task_executor.h"
 
 using namespace srsran;
@@ -46,7 +45,13 @@ closed_rx_window_handler::closed_rx_window_handler(const closed_rx_window_handle
 
 void closed_rx_window_handler::on_new_symbol(const slot_symbol_point_context& symbol_point_context)
 {
-  if (!executor.defer([internal_slot = symbol_point_context.symbol_point - notification_delay_in_symbols, this]() {
+  if (stop_manager.stop_was_requested()) {
+    return;
+  }
+
+  if (!executor.defer([internal_slot = symbol_point_context.symbol_point - notification_delay_in_symbols,
+                       this,
+                       token = stop_manager.get_token()]() {
         // Add pending contexts to the repository.
         uplink_repo->process_pending_contexts();
         prach_repo->process_pending_contexts();
@@ -63,6 +68,13 @@ void closed_rx_window_handler::on_new_symbol(const slot_symbol_point_context& sy
   }
 }
 
+void closed_rx_window_handler::collect_metrics(closed_rx_window_metrics& metrics)
+{
+  // Fill the metrics and reset internal counters.
+  metrics.nof_missing_prach_contexts = nof_missed_prach_contexts.exchange(0, std::memory_order_relaxed);
+  metrics.nof_missing_uplink_symbols = nof_missed_uplink_symbols.exchange(0, std::memory_order_relaxed);
+}
+
 void closed_rx_window_handler::handle_uplink_context(slot_symbol_point symbol_point)
 {
   expected<uplink_context::uplink_context_resource_grid_info> context =
@@ -74,16 +86,14 @@ void closed_rx_window_handler::handle_uplink_context(slot_symbol_point symbol_po
 
   uplink_context::uplink_context_resource_grid_info& ctx_value = *context;
 
-  // Fill REs corresponding to the missing symbol with zeros.
-  for (unsigned port = 0, e = ctx_value.grid->get_writer().get_nof_ports(); port != e; ++port) {
-    srsvec::zero(ctx_value.grid->get_writer().get_view(port, symbol_point.get_symbol_index()));
-  }
-
   uplane_rx_symbol_context notification_context = {
       ctx_value.context.slot, symbol_point.get_symbol_index(), ctx_value.context.sector};
-  notifier->on_new_uplink_symbol(notification_context, std::move(ctx_value.grid));
+  notifier->on_new_uplink_symbol(notification_context, std::move(ctx_value.grid), false);
 
   if (log_unreceived_messages) {
+    // Increase the metrics counter.
+    nof_missed_uplink_symbols.fetch_add(1, std::memory_order_relaxed);
+
     logger.warning("Sector#{}: missed incoming User-Plane uplink messages for slot '{}', symbol '{}'",
                    ctx_value.context.sector,
                    ctx_value.context.slot,
@@ -118,6 +128,8 @@ void closed_rx_window_handler::handle_prach_context(slot_symbol_point symbol_poi
   notifier->on_new_prach_window_data(ctx_value.context, *ctx_value.buffer);
 
   if (log_unreceived_messages) {
+    nof_missed_prach_contexts.fetch_add(1, std::memory_order_relaxed);
+
     logger.warning("Sector#{}: missed incoming User-Plane PRACH messages for slot '{}'",
                    ctx_value.context.sector,
                    ctx_value.context.slot);

@@ -31,23 +31,23 @@ constexpr std::size_t MAX_NOF_SRBS = 4;
 
 enum class srb_id_t : uint8_t { srb0 = 0, srb1, srb2, srb3, nulltype };
 
-constexpr inline std::underlying_type_t<srb_id_t> srb_id_to_uint(srb_id_t id)
+constexpr std::underlying_type_t<srb_id_t> srb_id_to_uint(srb_id_t id)
 {
   return static_cast<std::underlying_type_t<srb_id_t>>(id);
 }
 
-inline srb_id_t int_to_srb_id(std::underlying_type_t<srb_id_t> val)
+constexpr srb_id_t int_to_srb_id(std::underlying_type_t<srb_id_t> val)
 {
   return static_cast<srb_id_t>(val);
 }
 
-inline srb_id_t to_srb_id(lcid_t lcid)
+constexpr srb_id_t to_srb_id(lcid_t lcid)
 {
   return is_srb(lcid) ? static_cast<srb_id_t>(lcid) : srb_id_t::nulltype;
 }
 
 /// Convert SRB ID to LCID.
-inline lcid_t srb_id_to_lcid(srb_id_t srb_id)
+constexpr lcid_t srb_id_to_lcid(srb_id_t srb_id)
 {
   return static_cast<lcid_t>(srb_id);
 }
@@ -91,14 +91,14 @@ enum class drb_id_t : uint8_t {
   invalid
 };
 
-static constexpr std::size_t MAX_NOF_DRBS = 29;
+constexpr std::size_t MAX_NOF_DRBS = 29;
 
-constexpr inline uint8_t drb_id_to_uint(drb_id_t id)
+constexpr uint8_t drb_id_to_uint(drb_id_t id)
 {
   return static_cast<uint8_t>(id);
 }
 
-constexpr inline drb_id_t uint_to_drb_id(uint8_t id)
+constexpr drb_id_t uint_to_drb_id(uint8_t id)
 {
   return static_cast<drb_id_t>(id);
 }

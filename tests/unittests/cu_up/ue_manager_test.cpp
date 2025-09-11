@@ -78,7 +78,7 @@ protected:
   std::unique_ptr<gtpu_teid_pool>                             gtpu_n3_allocator;
   std::unique_ptr<gtpu_teid_pool>                             gtpu_f1u_allocator;
   std::unique_ptr<gtpu_tunnel_common_tx_upper_layer_notifier> gtpu_tx_notifier;
-  std::unique_ptr<e1ap_control_message_handler>               e1ap;
+  std::unique_ptr<e1ap_interface>                             e1ap;
   std::unique_ptr<cu_up_executor_mapper>                      cu_up_exec_mapper;
   dummy_inner_f1u_bearer                                      f1u_bearer;
   null_dlt_pcap                                               gtpu_pcap;

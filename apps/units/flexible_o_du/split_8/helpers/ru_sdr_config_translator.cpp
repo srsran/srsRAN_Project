@@ -36,15 +36,14 @@ static lower_phy_configuration generate_low_phy_config(const flexible_o_du_ru_co
   /// Static configuration that the gnb supports.
   static constexpr cyclic_prefix cp = cyclic_prefix::NORMAL;
 
-  const frequency_range freq_range = band_helper::get_freq_range(config.band);
-  const unsigned        bandwidth_sc =
-      NOF_SUBCARRIERS_PER_RB * band_helper::get_n_rbs_from_bw(config.bw, config.scs, freq_range);
+  const unsigned bandwidth_sc =
+      NOF_SUBCARRIERS_PER_RB * band_helper::get_n_rbs_from_bw(config.bw, config.scs, config.freq_range);
 
   lower_phy_configuration out_cfg;
 
   out_cfg.scs                        = config.scs;
   out_cfg.cp                         = cp;
-  out_cfg.bandwidth_rb               = band_helper::get_n_rbs_from_bw(config.bw, config.scs, freq_range);
+  out_cfg.bandwidth_rb               = band_helper::get_n_rbs_from_bw(config.bw, config.scs, config.freq_range);
   out_cfg.dl_freq_hz                 = band_helper::nr_arfcn_to_freq(config.dl_arfcn);
   out_cfg.ul_freq_hz                 = band_helper::nr_arfcn_to_freq(config.ul_arfcn);
   out_cfg.nof_rx_ports               = config.nof_rx_antennas;
@@ -55,7 +54,7 @@ static lower_phy_configuration generate_low_phy_config(const flexible_o_du_ru_co
 
   out_cfg.srate = sampling_rate::from_MHz(ru_cfg.srate_MHz);
 
-  out_cfg.ta_offset = band_helper::get_ta_offset(config.band);
+  out_cfg.ta_offset = band_helper::get_ta_offset(config.freq_range);
   if (ru_cfg.time_alignment_calibration.has_value()) {
     // Selects the user specific value.
     out_cfg.time_alignment_calibration = ru_cfg.time_alignment_calibration.value();
@@ -66,7 +65,7 @@ static lower_phy_configuration generate_low_phy_config(const flexible_o_du_ru_co
 
   // Select RX buffer size policy.
   if (ru_cfg.device_driver == "zmq") {
-    out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
+    out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::slot;
   } else if (ru_cfg.expert_execution_cfg.threads.execution_profile == lower_phy_thread_profile::single) {
     // For single executor, the same executor processes uplink and downlink. In this case, the processing is blocked
     // by the signal reception. The buffers must be smaller than a slot duration considering the downlink baseband
@@ -76,25 +75,11 @@ static lower_phy_configuration generate_low_phy_config(const flexible_o_du_ru_co
     out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
   }
 
-  // Select TX buffer size policy.
-  if (ru_cfg.expert_cfg.dl_buffer_size_policy == "auto") {
-    if (ru_cfg.device_driver == "zmq") {
-      out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
-    } else if (ru_cfg.expert_execution_cfg.threads.execution_profile == lower_phy_thread_profile::single) {
-      // For single executor, the same executor processes uplink and downlink. In this case, the processing is blocked
-      // by the signal reception. The buffers must be smaller than a slot duration considering the downlink baseband
-      // samples must arrive to the baseband device before the transmission time passes.
-      out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
-    } else {
-      out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::slot;
-    }
-  } else {
-    // Manual selection of the TX buffer size policy.
-    out_cfg.baseband_tx_buffer_size_policy = to_buffer_size_policy(ru_cfg.expert_cfg.dl_buffer_size_policy);
-  }
-
   // Get lower PHY system time throttling.
   out_cfg.system_time_throttling = ru_cfg.expert_cfg.lphy_dl_throttling;
+
+  // Currently, only one concurrent PRACH request is supported.
+  out_cfg.max_nof_prach_concurrent_requests = 1;
 
   // Apply gain back-off to account for the PAPR of the signal and the DFT power normalization.
   out_cfg.amplitude_config.input_gain_dB =
@@ -258,6 +243,7 @@ ru_generic_configuration srsran::generate_ru_sdr_config(const ru_sdr_unit_config
   ru_generic_configuration out_cfg;
   out_cfg.are_metrics_enabled = ru_cfg.metrics_cfg.enable_ru_metrics;
   out_cfg.device_driver       = ru_cfg.device_driver;
+  out_cfg.start_time          = ru_cfg.start_time;
   generate_radio_config(out_cfg.radio_cfg, ru_cfg, cells);
 
   unsigned sector_id = 0;
@@ -276,7 +262,7 @@ void srsran::fill_sdr_worker_manager_config(worker_manager_config& config, const
   sdr_cfg.profile   = (ru_cfg.device_driver != "zmq")
                           ? static_cast<worker_manager_config::ru_sdr_config::lower_phy_thread_profile>(
                               ru_cfg.expert_execution_cfg.threads.execution_profile)
-                          : worker_manager_config::ru_sdr_config::lower_phy_thread_profile::blocking;
+                          : worker_manager_config::ru_sdr_config::lower_phy_thread_profile::sequential;
 
   srsran_assert(config.config_affinities.size() == ru_cfg.expert_execution_cfg.cell_affinities.size(),
                 "Invalid number of cell affinities");

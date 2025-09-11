@@ -49,17 +49,17 @@ public:
   std::unique_ptr<metrics_report_session>
   create_periodic_report_session(const periodic_metric_report_request& request) override;
 
-  metrics_report request_metrics_report() const override;
+  cu_cp_metrics_report request_metrics_report() const override;
 
 private:
   /// Context of a periodic metric report session
   struct periodic_session_context {
-    unique_timer             timer;
-    metrics_report_notifier* report_notifier;
+    unique_timer                   timer;
+    cu_cp_metrics_report_notifier* report_notifier;
   };
 
   // Generate new metrics report.
-  metrics_report create_report() const;
+  cu_cp_metrics_report create_report() const;
 
   unsigned create_periodic_session(const periodic_metric_report_request& request);
   void     request_session_reconfiguration(unsigned session_id, const periodic_metric_report_request& request);

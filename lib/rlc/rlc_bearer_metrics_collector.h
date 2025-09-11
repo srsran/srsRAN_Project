@@ -41,17 +41,17 @@ public:
   /// \brief push metrics from the lower RLC executor to the collector.
   ///
   /// This will transfer the execution to UE executor; a copy of the metrics is passed through a triple buffer.
-  void push_tx_low_metrics(rlc_tx_metrics_lower m_lower_);
+  void push_tx_low_metrics(const rlc_tx_metrics_lower& m_lower_);
 
   /// \brief push metrics from the high RLC executors to the collector.
   ///
   /// As these are called from the UE executor no execution transfer is required.
-  void push_tx_high_metrics(rlc_tx_metrics_higher m_higher_);
+  void push_tx_high_metrics(const rlc_tx_metrics_higher& m_higher_);
 
   /// \brief push metrics from the high RLC executors to the collector.
   ///
   /// As these are called from the UE executor no execution transfer is required.
-  void push_rx_high_metrics(rlc_rx_metrics m_rx_high_);
+  void push_rx_high_metrics(const rlc_rx_metrics& m_rx_high_);
 
   /// \brief get metrics report period from the collector.
   const timer_duration& get_metrics_period() const { return metrics_period; }
@@ -62,9 +62,9 @@ private:
   /// Must be run from the UE executor.
   void push_report();
 
-  void push_tx_high_metrics_impl(rlc_tx_metrics_higher m_higher_);
-  void push_tx_low_metrics_impl(rlc_tx_metrics_lower m_lower_);
-  void push_rx_high_metrics_impl(rlc_rx_metrics m_rx_high_);
+  void push_tx_high_metrics_impl(const rlc_tx_metrics_higher& m_higher_);
+  void push_tx_low_metrics_impl(const rlc_tx_metrics_lower& m_lower_);
+  void push_rx_high_metrics_impl(const rlc_rx_metrics& m_rx_high_);
 
   gnb_du_id_t           du;
   du_ue_index_t         ue;

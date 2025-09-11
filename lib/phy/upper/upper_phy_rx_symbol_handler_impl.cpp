@@ -40,13 +40,14 @@ upper_phy_rx_symbol_handler_impl::upper_phy_rx_symbol_handler_impl(uplink_slot_p
 }
 
 void upper_phy_rx_symbol_handler_impl::handle_rx_symbol(const upper_phy_rx_symbol_context& context,
-                                                        const shared_resource_grid&        grid)
+                                                        const shared_resource_grid&        grid,
+                                                        bool                               is_valid)
 {
   // Get uplink processor.
   uplink_slot_processor& ul_proc = ul_processor_pool.get_slot_processor(context.slot);
 
   // Notify Rx symbol.
-  ul_proc.handle_rx_symbol(context.symbol);
+  ul_proc.handle_rx_symbol(context.symbol, is_valid);
 }
 
 void upper_phy_rx_symbol_handler_impl::handle_rx_prach_window(const prach_buffer_context& context,

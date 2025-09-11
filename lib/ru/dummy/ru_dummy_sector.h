@@ -104,11 +104,6 @@ public:
   // See ru_downlink_plane_handler interface for documentation.
   void handle_dl_data(const resource_grid_context& context, const shared_resource_grid& grid) override
   {
-    // Ignore request if RU is stopped.
-    if (stopped.load(std::memory_order_relaxed)) {
-      return;
-    }
-
     // Set the current slot information.
     std::optional<resource_grid_context> late_context =
         dl_request[context.slot.system_slot() % dl_request.size()].new_request(context, grid.copy());
@@ -129,11 +124,6 @@ public:
   // See ru_uplink_plane_handler interface for documentation.
   void handle_prach_occasion(const prach_buffer_context& context, prach_buffer& buffer) override
   {
-    // Ignore request if RU is stopped.
-    if (stopped.load(std::memory_order_relaxed)) {
-      return;
-    }
-
     std::optional<prach_buffer_context> late_context =
         prach_request[context.slot.system_slot() % prach_request.size()].new_request(context, {});
     total_prach_request_count.fetch_add(1, std::memory_order_relaxed);
@@ -152,11 +142,6 @@ public:
   // See ru_uplink_plane_handler interface for documentation.
   void handle_new_uplink_slot(const resource_grid_context& context, const shared_resource_grid& grid) override
   {
-    // Ignore request if RU is stopped.
-    if (stopped.load(std::memory_order_relaxed)) {
-      return;
-    }
-
     std::optional<resource_grid_context> late_context =
         ul_request[context.slot.system_slot() % ul_request.size()].new_request(context, grid.copy());
     total_ul_request_count.fetch_add(1, std::memory_order_relaxed);
@@ -212,7 +197,7 @@ public:
         // Notify received resource grid for each symbol.
         for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
           rx_context.symbol_id = i_symbol;
-          symbol_notifier.on_new_uplink_symbol(rx_context, ul_grid);
+          symbol_notifier.on_new_uplink_symbol(rx_context, ul_grid, true);
         }
 
       } else {
@@ -247,8 +232,19 @@ public:
     }
   }
 
-  /// Instruct the RU sector to discard new transmit/receive requests.
-  void stop() { stopped = true; }
+  /// Instruct the sector radio unit to stop and wait for the RU to clear all pending request.
+  void stop()
+  {
+    for (auto& req : dl_request) {
+      req.stop();
+    }
+    for (auto& req : ul_request) {
+      req.stop();
+    }
+    for (auto& req : prach_request) {
+      req.stop();
+    }
+  }
 
   /// Collects the RU dummy sector metrics. It does not reset the metrics.
   void collect_metrics(ru_dummy_sector_metrics& metrics) const
@@ -271,6 +267,11 @@ private:
     /// \return \c std::nullptr if there is no previous request, otherwise the context of the previous request.
     std::optional<Context> new_request(const Context& new_context, const shared_resource_grid& new_resource)
     {
+      // If the state is stopped return an empty request.
+      if (internal_state.load() == internal_states::stopped) {
+        return {};
+      }
+
       // Exchange the current internal state.
       internal_states previous_state = internal_state.exchange(internal_states::locked);
 
@@ -301,6 +302,11 @@ private:
     /// Pops the current context and grid.
     std::pair<Context, shared_resource_grid> pop()
     {
+      // If the state is stopped return an empty request.
+      if (internal_state.load() == internal_states::stopped) {
+        return {};
+      }
+
       // Exchange the current internal state.
       internal_states previous_state = internal_state.exchange(internal_states::locked);
 
@@ -326,8 +332,19 @@ private:
       return {current_context, std::move(current_resource)};
     }
 
+    /// Stops the request information from handling new requests.
+    void stop()
+    {
+      // Waits for the state to be available before transitioning to stopped.
+      for (internal_states expected_state = internal_states::available;
+           !internal_state.compare_exchange_weak(expected_state, internal_states::stopped);
+           expected_state = internal_states::available) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      }
+    }
+
   private:
-    enum class internal_states : uint32_t { available = 0, locked, in_use };
+    enum class internal_states : uint32_t { available = 0, locked, in_use, stopped };
 
     std::atomic<internal_states> internal_state = internal_states::available;
     Context                      context        = {};
@@ -352,8 +369,6 @@ private:
   std::vector<request_information<prach_buffer_context>> prach_request;
   /// Circular buffer containing the DL requests indexed by system slot.
   std::vector<request_information<resource_grid_context>> dl_request;
-  /// Stop sector from accepting new requests.
-  std::atomic<bool> stopped = false;
   /// \name  Group of event counters.
   ///
   /// These counters are informative and printed when print_metrics() is called.

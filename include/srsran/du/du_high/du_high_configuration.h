@@ -1,3 +1,24 @@
+/*
+ *
+ * Copyright 2021-2025 Software Radio Systems Limited
+ *
+ * This file is part of srsRAN.
+ *
+ * srsRAN is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * srsRAN is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * A copy of the GNU Affero General Public License can be found in
+ * the LICENSE file in the top-level directory of this distribution
+ * and at http://www.gnu.org/licenses/.
+ *
+ */
 
 #pragma once
 
@@ -60,7 +81,7 @@ struct du_high_dependencies {
   f1c_connection_client*   f1c_client        = nullptr;
   f1u_du_gateway*          f1u_gw            = nullptr;
   mac_result_notifier*     phy_adapter       = nullptr;
-  timer_manager*           timers            = nullptr;
+  mac_clock_controller*    timer_ctrl        = nullptr;
   du_metrics_notifier*     du_notifier       = nullptr;
   rlc_metrics_notifier*    rlc_metrics_notif = nullptr;
   mac_pcap*                mac_p             = nullptr;

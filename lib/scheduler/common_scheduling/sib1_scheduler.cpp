@@ -148,6 +148,12 @@ void sib1_scheduler::run_slot(cell_slot_resource_allocator& res_grid)
   }
 }
 
+void sib1_scheduler::stop()
+{
+  // Flush any pending SIB1 update.
+  handle_pending_sib1_update();
+}
+
 //  ------   Private methods   ------ .
 
 bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsigned beam_idx, unsigned time_resource)

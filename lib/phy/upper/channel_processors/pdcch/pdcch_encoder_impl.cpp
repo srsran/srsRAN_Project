@@ -52,7 +52,7 @@ void pdcch_encoder_impl::crc_attach(span<uint8_t>& c, span<const uint8_t> a, uns
 
   // Scramble CRC parity bits with RNTI
   span<uint8_t> p = c.last(RNTI_LEN);
-  srsvec::binary_xor(unpacked_rnti, p, p);
+  srsvec::binary_xor(p, unpacked_rnti, p);
 
   // Skip first L 1s added for CRC calculation
   c = c.last(c.size() - CRC_LEN);

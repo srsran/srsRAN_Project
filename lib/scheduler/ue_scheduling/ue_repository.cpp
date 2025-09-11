@@ -180,7 +180,7 @@ void ue_repository::rem_ue(const ue& u)
   }
 }
 
-void ue_repository::handle_cell_removal(du_cell_index_t cell_index)
+void ue_repository::handle_cell_deactivation(du_cell_index_t cell_index)
 {
   for (std::unique_ptr<ue>& u : ues) {
     ue_cell* ue_cc = u->find_cell(cell_index);

@@ -33,11 +33,11 @@ namespace srsran {
 namespace dpdk {
 
 /// Maximum number of queues supported by a bbdev-based hardware-accelerator.
-static constexpr unsigned MAX_NOF_BBDEV_QUEUES = 128;
+constexpr unsigned MAX_NOF_BBDEV_QUEUES = 128;
 /// Maximum number of operations that can be stored in a hardware queue at a given time.
-static constexpr unsigned MAX_NOF_OP_IN_QUEUE = 16;
+constexpr unsigned MAX_NOF_OP_IN_QUEUE = 16;
 /// Maximum number of VF instances supported by a bbdev-based hardware-accelerator.
-static constexpr unsigned MAX_NOF_BBDEV_VF_INSTANCES = 64;
+constexpr unsigned MAX_NOF_BBDEV_VF_INSTANCES = 64;
 
 /// Configuration parameters and objects tied to a bbdev-based hardware-accelerator.
 struct bbdev_acc_configuration {

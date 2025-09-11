@@ -162,6 +162,8 @@ public:
 
     bool execute(task_type&& task) { return executor.execute(std::move(task)); }
 
+    bool defer(task_type&& task) { return executor.defer(std::move(task)); }
+
   private:
     task_executor& executor;
   };
@@ -172,7 +174,7 @@ public:
   public:
     dummy_instance(uplink_slot_processor& base_) : base(base_) {}
 
-    void handle_rx_symbol(unsigned end_symbol_index) override
+    void handle_rx_symbol(unsigned end_symbol_index, bool is_valid) override
     {
       // Ignore symbol.
     }
@@ -227,7 +229,7 @@ private:
   static std::atomic<unsigned>& get_grid_ref_counter();
 
   // See uplink_slot_processor interface for documentation.
-  void handle_rx_symbol(unsigned end_symbol_index) override;
+  void handle_rx_symbol(unsigned end_symbol_index, bool is_valid) override;
 
   // See uplink_slot_processor interface for documentation.
   void process_prach(const prach_buffer& buffer, const prach_buffer_context& context) override;

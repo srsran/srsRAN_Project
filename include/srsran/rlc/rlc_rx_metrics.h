@@ -138,9 +138,8 @@ public:
   virtual void           reset_metrics()         = 0;
 };
 
-inline std::string format_rlc_rx_metrics(timer_duration metrics_period, const rlc_rx_metrics& m)
+inline void format_rlc_rx_metrics(fmt::memory_buffer& buffer, timer_duration metrics_period, const rlc_rx_metrics& m)
 {
-  fmt::memory_buffer buffer;
   fmt::format_to(
       std::back_inserter(buffer),
       "num_sdus={} sdu_rate={}bps num_pdus={} pdu_rate={}bps",
@@ -170,7 +169,6 @@ inline std::string format_rlc_rx_metrics(timer_duration metrics_period, const rl
         float_to_eng_string(
             static_cast<float>(m.mode_specific.am.num_ctrl_pdu_bytes) * 8 * 1000 / metrics_period.count(), 1, false));
   }
-  return to_c_str(buffer);
 }
 
 } // namespace srsran
@@ -188,7 +186,7 @@ struct formatter<srsran::rlc_rx_metrics> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::rlc_rx_metrics m, FormatContext& ctx) const
+  auto format(const srsran::rlc_rx_metrics& m, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "num_pdus={} num_pdu_bytes={} num_lost_pdus={} num_malformed_pdus={} num_sdus={} num_sdu_bytes={}",

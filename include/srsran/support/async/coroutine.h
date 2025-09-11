@@ -366,7 +366,7 @@ using coro_context = detail::base_coro_frame<typename FutureType::promise_type>;
     return;                                                                                                            \
     case -__LINE__:                                                                                                    \
       coro_context__.template on_await_cancel<decltype((awaitable_var))>();                                            \
-      coro_context__.state_index = detail::coro_state_tag_t::tag_cancelled;                                            \
+      coro_context__.state_index = ::srsran::detail::coro_state_tag_t::tag_cancelled;                                  \
       coro_context__.on_return();                                                                                      \
       return;                                                                                                          \
   }                                                                                                                    \
@@ -374,7 +374,7 @@ using coro_context = detail::base_coro_frame<typename FutureType::promise_type>;
 
 /// Helper macro to delete coroutine function body and suspend on final suspension point
 #define _CORO_ENTER_FINAL_SUSPEND()                                                                                    \
-  coro_context__.state_index = detail::coro_state_tag_t::tag_final_suspend;                                            \
+  coro_context__.state_index = ::srsran::detail::coro_state_tag_t::tag_final_suspend;                                  \
   coro_context__.on_return();                                                                                          \
   if (coro_context__.on_await_call(coro_context__.promise().final_suspend())) {                                        \
     goto final_cleanup;                                                                                                \
@@ -397,9 +397,9 @@ using coro_context = detail::base_coro_frame<typename FutureType::promise_type>;
   auto& coro_context__ = x;                                                                                            \
   switch (coro_context__.state_index) {                                                                                \
     default:                                                                                                           \
-      printf("Jumping to invalid label %d\n", (coro_context__).state_index);                                           \
+      std::printf("Jumping to invalid label %d\n", (coro_context__).state_index);                                      \
       return;                                                                                                          \
-    case detail::tag_init:                                                                                             \
+    case ::srsran::detail::tag_init:                                                                                   \
       CORO_AWAIT(coro_context__.promise().initial_suspend())
 
 /// Macro placed at the end of coroutine resume function body. Operations:
@@ -412,7 +412,7 @@ using coro_context = detail::base_coro_frame<typename FutureType::promise_type>;
   }                                                                                                                    \
   final_cleanup:                                                                                                       \
   coro_context__.template on_await_resume<decltype(coro_context__.promise().final_suspend())>();                       \
-  coro_context__.state_index = detail::tag_destroyed;                                                                  \
+  coro_context__.state_index = ::srsran::detail::tag_destroyed;                                                        \
   coro_context__.destroy();                                                                                            \
   return
 #define CORO_EARLY_RETURN(...)                                                                                         \

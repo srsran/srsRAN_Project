@@ -32,7 +32,8 @@ ru_ofh_impl::ru_ofh_impl(const ru_ofh_impl_config& config, ru_ofh_impl_dependenc
   error_handler(*dependencies.error_notifier),
   rx_symbol_handler(*dependencies.rx_symbol_notifier),
   ofh_timing_mngr(std::move(dependencies.timing_mngr)),
-  controller(*dependencies.logger)
+  controller(*dependencies.logger),
+  metrics_collector(ofh_timing_mngr->get_metrics_collector())
 {
   srsran_assert(ofh_timing_mngr, "Invalid Open Fronthaul timing manager");
 }
@@ -86,15 +87,16 @@ void ru_ofh_impl::set_ofh_sectors(std::vector<std::unique_ptr<ofh::sector>> ofh_
     return out;
   }(sectors));
 
-  metrics_collector = ru_ofh_metrics_collector_impl([](span<std::unique_ptr<ofh::sector>> sectors_) {
-    std::vector<ofh::metrics_collector*> out;
-    for (const auto& sector : sectors_) {
-      if (auto* collector = sector->get_metrics_collector()) {
-        out.emplace_back(collector);
-      }
-    }
-    return out;
-  }(sectors));
+  metrics_collector = ru_ofh_metrics_collector_impl(ofh_timing_mngr->get_metrics_collector(),
+                                                    [](span<std::unique_ptr<ofh::sector>> sectors_) {
+                                                      std::vector<ofh::metrics_collector*> out;
+                                                      for (const auto& sector : sectors_) {
+                                                        if (auto* collector = sector->get_metrics_collector()) {
+                                                          out.emplace_back(collector);
+                                                        }
+                                                      }
+                                                      return out;
+                                                    }(sectors));
 
   // Subscribe the OTA symbol boundary notifiers.
   std::vector<ofh::ota_symbol_boundary_notifier*> notifiers;

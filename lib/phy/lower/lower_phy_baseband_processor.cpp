@@ -23,25 +23,24 @@
 #include "lower_phy_baseband_processor.h"
 #include "srsran/adt/interval.h"
 #include "srsran/instrumentation/traces/ru_traces.h"
+#include "srsran/ran/slot_point.h"
 
 using namespace srsran;
 
 lower_phy_baseband_processor::lower_phy_baseband_processor(const lower_phy_baseband_processor::configuration& config) :
   srate(config.srate),
-  tx_buffer_size(config.tx_buffer_size),
   rx_buffer_size(config.rx_buffer_size),
-  cpu_throttling_time((config.tx_buffer_size * static_cast<uint64_t>(config.system_time_throttling * 1e6)) /
-                      config.srate.to_kHz()),
+  slot_duration(1000 / pow2(to_numerology_value(config.scs))),
+  cpu_throttling_time(static_cast<uint64_t>(config.system_time_throttling * 1e6) /
+                      pow2(to_numerology_value(config.scs))),
   rx_executor(*config.rx_task_executor),
   tx_executor(*config.tx_task_executor),
   uplink_executor(*config.ul_task_executor),
-  downlink_executor(*config.dl_task_executor),
   receiver(*config.receiver),
   transmitter(*config.transmitter),
   uplink_processor(*config.ul_bb_proc),
   downlink_processor(*config.dl_bb_proc),
   rx_buffers(config.nof_rx_buffers),
-  tx_buffers(config.nof_tx_buffers),
   tx_time_offset(config.tx_time_offset),
   rx_to_tx_max_delay(config.rx_to_tx_max_delay),
   tx_state(config.stop_nof_slots),
@@ -49,7 +48,6 @@ lower_phy_baseband_processor::lower_phy_baseband_processor(const lower_phy_baseb
 {
   static constexpr interval<float> system_time_throttling_range(0, 1);
 
-  srsran_assert(tx_buffer_size, "Invalid buffer size.");
   srsran_assert(rx_buffer_size, "Invalid buffer size.");
   srsran_assert(config.rx_task_executor, "Invalid receive task executor.");
   srsran_assert(system_time_throttling_range.contains(config.system_time_throttling),
@@ -58,7 +56,6 @@ lower_phy_baseband_processor::lower_phy_baseband_processor(const lower_phy_baseb
                 system_time_throttling_range);
   srsran_assert(config.tx_task_executor, "Invalid transmit task executor.");
   srsran_assert(config.ul_task_executor, "Invalid uplink task executor.");
-  srsran_assert(config.dl_task_executor, "Invalid downlink task executor.");
   srsran_assert(config.receiver, "Invalid baseband receiver.");
   srsran_assert(config.transmitter, "Invalid baseband transmitter.");
   srsran_assert(config.ul_bb_proc, "Invalid uplink processor.");
@@ -70,24 +67,20 @@ lower_phy_baseband_processor::lower_phy_baseband_processor(const lower_phy_baseb
   while (!rx_buffers.full()) {
     rx_buffers.push_blocking(std::make_unique<baseband_gateway_buffer_dynamic>(config.nof_rx_ports, rx_buffer_size));
   }
-
-  // Create queue of transmit buffers.
-  while (!tx_buffers.full()) {
-    tx_buffers.push_blocking(std::make_unique<baseband_gateway_buffer_dynamic>(config.nof_tx_ports, tx_buffer_size));
-  }
 }
 
-void lower_phy_baseband_processor::start(baseband_gateway_timestamp init_time)
+void lower_phy_baseband_processor::start(baseband_gateway_timestamp init_time, bool start_with_sfn0)
 {
+  // If it is required to start with system frame number 0, then set a time offset to start an SFN earlier.
+  start_time_sfn0   = start_with_sfn0 ? (init_time - NOF_SUBFRAMES_PER_FRAME * srate.to_kHz()) : 0;
   last_rx_timestamp = init_time;
 
   rx_state.start();
-  report_fatal_error_if_not(rx_executor.execute([this]() { ul_process(); }), "Failed to execute initial uplink task.");
+  report_fatal_error_if_not(rx_executor.defer([this]() { ul_process(); }), "Failed to execute initial uplink task.");
 
   tx_state.start();
-  report_fatal_error_if_not(
-      downlink_executor.execute([this, init_time]() { dl_process(init_time + rx_to_tx_max_delay); }),
-      "Failed to execute initial downlink task.");
+  report_fatal_error_if_not(tx_executor.defer([this, init_time]() { dl_process(init_time + rx_to_tx_max_delay); }),
+                            "Failed to execute initial downlink task.");
 }
 
 void lower_phy_baseband_processor::stop()
@@ -105,14 +98,11 @@ void lower_phy_baseband_processor::dl_process(baseband_gateway_timestamp timesta
     return;
   }
 
-  // Get transmit baseband buffer. It blocks if all the buffers are enqueued for transmission.
-  std::unique_ptr<baseband_gateway_buffer_dynamic> dl_buffer = tx_buffers.pop_blocking();
-
   // Throttling mechanism to keep a maximum latency of one millisecond in the transmit buffer based on the latest
   // received timestamp.
   {
     // Calculate maximum waiting time to avoid deadlock.
-    std::chrono::microseconds timeout_duration = 2 * std::chrono::microseconds(tx_buffer_size * 1000 / srate.to_kHz());
+    std::chrono::microseconds timeout_duration = 2 * slot_duration;
     // Maximum time point to wait for.
     std::chrono::time_point<std::chrono::steady_clock> wait_until_tp =
         std::chrono::steady_clock::now() + timeout_duration;
@@ -138,29 +128,24 @@ void lower_phy_baseband_processor::dl_process(baseband_gateway_timestamp timesta
   last_tx_time.emplace(std::chrono::high_resolution_clock::now());
 
   // Process downlink buffer.
-  trace_point                           tp          = ru_tracer.now();
-  baseband_gateway_transmitter_metadata baseband_md = downlink_processor.process(dl_buffer->get_writer(), timestamp);
-  ru_tracer << trace_event("downlink_baseband", tp);
+  downlink_processor_baseband::processing_result result = downlink_processor.process(timestamp - start_time_sfn0);
+  srsran_assert(result.buffer, "The buffer must be valid.");
 
   // Set transmission timestamp.
-  baseband_md.ts = timestamp + tx_time_offset;
+  result.metadata.ts = timestamp + tx_time_offset;
 
   // Enqueue transmission.
-  report_fatal_error_if_not(tx_executor.execute([this, tx_buffer = std::move(dl_buffer), baseband_md]() mutable {
-    trace_point tx_tp = ru_tracer.now();
+  trace_point tx_tp = ru_tracer.now();
 
-    // Transmit buffer.
-    transmitter.transmit(tx_buffer->get_reader(), baseband_md);
+  // Transmit buffer.
+  transmitter.transmit(result.buffer->get_reader(), result.metadata);
 
-    // Return transmit buffer to the queue.
-    tx_buffers.push_blocking(std::move(tx_buffer));
-
-    ru_tracer << trace_event("transmit_baseband", tx_tp);
-  }),
-                            "Failed to execute transmit task.");
+  ru_tracer << trace_event("transmit_baseband", tx_tp);
 
   // Enqueue DL process task.
-  report_fatal_error_if_not(downlink_executor.defer([this, timestamp]() { dl_process(timestamp + tx_buffer_size); }),
+  report_fatal_error_if_not(tx_executor.defer([this, new_timestamp = timestamp + result.buffer->get_nof_samples()]() {
+    dl_process(new_timestamp);
+  }),
                             "Failed to execute downlink processing task");
 }
 
@@ -183,11 +168,11 @@ void lower_phy_baseband_processor::ul_process()
   last_rx_timestamp.store(rx_metadata.ts + rx_buffer->get_nof_samples(), std::memory_order_release);
 
   // Queue uplink buffer processing.
-  report_fatal_error_if_not(uplink_executor.execute([this, ul_buffer = std::move(rx_buffer), rx_metadata]() mutable {
+  report_fatal_error_if_not(uplink_executor.defer([this, ul_buffer = std::move(rx_buffer), rx_metadata]() mutable {
     trace_point ul_tp = ru_tracer.now();
 
     // Process UL.
-    uplink_processor.process(ul_buffer->get_reader(), rx_metadata.ts);
+    uplink_processor.process(ul_buffer->get_reader(), rx_metadata.ts - start_time_sfn0);
 
     // Return buffer to receive.
     rx_buffers.push_blocking(std::move(ul_buffer));

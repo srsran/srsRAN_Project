@@ -32,6 +32,8 @@
 using namespace srsran;
 using namespace sched_helper;
 
+namespace {
+
 /// Estimation of the number of PRBs and MCS to use for a given number of pending bytes and channel state.
 struct mcs_prbs_selection {
   /// Recommended MCS to use.
@@ -39,6 +41,8 @@ struct mcs_prbs_selection {
   /// Number of recommended PRBs for the PDSCH grant given the number of pending bytes and chosen MCS.
   unsigned nof_prbs;
 };
+
+} // namespace
 
 static std::optional<mcs_prbs_selection> compute_newtx_required_mcs_and_prbs(const pdsch_config_params& pdsch_cfg,
                                                                              const ue_cell&             ue_cc,
@@ -211,7 +215,7 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
   unsigned                     slot_nof_symbols = cell_cfg.get_nof_dl_symbol_per_slot(pdsch_slot);
 
   // TODO: Support more search spaces.
-  constexpr static search_space_id ue_ded_ss_id = to_search_space_id(2);
+  static constexpr search_space_id ue_ded_ss_id = to_search_space_id(2);
   const search_space_info&         ss           = ue_cc.cfg().search_space(ue_ded_ss_id);
 
   if (h_dl != nullptr) {

@@ -102,16 +102,15 @@ static void validates_derived_du_params(span<const srs_du::du_cell_config> cells
     const unsigned pucch_to_prach_guardband = is_long_preamble(prach_cfg.format) ? 0U : 3U;
 
     if (rach_cfg.rach_cfg_generic.msg1_frequency_start < prb_interval_no_pucch.start() + pucch_to_prach_guardband) {
-      fmt::print(
-          "Warning: With the given prach_frequency_start={}, the PRACH opportunities overlap with the PUCCH "
-          "resources/guardband in prbs=[0, {}). Some interference between PUCCH and PRACH interference should be "
-          "expected\n",
-          rach_cfg.rach_cfg_generic.msg1_frequency_start,
-          prb_interval_no_pucch.start() + pucch_to_prach_guardband);
+      fmt::print("Warning: With the given prach_frequency_start={}, the PRACH opportunities overlap with the PUCCH "
+                 "resources/guardband in prbs=[0, {}). Some interference between PUCCH and PRACH should be "
+                 "expected\n",
+                 rach_cfg.rach_cfg_generic.msg1_frequency_start,
+                 prb_interval_no_pucch.start() + pucch_to_prach_guardband);
 
       logger.warning(
           "With the given prach_frequency_start={}, the PRACH opportunities overlap with the PUCCH resources/guardband "
-          "in prbs=[0, {}). Some interference between PUCCH and PRACH interference should be expected",
+          "in prbs=[0, {}). Some interference between PUCCH and PRACH should be expected",
           rach_cfg.rach_cfg_generic.msg1_frequency_start,
           prb_interval_no_pucch.start() + pucch_to_prach_guardband);
     }
@@ -147,7 +146,7 @@ static rlc_metrics_notifier* build_rlc_du_metrics(std::vector<app_services::metr
         std::make_unique<rlc_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
   }
 
-  if (metrics_config.json_config.enable_json_metrics) {
+  if (metrics_config.enable_json_metrics) {
     rlc_metrics_cfg.consumers.push_back(
         std::make_unique<rlc_metrics_consumer_json>(app_helpers::fetch_json_metrics_log_channel()));
   }
@@ -196,7 +195,7 @@ build_du_metrics(std::vector<app_services::metrics_config>& metrics,
         std::make_unique<du_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
   }
 
-  if (metrics_config.json_config.enable_json_metrics) {
+  if (metrics_config.enable_json_metrics) {
     du_metrics_cfg.consumers.push_back(
         std::make_unique<du_metrics_consumer_json>(app_helpers::fetch_json_metrics_log_channel()));
   }
@@ -227,7 +226,7 @@ o_du_high_unit srsran::make_o_du_high_unit(const o_du_high_unit_config&  o_du_hi
   du_hi_deps.f1c_client                    = &dependencies.f1c_client_handler;
   du_hi_deps.f1u_gw                        = &dependencies.f1u_gw;
   du_hi_deps.phy_adapter                   = nullptr;
-  du_hi_deps.timers                        = &dependencies.timer_mng;
+  du_hi_deps.timer_ctrl                    = &dependencies.timer_ctrl;
   du_hi_deps.mac_p                         = &dependencies.mac_p;
   du_hi_deps.rlc_p                         = &dependencies.rlc_p;
 

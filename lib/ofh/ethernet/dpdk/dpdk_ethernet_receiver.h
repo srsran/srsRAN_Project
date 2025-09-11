@@ -28,6 +28,7 @@
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/support/srsran_assert.h"
+#include "srsran/support/synchronization/stop_event.h"
 
 namespace srsran {
 
@@ -40,8 +41,6 @@ class frame_notifier;
 /// DPDK Ethernet receiver implementation.
 class dpdk_receiver_impl : public receiver, private receiver_operation_controller
 {
-  enum class receiver_status { running, stop_requested, stopped };
-
 public:
   dpdk_receiver_impl(task_executor&                     executor_,
                      std::shared_ptr<dpdk_port_context> port_ctx_,
@@ -72,7 +71,7 @@ private:
   frame_notifier*                    notifier;
   std::shared_ptr<dpdk_port_context> port_ctx;
   receiver_metrics_collector_impl    metrics_collector;
-  std::atomic<receiver_status>       rx_status{receiver_status::running};
+  stop_event_source                  stop_manager;
 };
 
 } // namespace ether

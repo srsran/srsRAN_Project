@@ -76,6 +76,8 @@ struct receiver_config {
   bool are_metrics_enabled = false;
   /// Warn of unreceived Radio Unit frames status.
   warn_unreceived_ru_frames log_unreceived_ru_frames = warn_unreceived_ru_frames::after_traffic_detection;
+  /// If set to true, logs late events as warnings, otherwise as info.
+  bool enable_log_warnings_for_lates = true;
 };
 
 } // namespace ofh

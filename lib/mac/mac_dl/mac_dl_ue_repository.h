@@ -31,11 +31,11 @@
 
 namespace srsran {
 
-// Array of bytes used to store the UE Contention Resolution Id.
-static constexpr size_t UE_CON_RES_ID_LEN = 6;
-using ue_con_res_id_t                     = std::array<uint8_t, UE_CON_RES_ID_LEN>;
+/// Array of bytes used to store the UE Contention Resolution Id.
+constexpr size_t UE_CON_RES_ID_LEN = 6;
+using ue_con_res_id_t              = std::array<uint8_t, UE_CON_RES_ID_LEN>;
 
-// Table for conversion between RNTI and ue indexes.
+/// Table for conversion between RNTI and ue indexes.
 using du_rnti_table = rnti_value_table<du_ue_index_t, du_ue_index_t::INVALID_DU_UE_INDEX>;
 
 /// Context of a UE in the MAC DL.
@@ -68,7 +68,7 @@ private:
 class mac_dl_ue_repository
 {
 public:
-  mac_dl_ue_repository(du_rnti_table& rnti_table_);
+  explicit mac_dl_ue_repository(du_rnti_table& rnti_table_);
 
   /// Lookup UE index based on RNTI.
   du_ue_index_t get_ue_index(rnti_t rnti) const
@@ -143,6 +143,9 @@ public:
     }
     return false;
   }
+
+  /// Remove all UEs.
+  void clear();
 
 private:
   du_rnti_table& rnti_table;

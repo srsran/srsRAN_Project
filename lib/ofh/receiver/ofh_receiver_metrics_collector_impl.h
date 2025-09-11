@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "ofh_closed_rx_window_handler.h"
 #include "ofh_message_receiver_metrics_collector.h"
 #include "ofh_rx_window_checker.h"
 #include "srsran/ofh/ethernet/ethernet_receiver_metrics_collector.h"
@@ -35,10 +36,12 @@ class receiver_metrics_collector_impl : public receiver_metrics_collector
 {
 public:
   receiver_metrics_collector_impl(bool                                metrics_enabled,
+                                  closed_rx_window_handler&           closed_window_handler_,
                                   rx_window_checker&                  window_checker_,
                                   message_receiver_metrics_collector* msg_rcv_metrics_collector_,
                                   ether::receiver_metrics_collector*  eth_rcv_metrics_collector_) :
     is_disabled(!metrics_enabled),
+    closed_window_handler(closed_window_handler_),
     window_checker(window_checker_),
     msg_rcv_metrics_collector(msg_rcv_metrics_collector_),
     eth_rcv_metrics_collector(eth_rcv_metrics_collector_)
@@ -56,6 +59,7 @@ public:
       return;
     }
 
+    closed_window_handler.collect_metrics(metrics.closed_window_metrics);
     window_checker.collect_metrics(metrics.rx_messages_metrics);
     msg_rcv_metrics_collector->collect_metrics(metrics.rx_decoding_perf_metrics);
     eth_rcv_metrics_collector->collect_metrics(metrics.eth_receiver_metrics);
@@ -66,6 +70,7 @@ public:
 
 private:
   const bool                          is_disabled;
+  closed_rx_window_handler&           closed_window_handler;
   rx_window_checker&                  window_checker;
   message_receiver_metrics_collector* msg_rcv_metrics_collector;
   ether::receiver_metrics_collector*  eth_rcv_metrics_collector;

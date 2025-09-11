@@ -48,10 +48,10 @@ pdu_session_resource_release_routine::pdu_session_resource_release_routine(
 }
 
 // Handle RRC reconfiguration result.
-bool handle_rrc_reconfiguration_response(cu_cp_pdu_session_resource_release_response&      response_msg,
-                                         const cu_cp_pdu_session_resource_release_command& release_cmd,
-                                         bool                                              rrc_reconfig_result,
-                                         const srslog::basic_logger&                       logger)
+static bool handle_rrc_reconfiguration_response(cu_cp_pdu_session_resource_release_response&      response_msg,
+                                                const cu_cp_pdu_session_resource_release_command& release_cmd,
+                                                bool                                              rrc_reconfig_result,
+                                                const srslog::basic_logger&                       logger)
 {
   // Let all PDU sessions fail if response is negative.
   if (!rrc_reconfig_result) {
@@ -148,6 +148,7 @@ void pdu_session_resource_release_routine::operator()(
                                   false,
                                   std::nullopt,
                                   {},
+                                  std::nullopt,
                                   logger)) {
         logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", release_cmd.ue_index, name());
         CORO_EARLY_RETURN(handle_pdu_session_resource_release_response(false));

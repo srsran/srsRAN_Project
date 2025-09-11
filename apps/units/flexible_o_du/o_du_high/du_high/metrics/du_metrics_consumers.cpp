@@ -21,6 +21,8 @@
  */
 
 #include "du_metrics_consumers.h"
+#include "apps/helpers/metrics/json_generators/du_high/scheduler.h"
+#include "apps/helpers/metrics/json_generators/o_du_high.h"
 #include "du_metrics.h"
 
 using namespace srsran;
@@ -48,8 +50,10 @@ void du_metrics_consumer_json::handle_metric(const app_services::metrics_set& me
     return;
   }
 
-  mac_consumer.handle_metric(report.mac->dl);
-  sched_handler.handle_metric(report.mac->sched);
+  log_chan("{}", app_helpers::json_generators::generate_string(report, 2));
+  if (report.mac) {
+    log_chan("{}", app_helpers::json_generators::generate_string(report.mac->sched, 2));
+  }
 }
 
 void du_metrics_consumer_log::handle_metric(const app_services::metrics_set& metric)

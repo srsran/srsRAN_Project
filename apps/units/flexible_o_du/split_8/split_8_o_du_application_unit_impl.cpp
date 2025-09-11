@@ -48,10 +48,9 @@ void split_8_o_du_application_unit_impl::on_configuration_parameters_autoderivat
   autoderive_split_8_o_du_parameters_after_parsing(app, unit_cfg);
 }
 
-bool split_8_o_du_application_unit_impl::on_configuration_validation(
-    const os_sched_affinity_bitmask& available_cpus) const
+bool split_8_o_du_application_unit_impl::on_configuration_validation() const
 {
-  return validate_split_8_o_du_unit_config(unit_cfg, available_cpus);
+  return validate_split_8_o_du_unit_config(unit_cfg);
 }
 
 split_8_o_du_application_unit_impl::split_8_o_du_application_unit_impl(std::string_view app_name)
@@ -88,7 +87,14 @@ void split_8_o_du_application_unit_impl::fill_worker_manager_config(worker_manag
   bool     is_blocking_mode_enable = unit_cfg.ru_cfg.device_driver == "zmq";
   unsigned nof_cells               = unit_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg.size();
   fill_du_high_worker_manager_config(config, unit_cfg.odu_high_cfg.du_high_cfg.config, is_blocking_mode_enable);
-  fill_du_low_worker_manager_config(config, unit_cfg.du_low_cfg, is_blocking_mode_enable, nof_cells);
+  std::vector<unsigned> nof_dl_antennas;
+  std::vector<unsigned> nof_ul_antennas;
+  for (const auto& cell : unit_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg) {
+    nof_dl_antennas.push_back(cell.cell.nof_antennas_dl);
+    nof_ul_antennas.push_back(cell.cell.nof_antennas_ul);
+  }
+  fill_du_low_worker_manager_config(
+      config, unit_cfg.du_low_cfg, is_blocking_mode_enable, nof_dl_antennas, nof_ul_antennas);
   fill_fapi_worker_manager_config(config, unit_cfg.odu_high_cfg.fapi_cfg, nof_cells);
   fill_sdr_worker_manager_config(config, unit_cfg.ru_cfg);
 }

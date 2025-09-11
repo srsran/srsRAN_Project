@@ -41,6 +41,9 @@ public:
 
   void run_slot(cell_resource_allocator& res_alloc) override;
 
+  /// Called on cell deactivation.
+  void stop();
+
   void add_ue(const ue_cell_configuration& ue_cfg) override;
 
   void rem_ue(const ue_cell_configuration& ue_cfg) override;

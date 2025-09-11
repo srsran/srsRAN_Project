@@ -1060,3 +1060,18 @@ ngap_message srsran::srs_cu_cp::generate_handover_cancel_ack(amf_ue_id_t amf_ue_
 
   return ngap_msg;
 }
+
+ngap_message srsran::srs_cu_cp::generate_ng_reset_ack(const asn1::ngap::ue_associated_lc_ng_conn_list_l& ng_reset_ues)
+{
+  ngap_message ngap_msg;
+
+  ngap_msg.pdu.set_successful_outcome();
+  ngap_msg.pdu.successful_outcome().load_info_obj(ASN1_NGAP_ID_NG_RESET);
+  if (ng_reset_ues.size() > 0) {
+    auto& ng_reset_ack                                  = ngap_msg.pdu.successful_outcome().value.ng_reset_ack();
+    ng_reset_ack->ue_associated_lc_ng_conn_list_present = true;
+    ng_reset_ack->ue_associated_lc_ng_conn_list         = ng_reset_ues;
+  }
+
+  return ngap_msg;
+}

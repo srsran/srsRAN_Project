@@ -1132,5 +1132,39 @@ fill_asn1_handover_notify(asn1::ngap::ho_notify_s& asn1_msg, const nr_cell_globa
   user_loc_info_nr.tai.tac.from_number(tac);
 }
 
+/// \brief Convert the UL RAN Status Transfer struct to ASN.1.
+/// \param[out] asn1_msg The UL RAN Status Transfer ASN1 struct to fill.
+/// \param[in] drb_list The list of DRB status transfer information.
+inline void
+fill_asn1_ul_ran_status_transfer(asn1::ngap::ul_ran_status_transfer_s&                                         asn1_msg,
+                                 const slotted_id_vector<drb_id_t, ngap_drbs_subject_to_status_transfer_item>& drb_list)
+{
+  asn1::ngap::drbs_subject_to_status_transfer_list_l& asn1_drb_list =
+      asn1_msg->ran_status_transfer_transparent_container.drbs_subject_to_status_transfer_list;
+  for (const ngap_drbs_subject_to_status_transfer_item& drb : drb_list) {
+    asn1::ngap::drbs_subject_to_status_transfer_item_s asn1_drb_item = {};
+    asn1_drb_item.drb_id                                             = drb_id_to_uint(drb.drb_id);
+    if (drb.drb_status_ul.sn_size == pdcp_sn_size::size12bits) {
+      asn1_drb_item.drb_status_ul.set_drb_status_ul12();
+      asn1_drb_item.drb_status_ul.drb_status_ul12().ul_count_value.hfn_pdcp_sn12 = drb.drb_status_ul.ul_count.hfn;
+      asn1_drb_item.drb_status_ul.drb_status_ul12().ul_count_value.pdcp_sn12     = drb.drb_status_ul.ul_count.sn;
+    } else {
+      asn1_drb_item.drb_status_ul.set_drb_status_ul18();
+      asn1_drb_item.drb_status_ul.drb_status_ul18().ul_count_value.hfn_pdcp_sn18 = drb.drb_status_ul.ul_count.hfn;
+      asn1_drb_item.drb_status_ul.drb_status_ul18().ul_count_value.pdcp_sn18     = drb.drb_status_ul.ul_count.sn;
+    }
+    if (drb.drb_status_dl.sn_size == pdcp_sn_size::size12bits) {
+      asn1_drb_item.drb_status_dl.set_drb_status_dl12();
+      asn1_drb_item.drb_status_dl.drb_status_dl12().dl_count_value.hfn_pdcp_sn12 = drb.drb_status_dl.dl_count.hfn;
+      asn1_drb_item.drb_status_dl.drb_status_dl12().dl_count_value.pdcp_sn12     = drb.drb_status_dl.dl_count.sn;
+    } else {
+      asn1_drb_item.drb_status_dl.set_drb_status_dl18();
+      asn1_drb_item.drb_status_dl.drb_status_dl18().dl_count_value.hfn_pdcp_sn18 = drb.drb_status_dl.dl_count.hfn;
+      asn1_drb_item.drb_status_dl.drb_status_dl18().dl_count_value.pdcp_sn18     = drb.drb_status_dl.dl_count.sn;
+    }
+    asn1_drb_list.push_back(asn1_drb_item);
+  }
+}
+
 } // namespace srs_cu_cp
 } // namespace srsran

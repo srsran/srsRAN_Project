@@ -39,11 +39,13 @@ public:
 
   /// \brief Start scheduling for a given cell. If cell was already activated, this operation has no effect.
   /// \param cell_idx DU-specific index of the cell for which the slot is being processed.
-  virtual void start_cell(du_cell_index_t cell_idx) = 0;
+  /// \remark This function must be called before the first slot indication is processed.
+  virtual void handle_cell_activation(du_cell_index_t cell_idx) = 0;
 
   /// \brief Stop running cell. If cell was already deactivated, this operation has no effect.
   /// \param cell_idx DU-specific index of the cell for which the slot is being processed.
-  virtual void stop_cell(du_cell_index_t cell_idx) = 0;
+  /// \remark This function must be called after the last slot indication is processed.
+  virtual void handle_cell_deactivation(du_cell_index_t cell_idx) = 0;
 
   /// \brief Processes a new slot for a specific cell in the MAC scheduler.
   /// \param slot_tx SFN + slot index of the Transmit slot to be processed.

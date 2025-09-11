@@ -29,7 +29,7 @@ bwp_rb_bitmap::bwp_rb_bitmap(uint32_t bwp_nof_prbs, uint32_t bwp_prb_start_, boo
   prbs_(bwp_nof_prbs),
   rbgs_(get_nof_rbgs(crb_interval(bwp_prb_start_, bwp_prb_start_ + bwp_nof_prbs), config1_or_2)),
   P_(get_nominal_rbg_size(bwp_nof_prbs, config1_or_2)),
-  Pnofbits(log2(to_nominal_rbg_size_value(P_))),
+  Pnofbits(std::log2(to_nominal_rbg_size_value(P_))),
   first_rbg_size(get_rbg_size(crb_interval(bwp_prb_start_, bwp_prb_start_ + bwp_nof_prbs), P_, 0))
 {
 }

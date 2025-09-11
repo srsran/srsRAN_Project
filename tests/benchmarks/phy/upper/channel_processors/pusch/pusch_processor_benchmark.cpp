@@ -344,7 +344,7 @@ static int parse_args(int argc, char** argv)
       case 'h':
       default:
         usage(argv[0]);
-        exit(0);
+        std::exit(0);
     }
   }
 
@@ -649,7 +649,6 @@ static std::shared_ptr<pusch_processor_factory> create_pusch_processor_factory()
   pusch_proc_pool_config.uci_factory            = uci_proc_factory;
   pusch_proc_pool_config.nof_regular_processors = nof_threads;
   pusch_proc_pool_config.nof_uci_processors     = nof_threads;
-  pusch_proc_pool_config.blocking               = true;
 
   pusch_proc_factory = create_pusch_processor_pool(pusch_proc_pool_config);
   TESTASSERT(pusch_proc_factory);
@@ -720,7 +719,9 @@ static void thread_process(pusch_processor&              proc,
     unique_rx_buffer rm_buffer = buffer_pool->get_pool().reserve(config.slot, buffer_id, nof_codeblocks, true);
 
     // Process PDU.
-    [&]() SRSRAN_RTSAN_NONBLOCKING { proc.process(data, std::move(rm_buffer), result_notifier, grid, config); }();
+    [&]() noexcept SRSRAN_RTSAN_NONBLOCKING {
+      proc.process(data, std::move(rm_buffer), result_notifier, grid, config);
+    }();
 
     // Wait for finish the task.
     result_notifier.wait_for_completion();

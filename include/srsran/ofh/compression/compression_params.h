@@ -30,13 +30,13 @@ namespace srsran {
 namespace ofh {
 
 /// Maximum allowed bit width of compressed IQ data.
-static constexpr unsigned MAX_IQ_WIDTH = 16U;
+constexpr unsigned MAX_IQ_WIDTH = 16U;
 
 /// Bit width used by quantization of input complex IQ samples.
-static constexpr unsigned Q_BIT_WIDTH = MAX_IQ_WIDTH;
+constexpr unsigned Q_BIT_WIDTH = MAX_IQ_WIDTH;
 
 /// Number of compression types supported.
-static constexpr unsigned NOF_COMPRESSION_TYPES_SUPPORTED = 7U;
+constexpr unsigned NOF_COMPRESSION_TYPES_SUPPORTED = 7U;
 
 /// Compression type used to (de)compress IQ samples.
 enum class compression_type {
@@ -72,7 +72,7 @@ struct ru_compression_params {
   unsigned data_width;
 };
 
-inline compression_type to_compression_type(unsigned compr_value)
+constexpr compression_type to_compression_type(unsigned compr_value)
 {
   return (compr_value < static_cast<unsigned>(compression_type::reserved)) ? static_cast<compression_type>(compr_value)
                                                                            : compression_type::reserved;

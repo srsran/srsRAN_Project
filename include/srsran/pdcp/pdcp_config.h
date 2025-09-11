@@ -262,6 +262,7 @@ inline pdcp_config pdcp_make_default_srb_config()
   config.tx.sn_size                = pdcp_sn_size::size12bits;
   config.tx.direction              = pdcp_security_direction::downlink;
   config.tx.status_report_required = false;
+  config.tx.discard_timer          = pdcp_discard_timer::infinity;
 
   // Rx config.
   config.rx.sn_size               = pdcp_sn_size::size12bits;
@@ -274,6 +275,16 @@ inline pdcp_config pdcp_make_default_srb_config()
 
   return config;
 }
+
+struct pdcp_count_info {
+  uint32_t sn  = 0;
+  uint32_t hfn = 0;
+};
+
+struct pdcp_sn_status_info {
+  pdcp_count_info ul_count;
+  pdcp_count_info dl_count;
+};
 
 } // namespace srsran
 

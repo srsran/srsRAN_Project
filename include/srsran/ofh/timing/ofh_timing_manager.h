@@ -24,6 +24,7 @@
 
 #include "srsran/ofh/ofh_controller.h"
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier_manager.h"
+#include "srsran/ofh/timing/ofh_timing_metrics_collector.h"
 
 namespace srsran {
 namespace ofh {
@@ -40,6 +41,9 @@ public:
 
   /// Returns the OTA symbol boundary notifier manager of this timing manager.
   virtual ota_symbol_boundary_notifier_manager& get_ota_symbol_boundary_notifier_manager() = 0;
+
+  /// Returns the timing metrics collector of this timing manager.
+  virtual timing_metrics_collector& get_metrics_collector() = 0;
 };
 
 } // namespace ofh

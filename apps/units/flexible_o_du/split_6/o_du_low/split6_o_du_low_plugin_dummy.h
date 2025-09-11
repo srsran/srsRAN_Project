@@ -42,12 +42,14 @@ public:
   void on_loggers_registration() override {}
 
   // See interface for documentation.
-  std::unique_ptr<fapi::config_messages_adaptor> create_config_messages_adaptor(fapi::config_message_gateway& gateway,
-                                                                                task_executor& executor) override;
+  std::unique_ptr<fapi::config_messages_adaptor>
+  create_config_messages_adaptor(fapi::config_message_gateway& gateway,
+                                 task_executor&                executor,
+                                 task_executor&                control_executor) override;
 
   // See interface for documentation.
   std::unique_ptr<fapi::slot_messages_adaptor_factory>
-  create_slot_messages_adaptor_factory(task_executor& executor) override;
+  create_slot_messages_adaptor_factory(task_executor& executor, task_executor& control_executor) override;
 
   // See interface for documentation.
   void fill_worker_manager_config(worker_manager_config& config) override {}

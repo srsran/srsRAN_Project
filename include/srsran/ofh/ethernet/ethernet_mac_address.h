@@ -29,7 +29,7 @@ namespace srsran {
 namespace ether {
 
 /// Size in bytes of an Ethernet MAC address.
-static constexpr unsigned ETH_ADDR_LEN = 6;
+constexpr unsigned ETH_ADDR_LEN = 6;
 
 /// Type alias for an Ethernet MAC address.
 using mac_address = std::array<uint8_t, ETH_ADDR_LEN>;

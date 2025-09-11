@@ -34,6 +34,8 @@ struct lower_phy_rx_symbol_context {
   unsigned sector;
   /// The last processed symbol index within the slot.
   unsigned nof_symbols;
+  /// Set to true if the received OFDM symbol contains valid information.
+  bool is_valid;
 };
 
 } // namespace srsran

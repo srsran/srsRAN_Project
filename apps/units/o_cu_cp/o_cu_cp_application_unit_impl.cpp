@@ -52,7 +52,7 @@ void o_cu_cp_application_unit_impl::on_configuration_parameters_autoderivation(C
   autoderive_o_cu_cp_e2_parameters_after_parsing(unit_cfg.e2_cfg);
 }
 
-bool o_cu_cp_application_unit_impl::on_configuration_validation(const os_sched_affinity_bitmask& available_cpus) const
+bool o_cu_cp_application_unit_impl::on_configuration_validation() const
 {
   return validate_cu_cp_unit_config(unit_cfg.cucp_cfg);
 }

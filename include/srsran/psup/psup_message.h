@@ -27,46 +27,46 @@
 
 namespace srsran {
 
-/// PSUP PDU Type
+/// PSUP PDU Type.
 ///
-/// Ref: TS 38.415 Sec. 5.5.3.1
+/// Ref: TS 38.415 Sec. 5.5.3.1.
 enum class psup_pdu_type : uint8_t { dl_pdu_session_information = 0, ul_pdu_session_information = 1 };
 
 /// Convert PSUP PDU Type to integer.
-constexpr inline uint8_t psup_pdu_type_to_uint(psup_pdu_type pdu_type)
+constexpr uint8_t psup_pdu_type_to_uint(psup_pdu_type pdu_type)
 {
   return static_cast<uint8_t>(pdu_type);
 }
 
 /// Convert integer to PSUP PDU Type.
-constexpr inline psup_pdu_type uint_to_psup_pdu_type(uint8_t num)
+constexpr psup_pdu_type uint_to_psup_pdu_type(uint8_t num)
 {
   return static_cast<psup_pdu_type>(num);
 }
 
-// See TS 38.415 Sec. 5.5.3.7: Pagin Policy Indicator (PPI) - value range: (0..7)
-static constexpr uint8_t MAX_NOF_PPI = 8;
+/// See TS 38.415 Sec. 5.5.3.7: Pagin Policy Indicator (PPI) - value range: (0..7).
+constexpr uint8_t MAX_NOF_PPI = 8;
 
-/// PSUP Paging Policy Indicator (PPI)
+/// PSUP Paging Policy Indicator (PPI).
 ///
-/// Ref: TS 38.415 Sec. 5.5.3.7
+/// Ref: TS 38.415 Sec. 5.5.3.7.
 enum class psup_ppi : uint8_t { min = 0, max = MAX_NOF_PPI - 1, invalid = MAX_NOF_PPI };
 
 /// Convert PSUP Paging Policy Indicator to integer.
-constexpr inline uint8_t psup_ppi_to_uint(psup_ppi ppi)
+constexpr uint8_t psup_ppi_to_uint(psup_ppi ppi)
 {
   return static_cast<uint8_t>(ppi);
 }
 
 /// Convert integer to PSUP Paging Policy Indicator.
-constexpr inline psup_ppi uint_to_psup_ppi(uint8_t num)
+constexpr psup_ppi uint_to_psup_ppi(uint8_t num)
 {
   return static_cast<psup_ppi>(num);
 }
 
-/// DL PDU SESSION INFORMATION (PDU Type 0)
+/// DL PDU SESSION INFORMATION (PDU Type 0).
 ///
-/// Ref: TS 38.415 Sec. 5.2.2.1
+/// Ref: TS 38.415 Sec. 5.2.2.1.
 struct psup_dl_pdu_session_information {
   /// PDU Type.
   /// The PDU Type indicates the structure of the PDU session UP frame. The field takes the value of the PDU Type it
@@ -101,9 +101,9 @@ struct psup_dl_pdu_session_information {
   }
 };
 
-/// UL PDU SESSION INFORMATION (PDU Type 1)
+/// UL PDU SESSION INFORMATION (PDU Type 1).
 ///
-/// Ref: TS 38.415 Sec. 5.2.2.2
+/// Ref: TS 38.415 Sec. 5.2.2.2.
 struct psup_ul_pdu_session_information {
   /// PDU Type.
   /// The PDU Type indicates the structure of the PDU session UP frame. The field takes the value of the PDU Type it

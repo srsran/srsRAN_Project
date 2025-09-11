@@ -80,10 +80,10 @@ class rrc_ue_test_helper
 protected:
   rrc_ue_test_helper() :
     cu_cp_cfg([this]() {
-      cu_cp_configuration cucfg          = config_helpers::make_default_cu_cp_config();
-      cucfg.services.timers              = &timers;
-      cucfg.services.cu_cp_executor      = &ctrl_worker;
-      cucfg.rrc.rrc_procedure_timeout_ms = std::chrono::milliseconds{160};
+      cu_cp_configuration cucfg             = config_helpers::make_default_cu_cp_config();
+      cucfg.services.timers                 = &timers;
+      cucfg.services.cu_cp_executor         = &ctrl_worker;
+      cucfg.rrc.rrc_procedure_guard_time_ms = std::chrono::milliseconds{10000};
       return cucfg;
     }())
   {
@@ -117,8 +117,8 @@ protected:
     meas_timing.freq_and_timing.value().ssb_meas_timing_cfg.periodicity_and_offset.offset = 0;
 
     ue_cfg.meas_timings.push_back(meas_timing);
-    ue_cfg.rrc_procedure_timeout_ms = cu_cp_cfg.rrc.rrc_procedure_timeout_ms;
-    rrc_ue                          = std::make_unique<rrc_ue_impl>(*rrc_ue_create_msg.f1ap_pdu_notifier,
+    ue_cfg.rrc_procedure_guard_time_ms = cu_cp_cfg.rrc.rrc_procedure_guard_time_ms;
+    rrc_ue                             = std::make_unique<rrc_ue_impl>(*rrc_ue_create_msg.f1ap_pdu_notifier,
                                            rrc_ue_ngap_notifier,
                                            *rrc_ue_create_msg.rrc_ue_cu_cp_notifier,
                                            *rrc_ue_create_msg.measurement_notifier,
@@ -292,9 +292,11 @@ protected:
               rrc_ue->get_srbs().end());
   }
 
+  std::chrono::milliseconds t300{400};
+
   void tick_timer()
   {
-    for (unsigned i = 0; i < cu_cp_cfg.rrc.rrc_procedure_timeout_ms.count(); ++i) {
+    for (unsigned i = 0; i < (t300 + cu_cp_cfg.rrc.rrc_procedure_guard_time_ms).count(); ++i) {
       task_sched_handle.tick_timer();
       ctrl_worker.run_pending_tasks();
     }

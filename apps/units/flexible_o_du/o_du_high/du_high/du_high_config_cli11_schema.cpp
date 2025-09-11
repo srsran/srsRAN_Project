@@ -99,45 +99,8 @@ static void configure_cli11_log_args(CLI::App& app, du_high_unit_logger_config& 
       ->always_capture_default();
 }
 
-static void configure_cli11_cell_affinity_args(CLI::App& app, du_high_unit_cpu_affinities_cell_config& config)
-{
-  add_option_function<std::string>(
-      app,
-      "--l2_cell_cpus",
-      [&config](const std::string& value) { parse_affinity_mask(config.l2_cell_cpu_cfg.mask, value, "l2_cell_cpus"); },
-      "CPU cores assigned to L2 cell tasks");
-
-  add_option_function<std::string>(
-      app,
-      "--l2_cell_pinning",
-      [&config](const std::string& value) {
-        config.l2_cell_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
-        if (config.l2_cell_cpu_cfg.pinning_policy == sched_affinity_mask_policy::last) {
-          report_error("Incorrect value={} used in {} property", value, "l2_cell_pinning");
-        }
-      },
-      "Policy used for assigning CPU cores to L2 cell tasks");
-}
-
 static void configure_cli11_expert_execution_args(CLI::App& app, du_high_unit_expert_execution_config& config)
 {
-  // Cell affinity section.
-  add_option_cell(
-      app,
-      "--cell_affinities",
-      [&config](const std::vector<std::string>& values) {
-        config.cell_affinities.resize(values.size());
-        for (unsigned i = 0, e = values.size(); i != e; ++i) {
-          CLI::App subapp("DU high expert execution cell CPU affinities",
-                          "DU high expert execution cell CPU affinities config, item #" + std::to_string(i));
-          subapp.config_formatter(create_yaml_config_parser());
-          subapp.allow_config_extras();
-          configure_cli11_cell_affinity_args(subapp, config.cell_affinities[i]);
-          std::istringstream ss(values[i]);
-          subapp.parse_from_stream(ss);
-        }
-      },
-      "Sets the cell CPU affinities configuration on a per cell basis");
   CLI::App* queues_subcmd = add_subcommand(app, "queues", "Task executor queue parameters")->configurable();
   add_option(*queues_subcmd,
              "--du_ue_data_executor_queue_size",
@@ -408,6 +371,11 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
              "transmission layers. The actual maximum is limited by the number of DL antennas.")
       ->capture_default_str()
       ->check(CLI::NonNegativeNumber);
+  add_option(app,
+             "--enable_csi_rs_pdsch_multiplexing",
+             pdsch_params.enable_csi_rs_pdsch_multiplexing,
+             "Enable multiplexing of CSI-RS and PDSCH")
+      ->capture_default_str();
 }
 
 static void configure_cli11_du_args(CLI::App& app, bool& warn_on_drop)
@@ -761,6 +729,12 @@ static void configure_cli11_ul_common_args(CLI::App& app, du_high_unit_ul_common
              "Maximum number of UL grants that can be allocated per slot")
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)(MAX_PUSCH_PDUS_PER_SLOT + MAX_PUCCH_PDUS_PER_SLOT)));
+  add_option(app,
+             "--min_pucch_pusch_prb_distance",
+             ul_common_params.min_pucch_pusch_prb_distance,
+             "Minimum PRB distance between PUCCH and UE-dedicated PUSCH grants")
+      ->capture_default_str()
+      ->check(CLI::Range(0U, (unsigned)MAX_NOF_PRBS / 2U));
 }
 
 static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config& pusch_params)
@@ -1916,7 +1890,7 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
       ->check(CLI::Range(22, 32));
   add_option(app, "--gnb_du_id", parsed_cfg.config.gnb_du_id, "gNB-DU Id")
       ->capture_default_str()
-      ->check(CLI::Range(static_cast<uint64_t>(0U), static_cast<uint64_t>(pow(2, 36) - 1)));
+      ->check(CLI::Range(static_cast<uint64_t>(0U), static_cast<uint64_t>((uint64_t(1) << 36) - 1)));
 
   // Loggers section.
   CLI::App* log_subcmd = add_subcommand(app, "log", "Logging configuration")->configurable();
@@ -1982,8 +1956,6 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
       app,
       "--cells",
       [&parsed_cfg](const std::vector<std::string>& values) {
-        // Resize the number of cells that controls the CPU affinites.
-        parsed_cfg.config.expert_execution_cfg.cell_affinities.resize(values.size());
         // Prepare the cells from the common cell.
         parsed_cfg.config.cells_cfg.resize(values.size());
         for (auto& cell : parsed_cfg.config.cells_cfg) {
@@ -2103,10 +2075,11 @@ static void derive_auto_params(du_high_unit_config& config)
     if (cell.cell.ntn_cfg.has_value()) {
       auto& sib_cfg = cell.cell.sib_cfg;
       auto& ntn_cfg = cell.cell.ntn_cfg;
-      for (const auto& si_msg : sib_cfg.si_sched_info) {
+      for (unsigned i = 0, ie = sib_cfg.si_sched_info.size(); i != ie; ++i) {
+        const auto& si_msg = sib_cfg.si_sched_info[i];
         for (unsigned j = 0, je = si_msg.sib_mapping_info.size(); j != je; ++j) {
           if (si_msg.sib_mapping_info[j] == 19) {
-            ntn_cfg->si_msg_idx          = j;
+            ntn_cfg->si_msg_idx          = i;
             ntn_cfg->si_period_rf        = si_msg.si_period_rf;
             ntn_cfg->si_window_len_slots = sib_cfg.si_window_len_slots;
             ntn_cfg->si_window_position  = si_msg.si_window_position;

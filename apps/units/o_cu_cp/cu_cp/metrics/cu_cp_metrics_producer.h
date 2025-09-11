@@ -29,13 +29,13 @@
 namespace srsran {
 
 /// CU-CP metrics producer implementation.
-class cu_cp_metrics_producer_impl : public srs_cu_cp::metrics_report_notifier, public app_services::metrics_producer
+class cu_cp_metrics_producer_impl : public cu_cp_metrics_report_notifier, public app_services::metrics_producer
 {
 public:
   explicit cu_cp_metrics_producer_impl(app_services::metrics_notifier& notifier_) : notifier(notifier_) {}
 
   // See interface for documentation.
-  void notify_metrics_report_request(const srs_cu_cp::metrics_report& metrics) override;
+  void notify_metrics_report_request(const cu_cp_metrics_report& metrics) override;
 
   // See interface for documentation.
   void on_new_report_period() override {}

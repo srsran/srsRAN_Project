@@ -44,8 +44,9 @@ public:
   /// The fist uplink processing block is expected at \c init_time and the first downlink processing block transmission
   /// will be relative to this time.
   ///
-  /// \param[in] init_time Initial time in clock ticks.
-  virtual void start(baseband_gateway_timestamp init_time) = 0;
+  /// \param[in] init_time       Initial time in clock ticks.
+  /// \param[in] start_with_sfn0 Set to true for starting at system frame number zero.
+  virtual void start(baseband_gateway_timestamp init_time, bool start_with_sfn0) = 0;
 
   /// \brief Stops the lower physical layer operation.
   ///

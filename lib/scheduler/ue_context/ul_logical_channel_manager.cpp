@@ -25,7 +25,7 @@
 using namespace srsran;
 
 // Initial capacity for the slice_lcid_list_lookup vector.
-constexpr unsigned INITIAL_SLICE_CAPACITY = 4;
+static constexpr unsigned INITIAL_SLICE_CAPACITY = 4;
 
 ul_logical_channel_manager::ul_logical_channel_manager(subcarrier_spacing              scs,
                                                        logical_channel_config_list_ptr log_channels_configs) :

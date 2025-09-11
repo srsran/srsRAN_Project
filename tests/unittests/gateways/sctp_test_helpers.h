@@ -127,7 +127,7 @@ public:
                                   &data.msg_flags);
     if (rx_bytes < 0) {
       if (errno != EAGAIN) {
-        logger.error("Recv error: {}", strerror(errno));
+        logger.error("Recv error: {}", ::strerror(errno));
       }
       return std::nullopt;
     }
@@ -163,16 +163,16 @@ public:
   bool send_eof(int ppid, const sockaddr& dest_addr, socklen_t dest_addrlen)
   {
     // Send EOF to SCTP server.
-    int bytes_sent = sctp_sendmsg(socket.fd().value(),
-                                  nullptr,
-                                  0,
-                                  const_cast<struct sockaddr*>(&dest_addr),
-                                  dest_addrlen,
-                                  htonl(ppid),
-                                  SCTP_EOF,
-                                  0,
-                                  0,
-                                  0);
+    int bytes_sent = ::sctp_sendmsg(socket.fd().value(),
+                                    nullptr,
+                                    0,
+                                    const_cast<struct sockaddr*>(&dest_addr),
+                                    dest_addrlen,
+                                    htonl(ppid),
+                                    SCTP_EOF,
+                                    0,
+                                    0,
+                                    0);
     return bytes_sent != -1;
   }
 

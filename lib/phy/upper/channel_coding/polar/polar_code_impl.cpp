@@ -413,7 +413,7 @@ srsran::polar_code_impl::polar_code_impl()
 }
 
 // Compares two unsigned
-bool cmpfunc(unsigned ai, unsigned bi)
+static bool cmpfunc(unsigned ai, unsigned bi)
 {
   return (ai < bi);
 }

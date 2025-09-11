@@ -45,8 +45,8 @@ struct rrc_cfg_t {
   security::preferred_ciphering_algorithms enc_algo_pref_list{security::ciphering_algorithm::nea0};
   /// Force re-establishment fallback.
   bool force_reestablishment_fallback = false;
-  /// Timeout for RRC procedures.
-  std::chrono::milliseconds rrc_procedure_timeout_ms{360};
+  /// Guard time for RRC procedures.
+  std::chrono::milliseconds rrc_procedure_guard_time_ms{500};
 };
 
 } // namespace srs_cu_cp

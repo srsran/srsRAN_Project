@@ -27,7 +27,6 @@
 namespace srsran {
 
 /// Validates the given O-RAN DU Split 6 unit configuration. Returns true on success, false otherwise.
-bool validate_split6_o_du_unit_config(const split6_o_du_unit_config&   config,
-                                      const os_sched_affinity_bitmask& available_cpus);
+bool validate_split6_o_du_unit_config(const split6_o_du_unit_config& config);
 
 } // namespace srsran

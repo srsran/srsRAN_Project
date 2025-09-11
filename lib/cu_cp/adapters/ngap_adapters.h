@@ -68,7 +68,7 @@ public:
     return cu_cp_handler->schedule_ue_task(ue_index, std::move(task));
   }
 
-  bool on_handover_request_received(ue_index_t ue_index, security::security_context sec_ctxt) override
+  bool on_handover_request_received(ue_index_t ue_index, const security::security_context& sec_ctxt) override
   {
     srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
     return cu_cp_handler->handle_handover_request(ue_index, sec_ctxt);
@@ -179,7 +179,7 @@ public:
     return ue->get_ngap_rrc_ue_notifier();
   }
 
-  bool init_security_context(security::security_context sec_ctxt) override
+  bool init_security_context(const security::security_context& sec_ctxt) override
   {
     srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
     return ue->get_security_manager().init_security_context(sec_ctxt);

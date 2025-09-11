@@ -154,7 +154,7 @@ unsigned ofdm_slot_demodulator_impl::get_slot_size(unsigned slot_index) const
 
   // Iterate all symbols of the slot and accumulate
   for (unsigned symbol_idx = 0; symbol_idx != nsymb; ++symbol_idx) {
-    count += symbol_demodulator.get_symbol_size(nsymb * slot_index + symbol_idx);
+    count += symbol_demodulator->get_symbol_size(nsymb * slot_index + symbol_idx);
   }
 
   return count;
@@ -170,10 +170,10 @@ void ofdm_slot_demodulator_impl::demodulate(resource_grid_writer& grid,
   // For each symbol in the slot.
   for (unsigned symbol_idx = 0; symbol_idx != nsymb; ++symbol_idx) {
     // Get the current symbol size.
-    unsigned symbol_sz = symbol_demodulator.get_symbol_size(nsymb * slot_index + symbol_idx);
+    unsigned symbol_sz = symbol_demodulator->get_symbol_size(nsymb * slot_index + symbol_idx);
 
     // Demodulate symbol.
-    symbol_demodulator.demodulate(grid, input.first(symbol_sz), port_index, nsymb * slot_index + symbol_idx);
+    symbol_demodulator->demodulate(grid, input.first(symbol_sz), port_index, nsymb * slot_index + symbol_idx);
 
     input = input.last(input.size() - symbol_sz);
   }

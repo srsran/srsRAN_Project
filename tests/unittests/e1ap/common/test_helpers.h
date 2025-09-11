@@ -53,13 +53,16 @@ public:
     last_cu_up_e1_setup_request = msg;
   }
 
+  bool schedule_async_task(async_task<void> task) override { return task_sched.schedule(std::move(task)); }
+
   void set_ue_index(uint16_t ue_index_) { ue_index = ue_index_; }
 
   cu_up_e1_setup_request last_cu_up_e1_setup_request;
 
 private:
-  srslog::basic_logger& logger;
-  uint16_t              ue_index = srs_cu_cp::ue_index_to_uint(srs_cu_cp::ue_index_t::min);
+  srslog::basic_logger&     logger;
+  uint16_t                  ue_index = srs_cu_cp::ue_index_to_uint(srs_cu_cp::ue_index_t::min);
+  fifo_async_task_scheduler task_sched{16};
 };
 
 class dummy_e1ap_cu_up_notifier : public srs_cu_up::e1ap_cu_up_manager_notifier

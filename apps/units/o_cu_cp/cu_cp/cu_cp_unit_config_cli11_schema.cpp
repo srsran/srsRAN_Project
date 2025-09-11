@@ -209,6 +209,14 @@ static void configure_cli11_report_args(CLI::App& app, cu_cp_unit_report_config&
       ->check(
           CLI::IsMember({120, 240, 480, 640, 1024, 2048, 5120, 10240, 20480, 40960, 60000, 360000, 720000, 1800000}));
   add_option(app,
+             "--periodic_ho_rsrp_offset_db",
+             report_params.periodic_ho_rsrp_offset,
+             "Measurement trigger quantity offset in dB used to trigger handovers by periodic measurement reports. "
+             "When set to -1 no handover will be triggered from periodical measurements. Note the "
+             "actual value is field value * 0.5 dB")
+      ->check(CLI::Range(-1, 30))
+      ->capture_default_str();
+  add_option(app,
              "--meas_trigger_quantity",
              report_params.meas_trigger_quantity,
              "Measurement trigger quantity (RSRP/RSRQ/SINR)")
@@ -345,12 +353,10 @@ static void configure_cli11_rrc_args(CLI::App& app, cu_cp_unit_rrc_config& confi
              "Force RRC re-establishment fallback to RRC setup")
       ->capture_default_str();
 
-  add_option(
-      app,
-      "--rrc_procedure_timeout_ms",
-      config.rrc_procedure_timeout_ms,
-      "Timeout in ms used for RRC message exchange with UE. It needs to suit the expected communication delay and "
-      "account for potential retransmissions UE processing delays, SR delays, etc.")
+  add_option(app,
+             "--rrc_procedure_guard_time_ms",
+             config.rrc_procedure_guard_time_ms,
+             "Guard time in ms used for RRC message exchange with UE. This is added to the RRC procedure timeout.")
       ->capture_default_str();
 }
 
@@ -568,7 +574,9 @@ static void configure_cli11_qos_args(CLI::App& app, cu_cp_unit_qos_config& qos_p
 
 static void configure_cli11_metrics_layers_args(CLI::App& app, cu_cp_unit_metrics_layer_config& metrics_params)
 {
+  add_option(app, "--enable_ngap", metrics_params.enable_ngap, "Enable NGAP metrics")->capture_default_str();
   add_option(app, "--enable_pdcp", metrics_params.enable_pdcp, "Enable PDCP metrics")->capture_default_str();
+  add_option(app, "--enable_rrc", metrics_params.enable_rrc, "Enable CU-CP RRC metrics")->capture_default_str();
 }
 
 static void configure_cli11_metrics_args(CLI::App& app, cu_cp_unit_metrics_config& metrics_params)

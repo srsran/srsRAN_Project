@@ -90,26 +90,26 @@ bool parse_args(pdcp_gen_helper_args& args, int argc, char* argv[])
 
     switch (c) {
       case 'h':
-        fprintf(stdout, "%s", usage);
+        std::fprintf(stdout, "%s", usage);
         break;
       case 's':
         args.sn_size = std::string(optarg);
-        fprintf(stdout, "PDCP SN Size %s\n", args.sn_size.c_str());
+        std::fprintf(stdout, "PDCP SN Size %s\n", args.sn_size.c_str());
         break;
       case 'c':
         args.count = strtod(optarg, nullptr);
-        fprintf(stdout, "PDCP COUNT %u\n", args.count);
+        std::fprintf(stdout, "PDCP COUNT %u\n", args.count);
         break;
       case 'a':
         args.algo = strtod(optarg, nullptr);
-        fprintf(stdout, "PDCP NIA%u/NEA%u\n", args.algo, args.algo);
+        std::fprintf(stdout, "PDCP NIA%u/NEA%u\n", args.algo, args.algo);
         break;
       case 'r':
         args.rb_type = strtod(optarg, nullptr);
-        fprintf(stdout, "PDCP %s\n", args.rb_type == 0 ? "SRB" : "DRB");
+        std::fprintf(stdout, "PDCP %s\n", args.rb_type == 0 ? "SRB" : "DRB");
         break;
       default:
-        fprintf(stderr, "error parsing arguments\n");
+        std::fprintf(stderr, "error parsing arguments\n");
         return false;
     }
   }
@@ -161,8 +161,8 @@ int main(int argc, char** argv)
       std::make_unique<pdcp_metrics_aggregator>(0, drb_id_t::drb1, timer_duration{100}, nullptr, worker);
   // Create PDCP entities
   std::unique_ptr<pdcp_entity_tx> pdcp_tx = std::make_unique<pdcp_entity_tx>(
-      0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker}, worker, worker, *metrics_agg);
-  pdcp_tx_state st = {args.count, args.count, args.count};
+      0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker}, worker, worker, 1, *metrics_agg);
+  pdcp_tx_state st = {args.count, args.count, 0, args.count, args.count};
   pdcp_tx->set_state(st);
   pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
 

@@ -40,7 +40,7 @@ class o_du_low_unit_factory
   o_du_low_hal_dependencies hal_dependencies;
 
 public:
-  o_du_low_unit_factory(const std::optional<du_low_unit_hal_config>& hal_config, unsigned nof_cells);
+  o_du_low_unit_factory(const std::optional<du_low_unit_hal_config>& hal_config);
 
   /// Creates an O-RAN DU low unit with the given parameters.
   o_du_low_unit create(const o_du_low_unit_config& params, const o_du_low_unit_dependencies& dependencies);

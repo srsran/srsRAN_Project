@@ -74,30 +74,78 @@ public:
   virtual task_executor& asynchronous_radio_executor() = 0;
 };
 
-/// Collects the generic RU executor mapper executors per sector.
-struct ru_generic_executor_mapper_sector_configuration {
-  /// Downlink modulator executor.
-  task_executor* dl_exec;
-  /// Uplink modulator executor.
-  task_executor* ul_exec;
-  /// PRACH modulator executor.
-  task_executor* prach_exec;
-  /// Baseband transmitter executor.
-  task_executor* tx_exec;
-  /// Baseband receiver executor.
-  task_executor* rx_exec;
+/// Collects the generic RU executor mapper dependencies for sequential baseband operation.
+struct ru_generic_executor_mapper_sequential_configuration {
+  /// Asynchronous executor.
+  task_executor* asynchronous_exec;
+  /// Common executor for all sectors.
+  task_executor* common_exec;
+  /// Number of sectors.
+  unsigned nof_sectors;
 };
 
-/// Collects the generic RU executor mapper dependencies.
-struct ru_generic_executor_mapper_configuration {
+/// Collects the generic RU executor mapper dependencies for a single baseband thread.
+struct ru_generic_executor_mapper_single_configuration {
   /// Common radio executor.
   task_executor* radio_exec;
-  /// Sector executors.
-  std::vector<ru_generic_executor_mapper_sector_configuration> sectors;
+  /// High priority executor for downlink modulation, and uplink demodulation.
+  task_executor* high_prio_executor;
+  /// Dedicated baseband executor per cell basis.
+  std::vector<task_executor*> baseband_exec;
 };
 
-/// Creates a generic RU executor mapper.
+/// Collects the generic RU executor mapper dependencies for a dual baseband executor.
+struct ru_generic_executor_mapper_dual_configuration {
+  /// Collects transmit and receive baseband executors.
+  struct cell_executors {
+    /// Baseband transmitter executor.
+    task_executor* tx_exec;
+    /// Baseband receiver executor.
+    task_executor* rx_exec;
+  };
+
+  /// Common radio executor.
+  task_executor* radio_exec;
+  /// High priority executor for downlink modulation, and uplink demodulation.
+  task_executor* high_prio_executor;
+  /// Dedicated baseband executor per cell basis.
+  std::vector<cell_executors> baseband_exec;
+};
+
+/// Collects the generic RU executor mapper dependencies for a triple baseband executor.
+struct ru_generic_executor_mapper_triple_configuration {
+  /// Collects transmit and receive baseband executors.
+  struct cell_executors {
+    /// Baseband transmitter executor.
+    task_executor* tx_exec;
+    /// Baseband receiver executor.
+    task_executor* rx_exec;
+    /// Baseband uplink executor.
+    task_executor* ul_exec;
+  };
+
+  /// Common radio executor.
+  task_executor* radio_exec;
+  /// High priority executor for downlink modulation, and uplink demodulation.
+  task_executor* high_prio_executor;
+  /// Dedicated baseband executor per cell basis.
+  std::vector<cell_executors> baseband_exec;
+};
+
+/// Creates a generic RU executor mapper from a sequential baseband executor configuration.
 std::unique_ptr<ru_generic_executor_mapper>
-create_ru_generic_executor_mapper(ru_generic_executor_mapper_configuration& config);
+create_ru_generic_executor_mapper(const ru_generic_executor_mapper_sequential_configuration& config);
+
+/// Creates a generic RU executor mapper from a single baseband executor configuration.
+std::unique_ptr<ru_generic_executor_mapper>
+create_ru_generic_executor_mapper(const ru_generic_executor_mapper_single_configuration& config);
+
+/// Creates a generic RU executor mapper from a dual baseband executor configuration.
+std::unique_ptr<ru_generic_executor_mapper>
+create_ru_generic_executor_mapper(const ru_generic_executor_mapper_dual_configuration& config);
+
+/// Creates a generic RU executor mapper from a triple baseband executor configuration.
+std::unique_ptr<ru_generic_executor_mapper>
+create_ru_generic_executor_mapper(const ru_generic_executor_mapper_triple_configuration& config);
 
 } // namespace srsran

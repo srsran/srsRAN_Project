@@ -21,47 +21,11 @@
  */
 
 #include "cu_up_pdcp_metrics_consumers.h"
+#include "apps/helpers/metrics/json_generators/cu_up/pdcp.h"
 #include "cu_up_pdcp_metrics.h"
 #include "srsran/pdcp/pdcp_metrics.h"
 
 using namespace srsran;
-
-namespace {
-
-DECLARE_METRIC("average_latency_us", metric_average_latency, double, "us");
-DECLARE_METRIC("min_latency_us", metric_min_latency, double, "us");
-DECLARE_METRIC("max_latency_us", metric_max_latency, double, "us");
-DECLARE_METRIC("average_throughput_Mbps", metric_avg_throughput_mbps, double, "Mbps");
-DECLARE_METRIC("cpu_usage_percent", metric_cpu_usage, double, "");
-
-/// PDCP DL processing metrics.
-DECLARE_METRIC_SET("dl",
-                   mset_dl_pdcp,
-                   metric_average_latency,
-                   metric_min_latency,
-                   metric_max_latency,
-                   metric_avg_throughput_mbps,
-                   metric_cpu_usage);
-
-/// PDCP UL processing metrics.
-DECLARE_METRIC_SET("ul",
-                   mset_ul_pdcp,
-                   metric_average_latency,
-                   metric_min_latency,
-                   metric_max_latency,
-                   metric_avg_throughput_mbps,
-                   metric_cpu_usage);
-
-DECLARE_METRIC_SET("pdcp", mset_pdcp, mset_dl_pdcp, mset_ul_pdcp);
-
-/// Metrics root object.
-DECLARE_METRIC("timestamp", metric_timestamp_tag, double, "");
-DECLARE_METRIC_SET("cu-up", mset_cu_up, mset_pdcp);
-
-/// Metrics context.
-using metric_context_t = srslog::build_context_type<metric_timestamp_tag, mset_cu_up>;
-
-} // namespace
 
 void cu_up_pdcp_metrics_consumer_e2::handle_metric(const app_services::metrics_set& metric)
 {
@@ -151,72 +115,19 @@ void cu_up_pdcp_metrics_consumer_json::handle_metric(const app_services::metrics
   aggr_metrics.is_empty = false;
 }
 
-/// Returns the current time in seconds with ms precision since UNIX epoch.
-static double get_time_stamp()
-{
-  auto tp = std::chrono::system_clock::now().time_since_epoch();
-  return std::chrono::duration_cast<std::chrono::milliseconds>(tp).count() * 1e-3;
-}
-
 void cu_up_pdcp_metrics_consumer_json::print_metrics()
 {
   if (aggr_metrics.is_empty) {
     return;
   }
 
-  metric_context_t ctx("JSON CU-UP Metrics");
-
-  // DL path.
-  auto&                            dl_pdcp    = ctx.get<mset_cu_up>().get<mset_pdcp>().get<mset_dl_pdcp>();
-  const pdcp_tx_metrics_container& tx_metrics = aggr_metrics.tx;
-  double value = tx_metrics.num_pdus ? static_cast<double>(tx_metrics.sum_pdu_latency_ns) * 1e-3 /
-                                           static_cast<double>(tx_metrics.num_pdus)
-                                     : 0.0;
-  dl_pdcp.write<metric_average_latency>(value);
-
-  if (tx_metrics.min_pdu_latency_ns) {
-    value = static_cast<double>(tx_metrics.min_pdu_latency_ns.value()) * 1e-3;
-    dl_pdcp.write<metric_min_latency>(value);
-  }
-
-  if (tx_metrics.max_pdu_latency_ns) {
-    value = static_cast<double>(tx_metrics.max_pdu_latency_ns.value()) * 1e-3;
-    dl_pdcp.write<metric_max_latency>(value);
-  }
-
-  value = static_cast<double>(tx_metrics.num_pdu_bytes) * 8.0 * 1000.0 * 1e-6 /
-          static_cast<double>(aggr_metrics.metrics_period.count());
-  dl_pdcp.write<metric_avg_throughput_mbps>(value);
-
-  dl_pdcp.write<metric_cpu_usage>(aggr_metrics.tx_cpu_usage);
-
-  // UL path.
-  auto&                            ul_pdcp    = ctx.get<mset_cu_up>().get<mset_pdcp>().get<mset_ul_pdcp>();
-  const pdcp_rx_metrics_container& rx_metrics = aggr_metrics.rx;
-
-  value = rx_metrics.num_sdus
-              ? static_cast<double>(rx_metrics.sum_sdu_latency_ns) * 1e-3 / static_cast<double>(rx_metrics.num_sdus)
-              : 0.0;
-  ul_pdcp.write<metric_average_latency>(value);
-
-  if (rx_metrics.min_sdu_latency_ns) {
-    value = static_cast<double>(rx_metrics.min_sdu_latency_ns.value()) * 1e-3;
-    ul_pdcp.write<metric_min_latency>(value);
-  }
-
-  if (rx_metrics.max_sdu_latency_ns) {
-    value = static_cast<double>(rx_metrics.max_sdu_latency_ns.value()) * 1e-3;
-    ul_pdcp.write<metric_max_latency>(value);
-  }
-
-  value = static_cast<double>(rx_metrics.num_pdu_bytes) * 8.0 * 1000.0 * 1e-6 /
-          static_cast<double>(aggr_metrics.metrics_period.count());
-  ul_pdcp.write<metric_avg_throughput_mbps>(value);
-
-  ul_pdcp.write<metric_cpu_usage>(aggr_metrics.rx_cpu_usage);
-
-  ctx.write<metric_timestamp_tag>(get_time_stamp());
-  log_chan(ctx);
+  log_chan("{}",
+           app_helpers::json_generators::generate_string(aggr_metrics.tx,
+                                                         aggr_metrics.rx,
+                                                         aggr_metrics.tx_cpu_usage,
+                                                         aggr_metrics.rx_cpu_usage,
+                                                         aggr_metrics.metrics_period,
+                                                         2));
 
   // Clear metrics after printing.
   clear_metrics();

@@ -27,11 +27,13 @@ using namespace ofh;
 
 void sector_controller::start()
 {
+  ofh_tx.get_operation_controller().start();
   ofh_rx.get_operation_controller().start();
 }
 
 void sector_controller::stop()
 {
+  ofh_tx.get_operation_controller().stop();
   ofh_rx.get_operation_controller().stop();
   slot_repo->clear();
 }

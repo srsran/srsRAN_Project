@@ -21,6 +21,7 @@
  */
 
 #include "du_stop_procedure.h"
+#include "await_all_ues.h"
 #include "srsran/support/async/async_timer.h"
 #include "srsran/support/async/execute_on.h"
 
@@ -44,9 +45,13 @@ void du_stop_procedure::operator()(coro_context<async_task<void>>& ctx)
   proc_logger.log_proc_started();
 
   // Stop all cells.
-  CORO_AWAIT(cell_mng.stop());
+  // Note: This will stop all scheduling activity and unlock any pending scheduler UE update procedure.
+  CORO_AWAIT(cell_mng.stop_all());
 
   proc_logger.log_progress("Stopped all cells");
+
+  // Stop all UE traffic
+  CORO_AWAIT(stop_ue_traffic());
 
   // Run F1 Remove Procedure.
   CORO_AWAIT(f1ap_conn_mng.handle_f1_removal_request());
@@ -57,4 +62,9 @@ void du_stop_procedure::operator()(coro_context<async_task<void>>& ctx)
   proc_logger.log_proc_completed();
 
   CORO_RETURN();
+}
+
+async_task<void> du_stop_procedure::stop_ue_traffic()
+{
+  return await_all_ues(ue_mng, [](du_ue& u) { return u.handle_activity_stop_request(true); });
 }

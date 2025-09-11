@@ -22,6 +22,7 @@
 
 #include "../common/test_helpers.h"
 #include "e1ap_cu_cp_test_helpers.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/support/async/async_test_utils.h"
 #include <gtest/gtest.h>
 
@@ -76,6 +77,25 @@ TEST_F(e1ap_cu_cp_test, when_unsupported_unsuccessful_outcome_received_then_mess
 
   // Check that PDU has not been forwarded (last PDU is still init_msg)
   ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
+/* Bearer Context Release Request                                                   */
+//////////////////////////////////////////////////////////////////////////////////////
+
+TEST_F(e1ap_cu_cp_test, when_valid_bearer_context_release_request_received_then_message_is_forwarded_to_cu_cp)
+{
+  // Test Preamble.
+  auto& ue = create_ue();
+
+  // Generate Bearer Context Release Request.
+  e1ap_message bearer_context_release_request =
+      generate_bearer_context_release_request(ue.cu_cp_ue_e1ap_id.value(), ue.cu_up_ue_e1ap_id.value());
+
+  e1ap->handle_message(bearer_context_release_request);
+
+  // Check that PDU has been forwarded to CU-CP
+  ASSERT_TRUE(cu_cp_notifier.last_release_request.ue_index == ue.ue_index);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

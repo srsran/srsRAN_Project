@@ -66,7 +66,7 @@ void test_init_unique_thread()
   TESTASSERT_NEQ(std::string(t.get_name()), this_thread_name());
 
   while (running) {
-    usleep(100);
+    ::usleep(100);
   }
   fmt::print("Main Thread [{}:{}] completed.\n", this_thread_name(), std::this_thread::get_id());
 }

@@ -26,19 +26,23 @@
 
 using namespace srsran;
 
-static bool validate_upper_phy_threads_appconfig(const du_low_unit_expert_threads_config& config,
-                                                 unsigned                                 max_processing_delay_slots,
-                                                 unsigned                                 nof_hwacc_pdsch,
-                                                 unsigned                                 nof_hwacc_pusch)
+static bool validate_upper_phy_threads_appconfig(const du_low_unit_expert_threads_config& config)
 {
-  static const interval<unsigned, true> nof_ul_dl_threads_range(1, std::thread::hardware_concurrency());
-  static const interval<unsigned, true> nof_pdsch_threads_range(2, std::thread::hardware_concurrency());
+  static const interval<unsigned, true> max_concurrency_range(0, std::thread::hardware_concurrency());
 
   bool valid = true;
 
-  if (!nof_ul_dl_threads_range.contains(config.nof_ul_threads)) {
-    fmt::print(
-        "Number of PHY UL threads (i.e., {}) must be in range {}.\n", config.nof_ul_threads, nof_ul_dl_threads_range);
+  if (!max_concurrency_range.contains(config.max_pucch_concurrency)) {
+    fmt::print("Maximum PUCCH concurrency (i.e., {}) must be in range {}.\n",
+               config.max_pucch_concurrency,
+               max_concurrency_range);
+    valid = false;
+  }
+
+  if (!max_concurrency_range.contains(config.max_pusch_and_srs_concurrency)) {
+    fmt::print("Maximum joint PUSCH and SRS concurrency (i.e., {}) must be in range {}.\n",
+               config.max_pusch_and_srs_concurrency,
+               max_concurrency_range);
     valid = false;
   }
 
@@ -48,78 +52,19 @@ static bool validate_upper_phy_threads_appconfig(const du_low_unit_expert_thread
     valid = false;
   }
 
-  // To run the concurrent PDSCH processor with a single thread isn't optimal, although possible.
-  if ((config.pdsch_processor_type == "concurrent") && !nof_pdsch_threads_range.contains(config.nof_dl_threads)) {
-    fmt::print("For concurrent PDSCH processor. Number of PHY DL threads (i.e., {}) must be in range {} for better "
-               "performance.\n",
-               config.nof_dl_threads,
-               nof_pdsch_threads_range);
-  }
-
-  if (!nof_ul_dl_threads_range.contains(config.nof_dl_threads)) {
-    fmt::print(
-        "Number of PHY DL threads (i.e., {}) must be in range {}.\n", config.nof_dl_threads, nof_ul_dl_threads_range);
+  if (!max_concurrency_range.contains(config.max_pdsch_concurrency)) {
+    fmt::print("Maximum PDSCH concurrency (i.e., {}) must be in range {}.\n",
+               config.max_pdsch_concurrency,
+               max_concurrency_range);
     valid = false;
   }
-
-#ifdef DPDK_FOUND
-  if ((nof_hwacc_pdsch > 0) && (config.nof_dl_threads > nof_hwacc_pdsch)) {
-    fmt::print("Not enough hardware-accelerated PDSCH encoder functions. Number of PHY DL threads (i.e., {}) must be "
-               "in range {}.\n",
-               config.nof_dl_threads,
-               nof_hwacc_pdsch);
-    valid = false;
-  }
-  if ((nof_hwacc_pusch > 0) && ((config.nof_ul_threads + config.nof_pusch_decoder_threads) > nof_hwacc_pusch)) {
-    fmt::print("Not enough hardware-accelerated PUSCH decoder functions. Combined number of PHY UL threads (i.e., {}) "
-               "and PUSCH decoder threads (i.e., {}) must be in range {}.\n",
-               config.nof_ul_threads,
-               config.nof_pusch_decoder_threads,
-               nof_hwacc_pusch);
-    valid = false;
-  }
-#endif // DPDK_FOUND
 
   return valid;
 }
 
-static bool validate_expert_execution_unit_config(const du_low_unit_config&        config,
-                                                  const os_sched_affinity_bitmask& available_cpus)
+static bool validate_expert_execution_unit_config(const du_low_unit_config& config)
 {
-  unsigned nof_hwacc_pdsch = 0;
-  unsigned nof_hwacc_pusch = 0;
-#ifdef DPDK_FOUND
-  nof_hwacc_pdsch = config.hal_config->bbdev_hwacc->pdsch_enc->nof_hwacc;
-  nof_hwacc_pusch = config.hal_config->bbdev_hwacc->pusch_dec->nof_hwacc;
-#endif // DPDK_FOUND
-  if (!validate_upper_phy_threads_appconfig(config.expert_execution_cfg.threads,
-                                            config.expert_phy_cfg.max_processing_delay_slots,
-                                            nof_hwacc_pdsch,
-                                            nof_hwacc_pusch)) {
-    return false;
-  }
-
-  auto validate_cpu_range = [](const os_sched_affinity_bitmask& allowed_cpus_mask,
-                               const os_sched_affinity_bitmask& mask,
-                               const std::string&               name) {
-    auto invalid_cpu_ids = mask.subtract(allowed_cpus_mask);
-    if (not invalid_cpu_ids.empty()) {
-      fmt::print("CPU cores {} selected in '{}' option doesn't belong to available cpuset.\n", invalid_cpu_ids, name);
-      return false;
-    }
-
-    return true;
-  };
-
-  for (const auto& cell : config.expert_execution_cfg.cell_affinities) {
-    if (!validate_cpu_range(available_cpus, cell.l1_dl_cpu_cfg.mask, "l1_dl_cpus")) {
-      return false;
-    }
-    if (!validate_cpu_range(available_cpus, cell.l1_ul_cpu_cfg.mask, "l1_ul_cpus")) {
-      return false;
-    }
-  }
-  return true;
+  return validate_upper_phy_threads_appconfig(config.expert_execution_cfg.threads);
 }
 
 static bool validate_phy_prach_configuration(span<const du_low_prach_validation_config>& prach_cells_config)
@@ -192,14 +137,13 @@ bool srsran::validate_du_low_config(const du_low_unit_config&                  c
     return false;
   }
 
+  if (!validate_expert_execution_unit_config(config)) {
+    return false;
+  }
+
   if (!validate_phy_prach_configuration(prach_cells_config)) {
     return false;
   }
 
   return true;
-}
-
-bool srsran::validate_du_low_cpus(const du_low_unit_config& config, const os_sched_affinity_bitmask& available_cpus)
-{
-  return validate_expert_execution_unit_config(config, available_cpus);
 }

@@ -50,7 +50,7 @@ public:
   [[nodiscard]] security::sec_selected_algos get_security_algos() const;
   [[nodiscard]] security::sec_as_config      get_rrc_as_config() const;
   [[nodiscard]] security::sec_128_as_config  get_rrc_128_as_config() const;
-  void                                       update_security_context(security::security_context sec_ctxt);
+  void                                       update_security_context(const security::security_context& sec_ctxt);
   void perform_horizontal_key_derivation(pci_t target_pci, unsigned target_ssb_arfcn);
 
 private:

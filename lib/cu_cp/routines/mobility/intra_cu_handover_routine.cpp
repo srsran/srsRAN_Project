@@ -30,9 +30,9 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-bool verify_ho_request(const cu_cp_intra_cu_handover_request& request,
-                       ue_manager&                            ue_mng,
-                       const srslog::basic_logger&            logger)
+static bool verify_ho_request(const cu_cp_intra_cu_handover_request& request,
+                              ue_manager&                            ue_mng,
+                              const srslog::basic_logger&            logger)
 {
   if (request.target_pci == INVALID_PCI) {
     logger.warning("Target PCI must not be invalid");
@@ -160,6 +160,7 @@ void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_c
                                   true /* Reestablish DRBs */,
                                   target_ue->get_security_manager().get_ncc(), /* Update keys */
                                   target_cell_sib1.copy(),
+                                  std::nullopt,
                                   logger)) {
         logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", request.source_ue_index, name());
         CORO_EARLY_RETURN(response_msg);

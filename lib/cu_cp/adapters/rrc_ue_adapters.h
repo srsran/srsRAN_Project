@@ -154,7 +154,7 @@ public:
 
   /// \brief Update the security context
   /// \param[in] sec_ctxt The new security context
-  void update_security_context(security::security_context sec_ctxt) override
+  void update_security_context(const security::security_context& sec_ctxt) override
   {
     srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
     return ue->get_security_manager().update_security_context(sec_ctxt);
@@ -220,6 +220,12 @@ public:
     return cu_cp_rrc_ue_handler->handle_rrc_reestablishment_complete(old_ue_index);
   }
 
+  virtual void on_rrc_reconfiguration_complete_indicator() override
+  {
+    srsran_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");
+    return cu_cp_rrc_ue_handler->handle_rrc_reconf_complete_indicator(ue_index);
+  }
+
   async_task<bool> on_ue_transfer_required(ue_index_t old_ue_index) override
   {
     srsran_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");
@@ -232,7 +238,7 @@ public:
     return cu_cp_rrc_ue_handler->handle_ue_context_release(request);
   }
 
-  void on_up_context_setup_required(up_context ctxt) override
+  void on_up_context_setup_required(const up_context& ctxt) override
   {
     srsran_assert(up_mng != nullptr, "UP resource manager must not be nullptr");
     up_mng->set_up_context(ctxt);
@@ -251,8 +257,8 @@ public:
   }
 
   std::optional<rrc_meas_cfg>
-  on_measurement_config_request(nr_cell_identity            nci,
-                                std::optional<rrc_meas_cfg> current_meas_config = std::nullopt) override
+  on_measurement_config_request(nr_cell_identity                   nci,
+                                const std::optional<rrc_meas_cfg>& current_meas_config = std::nullopt) override
   {
     srsran_assert(meas_handler != nullptr, "Measurement handler must not be nullptr");
     return meas_handler->handle_measurement_config_request(ue_index, nci, current_meas_config);

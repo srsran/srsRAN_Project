@@ -66,6 +66,8 @@ public:
 
   bool cancel_last_pdcch(cell_slot_resource_allocator& slot_alloc) override;
 
+  void stop();
+
 private:
   /// Size of the ring buffer of pdcch_slot_allocator. This size sets a limit on how far in advance a PDCCH can be
   /// allocated.

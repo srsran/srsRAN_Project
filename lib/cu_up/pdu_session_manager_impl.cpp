@@ -45,6 +45,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
                                                    timer_factory        ue_dl_timer_factory_,
                                                    timer_factory        ue_ul_timer_factory_,
                                                    timer_factory        ue_ctrl_timer_factory_,
+                                                   e1ap_interface&      e1ap_,
                                                    f1u_cu_up_gateway&   f1u_gw_,
                                                    ngu_session_manager& ngu_session_mngr_,
                                                    gtpu_teid_pool&      n3_teid_allocator_,
@@ -73,6 +74,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   ue_ctrl_exec(ue_ctrl_exec_),
   crypto_exec(crypto_exec_),
   gtpu_pcap(gtpu_pcap_),
+  e1ap(e1ap_),
   f1u_gw(f1u_gw_),
   ngu_session_mngr(ngu_session_mngr_)
 {
@@ -323,8 +325,8 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   }
 
   // Connect "PDCP-E1AP" adapter to E1AP
-  new_drb->pdcp_tx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler
-  new_drb->pdcp_rx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler
+  new_drb->pdcp_tx_to_e1ap_adapter.connect_e1ap(ue_index, &e1ap);
+  new_drb->pdcp_rx_to_e1ap_adapter.connect_e1ap(ue_index, &e1ap);
 
   // Create  F1-U bearer
   new_drb->f1u_cfg = qos_cfg.at(five_qi).f1u_cfg;
@@ -414,16 +416,16 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
   // > DRB To Modify List
   for (const auto& drb_to_mod : session.drb_to_modify_list_ng_ran) {
     // prepare DRB modification result
-    drb_setup_result drb_result = {};
-    drb_result.success          = false;
-    drb_result.cause            = e1ap_cause_radio_network_t::unspecified;
-    drb_result.drb_id           = drb_to_mod.drb_id;
+    drb_modified_result drb_result = {};
+    drb_result.success             = false;
+    drb_result.cause               = e1ap_cause_radio_network_t::unspecified;
+    drb_result.drb_id              = drb_to_mod.drb_id;
 
     // find DRB in PDU session
     auto drb_iter = pdu_session->drbs.find(drb_to_mod.drb_id);
     if (drb_iter == pdu_session->drbs.end()) {
       logger.log_warning("Cannot modify {} not found in {}", drb_to_mod.drb_id, session.pdu_session_id);
-      pdu_session_result.drb_setup_results.push_back(drb_result);
+      pdu_session_result.drb_modification_results.push_back(drb_result);
       continue;
     }
     srsran_assert(drb_to_mod.drb_id == drb_iter->second->drb_id,
@@ -514,6 +516,17 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                             drb_to_mod.dl_up_params[0].up_tnl_info);
 
       drb_iter->second->pdcp_to_f1u_adapter.connect_f1u(drb_iter->second->f1u->get_tx_sdu_handler());
+    }
+
+    // Extract PDCP status and add it to the response
+    if (drb_to_mod.pdcp_sn_status_request.has_value() && drb_to_mod.pdcp_sn_status_request.value()) {
+      drb_result.pdcp_sn_status.emplace();
+
+      auto& pdcp_rx_ctrl                  = drb->pdcp->get_rx_upper_control_interface();
+      drb_result.pdcp_sn_status->ul_count = pdcp_rx_ctrl.get_count();
+
+      auto& pdcp_tx_ctrl                  = drb->pdcp->get_tx_upper_control_interface();
+      drb_result.pdcp_sn_status->dl_count = pdcp_tx_ctrl.get_count();
     }
 
     // Apply re-establishment at PDCP
@@ -647,9 +660,10 @@ void pdu_session_manager_impl::notify_pdcp_pdu_processing_stopped()
 
   for (const auto& [psi, pdu_session] : pdu_sessions) {
     for (const auto& [drb_id, drb] : pdu_session->drbs) {
-      // reestablish rx and configure rx security
       auto& pdcp_rx_ctrl = drb->pdcp->get_rx_upper_control_interface();
       pdcp_rx_ctrl.notify_pdu_processing_stopped();
+      auto& pdcp_tx_ctrl = drb->pdcp->get_tx_upper_control_interface();
+      pdcp_tx_ctrl.notify_pdu_processing_stopped();
     }
   }
 }
@@ -660,16 +674,17 @@ void pdu_session_manager_impl::restart_pdcp_pdu_processing()
 
   for (const auto& [psi, pdu_session] : pdu_sessions) {
     for (const auto& [drb_id, drb] : pdu_session->drbs) {
-      // reestablish rx and configure rx security
       auto& pdcp_rx_ctrl = drb->pdcp->get_rx_upper_control_interface();
       pdcp_rx_ctrl.restart_pdu_processing();
+      auto& pdcp_tx_ctrl = drb->pdcp->get_tx_upper_control_interface();
+      pdcp_tx_ctrl.restart_pdu_processing();
     }
   }
 }
 
 async_task<void> pdu_session_manager_impl::await_crypto_rx_all_pdu_sessions()
 {
-  logger.log_debug("Awaiting all crypto tasks to finish in UE");
+  logger.log_debug("Awaiting all RX crypto tasks to finish in UE");
   auto ps_it = pdu_sessions.begin();
   return launch_async([this, ps_it](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
@@ -683,7 +698,7 @@ async_task<void> pdu_session_manager_impl::await_crypto_rx_all_pdu_sessions()
 
 async_task<void> pdu_session_manager_impl::await_crypto_rx_all_drbs(const std::unique_ptr<pdu_session>& pdu_session)
 {
-  logger.log_debug("Awaiting all crypto tasks to finish in PDU session. psi={}", pdu_session->pdu_session_id);
+  logger.log_debug("Awaiting all RX crypto tasks to finish in PDU session. psi={}", pdu_session->pdu_session_id);
   auto drb_it = pdu_session->drbs.begin();
   return launch_async([drb_it, &pdu_session, this](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
@@ -691,6 +706,35 @@ async_task<void> pdu_session_manager_impl::await_crypto_rx_all_drbs(const std::u
       logger.log_debug(
           "Awaiting all crypto tasks to finish in DRB. psi={}, drb_id={}", pdu_session->pdu_session_id, drb_it->first);
       CORO_AWAIT(drb_it->second->pdcp->rx_crypto_awaitable());
+    }
+    CORO_RETURN();
+  });
+}
+
+async_task<void> pdu_session_manager_impl::await_crypto_tx_all_pdu_sessions()
+{
+  logger.log_debug("Awaiting all TX crypto tasks to finish in UE");
+  auto ps_it = pdu_sessions.begin();
+  return launch_async([this, ps_it](coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    for (; ps_it != pdu_sessions.end(); ++ps_it) {
+      CORO_AWAIT(await_crypto_tx_all_drbs(ps_it->second));
+    }
+    CORO_RETURN();
+  });
+}
+
+async_task<void> pdu_session_manager_impl::await_crypto_tx_all_drbs(const std::unique_ptr<pdu_session>& pdu_session)
+{
+  logger.log_debug("Awaiting all crypto tasks to finish in PDU session. psi={}", pdu_session->pdu_session_id);
+  auto drb_it = pdu_session->drbs.begin();
+  return launch_async([drb_it, &pdu_session, this](coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+    for (; drb_it != pdu_session->drbs.end(); ++drb_it) {
+      logger.log_debug(
+          "Awaiting all crypto tasks to finish in DRB. psi={}, drb_id={}", pdu_session->pdu_session_id, drb_it->first);
+      CORO_AWAIT(drb_it->second->pdcp->tx_crypto_awaitable());
     }
     CORO_RETURN();
   });

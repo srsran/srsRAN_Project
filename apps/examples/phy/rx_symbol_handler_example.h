@@ -41,7 +41,8 @@ public:
     logger.set_level(log_level);
   }
 
-  void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const shared_resource_grid& grid) override
+  void
+  handle_rx_symbol(const upper_phy_rx_symbol_context& context, const shared_resource_grid& grid, bool is_valid) override
   {
     std::unique_lock<std::mutex> lock(mutex);
     logger.debug(context.slot.sfn(),

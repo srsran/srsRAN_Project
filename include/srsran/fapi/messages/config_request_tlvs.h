@@ -50,12 +50,12 @@ struct phy_config {
 /// Encodes the carrier configuration.
 struct carrier_config {
   uint16_t                dl_bandwidth;
-  uint32_t                dl_freq;
+  uint32_t                dl_f_ref_arfcn;
   std::array<uint16_t, 5> dl_k0;
   std::array<uint16_t, 5> dl_grid_size;
   uint16_t                num_tx_ant;
   uint16_t                ul_bandwidth;
-  uint32_t                ul_freq;
+  uint32_t                ul_f_ref_arfcn;
   std::array<uint16_t, 5> ul_k0;
   std::array<uint16_t, 5> ul_grid_size;
   uint16_t                num_rx_ant;

@@ -21,22 +21,20 @@
  */
 
 #include "rlc_pcap_impl.h"
-#include <linux/udp.h>
 #include <netinet/in.h>
-#include <sys/time.h>
 
 using namespace srsran;
 
-// PCAP tags as defined in Wireshark's "packet-rlc-nr.h"
-constexpr const char* PCAP_RLC_NR_START_STRING    = "rlc-nr";
-constexpr uint8_t     PCAP_RLC_NR_PAYLOAD_TAG     = 0x01;
-constexpr uint8_t     PCAP_RLC_NR_DIRECTION_TAG   = 0x02;
-constexpr uint8_t     PCAP_RLC_NR_UEID_TAG        = 0x03;
-constexpr uint8_t     PCAP_RLC_NR_BEARER_TYPE_TAG = 0x04;
-constexpr uint8_t     PCAP_RLC_NR_BEARER_ID_TAG   = 0x05;
+/// PCAP tags as defined in Wireshark's "packet-rlc-nr.h".
+static constexpr const char* PCAP_RLC_NR_START_STRING    = "rlc-nr";
+static constexpr uint8_t     PCAP_RLC_NR_PAYLOAD_TAG     = 0x01;
+static constexpr uint8_t     PCAP_RLC_NR_DIRECTION_TAG   = 0x02;
+static constexpr uint8_t     PCAP_RLC_NR_UEID_TAG        = 0x03;
+static constexpr uint8_t     PCAP_RLC_NR_BEARER_TYPE_TAG = 0x04;
+static constexpr uint8_t     PCAP_RLC_NR_BEARER_ID_TAG   = 0x05;
 
-// Other constants
-constexpr uint16_t UDP_DLT = 149;
+/// Other constants.
+static constexpr uint16_t UDP_DLT = 149;
 
 int nr_pcap_pack_rlc_context_to_buffer(const pcap_rlc_pdu_context& context, uint8_t* buffer, unsigned length);
 
@@ -161,7 +159,7 @@ int nr_pcap_pack_rlc_context_to_buffer(const pcap_rlc_pdu_context& context, uint
   /* UEID */
   buffer[offset++] = PCAP_RLC_NR_UEID_TAG;
   tmp16            = htons(context.ueid);
-  memcpy(buffer + offset, &tmp16, 2);
+  std::memcpy(buffer + offset, &tmp16, 2);
   offset += 2;
 
   /* Bearer type */

@@ -101,12 +101,12 @@ bool sctp_network_gateway_impl::create_and_connect()
     fmt::print("Failed to connect SCTP socket to {}:{}. error=\"{}\" timeout={}ms\n",
                config.connect_address,
                config.connect_port,
-               strerror(errno),
+               ::strerror(errno),
                now_ms.count());
     logger.error("Failed to connect SCTP socket to {}:{}. error=\"{}\" timeout={}ms",
                  config.connect_address,
                  config.connect_port,
-                 strerror(errno),
+                 ::strerror(errno),
                  now_ms.count());
     return false;
   }
@@ -139,7 +139,7 @@ void sctp_network_gateway_impl::receive()
                                 &msg_flags);
 
   if (rx_bytes == -1 && errno != EAGAIN) {
-    logger.error("Error reading from SCTP socket: {}", strerror(errno));
+    logger.error("Error reading from SCTP socket: {}", ::strerror(errno));
   } else if (rx_bytes == -1 && errno == EAGAIN) {
     if (!config.non_blocking_mode) {
       logger.debug("Socket timeout reached");
@@ -270,18 +270,18 @@ void sctp_network_gateway_impl::handle_pdu(const byte_buffer& pdu)
     msg_dst_addrlen = msg_src_addrlen;
   }
 
-  int bytes_sent = sctp_sendmsg(socket.fd().value(),
-                                pdu_span.data(),
-                                pdu_span.size_bytes(),
-                                (struct sockaddr*)&msg_dst_addr,
-                                msg_dst_addrlen,
-                                htonl(config.ppid),
-                                0,
-                                stream_no,
-                                0,
-                                0);
+  int bytes_sent = ::sctp_sendmsg(socket.fd().value(),
+                                  pdu_span.data(),
+                                  pdu_span.size_bytes(),
+                                  (struct sockaddr*)&msg_dst_addr,
+                                  msg_dst_addrlen,
+                                  htonl(config.ppid),
+                                  0,
+                                  stream_no,
+                                  0,
+                                  0);
   if (bytes_sent == -1) {
-    logger.error("Couldn't send {} B of data on SCTP socket: {}", pdu_span.size_bytes(), strerror(errno));
+    logger.error("Couldn't send {} B of data on SCTP socket: {}", pdu_span.size_bytes(), ::strerror(errno));
     return;
   }
 }

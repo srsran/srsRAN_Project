@@ -23,35 +23,10 @@
 #pragma once
 
 #include "srsran/mac/mac_cell_manager.h"
+#include "srsran/mac/mac_clock_controller.h"
 #include "srsran/mac/mac_metrics.h"
-#include "srsran/ran/slot_point_extended.h"
 
 namespace srsran {
-
-/// Notifier of subframe starts for a given cell.
-class du_cell_timer_source
-{
-public:
-  virtual ~du_cell_timer_source() = default;
-
-  /// Called when a MAC cell gets deactivated and the slot indications stop being received.
-  virtual void on_cell_deactivation() = 0;
-
-  /// Called on each new slot indication for a given cell.
-  slot_point_extended on_slot_indication(slot_point sl_tx)
-  {
-    cached_now = on_slot_indication_impl(sl_tx);
-    return cached_now;
-  }
-
-  /// Current HFN, SFN and slot number.
-  slot_point_extended now() const { return cached_now; }
-
-private:
-  virtual slot_point_extended on_slot_indication_impl(slot_point sl_tx) = 0;
-
-  slot_point_extended cached_now;
-};
 
 /// Notifier used by MAC DL to forward cell metric reports.
 class mac_cell_metric_notifier
@@ -75,7 +50,7 @@ public:
 /// \brief Dependencies between a MAC cell and remaining components of the MAC.
 struct mac_cell_config_dependencies {
   /// Timer source for the cell.
-  std::unique_ptr<du_cell_timer_source> timer_source;
+  std::unique_ptr<mac_cell_clock_controller> timer_source;
   /// \brief Period of the metric reporting.
   std::chrono::milliseconds report_period{0};
   /// \brief Pointer to the MAC cell metric notifier.

@@ -58,7 +58,7 @@ f1c_srb0_du_bearer::f1c_srb0_du_bearer(f1ap_ue_context&           ue_ctxt_,
 void f1c_srb0_du_bearer::handle_sdu(byte_buffer_chain sdu)
 {
   // Ensure SRB tasks are handled within the control executor.
-  if (not ctrl_exec.execute(TRACE_TASK([this, sdu = std::move(sdu)]() {
+  if (not ctrl_exec.execute([this, sdu = std::move(sdu)]() {
         const protocol_transaction<f1ap_transaction_response> transaction =
             ev_manager.transactions.create_transaction();
 
@@ -85,7 +85,7 @@ void f1c_srb0_du_bearer::handle_sdu(byte_buffer_chain sdu)
 
         // Notify upper layers of the initial UL RRC Message Transfer.
         f1ap_notifier.on_new_message(msg);
-      }))) {
+      })) {
     logger.error("Tx PDU {}: Discarding SRB0 Tx PDU. Cause: The task executor queue is full.", ue_ctxt);
   }
 }
@@ -103,8 +103,7 @@ void f1c_srb0_du_bearer::handle_delivery_notification(uint32_t highest_pdcp_sn)
 void f1c_srb0_du_bearer::handle_pdu(byte_buffer pdu, bool /* unused */)
 {
   // Change to UE execution context before forwarding the SDU to lower layers.
-  if (not ue_exec.execute(
-          TRACE_TASK([this, sdu = std::move(pdu)]() mutable { sdu_notifier.on_new_sdu(std::move(sdu)); }))) {
+  if (not ue_exec.execute([this, sdu = std::move(pdu)]() mutable { sdu_notifier.on_new_sdu(std::move(sdu)); })) {
     logger.error("Rx {} PDU: Discarding SRB0 Rx PDU. Cause: The task executor queue is full.", ue_ctxt);
   }
 }
@@ -166,7 +165,7 @@ f1c_other_srb_du_bearer::f1c_other_srb_du_bearer(f1ap_ue_context&       ue_ctxt_
 void f1c_other_srb_du_bearer::handle_sdu(byte_buffer_chain sdu)
 {
   // Ensure SRB tasks are handled within the control executor as they involve access to the UE context.
-  if (not ctrl_exec.execute(TRACE_TASK([this, sdu = std::move(sdu)]() {
+  if (not ctrl_exec.execute([this, sdu = std::move(sdu)]() {
         gnb_cu_ue_f1ap_id_t cu_ue_id = ue_ctxt.gnb_cu_ue_f1ap_id;
         if (cu_ue_id >= gnb_cu_ue_f1ap_id_t::max) {
           logger.warning("ue={} rnti={} du_ue={} SRB={}: Discarding F1AP RX SDU. Cause: GNB-CU-UE-F1AP-ID is invalid.",
@@ -202,7 +201,7 @@ void f1c_other_srb_du_bearer::handle_sdu(byte_buffer_chain sdu)
           ue_ctxt.rrc_state = f1ap_ue_context::ue_rrc_state::config_applied;
           du_configurator.on_ue_config_applied(ue_ctxt.ue_index);
         }
-      }))) {
+      })) {
     logger.error(
         "Tx PDU {}: Discarding SRB{} Tx PDU. Cause: The task executor queue is full.", ue_ctxt, srb_id_to_uint(srb_id));
   }
@@ -231,10 +230,10 @@ void f1c_other_srb_du_bearer::handle_pdu(srsran::byte_buffer pdu, bool rrc_deliv
   }
 
   // Change to UE execution context before forwarding the SDU to lower layers.
-  if (not ue_exec.execute(TRACE_TASK([this, sdu = std::move(pdu)]() mutable {
+  if (not ue_exec.execute([this, sdu = std::move(pdu)]() mutable {
         // Forward SDU to lower layers.
         sdu_notifier.on_new_sdu(std::move(sdu));
-      }))) {
+      })) {
     logger.error("Rx PDU {}: Discarding  SRB{} Rx PDU. Cause: The task executor queue is full.",
                  ue_ctxt,
                  srb_id_to_uint(srb_id));
@@ -257,7 +256,7 @@ async_task<bool> f1c_other_srb_du_bearer::handle_pdu_and_await_delivery(byte_buf
 
 void f1c_other_srb_du_bearer::handle_transmit_notification(uint32_t highest_pdcp_sn)
 {
-  if (not ue_exec.defer(TRACE_TASK([this, highest_pdcp_sn]() { handle_notification(highest_pdcp_sn, true); }))) {
+  if (not ue_exec.defer([this, highest_pdcp_sn]() { handle_notification(highest_pdcp_sn, true); })) {
     logger.warning("Discarded transmit notification for SRB{} because the task executor queue is full.",
                    srb_id_to_uint(srb_id));
   }
@@ -265,7 +264,7 @@ void f1c_other_srb_du_bearer::handle_transmit_notification(uint32_t highest_pdcp
 
 void f1c_other_srb_du_bearer::handle_delivery_notification(uint32_t highest_pdcp_sn)
 {
-  if (not ue_exec.defer(TRACE_TASK([this, highest_pdcp_sn]() { handle_notification(highest_pdcp_sn, false); }))) {
+  if (not ue_exec.defer([this, highest_pdcp_sn]() { handle_notification(highest_pdcp_sn, false); })) {
     logger.warning("Discarded delivery notification for SRB{} because the task executor queue is full.",
                    srb_id_to_uint(srb_id));
   }
@@ -387,16 +386,22 @@ f1c_other_srb_du_bearer::wait_for_notification(uint32_t                  pdcp_sn
 
 void f1c_other_srb_du_bearer::handle_rrc_delivery_report(uint32_t trigger_pdcp_sn, uint32_t highest_in_order_pdcp_sn)
 {
-  f1ap_message msg;
-  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_RRC_DELIVERY_REPORT);
-  asn1::f1ap::rrc_delivery_report_ies_container& report = *msg.pdu.init_msg().value.rrc_delivery_report();
-
-  report.gnb_cu_ue_f1ap_id                   = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.gnb_cu_ue_f1ap_id);
-  report.gnb_du_ue_f1ap_id                   = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.gnb_du_ue_f1ap_id);
-  report.srb_id                              = srb_id_to_uint(srb_id);
-  report.rrc_delivery_status.trigger_msg     = trigger_pdcp_sn;
-  report.rrc_delivery_status.delivery_status = highest_in_order_pdcp_sn;
-
   // Send F1AP PDU to CU-CP.
-  f1ap_notifier.on_new_message(msg);
+  if (not ctrl_exec.defer([this, trigger_pdcp_sn, highest_in_order_pdcp_sn]() {
+        f1ap_message msg;
+        msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_RRC_DELIVERY_REPORT);
+        asn1::f1ap::rrc_delivery_report_ies_container& report = *msg.pdu.init_msg().value.rrc_delivery_report();
+
+        report.gnb_cu_ue_f1ap_id                   = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.gnb_cu_ue_f1ap_id);
+        report.gnb_du_ue_f1ap_id                   = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.gnb_du_ue_f1ap_id);
+        report.srb_id                              = srb_id_to_uint(srb_id);
+        report.rrc_delivery_status.trigger_msg     = trigger_pdcp_sn;
+        report.rrc_delivery_status.delivery_status = highest_in_order_pdcp_sn;
+
+        f1ap_notifier.on_new_message(msg);
+      })) {
+    logger.warning("ue={} SRB{}: Discarded delivery report. Cause: The task executor queue is full.",
+                   fmt::underlying(ue_ctxt.ue_index),
+                   srb_id_to_uint(srb_id));
+  }
 }

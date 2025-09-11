@@ -35,10 +35,13 @@ namespace srsvec {
 ///
 /// The element at position \c i is moved to position <tt>i + shift</tt>. Elements that fall beyond the end of the
 /// sequence are reintroduced at its start.
+/// \tparam     T         Type of the output sequence (must be compatible with a span).
+/// \tparam     U         Type of the input sequence (must be compatible with a span).
 /// \param[out] out       Shifted output sequence.
 /// \param[in]  in        Original input sequence.
 /// \param[in]  shift     The number of positions the sequence is shifted by.
 /// \remark Cannot be used to override memory.
+/// \warning An assertion is triggered if input and output vectors have different sizes.
 template <typename T, typename U>
 void circ_shift_forward(T&& out, const U& in, unsigned shift)
 {
@@ -57,10 +60,13 @@ void circ_shift_forward(T&& out, const U& in, unsigned shift)
 ///
 /// The element at position \c i is moved to position <tt>i - shift</tt>. Elements that fall beyond the beginning of the
 /// sequence are reintroduced at its end.
+/// \tparam     T         Type of the output sequence (must be compatible with a span).
+/// \tparam     U         Type of the input sequence (must be compatible with a span).
 /// \param[out] out       Shifted output sequence.
 /// \param[in]  in        Original input sequence.
 /// \param[in]  shift     The number of positions the sequence is shifted by.
 /// \remark Cannot be used to override memory.
+/// \warning An assertion is triggered if input and output vectors have different sizes.
 template <typename T, typename U>
 void circ_shift_backward(T&& out, const U& in, unsigned shift)
 {

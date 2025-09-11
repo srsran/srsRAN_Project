@@ -200,11 +200,11 @@ void srsran::security::generate_k_ng_ran_star(sec_key&       k_star,
 
   // ARFCN, can be two or three bytes
   std::vector<uint8_t> target_ssb_arfcn;
-  if (target_ssb_arfcn_ < pow(2, 16)) {
+  if (target_ssb_arfcn_ < (1U << 16)) {
     target_ssb_arfcn.resize(2);
     target_ssb_arfcn[0] = (target_ssb_arfcn_ >> 8U) & 0xffU;
     target_ssb_arfcn[1] = target_ssb_arfcn_ & 0xffU;
-  } else if (target_ssb_arfcn_ < pow(2, 24)) {
+  } else if (target_ssb_arfcn_ < (1U << 24)) {
     target_ssb_arfcn.resize(3);
     target_ssb_arfcn[0] = (target_ssb_arfcn_ >> 16U) & 0xffU;
     target_ssb_arfcn[1] = (target_ssb_arfcn_ >> 8U) & 0xffU;

@@ -39,6 +39,19 @@
 namespace srsran {
 namespace srs_du {
 
+struct f1_reset_request {
+  enum class cause_type { cell_removal, other };
+
+  /// UEs to reset. If empty, all UEs will be reset.
+  std::vector<du_ue_index_t> ues_reset;
+  /// Cause for the F1 Reset.
+  cause_type cause;
+};
+
+struct f1_reset_acknowledgement {
+  bool success = true;
+};
+
 /// System Information Update from the gNB-DU.
 struct gnb_du_sys_info {
   byte_buffer packed_mib;
@@ -137,6 +150,9 @@ public:
 
   /// \brief Launches the F1 Removal procedure as per TS 38.473, Section 8.2.8.
   virtual async_task<void> handle_f1_removal_request() = 0;
+
+  /// \brief Initiates F1AP reset procedure as per TS 38.473, Section 8.2.1.2.2.
+  virtual async_task<f1_reset_acknowledgement> handle_f1_reset_request(const f1_reset_request& req) = 0;
 
   /// \brief Initiates F1AP gNB-DU config update procedure as per TS 38.473, Section 8.2.4.
   virtual async_task<gnbdu_config_update_response>

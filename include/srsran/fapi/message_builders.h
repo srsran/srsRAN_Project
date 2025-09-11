@@ -482,7 +482,7 @@ public:
                                             dmrs_config_type   dmrs_type,
                                             uint16_t           pdsch_dmrs_scrambling_id,
                                             uint16_t           pdsch_dmrs_scrambling_id_complement,
-                                            low_papr_dmrs_type low_parp_dmrs,
+                                            low_papr_dmrs_type low_papr_dmrs,
                                             uint8_t            nscid,
                                             uint8_t            num_dmrs_cdm_groups_no_data,
                                             uint16_t           dmrs_ports)
@@ -491,7 +491,7 @@ public:
     pdu.dmrs_type        = (dmrs_type == dmrs_config_type::type1) ? dmrs_cfg_type::type_1 : dmrs_cfg_type::type_2;
     pdu.pdsch_dmrs_scrambling_id       = pdsch_dmrs_scrambling_id;
     pdu.pdsch_dmrs_scrambling_id_compl = pdsch_dmrs_scrambling_id_complement;
-    pdu.low_papr_dmrs                  = low_parp_dmrs;
+    pdu.low_papr_dmrs                  = low_papr_dmrs;
     pdu.nscid                          = nscid;
     pdu.num_dmrs_cdm_grps_no_data      = num_dmrs_cdm_groups_no_data;
     pdu.dmrs_ports                     = dmrs_ports;
@@ -865,6 +865,14 @@ public:
     pdu.comb_offset = comb_offset;
 
     return *this;
+  }
+
+  /// Returns a transmission precoding and beamforming PDU builder of this PRS PDU.
+  tx_precoding_and_beamforming_pdu_builder get_tx_precoding_and_beamforming_pdu_builder()
+  {
+    tx_precoding_and_beamforming_pdu_builder builder(pdu.precoding_and_beamforming);
+
+    return builder;
   }
 };
 

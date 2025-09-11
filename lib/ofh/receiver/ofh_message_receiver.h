@@ -25,12 +25,9 @@
 #include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
 
 namespace srsran {
-
-namespace ether {
-class receiver;
-} // namespace ether
-
 namespace ofh {
+
+class operation_controller;
 
 class message_receiver_metrics_collector;
 
@@ -44,8 +41,8 @@ public:
   /// Default destructor.
   virtual ~message_receiver() = default;
 
-  /// Returns the Ethernet receiver of this Open Fronthaul message receiver.
-  virtual ether::receiver& get_ethernet_receiver() = 0;
+  /// Returns the operation controller of this Open Fronthaul message receiver.
+  virtual operation_controller& get_operation_controller() = 0;
 
   /// Returns the message receiver performance metrics collector.
   virtual message_receiver_metrics_collector* get_metrics_collector() = 0;

@@ -34,8 +34,8 @@ class concurrent_queue<T, concurrent_queue_policy::locking_mpmc, concurrent_queu
 {
 public:
   using value_type                                           = T;
-  constexpr static concurrent_queue_policy      queue_policy = concurrent_queue_policy::locking_mpmc;
-  constexpr static concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::non_blocking;
+  static constexpr concurrent_queue_policy      queue_policy = concurrent_queue_policy::locking_mpmc;
+  static constexpr concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::non_blocking;
   using consumer_type                                        = detail::basic_queue_consumer<concurrent_queue, T>;
 
   explicit concurrent_queue(size_t qsize) : queue(qsize) {}
@@ -79,8 +79,8 @@ class concurrent_queue<T, concurrent_queue_policy::locking_mpmc, concurrent_queu
 
 public:
   using value_type                                           = T;
-  constexpr static concurrent_queue_policy      queue_policy = concurrent_queue_policy::locking_mpmc;
-  constexpr static concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::condition_variable;
+  static constexpr concurrent_queue_policy      queue_policy = concurrent_queue_policy::locking_mpmc;
+  static constexpr concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::condition_variable;
   using consumer_type                                        = detail::basic_queue_consumer<concurrent_queue, T>;
 
   // Inherited methods.

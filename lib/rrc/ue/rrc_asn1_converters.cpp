@@ -44,7 +44,7 @@ asn1::rrc_nr::pdcp_cfg_s::t_reordering_e_ srsran::srs_cu_cp::t_reordering_to_asn
   return asn1_t_reordering;
 }
 
-asn1::rrc_nr::pdcp_cfg_s srsran::srs_cu_cp::pdcp_config_to_rrc_nr_asn1(pdcp_config pdcp_cfg)
+asn1::rrc_nr::pdcp_cfg_s srsran::srs_cu_cp::pdcp_config_to_rrc_nr_asn1(const pdcp_config& pdcp_cfg)
 {
   asn1::rrc_nr::pdcp_cfg_s rrc_pdcp_cfg;
 

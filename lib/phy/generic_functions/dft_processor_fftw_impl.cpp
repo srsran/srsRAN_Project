@@ -99,22 +99,22 @@ dft_processor_fftw_impl::fftw_wisdom_filename::fftw_wisdom_filename()
     // Get user entry in users database.
     const passwd* pwuid = getpwuid(getuid());
     if (pwuid == nullptr) {
-      printf("Failed to load home directory: %s. Skipping wisdom load/save.\n", strerror(errno));
+      fmt::println("Failed to load home directory: {}. Skipping wisdom load/save.", ::strerror(errno));
       return;
     }
 
     // Get home directory from user database entry.
     homedir = pwuid->pw_dir;
     if (homedir == nullptr) {
-      printf("Home dir is not available. Skipping wisdom load/save.\n");
+      fmt::println("Home dir is not available. Skipping wisdom load/save.");
       return;
     }
   }
 
   // Create full path to the wisdom file.
-  int n = snprintf(data.data(), data.size(), FFTW_WISDOM_FILE, homedir);
+  int n = std::snprintf(data.data(), data.size(), FFTW_WISDOM_FILE, homedir);
   if (n == 0 || n == 256) {
-    printf("Default FFTW wisdom path exceeds the maximum length. HOME=%s. Skipping wisdom load/save.\n", homedir);
+    fmt::println("Default FFTW wisdom path exceeds the maximum length. HOME={}. Skipping wisdom load/save.", homedir);
     return;
   }
 }

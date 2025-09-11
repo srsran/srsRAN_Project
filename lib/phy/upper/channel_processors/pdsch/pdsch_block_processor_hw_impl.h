@@ -19,6 +19,7 @@
  * and at http://www.gnu.org/licenses/.
  *
  */
+
 #pragma once
 
 #include "srsran/hal/phy/upper/channel_processors/hw_accelerator_pdsch_enc.h"
@@ -60,7 +61,7 @@ public:
   {
   }
 
-  // See interface for documentation.
+  // See the pdsch_block_processor interface for documentation.
   resource_grid_mapper::symbol_buffer& configure_new_transmission(span<const uint8_t>           data,
                                                                   unsigned                      i_cw,
                                                                   const pdsch_processor::pdu_t& pdu,
@@ -68,24 +69,18 @@ public:
                                                                   unsigned                      start_i_cb,
                                                                   unsigned                      cb_batch_len) override;
 
-  // See interface for documentation.
+  // See the resource_grid_mapper::symbol_buffer interface for documentation.
   unsigned get_max_block_size() const override;
 
+  // See the resource_grid_mapper::symbol_buffer interface for documentation.
   bool empty() const override;
 
-  // See interface for documentation.
+  // See the resource_grid_mapper::symbol_buffer interface for documentation.
   span<const ci8_t> pop_symbols(unsigned block_size) override;
-
-  /// Gets the QAM modulation scaling, as per TS38.211 Section 5.1.
-  float get_scaling(modulation_scheme mod_sch) override
-  {
-    static_bit_buffer<0> temp;
-    return modulator->modulate(span<ci8_t>(), temp, mod_sch);
-  }
 
   /// \brief Configures the encoding parameters as required by the hardware-accelerated PDSCH encoder function.
   /// \param[out] hw_cfg        Hardware-accelerated PDSCH encoder configuration parameters.
-  /// \param[in]  descr_seg     Strucutre with both the CB data and related encoding parameters.
+  /// \param[in]  descr_seg     Structure with both the CB data and related encoding parameters.
   /// \param[in]  cb_index      Index of the CB (within the TB).
   void set_hw_enc_configuration(hal::hw_pdsch_encoder_configuration& hw_cfg,
                                 const codeblock_metadata&            cb_metadata,

@@ -101,7 +101,7 @@ void pseudo_random_generator_impl::generate(bit_buffer& data)
     uint64_t c                 = sequence.step64();
     c                          = __builtin_bswap64(c);
     span<uint8_t> output_chunk = data.get_buffer().subspan(i_byte, max_nof_bytes_step);
-    memcpy(output_chunk.data(), &c, max_nof_bytes_step);
+    std::memcpy(output_chunk.data(), &c, max_nof_bytes_step);
   }
 
   // Process spare bits in a batch of the remainder bits.
@@ -146,9 +146,9 @@ void pseudo_random_generator_impl::generate(bit_buffer& data)
 #define FLOAT_U32_XOR(DST, SRC, U32_MASK)                                                                              \
   do {                                                                                                                 \
     uint32_t temp_u32;                                                                                                 \
-    memcpy(&temp_u32, &(SRC), 4);                                                                                      \
+    std::memcpy(&temp_u32, &(SRC), 4);                                                                                 \
     temp_u32 ^= (U32_MASK);                                                                                            \
-    memcpy(&(DST), &temp_u32, 4);                                                                                      \
+    std::memcpy(&(DST), &temp_u32, 4);                                                                                 \
   } while (false)
 
 void pseudo_random_generator_impl::generate(span<float> out, float value)
@@ -270,9 +270,9 @@ void pseudo_random_generator_impl::apply_xor(bit_buffer& out, const bit_buffer& 
     uint64_t c = sequence.step64();
     c          = __builtin_bswap64(c);
     uint64_t temp;
-    memcpy(&temp, &in.get_buffer()[i_byte], 8);
+    std::memcpy(&temp, &in.get_buffer()[i_byte], 8);
     temp ^= c;
-    memcpy(&out.get_buffer()[i_byte], &temp, 8);
+    std::memcpy(&out.get_buffer()[i_byte], &temp, 8);
   }
 
   // Process spare bits in a batch of the remainder bits.

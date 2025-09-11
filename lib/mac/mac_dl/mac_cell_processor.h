@@ -32,7 +32,7 @@
 #include "rar_pdu_assembler.h"
 #include "sib_pdu_assembler.h"
 #include "ssb_assembler.h"
-#include "srsran/mac/mac.h"
+#include "srsran/support/async/manual_event.h"
 #include "srsran/support/memory_pool/ring_buffer_pool.h"
 
 namespace srsran {
@@ -65,6 +65,7 @@ public:
 
   void handle_slot_indication(const mac_cell_timing_context& context) noexcept override;
   void handle_error_indication(slot_point sl_tx, error_event event) noexcept override;
+  void handle_stop_indication() noexcept override;
 
   /// Creates new UE DL context, updates logical channel MUX, adds UE in scheduler.
   async_task<bool> add_ue(const mac_ue_create_request& request);
@@ -99,8 +100,9 @@ private:
   /// Update DL buffer states of the allocated DL bearers.
   void update_logical_channel_dl_buffer_states(const dl_sched_result& dl_res);
 
-  void write_tx_pdu_pcap(const slot_point& sl_tx, const sched_result& sl_res, const mac_dl_data_result& dl_res);
+  void write_tx_pdu_pcap(slot_point sl_tx, const sched_result& sl_res, const mac_dl_data_result& dl_res);
 
+  // Dependencies.
   srslog::basic_logger&           logger;
   const mac_cell_creation_request cell_cfg;
   task_executor&                  cell_exec;
@@ -128,13 +130,15 @@ private:
 
   mac_scheduler_cell_info_handler& sched;
 
-  std::unique_ptr<du_cell_timer_source> time_source;
+  /// Ticks the APP clock based on the received slot indications for this cell.
+  std::unique_ptr<mac_cell_clock_controller> time_source;
 
   // Handler of cell metrics
   mac_dl_cell_metric_handler metrics;
 
   // Represents cell activation state.
   enum class cell_state { inactive, active } state = cell_state::inactive;
+  manual_event_flag stop_completed;
 
   mac_pcap& pcap;
 

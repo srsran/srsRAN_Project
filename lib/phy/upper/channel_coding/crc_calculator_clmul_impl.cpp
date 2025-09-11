@@ -29,7 +29,7 @@ using namespace srsran;
 
 namespace {
 
-// Collects algorithm parameters.
+/// Collects algorithm parameters.
 struct crc_pclmulqdq_parameters {
   // K1 = remainder X^128 / P(X)
   int64_t k1;

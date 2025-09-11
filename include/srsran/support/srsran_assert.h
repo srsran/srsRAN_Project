@@ -24,6 +24,7 @@
 
 #include "srsran/support/compiler.h"
 #include "srsran/support/error_handling.h"
+#include "srsran/support/rtsan.h"
 
 namespace srsran {
 namespace detail {
@@ -37,6 +38,8 @@ namespace detail {
 [[gnu::noinline]] inline void
 print_and_abort_1(const char* filename, int line, const char* funcname, const char* condstr) noexcept
 {
+  SRSRAN_RTSAN_SCOPED_DISABLER(d);
+
   if (auto handler = error_report_handler.exchange(nullptr)) {
     handler();
   }
@@ -56,6 +59,8 @@ print_and_abort_1(const char* filename, int line, const char* funcname, const ch
 template <typename... Args>
 [[gnu::noinline, noreturn]] inline void print_and_abort_2(fmt::string_view fmt, Args&&... args) noexcept
 {
+  SRSRAN_RTSAN_SCOPED_DISABLER(d);
+
   if (fmt.size()) {
     fmt::print(stderr, " - ");
     fmt::print(stderr, fmt, std::forward<Args>(args)...);

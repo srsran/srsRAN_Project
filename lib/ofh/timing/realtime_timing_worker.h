@@ -22,13 +22,14 @@
 
 #pragma once
 
+#include "ofh_timing_metrics_collector_impl.h"
 #include "srsran/adt/span.h"
 #include "srsran/ofh/ofh_controller.h"
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier_manager.h"
 #include "srsran/ran/cyclic_prefix.h"
-#include "srsran/ran/slot_point.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/synchronization/stop_event.h"
 #include <atomic>
 
 namespace srsran {
@@ -47,13 +48,13 @@ struct realtime_worker_cfg {
   unsigned gps_Alpha;
   /// GPS Beta.
   int gps_Beta;
+  /// If set to true, logs late events as warnings, otherwise as info.
+  bool enable_log_warnings_for_lates;
 };
 
 /// Realtime worker that generates OTA symbol notifications.
 class realtime_timing_worker : public operation_controller, public ota_symbol_boundary_notifier_manager
 {
-  enum class worker_status { running, stop_requested, stopped };
-
   srslog::basic_logger&                          logger;
   std::vector<ota_symbol_boundary_notifier*>     ota_notifiers;
   task_executor&                                 executor;
@@ -62,8 +63,10 @@ class realtime_timing_worker : public operation_controller, public ota_symbol_bo
   const unsigned                                 nof_symbols_per_sec;
   const std::chrono::duration<double, std::nano> symbol_duration;
   const std::chrono::nanoseconds                 sleep_time;
+  bool                                           enable_log_warnings_for_lates;
   unsigned                                       previous_symb_index = 0;
-  std::atomic<worker_status>                     status{worker_status::running};
+  stop_event_source                              stop_manager;
+  timing_metrics_collector_impl                  metrics_collector;
 
 public:
   realtime_timing_worker(srslog::basic_logger& logger_, task_executor& executor_, const realtime_worker_cfg& cfg);
@@ -77,9 +80,12 @@ public:
   // See interface for documentation.
   void subscribe(span<ota_symbol_boundary_notifier*> notifiers) override;
 
+  /// Returns the metrics collector of this timing worker.
+  timing_metrics_collector& get_metrics_collector() { return metrics_collector; }
+
 private:
   /// Main timing loop.
-  void timing_loop();
+  void timing_loop() noexcept;
 
   /// Polls the system time checking for the start of a new OTA symbol.
   void poll();

@@ -128,6 +128,8 @@ struct du_high_unit_ul_common_config {
   unsigned max_pucchs_per_slot = 31U;
   /// Maximum number of PUSCH + PUCCH grants per slot.
   unsigned max_ul_grants_per_slot = 32U;
+  /// Minimum distance in PRBs between PUCCH and UE-dedicated PUSCH grants.
+  unsigned min_pucch_pusch_prb_distance = 1U;
 };
 
 /// PDSCH application configuration.
@@ -202,6 +204,8 @@ struct du_high_unit_pdsch_config {
   vrb_to_prb::mapping_type interleaving_bundle_size{vrb_to_prb::mapping_type::non_interleaved};
   /// Limits the maximum rank UEs can report. It must not exceed the number of transmit antennas.
   std::optional<unsigned> max_rank;
+  /// Enable multiplexing of CSI-RS and PDSCH.
+  bool enable_csi_rs_pdsch_multiplexing = true;
 };
 
 /// PUSCH application configuration.
@@ -976,11 +980,6 @@ struct du_high_unit_execution_queues_config {
   uint32_t ue_data_executor_queue_size = 8192;
 };
 
-/// CPU affinities configuration for the cell.
-struct du_high_unit_cpu_affinities_cell_config {
-  os_sched_affinity_config l2_cell_cpu_cfg = {sched_affinity_mask_types::l2_cell, {}, sched_affinity_mask_policy::mask};
-};
-
 /// Expert configuration of the DU high.
 struct du_high_unit_expert_execution_config {
   /// \brief Task executor configuration for the DU.
@@ -988,11 +987,6 @@ struct du_high_unit_expert_execution_config {
 
   /// \brief Whether to enable tracing of the DU-high executors.
   bool executor_tracing_enable = false;
-
-  /// \brief CPU affinities per cell of the gNB app.
-  ///
-  /// \note Add one cell by default.
-  std::vector<du_high_unit_cpu_affinities_cell_config> cell_affinities = {{}};
 };
 
 /// RLC UM TX configuration

@@ -150,6 +150,7 @@ private:
     latency_data dl_tti_req;
     latency_data tx_data_req;
     latency_data ul_tti_req;
+    latency_data slot_distance;
     unsigned     count_vol_context_switches{0};
     unsigned     count_invol_context_switches{0};
     /// \brief Whether the cell was marked for deactivation and this is the last report.
@@ -168,7 +169,10 @@ private:
   slot_point last_sl_tx;
 
   // Metrics tracked
+  /// Data that is reset on every report.
   non_persistent_data data;
+  /// Time point when the last slot indication was sent.
+  metric_clock::time_point last_slot_ind_enqueue_tp{};
 };
 
 } // namespace srsran

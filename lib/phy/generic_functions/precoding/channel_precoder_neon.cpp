@@ -25,20 +25,20 @@
 
 using namespace srsran;
 
-namespace {
-
-// Size of a NEON register in complex numbers with 32-bit floating point precision.
+/// Size of a NEON register in complex numbers with 32-bit floating point precision.
 static constexpr unsigned NEON_CF_SIZE = 4;
 
-// Size of a NEON register in complex numbers with 8-bit fixed point precision.
+/// Size of a NEON register in complex numbers with 8-bit fixed point precision.
 static constexpr unsigned NEON_CI8_SIZE = 16;
 
-// Representation of a set of complex numbers using a pair of NEON registers, for the real and imaginary parts.
+namespace {
+
+/// Representation of a set of complex numbers using a pair of NEON registers, for the real and imaginary parts.
 struct simd_cf_t {
   float32x4_t re;
   float32x4_t im;
 
-  // Sets the registers using a complex constant.
+  /// Sets the registers using a complex constant.
   void set1(const cf_t a)
   {
     re = vdupq_n_f32(a.real());
@@ -46,10 +46,12 @@ struct simd_cf_t {
   }
 };
 
-// Type to hold a set of complex numbers using a NEON register, with interleaved real and imaginary parts.
+/// Type to hold a set of complex numbers using a NEON register, with interleaved real and imaginary parts.
 using simd_cf_interleaved = float32x4x2_t;
 
-simd_cf_interleaved operator+(simd_cf_interleaved a, simd_cf_interleaved b)
+} // namespace
+
+static simd_cf_interleaved operator+(simd_cf_interleaved a, simd_cf_interleaved b)
 {
   simd_cf_interleaved ret;
   ret.val[0] = vaddq_f32(a.val[0], b.val[0]);
@@ -57,8 +59,8 @@ simd_cf_interleaved operator+(simd_cf_interleaved a, simd_cf_interleaved b)
   return ret;
 }
 
-// Multiplication operator for the precoding weights.
-simd_cf_interleaved operator*(const simd_cf_interleaved& re, const simd_cf_t& weight)
+/// Multiplication operator for the precoding weights.
+static simd_cf_interleaved operator*(const simd_cf_interleaved& re, const simd_cf_t& weight)
 {
   simd_cf_interleaved ret;
   ret.val[0] = vmlsq_f32(vmulq_f32(re.val[0], weight.re), re.val[1], weight.im);
@@ -66,7 +68,8 @@ simd_cf_interleaved operator*(const simd_cf_interleaved& re, const simd_cf_t& we
   return ret;
 }
 
-simd_cf_interleaved add_mul(const simd_cf_interleaved& sum, const simd_cf_interleaved& value, const simd_cf_t& weight)
+static simd_cf_interleaved
+add_mul(const simd_cf_interleaved& sum, const simd_cf_interleaved& value, const simd_cf_t& weight)
 {
   simd_cf_interleaved ret;
   ret.val[0] = vmlsq_f32(vmlaq_f32(sum.val[0], value.val[0], weight.re), value.val[1], weight.im);
@@ -74,7 +77,7 @@ simd_cf_interleaved add_mul(const simd_cf_interleaved& sum, const simd_cf_interl
   return ret;
 }
 
-inline uint16x8_t cf_to_cbf16(simd_cf_interleaved in)
+static uint16x8_t cf_to_cbf16(simd_cf_interleaved in)
 {
   const uint32x4_t bias = vdupq_n_u32(0x7fff);
   const uint32x4_t one  = vdupq_n_u32(0x1);
@@ -94,8 +97,6 @@ inline uint16x8_t cf_to_cbf16(simd_cf_interleaved in)
   // Combine real and imaginary parts.
   return vreinterpretq_u16_u32(vorrq_u32(a_u32, b_u32));
 }
-
-} // namespace
 
 void channel_precoder_neon::apply_precoding_port(span<cbf16_t>             port_re,
                                                  const re_buffer_reader<>& input_re,
@@ -150,7 +151,7 @@ void channel_precoder_neon::apply_precoding_port(span<cbf16_t>             port_
   }
 }
 
-static inline void from_ci8_to_ci16(int16x8x2_t& out0, int16x8x2_t& out1, int8x16x2_t in)
+static void from_ci8_to_ci16(int16x8x2_t& out0, int16x8x2_t& out1, int8x16x2_t in)
 {
   out0.val[0] = vmovl_s8(vget_low_s8(in.val[0]));
   out0.val[1] = vmovl_s8(vget_low_s8(in.val[1]));
@@ -159,7 +160,7 @@ static inline void from_ci8_to_ci16(int16x8x2_t& out0, int16x8x2_t& out1, int8x1
   out1.val[1] = vmovl_high_s8(in.val[1]);
 }
 
-static inline void from_ci16_to_ci32(int32x4x2_t& out0, int32x4x2_t& out1, int16x8x2_t in)
+static void from_ci16_to_ci32(int32x4x2_t& out0, int32x4x2_t& out1, int16x8x2_t in)
 {
   out0.val[0] = vmovl_s16(vget_low_s16(in.val[0]));
   out0.val[1] = vmovl_s16(vget_low_s16(in.val[1]));
@@ -168,18 +169,18 @@ static inline void from_ci16_to_ci32(int32x4x2_t& out0, int32x4x2_t& out1, int16
   out1.val[1] = vmovl_high_s16(in.val[1]);
 }
 
-static inline void from_ci32_to_cf(float32x4x2_t& out, int32x4x2_t in)
+static void from_ci32_to_cf(float32x4x2_t& out, int32x4x2_t in)
 {
   out.val[0] = vcvtq_f32_s32(in.val[0]);
   out.val[1] = vcvtq_f32_s32(in.val[1]);
 }
 
-// Converts ci8_t symbols into cf_t and stores them on four NEON registers.
-static inline void from_ci8_to_cf(simd_cf_interleaved& out0,
-                                  simd_cf_interleaved& out1,
-                                  simd_cf_interleaved& out2,
-                                  simd_cf_interleaved& out3,
-                                  const int8x16x2_t    in)
+/// Converts ci8_t symbols into cf_t and stores them on four NEON registers.
+static void from_ci8_to_cf(simd_cf_interleaved& out0,
+                           simd_cf_interleaved& out1,
+                           simd_cf_interleaved& out2,
+                           simd_cf_interleaved& out3,
+                           const int8x16x2_t    in)
 {
   // Convert input to ci16.
   int16x8x2_t in_ci16_0, in_ci16_1;
@@ -197,12 +198,12 @@ static inline void from_ci8_to_cf(simd_cf_interleaved& out0,
   from_ci32_to_cf(out3, in_ci32_3);
 }
 
-// Applies layer mapping for two layers and converts the symbols to cf_t.
-static inline void layer2_map_and_ci8_to_cf(simd_cf_interleaved& out0_l0,
-                                            simd_cf_interleaved& out0_l1,
-                                            simd_cf_interleaved& out1_l0,
-                                            simd_cf_interleaved& out1_l1,
-                                            const int8x16x2_t    in)
+/// Applies layer mapping for two layers and converts the symbols to cf_t.
+static void layer2_map_and_ci8_to_cf(simd_cf_interleaved& out0_l0,
+                                     simd_cf_interleaved& out0_l1,
+                                     simd_cf_interleaved& out1_l0,
+                                     simd_cf_interleaved& out1_l1,
+                                     const int8x16x2_t    in)
 {
   // The input is de-interleaved in real and imaginary, this step interleaves them again to produce the linear input in
   // temp in an array of words of 16bits.
@@ -220,11 +221,11 @@ static inline void layer2_map_and_ci8_to_cf(simd_cf_interleaved& out0_l0,
   from_ci8_to_cf(out0_l0, out1_l0, out0_l1, out1_l1, out);
 }
 
-// Applies layer mapping for three layers and converts the symbols to cf_t.
-static inline void layer3_map_and_ci8_to_cf(simd_cf_interleaved& out_l0,
-                                            simd_cf_interleaved& out_l1,
-                                            simd_cf_interleaved& out_l2,
-                                            const int8x16x2_t    in)
+/// Applies layer mapping for three layers and converts the symbols to cf_t.
+static void layer3_map_and_ci8_to_cf(simd_cf_interleaved& out_l0,
+                                     simd_cf_interleaved& out_l1,
+                                     simd_cf_interleaved& out_l2,
+                                     const int8x16x2_t    in)
 {
   simd_cf_interleaved unused;
 
@@ -245,12 +246,12 @@ static inline void layer3_map_and_ci8_to_cf(simd_cf_interleaved& out_l0,
   from_ci8_to_cf(out_l0, out_l1, out_l2, unused, out);
 }
 
-// Applies layer mapping for four layers and converts the symbols to cf_t.
-static inline void layer4_map_and_ci8_to_cf(simd_cf_interleaved& out_l0,
-                                            simd_cf_interleaved& out_l1,
-                                            simd_cf_interleaved& out_l2,
-                                            simd_cf_interleaved& out_l3,
-                                            const int8x16x2_t    in)
+/// Applies layer mapping for four layers and converts the symbols to cf_t.
+static void layer4_map_and_ci8_to_cf(simd_cf_interleaved& out_l0,
+                                     simd_cf_interleaved& out_l1,
+                                     simd_cf_interleaved& out_l2,
+                                     simd_cf_interleaved& out_l3,
+                                     const int8x16x2_t    in)
 {
   // The input is de-interleaved in real and imaginary, this step interleaves them again to produce the linear input in
   // temp in an array of words of 16bits.
@@ -274,9 +275,9 @@ static inline void layer4_map_and_ci8_to_cf(simd_cf_interleaved& out_l0,
 }
 
 template <unsigned NofPorts>
-void template_apply_layer_map_and_precoding(re_buffer_writer<cbf16_t>&     output,
-                                            span<const ci8_t>              input,
-                                            const precoding_weight_matrix& precoding)
+static void template_apply_layer_map_and_precoding(re_buffer_writer<cbf16_t>&     output,
+                                                   span<const ci8_t>              input,
+                                                   const precoding_weight_matrix& precoding)
 {
   // Extract precoding parameters.
   unsigned nof_re     = output.get_nof_re();

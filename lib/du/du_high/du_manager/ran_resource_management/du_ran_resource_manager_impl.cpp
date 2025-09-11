@@ -93,7 +93,7 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
     unsigned              max_nof_ues = pucch_res_mng.get_nof_sr_free_res_offsets(cell_idx);
 
     if (cell.ue_ded_serv_cell_cfg.csi_meas_cfg.has_value()) {
-      max_nof_ues = std::min(max_nof_ues, srs_res_mng->get_nof_srs_free_res_offsets(cell_idx));
+      max_nof_ues = std::min(max_nof_ues, pucch_res_mng.get_nof_csi_free_res_offsets(cell_idx));
     }
 
     if (cell.srs_cfg.srs_period.has_value()) {

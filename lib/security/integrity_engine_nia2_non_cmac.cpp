@@ -88,7 +88,7 @@ expected<security::sec_mac, security_error> integrity_engine_nia2_non_cmac::comp
   std::fill(msg.begin() + len + 8, msg.end(), 0);
 
   // MAC generation
-  const uint32_t n = ceilf((float)(len + 8) / (float)(16));
+  const uint32_t n = std::ceil((float)(len + 8) / (float)(16));
   std::fill(tmp_mac.begin(), tmp_mac.end(), 0);
   for (uint32_t i = 0; i < (n - 1); i++) {
     for (uint32_t j = 0; j < 16; j++) {

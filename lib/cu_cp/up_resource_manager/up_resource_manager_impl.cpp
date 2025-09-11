@@ -67,7 +67,7 @@ up_config_update up_resource_manager::calculate_update(const cu_cp_pdu_session_r
   return srsran::srs_cu_cp::calculate_update(pdu, context, cfg, logger);
 }
 
-inline void apply_update_for_new_drbs(up_pdu_session_context&                   pdu_session_context,
+static void apply_update_for_new_drbs(up_pdu_session_context&                   pdu_session_context,
                                       up_context&                               context,
                                       const std::map<drb_id_t, up_drb_context>& drb_to_add)
 {
@@ -84,7 +84,7 @@ inline void apply_update_for_new_drbs(up_pdu_session_context&                   
   }
 }
 
-inline void apply_update_for_removed_drbs(up_pdu_session_context&      pdu_session_context,
+static void apply_update_for_removed_drbs(up_pdu_session_context&      pdu_session_context,
                                           up_context&                  context,
                                           const std::vector<drb_id_t>& drb_to_remove)
 {

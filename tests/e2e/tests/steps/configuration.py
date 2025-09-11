@@ -23,6 +23,7 @@ Configuration related steps
 """
 
 import logging
+import socket
 from collections import defaultdict
 from pprint import pformat
 from typing import List, NamedTuple, Optional, Tuple, Union
@@ -33,7 +34,9 @@ from retina.launcher.public import MetricServerInfo
 from retina.protocol.channel_emulator_pb2 import EphemerisInfoType, NtnScenarioConfig, NtnScenarioType
 
 
-def configure_ntn_parameters(retina_data: RetinaTestData, ntn_config: NtnScenarioConfig):
+def configure_ntn_parameters(
+    *, retina_data: RetinaTestData, ntn_config: NtnScenarioConfig  # The "*" enforces keyword-only arguments
+):
     """
     Configure test NTN parameters
     """
@@ -42,15 +45,15 @@ def configure_ntn_parameters(retina_data: RetinaTestData, ntn_config: NtnScenari
     if ntn_config.scenario_type == NtnScenarioType.GEO:
         retina_data.test_config["gnb"]["parameters"]["cu_cp_inactivity_timer"] = 120
         retina_data.test_config["gnb"]["parameters"]["request_pdu_session_timeout"] = 12
-        retina_data.test_config["gnb"]["parameters"]["rrc_procedure_timeout_ms"] = 12800
+        retina_data.test_config["gnb"]["parameters"]["rrc_procedure_guard_time_ms"] = 12800
     elif ntn_config.scenario_type == NtnScenarioType.MEO:
         retina_data.test_config["gnb"]["parameters"]["cu_cp_inactivity_timer"] = 90
         retina_data.test_config["gnb"]["parameters"]["request_pdu_session_timeout"] = 9
-        retina_data.test_config["gnb"]["parameters"]["rrc_procedure_timeout_ms"] = 12800
+        retina_data.test_config["gnb"]["parameters"]["rrc_procedure_guard_time_ms"] = 12800
     else:  # LEO
         retina_data.test_config["gnb"]["parameters"]["cu_cp_inactivity_timer"] = 60
         retina_data.test_config["gnb"]["parameters"]["request_pdu_session_timeout"] = 6
-        retina_data.test_config["gnb"]["parameters"]["rrc_procedure_timeout_ms"] = 10000
+        retina_data.test_config["gnb"]["parameters"]["rrc_procedure_guard_time_ms"] = 10000
 
     # DU NTN parameters.
     retina_data.test_config["gnb"]["parameters"]["sib19"] = {}
@@ -111,6 +114,7 @@ def configure_ntn_parameters(retina_data: RetinaTestData, ntn_config: NtnScenari
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 # pylint: disable=too-many-locals
 def configure_test_parameters(
+    *,  # This enforces keyword-only arguments
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     band: int,
@@ -145,6 +149,7 @@ def configure_test_parameters(
     pdcch_log: bool = False,
     slices: Optional[List[dict]] = None,
     ue_sds: Optional[List[str]] = None,
+    warning_allowlist: Optional[List[str]] = None,
 ):
     """
     Configure test parameters
@@ -195,6 +200,39 @@ def configure_test_parameters(
                 "pucch_set1_format": pucch_set1_format,
                 "pdsch_interleaving_bundle_size": pdsch_interleaving_bundle_size,
                 "slices": slices if slices is not None else [],
+                "warning_extra_regex": (
+                    (r"(?!.*" + r")(?!.*".join(warning_allowlist) + r")") if warning_allowlist else ""
+                ),
+            },
+        },
+        "du": {
+            "parameters": {
+                "band": band,
+                "dl_arfcn": _get_dl_arfcn(band),
+                "common_scs": common_scs,
+                "bandwidth": bandwidth,
+                "time_alignment_calibration": time_alignment_calibration,
+                "common_search_space_enable": common_search_space_enable,
+                "prach_config_index": prach_config_index,
+                "enable_channel_noise": noise_spd != 0,
+                "enable_qos_reestablishment": enable_qos_reestablishment,
+                "enable_dddsu": enable_dddsu,
+                "nof_antennas_dl": nof_antennas_dl,
+                "nof_antennas_ul": nof_antennas_ul,
+                "enable_drx": enable_drx,
+                "pdsch_mcs_table": pdsch_mcs_table,
+                "pusch_mcs_table": pusch_mcs_table,
+                "use_format_0": use_format_0,
+                "pucch_set1_format": pucch_set1_format,
+                "pdsch_interleaving_bundle_size": pdsch_interleaving_bundle_size,
+                "slices": slices if slices is not None else [],
+            },
+        },
+        "cu": {
+            "parameters": {
+                "enable_security_mode": enable_security_mode,
+                "cu_cp_inactivity_timer": cu_cp_inactivity_timer,
+                "num_cells": num_cells,
             },
         },
         "5gc": {
@@ -214,7 +252,7 @@ def configure_test_parameters(
         retina_data.test_config["ue"]["parameters"]["rx_ant"] = "rx"
 
     if ntn_config is not None:
-        configure_ntn_parameters(retina_data, ntn_config)
+        configure_ntn_parameters(retina_data=retina_data, ntn_config=ntn_config)
 
     for node_name in retina_manager.get_testbed_info().get("generic", {}).keys():
         if "metrics-server" in node_name:
@@ -223,7 +261,7 @@ def configure_test_parameters(
             logging.info(
                 "Metrics Server in %s:%s will be used for this test.", metrics_server.address, metrics_server.port
             )
-            configure_metric_server_for_gnb(retina_manager, retina_data, metrics_server)
+            configure_metric_server_for_gnb(retina_manager=retina_manager, metrics_server=metrics_server)
 
     logging.info("Test config: \n%s", pformat(retina_data.test_config))
     retina_manager.parse_configuration(retina_data.test_config)
@@ -314,23 +352,27 @@ def get_minimum_sample_rate_for_bandwidth(bandwidth: int) -> int:
 
 
 def configure_metric_server_for_gnb(
-    retina_manager: RetinaTestManager, retina_data: RetinaTestData, metrics_server: MetricServerInfo
+    *, retina_manager: RetinaTestManager, metrics_server: MetricServerInfo  # The "*" enforces keyword-only arguments
 ):
     """
-    Set parameters to set up a metrics server
+    Report gnb ip and port to the metrics-server configuration
     """
+    # Send a UDP packet to the metrics-server with the gnb's ip:port
 
-    if "gnb" not in retina_data.test_config:
-        retina_data.test_config["gnb"] = {}
-    if "parameters" not in retina_data.test_config["gnb"]:
-        retina_data.test_config["gnb"]["parameters"] = {}
+    for item in retina_manager.get_testbed_info().get("gnb", {}).values():
+        gnb_ip = item.address
+        break
 
-    retina_data.test_config["gnb"]["parameters"]["metrics_hostname"] = metrics_server.address
-    retina_data.test_config["gnb"]["parameters"]["metrics_port"] = metrics_server.port
+    message = f"{gnb_ip}:8001"
 
-    logging.info("Test config: \n%s", pformat(retina_data.test_config))
-    retina_manager.parse_configuration(retina_data.test_config)
-    retina_manager.push_all_config()
+    try:
+        # Create UDP socket and send message to metrics server
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.sendto(message.encode("utf-8"), (metrics_server.address, metrics_server.port))
+        sock.close()
+        logging.info("Sent gnb info '%s' to metrics server %s:%s", message, metrics_server.address, metrics_server.port)
+    except socket.error as e:
+        logging.error("Failed to send gnb info to metrics server: %s", e)
 
 
 class NrRasterParams(NamedTuple):

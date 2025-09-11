@@ -41,9 +41,9 @@ sockaddr_searcher::sockaddr_searcher(const std::string& address, int port, srslo
   hints.ai_next      = nullptr;
 
   std::string port_str = std::to_string(port);
-  int         ret      = getaddrinfo(address.c_str(), port_str.c_str(), &hints, &results);
+  int         ret      = ::getaddrinfo(address.c_str(), port_str.c_str(), &hints, &results);
   if (ret != 0) {
-    logger.error("Error in \"getaddrinfo\" for \"{}\":{}. Cause: {}", address, port, gai_strerror(ret));
+    logger.error("Error in \"getaddrinfo\" for \"{}\":{}. Cause: {}", address, port, ::gai_strerror(ret));
     results = nullptr;
     return;
   }
@@ -52,7 +52,7 @@ sockaddr_searcher::sockaddr_searcher(const std::string& address, int port, srslo
 
 sockaddr_searcher::~sockaddr_searcher()
 {
-  freeaddrinfo(results);
+  ::freeaddrinfo(results);
 }
 
 /// Get next candidate or nullptr of search has ended.
@@ -132,8 +132,10 @@ bool sctp_network_gateway_common_impl::create_and_bind_common()
   }
 
   if (not socket.is_open()) {
-    fmt::print(
-        "Failed to bind SCTP socket to {}:{}. Cause: {}\n", node_cfg.bind_address, node_cfg.bind_port, strerror(errno));
+    fmt::print("Failed to bind SCTP socket to {}:{}. Cause: {}\n",
+               node_cfg.bind_address,
+               node_cfg.bind_port,
+               ::strerror(errno));
     return false;
   }
 

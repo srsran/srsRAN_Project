@@ -80,8 +80,8 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
 }
 
 async_task<f1ap_ue_context_setup_response>
-f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_request&   request,
-                                              std::optional<rrc_ue_transfer_context> rrc_context)
+f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_request&          request,
+                                              const std::optional<rrc_ue_transfer_context>& rrc_context)
 {
   return launch_async<ue_context_setup_procedure>(
       cfg, request, ue_ctxt_list, du_processor_notifier, tx_pdu_notifier, logger, rrc_context);

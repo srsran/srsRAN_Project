@@ -22,13 +22,13 @@
 
 #pragma once
 
+#include "mac_test_mode_event_handler.h"
 #include "srsran/adt/flat_map.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/adt/unique_function.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/scheduler/scheduler_configurator.h"
-#include <vector>
 
 namespace srsran {
 
@@ -36,7 +36,10 @@ namespace srsran {
 class mac_test_mode_ue_repository
 {
 public:
-  mac_test_mode_ue_repository(rnti_t rnti_start_, uint16_t nof_ues_, uint16_t nof_cells_);
+  mac_test_mode_ue_repository(mac_test_mode_event_handler& event_handler,
+                              rnti_t                       rnti_start_,
+                              uint16_t                     nof_ues_,
+                              uint16_t                     nof_cells_);
 
   bool is_test_ue(du_ue_index_t ue_idx) const { return ue_idx < nof_ues * cells.size(); }
 
@@ -64,8 +67,6 @@ public:
 
   void remove_ue(rnti_t rnti);
 
-  void process_pending_tasks(du_cell_index_t cell_index);
-
   du_ue_index_t rnti_to_du_ue_idx(rnti_t rnti) const;
 
 private:
@@ -79,19 +80,18 @@ private:
   };
 
   struct cell_info {
-    cell_event_queue pending_tasks;
     // Mapping between UE RNTI and test UE information.
     flat_map<rnti_t, test_ue_info> rnti_to_ue_info_lookup;
 
-    cell_info(unsigned qsize) : pending_tasks(qsize) { rnti_to_ue_info_lookup.reserve(MAX_NOF_DU_UES); }
+    cell_info() { rnti_to_ue_info_lookup.reserve(MAX_NOF_DU_UES); }
   };
 
-  unsigned get_cell_index(du_ue_index_t ue_index) const;
   unsigned get_cell_index(rnti_t rnti) const;
 
   // Parameters received from configuration.
-  const uint16_t rnti_start;
-  const uint16_t nof_ues;
+  mac_test_mode_event_handler& event_handler;
+  const uint16_t               rnti_start;
+  const uint16_t               nof_ues;
 
   // Derived
   uint16_t rnti_end;

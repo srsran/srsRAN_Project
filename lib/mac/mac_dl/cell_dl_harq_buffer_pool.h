@@ -104,6 +104,10 @@ public:
   /// \param nof_ports Number of ports of the cell.
   /// \param ctrl_exec Executor to which DL HARQ buffer allocation tasks is dispatched.
   cell_dl_harq_buffer_pool(unsigned cell_nof_prbs, unsigned nof_ports, task_executor& ctrl_exec);
+  ~cell_dl_harq_buffer_pool();
+
+  /// Called on cell deactivation to clear all available buffers.
+  void clear();
 
   /// Allocate DL HARQ buffers for a newly created UE.
   void allocate_ue_buffers(du_ue_index_t ue_index, unsigned nof_harqs);
@@ -154,6 +158,8 @@ private:
   std::unique_ptr<std::array<dl_harq_buffer_storage, MAX_NOF_DU_UES * MAX_NOF_HARQS>> pool;
   /// Index to the available buffer storage in the pool.
   size_t pool_elem_index;
+  /// Flag used to cancel scheduled tasks that grow the cache of DL HARQ buffers.
+  std::shared_ptr<bool> pool_growth_cancelled = std::make_shared<bool>(false);
 };
 
 } // namespace srsran

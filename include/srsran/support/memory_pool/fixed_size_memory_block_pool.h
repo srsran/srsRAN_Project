@@ -33,6 +33,7 @@
 #include "srsran/support/srsran_assert.h"
 #include <mutex>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 namespace srsran {

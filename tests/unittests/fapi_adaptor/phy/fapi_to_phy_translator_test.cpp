@@ -119,7 +119,7 @@ public:
     unsigned expected_available_ref_count = 0;
     bool     available                    = ref_count.compare_exchange_strong(expected_available_ref_count, 1);
     srsran_assert(available, "The grid must NOT be reserved.");
-    return {*this, ref_count, 0};
+    return {*this, ref_count};
   }
 
   unsigned get_getter_count() const { return getter_count; }
@@ -127,23 +127,17 @@ public:
   bool is_available() const { return ref_count == 0; }
 
 private:
-  resource_grid& get(unsigned identifier_) override
+  resource_grid& get() override
   {
-    srsran_assert(identifier == identifier_, "Identifier unmatched.");
     srsran_assert(ref_count != 0, "Reference counter must NOT be zero.");
     ++getter_count;
     return grid;
   }
 
-  void notify_release_scope(unsigned identifier_) override
-  {
-    srsran_assert(identifier == identifier_, "Identifier unmatched.");
-    srsran_assert(ref_count == 0, "Reference counter must be zero.");
-  }
+  void notify_release_scope() override { srsran_assert(ref_count == 0, "Reference counter must be zero."); }
 
-  static constexpr unsigned identifier   = 0;
-  std::atomic<unsigned>     ref_count    = {};
-  unsigned                  getter_count = 0;
+  std::atomic<unsigned> ref_count    = {};
+  unsigned              getter_count = 0;
 
   resource_grid_dummy grid;
 };
@@ -206,9 +200,7 @@ public:
   }
 
 private:
-  static constexpr unsigned resource_grid_id = 0;
-
-  shared_resource_grid finish_adding_pdus() override { return {*this, grid_ref_count, resource_grid_id}; }
+  shared_resource_grid finish_adding_pdus() override { return {*this, grid_ref_count}; }
 
   void add_pusch_pdu(const pusch_pdu& pdu) override { pusch_pdus.emplace_back(pdu); }
 
@@ -216,16 +208,9 @@ private:
 
   void add_srs_pdu(const srs_pdu& pdu) override { srs_pdus.emplace_back(pdu); }
 
-  resource_grid& get(unsigned identifier) override
-  {
-    srsran_assert(identifier == resource_grid_id, "Invalid identifier {}.", identifier);
-    return grid_spy;
-  }
+  resource_grid& get() override { return grid_spy; }
 
-  void notify_release_scope(unsigned identifier) override
-  {
-    srsran_assert(identifier == resource_grid_id, "Invalid identifier {}.", identifier);
-  }
+  void notify_release_scope() override {}
 
   slot_point               current_slot;
   std::vector<pusch_pdu>   pusch_pdus;

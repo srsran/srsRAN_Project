@@ -27,7 +27,7 @@
 using namespace srsran;
 using namespace ofh;
 
-void uplane_rx_symbol_data_flow_writer::write_to_resource_grid(unsigned                              eaxc,
+bool uplane_rx_symbol_data_flow_writer::write_to_resource_grid(unsigned                              eaxc,
                                                                const uplane_message_decoder_results& results)
 {
   trace_point access_repo_tp = ofh_tracer.now();
@@ -36,7 +36,7 @@ void uplane_rx_symbol_data_flow_writer::write_to_resource_grid(unsigned         
   unsigned       symbol     = results.params.symbol_id;
   uplink_context ul_context = ul_context_repo->get(slot, symbol);
   if (SRSRAN_UNLIKELY(ul_context.empty())) {
-    logger.warning(
+    logger.info(
         "Sector#{}: dropped received Open Fronthaul message as no uplink slot context was found for slot '{}', symbol "
         "'{}' and eAxC '{}'",
         sector_id,
@@ -44,7 +44,7 @@ void uplane_rx_symbol_data_flow_writer::write_to_resource_grid(unsigned         
         results.params.symbol_id,
         eaxc);
 
-    return;
+    return false;
   }
   ofh_tracer << trace_event("ofh_receiver_access_repo", access_repo_tp);
 
@@ -94,4 +94,6 @@ void uplane_rx_symbol_data_flow_writer::write_to_resource_grid(unsigned         
                    rg_port);
     }
   }
+
+  return true;
 }

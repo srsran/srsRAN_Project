@@ -22,6 +22,7 @@
 
 #include "scheduler_metrics_handler.h"
 #include "../config/cell_configuration.h"
+#include "srsran/ran/resource_allocation/rb_bitmap.h"
 #include "srsran/scheduler/result/sched_result.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 #include "srsran/srslog/srslog.h"
@@ -46,9 +47,9 @@ private:
   scheduler_cell_metrics null_report{};
 };
 
-null_metrics_notifier null_notifier;
-
 } // namespace
+
+static null_metrics_notifier null_notifier;
 
 cell_metrics_handler::cell_metrics_handler(
     const cell_configuration&                                                      cell_cfg_,
@@ -424,6 +425,8 @@ void cell_metrics_handler::report_metrics()
   next_report->nof_failed_pdsch_allocs_late_harqs = data.nof_failed_pdsch_allocs_late_harqs;
   next_report->nof_failed_pusch_allocs_late_harqs = data.nof_failed_pusch_allocs_late_harqs;
   next_report->nof_filtered_events                = data.filtered_events_counter;
+  // Note: PUCCH is only allocated on full UL slots.
+  next_report->pucch_tot_rb_usage_avg = static_cast<float>(data.pucch_rbs_used) / data.nof_ul_slots;
 
   // Reset cell-wide metric counters.
   data = {};
@@ -484,6 +487,15 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
     ++u.data.nof_puschs;
   }
 
+  // PUCCH resource usage.
+  prb_bitmap pucch_prbs(cell_cfg.nof_ul_prbs);
+  for (const auto& pucch : slot_result.ul.pucchs) {
+    // Mark the PRBs used by this PUCCH.
+    pucch_prbs.fill(pucch.resources.prbs.start(), pucch.resources.prbs.stop());
+    pucch_prbs.fill(pucch.resources.second_hop_prbs.start(), pucch.resources.second_hop_prbs.stop());
+  }
+  data.pucch_rbs_used += pucch_prbs.count();
+
   // Count DL and UL slots.
   data.nof_dl_slots += (slot_result.dl.nof_dl_symbols > 0);
   data.nof_ul_slots += (slot_result.ul.nof_ul_symbols == 14); // Note: PUSCH in special slot not supported.;
@@ -538,9 +550,9 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   ret.rnti                = rnti;
   ret.cqi_stats           = data.cqi;
   ret.dl_ri_stats         = data.dl_ri;
-  uint8_t mcs             = data.nof_dl_cws > 0 ? std::roundf(static_cast<float>(data.dl_mcs) / data.nof_dl_cws) : 0;
+  uint8_t mcs             = data.nof_dl_cws > 0 ? std::round(static_cast<float>(data.dl_mcs) / data.nof_dl_cws) : 0;
   ret.dl_mcs              = sch_mcs_index{mcs};
-  mcs                     = data.nof_puschs > 0 ? std::roundf(static_cast<float>(data.ul_mcs) / data.nof_puschs) : 0;
+  mcs                     = data.nof_puschs > 0 ? std::round(static_cast<float>(data.ul_mcs) / data.nof_puschs) : 0;
   ret.ul_mcs              = sch_mcs_index{mcs};
   ret.tot_pdsch_prbs_used = data.tot_dl_prbs_used;
   ret.tot_pusch_prbs_used = data.tot_ul_prbs_used;

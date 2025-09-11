@@ -91,7 +91,12 @@ public:
     }
   }
 
-  task_executor& executor(du_cell_index_t cell_index) override
+  task_executor& mac_cell_executor(du_cell_index_t cell_index) override
+  {
+    return *cell_execs[cell_index % cell_execs.size()].low_prio_executor;
+  }
+
+  task_executor& rlc_lower_executor(du_cell_index_t cell_index) override
   {
     return *cell_execs[cell_index % cell_execs.size()].low_prio_executor;
   }
@@ -130,15 +135,23 @@ public:
       std::string exec_name = trace_enabled or metrics_period ? fmt::format("slot_ind_exec#{}", i) : "";
       cell_strands[i].slot_ind_exec =
           &decorator.decorate(execs[0], is_sync, trace_enabled, std::nullopt, metrics_period, exec_name);
-      exec_name = trace_enabled or metrics_period ? fmt::format("cell_exec#{}", i) : "";
-      cell_strands[i].cell_exec =
+      exec_name = trace_enabled or metrics_period ? fmt::format("mac_cell_exec#{}", i) : "";
+      cell_strands[i].mac_cell_exec =
+          &decorator.decorate(execs[1], is_sync, trace_enabled, std::nullopt, metrics_period, exec_name);
+      exec_name = trace_enabled or metrics_period ? fmt::format("rlc_lower_exec#{}", i) : "";
+      cell_strands[i].rlc_lower_exec =
           &decorator.decorate(execs[1], is_sync, trace_enabled, std::nullopt, metrics_period, exec_name);
     }
   }
 
-  task_executor& executor(du_cell_index_t cell_index) override
+  task_executor& mac_cell_executor(du_cell_index_t cell_index) override
   {
-    return *cell_strands[cell_index % cell_strands.size()].cell_exec;
+    return *cell_strands[cell_index % cell_strands.size()].mac_cell_exec;
+  }
+
+  task_executor& rlc_lower_executor(du_cell_index_t cell_index) override
+  {
+    return *cell_strands[cell_index % cell_strands.size()].rlc_lower_exec;
   }
 
   task_executor& slot_ind_executor(du_cell_index_t cell_index) override
@@ -151,17 +164,20 @@ private:
   struct strand_context {
     std::unique_ptr<cell_strand_type> strand;
     task_executor*                    slot_ind_exec;
-    task_executor*                    cell_exec;
+    task_executor*                    mac_cell_exec;
+    task_executor*                    rlc_lower_exec;
   };
 
   std::vector<strand_context> cell_strands;
   executor_decorator          decorator;
 };
 
-std::unique_ptr<du_high_cell_executor_mapper> create_du_high_cell_executor_mapper(const du_high_executor_config& config)
+static std::unique_ptr<du_high_cell_executor_mapper>
+create_du_high_cell_executor_mapper(const du_high_executor_config& config)
 {
   std::unique_ptr<du_high_cell_executor_mapper> cell_mapper;
-  if (auto* ded_workers = std::get_if<du_high_executor_config::dedicated_cell_worker_list>(&config.cell_executors)) {
+  if (const auto* ded_workers =
+          std::get_if<du_high_executor_config::dedicated_cell_worker_list>(&config.cell_executors)) {
     cell_mapper = std::make_unique<dedicated_cell_worker_executor_mapper>(
         *ded_workers, config.is_rt_mode_enabled, config.trace_exec_tasks, config.metrics_period);
   } else {
@@ -340,7 +356,8 @@ private:
   std::array<unsigned, MAX_NOF_DU_UES> ue_idx_to_exec_index;
 };
 
-std::unique_ptr<du_high_ue_executor_mapper> create_du_high_ue_executor_mapper(const du_high_executor_config& config)
+static std::unique_ptr<du_high_ue_executor_mapper>
+create_du_high_ue_executor_mapper(const du_high_executor_config& config)
 {
   std::unique_ptr<du_high_ue_executor_mapper> ue_mapper;
   if (config.ue_executors.policy == du_high_executor_config::ue_executor_config::map_policy::per_cell) {
@@ -408,7 +425,8 @@ class du_high_executor_mapper_impl final : public du_high_executor_mapper
 
 public:
   explicit du_high_executor_mapper_impl(const du_high_executor_config& config) :
-    tick_exec(create_time_exec(config)),
+    raw_non_rt_hi_prio_exec(*config.ctrl_executors.pool_executor),
+    raw_low_prio_exec(*config.ue_executors.f1u_reader_executor),
     cell_mapper_ptr(create_du_high_cell_executor_mapper(config)),
     ue_mapper_ptr(create_du_high_ue_executor_mapper(config)),
     ctrl_mapper(config.ctrl_executors, config.trace_exec_tasks, config.metrics_period)
@@ -418,34 +436,15 @@ public:
   du_high_cell_executor_mapper& cell_mapper() override { return *cell_mapper_ptr; }
   du_high_ue_executor_mapper&   ue_mapper() override { return *ue_mapper_ptr; }
   task_executor&                du_control_executor() override { return ctrl_mapper.ctrl_exec; }
-  task_executor&                du_timer_executor() override { return tick_exec; }
   task_executor&                du_e2_executor() override { return ctrl_mapper.e2_exec; }
+  task_executor&                f1c_rx_executor() override { return raw_non_rt_hi_prio_exec; }
+  task_executor&                e2_rx_executor() override { return raw_non_rt_hi_prio_exec; }
+  task_executor&                f1u_rx_executor() override { return raw_low_prio_exec; }
 
 private:
-  task_executor& create_time_exec(const du_high_executor_config& config)
-  {
-    // Create a strand pointing to the same pool used by the control executors.
-    tick_strand =
-        std::make_unique<tick_strand_type>(config.ctrl_executors.pool_executor, config.ctrl_executors.task_queue_size);
-    task_executor& base_time_exec = *tick_strand;
-
-    // Decorate base_time_exec.
-    return decorator.decorate(base_time_exec,
-                              false,
-                              config.trace_exec_tasks,
-                              // Throttle the timer tick caller in non-RT mode
-                              config.is_rt_mode_enabled ? std::nullopt : std::optional<unsigned>(1),
-                              config.metrics_period,
-                              config.trace_exec_tasks or config.metrics_period ? "du_timer_exec" : "");
-  }
-
-  /// Decorator for executors.
-  executor_decorator decorator;
-
-  /// Strand used to tick the application timers.
-  std::unique_ptr<tick_strand_type> tick_strand;
-  /// Decorated tick_executor.
-  task_executor& tick_exec;
+  /// Raw control-plane executor.
+  task_executor& raw_non_rt_hi_prio_exec;
+  task_executor& raw_low_prio_exec;
 
   std::unique_ptr<du_high_cell_executor_mapper> cell_mapper_ptr;
   std::unique_ptr<du_high_ue_executor_mapper>   ue_mapper_ptr;

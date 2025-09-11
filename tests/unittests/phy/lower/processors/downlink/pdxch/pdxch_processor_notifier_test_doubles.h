@@ -40,21 +40,12 @@ public:
 
   const std::vector<resource_grid_context>& get_request_late() const { return request_late; }
 
-  const std::vector<resource_grid_context>& get_request_overflow() const { return request_overflow; }
+  unsigned get_nof_notifications() const { return request_late.size(); }
 
-  unsigned get_nof_notifications() const { return request_late.size() + request_overflow.size(); }
-
-  unsigned get_total_count() const { return request_late.size() + request_overflow.size(); }
-
-  void clear_notifications()
-  {
-    request_late.clear();
-    request_overflow.clear();
-  }
+  void clear_notifications() { request_late.clear(); }
 
 private:
   std::vector<resource_grid_context> request_late;
-  std::vector<resource_grid_context> request_overflow;
 };
 
 } // namespace srsran

@@ -154,7 +154,7 @@ public:
     return ues.at(ue_index).get_rrc_ue_cu_cp_adapter();
   }
 
-  std::vector<metrics_report::ue_info> handle_ue_metrics_report_request() const override;
+  std::vector<cu_cp_metrics_report::ue_info> handle_ue_metrics_report_request() const override;
 
   ue_task_scheduler_manager& get_task_sched() { return ue_task_scheds; }
 

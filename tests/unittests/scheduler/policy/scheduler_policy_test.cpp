@@ -51,29 +51,31 @@ class base_scheduler_policy_test
 {
 protected:
   base_scheduler_policy_test(
-      policy_scheduler_type   policy,
-      scheduler_expert_config sched_cfg_ = config_helpers::make_default_scheduler_expert_config(),
-      const sched_cell_configuration_request_message& msg =
-          sched_config_helper::make_default_sched_cell_configuration_request()) :
+      policy_scheduler_type      policy,
+      scheduler_expert_config    sched_cfg_ = config_helpers::make_default_scheduler_expert_config(),
+      cell_config_builder_params params_    = {}) :
+    params(params_),
+    cell_cfg_req(sched_config_helper::make_default_sched_cell_configuration_request(params)),
     logger(srslog::fetch_basic_logger("SCHED", true)),
-    res_logger(false, msg.pci),
+    res_logger(false, cell_cfg_req.pci),
     sched_cfg([&sched_cfg_, policy]() {
       if (policy == policy_scheduler_type::time_qos) {
         sched_cfg_.ue.strategy_cfg = time_qos_scheduler_expert_config{};
       }
       return sched_cfg_;
     }()),
-    cell_cfg(*[this, &msg]() {
-      return cell_cfg_list.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(sched_cfg, msg)).get();
+    cell_cfg(*[this]() {
+      return cell_cfg_list.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(sched_cfg, cell_cfg_req))
+          .get();
     }()),
     slice_sched(cell_cfg, ues),
-    cell_metrics(cell_cfg, msg.metrics),
+    cell_metrics(cell_cfg, cell_cfg_req.metrics),
     intra_slice_sched(cell_cfg.expert_cfg.ue, ues, pdcch_alloc, uci_alloc, res_grid, cell_metrics, cell_harqs, logger)
   {
     logger.set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    cfg_pool.add_cell(msg);
+    cfg_pool.add_cell(cell_cfg_req);
   }
 
   ~base_scheduler_policy_test() { srslog::flush(); }
@@ -138,7 +140,7 @@ protected:
                                                        const std::initializer_list<lcid_t>& lcids_to_activate,
                                                        lcg_id_t                             lcg_id)
   {
-    sched_ue_creation_request_message req = sched_config_helper::create_default_sched_ue_creation_request();
+    sched_ue_creation_request_message req = sched_config_helper::create_default_sched_ue_creation_request(params);
     req.ue_index                          = ue_index;
     req.crnti                             = rnti;
     // Set LCG ID for SRBs provided in the LCIDs to activate list.
@@ -176,6 +178,9 @@ protected:
 
     ues[ue_index].handle_bsr_indication(msg);
   }
+
+  const cell_config_builder_params               params;
+  const sched_cell_configuration_request_message cell_cfg_req;
 
   srslog::basic_logger&                          logger;
   scheduler_result_logger                        res_logger;
@@ -467,7 +472,7 @@ protected:
                                                                                  .nof_dl_symbols            = 5,
                                                                                  .nof_ul_slots              = 4,
                                                                                  .nof_ul_symbols            = 0}};
-      return sched_config_helper::make_default_sched_cell_configuration_request(builder_params);
+      return builder_params;
     }())
   {
     next_slot = {to_numerology_value(subcarrier_spacing::kHz30), 0};

@@ -287,7 +287,7 @@ TEST_F(asn1_ngap_test, amf_config_update)
   ASSERT_TRUE(amf_upd->amf_name_present);
   ASSERT_EQ("srsran", amf_name.to_string());
 
-  ASSERT_EQ(sizeof(ngap_msg), ceil(bref.distance_bytes()));
+  ASSERT_EQ(sizeof(ngap_msg), std::ceil(bref.distance_bytes()));
   ASSERT_EQ(SRSASN_SUCCESS, test_pack_unpack_consistency(pdu));
 
   json_writer js;

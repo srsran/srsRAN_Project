@@ -180,7 +180,7 @@ template <typename Char> struct runtime_named_field {
   basic_string_view<Char> name;
 
   template <typename OutputIt, typename T>
-  constexpr static bool try_format_argument(
+  static constexpr bool try_format_argument(
       OutputIt& out,
       // [[maybe_unused]] due to unused-but-set-parameter warning in GCC 7,8,9
       [[maybe_unused]] basic_string_view<Char> arg_name, const T& arg) {

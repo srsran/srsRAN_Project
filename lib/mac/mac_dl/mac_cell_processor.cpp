@@ -29,7 +29,9 @@
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/scheduler/result/sched_result.h"
+#include "srsran/support/async/async_timer.h"
 #include "srsran/support/async/execute_on_blocking.h"
+#include "srsran/support/executors/execute_until_success.h"
 #include "srsran/support/rtsan.h"
 
 using namespace srsran;
@@ -82,6 +84,10 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
 
 async_task<void> mac_cell_processor::start()
 {
+  // Notify scheduler about activation.
+  // Note: This is done in the control executor context to avoid concurrency with other CTRL procedures.
+  sched.handle_cell_activation(cell_cfg.cell_index);
+
   return execute_and_continue_on_blocking(
       cell_exec,
       ctrl_exec,
@@ -91,9 +97,6 @@ async_task<void> mac_cell_processor::start()
           // No-op.
           return;
         }
-
-        // Notify scheduler about activation.
-        sched.start_cell(cell_cfg.cell_index);
 
         state = cell_state::active;
         logger.info("cell={}: Cell was activated", fmt::underlying(cell_cfg.cell_index));
@@ -106,32 +109,47 @@ async_task<void> mac_cell_processor::start()
 
 async_task<void> mac_cell_processor::stop()
 {
-  return execute_and_continue_on_blocking(
-      cell_exec,
-      ctrl_exec,
-      timers,
-      [this]() noexcept SRSRAN_RTSAN_NONBLOCKING {
-        if (state == cell_state::inactive) {
-          return;
-        }
+  return launch_async([this](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
 
-        // Notify scheduler about activation.
-        sched.stop_cell(cell_cfg.cell_index);
+    // Switch to respective cell executor context.
+    CORO_AWAIT(defer_on_blocking(cell_exec, timers));
 
-        // Notify that cell metrics stopped being collected.
-        metrics.on_cell_deactivation();
+    if (state == cell_state::inactive) {
+      // No state change detected.
+      CORO_EARLY_RETURN();
+    }
+    // Set cell state as inactive.
+    // Note: No more slot indications will reach the scheduler after this point. So, we will stop observing new
+    // scheduled grants.
+    state = cell_state::inactive;
 
-        // TODO: Call time_source->on_cell_deactivation() once FAPI supports stop procedure.
+    // Notify time source that the cell is being deactivated and no slot indications will be received anymore.
+    time_source->on_cell_deactivation();
 
-        // Set cell state as inactive to stop answering to slot indications.
-        state = cell_state::inactive;
+    // Notify lower layers that the cell is being stopped.
+    // TODO: Rely on FAPI STOP procedure to signal the cell stop. For now, we just skip this step.
 
-        logger.info("cell={}: Cell was stopped.", fmt::underlying(cell_cfg.cell_index));
-      },
-      [this, cell_index = cell_cfg.cell_index]() {
-        logger.warning("cell={}: Postponed cell stop operation. Cause: Task queue is full",
-                       fmt::underlying(cell_index));
-      });
+    // Notify that cell metrics stopped being collected.
+    metrics.on_cell_deactivation();
+
+    // Clear all UEs.
+    ue_mng.clear();
+
+    // Switch back to respective ctrl executor context.
+    CORO_AWAIT(defer_on_blocking(ctrl_exec, timers));
+
+    // Signal to the scheduler that the cell was successfully stopped in the lower layers.
+    // Note: This is done in the control executor context to avoid concurrency with other CTRL procedures.
+    sched.handle_cell_deactivation(cell_cfg.cell_index);
+
+    // Clear DL buffers associated with this cell.
+    dl_harq_buffers.clear();
+
+    logger.info("cell={}: Cell was stopped.", fmt::underlying(cell_cfg.cell_index));
+
+    CORO_RETURN();
+  });
 }
 
 async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac_cell_reconfig_request& request)
@@ -142,7 +160,7 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
 
     if (request.new_sys_info.has_value()) {
       // Change to respective DL cell executor context.
-      CORO_AWAIT(execute_on_blocking(cell_exec, timers));
+      CORO_AWAIT(defer_on_blocking(cell_exec, timers));
 
       {
         SRSRAN_RTSAN_SCOPED_ENABLER;
@@ -159,7 +177,7 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
       }
 
       // Change back to CTRL executor context.
-      CORO_AWAIT(execute_on_blocking(ctrl_exec, timers));
+      CORO_AWAIT(defer_on_blocking(ctrl_exec, timers));
     }
 
     if (request.positioning.has_value()) {
@@ -183,10 +201,10 @@ void mac_cell_processor::handle_slot_indication(const mac_cell_timing_context& c
   slot_time_mapper.handle_slot_indication(context);
   trace_point slot_ind_enqueue_tp = metric_clock::now();
   // Change execution context to slot indication executor.
-  if (not slot_exec.execute(TRACE_TASK([this, context, slot_ind_enqueue_tp]() {
+  if (not slot_exec.execute([this, context, slot_ind_enqueue_tp]() {
         l2_tracer << trace_event{"mac_slot_ind_enqueue", slot_ind_enqueue_tp};
         handle_slot_indication_impl(context.sl_tx, slot_ind_enqueue_tp);
-      }))) {
+      })) {
     logger.warning("Skipped slot indication={}. Cause: DL task queue is full.", context.sl_tx);
   }
 }
@@ -195,6 +213,14 @@ void mac_cell_processor::handle_error_indication(slot_point sl_tx, error_event e
 {
   // Forward error indication to the scheduler to be processed asynchronously.
   sched.handle_error_indication(sl_tx, cell_cfg.cell_index, event);
+}
+
+void mac_cell_processor::handle_stop_indication() noexcept
+{
+  defer_until_success(cell_exec, timers, [this]() {
+    // Signal the cell stop procedure that the FAPI completed the FAPI STOP procedure.
+    stop_completed.set();
+  });
 }
 
 async_task<bool> mac_cell_processor::add_ue(const mac_ue_create_request& request)
@@ -208,14 +234,21 @@ async_task<bool> mac_cell_processor::add_ue(const mac_ue_create_request& request
   mac_dl_ue_context ue_inst(request);
 
   // > Update the UE context inside the cell executor.
-  return execute_and_continue_on_blocking(
+  return defer_and_continue_on_blocking(
       cell_exec,
       ctrl_exec,
       timers,
       [this, ue_inst = std::move(ue_inst)]() mutable noexcept SRSRAN_RTSAN_NONBLOCKING {
         // > Insert UE and DL bearers.
+
         // Note: Ensure we only do so if the cell is active.
-        return state == cell_state::active and ue_mng.add_ue(std::move(ue_inst));
+        if (state != cell_state::active) {
+          // Note: We do not need to call dl_harq_buffers.deallocate_ue_buffers(...) because the buffers were reset
+          // on cell deactivation.
+          return false;
+        }
+
+        return ue_mng.add_ue(std::move(ue_inst));
       },
       [this, ue_index = request.ue_index]() {
         logger.warning("ue={}: Postponed UE creation. Cause: Task queue is full", fmt::underlying(ue_index));
@@ -233,7 +266,7 @@ async_task<void> mac_cell_processor::remove_ue(const mac_ue_delete_request& requ
 
     // Change to respective DL cell executor.
     // Note: Caller (ctrl exec) blocks if the cell executor is full.
-    CORO_AWAIT(execute_on_blocking(cell_exec, timers, log_dispatch_failure));
+    CORO_AWAIT(defer_on_blocking(cell_exec, timers, log_dispatch_failure));
 
     {
       SRSRAN_RTSAN_SCOPED_ENABLER;
@@ -244,7 +277,7 @@ async_task<void> mac_cell_processor::remove_ue(const mac_ue_delete_request& requ
 
     // Change back to CTRL executor before returning
     // Note: Blocks if the executor is full (which should never happen).
-    CORO_AWAIT(execute_on_blocking(ctrl_exec, timers, log_dispatch_failure));
+    CORO_AWAIT(defer_on_blocking(ctrl_exec, timers, log_dispatch_failure));
 
     // Deallocate DL HARQ buffers back in the CTRL executor.
     dl_harq_buffers.deallocate_ue_buffers(request.ue_index);
@@ -258,7 +291,7 @@ async_task<bool> mac_cell_processor::addmod_bearers(du_ue_index_t               
 {
   // Note: logical_channels must outlive the returned async_task completion.
 
-  return execute_and_continue_on_blocking(
+  return defer_and_continue_on_blocking(
       cell_exec,
       ctrl_exec,
       timers,
@@ -277,13 +310,13 @@ async_task<bool> mac_cell_processor::remove_bearers(du_ue_index_t ue_index, span
   // Use bitset to minimize capture size.
   auto lcids_to_rem_bset = bit_positions_to_bitset<MAX_NOF_RB_LCIDS>(lcids_to_rem);
 
-  return execute_and_continue_on_blocking(
+  return defer_and_continue_on_blocking(
       cell_exec,
       ctrl_exec,
       timers,
       [this, ue_index, lcids_to_rem_bset]() noexcept SRSRAN_RTSAN_NONBLOCKING -> bool {
         // Remove logical channels.
-        return ue_mng.remove_bearers(ue_index, lcids_to_rem_bset);
+        return state == cell_state::active and ue_mng.remove_bearers(ue_index, lcids_to_rem_bset);
       },
       [this, ue_index]() {
         logger.warning("ue={}: Postponed UE bearer removal. Cause: Task queue is full", fmt::underlying(ue_index));
@@ -296,14 +329,16 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point               sl
 {
   // * Start of Critical Path * //
 
-  // Tick DU timers on subframe boundaries. Retrieve the combination of HFN, SFN and slot.
-  time_source->on_slot_indication(sl_tx);
+  logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
 
   if (SRSRAN_UNLIKELY(state == cell_state::inactive)) {
     // Ignore slot indication if cell is inactive.
     phy_cell.on_cell_results_completion(sl_tx);
     return;
   }
+
+  // Tick DU timers.
+  time_source->on_slot_indication(sl_tx);
 
   // Initiate metric capturing.
   auto        metrics_meas = metrics.start_slot(sl_tx, enqueue_slot_tp);
@@ -524,7 +559,7 @@ void mac_cell_processor::update_logical_channel_dl_buffer_states(const dl_sched_
   }
 }
 
-void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
+void mac_cell_processor::write_tx_pdu_pcap(slot_point                sl_tx,
                                            const sched_result&       sl_res,
                                            const mac_dl_data_result& dl_res)
 {

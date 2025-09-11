@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "../logging/scheduler_metrics_handler.h"
 #include "../policy/scheduler_policy.h"
 #include "../slicing/ran_slice_candidate.h"
 #include "ue_cell_grid_allocator.h"
@@ -32,6 +31,7 @@ namespace srsran {
 class pdcch_resource_allocator;
 class scheduler_policy;
 class ue_repository;
+class cell_metrics_handler;
 
 class intra_slice_scheduler
 {

@@ -40,6 +40,7 @@ public:
     pending_crypto.reset();
     increment_token();
   }
+
   void stop() { return_token(); }
 
 private:

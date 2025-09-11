@@ -180,10 +180,5 @@ void srsran::autoderive_dynamic_o_du_parameters_after_parsing(CLI::App& app, dyn
   // Auto derive DU low parameters.
   const auto&   cell = parsed_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg.front().cell;
   const nr_band band = cell.band ? cell.band.value() : band_helper::get_band_from_dl_arfcn(cell.dl_f_ref_arfcn);
-  bool          is_zmq_rf_driver = false;
-  if (std::holds_alternative<ru_sdr_unit_config>(parsed_cfg.ru_cfg)) {
-    is_zmq_rf_driver = std::get<ru_sdr_unit_config>(parsed_cfg.ru_cfg).device_driver == "zmq";
-  }
-  autoderive_du_low_parameters_after_parsing(
-      app, parsed_cfg.du_low_cfg, band_helper::get_duplex_mode(band), is_zmq_rf_driver, nof_cells);
+  autoderive_du_low_parameters_after_parsing(app, parsed_cfg.du_low_cfg, band_helper::get_duplex_mode(band), nof_cells);
 }

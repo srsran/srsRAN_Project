@@ -30,7 +30,7 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::ngap;
 
-constexpr std::chrono::milliseconds ng_setup_response_timeout{5000};
+static constexpr std::chrono::milliseconds ng_setup_response_timeout{5000};
 
 ng_setup_procedure::ng_setup_procedure(ngap_context_t&           context_,
                                        const ngap_message&       request_,

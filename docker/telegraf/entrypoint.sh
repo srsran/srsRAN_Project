@@ -22,7 +22,8 @@
 set -o pipefail
 
 if [ -n "$RETINA_PORTS" ]; then
-  export TELEGRAF_LISTENER_PORT="$RETINA_PORTS"
+  # In this mode, we expect to receive data over UDP, telling websocket ip/port of the server.
+  export WS_URL=$(socat -u UDP-RECVFROM:"${RETINA_PORTS}",reuseaddr STDOUT)
 fi
 telegraf --config /etc/telegraf/telegraf.conf $TELEGRAF_CLI_EXTRA_ARGS &
 child=$!

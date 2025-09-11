@@ -42,6 +42,8 @@ struct du_low_unit_expert_upper_phy_config {
   unsigned pusch_decoder_max_iterations = 6;
   /// Set to true to enable the PUSCH LDPC decoder early stop.
   bool pusch_decoder_early_stop = true;
+  /// Set to true for forcing the LDPC decoder to decode even if the number of soft bits is insufficient.
+  bool pusch_decoder_force_decoding = false;
   /// \brief Selects a PUSCH SINR calculation method.
   ///
   /// Available methods:
@@ -82,6 +84,8 @@ struct du_low_unit_expert_upper_phy_config {
   ///
   /// An uplink slot is considered empty when it does not contain PUCCH/PUSCH/SRS PDUs.
   bool allow_request_on_empty_uplink_slot = false;
+  /// Enables the PHY tap plugin if present.
+  bool enable_phy_tap = true;
 };
 
 /// DU low logging functionalities.
@@ -104,8 +108,6 @@ struct du_low_unit_logger_config {
 
 /// CPU affinities configuration for the cell.
 struct du_low_unit_cpu_affinities_cell_config {
-  /// L1 uplink CPU affinity mask.
-  os_sched_affinity_config l1_ul_cpu_cfg = {sched_affinity_mask_types::l1_ul, {}, sched_affinity_mask_policy::mask};
   /// L1 downlink workers CPU affinity mask.
   os_sched_affinity_config l1_dl_cpu_cfg = {sched_affinity_mask_types::l1_dl, {}, sched_affinity_mask_policy::mask};
 };
@@ -116,27 +118,22 @@ struct du_low_unit_expert_threads_config {
   {
     unsigned nof_threads = cpu_architecture_info::get().get_host_nof_available_cpus();
 
+    max_pucch_concurrency = 0;
     if (nof_threads <= 4) {
-      nof_ul_threads            = 1;
-      nof_pusch_decoder_threads = 0;
-      nof_dl_threads            = 3;
+      max_pusch_and_srs_concurrency = 1;
     } else if (nof_threads < 8) {
-      nof_ul_threads            = 1;
-      nof_pusch_decoder_threads = 1;
-      nof_dl_threads            = 5;
+      max_pusch_and_srs_concurrency = 2;
     } else if (nof_threads < 16) {
-      nof_ul_threads            = 1;
-      nof_pusch_decoder_threads = 1;
-      nof_dl_threads            = 5;
+      max_pusch_and_srs_concurrency = 2;
     } else {
-      nof_ul_threads            = 2;
-      nof_pusch_decoder_threads = 2;
-      nof_dl_threads            = 7;
+      max_pusch_and_srs_concurrency = 4;
     }
   }
 
   /// Codeblock batch length for ensuring synchronous processing within the flexible PDSCH processor implementation.
   static constexpr unsigned synchronous_cb_batch_length = std::numeric_limits<unsigned>::max();
+  /// Codeblock default batch length.
+  static constexpr unsigned default_cb_batch_length = 4;
 
   /// \brief PDSCH processor type.
   ///
@@ -148,21 +145,27 @@ struct du_low_unit_expert_threads_config {
   std::string pdsch_processor_type = "auto";
   /// \brief PDSCH codeblock-batch length per thread (flexible PDSCH processor only).
   ///
-  /// Set it to 0 (default) for an homogeneous split of codeblocks per thread. Set it to \c pdsch_cb_batch_length_sync
-  /// for guaranteeing synchronous processing with the most memory-optimized processor.
-  unsigned pdsch_cb_batch_length = 0;
-  /// \brief Number of threads for concurrent PUSCH decoding.
+  /// Set it to \c pdsch_cb_batch_length_sync for guaranteeing synchronous processing with the most memory-optimized
+  /// processor.
+  unsigned pdsch_cb_batch_length = default_cb_batch_length;
+  /// \brief Maximum concurrency level for PUCCH.
   ///
-  /// If the number of PUSCH decoder threads is greater than zero, the PUSCH decoder will enqueue received soft bits and
-  /// process them asynchronously. Otherwise, PUSCH decoding will be performed synchronously.
+  /// Maximum number of threads that can concurrently process Physical Uplink Control Channel (PUCCH). Set to zero for
+  /// no limitation.
+  unsigned max_pucch_concurrency = 0;
+  /// \brief Maximum joint concurrency level for PUSCH and SRS.
   ///
-  /// In non-real-time operations (e.g., when using ZeroMQ), setting this parameter to a non-zero value can potentially
-  /// introduce delays in uplink HARQ feedback.
-  unsigned nof_pusch_decoder_threads = 0;
-  /// Number of threads for processing PUSCH and PUCCH.
-  unsigned nof_ul_threads = 1;
-  /// Number of threads for processing PDSCH, PDCCH, NZP CSI-RS and SSB. It is set to 1 by default.
-  unsigned nof_dl_threads = 1;
+  /// Maximum number of threads that can concurrently process Physical Uplink Shared Channel (PUSCH) and Sounding
+  /// Reference Signals (SRS). Set to zero for no limitation.
+  unsigned max_pusch_and_srs_concurrency = 1;
+  /// \brief Maximum concurrency level for PDSCH processing.
+  ///
+  /// Maximum number of threads that can concurrently process Physical Downlink Shared Channel (PDSCH). Set to zero for
+  /// no limitation.
+  ///
+  /// This parameter is necessary when hardware acceleration is used to limit the number of threads accessing the
+  /// physical resources.
+  unsigned max_pdsch_concurrency = 0;
 };
 
 /// Expert configuration of the gNB app.

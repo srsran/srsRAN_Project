@@ -51,9 +51,12 @@ public:
   virtual ~upper_phy_rx_symbol_handler() = default;
 
   /// \brief Handles the reception of an OFDM symbol.
-  /// \param[in] context Notification context: specifies sector, slot and symbol.
-  /// \param[in] grid    Resource grid for the current slot (encompasses all receive antenna ports).
-  virtual void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const shared_resource_grid& grid) = 0;
+  /// \param[in] context  Notification context: specifies sector, slot and symbol.
+  /// \param[in] grid     Resource grid for the current slot (encompasses all receive antenna ports).
+  /// \param[in] is_valid Set it to true if the resource grid data contains valid information. Otherwise, set it to
+  /// false.
+  virtual void
+  handle_rx_symbol(const upper_phy_rx_symbol_context& context, const shared_resource_grid& grid, bool is_valid) = 0;
 
   /// \brief Handles the arrival of PRACH sequences.
   /// \param[in] context PRACH context: specifies sector, slot and window.

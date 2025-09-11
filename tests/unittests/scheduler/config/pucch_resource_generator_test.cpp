@@ -167,12 +167,11 @@ public:
   {
     if (res.format == pucch_format::FORMAT_0) {
       srsran_assert(std::holds_alternative<pucch_format_0_cfg>(res.format_params), "Expected PUCCH Format 0");
-      const auto& res_f0 = std::get<pucch_format_0_cfg>(res.format_params);
 
       if (res.second_hop_prb.has_value()) {
-        srsran_assert(res_f0.nof_symbols == 2U, "Intra-slot freq. hopping for PUCCH Format 0 requires 2 symbols");
+        srsran_assert(res.nof_symbols == 2U, "Intra-slot freq. hopping for PUCCH Format 0 requires 2 symbols");
         // First hop.
-        for (unsigned sym_idx = res_f0.starting_sym_idx, sym_stop = res_f0.starting_sym_idx + res_f0.nof_symbols / 2;
+        for (unsigned sym_idx = res.starting_sym_idx, sym_stop = res.starting_sym_idx + res.nof_symbols / 2;
              sym_idx != sym_stop;
              ++sym_idx) {
           auto& grid_elem        = grid[sym_idx + nof_symbols * res.starting_prb];
@@ -180,8 +179,8 @@ public:
           grid_elem.element_used = true;
         }
         // Second hop.
-        for (unsigned sym_idx  = res_f0.starting_sym_idx + res_f0.nof_symbols / 2,
-                      sym_stop = res_f0.starting_sym_idx + res_f0.nof_symbols;
+        for (unsigned sym_idx  = res.starting_sym_idx + res.nof_symbols / 2,
+                      sym_stop = res.starting_sym_idx + res.nof_symbols;
              sym_idx != sym_stop;
              ++sym_idx) {
           auto& grid_elem        = grid[sym_idx + nof_symbols * res.second_hop_prb.value()];
@@ -189,7 +188,7 @@ public:
           grid_elem.element_used = true;
         }
       } else {
-        for (unsigned sym_idx = res_f0.starting_sym_idx, sym_stop = res_f0.starting_sym_idx + res_f0.nof_symbols;
+        for (unsigned sym_idx = res.starting_sym_idx, sym_stop = res.starting_sym_idx + res.nof_symbols;
              sym_idx != sym_stop;
              ++sym_idx) {
           auto& grid_elem        = grid[sym_idx + nof_symbols * res.starting_prb];
@@ -204,7 +203,7 @@ public:
 
       if (res.second_hop_prb.has_value()) {
         // First hop.
-        for (unsigned sym_idx = res_f1.starting_sym_idx, sym_stop = res_f1.starting_sym_idx + res_f1.nof_symbols / 2;
+        for (unsigned sym_idx = res.starting_sym_idx, sym_stop = res.starting_sym_idx + res.nof_symbols / 2;
              sym_idx != sym_stop;
              ++sym_idx) {
           auto& grid_elem           = grid[sym_idx + nof_symbols * res.starting_prb];
@@ -216,8 +215,8 @@ public:
           grid_elem.allocated_occ_cs_list[occ_cs_idx] = true;
         }
         // Second hop.
-        for (unsigned sym_idx  = res_f1.starting_sym_idx + res_f1.nof_symbols / 2,
-                      sym_stop = res_f1.starting_sym_idx + res_f1.nof_symbols;
+        for (unsigned sym_idx  = res.starting_sym_idx + res.nof_symbols / 2,
+                      sym_stop = res.starting_sym_idx + res.nof_symbols;
              sym_idx != sym_stop;
              ++sym_idx) {
           auto& grid_elem           = grid[sym_idx + nof_symbols * res.second_hop_prb.value()];
@@ -229,7 +228,7 @@ public:
           grid_elem.allocated_occ_cs_list[occ_cs_idx] = true;
         }
       } else {
-        for (unsigned sym_idx = res_f1.starting_sym_idx, sym_stop = res_f1.starting_sym_idx + res_f1.nof_symbols;
+        for (unsigned sym_idx = res.starting_sym_idx, sym_stop = res.starting_sym_idx + res.nof_symbols;
              sym_idx != sym_stop;
              ++sym_idx) {
           auto& grid_elem           = grid[sym_idx + nof_symbols * res.starting_prb];
@@ -246,11 +245,11 @@ public:
       const auto& res_f2 = std::get<pucch_format_2_3_cfg>(res.format_params);
 
       if (res.second_hop_prb.has_value()) {
-        srsran_assert(res_f2.nof_symbols == 2U, "Intra-slot freq. hopping for PUCCH Format 0 requires 2 symbols");
+        srsran_assert(res.nof_symbols == 2U, "Intra-slot freq. hopping for PUCCH Format 0 requires 2 symbols");
         // First hop.
         for (unsigned rb_idx = res.starting_prb, rb_stop = res.starting_prb + res_f2.nof_prbs; rb_idx != rb_stop;
              ++rb_idx) {
-          for (unsigned sym_idx = res_f2.starting_sym_idx, sym_stop = res_f2.starting_sym_idx + res_f2.nof_symbols / 2;
+          for (unsigned sym_idx = res.starting_sym_idx, sym_stop = res.starting_sym_idx + res.nof_symbols / 2;
                sym_idx != sym_stop;
                ++sym_idx) {
             auto& grid_elem        = grid[sym_idx + nof_symbols * rb_idx];
@@ -262,8 +261,8 @@ public:
         for (unsigned rb_idx = res.second_hop_prb.value(), rb_stop = res.second_hop_prb.value() + res_f2.nof_prbs;
              rb_idx != rb_stop;
              ++rb_idx) {
-          for (unsigned sym_idx  = res_f2.starting_sym_idx + res_f2.nof_symbols / 2,
-                        sym_stop = res_f2.starting_sym_idx + res_f2.nof_symbols;
+          for (unsigned sym_idx  = res.starting_sym_idx + res.nof_symbols / 2,
+                        sym_stop = res.starting_sym_idx + res.nof_symbols;
                sym_idx != sym_stop;
                ++sym_idx) {
             auto& grid_elem        = grid[sym_idx + nof_symbols * rb_idx];
@@ -274,7 +273,7 @@ public:
       } else {
         for (unsigned rb_idx = res.starting_prb, rb_stop = res.starting_prb + res_f2.nof_prbs; rb_idx != rb_stop;
              ++rb_idx) {
-          for (unsigned sym_idx = res_f2.starting_sym_idx, sym_stop = res_f2.starting_sym_idx + res_f2.nof_symbols;
+          for (unsigned sym_idx = res.starting_sym_idx, sym_stop = res.starting_sym_idx + res.nof_symbols;
                sym_idx != sym_stop;
                ++sym_idx) {
             auto& grid_elem        = grid[sym_idx + nof_symbols * rb_idx];
@@ -291,7 +290,7 @@ public:
         // First hop.
         for (unsigned rb_idx = res.starting_prb, rb_stop = res.starting_prb + res_f3.nof_prbs; rb_idx != rb_stop;
              ++rb_idx) {
-          for (unsigned sym_idx = res_f3.starting_sym_idx, sym_stop = res_f3.starting_sym_idx + res_f3.nof_symbols / 2;
+          for (unsigned sym_idx = res.starting_sym_idx, sym_stop = res.starting_sym_idx + res.nof_symbols / 2;
                sym_idx != sym_stop;
                ++sym_idx) {
             auto& grid_elem        = grid[sym_idx + nof_symbols * rb_idx];
@@ -303,8 +302,8 @@ public:
         for (unsigned rb_idx = res.second_hop_prb.value(), rb_stop = res.second_hop_prb.value() + res_f3.nof_prbs;
              rb_idx != rb_stop;
              ++rb_idx) {
-          for (unsigned sym_idx  = res_f3.starting_sym_idx + res_f3.nof_symbols / 2,
-                        sym_stop = res_f3.starting_sym_idx + res_f3.nof_symbols;
+          for (unsigned sym_idx  = res.starting_sym_idx + res.nof_symbols / 2,
+                        sym_stop = res.starting_sym_idx + res.nof_symbols;
                sym_idx != sym_stop;
                ++sym_idx) {
             auto& grid_elem        = grid[sym_idx + nof_symbols * rb_idx];
@@ -315,7 +314,7 @@ public:
       } else {
         for (unsigned rb_idx = res.starting_prb, rb_stop = res.starting_prb + res_f3.nof_prbs; rb_idx != rb_stop;
              ++rb_idx) {
-          for (unsigned sym_idx = res_f3.starting_sym_idx, sym_stop = res_f3.starting_sym_idx + res_f3.nof_symbols;
+          for (unsigned sym_idx = res.starting_sym_idx, sym_stop = res.starting_sym_idx + res.nof_symbols;
                sym_idx != sym_stop;
                ++sym_idx) {
             auto& grid_elem        = grid[sym_idx + nof_symbols * rb_idx];
@@ -326,12 +325,11 @@ public:
       }
     } else if (res.format == pucch_format::FORMAT_4) {
       srsran_assert(std::holds_alternative<pucch_format_4_cfg>(res.format_params), "Expected PUCCH Format 4");
-      const auto& res_f4 = std::get<pucch_format_4_cfg>(res.format_params);
 
       if (res.second_hop_prb.has_value()) {
         // First hop.
         for (unsigned rb_idx = res.starting_prb, rb_stop = res.starting_prb + 1; rb_idx != rb_stop; ++rb_idx) {
-          for (unsigned sym_idx = res_f4.starting_sym_idx, sym_stop = res_f4.starting_sym_idx + res_f4.nof_symbols / 2;
+          for (unsigned sym_idx = res.starting_sym_idx, sym_stop = res.starting_sym_idx + res.nof_symbols / 2;
                sym_idx != sym_stop;
                ++sym_idx) {
             auto& grid_elem        = grid[sym_idx + nof_symbols * rb_idx];
@@ -342,8 +340,8 @@ public:
         // Second hop.
         for (unsigned rb_idx = res.second_hop_prb.value(), rb_stop = res.second_hop_prb.value() + 1; rb_idx != rb_stop;
              ++rb_idx) {
-          for (unsigned sym_idx  = res_f4.starting_sym_idx + res_f4.nof_symbols / 2,
-                        sym_stop = res_f4.starting_sym_idx + res_f4.nof_symbols;
+          for (unsigned sym_idx  = res.starting_sym_idx + res.nof_symbols / 2,
+                        sym_stop = res.starting_sym_idx + res.nof_symbols;
                sym_idx != sym_stop;
                ++sym_idx) {
             auto& grid_elem        = grid[sym_idx + nof_symbols * rb_idx];
@@ -353,7 +351,7 @@ public:
         }
       } else {
         for (unsigned rb_idx = res.starting_prb, rb_stop = res.starting_prb + 1; rb_idx != rb_stop; ++rb_idx) {
-          for (unsigned sym_idx = res_f4.starting_sym_idx, sym_stop = res_f4.starting_sym_idx + res_f4.nof_symbols;
+          for (unsigned sym_idx = res.starting_sym_idx, sym_stop = res.starting_sym_idx + res.nof_symbols;
                sym_idx != sym_stop;
                ++sym_idx) {
             auto& grid_elem        = grid[sym_idx + nof_symbols * rb_idx];
@@ -370,11 +368,10 @@ public:
   {
     if (res.format == pucch_format::FORMAT_0) {
       srsran_assert(std::holds_alternative<pucch_format_0_cfg>(res.format_params), "Expected PUCCH Format 0");
-      const auto& res_f0 = std::get<pucch_format_0_cfg>(res.format_params);
       // Intra-slot frequency hopping.
       if (res.second_hop_prb.has_value()) {
         // First hop.
-        for (unsigned sym_idx = res_f0.starting_sym_idx, sym_stop = res_f0.starting_sym_idx + res_f0.nof_symbols / 2;
+        for (unsigned sym_idx = res.starting_sym_idx, sym_stop = res.starting_sym_idx + res.nof_symbols / 2;
              sym_idx != sym_stop;
              ++sym_idx) {
           const auto& grid_elem = grid[sym_idx + nof_symbols * res.starting_prb];
@@ -383,8 +380,8 @@ public:
           }
         }
         // Second hop.
-        for (unsigned sym_idx  = res_f0.starting_sym_idx + res_f0.nof_symbols / 2,
-                      sym_stop = res_f0.starting_sym_idx + res_f0.nof_symbols;
+        for (unsigned sym_idx  = res.starting_sym_idx + res.nof_symbols / 2,
+                      sym_stop = res.starting_sym_idx + res.nof_symbols;
              sym_idx != sym_stop;
              ++sym_idx) {
           const auto& grid_elem = grid[sym_idx + nof_symbols * res.second_hop_prb.value()];
@@ -396,7 +393,7 @@ public:
       }
       // No intra-slot frequency hopping.
       else {
-        for (unsigned sym_idx = res_f0.starting_sym_idx, sym_stop = res_f0.starting_sym_idx + res_f0.nof_symbols;
+        for (unsigned sym_idx = res.starting_sym_idx, sym_stop = res.starting_sym_idx + res.nof_symbols;
              sym_idx != sym_stop;
              ++sym_idx) {
           const auto& grid_elem = grid[sym_idx + nof_symbols * res.starting_prb];
@@ -411,7 +408,7 @@ public:
       // Intra-slot frequency hopping.
       if (res.second_hop_prb.has_value()) {
         // First hop.
-        for (unsigned sym_idx = res_f1.starting_sym_idx, sym_stop = res_f1.starting_sym_idx + res_f1.nof_symbols / 2;
+        for (unsigned sym_idx = res.starting_sym_idx, sym_stop = res.starting_sym_idx + res.nof_symbols / 2;
              sym_idx != sym_stop;
              ++sym_idx) {
           const auto& grid_elem = grid[sym_idx + nof_symbols * res.starting_prb];
@@ -428,8 +425,8 @@ public:
           }
         }
         // Second hop.
-        for (unsigned sym_idx  = res_f1.starting_sym_idx + res_f1.nof_symbols / 2,
-                      sym_stop = res_f1.starting_sym_idx + res_f1.nof_symbols;
+        for (unsigned sym_idx  = res.starting_sym_idx + res.nof_symbols / 2,
+                      sym_stop = res.starting_sym_idx + res.nof_symbols;
              sym_idx != sym_stop;
              ++sym_idx) {
           const auto& grid_elem = grid[sym_idx + nof_symbols * res.second_hop_prb.value()];
@@ -449,7 +446,7 @@ public:
       }
       // No intra-slot frequency hopping.
       else {
-        for (unsigned sym_idx = res_f1.starting_sym_idx, sym_stop = res_f1.starting_sym_idx + res_f1.nof_symbols;
+        for (unsigned sym_idx = res.starting_sym_idx, sym_stop = res.starting_sym_idx + res.nof_symbols;
              sym_idx != sym_stop;
              ++sym_idx) {
           const auto& grid_elem = grid[sym_idx + nof_symbols * res.starting_prb];
@@ -475,8 +472,7 @@ public:
         // First hop.
         for (unsigned rb_idx = res.starting_prb, rb_stop = res.starting_prb + res_f2_f3.nof_prbs; rb_idx != rb_stop;
              ++rb_idx) {
-          for (unsigned sym_idx  = res_f2_f3.starting_sym_idx,
-                        sym_stop = res_f2_f3.starting_sym_idx + res_f2_f3.nof_symbols / 2;
+          for (unsigned sym_idx = res.starting_sym_idx, sym_stop = res.starting_sym_idx + res.nof_symbols / 2;
                sym_idx != sym_stop;
                ++sym_idx) {
             const auto& grid_unit = grid[sym_idx + nof_symbols * rb_idx];
@@ -489,8 +485,8 @@ public:
         for (unsigned rb_idx = res.second_hop_prb.value(), rb_stop = res.second_hop_prb.value() + res_f2_f3.nof_prbs;
              rb_idx != rb_stop;
              ++rb_idx) {
-          for (unsigned sym_idx  = res_f2_f3.starting_sym_idx + res_f2_f3.nof_symbols / 2,
-                        sym_stop = res_f2_f3.starting_sym_idx + res_f2_f3.nof_symbols;
+          for (unsigned sym_idx  = res.starting_sym_idx + res.nof_symbols / 2,
+                        sym_stop = res.starting_sym_idx + res.nof_symbols;
                sym_idx != sym_stop;
                ++sym_idx) {
             const auto& grid_unit = grid[sym_idx + nof_symbols * rb_idx];
@@ -504,8 +500,7 @@ public:
       else {
         for (unsigned rb_idx = res.starting_prb, rb_stop = res.starting_prb + res_f2_f3.nof_prbs; rb_idx != rb_stop;
              ++rb_idx) {
-          for (unsigned sym_idx  = res_f2_f3.starting_sym_idx,
-                        sym_stop = res_f2_f3.starting_sym_idx + res_f2_f3.nof_symbols;
+          for (unsigned sym_idx = res.starting_sym_idx, sym_stop = res.starting_sym_idx + res.nof_symbols;
                sym_idx != sym_stop;
                ++sym_idx) {
             const auto& grid_unit = grid[sym_idx + nof_symbols * rb_idx];
@@ -523,7 +518,7 @@ public:
       if (res.second_hop_prb.has_value()) {
         // First hop.
         for (unsigned rb_idx = res.starting_prb, rb_stop = res.starting_prb + 1; rb_idx != rb_stop; ++rb_idx) {
-          for (unsigned sym_idx = res_f4.starting_sym_idx, sym_stop = res_f4.starting_sym_idx + res_f4.nof_symbols / 2;
+          for (unsigned sym_idx = res.starting_sym_idx, sym_stop = res.starting_sym_idx + res.nof_symbols / 2;
                sym_idx != sym_stop;
                ++sym_idx) {
             const auto& grid_unit = grid[sym_idx + nof_symbols * rb_idx];
@@ -542,8 +537,8 @@ public:
         // Second hop.
         for (unsigned rb_idx = res.second_hop_prb.value(), rb_stop = res.second_hop_prb.value() + 1; rb_idx != rb_stop;
              ++rb_idx) {
-          for (unsigned sym_idx  = res_f4.starting_sym_idx + res_f4.nof_symbols / 2,
-                        sym_stop = res_f4.starting_sym_idx + res_f4.nof_symbols;
+          for (unsigned sym_idx  = res.starting_sym_idx + res.nof_symbols / 2,
+                        sym_stop = res.starting_sym_idx + res.nof_symbols;
                sym_idx != sym_stop;
                ++sym_idx) {
             const auto& grid_unit = grid[sym_idx + nof_symbols * rb_idx];
@@ -563,7 +558,7 @@ public:
       // No intra-slot frequency hopping.
       else {
         for (unsigned rb_idx = res.starting_prb, rb_stop = res.starting_prb + 1; rb_idx != rb_stop; ++rb_idx) {
-          for (unsigned sym_idx = res_f4.starting_sym_idx, sym_stop = res_f4.starting_sym_idx + res_f4.nof_symbols;
+          for (unsigned sym_idx = res.starting_sym_idx, sym_stop = res.starting_sym_idx + res.nof_symbols;
                sym_idx != sym_stop;
                ++sym_idx) {
             const auto& grid_unit = grid[sym_idx + nof_symbols * rb_idx];
@@ -1356,20 +1351,18 @@ protected:
       srsran_assert(sr_pucch_res_cfg.format == pucch_format::FORMAT_0 and
                         std::holds_alternative<pucch_format_0_cfg>(sr_pucch_res_cfg.format_params),
                     "SR PUCCH resource must be of Format 0 if any of the PUCCH resources from set 0 has Format 0.");
-      const auto& sr_pucch_params_cfg = std::get<pucch_format_0_cfg>(sr_pucch_res_cfg.format_params);
 
       const auto harq_res_set_0_for_sr_idx =
           pucch_cfg.pucch_res_set[0].pucch_res_id_list[pucch_cfg.pucch_res_set[0].pucch_res_id_list.size() - 1];
       const auto harq_res_set_0_for_sr = pucch_cfg.pucch_res_list[harq_res_set_0_for_sr_idx.ue_res_id];
       test_result                      = test_result and harq_res_set_0_for_sr == sr_pucch_res_cfg;
 
-      const auto  harq_res_set_1_for_sr_idx    = pucch_cfg.pucch_res_set[1].pucch_res_id_list.back();
-      const auto  harq_res_set_1_for_sr        = pucch_cfg.pucch_res_list[harq_res_set_1_for_sr_idx.ue_res_id];
-      const auto& harq_res_set_1_for_sr_params = std::get<pucch_format_2_3_cfg>(harq_res_set_1_for_sr.format_params);
+      const auto harq_res_set_1_for_sr_idx = pucch_cfg.pucch_res_set[1].pucch_res_id_list.back();
+      const auto harq_res_set_1_for_sr     = pucch_cfg.pucch_res_list[harq_res_set_1_for_sr_idx.ue_res_id];
       test_result = test_result and harq_res_set_1_for_sr.starting_prb == sr_pucch_res_cfg.starting_prb and
                     harq_res_set_1_for_sr.second_hop_prb == sr_pucch_res_cfg.second_hop_prb and
-                    harq_res_set_1_for_sr_params.starting_sym_idx == sr_pucch_params_cfg.starting_sym_idx and
-                    harq_res_set_1_for_sr_params.nof_symbols == sr_pucch_params_cfg.nof_symbols;
+                    harq_res_set_1_for_sr.starting_sym_idx == sr_pucch_res_cfg.starting_sym_idx and
+                    harq_res_set_1_for_sr.nof_symbols == sr_pucch_res_cfg.nof_symbols;
 
       if (has_csi) {
         const pucch_res_id_t csi_res_id =
@@ -1386,7 +1379,6 @@ protected:
         srsran_assert(csi_pucch_res_cfg.format == pucch_format::FORMAT_2 and
                           std::holds_alternative<pucch_format_2_3_cfg>(csi_pucch_res_cfg.format_params),
                       "CSI PUCCH resource must be of Format 2");
-        const auto& csi_pucch_params_cfg = std::get<pucch_format_2_3_cfg>(csi_pucch_res_cfg.format_params);
 
         const auto harq_res_set_1_for_csi_idx =
             pucch_cfg.pucch_res_set[1].pucch_res_id_list[pucch_cfg.pucch_res_set[1].pucch_res_id_list.size() - 2U];
@@ -1395,12 +1387,11 @@ protected:
 
         const auto harq_res_set_0_for_csi_idx =
             pucch_cfg.pucch_res_set[0].pucch_res_id_list[pucch_cfg.pucch_res_set[0].pucch_res_id_list.size() - 2U];
-        const auto  harq_res_set_0_for_csi        = pucch_cfg.pucch_res_list[harq_res_set_0_for_csi_idx.ue_res_id];
-        const auto& harq_res_set_0_for_csi_params = std::get<pucch_format_0_cfg>(harq_res_set_0_for_csi.format_params);
+        const auto harq_res_set_0_for_csi = pucch_cfg.pucch_res_list[harq_res_set_0_for_csi_idx.ue_res_id];
         test_result = test_result and harq_res_set_0_for_csi.starting_prb == csi_pucch_res_cfg.starting_prb and
                       harq_res_set_0_for_csi.second_hop_prb == csi_pucch_res_cfg.second_hop_prb and
-                      harq_res_set_0_for_csi_params.starting_sym_idx == csi_pucch_params_cfg.starting_sym_idx and
-                      harq_res_set_0_for_csi_params.nof_symbols == csi_pucch_params_cfg.nof_symbols;
+                      harq_res_set_0_for_csi.starting_sym_idx == csi_pucch_res_cfg.starting_sym_idx and
+                      harq_res_set_0_for_csi.nof_symbols == csi_pucch_res_cfg.nof_symbols;
       }
     }
 

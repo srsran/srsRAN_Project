@@ -21,7 +21,10 @@
  */
 
 #include "mock_amf.h"
+#include "tests/unittests/ngap/ngap_test_messages.h"
 #include "srsran/adt/mutexed_mpmc_queue.h"
+#include "srsran/asn1/ngap/common.h"
+#include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/srslog/srslog.h"
 #include <atomic>
@@ -47,6 +50,18 @@ public:
 
       [[nodiscard]] bool on_new_message(const ngap_message& msg) override
       {
+        // If a NG Reset is sent, we inject a NG Reset Acknowledge message.
+        if (msg.pdu.type().value == asn1::ngap::ngap_pdu_c::types_opts::init_msg &&
+            msg.pdu.init_msg().proc_code == ASN1_NGAP_ID_NG_RESET) {
+          auto& ng_reset = msg.pdu.init_msg().value.ng_reset();
+
+          ngap_message ng_reset_ack = generate_ng_reset_ack(
+              (ng_reset->reset_type.type() == asn1::ngap::reset_type_c::types_opts::options::part_of_ng_interface)
+                  ? ng_reset->reset_type.part_of_ng_interface()
+                  : asn1::ngap::ue_associated_lc_ng_conn_list_l{});
+          parent.push_tx_pdu(ng_reset_ack);
+        }
+
         // If a PDU response has been previously enqueued, we send it now.
         if (not parent.pending_tx_pdus.empty()) {
           ngap_message tx_pdu;

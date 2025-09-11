@@ -34,7 +34,8 @@ struct dl_config_common;
 namespace config_helpers {
 
 /// Builds the list of PUCCH guardbands.
-std::vector<sched_grid_resource> build_pucch_guardbands_list(const pucch_builder_params& ul_cfg, unsigned bwp_size);
+std::vector<sched_grid_resource> build_pucch_guardbands_list(const pucch_builder_params& user_params,
+                                                             unsigned                    bwp_size);
 
 unsigned compute_tot_nof_monitored_pdcch_candidates_per_slot(const serving_cell_config& ue_cell_cfg,
                                                              const dl_config_common&    dl_cfg_common);

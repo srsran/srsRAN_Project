@@ -12,7 +12,6 @@
   labels:
     - ${ZMQ_HOSTLABEL_0}
   requirements:
-    arch: amd64
     cpu:
       requests: 4
       limits: 4
@@ -33,7 +32,6 @@
   labels:
     - ${ZMQ_HOSTLABEL_0}
   requirements:
-    arch: amd64
     cpu:
       requests: 4
       limits: 4
@@ -55,7 +53,6 @@
 - name: open5gs
   type: 5gc
   requirements:
-    arch: amd64
     cpu:
       requests: 1
       limits: 1
@@ -72,7 +69,6 @@
 - name: flexric-ric
   type: ric
   requirements:
-    arch: amd64
     cpu:
       requests: 1
       limits: 1

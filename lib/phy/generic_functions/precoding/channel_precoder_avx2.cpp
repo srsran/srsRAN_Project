@@ -25,20 +25,20 @@
 
 using namespace srsran;
 
-namespace {
-
-// Size of an AVX2 register in complex numbers with 32-bit floating point precision.
+/// Size of an AVX2 register in complex numbers with 32-bit floating point precision.
 static constexpr unsigned AVX2_CF_SIZE = 4;
 
-// Size of an AVX2 register in complex numbers with 8-bit fixed point precision.
+/// Size of an AVX2 register in complex numbers with 8-bit fixed point precision.
 static constexpr unsigned AVX2_CI8_SIZE = 16;
 
-// Representation of a set of complex numbers using a pair of AVX2 registers, for the real and imaginary parts.
+namespace {
+
+/// Representation of a set of complex numbers using a pair of AVX2 registers, for the real and imaginary parts.
 struct simd_cf_t {
   __m256 re;
   __m256 im;
 
-  // Sets the registers using a complex constant.
+  /// Sets the registers using a complex constant.
   void set1(const cf_t a)
   {
     re = _mm256_set1_ps(a.real());
@@ -46,16 +46,18 @@ struct simd_cf_t {
   }
 };
 
-// Type to hold a set of complex numbers using an AVX2 register, with interleaved real and imaginary parts.
+/// Type to hold a set of complex numbers using an AVX2 register, with interleaved real and imaginary parts.
 using simd_cf_interleaved = __m256;
 
-// Multiplication operator for the precoding weights.
-simd_cf_interleaved operator*(const simd_cf_interleaved& re, const simd_cf_t& weight)
+} // namespace
+
+/// Multiplication operator for the precoding weights.
+static simd_cf_interleaved operator*(const simd_cf_interleaved& re, const simd_cf_t& weight)
 {
   return _mm256_fmaddsub_ps(re, weight.re, _mm256_mul_ps(_mm256_shuffle_ps(re, re, 0xb1), weight.im));
 }
 
-inline __m128i ps_to_cbf16(simd_cf_interleaved in)
+static __m128i ps_to_cbf16(simd_cf_interleaved in)
 {
   const __m256i bias = _mm256_set1_epi32(0x7fff);
   const __m256i one  = _mm256_set1_epi32(0x1);
@@ -71,8 +73,6 @@ inline __m128i ps_to_cbf16(simd_cf_interleaved in)
   // Pack both parts in 32-bit registers.
   return _mm_packs_epi32(_mm256_extractf128_si256(a_i32, 0), _mm256_extractf128_si256(a_i32, 1));
 }
-
-} // namespace
 
 void channel_precoder_avx2::apply_precoding_port(span<cbf16_t>             port_re,
                                                  const re_buffer_reader<>& input_re,
@@ -126,12 +126,12 @@ void channel_precoder_avx2::apply_precoding_port(span<cbf16_t>             port_
   }
 }
 
-// Converts ci8_t symbols into cf_t and stores them on four AVX2 registers.
-static inline void from_ci8_to_cf(simd_cf_interleaved& out0,
-                                  simd_cf_interleaved& out1,
-                                  simd_cf_interleaved& out2,
-                                  simd_cf_interleaved& out3,
-                                  const __m256i        in)
+/// Converts ci8_t symbols into cf_t and stores them on four AVX2 registers.
+static void from_ci8_to_cf(simd_cf_interleaved& out0,
+                           simd_cf_interleaved& out1,
+                           simd_cf_interleaved& out2,
+                           simd_cf_interleaved& out3,
+                           const __m256i        in)
 {
   // Expand to 16 bit.
   __m256i in16_0 = _mm256_cvtepi8_epi16(_mm256_extracti128_si256(in, 0));
@@ -150,12 +150,12 @@ static inline void from_ci8_to_cf(simd_cf_interleaved& out0,
   out3 = _mm256_cvtepi32_ps(in32_3);
 }
 
-// Applies layer mapping for two layers and converts the symbols to cf_t.
-static inline void layer2_map_and_ci8_to_cf(simd_cf_interleaved& out0_l0,
-                                            simd_cf_interleaved& out0_l1,
-                                            simd_cf_interleaved& out1_l0,
-                                            simd_cf_interleaved& out1_l1,
-                                            const __m256i        in)
+/// Applies layer mapping for two layers and converts the symbols to cf_t.
+static void layer2_map_and_ci8_to_cf(simd_cf_interleaved& out0_l0,
+                                     simd_cf_interleaved& out0_l1,
+                                     simd_cf_interleaved& out1_l0,
+                                     simd_cf_interleaved& out1_l1,
+                                     const __m256i        in)
 {
   // Apply layer mapping to each 128 bit lane. The lower 128 bits of the input register contain REs 0..3, while the
   // higher 128 bits contain REs 4..7.
@@ -166,11 +166,11 @@ static inline void layer2_map_and_ci8_to_cf(simd_cf_interleaved& out0_l0,
   from_ci8_to_cf(out0_l0, out0_l1, out1_l0, out1_l1, tmp);
 }
 
-// Applies layer mapping for three layers and converts the symbols to cf_t.
-static inline void layer3_map_and_ci8_to_cf(simd_cf_interleaved& out_l0,
-                                            simd_cf_interleaved& out_l1,
-                                            simd_cf_interleaved& out_l2,
-                                            const __m256i        in)
+/// Applies layer mapping for three layers and converts the symbols to cf_t.
+static void layer3_map_and_ci8_to_cf(simd_cf_interleaved& out_l0,
+                                     simd_cf_interleaved& out_l1,
+                                     simd_cf_interleaved& out_l2,
+                                     const __m256i        in)
 {
   simd_cf_interleaved unused;
 
@@ -191,12 +191,12 @@ static inline void layer3_map_and_ci8_to_cf(simd_cf_interleaved& out_l0,
   from_ci8_to_cf(out_l0, out_l1, out_l2, unused, tmp);
 }
 
-// Applies layer mapping for four layers and converts the symbols to cf_t.
-static inline void layer4_map_and_ci8_to_cf(simd_cf_interleaved& out_l0,
-                                            simd_cf_interleaved& out_l1,
-                                            simd_cf_interleaved& out_l2,
-                                            simd_cf_interleaved& out_l3,
-                                            const __m256i        in)
+/// Applies layer mapping for four layers and converts the symbols to cf_t.
+static void layer4_map_and_ci8_to_cf(simd_cf_interleaved& out_l0,
+                                     simd_cf_interleaved& out_l1,
+                                     simd_cf_interleaved& out_l2,
+                                     simd_cf_interleaved& out_l3,
+                                     const __m256i        in)
 {
   // Apply layer mapping to each 128 bit lane. The lower 128 bits of the input register contain REs 0 and 1, while the
   // higher 128 bits contain REs 2 and 3.

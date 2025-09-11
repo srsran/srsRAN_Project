@@ -71,6 +71,9 @@ struct ta_info_t {
   double ta_common_drift;
   /// Indicate drift rate variation of the common TA. Unit is us/s^2.
   double ta_common_drift_variant;
+  /// Constant offset added to the NTA-common broadcast in SIB19 to model fixed system delays independent of satellite
+  /// position. Unit is us.
+  double ta_common_offset;
 };
 
 /// EpochTime is used to indicate the epoch time for the NTN assistance information, and it is defined as the starting

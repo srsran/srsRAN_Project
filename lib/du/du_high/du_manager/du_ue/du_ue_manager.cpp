@@ -58,11 +58,6 @@ du_ue_index_t du_ue_manager::find_unused_du_ue_index()
   return INVALID_DU_UE_INDEX;
 }
 
-async_task<void> du_ue_manager::handle_f1_reset_request(const std::vector<du_ue_index_t>& ues_to_reset)
-{
-  return launch_async<du_ue_reset_procedure>(ues_to_reset, *this, cfg);
-}
-
 void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& msg)
 {
   du_ue_index_t ue_idx_candidate = find_unused_du_ue_index();
@@ -264,6 +259,7 @@ void du_ue_manager::remove_ue(du_ue_index_t ue_index)
 
   srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue index={}", fmt::underlying(ue_index));
   logger.debug("ue={}: Scheduled deletion of UE context", fmt::underlying(ue_index));
+  ue_ctrl_loop[ue_index].clear_pending_tasks();
 
   // Schedule UE removal task
   ue_ctrl_loop[ue_index].schedule([this, ue_index](coro_context<async_task<void>>& ctx) {

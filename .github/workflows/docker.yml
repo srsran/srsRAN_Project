@@ -11,6 +11,8 @@ jobs:
   docker:
     if: ${{ vars.SKIP_DOCKER_JOB != 'true' }}
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     strategy:
       matrix:
         include:
@@ -24,6 +26,7 @@ jobs:
             DPDK_VERSION: ""
             DOCKERFILE: ./docker/telegraf/Dockerfile
             CONTEXT: ./docker/telegraf
+            ATTESTATION_FILE: ""
           # --> grafana
           - TAGNAME: ""
             REPOSITORY: grafana
@@ -34,6 +37,7 @@ jobs:
             DPDK_VERSION: ""
             DOCKERFILE: ./docker/grafana/Dockerfile
             CONTEXT: ./docker/grafana
+            ATTESTATION_FILE: ""
           # --> gnb
           # AMD AVX2
           - TAGNAME: release_avx2
@@ -41,36 +45,40 @@ jobs:
             MARCH: x86-64-v3
             PLATFORM: amd64
             UHD_VERSION: "4.7.0.0"
-            DPDK_VERSION: "23.11.1"
+            DPDK_VERSION: "24.11.2"
             DOCKERFILE: ./docker/Dockerfile
             CONTEXT: ./
+            ATTESTATION_FILE: /usr/local/etc/srsran_image.spdx
           - TAGNAME: release_with_debug_avx2
             REPOSITORY: srsran-project
             EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
             MARCH: x86-64-v3
             PLATFORM: amd64
             UHD_VERSION: "4.7.0.0"
-            DPDK_VERSION: "23.11.1"
+            DPDK_VERSION: "24.11.2"
             DOCKERFILE: ./docker/Dockerfile
             CONTEXT: ./
+            ATTESTATION_FILE: /usr/local/etc/srsran_image.spdx
           # AMD AVX512
           - TAGNAME: release_avx512
             REPOSITORY: srsran-project
             MARCH: x86-64-v4
             PLATFORM: amd64
             UHD_VERSION: "4.7.0.0"
-            DPDK_VERSION: "23.11.1"
+            DPDK_VERSION: "24.11.2"
             DOCKERFILE: ./docker/Dockerfile
             CONTEXT: ./
+            ATTESTATION_FILE: /usr/local/etc/srsran_image.spdx
           - TAGNAME: release_with_debug_avx512
             REPOSITORY: srsran-project
             EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
             MARCH: x86-64-v4
             PLATFORM: amd64
             UHD_VERSION: "4.7.0.0"
-            DPDK_VERSION: "23.11.1"
+            DPDK_VERSION: "24.11.2"
             DOCKERFILE: ./docker/Dockerfile
             CONTEXT: ./
+            ATTESTATION_FILE: /usr/local/etc/srsran_image.spdx
     env:
       PREFIX: softwareradiosystems/${{ matrix.REPOSITORY }}:${{ matrix.TAGNAME }}
     environment: dockerhub
@@ -83,6 +91,18 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Set up cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Install regctl
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.x'
+      - name: Set up regctl
+        run: |
+          go install github.com/regclient/regclient/cmd/regctl@latest
+        shell: bash
 
       - name: Determine tags based on branch
         id: tags
@@ -114,6 +134,7 @@ jobs:
           ecr: false
 
       - name: Build and push
+        id: build_and_push
         uses: docker/build-push-action@v6
         with:
           push: true
@@ -126,3 +147,19 @@ jobs:
             UHD_VERSION=${{ matrix.UHD_VERSION }}
             DPDK_VERSION=${{ matrix.DPDK_VERSION }}
             MARCH=${{ matrix.MARCH }}
+
+      - name: Attest image
+        if: ${{ matrix.ATTESTATION_FILE != '' }}
+        run: |
+          IFS=',' read -ra TAG_LIST <<< "${{ steps.tags.outputs.tags }}"
+          DIGEST=${{ steps.build_and_push.outputs.digest }}
+          
+          for IMAGE_TAG in "${TAG_LIST[@]}"; do
+            IMAGE_DIGEST="$IMAGE_TAG@$DIGEST"
+            regctl image get-file "$IMAGE_TAG" ${{ matrix.ATTESTATION_FILE }} > image.spdx
+            cosign attest --predicate image.spdx --type spdx "$IMAGE_DIGEST"
+          done
+        shell: bash
+        env:
+          COSIGN_EXPERIMENTAL: 1
+          COSIGN_YES: 1

@@ -46,9 +46,10 @@ std::vector<grant_info> get_pdcch_grant_info(pci_t pci, const pdcch_dl_informati
 
 /// Extract PDCCH grant info of UL PDCCH allocation.
 ///
+/// \param pci Cell PCI.
 /// \param pdcch UL PDCCH allocation parameters.
 /// \return Parameters of the grant.
-std::vector<grant_info> get_pdcch_grant_info(const pdcch_ul_information& pdcch);
+std::vector<grant_info> get_pdcch_grant_info(pci_t pci, const pdcch_ul_information& pdcch);
 
 /// Extract PDSCH grant info of SIB allocation.
 ///

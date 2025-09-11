@@ -95,16 +95,16 @@ public:
 
   void print()
   {
-    printf("[TX] Overflow: %d; Late: %d Underflow: %d Other: %d\n",
-           count_tx_overflow,
-           count_tx_late,
-           count_tx_underflow,
-           count_tx_other);
-    printf("[RX] Overflow: %d; Late: %d Underflow: %d Other: %d\n",
-           count_rx_overflow,
-           count_rx_late,
-           count_rx_underflow,
-           count_rx_other);
+    fmt::println("[TX] Overflow: {}; Late: {} Underflow: {} Other: {}",
+                 count_tx_overflow,
+                 count_tx_late,
+                 count_tx_underflow,
+                 count_tx_other);
+    fmt::println("[RX] Overflow: {}; Late: {} Underflow: {} Other: {}",
+                 count_rx_overflow,
+                 count_rx_late,
+                 count_rx_underflow,
+                 count_rx_other);
   }
 };
 

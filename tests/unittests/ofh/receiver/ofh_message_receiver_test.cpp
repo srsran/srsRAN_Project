@@ -21,6 +21,7 @@
  */
 
 #include "../../../../lib/ofh/receiver/ofh_closed_rx_window_handler.h"
+#include "../../../../lib/ofh/receiver/ofh_data_flow_uplane_decoding_metrics_collector.h"
 #include "../../../../lib/ofh/receiver/ofh_message_receiver_impl.h"
 #include "../../../../lib/ofh/receiver/ofh_rx_window_checker.h"
 #include "../../../../lib/ofh/receiver/ofh_sequence_id_checker_dummy_impl.h"
@@ -43,7 +44,9 @@ namespace {
 class dummy_uplane_rx_symbol_notifier : public uplane_rx_symbol_notifier
 {
 public:
-  void on_new_uplink_symbol(const uplane_rx_symbol_context& context, shared_resource_grid grid) override {}
+  void on_new_uplink_symbol(const uplane_rx_symbol_context& context, shared_resource_grid grid, bool is_valid) override
+  {
+  }
   void on_new_prach_window_data(const prach_buffer_context& context, const prach_buffer& buffer) override {}
 };
 
@@ -61,11 +64,15 @@ private:
 /// Data flow User-Plane uplink PRACH spy.
 class data_flow_uplane_uplink_prach_spy : public data_flow_uplane_uplink_prach
 {
-  bool decode_function_called = false;
+  bool                                         decode_function_called = false;
+  data_flow_message_decoding_metrics_collector metrics_collector{false};
 
 public:
   // See interface for documentation.
   void decode_type1_message(unsigned eaxc, span<const uint8_t> msg) override { decode_function_called = true; }
+
+  // See interface for documentation.
+  data_flow_message_decoding_metrics_collector& get_metrics_collector() override { return metrics_collector; }
 
   /// Returns true if the decode_type1_message function has been called, otherwise false.
   bool has_decode_function_been_called() const { return decode_function_called; }
@@ -74,11 +81,15 @@ public:
 /// Data flow User-Plane uplink PRACH spy.
 class data_flow_uplane_uplink_data_spy : public data_flow_uplane_uplink_data
 {
-  bool decode_function_called = false;
+  bool                                         decode_function_called = false;
+  data_flow_message_decoding_metrics_collector metrics_collector{false};
 
 public:
   // See interface for documentation.
   void decode_type1_message(unsigned eaxc, span<const uint8_t> msg) override { decode_function_called = true; }
+
+  // See interface for documentation.
+  data_flow_message_decoding_metrics_collector& get_metrics_collector() override { return metrics_collector; }
 
   /// Returns true if the decode_type1_message function has been called, otherwise false.
   bool has_decode_function_been_called() const { return decode_function_called; }
@@ -186,11 +197,12 @@ public:
   message_receiver_config generate_config()
   {
     message_receiver_config config;
-    config.nof_symbols = 14;
-    config.scs         = subcarrier_spacing::kHz30;
-    config.vlan_params = vlan_params;
-    config.ul_eaxc     = ul_eaxc;
-    config.prach_eaxc  = ul_prach_eaxc;
+    config.nof_symbols                   = 14;
+    config.scs                           = subcarrier_spacing::kHz30;
+    config.vlan_params                   = vlan_params;
+    config.ul_eaxc                       = ul_eaxc;
+    config.prach_eaxc                    = ul_prach_eaxc;
+    config.enable_log_warnings_for_lates = true;
 
     return config;
   }

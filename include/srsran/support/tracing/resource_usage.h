@@ -32,9 +32,9 @@ namespace resource_usage {
 /// Difference between two resource_usage::snapshot points for a given thread.
 struct diff {
   /// Number of voluntary context switches between the two snapshots.
-  int vol_ctxt_switch_count;
+  int vol_ctxt_switch_count{0};
   /// Number of involuntary context switches between the two snapshots.
-  int invol_ctxt_switch_count;
+  int invol_ctxt_switch_count{0};
   /// Time spent in user mode between two snapshots.
   std::chrono::microseconds user_time{0};
   /// Time spent in kernel mode between two snapshots.

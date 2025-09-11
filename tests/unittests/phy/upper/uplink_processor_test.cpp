@@ -154,24 +154,76 @@ protected:
   resource_grid_spy*       grid_spy;
 };
 
-TEST_F(UplinkProcessorFixture, prach_workflow)
+TEST_F(UplinkProcessorFixture, prach_normal_workflow)
 {
   slot_point slot;
   ul_processor->get_pdu_slot_repository(slot);
 
+  // Request PRACH processing.
   prach_buffer_spy buffer;
   ul_processor->get_slot_processor(slot).process_prach(buffer, {});
 
-  // Check PRACH detection has been enqueued and the detector was not called.
-  ASSERT_TRUE(prach_executor.has_pending_tasks());
-  ASSERT_FALSE(prach_spy->has_detect_method_been_called());
+  // Create asynchronous task - it will block until all tasks are completed.
+  std::atomic<bool> stop_thread_started = false;
+  std::thread       stop_thread([this, &stop_thread_started]() {
+    stop_thread_started = true;
+    ul_processor->stop();
+  });
+
+  // Wait for thread to start.
+  while (!stop_thread_started) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
 
   // Execute tasks.
-  prach_executor.run_pending_tasks();
+  ASSERT_TRUE(prach_executor.run_pending_tasks());
 
   // Check the detector has been called and the result notified.
   ASSERT_TRUE(prach_spy->has_detect_method_been_called());
   ASSERT_TRUE(results_notifier.has_prach_result_been_notified());
+
+  // Synchronize stopping thread.
+  stop_thread.join();
+}
+
+TEST_F(UplinkProcessorFixture, prach_fail_defer_workflow)
+{
+  slot_point slot;
+  ul_processor->get_pdu_slot_repository(slot);
+
+  // Stop PRACH executor.
+  prach_executor.stop();
+
+  // Request PRACH processing.
+  prach_buffer_spy buffer;
+  ul_processor->get_slot_processor(slot).process_prach(buffer, {});
+
+  // Request processor to stop. There is no pending task, so it should not block.
+  ul_processor->stop();
+
+  // Check the detector has not been called nor the result notified.
+  ASSERT_FALSE(prach_spy->has_detect_method_been_called());
+  ASSERT_FALSE(results_notifier.has_prach_result_been_notified());
+}
+
+TEST_F(UplinkProcessorFixture, prach_request_after_stop)
+{
+  slot_point slot;
+  ul_processor->get_pdu_slot_repository(slot);
+
+  // Request processor to stop. There is no pending task, so it should not block.
+  ul_processor->stop();
+
+  // Request PRACH processing.
+  prach_buffer_spy buffer;
+  ul_processor->get_slot_processor(slot).process_prach(buffer, {});
+
+  // The UL processor must not create an asynchronous task.
+  ASSERT_FALSE(prach_executor.run_pending_tasks());
+
+  // Check the detector has not been called nor the result notified.
+  ASSERT_FALSE(prach_spy->has_detect_method_been_called());
+  ASSERT_FALSE(results_notifier.has_prach_result_been_notified());
 }
 
 TEST_F(UplinkProcessorFixture, pusch_normal_workflow)
@@ -185,7 +237,7 @@ TEST_F(UplinkProcessorFixture, pusch_normal_workflow)
   unsigned end_symbol_index = pusch_pdu.pdu.start_symbol_index + pusch_pdu.pdu.nof_symbols - 1;
 
   // Notify reception of the previous reception symbol.
-  ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index - 1);
+  ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index - 1, true);
 
   // Check that nothing happened.
   ASSERT_FALSE(pusch_executor.has_pending_tasks());
@@ -194,7 +246,7 @@ TEST_F(UplinkProcessorFixture, pusch_normal_workflow)
   ASSERT_FALSE(results_notifier.has_pusch_uci_result_been_notified());
 
   // Notify reception of receive symbol.
-  ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index);
+  ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index, true);
 
   // Check PUSCH processing has been enqueued and the processor was not called.
   ASSERT_TRUE(pusch_executor.has_pending_tasks());
@@ -222,10 +274,10 @@ TEST_F(UplinkProcessorFixture, rx_symbol_bad_order)
   unsigned end_symbol_index = pusch_pdu.pdu.start_symbol_index + pusch_pdu.pdu.nof_symbols - 1;
 
   // Notify reception of the previous reception symbol.
-  ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index - 1);
+  ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index - 1, true);
 
   // Notify reception of the symbol before the previous.
-  ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index - 2);
+  ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index - 2, true);
 
   // Check that nothing happened.
   ASSERT_FALSE(pusch_executor.has_pending_tasks());
@@ -234,7 +286,7 @@ TEST_F(UplinkProcessorFixture, rx_symbol_bad_order)
   ASSERT_FALSE(results_notifier.has_pusch_uci_result_been_notified());
 
   // Notify reception of receive symbol.
-  ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index);
+  ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index, true);
 
   // Check PUSCH processing has been enqueued and the processor was not called.
   ASSERT_TRUE(pusch_executor.has_pending_tasks());
@@ -262,7 +314,7 @@ TEST_F(UplinkProcessorFixture, pusch_wrong_slot)
   unsigned end_symbol_index = pusch_pdu.pdu.start_symbol_index + pusch_pdu.pdu.nof_symbols - 1;
 
   // Notify reception of receive symbol for the wrong slot.
-  ul_processor->get_slot_processor(slot - 1).handle_rx_symbol(end_symbol_index);
+  ul_processor->get_slot_processor(slot - 1).handle_rx_symbol(end_symbol_index, true);
 
   // Check PUSCH processing has NOT been enqueued and the processor was not called.
   ASSERT_FALSE(pusch_executor.has_pending_tasks());
@@ -271,7 +323,7 @@ TEST_F(UplinkProcessorFixture, pusch_wrong_slot)
   ASSERT_FALSE(results_notifier.has_pusch_uci_result_been_notified());
 
   // Notify reception of receive symbol for the right slot.
-  ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index);
+  ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index, true);
 
   // Check PUSCH processing has been enqueued and the processor was not called.
   ASSERT_TRUE(pusch_executor.has_pending_tasks());
@@ -303,7 +355,7 @@ TEST_F(UplinkProcessorFixture, pusch_exceed_tb_size)
   unsigned end_symbol_index = pusch_pdu_large.pdu.start_symbol_index + pusch_pdu_large.pdu.nof_symbols - 1;
 
   // Notify reception of receive symbol.
-  ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index);
+  ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index, true);
 
   // Execute tasks.
   pusch_executor.run_pending_tasks();
@@ -328,7 +380,7 @@ TEST_F(UplinkProcessorFixture, pusch_locked_rx_buffer)
   ASSERT_TRUE(buffer_pool_spy.try_lock());
 
   // Notify reception of receive symbol.
-  ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index);
+  ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index, true);
 
   // Check PUSCH processing has been enqueued and the processor was not called.
   ASSERT_FALSE(pusch_executor.has_pending_tasks());
@@ -351,7 +403,7 @@ TEST_F(UplinkProcessorFixture, pusch_fail_executor)
   unsigned end_symbol_index = pusch_pdu.pdu.start_symbol_index + pusch_pdu.pdu.nof_symbols - 1;
 
   // Notify reception of receive symbol.
-  ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index);
+  ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index, true);
 
   // Check PUSCH processing has been enqueued and the processor was not called.
   ASSERT_FALSE(pusch_executor.has_pending_tasks());
@@ -362,7 +414,6 @@ TEST_F(UplinkProcessorFixture, pusch_fail_executor)
 
 TEST_F(UplinkProcessorFixture, pusch_discard_slot)
 {
-  // Contexted slot.
   slot_point slot = pusch_pdu.pdu.slot;
 
   // Add PDU to the repository.
@@ -383,7 +434,6 @@ TEST_F(UplinkProcessorFixture, pusch_discard_slot)
 
 TEST_F(UplinkProcessorFixture, pucch_discard_twice)
 {
-  // Contexted slot.
   slot_point slot = pusch_pdu.pdu.slot;
 
   // Add PDU to the repository.
@@ -403,6 +453,34 @@ TEST_F(UplinkProcessorFixture, pucch_discard_twice)
   ASSERT_TRUE(results_notifier.has_pucch_result_been_notified());
 }
 
+TEST_F(UplinkProcessorFixture, pusch_discard_invalid_symbol)
+{
+  slot_point slot = pusch_pdu.pdu.slot;
+
+  // Add PDU to the repository.
+  {
+    unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+    repository->add_pusch_pdu(pusch_pdu);
+  }
+
+  unsigned end_symbol_index = pusch_pdu.pdu.start_symbol_index + pusch_pdu.pdu.nof_symbols - 1;
+
+  // Notify all symbols as valid except for the last one.
+  for (unsigned i_symbol = 0; i_symbol != end_symbol_index - 1; ++i_symbol) {
+    ul_processor->get_slot_processor(slot).handle_rx_symbol(i_symbol, true);
+  }
+  ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index - 1, false);
+
+  // Assert PDU was discarded.
+  ASSERT_FALSE(pusch_executor.has_pending_tasks());
+  ASSERT_TRUE(results_notifier.has_pusch_data_result_been_notified());
+
+  // Clear notifier spy, feed last OFDM symbol and make sure nothing was notified.
+  results_notifier.clear();
+  ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index, true);
+  ASSERT_FALSE(results_notifier.has_pusch_data_result_been_notified());
+}
+
 TEST_F(UplinkProcessorFixture, pusch_execute_after_stop)
 {
   slot_point slot;
@@ -420,7 +498,7 @@ TEST_F(UplinkProcessorFixture, pusch_execute_after_stop)
   ul_processor->stop();
 
   // Notify reception of receive symbol.
-  processor.handle_rx_symbol(end_symbol_index);
+  processor.handle_rx_symbol(end_symbol_index, true);
 
   // Check PUSCH processing has been enqueued and the processor was not called.
   ASSERT_FALSE(pusch_executor.has_pending_tasks());
@@ -431,7 +509,6 @@ TEST_F(UplinkProcessorFixture, pusch_execute_after_stop)
 
 TEST_F(UplinkProcessorFixture, reserve_slot_twice_without_request)
 {
-  // Contexted slot.
   slot_point slot = pusch_pdu.pdu.slot;
 
   // Get the repository for the first time - it transitions to idle as there is no request.
@@ -478,7 +555,7 @@ TEST_F(UplinkProcessorFixture, reserve_slot_twice_pending_exec)
 
   // Notify reception of receive symbol.
   {
-    ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index);
+    ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index, true);
   }
 
   // Assert execution expectations.
@@ -510,7 +587,6 @@ TEST_F(UplinkProcessorFixture, stop_no_pending_task)
 
 TEST_F(UplinkProcessorFixture, stop_accepting_tasks)
 {
-  // Contexted slot.
   slot_point slot = pusch_pdu.pdu.slot;
 
   // Add PDU to the repository.
@@ -543,7 +619,6 @@ TEST_F(UplinkProcessorFixture, stop_accepting_tasks)
 
 TEST_F(UplinkProcessorFixture, stop_pending_task)
 {
-  // Contexted slot.
   slot_point slot = pusch_pdu.pdu.slot;
 
   // Add PDU to the repository.
@@ -554,7 +629,7 @@ TEST_F(UplinkProcessorFixture, stop_pending_task)
 
   // Notify reception of receive symbol - an asynchronous task is expected.
   unsigned end_symbol_index = pusch_pdu.pdu.start_symbol_index + pusch_pdu.pdu.nof_symbols - 1;
-  ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index);
+  ul_processor->get_slot_processor(slot).handle_rx_symbol(end_symbol_index, true);
   ASSERT_TRUE(pusch_executor.has_pending_tasks());
 
   // Create asynchronous task - it will block until all tasks are completed.
@@ -575,7 +650,6 @@ TEST_F(UplinkProcessorFixture, stop_pending_task)
 
 TEST_F(UplinkProcessorFixture, pusch_discard_slot_after_stop)
 {
-  // Contexted slot.
   slot_point slot = pusch_pdu.pdu.slot;
 
   // Add PDU to the repository.

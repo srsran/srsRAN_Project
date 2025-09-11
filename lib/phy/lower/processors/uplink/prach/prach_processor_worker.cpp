@@ -107,7 +107,7 @@ void prach_processor_worker::accumulate_samples(const baseband_gateway_buffer_re
   // Otherwise, transition to processing.
   state = states::processing;
 
-  if (!async_task_executor.execute([this, nof_ports]() {
+  if (!async_task_executor.defer([this, nof_ports]() {
         trace_point tp = ru_tracer.now();
 
         for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {

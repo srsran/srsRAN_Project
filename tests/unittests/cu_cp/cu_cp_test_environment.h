@@ -241,6 +241,8 @@ public:
       const std::vector<pdu_session_id_t>& expected_pdu_sessions_to_setup,
       const std::vector<pdu_session_id_t>& expected_pdu_sessions_failed_to_setup);
 
+  rrc_timers_t rrc_test_timer_values;
+
 private:
   class worker_manager;
 

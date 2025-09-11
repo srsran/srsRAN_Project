@@ -47,13 +47,13 @@ constexpr Integer ceil_frac(Integer n, Integer d)
 
 namespace detail {
 
-inline constexpr std::size_t max_size_impl(std::size_t lhs, std::size_t rhs)
+constexpr std::size_t max_size_impl(std::size_t lhs, std::size_t rhs)
 {
   return lhs < rhs ? rhs : lhs;
 }
 
 template <typename ItBegin, typename ItEnd>
-inline constexpr std::size_t max_array_impl(ItBegin b, ItEnd e)
+constexpr std::size_t max_array_impl(ItBegin b, ItEnd e)
 {
   return b + 1 == e ? *b : max_size_impl(*b, max_array_impl(b + 1, e));
 }
@@ -62,7 +62,7 @@ inline constexpr std::size_t max_array_impl(ItBegin b, ItEnd e)
 
 /// \brief Compute maximum value of an array of std::size.
 template <std::size_t N>
-inline constexpr std::size_t max_size(const std::size_t (&arr)[N])
+constexpr std::size_t max_size(const std::size_t (&arr)[N])
 {
   return detail::max_array_impl(arr, arr + N);
 }
@@ -251,6 +251,18 @@ public:
     size_ = other.size();
     std::copy(other.data(), other.data() + other.size(), data());
     return *this;
+  }
+  void reserve(uint32_t new_cap)
+  {
+    if (new_cap > cap_) {
+      T* new_data = new T[new_cap];
+      if (data_ != nullptr) {
+        std::move(data_, data_ + size_, new_data);
+      }
+      cap_ = new_cap;
+      delete[] data_;
+      data_ = new_data;
+    }
   }
   void resize(uint32_t new_size, uint32_t new_cap = 0)
   {
@@ -467,7 +479,7 @@ private:
 *********************/
 
 SRSASN_CODE pack_unsupported_ext_flag(bit_ref& bref, bool ext);
-SRSASN_CODE unpack_unsupported_ext_flag(bool& ext, bit_ref& bref);
+SRSASN_CODE unpack_unsupported_ext_flag(bool& ext, cbit_ref& bref);
 
 /************************
     asn1 null packing
@@ -963,7 +975,7 @@ public:
   explicit bitstring(const std::string& s)
   {
     resize(s.size());
-    memset(&octets_[0], 0, nof_octets());
+    std::memset(&octets_[0], 0, nof_octets());
     for (uint32_t i = 0; i < s.size(); ++i)
       set(s.size() - i - 1, s[i] == '1');
   }
@@ -979,7 +991,7 @@ public:
   {
     nof_bits = new_size;
     octets_.resize(nof_octets());
-    memset(data(), 0, nof_octets()); // resize always resets content
+    std::memset(data(), 0, nof_octets()); // resize always resets content
   }
 
   // comparison
@@ -1011,7 +1023,7 @@ public:
   uint64_t   to_number() const { return bitstring_utils::to_number(data(), length()); }
   this_type& from_number(uint64_t val)
   {
-    auto nof_bits_ = std::max((uint32_t)ceilf(log2(std::max(val, (uint64_t)1u))), LB);
+    auto nof_bits_ = std::max((uint32_t)std::ceil(std::log2(std::max(val, (uint64_t)1u))), LB);
     if (nof_bits_ > UB) {
       log_error("The provided bitstring value {} does not fit the bounds [{}, {}]", val, uint32_t(lb), uint32_t(ub));
       return *this;

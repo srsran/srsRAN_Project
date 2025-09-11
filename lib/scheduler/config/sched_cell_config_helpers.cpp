@@ -22,7 +22,6 @@
 
 #include "srsran/scheduler/config/sched_cell_config_helpers.h"
 #include "srsran/scheduler/config/pucch_resource_generator.h"
-#include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include <map>
 
 using namespace srsran;
@@ -50,14 +49,8 @@ srsran::config_helpers::build_pucch_guardbands_list(const pucch_builder_params& 
   };
 
   for (const auto& pucch_res : res_list) {
-    unsigned starting_sym = 0;
-    unsigned nof_symbols  = 0;
-    std::visit(
-        [&starting_sym, &nof_symbols](const auto& format_params) {
-          starting_sym = format_params.starting_sym_idx;
-          nof_symbols  = format_params.nof_symbols;
-        },
-        pucch_res.format_params);
+    unsigned starting_sym = pucch_res.starting_sym_idx;
+    unsigned nof_symbols  = pucch_res.nof_symbols;
 
     // For PUCCH Formats 0/1/4, the resource has 1 PRB only.
     const unsigned nof_prbs = std::holds_alternative<pucch_format_2_3_cfg>(pucch_res.format_params)

@@ -45,20 +45,24 @@ public:
   // See pusch_processor interface for documentation.
   void process(span<uint8_t>                    data_,
                unique_rx_buffer                 rm_buffer,
-               pusch_processor_result_notifier& notifier_,
+               pusch_processor_result_notifier& proc_notifier,
                const resource_grid_reader&      grid,
                const pdu_t&                     pdu_) override
   {
-    notifier = &notifier_;
-    data     = data_;
-    pdu      = pdu_;
+    // Save reference to the notifier for this transmission. It must be nullptr to ensure that the processor was
+    // released from previous processing.
+    [[maybe_unused]] pusch_processor_result_notifier* prev_proc_notifier = std::exchange(notifier, &proc_notifier);
+    srsran_assert(prev_proc_notifier == nullptr, "The PUSCH processor is in use.");
+
+    // Save processing inputs.
+    data = data_;
+    pdu  = pdu_;
 
     // Setup times.
-    time_start        = std::chrono::steady_clock::now();
-    elapsed_data_ns   = 0;
-    elapsed_uci_ns    = 0;
-    elapsed_return_ns = 0;
-    cpu_time_usage_ns = 0;
+    time_start                 = std::chrono::steady_clock::now();
+    elapsed_data_and_return_ns = 0;
+    elapsed_uci_ns             = 0;
+    cpu_time_usage_ns          = 0;
 
     resource_usage_utils::measurements measurements;
     {
@@ -67,7 +71,8 @@ public:
       processor->process(data, std::move(rm_buffer), *this, grid, pdu);
     }
     cpu_time_usage_ns = measurements.duration.count();
-    elapsed_return_ns = std::chrono::nanoseconds(std::chrono::steady_clock::now() - time_start).count();
+    elapsed_data_and_return_ns |=
+        std::min(std::chrono::nanoseconds(std::chrono::steady_clock::now() - time_start).count(), 0xffffffffL);
 
     // Notify metrics.
     notify_metrics();
@@ -95,34 +100,27 @@ private:
     sch_result = sch;
 
     // Save data reporting time.
-    elapsed_data_ns = std::chrono::nanoseconds(std::chrono::steady_clock::now() - time_start).count();
+    elapsed_data_and_return_ns |=
+        std::min(std::chrono::nanoseconds(std::chrono::steady_clock::now() - time_start).count(), 0xffffffffL) << 32;
 
     // Notify metrics.
     notify_metrics();
-
-    // Exchanges the notifier before notifying the reception of SCH.
-    pusch_processor_result_notifier* notifier_ = nullptr;
-    std::exchange(notifier_, notifier);
-
-    // Notify the SCH reception.
-    notifier_->on_sch(sch);
   }
 
-  /// Notifies the gathered metrics through the given notifier.
+  /// Reports the PUSCH processing metrics if the underlying PUSCH processor has returned and notified the completion of
+  /// the data decoding.
   void notify_metrics()
   {
     static float invalid_sinr_and_evm = std::numeric_limits<float>::quiet_NaN();
-    uint64_t     local_elapsed_return_ns(elapsed_return_ns);
-    uint64_t     local_elapsed_data_ns(elapsed_data_ns);
 
-    // Make sure that the processor returned and notified the completion of data.
-    if ((local_elapsed_return_ns == 0) || (local_elapsed_data_ns == 0)) {
+    // The processing is considered complete if the processor has returned and notified the completion.
+    uint64_t current_elapsed_data_and_return_ns = elapsed_data_and_return_ns;
+    uint64_t elapsed_return_ns(current_elapsed_data_and_return_ns & 0xffffffff);
+    uint64_t elapsed_data_ns(current_elapsed_data_and_return_ns >> 32);
+    if ((elapsed_return_ns == 0) || (elapsed_data_ns == 0)) {
       return;
     }
-
-    // If there is thread contention, ensure only one thread reaches this point.
-    bool success = elapsed_return_ns.compare_exchange_weak(local_elapsed_return_ns, 0);
-    if (!success) {
+    if (!elapsed_data_and_return_ns.compare_exchange_weak(current_elapsed_data_and_return_ns, 0)) {
       return;
     }
 
@@ -140,30 +138,33 @@ private:
     metric_notifier.on_new_metric({.slot              = pdu.slot,
                                    .tbs               = units::bytes(data.size()),
                                    .crc_ok            = crc_ok,
-                                   .elapsed_return    = std::chrono::nanoseconds(local_elapsed_return_ns),
-                                   .elapsed_data      = std::chrono::nanoseconds(local_elapsed_data_ns),
+                                   .elapsed_return    = std::chrono::nanoseconds(elapsed_return_ns),
+                                   .elapsed_data      = std::chrono::nanoseconds(elapsed_data_ns),
                                    .elapsed_uci       = elapsed_uci,
                                    .cpu_time_usage_ns = cpu_time_usage_ns,
                                    .sinr_dB           = sinr_dB,
                                    .evm               = evm});
+
+    // Notify the completion of the PUSCH processing. From now on, the processor might become available.
+    pusch_processor_result_notifier* current_proc_notifier = std::exchange(notifier, nullptr);
+    srsran_assert(current_proc_notifier != nullptr, "PUSCH processor is still busy.");
+    current_proc_notifier->on_sch(sch_result);
   }
 
+  std::chrono::steady_clock::time_point time_start                 = {};
+  std::atomic<uint64_t>                 elapsed_uci_ns             = {};
+  std::atomic<uint64_t>                 elapsed_data_and_return_ns = {};
+  std::atomic<uint64_t>                 cpu_time_usage_ns          = {};
+  pusch_processor_result_notifier*      notifier                   = nullptr;
   std::unique_ptr<pusch_processor>      processor;
   span<uint8_t>                         data;
   pdu_t                                 pdu;
-  pusch_processor_result_notifier*      notifier;
-  std::chrono::steady_clock::time_point time_start;
-  std::atomic<uint64_t>                 elapsed_uci_ns;
-  std::atomic<uint64_t>                 elapsed_data_ns;
-  std::atomic<uint64_t>                 elapsed_return_ns;
-  std::atomic<uint64_t>                 cpu_time_usage_ns;
   pusch_processor_metric_notifier&      metric_notifier;
   pusch_processor_result_data           sch_result;
 
   // Makes sure atomics are lock free.
   static_assert(std::atomic<decltype(elapsed_uci_ns)>::is_always_lock_free);
-  static_assert(std::atomic<decltype(elapsed_data_ns)>::is_always_lock_free);
-  static_assert(std::atomic<decltype(elapsed_return_ns)>::is_always_lock_free);
+  static_assert(std::atomic<decltype(elapsed_data_and_return_ns)>::is_always_lock_free);
   static_assert(std::atomic<decltype(cpu_time_usage_ns)>::is_always_lock_free);
 };
 

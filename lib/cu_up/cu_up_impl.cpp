@@ -218,6 +218,14 @@ void cu_up::stop()
     main_ctrl_loop.schedule(launch_async([this, &cvar](coro_context<async_task<void>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
+      if (not running) {
+        // Already stopped.
+        CORO_EARLY_RETURN();
+      }
+
+      // Run E1 Release Procedure.
+      CORO_AWAIT(e1ap->handle_cu_up_e1ap_release_request());
+
       // CU-UP stops listening to new GTPU Rx PDUs and stops pushing UL PDUs.
       CORO_AWAIT(handle_stop_command());
 

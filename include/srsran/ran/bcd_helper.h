@@ -290,7 +290,7 @@ bool mnc_to_bytes(uint16_t mnc, Vec& vec)
   uint8_t v[3];
   bool    ret = mnc_to_bytes(mnc, &v[0], &len);
   vec.resize(len);
-  memcpy(&vec[0], &v[0], len);
+  std::memcpy(&vec[0], &v[0], len);
   return ret;
 }
 

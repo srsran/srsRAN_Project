@@ -33,6 +33,7 @@ srsran::srs_cu_cp::start_inter_cu_handover_target_routine(const ngap_handover_re
                                                           f1ap_ue_context_manager&     f1ap_ue_ctxt_mng,
                                                           cu_cp_ue_removal_handler&    ue_removal_handler,
                                                           ue_manager&                  ue_mng,
+                                                          cell_meas_manager&           cell_meas_mng,
                                                           const security_indication_t& default_security_indication,
                                                           srslog::basic_logger&        logger)
 {

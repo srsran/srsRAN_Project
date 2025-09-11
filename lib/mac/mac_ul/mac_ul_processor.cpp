@@ -95,10 +95,9 @@ async_task<void> mac_ul_processor::remove_ue(const mac_ue_delete_request& msg)
 
 bool mac_ul_processor::flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ccch_pdu)
 {
-  if (not cfg.ue_exec_mapper.ctrl_executor(ue_index).execute(
-          TRACE_TASK([this, ue_index, pdu = std::move(ccch_pdu)]() mutable {
-            pdu_handler.push_ul_ccch_msg(ue_index, std::move(pdu));
-          }))) {
+  if (not cfg.ue_exec_mapper.ctrl_executor(ue_index).execute([this, ue_index, pdu = std::move(ccch_pdu)]() mutable {
+        pdu_handler.push_ul_ccch_msg(ue_index, std::move(pdu));
+      })) {
     logger.warning("ue={}: Unable to forward UL-CCCH message to upper layers. Cause: task queue is full.",
                    fmt::underlying(ue_index));
     // Note: The UE is not yet created in the CU, so there in no inactivity timer.
@@ -110,7 +109,7 @@ bool mac_ul_processor::flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ccc
 void mac_ul_processor::handle_ue_config_applied(du_ue_index_t ue_index)
 {
   if (not cfg.ue_exec_mapper.ctrl_executor(ue_index).execute(
-          TRACE_TASK([this, ue_index]() { ue_manager.handle_ue_config_applied(ue_index); }))) {
+          [this, ue_index]() { ue_manager.handle_ue_config_applied(ue_index); })) {
     logger.warning("ue={}: Unable to forward UE config applied to upper layers. Cause: task queue is full.",
                    fmt::underlying(ue_index));
   }
@@ -134,10 +133,10 @@ void mac_ul_processor::handle_rx_data_indication(mac_rx_data_indication msg)
 
     // > Fork each PDU handling to different executors based on the PDU RNTI.
     if (not cfg.ue_exec_mapper.mac_ul_pdu_executor(ue_index).execute(
-            TRACE_TASK([this, slot_rx = msg.sl_rx, cell_idx = msg.cell_index, pdu = std::move(pdu)]() mutable {
+            [this, slot_rx = msg.sl_rx, cell_idx = msg.cell_index, pdu = std::move(pdu)]() mutable {
               // > Decode Rx PDU and handle respective subPDUs.
               pdu_handler.handle_rx_pdu(slot_rx, cell_idx, std::move(pdu));
-            }))) {
+            })) {
       logger.warning("cell={} slot_rx={}: Discarding Rx PDU. Cause: Rx task queue is full.",
                      fmt::underlying(msg.cell_index),
                      msg.sl_rx);

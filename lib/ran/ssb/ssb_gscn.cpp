@@ -28,18 +28,18 @@ using namespace srsran;
 using namespace band_helper;
 
 // GSCN set for band n34, SSB case A, as per TS 38.104, Table 5.4.3.3-1, Note 3.
-static const std::array<unsigned, 3> gscn_band_n34_ssb_caseA = {5032, 5043, 5054};
+static constexpr std::array<unsigned, 3> gscn_band_n34_ssb_caseA = {5032, 5043, 5054};
 
 // GSCN set for band n38, SSB case A, as per TS 38.104, Table 5.4.3.3-1, Note 2.
-static const std::array<unsigned, 10> gscn_band_n38_ssb_caseA =
+static constexpr std::array<unsigned, 10> gscn_band_n38_ssb_caseA =
     {6432, 6443, 6457, 6468, 6479, 6493, 6507, 6518, 6532, 6543};
 
 // GSCN set for band n39, SSB case A, as per TS 38.104, Table 5.4.3.3-1, Note 4.
-static const std::array<unsigned, 14> gscn_band_n39_ssb_caseA =
+static constexpr std::array<unsigned, 14> gscn_band_n39_ssb_caseA =
     {4707, 4715, 4718, 4729, 4732, 4743, 4747, 4754, 4761, 4768, 4772, 4782, 4786, 4793};
 
 // GSCN set for band n46, as per TS 38.104, Table 5.4.3.3-1, Note 5.
-static const std::array<unsigned, 32> gscn_band_n46 = {
+static constexpr std::array<unsigned, 32> gscn_band_n46 = {
     // clang-format off
   8996, 9010, 9024, 9038, 9051, 9065, 9079, 9093, 9107, 9121, 9218, 9232, 9246, 9260, 9274, 9288, 9301, 9315, 9329,
   9343, 9357, 9371, 9385, 9402, 9416, 9430, 9444, 9458, 9472, 9485, 9499, 9513
@@ -47,7 +47,7 @@ static const std::array<unsigned, 32> gscn_band_n46 = {
 };
 
 // GSCN set for band n96, as per TS 38.104, Table 5.4.3.3-1, Note 6.
-static const std::array<unsigned, 59> gscn_band_n96 = {
+static constexpr std::array<unsigned, 59> gscn_band_n96 = {
     // clang-format off
   9548, 9562, 9576, 9590, 9603, 9617, 9631, 9645, 9659, 9673, 9687, 9701, 9714, 9728, 9742, 9756, 9770, 9784, 9798,
   9812, 9826, 9840, 9853, 9867, 9881, 9895, 9909, 9923, 9937, 9951, 9964, 9978, 9992, 10006, 10020, 10034, 10048, 10062,
@@ -57,13 +57,14 @@ static const std::array<unsigned, 59> gscn_band_n96 = {
 };
 
 // GSCN set for band n102, as per TS 38.104, Table 5.4.3.3-1, Note 9.
-static const std::array<unsigned, 25> gscn_band_n102 = {
+static constexpr std::array<unsigned, 25> gscn_band_n102 = {
     // clang-format off
   9535, 9548, 9562, 9576, 9590, 9603, 9617, 9631, 9645, 9659, 9673, 9687, 9701, 9714, 9728, 9742, 9756, 9770, 9784,
   9798, 9812, 9826, 9840, 9853, 9867
     // clang-format on
 };
 
+namespace {
 struct ssb_gscn_raster {
   nr_band            band;
   subcarrier_spacing scs;
@@ -74,10 +75,11 @@ struct ssb_gscn_raster {
   // Final (valid) value of the GSCN interval, as per Table 5.4.3.3-1, TS 38.104.
   unsigned gscn_last;
 };
+} // namespace
 
 // This table implements Table 5.4.3.3-1, TS 38.104.
-const size_t                                                  nof_gscn_raster_fr1 = 51U;
-static const std::array<ssb_gscn_raster, nof_gscn_raster_fr1> ssb_gscn_raster_table_fr1{{
+static constexpr size_t                                           nof_gscn_raster_fr1 = 51U;
+static constexpr std::array<ssb_gscn_raster, nof_gscn_raster_fr1> ssb_gscn_raster_table_fr1{{
     // clang-format off
     {nr_band::n1, subcarrier_spacing::kHz15,  5279, 1, 5419},
     {nr_band::n2, subcarrier_spacing::kHz15,  4829, 1, 4969},

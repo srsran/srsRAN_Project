@@ -394,7 +394,7 @@ TEST_F(ue_config_tester, when_config_is_empty_then_procedure_avoids_configuring_
   ASSERT_TRUE(proc.ready());
   f1ap_ue_context_update_response resp = proc.get();
   ASSERT_TRUE(resp.result);
-  ASSERT_FALSE(resp.cell_group_cfg.empty());
+  ASSERT_TRUE(resp.cell_group_cfg.empty());
   ASSERT_TRUE(resp.drbs_setup.empty());
   ASSERT_TRUE(resp.failed_drbs_setups.empty());
 }

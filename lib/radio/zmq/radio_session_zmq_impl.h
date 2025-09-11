@@ -48,7 +48,7 @@ private:
   void* zmq_context;
   /// Stores transmit streams.
   std::vector<std::unique_ptr<radio_zmq_baseband_gateway>> bb_gateways;
-  /// Indicates the session has been created succesfully.
+  /// Indicates the session has been created successfully.
   bool successful = false;
 
 public:

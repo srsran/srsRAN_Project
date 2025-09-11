@@ -44,9 +44,10 @@ void priority_task_worker::stop()
 
 void priority_task_worker::run_pop_task_loop()
 {
-  unique_task t;
+  auto consumer = task_queue.create_consumer();
 
-  while (task_queue.pop_blocking(t)) {
+  unique_task t;
+  while (consumer.pop_blocking(t)) {
     // Run popped task
     t();
 

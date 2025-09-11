@@ -108,6 +108,8 @@ inline std::optional<uint8_t> get_transaction_id(const asn1::e1ap::successful_ou
       return out.value.gnb_cu_up_e1_setup_resp()->transaction_id;
     case success_type::gnb_cu_cp_e1_setup_resp:
       return out.value.gnb_cu_cp_e1_setup_resp()->transaction_id;
+    case success_type::e1_release_resp:
+      return out.value.e1_release_resp()->transaction_id;
     case success_type::gnb_cu_up_cfg_upd_ack:
       return out.value.gnb_cu_up_cfg_upd_ack()->transaction_id;
     case success_type::gnb_cu_cp_cfg_upd_ack:

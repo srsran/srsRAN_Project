@@ -31,7 +31,7 @@
 #include "srsran/ran/pucch/pucch_info.h"
 #include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 #include "srsran/scheduler/config/csi_helper.h"
-#include "srsran/srslog/srslog.h"
+#include <algorithm>
 #include <set>
 #include <vector>
 
@@ -556,74 +556,98 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
 
   // PUCCH resource format 1, for HARQ-ACK.
   // >>> PUCCH resource 0.
-  pucch_resource res_basic{
-      .res_id = pucch_res_id_t{0, 0}, .starting_prb = params.cell_nof_crbs - 1, .format = pucch_format::FORMAT_1};
+  pucch_resource res_basic{.res_id           = pucch_res_id_t{0, 0},
+                           .starting_prb     = params.cell_nof_crbs - 1,
+                           .nof_symbols      = 14,
+                           .starting_sym_idx = 0,
+                           .format           = pucch_format::FORMAT_1};
   res_basic.format_params.emplace<pucch_format_1_cfg>(
-      pucch_format_1_cfg{.initial_cyclic_shift = 0, .nof_symbols = 14, .starting_sym_idx = 0, .time_domain_occ = 0});
+      pucch_format_1_cfg{.initial_cyclic_shift = 0, .time_domain_occ = 0});
   pucch_cfg.pucch_res_list.push_back(res_basic);
   // >>> PUCCH resource 1.
-  pucch_cfg.pucch_res_list.push_back(res_basic);
-  pucch_resource& res1 = pucch_cfg.pucch_res_list.back();
-  res1.res_id          = pucch_res_id_t{1, 1};
-  res1.starting_prb    = 1;
+  {
+    pucch_cfg.pucch_res_list.push_back(res_basic);
+    pucch_resource& res1 = pucch_cfg.pucch_res_list.back();
+    res1.res_id          = pucch_res_id_t{1, 1};
+    res1.starting_prb    = 1;
+  }
   // >>> PUCCH resource 2.
-  pucch_cfg.pucch_res_list.push_back(res_basic);
-  pucch_resource& res2 = pucch_cfg.pucch_res_list.back();
-  res2.res_id          = pucch_res_id_t{2, 2};
-  res2.starting_prb    = params.cell_nof_crbs - 2;
+  {
+    pucch_cfg.pucch_res_list.push_back(res_basic);
+    pucch_resource& res2 = pucch_cfg.pucch_res_list.back();
+    res2.res_id          = pucch_res_id_t{2, 2};
+    res2.starting_prb    = params.cell_nof_crbs - 2;
+  }
 
   // PUCCH resource format 2, for HARQ-ACK + optionally SR and/or CSI.
   // >>> PUCCH resource 3.
-  pucch_resource res_basic_f2{.starting_prb = 2, .format = pucch_format::FORMAT_2};
+  pucch_resource res_basic_f2{
+      .starting_prb = 2, .nof_symbols = 2, .starting_sym_idx = 0, .format = pucch_format::FORMAT_2};
   res_basic_f2.res_id = pucch_res_id_t{3, 3};
-  res_basic_f2.format_params.emplace<pucch_format_2_3_cfg>(
-      pucch_format_2_3_cfg{.nof_prbs = 1, .nof_symbols = 2, .starting_sym_idx = 0});
+  res_basic_f2.format_params.emplace<pucch_format_2_3_cfg>(pucch_format_2_3_cfg{.nof_prbs = 1});
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
   // >>> PUCCH resource 4.
-  pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res4                                                = pucch_cfg.pucch_res_list.back();
-  res4.res_id                                                         = pucch_res_id_t{4, 4};
-  std::get<pucch_format_2_3_cfg>(res4.format_params).starting_sym_idx = 2;
+  {
+    pucch_cfg.pucch_res_list.push_back(res_basic_f2);
+    pucch_resource& res4  = pucch_cfg.pucch_res_list.back();
+    res4.res_id           = pucch_res_id_t{4, 4};
+    res4.starting_sym_idx = 2;
+  }
   // >>> PUCCH resource 5.
-  pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res5                                                = pucch_cfg.pucch_res_list.back();
-  res5.res_id                                                         = pucch_res_id_t{5, 5};
-  std::get<pucch_format_2_3_cfg>(res5.format_params).starting_sym_idx = 4;
+  {
+    pucch_cfg.pucch_res_list.push_back(res_basic_f2);
+    pucch_resource& res5  = pucch_cfg.pucch_res_list.back();
+    res5.res_id           = pucch_res_id_t{5, 5};
+    res5.starting_sym_idx = 4;
+  }
   // >>> PUCCH resource 6.
-  pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res6                                                = pucch_cfg.pucch_res_list.back();
-  res6.res_id                                                         = pucch_res_id_t{6, 6};
-  std::get<pucch_format_2_3_cfg>(res6.format_params).starting_sym_idx = 6;
+  {
+    pucch_cfg.pucch_res_list.push_back(res_basic_f2);
+    pucch_resource& res6  = pucch_cfg.pucch_res_list.back();
+    res6.res_id           = pucch_res_id_t{6, 6};
+    res6.starting_sym_idx = 6;
+  }
   // >>> PUCCH resource 7.
-  pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res7                                                = pucch_cfg.pucch_res_list.back();
-  res7.res_id                                                         = pucch_res_id_t{7, 7};
-  std::get<pucch_format_2_3_cfg>(res7.format_params).starting_sym_idx = 8;
+  {
+    pucch_cfg.pucch_res_list.push_back(res_basic_f2);
+    pucch_resource& res7  = pucch_cfg.pucch_res_list.back();
+    res7.res_id           = pucch_res_id_t{7, 7};
+    res7.starting_sym_idx = 8;
+  }
   // >>> PUCCH resource 8.
-  pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res8                                                = pucch_cfg.pucch_res_list.back();
-  res8.res_id                                                         = pucch_res_id_t{8, 8};
-  std::get<pucch_format_2_3_cfg>(res8.format_params).starting_sym_idx = 10;
+  {
+    pucch_cfg.pucch_res_list.push_back(res_basic_f2);
+    pucch_resource& res8  = pucch_cfg.pucch_res_list.back();
+    res8.res_id           = pucch_res_id_t{8, 8};
+    res8.starting_sym_idx = 10;
+  }
 
   // PUCCH resource format 2, for CSI and optionally for SR.
   // >>> PUCCH resource 9.
-  pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res9                                                = pucch_cfg.pucch_res_list.back();
-  res9.res_id                                                         = pucch_res_id_t{9, 9};
-  std::get<pucch_format_2_3_cfg>(res9.format_params).starting_sym_idx = 12;
+  {
+    pucch_cfg.pucch_res_list.push_back(res_basic_f2);
+    pucch_resource& res9  = pucch_cfg.pucch_res_list.back();
+    res9.res_id           = pucch_res_id_t{9, 9};
+    res9.starting_sym_idx = 12;
+  }
 
   // PUCCH resource format 1, for SR only.
   // >>> PUCCH resource 10.
-  pucch_cfg.pucch_res_list.push_back(res_basic);
-  pucch_resource& res10 = pucch_cfg.pucch_res_list.back();
-  res10.res_id          = pucch_res_id_t{10, 10};
-  res10.starting_prb    = 0;
-  res10.second_hop_prb  = params.cell_nof_crbs - 1;
+  {
+    pucch_cfg.pucch_res_list.push_back(res_basic);
+    pucch_resource& res10 = pucch_cfg.pucch_res_list.back();
+    res10.res_id          = pucch_res_id_t{10, 10};
+    res10.starting_prb    = 0;
+    res10.second_hop_prb  = params.cell_nof_crbs - 1;
+  }
 
   pucch_cfg.pucch_res_list.push_back(res_basic);
-  pucch_resource& res11 = pucch_cfg.pucch_res_list.back();
-  res11.res_id          = pucch_res_id_t{11, 11};
-  res11.starting_prb    = params.cell_nof_crbs - 3;
+  // >>> PUCCH resource 11.
+  {
+    pucch_resource& res11 = pucch_cfg.pucch_res_list.back();
+    res11.res_id          = pucch_res_id_t{11, 11};
+    res11.starting_prb    = params.cell_nof_crbs - 3;
+  }
 
   // TODO: add more PUCCH resources.
 
@@ -668,8 +692,10 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
   static constexpr unsigned pucch_f1_max_harq_payload                        = 2U;
   pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_1)] = pucch_f1_max_harq_payload;
   const auto& res_f2 = std::get<pucch_format_2_3_cfg>(res_basic_f2.format_params);
-  pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_2)] = get_pucch_format2_max_payload(
-      res_f2.nof_prbs, res_f2.nof_symbols, to_max_code_rate_float(pucch_cfg.format_2_common_param.value().max_c_rate));
+  pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_2)] =
+      get_pucch_format2_max_payload(res_f2.nof_prbs,
+                                    res_basic_f2.nof_symbols,
+                                    to_max_code_rate_float(pucch_cfg.format_2_common_param.value().max_c_rate));
   pucch_cfg.set_1_format = pucch_format::FORMAT_2;
 
   // Add the PUCCH power configuration.
@@ -848,10 +874,10 @@ uint8_t srsran::config_helpers::compute_max_nof_candidates(aggregation_level    
 }
 
 std::vector<pdsch_time_domain_resource_allocation>
-srsran::config_helpers::make_pdsch_time_domain_resource(uint8_t                                ss0_idx,
-                                                        const pdcch_config_common&             common_pdcch_cfg,
-                                                        std::optional<pdcch_config>            ded_pdcch_cfg,
-                                                        std::optional<tdd_ul_dl_config_common> tdd_cfg)
+srsran::config_helpers::make_pdsch_time_domain_resource(uint8_t                                       ss0_idx,
+                                                        const pdcch_config_common&                    common_pdcch_cfg,
+                                                        const std::optional<pdcch_config>&            ded_pdcch_cfg,
+                                                        const std::optional<tdd_ul_dl_config_common>& tdd_cfg)
 {
   const std::optional<coreset_configuration> coreset0                                = common_pdcch_cfg.coreset0;
   const std::optional<coreset_configuration> common_coreset                          = common_pdcch_cfg.common_coreset;
@@ -875,9 +901,7 @@ srsran::config_helpers::make_pdsch_time_domain_resource(uint8_t                 
   }
   if (ded_pdcch_cfg.has_value()) {
     for (const coreset_configuration& cs_cfg : ded_pdcch_cfg->coresets) {
-      if (cs_cfg.duration > max_coreset_duration) {
-        max_coreset_duration = cs_cfg.duration;
-      }
+      max_coreset_duration = std::max<unsigned int>(cs_cfg.duration, max_coreset_duration);
     }
   }
 
@@ -956,6 +980,7 @@ srsran::config_helpers::make_pdsch_time_domain_resource(uint8_t                 
 
   // Make PDSCH time domain resource allocation.
   std::vector<pdsch_time_domain_resource_allocation> result;
+  result.reserve(pdsch_symbols.size());
   for (const auto& symbs : pdsch_symbols) {
     result.push_back(
         pdsch_time_domain_resource_allocation{.k0 = 0, .map_type = sch_mapping_type::typeA, .symbols = symbs});

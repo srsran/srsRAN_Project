@@ -186,21 +186,21 @@ static void trx_srsran_write2(TRXState*         s1,
   // Empirically this avoids lates/underflows.
   thread_local bool affinity = false;
   if (!affinity) {
-    pthread_t tself = pthread_self();
+    ::pthread_t tself = ::pthread_self();
 
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
     CPU_SET(0, &cpuset);
-    if (pthread_setaffinity_np(tself, sizeof(cpu_set_t), &cpuset) != 0) {
-      perror("pthread_setaffinity_np trx_srsran_read2");
+    if (::pthread_setaffinity_np(tself, sizeof(cpu_set_t), &cpuset) != 0) {
+      ::perror("pthread_setaffinity_np trx_srsran_read2");
     }
 
     sched_param param{};
     param.sched_priority = 99;
-    if (pthread_setschedparam(tself, SCHED_FIFO, &param) != 0) {
-      fprintf(stderr,
-              "Warning: Scheduling priority of thread \"%s\" not changed. Cause: Not enough privileges.\n",
-              this_thread_name());
+    if (::pthread_setschedparam(tself, SCHED_FIFO, &param) != 0) {
+      std::fprintf(stderr,
+                   "Warning: Scheduling priority of thread \"%s\" not changed. Cause: Not enough privileges.\n",
+                   this_thread_name());
     }
 
     affinity = true;
@@ -284,21 +284,21 @@ static int trx_srsran_read2(TRXState*        s1,
   // Empirically this avoids lates/underflows.
   thread_local bool affinity = false;
   if (!affinity) {
-    pthread_t tself = pthread_self();
+    ::pthread_t tself = ::pthread_self();
 
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
     CPU_SET(0, &cpuset);
-    if (pthread_setaffinity_np(tself, sizeof(cpu_set_t), &cpuset) != 0) {
-      perror("pthread_setaffinity_np trx_srsran_read2");
+    if (::pthread_setaffinity_np(tself, sizeof(cpu_set_t), &cpuset) != 0) {
+      ::perror("pthread_setaffinity_np trx_srsran_read2");
     }
 
     sched_param param{};
     param.sched_priority = 90;
-    if (pthread_setschedparam(tself, SCHED_FIFO, &param) != 0) {
-      fprintf(stderr,
-              "Warning: Scheduling priority of thread \"%s\" not changed. Cause: Not enough privileges.\n",
-              this_thread_name());
+    if (::pthread_setschedparam(tself, SCHED_FIFO, &param) != 0) {
+      std::fprintf(stderr,
+                   "Warning: Scheduling priority of thread \"%s\" not changed. Cause: Not enough privileges.\n",
+                   this_thread_name());
     }
 
     affinity = true;

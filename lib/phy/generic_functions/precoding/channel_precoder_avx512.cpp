@@ -25,20 +25,20 @@
 
 using namespace srsran;
 
-namespace {
-
-// Size of an AVX512 register in complex numbers with 32-bit floating point precision.
+/// Size of an AVX512 register in complex numbers with 32-bit floating point precision.
 static constexpr unsigned AVX512_CF_SIZE = 8;
 
-// Size of an AVX512 register in complex numbers with 8-bit fixed point precision.
+/// Size of an AVX512 register in complex numbers with 8-bit fixed point precision.
 static constexpr unsigned AVX512_CI8_SIZE = 32;
 
-// Representation of a set of complex numbers using a pair of AVX512 registers, for the real and imaginary parts.
+namespace {
+
+/// Representation of a set of complex numbers using a pair of AVX512 registers, for the real and imaginary parts.
 struct simd_cf_t {
   __m512 re;
   __m512 im;
 
-  // Sets the registers using a complex constant.
+  /// Sets the registers using a complex constant.
   void set1(const cf_t a)
   {
     re = _mm512_set1_ps(a.real());
@@ -46,10 +46,12 @@ struct simd_cf_t {
   }
 };
 
-// Type to hold a set of complex numbers using an AVX512 register, with interleaved real and imaginary parts.
+/// Type to hold a set of complex numbers using an AVX512 register, with interleaved real and imaginary parts.
 using simd_cf_interleaved = __m512;
 
-inline __m256i ps_to_cbf16(simd_cf_interleaved in)
+} // namespace
+
+static __m256i ps_to_cbf16(simd_cf_interleaved in)
 {
 #if __AVX512BF16__
   return (__m256i)_mm512_cvtneps_pbh(in);
@@ -70,57 +72,55 @@ inline __m256i ps_to_cbf16(simd_cf_interleaved in)
 #endif // __AVX512BF16__
 }
 
-} // namespace
-
-// Multiplication operator for the precoding weights.
-simd_cf_interleaved operator*(const simd_cf_interleaved& re, const simd_cf_t& weight)
+/// Multiplication operator for the precoding weights.
+static simd_cf_interleaved operator*(const simd_cf_interleaved& re, const simd_cf_t& weight)
 {
   return _mm512_fmaddsub_ps(re, weight.re, _mm512_mul_ps(_mm512_shuffle_ps(re, re, 0xb1), weight.im));
 }
 
-static inline __m512i _mm512_setr_epi16(int16_t __e0,
-                                        int16_t __e1,
-                                        int16_t __e2,
-                                        int16_t __e3,
-                                        int16_t __e4,
-                                        int16_t __e5,
-                                        int16_t __e6,
-                                        int16_t __e7,
-                                        int16_t __e8,
-                                        int16_t __e9,
-                                        int16_t __e10,
-                                        int16_t __e11,
-                                        int16_t __e12,
-                                        int16_t __e13,
-                                        int16_t __e14,
-                                        int16_t __e15,
-                                        int16_t __e16,
-                                        int16_t __e17,
-                                        int16_t __e18,
-                                        int16_t __e19,
-                                        int16_t __e20,
-                                        int16_t __e21,
-                                        int16_t __e22,
-                                        int16_t __e23,
-                                        int16_t __e24,
-                                        int16_t __e25,
-                                        int16_t __e26,
-                                        int16_t __e27,
-                                        int16_t __e28,
-                                        int16_t __e29,
-                                        int16_t __e30,
-                                        int16_t __e31)
+static __m512i _mm512_setr_epi16(int16_t __e0,
+                                 int16_t __e1,
+                                 int16_t __e2,
+                                 int16_t __e3,
+                                 int16_t __e4,
+                                 int16_t __e5,
+                                 int16_t __e6,
+                                 int16_t __e7,
+                                 int16_t __e8,
+                                 int16_t __e9,
+                                 int16_t __e10,
+                                 int16_t __e11,
+                                 int16_t __e12,
+                                 int16_t __e13,
+                                 int16_t __e14,
+                                 int16_t __e15,
+                                 int16_t __e16,
+                                 int16_t __e17,
+                                 int16_t __e18,
+                                 int16_t __e19,
+                                 int16_t __e20,
+                                 int16_t __e21,
+                                 int16_t __e22,
+                                 int16_t __e23,
+                                 int16_t __e24,
+                                 int16_t __e25,
+                                 int16_t __e26,
+                                 int16_t __e27,
+                                 int16_t __e28,
+                                 int16_t __e29,
+                                 int16_t __e30,
+                                 int16_t __e31)
 {
   return __extension__(__m512i)(__v32hi){__e0,  __e1,  __e2,  __e3,  __e4,  __e5,  __e6,  __e7,  __e8,  __e9,  __e10,
                                          __e11, __e12, __e13, __e14, __e15, __e16, __e17, __e18, __e19, __e20, __e21,
                                          __e22, __e23, __e24, __e25, __e26, __e27, __e28, __e29, __e30, __e31};
 }
 
-static inline void from_ci8_to_cf(simd_cf_interleaved& out0,
-                                  simd_cf_interleaved& out1,
-                                  simd_cf_interleaved& out2,
-                                  simd_cf_interleaved& out3,
-                                  __m512i              in)
+static void from_ci8_to_cf(simd_cf_interleaved& out0,
+                           simd_cf_interleaved& out1,
+                           simd_cf_interleaved& out2,
+                           simd_cf_interleaved& out3,
+                           __m512i              in)
 {
   __m512i in16_0 = _mm512_cvtepi8_epi16(_mm512_extracti64x4_epi64(in, 0));
   __m512i in16_1 = _mm512_cvtepi8_epi16(_mm512_extracti64x4_epi64(in, 1));
@@ -137,11 +137,11 @@ static inline void from_ci8_to_cf(simd_cf_interleaved& out0,
   out3               = _mm512_cvt_roundepi32_ps(in32_3, rounding);
 }
 
-static inline void layer2_map_and_ci8_to_cf(simd_cf_interleaved& out0,
-                                            simd_cf_interleaved& out1,
-                                            simd_cf_interleaved& out2,
-                                            simd_cf_interleaved& out3,
-                                            const __m512i&       in)
+static void layer2_map_and_ci8_to_cf(simd_cf_interleaved& out0,
+                                     simd_cf_interleaved& out1,
+                                     simd_cf_interleaved& out2,
+                                     simd_cf_interleaved& out3,
+                                     const __m512i&       in)
 {
   __m512i idx = _mm512_setr_epi16(0,
                                   2,
@@ -180,10 +180,10 @@ static inline void layer2_map_and_ci8_to_cf(simd_cf_interleaved& out0,
   from_ci8_to_cf(out0, out1, out2, out3, tmp);
 }
 
-static inline void layer3_map_and_ci8_to_cf(simd_cf_interleaved& out0,
-                                            simd_cf_interleaved& out1,
-                                            simd_cf_interleaved& out2,
-                                            const __m512i&       in)
+static void layer3_map_and_ci8_to_cf(simd_cf_interleaved& out0,
+                                     simd_cf_interleaved& out1,
+                                     simd_cf_interleaved& out2,
+                                     const __m512i&       in)
 {
   __m512i idx = _mm512_setr_epi16(
       0, 3, 6, 9, 12, 15, 18, 21, 1, 4, 7, 10, 13, 16, 19, 22, 2, 5, 8, 11, 14, 17, 20, 23, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -193,11 +193,11 @@ static inline void layer3_map_and_ci8_to_cf(simd_cf_interleaved& out0,
   from_ci8_to_cf(out0, out1, out2, unused, tmp);
 }
 
-static inline void layer4_map_and_ci8_to_cf(simd_cf_interleaved& out0,
-                                            simd_cf_interleaved& out1,
-                                            simd_cf_interleaved& out2,
-                                            simd_cf_interleaved& out3,
-                                            const __m512i&       in)
+static void layer4_map_and_ci8_to_cf(simd_cf_interleaved& out0,
+                                     simd_cf_interleaved& out1,
+                                     simd_cf_interleaved& out2,
+                                     simd_cf_interleaved& out3,
+                                     const __m512i&       in)
 {
   __m512i idx = _mm512_setr_epi16(0,
                                   4,

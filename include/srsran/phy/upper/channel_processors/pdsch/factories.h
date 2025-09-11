@@ -108,6 +108,11 @@ create_pdsch_block_processor_factory_hw(std::shared_ptr<hal::hw_accelerator_pdsc
                                         std::shared_ptr<pseudo_random_generator_factory>       prg_factory,
                                         std::shared_ptr<modulation_mapper_factory>             modulator_factory);
 
+std::shared_ptr<pdsch_block_processor_factory>
+create_pdsch_block_processor_pool_factory(std::shared_ptr<pdsch_block_processor_factory> base,
+                                          task_executor&                                 executor,
+                                          unsigned                                       nof_concurrent_threads);
+
 std::shared_ptr<pdsch_processor_factory>
 create_pdsch_flexible_processor_factory_sw(std::shared_ptr<ldpc_segmenter_tx_factory>     ldpc_segmenter_factory,
                                            std::shared_ptr<pdsch_block_processor_factory> block_processor_factory,
@@ -117,10 +122,6 @@ create_pdsch_flexible_processor_factory_sw(std::shared_ptr<ldpc_segmenter_tx_fac
                                            task_executor&                                 executor,
                                            unsigned                                       nof_concurrent_threads,
                                            unsigned                                       cb_batch_length = 0);
-
-std::shared_ptr<pdsch_processor_factory>
-create_pdsch_processor_asynchronous_pool(std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory,
-                                         unsigned                                 max_nof_processors);
 
 std::shared_ptr<pdsch_processor_factory>
 create_pdsch_processor_pool(std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory, unsigned max_nof_processors);

@@ -27,6 +27,7 @@
 #include "srsran/mac/config/mac_cell_group_config_factory.h"
 #include "srsran/mac/config/mac_config_helpers.h"
 #include "srsran/mac/mac_cell_result.h"
+#include "srsran/mac/mac_clock_controller.h"
 #include "srsran/mac/mac_ue_configurator.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/pcap/rlc_pcap.h"
@@ -34,7 +35,6 @@
 #include "srsran/scheduler/result/sched_result.h"
 #include "srsran/support/async/async_no_op_task.h"
 #include "srsran/support/test_utils.h"
-#include "srsran/support/timers.h"
 
 namespace srsran {
 
@@ -136,9 +136,9 @@ public:
 
   void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs) override {}
 
-  void start_cell(du_cell_index_t cell_idx) override { active = true; }
+  void handle_cell_activation(du_cell_index_t cell_idx) override { active = true; }
 
-  void stop_cell(du_cell_index_t cell_idx) override { active = false; }
+  void handle_cell_deactivation(du_cell_index_t cell_idx) override { active = false; }
 
   const sched_result& slot_indication(slot_point slot_tx, du_cell_index_t cell_idx) override
   {
@@ -205,6 +205,76 @@ public:
     // TODO: set bs.hol_toa
     return bs;
   }
+};
+
+class dummy_mac_clock_controller : public mac_clock_controller
+{
+public:
+  class dummy_mac_cell_clock_controller : public mac_cell_clock_controller
+  {
+  public:
+    dummy_mac_cell_clock_controller(dummy_mac_clock_controller& parent_, du_cell_index_t cell_index_) :
+      parent(parent_), cell_index(cell_index_)
+    {
+    }
+
+    slot_point_extended do_on_slot_indication(slot_point sl_tx) override
+    {
+      if (not parent.active_cells[cell_index]) {
+        parent.active_cells[cell_index] = true;
+        if (parent.nof_active_cells == 0) {
+          parent.master_slot = slot_point_extended{sl_tx - 1, 0};
+        }
+        parent.nof_active_cells++;
+      }
+
+      if (sl_tx.subframe_slot_index() != 0) {
+        return parent.master_slot;
+      }
+
+      if (sl_tx > parent.master_slot.without_hyper_sfn()) {
+        slot_point_extended next_master_slot = {sl_tx, parent.master_slot.hyper_sfn()};
+        if (next_master_slot < parent.master_slot) {
+          // SFN rollover.
+          next_master_slot += sl_tx.nof_slots_per_hyper_system_frame();
+        }
+        unsigned nof_ticks = next_master_slot - parent.master_slot;
+        parent.master_slot = next_master_slot;
+        for (unsigned i = 0; i != nof_ticks; ++i) {
+          parent.timers.tick();
+        }
+      }
+      return parent.master_slot;
+    }
+
+    void on_cell_deactivation() override
+    {
+      if (parent.active_cells[cell_index]) {
+        parent.active_cells[cell_index] = false;
+        parent.nof_active_cells--;
+      }
+    }
+
+  private:
+    dummy_mac_clock_controller& parent;
+    du_cell_index_t             cell_index;
+  };
+
+  dummy_mac_clock_controller(timer_manager& timers_) : timers(timers_) {}
+
+  std::unique_ptr<mac_cell_clock_controller> add_cell(du_cell_index_t cell_index) override
+  {
+    return std::make_unique<dummy_mac_cell_clock_controller>(*this, cell_index);
+  }
+
+  timer_manager& get_timer_manager() override { return timers; }
+
+private:
+  timer_manager& timers;
+
+  unsigned                           nof_active_cells = 0;
+  slot_point_extended                master_slot;
+  std::array<bool, MAX_NOF_DU_CELLS> active_cells{false};
 };
 
 struct mac_test_ue_bearer {

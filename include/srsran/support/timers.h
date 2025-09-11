@@ -35,7 +35,7 @@ enum class timer_id_t : unsigned { invalid = std::numeric_limits<unsigned>::max(
 /// Unit used to represent a time duration in terms of timer_manager ticks.
 using timer_duration = std::chrono::milliseconds;
 
-/// Type used to represend a particular time tick of the timers.
+/// Type used to represent a particular time tick of the timers.
 using tick_point_t = unsigned;
 
 namespace timer_detail {
@@ -44,7 +44,7 @@ namespace timer_detail {
 enum class state_t { stopped, running, expired };
 
 /// Constant used to represent invalid timer durations.
-static constexpr timer_duration INVALID_DURATION = timer_duration::max();
+constexpr timer_duration INVALID_DURATION = timer_duration::max();
 
 /// Data relative to a timer state that is accessed from the front-end side (the unique_timer) getters.
 struct frontend_state {

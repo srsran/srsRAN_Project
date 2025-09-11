@@ -33,6 +33,7 @@
 #include "srsran/asn1/rrc_nr/meas_cfg.h"
 #include "srsran/asn1/rrc_nr/ul_ccch_msg.h"
 #include "srsran/ran/rb_id.h"
+#include <chrono>
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -179,6 +180,7 @@ void rrc_ue_impl::handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu)
         logger.log_debug("Received a RRC Reconfiguration Complete during inter CU handover. Notifying NGAP");
         ngap_notifier.on_inter_cu_ho_rrc_recfg_complete_received(context.ue_index, context.cell.cgi, context.cell.tac);
         context.transfer_context.value().is_inter_cu_handover = false;
+        cu_cp_notifier.on_rrc_reconfiguration_complete_indicator();
       } else {
         handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_recfg_complete().rrc_transaction_id);
       }
@@ -330,7 +332,7 @@ rrc_ue_security_mode_command_context rrc_ue_impl::get_security_mode_command_cont
 async_task<bool> rrc_ue_impl::handle_security_mode_complete_expected(uint8_t transaction_id)
 {
   return launch_async([this,
-                       timeout_ms = context.cfg.rrc_procedure_timeout_ms,
+                       timeout_ms = context.cfg.rrc_procedure_guard_time_ms,
                        transaction_id,
                        transaction = rrc_transaction{}](coro_context<async_task<bool>>& ctx) mutable {
     CORO_BEGIN(ctx);
@@ -607,7 +609,7 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context(bool             
   return release_context;
 }
 
-std::optional<rrc_meas_cfg> rrc_ue_impl::generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config)
+std::optional<rrc_meas_cfg> rrc_ue_impl::generate_meas_config(const std::optional<rrc_meas_cfg>& current_meas_config)
 {
   // (Re-)generate measurement config and return result.
   context.meas_cfg = measurement_notifier.on_measurement_config_request(context.cell.cgi.nci, current_meas_config);

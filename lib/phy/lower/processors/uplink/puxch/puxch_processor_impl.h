@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "../../resource_grid_request_pool.h"
+#include "../../resource_request_pool.h"
 #include "srsran/adt/circular_array.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/phy/lower/modulation/ofdm_demodulator.h"
@@ -83,14 +83,14 @@ private:
   // See interface for documentation.
   bool set_carrier_center_frequency(double carrier_center_frequency_Hz) override;
 
-  std::atomic<bool>                        stopped = false;
-  unsigned                                 nof_symbols_per_slot;
-  unsigned                                 nof_rx_ports;
-  puxch_processor_notifier*                notifier = nullptr;
-  std::unique_ptr<ofdm_symbol_demodulator> demodulator;
-  slot_point                               current_slot;
-  shared_resource_grid                     current_grid;
-  resource_grid_request_pool               requests;
+  std::atomic<bool>                           stopped = false;
+  unsigned                                    nof_symbols_per_slot;
+  unsigned                                    nof_rx_ports;
+  puxch_processor_notifier*                   notifier = nullptr;
+  std::unique_ptr<ofdm_symbol_demodulator>    demodulator;
+  slot_point                                  current_slot;
+  shared_resource_grid                        current_grid;
+  resource_request_pool<shared_resource_grid> requests;
 };
 
 } // namespace srsran

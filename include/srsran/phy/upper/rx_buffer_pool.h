@@ -79,11 +79,11 @@ public:
   /// \param[in] new_data       Set to true if the transmission is for new data.
   /// \return A valid unique buffer if the reservation was successful. Otherwise, an invalid unique buffer.
   virtual unique_rx_buffer
-  reserve(const slot_point& slot, trx_buffer_identifier id, unsigned nof_codeblocks, bool new_data) = 0;
+  reserve(slot_point slot, trx_buffer_identifier id, unsigned nof_codeblocks, bool new_data) = 0;
 
   /// \brief Runs pool housekeeping tasks.
   /// \param[in] slot Indicates the current slot.
-  virtual void run_slot(const slot_point& slot) = 0;
+  virtual void run_slot(slot_point slot) = 0;
 };
 
 /// buffer pool configuration.

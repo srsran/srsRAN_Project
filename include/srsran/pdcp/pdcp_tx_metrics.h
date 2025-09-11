@@ -90,12 +90,12 @@ inline std::string format_pdcp_tx_metrics(timer_duration metrics_period, const p
   if (m.min_pdu_latency_ns) {
     fmt::format_to(std::back_inserter(buffer), " min_pdu_latency={:.2f}us", *m.min_pdu_latency_ns * 1e-3);
   } else {
-    fmt::format_to(std::back_inserter(buffer), " min_pdu_latency=none");
+    fmt::format_to(std::back_inserter(buffer), " min_pdu_latency={{na}}");
   }
   if (m.max_pdu_latency_ns) {
     fmt::format_to(std::back_inserter(buffer), " max_pdu_latency={:.2f}us", *m.max_pdu_latency_ns * 1e-3);
   } else {
-    fmt::format_to(std::back_inserter(buffer), " max_pdu_latency=none");
+    fmt::format_to(std::back_inserter(buffer), " max_pdu_latency={{na}}");
   }
   fmt::format_to(std::back_inserter(buffer),
                  " crypto_cpu_usage={:.2f}\%",
@@ -116,7 +116,7 @@ struct formatter<srsran::pdcp_tx_metrics_container> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_tx_metrics_container m, FormatContext& ctx) const
+  auto format(const srsran::pdcp_tx_metrics_container& m, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "num_sdus={} num_sdu_bytes={} num_dropped_sdus={} num_pdus={} num_pdu_bytes={} "

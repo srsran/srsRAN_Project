@@ -112,6 +112,9 @@ std::map<amf_index_t, ngap_interface*> ngap_repository::get_ngaps()
 
 std::vector<ngap_info> ngap_repository::handle_ngap_metrics_report_request() const
 {
+  if (!cfg.cu_cp.metrics.layers_cfg.enable_ngap) {
+    return {};
+  }
   std::vector<ngap_info> ngap_reports;
   ngap_reports.reserve(ngap_db.size());
   for (const auto& ngap : ngap_db) {

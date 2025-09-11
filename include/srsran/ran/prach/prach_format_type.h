@@ -47,7 +47,7 @@ enum class prach_format_type : uint8_t {
   invalid
 };
 
-inline constexpr const char* to_string(prach_format_type format)
+constexpr const char* to_string(prach_format_type format)
 {
   switch (format) {
     case prach_format_type::zero:

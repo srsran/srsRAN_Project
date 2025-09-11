@@ -34,7 +34,7 @@ namespace srsran {
 enum class qos_flow_resource_type { gbr, non_gbr, delay_critical_gbr };
 
 /// Maximum QoS Priority Level as per TS 38.471.
-static constexpr uint8_t MAX_QOS_PRIORITY_LEVEL = 127;
+constexpr uint8_t MAX_QOS_PRIORITY_LEVEL = 127;
 
 /// \brief Represents 5G QoS characteristics associated with a standardized 5QI, as per TS 23.501 5.7.4-1.
 struct standardized_qos_characteristics {

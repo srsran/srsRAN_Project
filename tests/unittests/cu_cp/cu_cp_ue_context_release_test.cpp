@@ -202,6 +202,34 @@ public:
     return true;
   }
 
+  [[nodiscard]] bool send_e1ap_bearer_context_release_request(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_id_,
+                                                              gnb_cu_up_ue_e1ap_id_t cu_up_ue_id_)
+  {
+    // Inject E1AP Bearer Context Release Request
+    get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_release_request(cu_cp_ue_id_, cu_up_ue_id_));
+    return true;
+  }
+
+  [[nodiscard]] bool send_e1ap_bearer_context_release_request_and_await_ngap_ue_context_release_request()
+  {
+    report_fatal_error_if_not(not this->get_amf().try_pop_rx_pdu(ngap_pdu),
+                              "there are still NGAP messages to pop from AMF");
+    report_fatal_error_if_not(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu),
+                              "there are still F1AP DL messages to pop from DU");
+    report_fatal_error_if_not(not this->get_cu_up(cu_up_idx).try_pop_rx_pdu(e1ap_pdu),
+                              "there are still E1AP messages to pop from CU-UP");
+
+    // Inject E1AP Bearer Context Release Request and wait for NGAP UE Context Release Request
+    if (!send_e1ap_bearer_context_release_request(ue_ctx->cu_cp_e1ap_id.value(), ue_ctx->cu_up_e1ap_id.value())) {
+      return false;
+    }
+    report_fatal_error_if_not(this->wait_for_ngap_tx_pdu(ngap_pdu),
+                              "Failed to receive NGAP UE Context Release Request");
+    report_fatal_error_if_not(test_helpers::is_valid_ue_context_release_request(ngap_pdu),
+                              "Invalid NGAP UE Context Release Request");
+    return true;
+  }
+
   unsigned du_idx    = 0;
   unsigned cu_up_idx = 0;
 
@@ -337,4 +365,14 @@ TEST_F(
   // STATUS: UE should be removed at this stage
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 0) << "UE should be removed";
+}
+
+TEST_F(cu_cp_ue_context_release_test,
+       when_cu_up_initiated_bearer_context_release_received_then_ue_context_release_request_is_sent)
+{
+  // Setup PDU Session
+  ASSERT_TRUE(setup_ue_pdu_session());
+
+  // Inject E1AP Bearer Context Release Request and await NGAP UE Context Release Request
+  ASSERT_TRUE(send_e1ap_bearer_context_release_request_and_await_ngap_ue_context_release_request());
 }

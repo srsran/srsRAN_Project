@@ -37,7 +37,8 @@ data_flow_uplane_uplink_prach_impl::data_flow_uplane_uplink_prach_impl(
   prach_iq_writter(config.prach_eaxcs, config.sector, *dependencies.logger, dependencies.prach_context_repo),
   notification_sender(*dependencies.logger, dependencies.prach_context_repo, dependencies.notifier),
   sector_id(config.sector),
-  ignore_prach_start_symbol(config.ignore_prach_start_symbol)
+  ignore_prach_start_symbol(config.ignore_prach_start_symbol),
+  metrics_collector(config.are_metrics_enabled)
 {
   srsran_assert(prach_cplane_context_repo, "Invalid PRACH Control-Plane context repository");
   srsran_assert(uplane_decoder, "Invalid User-Plane decoder");
@@ -110,13 +111,22 @@ void data_flow_uplane_uplink_prach_impl::decode_type1_message(unsigned eaxc, spa
 {
   uplane_message_decoder_results results;
   if (!uplane_decoder->decode(results, message)) {
+    metrics_collector.increase_dropped_messages();
+
     return;
   }
 
   if (should_uplane_packet_be_filtered(eaxc, results)) {
+    metrics_collector.increase_dropped_messages();
+
     return;
   }
 
-  prach_iq_writter.write_to_prach_buffer(eaxc, results);
+  if (!prach_iq_writter.write_to_prach_buffer(eaxc, results)) {
+    metrics_collector.increase_dropped_messages();
+
+    return;
+  }
+
   notification_sender.notify_prach(results.params.slot);
 }

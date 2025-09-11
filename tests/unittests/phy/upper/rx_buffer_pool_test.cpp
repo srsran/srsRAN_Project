@@ -49,7 +49,7 @@ bool operator==(span<const bool> left, span<const bool> right)
 /// \return A valid receive buffer if the reservation is successful before exhausting the number trials. Otherwise, an
 /// invalid buffer.
 inline unique_rx_buffer reserve_buffer_trial(rx_buffer_pool&       pool,
-                                             const slot_point&     slot,
+                                             slot_point            slot,
                                              trx_buffer_identifier id,
                                              unsigned              nof_codeblocks,
                                              bool                  new_data)

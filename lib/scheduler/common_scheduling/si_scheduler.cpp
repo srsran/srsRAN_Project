@@ -72,6 +72,19 @@ void si_scheduler::run_slot(cell_resource_allocator& res_alloc)
   si_msg_sched.run_slot(slot_res_alloc);
 }
 
+void si_scheduler::stop()
+{
+  last_sl_tx = {};
+
+  // Reset on-going requests.
+  const auto& next = pending_req.read();
+  last_version     = next.version;
+  on_going_req.reset();
+
+  sib1_sched.stop();
+  si_msg_sched.stop();
+}
+
 void si_scheduler::handle_pending_request(cell_resource_allocator& res_alloc)
 {
   // The SI is scheduled ahead of time.

@@ -114,6 +114,7 @@ public:
     error             = event;
     has_been_notified = true;
   }
+  void handle_stop_indication() override {}
 
   bool               has_error_been_notified() const { return has_been_notified; }
   const error_event& get_error() const { return error; }

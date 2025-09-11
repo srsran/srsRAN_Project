@@ -250,5 +250,7 @@ generate_handover_preparation_request(ue_index_t                                
 /// \brief Generate a valid dummy Handover Cancel Acknowledgement message.
 ngap_message generate_handover_cancel_ack(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 
+ngap_message generate_ng_reset_ack(const asn1::ngap::ue_associated_lc_ng_conn_list_l& ng_reset_ues = {});
+
 } // namespace srs_cu_cp
 } // namespace srsran

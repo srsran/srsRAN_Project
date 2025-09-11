@@ -147,17 +147,16 @@ static void parse_args(int argc, char** argv, bench_params& params, app_params& 
       case 'h':
       default:
         usage(argv[0], params, app);
-        exit(0);
+        std::exit(0);
     }
   }
 }
 
-std::vector<byte_buffer_chain> gen_pdu_list(uint64_t                      nof_sdus,
-                                            uint32_t                      sdu_len,
-                                            security::integrity_enabled   int_enabled,
-                                            security::ciphering_enabled   ciph_enabled,
-                                            security::integrity_algorithm int_algo,
-                                            security::ciphering_algorithm ciph_algo)
+static std::vector<byte_buffer_chain> gen_pdu_list(bench_params                  params,
+                                                   security::integrity_enabled   int_enabled,
+                                                   security::ciphering_enabled   ciph_enabled,
+                                                   security::integrity_algorithm int_algo,
+                                                   security::ciphering_algorithm ciph_algo)
 {
   timer_manager      timers;
   manual_task_worker worker{64};
@@ -191,17 +190,25 @@ std::vector<byte_buffer_chain> gen_pdu_list(uint64_t                      nof_sd
   std::unique_ptr<pdcp_metrics_aggregator> metrics_agg =
       std::make_unique<pdcp_metrics_aggregator>(0, drb_id_t::drb1, timer_duration{1000}, nullptr, worker);
   // Create PDCP entities
-  std::unique_ptr<pdcp_entity_tx> pdcp_tx = std::make_unique<pdcp_entity_tx>(
-      0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker}, worker, worker, *metrics_agg);
+  std::unique_ptr<pdcp_entity_tx> pdcp_tx = std::make_unique<pdcp_entity_tx>(0,
+                                                                             drb_id_t::drb1,
+                                                                             config,
+                                                                             frame,
+                                                                             frame,
+                                                                             timer_factory{timers, worker},
+                                                                             worker,
+                                                                             worker,
+                                                                             params.nof_crypto_threads,
+                                                                             *metrics_agg);
   pdcp_tx->configure_security(sec_cfg, int_enabled, ciph_enabled);
 
-  const uint32_t max_pdu_size = sdu_len + 9;
-  pdcp_tx->handle_desired_buffer_size_notification(nof_sdus * max_pdu_size);
+  const uint32_t max_pdu_size = params.sdu_len + 9;
+  pdcp_tx->handle_desired_buffer_size_notification(params.nof_sdus * max_pdu_size);
 
   // Prepare SDU list for benchmark
-  for (uint64_t i = 0; i < nof_sdus; i++) {
+  for (uint64_t i = 0; i < params.nof_sdus; i++) {
     byte_buffer sdu_buf = {};
-    for (uint32_t j = 0; j < sdu_len; ++j) {
+    for (uint32_t j = 0; j < params.sdu_len; ++j) {
       report_error_if_not(sdu_buf.append(rand()), "Failed to allocate SDU");
     }
     pdcp_tx->handle_sdu(std::move(sdu_buf));
@@ -209,11 +216,11 @@ std::vector<byte_buffer_chain> gen_pdu_list(uint64_t                      nof_sd
   return std::move(frame.pdu_list);
 }
 
-void benchmark_pdcp_rx(bench_params                  params,
-                       security::integrity_enabled   int_enabled,
-                       security::ciphering_enabled   ciph_enabled,
-                       security::integrity_algorithm int_algo,
-                       security::ciphering_algorithm ciph_algo)
+static void benchmark_pdcp_rx(bench_params                  params,
+                              security::integrity_enabled   int_enabled,
+                              security::ciphering_enabled   ciph_enabled,
+                              security::integrity_algorithm int_algo,
+                              security::ciphering_algorithm ciph_algo)
 {
   fmt::memory_buffer buffer;
   fmt::format_to(std::back_inserter(buffer),
@@ -285,7 +292,7 @@ void benchmark_pdcp_rx(bench_params                  params,
       }
     }
     pdcp_rx.reset();
-    pdu_list    = gen_pdu_list(nof_sdus, sdu_len, int_enabled, ciph_enabled, int_algo, ciph_algo);
+    pdu_list    = gen_pdu_list(params, int_enabled, ciph_enabled, int_algo, ciph_algo);
     frame       = std::make_unique<pdcp_rx_test_frame>();
     metrics_agg = std::make_unique<pdcp_metrics_aggregator>(0, drb_id_t::drb1, timer_duration{1000}, nullptr, ul_exec);
     pdcp_rx     = std::make_unique<pdcp_entity_rx>(0,
@@ -329,7 +336,7 @@ void benchmark_pdcp_rx(bench_params                  params,
   bm->print_percentiles_throughput(" bps");
 }
 
-int run_benchmark(bench_params params, int algo)
+static int run_benchmark(bench_params params, int algo)
 {
   if (algo != 0 && algo != 1 && algo != 2 && algo != 3) {
     fmt::print("Unsupported algorithm. Use NIA/NEA 0, 1, 2 or 3.\n");
@@ -337,8 +344,8 @@ int run_benchmark(bench_params params, int algo)
   }
   fmt::print("------ Benchmarking: NIA{} NEA{} ------\n", algo, algo);
 
-  security::integrity_algorithm int_algo  = static_cast<security::integrity_algorithm>(algo);
-  security::ciphering_algorithm ciph_algo = static_cast<security::ciphering_algorithm>(algo);
+  auto int_algo  = static_cast<security::integrity_algorithm>(algo);
+  auto ciph_algo = static_cast<security::ciphering_algorithm>(algo);
 
   // coarsely estimate number of required byte_buffer segments; round up to next power of 2 that is larger than 64
   size_t segments_per_sdu     = 1 + (params.sdu_len / byte_buffer_segment_pool_default_segment_size());

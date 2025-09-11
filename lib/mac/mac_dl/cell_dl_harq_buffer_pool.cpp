@@ -64,6 +64,22 @@ cell_dl_harq_buffer_pool::cell_dl_harq_buffer_pool(unsigned       cell_nof_prbs,
   }
 }
 
+cell_dl_harq_buffer_pool::~cell_dl_harq_buffer_pool()
+{
+  // Cancel any pending background task to grow the pool.
+  *pool_growth_cancelled = true;
+}
+
+void cell_dl_harq_buffer_pool::clear()
+{
+  *pool_growth_cancelled = true;
+  pool_growth_cancelled  = std::make_shared<bool>(false);
+
+  for (unsigned i = 0; i != cell_buffers.size(); ++i) {
+    deallocate_ue_buffers(to_du_ue_index(i));
+  }
+}
+
 void cell_dl_harq_buffer_pool::allocate_ue_buffers(du_ue_index_t ue_index, unsigned nof_harqs)
 {
   srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid UE index");
@@ -126,7 +142,11 @@ void cell_dl_harq_buffer_pool::grow_cache_in_background()
     return;
   }
 
-  if (not ctrl_exec.defer(TRACE_TASK([this]() {
+  if (not ctrl_exec.defer([this, cancel_flag_cpy = pool_growth_cancelled]() {
+        if (cancel_flag_cpy) {
+          // Task cancelled.
+          return;
+        }
         // Allocate minibatch of DL HARQ buffers and save them in cache.
         for (unsigned i = 0; i != DL_HARQ_ALLOC_MINIBATCH; ++i) {
           if (auto* buffer = allocate_from_pool()) {
@@ -139,7 +159,7 @@ void cell_dl_harq_buffer_pool::grow_cache_in_background()
 
         // Dispatch new task to grow the cache if it hasn't yet achieved the desired size.
         grow_cache_in_background();
-      }))) {
+      })) {
     logger.warning("Failed to dispatch task to allocate DL HARQ buffers");
   }
 }

@@ -44,27 +44,27 @@
 
 using namespace srsran;
 
-static constexpr subcarrier_spacing scs                              = subcarrier_spacing::kHz30;
-static constexpr uint16_t           rnti                             = 0x1234;
-static constexpr unsigned           bwp_start_rb                     = 0;
-static constexpr unsigned           nof_ofdm_symbols                 = 14;
-static const symbol_slot_mask       dmrs_symbol_mask                 = {0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0};
-static constexpr unsigned           nof_ldpc_iterations              = 10;
-static constexpr dmrs_type          dmrs                             = dmrs_type::TYPE1;
-static constexpr unsigned           nof_cdm_groups_without_data      = 2;
-static constexpr cyclic_prefix      cy_prefix                        = cyclic_prefix::NORMAL;
-static constexpr unsigned           rv                               = 0;
-static constexpr unsigned           n_id                             = 0;
-static constexpr unsigned           scrambling_id                    = 0;
-static constexpr bool               n_scid                           = false;
-static constexpr bool               use_early_stop                   = true;
-static unsigned                     max_nof_threads                  = std::thread::hardware_concurrency();
-static bool                         show_stats                       = true;
-static unsigned                     nof_repetitions                  = 1000;
-static std::string                  channel_delay_profile            = "single-tap";
-static std::string                  channel_fading_distribution      = "uniform-phase";
-static float                        sinr_dB                          = 60.0F;
-static float                        cfo_Hz                           = 0.0F;
+static constexpr subcarrier_spacing scs                         = subcarrier_spacing::kHz30;
+static constexpr uint16_t           rnti                        = 0x1234;
+static constexpr unsigned           bwp_start_rb                = 0;
+static constexpr unsigned           nof_ofdm_symbols            = 14;
+static const symbol_slot_mask       dmrs_symbol_mask            = {0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0};
+static constexpr unsigned           nof_ldpc_iterations         = 10;
+static constexpr dmrs_type          dmrs                        = dmrs_type::TYPE1;
+static constexpr unsigned           nof_cdm_groups_without_data = 2;
+static constexpr cyclic_prefix      cy_prefix                   = cyclic_prefix::NORMAL;
+static constexpr unsigned           rv                          = 0;
+static constexpr unsigned           n_id                        = 0;
+static constexpr unsigned           scrambling_id               = 0;
+static constexpr bool               n_scid                      = false;
+static constexpr bool               use_early_stop              = true;
+static unsigned                     max_nof_threads             = std::min(8U, std::thread::hardware_concurrency());
+static bool                         show_stats                  = true;
+static unsigned                     nof_repetitions             = 1000;
+static std::string                  channel_delay_profile       = "single-tap";
+static std::string                  channel_fading_distribution = "uniform-phase";
+static float                        sinr_dB                     = 60.0F;
+static float                        cfo_Hz                      = 0.0F;
 static unsigned                     nof_corrupted_re_per_ofdm_symbol = 0;
 static unsigned                     nof_rx_ports                     = 2;
 static unsigned                     nof_layers                       = 1;
@@ -244,7 +244,7 @@ private:
     // Create PDSCH processor factory.
     std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory =
         create_sw_pdsch_processor_factory(*executor, max_nof_threads + 1, eal_arguments, pxsch_type);
-    report_fatal_error_if_not(pdsch_proc_factory, "Failted to create PDSCH processor factory.");
+    report_fatal_error_if_not(pdsch_proc_factory, "Failed to create PDSCH processor factory.");
 
     // Create PUSCH processor factory.
     std::shared_ptr<pusch_processor_factory> pusch_proc_factory =
@@ -255,7 +255,7 @@ private:
                                           pxsch_type,
                                           port_channel_estimator_td_interpolation_strategy::average,
                                           channel_equalizer_algorithm_type::zf);
-    report_fatal_error_if_not(pusch_proc_factory, "Failted to create PUSCH processor factory.");
+    report_fatal_error_if_not(pusch_proc_factory, "Failed to create PUSCH processor factory.");
 
     // Create resource grid factory.
     std::shared_ptr<resource_grid_factory> grid_factory = create_grid_factory();
@@ -562,7 +562,7 @@ static void parse_args(int argc, char** argv)
           if (!table) {
             fmt::print("Invalid MCS table {}.", optarg);
             usage(argv[0]);
-            exit(-1);
+            std::exit(-1);
           }
           mcs_table = table.value();
         }
@@ -582,7 +582,7 @@ static void parse_args(int argc, char** argv)
       case 'h':
       default:
         usage(argv[0]);
-        exit(-1);
+        std::exit(-1);
     }
   }
 }

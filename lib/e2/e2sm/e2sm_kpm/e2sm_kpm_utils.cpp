@@ -22,9 +22,9 @@
 
 #include "e2sm_kpm_utils.h"
 
-namespace srsran {
+using namespace srsran;
 
-std::string e2sm_kpm_label_2_str(e2sm_kpm_label_enum label)
+std::string srsran::e2sm_kpm_label_2_str(e2sm_kpm_label_enum label)
 {
   switch (label) {
     case NO_LABEL:
@@ -86,7 +86,7 @@ std::string e2sm_kpm_label_2_str(e2sm_kpm_label_enum label)
   }
 }
 
-std::string e2sm_kpm_scope_2_str(e2sm_kpm_metric_level_enum level)
+std::string srsran::e2sm_kpm_scope_2_str(e2sm_kpm_metric_level_enum level)
 {
   switch (level) {
     case E2_NODE_LEVEL:
@@ -102,7 +102,7 @@ std::string e2sm_kpm_scope_2_str(e2sm_kpm_metric_level_enum level)
   }
 }
 
-e2sm_kpm_label_enum asn1_label_2_enum(const asn1::e2sm::meas_label_s& meas_label)
+e2sm_kpm_label_enum srsran::asn1_label_2_enum(const asn1::e2sm::meas_label_s& meas_label)
 {
   if (meas_label.no_label_present) {
     return NO_LABEL;
@@ -179,7 +179,7 @@ e2sm_kpm_label_enum asn1_label_2_enum(const asn1::e2sm::meas_label_s& meas_label
   return UNKNOWN_LABEL;
 }
 
-bool operator==(asn1::e2sm::ue_id_c const& lhs, asn1::e2sm::ue_id_c const& rhs)
+bool srsran::operator==(const asn1::e2sm::ue_id_c& lhs, asn1::e2sm::ue_id_c const& rhs)
 {
   if (lhs.type() != rhs.type()) {
     return false;
@@ -196,12 +196,12 @@ bool operator==(asn1::e2sm::ue_id_c const& lhs, asn1::e2sm::ue_id_c const& rhs)
   }
 }
 
-bool operator!=(asn1::e2sm::ue_id_c const& lhs, asn1::e2sm::ue_id_c const& rhs)
+bool srsran::operator!=(const asn1::e2sm::ue_id_c& lhs, asn1::e2sm::ue_id_c const& rhs)
 {
   return !(lhs == rhs);
 }
 
-bool operator<(asn1::e2sm::ue_id_c const& lhs, asn1::e2sm::ue_id_c const& rhs)
+bool srsran::operator<(const asn1::e2sm::ue_id_c& lhs, asn1::e2sm::ue_id_c const& rhs)
 {
   srsran_assert(lhs.type() != rhs.type(), "Cannot compare UEIDs of different types.");
   switch (lhs.type()) {
@@ -214,14 +214,12 @@ bool operator<(asn1::e2sm::ue_id_c const& lhs, asn1::e2sm::ue_id_c const& rhs)
   }
 }
 
-bool operator==(asn1::e2sm::ue_id_gnb_du_s const& lhs, asn1::e2sm::ue_id_gnb_du_s const& rhs)
+bool srsran::operator==(const asn1::e2sm::ue_id_gnb_du_s& lhs, asn1::e2sm::ue_id_gnb_du_s const& rhs)
 {
   return lhs.gnb_cu_ue_f1ap_id == rhs.gnb_cu_ue_f1ap_id;
 }
 
-bool operator<(asn1::e2sm::ue_id_gnb_du_s const& lhs, asn1::e2sm::ue_id_gnb_du_s const& rhs)
+bool srsran::operator<(const asn1::e2sm::ue_id_gnb_du_s& lhs, asn1::e2sm::ue_id_gnb_du_s const& rhs)
 {
   return lhs.gnb_cu_ue_f1ap_id < rhs.gnb_cu_ue_f1ap_id;
 }
-
-} // namespace srsran

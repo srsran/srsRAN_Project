@@ -47,6 +47,7 @@ e1ap_cu_cp_test::e1ap_cu_cp_test() :
   tmp.json_log_enabled = true;
 
   e1ap = create_e1ap(tmp,
+                     cu_up_index_t::min,
                      e1ap_pdu_notifier,
                      cu_up_processor_notifier,
                      cu_cp_notifier,

@@ -42,6 +42,9 @@ public:
   }
 
   // See interface for documentation.
+  operation_controller& get_operation_controller() override { return controller; }
+
+  // See interface for documentation.
   void enqueue_section_type_1_message(const data_flow_cplane_type_1_context& context) override
   {
     resource_usage_utils::measurements m;
@@ -109,10 +112,11 @@ private:
 
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane;
 
-  std::atomic<uint32_t> count          = {};
-  std::atomic<uint64_t> sum_elapsed_ns = {};
-  std::atomic<uint32_t> min_latency_ns = default_min_latency_ns;
-  std::atomic<uint32_t> max_latency_ns = default_max_latency_ns;
+  std::atomic<uint32_t>      count          = {};
+  std::atomic<uint64_t>      sum_elapsed_ns = {};
+  std::atomic<uint32_t>      min_latency_ns = default_min_latency_ns;
+  std::atomic<uint32_t>      max_latency_ns = default_max_latency_ns;
+  operation_controller_dummy controller;
 };
 
 } // namespace ofh

@@ -27,7 +27,6 @@
 #include "apps/services/metrics/metrics_set.h"
 #include "flexible_o_du_metrics.h"
 #include "srsran/adt/span.h"
-#include "srsran/adt/unique_function.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/support/executors/task_executor.h"
 
@@ -63,11 +62,11 @@ inline auto flexible_o_du_metrics_callback = [](const app_services::metrics_set&
                                                 srslog::basic_logger&                 logger) {
   const auto& metric = static_cast<const flexible_o_du_app_service_metrics_impl&>(report);
 
-  if (!executor.defer(TRACE_TASK([metric, consumers]() {
+  if (!executor.defer([metric, consumers]() {
         for (auto& consumer : consumers) {
           consumer->handle_metric(metric);
         }
-      }))) {
+      })) {
     logger.error("Failed to dispatch the metric '{}'", metric.get_properties().name());
   }
 };

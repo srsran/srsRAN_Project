@@ -27,19 +27,6 @@
 
 namespace srsran {
 
-/// JSON consumer for the MAC metrics.
-class mac_metrics_consumer_json
-{
-public:
-  explicit mac_metrics_consumer_json(srslog::log_channel& log_chan_) : log_chan(log_chan_) {}
-
-  /// Handle the given DU high MAC metrics.
-  void handle_metric(const mac_dl_metric_report& report);
-
-private:
-  srslog::log_channel& log_chan;
-};
-
 /// Logger consumer for the MAC metrics.
 class mac_metrics_consumer_log
 {

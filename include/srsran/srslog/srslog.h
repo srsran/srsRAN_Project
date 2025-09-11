@@ -159,6 +159,9 @@ std::unique_ptr<log_formatter> get_default_log_formatter();
 /// Creates a new instance of a plain text formatter.
 std::unique_ptr<log_formatter> create_text_formatter();
 
+/// Creates a new instance of a plain text formatter that adds context.
+std::unique_ptr<log_formatter> create_contextual_text_formatter();
+
 /// Creates a new instance of a JSON formatter.
 std::unique_ptr<log_formatter> create_json_formatter();
 

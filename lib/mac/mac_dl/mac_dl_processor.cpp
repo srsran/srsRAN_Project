@@ -48,7 +48,7 @@ mac_cell_controller& mac_dl_processor::add_cell(const mac_cell_creation_request&
                                            sched,
                                            rnti_table,
                                            cfg.phy_notifier.get_cell(cell_cfg_req.cell_index),
-                                           cfg.cell_exec_mapper.executor(cell_cfg_req.cell_index),
+                                           cfg.cell_exec_mapper.mac_cell_executor(cell_cfg_req.cell_index),
                                            cfg.cell_exec_mapper.slot_ind_executor(cell_cfg_req.cell_index),
                                            cfg.ctrl_exec,
                                            cfg.pcap,

@@ -47,7 +47,7 @@ public:
   }
 
   // See interface for documentation.
-  void on_new_uplink_symbol(const uplane_rx_symbol_context& context, shared_resource_grid grid) override;
+  void on_new_uplink_symbol(const uplane_rx_symbol_context& context, shared_resource_grid grid, bool is_valid) override;
 
   // See interface for documentation.
   void on_new_prach_window_data(const prach_buffer_context& context, const prach_buffer& buffer) override

@@ -53,14 +53,13 @@ private:
 class du_metrics_consumer_json : public app_services::metrics_consumer
 {
 public:
-  explicit du_metrics_consumer_json(srslog::log_channel& log_chan) : mac_consumer(log_chan), sched_handler(log_chan) {}
+  explicit du_metrics_consumer_json(srslog::log_channel& log_chan_) : log_chan(log_chan_) {}
 
   // See interface for documentation.
   void handle_metric(const app_services::metrics_set& metric) override;
 
 private:
-  mac_metrics_consumer_json            mac_consumer;
-  scheduler_cell_metrics_consumer_json sched_handler;
+  srslog::log_channel& log_chan;
 };
 
 /// Consumer for the logger DU metrics.

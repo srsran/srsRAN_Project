@@ -68,7 +68,7 @@ int main(int argc, char** argv)
   handle = dlopen(argv[1], RTLD_NOW);
   if (handle == nullptr) {
     std::cerr << "Error: " << dlerror() << std::endl;
-    exit(EXIT_FAILURE);
+    std::exit(EXIT_FAILURE);
   }
 
   // Clear any existing error.
@@ -80,7 +80,7 @@ int main(int argc, char** argv)
   error = dlerror();
   if (error != nullptr) {
     std::cerr << "Error: " << error << std::endl;
-    exit(EXIT_FAILURE);
+    std::exit(EXIT_FAILURE);
   }
   std::cout << "Dynamic library loaded." << std::endl;
 
@@ -126,5 +126,5 @@ int main(int argc, char** argv)
   dlclose(handle);
 
   std::cout << "Successful." << std::endl;
-  exit(EXIT_SUCCESS);
+  std::exit(EXIT_SUCCESS);
 }

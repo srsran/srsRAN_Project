@@ -31,8 +31,7 @@ namespace srsran {
 struct lower_phy_configuration;
 
 /// Helper class that creates the lower PHY sector using the given configuration.
-std::unique_ptr<lower_phy_sector> create_low_phy_sector(unsigned                   max_nof_prach_concurrent_requests,
-                                                        lower_phy_configuration&   low_cfg,
+std::unique_ptr<lower_phy_sector> create_low_phy_sector(lower_phy_configuration&   low_cfg,
                                                         lower_phy_error_notifier&  error_notifier,
                                                         lower_phy_timing_notifier* timing_notifier);
 

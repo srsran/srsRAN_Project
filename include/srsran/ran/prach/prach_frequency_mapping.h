@@ -37,7 +37,7 @@ struct prach_frequency_mapping_information {
 };
 
 /// Reserved PRACH frequency-domain mapping information.
-static constexpr prach_frequency_mapping_information PRACH_FREQUENCY_MAPPING_INFORMATION_RESERVED = {0, 0};
+constexpr prach_frequency_mapping_information PRACH_FREQUENCY_MAPPING_INFORMATION_RESERVED = {0, 0};
 
 /// \brief Gets the PRACH frequency mapping information contained in TS38.211 Table 6.3.3.2-1.
 /// \param[in] prach_scs_Hz PRACH subcarrier spacing (parameter \f$\Delta f_{RA}\f$).

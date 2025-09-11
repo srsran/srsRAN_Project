@@ -38,12 +38,12 @@
 
 using namespace srsran;
 
-static srs_cu_cp::metrics_report_notifier*
+static cu_cp_metrics_report_notifier*
 build_cu_cp_metrics_config(std::vector<app_services::metrics_config>& cu_cp_services_cfg,
                            app_services::metrics_notifier&            metrics_notifier,
                            const cu_cp_unit_metrics_config&           cu_cp_metrics_cfg)
 {
-  srs_cu_cp::metrics_report_notifier* out = nullptr;
+  cu_cp_metrics_report_notifier* out = nullptr;
 
   auto metrics_generator                            = std::make_unique<cu_cp_metrics_producer_impl>(metrics_notifier);
   out                                               = &(*metrics_generator);
@@ -53,7 +53,7 @@ build_cu_cp_metrics_config(std::vector<app_services::metrics_config>& cu_cp_serv
   metrics_service_cfg.producers.push_back(std::move(metrics_generator));
 
   const app_helpers::metrics_config& unit_metrics_cfg = cu_cp_metrics_cfg.common_metrics_cfg;
-  if (unit_metrics_cfg.json_config.enable_json_metrics) {
+  if (unit_metrics_cfg.enable_json_metrics) {
     metrics_service_cfg.consumers.push_back(
         std::make_unique<cu_cp_metrics_consumer_json>(app_helpers::fetch_json_metrics_log_channel()));
   }

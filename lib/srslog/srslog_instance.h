@@ -37,22 +37,22 @@ class srslog_instance : public sink_repository
   srslog_instance()
   {
     // stdout and stderr sinks are always present.
-    auto& stdout_sink =
-        sink_repo.emplace(std::piecewise_construct,
-                          std::forward_as_tuple("stdout"),
-                          std::forward_as_tuple(new stream_sink(sink_stream_type::stdout,
-                                                                std::unique_ptr<log_formatter>(new text_formatter))));
+    auto& stdout_sink = sink_repo.emplace(
+        std::piecewise_construct,
+        std::forward_as_tuple("stdout"),
+        std::forward_as_tuple(
+            new stream_sink(sink_stream_type::stdout, std::unique_ptr<log_formatter>(new contextual_text_formatter))));
     default_sink = stdout_sink.get();
 
     sink_repo.emplace(std::piecewise_construct,
                       std::forward_as_tuple("stderr"),
-                      std::forward_as_tuple(new stream_sink(sink_stream_type::stderr,
-                                                            std::unique_ptr<log_formatter>(new text_formatter))));
+                      std::forward_as_tuple(new stream_sink(
+                          sink_stream_type::stderr, std::unique_ptr<log_formatter>(new contextual_text_formatter))));
 
     // Initialize the default formatter pointer with a text formatter.
     {
       detail::scoped_lock lock(formatter_mutex);
-      default_formatter = std::unique_ptr<log_formatter>(new text_formatter);
+      default_formatter = std::unique_ptr<log_formatter>(new contextual_text_formatter);
     }
   }
 

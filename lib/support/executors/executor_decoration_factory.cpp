@@ -30,13 +30,11 @@
 
 using namespace srsran;
 
-namespace {
-
-file_event_tracer<true> tracer;
+static file_event_tracer<true> tracer;
 
 /// Helper function that converts an executor of type T to a unique_ptr<task_executor>.
 template <typename T>
-std::unique_ptr<task_executor> convert_to_unique_executor_ptr(T&& exec)
+static std::unique_ptr<task_executor> convert_to_unique_executor_ptr(T&& exec)
 {
   if constexpr (std::is_same_v<std::decay_t<T>, std::unique_ptr<task_executor>>) {
     // If T is already a unique task_executor, we can return it as a unique_ptr.
@@ -59,16 +57,16 @@ std::unique_ptr<task_executor> convert_to_unique_executor_ptr(T&& exec)
 }
 
 template <typename ComposedExecutor>
-void make_executor_decorator_helper(std::unique_ptr<task_executor>& result, ComposedExecutor&& exec)
+static void make_executor_decorator_helper(std::unique_ptr<task_executor>& result, ComposedExecutor&& exec)
 {
   result = convert_to_unique_executor_ptr(std::forward<ComposedExecutor>(exec));
 }
 
 template <typename ComposedExecutor, typename FirstPolicy, typename... Policies>
-void make_executor_decorator_helper(std::unique_ptr<task_executor>&   result,
-                                    ComposedExecutor&&                exec,
-                                    const std::optional<FirstPolicy>& first_policy,
-                                    const Policies&... policies)
+static void make_executor_decorator_helper(std::unique_ptr<task_executor>&   result,
+                                           ComposedExecutor&&                exec,
+                                           const std::optional<FirstPolicy>& first_policy,
+                                           const Policies&... policies)
 {
   if (not first_policy.has_value()) {
     // Skip this policy.
@@ -103,7 +101,7 @@ void make_executor_decorator_helper(std::unique_ptr<task_executor>&   result,
   }
 }
 
-void validate_config(const execution_decoration_config& config)
+static void validate_config(const execution_decoration_config& config)
 {
   if (config.metrics.has_value() and config.trace.has_value()) {
     report_fatal_error("Metrics and tracing cannot be enabled at the same time.");
@@ -112,8 +110,6 @@ void validate_config(const execution_decoration_config& config)
     report_fatal_error("Synchronous executors cannot be throttled.");
   }
 }
-
-} // namespace
 
 std::unique_ptr<task_executor> srsran::decorate_executor(std::unique_ptr<task_executor>     exec,
                                                          const execution_decoration_config& config)

@@ -41,9 +41,10 @@ cell_meas_manager::cell_meas_manager(const cell_meas_manager_cfg&         cfg_,
   log_cells(logger, cfg);
 }
 
-std::optional<rrc_meas_cfg> cell_meas_manager::get_measurement_config(ue_index_t                  ue_index,
-                                                                      nr_cell_identity            serving_nci,
-                                                                      std::optional<rrc_meas_cfg> current_meas_config)
+std::optional<rrc_meas_cfg>
+cell_meas_manager::get_measurement_config(ue_index_t                         ue_index,
+                                          nr_cell_identity                   serving_nci,
+                                          const std::optional<rrc_meas_cfg>& current_meas_config)
 {
   std::optional<rrc_meas_cfg> meas_cfg;
 
@@ -185,7 +186,7 @@ bool cell_meas_manager::update_cell_config(nr_cell_identity nci, const serving_c
   return true;
 }
 
-std::optional<uint8_t> get_ssb_rsrp(const rrc_meas_result_nr& meas_result)
+static std::optional<uint8_t> get_ssb_rsrp(const rrc_meas_result_nr& meas_result)
 {
   std::optional<uint8_t> rsrp;
   if (meas_result.cell_results.results_ssb_cell.has_value()) {
@@ -194,6 +195,48 @@ std::optional<uint8_t> get_ssb_rsrp(const rrc_meas_result_nr& meas_result)
     }
   }
   return rsrp;
+}
+
+static std::optional<pci_t> find_strongest_neighbor(ue_index_t              ue_index,
+                                                    const rrc_meas_results& meas_results,
+                                                    srslog::basic_logger&   logger,
+                                                    std::optional<uint8_t>  periodic_ho_rsrp_offset = std::nullopt)
+{
+  std::optional<pci_t> strongest_neighbor;
+  // Find strongest neighbor cell
+  if (meas_results.meas_result_neigh_cells.has_value()) {
+    // Find strongest neighbor here.
+    std::optional<uint8_t> serv_cell_rsrp;
+
+    // Extract RSRP of SSB for servCellId 0.
+    if (meas_results.meas_result_serving_mo_list.contains(0)) {
+      serv_cell_rsrp = get_ssb_rsrp(meas_results.meas_result_serving_mo_list[0].meas_result_serving_cell);
+    }
+
+    if (serv_cell_rsrp.has_value()) {
+      uint8_t max_rsrp = serv_cell_rsrp.value();
+
+      for (const auto& report : meas_results.meas_result_neigh_cells.value().meas_result_list_nr) {
+        std::optional<uint8_t> neighbor_rsrp = get_ssb_rsrp(report);
+        if (neighbor_rsrp.has_value()) {
+          if (neighbor_rsrp.value() > max_rsrp + periodic_ho_rsrp_offset.value_or(0)) {
+            // Found stronger neighbor, take note of it's details.
+            max_rsrp           = neighbor_rsrp.value();
+            strongest_neighbor = report.pci;
+          }
+        }
+      }
+
+      if (strongest_neighbor.has_value()) {
+        logger.info("ue={}: Neighbor PCI={} (ssb_rsrp={}) stronger than current serving cell (ssb_rsrp={})",
+                    ue_index,
+                    strongest_neighbor.value(),
+                    max_rsrp,
+                    serv_cell_rsrp.value());
+      }
+    }
+  }
+  return strongest_neighbor;
 }
 
 void cell_meas_manager::report_measurement(ue_index_t ue_index, const rrc_meas_results& meas_results)
@@ -215,60 +258,63 @@ void cell_meas_manager::report_measurement(ue_index_t ue_index, const rrc_meas_r
 
   auto& meas_ctxt = ue_meas_context.meas_id_to_meas_context.at(meas_results.meas_id);
 
-  // Ignore id with periodic measurements.
-
-  // For meas_id with e.g. A3 event configured:
-
-  // Iterate through serving cell results and check if best neighbor is reported.
-  for (const auto& serv_cell : meas_results.meas_result_serving_mo_list) {
-    if (serv_cell.meas_result_best_neigh_cell.has_value()) {
-      // Report this cell.
-      if (serv_cell.meas_result_best_neigh_cell.value().pci.has_value()) {
-        mobility_mng_notifier.on_neighbor_better_than_spcell(ue_index,
-                                                             meas_ctxt.nci.gnb_id(meas_ctxt.gnb_id_bit_length),
-                                                             meas_ctxt.nci,
-                                                             serv_cell.meas_result_best_neigh_cell.value().pci.value());
+  // Handle periodic measurement results.
+  if (cfg.cells.at(meas_ctxt.nci).periodic_report_cfg_id.has_value() &&
+      cfg.cells.at(meas_ctxt.nci).periodic_report_cfg_id.value() == meas_ctxt.report_cfg_id) {
+    uint8_t periodic_ho_rsrp_offset = 0;
+    if (const auto* periodical = std::get_if<rrc_periodical_report_cfg>(
+            &cfg.report_config_ids.at(cfg.cells.at(meas_ctxt.nci).periodic_report_cfg_id.value()));
+        periodical != nullptr) {
+      if (periodical->periodic_ho_rsrp_offset == -1) {
+        logger.debug("ue={}: Handover from periodic measurements is disabled", ue_index);
         return;
       }
-    }
-  }
-
-  // Find strongest neighbor cell
-  if (meas_results.meas_result_neigh_cells.has_value()) {
-    // Find strongest neighbor here.
-    std::optional<uint8_t> serv_cell_rsrp;
-
-    // Extract RSRP of SSB for servCellId 0.
-    if (meas_results.meas_result_serving_mo_list.contains(0)) {
-      serv_cell_rsrp = get_ssb_rsrp(meas_results.meas_result_serving_mo_list[0].meas_result_serving_cell);
+      periodic_ho_rsrp_offset = uint8_t(periodical->periodic_ho_rsrp_offset);
     }
 
-    if (serv_cell_rsrp.has_value()) {
-      uint8_t              max_rsrp = serv_cell_rsrp.value();
-      std::optional<pci_t> strongest_neighbor;
-
-      for (const auto& report : meas_results.meas_result_neigh_cells.value().meas_result_list_nr) {
-        std::optional<uint8_t> neighbor_rsrp = get_ssb_rsrp(report);
-        if (neighbor_rsrp.has_value()) {
-          if (neighbor_rsrp.value() > max_rsrp) {
-            // Found stronger neighbor, take note of it's details.
-            max_rsrp           = neighbor_rsrp.value();
-            strongest_neighbor = report.pci;
-          }
+    // Find strongest neighbor cell.
+    std::optional<pci_t> strongest_neighbor =
+        find_strongest_neighbor(ue_index, meas_results, logger, periodic_ho_rsrp_offset);
+    if (strongest_neighbor.has_value()) {
+      for (const auto& ncell : cfg.cells.at(meas_ctxt.nci).ncells) {
+        const cell_meas_config& ncell_cfg = cfg.cells.at(ncell.nci);
+        if (ncell_cfg.serving_cell_cfg.pci.has_value() &&
+            ncell_cfg.serving_cell_cfg.pci.value() == strongest_neighbor.value()) {
+          // Report cell.
+          mobility_mng_notifier.on_neighbor_better_than_spcell(
+              ue_index,
+              ncell_cfg.serving_cell_cfg.nci.gnb_id(ncell_cfg.serving_cell_cfg.gnb_id_bit_length),
+              ncell_cfg.serving_cell_cfg.nci,
+              strongest_neighbor.value());
+          return;
         }
       }
+    }
+  } else {
+    // For meas_id with e.g. A3 event configured:
 
-      if (strongest_neighbor.has_value()) {
-        // Report cell.
-        logger.info("ue={}: Neighbor PCI={} (ssb_rsrp={}) stronger than current serving cell (ssb_rsrp={})",
-                    ue_index,
-                    strongest_neighbor.value(),
-                    max_rsrp,
-                    serv_cell_rsrp.value());
-        mobility_mng_notifier.on_neighbor_better_than_spcell(
-            ue_index, meas_ctxt.nci.gnb_id(meas_ctxt.gnb_id_bit_length), meas_ctxt.nci, strongest_neighbor.value());
-        return;
+    // Iterate through serving cell results and check if best neighbor is reported.
+    for (const auto& serv_cell : meas_results.meas_result_serving_mo_list) {
+      if (serv_cell.meas_result_best_neigh_cell.has_value()) {
+        // Report this cell.
+        if (serv_cell.meas_result_best_neigh_cell.value().pci.has_value()) {
+          mobility_mng_notifier.on_neighbor_better_than_spcell(
+              ue_index,
+              meas_ctxt.nci.gnb_id(meas_ctxt.gnb_id_bit_length),
+              meas_ctxt.nci,
+              serv_cell.meas_result_best_neigh_cell.value().pci.value());
+          return;
+        }
       }
+    }
+
+    // Find strongest neighbor cell.
+    std::optional<pci_t> strongest_neighbor = find_strongest_neighbor(ue_index, meas_results, logger);
+    if (strongest_neighbor.has_value()) {
+      // Report cell.
+      mobility_mng_notifier.on_neighbor_better_than_spcell(
+          ue_index, meas_ctxt.nci.gnb_id(meas_ctxt.gnb_id_bit_length), meas_ctxt.nci, strongest_neighbor.value());
+      return;
     }
   }
 }

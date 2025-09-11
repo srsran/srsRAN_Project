@@ -63,6 +63,10 @@ bool is_valid_handover_required(const srs_cu_cp::ngap_message& msg);
 
 bool is_valid_handover_cancel(const srs_cu_cp::ngap_message& msg);
 
+bool is_valid_ul_ran_status_transfer(const srs_cu_cp::ngap_message& msg);
+
+bool is_valid_ng_reset(const srs_cu_cp::ngap_message& msg);
+
 bool is_valid_ul_ue_associated_nrppa_transport(const srs_cu_cp::ngap_message& msg);
 
 bool is_valid_ul_non_ue_associated_nrppa_transport(const srs_cu_cp::ngap_message& msg);

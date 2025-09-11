@@ -79,7 +79,7 @@ public:
       cp_len = 512U >> to_numerology_value(scs);
     }
 
-    unsigned sampling_rate_Hz = to_sampling_rate_Hz<unsigned>(scs, dft_size);
+    auto sampling_rate_Hz = to_sampling_rate_Hz<unsigned>(scs, dft_size);
 
     // The cyclic prefix lengths must result in an integer number of samples.
     return phy_time_unit::from_units_of_kappa(cp_len).is_sample_accurate(sampling_rate_Hz) &&
@@ -105,7 +105,7 @@ public:
 };
 
 /// Defines the number of OFDM symbols per slot, according to TS 38.211 Tables 4.3.2-1 and 4.3.2-2.
-inline constexpr unsigned get_nsymb_per_slot(const cyclic_prefix cp)
+constexpr unsigned get_nsymb_per_slot(cyclic_prefix cp)
 {
   if (cp == cyclic_prefix::EXTENDED) {
     return 12;
@@ -114,7 +114,7 @@ inline constexpr unsigned get_nsymb_per_slot(const cyclic_prefix cp)
 }
 
 /// Returns the maximum number of OFDM symbols per slot.
-static constexpr unsigned MAX_NSYMB_PER_SLOT =
+constexpr unsigned MAX_NSYMB_PER_SLOT =
     std::max(get_nsymb_per_slot(cyclic_prefix::NORMAL), get_nsymb_per_slot(cyclic_prefix::EXTENDED));
 
 } // namespace srsran
@@ -135,4 +135,5 @@ struct formatter<srsran::cyclic_prefix> {
     return format_to(ctx.out(), "{}", cp.to_string());
   }
 };
+
 } // namespace fmt

@@ -129,14 +129,14 @@ protected:
   void create_af_init_sockets(int type)
   {
     // Create server socket.
-    socket_fd   = unique_fd{socket(AF_INET, type, 0)};
+    socket_fd   = unique_fd{::socket(AF_INET, type, 0)};
     socket_type = type;
     ASSERT_TRUE(socket_fd.is_open());
     raw_socket_fd = socket_fd.value();
 
     // Configure socket as reusable to allow multiple runs.
     int enable = 1;
-    ASSERT_NE(setsockopt(raw_socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)), -1);
+    ASSERT_NE(::setsockopt(raw_socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)), -1);
 
     // prepare server address
     std::memset(&server_addr_in, 0, sizeof(::sockaddr_in));

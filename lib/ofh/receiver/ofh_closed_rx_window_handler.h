@@ -24,12 +24,15 @@
 
 #include "../support/prach_context_repository.h"
 #include "../support/uplink_context_repository.h"
+#include "srsran/ofh/ofh_controller.h"
 #include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
+#include "srsran/ofh/receiver/ofh_receiver_metrics.h"
 #include "srsran/ofh/receiver/ofh_receiver_timing_parameters.h"
 #include "srsran/ofh/receiver/ofh_receiver_warn_unreceived_frames_parameters.h"
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
 #include "srsran/ofh/timing/slot_symbol_point.h"
 #include "srsran/srslog/logger.h"
+#include "srsran/support/synchronization/stop_event.h"
 
 namespace srsran {
 
@@ -60,11 +63,15 @@ struct closed_rx_window_handler_dependencies {
 };
 
 /// Open Fronthaul closed reception window handler.
-class closed_rx_window_handler : public ota_symbol_boundary_notifier
+class closed_rx_window_handler : public ota_symbol_boundary_notifier, public operation_controller
 {
 public:
   closed_rx_window_handler(const closed_rx_window_handler_config&  config,
                            closed_rx_window_handler_dependencies&& dependencies);
+
+  void start() override { stop_manager.reset(); }
+
+  void stop() override { stop_manager.stop(); }
 
   // See interface for documentation.
   void on_new_symbol(const slot_symbol_point_context& symbol_point_context) override;
@@ -76,6 +83,9 @@ public:
       log_unreceived_messages = true;
     }
   }
+
+  /// Collects the metrics of the closed reception window metrics.
+  void collect_metrics(closed_rx_window_metrics& metrics);
 
 private:
   /// \brief Handles the uplink context for the closed reception window given by symbol point.
@@ -104,6 +114,11 @@ private:
   std::shared_ptr<prach_context_repository>  prach_repo;
   std::shared_ptr<uplink_context_repository> uplink_repo;
   std::shared_ptr<uplane_rx_symbol_notifier> notifier;
+  /// Counts every symbol not received when reception window closes.
+  std::atomic<unsigned> nof_missed_uplink_symbols;
+  /// Counts every PRACH not received when the reception window closes.
+  std::atomic<unsigned> nof_missed_prach_contexts;
+  stop_event_source     stop_manager;
 };
 
 } // namespace ofh

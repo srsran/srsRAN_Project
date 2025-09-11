@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "../operation_controller_dummy.h"
 #include "../support/uplink_cplane_context_repository.h"
 #include "ofh_data_flow_cplane_scheduling_commands.h"
 #include "sequence_identifier_generator.h"
@@ -77,6 +78,9 @@ public:
                                             data_flow_cplane_scheduling_commands_impl_dependencies&& dependencies);
 
   // See interface for documentation.
+  operation_controller& get_operation_controller() override { return controller; }
+
+  // See interface for documentation.
   void enqueue_section_type_1_message(const data_flow_cplane_type_1_context& context) override;
 
   // See interface for documentation.
@@ -94,6 +98,7 @@ private:
   const ru_compression_params                       dl_compr_params;
   const ru_compression_params                       ul_compr_params;
   const ru_compression_params                       prach_compr_params;
+  operation_controller_dummy                        controller;
   sequence_identifier_generator                     cp_dl_seq_gen;
   sequence_identifier_generator                     cp_ul_seq_gen;
   std::shared_ptr<uplink_cplane_context_repository> ul_cplane_context_repo;

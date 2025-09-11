@@ -115,7 +115,7 @@ unsigned ofdm_slot_modulator_impl::get_slot_size(unsigned slot_index) const
 
   // Iterate all symbols of the slot and accumulate
   for (unsigned symbol_idx = 0; symbol_idx != nsymb; ++symbol_idx) {
-    count += symbol_modulator.get_symbol_size(nsymb * slot_index + symbol_idx);
+    count += symbol_modulator->get_symbol_size(nsymb * slot_index + symbol_idx);
   }
 
   return count;
@@ -137,10 +137,10 @@ void ofdm_slot_modulator_impl::modulate(span<cf_t>                  output,
   // For each symbol in the slot.
   for (unsigned symbol_idx = 0; symbol_idx != nsymb; ++symbol_idx) {
     // Get the current symbol size.
-    unsigned symbol_sz = symbol_modulator.get_symbol_size(nsymb * slot_index + symbol_idx);
+    unsigned symbol_sz = symbol_modulator->get_symbol_size(nsymb * slot_index + symbol_idx);
 
     // Modulate symbol.
-    symbol_modulator.modulate(output.first(symbol_sz), grid, port_index, nsymb * slot_index + symbol_idx);
+    symbol_modulator->modulate(output.first(symbol_sz), grid, port_index, nsymb * slot_index + symbol_idx);
 
     // Advance output buffer.
     output = output.last(output.size() - symbol_sz);

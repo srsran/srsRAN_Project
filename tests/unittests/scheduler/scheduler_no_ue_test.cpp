@@ -32,13 +32,29 @@
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/indication_generators.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
-#include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/support/test_utils.h"
+#include <gtest/gtest.h>
 
 using namespace srsran;
 
-void test_no_ues()
+namespace sched_no_ue_test {
+
+class sched_no_ue_tester : public ::testing::Test
+{
+protected:
+  void SetUp() override
+  {
+    srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::info);
+    srslog::init();
+  }
+};
+
+} // namespace sched_no_ue_test
+
+using namespace sched_no_ue_test;
+
+TEST_F(sched_no_ue_tester, test_no_ues)
 {
   scheduler_expert_config             sched_cfg = config_helpers::make_default_scheduler_expert_config();
   sched_cfg_dummy_notifier            cfg_notif;
@@ -55,13 +71,13 @@ void test_no_ues()
 
   // Action 2: Run slot.
   const sched_result& res = sch.slot_indication(sl_tx, to_du_cell_index(0));
-  TESTASSERT(res.success);
+  ASSERT_TRUE(res.success);
   test_scheduler_result_consistency(cell_cfg, sl_tx, res);
-  TESTASSERT(res.dl.ue_grants.empty());
-  TESTASSERT(res.ul.puschs.empty());
+  ASSERT_TRUE(res.dl.ue_grants.empty());
+  ASSERT_TRUE(res.ul.puschs.empty());
 }
 
-void test_rach_indication()
+TEST_F(sched_no_ue_tester, test_rach_indication)
 {
   scheduler_expert_config             sched_cfg = config_helpers::make_default_scheduler_expert_config();
   sched_cfg_dummy_notifier            cfg_notif;
@@ -85,18 +101,8 @@ void test_rach_indication()
   const sched_result& res = sch.slot_indication(sl_tx, to_du_cell_index(0));
 
   // TEST: Result exists. No Data allocated. A RAR has been allocated.
-  TESTASSERT(res.success);
+  ASSERT_TRUE(res.success);
   test_scheduler_result_consistency(cell_cfg, sl_tx, res);
-  TESTASSERT(res.dl.ue_grants.empty());
-  TESTASSERT(not res.dl.rar_grants.empty());
-}
-
-int main()
-{
-  srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::info);
-
-  srslog::init();
-
-  test_no_ues();
-  test_rach_indication();
+  ASSERT_TRUE(res.dl.ue_grants.empty());
+  ASSERT_TRUE(not res.dl.rar_grants.empty());
 }

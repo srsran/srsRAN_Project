@@ -30,71 +30,40 @@
 
 using namespace srsran;
 
-static void generate_dl_processor_config(downlink_processor_factory_sw_config& out_cfg,
-                                         const du_low_unit_config&             unit_cfg,
-                                         task_executor&                        pdsch_codeblock_executor,
-                                         std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> hw_encoder_factory)
-{
-  out_cfg.ldpc_encoder_type   = "auto";
-  out_cfg.crc_calculator_type = "auto";
-
-  const du_low_unit_expert_threads_config& upper_phy_threads_cfg = unit_cfg.expert_execution_cfg.threads;
-
-  // Check hardware acceleration usage.
-  bool hwacc_pdsch_processor = hw_encoder_factory != nullptr;
-  if (hwacc_pdsch_processor) {
-    out_cfg.hw_encoder_factory = hw_encoder_factory;
-  }
-
-  // The flexible PDSCH processor implementation will be used by default.
-  if ((upper_phy_threads_cfg.pdsch_processor_type == "auto") ||
-      (upper_phy_threads_cfg.pdsch_processor_type == "flexible")) {
-    // The worker pool in charge of processing PDSCH CBs is shared with the rest of the DL processors.
-    unsigned nof_pdsch_codeblock_threads = upper_phy_threads_cfg.nof_dl_threads;
-
-    // Setup parameters for synchronous operation:
-    // - the batch size must be the maximum to avoid more than one batch; and
-    // - the maximum number of simultaneous PDSCH equals to the number of DL processing threads.
-    unsigned cb_batch_length            = pdsch_processor_flexible_configuration::synchronous_cb_batch_length;
-    unsigned max_nof_simultaneous_pdsch = upper_phy_threads_cfg.nof_dl_threads;
-
-    // Override default parameters if the CB batch length is set for asynchronous concurrent operation.
-    if (upper_phy_threads_cfg.pdsch_cb_batch_length != du_low_unit_expert_threads_config::synchronous_cb_batch_length) {
-      // For asynchronous operation:
-      // - Use the given CB batch length;
-      // - The number of simultaneous PDSCH is equal to the maximum number of PDSCH per slot times the maximum allowed
-      //   processing time.
-      cb_batch_length            = upper_phy_threads_cfg.pdsch_cb_batch_length;
-      max_nof_simultaneous_pdsch = (MAX_UE_PDUS_PER_SLOT + 1) * unit_cfg.expert_phy_cfg.max_processing_delay_slots;
-    }
-
-    // Emplace configuration parameters.
-    out_cfg.pdsch_processor.emplace<pdsch_processor_flexible_configuration>(
-        pdsch_processor_flexible_configuration{.nof_pdsch_codeblock_threads   = nof_pdsch_codeblock_threads,
-                                               .cb_batch_length               = cb_batch_length,
-                                               .max_nof_simultaneous_pdsch    = max_nof_simultaneous_pdsch,
-                                               .pdsch_codeblock_task_executor = pdsch_codeblock_executor
-
-        });
-  } else if (upper_phy_threads_cfg.pdsch_processor_type == "generic") {
-    out_cfg.pdsch_processor.emplace<pdsch_processor_generic_configuration>();
-  } else {
-    srsran_assert(false,
-                  "Invalid {}PDSCH processor type {}.",
-                  hwacc_pdsch_processor ? "hardware-accelerated " : "",
-                  upper_phy_threads_cfg.pdsch_processor_type);
-  }
-  out_cfg.nof_concurrent_threads = upper_phy_threads_cfg.nof_dl_threads;
-}
-
-o_du_low_unit_factory::o_du_low_unit_factory(const std::optional<du_low_unit_hal_config>& hal_config,
-                                             unsigned                                     nof_cells) :
-  hal_dependencies(make_du_low_hal_dependencies(hal_config, nof_cells))
+o_du_low_unit_factory::o_du_low_unit_factory(const std::optional<du_low_unit_hal_config>& hal_config) :
+  hal_dependencies(make_du_low_hal_dependencies(hal_config))
 {
 }
 
-o_du_low_unit o_du_low_unit_factory::create(const o_du_low_unit_config&       params,
-                                            const o_du_low_unit_dependencies& dependencies)
+static srs_du::du_low_dependencies generate_du_low_dependencies(const o_du_low_unit_dependencies& dependencies,
+                                                                const o_du_low_hal_dependencies&  hal_dependencies,
+                                                                unsigned                          nof_cells)
+{
+  srs_du::du_low_dependencies out_deps;
+  out_deps.logger = &srslog::fetch_basic_logger("DU");
+  out_deps.cells.reserve(nof_cells);
+
+  upper_phy_factory_dependencies& upper_phy_common_deps = out_deps.upper_phy_common_deps;
+  upper_phy_common_deps.executors                       = dependencies.workers.get_upper_phy_execution_config();
+
+  if (hal_dependencies.hw_encoder_factory) {
+    upper_phy_common_deps.hw_encoder_factory = hal_dependencies.hw_encoder_factory;
+  }
+
+  if (hal_dependencies.hw_decoder_factory) {
+    upper_phy_common_deps.hw_decoder_factory = hal_dependencies.hw_decoder_factory;
+  }
+
+  for (unsigned i = 0, e = nof_cells; i != e; ++i) {
+    upper_phy_dependencies& upper_phy_cell    = out_deps.cells.emplace_back().upper_phy_deps;
+    upper_phy_cell.rg_gateway                 = &dependencies.rg_gateway;
+    upper_phy_cell.rx_symbol_request_notifier = &dependencies.rx_symbol_request_notifier;
+  }
+
+  return out_deps;
+}
+
+o_du_low_unit o_du_low_unit_factory::create(const o_du_low_unit_config& params, const o_du_low_unit_dependencies& deps)
 {
   srs_du::o_du_low_config o_du_low_cfg;
 
@@ -104,41 +73,15 @@ o_du_low_unit o_du_low_unit_factory::create(const o_du_low_unit_config&       pa
   // Configure the metrics.
   o_du_low_cfg.enable_metrics = params.du_low_unit_cfg.metrics_cfg.enable_du_low;
 
+  // Generate O-DU low configuration.
   generate_o_du_low_config(o_du_low_cfg, params.du_low_unit_cfg, params.cells);
 
-  // Fill the workers information.
-  for (unsigned i = 0, e = o_du_low_cfg.du_low_cfg.cells.size(); i != e; ++i) {
-    srs_du::du_low_cell_executor_mapper& cell_exec_map = dependencies.workers[i];
-
-    srs_du::du_low_cell_config& cell = o_du_low_cfg.du_low_cfg.cells[i];
-
-    generate_dl_processor_config(cell.dl_proc_cfg,
-                                 params.du_low_unit_cfg,
-                                 cell_exec_map.pdsch_codeblock_executor(),
-                                 hal_dependencies.hw_encoder_factory);
-
-    upper_phy_config& upper          = cell.upper_phy_cfg;
-    upper.rg_gateway                 = &dependencies.rg_gateway;
-    upper.rx_symbol_request_notifier = &dependencies.rx_symbol_request_notifier;
-    upper.pucch_executor             = &cell_exec_map.pucch_executor();
-    upper.pusch_executor             = &cell_exec_map.pusch_executor();
-    upper.pusch_decoder_executor =
-        (upper.nof_pusch_decoder_threads > 1) ? &cell_exec_map.pusch_decoder_executor() : nullptr;
-    upper.prach_executor = &cell_exec_map.prach_executor();
-    upper.srs_executor   = &cell_exec_map.srs_executor();
-    if (hal_dependencies.hw_decoder_factory) {
-      upper.hw_decoder_factory = hal_dependencies.hw_decoder_factory;
-    }
-    upper.pdcch_executor   = &cell_exec_map.pdcch_executor();
-    upper.pdsch_executor   = &cell_exec_map.pdsch_executor();
-    upper.ssb_executor     = &cell_exec_map.ssb_executor();
-    upper.csi_rs_executor  = &cell_exec_map.csi_rs_executor();
-    upper.prs_executor     = &cell_exec_map.prs_executor();
-    upper.dl_grid_executor = &cell_exec_map.dl_grid_pool_executor();
-  }
+  // Generate O-DU low dependencies.
+  srs_du::o_du_low_dependencies o_du_low_deps;
+  o_du_low_deps.du_low_deps = generate_du_low_dependencies(deps, hal_dependencies, params.cells.size());
 
   o_du_low_unit unit;
-  unit.o_du_lo = srs_du::make_o_du_low(o_du_low_cfg);
+  unit.o_du_lo = srs_du::make_o_du_low(o_du_low_cfg, o_du_low_deps);
   report_error_if_not(unit.o_du_lo, "Invalid O-DU low");
 
   return unit;

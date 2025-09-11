@@ -21,6 +21,7 @@
  */
 
 #pragma once
+
 #include "srsran/srslog/logger.h"
 
 namespace srsran {

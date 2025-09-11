@@ -396,7 +396,7 @@ TEST_F(pdu_session_manager_test, when_new_ul_info_is_requested_f1u_is_disconnect
       generate_pdu_session_res_to_modify_item_to_modify_drb(psi, drb_id);
 
   pdu_session_modification_result mod_result  = pdu_session_mng->modify_pdu_session(pdu_session_modify_item, true);
-  drb_setup_result                drb_mod_res = mod_result.drb_modification_results[0];
+  drb_modified_result             drb_mod_res = mod_result.drb_modification_results[0];
   ASSERT_EQ(drb_mod_res.gtp_tunnel.gtp_teid, 0x2);
 
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);

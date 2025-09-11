@@ -45,37 +45,37 @@ static const float M_SQRT1_42 = 1.0F / std::sqrt(42.0F);
 // Maximum (absolute) value considered for quantization. Larger values will be clipped.
 static constexpr float RANGE_LIMIT_FLOAT = 20;
 
-static constexpr int              NOF_INTERVALS_01  = 8;
-static const float                INTERVAL_WIDTH_01 = 2 * M_SQRT1_42;
-static const std::array<float, 8> SLOPE_01          = {16 * M_SQRT1_42,
-                                                       12 * M_SQRT1_42,
-                                                       8 * M_SQRT1_42,
-                                                       4 * M_SQRT1_42,
-                                                       4 * M_SQRT1_42,
-                                                       8 * M_SQRT1_42,
-                                                       12 * M_SQRT1_42,
-                                                       16 * M_SQRT1_42};
-static const std::array<float, 8> INTERCEPT_01 =
+static constexpr unsigned             NOF_INTERVALS_01  = 8;
+static const float                    INTERVAL_WIDTH_01 = 2 * M_SQRT1_42;
+static const std::array<float, 8>     SLOPE_01          = {16 * M_SQRT1_42,
+                                                           12 * M_SQRT1_42,
+                                                           8 * M_SQRT1_42,
+                                                           4 * M_SQRT1_42,
+                                                           4 * M_SQRT1_42,
+                                                           8 * M_SQRT1_42,
+                                                           12 * M_SQRT1_42,
+                                                           16 * M_SQRT1_42};
+static constexpr std::array<float, 8> INTERCEPT_01 =
     {24.0F / 21, 12.0F / 21, 4.0F / 21, 0.0F, 0.0F, -4.0F / 21, -12.0F / 21, -24.0F / 21};
 
-constexpr int                     NOF_INTERVALS_23  = 8;
-const float                       INTERVAL_WIDTH_23 = 2 * M_SQRT1_42;
-static const std::array<float, 8> SLOPE_23          = {8 * M_SQRT1_42,
-                                                       4 * M_SQRT1_42,
-                                                       4 * M_SQRT1_42,
-                                                       8 * M_SQRT1_42,
-                                                       -8 * M_SQRT1_42,
-                                                       -4 * M_SQRT1_42,
-                                                       -4 * M_SQRT1_42,
-                                                       -8 * M_SQRT1_42};
-static const std::array<float, 8> INTERCEPT_23 =
+static constexpr unsigned             NOF_INTERVALS_23  = 8;
+static const float                    INTERVAL_WIDTH_23 = 2 * M_SQRT1_42;
+static const std::array<float, 8>     SLOPE_23          = {8 * M_SQRT1_42,
+                                                           4 * M_SQRT1_42,
+                                                           4 * M_SQRT1_42,
+                                                           8 * M_SQRT1_42,
+                                                           -8 * M_SQRT1_42,
+                                                           -4 * M_SQRT1_42,
+                                                           -4 * M_SQRT1_42,
+                                                           -8 * M_SQRT1_42};
+static constexpr std::array<float, 8> INTERCEPT_23 =
     {20.0F / 21, 8.0F / 21, 8.0F / 21, 12.0F / 21, 12.0F / 21, 8.0F / 21, 8.0F / 21, 20.0F / 21};
 
-static constexpr int              NOF_INTERVALS_45  = 4;
+static constexpr unsigned         NOF_INTERVALS_45  = 4;
 static const float                INTERVAL_WIDTH_45 = 4 * M_SQRT1_42;
 static const std::array<float, 8> SLOPE_45 =
     {4 * M_SQRT1_42, -4 * M_SQRT1_42, 4 * M_SQRT1_42, -4 * M_SQRT1_42, 0, 0, 0, 0};
-static const std::array<float, 8> INTERCEPT_45 = {12.0F / 21, -4.0F / 21, -4.0F / 21, 12.0F / 21, 0, 0, 0, 0};
+static constexpr std::array<float, 8> INTERCEPT_45 = {12.0F / 21, -4.0F / 21, -4.0F / 21, 12.0F / 21, 0, 0, 0, 0};
 
 #ifdef HAVE_AVX512
 static void demod_QAM64_avx512(log_likelihood_ratio* llr, const cf_t* symbol, const float* noise_var)

@@ -48,13 +48,13 @@ main() {
         fi
         if [[ "$mode" == "all" || "$mode" == "extra" ]]; then
             DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends \
-                libzmq3-dev libuhd-dev uhd-host libboost-program-options-dev libdpdk-dev libelf-dev libdwarf-dev
+                libzmq3-dev libuhd-dev uhd-host libboost-program-options-dev libdpdk-dev libelf-dev libdwarf-dev libdw-dev
             
             ARCH=$(uname -m)
             if [[ "$ARCH" == "x86_64" ]]; then
                 DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gpg gpg-agent wget
                 wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
-                echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
+                echo "deb [trusted=yes] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
                 DEBIAN_FRONTEND=noninteractive apt-get update
                 DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends intel-oneapi-mkl-devel libomp-dev
             else
@@ -82,7 +82,7 @@ main() {
             pacman -Syu --noconfirm fftw mbedtls yaml-cpp lksctp-tools gtest
         fi
         if [[ "$mode" == "all" || "$mode" == "extra" ]]; then
-            pacman -Syu --noconfirm zeromq libuhd boost dpdk libelf libdwarf
+            pacman -Syu --noconfirm zeromq libuhd boost dpdk libelf libdwarf elfutils
         fi
 
     elif [[ "$ID" == "rhel" ]]; then
@@ -93,7 +93,7 @@ main() {
             dnf -y install fftw-devel lksctp-tools-devel yaml-cpp-devel mbedtls-devel gcc-toolset-12-libatomic-devel
         fi
         if [[ "$mode" == "all" || "$mode" == "extra" ]]; then
-            dnf -y install cppzmq-devel libusb1-devel boost-devel numactl-devel # dpdk libelf libdwarf
+            dnf -y install cppzmq-devel libusb1-devel boost-devel numactl-devel # dpdk elfutils-libelf-devel libdwarf elfutils-devel
         fi
 
     elif [[ "$ID" == "fedora" ]]; then
@@ -104,7 +104,7 @@ main() {
             dnf -y install fftw-devel lksctp-tools-devel yaml-cpp-devel mbedtls-devel gtest-devel
         fi
         if [[ "$mode" == "all" || "$mode" == "extra" ]]; then
-            dnf -y install cppzmq-devel libusb1-devel boost-devel numactl-devel # dpdk libelf libdwarf
+            dnf -y install cppzmq-devel libusb1-devel boost-devel numactl-devel # dpdk elfutils-libelf-devel libdwarf elfutils-devel
         fi
 
     else

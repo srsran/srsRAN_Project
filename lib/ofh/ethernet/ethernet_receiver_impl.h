@@ -28,6 +28,7 @@
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/ofh/ethernet/ethernet_receiver_config.h"
 #include "srsran/srslog/logger.h"
+#include "srsran/support/synchronization/stop_event.h"
 
 namespace srsran {
 
@@ -39,8 +40,6 @@ namespace ether {
 class receiver_impl : public receiver, private receiver_operation_controller
 {
   static constexpr unsigned BUFFER_SIZE = 9600;
-
-  enum class receiver_status { running, stop_requested, stopped };
 
 public:
   receiver_impl(const receiver_config& config, task_executor& executor_, srslog::basic_logger& logger_);
@@ -73,7 +72,7 @@ private:
   task_executor&                  executor;
   frame_notifier*                 notifier;
   int                             socket_fd = -1;
-  std::atomic<receiver_status>    rx_status{receiver_status::running};
+  stop_event_source               stop_manager;
   ethernet_rx_buffer_pool         buffer_pool;
   receiver_metrics_collector_impl metrics_collector;
 };

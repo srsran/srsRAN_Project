@@ -21,6 +21,7 @@
  */
 
 #include "srsran/ru/generic/ru_generic_executor_mapper.h"
+#include "srsran/support/executors/inline_task_executor.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
@@ -41,7 +42,7 @@ public:
   }
 
   task_executor& downlink_executor() override { return dl_exec; }
-  task_executor& uplink_executor() override { return ul_exec; } // namespace
+  task_executor& uplink_executor() override { return ul_exec; }
   task_executor& prach_executor() override { return prach_exec; }
   task_executor& transmitter_executor() override { return tx_exec; }
   task_executor& receiver_executor() override { return rx_exec; }
@@ -57,39 +58,118 @@ private:
 class ru_generic_executor_mapper_impl : public ru_generic_executor_mapper
 {
 public:
-  ru_generic_executor_mapper_impl(ru_generic_executor_mapper_configuration& config) : async_exec(*config.radio_exec)
+  ru_generic_executor_mapper_impl(const ru_generic_executor_mapper_sequential_configuration& config)
+  {
+    srsran_assert(config.asynchronous_exec != nullptr, "Invalid asynchronous executor.");
+    srsran_assert(config.common_exec != nullptr, "Invalid common executor.");
+
+    async_exec = config.asynchronous_exec;
+
+    for (unsigned i_sector = 0; i_sector != config.nof_sectors; ++i_sector) {
+      task_executor& dl_exec    = inline_executor;
+      task_executor& ul_exec    = inline_executor;
+      task_executor& prach_exec = inline_executor;
+      task_executor& tx_exec    = *config.common_exec;
+      task_executor& rx_exec    = *config.common_exec;
+      sectors.emplace_back(dl_exec, ul_exec, prach_exec, tx_exec, rx_exec);
+    }
+  }
+
+  ru_generic_executor_mapper_impl(const ru_generic_executor_mapper_single_configuration& config)
   {
     srsran_assert(config.radio_exec != nullptr, "Invalid radio executor.");
-    for (auto& sector : config.sectors) {
-      task_executor* dl_exec    = sector.dl_exec;
-      task_executor* ul_exec    = sector.ul_exec;
-      task_executor* prach_exec = sector.prach_exec;
-      task_executor* tx_exec    = sector.tx_exec;
-      task_executor* rx_exec    = sector.rx_exec;
+    srsran_assert(config.high_prio_executor != nullptr, "Invalid high priority executor.");
 
-      srsran_assert(dl_exec != nullptr, "Invalid downlink executor.");
-      srsran_assert(ul_exec != nullptr, "Invalid uplink executor.");
-      srsran_assert(prach_exec != nullptr, "Invalid PRACH executor.");
-      srsran_assert(tx_exec != nullptr, "Invalid transmitter executor.");
-      srsran_assert(rx_exec != nullptr, "Invalid receiver executor.");
+    async_exec = config.radio_exec;
 
-      sectors.emplace_back(*dl_exec, *ul_exec, *prach_exec, *tx_exec, *rx_exec);
+    for (auto& baseband_exec : config.baseband_exec) {
+      srsran_assert(baseband_exec != nullptr, "Invalid baseband cell executor.");
+
+      task_executor& dl_exec    = *config.high_prio_executor;
+      task_executor& ul_exec    = inline_executor;
+      task_executor& prach_exec = *config.high_prio_executor;
+      task_executor& tx_exec    = *baseband_exec;
+      task_executor& rx_exec    = *baseband_exec;
+
+      sectors.emplace_back(dl_exec, ul_exec, prach_exec, tx_exec, rx_exec);
+    }
+  }
+
+  ru_generic_executor_mapper_impl(const ru_generic_executor_mapper_dual_configuration& config)
+  {
+    srsran_assert(config.radio_exec != nullptr, "Invalid radio executor.");
+    srsran_assert(config.high_prio_executor != nullptr, "Invalid high priority executor.");
+
+    async_exec = config.radio_exec;
+
+    for (auto& baseband_exec : config.baseband_exec) {
+      srsran_assert(baseband_exec.rx_exec != nullptr, "Invalid receive baseband cell executor.");
+      srsran_assert(baseband_exec.tx_exec != nullptr, "Invalid transmit baseband cell executor.");
+
+      task_executor& dl_exec    = *config.high_prio_executor;
+      task_executor& ul_exec    = inline_executor;
+      task_executor& prach_exec = *config.high_prio_executor;
+      task_executor& tx_exec    = *baseband_exec.tx_exec;
+      task_executor& rx_exec    = *baseband_exec.rx_exec;
+
+      sectors.emplace_back(dl_exec, ul_exec, prach_exec, tx_exec, rx_exec);
+    }
+  }
+
+  ru_generic_executor_mapper_impl(const ru_generic_executor_mapper_triple_configuration& config)
+  {
+    srsran_assert(config.radio_exec != nullptr, "Invalid radio executor.");
+    srsran_assert(config.high_prio_executor != nullptr, "Invalid high priority executor.");
+
+    async_exec = config.radio_exec;
+
+    for (auto& baseband_exec : config.baseband_exec) {
+      srsran_assert(baseband_exec.rx_exec != nullptr, "Invalid receive baseband cell executor.");
+      srsran_assert(baseband_exec.tx_exec != nullptr, "Invalid transmit baseband cell executor.");
+      srsran_assert(baseband_exec.ul_exec != nullptr, "Invalid baseband demodulator cell executor.");
+
+      task_executor& dl_exec    = *config.high_prio_executor;
+      task_executor& ul_exec    = *baseband_exec.ul_exec;
+      task_executor& prach_exec = *config.high_prio_executor;
+      task_executor& tx_exec    = *baseband_exec.tx_exec;
+      task_executor& rx_exec    = *baseband_exec.rx_exec;
+
+      sectors.emplace_back(dl_exec, ul_exec, prach_exec, tx_exec, rx_exec);
     }
   }
 
   ru_sdr_sector_executor_mapper& get_sector_mapper(unsigned index) override { return sectors[index]; }
 
-  task_executor& asynchronous_radio_executor() override { return async_exec; }
+  task_executor& asynchronous_radio_executor() override { return *async_exec; }
 
 private:
   std::vector<ru_sdr_sector_executor_mapper_impl> sectors;
-  task_executor&                                  async_exec;
+  task_executor*                                  async_exec;
+  inline_task_executor                            inline_executor;
 };
 
 } // namespace
 
 std::unique_ptr<ru_generic_executor_mapper>
-srsran::create_ru_generic_executor_mapper(ru_generic_executor_mapper_configuration& config)
+srsran::create_ru_generic_executor_mapper(const ru_generic_executor_mapper_sequential_configuration& config)
+{
+  return std::make_unique<ru_generic_executor_mapper_impl>(config);
+}
+
+std::unique_ptr<ru_generic_executor_mapper>
+srsran::create_ru_generic_executor_mapper(const srsran::ru_generic_executor_mapper_single_configuration& config)
+{
+  return std::make_unique<ru_generic_executor_mapper_impl>(config);
+}
+
+std::unique_ptr<ru_generic_executor_mapper>
+srsran::create_ru_generic_executor_mapper(const srsran::ru_generic_executor_mapper_dual_configuration& config)
+{
+  return std::make_unique<ru_generic_executor_mapper_impl>(config);
+}
+
+std::unique_ptr<ru_generic_executor_mapper>
+srsran::create_ru_generic_executor_mapper(const srsran::ru_generic_executor_mapper_triple_configuration& config)
 {
   return std::make_unique<ru_generic_executor_mapper_impl>(config);
 }

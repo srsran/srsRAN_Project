@@ -292,6 +292,17 @@ cell_slot_resource_allocator::cell_slot_resource_allocator(const cell_configurat
 void cell_slot_resource_allocator::slot_indication(slot_point new_slot)
 {
   // Clear previous results.
+  clear();
+
+  // Initiate new slot in the same grid ring location.
+  slot                     = new_slot;
+  result.success           = true;
+  result.dl.nof_dl_symbols = cfg.get_nof_dl_symbol_per_slot(new_slot);
+  result.ul.nof_ul_symbols = cfg.get_nof_ul_symbol_per_slot(new_slot);
+}
+
+void cell_slot_resource_allocator::clear()
+{
   result.dl.dl_pdcchs.clear();
   result.dl.ul_pdcchs.clear();
   result.dl.bc.ssb_info.clear();
@@ -308,12 +319,7 @@ void cell_slot_resource_allocator::slot_indication(slot_point new_slot)
   result.failed_attempts.uci   = 0;
   dl_res_grid.clear();
   ul_res_grid.clear();
-
-  // Initiate new slot in the same position.
-  slot                     = new_slot;
-  result.success           = true;
-  result.dl.nof_dl_symbols = cfg.get_nof_dl_symbol_per_slot(new_slot);
-  result.ul.nof_ul_symbols = cfg.get_nof_ul_symbol_per_slot(new_slot);
+  result.success = false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -366,4 +372,12 @@ void cell_resource_allocator::slot_indication(slot_point sl_tx)
     old_slot_res->slot_indication(slot_to_reset + slots.size());
   }
   last_slot_ind = sl_tx;
+}
+
+void cell_resource_allocator::stop()
+{
+  for (unsigned i = 0, sz = slots.size(); i != sz; ++i) {
+    slots[i]->clear();
+  }
+  last_slot_ind = {};
 }

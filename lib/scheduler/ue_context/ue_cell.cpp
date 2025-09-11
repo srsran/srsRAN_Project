@@ -24,7 +24,6 @@
 #include "../support/dmrs_helpers.h"
 #include "../support/mcs_calculator.h"
 #include "../support/pdcch_aggregation_level_calculator.h"
-#include "../support/prbs_calculator.h"
 #include "../support/sch_pdu_builder.h"
 #include "ue_drx_controller.h"
 #include "srsran/ran/sch/tbs_calculator.h"
@@ -34,11 +33,11 @@
 using namespace srsran;
 
 /// Number of UL HARQs reserved per UE (Implementation-defined)
-constexpr unsigned NOF_UL_HARQS = 16;
+static constexpr unsigned NOF_UL_HARQS = 16;
 
 /// The default number of HARQ processes to be used on the PDSCH of a serving cell. See TS 38.331, \c
 /// nrofHARQ-ProcessesForPDSCH.
-constexpr unsigned DEFAULT_NOF_DL_HARQS = 8;
+static constexpr unsigned DEFAULT_NOF_DL_HARQS = 8;
 
 ue_cell::ue_cell(du_ue_index_t                ue_index_,
                  rnti_t                       crnti_val,

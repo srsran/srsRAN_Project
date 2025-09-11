@@ -115,6 +115,8 @@ ri_li_cqi_cri_sizes srsran::get_ri_li_cqi_cri_sizes(pmi_codebook_type        pmi
   }
 }
 
+namespace {
+
 /// Collects PMI sizes.
 struct csi_report_typeI_single_panel_pmi_sizes {
   unsigned i_1_1;
@@ -122,6 +124,8 @@ struct csi_report_typeI_single_panel_pmi_sizes {
   unsigned i_1_3;
   unsigned i_2;
 };
+
+} // namespace
 
 /// Gets PMI sizes for TypeI-SinglePanel, Mode 1 codebook configuration as per TS38.212 Table 6.3.1.1.2-1.
 static csi_report_typeI_single_panel_pmi_sizes

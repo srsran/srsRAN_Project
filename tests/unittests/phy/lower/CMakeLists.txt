@@ -18,6 +18,8 @@
 # and at http://www.gnu.org/licenses/.
 #
 
+set_directory_properties(PROPERTIES LABELS "phy")
+
 add_subdirectory(modulation)
 add_subdirectory(processors)
 

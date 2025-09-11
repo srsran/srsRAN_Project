@@ -116,6 +116,11 @@ std::unique_ptr<log_formatter> srslog::create_text_formatter()
   return std::unique_ptr<log_formatter>(new text_formatter);
 }
 
+std::unique_ptr<log_formatter> srslog::create_contextual_text_formatter()
+{
+  return std::unique_ptr<log_formatter>(new contextual_text_formatter);
+}
+
 std::unique_ptr<log_formatter> srslog::create_json_formatter()
 {
   return std::unique_ptr<log_formatter>(new json_formatter);
@@ -433,8 +438,8 @@ sink* srslog::create_file_sink(const std::string& path, size_t max_size, bool ma
       .get_sink_repo()
       .emplace(std::piecewise_construct,
                std::forward_as_tuple(path),
-               std::forward_as_tuple(
-                   new file_sink(path, max_size, mark_eof, false, std::unique_ptr<log_formatter>(new text_formatter))))
+               std::forward_as_tuple(new file_sink(
+                   path, max_size, mark_eof, false, std::unique_ptr<log_formatter>(new contextual_text_formatter))))
       .get();
 }
 

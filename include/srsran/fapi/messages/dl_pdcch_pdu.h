@@ -37,7 +37,7 @@ namespace fapi {
 /// \brief Maximum number of DCIs per PDCCH PDU.
 ///
 /// \note DCIs are grouped by CORESET, BWP and starting symbol of the PDCCH PDU.
-static constexpr size_t MAX_NUM_DCIS_PER_PDCCH_PDU = MAX_DL_PDCCH_PDUS_PER_SLOT;
+constexpr size_t MAX_NUM_DCIS_PER_PDCCH_PDU = MAX_DL_PDCCH_PDUS_PER_SLOT;
 
 /// PDCCH PDU maintenance information added in FAPIv3.
 struct dl_pdcch_pdu_maintenance_v3 {

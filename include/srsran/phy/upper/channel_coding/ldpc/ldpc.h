@@ -97,20 +97,20 @@ constexpr unsigned NOF_LIFTING_SIZES = 51;
 constexpr unsigned NOF_LIFTING_INDICES = 8;
 
 /// Array of lifting sizes, for iterations.
-static constexpr std::array<lifting_size_t, NOF_LIFTING_SIZES> all_lifting_sizes = {
+constexpr std::array<lifting_size_t, NOF_LIFTING_SIZES> all_lifting_sizes = {
     LS2,   LS3,   LS4,   LS5,   LS6,   LS7,   LS8,   LS9,   LS10,  LS11,  LS12,  LS13,  LS14,
     LS15,  LS16,  LS18,  LS20,  LS22,  LS24,  LS26,  LS28,  LS30,  LS32,  LS36,  LS40,  LS44,
     LS48,  LS52,  LS56,  LS60,  LS64,  LS72,  LS80,  LS88,  LS96,  LS104, LS112, LS120, LS128,
     LS144, LS160, LS176, LS192, LS208, LS224, LS240, LS256, LS288, LS320, LS352, LS384};
 
 /// Filler bit identifier
-static constexpr uint8_t FILLER_BIT = 254;
+constexpr uint8_t FILLER_BIT = 254;
 
 /// Maximum LDPC message size in bits.
-static constexpr unsigned MAX_MESSAGE_SIZE = all_lifting_sizes.back() * 22;
+constexpr unsigned MAX_MESSAGE_SIZE = all_lifting_sizes.back() * 22;
 
 /// Maximum LDPC encoded codeblock size in bits.
-static constexpr unsigned MAX_CODEBLOCK_SIZE = all_lifting_sizes.back() * 66;
+constexpr unsigned MAX_CODEBLOCK_SIZE = all_lifting_sizes.back() * 66;
 
 /// \brief Maximum LDPC rate-matched codeblock size in bits.
 ///
@@ -119,13 +119,13 @@ static constexpr unsigned MAX_CODEBLOCK_SIZE = all_lifting_sizes.back() * 66;
 /// \f[
 /// \textup{MAX_MESSAGE_SIZE} \times \lceil 1024 / 30 \rceil = \textup{MAX_MESSAGE_SIZE} \times 35.
 /// \f]
-static constexpr unsigned MAX_CODEBLOCK_RM_SIZE = MAX_MESSAGE_SIZE * 35;
+constexpr unsigned MAX_CODEBLOCK_RM_SIZE = MAX_MESSAGE_SIZE * 35;
 
 /// \brief Computes the transport block CRC size from the transport block size.
 ///
 /// \param[in] tbs Transport block size as a number of bits.
 /// \return The number of CRC bits appended to a transport block.
-inline constexpr units::bits compute_tb_crc_size(units::bits tbs)
+constexpr units::bits compute_tb_crc_size(units::bits tbs)
 {
   using namespace units::literals;
   constexpr units::bits MAX_BITS_CRC16 = 3824_bits;
@@ -137,7 +137,7 @@ inline constexpr units::bits compute_tb_crc_size(units::bits tbs)
 /// \param[in] tbs Transport block size as a number of bits (not including CRC).
 /// \param[in] bg  Base graph.
 /// \return The number of codeblocks a transport block of size \c tbs is encoded into when using using base graph \c bg.
-inline constexpr unsigned compute_nof_codeblocks(units::bits tbs, ldpc_base_graph_type bg)
+constexpr unsigned compute_nof_codeblocks(units::bits tbs, ldpc_base_graph_type bg)
 {
   using namespace units::literals;
   constexpr units::bits CBLOCK_CRC_LENGTH = 24_bits;
@@ -197,7 +197,7 @@ inline unsigned compute_lifting_size(units::bits tbs, ldpc_base_graph_type base_
 /// As per TS38.212 Section 5.2.2, the number bits to encode is fixed for a given base graph and a given lifting size.
 /// The codeblock consists of information bits, CRC bits and the number of filler bits required to match the codeblock
 /// size.
-inline units::bits compute_codeblock_size(ldpc_base_graph_type base_graph, unsigned lifting_size)
+constexpr units::bits compute_codeblock_size(ldpc_base_graph_type base_graph, unsigned lifting_size)
 {
   constexpr unsigned base_length_BG1 = 22;
   constexpr unsigned base_length_BG2 = 10;
@@ -207,7 +207,7 @@ inline units::bits compute_codeblock_size(ldpc_base_graph_type base_graph, unsig
 }
 
 /// Computes the codeblock size after the LDPC encoding.
-inline units::bits compute_full_codeblock_size(ldpc_base_graph_type base_graph, units::bits codeblock_size)
+constexpr units::bits compute_full_codeblock_size(ldpc_base_graph_type base_graph, units::bits codeblock_size)
 {
   // BG1 has rate 1/3 and BG2 has rate 1/5.
   constexpr unsigned INVERSE_BG1_RATE = 3;
@@ -222,7 +222,7 @@ inline units::bits compute_full_codeblock_size(ldpc_base_graph_type base_graph, 
 /// \param[in] tbs_lbrm       Transport block size for limited buffer rate match, parameter \f$TBS_{LBRM}\f$.
 /// \param[in] nof_codeblocks Number of codeblocks for the transport block, parameter \f$C\f$.
 /// \return The minimum between the computed \f$N_{ref}\f$ and the maximum full codeblock size.
-inline units::bits compute_N_ref(units::bytes tbs_lbrm, unsigned nof_codeblocks)
+constexpr units::bits compute_N_ref(units::bytes tbs_lbrm, unsigned nof_codeblocks)
 {
   return std::min(units::bits(tbs_lbrm.to_bits().value() * 3 / (2 * nof_codeblocks)), units::bits(MAX_CODEBLOCK_SIZE));
 }

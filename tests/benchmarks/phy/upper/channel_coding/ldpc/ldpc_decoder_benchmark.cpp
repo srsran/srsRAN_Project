@@ -77,7 +77,7 @@ static void parse_args(int argc, char** argv)
       case 'h':
       default:
         usage(argv[0]);
-        exit(0);
+        std::exit(0);
     }
   }
 }
@@ -182,12 +182,13 @@ int main(int argc, char** argv)
 
         fmt::memory_buffer descr_buffer;
         fmt::format_to(std::back_inserter(descr_buffer),
-                       "BG={} LS={:<3} cb_len={}",
+                       "BG={} LS={:<3} cb_len={} R={:.3f}",
                        fmt::underlying(bg),
                        fmt::underlying(ls),
-                       cb_length);
-        perf_meas_generic.new_measure(to_string(descr_buffer), codeblock.size(), [&]() {
-          decoder->decode(message, codeblock, crc16.get(), {cfg_dec, {nof_iterations, 0.8}});
+                       cb_length,
+                       static_cast<double>(msg_length) / static_cast<double>(cb_length));
+        perf_meas_generic.new_measure(to_string(descr_buffer), msg_length, [&]() {
+          decoder->decode(message, codeblock, crc16.get(), {cfg_dec, {false, nof_iterations, 0.8}});
           do_not_optimize(codeblock);
         });
       }

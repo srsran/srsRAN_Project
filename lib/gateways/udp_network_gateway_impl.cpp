@@ -130,9 +130,9 @@ void udp_network_gateway_impl::handle_pdu_impl(span<udp_tx_pdu_t> pdus)
     }
   }
 
-  int ret = sendmmsg(sock_fd.value(), tx_ctx.mmsg.data(), msg_index, 0);
+  int ret = ::sendmmsg(sock_fd.value(), tx_ctx.mmsg.data(), msg_index, 0);
   if (ret < 0) {
-    logger.error("Could not send {} packets to socket. ret={} error={}", msg_index, ret, strerror(errno));
+    logger.error("Could not send {} packets to socket. ret={} error={}", msg_index, ret, ::strerror(errno));
   }
 }
 
@@ -156,9 +156,9 @@ bool udp_network_gateway_impl::create_and_bind()
   std::string      bind_port = std::to_string(config.bind_port);
   struct addrinfo* results;
 
-  int ret = getaddrinfo(config.bind_address.c_str(), bind_port.c_str(), &hints, &results);
+  int ret = ::getaddrinfo(config.bind_address.c_str(), bind_port.c_str(), &hints, &results);
   if (ret != 0) {
-    logger.error("Getaddrinfo error: {} - {}", config.bind_address, gai_strerror(ret));
+    logger.error("Getaddrinfo error: {} - {}", config.bind_address, ::gai_strerror(ret));
     return false;
   }
 
@@ -173,14 +173,14 @@ bool udp_network_gateway_impl::create_and_bind()
 
     char ip_addr[NI_MAXHOST];
     char port_nr[NI_MAXSERV];
-    getnameinfo(
+    ::getnameinfo(
         result->ai_addr, result->ai_addrlen, ip_addr, NI_MAXHOST, port_nr, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV);
     logger.debug("Binding to {} port {}", ip_addr, port_nr);
 
     if (::bind(sock_fd.value(), result->ai_addr, result->ai_addrlen) == -1) {
       // binding failed, try next address
       ret = errno;
-      logger.debug("Failed to bind to {}:{} - {}", ip_addr, port_nr, strerror(ret));
+      logger.debug("Failed to bind to {}:{} - {}", ip_addr, port_nr, ::strerror(ret));
       close_socket();
       continue;
     }
@@ -192,7 +192,7 @@ bool udp_network_gateway_impl::create_and_bind()
     }
 
     // store client address
-    memcpy(&local_addr, result->ai_addr, result->ai_addrlen);
+    std::memcpy(&local_addr, result->ai_addr, result->ai_addrlen);
     local_addrlen     = result->ai_addrlen;
     local_ai_family   = result->ai_family;
     local_ai_socktype = result->ai_socktype;
@@ -212,19 +212,19 @@ bool udp_network_gateway_impl::create_and_bind()
     break;
   }
 
-  freeaddrinfo(results);
+  ::freeaddrinfo(results);
 
   if (not sock_fd.is_open()) {
     fmt::print("Failed to bind {} socket to {}:{}. {}\n",
                ipproto_to_string(hints.ai_protocol),
                config.bind_address,
                config.bind_port,
-               strerror(ret));
+               ::strerror(ret));
     logger.error("Failed to bind {} socket to {}:{}. {}",
                  ipproto_to_string(hints.ai_protocol),
                  config.bind_address,
                  config.bind_port,
-                 strerror(ret));
+                 ::strerror(ret));
     return false;
   }
 
@@ -288,7 +288,7 @@ void udp_network_gateway_impl::receive()
   int rx_msgs = recvmmsg(sock_fd.value(), rx_context.rx_msghdr.data(), config.rx_max_mmsg, MSG_WAITFORONE, nullptr);
   srslog::fetch_basic_logger("IO-EPOLL").info("UDP rx {} packets, max is {}", rx_msgs, config.rx_max_mmsg);
   if (rx_msgs == -1 && errno != EAGAIN) {
-    logger.error("Error reading from UDP socket: {}", strerror(errno));
+    logger.error("Error reading from UDP socket: {}", ::strerror(errno));
     return;
   }
   if (rx_msgs == -1 && errno == EAGAIN) {
@@ -340,9 +340,9 @@ std::optional<uint16_t> udp_network_gateway_impl::get_bind_port() const
   sockaddr*        gw_addr     = (sockaddr*)&gw_addr_storage;
   socklen_t        gw_addr_len = sizeof(gw_addr_storage);
 
-  int ret = getsockname(sock_fd.value(), gw_addr, &gw_addr_len);
+  int ret = ::getsockname(sock_fd.value(), gw_addr, &gw_addr_len);
   if (ret != 0) {
-    logger.error("Failed `getsockname` in UDP network gateway with sock_fd={}: {}", sock_fd.value(), strerror(errno));
+    logger.error("Failed `getsockname` in UDP network gateway with sock_fd={}: {}", sock_fd.value(), ::strerror(errno));
     return {};
   }
 
@@ -380,21 +380,22 @@ bool udp_network_gateway_impl::get_bind_address(std::string& ip_address) const
   sockaddr*        gw_addr         = (sockaddr*)&gw_addr_storage;
   socklen_t        gw_addr_len     = sizeof(gw_addr_storage);
 
-  int ret = getsockname(sock_fd.value(), gw_addr, &gw_addr_len);
+  int ret = ::getsockname(sock_fd.value(), gw_addr, &gw_addr_len);
   if (ret != 0) {
-    logger.error("Failed `getsockname` in UDP network gateway with sock_fd={}: {}", sock_fd.value(), strerror(errno));
+    logger.error("Failed `getsockname` in UDP network gateway with sock_fd={}: {}", sock_fd.value(), ::strerror(errno));
     return false;
   }
 
   char addr_str[INET6_ADDRSTRLEN] = {};
   if (gw_addr->sa_family == AF_INET) {
     if (inet_ntop(AF_INET, &((sockaddr_in*)gw_addr)->sin_addr, addr_str, INET6_ADDRSTRLEN) == nullptr) {
-      logger.error("Could not convert sockaddr_in to string. sock_fd={}, errno={}", sock_fd.value(), strerror(errno));
+      logger.error("Could not convert sockaddr_in to string. sock_fd={}, errno={}", sock_fd.value(), ::strerror(errno));
       return false;
     }
   } else if (gw_addr->sa_family == AF_INET6) {
     if (inet_ntop(AF_INET6, &((sockaddr_in6*)gw_addr)->sin6_addr, addr_str, INET6_ADDRSTRLEN) == nullptr) {
-      logger.error("Could not convert sockaddr_in6 to string. sock_fd={}, errno={}", sock_fd.value(), strerror(errno));
+      logger.error(
+          "Could not convert sockaddr_in6 to string. sock_fd={}, errno={}", sock_fd.value(), ::strerror(errno));
       return false;
     }
   } else {
@@ -436,15 +437,15 @@ bool udp_network_gateway_impl::set_sockopts()
 
 bool udp_network_gateway_impl::set_non_blocking()
 {
-  int flags = fcntl(sock_fd.value(), F_GETFL, 0);
+  int flags = ::fcntl(sock_fd.value(), F_GETFL, 0);
   if (flags == -1) {
-    logger.error("Error getting socket flags: {}", strerror(errno));
+    logger.error("Error getting socket flags: {}", ::strerror(errno));
     return false;
   }
 
-  int s = fcntl(sock_fd.value(), F_SETFL, flags | O_NONBLOCK);
+  int s = ::fcntl(sock_fd.value(), F_SETFL, flags | O_NONBLOCK);
   if (s == -1) {
-    logger.error("Error setting socket to non-blocking mode: {}", strerror(errno));
+    logger.error("Error setting socket to non-blocking mode: {}", ::strerror(errno));
     return false;
   }
 
@@ -457,8 +458,8 @@ bool udp_network_gateway_impl::set_receive_timeout(unsigned rx_timeout_sec)
   tv.tv_sec  = rx_timeout_sec;
   tv.tv_usec = 0;
 
-  if (setsockopt(sock_fd.value(), SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv)) {
-    logger.error("Couldn't set receive timeout for socket: {}", strerror(errno));
+  if (::setsockopt(sock_fd.value(), SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv)) {
+    logger.error("Couldn't set receive timeout for socket: {}", ::strerror(errno));
     return false;
   }
 
@@ -468,8 +469,8 @@ bool udp_network_gateway_impl::set_receive_timeout(unsigned rx_timeout_sec)
 bool udp_network_gateway_impl::set_reuse_addr()
 {
   int one = 1;
-  if (setsockopt(sock_fd.value(), SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one))) {
-    logger.error("Couldn't set reuseaddr for socket: {}", strerror(errno));
+  if (::setsockopt(sock_fd.value(), SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one))) {
+    logger.error("Couldn't set reuseaddr for socket: {}", ::strerror(errno));
     return false;
   }
   return true;
@@ -483,15 +484,15 @@ bool udp_network_gateway_impl::set_dscp()
   uint8_t option = config.dscp.value() << 2; // DSCP is the only the 6 most significant bits.
   if (local_addr.ss_family == AF_INET) {
     if (::setsockopt(sock_fd.value(), IPPROTO_IP, IP_TOS, &option, sizeof(option))) {
-      logger.error("Couldn't set DSCP for socket: {}", strerror(errno));
+      logger.error("Couldn't set DSCP for socket: {}", ::strerror(errno));
       return false;
     }
     logger.debug("Set DSCP for socket. dscp={}", config.dscp.value());
     return true;
   }
   if (local_addr.ss_family == AF_INET6) {
-    if (setsockopt(sock_fd.value(), IPPROTO_IPV6, IPV6_TCLASS, &option, sizeof(option))) {
-      logger.error("Couldn't set DSCP for socket: {}", strerror(errno));
+    if (::setsockopt(sock_fd.value(), IPPROTO_IPV6, IPV6_TCLASS, &option, sizeof(option))) {
+      logger.error("Couldn't set DSCP for socket: {}", ::strerror(errno));
       return false;
     }
     logger.debug("Set DSCP for socket. dscp={}", config.dscp.value());
@@ -504,7 +505,7 @@ bool udp_network_gateway_impl::set_dscp()
 bool udp_network_gateway_impl::close_socket()
 {
   if (not sock_fd.close()) {
-    logger.error("Error closing socket: {}", strerror(errno));
+    logger.error("Error closing socket: {}", ::strerror(errno));
     return false;
   }
   return true;

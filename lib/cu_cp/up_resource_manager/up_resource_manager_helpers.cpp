@@ -25,8 +25,8 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-// Verifies if any of the PDU sessions to be setup/modified already contains a DRB with the given ID.
-bool contains_drb(const up_config_update& config_update, drb_id_t drb_id)
+/// Verifies if any of the PDU sessions to be setup/modified already contains a DRB with the given ID.
+static bool contains_drb(const up_config_update& config_update, drb_id_t drb_id)
 {
   for (const auto& setup_item : config_update.pdu_sessions_to_setup_list) {
     for (const auto& drb_item : setup_item.second.drb_to_add) {
@@ -46,7 +46,7 @@ bool contains_drb(const up_config_update& config_update, drb_id_t drb_id)
   return false;
 }
 
-bool contains_drb(const up_context& context, drb_id_t new_drb_id)
+static bool contains_drb(const up_context& context, drb_id_t new_drb_id)
 {
   for (const auto& drb : context.drb_map) {
     if (drb.first == new_drb_id) {
@@ -56,7 +56,7 @@ bool contains_drb(const up_context& context, drb_id_t new_drb_id)
   return false;
 }
 
-bool contains_drb(const up_pdu_session_context_update& new_session_context, drb_id_t new_drb_id)
+static bool contains_drb(const up_pdu_session_context_update& new_session_context, drb_id_t new_drb_id)
 {
   return (new_session_context.drb_to_add.find(new_drb_id) != new_session_context.drb_to_add.end());
 }
@@ -209,12 +209,12 @@ bool srsran::srs_cu_cp::is_valid(const cu_cp_pdu_session_resource_release_comman
 }
 
 /// \brief Allocates a QoS flow to a new DRB. Inserts it in PDU session object.
-drb_id_t allocate_qos_flow(up_pdu_session_context_update&     new_session_context,
-                           const qos_flow_setup_request_item& qos_flow,
-                           const up_config_update&            config_update,
-                           const up_context&                  full_context,
-                           const up_resource_manager_cfg&     cfg,
-                           const srslog::basic_logger&        logger)
+static drb_id_t allocate_qos_flow(up_pdu_session_context_update&     new_session_context,
+                                  const qos_flow_setup_request_item& qos_flow,
+                                  const up_config_update&            config_update,
+                                  const up_context&                  full_context,
+                                  const up_resource_manager_cfg&     cfg,
+                                  const srslog::basic_logger&        logger)
 {
   five_qi_t five_qi = get_five_qi(qos_flow, cfg, logger);
   srsran_assert(five_qi != five_qi_t::invalid, "5QI cannot be invalid.");

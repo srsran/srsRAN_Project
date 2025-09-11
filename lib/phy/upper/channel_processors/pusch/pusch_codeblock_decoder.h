@@ -112,6 +112,7 @@ public:
   /// \param[in] crc_poly            CRC polynomial used for the code block.
   /// \param[in] use_early_stop      Set to true to allow the LDPC decoder to stop decoding when the CRC matches.
   /// \param[in] nof_ldpc_iterations Number of LDPC decoder iterations.
+  /// \param[in] force_decoding      Forces decoding even if the number of valid soft bits is insufficient.
   /// \param[in] metadata            Code block metadata.
   /// \return The number of iterations if the CRC matches after the LDPC decoder. Otherwise, \c std::nullopt.
   std::optional<unsigned> decode(bit_buffer                       cb_data,
@@ -121,6 +122,7 @@ public:
                                  srsran::crc_generator_poly       crc_poly,
                                  bool                             use_early_stop,
                                  unsigned                         nof_ldpc_iterations,
+                                 bool                             force_decoding,
                                  const codeblock_metadata&        metadata);
 
 private:

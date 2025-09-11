@@ -108,7 +108,8 @@ public:
 class ru_controller_generic_impl : public ru_controller, public ru_operation_controller
 {
 public:
-  explicit ru_controller_generic_impl(double srate_MHz_);
+  explicit ru_controller_generic_impl(double                                               srate_MHz_,
+                                      std::optional<std::chrono::system_clock::time_point> start_time);
 
   // See interface for documentation.
   ru_operation_controller& get_operation_controller() override { return *this; }
@@ -135,19 +136,21 @@ public:
   {
     radio                  = &session;
     center_freq_controller = ru_center_frequency_controller_generic_impl(low_phy_crtl, radio);
+    gain_controller        = ru_gain_controller_generic_impl(radio);
   }
 
   /// Set low phy sectors.
   void set_lower_phy_sectors(std::vector<lower_phy_sector*> sectors);
 
 private:
-  double                                      srate_MHz;
-  radio_session*                              radio;
-  ru_gain_controller_generic_impl             gain_controller;
-  std::vector<lower_phy_sector*>              low_phy_crtl;
-  ru_cfo_controller_generic_impl              cfo_controller;
-  ru_center_frequency_controller_generic_impl center_freq_controller;
-  ru_tx_time_offset_controller_generic_impl   tx_time_offset_controller;
+  double                                               srate_MHz;
+  std::optional<std::chrono::system_clock::time_point> start_time;
+  radio_session*                                       radio;
+  ru_gain_controller_generic_impl                      gain_controller;
+  std::vector<lower_phy_sector*>                       low_phy_crtl;
+  ru_cfo_controller_generic_impl                       cfo_controller;
+  ru_center_frequency_controller_generic_impl          center_freq_controller;
+  ru_tx_time_offset_controller_generic_impl            tx_time_offset_controller;
 };
 
 } // namespace srsran

@@ -60,7 +60,7 @@ bool srsran::set_reuse_addr(const unique_fd& fd, srslog::basic_logger& logger)
   srsran_assert(fd.is_open(), "fd is not open");
   int one = 1;
   if (::setsockopt(fd.value(), SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) != 0) {
-    logger.error("fd={}: Couldn't set reuseaddr for socket: {}", fd.value(), strerror(errno));
+    logger.error("fd={}: Couldn't set reuseaddr for socket: {}", fd.value(), ::strerror(errno));
     return false;
   }
   return true;
@@ -77,11 +77,11 @@ bool srsran::bind_to_interface(const unique_fd& fd, const std::string& interface
   std::strncpy(ifr.ifr_ifrn.ifrn_name, interface.c_str(), IFNAMSIZ - 1);
   ifr.ifr_ifrn.ifrn_name[IFNAMSIZ - 1] = 0; // ensure null termination in case input exceeds maximum length
 
-  if (setsockopt(fd.value(), SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)) < 0) {
+  if (::setsockopt(fd.value(), SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)) < 0) {
     logger.error("fd={}: Could not bind socket to interface \"{}\". errno=\"{}\"",
                  fd.value(),
                  ifr.ifr_ifrn.ifrn_name,
-                 strerror(errno));
+                 ::strerror(errno));
     return false;
   }
   return true;
@@ -92,12 +92,12 @@ bool srsran::sockaddr_to_ip_str(const sockaddr* addr, std::string& ip_address, s
   char addr_str[INET6_ADDRSTRLEN] = {};
   if (addr->sa_family == AF_INET) {
     if (inet_ntop(AF_INET, &((sockaddr_in*)addr)->sin_addr, addr_str, INET6_ADDRSTRLEN) == nullptr) {
-      logger.error("Could not convert sockaddr_in to string. errno=\"{}\"", strerror(errno));
+      logger.error("Could not convert sockaddr_in to string. errno=\"{}\"", ::strerror(errno));
       return false;
     }
   } else if (addr->sa_family == AF_INET6) {
     if (inet_ntop(AF_INET6, &((sockaddr_in6*)addr)->sin6_addr, addr_str, INET6_ADDRSTRLEN) == nullptr) {
-      logger.error("Could not convert sockaddr_in6 to string. errno=\"{}\"", strerror(errno));
+      logger.error("Could not convert sockaddr_in6 to string. errno=\"{}\"", ::strerror(errno));
       return false;
     }
   } else {
@@ -129,7 +129,7 @@ bool srsran::set_receive_timeout(const unique_fd& fd, std::chrono::seconds rx_ti
   tv.tv_usec = 0;
 
   if (::setsockopt(fd.value(), SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv)) != 0) {
-    logger.error("SCTP failed to be created. Cause: Couldn't set receive timeout for socket: {}", strerror(errno));
+    logger.error("SCTP failed to be created. Cause: Couldn't set receive timeout for socket: {}", ::strerror(errno));
     return false;
   }
   return true;
@@ -141,15 +141,15 @@ bool srsran::set_non_blocking(const unique_fd& fd, srslog::basic_logger& logger)
     logger.error("Failed to set socket as non-blocking. Cause: Socket is closed");
     return false;
   }
-  int flags = fcntl(fd.value(), F_GETFL, 0);
+  int flags = ::fcntl(fd.value(), F_GETFL, 0);
   if (flags == -1) {
-    logger.error("Failed to set socket as non-blocking. Cause: Error getting socket flags: {}", strerror(errno));
+    logger.error("Failed to set socket as non-blocking. Cause: Error getting socket flags: {}", ::strerror(errno));
     return false;
   }
 
-  int s = fcntl(fd.value(), F_SETFL, flags | O_NONBLOCK);
+  int s = ::fcntl(fd.value(), F_SETFL, flags | O_NONBLOCK);
   if (s == -1) {
-    logger.error("Failed to set socket as non-blocking. Cause: Error {}", strerror(errno));
+    logger.error("Failed to set socket as non-blocking. Cause: Error {}", ::strerror(errno));
     return false;
   }
 

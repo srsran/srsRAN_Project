@@ -21,6 +21,7 @@
  */
 
 #include "ofh_uplink_request_handler_impl.h"
+#include "../support/logger_utils.h"
 #include "helpers.h"
 #include "srsran/ofh/ofh_error_notifier.h"
 #include "srsran/phy/support/shared_resource_grid.h"
@@ -31,21 +32,6 @@
 
 using namespace srsran;
 using namespace ofh;
-
-namespace {
-/// Open Fronthaul error notifier dummy implementation.
-class error_notifier_dummy : public error_notifier
-{
-public:
-  void on_late_downlink_message(const error_context& context) override {}
-  void on_late_uplink_message(const error_context& context) override {}
-  void on_late_prach_message(const error_context& context) override {}
-};
-
-} // namespace
-
-/// Dummy error notifier for the uplink request handler construction.
-static error_notifier_dummy dummy_err_notifier;
 
 /// Determines and returns Open Fronthaul filter index type given the PRACH preamble info and associated context.
 static filter_index_type get_prach_cplane_filter_index(const prach_buffer_context&       context,
@@ -98,7 +84,8 @@ uplink_request_handler_impl::uplink_request_handler_impl(const uplink_request_ha
   data_flow(std::move(dependencies.data_flow)),
   frame_pool(std::move(dependencies.frame_pool)),
   err_notifier(dependencies.err_notifier),
-  metrics_collector(data_flow->get_metrics_collector(), window_checker)
+  metrics_collector(data_flow->get_metrics_collector(), window_checker),
+  enable_log_warnings_for_lates(config.enable_log_warnings_for_lates)
 {
   srsran_assert(ul_slot_repo, "Invalid uplink repository");
   srsran_assert(ul_prach_repo, "Invalid PRACH repository");
@@ -140,10 +127,12 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
     logger.debug("Registering PRACH context entry for slot '{}' and sector#{}", context.slot, context.sector);
   }
 
-  frame_pool->clear_slot(context.slot, context.sector);
+  metrics_collector.update_cp_ul_lates(frame_pool->clear_slot(context.slot, context.sector));
 
   if (SRSRAN_UNLIKELY(window_checker.is_late(context.slot))) {
-    logger.warning(
+    log_conditional_warning(
+        logger,
+        enable_log_warnings_for_lates,
         "Sector#{}: dropped late PRACH request in slot '{}'. No OFH data will be requested from an RU for this slot",
         context.sector,
         context.slot);
@@ -219,10 +208,12 @@ void uplink_request_handler_impl::handle_new_uplink_slot(const resource_grid_con
     logger.debug("Registering UL context entry for slot '{}' and sector#{}", context.slot, context.sector);
   }
 
-  frame_pool->clear_slot(context.slot, context.sector);
+  metrics_collector.update_cp_ul_lates(frame_pool->clear_slot(context.slot, context.sector));
 
   if (SRSRAN_UNLIKELY(window_checker.is_late(context.slot))) {
-    logger.warning(
+    log_conditional_warning(
+        logger,
+        enable_log_warnings_for_lates,
         "Sector#{}: dropped late uplink request in slot '{}'. No OFH data will be requested from an RU for this slot",
         context.sector,
         context.slot);

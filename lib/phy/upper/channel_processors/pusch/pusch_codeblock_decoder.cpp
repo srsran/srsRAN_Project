@@ -39,6 +39,7 @@ std::optional<unsigned> pusch_codeblock_decoder::decode(bit_buffer              
                                                         srsran::crc_generator_poly       crc_poly,
                                                         bool                             use_early_stop,
                                                         unsigned                         nof_ldpc_iterations,
+                                                        bool                             force_decoding,
                                                         const codeblock_metadata&        metadata)
 {
   rate_match(rm_buffer, cb_llrs, new_data, metadata);
@@ -46,6 +47,7 @@ std::optional<unsigned> pusch_codeblock_decoder::decode(bit_buffer              
   // Prepare LDPC decoder configuration.
   ldpc_decoder::configuration decoder_config;
   decoder_config.block_conf                    = metadata;
+  decoder_config.algorithm_conf.force_decoding = force_decoding;
   decoder_config.algorithm_conf.max_iterations = nof_ldpc_iterations;
   // As for the other algorithm_details, we use the default values.
 

@@ -48,6 +48,9 @@ public:
   /// successful outcome, 'false' otherwise. \remark The CU-UP transmits the E1SetupRequest as per TS 38.463
   /// section 8.2.3 and awaits the response. If a E1SetupFailure is received the E1AP will handle the failure.
   virtual async_task<cu_up_e1_setup_response> handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& request) = 0;
+
+  /// \brief Launches the E1 Release procedure as per TS 38.483, Section 8.2.7.2.2.
+  virtual async_task<void> handle_cu_up_e1ap_release_request() = 0;
 };
 
 /// Handle E1AP control messages
@@ -60,6 +63,15 @@ public:
   /// \param[in] msg The common type bearer context inactivity notification message to convert and forward to the CU-CP.
   virtual void
   handle_bearer_context_inactivity_notification(const e1ap_bearer_context_inactivity_notification& msg) = 0;
+};
+
+/// Handle E1AP control messages
+class e1ap_pdcp_error_handler
+{
+public:
+  virtual ~e1ap_pdcp_error_handler() = default;
+
+  virtual void handle_pdcp_max_count_reached(ue_index_t ue_index) = 0;
 };
 
 /// Methods used by E1AP to notify the CU-UP manager.
@@ -103,6 +115,7 @@ public:
 /// Combined entry point for E1AP handling.
 class e1ap_interface : public e1ap_message_handler,
                        public e1ap_control_message_handler,
+                       public e1ap_pdcp_error_handler,
                        public e1ap_event_handler,
                        public e1ap_connection_manager,
                        public e1ap_statistics_handler

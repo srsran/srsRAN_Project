@@ -26,7 +26,7 @@
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
-pthread_barrier_t barrier;
+::pthread_barrier_t barrier;
 stress_stack::stress_stack(const stress_test_args& args_, uint32_t id, rb_id_t rb_id) :
   stack_id(id),
   args(args_),
@@ -182,7 +182,7 @@ void stress_stack::run_lower_tti(uint32_t tti)
     report_error_if_not(result, "Failed to dispatch run_upper_tti");
     peer_stack->push_pdus(std::move(pdu_list));
     tti++;
-    pthread_barrier_wait(&barrier); // wait for other stack to finish
+    ::pthread_barrier_wait(&barrier); // wait for other stack to finish
   } else {
     logger.log_debug("Stopping lower TTI={}", tti);
     std::unique_lock<std::mutex> lk(mutex_pcell);
@@ -242,16 +242,16 @@ void stress_test(const stress_test_args& args)
 int main(int argc, char** argv)
 {
   // srsgnb_debug_handle_crash(argc, argv);
-  pthread_barrier_init(&barrier, nullptr, 2);
+  ::pthread_barrier_init(&barrier, nullptr, 2);
   stress_test_args args = {};
   if (not parse_args(args, argc, argv)) {
-    fprintf(stderr, "Could not parse command line options\n");
+    std::fprintf(stderr, "Could not parse command line options\n");
     return -1;
   }
 
   init_log_from_args(args);
 
   stress_test(args);
-  pthread_barrier_destroy(&barrier);
+  ::pthread_barrier_destroy(&barrier);
   return 0;
 }

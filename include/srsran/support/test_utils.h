@@ -336,12 +336,33 @@ private:
     return dummy;                                                                                                      \
   }();
 
-/// \brief Helper macro to make sure that logs are flushed when asserts fail.
+/// \brief Helper macro to make sure that logs are flushed when ASSERT_TRUE fails.
+#define FLUSH_AND_ASSERT_TRUE(val1)                                                                                    \
+  if (not(val1)) {                                                                                                     \
+    srslog::flush();                                                                                                   \
+  }                                                                                                                    \
+  ASSERT_TRUE((val1));
+
+/// \brief Helper macro to make sure that logs are flushed when ASSERT_FALSE fails.
+#define FLUSH_AND_ASSERT_FALSE(val1)                                                                                   \
+  if ((val1)) {                                                                                                        \
+    srslog::flush();                                                                                                   \
+  }                                                                                                                    \
+  ASSERT_FALSE((val1));
+
+/// \brief Helper macro to make sure that logs are flushed when ASSERT_EQ fail.
 #define FLUSH_AND_ASSERT_EQ(val1, val2)                                                                                \
   if (not((val1) == (val2))) {                                                                                         \
     srslog::flush();                                                                                                   \
   }                                                                                                                    \
   ASSERT_EQ((val1), (val2));
+
+/// \brief Helper macro to make sure that logs are flushed when ASSERT_NE fail.
+#define FLUSH_AND_ASSERT_NE(val1, val2)                                                                                \
+  if (((val1) == (val2))) {                                                                                            \
+    srslog::flush();                                                                                                   \
+  }                                                                                                                    \
+  ASSERT_NE((val1), (val2));
 
 } // namespace srsran
 

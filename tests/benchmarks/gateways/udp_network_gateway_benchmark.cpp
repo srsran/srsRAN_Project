@@ -79,7 +79,7 @@ static void parse_args(int argc, char** argv, bench_params& params)
       case 'h':
       default:
         usage(argv[0], params);
-        exit(0);
+        std::exit(0);
     }
   }
 }
@@ -124,7 +124,7 @@ int main(int argc, char** argv)
 
   std::unique_ptr<io_broker> epoll_broker;
 
-  epoll_broker = create_io_broker(io_broker_type::epoll);
+  epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_config{os_thread_realtime_priority::min() + 5});
 
   if (not gw1->subscribe_to(*epoll_broker)) {
     report_fatal_error("Failed to register UDP network gateway 1 at IO broker. socket_fd={}", gw1->get_socket_fd());

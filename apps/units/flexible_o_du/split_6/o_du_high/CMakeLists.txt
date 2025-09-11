@@ -30,6 +30,7 @@ add_library(srsran_split6_plugin STATIC split6_plugin_dummy.cpp)
 add_library(srsran_flexible_o_du_split_6 STATIC ${SOURCES})
 target_include_directories(srsran_flexible_o_du_split_6 PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(srsran_flexible_o_du_split_6
-        srsran_o_du
-        srsran_o_du_high_unit_helpers
-        srsran_split6_plugin)
+                                                    srsran_o_du
+                                                    srsran_o_du_high_unit_helpers
+                                                    srsran_split6_plugin
+                                                    srsran_metrics_json_generators)

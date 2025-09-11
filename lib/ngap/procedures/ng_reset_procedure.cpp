@@ -26,7 +26,7 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::ngap;
 
-constexpr std::chrono::milliseconds ng_reset_response_timeout{5000};
+static constexpr std::chrono::milliseconds ng_reset_response_timeout{5000};
 
 ng_reset_procedure::ng_reset_procedure(const ngap_message&       msg_,
                                        ngap_message_notifier&    amf_notif_,

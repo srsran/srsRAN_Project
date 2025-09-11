@@ -516,21 +516,20 @@ bool timer_manager::manager_impl::try_stop_timer_backend(timer_handle& timer, bo
 
 bool timer_manager::manager_impl::trigger_timeout_handling(timer_handle& timer)
 {
-  return timer.frontend->exec->defer(
-      TRACE_TASK([frontend = timer.frontend.get(), expiry_epoch = timer.backend.cmd_id]() {
-        // In case, the timer state has not been updated since the task was dispatched (epoches match).
-        // Note: Now that we are in the same execution context as the timer frontend, the frontend cmd_id is precise.
-        if (frontend->backend_ch.current_cmd_id() == expiry_epoch) {
-          srsran_assert(frontend->state == state_t::running, "The timer can only expire if it was already running");
-          // Update timer frontend state to expired.
-          frontend->state = state_t::expired;
+  return timer.frontend->exec->defer([frontend = timer.frontend.get(), expiry_epoch = timer.backend.cmd_id]() {
+    // In case, the timer state has not been updated since the task was dispatched (epoches match).
+    // Note: Now that we are in the same execution context as the timer frontend, the frontend cmd_id is precise.
+    if (frontend->backend_ch.current_cmd_id() == expiry_epoch) {
+      srsran_assert(frontend->state == state_t::running, "The timer can only expire if it was already running");
+      // Update timer frontend state to expired.
+      frontend->state = state_t::expired;
 
-          // Run callback if configured.
-          if (not frontend->timeout_callback.is_empty()) {
-            frontend->timeout_callback(frontend->id);
-          }
-        }
-      }));
+      // Run callback if configured.
+      if (not frontend->timeout_callback.is_empty()) {
+        frontend->timeout_callback(frontend->id);
+      }
+    }
+  });
 }
 
 void timer_manager::manager_impl::handle_postponed_timeouts()

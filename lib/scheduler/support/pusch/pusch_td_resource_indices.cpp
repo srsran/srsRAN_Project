@@ -139,9 +139,9 @@ std::vector<pusch_index_list> srsran::get_pusch_td_resource_indices_per_slot(con
   return pusch_td_list_per_slot;
 }
 
-std::optional<unsigned> find_td_index_with_k2(span<const pusch_time_domain_resource_allocation> pusch_res_list,
-                                              span<const unsigned>                              valid_indexes,
-                                              unsigned                                          k2)
+static std::optional<unsigned> find_td_index_with_k2(span<const pusch_time_domain_resource_allocation> pusch_res_list,
+                                                     span<const unsigned>                              valid_indexes,
+                                                     unsigned                                          k2)
 {
   auto* it = std::find_if(valid_indexes.begin(), valid_indexes.end(), [&pusch_res_list, k2](unsigned pusch_td_res_idx) {
     return pusch_res_list[pusch_td_res_idx].k2 == k2;

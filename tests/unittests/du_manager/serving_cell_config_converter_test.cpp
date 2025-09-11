@@ -30,7 +30,7 @@
 
 using namespace srsran;
 
-srs_du::du_ue_resource_config make_initial_du_ue_resource_config()
+static srs_du::du_ue_resource_config make_initial_du_ue_resource_config()
 {
   srs_du::du_ue_resource_config dest_cfg{};
   dest_cfg.cell_group.cells.emplace(0, config_helpers::create_default_initial_ue_spcell_cell_config());
@@ -38,7 +38,7 @@ srs_du::du_ue_resource_config make_initial_du_ue_resource_config()
   return dest_cfg;
 }
 
-pusch_config make_initial_pusch_config()
+static pusch_config make_initial_pusch_config()
 {
   pusch_config cfg{};
   cfg.tx_cfg = tx_scheme_codebook{.max_rank        = 1,
@@ -88,7 +88,7 @@ pusch_config make_initial_pusch_config()
   return cfg;
 }
 
-srs_config make_initial_srs_config()
+static srs_config make_initial_srs_config()
 {
   srs_config cfg{};
 
@@ -417,10 +417,14 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pucch_cfg_conversion)
   dest_pucch_cfg.pucch_res_set.erase(dest_pucch_cfg.pucch_res_set.begin());
 
   // >>> PUCCH resource 2.
-  pucch_resource res_basic{
-      .res_id = pucch_res_id_t{12, 12}, .starting_prb = 40, .second_hop_prb = 50, .format = pucch_format::FORMAT_3};
+  pucch_resource res_basic{.res_id           = pucch_res_id_t{12, 12},
+                           .starting_prb     = 40,
+                           .second_hop_prb   = 50,
+                           .nof_symbols      = 1,
+                           .starting_sym_idx = 13,
+                           .format           = pucch_format::FORMAT_3};
   res_basic.format = pucch_format::FORMAT_2;
-  res_basic.format_params.emplace<pucch_format_2_3_cfg>(pucch_format_2_3_cfg{.nof_symbols = 1, .starting_sym_idx = 13});
+  res_basic.format_params.emplace<pucch_format_2_3_cfg>();
   dest_pucch_cfg.pucch_res_list.push_back(res_basic);
 
   // Remove first element.

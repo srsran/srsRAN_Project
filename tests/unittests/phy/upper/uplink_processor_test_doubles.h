@@ -68,7 +68,7 @@ private:
 
   void add_srs_pdu(const uplink_pdu_slot_repository::srs_pdu& pdu) override { has_add_srs_pdu_method_called = true; }
 
-  void handle_rx_symbol(unsigned end_symbol_index) override
+  void handle_rx_symbol(unsigned end_symbol_index, bool is_valid) override
   {
     last_end_symbol_index = end_symbol_index;
     ++on_rx_symbol_count;

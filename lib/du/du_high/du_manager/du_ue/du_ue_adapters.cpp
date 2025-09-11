@@ -29,6 +29,8 @@
 using namespace srsran;
 using namespace srs_du;
 
+namespace {
+
 class null_sink_f1c_bearer : public f1c_bearer
 {
 public:
@@ -48,7 +50,7 @@ public:
   void handle_transmit_notification(uint32_t highest_pdcp_sn) override {}
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override {}
   void handle_sdu(byte_buffer_chain sdu) override {}
-} null_f1c_bearer;
+};
 
 /// \brief F1-U Bearer Sink. Used to discard events while in the process of destroying a UE bearer.
 class null_sink_f1u_bearer : public f1u_bearer,
@@ -69,7 +71,7 @@ public:
   void handle_sdu(byte_buffer_chain sdu) override {}
   void flush_ul_buffer() override {}
   void stop() override {}
-} null_f1u_bearer;
+};
 
 class null_sink_rlc_bearer : public rlc_tx_upper_layer_data_interface, public rlc_rx_lower_layer_interface
 {
@@ -77,7 +79,13 @@ public:
   void handle_sdu(byte_buffer sdu_buf, bool is_retx) override {}
   void discard_sdu(uint32_t pdcp_sn) override {}
   void handle_pdu(byte_buffer_slice pdu) override {}
-} null_rlc_bearer;
+};
+
+} // namespace
+
+static null_sink_f1c_bearer null_f1c_bearer;
+static null_sink_f1u_bearer null_f1u_bearer;
+static null_sink_rlc_bearer null_rlc_bearer;
 
 void f1c_rx_sdu_rlc_adapter::disconnect()
 {

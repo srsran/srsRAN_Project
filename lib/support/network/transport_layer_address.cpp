@@ -28,7 +28,7 @@ using namespace srsran;
 
 transport_layer_address::transport_layer_address(const struct sockaddr& addr_, socklen_t socklen) : addrlen(socklen)
 {
-  memcpy((struct sockaddr*)&addr_storage, &addr_, addrlen);
+  std::memcpy((struct sockaddr*)&addr_storage, &addr_, addrlen);
 }
 
 transport_layer_address transport_layer_address::create_from_sockaddr(const struct sockaddr& sockaddr,
@@ -132,7 +132,7 @@ bool transport_layer_address::operator==(const transport_layer_address& other) c
   if (addrlen != other.addrlen) {
     return false;
   }
-  return memcmp(&addr_storage, &other.addr_storage, addrlen) == 0;
+  return std::memcmp(&addr_storage, &other.addr_storage, addrlen) == 0;
 }
 
 bool transport_layer_address::operator<(const transport_layer_address& other) const
@@ -140,5 +140,5 @@ bool transport_layer_address::operator<(const transport_layer_address& other) co
   if (addrlen != other.addrlen) {
     return addrlen < other.addrlen;
   }
-  return memcmp(&addr_storage, &other.addrlen, addrlen) < 0;
+  return std::memcmp(&addr_storage, &other.addrlen, addrlen) < 0;
 }

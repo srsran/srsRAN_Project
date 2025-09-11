@@ -42,9 +42,6 @@ public:
 
   du_ue_index_t find_unused_du_ue_index();
 
-  /// \brief Reset a set of UE contexts.
-  async_task<void> handle_f1_reset_request(const std::vector<du_ue_index_t>& ues_to_reset);
-
   /// \brief Handle the creation of a new UE context when a UL-CCCH is received.
   void handle_ue_create_request(const ul_ccch_indication_message& msg);
 

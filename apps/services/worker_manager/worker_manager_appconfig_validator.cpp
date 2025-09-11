@@ -30,9 +30,9 @@ bool srsran::validate_expert_execution_appconfig(const expert_execution_appconfi
   // Ensure the number of non-real time threads does not exceed the number of CPU cores
   auto&    cpu_desc  = cpu_architecture_info::get();
   uint32_t nof_cores = cpu_desc.get_host_nof_available_cpus();
-  if (config.threads.non_rt_threads.nof_non_rt_threads > nof_cores) {
-    fmt::print("Invalid expert execution config: nof_non_rt_threads={} must not exceed nof_cores={}\n",
-               config.threads.non_rt_threads.nof_non_rt_threads,
+  if (config.threads.main_pool.nof_threads and config.threads.main_pool.nof_threads.value() > nof_cores) {
+    fmt::print("Invalid expert execution config: main_pool.nof_threads={} must not exceed nof_cores={}\n",
+               config.threads.main_pool.nof_threads.value(),
                nof_cores);
     return false;
   }

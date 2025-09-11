@@ -29,7 +29,7 @@
 namespace srsran {
 
 /// Length of the generator state in bits.
-static constexpr unsigned pseudo_random_generator_state_size = 31;
+constexpr unsigned pseudo_random_generator_state_size = 31;
 
 /// State sequence \f$x_1(n)\f$ initializer.
 class pseudo_random_initializer_x1

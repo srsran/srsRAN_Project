@@ -29,6 +29,7 @@
 namespace srsran {
 namespace ofh {
 
+class operation_controller;
 class transmitter_metrics_collector;
 
 /// Open Fronthaul transmitter interface.
@@ -43,6 +44,9 @@ public:
 
   /// Returns the downlink handler of this Open Fronthaul transmitter.
   virtual downlink_handler& get_downlink_handler() = 0;
+
+  /// Returns the controller of this Open Fronthaul transmitter.
+  virtual operation_controller& get_operation_controller() = 0;
 
   /// Returns the OTA symbol boundary notifier of this Open Fronthaul transmitter.
   virtual ota_symbol_boundary_notifier& get_ota_symbol_boundary_notifier() = 0;

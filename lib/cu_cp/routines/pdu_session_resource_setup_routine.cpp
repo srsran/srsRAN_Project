@@ -237,6 +237,7 @@ void pdu_session_resource_setup_routine::operator()(
                                   false,
                                   std::nullopt,
                                   {},
+                                  std::nullopt,
                                   logger)) {
         logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", setup_msg.ue_index, name());
         CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
@@ -585,8 +586,8 @@ bool handle_bearer_context_setup_response(cu_cp_pdu_session_resource_setup_respo
 }
 
 // Helper function to fail all requested PDU session.
-void fill_setup_failed_list(cu_cp_pdu_session_resource_setup_response&      response_msg,
-                            const cu_cp_pdu_session_resource_setup_request& setup_msg)
+static void fill_setup_failed_list(cu_cp_pdu_session_resource_setup_response&      response_msg,
+                                   const cu_cp_pdu_session_resource_setup_request& setup_msg)
 {
   for (const auto& item : setup_msg.pdu_session_res_setup_items) {
     cu_cp_pdu_session_res_setup_failed_item failed_item;
@@ -643,10 +644,10 @@ bool handle_rrc_reconfiguration_response(cu_cp_pdu_session_resource_setup_respon
 }
 
 // Helper to mark all PDU sessions that were requested to be set up as failed.
-void mark_all_sessions_as_failed(cu_cp_pdu_session_resource_setup_response&      response_msg,
-                                 const cu_cp_pdu_session_resource_setup_request& setup_msg,
-                                 up_config_update&                               next_config,
-                                 e1ap_cause_t                                    cause)
+static void mark_all_sessions_as_failed(cu_cp_pdu_session_resource_setup_response&      response_msg,
+                                        const cu_cp_pdu_session_resource_setup_request& setup_msg,
+                                        up_config_update&                               next_config,
+                                        e1ap_cause_t                                    cause)
 {
   slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item> failed_list;
   for (const auto& setup_item : setup_msg.pdu_session_res_setup_items) {

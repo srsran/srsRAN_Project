@@ -36,6 +36,10 @@ struct transmitter_dl_metrics {
   tx_data_flow_perf_metrics dl_up_metrics;
   /// Number of late downlink resource grids received from the PHY.
   unsigned nof_late_dl_grids;
+  /// Number of late Control-Plane downlink messages, ie, messages that were not transmitted.
+  unsigned nof_late_cp_dl;
+  /// Number of late User-Plane downlink messages, ie, messages that were not transmitted.
+  unsigned nof_late_up_dl;
 };
 
 /// Open Fronthaul transmitter uplink requests processing metrics.
@@ -44,6 +48,8 @@ struct transmitter_ul_metrics {
   tx_data_flow_perf_metrics ul_cp_metrics;
   /// Number of late uplink request.
   unsigned nof_late_ul_requests;
+  /// Number of late Control-Plane uplink messages, ie, messages that were not transmitted.
+  unsigned nof_late_cp_ul;
 };
 
 /// Open Fronthaul message transmitter metrics.

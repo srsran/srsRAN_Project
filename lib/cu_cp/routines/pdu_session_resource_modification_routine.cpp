@@ -181,6 +181,7 @@ void pdu_session_resource_modification_routine::operator()(
                                   false,
                                   std::nullopt,
                                   {},
+                                  std::nullopt,
                                   logger)) {
         logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", modify_request.ue_index, name());
         CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
@@ -203,7 +204,7 @@ void pdu_session_resource_modification_routine::operator()(
   CORO_RETURN(generate_pdu_session_resource_modify_response(true));
 }
 
-void fill_e1ap_pdu_session_res_to_modify_list(
+static void fill_e1ap_pdu_session_res_to_modify_list(
     slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_modify_item>& pdu_session_res_to_modify_list,
     srslog::basic_logger&                                                     logger,
     const up_config_update&                                                   next_config,
@@ -474,8 +475,8 @@ bool handle_ue_context_modification_response(
 }
 
 // Helper function to fail all requested PDU session.
-void fill_modify_failed_list(cu_cp_pdu_session_resource_modify_response&      response_msg,
-                             const cu_cp_pdu_session_resource_modify_request& modify_request)
+static void fill_modify_failed_list(cu_cp_pdu_session_resource_modify_response&      response_msg,
+                                    const cu_cp_pdu_session_resource_modify_request& modify_request)
 {
   for (const auto& item : modify_request.pdu_session_res_modify_items) {
     cu_cp_pdu_session_resource_failed_to_modify_item failed_item;
@@ -500,8 +501,8 @@ bool handle_rrc_reconfiguration_response(cu_cp_pdu_session_resource_modify_respo
 }
 
 // Helper to mark all PDU sessions that were requested to be set up as failed.
-void mark_all_sessions_as_failed(cu_cp_pdu_session_resource_modify_response&      response_msg,
-                                 const cu_cp_pdu_session_resource_modify_request& modify_request)
+static void mark_all_sessions_as_failed(cu_cp_pdu_session_resource_modify_response&      response_msg,
+                                        const cu_cp_pdu_session_resource_modify_request& modify_request)
 {
   for (const auto& modify_item : modify_request.pdu_session_res_modify_items) {
     cu_cp_pdu_session_resource_failed_to_modify_item failed_item;

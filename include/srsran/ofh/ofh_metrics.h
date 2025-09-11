@@ -23,9 +23,8 @@
 #pragma once
 
 #include "srsran/adt/static_vector.h"
-#include "srsran/ofh/ethernet/ethernet_receiver_metrics.h"
-#include "srsran/ofh/ethernet/ethernet_transmitter_metrics.h"
 #include "srsran/ofh/receiver/ofh_receiver_metrics.h"
+#include "srsran/ofh/timing/ofh_timing_metrics.h"
 #include "srsran/ofh/transmitter/ofh_transmitter_metrics.h"
 #include "srsran/ran/gnb_constants.h"
 #include <chrono>
@@ -49,6 +48,8 @@ struct sector_metrics {
 struct metrics {
   /// Timestamp of the OFH RU metrics.
   std::chrono::time_point<std::chrono::system_clock> timestamp;
+  /// Timing metrics.
+  timing_metrics timing;
   /// Metrics for every sector.
   static_vector<sector_metrics, MAX_CELLS_PER_DU> sectors;
 };

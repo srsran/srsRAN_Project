@@ -29,8 +29,10 @@
 #include "srsran/support/executors/task_worker_pool.h"
 #include "srsran/support/executors/unique_thread.h"
 #include "srsran/support/math/math_utils.h"
+#include "srsran/support/memory_pool/bounded_object_pool.h"
 #include "srsran/support/rtsan.h"
 #include "srsran/support/srsran_test.h"
+#include "srsran/support/tracing/event_tracing.h"
 #ifdef HWACC_PDSCH_ENABLED
 #include "srsran/hal/dpdk/bbdev/bbdev_acc.h"
 #include "srsran/hal/dpdk/bbdev/bbdev_acc_factory.h"
@@ -86,7 +88,10 @@ benchmark_modes to_benchmark_mode(const char* string)
 static const unsigned max_nof_threads = std::thread::hardware_concurrency();
 
 // Executor queue type.
-static constexpr concurrent_queue_policy queue_policy = concurrent_queue_policy::lockfree_mpmc;
+static constexpr concurrent_queue_policy queue_policy = concurrent_queue_policy::locking_mpmc;
+
+// General sleeping time.
+static constexpr auto sleep_duration = std::chrono::microseconds(10);
 
 // General test configuration parameters.
 static uint64_t                           nof_repetitions             = 10;
@@ -96,22 +101,17 @@ static std::string                        selected_profile_name       = "default
 static std::string                        ldpc_encoder_type           = "auto";
 static std::string                        pdsch_processor_type        = "flexible";
 static benchmark_modes                    benchmark_mode              = benchmark_modes::throughput_total;
+static std::string                        tracing_filename            = "";
 static dmrs_type                          dmrs                        = dmrs_type::TYPE1;
 static unsigned                           nof_cdm_groups_without_data = 2;
 static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
     {false, false, true, false, false, false, false, true, false, false, false, true, false, false};
 static unsigned                                                 nof_pdsch_processor_concurrent_threads = 0;
 static unsigned                                                 cb_batch_length = std::numeric_limits<unsigned>::max();
-static std::unique_ptr<task_worker_pool<queue_policy>>          worker_pool     = nullptr;
-static std::unique_ptr<task_worker_pool_executor<queue_policy>> executor        = nullptr;
-
-// Thread shared variables.
-static std::mutex              mutex_pending_count;
-static std::mutex              mutex_finish_count;
-static std::condition_variable cvar_count;
-static std::atomic<bool>       thread_quit   = {};
-static unsigned                pending_count = 0;
-static unsigned                finish_count  = 0;
+static std::unique_ptr<task_worker_pool<queue_policy>>          cb_worker_pool  = nullptr;
+static std::unique_ptr<task_worker_pool_executor<queue_policy>> cb_executor     = nullptr;
+static std::unique_ptr<task_worker_pool<queue_policy>>          pdsch_worker_pool = nullptr;
+static std::unique_ptr<task_worker_pool_executor<queue_policy>> pdsch_executor    = nullptr;
 
 #ifdef HWACC_PDSCH_ENABLED
 static bool                 dedicated_queue = true;
@@ -296,6 +296,7 @@ static void usage(const char* prog)
   fmt::print("\t\t {:<20}Prints the average single thread throughput.\n",
              to_string(benchmark_modes::throughput_thread));
   fmt::print("\t\t {:<20}Prints all the previous modes.\n", to_string(benchmark_modes::all));
+  fmt::print("\t-o Tracing filename [Default {}]\n", tracing_filename.empty() ? "none" : tracing_filename);
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
   fmt::print("\t-B Batch size [Default {}]\n", batch_size_per_thread);
   fmt::print("\t-T Number of threads [Default {}, max. {}]\n", nof_threads, max_nof_threads);
@@ -356,7 +357,7 @@ static std::string capture_eal_args(int* argc, char*** argv)
 static int parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:T:B:D:P:m:t:wxyz:h")) != -1) {
+  while ((opt = getopt(argc, argv, "R:T:B:D:P:m:t:o:wxyz:h")) != -1) {
     switch (opt) {
       case 'R':
         nof_repetitions = std::strtol(optarg, nullptr, 10);
@@ -384,6 +385,7 @@ static int parse_args(int argc, char** argv)
               cb_batch_length                        = std::strtol(substr.c_str(), nullptr, 10);
             } else {
               nof_pdsch_processor_concurrent_threads = std::strtol(str.c_str(), nullptr, 10);
+              cb_batch_length                        = 4;
             }
           }
         } else if (pdsch_processor_type == "lite") {
@@ -401,6 +403,9 @@ static int parse_args(int argc, char** argv)
           usage(argv[0]);
           return -1;
         }
+        break;
+      case 'o':
+        tracing_filename = std::string(optarg);
         break;
 #ifdef HWACC_PDSCH_ENABLED
       case 'w':
@@ -421,7 +426,7 @@ static int parse_args(int argc, char** argv)
       case 'h':
       default:
         usage(argv[0]);
-        exit(0);
+        std::exit(0);
     }
   }
 
@@ -686,16 +691,17 @@ static pdsch_processor_factory& get_processor_factory()
   }
   TESTASSERT(block_processor_factory, "Failed to create a PDSCH block processor factory.");
 
+  // Create PDSCH concurrent pool for asynchronous codeblock processing.
+  cb_worker_pool = std::make_unique<task_worker_pool<queue_policy>>(
+      "pdsch_proc", std::max(1U, nof_pdsch_processor_concurrent_threads), 1024, sleep_duration);
+  cb_executor = std::make_unique<task_worker_pool_executor<queue_policy>>(*cb_worker_pool);
+
   // Initialize task executors for asynchronous PDSCH processors only.
   unsigned nof_concurrent_pdsch = nof_threads;
   if (nof_pdsch_processor_concurrent_threads > 0) {
-    worker_pool =
-        std::make_unique<task_worker_pool<queue_policy>>("pdsch_proc", nof_pdsch_processor_concurrent_threads, 1024);
-    executor             = std::make_unique<task_worker_pool_executor<queue_policy>>(*worker_pool);
-    nof_concurrent_pdsch = nof_pdsch_processor_concurrent_threads;
+    nof_concurrent_pdsch += nof_pdsch_processor_concurrent_threads;
   } else {
-    worker_pool = std::make_unique<task_worker_pool<queue_policy>>("pdsch_proc", 1, 1024);
-    executor    = std::make_unique<task_worker_pool_executor<queue_policy>>(*worker_pool);
+    cb_worker_pool = std::make_unique<task_worker_pool<queue_policy>>("pdsch_proc", 1, 1024);
   }
 
   // Create flexible PDSCH processor.
@@ -704,16 +710,12 @@ static pdsch_processor_factory& get_processor_factory()
                                                                   rg_mapper_factory,
                                                                   dmrs_pdsch_gen_factory,
                                                                   ptrs_pdsch_gen_factory,
-                                                                  *executor,
+                                                                  *cb_executor,
                                                                   nof_concurrent_pdsch,
                                                                   cb_batch_length);
 
-  // When required create either an asynchronous or a synchronous PDSCH processor pool.
-  if (nof_pdsch_processor_concurrent_threads > 1) {
-    pdsch_proc_factory = create_pdsch_processor_asynchronous_pool(std::move(pdsch_proc_factory), nof_threads);
-  } else if (nof_threads > 1) {
-    pdsch_proc_factory = create_pdsch_processor_pool(std::move(pdsch_proc_factory), nof_threads);
-  }
+  // Wrap the PDSCH processor with a pool. It assumes that each thread will only spawn one PDSCH transmission.
+  pdsch_proc_factory = create_pdsch_processor_pool(std::move(pdsch_proc_factory), nof_threads);
 
   TESTASSERT(pdsch_proc_factory);
 
@@ -741,66 +743,23 @@ static std::unique_ptr<resource_grid> create_resource_grid(unsigned nof_ports, u
   return rg_factory->create(nof_ports, nof_symbols, nof_subc);
 }
 
-static void thread_process(pdsch_processor& proc, const pdsch_processor::pdu_t& config, span<const uint8_t>& data)
+static bounded_unique_object_pool<resource_grid> create_resource_grid_pool()
 {
-  // Create grid.
-  std::unique_ptr<resource_grid> grid = create_resource_grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_RB * NRE);
-  TESTASSERT(grid);
+  std::vector<std::unique_ptr<resource_grid>> grids(nof_threads);
+  std::generate(
+      grids.begin(), grids.end(), []() { return create_resource_grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_RB * NRE); });
 
-  // Notify finish count.
-  {
-    std::unique_lock<std::mutex> lock(mutex_finish_count);
-    finish_count++;
-    cvar_count.notify_all();
-  }
-
-  pdsch_processor_notifier_spy notifier;
-
-  while (!thread_quit) {
-    // Wait for pending.
-    {
-      std::unique_lock<std::mutex> lock(mutex_pending_count);
-      while (pending_count == 0) {
-        cvar_count.wait_until(lock, std::chrono::system_clock::now() + std::chrono::microseconds(10));
-
-        // Quit if signaled.
-        if (thread_quit) {
-          return;
-        }
-      }
-      pending_count--;
-    }
-
-    // Reset any notification.
-    notifier.reset();
-
-    // Create asynchronous task - memory allocation and thread blocking are not allowed.
-    unique_function<void(), default_unique_task_buffer_size, true> task =
-        [&proc, &grid, &notifier, &data, &config]() SRSRAN_RTSAN_NONBLOCKING {
-          proc.process(grid->get_writer(), notifier, {shared_transport_block(data)}, config);
-        };
-
-    // Process PDU.
-    if (worker_pool) {
-      (void)worker_pool->push_task(std::move(task));
-    } else {
-      task();
-    }
-
-    // Wait for the processor to finish.
-    notifier.wait_for_finished();
-
-    // Notify finish count.
-    {
-      std::unique_lock<std::mutex> lock(mutex_finish_count);
-      finish_count++;
-      cvar_count.notify_all();
-    }
-  }
+  return bounded_unique_object_pool<resource_grid>(grids);
 }
 
 int main(int argc, char** argv)
 {
+  // Prepare logging for only errors.
+  srslog::init();
+  srslog::fetch_basic_logger("PHY").set_level(srslog::basic_levels::warning);
+  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
+  srslog::fetch_basic_logger("ALL").set_level(srslog::basic_levels::warning);
+
 #ifdef HWACC_PDSCH_ENABLED
   // Separate EAL and non-EAL arguments.
   eal_arguments = capture_eal_args(&argc, &argv);
@@ -811,6 +770,10 @@ int main(int argc, char** argv)
     return ret;
   }
 
+  if (!tracing_filename.empty()) {
+    open_trace_file(tracing_filename);
+  }
+
 #ifdef HWACC_PDSCH_ENABLED
   // Check if we actually need to initialize the EAL.
   static std::unique_ptr<dpdk::dpdk_eal> dpdk_interface = nullptr;
@@ -818,7 +781,6 @@ int main(int argc, char** argv)
     srslog::sink* log_sink =
         std_out_sink ? srslog::create_stdout_sink() : srslog::create_file_sink("pdsch_processor_benchmark.log");
     srslog::set_default_sink(*log_sink);
-    srslog::init();
     srslog::basic_logger& logger = srslog::fetch_basic_logger("EAL", false);
     logger.set_level(hal_log_level);
     dpdk_interface = dpdk::create_dpdk_eal(eal_arguments, logger);
@@ -853,38 +815,20 @@ int main(int argc, char** argv)
   // Create processor.
   std::unique_ptr<pdsch_processor> proc = create_processor();
 
-  // Reference configuration.
-  pdsch_processor::pdu_t config;
+  // Create resource grids.
+  bounded_unique_object_pool<resource_grid> grids = create_resource_grid_pool();
 
-  // Reference data.
-  span<const uint8_t> data;
+  // Create concurrent PDSCH processing executors.
+  pdsch_worker_pool = std::make_unique<task_worker_pool<queue_policy>>("worker", nof_threads, 1024, sleep_duration);
+  pdsch_executor    = std::make_unique<task_worker_pool_executor<queue_policy>>(*pdsch_worker_pool);
 
-  // Reset finish counter.
-  finish_count = 0;
-  thread_quit  = false;
-
-  // Prepare threads for all benchmark cases.
-  std::vector<unique_thread> threads(nof_threads);
-  for (unsigned thread_id = 0; thread_id != nof_threads; ++thread_id) {
-    // Select thread.
-    unique_thread& thread = threads[thread_id];
-
-    // Create thread.
-    thread = unique_thread("thread_" + std::to_string(thread_id),
-                           [&proc, &config, &data] { thread_process(*proc, config, data); });
-  }
-
-  // Wait for finish thread init.
-  {
-    std::unique_lock lock(mutex_finish_count);
-    while (finish_count != nof_threads) {
-      cvar_count.wait_until(lock, std::chrono::system_clock::now() + std::chrono::milliseconds(2));
-    }
-  }
+  // Prepare PDSCH processor notifiers.
+  std::vector<pdsch_processor_notifier_spy> notifiers(nof_threads);
 
   for (const test_case_type& test_case : test_case_set) {
     // Get the PDSCH configuration.
-    config = std::get<0>(test_case);
+    pdsch_processor::pdu_t config = std::get<0>(test_case);
+
     // Get the TBS in bits.
     unsigned tbs = std::get<1>(test_case);
 
@@ -893,7 +837,7 @@ int main(int argc, char** argv)
     std::generate(data_vector.begin(), data_vector.end(), [&rgen]() { return static_cast<uint8_t>(rgen() & 0xff); });
 
     // Update data reference.
-    data = data_vector;
+    span<const uint8_t> data = data_vector;
 
     std::unique_ptr<pdsch_pdu_validator> validator = create_validator();
 
@@ -913,32 +857,52 @@ int main(int argc, char** argv)
                    config.codewords.front().rv,
                    peak_throughput_Mbps);
 
+    std::atomic<unsigned> completion_counter = 0;
+
+    // Create benchmark routine.
+    auto benchmark_task =
+        [&notifiers, &grids, &data, &config, &proc, &completion_counter]() noexcept SRSRAN_RTSAN_NONBLOCKING {
+          // Reset counter.
+          completion_counter = 0;
+
+          // Spawn tasks for each therad.
+          for (unsigned i_thread = 0; i_thread != nof_threads; ++i_thread) {
+            // Select notifier.
+            pdsch_processor_notifier_spy& notifier = notifiers[i_thread];
+
+            bool success = pdsch_executor->execute(
+                [&notifier, &grids, &data, &config, &proc, &completion_counter]() noexcept SRSRAN_RTSAN_NONBLOCKING {
+                  // Get a resource grid.
+                  auto grid = grids.get();
+                  report_fatal_error_if_not(grid, "Failed to retrieve resource grid.");
+
+                  // Repeat PDSCH transmission.
+                  for (unsigned i_pdsch = 0; i_pdsch != batch_size_per_thread; ++i_pdsch) {
+                    // Reset notifier.
+                    notifier.reset();
+
+                    // Process PDSCH transmission.
+                    proc->process(grid->get_writer(), notifier, {shared_transport_block(data)}, config);
+
+                    // Wait for notifier before starting next PDSCH transmission.
+                    notifier.wait_for_finished();
+                  }
+
+                  // Count the completion of the thread.
+                  ++completion_counter;
+                });
+
+            report_fatal_error_if_not(success, "Failed to execute.");
+          }
+
+          // Wait for completion.
+          while (completion_counter != nof_threads) {
+            std::this_thread::sleep_for(sleep_duration);
+          }
+        };
+
     // Run the benchmark.
-    perf_meas.new_measure(to_string(meas_description), nof_threads * batch_size_per_thread * tbs, []() {
-      // Notify start.
-      {
-        std::unique_lock<std::mutex> lock(mutex_pending_count);
-        pending_count = nof_threads * batch_size_per_thread;
-        finish_count  = 0;
-        cvar_count.notify_all();
-      }
-
-      // Wait for finish.
-      {
-        std::unique_lock<std::mutex> lock(mutex_finish_count);
-        while (finish_count != (nof_threads * batch_size_per_thread)) {
-          cvar_count.wait_until(lock, std::chrono::system_clock::now() + std::chrono::milliseconds(2));
-        }
-      }
-    });
-  }
-
-  // Signal quiting for the asynchronous threads.
-  thread_quit = true;
-
-  // Join the asynchronous threads.
-  for (unique_thread& thread : threads) {
-    thread.join();
+    perf_meas.new_measure(to_string(meas_description), nof_threads * batch_size_per_thread * tbs, benchmark_task);
   }
 
   // Print latency.
@@ -959,8 +923,16 @@ int main(int argc, char** argv)
     perf_meas.print_percentiles_throughput("bits", 1.0 / static_cast<double>(nof_threads));
   }
 
-  if (worker_pool) {
-    worker_pool->stop();
+  if (cb_worker_pool) {
+    cb_worker_pool->stop();
+  }
+
+  if (pdsch_worker_pool) {
+    pdsch_worker_pool->stop();
+  }
+
+  if (!tracing_filename.empty()) {
+    close_trace_file();
   }
 
   return 0;

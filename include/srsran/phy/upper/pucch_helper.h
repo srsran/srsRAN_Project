@@ -78,12 +78,8 @@ public:
   /// \param m0[in]      Initial cyclic shift
   /// \param m_cs[in]    Cyclic shift
   /// \return NR alpha index
-  unsigned get_alpha_index(const slot_point&    slot,
-                           const cyclic_prefix& cp,
-                           unsigned             n_id,
-                           unsigned             symbol,
-                           unsigned             m0,
-                           unsigned             m_cs) const
+  unsigned
+  get_alpha_index(slot_point slot, cyclic_prefix cp, unsigned n_id, unsigned symbol, unsigned m0, unsigned m_cs) const
   {
     // Initialize pseudo-random sequence with the seed set to nid
     unsigned cinit = n_id;

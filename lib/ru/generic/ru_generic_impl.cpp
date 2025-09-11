@@ -32,7 +32,7 @@ ru_generic_impl::ru_generic_impl(const ru_generic_impl_config& config, ru_generi
   rx_adapter(dependencies.rx_symbol_handler),
   timing_adapter(dependencies.timing_handler),
   metrics_collector(radio_metrics_collector),
-  ru_ctrl(config.srate_MHz),
+  ru_ctrl(config.srate_MHz, config.start_time),
   ru_downlink_hdlr({}),
   ru_uplink_request_hdlr({})
 {

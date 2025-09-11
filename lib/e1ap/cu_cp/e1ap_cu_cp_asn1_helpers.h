@@ -26,6 +26,7 @@
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/e1ap/e1ap_ies.h"
 #include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
+#include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/ran/qos/qos_prio_level.h"
 
 namespace srsran {
@@ -585,7 +586,7 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
           asn1_res_to_mod_item.drb_to_setup_list_ng_ran.push_back(asn1_drb_to_setup_item);
         }
 
-        for (const auto& drb_to_mod_item : res_to_mod_item.drb_to_modify_list_ng_ran) {
+        for (const e1ap_drb_to_modify_item_ng_ran& drb_to_mod_item : res_to_mod_item.drb_to_modify_list_ng_ran) {
           asn1::e1ap::drb_to_modify_item_ng_ran_s asn1_drb_to_mod_item;
 
           asn1_drb_to_mod_item.drb_id = drb_id_to_uint(drb_to_mod_item.drb_id);
@@ -600,6 +601,11 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
           if (drb_to_mod_item.pdcp_cfg.has_value()) {
             asn1_drb_to_mod_item.pdcp_cfg_present = true;
             asn1_drb_to_mod_item.pdcp_cfg         = pdcp_config_to_e1ap_asn1(drb_to_mod_item.pdcp_cfg.value());
+          }
+
+          if (drb_to_mod_item.pdcp_sn_status_request.has_value() && *drb_to_mod_item.pdcp_sn_status_request) {
+            asn1_drb_to_mod_item.pdcp_sn_status_request_present = true;
+            asn1_drb_to_mod_item.pdcp_sn_status_request         = asn1::e1ap::pdcp_sn_status_request_opts::requested;
           }
 
           asn1_res_to_mod_item.drb_to_modify_list_ng_ran.push_back(asn1_drb_to_mod_item);
@@ -921,7 +927,7 @@ inline void fill_e1ap_bearer_context_modification_response(
             // Fill PDCP SN status info.
             if (asn1_drb_mod_item.pdcp_sn_status_info_present) {
               auto& asn1_pdcp_sn_status_info = asn1_drb_mod_item.pdcp_sn_status_info;
-
+              drb_mod_item.pdcp_sn_status_info.emplace();
               drb_mod_item.pdcp_sn_status_info.value().pdcp_status_transfer_ul.count_value =
                   e1ap_asn1_pdcp_count_to_pdcp_count(asn1_pdcp_sn_status_info.pdcp_status_transfer_ul.count_value);
 

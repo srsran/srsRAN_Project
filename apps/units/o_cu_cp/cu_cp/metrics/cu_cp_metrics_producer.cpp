@@ -25,7 +25,7 @@
 
 using namespace srsran;
 
-void cu_cp_metrics_producer_impl::notify_metrics_report_request(const srs_cu_cp::metrics_report& report)
+void cu_cp_metrics_producer_impl::notify_metrics_report_request(const cu_cp_metrics_report& report)
 {
   notifier.on_new_metric(cu_cp_metrics_impl(report));
 }

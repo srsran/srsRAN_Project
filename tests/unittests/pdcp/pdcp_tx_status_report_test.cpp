@@ -39,7 +39,7 @@ TEST_P(pdcp_tx_status_report_test, handle_status_report)
     test_frame.sdu_discard_queue   = {};
     unsigned                n_sdus = 5;
     std::queue<byte_buffer> exp_pdu_list;
-    pdcp_tx_state           st = {tx_next, tx_next, tx_next};
+    pdcp_tx_state           st = {tx_next, tx_next, 0, tx_next, tx_next};
     pdcp_tx->set_state(st);
     pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::off, security::ciphering_enabled::off);
     srsran::test_delimit_logger delimiter("Testing data recovery. SN_SIZE={} COUNT={}", sn_size, tx_next);
@@ -47,16 +47,21 @@ TEST_P(pdcp_tx_status_report_test, handle_status_report)
       // Write SDU
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
+
+      // Wait for crypto and reordering
+      wait_pending_crypto();
+      worker.run_pending_tasks();
+
       pdcp_tx->handle_transmit_notification(pdcp_compute_sn(count, sn_size));
 
       // Get generated PDU
-      ASSERT_EQ(test_frame.pdu_queue.size(), 1);
+      FLUSH_AND_ASSERT_EQ(test_frame.pdu_queue.size(), 1);
       exp_pdu_list.push(std::move(test_frame.pdu_queue.front()));
       test_frame.pdu_queue.pop();
       ASSERT_EQ(test_frame.pdu_queue.size(), 0);
     }
 
-    ASSERT_TRUE(test_frame.sdu_discard_queue.empty());
+    FLUSH_AND_ASSERT_TRUE(test_frame.sdu_discard_queue.empty());
 
     // Build status report that confirms RX of SDUs:
     // Confirm: [tx_next,            tx_next+2,            tx_next+4]
@@ -86,7 +91,7 @@ TEST_P(pdcp_tx_status_report_test, handle_status_report)
       std::array<uint32_t, 3> exp_pdcp_sns = {pdcp_compute_sn(tx_next, sn_size),
                                               pdcp_compute_sn(tx_next + 2, sn_size),
                                               pdcp_compute_sn(tx_next + 4, sn_size)};
-      ASSERT_FALSE(test_frame.sdu_discard_queue.empty());
+      FLUSH_AND_ASSERT_FALSE(test_frame.sdu_discard_queue.empty());
       while (not test_frame.sdu_discard_queue.empty()) {
         ASSERT_NE(std::find(exp_pdcp_sns.begin(), exp_pdcp_sns.end(), test_frame.sdu_discard_queue.front()),
                   exp_pdcp_sns.end());
@@ -104,7 +109,7 @@ TEST_P(pdcp_tx_status_report_test, handle_status_report)
     {
       std::array<uint32_t, 2> exp_pdcp_sns = {pdcp_compute_sn(tx_next + 1, sn_size),
                                               pdcp_compute_sn(tx_next + 3, sn_size)};
-      ASSERT_FALSE(test_frame.sdu_discard_queue.empty());
+      FLUSH_AND_ASSERT_FALSE(test_frame.sdu_discard_queue.empty());
       while (not test_frame.sdu_discard_queue.empty()) {
         ASSERT_NE(std::find(exp_pdcp_sns.begin(), exp_pdcp_sns.end(), test_frame.sdu_discard_queue.front()),
                   exp_pdcp_sns.end());
@@ -133,7 +138,7 @@ TEST_P(pdcp_tx_status_report_test, data_recovery)
   auto test_with_count = [this](uint32_t tx_next) {
     unsigned                n_sdus = 5;
     std::queue<byte_buffer> exp_pdu_list;
-    pdcp_tx_state           st = {tx_next, tx_next, tx_next};
+    pdcp_tx_state           st = {tx_next, tx_next, 0, tx_next, tx_next};
     pdcp_tx->set_state(st);
     pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::off, security::ciphering_enabled::off);
     srsran::test_delimit_logger delimiter("Testing data recovery. SN_SIZE={} COUNT={}", sn_size, tx_next);
@@ -141,36 +146,45 @@ TEST_P(pdcp_tx_status_report_test, data_recovery)
       // Write SDU
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
+
+      // Wait for crypto and reordering
+      wait_pending_crypto();
+      worker.run_pending_tasks();
+
       pdcp_tx->handle_transmit_notification(pdcp_compute_sn(count, sn_size));
 
       // Get generated PDU
-      ASSERT_EQ(test_frame.pdu_queue.size(), 1);
+      FLUSH_AND_ASSERT_EQ(test_frame.pdu_queue.size(), 1);
       exp_pdu_list.push(std::move(test_frame.pdu_queue.front()));
       test_frame.pdu_queue.pop();
-      ASSERT_EQ(test_frame.pdu_queue.size(), 0);
+      FLUSH_AND_ASSERT_EQ(test_frame.pdu_queue.size(), 0);
     }
 
     pdcp_tx->data_recovery();
 
+    // Wait for crypto and reordering
+    wait_pending_crypto();
+    worker.run_pending_tasks();
+
     // read the status report
     {
-      ASSERT_EQ(test_frame.pdu_queue.size(), 1);
+      FLUSH_AND_ASSERT_EQ(test_frame.pdu_queue.size(), 1);
       byte_buffer pdu = std::move(test_frame.pdu_queue.front());
       test_frame.pdu_queue.pop();
       byte_buffer exp_pdu = test_frame.compile_status_report();
-      ASSERT_EQ(pdu.length(), exp_pdu.length());
-      ASSERT_EQ(pdu, exp_pdu);
+      FLUSH_AND_ASSERT_EQ(pdu.length(), exp_pdu.length());
+      FLUSH_AND_ASSERT_EQ(pdu, exp_pdu);
     }
 
     // read data PDUs
-    ASSERT_EQ(test_frame.retx_queue.size(), n_sdus);
+    FLUSH_AND_ASSERT_EQ(test_frame.retx_queue.size(), n_sdus);
     for (uint32_t count = tx_next; count < tx_next + n_sdus; ++count) {
       byte_buffer pdu = std::move(test_frame.retx_queue.front());
       test_frame.retx_queue.pop();
       byte_buffer exp_pdu = std::move(exp_pdu_list.front());
       exp_pdu_list.pop();
-      ASSERT_EQ(pdu.length(), exp_pdu.length());
-      ASSERT_EQ(pdu, exp_pdu);
+      FLUSH_AND_ASSERT_EQ(pdu.length(), exp_pdu.length());
+      FLUSH_AND_ASSERT_EQ(pdu, exp_pdu);
     }
 
     while (not test_frame.pdu_queue.empty()) {

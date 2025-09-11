@@ -57,6 +57,8 @@ struct uplink_request_handler_impl_config {
   std::chrono::microseconds ul_processing_time;
   /// Transmission window timing parameters for delay management.
   tx_window_timing_parameters tx_timing_params;
+  /// If set to true, logs late events as warnings, otherwise as info.
+  bool enable_log_warnings_for_lates;
 };
 
 /// Uplink request handler implmentation dependencies.
@@ -111,6 +113,7 @@ private:
   std::shared_ptr<ether::eth_frame_pool>                  frame_pool;
   error_notifier&                                         err_notifier;
   uplink_request_handler_metrics_collector                metrics_collector;
+  bool                                                    enable_log_warnings_for_lates;
 };
 
 } // namespace ofh

@@ -118,7 +118,9 @@ protected:
   queue_impl q;
 };
 
-std::unique_ptr<detail::any_task_queue> make_any_task_queue(const concurrent_queue_params& params)
+} // namespace
+
+static std::unique_ptr<detail::any_task_queue> make_any_task_queue(const concurrent_queue_params& params)
 {
   switch (params.policy) {
     case concurrent_queue_policy::lockfree_mpmc:
@@ -139,8 +141,6 @@ std::unique_ptr<detail::any_task_queue> make_any_task_queue(const concurrent_que
   }
   return nullptr;
 }
-
-} // namespace
 
 detail::priority_task_queue::priority_task_queue(span<const concurrent_queue_params> queue_params,
                                                  std::chrono::microseconds           wait_if_empty) :

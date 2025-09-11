@@ -109,7 +109,7 @@ security::sec_128_as_config ue_security_manager::get_rrc_128_as_config() const
   return sec_context.get_128_as_config(security::sec_domain::rrc);
 }
 
-void ue_security_manager::update_security_context(security::security_context sec_ctxt)
+void ue_security_manager::update_security_context(const security::security_context& sec_ctxt)
 {
   sec_context = sec_ctxt;
 }

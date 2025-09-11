@@ -236,7 +236,9 @@ protected:
   }
 
   sched_cell_configuration_request_message
-  create_custom_cell_config_request(unsigned k0, const std::optional<tdd_ul_dl_config_common>& tdd_cfg = {})
+  create_custom_cell_config_request(unsigned                                      k0,
+                                    const std::optional<tdd_ul_dl_config_common>& tdd_cfg                   = {},
+                                    bool                                          add_extra_pdcch_candidate = false)
   {
     if (duplx_mode == duplex_mode::TDD and tdd_cfg.has_value()) {
       builder_params.tdd_ul_dl_cfg_common = *tdd_cfg;
@@ -244,6 +246,12 @@ protected:
     sched_cell_configuration_request_message msg =
         sched_config_helper::make_default_sched_cell_configuration_request(builder_params);
     msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0 = k0;
+
+    if (add_extra_pdcch_candidate) {
+      srsran_assert(msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.size() > 1U,
+                    "This test assumes that the cell configuration has at least 2 search spaces");
+      msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].set_non_ss0_nof_candidates({0, 0, 2, 0, 0});
+    }
     return msg;
   }
 
@@ -267,6 +275,13 @@ protected:
     return std::any_of(bench->res_grid[0].result.dl.ue_grants.begin(),
                        bench->res_grid[0].result.dl.ue_grants.end(),
                        [&u](const dl_msg_alloc& grant) { return grant.pdsch_cfg.rnti == u.crnti; });
+  }
+
+  bool ue_is_allocated_pusch(const ue& u)
+  {
+    return std::any_of(bench->res_grid[0].result.ul.puschs.begin(),
+                       bench->res_grid[0].result.ul.puschs.end(),
+                       [&u](const ul_sched_info& grant) { return grant.pusch_cfg.rnti == u.crnti; });
   }
 
   const dl_msg_alloc* get_ue_allocated_pdsch(const ue& u)
@@ -662,6 +677,49 @@ TEST_P(fallback_scheduler_tester, when_conres_and_msg4_srb1_scheduled_separately
     }
   }
   ASSERT_TRUE(msg4_srb1_pdcch.has_value());
+}
+
+TEST_P(fallback_scheduler_tester, in_ul_and_dl_allocation_pucch_cannot_collide_with_pusch_for_same_ue)
+{
+  // Simulate the case in the fallback scheduler first schedules a PUSCH grant for a given slot, and then there is an
+  // opportunity to schedule a PDSCH whose corresponding PUCCH falls in the same slot as the PUSCH. Verify that in this
+  // case the PUCCH is allocated in the next available slot.
+
+  // Add an extra PDCCH candidate for SS#1 to enable 2 PDCCHs (1 UL and 1 DL) to be allocated in the same slot.
+  const bool add_extra_pdcch_candidate = true;
+  setup_sched(create_expert_config(1), create_custom_cell_config_request(params.k0, {}, add_extra_pdcch_candidate));
+
+  // Add UE 1.
+  add_ue(to_rnti(0x4601), to_du_ue_index(0));
+
+  // Advance the slot count, so that the UL slot (corresponding to the PDCCH) for PUSCH (with k2=4) and PUCCH
+  // (with k2=4) are on an UL slot (e.g. slot with idx 8) in both FDD and TDD.
+  while (current_slot.slot_index() != 3U) {
+    run_slot();
+  }
+
+  // Push both DL and UL buffer state for the UE.
+  unsigned ue1_mac_srb1_sdu_size = 99;
+  push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, ue1_mac_srb1_sdu_size, false);
+  push_buffer_state_to_ul_ue(to_du_ue_index(0), current_slot, ue1_mac_srb1_sdu_size);
+
+  const auto&    test_ue            = get_ue(to_du_ue_index(0));
+  bool           pdsch_allocated    = false;
+  bool           pusch_allocated    = false;
+  unsigned       sl_idx             = 0;
+  const unsigned max_test_run_slots = 10U * (1U << current_slot.numerology());
+  for (; sl_idx != max_test_run_slots; ++sl_idx) {
+    run_slot();
+
+    ASSERT_FALSE(ue_is_allocated_pusch(test_ue) and ue_is_allocated_pucch(test_ue))
+        << fmt::format("PUSCH and PUCCH allocated at slot {} ", current_slot);
+
+    pdsch_allocated |= ue_is_allocated_pdsch(test_ue);
+    pusch_allocated |= ue_is_allocated_pusch(test_ue);
+  }
+
+  ASSERT_TRUE(pdsch_allocated);
+  ASSERT_TRUE(pusch_allocated);
 }
 
 TEST_P(fallback_scheduler_tester, test_large_srb0_buffer_size)
@@ -1640,7 +1698,7 @@ TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_reconf_is_after_reest_both_common
 
   slot_point slot_update_srb_traffic{current_slot.numerology(), generate_srb_traffic_slot()};
 
-  // Check if the SRB0 gets transmitted at least once.
+  // Check if the SRB1 gets transmitted at least once.
   bool srb_transmitted = false;
   for (unsigned idx = 1; idx < MAX_TEST_RUN_SLOTS * (1U << current_slot.numerology()); idx++) {
     run_slot();
@@ -1648,6 +1706,58 @@ TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_reconf_is_after_reest_both_common
     // Allocate buffer for SRB1.
     if (current_slot == slot_update_srb_traffic) {
       push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, MAC_SRB_SDU_SIZE, false);
+    }
+
+    // If PUCCH is detected, then it must be 1 grant only (PUCCH common).
+    auto& pucchs = bench->res_grid[0].result.ul.pucchs;
+    if (not pucchs.empty()) {
+      srb_transmitted = true;
+      ASSERT_EQ(2, std::count_if(pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) {
+                  return pucch.crnti == rnti;
+                }));
+
+      const auto* pucch_common = std::find_if(pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) {
+        return pucch.crnti == rnti and pucch.pdu_context.is_common;
+      });
+      ASSERT_TRUE(pucch_common != pucchs.end());
+
+      const auto* pucch_ded = std::find_if(pucchs.begin(), pucchs.end(), [rnti = u.crnti](const pucch_info& pucch) {
+        return pucch.crnti == rnti and not pucch.pdu_context.is_common;
+      });
+      ASSERT_TRUE(pucch_ded != pucchs.end());
+    }
+
+    // NACK the HARQ processes that are waiting for ACK to trigger a retransmissions.
+    const unsigned                        bit_index_1_harq_only = 0U;
+    std::optional<dl_harq_process_handle> dl_harq =
+        u.get_pcell().harqs.find_dl_harq_waiting_ack(current_slot, bit_index_1_harq_only);
+    if (dl_harq.has_value()) {
+      dl_harq->dl_ack_info(mac_harq_ack_report_status::nack, {});
+    }
+  }
+
+  ASSERT_TRUE(srb_transmitted);
+}
+
+TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_srb1_is_scheduled_with_crnti_both_common_and_ded_pucch_are_scheduled)
+{
+  const auto rnti        = to_rnti(0x4601);
+  const auto du_ue_index = to_du_ue_index(0);
+  ASSERT_TRUE(add_ue(rnti, du_ue_index));
+  auto& u = bench->ue_db[to_du_ue_index(0)];
+  ASSERT_TRUE(u.get_pcell().cfg().init_bwp().ul_ded.has_value());
+
+  slot_point slot_update_srb_traffic{current_slot.numerology(), generate_srb_traffic_slot()};
+
+  // Check if the SRB1 gets transmitted at least once.
+  bool srb_transmitted = false;
+  for (unsigned idx = 1; idx < MAX_TEST_RUN_SLOTS * (1U << current_slot.numerology()); idx++) {
+    run_slot();
+
+    // Allocate buffer for SRB1.
+    if (current_slot == slot_update_srb_traffic) {
+      // Do not transmit CON_RES so that dci type is c_rnti_f1_0.
+      push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, MAC_SRB_SDU_SIZE, false, false);
     }
 
     // If PUCCH is detected, then it must be 1 grant only (PUCCH common).

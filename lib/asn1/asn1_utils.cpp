@@ -389,10 +389,10 @@ SRSASN_CODE pack_enum(bit_ref& bref, uint32_t e, uint32_t nof_types, uint32_t no
   }
   SRSASN_CODE ret;
   if (has_ext) {
-    uint32_t nof_bits = (uint32_t)ceilf(log2f(nof_types - nof_exts));
+    uint32_t nof_bits = (uint32_t)std::ceil(std::log2(nof_types - nof_exts));
     ret               = pack_enum(bref, e, nof_bits, nof_types - nof_exts);
   } else {
-    uint32_t nof_bits = (uint32_t)ceilf(log2f(nof_types));
+    uint32_t nof_bits = (uint32_t)std::ceil(std::log2(nof_types));
     ret               = pack_enum(bref, e, nof_bits);
   }
   return ret;
@@ -402,7 +402,7 @@ ValOrError unpack_enum(uint32_t nof_types, uint32_t nof_exts, bool has_ext, cbit
 {
   ValOrError ret;
   if (has_ext) {
-    uint32_t nof_bits = (uint32_t)ceilf(log2f(nof_types - nof_exts));
+    uint32_t nof_bits = (uint32_t)std::ceil(std::log2(nof_types - nof_exts));
     bool     ext;
     ret.code = bref.unpack(ext, 1);
     if (ret.code != SRSASN_SUCCESS) {
@@ -415,7 +415,7 @@ ValOrError unpack_enum(uint32_t nof_types, uint32_t nof_exts, bool has_ext, cbit
       ret.val += nof_types - nof_exts;
     }
   } else {
-    uint32_t nof_bits = (uint32_t)ceilf(log2f(nof_types));
+    uint32_t nof_bits = (uint32_t)std::ceil(std::log2(nof_types));
     ret.code          = bref.unpack(ret.val, nof_bits);
   }
   if (ret.val >= nof_types) {
@@ -452,7 +452,7 @@ SRSASN_CODE pack_constrained_whole_number(bit_ref& bref, IntType n, IntType lb, 
   if (ra == 1) {
     return SRSASN_SUCCESS;
   }
-  uint32_t n_bits   = (uint32_t)ceilf(log2f((float)ra)); // bit-field size
+  uint32_t n_bits   = (uint32_t)std::ceil(std::log2((float)ra)); // bit-field size
   IntType  toencode = n - lb;
   if (not aligned) {
     // UNALIGNED variant
@@ -470,8 +470,8 @@ SRSASN_CODE pack_constrained_whole_number(bit_ref& bref, IntType n, IntType lb, 
       HANDLE_CODE(bref.pack(toencode, n_bits));
       ret = bref.align_bytes_zero();
     } else {
-      uint32_t n_bits_len = (uint32_t)ceilf(log2f(ceil_frac(n_bits, 8u)));
-      n_bits              = (uint32_t)floorf(log2f(std::max(toencode, (IntType)1)) + 1);
+      uint32_t n_bits_len = (uint32_t)std::ceil(std::log2(ceil_frac(n_bits, 8u)));
+      n_bits              = (uint32_t)std::floor(std::log2(std::max(toencode, (IntType)1)) + 1);
       uint32_t n_octets   = ceil_frac(n_bits, 8u);
       HANDLE_CODE(bref.pack(n_octets - 1, n_bits_len));
       HANDLE_CODE(bref.align_bytes_zero());
@@ -519,7 +519,7 @@ SRSASN_CODE unpack_constrained_whole_number(IntType& n, cbit_ref& bref, IntType 
     n = lb;
     return SRSASN_SUCCESS;
   }
-  uint32_t n_bits = (uint32_t)ceilf(log2f((float)ra));
+  uint32_t n_bits = (uint32_t)std::ceil(std::log2((float)ra));
   if (not aligned) {
     // UNALIGNED variant
     HANDLE_CODE(bref.unpack(n, n_bits));
@@ -534,7 +534,7 @@ SRSASN_CODE unpack_constrained_whole_number(IntType& n, cbit_ref& bref, IntType 
       HANDLE_CODE(bref.unpack(n, n_octets * 8));
       HANDLE_CODE(bref.align_bytes());
     } else {
-      uint32_t n_bits_len = (uint32_t)ceilf(log2f(ceil_frac(n_bits, 8u)));
+      uint32_t n_bits_len = (uint32_t)std::ceil(std::log2(ceil_frac(n_bits, 8u)));
       uint32_t n_octets;
       HANDLE_CODE(bref.unpack(n_octets, n_bits_len));
       n_octets += 1;
@@ -614,7 +614,7 @@ template SRSASN_CODE unpack_norm_small_non_neg_whole_number<uint64_t>(uint64_t& 
 template <typename IntType>
 IntType unconstrained_whole_number_length(IntType n)
 {
-  return (IntType)ceilf((log2f(n) + 1) / 8.0f);
+  return (IntType)std::ceil((std::log2(n) + 1) / 8.0f);
 }
 
 /**
@@ -1005,7 +1005,7 @@ void octet_string_helper::to_octet_string(srsran::byte_buffer& buf, uint64_t num
 
 static void to_hex(char* cstr, uint8_t val)
 {
-  sprintf(cstr, "%02x", val);
+  std::sprintf(cstr, "%02x", val);
 }
 
 std::string octet_string_helper::to_hex_string(srsran::span<const uint8_t> buf)
@@ -1042,7 +1042,7 @@ unsigned octet_string_helper::hex_string_to_octets(srsran::span<uint8_t> buf, co
   }
   char cstr[] = "\0\0\0";
   for (unsigned i = 0; i < str.size(); i += 2) {
-    memcpy(&cstr[0], &str[i], 2);
+    std::memcpy(&cstr[0], &str[i], 2);
     buf[i / 2] = strtoul(cstr, nullptr, 16);
   }
   return (str.size() + 1) / 2;
@@ -1055,7 +1055,7 @@ void octet_string_helper::append_hex_string(byte_buffer& buf, const std::string&
   }
   char cstr[] = "\0\0\0";
   for (unsigned i = 0; i < str.size(); i += 2) {
-    memcpy(&cstr[0], &str[i], 2);
+    std::memcpy(&cstr[0], &str[i], 2);
     if (not buf.append(strtoul(cstr, nullptr, 16))) {
       log_error("Failed to append octet string byte to buffer");
     }
@@ -1171,12 +1171,12 @@ namespace bitstring_utils {
 /**
  * Pack ASN1 bitstring length prefix. Accommodates for cases: fixed/unbounded/bounded, aligned/unaligned, with/out ext
  */
-SRSASN_CODE pack_length_prefix(bit_ref& bref,
-                               uint32_t len,
-                               uint32_t lb         = 0,
-                               uint32_t ub         = std::numeric_limits<uint32_t>::max(),
-                               bool     has_ext    = false,
-                               bool     is_aligned = false)
+static SRSASN_CODE pack_length_prefix(bit_ref& bref,
+                                      uint32_t len,
+                                      uint32_t lb         = 0,
+                                      uint32_t ub         = std::numeric_limits<uint32_t>::max(),
+                                      bool     has_ext    = false,
+                                      bool     is_aligned = false)
 {
   if (has_ext and ub == std::numeric_limits<uint32_t>::max()) {
     log_error("has extension marker but it is an unbounded prefix size");
@@ -1204,7 +1204,7 @@ SRSASN_CODE pack_length_prefix(bit_ref& bref,
   }
 
   // pack as bounded bitstring
-  uint32_t len_bits = (uint32_t)ceilf(log2(ub - lb));
+  uint32_t len_bits = (uint32_t)std::ceil(std::log2(ub - lb));
   HANDLE_CODE(bref.pack(len - lb, len_bits));
   if (is_aligned) {
     HANDLE_CODE(bref.align_bytes_zero());
@@ -1212,7 +1212,8 @@ SRSASN_CODE pack_length_prefix(bit_ref& bref,
   return SRSASN_SUCCESS;
 }
 
-SRSASN_CODE pack_bitfield(bit_ref& bref, const uint8_t* buf, uint32_t nbits, uint32_t lb, uint32_t ub, bool is_aligned)
+static SRSASN_CODE
+pack_bitfield(bit_ref& bref, const uint8_t* buf, uint32_t nbits, uint32_t lb, uint32_t ub, bool is_aligned)
 {
   if (nbits == 0) {
     log_error("Invalid bitstring size={}", nbits);
@@ -1357,23 +1358,23 @@ void log_invalid_choice_id(uint32_t val, const char* choice_type)
 
 namespace asn_string_utils {
 
-size_t get_nof_bits_per_char(size_t lb, size_t ub, bool aligned)
+static size_t get_nof_bits_per_char(size_t lb, size_t ub, bool aligned)
 {
   size_t N = ub - lb + 1;
-  auto   b = (size_t)ceilf(log2(N)); // B
+  auto   b = (size_t)std::ceil(std::log2(N)); // B
   if (aligned) {
-    b = (size_t)pow(2, ceilf(log2(b))); // B2
+    b = (size_t)std::pow(2, std::ceil(std::log2(b))); // B2
   }
   return b;
 }
 
-bool is_octet_aligned(size_t bits_per_char, size_t alb, size_t aub, bool aligned)
+static bool is_octet_aligned(size_t bits_per_char, size_t alb, size_t aub, bool aligned)
 {
   size_t max_nof_bits = bits_per_char * aub;
   return aligned and (max_nof_bits > 16 or (alb != aub and max_nof_bits == 16));
 }
 
-constexpr bool is_length_encoded(size_t alb, size_t aub, bool aligned)
+static constexpr bool is_length_encoded(size_t alb, size_t aub, bool aligned)
 {
   return alb != aub or aub >= ASN_64K;
 }

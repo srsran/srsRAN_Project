@@ -30,10 +30,10 @@ using namespace srsran;
 
 // [Implementation-defined] Limit for the coefficient of the proportional fair metric to avoid issues with double
 // imprecision.
-constexpr unsigned MAX_PF_COEFF = 10;
+static constexpr unsigned MAX_PF_COEFF = 10;
 
 // [Implementation-defined] Maximum number of slots skipped between scheduling opportunities.
-constexpr unsigned MAX_SLOT_SKIPPED = 20;
+static constexpr unsigned MAX_SLOT_SKIPPED = 20;
 
 scheduler_time_qos::scheduler_time_qos(const scheduler_ue_expert_config& expert_cfg_, du_cell_index_t cell_index_) :
   params(std::get<time_qos_scheduler_expert_config>(expert_cfg_.strategy_cfg)), cell_index(cell_index_)
@@ -99,13 +99,11 @@ void scheduler_time_qos::save_ul_newtx_grants(span<const ul_sched_info> ul_grant
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace {
-
 // [Implementation-defined] Helper value to set a maximum metric weight that is low enough to avoid overflows during
 // the final QoS weight computation.
-constexpr double max_metric_weight = 1.0e12;
+static constexpr double max_metric_weight = 1.0e12;
 
-double compute_pf_metric(double estim_rate, double avg_rate, double fairness_coeff)
+static double compute_pf_metric(double estim_rate, double avg_rate, double fairness_coeff)
 {
   double pf_weight = 0.0;
   if (estim_rate > 0) {
@@ -116,7 +114,7 @@ double compute_pf_metric(double estim_rate, double avg_rate, double fairness_coe
         // rate, as its impact is minimal.
         pf_weight = 1 / avg_rate;
       } else {
-        pf_weight = estim_rate / pow(avg_rate, fairness_coeff);
+        pf_weight = estim_rate / std::pow(avg_rate, fairness_coeff);
       }
     } else {
       // In case the avg rate is zero, the division would be inf. Instead, we give the highest priority to the UE.
@@ -126,11 +124,11 @@ double compute_pf_metric(double estim_rate, double avg_rate, double fairness_coe
   return pf_weight;
 }
 
-double combine_qos_metrics(double                                  pf_weight,
-                           double                                  gbr_weight,
-                           double                                  prio_weight,
-                           double                                  delay_weight,
-                           const time_qos_scheduler_expert_config& policy_params)
+static double combine_qos_metrics(double                                  pf_weight,
+                                  double                                  gbr_weight,
+                                  double                                  prio_weight,
+                                  double                                  delay_weight,
+                                  const time_qos_scheduler_expert_config& policy_params)
 {
   if (policy_params.qos_weight_func == time_qos_scheduler_expert_config::weight_function::gbr_prioritized and
       gbr_weight > 1.0) {
@@ -143,11 +141,11 @@ double combine_qos_metrics(double                                  pf_weight,
 }
 
 /// \brief Computes DL rate weight used in computation of DL priority value for a UE in a slot.
-double compute_dl_qos_weights(const slice_ue&                         u,
-                              double                                  estim_dl_rate,
-                              double                                  avg_dl_rate,
-                              slot_point                              slot_tx,
-                              const time_qos_scheduler_expert_config& policy_params)
+static double compute_dl_qos_weights(const slice_ue&                         u,
+                                     double                                  estim_dl_rate,
+                                     double                                  avg_dl_rate,
+                                     slot_point                              slot_tx,
+                                     const time_qos_scheduler_expert_config& policy_params)
 {
   if (avg_dl_rate == 0) {
     // Highest priority to UEs that have not yet received any allocation.
@@ -208,10 +206,10 @@ double compute_dl_qos_weights(const slice_ue&                         u,
 }
 
 /// \brief Computes UL weights used in computation of UL priority value for a UE in a slot.
-double compute_ul_qos_weights(const slice_ue&                         u,
-                              double                                  estim_ul_rate,
-                              double                                  avg_ul_rate,
-                              const time_qos_scheduler_expert_config& policy_params)
+static double compute_ul_qos_weights(const slice_ue&                         u,
+                                     double                                  estim_ul_rate,
+                                     double                                  avg_ul_rate,
+                                     const time_qos_scheduler_expert_config& policy_params)
 {
   if (u.has_pending_sr() or avg_ul_rate == 0) {
     // Highest priority to SRs and UEs that have not yet received any allocation.
@@ -261,8 +259,6 @@ double compute_ul_qos_weights(const slice_ue&                         u,
 
   return combine_qos_metrics(pf_weight, gbr_weight, prio_weight, 1.0, policy_params);
 }
-
-} // namespace
 
 scheduler_time_qos::ue_ctxt::ue_ctxt(du_ue_index_t             ue_index_,
                                      du_cell_index_t           cell_index_,

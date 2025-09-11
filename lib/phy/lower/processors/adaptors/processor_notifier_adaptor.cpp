@@ -89,8 +89,9 @@ void processor_notifier_adaptor::puxch_adaptor::on_puxch_request_late(const reso
 }
 
 void processor_notifier_adaptor::puxch_adaptor::on_rx_symbol(const shared_resource_grid&        grid,
-                                                             const lower_phy_rx_symbol_context& context)
+                                                             const lower_phy_rx_symbol_context& context,
+                                                             bool                               is_valid)
 {
   srsran_assert(error_notifier, "The adaptor is not connected to an error notifier.");
-  rx_notifier->on_rx_symbol(context, grid);
+  rx_notifier->on_rx_symbol(context, grid, is_valid);
 }

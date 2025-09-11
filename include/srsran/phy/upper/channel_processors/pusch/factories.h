@@ -116,6 +116,7 @@ struct pusch_processor_factory_sw_configuration {
   channel_estimate::channel_estimate_dimensions ch_estimate_dimensions;
   unsigned                                      dec_nof_iterations    = 10;
   bool                                          dec_enable_early_stop = true;
+  bool                                          dec_force_decoding    = false;
   unsigned                                      max_nof_concurrent_threads;
   channel_state_information::sinr_type csi_sinr_calc_method = channel_state_information::sinr_type::channel_estimator;
 };
@@ -146,8 +147,6 @@ struct pusch_processor_pool_factory_config {
   /// reserved. The number of UCI processors must be equal to the number of threads that will use the PUSCH processor
   /// pool.
   unsigned nof_uci_processors;
-  /// Set to true for the pool to wait for processors to be unlocked.
-  bool blocking = false;
 };
 
 /// Creates a PUSCH processor pool.

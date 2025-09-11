@@ -2324,7 +2324,7 @@ inline simd_s_t srsran_simd_convert_1f_bf16(simd_f_t a)
 }
 #endif // __AVX512F__
 
-static inline simd_s_t srsran_simd_convert_2f_bf16(simd_f_t a, simd_f_t b)
+inline simd_s_t srsran_simd_convert_2f_bf16(simd_f_t a, simd_f_t b)
 {
   simd_s_t ret;
 #ifdef __AVX512F__
@@ -2470,7 +2470,7 @@ static inline simd_s_t srsran_simd_convert_2f_bf16(simd_f_t a, simd_f_t b)
 
 // Converts 2 vectors of single-precision floats to a vector of bf16_t, given that input vectors contain values of the
 // interleaved data read from memory.
-static inline simd_s_t srsran_simd_convert_2f_interleaved_bf16(simd_f_t a, simd_f_t b)
+inline simd_s_t srsran_simd_convert_2f_interleaved_bf16(simd_f_t a, simd_f_t b)
 {
 #ifdef __AVX512F__
   const __m512i bias = _mm512_set1_epi32(0x7fff);

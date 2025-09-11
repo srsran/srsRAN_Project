@@ -91,18 +91,24 @@ TEST(downlinkProcessorTest, worksInOrder)
   ASSERT_FALSE(gw.sent);
 
   dl_processor->process_ssb({});
-  ASSERT_TRUE(ssb_ref.is_process_called());
 
   pdcch_processor::pdu_t pdu;
   pdu.dci.precoding = precoding_configuration::make_wideband(make_single_port());
   dl_processor->process_pdcch(pdu);
-  ASSERT_TRUE(pdcch_ref.is_process_called());
 
-  std::vector<uint8_t> data = {1, 2, 3, 4};
-  dl_processor->process_pdsch({shared_transport_block(data)}, {});
-  ASSERT_TRUE(pdsch_ref.is_process_called());
-
+  std::vector<uint8_t> pdsch_data = {1, 2, 3, 4};
+  dl_processor->process_pdsch({shared_transport_block(pdsch_data)}, {});
   dl_processor->process_nzp_csi_rs({});
+
+  unsigned task_count = 0;
+  while (executor.try_run_next()) {
+    ++task_count;
+  }
+  ASSERT_EQ(task_count, 4);
+
+  ASSERT_TRUE(ssb_ref.is_process_called());
+  ASSERT_TRUE(pdcch_ref.is_process_called());
+  ASSERT_TRUE(pdsch_ref.is_process_called());
   ASSERT_TRUE(csi_rs_ref.is_map_called());
 
   ASSERT_FALSE(gw.sent);
@@ -218,6 +224,8 @@ TEST(downlinkProcessorTest, twoConsecutiveSlots)
   ASSERT_TRUE(!gw.sent);
 
   dl_processor.release();
+  while (executor.try_run_next()) {
+  }
   ASSERT_TRUE(gw.sent);
 
   slot_point slot2(1, 2, 2);
@@ -232,6 +240,10 @@ TEST(downlinkProcessorTest, twoConsecutiveSlots)
   ASSERT_FALSE(gw.sent);
 
   dl_processor.release();
+
+  ASSERT_FALSE(gw.sent);
+  while (executor.try_run_next()) {
+  }
 
   ASSERT_TRUE(gw.sent);
 }

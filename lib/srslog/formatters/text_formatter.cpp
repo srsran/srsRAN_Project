@@ -55,36 +55,6 @@ static void format_hex_dump(const std::vector<uint8_t>& v, fmt::memory_buffer& b
   }
 }
 
-/// Format the log metadata into the input buffer.
-static void format_metadata(const detail::log_entry_metadata& metadata, fmt::memory_buffer& buffer)
-{
-  // Time stamp data preparation.
-  std::tm current_time = fmt::gmtime(std::chrono::high_resolution_clock::to_time_t(metadata.tp));
-  auto    us_fraction =
-      std::chrono::duration_cast<std::chrono::microseconds>(metadata.tp.time_since_epoch()).count() % 1000000u;
-  fmt::format_to(std::back_inserter(buffer), "{:%F}T{:%H:%M:%S}.{:06} ", current_time, current_time, us_fraction);
-
-  // Format optional fields if present.
-  if (!metadata.log_name.empty()) {
-    fmt::format_to(std::back_inserter(buffer), "[{: <8}] ", metadata.log_name);
-  }
-  if (metadata.log_tag != '\0') {
-    fmt::format_to(std::back_inserter(buffer), "[{}] ", metadata.log_tag);
-  }
-  if (metadata.context.enabled) {
-    fmt::memory_buffer ctx_buffer;
-    fmt::format_to(std::back_inserter(ctx_buffer),
-                   "{}.{}",
-                   uint32_t(metadata.context.value64 >> 32),
-                   uint32_t(metadata.context.value64));
-    ctx_buffer.push_back('\0');
-    fmt::format_to(std::back_inserter(buffer), "[{: >8}] ", ctx_buffer.data());
-  }
-  if (metadata.log_label != nullptr && !metadata.log_label->empty()) {
-    fmt::format_to(std::back_inserter(buffer), "{}", *metadata.log_label);
-  }
-}
-
 void text_formatter::format(detail::log_entry_metadata&& metadata, fmt::memory_buffer& buffer)
 {
   // Prefix first.
@@ -222,4 +192,39 @@ void text_formatter::format_list_begin(fmt::string_view    list_name,
     return;
   }
   fmt::format_to(std::back_inserter(buffer), "{: <{}}> List: {}\n", ' ', get_indents(level), list_name);
+}
+
+std::unique_ptr<log_formatter> contextual_text_formatter::clone() const
+{
+  return std::unique_ptr<log_formatter>(new contextual_text_formatter(*this));
+}
+
+/// Format the log metadata into the input buffer.
+void contextual_text_formatter::format_metadata(const detail::log_entry_metadata& metadata, fmt::memory_buffer& buffer)
+{
+  // Time stamp data preparation.
+  std::tm current_time = fmt::gmtime(std::chrono::high_resolution_clock::to_time_t(metadata.tp));
+  auto    us_fraction =
+      std::chrono::duration_cast<std::chrono::microseconds>(metadata.tp.time_since_epoch()).count() % 1000000u;
+  fmt::format_to(std::back_inserter(buffer), "{:%F}T{:%H:%M:%S}.{:06} ", current_time, current_time, us_fraction);
+
+  // Format optional fields if present.
+  if (!metadata.log_name.empty()) {
+    fmt::format_to(std::back_inserter(buffer), "[{: <8}] ", metadata.log_name);
+  }
+  if (metadata.log_tag != '\0') {
+    fmt::format_to(std::back_inserter(buffer), "[{}] ", metadata.log_tag);
+  }
+  if (metadata.context.enabled) {
+    fmt::memory_buffer ctx_buffer;
+    fmt::format_to(std::back_inserter(ctx_buffer),
+                   "{}.{}",
+                   uint32_t(metadata.context.value64 >> 32),
+                   uint32_t(metadata.context.value64));
+    ctx_buffer.push_back('\0');
+    fmt::format_to(std::back_inserter(buffer), "[{: >8}] ", ctx_buffer.data());
+  }
+  if (metadata.log_label != nullptr && !metadata.log_label->empty()) {
+    fmt::format_to(std::back_inserter(buffer), "{}", *metadata.log_label);
+  }
 }

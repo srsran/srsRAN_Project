@@ -64,7 +64,7 @@ struct flexible_o_du_ru_config {
     std::optional<tdd_ul_dl_config_common> tdd_config;
     unsigned                               dl_arfcn;
     unsigned                               ul_arfcn;
-    nr_band                                band;
+    frequency_range                        freq_range;
   };
 
   std::vector<cell_config> cells;

@@ -78,7 +78,7 @@ public:
 
   std::vector<du_index_t> get_du_processor_indexes() const;
 
-  std::vector<metrics_report::du_info> handle_du_metrics_report_request() const override;
+  std::vector<cu_cp_metrics_report::du_info> handle_du_metrics_report_request() const override;
 
   size_t get_nof_f1ap_ues();
 

@@ -58,7 +58,7 @@ TEST_F(pdcp_tx_metrics_container_test, init)
     std::string exp_str =
         "num_sdus=0 num_sdu_bytes=0 num_dropped_sdus=0 num_pdus=0 num_pdu_bytes=0 num_discard_timeouts=0 "
         "avg_pdu_latency=0.00us "
-        "pdu_latency_hist=[0 0 0 0 0 0 0 0] min_pdu_latency=none max_pdu_latency=none avg_crypto_latency=0.00us";
+        "pdu_latency_hist=[0 0 0 0 0 0 0 0] min_pdu_latency={na} max_pdu_latency={na} avg_crypto_latency=0.00us";
     srslog::fetch_basic_logger("TEST", false).info("out_str={}", out_str);
     srslog::fetch_basic_logger("TEST", false).info("exp_str={}", exp_str);
     EXPECT_EQ(out_str, exp_str);
@@ -71,7 +71,7 @@ TEST_F(pdcp_tx_metrics_container_test, init)
     std::string    exp_str =
         "num_sdus=0 sdu_rate= 0bps dropped_sdus=0 num_pdus=0 pdu_rate= 0bps num_discard_timeouts=0 "
         "avg_pdu_latency=0.00us "
-        "pdu_latency_hist=[ 0  0  0  0  0  0  0  0] min_pdu_latency=none max_pdu_latency=none crypto_cpu_usage=0.00\%";
+        "pdu_latency_hist=[ 0  0  0  0  0  0  0  0] min_pdu_latency={na} max_pdu_latency={na} crypto_cpu_usage=0.00\%";
     srslog::fetch_basic_logger("TEST", false).info("out_str={}", out_str);
     srslog::fetch_basic_logger("TEST", false).info("exp_str={}", exp_str);
     EXPECT_EQ(out_str, exp_str);
@@ -115,11 +115,10 @@ TEST_F(pdcp_tx_metrics_container_test, values)
     fmt::memory_buffer buffer;
     fmt::format_to(std::back_inserter(buffer), "{}", m);
     std::string out_str = to_c_str(buffer);
-    std::string exp_str =
-        "num_sdus=4598 num_sdu_bytes=39029 num_dropped_sdus=12 num_pdus=9396 num_pdu_bytes=69494 "
-        "num_discard_timeouts=7 "
-        "avg_pdu_latency=0.01us pdu_latency_hist=[999 20 400 8000 160000 3200000 64000000 128] "
-        "min_pdu_latency=optional(1200)ns max_pdu_latency=optional(54322)ns avg_crypto_latency=0.11us";
+    std::string exp_str = "num_sdus=4598 num_sdu_bytes=39029 num_dropped_sdus=12 num_pdus=9396 num_pdu_bytes=69494 "
+                          "num_discard_timeouts=7 "
+                          "avg_pdu_latency=0.01us pdu_latency_hist=[999 20 400 8000 160000 3200000 64000000 128] "
+                          "min_pdu_latency=1200ns max_pdu_latency=54322ns avg_crypto_latency=0.11us";
     srslog::fetch_basic_logger("TEST", false).info("out_str={}", out_str);
     srslog::fetch_basic_logger("TEST", false).info("exp_str={}", exp_str);
     EXPECT_EQ(out_str, exp_str);
@@ -148,13 +147,18 @@ TEST_P(pdcp_tx_metrics_test, sdu_pdu)
     srsran::test_delimit_logger delimiter("TX SDU/PDU metrics test. SN_SIZE={} COUNT={}", sn_size, tx_next);
     // Set state of PDCP entiy
 
-    pdcp_tx_state st = {tx_next, tx_next, tx_next};
+    pdcp_tx_state st = {tx_next, tx_next, 0, tx_next, tx_next};
     pdcp_tx->set_state(st);
     pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
 
     // Write SDU
     byte_buffer sdu = byte_buffer::create(sdu1).value();
     pdcp_tx->handle_sdu(std::move(sdu));
+
+    // Wait for crypto and reordering
+    wait_pending_crypto();
+    worker.run_pending_tasks();
+
     pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next + 1, sn_size));
 
     uint32_t exp_sdu_size = 2;

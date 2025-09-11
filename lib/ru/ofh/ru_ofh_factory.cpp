@@ -41,10 +41,11 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
 
   // Prepare OFH controller configuration.
   ofh::controller_config controller_cfg;
-  controller_cfg.cp        = config.sector_configs.back().cp;
-  controller_cfg.scs       = config.sector_configs.back().scs;
-  controller_cfg.gps_Alpha = config.gps_Alpha;
-  controller_cfg.gps_Beta  = config.gps_Beta;
+  controller_cfg.cp                            = config.sector_configs.back().cp;
+  controller_cfg.scs                           = config.sector_configs.back().scs;
+  controller_cfg.gps_Alpha                     = config.gps_Alpha;
+  controller_cfg.gps_Beta                      = config.gps_Beta;
+  controller_cfg.enable_log_warnings_for_lates = config.sector_configs.back().enable_log_warnings_for_lates;
 
   // Create OFH timing controller.
   ofh_dependencies.timing_mngr =

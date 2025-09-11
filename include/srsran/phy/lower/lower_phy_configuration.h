@@ -103,8 +103,8 @@ struct lower_phy_configuration {
   ///
   /// Set to zero to disable this feature.
   float system_time_throttling;
-  /// Baseband transmit buffer size policy.
-  lower_phy_baseband_buffer_size_policy baseband_tx_buffer_size_policy;
+  /// Maximum number of PRACH concurrent requests.
+  unsigned max_nof_prach_concurrent_requests = 1;
   /// Baseband receive buffer size policy.
   lower_phy_baseband_buffer_size_policy baseband_rx_buffer_size_policy;
   /// Amplitude control parameters, including baseband gain and clipping.

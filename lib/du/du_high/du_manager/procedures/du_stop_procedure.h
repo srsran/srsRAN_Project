@@ -25,7 +25,6 @@
 #include "../du_cell_manager.h"
 #include "../du_ue/du_ue_manager.h"
 #include "procedure_logger.h"
-#include "srsran/du/du_high/du_manager/du_manager_params.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
@@ -42,11 +41,15 @@ public:
   void operator()(coro_context<async_task<void>>& ctx);
 
 private:
+  async_task<void> stop_ue_traffic();
+
   du_ue_manager&           ue_mng;
   du_cell_manager&         cell_mng;
   f1ap_connection_manager& f1ap_conn_mng;
 
   du_procedure_logger proc_logger;
+
+  std::vector<du_ue_index_t> ues_to_stop;
 };
 
 } // namespace srs_du

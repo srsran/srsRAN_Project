@@ -58,7 +58,7 @@ public:
   sector_impl(const sector_impl_config& config, sector_impl_dependencies&& dependencies) :
     ofh_receiver(std::move(dependencies.ofh_receiver)),
     ofh_transmitter(std::move(dependencies.ofh_transmitter)),
-    ofh_sector_controller(*ofh_receiver, std::move(dependencies.ul_data_repo)),
+    ofh_sector_controller(*ofh_transmitter, *ofh_receiver, std::move(dependencies.ul_data_repo)),
     ofh_metrics_collector(ofh_receiver->get_metrics_collector(),
                           ofh_transmitter->get_metrics_collector(),
                           config.sector_id)

@@ -43,12 +43,12 @@ bool pdcp_tx_window::has_sn(uint32_t count) const
   return tx_window.has_sn(count);
 }
 
-pdcp_tx_buf_info& pdcp_tx_window::operator[](uint32_t count)
+pdcp_tx_window_element& pdcp_tx_window::operator[](uint32_t count)
 {
-  return tx_window[count].sdu_info;
+  return tx_window[count];
 }
 
-void pdcp_tx_window::add_sdu(pdcp_tx_buf_info&& sdu_info, uint32_t sdu_length)
+void pdcp_tx_window::add_sdu(pdcp_tx_window_sdu_info&& sdu_info, uint32_t sdu_length)
 {
   pdcp_tx_window_element& elem = tx_window.add_sn(sdu_info.count);
   elem.sdu_info                = std::move(sdu_info);

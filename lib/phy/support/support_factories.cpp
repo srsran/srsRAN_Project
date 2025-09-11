@@ -54,14 +54,26 @@ public:
 std::unique_ptr<resource_grid_pool>
 srsran::create_generic_resource_grid_pool(std::vector<std::unique_ptr<resource_grid>> grids)
 {
-  return std::make_unique<resource_grid_pool_impl>(nullptr, std::move(grids));
+  std::vector<resource_grid_pool_wrapper> rg_wrappers;
+  std::for_each(grids.begin(), grids.end(), [&rg_wrappers](std::unique_ptr<resource_grid>& grid) {
+    rg_wrappers.emplace_back(resource_grid_pool_wrapper(std::move(grid), nullptr));
+  });
+
+  return std::make_unique<resource_grid_pool_impl>(std::move(rg_wrappers));
 }
 
 std::unique_ptr<resource_grid_pool>
 srsran::create_asynchronous_resource_grid_pool(task_executor&                              async_executor,
                                                std::vector<std::unique_ptr<resource_grid>> grids)
 {
-  return std::make_unique<resource_grid_pool_impl>(&async_executor, std::move(grids));
+  std::vector<resource_grid_pool_wrapper> rg_wrappers;
+  std::for_each(grids.begin(),
+                grids.end(),
+                [&rg_wrappers, async_executor_ptr = &async_executor](std::unique_ptr<resource_grid>& grid) {
+                  rg_wrappers.emplace_back(resource_grid_pool_wrapper(std::move(grid), async_executor_ptr));
+                });
+
+  return std::make_unique<resource_grid_pool_impl>(std::move(rg_wrappers));
 }
 
 namespace {

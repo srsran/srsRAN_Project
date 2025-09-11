@@ -42,6 +42,11 @@ static void configure_cli11_f1u_socket_args(CLI::App& app, f1u_socket_appconfig&
 
 void srsran::configure_cli11_f1u_sockets_args(CLI::App& app, f1u_sockets_appconfig& f1u_params)
 {
+  // Add configurable F1-U bind port. Default port is 2152 as per TS 29.281 Sec. 4.4.2.3.
+  add_option(app, "--bind_port", f1u_params.bind_port, "F1-U bind port")->capture_default_str();
+  // Add configurable F1-U peer port. Default port is 2152 as per TS 29.281 Sec. 4.4.2.3.
+  add_option(app, "--peer_port", f1u_params.peer_port, "F1-U peer port")->capture_default_str();
+
   // Add option for multiple sockets, for usage with different slices, 5QIs or parallization.
   auto sock_lambda = [&f1u_params](const std::vector<std::string>& values) {
     // Prepare the radio bearers

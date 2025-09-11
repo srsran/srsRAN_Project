@@ -95,7 +95,9 @@ make_drbs_failed_to_be_setup_list(span<const f1ap_drb_failed_to_setupmod> failed
 asn1::f1ap::drbs_failed_to_be_setup_mod_list_l
 make_drbs_failed_to_be_setup_mod_list(span<const f1ap_drb_failed_to_setupmod> failed_drbs);
 asn1::f1ap::drbs_failed_to_be_modified_list_l
-                            make_drbs_failed_to_be_modified_list(span<const f1ap_drb_failed_to_setupmod> failed_drbs);
+make_drbs_failed_to_be_modified_list(span<const f1ap_drb_failed_to_setupmod> failed_drbs);
+asn1::f1ap::serving_cell_mo_encoded_in_cgc_list_l
+                            make_serving_cell_mo_encoded_in_cgc_list(span<const uint8_t> serving_cell_mos);
 f1ap_drb_failed_to_setupmod make_drb_failed_to_setupmod(const asn1::f1ap::drbs_failed_to_be_setup_item_s& asn1_type);
 f1ap_drb_failed_to_setupmod
 make_drb_failed_to_setupmod(const asn1::f1ap::drbs_failed_to_be_setup_mod_item_s& asn1_type);

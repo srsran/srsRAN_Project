@@ -131,6 +131,20 @@ bool srsran::test_helpers::is_valid_handover_cancel(const srs_cu_cp::ngap_messag
   return true;
 }
 
+bool srsran::test_helpers::is_valid_ul_ran_status_transfer(const srs_cu_cp::ngap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type() == asn1::ngap::ngap_pdu_c::types_opts::init_msg);
+  TRUE_OR_RETURN(msg.pdu.init_msg().proc_code == ASN1_NGAP_ID_UL_RAN_STATUS_TRANSFER);
+  return true;
+}
+
+bool srsran::test_helpers::is_valid_ng_reset(const srs_cu_cp::ngap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type() == asn1::ngap::ngap_pdu_c::types_opts::init_msg);
+  TRUE_OR_RETURN(msg.pdu.init_msg().proc_code == ASN1_NGAP_ID_NG_RESET);
+  return true;
+}
+
 bool srsran::test_helpers::is_valid_ul_ue_associated_nrppa_transport(const srs_cu_cp::ngap_message& msg)
 {
   TRUE_OR_RETURN(msg.pdu.type() == asn1::ngap::ngap_pdu_c::types_opts::init_msg);

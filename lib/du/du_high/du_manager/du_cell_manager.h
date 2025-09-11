@@ -33,12 +33,14 @@ struct du_cell_param_config_request;
 
 /// Current DU cell context.
 struct du_cell_context {
+  enum class state_t { active, inactive, deactivating };
+
   /// Current configuration.
   du_cell_config cfg;
   /// Encoded System Information being currently sent by the DU cell.
   mac_cell_sys_info_config si_cfg;
-  /// Whether the cell is active.
-  bool active = false;
+  /// Current cell state.
+  state_t state;
 };
 
 /// Result of the reconfiguration of a DU cell.
@@ -64,7 +66,7 @@ public:
   bool is_cell_active(du_cell_index_t cell_index) const
   {
     assert_cell_exists(cell_index);
-    return cells[cell_index]->active;
+    return cells[cell_index]->state == du_cell_context::state_t::active;
   }
 
   du_cell_index_t get_cell_index(nr_cell_global_id_t nr_cgi) const;
@@ -84,6 +86,12 @@ public:
     return cells[cell_index]->cfg;
   }
 
+  /// Stop accepting new UE creations in the given cell.
+  void stop_accepting_ues(du_cell_index_t cell_index)
+  {
+    cells[cell_index]->state = du_cell_context::state_t::deactivating;
+  }
+
   /// Handle request to update a cell configuration.
   /// \return true if a change was detected and applied.
   expected<du_cell_reconfig_result> handle_cell_reconf_request(const du_cell_param_config_request& req);
@@ -95,11 +103,14 @@ public:
     return cells[cell_index]->si_cfg;
   }
 
+  /// Start a specific cell in the DU.
   async_task<bool> start(du_cell_index_t cell_index);
 
+  /// Stop a specific cell in the DU.
   async_task<void> stop(du_cell_index_t cell_index);
 
-  async_task<void> stop();
+  /// Stop all cells in the DU.
+  async_task<void> stop_all();
 
 private:
   void assert_cell_exists(du_cell_index_t cell_index) const

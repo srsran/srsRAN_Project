@@ -83,9 +83,9 @@ metrics_handler_impl::create_periodic_report_session(const periodic_metric_repor
   return std::make_unique<periodic_metrics_report_session_impl>(*this, session_id);
 }
 
-metrics_report metrics_handler_impl::request_metrics_report() const
+cu_cp_metrics_report metrics_handler_impl::request_metrics_report() const
 {
-  metrics_report report;
+  cu_cp_metrics_report report;
 
   sync_execute(
       cu_cp_exec,
@@ -98,9 +98,9 @@ metrics_report metrics_handler_impl::request_metrics_report() const
   return report;
 }
 
-metrics_report metrics_handler_impl::create_report() const
+cu_cp_metrics_report metrics_handler_impl::create_report() const
 {
-  metrics_report report;
+  cu_cp_metrics_report report;
 
   report.ues      = ue_handler.handle_ue_metrics_report_request();
   report.dus      = du_handler.handle_du_metrics_report_request();
@@ -132,7 +132,7 @@ unsigned metrics_handler_impl::create_periodic_session(const periodic_metric_rep
   sessions[session_id].report_notifier = request.report_notifier;
   sessions[session_id].timer.set(request.period, [this, session_id](timer_id_t tid) {
     // Generate a report.
-    metrics_report report = create_report();
+    cu_cp_metrics_report report = create_report();
 
     // Notify report.
     sessions[session_id].report_notifier->notify_metrics_report_request(report);

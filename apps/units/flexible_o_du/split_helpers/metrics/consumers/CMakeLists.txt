@@ -24,3 +24,4 @@ set(SOURCES
 
 add_library(srsran_flexible_o_du_split_helpers_metrics_consumers STATIC ${SOURCES})
 target_include_directories(srsran_flexible_o_du_split_helpers_metrics_consumers PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(srsran_flexible_o_du_split_helpers_metrics_consumers PRIVATE srsran_metrics_json_generators)

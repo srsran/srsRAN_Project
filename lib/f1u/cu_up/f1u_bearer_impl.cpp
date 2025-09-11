@@ -91,9 +91,9 @@ void f1u_bearer_impl::handle_pdu_impl(nru_ul_message msg)
     nru_dl_data_delivery_status& status = msg.data_delivery_status.value();
 
     // Desired buffer size
-    if (not dl_exec.defer(TRACE_TASK([this, status]() {
+    if (not dl_exec.defer([this, status]() {
           rx_delivery_notifier.on_desired_buffer_size_notification(status.desired_buffer_size_for_drb);
-        }))) {
+        })) {
       logger.log_warning("Could not pass desired buffer size notification to PDCP");
     }
 
@@ -104,8 +104,7 @@ void f1u_bearer_impl::handle_pdu_impl(nru_ul_message msg)
         ue_inactivity_timer.run(); // restart inactivity timer due to confirmed transmission of DL PDU
         logger.log_debug("Notifying highest transmitted pdcp_sn={}", pdcp_sn);
         notif_highest_transmitted_pdcp_sn = pdcp_sn;
-        if (not dl_exec.defer(
-                TRACE_TASK([this, pdcp_sn]() { rx_delivery_notifier.on_transmit_notification(pdcp_sn); }))) {
+        if (not dl_exec.defer([this, pdcp_sn]() { rx_delivery_notifier.on_transmit_notification(pdcp_sn); })) {
           logger.log_warning("Could not pass desired buffer size notification to PDCP");
         }
       } else {
@@ -118,8 +117,7 @@ void f1u_bearer_impl::handle_pdu_impl(nru_ul_message msg)
       if (pdcp_sn != notif_highest_delivered_pdcp_sn) {
         logger.log_debug("Notifying highest successfully delivered pdcp_sn={}", pdcp_sn);
         notif_highest_delivered_pdcp_sn = pdcp_sn;
-        if (not dl_exec.defer(
-                TRACE_TASK([this, pdcp_sn]() { rx_delivery_notifier.on_delivery_notification(pdcp_sn); }))) {
+        if (not dl_exec.defer([this, pdcp_sn]() { rx_delivery_notifier.on_delivery_notification(pdcp_sn); })) {
           logger.log_warning("Could not pass highest delivered notification to PDCP");
         }
       } else {
@@ -130,8 +128,7 @@ void f1u_bearer_impl::handle_pdu_impl(nru_ul_message msg)
     if (status.highest_retransmitted_pdcp_sn.has_value()) {
       uint32_t pdcp_sn = status.highest_retransmitted_pdcp_sn.value();
       logger.log_debug("Notifying highest retransmitted pdcp_sn={}", pdcp_sn);
-      if (not dl_exec.defer(
-              TRACE_TASK([this, pdcp_sn]() { rx_delivery_notifier.on_retransmit_notification(pdcp_sn); }))) {
+      if (not dl_exec.defer([this, pdcp_sn]() { rx_delivery_notifier.on_retransmit_notification(pdcp_sn); })) {
         logger.log_warning("Could not pass highest retransmitted notification to PDCP");
       }
     }
@@ -139,8 +136,8 @@ void f1u_bearer_impl::handle_pdu_impl(nru_ul_message msg)
     if (status.highest_delivered_retransmitted_pdcp_sn.has_value()) {
       uint32_t pdcp_sn = status.highest_delivered_retransmitted_pdcp_sn.value();
       logger.log_debug("Notifying highest successfully delivered retransmitted pdcp_sn={}", pdcp_sn);
-      if (not dl_exec.defer(TRACE_TASK(
-              [this, pdcp_sn]() { rx_delivery_notifier.on_delivery_retransmitted_notification(pdcp_sn); }))) {
+      if (not dl_exec.defer(
+              [this, pdcp_sn]() { rx_delivery_notifier.on_delivery_retransmitted_notification(pdcp_sn); })) {
         logger.log_warning("Could not pass highest retransmitted notification to PDCP");
       }
     }

@@ -31,6 +31,7 @@
 #include "flexible_o_du_impl.h"
 #include "metrics/flexible_o_du_metrics_builder.h"
 #include "srsran/du/du_high/du_high.h"
+#include "srsran/du/du_high/du_high_clock_controller.h"
 #include "srsran/du/o_du_factory.h"
 #include "srsran/e2/e2_du_metrics_connector.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor.h"
@@ -149,7 +150,7 @@ static flexible_o_du_ru_config generate_o_du_ru_config(span<const srs_du::du_cel
     out_cell.ul_arfcn        = cell.ul_carrier.arfcn_f_ref;
     out_cell.tdd_config      = cell.tdd_ul_dl_cfg_common;
     out_cell.bw              = MHz_to_bs_channel_bandwidth(cell.dl_carrier.carrier_bw_mhz);
-    out_cell.band            = cell.dl_carrier.band;
+    out_cell.freq_range      = band_helper::get_freq_range(cell.dl_carrier.band);
     out_cell.cp              = cell.dl_cfg_common.init_dl_bwp.generic_params.cp;
   }
 
@@ -174,6 +175,10 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
     pci_cell_mapper.push_back(cell.pci);
   }
 
+  std::chrono::nanoseconds symbol_duration(
+      static_cast<int64_t>(1e6 / (get_nsymb_per_slot(cyclic_prefix::NORMAL) *
+                                  get_nof_slots_per_subframe(du_hi.cells_cfg.front().cell.common_scs))));
+
   std::vector<std::unique_ptr<app_services::toggle_stdout_metrics_app_command::metrics_subcommand>>
       ru_metrics_subcommands;
   // Create flexible O-DU metrics configuration.
@@ -182,7 +187,8 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
                                          ru_metrics_subcommands,
                                          *dependencies.metrics_notifier,
                                          config.ru_cfg.config,
-                                         std::move(pci_cell_mapper));
+                                         std::move(pci_cell_mapper),
+                                         symbol_duration);
 
   // Create flexible O-DU implementation.
   auto du_impl = std::make_unique<flexible_o_du_impl>(nof_cells, flexible_odu_metrics_notifier);
@@ -192,7 +198,7 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
                                                      .rx_symbol_request_notifier =
                                                          du_impl->get_upper_ru_ul_request_adapter(),
                                                      .workers = dependencies.workers->get_du_low_executor_mapper()};
-  o_du_low_unit_factory      odu_low_factory(du_lo.hal_config, nof_cells);
+  o_du_low_unit_factory      odu_low_factory(du_lo.hal_config);
   auto                       odu_lo_unit = odu_low_factory.create(odu_low_cfg, odu_low_dependencies);
 
   std::for_each(odu_lo_unit.metrics.begin(), odu_lo_unit.metrics.end(), [&](auto& e) {
@@ -202,7 +208,7 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
   o_du_high_unit_dependencies odu_hi_unit_dependencies = {dependencies.workers->get_du_high_executor_mapper(),
                                                           *dependencies.f1c_client_handler,
                                                           *dependencies.f1u_gw,
-                                                          *dependencies.timer_mng,
+                                                          *dependencies.timer_ctrl,
                                                           *dependencies.mac_p,
                                                           *dependencies.rlc_p,
                                                           *dependencies.e2_client_handler,
@@ -294,7 +300,7 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
         odu_instance->get_o_du_high().get_du_high().get_du_configurator(),
         odu_instance->get_o_du_high().get_du_high().get_du_manager_time_mapper_accessor(),
         ru->get_controller(),
-        *dependencies.timer_mng,
+        dependencies.timer_ctrl->get_timer_manager(),
         dependencies.workers->get_du_high_executor_mapper().du_control_executor());
   }
 

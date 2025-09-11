@@ -30,9 +30,9 @@
 namespace srsran {
 
 /// Fills the O-RAN DU high worker manager parameters of the given worker manager configuration.
-void fill_o_du_high_worker_manager_config(worker_manager_config&       config,
-                                          const o_du_high_unit_config& unit_cfg,
-                                          bool                         is_blocking_mode_enabled = false)
+inline void fill_o_du_high_worker_manager_config(worker_manager_config&       config,
+                                                 const o_du_high_unit_config& unit_cfg,
+                                                 bool                         is_blocking_mode_enabled = false)
 {
   fill_du_high_worker_manager_config(config, unit_cfg.du_high_cfg.config, is_blocking_mode_enabled);
   fill_fapi_worker_manager_config(config, unit_cfg.fapi_cfg, unit_cfg.du_high_cfg.config.cells_cfg.size());

@@ -36,8 +36,8 @@
 #include "apps/units/o_cu_cp/o_cu_cp_unit_config.h"
 #include "apps/units/o_cu_cp/pcap_factory.h"
 #include "cu_cp_appconfig.h"
+#include "srsran/adt/scope_exit.h"
 #include "srsran/cu_cp/cu_cp_operation_controller.h"
-#include "srsran/e1ap/gateways/e1_local_connector_factory.h"
 #include "srsran/e1ap/gateways/e1_network_server_factory.h"
 #include "srsran/e2/e2ap_config_translators.h"
 #include "srsran/f1ap/gateways/f1c_network_server_factory.h"
@@ -145,6 +145,9 @@ static void register_app_logs(const cu_cp_appconfig& cu_cp_cfg, o_cu_cp_applicat
   // Metrics log channels.
   const app_helpers::metrics_config& metrics_cfg = cu_cp_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg;
   app_helpers::initialize_metrics_log_channels(metrics_cfg, log_cfg.hex_max_size);
+  if (metrics_cfg.enable_json_metrics) {
+    app_services::initialize_json_channel();
+  }
 
   // Register units logs.
   cu_cp_app_unit.on_loggers_registration();
@@ -152,9 +155,11 @@ static void register_app_logs(const cu_cp_appconfig& cu_cp_cfg, o_cu_cp_applicat
 
 static void fill_cu_cp_worker_manager_config(worker_manager_config& config, const cu_cp_appconfig& unit_cfg)
 {
-  config.nof_low_prio_threads     = unit_cfg.expert_execution_cfg.threads.non_rt_threads.nof_non_rt_threads;
-  config.low_prio_task_queue_size = unit_cfg.expert_execution_cfg.threads.non_rt_threads.non_rt_task_queue_size;
-  config.low_prio_sched_config    = unit_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg;
+  config.nof_main_pool_threads     = unit_cfg.expert_execution_cfg.threads.main_pool.nof_threads;
+  config.main_pool_task_queue_size = unit_cfg.expert_execution_cfg.threads.main_pool.task_queue_size;
+  config.main_pool_backoff_period =
+      std::chrono::microseconds{unit_cfg.expert_execution_cfg.threads.main_pool.backoff_period};
+  config.main_pool_affinity_cfg = unit_cfg.expert_execution_cfg.affinities.main_pool_cpu_cfg;
 }
 
 int main(int argc, char** argv)
@@ -197,10 +202,16 @@ int main(int argc, char** argv)
     return 0;
   }
 
+  if (cu_cp_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg.enable_json_metrics &&
+      !cu_cp_cfg.remote_control_config.enabled) {
+    fmt::println("NOTE: No JSON metrics will be generated as the remote server is disabled");
+  }
+
   // TODO: validate appconfig
 
   // Set up logging.
   initialize_log(cu_cp_cfg.log_cfg.filename);
+  auto log_flusher = make_scope_exit([]() { srslog::flush(); });
   register_app_logs(cu_cp_cfg, *o_cu_cp_app_unit);
 
   // Check the metrics and metrics consumers.
@@ -257,14 +268,20 @@ int main(int argc, char** argv)
   worker_manager_cfg.app_timers = &app_timers;
   worker_manager workers{worker_manager_cfg};
 
+  // Create IO broker.
+  const auto&                main_pool_cpu_mask = cu_cp_cfg.expert_execution_cfg.affinities.main_pool_cpu_cfg.mask;
+  io_broker_config           io_broker_cfg(os_thread_realtime_priority::min() + 5, main_pool_cpu_mask);
+  std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
+
+  // Create time source that ticks the timers.
+  std::optional<io_timer_source> time_source(
+      std::in_place_t{}, app_timers, *epoll_broker, workers.get_timer_source_executor(), std::chrono::milliseconds{1});
+
   // Create layer specific PCAPs.
+  auto on_pcap_close = make_scope_exit([&cu_cp_logger]() { cu_cp_logger.info("PCAP files successfully closed."); });
   o_cu_cp_dlt_pcaps cu_cp_dlt_pcaps = create_o_cu_cp_dlt_pcap(
       o_cu_cp_app_unit->get_o_cu_cp_unit_config(), workers.get_cu_cp_pcap_executors(), cleanup_signal_dispatcher);
-
-  // Create IO broker.
-  const auto&                low_prio_cpu_mask = cu_cp_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
-  io_broker_config           io_broker_cfg(low_prio_cpu_mask);
-  std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
+  auto on_pcap_close_init = make_scope_exit([&cu_cp_logger]() { cu_cp_logger.info("Closing PCAP files..."); });
 
   // Create F1-C GW (TODO cleanup port and PPID args with factory)
   sctp_network_gateway_config f1c_sctp_cfg = {};
@@ -273,7 +290,7 @@ int main(int argc, char** argv)
   f1c_sctp_cfg.bind_port                   = F1AP_PORT;
   f1c_sctp_cfg.ppid                        = F1AP_PPID;
   f1c_cu_sctp_gateway_config f1c_server_cfg(
-      {f1c_sctp_cfg, *epoll_broker, *workers.non_rt_hi_prio_exec, *cu_cp_dlt_pcaps.f1ap});
+      {f1c_sctp_cfg, *epoll_broker, workers.get_cu_cp_executor_mapper().f1c_rx_executor(), *cu_cp_dlt_pcaps.f1ap});
   std::unique_ptr<srs_cu_cp::f1c_connection_server> cu_f1c_gw = srsran::create_f1c_gateway_server(f1c_server_cfg);
 
   // Instantiate E1 GW
@@ -284,18 +301,14 @@ int main(int argc, char** argv)
   e1_sctp_cfg.bind_port    = E1AP_PORT;
   e1_sctp_cfg.ppid         = E1AP_PPID;
   // > Create E1 gateway
-  std::unique_ptr<srs_cu_cp::e1_connection_server> e1_gw = create_e1_gateway_server(
-      e1_cu_cp_sctp_gateway_config{e1_sctp_cfg, *epoll_broker, *workers.non_rt_hi_prio_exec, *cu_cp_dlt_pcaps.e1ap});
-
-  // Create time source that ticks the timers.
-  std::optional<io_timer_source> time_source(
-      std::in_place_t{}, app_timers, *epoll_broker, *workers.non_rt_hi_prio_exec, std::chrono::milliseconds{1});
+  std::unique_ptr<srs_cu_cp::e1_connection_server> e1_gw = create_e1_gateway_server(e1_cu_cp_sctp_gateway_config{
+      e1_sctp_cfg, *epoll_broker, workers.get_cu_cp_executor_mapper().e1_rx_executor(), *cu_cp_dlt_pcaps.e1ap});
 
   // Instantiate E2AP client gateway.
   std::unique_ptr<e2_connection_client> e2_gw_cu_cp = create_e2_gateway_client(
       generate_e2_client_gateway_config(o_cu_cp_app_unit->get_o_cu_cp_unit_config().e2_cfg.base_config,
                                         *epoll_broker,
-                                        *workers.non_rt_hi_prio_exec,
+                                        workers.get_cu_cp_executor_mapper().e2_rx_executor(),
                                         *cu_cp_dlt_pcaps.e2ap,
                                         E2_CP_PPID));
 
@@ -327,7 +340,7 @@ int main(int argc, char** argv)
 
   // Create console helper object for commands and metrics printing.
   app_services::cmdline_command_dispatcher command_parser(
-      *epoll_broker, *workers.non_rt_medium_prio_exec, o_cucp_unit.commands.cmdline.commands);
+      *epoll_broker, workers.get_cmd_line_executor(), o_cucp_unit.commands.cmdline.commands);
 
   for (auto& metric : o_cucp_unit.metrics) {
     metrics_configs.push_back(std::move(metric));
@@ -351,7 +364,7 @@ int main(int argc, char** argv)
 
   app_services::metrics_manager metrics_mngr(
       srslog::fetch_basic_logger("CU"),
-      *workers.metrics_exec,
+      workers.get_metrics_executor(),
       metrics_configs,
       app_timers,
       std::chrono::milliseconds(cu_cp_cfg.metrics_cfg.metrics_service_cfg.app_usage_report_period));
@@ -384,21 +397,6 @@ int main(int argc, char** argv)
 
   // FIXME: closing the E1 gateway should be part of the E1 Release procedure
   e1_gw.reset();
-
-  // Stop the timer source before stopping the workers.
-  time_source.reset();
-
-  // Close PCAPs
-  cu_cp_logger.info("Closing PCAP files...");
-  cu_cp_dlt_pcaps.reset();
-  cu_cp_logger.info("PCAP files successfully closed.");
-
-  // Stop workers
-  cu_cp_logger.info("Stopping executors...");
-  workers.stop();
-  cu_cp_logger.info("Executors closed successfully.");
-
-  srslog::flush();
 
   return 0;
 }

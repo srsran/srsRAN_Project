@@ -522,7 +522,7 @@ public:
   byte_buffer_view view() const { return *buffer; }
 
   /// Appends bytes.
-  [[nodiscard]] bool append(byte_buffer_view bytes) { return buffer->append(bytes); }
+  [[nodiscard]] bool append(const byte_buffer_view& bytes) { return buffer->append(bytes); }
 
   /// Appends initializer list of bytes.
   [[nodiscard]] bool append(const std::initializer_list<uint8_t>& bytes)

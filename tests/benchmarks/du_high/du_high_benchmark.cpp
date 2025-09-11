@@ -50,6 +50,7 @@
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/du/du_high/du_high_clock_controller.h"
 #include "srsran/du/du_high/du_high_configuration.h"
 #include "srsran/du/du_high/du_high_executor_mapper.h"
 #include "srsran/du/du_high/du_metrics_notifier.h"
@@ -59,6 +60,7 @@
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/support/benchmark_utils.h"
+#include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/rtsan.h"
 #include "srsran/support/test_utils.h"
 #include "srsran/support/tracing/event_tracing.h"
@@ -153,7 +155,7 @@ static void parse_args(int argc, char** argv, bench_params& params)
           params.dplx_mode = duplex_mode::TDD;
         } else {
           usage(argv[0], params);
-          exit(0);
+          std::exit(0);
         }
         break;
       }
@@ -190,7 +192,7 @@ static void parse_args(int argc, char** argv, bench_params& params)
           params.strategy_cfg = time_rr_scheduler_expert_config{};
         } else {
           usage(argv[0], params);
-          exit(0);
+          std::exit(0);
         }
       } break;
       case 't':
@@ -199,7 +201,7 @@ static void parse_args(int argc, char** argv, bench_params& params)
       case 'h':
       default:
         usage(argv[0], params);
-        exit(0);
+        std::exit(0);
     }
   }
 
@@ -615,7 +617,7 @@ public:
     dependencies.f1c_client  = &sim_cu_cp;
     dependencies.f1u_gw      = &sim_cu_up;
     dependencies.phy_adapter = &sim_phy;
-    dependencies.timers      = &timers;
+    dependencies.timer_ctrl  = timer_ctrl.get();
     dependencies.du_notifier = &metrics_handler;
     dependencies.mac_p       = &mac_pcap;
     dependencies.rlc_p       = &rlc_pcap;
@@ -654,6 +656,7 @@ public:
   void stop()
   {
     du_hi->stop();
+    timer_ctrl.reset();
     workers->stop();
   }
 
@@ -1131,13 +1134,17 @@ public:
   dummy_metrics_handler                                 metrics_handler;
   timer_manager                                         timers{2048};
   std::unique_ptr<test_helpers::du_high_worker_manager> workers;
-  null_mac_pcap                                         mac_pcap;
-  null_rlc_pcap                                         rlc_pcap;
-  std::unique_ptr<du_high_impl>                         du_hi;
-  cu_cp_simulator                                       sim_cu_cp;
-  cu_up_simulator                                       sim_cu_up;
-  phy_simulator                                         sim_phy;
-  slot_point                                            next_sl_tx{0, 0};
+  std::unique_ptr<io_broker>                            broker{
+      create_io_broker(io_broker_type::epoll, io_broker_config{os_thread_realtime_priority::min() + 5})};
+  std::unique_ptr<mac_clock_controller> timer_ctrl{
+      srs_du::create_du_high_clock_controller(timers, *broker, workers->timer_executor())};
+  null_mac_pcap                 mac_pcap;
+  null_rlc_pcap                 rlc_pcap;
+  std::unique_ptr<du_high_impl> du_hi;
+  cu_cp_simulator               sim_cu_cp;
+  cu_up_simulator               sim_cu_up;
+  phy_simulator                 sim_phy;
+  slot_point                    next_sl_tx{0, 0};
 
   /// Determines whether a UE setup has completed.
   std::array<bool, MAX_NOF_DU_UES> ue_created_flag_list{false};
@@ -1331,8 +1338,8 @@ static void configure_main_thread(span<const unsigned> du_cell_cores)
       CPU_SET(i, &cpuset);
     }
     int ret;
-    if ((ret = pthread_setaffinity_np(self, sizeof(cpuset), &cpuset)) != 0) {
-      fmt::print("Warning: Unable to set affinity for test thread. Cause: '{}'\n", strerror(ret));
+    if ((ret = ::pthread_setaffinity_np(self, sizeof(cpuset), &cpuset)) != 0) {
+      fmt::print("Warning: Unable to set affinity for test thread. Cause: '{}'\n", ::strerror(ret));
       return;
     }
   }

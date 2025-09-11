@@ -37,7 +37,7 @@ constexpr unsigned MAX_ETH_FRAME_LENGTH = 9600;
 constexpr unsigned MIN_ETH_FRAME_LENGTH = 64;
 
 /// Maximum number of frames allowed to be transmitted in each symbol.
-static constexpr unsigned MAX_TX_BURST_SIZE = 128;
+constexpr unsigned MAX_TX_BURST_SIZE = 128;
 
 } // namespace ether
 } // namespace srsran

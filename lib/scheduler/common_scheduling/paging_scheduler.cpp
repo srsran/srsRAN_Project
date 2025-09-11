@@ -254,6 +254,14 @@ void paging_scheduler::handle_paging_information(const sched_paging_information&
   }
 }
 
+void paging_scheduler::stop()
+{
+  sched_paging_information paging_info;
+  while (new_paging_notifications.try_pop(paging_info)) {
+  }
+  paging_pending_ues.clear();
+}
+
 bool paging_scheduler::is_there_space_available_for_paging(cell_resource_allocator& res_grid,
                                                            unsigned                 pdsch_time_res,
                                                            unsigned                 msg_size)

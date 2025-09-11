@@ -24,7 +24,6 @@
 
 #include "../cell/cell_harq_manager.h"
 #include "../logging/scheduler_event_logger.h"
-#include "../pucch_scheduling/pucch_guardbands_scheduler.h"
 #include "../slicing/inter_slice_scheduler.h"
 #include "../srs/srs_scheduler_impl.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
@@ -46,25 +45,15 @@ class ue_scheduler_impl final : public ue_scheduler
 public:
   explicit ue_scheduler_impl(const scheduler_ue_expert_config& expert_cfg_);
 
-  sched_ue_configuration_handler& get_ue_configurator() override { return event_mng; }
-
-  scheduler_feedback_handler& get_feedback_handler() override { return event_mng; }
-
-  scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() override { return event_mng; }
-
-  scheduler_positioning_handler& get_positioning_handler() override { return event_mng; }
-
 private:
   ue_cell_scheduler* do_add_cell(const ue_cell_scheduler_creation_request& params) override;
+
+  void do_start_cell(du_cell_index_t cell_index);
+  void do_stop_cell(du_cell_index_t cell_index);
 
   void do_rem_cell(du_cell_index_t cell_index) override;
 
   void run_slot_impl(slot_point sl_tx);
-
-  void handle_error_ind_impl(slot_point sl_tx, du_cell_index_t cell_index, scheduler_slot_handler::error_outcome event)
-  {
-    event_mng.handle_error_indication(sl_tx, cell_index, event);
-  }
 
   void run_sched_strategy(du_cell_index_t cell_index);
 
@@ -94,16 +83,26 @@ private:
     /// SRS scheduler
     srs_scheduler_impl srs_sched;
 
+    /// Cell-specific event manager.
+    std::unique_ptr<ue_cell_event_manager> ev_mng;
+
     cell_context(ue_scheduler_impl& parent, const ue_cell_scheduler_creation_request& params);
 
     void run_slot(slot_point sl_tx) override { parent.run_slot_impl(sl_tx); }
 
     void handle_error_indication(slot_point sl_tx, scheduler_slot_handler::error_outcome event) override
     {
-      parent.handle_error_ind_impl(sl_tx, cell_res_alloc->cfg.cell_index, event);
+      ev_mng->handle_error_indication(sl_tx, event);
     }
 
-    scheduler_feedback_handler& get_feedback_handler() override { return parent.get_feedback_handler(); }
+    scheduler_feedback_handler&                   get_feedback_handler() override { return *ev_mng; }
+    scheduler_positioning_handler&                get_positioning_handler() override { return *ev_mng; }
+    scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() override { return *ev_mng; }
+    sched_ue_configuration_handler&               get_ue_configurator() override { return *ev_mng; }
+
+    void start() override { parent.do_start_cell(cell_res_alloc->cfg.cell_index); }
+
+    void stop() override { parent.do_stop_cell(cell_res_alloc->cfg.cell_index); }
   };
 
   const scheduler_ue_expert_config& expert_cfg;

@@ -139,29 +139,6 @@ TYPED_TEST(single_prio_strand_test, dispatch_to_worker_pool_causes_no_race_condi
   run_count_test(*this->strand_exec, nof_increments, nof_pushers, [&pool]() { pool.wait_pending_tasks(); });
 }
 
-TYPED_TEST(single_prio_strand_test, execute_inside_worker_runs_inline)
-{
-  static const unsigned nof_increments = 4096;
-
-  task_worker w{"WORKER", 256};
-  auto        worker_exec = make_task_executor(w);
-  this->setup_strand(make_task_executor(w), 4);
-
-  unsigned count = 0;
-  w.push_task_blocking([this, &count]() {
-    // Running from inside the task_worker. Execute calls should be run inline.
-    for (unsigned i = 0; i != nof_increments; ++i) {
-      ASSERT_TRUE(this->strand_exec->execute([&count]() { count++; }));
-    }
-  });
-
-  w.wait_pending_tasks();
-
-  // Even though the worker queue size is smaller than the number of tasks, the fact that we run the task inline
-  // should ensure no task is dropped.
-  ASSERT_EQ(count, nof_increments);
-}
-
 template <typename StrandType>
 class multi_prio_strand_test : public testing::Test
 {

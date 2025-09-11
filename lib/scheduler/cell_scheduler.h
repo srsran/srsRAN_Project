@@ -34,7 +34,6 @@
 #include "logging/scheduler_result_logger.h"
 #include "pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "pucch_scheduling/pucch_allocator_impl.h"
-#include "pucch_scheduling/pucch_guardbands_scheduler.h"
 #include "uci_scheduling/uci_allocator_impl.h"
 #include "ue_scheduling/ue_scheduler.h"
 
@@ -67,9 +66,6 @@ public:
 
   const sched_result& last_result() const { return res_grid[0].result; }
 
-  /// Check if the cell is running.
-  bool is_running() const { return active; }
-
   void handle_si_update_request(const si_scheduling_update_request& msg);
 
   void handle_rach_indication(const rach_indication_message& msg) { ra_sch.handle_rach_indication(msg); }
@@ -78,13 +74,17 @@ public:
 
   void handle_paging_information(const sched_paging_information& pi) { pg_sch.handle_paging_information(pi); }
 
-  scheduler_feedback_handler& get_feedback_handler() { return ue_sched->get_feedback_handler(); }
+  scheduler_feedback_handler&    get_feedback_handler() { return ue_sched->get_feedback_handler(); }
+  scheduler_positioning_handler& get_positioning_handler() { return ue_sched->get_positioning_handler(); }
+  scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler()
+  {
+    return ue_sched->get_dl_buffer_state_indication_handler();
+  }
+  sched_ue_configuration_handler& get_ue_configurator() { return ue_sched->get_ue_configurator(); }
 
   const cell_configuration& cell_cfg;
 
 private:
-  void handle_pending_cell_activity_commands();
-
   void reset_resource_grid(slot_point sl_tx);
 
   /// Resource grid of this cell.
@@ -104,18 +104,13 @@ private:
   prach_scheduler               prach_sch;
   pucch_allocator_impl          pucch_alloc;
   uci_allocator_impl            uci_alloc;
-  pucch_guardbands_scheduler    pucch_guard_sch;
   paging_scheduler              pg_sch;
 
   /// Reference to UE scheduler whose DU cell group contains this cell.
   ue_scheduler::unique_cell_ptr ue_sched;
 
-  // Current state of the cell.
-  bool active = true;
-
-  // Pending command for cell start/stop.
-  enum class activation_command { no_cmd, start_cmd, stop_cmd };
-  std::atomic<activation_command> activ_cmd{activation_command::no_cmd};
+  /// Current state of the cell.
+  bool active = false;
 };
 
 } // namespace srsran

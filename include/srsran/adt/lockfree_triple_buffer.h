@@ -90,9 +90,9 @@ private:
     padded_element(const T& value_) : value(value_) {}
   };
   std::array<padded_element, 3> buffer;
-  std::atomic<unsigned>         dirty_middle_buffer_idx = {1 << 1};
-  unsigned                      front_buffer_idx        = 0;
-  unsigned                      back_buffer_idx         = 2;
+  alignas(k_cache_line_size) std::atomic<unsigned> dirty_middle_buffer_idx = {1 << 1};
+  alignas(k_cache_line_size) unsigned front_buffer_idx                     = 0;
+  alignas(k_cache_line_size) unsigned back_buffer_idx                      = 2;
 };
 
 } // namespace srsran

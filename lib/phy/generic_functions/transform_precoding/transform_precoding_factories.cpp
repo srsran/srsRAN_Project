@@ -36,7 +36,7 @@ public:
   transform_precoder_dft_factory(std::shared_ptr<dft_processor_factory> dft_factory_, unsigned max_nof_prb_) :
     dft_factory(std::move(dft_factory_)), max_nof_prb(max_nof_prb_)
   {
-    srsran_assert(dft_factory, "Invalid DFt factory.");
+    srsran_assert(dft_factory, "Invalid DFT factory.");
   }
 
   // See interface for documentation.
@@ -44,7 +44,7 @@ public:
   {
     // Create DFT processors for each valid number of PRBs within the limit.
     transform_precoder_dft_impl::collection_dft_processors dft_processors;
-    for (unsigned nof_prb = 0; nof_prb != max_nof_prb; ++nof_prb) {
+    for (unsigned nof_prb = 0, nof_prb_end = max_nof_prb + 1; nof_prb != nof_prb_end; ++nof_prb) {
       if (transform_precoding::is_nof_prbs_valid(nof_prb)) {
         // Prepare DFT size.
         dft_processor::configuration dft_config;

@@ -76,22 +76,22 @@ bool parse_args(k_star_gen_helper_args& args, int argc, char* argv[])
 
     switch (c) {
       case 'h':
-        fprintf(stdout, "%s", usage);
+        std::fprintf(stdout, "%s", usage);
         break;
       case 'k':
         args.k = std::string(optarg);
-        fprintf(stdout, "K_gNB %s\n", args.k.c_str());
+        std::fprintf(stdout, "K_gNB %s\n", args.k.c_str());
         break;
       case 'p':
         args.pci = strtod(optarg, nullptr);
-        fprintf(stdout, "PCI %u\n", args.pci);
+        std::fprintf(stdout, "PCI %u\n", args.pci);
         break;
       case 's':
         args.t_ssb_arfcn = strtod(optarg, nullptr);
-        fprintf(stdout, "SSB-ARFCN %u\n", args.t_ssb_arfcn);
+        std::fprintf(stdout, "SSB-ARFCN %u\n", args.t_ssb_arfcn);
         break;
       default:
-        fprintf(stderr, "error parsing arguments\n");
+        std::fprintf(stderr, "error parsing arguments\n");
         return false;
     }
   }

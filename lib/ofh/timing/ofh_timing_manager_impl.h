@@ -43,6 +43,9 @@ public:
 
   // See interface for documentation.
   ota_symbol_boundary_notifier_manager& get_ota_symbol_boundary_notifier_manager() override;
+
+  // See interface for documentation.
+  timing_metrics_collector& get_metrics_collector() override;
 };
 
 } // namespace ofh

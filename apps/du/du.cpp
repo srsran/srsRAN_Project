@@ -27,7 +27,6 @@
 #include "apps/services/application_tracer.h"
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
 #include "apps/services/cmdline/cmdline_command_dispatcher.h"
-#include "apps/services/core_isolation_manager.h"
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/services/remote_control/remote_server.h"
@@ -40,6 +39,8 @@
 #include "du_appconfig_translators.h"
 #include "du_appconfig_validators.h"
 #include "du_appconfig_yaml_writer.h"
+#include "srsran/adt/scope_exit.h"
+#include "srsran/du/du_high/du_high_clock_controller.h"
 #include "srsran/du/du_operation_controller.h"
 #include "srsran/e2/e2ap_config_translators.h"
 #include "srsran/e2/gateways/e2_connection_client.h"
@@ -54,6 +55,7 @@
 #include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/signal_handling.h"
 #include "srsran/support/signal_observer.h"
+#include "srsran/support/sysinfo.h"
 #include "srsran/support/tracing/event_tracing.h"
 #include "srsran/support/versioning/build_info.h"
 #include "srsran/support/versioning/version.h"
@@ -147,6 +149,9 @@ static void register_app_logs(const du_appconfig& du_cfg, flexible_o_du_applicat
   // Metrics log channels.
   const app_helpers::metrics_config& metrics_cfg = du_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg;
   app_helpers::initialize_metrics_log_channels(metrics_cfg, log_cfg.hex_max_size);
+  if (metrics_cfg.enable_json_metrics) {
+    app_services::initialize_json_channel();
+  }
 
   auto& e2ap_logger = srslog::fetch_basic_logger("E2AP", false);
   e2ap_logger.set_level(log_cfg.e2ap_level);
@@ -199,16 +204,19 @@ int main(int argc, char** argv)
     return 0;
   }
 
+  if (du_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg.enable_json_metrics &&
+      !du_cfg.remote_control_config.enabled) {
+    fmt::println("NOTE: No JSON metrics will be generated as the remote server is disabled");
+  }
+
   // Check the modified configuration.
-  if (!validate_appconfig(du_cfg) ||
-      !o_du_app_unit->on_configuration_validation((du_cfg.expert_execution_cfg.affinities.isolated_cpus)
-                                                      ? du_cfg.expert_execution_cfg.affinities.isolated_cpus.value()
-                                                      : os_sched_affinity_bitmask::available_cpus())) {
+  if (!validate_appconfig(du_cfg) || !o_du_app_unit->on_configuration_validation()) {
     report_error("Invalid configuration detected.\n");
   }
 
   // Set up logging.
   initialize_log(du_cfg.log_cfg.filename);
+  auto log_flusher = make_scope_exit([]() { srslog::flush(); });
   register_app_logs(du_cfg, *o_du_app_unit);
 
   // Check the metrics and metrics consumers.
@@ -235,13 +243,6 @@ int main(int argc, char** argv)
   app_services::application_tracer app_tracer;
   if (not du_cfg.log_cfg.tracing_filename.empty()) {
     app_tracer.enable_tracer(du_cfg.log_cfg.tracing_filename, du_logger);
-  }
-
-  app_services::core_isolation_manager core_isolation_mngr;
-  if (du_cfg.expert_execution_cfg.affinities.isolated_cpus) {
-    if (!core_isolation_mngr.isolate_cores(*du_cfg.expert_execution_cfg.affinities.isolated_cpus)) {
-      report_error("Failed to isolate specified CPUs");
-    }
   }
 
 #ifdef DPDK_FOUND
@@ -285,22 +286,27 @@ int main(int argc, char** argv)
 
   worker_manager workers{worker_manager_cfg};
 
-  // Set layer-specific pcap options.
-  const auto& low_prio_cpu_mask = du_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
-
   // Create IO broker.
-  io_broker_config           io_broker_cfg(low_prio_cpu_mask);
+  const auto&                main_pool_cpu_mask = du_cfg.expert_execution_cfg.affinities.main_pool_cpu_cfg.mask;
+  io_broker_config           io_broker_cfg(os_thread_realtime_priority::min() + 5, main_pool_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
-  flexible_o_du_pcaps du_pcaps =
-      create_o_du_pcaps(o_du_app_unit->get_o_du_high_unit_config(), workers, cleanup_signal_dispatcher);
+  // Create a IO timer source.
+  auto time_ctrl =
+      srs_du::create_du_high_clock_controller(app_timers, *epoll_broker, workers.get_timer_source_executor());
+
+  auto on_pcap_close = make_scope_exit([&gnb_logger]() { gnb_logger.info("PCAP files successfully closed."); });
+  flexible_o_du_pcaps du_pcaps = create_o_du_pcaps(
+      o_du_app_unit->get_o_du_high_unit_config(), workers.get_du_pcap_executors(), cleanup_signal_dispatcher);
+  auto on_pcap_close_init = make_scope_exit([&gnb_logger]() { gnb_logger.info("Closing PCAP files..."); });
 
   // Instantiate F1-C client gateway.
-  std::unique_ptr<srs_du::f1c_connection_client> f1c_gw = create_f1c_client_gateway(du_cfg.f1ap_cfg.cu_cp_address,
-                                                                                    du_cfg.f1ap_cfg.bind_address,
-                                                                                    *epoll_broker,
-                                                                                    *workers.non_rt_hi_prio_exec,
-                                                                                    *du_pcaps.f1ap);
+  std::unique_ptr<srs_du::f1c_connection_client> f1c_gw =
+      create_f1c_client_gateway(du_cfg.f1ap_cfg.cu_cp_address,
+                                du_cfg.f1ap_cfg.bind_address,
+                                *epoll_broker,
+                                workers.get_du_high_executor_mapper().f1c_rx_executor(),
+                                *du_pcaps.f1ap);
 
   // Create F1-U GW.
   // > Create GTP-U Demux.
@@ -316,7 +322,7 @@ int main(int argc, char** argv)
     udp_network_gateway_config f1u_gw_config = {};
     f1u_gw_config.bind_address               = sock_cfg.bind_addr;
     f1u_gw_config.ext_bind_addr              = sock_cfg.udp_config.ext_addr;
-    f1u_gw_config.bind_port                  = GTPU_PORT;
+    f1u_gw_config.bind_port                  = du_cfg.f1u_cfg.f1u_sockets.bind_port;
     f1u_gw_config.reuse_addr                 = false;
     f1u_gw_config.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;
     f1u_gw_config.rx_max_mmsg                = sock_cfg.udp_config.rx_max_msgs;
@@ -325,7 +331,7 @@ int main(int argc, char** argv)
         f1u_gw_config,
         *epoll_broker,
         workers.get_du_high_executor_mapper().ue_mapper().mac_ul_pdu_executor(to_du_ue_index(0)),
-        *workers.non_rt_medium_prio_exec);
+        workers.get_du_high_executor_mapper().f1u_rx_executor());
     if (not sock_cfg.five_qi.has_value()) {
       f1u_gw_maps.default_gws.push_back(std::move(f1u_gw));
     } else {
@@ -334,14 +340,14 @@ int main(int argc, char** argv)
   }
 
   // > Create F1-U split connector.
-  std::unique_ptr<srs_du::f1u_du_udp_gateway> du_f1u_conn =
-      srs_du::create_split_f1u_gw({f1u_gw_maps, du_f1u_gtpu_demux.get(), *du_pcaps.f1u, GTPU_PORT});
+  std::unique_ptr<srs_du::f1u_du_udp_gateway> du_f1u_conn = srs_du::create_split_f1u_gw(
+      {f1u_gw_maps, du_f1u_gtpu_demux.get(), *du_pcaps.f1u, du_cfg.f1u_cfg.f1u_sockets.peer_port});
 
   // Instantiate E2AP client gateway.
   std::unique_ptr<e2_connection_client> e2_gw = create_e2_gateway_client(
       generate_e2_client_gateway_config(o_du_app_unit->get_o_du_high_unit_config().e2_cfg.base_cfg,
                                         *epoll_broker,
-                                        *workers.non_rt_hi_prio_exec,
+                                        workers.get_du_high_executor_mapper().e2_rx_executor(),
                                         *du_pcaps.e2ap,
                                         E2_DU_PPID));
 
@@ -357,7 +363,7 @@ int main(int argc, char** argv)
   du_dependencies.workers            = &workers;
   du_dependencies.f1c_client_handler = f1c_gw.get();
   du_dependencies.f1u_gw             = du_f1u_conn.get();
-  du_dependencies.timer_mng          = &app_timers;
+  du_dependencies.timer_ctrl         = time_ctrl.get();
   du_dependencies.mac_p              = du_pcaps.mac.get();
   du_dependencies.rlc_p              = du_pcaps.rlc.get();
   du_dependencies.e2_client_handler  = e2_gw.get();
@@ -371,7 +377,7 @@ int main(int argc, char** argv)
   // Only DU has metrics now.
   app_services::metrics_manager metrics_mngr(
       srslog::fetch_basic_logger("GNB"),
-      *workers.metrics_exec,
+      workers.get_metrics_executor(),
       app_metrics,
       app_timers,
       std::chrono::milliseconds(du_cfg.metrics_cfg.metrics_service_cfg.app_usage_report_period));
@@ -389,7 +395,7 @@ int main(int argc, char** argv)
 
   // Register the commands.
   app_services::cmdline_command_dispatcher command_parser(
-      *epoll_broker, *workers.non_rt_medium_prio_exec, du_inst_and_cmds.commands.cmdline.commands);
+      *epoll_broker, workers.get_cmd_line_executor(), du_inst_and_cmds.commands.cmdline.commands);
 
   // Start processing.
   du_inst.get_operation_controller().start();
@@ -414,16 +420,6 @@ int main(int argc, char** argv)
 
   // Stop DU activity.
   du_inst.get_operation_controller().stop();
-
-  du_logger.info("Closing PCAP files...");
-  du_pcaps.reset();
-  du_logger.info("PCAP files successfully closed.");
-
-  du_logger.info("Stopping executors...");
-  workers.stop();
-  du_logger.info("Executors closed successfully.");
-
-  srslog::flush();
 
   return 0;
 }

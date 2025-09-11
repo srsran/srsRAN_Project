@@ -20,6 +20,7 @@
 
 set(SOURCES
         ofh_timing_manager_impl.cpp
+        ofh_timing_metrics_collector_impl.cpp
         realtime_timing_worker.cpp)
 
 add_library(srsran_ofh_timing STATIC ${SOURCES})

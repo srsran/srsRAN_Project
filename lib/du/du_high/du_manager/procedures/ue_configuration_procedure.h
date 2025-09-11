@@ -53,9 +53,9 @@ private:
   /// the scheduler with the new UE config.
   async_task<mac_ue_reconfiguration_response> update_mac_and_sched();
 
-  f1ap_ue_context_update_response make_ue_config_response();
-  f1ap_ue_context_update_response make_empty_ue_config_response();
-  f1ap_ue_context_update_response make_ue_config_failure();
+  f1ap_ue_context_update_response        make_ue_config_response();
+  static f1ap_ue_context_update_response make_empty_ue_config_response();
+  static f1ap_ue_context_update_response make_ue_config_failure();
 
   void handle_rrc_reconfiguration_complete_ind();
 

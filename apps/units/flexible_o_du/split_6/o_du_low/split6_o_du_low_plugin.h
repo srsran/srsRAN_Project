@@ -54,11 +54,13 @@ public:
 
   /// Creates and returns a FAPI config messages adaptor using the given arguments.
   virtual std::unique_ptr<fapi::config_messages_adaptor>
-  create_config_messages_adaptor(fapi::config_message_gateway& gateway, task_executor& executor) = 0;
+  create_config_messages_adaptor(fapi::config_message_gateway& gateway,
+                                 task_executor&                executor,
+                                 task_executor&                control_executor) = 0;
 
   /// Creates and returns a FAPI slot messages adaptor factory using the given arguments.
   virtual std::unique_ptr<fapi::slot_messages_adaptor_factory>
-  create_slot_messages_adaptor_factory(task_executor& executor) = 0;
+  create_slot_messages_adaptor_factory(task_executor& executor, task_executor& control_executor) = 0;
 
   /// Fills the given worker manager split 6 configuration.
   virtual void fill_worker_manager_config(worker_manager_config& config) = 0;

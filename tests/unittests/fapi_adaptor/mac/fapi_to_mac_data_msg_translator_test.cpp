@@ -111,7 +111,7 @@ private:
     const mac_rach_indication::rach_preamble& pream = occ.preambles.front();
     EXPECT_FLOAT_EQ(snr, pream.snr_dB.value());
     EXPECT_FLOAT_EQ(power, pream.pwr_dBFS.value());
-    EXPECT_EQ(time_advance_ns, std::roundf(pream.time_advance.to_seconds() * 1e9));
+    EXPECT_EQ(time_advance_ns, std::round(pream.time_advance.to_seconds() * 1e9));
   }
 };
 

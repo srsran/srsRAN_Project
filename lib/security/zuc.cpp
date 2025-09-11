@@ -88,14 +88,14 @@ static const u32 EK_d[16] = {0x44d7,
 
 /* ——————————————————————- */
 /* c = a + b mod (2^31 – 1) */
-u32 AddM(u32 a, u32 b)
+static u32 AddM(u32 a, u32 b)
 {
   u32 c = a + b;
   return (c & 0x7fffffff) + (c >> 31);
 }
 
 /* LFSR with initialization mode */
-void LFSRWithInitialisationMode(zuc_state_t* state, u32 u)
+static void LFSRWithInitialisationMode(zuc_state_t* state, u32 u)
 {
   u32 f, v;
   f = state->LFSR_S0;
@@ -131,7 +131,7 @@ void LFSRWithInitialisationMode(zuc_state_t* state, u32 u)
 }
 
 /* LFSR with work mode */
-void LFSRWithWorkMode(zuc_state_t* state)
+static void LFSRWithWorkMode(zuc_state_t* state)
 {
   u32 f, v;
   f = state->LFSR_S0;
@@ -166,7 +166,7 @@ void LFSRWithWorkMode(zuc_state_t* state)
 }
 
 /* BitReorganization */
-void BitReorganization(zuc_state_t* state)
+static void BitReorganization(zuc_state_t* state)
 {
   state->BRC_X0 = ((state->LFSR_S15 & 0x7fff8000) << 1) | (state->LFSR_S14 & 0xffff);
   state->BRC_X1 = ((state->LFSR_S11 & 0xffff) << 16) | (state->LFSR_S9 >> 15);
@@ -175,19 +175,19 @@ void BitReorganization(zuc_state_t* state)
 }
 
 /* L1 */
-u32 L1(u32 X)
+static u32 L1(u32 X)
 {
   return (X ^ ROT(X, 2) ^ ROT(X, 10) ^ ROT(X, 18) ^ ROT(X, 24));
 }
 
 /* L2 */
-u32 L2(u32 X)
+static u32 L2(u32 X)
 {
   return (X ^ ROT(X, 8) ^ ROT(X, 14) ^ ROT(X, 22) ^ ROT(X, 30));
 }
 
 /* F */
-u32 F(zuc_state_t* state)
+static u32 F(zuc_state_t* state)
 {
   u32 W, W1, W2, u, v;
   W  = (state->BRC_X0 ^ state->F_R1) + state->F_R2;

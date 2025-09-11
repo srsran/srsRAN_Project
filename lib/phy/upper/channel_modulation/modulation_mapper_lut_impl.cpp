@@ -27,7 +27,9 @@
 
 using namespace srsran;
 
-// Generic optimized modulator for any modulation order QM > 2 and QM % 2 == 0.
+namespace {
+
+/// Generic optimized modulator for any modulation order QM > 2 and QM % 2 == 0.
 template <unsigned QM>
 struct modulator_table_s {
   // The indexing provides the complex symbol corresponding to the binary expansion of the index.
@@ -66,8 +68,7 @@ struct modulator_table_s {
 
   // Modulates the input bits.
   template <typename Type>
-  inline constexpr void
-  modulate(span<Type> symbols, const bit_buffer& input, const std::array<Type, pow2(QM)>& table) const
+  constexpr void modulate(span<Type> symbols, const bit_buffer& input, const std::array<Type, pow2(QM)>& table) const
   {
     unsigned       i_symbol    = 0;
     Type*          symbols_ptr = symbols.data();
@@ -148,7 +149,7 @@ struct modulator_table_s {
   }
 };
 
-// Generic optimized modulator for BSPK.
+/// Generic optimized modulator for BSPK.
 struct modulator_table_bpsk {
   // The indexing provides the complex symbol corresponding to the binary expansion of the index.
   const std::array<cf_t, 2>  cf_table  = {{{M_SQRT1_2, M_SQRT1_2}, {-M_SQRT1_2, -M_SQRT1_2}}};
@@ -176,7 +177,7 @@ struct modulator_table_bpsk {
   }
 };
 
-// Generic optimized modulator for π/2-BPSK.
+/// Generic optimized modulator for π/2-BPSK.
 struct modulator_table_pi_2_bpsk {
   // The indexing provides the complex symbol corresponding to the binary expansion of the index.
   const std::array<cf_t, 2>  cf_table_even  = {{{M_SQRT1_2, M_SQRT1_2}, {-M_SQRT1_2, -M_SQRT1_2}}};
@@ -206,7 +207,9 @@ struct modulator_table_pi_2_bpsk {
   }
 };
 
-// Modulation tables.
+} // namespace
+
+/// Modulation tables.
 static const modulator_table_pi_2_bpsk pi_2_bpsk_modulator;
 static const modulator_table_bpsk      bpsk_modulator;
 static const modulator_table_s<2>      qpsk_modulator;

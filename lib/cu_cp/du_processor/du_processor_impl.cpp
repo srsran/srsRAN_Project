@@ -36,7 +36,7 @@ static rrc_cfg_t create_rrc_config(const cu_cp_configuration& cu_cp_cfg)
   rrc_cfg_t rrc_cfg;
   rrc_cfg.gnb_id                         = cu_cp_cfg.node.gnb_id;
   rrc_cfg.force_reestablishment_fallback = cu_cp_cfg.rrc.force_reestablishment_fallback;
-  rrc_cfg.rrc_procedure_timeout_ms       = cu_cp_cfg.rrc.rrc_procedure_timeout_ms;
+  rrc_cfg.rrc_procedure_guard_time_ms    = cu_cp_cfg.rrc.rrc_procedure_guard_time_ms;
   rrc_cfg.int_algo_pref_list             = cu_cp_cfg.security.int_algo_pref_list;
   rrc_cfg.enc_algo_pref_list             = cu_cp_cfg.security.enc_algo_pref_list;
   rrc_cfg.srb2_cfg                       = cu_cp_cfg.bearers.srb2_cfg;
@@ -178,7 +178,7 @@ bool du_processor_impl::create_rrc_ue(cu_cp_ue&                              ue,
   rrc_ue_create_msg.cu_cp_ue_notifier     = &ue.get_rrc_ue_cu_cp_ue_notifier();
   rrc_ue_create_msg.du_to_cu_container    = std::move(du_to_cu_rrc_container);
   rrc_ue_create_msg.rrc_context           = std::move(rrc_context);
-  auto* rrc_ue                            = rrc->add_ue(std::move(rrc_ue_create_msg));
+  auto* rrc_ue                            = rrc->add_ue(rrc_ue_create_msg);
   if (rrc_ue == nullptr) {
     logger.warning("Could not create RRC UE");
     return false;
@@ -312,9 +312,9 @@ byte_buffer du_processor_impl::get_packed_sib1(nr_cell_global_id_t cgi)
   return byte_buffer{};
 }
 
-metrics_report::du_info du_processor_impl::handle_du_metrics_report_request() const
+cu_cp_metrics_report::du_info du_processor_impl::handle_du_metrics_report_request() const
 {
-  metrics_report::du_info report;
+  cu_cp_metrics_report::du_info report;
   report.id = gnb_du_id_t::invalid;
   if (cfg.du_cfg_hdlr->has_context()) {
     report.id         = cfg.du_cfg_hdlr->get_context().id;

@@ -65,10 +65,11 @@ public:
     }
   }
 
-  void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const shared_resource_grid& grid) override
+  void
+  handle_rx_symbol(const upper_phy_rx_symbol_context& context, const shared_resource_grid& grid, bool is_valid) override
   {
     // Handle Rx symbol.
-    handler->handle_rx_symbol(context, grid);
+    handler->handle_rx_symbol(context, grid, is_valid);
 
     // Early return if the number of symbols does not reach the configured one or the file is not open.
     if ((context.symbol != (nof_symbols - 1)) || !file.is_open()) {

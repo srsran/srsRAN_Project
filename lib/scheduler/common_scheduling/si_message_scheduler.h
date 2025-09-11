@@ -43,6 +43,9 @@ public:
   void handle_si_message_update_indication(unsigned                                   version,
                                            const std::optional<si_scheduling_config>& new_si_sched_cfg);
 
+  /// Called when cell is deactivated.
+  void stop();
+
 private:
   struct message_window_context {
     /// SI message window.

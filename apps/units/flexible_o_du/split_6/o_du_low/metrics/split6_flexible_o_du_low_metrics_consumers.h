@@ -34,12 +34,13 @@ struct ru_metrics;
 class split6_flexible_o_du_low_metrics_consumer_log : public app_services::metrics_consumer
 {
 public:
-  split6_flexible_o_du_low_metrics_consumer_log(srslog::log_channel& log_chan,
-                                                std::vector<pci_t>   pci_sector_map_,
-                                                bool                 verbose) :
+  split6_flexible_o_du_low_metrics_consumer_log(srslog::log_channel&     log_chan,
+                                                std::vector<pci_t>       pci_sector_map_,
+                                                bool                     verbose,
+                                                std::chrono::nanoseconds symbol_duration) :
     pci_sector_map(std::move(pci_sector_map_)),
     odu_low_metrics_handler(log_chan, pci_sector_map, verbose),
-    ru_metrics_handler(log_chan, pci_sector_map)
+    ru_metrics_handler(log_chan, pci_sector_map, symbol_duration)
   {
   }
 
@@ -56,10 +57,12 @@ private:
 class split6_flexible_o_du_low_metrics_consumer_json : public app_services::metrics_consumer
 {
 public:
-  split6_flexible_o_du_low_metrics_consumer_json(srslog::log_channel& log_chan, std::vector<pci_t> pci_sector_map_) :
+  split6_flexible_o_du_low_metrics_consumer_json(srslog::log_channel&     log_chan,
+                                                 std::vector<pci_t>       pci_sector_map_,
+                                                 std::chrono::nanoseconds symbol_duration) :
     pci_sector_map(std::move(pci_sector_map_)),
     odu_low_metrics_handler(log_chan, pci_sector_map),
-    ru_metrics_handler(log_chan, pci_sector_map)
+    ru_metrics_handler(log_chan, pci_sector_map, symbol_duration)
   {
     srsran_assert(log_chan.enabled(), "JSON log channel is not enabled");
   }

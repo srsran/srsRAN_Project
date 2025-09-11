@@ -32,6 +32,9 @@
 #include "srsran/scheduler/config/cell_config_builder_params.h"
 
 namespace srsran {
+
+class io_broker;
+
 namespace srs_du {
 
 class dummy_f1c_test_client : public f1c_connection_client
@@ -118,11 +121,13 @@ public:
 
   virtual void handle_slot_results(du_cell_index_t cell_index);
 
-  du_high_worker_manager    workers;
-  timer_manager             timers;
-  dummy_f1c_test_client     cu_notifier;
-  cu_up_simulator           cu_up_sim;
-  dummy_du_metrics_notifier du_metrics;
+  du_high_worker_manager                workers;
+  timer_manager                         timers;
+  std::unique_ptr<io_broker>            broker;
+  std::unique_ptr<mac_clock_controller> timer_ctrl;
+  dummy_f1c_test_client                 cu_notifier;
+  cu_up_simulator                       cu_up_sim;
+  dummy_du_metrics_notifier             du_metrics;
 
   du_high_configuration    du_high_cfg;
   du_high_dependencies     du_hi_dependencies;

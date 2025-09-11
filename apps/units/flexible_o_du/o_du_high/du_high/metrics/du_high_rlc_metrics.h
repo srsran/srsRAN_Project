@@ -26,7 +26,6 @@
 #include "apps/services/metrics/metrics_properties.h"
 #include "apps/services/metrics/metrics_set.h"
 #include "srsran/adt/span.h"
-#include "srsran/adt/unique_function.h"
 #include "srsran/rlc/rlc_metrics.h"
 #include "srsran/srslog/logger.h"
 
@@ -60,11 +59,11 @@ inline auto rlc_metrics_callback = [](const app_services::metrics_set&      repo
                                       srslog::basic_logger&                 logger) {
   const auto& metric = static_cast<const rlc_metrics_impl&>(report);
 
-  if (!executor.defer(TRACE_TASK([metric, consumers]() {
+  if (!executor.defer([metric, consumers]() {
         for (auto& consumer : consumers) {
           consumer->handle_metric(metric);
         }
-      }))) {
+      })) {
     logger.error("Failed to dispatch the metric '{}'", metric.get_properties().name());
   }
 };
