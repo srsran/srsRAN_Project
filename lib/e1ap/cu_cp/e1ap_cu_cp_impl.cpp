@@ -167,7 +167,7 @@ e1ap_cu_cp_impl::handle_bearer_context_release_command(const e1ap_bearer_context
   }
 
   if (e1_release_in_progress) {
-    logger.debug("ue={}:Dropping BearerContextReleaseCommand. Cause: E1 Release in progress", command.ue_index);
+    logger.debug("ue={}: Dropping BearerContextReleaseCommand. Cause: E1 Release in progress", command.ue_index);
     return launch_async([](coro_context<async_task<void>>& ctx) mutable {
       CORO_BEGIN(ctx);
       CORO_RETURN();

@@ -155,9 +155,9 @@ protected:
   manual_task_worker                  ctrl_worker{128};
   cu_cp_configuration                 cu_cp_cfg;
 
-  ue_manager                      ue_mng{cu_cp_cfg};
-  dummy_e1ap_cu_cp_notifier       cu_cp_notifier{ue_mng};
-  std::unique_ptr<e1ap_interface> e1ap;
+  ue_manager                  ue_mng{cu_cp_cfg};
+  dummy_e1ap_cu_cp_notifier   cu_cp_notifier{ue_mng};
+  std::unique_ptr<e1ap_cu_cp> e1ap;
 };
 
 } // namespace srs_cu_cp

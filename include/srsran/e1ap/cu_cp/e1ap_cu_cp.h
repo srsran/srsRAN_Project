@@ -153,16 +153,24 @@ public:
 };
 
 /// Combined entry point for E1AP handling.
-class e1ap_interface : public e1ap_message_handler,
-                       public e1ap_event_handler,
-                       public e1ap_connection_manager,
-                       public e1ap_bearer_context_manager,
-                       public e1ap_ue_handler,
-                       public e1ap_bearer_context_removal_handler,
-                       public e1ap_statistics_handler
+class e1ap_cu_cp : public e1ap_message_handler,
+                   public e1ap_event_handler,
+                   public e1ap_connection_manager,
+                   public e1ap_bearer_context_manager,
+                   public e1ap_ue_handler,
+                   public e1ap_bearer_context_removal_handler,
+                   public e1ap_statistics_handler
 {
 public:
-  virtual ~e1ap_interface() = default;
+  virtual ~e1ap_cu_cp() = default;
+
+  virtual e1ap_message_handler&                get_e1ap_message_handler()                = 0;
+  virtual e1ap_event_handler&                  get_e1ap_event_handler()                  = 0;
+  virtual e1ap_connection_manager&             get_e1ap_connection_manager()             = 0;
+  virtual e1ap_bearer_context_manager&         get_e1ap_bearer_context_manager()         = 0;
+  virtual e1ap_ue_handler&                     get_e1ap_ue_handler()                     = 0;
+  virtual e1ap_bearer_context_removal_handler& get_e1ap_bearer_context_removal_handler() = 0;
+  virtual e1ap_statistics_handler&             get_e1ap_statistics_handler()             = 0;
 };
 
 } // namespace srs_cu_cp

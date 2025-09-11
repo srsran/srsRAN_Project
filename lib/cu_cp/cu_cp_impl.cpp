@@ -748,8 +748,8 @@ void cu_cp_impl::handle_n2_handover_execution(ue_index_t ue_index)
     return;
   }
 
-  cu_up_index_t cu_up_index = uint_to_cu_up_index(0); // TODO: Update when mapping from UE index to CU-UP exists
-  cu_up_processor_impl_interface* cu_up = cu_up_db.find_cu_up_processor(cu_up_index);
+  cu_up_index_t    cu_up_index = uint_to_cu_up_index(0); // TODO: Update when mapping from UE index to CU-UP exists
+  cu_up_processor* cu_up       = cu_up_db.find_cu_up_processor(cu_up_index);
   if (cu_up == nullptr) {
     logger.warning("ue={}: could not find CU-UP for handover execution. cu_up={}", ue_index, cu_up_index);
     return;

@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "cu_up_processor.h"
 #include "cu_up_processor_config.h"
-#include "cu_up_processor_impl_interface.h"
 #include "srsran/cu_cp/common_task_scheduler.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
@@ -20,7 +20,7 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-class cu_up_processor_impl : public cu_up_processor_impl_interface
+class cu_up_processor_impl : public cu_up_processor
 {
 public:
   cu_up_processor_impl(const cu_up_processor_config_t cu_up_processor_config_,
@@ -34,6 +34,7 @@ public:
   void handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& msg) override;
 
   // getter functions
+  e1ap_cu_cp&                          get_e1ap_handler() override { return *e1ap; }
   cu_up_index_t                        get_cu_up_index() override { return context.cu_up_index; }
   cu_up_processor_context&             get_context() override { return context; }
   e1ap_message_handler&                get_e1ap_message_handler() override { return *e1ap; }
@@ -68,7 +69,7 @@ private:
   std::unique_ptr<e1ap_cu_up_processor_notifier> e1ap_ev_notifier;
 
   // Components
-  std::unique_ptr<e1ap_interface> e1ap;
+  std::unique_ptr<e1ap_cu_cp> e1ap;
 };
 
 } // namespace srs_cu_cp

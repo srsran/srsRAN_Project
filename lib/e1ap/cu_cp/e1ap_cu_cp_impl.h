@@ -23,7 +23,7 @@ namespace srs_cu_cp {
 
 class e1ap_event_manager;
 
-class e1ap_cu_cp_impl final : public e1ap_interface
+class e1ap_cu_cp_impl final : public e1ap_cu_cp
 {
 public:
   e1ap_cu_cp_impl(const e1ap_configuration&      e1ap_cfg_,
@@ -59,6 +59,15 @@ public:
 
   // e1ap_statistics_handler functions
   size_t get_nof_ues() const override { return ue_ctxt_list.size(); }
+
+  // e1ap_cu_cp_interface
+  e1ap_message_handler&                get_e1ap_message_handler() override { return *this; }
+  e1ap_event_handler&                  get_e1ap_event_handler() override { return *this; }
+  e1ap_connection_manager&             get_e1ap_connection_manager() override { return *this; }
+  e1ap_bearer_context_manager&         get_e1ap_bearer_context_manager() override { return *this; }
+  e1ap_ue_handler&                     get_e1ap_ue_handler() override { return *this; }
+  e1ap_bearer_context_removal_handler& get_e1ap_bearer_context_removal_handler() override { return *this; }
+  e1ap_statistics_handler&             get_e1ap_statistics_handler() override { return *this; }
 
 private:
   /// \brief Decorator of e1ap_message_notifier that logs the transmitted E1AP messages.

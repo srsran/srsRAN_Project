@@ -24,19 +24,19 @@ public:
 
   bool schedule_async_task(ue_index_t ue_index, async_task<void> task) override
   {
-    srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
     return cu_cp_handler->schedule_ue_task(ue_index, std::move(task));
   }
 
   void on_bearer_context_release_request_received(const cu_cp_bearer_context_release_request& msg) override
   {
-    srsran_assert(cu_cp_handler != nullptr, "E1AP handler must not be nullptr");
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
     cu_cp_handler->handle_bearer_context_release_request(msg);
   }
 
   void on_bearer_context_inactivity_notification_received(const cu_cp_inactivity_notification& msg) override
   {
-    srsran_assert(cu_cp_handler != nullptr, "E1AP handler must not be nullptr");
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
     cu_cp_handler->handle_bearer_context_inactivity_notification(msg);
   }
 

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "cu_up_processor_impl_interface.h"
+#include "cu_up_processor.h"
 #include "srsran/cu_cp/common_task_scheduler.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include <map>
@@ -47,13 +47,13 @@ public:
   /// \brief Find a CU-UP object.
   /// \param[in] cu_up_index The index of the CU-UP processor object.
   /// \return The CU-UP processor object if it exists, nullptr otherwise.
-  cu_up_processor_impl_interface* find_cu_up_processor(cu_up_index_t cu_up_index);
+  cu_up_processor* find_cu_up_processor(cu_up_index_t cu_up_index);
 
   size_t get_nof_e1ap_ues();
 
 private:
   struct cu_up_context {
-    std::unique_ptr<cu_up_processor_impl_interface> processor;
+    std::unique_ptr<cu_up_processor> processor;
 
     /// Notifier used by the CU-CP to push E1AP Tx messages to the respective CU-UP.
     std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier;
