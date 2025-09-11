@@ -88,8 +88,10 @@ void io_timer_source::create_subscriber()
   }
 
   logger.info("Starting IO timer ticking source...");
-  io_sub = broker.register_fd(create_timer_fd(tick_period), tick_exec, [this]() { read_time(); });
-  report_fatal_error_if_not(io_sub.value() > 0, "Failed to create timer source");
+  auto fd     = create_timer_fd(tick_period);
+  int  raw_fd = fd.value();
+  io_sub      = broker.register_fd(std::move(fd), tick_exec, [this, raw_fd]() { read_time(raw_fd); });
+  report_fatal_error_if_not(io_sub.registered(), "Failed to create timer source");
 }
 
 void io_timer_source::destroy_subscriber()
@@ -146,7 +148,7 @@ bool io_timer_source::handle_state_update(bool defer_stop)
   return sub_destroyed;
 }
 
-void io_timer_source::read_time()
+void io_timer_source::read_time(int raw_fd)
 {
   // Note: Called inside the ticking executor.
 
@@ -159,7 +161,7 @@ void io_timer_source::read_time()
   }
 
   uint64_t nof_expirations = 0;
-  int      n               = ::read(io_sub.value(), &nof_expirations, sizeof(nof_expirations));
+  int      n               = ::read(raw_fd, &nof_expirations, sizeof(nof_expirations));
   if (n < 0) {
     logger.error("Failed to read timerfd (errno={})", ::strerror(errno));
     return;

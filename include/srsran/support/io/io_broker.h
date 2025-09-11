@@ -79,9 +79,6 @@ public:
       return ret;
     }
 
-    /// Returns the file descriptor value held by this subscriber.
-    int value() const { return fd; }
-
   private:
     bool reset_impl(std::promise<bool>* complete_notifier = nullptr)
     {

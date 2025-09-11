@@ -43,7 +43,7 @@ private:
   void create_subscriber();
   void destroy_subscriber();
 
-  void read_time();
+  void read_time(int raw_fd);
 
   void update_state(bool start);
   bool handle_state_update(bool defer_stop);
