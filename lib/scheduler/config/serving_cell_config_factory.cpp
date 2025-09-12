@@ -703,6 +703,9 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
   // > PUSCH config.
   ul_config.init_ul_bwp.pusch_cfg.emplace(make_default_pusch_config());
 
+  // > pusch-ServingCellConfig.
+  ul_config.pusch_serv_cell_cfg.emplace();
+
   // > SRS config.
   ul_config.init_ul_bwp.srs_cfg.emplace(make_default_srs_config(params));
 
