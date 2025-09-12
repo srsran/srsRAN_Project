@@ -1228,6 +1228,22 @@ calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_config& 
         return make_asn1_zp_csi_rs_resource_set(s);
       });
 
+  // DCI Format 1_1 size.
+  if (dest.harq_process_num_size_dci_1_1.has_value() and
+      dest.harq_process_num_size_dci_1_1 == pdsch_config::harq_process_num_dci_1_1_size::n5) {
+    out.ext                                       = true;
+    out.harq_process_num_size_dci_1_1_r17_present = true;
+    out.harq_process_num_size_dci_1_1_r17         = 5;
+  }
+
+  // DCI Format 1_2 size.
+  if (dest.harq_process_num_size_dci_1_2.has_value() and
+      dest.harq_process_num_size_dci_1_2 == pdsch_config::harq_process_num_dci_1_2_size::n5) {
+    out.ext                                         = true;
+    out.harq_process_num_size_dci_1_2_v1700_present = true;
+    out.harq_process_num_size_dci_1_2_v1700         = 5;
+  }
+
   // TODO: Remaining.
 }
 
@@ -2101,6 +2117,22 @@ calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_config& 
   } else if (src.uci_cfg.has_value() && not dest.uci_cfg.has_value()) {
     out.uci_on_pusch_present = true;
     out.uci_on_pusch.set_release();
+  }
+
+  // DCI Format 0_1 size.
+  if (dest.harq_process_num_size_dci_0_1.has_value() and
+      dest.harq_process_num_size_dci_0_1 == pusch_config::harq_process_num_dci_0_1_size::n5) {
+    out.ext                                       = true;
+    out.harq_process_num_size_dci_0_1_r17_present = true;
+    out.harq_process_num_size_dci_0_1_r17         = 5;
+  }
+
+  // DCI Format 0_2 size.
+  if (dest.harq_process_num_size_dci_0_2.has_value() and
+      dest.harq_process_num_size_dci_0_2 == pusch_config::harq_process_num_dci_0_2_size::n5) {
+    out.ext                                         = true;
+    out.harq_process_num_size_dci_0_2_v1700_present = true;
+    out.harq_process_num_size_dci_0_2_v1700         = 5;
   }
 }
 

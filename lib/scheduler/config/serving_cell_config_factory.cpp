@@ -470,6 +470,9 @@ pusch_config srsran::config_helpers::make_default_pusch_config(const cell_config
   b_offset.beta_offset_csi_p2_idx_2 = 9;
   uci_cfg.beta_offsets_cfg          = uci_on_pusch::beta_offsets_semi_static{b_offset};
 
+  cfg.harq_process_num_size_dci_0_1 = pusch_config::harq_process_num_dci_0_1_size::n4;
+  cfg.harq_process_num_size_dci_0_2 = pusch_config::harq_process_num_dci_0_2_size::n4;
+
   return cfg;
 }
 
@@ -778,6 +781,9 @@ pdsch_config srsran::config_helpers::make_default_pdsch_config(const cell_config
     // periodic set of zp-CSI-RS resources.
     pdsch_cfg.p_zp_csi_rs_res = csi_helper::make_periodic_zp_csi_rs_resource_set(csi_params);
   }
+
+  pdsch_cfg.harq_process_num_size_dci_1_1 = pdsch_config::harq_process_num_dci_1_1_size::n4;
+  pdsch_cfg.harq_process_num_size_dci_1_2 = pdsch_config::harq_process_num_dci_1_2_size::n4;
 
   return pdsch_cfg;
 }

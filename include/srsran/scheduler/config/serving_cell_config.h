@@ -84,6 +84,14 @@ struct pdsch_config {
 
   enum class max_no_codeword_scheduled_by_dci { n1, n2 };
 
+  /// \brief HARQ process number for DCI Format 1_1.
+  /// \remark See TS38.212, Section 7.3.1.2.2 Format 1_1.
+  enum class harq_process_num_dci_1_1_size { n4 = 4, n5 = 5 };
+
+  /// \brief HARQ process number for DCI Format 1_2.
+  /// \remark See TS38.212, Section 7.3.1.2.3 Format 1_2.
+  enum class harq_process_num_dci_1_2_size { n0 = 0, n1 = 1, n2 = 2, n3 = 3, n4 = 4, n5 = 5 };
+
   /// Identifier used to initialize data scrambling (c_init) for PDSCH. If the field is absent, the UE applies the PCI.
   /// See TS38.331, \e dataScramblingIdentityPDSCH, and TS38.211, 7.3.1.1. Values: {0,...,1023}.
   std::optional<uint16_t> data_scrambling_id_pdsch;
@@ -129,6 +137,15 @@ struct pdsch_config {
   /// A set of periodically occurring ZP-CSI-RS-Resources. The network uses the ZP-CSI-RSResourceSetId=0 for this set.
   std::optional<zp_csi_rs_resource_set> p_zp_csi_rs_res;
 
+  /// The UE specific HARQ Process number field size in DCI Format 1_1.
+  /// 5 bits if higher layer parameter harq-ProcessNumberSizeDCI-1-1 is configured; otherwise 4 bits.
+  std::optional<harq_process_num_dci_1_1_size> harq_process_num_size_dci_1_1{harq_process_num_dci_1_1_size::n4};
+
+  /// The UE specific HARQ Process number field size in DCI Format 1_2.
+  /// 0, 1, 2, 3, 4 or 5 bits determined by higher layer parameter harq-ProcessNumberSizeDCI-1-2-v1700 if configured.
+  /// otherwise 0, 1, 2, 3 or 4 bits determined by higher layer parameter harq-ProcessNumberSizeDCI-1-2.
+  std::optional<harq_process_num_dci_1_2_size> harq_process_num_size_dci_1_2{harq_process_num_dci_1_2_size::n4};
+
   // TODO: Remaining.
 
   bool operator==(const pdsch_config& rhs) const
@@ -141,7 +158,9 @@ struct pdsch_config {
            pdsch_td_alloc_list == rhs.pdsch_td_alloc_list && rate_match_pattrn == rhs.rate_match_pattrn &&
            rbg_sz == rhs.rbg_sz && mcs_table == rhs.mcs_table &&
            is_max_cw_sched_by_dci_is_two == rhs.is_max_cw_sched_by_dci_is_two && prb_bndlg == rhs.prb_bndlg &&
-           zp_csi_rs_res_list == rhs.zp_csi_rs_res_list and p_zp_csi_rs_res == rhs.p_zp_csi_rs_res;
+           zp_csi_rs_res_list == rhs.zp_csi_rs_res_list and p_zp_csi_rs_res == rhs.p_zp_csi_rs_res &&
+           harq_process_num_size_dci_1_1 == rhs.harq_process_num_size_dci_1_1 &&
+           harq_process_num_size_dci_1_2 == rhs.harq_process_num_size_dci_1_2;
   }
   bool operator!=(const pdsch_config& rhs) const { return !(rhs == *this); }
 };
