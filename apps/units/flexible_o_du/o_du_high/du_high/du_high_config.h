@@ -210,6 +210,8 @@ struct du_high_unit_pusch_config {
   /// Maximum modulation and coding scheme index for C-RNTI PUSCH allocations. To set a fixed MCS, set \c min_ue_mcs
   /// equal to the \c max_ue_mcs.
   unsigned max_ue_mcs = 28;
+  /// Number of UE UL HARQ processes.
+  unsigned nof_harqs = 16;
   /// Maximum number of times a UL HARQ process can be retransmitted, before it gets discarded.
   unsigned max_nof_harq_retxs = 4;
   /// \brief Maximum time, in milliseconds, between a CRC=KO and the scheduler allocating the respective HARQ for

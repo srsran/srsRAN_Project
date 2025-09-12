@@ -216,7 +216,7 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
       ->check(CLI::Range(0, 28));
   add_option(app, "--nof_harqs", pdsch_params.nof_harqs, "Number of DL HARQ processes")
       ->capture_default_str()
-      ->check(CLI::IsMember({2, 4, 6, 8, 10, 12, 16}));
+      ->check(CLI::IsMember({2, 4, 6, 8, 10, 12, 16, 32}));
   add_option(app,
              "--max_nof_harq_retxs",
              pdsch_params.max_nof_harq_retxs,
@@ -736,6 +736,9 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
   add_option(app, "--max_ue_mcs", pusch_params.max_ue_mcs, "Maximum UE MCS")
       ->capture_default_str()
       ->check(CLI::Range(0, 28));
+  add_option(app, "--nof_harqs", pusch_params.nof_harqs, "Number of UL HARQ processes")
+      ->capture_default_str()
+      ->check(CLI::IsMember({16, 32}));
   add_option(app,
              "--max_nof_harq_retxs",
              pusch_params.max_nof_harq_retxs,

@@ -637,6 +637,9 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     out_cell.ue_ded_serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
         static_cast<pdsch_serving_cell_config::nof_harq_proc_for_pdsch>(
             config.cells_cfg.front().cell.pdsch_cfg.nof_harqs);
+    out_cell.ue_ded_serv_cell_cfg.ul_config->pusch_serv_cell_cfg->nof_harq_proc =
+        static_cast<pusch_serving_cell_config::nof_harq_proc_for_pusch>(
+            config.cells_cfg.front().cell.pusch_cfg.nof_harqs);
     // Set DL MCS table.
     out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = base_cell.pdsch_cfg.mcs_table;
     // Set DMRS additional position.

@@ -243,7 +243,8 @@ static bool validate_rv_sequence(span<const unsigned> rv_sequence)
 /// Validates the given PDSCH cell application configuration. Returns true on success, otherwise false.
 static bool validate_pdsch_cell_unit_config(const du_high_unit_pdsch_config& config,
                                             unsigned                         cell_bw_crbs,
-                                            unsigned                         nof_antennas_dl)
+                                            unsigned                         nof_antennas_dl,
+                                            bool                             is_ntn_band)
 {
   if (config.min_ue_mcs > config.max_ue_mcs) {
     fmt::print("Invalid UE MCS range (i.e., [{}, {}]). The min UE MCS must be less than or equal to the max UE MCS.\n",
@@ -302,12 +303,19 @@ static bool validate_pdsch_cell_unit_config(const du_high_unit_pdsch_config& con
     }
   }
 
+  if (config.nof_harqs == 32 and not is_ntn_band) {
+    fmt::print("Number of UE DL HARQ processes can be equal to 32 only in NTN cells.\n");
+    return false;
+  }
+
   return true;
 }
 
 /// Validates the given PUSCH cell application configuration. Returns true on success, otherwise false.
-static bool
-validate_pusch_cell_unit_config(const du_high_unit_pusch_config& config, unsigned cell_crbs, unsigned min_k1)
+static bool validate_pusch_cell_unit_config(const du_high_unit_pusch_config& config,
+                                            unsigned                         cell_crbs,
+                                            unsigned                         min_k1,
+                                            bool                             is_ntn_band)
 {
   if (config.min_ue_mcs > config.max_ue_mcs) {
     fmt::print("Invalid UE MCS range (i.e., [{}, {}]). The min UE MCS must be less than or equal to the max UE MCS.\n",
@@ -367,6 +375,11 @@ validate_pusch_cell_unit_config(const du_high_unit_pusch_config& config, unsigne
     fmt::print("The value min_k2 {} set for PUSCH cannot be greater than the min_k1 {} set for PUCCH config.\n",
                config.min_k2,
                min_k1);
+    return false;
+  }
+
+  if (config.nof_harqs == 32 and not is_ntn_band) {
+    fmt::print("Number of UE UL HARQ processes can be equal to 32 only in NTN cells.\n");
     return false;
   }
 
@@ -1091,7 +1104,8 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
   const unsigned nof_crbs =
       band_helper::get_n_rbs_from_bw(config.channel_bw_mhz, config.common_scs, band_helper::get_freq_range(band));
 
-  if (!validate_pdsch_cell_unit_config(config.pdsch_cfg, nof_crbs, config.nof_antennas_dl)) {
+  const bool is_ntn_band = band_helper::is_ntn_band(band);
+  if (!validate_pdsch_cell_unit_config(config.pdsch_cfg, nof_crbs, config.nof_antennas_dl, is_ntn_band)) {
     return false;
   }
 
@@ -1111,7 +1125,7 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     return false;
   }
 
-  if (!validate_pusch_cell_unit_config(config.pusch_cfg, nof_crbs, config.pucch_cfg.min_k1)) {
+  if (!validate_pusch_cell_unit_config(config.pusch_cfg, nof_crbs, config.pucch_cfg.min_k1, is_ntn_band)) {
     return false;
   }
 
