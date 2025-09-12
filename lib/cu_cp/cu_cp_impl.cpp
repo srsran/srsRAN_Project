@@ -991,7 +991,7 @@ byte_buffer cu_cp_impl::handle_target_cell_sib1_required(du_index_t du_index, nr
   return du_db.get_du_processor(du_index).get_mobility_handler().get_packed_sib1(cgi);
 }
 
-async_task<void> cu_cp_impl::handle_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev)
+async_task<void> cu_cp_impl::handle_transaction_info_loss(const ue_transaction_info_loss_event& ev)
 {
   return launch_async<ue_transaction_info_release_routine>(ev, ue_mng, ngap_db, *this, logger);
 }

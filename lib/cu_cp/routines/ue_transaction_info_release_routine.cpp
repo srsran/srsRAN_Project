@@ -17,11 +17,11 @@ using namespace srsran;
 using namespace srs_cu_cp;
 
 ue_transaction_info_release_routine::ue_transaction_info_release_routine(
-    const f1_ue_transaction_info_loss_event& loss_event_,
-    ue_manager&                              ue_mng_,
-    ngap_repository&                         ngap_db_,
-    cu_cp_ue_removal_handler&                ue_rem_handler_,
-    srslog::basic_logger&                    logger_) :
+    const ue_transaction_info_loss_event& loss_event_,
+    ue_manager&                           ue_mng_,
+    ngap_repository&                      ngap_db_,
+    cu_cp_ue_removal_handler&             ue_rem_handler_,
+    srslog::basic_logger&                 logger_) :
   loss_event(loss_event_), ue_mng(ue_mng_), ngap_db(ngap_db_), ue_rem_handler(ue_rem_handler_), logger(logger_)
 {
 }

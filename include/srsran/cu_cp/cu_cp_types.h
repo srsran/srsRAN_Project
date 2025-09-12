@@ -123,6 +123,11 @@ constexpr std::underlying_type_t<amf_index_t> amf_index_to_uint(amf_index_t amf_
   return static_cast<std::underlying_type_t<amf_index_t>>(amf_index);
 }
 
+/// Notification from the E1AP/F1AP that transaction reference information for some UEs has been lost.
+struct ue_transaction_info_loss_event {
+  std::vector<ue_index_t> ues_lost;
+};
+
 /// QoS Configuration, i.e. 5QI and the associated PDCP
 /// and SDAP configuration for DRBs
 struct cu_cp_qos_config {
