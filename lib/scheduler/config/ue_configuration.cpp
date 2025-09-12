@@ -166,8 +166,10 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
       init_ul_bwp.generic_params.crbs.length(),
       active_ul_bwp.crbs.length(),
       init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0};
-  dci_sz_cfg.cross_carrier_configured = false;
-  dci_sz_cfg.sul_configured           = false;
+  dci_sz_cfg.cross_carrier_configured          = false;
+  dci_sz_cfg.sul_configured                    = false;
+  dci_sz_cfg.dl_harq_process_number_field_size = 4;
+  dci_sz_cfg.ul_harq_process_number_field_size = 4;
   // TODO: Need to fetch from physical_cell_group_config.
   dci_sz_cfg.pdsch_harq_ack_cb = pdsch_harq_ack_codebook::dynamic;
 
