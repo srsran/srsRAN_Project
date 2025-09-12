@@ -118,5 +118,20 @@ void convert(span<int16_t> z, span<const bf16_t> x, float scale);
 /// \param [in]  scale Input data scaling after conversion.
 void convert(span<bf16_t> z, span<const int16_t> x, float scale);
 
+/// \brief Converts a sequence of numbers from complex float to complex int16 applying the given scaling and rounding
+/// the result to the nearest integer.
+///
+/// \param [out] z       Converted sequence.
+/// \param [in]  x       Input sequence.
+/// \param [in]  scale   Scaling factor.
+void convert(span<ci16_t> z, span<const cf_t> x, float scale);
+
+/// \brief Converts from complex int16 to complex float applying the given scaling.
+///
+/// \param [out] z       Converted sequence.
+/// \param [in]  x       Input sequence.
+/// \param [in]  scale   Scaling factor.
+void convert(span<cf_t> z, span<const ci16_t> x, float scale);
+
 } // namespace srsvec
 } // namespace srsran

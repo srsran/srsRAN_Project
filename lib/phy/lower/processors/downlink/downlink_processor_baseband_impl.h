@@ -99,10 +99,10 @@ public:
     // For each port, concatenate samples.
     for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
       // Select view of the temporary buffer.
-      span<const cf_t> temp_buffer_src = buffer[i_port].subspan(read_index, count);
+      span<const ci16_t> temp_buffer_src = buffer[i_port].subspan(read_index, count);
 
       // Select view of the output samples.
-      span<cf_t> temp_buffer_dst = out.get_channel_buffer(i_port).first(count);
+      span<ci16_t> temp_buffer_dst = out.get_channel_buffer(i_port).first(count);
 
       srsvec::copy(temp_buffer_dst, temp_buffer_src);
     }
@@ -193,6 +193,12 @@ public:
   void set_tx_time_offset(phy_time_unit tx_time_offset) override;
 
 private:
+  /// Scaling factor for converting from complex float to 16-bit complex integer.
+  static constexpr float scaling_factor_cf_to_ci16 = std::numeric_limits<int16_t>::max();
+
+  /// Scaling factor for converting from 16-bit complex integer to complex float.
+  static constexpr float scaling_factor_ci16_to_cf = std::numeric_limits<int16_t>::max();
+
   /// Transmit time offset in samples.
   std::atomic<int> tx_time_offset = 0;
   /// PDxCH baseband processor.
@@ -219,6 +225,8 @@ private:
   downlink_processor_notifier* notifier = nullptr;
   /// Temporal storage of baseband samples.
   detail::baseband_symbol_buffer temp_buffer;
+  /// Buffer to hold complex floating-point based samples.
+  dynamic_tensor<2, cf_t> cf_buffer;
   /// Carrier Frequency Offset processor.
   baseband_cfo_processor cfo_processor;
   /// Baseband buffer pool for transmitting zeros.

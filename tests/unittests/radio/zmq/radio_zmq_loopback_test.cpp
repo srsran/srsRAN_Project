@@ -225,9 +225,10 @@ TEST_P(RadioZmqE2EFixture, RadioZmqE2EFlow)
 
         // Generate transmit random data for each channel.
         for (unsigned channel_id = 0; channel_id != nof_channels; ++channel_id, ++port_id) {
-          span<cf_t> buffer = tx_buffer[channel_id];
-          for (cf_t& sample : buffer) {
-            sample = tx_dist(tx_rgen[port_id]);
+          span<ci16_t> buffer = tx_buffer[channel_id];
+          for (ci16_t& sample : buffer) {
+            cf_t value = tx_dist(tx_rgen[port_id]);
+            sample     = to_ci16(cf_t(value.real() * INT16_MAX, value.imag() * INT16_MAX));
           }
         }
 
@@ -268,9 +269,10 @@ TEST_P(RadioZmqE2EFixture, RadioZmqE2EFlow)
 
       // Validate data for each channel.
       for (unsigned channel_id = 0; channel_id != nof_channels; ++channel_id, ++port_id) {
-        span<const cf_t> buffer = rx_buffer[channel_id];
-        for (const cf_t& sample : buffer) {
-          cf_t expected_sample = rx_dist(rx_rgen[port_id]);
+        span<const ci16_t> buffer = rx_buffer[channel_id];
+        for (const ci16_t& sample : buffer) {
+          cf_t   value           = rx_dist(rx_rgen[port_id]);
+          ci16_t expected_sample = to_ci16(cf_t(value.real() * INT16_MAX, value.imag() * INT16_MAX));
           EXPECT_NEAR(expected_sample.real(), sample.real(), ASSERT_MAX_ERROR);
           EXPECT_NEAR(expected_sample.imag(), sample.imag(), ASSERT_MAX_ERROR);
         }

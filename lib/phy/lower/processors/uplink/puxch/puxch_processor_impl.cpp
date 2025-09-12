@@ -12,6 +12,7 @@
 #include "srsran/phy/lower/lower_phy_rx_symbol_context.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/resource_grid_writer.h"
+#include "srsran/srsvec/conversion.h"
 
 using namespace srsran;
 
@@ -53,10 +54,19 @@ bool puxch_processor_impl::process_symbol(const baseband_gateway_buffer_reader& 
   // Symbol index within the subframe.
   unsigned symbol_index_subframe = context.nof_symbols + context.slot.subframe_slot_index() * nof_symbols_per_slot;
 
+  // Buffer view holding the float-based complex samples.
+  span<cf_t> channel_buffer_cf;
+  // View over the original int16-based input samples.
+  span<const ci16_t> channel_buffer_ci16;
+
   // Demodulate each of the ports.
   for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
-    demodulator->demodulate(
-        current_grid.get().get_writer(), samples.get_channel_buffer(i_port), i_port, symbol_index_subframe);
+    channel_buffer_ci16 = samples.get_channel_buffer(i_port);
+    channel_buffer_cf   = cf_buffer.get_view({i_port}).subspan(0, channel_buffer_ci16.size());
+
+    // Convert integer based complex samples to floating-point based.
+    srsvec::convert(channel_buffer_cf, channel_buffer_ci16, scaling_factor_ci16_to_cf);
+    demodulator->demodulate(current_grid.get().get_writer(), channel_buffer_cf, i_port, symbol_index_subframe);
   }
 
   // Notify.

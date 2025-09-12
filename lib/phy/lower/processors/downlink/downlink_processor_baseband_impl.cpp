@@ -15,6 +15,7 @@
 #include "srsran/phy/lower/lower_phy_timing_context.h"
 #include "srsran/srsvec/dot_prod.h"
 #include "srsran/srsvec/zero.h"
+#include <srsran/srsvec/conversion.h>
 
 using namespace srsran;
 
@@ -32,6 +33,7 @@ downlink_processor_baseband_impl::downlink_processor_baseband_impl(
   nof_slots_per_subframe(get_nof_slots_per_subframe(config.scs)),
   nof_symbols_per_slot(get_nsymb_per_slot(config.cp)),
   temp_buffer(config.nof_tx_ports, 2 * config.rate.get_dft_size(config.scs)),
+  cf_buffer({config.rate.to_kHz(), config.nof_tx_ports}),
   cfo_processor(config.rate),
   buffer_pool(nof_slots_per_subframe * NOF_SUBFRAMES_PER_FRAME, config.nof_tx_ports, nof_samples_per_subframe)
 {
@@ -153,8 +155,14 @@ downlink_processor_baseband_impl::process(baseband_gateway_timestamp timestamp)
     cfo_processor.next_cfo_command();
     for (unsigned i_port = 0, i_port_end = pdxch_baseband_result.buffer->get_nof_channels(); i_port != i_port_end;
          ++i_port) {
-      span<cf_t> channel_buffer = pdxch_baseband_result.buffer->get_writer().get_channel_buffer(i_port);
-      cfo_processor.process(channel_buffer);
+      // The CFO compensation is not currently supported for 16-bit complex integer samples. So, it must convert it to
+      // single-precision complex floating-point samples.
+      span<ci16_t> channel_buffer = pdxch_baseband_result.buffer->get_writer().get_channel_buffer(i_port);
+      span<cf_t>   cf_buf         = cf_buffer.get_view({i_port}).first(channel_buffer.size());
+
+      srsvec::convert(cf_buf, channel_buffer, scaling_factor_ci16_to_cf);
+      cfo_processor.process(cf_buf);
+      srsvec::convert(channel_buffer, cf_buf, scaling_factor_cf_to_ci16);
     }
 
     // Notify metrics.
@@ -168,6 +176,7 @@ downlink_processor_baseband_impl::process(baseband_gateway_timestamp timestamp)
     // Prepare result metadata and obtain baseband buffer from the pool.
     processing_result result = {};
     result.metadata.ts       = timestamp;
+    result.metadata.is_empty = true;
     result.buffer            = buffer_pool.get();
     report_fatal_error_if_not(result.buffer, "Failed to retrieve a baseband buffer.");
 
