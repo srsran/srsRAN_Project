@@ -84,9 +84,8 @@ public:
 
     static_assert(alignof(SPSCQueue<T>) == kCacheLineSize, "");
     static_assert(sizeof(SPSCQueue<T>) >= 3 * kCacheLineSize, "");
-    assert(reinterpret_cast<char *>(&readIdx_) -
-               reinterpret_cast<char *>(&writeIdx_) >=
-           static_cast<std::ptrdiff_t>(kCacheLineSize));
+    static_assert(offsetof(SPSCQueue<T>, readIdx_) -
+                  offsetof(SPSCQueue<T>, writeIdx_) >= kCacheLineSize, "");
   }
 
   ~SPSCQueue() {
@@ -180,7 +179,8 @@ public:
     static_assert(std::is_nothrow_destructible<T>::value,
                   "T must be nothrow destructible");
     auto const readIdx = readIdx_.load(std::memory_order_relaxed);
-    assert(writeIdx_.load(std::memory_order_acquire) != readIdx);
+    assert(writeIdx_.load(std::memory_order_acquire) != readIdx &&
+           "Can only call pop() after front() has returned a non-nullptr");
     slots_[readIdx + kPadding].~T();
     auto nextReadIdx = readIdx + 1;
     if (nextReadIdx == capacity_) {
@@ -227,9 +227,5 @@ private:
   alignas(kCacheLineSize) size_t readIdxCache_ = 0;
   alignas(kCacheLineSize) std::atomic<size_t> readIdx_ = {0};
   alignas(kCacheLineSize) size_t writeIdxCache_ = 0;
-
-  // Padding to avoid adjacent allocations to share cache line with
-  // writeIdxCache_
-  char padding_[kCacheLineSize - sizeof(writeIdxCache_)];
 };
 } // namespace rigtorp
