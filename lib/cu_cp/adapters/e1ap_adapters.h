@@ -52,6 +52,12 @@ public:
     cu_cp_handler->handle_e1_release_request(cu_up_index);
   }
 
+  async_task<void> on_transaction_info_loss(const ue_transaction_info_loss_event& ev) override
+  {
+    srsran_assert(cu_cp_handler != nullptr, "E1AP handler must not be nullptr");
+    return cu_cp_handler->handle_transaction_info_loss(ev);
+  }
+
 private:
   cu_cp_e1ap_event_handler* cu_cp_handler = nullptr;
 };

@@ -66,6 +66,15 @@ public:
     return ue_mng.find_ue_task_scheduler(ue_index)->schedule_async_task(std::move(task));
   }
 
+  async_task<void> on_transaction_info_loss(const ue_transaction_info_loss_event& ev) override
+  {
+    logger.info("Received transaction info loss for {} UEs", ev.ues_lost.size());
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
   srs_cu_cp::cu_cp_bearer_context_release_request last_release_request;
   srs_cu_cp::cu_cp_inactivity_notification        last_msg;
 

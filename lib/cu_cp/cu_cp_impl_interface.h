@@ -172,6 +172,9 @@ public:
   /// \brief Handles the reception of an E1 Release Request message.
   /// \param[in] cu_up_index The index of the CU-UP processor.
   virtual void handle_e1_release_request(cu_up_index_t cu_up_index) = 0;
+
+  /// \brief Handle transaction information loss in the E1AP.
+  virtual async_task<void> handle_transaction_info_loss(const ue_transaction_info_loss_event& ev) = 0;
 };
 
 /// Interface used to handle DU specific procedures.

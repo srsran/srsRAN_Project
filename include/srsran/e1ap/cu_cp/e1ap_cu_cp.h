@@ -153,6 +153,10 @@ public:
   /// \brief Notifies about the reception of an E1 Release Request message.
   /// \param[in] cu_up_index The index of the CU-UP processor.
   virtual void on_e1_release_request_received(cu_up_index_t cu_up_index) = 0;
+
+  /// \brief Indicates that there was some loss of transaction information for some UEs.
+  /// \return Asynchronous task that handles the event
+  virtual async_task<void> on_transaction_info_loss(const ue_transaction_info_loss_event& ev) = 0;
 };
 
 /// Combined entry point for E1AP handling.
