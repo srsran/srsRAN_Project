@@ -718,12 +718,14 @@ retina setup:
   image:
     name: ${RETINA_REGISTRY_PREFIX}/launcher:${RETINA_VERSION}
     entrypoint: ["/bin/sh", "-c"]
+  tags:
+    - ${CLUSTER}
   script:
     - |
       retina-garbage-collector --mode demolition
   needs:
     - *retina-needs
-  parallel: 
+  parallel:
     matrix:
       - CLUSTER: retina-e2e-amd64
       - CLUSTER: new-retina-e2e-amd64
