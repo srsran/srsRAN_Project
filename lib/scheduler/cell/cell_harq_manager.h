@@ -441,9 +441,9 @@ public:
   /// \param rnti RNTI of the UE
   /// \param nof_dl_harq_procs Number of DL HARQ processes that the UE can support. This value is derived based on
   /// the UE capabilities, and passed to the UE via RRC signalling. See TS38.331, "nrofHARQ-ProcessesForPDSCH".
-  /// Values: {2, 4, 6, 10, 12, 16}.
+  /// Values: {2, 4, 6, 10, 12, 16, 32}.
   /// \param nof_ul_harq_procs Number of UL HARQ processes that gNB can support. This value is implementation-defined
-  /// and can up to 16 (there are up to 4 bits for HARQ-Id signalling).
+  /// and can up to 32 (there are up to 4 bits for HARQ-Id signalling, up to 5 bits in an NTN cell).
   unique_ue_harq_entity add_ue(du_ue_index_t ue_idx,
                                rnti_t        crnti,
                                unsigned      nof_dl_harq_procs = MAX_NOF_HARQS,

@@ -220,13 +220,21 @@ struct pusch_serving_cell_config {
     }
   };
 
+  /// \c nrofHARQ-ProcessesForPUSCH.
+  enum class nof_harq_proc_for_pusch { n16 = 16, n32 = 32 };
+
+  /// See TS 38.331, \c nrofHARQ-ProcessesForPUSCH.
+  nof_harq_proc_for_pusch nof_harq_proc{nof_harq_proc_for_pusch::n16};
+
   std::optional<pusch_code_block_group_transmission> cbg_tx;
   x_overhead                                         x_ov_head{x_overhead::not_set};
 
   bool operator==(const pusch_serving_cell_config& other) const
   {
-    return cbg_tx == other.cbg_tx and x_ov_head == other.x_ov_head;
+    return cbg_tx == other.cbg_tx and x_ov_head == other.x_ov_head and nof_harq_proc == other.nof_harq_proc;
   }
+
+  bool operator!=(const pusch_serving_cell_config& rhs) const { return !(rhs == *this); }
 };
 
 /// Uplink configuration, as per \c UplinkConfig, in \c ServingCellConfig, TS 38.331.
@@ -261,7 +269,7 @@ struct pdsch_code_block_group_transmission {
 /// \c PDSCH-ServingCellConfig, as per TS38.331.
 struct pdsch_serving_cell_config {
   /// \c nrofHARQ-ProcessesForPDSCH.
-  enum class nof_harq_proc_for_pdsch { n2 = 2, n4 = 4, n6 = 6, n8 = 8, n10 = 10, n12 = 12, n16 = 16 };
+  enum class nof_harq_proc_for_pdsch { n2 = 2, n4 = 4, n6 = 6, n8 = 8, n10 = 10, n12 = 12, n16 = 16, n32 = 32 };
 
   std::optional<pdsch_code_block_group_transmission> code_block_group_tx;
   x_overhead                                         x_ov_head{x_overhead::not_set};

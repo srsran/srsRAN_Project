@@ -20,12 +20,13 @@
 
 using namespace srsran;
 
-/// Number of UL HARQs reserved per UE (Implementation-defined)
-static constexpr unsigned NOF_UL_HARQS = 16;
-
 /// The default number of HARQ processes to be used on the PDSCH of a serving cell. See TS 38.331, \c
 /// nrofHARQ-ProcessesForPDSCH.
 static constexpr unsigned DEFAULT_NOF_DL_HARQS = 8;
+
+/// The default number of HARQ processes to be used on the PUSCH of a serving cell. See TS 38.331, \c
+/// nrofHARQ-ProcessesForPUSCH.
+static constexpr unsigned DEFAULT_NOF_UL_HARQS = 16;
 
 ue_cell::ue_cell(du_ue_index_t                ue_index_,
                  rnti_t                       crnti_val,
@@ -35,12 +36,13 @@ ue_cell::ue_cell(du_ue_index_t                ue_index_,
                  std::optional<slot_point>    msg3_slot_rx) :
   ue_index(ue_index_),
   cell_index(ue_cell_cfg_.cell_cfg_common.cell_index),
-  harqs(cell_harq_pool.add_ue(ue_index,
-                              crnti_val,
-                              ue_cell_cfg_.pdsch_serving_cell_cfg() != nullptr
-                                  ? (unsigned)ue_cell_cfg_.pdsch_serving_cell_cfg()->nof_harq_proc
-                                  : DEFAULT_NOF_DL_HARQS,
-                              NOF_UL_HARQS)),
+  harqs(cell_harq_pool.add_ue(
+      ue_index,
+      crnti_val,
+      ue_cell_cfg_.pdsch_serving_cell_cfg() != nullptr ? (unsigned)ue_cell_cfg_.pdsch_serving_cell_cfg()->nof_harq_proc
+                                                       : DEFAULT_NOF_DL_HARQS,
+      ue_cell_cfg_.pusch_serving_cell_cfg() != nullptr ? (unsigned)ue_cell_cfg_.pusch_serving_cell_cfg()->nof_harq_proc
+                                                       : DEFAULT_NOF_UL_HARQS)),
   crnti_(crnti_val),
   cell_cfg(ue_cell_cfg_.cell_cfg_common),
   ue_cfg(&ue_cell_cfg_),

@@ -2517,14 +2517,38 @@ static bool calculate_bwp_ul_dedicated_diff(asn1::rrc_nr::bwp_ul_ded_s& out,
   return out.pucch_cfg_present || out.pusch_cfg_present || out.srs_cfg_present;
 }
 
+static void calculate_pusch_serving_cell_cfg_diff(asn1::rrc_nr::pusch_serving_cell_cfg_s& out,
+                                                  const pusch_serving_cell_config&        src,
+                                                  const pusch_serving_cell_config&        dest)
+{
+  if (dest.nof_harq_proc != pusch_serving_cell_config::nof_harq_proc_for_pusch::n16) {
+    out.ext                                       = true;
+    out.nrof_harq_processes_for_pusch_r17_present = true;
+  }
+
+  // TODO: Remaining.
+}
+
 static bool
 calculate_uplink_config_diff(asn1::rrc_nr::ul_cfg_s& out, const uplink_config& src, const uplink_config& dest)
 {
   out.init_ul_bwp_present = calculate_bwp_ul_dedicated_diff(out.init_ul_bwp, src.init_ul_bwp, dest.init_ul_bwp);
 
+  if ((dest.pusch_serv_cell_cfg.has_value() && not src.pusch_serv_cell_cfg.has_value()) ||
+      (dest.pusch_serv_cell_cfg.has_value() && src.pusch_serv_cell_cfg.has_value() &&
+       dest.pusch_serv_cell_cfg != src.pusch_serv_cell_cfg)) {
+    out.pusch_serving_cell_cfg_present = true;
+    calculate_pusch_serving_cell_cfg_diff(out.pusch_serving_cell_cfg.set_setup(),
+                                          src.pusch_serv_cell_cfg.has_value() ? src.pusch_serv_cell_cfg.value()
+                                                                              : pusch_serving_cell_config{},
+                                          dest.pusch_serv_cell_cfg.value());
+  } else if (src.pusch_serv_cell_cfg.has_value() && not dest.pusch_serv_cell_cfg.has_value()) {
+    out.pusch_serving_cell_cfg_present = true;
+    out.pusch_serving_cell_cfg.set_release();
+  }
   // TODO: Remaining.
 
-  return out.init_ul_bwp_present;
+  return out.init_ul_bwp_present || out.pusch_serving_cell_cfg_present;
 }
 
 static void calculate_pdsch_serving_cell_cfg_diff(asn1::rrc_nr::pdsch_serving_cell_cfg_s& out,
@@ -2599,6 +2623,11 @@ static void calculate_pdsch_serving_cell_cfg_diff(asn1::rrc_nr::pdsch_serving_ce
         break;
       case pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n16:
         out.nrof_harq_processes_for_pdsch = pdsch_serving_cell_cfg_s::nrof_harq_processes_for_pdsch_opts::n16;
+        break;
+      case pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n32:
+        out.nrof_harq_processes_for_pdsch_present       = false;
+        out.ext                                         = true;
+        out.nrof_harq_processes_for_pdsch_v1700_present = true;
         break;
       default:
         srsran_assertion_failure("Invalid max. nof.HARQ process for PDSCH={}", fmt::underlying(dest.nof_harq_proc));
