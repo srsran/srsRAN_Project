@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "tests/test_doubles/scheduler/scheduler_result_test.h"
+#include "tests/test_doubles/scheduler/scheduler_result_finder.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 
 namespace srsran {

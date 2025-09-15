@@ -33,7 +33,7 @@
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/mac/mac_test_messages.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
-#include "tests/test_doubles/scheduler/scheduler_result_test.h"
+#include "tests/test_doubles/scheduler/scheduler_result_finder.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"

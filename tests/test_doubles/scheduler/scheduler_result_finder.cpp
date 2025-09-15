@@ -8,7 +8,7 @@
  *
  */
 
-#include "scheduler_result_test.h"
+#include "scheduler_result_finder.h"
 
 using namespace srsran;
 
