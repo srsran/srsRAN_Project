@@ -45,22 +45,21 @@ io_timer_source::io_timer_source(timer_manager&            tick_sink_,
   logger(srslog::fetch_basic_logger("IO-EPOLL"))
 {
   if (auto_start) {
-    cur_state.store(state_t::started, std::memory_order_relaxed);
+    running.store(true, std::memory_order_relaxed);
     create_subscriber(stop_flag.get_token());
   }
 }
 
 io_timer_source::~io_timer_source()
 {
-  cur_state.store(state_t::stopped, std::memory_order_release);
+  running.store(false, std::memory_order_release);
   stop_flag.wait();
 }
 
 void io_timer_source::resume()
 {
-  const auto cmd  = state_t::started;
-  auto       prev = cur_state.exchange(cmd, std::memory_order_acq_rel);
-  if (prev == cmd) {
+  auto prev = running.exchange(true, std::memory_order_acq_rel);
+  if (prev) {
     // Already started. No need to dispatch task. Early exit.
     return;
   }
@@ -75,7 +74,7 @@ void io_timer_source::resume()
 void io_timer_source::request_stop()
 {
   // Request in a non-blocking fashion, the stop of the timer.
-  cur_state.store(state_t::stopped, std::memory_order_release);
+  running.store(false, std::memory_order_release);
 }
 
 void io_timer_source::create_subscriber(scoped_sync_token token)
@@ -87,7 +86,7 @@ void io_timer_source::create_subscriber(scoped_sync_token token)
     return;
   }
 
-  if (cur_state.load(std::memory_order_acquire) != state_t::started) {
+  if (not running.load(std::memory_order_acquire)) {
     // The state has changed in the meantime and the subscriber wasn't created.
     return;
   }
@@ -118,7 +117,7 @@ void io_timer_source::read_time(int raw_fd)
 {
   // Note: Called inside the ticking executor.
 
-  if (cur_state.load(std::memory_order_acquire) != state_t::started) {
+  if (not running.load(std::memory_order_acquire)) {
     // Destroy subscriber and signal the completion of the stop by resetting the token.
     destroy_subscriber();
     // Note: Do not touch any variable here as the ~io_timer_source() might be running concurrently.

@@ -38,8 +38,6 @@ public:
   void request_stop();
 
 private:
-  enum class state_t : uint8_t { idle, stopped, started };
-
   void create_subscriber(scoped_sync_token token);
   void destroy_subscriber();
 
@@ -53,7 +51,7 @@ private:
   io_broker::subscriber           io_sub;
 
   // Current state of the timer source.
-  std::atomic<state_t> cur_state;
+  std::atomic<bool> running{false};
 
   // Synchronization primitive to stop the timer source.
   sync_event        stop_flag;
