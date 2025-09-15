@@ -189,6 +189,13 @@ static void set_ul_dci_harq_num_field_size(serving_cell_config& cell_cfg, unsign
   }
 }
 
+static void set_ul_harq_mode_b(serving_cell_config& cell_cfg, bool harq_mode_b_supported)
+{
+  if (cell_cfg.ul_config.has_value() and cell_cfg.ul_config->pusch_serv_cell_cfg.has_value()) {
+    cell_cfg.ul_config->pusch_serv_cell_cfg->harq_mode_b = harq_mode_b_supported;
+  }
+}
+
 ue_capability_manager::ue_capability_manager(span<const du_cell_config> cell_cfg_list_,
                                              du_drx_resource_manager&   drx_mng_,
                                              srslog::basic_logger&      logger_,
@@ -212,6 +219,7 @@ void ue_capability_manager::handle_ue_creation(du_ue_resource_config& ue_res_cfg
   set_max_ul_nof_harqs(pcell_cfg, select_max_ul_nof_harqs(cell_idx));
   set_dl_dci_harq_num_field_size(pcell_cfg, select_dl_dci_harq_num_field_size(cell_idx));
   set_ul_dci_harq_num_field_size(pcell_cfg, select_ul_dci_harq_num_field_size(cell_idx));
+  set_ul_harq_mode_b(pcell_cfg, select_ul_harq_mode_b(cell_idx));
 
   // Initialize UE with DRX disabled.
   drx_res_mng.handle_ue_creation(ue_res_cfg.cell_group);
@@ -262,6 +270,9 @@ void ue_capability_manager::update_impl(du_ue_resource_config& ue_res_cfg)
   // Set DL/UL DCI HARQ Process Number size.
   set_dl_dci_harq_num_field_size(pcell_cfg, select_dl_dci_harq_num_field_size(cell_idx));
   set_ul_dci_harq_num_field_size(pcell_cfg, select_ul_dci_harq_num_field_size(cell_idx));
+
+  // Set UL HARQ Mode B enabled.
+  set_ul_harq_mode_b(pcell_cfg, select_ul_harq_mode_b(cell_idx));
 
   // Setup DRX config.
   update_drx(ue_res_cfg);
@@ -573,6 +584,35 @@ unsigned ue_capability_manager::select_ul_dci_harq_num_field_size(du_cell_index_
   auto band_dci_size = log2_ceil((unsigned)ue_caps->bands.at(band).max_ul_harq_process_num);
   // return 4 or 5
   return std::max(std::min(cell_dci_size, band_dci_size), default_dci_size);
+}
+
+bool ue_capability_manager::select_ul_harq_mode_b(du_cell_index_t cell_idx) const
+{
+  // Configured disabled UL HARQ mode B.
+  const auto& ul_config = base_cell_cfg_list[cell_idx].ue_ded_serv_cell_cfg.ul_config;
+
+  if (not ul_config.has_value()) {
+    return false;
+  }
+  const auto& pusch_serv_cell_cfg = ul_config->pusch_serv_cell_cfg;
+  if (not pusch_serv_cell_cfg.has_value()) {
+    return false;
+  }
+
+  bool cell_harq_mode_b = pusch_serv_cell_cfg->harq_mode_b;
+
+  if (test_cfg.test_ue.has_value() and test_cfg.test_ue->rnti != rnti_t::INVALID_RNTI) {
+    // In case of test mode, we do not need to rely on capabilities.
+    return cell_harq_mode_b;
+  }
+
+  // UE capabilities have not been decoded yet, but NTN band.
+  if (not ue_caps.has_value() || not ue_caps->ntn_supported) {
+    // If the UE does not support NTN capabilities, HARQ mode B cannot be enabled.
+    return false;
+  }
+
+  return cell_harq_mode_b and ue_caps->ul_harq_mode_b_supported;
 }
 
 void ue_capability_manager::update_drx(du_ue_resource_config& ue_res_cfg)

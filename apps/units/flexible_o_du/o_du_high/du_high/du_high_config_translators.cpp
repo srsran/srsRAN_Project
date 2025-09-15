@@ -527,6 +527,10 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     if (cell.cell.ntn_cfg.has_value()) {
       out_cell.ntn_cs_koffset = cell.cell.ntn_cfg.value().cell_specific_koffset;
     }
+
+    out_cell.dl_harq_mode_b = cell.cell.pdsch_cfg.harq_mode_b;
+    out_cell.ul_harq_mode_b = cell.cell.pusch_cfg.harq_mode_b;
+
     // Parameters for PUCCH-ConfigCommon.
     if (not out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.has_value()) {
       out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.emplace();
@@ -640,6 +644,8 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     out_cell.ue_ded_serv_cell_cfg.ul_config->pusch_serv_cell_cfg->nof_harq_proc =
         static_cast<pusch_serving_cell_config::nof_harq_proc_for_pusch>(
             config.cells_cfg.front().cell.pusch_cfg.nof_harqs);
+    out_cell.ue_ded_serv_cell_cfg.ul_config->pusch_serv_cell_cfg->harq_mode_b =
+        config.cells_cfg.front().cell.pusch_cfg.harq_mode_b;
     // Set DL MCS table.
     out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = base_cell.pdsch_cfg.mcs_table;
     // Set DMRS additional position.

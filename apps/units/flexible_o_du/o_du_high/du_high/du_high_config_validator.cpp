@@ -308,6 +308,11 @@ static bool validate_pdsch_cell_unit_config(const du_high_unit_pdsch_config& con
     return false;
   }
 
+  if (config.harq_mode_b and not is_ntn_band) {
+    fmt::print("DL HARQ Mode B can be used only in NTN cells.\n");
+    return false;
+  }
+
   return true;
 }
 
@@ -380,6 +385,11 @@ static bool validate_pusch_cell_unit_config(const du_high_unit_pusch_config& con
 
   if (config.nof_harqs == 32 and not is_ntn_band) {
     fmt::print("Number of UE UL HARQ processes can be equal to 32 only in NTN cells.\n");
+    return false;
+  }
+
+  if (config.harq_mode_b and not is_ntn_band) {
+    fmt::print("UL HARQ Mode B can be used only in NTN cells.\n");
     return false;
   }
 

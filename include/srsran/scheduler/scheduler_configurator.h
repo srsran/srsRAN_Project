@@ -100,7 +100,13 @@ struct sched_cell_configuration_request_message {
   /// List of RAN slices to support in the scheduler.
   std::vector<slice_rrm_policy_config> rrm_policy_members;
 
+  /// NTN parameters.
+  /// Cell-Specific K-offset.
   unsigned ntn_cs_koffset = 0;
+  /// DL HARQ Mode B.
+  bool dl_harq_mode_b = false;
+  /// UL HARQ Mode B.
+  bool ul_harq_mode_b = false;
 
   bool cfra_enabled = false;
 

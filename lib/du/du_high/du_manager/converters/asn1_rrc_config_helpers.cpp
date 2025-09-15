@@ -2526,6 +2526,14 @@ static void calculate_pusch_serving_cell_cfg_diff(asn1::rrc_nr::pusch_serving_ce
     out.nrof_harq_processes_for_pusch_r17_present = true;
   }
 
+  if (dest.harq_mode_b) {
+    out.ext = true;
+    out.ul_harq_mode_r17.set_present();
+    auto* ul_harq_mode_b_ptr = out.ul_harq_mode_r17.get();
+    auto& ul_harq_mode_b     = ul_harq_mode_b_ptr->set_setup();
+    ul_harq_mode_b.from_number(0xffffffff);
+  }
+
   // TODO: Remaining.
 }
 

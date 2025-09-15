@@ -138,6 +138,9 @@ struct du_high_unit_pdsch_config {
   unsigned fixed_rar_mcs = 0;
   /// SI modulation and coding scheme index.
   unsigned fixed_sib1_mcs = 5;
+  /// Set DL HARQ Mode B in NTN cell.
+  /// HARQ mode B allows scheduling and reusing a HARQ process before the RTT of the previous HARQ process has elapsed.
+  bool harq_mode_b = false;
   /// Number of UE DL HARQ processes.
   unsigned nof_harqs = 16;
   /// Maximum number of times a DL HARQ process can be retransmitted, before it gets discarded.
@@ -210,6 +213,9 @@ struct du_high_unit_pusch_config {
   /// Maximum modulation and coding scheme index for C-RNTI PUSCH allocations. To set a fixed MCS, set \c min_ue_mcs
   /// equal to the \c max_ue_mcs.
   unsigned max_ue_mcs = 28;
+  /// Set UL HARQ Mode B in NTN cell.
+  /// HARQ mode B allows scheduling and reusing a HARQ process before the RTT of the previous HARQ process has elapsed.
+  bool harq_mode_b = false;
   /// Number of UE UL HARQ processes.
   unsigned nof_harqs = 16;
   /// Maximum number of times a UL HARQ process can be retransmitted, before it gets discarded.

@@ -223,6 +223,9 @@ struct pusch_serving_cell_config {
   /// \c nrofHARQ-ProcessesForPUSCH.
   enum class nof_harq_proc_for_pusch { n16 = 16, n32 = 32 };
 
+  /// See TS 38.331, \c uplinkHARQ-mode.
+  bool harq_mode_b = false;
+
   /// See TS 38.331, \c nrofHARQ-ProcessesForPUSCH.
   nof_harq_proc_for_pusch nof_harq_proc{nof_harq_proc_for_pusch::n16};
 
@@ -231,7 +234,8 @@ struct pusch_serving_cell_config {
 
   bool operator==(const pusch_serving_cell_config& other) const
   {
-    return cbg_tx == other.cbg_tx and x_ov_head == other.x_ov_head and nof_harq_proc == other.nof_harq_proc;
+    return cbg_tx == other.cbg_tx and x_ov_head == other.x_ov_head and nof_harq_proc == other.nof_harq_proc and
+           harq_mode_b == other.harq_mode_b;
   }
 
   bool operator!=(const pusch_serving_cell_config& rhs) const { return !(rhs == *this); }
