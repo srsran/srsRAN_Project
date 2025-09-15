@@ -381,6 +381,7 @@ test mode ru:
   stage: test mode
   extends: .e2e-run
   variables:
+    CLUSTER: new-retina-e2e-amd64
     GROUP: viavi
     TESTBED: viavi
     MARKERS: test_mode
@@ -445,8 +446,6 @@ test mode ru acc100:
 test mode ue many ues:
   extends: test mode ru
   variables:
-    GROUP: viavi
-    TESTBED: viavi
     MARKERS: test_mode_many_ues
     KEYWORDS: test_mode_many_ues
     E2E_LOG_LEVEL: warning
@@ -549,6 +548,7 @@ android drx:
   extends: .e2e-run
   timeout: 8h
   variables:
+    CLUSTER: new-retina-e2e-amd64
     GROUP: viavi
     TESTBED: viavi
     MARKERS: viavi
