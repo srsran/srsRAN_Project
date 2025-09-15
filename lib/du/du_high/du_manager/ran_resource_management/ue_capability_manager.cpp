@@ -67,6 +67,9 @@ srsran::srs_du::decode_ue_nr_cap_container(const byte_buffer& ue_cap_container)
   // Convert advanced UE NR capabilities.
   decode_advanced_ue_nr_caps(ue_caps, ue_cap);
 
+  // Convert advanced UE NR NTN capabilities.
+  decode_advanced_ue_nr_ntn_caps(ue_caps, ue_cap);
+
   return ue_caps;
 }
 
@@ -79,6 +82,16 @@ void srsran::srs_du::decode_advanced_ue_nr_caps(ue_capability_summary&          
 }
 
 #endif // SRSRAN_HAS_ENTERPRISE
+
+#ifndef SRSRAN_HAS_ENTERPRISE_NTN
+
+void srsran::srs_du::decode_advanced_ue_nr_ntn_caps(ue_capability_summary&           ue_capability,
+                                                    const asn1::rrc_nr::ue_nr_cap_s& ue_cap)
+{
+  // Advanced NTN UE capabilities is not implemented.
+}
+
+#endif // SRSRAN_HAS_ENTERPRISE_NTN
 
 // Configure dedicated UE configuration to set MCS ant CQI tables.
 static void set_pdsch_mcs_table(serving_cell_config& cell_cfg, pdsch_mcs_table mcs_table)

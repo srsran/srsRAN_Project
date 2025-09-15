@@ -147,6 +147,17 @@ public:
     return count_info;
   }
 
+  /// \brief Set the TX count for status transfer
+  void set_count(pdcp_count_info count_info) override
+  {
+    uint32_t count = COUNT(count_info.hfn, count_info.sn);
+    if (st.tx_next != 0 || st.tx_trans_crypto != 0 || st.tx_reord_crypto != 0 || st.tx_trans != 0 ||
+        st.tx_next_ack != 0) {
+      logger.log_warning("Status transfer applied to bearer with non-zero state. st={} count={}", st, count);
+    }
+    st = {count, count, count, count, count};
+  }
+
   // Tx/Rx interconnect
   void set_status_provider(pdcp_rx_status_provider* status_provider_) { status_provider = status_provider_; }
 

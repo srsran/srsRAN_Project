@@ -38,6 +38,12 @@ variables:
       - warning
       - error
     value: "info"
+  CLUSTER:
+    description: Kubernetes cluster to use
+    options:
+      - "retina-e2e-amd64"
+      - "new-retina-e2e-amd64"
+    value: "retina-e2e-amd64"
 
 .load retina variables:
   stage: ci
@@ -52,10 +58,16 @@ variables:
 
 .prepare_test:
   variables: &setup_kube_variables
-    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
-    KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
     GIT_LFS_SKIP_SMUDGE: 1
   before_script: &setup_kube_config
+    - |
+      if [ "$CLUSTER" = "new-retina-e2e-amd64" ]; then
+        export KUBECONFIG_VAR_NAME="RETINA_NAMESPACE_KUBECONFIG_LAB_BCN"
+        export KUBECONFIG_VAR_NAME_EXTRA=""
+      else
+        export KUBECONFIG_VAR_NAME="RETINA_NAMESPACE_KUBECONFIG"
+        export KUBECONFIG_VAR_NAME_EXTRA="RETINA_NAMESPACE_KUBECONFIG_EXTRA"
+      fi
     - |
       export FORCE_COLOR=1
       eval K_PATH="\$$KUBECONFIG_VAR_NAME"
@@ -83,7 +95,7 @@ variables:
     <<: *setup_kube_variables
     GROUP: zmq
   tags:
-    - retina-e2e-amd64
+    - ${CLUSTER}
   artifacts:
     paths:
       - ${SRSRANDIR}/tests/e2e/log
@@ -95,6 +107,7 @@ variables:
     - *setup_kube_config
     - |
       # Print E2E parameters
+      echo "CLUSTER=${CLUSTER}"
       echo "GROUP=${GROUP}"
       echo "TESTBED=${TESTBED}"
       echo "E2E_FILE_OR_DIR=${E2E_FILE_OR_DIR}"

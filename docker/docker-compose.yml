@@ -98,7 +98,7 @@ services:
     env_file:
       - .env
     # volumes:
-    #   - /tmp/metrics.txt:/etc/telegraf/metrics.txt:ro # Uncomment to use an input metrics file
+    #   - /tmp/metrics.txt:/etc/srs/metrics.txt:ro # Uncomment to use an input metrics file
     networks:
       metrics:
         ipv4_address: 172.19.1.4

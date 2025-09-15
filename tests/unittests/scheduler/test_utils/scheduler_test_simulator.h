@@ -22,16 +22,27 @@
 
 #pragma once
 
+#include "config_generators.h"
 #include "dummy_test_components.h"
 #include "lib/scheduler/config/cell_configuration.h"
 #include "result_test_helpers.h"
 #include "srsran/du/du_cell_config_helpers.h"
-#include "srsran/scheduler/scheduler_configurator.h"
 #include "srsran/scheduler/scheduler_factory.h"
 
 namespace srsran {
 
 scheduler_expert_config make_custom_scheduler_expert_config(bool enable_csi_rs_pdsch_multiplexing);
+
+/// Configuration of the scheduler test simulator.
+struct scheduler_test_sim_config {
+  scheduler_expert_config sched_cfg   = config_helpers::make_default_scheduler_expert_config();
+  unsigned                tx_rx_delay = 4;
+  subcarrier_spacing      max_scs     = subcarrier_spacing::kHz15;
+  /// Whether to automatically respond to UCI grants with UCI indications.
+  bool auto_uci = false;
+  /// Whether to automatically respond to PUSCH grants with CRC indications.
+  bool auto_crc = false;
+};
 
 /// Helper class to help setup a scheduler unit test.
 class scheduler_test_simulator
@@ -43,6 +54,7 @@ public:
   explicit scheduler_test_simulator(const scheduler_expert_config& sched_cfg_,
                                     unsigned                       tx_rx_delay_ = 4,
                                     subcarrier_spacing             max_scs      = subcarrier_spacing::kHz15);
+  explicit scheduler_test_simulator(const scheduler_test_sim_config& cfg);
   ~scheduler_test_simulator();
 
   slot_point next_slot_rx() const { return next_slot - tx_rx_delay; }
@@ -83,6 +95,8 @@ public:
   }
 
   const unsigned                      tx_rx_delay;
+  bool                                auto_uci = false;
+  bool                                auto_crc = false;
   srslog::basic_logger&               logger;
   srslog::basic_logger&               test_logger;
   const scheduler_expert_config       sched_cfg;
@@ -94,6 +108,12 @@ public:
 
   slot_point                                           next_slot;
   static_vector<const sched_result*, MAX_NOF_DU_CELLS> last_sched_res_list;
+
+private:
+  /// Handle automatic feedback (UCI/CRC) if enabled.
+  void handle_auto_feedback(du_cell_index_t cell_idx);
+
+  std::unordered_map<rnti_t, du_ue_index_t> rnti_to_ue_index;
 };
 
 } // namespace srsran

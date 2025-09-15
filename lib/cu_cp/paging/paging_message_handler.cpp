@@ -37,8 +37,8 @@ void paging_message_handler::handle_paging_message(const cu_cp_paging_message& m
 {
   // Forward paging message to all DU processors
   bool paging_sent = false;
-  for (unsigned i = 0; i != dus.get_nof_dus(); ++i) {
-    paging_sent |= handle_du_paging_message(uint_to_du_index(i), msg);
+  for (const auto& du_idx : dus.get_du_processor_indexes()) {
+    paging_sent |= handle_du_paging_message(du_idx, msg);
   }
 
   if (not paging_sent) {

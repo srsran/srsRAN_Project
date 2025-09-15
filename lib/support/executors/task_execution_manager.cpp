@@ -405,11 +405,12 @@ bool task_execution_manager::add_execution_context(std::unique_ptr<task_executio
     logger.error("Unable to create execution context. Cause: Invalid name");
     return false;
   }
-  auto ret = contexts.insert(std::make_pair(ctxt_to_insert->name(), std::move(ctxt_to_insert)));
+  auto ctxt_name = ctxt_to_insert->name();
+  auto ret       = contexts.insert(std::make_pair(ctxt_name, std::move(ctxt_to_insert)));
   if (not ret.second) {
     logger.error("Unable to create execution context with name \"{}\". Cause: A execution context with the same name "
                  "already exists.",
-                 ctxt_to_insert->name());
+                 ctxt_name);
     return false;
   }
   task_execution_context& ctxt = *ret.first->second;

@@ -42,17 +42,17 @@ Copyright: 2017-2024 University of Cincinnati, developed by Henry Schreiner
 License:   BSD-3-clause
 
 
-Files:     external/rigtorp/MPMCQueue.hpp
+Files:     external/rigtorp/MPMCQueue.h
 Copyright: 2018 Erik Rigtorp
 License:   MIT
 
 
-Files:     external/rigtorp/SPSCQueue.hpp
+Files:     external/rigtorp/SPSCQueue.h
 Copyright: 2018 Erik Rigtorp
 License:   MIT
 
 
-Files:     external/cameron314/concurrentqueue.hpp
+Files:     external/cameron314/concurrentqueue.h
 Copyright: 2013-2020, Cameron Desrochers
 License:   Simplified BSD
 

@@ -297,6 +297,35 @@ static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_ce
   return cell;
 }
 
+static asn1::rrc_nr::plmn_id_s make_asn1_plmn_id(const plmn_identity& plmn)
+{
+  using namespace asn1::rrc_nr;
+
+  plmn_id_s asn1_plmn;
+  asn1_plmn.mcc_present         = true;
+  asn1_plmn.mcc                 = plmn.mcc().to_bytes();
+  static_vector<uint8_t, 3> mnc = plmn.mnc().to_bytes();
+  asn1_plmn.mnc.resize(mnc.size());
+  for (unsigned i = 0, sz = mnc.size(); i != sz; ++i) {
+    asn1_plmn.mnc[i] = mnc[i];
+  }
+  return asn1_plmn;
+}
+
+static asn1::rrc_nr::plmn_id_info_s
+make_asn1_plmn_id_info(const plmn_identity& plmn, const tac_t& tac, const nr_cell_identity& nci)
+{
+  using namespace asn1::rrc_nr;
+
+  plmn_id_info_s asn1_plmn_info;
+  asn1_plmn_info.plmn_id_list.push_back(make_asn1_plmn_id(plmn));
+  asn1_plmn_info.tac_present = true;
+  asn1_plmn_info.tac.from_number(tac);
+  asn1_plmn_info.cell_id.from_number(nci.value());
+  asn1_plmn_info.cell_reserved_for_oper.value = plmn_id_info_s::cell_reserved_for_oper_opts::not_reserved;
+  return asn1_plmn_info;
+}
+
 static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg)
 {
   using namespace asn1::rrc_nr;
@@ -308,21 +337,11 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
   sib1.cell_sel_info.q_qual_min_present = true;
   sib1.cell_sel_info.q_qual_min         = du_cfg.cell_sel_info.q_qual_min.value();
 
-  sib1.cell_access_related_info.plmn_id_info_list.resize(1);
-  sib1.cell_access_related_info.plmn_id_info_list[0].plmn_id_list.resize(1);
-  plmn_id_s& plmn               = sib1.cell_access_related_info.plmn_id_info_list[0].plmn_id_list[0];
-  plmn.mcc_present              = true;
-  plmn.mcc                      = du_cfg.nr_cgi.plmn_id.mcc().to_bytes();
-  static_vector<uint8_t, 3> mnc = du_cfg.nr_cgi.plmn_id.mnc().to_bytes();
-  plmn.mnc.resize(mnc.size());
-  for (unsigned i = 0, sz = mnc.size(); i != sz; ++i) {
-    plmn.mnc[i] = mnc[i];
+  auto& asn1_plmn_id_info_list = sib1.cell_access_related_info.plmn_id_info_list;
+  asn1_plmn_id_info_list.push_back(make_asn1_plmn_id_info(du_cfg.nr_cgi.plmn_id, du_cfg.tac, du_cfg.nr_cgi.nci));
+  for (auto& add_plmn : du_cfg.cell_acc_rel_info.additional_plmns) {
+    asn1_plmn_id_info_list[0].plmn_id_list.push_back(make_asn1_plmn_id(add_plmn));
   }
-  sib1.cell_access_related_info.plmn_id_info_list[0].tac_present = true;
-  sib1.cell_access_related_info.plmn_id_info_list[0].tac.from_number(du_cfg.tac);
-  sib1.cell_access_related_info.plmn_id_info_list[0].cell_id.from_number(du_cfg.nr_cgi.nci.value());
-  sib1.cell_access_related_info.plmn_id_info_list[0].cell_reserved_for_oper.value =
-      plmn_id_info_s::cell_reserved_for_oper_opts::not_reserved;
 
   sib1.conn_est_fail_ctrl_present                   = true;
   sib1.conn_est_fail_ctrl.conn_est_fail_count.value = asn1::rrc_nr::conn_est_fail_ctrl_s::conn_est_fail_count_opts::n1;

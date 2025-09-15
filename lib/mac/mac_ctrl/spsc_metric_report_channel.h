@@ -63,8 +63,7 @@ public:
     for (unsigned i = 0; i != capacity; ++i) {
       reports.emplace_back(report_ctor());
       bool discard = free_list.try_push(i);
-      srsran_assert(discard, "Failed to fill free list");
-      (void)discard;
+      report_fatal_error_if_not(discard, "Failed to fill free list");
     }
   }
   ~spsc_metric_report_channel() override

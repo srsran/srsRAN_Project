@@ -46,6 +46,9 @@ expected<ue_capability_summary, std::string> decode_ue_nr_cap_container(const by
 /// Helper function to convert advanced UE NR capabilities.
 void decode_advanced_ue_nr_caps(ue_capability_summary& ue_capability, const asn1::rrc_nr::ue_nr_cap_s& ue_cap);
 
+/// Helper function to convert advanced UE NR capabilities.
+void decode_advanced_ue_nr_ntn_caps(ue_capability_summary& ue_capability, const asn1::rrc_nr::ue_nr_cap_s& ue_cap);
+
 /// Entity responsible for handling the UE RAT capabilities container, passed by the CU-CP, and updating the UE
 /// configuration in the DU accordingly.
 class ue_capability_manager

@@ -206,16 +206,22 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_unit_bas
         return "";
       });
 
-  app.add_option_function<float>(
+  app.add_option_function<std::string>(
          "--subcarrier_rms_backoff_dB",
-         [&config](float value) {
+         [&config](std::string value) {
            if (!std::holds_alternative<ru_ofh_scaling_config>(config.iq_scaling_config)) {
              config.iq_scaling_config.emplace<ru_ofh_scaling_config>();
            }
-           std::get<ru_ofh_scaling_config>(config.iq_scaling_config).subcarrier_rms_backoff_dB = value;
+           // By default, subcarrier backoff is set to 'auto', i.e., normalize bandwidth based on number of
+           // subcarriers. If another value is specified, it is parsed.
+           if (value != "auto") {
+             // It is safe to convert the value without try-catch because it has been already checked.
+             float backoff                                                                       = std::stof(value);
+             std::get<ru_ofh_scaling_config>(config.iq_scaling_config).subcarrier_rms_backoff_dB = backoff;
+           }
          },
          "Power back-off attenuation applied to all subcarriers with respect to the RU reference level")
-      ->check(CLI::Range(0.0f, std::numeric_limits<float>::infinity()))
+      ->check(CLI::Range(0.0f, std::numeric_limits<float>::infinity()) | CLI::IsMember({"auto"}))
       ->check([&config](const std::string& value) -> std::string {
         if (std::holds_alternative<ru_ofh_legacy_scaling_config>(config.iq_scaling_config)) {
           return "IQ scaling and RU subcarrier back-off cannot be set at the same time";
@@ -294,8 +300,8 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_unit_bas
           "RU IQ scaling parameter cannot be used if RU reference level and subcarrier RMS back-off are set\n");
     }
 
-    if (ref_level_count != backoff_count) {
-      report_error("RU reference level and subcarrier RMS back-off must be set together\n");
+    if (backoff_count > 0 && ref_level_count == 0) {
+      report_error("RU reference level is required if subcarrier RMS back-off is set\n");
     }
   };
 

@@ -35,6 +35,8 @@ struct ue_capability_summary {
   static constexpr unsigned default_pusch_max_rank = 1;
   /// Default SRS number of transmit ports.
   static constexpr unsigned default_nof_srs_tx_ports = 1;
+  /// Default max number of DL/UL HARQ processes.
+  static constexpr unsigned default_max_harq_process_num = 16;
   /// @}
 
   /// Contains band specific parameters.
@@ -51,6 +53,16 @@ struct ue_capability_summary {
     unsigned pusch_max_rank = default_pusch_max_rank;
     /// Maximum number of ports that can be simultaneously used for transmiting Sounding Reference Signals.
     uint8_t nof_srs_tx_ports = default_nof_srs_tx_ports;
+    /// Maximum number of DL HARQ processes.
+    uint8_t max_dl_harq_process_num = default_max_harq_process_num;
+    /// Maximum number of UL HARQ processes.
+    uint8_t max_ul_harq_process_num = default_max_harq_process_num;
+    /// Indicates whether the UE supports the uplink time and frequency pre-compensation.
+    bool ul_pre_compensation_supported = false;
+    /// Indicates whether the UE supports UE reporting of information related to TA pre-compensation.
+    bool ul_ta_reporting_supported = false;
+    /// Indicates whether the UE supports the reception of UE-specific K_offset.
+    bool ue_specific_k_offset_supported = false;
   };
 
   /// Set to true if QAM-256 MCS table are supported for PDSCH transmissions.
@@ -67,6 +79,12 @@ struct ue_capability_summary {
   bool short_drx_cycle_supported = false;
   /// Set to true if UE supports \c interleavingVRB-ToPRB-PDSCH, as per TS 38.306, Section 4.2.7.10.
   bool pdsch_interleaving_vrb_to_prb_supported = false;
+  /// Set to true if UE supports NTN features.
+  bool ntn_supported = false;
+  /// Indicates whether the UE supports disabled HARQ feedback for downlink transmission.
+  bool disabled_dl_harq_feedback_supported = false;
+  /// Indicates whether the UE supports HARQ Mode B and the corresponding LCP restrictions for uplink transmission.
+  bool ul_harq_mode_b_supported = false;
 };
 
 } // namespace srs_du

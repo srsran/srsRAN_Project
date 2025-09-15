@@ -21,6 +21,7 @@
  */
 
 #include "scheduler_test_simulator.h"
+#include "../test_utils/indication_generators.h"
 #include "config_generators.h"
 #include "sched_random_utils.h"
 #include "scheduler_test_suite.h"
@@ -62,6 +63,13 @@ scheduler_test_simulator::scheduler_test_simulator(unsigned           tx_rx_dela
 {
 }
 
+scheduler_test_simulator::scheduler_test_simulator(const scheduler_test_sim_config& cfg) :
+  scheduler_test_simulator(cfg.sched_cfg, cfg.tx_rx_delay, cfg.max_scs)
+{
+  auto_uci = cfg.auto_uci;
+  auto_crc = cfg.auto_crc;
+}
+
 scheduler_test_simulator::~scheduler_test_simulator()
 {
   // Let any pending allocations complete.
@@ -91,11 +99,18 @@ void scheduler_test_simulator::add_ue(const sched_ue_creation_request_message& u
       run_slot();
     }
   }
+  rnti_to_ue_index.insert(std::make_pair(ue_request.crnti, ue_request.ue_index));
 }
 
 void scheduler_test_simulator::rem_ue(du_ue_index_t ue_index)
 {
   sched->handle_ue_removal_request(ue_index);
+  for (auto it = rnti_to_ue_index.begin(); it != rnti_to_ue_index.end(); ++it) {
+    if (it->second == ue_index) {
+      rnti_to_ue_index.erase(it);
+      break;
+    }
+  }
 }
 
 void scheduler_test_simulator::push_dl_buffer_state(const dl_buffer_state_indication_message& upd)
@@ -126,7 +141,12 @@ void scheduler_test_simulator::run_slot(du_cell_index_t cell_idx)
 
   last_sched_res_list[cell_idx] = &sched->slot_indication(next_slot, cell_idx);
 
+  // Ensure the scheduler result is consistent with the cell configuration and there are no collisions.
   test_scheduler_result_consistency(cell_cfg_list[cell_idx], next_slot, *last_sched_res_list[cell_idx]);
+
+  // In case auto-feedback is enabled, handle it.
+  handle_auto_feedback(cell_idx);
+
   ++next_slot;
 }
 
@@ -140,4 +160,52 @@ bool scheduler_test_simulator::run_slot_until(const std::function<bool()>& cond_
     }
   }
   return count < slot_timeout;
+}
+
+void scheduler_test_simulator::handle_auto_feedback(du_cell_index_t cell_idx)
+{
+  if (not auto_uci and not auto_crc) {
+    return;
+  }
+  // Note: next_slot hasn't been incremented yet.
+  slot_point sl_rx = next_slot;
+
+  uci_indication uci_ind;
+  uci_ind.cell_index = cell_idx;
+  uci_ind.slot_rx    = sl_rx;
+  ul_crc_indication crc_ind;
+  crc_ind.cell_index = cell_idx;
+  crc_ind.sl_rx      = sl_rx;
+
+  if (auto_uci) {
+    // Handle PUCCHs.
+    for (const pucch_info& pucch : this->last_sched_res_list[cell_idx]->ul.pucchs) {
+      if (pucch.format() == pucch_format::FORMAT_1 and pucch.uci_bits.sr_bits != sr_nof_bits::no_sr) {
+        // Skip SRs.
+        continue;
+      }
+
+      const du_ue_index_t ue_idx = rnti_to_ue_index.at(pucch.crnti);
+      uci_ind.ucis.push_back(test_helper::create_uci_indication_pdu(ue_idx, pucch));
+    }
+  }
+
+  for (const auto& pusch : this->last_sched_res_list[cell_idx]->ul.puschs) {
+    if (auto_uci and pusch.uci.has_value()) {
+      const du_ue_index_t ue_idx = pusch.context.ue_index;
+      uci_ind.ucis.push_back(test_helper::create_uci_indication_pdu(pusch.pusch_cfg.rnti, ue_idx, pusch.uci.value()));
+    }
+
+    if (auto_crc) {
+      crc_ind.crcs.push_back(test_helper::create_crc_pdu_indication(pusch));
+    }
+  }
+
+  // Forward indications to the scheduler.
+  if (not uci_ind.ucis.empty()) {
+    this->sched->handle_uci_indication(uci_ind);
+  }
+  if (not crc_ind.crcs.empty()) {
+    this->sched->handle_crc_indication(crc_ind);
+  }
 }

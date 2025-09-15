@@ -38,11 +38,12 @@ namespace {
 class ru_ofh_sector_executor_mapper_impl : public ru_ofh_sector_executor_mapper
 {
 public:
-  ru_ofh_sector_executor_mapper_impl(task_executor& txrx_exec_,
-                                     task_executor& downlink_exec_,
-                                     task_executor& uplink_exec_) :
-    txrx_exec(txrx_exec_), downlink_exec(downlink_exec_), uplink_exec(uplink_exec_)
+  ru_ofh_sector_executor_mapper_impl(task_executor&                 txrx_exec_,
+                                     task_executor&                 downlink_exec_,
+                                     std::unique_ptr<task_executor> uplink_exec_) :
+    txrx_exec(txrx_exec_), downlink_exec(downlink_exec_), uplink_exec(std::move(uplink_exec_))
   {
+    srsran_assert(uplink_exec, "Invalid OFH uplink executor");
   }
 
   // See interface for documentation.
@@ -52,12 +53,12 @@ public:
   task_executor& downlink_executor() override { return downlink_exec; }
 
   // See interface for documentation.
-  task_executor& uplink_executor() override { return uplink_exec; }
+  task_executor& uplink_executor() override { return *uplink_exec; }
 
 private:
-  task_executor& txrx_exec;
-  task_executor& downlink_exec;
-  task_executor& uplink_exec;
+  task_executor&                 txrx_exec;
+  task_executor&                 downlink_exec;
+  std::unique_ptr<task_executor> uplink_exec;
 };
 
 /// Open Fronthaul RU executor mapper implementation managing executor mappers of the configured sectors.
@@ -88,10 +89,10 @@ public:
             : 1;
 
     for (unsigned i = 0; i != config.nof_sectors; ++i) {
-      auto& ul_strand = ul_strands.emplace_back(
-          make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(*config.uplink_executor, default_queue_size));
       sector_mappers.emplace_back(
-          *config.txrx_executors[i / nof_sectors_per_txrx_thread], *config.downlink_executor, *ul_strand);
+          *config.txrx_executors[i / nof_sectors_per_txrx_thread],
+          *config.downlink_executor,
+          make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(*config.uplink_executor, default_queue_size));
     }
   }
 
@@ -110,7 +111,6 @@ public:
 
 private:
   task_executor*                                  timing_exec;
-  std::vector<std::unique_ptr<task_executor>>     ul_strands;
   std::vector<ru_ofh_sector_executor_mapper_impl> sector_mappers;
 };
 

@@ -33,6 +33,9 @@ namespace srsran {
 /// Registers all the loggers for the O-RAN DU low split 6.
 inline void register_split6_o_du_low_loggers(const split6_o_du_low_unit_config& config)
 {
+  auto& fapi = srslog::fetch_basic_logger("FAPI", true);
+  fapi.set_level(config.fapi_level);
+
   register_du_low_loggers(config.du_low_cfg.loggers);
 
   if (const auto* ru_sdr = std::get_if<ru_sdr_unit_config>(&config.ru_cfg)) {

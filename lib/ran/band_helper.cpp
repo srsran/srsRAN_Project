@@ -940,6 +940,11 @@ bool srsran::band_helper::is_band_40mhz_min_ch_bw_equivalent(nr_band band)
   return band == nr_band::n79 or band == nr_band::n104;
 }
 
+bool srsran::band_helper::is_ntn_band(nr_band band)
+{
+  return band == nr_band::n254 or band == nr_band::n255 or band == nr_band::n256;
+}
+
 ssb_pattern_case srsran::band_helper::get_ssb_pattern(nr_band band, subcarrier_spacing scs)
 {
   // Look for the given band and SCS.

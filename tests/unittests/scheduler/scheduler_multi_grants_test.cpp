@@ -43,7 +43,11 @@ class base_sched_grants_per_slot_test : public scheduler_test_simulator
 {
 protected:
   base_sched_grants_per_slot_test(unsigned max_ul_grants_per_slot = 32) :
-    scheduler_test_simulator(create_custom_sched_cfg(max_ul_grants_per_slot), 4, subcarrier_spacing::kHz30),
+    scheduler_test_simulator(scheduler_test_sim_config{create_custom_sched_cfg(max_ul_grants_per_slot),
+                                                       4,
+                                                       subcarrier_spacing::kHz30,
+                                                       true,
+                                                       true}),
     params(cell_config_builder_profiles::tdd())
   {
     auto sched_cell_cfg_req = sched_config_helper::make_default_sched_cell_configuration_request(params);
@@ -85,47 +89,6 @@ protected:
                                   bsr_format::LONG_BSR,
                                   ul_bsr_lcg_report_list{{uint_to_lcg_id(2), BSR_VALUE}}};
     this->push_bsr(bsr);
-  }
-
-  void run_slot()
-  {
-    scheduler_test_simulator::run_slot();
-
-    // Handle UCI and CRC indications.
-    uci_indication uci_ind;
-    uci_ind.cell_index = to_du_cell_index(0);
-    uci_ind.slot_rx    = this->last_result_slot();
-    ul_crc_indication crc_ind;
-    crc_ind.cell_index = to_du_cell_index(0);
-    crc_ind.sl_rx      = last_result_slot();
-
-    span<const ul_sched_info> ul_grants = this->last_sched_res_list[0]->ul.puschs;
-
-    // Handle PUCCHs.
-    for (const pucch_info& pucch : this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs) {
-      if (pucch.format() == pucch_format::FORMAT_1 and pucch.uci_bits.sr_bits != sr_nof_bits::no_sr) {
-        // Skip SRs for this test.
-        continue;
-      }
-      du_ue_index_t ue_idx = to_du_ue_index((unsigned)pucch.crnti - 0x4601);
-      uci_ind.ucis.push_back(test_helper::create_uci_indication_pdu(ue_idx, pucch));
-    }
-
-    // Handle CRCs and PUSCH UCIs.
-    for (const ul_sched_info& grant : ul_grants) {
-      crc_ind.crcs.emplace_back(test_helper::create_crc_pdu_indication(grant));
-      if (grant.uci.has_value()) {
-        uci_ind.ucis.push_back(
-            test_helper::create_uci_indication_pdu(grant.pusch_cfg.rnti, grant.context.ue_index, grant.uci.value()));
-      }
-    }
-
-    if (not uci_ind.ucis.empty()) {
-      this->sched->handle_uci_indication(uci_ind);
-    }
-    if (not crc_ind.crcs.empty()) {
-      this->sched->handle_crc_indication(crc_ind);
-    }
   }
 
   cell_config_builder_params    params;

@@ -286,6 +286,7 @@ endif()
 ########################################################################
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/external/cmake-sbom")
 include(sbom)
+include(copyright)
 include(GNUInstallDirs)
 
 sbom_generate(
@@ -655,6 +656,7 @@ message(STATUS "Building srsRAN version ${SRSRAN_VERSION_STRING}")
 ########################################################################
 # Generate SBOM
 ########################################################################
+parse_copyright_file("${CMAKE_SOURCE_DIR}/COPYRIGHT")
 sbom_add(
     LICENSE "LicenseRef-srsRAN"
     NAME    "AGPL-3.0-only"

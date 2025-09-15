@@ -103,6 +103,9 @@ struct du_cell_config {
   /// \c cellSelectionInfo, \c SIB1, as per TS 38.331.
   cell_selection_info cell_sel_info;
 
+  /// \c cellAccessRelatedInfo, sent in \c SIB1, as per TS 38.331.
+  cell_access_related_info cell_acc_rel_info;
+
   /// Content and scheduling information of SI-messages.
   std::optional<si_scheduling_info_config> si_config;
 

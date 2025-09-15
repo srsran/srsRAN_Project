@@ -76,8 +76,13 @@ void test_pdsch_rar_consistency(const cell_configuration& cell_cfg, span<const r
 void test_pdsch_ue_consistency(const cell_configuration& cell_cfg, span<const dl_msg_alloc> ue_grants);
 
 /// \brief Verify UE PUSCH content is valid. Current checks:
+/// - Number of PUSCHs does not exceed max_puschs_per_slot.
 /// - PRBs fall within BWP boundaries.
 void test_pusch_ue_consistency(const cell_configuration& cell_cfg, span<const ul_sched_info> ue_grants);
+
+/// \brief Verify UE PUCCH content is valid. Current checks:
+/// - Number of PUCCHs does not exceed max_pucchs_per_slot.
+void test_pucch_consistency(const cell_configuration& cell_cfg, span<const pucch_info> pucchs);
 
 /// \brief Current checks:
 /// - PRACH occasions parameters match RACH-ConfigCommon present in cell_cfg.
@@ -90,6 +95,14 @@ void test_dl_resource_grid_collisions(const cell_configuration& cell_cfg, const 
 
 /// \brief Detects collisions in the "RB x symbol" UL resource grid.
 void test_ul_resource_grid_collisions(const cell_configuration& cell_cfg, const ul_sched_result& result);
+
+/// \brief Detects inconsistencies in the whole UL scheduling result. This function calls other more specific UL
+/// validity checks.
+void test_ul_consistency(const cell_configuration& cell_cfg, const ul_sched_result& result);
+
+/// \brief Detects inconsistencies in the whole DL scheduling result. This function calls other more specific DL
+/// validity checks.
+void test_dl_consistency(const cell_configuration& cell_cfg, slot_point sl_tx, const dl_sched_result& result);
 
 /// \brief Run all consistency checks for the scheduler result.
 void test_scheduler_result_consistency(const cell_configuration& cell_cfg,

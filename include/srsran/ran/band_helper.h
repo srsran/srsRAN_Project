@@ -85,6 +85,9 @@ bool is_band_for_shared_spectrum(nr_band band);
 /// \remark    As per TS 38.101, Table 5.2-1, only bands where Note 17 applies.
 bool is_band_40mhz_min_ch_bw_equivalent(nr_band band);
 
+/// \brief     Returns true if the band is an NTN band.
+bool is_ntn_band(nr_band band);
+
 /// \brief     Checks whether a Downlink ARFCN is valid for a given band.
 /// \param[in] band Given NR band.
 /// \param[in] arfcn_f_ref Given Downlink ARFCN of \c F_REF, as per TS 38.104, Section 5.4.2.1.

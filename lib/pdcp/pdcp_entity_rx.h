@@ -114,6 +114,16 @@ public:
     return count_info;
   }
 
+  /// \brief Set the RX count for status transfer
+  void set_count(pdcp_count_info count_info) override
+  {
+    uint32_t count = COUNT(count_info.hfn, count_info.sn);
+    if (st.rx_next != 0 || st.rx_deliv != 0 || st.rx_reord != 0) {
+      logger.log_warning("Status transfer applied to bearer with non-zero state. st={} count={}", st, count);
+    }
+    st = {count, count, count};
+  }
+
   /// \brief Retrun awaitable to wait for cripto tasks to be
   /// finished.
   manual_event_flag& crypto_awaitable();

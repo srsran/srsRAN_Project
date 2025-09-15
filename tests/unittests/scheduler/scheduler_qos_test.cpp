@@ -68,7 +68,9 @@ class scheduler_qos_test : public scheduler_test_simulator, public ::testing::Te
   };
 
 public:
-  scheduler_qos_test() : scheduler_test_simulator(4, subcarrier_spacing::kHz30)
+  scheduler_qos_test() :
+    scheduler_test_simulator(
+        scheduler_test_sim_config{.max_scs = subcarrier_spacing::kHz30, .auto_uci = true, .auto_crc = true})
   {
     params = cell_config_builder_profiles::tdd(subcarrier_spacing::kHz30);
 
@@ -126,48 +128,13 @@ public:
   {
     scheduler_test_simulator::run_slot();
 
-    // Handle UCI and CRC indications.
-    uci_indication uci_ind;
-    uci_ind.cell_index = to_du_cell_index(0);
-    uci_ind.slot_rx    = this->last_result_slot();
-    ul_crc_indication crc_ind;
-    crc_ind.cell_index = to_du_cell_index(0);
-    crc_ind.sl_rx      = last_result_slot();
-
-    span<const dl_msg_alloc>  ue_grants = this->last_sched_res_list[0]->dl.ue_grants;
-    span<const ul_sched_info> ul_grants = this->last_sched_res_list[0]->ul.puschs;
-
-    // Handle PUCCHs.
-    for (const pucch_info& pucch : this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs) {
-      if (pucch.format() == pucch_format::FORMAT_1 and pucch.uci_bits.sr_bits != sr_nof_bits::no_sr) {
-        // Skip SRs for this test.
-        continue;
-      }
-      du_ue_index_t ue_idx = to_du_ue_index((unsigned)pucch.crnti - 0x4601);
-      uci_ind.ucis.push_back(test_helper::create_uci_indication_pdu(ue_idx, pucch));
-    }
-
-    // Handle CRCs and PUSCH UCIs.
-    for (const ul_sched_info& grant : ul_grants) {
-      crc_ind.crcs.emplace_back(test_helper::create_crc_pdu_indication(grant));
-      if (grant.uci.has_value()) {
-        uci_ind.ucis.push_back(
-            test_helper::create_uci_indication_pdu(grant.pusch_cfg.rnti, grant.context.ue_index, grant.uci.value()));
-      }
-    }
-
-    if (not uci_ind.ucis.empty()) {
-      this->sched->handle_uci_indication(uci_ind);
-    }
-    if (not crc_ind.crcs.empty()) {
-      this->sched->handle_crc_indication(crc_ind);
-    }
-
     // Register DL sched bytes.
+    span<const dl_msg_alloc> ue_grants = this->last_sched_res_list[0]->dl.ue_grants;
     for (const dl_msg_alloc& grant : ue_grants) {
       ue_stats_map[grant.context.ue_index].dl_bytes_sum += grant.pdsch_cfg.codewords[0].tb_size_bytes;
     }
     // Register UL sched bytes.
+    span<const ul_sched_info> ul_grants = this->last_sched_res_list[0]->ul.puschs;
     for (const ul_sched_info& grant : ul_grants) {
       ue_stats_map[grant.context.ue_index].ul_bytes_sum += grant.pusch_cfg.tb_size_bytes;
     }

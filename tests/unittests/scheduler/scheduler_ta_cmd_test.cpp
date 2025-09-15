@@ -35,16 +35,10 @@ protected:
   scheduler_ta_cmd_tester() :
     scheduler_test_simulator(4, GetParam() == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30)
   {
+    params = GetParam() == duplex_mode::FDD ? cell_config_builder_profiles::fdd() : cell_config_builder_profiles::tdd();
+
     // Add Cell.
-    this->add_cell([this, duplex_mode = GetParam()]() {
-      params =
-          duplex_mode == duplex_mode::FDD ? cell_config_builder_profiles::fdd() : cell_config_builder_profiles::tdd();
-
-      sched_cell_configuration_request_message sched_cfg_req =
-          sched_config_helper::make_default_sched_cell_configuration_request(params);
-
-      return sched_cfg_req;
-    }());
+    this->add_cell(sched_config_helper::make_default_sched_cell_configuration_request(params));
 
     // Add UE
     this->add_ue(sched_config_helper::create_default_sched_ue_creation_request(params, {ue_drb_lcid}));
@@ -59,32 +53,16 @@ protected:
     uci_indication uci_ind{};
     uci_ind.cell_index = to_du_cell_index(0);
     uci_ind.slot_rx    = uci_sl;
-    uci_ind.ucis.resize(1);
-    uci_ind.ucis[0].crnti    = pucch_pdu.crnti;
-    uci_ind.ucis[0].ue_index = ue_index;
-    switch (pucch_pdu.format()) {
-      case pucch_format::FORMAT_1: {
-        uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu f1{};
-        f1.harqs.resize(pucch_pdu.uci_bits.harq_ack_nof_bits);
-        std::fill(f1.harqs.begin(), f1.harqs.end(), mac_harq_ack_report_status::ack);
-        f1.ul_sinr_dB          = ul_sinr;
-        f1.time_advance_offset = phy_time_unit::from_units_of_Tc(time_advance_offset_in_tc);
-        uci_ind.ucis[0].pdu    = f1;
-      } break;
-      case pucch_format::FORMAT_2: {
-        uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu f2{};
-        f2.harqs.resize(pucch_pdu.uci_bits.harq_ack_nof_bits);
-        std::fill(f2.harqs.begin(), f2.harqs.end(), mac_harq_ack_report_status::ack);
-        f2.ul_sinr_dB          = ul_sinr;
-        f2.time_advance_offset = phy_time_unit::from_units_of_Tc(time_advance_offset_in_tc);
-        uci_ind.ucis[0].pdu    = f2;
-        if (pucch_pdu.uci_bits.csi_part1_nof_bits > 0) {
-          f2.csi.emplace();
-          f2.csi->first_tb_wideband_cqi = 15;
-        }
-      } break;
-      default:
-        report_fatal_error("Unsupported PUCCH format");
+    uci_ind.ucis.push_back(test_helper::create_uci_indication_pdu(ue_index, pucch_pdu));
+    if (auto* f0_f1 = std::get_if<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(&uci_ind.ucis[0].pdu)) {
+      f0_f1->ul_sinr_dB          = ul_sinr;
+      f0_f1->time_advance_offset = phy_time_unit::from_units_of_Tc(time_advance_offset_in_tc);
+    } else if (auto* f2_f3_f4 =
+                   std::get_if<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(&uci_ind.ucis[0].pdu)) {
+      f2_f3_f4->ul_sinr_dB          = ul_sinr;
+      f2_f3_f4->time_advance_offset = phy_time_unit::from_units_of_Tc(time_advance_offset_in_tc);
+    } else {
+      report_fatal_error("Unsupported PUCCH format");
     }
     return uci_ind;
   }

@@ -324,6 +324,19 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
     pdcp_tx_lower.handle_desired_buffer_size_notification(UINT32_MAX);
   }
 
+  // Apply PDCP status
+  if (drb_to_setup.pdcp_sn_status_info.has_value()) {
+    pdcp_count_info rx_count;
+    rx_count.sn  = drb_to_setup.pdcp_sn_status_info.value().pdcp_status_transfer_ul.count_value.pdcp_sn;
+    rx_count.hfn = drb_to_setup.pdcp_sn_status_info.value().pdcp_status_transfer_ul.count_value.hfn;
+    pdcp_rx_ctrl.set_count(rx_count);
+
+    pdcp_count_info tx_count;
+    tx_count.sn  = drb_to_setup.pdcp_sn_status_info.value().pdcp_status_transfer_dl.pdcp_sn;
+    tx_count.hfn = drb_to_setup.pdcp_sn_status_info.value().pdcp_status_transfer_dl.hfn;
+    pdcp_tx_ctrl.set_count(tx_count);
+  }
+
   // Connect "PDCP-E1AP" adapter to E1AP
   new_drb->pdcp_tx_to_e1ap_adapter.connect_e1ap(ue_index, &e1ap);
   new_drb->pdcp_rx_to_e1ap_adapter.connect_e1ap(ue_index, &e1ap);
@@ -527,6 +540,21 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
 
       auto& pdcp_tx_ctrl                  = drb->pdcp->get_tx_upper_control_interface();
       drb_result.pdcp_sn_status->dl_count = pdcp_tx_ctrl.get_count();
+    }
+
+    // Apply PDCP status
+    if (drb_to_mod.pdcp_sn_status_info.has_value()) {
+      auto&           pdcp_rx_ctrl = drb->pdcp->get_rx_upper_control_interface();
+      pdcp_count_info rx_count;
+      rx_count.sn  = drb_to_mod.pdcp_sn_status_info.value().pdcp_status_transfer_ul.count_value.pdcp_sn;
+      rx_count.hfn = drb_to_mod.pdcp_sn_status_info.value().pdcp_status_transfer_ul.count_value.hfn;
+      pdcp_rx_ctrl.set_count(rx_count);
+
+      auto&           pdcp_tx_ctrl = drb->pdcp->get_tx_upper_control_interface();
+      pdcp_count_info tx_count;
+      tx_count.sn  = drb_to_mod.pdcp_sn_status_info.value().pdcp_status_transfer_dl.pdcp_sn;
+      tx_count.hfn = drb_to_mod.pdcp_sn_status_info.value().pdcp_status_transfer_dl.hfn;
+      pdcp_tx_ctrl.set_count(tx_count);
     }
 
     // Apply re-establishment at PDCP

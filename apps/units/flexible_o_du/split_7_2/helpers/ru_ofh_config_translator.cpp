@@ -159,9 +159,16 @@ static void generate_config(ru_ofh_configuration&                            out
           legacy_scaling_config->iq_scaling / std::sqrt(static_cast<float>(nof_prbs * NOF_SUBCARRIERS_PER_RB));
     } else if (const auto* scaling_config = std::get_if<ru_ofh_scaling_config>(&ofh_cell_cfg.cell.iq_scaling_config)) {
       // Take the RU reference level, apply the configured subcarrier back-off and convert the result into a linear
-      // scaling factor. Do not apply any bandwidth normalization.
+      // scaling factor. If no subcarrier back-off is configured, apply a bandwidth power normalization factor.
+      unsigned nof_prbs =
+          get_max_Nprb(bs_channel_bandwidth_to_MHz(sector_cfg.bw), sector_cfg.scs, frequency_range::FR1);
+      float subcarrier_rms_backoff_dB = convert_power_to_dB(nof_prbs * NOF_SUBCARRIERS_PER_RB);
+      // If no value of subcarrier backoff is defined, the default bandwidth normalization is used.
+      if (scaling_config->subcarrier_rms_backoff_dB) {
+        subcarrier_rms_backoff_dB = *scaling_config->subcarrier_rms_backoff_dB;
+      }
       sector_cfg.iq_scaling =
-          convert_dB_to_amplitude(scaling_config->ru_reference_level_dBFS - scaling_config->subcarrier_rms_backoff_dB);
+          convert_dB_to_amplitude(scaling_config->ru_reference_level_dBFS - subcarrier_rms_backoff_dB);
     } else {
       report_fatal_error(
           "Either the iq_scaling or the RU reference level and subarrier RMS backoff must be configured.");

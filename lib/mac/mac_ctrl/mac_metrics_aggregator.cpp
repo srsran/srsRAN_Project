@@ -274,11 +274,13 @@ bool mac_metrics_aggregator::pop_report(cell_metric_handler& cell)
   const auto* next_ev = cell.report_queue.peek();
 
   if (next_ev == nullptr) {
-    // No report to pop.
+    // No report to pop for this cell.
     return false;
   }
 
   if (not next_report_start_slot.valid()) {
+    // All cells are deactivated.
+    logger.warning("cell={}: Discarding report as all cells are deactivated", fmt::underlying(cell.cell_index));
     return false;
   }
 
@@ -368,16 +370,38 @@ void mac_metrics_aggregator::handle_cell_deactivation(du_cell_index_t           
   srsran_assert(cell.active_flag, "Deactivation of already deactivated cell not supported");
   srsran_assert(last_report.cell_deactivated, "Expected cell deactivated flag to be set");
 
-  // Save last report before deactivating cell.
-  if (last_report.start_slot.valid()) {
-    slot_point next_start_sl_tx = next_report_start_slot.without_hyper_sfn();
-    if (last_report.start_slot >= next_start_sl_tx and last_report.start_slot < next_start_sl_tx + cell.period_slots) {
-      next_report.dl.cells.push_back(last_report);
+  auto push_last_report = [&]() {
+    if (last_report.start_slot.valid()) {
+      slot_point next_start_sl_tx = next_report_start_slot.without_hyper_sfn();
+      if (last_report.start_slot >= next_start_sl_tx and
+          last_report.start_slot < next_start_sl_tx + cell.period_slots) {
+        next_report.dl.cells.push_back(last_report);
+        return true;
+      }
     }
-  }
-  cell.active_flag = false;
+    return false;
+  };
+
+  // Save last report before deactivating cell.
+  bool report_pushed = push_last_report();
+  cell.active_flag   = false;
   if (--nof_active_cells == 0) {
-    // No cells are active. Reset the next aggregated report start slot.
+    // No more cells are active.
+
+    // Stop aggregation timer.
+    aggr_timer.stop();
+
+    // We don't expect more reports. Verify if there is nothing pending to be processed.
+    handle_pending_reports();
+
+    if (not report_pushed) {
+      // It can happen that the next_report_start_slot was updated in handle_pending_reports() and therefore,
+      // the last report can be pushed.
+      push_last_report();
+    }
+    try_send_new_report();
+
+    // Reset the next aggregated report start slot.
     next_report_start_slot = {};
   }
 }

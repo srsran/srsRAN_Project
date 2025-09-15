@@ -840,6 +840,8 @@ struct du_high_unit_base_cell_config {
   unsigned nof_antennas_ul = 1;
   /// Human readable full PLMN (without possible filler digit).
   std::string plmn = "00101";
+  /// List of human readable PLMNs (without possible filler digit) that are additionally supported by the cell.
+  std::vector<std::string> additional_plmns;
   /// TAC.
   tac_t tac = 7;
   /// Whether the DU adds this cell to the list of served cells while communicating with the CU-CP or it waits for a

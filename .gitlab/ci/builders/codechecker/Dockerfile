@@ -8,12 +8,12 @@
 
 ARG CR_REGISTRY_URI
 ARG CI_TOOLS_REPO
-ARG CODECHECKER_VERSION=1.0.1
+ARG CODECHECKER_VERSION=6.26.1
 
 FROM ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/codechecker:${CODECHECKER_VERSION}
 
-ADD install_dependencies.sh /usr/local/bin
-RUN chmod +x /usr/local/bin/install_dependencies.sh
+ADD install_dependencies.sh builder.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/install_dependencies.sh /usr/local/bin/builder.sh
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && install_dependencies.sh \
   && apt-get install -y --no-install-recommends git \

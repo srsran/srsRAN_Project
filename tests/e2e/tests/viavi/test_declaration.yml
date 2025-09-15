@@ -250,6 +250,9 @@ tests:
           nof_dl_slots: 3
           nof_ul_slots: 1
           nof_ul_symbols: 4
+        pdcch:
+          common:
+            ss1_n_candidates: 0 0 2 0 0
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
@@ -275,6 +278,9 @@ tests:
           nof_dl_symbols: 10
           nof_ul_slots: 7
           nof_ul_symbols: 0
+        pdcch:
+          common:
+            ss1_n_candidates: 0 0 2 0 0          
       expert_execution:
         threads:
           upper_phy:
@@ -305,6 +311,9 @@ tests:
           nof_dl_symbols: 10
           nof_ul_slots: 6
           nof_ul_symbols: 0
+        pdcch:
+          common:
+            ss1_n_candidates: 0 0 2 0 0          
       expert_execution:
         threads:
           upper_phy:
@@ -341,6 +350,9 @@ tests:
             nof_dl_symbols: 10
             nof_ul_slots: 2
             nof_ul_symbols: 0
+        pdcch:
+          common:
+            ss1_n_candidates: 0 0 2 0 0            
       expert_execution:
         threads:
           upper_phy:
@@ -371,6 +383,9 @@ tests:
           nof_dl_symbols: 12
           nof_ul_slots: 3
           nof_ul_symbols: 0
+        pdcch:
+          common:
+            ss1_n_candidates: 0 0 2 0 0          
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
