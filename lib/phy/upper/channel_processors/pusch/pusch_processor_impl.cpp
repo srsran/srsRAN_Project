@@ -107,14 +107,14 @@ static pusch_decoder_buffer_dummy decoder_buffer_dummy;
 pusch_processor_impl::pusch_processor_impl(configuration& config) :
   estimator_notifier_configurator(*this),
   logger(srslog::fetch_basic_logger("PHY")),
-  thread_local_dependencies_pool(std::move(config.thread_local_dependencies_pool)),
+  dependencies_pool(std::move(config.dependencies_pool)),
   decoder(std::move(config.decoder)),
   dec_nof_iterations(config.dec_nof_iterations),
   force_decoding(config.dec_force_decoding),
   dec_enable_early_stop(config.dec_enable_early_stop),
   csi_sinr_calc_method(config.csi_sinr_calc_method)
 {
-  srsran_assert(thread_local_dependencies_pool, "Invalid dependency pool.");
+  srsran_assert(dependencies_pool, "Invalid dependency pool.");
   srsran_assert(decoder, "Invalid decoder.");
   srsran_assert(dec_nof_iterations != 0, "The decoder number of iterations must be non-zero.");
 }
@@ -125,8 +125,8 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
                                    const resource_grid_reader&      grid,
                                    const pusch_processor::pdu_t&    pdu)
 {
-  // Get thread local dependencies.
-  concurrent_dependencies_pool_type::ptr dependencies = thread_local_dependencies_pool->get();
+  // Get dependencies.
+  concurrent_dependencies_pool_type::ptr dependencies = dependencies_pool->get();
 
   if (!dependencies) {
     logger.error("Failed to retrieve PUSCH processor dependencies.");
@@ -214,7 +214,7 @@ void pusch_processor_impl::process_data(span<uint8_t>                          d
   using namespace units::literals;
 
   // Get channel estimates. They were filled in by pusch_processor_impl::process(...).
-  auto& ch_estimate = dependencies->get_channel_estimate();
+  channel_estimate& ch_estimate = dependencies->get_channel_estimate();
 
   // Set the DC (Direct Current) subcarrier to zero if its position is within the resource grid and transform precoding
   // is disabled. This step is skipped when transform precoding is used, as forcing the DC to zero in that case may

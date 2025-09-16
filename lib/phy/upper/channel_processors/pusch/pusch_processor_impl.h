@@ -92,8 +92,8 @@ public:
 
   /// Collects the necessary parameters for creating a PUSCH processor.
   struct configuration {
-    /// Thread local dependencies pool.
-    std::shared_ptr<concurrent_dependencies_pool_type> thread_local_dependencies_pool;
+    /// Dependencies pool.
+    std::shared_ptr<concurrent_dependencies_pool_type> dependencies_pool;
     /// Decoder instance. Ownership is transferred to the processor.
     std::unique_ptr<pusch_decoder> decoder;
     /// Selects the number of LDPC decoder iterations.
@@ -209,8 +209,8 @@ private:
   dmrs_pusch_estimator_notifier_impl estimator_notifier_configurator;
 
   srslog::basic_logger& logger;
-  /// Thread local dependencies pool.
-  std::shared_ptr<concurrent_dependencies_pool_type> thread_local_dependencies_pool;
+  /// Dependencies pool.
+  std::shared_ptr<concurrent_dependencies_pool_type> dependencies_pool;
   /// UL-SCH transport block decoder.
   std::unique_ptr<pusch_decoder> decoder;
   /// Selects the number of LDPC decoder iterations.
