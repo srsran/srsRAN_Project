@@ -1282,7 +1282,7 @@ static auto log_pdu_helper(srslog::basic_logger&         logger,
     return;
   }
 
-  std::optional<ran_ue_id_t> ran_ue_id = get_ran_ue_id(pdu);
+  std::optional<ran_ue_id_t> ran_ue_id = asn1_utils::get_ran_ue_id(pdu);
   std::optional<ue_index_t>  ue_idx;
   if (ran_ue_id.has_value()) {
     const auto* ue = ue_ctxt_list.find(ran_ue_id.value());

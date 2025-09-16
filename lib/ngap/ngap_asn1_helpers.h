@@ -461,11 +461,11 @@ inline bool fill_ngap_initial_context_setup_request(ngap_init_context_setup_requ
   }
 
   // Fill security context.
-  copy_asn1_key(request.security_context.k, asn1_request->security_key);
-  fill_supported_algorithms(request.security_context.supported_int_algos,
-                            asn1_request->ue_security_cap.nr_integrity_protection_algorithms);
-  fill_supported_algorithms(request.security_context.supported_enc_algos,
-                            asn1_request->ue_security_cap.nr_encryption_algorithms);
+  asn1_utils::copy_asn1_key(request.security_context.k, asn1_request->security_key);
+  asn1_utils::fill_supported_algorithms(request.security_context.supported_int_algos,
+                                        asn1_request->ue_security_cap.nr_integrity_protection_algorithms);
+  asn1_utils::fill_supported_algorithms(request.security_context.supported_enc_algos,
+                                        asn1_request->ue_security_cap.nr_encryption_algorithms);
 
   // Fill UE radio capabilities.
   if (asn1_request->ue_radio_cap_present) {
