@@ -11,6 +11,7 @@
 #include "e1ap_cu_cp_impl.h"
 #include "../common/e1ap_asn1_helpers.h"
 #include "../common/log_helpers.h"
+#include "cu_cp/procedures/cu_cp_e1_reset_procedure.h"
 #include "cu_cp/procedures/e1_release_procedure.h"
 #include "cu_cp/procedures/e1ap_stop_procedure.h"
 #include "e1ap_cu_cp_asn1_helpers.h"
@@ -21,6 +22,7 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ran/cause/e1ap_cause.h"
 #include "srsran/ran/cause/e1ap_cause_converters.h"
+#include <variant>
 
 using namespace srsran;
 using namespace asn1::e1ap;
@@ -54,7 +56,29 @@ e1ap_cu_cp_impl::~e1ap_cu_cp_impl() {}
 
 async_task<void> e1ap_cu_cp_impl::stop()
 {
+  e1ap_stopping = true;
   return launch_async<e1ap_stop_procedure>(cu_cp_notifier, ue_ctxt_list);
+}
+
+async_task<void> e1ap_cu_cp_impl::handle_cu_cp_e1_reset_message(const cu_cp_reset& reset)
+{
+  if (e1ap_stopping) {
+    logger.debug("Dropping E1 Reset message as E1AP is stopping");
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
+  if (!std::holds_alternative<e1ap_cause_t>(reset.cause)) {
+    logger.error("Invalid cause type for E1 Reset");
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
+  return launch_async<cu_cp_e1_reset_procedure>(e1ap_cfg, reset, pdu_notifier, ev_mng, ue_ctxt_list, logger);
 }
 
 void e1ap_cu_cp_impl::handle_cu_up_e1_setup_response(const cu_up_e1_setup_response& msg)

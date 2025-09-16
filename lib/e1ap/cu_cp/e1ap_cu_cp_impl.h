@@ -38,8 +38,9 @@ public:
 
   async_task<void> stop() override;
 
-  // e1ap_connection_manager functions
-  void handle_cu_up_e1_setup_response(const cu_up_e1_setup_response& msg) override;
+  // e1ap_connection_manager functions.
+  async_task<void> handle_cu_cp_e1_reset_message(const cu_cp_reset& reset) override;
+  void             handle_cu_up_e1_setup_response(const cu_up_e1_setup_response& msg) override;
 
   // e1ap_bearer_context_manager functions
   async_task<e1ap_bearer_context_setup_response>
@@ -130,6 +131,9 @@ private:
 
   // Flag to indicate if E1 Release procedure is in progress.
   bool e1_release_in_progress = false;
+
+  // Flag to indicate if E1AP is stopping.
+  bool e1ap_stopping = false;
 };
 
 } // namespace srs_cu_cp
