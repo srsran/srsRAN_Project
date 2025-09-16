@@ -44,7 +44,7 @@ public:
   bool                             handle_amf_tnl_connection_request() override;
   async_task<void>                 handle_amf_disconnection_request() override;
   async_task<ngap_ng_setup_result> handle_ng_setup_request(unsigned max_setup_retries) override;
-  async_task<void>                 handle_ng_reset_message(const cu_cp_ng_reset& msg) override;
+  async_task<void>                 handle_ng_reset_message(const cu_cp_reset& msg) override;
 
   // ngap_nas_message_handler.
   void handle_initial_ue_message(const cu_cp_initial_ue_message& msg) override;

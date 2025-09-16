@@ -15,7 +15,6 @@
 #include "srsran/ngap/ngap_handover.h"
 #include "srsran/ngap/ngap_init_context_setup.h"
 #include "srsran/ngap/ngap_metrics.h"
-#include "srsran/ngap/ngap_reset.h"
 #include "srsran/ngap/ngap_setup.h"
 #include "srsran/ngap/ngap_ue_radio_capability_management.h"
 #include "srsran/ran/plmn_identity.h"
@@ -78,7 +77,7 @@ public:
 
   /// \brief Initiates NG Reset procedure as per TS 38.413 section 8.7.4.2.2.
   /// \param[in] msg The ng reset message to transmit.
-  virtual async_task<void> handle_ng_reset_message(const cu_cp_ng_reset& msg) = 0;
+  virtual async_task<void> handle_ng_reset_message(const cu_cp_reset& msg) = 0;
 };
 
 /// Handle ue context removal.

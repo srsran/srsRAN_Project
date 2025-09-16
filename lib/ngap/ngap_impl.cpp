@@ -25,7 +25,6 @@
 #include "procedures/ngap_pdu_session_resource_setup_procedure.h"
 #include "procedures/ngap_ue_context_release_procedure.h"
 #include "srsran/asn1/ngap/common.h"
-#include "srsran/ngap/ngap_reset.h"
 #include "srsran/ngap/ngap_setup.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/ran/cause/ngap_cause.h"
@@ -116,45 +115,18 @@ async_task<ngap_ng_setup_result> ngap_impl::handle_ng_setup_request(unsigned max
       context, ngap_msg, max_setup_retries, tx_pdu_notifier, ev_mng, timer_factory{timers, ctrl_exec}, logger);
 }
 
-async_task<void> ngap_impl::handle_ng_reset_message(const cu_cp_ng_reset& msg)
+async_task<void> ngap_impl::handle_ng_reset_message(const cu_cp_reset& msg)
 {
-  ngap_ng_reset ng_reset = {};
-  ng_reset.cause         = msg.cause;
-
-  if (msg.ng_interface_reset) {
-    // Reset all UEs.
-    ng_reset.reset_type = ngap_reset_ng_interface{};
-  } else {
-    // Reset only specific UEs.
-    ngap_reset_type_part_of_interface ng_reset_part_of_interface = {};
-    for (const auto& ue : msg.ues_to_reset) {
-      if (!ue_ctxt_list.contains(ue)) {
-        logger.warning("ue={}: Excluding UE from NG Reset. UE context does not exist", ue);
-      } else {
-        auto& ue_ctxt = ue_ctxt_list[ue];
-
-        ngap_ue_associated_lc_ng_conn_item conn_item = {};
-        if (ue_ctxt.ue_ids.amf_ue_id != amf_ue_id_t::invalid) {
-          conn_item.amf_ue_id = ue_ctxt.ue_ids.amf_ue_id;
-        }
-        if (ue_ctxt.ue_ids.ran_ue_id != ran_ue_id_t::invalid) {
-          conn_item.ran_ue_id = ue_ctxt.ue_ids.ran_ue_id;
-        }
-
-        ng_reset_part_of_interface.push_back(conn_item);
-      }
-    }
-    ng_reset.reset_type = ng_reset_part_of_interface;
+  if (!std::holds_alternative<ngap_cause_t>(msg.cause)) {
+    logger.error("Invalid cause type for NG Reset");
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
   }
 
-  ngap_message ngap_msg = {};
-  ngap_msg.pdu.set_init_msg();
-  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_NG_RESET);
-
-  fill_asn1_ng_reset(ngap_msg.pdu.init_msg().value.ng_reset(), ng_reset);
-
   // Schedule NG Reset procedure.
-  return launch_async<ng_reset_procedure>(ngap_msg, tx_pdu_notifier, ev_mng, logger);
+  return launch_async<ng_reset_procedure>(msg, tx_pdu_notifier, ev_mng, ue_ctxt_list, logger);
 }
 
 void ngap_impl::handle_initial_ue_message(const cu_cp_initial_ue_message& msg)

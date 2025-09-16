@@ -30,10 +30,12 @@ void ue_transaction_info_release_routine::operator()(coro_context<async_task<voi
 {
   CORO_BEGIN(ctx);
 
+  logger.debug("\"{}\" started...", name());
+
   // Prepare NG Reset messages for each PLMN.
   prepare_ng_reset_messages();
 
-  // Run NG Reset to signal to the AMF the reset UEs.
+  // Run NG Reset to signal to the AMF the reset of UEs.
   for (plmn_id_it = ng_reset_per_plmn.begin(); plmn_id_it != ng_reset_per_plmn.end(); ++plmn_id_it) {
     ngap = ngap_db.find_ngap(plmn_id_it->first);
     if (ngap == nullptr) {
@@ -55,6 +57,8 @@ void ue_transaction_info_release_routine::operator()(coro_context<async_task<voi
     CORO_AWAIT(all_ues_reset);
   }
 
+  logger.debug("\"{}\" finished successfully", name());
+
   CORO_RETURN();
 }
 
@@ -70,7 +74,7 @@ void ue_transaction_info_release_routine::prepare_ng_reset_messages()
     if (ng_reset_per_plmn.find(ue->get_ue_context().plmn) == ng_reset_per_plmn.end()) {
       // Create a new entry for the PLMN.
       ngap_cause_t reset_cause                     = ngap_cause_radio_network_t::radio_conn_with_ue_lost;
-      ng_reset_per_plmn[ue->get_ue_context().plmn] = cu_cp_ng_reset{reset_cause, false, {}};
+      ng_reset_per_plmn[ue->get_ue_context().plmn] = cu_cp_reset{reset_cause, false, {}};
     }
 
     // Add reset message to the PLMN list.

@@ -29,6 +29,8 @@ public:
 
   void operator()(coro_context<async_task<void>>& ctx);
 
+  static const char* name() { return "UE Transaction Info Release Routine"; }
+
 private:
   void prepare_ng_reset_messages();
   void launch_ue_removal(ue_index_t ue_idx);
@@ -40,9 +42,9 @@ private:
   srslog::basic_logger&                logger;
 
   // NG reset messages per PLMN.
-  std::map<plmn_identity, cu_cp_ng_reset>           ng_reset_per_plmn;
-  std::map<plmn_identity, cu_cp_ng_reset>::iterator plmn_id_it;
-  ngap_interface*                                   ngap = nullptr;
+  std::map<plmn_identity, cu_cp_reset>           ng_reset_per_plmn;
+  std::map<plmn_identity, cu_cp_reset>::iterator plmn_id_it;
+  ngap_interface*                                ngap = nullptr;
 
   unsigned          ues_remaining_count{0};
   manual_event_flag all_ues_reset;
