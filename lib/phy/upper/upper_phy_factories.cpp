@@ -70,13 +70,15 @@ public:
                                 std::shared_ptr<prach_detector_factory>          prach_factory_,
                                 std::shared_ptr<srs_estimator_factory>           srs_factory_,
                                 std::shared_ptr<resource_grid_factory>           grid_factory_,
+                                std::shared_ptr<phy_tap_factory>                 tap_factory_,
                                 uplink_processor_impl::task_executor_collection& task_executors_) :
     pucch_factory(std::move(pucch_factory_)),
     pusch_factory(std::move(pusch_factory_)),
     prach_factory(std::move(prach_factory_)),
     srs_factory(std::move(srs_factory_)),
     grid_factory(std::move(grid_factory_)),
-    task_executors(task_executors_)
+    task_executors(task_executors_),
+    tap_factory(std::move(tap_factory_))
   {
     report_fatal_error_if_not(prach_factory, "Invalid PRACH factory.");
     report_fatal_error_if_not(pusch_factory, "Invalid PUSCH factory.");
@@ -102,11 +104,19 @@ public:
         grid_factory->create(config.nof_rx_ports, MAX_NSYMB_PER_SLOT, config.nof_rb * NOF_SUBCARRIERS_PER_RB);
     report_fatal_error_if_not(grid, "Invalid SRS estimator.");
 
+    // If a TAP factory is provided, create the PHY TAP and pass it to the uplink processor.
+    std::unique_ptr<phy_tap> ul_tap;
+    if (tap_factory) {
+      ul_tap = tap_factory->create();
+      report_fatal_error_if_not(ul_tap, "Invalid PHY TAP.");
+    }
+
     return std::make_unique<uplink_processor_impl>(std::move(prach),
                                                    std::move(pusch_proc),
                                                    std::move(pucch_proc),
                                                    std::move(srs),
                                                    std::move(grid),
+                                                   std::move(ul_tap),
                                                    task_executors,
                                                    config.rm_buffer_pool,
                                                    config.notifier,
@@ -133,11 +143,18 @@ public:
         grid_factory->create(config.nof_rx_ports, MAX_NSYMB_PER_SLOT, config.nof_rb * NOF_SUBCARRIERS_PER_RB);
     report_fatal_error_if_not(grid, "Invalid SRS estimator.");
 
+    // If a TAP factory is provided, create the PHY TAP and pass it to the uplink processor.
+    std::unique_ptr<phy_tap> ul_tap;
+    if (tap_factory) {
+      ul_tap = tap_factory->create();
+      report_fatal_error_if_not(ul_tap, "Invalid PHY TAP.");
+    }
     return std::make_unique<uplink_processor_impl>(std::move(prach),
                                                    std::move(pusch_proc),
                                                    std::move(pucch_proc),
                                                    std::move(srs),
                                                    std::move(grid),
+                                                   std::move(ul_tap),
                                                    task_executors,
                                                    config.rm_buffer_pool,
                                                    config.notifier,
@@ -160,6 +177,7 @@ private:
   std::shared_ptr<srs_estimator_factory>          srs_factory;
   std::shared_ptr<resource_grid_factory>          grid_factory;
   uplink_processor_impl::task_executor_collection task_executors;
+  std::shared_ptr<phy_tap_factory>                tap_factory;
 };
 
 /// \brief Factory to create single executor downlink processors.
@@ -417,13 +435,6 @@ public:
                                                              ul_ports,
                                                              factory_config.rx_symbol_printer_prach);
       report_fatal_error_if_not(rx_symbol_handler_factory, "Invalid Rx symbol handler printer decorator factory.");
-    }
-
-    // Create the RX symbol handler with the PHY tap decorator.
-    if (factory_config.enable_phy_tap) {
-      rx_symbol_handler_factory = create_rx_symbol_handler_tap_factory(
-          std::move(rx_symbol_handler_factory), factory_config.ul_bw_rb, factory_config.nof_rx_ports);
-      report_fatal_error_if_not(rx_symbol_handler_factory, "Invalid Rx symbol handler tap factory.");
     }
   }
 
@@ -904,6 +915,12 @@ create_ul_processor_factory(const upper_phy_factory_configuration& config,
       .srs_executor   = *dependencies.executors.srs_executor.executor,
       .prach_executor = *dependencies.executors.prach_executor.executor};
 
+  // Create a PHY TAP factory if the feature is enabled.
+  std::shared_ptr<phy_tap_factory> tap_factory;
+  if (config.enable_phy_tap) {
+    tap_factory = create_phy_tap_factory(config.ul_bw_rb, config.nof_rx_ports);
+  }
+
   // Create base factory.
   std::shared_ptr<uplink_processor_factory> factory =
       std::make_shared<uplink_processor_base_factory>(std::move(pucch_factory),
@@ -911,6 +928,7 @@ create_ul_processor_factory(const upper_phy_factory_configuration& config,
                                                       std::move(prach_factory),
                                                       std::move(srs_factory),
                                                       rg_factory,
+                                                      std::move(tap_factory),
                                                       ul_task_executors);
   report_fatal_error_if_not(factory, "Invalid Uplink processor factory.");
 
@@ -997,18 +1015,6 @@ std::shared_ptr<upper_phy_rx_symbol_handler_factory> srsran::create_rx_symbol_ha
 {
   return std::make_shared<upper_phy_rx_symbol_handler_factory_impl>();
 }
-
-#ifndef SRSRAN_HAS_PHY_TAP
-std::shared_ptr<upper_phy_rx_symbol_handler_factory>
-srsran::create_rx_symbol_handler_tap_factory(std::shared_ptr<upper_phy_rx_symbol_handler_factory> factory,
-                                             unsigned                                             nof_rb,
-                                             unsigned                                             nof_ports,
-                                             const std::string&                                   processor_arguments)
-{
-  // Return the factory as is, since the PHY tap plugin is not present.
-  return factory;
-}
-#endif
 
 std::shared_ptr<upper_phy_rx_symbol_handler_factory> srsran::create_rx_symbol_handler_printer_decorator_factory(
     std::shared_ptr<upper_phy_rx_symbol_handler_factory> factory_,
@@ -1334,3 +1340,11 @@ srsran::create_upper_phy_factory(const upper_phy_factory_configuration& factory_
 {
   return std::make_unique<upper_phy_factory_impl>(factory_config, factory_deps);
 }
+
+#ifndef SRSRAN_HAS_PHY_TAP
+std::shared_ptr<phy_tap_factory>
+srsran::create_phy_tap_factory(unsigned nof_rb, unsigned nof_ports, const std::string& processor_arguments)
+{
+  return nullptr;
+}
+#endif // SRSRAN_HAS_PHY_TAP

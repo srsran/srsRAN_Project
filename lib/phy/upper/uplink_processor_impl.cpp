@@ -43,6 +43,7 @@ uplink_processor_impl::uplink_processor_impl(std::unique_ptr<prach_detector>  pr
                                              std::unique_ptr<pucch_processor> pucch_proc_,
                                              std::unique_ptr<srs_estimator>   srs_,
                                              std::unique_ptr<resource_grid>   grid_,
+                                             std::unique_ptr<phy_tap>         ul_tap_,
                                              task_executor_collection&        task_executors_,
                                              rx_buffer_pool&                  rm_buffer_pool_,
                                              upper_phy_rx_results_notifier&   notifier_,
@@ -60,7 +61,8 @@ uplink_processor_impl::uplink_processor_impl(std::unique_ptr<prach_detector>  pr
   rm_buffer_pool(rm_buffer_pool_),
   rx_payload_pool(max_nof_prb, max_nof_layers),
   logger(srslog::fetch_basic_logger("PHY", true)),
-  notifier(notifier_)
+  notifier(notifier_),
+  ul_tap(std::move(ul_tap_))
 {
   srsran_assert(prach, "A valid PRACH detector must be provided");
   srsran_assert(pusch_proc, "A valid PUSCH processor must be provided");
@@ -173,21 +175,54 @@ void uplink_processor_impl::handle_rx_symbol(unsigned end_symbol_index, bool is_
   for (unsigned end_processed_symbol = std::min(end_symbol_index + 1, MAX_NSYMB_PER_SLOT);
        nof_processed_symbols != end_processed_symbol;
        ++nof_processed_symbols) {
-    for (const auto& pdu : pdu_repository.get_pucch_pdus(nof_processed_symbols)) {
-      process_pucch(pdu);
+    // Process the PDUs belonging to the received symbols.
+    process_symbol_pdus(nof_processed_symbols);
+  }
+}
+
+void uplink_processor_impl::process_symbol_pdus(unsigned end_symbol_index)
+{
+  // Obtain all PDUs for the given end symbol index.
+  span<const uplink_pdu_slot_repository::pusch_pdu> pusch_pdus = pdu_repository.get_pusch_pdus(end_symbol_index);
+  span<const uplink_pdu_slot_repository::pucch_pdu> pucch_pdus = pdu_repository.get_pucch_pdus(end_symbol_index);
+  span<const uplink_pdu_slot_repository_impl::pucch_f1_collection> pucch_f1_pdus =
+      pdu_repository.get_pucch_f1_repository(end_symbol_index);
+  span<const uplink_pdu_slot_repository::srs_pdu> srs_pdus = pdu_repository.get_srs_pdus(end_symbol_index);
+
+  // If the phy tap is configured, send the UL symbols through the tap interface along with their associated PDUs.
+  if (ul_tap) {
+    // Extract PUCCH Format 1 common PDU parameters.
+    static_vector<pucch_processor::format1_common_configuration, MAX_PUCCH_PDUS_PER_SLOT> pucch_f1_common_configs;
+    for (const auto& pucch_f1 : pucch_f1_pdus) {
+      pucch_f1_common_configs.push_back(pucch_f1.config.common_config);
     }
 
-    for (const auto& collection : pdu_repository.get_pucch_f1_repository(nof_processed_symbols)) {
-      process_pucch_f1(collection);
-    }
+    // Send the symbols to the tap plugin for external analysis and processing.
+    ul_tap->handle_ul_symbol(grid->get_writer(),
+                             grid->get_reader(),
+                             current_slot,
+                             nof_processed_symbols,
+                             pusch_pdus,
+                             pucch_pdus,
+                             pucch_f1_common_configs,
+                             srs_pdus);
+  }
 
-    for (const auto& pdu : pdu_repository.get_pusch_pdus(nof_processed_symbols)) {
-      process_pusch(pdu);
-    }
+  // Process each PDU.
+  for (const auto& pdu : pucch_pdus) {
+    process_pucch(pdu);
+  }
 
-    for (const auto& pdu : pdu_repository.get_srs_pdus(nof_processed_symbols)) {
-      process_srs(pdu);
-    }
+  for (const auto& collection : pucch_f1_pdus) {
+    process_pucch_f1(collection);
+  }
+
+  for (const auto& pdu : pusch_pdus) {
+    process_pusch(pdu);
+  }
+
+  for (const auto& pdu : srs_pdus) {
+    process_srs(pdu);
   }
 }
 

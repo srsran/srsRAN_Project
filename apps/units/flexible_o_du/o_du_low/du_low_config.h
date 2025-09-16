@@ -73,7 +73,7 @@ struct du_low_unit_expert_upper_phy_config {
   /// An uplink slot is considered empty when it does not contain PUCCH/PUSCH/SRS PDUs.
   bool allow_request_on_empty_uplink_slot = false;
   /// Enables the PHY tap plugin if present.
-  bool enable_phy_tap = true;
+  bool enable_phy_tap = false;
 };
 
 /// DU low logging functionalities.

@@ -17,6 +17,7 @@
 #include "srsran/phy/upper/channel_processors/pdsch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/downlink_processor.h"
+#include "srsran/phy/upper/phy_tap/phy_tap.h"
 #include "srsran/phy/upper/rx_buffer_pool.h"
 #include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/phy/upper/upper_phy.h"
@@ -425,5 +426,21 @@ create_rx_symbol_handler_tap_factory(std::shared_ptr<upper_phy_rx_symbol_handler
                                      unsigned                                             nof_rb,
                                      unsigned                                             nof_ports,
                                      const std::string&                                   processor_arguments = "");
+
+/// Factory interface for creating an upper physical layer tap. This factory msut be defined in the physical layer tap
+/// plugin.
+class phy_tap_factory
+{
+public:
+  /// Default destructor.
+  virtual ~phy_tap_factory() = default;
+
+  /// Creates a new upper physical layer tap.
+  virtual std::unique_ptr<phy_tap> create() = 0;
+};
+
+/// Creates a physical layer tap factory.
+std::shared_ptr<phy_tap_factory>
+create_phy_tap_factory(unsigned nof_rb, unsigned nof_ports, const std::string& processor_arguments = "");
 
 } // namespace srsran
