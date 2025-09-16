@@ -46,7 +46,7 @@ public:
 
   void push_ul_pdu(const f1ap_message& msg) override
   {
-    report_fatal_error_if_not(tx_pdu_notifier != nullptr, "TNL connection is not established");
+    report_fatal_error_if_not(tx_pdu_notifier != nullptr, "DU is not connected to CU-CP");
 
     // For inter-CU handover no Init UL RRC message is received
     if (msg.pdu.type().value == asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome) {
@@ -129,7 +129,22 @@ private:
       rx_pdu_dtor_signal.set_value();
     }
 
-    void on_new_message(const f1ap_message& msg) override { parent.handle_rx_pdu(msg); }
+    void on_new_message(const f1ap_message& msg) override
+    {
+      if (msg.pdu.type().value == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg &&
+          msg.pdu.init_msg().value.type().value == asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::reset) {
+        auto& f1_reset = msg.pdu.init_msg().value.reset();
+
+        f1ap_message f1_reset_ack = test_helpers::generate_f1ap_reset_ack(
+            msg.pdu.init_msg().value.reset()->transaction_id,
+            (f1_reset->reset_type.type() == asn1::f1ap::reset_type_c::types_opts::options::part_of_f1_interface)
+                ? f1_reset->reset_type.part_of_f1_interface()
+                : asn1::f1ap::ue_associated_lc_f1_conn_list_res_l{});
+        parent.push_ul_pdu(f1_reset_ack);
+      }
+
+      parent.handle_rx_pdu(msg);
+    }
 
   private:
     synchronized_mock_du& parent;

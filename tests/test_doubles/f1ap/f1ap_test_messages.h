@@ -15,6 +15,7 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/asn1/f1ap/f1ap_ies.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/f1ap/common/interface_management.h"
 #include "srsran/f1ap/f1ap_message.h"
 #include "srsran/f1ap/f1ap_ue_id_types.h"
@@ -55,6 +56,11 @@ struct served_cell_item_info {
 f1ap_message generate_f1ap_reset_message(
     const std::vector<std::pair<std::optional<gnb_du_ue_f1ap_id_t>, std::optional<gnb_cu_ue_f1ap_id_t>>>& ues_to_reset =
         {});
+
+/// \brief Generate a dummy CU-CP F1 Reset Acknowledge.
+/// \return The CU-CP F1 Reset Acknowledge.
+f1ap_message generate_f1ap_reset_ack(uint8_t                                                transaction_id,
+                                     const asn1::f1ap::ue_associated_lc_f1_conn_list_res_l& f1_reset_ues);
 
 /// \brief Generate a dummy F1AP Served Cell Item.
 asn1::f1ap::gnb_du_served_cells_item_s generate_served_cells_item(const served_cell_item_info& info);
