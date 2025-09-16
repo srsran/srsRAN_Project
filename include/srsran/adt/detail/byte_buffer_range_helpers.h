@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/adt/detail/byte_buffer_segment_list.h"
-#include "srsran/adt/detail/has_member.h"
+#include "srsran/support/has_method.h"
 
 namespace srsran {
 namespace detail {

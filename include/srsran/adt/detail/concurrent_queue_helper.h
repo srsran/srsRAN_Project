@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/adt/span.h"
-#include "srsran/support/detail/has_method.h"
+#include "srsran/support/has_method.h"
 #include "srsran/support/math/math_utils.h"
 #include <atomic>
 #include <optional>
