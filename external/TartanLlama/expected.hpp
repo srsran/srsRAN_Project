@@ -1942,6 +1942,7 @@ public:
       using std::swap;
       swap(err(), rhs.err());
     }
+    return;
   }
 
   constexpr const T *operator->() const {
