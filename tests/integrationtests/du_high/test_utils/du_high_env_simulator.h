@@ -18,6 +18,9 @@
 #include "srsran/du/du_high/du_metrics_notifier.h"
 #include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
+#include "srsran/support/async/eager_async_task.h"
+#include "srsran/support/async/event_signal.h"
+#include <list>
 
 namespace srsran {
 
@@ -109,6 +112,12 @@ public:
 
   virtual void handle_slot_results(du_cell_index_t cell_index);
 
+  void schedule_task(eager_async_task<void> task);
+
+  /// Schedule non-blocking task to create a UE.
+  void
+  schedule_ue_creation_task(rnti_t rnti, du_cell_index_t cell_index = to_du_cell_index(0), bool assert_success = true);
+
   du_high_worker_manager                workers;
   timer_manager                         timers;
   std::unique_ptr<io_broker>            broker;
@@ -150,6 +159,10 @@ protected:
   std::unordered_map<rnti_t, ue_sim_context> ues;
 
   unsigned next_cu_ue_id = 0;
+
+  // Asynchronous tasks of the simulator.
+  std::list<eager_async_task<void>> pending_tasks;
+  event_signal_flag                 next_slot_signal;
 };
 
 } // namespace srs_du

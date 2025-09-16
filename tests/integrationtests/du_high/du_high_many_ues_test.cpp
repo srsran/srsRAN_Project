@@ -86,3 +86,17 @@ TEST_F(du_high_many_ues_tester, when_du_runs_out_of_resources_then_ues_start_bei
   container = test_helpers::get_du_to_cu_container(cu_notifier.last_f1ap_msgs.back());
   ASSERT_FALSE(container.empty()) << "The resources of the released UE were not correctly cleaned up";
 }
+
+TEST_F(du_high_many_ues_tester, when_many_ues_are_created_concurrently_then_ues_complete_conres)
+{
+  const unsigned max_ues  = 30;
+  unsigned       ue_count = 0;
+  for (; ue_count != max_ues; ++ue_count) {
+    rnti_t rnti = to_rnti(next_rnti++);
+    this->schedule_ue_creation_task(rnti, to_du_cell_index(0), true);
+  }
+
+  while (this->ues.size() < ue_count) {
+    this->run_slot();
+  }
+}

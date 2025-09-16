@@ -610,6 +610,18 @@ void du_high_env_simulator::run_slot()
 
     // Process results.
     handle_slot_results(to_du_cell_index(i));
+
+    // Signal pending tasks that a slot has completed.
+    next_slot_signal.set();
+  }
+
+  // Erase tasks that have completed.
+  for (auto it = pending_tasks.begin(); it != pending_tasks.end();) {
+    if (it->ready()) {
+      it = pending_tasks.erase(it);
+    } else {
+      ++it;
+    }
   }
 
   // Advance to next slot.
@@ -645,4 +657,79 @@ void du_high_env_simulator::handle_slot_results(du_cell_index_t cell_index)
       this->du_hi->get_control_info_handler(cell_index).handle_srs(srs_ind);
     }
   }
+}
+
+void du_high_env_simulator::schedule_task(eager_async_task<void> task)
+{
+  if (task.ready()) {
+    return;
+  }
+  pending_tasks.push_back(std::move(task));
+}
+
+void du_high_env_simulator::schedule_ue_creation_task(rnti_t rnti, du_cell_index_t cell_index, bool assert_success)
+{
+  static constexpr unsigned ue_creation_timeout = 100U;
+
+  if (ues.count(rnti) > 0) {
+    EXPECT_FALSE(assert_success) << fmt::format("rnti={}: UE already exists", rnti);
+    return;
+  }
+
+  // Send UL-CCCH message.
+  du_hi->get_pdu_handler().handle_rx_data_indication(test_helpers::create_ccch_message(next_slot, rnti, cell_index));
+
+  schedule_task(launch_async([this,
+                              rnti,
+                              cell_index,
+                              assert_success,
+                              init_ul_rrc_msg_flag = false,
+                              conres_sent          = false,
+                              count                = 0U,
+                              du_ue_id =
+                                  gnb_du_ue_f1ap_id_t::invalid](coro_context<eager_async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    for (count = 0; (not conres_sent or not init_ul_rrc_msg_flag) and count < ue_creation_timeout; ++count) {
+      // On every run_slot.
+      CORO_AWAIT(next_slot_signal);
+
+      // Wait for Init UL RRC Message to come out of the F1AP.
+      if (not init_ul_rrc_msg_flag) {
+        for (auto it = cu_notifier.last_f1ap_msgs.begin(); it != cu_notifier.last_f1ap_msgs.end(); ++it) {
+          if (test_helpers::is_init_ul_rrc_msg_transfer_valid(*it, rnti)) {
+            init_ul_rrc_msg_flag = true;
+            du_ue_id = int_to_gnb_du_ue_f1ap_id(it->pdu.init_msg().value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
+            cu_notifier.last_f1ap_msgs.erase(it);
+            break;
+          }
+        }
+      }
+
+      // Wait for ConRes CE to be scheduled.
+      if (not conres_sent) {
+        phy_cell_test_dummy& phy_cell = phy.cells[cell_index];
+        if (phy_cell.last_dl_res.has_value()) {
+          auto& dl_res = *phy_cell.last_dl_res.value().dl_res;
+          if (find_ue_pdsch(rnti, dl_res.ue_grants) != nullptr) {
+            report_fatal_error_if_not(find_ue_pdsch_with_lcid(rnti, lcid_dl_sch_t::UE_CON_RES_ID, dl_res.ue_grants) !=
+                                          nullptr,
+                                      "rnti={}: UE ConRes not scheduled",
+                                      rnti);
+            conres_sent = true;
+          }
+        }
+      }
+    }
+    EXPECT_TRUE(not assert_success or (conres_sent and init_ul_rrc_msg_flag))
+        << fmt::format("rnti={}: Unable to add UE. Timeout waiting for Init UL RRC Message or ConRes CE", rnti);
+
+    // Add UE to simulator.
+    EXPECT_TRUE(
+        ues.insert(std::make_pair(
+                       rnti, ue_sim_context{rnti, du_ue_id, int_to_gnb_cu_ue_f1ap_id(next_cu_ue_id++), cell_index}))
+            .second);
+
+    CORO_RETURN();
+  }));
 }
