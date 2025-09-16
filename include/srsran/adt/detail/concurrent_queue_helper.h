@@ -18,9 +18,7 @@
 #include <thread>
 
 namespace srsran {
-
 namespace detail {
-
 namespace queue_helper {
 
 /// Generic implementation of try_pop_bulk for queues that do not have a specialized implementation.
