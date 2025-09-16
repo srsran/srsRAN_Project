@@ -43,6 +43,8 @@ public:
       phy_config.pucch_executor   = single.common_executor;
       phy_config.srs_executor     = single.common_executor;
 
+      phy_config.pusch_ch_estimator_executor = single.common_executor;
+
       // The PDSCH processor and the PUSCH decoder shall work synchronously.
       phy_config.pdsch_codeblock_executor = {};
       phy_config.pusch_decoder_executor   = {};
@@ -52,7 +54,8 @@ public:
       const unsigned                           max_pdsch_batch_size = 16;
       static constexpr std::array<unsigned, 1> pdsch_queue_sizes{default_queue_size};
       static constexpr std::array<unsigned, 1> pucch_queue_sizes{default_queue_size};
-      static constexpr std::array<unsigned, 2> pusch_srs_queue_sizes{default_queue_size, default_queue_size};
+      static constexpr std::array<unsigned, 3> pusch_srs_queue_sizes{
+          default_queue_size, default_queue_size, default_queue_size};
 
       const auto& flexible = std::get<du_low_executor_mapper_flexible_exec_config>(config.executors);
 
@@ -71,13 +74,14 @@ public:
           create_task_fork_limiter(
               flexible.non_rt_hi_prio_exec, flexible.max_pucch_concurrency, pucch_queue_sizes, max_pucch_batch_size)
               .front();
-      auto pusch_srs_execs              = create_task_fork_limiter(flexible.non_rt_medium_prio_exec,
+      auto pusch_srs_execs                   = create_task_fork_limiter(flexible.non_rt_medium_prio_exec,
                                                       flexible.max_pusch_and_srs_concurrency,
                                                       pusch_srs_queue_sizes,
                                                       max_pusch_batch_size);
-      phy_config.pusch_executor         = pusch_srs_execs[0];
-      phy_config.pusch_decoder_executor = pusch_srs_execs[1];
-      phy_config.srs_executor           = pusch_srs_execs[1];
+      phy_config.pusch_ch_estimator_executor = pusch_srs_execs[0];
+      phy_config.pusch_executor              = pusch_srs_execs[1];
+      phy_config.pusch_decoder_executor      = pusch_srs_execs[2];
+      phy_config.srs_executor                = pusch_srs_execs[2];
     }
 
     srsran_assert(phy_config.pdcch_executor.is_valid(), "Invalid PDCCH executor.");
@@ -88,6 +92,7 @@ public:
     srsran_assert(phy_config.dl_grid_executor.is_valid(), "Invalid DL grid pool executor.");
     srsran_assert(phy_config.pucch_executor.is_valid(), "Invalid PUCCH executor.");
     srsran_assert(phy_config.pusch_executor.is_valid(), "Invalid PUSCH executor.");
+    srsran_assert(phy_config.pusch_ch_estimator_executor.is_valid(), "Invalid PUSCH channel estimator executor.");
     srsran_assert(phy_config.prach_executor.is_valid(), "Invalid PRACH executor.");
     srsran_assert(phy_config.srs_executor.is_valid(), "Invalid SRS executor.");
 
@@ -104,6 +109,8 @@ public:
       }
       phy_config.prach_executor = wrap_executor_with_metric(phy_config.prach_executor, "prach_exec", metrics_config);
       phy_config.pusch_executor = wrap_executor_with_metric(phy_config.pusch_executor, "pusch_exec", metrics_config);
+      phy_config.pusch_ch_estimator_executor =
+          wrap_executor_with_metric(phy_config.pusch_ch_estimator_executor, "pusch_ch_est_exec", metrics_config);
       if (phy_config.pusch_decoder_executor.is_valid()) {
         phy_config.pusch_decoder_executor =
             wrap_executor_with_metric(phy_config.pusch_decoder_executor, "pusch_dec_exec", metrics_config);

@@ -24,8 +24,8 @@ class phy_metrics_pusch_channel_estimator_decorator : public dmrs_pusch_estimato
 public:
   /// Creates an PUSCH channel estimator from a base estimator instance and a metric notifier.
   phy_metrics_pusch_channel_estimator_decorator(std::unique_ptr<dmrs_pusch_estimator>    base_,
-                                                pusch_channel_estimator_metric_notifier& notifier_) :
-    base(std::move(base_)), metrics_notifier(notifier_)
+                                                pusch_channel_estimator_metric_notifier& metrics_notifier_) :
+    base(std::move(base_)), metrics_notifier(metrics_notifier_)
   {
     srsran_assert(base, "Invalid estimator.");
   }

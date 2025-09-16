@@ -12,7 +12,6 @@
 #include "dmrs_helper.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/sc_prod.h"
-#include "srsran/support/executors/inline_task_executor.h"
 
 using namespace srsran;
 
@@ -46,7 +45,6 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&              estimate
   // Generate symbols and allocation patterns.
   generate(temp_symbols, coordinates, config);
 
-  port_channel_estimator::configuration est_cfg;
   est_cfg.dmrs_pattern.assign(coordinates.begin(), coordinates.end());
   est_cfg.scs          = to_subcarrier_spacing(config.slot.numerology());
   est_cfg.first_symbol = config.first_symbol;
@@ -54,23 +52,18 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&              estimate
   est_cfg.rx_ports     = config.rx_ports;
   est_cfg.scaling      = config.scaling;
 
-  // TODO: the executor should be injected to the estimator from outside.
-  inline_task_executor in_executor;
-  task_executor&       executor = in_executor;
-
-  std::atomic<unsigned> pending_ports = nof_rx_ports;
+  pending_ports = nof_rx_ports;
   for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
-    bool enqueued = executor.defer([this, &estimate, &grid, i_port, &est_cfg, &pending_ports, &notifier]() {
+    auto estimator_callback = [this, &estimate, &grid, i_port, &notifier]() {
       ch_estimator->compute(estimate, grid, i_port, temp_symbols, est_cfg);
       if (pending_ports.fetch_sub(1) == 1) {
         notifier.on_estimation_complete();
       }
-    });
+    };
+
+    bool enqueued = executor.defer(estimator_callback);
     if (!enqueued) {
-      ch_estimator->compute(estimate, grid, i_port, temp_symbols, est_cfg);
-      if (pending_ports.fetch_sub(1) == 1) {
-        notifier.on_estimation_complete();
-      }
+      estimator_callback();
     }
   }
 }
