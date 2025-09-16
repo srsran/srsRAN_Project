@@ -77,6 +77,7 @@ public:
   handle_positioning_measurement_request(const measurement_request_t& request) override;
 
   // f1ap_interface_management_handler functions.
+  async_task<void> handle_cu_cp_f1_reset_message(const cu_cp_reset& reset) override;
   async_task<f1ap_gnb_cu_configuration_update_response>
   handle_gnb_cu_configuration_update(const f1ap_gnb_cu_configuration_update& request) override;
 
@@ -161,6 +162,9 @@ private:
 
   // Store current F1AP transaction ID.
   unsigned current_transaction_id = 0;
+
+  // Flag to indicate if F1AP is stopping.
+  bool f1ap_stopping = false;
 };
 
 } // namespace srs_cu_cp
