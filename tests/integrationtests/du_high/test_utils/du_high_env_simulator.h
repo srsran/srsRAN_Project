@@ -10,12 +10,12 @@
 
 #pragma once
 
+#include "du_high_sim_dependencies.h"
 #include "du_high_worker_manager.h"
 #include "tests/test_doubles/f1u/dummy_f1u_du_gateway.h"
 #include "tests/test_doubles/mac/dummy_mac_result_notifier.h"
 #include "srsran/du/du_high/du_high.h"
 #include "srsran/du/du_high/du_high_configuration.h"
-#include "srsran/du/du_high/du_metrics_notifier.h"
 #include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
 #include "srsran/support/async/eager_async_task.h"
@@ -27,44 +27,6 @@ namespace srsran {
 class io_broker;
 
 namespace srs_du {
-
-class dummy_f1c_test_client : public f1c_connection_client
-{
-public:
-  bool cell_start_on_f1_setup = true;
-
-  /// Last messages sent to the CU.
-  std::vector<f1ap_message> last_f1ap_msgs;
-
-  dummy_f1c_test_client(task_executor& test_exec_, bool cell_start_on_f1_setup_ = true);
-
-  std::unique_ptr<f1ap_message_notifier>
-  handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier) override;
-
-private:
-  task_executor& test_exec;
-};
-
-class dummy_du_metrics_notifier : public du_metrics_notifier
-{
-public:
-  std::optional<du_metrics_report> last_report;
-
-  dummy_du_metrics_notifier(task_executor& exec_) : exec(exec_) {}
-
-  void on_new_metric_report(const du_metrics_report& report) override
-  {
-    bool result = exec.defer([this, report]() { last_report = report; });
-    report_fatal_error_if_not(result, "Failed to defer metric report to test thread");
-  }
-
-private:
-  task_executor& exec;
-};
-
-bool is_ue_context_release_complete_valid(const f1ap_message& msg,
-                                          gnb_du_ue_f1ap_id_t du_ue_id,
-                                          gnb_cu_ue_f1ap_id_t cu_ue_id);
 
 /// Parameters to set the DU-high environment simulator.
 struct du_high_env_sim_params {
@@ -112,11 +74,18 @@ public:
 
   virtual void handle_slot_results(du_cell_index_t cell_index);
 
-  void schedule_task(eager_async_task<void> task);
+  /// Schedule asynchronous task to be executed in the simulator context.
+  void schedule_task(async_task<void> task);
 
-  /// Schedule non-blocking task to create a UE.
-  void
-  schedule_ue_creation_task(rnti_t rnti, du_cell_index_t cell_index = to_du_cell_index(0), bool assert_success = true);
+  /// Launch non-blocking task to create a UE.
+  async_task<void>
+  launch_ue_creation_task(rnti_t rnti, du_cell_index_t cell_index = to_du_cell_index(0), bool assert_success = true);
+
+  /// Launch non-blocking task to run RRC Setup procedure.
+  async_task<void> launch_rrc_setup_task(rnti_t rnti, bool assert_success = true);
+
+  /// Await completion of all pending asynchronous tasks.
+  void run_until_all_pending_tasks_completion();
 
   du_high_worker_manager                workers;
   timer_manager                         timers;
@@ -155,6 +124,20 @@ protected:
 
   [[nodiscard]] bool
   send_dl_rrc_msg_and_await_ul_rrc_msg(const ue_sim_context& u, const f1ap_message& dl_msg, uint32_t rlc_ul_sn);
+
+  async_task<bool> launch_run_until_task(unique_function<bool()> condition,
+                                         std::optional<unsigned> max_slot_count = std::nullopt);
+
+  /// Launch non-blocking task to await for a PDSCH to be scheduled in the MAC for the given UE and LCID.
+  async_task<bool> launch_await_dl_msg_sched_task(const ue_sim_context&   u,
+                                                  lcid_t                  lcid,
+                                                  std::optional<unsigned> max_slot_count = std::nullopt);
+
+  /// \brief Launch non-blocking task to await for a DL RRC container to be sent to a UE and for the corresponding UL
+  /// response to be sent by the DU to the CU-CP.
+  async_task<bool> launch_send_dl_rrc_msg_and_await_ul_rrc_msg_task(const ue_sim_context& u,
+                                                                    const f1ap_message&   dl_msg,
+                                                                    uint32_t              rlc_ul_sn);
 
   std::unordered_map<rnti_t, ue_sim_context> ues;
 

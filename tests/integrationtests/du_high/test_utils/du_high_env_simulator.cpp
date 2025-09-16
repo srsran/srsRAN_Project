@@ -37,10 +37,14 @@ class dummy_du_f1ap_tx_pdu_notifier : public f1ap_message_notifier
 public:
   dummy_du_f1ap_tx_pdu_notifier(task_executor&                         test_exec_,
                                 std::vector<f1ap_message>&             last_f1ap_msgs_,
+                                std::map<uint64_t, f1ap_message>&      f1ap_ul_msgs_,
+                                uint64_t&                              next_msg_number_,
                                 std::unique_ptr<f1ap_message_notifier> du_rx_notifier_,
                                 bool                                   cell_start_on_f1_setup_) :
     test_exec(test_exec_),
     last_f1ap_msgs(last_f1ap_msgs_),
+    f1ap_ul_msgs(f1ap_ul_msgs_),
+    next_msg_number(next_msg_number_),
     du_rx_notifier(std::move(du_rx_notifier_)),
     cell_start_on_f1_setup(cell_start_on_f1_setup_)
   {
@@ -61,35 +65,25 @@ public:
     // Dispatch storing of message to test main thread so it can be safely checked in the test function body.
     // Note: F1AP Tx PDU notifier can be deleted by the F1AP-DU at any moment. Therefore, we cannot pass this in the
     // capture.
-    bool result = test_exec.execute([last_msgs = &last_f1ap_msgs, msg]() {
-      static srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
-      logger.info("Received F1 UL message with {}", msg.pdu.type().to_string());
-      last_msgs->push_back(msg);
-    });
+    bool result = test_exec.execute(
+        [last_msgs = &last_f1ap_msgs, ul_msgs = &f1ap_ul_msgs, next_msg_no = &next_msg_number, msg]() {
+          static srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
+          logger.info("Received F1 UL message with {}", msg.pdu.type().to_string());
+          last_msgs->push_back(msg);
+          ul_msgs->emplace(std::make_pair((*next_msg_no)++, msg));
+        });
     EXPECT_TRUE(result);
   }
 
   task_executor&                         test_exec;
   std::vector<f1ap_message>&             last_f1ap_msgs;
+  std::map<uint64_t, f1ap_message>&      f1ap_ul_msgs;
+  uint64_t&                              next_msg_number;
   std::unique_ptr<f1ap_message_notifier> du_rx_notifier;
   const bool                             cell_start_on_f1_setup;
 };
 
 } // namespace
-
-bool srsran::srs_du::is_ue_context_release_complete_valid(const f1ap_message& msg,
-                                                          gnb_du_ue_f1ap_id_t du_ue_id,
-                                                          gnb_cu_ue_f1ap_id_t cu_ue_id)
-{
-  if (not(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome and
-          msg.pdu.successful_outcome().proc_code == ASN1_F1AP_ID_UE_CONTEXT_RELEASE)) {
-    return false;
-  }
-  const asn1::f1ap::ue_context_release_complete_s& resp =
-      msg.pdu.successful_outcome().value.ue_context_release_complete();
-  return (gnb_cu_ue_f1ap_id_t)resp->gnb_cu_ue_f1ap_id == cu_ue_id and (gnb_du_ue_f1ap_id_t)
-                                                                              resp->gnb_du_ue_f1ap_id == du_ue_id;
-}
 
 phy_cell_test_dummy::phy_cell_test_dummy(task_executor& exec_) : test_exec(exec_) {}
 
@@ -146,7 +140,7 @@ std::unique_ptr<f1ap_message_notifier>
 dummy_f1c_test_client::handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier)
 {
   return std::make_unique<dummy_du_f1ap_tx_pdu_notifier>(
-      test_exec, last_f1ap_msgs, std::move(du_rx_pdu_notifier), cell_start_on_f1_setup);
+      test_exec, last_f1ap_msgs, f1ap_ul_msgs, next_msg_number, std::move(du_rx_pdu_notifier), cell_start_on_f1_setup);
 }
 
 static void init_loggers()
@@ -571,7 +565,7 @@ bool du_high_env_simulator::run_ue_context_release(rnti_t rnti, srb_id_t srb_id)
     test_logger.error("Did not receive UE context release complete");
     return false;
   }
-  if (not is_ue_context_release_complete_valid(cu_notifier.last_f1ap_msgs.back(), *u.du_ue_id, *u.cu_ue_id)) {
+  if (not test_helpers::is_valid_ue_context_release_complete(cu_notifier.last_f1ap_msgs.back(), msg)) {
     test_logger.error("UE context release complete message is not valid");
     return false;
   }
@@ -659,37 +653,51 @@ void du_high_env_simulator::handle_slot_results(du_cell_index_t cell_index)
   }
 }
 
-void du_high_env_simulator::schedule_task(eager_async_task<void> task)
+void du_high_env_simulator::schedule_task(async_task<void> task)
 {
   if (task.ready()) {
+    // Task is already completed.
     return;
   }
-  pending_tasks.push_back(std::move(task));
+
+  // Convert async task to eager task and schedule it.
+  pending_tasks.push_back(launch_async([t = std::move(task)](coro_context<eager_async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT(t);
+    CORO_RETURN();
+  }));
 }
 
-void du_high_env_simulator::schedule_ue_creation_task(rnti_t rnti, du_cell_index_t cell_index, bool assert_success)
+void du_high_env_simulator::run_until_all_pending_tasks_completion()
+{
+  while (not pending_tasks.empty()) {
+    run_slot();
+  }
+}
+
+async_task<void>
+du_high_env_simulator::launch_ue_creation_task(rnti_t rnti, du_cell_index_t cell_index, bool assert_success)
 {
   /// Note: This timeout needs to be higher than conRes timeout and the time for the DU to send init UL RRC message.
   static constexpr unsigned ue_creation_timeout = 500U;
 
-  if (ues.count(rnti) > 0) {
-    EXPECT_FALSE(assert_success) << fmt::format("rnti={}: UE already exists", rnti);
-    return;
-  }
-
-  // Send UL-CCCH message.
-  du_hi->get_pdu_handler().handle_rx_data_indication(test_helpers::create_ccch_message(next_slot, rnti, cell_index));
-
-  schedule_task(launch_async([this,
-                              rnti,
-                              cell_index,
-                              assert_success,
-                              init_ul_rrc_msg_flag = false,
-                              conres_sent          = false,
-                              count                = 0U,
-                              du_ue_id =
-                                  gnb_du_ue_f1ap_id_t::invalid](coro_context<eager_async_task<void>>& ctx) mutable {
+  return launch_async([this,
+                       rnti,
+                       cell_index,
+                       assert_success,
+                       init_ul_rrc_msg_flag = false,
+                       conres_sent          = false,
+                       count                = 0U,
+                       du_ue_id = gnb_du_ue_f1ap_id_t::invalid](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
+
+    if (ues.count(rnti) > 0) {
+      EXPECT_FALSE(assert_success) << fmt::format("rnti={}: UE already exists", rnti);
+      CORO_EARLY_RETURN();
+    }
+
+    // Forward UL-CCCH message.
+    du_hi->get_pdu_handler().handle_rx_data_indication(test_helpers::create_ccch_message(next_slot, rnti, cell_index));
 
     for (count = 0; (not conres_sent or not init_ul_rrc_msg_flag) and count < ue_creation_timeout; ++count) {
       // On every run_slot.
@@ -732,5 +740,131 @@ void du_high_env_simulator::schedule_ue_creation_task(rnti_t rnti, du_cell_index
             .second);
 
     CORO_RETURN();
-  }));
+  });
+}
+
+async_task<void> du_high_env_simulator::launch_rrc_setup_task(rnti_t rnti, bool assert_success)
+{
+  const ue_sim_context* u = nullptr;
+  return launch_async([this, rnti, assert_success, u](coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    // Find UE with matching RNTI.
+    {
+      auto it = ues.find(rnti);
+      if (it == ues.end()) {
+        test_logger.error("rnti={}: Failed to run RRC Setup procedure. Cause: UE not found", rnti);
+        EXPECT_FALSE(assert_success) << fmt::format("rnti={}: UE not found", rnti);
+        CORO_EARLY_RETURN();
+      }
+      u = &it->second;
+    }
+
+    // Send DL RRC Message which contains RRC Setup and await response.
+    test_logger.info("rnti={}: RRC Setup procedure starting...", rnti);
+    CORO_AWAIT_VALUE(bool ret,
+                     launch_send_dl_rrc_msg_and_await_ul_rrc_msg_task(
+                         *u,
+                         generate_dl_rrc_message_transfer(
+                             *u->du_ue_id, *u->cu_ue_id, srb_id_t::srb0, byte_buffer::create({0x1, 0x2, 0x3}).value()),
+                         0));
+    if (not ret) {
+      EXPECT_FALSE(assert_success) << fmt::format("rnti={}: Failed RRC Setup procedure", rnti);
+      CORO_EARLY_RETURN();
+    }
+    test_logger.info("rnti={}: RRC Setup procedure completed", rnti);
+
+    CORO_RETURN();
+  });
+}
+
+async_task<bool> du_high_env_simulator::launch_await_dl_msg_sched_task(const ue_sim_context&   u,
+                                                                       lcid_t                  lcid,
+                                                                       std::optional<unsigned> max_slot_count)
+{
+  return launch_async(
+      [this, &u, lcid, max_count = max_slot_count.value_or(1000), phy_cell = &phy.cells[u.pcell_index], count = 0U](
+          coro_context<async_task<bool>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+
+        for (count = 0U; count < max_count; ++count) {
+          // Check LCID was scheduled for the given UE.
+          if (phy_cell->last_dl_res.has_value() and phy_cell->last_dl_res->dl_res != nullptr) {
+            auto& dl_res = *phy_cell->last_dl_res.value().dl_res;
+            if (find_ue_pdsch_with_lcid(u.rnti, lcid, dl_res.ue_grants) != nullptr) {
+              CORO_EARLY_RETURN(true);
+            }
+          }
+
+          // Wait for next slot.
+          CORO_AWAIT(next_slot_signal);
+        }
+
+        CORO_RETURN(false);
+      });
+}
+
+async_task<bool> du_high_env_simulator::launch_send_dl_rrc_msg_and_await_ul_rrc_msg_task(const ue_sim_context& u,
+                                                                                         const f1ap_message&   dl_msg,
+                                                                                         uint32_t rlc_ul_sn)
+{
+  srsran_assert(test_helpers::is_valid_dl_rrc_message_transfer(dl_msg), "Expected F1AP DL RRC Message");
+  lcid_t                    dl_lcid   = uint_to_lcid(dl_msg.pdu.init_msg().value.dl_rrc_msg_transfer()->srb_id);
+  lcid_t                    ul_lcid   = dl_lcid == LCID_SRB0 ? LCID_SRB1 : dl_lcid;
+  constexpr static unsigned dl_msg_k1 = 4;
+
+  return launch_async([this, &u, dl_msg, dl_lcid, ul_lcid, rlc_ul_sn, i = 0U, ul_msg_rx = unique_function<bool()>{}](
+                          coro_context<async_task<bool>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    // Send DL RRC Message.
+    du_hi->get_f1ap_du().handle_message(dl_msg);
+
+    // Wait until DL message is scheduled in the MAC.
+    CORO_AWAIT(launch_await_dl_msg_sched_task(u, dl_lcid));
+
+    // Wait for DL message to be ACKed.
+    for (i = 0U; i != dl_msg_k1; ++i) {
+      CORO_AWAIT(next_slot_signal);
+    }
+
+    // UE sends UL message. Await until F1AP forwards UL RRC Message to CU-CP.
+    du_hi->get_pdu_handler().handle_rx_data_indication(
+        test_helpers::create_pdu_with_sdu(next_slot, u.rnti, ul_lcid, rlc_ul_sn));
+    ul_msg_rx = [this, ul_lcid, msgno = cu_notifier.next_ul_message_number()]() mutable -> bool {
+      for (auto it = cu_notifier.f1ap_ul_msgs.lower_bound(msgno); it != cu_notifier.f1ap_ul_msgs.end(); ++it) {
+        if (test_helpers::is_ul_rrc_msg_transfer_valid(it->second, int_to_srb_id(ul_lcid))) {
+          cu_notifier.f1ap_ul_msgs.erase(it);
+          return true;
+        }
+      }
+      msgno = cu_notifier.next_ul_message_number();
+      return false;
+    };
+    CORO_AWAIT_VALUE(bool ret, launch_run_until_task(std::move(ul_msg_rx)));
+
+    if (not ret) {
+      test_logger.error("rnti={}: F1AP UL RRC Message not sent or is invalid", u.rnti);
+    }
+
+    CORO_RETURN(ret);
+  });
+}
+
+async_task<bool> du_high_env_simulator::launch_run_until_task(unique_function<bool()> condition,
+                                                              std::optional<unsigned> max_slot_count)
+{
+  return launch_async([this, condition = std::move(condition), max_count = max_slot_count.value_or(1000), count = 0U](
+                          coro_context<async_task<bool>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    for (count = 0; count != max_count; ++count) {
+      if (condition()) {
+        CORO_EARLY_RETURN(true);
+      }
+      CORO_AWAIT(next_slot_signal);
+    }
+
+    CORO_RETURN(false);
+  });
 }

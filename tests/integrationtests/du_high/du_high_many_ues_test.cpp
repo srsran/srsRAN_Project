@@ -11,6 +11,7 @@
 #include "tests/integrationtests/du_high/test_utils/du_high_env_simulator.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
+#include "srsran/support/async/async_then.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -31,7 +32,11 @@ static du_high_env_sim_params create_custom_params()
   params.pucch_cfg.emplace();
   params.pucch_cfg->nof_ue_pucch_f0_or_f1_res_harq       = 8;
   params.pucch_cfg->nof_ue_pucch_f2_or_f3_or_f4_res_harq = 8;
-  params.pucch_cfg->nof_sr_resources                     = 1;
+  params.pucch_cfg->nof_sr_resources                     = 4;
+  params.pucch_cfg->nof_csi_resources                    = 4;
+  auto& f1_params                                        = params.pucch_cfg->f0_or_f1_params.emplace<pucch_f1_params>();
+  f1_params.nof_cyc_shifts                               = pucch_nof_cyclic_shifts::twelve;
+  f1_params.occ_supported                                = true;
   // Set the PRACH frequency start to avoid PRACH collisions with the PUCCH on the upper RBs of the BWP (this would
   // trigger an error and abort the test).
   // NOTE: this results in the PRACH overlapping with the PUCCH resources on the lower RBs of the BWP, but it doesn't
@@ -87,16 +92,19 @@ TEST_F(du_high_many_ues_tester, when_du_runs_out_of_resources_then_ues_start_bei
   ASSERT_FALSE(container.empty()) << "The resources of the released UE were not correctly cleaned up";
 }
 
-TEST_F(du_high_many_ues_tester, when_many_ues_are_created_concurrently_then_ues_complete_conres)
+TEST_F(du_high_many_ues_tester, when_many_ues_are_created_concurrently_then_ues_complete_conres_and_rrc_setup)
 {
   const unsigned max_ues  = 30;
   unsigned       ue_count = 0;
+
+  // Launch async tasks for UE creation and RRC setup.
   for (; ue_count != max_ues; ++ue_count) {
-    rnti_t rnti = to_rnti(next_rnti++);
-    this->schedule_ue_creation_task(rnti, to_du_cell_index(0), true);
+    rnti_t rnti             = to_rnti(next_rnti++);
+    auto   ue_creation_task = launch_ue_creation_task(rnti, to_du_cell_index(0), true);
+    auto   rrc_setup_task   = launch_rrc_setup_task(rnti, true);
+    this->schedule_task(async_then(std::move(ue_creation_task), std::move(rrc_setup_task)));
   }
 
-  while (this->ues.size() < ue_count) {
-    this->run_slot();
-  }
+  // Await completion of all tasks.
+  this->run_until_all_pending_tasks_completion();
 }

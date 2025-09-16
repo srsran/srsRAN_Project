@@ -110,8 +110,7 @@ TEST_F(du_high_tester, when_ue_context_release_received_then_ue_gets_deleted)
 
   // Receive UE Context Release Command.
   cu_notifier.last_f1ap_msgs.clear();
-  f1ap_message                    msg = generate_ue_context_release_command();
-  const ue_context_release_cmd_s& cmd = msg.pdu.init_msg().value.ue_context_release_cmd();
+  f1ap_message msg = generate_ue_context_release_command();
   this->du_hi->get_f1ap_du().handle_message(msg);
 
   const unsigned MAX_COUNT = 1000;
@@ -124,9 +123,7 @@ TEST_F(du_high_tester, when_ue_context_release_received_then_ue_gets_deleted)
     }
   }
   ASSERT_EQ(cu_notifier.last_f1ap_msgs.size(), 1);
-  ASSERT_TRUE(is_ue_context_release_complete_valid(cu_notifier.last_f1ap_msgs.back(),
-                                                   (gnb_du_ue_f1ap_id_t)cmd->gnb_du_ue_f1ap_id,
-                                                   (gnb_cu_ue_f1ap_id_t)cmd->gnb_cu_ue_f1ap_id));
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_release_complete(cu_notifier.last_f1ap_msgs.back(), msg));
 }
 
 TEST_F(du_high_tester, when_ue_context_setup_release_starts_then_drb_activity_stops)
