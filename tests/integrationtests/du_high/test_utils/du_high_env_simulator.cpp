@@ -669,7 +669,8 @@ void du_high_env_simulator::schedule_task(eager_async_task<void> task)
 
 void du_high_env_simulator::schedule_ue_creation_task(rnti_t rnti, du_cell_index_t cell_index, bool assert_success)
 {
-  static constexpr unsigned ue_creation_timeout = 100U;
+  /// Note: This timeout needs to be higher than conRes timeout and the time for the DU to send init UL RRC message.
+  static constexpr unsigned ue_creation_timeout = 500U;
 
   if (ues.count(rnti) > 0) {
     EXPECT_FALSE(assert_success) << fmt::format("rnti={}: UE already exists", rnti);
