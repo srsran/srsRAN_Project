@@ -36,6 +36,8 @@ public:
                   unsigned                       max_nof_supported_ues_);
   ~e1ap_cu_cp_impl();
 
+  async_task<void> stop() override;
+
   // e1ap_connection_manager functions
   void handle_cu_up_e1_setup_response(const cu_up_e1_setup_response& msg) override;
 

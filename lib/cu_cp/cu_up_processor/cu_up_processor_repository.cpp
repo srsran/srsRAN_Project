@@ -77,12 +77,10 @@ async_task<void> cu_up_processor_repository::remove_cu_up(cu_up_index_t cu_up_in
     }
 
     // Stop CU-UP activity, eliminating pending transactions for the CU-UP and respective UEs.
-    // TODO
+    CORO_AWAIT(cu_up_db.find(cu_up_index)->second.processor->get_e1ap_handler().stop());
 
-    // Remove CU-UP
+    // Remove CU-UP.
     cu_up_db.erase(cu_up_index);
-
-    // Remove CU-UP
     logger.info("Removed CU-UP {}", cu_up_index);
 
     CORO_RETURN();

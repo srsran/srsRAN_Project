@@ -12,6 +12,7 @@
 #include "../common/e1ap_asn1_helpers.h"
 #include "../common/log_helpers.h"
 #include "cu_cp/procedures/e1_release_procedure.h"
+#include "cu_cp/procedures/e1ap_stop_procedure.h"
 #include "e1ap_cu_cp_asn1_helpers.h"
 #include "procedures/bearer_context_modification_procedure.h"
 #include "procedures/bearer_context_release_procedure.h"
@@ -50,6 +51,11 @@ e1ap_cu_cp_impl::e1ap_cu_cp_impl(const e1ap_configuration&      e1ap_cfg_,
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 e1ap_cu_cp_impl::~e1ap_cu_cp_impl() {}
+
+async_task<void> e1ap_cu_cp_impl::stop()
+{
+  return launch_async<e1ap_stop_procedure>(cu_cp_notifier, ue_ctxt_list);
+}
 
 void e1ap_cu_cp_impl::handle_cu_up_e1_setup_response(const cu_up_e1_setup_response& msg)
 {

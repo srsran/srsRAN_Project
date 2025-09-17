@@ -171,6 +171,8 @@ class e1ap_cu_cp : public e1ap_message_handler,
 public:
   virtual ~e1ap_cu_cp() = default;
 
+  virtual async_task<void> stop() = 0;
+
   virtual e1ap_message_handler&                get_e1ap_message_handler()                = 0;
   virtual e1ap_event_handler&                  get_e1ap_event_handler()                  = 0;
   virtual e1ap_connection_manager&             get_e1ap_connection_manager()             = 0;
