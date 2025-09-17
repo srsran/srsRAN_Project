@@ -125,6 +125,8 @@ protected:
   [[nodiscard]] bool
   send_dl_rrc_msg_and_await_ul_rrc_msg(const ue_sim_context& u, const f1ap_message& dl_msg, uint32_t rlc_ul_sn);
 
+  /// \brief Launch non-blocking task that on every slot checks the given condition and returns true if it is met
+  /// within the given number of slots, false otherwise.
   async_task<bool> launch_run_until_task(unique_function<bool()> condition,
                                          std::optional<unsigned> max_slot_count = std::nullopt);
 

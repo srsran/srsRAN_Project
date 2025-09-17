@@ -19,14 +19,12 @@
 namespace srsran {
 namespace srs_du {
 
+/// Dummy F1C connection client that emulates the CU-CP side.
 class dummy_f1c_test_client : public f1c_connection_client
 {
 public:
   using message_number        = uint64_t;
   bool cell_start_on_f1_setup = true;
-
-  /// Last messages sent to the CU.
-  std::vector<f1ap_message> last_f1ap_msgs;
 
   /// List of (message number, F1AP message) sent by the DU to the CU.
   std::map<message_number, f1ap_message> f1ap_ul_msgs;
@@ -41,9 +39,11 @@ public:
 
 private:
   task_executor& test_exec;
+  /// Number to be assigned to the next F1AP message sent by the DU to the CU.
   message_number next_msg_number = 0;
 };
 
+/// Dummy DU metrics consumer class that stores the last received report.
 class dummy_du_metrics_notifier : public du_metrics_notifier
 {
 public:

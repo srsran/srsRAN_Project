@@ -51,7 +51,7 @@ protected:
   du_high_many_ues_tester() : du_high_env_simulator(create_custom_params())
   {
     // Reset the last sent F1AP PDU (e.g. F1 setup).
-    cu_notifier.last_f1ap_msgs.clear();
+    cu_notifier.f1ap_ul_msgs.clear();
   }
 
   uint16_t next_rnti = 0x4601;
@@ -64,7 +64,7 @@ TEST_F(du_high_many_ues_tester, when_du_runs_out_of_resources_then_ues_start_bei
     rnti_t rnti = to_rnti(next_rnti++);
     ASSERT_TRUE(this->add_ue(rnti));
 
-    byte_buffer container = test_helpers::get_du_to_cu_container(cu_notifier.last_f1ap_msgs.back());
+    byte_buffer container = test_helpers::get_du_to_cu_container(cu_notifier.f1ap_ul_msgs.rbegin()->second);
     if (container.empty()) {
       // When DU-to-CU container is empty, it means that the DU could not allocate resources for the UE.
 
@@ -82,13 +82,13 @@ TEST_F(du_high_many_ues_tester, when_du_runs_out_of_resources_then_ues_start_bei
 
   // If we try to add more UEs, they also fail.
   ASSERT_TRUE(this->add_ue(to_rnti(next_rnti++)));
-  byte_buffer container = test_helpers::get_du_to_cu_container(cu_notifier.last_f1ap_msgs.back());
+  byte_buffer container = test_helpers::get_du_to_cu_container(cu_notifier.f1ap_ul_msgs.rbegin()->second);
   ASSERT_TRUE(container.empty()) << "No more UEs are accepted after the DU runs out of resources";
 
   // Once we remove a UE, we have space again for another UE.
   ASSERT_TRUE(this->run_ue_context_release(to_rnti(0x4601)));
   ASSERT_TRUE(this->add_ue(to_rnti(next_rnti++)));
-  container = test_helpers::get_du_to_cu_container(cu_notifier.last_f1ap_msgs.back());
+  container = test_helpers::get_du_to_cu_container(cu_notifier.f1ap_ul_msgs.rbegin()->second);
   ASSERT_FALSE(container.empty()) << "The resources of the released UE were not correctly cleaned up";
 }
 
