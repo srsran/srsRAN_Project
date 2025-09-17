@@ -31,7 +31,7 @@ public:
 
   /// Creates the FAPI slot messages adaptor.
   virtual std::unique_ptr<slot_messages_adaptor>
-  create_slot_messages_adaptor(const fapi_cell_config&     config,
+  create_slot_messages_adaptor(const fapi_cell_config&     fapi_cfg,
                                slot_message_gateway&       gateway,
                                slot_last_message_notifier& last_msg_notifier,
                                ru_controller&              ru_ctrl) = 0;
