@@ -17,7 +17,7 @@ namespace srsran {
 
 /// \brief Helper class to safely access elements of a std::array.
 ///
-/// Protects from out-of-bounds access by applying modulo of it's length when using the [] operator for element access.
+/// Protects from out-of-bounds access by applying modulo of its length when using the [] operator for element access.
 template <typename T, std::size_t N>
 class circular_array
 {
