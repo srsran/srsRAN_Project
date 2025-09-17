@@ -108,8 +108,7 @@ public:
   virtual async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) = 0;
 
   /// \brief Handles UE index allocation request for N2 handover at target gNB.
-  virtual ue_index_t handle_ue_index_allocation_request(const nr_cell_global_id_t&   cgi,
-                                                        std::optional<plmn_identity> plmn) = 0;
+  virtual ue_index_t handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi, const plmn_identity& plmn) = 0;
 
   /// \brief Handles a DL UE associated NRPPa transport.
   virtual void handle_dl_ue_associated_nrppa_transport_pdu(ue_index_t ue_index, const byte_buffer& nrppa_pdu) = 0;

@@ -760,8 +760,7 @@ async_task<bool> cu_cp_impl::handle_new_handover_command(ue_index_t ue_index, by
       ue_index, std::move(command), ue_mng, du_db, cu_up_db, ngap->get_ngap_control_message_handler(), logger);
 }
 
-ue_index_t cu_cp_impl::handle_ue_index_allocation_request(const nr_cell_global_id_t&   cgi,
-                                                          std::optional<plmn_identity> plmn)
+ue_index_t cu_cp_impl::handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi, const plmn_identity& plmn)
 {
   du_index_t du_index = du_db.find_du(cgi);
   if (du_index == du_index_t::invalid) {
@@ -775,12 +774,10 @@ ue_index_t cu_cp_impl::handle_ue_index_allocation_request(const nr_cell_global_i
     return ue_index_t::invalid;
   }
 
-  if (plmn.has_value()) {
-    if (!ue_mng.set_plmn(ue_index, plmn.value())) {
-      logger.warning("ue={}: Could not set PLMN {}", ue_index, plmn.value());
-      ue_mng.remove_ue(ue_index);
-      return ue_index_t::invalid;
-    }
+  if (!ue_mng.set_plmn(ue_index, plmn)) {
+    logger.warning("ue={}: Could not set PLMN {}", ue_index, plmn);
+    ue_mng.remove_ue(ue_index);
+    return ue_index_t::invalid;
   }
 
   return ue_index;
