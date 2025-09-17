@@ -89,27 +89,41 @@ rrc_du_impl::get_cell_info(const std::vector<cu_cp_du_served_cells_item>& served
     cell_info.timers.t310 = std::chrono::milliseconds{sib1_msg.ue_timers_and_consts.t310.to_number()};
     cell_info.timers.t311 = std::chrono::milliseconds{sib1_msg.ue_timers_and_consts.t311.to_number()};
 
-    // Store selectedPLMN-Identities.
-    // TODO: what plmn_id_info_list element to use here?
-    for (const auto& plmn_info : sib1_msg.cell_access_related_info.plmn_id_info_list[0].plmn_id_list) {
-      if (plmn_info.mcc_present) {
-        expected<mobile_country_code> mcc = mobile_country_code::from_bytes(plmn_info.mcc);
-        if (!mcc.has_value()) {
-          logger.error("Invalid MCC in SIB1 RRC container");
-          return {};
+    // Store selectedPLMN-Identities. Iterate over all PLMN identities in SIB1 and store them in the cell info.
+    // TS 38.331 section 6.3.2:
+    // plmn-IdentityInfoList
+    // The plmn-IdentityInfoList is used to configure a set of PLMN-IdentityInfo elements. Each of those elements
+    // contains a list of one or more PLMN Identities and additional information associated with those PLMNs. A
+    // PLMN-identity can be included only once, and in only one entry of the PLMN-IdentityInfoList. The PLMN index is
+    // defined as b1+b2+…+b(n-1)+i for the PLMN included at the n-th entry of PLMN-IdentityInfoList and the i-th entry
+    // of its corresponding PLMN-IdentityInfo, where b(j) is the number of PLMN-Identity entries in each
+    // PLMN-IdentityInfo, respectively.
+    for (const auto& plmn_id_info : sib1_msg.cell_access_related_info.plmn_id_info_list) {
+      for (const auto& plmn_info : plmn_id_info.plmn_id_list) {
+        if (plmn_info.mcc_present) {
+          expected<mobile_country_code> mcc = mobile_country_code::from_bytes(plmn_info.mcc);
+          if (!mcc.has_value()) {
+            logger.error("Invalid MCC in SIB1 RRC container");
+            return {};
+          }
+          expected<mobile_network_code> mnc = mobile_network_code::from_bytes(plmn_info.mnc);
+          if (!mnc.has_value()) {
+            logger.error("Invalid MNC in SIB1 RRC container");
+            return {};
+          }
+          logger.debug("Found PLMN identity {} in SIB1 RRC container", plmn_identity(mcc.value(), mnc.value()));
+          cell_info.plmn_identity_list.emplace_back(mcc.value(), mnc.value());
         }
-        expected<mobile_network_code> mnc = mobile_network_code::from_bytes(plmn_info.mnc);
-        if (!mnc.has_value()) {
-          logger.error("Invalid MNC in SIB1 RRC container");
-          return {};
-        }
-        logger.debug("Found PLMN identity {} in SIB1 RRC container", plmn_identity(mcc.value(), mnc.value()));
-        cell_info.plmn_identity_list.emplace_back(mcc.value(), mnc.value());
       }
     }
 
     if (cell_info.plmn_identity_list.empty()) {
       logger.error("No PLMN identities found in SIB1 RRC container");
+      return {};
+    }
+
+    if (cell_info.plmn_identity_list.size() > 12U) {
+      logger.error("Too many PLMN identities found in SIB1 RRC container ({}>12)", cell_info.plmn_identity_list.size());
       return {};
     }
 
