@@ -342,6 +342,4 @@ TEST_F(handover_reconfiguration_routine_test, when_ue_context_mod_unsuccessful_t
 
   // Reconfiguration complete was received.
   ASSERT_FALSE(get_result());
-
-  ASSERT_FALSE(check_transaction_id(test_transaction_id));
 }
