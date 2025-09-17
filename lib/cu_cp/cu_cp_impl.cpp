@@ -577,25 +577,27 @@ async_task<void> cu_cp_impl::handle_ue_context_release(const cu_cp_ue_context_re
       request, ngap->get_ngap_control_message_handler(), *this, logger);
 }
 
-std::optional<std::string> cu_cp_impl::handle_handover_request(ue_index_t                        ue_index,
-                                                               const plmn_identity&              selected_plmn,
-                                                               const security::security_context& sec_ctxt)
+bool cu_cp_impl::handle_handover_request(ue_index_t                        ue_index,
+                                         const plmn_identity&              selected_plmn,
+                                         const security::security_context& sec_ctxt)
 {
   cu_cp_ue* ue = ue_mng.find_ue(ue_index);
   if (ue == nullptr) {
-    logger.warning("ue={}: Could not find UE", ue_index);
-    return fmt::format("ue={}: Could not find UE", ue_index);
+    logger.debug("ue={}: Could not find UE", ue_index);
+    return false;
   }
 
   if (!handle_ue_plmn_selected(ue_index, selected_plmn)) {
-    return fmt::format("ue={}: PLMN selection failed", ue_index);
+    logger.info("ue={}: PLMN selection failed", ue_index);
+    return false;
   }
 
   if (!ue->get_security_manager().init_security_context(sec_ctxt)) {
-    return fmt::format("ue={}: Security context initialization failed", ue_index);
+    logger.info("ue={}: Security context initialization failed", ue_index);
+    return false;
   }
 
-  return std::nullopt;
+  return true;
 }
 
 async_task<expected<ngap_init_context_setup_response, ngap_init_context_setup_failure>>

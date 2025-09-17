@@ -172,18 +172,19 @@ public:
     return ue_mng.find_ue_task_scheduler(ue_index)->schedule_async_task(std::move(task));
   }
 
-  std::optional<std::string> on_handover_request_received(ue_index_t                        ue_index,
-                                                          const plmn_identity&              selected_plmn,
-                                                          const security::security_context& sec_ctxt) override
+  bool on_handover_request_received(ue_index_t                        ue_index,
+                                    const plmn_identity&              selected_plmn,
+                                    const security::security_context& sec_ctxt) override
   {
     srsran_assert(ue_mng.find_ue(ue_index) != nullptr, "UE must be present");
     logger.info("Received a handover request");
 
     if (!ue_mng.find_ue(ue_index)->get_security_manager().init_security_context(sec_ctxt)) {
-      return "Failed to initialize security context";
+      logger.info("Failed to initialize security context");
+      return false;
     }
 
-    return std::nullopt;
+    return true;
   }
 
   async_task<expected<ngap_init_context_setup_response, ngap_init_context_setup_failure>>

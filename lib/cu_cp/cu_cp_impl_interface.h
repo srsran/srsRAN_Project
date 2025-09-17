@@ -64,10 +64,10 @@ public:
   /// \param[in] ue_index Index of the UE.
   /// \param[in] selected_plmn The selected PLMN identity of the UE.
   /// \param[in] sec_ctxt The received security context.
-  /// \return If the handover request handling failes a cause string is returned, otherwise std::nullopt.
-  virtual std::optional<std::string> handle_handover_request(ue_index_t                        ue_index,
-                                                             const plmn_identity&              selected_plmn,
-                                                             const security::security_context& sec_ctxt) = 0;
+  /// \return True if the handover request was successfully handled, false otherwise.
+  virtual bool handle_handover_request(ue_index_t                        ue_index,
+                                       const plmn_identity&              selected_plmn,
+                                       const security::security_context& sec_ctxt) = 0;
 
   /// \brief Handle the reception of a new Initial Context Setup Request.
   /// \param[in] request The received Initial Context Setup Request.
