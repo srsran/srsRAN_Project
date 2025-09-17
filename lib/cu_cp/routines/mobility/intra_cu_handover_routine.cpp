@@ -96,6 +96,8 @@ void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_c
       ue_mng.remove_ue(target_ue_context_setup_request.ue_index);
       CORO_EARLY_RETURN(response_msg);
     }
+    // Connect the target UE to the same CU-UP as the source UE.
+    ue_mng.find_du_ue(target_ue_context_setup_request.ue_index)->set_cu_up_index(source_ue->get_cu_up_index());
 
     // Prepare F1AP UE Context Setup Command and call F1AP notifier of target DU.
     if (!generate_ue_context_setup_request(

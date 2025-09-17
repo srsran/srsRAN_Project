@@ -103,6 +103,26 @@ cu_up_processor* cu_up_processor_repository::find_cu_up_processor(cu_up_index_t 
   return cu_up_db.at(cu_up_index).processor.get();
 }
 
+cu_up_index_t cu_up_processor_repository::select_cu_up()
+{
+  if (cu_up_db.empty()) {
+    return cu_up_index_t::invalid;
+  }
+
+  // Equally distribute UEs among available CU-UPs.
+  unsigned      min_nof_ues    = 0;
+  cu_up_index_t selected_cu_up = cu_up_index_t::invalid;
+  for (const auto& [cu_up_idx, cu_up] : cu_up_db) {
+    if (cu_up.processor->get_e1ap_statistics_handler().get_nof_ues() < min_nof_ues ||
+        selected_cu_up == cu_up_index_t::invalid) {
+      min_nof_ues    = cu_up.processor->get_e1ap_statistics_handler().get_nof_ues();
+      selected_cu_up = cu_up_idx;
+    }
+  }
+
+  return selected_cu_up;
+}
+
 size_t cu_up_processor_repository::get_nof_e1ap_ues()
 {
   size_t nof_ues = 0;

@@ -49,6 +49,10 @@ public:
   /// \return The CU-UP processor object if it exists, nullptr otherwise.
   cu_up_processor* find_cu_up_processor(cu_up_index_t cu_up_index);
 
+  /// \brief Select a CU-UP.
+  /// \return The CU-UP index of the selected CU-UP.
+  cu_up_index_t select_cu_up();
+
   size_t get_nof_e1ap_ues();
 
 private:

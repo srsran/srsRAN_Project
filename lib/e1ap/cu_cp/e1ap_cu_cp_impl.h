@@ -43,7 +43,7 @@ public:
 
   // e1ap_bearer_context_manager functions
   async_task<e1ap_bearer_context_setup_response>
-  handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override;
+  handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& request) override;
   async_task<e1ap_bearer_context_modification_response>
   handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& request) override;
   async_task<void> handle_bearer_context_release_command(const e1ap_bearer_context_release_command& command) override;
