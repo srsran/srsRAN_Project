@@ -19,6 +19,7 @@
 namespace srsran {
 namespace srs_cu_cp {
 
+/// RRC DU cell information extracted from the SIB1 message.
 struct rrc_cell_info {
   nr_band                      band;
   pci_t                        nr_pci;

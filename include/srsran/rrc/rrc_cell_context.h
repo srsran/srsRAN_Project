@@ -36,7 +36,7 @@ struct rrc_timers_t {
   std::chrono::milliseconds t311;
 };
 
-// Cell-related configuration used by the RRC.
+// Cell-related configuration used by the RRC UE.
 struct rrc_cell_context {
   nr_cell_global_id_t        cgi;
   tac_t                      tac;
