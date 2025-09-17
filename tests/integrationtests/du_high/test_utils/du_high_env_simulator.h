@@ -84,6 +84,10 @@ public:
   /// Launch non-blocking task to run RRC Setup procedure.
   async_task<void> launch_rrc_setup_task(rnti_t rnti, bool assert_success = true);
 
+  /// Launch non-blocking task to run UE Context Release.
+  async_task<void>
+  launch_ue_context_release_task(rnti_t rnti, srb_id_t srb_id = srb_id_t::srb1, bool assert_success = true);
+
   /// Await completion of all pending asynchronous tasks.
   void run_until_all_pending_tasks_completion();
 
@@ -117,6 +121,7 @@ protected:
     std::optional<gnb_cu_ue_f1ap_id_t>    cu_ue_id;
     du_cell_index_t                       pcell_index;
     std::array<srb_context, MAX_NOF_SRBS> srbs;
+    std::unique_ptr<f1ap_message>         last_ul_f1ap_msg;
   };
 
   [[nodiscard]] bool

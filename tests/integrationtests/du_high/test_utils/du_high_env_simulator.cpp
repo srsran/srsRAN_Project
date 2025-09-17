@@ -570,25 +570,27 @@ du_high_env_simulator::launch_ue_creation_task(rnti_t rnti, du_cell_index_t cell
 
   // Check if Init UL RRC Message has been sent for the given RNTI.
   // Note: We avoid re-checking messages that have already been checked via msgno.
-  auto find_init_ul_rrc_msg_sent = [msgno = 0U](dummy_f1c_test_client& cu_notif, rnti_t rnti_val) mutable {
+  auto find_and_rem_init_ul_rrc_msg = [msgno = 0U](dummy_f1c_test_client& cu_notif, rnti_t rnti_val) mutable {
+    std::unique_ptr<f1ap_message> ret;
     for (auto it = cu_notif.f1ap_ul_msgs.lower_bound(msgno); it != cu_notif.f1ap_ul_msgs.end(); ++it) {
       if (test_helpers::is_init_ul_rrc_msg_transfer_valid(it->second, rnti_val)) {
-        return it;
+        ret = std::make_unique<f1ap_message>(it->second);
+        cu_notif.f1ap_ul_msgs.erase(it);
+        return ret;
       }
     }
     msgno = cu_notif.next_ul_message_number();
-    return cu_notif.f1ap_ul_msgs.end();
+    return ret;
   };
 
   return launch_async([this,
                        rnti,
                        cell_index,
                        assert_success,
-                       init_ul_rrc_msg_flag = false,
-                       conres_sent          = false,
-                       count                = 0U,
-                       find_init_ul_rrc_msg_sent,
-                       du_ue_id = gnb_du_ue_f1ap_id_t::invalid](coro_context<async_task<void>>& ctx) mutable {
+                       conres_sent = false,
+                       count       = 0U,
+                       find_and_rem_init_ul_rrc_msg,
+                       init_ul_rrc_msg = std::unique_ptr<f1ap_message>{}](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
     if (ues.count(rnti) > 0) {
@@ -599,19 +601,13 @@ du_high_env_simulator::launch_ue_creation_task(rnti_t rnti, du_cell_index_t cell
     // Forward UL-CCCH message.
     du_hi->get_pdu_handler().handle_rx_data_indication(test_helpers::create_ccch_message(next_slot, rnti, cell_index));
 
-    for (count = 0; (not conres_sent or not init_ul_rrc_msg_flag) and count < ue_creation_timeout; ++count) {
+    for (count = 0; (not conres_sent or not init_ul_rrc_msg) and count < ue_creation_timeout; ++count) {
       // On every run_slot.
       CORO_AWAIT(next_slot_signal);
 
       // Wait for Init UL RRC Message to come out of the F1AP.
-      if (not init_ul_rrc_msg_flag) {
-        auto it = find_init_ul_rrc_msg_sent(cu_notifier, rnti);
-        if (it != cu_notifier.f1ap_ul_msgs.end()) {
-          init_ul_rrc_msg_flag = true;
-          du_ue_id =
-              int_to_gnb_du_ue_f1ap_id(it->second.pdu.init_msg().value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
-          cu_notifier.f1ap_ul_msgs.erase(it);
-        }
+      if (not init_ul_rrc_msg) {
+        init_ul_rrc_msg = find_and_rem_init_ul_rrc_msg(cu_notifier, rnti);
       }
 
       // Wait for ConRes CE to be scheduled.
@@ -629,14 +625,21 @@ du_high_env_simulator::launch_ue_creation_task(rnti_t rnti, du_cell_index_t cell
         }
       }
     }
-    EXPECT_TRUE(not assert_success or (conres_sent and init_ul_rrc_msg_flag))
+    EXPECT_TRUE(not assert_success or (conres_sent and init_ul_rrc_msg))
         << fmt::format("rnti={}: Unable to add UE. Timeout waiting for Init UL RRC Message or ConRes CE", rnti);
 
-    // Add UE to simulator.
-    EXPECT_TRUE(
-        ues.insert(std::make_pair(
-                       rnti, ue_sim_context{rnti, du_ue_id, int_to_gnb_cu_ue_f1ap_id(next_cu_ue_id++), cell_index}))
-            .second);
+    // Add sim UE object to simulator.
+    {
+      auto du_ue_id =
+          int_to_gnb_du_ue_f1ap_id(init_ul_rrc_msg->pdu.init_msg().value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
+      auto ret = ues.insert(std::make_pair(rnti,
+                                           ue_sim_context{.rnti             = rnti,
+                                                          .du_ue_id         = du_ue_id,
+                                                          .cu_ue_id         = int_to_gnb_cu_ue_f1ap_id(next_cu_ue_id++),
+                                                          .pcell_index      = cell_index,
+                                                          .last_ul_f1ap_msg = std::move(init_ul_rrc_msg)}));
+      EXPECT_TRUE(ret.second);
+    }
 
     CORO_RETURN();
   });
@@ -659,6 +662,16 @@ async_task<void> du_high_env_simulator::launch_rrc_setup_task(rnti_t rnti, bool 
       u = &it->second;
     }
 
+    if (u->last_ul_f1ap_msg != nullptr) {
+      // Determine whether it is an RRC Setup or RRC Reject.
+      if (test_helpers::get_du_to_cu_container(*u->last_ul_f1ap_msg).empty()) {
+        // RRC container is empty, which means that a RRC Reject needs to be sent.
+        EXPECT_FALSE(assert_success) << fmt::format("rnti={}: Failed RRC Setup procedure", rnti);
+        CORO_AWAIT(launch_ue_context_release_task(rnti, srb_id_t::srb0));
+        CORO_EARLY_RETURN();
+      }
+    }
+
     // Send DL RRC Message which contains RRC Setup and await response.
     test_logger.info("rnti={}: RRC Setup procedure starting...", rnti);
     CORO_AWAIT_VALUE(bool ret,
@@ -672,6 +685,71 @@ async_task<void> du_high_env_simulator::launch_rrc_setup_task(rnti_t rnti, bool 
       CORO_EARLY_RETURN();
     }
     test_logger.info("rnti={}: RRC Setup procedure completed", rnti);
+
+    CORO_RETURN();
+  });
+}
+
+async_task<void>
+du_high_env_simulator::launch_ue_context_release_task(rnti_t rnti, srb_id_t srb_id, bool assert_success)
+{
+  const ue_sim_context* u = nullptr;
+  return launch_async([this,
+                       rnti,
+                       srb_id,
+                       u,
+                       success = false,
+                       assert_success,
+                       msgno   = 0U,
+                       rel_cmd = f1ap_message{},
+                       rel_rx  = unique_function<bool()>{}](coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    {
+      auto it = ues.find(rnti);
+      if (it == ues.end()) {
+        test_logger.error("rnti={}: Failed to run UE Context Release. Cause: UE not found", rnti);
+        EXPECT_FALSE(assert_success) << fmt::format("rnti={}: UE not found", rnti);
+        CORO_EARLY_RETURN();
+      }
+      u = &it->second;
+    }
+
+    {
+      // Send UE Context Release Command which contains dummy RRC Release.
+      msgno   = cu_notifier.next_ul_message_number();
+      rel_cmd = test_helpers::generate_ue_context_release_command(*u->cu_ue_id, *u->du_ue_id, srb_id);
+      du_hi->get_f1ap_du().handle_message(rel_cmd);
+    }
+
+    // Await for RRC container to be scheduled in the MAC.
+    CORO_AWAIT_VALUE(success, launch_await_dl_msg_sched_task(*u, srb_id_to_lcid(srb_id), 120));
+    if (not success) {
+      EXPECT_FALSE(assert_success) << fmt::format("rnti={}: RRC container not scheduled", rnti);
+      CORO_EARLY_RETURN();
+    }
+
+    // Wait for UE Context Release Complete.
+    rel_rx = [this, msgno, &rel_cmd]() mutable {
+      auto it = std::find_if(
+          cu_notifier.f1ap_ul_msgs.lower_bound(msgno), cu_notifier.f1ap_ul_msgs.end(), [&rel_cmd](const auto& pair) {
+            return test_helpers::is_valid_ue_context_release_complete(pair.second, rel_cmd);
+          });
+      if (it != cu_notifier.f1ap_ul_msgs.end()) {
+        cu_notifier.f1ap_ul_msgs.erase(it);
+        return true;
+      }
+      msgno = cu_notifier.next_ul_message_number();
+      return false;
+    };
+    CORO_AWAIT_VALUE(success, launch_run_until_task(std::move(rel_rx), 500));
+    if (not success) {
+      test_logger.error("Did not receive UE context release complete");
+      EXPECT_FALSE(assert_success) << fmt::format("rnti={}: UE context release complete missing", rnti);
+      CORO_EARLY_RETURN();
+    }
+
+    ues.erase(rnti);
 
     CORO_RETURN();
   });
