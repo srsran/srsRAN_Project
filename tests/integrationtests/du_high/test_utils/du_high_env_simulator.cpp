@@ -507,6 +507,9 @@ void du_high_env_simulator::run_slot()
 
   // Advance to next slot.
   ++next_slot;
+
+  // Ensure the pending control executor does not get starved.
+  workers.flush_pending_control_tasks();
 }
 
 void du_high_env_simulator::handle_slot_results(du_cell_index_t cell_index)

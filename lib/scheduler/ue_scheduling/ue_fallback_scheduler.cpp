@@ -1349,9 +1349,10 @@ void ue_fallback_scheduler::store_harq_tx(du_ue_index_t ue_index, const dl_harq_
   ongoing_ues_ack_retxs.emplace_back(ue_index, h_dl);
 }
 
+/// Helper function to check if the conRes timer has expired for a given UE in fallback mode.
 static bool is_conres_expired(ue& u, slot_point sl_tx, srslog::basic_logger& logger)
 {
-  auto& ue_pcell = u.get_pcell();
+  const auto& ue_pcell = u.get_pcell();
 
   if (ue_pcell.is_conres_complete() or not ue_pcell.get_msg3_rx_slot().valid()) {
     return false;
