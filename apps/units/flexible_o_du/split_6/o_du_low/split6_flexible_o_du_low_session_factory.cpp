@@ -18,6 +18,7 @@
 #include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_config_validator.h"
 #include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_factories.h"
 #include "apps/units/flexible_o_du/split_helpers/flexible_o_du_configs.h"
+#include "external/fmt/include/fmt/chrono.h"
 #include "split6_constants.h"
 #include "split6_flexible_o_du_low_session.h"
 #include "srsran/du/du_low/o_du_low_config.h"
@@ -28,6 +29,35 @@
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 
 using namespace srsran;
+
+std::optional<std::chrono::system_clock::time_point>
+split6_flexible_o_du_low_session_factory::start_time_calculator::calculate_start_time() const
+{
+  if (jitter.count() == 0) {
+    return std::nullopt;
+  }
+
+  auto                      current_time = std::chrono::system_clock::now();
+  std::chrono::milliseconds ms_since_epoch =
+      std::chrono::duration_cast<std::chrono::milliseconds>(current_time.time_since_epoch());
+
+  std::chrono::milliseconds offset_in_window = ms_since_epoch % window_size;
+
+  if (offset_in_window < jitter || offset_in_window > jitter_upper_border) {
+    logger.warning("Current start time is too close to the start window border, synchronization may fail");
+  }
+
+  auto start_time = std::chrono::floor<std::chrono::seconds>(current_time + (2 * window_size - offset_in_window));
+  logger.debug("Start.request received at '{:%Y-%m-%d %H:%M:%S}' jitter_ms={} window_size={}. Calculated O-DU low "
+               "start at '{:%Y-%m-%d %H:%M:%S}'",
+               current_time,
+               jitter,
+               window_size,
+               start_time);
+
+  // Return next window start.
+  return {start_time};
+}
 
 std::unique_ptr<split6_flexible_o_du_low_session>
 split6_flexible_o_du_low_session_factory::create_o_du_low_session(const fapi::fapi_cell_config& config)
@@ -345,7 +375,7 @@ split6_flexible_o_du_low_session_factory::create_radio_unit(split6_flexible_o_du
       return nullptr;
     }
 
-    return create_sdr_radio_unit(*cfg, ru_config, ru_dependencies);
+    return create_sdr_radio_unit(*cfg, ru_config, ru_dependencies, start_time_calc.calculate_start_time());
   }
 
   report_error("Could not detect valid Radio Unit configuration");
