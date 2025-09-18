@@ -1432,7 +1432,7 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
 
     if (is_conres_expired(u, sl, logger)) {
       // Remove the UE from the fallback scheduler.
-      ++ue_it;
+      ue_it = pending_dl_ues_new_tx.erase(ue_it);
       rem_fallback_ue(u.ue_index);
       continue;
     }
@@ -1466,8 +1466,9 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
   // elements are potential candidates for retransmissions.
   for (auto it_ue_harq = ongoing_ues_ack_retxs.begin(); it_ue_harq != ongoing_ues_ack_retxs.end();) {
     if (not ues.contains(it_ue_harq->ue_index)) {
-      auto rem_it = it_ue_harq++;
-      rem_fallback_ue(rem_it->ue_index);
+      auto ue_idx = it_ue_harq->ue_index;
+      it_ue_harq  = ongoing_ues_ack_retxs.erase(it_ue_harq);
+      rem_fallback_ue(ue_idx);
       continue;
     }
     auto& u        = ues[it_ue_harq->ue_index];
@@ -1479,7 +1480,7 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
 
     if (is_conres_expired(u, sl, logger)) {
       // Remove the UE from the fallback scheduler.
-      ++it_ue_harq;
+      it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
       rem_fallback_ue(u.ue_index);
       continue;
     }
