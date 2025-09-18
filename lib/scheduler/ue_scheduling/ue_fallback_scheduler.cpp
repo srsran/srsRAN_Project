@@ -1350,9 +1350,9 @@ void ue_fallback_scheduler::store_harq_tx(du_ue_index_t ue_index, const dl_harq_
 }
 
 /// Helper function to check if the conRes timer has expired for a given UE in fallback mode.
-static bool is_conres_expired(ue& u, slot_point sl_tx, srslog::basic_logger& logger)
+static bool handle_conres_expiry(ue& u, slot_point sl_tx, srslog::basic_logger& logger)
 {
-  const auto& ue_pcell = u.get_pcell();
+  auto& ue_pcell = u.get_pcell();
 
   if (ue_pcell.is_conres_complete() or not ue_pcell.get_msg3_rx_slot().valid()) {
     return false;
@@ -1371,13 +1371,31 @@ static bool is_conres_expired(ue& u, slot_point sl_tx, srslog::basic_logger& log
   const auto sl_conres          = ue_pcell.get_msg3_rx_slot() + conres_timer_slots;
   if (sl_conres < sl_tx) {
     // ConRes window has elapsed.
-    logger.warning("ue={} rnti={}: ra-ContentionResolutionTimer ({}ms) expired. UE will stop being scheduled",
-                   fmt::underlying(u.ue_index),
-                   u.crnti,
-                   conres_timer);
-
-    // Mark the UE as deactivated.
-    u.deactivate();
+    const bool conres_was_scheduled = ue_pcell.harqs.last_pdsch_slot().valid();
+    if (conres_was_scheduled) {
+      // If ConRes was scheduled, but never ACKed, there is a change that the PUCCH was just not detected.
+      logger.info("ue={} rnti={}: ra-ContentionResolutionTimer ({}ms) expired, but the scheduler never got back a "
+                  "positive ACK. The scheduler will stop retransmitting the ConRes CE",
+                  fmt::underlying(u.ue_index),
+                  u.crnti,
+                  conres_timer);
+      for (unsigned i = 0; i != ue_pcell.harqs.nof_dl_harqs(); ++i) {
+        auto h = ue_pcell.harqs.dl_harq(to_harq_id(i));
+        if (h.has_value() and not h->get_grant_params().lc_sched_info.empty() and
+            h->get_grant_params().lc_sched_info[0].lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
+          h->cancel_retxs();
+        }
+      }
+    } else {
+      // If ConRes was never scheduled, there is no chance that the contention resolution procedure passed.
+      logger.warning("ue={} rnti={}: ra-ContentionResolutionTimer ({}ms) expired before ConRes CE was scheduled. UE "
+                     "will stop being scheduled",
+                     fmt::underlying(u.ue_index),
+                     u.crnti,
+                     conres_timer);
+      // We have the guarantee that the UE has never been scheduled for ConRes, so we can safely deactivate it.
+      u.deactivate();
+    }
     return true;
   }
   return false;
@@ -1409,11 +1427,14 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       logger.debug(
           "ue={}: will be removed from fallback scheduler. Cause: not present anymore in the scheduler UE repository",
           fmt::underlying(ue_it->ue_index));
-      ue_it = pending_dl_ues_new_tx.erase(ue_it);
+      auto ue_idx = ue_it->ue_index;
+      ue_it       = pending_dl_ues_new_tx.erase(ue_it);
+      rem_fallback_ue(ue_idx);
       continue;
     }
-    auto& u = ues[ue_it->ue_index];
-    if (not u.get_pcell().is_in_fallback_mode()) {
+    auto& u        = ues[ue_it->ue_index];
+    auto& ue_pcell = u.get_pcell();
+    if (not ue_pcell.is_in_fallback_mode()) {
       // UE exited fallback.
       logger.debug("ue={} rnti={}: will be removed from fallback scheduler. Cause: UE exited fallback mode",
                    fmt::underlying(ue_it->ue_index),
@@ -1430,10 +1451,12 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       continue;
     }
 
-    if (is_conres_expired(u, sl, logger)) {
+    if (handle_conres_expiry(u, sl, logger)) {
       // Remove the UE from the fallback scheduler.
       ue_it = pending_dl_ues_new_tx.erase(ue_it);
-      rem_fallback_ue(u.ue_index);
+      if (not ue_pcell.is_active()) {
+        rem_fallback_ue(u.ue_index);
+      }
       continue;
     }
 
@@ -1478,10 +1501,12 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       continue;
     }
 
-    if (is_conres_expired(u, sl, logger)) {
-      // Remove the UE from the fallback scheduler.
+    if (handle_conres_expiry(u, sl, logger)) {
       it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
-      rem_fallback_ue(u.ue_index);
+      if (not ue_pcell.is_active()) {
+        // Remove the UE from the fallback scheduler if it got deactivated.
+        rem_fallback_ue(u.ue_index);
+      }
       continue;
     }
     ++it_ue_harq;
