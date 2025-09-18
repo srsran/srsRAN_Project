@@ -1358,47 +1358,55 @@ static bool handle_conres_expiry(ue& u, slot_point sl_tx, srslog::basic_logger& 
     return false;
   }
 
-  // Wait for pending ACKs to be received before declaring that the ConRes timer has expired.
-  auto h_dl = ue_pcell.harqs.find_dl_harq_waiting_ack();
-  if (h_dl.has_value()) {
-    return false;
-  }
-
-  // If the gNB is waiting for a pending ACK, we need to check if the slot at which the PDSCH will be sent is before
-  // the ra-ContentionResolutionTimer will expire.
   const auto conres_timer = ue_pcell.cfg().init_bwp().ul_common.value()->rach_cfg_common->ra_con_res_timer.count();
   const auto conres_timer_slots = conres_timer * sl_tx.nof_slots_per_subframe();
   const auto sl_conres          = ue_pcell.get_msg3_rx_slot() + conres_timer_slots;
-  if (sl_conres < sl_tx) {
-    // ConRes window has elapsed.
-    const bool conres_was_scheduled = ue_pcell.harqs.last_pdsch_slot().valid();
-    if (conres_was_scheduled) {
-      // If ConRes was scheduled, but never ACKed, there is a change that the PUCCH was just not detected.
-      logger.info("ue={} rnti={}: ra-ContentionResolutionTimer ({}ms) expired, but the scheduler never got back a "
-                  "positive ACK. The scheduler will stop retransmitting the ConRes CE",
-                  fmt::underlying(u.ue_index),
-                  u.crnti,
-                  conres_timer);
-      for (unsigned i = 0; i != ue_pcell.harqs.nof_dl_harqs(); ++i) {
-        auto h = ue_pcell.harqs.dl_harq(to_harq_id(i));
-        if (h.has_value() and not h->get_grant_params().lc_sched_info.empty() and
-            h->get_grant_params().lc_sched_info[0].lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
-          h->cancel_retxs();
-        }
-      }
-    } else {
-      // If ConRes was never scheduled, there is no chance that the contention resolution procedure passed.
-      logger.warning("ue={} rnti={}: ra-ContentionResolutionTimer ({}ms) expired before ConRes CE was scheduled. UE "
-                     "will stop being scheduled",
-                     fmt::underlying(u.ue_index),
-                     u.crnti,
-                     conres_timer);
-      // We have the guarantee that the UE has never been scheduled for ConRes, so we can safely deactivate it.
-      u.deactivate();
-    }
+  if (sl_conres > sl_tx) {
+    // ConRes window has not yet elapsed.
+    return false;
+  }
+
+  // If the ConRes CE was never scheduled, then we deactivate the UE right away.
+  if (u.dl_logical_channels().is_con_res_id_pending()) {
+    logger.warning("ue={} rnti={}: ra-ContentionResolutionTimer ({}ms) expired before ConRes CE was scheduled. UE "
+                   "will stop being scheduled",
+                   fmt::underlying(u.ue_index),
+                   u.crnti,
+                   conres_timer);
+    ue_pcell.set_conres_state(true);
+    u.deactivate();
     return true;
   }
-  return false;
+
+  // Search for HARQ with ConRes ID.
+  std::optional<dl_harq_process_handle> h_conres;
+  for (unsigned i = 0; i != ue_pcell.harqs.nof_dl_harqs(); ++i) {
+    auto h = ue_pcell.harqs.dl_harq(to_harq_id(i));
+    if (h.has_value() and not h->get_grant_params().lc_sched_info.empty() and
+        h->get_grant_params().lc_sched_info[0].lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
+      h_conres = h;
+      break;
+    }
+  }
+  if (h_conres.has_value() and h_conres->is_waiting_ack()) {
+    // Wait for pending ACKs to be received before declaring that the ConRes timer has expired.
+    return false;
+  }
+
+  // ConRes timer has expired, but there is a chance the UE received the ConRes CE but the ACK was not successful.
+  // In this case, the scheduler will stop retransmitting the ConRes CE.
+  logger.info("ue={} rnti={}: ra-ContentionResolutionTimer ({}ms) expired, but the scheduler never got back a "
+              "positive ACK. The scheduler will stop retransmitting the ConRes CE",
+              fmt::underlying(u.ue_index),
+              u.crnti,
+              conres_timer);
+  ue_pcell.set_conres_state(true);
+
+  if (h_conres.has_value()) {
+    // Cancel any pending retransmissions.
+    h_conres->cancel_retxs();
+  }
+  return true;
 }
 
 void ue_fallback_scheduler::slot_indication(slot_point sl)
@@ -1515,10 +1523,6 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
 
 void ue_fallback_scheduler::rem_fallback_ue(du_ue_index_t ue_index)
 {
-  if (ues.contains(ue_index)) {
-    // Remove UE from conRes state if it is on.
-    ues[ue_index].get_pcell().set_conres_state(false);
-  }
   ongoing_ues_ack_retxs.erase(
       std::remove_if(ongoing_ues_ack_retxs.begin(),
                      ongoing_ues_ack_retxs.end(),
