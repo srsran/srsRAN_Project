@@ -7,7 +7,7 @@
 # the distribution.
 #
 
-set -e # stop executing after error
+set -eo pipefail
 
 # Print help and syntax
 print_help() {
