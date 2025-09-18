@@ -1391,7 +1391,7 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       logger.info("UE fallback scheduler: Detected skipped slots within [{}, {}).", last_sl_ind + 1, sl);
       while (last_sl_ind + 1 != sl) {
         // Reset the flag that indicates that there are no resources for the slot that has passed.
-        slots_with_no_pdxch_space[last_sl_ind.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = false;
+        slots_with_no_pdxch_space[last_sl_ind.count() % FALLBACK_SCHED_RING_BUFFER_SIZE] = false;
         ++last_sl_ind;
       }
     }
@@ -1432,13 +1432,8 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
 
     if (is_conres_expired(u, sl, logger)) {
       // Remove the UE from the fallback scheduler.
-      ue_it = pending_dl_ues_new_tx.erase(ue_it);
-      pending_ul_ues.erase(std::remove(pending_ul_ues.begin(), pending_ul_ues.end(), u.ue_index), pending_ul_ues.end());
-      ongoing_ues_ack_retxs.erase(
-          std::remove_if(ongoing_ues_ack_retxs.begin(),
-                         ongoing_ues_ack_retxs.end(),
-                         [&u](const ack_and_retx_tracker& tracker) { return tracker.ue_index == u.ue_index; }),
-          ongoing_ues_ack_retxs.end());
+      ++ue_it;
+      rem_fallback_ue(u.ue_index);
       continue;
     }
 
@@ -1471,6 +1466,8 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
   // elements are potential candidates for retransmissions.
   for (auto it_ue_harq = ongoing_ues_ack_retxs.begin(); it_ue_harq != ongoing_ues_ack_retxs.end();) {
     if (not ues.contains(it_ue_harq->ue_index)) {
+      auto rem_it = it_ue_harq++;
+      rem_fallback_ue(rem_it->ue_index);
       continue;
     }
     auto& u        = ues[it_ue_harq->ue_index];
@@ -1482,15 +1479,29 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
 
     if (is_conres_expired(u, sl, logger)) {
       // Remove the UE from the fallback scheduler.
-      it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
-      pending_dl_ues_new_tx.erase(
-          std::remove_if(pending_dl_ues_new_tx.begin(),
-                         pending_dl_ues_new_tx.end(),
-                         [ue_index = u.ue_index](const fallback_ue& ue) { return ue.ue_index == ue_index; }),
-          pending_dl_ues_new_tx.end());
-      pending_ul_ues.erase(std::remove(pending_ul_ues.begin(), pending_ul_ues.end(), u.ue_index), pending_ul_ues.end());
+      ++it_ue_harq;
+      rem_fallback_ue(u.ue_index);
       continue;
     }
     ++it_ue_harq;
   }
+}
+
+void ue_fallback_scheduler::rem_fallback_ue(du_ue_index_t ue_index)
+{
+  if (ues.contains(ue_index)) {
+    // Remove UE from conRes state if it is on.
+    ues[ue_index].get_pcell().set_conres_state(false);
+  }
+  ongoing_ues_ack_retxs.erase(
+      std::remove_if(ongoing_ues_ack_retxs.begin(),
+                     ongoing_ues_ack_retxs.end(),
+                     [ue_index](const ack_and_retx_tracker& tracker) { return tracker.ue_index == ue_index; }),
+      ongoing_ues_ack_retxs.end());
+  pending_dl_ues_new_tx.erase(
+      std::remove_if(pending_dl_ues_new_tx.begin(),
+                     pending_dl_ues_new_tx.end(),
+                     [ue_index = ue_index](const fallback_ue& ue) { return ue.ue_index == ue_index; }),
+      pending_dl_ues_new_tx.end());
+  pending_ul_ues.erase(std::remove(pending_ul_ues.begin(), pending_ul_ues.end(), ue_index), pending_ul_ues.end());
 }
