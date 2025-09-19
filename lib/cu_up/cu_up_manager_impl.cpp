@@ -148,6 +148,11 @@ cu_up_manager_impl::handle_bearer_context_release_command(const e1ap_bearer_cont
   return ue_mng->remove_ue(msg.ue_index);
 }
 
+void cu_up_manager_impl::handle_e1ap_connection_drop()
+{
+  // TODO Release all Bearer Contexts.
+}
+
 async_task<void> cu_up_manager_impl::enable_test_mode()
 {
   return launch_async<cu_up_enable_test_mode_routine>(test_mode_cfg, *this, ngu_demux);

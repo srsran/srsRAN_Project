@@ -68,6 +68,15 @@ public:
     cu_up_handler->schedule_ue_async_task(ue_index, std::move(task));
   }
 
+  void on_connection_loss() override
+  {
+    if (cu_up_handler == nullptr) {
+      logger.error("Could not schedule UE task, no CU-UP handler present.");
+      return;
+    }
+    cu_up_handler->handle_e1ap_connection_drop();
+  }
+
 private:
   cu_up_manager_e1ap_interface* cu_up_handler = nullptr;
   srslog::basic_logger&         logger;

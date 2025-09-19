@@ -53,7 +53,7 @@ public:
   handle_bearer_context_inactivity_notification(const e1ap_bearer_context_inactivity_notification& msg) = 0;
 };
 
-/// Handle E1AP control messages
+/// Handle E1AP PDCP notifications messages
 class e1ap_pdcp_error_handler
 {
 public:
@@ -62,11 +62,23 @@ public:
   virtual void handle_pdcp_max_count_reached(ue_index_t ue_index) = 0;
 };
 
-/// Methods used by E1AP to notify the CU-UP manager.
-class e1ap_cu_up_manager_notifier
+/// \brief Interface to query statistics from the E1AP interface.
+class e1ap_statistics_handler
 {
 public:
-  virtual ~e1ap_cu_up_manager_notifier() = default;
+  virtual ~e1ap_statistics_handler() = default;
+
+  /// \brief Get the number of UEs registered at the E1AP.
+  /// \return The number of UEs.
+  virtual size_t get_nof_ues() const = 0;
+};
+
+/// Methods used by E1AP to notify the CU-UP manager of received messages.
+/// Used by the main E1AP implementation.
+class e1ap_cu_up_manager_message_notifier
+{
+public:
+  virtual ~e1ap_cu_up_manager_message_notifier() = default;
 
   /// \brief Notifies the UE manager to create a UE context.
   /// \param[in] msg The received bearer context setup message.
@@ -89,15 +101,14 @@ public:
   virtual void on_schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) = 0;
 };
 
-/// \brief Interface to query statistics from the E1AP interface.
-class e1ap_statistics_handler
+/// Methods used by E1AP to notify the CU-UP manager of connection drops.
+/// Used by the E1AP connection manager.
+class e1ap_cu_up_manager_connection_notifier
 {
 public:
-  virtual ~e1ap_statistics_handler() = default;
+  virtual ~e1ap_cu_up_manager_connection_notifier() = default;
 
-  /// \brief Get the number of UEs registered at the E1AP.
-  /// \return The number of UEs.
-  virtual size_t get_nof_ues() const = 0;
+  virtual void on_connection_loss() = 0;
 };
 
 /// Combined entry point for E1AP handling.
@@ -110,6 +121,14 @@ class e1ap_interface : public e1ap_message_handler,
 {
 public:
   virtual ~e1ap_interface() = default;
+};
+
+/// Combined exit point of the E1AP to CU-UP manager.
+class e1ap_cu_up_manager_notifier : public e1ap_cu_up_manager_message_notifier,
+                                    public e1ap_cu_up_manager_connection_notifier
+{
+public:
+  virtual ~e1ap_cu_up_manager_notifier() = default;
 };
 
 } // namespace srs_cu_up

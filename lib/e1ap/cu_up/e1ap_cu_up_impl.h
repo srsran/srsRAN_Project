@@ -49,7 +49,10 @@ public:
   void handle_pdcp_max_count_reached(ue_index_t ue_index) override;
 
   // e1ap event handler functions
-  void handle_connection_loss() override {}
+  void handle_connection_loss() override
+  {
+    // TODO
+  }
 
   // e1ap_statistics_handler functions
   size_t get_nof_ues() const override { return ue_ctxt_list.size(); }
