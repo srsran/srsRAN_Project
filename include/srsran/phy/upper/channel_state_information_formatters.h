@@ -113,10 +113,17 @@ struct formatter<srsran::channel_state_information> {
         helper.format_always(ctx, "epre=na");
       }
 
-      // Print the RSRP for each port, if available.
-      auto port_rsrp = csi.get_port_rsrp_dB();
-      if (std::any_of(port_rsrp.begin(), port_rsrp.end(), [](auto elem) { return elem.has_value(); })) {
-        helper.format_if_verbose(ctx, "rsrp=[{:.2f}]dB", port_rsrp);
+      // Print the RSRP for each port, if available. Otherwise, print the average RSRP.
+      srsran::span<const float> port_rsrp = csi.get_port_rsrp_dB();
+      if (std::any_of(port_rsrp.begin(), port_rsrp.end(), [](auto elem) { return !std::isnan(elem); })) {
+        helper.format_if_verbose(ctx, "rsrp=[{:.1f}]dB", port_rsrp);
+      } else {
+        std::optional<float> rsrp_dB = csi.get_rsrp_dB();
+        if (rsrp_dB.has_value()) {
+          helper.format_if_verbose(ctx, "rsrp={:.1f}dB", rsrp_dB);
+        } else {
+          helper.format_if_verbose(ctx, "rsrp=na");
+        }
       }
 
       if (sinr_dB.has_value()) {

@@ -114,7 +114,7 @@ TEST_P(PucchProcessorFormat1Fixture, FromVector)
     ASSERT_NEAR(convert_dB_to_power(*epre_dB), param.epre, param.epre * 0.01)
         << fmt::format("PUCCH with ICS {} and OCCI {} has a wrong EPRE value.", initial_cyclic_shift, time_domain_occ);
 
-    std::optional<float> rsrp_dB = this_result.csi.get_global_rsrp_dB();
+    std::optional<float> rsrp_dB = this_result.csi.get_rsrp_dB();
     ASSERT_TRUE(rsrp_dB.has_value()) << fmt::format(
         "PUCCH with ICS {} and OCCI {} has an invalid RSRP.", initial_cyclic_shift, time_domain_occ);
     ASSERT_NEAR(convert_dB_to_power(*rsrp_dB), mux_pucch.rsrp, mux_pucch.rsrp * 0.01)
