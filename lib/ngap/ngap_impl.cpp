@@ -126,7 +126,7 @@ async_task<void> ngap_impl::handle_ng_reset_message(const cu_cp_ng_reset& msg)
   } else {
     // Reset only specific UEs.
     ngap_reset_type_part_of_interface ng_reset_part_of_interface = {};
-    for (auto& ue : msg.ues_to_reset) {
+    for (const auto& ue : msg.ues_to_reset) {
       if (!ue_ctxt_list.contains(ue)) {
         logger.warning("ue={}: Excluding UE from NG Reset. UE context does not exist", ue);
       } else {
@@ -1137,8 +1137,10 @@ async_task<void> ngap_impl::handle_ul_non_ue_associated_nrppa_transport(const by
 ngap_info ngap_impl::handle_ngap_metrics_report_request() const
 {
   ngap_info ngap_info;
-  ngap_info.amf_name = context.amf_name;
-  ngap_info.metrics  = metrics_handler.request_metrics_report();
+  ngap_info.amf_name        = context.amf_name;
+  ngap_info.connected       = conn_handler.is_connected();
+  ngap_info.supported_plmns = context.get_supported_plmns();
+  ngap_info.metrics         = metrics_handler.request_metrics_report();
   return ngap_info;
 }
 
@@ -1258,7 +1260,7 @@ static auto log_pdu_helper(srslog::basic_logger&         logger,
   std::optional<ran_ue_id_t> ran_ue_id = get_ran_ue_id(pdu);
   std::optional<ue_index_t>  ue_idx;
   if (ran_ue_id.has_value()) {
-    auto* ue = ue_ctxt_list.find(ran_ue_id.value());
+    const auto* ue = ue_ctxt_list.find(ran_ue_id.value());
     if (ue != nullptr) {
       ue_idx = ue->ue_ids.ue_index;
     }

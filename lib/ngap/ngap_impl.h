@@ -20,7 +20,6 @@
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_configuration.h"
 #include "srsran/ngap/ngap_ue_radio_capability_management.h"
-#include "srsran/support/compiler.h"
 #include "srsran/support/executors/task_executor.h"
 #include <memory>
 
@@ -41,21 +40,21 @@ public:
   bool
   update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index, ngap_cu_cp_ue_notifier& new_ue_notifier) override;
 
-  // ngap connection manager functions
+  // NGAP connection manager functions.
   bool                             handle_amf_tnl_connection_request() override;
   async_task<void>                 handle_amf_disconnection_request() override;
   async_task<ngap_ng_setup_result> handle_ng_setup_request(unsigned max_setup_retries) override;
   async_task<void>                 handle_ng_reset_message(const cu_cp_ng_reset& msg) override;
 
-  // ngap_nas_message_handler
+  // ngap_nas_message_handler.
   void handle_initial_ue_message(const cu_cp_initial_ue_message& msg) override;
   void handle_ul_nas_transport_message(const cu_cp_ul_nas_transport& msg) override;
 
-  // ngap_ue_radio_capability_management_handler
+  // ngap_ue_radio_capability_management_handler.
   void
   handle_tx_ue_radio_capability_info_indication_required(const ngap_ue_radio_capability_info_indication& msg) override;
 
-  // ngap message handler functions
+  // NGAP message handler functions.
   void handle_message(const ngap_message& msg) override;
   void handle_connection_loss() override {}
 
@@ -71,17 +70,17 @@ public:
   void             handle_ul_ue_associated_nrppa_transport(ue_index_t ue_index, const byte_buffer& nrppa_pdu) override;
   async_task<void> handle_ul_non_ue_associated_nrppa_transport(const byte_buffer& nrppa_pdu) override;
 
-  // ngap_metrics_handler
+  // ngap_metrics_handler.
   ngap_info handle_ngap_metrics_report_request() const override;
 
-  // ngap_statistics_handler
+  // ngap_statistics_handler.
   size_t get_nof_ues() const override { return ue_ctxt_list.size(); }
 
-  // ngap_ue_context_removal_handler
+  // ngap_ue_context_removal_handler.
   void remove_ue_context(ue_index_t ue_index) override;
 
-  // ngap_ue_id_translator
-  ue_index_t  get_ue_index(const amf_ue_id_t& amf_ue_id) override;
+  // ngap_ue_id_translator.
+  ue_index_t  get_ue_index(const amf_ue_id_t& amf_ue_ngap_id) override;
   amf_ue_id_t get_amf_ue_id(const ue_index_t& ue_index) override;
 
   ngap_message_handler&                        get_ngap_message_handler() override { return *this; }
