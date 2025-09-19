@@ -473,6 +473,10 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
       return false;
     }
 
+    // Connect NGAP to RRC UE to NGAP adapter.
+    logger.debug("ue={}: Connecting NGAP (plmn={}) to RRC UE adapter", ue_index, ue->get_ue_context().plmn);
+    ue_mng.get_rrc_ue_ngap_adapter(ue_index).connect_ngap(ngap);
+
     // Transfer E1AP UE Context to new UE and remove old context.
     cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->update_ue_index(ue_index, old_ue_index);
 
