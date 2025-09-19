@@ -774,8 +774,8 @@ ue_index_t cu_cp_impl::handle_ue_index_allocation_request(const nr_cell_global_i
     return ue_index_t::invalid;
   }
 
-  if (!ue_mng.set_plmn(ue_index, plmn)) {
-    logger.warning("ue={}: Could not set PLMN {}", ue_index, plmn);
+  if (!handle_ue_plmn_selected(ue_index, plmn)) {
+    logger.warning("ue={}: PLMN selection failed", ue_index);
     ue_mng.remove_ue(ue_index);
     return ue_index_t::invalid;
   }
@@ -860,8 +860,6 @@ cu_cp_impl::handle_intra_cu_handover_request(const cu_cp_intra_cu_handover_reque
                                                  std::move(sib1),
                                                  du_db.get_du_processor(source_du_index).get_f1ap_handler(),
                                                  du_db.get_du_processor(target_du_index).get_f1ap_handler(),
-                                                 *this,
-                                                 get_cu_cp_ue_removal_handler(),
                                                  *this,
                                                  ue_mng,
                                                  mobility_mng,
