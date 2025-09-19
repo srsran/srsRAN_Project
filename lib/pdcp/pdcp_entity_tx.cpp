@@ -72,7 +72,7 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
   discard_timer           = ue_ctrl_timer_factory.create_timer();
   crypto_reordering_timer = ue_ctrl_timer_factory.create_timer();
 
-  crypto_reordering_timer.set(std::chrono::milliseconds{10},
+  crypto_reordering_timer.set(std::chrono::milliseconds{pdcp_tx_crypto_reordering_timeout_ms},
                               [this](timer_id_t /*timer_id*/) { crypto_reordering_timeout(); });
 
   // Populate null security engines
@@ -1131,10 +1131,12 @@ void pdcp_entity_tx::discard_callback()
 void pdcp_entity_tx::crypto_reordering_timeout()
 {
   if (stopped) {
-    logger.log_debug("Crypto reordering timer expired after bearer was stopped. st={}", st);
+    logger.log_warning("Crypto reordering timer expired after bearer was stopped. timeout={} st={}",
+                       pdcp_tx_crypto_reordering_timeout_ms,
+                       st);
     return;
   }
-  logger.log_debug("Crypto reordering timer expired. st={}", st);
+  logger.log_warning("Crypto reordering timer expired. timeout={} st={}", pdcp_tx_crypto_reordering_timeout_ms, st);
 
   // Advance the TX_TRANS_CRYPTO to TX_REORD_CRYPTO.
   // Deliver all processed PDUs up until TX_REORD_CRYPTO.
