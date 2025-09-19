@@ -294,15 +294,11 @@ e2sm_ccc_control_o_rrm_policy_ratio_executor::execute_ric_control_action(const e
   // Log received control request.
   log_du_config_request(logger, du_ctrl_config_req);
 
-  return launch_async(
-      [&req, ctrl_config = std::move(du_ctrl_config_req)](coro_context<async_task<e2sm_ric_control_response>>& ctx) {
-        CORO_BEGIN(ctx);
-        srs_du::du_param_config_response ctrl_response;
-        // TODO: remove success = true, add this to the capture list above, and uncomment when RRM Policy
-        // reconfiguration handling is implemented in DU.
-        ctrl_response.success = true;
-        // ctrl_response                     = du_param_configurator.handle_operator_config_request(ctrl_config);
-        e2sm_ric_control_response e2_resp = convert_to_e2sm_response(req, ctrl_config, ctrl_response);
-        CORO_RETURN(e2_resp);
-      });
+  return launch_async([this, &req, ctrl_config = std::move(du_ctrl_config_req)](
+                          coro_context<async_task<e2sm_ric_control_response>>& ctx) {
+    CORO_BEGIN(ctx);
+    srs_du::du_param_config_response ctrl_response = du_param_configurator.handle_operator_config_request(ctrl_config);
+    e2sm_ric_control_response        e2_resp       = convert_to_e2sm_response(req, ctrl_config, ctrl_response);
+    CORO_RETURN(e2_resp);
+  });
 }

@@ -101,6 +101,29 @@ const cell_configuration* sched_config_manager::add_cell(const sched_cell_config
   return added_cells[msg.cell_index].get();
 }
 
+void sched_config_manager::update_cell(const sched_cell_reconfiguration_request_message& msg)
+{
+  if (msg.slice_reconf_req.has_value()) {
+    const auto& cell_index = msg.slice_reconf_req->cell_index;
+    srsran_assert(added_cells.contains(cell_index), "cell={} does not exist", fmt::underlying(cell_index));
+    for (const auto& rrm : msg.slice_reconf_req->rrm_policies) {
+      bool found = false;
+      for (auto& slice : added_cells[cell_index]->rrm_policy_members) {
+        if (slice.rrc_member == rrm.rrc_member) {
+          found         = true;
+          slice.max_prb = rrm.max_prb;
+          slice.min_prb = rrm.min_prb;
+          break;
+        }
+      }
+
+      if (not found) {
+        logger.warning("No slice RRM policy found for {} in cell {}.", rrm.rrc_member, fmt::underlying(cell_index));
+      }
+    }
+  }
+}
+
 void sched_config_manager::rem_cell(du_cell_index_t cell_index)
 {
   const du_cell_group_index_t group_index = added_cells[cell_index]->cell_group_index;

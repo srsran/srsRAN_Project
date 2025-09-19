@@ -115,6 +115,8 @@ public:
 
   const cell_configuration* add_cell(const sched_cell_configuration_request_message& msg);
 
+  void update_cell(const sched_cell_reconfiguration_request_message& msg);
+
   void rem_cell(du_cell_index_t cell_index);
 
   ue_config_update_event add_ue(const sched_ue_creation_request_message& cfg_req);
