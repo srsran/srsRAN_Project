@@ -80,9 +80,15 @@ void du_cell_manager::add_cell(const du_cell_config& cell_cfg)
 
 expected<du_cell_reconfig_result> du_cell_manager::handle_cell_reconf_request(const du_cell_param_config_request& req)
 {
-  du_cell_index_t cell_index = get_cell_index(req.nr_cgi);
+  if (!req.nr_cgi.has_value()) {
+    logger.warning("DU Cell Reconfiguration request without NR CGI is not supported");
+    return make_unexpected(default_error_t{});
+  }
+
+  du_cell_index_t cell_index = get_cell_index(req.nr_cgi.value());
   if (cell_index == INVALID_DU_CELL_INDEX) {
-    logger.warning("Discarding cell {} changes. Cause: No cell with the provided CGI was found", req.nr_cgi.nci);
+    logger.warning("Discarding cell {} changes. Cause: No cell with the provided CGI was found",
+                   req.nr_cgi.value().nci);
     return make_unexpected(default_error_t{});
   }
   auto& cell = *cells[cell_index];
