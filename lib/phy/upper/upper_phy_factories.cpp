@@ -617,9 +617,29 @@ create_ul_processor_factory(const upper_phy_factory_configuration& config,
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
   report_error_if_not(prg_factory, "Invalid pseudo-random sequence generator factory.");
 
-  std::shared_ptr<port_channel_estimator_factory> ch_estimator_factory =
+  // Create port channel estimator for PUSCH and PUCCH.
+  std::shared_ptr<port_channel_estimator_factory> pusch_ch_estimator_factory =
       create_port_channel_estimator_factory_sw(ta_est_factory);
   report_error_if_not(prg_factory, "Invalid channel estimator factory.");
+  std::shared_ptr<port_channel_estimator_factory> pucch_ch_estimator_factory = pusch_ch_estimator_factory;
+
+  // Wrap PUSCH port channel estimator with metric if necessary.
+  if (metric_notifier) {
+    // First, wrap TA estimator.
+    std::shared_ptr<time_alignment_estimator_factory> metric_ta_est_factory =
+        create_time_alignment_estimator_metric_decorator_factory(ta_est_factory,
+                                                                 metric_notifier->get_pusch_ta_estimator_notifier());
+    report_fatal_error_if_not(metric_ta_est_factory, "Failed to create TA estimator factory.");
+
+    // Create a different factory containing the new TA estimator factory.
+    pusch_ch_estimator_factory = create_port_channel_estimator_factory_sw(metric_ta_est_factory);
+    report_error_if_not(pusch_ch_estimator_factory, "Invalid channel estimator factory.");
+
+    // Finally, wrap the factory with the metric decorator.
+    pusch_ch_estimator_factory = create_port_channel_estimator_metric_decorator_factory(
+        std::move(pusch_ch_estimator_factory), metric_notifier->get_pusch_port_channel_estimator_notifier());
+    report_error_if_not(pusch_ch_estimator_factory, "Invalid port channel estimator factory.");
+  }
 
   std::shared_ptr<low_papr_sequence_generator_factory> low_papr_sequence_gen_factory =
       create_low_papr_sequence_generator_sw_factory();
@@ -656,7 +676,6 @@ create_ul_processor_factory(const upper_phy_factory_configuration& config,
   std::shared_ptr<demodulation_mapper_factory>     pusch_demodulation_factory = demodulation_factory;
   std::shared_ptr<evm_calculator_factory>          pusch_evm_calc_factory     = evm_calc_factory;
   std::shared_ptr<transform_precoder_factory>      pusch_precoding_factory    = precoding_factory;
-  std::shared_ptr<dmrs_pusch_estimator_factory>    pusch_channel_estimator_factory;
   if (metric_notifier) {
     pusch_scrambling_factory = create_pseudo_random_generator_metric_decorator_factory(
         std::move(pusch_scrambling_factory), metric_notifier->get_pusch_scrambling_notifier());
@@ -678,40 +697,6 @@ create_ul_processor_factory(const upper_phy_factory_configuration& config,
         std::move(pusch_evm_calc_factory), metric_notifier->get_pusch_evm_calculator_notifier());
     report_fatal_error_if_not(pusch_evm_calc_factory, "Failed to create factory.");
 
-    std::shared_ptr<time_alignment_estimator_factory> metric_ta_est_factory =
-        create_time_alignment_estimator_metric_decorator_factory(ta_est_factory,
-                                                                 metric_notifier->get_pusch_ta_estimator_notifier());
-    report_fatal_error_if_not(metric_ta_est_factory, "Failed to create TA estimator factory.");
-
-    std::shared_ptr<port_channel_estimator_factory> metric_ch_estimator_factory =
-        create_port_channel_estimator_factory_sw(metric_ta_est_factory);
-    report_error_if_not(metric_ch_estimator_factory, "Invalid channel estimator factory.");
-
-    // Use the parallelized port channel estimator if possible.
-    if (dependencies.executors.pusch_ch_estimator_executor.max_concurrency > 1) {
-      metric_ch_estimator_factory = create_port_channel_estimator_pool_factory(
-          metric_ch_estimator_factory, dependencies.executors.pusch_ch_estimator_executor.max_concurrency);
-      report_fatal_error_if_not(metric_ch_estimator_factory, "Invalid channel estimator factory.");
-    }
-
-    metric_ch_estimator_factory = create_port_channel_estimator_metric_decorator_factory(
-        std::move(metric_ch_estimator_factory), metric_notifier->get_pusch_port_channel_estimator_notifier());
-    report_error_if_not(metric_ch_estimator_factory, "Invalid port channel estimator factory.");
-
-    pusch_channel_estimator_factory =
-        create_dmrs_pusch_estimator_factory_sw(prg_factory,
-                                               low_papr_sequence_gen_factory,
-                                               metric_ch_estimator_factory,
-                                               *dependencies.executors.pusch_ch_estimator_executor.executor,
-                                               pusch_chan_estimator_fd_strategy,
-                                               pusch_chan_estimator_td_strategy,
-                                               config.pusch_channel_estimator_compensate_cfo);
-    report_error_if_not(pusch_channel_estimator_factory, "Invalid channel estimator factory.");
-
-    pusch_channel_estimator_factory = create_pusch_channel_estimator_metric_decorator_factory(
-        std::move(pusch_channel_estimator_factory), metric_notifier->get_pusch_channel_estimator_notifier());
-    report_fatal_error_if_not(pusch_channel_estimator_factory, "Failed to create factory.");
-
     ulsch_demux_factory = create_ulsch_demultiplex_metric_decorator_factory(
         std::move(ulsch_demux_factory), metric_notifier->get_ulsch_demultiplex_notifier());
     report_fatal_error_if_not(ulsch_demux_factory, "Failed to create UL-SCH demultiplex factory.");
@@ -719,24 +704,31 @@ create_ul_processor_factory(const upper_phy_factory_configuration& config,
     pusch_precoding_factory = create_transform_precoder_metric_decorator_factory(
         std::move(pusch_precoding_factory), metric_notifier->get_pusch_transform_precoder_notifier());
     report_fatal_error_if_not(pusch_precoding_factory, "Failed to create transform precoder factory.");
-  } else {
-    // Use the parallelized port channel estimator if possible.
-    std::shared_ptr<port_channel_estimator_factory> pusch_ch_estimator_factory = ch_estimator_factory;
-    if (dependencies.executors.pusch_ch_estimator_executor.max_concurrency > 1) {
-      pusch_ch_estimator_factory = create_port_channel_estimator_pool_factory(
-          pusch_ch_estimator_factory, dependencies.executors.pusch_ch_estimator_executor.max_concurrency);
-      report_fatal_error_if_not(pusch_ch_estimator_factory, "Invalid channel estimator factory.");
-    }
+  }
 
-    pusch_channel_estimator_factory =
-        create_dmrs_pusch_estimator_factory_sw(prg_factory,
-                                               low_papr_sequence_gen_factory,
-                                               ch_estimator_factory,
-                                               *dependencies.executors.pusch_ch_estimator_executor.executor,
-                                               pusch_chan_estimator_fd_strategy,
-                                               pusch_chan_estimator_td_strategy,
-                                               config.pusch_channel_estimator_compensate_cfo);
-    report_error_if_not(pusch_channel_estimator_factory, "Invalid channel estimator factory.");
+  // If the PUSCH channel estimator is configured for multiple threads, then wrap with a pool.
+  if (dependencies.executors.pusch_ch_estimator_executor.max_concurrency > 1) {
+    pusch_ch_estimator_factory = create_port_channel_estimator_pool_factory(
+        pusch_ch_estimator_factory, dependencies.executors.pusch_ch_estimator_executor.max_concurrency);
+    report_fatal_error_if_not(pusch_ch_estimator_factory, "Invalid channel estimator factory.");
+  }
+
+  // Create DM-RS based PUSCH channel estimator factory.
+  std::shared_ptr<dmrs_pusch_estimator_factory> pusch_channel_estimator_factory =
+      create_dmrs_pusch_estimator_factory_sw(prg_factory,
+                                             low_papr_sequence_gen_factory,
+                                             pusch_ch_estimator_factory,
+                                             *dependencies.executors.pusch_ch_estimator_executor.executor,
+                                             pusch_chan_estimator_fd_strategy,
+                                             pusch_chan_estimator_td_strategy,
+                                             config.pusch_channel_estimator_compensate_cfo);
+  report_error_if_not(pusch_channel_estimator_factory, "Invalid channel estimator factory.");
+
+  // Wrap the DM-RS based PUSCH channel estimator with the metric decorator.
+  if (metric_notifier) {
+    pusch_channel_estimator_factory = create_pusch_channel_estimator_metric_decorator_factory(
+        std::move(pusch_channel_estimator_factory), metric_notifier->get_pusch_channel_estimator_notifier());
+    report_fatal_error_if_not(pusch_channel_estimator_factory, "Failed to create factory.");
   }
 
   // Check if a hardware-accelerated PUSCH processor is requested.

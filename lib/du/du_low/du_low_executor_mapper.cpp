@@ -12,6 +12,7 @@
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/phy/upper/upper_phy_execution_configuration.h"
 #include "srsran/support/executors/concurrent_metrics_executor.h"
+#include "srsran/support/executors/inline_task_executor.h"
 #include "srsran/support/executors/strand_executor.h"
 #include "srsran/support/executors/task_fork_limiter.h"
 #include "srsran/support/srsran_assert.h"
@@ -43,7 +44,7 @@ public:
       phy_config.pucch_executor   = single.common_executor;
       phy_config.srs_executor     = single.common_executor;
 
-      phy_config.pusch_ch_estimator_executor = single.common_executor;
+      phy_config.pusch_ch_estimator_executor = create_inline_task_executor();
 
       // The PDSCH processor and the PUSCH decoder shall work synchronously.
       phy_config.pdsch_codeblock_executor = {};
@@ -202,6 +203,13 @@ private:
       ret.emplace_back(upper_phy_executor{.executor = &exec, .max_concurrency = max_nof_threads});
     }
     return ret;
+  }
+
+  /// Creates an inline task executor.
+  upper_phy_executor create_inline_task_executor()
+  {
+    executors.emplace_back(std::make_unique<inline_task_executor>());
+    return {executors.back().get(), 1};
   }
 
   /// Wraps an executor with a metric decorator.
