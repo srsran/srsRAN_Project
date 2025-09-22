@@ -73,14 +73,6 @@ public:
 
   ~ue_executor_mapper_impl() override {}
 
-  async_task<void> stop() override
-  {
-    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
-      CORO_BEGIN(ctx);
-      CORO_RETURN();
-    });
-  }
-
   task_executor& ctrl_executor() override { return ctrl_exec; }
   task_executor& ul_pdu_executor() override { return ul_exec; }
   task_executor& dl_pdu_executor() override { return dl_exec; }
@@ -110,7 +102,7 @@ struct base_cu_up_executor_pool_config {
 class round_robin_cu_up_exec_pool
 {
 public:
-  round_robin_cu_up_exec_pool(base_cu_up_executor_pool_config config) : timers(config.timers)
+  round_robin_cu_up_exec_pool(base_cu_up_executor_pool_config config)
   {
     srsran_assert(config.ctrl_executors.size() > 0, "At least one DL executor must be specified");
     if (config.dl_executors.empty()) {
@@ -173,9 +165,6 @@ private:
     {
     }
   };
-
-  // Main executor of the CU-UP.
-  timer_manager& timers;
 
   // List of UE executor mapper contexts created.
   std::vector<ue_executor_context> execs;

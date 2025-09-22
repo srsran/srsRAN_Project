@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/support/async/async_task.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/timers.h"
 #include <optional>
@@ -23,11 +22,6 @@ class ue_executor_mapper
 {
 public:
   virtual ~ue_executor_mapper() = default;
-
-  /// \brief Initiate the shutdown of the executors associated with the respective UE context.
-  /// \return Returns an asynchronous task that is only completed when all the UE executors finished their pending
-  /// tasks.
-  virtual async_task<void> stop() = 0;
 
   /// \brief Returns the task executor appropriate for the control aspects of the UE context (e.g. timers, deletion).
   virtual task_executor& ctrl_executor() = 0;

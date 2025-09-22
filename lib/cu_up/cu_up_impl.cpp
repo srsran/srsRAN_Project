@@ -257,10 +257,6 @@ async_task<void> cu_up::handle_stop_command()
   return launch_async([this](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
 
-    // Stop dedicated executor for control TEID.
-    CORO_AWAIT(echo_exec_mapper->stop());
-    echo_exec_mapper = nullptr;
-
     // Stop CU-UP manager and remove all UEs.
     CORO_AWAIT(cu_up_mng->stop());
 
