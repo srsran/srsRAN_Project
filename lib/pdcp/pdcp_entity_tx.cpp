@@ -52,6 +52,7 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
     });
     metrics_timer.run();
   }
+
   // Validate configuration
   if (is_srb() && (cfg.sn_size != pdcp_sn_size::size12bits)) {
     report_error("PDCP SRB with invalid sn_size. {}", cfg);
@@ -128,7 +129,7 @@ manual_event_flag& pdcp_entity_tx::crypto_awaitable()
 ///
 /// \param sdu Buffer that hold the SDU from higher layers.
 /// \ref TS 38.323 section 5.2.1: Transmit operation
-void pdcp_entity_tx::handle_sdu(byte_buffer buf)
+void pdcp_entity_tx::handle_sdu(byte_buffer buf) SRSRAN_RTSAN_NONBLOCKING
 {
   metrics.add_sdus(1, buf.length());
   logger.log_debug(buf.begin(), buf.end(), "TX SDU. sdu_len={}", buf.length());
@@ -248,15 +249,18 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   }
 
   /// Prepare buffer info struct to pass to crypto executor.
-  pdcp_tx_buffer_info buf_info{
-      .buf = std::move(buf), .count = st.tx_next, .retx_id = retransmit_id, .token = pdcp_crypto_token(token_mngr)};
+  pdcp_tx_buffer_info buf_info{.is_retx = false,
+                               .retx_id = retransmit_id,
+                               .count   = st.tx_next,
+                               .buf     = std::move(buf),
+                               .token   = pdcp_crypto_token(token_mngr)};
 
   // Increment TX_NEXT. We do this before passing the SDU+Header
   // to the crypto executor, so that the reordering function has the updated state.
   st.tx_next++;
 
   // Apply security in crypto executor
-  auto fn = [this, buf_info = std::move(buf_info)]() mutable { apply_security(std::move(buf_info), false); };
+  auto fn = [this, buf_info = std::move(buf_info)]() mutable { apply_security(std::move(buf_info)); };
   if (not crypto_executor.execute(std::move(fn))) {
     logger.log_warning("Dropped PDU, crypto executor queue is full. st={}", st);
     metrics.add_lost_sdus(1);
@@ -265,7 +269,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   up_tracer << trace_event{"pdcp_tx_pdu", tx_tp};
 }
 
-void pdcp_entity_tx::apply_reordering(pdcp_tx_buffer_info buf_info, bool is_retx)
+void pdcp_entity_tx::apply_reordering(pdcp_tx_buffer_info buf_info)
 {
   if (SRSRAN_UNLIKELY(stopped)) {
     logger.log_debug("Dropping security protected PDU. Entity is stopped");
@@ -312,7 +316,7 @@ void pdcp_entity_tx::apply_reordering(pdcp_tx_buffer_info buf_info, bool is_retx
   for (uint32_t count = st.tx_trans_crypto; count < st.tx_next && not tx_window[count].pdu.empty(); count++) {
     pdcp_tx_pdu_info pdu_info{
         .pdu = std::move(tx_window[count].pdu), .count = count, .sdu_toa = tx_window[count].sdu_info.time_of_arrival};
-    write_data_pdu_to_lower_layers(std::move(pdu_info), is_retx);
+    write_data_pdu_to_lower_layers(std::move(pdu_info), buf_info.is_retx);
     st.tx_trans_crypto = count + 1;
     // Automatically trigger delivery notifications when using test mode
     if (cfg.custom.test_mode) {
@@ -470,7 +474,8 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_chain status)
 /*
  * Ciphering and Integrity Protection Helpers
  */
-void pdcp_entity_tx::apply_security(pdcp_tx_buffer_info buf_info, bool is_retx)
+void pdcp_entity_tx::apply_security(pdcp_tx_buffer_info buf_info) SRSRAN_RTSAN_NONBLOCKING
+
 {
   auto     pre      = std::chrono::high_resolution_clock::now();
   uint32_t tx_count = buf_info.count;
@@ -508,9 +513,10 @@ void pdcp_entity_tx::apply_security(pdcp_tx_buffer_info buf_info, bool is_retx)
   }
   logger.log_debug(result.buf.value().begin(), result.buf.value().end(), "Security applied. count={}", tx_count);
 
-  pdcp_tx_buffer_info pdu_info{.buf     = std::move(result.buf.value()),
-                               .count   = tx_count,
+  pdcp_tx_buffer_info pdu_info{.is_retx = buf_info.is_retx,
                                .retx_id = buf_info.retx_id,
+                               .count   = tx_count,
+                               .buf     = std::move(result.buf.value()),
                                .token   = std::move(buf_info.token)};
 
   auto post           = std::chrono::high_resolution_clock::now();
@@ -518,9 +524,7 @@ void pdcp_entity_tx::apply_security(pdcp_tx_buffer_info buf_info, bool is_retx)
   metrics.add_crypto_processing_latency(sdu_latency_ns.count());
 
   // apply reordering in UE executor
-  auto fn = [this, pdu_info = std::move(pdu_info), is_retx]() mutable {
-    apply_reordering(std::move(pdu_info), is_retx);
-  };
+  auto fn = [this, pdu_info = std::move(pdu_info)]() mutable { apply_reordering(std::move(pdu_info)); };
   if (not ue_dl_executor.execute(std::move(fn))) {
     logger.log_warning("Dropped PDU, UE executor queue is full. count={}", tx_count);
   }
@@ -732,10 +736,13 @@ void pdcp_entity_tx::retransmit_all_pdus()
       }
 
       /// Prepare buffer info struct to pass to crypto executor.
-      pdcp_tx_buffer_info buf_info{
-          .buf = std::move(buf), .count = count, .retx_id = retransmit_id, .token = pdcp_crypto_token(token_mngr)};
+      pdcp_tx_buffer_info buf_info{.is_retx = true,
+                                   .retx_id = retransmit_id,
+                                   .count   = count,
+                                   .buf     = std::move(buf),
+                                   .token   = pdcp_crypto_token(token_mngr)};
 
-      auto fn = [this, buf_info = std::move(buf_info)]() mutable { apply_security(std::move(buf_info), true); };
+      auto fn = [this, buf_info = std::move(buf_info)]() mutable { apply_security(std::move(buf_info)); };
       if (not crypto_executor.execute(std::move(fn))) {
         logger.log_warning("Dropped PDU, crypto executor queue is full. st={}", st);
       }
