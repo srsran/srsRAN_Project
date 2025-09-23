@@ -78,7 +78,9 @@ custom e2e:
   needs:
     - *retina-needs
     - custom build
-    - build trx driver
+    - job: custom zmq driver
+      artifacts: true
+      optional: true
   interruptible: false # Web jobs are standalone
 
 ################################################################################
