@@ -87,7 +87,9 @@ public:
   }
 
   [[nodiscard]] bool send_pdu_session_resource_setup_request_and_await_pdu_session_setup_response(
-      const ngap_message& pdu_session_resource_setup_request)
+      const ngap_message&                  pdu_session_resource_setup_request,
+      const std::vector<pdu_session_id_t>& expected_pdu_sessions_to_setup        = {},
+      const std::vector<pdu_session_id_t>& expected_pdu_sessions_failed_to_setup = {})
   {
     report_fatal_error_if_not(not this->get_amf().try_pop_rx_pdu(ngap_pdu),
                               "there are still NGAP messages to pop from AMF");
@@ -102,7 +104,8 @@ public:
                               "Failed to receive PDU Session Resource Setup Response");
     report_fatal_error_if_not(test_helpers::is_valid_pdu_session_resource_setup_response(ngap_pdu),
                               "Invalid PDU Session Resource Setup Response");
-    report_fatal_error_if_not(test_helpers::is_expected_pdu_session_resource_setup_response(ngap_pdu, {}, {psi}),
+    report_fatal_error_if_not(test_helpers::is_expected_pdu_session_resource_setup_response(
+                                  ngap_pdu, expected_pdu_sessions_to_setup, expected_pdu_sessions_failed_to_setup),
                               "Unsuccessful PDU Session Resource Setup Response");
     return true;
   }
@@ -257,7 +260,7 @@ TEST_F(cu_cp_pdu_session_resource_setup_test,
 {
   // Inject NGAP PDU Session Resource Setup Request and await PDU Session Setup Response
   ASSERT_TRUE(send_pdu_session_resource_setup_request_and_await_pdu_session_setup_response(
-      generate_pdu_session_resource_setup_request_with_unconfigured_fiveqi()));
+      generate_pdu_session_resource_setup_request_with_unconfigured_fiveqi(), {}, {psi}));
 }
 
 TEST_F(cu_cp_pdu_session_resource_setup_test, when_bearer_context_setup_failure_received_then_setup_fails)
@@ -376,7 +379,9 @@ TEST_F(cu_cp_pdu_session_resource_setup_test, when_pdu_session_setup_for_existin
   // Inject NGAP PDU Session Resource Setup Request and await PDU Session Setup Response
   ASSERT_TRUE(send_pdu_session_resource_setup_request_and_await_pdu_session_setup_response(
       generate_valid_pdu_session_resource_setup_request_message(
-          ue_ctx->amf_ue_id.value(), ue_ctx->ran_ue_id.value(), {{psi, {pdu_session_type_t::ipv4, {{qfi, 9}}}}})));
+          ue_ctx->amf_ue_id.value(), ue_ctx->ran_ue_id.value(), {{psi, {pdu_session_type_t::ipv4, {{qfi, 9}}}}}),
+      {},
+      {psi}));
 }
 
 TEST_F(cu_cp_pdu_session_resource_setup_test, when_setup_for_pdu_sessions_with_two_qos_flows_received_setup_succeeds)
@@ -483,4 +488,31 @@ TEST_F(cu_cp_pdu_session_resource_setup_test, when_two_consecutive_setups_arrive
 
   // Setup second PDU session
   ASSERT_TRUE(setup_pdu_session(psi2, drb_id_t::drb2, qfi2, generate_rrc_reconfiguration_complete_pdu(0, 8), false));
+}
+
+TEST_F(cu_cp_pdu_session_resource_setup_test, when_maximum_nof_drbs_per_ue_is_exeeded_pdu_session_setup_fails)
+{
+  // Setup eight PDU sessions.
+  unsigned transaction_id = 3;
+  for (uint8_t i = 1; i <= 8; i++) {
+    ASSERT_TRUE(setup_pdu_session(uint_to_pdu_session_id(i),
+                                  uint_to_drb_id(i),
+                                  uint_to_qos_flow_id(i),
+                                  generate_rrc_reconfiguration_complete_pdu(transaction_id, 6 + i),
+                                  i == 1));
+    if (transaction_id < 3) {
+      ++transaction_id;
+    } else {
+      transaction_id = 0;
+    }
+  }
+
+  // Setup ninth PDU sessions.
+  pdu_session_id_t psi9                               = uint_to_pdu_session_id(9);
+  qos_flow_id_t    qfi9                               = uint_to_qos_flow_id(9);
+  ngap_message     pdu_session_resource_setup_request = generate_valid_pdu_session_resource_setup_request_message(
+      ue_ctx->amf_ue_id.value(), ue_ctx->ran_ue_id.value(), {{psi9, {pdu_session_type_t::ipv4, {{qfi9, 9}}}}});
+
+  ASSERT_TRUE(send_pdu_session_resource_setup_request_and_await_pdu_session_setup_response(
+      pdu_session_resource_setup_request, {}, {psi9}));
 }
