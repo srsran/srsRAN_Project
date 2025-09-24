@@ -111,6 +111,14 @@ build amariue ntn zmq driver:
 custom zmq driver:
   extends: build trx driver
   rules:
+    - if: $ON_MR
+      when: never
+    - if: $ON_DEFAULT_BRANCH
+      when: never
+    - if: $ON_SCHEDULE
+      when: never
+    - if: $ON_TAG
+      when: never
     - if: $GROUP == "viavi" || $GROUP == "rf"
       when: never
     - if: $GROUP == "uesim"
