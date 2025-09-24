@@ -1,6 +1,17 @@
 Change Log for Releases
 =======================
 
+## 25.10
+- Reworked threading and execution model to support more deployment use-cases
+- Updated E1AP ASN1 to Release 18.5
+- Added automatic SBOM generation
+- Itensified CI coverage and testing
+- New WebSocket interface for metrics reporting and remote commands
+- PDCP transmit parallelization for security processing
+- Simplified and aligned Docker/Helm configs, moved metrics to telegraf
+- Added new OFH parameter to set RU reference level
+- Other bug-fixes and improved stability and performance in all parts
+
 ## 25.04
 - PUCCH format F3 and F4
 - Single layer closed loop UL-MIMO using Sounding Reference Signals (SRS)
