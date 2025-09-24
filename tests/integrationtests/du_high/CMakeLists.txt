@@ -29,6 +29,7 @@ add_executable(du_high_test du_high_test.cpp
 target_link_libraries(du_high_test
         srsran_du_high
         du_high_worker_manager
+        srsran_du_high_unit_helpers
         srsran_gateway
         gtest
         gtest_main)

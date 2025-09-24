@@ -11,6 +11,8 @@
 /// \file
 /// \brief Tests that check the setup/teardown, addition/removal of UEs in the DU-high class.
 
+#include "apps/units/flexible_o_du/o_du_high/du_high/commands/du_high_remote_commands.h"
+#include "nlohmann/json.hpp"
 #include "tests/integrationtests/du_high/test_utils/du_high_env_simulator.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
@@ -427,4 +429,44 @@ TEST_F(du_high_tester, when_reestablishment_takes_place_then_previous_ue_capabil
         return pdsch != nullptr and pdsch->pdsch_cfg.codewords[0].mcs_table == pdsch_mcs_table::qam256;
       },
       nof_slots_test));
+}
+
+TEST_F(du_high_tester, when_rrm_policy_remote_command_is_reveived_then_it_is_handled)
+{
+  /*
+  {
+    "cmd": "rrm_policy_ratio_set",
+    "policies": {
+      "resourceType": "PRB",
+      "rRMPolicyMemberList": [
+        {
+          "plmn": "00101",
+          "sst": 1,
+          "sd": 0xffffff
+        }
+      ],
+      "min_prb_policy_ratio": 30,
+      "max_prb_policy_ratio": 100,
+      "dedicated_ratio": 0
+    }
+  }
+  */
+
+  nlohmann::json req;
+  req["cmd"]                             = "rrm_policy_ratio_set";
+  req["policies"]["resourceType"]        = "PRB";
+  req["policies"]["rRMPolicyMemberList"] = nlohmann::json::array();
+  nlohmann::json policy;
+  policy["plmn"] = "00101";
+  policy["sst"]  = 1;
+  policy["sd"]   = 0xffffff;
+  req["policies"]["rRMPolicyMemberList"].push_back(policy);
+  req["policies"]["min_prb_policy_ratio"] = 30;
+  req["policies"]["max_prb_policy_ratio"] = 100;
+  req["policies"]["dedicated_ratio"]      = 0;
+
+  std::unique_ptr<app_services::remote_command> remote =
+      std::make_unique<rrm_policy_ratio_remote_command>(this->du_hi->get_du_configurator());
+
+  ASSERT_FALSE(remote->execute(req).has_value());
 }
