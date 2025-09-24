@@ -71,7 +71,7 @@ public:
   void on_connection_loss() override
   {
     if (cu_up_handler == nullptr) {
-      logger.error("Could not schedule UE task, no CU-UP handler present.");
+      logger.error("Connection loss detected, but no CU-UP handler present.");
       return;
     }
     cu_up_handler->handle_e1ap_connection_drop();

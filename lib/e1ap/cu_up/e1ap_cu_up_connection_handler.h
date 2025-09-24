@@ -13,6 +13,7 @@
 #include "srsran/cu_up/cu_up_manager.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/e1ap/gateways/e1_connection_client.h"
+#include "srsran/support/async/manual_event.h"
 
 namespace srsran {
 namespace srs_cu_up {
@@ -24,9 +25,12 @@ public:
                                 e1ap_message_handler&                   e1ap_pdu_handler_,
                                 e1ap_cu_up_manager_connection_notifier& cu_up_manager_,
                                 task_executor&                          cu_up_executor_);
+  ~e1ap_cu_up_connection_handler();
 
   [[nodiscard]] e1ap_message_notifier* connect_to_cu_cp();
-  [[nodiscard]] bool                   is_connected() const { return e1ap_notifier != nullptr; }
+  [[nodiscard]] bool                   is_connected() const { return connected_flag; }
+
+  async_task<void> handle_tnl_association_removal();
 
 private:
   void handle_connection_loss();
@@ -39,6 +43,9 @@ private:
   srslog::basic_logger&                   logger;
 
   std::unique_ptr<e1ap_message_notifier> e1ap_notifier;
+
+  bool              connected_flag{false};
+  manual_event_flag rx_path_disconnected;
 };
 
 } // namespace srs_cu_up

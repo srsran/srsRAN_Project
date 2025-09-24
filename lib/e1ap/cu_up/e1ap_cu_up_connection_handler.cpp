@@ -47,10 +47,29 @@ e1ap_cu_up_connection_handler::e1ap_cu_up_connection_handler(e1_connection_clien
 {
 }
 
+e1ap_cu_up_connection_handler::~e1ap_cu_up_connection_handler()
+{
+  // Check whether the N2 TNL association was previously shutdown as part of the E1 Removal procedure.
+  if (is_connected()) {
+    logger.warning("E1 TNL association was not properly shutdown before E1AP shutdown. Forcing it...");
+  }
+
+  // Tear down Tx PDU notifier, which will trigger the shutdown of the Rx path as well.
+  handle_connection_loss_impl();
+}
+
 e1ap_message_notifier* e1ap_cu_up_connection_handler::connect_to_cu_cp()
 {
+  rx_path_disconnected.reset();
+
   e1ap_notifier = e1_client_handler.handle_cu_up_connection_request(
       std::make_unique<e1ap_rx_pdu_adapter>(e1ap_pdu_handler, [this]() { handle_connection_loss(); }));
+  if (e1ap_notifier == nullptr) {
+    return nullptr;
+  }
+
+  // Connection successful.
+  connected_flag = true;
 
   return e1ap_notifier.get();
 }
@@ -71,6 +90,38 @@ void e1ap_cu_up_connection_handler::handle_connection_loss()
 
 void e1ap_cu_up_connection_handler::handle_connection_loss_impl()
 {
-  cu_up_manager.on_connection_loss();
-  // TODO Disconnect TX.
+  connected_flag = false;
+
+  // In case of unexpected E1 connection loss, the Tx path is still up.
+  if (e1ap_notifier != nullptr) {
+    // Disconnect Tx path.
+    e1ap_notifier.reset();
+
+    // Signal to DU that the E1 connection is lost.
+    cu_up_manager.on_connection_loss();
+  }
+
+  // Signal back that the E1 Rx path has been successfully shutdown to any awaiting coroutine.
+  rx_path_disconnected.set();
+}
+
+async_task<void> e1ap_cu_up_connection_handler::handle_tnl_association_removal()
+{
+  return launch_async([this](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+
+    if (not is_connected()) {
+      // No need to wait for any event if the E1 TNL association is already down.
+      CORO_EARLY_RETURN();
+    }
+
+    // Stop Tx PDU path.
+    // Note: This should notify the E1 GW that the Rx path should be disconnected as well.
+    e1ap_notifier.reset();
+
+    // Wait for Rx PDU disconnection notification.
+    CORO_AWAIT(rx_path_disconnected);
+
+    CORO_RETURN();
+  });
 }
