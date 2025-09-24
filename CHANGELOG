@@ -3,13 +3,14 @@ Change Log for Releases
 
 ## 25.10
 - Reworked threading and execution model to support more deployment use-cases
+- Added separate applications for CU-CP and CU-UP
 - Updated E1AP ASN1 to Release 18.5
-- Added automatic SBOM generation
-- Itensified CI coverage and testing
 - New WebSocket interface for metrics reporting and remote commands
 - PDCP transmit parallelization for security processing
-- Simplified and aligned Docker/Helm configs, moved metrics to telegraf
 - Added new OFH parameter to set RU reference level
+- Added automatic SBOM generation
+- Itensified CI coverage and testing
+- Simplified and aligned Docker/Helm configs, moved metrics to telegraf
 - Other bug-fixes and improved stability and performance in all parts
 
 ## 25.04
