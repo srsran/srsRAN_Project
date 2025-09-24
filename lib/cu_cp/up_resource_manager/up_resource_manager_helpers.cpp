@@ -65,7 +65,7 @@ drb_id_t srsran::srs_cu_cp::allocate_drb_id(const up_pdu_session_context_update&
   drb_id_t new_drb_id = drb_id_t::drb1;
   // The new DRB ID must not be allocated already.
   while (contains_drb(context, new_drb_id) || contains_drb(config_update, new_drb_id) ||
-         contains_drb(new_session_context, new_drb_id) || context.drb_dirty[(unsigned)new_drb_id - 1]) {
+         contains_drb(new_session_context, new_drb_id) || context.drb_dirty[get_dirty_drb_index(new_drb_id)]) {
     // Try next.
     new_drb_id = uint_to_drb_id(drb_id_to_uint(new_drb_id) + 1);
 
@@ -468,4 +468,11 @@ up_config_update srsran::srs_cu_cp::to_config_update(const up_context& old_conte
   }
 
   return config;
+}
+
+unsigned srsran::srs_cu_cp::get_dirty_drb_index(drb_id_t drb_id)
+{
+  unsigned index = drb_id_to_uint(drb_id) - 1;
+  srsran_assert(index < MAX_NOF_DRBS, "Invalid DRB ID when checking for DRB dirtyness");
+  return index;
 }

@@ -66,7 +66,7 @@ static void apply_update_for_new_drbs(up_pdu_session_context&                   
     context.drb_map.emplace(drb.first, pdu_session_context.id);
 
     // Mark DRB Id as dirty, until keys are refreshed.
-    context.drb_dirty[(unsigned)drb.first - 1] = true;
+    context.drb_dirty[get_dirty_drb_index(drb.first)] = true;
 
     // add QoS flows of the DRB to the map.
     for (const auto& flow : drb.second.qos_flows) {
@@ -230,7 +230,7 @@ void up_resource_manager::refresh_drb_id_after_key_change()
 
   // Mark all used DRBs as dirty.
   for (auto& drb : context.drb_map) {
-    context.drb_dirty[(unsigned)drb.first - 1] = true;
+    context.drb_dirty[get_dirty_drb_index(drb.first)] = true;
   }
 }
 
