@@ -150,7 +150,13 @@ cu_up_manager_impl::handle_bearer_context_release_command(const e1ap_bearer_cont
 
 void cu_up_manager_impl::handle_e1ap_connection_drop()
 {
-  // TODO Release all Bearer Contexts.
+  // Release all Bearer Contexts.
+  auto release_all_ues = [this](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT(ue_mng->remove_all_ues());
+    CORO_RETURN();
+  };
+  schedule_cu_up_async_task(launch_async(std::move(release_all_ues)));
 }
 
 async_task<void> cu_up_manager_impl::enable_test_mode()
