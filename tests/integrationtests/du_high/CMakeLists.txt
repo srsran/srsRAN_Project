@@ -36,6 +36,7 @@ target_link_libraries(du_high_test
 target_include_directories(du_high_test PRIVATE ${CMAKE_SOURCE_DIR})
 add_test(du_high_test du_high_test)
 set_tests_properties(du_high_test PROPERTIES LABELS "tsan")
+gtest_discover_tests(du_high_test)
 
 add_executable(mac_test_mode_adapter_test mac_test_mode_adapter_test.cpp)
 target_link_libraries(mac_test_mode_adapter_test srsran_du_high gtest gtest_main)
