@@ -152,7 +152,8 @@ struct rusage_trace_event_extended : public trace_event_extended {
 
 } // namespace
 
-static trace_point run_epoch = trace_clock::now();
+/// Epoch used to compute relative timestamps for trace events.
+static const trace_point run_epoch = trace_clock::now();
 /// Unique event trace file writer.
 static std::unique_ptr<event_trace_writer> trace_file_writer;
 
@@ -174,11 +175,24 @@ bool srsran::is_trace_file_open()
   return trace_file_writer != nullptr;
 }
 
-static auto formatted_date(trace_point tp)
+/// Helper to get an approximation of the system clock timestamp.
+static auto formatted_date(trace_point start_tp)
 {
-  return make_formattable([tp](auto& ctx) {
-    std::tm current_time = fmt::gmtime(std::chrono::high_resolution_clock::to_time_t(tp));
-    auto us_fraction = std::chrono::duration_cast<std::chrono::microseconds>(tp.time_since_epoch()).count() % 1000000u;
+  /// Caching and mapping of system_clock with trace points for %H:%M:%S formatting.
+  static system_clock::time_point cached_sys_tp   = system_clock::now();
+  static trace_point              cached_trace_tp = trace_clock::now();
+
+  if (start_tp - cached_trace_tp > seconds{1}) {
+    // Recompute the mapping of system clock to trace points to compensate for drifts.
+    cached_sys_tp   = system_clock::now();
+    cached_trace_tp = trace_clock::now();
+  }
+
+  return make_formattable([start_tp](auto& ctx) {
+    // Retrieve system clock approximation
+    auto    systp        = cached_sys_tp + (start_tp - cached_trace_tp);
+    std::tm current_time = fmt::gmtime(high_resolution_clock::to_time_t(systp));
+    auto    us_fraction  = std::chrono::duration_cast<microseconds>(systp.time_since_epoch()).count() % 1000000u;
     return fmt::format_to(ctx.out(), "{:%H:%M:%S}.{:06}", current_time, us_fraction);
   });
 }

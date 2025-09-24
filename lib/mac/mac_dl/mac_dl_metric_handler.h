@@ -27,7 +27,7 @@ class task_executor;
 class timer_manager;
 
 /// Clock time point type used for metric capture.
-using metric_clock = std::chrono::high_resolution_clock;
+using metric_clock = std::chrono::steady_clock;
 
 /// Handling of MAC DL cell metrics.
 class mac_dl_cell_metric_handler

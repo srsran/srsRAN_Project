@@ -15,6 +15,7 @@
 #include "srsran/support/executors/detail/task_executor_utils.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/rtsan.h"
+#include "srsran/support/tracing/event_tracing.h"
 #include "srsran/support/tracing/resource_usage.h"
 #include <chrono>
 
@@ -22,15 +23,14 @@ namespace srsran {
 
 /// \brief Decorator of a task executor that tracks its performance metrics, such as latency.
 /// \remark This class should only be used for concurrent executors (e.g. strands, single threads).
-template <typename ExecutorType>
+template <typename ExecutorType, typename Tracer = detail::null_event_tracer>
 class concurrent_metrics_executor : public task_executor
 {
   /// Maximum number of elements the pool can hold.
   static constexpr unsigned POOL_SIZE = 32 * 1024;
 
   using time_point = std::chrono::time_point<std::chrono::steady_clock>;
-  using queue_type =
-      concurrent_queue<unsigned, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>;
+  using queue_type = concurrent_queue<unsigned, concurrent_queue_policy::lockfree_mpmc>;
 
   class task_executor_nomalloc
   {
@@ -39,7 +39,7 @@ class concurrent_metrics_executor : public task_executor
 
     task_executor_nomalloc(task_executor& executor_) : executor(executor_) {}
 
-    bool execute(task_type&& task) { return executor.execute(std::move(task)); }
+    bool defer(task_type&& task) { return executor.defer(std::move(task)); }
 
   private:
     task_executor& executor;
@@ -51,13 +51,16 @@ public:
                               U&&                       exec_,
                               task_executor&            seq_exec_,
                               srslog::log_channel&      metrics_logger_,
-                              std::chrono::milliseconds period_) :
+                              std::chrono::milliseconds period_,
+                              Tracer*                   tracer_ = nullptr) :
     name(std::move(name_)),
     exec(std::forward<U>(exec_)),
     seq_exec(seq_exec_),
     metrics_logger(metrics_logger_),
     logger(srslog::fetch_basic_logger("APP")),
     period(period_),
+    tracer(tracer_),
+    trace_name(tracer == nullptr ? "" : fmt::format("{}_run", name)),
     task_pool(POOL_SIZE),
     free_tasks(std::make_unique<queue_type>(POOL_SIZE))
   {
@@ -123,16 +126,20 @@ private:
   };
 
   template <bool isExec>
-  void process_task(unsigned task_idx, std::chrono::steady_clock::time_point enqueue_tp)
+  void process_task(unsigned task_idx, time_point enqueue_tp)
   {
     auto start_tp   = std::chrono::steady_clock::now();
     auto start_rusg = resource_usage::now();
 
     unique_task& task = task_pool[task_idx];
     task();
+    task = {};
 
     auto end_tp   = std::chrono::steady_clock::now();
     auto end_rusg = resource_usage::now();
+
+    // Free task index.
+    (void)free_tasks->try_push(task_idx);
 
     expected<resource_usage::diff, int> diff_rusg;
     if (end_rusg.has_value() && start_rusg.has_value()) {
@@ -143,17 +150,16 @@ private:
     unsigned enqueue_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(start_tp - enqueue_tp).count();
     unsigned task_latency_ns    = std::chrono::duration_cast<std::chrono::nanoseconds>(end_tp - start_tp).count();
 
-    bool success = seq_exec.execute([this, enqueue_latency_ns, task_latency_ns, end_tp, diff_rusg, task_idx]() {
-      unique_task& pooled_task = task_pool[task_idx];
+    // Trace if enabled.
+    if (tracer != nullptr and tracer->is_enabled()) {
+      (*tracer) << trace_event(trace_name.c_str(), start_tp);
+    }
 
+    // Push metrics to sequential executor.
+    bool success = seq_exec.defer([this, enqueue_latency_ns, task_latency_ns, end_tp, diff_rusg]() {
       handle_metrics(isExec, enqueue_latency_ns, task_latency_ns, end_tp, diff_rusg);
-
-      pooled_task = {};
-      (void)free_tasks->try_push(task_idx);
     });
     if (!success) {
-      task = {};
-      (void)free_tasks->try_push(task_idx);
       logger.debug("Unsuccessful execution of handle metrics.");
     }
   }
@@ -211,6 +217,8 @@ private:
   srslog::log_channel&            metrics_logger;
   srslog::basic_logger&           logger;
   const std::chrono::milliseconds period;
+  Tracer*                         tracer;
+  const std::string               trace_name;
   std::vector<unique_task>        task_pool;
   std::unique_ptr<queue_type>     free_tasks;
 
