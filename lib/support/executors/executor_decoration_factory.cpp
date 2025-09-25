@@ -72,13 +72,20 @@ static void make_executor_decorator_helper(std::unique_ptr<task_executor>&   res
         executor_throttler<ComposedExecutor>(std::forward<ComposedExecutor>(exec), first_policy->nof_task_threshold),
         policies...);
   } else if constexpr (std::is_same_v<Decoration, execution_decoration_config::metrics_option>) {
-    make_executor_decorator_helper(
-        result,
-        sequential_metrics_executor<ComposedExecutor, srslog::basic_logger&>(first_policy->name,
-                                                                             std::forward<ComposedExecutor>(exec),
-                                                                             srslog::fetch_basic_logger("METRICS"),
-                                                                             first_policy->period),
-        policies...);
+    auto& logger = srslog::fetch_basic_logger("METRICS");
+    if (first_policy->tracing_enabled) {
+      make_executor_decorator_helper(
+          result,
+          sequential_metrics_executor<ComposedExecutor, srslog::basic_logger, file_event_tracer<true>>(
+              first_policy->name, std::forward<ComposedExecutor>(exec), logger, first_policy->period, &tracer),
+          policies...);
+    } else {
+      make_executor_decorator_helper(
+          result,
+          sequential_metrics_executor<ComposedExecutor, srslog::basic_logger>(
+              first_policy->name, std::forward<ComposedExecutor>(exec), logger, first_policy->period),
+          policies...);
+    }
   } else if constexpr (std::is_same_v<Decoration, execution_decoration_config::trace_option>) {
     make_executor_decorator_helper(result,
                                    executor_tracer<ComposedExecutor, file_event_tracer<true>>{

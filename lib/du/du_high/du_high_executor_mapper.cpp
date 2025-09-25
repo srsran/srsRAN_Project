@@ -40,11 +40,10 @@ struct executor_decorator {
     if (throttle_thres.has_value()) {
       cfg.throttle = execution_decoration_config::throttle_option{*throttle_thres};
     }
-    if (tracing_enabled) {
-      cfg.trace = execution_decoration_config::trace_option{exec_name};
-    }
     if (metrics_period) {
-      cfg.metrics = execution_decoration_config::metrics_option{exec_name, *metrics_period};
+      cfg.metrics = execution_decoration_config::metrics_option{exec_name, *metrics_period, tracing_enabled};
+    } else if (tracing_enabled) {
+      cfg.trace = execution_decoration_config::trace_option{exec_name};
     }
     decorators.push_back(decorate_executor(std::forward<Exec>(exec), cfg));
 

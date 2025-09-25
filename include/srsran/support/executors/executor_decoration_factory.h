@@ -34,6 +34,8 @@ struct execution_decoration_config {
     std::string name;
     /// Period at which the metrics are collected.
     std::chrono::milliseconds period;
+    /// Whether to use metric captures for tracing.
+    bool tracing_enabled = false;
   };
 
   /// If set, the executor will block the caller until the task is executed.
