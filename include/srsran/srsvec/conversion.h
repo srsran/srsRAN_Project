@@ -81,6 +81,14 @@ void convert(span<float> out, span<const bf16_t> in);
 /// \param [in]  scale Input data scaling prior conversion.
 void convert(span<int16_t> z, span<const cbf16_t> x, float scale);
 
+/// \brief Converts a sequence of numbers from complex brain float to 16-bit complex integer applying the given scaling
+/// and rounding the result to the nearest integer.
+///
+/// \param [out] z     Resultant data.
+/// \param [in]  x     Data to convert.
+/// \param [in]  scale Input data scaling prior conversion.
+void convert(span<ci16_t> z, span<const cbf16_t> x, float scale);
+
 /// \brief Converts from int16 to complex brain float applying the given scaling.
 ///
 /// \param [out] z     Resultant data.

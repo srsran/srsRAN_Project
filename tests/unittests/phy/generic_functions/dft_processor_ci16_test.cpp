@@ -9,7 +9,7 @@
  */
 
 #include "srsran/phy/generic_functions/generic_functions_factories.h"
-#include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
+#include "srsran/srsvec/sc_prod.h"
 #include "srsran/support/math/math_utils.h"
 #include "srsran/support/srsran_test.h"
 #include "fmt/ostream.h"
@@ -23,47 +23,27 @@ using namespace srsran;
 // Random generator.
 static std::mt19937 rgen(0);
 
-static std::set<unsigned> dft_required_sizes = []() {
-  // Initialize the DFT required sizes with the most common ones.
-  std::set<unsigned> dft_sizes = {
-      128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096, 4608, 6144, 9216, 12288, 18432, 24576, 36864, 49152};
-
-  // Append transform precoding sizes.
-  span<const bool> transform_precoding_nof_prb = transform_precoding::get_valid_nof_prbs();
-  for (auto it = std::find(transform_precoding_nof_prb.begin(), transform_precoding_nof_prb.end(), true);
-       it != transform_precoding_nof_prb.end();
-       it = std::find(it + 1, transform_precoding_nof_prb.end(), true)) {
-    unsigned nof_prb = std::distance(transform_precoding_nof_prb.begin(), it);
-
-    dft_sizes.emplace(nof_prb * NOF_SUBCARRIERS_PER_RB);
-  }
-
-  return dft_sizes;
-}();
+static std::set<unsigned> dft_required_sizes = {4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192};
 
 // Maximum allowed peak error.
-static float ASSERT_MAX_ERROR = 1e-3;
+static float ASSERT_MAX_ERROR = 10;
 
 namespace srsran {
 
-static bool operator==(span<const cf_t> transform, span<const cf_t> dft_output)
+static bool operator==(span<const ci16_t> lhs, span<const ci16_t> rhs)
 {
-  auto length = static_cast<float>(transform.size());
-  return std::equal(transform.begin(),
-                    transform.end(),
-                    dft_output.begin(),
-                    dft_output.end(),
-                    [length](cf_t transform_val, cf_t dft_output_val) {
-                      return (std::abs(transform_val - dft_output_val) / std::sqrt(length) <= ASSERT_MAX_ERROR);
-                    });
+  return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [](ci16_t left, ci16_t right) {
+    int16_t abs_err = std::abs(left - right);
+    return abs_err < ASSERT_MAX_ERROR;
+  });
 }
 
-std::ostream& operator<<(std::ostream& os, dft_processor::direction direction)
+std::ostream& operator<<(std::ostream& os, dft_processor_ci16::direction direction)
 {
-  return os << dft_processor::direction_to_string(direction);
+  return os << dft_processor_ci16::direction_to_string(direction);
 }
 
-std::ostream& operator<<(std::ostream& os, span<const cf_t> data)
+std::ostream& operator<<(std::ostream& os, span<const ci16_t> data)
 {
   fmt::print(os, "{}", data);
   return os;
@@ -71,7 +51,7 @@ std::ostream& operator<<(std::ostream& os, span<const cf_t> data)
 
 } // namespace srsran
 
-using DFTprocessorParams = std::tuple<std::string, unsigned, dft_processor::direction>;
+using DFTprocessorParams = std::tuple<std::string, unsigned, dft_processor_ci16::direction>;
 
 class DFTprocessorFixture : public ::testing::TestWithParam<DFTprocessorParams>
 {
@@ -79,16 +59,14 @@ protected:
   static constexpr unsigned             nof_repetitions = 10;
   std::uniform_real_distribution<float> dist            = std::uniform_real_distribution<float>(-M_PI, +M_PI);
 
-  std::shared_ptr<dft_processor_factory> dft_factory = nullptr;
+  std::shared_ptr<dft_processor_ci16_factory> dft_factory = nullptr;
 
   void SetUp() override
   {
     // Call the required dft factory.
     const std::string& dft_factory_str = std::get<0>(GetParam());
-    if (dft_factory_str == "generic") {
-      dft_factory = create_dft_processor_factory_generic();
-    } else if (dft_factory_str == "fftw") {
-      dft_factory = create_dft_processor_factory_fftw_slow();
+    if (dft_factory_str == "avx2") {
+      dft_factory = create_dft_processor_ci16_factory_avx2();
     }
   }
 
@@ -119,7 +97,7 @@ protected:
     }
   }
 
-  static void run_expected_dft(span<cf_t> output, dft_processor::direction direction, span<const cf_t> input)
+  static void run_expected_dft(span<ci16_t> output, dft_processor_ci16::direction direction, span<const ci16_t> input)
   {
     // Formal checks to avoid zero division among other failures.
     srsran_assert(!input.empty(), "Empty input span");
@@ -127,8 +105,13 @@ protected:
 
     // Derive parameters.
     unsigned size = input.size();
-    float    sign = (direction == dft_processor::direction::DIRECT) ? -1 : +1;
+    float    sign = (direction == dft_processor_ci16::direction::direct) ? -1 : +1;
     float    N    = static_cast<float>(size);
+
+    std::vector<cf_t> output_cf(output.size());
+    std::vector<cf_t> input_cf(input.size());
+
+    std::transform(input.begin(), input.end(), input_cf.begin(), [](ci16_t sample) { return to_cf(sample); });
 
     // Create exponential to avoid abusing std::exp.
     std::vector<cf_t> exp(size);
@@ -137,64 +120,64 @@ protected:
     }
 
     // Compute theoretical discrete Fourier transform.
-    ditfft(output, input, exp, N, 1);
+    ditfft(output_cf, input_cf, exp, N, 1);
+
+    float scaling = 1 / static_cast<float>(N);
+    srsvec::sc_prod(output_cf, output_cf, scaling);
+
+    std::transform(output_cf.begin(), output_cf.end(), output.begin(), [](cf_t sample) { return to_ci16(sample); });
   }
 };
 
 TEST_P(DFTprocessorFixture, DFTProcessorUnittest)
 {
-  unsigned                 dft_size  = std::get<1>(GetParam());
-  dft_processor::direction direction = std::get<2>(GetParam());
+  unsigned                      dft_size  = std::get<1>(GetParam());
+  dft_processor_ci16::direction direction = std::get<2>(GetParam());
 
   // Make sure the factory is valid.
   ASSERT_NE(dft_factory, nullptr);
 
   // Create DFT configuration;
-  dft_processor::configuration config;
+  dft_processor_ci16::configuration config;
   config.size = dft_size;
   config.dir  = direction;
 
   // Create processor.
-  std::unique_ptr<dft_processor> dft = dft_factory->create(config);
+  std::unique_ptr<dft_processor_ci16> dft = dft_factory->create(config);
 
   // Skip test case silently if the DFT processor is not available.
   if (dft == nullptr) {
     GTEST_SKIP();
   }
 
-  // Get DFT input buffer
-  span<cf_t> input = dft->get_input();
-
-  // Allocate golden output buffer.
-  std::vector<cf_t> expected_output(dft_size);
+  // Create DFT buffers
+  std::vector<ci16_t> input(dft_size);
+  std::vector<ci16_t> output(dft_size);
+  std::vector<ci16_t> expected_output(dft_size);
 
   // For each repetition...
   for (unsigned repetition = 0; repetition != nof_repetitions; ++repetition) {
     // Generate input random data.
-    for (cf_t& value : input) {
-      value = std::polar(1.0F, dist(rgen));
-    }
+    std::generate(input.begin(), input.end(), [this]() {
+      static constexpr float amplitude = pow2(12);
+      return to_ci16(std::polar(amplitude, dist(rgen)));
+    });
 
     // Run DFT.
-    span<const cf_t> output = dft->run();
+    dft->run(output, input);
 
     // Run expected DFT
     run_expected_dft(expected_output, direction, input);
 
     // Make sure the output matches the expected within the tolerances.
-    ASSERT_EQ(span<const cf_t>(expected_output), span<const cf_t>(output));
+    ASSERT_EQ(span<const ci16_t>(expected_output), span<const ci16_t>(output)) << fmt::format("input=[{}]", input);
   }
 }
 
 // Creates test suite that combines all possible parameters.
 INSTANTIATE_TEST_SUITE_P(DFTProcessorTest,
                          DFTprocessorFixture,
-                         ::testing::Combine(::testing::Values("generic"
-#ifdef HAVE_FFTW
-                                                              ,
-                                                              "fftw"
-#endif // HAVE_FFTW
-                                                              ),
+                         ::testing::Combine(::testing::Values("avx2"),
                                             ::testing::ValuesIn(dft_required_sizes),
-                                            ::testing::Values(dft_processor::direction::DIRECT,
-                                                              dft_processor::direction::INVERSE)));
+                                            ::testing::Values(dft_processor_ci16::direction::direct,
+                                                              dft_processor_ci16::direction::inverse)));
