@@ -19,6 +19,7 @@
 #include "../support/prbs_calculator.h"
 #include "../support/pusch/pusch_td_resource_indices.h"
 #include "../uci_scheduling/uci_allocator.h"
+#include "srsran/ran/resource_block.h"
 #include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
 #include "srsran/srslog/srslog.h"
@@ -552,7 +553,8 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
   crb_bitmap used_crbs =
       pdsch_alloc.dl_res_grid.used_crbs(initial_active_dl_bwp.scs, cset0_crbs_lim, pdsch_cfg.symbols);
 
-  crb_interval unused_crbs = rb_helper::find_next_empty_interval(used_crbs, cset0_crbs_lim);
+  // Find the biggest CRB interval available.
+  crb_interval unused_crbs = rb_helper::find_empty_interval_of_length(used_crbs, MAX_NOF_PRBS, cset0_crbs_lim);
   if (unused_crbs.empty()) {
     logger.debug("rnti={}: Postponed PDU scheduling for slot={}. Cause: No space in PDSCH.", u.crnti, pdsch_alloc.slot);
     // If there is no free PRBs left on this slot for this UE, then this slot should be avoided by the other UEs too.
@@ -575,7 +577,6 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
       return {};
     }
     ue_grant_crbs = {unused_crbs.start(), unused_crbs.start() + prbs_tbs.nof_prbs};
-
   } else {
     const unsigned only_conres_bytes = u.pending_conres_ce_bytes();
     const unsigned only_srb0_bytes   = u.pending_dl_newtx_bytes(LCID_SRB0);
@@ -584,8 +585,7 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
     srsran_assert(pending_bytes > 0, "Unexpected number of pending bytes");
     // There must be space for ConRes CE, if it is pending. If only SRB0 is pending (no ConRes), there must be space
     // for it, as the SRB0 cannot be segmented.
-    const unsigned min_pending_bytes =
-        only_conres_bytes > 0 ? only_conres_bytes : (only_srb0_bytes > 0 ? only_srb0_bytes : 0);
+    const unsigned min_pending_bytes = only_conres_bytes > 0 ? only_conres_bytes : only_srb0_bytes;
 
     std::optional<sch_mcs_index> fixed_mcs;
     if (only_srb1_bytes > 0) {
@@ -1076,7 +1076,7 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
   const bool is_retx = h_ul_retx.has_value();
 
   // Search for empty HARQ.
-  if (not h_ul_retx.has_value() and not ue_pcell.harqs.has_empty_ul_harqs()) {
+  if (not is_retx and not ue_pcell.harqs.has_empty_ul_harqs()) {
     logger.debug(
         "ue={} rnti={} PUSCH allocation skipped. Cause: no HARQ available", fmt::underlying(u.ue_index), u.crnti);
     return ul_srb_sched_outcome::next_ue;
