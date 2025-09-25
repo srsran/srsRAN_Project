@@ -11,7 +11,7 @@
 #pragma once
 
 // This file was generated using the following MATLAB class on 22-09-2025 (seed 0):
-//   + "srsPRACHConfigurationsUnittest.m"
+//   + "srsPRACHConfigurationUnittest.m"
 
 #include "srsran/ran/prach/prach_configuration.h"
 #include <vector>
