@@ -54,8 +54,9 @@ scheduler_test_simulator::scheduler_test_simulator(unsigned           tx_rx_dela
 scheduler_test_simulator::scheduler_test_simulator(const scheduler_test_sim_config& cfg) :
   scheduler_test_simulator(cfg.sched_cfg, cfg.tx_rx_delay, cfg.max_scs)
 {
-  auto_uci = cfg.auto_uci;
-  auto_crc = cfg.auto_crc;
+  auto_uci       = cfg.auto_uci;
+  auto_crc       = cfg.auto_crc;
+  ntn_cs_koffset = cfg.ntn_cs_koffset;
 }
 
 scheduler_test_simulator::~scheduler_test_simulator()

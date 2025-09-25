@@ -289,14 +289,28 @@ INSTANTIATE_TEST_SUITE_P(scheduler_con_res_msg4_test,
                                            conres_test_params{LCID_SRB1, duplex_mode::FDD},
                                            conres_test_params{LCID_SRB1, duplex_mode::TDD}));
 
-class scheduler_conres_expiry_test : public scheduler_test_simulator, public ::testing::Test
+struct conres_expiry_params {
+  subcarrier_spacing max_scs        = subcarrier_spacing::kHz15;
+  unsigned           ntn_cs_koffset = 0;
+};
+
+/// Formatter for test params.
+void PrintTo(const conres_expiry_params& value, ::std::ostream* os)
+{
+  *os << fmt::format("SCS={}, Cell-Specific-K-Offset={}", to_string(value.max_scs), value.ntn_cs_koffset);
+}
+
+class scheduler_conres_expiry_test : public scheduler_test_simulator,
+                                     public ::testing::TestWithParam<conres_expiry_params>
 {
 protected:
   scheduler_conres_expiry_test() :
-    scheduler_test_simulator(scheduler_test_sim_config{.max_scs = subcarrier_spacing::kHz30})
+    scheduler_test_simulator(
+        scheduler_test_sim_config{.max_scs = GetParam().max_scs, .ntn_cs_koffset = GetParam().ntn_cs_koffset})
   {
     // Create cell.
-    auto cell_cfg_req = sched_config_helper::make_default_sched_cell_configuration_request(builder_params);
+    auto cell_cfg_req           = sched_config_helper::make_default_sched_cell_configuration_request(builder_params);
+    cell_cfg_req.ntn_cs_koffset = ntn_cs_koffset;
     add_cell(cell_cfg_req);
 
     // Create a UE.
@@ -306,21 +320,24 @@ protected:
     ue_cfg.starts_in_fallback = true;
     ue_cfg.ul_ccch_slot_rx    = next_slot;
     scheduler_test_simulator::add_ue(ue_cfg, true);
-    ul_ccch_slot_rx = next_slot;
-    conres_expiry_slot =
-        ul_ccch_slot_rx + cell_cfg_req.ul_cfg_common.init_ul_bwp.rach_cfg_common->ra_con_res_timer.count() *
-                              next_slot.nof_slots_per_subframe();
+    nof_rtt_slots      = cell_cfg_req.ntn_cs_koffset * next_slot.nof_slots_per_subframe();
+    ul_ccch_slot_rx    = next_slot;
+    conres_expiry_slot = ul_ccch_slot_rx +
+                         cell_cfg_req.ul_cfg_common.init_ul_bwp.rach_cfg_common->ra_con_res_timer.count() *
+                             next_slot.nof_slots_per_subframe() +
+                         nof_rtt_slots;
   }
 
   cell_config_builder_params builder_params{cell_config_builder_profiles::tdd()};
   const du_cell_index_t      cell_index = to_du_cell_index(0);
   const du_ue_index_t        ue_index   = to_du_ue_index(0);
   const rnti_t               rnti       = to_rnti(0x4601);
+  unsigned                   nof_rtt_slots;
   slot_point                 ul_ccch_slot_rx;
   slot_point                 conres_expiry_slot;
 };
 
-TEST_F(scheduler_conres_expiry_test, when_conres_ce_arrives_after_conres_timer_expires_then_no_pdsch_is_scheduled)
+TEST_P(scheduler_conres_expiry_test, when_conres_ce_arrives_after_conres_timer_expires_then_no_pdsch_is_scheduled)
 {
   // CE is enqueued after the ConRes timer expires.
   auto ce_enqueue_slot = conres_expiry_slot + test_rgen::uniform_int<unsigned>(0, 10);
@@ -336,7 +353,7 @@ TEST_F(scheduler_conres_expiry_test, when_conres_ce_arrives_after_conres_timer_e
       [this]() { return find_ue_pdsch(rnti, *this->last_sched_res_list[cell_index]) != nullptr; }, 100));
 }
 
-TEST_F(scheduler_conres_expiry_test, when_conres_retx_goes_after_conres_timer_expiry_it_is_not_scheduled)
+TEST_P(scheduler_conres_expiry_test, when_conres_retx_goes_after_conres_timer_expiry_it_is_not_scheduled)
 {
   auto pdsch_is_sched = [this]() { return find_ue_pdsch(rnti, *this->last_sched_res_list[cell_index]) != nullptr; };
 
@@ -370,3 +387,29 @@ TEST_F(scheduler_conres_expiry_test, when_conres_retx_goes_after_conres_timer_ex
   // No PDSCH should be scheduled, as the ConRes timer has expired.
   ASSERT_FALSE(this->run_slot_until(pdsch_is_sched, 100));
 }
+
+TEST_P(scheduler_conres_expiry_test, when_ntn_cell_conres_timer_extended_with_rtt)
+{
+  static const unsigned msg4_size = 128;
+  auto pdsch_is_sched = [this]() { return find_ue_pdsch(rnti, *this->last_sched_res_list[cell_index]) != nullptr; };
+
+  // Advance by link RTT.
+  while (next_slot < ul_ccch_slot_rx + nof_rtt_slots) {
+    run_slot();
+    ASSERT_FALSE(pdsch_is_sched());
+  }
+
+  // Enqueue ConRes CE + Msg4.
+  this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{this->ue_index, LCID_SRB1, msg4_size});
+
+  // Wait for ConRes + Msg4 PDCCH to be scheduled.
+  // PDSCH should be scheduled, as the ConRes timer is not expired.
+  ASSERT_TRUE(this->run_slot_until(pdsch_is_sched, 100));
+}
+
+INSTANTIATE_TEST_SUITE_P(scheduler_conres_expiry_test,
+                         scheduler_conres_expiry_test,
+                         ::testing::Values(conres_expiry_params{subcarrier_spacing::kHz30, 0},
+                                           conres_expiry_params{subcarrier_spacing::kHz30, 240},
+                                           conres_expiry_params{subcarrier_spacing::kHz30, 480}));

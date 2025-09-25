@@ -30,6 +30,8 @@ struct scheduler_test_sim_config {
   bool auto_uci = false;
   /// Whether to automatically respond to PUSCH grants with CRC indications.
   bool auto_crc = false;
+  /// Cell-Specific K-offset for NTN cells.
+  unsigned ntn_cs_koffset = 0;
 };
 
 /// Helper class to help setup a scheduler unit test.
@@ -83,8 +85,9 @@ public:
   }
 
   const unsigned                      tx_rx_delay;
-  bool                                auto_uci = false;
-  bool                                auto_crc = false;
+  bool                                auto_uci       = false;
+  bool                                auto_crc       = false;
+  unsigned                            ntn_cs_koffset = 0;
   srslog::basic_logger&               logger;
   srslog::basic_logger&               test_logger;
   const scheduler_expert_config       sched_cfg;
