@@ -80,11 +80,13 @@ du_high_configuration srs_du::create_du_high_configuration(const du_high_env_sim
 }
 
 du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
-  du_high_env_simulator(create_du_high_configuration(params), params.active_cells_on_start)
+  du_high_env_simulator(create_du_high_configuration(params), params.auto_start, params.active_cells_on_start)
 {
 }
 
-du_high_env_simulator::du_high_env_simulator(const du_high_configuration& du_hi_cfg_, bool active_cells_on_start) :
+du_high_env_simulator::du_high_env_simulator(const du_high_configuration& du_hi_cfg_,
+                                             bool                         auto_start,
+                                             bool                         active_cells_on_start) :
   broker(create_io_broker(io_broker_type::epoll)),
   timer_ctrl(srs_du::create_du_high_clock_controller(timers, *broker, *workers.time_exec)),
   cu_notifier(workers.test_worker, active_cells_on_start),
@@ -109,11 +111,13 @@ du_high_env_simulator::du_high_env_simulator(const du_high_configuration& du_hi_
             test_rgen::uniform_int<unsigned>(0, 10239) *
                 get_nof_slots_per_subframe(du_high_cfg.ran.cells[0].scs_common))
 {
-  // Start DU and try to connect to CU.
-  du_hi->start();
+  if (auto_start) {
+    // Start DU and try to connect to CU.
+    du_hi->start();
 
-  // Ensure the result is saved in the notifier.
-  run_until([this]() { return not cu_notifier.f1ap_ul_msgs.empty(); });
+    // Ensure the result is saved in the notifier.
+    run_until([this]() { return not cu_notifier.f1ap_ul_msgs.empty(); });
+  }
 }
 
 du_high_env_simulator::~du_high_env_simulator()

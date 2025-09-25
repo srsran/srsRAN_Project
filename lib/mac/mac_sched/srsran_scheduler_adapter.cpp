@@ -362,6 +362,11 @@ srsran_scheduler_adapter::cell_handler::cell_handler(srsran_scheduler_adapter&  
 {
 }
 
+srsran_scheduler_adapter::cell_handler::~cell_handler()
+{
+  parent.rach_handler.rem_cell(cell_idx);
+}
+
 void srsran_scheduler_adapter::cell_handler::handle_crc(const mac_crc_indication_message& msg)
 {
   // Convert MAC CRC indication to srsRAN scheduler UL CRC indication.

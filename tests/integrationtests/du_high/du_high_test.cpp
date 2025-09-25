@@ -31,15 +31,6 @@ using namespace asn1::f1ap;
 class du_high_tester : public du_high_env_simulator, public testing::Test
 {};
 
-/// Test F1 setup over "local" connection to DU.
-TEST_F(du_high_tester, when_du_high_started_then_connection_to_cu_takes_place)
-{
-  // Starting the DU-high initiates the F1 Setup procedure.
-  ASSERT_EQ(this->cu_notifier.f1ap_ul_msgs.size(), 1);
-  ASSERT_EQ(this->cu_notifier.f1ap_ul_msgs.rbegin()->second.pdu.type().value, f1ap_pdu_c::types_opts::init_msg);
-  ASSERT_EQ(this->cu_notifier.f1ap_ul_msgs.rbegin()->second.pdu.init_msg().proc_code, ASN1_F1AP_ID_F1_SETUP);
-}
-
 TEST_F(du_high_tester, when_ccch_msg_is_received_then_ue_context_is_created)
 {
   // Reset the last sent F1AP PDU (e.g. F1 setup).

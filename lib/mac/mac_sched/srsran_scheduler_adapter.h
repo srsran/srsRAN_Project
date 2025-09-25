@@ -105,6 +105,7 @@ private:
   {
   public:
     cell_handler(srsran_scheduler_adapter& parent_, const sched_cell_configuration_request_message& sched_cfg);
+    ~cell_handler() override;
 
     void handle_crc(const mac_crc_indication_message& msg) override;
 

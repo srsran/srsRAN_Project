@@ -102,6 +102,9 @@ public:
   /// Stop all cells in the DU.
   async_task<void> stop_all();
 
+  /// Remove all cell configurations.
+  void remove_all_cells();
+
 private:
   void assert_cell_exists(du_cell_index_t cell_index) const
   {

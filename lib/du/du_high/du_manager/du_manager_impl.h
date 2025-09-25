@@ -41,7 +41,7 @@ public:
     ue_mng.schedule_async_task(ue_index, std::move(task));
   }
 
-  void handle_du_stop_request() override;
+  void handle_f1c_connection_loss() override;
 
   du_ue_index_t find_unused_du_ue_index() override;
 
@@ -78,6 +78,8 @@ public:
   du_manager_mac_metric_aggregator& get_metrics_aggregator() override { return metrics; }
 
 private:
+  void handle_du_stop_request();
+
   // DU manager configuration that will be visible to all running procedures
   du_manager_params     params;
   srslog::basic_logger& logger;

@@ -118,6 +118,32 @@ void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message
   }
 }
 
+void du_manager_impl::handle_f1c_connection_loss()
+{
+  logger.info("F1-C connection lost. Stop DU activity and setup a new F1 session");
+
+  schedule_async_task(launch_async([this](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+
+    if (running) {
+      // Tear down activity in remaining layers.
+      CORO_AWAIT(launch_async<du_stop_procedure>(ue_mng, cell_mng, params.f1ap.conn_mng));
+      running = false;
+    }
+
+    // Attempt a new F1 setup.
+    CORO_AWAIT(launch_async<initial_du_setup_procedure>(params, cell_mng, metrics));
+    running = true;
+
+    CORO_RETURN();
+  }));
+
+  // Switch to DU manager exec context.
+  if (not params.services.du_mng_exec.execute([this]() { handle_du_stop_request(); })) {
+    logger.error("Unable to dispatch handling of F1-C connection loss. Cause: Task queue is full.");
+  }
+}
+
 void du_manager_impl::handle_du_stop_request()
 {
   if (not running) {
