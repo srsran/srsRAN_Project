@@ -47,14 +47,18 @@ private:
 class f1c_tx_channel final : public f1ap_message_notifier
 {
 public:
-  f1c_tx_channel(std::unique_ptr<f1ap_message_notifier>& f1c_notifier_, srslog::basic_logger& logger_) :
-    f1c_notifier(f1c_notifier_), logger(logger_)
+  f1c_tx_channel(std::unique_ptr<f1ap_message_notifier>& f1c_notifier_,
+                 unsigned&                               epoch_,
+                 srslog::basic_logger&                   logger_) :
+    f1c_notifier(f1c_notifier_), epoch_ref(epoch_), logger(logger_), epoch(epoch_ref)
   {
   }
   ~f1c_tx_channel() override
   {
-    // Resetting the F1-C Tx notifier should trigger the shutdown of the Rx path in the F1-C client.
-    f1c_notifier.reset();
+    if (epoch_ref == epoch) {
+      // Resetting the F1-C Tx notifier should trigger the shutdown of the Rx path in the F1-C client.
+      f1c_notifier.reset();
+    }
   }
 
   void on_new_message(const f1ap_message& msg) override
@@ -68,7 +72,10 @@ public:
 
 private:
   std::unique_ptr<f1ap_message_notifier>& f1c_notifier;
+  unsigned&                               epoch_ref;
   srslog::basic_logger&                   logger;
+
+  unsigned epoch;
 };
 
 } // namespace
@@ -112,11 +119,12 @@ std::unique_ptr<f1ap_message_notifier> f1ap_du_connection_handler::connect_to_cu
   if (tx_pdu_notifier == nullptr) {
     return nullptr;
   }
+  f1c_session_epoch++;
 
   // Connection successful.
   connected_flag = true;
 
-  return std::make_unique<f1c_tx_channel>(tx_pdu_notifier, logger);
+  return std::make_unique<f1c_tx_channel>(tx_pdu_notifier, f1c_session_epoch, logger);
 }
 
 void f1ap_du_connection_handler::handle_connection_loss()

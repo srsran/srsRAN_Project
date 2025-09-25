@@ -245,6 +245,7 @@ void du_cell_manager::remove_all_cells()
     srsran_assert(cells[i]->state != du_cell_context::state_t::active, "Cell {} is still active", i);
     cfg.mac.cell_mng.remove_cell(to_du_cell_index(i));
   }
+  cells.clear();
 }
 
 du_cell_index_t du_cell_manager::get_cell_index(nr_cell_global_id_t nr_cgi) const

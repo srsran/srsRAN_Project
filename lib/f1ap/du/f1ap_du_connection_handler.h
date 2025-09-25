@@ -54,6 +54,7 @@ private:
   bool connected_flag{false};
 
   std::unique_ptr<f1ap_message_notifier> tx_pdu_notifier;
+  unsigned                               f1c_session_epoch{0};
 
   manual_event_flag rx_path_disconnected;
 };
