@@ -23,6 +23,7 @@
 #include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/format/custom_formattable.h"
 
 using namespace srsran;
 
@@ -374,8 +375,10 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
     // expire by the slot it will receive the ConRes, abort the allocation; the \ref slot_indication function will take
     // care of removing the UE.
     if (u.get_pcell().get_msg3_rx_slot().valid() and not u.get_pcell().is_conres_complete()) {
-      const auto ra_conres_timer_subframes = static_cast<uint32_t>(
-          u.get_pcell().cfg().init_bwp().ul_common.value()->rach_cfg_common.value().ra_con_res_timer.count());
+      const auto ra_conres_timer_subframes =
+          static_cast<uint32_t>(
+              u.get_pcell().cfg().init_bwp().ul_common.value()->rach_cfg_common.value().ra_con_res_timer.count()) +
+          cell_cfg.ntn_cs_koffset;
       const int conres_msg3_slot_diff = pdsch_alloc.slot - u.get_pcell().get_msg3_rx_slot();
       if (conres_msg3_slot_diff < 0 or
           divide_ceil<uint32_t, uint32_t>(static_cast<uint32_t>(conres_msg3_slot_diff),
@@ -1350,7 +1353,7 @@ void ue_fallback_scheduler::store_harq_tx(du_ue_index_t ue_index, const dl_harq_
 }
 
 /// Helper function to check if the conRes timer has expired for a given UE in fallback mode.
-static bool handle_conres_expiry(ue& u, slot_point sl_tx, srslog::basic_logger& logger)
+static bool handle_conres_expiry(ue& u, slot_point sl_tx, srslog::basic_logger& logger, unsigned ntn_cs_koffset = 0)
 {
   auto& ue_pcell = u.get_pcell();
 
@@ -1359,7 +1362,7 @@ static bool handle_conres_expiry(ue& u, slot_point sl_tx, srslog::basic_logger& 
   }
 
   const auto conres_timer = ue_pcell.cfg().init_bwp().ul_common.value()->rach_cfg_common->ra_con_res_timer.count();
-  const auto conres_timer_slots = conres_timer * sl_tx.nof_slots_per_subframe();
+  const auto conres_timer_slots = (conres_timer + ntn_cs_koffset) * sl_tx.nof_slots_per_subframe();
   const auto sl_conres          = ue_pcell.get_msg3_rx_slot() + conres_timer_slots;
   if (sl_conres > sl_tx) {
     // ConRes window has not yet elapsed.
@@ -1368,11 +1371,14 @@ static bool handle_conres_expiry(ue& u, slot_point sl_tx, srslog::basic_logger& 
 
   // If the ConRes CE was never scheduled, then we deactivate the UE right away.
   if (u.dl_logical_channels().is_con_res_id_pending()) {
-    logger.warning("ue={} rnti={}: ra-ContentionResolutionTimer ({}ms) expired before ConRes CE was scheduled. UE "
+    logger.warning("ue={} rnti={}: ra-ContentionResolutionTimer ({}ms{}) expired before ConRes CE was scheduled. UE "
                    "will stop being scheduled",
                    fmt::underlying(u.ue_index),
                    u.crnti,
-                   conres_timer);
+                   conres_timer,
+                   make_formattable([k = ntn_cs_koffset](auto& ctx) {
+                     return k ? fmt::format_to(ctx.out(), " + RTT: {}ms", k) : ctx.out();
+                   }));
     ue_pcell.set_conres_state(true);
     u.deactivate();
     return true;
@@ -1395,11 +1401,14 @@ static bool handle_conres_expiry(ue& u, slot_point sl_tx, srslog::basic_logger& 
 
   // ConRes timer has expired, but there is a chance the UE received the ConRes CE but the ACK was not successful.
   // In this case, the scheduler will stop retransmitting the ConRes CE.
-  logger.info("ue={} rnti={}: ra-ContentionResolutionTimer ({}ms) expired, but the scheduler never got back a "
+  logger.info("ue={} rnti={}: ra-ContentionResolutionTimer ({}ms{}) expired, but the scheduler never got back a "
               "positive ACK. The scheduler will stop retransmitting the ConRes CE",
               fmt::underlying(u.ue_index),
               u.crnti,
-              conres_timer);
+              conres_timer,
+              make_formattable([k = ntn_cs_koffset](auto& ctx) {
+                return k ? fmt::format_to(ctx.out(), " + RTT: {}ms", k) : ctx.out();
+              }));
   ue_pcell.set_conres_state(true);
 
   if (h_conres.has_value()) {
@@ -1459,7 +1468,7 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       continue;
     }
 
-    if (handle_conres_expiry(u, sl, logger)) {
+    if (handle_conres_expiry(u, sl, logger, cell_cfg.ntn_cs_koffset)) {
       // Remove the UE from the fallback scheduler.
       ue_it = pending_dl_ues_new_tx.erase(ue_it);
       if (not ue_pcell.is_active()) {
@@ -1509,7 +1518,7 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       continue;
     }
 
-    if (handle_conres_expiry(u, sl, logger)) {
+    if (handle_conres_expiry(u, sl, logger, cell_cfg.ntn_cs_koffset)) {
       it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
       if (not ue_pcell.is_active()) {
         // Remove the UE from the fallback scheduler if it got deactivated.
