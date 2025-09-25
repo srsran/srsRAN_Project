@@ -104,6 +104,7 @@ public:
   void stop() final
   {
     // Stop all timers. Any queued handlers of timers that just expired before this call are canceled automatically
+    high_metrics_timer.stop();
     reassembly_timer.stop();
   }
 

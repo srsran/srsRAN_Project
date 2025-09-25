@@ -29,7 +29,8 @@ public:
 
   void stop() final
   {
-    // There are no timers to be stopped here.
+    // Stop all timers.
+    high_metrics_timer.stop();
   }
 
   // Interfaces for higher layers
