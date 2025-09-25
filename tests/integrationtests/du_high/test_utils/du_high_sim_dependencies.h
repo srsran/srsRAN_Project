@@ -14,7 +14,6 @@
 #include "srsran/f1ap/gateways/f1c_connection_client.h"
 #include "srsran/support/executors/task_executor.h"
 #include <map>
-#include <vector>
 
 namespace srsran {
 namespace srs_du {
@@ -37,10 +36,20 @@ public:
   /// Number tagged to the next message sent by the DU to the CU.
   message_number next_ul_message_number() const { return next_msg_number; }
 
+  /// Called when the GW detects a remote CU F1 disconnection.
+  void on_cu_disconnection();
+
+  /// Whether the DU signalled to the connection client its disconnection.
+  bool du_released_connection() const { return connected; }
+
 private:
   task_executor& test_exec;
   /// Number to be assigned to the next F1AP message sent by the DU to the CU.
   message_number next_msg_number = 0;
+  /// Callable to trigger F1 connection losses.
+  unique_function<void()> on_connection_loss;
+  /// Current connection state.
+  bool connected = false;
 };
 
 /// Dummy DU metrics consumer class that stores the last received report.

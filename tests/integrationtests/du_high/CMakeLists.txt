@@ -24,6 +24,7 @@ target_link_libraries(du_high_worker_manager
 add_executable(du_high_test du_high_test.cpp
         du_high_many_ues_test.cpp
         du_high_many_cells_test.cpp
+        du_high_connection_test.cpp
         paging_test.cpp)
 target_link_libraries(du_high_test
         srsran_du_high
