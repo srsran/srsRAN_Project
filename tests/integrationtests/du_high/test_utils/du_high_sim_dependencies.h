@@ -36,11 +36,12 @@ public:
   /// Number tagged to the next message sent by the DU to the CU.
   message_number next_ul_message_number() const { return next_msg_number; }
 
-  /// Called when the GW detects a remote CU F1 disconnection.
-  void on_cu_disconnection();
-
   /// Whether the DU signalled to the connection client its disconnection.
-  bool du_released_connection() const { return connected; }
+  bool du_released_connection() const { return du_released_client; }
+
+  /// \brief Sets the state of the F1 channel (up or down).
+  /// If the channel is set down, any on-going connection is lost, and no new connection attempts are accepted.
+  void set_f1_channel_state(bool up);
 
 private:
   task_executor& test_exec;
@@ -48,8 +49,10 @@ private:
   message_number next_msg_number = 0;
   /// Callable to trigger F1 connection losses.
   unique_function<void()> on_connection_loss;
-  /// Current connection state.
-  bool connected = false;
+  /// Current F1 channel state.
+  bool f1c_is_up = true;
+  /// Whether the DU has released the connection handler (e.g. due to connection loss).
+  bool du_released_client = false;
 };
 
 /// Dummy DU metrics consumer class that stores the last received report.
