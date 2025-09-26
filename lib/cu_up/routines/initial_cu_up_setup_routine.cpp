@@ -10,27 +10,33 @@
 
 #include "initial_cu_up_setup_routine.h"
 #include "srsran/e1ap/common/e1_setup_messages.h"
-#include "srsran/ran/bcd_helper.h"
 #include "srsran/srslog/srslog.h"
+#include <utility>
 
 using namespace srsran;
 using namespace srs_cu_up;
 
-initial_cu_up_setup_routine::initial_cu_up_setup_routine(const cu_up_config&      cfg_,
+initial_cu_up_setup_routine::initial_cu_up_setup_routine(gnb_cu_up_id_t           cu_up_id_,
+                                                         std::string              cu_up_name_,
+                                                         std::string              plmn_,
                                                          e1ap_connection_manager& e1ap_conn_mng_) :
-  cfg(cfg_), e1ap_conn_mng(e1ap_conn_mng_), logger(srslog::fetch_basic_logger("CU-UP"))
+  cu_up_id(cu_up_id_),
+  cu_up_name(std::move(cu_up_name_)),
+  plmn(std::move(plmn_)),
+  e1ap_conn_mng(e1ap_conn_mng_),
+  logger(srslog::fetch_basic_logger("CU-UP"))
 {
 }
 
-void initial_cu_up_setup_routine::operator()(coro_context<async_task<void>>& ctx)
+void initial_cu_up_setup_routine::operator()(coro_context<async_task<bool>>& ctx)
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("cu-up={}: \"{}\" initialized.", cfg.cu_up_id, name());
+  logger.debug("cu-up={}: \"{}\" initialized.", cu_up_id, name());
 
   // Connect to CU-CP.
   if (not e1ap_conn_mng.connect_to_cu_cp()) {
-    report_error("Failed to connect to CU-CP");
+    CORO_EARLY_RETURN(false);
   }
 
   // Initiate E1 Setup.
@@ -39,7 +45,7 @@ void initial_cu_up_setup_routine::operator()(coro_context<async_task<void>>& ctx
   // Handle E1 setup result.
   handle_cu_up_e1_setup_response(response_msg);
 
-  CORO_RETURN();
+  CORO_RETURN(true);
 }
 
 async_task<cu_up_e1_setup_response> initial_cu_up_setup_routine::start_cu_up_e1_setup_request()
@@ -47,15 +53,15 @@ async_task<cu_up_e1_setup_response> initial_cu_up_setup_routine::start_cu_up_e1_
   // Prepare request to send to E1.
   cu_up_e1_setup_request request_msg = {};
 
-  request_msg.gnb_cu_up_id   = gnb_cu_up_id_to_uint(cfg.cu_up_id);
-  request_msg.gnb_cu_up_name = cfg.cu_up_name;
+  request_msg.gnb_cu_up_id   = gnb_cu_up_id_to_uint(cu_up_id);
+  request_msg.gnb_cu_up_name = cu_up_name;
 
   // We only support 5G
   request_msg.cn_support = cu_up_cn_support_t::c_5gc;
 
   supported_plmns_item_t plmn_item;
 
-  plmn_item.plmn_id = cfg.plmn;
+  plmn_item.plmn_id = plmn;
 
   request_msg.supported_plmns.push_back(plmn_item);
 
@@ -70,5 +76,5 @@ void initial_cu_up_setup_routine::handle_cu_up_e1_setup_response(const cu_up_e1_
     report_fatal_error("CU-UP E1 Setup failed");
   }
 
-  logger.debug("cu-up={}: \"{}\" finalized.", cfg.cu_up_id, name());
+  logger.debug("cu-up={}: \"{}\" finalized.", cu_up_id, name());
 }

@@ -17,15 +17,15 @@
 namespace srsran {
 namespace srs_cu_up {
 
-class du_cell_manager;
-struct du_manager_params;
-
 class initial_cu_up_setup_routine
 {
 public:
-  initial_cu_up_setup_routine(const cu_up_config& cfg_, e1ap_connection_manager& e1ap_conn_mng_);
+  initial_cu_up_setup_routine(gnb_cu_up_id_t           cu_up_id_,
+                              std::string              cu_up_name_,
+                              std::string              plmn_,
+                              e1ap_connection_manager& e1ap_conn_mng_);
 
-  void operator()(coro_context<async_task<void>>& ctx);
+  void operator()(coro_context<async_task<bool>>& ctx);
 
   static const char* name() { return "Initial CU-UP setup routine"; }
 
@@ -33,7 +33,9 @@ private:
   async_task<cu_up_e1_setup_response> start_cu_up_e1_setup_request();
   void                                handle_cu_up_e1_setup_response(const cu_up_e1_setup_response& resp);
 
-  const cu_up_config&      cfg;
+  gnb_cu_up_id_t           cu_up_id;
+  std::string              cu_up_name;
+  std::string              plmn;
   e1ap_connection_manager& e1ap_conn_mng;
 
   srslog::basic_logger& logger;
