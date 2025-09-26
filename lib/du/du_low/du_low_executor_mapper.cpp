@@ -10,6 +10,7 @@
 
 #include "srsran/du/du_low/du_low_executor_mapper.h"
 #include "srsran/adt/mpmc_queue.h"
+#include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/upper/upper_phy_execution_configuration.h"
 #include "srsran/support/executors/concurrent_metrics_executor.h"
 #include "srsran/support/executors/inline_task_executor.h"
@@ -99,25 +100,34 @@ public:
 
     if (config.metrics.has_value()) {
       const du_low_executor_mapper_metric_config& metrics_config = *config.metrics;
-      phy_config.pdcch_executor  = wrap_executor_with_metric(phy_config.pdcch_executor, "pdcch_exec", metrics_config);
-      phy_config.pdsch_executor  = wrap_executor_with_metric(phy_config.pdsch_executor, "pdsch_exec", metrics_config);
-      phy_config.ssb_executor    = wrap_executor_with_metric(phy_config.ssb_executor, "ssb_exec", metrics_config);
-      phy_config.csi_rs_executor = wrap_executor_with_metric(phy_config.csi_rs_executor, "csi_rs_exec", metrics_config);
-      phy_config.prs_executor    = wrap_executor_with_metric(phy_config.prs_executor, "prs_exec", metrics_config);
+      phy_config.pdcch_executor =
+          wrap_executor_with_metric(phy_config.pdcch_executor, "pdcch_exec", l1_dl_tracer, metrics_config);
+      phy_config.pdsch_executor =
+          wrap_executor_with_metric(phy_config.pdsch_executor, "pdsch_exec", l1_dl_tracer, metrics_config);
+      phy_config.ssb_executor =
+          wrap_executor_with_metric(phy_config.ssb_executor, "ssb_exec", l1_dl_tracer, metrics_config);
+      phy_config.csi_rs_executor =
+          wrap_executor_with_metric(phy_config.csi_rs_executor, "csi_rs_exec", l1_dl_tracer, metrics_config);
+      phy_config.prs_executor =
+          wrap_executor_with_metric(phy_config.prs_executor, "prs_exec", l1_dl_tracer, metrics_config);
       if (phy_config.pdsch_codeblock_executor.is_valid()) {
-        phy_config.pdsch_codeblock_executor =
-            wrap_executor_with_metric(phy_config.pdsch_codeblock_executor, "pdsch_codeblock_exec", metrics_config);
+        phy_config.pdsch_codeblock_executor = wrap_executor_with_metric(
+            phy_config.pdsch_codeblock_executor, "pdsch_codeblock_exec", l1_dl_tracer, metrics_config);
       }
-      phy_config.prach_executor = wrap_executor_with_metric(phy_config.prach_executor, "prach_exec", metrics_config);
-      phy_config.pusch_executor = wrap_executor_with_metric(phy_config.pusch_executor, "pusch_exec", metrics_config);
-      phy_config.pusch_ch_estimator_executor =
-          wrap_executor_with_metric(phy_config.pusch_ch_estimator_executor, "pusch_ch_est_exec", metrics_config);
+      phy_config.prach_executor =
+          wrap_executor_with_metric(phy_config.prach_executor, "prach_exec", l1_ul_tracer, metrics_config);
+      phy_config.pusch_executor =
+          wrap_executor_with_metric(phy_config.pusch_executor, "pusch_exec", l1_ul_tracer, metrics_config);
+      phy_config.pusch_ch_estimator_executor = wrap_executor_with_metric(
+          phy_config.pusch_ch_estimator_executor, "pusch_ch_est_exec", l1_ul_tracer, metrics_config);
       if (phy_config.pusch_decoder_executor.is_valid()) {
-        phy_config.pusch_decoder_executor =
-            wrap_executor_with_metric(phy_config.pusch_decoder_executor, "pusch_dec_exec", metrics_config);
+        phy_config.pusch_decoder_executor = wrap_executor_with_metric(
+            phy_config.pusch_decoder_executor, "pusch_dec_exec", l1_ul_tracer, metrics_config);
       }
-      phy_config.pucch_executor = wrap_executor_with_metric(phy_config.pucch_executor, "pucch_exec", metrics_config);
-      phy_config.srs_executor   = wrap_executor_with_metric(phy_config.srs_executor, "srs_exec", metrics_config);
+      phy_config.pucch_executor =
+          wrap_executor_with_metric(phy_config.pucch_executor, "pucch_exec", l1_ul_tracer, metrics_config);
+      phy_config.srs_executor =
+          wrap_executor_with_metric(phy_config.srs_executor, "srs_exec", l1_ul_tracer, metrics_config);
     }
   }
 
@@ -213,13 +223,15 @@ private:
   }
 
   /// Wraps an executor with a metric decorator.
+  template <typename Tracer = detail::null_event_tracer>
   upper_phy_executor wrap_executor_with_metric(upper_phy_executor                          base_executor,
                                                std::string                                 exec_name,
+                                               Tracer&                                     tracer,
                                                const du_low_executor_mapper_metric_config& config)
   {
     srsran_assert(base_executor.is_valid(), "Invalid executor.");
     executors.emplace_back(make_concurrent_metrics_executor_ptr(
-        exec_name, *base_executor.executor, config.sequential_executor, config.logger, config.period));
+        exec_name, *base_executor.executor, config.sequential_executor, config.logger, config.period, &tracer));
     return {executors.back().get(), base_executor.max_concurrency};
   }
 

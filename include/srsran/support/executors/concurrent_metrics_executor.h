@@ -14,6 +14,7 @@
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/detail/task_executor_utils.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/memory_pool/bounded_object_pool.h"
 #include "srsran/support/rtsan.h"
 #include "srsran/support/tracing/event_tracing.h"
 #include "srsran/support/tracing/resource_usage.h"
@@ -29,8 +30,8 @@ class concurrent_metrics_executor : public task_executor
   /// Maximum number of elements the pool can hold.
   static constexpr unsigned POOL_SIZE = 32 * 1024;
 
-  using time_point = std::chrono::time_point<std::chrono::steady_clock>;
-  using queue_type = concurrent_queue<unsigned, concurrent_queue_policy::lockfree_mpmc>;
+  using time_point      = trace_clock::time_point;
+  using unique_task_ptr = bounded_object_pool<unique_task>::ptr;
 
   class task_executor_nomalloc
   {
@@ -61,55 +62,42 @@ public:
     period(period_),
     tracer(tracer_),
     trace_name(tracer == nullptr ? "" : fmt::format("{}_run", name)),
-    task_pool(POOL_SIZE),
-    free_tasks(std::make_unique<queue_type>(POOL_SIZE))
+    task_pool(POOL_SIZE)
   {
-    for (unsigned i = 0, e = task_pool.size(); i != e; ++i) {
-      (void)free_tasks->try_push(i);
-    }
-
-    last_tp = std::chrono::steady_clock::now();
+    last_tp = trace_clock::now();
   }
 
   [[nodiscard]] bool execute(unique_task task) override
   {
-    unsigned task_idx = 0;
-    if (not free_tasks->try_pop(task_idx)) {
+    unique_task_ptr task_ptr = task_pool.get();
+    if (!task_ptr) {
       logger.warning("Unable to execute new task in the '{}' metrics executor decorator", name);
       return false;
     }
 
-    unique_task& pooled_task = task_pool[task_idx];
-    pooled_task              = std::move(task);
+    *task_ptr = std::move(task);
 
-    auto enqueue_tp = std::chrono::steady_clock::now();
-    bool ret =
-        detail::invoke_execute(exec, [this, enqueue_tp, task_idx]() { process_task<false>(task_idx, enqueue_tp); });
-    if (not ret) {
-      pooled_task = {};
-      (void)free_tasks->try_push(task_idx);
-    }
+    auto enqueue_tp = trace_clock::now();
+    bool ret        = detail::invoke_execute(exec, [this, enqueue_tp, pooled_task_ptr = std::move(task_ptr)]() mutable {
+      process_task<false>(std::move(pooled_task_ptr), enqueue_tp);
+    });
     return ret;
   }
 
   [[nodiscard]] bool defer(unique_task task) override
   {
-    unsigned task_idx = 0;
-    if (not free_tasks->try_pop(task_idx)) {
+    unique_task_ptr task_ptr = task_pool.get();
+    if (!task_ptr) {
       logger.warning("Unable to defer new task in the '{}' metrics executor decorator", name);
       return false;
     }
 
-    unique_task& pooled_task = task_pool[task_idx];
-    pooled_task              = std::move(task);
+    *task_ptr = std::move(task);
 
-    auto enqueue_tp = std::chrono::steady_clock::now();
-    bool ret =
-        detail::invoke_defer(exec, [this, enqueue_tp, task_idx]() { process_task<false>(task_idx, enqueue_tp); });
-    if (not ret) {
-      pooled_task = {};
-      (void)free_tasks->try_push(task_idx);
-    }
+    auto enqueue_tp = trace_clock::now();
+    bool ret        = detail::invoke_defer(exec, [this, enqueue_tp, pooled_task_ptr = std::move(task_ptr)]() mutable {
+      process_task<true>(std::move(pooled_task_ptr), enqueue_tp);
+    });
     return ret;
   }
 
@@ -126,20 +114,15 @@ private:
   };
 
   template <bool isExec>
-  void process_task(unsigned task_idx, time_point enqueue_tp)
+  void process_task(unique_task_ptr task_ptr, time_point enqueue_tp)
   {
-    auto start_tp   = std::chrono::steady_clock::now();
+    auto start_tp   = trace_clock::now();
     auto start_rusg = resource_usage::now();
 
-    unique_task& task = task_pool[task_idx];
-    task();
-    task = {};
+    (*task_ptr)();
 
-    auto end_tp   = std::chrono::steady_clock::now();
+    auto end_tp   = trace_clock::now();
     auto end_rusg = resource_usage::now();
-
-    // Free task index.
-    (void)free_tasks->try_push(task_idx);
 
     expected<resource_usage::diff, int> diff_rusg;
     if (end_rusg.has_value() && start_rusg.has_value()) {
@@ -211,31 +194,31 @@ private:
     }
   }
 
-  std::string                     name;
-  ExecutorType                    exec;
-  task_executor_nomalloc          seq_exec;
-  srslog::log_channel&            metrics_logger;
-  srslog::basic_logger&           logger;
-  const std::chrono::milliseconds period;
-  Tracer*                         tracer;
-  const std::string               trace_name;
-  std::vector<unique_task>        task_pool;
-  std::unique_ptr<queue_type>     free_tasks;
+  std::string                      name;
+  ExecutorType                     exec;
+  task_executor_nomalloc           seq_exec;
+  srslog::log_channel&             metrics_logger;
+  srslog::basic_logger&            logger;
+  const std::chrono::milliseconds  period;
+  Tracer*                          tracer;
+  const std::string                trace_name;
+  bounded_object_pool<unique_task> task_pool;
 
-  non_persistent_data                                counters;
-  std::chrono::time_point<std::chrono::steady_clock> last_tp;
+  non_persistent_data     counters;
+  trace_clock::time_point last_tp;
 };
 
 /// Returns an owning pointer to a task executor that decorates a concurrent executor to track its performance metrics
-template <typename ConcurrentExec>
+template <typename ConcurrentExec, typename Tracer = detail::null_event_tracer>
 std::unique_ptr<task_executor> make_concurrent_metrics_executor_ptr(std::string               exec_name,
                                                                     ConcurrentExec&&          exec,
                                                                     task_executor&            seq_exec,
                                                                     srslog::log_channel&      logger,
-                                                                    std::chrono::milliseconds period)
+                                                                    std::chrono::milliseconds period,
+                                                                    Tracer*                   tracer = nullptr)
 {
-  return std::make_unique<concurrent_metrics_executor<ConcurrentExec>>(
-      std::move(exec_name), std::forward<ConcurrentExec>(exec), seq_exec, logger, period);
+  return std::make_unique<concurrent_metrics_executor<ConcurrentExec, Tracer>>(
+      std::move(exec_name), std::forward<ConcurrentExec>(exec), seq_exec, logger, period, tracer);
 }
 
 } // namespace srsran
