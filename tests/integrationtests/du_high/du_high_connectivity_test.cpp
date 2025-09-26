@@ -48,8 +48,8 @@ TEST_F(du_high_connectivity_test, when_du_starts_it_then_initiates_f1_setup)
   // Start DU and try to connect to CU.
   this->du_hi->start();
 
-  // Ensure the result is saved in the notifier.
-  run_until([this]() { return not cu_notifier.f1ap_ul_msgs.empty(); });
+  // Ensure the F1 Setup Request is saved in the CU notifier.
+  ASSERT_TRUE(run_until([this]() { return not cu_notifier.f1ap_ul_msgs.empty(); }));
 
   // Starting the DU-high initiates the F1 Setup procedure.
   ASSERT_EQ(this->cu_notifier.f1ap_ul_msgs.size(), 1);
@@ -62,7 +62,7 @@ TEST_F(du_high_connectivity_test, when_f1_connection_is_lost_then_du_detects_con
   run_f1_setup();
   ASSERT_FALSE(cu_notifier.du_released_connection());
 
-  // Trigger a disconnection.
+  // Trigger a TNL disconnection (and the channel will stay down).
   cu_notifier.set_f1_channel_state(false);
 
   // DU releases its F1 connection, it will attempt to establish a new one and fail.
@@ -72,7 +72,7 @@ TEST_F(du_high_connectivity_test, when_f1_connection_is_lost_then_du_detects_con
   ASSERT_TRUE(cu_notifier.du_released_connection());
 
   // Ensure no F1 setup request is sent (because TNL association failed).
-  ASSERT_FALSE(run_until([this]() { return not cu_notifier.f1ap_ul_msgs.empty(); }));
+  ASSERT_FALSE(run_until([this]() { return not cu_notifier.f1ap_ul_msgs.empty(); }, 200));
 }
 
 TEST_F(du_high_connectivity_test, when_f1_connection_is_lost_then_du_retries_new_connection)

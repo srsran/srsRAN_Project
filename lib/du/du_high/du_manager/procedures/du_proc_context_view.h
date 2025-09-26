@@ -10,31 +10,25 @@
 
 #pragma once
 
-#include "du_proc_context_view.h"
-#include "procedure_logger.h"
 #include "srsran/srslog/logger.h"
-#include "srsran/support/async/async_task.h"
 
 namespace srsran {
 namespace srs_du {
 
 struct du_manager_params;
+struct du_manager_context;
 class du_cell_manager;
 class du_ue_manager;
 class du_manager_metrics_aggregator_impl;
 
-class f1c_disconnection_handling_procedure
-{
-public:
-  f1c_disconnection_handling_procedure(du_proc_context_view ctxt_);
-
-  void operator()(coro_context<async_task<void>>& ctx);
-
-private:
-  const du_proc_context_view          ctxt;
-  du_procedure_logger                 proc_logger;
-
-  unsigned i = 0;
+struct du_proc_context_view {
+  /// Static parameters of the DU.
+  du_manager_params&                  params;
+  du_manager_context&                 ctxt;
+  du_cell_manager&                    cell_mng;
+  du_ue_manager&                      ue_mng;
+  du_manager_metrics_aggregator_impl& metrics;
+  srslog::basic_logger&               logger;
 };
 
 } // namespace srs_du

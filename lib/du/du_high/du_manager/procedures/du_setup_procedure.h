@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../du_metrics_aggregator_impl.h"
+#include "du_proc_context_view.h"
 #include "procedure_logger.h"
 #include "srsran/f1ap/du/f1ap_du_connection_manager.h"
 
@@ -32,10 +33,7 @@ struct du_start_request {
 class du_setup_procedure
 {
 public:
-  du_setup_procedure(const du_manager_params&            params_,
-                     du_cell_manager&                    cell_mng_,
-                     du_manager_metrics_aggregator_impl& metrics_,
-                     const du_start_request&             request = {});
+  du_setup_procedure(const du_proc_context_view& ctxt, const du_start_request& request = {});
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -48,12 +46,9 @@ private:
   // Handle F1 setup response with list of cells to activate.
   async_task<void> handle_f1_setup_response(const f1_setup_result& resp);
 
-  const du_manager_params&            params;
-  du_cell_manager&                    cell_mng;
-  du_manager_metrics_aggregator_impl& metrics;
-  const du_start_request              request;
-  srslog::basic_logger&               logger;
-  du_procedure_logger                 proc_logger;
+  const du_proc_context_view& ctxt;
+  const du_start_request      request;
+  du_procedure_logger         proc_logger;
 
   f1_setup_result response_msg = {};
 
