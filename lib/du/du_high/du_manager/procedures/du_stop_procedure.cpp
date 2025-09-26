@@ -47,9 +47,6 @@ void du_stop_procedure::operator()(coro_context<async_task<void>>& ctx)
   // Forcefully interrupt all UE activity.
   CORO_AWAIT(ue_mng.stop());
 
-  // Remove MAC cells.
-  cell_mng.remove_all_cells();
-
   proc_logger.log_proc_completed();
 
   CORO_RETURN();

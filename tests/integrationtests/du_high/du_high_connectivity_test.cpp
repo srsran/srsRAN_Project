@@ -9,6 +9,8 @@
  */
 
 #include "tests/integrationtests/du_high/test_utils/du_high_env_simulator.h"
+#include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
+#include "tests/test_doubles/mac/mac_test_messages.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/f1ap/f1ap_message.h"
 #include <gtest/gtest.h>
@@ -78,7 +80,6 @@ TEST_F(du_high_connectivity_test, when_f1_connection_is_lost_then_du_retries_new
   cu_notifier.set_f1_channel_state(true);
 
   ASSERT_TRUE(cu_notifier.f1ap_ul_msgs.empty());
-  workers.flush_pending_control_tasks();
 
   // DU stops and restarts the F1 setup procedure after detecting that the connection is back up.
   run_until([this]() { return not cu_notifier.f1ap_ul_msgs.empty(); });
@@ -86,4 +87,32 @@ TEST_F(du_high_connectivity_test, when_f1_connection_is_lost_then_du_retries_new
   ASSERT_EQ(this->cu_notifier.f1ap_ul_msgs.rbegin()->second.pdu.type().value, f1ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(this->cu_notifier.f1ap_ul_msgs.rbegin()->second.pdu.init_msg().proc_code, ASN1_F1AP_ID_F1_SETUP);
   test_logger.info("STATUS: DU successfully retried F1 Setup after connection loss.");
+}
+
+TEST_F(du_high_connectivity_test, when_f1_connection_is_lost_then_ues_are_removed)
+{
+  // Run F1 Setup
+  run_f1_setup();
+
+  // Add UE
+  du_hi->get_pdu_handler().handle_rx_data_indication(test_helpers::create_ccch_message(next_slot, to_rnti(0x4601)));
+  this->run_until([this]() { return not cu_notifier.f1ap_ul_msgs.empty(); });
+  ASSERT_EQ(cu_notifier.f1ap_ul_msgs.size(), 1);
+  ASSERT_TRUE(
+      test_helpers::is_init_ul_rrc_msg_transfer_valid(cu_notifier.f1ap_ul_msgs.rbegin()->second, to_rnti(0x4601)));
+  cu_notifier.f1ap_ul_msgs.clear();
+
+  // Signal a temporary F1 connection loss. The DU should retry the connection.
+  cu_notifier.set_f1_channel_state(false);
+  cu_notifier.set_f1_channel_state(true);
+  run_until([this]() { return not cu_notifier.f1ap_ul_msgs.empty(); });
+  cu_notifier.f1ap_ul_msgs.clear();
+  test_logger.info("STATUS: DU successfully retried F1 Setup after connection loss.");
+
+  // Add new UE
+  du_hi->get_pdu_handler().handle_rx_data_indication(test_helpers::create_ccch_message(next_slot, to_rnti(0x4602)));
+  this->run_until([this]() { return not cu_notifier.f1ap_ul_msgs.empty(); });
+  ASSERT_EQ(cu_notifier.f1ap_ul_msgs.size(), 1);
+  ASSERT_TRUE(
+      test_helpers::is_init_ul_rrc_msg_transfer_valid(cu_notifier.f1ap_ul_msgs.rbegin()->second, to_rnti(0x4602)));
 }

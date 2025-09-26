@@ -12,7 +12,6 @@
 
 #include "../du_metrics_aggregator_impl.h"
 #include "srsran/f1ap/du/f1ap_du_connection_manager.h"
-#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 namespace srs_du {

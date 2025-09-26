@@ -15,6 +15,7 @@
 #include "../du_cell_manager.h"
 #include "srsran/mac/config/mac_config_helpers.h"
 #include "srsran/scheduler/config/scheduler_cell_config_validator.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 using namespace srs_du;

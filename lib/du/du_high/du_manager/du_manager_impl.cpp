@@ -11,12 +11,15 @@
 #include "du_manager_impl.h"
 #include "du_positioning_handler_factory.h"
 #include "procedures/cu_configuration_procedure.h"
+#include "procedures/du_cell_stop_procedure.h"
 #include "procedures/du_mac_si_pdu_update_procedure.h"
 #include "procedures/du_param_config_procedure.h"
 #include "procedures/du_stop_procedure.h"
 #include "procedures/du_ue_reset_procedure.h"
 #include "procedures/du_ue_ric_configuration_procedure.h"
+#include "procedures/f1c_disconnection_handling_procedure.h"
 #include "procedures/initial_du_setup_procedure.h"
+#include "srsran/support/async/async_timer.h"
 #include "srsran/support/executors/execute_until_success.h"
 #include <condition_variable>
 #include <future>
@@ -120,28 +123,7 @@ void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message
 
 void du_manager_impl::handle_f1c_connection_loss()
 {
-  logger.info("F1-C connection lost. Stop DU activity and setup a new F1 session");
-
-  schedule_async_task(launch_async([this](coro_context<async_task<void>>& ctx) {
-    CORO_BEGIN(ctx);
-
-    if (running) {
-      // Tear down activity in remaining layers.
-      CORO_AWAIT(launch_async<du_stop_procedure>(ue_mng, cell_mng, params.f1ap.conn_mng));
-      running = false;
-    }
-
-    // Attempt a new F1 setup.
-    CORO_AWAIT(launch_async<initial_du_setup_procedure>(params, cell_mng, metrics));
-    running = true;
-
-    CORO_RETURN();
-  }));
-
-  // Switch to DU manager exec context.
-  if (not params.services.du_mng_exec.execute([this]() { handle_du_stop_request(); })) {
-    logger.error("Unable to dispatch handling of F1-C connection loss. Cause: Task queue is full.");
-  }
+  schedule_async_task(launch_async<f1c_disconnection_handling_procedure>(params, cell_mng, ue_mng, metrics));
 }
 
 void du_manager_impl::handle_du_stop_request()
