@@ -886,6 +886,45 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
   return out_cfg;
 }
 
+static void ntn_augment_rlc_config(const ntn_config& ntn_cfg, rlc_config& rlc)
+{
+  if (ntn_cfg.cell_specific_koffset > 1000) {
+    rlc.am.tx.t_poll_retx = std::max(rlc.am.tx.t_poll_retx, 4000);
+  } else if (ntn_cfg.cell_specific_koffset > 800) {
+    rlc.am.tx.t_poll_retx = std::max(rlc.am.tx.t_poll_retx, 2000);
+  } else if (ntn_cfg.cell_specific_koffset > 500) {
+    rlc.am.tx.t_poll_retx = std::max(rlc.am.tx.t_poll_retx, 2000);
+  } else if (ntn_cfg.cell_specific_koffset > 300) {
+    rlc.am.tx.t_poll_retx = std::max(rlc.am.tx.t_poll_retx, 1000);
+  } else if (ntn_cfg.cell_specific_koffset > 200) {
+    rlc.am.tx.t_poll_retx = std::max(rlc.am.tx.t_poll_retx, 800);
+  } else if (ntn_cfg.cell_specific_koffset > 100) {
+    rlc.am.tx.t_poll_retx = std::max(rlc.am.tx.t_poll_retx, 400);
+  } else if (ntn_cfg.cell_specific_koffset > 50) {
+    rlc.am.tx.t_poll_retx = std::max(rlc.am.tx.t_poll_retx, 200);
+  } else if (ntn_cfg.cell_specific_koffset > 10) {
+    rlc.am.tx.t_poll_retx = std::max(rlc.am.tx.t_poll_retx, 100);
+  } else {
+    rlc.am.tx.t_poll_retx = std::max(rlc.am.tx.t_poll_retx, 50);
+  }
+}
+
+static void ntn_augment_du_srb_config(const ntn_config& ntn_cfg, std::map<srb_id_t, srs_du::du_srb_config>& srb_cfgs)
+{
+  // NTN is enabled, so we need to augment the RLC parameters for the NTN cell.
+  for (auto& srb : srb_cfgs) {
+    ntn_augment_rlc_config(ntn_cfg, srb.second.rlc);
+  }
+}
+
+static void ntn_augment_du_qos_config(const ntn_config& ntn_cfg, std::map<five_qi_t, srs_du::du_qos_config>& qos_cfgs)
+{
+  // NTN is enabled, so we need to augment the QoS parameters for the NTN cell.
+  for (auto& qos : qos_cfgs) {
+    ntn_augment_rlc_config(ntn_cfg, qos.second.rlc);
+  }
+}
+
 static rlc_am_config generate_du_rlc_am_config(const du_high_unit_rlc_am_config& in_cfg)
 {
   rlc_am_config out_rlc;
@@ -919,6 +958,12 @@ static std::map<five_qi_t, srs_du::du_qos_config> generate_du_qos_config(const d
   if (config.qos_cfg.empty()) {
     out_cfg = config_helpers::make_default_du_qos_config_list(
         config.warn_on_drop, config.metrics.layers_cfg.enable_rlc ? config.metrics.du_report_period : 0);
+
+    for (const auto& cell : config.cells_cfg) {
+      if (cell.cell.ntn_cfg.has_value()) {
+        ntn_augment_du_qos_config(cell.cell.ntn_cfg.value(), out_cfg);
+      }
+    }
     return out_cfg;
   }
 
@@ -1006,7 +1051,7 @@ static std::map<srb_id_t, srs_du::du_srb_config> generate_du_srb_config(const du
 
   for (auto& cell : config.cells_cfg) {
     if (cell.cell.ntn_cfg.has_value()) {
-      ntn_augment_rlc_parameters(cell.cell.ntn_cfg.value(), srb_cfg);
+      ntn_augment_du_srb_config(cell.cell.ntn_cfg.value(), srb_cfg);
     }
   }
 
@@ -1138,32 +1183,6 @@ void srsran::generate_du_high_config(srs_du::du_high_configuration& du_hi_cfg,
   du_hi_cfg.ran.mac_cfg               = generate_mac_expert_config(du_high_unit_cfg);
   du_hi_cfg.ran.mac_cfg.initial_crnti = to_rnti(0x4601);
   du_hi_cfg.ran.sched_cfg             = generate_scheduler_expert_config(du_high_unit_cfg);
-}
-
-void srsran::ntn_augment_rlc_parameters(const ntn_config& ntn_cfg, std::map<srb_id_t, srs_du::du_srb_config>& srb_cfgs)
-{
-  // NTN is enabled, so we need to augment the RLC parameters for the NTN cell.
-  for (auto& srb : srb_cfgs) {
-    if (ntn_cfg.cell_specific_koffset > 1000) {
-      srb.second.rlc.am.tx.t_poll_retx = 4000;
-    } else if (ntn_cfg.cell_specific_koffset > 800) {
-      srb.second.rlc.am.tx.t_poll_retx = 2000;
-    } else if (ntn_cfg.cell_specific_koffset > 500) {
-      srb.second.rlc.am.tx.t_poll_retx = 2000;
-    } else if (ntn_cfg.cell_specific_koffset > 300) {
-      srb.second.rlc.am.tx.t_poll_retx = 1000;
-    } else if (ntn_cfg.cell_specific_koffset > 200) {
-      srb.second.rlc.am.tx.t_poll_retx = 800;
-    } else if (ntn_cfg.cell_specific_koffset > 100) {
-      srb.second.rlc.am.tx.t_poll_retx = 400;
-    } else if (ntn_cfg.cell_specific_koffset > 50) {
-      srb.second.rlc.am.tx.t_poll_retx = 200;
-    } else if (ntn_cfg.cell_specific_koffset > 10) {
-      srb.second.rlc.am.tx.t_poll_retx = 100;
-    } else {
-      srb.second.rlc.am.tx.t_poll_retx = 50;
-    }
-  }
 }
 
 void srsran::fill_du_high_worker_manager_config(worker_manager_config&     config,
