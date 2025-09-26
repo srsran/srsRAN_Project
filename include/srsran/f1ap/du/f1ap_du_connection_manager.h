@@ -145,6 +145,9 @@ public:
   /// \brief Initiates F1AP gNB-DU config update procedure as per TS 38.473, Section 8.2.4.
   virtual async_task<gnbdu_config_update_response>
   handle_du_config_update(const gnbdu_config_update_request& request) = 0;
+
+  /// \brief Query whether the F1-C interface has been setup with the CU-CP.
+  virtual bool is_f1_setup() const = 0;
 };
 
 /// Notifier used by F1AP to signal to the DU any CU-initiated requests related with the F1AP interface management.

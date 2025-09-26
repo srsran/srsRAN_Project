@@ -12,7 +12,7 @@ set(SOURCES
         du_ue_ric_configuration_procedure.cpp
         du_param_config_procedure.cpp
         du_mac_si_pdu_update_procedure.cpp
-        initial_du_setup_procedure.cpp
+        du_setup_procedure.cpp
         ue_configuration_procedure.cpp
         ue_creation_procedure.cpp
         ue_deletion_procedure.cpp

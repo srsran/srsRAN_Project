@@ -14,11 +14,11 @@
 #include "procedures/du_cell_stop_procedure.h"
 #include "procedures/du_mac_si_pdu_update_procedure.h"
 #include "procedures/du_param_config_procedure.h"
+#include "procedures/du_setup_procedure.h"
 #include "procedures/du_stop_procedure.h"
 #include "procedures/du_ue_reset_procedure.h"
 #include "procedures/du_ue_ric_configuration_procedure.h"
 #include "procedures/f1c_disconnection_handling_procedure.h"
-#include "procedures/initial_du_setup_procedure.h"
 #include "srsran/support/async/async_timer.h"
 #include "srsran/support/executors/execute_until_success.h"
 #include <condition_variable>
@@ -66,7 +66,7 @@ void du_manager_impl::start()
           CORO_BEGIN(ctx);
 
           // Connect to CU-CP and send F1 Setup Request and await for F1 setup response.
-          CORO_AWAIT(launch_async<initial_du_setup_procedure>(params, cell_mng, metrics));
+          CORO_AWAIT(launch_async<du_setup_procedure>(params, cell_mng, metrics));
 
           // Signal start() caller thread that the operation is complete.
           std::lock_guard<std::mutex> lock(mutex);

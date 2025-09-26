@@ -8,7 +8,7 @@
  *
  */
 
-#include "initial_du_setup_procedure.h"
+#include "du_setup_procedure.h"
 #include "../converters/asn1_sys_info_packer.h"
 #include "../converters/f1ap_configuration_helpers.h"
 #include "../converters/scheduler_configuration_helpers.h"
@@ -16,40 +16,76 @@
 #include "srsran/mac/config/mac_config_helpers.h"
 #include "srsran/scheduler/config/scheduler_cell_config_validator.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/async/async_no_op_task.h"
+#include "srsran/support/async/async_timer.h"
 
 using namespace srsran;
 using namespace srs_du;
 
-initial_du_setup_procedure::initial_du_setup_procedure(const du_manager_params&            params_,
-                                                       du_cell_manager&                    cell_mng_,
-                                                       du_manager_metrics_aggregator_impl& metrics_) :
-  params(params_), cell_mng(cell_mng_), metrics(metrics_), logger(srslog::fetch_basic_logger("DU-MNG"))
+du_setup_procedure::du_setup_procedure(const du_manager_params&            params_,
+                                       du_cell_manager&                    cell_mng_,
+                                       du_manager_metrics_aggregator_impl& metrics_,
+                                       const du_start_request&             request_) :
+  params(params_),
+  cell_mng(cell_mng_),
+  metrics(metrics_),
+  request(request_),
+  logger(srslog::fetch_basic_logger("DU-MNG")),
+  proc_logger(logger, "DU setup"),
+  timer(params.services.timers.create_unique_timer(params.services.du_mng_exec))
 {
 }
 
-void initial_du_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
+void du_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
-  // Connect to CU-CP.
-  if (not params.f1ap.conn_mng.connect_to_cu_cp()) {
-    report_error("Failed to connect DU to CU-CP");
+  proc_logger.log_proc_started();
+
+  // Establish TNL association with the CU-CP.
+  for (; count != request.max_f1_setup_retries and not params.f1ap.conn_mng.connect_to_cu_cp(); ++count) {
+    logger.warning("F1-C TNL association with CU-CP attempt {}/{} failed. Retrying in {} ms...",
+                   count + 1,
+                   request.max_f1_setup_retries,
+                   request.f1_setup_retry_wait.count());
+    CORO_AWAIT(async_wait_for(timer, request.f1_setup_retry_wait));
+  }
+  if (count == request.max_f1_setup_retries) {
+    report_error("F1 Setup failed. Cause: F1-C TNL connection failed");
   }
 
   // Configure cells.
   configure_du_cells();
 
   // Initiate F1 Setup.
-  CORO_AWAIT_VALUE(response_msg, start_f1_setup_request());
+  for (; count != request.max_f1_setup_retries; ++count) {
+    CORO_AWAIT_VALUE(response_msg, start_f1_setup_request());
 
-  // Handle F1 setup result and activate cells.
-  CORO_AWAIT(handle_f1_setup_response(response_msg));
+    // Handle F1 setup result and activate cells.
+    CORO_AWAIT(handle_f1_setup_response(response_msg));
+
+    if (response_msg.has_value()) {
+      break;
+    }
+  }
+  if (count == request.max_f1_setup_retries) {
+    proc_logger.log_proc_failure(failure_cause.c_str());
+    report_error("F1 Setup failed. Cause: {}", failure_cause);
+  }
+
+  proc_logger.log_proc_completed();
 
   CORO_RETURN();
 }
 
-void initial_du_setup_procedure::configure_du_cells()
+void du_setup_procedure::configure_du_cells()
 {
+  if (not request.configure_cells) {
+    // No need to reconfigure cells.
+    return;
+  }
+  cell_mng.remove_all_cells();
+
   // Save cell configurations.
   for (const du_cell_config& cell : params.ran.cells) {
     cell_mng.add_cell(cell);
@@ -77,7 +113,7 @@ void initial_du_setup_procedure::configure_du_cells()
   }
 }
 
-async_task<f1_setup_result> initial_du_setup_procedure::start_f1_setup_request()
+async_task<f1_setup_result> du_setup_procedure::start_f1_setup_request()
 {
   // Prepare request to send to F1.
   f1_setup_request_message req = {};
@@ -122,29 +158,45 @@ async_task<f1_setup_result> initial_du_setup_procedure::start_f1_setup_request()
   return params.f1ap.conn_mng.handle_f1_setup_request(req);
 }
 
-async_task<void> initial_du_setup_procedure::handle_f1_setup_response(const f1_setup_result& resp)
+async_task<void> du_setup_procedure::handle_f1_setup_response(const f1_setup_result& resp)
 {
   if (not resp.has_value()) {
-    std::string cause;
     switch (resp.error().result) {
       case f1_setup_failure::result_code::f1_setup_failure:
-        cause = "CU-CP responded with \"F1 Setup Failure\"";
+        failure_cause = "CU-CP responded with \"F1 Setup Failure\"";
         if (resp.error().f1_setup_failure_cause != "unspecified") {
-          cause += fmt::format(" with F1AP cause \"{}\"", resp.error().f1_setup_failure_cause);
+          failure_cause += fmt::format(" with F1AP cause \"{}\"", resp.error().f1_setup_failure_cause);
         }
         break;
       case f1_setup_failure::result_code::invalid_response:
-        cause = "CU-CP response to F1 Setup Request is invalid";
+        failure_cause = "CU-CP response to F1 Setup Request is invalid";
         break;
       case f1_setup_failure::result_code::timeout:
-        cause = "CU-CP did not respond to F1 Setup Request";
+        failure_cause = "CU-CP did not respond to F1 Setup Request";
         break;
       case f1_setup_failure::result_code::proc_failure:
-        cause = "DU failed to run F1 Setup Procedure";
+        failure_cause = "DU failed to run F1 Setup Procedure";
       default:
         report_fatal_error("Invalid F1 Setup Response");
     }
-    report_error("F1 Setup failed. Cause: {}", cause);
+
+    if (count < request.max_f1_setup_retries - 1) {
+      logger.warning("F1 Setup attempt {}/{} failed. Cause: {}. Retrying in {} ms...",
+                     count + 1,
+                     request.max_f1_setup_retries,
+                     failure_cause,
+                     request.f1_setup_retry_wait.count());
+      return launch_async([this](coro_context<async_task<void>>& ctx) {
+        CORO_BEGIN(ctx);
+        async_wait_for(timer, request.f1_setup_retry_wait);
+        CORO_RETURN();
+      });
+    }
+    logger.error("F1 Setup attempt {}/{} failed. Cause: {}. No more retries left.",
+                 count + 1,
+                 request.max_f1_setup_retries,
+                 failure_cause);
+    return launch_no_op_task();
   }
 
   // Success case.

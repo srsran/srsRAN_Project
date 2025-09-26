@@ -212,6 +212,7 @@ f1_setup_result f1ap_du_setup_procedure::create_f1_setup_result()
   // Update F1 DU Context (taking values from request).
   du_ctxt.du_id       = request.gnb_du_id;
   du_ctxt.gnb_du_name = request.gnb_du_name;
+  du_ctxt.f1c_setup   = true;
   du_ctxt.served_cells.clear();
   for (unsigned i = 0, sz = request.served_cells.size(); i != sz; ++i) {
     const du_cell_index_t cell_idx = request.served_cells[i].cell_index;

@@ -28,6 +28,7 @@ struct f1ap_du_cell_context {
 struct f1ap_du_context {
   gnb_du_id_t du_id = gnb_du_id_t::invalid;
   std::string gnb_du_name;
+  bool        f1c_setup = false;
   /// Last served cells reported to the CU-CP.
   slotted_id_vector<du_cell_index_t, f1ap_du_cell_context> served_cells;
 

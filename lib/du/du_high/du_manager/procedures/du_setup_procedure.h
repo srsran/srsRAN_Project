@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../du_metrics_aggregator_impl.h"
+#include "procedure_logger.h"
 #include "srsran/f1ap/du/f1ap_du_connection_manager.h"
 
 namespace srsran {
@@ -19,12 +20,22 @@ namespace srs_du {
 class du_cell_manager;
 struct du_manager_params;
 
-class initial_du_setup_procedure
+/// Request to transition the DU to operational mode.
+struct du_start_request {
+  /// Whether the cells need to be reconfigured.
+  bool                      configure_cells      = true;
+  unsigned                  max_f1_setup_retries = 1;
+  std::chrono::milliseconds f1_setup_retry_wait{1000};
+};
+
+/// Procedure to transition the DU state to operation mode.
+class du_setup_procedure
 {
 public:
-  initial_du_setup_procedure(const du_manager_params&            params_,
-                             du_cell_manager&                    cell_mng_,
-                             du_manager_metrics_aggregator_impl& metrics_);
+  du_setup_procedure(const du_manager_params&            params_,
+                     du_cell_manager&                    cell_mng_,
+                     du_manager_metrics_aggregator_impl& metrics_,
+                     const du_start_request&             request = {});
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -40,9 +51,16 @@ private:
   const du_manager_params&            params;
   du_cell_manager&                    cell_mng;
   du_manager_metrics_aggregator_impl& metrics;
+  const du_start_request              request;
   srslog::basic_logger&               logger;
+  du_procedure_logger                 proc_logger;
 
   f1_setup_result response_msg = {};
+
+  unique_timer timer;
+
+  unsigned    count = 0;
+  std::string failure_cause;
 };
 
 } // namespace srs_du

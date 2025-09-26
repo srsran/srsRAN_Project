@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "procedure_logger.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/support/async/async_task.h"
 
@@ -37,6 +38,7 @@ private:
   du_ue_manager&                      ue_mng;
   du_manager_metrics_aggregator_impl& metrics;
   srslog::basic_logger&               logger;
+  du_procedure_logger                 proc_logger;
 
   unsigned i = 0;
 };

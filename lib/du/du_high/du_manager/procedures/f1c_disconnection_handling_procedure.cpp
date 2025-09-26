@@ -11,7 +11,7 @@
 #include "f1c_disconnection_handling_procedure.h"
 #include "../du_cell_manager.h"
 #include "du_cell_stop_procedure.h"
-#include "initial_du_setup_procedure.h"
+#include "du_setup_procedure.h"
 #include "srsran/support/async/async_timer.h"
 
 using namespace srsran;
@@ -22,7 +22,12 @@ f1c_disconnection_handling_procedure::f1c_disconnection_handling_procedure(
     du_cell_manager&                    cell_mng_,
     du_ue_manager&                      ue_mng_,
     du_manager_metrics_aggregator_impl& metrics_) :
-  params(params_), cell_mng(cell_mng_), ue_mng(ue_mng_), metrics(metrics_), logger(srslog::fetch_basic_logger("DU-MNG"))
+  params(params_),
+  cell_mng(cell_mng_),
+  ue_mng(ue_mng_),
+  metrics(metrics_),
+  logger(srslog::fetch_basic_logger("DU-MNG")),
+  proc_logger(logger, "F1-C Disconnection Handling")
 {
 }
 
@@ -30,9 +35,10 @@ void f1c_disconnection_handling_procedure::operator()(coro_context<async_task<vo
 {
   CORO_BEGIN(ctx);
 
-  logger.info("Stopping DU activity. Cause: F1-C connection to CU-CP lost.");
+  proc_logger.log_proc_started();
 
-  // Tear down all cells.
+  // Stop all cells.
+  // Note: Do not delete the cells until the FAPI supports stop.
   for (; i != cell_mng.nof_cells(); ++i) {
     if (cell_mng.is_cell_active(to_du_cell_index(i))) {
       CORO_AWAIT(launch_async<du_cell_stop_procedure>(
@@ -40,15 +46,13 @@ void f1c_disconnection_handling_procedure::operator()(coro_context<async_task<vo
     }
   }
 
-  // TODO: Remove timeout once FAPI supports cell stop.
-  CORO_AWAIT(async_wait_for(params.services.timers.create_unique_timer(params.services.du_mng_exec),
-                            std::chrono::milliseconds(32)));
-  cell_mng.remove_all_cells();
-
-  logger.info("Attempting new F1-C connection to CU-CP...");
+  proc_logger.log_progress("DU activity was stopped. Attempting to re-establish F1-C connection..");
 
   // Attempt a new F1 setup connection.
-  CORO_AWAIT(launch_async<initial_du_setup_procedure>(params, cell_mng, metrics));
+  CORO_AWAIT(launch_async<du_setup_procedure>(
+      params, cell_mng, metrics, du_start_request{false, std::numeric_limits<unsigned>::max()}));
+
+  proc_logger.log_proc_completed();
 
   CORO_RETURN();
 }

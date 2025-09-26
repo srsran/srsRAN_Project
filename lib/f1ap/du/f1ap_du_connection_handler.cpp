@@ -9,6 +9,7 @@
  */
 
 #include "f1ap_du_connection_handler.h"
+#include "f1ap_du_context.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/srslog/srslog.h"
 #include <thread>
@@ -83,10 +84,12 @@ private:
 f1ap_du_connection_handler::f1ap_du_connection_handler(f1c_connection_client& f1c_client_handler_,
                                                        f1ap_message_handler&  f1ap_pdu_handler_,
                                                        f1ap_du_configurator&  du_mng_,
+                                                       f1ap_du_context&       du_ctxt_,
                                                        task_executor&         ctrl_exec_) :
   f1c_client_handler(f1c_client_handler_),
   f1ap_pdu_handler(f1ap_pdu_handler_),
   du_mng(du_mng_),
+  du_ctxt(du_ctxt_),
   ctrl_exec(ctrl_exec_),
   logger(srslog::fetch_basic_logger("DU-F1"))
 {
@@ -145,6 +148,9 @@ void f1ap_du_connection_handler::handle_connection_loss_impl()
 {
   // Mark the F1-C TNL as disconnected.
   connected_flag = false;
+
+  // F1 is implicitly not setup anymore when the TNL association is lost.
+  du_ctxt.f1c_setup = false;
 
   // In case of unexpected F1-C connection loss, the Tx path is still up.
   if (tx_pdu_notifier != nullptr) {

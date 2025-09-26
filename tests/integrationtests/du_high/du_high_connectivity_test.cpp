@@ -65,10 +65,14 @@ TEST_F(du_high_connectivity_test, when_f1_connection_is_lost_then_du_detects_con
   // Trigger a disconnection.
   cu_notifier.set_f1_channel_state(false);
 
-  // DU releases its F1 connection.
+  // DU releases its F1 connection, it will attempt to establish a new one and fail.
+  cu_notifier.f1ap_ul_msgs.clear();
   ASSERT_FALSE(cu_notifier.du_released_connection());
   workers.flush_pending_control_tasks();
   ASSERT_TRUE(cu_notifier.du_released_connection());
+
+  // Ensure no F1 setup request is sent (because TNL association failed).
+  ASSERT_FALSE(run_until([this]() { return not cu_notifier.f1ap_ul_msgs.empty(); }));
 }
 
 TEST_F(du_high_connectivity_test, when_f1_connection_is_lost_then_du_retries_new_connection)

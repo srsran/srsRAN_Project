@@ -141,6 +141,8 @@ public:
     return launch_no_op_task(gnbdu_config_update_response{true});
   }
 
+  bool is_f1_setup() const override { return true; }
+
   /// Initiates creation of UE context in F1.
   f1ap_ue_creation_response handle_ue_creation_request(const f1ap_ue_creation_request& msg) override
   {
