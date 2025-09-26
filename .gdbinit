@@ -74,37 +74,6 @@ def make_bounded_bitset(val):
 
 gdb.pretty_printers.append(make_bounded_bitset)
 
-###### optional<T> #######
-
-class OptionalPrinter(object):
-  def __init__(self, val):
-      self.val = val
-      self.value_type = self.val.type.strip_typedefs().template_argument(0)
-
-  def children(self):
-      has_val = bool(self.val['storage']['has_val'])
-      if has_val:
-          payload = self.val['storage']['payload']['val']
-          yield '[0]', payload
-
-  def to_string(self):
-      has_val = bool(self.val['storage']['has_val'])
-      if has_val:
-          return 'optional (present)'
-      return 'optional (empty)'
-
-  def display_hint(self):
-      return 'string'
-
-
-def make_optional(val):
-    s = str(val.type.strip_typedefs())
-    if s.startswith('srsran::optional<') and s.endswith('>'):
-        return OptionalPrinter(val)
-
-gdb.pretty_printers.append(make_optional)
-
-
 ###### tiny_optional<T> #######
 
 class TinyOptionalPrinter(object):
@@ -129,8 +98,8 @@ class TinyOptionalPrinter(object):
         fields = gdb_val.type.strip_typedefs().fields()
         assert len(fields) > 0
         f_type_str = str(fields[0].type.strip_typedefs())
-        if f_type_str.startswith('srsran::optional<'):
-            return bool(gdb_val['storage']['has_val'])
+        if f_type_str.startswith('std::optional<'):
+            return gdb_val['_M_payload']['_M_engaged']
         if 'std::unique_ptr<' in str(gdb_val['val'].type):
             val_str = str(gdb_val['val'])
             val_str = val_str[val_str.find('get() = ') + len('get() = ')::]
@@ -143,8 +112,8 @@ class TinyOptionalPrinter(object):
     def get_value(gdb_val):
         fields = gdb_val.type.strip_typedefs().fields()
         f_type_str = str(fields[0].type.strip_typedefs())
-        if f_type_str.startswith('srsran::optional<'):
-            return gdb_val['storage']['payload']['val']
+        if f_type_str.startswith('std::optional<'):
+            return gdb_val['_M_payload']['_M_payload']['_M_value']
         return gdb_val['val']
 
 
