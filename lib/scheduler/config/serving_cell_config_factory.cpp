@@ -415,9 +415,9 @@ ssb_configuration srsran::config_helpers::make_default_ssb_config(const cell_con
   cfg.ssb_period        = ssb_periodicity::ms10;
   cfg.k_ssb             = *params.k_ssb;
 
-  const unsigned beam_index = 63;
-  cfg.ssb_bitmap            = uint64_t(1) << beam_index;
-  cfg.beam_ids[beam_index]  = 0;
+  static constexpr unsigned beam_index = 63;
+  cfg.ssb_bitmap                       = uint64_t(1) << beam_index;
+  cfg.beam_ids[beam_index]             = 0;
 
   // The values we assign to these parameters are implementation-defined.
   cfg.ssb_block_power = -16;
