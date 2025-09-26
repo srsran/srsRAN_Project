@@ -537,8 +537,6 @@ TEST_F(prioritised_slice_scheduler_test, when_drb_slice_with_min_rb_has_ues_then
       // DRB1 slice is scheduled before DRB2 because it has MIN_RB > 0.
       ASSERT_EQ(next_dl_slice->id(), drb2_slice_id);
       ASSERT_EQ(next_ul_slice->id(), drb2_slice_id);
-      ASSERT_EQ(next_dl_slice->remaining_rbs(), MIN_SLICE_RB);
-      ASSERT_EQ(next_ul_slice->remaining_rbs(), MIN_SLICE_RB);
       next_dl_slice = slice_sched.get_next_dl_candidate();
       next_ul_slice = slice_sched.get_next_ul_candidate();
       ASSERT_EQ(next_dl_slice->id(), drb3_slice_id);
