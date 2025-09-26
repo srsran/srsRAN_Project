@@ -75,7 +75,7 @@ TEST_F(du_high_connectivity_test, when_f1_connection_is_lost_then_du_detects_con
   ASSERT_FALSE(run_until([this]() { return not cu_notifier.f1ap_ul_msgs.empty(); }, 200));
 }
 
-TEST_F(du_high_connectivity_test, when_f1_connection_is_lost_then_du_retries_new_connection)
+TEST_F(du_high_connectivity_test, when_f1_connection_is_lost_and_reestablished_then_du_completes_f1_setup)
 {
   run_f1_setup();
 
