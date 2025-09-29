@@ -10,6 +10,7 @@
 
 #include "e1ap_cu_up_impl.h"
 #include "../common/log_helpers.h"
+#include "cu_up/procedures/e1ap_cu_up_reset_procedure.h"
 #include "e1ap_cu_up_asn1_helpers.h"
 #include "procedures/bearer_context_modification_procedure.h"
 #include "procedures/bearer_context_release_procedure.h"
@@ -193,7 +194,7 @@ void e1ap_cu_up_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& ms
       handle_bearer_context_release_command(msg.value.bearer_context_release_cmd());
     } break;
     case asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::options::reset: {
-      // TODO: handle E1 Reset message.
+      handle_cu_up_e1ap_reset(msg.value.reset());
     } break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
@@ -338,8 +339,8 @@ void e1ap_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::be
 
 void e1ap_cu_up_impl::handle_cu_up_e1ap_reset(const asn1::e1ap::reset_s& msg)
 {
-  // cu_up_notifier.on_schedule_cu_up_async_task(
-  //     launch_async<e1ap_cu_up_reset_procedure>(connection_handler, *pdu_notifier, logger));
+  cu_up_notifier.on_schedule_cu_up_async_task(
+      launch_async<e1ap_cu_up_reset_procedure>(msg, cu_up_notifier, *pdu_notifier, logger));
 }
 
 void e1ap_cu_up_impl::handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome)
