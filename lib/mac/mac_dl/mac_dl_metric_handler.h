@@ -59,6 +59,13 @@ public:
 
     auto start_time_point() const { return start_tp; }
 
+    void on_sched()
+    {
+      if (enabled()) {
+        sched_tp = metric_clock::now();
+      }
+    }
+
     void on_dl_tti_req()
     {
       if (enabled()) {
@@ -87,6 +94,7 @@ public:
     slot_point                                                  sl_tx;
     metric_clock::time_point                                    slot_ind_enqueue_tp;
     metric_clock::time_point                                    start_tp;
+    metric_clock::time_point                                    sched_tp;
     metric_clock::time_point                                    dl_tti_req_tp;
     metric_clock::time_point                                    tx_data_req_tp;
     metric_clock::time_point                                    ul_tti_req_tp;
@@ -135,6 +143,7 @@ private:
     latency_data user;
     latency_data sys;
     latency_data slot_enqueue;
+    latency_data sched;
     latency_data dl_tti_req;
     latency_data tx_data_req;
     latency_data ul_tti_req;

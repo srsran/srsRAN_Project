@@ -110,7 +110,8 @@ void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& 
   }
   data.wall.save_sample(meas.sl_tx, time_diff);
   data.slot_enqueue.save_sample(meas.sl_tx, enqueue_time_diff);
-  auto last_tp = meas.start_tp;
+  data.sched.save_sample(meas.sl_tx, meas.sched_tp - meas.start_tp);
+  auto last_tp = meas.sched_tp;
   if (meas.dl_tti_req_tp != metric_clock::time_point{}) {
     data.dl_tti_req.save_sample(meas.sl_tx, meas.dl_tti_req_tp - last_tp);
     last_tp = meas.dl_tti_req_tp;
@@ -149,6 +150,7 @@ void mac_dl_cell_metric_handler::send_new_report()
     report.user_time               = data.user.get_report(data.nof_slots);
     report.sys_time                = data.sys.get_report(data.nof_slots);
     report.slot_ind_handle_latency = data.slot_enqueue.get_report(data.nof_slots);
+    report.sched_latency           = data.sched.get_report(data.nof_slots);
     report.dl_tti_req_latency      = data.dl_tti_req.get_report(data.nof_slots);
     report.tx_data_req_latency     = data.tx_data_req.get_report(data.nof_slots);
     report.ul_tti_req_latency      = data.ul_tti_req.get_report(data.nof_slots);

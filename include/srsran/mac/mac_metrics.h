@@ -43,6 +43,9 @@ struct mac_dl_cell_metric_report {
   /// \brief Description of the wall clock latency between the lower layers signalling a slot indication and the MAC
   /// starting to handle it.
   latency_report slot_ind_handle_latency;
+  /// \brief Description of the delay in the MAC scheduler between receiving a slot indication and completing the
+  /// scheduling
+  latency_report sched_latency;
   /// \brief Description of the delays between the MAC starting the processing of a slot indication and generating a DL
   /// TTI request.
   latency_report dl_tti_req_latency;
