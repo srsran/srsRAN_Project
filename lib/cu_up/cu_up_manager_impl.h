@@ -62,8 +62,9 @@ public:
 
   void handle_e1ap_connection_drop() override;
 
-  void schedule_cu_up_async_task(async_task<void> task);
   void schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) override;
+
+  void schedule_cu_up_async_task(async_task<void> task) override;
 
   // cu_up_e1ap_connection_notifier
   void on_e1ap_connection_establish() override { e1ap_connected = true; }

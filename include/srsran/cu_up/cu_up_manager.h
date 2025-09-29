@@ -53,9 +53,11 @@ public:
   /// \return True if E1AP is connected, false otherwise.
   virtual bool e1ap_is_connected() = 0;
 
-  virtual void schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) = 0;
-
   virtual void handle_e1ap_connection_drop() = 0;
+
+  virtual void schedule_cu_up_async_task(async_task<void> task) = 0;
+
+  virtual void schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) = 0;
 };
 
 class cu_up_manager : public cu_up_manager_e1ap_connection_notifier, public cu_up_manager_e1ap_interface

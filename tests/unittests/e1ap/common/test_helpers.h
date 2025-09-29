@@ -170,6 +170,11 @@ public:
 
   void on_connection_loss() override {}
 
+  void on_schedule_cu_up_async_task(async_task<void> task) override
+  {
+    task_loop.schedule(std::move(task)); // schedule ue task in dummy task loop
+  }
+
   void set_ue_index(uint16_t ue_index_) { ue_index = srs_cu_up::int_to_ue_index(ue_index_); }
 
   srs_cu_up::e1ap_bearer_context_release_command      last_bearer_context_release_command;

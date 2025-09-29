@@ -97,6 +97,9 @@ public:
   virtual async_task<void>
   on_bearer_context_release_command_received(const e1ap_bearer_context_release_command& msg) = 0;
 
+  /// \brief Schedules async task on CU-UP.
+  virtual void on_schedule_cu_up_async_task(async_task<void> task) = 0;
+
   /// \brief Schedules async task on UE.
   virtual void on_schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) = 0;
 };

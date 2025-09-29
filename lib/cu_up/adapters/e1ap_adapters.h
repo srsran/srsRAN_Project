@@ -59,6 +59,15 @@ public:
     return cu_up_handler->handle_bearer_context_release_command(msg);
   }
 
+  void on_schedule_cu_up_async_task(async_task<void> task) override
+  {
+    if (cu_up_handler == nullptr) {
+      logger.error("Could not schedule CU-UP task, no CU-UP handler present");
+      return;
+    }
+    cu_up_handler->schedule_cu_up_async_task(std::move(task));
+  }
+
   void on_schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) override
   {
     if (cu_up_handler == nullptr) {

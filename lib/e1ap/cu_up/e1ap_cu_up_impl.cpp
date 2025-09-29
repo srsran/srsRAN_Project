@@ -336,6 +336,12 @@ void e1ap_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::be
       launch_async<bearer_context_release_procedure>(ue_index, msg, *pdu_notifier, cu_up_notifier, metrics, logger));
 }
 
+void e1ap_cu_up_impl::handle_cu_up_e1ap_reset(const asn1::e1ap::reset_s& msg)
+{
+  // cu_up_notifier.on_schedule_cu_up_async_task(
+  //     launch_async<e1ap_cu_up_reset_procedure>(connection_handler, *pdu_notifier, logger));
+}
+
 void e1ap_cu_up_impl::handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome)
 {
   std::optional<uint8_t> transaction_id = get_transaction_id(outcome);
