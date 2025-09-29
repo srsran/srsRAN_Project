@@ -8,7 +8,7 @@
  *
  */
 
-#include "cu_cp_connection_loss_routine.h"
+#include "cu_up_e1_connection_loss_routine.h"
 #include "initial_cu_up_setup_routine.h"
 #include "srsran/support/async/async_timer.h"
 #include <utility>
@@ -16,14 +16,14 @@
 using namespace srsran;
 using namespace srs_cu_up;
 
-cu_cp_connection_loss_routine::cu_cp_connection_loss_routine(gnb_cu_up_id_t           cu_up_id_,
-                                                             std::string              cu_up_name_,
-                                                             std::string              plmn_,
-                                                             std::atomic<bool>&       stop_command_,
-                                                             e1ap_connection_manager& e1ap_conn_mng_,
-                                                             ue_manager&              ue_mng_,
-                                                             timer_manager&           timers,
-                                                             task_executor&           ctrl_exec) :
+cu_up_e1_connection_loss_routine::cu_up_e1_connection_loss_routine(gnb_cu_up_id_t           cu_up_id_,
+                                                                   std::string              cu_up_name_,
+                                                                   std::string              plmn_,
+                                                                   std::atomic<bool>&       stop_command_,
+                                                                   e1ap_connection_manager& e1ap_conn_mng_,
+                                                                   ue_manager&              ue_mng_,
+                                                                   timer_manager&           timers,
+                                                                   task_executor&           ctrl_exec) :
   cu_up_id(cu_up_id_),
   cu_up_name(std::move(cu_up_name_)),
   plmn(std::move(plmn_)),
@@ -35,7 +35,7 @@ cu_cp_connection_loss_routine::cu_cp_connection_loss_routine(gnb_cu_up_id_t     
 {
 }
 
-void cu_cp_connection_loss_routine::operator()(coro_context<async_task<void>>& ctx)
+void cu_up_e1_connection_loss_routine::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 

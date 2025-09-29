@@ -10,8 +10,8 @@
 
 #include "cu_up_manager_impl.h"
 #include "cu_up_manager_helpers.h"
-#include "routines/cu_cp_connection_loss_routine.h"
 #include "routines/cu_up_bearer_context_modification_routine.h"
+#include "routines/cu_up_e1_connection_loss_routine.h"
 #include "routines/cu_up_test_mode_routines.h"
 #include "srsran/support/async/execute_on_blocking.h"
 
@@ -153,7 +153,7 @@ cu_up_manager_impl::handle_bearer_context_release_command(const e1ap_bearer_cont
 
 void cu_up_manager_impl::handle_e1ap_connection_drop()
 {
-  schedule_cu_up_async_task(launch_async<cu_cp_connection_loss_routine>(
+  schedule_cu_up_async_task(launch_async<cu_up_e1_connection_loss_routine>(
       cu_up_id, cu_up_name, plmn, stop_command, e1ap, *ue_mng, timers, exec_mapper.ctrl_executor()));
 }
 
