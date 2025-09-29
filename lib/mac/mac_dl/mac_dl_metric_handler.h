@@ -143,7 +143,7 @@ private:
     latency_data wall;
     latency_data user;
     latency_data sys;
-    latency_data slot_enqueue;
+    latency_data slot_dequeue;
     latency_data sched;
     latency_data dl_tti_req;
     latency_data tx_data_req;

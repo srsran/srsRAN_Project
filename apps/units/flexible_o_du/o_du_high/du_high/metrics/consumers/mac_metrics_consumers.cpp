@@ -51,7 +51,7 @@ void mac_metrics_consumer_log::handle_metric(const mac_dl_metric_report& report)
     write_latency_information(buffer, cell.dl_tti_req_latency, "dl_tti_req_latency");
     write_latency_information(buffer, cell.tx_data_req_latency, "tx_data_req_latency");
     write_latency_information(buffer, cell.ul_tti_req_latency, "ul_tti_req_latency");
-    write_latency_information(buffer, cell.slot_ind_handle_latency, "slot_ind_latency");
+    write_latency_information(buffer, cell.slot_ind_dequeue_latency, "slot_ind_dequeue_latency");
     write_latency_information(buffer, cell.sys_time, "sys_time_latency");
     write_latency_information(buffer, cell.slot_ind_msg_time_diff, "slot_ind_msg_time_diff", false);
 
