@@ -129,8 +129,6 @@ void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& 
     auto& rusg_val = rusg_diff.value();
     data.count_vol_context_switches += rusg_val.vol_ctxt_switch_count;
     data.count_invol_context_switches += rusg_val.invol_ctxt_switch_count;
-    data.user.save_sample(meas.sl_tx, std::chrono::nanoseconds{rusg_val.user_time});
-    data.sys.save_sample(meas.sl_tx, std::chrono::nanoseconds{rusg_val.sys_time});
   }
   if (consecutive_slot_ind_time_diff != std::chrono::nanoseconds{0}) {
     data.slot_distance.save_sample(meas.sl_tx, consecutive_slot_ind_time_diff);
@@ -150,15 +148,13 @@ void mac_dl_cell_metric_handler::send_new_report()
   report.slot_duration = slot_duration;
   report.nof_slots     = data.nof_slots;
   if (data.nof_slots > 0) {
-    report.wall_clock_latency      = data.wall.get_report();
-    report.user_time               = data.user.get_report();
-    report.sys_time                = data.sys.get_report();
+    report.wall_clock_latency       = data.wall.get_report();
     report.slot_ind_dequeue_latency = data.slot_dequeue.get_report();
-    report.sched_latency           = data.sched.get_report();
-    report.dl_tti_req_latency      = data.dl_tti_req.get_report();
-    report.tx_data_req_latency     = data.tx_data_req.get_report();
-    report.ul_tti_req_latency      = data.ul_tti_req.get_report();
-    report.slot_ind_msg_time_diff  = data.slot_distance.get_report();
+    report.sched_latency            = data.sched.get_report();
+    report.dl_tti_req_latency       = data.dl_tti_req.get_report();
+    report.tx_data_req_latency      = data.tx_data_req.get_report();
+    report.ul_tti_req_latency       = data.ul_tti_req.get_report();
+    report.slot_ind_msg_time_diff   = data.slot_distance.get_report();
   }
   report.count_voluntary_context_switches   = data.count_vol_context_switches;
   report.count_involuntary_context_switches = data.count_invol_context_switches;

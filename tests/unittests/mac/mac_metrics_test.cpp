@@ -25,19 +25,12 @@ static void print_report(const mac_dl_metric_report& rep)
   fmt::print("New report:\n", rep.cells.size());
   for (unsigned i = 0; i != rep.cells.size(); ++i) {
     auto& cell = rep.cells[i];
-    fmt::print("- cell={}: slots={} wall_latency={{avg={}, min={}, max={}}}nsec, user_latency={{avg={}, min={}, "
-               "max={}}}, sys_latency={{avg={}, min={}, max={}}}, vol_ctx_switches={} invol_ctx_switches={}\n",
+    fmt::print("- cell={}: slots={} wall_latency={{avg={}, min={}, max={}}}nsec, , vol_ctx_switches={} invol_ctx_switches={}\n",
                i,
                cell.nof_slots,
                cell.wall_clock_latency.average.count(),
                cell.wall_clock_latency.min.count(),
                cell.wall_clock_latency.max.count(),
-               cell.user_time.average.count(),
-               cell.user_time.min.count(),
-               cell.user_time.max.count(),
-               cell.sys_time.average.count(),
-               cell.sys_time.min.count(),
-               cell.sys_time.max.count(),
                cell.count_voluntary_context_switches,
                cell.count_involuntary_context_switches);
   }

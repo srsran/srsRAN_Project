@@ -128,10 +128,10 @@ private:
   struct non_persistent_data {
     struct latency_data {
       unsigned                 count{0};
+      slot_point               max_slot;
       std::chrono::nanoseconds min{std::chrono::nanoseconds::max()};
       std::chrono::nanoseconds max{0};
       std::chrono::nanoseconds sum{0};
-      slot_point               max_slot;
 
       mac_dl_cell_metric_report::latency_report get_report() const;
 
@@ -141,8 +141,6 @@ private:
     unsigned     nof_slots = 0;
     slot_point   start_slot;
     latency_data wall;
-    latency_data user;
-    latency_data sys;
     latency_data slot_dequeue;
     latency_data sched;
     latency_data dl_tti_req;
