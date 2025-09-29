@@ -23,8 +23,6 @@
       limits: "6G"
   resources:
     - type: zmq
-  environment:
-    - RETINA_AGENT_ARGS: --grpc.max_size_file_artifact 209715200
 
 - name: srs-gnb
   type: gnb
