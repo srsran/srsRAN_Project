@@ -11,7 +11,7 @@
 #include "cu_up_impl.h"
 #include "cu_up_manager_impl.h"
 #include "ngu_session_manager_impl.h"
-#include "routines/initial_cu_up_setup_routine.h"
+#include "routines/cu_up_setup_routine.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_factory.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
 #include "srsran/gtpu/gtpu_echo_factory.h"
@@ -175,8 +175,7 @@ void cu_up::start()
           CORO_BEGIN(ctx);
 
           // Connect to CU-CP and send E1 Setup Request and await for E1 setup response.
-          CORO_AWAIT_VALUE(connected,
-                           launch_async<initial_cu_up_setup_routine>(cfg.cu_up_id, cfg.cu_up_name, cfg.plmn, *e1ap));
+          CORO_AWAIT_VALUE(connected, launch_async<cu_up_setup_routine>(cfg.cu_up_id, cfg.cu_up_name, cfg.plmn, *e1ap));
 
           if (cfg.test_mode_cfg.enabled) {
             logger.info("enabling test mode...");

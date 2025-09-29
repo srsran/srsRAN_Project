@@ -8,7 +8,7 @@
  *
  */
 
-#include "initial_cu_up_setup_routine.h"
+#include "cu_up_setup_routine.h"
 #include "srsran/e1ap/common/e1_setup_messages.h"
 #include "srsran/srslog/srslog.h"
 #include <utility>
@@ -16,10 +16,10 @@
 using namespace srsran;
 using namespace srs_cu_up;
 
-initial_cu_up_setup_routine::initial_cu_up_setup_routine(gnb_cu_up_id_t           cu_up_id_,
-                                                         std::string              cu_up_name_,
-                                                         std::string              plmn_,
-                                                         e1ap_connection_manager& e1ap_conn_mng_) :
+cu_up_setup_routine::cu_up_setup_routine(gnb_cu_up_id_t           cu_up_id_,
+                                         std::string              cu_up_name_,
+                                         std::string              plmn_,
+                                         e1ap_connection_manager& e1ap_conn_mng_) :
   cu_up_id(cu_up_id_),
   cu_up_name(std::move(cu_up_name_)),
   plmn(std::move(plmn_)),
@@ -28,7 +28,7 @@ initial_cu_up_setup_routine::initial_cu_up_setup_routine(gnb_cu_up_id_t         
 {
 }
 
-void initial_cu_up_setup_routine::operator()(coro_context<async_task<bool>>& ctx)
+void cu_up_setup_routine::operator()(coro_context<async_task<bool>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -48,7 +48,7 @@ void initial_cu_up_setup_routine::operator()(coro_context<async_task<bool>>& ctx
   CORO_RETURN(true);
 }
 
-async_task<cu_up_e1_setup_response> initial_cu_up_setup_routine::start_cu_up_e1_setup_request()
+async_task<cu_up_e1_setup_response> cu_up_setup_routine::start_cu_up_e1_setup_request()
 {
   // Prepare request to send to E1.
   cu_up_e1_setup_request request_msg = {};
@@ -69,7 +69,7 @@ async_task<cu_up_e1_setup_response> initial_cu_up_setup_routine::start_cu_up_e1_
   return e1ap_conn_mng.handle_cu_up_e1_setup_request(request_msg);
 }
 
-void initial_cu_up_setup_routine::handle_cu_up_e1_setup_response(const cu_up_e1_setup_response& resp)
+void cu_up_setup_routine::handle_cu_up_e1_setup_response(const cu_up_e1_setup_response& resp)
 {
   // TODO
   if (not resp.success) {

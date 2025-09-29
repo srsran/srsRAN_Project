@@ -9,7 +9,7 @@
  */
 
 #include "cu_up_e1_connection_loss_routine.h"
-#include "initial_cu_up_setup_routine.h"
+#include "cu_up_setup_routine.h"
 #include "srsran/support/async/async_timer.h"
 #include <utility>
 
@@ -45,7 +45,7 @@ void cu_up_e1_connection_loss_routine::operator()(coro_context<async_task<void>>
 
   // Attempt a new E1 setup connection.
   for (;;) {
-    CORO_AWAIT_VALUE(reconnected, launch_async<initial_cu_up_setup_routine>(cu_up_id, cu_up_name, plmn, e1ap_conn_mng));
+    CORO_AWAIT_VALUE(reconnected, launch_async<cu_up_setup_routine>(cu_up_id, cu_up_name, plmn, e1ap_conn_mng));
     if (reconnected || stop_command) {
       break;
     }

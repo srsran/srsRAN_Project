@@ -17,17 +17,17 @@
 namespace srsran {
 namespace srs_cu_up {
 
-class initial_cu_up_setup_routine
+class cu_up_setup_routine
 {
 public:
-  initial_cu_up_setup_routine(gnb_cu_up_id_t           cu_up_id_,
-                              std::string              cu_up_name_,
-                              std::string              plmn_,
-                              e1ap_connection_manager& e1ap_conn_mng_);
+  cu_up_setup_routine(gnb_cu_up_id_t           cu_up_id_,
+                      std::string              cu_up_name_,
+                      std::string              plmn_,
+                      e1ap_connection_manager& e1ap_conn_mng_);
 
   void operator()(coro_context<async_task<bool>>& ctx);
 
-  static const char* name() { return "Initial CU-UP setup routine"; }
+  static const char* name() { return "CU-UP setup routine"; }
 
 private:
   async_task<cu_up_e1_setup_response> start_cu_up_e1_setup_request();
