@@ -29,8 +29,22 @@ void e1ap_cu_up_reset_procedure::operator()(coro_context<async_task<void>>& ctx)
   logger.debug("\"{}\" started...", name());
 
   fmt::println("TEESTTTT");
+
   // Release CU-UP Bearer contexts.
-  // CORO_AWAIT(cu_up_notifier.on_bearer_context_release_command_received(bearer_context_release_cmd));
+  if (reset_msg->reset_type.type() == asn1::e1ap::reset_type_c::types_opts::e1_interface) {
+    handle_e1_interface_reset(reset_msg->reset_type.e1_interface());
+  } else if (reset_msg->reset_type.type() == asn1::e1ap::reset_type_c::types_opts::part_of_e1_interface) {
+    handle_part_of_e1_interface_reset(reset_msg->reset_type.part_of_e1_interface());
+  } else {
+    CORO_EARLY_RETURN();
+  }
 
   CORO_RETURN();
+}
+
+void e1ap_cu_up_reset_procedure::handle_e1_interface_reset(const asn1::e1ap::reset_all_e& reset_all) {}
+
+void e1ap_cu_up_reset_procedure::handle_part_of_e1_interface_reset(
+    const asn1::e1ap::ue_associated_lc_e1_conn_list_res_l& ue_reset_list)
+{
 }

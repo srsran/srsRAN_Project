@@ -30,7 +30,9 @@ public:
   void operator()(coro_context<async_task<void>>& ctx);
 
 private:
-  const char* name() const { return "E1AP CU-UP Reset Procedure"; }
+  static const char* name() { return "E1AP CU-UP Reset Procedure"; }
+  void               handle_e1_interface_reset(const asn1::e1ap::reset_all_e& reset_all);
+  void handle_part_of_e1_interface_reset(const asn1::e1ap::ue_associated_lc_e1_conn_list_res_l& ue_reset_list);
 
   asn1::e1ap::reset_s          reset_msg;
   e1ap_cu_up_manager_notifier& cu_up_notifier;
