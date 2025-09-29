@@ -1734,10 +1734,10 @@ TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_reconf_is_after_reest_both_common
   ASSERT_TRUE(u.get_pcell().cfg().init_bwp().ul_ded.has_value());
 
   // Signal a UE reconfiguration that happens after re-establishment.
-  auto ue_cfg = sched_config_helper::create_default_sched_ue_creation_request(bench->builder_params);
-  sched_ue_reconfiguration_message reconf_msg{
-      .ue_index = du_ue_index, .crnti = rnti, .cfg = ue_cfg.cfg, .reestablished = true};
-  auto ev = bench->cfg_mng.update_ue(reconf_msg);
+  auto ue_cfg              = sched_config_helper::create_default_sched_ue_creation_request(bench->builder_params);
+  ue_cfg.cfg.reestablished = true;
+  sched_ue_reconfiguration_message reconf_msg{.ue_index = du_ue_index, .crnti = rnti, .cfg = ue_cfg.cfg};
+  auto                             ev = bench->cfg_mng.update_ue(reconf_msg);
   u.handle_reconfiguration_request(ue_reconf_command{.cfg = ev.next_config()}, true);
 
   slot_point slot_update_srb_traffic{current_slot.numerology(), generate_srb_traffic_slot()};

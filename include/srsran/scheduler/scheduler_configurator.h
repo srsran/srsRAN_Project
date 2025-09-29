@@ -165,7 +165,6 @@ struct sched_ue_reconfiguration_message {
   du_ue_index_t           ue_index;
   rnti_t                  crnti;
   sched_ue_config_request cfg;
-  bool                    reestablished;
 };
 
 /// UE Delete Request.
