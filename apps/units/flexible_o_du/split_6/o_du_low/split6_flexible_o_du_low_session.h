@@ -74,9 +74,9 @@ private:
   upper_phy_ru_ul_adapter                      ru_ul_adapt;
   upper_phy_ru_timing_adapter                  ru_timing_adapt;
   upper_phy_ru_error_adapter                   ru_error_adapt;
-  std::unique_ptr<fapi::slot_messages_adaptor> slot_adaptor;
-  std::unique_ptr<srs_du::o_du_low>            odu_low;
   std::unique_ptr<radio_unit>                  ru;
+  std::unique_ptr<srs_du::o_du_low>            odu_low;
+  std::unique_ptr<fapi::slot_messages_adaptor> slot_adaptor;
   upper_phy_ru_dl_rg_adapter                   ru_dl_rg_adapt;
   upper_phy_ru_ul_request_adapter              ru_ul_request_adapt;
   split6_o_du_low_metrics_collector_impl       metrics_collector;

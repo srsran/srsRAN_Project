@@ -27,11 +27,14 @@
 #include "lib/scheduler/support/pdsch/pdsch_default_time_allocation.h"
 #include "scheduler_output_test_helpers.h"
 #include "tests/test_doubles/scheduler/scheduler_test_message_validators.h"
+#include "srsran/adt/static_vector.h"
 #include "srsran/ran/pdcch/dci_packing.h"
 #include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/ran/pucch/pucch_constants.h"
+#include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
+#include "srsran/scheduler/result/pucch_format.h"
 #include "srsran/support/error_handling.h"
-#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -45,28 +48,33 @@ void srsran::assert_tdd_pattern_consistency(const cell_configuration& cell_cfg,
   }
   ofdm_symbol_range dl_symbols = get_active_tdd_dl_symbols(
       *cell_cfg.tdd_cfg_common, sl_tx.to_uint(), cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp);
+  ASSERT_EQ(dl_symbols.length(), result.dl.nof_dl_symbols);
+
   if (dl_symbols.empty()) {
     ASSERT_TRUE(result.dl.dl_pdcchs.empty());
     ASSERT_TRUE(result.dl.ul_pdcchs.empty());
     ASSERT_TRUE(result.dl.bc.ssb_info.empty());
     ASSERT_TRUE(result.dl.bc.sibs.empty());
     ASSERT_TRUE(result.dl.rar_grants.empty());
-    ASSERT_TRUE(result.dl.ue_grants.empty());
     ASSERT_TRUE(result.dl.paging_grants.empty());
+    ASSERT_TRUE(result.dl.ue_grants.empty());
     ASSERT_TRUE(result.dl.csi_rs.empty());
   } else if (dl_symbols.length() != get_nsymb_per_slot(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp)) {
     // Partial slot case.
+    for (const auto& ssb : result.dl.bc.ssb_info) {
+      ASSERT_TRUE(dl_symbols.contains(ssb.symbols));
+    }
     for (const auto& sib : result.dl.bc.sibs) {
       ASSERT_TRUE(dl_symbols.contains(sib.pdsch_cfg.symbols));
     }
     for (const auto& rar : result.dl.rar_grants) {
       ASSERT_TRUE(dl_symbols.contains(rar.pdsch_cfg.symbols));
     }
-    for (const auto& ue_grant : result.dl.ue_grants) {
-      ASSERT_TRUE(dl_symbols.contains(ue_grant.pdsch_cfg.symbols));
-    }
     for (const auto& paging_grant : result.dl.paging_grants) {
       ASSERT_TRUE(dl_symbols.contains(paging_grant.pdsch_cfg.symbols));
+    }
+    for (const auto& ue_grant : result.dl.ue_grants) {
+      ASSERT_TRUE(dl_symbols.contains(ue_grant.pdsch_cfg.symbols));
     }
     for (const auto& csi_rs : result.dl.csi_rs) {
       ASSERT_TRUE(dl_symbols.contains(csi_rs.symbol0));
@@ -75,16 +83,26 @@ void srsran::assert_tdd_pattern_consistency(const cell_configuration& cell_cfg,
 
   ofdm_symbol_range ul_symbols = get_active_tdd_ul_symbols(
       *cell_cfg.tdd_cfg_common, sl_tx.to_uint(), cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.cp);
+  ASSERT_EQ(ul_symbols.length(), result.ul.nof_ul_symbols);
+
   if (ul_symbols.empty()) {
-    ASSERT_TRUE(result.ul.pucchs.empty());
     ASSERT_TRUE(result.ul.puschs.empty());
     ASSERT_TRUE(result.ul.prachs.empty());
+    ASSERT_TRUE(result.ul.pucchs.empty());
+    ASSERT_TRUE(result.ul.srss.empty());
   } else if (dl_symbols.length() != get_nsymb_per_slot(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.cp)) {
     for (const auto& ue_grant : result.ul.puschs) {
       ASSERT_TRUE(ul_symbols.contains(ue_grant.pusch_cfg.symbols));
     }
+    for (const auto& prach : result.ul.prachs) {
+      ofdm_symbol_range prach_symbols = {prach.start_symbol, prach.start_symbol + get_preamble_duration(prach.format)};
+      ASSERT_TRUE(ul_symbols.contains(prach_symbols));
+    }
     for (const auto& pucch : result.ul.pucchs) {
       ASSERT_TRUE(ul_symbols.contains(pucch.resources.symbols));
+    }
+    for (const auto& srs : result.ul.srss) {
+      ASSERT_TRUE(ul_symbols.contains(srs.symbols));
     }
   }
 }
@@ -93,9 +111,9 @@ void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&   c
                                                    const pdcch_dl_information& pdcch,
                                                    const pdsch_information&    pdsch)
 {
-  TESTASSERT_EQ(pdcch.ctx.rnti, pdsch.rnti);
-  TESTASSERT(*pdcch.ctx.bwp_cfg == *pdsch.bwp_cfg);
-  TESTASSERT(*pdcch.ctx.coreset_cfg == *pdsch.coreset_cfg);
+  ASSERT_EQ(pdcch.ctx.rnti, pdsch.rnti);
+  ASSERT_TRUE(*pdcch.ctx.bwp_cfg == *pdsch.bwp_cfg);
+  ASSERT_TRUE(*pdcch.ctx.coreset_cfg == *pdsch.coreset_cfg);
   bwp_configuration bwp_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
   // See TS 38.214, 5.1.2.2.2, Downlink resource allocation type 1.
   if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
@@ -108,25 +126,25 @@ void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&   c
   unsigned N_rb_dl_bwp     = 0;
   switch (pdcch.dci.type) {
     case dci_dl_rnti_config_type::si_f1_0: {
-      TESTASSERT_EQ(pdcch.ctx.rnti, rnti_t::SI_RNTI);
+      ASSERT_EQ(pdcch.ctx.rnti, rnti_t::SI_RNTI);
       time_assignment = pdcch.dci.si_f1_0.time_resource;
       freq_assignment = pdcch.dci.si_f1_0.frequency_resource;
       N_rb_dl_bwp     = pdcch.dci.si_f1_0.N_rb_dl_bwp;
-      TESTASSERT_EQ(N_rb_dl_bwp, cs_zero_crbs.length());
+      ASSERT_EQ(N_rb_dl_bwp, cs_zero_crbs.length());
       break;
     }
     case dci_dl_rnti_config_type::ra_f1_0: {
       time_assignment = pdcch.dci.ra_f1_0.time_resource;
-      TESTASSERT(time_assignment < cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.size());
+      ASSERT_TRUE(time_assignment < cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.size());
       freq_assignment = pdcch.dci.ra_f1_0.frequency_resource;
       N_rb_dl_bwp     = pdcch.dci.ra_f1_0.N_rb_dl_bwp;
-      TESTASSERT_EQ(N_rb_dl_bwp, bwp_cfg.crbs.length());
+      ASSERT_EQ(N_rb_dl_bwp, bwp_cfg.crbs.length());
     } break;
     case dci_dl_rnti_config_type::tc_rnti_f1_0: {
       time_assignment = pdcch.dci.tc_rnti_f1_0.time_resource;
       freq_assignment = pdcch.dci.tc_rnti_f1_0.frequency_resource;
       N_rb_dl_bwp     = pdcch.dci.tc_rnti_f1_0.N_rb_dl_bwp;
-      TESTASSERT_EQ(N_rb_dl_bwp, cs_zero_crbs.length());
+      ASSERT_EQ(N_rb_dl_bwp, cs_zero_crbs.length());
     } break;
     case dci_dl_rnti_config_type::c_rnti_f1_0: {
       time_assignment = pdcch.dci.c_rnti_f1_0.time_resource;
@@ -137,18 +155,18 @@ void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&   c
       time_assignment = pdcch.dci.p_rnti_f1_0.time_resource;
       freq_assignment = pdcch.dci.p_rnti_f1_0.frequency_resource;
       N_rb_dl_bwp     = pdcch.dci.p_rnti_f1_0.N_rb_dl_bwp;
-      TESTASSERT_EQ(N_rb_dl_bwp, cs_zero_crbs.length());
+      ASSERT_EQ(N_rb_dl_bwp, cs_zero_crbs.length());
     } break;
     default:
       srsran_terminate("DCI type not supported");
   }
   ofdm_symbol_range symbols =
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_assignment].symbols;
-  TESTASSERT(symbols == pdsch.symbols, "Mismatch of time-domain resource assignment and PDSCH symbols");
+  ASSERT_EQ(symbols, pdsch.symbols) << "Mismatch of time-domain resource assignment and PDSCH symbols";
 
   unsigned pdsch_freq_resource = ra_frequency_type1_get_riv(
       ra_frequency_type1_configuration{N_rb_dl_bwp, pdsch.rbs.type1().start(), pdsch.rbs.type1().length()});
-  TESTASSERT_EQ(pdsch_freq_resource, freq_assignment, "DCI frequency resource does not match PDSCH PRBs");
+  ASSERT_EQ(pdsch_freq_resource, freq_assignment) << "DCI frequency resource does not match PDSCH PRBs";
 }
 
 void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&      cell_cfg,
@@ -167,7 +185,7 @@ void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&    
           return (sib_.pdsch_cfg.rnti == pdcch.ctx.rnti) &&
                  (pdsch_freq_resource == pdcch.dci.si_f1_0.frequency_resource);
         });
-        TESTASSERT(it != sibs.end());
+        ASSERT_NE(it, sibs.end());
         linked_pdsch = &it->pdsch_cfg;
       } break;
       case dci_dl_rnti_config_type::ra_f1_0: {
@@ -176,7 +194,7 @@ void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&    
         const auto& rars = cell_res_grid[k0].result.dl.rar_grants;
         auto        it   = std::find_if(
             rars.begin(), rars.end(), [&pdcch](const auto& rar) { return rar.pdsch_cfg.rnti == pdcch.ctx.rnti; });
-        TESTASSERT(it != rars.end());
+        ASSERT_NE(it, rars.end());
         linked_pdsch = &it->pdsch_cfg;
       } break;
       case dci_dl_rnti_config_type::c_rnti_f1_0: {
@@ -186,7 +204,7 @@ void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&    
         auto        it        = std::find_if(ue_grants.begin(), ue_grants.end(), [&pdcch](const auto& grant) {
           return grant.pdsch_cfg.rnti == pdcch.ctx.rnti;
         });
-        TESTASSERT(it != ue_grants.end());
+        ASSERT_NE(it, ue_grants.end());
         linked_pdsch = &it->pdsch_cfg;
       } break;
       case dci_dl_rnti_config_type::tc_rnti_f1_0: {
@@ -197,7 +215,7 @@ void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&    
         auto        it        = std::find_if(ue_grants.begin(), ue_grants.end(), [&pdcch](const auto& grant) {
           return grant.pdsch_cfg.rnti == pdcch.ctx.rnti;
         });
-        TESTASSERT(it != ue_grants.end());
+        ASSERT_NE(it, ue_grants.end());
         linked_pdsch = &it->pdsch_cfg;
       } break;
       case dci_dl_rnti_config_type::p_rnti_f1_0: {
@@ -212,7 +230,7 @@ void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&    
         auto        it        = std::find_if(pg_grants.begin(), pg_grants.end(), [&pdcch](const auto& grant) {
           return grant.pdsch_cfg.rnti == pdcch.ctx.rnti;
         });
-        TESTASSERT(it != pg_grants.end());
+        ASSERT_NE(it, pg_grants.end());
         linked_pdsch = &it->pdsch_cfg;
       } break;
       default:
@@ -305,7 +323,101 @@ void srsran::test_pucch_consistency(const cell_configuration& cell_cfg, span<con
 {
   ASSERT_LE(pucchs.size(), cell_cfg.expert_cfg.ue.max_pucchs_per_slot);
 
-  // TODO: Add more checks.
+  constexpr unsigned max_f0_or_f1_multiplexing = pucch_constants::format1_initial_cyclic_shift_range.length() *
+                                                 pucch_constants::format1_time_domain_occ_range.length();
+
+  // Note: The grid at index max_f0_or_f1_multiplexing is used to track the union of all F0/F1 grids.
+  // [Implementation defined] This assumes that either Format 0 or Format 1 is used, but not both.
+  static_vector<cell_slot_resource_grid, max_f0_or_f1_multiplexing + 1> f0_or_f1_grids(
+      max_f0_or_f1_multiplexing + 1, cell_slot_resource_grid(cell_cfg.ul_cfg_common.freq_info_ul.scs_carrier_list));
+
+  // Note: The grid at index max_f4_multiplexing is used to track the union of all F4 grids.
+  constexpr unsigned                                              max_f4_multiplexing = 4;
+  static_vector<cell_slot_resource_grid, max_f4_multiplexing + 1> f4_grids(
+      max_f4_multiplexing + 1, cell_slot_resource_grid(cell_cfg.ul_cfg_common.freq_info_ul.scs_carrier_list));
+
+  // For formats that are not multiplexed.
+  cell_slot_resource_grid general_grid(cell_cfg.ul_cfg_common.freq_info_ul.scs_carrier_list);
+
+  for (const pucch_info& pucch : pucchs) {
+    const auto pucch_grants = get_pucch_grant_info(pucch);
+    switch (pucch.format()) {
+      case pucch_format::FORMAT_0: {
+        const auto&    f0_params        = std::get<pucch_format_0>(pucch.format_params);
+        const unsigned multiplexing_idx = f0_params.initial_cyclic_shift;
+        // Multiplexed by initial cyclic shift only.
+        // Check the general grid, the union of the F4 grids and the F0 specific grid.
+        // Write to both the F0 union grid and the F0 specific grid.
+        ASSERT_FALSE(general_grid.collides(pucch_grants.first));
+        ASSERT_FALSE(f4_grids[max_f4_multiplexing].collides(pucch_grants.first));
+        ASSERT_FALSE(f0_or_f1_grids[multiplexing_idx].collides(pucch_grants.first));
+        f0_or_f1_grids[max_f0_or_f1_multiplexing].fill(pucch_grants.first);
+        f0_or_f1_grids[multiplexing_idx].fill(pucch_grants.first);
+        if (not pucch.resources.second_hop_prbs.empty()) {
+          ASSERT_FALSE(general_grid.collides(pucch_grants.second));
+          ASSERT_FALSE(f4_grids[max_f4_multiplexing].collides(pucch_grants.second));
+          ASSERT_FALSE(f0_or_f1_grids[multiplexing_idx].collides(pucch_grants.second));
+          f0_or_f1_grids[max_f0_or_f1_multiplexing].fill(pucch_grants.second);
+          f0_or_f1_grids[multiplexing_idx].fill(pucch_grants.second);
+        }
+      } break;
+      case pucch_format::FORMAT_1: {
+        const auto&    f1_params = std::get<pucch_format_1>(pucch.format_params);
+        const unsigned multiplexing_idx =
+            f1_params.initial_cyclic_shift +
+            f1_params.time_domain_occ * pucch_constants::format0_initial_cyclic_shift_range.length();
+        // Multiplexed by initial cyclic shift and time domain OCC.
+        // Check the general grid, the union of the F4 grids and the F1 specific grid.
+        // Write to both the F1 union grid and the F1 specific grid.
+        ASSERT_FALSE(general_grid.collides(pucch_grants.first));
+        ASSERT_FALSE(f4_grids[max_f4_multiplexing].collides(pucch_grants.first));
+        ASSERT_FALSE(f0_or_f1_grids[multiplexing_idx].collides(pucch_grants.first));
+        f0_or_f1_grids[max_f0_or_f1_multiplexing].fill(pucch_grants.first);
+        f0_or_f1_grids[multiplexing_idx].fill(pucch_grants.first);
+        if (not pucch.resources.second_hop_prbs.empty()) {
+          ASSERT_FALSE(general_grid.collides(pucch_grants.second));
+          ASSERT_FALSE(f4_grids[max_f4_multiplexing].collides(pucch_grants.second));
+          ASSERT_FALSE(f0_or_f1_grids[multiplexing_idx].collides(pucch_grants.second));
+          f0_or_f1_grids[max_f0_or_f1_multiplexing].fill(pucch_grants.second);
+          f0_or_f1_grids[multiplexing_idx].fill(pucch_grants.second);
+        }
+      } break;
+      case pucch_format::FORMAT_4: {
+        const auto&    f4_params        = std::get<pucch_format_4>(pucch.format_params);
+        const unsigned multiplexing_idx = f4_params.orthog_seq_idx;
+        // Multiplexed by orthogonal sequence index.
+        // Check the general grid, the union of the F0/F1 grids and the F4 specific grid.
+        // Write to both the F4 union grid and the F4 specific grid.
+        ASSERT_FALSE(general_grid.collides(pucch_grants.first));
+        ASSERT_FALSE(f0_or_f1_grids[max_f0_or_f1_multiplexing].collides(pucch_grants.first));
+        ASSERT_FALSE(f4_grids[multiplexing_idx].collides(pucch_grants.first));
+        f4_grids[max_f4_multiplexing].fill(pucch_grants.first);
+        f4_grids[multiplexing_idx].fill(pucch_grants.first);
+        if (not pucch.resources.second_hop_prbs.empty()) {
+          ASSERT_FALSE(general_grid.collides(pucch_grants.second));
+          ASSERT_FALSE(f0_or_f1_grids[max_f0_or_f1_multiplexing].collides(pucch_grants.second));
+          ASSERT_FALSE(f4_grids[multiplexing_idx].collides(pucch_grants.second));
+          f4_grids[max_f4_multiplexing].fill(pucch_grants.second);
+          f4_grids[multiplexing_idx].fill(pucch_grants.second);
+        }
+      } break;
+      default: {
+        // Non multiplexed formats.
+        // Check the general grid, and the unions of the multiplexed grids.
+        // Only write to the general grid.
+        ASSERT_FALSE(general_grid.collides(pucch_grants.first));
+        ASSERT_FALSE(f0_or_f1_grids[max_f0_or_f1_multiplexing].collides(pucch_grants.first));
+        ASSERT_FALSE(f4_grids[max_f4_multiplexing].collides(pucch_grants.first));
+        general_grid.fill(pucch_grants.first);
+        if (not pucch.resources.second_hop_prbs.empty()) {
+          ASSERT_FALSE(general_grid.collides(pucch_grants.second));
+          ASSERT_FALSE(f0_or_f1_grids[max_f0_or_f1_multiplexing].collides(pucch_grants.second));
+          ASSERT_FALSE(f4_grids[max_f4_multiplexing].collides(pucch_grants.second));
+          general_grid.fill(pucch_grants.second);
+        }
+      } break;
+    }
+  }
 }
 
 /// \brief Tests the validity of the parameters chosen for the PDCCHs using common search spaces. Checks include:
@@ -367,17 +479,16 @@ void assert_rar_grant_msg3_pusch_consistency(const cell_configuration& cell_cfg,
                                              const rar_ul_grant&       rar_grant,
                                              const pusch_information&  msg3_pusch)
 {
-  TESTASSERT_EQ(rar_grant.temp_crnti, msg3_pusch.rnti);
-  TESTASSERT(msg3_pusch.rbs.is_type1());
-  TESTASSERT(not msg3_pusch.rbs.any(), "Msg3 with temp-c-rnti={} has no RBs", msg3_pusch.rnti);
+  ASSERT_EQ(rar_grant.temp_crnti, msg3_pusch.rnti);
+  ASSERT_TRUE(msg3_pusch.rbs.is_type1());
+  ASSERT_FALSE(msg3_pusch.rbs.any()) << fmt::format("Msg3 with temp-c-rnti={} has no RBs", msg3_pusch.rnti);
 
   unsigned     N_rb_ul_bwp = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
   vrb_interval vrbs        = msg3_pusch.rbs.type1();
   uint8_t      pusch_freq_resource =
       ra_frequency_type1_get_riv(ra_frequency_type1_configuration{N_rb_ul_bwp, vrbs.start(), vrbs.length()});
-  TESTASSERT_EQ(rar_grant.freq_resource_assignment,
-                pusch_freq_resource,
-                "Mismatch between RAR grant frequency assignment and corresponding Msg3 PUSCH PRBs");
+  ASSERT_EQ(rar_grant.freq_resource_assignment, pusch_freq_resource)
+      << fmt::format("Mismatch between RAR grant frequency assignment and corresponding Msg3 PUSCH PRBs");
 }
 
 void assert_rar_grant_msg3_pusch_consistency(const cell_configuration&      cell_cfg,
@@ -398,7 +509,7 @@ void assert_rar_grant_msg3_pusch_consistency(const cell_configuration&      cell
     span<const rar_information> rars   = res_grid[k0].result.dl.rar_grants;
     auto                        rar_it = std::find_if(
         rars.begin(), rars.end(), [&pdcch](const auto& rar) { return rar.pdsch_cfg.rnti == pdcch.ctx.rnti; });
-    TESTASSERT(rar_it != rars.end());
+    ASSERT_NE(rar_it, rars.end());
     const rar_information& rar = *rar_it;
 
     ASSERT_EQ(rar.pdsch_cfg.codewords.size(), 1);
@@ -407,7 +518,7 @@ void assert_rar_grant_msg3_pusch_consistency(const cell_configuration&      cell
 
     // For all RAR grants within the same RAR, check that they are consistent with the respective Msg3 PUSCHs.
     for (const rar_ul_grant& rar_grant : rar.grants) {
-      TESTASSERT(rar_grant.time_resource_assignment < pusch_td_list.size());
+      ASSERT_TRUE(rar_grant.time_resource_assignment < pusch_td_list.size());
       uint8_t k2 = get_msg3_delay(pusch_td_list[rar_grant.time_resource_assignment],
                                   cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs);
 
@@ -415,12 +526,11 @@ void assert_rar_grant_msg3_pusch_consistency(const cell_configuration&      cell
       auto it = std::find_if(ul_grants.begin(), ul_grants.end(), [&rar_grant](const auto& ulgrant) {
         return ulgrant.pusch_cfg.rnti == rar_grant.temp_crnti;
       });
-      TESTASSERT(it != ul_grants.end(),
-                 "Msg3 was not found for the scheduled RAR grant with tc-rnti={}",
-                 rar_grant.temp_crnti);
+      ASSERT_NE(it, ul_grants.end()) << fmt::format("Msg3 was not found for the scheduled RAR grant with tc-rnti={}",
+                                                    rar_grant.temp_crnti);
       assert_rar_grant_msg3_pusch_consistency(cell_cfg, rar_grant, it->pusch_cfg);
 
-      TESTASSERT(tc_rntis.count(rar_grant.temp_crnti) == 0, "Repeated TC-RNTI detected");
+      ASSERT_EQ(tc_rntis.count(rar_grant.temp_crnti), 0) << fmt::format("Repeated TC-RNTI detected");
       tc_rntis.emplace(rar_grant.temp_crnti);
     }
   }
@@ -432,8 +542,9 @@ void srsran::test_dl_resource_grid_collisions(const cell_configuration& cell_cfg
 
   std::vector<test_grant_info> dl_grants = get_dl_grants(cell_cfg, result);
   for (const test_grant_info& test_grant : dl_grants) {
-    TESTASSERT(not test_grant.grant.crbs.empty(), "Resource is empty");
-    TESTASSERT(not grid.collides(test_grant.grant), "Resource collision for grant with rnti={}", test_grant.rnti);
+    ASSERT_FALSE(test_grant.grant.crbs.empty()) << "Resource is empty";
+    ASSERT_FALSE(grid.collides(test_grant.grant))
+        << fmt::format("Resource collision for grant with rnti={}", test_grant.rnti);
     grid.fill(test_grant.grant);
   }
 }
@@ -465,14 +576,16 @@ void srsran::test_ul_resource_grid_collisions(const cell_configuration& cell_cfg
 {
   cell_slot_resource_grid      grid(cell_cfg.ul_cfg_common.freq_info_ul.scs_carrier_list);
   std::vector<test_grant_info> ul_grants = get_ul_grants(cell_cfg, result);
+
   for (const test_grant_info& test_grant : ul_grants) {
-    // We do not check for collisions between PUCCHs or between PUCCHs and PRACHs.
-    if (test_grant.type != test_grant_info::UE_UL) {
+    // Collisions between PUCCH grants are tested in \c test_pucch_consistency.
+    if (test_grant.type == test_grant_info::PUCCH) {
       grid.fill(test_grant.grant);
     }
   }
+
   for (const test_grant_info& test_grant : ul_grants) {
-    if (test_grant.type == test_grant_info::UE_UL) {
+    if (test_grant.type != test_grant_info::PUCCH) {
       ASSERT_FALSE(grid.collides(test_grant.grant))
           << fmt::format("Resource collision for grant with rnti={}", test_grant.rnti);
       grid.fill(test_grant.grant);
@@ -511,16 +624,17 @@ void srsran::test_scheduler_result_consistency(const cell_configuration& cell_cf
 }
 
 /// \brief Verifies that the cell resource grid PRBs and symbols was filled with the allocated PDSCHs.
-void assert_dl_resource_grid_filled(const cell_configuration& cell_cfg, const cell_resource_allocator& cell_res_grid)
+void srsran::assert_dl_resource_grid_filled(const cell_configuration&      cell_cfg,
+                                            const cell_resource_allocator& cell_res_grid)
 {
   std::vector<test_grant_info> dl_grants = get_dl_grants(cell_cfg, cell_res_grid[0].result.dl);
   for (const test_grant_info& test_grant : dl_grants) {
     if (test_grant.type != srsran::test_grant_info::DL_PDCCH and test_grant.type != srsran::test_grant_info::UL_PDCCH) {
-      TESTASSERT(cell_res_grid[0].dl_res_grid.all_set(test_grant.grant),
-                 "The allocation with rnti={}, type={}, crbs={} was not registered in the cell resource grid",
-                 test_grant.rnti,
-                 fmt::underlying(test_grant.type),
-                 test_grant.grant.crbs);
+      ASSERT_TRUE(cell_res_grid[0].dl_res_grid.all_set(test_grant.grant))
+          << fmt::format("The allocation with rnti={}, type={}, crbs={} was not registered in the cell resource grid",
+                         test_grant.rnti,
+                         fmt::underlying(test_grant.type),
+                         test_grant.grant.crbs);
     }
   }
 }

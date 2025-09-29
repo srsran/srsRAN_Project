@@ -38,7 +38,7 @@ asn1::rrc_nr::ul_ccch_msg_s create_rrc_reestablishment_request(rnti_t           
                                                                const std::string& short_mac_i = "1100011101010100");
 
 /// \brief Generates a dummy RRC Setup Complete message.
-asn1::rrc_nr::ul_dcch_msg_s create_rrc_setup_complete();
+asn1::rrc_nr::ul_dcch_msg_s create_rrc_setup_complete(uint8_t sel_plmn_id = 1);
 
 /// \brief Generates a dummy RRC Reestablishment Complete message.
 asn1::rrc_nr::ul_dcch_msg_s create_rrc_reestablishment_complete();

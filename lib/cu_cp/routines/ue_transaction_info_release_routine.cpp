@@ -21,6 +21,7 @@
  */
 
 #include "ue_transaction_info_release_routine.h"
+#include "../ngap_repository.h"
 #include "srsran/adt/scope_exit.h"
 #include "srsran/support/async/coroutine.h"
 

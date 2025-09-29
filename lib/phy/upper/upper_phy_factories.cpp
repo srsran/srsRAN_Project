@@ -29,7 +29,6 @@
 #include "upper_phy_impl.h"
 #include "upper_phy_pdu_validators.h"
 #include "upper_phy_rx_symbol_handler_printer_decorator.h"
-#include "srsran/fapi/messages/config_request_tlvs.h"
 #include "srsran/phy/metrics/phy_metrics_factories.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_estimation.h"
@@ -46,6 +45,32 @@
 #include <algorithm>
 
 using namespace srsran;
+
+static std::unique_ptr<downlink_processor_pool>
+create_downlink_processor_pool(std::shared_ptr<downlink_processor_factory> factory,
+                               const upper_phy_factory_configuration&      factory_config,
+                               const upper_phy_configuration&              config,
+                               const upper_phy_dependencies&               dependencies);
+
+static std::unique_ptr<resource_grid_pool>
+create_dl_resource_grid_pool(const upper_phy_factory_dependencies&  factory_dependencies,
+                             const upper_phy_configuration&         config,
+                             std::shared_ptr<resource_grid_factory> rg_factory);
+
+static std::shared_ptr<uplink_processor_factory>
+create_ul_processor_factory(const upper_phy_factory_configuration& config,
+                            const upper_phy_factory_dependencies&  dependencies,
+                            std::shared_ptr<resource_grid_factory> rg_factory,
+                            upper_phy_metrics_notifiers*           metric_notifier);
+
+static std::unique_ptr<uplink_processor_pool>
+create_ul_processor_pool(uplink_processor_factory&              factory,
+                         rx_buffer_pool&                        rm_buffer_pool,
+                         upper_phy_rx_results_notifier&         rx_results_notifier,
+                         const upper_phy_factory_configuration& factory_config,
+                         const upper_phy_configuration&         config);
+
+static std::unique_ptr<prach_buffer_pool> create_prach_pool(const upper_phy_configuration& config);
 
 namespace {
 
@@ -339,6 +364,136 @@ private:
   bool                                                 print_prach;
 };
 
+class upper_phy_factory_impl : public upper_phy_factory
+{
+public:
+  explicit upper_phy_factory_impl(upper_phy_factory_configuration factory_config_,
+                                  upper_phy_factory_dependencies  factory_dependencies_) :
+    factory_config(std::move(factory_config_)),
+    factory_deps(std::move(factory_dependencies_)),
+    rg_factory(create_resource_grid_factory())
+  {
+    srsran_assert(rg_factory, "Invalid resource grid factory.");
+
+    // Create upper PHY metrics collector.
+    upper_phy_metrics_notifiers* metric_notifier = nullptr;
+    if (factory_config.enable_metrics) {
+      metrics_collector = std::make_shared<upper_phy_metrics_collector_impl>();
+      metric_notifier   = metrics_collector.get();
+    }
+
+    downlink_processor_factory_sw_config dl_fact_config = {
+        .ldpc_encoder_type   = factory_config.ldpc_encoder_type,
+        .crc_calculator_type = factory_config.crc_calculator_type,
+        .pdsch_processor     = factory_config.pdsch_processor,
+        .hw_encoder_factory  = factory_deps.hw_encoder_factory,
+        .pdcch_executor      = factory_deps.executors.pdcch_executor,
+        .pdsch_executor      = factory_deps.executors.pdsch_executor,
+        .ssb_executor        = factory_deps.executors.ssb_executor,
+        .csi_rs_executor     = factory_deps.executors.csi_rs_executor,
+        .prs_executor        = factory_deps.executors.prs_executor,
+    };
+
+    downlink_processor_factory_sw_dependencies dl_fact_deps = {.pdsch_codeblock_executor =
+                                                                   factory_deps.executors.pdsch_codeblock_executor,
+                                                               .metric_notifier = metric_notifier};
+
+    downlink_proc_factory = create_downlink_processor_factory_sw(dl_fact_config, dl_fact_deps);
+    report_fatal_error_if_not(downlink_proc_factory, "Failed to create a DL processor factory.");
+
+    if (metric_notifier) {
+      downlink_proc_factory = create_downlink_processor_generator_metric_decorator_factory(
+          std::move(downlink_proc_factory), metric_notifier->get_downlink_processor_notifier());
+      report_fatal_error_if_not(downlink_proc_factory, "Failed to create a DL processor metric decorator factory.");
+    }
+
+    uplink_proc_factory = create_ul_processor_factory(factory_config, factory_deps, rg_factory, metric_notifier);
+    report_fatal_error_if_not(downlink_proc_factory, "Failed to create an UL processor factory.");
+
+    rx_symbol_handler_factory = create_rx_symbol_handler_factory();
+    report_fatal_error_if_not(rx_symbol_handler_factory, "Invalid Rx symbol handler factory.");
+
+    // If the RX symbol filename is set, create an RX symbol handler printer decorator.
+    if (!factory_config.rx_symbol_printer_filename.empty()) {
+      interval<unsigned> ul_ports(0, factory_config.nof_rx_ports);
+      if (factory_config.rx_symbol_printer_port.has_value()) {
+        ul_ports.set(*factory_config.rx_symbol_printer_port, *factory_config.rx_symbol_printer_port + 1);
+      }
+      // Configure RX symbol handler for printing the resource grid.
+      srslog::basic_logger& logger = srslog::fetch_basic_logger("PHY", true);
+      rx_symbol_handler_factory =
+          create_rx_symbol_handler_printer_decorator_factory(std::move(rx_symbol_handler_factory),
+                                                             logger,
+                                                             factory_config.rx_symbol_printer_filename,
+                                                             factory_config.ul_bw_rb,
+                                                             ul_ports,
+                                                             factory_config.rx_symbol_printer_prach);
+      report_fatal_error_if_not(rx_symbol_handler_factory, "Invalid Rx symbol handler printer decorator factory.");
+    }
+
+    // Create the RX symbol handler with the PHY tap decorator.
+    if (factory_config.enable_phy_tap) {
+      rx_symbol_handler_factory = create_rx_symbol_handler_tap_factory(
+          std::move(rx_symbol_handler_factory), factory_config.ul_bw_rb, factory_config.nof_rx_ports);
+      report_fatal_error_if_not(rx_symbol_handler_factory, "Invalid Rx symbol handler tap factory.");
+    }
+  }
+
+  std::unique_ptr<upper_phy> create(const upper_phy_configuration& config, const upper_phy_dependencies& deps) override
+  {
+    upper_phy_impl_config phy_config;
+    phy_config.pusch_max_nof_layers        = config.pusch_max_nof_layers;
+    phy_config.log_level                   = factory_config.log_level;
+    phy_config.rx_symbol_request_notifier  = deps.rx_symbol_request_notifier;
+    phy_config.nof_slots_ul_pdu_repository = config.nof_ul_rg;
+
+    phy_config.dl_rg_pool = create_dl_resource_grid_pool(factory_deps, config, rg_factory);
+    report_fatal_error_if_not(phy_config.dl_rg_pool, "Invalid downlink resource grid pool.");
+
+    phy_config.dl_processor_pool = create_downlink_processor_pool(downlink_proc_factory, factory_config, config, deps);
+    report_fatal_error_if_not(phy_config.dl_processor_pool, "Invalid downlink processor pool.");
+
+    phy_config.rx_buf_pool = create_rx_buffer_pool(config.rx_buffer_config);
+    report_fatal_error_if_not(phy_config.rx_buf_pool, "Invalid receive buffer processor pool.");
+
+    phy_config.rx_results_notifier = std::make_unique<upper_phy_rx_results_notifier_wrapper>();
+
+    phy_config.ul_processor_pool = create_ul_processor_pool(*uplink_proc_factory,
+                                                            phy_config.rx_buf_pool->get_pool(),
+                                                            *phy_config.rx_results_notifier,
+                                                            factory_config,
+                                                            config);
+    report_fatal_error_if_not(phy_config.ul_processor_pool, "Invalid uplink processor pool.");
+
+    phy_config.prach_pool = create_prach_pool(config);
+    report_fatal_error_if_not(phy_config.prach_pool, "Invalid PRACH buffer pool.");
+
+    // Create the validators.
+    phy_config.dl_pdu_validator = downlink_proc_factory->create_pdu_validator();
+    phy_config.ul_pdu_validator = uplink_proc_factory->create_pdu_validator();
+
+    // Add the metrics collector.
+    phy_config.metrics_collector = metrics_collector;
+
+    // Create the RX symbol handler.
+    phy_config.rx_symbol_handler =
+        rx_symbol_handler_factory->create(phy_config.ul_processor_pool->get_slot_processor_pool());
+
+    return std::make_unique<upper_phy_impl>(std::move(phy_config));
+  }
+
+private:
+  const upper_phy_factory_configuration                factory_config;
+  const upper_phy_factory_dependencies                 factory_deps;
+  std::shared_ptr<resource_grid_factory>               rg_factory;
+  std::shared_ptr<downlink_processor_factory>          downlink_proc_factory;
+  std::shared_ptr<uplink_processor_factory>            uplink_proc_factory;
+  std::shared_ptr<upper_phy_metrics_collector_impl>    metrics_collector;
+  std::shared_ptr<upper_phy_rx_symbol_handler_factory> rx_symbol_handler_factory;
+};
+
+} // namespace
+
 static std::unique_ptr<downlink_processor_pool>
 create_downlink_processor_pool(std::shared_ptr<downlink_processor_factory> factory,
                                const upper_phy_factory_configuration&      factory_config,
@@ -474,9 +629,29 @@ create_ul_processor_factory(const upper_phy_factory_configuration& config,
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
   report_error_if_not(prg_factory, "Invalid pseudo-random sequence generator factory.");
 
-  std::shared_ptr<port_channel_estimator_factory> ch_estimator_factory =
+  // Create port channel estimator for PUSCH and PUCCH.
+  std::shared_ptr<port_channel_estimator_factory> pusch_ch_estimator_factory =
       create_port_channel_estimator_factory_sw(ta_est_factory);
   report_error_if_not(prg_factory, "Invalid channel estimator factory.");
+  std::shared_ptr<port_channel_estimator_factory> pucch_ch_estimator_factory = pusch_ch_estimator_factory;
+
+  // Wrap PUSCH port channel estimator with metric if necessary.
+  if (metric_notifier) {
+    // First, wrap TA estimator.
+    std::shared_ptr<time_alignment_estimator_factory> metric_ta_est_factory =
+        create_time_alignment_estimator_metric_decorator_factory(ta_est_factory,
+                                                                 metric_notifier->get_pusch_ta_estimator_notifier());
+    report_fatal_error_if_not(metric_ta_est_factory, "Failed to create TA estimator factory.");
+
+    // Create a different factory containing the new TA estimator factory.
+    pusch_ch_estimator_factory = create_port_channel_estimator_factory_sw(metric_ta_est_factory);
+    report_error_if_not(pusch_ch_estimator_factory, "Invalid channel estimator factory.");
+
+    // Finally, wrap the factory with the metric decorator.
+    pusch_ch_estimator_factory = create_port_channel_estimator_metric_decorator_factory(
+        std::move(pusch_ch_estimator_factory), metric_notifier->get_pusch_port_channel_estimator_notifier());
+    report_error_if_not(pusch_ch_estimator_factory, "Invalid port channel estimator factory.");
+  }
 
   std::shared_ptr<low_papr_sequence_generator_factory> low_papr_sequence_gen_factory =
       create_low_papr_sequence_generator_sw_factory();
@@ -503,15 +678,6 @@ create_ul_processor_factory(const upper_phy_factory_configuration& config,
   std::shared_ptr<crc_calculator_factory> crc_calc_factory =
       create_crc_calculator_factory_sw(config.crc_calculator_type);
   report_fatal_error_if_not(crc_calc_factory, "Invalid CRC calculator factory of type {}.", config.crc_calculator_type);
-
-  // Create PUSCH channel estimator.
-  std::shared_ptr<dmrs_pusch_estimator_factory> pusch_channel_estimator_factory =
-      create_dmrs_pusch_estimator_factory_sw(prg_factory,
-                                             low_papr_sequence_gen_factory,
-                                             ch_estimator_factory,
-                                             pusch_chan_estimator_fd_strategy,
-                                             pusch_chan_estimator_td_strategy,
-                                             config.pusch_channel_estimator_compensate_cfo);
 
   std::shared_ptr<ulsch_demultiplex_factory> ulsch_demux_factory = create_ulsch_demultiplex_factory_sw();
   report_fatal_error_if_not(ulsch_demux_factory, "Failed to create UL-SCH demultiplex factory.");
@@ -543,32 +709,6 @@ create_ul_processor_factory(const upper_phy_factory_configuration& config,
         std::move(pusch_evm_calc_factory), metric_notifier->get_pusch_evm_calculator_notifier());
     report_fatal_error_if_not(pusch_evm_calc_factory, "Failed to create factory.");
 
-    std::shared_ptr<time_alignment_estimator_factory> pusch_ta_est_factory =
-        create_time_alignment_estimator_metric_decorator_factory(ta_est_factory,
-                                                                 metric_notifier->get_pusch_ta_estimator_notifier());
-    report_fatal_error_if_not(pusch_ta_est_factory, "Failed to create TA estimator factory.");
-
-    std::shared_ptr<port_channel_estimator_factory> pusch_ch_estimator_factory =
-        create_port_channel_estimator_factory_sw(pusch_ta_est_factory);
-    report_error_if_not(pusch_ch_estimator_factory, "Invalid channel estimator factory.");
-
-    pusch_ch_estimator_factory = create_port_channel_estimator_metric_decorator_factory(
-        std::move(pusch_ch_estimator_factory), metric_notifier->get_pusch_port_channel_estimator_notifier());
-    report_error_if_not(pusch_ch_estimator_factory, "Invalid port channel estimator factory.");
-
-    pusch_channel_estimator_factory = pusch_channel_estimator_factory =
-        create_dmrs_pusch_estimator_factory_sw(prg_factory,
-                                               low_papr_sequence_gen_factory,
-                                               ch_estimator_factory,
-                                               pusch_chan_estimator_fd_strategy,
-                                               pusch_chan_estimator_td_strategy,
-                                               config.pusch_channel_estimator_compensate_cfo);
-    report_error_if_not(pusch_channel_estimator_factory, "Invalid channel estimator factory.");
-
-    pusch_channel_estimator_factory = create_pusch_channel_estimator_metric_decorator_factory(
-        std::move(pusch_channel_estimator_factory), metric_notifier->get_pusch_channel_estimator_notifier());
-    report_fatal_error_if_not(pusch_channel_estimator_factory, "Failed to create factory.");
-
     ulsch_demux_factory = create_ulsch_demultiplex_metric_decorator_factory(
         std::move(ulsch_demux_factory), metric_notifier->get_ulsch_demultiplex_notifier());
     report_fatal_error_if_not(ulsch_demux_factory, "Failed to create UL-SCH demultiplex factory.");
@@ -576,6 +716,31 @@ create_ul_processor_factory(const upper_phy_factory_configuration& config,
     pusch_precoding_factory = create_transform_precoder_metric_decorator_factory(
         std::move(pusch_precoding_factory), metric_notifier->get_pusch_transform_precoder_notifier());
     report_fatal_error_if_not(pusch_precoding_factory, "Failed to create transform precoder factory.");
+  }
+
+  // If the PUSCH channel estimator is configured for multiple threads, then wrap with a pool.
+  if (dependencies.executors.pusch_ch_estimator_executor.max_concurrency > 1) {
+    pusch_ch_estimator_factory = create_port_channel_estimator_pool_factory(
+        pusch_ch_estimator_factory, dependencies.executors.pusch_ch_estimator_executor.max_concurrency);
+    report_fatal_error_if_not(pusch_ch_estimator_factory, "Invalid channel estimator factory.");
+  }
+
+  // Create DM-RS based PUSCH channel estimator factory.
+  std::shared_ptr<dmrs_pusch_estimator_factory> pusch_channel_estimator_factory =
+      create_dmrs_pusch_estimator_factory_sw(prg_factory,
+                                             low_papr_sequence_gen_factory,
+                                             pusch_ch_estimator_factory,
+                                             *dependencies.executors.pusch_ch_estimator_executor.executor,
+                                             pusch_chan_estimator_fd_strategy,
+                                             pusch_chan_estimator_td_strategy,
+                                             config.pusch_channel_estimator_compensate_cfo);
+  report_error_if_not(pusch_channel_estimator_factory, "Invalid channel estimator factory.");
+
+  // Wrap the DM-RS based PUSCH channel estimator with the metric decorator.
+  if (metric_notifier) {
+    pusch_channel_estimator_factory = create_pusch_channel_estimator_metric_decorator_factory(
+        std::move(pusch_channel_estimator_factory), metric_notifier->get_pusch_channel_estimator_notifier());
+    report_fatal_error_if_not(pusch_channel_estimator_factory, "Failed to create factory.");
   }
 
   // Check if a hardware-accelerated PUSCH processor is requested.
@@ -839,134 +1004,6 @@ static std::unique_ptr<prach_buffer_pool> create_prach_pool(const upper_phy_conf
 
   return create_prach_buffer_pool(std::move(prach_mem));
 }
-
-class upper_phy_factory_impl : public upper_phy_factory
-{
-public:
-  explicit upper_phy_factory_impl(const upper_phy_factory_configuration& factory_config_,
-                                  const upper_phy_factory_dependencies&  factory_dependencies_) :
-    factory_config(factory_config_), factory_deps(factory_dependencies_), rg_factory(create_resource_grid_factory())
-  {
-    srsran_assert(rg_factory, "Invalid resource grid factory.");
-
-    // Create upper PHY metrics collector.
-    upper_phy_metrics_notifiers* metric_notifier = nullptr;
-    if (factory_config.enable_metrics) {
-      metrics_collector = std::make_shared<upper_phy_metrics_collector_impl>();
-      metric_notifier   = metrics_collector.get();
-    }
-
-    downlink_processor_factory_sw_config dl_fact_config = {
-        .ldpc_encoder_type   = factory_config.ldpc_encoder_type,
-        .crc_calculator_type = factory_config.crc_calculator_type,
-        .pdsch_processor     = factory_config.pdsch_processor,
-        .hw_encoder_factory  = factory_deps.hw_encoder_factory,
-        .pdcch_executor      = factory_deps.executors.pdcch_executor,
-        .pdsch_executor      = factory_deps.executors.pdsch_executor,
-        .ssb_executor        = factory_deps.executors.ssb_executor,
-        .csi_rs_executor     = factory_deps.executors.csi_rs_executor,
-        .prs_executor        = factory_deps.executors.prs_executor,
-    };
-
-    downlink_processor_factory_sw_dependencies dl_fact_deps = {.pdsch_codeblock_executor =
-                                                                   factory_deps.executors.pdsch_codeblock_executor,
-                                                               .metric_notifier = metric_notifier};
-
-    downlink_proc_factory = create_downlink_processor_factory_sw(dl_fact_config, dl_fact_deps);
-    report_fatal_error_if_not(downlink_proc_factory, "Failed to create a DL processor factory.");
-
-    if (metric_notifier) {
-      downlink_proc_factory = create_downlink_processor_generator_metric_decorator_factory(
-          std::move(downlink_proc_factory), metric_notifier->get_downlink_processor_notifier());
-      report_fatal_error_if_not(downlink_proc_factory, "Failed to create a DL processor metric decorator factory.");
-    }
-
-    uplink_proc_factory = create_ul_processor_factory(factory_config, factory_deps, rg_factory, metric_notifier);
-    report_fatal_error_if_not(downlink_proc_factory, "Failed to create an UL processor factory.");
-
-    rx_symbol_handler_factory = create_rx_symbol_handler_factory();
-    report_fatal_error_if_not(rx_symbol_handler_factory, "Invalid Rx symbol handler factory.");
-
-    // If the RX symbol filename is set, create an RX symbol handler printer decorator.
-    if (!factory_config.rx_symbol_printer_filename.empty()) {
-      interval<unsigned> ul_ports(0, factory_config.nof_rx_ports);
-      if (factory_config.rx_symbol_printer_port.has_value()) {
-        ul_ports.set(*factory_config.rx_symbol_printer_port, *factory_config.rx_symbol_printer_port + 1);
-      }
-      // Configure RX symbol handler for printing the resource grid.
-      srslog::basic_logger& logger = srslog::fetch_basic_logger("PHY", true);
-      rx_symbol_handler_factory =
-          create_rx_symbol_handler_printer_decorator_factory(std::move(rx_symbol_handler_factory),
-                                                             logger,
-                                                             factory_config.rx_symbol_printer_filename,
-                                                             factory_config.ul_bw_rb,
-                                                             ul_ports,
-                                                             factory_config.rx_symbol_printer_prach);
-      report_fatal_error_if_not(rx_symbol_handler_factory, "Invalid Rx symbol handler printer decorator factory.");
-    }
-
-    // Create the RX symbol handler with the PHY tap decorator.
-    if (factory_config.enable_phy_tap) {
-      rx_symbol_handler_factory = create_rx_symbol_handler_tap_factory(
-          std::move(rx_symbol_handler_factory), factory_config.ul_bw_rb, factory_config.nof_rx_ports);
-      report_fatal_error_if_not(rx_symbol_handler_factory, "Invalid Rx symbol handler tap factory.");
-    }
-  }
-
-  std::unique_ptr<upper_phy> create(const upper_phy_configuration& config, const upper_phy_dependencies& deps) override
-  {
-    upper_phy_impl_config phy_config;
-    phy_config.pusch_max_nof_layers        = config.pusch_max_nof_layers;
-    phy_config.log_level                   = factory_config.log_level;
-    phy_config.rx_symbol_request_notifier  = deps.rx_symbol_request_notifier;
-    phy_config.nof_slots_ul_pdu_repository = config.nof_ul_rg;
-
-    phy_config.dl_rg_pool = create_dl_resource_grid_pool(factory_deps, config, rg_factory);
-    report_fatal_error_if_not(phy_config.dl_rg_pool, "Invalid downlink resource grid pool.");
-
-    phy_config.dl_processor_pool = create_downlink_processor_pool(downlink_proc_factory, factory_config, config, deps);
-    report_fatal_error_if_not(phy_config.dl_processor_pool, "Invalid downlink processor pool.");
-
-    phy_config.rx_buf_pool = create_rx_buffer_pool(config.rx_buffer_config);
-    report_fatal_error_if_not(phy_config.rx_buf_pool, "Invalid receive buffer processor pool.");
-
-    phy_config.rx_results_notifier = std::make_unique<upper_phy_rx_results_notifier_wrapper>();
-
-    phy_config.ul_processor_pool = create_ul_processor_pool(*uplink_proc_factory,
-                                                            phy_config.rx_buf_pool->get_pool(),
-                                                            *phy_config.rx_results_notifier,
-                                                            factory_config,
-                                                            config);
-    report_fatal_error_if_not(phy_config.ul_processor_pool, "Invalid uplink processor pool.");
-
-    phy_config.prach_pool = create_prach_pool(config);
-    report_fatal_error_if_not(phy_config.prach_pool, "Invalid PRACH buffer pool.");
-
-    // Create the validators.
-    phy_config.dl_pdu_validator = downlink_proc_factory->create_pdu_validator();
-    phy_config.ul_pdu_validator = uplink_proc_factory->create_pdu_validator();
-
-    // Add the metrics collector.
-    phy_config.metrics_collector = metrics_collector;
-
-    // Create the RX symbol handler.
-    phy_config.rx_symbol_handler =
-        rx_symbol_handler_factory->create(phy_config.ul_processor_pool->get_slot_processor_pool());
-
-    return std::make_unique<upper_phy_impl>(std::move(phy_config));
-  }
-
-private:
-  const upper_phy_factory_configuration                factory_config;
-  const upper_phy_factory_dependencies                 factory_deps;
-  std::shared_ptr<resource_grid_factory>               rg_factory;
-  std::shared_ptr<downlink_processor_factory>          downlink_proc_factory;
-  std::shared_ptr<uplink_processor_factory>            uplink_proc_factory;
-  std::shared_ptr<upper_phy_metrics_collector_impl>    metrics_collector;
-  std::shared_ptr<upper_phy_rx_symbol_handler_factory> rx_symbol_handler_factory;
-};
-
-} // namespace
 
 std::shared_ptr<upper_phy_rx_symbol_handler_factory> srsran::create_rx_symbol_handler_factory()
 {

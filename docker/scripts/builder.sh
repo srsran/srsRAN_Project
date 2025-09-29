@@ -19,7 +19,7 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-set -e # stop executing after error
+set -eo pipefail
 
 # Print help and syntax
 print_help() {

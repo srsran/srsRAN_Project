@@ -23,6 +23,7 @@
 #pragma once
 
 #include "messages/config_request_tlvs.h"
+#include <any>
 
 namespace srsran {
 namespace fapi {
@@ -35,6 +36,8 @@ struct fapi_cell_config {
   prach_config   prach_cfg;
   ssb_config     ssb_cfg;
   tdd_phy_config tdd_cfg;
+  /// Vendor specific configuration..
+  std::any vendor_cfg;
 };
 
 } // namespace fapi

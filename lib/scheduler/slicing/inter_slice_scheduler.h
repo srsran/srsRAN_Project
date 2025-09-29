@@ -58,6 +58,8 @@ public:
   const slice_rrm_policy_config& slice_config(ran_slice_id_t id) const { return slices[id.value()].inst.cfg; }
   scheduler_policy&              get_policy(ran_slice_id_t id) { return *slices[id.value()].policy; }
 
+  void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& slice_reconf_req);
+
 private:
   /// Class responsible for tracking the scheduling context of each RAN slice instance.
   struct ran_slice_sched_context {

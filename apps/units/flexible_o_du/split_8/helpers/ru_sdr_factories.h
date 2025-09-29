@@ -30,9 +30,11 @@ namespace srsran {
 struct flexible_o_du_ru_dependencies;
 struct flexible_o_du_ru_config;
 
-/// Creates and returns a SDR RU with the given consifuration and dependencies.
-std::unique_ptr<radio_unit> create_sdr_radio_unit(const ru_sdr_unit_config&            ru_cfg,
-                                                  const flexible_o_du_ru_config&       ru_config,
-                                                  const flexible_o_du_ru_dependencies& ru_dependencies);
+/// Creates and returns a SDR RU with the given configuration and dependencies.
+std::unique_ptr<radio_unit>
+create_sdr_radio_unit(const ru_sdr_unit_config&                            ru_cfg,
+                      const flexible_o_du_ru_config&                       ru_config,
+                      const flexible_o_du_ru_dependencies&                 ru_dependencies,
+                      std::optional<std::chrono::system_clock::time_point> start_time = std::nullopt);
 
 } // namespace srsran

@@ -58,7 +58,6 @@ protected:
   dummy_du_connection_notifier            du_conn_notifier;
   dummy_f1ap_pdu_notifier                 f1ap_pdu_notifier;
   dummy_rrc_ue_cu_cp_adapter              rrc_ue_cu_cp_notifier;
-  dummy_rrc_du_cu_cp_adapter              rrc_du_cu_cp_notifier;
   std::unique_ptr<cu_cp_du_event_handler> cu_cp_event_handler;
   std::unique_ptr<common_task_scheduler>  common_task_sched;
   du_configuration_manager                du_cfg_mgr;

@@ -25,6 +25,7 @@
 /// TC-RNTI to C-RNTI transitions.
 
 #include "test_utils/config_generators.h"
+#include "test_utils/indication_generators.h"
 #include "test_utils/result_test_helpers.h"
 #include "test_utils/scheduler_test_simulator.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
@@ -68,6 +69,8 @@ public:
   rnti_t        rnti     = to_rnti(0x4601);
 };
 
+/// \brief Test to verify that when a PDSCH with ConRes CE is scheduled even when there is no LCID0/LCID1 PDU passed
+/// down to the scheduler.
 class scheduler_conres_without_pdu_test : public base_scheduler_conres_test, public ::testing::Test
 {};
 
@@ -95,6 +98,8 @@ void PrintTo(const conres_test_params& value, ::std::ostream* os)
       "LCID={}, mode={}", fmt::underlying(value.msg4_lcid), value.duplx_mode == duplex_mode::TDD ? "TDD" : "FDD");
 }
 
+/// \brief Test to verify the correct scheduling of the ConRes CE and Msg4 LCID0/1 PDU even when multiple PRACH
+/// preambles are detected.
 class scheduler_con_res_msg4_test : public base_scheduler_conres_test,
                                     public ::testing::TestWithParam<conres_test_params>
 {
@@ -295,3 +300,85 @@ INSTANTIATE_TEST_SUITE_P(scheduler_con_res_msg4_test,
                                            conres_test_params{LCID_SRB0, duplex_mode::TDD},
                                            conres_test_params{LCID_SRB1, duplex_mode::FDD},
                                            conres_test_params{LCID_SRB1, duplex_mode::TDD}));
+
+class scheduler_conres_expiry_test : public scheduler_test_simulator, public ::testing::Test
+{
+protected:
+  scheduler_conres_expiry_test() :
+    scheduler_test_simulator(scheduler_test_sim_config{.max_scs = subcarrier_spacing::kHz30})
+  {
+    // Create cell.
+    auto cell_cfg_req = sched_config_helper::make_default_sched_cell_configuration_request(builder_params);
+    add_cell(cell_cfg_req);
+
+    // Create a UE.
+    auto ue_cfg               = sched_config_helper::create_default_sched_ue_creation_request(builder_params, {});
+    ue_cfg.ue_index           = ue_index;
+    ue_cfg.crnti              = rnti;
+    ue_cfg.starts_in_fallback = true;
+    ue_cfg.ul_ccch_slot_rx    = next_slot;
+    scheduler_test_simulator::add_ue(ue_cfg, true);
+    ul_ccch_slot_rx = next_slot;
+    conres_expiry_slot =
+        ul_ccch_slot_rx + cell_cfg_req.ul_cfg_common.init_ul_bwp.rach_cfg_common->ra_con_res_timer.count() *
+                              next_slot.nof_slots_per_subframe();
+  }
+
+  cell_config_builder_params builder_params{cell_config_builder_profiles::tdd()};
+  const du_cell_index_t      cell_index = to_du_cell_index(0);
+  const du_ue_index_t        ue_index   = to_du_ue_index(0);
+  const rnti_t               rnti       = to_rnti(0x4601);
+  slot_point                 ul_ccch_slot_rx;
+  slot_point                 conres_expiry_slot;
+};
+
+TEST_F(scheduler_conres_expiry_test, when_conres_ce_arrives_after_conres_timer_expires_then_no_pdsch_is_scheduled)
+{
+  // CE is enqueued after the ConRes timer expires.
+  auto ce_enqueue_slot = conres_expiry_slot + test_rgen::uniform_int<unsigned>(0, 10);
+  while (next_slot < ce_enqueue_slot) {
+    run_slot();
+    ASSERT_EQ(find_ue_pdsch(rnti, *last_sched_res_list[cell_index]), nullptr)
+        << "PDSCH scheduled but there is no pending data";
+  }
+  this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
+
+  // Ensure the ConRes CE is not scheduled.
+  ASSERT_FALSE(this->run_slot_until(
+      [this]() { return find_ue_pdsch(rnti, *this->last_sched_res_list[cell_index]) != nullptr; }, 100));
+}
+
+TEST_F(scheduler_conres_expiry_test, when_conres_retx_goes_after_conres_timer_expiry_it_is_not_scheduled)
+{
+  auto pdsch_is_sched = [this]() { return find_ue_pdsch(rnti, *this->last_sched_res_list[cell_index]) != nullptr; };
+
+  // Get closer to the conRes expiry slot.
+  while (next_slot < conres_expiry_slot - 10) {
+    run_slot();
+    ASSERT_FALSE(pdsch_is_sched());
+  }
+
+  // Wait for newTx with ConRes CE to be scheduled.
+  this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
+  ASSERT_TRUE(this->run_slot_until(pdsch_is_sched, 100));
+
+  // Wait for common PUCCH.
+  ASSERT_TRUE(this->run_slot_until(
+      [this]() { return find_ue_pucch(rnti, *this->last_sched_res_list[cell_index]) != nullptr; }, 100));
+
+  // Enqueue a NACK after ConRes timer expires.
+  uci_indication uci_ind;
+  uci_ind.cell_index = cell_index;
+  uci_ind.slot_rx    = next_slot - 1;
+  for (const pucch_info& pucch : this->last_sched_res_list[cell_index]->ul.pucchs) {
+    uci_ind.ucis.push_back(test_helper::create_uci_indication_pdu(ue_index, pucch, mac_harq_ack_report_status::nack));
+  }
+  while (next_slot < conres_expiry_slot) {
+    run_slot();
+    ASSERT_FALSE(pdsch_is_sched());
+  }
+  this->sched->handle_uci_indication(uci_ind);
+
+  // No PDSCH should be scheduled, as the ConRes timer has expired.
+  ASSERT_FALSE(this->run_slot_until(pdsch_is_sched, 100));
+}

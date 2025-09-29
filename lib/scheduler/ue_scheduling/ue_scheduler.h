@@ -63,6 +63,9 @@ public:
   /// Handle error indication coming from the lower layers for a given {slot, cell}.
   virtual void handle_error_indication(slot_point sl_tx, scheduler_slot_handler::error_outcome event) = 0;
 
+  /// Handle slice reconfiguration request for a given cell.
+  virtual void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& slice_reconf_req) = 0;
+
   /// Retrieves handler of UE feedback for a given cell.
   virtual scheduler_feedback_handler& get_feedback_handler() = 0;
 

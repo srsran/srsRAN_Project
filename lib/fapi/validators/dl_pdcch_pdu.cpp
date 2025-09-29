@@ -249,7 +249,10 @@ bool srsran::fapi::validate_dl_pdcch_pdu(message_type_id msg_type, const dl_pdcc
     // NOTE: N-RNTI PDCCH data field uses the whole range of the variable, so it will not be checked.
     result &= validate_cce_index(msg_type, dci.cce_index, report);
     result &= validate_aggregation_level(msg_type, dci.aggregation_level, report);
-    result &= validate_power_control_offset_ss_profile_nr(msg_type, dci.power_control_offset_ss_profile_nr, report);
+    if (const auto* profile_nr = std::get_if<fapi::dl_dci_pdu::power_profile_nr>(&dci.power_config)) {
+      result &= validate_power_control_offset_ss_profile_nr(msg_type, profile_nr->power_control_offset_ss, report);
+    }
+
     // NOTE: DCI index uses the whole range of the variable, so it will not be checked.
     result &= validate_collocated_al16_candidate(msg_type, dci_v3.collocated_AL16_candidate, report);
     // NOTE: PDCCH DMRS power offset profile NR uses the whole range of the variable, so it will not be checked.

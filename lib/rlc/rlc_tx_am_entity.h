@@ -138,8 +138,7 @@ private:
   /// This timer is used by the transmitting side of an AM RLC entity in order to retransmit a poll (see sub
   /// clause 5.3.3).
   /// Ref: TS 38.322 Sec. 7.3
-  unique_timer      poll_retransmit_timer;
-  std::atomic<bool> is_poll_retransmit_timer_expired;
+  unique_timer poll_retransmit_timer;
 
   task_executor& pcell_executor;
   task_executor& ue_executor;

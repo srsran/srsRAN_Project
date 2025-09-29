@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "e2ap_asn1_utils.h"
+#include "e2sm/e2sm_ccc/e2sm_ccc_asn1_packer.h"
 #include "e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
 #include "e2sm/e2sm_rc/e2sm_rc_asn1_packer.h"
 #include "srsran/adt/byte_buffer.h"
@@ -41,6 +41,7 @@ namespace srsran {
 inline void fill_ran_function_item(srslog::basic_logger&          logger,
                                    asn1::e2ap::e2setup_request_s& setup,
                                    const std::string&             ran_oid,
+                                   const std::uint32_t&           ran_func_id,
                                    e2sm_interface*                e2_iface)
 {
   using namespace asn1::e2ap;
@@ -48,8 +49,7 @@ inline void fill_ran_function_item(srslog::basic_logger&          logger,
   ran_func_item.load_info_obj(ASN1_E2AP_ID_RAN_FUNCTION_ITEM);
   auto& ran_function_item = ran_func_item->ran_function_item();
 
-  ran_func_item.value().ran_function_item().ran_function_id =
-      (ran_oid == e2sm_kpm_asn1_packer::oid) ? e2sm_kpm_asn1_packer::ran_func_id : e2sm_rc_asn1_packer::ran_func_id;
+  ran_func_item.value().ran_function_item().ran_function_id       = ran_func_id;
   ran_func_item.value().ran_function_item().ran_function_revision = 0;
   ran_func_item.value().ran_function_item().ran_function_o_id.from_string(ran_oid);
 
@@ -94,21 +94,34 @@ inline void fill_asn1_e2ap_setup_request(srslog::basic_logger&          logger,
 
   // RAN functions added
   if (e2ap_config.e2sm_kpm_enabled) {
-    std::string ran_oid = e2sm_kpm_asn1_packer::oid;
+    std::string ran_oid     = e2sm_kpm_asn1_packer::oid;
+    uint32_t    ran_func_id = e2sm_kpm_asn1_packer::ran_func_id;
     logger.info("Generate RAN function definition for OID: {}", ran_oid.c_str());
     e2sm_interface* e2_iface = e2sm_mngr.get_e2sm_interface(ran_oid);
     if (e2_iface) {
-      fill_ran_function_item(logger, setup, ran_oid, e2_iface);
+      fill_ran_function_item(logger, setup, ran_oid, ran_func_id, e2_iface);
     } else {
       logger.error("No E2SM interface found for RAN OID {}", ran_oid.c_str());
     }
   }
   if (e2ap_config.e2sm_rc_enabled) {
-    std::string ran_oid = e2sm_rc_asn1_packer::oid;
+    std::string ran_oid     = e2sm_rc_asn1_packer::oid;
+    uint32_t    ran_func_id = e2sm_rc_asn1_packer::ran_func_id;
     logger.info("Generate RAN function definition for OID: {}", ran_oid.c_str());
     e2sm_interface* e2_iface = e2sm_mngr.get_e2sm_interface(ran_oid);
     if (e2_iface) {
-      fill_ran_function_item(logger, setup, ran_oid, e2_iface);
+      fill_ran_function_item(logger, setup, ran_oid, ran_func_id, e2_iface);
+    } else {
+      logger.error("No E2SM interface found for RAN OID {}", ran_oid.c_str());
+    }
+  }
+  if (e2ap_config.e2sm_ccc_enabled) {
+    std::string ran_oid     = e2sm_ccc_asn1_packer::oid;
+    uint32_t    ran_func_id = e2sm_ccc_asn1_packer::ran_func_id;
+    logger.info("Generate RAN function definition for OID: {}", ran_oid.c_str());
+    e2sm_interface* e2_iface = e2sm_mngr.get_e2sm_interface(ran_oid);
+    if (e2_iface) {
+      fill_ran_function_item(logger, setup, ran_oid, ran_func_id, e2_iface);
     } else {
       logger.error("No E2SM interface found for RAN OID {}", ran_oid.c_str());
     }

@@ -57,17 +57,22 @@ void cell_activation_routine::operator()(coro_context<async_task<void>>& ctx)
     }
 
     if (!generate_gnb_cu_configuration_update()) {
-      logger.warning("Failed to generate gNB-CU configuration update for DU {}", *du_idx_it);
+      logger.warning("Failed to generate gNB-CU configuration update for du={}", *du_idx_it);
       continue;
     }
 
     CORO_AWAIT_VALUE(f1ap_cu_cfg_update_response, du_proc->handle_configuration_update(f1ap_cu_cfg_update));
+    if (!f1ap_cu_cfg_update_response.success) {
+      logger.info(
+          "Configuration update for du={} failed. Cause: {}", *du_idx_it, f1ap_cu_cfg_update_response.cause.value());
+      routine_success = false;
+    }
   }
 
-  if (f1ap_cu_cfg_update_response.success) {
+  if (routine_success) {
     logger.info("\"{}\" finished successfully", name());
   } else {
-    logger.info("\"{}\" failed. Cause: {}", name(), f1ap_cu_cfg_update_response.cause.value());
+    logger.info("\"{}\" failed", name());
   }
 
   CORO_RETURN();

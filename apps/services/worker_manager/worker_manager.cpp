@@ -320,6 +320,15 @@ void worker_manager::create_fapi_executors(const worker_manager_config::fapi_con
 /// Makes an estimation of the needed number of threads for the application.
 static unsigned get_default_nof_workers(const worker_manager_config& worker_cfg)
 {
+  // Derive the maximum number of CPUs available for the main pool.
+  unsigned avail_cpus = worker_cfg.main_pool_affinity_cfg.mask.count();
+  if (avail_cpus == 0) {
+    avail_cpus = cpu_architecture_info::get().get_host_nof_available_cpus();
+  }
+  report_fatal_error_if_not(avail_cpus > 0, "Unable to derive the number of available CPUs");
+  // Allow some spare CPUs for, e.g. processing of packets by the kernel, RU timing, etc.
+  const unsigned spare_cpus = std::min(avail_cpus, 3U);
+
   unsigned nof_workers = 0;
   if (worker_cfg.nof_main_pool_threads.has_value()) {
     nof_workers = worker_cfg.nof_main_pool_threads.value();
@@ -337,15 +346,9 @@ static unsigned get_default_nof_workers(const worker_manager_config& worker_cfg)
     nof_workers += 2;
   }
 
-  unsigned max_cpus = worker_cfg.main_pool_affinity_cfg.mask.count();
-  if (max_cpus == 0) {
-    max_cpus = cpu_architecture_info::get().get_host_nof_available_cpus();
-  }
-
-  // Allow some spare capacity for, e.g., processing of packets by the kernel, RU timing, etc.
-  const unsigned spare_cpus  = 3;
-  const unsigned min_workers = 4;
-  return std::max(std::min(nof_workers, max_cpus - spare_cpus), min_workers);
+  // The number of workers of the pool needs to be at least 1.
+  const unsigned min_pool_workers = 1;
+  return std::max(std::min(nof_workers, avail_cpus - spare_cpus), min_pool_workers);
 }
 
 /// Helper to calculate an upper bound on the number of preallocated producers for the main worker pool.

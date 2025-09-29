@@ -173,8 +173,7 @@ private:
 
   /// \brief Send a handover failure to the AMF.
   /// \param[in] amf_ue_id The AMF UE NGAP ID.
-  /// \param[in] cause The cause of the handover failure.
-  void send_handover_failure(uint64_t amf_ue_id, const std::string& cause);
+  void send_handover_failure(uint64_t amf_ue_id);
 
   /// \brief Notify about the reception of a Handover request message.
   /// \param[in] msg The received handover request message.

@@ -29,6 +29,7 @@
 #include "split6_o_du_unit_cli11_schema.h"
 #include "split6_o_du_unit_config_validator.h"
 #include "split6_o_du_unit_logger_registrator.h"
+#include "srsran/du/du_high/du_high_configuration.h"
 
 using namespace srsran;
 
@@ -78,11 +79,12 @@ void split6_o_du_application_unit_impl::on_parsing_configuration_registration(CL
 
 o_du_unit split6_o_du_application_unit_impl::create_flexible_o_du_unit(const o_du_unit_dependencies& dependencies)
 {
-  // Get the cells config.
-  std::vector<srs_du::du_cell_config> du_cells_cfg = generate_du_cell_config(unit_cfg.odu_high_cfg.du_high_cfg.config);
+  // Get the du_high configuration.
+  srs_du::du_high_configuration du_hi_cfg;
+  generate_du_high_config(du_hi_cfg, unit_cfg.odu_high_cfg.du_high_cfg.config);
 
   // Create the adaptors.
-  auto fapi_ctrl = plugin->create_fapi_adaptor(du_cells_cfg, dependencies);
+  auto fapi_ctrl = plugin->create_fapi_adaptor(du_hi_cfg, dependencies);
   report_error_if_not(!fapi_ctrl.empty(), "Could not create FAPI adaptor");
   auto du_impl = create_o_du_split6(unit_cfg, dependencies, std::move(fapi_ctrl));
   report_error_if_not(du_impl.unit, "Could not create split 6 DU");

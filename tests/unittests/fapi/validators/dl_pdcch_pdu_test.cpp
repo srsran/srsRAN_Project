@@ -311,7 +311,9 @@ INSTANTIATE_TEST_SUITE_P(dmrs_power,
                          testing::Combine(testing::Values(pdu_field_data<dl_pdcch_pdu>{
                                               "Power control offset SS",
                                               [](dl_pdcch_pdu& pdu, int value) {
-                                                pdu.dl_dci.back().power_control_offset_ss_profile_nr = value;
+                                                std::get_if<dl_dci_pdu::power_profile_nr>(
+                                                    &pdu.dl_dci.back().power_config)
+                                                    ->power_control_offset_ss = value;
                                               }}),
                                           testing::Values(test_case_data{static_cast<unsigned>(int16_t(-127)), false},
                                                           test_case_data{static_cast<unsigned>(int16_t(-9)), false},

@@ -186,11 +186,15 @@ private:
                                                         const ue_cell_configuration&  ue_cell_cfg);
 
   // Implements the main steps of the multiplexing procedure as defined in TS 38.213, Section 9.2.5.
-  std::optional<unsigned> multiplex_and_allocate_pucch(cell_slot_resource_allocator& pucch_slot_alloc,
-                                                       pucch_uci_bits                new_bits,
-                                                       ue_grants&                    current_grants,
-                                                       const ue_cell_configuration&  ue_cell_cfg,
-                                                       std::optional<uint8_t>        preserve_res_indicator);
+  // Note: If \c common_grants is set, it means that the function is called while allocating common and dedicated
+  // resources together. In this case, the allocation will fail if the multiplexed resources collide with it.
+  std::optional<unsigned>
+  multiplex_and_allocate_pucch(cell_slot_resource_allocator&                    pucch_slot_alloc,
+                               pucch_uci_bits                                   new_bits,
+                               ue_grants&                                       current_grants,
+                               const ue_cell_configuration&                     ue_cell_cfg,
+                               std::optional<uint8_t>                           preserve_res_indicator,
+                               std::optional<std::pair<grant_info, grant_info>> common_grants = std::nullopt);
 
   // Computes which resources are expected to be sent, depending on the UCI bits to be sent, before any multiplexing.
   std::optional<pucch_grant_list> get_pucch_res_pre_multiplexing(slot_point                   sl_tx,

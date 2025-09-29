@@ -30,6 +30,7 @@
 #include "srsran/ngap/ngap_reset.h"
 #include "srsran/ngap/ngap_setup.h"
 #include "srsran/ngap/ngap_ue_radio_capability_management.h"
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
@@ -161,11 +162,14 @@ public:
   /// \returns True if the task was successfully scheduled, false otherwise.
   virtual bool schedule_async_task(ue_index_t ue_index, async_task<void> task) = 0;
 
-  /// \brief Notify the CU-CP about a security context received in a handover request.
+  /// \brief Notify the CU-CP about a handover request received.
   /// \param[in] ue_index Index of the UE.
+  /// \param[in] selected_plmn The selected PLMN identity of the UE.
   /// \param[in] sec_ctxt The received security context.
-  /// \return True if the security context was successfully initialized, false otherwise.
-  virtual bool on_handover_request_received(ue_index_t ue_index, const security::security_context& sec_ctxt) = 0;
+  /// \return True if the handover request handling is successful, false otherwise.
+  virtual bool on_handover_request_received(ue_index_t                        ue_index,
+                                            const plmn_identity&              selected_plmn,
+                                            const security::security_context& sec_ctxt) = 0;
 
   /// \brief Notify about the reception of a new Initial Context Setup Request.
   /// \param[in] request The received Initial Context Setup Request.
@@ -214,7 +218,7 @@ public:
   virtual void on_paging_message(cu_cp_paging_message& msg) = 0;
 
   /// \brief Request UE index allocation on the CU-CP on N2 handover request.
-  virtual ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t cgi) = 0;
+  virtual ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t cgi, const plmn_identity& plmn) = 0;
 
   /// \brief Notifies the CU-CP about a Handover Request.
   virtual async_task<ngap_handover_resource_allocation_response>

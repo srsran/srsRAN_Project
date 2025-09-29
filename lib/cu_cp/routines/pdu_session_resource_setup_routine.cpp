@@ -22,6 +22,7 @@
 
 #include "pdu_session_resource_setup_routine.h"
 #include "pdu_session_routine_helpers.h"
+#include "srsran/ran/cause/common.h"
 #include "srsran/ran/cause/e1ap_cause_converters.h"
 #include "srsran/ran/cause/ngap_cause.h"
 
@@ -98,12 +99,13 @@ void pdu_session_resource_setup_routine::operator()(
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={}: \"{}\" initialized", setup_msg.ue_index, name());
+  logger.debug("ue={}: \"{}\" started...", setup_msg.ue_index, name());
 
   // Perform initial sanity checks on incoming message.
   if (!up_resource_mng.validate_request(setup_msg.pdu_session_res_setup_items)) {
     logger.info("ue={}: \"{}\" Invalid PduSessionResourceSetup", setup_msg.ue_index, name());
-    CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
+    CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(
+        false, cause_protocol_t::abstract_syntax_error_falsely_constructed_msg));
   }
 
   {
@@ -111,12 +113,20 @@ void pdu_session_resource_setup_routine::operator()(
     next_config = up_resource_mng.calculate_update(setup_msg.pdu_session_res_setup_items);
   }
 
+  // Check next configuration.
+  if (next_config.pdu_sessions_to_setup_list.empty()) {
+    logger.info("ue={}: \"{}\" No PDU sessions to setup", setup_msg.ue_index, name());
+    CORO_EARLY_RETURN(
+        handle_pdu_session_resource_setup_result(false, ngap_cause_radio_network_t::radio_res_not_available));
+  }
+
   // Sanity check passed, decide whether we have to create a Bearer Context at the CU-UP or modify an existing one.
   if (next_config.initial_context_creation) {
     // Prepare BearerContextSetupRequest.
     if (!fill_e1ap_bearer_context_setup_request(bearer_context_setup_request)) {
       logger.warning("ue={}: \"{}\" failed to fill bearer context at CU-UP", setup_msg.ue_index, name());
-      CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
+      CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(
+          false, cause_protocol_t::abstract_syntax_error_falsely_constructed_msg));
     }
 
     // Call E1AP procedure.
@@ -133,7 +143,8 @@ void pdu_session_resource_setup_routine::operator()(
                                               default_security_indication,
                                               logger)) {
       logger.warning("ue={}: \"{}\" failed to setup bearer at CU-UP", setup_msg.ue_index, name());
-      CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
+      CORO_EARLY_RETURN(
+          handle_pdu_session_resource_setup_result(false, cause_protocol_t::msg_not_compatible_with_receiver_state));
     }
   } else {
     // Prepare BearerContextModificationRequest and modify existing bearer.
@@ -155,7 +166,8 @@ void pdu_session_resource_setup_routine::operator()(
                                                      default_security_indication,
                                                      logger)) {
       logger.warning("ue={}: \"{}\" failed to modify bearer at CU-UP", setup_msg.ue_index, name());
-      CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
+      CORO_EARLY_RETURN(
+          handle_pdu_session_resource_setup_result(false, cause_protocol_t::msg_not_compatible_with_receiver_state));
     }
   }
 
@@ -181,7 +193,8 @@ void pdu_session_resource_setup_routine::operator()(
                                                  next_config,
                                                  logger)) {
       logger.warning("ue={}: \"{}\" failed to modify UE context at DU", setup_msg.ue_index, name());
-      CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
+      CORO_EARLY_RETURN(
+          handle_pdu_session_resource_setup_result(false, cause_protocol_t::msg_not_compatible_with_receiver_state));
     }
   }
 
@@ -205,7 +218,8 @@ void pdu_session_resource_setup_routine::operator()(
                                                      default_security_indication,
                                                      logger)) {
       logger.warning("ue={}: \"{}\" failed to modify bearer at CU-UP", setup_msg.ue_index, name());
-      CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
+      CORO_EARLY_RETURN(
+          handle_pdu_session_resource_setup_result(false, cause_protocol_t::msg_not_compatible_with_receiver_state));
     }
   }
 
@@ -240,7 +254,8 @@ void pdu_session_resource_setup_routine::operator()(
                                   std::nullopt,
                                   logger)) {
         logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", setup_msg.ue_index, name());
-        CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
+        CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(
+            false, cause_protocol_t::abstract_syntax_error_falsely_constructed_msg));
       }
     }
 
@@ -252,7 +267,8 @@ void pdu_session_resource_setup_routine::operator()(
       // Notify NGAP to request UE context release from AMF.
       ue_task_sched.schedule_async_task(cu_cp_notifier.handle_ue_context_release(
           {setup_msg.ue_index, {}, ngap_cause_radio_network_t::release_due_to_ngran_generated_reason}));
-      CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
+      CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(
+          false, ngap_cause_radio_network_t::release_due_to_ngran_generated_reason));
     }
   }
 
@@ -410,7 +426,6 @@ static bool update_setup_list_with_bearer_ctxt_setup_mod_response(
 /// \param[in] pdu_session_resource_failed_list Const reference to the failed PDU sessions of the Bearer Context
 /// Setup/Modification Response.
 static void update_failed_list(
-
     cu_cp_pdu_session_resource_setup_response&                                        response_msg,
     up_config_update&                                                                 next_config,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item>& pdu_session_resource_failed_list)
@@ -647,25 +662,30 @@ bool handle_rrc_reconfiguration_response(cu_cp_pdu_session_resource_setup_respon
 static void mark_all_sessions_as_failed(cu_cp_pdu_session_resource_setup_response&      response_msg,
                                         const cu_cp_pdu_session_resource_setup_request& setup_msg,
                                         up_config_update&                               next_config,
-                                        e1ap_cause_t                                    cause)
+                                        ngap_cause_t                                    cause)
 {
   slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item> failed_list;
   for (const auto& setup_item : setup_msg.pdu_session_res_setup_items) {
-    e1ap_pdu_session_resource_failed_item fail_item;
-    fail_item.pdu_session_id = setup_item.pdu_session_id;
-    fail_item.cause          = cause;
-    failed_list.emplace(setup_item.pdu_session_id, fail_item);
+    // Remove from next config.
+    next_config.pdu_sessions_to_setup_list.erase(setup_item.pdu_session_id);
+    response_msg.pdu_session_res_setup_response_items.erase(setup_item.pdu_session_id);
+
+    // Add to list taking cause received from CU-UP.
+    cu_cp_pdu_session_res_setup_failed_item failed_item;
+    failed_item.pdu_session_id              = setup_item.pdu_session_id;
+    failed_item.unsuccessful_transfer.cause = cause;
+    response_msg.pdu_session_res_failed_to_setup_items.emplace(setup_item.pdu_session_id, failed_item);
   }
-  update_failed_list(response_msg, next_config, failed_list);
+
   // No PDU session setup can be successful at the same time.
   response_msg.pdu_session_res_setup_response_items.clear();
 }
 
 cu_cp_pdu_session_resource_setup_response
-pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(bool success)
+pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(bool success, ngap_cause_t cause)
 {
   if (success) {
-    logger.debug("ue={}: \"{}\" finalized", setup_msg.ue_index, name());
+    logger.debug("ue={}: \"{}\" finished successfully", setup_msg.ue_index, name());
 
     // Prepare update for UP resource manager.
     up_config_update_result result;
@@ -676,8 +696,7 @@ pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(boo
   } else {
     logger.info("ue={}: \"{}\" failed", setup_msg.ue_index, name());
 
-    mark_all_sessions_as_failed(
-        response_msg, setup_msg, next_config, e1ap_cause_t{e1ap_cause_radio_network_t::unspecified});
+    mark_all_sessions_as_failed(response_msg, setup_msg, next_config, cause);
   }
 
   return response_msg;

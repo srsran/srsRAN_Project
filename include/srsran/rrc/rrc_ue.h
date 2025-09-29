@@ -28,6 +28,7 @@
 #include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_cp_ue_messages.h"
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/rrc/rrc_types.h"
 #include "srsran/rrc/rrc_ue_config.h"
@@ -378,9 +379,13 @@ public:
   virtual ~rrc_ue_context_update_notifier() = default;
 
   /// \brief Notifies that a new RRC UE needs to be setup.
-  /// \param[in] plmn The PLMN of the UE.
   /// \return True if the UE is accepted.
-  virtual bool on_ue_setup_request(plmn_identity plmn) = 0;
+  virtual bool on_ue_setup_request() = 0;
+
+  /// \brief Notifies that the RRC UE setup complete is received.
+  /// \param[in] plmn The selected PLMN of the UE.
+  /// \return True if the UE setup complete is accepted.
+  virtual bool on_ue_setup_complete_received(const plmn_identity& plmn) = 0;
 
   /// \brief Notify about the reception of an RRC Reestablishment Request.
   /// \param[in] old_pci The old PCI contained in the RRC Reestablishment Request.

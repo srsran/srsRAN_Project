@@ -139,13 +139,15 @@ class srsran::pdu_indication_pool
   static constexpr size_t SRS_INITIAL_POOL_SIZE     = MAX_SRS_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
   static constexpr size_t BSR_INITIAL_POOL_SIZE     = MAX_PUSCH_PDUS_PER_SLOT * MAX_EXPECTED_SLOTS;
   static constexpr size_t POSITIONING_REQ_POOL_SIZE = 1 * MAX_EXPECTED_SLOTS;
+  static constexpr size_t SLICE_RECONF_POOL_SIZE    = 1 * MAX_EXPECTED_SLOTS;
 
-  using uci_pool     = bounded_object_pool<uci_indication::uci_pdu>;
-  using phr_pool     = bounded_object_pool<ul_phr_indication_message>;
-  using crc_pool     = bounded_object_pool<ul_crc_pdu_indication>;
-  using srs_pool     = bounded_object_pool<srs_indication::srs_indication_pdu>;
-  using bsr_pool     = bounded_object_pool<ul_bsr_indication_message>;
-  using pos_req_pool = bounded_object_pool<positioning_measurement_request>;
+  using uci_pool          = bounded_object_pool<uci_indication::uci_pdu>;
+  using phr_pool          = bounded_object_pool<ul_phr_indication_message>;
+  using crc_pool          = bounded_object_pool<ul_crc_pdu_indication>;
+  using srs_pool          = bounded_object_pool<srs_indication::srs_indication_pdu>;
+  using bsr_pool          = bounded_object_pool<ul_bsr_indication_message>;
+  using pos_req_pool      = bounded_object_pool<positioning_measurement_request>;
+  using slice_reconf_pool = bounded_object_pool<du_cell_slice_reconfig_request>;
 
 public:
   pdu_indication_pool(srslog::basic_logger& logger_) :
@@ -155,7 +157,8 @@ public:
     pending_crcs(CRC_INITIAL_POOL_SIZE),
     pending_srss(SRS_INITIAL_POOL_SIZE),
     pending_bsrs(BSR_INITIAL_POOL_SIZE),
-    pending_pos_reqs(POSITIONING_REQ_POOL_SIZE)
+    pending_pos_reqs(POSITIONING_REQ_POOL_SIZE),
+    slice_reconf_reqs(SLICE_RECONF_POOL_SIZE)
   {
   }
 
@@ -176,19 +179,22 @@ public:
 private:
   srslog::basic_logger& logger;
 
-  uci_pool     pending_ucis;
-  phr_pool     pending_phrs;
-  crc_pool     pending_crcs;
-  srs_pool     pending_srss;
-  bsr_pool     pending_bsrs;
-  pos_req_pool pending_pos_reqs;
+  uci_pool          pending_ucis;
+  phr_pool          pending_phrs;
+  crc_pool          pending_crcs;
+  srs_pool          pending_srss;
+  bsr_pool          pending_bsrs;
+  pos_req_pool      pending_pos_reqs;
+  slice_reconf_pool slice_reconf_reqs;
 
-  std::tuple<uci_pool*, phr_pool*, crc_pool*, srs_pool*, bsr_pool*, pos_req_pool*> pools{&pending_ucis,
-                                                                                         &pending_phrs,
-                                                                                         &pending_crcs,
-                                                                                         &pending_srss,
-                                                                                         &pending_bsrs,
-                                                                                         &pending_pos_reqs};
+  std::tuple<uci_pool*, phr_pool*, crc_pool*, srs_pool*, bsr_pool*, pos_req_pool*, slice_reconf_pool*> pools{
+      &pending_ucis,
+      &pending_phrs,
+      &pending_crcs,
+      &pending_srss,
+      &pending_bsrs,
+      &pending_pos_reqs,
+      &slice_reconf_reqs};
 };
 
 // Initial capacity for the common and cell event lists, in order to avoid std::vector reallocations. We use the max
@@ -925,6 +931,26 @@ void ue_cell_event_manager::handle_error_indication(slot_point sl_tx, scheduler_
   push_event(cfg.cell_index, event_t{"error_ind", std::move(handle_error_impl)});
 }
 
+void ue_cell_event_manager::handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req)
+{
+  auto req_ptr = ind_pdu_pool->create_pdu(req);
+  if (req_ptr == nullptr) {
+    return;
+  }
+
+  auto handle_slice_reconfig_impl = [this, req_ptr = std::move(req_ptr)]() {
+    // Handle slice reconfiguration.
+    slice_sched.handle_slice_reconfiguration_request(*req_ptr);
+
+    // Log event.
+    ev_logger.enqueue(scheduler_event_logger::slice_reconfiguration_event{req_ptr->cell_index});
+
+    return event_result::processed;
+  };
+
+  push_event(cfg.cell_index, event_t{"slice_reconf", std::move(handle_slice_reconfig_impl)});
+}
+
 void ue_cell_event_manager::handle_harq_ind(ue_cell&                               ue_cc,
                                             slot_point                             uci_sl,
                                             span<const mac_harq_ack_report_status> harq_bits,
@@ -946,7 +972,7 @@ void ue_cell_event_manager::handle_harq_ind(ue_cell&                            
       // NOTE: this is for the first attachment only. In this case, the first ACK is the one that acks the ConRes or the
       // ConRes + MSG4; there is only 1 HARQ process waiting for ACKs, which acks the ConRes. Until this is acked, no
       // other DL grant should be scheduled.
-      if (not ue_cc.is_conres_complete() and result->update == dl_harq_process_handle::status_update::acked) {
+      if (not ue_cc.is_conres_complete() and result->h_dl.empty()) {
         ue_cc.set_conres_state(true);
       }
 

@@ -33,7 +33,6 @@
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 #include <cstdint>
 #include <list>
-#include <memory>
 #include <variant>
 
 namespace srsran {
@@ -59,6 +58,13 @@ public:
   {
     cu_cp_handler      = cu_cp_handler_;
     ue_removal_handler = ue_removal_handler_;
+  }
+
+  bool on_cell_config_update_request(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg) override
+  {
+    logger.info("Received a cell config update request for nci={}", nci);
+
+    return true;
   }
 
   void on_rrc_ue_created(ue_index_t ue_index, rrc_ue_interface& rrc_ue) override
@@ -197,7 +203,7 @@ private:
 class dummy_du_connection_notifier : public du_connection_notifier
 {
 public:
-  bool on_du_setup_request(du_index_t du_index, const du_setup_request& req) override { return true; }
+  bool on_du_setup_request(du_index_t du_index, const std::set<plmn_identity>& plmn_ids) override { return true; }
 };
 
 struct dummy_ngap_ue_context_removal_handler : public ngap_ue_context_removal_handler {

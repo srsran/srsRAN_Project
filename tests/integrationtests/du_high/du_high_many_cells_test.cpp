@@ -68,11 +68,12 @@ public:
 TEST_P(du_high_many_cells_tester, when_du_high_initiated_then_f1_setup_is_sent_with_correct_number_of_cells)
 {
   // Starting the DU-high initiates the F1 Setup procedure and sets the number of serving cells correctly.
-  ASSERT_EQ(this->cu_notifier.last_f1ap_msgs.size(), 1);
-  ASSERT_EQ(this->cu_notifier.last_f1ap_msgs.back().pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
-  ASSERT_EQ(this->cu_notifier.last_f1ap_msgs.back().pdu.init_msg().proc_code, ASN1_F1AP_ID_F1_SETUP);
+  ASSERT_EQ(this->cu_notifier.f1ap_ul_msgs.size(), 1);
+  ASSERT_EQ(this->cu_notifier.f1ap_ul_msgs.rbegin()->second.pdu.type().value,
+            asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(this->cu_notifier.f1ap_ul_msgs.rbegin()->second.pdu.init_msg().proc_code, ASN1_F1AP_ID_F1_SETUP);
   asn1::f1ap::f1_setup_request_s& f1_setup =
-      this->cu_notifier.last_f1ap_msgs.back().pdu.init_msg().value.f1_setup_request();
+      this->cu_notifier.f1ap_ul_msgs.rbegin()->second.pdu.init_msg().value.f1_setup_request();
 
   // Ensure all cells are set.
   ASSERT_EQ(f1_setup->gnb_du_served_cells_list.size(), GetParam().nof_cells);
@@ -92,7 +93,7 @@ TEST_P(du_high_many_cells_tester,
   // Add one UE per cell
   for (unsigned i = 0; i != GetParam().nof_cells; ++i) {
     // Reset previous F1 message.
-    cu_notifier.last_f1ap_msgs.clear();
+    cu_notifier.f1ap_ul_msgs.clear();
 
     // Inject UL-CCCH with RRC Setup.
     rnti_t rnti = to_rnti(0x4601 + i);
@@ -100,12 +101,12 @@ TEST_P(du_high_many_cells_tester,
         test_helpers::create_ccch_message(next_slot, rnti, to_du_cell_index(i)));
 
     // Wait for F1AP message to be propagated to the CU-CP.
-    this->run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
+    this->run_until([this]() { return not cu_notifier.f1ap_ul_msgs.empty(); });
 
     // Ensure the F1AP Initial UL RRC message is correct.
-    ASSERT_EQ(cu_notifier.last_f1ap_msgs.size(), 1);
+    ASSERT_EQ(cu_notifier.f1ap_ul_msgs.size(), 1);
     ASSERT_TRUE(test_helpers::is_init_ul_rrc_msg_transfer_valid(
-        cu_notifier.last_f1ap_msgs.back(), rnti, du_high_cfg.ran.cells[i].nr_cgi));
+        cu_notifier.f1ap_ul_msgs.rbegin()->second, rnti, du_high_cfg.ran.cells[i].nr_cgi));
   }
 }
 
@@ -215,7 +216,7 @@ TEST_P(du_high_many_cells_tester, when_cell_stopped_then_ues_are_released)
 
   // Stop one cell via F1AP gNB-CU Configuration Update.
   const unsigned rem_cell_idx = test_rgen::uniform_int<unsigned>(0, GetParam().nof_cells - 1);
-  this->cu_notifier.last_f1ap_msgs.clear();
+  this->cu_notifier.f1ap_ul_msgs.clear();
   f1ap_message req = test_helpers::generate_gnb_cu_configuration_update_request(
       0, {}, {{nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(rem_cell_idx).value()}}});
   this->du_hi->get_f1ap_du().handle_message(req);
@@ -223,23 +224,25 @@ TEST_P(du_high_many_cells_tester, when_cell_stopped_then_ues_are_released)
   // Expect release request for UE connected to the cell being stopped.
   const rnti_t crnti = to_rnti(0x4601 + rem_cell_idx);
   auto&        u     = ues.at(crnti);
-  ASSERT_TRUE(this->run_until([this]() { return not this->cu_notifier.last_f1ap_msgs.empty(); }));
-  ASSERT_TRUE(
-      test_helpers::is_valid_ue_context_release_request(this->cu_notifier.last_f1ap_msgs.back(), u.du_ue_id.value()));
+  ASSERT_TRUE(this->run_until([this]() { return not this->cu_notifier.f1ap_ul_msgs.empty(); }));
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_release_request(this->cu_notifier.f1ap_ul_msgs.rbegin()->second,
+                                                                u.du_ue_id.value()));
 
   // CU releases UE.
-  this->cu_notifier.last_f1ap_msgs.clear();
+  this->cu_notifier.f1ap_ul_msgs.clear();
   auto cmd_rel = test_helpers::generate_ue_context_release_command(
       u.cu_ue_id.value(), u.du_ue_id.value(), srb_id_t::srb1, byte_buffer::create({0x1, 0x2, 0x3}).value());
   this->du_hi->get_f1ap_du().handle_message(cmd_rel);
-  ASSERT_TRUE(this->run_until([this]() { return not this->cu_notifier.last_f1ap_msgs.empty(); }));
-  ASSERT_TRUE(test_helpers::is_valid_ue_context_release_complete(this->cu_notifier.last_f1ap_msgs.front(), cmd_rel));
-  this->cu_notifier.last_f1ap_msgs.erase(this->cu_notifier.last_f1ap_msgs.begin());
+  ASSERT_TRUE(this->run_until([this]() { return not this->cu_notifier.f1ap_ul_msgs.empty(); }));
+  ASSERT_TRUE(
+      test_helpers::is_valid_ue_context_release_complete(this->cu_notifier.f1ap_ul_msgs.begin()->second, cmd_rel));
+  this->cu_notifier.f1ap_ul_msgs.erase(this->cu_notifier.f1ap_ul_msgs.begin());
 
   // gNB-CU Configuration Update Complete.
-  ASSERT_TRUE(this->run_until([this]() { return not this->cu_notifier.last_f1ap_msgs.empty(); }));
-  ASSERT_TRUE(test_helpers::is_gnb_cu_config_update_acknowledge_valid(this->cu_notifier.last_f1ap_msgs.back(), req));
-  ASSERT_EQ(this->cu_notifier.last_f1ap_msgs.size(), 1);
+  ASSERT_TRUE(this->run_until([this]() { return not this->cu_notifier.f1ap_ul_msgs.empty(); }));
+  ASSERT_TRUE(
+      test_helpers::is_gnb_cu_config_update_acknowledge_valid(this->cu_notifier.f1ap_ul_msgs.rbegin()->second, req));
+  ASSERT_EQ(this->cu_notifier.f1ap_ul_msgs.size(), 1);
 
   // Ensure the cell is indeed stopped.
   const unsigned nof_test_slots = 100;
@@ -275,8 +278,8 @@ TEST_P(du_high_many_cells_tester, when_cell_restarted_then_ues_can_be_created)
       u.cu_ue_id.value(), u.du_ue_id.value(), srb_id_t::srb1, byte_buffer::create({0x1, 0x2, 0x3}).value());
   this->du_hi->get_f1ap_du().handle_message(cmd_rel);
   ASSERT_TRUE(this->run_until([this, &req]() {
-    return not this->cu_notifier.last_f1ap_msgs.empty() and
-           test_helpers::is_gnb_cu_config_update_acknowledge_valid(this->cu_notifier.last_f1ap_msgs.back(), req);
+    return not this->cu_notifier.f1ap_ul_msgs.empty() and test_helpers::is_gnb_cu_config_update_acknowledge_valid(
+                                                              this->cu_notifier.f1ap_ul_msgs.rbegin()->second, req);
   }));
 
   // Random number of slots elapsed.
@@ -286,12 +289,13 @@ TEST_P(du_high_many_cells_tester, when_cell_restarted_then_ues_can_be_created)
   }
 
   // Restart the cell.
-  this->cu_notifier.last_f1ap_msgs.clear();
+  this->cu_notifier.f1ap_ul_msgs.clear();
   f1ap_message req_restart = test_helpers::generate_gnb_cu_configuration_update_request(0, {{rem_cgi}}, {});
   this->du_hi->get_f1ap_du().handle_message(req_restart);
   ASSERT_TRUE(this->run_until([this, &req_restart]() {
-    return not this->cu_notifier.last_f1ap_msgs.empty() and test_helpers::is_gnb_cu_config_update_acknowledge_valid(
-                                                                this->cu_notifier.last_f1ap_msgs.back(), req_restart);
+    return not this->cu_notifier.f1ap_ul_msgs.empty() and
+           test_helpers::is_gnb_cu_config_update_acknowledge_valid(this->cu_notifier.f1ap_ul_msgs.rbegin()->second,
+                                                                   req_restart);
   }));
 
   // Create UE in the restarted cell.
@@ -350,7 +354,7 @@ TEST_F(du_high_many_cells_deferred_activation_test, when_cell_starts_deactivated
   }
 
   // CU sends gNB-CU-ConfigurationUpdateRequest to activate cells.
-  this->cu_notifier.last_f1ap_msgs.clear();
+  this->cu_notifier.f1ap_ul_msgs.clear();
   std::vector<nr_cell_global_id_t> cgis;
   for (unsigned i = 0; i != nof_cells; ++i) {
     cgis.push_back(nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(i).value()});
@@ -358,8 +362,8 @@ TEST_F(du_high_many_cells_deferred_activation_test, when_cell_starts_deactivated
   auto req_msg = test_helpers::generate_gnb_cu_configuration_update_request(0, cgis, {});
   this->du_hi->get_f1ap_du().handle_message(req_msg);
   ASSERT_TRUE(this->run_until([this, req_msg]() {
-    return not this->cu_notifier.last_f1ap_msgs.empty() and
-           test_helpers::is_gnb_cu_config_update_acknowledge_valid(this->cu_notifier.last_f1ap_msgs.back(), req_msg);
+    return not this->cu_notifier.f1ap_ul_msgs.empty() and test_helpers::is_gnb_cu_config_update_acknowledge_valid(
+                                                              this->cu_notifier.f1ap_ul_msgs.rbegin()->second, req_msg);
   }));
 
   static_vector<bool, MAX_NOF_DU_CELLS> csi_rs_alloc(nof_cells, false);

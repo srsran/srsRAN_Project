@@ -199,6 +199,8 @@ private:
 
   void store_harq_tx(du_ue_index_t ue_index, const dl_harq_process_handle& h_dl);
 
+  void rem_fallback_ue(du_ue_index_t ue_index);
+
   const scheduler_ue_expert_config& expert_cfg;
   const cell_configuration&         cell_cfg;
   // TODO: Find proper values for these 2 parameters.

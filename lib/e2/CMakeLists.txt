@@ -34,6 +34,10 @@ set(SOURCES
         common/e2_subscription_manager_impl.cpp
         common/e2_du_metrics_connector.cpp
         common/e2_cu_metrics_connector.cpp
+        e2sm/e2sm_ccc/e2sm_ccc_asn1_packer.cpp
+        e2sm/e2sm_ccc/e2sm_ccc_impl.cpp
+        e2sm/e2sm_ccc/e2sm_ccc_control_service_impl.cpp
+        e2sm/e2sm_ccc/e2sm_ccc_control_action_du_executor.cpp
         e2sm/e2sm_kpm/e2sm_kpm_impl.cpp
         e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.cpp
         e2sm/e2sm_rc/e2sm_rc_asn1_packer.cpp

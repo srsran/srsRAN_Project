@@ -90,8 +90,9 @@ void e1ap_cu_cp_test::run_bearer_context_setup(ue_index_t ue_index, gnb_cu_up_ue
 
 e1ap_cu_cp_test::test_ue& e1ap_cu_cp_test::create_ue()
 {
-  ue_index_t ue_index = ue_mng.add_ue(du_index_t::min, plmn_identity::test_value());
-  auto       request  = generate_bearer_context_setup_request(ue_index);
+  ue_index_t ue_index = ue_mng.add_ue(du_index_t::min);
+  ue_mng.set_plmn(ue_index, plmn_identity::test_value());
+  auto request = generate_bearer_context_setup_request(ue_index);
 
   run_bearer_context_setup(request.ue_index,
                            int_to_gnb_cu_up_ue_e1ap_id(test_rgen::uniform_int<uint64_t>(

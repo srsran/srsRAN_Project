@@ -58,6 +58,9 @@ struct served_cell_item_info {
   nr_band            band     = nr_band::n78;
   uint32_t           nr_arfcn = 626748;
   meas_timing_config meas_timing_cfg;
+  std::string        sib1_str =
+      "d20405c04300100e6640400000e000cd80018056109a000200046402051320c6b6c61b3704020000080800041a235241213042692f120000"
+      "0464e35b63224f80b0664abff0124e9106e28dc61b8e372c6fbf56c70ea008580d003058b68228";
 };
 
 /// \brief Generates dummy F1 RESET message, sent by the CU to the DU, as per TS 38.473 section 8.2.1.1.

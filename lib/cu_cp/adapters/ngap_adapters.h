@@ -28,6 +28,7 @@
 #include "../ue_manager/cu_cp_ue_impl_interface.h"
 #include "srsran/cu_cp/ue_task_scheduler.h"
 #include "srsran/ngap/ngap.h"
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
@@ -68,10 +69,12 @@ public:
     return cu_cp_handler->schedule_ue_task(ue_index, std::move(task));
   }
 
-  bool on_handover_request_received(ue_index_t ue_index, const security::security_context& sec_ctxt) override
+  bool on_handover_request_received(ue_index_t                        ue_index,
+                                    const plmn_identity&              selected_plmn,
+                                    const security::security_context& sec_ctxt) override
   {
     srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
-    return cu_cp_handler->handle_handover_request(ue_index, sec_ctxt);
+    return cu_cp_handler->handle_handover_request(ue_index, selected_plmn, sec_ctxt);
   }
 
   async_task<expected<ngap_init_context_setup_response, ngap_init_context_setup_failure>>
@@ -121,10 +124,10 @@ public:
     return cu_cp_handler->handle_new_handover_command(ue_index, std::move(command));
   }
 
-  ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t cgi) override
+  ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t cgi, const plmn_identity& plmn) override
   {
     srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
-    return cu_cp_handler->handle_ue_index_allocation_request(cgi);
+    return cu_cp_handler->handle_ue_index_allocation_request(cgi, plmn);
   }
 
   void on_dl_ue_associated_nrppa_transport_pdu(ue_index_t ue_index, const byte_buffer& nrppa_pdu) override

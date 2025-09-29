@@ -46,8 +46,8 @@ public:
 
   // See interface for documentation.
   std::vector<std::unique_ptr<fapi::fapi_adaptor>>
-  create_fapi_adaptor(span<const srs_du::du_cell_config> du_cell_cfg,
-                      const o_du_unit_dependencies&      dependencies) override;
+  create_fapi_adaptor(const srs_du::du_high_configuration& du_high_cfg,
+                      const o_du_unit_dependencies&        dependencies) override;
 };
 
 } // namespace srsran

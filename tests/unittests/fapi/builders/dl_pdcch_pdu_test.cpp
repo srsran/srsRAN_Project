@@ -124,9 +124,27 @@ TEST(dl_pdcch_pdu_builder, valid_dci_tx_power_parameters_passes)
     dl_pdcch_pdu_builder builder(pdu);
     dl_dci_pdu_builder   builder_dci = builder.add_dl_dci();
 
-    builder_dci.set_tx_power_info_parameter(i);
+    builder_dci.set_profile_nr_tx_power_info_parameters(i);
 
-    ASSERT_EQ(i, pdu.dl_dci[0].power_control_offset_ss_profile_nr);
+    const auto* profile = std::get_if<dl_dci_pdu::power_profile_nr>(&pdu.dl_dci[0].power_config);
+    ASSERT_TRUE(profile);
+    ASSERT_EQ(i, profile->power_control_offset_ss);
+  }
+}
+
+TEST(dl_pdcch_pdu_builder, valid_dci_profile_sss_tx_power_parameters_passes)
+{
+  for (int i = -8; i != 9; ++i) {
+    dl_pdcch_pdu         pdu;
+    dl_pdcch_pdu_builder builder(pdu);
+    dl_dci_pdu_builder   builder_dci = builder.add_dl_dci();
+
+    builder_dci.set_profile_sss_tx_power_info_parameters(i, i - 10);
+
+    const auto* profile = std::get_if<dl_dci_pdu::power_profile_sss>(&pdu.dl_dci[0].power_config);
+    ASSERT_TRUE(profile);
+    ASSERT_FLOAT_EQ(i, profile->dmrs_power_offset_db);
+    ASSERT_FLOAT_EQ(i - 10, profile->data_power_offset_db);
   }
 }
 

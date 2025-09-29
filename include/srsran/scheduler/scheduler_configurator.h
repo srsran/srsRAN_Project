@@ -121,16 +121,17 @@ struct sched_cell_configuration_request_message {
   metrics_config metrics;
 };
 
+/// Cell Reconfiguration Request.
+struct sched_cell_reconfiguration_request_message {
+  std::optional<du_cell_slice_reconfig_request> slice_reconf_req;
+};
+
 /// Parameters provided to the scheduler to configure the resource allocation of a specific UE.
 struct sched_ue_resource_alloc_config {
   /// Minimum and maximum PDSCH grant sizes for the given UE.
   prb_interval pdsch_grant_size_limits{0, MAX_NOF_PRBS};
-  /// Boundaries within which PDSCH needs to be allocated.
-  crb_interval pdsch_crb_limits{0, MAX_NOF_PRBS};
   /// Minimum and maximum PUSCH grant sizes for the given UE.
   prb_interval pusch_grant_size_limits{0, MAX_NOF_PRBS};
-  /// Boundaries within which PUSCH needs to be allocated.
-  crb_interval pusch_crb_limits{0, MAX_NOF_PRBS};
   /// Maximum PDSCH HARQ retransmissions.
   unsigned max_pdsch_harq_retxs = 4;
   /// Maximum PUSCH HARQ retransmissions.
@@ -231,6 +232,9 @@ public:
   /// \brief Deactivate a configured cell. This method has no effect if the cell is already deactivated.
   /// \remark This method needs to be called after the last slot_indication() call.
   virtual void handle_cell_deactivation_request(du_cell_index_t cell_index) = 0;
+
+  /// \brief Handle slice reconfiguration request of a cell.
+  virtual void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& msg) = 0;
 };
 
 class scheduler_ue_configurator

@@ -1400,9 +1400,9 @@ TEST_F(single_ue_sched_tester, successfully_schedule_srb0_retransmission_fdd)
     const auto* grant   = find_ue_pdsch(test_ue);
     // Re-transmission scenario.
     if (grant != nullptr && grant->context.nof_retxs > 0) {
-      // Must be Typ1-PDCCH CSS.
+      // Must be Type1-PDCCH CSS.
       // See 3GPP TS 38.213, clause 10.1,
-      // A UE monitors PDCCH candidates in one or more of the following search spaces sets
+      // A UE monitors PDCCH candidates in one or more of the following search spaces sets:
       //  - a Type1-PDCCH CSS set configured by ra-SearchSpace in PDCCH-ConfigCommon for a DCI format with
       //    CRC scrambled by a RA-RNTI, a MsgB-RNTI, or a TC-RNTI on the primary cell.
       ASSERT_EQ(grant->pdsch_cfg.ss_set_type, search_space_set_type::type1);
@@ -1411,12 +1411,15 @@ TEST_F(single_ue_sched_tester, successfully_schedule_srb0_retransmission_fdd)
     }
 
     if (uci_ind_to_send.has_value() and current_slot == uci_ind_to_send.value().slot_rx) {
+      // Send the NACK indication on the expected slot to trigger retransmission.
       bench->sch.handle_uci_indication(uci_ind_to_send.value());
       uci_ind_to_send.reset();
     }
 
+    // Look for a PDSCH in the scheduler results and get the corresponding ACK/NACK slot.
     const auto& ack_nack_slot = get_pdsch_ack_nack_scheduled_slot(test_ue);
     if (ack_nack_slot.has_value()) {
+      // Build a NACK for the first PDSCH scheduled to trigger retransmission.
       uci_ind_to_send.emplace(build_harq_nack_pucch_f0_f1_uci_ind(to_du_ue_index(0), ack_nack_slot.value()));
     }
   }

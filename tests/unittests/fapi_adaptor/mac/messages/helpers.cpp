@@ -190,12 +190,12 @@ static coreset_configuration generate_coreset_configuration()
 
 static dci_1_0_si_rnti_configuration generate_si_f1_0()
 {
-  return {1, 2, 3, vrb_to_prb::mapping_type::non_interleaved, 0, 2, 1};
+  return {1, 2, 3, false, 0, 2, 1};
 }
 
 static dci_1_0_ra_rnti_configuration generate_ra_f1_0()
 {
-  return {1, 2, 3, vrb_to_prb::mapping_type::non_interleaved, 1, 2};
+  return {1, 2, 3, false, 1, 2};
 }
 
 static dci_dl_info generate_dci_dl_info()

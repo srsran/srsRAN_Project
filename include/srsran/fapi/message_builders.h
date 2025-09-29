@@ -256,11 +256,23 @@ public:
     return *this;
   }
 
-  /// Sets the transmission power info parameters for the fields of the DL DCI PDU.
+  /// Sets the profile NR Tx Power info parameters for the fields of the DL DCI PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.1, in table DL DCI PDU.
-  dl_dci_pdu_builder& set_tx_power_info_parameter(int power_control_offset_ss_dB)
+  dl_dci_pdu_builder& set_profile_nr_tx_power_info_parameters(int power_control_offset_ss_dB)
   {
-    pdu.power_control_offset_ss_profile_nr = power_control_offset_ss_dB;
+    auto& power                   = pdu.power_config.emplace<dl_dci_pdu::power_profile_nr>();
+    power.power_control_offset_ss = power_control_offset_ss_dB;
+
+    return *this;
+  }
+
+  /// Sets the profile SSS Tx Power info parameters for the fields of the DL DCI PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.1, in table PDCCH PDU maintenance PDU.
+  dl_dci_pdu_builder& set_profile_sss_tx_power_info_parameters(float dmrs_offset_db, float data_offset_db)
+  {
+    auto& power                = pdu.power_config.emplace<dl_dci_pdu::power_profile_sss>();
+    power.dmrs_power_offset_db = dmrs_offset_db;
+    power.data_power_offset_db = data_offset_db;
 
     return *this;
   }

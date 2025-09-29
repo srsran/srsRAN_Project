@@ -41,7 +41,8 @@ public:
     pucch_expected_f1_sr.crnti   = to_rnti(0x4601);
     pucch_expected_f1_sr.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
 
-    pucch_expected_f1_sr.resources.prbs             = prb_interval{NOF_RBS - 3, NOF_RBS - 2};
+    pucch_expected_f1_sr.resources.prbs =
+        prb_interval::start_and_len(NOF_RBS - test_helpers::common_pucch_res_guardband - 3, 1);
     pucch_expected_f1_sr.resources.second_hop_prbs  = prb_interval{0, 0};
     pucch_expected_f1_sr.resources.symbols          = ofdm_symbol_range{0, 14};
     pucch_expected_f1_sr.uci_bits.sr_bits           = sr_nof_bits::one;
@@ -59,7 +60,8 @@ public:
     pucch_expected_f1_harq.crnti   = to_rnti(0x4601);
     pucch_expected_f1_harq.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
 
-    pucch_expected_f1_harq.resources.prbs             = prb_interval{NOF_RBS - 1, NOF_RBS};
+    pucch_expected_f1_harq.resources.prbs =
+        prb_interval::start_and_len(NOF_RBS - test_helpers::common_pucch_res_guardband - 1, 1);
     pucch_expected_f1_harq.resources.second_hop_prbs  = prb_interval{0, 0};
     pucch_expected_f1_harq.resources.symbols          = ofdm_symbol_range{0, 14};
     pucch_expected_f1_harq.uci_bits.sr_bits           = sr_nof_bits::no_sr;
@@ -72,10 +74,10 @@ public:
     format1_harq.n_id_hopping    = t_bench.cell_cfg.pci;
     format1_harq.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
 
-    auto& format2                               = pucch_expected_f2.format_params.emplace<pucch_format_2>();
-    pucch_expected_f2.crnti                     = to_rnti(0x4601);
-    pucch_expected_f2.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-    pucch_expected_f2.resources.prbs            = prb_interval{2, 3};
+    auto& format2                    = pucch_expected_f2.format_params.emplace<pucch_format_2>();
+    pucch_expected_f2.crnti          = to_rnti(0x4601);
+    pucch_expected_f2.bwp_cfg        = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_expected_f2.resources.prbs = prb_interval::start_and_len(test_helpers::common_pucch_res_guardband + 2, 1);
     pucch_expected_f2.resources.second_hop_prbs = prb_interval{0, 0};
     pucch_expected_f2.resources.symbols         = ofdm_symbol_range{0, 2};
 
@@ -83,10 +85,10 @@ public:
     format2.n_id_scambling    = t_bench.cell_cfg.pci;
     format2.n_id_0_scrambling = t_bench.cell_cfg.pci;
 
-    auto& format2_csi                            = pucch_expected_csi.format_params.emplace<pucch_format_2>();
-    pucch_expected_csi.crnti                     = to_rnti(0x4601);
-    pucch_expected_csi.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-    pucch_expected_csi.resources.prbs            = prb_interval{2, 3};
+    auto& format2_csi                 = pucch_expected_csi.format_params.emplace<pucch_format_2>();
+    pucch_expected_csi.crnti          = to_rnti(0x4601);
+    pucch_expected_csi.bwp_cfg        = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_expected_csi.resources.prbs = prb_interval::start_and_len(test_helpers::common_pucch_res_guardband + 2, 1);
     pucch_expected_csi.resources.second_hop_prbs = prb_interval{0, 0};
     pucch_expected_csi.resources.symbols         = ofdm_symbol_range{12, 14};
 
@@ -1279,8 +1281,7 @@ TEST_F(test_pucch_allocator_ded_resources, test_for_private_fnc_retrieving_exist
   std::optional<unsigned> pucch_res_ind_ue0 = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, k1, t_bench.dci_info);
   ASSERT_TRUE(pucch_res_ind_ue0.has_value());
-  // Note: The first common PUCCH resource is on the same resources as the first dedicated PUCCH resource.
-  ASSERT_EQ(1, pucch_res_ind_ue0.value());
+  ASSERT_EQ(0, pucch_res_ind_ue0.value());
   ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
   ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [rnti = t_bench.get_main_ue().crnti](const pucch_info& pdu) {
     return pdu.format() == pucch_format::FORMAT_1 and pdu.crnti == rnti and pdu.uci_bits.harq_ack_nof_bits == 1U and

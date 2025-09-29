@@ -56,14 +56,14 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
   auto it = du_db.insert(std::make_pair(du_index, du_context{}));
   srsran_assert(it.second, "Unable to insert DU in map");
   du_context& du_ctxt = it.first->second;
-  du_ctxt.du_to_cu_cp_notifier.connect_cu_cp(cfg.cu_cp_du_handler, cfg.ue_removal_handler, cfg.ue_context_handler);
+  du_ctxt.du_to_cu_cp_notifier.connect_cu_cp(
+      cfg.cu_cp_du_handler, cfg.meas_config_handler, cfg.ue_removal_handler, cfg.ue_context_handler);
   du_ctxt.f1ap_tx_pdu_notifier = std::move(f1ap_tx_pdu_notifier);
 
   du_processor_config_t du_cfg     = {du_index, cfg.cu_cp, logger, &cfg.du_conn_notif, du_cfg_mng.create_du_handler()};
   std::unique_ptr<du_processor> du = create_du_processor(std::move(du_cfg),
                                                          du_ctxt.du_to_cu_cp_notifier,
                                                          *du_ctxt.f1ap_tx_pdu_notifier,
-                                                         cfg.meas_config_notifier,
                                                          cfg.common_task_sched,
                                                          cfg.ue_mng);
 

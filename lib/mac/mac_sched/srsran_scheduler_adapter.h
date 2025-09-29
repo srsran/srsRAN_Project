@@ -100,6 +100,8 @@ public:
   handle_positioning_measurement_request(du_cell_index_t                                 cell_index,
                                          const mac_cell_positioning_measurement_request& req) override;
 
+  void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req) override;
+
   mac_cell_rach_handler& get_cell_rach_handler(du_cell_index_t cell_index) override
   {
     return cell_handlers[cell_index].get_rach_handler();

@@ -498,6 +498,38 @@ TEST_F(cu_cp_reestablishment_test,
   ASSERT_EQ(report.ues.size(), 1) << "Old UE should not be removed yet";
 }
 
+TEST_F(cu_cp_reestablishment_test, when_reestablishment_succeeds_then_amf_is_connected)
+{
+  // Attach UE 0x4601.
+  EXPECT_TRUE(attach_ue(du_idx, cu_up_idx, old_du_ue_id, old_crnti, amf_ue_id, cu_up_e1ap_id));
+
+  // Send RRC Reestablishment Request and DU receives RRC Reestablishment.
+  gnb_du_ue_f1ap_id_t new_du_ue_id = int_to_gnb_du_ue_f1ap_id(1);
+  rnti_t              new_crnti    = to_rnti(0x4602);
+  ASSERT_TRUE(reestablish_ue(du_idx, cu_up_idx, new_du_ue_id, new_crnti, old_crnti, old_pci))
+      << "Reestablishment failed";
+
+  // Check metrics for successful RRC connection re-establishment.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus[0].rrc_metrics.attempted_rrc_connection_reestablishments, 1);
+  ASSERT_EQ(report.dus[0].rrc_metrics.successful_rrc_connection_establishments.get_count(establishment_cause_t::mo_sig),
+            1);
+  ASSERT_EQ(report.dus[0].rrc_metrics.successful_rrc_connection_reestablishments_with_ue_context, 1);
+  // Old UE should not be removed at this stage.
+  ASSERT_EQ(report.ues.size(), 1) << "Old UE should not be removed yet";
+
+  // Check that the UE is connected to the AMF by injecting a deregistration request and make sure its forwarded.
+  f1ap_message ul_rrc_msg_transfer = test_helpers::generate_ul_rrc_message_transfer(
+      new_du_ue_id,
+      this->find_ue_context(du_idx, new_du_ue_id)->cu_ue_id.value(),
+      srb_id_t::srb1,
+      make_byte_buffer("00023a0c3f016f19764701bf0022808005f900788801002060000306805ed46e67").value());
+  get_du(du_idx).push_ul_pdu(ul_rrc_msg_transfer);
+  ngap_message ngap_pdu;
+  ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_ul_nas_transport_message(ngap_pdu));
+}
+
 TEST_F(cu_cp_reestablishment_test, when_old_ue_is_busy_with_a_procedure_then_reestablishment_fallback_still_completes)
 {
   // UE 0x4601 sends RRC Setup Request, the gNB responds with RRC Setup and waits for RRC Setup Complete.

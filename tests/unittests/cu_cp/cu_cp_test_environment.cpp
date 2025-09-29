@@ -345,6 +345,8 @@ bool cu_cp_test_environment::drop_amf_connection(unsigned amf_idx)
     return false;
   }
   it->second.amf_stub->drop_connection();
+  // Wait for the CU-CP to process the disconnection.
+  cu_cp_workers->wait_pending_tasks();
   return true;
 }
 

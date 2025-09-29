@@ -71,7 +71,6 @@ void amf_connection_manager::connect_to_amf(std::promise<bool>* completion_signa
 async_task<void> amf_connection_manager::disconnect_amf()
 {
   if (ngaps.get_ngaps().empty() or amfs_connected.empty()) {
-    logger.error("No NGAP interface available to disconnect from AMF");
     return launch_async([](coro_context<async_task<void>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN();

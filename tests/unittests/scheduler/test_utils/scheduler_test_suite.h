@@ -82,6 +82,7 @@ void test_pusch_ue_consistency(const cell_configuration& cell_cfg, span<const ul
 
 /// \brief Verify UE PUCCH content is valid. Current checks:
 /// - Number of PUCCHs does not exceed max_pucchs_per_slot.
+/// - Detects collisions between PUCCH grants.
 void test_pucch_consistency(const cell_configuration& cell_cfg, span<const pucch_info> pucchs);
 
 /// \brief Current checks:
@@ -104,7 +105,7 @@ void test_ul_consistency(const cell_configuration& cell_cfg, const ul_sched_resu
 /// validity checks.
 void test_dl_consistency(const cell_configuration& cell_cfg, slot_point sl_tx, const dl_sched_result& result);
 
-/// \brief Run all consistency checks for the scheduler result.
+/// \brief Run all consistency checks for the scheduler result on a given slot.
 void test_scheduler_result_consistency(const cell_configuration& cell_cfg,
                                        slot_point                sl_tx,
                                        const sched_result&       result);
@@ -112,6 +113,9 @@ void test_scheduler_result_consistency(const cell_configuration& cell_cfg,
 /// \brief Run all consistency checks for multiple slot scheduler results.
 void test_scheduler_result_consistency(const cell_configuration&      cell_cfg,
                                        const cell_resource_allocator& cell_res_grid);
+
+/// \brief Verifies that the cell resource grid PRBs and symbols was filled with the allocated PDSCHs.
+void assert_dl_resource_grid_filled(const cell_configuration& cell_cfg, const cell_resource_allocator& cell_res_grid);
 
 /// \brief Verifies that the cell resource grid PRBs and symbols was filled with the allocated PUCCHs.
 // TODO: Replace this function with a more thorough check.

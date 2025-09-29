@@ -40,6 +40,13 @@ bool srsran::test_helpers::is_valid_init_ue_message(const ngap_message& msg)
   return true;
 }
 
+bool srsran::test_helpers::is_valid_ul_nas_transport_message(const ngap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type() == asn1::ngap::ngap_pdu_c::types_opts::init_msg);
+  TRUE_OR_RETURN(msg.pdu.init_msg().proc_code == ASN1_NGAP_ID_UL_NAS_TRANSPORT);
+  return true;
+}
+
 bool srsran::test_helpers::is_valid_initial_context_setup_response(const srs_cu_cp::ngap_message& msg)
 {
   TRUE_OR_RETURN(msg.pdu.type() == asn1::ngap::ngap_pdu_c::types_opts::successful_outcome);

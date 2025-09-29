@@ -641,7 +641,7 @@ static check_outcome check_prach_config(const du_cell_config& cell_cfg)
 
   // Derive PRACH duration information.
   // The parameter \c is_last_prach_occasion is arbitrarily set to false, as it doesn't affect the PRACH number of PRBs.
-  const bool                       is_last_prach_occasion = false;
+  constexpr bool                   is_last_prach_occasion = false;
   const prach_preamble_information info =
       is_long_preamble(prach_cfg.format)
           ? get_prach_preamble_long_info(prach_cfg.format)

@@ -302,6 +302,14 @@ void scheduler_event_logger::enqueue_impl(const srs_indication_event& srs_ev)
   }
 }
 
+void scheduler_event_logger::enqueue_impl(const slice_reconfiguration_event& slice_reconf_ev)
+{
+  if (mode == debug) {
+    fmt::format_to(
+        std::back_inserter(fmtbuf), "\n- SLICE RECONF: cell={}", fmt::underlying(slice_reconf_ev.cell_index));
+  }
+}
+
 const char* scheduler_event_logger::separator() const
 {
   return fmtbuf.size() > 0 ? ", " : " ";

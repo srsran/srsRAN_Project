@@ -37,7 +37,7 @@ struct o_du_unit_dependencies;
 struct worker_manager_config;
 
 namespace srs_du {
-struct du_cell_config;
+struct du_high_configuration;
 }
 
 /// \brief Split 6 plugin interface.
@@ -59,7 +59,7 @@ public:
 
   /// Creates and returns a vector of fapi adaptors, each of them representing a cell.
   virtual std::vector<std::unique_ptr<fapi::fapi_adaptor>>
-  create_fapi_adaptor(span<const srs_du::du_cell_config> du_cell_cfg, const o_du_unit_dependencies& dependencies) = 0;
+  create_fapi_adaptor(const srs_du::du_high_configuration& du_high_cfg, const o_du_unit_dependencies& dependencies) = 0;
 
   /// Fills the given worker manager split 6 configuration.
   virtual void fill_worker_manager_config(worker_manager_config& config) = 0;

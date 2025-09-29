@@ -118,7 +118,7 @@ split6_o_du_low_application_unit_impl::create_flexible_o_du_low(worker_manager& 
 {
   split6_o_du_low_unit output;
 
-  // :TODO:
+  // :TODO: Cyclic prefix and subcarrier spacing are hardcoded.
   std::chrono::nanoseconds symbol_duration(static_cast<int64_t>(
       SUBFRAME_DURATION_MSEC * 1e6 /
       (get_nsymb_per_slot(cyclic_prefix::NORMAL) * get_nof_slots_per_subframe(subcarrier_spacing::kHz30))));

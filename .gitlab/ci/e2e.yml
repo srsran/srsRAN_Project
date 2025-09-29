@@ -78,7 +78,9 @@ custom e2e:
   needs:
     - *retina-needs
     - custom build
-    - build trx driver
+    - job: custom zmq driver
+      artifacts: true
+      optional: true
   interruptible: false # Web jobs are standalone
 
 ################################################################################
@@ -256,7 +258,20 @@ amari 32UE:
             "tcp and not band:3 and not precoding",
             "tcp and not band:3 and precoding",
           ]
-      - E2E_FILE_OR_DIR: tests/pucch.py
+
+amari 32UE [tests/pucch.py]:
+  extends: .zmq
+  variables:
+    TESTBED: zmq_ntn
+    MARKERS: "zmq and not smoke"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+    E2E_FILE_OR_DIR: tests/pucch.py
+  needs:
+    - job: basic relwithdeb
+      artifacts: true
+    - job: build amariue ntn zmq driver
+      artifacts: true
+    - *retina-needs
 
 amari 32UE [ping]:
   extends: .zmq-uesim
@@ -445,8 +460,6 @@ test mode ru acc100:
 test mode ue many ues:
   extends: test mode ru
   variables:
-    GROUP: viavi
-    TESTBED: viavi
     MARKERS: test_mode_many_ues
     KEYWORDS: test_mode_many_ues
     E2E_LOG_LEVEL: warning

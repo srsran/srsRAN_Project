@@ -33,10 +33,11 @@ public:
   test_pucch_f2_alloc_several_prbs() : pucch_allocator_base_tester(test_bench_params{.pucch_f2_f3_more_prbs = true})
   {
     // This PUCCH grant will be for 5 HARQ bits, which fit in 1 PRB.
-    auto& format2_harq                      = pucch_expected_harq_only.format_params.emplace<pucch_format_2>();
-    pucch_expected_harq_only.crnti          = to_rnti(0x4601);
-    pucch_expected_harq_only.bwp_cfg        = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-    pucch_expected_harq_only.resources.prbs = prb_interval{2, 3};
+    auto& format2_harq               = pucch_expected_harq_only.format_params.emplace<pucch_format_2>();
+    pucch_expected_harq_only.crnti   = to_rnti(0x4601);
+    pucch_expected_harq_only.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_expected_harq_only.resources.prbs =
+        prb_interval::start_and_len(test_helpers::common_pucch_res_guardband + 2, 1);
     pucch_expected_harq_only.resources.second_hop_prbs = prb_interval{0, 0};
     pucch_expected_harq_only.resources.symbols         = ofdm_symbol_range{0, 2};
 
@@ -45,14 +46,16 @@ public:
     format2_harq.n_id_0_scrambling = t_bench.cell_cfg.pci;
 
     // This PUCCH grant will be for 5 HARQ bits + 4 CSI bits, which fit in 2 PRBs.
-    pucch_expected_harq_csi                = pucch_expected_harq_only;
-    pucch_expected_harq_csi.resources.prbs = prb_interval{2, 4};
+    pucch_expected_harq_csi = pucch_expected_harq_only;
+    pucch_expected_harq_csi.resources.prbs =
+        prb_interval::start_and_len(test_helpers::common_pucch_res_guardband + 2, 2);
 
     // This PUCCH grant will be for 4 CSI bits only, which are encoded in the maximum number of PRBs.
-    auto& format2_csi                                 = pucch_expected_csi_only.format_params.emplace<pucch_format_2>();
-    pucch_expected_csi_only.crnti                     = to_rnti(0x4601);
-    pucch_expected_csi_only.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-    pucch_expected_csi_only.resources.prbs            = prb_interval{2, 5};
+    auto& format2_csi               = pucch_expected_csi_only.format_params.emplace<pucch_format_2>();
+    pucch_expected_csi_only.crnti   = to_rnti(0x4601);
+    pucch_expected_csi_only.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_expected_csi_only.resources.prbs =
+        prb_interval::start_and_len(test_helpers::common_pucch_res_guardband + 2, 3);
     pucch_expected_csi_only.resources.second_hop_prbs = prb_interval{0, 0};
     pucch_expected_csi_only.resources.symbols         = ofdm_symbol_range{12, 14};
 

@@ -23,7 +23,6 @@
 #pragma once
 
 #include "pusch_processor_notifier_adaptor.h"
-#include "pusch_uci_decoder_notifier.h"
 #include "pusch_uci_decoder_wrapper.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_demodulator.h"
@@ -32,8 +31,6 @@
 #include "srsran/phy/upper/channel_processors/uci/uci_decoder.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pusch_estimator.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
-#include "srsran/ran/pusch/ulsch_info.h"
-#include "srsran/srslog/srslog.h"
 #include "srsran/support/memory_pool/bounded_object_pool.h"
 #include <memory>
 
@@ -107,8 +104,8 @@ public:
 
   /// Collects the necessary parameters for creating a PUSCH processor.
   struct configuration {
-    /// Thread local dependencies pool.
-    std::shared_ptr<concurrent_dependencies_pool_type> thread_local_dependencies_pool;
+    /// Dependencies pool.
+    std::shared_ptr<concurrent_dependencies_pool_type> dependencies_pool;
     /// Decoder instance. Ownership is transferred to the processor.
     std::unique_ptr<pusch_decoder> decoder;
     /// Selects the number of LDPC decoder iterations.
@@ -133,9 +130,111 @@ public:
                const pdu_t&                     pdu) override;
 
 private:
+  /// \brief Notifier for the PUSCH channel estimator.
+  ///
+  /// At the notification by the DM-RS PUSCH estimator, the notified PUSCH processor recovers the PUSCH data by running
+  /// the demodulation and decoding steps.
+  ///
+  /// The notifier is available only after calling the \c configure public method.
+  class dmrs_pusch_estimator_notifier_impl : private dmrs_pusch_estimator_notifier
+  {
+  public:
+    /// Constructor: initializes the reference to the notified PUSCH processor.
+    explicit dmrs_pusch_estimator_notifier_impl(pusch_processor_impl& pp) : notified_processor(pp) {}
+
+    /// \brief Configures the notifier for the current PUSCH transmission.
+    /// \param[out]    data_        Received transport block.
+    /// \param[in,out] rm_buffer_   Rate matcher buffer.
+    /// \param[in,out] dependencies Pointer to the dependencies object assigned to the PUSCH processor.
+    /// \param[in]     notifier_    Result notification interface.
+    /// \param[in]     grid_        Source resource grid.
+    /// \param[in]     pdu_         Necessary parameters to process the PUSCH transmission.
+    /// \param[in]     dmrs_type_   DM-RS type used by the PUSCH transmission.
+    /// \param[in]     cdm_         Number of CDM groups without data in the PUSCH transmission.
+    /// \return A reference to the configured notifier.
+    dmrs_pusch_estimator_notifier& configure(span<uint8_t>                          data_,
+                                             unique_rx_buffer                       rm_buffer_,
+                                             concurrent_dependencies_pool_type::ptr dependencies_,
+                                             pusch_processor_result_notifier&       notifier_,
+                                             const resource_grid_reader&            grid_,
+                                             const pdu_t&                           pdu_,
+                                             const dmrs_type&                       dmrs_type_,
+                                             unsigned                               cdm_)
+    {
+      // Set new PUSCH reception parameters. Use exchange for verifying that previous receptions are not overwritten.
+      [[maybe_unused]] auto prev_data         = std::exchange(data, data_);
+      [[maybe_unused]] auto prev_rm_buffer    = std::exchange(rm_buffer, std::move(rm_buffer_));
+      [[maybe_unused]] auto prev_notifier     = std::exchange(notifier, &notifier_);
+      [[maybe_unused]] auto prev_dependencies = std::exchange(dependencies, std::move(dependencies_));
+      [[maybe_unused]] auto prev_grid         = std::exchange(grid, &grid_);
+      [[maybe_unused]] auto prev_pdu          = std::exchange(pdu, &pdu_);
+      used_dmrs_type                          = dmrs_type_;
+      nof_cdm_groups_without_data             = cdm_;
+
+      // Ensure that no parameter was overwritten.
+      srsran_assert(prev_data.data() == nullptr, "Detected data overwrite.");
+      srsran_assert(!prev_rm_buffer.is_valid(), "Detected RM buffer overwrite.");
+      srsran_assert(prev_notifier == nullptr, "Detected notifier overwrite.");
+      srsran_assert(prev_dependencies == nullptr, "Detected dependencies overwrite.");
+      srsran_assert(prev_grid == nullptr, "Detected grid overwrite.");
+      srsran_assert(prev_pdu == nullptr, "Detected PDU overwrite.");
+
+      // Return its own reference to the estimator callback interface.
+      return *this;
+    }
+
+  private:
+    // See interface for documentation.
+    void on_estimation_complete() override
+    {
+      // Move current transmission parameters to the stack.
+      pusch_processor_result_notifier* current_notifier = std::exchange(notifier, nullptr);
+      const resource_grid_reader*      current_grid     = std::exchange(grid, nullptr);
+      const pdu_t*                     current_pdu      = std::exchange(pdu, nullptr);
+      span<uint8_t>                    current_data     = std::exchange(data, {});
+
+      // Verify the parameters are valid before continuing with the processing.
+      srsran_assert(current_notifier != nullptr, "Invalid notifier.");
+      srsran_assert(current_grid != nullptr, "Invalid grid.");
+      srsran_assert(current_pdu != nullptr, "Invalid PDU.");
+      srsran_assert((current_data.data() != nullptr) && (!current_data.empty()), "Invalid data.");
+
+      // Keep processing the PUSCH reception. The notifier can be configured for a different reception before returning.
+      notified_processor.process_data(current_data,
+                                      std::move(rm_buffer),
+                                      std::move(dependencies),
+                                      *current_notifier,
+                                      *current_grid,
+                                      *current_pdu,
+                                      used_dmrs_type,
+                                      nof_cdm_groups_without_data);
+    }
+
+    /// Reference to the PUSCH processor waiting for notification.
+    pusch_processor_impl& notified_processor;
+    /// Pointer to the dependencies object assigned to the PUSCH processor.
+    concurrent_dependencies_pool_type::ptr dependencies = {};
+    /// Buffer to store retrieved data.
+    span<uint8_t> data = {};
+    /// Rate matcher buffer.
+    unique_rx_buffer rm_buffer = unique_rx_buffer();
+    /// Pointer to the PUSCH processor notifier passed to the notified processor.
+    pusch_processor_result_notifier* notifier = nullptr;
+    /// Pointer to the reader of the resource grid containing the PUSCH transmission.
+    const resource_grid_reader* grid = nullptr;
+    /// Pointer to the PDU describing the processed PUSCH transmission.
+    const pdu_t* pdu = nullptr;
+    /// DM-RS type.
+    dmrs_type used_dmrs_type = dmrs_type::TYPE1;
+    /// Number of CDM groups without data.
+    unsigned nof_cdm_groups_without_data = 2;
+  };
+  /// Channel estimator notifier configurator.
+  dmrs_pusch_estimator_notifier_impl estimator_notifier_configurator;
+
   srslog::basic_logger& logger;
-  /// Thread local dependencies pool.
-  std::shared_ptr<concurrent_dependencies_pool_type> thread_local_dependencies_pool;
+  /// Dependencies pool.
+  std::shared_ptr<concurrent_dependencies_pool_type> dependencies_pool;
   /// UL-SCH transport block decoder.
   std::unique_ptr<pusch_decoder> decoder;
   /// Selects the number of LDPC decoder iterations.
@@ -148,6 +247,24 @@ private:
   channel_state_information::sinr_type csi_sinr_calc_method;
   /// Notifier adaptor.
   pusch_processor_notifier_adaptor notifier_adaptor;
+
+  /// \brief Processes the data in a PUSCH transmission.
+  /// \param[out]    data                         Received transport block.
+  /// \param[in,out] rm_buffer                    Rate matcher buffer.
+  /// \param[in,out] dependencies                 Pointer to the dependencies object assigned to the PUSCH processor.
+  /// \param[in]     notifier                     Result notification interface.
+  /// \param[in]     grid                         Source resource grid.
+  /// \param[in]     pdu                          Necessary parameters to process the PUSCH transmission.
+  /// \param[in]     dmrs_type                    DM-RS type used by the PUSCH transmission.
+  /// \param[in]     nof_cdm_groups_without_data  Number of CDM groups without data in the PUSCH transmission.
+  void process_data(span<uint8_t>                          data,
+                    unique_rx_buffer                       rm_buffer,
+                    concurrent_dependencies_pool_type::ptr dependencies,
+                    pusch_processor_result_notifier&       notifier,
+                    const resource_grid_reader&            grid,
+                    const pdu_t&                           pdu,
+                    const dmrs_type&                       dmrs_type,
+                    unsigned                               nof_cdm_groups_without_data);
 };
 
 } // namespace srsran

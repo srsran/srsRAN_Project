@@ -98,6 +98,9 @@ public:
   // Handle error indication for a past slot.
   void handle_error_indication(slot_point sl_tx, scheduler_slot_handler::error_outcome event);
 
+  // Handle slice reconfiguration request.
+  void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req);
+
 private:
   class ue_dl_buffer_occupancy_manager;
 

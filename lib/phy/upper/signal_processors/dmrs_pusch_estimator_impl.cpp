@@ -27,9 +27,10 @@
 
 using namespace srsran;
 
-void dmrs_pusch_estimator_impl::estimate(channel_estimate&           estimate,
-                                         const resource_grid_reader& grid,
-                                         const configuration&        config)
+void dmrs_pusch_estimator_impl::estimate(channel_estimate&              estimate,
+                                         dmrs_pusch_estimator_notifier& notifier,
+                                         const resource_grid_reader&    grid,
+                                         const configuration&           config)
 {
   dmrs_type type          = config.get_dmrs_type();
   unsigned  nof_tx_layers = config.get_nof_tx_layers();
@@ -56,7 +57,6 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&           estimate,
   // Generate symbols and allocation patterns.
   generate(temp_symbols, coordinates, config);
 
-  port_channel_estimator::configuration est_cfg;
   est_cfg.dmrs_pattern.assign(coordinates.begin(), coordinates.end());
   est_cfg.scs          = to_subcarrier_spacing(config.slot.numerology());
   est_cfg.first_symbol = config.first_symbol;
@@ -64,8 +64,19 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&           estimate,
   est_cfg.rx_ports     = config.rx_ports;
   est_cfg.scaling      = config.scaling;
 
+  pending_ports = nof_rx_ports;
   for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
-    ch_estimator->compute(estimate, grid, i_port, temp_symbols, est_cfg);
+    auto estimator_callback = [this, &estimate, &grid, i_port, &notifier]() {
+      ch_estimator->compute(estimate, grid, i_port, temp_symbols, est_cfg);
+      if (pending_ports.fetch_sub(1) == 1) {
+        notifier.on_estimation_complete();
+      }
+    };
+
+    bool enqueued = executor.defer(estimator_callback);
+    if (!enqueued) {
+      estimator_callback();
+    }
   }
 }
 
@@ -77,7 +88,7 @@ void dmrs_pusch_estimator_impl::sequence_generation(span<cf_t>           sequenc
   if (std::holds_alternative<low_papr_sequence_configuration>(config.sequence_config)) {
     const auto& sequence_config = std::get<low_papr_sequence_configuration>(config.sequence_config);
     unsigned    sequence_group  = sequence_config.n_rs_id % 30;
-    low_paper_sequence_gen->generate(sequence, sequence_group, 0, 0, 1);
+    low_papr_sequence_gen->generate(sequence, sequence_group, 0, 0, 1);
     return;
   }
 

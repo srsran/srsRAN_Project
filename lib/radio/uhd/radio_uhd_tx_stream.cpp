@@ -23,6 +23,7 @@
 #include "radio_uhd_tx_stream.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_reader_view.h"
 #include "srsran/srsvec/zero.h"
+#include <uhd/version.hpp>
 
 using namespace srsran;
 
@@ -72,6 +73,11 @@ void radio_uhd_tx_stream::recv_async_msg()
     case uhd::async_metadata_t::EVENT_CODE_USER_PAYLOAD:
       event_description.type = radio_notification_handler::event_type::OTHER;
       break;
+#if UHD_VERSION >= 4090000
+    case uhd::async_metadata_t::EVENT_CODE_OK:
+      // This is not an error. Do nothing.
+      break;
+#endif // UHD_VERSION >= 4090000
   }
 
   // Notify event if it is defined.

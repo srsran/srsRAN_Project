@@ -64,7 +64,6 @@ rlc_tx_am_entity::rlc_tx_am_entity(gnb_du_id_t                          gnb_du_i
   head_min_size(rlc_am_pdu_header_min_size(cfg.sn_field_length)),
   head_max_size(rlc_am_pdu_header_max_size(cfg.sn_field_length)),
   poll_retransmit_timer(pcell_timer_factory.create_timer()),
-  is_poll_retransmit_timer_expired(false),
   pcell_executor(pcell_executor_),
   ue_executor(ue_executor_),
   pcap_context(ue_index, rb_id_, config)
@@ -1110,16 +1109,6 @@ uint8_t rlc_tx_am_entity::get_polling_bit(uint32_t sn, bool is_retx, uint32_t pa
   }
 
   /*
-   * From Sec. 5.3.3.4 Expiry of t-PollRetransmit
-   * [...]
-   * - include a poll in an AMD PDU as described in clause 5.3.3.2.
-   */
-  if (is_poll_retransmit_timer_expired.exchange(false, std::memory_order_relaxed)) {
-    logger.log_debug("Setting poll bit due to expired poll retransmit timer. sn={} poll_sn={}", sn, st.poll_sn);
-    poll = 1;
-  }
-
-  /*
    * - If poll bit is included:
    *     - set PDU_WITHOUT_POLL to 0;
    *     - set BYTE_WITHOUT_POLL to 0.
@@ -1193,16 +1182,11 @@ void rlc_tx_am_entity::on_expired_poll_retransmit_timer() noexcept SRSRAN_RTSAN_
       return;
     }
     // RETX first RLC SDU that has not been ACKed
-    // or first SDU segment of the first RLC SDU
-    // that has not been acked
     rlc_tx_amd_retx retx = {};
     retx.so              = 0;
     retx.sn              = st.tx_next_ack;
     retx.length          = tx_window[st.tx_next_ack].sdu.length();
     bool retx_enqueued   = retx_queue.try_push(retx);
-    //
-    // TODO: Revise this: shall we send a minimum-sized segment instead?
-    //
 
     if (retx_enqueued) {
       logger.log_debug(
@@ -1220,7 +1204,7 @@ void rlc_tx_am_entity::on_expired_poll_retransmit_timer() noexcept SRSRAN_RTSAN_
   /*
    * - include a poll in an AMD PDU as described in clause 5.3.3.2.
    */
-  is_poll_retransmit_timer_expired.store(true, std::memory_order_relaxed);
+  // The poll inclusion according to clause 5.3.3.2. is evaluated later upon transmission.
 }
 
 bool rlc_tx_am_entity::inside_tx_window(uint32_t sn) const

@@ -1914,7 +1914,52 @@ TEST_P(rlc_tx_am_test, status_report_trim)
   EXPECT_EQ(pdu_len, tester->status.get_packed_size());
 }
 
-TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx)
+// Expired poll retransmit timer should trigger a ReTx if no fresh SDUs or ReTx are available.
+// If the ReTx is transmitted without segmentation, the full PDU shall have the polling (P) bit set.
+TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx_when_queues_are_empty_and_poll_in_full_pdu)
+{
+  const uint32_t n_pdus          = 5;
+  const uint32_t sdu_size        = 10;
+  const uint32_t header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t pdu_size        = header_min_size + sdu_size;
+
+  tx_full_pdus(n_pdus, sdu_size);
+  rlc_buffer_state expect_mac_bsr = tester->bsr;
+  uint32_t         n_bsr          = tester->bsr_count;
+
+  // advance timers to expire poll_retransmit_timer
+  for (int i = 0; i < config.t_poll_retx; i++) {
+    EXPECT_EQ(rlc->get_buffer_state().pending_bytes, 0);
+    EXPECT_EQ(tester->bsr.pending_bytes, expect_mac_bsr.pending_bytes);
+    EXPECT_EQ(tester->bsr_count, n_bsr);
+    tick();
+  }
+
+  // expiry of poll_retransmit_timer should schedule an SDU for ReTx
+  EXPECT_EQ(rlc->get_buffer_state().pending_bytes, pdu_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, pdu_size);
+  EXPECT_EQ(tester->bsr_count, ++n_bsr);
+
+  {
+    // pull one full PDU.
+    // check if the polling (P) bit is set in the PDU header (because RLC queues become empty)
+    std::vector<uint8_t> pdu_buf;
+    size_t               pdu_len;
+    pdu_buf.resize(rlc->get_buffer_state().pending_bytes);
+    pdu_len = rlc->pull_pdu(pdu_buf);
+    pdu_buf.resize(pdu_len);
+    rlc_am_pdu_header pdu_hdr = {};
+    ASSERT_TRUE(
+        rlc_am_read_data_pdu_header(byte_buffer::create(pdu_buf.begin(), pdu_buf.end()).value(), sn_size, &pdu_hdr));
+    EXPECT_TRUE(pdu_hdr.p);
+    EXPECT_EQ(tester->bsr.pending_bytes, pdu_size);
+    EXPECT_EQ(tester->bsr_count, n_bsr);
+  }
+}
+
+// Expired poll retransmit timer should trigger a ReTx if no fresh SDUs or ReTx are available.
+// If the ReTx is transmitted in segments, only the last segment shall have the polling (P) bit set.
+TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx_when_queues_are_empty_and_poll_in_last_segment)
 {
   const uint32_t n_pdus          = 5;
   const uint32_t sdu_size        = 10;
@@ -1940,7 +1985,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx)
 
   {
     // pull one segment but leave 2 bytes for later.
-    // check if the polling (P) bit IS set in the PDU header (because of previously expired poll_retransmit_timer)
+    // check if the polling (P) bit is not set in the PDU header (queues are not empty yet)
     std::vector<uint8_t> pdu_buf;
     size_t               pdu_len;
     pdu_buf.resize(rlc->get_buffer_state().pending_bytes - 2);
@@ -1949,14 +1994,14 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx)
     rlc_am_pdu_header pdu_hdr = {};
     ASSERT_TRUE(
         rlc_am_read_data_pdu_header(byte_buffer::create(pdu_buf.begin(), pdu_buf.end()).value(), sn_size, &pdu_hdr));
-    EXPECT_TRUE(pdu_hdr.p);
+    EXPECT_FALSE(pdu_hdr.p);
     EXPECT_EQ(tester->bsr.pending_bytes, pdu_size);
     EXPECT_EQ(tester->bsr_count, n_bsr);
   }
 
   {
     // pull next segment but leave 1 byte for later.
-    // check if the polling (P) bit is NOT set anymore in the PDU header (non-empty queues and timer not expired again)
+    // check if the polling (P) bit is not set in the PDU header (queues are not empty yet)
     std::vector<uint8_t> pdu_buf;
     size_t               pdu_len;
     pdu_buf.resize(rlc->get_buffer_state().pending_bytes - 1);
@@ -1972,7 +2017,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx)
 
   {
     // pull final segment so that RLC queues run empty.
-    // check if the polling (P) bit IS set anymore in the PDU header (because RLC queues are run empty)
+    // check if the polling (P) bit is set in the PDU header (because RLC queues become empty)
     std::vector<uint8_t> pdu_buf;
     size_t               pdu_len;
     pdu_buf.resize(rlc->get_buffer_state().pending_bytes);
@@ -1987,7 +2032,8 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx)
   }
 }
 
-TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
+// Expired poll retransmit timer should not trigger an extra ReTx if fresh SDUs are available (and no stale window)
+TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_no_retx_when_fresh_sdu_can_be_sent)
 {
   const uint32_t n_pdus          = 5;
   const uint32_t sdu_size        = 10;
@@ -2007,7 +2053,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
 
   {
     // pull one segment but leave 3 bytes for later.
-    // check if the polling (P) bit is NOT set in the PDU header
+    // check if the polling (P) bit is not set in the PDU header
     std::vector<uint8_t> pdu_buf;
     size_t               pdu_len;
     pdu_buf.resize(rlc->get_buffer_state().pending_bytes - 3);
@@ -2035,7 +2081,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
 
   {
     // pull next segment but leave 2 bytes for later.
-    // check if the polling (P) bit IS set in the PDU header (because of previously expired poll_retransmit_timer)
+    // check if the polling (P) bit is not set in the PDU header (queues are not empty yet)
     std::vector<uint8_t> pdu_buf;
     size_t               pdu_len;
     pdu_buf.resize(rlc->get_buffer_state().pending_bytes - 2);
@@ -2044,12 +2090,12 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
     rlc_am_pdu_header pdu_hdr = {};
     ASSERT_TRUE(
         rlc_am_read_data_pdu_header(byte_buffer::create(pdu_buf.begin(), pdu_buf.end()).value(), sn_size, &pdu_hdr));
-    EXPECT_TRUE(pdu_hdr.p);
+    EXPECT_FALSE(pdu_hdr.p);
   }
 
   {
     // pull next segment but leave 1 byte for later.
-    // check if the polling (P) bit is NOT set anymore in the PDU header (non-empty queues and timer not expired again)
+    // check if the polling (P) bit is not set in the PDU header (queues are not empty yet)
     std::vector<uint8_t> pdu_buf;
     size_t               pdu_len;
     pdu_buf.resize(rlc->get_buffer_state().pending_bytes - 1);
@@ -2063,7 +2109,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
 
   {
     // pull final segment so that RLC queues run empty.
-    // check if the polling (P) bit IS set anymore in the PDU header (because RLC queues are run empty)
+    // check if the polling (P) bit is set in the PDU header (because RLC queues become empty)
     std::vector<uint8_t> pdu_buf;
     size_t               pdu_len;
     pdu_buf.resize(rlc->get_buffer_state().pending_bytes);

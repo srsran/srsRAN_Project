@@ -92,6 +92,18 @@ TEST_F(cu_cp_connectivity_test, when_ng_setup_fails_then_cu_cp_is_not_in_amf_con
   ASSERT_FALSE(get_cu_cp().get_ng_handler().amfs_are_connected());
 }
 
+TEST_F(cu_cp_connectivity_test, when_amf_connection_is_lost_and_no_dus_are_connected_then_no_amfs_are_connected)
+{
+  // Run NG setup to completion.
+  run_ng_setup();
+
+  // Drop AMF connection.
+  ASSERT_TRUE(drop_amf_connection(0));
+
+  // Check that CU-CP is still running but not connected to AMF.
+  ASSERT_FALSE(this->get_cu_cp().get_ng_handler().amfs_are_connected());
+}
+
 TEST_F(cu_cp_connectivity_test, when_amf_connection_is_lost_then_connected_ues_are_released_and_new_ues_are_rejected)
 {
   // Run NG setup to completion.

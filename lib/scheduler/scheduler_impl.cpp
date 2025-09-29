@@ -76,6 +76,15 @@ void scheduler_impl::handle_cell_deactivation_request(du_cell_index_t cell_index
   cells[cell_index]->stop();
 }
 
+void scheduler_impl::handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req)
+{
+  srsran_assert(cells.contains(req.cell_index), "cell={} does not exist", fmt::underlying(req.cell_index));
+  sched_cell_reconfiguration_request_message reconf_msg;
+  reconf_msg.slice_reconf_req.emplace(req);
+  cfg_mng.update_cell(reconf_msg);
+  cells[req.cell_index]->handle_slice_reconfiguration_request(req);
+}
+
 void scheduler_impl::handle_si_update_request(const si_scheduling_update_request& req)
 {
   srsran_assert(cells.contains(req.cell_index), "cell={} does not exist", fmt::underlying(req.cell_index));

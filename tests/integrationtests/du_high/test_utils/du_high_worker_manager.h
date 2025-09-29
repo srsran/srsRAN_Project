@@ -25,6 +25,7 @@
 #include "srsran/du/du_high/du_high_executor_mapper.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/executors/task_worker_pool.h"
+#include "srsran/support/synchronization/sync_event.h"
 #include <array>
 
 namespace srsran {
@@ -49,6 +50,9 @@ struct du_high_worker_manager {
   priority_task_worker_pool_executor               low_prio_exec{enqueue_priority::max - 1, worker_pool};
   std::unique_ptr<srs_du::du_high_executor_mapper> exec_mapper;
   std::unique_ptr<task_executor>                   time_exec;
+
+private:
+  sync_event ev;
 };
 
 } // namespace srsran

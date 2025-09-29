@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include <cstddef>
+
 namespace srsran {
 
 /// [Implementation-specific] Maximum Logical channels per TB.

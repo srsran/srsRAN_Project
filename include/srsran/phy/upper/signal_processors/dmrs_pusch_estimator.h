@@ -30,12 +30,22 @@
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/slot_point.h"
-#include "srsran/ran/subcarrier_spacing.h"
 #include <variant>
 
 namespace srsran {
 
 class resource_grid_reader;
+
+/// Notifier to communicate the completion of the estimation process.
+class dmrs_pusch_estimator_notifier
+{
+public:
+  /// Default destructor.
+  virtual ~dmrs_pusch_estimator_notifier() = default;
+
+  /// Communicates the notified object about the completion of the estimation process.
+  virtual void on_estimation_complete() = 0;
+};
 
 /// DM-RS-based PUSCH channel estimator interface.
 class dmrs_pusch_estimator
@@ -119,9 +129,13 @@ public:
 
   /// \brief Estimates the PUSCH propagation channel.
   /// \param[out] estimate Channel estimate.
+  /// \param[in]  notifier Notifier to communicate the end of the estimation process.
   /// \param[in]  grid     Received resource grid.
   /// \param[in]  config   DM-RS configuration parameters. They characterize the DM-RS symbols and their indices.
-  virtual void estimate(channel_estimate& estimate, const resource_grid_reader& grid, const configuration& config) = 0;
+  virtual void estimate(channel_estimate&              estimate,
+                        dmrs_pusch_estimator_notifier& notifier,
+                        const resource_grid_reader&    grid,
+                        const configuration&           config) = 0;
 };
 
 } // namespace srsran

@@ -54,7 +54,7 @@ srsran::create_rrc_reestablishment_request(rnti_t old_crnti, pci_t old_pci, cons
   return msg;
 }
 
-ul_dcch_msg_s srsran::create_rrc_setup_complete()
+ul_dcch_msg_s srsran::create_rrc_setup_complete(uint8_t sel_plmn_id)
 {
   ul_dcch_msg_s msg;
 
@@ -63,7 +63,7 @@ ul_dcch_msg_s srsran::create_rrc_setup_complete()
   req.rrc_transaction_id        = 0;
   rrc_setup_complete_ies_s& ies = req.crit_exts.set_rrc_setup_complete();
 
-  ies.sel_plmn_id = 1;
+  ies.sel_plmn_id = sel_plmn_id;
   ies.ded_nas_msg.from_string("7e004179000d0100f110f0ff000010325476092e02e0e0");
 
   return msg;

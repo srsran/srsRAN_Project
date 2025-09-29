@@ -244,12 +244,12 @@ public:
   std::unique_ptr<pusch_processor> create() override
   {
     pusch_processor_impl::configuration config;
-    config.thread_local_dependencies_pool = dependencies_pool;
-    config.decoder                        = decoder_factory->create();
-    config.dec_nof_iterations             = dec_nof_iterations;
-    config.dec_enable_early_stop          = dec_enable_early_stop;
-    config.dec_force_decoding             = dec_force_decoding;
-    config.csi_sinr_calc_method           = csi_sinr_calc_method;
+    config.dependencies_pool     = dependencies_pool;
+    config.decoder               = decoder_factory->create();
+    config.dec_nof_iterations    = dec_nof_iterations;
+    config.dec_enable_early_stop = dec_enable_early_stop;
+    config.dec_force_decoding    = dec_force_decoding;
+    config.csi_sinr_calc_method  = csi_sinr_calc_method;
     return std::make_unique<pusch_processor_impl>(config);
   }
 

@@ -126,7 +126,8 @@ struct test_bench {
     }
 
     // Add UE to UE DB.
-    auto u = std::make_unique<ue>(ue_creation_command{ev.next_config(), create_req.starts_in_fallback, cell_harqs});
+    auto u = std::make_unique<ue>(
+        ue_creation_command{ev.next_config(), create_req.starts_in_fallback, cell_harqs, create_req.ul_ccch_slot_rx});
     if (ue_db.contains(create_req.ue_index)) {
       // UE already exists.
       return false;
@@ -318,7 +319,8 @@ protected:
     return total_cw_tb_size_bytes >= exp_size;
   }
 
-  bool add_ue(rnti_t tc_rnti, du_ue_index_t ue_index, bool remove_ded_cfg = false)
+  bool
+  add_ue(rnti_t tc_rnti, du_ue_index_t ue_index, bool remove_ded_cfg = false, slot_point msg3_rx_slot = slot_point())
   {
     // Add cell to UE cell grid allocator.
     auto ue_create_req               = remove_ded_cfg
@@ -330,6 +332,9 @@ protected:
     if (enable_pusch_transform_precoding) {
       ue_create_req.cfg.cells.value()[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().trans_precoder =
           pusch_config::transform_precoder::enabled;
+    }
+    if (msg3_rx_slot.valid()) {
+      ue_create_req.ul_ccch_slot_rx = msg3_rx_slot;
     }
     return bench->add_ue(ue_create_req);
   }
@@ -631,7 +636,7 @@ TEST_P(fallback_scheduler_tester, when_conres_and_msg4_srb1_scheduled_separately
 
   // Add UE 1.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
-  // Notify about SRB0 message in DL of size 101 bytes.
+  // Notify about SRB0 message in DL of size 99 bytes.
   unsigned ue1_mac_srb1_sdu_size = 99;
   push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, ue1_mac_srb1_sdu_size, false);
 
@@ -677,6 +682,57 @@ TEST_P(fallback_scheduler_tester, when_conres_and_msg4_srb1_scheduled_separately
     }
   }
   ASSERT_TRUE(msg4_srb1_pdcch.has_value());
+}
+
+TEST_P(fallback_scheduler_tester, when_ra_conres_timer_expires_ue_doesnt_get_allocated)
+{
+  setup_sched(create_expert_config(1), create_custom_cell_config_request(params.k0));
+
+  // Set MSG3 rx slot to 0 (it wouldn't be correct for TDD, but this is not relevant for this test).
+  const slot_point msg3_rx_slot = current_slot;
+
+  // Add UE 1.
+  add_ue(to_rnti(0x4601), to_du_ue_index(0), false, msg3_rx_slot);
+
+  // Notify about SRB0 message in DL of size 99 bytes.
+  unsigned ue1_mac_srb1_sdu_size = 99;
+  push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, ue1_mac_srb1_sdu_size, false);
+
+  const auto&               test_ue = get_ue(to_du_ue_index(0));
+  std::optional<slot_point> conres_pdcch;
+  unsigned                  ra_conres_timer_subframes = static_cast<uint32_t>(
+      test_ue.get_pcell().cfg().init_bwp().ul_common.value()->rach_cfg_common.value().ra_con_res_timer.count());
+  const unsigned max_test_run_slots = 2 * ra_conres_timer_subframes * (1U << current_slot.numerology());
+  unsigned       sl_idx             = 0;
+  for (; sl_idx != max_test_run_slots; ++sl_idx) {
+    // Set the grid busy for all slots until the RA-ConRes timer expires, to test the scheduler behaviour after that
+    // timer has expired.
+    // NOTE: Allocate in advance, to prevent the scheduler from finding space for allocation in the next slots.
+    const unsigned in_advance_slot_alloc = 5U;
+    for (unsigned sl_in_adv = 1U; sl_in_adv <= in_advance_slot_alloc; ++sl_in_adv) {
+      const slot_point next_allocation_slot       = current_slot + sl_in_adv;
+      const int        elapsed_time_since_msg3_rx = next_allocation_slot - msg3_rx_slot;
+      if (divide_ceil<uint32_t, uint32_t>(static_cast<uint32_t>(elapsed_time_since_msg3_rx),
+                                          current_slot.nof_slots_per_subframe()) <= ra_conres_timer_subframes) {
+        bench->res_grid[next_allocation_slot].dl_res_grid.fill(
+            grant_info(bench->cell_cfg.scs_common,
+                       ofdm_symbol_range{3, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP},
+                       crb_interval{bench->cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.start(),
+                                    bench->cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.stop()}));
+      }
+    }
+
+    run_slot();
+
+    const pdcch_dl_information* pdcch_it = get_ue_allocated_pdcch(test_ue);
+    if (pdcch_it != nullptr) {
+      if (pdcch_it->dci.type == dci_dl_rnti_config_type::tc_rnti_f1_0) {
+        conres_pdcch = current_slot;
+      }
+    }
+  }
+
+  ASSERT_FALSE(conres_pdcch.has_value());
 }
 
 TEST_P(fallback_scheduler_tester, in_ul_and_dl_allocation_pucch_cannot_collide_with_pusch_for_same_ue)

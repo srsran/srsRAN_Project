@@ -195,15 +195,15 @@ dl_pdcch_pdu unittest::build_valid_dl_pdcch_pdu()
   }
   // Add a DCI.
   pdu.dl_dci.emplace_back();
-  dl_dci_pdu& dci                        = pdu.dl_dci.back();
-  dci.rnti                               = generate_rnti();
-  dci.nid_pdcch_data                     = generate_uint16();
-  dci.nrnti_pdcch_data                   = generate_uint16();
-  dci.aggregation_level                  = 12;
-  dci.aggregation_level                  = 2;
-  dci.power_control_offset_ss_profile_nr = 0;
-  dci.payload                            = {1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0};
-  dci.precoding_and_beamforming          = build_valid_tx_precoding_and_beamforming_pdu();
+  dl_dci_pdu& dci                                                                        = pdu.dl_dci.back();
+  dci.rnti                                                                               = generate_rnti();
+  dci.nid_pdcch_data                                                                     = generate_uint16();
+  dci.nrnti_pdcch_data                                                                   = generate_uint16();
+  dci.aggregation_level                                                                  = 12;
+  dci.aggregation_level                                                                  = 2;
+  dci.power_config.emplace<fapi::dl_dci_pdu::power_profile_nr>().power_control_offset_ss = 0;
+  dci.payload                   = {1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0};
+  dci.precoding_and_beamforming = build_valid_tx_precoding_and_beamforming_pdu();
 
   pdu.maintenance_v3.info.emplace_back();
   dl_pdcch_pdu_maintenance_v3::maintenance_info& dci_v3 = pdu.maintenance_v3.info.back();

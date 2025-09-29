@@ -71,7 +71,7 @@ public:
   bool empty() const { return not RightClosed and stop_ == start_; }
 
   /// Interval length. e.g. [0, 1), [0, 1], [0 .. 1) have length 1. [0 .. 1] has length 2.
-  length_type length() const noexcept
+  constexpr length_type length() const noexcept
   {
     return static_cast<length_type>(stop_ - start_ + ((RightClosed and not is_real::value) ? 1 : 0));
   }

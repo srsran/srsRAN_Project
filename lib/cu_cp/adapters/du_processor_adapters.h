@@ -25,9 +25,7 @@
 #include "../cu_cp_controller/cu_cp_controller.h"
 #include "../cu_cp_impl_interface.h"
 #include "../du_processor/du_processor.h"
-#include "srsran/rrc/rrc_du.h"
 #include "srsran/support/srsran_assert.h"
-#include <cstddef>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -37,12 +35,20 @@ class du_processor_cu_cp_adapter : public du_processor_cu_cp_notifier
 {
 public:
   void connect_cu_cp(cu_cp_du_event_handler&                cu_cp_mng_,
+                     cu_cp_measurement_config_handler&      meas_config_handler_,
                      cu_cp_ue_removal_handler&              ue_removal_handler_,
                      cu_cp_ue_context_manipulation_handler& ue_context_handler_)
   {
-    cu_cp_handler      = &cu_cp_mng_;
-    ue_removal_handler = &ue_removal_handler_;
-    ue_context_handler = &ue_context_handler_;
+    cu_cp_handler       = &cu_cp_mng_;
+    meas_config_handler = &meas_config_handler_;
+    ue_removal_handler  = &ue_removal_handler_;
+    ue_context_handler  = &ue_context_handler_;
+  }
+
+  bool on_cell_config_update_request(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg) override
+  {
+    srsran_assert(meas_config_handler != nullptr, "Measurement config handler must not be nullptr");
+    return meas_config_handler->handle_cell_config_update_request(nci, serv_cell_cfg);
   }
 
   void on_rrc_ue_created(ue_index_t ue_index, rrc_ue_interface& rrc_ue) override
@@ -75,9 +81,10 @@ public:
   }
 
 private:
-  cu_cp_du_event_handler*                cu_cp_handler      = nullptr;
-  cu_cp_ue_removal_handler*              ue_removal_handler = nullptr;
-  cu_cp_ue_context_manipulation_handler* ue_context_handler = nullptr;
+  cu_cp_du_event_handler*                cu_cp_handler       = nullptr;
+  cu_cp_measurement_config_handler*      meas_config_handler = nullptr;
+  cu_cp_ue_removal_handler*              ue_removal_handler  = nullptr;
+  cu_cp_ue_context_manipulation_handler* ue_context_handler  = nullptr;
 };
 
 class du_processor_cu_cp_connection_adapter final : public du_connection_notifier
@@ -85,10 +92,10 @@ class du_processor_cu_cp_connection_adapter final : public du_connection_notifie
 public:
   void connect_node_connection_handler(cu_cp_controller& cu_ctrl_) { cu_ctrl = &cu_ctrl_; }
 
-  bool on_du_setup_request(du_index_t du_index, const du_setup_request& req) override
+  bool on_du_setup_request(du_index_t du_index, const std::set<plmn_identity>& plmn_ids) override
   {
     srsran_assert(cu_ctrl != nullptr, "CU-CP controller must not be nullptr");
-    return cu_ctrl->handle_du_setup_request(du_index, req);
+    return cu_ctrl->handle_du_setup_request(du_index, plmn_ids);
   }
 
 private:

@@ -990,7 +990,7 @@ dci_payload srsran::dci_1_0_c_rnti_pack(const dci_1_0_c_rnti_configuration& conf
   payload.push_back(config.time_resource, 4);
 
   // VRB-to-PRB mapping - 1 bit.
-  payload.push_back(config.vrb_to_prb_mapping != vrb_to_prb::mapping_type::non_interleaved, 1);
+  payload.push_back(config.interleaved_vrb_prb_mapping, 1);
 
   // Modulation coding scheme - 5 bits.
   payload.push_back(config.modulation_coding_scheme, 5);
@@ -1065,7 +1065,7 @@ dci_payload srsran::dci_1_0_p_rnti_pack(const dci_1_0_p_rnti_configuration& conf
     payload.push_back(config.time_resource, 4);
 
     // VRB-to-PRB mapping - 1 bit.
-    payload.push_back(config.vrb_to_prb_mapping != vrb_to_prb::mapping_type::non_interleaved, 1);
+    payload.push_back(config.interleaved_vrb_prb_mapping, 1);
 
     // Modulation and coding scheme - 5 bits.
     payload.push_back(config.modulation_coding_scheme, 5);
@@ -1092,7 +1092,7 @@ dci_payload srsran::dci_1_0_si_rnti_pack(const dci_1_0_si_rnti_configuration& co
   payload.push_back(config.time_resource, 4);
 
   // VRB-to-PRB mapping - 1 bit.
-  payload.push_back(config.vrb_to_prb_mapping != vrb_to_prb::mapping_type::non_interleaved, 1);
+  payload.push_back(config.interleaved_vrb_prb_mapping, 1);
 
   // Modulation coding scheme - 5 bits.
   payload.push_back(config.modulation_coding_scheme, 5);
@@ -1121,7 +1121,7 @@ dci_payload srsran::dci_1_0_ra_rnti_pack(const dci_1_0_ra_rnti_configuration& co
   payload.push_back(config.time_resource, 4);
 
   // VRB-to-PRB mapping - 1 bit.
-  payload.push_back(config.vrb_to_prb_mapping != vrb_to_prb::mapping_type::non_interleaved, 1);
+  payload.push_back(config.interleaved_vrb_prb_mapping, 1);
 
   // Modulation and coding scheme - 5 bits.
   payload.push_back(config.modulation_coding_scheme, 5);
@@ -1150,7 +1150,7 @@ dci_payload srsran::dci_1_0_tc_rnti_pack(const dci_1_0_tc_rnti_configuration& co
   payload.push_back(config.time_resource, 4);
 
   // VRB-to-PRB mapping - 1 bit.
-  payload.push_back(config.vrb_to_prb_mapping != vrb_to_prb::mapping_type::non_interleaved, 1);
+  payload.push_back(config.interleaved_vrb_prb_mapping, 1);
 
   // Modulation coding scheme - 5 bits.
   payload.push_back(config.modulation_coding_scheme, 5);

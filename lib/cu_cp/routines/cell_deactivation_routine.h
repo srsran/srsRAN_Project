@@ -66,6 +66,7 @@ private:
 
   // (Sub-)Routine results.
   f1ap_gnb_cu_configuration_update_response f1ap_cu_cfg_update_response;
+  bool                                      routine_success = true;
 
   std::unordered_map<ue_index_t, bool>           ue_release_status;
   std::unordered_map<ue_index_t, bool>::iterator ue_release_status_it;

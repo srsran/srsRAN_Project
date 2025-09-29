@@ -48,6 +48,7 @@ public:
 
   /// e2sm_control_request_executor functions.
   uint32_t                              get_action_id() override;
+  std::string                           get_action_name() override;
   bool                                  ric_control_action_supported(const e2sm_ric_control_request& req) override = 0;
   async_task<e2sm_ric_control_response> execute_ric_control_action(const e2sm_ric_control_request& req) override   = 0;
   async_task<e2sm_ric_control_response> return_ctrl_failure(const e2sm_ric_control_request& req);
@@ -55,6 +56,7 @@ public:
 protected:
   srslog::basic_logger&          logger;
   uint32_t                       action_id;
+  std::string                    action_name;
   srs_du::du_configurator&       du_param_configurator;
   srs_du::f1ap_ue_id_translator& f1ap_ue_id_provider;
 };

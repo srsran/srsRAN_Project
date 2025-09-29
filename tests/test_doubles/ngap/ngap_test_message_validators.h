@@ -37,6 +37,8 @@ namespace test_helpers {
 
 bool is_valid_init_ue_message(const srs_cu_cp::ngap_message& msg);
 
+bool is_valid_ul_nas_transport_message(const srs_cu_cp::ngap_message& msg);
+
 bool is_valid_initial_context_setup_response(const srs_cu_cp::ngap_message& msg);
 
 bool is_valid_initial_context_setup_failure(const srs_cu_cp::ngap_message& msg);

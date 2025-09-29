@@ -63,6 +63,12 @@ struct grant_info {
     scs(grant.bwp_cfg->scs), symbols(grant.symbols), crbs(prb_to_crb(*grant.bwp_cfg, grant.prbs))
   {
   }
+
+  /// Checks whether this grant overlaps with another grant in time and frequency.
+  bool overlaps(const grant_info& other) const
+  {
+    return scs == other.scs and symbols.overlaps(other.symbols) and crbs.overlaps(other.crbs);
+  }
 };
 
 /// Derives Carrier CRB limits from scs-SpecificCarrier.

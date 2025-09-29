@@ -31,6 +31,7 @@
 #include "srsran/mac/mac_ue_configurator.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/pcap/rlc_pcap.h"
+#include "srsran/ran/rrm.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/scheduler/result/sched_result.h"
 #include "srsran/support/async/async_no_op_task.h"
@@ -126,6 +127,7 @@ public:
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override {}
   void handle_positioning_measurement_request(const positioning_measurement_request& req) override {}
   void handle_positioning_measurement_stop(du_cell_index_t cell_index, rnti_t pos_rnti) override {}
+  void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req) override {}
 };
 
 class dummy_mac_scheduler_adapter : public mac_scheduler_cell_info_handler
@@ -151,6 +153,8 @@ public:
   }
 
   void handle_si_change_indication(const si_scheduling_update_request& request) override {}
+
+  void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req) override {}
 
   async_task<mac_cell_positioning_measurement_response>
   handle_positioning_measurement_request(du_cell_index_t                                 cell_index,

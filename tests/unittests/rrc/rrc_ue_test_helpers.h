@@ -92,7 +92,8 @@ protected:
   void init()
   {
     // add UE to UE manager
-    allocated_ue_index = ue_mng.add_ue(du_index_t::min, plmn_identity::test_value());
+    allocated_ue_index = ue_mng.add_ue(du_index_t::min);
+    ue_mng.set_plmn(allocated_ue_index, plmn_identity::test_value());
 
     // create RRC UE
     rrc_ue_creation_message rrc_ue_create_msg{};
@@ -104,6 +105,7 @@ protected:
     rrc_ue_create_msg.measurement_notifier  = &rrc_ue_cu_cp_notifier;
     rrc_ue_create_msg.cu_cp_ue_notifier     = &ue_mng.find_ue(allocated_ue_index)->get_rrc_ue_cu_cp_ue_notifier();
     rrc_ue_create_msg.cell.bands.push_back(nr_band::n78);
+    rrc_ue_create_msg.cell.plmn_identity_list.push_back(plmn_identity::test_value());
 
     rrc_ue_cfg_t ue_cfg;
     // Add meas timing

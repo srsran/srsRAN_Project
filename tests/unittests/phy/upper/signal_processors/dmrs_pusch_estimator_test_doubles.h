@@ -36,13 +36,18 @@ public:
     configuration               config;
   };
 
-  void estimate(channel_estimate& estimate, const resource_grid_reader& grid, const configuration& config) override
+  void estimate(channel_estimate&              estimate,
+                dmrs_pusch_estimator_notifier& notifier,
+                const resource_grid_reader&    grid,
+                const configuration&           config) override
   {
     entries.emplace_back();
     entry_t& entry = entries.back();
     entry.estimate = &estimate;
     entry.grid     = &grid;
     entry.config   = config;
+
+    notifier.on_estimation_complete();
   }
 
   const std::vector<entry_t>& get_entries() const { return entries; }

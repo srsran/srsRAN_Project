@@ -23,15 +23,13 @@
 #include "cu_cp_test_environment.h"
 #include "tests/test_doubles/e1ap/e1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
+#include "tests/test_doubles/ngap/ngap_test_message_validators.h"
 #include "tests/test_doubles/rrc/rrc_test_message_validators.h"
-#include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
-#include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/f1ap/f1ap_message.h"
 #include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/ngap/ngap_message.h"
-#include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -280,6 +278,22 @@ public:
     return true;
   }
 
+  [[nodiscard]] bool send_ue_level_bearer_context_inactivity_notification_and_await_ue_context_release_request()
+  {
+    report_fatal_error_if_not(not this->get_amf().try_pop_rx_pdu(ngap_pdu),
+                              "there are still NGAP messages to pop from AMF");
+    report_fatal_error_if_not(not this->get_cu_up(cu_up_idx).try_pop_rx_pdu(e1ap_pdu),
+                              "there are still E1AP messages to pop from CU-UP");
+
+    // Inject inactivity notification and wait for UE Context Release Request.
+    get_cu_up(cu_up_idx).push_tx_pdu(
+        generate_bearer_context_inactivity_notification_with_ue_level(ue_ctx->cu_cp_e1ap_id.value(), cu_up_e1ap_id));
+    report_fatal_error_if_not(this->wait_for_ngap_tx_pdu(ngap_pdu), "Failed to receive UE Context Release Request");
+    report_fatal_error_if_not(test_helpers::is_valid_ue_context_release_request(ngap_pdu),
+                              "Invalid UE Context Release Request");
+    return true;
+  }
+
   unsigned source_du_idx = 0;
   unsigned target_du_idx = 0;
   unsigned cu_up_idx     = 0;
@@ -465,4 +479,54 @@ TEST_F(cu_cp_inter_du_handover_test, when_controller_triggered_ho_succeeds_then_
 
   // STATUS: UE should be removed from source DU.
   ASSERT_EQ(report.ues.size(), 1) << "UE should be removed";
+}
+
+TEST_F(cu_cp_inter_du_handover_test, when_ho_succeeds_then_target_ue_is_connected_to_amf)
+{
+  // Check that the metrics report doesn't contain a requested/successful handover execution.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.mobility.nof_handover_executions_requested, 0U);
+  ASSERT_EQ(report.mobility.nof_successful_handover_executions, 0U);
+
+  // Inject Measurement Report and await F1AP UE Context Setup Request.
+  ASSERT_TRUE(send_rrc_measurement_report_and_await_ue_context_setup_request());
+
+  // Inject UE Context Setup Response and await Bearer Context Modification Request.
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_ue_context_modification_request());
+
+  // Inject UE Context Modification Response.
+  ASSERT_TRUE(send_ue_context_modification_response(source_du_idx));
+
+  // Check that the metrics report contains a requested handover execution.
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.mobility.nof_handover_executions_requested, 1U);
+
+  // Inject RRC Reconfiguration Complete and await Bearer Context Modification Request.
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_bearer_context_modification_request());
+
+  // Inject Bearer Context Modification Response and await UE Context Modification Request.
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_ue_context_modification_request());
+
+  // Inject UE Context Modification Response and await UE Context Release Command.
+  ASSERT_TRUE(send_ue_context_modification_response_and_await_ue_context_release_command());
+
+  // Inject F1AP UE Context Release Complete.
+  ASSERT_TRUE(send_f1ap_ue_context_release_complete(source_du_idx));
+
+  // Check that the metrics report contains a successful handover execution.
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.mobility.nof_successful_handover_executions, 1U);
+
+  // STATUS: UE should be removed from source DU.
+  ASSERT_EQ(report.ues.size(), 1) << "UE should be removed";
+
+  // Check that the UE is connected to the AMF by injecting a deregistration request and make sure its forwarded.
+  f1ap_message ul_rrc_msg_transfer = test_helpers::generate_ul_rrc_message_transfer(
+      du_ue_id,
+      ue_ctx->cu_ue_id.value(),
+      srb_id_t::srb1,
+      make_byte_buffer("00013a0c3f016f19764701bf0022808005f900788801002060000306803b4d579f").value());
+  get_du(target_du_idx).push_ul_pdu(ul_rrc_msg_transfer);
+  ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_ul_nas_transport_message(ngap_pdu));
 }

@@ -29,6 +29,7 @@
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pusch_estimator.h"
 #include "srsran/phy/upper/signal_processors/port_channel_estimator.h"
+#include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
 
@@ -40,16 +41,23 @@ public:
   /// Constructor - sets the channel estimator.
   explicit dmrs_pusch_estimator_impl(std::unique_ptr<pseudo_random_generator>     prg_,
                                      std::unique_ptr<low_papr_sequence_generator> tp_sequence_generator_,
-                                     std::unique_ptr<port_channel_estimator>      ch_est) :
-    prg(std::move(prg_)), low_paper_sequence_gen(std::move(tp_sequence_generator_)), ch_estimator(std::move(ch_est))
+                                     std::unique_ptr<port_channel_estimator>      ch_est,
+                                     task_executor&                               executor_) :
+    prg(std::move(prg_)),
+    low_papr_sequence_gen(std::move(tp_sequence_generator_)),
+    ch_estimator(std::move(ch_est)),
+    executor(executor_)
   {
     srsran_assert(prg, "Invalid PRG.");
-    srsran_assert(low_paper_sequence_gen, "Invalid sequence generator.");
+    srsran_assert(low_papr_sequence_gen, "Invalid sequence generator.");
     srsran_assert(ch_estimator, "Invalid port channel estimator.");
   }
 
   // See interface for the documentation.
-  void estimate(channel_estimate& estimate, const resource_grid_reader& grid, const configuration& config) override;
+  void estimate(channel_estimate&              estimate,
+                dmrs_pusch_estimator_notifier& notifier,
+                const resource_grid_reader&    grid,
+                const configuration&           config) override;
 
 private:
   /// Maximum supported number of transmission layers.
@@ -60,13 +68,19 @@ private:
   /// Pseudo-random generator.
   std::unique_ptr<pseudo_random_generator> prg;
   /// Sequence generator for transform precoding.
-  std::unique_ptr<low_papr_sequence_generator> low_paper_sequence_gen;
+  std::unique_ptr<low_papr_sequence_generator> low_papr_sequence_gen;
   /// Antenna port channel estimator.
   std::unique_ptr<port_channel_estimator> ch_estimator;
   /// Buffer for DM-RS symbols.
   dmrs_symbol_list temp_symbols;
   /// Buffer for DM-RS symbol coordinates.
   std::array<layer_dmrs_pattern, MAX_TX_LAYERS> temp_pattern;
+  /// Configuration of the port channel estimator.
+  port_channel_estimator::configuration est_cfg;
+  /// Counter of ports still pending to be estimated.
+  std::atomic<unsigned> pending_ports;
+  /// Task executor for running the port channel estimator.
+  task_executor& executor;
 
   /// \brief Generates the sequence described in TS38.211 Section 6.4.1.1.1, considering the only values required
   /// in TS38.211 Section 6.4.1.1.2.

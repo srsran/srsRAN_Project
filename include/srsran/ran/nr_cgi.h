@@ -39,6 +39,10 @@ struct nr_cell_global_id_t {
 
   bool operator==(const nr_cell_global_id_t& rhs) const { return plmn_id == rhs.plmn_id and nci == rhs.nci; }
   bool operator!=(const nr_cell_global_id_t& rhs) const { return !(rhs == *this); }
+  bool operator<(const nr_cell_global_id_t& rhs) const
+  {
+    return (plmn_id < rhs.plmn_id) || (plmn_id == rhs.plmn_id && nci < rhs.nci);
+  }
 };
 
 } // namespace srsran

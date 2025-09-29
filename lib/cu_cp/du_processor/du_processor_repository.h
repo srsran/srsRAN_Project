@@ -42,11 +42,11 @@ struct cu_cp_configuration;
 struct du_repository_config {
   const cu_cp_configuration&             cu_cp;
   cu_cp_du_event_handler&                cu_cp_du_handler;
+  cu_cp_measurement_config_handler&      meas_config_handler;
   cu_cp_ue_removal_handler&              ue_removal_handler;
   cu_cp_ue_context_manipulation_handler& ue_context_handler;
   common_task_scheduler&                 common_task_sched;
   ue_manager&                            ue_mng;
-  rrc_du_measurement_config_notifier&    meas_config_notifier;
   du_connection_notifier&                du_conn_notif;
   srslog::basic_logger&                  logger;
 };

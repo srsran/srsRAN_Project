@@ -22,7 +22,8 @@
 
 #pragma once
 
-#include "srsran/f1ap/cu_cp/du_setup_notifier.h"
+#include "srsran/cu_cp/cu_cp_types.h"
+#include <set>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -35,7 +36,7 @@ public:
 
   /// \brief Notifies the CU-CP about a DU setup request.
   /// \return True if CU-CP accepts the request.
-  virtual bool on_du_setup_request(du_index_t du_index, const du_setup_request& req) = 0;
+  virtual bool on_du_setup_request(du_index_t du_index, const std::set<plmn_identity>& plmn_ids) = 0;
 };
 
 } // namespace srs_cu_cp

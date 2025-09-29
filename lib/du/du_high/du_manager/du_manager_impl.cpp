@@ -252,7 +252,7 @@ du_param_config_response du_manager_impl::handle_operator_config_request(const d
       // Launch config procedure.
       CORO_AWAIT_VALUE(auto resp, launch_async<du_param_config_procedure>(req, params, cell_mng));
 
-      // signal back to caller.
+      // Signal back to caller.
       p.set_value(resp);
 
       CORO_RETURN();

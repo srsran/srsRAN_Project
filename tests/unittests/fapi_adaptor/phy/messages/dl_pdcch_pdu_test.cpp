@@ -99,7 +99,7 @@ TEST(fapi_to_phy_pdcch_conversion_test, valid_pdu_conversion_success)
 
                   builder_dci.set_basic_parameters(to_rnti(0), nid_data, n_rnti, cce, aggregation);
 
-                  builder_dci.set_tx_power_info_parameter(power_nr);
+                  builder_dci.set_profile_nr_tx_power_info_parameters(power_nr);
                   builder_dci.get_tx_precoding_and_beamforming_pdu_builder().set_basic_parameters(275, 0).add_prg(0,
                                                                                                                   {});
 

@@ -87,14 +87,25 @@ struct tx_precoding_and_beamforming_pdu {
 
 /// Downlink DCI PDU configuration.
 struct dl_dci_pdu {
-  rnti_t                           rnti;
-  uint16_t                         nid_pdcch_data;
-  uint16_t                         nrnti_pdcch_data;
-  uint8_t                          cce_index;
-  uint8_t                          aggregation_level;
-  tx_precoding_and_beamforming_pdu precoding_and_beamforming;
-  int8_t                           power_control_offset_ss_profile_nr;
-  dci_payload                      payload;
+  /// PDCCH PDU profile SSS power parameters.
+  struct power_profile_sss {
+    float dmrs_power_offset_db;
+    float data_power_offset_db;
+  };
+
+  /// PDCCH PDU profile NR power parameters.
+  struct power_profile_nr {
+    int8_t power_control_offset_ss;
+  };
+
+  rnti_t                                            rnti;
+  uint16_t                                          nid_pdcch_data;
+  uint16_t                                          nrnti_pdcch_data;
+  uint8_t                                           cce_index;
+  uint8_t                                           aggregation_level;
+  tx_precoding_and_beamforming_pdu                  precoding_and_beamforming;
+  std::variant<power_profile_nr, power_profile_sss> power_config;
+  dci_payload                                       payload;
   // Vendor specific parameters.
   std::optional<pdcch_context> context;
 };

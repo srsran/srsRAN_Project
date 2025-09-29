@@ -159,6 +159,7 @@ async_task<void> rrc_reestablishment_procedure::handle_rrc_reestablishment_fallb
                                                  du_to_cu_container,
                                                  rrc_ue_setup_notifier,
                                                  srb_notifier,
+                                                 cu_cp_notifier,
                                                  metrics_notifier,
                                                  ngap_notifier,
                                                  event_mng,

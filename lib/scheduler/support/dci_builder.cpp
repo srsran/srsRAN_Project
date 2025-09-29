@@ -69,9 +69,9 @@ void srsran::build_dci_f1_0_si_rnti(dci_dl_info&               dci,
       ra_frequency_type1_configuration{si_dci.N_rb_dl_bwp, si_vrbs.start(), si_vrbs.length()});
   // As per Table 7.3.1.2.2-5, TS 38.212, 0 = non-interleaved, 1 = interleaved.
   // TODO: Verify if interleaved is suitable for SIB1.
-  si_dci.vrb_to_prb_mapping       = vrb_to_prb::mapping_type::non_interleaved;
-  si_dci.time_resource            = time_resource;
-  si_dci.modulation_coding_scheme = mcs_index.to_uint();
+  si_dci.interleaved_vrb_prb_mapping = false;
+  si_dci.time_resource               = time_resource;
+  si_dci.modulation_coding_scheme    = mcs_index.to_uint();
   // Redundancy version for first transmission.
   // TODO: Check what is the best RV for SIB1.
   si_dci.redundancy_version           = 0;
@@ -96,9 +96,9 @@ void srsran::build_dci_f1_0_p_rnti(dci_dl_info&               dci,
   p_dci.time_resource = time_resource;
   // As per Table 7.3.1.2.2-5, TS 38.212, 0 = non-interleaved, 1 = interleaved.
   // TODO: Verify if interleaved is suitable for Paging.
-  p_dci.vrb_to_prb_mapping       = vrb_to_prb::mapping_type::non_interleaved;
-  p_dci.short_messages_indicator = dci_1_0_p_rnti_configuration::payload_info::scheduling_information;
-  p_dci.modulation_coding_scheme = mcs_index.to_uint();
+  p_dci.interleaved_vrb_prb_mapping = false;
+  p_dci.short_messages_indicator    = dci_1_0_p_rnti_configuration::payload_info::scheduling_information;
+  p_dci.modulation_coding_scheme    = mcs_index.to_uint();
 }
 
 void srsran::build_dci_f1_0_p_rnti(dci_dl_info& dci, const bwp_downlink_common& init_dl_bwp, unsigned short_messages)
@@ -129,10 +129,10 @@ void srsran::build_dci_f1_0_ra_rnti(dci_dl_info&               dci,
       crb_to_vrb_f1_0_common_ss_non_interleaved(crbs, init_dl_bwp.pdcch_common.coreset0->get_coreset_start_crb());
   ra_dci.frequency_resource = ra_frequency_type1_get_riv(
       ra_frequency_type1_configuration{ra_dci.N_rb_dl_bwp, rar_vrbs.start(), rar_vrbs.length()});
-  ra_dci.vrb_to_prb_mapping       = vrb_to_prb::mapping_type::non_interleaved;
-  ra_dci.time_resource            = time_resource;
-  ra_dci.modulation_coding_scheme = mcs_index.to_uint();
-  ra_dci.tb_scaling               = 0; // TODO.
+  ra_dci.interleaved_vrb_prb_mapping = false;
+  ra_dci.time_resource               = time_resource;
+  ra_dci.modulation_coding_scheme    = mcs_index.to_uint();
+  ra_dci.tb_scaling                  = 0; // TODO.
 }
 
 void srsran::build_dci_f1_0_tc_rnti(dci_dl_info&                  dci,
@@ -149,8 +149,8 @@ void srsran::build_dci_f1_0_tc_rnti(dci_dl_info&                  dci,
   dci.tc_rnti_f1_0                    = {};
   dci_1_0_tc_rnti_configuration& f1_0 = dci.tc_rnti_f1_0;
 
-  f1_0.tpc_command        = 1;
-  f1_0.vrb_to_prb_mapping = vrb_to_prb::mapping_type::non_interleaved;
+  f1_0.tpc_command                 = 1;
+  f1_0.interleaved_vrb_prb_mapping = false;
 
   // PDSCH resources.
   // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB is the size of CORESET 0 for TC-RNTI.
@@ -192,8 +192,8 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                  dci,
   dci.c_rnti_f1_0                    = {};
   dci_1_0_c_rnti_configuration& f1_0 = dci.c_rnti_f1_0;
 
-  f1_0.tpc_command        = 1;
-  f1_0.vrb_to_prb_mapping = vrb_to_prb::mapping_type::non_interleaved;
+  f1_0.tpc_command                 = 1;
+  f1_0.interleaved_vrb_prb_mapping = false;
 
   // PDSCH resources.
   // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB for C-RNTI.

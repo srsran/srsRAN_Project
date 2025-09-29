@@ -94,18 +94,20 @@ void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& 
   const std::chrono::nanoseconds enqueue_time_diff = meas.start_tp - meas.slot_ind_enqueue_tp;
   const std::chrono::nanoseconds time_diff         = stop_tp - meas.start_tp;
 
-  // Get resource usage difference.
-  expected<resource_usage::diff, int> rusg_diff;
-  if (meas.start_rusg.has_value()) {
-    auto stop_rusg = resource_usage::now();
-    if (stop_rusg.has_value()) {
-      rusg_diff = stop_rusg.value() - meas.start_rusg.value();
-    } else {
-      rusg_diff = make_unexpected(stop_rusg.error());
+  // Compute resource usage in a lambda function.
+  auto compute_diff = [&meas]() -> expected<resource_usage::diff, int> {
+    // Get resource usage difference.
+    if (meas.start_rusg.has_value()) {
+      auto stop_rusg = resource_usage::now();
+      if (stop_rusg.has_value()) {
+        return stop_rusg.value() - *meas.start_rusg;
+      }
     }
-  } else {
-    rusg_diff = make_unexpected(meas.start_rusg.error());
-  }
+    return make_unexpected(meas.start_rusg.error());
+  };
+
+  // Get resource usage difference.
+  expected<resource_usage::diff, int> rusg_diff = compute_diff();
 
   std::chrono::nanoseconds consecutive_slot_ind_time_diff{0};
   if (last_slot_ind_enqueue_tp != metric_clock::time_point{}) {

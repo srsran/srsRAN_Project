@@ -66,7 +66,6 @@ public:
            const up_resource_manager_cfg& up_cfg,
            const security_manager_config& sec_cfg,
            ue_task_scheduler_impl         task_sched_,
-           plmn_identity                  plmn_,
            std::optional<gnb_du_id_t>     du_id_       = std::nullopt,
            std::optional<pci_t>           pci_         = std::nullopt,
            std::optional<rnti_t>          c_rnti_      = std::nullopt,

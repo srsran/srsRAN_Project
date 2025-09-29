@@ -53,7 +53,7 @@ public:
     pucch_sr_only_test.crnti   = to_rnti(0x4601);
     pucch_sr_only_test.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
 
-    pucch_sr_only_test.resources.prbs             = prb_interval{49, 50};
+    pucch_sr_only_test.resources.prbs = prb_interval::start_and_len(49 - test_helpers::common_pucch_res_guardband, 1);
     pucch_sr_only_test.resources.second_hop_prbs  = prb_interval{0, 0};
     pucch_sr_only_test.resources.symbols          = ofdm_symbol_range{0, 14};
     pucch_sr_only_test.uci_bits.sr_bits           = sr_nof_bits::one;
@@ -67,10 +67,10 @@ public:
     format1_sr.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
 
     // In the slots with SR + CSI, the expected format is Format 2.
-    auto& format2_sr_csi                          = pucch_sr_csi_test.format_params.emplace<pucch_format_2>();
-    pucch_sr_csi_test.crnti                       = to_rnti(0x4601);
-    pucch_sr_csi_test.bwp_cfg                     = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-    pucch_sr_csi_test.resources.prbs              = prb_interval{2, 3};
+    auto& format2_sr_csi             = pucch_sr_csi_test.format_params.emplace<pucch_format_2>();
+    pucch_sr_csi_test.crnti          = to_rnti(0x4601);
+    pucch_sr_csi_test.bwp_cfg        = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_sr_csi_test.resources.prbs = prb_interval::start_and_len(test_helpers::common_pucch_res_guardband + 2, 1);
     pucch_sr_csi_test.resources.second_hop_prbs   = prb_interval{0, 0};
     pucch_sr_csi_test.resources.symbols           = ofdm_symbol_range{12, 14};
     pucch_sr_csi_test.uci_bits.harq_ack_nof_bits  = 0;
@@ -160,10 +160,10 @@ public:
     sr_offset = t_bench.get_main_ue().get_pcell().cfg().init_bwp().ul_ded->pucch_cfg.value().sr_res_list[0].offset;
 
     // In the slots with SR + CSI, the expected format is Format 2.
-    auto& format2_csi_and_sr                          = pucch_csi_and_sr_test.format_params.emplace<pucch_format_2>();
-    pucch_csi_and_sr_test.crnti                       = to_rnti(0x4601);
-    pucch_csi_and_sr_test.bwp_cfg                     = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-    pucch_csi_and_sr_test.resources.prbs              = prb_interval{2, 3};
+    auto& format2_csi_and_sr             = pucch_csi_and_sr_test.format_params.emplace<pucch_format_2>();
+    pucch_csi_and_sr_test.crnti          = to_rnti(0x4601);
+    pucch_csi_and_sr_test.bwp_cfg        = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_csi_and_sr_test.resources.prbs = prb_interval::start_and_len(test_helpers::common_pucch_res_guardband + 2, 1);
     pucch_csi_and_sr_test.resources.second_hop_prbs   = prb_interval{0, 0};
     pucch_csi_and_sr_test.resources.symbols           = ofdm_symbol_range{12, 14};
     pucch_csi_and_sr_test.uci_bits.harq_ack_nof_bits  = 0;
@@ -175,10 +175,10 @@ public:
     format2_csi_and_sr.n_id_0_scrambling = t_bench.cell_cfg.pci;
 
     // In the slots with CSI only, the expected format is Format 2.
-    auto& format2_csi                               = pucch_csi_only_test.format_params.emplace<pucch_format_2>();
-    pucch_csi_only_test.crnti                       = to_rnti(0x4601);
-    pucch_csi_only_test.bwp_cfg                     = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-    pucch_csi_only_test.resources.prbs              = prb_interval{2, 3};
+    auto& format2_csi                  = pucch_csi_only_test.format_params.emplace<pucch_format_2>();
+    pucch_csi_only_test.crnti          = to_rnti(0x4601);
+    pucch_csi_only_test.bwp_cfg        = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_csi_only_test.resources.prbs = prb_interval::start_and_len(test_helpers::common_pucch_res_guardband + 2, 1);
     pucch_csi_only_test.resources.second_hop_prbs   = prb_interval{0, 0};
     pucch_csi_only_test.resources.symbols           = ofdm_symbol_range{12, 14};
     pucch_csi_only_test.uci_bits.harq_ack_nof_bits  = 0;

@@ -118,6 +118,8 @@ struct base_coro_frame<void> {
     auto& a = mem_buffer.get_awaiter<ForwardedAwaitable>();
     a.await_resume();
     mem_buffer.clear<ForwardedAwaitable>();
+    // Note: We need to do an explicit return here because cppcheck gets confused with the return type.
+    return;
   }
 
   template <typename Awaitable>

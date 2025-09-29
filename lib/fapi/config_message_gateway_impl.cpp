@@ -85,13 +85,13 @@ configuration_procedure::configuration_procedure(srslog::basic_logger& logger_) 
 void configuration_procedure::param_request(const fapi::param_request& msg)
 {
   // Do nothing for the PARAM.response.
-  param_response reponse;
-  reponse.num_tlv = 0;
+  param_response response;
+  response.num_tlv = 0;
 
   // If current status is running, report back error code, as per SCF-222 v4.0 section 3.3.1.3.
-  reponse.error_code = (status == cell_status::RUNNING) ? error_code_id::msg_invalid_state : error_code_id::msg_ok;
+  response.error_code = (status == cell_status::RUNNING) ? error_code_id::msg_invalid_state : error_code_id::msg_ok;
 
-  notifier->on_param_response(reponse);
+  notifier->on_param_response(response);
 }
 
 void configuration_procedure::config_request(const fapi::config_request& msg)
@@ -105,15 +105,15 @@ void configuration_procedure::config_request(const fapi::config_request& msg)
     config_updated = update_cell_config(msg);
   }
 
-  config_response reponse;
-  reponse.error_code = config_updated ? error_code_id::msg_ok : error_code_id::msg_invalid_config;
+  config_response response;
+  response.error_code = config_updated ? error_code_id::msg_ok : error_code_id::msg_invalid_config;
 
   // Move cell to configured status if current status is idle and the configuration update was successful.
   if ((current_status == cell_status::IDLE) && config_updated) {
     status = cell_status::CONFIGURED;
   }
 
-  notifier->on_config_response(reponse);
+  notifier->on_config_response(response);
 }
 
 void configuration_procedure::start_request(const fapi::start_request& msg)
@@ -183,6 +183,7 @@ bool configuration_procedure::update_cell_config(const fapi::config_request& msg
   cell_cfg.prach_cfg   = msg.prach_cfg;
   cell_cfg.ssb_cfg     = msg.ssb_cfg;
   cell_cfg.tdd_cfg     = msg.tdd_cfg;
+  cell_cfg.vendor_cfg  = msg.vendor_cfg;
 
   return true;
 }

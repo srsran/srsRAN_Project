@@ -23,8 +23,8 @@
 #include "du_processor_impl.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
+#include "srsran/ran/cause/f1ap_cause.h"
 #include "srsran/ran/cause/f1ap_cause_converters.h"
-#include "srsran/ran/cause/ngap_cause.h"
 #include "srsran/rrc/rrc_du_factory.h"
 #include "srsran/support/async/coroutine.h"
 
@@ -85,38 +85,67 @@ private:
 
 // du_processor_impl
 
-du_processor_impl::du_processor_impl(du_processor_config_t               du_processor_config_,
-                                     du_processor_cu_cp_notifier&        cu_cp_notifier_,
-                                     f1ap_message_notifier&              f1ap_pdu_notifier_,
-                                     rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier,
-                                     common_task_scheduler&              common_task_sched_,
-                                     ue_manager&                         ue_mng_) :
+du_processor_impl::du_processor_impl(du_processor_config_t        du_processor_config_,
+                                     du_processor_cu_cp_notifier& cu_cp_notifier_,
+                                     f1ap_message_notifier&       f1ap_pdu_notifier_,
+                                     common_task_scheduler&       common_task_sched_,
+                                     ue_manager&                  ue_mng_) :
   cfg(std::move(du_processor_config_)),
   cu_cp_notifier(cu_cp_notifier_),
   f1ap_pdu_notifier(f1ap_pdu_notifier_),
   ue_mng(ue_mng_),
   f1ap_ev_notifier(std::make_unique<f1ap_du_processor_adapter>(*this, common_task_sched_))
 {
-  // create f1ap
+  // Create F1AP.
   f1ap = create_f1ap(cfg.cu_cp_cfg.f1ap,
                      f1ap_pdu_notifier,
                      *f1ap_ev_notifier,
                      *cfg.cu_cp_cfg.services.timers,
                      *cfg.cu_cp_cfg.services.cu_cp_executor);
 
-  // create RRC
-  rrc_du_creation_message du_creation_req{create_rrc_config(cfg.cu_cp_cfg), rrc_du_cu_cp_notifier};
-  rrc = create_rrc_du(du_creation_req);
+  // Create RRC DU.
+  rrc = create_rrc_du(create_rrc_config(cfg.cu_cp_cfg));
 }
 
 du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_request& request)
 {
   du_setup_result res;
 
-  // Check if CU-CP is in a state to accept a new DU connection.
-  if (not cfg.du_setup_notif->on_du_setup_request(cfg.du_index, request)) {
-    res.result = du_setup_result::rejected{cause_protocol_t::msg_not_compatible_with_receiver_state,
-                                           "CU-CP is not in a state to accept a new DU connection"};
+  // Extract cell info from served cell list.
+  // TODO: How to handle missing optional freq and timing in meas timing config?
+  std::map<nr_cell_global_id_t, rrc_cell_info> cell_info_db = rrc->get_cell_info(request.gnb_du_served_cells_list);
+  if (cell_info_db.empty()) {
+    res.result = du_setup_result::rejected{f1ap_cause_transport_t::unspecified, "Could not extract cell info from DU"};
+    return res;
+  }
+
+  // Collect PLMN IDs and cell meas config of all served cells.
+  std::set<plmn_identity>                              plmn_ids;
+  std::map<nr_cell_identity, serving_cell_meas_config> meas_config_db;
+  for (const auto& [cgi, cell_info] : cell_info_db) {
+    for (const auto& plmn : cell_info.plmn_identity_list) {
+      plmn_ids.insert(plmn);
+    }
+
+    // Fill cell meas config.
+    serving_cell_meas_config meas_cfg;
+    meas_cfg.nci               = cgi.nci;
+    meas_cfg.gnb_id_bit_length = cfg.cu_cp_cfg.node.gnb_id.bit_length;
+    meas_cfg.plmn              = cgi.plmn_id;
+    meas_cfg.pci               = cell_info.nr_pci;
+    meas_cfg.band              = cell_info.band;
+    // TODO: which meas timing to use here?
+    meas_cfg.ssb_mtc   = cell_info.meas_timings.begin()->freq_and_timing.value().ssb_meas_timing_cfg;
+    meas_cfg.ssb_arfcn = cell_info.meas_timings.begin()->freq_and_timing.value().carrier_freq;
+    meas_cfg.ssb_scs   = cell_info.meas_timings.begin()->freq_and_timing.value().ssb_subcarrier_spacing;
+
+    meas_config_db.emplace(cgi.nci, meas_cfg);
+  }
+
+  // Check if CU-CP can accept a new DU connection.
+  if (not cfg.du_setup_notif->on_du_setup_request(cfg.du_index, plmn_ids)) {
+    res.result = du_setup_result::rejected{f1ap_cause_radio_network_t::plmn_not_served_by_the_gnb_cu,
+                                           "One or more PLMNs are not served by the GNB CU-CP"};
     return res;
   }
 
@@ -127,20 +156,24 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
     return res;
   }
 
-  // Forward serving cell list to RRC DU
-  // TODO: How to handle missing optional freq and timing in meas timing config?
-  if (!rrc->handle_served_cell_list(request.gnb_du_served_cells_list)) {
-    res.result =
-        du_setup_result::rejected{f1ap_cause_transport_t::unspecified, "Could not establish served cell list in RRC"};
-    return res;
+  // Update cell config in cell measurement manager.
+  for (const auto& [nci, meas_config] : meas_config_db) {
+    if (not cu_cp_notifier.on_cell_config_update_request(nci, meas_config)) {
+      res.result =
+          du_setup_result::rejected{f1ap_cause_transport_t::unspecified, "Could not update cell measurement config"};
+      return res;
+    }
   }
+
+  // Store cell info in RRC DU.
+  rrc->store_cell_info_db(cell_info_db);
 
   // Prepare DU response with accepted setup.
   auto& accepted              = res.result.emplace<du_setup_result::accepted>();
   accepted.gnb_cu_name        = cfg.cu_cp_cfg.node.ran_node_name;
   accepted.gnb_cu_rrc_version = cfg.cu_cp_cfg.rrc.rrc_version;
 
-  // Accept all cells
+  // Accept all cells.
   accepted.cells_to_be_activ_list.resize(request.gnb_du_served_cells_list.size());
   for (unsigned i = 0; i != accepted.cells_to_be_activ_list.size(); ++i) {
     accepted.cells_to_be_activ_list[i].nr_cgi = request.gnb_du_served_cells_list[i].served_cell_info.nr_cgi;
@@ -209,8 +242,7 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
 
   if (ue_index == ue_index_t::invalid) {
     // Add new CU-CP UE
-    ue_index = ue_mng.add_ue(
-        cfg.du_index, req.cgi.plmn_id, cfg.du_cfg_hdlr->get_context().id, pci, req.c_rnti, pcell->cell_index);
+    ue_index = ue_mng.add_ue(cfg.du_index, cfg.du_cfg_hdlr->get_context().id, pci, req.c_rnti, pcell->cell_index);
     if (ue_index == ue_index_t::invalid) {
       logger.warning("CU-CP UE creation failed");
       return make_unexpected(rrc->get_rrc_reject());

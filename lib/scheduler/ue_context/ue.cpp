@@ -50,7 +50,7 @@ ue::ue(const ue_creation_command& cmd) :
       logger)
 {
   // Apply configuration.
-  set_config(cmd.cfg);
+  set_config(cmd.cfg, cmd.ul_ccch_slot_rx);
 
   for (auto& cell : ue_du_cells) {
     if (cell != nullptr) {

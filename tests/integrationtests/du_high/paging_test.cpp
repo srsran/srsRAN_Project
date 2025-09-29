@@ -71,7 +71,7 @@ TEST_F(paging_tester, when_paging_message_is_received_its_relayed_to_ue)
   static constexpr uint64_t five_g_tmsi = 0x01011066fef7;
 
   // Receive F1AP paging message.
-  cu_notifier.last_f1ap_msgs.clear();
+  cu_notifier.f1ap_ul_msgs.clear();
   ASSERT_TRUE(not this->du_high_cfg.ran.cells.empty());
   const auto du_cell_cfg = this->du_high_cfg.ran.cells[0];
   this->du_hi->get_f1ap_du().handle_message(generate_paging_message(five_g_tmsi, du_cell_cfg.nr_cgi));

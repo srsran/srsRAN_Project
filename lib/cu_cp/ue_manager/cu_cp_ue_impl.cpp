@@ -32,7 +32,6 @@ cu_cp_ue::cu_cp_ue(ue_index_t                     ue_index_,
                    const up_resource_manager_cfg& up_cfg,
                    const security_manager_config& sec_cfg,
                    ue_task_scheduler_impl         task_sched_,
-                   plmn_identity                  plmn_,
                    std::optional<gnb_du_id_t>     du_id_,
                    std::optional<pci_t>           pci_,
                    std::optional<rnti_t>          c_rnti_,
@@ -60,7 +59,6 @@ cu_cp_ue::cu_cp_ue(ue_index_t                     ue_index_,
   }
 
   ue_ctxt.du_idx = du_index_;
-  ue_ctxt.plmn   = plmn_;
 
   rrc_ue_cu_cp_ue_ev_notifier.connect_ue(*this);
   ngap_cu_cp_ue_ev_notifier.connect_ue(*this);

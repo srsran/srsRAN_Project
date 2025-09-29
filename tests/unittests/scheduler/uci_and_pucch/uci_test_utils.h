@@ -38,6 +38,9 @@ namespace srsran {
 
 namespace test_helpers {
 
+/// Guardbands at the edges of the spectrum for dedicated PUCCH resources, to avoid collisions with common resources.
+constexpr unsigned common_pucch_res_guardband = 4;
+
 /// Creates a test uplink configuration using Formats 1 and 2, given the extended parameters.
 inline uplink_config make_test_ue_uplink_config(const config_helpers::cell_config_builder_params_extended& params)
 {
@@ -68,7 +71,7 @@ inline uplink_config make_test_ue_uplink_config(const config_helpers::cell_confi
   // PUCCH resource format 1, for HARQ-ACK.
   // >>> PUCCH resource 0.
   pucch_resource res_basic{.res_id           = pucch_res_id_t{0, 0},
-                           .starting_prb     = nof_rbs - 1,
+                           .starting_prb     = nof_rbs - common_pucch_res_guardband - 1,
                            .nof_symbols      = 14,
                            .starting_sym_idx = 0,
                            .format           = pucch_format::FORMAT_1};
@@ -80,19 +83,21 @@ inline uplink_config make_test_ue_uplink_config(const config_helpers::cell_confi
   pucch_cfg.pucch_res_list.push_back(res_basic);
   pucch_resource& res1 = pucch_cfg.pucch_res_list.back();
   res1.res_id          = pucch_res_id_t{1, 1};
-  res1.starting_prb    = 1;
+  res1.starting_prb    = common_pucch_res_guardband + 1;
   res1.second_hop_prb.emplace(nof_rbs - res1.starting_prb - 1);
   // >>> PUCCH resource 2.
   pucch_cfg.pucch_res_list.push_back(res_basic);
   pucch_resource& res2 = pucch_cfg.pucch_res_list.back();
   res2.res_id          = pucch_res_id_t{2, 2};
-  res2.second_hop_prb.emplace(1);
-  res2.starting_prb = nof_rbs - res2.second_hop_prb.value() - 1;
+  res2.second_hop_prb.emplace(common_pucch_res_guardband + 1);
+  res2.starting_prb = nof_rbs - res2.second_hop_prb.value() - common_pucch_res_guardband - 1;
 
   // PUCCH resource format 2, for HARQ-ACK and CSI.
   // >>> PUCCH resource 3.
-  pucch_resource res_basic_f2{
-      .starting_prb = 2, .nof_symbols = 2, .starting_sym_idx = 0, .format = pucch_format::FORMAT_2};
+  pucch_resource res_basic_f2{.starting_prb     = common_pucch_res_guardband + 2,
+                              .nof_symbols      = 2,
+                              .starting_sym_idx = 0,
+                              .format           = pucch_format::FORMAT_2};
   res_basic_f2.res_id = pucch_res_id_t{3, 3};
   res_basic_f2.format_params.emplace<pucch_format_2_3_cfg>(pucch_format_2_3_cfg{.nof_prbs = 1});
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
@@ -144,7 +149,7 @@ inline uplink_config make_test_ue_uplink_config(const config_helpers::cell_confi
     pucch_cfg.pucch_res_list.push_back(res_basic);
     pucch_resource& res10 = pucch_cfg.pucch_res_list.back();
     res10.res_id          = pucch_res_id_t{10, 10};
-    res10.starting_prb    = 0;
+    res10.starting_prb    = common_pucch_res_guardband;
   }
 
   // >>> PUCCH resource 11.
@@ -152,7 +157,7 @@ inline uplink_config make_test_ue_uplink_config(const config_helpers::cell_confi
     pucch_cfg.pucch_res_list.push_back(res_basic);
     pucch_resource& res11 = pucch_cfg.pucch_res_list.back();
     res11.res_id          = pucch_res_id_t{11, 11};
-    res11.starting_prb    = nof_rbs - 3;
+    res11.starting_prb    = nof_rbs - common_pucch_res_guardband - 3;
   }
 
   // TODO: add more PUCCH resources.

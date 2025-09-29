@@ -681,15 +681,16 @@ unsigned ra_scheduler::schedule_rar(pending_rar_t& rar, cell_resource_allocator&
   // the list of PUSCH-TimeDomainResourceAllocation in PUSCHConfigCommon.
   static_vector<msg3_alloc_candidate, MAX_GRANTS_PER_RAR> msg3_candidates;
   auto pusch_list = get_pusch_time_domain_resource_table(get_pusch_cfg());
-  for (unsigned puschidx = 0; puschidx < pusch_list.size(); ++puschidx) {
-    unsigned pusch_res_max_allocs = max_nof_allocs - msg3_candidates.size();
+  for (unsigned pusch_idx = 0; pusch_idx < pusch_list.size(); ++pusch_idx) {
+    unsigned pusch_res_max_allocs =
+        std::min(msg3_candidates.capacity() - msg3_candidates.size(), max_nof_allocs - msg3_candidates.size());
 
     // >> Verify if Msg3 delay provided by current PUSCH-TimeDomainResourceAllocation corresponds to an UL slot.
-    const unsigned msg3_delay = get_msg3_delay(pusch_list[puschidx], get_ul_bwp_cfg().scs) + cell_cfg.ntn_cs_koffset;
+    const unsigned msg3_delay = get_msg3_delay(pusch_list[pusch_idx], get_ul_bwp_cfg().scs) + cell_cfg.ntn_cs_koffset;
     const cell_slot_resource_allocator& msg3_alloc = res_alloc[pdcch_slot + msg3_delay];
     const unsigned                      start_ul_symbols =
         NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.get_nof_ul_symbol_per_slot(msg3_alloc.slot);
-    if (not cell_cfg.is_ul_enabled(msg3_alloc.slot) or pusch_list[puschidx].symbols.start() < start_ul_symbols) {
+    if (not cell_cfg.is_ul_enabled(msg3_alloc.slot) or pusch_list[pusch_idx].symbols.start() < start_ul_symbols) {
       continue;
     }
 
@@ -701,9 +702,9 @@ unsigned ra_scheduler::schedule_rar(pending_rar_t& rar, cell_resource_allocator&
     }
 
     // >> Check CRBs available in PUSCH for Msg3.
-    const unsigned nof_rbs_per_msg3 = msg3_data[puschidx].pusch.rbs.type1().length();
+    const unsigned nof_rbs_per_msg3 = msg3_data[pusch_idx].pusch.rbs.type1().length();
     unsigned       nof_msg3_rbs     = nof_rbs_per_msg3 * pusch_res_max_allocs;
-    crb_bitmap     used_ul_crbs     = msg3_alloc.ul_res_grid.used_crbs(get_ul_bwp_cfg(), pusch_list[puschidx].symbols);
+    crb_bitmap     used_ul_crbs     = msg3_alloc.ul_res_grid.used_crbs(get_ul_bwp_cfg(), pusch_list[pusch_idx].symbols);
     // Mark the CRBs used by PUCCH as occupied.
     used_ul_crbs |= pucch_crbs;
     crb_interval   msg3_crbs              = rb_helper::find_empty_interval_of_length(used_ul_crbs, nof_msg3_rbs);
@@ -721,11 +722,11 @@ unsigned ra_scheduler::schedule_rar(pending_rar_t& rar, cell_resource_allocator&
                      max_allocs_on_free_rbs,
                      list_space);
     }
-    pusch_res_max_allocs = std::min(max_allocs_on_free_rbs, pusch_res_max_allocs);
-    for (unsigned i = 0; i < pusch_res_max_allocs; ++i) {
+    pusch_res_max_allocs = std::min(pusch_res_max_allocs, max_allocs_on_free_rbs);
+    for (unsigned i = 0; i != pusch_res_max_allocs; ++i) {
       msg3_alloc_candidate& candidate = msg3_candidates.emplace_back();
       candidate.crbs                  = {last_crb, last_crb + nof_rbs_per_msg3};
-      candidate.pusch_td_res_index    = puschidx;
+      candidate.pusch_td_res_index    = pusch_idx;
       last_crb += nof_rbs_per_msg3;
     }
   }

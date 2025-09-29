@@ -95,6 +95,11 @@ private:
       ev_mng->handle_error_indication(sl_tx, event);
     }
 
+    void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& slice_reconf_req) override
+    {
+      ev_mng->handle_slice_reconfiguration_request(slice_reconf_req);
+    }
+
     scheduler_feedback_handler&                   get_feedback_handler() override { return *ev_mng; }
     scheduler_positioning_handler&                get_positioning_handler() override { return *ev_mng; }
     scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() override { return *ev_mng; }

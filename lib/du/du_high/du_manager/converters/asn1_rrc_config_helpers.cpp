@@ -3118,6 +3118,11 @@ static static_vector<rlc_bearer_config, MAX_NOF_RB_LCIDS> fill_rlc_bearers(const
     bearer.rlc_cfg            = &drb.rlc_cfg;
     bearer.mac_cfg            = &drb.mac_cfg;
   }
+
+  // Note: DRB ID and LCID assignments are not necessarily in the same order.
+  std::sort(
+      list.begin(), list.end(), [](const rlc_bearer_config& a, const rlc_bearer_config& b) { return a.lcid < b.lcid; });
+
   return list;
 }
 

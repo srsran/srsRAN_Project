@@ -26,6 +26,7 @@
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_phy_capabilities.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
 #include "srsran/srsvec/zero.h"
+#include "srsran/support/executors/inline_task_executor.h"
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
 
@@ -64,11 +65,23 @@ struct fmt::formatter<srsran::dmrs_pusch_estimator::configuration> : ostream_for
 
 namespace {
 
+class dmrs_pusch_estimator_notifier_spy : public dmrs_pusch_estimator_notifier
+{
+public:
+  void on_estimation_complete() override { ++estimation_notified; }
+
+  bool has_notified() const { return (estimation_notified == 1); }
+
+private:
+  unsigned estimation_notified = 0;
+};
+
 class DmrsPuschEstimatorFixture : public ::testing::TestWithParam<test_case_t>
 {
 protected:
   std::unique_ptr<dmrs_pusch_estimator> estimator;
   resource_grid_reader_spy              grid;
+  inline_task_executor                  ch_est_executor;
 
   // Default constructor - initializes the resource grid with the maximum size possible.
   DmrsPuschEstimatorFixture() : ::testing::TestWithParam<ParamType>(), grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_NOF_PRBS)
@@ -108,6 +121,7 @@ protected:
         create_dmrs_pusch_estimator_factory_sw(prg_factory,
                                                low_papr_sequence_gen_factory_factory,
                                                port_estimator_factory,
+                                               ch_est_executor,
                                                port_channel_estimator_fd_smoothing_strategy::filter,
                                                port_channel_estimator_td_interpolation_strategy::average,
                                                true);
@@ -161,8 +175,11 @@ TEST_P(DmrsPuschEstimatorFixture, Creation)
     }
   }
 
+  // Create a spy notifier.
+  dmrs_pusch_estimator_notifier_spy notifier;
+
   // Estimate.
-  estimator->estimate(ch_est, grid, config);
+  estimator->estimate(ch_est, notifier, grid, config);
 
   // First, assert the channel estimate dimensions haven't changed.
   ch_estimate_dims = ch_est.size();
@@ -170,6 +187,9 @@ TEST_P(DmrsPuschEstimatorFixture, Creation)
   ASSERT_EQ(ch_estimate_dims.nof_symbols, config.nof_symbols + config.first_symbol) << "Wrong number of symbols.";
   ASSERT_EQ(ch_estimate_dims.nof_rx_ports, config.rx_ports.size()) << "Wrong number of Rx ports.";
   ASSERT_EQ(ch_estimate_dims.nof_tx_layers, config.get_nof_tx_layers()) << "Wrong number of Tx layers.";
+
+  // Next, assert the notifier has been called.
+  ASSERT_TRUE(notifier.has_notified()) << "The estimator notifier was not called.";
 
   for (unsigned i_port = 0; i_port != ch_estimate_dims.nof_rx_ports; ++i_port) {
     for (unsigned i_layer = 0; i_layer != ch_estimate_dims.nof_tx_layers; ++i_layer) {

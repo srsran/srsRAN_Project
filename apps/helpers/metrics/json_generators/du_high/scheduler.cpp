@@ -123,7 +123,7 @@ void to_json(nlohmann::json& json, const scheduler_cell_metrics& metrics)
   cell_json["latency_histogram"]       = metrics.latency_histogram;
   cell_json["msg3_nof_ok"]             = metrics.nof_msg3_ok;
   cell_json["msg3_nof_nok"]            = metrics.nof_msg3_nok;
-  cell_json["avg_prach_delay"]         = metrics.avg_prach_delay_ms;
+  cell_json["avg_prach_delay"]         = metrics.avg_prach_delay_slots;
   cell_json["late_dl_harqs"]           = metrics.nof_failed_pdsch_allocs_late_harqs;
   cell_json["late_ul_harqs"]           = metrics.nof_failed_pusch_allocs_late_harqs;
   cell_json["pucch_tot_rb_usage_avg"]  = metrics.pucch_tot_rb_usage_avg;

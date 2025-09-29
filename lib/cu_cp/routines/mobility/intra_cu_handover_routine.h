@@ -26,7 +26,6 @@
 #include "../../mobility_manager/mobility_manager_impl.h"
 #include "../../ue_manager/ue_manager_impl.h"
 #include "srsran/support/async/async_task.h"
-#include "srsran/support/async/eager_async_task.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -40,9 +39,7 @@ public:
                             const byte_buffer&                     target_cell_sib1_,
                             f1ap_ue_context_manager&               source_du_f1ap_ue_ctxt_mng_,
                             f1ap_ue_context_manager&               target_du_f1ap_ue_ctxt_mng_,
-                            cu_cp_ue_context_release_handler&      ue_context_release_handler_,
-                            cu_cp_ue_removal_handler&              ue_removal_handler_,
-                            cu_cp_ue_context_manipulation_handler& cu_cp_handler_,
+                            cu_cp_impl_interface&                  cu_cp_handler_,
                             ue_manager&                            ue_mng_,
                             mobility_manager&                      mobility_mng_,
                             srslog::basic_logger&                  logger_);
@@ -67,15 +64,13 @@ private:
 
   rrc_ue_transfer_context source_rrc_context;
 
-  f1ap_ue_context_manager&               source_du_f1ap_ue_ctxt_mng; // to trigger UE context modification at source DU
-  f1ap_ue_context_manager&               target_du_f1ap_ue_ctxt_mng; // to trigger UE context creation at target DU
-  cu_cp_ue_context_release_handler&      ue_context_release_handler; // to release UE contexts
-  cu_cp_ue_removal_handler&              ue_removal_handler;         // to trigger UE removal (if setup fails)
-  cu_cp_ue_context_manipulation_handler& cu_cp_handler;              // to trigger UE context transfer (if sucessful)
-  ue_manager&                            ue_mng;                     // to remove UE context from source DU processor
-  mobility_manager&                      mobility_mng;               // to notify metrics about handover execution
-  up_config_update                       next_config;
-  srslog::basic_logger&                  logger;
+  f1ap_ue_context_manager& source_du_f1ap_ue_ctxt_mng; // to trigger UE context modification at source DU
+  f1ap_ue_context_manager& target_du_f1ap_ue_ctxt_mng; // to trigger UE context creation at target DU
+  cu_cp_impl_interface&    cu_cp_handler;              // to trigger UE context transfer (if sucessful)
+  ue_manager&              ue_mng;                     // to remove UE context from source DU processor
+  mobility_manager&        mobility_mng;               // to notify metrics about handover execution
+  up_config_update         next_config;
+  srslog::basic_logger&    logger;
 
   // (sub-)routine requests
   f1ap_ue_context_setup_request            target_ue_context_setup_request;

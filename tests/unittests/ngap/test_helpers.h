@@ -31,7 +31,7 @@
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/security/security.h"
 #include <gtest/gtest.h>
-#include <unordered_map>
+#include <optional>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -184,12 +184,19 @@ public:
     return ue_mng.find_ue_task_scheduler(ue_index)->schedule_async_task(std::move(task));
   }
 
-  bool on_handover_request_received(ue_index_t ue_index, const security::security_context& sec_ctxt) override
+  bool on_handover_request_received(ue_index_t                        ue_index,
+                                    const plmn_identity&              selected_plmn,
+                                    const security::security_context& sec_ctxt) override
   {
     srsran_assert(ue_mng.find_ue(ue_index) != nullptr, "UE must be present");
     logger.info("Received a handover request");
 
-    return ue_mng.find_ue(ue_index)->get_security_manager().init_security_context(sec_ctxt);
+    if (!ue_mng.find_ue(ue_index)->get_security_manager().init_security_context(sec_ctxt)) {
+      logger.info("Failed to initialize security context");
+      return false;
+    }
+
+    return true;
   }
 
   async_task<expected<ngap_init_context_setup_response, ngap_init_context_setup_failure>>
@@ -363,7 +370,10 @@ public:
     last_paging_msg = std::move(msg);
   }
 
-  ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t /*cgi*/) override { return ue_index_t::invalid; }
+  ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t /*cgi*/, const plmn_identity& /*plmn*/) override
+  {
+    return ue_index_t::invalid;
+  }
 
   async_task<ngap_handover_resource_allocation_response>
   on_ngap_handover_request(const ngap_handover_request& request) override

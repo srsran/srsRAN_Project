@@ -26,6 +26,7 @@
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/formatters.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
+#include "srsran/support/executors/inline_task_executor.h"
 #include "srsran/support/math/math_utils.h"
 #ifdef HWACC_PUSCH_ENABLED
 #include "srsran/hal/dpdk/bbdev/bbdev_acc.h"
@@ -102,6 +103,8 @@ using PuschProcessorParams = std::tuple<std::string, test_case_t>;
 class PuschProcessorFixture : public ::testing::TestWithParam<PuschProcessorParams>
 {
 private:
+  inline_task_executor ch_est_executor;
+
   static std::shared_ptr<pusch_decoder_factory>
   create_generic_pusch_decoder_factory(std::shared_ptr<crc_calculator_factory> crc_calculator_factory)
   {
@@ -304,6 +307,7 @@ private:
         create_dmrs_pusch_estimator_factory_sw(prg_factory,
                                                low_papr_sequence_gen_factory,
                                                port_chan_estimator_factory,
+                                               ch_est_executor,
                                                port_channel_estimator_fd_smoothing_strategy::filter,
                                                port_channel_estimator_td_interpolation_strategy::average,
                                                true);

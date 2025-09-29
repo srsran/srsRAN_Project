@@ -191,6 +191,19 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
       resp.si_pdus_enqueued = true;
     }
 
+    if (request.slice_reconf_req.has_value()) {
+      // Change to respective DL cell executor context.
+      CORO_AWAIT(execute_on_blocking(cell_exec, timers));
+
+      {
+        SRSRAN_RTSAN_SCOPED_ENABLER;
+        sched.handle_slice_reconfiguration_request(request.slice_reconf_req.value());
+      }
+
+      // Change back to CTRL executor context.
+      CORO_AWAIT(execute_on_blocking(ctrl_exec, timers));
+    }
+
     CORO_RETURN(resp);
   });
 }

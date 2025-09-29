@@ -21,6 +21,7 @@
  */
 
 #include "split6_plugin_dummy.h"
+#include "srsran/du/du_high/du_high_configuration.h"
 #include "srsran/fapi/slot_last_message_notifier.h"
 #include "srsran/fapi/slot_message_gateway.h"
 #include "srsran/fapi_adaptor/fapi_operation_controller.h"
@@ -97,10 +98,10 @@ public:
 } // namespace
 
 std::vector<std::unique_ptr<fapi::fapi_adaptor>>
-split6_plugin_dummy::create_fapi_adaptor(span<const srs_du::du_cell_config> du_cell_cfg,
-                                         const o_du_unit_dependencies&      dependencies)
+split6_plugin_dummy::create_fapi_adaptor(const srs_du::du_high_configuration& du_high_cfg,
+                                         const o_du_unit_dependencies&        dependencies)
 {
-  std::vector<std::unique_ptr<fapi::fapi_adaptor>> output(du_cell_cfg.size());
+  std::vector<std::unique_ptr<fapi::fapi_adaptor>> output(du_high_cfg.ran.cells.size());
   for (auto& cell : output) {
     cell = std::make_unique<fapi_adaptor_dummy>();
   }

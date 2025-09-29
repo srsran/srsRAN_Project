@@ -22,13 +22,13 @@
 
 #pragma once
 
+#include "srsran/ran/du_types.h"
 #include "srsran/ran/plmn_identity.h"
 #include "srsran/ran/s_nssai.h"
 
 namespace srsran {
 
 /// Identifier of a RRM Policy Member.
-/// \remark See O-RAN.WG3.E2SM-RC-R003-v3.00 Section 8.4.3.6
 struct rrm_policy_member {
   plmn_identity plmn_id = plmn_identity::test_value();
   /// Single Network Slice Selection Assistance Information (S-NSSAI).
@@ -41,7 +41,7 @@ struct rrm_policy_member {
 };
 
 struct rrm_policy_ratio_group {
-  /// The resource type of interest for an RRM Policy
+  /// The resource type of interest for an RRM Policy.
   /// \remark See 3GPP TS 28.541, Section 4.4.1 Attribute properties.
   enum class resource_type_t { prb, prb_ul, prb_dl };
   resource_type_t resource_type = resource_type_t::prb;
@@ -55,4 +55,40 @@ struct rrm_policy_ratio_group {
   std::optional<unsigned> ded_prb_policy_ratio;
 };
 
+constexpr unsigned MAX_SLICE_RECONF_POLICIES = 16;
+
+/// Request to reconfigure slicing policies for a given DU cell.
+struct du_cell_slice_reconfig_request {
+  du_cell_index_t cell_index;
+  struct rrm_policy_config {
+    rrm_policy_member rrc_member;
+    unsigned          min_prb;
+    unsigned          max_prb;
+  };
+  static_vector<rrm_policy_config, MAX_SLICE_RECONF_POLICIES> rrm_policies;
+};
+
 } // namespace srsran
+
+namespace fmt {
+
+template <>
+struct formatter<srsran::rrm_policy_member> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::rrm_policy_member& member, FormatContext& ctx) const
+  {
+    return format_to(ctx.out(),
+                     "{{PLMN={}, SST={}, SD={}}}",
+                     member.plmn_id.to_string(),
+                     member.s_nssai.sst.value(),
+                     member.s_nssai.sd.value());
+  }
+};
+
+} // namespace fmt

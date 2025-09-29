@@ -571,8 +571,9 @@ public:
   std::optional<ul_harq_process_handle>       find_pending_ul_retx();
   std::optional<const ul_harq_process_handle> find_pending_ul_retx() const;
 
-  std::optional<dl_harq_process_handle> find_dl_harq_waiting_ack();
-  std::optional<ul_harq_process_handle> find_ul_harq_waiting_ack();
+  std::optional<dl_harq_process_handle>       find_dl_harq_waiting_ack();
+  std::optional<const dl_harq_process_handle> find_dl_harq_waiting_ack() const;
+  std::optional<ul_harq_process_handle>       find_ul_harq_waiting_ack();
 
   /// Fetch a DL HARQ process expecting ACK info based on HARQ-ACK UCI slot and HARQ bit index.
   /// \param[in] uci_slot Slot when the UCI is to be received.

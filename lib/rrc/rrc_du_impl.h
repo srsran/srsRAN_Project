@@ -24,7 +24,6 @@
 
 #include "metrics/rrc_du_metrics_aggregator.h"
 #include "ue/rrc_ue_impl.h"
-#include "srsran/ran/nr_cgi.h"
 #include "srsran/rrc/rrc_config.h"
 #include "srsran/rrc/rrc_du.h"
 #include <unordered_map>
@@ -78,11 +77,14 @@ private:
 class rrc_du_impl : public rrc_du
 {
 public:
-  rrc_du_impl(const rrc_cfg_t& cfg_, rrc_du_measurement_config_notifier& meas_config_notifier_);
+  rrc_du_impl(const rrc_cfg_t& cfg_);
   ~rrc_du_impl() = default;
 
   // rrc_du_cell_manager.
-  bool handle_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) override;
+  std::map<nr_cell_global_id_t, rrc_cell_info>
+  get_cell_info(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) const override;
+
+  void store_cell_info_db(const std::map<nr_cell_global_id_t, rrc_cell_info>& cell_infos) override;
 
   // rrc_du_ue_repository.
   byte_buffer       get_rrc_reject() override;
@@ -119,8 +121,7 @@ private:
   const rrc_cfg_t cfg;
 
   // Notifier to the CU-CP.
-  rrc_du_measurement_config_notifier& meas_config_notifier;
-  srslog::basic_logger&               logger;
+  srslog::basic_logger& logger;
 
   // RRC UE to RRC DU adapters.
   std::unordered_map<ue_index_t, rrc_ue_rrc_du_adapter> rrc_ue_rrc_du_adapters;

@@ -51,6 +51,8 @@ struct du_cell_reconfig_result {
   bool cu_notif_required;
   /// Whether the Scheduler needs to be notified about an update in the SI scheduling.
   bool sched_notif_required;
+  /// Request for the MAC to change the slice configuration of the cell.
+  std::optional<du_cell_slice_reconfig_request> slice_reconf_req;
 };
 
 class du_cell_manager

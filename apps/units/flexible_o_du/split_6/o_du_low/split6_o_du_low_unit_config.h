@@ -32,6 +32,8 @@ namespace srsran {
 /// O-RAN DU low Split 6 unit configuration.
 struct split6_o_du_low_unit_config {
   unsigned du_report_period = 1000;
+  /// Start jitter in milliseconds.
+  unsigned start_time_jitter_ms = 0;
   /// FAPI log level.
   srslog::basic_levels fapi_level = srslog::basic_levels::warning;
   /// DU low configuration.

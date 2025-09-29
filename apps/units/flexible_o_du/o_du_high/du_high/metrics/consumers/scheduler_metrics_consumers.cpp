@@ -249,7 +249,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
       fmt::format_to(std::back_inserter(buffer), " max_pusch_harq_delay={}ms", max_pusch_delay);
     }
     fmt::format_to(
-        std::back_inserter(buffer), " avg_prach_delay={:.3}", format_unit_or(cell.avg_prach_delay_ms, "ms", "n/a"));
+        std::back_inserter(buffer), " avg_prach_delay={:.3}", format_value_or(cell.avg_prach_delay_slots, "n/a"));
     if (not cell.events.empty()) {
       fmt::format_to(std::back_inserter(buffer), " events=[");
       bool first = true;

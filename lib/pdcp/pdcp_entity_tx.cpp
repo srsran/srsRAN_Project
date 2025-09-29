@@ -1144,13 +1144,13 @@ void pdcp_entity_tx::crypto_reordering_timeout()
   // Advance the TX_TRANS_CRYPTO to TX_REORD_CRYPTO.
   // Deliver all processed PDUs up until TX_REORD_CRYPTO.
   while (st.tx_trans_crypto != st.tx_reord_crypto) {
-    if (tx_window.has_sn(st.tx_trans_crypto && not tx_window[st.tx_trans_crypto].pdu.empty())) {
-      logger.log_debug("Dropping SDU. count={}", st.tx_trans_crypto);
-    } else {
+    if (tx_window.has_sn(st.tx_trans_crypto) && not tx_window[st.tx_trans_crypto].pdu.empty()) {
       pdcp_tx_pdu_info pdu_info{.pdu     = std::move(tx_window[st.tx_trans_crypto].pdu),
                                 .count   = st.tx_trans_crypto,
                                 .sdu_toa = tx_window[st.tx_trans_crypto].sdu_info.time_of_arrival};
       write_data_pdu_to_lower_layers(std::move(pdu_info), false);
+    } else {
+      logger.log_debug("Dropping SDU. count={}", st.tx_trans_crypto);
     }
     // Update RX_DELIV
     st.tx_trans_crypto = st.tx_trans_crypto + 1;

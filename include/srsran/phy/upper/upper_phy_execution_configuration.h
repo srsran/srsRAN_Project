@@ -65,6 +65,8 @@ struct upper_phy_execution_configuration {
   upper_phy_executor pucch_executor;
   /// PUSCH task executor.
   upper_phy_executor pusch_executor;
+  /// PUSCH channel estimator executor.
+  upper_phy_executor pusch_ch_estimator_executor;
   /// PUSCH decoder task executor.
   upper_phy_executor pusch_decoder_executor;
   /// PRACH task executor.

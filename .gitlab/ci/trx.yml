@@ -31,8 +31,6 @@ build trx driver:
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_TARGET_BRANCH_PROTECTED == "true" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != $CI_DEFAULT_BRANCH
       when: never
     - if: $ON_MR
-    - if: $ON_WEB
-    - if: $ON_API
   retry: 2
   script:
     - |
@@ -108,4 +106,28 @@ build amariue ntn zmq driver:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
   variables:
-    AMARISOFT_VERSION: "2024-12-13"
+    AMARISOFT_VERSION: "2025-09-19"
+
+custom zmq driver:
+  extends: build trx driver
+  rules:
+    - if: $ON_MR
+      when: never
+    - if: $ON_DEFAULT_BRANCH
+      when: never
+    - if: $ON_SCHEDULE
+      when: never
+    - if: $ON_TAG
+      when: never
+    - if: $GROUP == "viavi" || $GROUP == "rf"
+      when: never
+    - if: $GROUP == "uesim"
+      variables:
+        OS: fedora-39
+        AMARISOFT_VERSION: "2024-03-15"
+    - if: $TESTBED == "zmq_ntn"
+      variables:
+        AMARISOFT_VERSION: "2025-09-19"
+    - if: $TESTBED != ""
+      variables:
+        AMARISOFT_VERSION: "2023-09-08"

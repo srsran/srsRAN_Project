@@ -184,6 +184,7 @@ def run_test(args_definition: _ArgsDefinition, test_definition: _TestDefinition)
         {"key": "RETINA_PARAM_ARGS", "value": "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.rlc_rb_type=srb"},
         {"key": "E2E_LOG_LEVEL", "value": "warning"},
         {"key": "GROUP", "value": "viavi"},
+        {"key": "CLUSTER", "value": "retina-e2e-amd64"},
         {"key": "PIPELINE_DESCRIPTION", "value": "Viavi manual test"},
     ]
 

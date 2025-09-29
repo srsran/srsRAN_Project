@@ -60,10 +60,13 @@ public:
 
   amf_connection_manager& amf_connection_handler() { return amf_mng; }
 
-  bool handle_du_setup_request(du_index_t du_idx, const du_setup_request& req);
+  bool handle_du_setup_request(du_index_t du_idx, const std::set<plmn_identity>& plmn_ids);
 
-  /// \brief Determines whether the CU-CP should accept a new UE connection for a given PLMN.
-  bool request_ue_setup(plmn_identity plmn) const override;
+  /// \brief Determines whether the CU-CP should accept new UE connections.
+  bool request_ue_setup() const override;
+
+  /// \brief Determines whether the CU-CP should accept a new UE connection based on its PLMN.
+  bool is_supported_plmn(const plmn_identity& plmn) const;
 
   cu_cp_f1c_handler& get_f1c_handler() { return du_mng; }
   cu_cp_e1_handler&  get_e1_handler() { return cu_up_mng; }

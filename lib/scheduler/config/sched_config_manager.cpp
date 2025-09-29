@@ -32,11 +32,13 @@ ue_config_update_event::ue_config_update_event(du_ue_index_t                    
                                                sched_config_manager&             parent_,
                                                std::unique_ptr<ue_configuration> next_cfg,
                                                const std::optional<bool>&        set_fallback,
+                                               slot_point                        ul_ccch_slot_rx_,
                                                bool                              reestablished_) :
   ue_index(ue_index_),
   parent(&parent_),
   next_ded_cfg(std::move(next_cfg)),
   set_fallback_mode(set_fallback),
+  ul_ccch_slot_rx(ul_ccch_slot_rx_),
   reestablished(reestablished_)
 {
 }
@@ -111,6 +113,29 @@ const cell_configuration* sched_config_manager::add_cell(const sched_cell_config
   return added_cells[msg.cell_index].get();
 }
 
+void sched_config_manager::update_cell(const sched_cell_reconfiguration_request_message& msg)
+{
+  if (msg.slice_reconf_req.has_value()) {
+    const auto& cell_index = msg.slice_reconf_req->cell_index;
+    srsran_assert(added_cells.contains(cell_index), "cell={} does not exist", fmt::underlying(cell_index));
+    for (const auto& rrm : msg.slice_reconf_req->rrm_policies) {
+      bool found = false;
+      for (auto& slice : added_cells[cell_index]->rrm_policy_members) {
+        if (slice.rrc_member == rrm.rrc_member) {
+          found         = true;
+          slice.max_prb = rrm.max_prb;
+          slice.min_prb = rrm.min_prb;
+          break;
+        }
+      }
+
+      if (not found) {
+        logger.warning("No slice RRM policy found for {} in cell {}.", rrm.rrc_member, fmt::underlying(cell_index));
+      }
+    }
+  }
+}
+
 void sched_config_manager::rem_cell(du_cell_index_t cell_index)
 {
   const du_cell_group_index_t group_index = added_cells[cell_index]->cell_group_index;
@@ -179,7 +204,11 @@ ue_config_update_event sched_config_manager::add_ue(const sched_ue_creation_requ
   auto                        next_ded_cfg   = std::make_unique<ue_configuration>(
       cfg_req.ue_index, cfg_req.crnti, added_cells, group_cfg_pool[target_grp_idx]->add_ue(cfg_req));
 
-  return ue_config_update_event{cfg_req.ue_index, *this, std::move(next_ded_cfg), cfg_req.starts_in_fallback};
+  return ue_config_update_event{cfg_req.ue_index,
+                                *this,
+                                std::move(next_ded_cfg),
+                                cfg_req.starts_in_fallback,
+                                cfg_req.ul_ccch_slot_rx.value_or(slot_point())};
 }
 
 ue_config_update_event sched_config_manager::update_ue(const sched_ue_reconfiguration_message& cfg_req)
@@ -202,7 +231,7 @@ ue_config_update_event sched_config_manager::update_ue(const sched_ue_reconfigur
     logger.error("ue={} c-rnti={}: Discarding UE configuration. Cause: UE with provided C-RNTI does not exist.",
                  fmt::underlying(cfg_req.ue_index),
                  cfg_req.crnti);
-    return ue_config_update_event{cfg_req.ue_index, *this, nullptr, {}, cfg_req.reestablished};
+    return ue_config_update_event{cfg_req.ue_index, *this, nullptr, {}, slot_point(), cfg_req.reestablished};
   }
 
   // Make a copy of the current UE dedicated config.
@@ -212,7 +241,8 @@ ue_config_update_event sched_config_manager::update_ue(const sched_ue_reconfigur
   next_ded_cfg->update(added_cells, group_cfg_pool[group_idx]->reconf_ue(cfg_req));
 
   // Return RAII event.
-  return ue_config_update_event{cfg_req.ue_index, *this, std::move(next_ded_cfg), {}, cfg_req.reestablished};
+  return ue_config_update_event{
+      cfg_req.ue_index, *this, std::move(next_ded_cfg), {}, slot_point(), cfg_req.reestablished};
 }
 
 ue_config_delete_event sched_config_manager::remove_ue(du_ue_index_t ue_index)

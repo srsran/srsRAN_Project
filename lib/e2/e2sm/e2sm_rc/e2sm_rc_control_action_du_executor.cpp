@@ -45,6 +45,11 @@ uint32_t e2sm_rc_control_action_du_executor_base::get_action_id()
   return action_id;
 }
 
+std::string e2sm_rc_control_action_du_executor_base::get_action_name()
+{
+  return action_name;
+}
+
 ran_function_definition_ctrl_action_item_s e2sm_rc_control_action_du_executor_base::get_control_action_definition()
 {
   ran_function_definition_ctrl_action_item_s action_item;

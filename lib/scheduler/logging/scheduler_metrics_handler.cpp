@@ -418,7 +418,7 @@ void cell_metrics_handler::report_metrics()
   next_report->nof_failed_uci_allocs     = data.nof_failed_uci_allocs;
   next_report->nof_msg3_ok               = data.nof_msg3_ok;
   next_report->nof_msg3_nok              = data.nof_msg3_nok;
-  next_report->avg_prach_delay_ms =
+  next_report->avg_prach_delay_slots =
       data.nof_prach_preambles
           ? std::optional{static_cast<float>(data.sum_prach_delay_slots) / static_cast<float>(data.nof_prach_preambles)}
           : std::nullopt;

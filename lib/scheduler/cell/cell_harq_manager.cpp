@@ -972,6 +972,15 @@ std::optional<dl_harq_process_handle> unique_ue_harq_entity::find_dl_harq_waitin
   return dl_harq_process_handle(cell_harq_mgr->dl, *h);
 }
 
+std::optional<const dl_harq_process_handle> unique_ue_harq_entity::find_dl_harq_waiting_ack() const
+{
+  dl_harq_process_impl* h = cell_harq_mgr->dl.find_ue_harq_in_state(ue_index, harq_state_t::waiting_ack);
+  if (h == nullptr) {
+    return std::nullopt;
+  }
+  return dl_harq_process_handle(cell_harq_mgr->dl, *h);
+}
+
 std::optional<ul_harq_process_handle> unique_ue_harq_entity::find_ul_harq_waiting_ack()
 {
   ul_harq_process_impl* h = cell_harq_mgr->ul.find_ue_harq_in_state(ue_index, harq_state_t::waiting_ack);

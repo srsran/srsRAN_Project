@@ -23,11 +23,11 @@
 #pragma once
 
 #include "../cu_cp_impl_interface.h"
-#include "../du_processor/du_processor.h"
 #include "../up_resource_manager/up_resource_manager_impl.h"
 #include "srsran/cu_cp/ue_configuration.h"
 #include "srsran/cu_cp/ue_task_scheduler.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
+#include "srsran/ran/cause/ngap_cause.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
@@ -73,7 +73,8 @@ private:
   bool fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_request& e1ap_request);
   void fill_initial_e1ap_bearer_context_modification_request(e1ap_bearer_context_modification_request& e1ap_request);
 
-  cu_cp_pdu_session_resource_setup_response handle_pdu_session_resource_setup_result(bool success);
+  cu_cp_pdu_session_resource_setup_response
+  handle_pdu_session_resource_setup_result(bool success, ngap_cause_t cause = ngap_cause_radio_network_t::unspecified);
 
   const cu_cp_pdu_session_resource_setup_request setup_msg;
   const ue_configuration                         ue_cfg;

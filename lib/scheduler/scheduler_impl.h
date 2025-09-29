@@ -43,6 +43,8 @@ public:
   void handle_cell_activation_request(du_cell_index_t cell_index) override;
   void handle_cell_deactivation_request(du_cell_index_t cell_index) override;
 
+  void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req) override;
+
   // Sys Info handling.
   void handle_si_update_request(const si_scheduling_update_request& req) override;
 

@@ -36,28 +36,31 @@ class phy_metrics_pusch_channel_estimator_decorator : public dmrs_pusch_estimato
 public:
   /// Creates an PUSCH channel estimator from a base estimator instance and a metric notifier.
   phy_metrics_pusch_channel_estimator_decorator(std::unique_ptr<dmrs_pusch_estimator>    base_,
-                                                pusch_channel_estimator_metric_notifier& notifier_) :
-    base(std::move(base_)), notifier(notifier_)
+                                                pusch_channel_estimator_metric_notifier& metrics_notifier_) :
+    base(std::move(base_)), metrics_notifier(metrics_notifier_)
   {
     srsran_assert(base, "Invalid estimator.");
   }
 
   // See interface for documentation.
-  void estimate(channel_estimate& estimate, const resource_grid_reader& grid, const configuration& config) override
+  void estimate(channel_estimate&              estimate,
+                dmrs_pusch_estimator_notifier& notifier,
+                const resource_grid_reader&    grid,
+                const configuration&           config) override
   {
     pusch_channel_estimator_metrics metrics;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
       resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
-      base->estimate(estimate, grid, config);
+      base->estimate(estimate, notifier, grid, config);
     }
     metrics.nof_prb = static_cast<unsigned>(config.rb_mask.count());
-    notifier.on_new_metric(metrics);
+    metrics_notifier.on_new_metric(metrics);
   }
 
 private:
   std::unique_ptr<dmrs_pusch_estimator>    base;
-  pusch_channel_estimator_metric_notifier& notifier;
+  pusch_channel_estimator_metric_notifier& metrics_notifier;
 };
 
 } // namespace srsran

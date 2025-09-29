@@ -20,7 +20,10 @@
 
 set_directory_properties(PROPERTIES LABELS "du_high;integrationtest")
 
-add_library(du_high_worker_manager test_utils/du_high_worker_manager.cpp test_utils/du_high_env_simulator.cpp)
+add_library(du_high_worker_manager
+        test_utils/du_high_worker_manager.cpp
+        test_utils/du_high_env_simulator.cpp
+        test_utils/du_high_sim_dependencies.cpp)
 target_include_directories(du_high_worker_manager PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(du_high_worker_manager
         srsran_du_high

@@ -58,6 +58,7 @@ private:
 
   // (Sub-)Routine results.
   f1ap_gnb_cu_configuration_update_response f1ap_cu_cfg_update_response;
+  bool                                      routine_success = true;
 
   std::unordered_set<plmn_identity> plmns_to_activate;
   std::vector<du_index_t>           du_indexes;

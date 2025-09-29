@@ -23,6 +23,7 @@
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/formatters.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
+#include "srsran/support/executors/inline_task_executor.h"
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
 #include <regex>
@@ -207,6 +208,7 @@ class PuschProcessorFixture : public ::testing::TestWithParam<test_case_t>
 protected:
   static std::unique_ptr<pusch_processor>     pusch_proc;
   static std::unique_ptr<pusch_pdu_validator> pdu_validator;
+  static inline_task_executor                 ch_est_executor;
 
   static void SetUpTestSuite()
   {
@@ -267,6 +269,7 @@ protected:
         create_dmrs_pusch_estimator_factory_sw(prg_factory,
                                                low_papr_sequence_gen_factory,
                                                port_chan_estimator_factory,
+                                               ch_est_executor,
                                                port_channel_estimator_fd_smoothing_strategy::filter,
                                                port_channel_estimator_td_interpolation_strategy::average,
                                                true);
@@ -343,6 +346,7 @@ protected:
 
 std::unique_ptr<pusch_processor>     PuschProcessorFixture::pusch_proc;
 std::unique_ptr<pusch_pdu_validator> PuschProcessorFixture::pdu_validator;
+inline_task_executor                 PuschProcessorFixture::ch_est_executor;
 
 TEST_P(PuschProcessorFixture, PuschProcessorValidatortest)
 {

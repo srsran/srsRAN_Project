@@ -41,6 +41,14 @@ void srsran::configure_cli11_with_split6_o_du_low_unit_config_schema(CLI::App& a
   configure_cli11_with_ru_ofh_config_schema(app, ofh_cfg);
   configure_cli11_with_ru_sdr_config_schema(app, sdr_cfg);
 
+  add_option(app,
+             "--start_time_jitter",
+             config.start_time_jitter_ms,
+             "Start time jitter in milliseconds. A value of 0 disables the start time calculation and the session "
+             "starts it as soon as possible")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 600));
+
   CLI::App* logger_subcmd = add_subcommand(app, "log", "Logger configuration")->configurable();
   app_helpers::add_log_option(*logger_subcmd, config.fapi_level, "--fapi_level", "FAPI log level");
 

@@ -223,7 +223,7 @@ static drb_id_t allocate_qos_flow(up_pdu_session_context_update&     new_session
   // potential optimization to support more QoS flows is to map non-GPB flows onto existing DRBs.
   if (full_context.drb_map.size() >= cfg.max_nof_drbs_per_ue) {
     logger.warning("DRB creation failed. Cause: Maximum number of DRBs per UE already created ({}). To increase the "
-                   "number of allowed DRBs per UE change the \"--max_nof_drbs_per_ue\" in the CU-CP configuration\n",
+                   "number of allowed DRBs per UE change the \"--max_nof_drbs_per_ue\" in the CU-CP configuration",
                    cfg.max_nof_drbs_per_ue);
     return drb_id_t::invalid;
   }
@@ -317,6 +317,10 @@ up_config_update srsran::srs_cu_cp::calculate_update(
     up_pdu_session_context_update new_ctxt(pdu_session.pdu_session_id);
     for (const auto& flow_item : pdu_session.qos_flow_setup_request_items) {
       auto drb_id = allocate_qos_flow(new_ctxt, flow_item, config, context, cfg, logger);
+      if (drb_id == drb_id_t::invalid) {
+        logger.warning("Couldn't allocate {}", flow_item.qos_flow_id);
+        continue;
+      }
       // S-NSSAI
       new_ctxt.drb_to_add.at(drb_id).s_nssai = pdu_session.s_nssai;
       logger.debug("Allocated {} to {} with {}",
@@ -324,7 +328,9 @@ up_config_update srsran::srs_cu_cp::calculate_update(
                    drb_id,
                    new_ctxt.drb_to_add.at(drb_id).qos_params.qos_desc.get_5qi());
     }
-    config.pdu_sessions_to_setup_list.emplace(new_ctxt.id, new_ctxt);
+    if (!new_ctxt.drb_to_add.empty()) {
+      config.pdu_sessions_to_setup_list.emplace(new_ctxt.id, new_ctxt);
+    }
   }
 
   return config;

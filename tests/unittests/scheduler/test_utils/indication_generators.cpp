@@ -54,8 +54,12 @@ srsran::test_helper::create_rach_indication(slot_point                          
   return rach_ind;
 }
 
-uci_indication::uci_pdu test_helper::create_uci_indication_pdu(du_ue_index_t ue_idx, const pucch_info& pucch_pdu)
+uci_indication::uci_pdu test_helper::create_uci_indication_pdu(du_ue_index_t                             ue_idx,
+                                                               const pucch_info&                         pucch_pdu,
+                                                               std::optional<mac_harq_ack_report_status> ack_set)
 {
+  const mac_harq_ack_report_status ack_status = ack_set.value_or(mac_harq_ack_report_status::ack);
+
   uci_indication::uci_pdu pdu;
   pdu.crnti    = pucch_pdu.crnti;
   pdu.ue_index = ue_idx;
@@ -63,13 +67,17 @@ uci_indication::uci_pdu test_helper::create_uci_indication_pdu(du_ue_index_t ue_
     case pucch_format::FORMAT_1: {
       uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu f1{};
       f1.harqs.resize(pucch_pdu.uci_bits.harq_ack_nof_bits);
-      std::fill(f1.harqs.begin(), f1.harqs.end(), mac_harq_ack_report_status::ack);
+      // We set DTX if it is a PUCCH F1 for SR and ack_set was not set.
+      const auto f1_status = pucch_pdu.uci_bits.sr_bits != sr_nof_bits::no_sr and not ack_set.has_value()
+                                 ? mac_harq_ack_report_status::dtx
+                                 : ack_status;
+      std::fill(f1.harqs.begin(), f1.harqs.end(), f1_status);
       pdu.pdu = f1;
     } break;
     case pucch_format::FORMAT_2: {
       uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu f2{};
       f2.harqs.resize(pucch_pdu.uci_bits.harq_ack_nof_bits);
-      std::fill(f2.harqs.begin(), f2.harqs.end(), mac_harq_ack_report_status::ack);
+      std::fill(f2.harqs.begin(), f2.harqs.end(), ack_status);
       if (pucch_pdu.uci_bits.harq_ack_nof_bits > 0) {
         f2.csi.emplace();
         f2.csi->first_tb_wideband_cqi = 15;

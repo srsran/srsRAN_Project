@@ -28,6 +28,7 @@
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/nrppa/nrppa.h"
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/rrc/rrc_du.h"
 #include "srsran/rrc/rrc_ue.h"
 #include <string>
@@ -71,11 +72,14 @@ public:
   /// \returns Pointer to the NGAP UE notifier.
   virtual ngap_cu_cp_ue_notifier* handle_new_ngap_ue(ue_index_t ue_index) = 0;
 
-  /// \brief Initialize security context by selecting security algorithms and generating K_rrc_enc and K_rrc_int.
+  /// \brief Handle a reeceived handover request.
   /// \param[in] ue_index Index of the UE.
+  /// \param[in] selected_plmn The selected PLMN identity of the UE.
   /// \param[in] sec_ctxt The received security context.
-  /// \return True if the security context was successfully initialized, false otherwise.
-  virtual bool handle_handover_request(ue_index_t ue_index, const security::security_context& sec_ctxt) = 0;
+  /// \return True if the handover request was successfully handled, false otherwise.
+  virtual bool handle_handover_request(ue_index_t                        ue_index,
+                                       const plmn_identity&              selected_plmn,
+                                       const security::security_context& sec_ctxt) = 0;
 
   /// \brief Handle the reception of a new Initial Context Setup Request.
   /// \param[in] request The received Initial Context Setup Request.
@@ -116,7 +120,7 @@ public:
   virtual async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) = 0;
 
   /// \brief Handles UE index allocation request for N2 handover at target gNB.
-  virtual ue_index_t handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi) = 0;
+  virtual ue_index_t handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi, const plmn_identity& plmn) = 0;
 
   /// \brief Handles a DL UE associated NRPPa transport.
   virtual void handle_dl_ue_associated_nrppa_transport_pdu(ue_index_t ue_index, const byte_buffer& nrppa_pdu) = 0;
@@ -201,6 +205,12 @@ class cu_cp_rrc_ue_interface
 {
 public:
   virtual ~cu_cp_rrc_ue_interface() = default;
+
+  /// \brief Handles a new UE connection with a selected PLMN.
+  /// \param[in] ue_index The index of the UE.
+  /// \param[in] plmn The selected PLMN of the UE.
+  /// \return True if the UE connection is accepted, false otherwise.
+  virtual bool handle_ue_plmn_selected(ue_index_t ue_index, const plmn_identity& plmn) = 0;
 
   /// \brief Handle the reception of an RRC Reestablishment Request by transfering UE Contexts at the RRC.
   /// \param[in] old_pci The old PCI contained in the RRC Reestablishment Request.

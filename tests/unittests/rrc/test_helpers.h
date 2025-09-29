@@ -23,7 +23,6 @@
 #pragma once
 
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/rrc/rrc_du.h"
 #include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
@@ -79,9 +78,12 @@ class dummy_rrc_ue_cu_cp_adapter : public rrc_ue_context_update_notifier, public
 public:
   void add_ue_context(rrc_ue_reestablishment_context_response context) { reest_context = context; }
 
-  bool next_ue_setup_response = true;
+  bool next_ue_setup_response          = true;
+  bool next_ue_setup_complete_response = true;
 
-  bool on_ue_setup_request(plmn_identity plmn) override { return next_ue_setup_response; }
+  bool on_ue_setup_request() override { return next_ue_setup_response; }
+
+  bool on_ue_setup_complete_received(const plmn_identity& plmn) override { return next_ue_setup_complete_response; }
 
   rrc_ue_reestablishment_context_response on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti) override
   {
@@ -164,15 +166,6 @@ public:
 private:
   rrc_ue_reestablishment_context_response reest_context = {};
   srslog::basic_logger&                   logger        = srslog::fetch_basic_logger("TEST");
-};
-
-class dummy_rrc_du_cu_cp_adapter : public rrc_du_measurement_config_notifier
-{
-public:
-  bool on_cell_config_update_request(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg) override
-  {
-    return true;
-  }
 };
 
 class dummy_rrc_ue_rrc_du_adapter : public rrc_ue_event_notifier

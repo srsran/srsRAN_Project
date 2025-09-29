@@ -70,6 +70,11 @@ public:
   virtual async_task<mac_cell_positioning_measurement_response>
   handle_positioning_measurement_request(du_cell_index_t                                 cell_index,
                                          const mac_cell_positioning_measurement_request& req) = 0;
+
+  /// \brief Handle request to update the slice configuration of a cell.
+  /// \param[in] cell_index Index of the cell for which the measurement is directed.
+  /// \param[in] req Request to update the RRM policies.
+  virtual void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req) = 0;
 };
 
 } // namespace srsran

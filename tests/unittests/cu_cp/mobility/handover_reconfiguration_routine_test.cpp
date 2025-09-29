@@ -225,24 +225,18 @@ protected:
 
   void create_ues(bool procedure_outcome, unsigned transaction_id_)
   {
-    ue_index_t source_ue_index = get_ue_manager()->add_ue(source_du_index,
-                                                          plmn_identity::test_value(),
-                                                          int_to_gnb_du_id(0),
-                                                          source_pci,
-                                                          source_rnti,
-                                                          srs_cu_cp::du_cell_index_t::min);
-    source_ue                  = get_ue_manager()->find_ue(source_ue_index);
+    ue_index_t source_ue_index = get_ue_manager()->add_ue(
+        source_du_index, int_to_gnb_du_id(0), source_pci, source_rnti, srs_cu_cp::du_cell_index_t::min);
+    get_ue_manager()->set_plmn(source_ue_index, plmn_identity::test_value());
+    source_ue = get_ue_manager()->find_ue(source_ue_index);
     ASSERT_NE(source_ue, nullptr);
     source_rrc_ue.set_transaction_id(transaction_id_);
     source_ue->set_rrc_ue(source_rrc_ue);
 
-    ue_index_t target_ue_index = get_ue_manager()->add_ue(target_du_index,
-                                                          plmn_identity::test_value(),
-                                                          int_to_gnb_du_id(0),
-                                                          target_pci,
-                                                          target_rnti,
-                                                          srs_cu_cp::du_cell_index_t::min);
-    target_ue                  = get_ue_manager()->find_ue(target_ue_index);
+    ue_index_t target_ue_index = get_ue_manager()->add_ue(
+        target_du_index, int_to_gnb_du_id(0), target_pci, target_rnti, srs_cu_cp::du_cell_index_t::min);
+    get_ue_manager()->set_plmn(target_ue_index, plmn_identity::test_value());
+    target_ue = get_ue_manager()->find_ue(target_ue_index);
     ASSERT_NE(target_ue, nullptr);
     source_f1ap_ue_ctxt_mng.set_ue_context_modification_outcome(
         {procedure_outcome,
@@ -360,6 +354,4 @@ TEST_F(handover_reconfiguration_routine_test, when_ue_context_mod_unsuccessful_t
 
   // Reconfiguration complete was received.
   ASSERT_FALSE(get_result());
-
-  ASSERT_FALSE(check_transaction_id(test_transaction_id));
 }

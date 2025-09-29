@@ -43,12 +43,11 @@ namespace srs_cu_cp {
 class du_processor_impl : public du_processor, public du_metrics_handler, public du_processor_mobility_handler
 {
 public:
-  du_processor_impl(du_processor_config_t               du_processor_config_,
-                    du_processor_cu_cp_notifier&        cu_cp_notifier_,
-                    f1ap_message_notifier&              f1ap_pdu_notifier_,
-                    rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier,
-                    common_task_scheduler&              common_task_sched_,
-                    ue_manager&                         ue_mng_);
+  du_processor_impl(du_processor_config_t        du_processor_config_,
+                    du_processor_cu_cp_notifier& cu_cp_notifier_,
+                    f1ap_message_notifier&       f1ap_pdu_notifier_,
+                    common_task_scheduler&       common_task_sched_,
+                    ue_manager&                  ue_mng_);
   ~du_processor_impl() override = default;
 
   // getter functions

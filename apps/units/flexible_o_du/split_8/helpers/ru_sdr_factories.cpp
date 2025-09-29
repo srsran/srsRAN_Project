@@ -28,9 +28,11 @@
 
 using namespace srsran;
 
-std::unique_ptr<radio_unit> srsran::create_sdr_radio_unit(const ru_sdr_unit_config&            ru_cfg,
-                                                          const flexible_o_du_ru_config&       ru_config,
-                                                          const flexible_o_du_ru_dependencies& ru_dependencies)
+std::unique_ptr<radio_unit>
+srsran::create_sdr_radio_unit(const ru_sdr_unit_config&                            ru_cfg,
+                              const flexible_o_du_ru_config&                       ru_config,
+                              const flexible_o_du_ru_dependencies&                 ru_dependencies,
+                              std::optional<std::chrono::system_clock::time_point> start_time)
 {
   ru_generic_configuration config = generate_ru_sdr_config(ru_cfg, ru_config.cells, ru_config.max_processing_delay);
 
@@ -41,6 +43,7 @@ std::unique_ptr<radio_unit> srsran::create_sdr_radio_unit(const ru_sdr_unit_conf
   config.timing_notifier = &ru_dependencies.timing_notifier;
   config.symbol_notifier = &ru_dependencies.symbol_notifier;
   config.error_notifier  = &ru_dependencies.error_notifier;
+  config.start_time      = start_time;
 
   for (unsigned i = 0, e = config.lower_phy_config.size(); i != e; ++i) {
     ru_sdr_sector_executor_mapper& sector_exec_map = exec_map[i];

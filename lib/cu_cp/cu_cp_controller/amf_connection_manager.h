@@ -69,6 +69,8 @@ public:
   bool is_amf_connected(plmn_identity plmn) const;
   bool is_amf_connected(amf_index_t amf_index) const;
 
+  size_t nof_amfs() const { return amfs_connected.size(); }
+
 private:
   void        handle_connection_setup_result(amf_index_t amf_index, bool success);
   amf_index_t plmn_to_amf_index(plmn_identity plmn) const;

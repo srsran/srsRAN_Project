@@ -37,6 +37,7 @@ inline e2ap_configuration make_default_e2ap_config()
   cfg.max_setup_retries = 5;
   cfg.e2sm_kpm_enabled  = false;
   cfg.e2sm_rc_enabled   = false;
+  cfg.e2sm_ccc_enabled  = false;
   return cfg;
 }
 

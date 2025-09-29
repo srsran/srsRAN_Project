@@ -809,13 +809,13 @@ static ngap_message generate_handover_failure(uint64_t amf_ue_id)
   return ngap_msg;
 }
 
-void ngap_impl::send_handover_failure(uint64_t amf_ue_id, const std::string& cause)
+void ngap_impl::send_handover_failure(uint64_t amf_ue_id)
 {
   if (!tx_pdu_notifier.on_new_message(generate_handover_failure(amf_ue_id))) {
-    logger.warning("AMF notifier is not set. Cannot send HandoverFailure (cause: {})", cause);
+    logger.warning("AMF notifier is not set. Cannot send HandoverFailure");
     return;
   }
-  logger.warning("Sending HandoverFailure. Cause: {}", cause);
+  logger.warning("Sending HandoverFailure");
 }
 
 void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
@@ -823,7 +823,8 @@ void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
   // Convert Handover Request to common type.
   ngap_handover_request ho_request;
   if (!fill_ngap_handover_request(ho_request, msg)) {
-    send_handover_failure(msg->amf_ue_ngap_id, "Received invalid HandoverRequest");
+    logger.info("Received invalid HandoverRequest");
+    send_handover_failure(msg->amf_ue_ngap_id);
     return;
   }
 
@@ -832,16 +833,18 @@ void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
               ho_request.source_to_target_transparent_container.target_cell_id.nci);
 
   // Create UE in target cell.
-  ho_request.ue_index =
-      cu_cp_notifier.request_new_ue_index_allocation(ho_request.source_to_target_transparent_container.target_cell_id);
+  ho_request.ue_index = cu_cp_notifier.request_new_ue_index_allocation(
+      ho_request.source_to_target_transparent_container.target_cell_id, ho_request.guami.plmn);
   if (ho_request.ue_index == ue_index_t::invalid) {
-    send_handover_failure(msg->amf_ue_ngap_id, "Couldn't allocate UE index");
+    logger.debug("Couldn't allocate UE index for handover target cell");
+    send_handover_failure(msg->amf_ue_ngap_id);
     return;
   }
 
   // Inititialize security context of target UE.
-  if (!cu_cp_notifier.on_handover_request_received(ho_request.ue_index, ho_request.security_context)) {
-    send_handover_failure(msg->amf_ue_ngap_id, "Couldn't initialize security context");
+  if (!cu_cp_notifier.on_handover_request_received(
+          ho_request.ue_index, ho_request.guami.plmn, ho_request.security_context)) {
+    send_handover_failure(msg->amf_ue_ngap_id);
     return;
   }
 
@@ -855,7 +858,8 @@ void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
                                                   timers,
                                                   ctrl_exec,
                                                   logger))) {
-    send_handover_failure(msg->amf_ue_ngap_id, "Couldn't schedule handover resource allocation procedure");
+    logger.debug("Couldn't schedule handover resource allocation procedure");
+    send_handover_failure(msg->amf_ue_ngap_id);
     return;
   }
 }

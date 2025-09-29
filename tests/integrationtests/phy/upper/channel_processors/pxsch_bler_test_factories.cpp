@@ -261,6 +261,11 @@ srsran::create_sw_pusch_processor_factory(task_executor&                        
       create_port_channel_estimator_factory_sw(ta_est_factory);
   report_fatal_error_if_not(chan_estimator_factory, "Failed to create factory.");
 
+  if (max_nof_threads > 1) {
+    chan_estimator_factory = create_port_channel_estimator_pool_factory(chan_estimator_factory, max_nof_threads);
+    report_fatal_error_if_not(chan_estimator_factory, "Failed to create factory.");
+  }
+
   // CFO compensation is not necessary if time domain interpolation is enabled.
   bool compensate_cfo = td_interpolation_strategy != port_channel_estimator_td_interpolation_strategy::interpolate;
 
@@ -268,6 +273,7 @@ srsran::create_sw_pusch_processor_factory(task_executor&                        
       create_dmrs_pusch_estimator_factory_sw(pseudo_random_gen_factory,
                                              low_papr_sequence_gen_factory,
                                              chan_estimator_factory,
+                                             executor,
                                              port_channel_estimator_fd_smoothing_strategy::filter,
                                              td_interpolation_strategy,
                                              compensate_cfo);

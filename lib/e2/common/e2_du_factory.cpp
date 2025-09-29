@@ -23,6 +23,10 @@
 #include "srsran/e2/e2_du_factory.h"
 #include "e2_entity.h"
 #include "e2_impl.h"
+#include "e2sm/e2sm_ccc/e2sm_ccc_asn1_packer.h"
+#include "e2sm/e2sm_ccc/e2sm_ccc_control_action_du_executor.h"
+#include "e2sm/e2sm_ccc/e2sm_ccc_control_service_impl.h"
+#include "e2sm/e2sm_ccc/e2sm_ccc_impl.h"
 #include "e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
 #include "e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.h"
 #include "e2sm/e2sm_kpm/e2sm_kpm_impl.h"
@@ -77,6 +81,23 @@ std::unique_ptr<e2_agent> srsran::create_e2_du_agent(const e2ap_configuration&  
   e2sm_rc_iface->add_e2sm_control_service(std::move(rc_control_service_style));
   dependencies.e2sm_modules.emplace_back(e2sm_module{
       e2sm_rc_asn1_packer::ran_func_id, e2sm_rc_asn1_packer::oid, std::move(e2sm_rc_packer), std::move(e2sm_rc_iface)});
+
+  // E2SM-CCC
+  auto e2sm_ccc_packer = std::make_unique<e2sm_ccc_asn1_packer>();
+  auto e2sm_ccc_iface  = std::make_unique<e2sm_ccc_impl>(logger, *e2sm_ccc_packer);
+  // Add Supported Control Styles.
+  // RIC Style Type 2: Cell Configuration and Control
+  std::unique_ptr<e2sm_control_service> ccc_control_service_style =
+      std::make_unique<e2sm_ccc_control_service_style_2>();
+  std::unique_ptr<e2sm_control_action_executor> ccc_control_action_executor =
+      std::make_unique<e2sm_ccc_control_o_rrm_policy_ratio_executor>(*du_configurator_);
+  ccc_control_service_style->add_e2sm_rc_control_action_executor(std::move(ccc_control_action_executor));
+  e2sm_ccc_packer->add_e2sm_control_service(ccc_control_service_style.get());
+  e2sm_ccc_iface->add_e2sm_control_service(std::move(ccc_control_service_style));
+  dependencies.e2sm_modules.emplace_back(e2sm_module{e2sm_ccc_asn1_packer::ran_func_id,
+                                                     e2sm_ccc_asn1_packer::oid,
+                                                     std::move(e2sm_ccc_packer),
+                                                     std::move(e2sm_ccc_iface)});
 
   auto e2_ext = std::make_unique<e2_entity>(std::move(dependencies));
   return e2_ext;

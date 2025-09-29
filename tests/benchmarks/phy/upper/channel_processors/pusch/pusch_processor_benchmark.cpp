@@ -29,6 +29,7 @@
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_result_notifier.h"
 #include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/support/benchmark_utils.h"
+#include "srsran/support/executors/inline_task_executor.h"
 #include "srsran/support/executors/task_worker_pool.h"
 #include "srsran/support/executors/unique_thread.h"
 #include "srsran/support/math/complex_normal_random.h"
@@ -140,6 +141,7 @@ static constexpr bool                                           compensate_cfo  
 static unsigned                                                 nof_pusch_decoder_threads = 0;
 static std::unique_ptr<task_worker_pool<queue_policy>>          worker_pool               = nullptr;
 static std::unique_ptr<task_worker_pool_executor<queue_policy>> executor                  = nullptr;
+static inline_task_executor                                     ch_est_executor;
 
 // Thread shared variables.
 static std::atomic<bool>     thread_quit   = {};
@@ -575,6 +577,7 @@ static std::shared_ptr<pusch_processor_factory> create_pusch_processor_factory()
       create_dmrs_pusch_estimator_factory_sw(prg_factory,
                                              low_papr_sequence_gen_factory,
                                              port_chan_estimator_factory,
+                                             ch_est_executor,
                                              fd_smoothing_strategy,
                                              td_interpolation_strategy,
                                              compensate_cfo);

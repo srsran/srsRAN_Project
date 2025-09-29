@@ -104,18 +104,14 @@ static void mark_pucch_in_resource_grid(cell_slot_resource_allocator&    pucch_s
   }
 }
 
-static void mark_pucch_in_resource_grid(cell_slot_resource_allocator& pucch_slot_alloc,
-                                        const pucch_resource&         pucch_res,
-                                        const ue_cell_configuration&  ue_cell_cfg)
+static std::pair<grant_info, std::optional<grant_info>>
+pucch_resource_to_grant_info(const bwp_configuration& init_ul_bwp, const pucch_resource& pucch_res)
 {
-  const auto& init_ul_bwp = ue_cell_cfg.init_bwp().ul_common.value()->generic_params;
-  unsigned    nof_prbs    = 1;
+  unsigned nof_prbs = 1;
   if (const auto* format_2_3 = std::get_if<pucch_format_2_3_cfg>(&pucch_res.format_params)) {
     nof_prbs = format_2_3->nof_prbs;
   }
 
-  grant_info                first_hop_grant;
-  std::optional<grant_info> second_hop_grant;
   if (pucch_res.second_hop_prb.has_value()) {
     crb_interval first_hop_crbs = prb_to_crb(init_ul_bwp, {pucch_res.starting_prb, pucch_res.starting_prb + nof_prbs});
     ofdm_symbol_range first_hop_symbols{pucch_res.starting_sym_idx,
@@ -124,17 +120,24 @@ static void mark_pucch_in_resource_grid(cell_slot_resource_allocator& pucch_slot
         prb_to_crb(init_ul_bwp, {pucch_res.second_hop_prb.value(), pucch_res.second_hop_prb.value() + nof_prbs});
     ofdm_symbol_range second_hop_symbols{pucch_res.starting_sym_idx + pucch_res.nof_symbols / 2,
                                          pucch_res.starting_sym_idx + pucch_res.nof_symbols};
-    first_hop_grant  = {init_ul_bwp.scs, first_hop_symbols, first_hop_crbs};
-    second_hop_grant = {init_ul_bwp.scs, second_hop_symbols, second_hop_crbs};
-  } else {
-    ofdm_symbol_range symbols{pucch_res.starting_sym_idx, pucch_res.starting_sym_idx + pucch_res.nof_symbols};
-    crb_interval      crbs = prb_to_crb(init_ul_bwp, {pucch_res.starting_prb, pucch_res.starting_prb + nof_prbs});
-    first_hop_grant        = {init_ul_bwp.scs, symbols, crbs};
+    return {grant_info{init_ul_bwp.scs, first_hop_symbols, first_hop_crbs},
+            grant_info{init_ul_bwp.scs, second_hop_symbols, second_hop_crbs}};
   }
+  ofdm_symbol_range symbols{pucch_res.starting_sym_idx, pucch_res.starting_sym_idx + pucch_res.nof_symbols};
+  crb_interval      crbs = prb_to_crb(init_ul_bwp, {pucch_res.starting_prb, pucch_res.starting_prb + nof_prbs});
+  return {grant_info{init_ul_bwp.scs, symbols, crbs}, std::nullopt};
+}
+
+static void mark_pucch_in_resource_grid(cell_slot_resource_allocator& pucch_slot_alloc,
+                                        const pucch_resource&         pucch_res,
+                                        const ue_cell_configuration&  ue_cell_cfg)
+{
+  const auto& init_ul_bwp = ue_cell_cfg.init_bwp().ul_common.value()->generic_params;
+  const auto  grants      = pucch_resource_to_grant_info(init_ul_bwp, pucch_res);
 
   // Fill Slot grid.
   mark_pucch_in_resource_grid(
-      pucch_slot_alloc, first_hop_grant, second_hop_grant, init_ul_bwp.crbs, ue_cell_cfg.cell_cfg_common.expert_cfg);
+      pucch_slot_alloc, grants.first, grants.second, init_ul_bwp.crbs, ue_cell_cfg.cell_cfg_common.expert_cfg);
 }
 
 //////////////    Public functions       //////////////
@@ -989,6 +992,34 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(const cell_slot_resource_alloc
   return std::nullopt;
 }
 
+static std::pair<grant_info, grant_info> get_common_pucch_grants(const bwp_configuration&      init_ul_bwp_params,
+                                                                 const pucch_default_resource& pucch_res,
+                                                                 unsigned                      r_pucch)
+{
+  // Get the parameter N_bwp_size, which is the Initial UL BWP size in PRBs, as per TS 38.213, Section 9.2.1.
+  const unsigned size_ul_bwp = init_ul_bwp_params.crbs.length();
+
+  // As per TS 38.211, Section 6.3.2.1, the first floor(N_symb_PUCCH/2) are for the first hop, the remaining ones for
+  // the second hop.
+  const ofdm_symbol_range first_hop_symbols{pucch_res.first_symbol_index,
+                                            pucch_res.first_symbol_index + pucch_res.nof_symbols / 2};
+  const ofdm_symbol_range second_hop_symbols{pucch_res.first_symbol_index + pucch_res.nof_symbols / 2,
+                                             pucch_res.first_symbol_index + pucch_res.nof_symbols};
+
+  // Compute PRB_first_hop and PRB_second_hop as per Section 9.2.1, TS 38.213.
+  auto prbs = get_pucch_default_prb_index(r_pucch, pucch_res.rb_bwp_offset, pucch_res.cs_indexes.size(), size_ul_bwp);
+
+  // With the default PUCCH resource configs, Format is either 0 or 1, which only occupy 1 RB.
+  const unsigned   crb_first_hop = prb_to_crb(init_ul_bwp_params, prbs.first);
+  const grant_info first_hop_grant{
+      init_ul_bwp_params.scs, first_hop_symbols, crb_interval{crb_first_hop, crb_first_hop + 1}};
+  const unsigned   crb_second_hop = prb_to_crb(init_ul_bwp_params, prbs.second);
+  const grant_info second_hop_grant{
+      init_ul_bwp_params.scs, second_hop_symbols, crb_interval{crb_second_hop, crb_second_hop + 1}};
+
+  return {first_hop_grant, second_hop_grant};
+}
+
 void pucch_allocator_impl::compute_pucch_common_params_and_alloc(cell_slot_resource_allocator& pucch_alloc,
                                                                  rnti_t                        rnti,
                                                                  pucch_common_params           pucch_params)
@@ -1001,27 +1032,8 @@ void pucch_allocator_impl::compute_pucch_common_params_and_alloc(cell_slot_resou
       cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common, size_ul_bwp);
 
   // Compute the PUCCH resource common configuration parameters.
-
-  // As per TS 38.211, Section 6.3.2.1, the first floor(N_symb_PUCCH/2) are for the first hop, the remaining ones for
-  // the second hop.
-  const ofdm_symbol_range first_hop_symbols{pucch_res.first_symbol_index,
-                                            pucch_res.first_symbol_index + pucch_res.nof_symbols / 2};
-  const ofdm_symbol_range second_hop_symbols{pucch_res.first_symbol_index + pucch_res.nof_symbols / 2,
-                                             pucch_res.first_symbol_index + pucch_res.nof_symbols};
-
-  const bwp_configuration& init_ul_bwp_param = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-
-  // Compute PRB_first_hop and PRB_second_hop as per Section 9.2.1, TS 38.213.
-  auto prbs = get_pucch_default_prb_index(
-      pucch_params.r_pucch, pucch_res.rb_bwp_offset, pucch_res.cs_indexes.size(), size_ul_bwp);
-
-  // With the default PUCCH resource configs, Format is either 0 or 1, which only occupy 1 RB.
-  const unsigned   crb_first_hop = prb_to_crb(init_ul_bwp_param, prbs.first);
-  const grant_info first_hop_grant{
-      init_ul_bwp_param.scs, first_hop_symbols, crb_interval{crb_first_hop, crb_first_hop + 1}};
-  const unsigned   crb_second_hop = prb_to_crb(init_ul_bwp_param, prbs.second);
-  const grant_info second_hop_grant{
-      init_ul_bwp_param.scs, second_hop_symbols, crb_interval{crb_second_hop, crb_second_hop + 1}};
+  const auto grant_infos =
+      get_common_pucch_grants(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, pucch_res, pucch_params.r_pucch);
 
   // Compute CS index as per Section 9.2.1, TS 38.213.
   const size_t cs_idx = pucch_params.r_pucch < 8
@@ -1035,15 +1047,15 @@ void pucch_allocator_impl::compute_pucch_common_params_and_alloc(cell_slot_resou
   fill_pucch_harq_common_grant(pucch_pdu_common,
                                rnti,
                                pucch_res_alloc_cfg{.pucch_res_indicator = pucch_params.pucch_res_indicator,
-                                                   .first_hop_res       = first_hop_grant,
-                                                   .second_hop_res      = second_hop_grant,
+                                                   .first_hop_res       = grant_infos.first,
+                                                   .second_hop_res      = grant_infos.second,
                                                    .cs                  = cyclic_shift,
                                                    .format              = pucch_res.format});
 
   // Allocate common HARQ-ACK resource.
   mark_pucch_in_resource_grid(pucch_alloc,
-                              first_hop_grant,
-                              second_hop_grant,
+                              grant_infos.first,
+                              grant_infos.second,
                               cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs,
                               cell_cfg.expert_cfg);
 
@@ -1128,6 +1140,14 @@ pucch_allocator_impl::find_common_and_ded_harq_res_available(cell_slot_resource_
 
   // As per Section 9.2.1, TS 38.213, this is the max value of \f$\Delta_{PRI}\f$, which is a 3-bit unsigned.
   static constexpr unsigned max_d_pri = 7;
+
+  // Get the parameter N_bwp_size, which is the Initial UL BWP size in PRBs, as per TS 38.213, Section 9.2.1.
+  const unsigned size_ul_bwp = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
+
+  // Get PUCCH common resource config from Table 9.2.1-1, TS 38.213.
+  pucch_default_resource pucch_res = get_pucch_default_resource(
+      cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common, size_ul_bwp);
+
   for (unsigned d_pri = 0; d_pri != max_d_pri + 1; ++d_pri) {
     // The PUCCH allocation may result in a temporary reservation of PUCCH resources, which need to be released in
     // case of failure or in case the multiplexing results in a different final PUCCH resource. If we don't reset the
@@ -1165,8 +1185,12 @@ pucch_allocator_impl::find_common_and_ded_harq_res_available(cell_slot_resource_
                                           ? existing_grants.pucch_grants.csi_resource.value().bits.csi_part1_nof_bits
                                           : 0U;
 
+    // Compute the PUCCH resource common configuration parameters.
+    const auto common_grants =
+        get_common_pucch_grants(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, pucch_res, r_pucch);
     // The PUCCH resource indicator must match the one used for the common resource.
-    pucch_res_ind = multiplex_and_allocate_pucch(pucch_alloc, bits_for_uci, existing_grants, ue_cell_cfg, d_pri);
+    pucch_res_ind =
+        multiplex_and_allocate_pucch(pucch_alloc, bits_for_uci, existing_grants, ue_cell_cfg, d_pri, common_grants);
 
     // In the case of PUCCH Format 0, the PUCCH (dedicated) resources that can be used when there are SR/CSI
     // pre-allocated are constrained in the PUCCH resource indicator. Therefore, the \ref multiplex_and_allocate_pucch
@@ -1176,7 +1200,6 @@ pucch_allocator_impl::find_common_and_ded_harq_res_available(cell_slot_resource_
       resource_manager.cancel_last_ue_res_reservations(pucch_alloc.slot, rnti, ue_cell_cfg);
       continue;
     }
-
     srsran_assert(pucch_res_ind.value() == d_pri, "PUCCH resource indicator must match the one given as an input");
 
     return pucch_common_params{.pucch_res_indicator = d_pri, .r_pucch = r_pucch};
@@ -1590,12 +1613,26 @@ void pucch_allocator_impl::remove_unused_pucch_res(slot_point                   
   }
 }
 
+static bool check_common_and_ded_grant_collisions(const std::pair<grant_info, grant_info>&                common_grants,
+                                                  const std::pair<grant_info, std::optional<grant_info>>& ded_grants)
+{
+  if (common_grants.first.overlaps(ded_grants.first) or common_grants.second.overlaps(ded_grants.first)) {
+    return true;
+  }
+  if (ded_grants.second.has_value() and
+      (common_grants.first.overlaps(*ded_grants.second) or common_grants.second.overlaps(*ded_grants.second))) {
+    return true;
+  }
+  return false;
+}
+
 std::optional<unsigned>
 pucch_allocator_impl::multiplex_and_allocate_pucch(cell_slot_resource_allocator& pucch_slot_alloc,
                                                    pucch_uci_bits                new_bits,
                                                    ue_grants&                    current_grants,
                                                    const ue_cell_configuration&  ue_cell_cfg,
-                                                   std::optional<uint8_t>        preserve_res_indicator)
+                                                   std::optional<uint8_t>        preserve_res_indicator,
+                                                   std::optional<std::pair<grant_info, grant_info>> common_grants)
 {
   // NOTE: In this function, the \c candidate_grants report the data about the grants BEFORE the multiplexing is
   // applied. Each grant contains only one UCI type (HARQ grant contains HARQ bits, SR grant contains SR bits and so
@@ -1616,6 +1653,32 @@ pucch_allocator_impl::multiplex_and_allocate_pucch(cell_slot_resource_allocator&
 
   if (grants_to_tx.is_empty()) {
     return std::nullopt;
+  }
+
+  // If the common grants are provided, make sure the grants_to_tx don't collide with them.
+  if (common_grants.has_value()) {
+    const auto& init_ul_bwp = ue_cell_cfg.init_bwp().ul_common.value()->generic_params;
+    if (grants_to_tx.csi_resource.has_value()) {
+      const auto ded_grants =
+          pucch_resource_to_grant_info(init_ul_bwp, *grants_to_tx.csi_resource.value().pucch_res_cfg);
+      if (check_common_and_ded_grant_collisions(*common_grants, ded_grants)) {
+        return std::nullopt;
+      }
+    }
+    if (grants_to_tx.sr_resource.has_value()) {
+      const auto ded_grants =
+          pucch_resource_to_grant_info(init_ul_bwp, *grants_to_tx.sr_resource.value().pucch_res_cfg);
+      if (check_common_and_ded_grant_collisions(*common_grants, ded_grants)) {
+        return std::nullopt;
+      }
+    }
+    if (grants_to_tx.harq_resource.has_value()) {
+      const auto ded_grants =
+          pucch_resource_to_grant_info(init_ul_bwp, *grants_to_tx.harq_resource.value().pucch_res_cfg);
+      if (check_common_and_ded_grant_collisions(*common_grants, ded_grants)) {
+        return std::nullopt;
+      }
+    }
   }
 
   // Allocate the grants.

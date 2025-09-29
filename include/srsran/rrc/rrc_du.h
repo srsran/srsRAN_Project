@@ -22,20 +22,23 @@
 
 #pragma once
 
-#include "srsran/cu_cp/cell_meas_manager_config.h"
 #include "srsran/ran/cause/common.h"
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/rrc/rrc_cell_context.h"
 #include "srsran/rrc/rrc_metrics.h"
 #include "srsran/rrc/rrc_ue.h"
-#include <chrono>
 
 namespace srsran {
 namespace srs_cu_cp {
 
+/// RRC DU cell information extracted from the SIB1 message.
 struct rrc_cell_info {
   nr_band                      band;
+  pci_t                        nr_pci;
   std::vector<rrc_meas_timing> meas_timings;
   rrc_timers_t                 timers;
+  // > PLMN identities broadcasted in SIB1. Max 12 as per TS 38.331 section 6.4.
+  std::vector<plmn_identity> plmn_identity_list;
 };
 
 class rrc_du_cell_manager
@@ -44,7 +47,13 @@ public:
   rrc_du_cell_manager()          = default;
   virtual ~rrc_du_cell_manager() = default;
 
-  virtual bool handle_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) = 0;
+  /// \brief Get information about the cells served by this DU.
+  /// \param[in] served_cell_list The list of served cells received from the DU in the F1 Setup Request.
+  /// \return A map of cell id to cell information for all served cells or an empty map on error.
+  virtual std::map<nr_cell_global_id_t, rrc_cell_info>
+  get_cell_info(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) const = 0;
+
+  virtual void store_cell_info_db(const std::map<nr_cell_global_id_t, rrc_cell_info>& cell_infos) = 0;
 };
 
 struct rrc_ue_creation_message {
@@ -80,18 +89,6 @@ public:
   /// \brief Get the number of UEs registered at the RRC DU.
   /// \return The number of UEs.
   virtual size_t get_nof_ues() const = 0;
-};
-
-/// Interface to notify about measurement config updates
-class rrc_du_measurement_config_notifier
-{
-public:
-  virtual ~rrc_du_measurement_config_notifier() = default;
-
-  /// \brief Request to update the measurement related parameters for the given cell id.
-  /// \param[in] nci The cell id of the serving cell to update.
-  /// \param[in] serv_cell_cfg_ The serving cell meas config to update.
-  virtual bool on_cell_config_update_request(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg_) = 0;
 };
 
 /// Handle RRC UE removal

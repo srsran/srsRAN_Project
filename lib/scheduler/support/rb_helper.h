@@ -63,12 +63,15 @@ inline crb_interval vrb_to_crb_ul_non_interleaved(vrb_interval vrbs, unsigned bw
   return crb_interval{vrbs.start() + bwp_crb_start, vrbs.stop() + bwp_crb_start};
 }
 
+namespace detail {
+
 /// \brief Finds the next contiguous range of RBs whose respective bit in provided RB bitmap is set to zero.
 ///
 /// \param used_rb_bitmap Bitmap of RBs, where 1's represent used RBs and 0's empty RBs.
 /// \param search_limits Minimum and maximum RB indices where the search is carried out.
 /// \return An interval of contiguous RBs where the respective bits are set to zero. If no interval was found, an empty
 ///         interval is returned.
+/// Note: This function should not be used directly. Use \c find_empty_interval_of_length instead.
 template <typename Tag>
 interval<unsigned, false, Tag> find_next_empty_interval(const bounded_bitset<MAX_NOF_PRBS, false, Tag>& used_rb_bitmap,
                                                         interval<unsigned, false, Tag> search_limits = {0,
@@ -85,6 +88,8 @@ interval<unsigned, false, Tag> find_next_empty_interval(const bounded_bitset<MAX
   }
   return {};
 }
+
+} // namespace detail
 
 /// \brief Finds a range of contiguous RBs, whose value in the provided RB bitmap is set to zero. The returned range
 /// length should be at most "nof_rbs" RBs. If no range with length "nof_rbs" is found, the longest valid range of
@@ -106,7 +111,7 @@ find_empty_interval_of_length(const bounded_bitset<MAX_NOF_PRBS, false, Tag>& us
 
   interval<unsigned, false, Tag> max_interv;
   do {
-    interval<unsigned, false, Tag> interv = find_next_empty_interval(used_rb_bitmap, search_limits);
+    interval<unsigned, false, Tag> interv = detail::find_next_empty_interval(used_rb_bitmap, search_limits);
     if (interv.empty()) {
       break;
     }

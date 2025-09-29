@@ -310,6 +310,25 @@ std::optional<ul_ran_slice_candidate> inter_slice_scheduler::get_next_ul_candida
   return get_next_candidate<false>();
 }
 
+void inter_slice_scheduler::handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req)
+{
+  for (const auto& rrm : req.rrm_policies) {
+    bool found = false;
+    for (auto& slice : slices) {
+      if (slice.inst.cfg.rrc_member == rrm.rrc_member) {
+        found                  = true;
+        slice.inst.cfg.max_prb = rrm.max_prb;
+        slice.inst.cfg.min_prb = rrm.min_prb;
+      }
+    }
+
+    if (not found) {
+      logger.warning(
+          "No slice RRM policy found for {} in cell {}.", rrm.rrc_member, fmt::underlying(cell_cfg.cell_index));
+    }
+  }
+}
+
 inter_slice_scheduler::priority_type inter_slice_scheduler::ran_slice_sched_context::get_prio(bool       is_dl,
                                                                                               slot_point pdcch_slot,
                                                                                               slot_point pxsch_slot,

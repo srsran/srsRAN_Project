@@ -40,8 +40,17 @@ rach_indication_message create_rach_indication(slot_point                       
                                                const std::vector<rach_indication_message::preamble>& preambles);
 
 /// Create dummy UCI indication based on a PUCCH PDU.
-uci_indication          create_uci_indication(slot_point uci_sl, du_ue_index_t ue_idx, const pucch_info& pucch_pdu);
-uci_indication::uci_pdu create_uci_indication_pdu(du_ue_index_t ue_idx, const pucch_info& pucch_pdu);
+uci_indication create_uci_indication(slot_point uci_sl, du_ue_index_t ue_idx, const pucch_info& pucch_pdu);
+
+/// Create dummy UCI PDU based on a PUCCH PDU.
+/// \param ue_idx UE index to set in the UCI PDU.
+/// \param pucch_pdu PUCCH PDU based on which the UCI PDU will be created.
+/// \param ack_set If set, it overrides the ACK/NACK bits in the PUCCH PDU. If not set, we assume ACK for all bits,
+/// except for SR-only PUCCHs, which are set to DTX.
+/// \return Created UCI PDU.
+uci_indication::uci_pdu create_uci_indication_pdu(du_ue_index_t                             ue_idx,
+                                                  const pucch_info&                         pucch_pdu,
+                                                  std::optional<mac_harq_ack_report_status> ack_set = std::nullopt);
 
 /// Create dummy UCI PDU based on a PUSCH UCI PDU.
 uci_indication::uci_pdu create_uci_indication_pdu(rnti_t rnti, du_ue_index_t ue_idx, const uci_info& uci);

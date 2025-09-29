@@ -319,6 +319,12 @@ srsran_scheduler_adapter::handle_positioning_measurement_request(du_cell_index_t
   return cell_handlers[cell_index].pos_handler->handle_positioning_measurement_request(req);
 }
 
+void srsran_scheduler_adapter::handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req)
+{
+  // Update RRM policies in the scheduler.
+  sched_impl->handle_slice_reconfiguration_request(req);
+}
+
 void srsran_scheduler_adapter::sched_config_notif_adapter::on_ue_config_complete(du_ue_index_t ue_index,
                                                                                  bool          ue_creation_result)
 {
@@ -413,9 +419,10 @@ void srsran_scheduler_adapter::cell_handler::handle_srs(const mac_srs_indication
   ind.slot_rx    = msg.sl_rx;
   for (const auto& mac_pdu : msg.srss) {
     // Only add PDUs with normalized channel IQ matrix.
-    if (const auto* matrix = std::get_if<mac_srs_pdu::normalized_channel_iq_matrix>(&mac_pdu.report))
+    if (const auto* matrix = std::get_if<mac_srs_pdu::normalized_channel_iq_matrix>(&mac_pdu.report)) {
       ind.srss.emplace_back(
           parent.rnti_mng[mac_pdu.rnti], mac_pdu.rnti, mac_pdu.time_advance_offset, matrix->channel_matrix);
+    }
   }
   // Forward SRS indication to the scheduler.
   parent.sched_impl->handle_srs_indication(ind);

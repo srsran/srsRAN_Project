@@ -497,6 +497,9 @@ double ue_cell::get_estimated_ul_rate(const pusch_config_params& pusch_cfg, sch_
 
 void ue_cell::set_conres_state(bool state)
 {
+  if (conres_procedure.complete == state) {
+    return;
+  }
   conres_procedure.complete = state;
   if (state) {
     conres_procedure.msg3_rx_slot.reset();

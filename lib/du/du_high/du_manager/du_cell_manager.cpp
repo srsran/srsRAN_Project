@@ -25,6 +25,7 @@
 #include "converters/scheduler_configuration_helpers.h"
 #include "srsran/du/du_cell_config_validation.h"
 #include "srsran/du/du_high/du_manager/du_configurator.h"
+#include "srsran/ran/band_helper.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;
@@ -107,6 +108,68 @@ expected<du_cell_reconfig_result> du_cell_manager::handle_cell_reconf_request(co
     si_updated                       = true;
   }
 
+  const unsigned nof_prbs =
+      band_helper::get_n_rbs_from_bw(MHz_to_bs_channel_bandwidth(cell_cfg.dl_carrier.carrier_bw_mhz),
+                                     cell_cfg.scs_common,
+                                     band_helper::get_freq_range(cell_cfg.dl_carrier.band));
+
+  du_cell_reconfig_result result;
+  result.slice_reconf_req.emplace();
+  for (const auto& rrm_policy_ratio : req.rrm_policy_ratio_list) {
+    if (not(rrm_policy_ratio.min_prb_policy_ratio.has_value() or rrm_policy_ratio.max_prb_policy_ratio.has_value())) {
+      continue;
+    }
+
+    for (const auto& policy_member : rrm_policy_ratio.policy_members_list) {
+      bool found = false;
+      for (auto& policy_cfg : cell_cfg.rrm_policy_members) {
+        if (policy_cfg.rrc_member == policy_member) {
+          found = true;
+          // Update the policy member configuration.
+          unsigned min_prb_ratio =
+              rrm_policy_ratio.min_prb_policy_ratio.has_value() ? rrm_policy_ratio.min_prb_policy_ratio.value() : 0;
+          unsigned max_prb_ratio =
+              rrm_policy_ratio.max_prb_policy_ratio.has_value() ? rrm_policy_ratio.max_prb_policy_ratio.value() : 100;
+
+          min_prb_ratio = std::clamp(min_prb_ratio, static_cast<unsigned>(0), static_cast<unsigned>(100));
+          max_prb_ratio = std::clamp(max_prb_ratio, static_cast<unsigned>(0), static_cast<unsigned>(100));
+
+          const unsigned min_prb = static_cast<int>((1.0 * min_prb_ratio / 100) * nof_prbs);
+          const unsigned max_prb = static_cast<int>((1.0 * max_prb_ratio / 100) * nof_prbs);
+
+          if (min_prb > max_prb) {
+            logger.warning(
+                "Invalid min/max PRB policy ratio for {} in cell {}: min_prb={} > max_prb={}. Skipping update.",
+                policy_member,
+                fmt::underlying(cell_index),
+                min_prb,
+                max_prb);
+            break;
+          }
+
+          if ((policy_cfg.min_prb != min_prb) or (policy_cfg.max_prb != max_prb)) {
+            // Policy configuration has been updated.
+            result.slice_reconf_req->rrm_policies.push_back(
+                du_cell_slice_reconfig_request::rrm_policy_config{policy_member, min_prb, max_prb});
+          }
+
+          policy_cfg.min_prb = min_prb;
+          policy_cfg.max_prb = max_prb;
+          break;
+        }
+      }
+      if (not found) {
+        logger.warning("No RRM policy member found for {} in cell {}", policy_member, fmt::underlying(cell_index));
+      }
+
+      if (result.slice_reconf_req->rrm_policies.full()) {
+        logger.warning("RRM policy update list is full. Discarding further updates for cell {}",
+                       fmt::underlying(cell_index));
+        break;
+      }
+    }
+  }
+
   if (si_updated) {
     // Need to re-pack SIB1.
     cell.si_cfg.sib1 = asn1_packer::pack_sib1(cell_cfg);
@@ -116,7 +179,14 @@ expected<du_cell_reconfig_result> du_cell_manager::handle_cell_reconf_request(co
     cell.si_cfg.si_sched_cfg.version++;
   }
 
-  return du_cell_reconfig_result{cell_index, si_updated, si_updated};
+  result.cell_index           = cell_index;
+  result.cu_notif_required    = si_updated;
+  result.sched_notif_required = si_updated;
+  if (result.slice_reconf_req->rrm_policies.empty()) {
+    // No RRM policy changes.
+    result.slice_reconf_req.reset();
+  }
+  return result;
 }
 
 async_task<bool> du_cell_manager::start(du_cell_index_t cell_index)

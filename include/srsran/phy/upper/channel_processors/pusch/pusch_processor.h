@@ -173,7 +173,7 @@ public:
   ///
   /// The size of each transport block is determined by <tt> data[TB index].size() </tt>.
   ///
-  /// \param[out]    data      Received transport block..
+  /// \param[out]    data      Received transport block.
   /// \param[in,out] rm_buffer Rate matcher buffer.
   /// \param[in]     notifier  Result notification interface.
   /// \param[in]     grid      Source resource grid.
