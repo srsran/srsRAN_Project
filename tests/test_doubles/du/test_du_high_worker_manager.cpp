@@ -87,6 +87,7 @@ public:
                                cfg.nof_cell_workers,
                                task_worker_queue_size,
                                task_worker_queue_size,
+                               &low_prio_exec,
                                &low_prio_exec};
     exec_cfg.ctrl_executors = {task_worker_queue_size, &high_prio_exec};
 
