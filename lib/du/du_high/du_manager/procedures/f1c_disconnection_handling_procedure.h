@@ -31,8 +31,8 @@ public:
   void operator()(coro_context<async_task<void>>& ctx);
 
 private:
-  const du_proc_context_view          ctxt;
-  du_procedure_logger                 proc_logger;
+  const du_proc_context_view ctxt;
+  du_procedure_logger        proc_logger;
 
   unsigned i = 0;
 };
