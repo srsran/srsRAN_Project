@@ -108,6 +108,8 @@ public:
 
   task_executor& timer_executor() override { return *timer_strand; }
 
+  void wait_pending_tasks() override { worker_pool.wait_pending_tasks(); }
+
 private:
   // Instantiated workers.
   priority_task_worker_pool                          worker_pool;
