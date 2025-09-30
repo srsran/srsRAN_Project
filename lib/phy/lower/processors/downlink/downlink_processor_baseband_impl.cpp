@@ -153,6 +153,13 @@ downlink_processor_baseband_impl::process(baseband_gateway_timestamp timestamp)
     return result;
   }
 
+  // Apply carrier frequency offset for the entire transmit slot buffer.
+  cfo_processor.next_cfo_command();
+  for (unsigned i_port = 0, i_port_end = slot_result.buffer->get_nof_channels(); i_port != i_port_end; ++i_port) {
+    span<cf_t> channel_buffer = slot_result.buffer->get_writer().get_channel_buffer(i_port);
+    cfo_processor.process(channel_buffer);
+  }
+
   // Notify metrics.
   notifier->on_new_metrics(slot_result.metrics);
 
