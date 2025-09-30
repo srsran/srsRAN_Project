@@ -23,8 +23,11 @@ struct slice_rrm_policy_config {
 
   /// RRM Policy identifier.
   rrm_policy_member rrc_member;
-  /// Sets the minimum/maximum number of PRBs to be allocated to this group.
-  prb_interval rb_range = {0, MAX_NOF_PRBS};
+  /// \brief Radio resources, in RBs, allocated to this group.
+  ///
+  /// These limits are computed based on the rrmPolicyRatios provided for the RRM policy and based on the number of RBs
+  /// of the cell.
+  rrm_policy_radio_block_limits rbs;
   /// RAN slice scheduling priority. Values: {0, ..., 255}.
   unsigned priority = 0;
   /// Policy scheduler configuration for the slice.

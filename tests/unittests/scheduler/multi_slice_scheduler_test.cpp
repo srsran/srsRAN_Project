@@ -132,9 +132,9 @@ protected:
   static constexpr unsigned slice1_max_rbs = 20;
 
   multi_slice_with_prio_slice_scheduler_test() :
-    base_multi_slice_scheduler_tester(
-        multi_slice_test_params{{slice_rrm_policy_config{get_rrm_policy(1, 1), {slice1_min_rbs, slice1_max_rbs}},
-                                 slice_rrm_policy_config{get_rrm_policy(1, 2), {0, MAX_NOF_PRBS}}}})
+    base_multi_slice_scheduler_tester(multi_slice_test_params{
+        {slice_rrm_policy_config{get_rrm_policy(1, 1), {slice1_min_rbs, slice1_max_rbs - slice1_min_rbs}},
+         slice_rrm_policy_config{get_rrm_policy(1, 2), {0, MAX_NOF_PRBS}}}})
   {
   }
 };

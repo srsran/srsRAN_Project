@@ -36,15 +36,15 @@ inter_slice_scheduler::inter_slice_scheduler(const cell_configuration& cell_cfg_
   // Default SRB slice.
   // NOTE: We set \c min_prb for default SRB slice to maximum nof. PRBs of a UE carrier to give maximum priority to this
   // slice.
-  slices.emplace_back(SRB_RAN_SLICE_ID,
-                      cell_cfg,
-                      slice_rrm_policy_config{.rb_range = {cell_max_rbs, cell_max_rbs},
-                                              .priority = slice_rrm_policy_config::max_priority},
-                      create_scheduler_strategy(cell_cfg.expert_cfg.ue, cell_cfg.cell_index));
+  slices.emplace_back(
+      SRB_RAN_SLICE_ID,
+      cell_cfg,
+      slice_rrm_policy_config{.rbs = {cell_max_rbs, 0}, .priority = slice_rrm_policy_config::max_priority},
+      create_scheduler_strategy(cell_cfg.expert_cfg.ue, cell_cfg.cell_index));
   // Default DRB slice.
   slices.emplace_back(DEFAULT_DRB_RAN_SLICE_ID,
                       cell_cfg,
-                      slice_rrm_policy_config{.rb_range = {0, cell_max_rbs}},
+                      slice_rrm_policy_config{.rbs = {0, cell_max_rbs}},
                       create_scheduler_strategy(cell_cfg.expert_cfg.ue, cell_cfg.cell_index));
   // NOTE: RAN slice IDs 0 and 1 are reserved for default SRB and default DRB slice respectively.
   ran_slice_id_t id_count{2};
@@ -52,7 +52,9 @@ inter_slice_scheduler::inter_slice_scheduler(const cell_configuration& cell_cfg_
   for (const slice_rrm_policy_config& rrm : cell_cfg.rrm_policy_members) {
     auto rrm_adjusted = rrm;
     // Adjust maximum PRBs per slice based on the number of PRBs in a cell.
-    rrm_adjusted.rb_range.intersect(prb_interval{0, cell_max_rbs});
+    rrm_adjusted.rbs      = {std::min(rrm_adjusted.rbs.dedicated(), cell_max_rbs),
+                             std::min(rrm_adjusted.rbs.prioritized(), cell_max_rbs),
+                             std::min(rrm_adjusted.rbs.shared(), cell_max_rbs)};
     rrm_adjusted.priority = std::min(rrm.priority, slice_rrm_policy_config::max_priority);
     // Set policy scheduler based on slice configuration.
     scheduler_ue_expert_config slice_scheduler_ue_expert_cfg{cell_cfg.expert_cfg.ue};
@@ -93,7 +95,7 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
   const bool pdsch_enabled =
       cell_cfg.expert_cfg.ue.enable_csi_rs_pdsch_multiplexing or res_grid[0].result.dl.csi_rs.empty();
   for (const auto& slice : slices) {
-    if (not pdsch_enabled or slice.inst.pdsch_rb_count >= slice.inst.cfg.rb_range.stop()) {
+    if (not pdsch_enabled or slice.inst.pdsch_rb_count >= slice.inst.cfg.rbs.max()) {
       // PDSCH is disabled or slice already reached max RBs. We can skip this slice.
       continue;
     }
@@ -101,14 +103,14 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
     // When minRB > 0, minRB != maxRB, sliceRBs < min_RB, we create two candidates. One with limit set to minRB
     // with high priority, and another one with limit set to maxRB with normal priority.
     interval<unsigned> rb_lims;
-    if (slice.inst.pdsch_rb_count < slice.inst.cfg.rb_range.start() and slice.inst.cfg.rb_range.start() > 0 and
-        not slice.inst.cfg.rb_range.empty()) {
-      rb_lims         = {slice.inst.pdsch_rb_count, slice.inst.cfg.rb_range.start()};
+    if (slice.inst.pdsch_rb_count < slice.inst.cfg.rbs.min() and slice.inst.cfg.rbs.min() > 0 and
+        slice.inst.cfg.rbs.shared() > 0) {
+      rb_lims         = {slice.inst.pdsch_rb_count, slice.inst.cfg.rbs.min()};
       const auto prio = slice.get_prio(true, slot_tx, slot_tx, rb_lims.stop());
       dl_prio_queue.push(slice_candidate_context{slice.inst.id, prio, rb_lims, slot_tx});
-      rb_lims = {slice.inst.cfg.rb_range.start(), slice.inst.cfg.rb_range.stop()};
+      rb_lims = {slice.inst.cfg.rbs.min(), slice.inst.cfg.rbs.max()};
     } else {
-      rb_lims = {slice.inst.pdsch_rb_count, slice.inst.cfg.rb_range.stop()};
+      rb_lims = {slice.inst.pdsch_rb_count, slice.inst.cfg.rbs.max()};
     }
     const auto prio = slice.get_prio(true, slot_tx, slot_tx, rb_lims.stop());
     dl_prio_queue.push(slice_candidate_context{slice.inst.id, prio, rb_lims, slot_tx});
@@ -126,7 +128,7 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
       slot_point                          pusch_slot  = slot_tx + pusch_delay;
 
       unsigned pusch_rb_count = slice.inst.nof_pusch_rbs_allocated(pusch_slot);
-      if (pusch_rb_count >= slice.inst.cfg.rb_range.stop()) {
+      if (pusch_rb_count >= slice.inst.cfg.rbs.max()) {
         // Slice reached max RBs.
         continue;
       }
@@ -143,14 +145,14 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
       // When minRB > 0, minRB != maxRB, sliceRBs < min_RB, we create two candidates. One with limit set to minRB
       // with high priority, and another one with limit set to maxRB with normal priority.
       interval<unsigned> rb_lims;
-      if (slice.inst.cfg.rb_range.start() > 0 and slice.inst.cfg.rb_range.start() != slice.inst.cfg.rb_range.stop() and
-          pusch_rb_count < slice.inst.cfg.rb_range.start()) {
-        rb_lims         = {pusch_rb_count, slice.inst.cfg.rb_range.start()};
+      if (slice.inst.cfg.rbs.min() > 0 and slice.inst.cfg.rbs.shared() > 0 and
+          pusch_rb_count < slice.inst.cfg.rbs.min()) {
+        rb_lims         = {pusch_rb_count, slice.inst.cfg.rbs.min()};
         const auto prio = slice.get_prio(false, slot_tx, pusch_slot, rb_lims.stop());
         ul_prio_queue.push(slice_candidate_context{slice.inst.id, prio, rb_lims, pusch_slot});
-        rb_lims = {slice.inst.cfg.rb_range.start(), slice.inst.cfg.rb_range.stop()};
+        rb_lims = {slice.inst.cfg.rbs.min(), slice.inst.cfg.rbs.max()};
       } else {
-        rb_lims = {pusch_rb_count, slice.inst.cfg.rb_range.stop()};
+        rb_lims = {pusch_rb_count, slice.inst.cfg.rbs.max()};
       }
       const auto prio = slice.get_prio(false, slot_tx, pusch_slot, rb_lims.stop());
       ul_prio_queue.push(slice_candidate_context{slice.inst.id, prio, rb_lims, pusch_slot});
@@ -314,8 +316,8 @@ void inter_slice_scheduler::handle_slice_reconfiguration_request(const du_cell_s
     bool found = false;
     for (auto& slice : slices) {
       if (slice.inst.cfg.rrc_member == rrm.rrc_member) {
-        found                   = true;
-        slice.inst.cfg.rb_range = {rrm.min_prb, rrm.max_prb};
+        found              = true;
+        slice.inst.cfg.rbs = rrm.rbs;
       }
     }
 
@@ -364,9 +366,8 @@ inter_slice_scheduler::priority_type inter_slice_scheduler::ran_slice_sched_cont
   priority_type prio = slot_dist;
 
   // 2. In case minRB > 0 and minimum RB ratio agreement is not yet reached, we give it a higher priority.
-  const priority_type slice_minrb_prio =
-      rb_lims <= inst.cfg.rb_range.start() and inst.cfg.rb_range.start() > 0 ? 1U : 0U;
-  prio = (prio << slice_minrb_prio_bitsize) + slice_minrb_prio;
+  const priority_type slice_minrb_prio = rb_lims <= inst.cfg.rbs.min() and inst.cfg.rbs.min() > 0 ? 1U : 0U;
+  prio                                 = (prio << slice_minrb_prio_bitsize) + slice_minrb_prio;
 
   // 3. Prioritize slices with higher priority.
   prio = (prio << slice_prio_bitsize) + std::min(inst.cfg.priority, slice_prio_bitmask);

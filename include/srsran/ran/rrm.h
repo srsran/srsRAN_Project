@@ -12,6 +12,7 @@
 
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/plmn_identity.h"
+#include "srsran/ran/resource_block.h"
 #include "srsran/ran/s_nssai.h"
 
 namespace srsran {
@@ -43,6 +44,39 @@ struct rrm_policy_ratio_group {
   std::optional<unsigned> ded_prb_policy_ratio;
 };
 
+/// Number of dedicated, prioritized and shared PRBs associated with a given RAN slice.
+struct rrm_policy_radio_block_limits {
+  rrm_policy_radio_block_limits() = default;
+  rrm_policy_radio_block_limits(unsigned prio_rbs_, unsigned shared_rbs_) :
+    rrm_policy_radio_block_limits(0, prio_rbs_, shared_rbs_)
+  {
+  }
+  rrm_policy_radio_block_limits(unsigned ded_rbs_, unsigned prio_rbs_, unsigned shared_rbs_) :
+    ded_rbs(ded_rbs_), min_rbs(ded_rbs_ + prio_rbs_), max_rbs(shared_rbs_ + min_rbs)
+  {
+  }
+
+  /// Sum of dedicated and prioritized RBs.
+  unsigned min() const { return min_rbs; }
+
+  /// Sum of dedicated, prioritized and shared RBs.
+  unsigned max() const { return max_rbs; }
+
+  /// Dedicated PRBs.
+  unsigned dedicated() const { return ded_rbs; }
+
+  /// Prioritized PRBs.
+  unsigned prioritized() const { return min_rbs - ded_rbs; }
+
+  /// Shared PRBs.
+  unsigned shared() const { return max_rbs - min_rbs; }
+
+private:
+  unsigned ded_rbs = 0;
+  unsigned min_rbs = 0;
+  unsigned max_rbs = MAX_NOF_PRBS;
+};
+
 constexpr unsigned MAX_SLICE_RECONF_POLICIES = 16;
 
 /// Request to reconfigure slicing policies for a given DU cell.
@@ -50,8 +84,8 @@ struct du_cell_slice_reconfig_request {
   du_cell_index_t cell_index;
   struct rrm_policy_config {
     rrm_policy_member rrc_member;
-    unsigned          min_prb;
-    unsigned          max_prb;
+    /// RB limits for the RRM policy member.
+    rrm_policy_radio_block_limits rbs;
   };
   static_vector<rrm_policy_config, MAX_SLICE_RECONF_POLICIES> rrm_policies;
 };
@@ -59,7 +93,6 @@ struct du_cell_slice_reconfig_request {
 } // namespace srsran
 
 namespace fmt {
-
 template <>
 struct formatter<srsran::rrm_policy_member> {
   template <typename ParseContext>
