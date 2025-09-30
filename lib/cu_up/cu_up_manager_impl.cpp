@@ -160,13 +160,10 @@ void cu_up_manager_impl::handle_e1ap_connection_drop()
       cu_up_id, cu_up_name, plmn, stop_command, e1ap, *ue_mng, timers, exec_mapper.ctrl_executor()));
 }
 
-async_task<void> cu_up_manager_impl::handle_e1_reset()
+async_task<void> cu_up_manager_impl::handle_e1_reset(const e1ap_reset& msg)
 {
-  // TODO
-  return launch_async([](coro_context<async_task<void>>& ctx) {
-    CORO_BEGIN(ctx);
-    CORO_RETURN();
-  });
+  // Release all Bearer Contexts.
+  return ue_mng->remove_all_ues();
 }
 
 async_task<void> cu_up_manager_impl::enable_test_mode()

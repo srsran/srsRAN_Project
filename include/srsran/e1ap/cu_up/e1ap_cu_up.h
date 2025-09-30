@@ -98,7 +98,7 @@ public:
   on_bearer_context_release_command_received(const e1ap_bearer_context_release_command& msg) = 0;
 
   /// \brief Notifies the CU-UP manager of a full E1 reset. The CU-UP will release all bearer contexts.
-  virtual async_task<void> on_e1_reset_received() = 0;
+  virtual async_task<void> on_e1_reset_received(const e1ap_reset& msg) = 0;
 
   /// \brief Schedules async task on CU-UP.
   virtual void on_schedule_cu_up_async_task(async_task<void> task) = 0;

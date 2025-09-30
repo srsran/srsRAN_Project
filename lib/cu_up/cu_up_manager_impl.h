@@ -62,7 +62,7 @@ public:
 
   void handle_e1ap_connection_drop() override;
 
-  async_task<void> handle_e1_reset() override;
+  async_task<void> handle_e1_reset(const e1ap_reset& msg) override;
 
   void schedule_cu_up_async_task(async_task<void> task) override;
 

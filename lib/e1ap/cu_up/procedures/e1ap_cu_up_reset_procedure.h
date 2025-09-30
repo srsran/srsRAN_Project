@@ -33,8 +33,9 @@ public:
 
 private:
   static const char* name() { return "E1AP CU-UP Reset Procedure"; }
-  void               handle_e1_interface_reset(const asn1::e1ap::reset_all_e& reset_all);
-  void handle_part_of_e1_interface_reset(const asn1::e1ap::ue_associated_lc_e1_conn_list_res_l& ue_reset_list);
+  async_task<void>   handle_e1_interface_reset(const asn1::e1ap::reset_all_e& reset_all);
+  async_task<void>
+  handle_part_of_e1_interface_reset(const asn1::e1ap::ue_associated_lc_e1_conn_list_res_l& ue_reset_list);
 
   asn1::e1ap::reset_s          reset_msg;
   e1ap_ue_context_list&        ue_ctxt_list;

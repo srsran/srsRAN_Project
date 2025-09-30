@@ -163,7 +163,7 @@ public:
     });
   }
 
-  async_task<void> on_e1_reset_received() override
+  async_task<void> on_e1_reset_received(const srs_cu_up::e1ap_reset& msg) override
   {
     logger.info("Received E1Reset");
     return launch_async([](coro_context<async_task<void>>& ctx) {
