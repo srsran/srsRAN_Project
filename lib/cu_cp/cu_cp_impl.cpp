@@ -253,13 +253,7 @@ void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inact
 
 void cu_cp_impl::handle_e1_release_request(cu_up_index_t cu_up_index)
 {
-  // Schedule removal of CU-UP processor. Note this must be scheduled to be executed after the E1 Release Response was
-  // sent from the calling procedure.
-  common_task_sched.schedule_async_task(launch_async([this, cu_up_index](coro_context<async_task<void>>& ctx) mutable {
-    CORO_BEGIN(ctx);
-    CORO_AWAIT(cu_up_db.remove_cu_up(cu_up_index));
-    CORO_RETURN();
-  }));
+  // TODO
 }
 
 bool cu_cp_impl::handle_ue_plmn_selected(ue_index_t ue_index, const plmn_identity& plmn)
