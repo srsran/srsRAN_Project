@@ -59,6 +59,18 @@ public:
     return cu_up_handler->handle_bearer_context_release_command(msg);
   }
 
+  async_task<void> on_e1_reset_received() override
+  {
+    if (cu_up_handler == nullptr) {
+      logger.warning("Could not handle E1 reset, no CU-UP handler present");
+      return launch_async([](coro_context<async_task<void>>& ctx) {
+        CORO_BEGIN(ctx);
+        CORO_RETURN();
+      });
+    }
+    return cu_up_handler->handle_e1_reset();
+  }
+
   void on_schedule_cu_up_async_task(async_task<void> task) override
   {
     if (cu_up_handler == nullptr) {

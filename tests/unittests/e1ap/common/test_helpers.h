@@ -163,6 +163,15 @@ public:
     });
   }
 
+  async_task<void> on_e1_reset_received() override
+  {
+    logger.info("Received E1Reset");
+    return launch_async([](coro_context<async_task<void>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
   void on_schedule_ue_async_task(srs_cu_up::ue_index_t ue_index_, async_task<void> task) override
   {
     task_loop.schedule(std::move(task)); // schedule ue task in dummy task loop

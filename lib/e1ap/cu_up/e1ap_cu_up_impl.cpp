@@ -340,7 +340,7 @@ void e1ap_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::be
 void e1ap_cu_up_impl::handle_cu_up_e1ap_reset(const asn1::e1ap::reset_s& msg)
 {
   cu_up_notifier.on_schedule_cu_up_async_task(
-      launch_async<e1ap_cu_up_reset_procedure>(msg, cu_up_notifier, *pdu_notifier, logger));
+      launch_async<e1ap_cu_up_reset_procedure>(msg, ue_ctxt_list, cu_up_notifier, *pdu_notifier, logger));
 }
 
 void e1ap_cu_up_impl::handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome)

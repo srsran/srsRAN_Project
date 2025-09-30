@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "cu_up/ue_context/e1ap_cu_up_ue_context.h"
 #include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
@@ -23,6 +24,7 @@ class e1ap_cu_up_reset_procedure
 {
 public:
   e1ap_cu_up_reset_procedure(asn1::e1ap::reset_s          reset_msg_,
+                             e1ap_ue_context_list&        ue_ctxt_list_,
                              e1ap_cu_up_manager_notifier& cu_up_notifier_,
                              e1ap_message_notifier&       tx_pdu_notifier_,
                              srslog::basic_logger&        logger_);
@@ -35,6 +37,7 @@ private:
   void handle_part_of_e1_interface_reset(const asn1::e1ap::ue_associated_lc_e1_conn_list_res_l& ue_reset_list);
 
   asn1::e1ap::reset_s          reset_msg;
+  e1ap_ue_context_list&        ue_ctxt_list;
   e1ap_cu_up_manager_notifier& cu_up_notifier;
   e1ap_message_notifier&       tx_pdu_notifier;
   srslog::basic_logger&        logger;

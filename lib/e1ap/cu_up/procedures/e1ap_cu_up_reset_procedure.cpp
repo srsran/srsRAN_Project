@@ -15,10 +15,15 @@ using namespace srsran;
 using namespace srs_cu_up;
 
 e1ap_cu_up_reset_procedure::e1ap_cu_up_reset_procedure(asn1::e1ap::reset_s          reset_msg_,
+                                                       e1ap_ue_context_list&        ue_ctxt_list_,
                                                        e1ap_cu_up_manager_notifier& cu_up_notifier_,
                                                        e1ap_message_notifier&       tx_pdu_notifier_,
                                                        srslog::basic_logger&        logger_) :
-  reset_msg(std::move(reset_msg_)), cu_up_notifier(cu_up_notifier_), tx_pdu_notifier(tx_pdu_notifier_), logger(logger_)
+  reset_msg(std::move(reset_msg_)),
+  ue_ctxt_list(ue_ctxt_list_),
+  cu_up_notifier(cu_up_notifier_),
+  tx_pdu_notifier(tx_pdu_notifier_),
+  logger(logger_)
 {
 }
 

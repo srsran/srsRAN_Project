@@ -160,6 +160,15 @@ void cu_up_manager_impl::handle_e1ap_connection_drop()
       cu_up_id, cu_up_name, plmn, stop_command, e1ap, *ue_mng, timers, exec_mapper.ctrl_executor()));
 }
 
+async_task<void> cu_up_manager_impl::handle_e1_reset()
+{
+  // TODO
+  return launch_async([](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+    CORO_RETURN();
+  });
+}
+
 async_task<void> cu_up_manager_impl::enable_test_mode()
 {
   return launch_async<cu_up_enable_test_mode_routine>(test_mode_cfg, *this, ngu_demux);
