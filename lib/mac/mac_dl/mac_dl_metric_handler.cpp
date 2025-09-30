@@ -17,10 +17,15 @@ mac_dl_cell_metric_report::latency_report
 mac_dl_cell_metric_handler::non_persistent_data::latency_data::get_report() const
 {
   mac_dl_cell_metric_report::latency_report result;
-  result.min      = min;
-  result.max      = max;
-  result.average  = sum / count;
-  result.max_slot = max_slot;
+  result.min = min;
+  result.max = max;
+  if (count > 0) {
+    result.average  = sum / count;
+    result.max_slot = max_slot;
+  } else {
+    result.average  = std::chrono::nanoseconds(0);
+    result.max_slot = slot_point{};
+  }
   return result;
 }
 
@@ -143,19 +148,17 @@ void mac_dl_cell_metric_handler::send_new_report()
 {
   // Prepare cell report.
   mac_dl_cell_metric_report report;
-  report.pci           = cell_pci;
-  report.start_slot    = data.start_slot;
-  report.slot_duration = slot_duration;
-  report.nof_slots     = data.nof_slots;
-  if (data.nof_slots > 0) {
-    report.wall_clock_latency       = data.wall.get_report();
-    report.slot_ind_dequeue_latency = data.slot_dequeue.get_report();
-    report.sched_latency            = data.sched.get_report();
-    report.dl_tti_req_latency       = data.dl_tti_req.get_report();
-    report.tx_data_req_latency      = data.tx_data_req.get_report();
-    report.ul_tti_req_latency       = data.ul_tti_req.get_report();
-    report.slot_ind_msg_time_diff   = data.slot_distance.get_report();
-  }
+  report.pci                                = cell_pci;
+  report.start_slot                         = data.start_slot;
+  report.slot_duration                      = slot_duration;
+  report.nof_slots                          = data.nof_slots;
+  report.wall_clock_latency                 = data.wall.get_report();
+  report.slot_ind_dequeue_latency           = data.slot_dequeue.get_report();
+  report.sched_latency                      = data.sched.get_report();
+  report.dl_tti_req_latency                 = data.dl_tti_req.get_report();
+  report.tx_data_req_latency                = data.tx_data_req.get_report();
+  report.ul_tti_req_latency                 = data.ul_tti_req.get_report();
+  report.slot_ind_msg_time_diff             = data.slot_distance.get_report();
   report.count_voluntary_context_switches   = data.count_vol_context_switches;
   report.count_involuntary_context_switches = data.count_invol_context_switches;
   report.cell_deactivated                   = data.last_report;
