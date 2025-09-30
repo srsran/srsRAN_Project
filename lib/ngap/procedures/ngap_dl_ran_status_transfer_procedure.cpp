@@ -17,10 +17,10 @@ using namespace asn1::ngap;
 #ifndef SRSRAN_HAS_ENTERPRISE
 
 async_task<expected<ngap_dl_ran_status_transfer>>
-srsran::srs_cu_cp::start_ngap_dl_status_transfer_procedure(ue_index_t                ue_index,
-                                                           ngap_transaction_manager& ev_mng,
-                                                           timer_factory             timers,
-                                                           ngap_ue_logger&           logger)
+srsran::srs_cu_cp::start_ngap_dl_status_transfer_procedure(ue_index_t                   ue_index,
+                                                           ngap_ue_transaction_manager& ev_mng,
+                                                           timer_factory                timers,
+                                                           ngap_ue_logger&              logger)
 {
   logger.log_info("NG Handover failed. Cause: NG handover not supported.");
   auto err_function = [](coro_context<async_task<expected<ngap_dl_ran_status_transfer>>>& ctx) {

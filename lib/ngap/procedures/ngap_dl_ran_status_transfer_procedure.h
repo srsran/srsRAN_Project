@@ -10,17 +10,17 @@
 
 #pragma once
 
-#include "ngap_transaction_manager.h"
 #include "ue_context/ngap_ue_logger.h"
+#include "ue_context/ngap_ue_transaction_manager.h"
 #include "srsran/ngap/ngap_handover.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran::srs_cu_cp {
 
 async_task<expected<ngap_dl_ran_status_transfer>>
-start_ngap_dl_status_transfer_procedure(ue_index_t                ue_index,
-                                        ngap_transaction_manager& ev_mng,
-                                        timer_factory             timers,
-                                        ngap_ue_logger&           logger);
+start_ngap_dl_status_transfer_procedure(ue_index_t                   ue_index,
+                                        ngap_ue_transaction_manager& ev_mng,
+                                        timer_factory                timers,
+                                        ngap_ue_logger&              logger);
 
 } // namespace srsran::srs_cu_cp

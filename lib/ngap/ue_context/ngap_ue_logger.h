@@ -16,7 +16,6 @@
 #include "srsran/support/format/fmt_to_c_str.h"
 #include "srsran/support/format/prefixed_logger.h"
 #include "fmt/format.h"
-#include <string.h>
 
 namespace srsran {
 namespace srs_cu_cp {

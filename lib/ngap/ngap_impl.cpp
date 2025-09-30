@@ -40,7 +40,7 @@ ngap_impl::ngap_impl(const ngap_configuration& ngap_cfg_,
                      timer_manager&            timers_,
                      task_executor&            ctrl_exec_) :
   logger(srslog::fetch_basic_logger("NGAP")),
-  ue_ctxt_list(logger),
+  ue_ctxt_list(timer_factory{timers_, ctrl_exec_}, logger),
   cu_cp_notifier(cu_cp_notifier_),
   timers(timers_),
   ctrl_exec(ctrl_exec_),
@@ -174,7 +174,7 @@ void ngap_impl::handle_initial_ue_message(const cu_cp_initial_ue_message& msg)
 
   // Create UE context and store it.
   ngap_cu_cp_ue_notifier* ue_notifier = cu_cp_notifier.on_new_ngap_ue(msg.ue_index);
-  ue_ctxt_list.add_ue(msg.ue_index, ran_ue_id, *ue_notifier, timers, ctrl_exec);
+  ue_ctxt_list.add_ue(msg.ue_index, ran_ue_id, *ue_notifier);
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[msg.ue_index];
 
@@ -847,8 +847,6 @@ void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
                                                   ue_ctxt_list,
                                                   cu_cp_notifier,
                                                   tx_pdu_notifier,
-                                                  timers,
-                                                  ctrl_exec,
                                                   logger))) {
     logger.debug("Couldn't schedule handover resource allocation procedure");
     send_handover_failure(msg->amf_ue_ngap_id);
@@ -858,7 +856,26 @@ void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
 
 void ngap_impl::handle_dl_ran_status_transfer(const asn1::ngap::dl_ran_status_transfer_s& msg)
 {
-  ev_mng.dl_ran_status_transfer.set(msg);
+  if (!ue_ctxt_list.contains(uint_to_ran_ue_id(msg->ran_ue_ngap_id))) {
+    logger.warning("ran_ue={} amf_ue={}: Dropping DLRANStatusTransfer. UE context does not exist",
+                   msg->ran_ue_ngap_id,
+                   msg->amf_ue_ngap_id);
+    send_error_indication(tx_pdu_notifier, logger, {}, {}, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
+    return;
+  }
+
+  ngap_ue_context& ue_ctxt = ue_ctxt_list[uint_to_ran_ue_id(msg->ran_ue_ngap_id)];
+
+  if (ue_ctxt.release_scheduled) {
+    ue_ctxt.logger.log_info("Dropping DLRANStatusTransfer. UE is already scheduled for release");
+    stored_error_indications.emplace(ue_ctxt.ue_ids.ue_index,
+                                     error_indication_request_t{ngap_cause_radio_network_t::interaction_with_other_proc,
+                                                                ue_ctxt.ue_ids.ran_ue_id,
+                                                                uint_to_amf_ue_id(msg->amf_ue_ngap_id)});
+    return;
+  }
+
+  ue_ctxt.ev_mng.dl_ran_status_transfer_outcome.set(msg);
 }
 
 void ngap_impl::handle_ul_ran_status_transfer(const ngap_ul_ran_status_transfer& ul_ran_status_transfer)
@@ -901,7 +918,8 @@ async_task<expected<ngap_dl_ran_status_transfer>> ngap_impl::handle_dl_ran_statu
   }
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
-  return start_ngap_dl_status_transfer_procedure(ue_index, ev_mng, timer_factory{timers, ctrl_exec}, ue_ctxt.logger);
+  return start_ngap_dl_status_transfer_procedure(
+      ue_index, ue_ctxt.ev_mng, timer_factory{timers, ctrl_exec}, ue_ctxt.logger);
 }
 
 #ifndef SRSRAN_HAS_ENTERPRISE
@@ -976,6 +994,25 @@ void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
 
 void ngap_impl::handle_successful_outcome(const successful_outcome_s& outcome)
 {
+  auto get_ue_ctxt_in_ue_assoc_msg = [this](const asn1::ngap::successful_outcome_s& outcome_) -> ngap_ue_context* {
+    std::optional<amf_ue_id_t> amf_ue_id = asn1_utils::get_amf_ue_id(outcome_);
+    // The AMF_UE_NGAP_ID field is mandatory in all UE associated successful messages.
+    if (!amf_ue_id.has_value()) {
+      logger.warning("Discarding received \"{}\". Cause: AMF_UE_NGAP_ID field is mandatory",
+                     outcome_.value.type().to_string());
+      return nullptr;
+    }
+
+    ngap_ue_context* ue_ctxt = ue_ctxt_list.find(*amf_ue_id);
+    if (ue_ctxt == nullptr) {
+      logger.warning("amf_ue={}: Discarding received \"{}\". Cause: UE was not found.",
+                     fmt::underlying(*amf_ue_id),
+                     outcome_.value.type().to_string());
+      return nullptr;
+    }
+    return ue_ctxt;
+  };
+
   switch (outcome.value.type().value) {
     case ngap_elem_procs_o::successful_outcome_c::types_opts::ng_setup_resp: {
       ev_mng.ng_setup_outcome.set(outcome.value.ng_setup_resp());
@@ -984,10 +1021,14 @@ void ngap_impl::handle_successful_outcome(const successful_outcome_s& outcome)
       ev_mng.ng_reset_outcome.set(outcome.value.ng_reset_ack());
     } break;
     case ngap_elem_procs_o::successful_outcome_c::types_opts::ho_cmd: {
-      ev_mng.handover_preparation_outcome.set(outcome.value.ho_cmd());
+      if (auto* ue_ctxt = get_ue_ctxt_in_ue_assoc_msg(outcome)) {
+        ue_ctxt->ev_mng.handover_preparation_outcome.set(outcome.value.ho_cmd());
+      }
     } break;
     case ngap_elem_procs_o::successful_outcome_c::types_opts::ho_cancel_ack: {
-      ev_mng.handover_cancel_outcome.set(outcome.value.ho_cancel_ack());
+      if (auto* ue_ctxt = get_ue_ctxt_in_ue_assoc_msg(outcome)) {
+        ue_ctxt->ev_mng.handover_cancel_outcome.set(outcome.value.ho_cancel_ack());
+      }
     } break;
     default:
       logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
@@ -996,12 +1037,33 @@ void ngap_impl::handle_successful_outcome(const successful_outcome_s& outcome)
 
 void ngap_impl::handle_unsuccessful_outcome(const unsuccessful_outcome_s& outcome)
 {
+  auto get_ue_ctxt_in_ue_assoc_msg = [this](const asn1::ngap::unsuccessful_outcome_s& outcome_) -> ngap_ue_context* {
+    std::optional<amf_ue_id_t> amf_ue_id = asn1_utils::get_amf_ue_id(outcome_);
+    // The AMF_UE_NGAP_ID field is mandatory in all UE associated failure messages.
+    if (!amf_ue_id.has_value()) {
+      logger.warning("Discarding received \"{}\". Cause: AMF_UE_NGAP_ID field is mandatory",
+                     outcome_.value.type().to_string());
+      return nullptr;
+    }
+
+    ngap_ue_context* ue_ctxt = ue_ctxt_list.find(*amf_ue_id);
+    if (ue_ctxt == nullptr) {
+      logger.warning("amf_ue={}: Discarding received \"{}\". Cause: UE was not found.",
+                     fmt::underlying(*amf_ue_id),
+                     outcome_.value.type().to_string());
+      return nullptr;
+    }
+    return ue_ctxt;
+  };
+
   switch (outcome.value.type().value) {
     case ngap_elem_procs_o::unsuccessful_outcome_c::types_opts::ng_setup_fail: {
       ev_mng.ng_setup_outcome.set(outcome.value.ng_setup_fail());
     } break;
     case ngap_elem_procs_o::unsuccessful_outcome_c::types_opts::ho_prep_fail: {
-      ev_mng.handover_preparation_outcome.set(outcome.value.ho_prep_fail());
+      if (auto* ue_ctxt = get_ue_ctxt_in_ue_assoc_msg(outcome)) {
+        ue_ctxt->ev_mng.handover_preparation_outcome.set(outcome.value.ho_prep_fail());
+      }
     } break;
     default:
       logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
@@ -1108,7 +1170,7 @@ ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_r
                                          tx_pdu_notifier,
                                          ue->get_ngap_rrc_ue_notifier(),
                                          cu_cp_notifier,
-                                         ev_mng,
+                                         ue_ctxt.ev_mng,
                                          timer_factory{timers, ctrl_exec},
                                          ue_ctxt.logger);
 }
