@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "srsran/ran/resource_allocation/rb_interval.h"
 #include "srsran/ran/rrm.h"
-#include "srsran/ran/s_nssai.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 
 namespace srsran {
@@ -23,10 +23,8 @@ struct slice_rrm_policy_config {
 
   /// RRM Policy identifier.
   rrm_policy_member rrc_member;
-  /// Sets the minimum number of PRBs to be allocated to this group.
-  unsigned min_prb = 0;
-  /// Sets the maximum number of PRBs to be allocated to this group.
-  unsigned max_prb = MAX_NOF_PRBS;
+  /// Sets the minimum/maximum number of PRBs to be allocated to this group.
+  prb_interval rb_range = {0, MAX_NOF_PRBS};
   /// RAN slice scheduling priority. Values: {0, ..., 255}.
   unsigned priority = 0;
   /// Policy scheduler configuration for the slice.

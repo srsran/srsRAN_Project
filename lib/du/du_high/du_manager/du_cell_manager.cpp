@@ -141,14 +141,13 @@ expected<du_cell_reconfig_result> du_cell_manager::handle_cell_reconf_request(co
             break;
           }
 
-          if ((policy_cfg.min_prb != min_prb) or (policy_cfg.max_prb != max_prb)) {
+          if ((policy_cfg.rb_range.start() != min_prb) or (policy_cfg.rb_range.stop() != max_prb)) {
             // Policy configuration has been updated.
             result.slice_reconf_req->rrm_policies.push_back(
                 du_cell_slice_reconfig_request::rrm_policy_config{policy_member, min_prb, max_prb});
           }
 
-          policy_cfg.min_prb = min_prb;
-          policy_cfg.max_prb = max_prb;
+          policy_cfg.rb_range = {min_prb, max_prb};
           break;
         }
       }

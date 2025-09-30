@@ -110,9 +110,8 @@ void sched_config_manager::update_cell(const sched_cell_reconfiguration_request_
       bool found = false;
       for (auto& slice : added_cells[cell_index]->rrm_policy_members) {
         if (slice.rrc_member == rrm.rrc_member) {
-          found         = true;
-          slice.max_prb = rrm.max_prb;
-          slice.min_prb = rrm.min_prb;
+          found          = true;
+          slice.rb_range = {rrm.min_prb, rrm.max_prb};
           break;
         }
       }
