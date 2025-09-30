@@ -22,8 +22,10 @@
 #include "srsran/ran/resource_block.h"
 #include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
+#include "srsran/scheduler/result/pusch_info.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/format/custom_formattable.h"
+#include <algorithm>
 
 using namespace srsran;
 
@@ -495,11 +497,6 @@ static std::optional<uci_allocation> allocate_ue_fallback_pucch(ue&             
     slot_point uci_slot = pdsch_slot + k1_candidate;
     if (not res_alloc.cfg.is_fully_ul_enabled(uci_slot)) {
       // If it is not UL-enabled slot.
-      continue;
-    }
-    // There can be PUSCHs that are already allocated: to avoid potential collisions between PUCCH and PUSCH, skip this
-    // allocation if any allocated PUSCHs.
-    if (not res_alloc[k1_candidate].result.ul.puschs.empty()) {
       continue;
     }
     last_valid_k1 = k1_candidate;

@@ -13,6 +13,7 @@
 #include "lib/scheduler/common_scheduling/ra_scheduler.h"
 #include "lib/scheduler/support/config_helpers.h"
 #include "lib/scheduler/support/pdsch/pdsch_default_time_allocation.h"
+#include "lib/scheduler/support/sched_result_helpers.h"
 #include "scheduler_output_test_helpers.h"
 #include "tests/test_doubles/scheduler/scheduler_test_message_validators.h"
 #include "srsran/adt/static_vector.h"
@@ -342,11 +343,11 @@ void srsran::test_pucch_consistency(const cell_configuration& cell_cfg, span<con
         f0_or_f1_grids[max_f0_or_f1_multiplexing].fill(pucch_grants.first);
         f0_or_f1_grids[multiplexing_idx].fill(pucch_grants.first);
         if (not pucch.resources.second_hop_prbs.empty()) {
-          ASSERT_FALSE(general_grid.collides(pucch_grants.second));
-          ASSERT_FALSE(f4_grids[max_f4_multiplexing].collides(pucch_grants.second));
-          ASSERT_FALSE(f0_or_f1_grids[multiplexing_idx].collides(pucch_grants.second));
-          f0_or_f1_grids[max_f0_or_f1_multiplexing].fill(pucch_grants.second);
-          f0_or_f1_grids[multiplexing_idx].fill(pucch_grants.second);
+          ASSERT_FALSE(general_grid.collides(*pucch_grants.second));
+          ASSERT_FALSE(f4_grids[max_f4_multiplexing].collides(*pucch_grants.second));
+          ASSERT_FALSE(f0_or_f1_grids[multiplexing_idx].collides(*pucch_grants.second));
+          f0_or_f1_grids[max_f0_or_f1_multiplexing].fill(*pucch_grants.second);
+          f0_or_f1_grids[multiplexing_idx].fill(*pucch_grants.second);
         }
       } break;
       case pucch_format::FORMAT_1: {
@@ -363,11 +364,11 @@ void srsran::test_pucch_consistency(const cell_configuration& cell_cfg, span<con
         f0_or_f1_grids[max_f0_or_f1_multiplexing].fill(pucch_grants.first);
         f0_or_f1_grids[multiplexing_idx].fill(pucch_grants.first);
         if (not pucch.resources.second_hop_prbs.empty()) {
-          ASSERT_FALSE(general_grid.collides(pucch_grants.second));
-          ASSERT_FALSE(f4_grids[max_f4_multiplexing].collides(pucch_grants.second));
-          ASSERT_FALSE(f0_or_f1_grids[multiplexing_idx].collides(pucch_grants.second));
-          f0_or_f1_grids[max_f0_or_f1_multiplexing].fill(pucch_grants.second);
-          f0_or_f1_grids[multiplexing_idx].fill(pucch_grants.second);
+          ASSERT_FALSE(general_grid.collides(*pucch_grants.second));
+          ASSERT_FALSE(f4_grids[max_f4_multiplexing].collides(*pucch_grants.second));
+          ASSERT_FALSE(f0_or_f1_grids[multiplexing_idx].collides(*pucch_grants.second));
+          f0_or_f1_grids[max_f0_or_f1_multiplexing].fill(*pucch_grants.second);
+          f0_or_f1_grids[multiplexing_idx].fill(*pucch_grants.second);
         }
       } break;
       case pucch_format::FORMAT_4: {
@@ -382,11 +383,11 @@ void srsran::test_pucch_consistency(const cell_configuration& cell_cfg, span<con
         f4_grids[max_f4_multiplexing].fill(pucch_grants.first);
         f4_grids[multiplexing_idx].fill(pucch_grants.first);
         if (not pucch.resources.second_hop_prbs.empty()) {
-          ASSERT_FALSE(general_grid.collides(pucch_grants.second));
-          ASSERT_FALSE(f0_or_f1_grids[max_f0_or_f1_multiplexing].collides(pucch_grants.second));
-          ASSERT_FALSE(f4_grids[multiplexing_idx].collides(pucch_grants.second));
-          f4_grids[max_f4_multiplexing].fill(pucch_grants.second);
-          f4_grids[multiplexing_idx].fill(pucch_grants.second);
+          ASSERT_FALSE(general_grid.collides(*pucch_grants.second));
+          ASSERT_FALSE(f0_or_f1_grids[max_f0_or_f1_multiplexing].collides(*pucch_grants.second));
+          ASSERT_FALSE(f4_grids[multiplexing_idx].collides(*pucch_grants.second));
+          f4_grids[max_f4_multiplexing].fill(*pucch_grants.second);
+          f4_grids[multiplexing_idx].fill(*pucch_grants.second);
         }
       } break;
       default: {
@@ -398,10 +399,10 @@ void srsran::test_pucch_consistency(const cell_configuration& cell_cfg, span<con
         ASSERT_FALSE(f4_grids[max_f4_multiplexing].collides(pucch_grants.first));
         general_grid.fill(pucch_grants.first);
         if (not pucch.resources.second_hop_prbs.empty()) {
-          ASSERT_FALSE(general_grid.collides(pucch_grants.second));
-          ASSERT_FALSE(f0_or_f1_grids[max_f0_or_f1_multiplexing].collides(pucch_grants.second));
-          ASSERT_FALSE(f4_grids[max_f4_multiplexing].collides(pucch_grants.second));
-          general_grid.fill(pucch_grants.second);
+          ASSERT_FALSE(general_grid.collides(*pucch_grants.second));
+          ASSERT_FALSE(f0_or_f1_grids[max_f0_or_f1_multiplexing].collides(*pucch_grants.second));
+          ASSERT_FALSE(f4_grids[max_f4_multiplexing].collides(*pucch_grants.second));
+          general_grid.fill(*pucch_grants.second);
         }
       } break;
     }
