@@ -634,6 +634,12 @@ valgrind changed tests:
       build_srsgnb
     - echo "This test execution has a timeout of ${TEST_EXECUTION_TIMEOUT}. If the execution excess that timer, the job will be marked as allowed_to_fail. This will avoid the job to have a huge duration in a MR pipeline."
     - launch_tests
+  after_script:
+    - mv ${CI_PROJECT_DIR}/build/Testing/Temporary /tmp/Testing_Temporary
+    - cd build
+    - make clean
+    - mkdir -p ${CI_PROJECT_DIR}/build/Testing
+    - mv /tmp/Testing_Temporary ${CI_PROJECT_DIR}/build/Testing/Temporary
   cache:
     - *cache_build_get
   artifacts: &valgrind_artifacts
