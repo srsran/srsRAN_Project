@@ -268,9 +268,8 @@ protected:
 
   rb_ratio_slice_scheduler_test() :
     slice_scheduler_test(
-        {{{plmn_identity::test_value(), s_nssai_t{slice_service_type{1}}}, {MIN_SLICE_RB, MAX_SLICE_RB - MIN_SLICE_RB}},
-         {{plmn_identity::test_value(), s_nssai_t{slice_service_type{2}}},
-          {MIN_SLICE_RB, MAX_SLICE_RB - MIN_SLICE_RB}}})
+        {{{plmn_identity::test_value(), s_nssai_t{slice_service_type{1}}}, {MIN_SLICE_RB, MAX_SLICE_RB}},
+         {{plmn_identity::test_value(), s_nssai_t{slice_service_type{2}}}, {MIN_SLICE_RB, MAX_SLICE_RB}}})
   {
   }
 
@@ -496,9 +495,7 @@ protected:
 
   prioritised_slice_scheduler_test() :
     slice_scheduler_test(
-        {{{plmn_identity::test_value(), s_nssai_t{slice_service_type{1}}},
-          {MIN_SLICE_RB, MAX_NOF_PRBS - MIN_SLICE_RB},
-          PRIORITY},
+        {{{plmn_identity::test_value(), s_nssai_t{slice_service_type{1}}}, {MIN_SLICE_RB, MAX_NOF_PRBS}, PRIORITY},
          {{plmn_identity::test_value(), s_nssai_t{slice_service_type{2}}}, {0, MAX_NOF_PRBS}, PRIORITY}})
   {
   }

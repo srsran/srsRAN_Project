@@ -110,7 +110,7 @@ expected<du_cell_reconfig_result> du_cell_manager::handle_cell_reconf_request(co
   du_cell_reconfig_result result;
   result.slice_reconf_req.emplace();
   for (const auto& rrm_policy_ratio : req.rrm_policy_ratio_list) {
-    if (not(rrm_policy_ratio.min_prb_policy_ratio.has_value() or rrm_policy_ratio.max_prb_policy_ratio.has_value())) {
+    if (not(rrm_policy_ratio.minimum_ratio.has_value() or rrm_policy_ratio.maximum_ratio.has_value())) {
       continue;
     }
 
@@ -120,10 +120,8 @@ expected<du_cell_reconfig_result> du_cell_manager::handle_cell_reconf_request(co
         if (policy_cfg.rrc_member == policy_member) {
           found = true;
           // Update the policy member configuration.
-          unsigned min_prb_ratio =
-              rrm_policy_ratio.min_prb_policy_ratio.has_value() ? rrm_policy_ratio.min_prb_policy_ratio.value() : 0;
-          unsigned max_prb_ratio =
-              rrm_policy_ratio.max_prb_policy_ratio.has_value() ? rrm_policy_ratio.max_prb_policy_ratio.value() : 100;
+          unsigned min_prb_ratio = rrm_policy_ratio.minimum_ratio.value_or(0);
+          unsigned max_prb_ratio = rrm_policy_ratio.maximum_ratio.value_or(100);
 
           min_prb_ratio = std::clamp(min_prb_ratio, static_cast<unsigned>(0), static_cast<unsigned>(100));
           max_prb_ratio = std::clamp(max_prb_ratio, static_cast<unsigned>(0), static_cast<unsigned>(100));
@@ -144,10 +142,10 @@ expected<du_cell_reconfig_result> du_cell_manager::handle_cell_reconf_request(co
           if ((policy_cfg.rbs.min() != min_prb) or (policy_cfg.rbs.max() != max_prb)) {
             // Policy configuration has been updated.
             result.slice_reconf_req->rrm_policies.push_back(
-                du_cell_slice_reconfig_request::rrm_policy_config{policy_member, {min_prb, max_prb - min_prb}});
+                du_cell_slice_reconfig_request::rrm_policy_config{policy_member, {min_prb, max_prb}});
           }
 
-          policy_cfg.rbs = {min_prb, max_prb - min_prb};
+          policy_cfg.rbs = {min_prb, max_prb};
           break;
         }
       }

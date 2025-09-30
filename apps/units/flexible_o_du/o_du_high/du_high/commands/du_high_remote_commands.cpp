@@ -208,9 +208,9 @@ error_type<std::string> rrm_policy_ratio_remote_command::execute(const nlohmann:
     }
   }
 
-  rrm_policy_group.min_prb_policy_ratio = min_prb_policy_ratio_value;
-  rrm_policy_group.max_prb_policy_ratio = max_prb_policy_ratio_value;
-  rrm_policy_group.ded_prb_policy_ratio = dedicated_ratio_value;
+  rrm_policy_group.minimum_ratio   = min_prb_policy_ratio_value;
+  rrm_policy_group.maximum_ratio   = max_prb_policy_ratio_value;
+  rrm_policy_group.dedicated_ratio = dedicated_ratio_value;
 
   req.cells.emplace_back(std::nullopt, std::nullopt, std::vector<rrm_policy_ratio_group>{rrm_policy_group});
 

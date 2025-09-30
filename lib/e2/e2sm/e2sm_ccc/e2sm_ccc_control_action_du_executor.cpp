@@ -108,15 +108,15 @@ static srs_du::du_param_config_request convert_to_du_config_request(const e2sm_r
         }
         // Convert Min Ratio.
         if (ran_cfg_structure.o_rrm_policy_ratio().rrm_policy_min_ratio_present) {
-          rrm_policy.min_prb_policy_ratio = ran_cfg_structure.o_rrm_policy_ratio().rrm_policy_min_ratio;
+          rrm_policy.minimum_ratio = ran_cfg_structure.o_rrm_policy_ratio().rrm_policy_min_ratio;
         }
         // Convert Max Ratio.
         if (ran_cfg_structure.o_rrm_policy_ratio().rrm_policy_max_ratio_present) {
-          rrm_policy.max_prb_policy_ratio = ran_cfg_structure.o_rrm_policy_ratio().rrm_policy_max_ratio;
+          rrm_policy.maximum_ratio = ran_cfg_structure.o_rrm_policy_ratio().rrm_policy_max_ratio;
         }
         // Convert Dedicated Ratio.
         if (ran_cfg_structure.o_rrm_policy_ratio().rrm_policy_ded_ratio) {
-          rrm_policy.ded_prb_policy_ratio = ran_cfg_structure.o_rrm_policy_ratio().rrm_policy_ded_ratio;
+          rrm_policy.dedicated_ratio = ran_cfg_structure.o_rrm_policy_ratio().rrm_policy_ded_ratio;
         }
       }
       cell_cfg.rrm_policy_ratio_list.emplace_back(rrm_policy);
@@ -153,12 +153,10 @@ static void log_du_config_request(srslog::basic_logger& logger, const srs_du::du
       fmt::format_to(std::back_inserter(log_buffer),
                      "  Resource Type: {}\n",
                      resource_type_to_string(rrm_policy_ratio.resource_type));
+      fmt::format_to(std::back_inserter(log_buffer), "  Min PRB Policy Ratio: {}\n", *rrm_policy_ratio.minimum_ratio);
+      fmt::format_to(std::back_inserter(log_buffer), "  Max PRB Policy Ratio: {}\n", *rrm_policy_ratio.maximum_ratio);
       fmt::format_to(
-          std::back_inserter(log_buffer), "  Min PRB Policy Ratio: {}\n", *rrm_policy_ratio.min_prb_policy_ratio);
-      fmt::format_to(
-          std::back_inserter(log_buffer), "  Max PRB Policy Ratio: {}\n", *rrm_policy_ratio.max_prb_policy_ratio);
-      fmt::format_to(
-          std::back_inserter(log_buffer), "  Dedicated PRB Policy Ratio: {}\n", *rrm_policy_ratio.ded_prb_policy_ratio);
+          std::back_inserter(log_buffer), "  Dedicated PRB Policy Ratio: {}\n", *rrm_policy_ratio.dedicated_ratio);
       fmt::format_to(std::back_inserter(log_buffer), "  RRM Policy Member List:\n");
       for (const auto& policy_member : rrm_policy_ratio.policy_members_list) {
         fmt::format_to(std::back_inserter(log_buffer),
@@ -284,13 +282,13 @@ e2sm_ccc_control_o_rrm_policy_ratio_executor::execute_ric_control_action(const e
     }
     // If PRB quota not provided, return failure.
     for (const auto& policy : cell_cfg.rrm_policy_ratio_list) {
-      if (!policy.min_prb_policy_ratio.has_value()) {
+      if (!policy.minimum_ratio.has_value()) {
         return return_ctrl_failure(req);
       }
-      if (!policy.max_prb_policy_ratio.has_value()) {
+      if (!policy.maximum_ratio.has_value()) {
         return return_ctrl_failure(req);
       }
-      if (!policy.ded_prb_policy_ratio.has_value()) {
+      if (!policy.dedicated_ratio.has_value()) {
         return return_ctrl_failure(req);
       }
     }

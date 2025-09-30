@@ -39,7 +39,7 @@ inter_slice_scheduler::inter_slice_scheduler(const cell_configuration& cell_cfg_
   slices.emplace_back(
       SRB_RAN_SLICE_ID,
       cell_cfg,
-      slice_rrm_policy_config{.rbs = {cell_max_rbs, 0}, .priority = slice_rrm_policy_config::max_priority},
+      slice_rrm_policy_config{.rbs = {cell_max_rbs, cell_max_rbs}, .priority = slice_rrm_policy_config::max_priority},
       create_scheduler_strategy(cell_cfg.expert_cfg.ue, cell_cfg.cell_index));
   // Default DRB slice.
   slices.emplace_back(DEFAULT_DRB_RAN_SLICE_ID,
@@ -53,8 +53,8 @@ inter_slice_scheduler::inter_slice_scheduler(const cell_configuration& cell_cfg_
     auto rrm_adjusted = rrm;
     // Adjust maximum PRBs per slice based on the number of PRBs in a cell.
     rrm_adjusted.rbs      = {std::min(rrm_adjusted.rbs.dedicated(), cell_max_rbs),
-                             std::min(rrm_adjusted.rbs.prioritized(), cell_max_rbs),
-                             std::min(rrm_adjusted.rbs.shared(), cell_max_rbs)};
+                             std::min(rrm_adjusted.rbs.min(), cell_max_rbs),
+                             std::min(rrm_adjusted.rbs.max(), cell_max_rbs)};
     rrm_adjusted.priority = std::min(rrm.priority, slice_rrm_policy_config::max_priority);
     // Set policy scheduler based on slice configuration.
     scheduler_ue_expert_config slice_scheduler_ue_expert_cfg{cell_cfg.expert_cfg.ue};

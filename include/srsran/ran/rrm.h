@@ -29,6 +29,7 @@ struct rrm_policy_member {
   }
 };
 
+/// Resource configuration of a RRM Policy Ratio Group.
 struct rrm_policy_ratio_group {
   /// The resource type of interest for an RRM Policy.
   /// \remark See 3GPP TS 28.541, Section 4.4.1 Attribute properties.
@@ -36,24 +37,26 @@ struct rrm_policy_ratio_group {
   resource_type_t resource_type = resource_type_t::prb;
   /// List of RRM policy members (PLMN + S-NSSAI combinations).
   std::vector<rrm_policy_member> policy_members_list;
-  /// Sets the minimum percentage of PRBs to be allocated to this group.
-  std::optional<unsigned> min_prb_policy_ratio;
-  /// Sets the maximum percentage of PRBs to be allocated to this group.
-  std::optional<unsigned> max_prb_policy_ratio;
-  /// Sets the percentage of PRBs to be allocated to this group.
-  std::optional<unsigned> ded_prb_policy_ratio;
+  /// The percentage of dedicated PRBs to be allocated to this group.
+  std::optional<unsigned> dedicated_ratio;
+  /// The percentage of prioritized + dedicated PRBs to be allocated to this group.
+  std::optional<unsigned> minimum_ratio;
+  /// The percentage of dedicated + prioritized + shared PRBs to be allocated to this group.
+  std::optional<unsigned> maximum_ratio;
 };
 
 /// Number of dedicated, prioritized and shared PRBs associated with a given RAN slice.
 struct rrm_policy_radio_block_limits {
   rrm_policy_radio_block_limits() = default;
-  rrm_policy_radio_block_limits(unsigned prio_rbs_, unsigned shared_rbs_) :
-    rrm_policy_radio_block_limits(0, prio_rbs_, shared_rbs_)
+  rrm_policy_radio_block_limits(unsigned min_rbs_, unsigned max_rbs_) :
+    rrm_policy_radio_block_limits(0, min_rbs_, max_rbs_)
   {
   }
-  rrm_policy_radio_block_limits(unsigned ded_rbs_, unsigned prio_rbs_, unsigned shared_rbs_) :
-    ded_rbs(ded_rbs_), min_rbs(ded_rbs_ + prio_rbs_), max_rbs(shared_rbs_ + min_rbs)
+  rrm_policy_radio_block_limits(unsigned ded_rbs_, unsigned min_rbs_, unsigned max_rbs_) :
+    ded_rbs(ded_rbs_), min_rbs(min_rbs_), max_rbs(max_rbs_)
   {
+    srsran_assert(ded_rbs_ <= min_rbs_, "Invalid RB limits: dedicated {} > minimum {}", ded_rbs_, min_rbs_);
+    srsran_assert(min_rbs_ <= max_rbs_, "Invalid RB limits: minimum {} > maximum {}", min_rbs_, max_rbs_);
   }
 
   /// Sum of dedicated and prioritized RBs.
@@ -93,6 +96,7 @@ struct du_cell_slice_reconfig_request {
 } // namespace srsran
 
 namespace fmt {
+
 template <>
 struct formatter<srsran::rrm_policy_member> {
   template <typename ParseContext>
