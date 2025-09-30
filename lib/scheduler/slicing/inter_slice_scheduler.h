@@ -115,6 +115,16 @@ private:
     unsigned                             next_pop = 0;
   };
 
+  struct slot_context {
+    /// \brief List of valid PUSCH time domain resources for a given DL slot.
+    /// Note: This list will be empty for UL slots.
+    std::vector<unsigned> valid_pusch_td_list;
+    /// Remaining PDSCH dedicated RBs for this slot.
+    unsigned rem_dl_ded_rbs = 0;
+    /// Remaining PUSCH dedicated RBs for this slot.
+    unsigned rem_ul_ded_rbs = 0;
+  };
+
   ran_slice_instance& get_slice(const logical_channel_config& lc_cfg);
 
   // Fetch UE if it is in a state to be added/reconfigured.
@@ -133,9 +143,12 @@ private:
 
   ue_repository& ues;
 
+  /// Total number of dedicated RBs across all slices.
+  unsigned total_remaining_dedicated_rbs = 0;
+
   /// Vector circularly indexed by slot with the list of applicable PUSCH time domain resources per slot.
   /// NOTE: The list would be empty for UL slots.
-  std::vector<static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>> valid_pusch_td_list_per_slot;
+  std::vector<slot_context> slot_ring;
 
   std::vector<ran_slice_sched_context> slices;
 

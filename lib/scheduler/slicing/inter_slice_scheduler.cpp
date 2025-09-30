@@ -16,10 +16,7 @@
 using namespace srsran;
 
 inter_slice_scheduler::inter_slice_scheduler(const cell_configuration& cell_cfg_, ue_repository& ues_) :
-  cell_cfg(cell_cfg_),
-  logger(srslog::fetch_basic_logger("SCHED")),
-  ues(ues_),
-  valid_pusch_td_list_per_slot(get_fairly_distributed_pusch_td_resource_indices(cell_cfg))
+  cell_cfg(cell_cfg_), logger(srslog::fetch_basic_logger("SCHED")), ues(ues_)
 {
   // Create a number of slices equal to the number of configured RRM Policy members + 1 (default SRB slice) + 1 (default
   // DRB slice).
@@ -66,6 +63,21 @@ inter_slice_scheduler::inter_slice_scheduler(const cell_configuration& cell_cfg_
                         create_scheduler_strategy(slice_scheduler_ue_expert_cfg, cell_cfg.cell_index));
     ++id_count;
   }
+
+  // Compute the total number of dedicated RBs across all slices.
+  total_remaining_dedicated_rbs =
+      std::accumulate(slices.begin(), slices.end(), 0U, [](unsigned acc, const ran_slice_sched_context& slice) {
+        return acc + slice.inst.cfg.rbs.dedicated();
+      });
+
+  // Generate the slot ring context.
+  auto pusch_list = get_fairly_distributed_pusch_td_resource_indices(cell_cfg);
+  slot_ring.resize(pusch_list.size());
+  for (unsigned i = 0, sz = pusch_list.size(); i != sz; ++i) {
+    slot_ring[i].valid_pusch_td_list.assign(pusch_list[i].begin(), pusch_list[i].end());
+    slot_ring[i].rem_dl_ded_rbs = total_remaining_dedicated_rbs;
+    slot_ring[i].rem_ul_ded_rbs = total_remaining_dedicated_rbs;
+  }
 }
 
 void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resource_allocator& res_grid)
@@ -80,6 +92,11 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
     for (auto& slice : slices) {
       slice.inst.slot_indication(current_slot);
     }
+
+    // Reset remaining dedicated RBs for the last slot.
+    auto& slot_ctx          = slot_ring[(current_slot - 1).count() % slot_ring.size()];
+    slot_ctx.rem_dl_ded_rbs = total_remaining_dedicated_rbs;
+    slot_ctx.rem_ul_ded_rbs = total_remaining_dedicated_rbs;
   }
 
   // Clear the priority queues.
@@ -121,8 +138,7 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
   span<const pusch_time_domain_resource_allocation> pusch_time_domain_list =
       cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list;
   for (const auto& slice : slices) {
-    for (const unsigned pusch_td_res_idx :
-         valid_pusch_td_list_per_slot[slot_tx.count() % valid_pusch_td_list_per_slot.size()]) {
+    for (const unsigned pusch_td_res_idx : slot_ring[slot_tx.count() % slot_ring.size()].valid_pusch_td_list) {
       unsigned pusch_delay = pusch_time_domain_list[pusch_td_res_idx].k2 + cell_cfg.ntn_cs_koffset;
       const cell_slot_resource_allocator& pusch_alloc = res_grid[pusch_delay];
       slot_point                          pusch_slot  = slot_tx + pusch_delay;
@@ -294,8 +310,11 @@ inter_slice_scheduler::get_next_candidate()
       continue;
     }
 
+    auto&     ring_pos = slot_ring[pxsch_slot.count() % slot_ring.size()];
+    unsigned& rem_rbs  = IsDownlink ? ring_pos.rem_dl_ded_rbs : ring_pos.rem_ul_ded_rbs;
+
     // Return the candidate.
-    return candidate_type{chosen_slice.inst, pxsch_slot, rb_lims.stop()};
+    return candidate_type{chosen_slice.inst, pxsch_slot, rem_rbs, rb_lims.stop()};
   }
   return std::nullopt;
 }
@@ -326,6 +345,13 @@ void inter_slice_scheduler::handle_slice_reconfiguration_request(const du_cell_s
           "No slice RRM policy found for {} in cell {}.", rrm.rrc_member, fmt::underlying(cell_cfg.cell_index));
     }
   }
+
+  // Recompute dedicated RBs across slices.
+  total_remaining_dedicated_rbs =
+      std::accumulate(slices.begin(), slices.end(), 0U, [](unsigned acc, const ran_slice_sched_context& slice) {
+        return acc + slice.inst.cfg.rbs.dedicated();
+      });
+  // TODO: Should we reset remaining dedicated RBs in the slot ring at this point? Some of them are already in use.
 }
 
 inter_slice_scheduler::priority_type inter_slice_scheduler::ran_slice_sched_context::get_prio(bool       is_dl,
