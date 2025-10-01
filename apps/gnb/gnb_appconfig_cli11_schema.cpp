@@ -11,6 +11,7 @@
 #include "gnb_appconfig_cli11_schema.h"
 #include "apps/helpers/hal/hal_cli11_schema.h"
 #include "apps/helpers/logger/logger_appconfig_cli11_schema.h"
+#include "apps/helpers/tracing/tracer_appconfig_cli11_schema.h"
 #include "apps/services/app_execution_metrics/executor_metrics_config_cli11_schema.h"
 #include "apps/services/app_resource_usage/app_resource_usage_config_cli11_schema.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig_cli11_schema.h"
@@ -55,6 +56,9 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
 
   // Loggers section.
   configure_cli11_with_logger_appconfig_schema(app, gnb_cfg.log_cfg);
+
+  // Tracers section.
+  configure_cli11_with_tracer_appconfig_schema(app, gnb_cfg.trace_cfg);
 
   // Buffer pool section.
   configure_cli11_with_buffer_pool_appconfig_schema(app, gnb_cfg.buffer_pool_config);

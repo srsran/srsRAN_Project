@@ -96,6 +96,16 @@ struct du_low_executor_mapper_flexible_exec_config {
 using du_low_executor_mapper_exec_config =
     std::variant<du_low_executor_mapper_single_exec_config, du_low_executor_mapper_flexible_exec_config>;
 
+/// Collects the DU low executor mapper metrics configuration.
+struct du_low_executor_mapper_metric_config {
+  /// Period.
+  std::chrono::milliseconds period;
+  /// Sequential executor for metric processing.
+  task_executor& sequential_executor;
+  /// Metrics logger.
+  srslog::log_channel& logger;
+};
+
 /// Configuration of DU-low executor mapper.
 struct du_low_executor_mapper_config {
   /// Common executor configuration.
@@ -104,6 +114,8 @@ struct du_low_executor_mapper_config {
   ///
   /// If it is initialized, the executor mapper wraps the executors with metric decorators.
   executor_metrics_backend* exec_metrics_backend = nullptr;
+  /// Enable task tracing.
+  bool executor_tracing_enable = false;
 };
 
 /// \brief Creates an executor mapper for the DU-low.

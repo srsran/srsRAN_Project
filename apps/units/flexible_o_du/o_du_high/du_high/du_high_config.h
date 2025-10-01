@@ -59,6 +59,12 @@ struct du_high_unit_logger_config {
   bool high_latency_diagnostics_enabled = false;
 };
 
+/// DU high tracing functionalities.
+struct du_high_unit_tracer_config {
+  /// \brief Whether to enable tracing of the DU-high executors.
+  bool executor_tracing_enable = false;
+};
+
 /// Timing Advance MAC CE scheduling expert configuration.
 struct du_high_unit_ta_sched_expert_config {
   /// Measurements periodicity in nof. slots over which the new Timing Advance Command is computed.
@@ -972,9 +978,6 @@ struct du_high_unit_execution_queues_config {
 struct du_high_unit_expert_execution_config {
   /// \brief Task executor configuration for the DU.
   du_high_unit_execution_queues_config du_queue_cfg;
-
-  /// \brief Whether to enable tracing of the DU-high executors.
-  bool executor_tracing_enable = false;
 };
 
 /// RLC UM TX configuration
@@ -1065,6 +1068,8 @@ struct du_high_unit_config {
   du_high_unit_metrics_config metrics;
   /// Loggers.
   du_high_unit_logger_config loggers;
+  /// Tracer.
+  du_high_unit_tracer_config tracer;
   /// Configuration for testing purposes.
   du_high_unit_test_mode_config test_mode_cfg = {};
   /// \brief Cell configuration.

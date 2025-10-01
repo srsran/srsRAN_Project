@@ -229,8 +229,11 @@ int main(int argc, char** argv)
 
   srslog::basic_logger&            du_logger = srslog::fetch_basic_logger("DU");
   app_services::application_tracer app_tracer;
-  if (not du_cfg.log_cfg.tracing_filename.empty()) {
-    app_tracer.enable_tracer(du_cfg.log_cfg.tracing_filename, du_logger);
+  if (not du_cfg.trace_cfg.filename.empty()) {
+    app_tracer.enable_tracer(du_cfg.trace_cfg.filename,
+                             du_cfg.trace_cfg.max_tracing_events_per_file,
+                             du_cfg.trace_cfg.nof_tracing_events_after_severe,
+                             du_logger);
   }
 
 #ifdef DPDK_FOUND

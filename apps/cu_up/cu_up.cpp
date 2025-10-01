@@ -243,8 +243,11 @@ int main(int argc, char** argv)
   // TODO: Log input configuration.
 
   app_services::application_tracer app_tracer;
-  if (not cu_up_cfg.log_cfg.tracing_filename.empty()) {
-    app_tracer.enable_tracer(cu_up_cfg.log_cfg.tracing_filename, cu_up_logger);
+  if (not cu_up_cfg.trace_cfg.filename.empty()) {
+    app_tracer.enable_tracer(cu_up_cfg.trace_cfg.filename,
+                             cu_up_cfg.trace_cfg.max_tracing_events_per_file,
+                             cu_up_cfg.trace_cfg.nof_tracing_events_after_severe,
+                             cu_up_logger);
   }
 
   // configure cgroups

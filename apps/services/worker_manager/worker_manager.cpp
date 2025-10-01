@@ -477,7 +477,8 @@ void worker_manager::create_du_low_executors(const worker_manager_config::du_low
         .max_pdsch_concurrency         = du_low.max_pdsch_concurrency};
 
     // Propagate metrics backend.
-    du_low_exec_mapper_config.exec_metrics_backend = exec_metrics_backend.get();
+    du_low_exec_mapper_config.exec_metrics_backend    = exec_metrics_backend.get();
+    du_low_exec_mapper_config.executor_tracing_enable = du_low.executor_tracing_enable;
   }
 
   // Create DU low executor mapper.

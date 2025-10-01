@@ -72,6 +72,14 @@ static void configure_cli11_log_args(CLI::App& app, du_low_unit_logger_config& l
       ->check(CLI::Range(0, 1024));
 }
 
+static void configure_cli11_trace_args(CLI::App& app, du_low_unit_tracer_config& config)
+{
+  CLI::App* layers_subcmd = add_subcommand(app, "layers", "Layer basis tracing configuration")->configurable();
+  add_option(
+      *layers_subcmd, "--phy_enable", config.executor_tracing_enable, "Enable tracing for physical layer executors")
+      ->capture_default_str();
+}
+
 static void configure_cli11_cell_affinity_args(CLI::App& app, du_low_unit_cpu_affinities_cell_config& config)
 {
   add_option_function<std::string>(
@@ -402,6 +410,10 @@ void srsran::configure_cli11_with_du_low_config_schema(CLI::App& app, du_low_uni
   // Loggers section.
   CLI::App* log_subcmd = add_subcommand(app, "log", "Logging configuration")->configurable();
   configure_cli11_log_args(*log_subcmd, parsed_cfg.loggers);
+
+  // Tracer section.
+  CLI::App* trace_subcmd = add_subcommand(app, "trace", "General tracer configuration")->configurable();
+  configure_cli11_trace_args(*trace_subcmd, parsed_cfg.tracer);
 
   // Expert upper PHY section.
   CLI::App* expert_phy_subcmd =

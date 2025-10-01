@@ -24,12 +24,18 @@ using namespace std::chrono;
 
 namespace {
 
+struct instant_trace_event_extended;
+
 /// Helper class to write trace events to a file.
 class event_trace_writer
 {
 public:
-  explicit event_trace_writer(std::string_view trace_fname, unsigned split_after_n_) :
-    split_after_n(split_after_n_), trace_worker("tracer_worker", 4096, microseconds{200})
+  /// \brief Create a event tracer writer backend.
+  /// \param trace_fname     Tracing filename.
+  /// \param split_after_n_  Number of lines for splitting the file. Set to zero for no split.
+  /// \param event_trigger_n Number of events to store for event triggered tracing. Set to zero for writing all events.
+  explicit event_trace_writer(std::string_view trace_fname, unsigned split_after_n_, unsigned event_trigger_n) :
+    split_after_n(split_after_n_), trace_worker("tracer_worker", 4096, microseconds{200}), event_ring(event_trigger_n)
   {
     size_t pos_ext = trace_fname.find_last_of(".");
     report_fatal_error_if_not(pos_ext != std::string::npos, "Unable to derive extension of filename {}", trace_fname);
@@ -53,18 +59,7 @@ public:
   template <typename EventType>
   void write_trace(const EventType& ev)
   {
-    if (not trace_worker.push_task([this, ev]() {
-          if (SRSRAN_LIKELY(nof_lines > 0)) {
-            fmt::print(fptr, ",\n{}", ev);
-          } else {
-            fmt::print(fptr, "\n{}", ev);
-          }
-          ++nof_lines;
-          if (split_after_n > 0 and nof_lines >= split_after_n) {
-            // In case splitting is enabled and we reached the end of the current file, we open a new one.
-            create_new_file();
-          }
-        })) {
+    if (not trace_worker.push_task([this, ev]() { backend_enqueue_event(ev); })) {
       if (not warn_logged.exchange(true, std::memory_order_relaxed)) {
         file_event_tracer<true> warn_tracer;
         warn_tracer << instant_trace_event{"trace_overflow", instant_trace_event::cpu_scope::global};
@@ -74,6 +69,49 @@ public:
   }
 
 private:
+  template <typename EventType>
+  void backend_write_event(const EventType& ev)
+  {
+    if (SRSRAN_LIKELY(nof_lines > 0)) {
+      fmt::print(fptr, ",\n{}", ev);
+    } else {
+      fmt::print(fptr, "\n{}", ev);
+    }
+    ++nof_lines;
+    if (split_after_n > 0 and nof_lines >= split_after_n) {
+      // In case splitting is enabled and we reached the end of the current file, we open a new one.
+      create_new_file();
+    }
+  }
+
+  template <typename EventType>
+  void backend_enqueue_event(const EventType& ev)
+  {
+    // Skip enqueueing the event in the ring buffer if event trigger is not configured.
+    if (event_ring.max_size() == 0) {
+      backend_write_event(ev);
+      return;
+    }
+
+    // Pop oldest event if the event ring is full.
+    if (event_ring.full()) {
+      event_ring.pop();
+    }
+
+    // Push task for writing the event.
+    event_ring.push([this, ev]() { backend_write_event(ev); });
+
+    // Execute all events in the ring buffer if the event is instant with a severe criticality.
+    if constexpr (std::is_same_v<EventType, instant_trace_event_extended>) {
+      if (ev.criticality >= event_criticality_threshold) {
+        while (!event_ring.empty()) {
+          event_ring.top()();
+          event_ring.pop();
+        }
+      }
+    }
+  }
+
   void create_new_file()
   {
     if (fptr != nullptr) {
@@ -116,7 +154,15 @@ private:
 
   /// Task worker to process events.
   general_task_worker<concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::sleep> trace_worker;
-  std::atomic<bool>                                                                                warn_logged{false};
+
+  /// Event tracing criticality threshold for writing the file.
+  static constexpr instant_trace_event::event_criticality event_criticality_threshold =
+      instant_trace_event::event_criticality::severe;
+
+  /// Ring of events to process when an instant event with severe criticality is received.
+  ring_buffer<unique_function<void(), default_unique_function_buffer_size, false>> event_ring;
+
+  std::atomic<bool> warn_logged{false};
 };
 
 struct trace_event_extended : public trace_event {
@@ -157,12 +203,12 @@ static const trace_point run_epoch = trace_clock::now();
 /// Unique event trace file writer.
 static std::unique_ptr<event_trace_writer> trace_file_writer;
 
-void srsran::open_trace_file(std::string_view trace_file_name, unsigned split_after_n)
+void srsran::open_trace_file(std::string_view trace_file_name, unsigned split_after_n, unsigned event_trigger_n)
 {
   if (trace_file_writer != nullptr) {
     report_fatal_error("Trace file '{}' already open", trace_file_name);
   }
-  trace_file_writer = std::make_unique<event_trace_writer>(trace_file_name, split_after_n);
+  trace_file_writer = std::make_unique<event_trace_writer>(trace_file_name, split_after_n, event_trigger_n);
 }
 
 void srsran::close_trace_file()
@@ -237,7 +283,7 @@ struct formatter<trace_event_extended> : public trace_format_parser {
     }
 
     return format_to(ctx.out(),
-                     "{{\"args\": {{}}, \"pid\": {}, \"tid\": \"{}\", "
+                     "{{\"args\": {{}}, \"pid\": {{}}, \"cpu\": {}, \"tid\": \"{}\", "
                      "\"dur\": {}, \"ts\": {}, \"cat\": \"process\", \"ph\": \"X\", "
                      "\"name\": \"{}\"}}",
                      event.cpu,
@@ -268,7 +314,7 @@ struct formatter<instant_trace_event_extended> : public trace_format_parser {
     }
 
     return format_to(ctx.out(),
-                     "{{\"args\": {{\"tstamp\": \"{}\"}}, \"pid\": {}, \"tid\": \"{}\", "
+                     "{{\"args\": {{\"tstamp\": \"{}\"}}, \"pid\": {{}},  \"cpu\": {}, \"tid\": \"{}\", "
                      "\"ts\": {}, \"cat\": \"process\", \"ph\": \"i\", \"s\": \"{}\", "
                      "\"name\": \"{}\"}}",
                      formatted_date(event.tp),

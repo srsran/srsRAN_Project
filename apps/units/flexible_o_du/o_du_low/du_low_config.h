@@ -94,6 +94,12 @@ struct du_low_unit_logger_config {
   bool phy_rx_symbols_prach = false;
 };
 
+/// DU low tracing functionalities.
+struct du_low_unit_tracer_config {
+  /// \brief Whether to enable tracing of the physical layer executors.
+  bool executor_tracing_enable = false;
+};
+
 /// CPU affinities configuration for the cell.
 struct du_low_unit_cpu_affinities_cell_config {
   /// L1 downlink workers CPU affinity mask.
@@ -239,6 +245,8 @@ struct du_low_unit_metrics_config {
 struct du_low_unit_config {
   /// Loggers.
   du_low_unit_logger_config loggers;
+  /// Tracers.
+  du_low_unit_tracer_config tracer;
   /// Expert physical layer configuration.
   du_low_unit_expert_upper_phy_config expert_phy_cfg;
   /// Expert execution parameters for the DU low.

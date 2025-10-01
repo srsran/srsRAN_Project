@@ -87,6 +87,13 @@ static void configure_cli11_log_args(CLI::App& app, du_high_unit_logger_config& 
       ->always_capture_default();
 }
 
+static void configure_cli11_trace_args(CLI::App& app, du_high_unit_tracer_config& config)
+{
+  CLI::App* layers_subcmd = add_subcommand(app, "layers", "Layer basis tracing configuration")->configurable();
+  add_option(*layers_subcmd, "--du_high_enable", config.executor_tracing_enable, "Enable tracing for DU-high executors")
+      ->capture_default_str();
+}
+
 static void configure_cli11_expert_execution_args(CLI::App& app, du_high_unit_expert_execution_config& config)
 {
   CLI::App* queues_subcmd = add_subcommand(app, "queues", "Task executor queue parameters")->configurable();
@@ -94,10 +101,6 @@ static void configure_cli11_expert_execution_args(CLI::App& app, du_high_unit_ex
              "--du_ue_data_executor_queue_size",
              config.du_queue_cfg.ue_data_executor_queue_size,
              "DU's UE executor task queue size for PDU processing")
-      ->capture_default_str();
-  CLI::App* tracing_subcmd = add_subcommand(app, "tracing", "Task executor tracing parameters")->configurable();
-  add_option(
-      *tracing_subcmd, "--du_high_enable", config.executor_tracing_enable, "Enable tracing for DU-high executors")
       ->capture_default_str();
 }
 
@@ -1886,6 +1889,10 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
   // Loggers section.
   CLI::App* log_subcmd = add_subcommand(app, "log", "Logging configuration")->configurable();
   configure_cli11_log_args(*log_subcmd, parsed_cfg.config.loggers);
+
+  // Trace section.
+  CLI::App* trace_subcmd = add_subcommand(app, "trace", "General tracer configuration")->configurable();
+  configure_cli11_trace_args(*trace_subcmd, parsed_cfg.config.tracer);
 
   // Metrics section.
   CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();

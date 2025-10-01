@@ -245,7 +245,7 @@ int main(int argc, char** argv)
 
   // Check the modified configuration.
   if (!validate_cu_appconfig(cu_cfg) || !o_cu_cp_app_unit->on_configuration_validation() ||
-      !o_cu_up_app_unit->on_configuration_validation(not cu_cfg.log_cfg.tracing_filename.empty())) {
+      !o_cu_up_app_unit->on_configuration_validation(not cu_cfg.trace_cfg.filename.empty())) {
     report_error("Invalid configuration detected.\n");
   }
 
@@ -277,8 +277,11 @@ int main(int argc, char** argv)
   }
 
   app_services::application_tracer app_tracer;
-  if (not cu_cfg.log_cfg.tracing_filename.empty()) {
-    app_tracer.enable_tracer(cu_cfg.log_cfg.tracing_filename, cu_logger);
+  if (not cu_cfg.trace_cfg.filename.empty()) {
+    app_tracer.enable_tracer(cu_cfg.trace_cfg.filename,
+                             cu_cfg.trace_cfg.max_tracing_events_per_file,
+                             cu_cfg.trace_cfg.nof_tracing_events_after_severe,
+                             cu_logger);
   }
 
   // configure cgroups

@@ -241,6 +241,7 @@ void srsran::fill_du_low_worker_manager_config(worker_manager_config&    config,
   du_low_cfg.max_pdsch_concurrency         = max_pdsch_concurrency;
   du_low_cfg.max_pucch_concurrency         = unit_cfg.expert_execution_cfg.threads.max_pucch_concurrency;
   du_low_cfg.max_pusch_and_srs_concurrency = max_pusch_and_srs_concurrency;
+  du_low_cfg.executor_tracing_enable       = unit_cfg.tracer.executor_tracing_enable;
 
   config.config_affinities.resize(nof_dl_antennas.size());
   for (unsigned i = 0, e = du_low_cfg.cell_nof_dl_antennas.size(); i != e; ++i) {

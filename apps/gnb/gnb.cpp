@@ -271,7 +271,7 @@ int main(int argc, char** argv)
 
   // Check the modified configuration.
   if (!validate_appconfig(gnb_cfg) || !o_cu_cp_app_unit->on_configuration_validation() ||
-      !o_cu_up_app_unit->on_configuration_validation(not gnb_cfg.log_cfg.tracing_filename.empty()) ||
+      !o_cu_up_app_unit->on_configuration_validation(not gnb_cfg.trace_cfg.filename.empty()) ||
       !o_du_app_unit->on_configuration_validation() ||
       !validate_plmn_and_tacs(o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config,
                               o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg)) {
@@ -307,8 +307,11 @@ int main(int argc, char** argv)
   }
 
   app_services::application_tracer app_tracer;
-  if (not gnb_cfg.log_cfg.tracing_filename.empty()) {
-    app_tracer.enable_tracer(gnb_cfg.log_cfg.tracing_filename, gnb_logger);
+  if (not gnb_cfg.trace_cfg.filename.empty()) {
+    app_tracer.enable_tracer(gnb_cfg.trace_cfg.filename,
+                             gnb_cfg.trace_cfg.max_tracing_events_per_file,
+                             gnb_cfg.trace_cfg.nof_tracing_events_after_severe,
+                             gnb_logger);
   }
 
 #ifdef DPDK_FOUND

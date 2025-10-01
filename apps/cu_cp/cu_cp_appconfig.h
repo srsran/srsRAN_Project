@@ -11,6 +11,7 @@
 #pragma once
 
 #include "apps/helpers/logger/logger_appconfig.h"
+#include "apps/helpers/tracing/tracer_appconfig.h"
 #include "apps/services/app_execution_metrics/executor_metrics_config.h"
 #include "apps/services/app_resource_usage/app_resource_usage_config.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
@@ -49,6 +50,8 @@ struct cu_cp_appconfig {
   cu_cp_appconfig() { log_cfg.filename = "/tmp/cu_cp.log"; }
   /// Loggers configuration.
   logger_appconfig log_cfg;
+  /// Tracers configuration.
+  tracer_appconfig trace_cfg;
   /// Expert configuration.
   expert_execution_appconfig expert_execution_cfg;
   /// E1AP configuration.

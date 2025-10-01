@@ -65,6 +65,8 @@ struct worker_manager_config {
     std::vector<unsigned> cell_nof_dl_antennas;
     /// Number of uplink antennas indexed by cell. The vector size must match the number of cells.
     std::vector<unsigned> cell_nof_ul_antennas;
+    /// Whether to enable task tracing.
+    bool executor_tracing_enable;
   };
 
   /// DU high executor configuration.

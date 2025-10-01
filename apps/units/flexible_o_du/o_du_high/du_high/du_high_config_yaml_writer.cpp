@@ -58,6 +58,16 @@ static void fill_du_high_log_section(YAML::Node node, const du_high_unit_logger_
   node["f1ap_json_enabled"]                = config.f1ap_json_enabled;
 }
 
+static void fill_du_high_tracer_layers_section(YAML::Node node, const du_high_unit_tracer_config& config)
+{
+  node["du_high_enable"] = config.executor_tracing_enable;
+}
+
+static void fill_du_high_trace_section(YAML::Node node, const du_high_unit_tracer_config& config)
+{
+  fill_du_high_tracer_layers_section(node["layers"], config);
+}
+
 static YAML::Node build_du_section(const du_high_unit_config& config)
 {
   YAML::Node node;
@@ -830,6 +840,7 @@ void srsran::fill_du_high_config_in_yaml_schema(YAML::Node& node, const du_high_
 
   app_helpers::fill_metrics_appconfig_in_yaml_schema(node, config.metrics.common_metrics_cfg);
   fill_du_high_log_section(node["log"], config.loggers);
+  fill_du_high_trace_section(node["trace"], config.tracer);
   fill_du_high_metrics_section(node["metrics"], config.metrics);
   fill_du_high_pcap_section(node["pcap"], config.pcaps);
   node["du"] = build_du_section(config);

@@ -202,8 +202,11 @@ int main(int argc, char** argv)
   }
 
   app_services::application_tracer app_tracer;
-  if (not du_low_cfg.log_cfg.tracing_filename.empty()) {
-    app_tracer.enable_tracer(du_low_cfg.log_cfg.tracing_filename, app_logger);
+  if (not du_low_cfg.trace_cfg.filename.empty()) {
+    app_tracer.enable_tracer(du_low_cfg.trace_cfg.filename,
+                             du_low_cfg.trace_cfg.max_tracing_events_per_file,
+                             du_low_cfg.trace_cfg.nof_tracing_events_after_severe,
+                             app_logger);
   }
 
   // Log CPU architecture.

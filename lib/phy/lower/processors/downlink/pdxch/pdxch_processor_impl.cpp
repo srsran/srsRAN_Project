@@ -9,10 +9,8 @@
  */
 
 #include "pdxch_processor_impl.h"
-#include "srsran/instrumentation/traces/du_traces.h"
+#include "srsran/instrumentation/traces/critical_traces.h"
 #include "srsran/phy/support/resource_grid_reader.h"
-#include "srsran/srsvec/copy.h"
-#include "srsran/srsvec/zero.h"
 
 using namespace srsran;
 
@@ -63,7 +61,8 @@ void pdxch_processor_impl::handle_request(const shared_resource_grid& grid, cons
   // If there was a request with a resource grid, then notify a late event with the context of the discarded request.
   if (!success) {
     logger.error(context.slot.sfn(), context.slot.slot_index(), "The modulator is busy.");
-    l1_dl_tracer << instant_trace_event{"modulator_busy", instant_trace_event::cpu_scope::thread};
+    general_critical_tracer << instant_trace_event{
+        "modulator_busy", instant_trace_event::cpu_scope::thread, instant_trace_event::event_criticality::severe};
   }
 }
 
@@ -79,7 +78,9 @@ void pdxch_processor_impl::on_modulation_completion(pdxch_processor_baseband::sl
     late_context.slot   = request.slot;
     late_context.sector = context.sector;
     notifier->on_pdxch_request_late(late_context);
-    l1_dl_tracer << instant_trace_event{"on_pdxch_request_late", instant_trace_event::cpu_scope::thread};
+    general_critical_tracer << instant_trace_event{"on_pdxch_request_late",
+                                                   instant_trace_event::cpu_scope::thread,
+                                                   instant_trace_event::event_criticality::severe};
   }
 }
 

@@ -11,6 +11,7 @@
 #include "du_low_appconfig_cli11_schema.h"
 #include "apps/helpers/hal/hal_cli11_schema.h"
 #include "apps/helpers/logger/logger_appconfig_cli11_schema.h"
+#include "apps/helpers/tracing/tracer_appconfig_cli11_schema.h"
 #include "apps/services/app_resource_usage/app_resource_usage_config_cli11_schema.h"
 #include "apps/services/metrics/metrics_config_cli11_schema.h"
 #include "apps/services/remote_control/remote_control_appconfig_cli11_schema.h"
@@ -25,6 +26,9 @@ void srsran::configure_cli11_with_du_low_appconfig_schema(CLI::App& app, du_low_
 
   // Loggers section.
   configure_cli11_with_logger_appconfig_schema(app, config.log_cfg);
+
+  // Tracers section.
+  configure_cli11_with_tracer_appconfig_schema(app, config.trace_cfg);
 
   // Expert execution section.
   configure_cli11_with_worker_manager_appconfig_schema(app, config.expert_execution_cfg);
