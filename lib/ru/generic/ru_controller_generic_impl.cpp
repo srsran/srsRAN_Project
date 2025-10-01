@@ -155,11 +155,6 @@ void ru_controller_generic_impl::set_lower_phy_sectors(std::vector<lower_phy_sec
   tx_time_offset_controller = ru_tx_time_offset_controller_generic_impl(low_phy_crtl);
 }
 
-ru_center_frequency_controller* ru_controller_generic_impl::get_center_frequency_controller()
-{
-  return nullptr;
-}
-
 bool ru_gain_controller_generic_impl::set_tx_gain(unsigned port_id, double gain_dB)
 {
   return radio->get_management_plane().set_tx_gain(port_id, gain_dB);
