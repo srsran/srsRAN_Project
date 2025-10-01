@@ -162,10 +162,20 @@ void cu_up_manager_impl::handle_e1ap_connection_drop()
 
 async_task<void> cu_up_manager_impl::handle_e1_reset(const e1ap_reset& msg)
 {
+  // Full E1 reset, release all bearer contexts.
   if (msg.type == e1ap_reset::full) {
-    // Release all Bearer Contexts.
     return ue_mng->remove_all_ues();
   }
+
+  // Partial E1 reset, release the indicated bearer contexts.
+  if (msg.ues.empty()) {
+    logger.error("Received partial E1 reset, but no UEs to release");
+    return launch_async([](coro_context<async_task<void>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
   return launch_async(
       [this, msg, ue_it = std::vector<ue_index_t>::const_iterator{}](coro_context<async_task<void>>& ctx) mutable {
         CORO_BEGIN(ctx);

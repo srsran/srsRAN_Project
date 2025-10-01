@@ -36,7 +36,7 @@ private:
   async_task<void>   handle_e1_interface_reset(const asn1::e1ap::reset_all_e& reset_all);
   async_task<void>
        handle_part_of_e1_interface_reset(const asn1::e1ap::ue_associated_lc_e1_conn_list_res_l& ue_reset_list);
-  void generate_e1ap_reset_ack();
+  void send_e1ap_reset_ack();
 
   asn1::e1ap::reset_s          reset_msg;
   e1ap_ue_context_list&        ue_ctxt_list;

@@ -46,8 +46,7 @@ void cu_cp_e1_reset_procedure::operator()(coro_context<async_task<void>>& ctx)
   CORO_AWAIT(transaction);
 
   if (transaction.aborted()) {
-    // TODO: increase to warning once E1 Reset is implemented at CU-UP.
-    logger.debug("\"{}\" failed. Cause: Timeout reached for E1ResetAcknowledge reception", name());
+    logger.warning("\"{}\" failed. Cause: Timeout reached for E1ResetAcknowledge reception", name());
     CORO_EARLY_RETURN();
   }
 

@@ -43,7 +43,8 @@ void e1ap_cu_up_reset_procedure::operator()(coro_context<async_task<void>>& ctx)
     CORO_EARLY_RETURN();
   }
 
-  generate_e1ap_reset_ack();
+  send_e1ap_reset_ack();
+  logger.debug("\"{}\" finished successfully", name());
   CORO_RETURN();
 }
 
@@ -59,20 +60,24 @@ async_task<void> e1ap_cu_up_reset_procedure::handle_part_of_e1_interface_reset(
   for (const auto& ue : ue_reset_list) {
     if (ue->type() !=
         asn1::e1ap::ue_associated_lc_e1_conn_item_res_o::value_c::types_opts::ue_associated_lc_e1_conn_item) {
+      logger.error("\"{}\": Unsupported UE associated logical connection", name());
       continue;
     }
     asn1::e1ap::ue_associated_lc_e1_conn_item_s lc = ue->ue_associated_lc_e1_conn_item();
     if (not lc.gnb_cu_up_ue_e1ap_id_present) {
+      logger.error("\"{}\": Unsupported UE associated logical connection", name());
       continue;
     }
 
     gnb_cu_up_ue_e1ap_id_t cu_up_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(lc.gnb_cu_up_ue_e1ap_id);
     if (cu_up_e1ap_id == gnb_cu_up_ue_e1ap_id_t::invalid) {
+      logger.error("\"{}\": Invalid gNB-CU-UP-UE-E1AP-ID", name());
       continue;
     }
 
     const e1ap_ue_context* ue_ctx = ue_ctxt_list.find_ue(cu_up_e1ap_id);
     if (ue_ctx == nullptr) {
+      logger.error("\"{}\": Could not find UE. cu_up_e1ap_id={}", name(), gnb_cu_up_ue_e1ap_id_to_uint(cu_up_e1ap_id));
       continue;
     }
 
@@ -81,7 +86,7 @@ async_task<void> e1ap_cu_up_reset_procedure::handle_part_of_e1_interface_reset(
   return cu_up_notifier.on_e1_reset_received({e1ap_reset::partial, ues});
 }
 
-void e1ap_cu_up_reset_procedure::generate_e1ap_reset_ack()
+void e1ap_cu_up_reset_procedure::send_e1ap_reset_ack()
 {
   e1ap_message e1ap_msg;
   e1ap_msg.pdu.set_successful_outcome().load_info_obj(ASN1_E1AP_ID_RESET);
