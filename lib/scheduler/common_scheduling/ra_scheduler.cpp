@@ -425,7 +425,9 @@ void ra_scheduler::stop()
   while (pending_crcs.try_pop(crc)) {
   }
   pending_rars.clear();
-  pending_msg3s.clear();
+  for (auto& msg3 : pending_msg3s) {
+    msg3.msg3_harq_ent.reset();
+  }
 }
 
 void ra_scheduler::update_pending_rars(slot_point pdcch_slot)
