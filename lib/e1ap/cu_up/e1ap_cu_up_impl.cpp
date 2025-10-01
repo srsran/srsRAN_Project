@@ -192,6 +192,9 @@ void e1ap_cu_up_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& ms
     case asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::options::bearer_context_release_cmd: {
       handle_bearer_context_release_command(msg.value.bearer_context_release_cmd());
     } break;
+    case asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::options::reset: {
+      // TODO: handle E1 Reset message.
+    } break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
   }
