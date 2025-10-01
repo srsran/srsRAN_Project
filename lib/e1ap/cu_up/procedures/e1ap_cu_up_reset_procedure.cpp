@@ -9,6 +9,7 @@
  */
 
 #include "e1ap_cu_up_reset_procedure.h"
+#include "srsran/e1ap/common/e1ap_message.h"
 #include <utility>
 
 using namespace srsran;
@@ -33,17 +34,16 @@ void e1ap_cu_up_reset_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   logger.debug("\"{}\" started...", name());
 
-  fmt::println("TEESTTTT");
-
   // Release CU-UP Bearer contexts.
   if (reset_msg->reset_type.type() == asn1::e1ap::reset_type_c::types_opts::e1_interface) {
     CORO_AWAIT(handle_e1_interface_reset(reset_msg->reset_type.e1_interface()));
   } else if (reset_msg->reset_type.type() == asn1::e1ap::reset_type_c::types_opts::part_of_e1_interface) {
-    handle_part_of_e1_interface_reset(reset_msg->reset_type.part_of_e1_interface());
+    CORO_AWAIT(handle_part_of_e1_interface_reset(reset_msg->reset_type.part_of_e1_interface()));
   } else {
     CORO_EARLY_RETURN();
   }
 
+  generate_e1ap_reset_ack();
   CORO_RETURN();
 }
 
@@ -79,4 +79,14 @@ async_task<void> e1ap_cu_up_reset_procedure::handle_part_of_e1_interface_reset(
     ues.push_back(ue_ctx->ue_ids.ue_index);
   }
   return cu_up_notifier.on_e1_reset_received({e1ap_reset::partial, ues});
+}
+
+void e1ap_cu_up_reset_procedure::generate_e1ap_reset_ack()
+{
+  e1ap_message e1ap_msg;
+  e1ap_msg.pdu.set_successful_outcome().load_info_obj(ASN1_E1AP_ID_RESET);
+  asn1::e1ap::reset_ack_s& e1_reset_ack = e1ap_msg.pdu.successful_outcome().value.reset_ack();
+  e1_reset_ack->transaction_id          = reset_msg->transaction_id;
+
+  tx_pdu_notifier.on_new_message(e1ap_msg);
 }
