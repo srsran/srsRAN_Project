@@ -322,9 +322,18 @@ static void configure_cli11_hwacc_pusch_dec_args(CLI::App& app, std::optional<hw
 
 static void configure_cli11_bbdev_hwacc_args(CLI::App& app, std::optional<bbdev_appconfig>& config)
 {
+  auto hwacc_type_check = [](const std::string& value) -> std::string {
+    if ((value == "acc100") || (value == "acc200") || (value == "vrb1")) {
+      return {};
+    }
+    return "Invalid BBDEV hardware-accelerator type. Accepted values [acc100,acc200,vrb1]";
+  };
+
   config.emplace();
 
-  app.add_option("--hwacc_type", config->hwacc_type, "Type of BBDEV hardware-accelerator")->capture_default_str();
+  app.add_option("--hwacc_type", config->hwacc_type, "Type of BBDEV hardware-accelerator")
+      ->capture_default_str()
+      ->check(hwacc_type_check);
   app.add_option("--id", config->id, "ID of the BBDEV-based hardware-accelerator.")
       ->capture_default_str()
       ->check(CLI::Range(0, 65535));
