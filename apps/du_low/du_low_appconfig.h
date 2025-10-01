@@ -13,6 +13,7 @@
 #include "apps/helpers/f1u/f1u_appconfig.h"
 #include "apps/helpers/hal/hal_appconfig.h"
 #include "apps/helpers/logger/logger_appconfig.h"
+#include "apps/services/app_execution_metrics/executor_metrics_config.h"
 #include "apps/services/app_resource_usage/app_resource_usage_config.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
 #include "apps/services/metrics/metrics_appconfig.h"
@@ -27,6 +28,7 @@ namespace srs_du_low {
 struct metrics_appconfig {
   app_services::app_resource_usage_config rusage_config;
   app_services::metrics_appconfig         metrics_service_cfg;
+  app_services::executor_metrics_config   executors_metrics_cfg;
 };
 
 } // namespace srs_du_low

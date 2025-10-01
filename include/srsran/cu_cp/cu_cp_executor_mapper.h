@@ -17,6 +17,7 @@
 namespace srsran {
 
 class task_executor;
+class executor_metrics_backend;
 
 namespace srs_cu_cp {
 
@@ -49,8 +50,8 @@ public:
 struct strand_based_executor_config {
   /// \brief Executor to which CU-CP strands will be associated.
   task_executor& pool_executor;
-  /// \brief CU-UP executor metrics period.
-  std::optional<std::chrono::milliseconds> metrics_period;
+  /// \brief Executor metrics backend.
+  executor_metrics_backend* exec_metrics_backend = nullptr;
 };
 
 /// \brief Creates an executor mapper for the CU-CP that is based on strands of a worker pool.

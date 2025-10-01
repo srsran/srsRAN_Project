@@ -25,14 +25,14 @@ namespace {
 /// Helper class to decorate executors with extra functionalities.
 struct executor_decorator {
   template <typename Exec>
-  task_executor& decorate(Exec&&                                          exec,
-                          bool                                            is_sync,
-                          bool                                            tracing_enabled,
-                          std::optional<unsigned>                         throttle_thres,
-                          const std::optional<std::chrono::milliseconds>& metrics_period,
-                          const std::string&                              exec_name = "")
+  task_executor& decorate(Exec&&                    exec,
+                          bool                      is_sync,
+                          bool                      tracing_enabled,
+                          std::optional<unsigned>   throttle_thres,
+                          executor_metrics_backend* metrics_backend,
+                          const std::string&        exec_name = "")
   {
-    if (not is_sync and not tracing_enabled and not metrics_period and not throttle_thres) {
+    if (not is_sync and not tracing_enabled and not metrics_backend and not throttle_thres) {
       // No decoration needed, return the original executor.
       return exec;
     }
@@ -44,11 +44,10 @@ struct executor_decorator {
     if (throttle_thres.has_value()) {
       cfg.throttle = execution_decoration_config::throttle_option{*throttle_thres};
     }
-    if (tracing_enabled) {
+    if (metrics_backend) {
+      cfg.metrics.emplace(exec_name, *metrics_backend, tracing_enabled);
+    } else if (tracing_enabled) {
       cfg.trace = execution_decoration_config::trace_option{exec_name};
-    }
-    if (metrics_period) {
-      cfg.metrics = execution_decoration_config::metrics_option{exec_name, *metrics_period};
     }
     decorators.push_back(decorate_executor(std::forward<Exec>(exec), cfg));
 
@@ -89,14 +88,14 @@ private:
 };
 
 struct base_cu_up_executor_pool_config {
-  task_executor&                           main_exec;
-  span<task_executor*>                     dl_executors;
-  span<task_executor*>                     ul_executors;
-  span<task_executor*>                     ctrl_executors;
-  task_executor&                           crypto_exec;
-  timer_manager&                           timers;
-  bool                                     tracing_enabled;
-  std::optional<std::chrono::milliseconds> metrics_period;
+  task_executor&            main_exec;
+  span<task_executor*>      dl_executors;
+  span<task_executor*>      ul_executors;
+  span<task_executor*>      ctrl_executors;
+  task_executor&            crypto_exec;
+  timer_manager&            timers;
+  bool                      tracing_enabled;
+  executor_metrics_backend* metrics_backend;
 };
 
 class round_robin_cu_up_exec_pool
@@ -125,7 +124,7 @@ public:
                          *config.dl_executors[i],
                          config.crypto_exec,
                          config.tracing_enabled,
-                         config.metrics_period);
+                         config.metrics_backend);
     }
   }
 
@@ -148,19 +147,19 @@ private:
     task_executor& dl_exec;
     task_executor& crypto_exec;
 
-    ue_executor_context(unsigned                                 index_,
-                        task_executor&                           ctrl_exec_,
-                        task_executor&                           ul_exec_,
-                        task_executor&                           dl_exec_,
-                        task_executor&                           crypto_exec_,
-                        bool                                     tracing_enabled,
-                        std::optional<std::chrono::milliseconds> metrics_period) :
+    ue_executor_context(unsigned                  index_,
+                        task_executor&            ctrl_exec_,
+                        task_executor&            ul_exec_,
+                        task_executor&            dl_exec_,
+                        task_executor&            crypto_exec_,
+                        bool                      tracing_enabled,
+                        executor_metrics_backend* metrics_backend) :
       ctrl_exec_name("cu_up_ue_ctrl_exec_" + std::to_string(index_)),
       dl_exec_name("cu_up_ue_dl_exec_" + std::to_string(index_)),
       ul_exec_name("cu_up_ue_ul_exec_" + std::to_string(index_)),
-      ctrl_exec(decorator.decorate(ctrl_exec_, false, tracing_enabled, std::nullopt, metrics_period, ctrl_exec_name)),
-      ul_exec(decorator.decorate(ul_exec_, false, tracing_enabled, std::nullopt, metrics_period, ul_exec_name)),
-      dl_exec(decorator.decorate(dl_exec_, false, tracing_enabled, std::nullopt, metrics_period, dl_exec_name)),
+      ctrl_exec(decorator.decorate(ctrl_exec_, false, tracing_enabled, std::nullopt, metrics_backend, ctrl_exec_name)),
+      ul_exec(decorator.decorate(ul_exec_, false, tracing_enabled, std::nullopt, metrics_backend, ul_exec_name)),
+      dl_exec(decorator.decorate(dl_exec_, false, tracing_enabled, std::nullopt, metrics_backend, dl_exec_name)),
       crypto_exec(crypto_exec_)
     {
     }
@@ -197,11 +196,14 @@ public:
                                  false,
                                  config.tracing_enabled,
                                  std::nullopt,
-                                 config.metrics_period,
+                                 config.exec_metrics_backend,
                                  "cu_up_strand_ctrl_exec")),
-    n3_exec(
-        decorator
-            .decorate(config.low_prio_executor, false, config.tracing_enabled, std::nullopt, std::nullopt, "n3_exec")),
+    n3_exec(decorator.decorate(config.low_prio_executor,
+                               false,
+                               config.tracing_enabled,
+                               std::nullopt,
+                               config.exec_metrics_backend,
+                               "n3_exec")),
     f1u_exec(config.low_prio_executor),
     e1_exec(config.sctp_io_reader_executor),
     e2_exec(config.sctp_io_reader_executor),
@@ -272,7 +274,7 @@ private:
                                            config.medium_prio_executor,
                                            *config.timers,
                                            config.tracing_enabled,
-                                           config.metrics_period};
+                                           config.exec_metrics_backend};
   }
   // Tracing helpers.
   executor_decorator decorator = {};

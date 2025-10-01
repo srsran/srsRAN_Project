@@ -12,7 +12,8 @@
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/executor_throttler.h"
 #include "srsran/support/executors/executor_tracer.h"
-#include "srsran/support/executors/sequential_metrics_executor.h"
+#include "srsran/support/executors/metrics/executor_metrics_backend.h"
+#include "srsran/support/executors/metrics/executor_metrics_decorator.h"
 #include "srsran/support/executors/sync_task_executor.h"
 #include "srsran/support/tracing/event_tracing.h"
 
@@ -72,18 +73,20 @@ static void make_executor_decorator_helper(std::unique_ptr<task_executor>&   res
         executor_throttler<ComposedExecutor>(std::forward<ComposedExecutor>(exec), first_policy->nof_task_threshold),
         policies...);
   } else if constexpr (std::is_same_v<Decoration, execution_decoration_config::metrics_option>) {
-    auto& logger = srslog::fetch_basic_logger("METRICS");
     if (first_policy->tracing_enabled) {
-      make_executor_decorator_helper(
-          result,
-          sequential_metrics_executor<ComposedExecutor, srslog::basic_logger, file_event_tracer<true>>(
-              first_policy->name, std::forward<ComposedExecutor>(exec), logger, first_policy->period, &tracer),
-          policies...);
+      make_executor_decorator_helper(result,
+                                     executor_metrics_decorator<ComposedExecutor, file_event_tracer<true>>(
+                                         first_policy->name,
+                                         std::forward<ComposedExecutor>(exec),
+                                         first_policy->backend.create_channel(first_policy->name),
+                                         first_policy->tracer ? first_policy->tracer : &tracer),
+                                     policies...);
     } else {
       make_executor_decorator_helper(
           result,
-          sequential_metrics_executor<ComposedExecutor, srslog::basic_logger>(
-              first_policy->name, std::forward<ComposedExecutor>(exec), logger, first_policy->period),
+          executor_metrics_decorator<ComposedExecutor>(first_policy->name,
+                                                       std::forward<ComposedExecutor>(exec),
+                                                       first_policy->backend.create_channel(first_policy->name)),
           policies...);
     }
   } else if constexpr (std::is_same_v<Decoration, execution_decoration_config::trace_option>) {

@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "apps/helpers/metrics/metrics_config.h"
+#include "apps/services/metrics/metrics_config.h"
 #include "pcap_executor_mapper.h"
 #include "worker_manager_config.h"
 #include "srsran/cu_cp/cu_cp_executor_mapper.h"
@@ -19,10 +21,15 @@
 #include "srsran/ru/dummy/ru_dummy_executor_mapper.h"
 #include "srsran/ru/generic/ru_generic_executor_mapper.h"
 #include "srsran/ru/ofh/ru_ofh_executor_mapper.h"
+#include "srsran/support/executors/metrics/executor_metrics_backend.h"
 #include "srsran/support/executors/task_execution_manager.h"
 #include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
+
+namespace app_services {
+class metrics_notifier;
+}
 
 /// Mapper of PCAP executors for the APP.
 class gnb_pcap_executor_mapper : public du_pcap_executor_mapper,
@@ -94,6 +101,11 @@ struct worker_manager {
   task_executor& get_timer_source_executor() const { return *timer_source_exec; }
   task_executor& get_metrics_executor() const { return *metrics_exec; }
 
+  /// Adds executor metrics config to the application metrics service if executor metrics are enabled.
+  void add_execution_metrics_to_metrics_service(std::vector<app_services::metrics_config>& app_metrics,
+                                                app_helpers::metrics_config                metrics_cfg,
+                                                app_services::metrics_notifier&            notifier);
+
 private:
   srslog::basic_logger& app_logger;
 
@@ -131,6 +143,9 @@ private:
 
   /// Manager of execution contexts and respective executors instantiated by the application.
   task_execution_manager exec_mng;
+
+  /// Backend for the executors metrics.
+  std::unique_ptr<executor_metrics_backend> exec_metrics_backend;
 
   /// Collection of task executor decorators.
   std::vector<std::unique_ptr<task_executor>> executor_decorators_exec;

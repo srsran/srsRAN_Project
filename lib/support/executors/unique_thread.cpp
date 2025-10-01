@@ -17,6 +17,10 @@
 
 using namespace srsran;
 
+/// TODO: make the thread index not grow unboundedly.
+static std::atomic<int> thread_count{0};
+thread_local unsigned   unique_thread_index = thread_count.fetch_add(1, std::memory_order_relaxed);
+
 /// Sets thread OS scheduling real-time priority.
 static bool thread_set_param(::pthread_t t, os_thread_realtime_priority prio)
 {
@@ -263,4 +267,9 @@ void unique_thread::print_priority()
 void unique_thread::add_observer(std::unique_ptr<observer> observer)
 {
   thread_observers.add(std::move(observer));
+}
+
+unsigned srsran::get_thread_index()
+{
+  return unique_thread_index;
 }

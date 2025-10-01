@@ -8,7 +8,6 @@
  *
  */
 
-#include "apps/helpers/e2/e2_metric_connector_manager.h"
 #include "apps/helpers/metrics/metrics_helpers.h"
 #include "apps/services/app_resource_usage/app_resource_usage.h"
 #include "apps/services/application_message_banners.h"
@@ -401,6 +400,9 @@ int main(int argc, char** argv)
       metrics_notifier_forwarder, gnb_cfg.metrics_cfg.rusage_config, gnb_logger);
 
   std::vector<app_services::metrics_config> metrics_configs = std::move(app_resource_usage_service.metrics);
+
+  workers.add_execution_metrics_to_metrics_service(
+      metrics_configs, gnb_cfg.metrics_cfg.executors_metrics_cfg.common_metrics_cfg, metrics_notifier_forwarder);
 
   // Instantiate E2AP client gateways.
   std::unique_ptr<e2_connection_client> e2_gw_du = create_e2_gateway_client(

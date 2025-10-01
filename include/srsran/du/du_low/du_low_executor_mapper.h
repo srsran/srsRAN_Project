@@ -21,6 +21,9 @@
 #include <vector>
 
 namespace srsran {
+
+class executor_metrics_backend;
+
 namespace srs_du {
 
 /// \brief DU low executor mapper interface.
@@ -93,24 +96,14 @@ struct du_low_executor_mapper_flexible_exec_config {
 using du_low_executor_mapper_exec_config =
     std::variant<du_low_executor_mapper_single_exec_config, du_low_executor_mapper_flexible_exec_config>;
 
-/// Collects the DU low executor mapper metrics configuration.
-struct du_low_executor_mapper_metric_config {
-  /// Period.
-  std::chrono::milliseconds period;
-  /// Sequential executor for metric processing.
-  task_executor& sequential_executor;
-  /// Metrics logger.
-  srslog::log_channel& logger;
-};
-
 /// Configuration of DU-low executor mapper.
 struct du_low_executor_mapper_config {
   /// Common executor configuration.
   du_low_executor_mapper_exec_config executors;
-  /// \brief Optional executor metric configuration.
+  /// \brief Executor metrics backend.
   ///
-  /// If it is present, the executor mapper wraps the executors with metric decorators.
-  std::optional<du_low_executor_mapper_metric_config> metrics;
+  /// If it is initialized, the executor mapper wraps the executors with metric decorators.
+  executor_metrics_backend* exec_metrics_backend = nullptr;
 };
 
 /// \brief Creates an executor mapper for the DU-low.

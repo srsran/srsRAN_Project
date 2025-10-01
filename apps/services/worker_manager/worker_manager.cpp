@@ -9,11 +9,11 @@
  */
 
 #include "worker_manager.h"
-#include "apps/helpers/metrics/metrics_helpers.h"
+#include "apps/services/app_execution_metrics/metrics/app_execution_metrics_builder.h"
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/mpmc_queue.h"
 #include "srsran/ru/ofh/ru_ofh_executor_mapper_factory.h"
 #include "srsran/srslog/srslog.h"
-#include "srsran/support/executors/concurrent_metrics_executor.h"
 #include "srsran/support/executors/inline_task_executor.h"
 #include "srsran/support/executors/strand_executor.h"
 
@@ -167,6 +167,9 @@ void worker_manager::stop()
   if (running) {
     running = false;
     app_logger.info("Stopping workers...");
+    if (exec_metrics_backend) {
+      exec_metrics_backend->stop();
+    }
     exec_mng.stop();
     app_logger.info("Workers stopped successfully.");
   }
@@ -238,12 +241,14 @@ std::vector<execution_config_helper::single_worker> worker_manager::create_fapi_
 void worker_manager::create_cu_cp_executors(const worker_manager_config::cu_cp_config& config, timer_manager& timers)
 {
   cu_cp_exec_mapper = srs_cu_cp::make_cu_cp_executor_mapper(
-      srs_cu_cp::strand_based_executor_config{*non_rt_hi_prio_exec, config.metrics_period});
+      srs_cu_cp::strand_based_executor_config{*non_rt_hi_prio_exec, exec_metrics_backend.get()});
 }
 
 void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_config& config, timer_manager& timers)
 {
   using namespace execution_config_helper;
+
+  executor_metrics_backend* metrics_backend = config.skip_cu_up_executor ? nullptr : exec_metrics_backend.get();
 
   cu_up_exec_mapper =
       srs_cu_up::make_cu_up_executor_mapper(srs_cu_up::strand_based_executor_config{config.max_nof_ue_strands,
@@ -258,7 +263,7 @@ void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_c
                                                                                     config.dedicated_io_ul_strand,
                                                                                     &timers,
                                                                                     config.executor_tracing_enable,
-                                                                                    config.metrics_period});
+                                                                                    metrics_backend});
 }
 
 void worker_manager::create_du_high_executors(const worker_manager_config::du_high_config& du_hi)
@@ -280,7 +285,7 @@ void worker_manager::create_du_high_executors(const worker_manager_config::du_hi
   cfg.ctrl_executors.pool_executor     = non_rt_hi_prio_exec;
   cfg.is_rt_mode_enabled               = du_hi.is_rt_mode_enabled;
   cfg.trace_exec_tasks                 = du_hi.executor_tracing_enable;
-  cfg.metrics_period                   = du_hi.metrics_period;
+  cfg.exec_metrics_backend             = exec_metrics_backend.get();
 
   du_high_exec_mapper = create_du_high_executor_mapper(cfg);
 }
@@ -424,6 +429,12 @@ void worker_manager::create_support_strands(const worker_manager_config& worker_
       make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(non_rt_hi_prio_exec, task_worker_queue_size);
   timer_source_exec = timer_source_strand.get();
   executor_decorators_exec.push_back(std::move(timer_source_strand));
+
+  // Executor metrics backend initialization.
+  if (worker_cfg.exec_metrics_cfg) {
+    exec_metrics_backend = std::make_unique<executor_metrics_backend>(
+        worker_cfg.exec_metrics_cfg->report_period, worker_cfg.app_timers->create_unique_timer(*metrics_exec));
+  }
 }
 
 void worker_manager::create_du_low_executors(const worker_manager_config::du_low_config& du_low)
@@ -465,13 +476,8 @@ void worker_manager::create_du_low_executors(const worker_manager_config::du_low
         .max_pusch_and_srs_concurrency = du_low.max_pusch_and_srs_concurrency,
         .max_pdsch_concurrency         = du_low.max_pdsch_concurrency};
 
-    // Setup metrics configuration.
-    if (du_low.metrics_period.has_value()) {
-      du_low_exec_mapper_config.metrics.emplace(
-          srs_du::du_low_executor_mapper_metric_config{.period              = *du_low.metrics_period,
-                                                       .sequential_executor = *metrics_exec,
-                                                       .logger = app_helpers::fetch_logger_metrics_log_channel()});
-    }
+    // Propagate metrics backend.
+    du_low_exec_mapper_config.exec_metrics_backend = exec_metrics_backend.get();
   }
 
   // Create DU low executor mapper.
@@ -687,4 +693,18 @@ void worker_manager::create_ru_dummy_executors()
                      affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::ru),
                      os_thread_realtime_priority::max());
   dummy_exec_mapper = create_ru_dummy_executor_mapper(*exec_mng.executors().at("ru_dummy_exec"));
+}
+
+void worker_manager::add_execution_metrics_to_metrics_service(std::vector<app_services::metrics_config>& app_metrics,
+                                                              app_helpers::metrics_config                metrics_cfg,
+                                                              app_services::metrics_notifier&            notifier)
+{
+  if (!exec_metrics_backend) {
+    return;
+  }
+  // Initialize executor metrics service.
+  auto* exec_metrics_notifier = build_app_execution_metrics_config(app_metrics, notifier, metrics_cfg);
+
+  // Start the executors metrics backend.
+  exec_metrics_backend->start(*exec_metrics_notifier);
 }

@@ -158,13 +158,18 @@ static void register_app_logs(const cu_appconfig&       cu_cfg,
   cu_up_app_unit.on_loggers_registration();
 }
 
-static void fill_cu_worker_manager_config(worker_manager_config& config, const cu_appconfig& unit_cfg)
+static void fill_cu_worker_manager_config(worker_manager_config& config, const cu_appconfig& app_cfg)
 {
-  config.nof_main_pool_threads     = unit_cfg.expert_execution_cfg.threads.main_pool.nof_threads;
-  config.main_pool_task_queue_size = unit_cfg.expert_execution_cfg.threads.main_pool.task_queue_size;
+  config.nof_main_pool_threads     = app_cfg.expert_execution_cfg.threads.main_pool.nof_threads;
+  config.main_pool_task_queue_size = app_cfg.expert_execution_cfg.threads.main_pool.task_queue_size;
   config.main_pool_backoff_period =
-      std::chrono::microseconds{unit_cfg.expert_execution_cfg.threads.main_pool.backoff_period};
-  config.main_pool_affinity_cfg = unit_cfg.expert_execution_cfg.affinities.main_pool_cpu_cfg;
+      std::chrono::microseconds{app_cfg.expert_execution_cfg.threads.main_pool.backoff_period};
+  config.main_pool_affinity_cfg = app_cfg.expert_execution_cfg.affinities.main_pool_cpu_cfg;
+
+  if (app_cfg.metrics_cfg.executors_metrics_cfg.enable_executor_metrics) {
+    auto& exec_metrics_cfg         = config.exec_metrics_cfg.emplace();
+    exec_metrics_cfg.report_period = app_cfg.metrics_cfg.executors_metrics_cfg.report_period_ms;
+  }
 }
 
 static void autoderive_cu_up_parameters_after_parsing(cu_appconfig&            cu_config,
@@ -395,6 +400,9 @@ int main(int argc, char** argv)
       metrics_notifier_forwarder, cu_cfg.metrics_cfg.rusage_config, cu_logger);
 
   std::vector<app_services::metrics_config> metrics_configs = std::move(app_resource_usage_service.metrics);
+
+  workers.add_execution_metrics_to_metrics_service(
+      metrics_configs, cu_cfg.metrics_cfg.executors_metrics_cfg.common_metrics_cfg, metrics_notifier_forwarder);
 
   // Create O-CU-CP dependencies.
   o_cu_cp_unit_dependencies o_cucp_deps;

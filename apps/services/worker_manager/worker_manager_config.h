@@ -64,8 +64,7 @@ struct worker_manager_config {
     /// Number of downlink antennas indexed by cell. The vector size must match the number of cells.
     std::vector<unsigned> cell_nof_dl_antennas;
     /// Number of uplink antennas indexed by cell. The vector size must match the number of cells.
-    std::vector<unsigned>                    cell_nof_ul_antennas;
-    std::optional<std::chrono::milliseconds> metrics_period;
+    std::vector<unsigned> cell_nof_ul_antennas;
   };
 
   /// DU high executor configuration.
@@ -76,8 +75,6 @@ struct worker_manager_config {
     unsigned nof_cells;
     /// Real-time mode enabled flag.
     bool is_rt_mode_enabled;
-    /// Whether to log performance metrics for the DU-high executors.
-    std::optional<std::chrono::milliseconds> metrics_period;
     /// Whether to enable task tracing.
     bool executor_tracing_enable;
   };
@@ -95,15 +92,12 @@ struct worker_manager_config {
     bool dedicated_io_ul_strand = true;
     /// Whether to enable task tracing.
     bool executor_tracing_enable = false;
-    /// Whether to log performance metrics for the CU-UP executors.
-    std::optional<std::chrono::milliseconds> metrics_period;
+    /// Whether to skip CU-UP executors when executors logging is enabled application wide.
+    bool skip_cu_up_executor = true;
   };
 
-  /// CU-CP executor configuration
-  struct cu_cp_config {
-    /// Whether to log performance metrics for the CU-CP executors.
-    std::optional<std::chrono::milliseconds> metrics_period;
-  };
+  /// CU-CP executor configuration.
+  struct cu_cp_config {};
 
   /// PCAP worker configuration.
   struct pcap_config {
@@ -115,6 +109,12 @@ struct worker_manager_config {
     bool is_f1u_enabled  = false;
     bool is_mac_enabled  = false;
     bool is_rlc_enabled  = false;
+  };
+
+  /// Execution metrics configuration.
+  struct exec_metrics_config {
+    /// Periodicity of executors metrics in milliseconds.
+    std::chrono::milliseconds report_period;
   };
 
   /// Size, in number of threads, of the main thread pool.
@@ -149,6 +149,8 @@ struct worker_manager_config {
   std::optional<ru_ofh_config> ru_ofh_cfg;
   /// RU dummy configuration.
   std::optional<ru_dummy_config> ru_dummy_cfg;
+  /// Execution metrics configuration.
+  std::optional<exec_metrics_config> exec_metrics_cfg;
 };
 
 } // namespace srsran

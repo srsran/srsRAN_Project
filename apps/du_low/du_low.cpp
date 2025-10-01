@@ -262,6 +262,9 @@ int main(int argc, char** argv)
 
   std::vector<app_services::metrics_config> app_metrics = std::move(app_resource_usage_service.metrics);
 
+  workers.add_execution_metrics_to_metrics_service(
+      app_metrics, du_low_cfg.metrics_cfg.executors_metrics_cfg.common_metrics_cfg, metrics_notifier_forwarder);
+
   auto du = o_du_app_unit->create_flexible_o_du_low(
       workers, metrics_notifier_forwarder, app_timers, srslog::fetch_basic_logger("APP"));
 

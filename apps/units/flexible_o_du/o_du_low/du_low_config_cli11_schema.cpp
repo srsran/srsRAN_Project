@@ -391,14 +391,6 @@ static void manage_hal_optional(CLI::App& app, du_low_unit_config& parsed_cfg)
 
 static void configure_cli11_metrics_args(CLI::App& app, du_low_unit_metrics_config& metrics_params)
 {
-  auto* periodicity_subcmd = add_subcommand(app, "periodicity", "Metrics periodicity configuration")->configurable();
-  add_option(*periodicity_subcmd,
-             "--du_report_period",
-             metrics_params.du_report_period,
-             "DU statistics report period in milliseconds")
-      ->capture_default_str()
-      ->check(CLI::Range(0U, static_cast<unsigned>(NOF_SUBFRAMES_PER_FRAME * NOF_SFNS * NOF_HYPER_SFNS)));
-
   CLI::App* layers_subcmd = add_subcommand(app, "layers", "Layer basis metrics configuration")->configurable();
   add_option(
       *layers_subcmd, "--enable_du_low", metrics_params.enable_du_low, "Enable DU low metrics (upper physical layer)")

@@ -9,6 +9,8 @@
 add_subdirectory(versioning)
 
 set(SOURCES
+        executors/metrics/executor_metrics_backend.cpp
+        executors/metrics/executor_metrics_channel.cpp
         executors/priority_task_queue.cpp
         executors/priority_task_worker.cpp
         executors/task_execution_manager.cpp

@@ -11,12 +11,15 @@
 #pragma once
 
 #include "srsran/support/executors/detail/task_executor_utils.h"
+#include "srsran/support/tracing/event_tracing.h"
 #include <chrono>
 #include <memory>
 #include <optional>
 #include <string>
 
 namespace srsran {
+
+class executor_metrics_backend;
 
 /// Description of the decorators to be applied to an executor.
 struct execution_decoration_config {
@@ -32,10 +35,20 @@ struct execution_decoration_config {
   struct metrics_option {
     /// Name of the executor for which metrics are to be reported.
     std::string name;
-    /// Period at which the metrics are collected.
-    std::chrono::milliseconds period;
+    /// Executor metrics backend.
+    executor_metrics_backend& backend;
     /// Whether to use metric captures for tracing.
     bool tracing_enabled = false;
+    /// Tracer.
+    file_event_tracer<true>* tracer = nullptr;
+
+    metrics_option(std::string               name_,
+                   executor_metrics_backend& backend_,
+                   bool                      tracing_enabled_,
+                   file_event_tracer<true>*  tracer_ = nullptr) :
+      name(std::move(name_)), backend(backend_), tracing_enabled(tracing_enabled_), tracer(tracer_)
+    {
+    }
   };
 
   /// If set, the executor will block the caller until the task is executed.

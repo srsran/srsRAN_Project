@@ -919,8 +919,6 @@ struct du_high_unit_metrics_layer_config {
   bool enable_scheduler = true;
   bool enable_rlc       = false;
   bool enable_mac       = false;
-  /// Whether to log performace metrics of the DU-high executors.
-  bool enable_executor_log_metrics = false;
 
   /// Returns true if one or more layers are enabled, otherwise false.
   bool are_metrics_enabled() const { return enable_scheduler || enable_rlc || enable_mac; }

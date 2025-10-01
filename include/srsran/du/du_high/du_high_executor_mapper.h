@@ -19,6 +19,9 @@
 #include <vector>
 
 namespace srsran {
+
+class executor_metrics_backend;
+
 namespace srs_du {
 
 /// \brief Mapper of task executors used by the MAC DL, RLC DL and MAC scheduler for low-latency tasks. The task
@@ -161,8 +164,8 @@ struct du_high_executor_config {
   bool is_rt_mode_enabled = true;
   /// Whether to trace executed tasks.
   bool trace_exec_tasks = false;
-  /// Whether to collect metrics on executed tasks and at which period.
-  std::optional<std::chrono::milliseconds> metrics_period;
+  /// Executor metrics backend.
+  executor_metrics_backend* exec_metrics_backend = nullptr;
 };
 
 /// \brief Creates an executor mapper for the DU-high.

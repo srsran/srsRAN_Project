@@ -347,6 +347,9 @@ int main(int argc, char** argv)
 
   std::vector<app_services::metrics_config> app_metrics = std::move(app_resource_usage_service.metrics);
 
+  workers.add_execution_metrics_to_metrics_service(
+      app_metrics, du_cfg.metrics_cfg.executors_metrics_cfg.common_metrics_cfg, metrics_notifier_forwarder);
+
   o_du_unit_dependencies du_dependencies;
   du_dependencies.workers            = &workers;
   du_dependencies.f1c_client_handler = f1c_gw.get();

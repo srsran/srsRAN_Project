@@ -255,4 +255,7 @@ private:
 /// Print caller thread priority.
 void print_this_thread_priority();
 
+/// Returns internal index associated with the calling thread.
+unsigned get_thread_index();
+
 } // namespace srsran

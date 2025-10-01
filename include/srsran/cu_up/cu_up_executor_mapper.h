@@ -15,6 +15,9 @@
 #include <optional>
 
 namespace srsran {
+
+class executor_metrics_backend;
+
 namespace srs_cu_up {
 
 /// \brief This class holds the executors available to a given UE in the CU-UP.
@@ -104,8 +107,8 @@ struct strand_based_executor_config {
   timer_manager* timers;
   /// \brief Enable CU-UP executor tracing.
   bool tracing_enabled;
-  /// \brief CU-UP executor metrics period.
-  std::optional<std::chrono::milliseconds> metrics_period;
+  /// \brief Executor metrics backend.
+  executor_metrics_backend* exec_metrics_backend = nullptr;
 };
 
 /// \brief Creates an executor mapper for the CU-UP that is based on strands of a worker pool.
