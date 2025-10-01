@@ -61,7 +61,6 @@ public:
 
 protected:
   ran_slice_instance* inst        = nullptr;
-  unsigned*           rem_ded_rbs = nullptr;
   unsigned            max_rbs     = 0;
   /// Slot at which PUSCH/PDSCH needs to be scheduled for this slice candidate.
   slot_point slot_tx;
