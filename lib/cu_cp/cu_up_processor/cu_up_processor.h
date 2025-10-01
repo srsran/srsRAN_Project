@@ -13,8 +13,7 @@
 #include "cu_up_processor_context.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
-#include "srsran/support/timers.h"
-#include <string>
+#include "srsran/support/async/async_task.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -40,6 +39,10 @@ public:
   /// or GNB-CU-UP E1 Setup Failure.
   /// \param[in] msg The received GNB-CU-UP E1 Setup Request message.
   virtual void handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& msg) = 0;
+
+  /// \brief Initiate the E1 Reset procedure as per TS 38.483 section 8.2.1.
+  /// \param[in] reset The E1 Reset message to transmit.
+  virtual async_task<void> handle_cu_cp_e1_reset_message(const cu_cp_reset& reset) = 0;
 
   /// \brief Get the E1AP message handler interface of the CU-UP processor object.
   /// \return The E1AP message handler interface of the CU-UP processor object.

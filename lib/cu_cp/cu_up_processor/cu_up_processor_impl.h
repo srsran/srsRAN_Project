@@ -30,10 +30,11 @@ public:
 
   void stop(ue_index_t ue_index) override;
 
-  // message handlers
-  void handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& msg) override;
+  // Message handlers.
+  void             handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& msg) override;
+  async_task<void> handle_cu_cp_e1_reset_message(const cu_cp_reset& reset) override;
 
-  // getter functions
+  // Getter functions.
   e1ap_cu_cp&                          get_e1ap_handler() override { return *e1ap; }
   cu_up_index_t                        get_cu_up_index() override { return context.cu_up_index; }
   cu_up_processor_context&             get_context() override { return context; }
@@ -47,7 +48,7 @@ public:
 private:
   class e1ap_cu_up_processor_adapter;
 
-  // E1AP senders
+  // E1AP senders.
 
   /// \brief Create and transmit the GNB-CU-UP E1 Setup response message.
   /// \param[in] du_ctxt The context of the DU that should receive the message.
@@ -65,10 +66,10 @@ private:
 
   cu_up_processor_context context;
 
-  // E1AP to CU-UP processor adapter
+  // E1AP to CU-UP processor adapter.
   std::unique_ptr<e1ap_cu_up_processor_notifier> e1ap_ev_notifier;
 
-  // Components
+  // Components.
   std::unique_ptr<e1ap_cu_cp> e1ap;
 };
 

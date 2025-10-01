@@ -221,9 +221,9 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
 
 cu_cp_test_environment::~cu_cp_test_environment()
 {
+  cu_cp_inst->stop();
   dus.clear();
   cu_ups.clear();
-  cu_cp_inst->stop();
   cu_cp_workers->stop();
 
   srslog::flush();
