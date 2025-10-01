@@ -42,6 +42,9 @@ static ue_manager_dependencies generate_ue_manager_dependencies(const cu_up_mana
 
 cu_up_manager_impl::cu_up_manager_impl(const cu_up_manager_impl_config&       config,
                                        const cu_up_manager_impl_dependencies& dependencies) :
+  cu_up_id(config.cu_up_id),
+  cu_up_name(config.cu_up_name),
+  plmn(config.plmn),
   stop_command(dependencies.stop_command),
   e1ap(dependencies.e1ap),
   qos(config.qos),
