@@ -119,7 +119,7 @@ public:
   float get_rsrp(unsigned rx_port, unsigned tx_layer = 0) const { return rsrp[path_to_index(rx_port, tx_layer)]; }
 
   /// Returns a view to the estimated RSRP for all Rx ports for the given Tx layer (linear scale).
-  span<const float> get_rsrp(unsigned tx_layer = 0) const
+  span<const float> get_rsrp_all_ports(unsigned tx_layer = 0) const
   {
     unsigned start_idx = path_to_index(0, tx_layer);
     return span<const float>(rsrp).subspan(start_idx, nof_rx_ports);
@@ -249,7 +249,7 @@ public:
     }
 
     // Set the RSRP according to the estimated values for each receive port. For now, only the RSRP of layer 0 is used.
-    csi.set_rsrp_lin(get_rsrp());
+    csi.set_rsrp_lin(get_rsrp_all_ports());
 
     epre_lin /= static_cast<float>(nof_rx_ports);
 
