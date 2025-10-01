@@ -119,10 +119,10 @@ private:
     /// \brief List of valid PUSCH time domain resources for a given DL slot.
     /// Note: This list will be empty for UL slots.
     std::vector<unsigned> valid_pusch_td_list;
-    /// Remaining PDSCH dedicated RBs for this slot.
-    unsigned rem_dl_ded_rbs = 0;
-    /// Remaining PUSCH dedicated RBs for this slot.
-    unsigned rem_ul_ded_rbs = 0;
+    /// Dedicated PDSCH RBs allocated for this slot.
+    unsigned count_dl_ded_rbs = 0;
+    /// Dedicated PUSCH RBs allocated for this slot.
+    unsigned count_ul_ded_rbs = 0;
   };
 
   ran_slice_instance& get_slice(const logical_channel_config& lc_cfg);
@@ -142,9 +142,6 @@ private:
   slot_point current_slot;
 
   ue_repository& ues;
-
-  /// Total number of dedicated RBs across all slices.
-  unsigned total_remaining_dedicated_rbs = 0;
 
   /// Vector circularly indexed by slot with the list of applicable PUSCH time domain resources per slot.
   /// NOTE: The list would be empty for UL slots.

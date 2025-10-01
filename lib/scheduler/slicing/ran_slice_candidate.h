@@ -21,14 +21,8 @@ template <bool IsDl>
 class common_ran_slice_candidate
 {
 public:
-  common_ran_slice_candidate(ran_slice_instance& instance_,
-                             slot_point          slot_tx_,
-                             unsigned&           rem_ded_rbs_,
-                             unsigned            max_rbs_ = 0) :
-    inst(&instance_),
-    rem_ded_rbs(&rem_ded_rbs_),
-    max_rbs(max_rbs_ == 0 ? inst->cfg.rbs.max() : max_rbs_),
-    slot_tx(slot_tx_)
+  common_ran_slice_candidate(ran_slice_instance& instance_, slot_point slot_tx_, unsigned max_rbs_ = 0) :
+    inst(&instance_), max_rbs(max_rbs_ == 0 ? inst->cfg.rbs.max() : max_rbs_), slot_tx(slot_tx_)
   {
   }
 
@@ -45,9 +39,9 @@ public:
   void store_grant(unsigned nof_rbs)
   {
     if constexpr (IsDl) {
-      inst->store_pdsch_grant(nof_rbs, slot_tx, *rem_ded_rbs);
+      inst->store_pdsch_grant(nof_rbs, slot_tx);
     } else {
-      inst->store_pusch_grant(nof_rbs, slot_tx, *rem_ded_rbs);
+      inst->store_pusch_grant(nof_rbs, slot_tx);
     }
   }
 

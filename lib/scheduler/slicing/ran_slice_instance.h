@@ -36,25 +36,16 @@ public:
   /// Save PDSCH grant.
   /// \param[in] crbs Number of RBs allocated.
   /// \param[in] pdsch_slot Slot where the PDSCH is scheduled.
-  /// \param[in,out] slot_rem_ded_rbs Remaining dedicated RBs of all slices for this slot.
-  void store_pdsch_grant(unsigned crbs, slot_point pdsch_slot, unsigned& slot_rem_ded_rbs)
+  void store_pdsch_grant(unsigned crbs, slot_point pdsch_slot)
   {
-    if (pdsch_rb_count < cfg.rbs.dedicated()) {
-      // Deduct from remaining dedicated RBs of this slice to the total number of dedicated RBs left.
-      slot_rem_ded_rbs -= std::min({slot_rem_ded_rbs, crbs, cfg.rbs.dedicated() - pdsch_rb_count});
-    }
     pdsch_rb_count += crbs;
     last_pdsch_alloc_slot = pdsch_slot;
   }
 
   /// Save PUSCH grant.
-  void store_pusch_grant(unsigned crbs, slot_point pusch_slot, unsigned& slot_rem_ded_rbs)
+  void store_pusch_grant(unsigned crbs, slot_point pusch_slot)
   {
     auto& pusch_count = pusch_rb_count_per_slot[pusch_slot.count() % pusch_rb_count_per_slot.size()];
-    if (pusch_count < cfg.rbs.dedicated()) {
-      // Deduct from remaining dedicated RBs of this slice to the total number of dedicated RBs left.
-      slot_rem_ded_rbs -= std::min({slot_rem_ded_rbs, crbs, cfg.rbs.dedicated() - pusch_count});
-    }
     pusch_count += crbs;
     last_pusch_alloc_slot = pusch_slot;
   }
