@@ -601,7 +601,7 @@ du_high_env_simulator::launch_ue_creation_task(rnti_t rnti, du_cell_index_t cell
     CORO_BEGIN(ctx);
 
     if (ues.count(rnti) > 0) {
-      EXPECT_FALSE(assert_success) << fmt::format("rnti={}: UE already exists", rnti);
+      report_fatal_error_if_not(assert_success, "rnti={}: UE already exists", rnti);
       CORO_EARLY_RETURN();
     }
 
@@ -632,8 +632,9 @@ du_high_env_simulator::launch_ue_creation_task(rnti_t rnti, du_cell_index_t cell
         }
       }
     }
-    EXPECT_TRUE(not assert_success or (conres_sent and init_ul_rrc_msg))
-        << fmt::format("rnti={}: Unable to add UE. Timeout waiting for Init UL RRC Message or ConRes CE", rnti);
+    report_fatal_error_if_not(not assert_success or (conres_sent and init_ul_rrc_msg),
+                              "rnti={}: Unable to create UE. Timeout waiting for Init UL RRC Message or ConRes CE",
+                              rnti);
 
     // Add sim UE object to simulator.
     {
@@ -645,7 +646,7 @@ du_high_env_simulator::launch_ue_creation_task(rnti_t rnti, du_cell_index_t cell
                                                           .cu_ue_id         = int_to_gnb_cu_ue_f1ap_id(next_cu_ue_id++),
                                                           .pcell_index      = cell_index,
                                                           .last_ul_f1ap_msg = std::move(init_ul_rrc_msg)}));
-      EXPECT_TRUE(ret.second);
+      report_fatal_error_if_not(ret.second, "Failed to register sim UE");
     }
 
     CORO_RETURN();
@@ -663,7 +664,7 @@ async_task<void> du_high_env_simulator::launch_rrc_setup_task(rnti_t rnti, bool 
       auto it = ues.find(rnti);
       if (it == ues.end()) {
         test_logger.error("rnti={}: Failed to run RRC Setup procedure. Cause: UE not found", rnti);
-        EXPECT_FALSE(assert_success) << fmt::format("rnti={}: UE not found", rnti);
+        report_fatal_error_if_not(not assert_success, "rnti={}: UE not found", rnti);
         CORO_EARLY_RETURN();
       }
       u = &it->second;
@@ -673,7 +674,8 @@ async_task<void> du_high_env_simulator::launch_rrc_setup_task(rnti_t rnti, bool 
       // Determine whether it is an RRC Setup or RRC Reject.
       if (test_helpers::get_du_to_cu_container(*u->last_ul_f1ap_msg).empty()) {
         // RRC container is empty, which means that a RRC Reject needs to be sent.
-        EXPECT_FALSE(assert_success) << fmt::format("rnti={}: Failed RRC Setup procedure", rnti);
+        report_fatal_error_if_not(
+            not assert_success, "rnti={}: Failed RRC Setup procedure beause the DU-to-CU-RRC container is empty", rnti);
         CORO_AWAIT(launch_ue_context_release_task(rnti, srb_id_t::srb0));
         CORO_EARLY_RETURN();
       }
