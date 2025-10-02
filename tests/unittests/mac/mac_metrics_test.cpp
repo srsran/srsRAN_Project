@@ -102,7 +102,7 @@ protected:
   {
     pci_t pci         = static_cast<unsigned>(cell_index);
     auto  time_source = timer_ctrl.add_cell(cell_index);
-    auto  metrics_cfg = metrics.add_cell(to_du_cell_index(cell_index), scs, *time_source);
+    auto  metrics_cfg = metrics.add_cell(to_du_cell_index(cell_index), scs, 0U, *time_source);
     cells.emplace(cell_index, *metrics_cfg.sched_notifier, *metrics_cfg.mac_notifier, std::move(time_source), pci, scs);
     return cells[cell_index].mac;
   }

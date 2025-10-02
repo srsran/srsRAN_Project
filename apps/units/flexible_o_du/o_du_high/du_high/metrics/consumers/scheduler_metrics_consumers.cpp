@@ -179,6 +179,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
       sum_ul_bitrate_kbps += ue.ul_brate_kbps;
       sum_pdsch_rbs += ue.tot_pdsch_prbs_used;
       sum_pusch_rbs += ue.tot_pusch_prbs_used;
+
       if (ue.max_crc_delay_ms.has_value()) {
         max_crc_delay = std::max(max_crc_delay, ue.max_crc_delay_ms.value());
       }
@@ -228,6 +229,12 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
         cell.nof_failed_pdsch_allocs_late_harqs,
         cell.nof_failed_pusch_allocs_late_harqs,
         cell.pucch_tot_rb_usage_avg);
+    if (cell.pusch_prbs_used_per_tdd_slot_idx.size()) {
+      fmt::format_to(
+          std::back_inserter(buffer),
+          " pusch_rbs_per_tdd_slot_idx=[{}]",
+          fmt::join(cell.pusch_prbs_used_per_tdd_slot_idx.begin(), cell.pusch_prbs_used_per_tdd_slot_idx.end(), ", "));
+    }
     if (max_crc_delay != std::numeric_limits<float>::min()) {
       fmt::format_to(std::back_inserter(buffer), " max_crc_delay={}ms", max_crc_delay);
     }

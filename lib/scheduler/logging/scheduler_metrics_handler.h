@@ -37,13 +37,13 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
   struct ue_metric_context {
     /// \brief In this struct we store all the metadata that is reset at every report.
     struct non_persistent_data {
-      unsigned   count_uci_harq_acks            = 0;
-      unsigned   count_uci_harqs                = 0;
-      unsigned   count_crc_acks                 = 0;
-      unsigned   count_crc_pdus                 = 0;
-      unsigned   count_pucch_harq_pdus          = 0;
-      unsigned   count_pusch_harq_pdus          = 0;
-      slot_point last_sr_slot                   = slot_point();
+      unsigned   count_uci_harq_acks   = 0;
+      unsigned   count_uci_harqs       = 0;
+      unsigned   count_crc_acks        = 0;
+      unsigned   count_crc_pdus        = 0;
+      unsigned   count_pucch_harq_pdus = 0;
+      unsigned   count_pusch_harq_pdus = 0;
+      slot_point last_sr_slot;
       unsigned   count_sr                       = 0;
       unsigned   count_handled_sr               = 0;
       unsigned   dl_mcs                         = 0;
@@ -164,6 +164,7 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
 
   slotted_id_vector<du_ue_index_t, ue_metric_context> ues;
   flat_map<rnti_t, du_ue_index_t>                     rnti_to_ue_index_lookup;
+  std::vector<unsigned>                               ul_prbs_used_per_tdd_slot_idx;
 
   /// Metrics tracked that are reset on every report.
   non_persistent_data data;

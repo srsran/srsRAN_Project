@@ -59,6 +59,9 @@ cell_metrics_handler::cell_metrics_handler(
   rnti_to_ue_index_lookup.reserve(MAX_NOF_DU_UES);
   const unsigned pre_reserved_event_capacity = std::min(3U * MAX_NOF_DU_UES, metrics_cfg->max_ue_events_per_report);
   pending_events.reserve(pre_reserved_event_capacity);
+  unsigned tdd_period_slots =
+      cell_cfg.tdd_cfg_common.has_value() ? nof_slots_per_tdd_period(*cell_cfg.tdd_cfg_common) : 0U;
+  ul_prbs_used_per_tdd_slot_idx.resize(tdd_period_slots);
 }
 
 cell_metrics_handler::~cell_metrics_handler() {}
@@ -308,8 +311,10 @@ void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_p
 void cell_metrics_handler::handle_sr_indication(du_ue_index_t ue_index, slot_point sr_slot)
 {
   if (ues.contains(ue_index)) {
-    auto& u             = ues[ue_index];
-    u.data.last_sr_slot = sr_slot;
+    auto& u = ues[ue_index];
+    if (not u.data.last_sr_slot.valid()) {
+      u.data.last_sr_slot = sr_slot;
+    }
     ++u.data.count_sr;
   }
 }
@@ -417,9 +422,17 @@ void cell_metrics_handler::report_metrics()
   next_report->nof_filtered_events                = data.filtered_events_counter;
   // Note: PUCCH is only allocated on full UL slots.
   next_report->pucch_tot_rb_usage_avg = static_cast<float>(data.pucch_rbs_used) / data.nof_ul_slots;
+  for (unsigned rb_count : ul_prbs_used_per_tdd_slot_idx) {
+    next_report->pusch_prbs_used_per_tdd_slot_idx.push_back(rb_count);
+  }
 
   // Reset cell-wide metric counters.
   data = {};
+
+  // Clear the PRB vectors for the next report.
+  for (unsigned& rb_count : ul_prbs_used_per_tdd_slot_idx) {
+    rb_count = 0;
+  }
 
   // Report all UE metrics in a batch.
   // Note: next_report will be reset afterwards. However, we prefer to first commit before fetching a new report.
@@ -463,13 +476,18 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
       // UE not found.
       continue;
     }
+    unsigned grant_prbs;
     if (ul_grant.pusch_cfg.rbs.is_type0()) {
-      ues[it->second].data.tot_ul_prbs_used += convert_rbgs_to_prbs(ul_grant.pusch_cfg.rbs.type0(),
-                                                                    {0, cell_cfg.nof_dl_prbs},
-                                                                    get_nominal_rbg_size(cell_cfg.nof_dl_prbs, true))
-                                                   .count();
-    } else if (ul_grant.pusch_cfg.rbs.is_type1()) {
-      ues[it->second].data.tot_ul_prbs_used += (ul_grant.pusch_cfg.rbs.type1().length());
+      grant_prbs = convert_rbgs_to_prbs(ul_grant.pusch_cfg.rbs.type0(),
+                                        {0, cell_cfg.nof_dl_prbs},
+                                        get_nominal_rbg_size(cell_cfg.nof_dl_prbs, true))
+                       .count();
+    } else {
+      grant_prbs = (ul_grant.pusch_cfg.rbs.type1().length());
+    }
+    ues[it->second].data.tot_ul_prbs_used += grant_prbs;
+    if (ul_prbs_used_per_tdd_slot_idx.size()) {
+      ul_prbs_used_per_tdd_slot_idx[last_slot_tx.count() % ul_prbs_used_per_tdd_slot_idx.size()] += grant_prbs;
     }
     ue_metric_context& u = ues[it->second];
     u.data.ul_mcs += ul_grant.pusch_cfg.mcs_index.to_uint();

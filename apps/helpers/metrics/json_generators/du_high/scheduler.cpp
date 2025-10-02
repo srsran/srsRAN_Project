@@ -118,6 +118,9 @@ void to_json(nlohmann::json& json, const scheduler_cell_metrics& metrics)
   cell_json["late_dl_harqs"]           = metrics.nof_failed_pdsch_allocs_late_harqs;
   cell_json["late_ul_harqs"]           = metrics.nof_failed_pusch_allocs_late_harqs;
   cell_json["pucch_tot_rb_usage_avg"]  = metrics.pucch_tot_rb_usage_avg;
+  if (metrics.pusch_prbs_used_per_tdd_slot_idx.size()) {
+    cell_json["pusch_prbs_used_per_tdd_slot_idx"] = metrics.pusch_prbs_used_per_tdd_slot_idx;
+  }
 
   if (!metrics.ue_metrics.empty()) {
     json["ue_list"] = metrics.ue_metrics;

@@ -11,6 +11,7 @@
 #include "mac_metrics_aggregator.h"
 #include "spsc_metric_report_channel.h"
 #include "srsran/mac/mac_metrics_notifier.h"
+#include "srsran/ran/tdd/tdd_ul_dl_config.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/support/executors/execute_until_success.h"
 
@@ -30,7 +31,7 @@ struct full_cell_report {
 
 } // namespace
 
-static full_cell_report report_preinit(unsigned max_ue_events = 64)
+static full_cell_report report_preinit(unsigned max_ue_events = 64U, unsigned tdd_period_slots = 0U)
 {
   full_cell_report report{};
   // Pre-reserve space for UE metrics.
@@ -38,6 +39,7 @@ static full_cell_report report_preinit(unsigned max_ue_events = 64)
   // Note: there can be more than one event per UE.
   const unsigned ue_event_capacity = std::min(max_ue_events, MAX_NOF_DU_UES * 3U);
   report.sched.events.reserve(ue_event_capacity);
+  report.sched.pusch_prbs_used_per_tdd_slot_idx.reserve(tdd_period_slots);
   return report;
 }
 
@@ -48,6 +50,7 @@ public:
   cell_metric_handler(mac_metrics_aggregator&    parent_,
                       du_cell_index_t            cell_index_,
                       subcarrier_spacing         scs_common_,
+                      unsigned                   tdd_period_slots,
                       mac_cell_clock_controller& time_source_,
                       srslog::basic_logger&      logger_) :
     parent(parent_),
@@ -55,8 +58,8 @@ public:
     scs_common(scs_common_),
     period_slots(get_nof_slots_per_subframe(scs_common) * parent.cfg.period.count()),
     time_source(time_source_),
-    report_queue(cell_report_queue_size, logger_, [ue_events = parent.cfg.max_nof_ue_events]() {
-      return report_preinit(ue_events);
+    report_queue(cell_report_queue_size, logger_, [ue_events = parent.cfg.max_nof_ue_events, tdd_period_slots]() {
+      return report_preinit(ue_events, tdd_period_slots);
     })
   {
   }
@@ -146,6 +149,7 @@ private:
       // Keep the capacity.
       report.sched.ue_metrics.clear();
       report.sched.events.clear();
+      report.sched.pusch_prbs_used_per_tdd_slot_idx.clear();
       report.mac.reset();
     }
   };
@@ -208,6 +212,7 @@ mac_metrics_aggregator::~mac_metrics_aggregator() {}
 
 cell_metric_report_config mac_metrics_aggregator::add_cell(du_cell_index_t            cell_index,
                                                            subcarrier_spacing         scs_common,
+                                                           unsigned                   tdd_period_slots,
                                                            mac_cell_clock_controller& time_source)
 {
   srsran_assert(not cells.contains(cell_index), "Duplicate cell creation");
@@ -217,8 +222,10 @@ cell_metric_report_config mac_metrics_aggregator::add_cell(du_cell_index_t      
   next_report.sched.cells.reserve(cells.size());
 
   // Create a handler for the new cell.
-  auto  cell_handler = std::make_unique<cell_metric_handler>(*this, cell_index, scs_common, time_source, logger);
-  auto& cell_ref     = *cell_handler;
+
+  auto cell_handler =
+      std::make_unique<cell_metric_handler>(*this, cell_index, scs_common, tdd_period_slots, time_source, logger);
+  auto& cell_ref = *cell_handler;
   cells.emplace(cell_index, std::move(cell_handler));
 
   // Return the cell report configuration.
