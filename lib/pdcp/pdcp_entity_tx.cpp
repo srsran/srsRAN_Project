@@ -129,7 +129,7 @@ manual_event_flag& pdcp_entity_tx::crypto_awaitable()
 ///
 /// \param sdu Buffer that hold the SDU from higher layers.
 /// \ref TS 38.323 section 5.2.1: Transmit operation
-void pdcp_entity_tx::handle_sdu(byte_buffer buf) SRSRAN_RTSAN_NONBLOCKING
+void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 {
   metrics.add_sdus(1, buf.length());
   logger.log_debug(buf.begin(), buf.end(), "TX SDU. sdu_len={}", buf.length());
@@ -474,7 +474,7 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_chain status)
 /*
  * Ciphering and Integrity Protection Helpers
  */
-void pdcp_entity_tx::apply_security(pdcp_tx_buffer_info buf_info) SRSRAN_RTSAN_NONBLOCKING
+void pdcp_entity_tx::apply_security(pdcp_tx_buffer_info buf_info)
 
 {
   auto     pre      = std::chrono::high_resolution_clock::now();
