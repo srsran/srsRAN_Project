@@ -80,15 +80,15 @@ struct ul_power_control {
 /// \brief UE scheduling statically configurable expert parameters.
 struct scheduler_ue_expert_config {
   /// Range of allowed MCS indices for DL UE scheduling. To use a fixed mcs, set the minimum mcs equal to the maximum.
-  interval<sch_mcs_index, true> dl_mcs;
+  interval<sch_mcs_index, true> dl_mcs = {0, 28};
   /// Sequence of redundancy versions used for PDSCH scheduling. Possible values: {0, 1, 2, 3}.
-  std::vector<uint8_t> pdsch_rv_sequence;
+  std::vector<uint8_t> pdsch_rv_sequence = {0};
   /// Range of allowed MCS indices for UL UE scheduling. To use a fixed mcs, set the minimum mcs equal to the maximum.
-  interval<sch_mcs_index, true> ul_mcs;
+  interval<sch_mcs_index, true> ul_mcs = {0, 28};
   /// Sequence of redundancy versions used for PUSCH scheduling. Possible values: {0, 1, 2, 3}.
-  std::vector<uint8_t> pusch_rv_sequence;
+  std::vector<uint8_t> pusch_rv_sequence = {0};
   /// CQI used to derived the MCS for DL scheduling, when no CSI has been reported yet.
-  unsigned initial_cqi;
+  unsigned initial_cqi = 3;
   /// Maximum number of DL HARQ retxs.
   unsigned max_nof_dl_harq_retxs = 4;
   /// Maximum number of UL HARQ retxs.
@@ -98,11 +98,11 @@ struct scheduler_ue_expert_config {
   /// Timeout for UL HARQ with pending retransmission to be discarded.
   std::chrono::milliseconds ul_harq_retx_timeout{100};
   /// Maximum MCS index that can be assigned when scheduling MSG4.
-  sch_mcs_index max_msg4_mcs;
+  sch_mcs_index max_msg4_mcs = 9;
   /// Initial UL SINR value used for Dynamic UL MCS computation (in dB).
-  double initial_ul_sinr;
+  double initial_ul_sinr = 5.0;
   /// Enable multiplexing of CSI-RS and PDSCH.
-  bool enable_csi_rs_pdsch_multiplexing;
+  bool enable_csi_rs_pdsch_multiplexing = true;
   /// Set boundaries, in number of RBs, for UE PDSCH grants.
   interval<unsigned> pdsch_nof_rbs{1, MAX_NOF_PRBS};
   /// Set boundaries, in number of RBs, for UE PUSCH grants.
@@ -132,14 +132,14 @@ struct scheduler_ue_expert_config {
   /// are {0,...,32}.
   ///
   /// If set to less than zero, issuing of TA Command is disabled.
-  int8_t ta_cmd_offset_threshold;
+  int8_t ta_cmd_offset_threshold = 1;
   /// \brief Timing Advance target in units of TA.
   ///
   /// Offsets the target TA measurements so the signal from the UE is kept delayed. This parameter is useful for
   /// avoiding negative TA when the UE is getting away.
-  float ta_target;
+  float ta_target = 0.0F;
   /// UL SINR threshold (in dB) above which reported N_TA update measurement is considered valid.
-  float ta_update_measurement_ul_sinr_threshold;
+  float ta_update_measurement_ul_sinr_threshold = 0.0F;
   /// @}
   /// Direct Current (DC) offset, in number of subcarriers, used in PUSCH, by default. The gNB may supersede this DC
   /// offset value through RRC messaging. See TS38.331 - "txDirectCurrentLocation".

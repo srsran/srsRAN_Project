@@ -70,6 +70,9 @@ du_high_configuration srs_du::create_du_high_configuration(const du_high_env_sim
 
   cfg.ran.qos       = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 0);
   cfg.ran.sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  if (params.sched_ue_expert_cfg.has_value()) {
+    cfg.ran.sched_cfg.ue = params.sched_ue_expert_cfg.value();
+  }
 
   cfg.metrics.enable_f1ap  = true;
   cfg.metrics.enable_mac   = true;

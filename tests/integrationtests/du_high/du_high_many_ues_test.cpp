@@ -44,9 +44,11 @@ static du_high_env_sim_params create_many_ues_config()
   params.pucch_cfg->nof_cell_harq_pucch_res_sets         = 2;
   params.pucch_cfg->nof_sr_resources                     = 80;
   params.pucch_cfg->nof_csi_resources                    = 80;
-  auto& f1_params                                        = params.pucch_cfg->f0_or_f1_params.emplace<pucch_f1_params>();
-  f1_params.nof_cyc_shifts                               = pucch_nof_cyclic_shifts::twelve;
-  f1_params.occ_supported                                = true;
+  params.sched_ue_expert_cfg.emplace();
+  params.sched_ue_expert_cfg->max_pucchs_per_slot = 64;
+  auto& f1_params                                 = params.pucch_cfg->f0_or_f1_params.emplace<pucch_f1_params>();
+  f1_params.nof_cyc_shifts                        = pucch_nof_cyclic_shifts::twelve;
+  f1_params.occ_supported                         = true;
   // Set the PRACH frequency start to avoid PRACH collisions with the PUCCH on the upper RBs of the BWP (this would
   // trigger an error and abort the test).
   // NOTE: this results in the PRACH overlapping with the PUCCH resources on the lower RBs of the BWP, but it doesn't
@@ -101,7 +103,7 @@ TEST_P(du_high_many_ues_tester, when_many_ues_are_created_concurrently_then_ues_
 
 INSTANTIATE_TEST_SUITE_P(du_high_many_ues_test,
                          du_high_many_ues_tester,
-                         testing::Values(test_params{0, 60}, test_params{5, 360}));
+                         testing::Values(test_params{0, 60}, test_params{5, 590}));
 
 class du_high_few_ues_test : public du_high_env_simulator, public testing::Test
 {
