@@ -216,7 +216,10 @@ f1_setup_result f1ap_du_setup_procedure::create_f1_setup_result()
   du_ctxt.served_cells.clear();
   for (unsigned i = 0, sz = request.served_cells.size(); i != sz; ++i) {
     const du_cell_index_t cell_idx = request.served_cells[i].cell_index;
-    du_ctxt.served_cells.emplace(cell_idx, f1ap_du_cell_context{cell_idx, request.served_cells[i].cell_info.nr_cgi});
+    du_ctxt.served_cells.emplace(cell_idx,
+                                 f1ap_du_cell_context{cell_idx,
+                                                      request.served_cells[i].cell_info.nr_cgi,
+                                                      request.served_cells[i].cell_info.ntn_link_rtt});
   }
   if (asn1_success.cells_to_be_activ_list_present) {
     success.cells_to_activate.resize(asn1_success.cells_to_be_activ_list.size());

@@ -22,6 +22,8 @@ struct f1ap_du_cell_context {
   du_cell_index_t cell_index;
   // Global cell ID.
   nr_cell_global_id_t nr_cgi;
+  // NTN Link Round Trip Time.
+  std::chrono::milliseconds ntn_link_rtt = std::chrono::milliseconds(0);
 };
 
 /// DU Context stored in the F1AP-DU. It includes information about the DU serving cells.

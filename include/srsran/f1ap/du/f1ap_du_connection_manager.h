@@ -56,6 +56,7 @@ struct du_served_cell_info {
   carrier_configuration                dl_carrier;
   std::optional<carrier_configuration> ul_carrier;
   byte_buffer                          packed_meas_time_cfg;
+  std::chrono::milliseconds            ntn_link_rtt = std::chrono::milliseconds(0);
 };
 
 /// \brief Served cell configuration that will be passed to CU-CP.

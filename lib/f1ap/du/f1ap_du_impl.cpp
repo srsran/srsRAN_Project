@@ -196,7 +196,7 @@ void f1ap_du_impl::handle_ue_context_release_command(const asn1::f1ap::ue_contex
   }
 
   du_mng.get_ue_handler(u->context.ue_index)
-      .schedule_async_task(launch_async<f1ap_du_ue_context_release_procedure>(msg, ues));
+      .schedule_async_task(launch_async<f1ap_du_ue_context_release_procedure>(msg, ues, ctxt));
 }
 
 void f1ap_du_impl::handle_ue_context_modification_request(const asn1::f1ap::ue_context_mod_request_s& msg)
@@ -211,7 +211,7 @@ void f1ap_du_impl::handle_ue_context_modification_request(const asn1::f1ap::ue_c
     return;
   }
 
-  ue->handle_ue_context_modification_request(msg);
+  ue->handle_ue_context_modification_request(msg, ctxt);
 }
 
 void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_transfer_s& msg)
