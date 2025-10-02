@@ -223,6 +223,8 @@ private:
   baseband_cfo_processor cfo_processor;
   /// Baseband buffer pool for transmitting zeros.
   baseband_gateway_buffer_pool buffer_pool;
+  /// Previous reported slot.
+  std::optional<slot_point> previous_slot;
 };
 
 } // namespace srsran

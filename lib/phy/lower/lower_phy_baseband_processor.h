@@ -181,10 +181,11 @@ private:
     return timestamp - start_time_sfn0;
   }
 
+  sampling_rate                                                              srate;
   uint64_t                                                                   nof_samples_per_super_frame;
   unsigned                                                                   rx_buffer_size;
   std::chrono::microseconds                                                  slot_duration;
-  std::chrono::nanoseconds                                                   cpu_throttling_time;
+  float                                                                      system_time_throttling_ratio;
   task_executor&                                                             rx_executor;
   task_executor&                                                             tx_executor;
   task_executor&                                                             uplink_executor;
@@ -200,6 +201,7 @@ private:
   internal_fsm                                                               rx_state;
   std::atomic<baseband_gateway_timestamp>                                    last_rx_timestamp;
   std::optional<std::chrono::time_point<std::chrono::high_resolution_clock>> last_tx_time;
+  unsigned                                                                   last_tx_buffer_size = 0;
 };
 
 } // namespace srsran
