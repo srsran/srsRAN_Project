@@ -534,6 +534,7 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
     return static_cast<float>(slots) / static_cast<float>(slots_per_sf);
   };
   scheduler_ue_metrics ret{};
+  ret.ue_index            = ue_index;
   ret.pci                 = pci;
   ret.rnti                = rnti;
   ret.cqi_stats           = data.cqi;

@@ -10,19 +10,24 @@
 
 #pragma once
 
-#include "srsran/adt/span.h"
+#include "srsran/ran/du_types.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/sch/sch_mcs.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/support/math/stats.h"
 #include "srsran/support/zero_copy_notifier.h"
+#include <array>
+#include <chrono>
 #include <optional>
+#include <vector>
 
 namespace srsran {
 
 /// \brief Snapshot of the metrics for a UE.
 struct scheduler_ue_metrics {
+  /// UE index in the DU for this UE.
+  du_ue_index_t ue_index;
   /// PCI of the UE's PCell.
   pci_t pci;
   /// Currently used C-RNTI for this UE.
@@ -107,7 +112,7 @@ struct scheduler_cell_event {
 
 inline const char* sched_event_to_string(scheduler_cell_event::event_type ev)
 {
-  std::array<const char*, 3> names = {"ue_add", "ue_reconf", "ue_rem"};
+  static constexpr std::array<const char*, 3> names = {"ue_add", "ue_reconf", "ue_rem"};
   return names[std::min(static_cast<size_t>(ev), names.size() - 1)];
 }
 

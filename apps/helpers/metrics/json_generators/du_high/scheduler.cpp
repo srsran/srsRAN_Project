@@ -43,6 +43,7 @@ void to_json(nlohmann::json& json, const scheduler_cell_event& metrics)
 
 void to_json(nlohmann::json& json, const scheduler_ue_metrics& metrics)
 {
+  json["ue"]   = metrics.ue_index;
   json["pci"]  = metrics.pci;
   json["rnti"] = metrics.rnti;
   if (metrics.cqi_stats.get_nof_observations() > 0) {

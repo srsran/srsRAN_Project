@@ -260,7 +260,11 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
 
     // log ue-specific metrics
     for (const auto& ue : cell.ue_metrics) {
-      fmt::format_to(std::back_inserter(buffer), "Scheduler UE pci={} rnti={} metrics:", ue.pci, ue.rnti);
+      fmt::format_to(std::back_inserter(buffer),
+                     "Scheduler UE ue={} pci={} rnti={} metrics:",
+                     fmt::underlying(ue.ue_index),
+                     ue.pci,
+                     ue.rnti);
       if (ue.cqi_stats.get_nof_observations() > 0) {
         fmt::format_to(
             std::back_inserter(buffer), " cqi={}", static_cast<unsigned>(std::round(ue.cqi_stats.get_mean())));
@@ -372,6 +376,7 @@ void scheduler_cell_metrics_consumer_e2::handle_metric(const std::optional<sched
     return;
   }
 
-  for (const auto& cell : report->cells)
+  for (const auto& cell : report->cells) {
     notifier.report_metrics(cell);
+  }
 }
