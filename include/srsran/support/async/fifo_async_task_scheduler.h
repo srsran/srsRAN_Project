@@ -96,7 +96,8 @@ private:
 template <typename Callback,
           typename ReturnType = detail::function_return_t<decltype(&std::decay_t<Callback>::operator())>,
           std::enable_if_t<std::is_same_v<ReturnType, void>, int> = 0>
-async_task<bool> when_completed_on_task_sched(fifo_async_task_scheduler& task_sched, Callback&& task_to_run)
+[[nodiscard]] async_task<bool> when_completed_on_task_sched(fifo_async_task_scheduler& task_sched,
+                                                            Callback&&                 task_to_run)
 {
   struct task_offloader {
     task_offloader(fifo_async_task_scheduler& task_sched_, Callback&& callback_) :
@@ -140,8 +141,8 @@ async_task<bool> when_completed_on_task_sched(fifo_async_task_scheduler& task_sc
 template <typename Callback,
           typename ReturnType = detail::function_return_t<decltype(&std::decay_t<Callback>::operator())>,
           std::enable_if_t<not std::is_same_v<ReturnType, void>, int> = 0>
-async_task<std::optional<ReturnType>> when_completed_on_task_sched(fifo_async_task_scheduler& task_sched,
-                                                                   Callback&&                 task_to_run)
+[[nodiscard]] async_task<std::optional<ReturnType>> when_completed_on_task_sched(fifo_async_task_scheduler& task_sched,
+                                                                                 Callback&&                 task_to_run)
 {
   struct task_offloader {
     task_offloader(fifo_async_task_scheduler& task_sched_, Callback&& callback_) :
@@ -192,7 +193,8 @@ async_task<std::optional<ReturnType>> when_completed_on_task_sched(fifo_async_ta
 template <typename Routine,
           typename ReturnType = detail::function_return_t<decltype(&std::decay_t<Routine>::operator())>,
           std::enable_if_t<std::is_same_v<ReturnType, void>, int> = 0>
-async_task<bool> when_coroutine_completed_on_task_sched(fifo_async_task_scheduler& task_sched, Routine&& routine_to_run)
+[[nodiscard]] async_task<bool> when_coroutine_completed_on_task_sched(fifo_async_task_scheduler& task_sched,
+                                                                      Routine&&                  routine_to_run)
 {
   struct task_offloader {
     task_offloader(fifo_async_task_scheduler& task_sched_, Routine&& routine_) :

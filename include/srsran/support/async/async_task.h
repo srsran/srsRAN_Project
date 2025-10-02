@@ -43,7 +43,7 @@ public:
     /// Final suspension awaiter. Tail-resumes continuation.
     final_awaiter final_suspend() { return {}; }
 
-    async_task<R> get_return_object()
+    [[nodiscard]] async_task<R> get_return_object()
     {
       auto corohandle = coro_handle<promise_type>::from_promise(this);
       corohandle.resume();

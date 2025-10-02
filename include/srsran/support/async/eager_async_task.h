@@ -49,7 +49,7 @@ public:
     /// Final suspension awaiter.
     final_awaiter final_suspend() { return {this}; }
 
-    eager_async_task<R> get_return_object()
+    [[nodiscard]] eager_async_task<R> get_return_object()
     {
       auto corohandle = coro_handle<promise_type>::from_promise(this);
       corohandle.resume();

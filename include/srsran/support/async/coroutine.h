@@ -315,10 +315,10 @@ struct suspend_always {
 /// Coroutine whose resumption does nothing.
 struct noop_coroutine_promise {
   struct future_type {};
-  future_type get_return_object() { return {}; }
+  [[nodiscard]] future_type get_return_object() { return {}; }
 };
 
-inline coro_handle<noop_coroutine_promise> noop_coroutine() noexcept
+[[nodiscard]] inline coro_handle<noop_coroutine_promise> noop_coroutine() noexcept
 {
   class noop_frame final : public detail::base_coro_frame<noop_coroutine_promise>
   {
@@ -333,7 +333,7 @@ inline coro_handle<noop_coroutine_promise> noop_coroutine() noexcept
 
 /// Creates coroutine frame and launches task if eager.
 template <typename FunT, typename... Args>
-auto launch_async(Args&&... args) -> typename detail::future_of<FunT>
+[[nodiscard]] auto launch_async(Args&&... args) -> typename detail::future_of<FunT>
 {
   auto* frame = new detail::coro_frame<FunT>(std::forward<Args>(args)...);
   return frame->promise().get_return_object();
@@ -341,7 +341,7 @@ auto launch_async(Args&&... args) -> typename detail::future_of<FunT>
 
 /// Creates coroutine frame and launches task if eager.
 template <typename FunT>
-auto launch_async(FunT&& f) -> typename detail::future_of<FunT>
+[[nodiscard]] auto launch_async(FunT&& f) -> typename detail::future_of<FunT>
 {
   auto* frame = new detail::coro_frame<FunT>(std::forward<FunT>(f));
   return frame->promise().get_return_object();

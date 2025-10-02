@@ -76,7 +76,7 @@ private:
 /// Returns an awaitable that resumes the suspended coroutine in a different execution context. If the call to execute
 /// fails, the awaitable will return false.
 template <typename TaskExecutor>
-auto try_execute_on(TaskExecutor& exec)
+[[nodiscard]] auto try_execute_on(TaskExecutor& exec)
 {
   return detail::try_execute_on_awaiter<TaskExecutor, true>{exec};
 }
@@ -84,7 +84,7 @@ auto try_execute_on(TaskExecutor& exec)
 /// Returns an awaitable that resumes the suspended coroutine in a different execution context. If the call to defer
 /// fails, the awaitable will return false.
 template <typename TaskExecutor>
-auto try_defer_to(TaskExecutor& exec)
+[[nodiscard]] auto try_defer_to(TaskExecutor& exec)
 {
   return detail::try_execute_on_awaiter<TaskExecutor, false>{exec};
 }
@@ -98,7 +98,8 @@ auto try_defer_to(TaskExecutor& exec)
 /// \param callable      Task to run.
 /// \return Awaitable.
 template <typename DispatchTaskExecutor, typename ResumeTaskExecutor, typename Callable>
-auto try_offload_to_executor(DispatchTaskExecutor& dispatch_exec, ResumeTaskExecutor& resume_exec, Callable&& callable)
+[[nodiscard]] auto
+try_offload_to_executor(DispatchTaskExecutor& dispatch_exec, ResumeTaskExecutor& resume_exec, Callable&& callable)
 {
   using result_type = detail::function_return_t<decltype(&std::decay_t<Callable>::operator())>;
 

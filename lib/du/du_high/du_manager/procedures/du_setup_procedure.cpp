@@ -179,7 +179,7 @@ async_task<void> du_setup_procedure::handle_f1_setup_response(const f1_setup_res
                           request.f1c_tnl_connection_retry_wait.count());
       return launch_async([this](coro_context<async_task<void>>& ctx) {
         CORO_BEGIN(ctx);
-        async_wait_for(timer, request.f1c_tnl_connection_retry_wait);
+        CORO_AWAIT(async_wait_for(timer, request.f1c_tnl_connection_retry_wait));
         CORO_RETURN();
       });
     }

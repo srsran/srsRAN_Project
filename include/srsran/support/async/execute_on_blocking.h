@@ -18,7 +18,7 @@ namespace srsran {
 namespace detail {
 
 template <bool IsExecute, typename TaskExecutor, typename OnFailureToDispatch>
-auto dispatch_on_blocking(TaskExecutor& exec, timer_manager& timers, OnFailureToDispatch&& on_failure)
+[[nodiscard]] auto dispatch_on_blocking(TaskExecutor& exec, timer_manager& timers, OnFailureToDispatch&& on_failure)
 {
   struct blocking_dispatch_on_awaiter {
     blocking_dispatch_on_awaiter(TaskExecutor& exec_, timer_manager& timers_, OnFailureToDispatch&& on_failure_) :
@@ -73,11 +73,11 @@ template <bool IsExecute,
           typename CurrentTaskExecutor,
           typename Callable,
           typename OnFailureToDispatch = noop_operation>
-auto dispatch_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
-                                       CurrentTaskExecutor&  return_exec,
-                                       timer_manager&        timers,
-                                       Callable&&            callable,
-                                       OnFailureToDispatch&& on_failure = noop_operation{})
+[[nodiscard]] auto dispatch_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
+                                                     CurrentTaskExecutor&  return_exec,
+                                                     timer_manager&        timers,
+                                                     Callable&&            callable,
+                                                     OnFailureToDispatch&& on_failure = noop_operation{})
 {
   if constexpr (std::is_invocable_v<Callable>) {
     // The task is a callable object.
@@ -210,11 +210,11 @@ template <typename DispatchTaskExecutor,
           typename CurrentTaskExecutor,
           typename Callable,
           typename OnFailureToDispatch = noop_operation>
-auto execute_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
-                                      CurrentTaskExecutor&  return_exec,
-                                      timer_manager&        timers,
-                                      Callable&&            callable,
-                                      OnFailureToDispatch&& on_failure = noop_operation{})
+[[nodiscard]] auto execute_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
+                                                    CurrentTaskExecutor&  return_exec,
+                                                    timer_manager&        timers,
+                                                    Callable&&            callable,
+                                                    OnFailureToDispatch&& on_failure = noop_operation{})
 {
   return detail::dispatch_and_continue_on_blocking<true>(dispatch_exec,
                                                          return_exec,
@@ -227,11 +227,11 @@ template <typename DispatchTaskExecutor,
           typename CurrentTaskExecutor,
           typename Callable,
           typename OnFailureToDispatch = noop_operation>
-auto defer_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
-                                    CurrentTaskExecutor&  return_exec,
-                                    timer_manager&        timers,
-                                    Callable&&            callable,
-                                    OnFailureToDispatch&& on_failure = noop_operation{})
+[[nodiscard]] auto defer_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
+                                                  CurrentTaskExecutor&  return_exec,
+                                                  timer_manager&        timers,
+                                                  Callable&&            callable,
+                                                  OnFailureToDispatch&& on_failure = noop_operation{})
 {
   return detail::dispatch_and_continue_on_blocking<false>(dispatch_exec,
                                                           return_exec,
