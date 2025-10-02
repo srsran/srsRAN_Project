@@ -23,12 +23,11 @@ namespace srsran {
 inline bool
 has_space_for_uci_pdu(const sched_result& result, rnti_t crnti, const scheduler_ue_expert_config& expert_cfg)
 {
-  // Check if we can fit the UCI in an existing PUSCH PDU for the same UE.
-  bool has_pusch = std::any_of(result.ul.puschs.begin(), result.ul.puschs.end(), [crnti](const ul_sched_info& grant) {
-    return grant.pusch_cfg.rnti == crnti;
-  });
-  if (has_pusch) {
-    return true;
+  // Avoid slots where PUSCH has already been scheduled, as the PUSCH could be occupying the PUCCH resources for this
+  // SR/CSI.
+  // Note: This will implicitly avoid that there are PUSCHs and PUCCH for the same UE in the same slot.
+  if (not result.ul.puschs.empty()) {
+    return false;
   }
 
   // Check if we can fit the UCI in an existing PUCCH PDU for the same UE.

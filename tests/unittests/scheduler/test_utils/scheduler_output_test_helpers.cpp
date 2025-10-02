@@ -191,7 +191,7 @@ std::vector<test_grant_info> srsran::get_ul_grants(const cell_configuration& cel
   for (const ul_sched_info& pusch : ul_res.puschs) {
     grants.emplace_back();
     grants.back().type  = test_grant_info::UE_UL;
-    grants.back().rnti  = rnti_t::INVALID_RNTI;
+    grants.back().rnti  = pusch.pusch_cfg.rnti;
     grants.back().grant = get_pusch_grant_info(pusch);
   }
 
@@ -210,13 +210,13 @@ std::vector<test_grant_info> srsran::get_ul_grants(const cell_configuration& cel
     const auto pucch_grants = get_pucch_grant_info(pucch);
     grants.emplace_back();
     grants.back().type  = test_grant_info::PUCCH;
-    grants.back().rnti  = rnti_t::INVALID_RNTI;
+    grants.back().rnti  = pucch.crnti;
     grants.back().grant = pucch_grants.first;
     if (pucch_grants.second.has_value()) {
       // Add a second resource for Frequency Hopping.
       grants.emplace_back();
       grants.back().type  = test_grant_info::PUCCH;
-      grants.back().rnti  = rnti_t::INVALID_RNTI;
+      grants.back().rnti  = pucch.crnti;
       grants.back().grant = *pucch_grants.second;
     }
   }

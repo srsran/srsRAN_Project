@@ -84,6 +84,8 @@ public:
     return srsran::find_ue_ul_pdcch(rnti, *last_sched_res_list[cell_idx]);
   }
 
+  const std::unordered_map<rnti_t, du_ue_index_t>& rnti_to_ue_index_mapping() const { return rnti_to_ue_index; }
+
   const unsigned                      tx_rx_delay;
   bool                                auto_uci       = false;
   bool                                auto_crc       = false;
