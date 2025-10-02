@@ -20,7 +20,7 @@ namespace srsran {
 
 class executor_metrics_notifier;
 
-/// \brief Executor metrics backend
+/// \brief Executor metrics backend.
 ///
 /// This class is responsible for handling metrics produced by different executors.
 /// An executor registers itself in the backend by getting a unique metrics channel.

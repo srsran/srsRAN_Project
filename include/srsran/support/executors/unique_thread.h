@@ -236,6 +236,9 @@ public:
   /// Print to console the current thread priority.
   void print_priority();
 
+  /// Returns maximum number of threads supported by the application.
+  static unsigned get_max_nof_supported_threads();
+
   /// Add a new observer of created/destroyed threads.
   static void add_observer(std::unique_ptr<observer> observer);
 

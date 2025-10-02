@@ -16,7 +16,7 @@ using namespace srsran;
 void executor_metrics_channel::update(const executed_task_metrics& new_metrics)
 {
   unsigned thread_idx = get_thread_index();
-  srsran_assert(thread_idx < threads_metrics.size(), "Thread ID exceeds the size of per-thread metrics array");
+  report_error_if_not(thread_idx < threads_metrics.size(), "Thread ID exceeds the size of per-thread metrics array");
 
   auto& aggr_metrics = threads_metrics[thread_idx].temp_aggr_metrics;
 

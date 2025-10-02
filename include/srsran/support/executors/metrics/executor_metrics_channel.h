@@ -12,6 +12,7 @@
 
 #include "executor_metrics.h"
 #include "srsran/adt/lockfree_triple_buffer.h"
+#include "srsran/support/executors/unique_thread.h"
 #include "srsran/support/tracing/resource_usage.h"
 #include <chrono>
 #include <vector>
@@ -46,9 +47,6 @@ class executor_metrics_channel
     std::atomic<bool> reset_flag{false};
   };
 
-  /// Maximum number of threads supported by the application.
-  static constexpr size_t MAX_THREADS = 256;
-
 public:
   /// Metrics of an executed task.
   struct executed_task_metrics {
@@ -61,7 +59,9 @@ public:
 
   /// Constructor initializes internal storage for the maximum supported number of threads.
   explicit executor_metrics_channel(const std::string& name_) :
-    name(name_), threads_metrics(MAX_THREADS), last_tp(std::chrono::steady_clock::now())
+    name(name_),
+    threads_metrics(unique_thread::get_max_nof_supported_threads()),
+    last_tp(std::chrono::steady_clock::now())
   {
   }
 
