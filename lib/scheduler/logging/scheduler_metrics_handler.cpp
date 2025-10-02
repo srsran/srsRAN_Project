@@ -11,6 +11,7 @@
 #include "scheduler_metrics_handler.h"
 #include "../config/cell_configuration.h"
 #include "srsran/ran/resource_allocation/rb_bitmap.h"
+#include "srsran/ran/slot_point.h"
 #include "srsran/scheduler/result/sched_result.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 #include "srsran/srslog/srslog.h"
@@ -304,10 +305,11 @@ void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_p
   }
 }
 
-void cell_metrics_handler::handle_sr_indication(du_ue_index_t ue_index)
+void cell_metrics_handler::handle_sr_indication(du_ue_index_t ue_index, slot_point sr_slot)
 {
   if (ues.contains(ue_index)) {
-    auto& u = ues[ue_index];
+    auto& u             = ues[ue_index];
+    u.data.last_sr_slot = sr_slot;
     ++u.data.count_sr;
   }
 }
@@ -472,6 +474,13 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
     ue_metric_context& u = ues[it->second];
     u.data.ul_mcs += ul_grant.pusch_cfg.mcs_index.to_uint();
     u.last_ul_olla = ul_grant.context.olla_offset;
+    if (u.data.last_sr_slot.valid()) {
+      unsigned sr_to_pusch_delay = last_slot_tx - u.data.last_sr_slot;
+      u.data.sum_sr_to_pusch_delay_slots += sr_to_pusch_delay;
+      u.data.max_sr_to_pusch_delay_slots = std::max(sr_to_pusch_delay, u.data.max_sr_to_pusch_delay_slots);
+      u.data.last_sr_slot.clear();
+      u.data.count_handled_sr++;
+    }
     ++u.data.nof_puschs;
   }
 
@@ -583,15 +592,20 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
     ret.avg_crc_delay_ms = convert_slots_to_ms(data.sum_crc_delay_slots) / static_cast<float>(data.count_crc_pdus);
     ret.max_crc_delay_ms = convert_slots_to_ms(data.max_crc_delay_slots);
   }
+  if (data.count_pusch_harq_pdus > 0) {
+    ret.avg_pusch_harq_delay_ms =
+        convert_slots_to_ms(data.sum_pusch_harq_delay_slots) / static_cast<float>(data.count_pusch_harq_pdus);
+    ret.max_pusch_harq_delay_ms = convert_slots_to_ms(data.max_pusch_harq_delay_slots);
+  }
   if (data.count_pucch_harq_pdus > 0) {
     ret.avg_pucch_harq_delay_ms =
         convert_slots_to_ms(data.sum_pucch_harq_delay_slots) / static_cast<float>(data.count_pucch_harq_pdus);
     ret.max_pucch_harq_delay_ms = convert_slots_to_ms(data.max_pucch_harq_delay_slots);
   }
-  if (data.count_pusch_harq_pdus > 0) {
-    ret.avg_pusch_harq_delay_ms =
-        convert_slots_to_ms(data.sum_pusch_harq_delay_slots) / static_cast<float>(data.count_pusch_harq_pdus);
-    ret.max_pusch_harq_delay_ms = convert_slots_to_ms(data.max_pusch_harq_delay_slots);
+  if (data.count_handled_sr > 0) {
+    ret.avg_sr_to_pusch_delay_ms =
+        convert_slots_to_ms(data.sum_sr_to_pusch_delay_slots) / static_cast<float>(data.count_handled_sr);
+    ret.max_sr_to_pusch_delay_ms = convert_slots_to_ms(data.max_sr_to_pusch_delay_slots);
   }
 
   // Reset UE stats metrics on every report.

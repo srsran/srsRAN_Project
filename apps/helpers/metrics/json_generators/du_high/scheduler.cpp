@@ -98,6 +98,8 @@ void to_json(nlohmann::json& json, const scheduler_ue_metrics& metrics)
   json["max_pusch_harq_delay"]           = metrics.max_pusch_harq_delay_ms;
   json["avg_pucch_harq_delay"]           = metrics.avg_pucch_harq_delay_ms;
   json["max_pucch_harq_delay"]           = metrics.max_pucch_harq_delay_ms;
+  json["avg_sr_to_pusch_delay"]          = metrics.avg_sr_to_pusch_delay_ms;
+  json["max_sr_to_pusch_delay"]          = metrics.max_sr_to_pusch_delay_ms;
 }
 
 void to_json(nlohmann::json& json, const scheduler_cell_metrics& metrics)

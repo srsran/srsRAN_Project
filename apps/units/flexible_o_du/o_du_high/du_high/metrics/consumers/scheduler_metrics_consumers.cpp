@@ -165,14 +165,15 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
   for (const auto& cell : report->cells) {
     fmt::memory_buffer buffer;
 
-    unsigned sum_dl_bitrate_kbps = 0;
-    unsigned sum_ul_bitrate_kbps = 0;
-    unsigned sum_pdsch_rbs       = 0;
-    unsigned sum_pusch_rbs       = 0;
-    float    max_crc_delay       = std::numeric_limits<float>::min();
-    float    max_ce_delay        = std::numeric_limits<float>::min();
-    float    max_pucch_delay     = std::numeric_limits<float>::min();
-    float    max_pusch_delay     = std::numeric_limits<float>::min();
+    unsigned sum_dl_bitrate_kbps   = 0;
+    unsigned sum_ul_bitrate_kbps   = 0;
+    unsigned sum_pdsch_rbs         = 0;
+    unsigned sum_pusch_rbs         = 0;
+    float    max_crc_delay         = std::numeric_limits<float>::min();
+    float    max_ce_delay          = std::numeric_limits<float>::min();
+    float    max_pucch_delay       = std::numeric_limits<float>::min();
+    float    max_pusch_delay       = std::numeric_limits<float>::min();
+    float    max_sr_to_pusch_delay = std::numeric_limits<float>::min();
     for (const auto& ue : cell.ue_metrics) {
       sum_dl_bitrate_kbps += ue.dl_brate_kbps;
       sum_ul_bitrate_kbps += ue.ul_brate_kbps;
@@ -184,11 +185,14 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
       if (ue.max_ce_delay_ms.has_value()) {
         max_ce_delay = std::max(max_ce_delay, ue.max_ce_delay_ms.value());
       }
+      if (ue.max_pusch_harq_delay_ms.has_value()) {
+        max_pusch_delay = std::max(max_pusch_delay, ue.max_pusch_harq_delay_ms.value());
+      }
       if (ue.max_pucch_harq_delay_ms.has_value()) {
         max_pucch_delay = std::max(max_pucch_delay, ue.max_pucch_harq_delay_ms.value());
       }
-      if (ue.max_pusch_harq_delay_ms.has_value()) {
-        max_pusch_delay = std::max(max_pusch_delay, ue.max_pusch_harq_delay_ms.value());
+      if (ue.max_sr_to_pusch_delay_ms.has_value()) {
+        max_sr_to_pusch_delay = std::max(max_pusch_delay, ue.max_sr_to_pusch_delay_ms.value());
       }
     }
 
@@ -235,6 +239,9 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
     }
     if (max_pusch_delay != std::numeric_limits<float>::min()) {
       fmt::format_to(std::back_inserter(buffer), " max_pusch_harq_delay={}ms", max_pusch_delay);
+    }
+    if (max_sr_to_pusch_delay != std::numeric_limits<float>::min()) {
+      fmt::format_to(std::back_inserter(buffer), " max_sr_to_pusch_delay={}ms", max_sr_to_pusch_delay);
     }
     fmt::format_to(
         std::back_inserter(buffer), " avg_prach_delay={:.3}", format_value_or(cell.avg_prach_delay_slots, "n/a"));
@@ -363,6 +370,8 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
       fmt::format_to(out_it, " max_pusch_harq_delay={:.3}", format_unit_or(ue.max_pusch_harq_delay_ms, "ms", "n/a"));
       fmt::format_to(out_it, " avg_pucch_harq_delay={:.3}", format_unit_or(ue.avg_pucch_harq_delay_ms, "ms", "n/a"));
       fmt::format_to(out_it, " max_pucch_harq_delay={:.3}", format_unit_or(ue.max_pucch_harq_delay_ms, "ms", "n/a"));
+      fmt::format_to(out_it, " avg_sr_to_pusch_delay={:.3}", format_unit_or(ue.avg_sr_to_pusch_delay_ms, "ms", "n/a"));
+      fmt::format_to(out_it, " max_sr_to_pusch_delay={:.3}", format_unit_or(ue.max_sr_to_pusch_delay_ms, "ms", "n/a"));
 
       log_chan("{}", to_c_str(buffer));
       buffer.clear();
