@@ -14,7 +14,7 @@
 using namespace srsran;
 using namespace srsran::ldpc;
 
-void ldpc_encoder_impl::init(const codeblock_metadata::tb_common_metadata& cfg)
+void ldpc_encoder_impl::init(const configuration& cfg)
 {
   uint8_t  pos  = get_lifting_size_position(cfg.lifting_size);
   unsigned skip = (cfg.base_graph == ldpc_base_graph_type::BG2) ? NOF_LIFTING_SIZES : 0;
@@ -29,8 +29,7 @@ void ldpc_encoder_impl::init(const codeblock_metadata::tb_common_metadata& cfg)
   select_strategy();
 }
 
-ldpc_encoder_buffer& ldpc_encoder_impl::encode(const bit_buffer&                             input,
-                                               const codeblock_metadata::tb_common_metadata& cfg)
+ldpc_encoder_buffer& ldpc_encoder_impl::encode(const bit_buffer& input, const configuration& cfg)
 {
   init(cfg);
 
