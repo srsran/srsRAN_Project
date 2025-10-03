@@ -235,6 +235,12 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
           " pusch_rbs_per_tdd_slot_idx=[{}]",
           fmt::join(cell.pusch_prbs_used_per_tdd_slot_idx.begin(), cell.pusch_prbs_used_per_tdd_slot_idx.end(), ", "));
     }
+    if (cell.pdsch_prbs_used_per_tdd_slot_idx.size()) {
+      fmt::format_to(
+          std::back_inserter(buffer),
+          " pdsch_rbs_per_tdd_slot_idx=[{}]",
+          fmt::join(cell.pdsch_prbs_used_per_tdd_slot_idx.begin(), cell.pdsch_prbs_used_per_tdd_slot_idx.end(), ", "));
+    }
     if (max_crc_delay != std::numeric_limits<float>::min()) {
       fmt::format_to(std::back_inserter(buffer), " max_crc_delay={}ms", max_crc_delay);
     }

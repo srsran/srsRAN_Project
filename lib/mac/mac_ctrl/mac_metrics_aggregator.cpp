@@ -40,6 +40,7 @@ static full_cell_report report_preinit(unsigned max_ue_events = 64U, unsigned td
   const unsigned ue_event_capacity = std::min(max_ue_events, MAX_NOF_DU_UES * 3U);
   report.sched.events.reserve(ue_event_capacity);
   report.sched.pusch_prbs_used_per_tdd_slot_idx.reserve(tdd_period_slots);
+  report.sched.pdsch_prbs_used_per_tdd_slot_idx.reserve(tdd_period_slots);
   return report;
 }
 
@@ -150,6 +151,7 @@ private:
       report.sched.ue_metrics.clear();
       report.sched.events.clear();
       report.sched.pusch_prbs_used_per_tdd_slot_idx.clear();
+      report.sched.pdsch_prbs_used_per_tdd_slot_idx.clear();
       report.mac.reset();
     }
   };

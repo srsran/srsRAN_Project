@@ -62,6 +62,7 @@ cell_metrics_handler::cell_metrics_handler(
   unsigned tdd_period_slots =
       cell_cfg.tdd_cfg_common.has_value() ? nof_slots_per_tdd_period(*cell_cfg.tdd_cfg_common) : 0U;
   ul_prbs_used_per_tdd_slot_idx.resize(tdd_period_slots);
+  dl_prbs_used_per_tdd_slot_idx.resize(tdd_period_slots);
 }
 
 cell_metrics_handler::~cell_metrics_handler() {}
@@ -425,12 +426,18 @@ void cell_metrics_handler::report_metrics()
   for (unsigned rb_count : ul_prbs_used_per_tdd_slot_idx) {
     next_report->pusch_prbs_used_per_tdd_slot_idx.push_back(rb_count);
   }
+  for (unsigned rb_count : dl_prbs_used_per_tdd_slot_idx) {
+    next_report->pdsch_prbs_used_per_tdd_slot_idx.push_back(rb_count);
+  }
 
   // Reset cell-wide metric counters.
   data = {};
 
   // Clear the PRB vectors for the next report.
   for (unsigned& rb_count : ul_prbs_used_per_tdd_slot_idx) {
+    rb_count = 0;
+  }
+  for (unsigned& rb_count : dl_prbs_used_per_tdd_slot_idx) {
     rb_count = 0;
   }
 
@@ -458,13 +465,19 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
       u.data.dl_mcs += cw.mcs_index.to_uint();
       ++u.data.nof_dl_cws;
     }
+
+    unsigned grant_prbs;
     if (dl_grant.pdsch_cfg.rbs.is_type0()) {
-      u.data.tot_dl_prbs_used += convert_rbgs_to_prbs(dl_grant.pdsch_cfg.rbs.type0(),
-                                                      {0, cell_cfg.nof_dl_prbs},
-                                                      get_nominal_rbg_size(cell_cfg.nof_dl_prbs, true))
-                                     .count();
-    } else if (dl_grant.pdsch_cfg.rbs.is_type1()) {
-      u.data.tot_dl_prbs_used += (dl_grant.pdsch_cfg.rbs.type1().length());
+      grant_prbs = convert_rbgs_to_prbs(dl_grant.pdsch_cfg.rbs.type0(),
+                                        {0, cell_cfg.nof_dl_prbs},
+                                        get_nominal_rbg_size(cell_cfg.nof_dl_prbs, true))
+                       .count();
+    } else {
+      grant_prbs = (dl_grant.pdsch_cfg.rbs.type1().length());
+    }
+    u.data.tot_dl_prbs_used += grant_prbs;
+    if (dl_prbs_used_per_tdd_slot_idx.size()) {
+      dl_prbs_used_per_tdd_slot_idx[last_slot_tx.count() % dl_prbs_used_per_tdd_slot_idx.size()] += grant_prbs;
     }
     u.last_dl_olla = dl_grant.context.olla_offset;
   }

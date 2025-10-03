@@ -169,6 +169,7 @@ struct scheduler_cell_metrics {
   std::array<unsigned, latency_hist_bins> latency_histogram{0};
   /// Number of RBs used for PUSCH per slot index in the TDD pattern.
   std::vector<unsigned>             pusch_prbs_used_per_tdd_slot_idx;
+  std::vector<unsigned>             pdsch_prbs_used_per_tdd_slot_idx;
   std::vector<scheduler_cell_event> events;
   std::vector<scheduler_ue_metrics> ue_metrics;
 };

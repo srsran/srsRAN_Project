@@ -121,6 +121,9 @@ void to_json(nlohmann::json& json, const scheduler_cell_metrics& metrics)
   if (metrics.pusch_prbs_used_per_tdd_slot_idx.size()) {
     cell_json["pusch_prbs_used_per_tdd_slot_idx"] = metrics.pusch_prbs_used_per_tdd_slot_idx;
   }
+  if (metrics.pdsch_prbs_used_per_tdd_slot_idx.size()) {
+    cell_json["pdsch_prbs_used_per_tdd_slot_idx"] = metrics.pdsch_prbs_used_per_tdd_slot_idx;
+  }
 
   if (!metrics.ue_metrics.empty()) {
     json["ue_list"] = metrics.ue_metrics;

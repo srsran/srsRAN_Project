@@ -165,6 +165,7 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
   slotted_id_vector<du_ue_index_t, ue_metric_context> ues;
   flat_map<rnti_t, du_ue_index_t>                     rnti_to_ue_index_lookup;
   std::vector<unsigned>                               ul_prbs_used_per_tdd_slot_idx;
+  std::vector<unsigned>                               dl_prbs_used_per_tdd_slot_idx;
 
   /// Metrics tracked that are reset on every report.
   non_persistent_data data;
