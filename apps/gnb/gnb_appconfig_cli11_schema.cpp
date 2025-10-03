@@ -67,7 +67,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   configure_cli11_with_worker_manager_appconfig_schema(app, gnb_cfg.expert_execution_cfg);
 
   // Metrics section.
-  CLI::App* metrics_subcmd = app.add_subcommand("metrics", "Metrics configuration")->configurable();
+  CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
   configure_cli11_metrics_args(*metrics_subcmd, gnb_cfg.metrics_cfg);
   app_services::configure_cli11_with_executor_metrics_appconfig_schema(app, gnb_cfg.metrics_cfg.executors_metrics_cfg);
   app_services::configure_cli11_with_app_resource_usage_config_schema(app, gnb_cfg.metrics_cfg.rusage_config);

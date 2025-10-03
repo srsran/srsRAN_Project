@@ -69,7 +69,7 @@ void srsran::configure_cli11_with_du_appconfig_schema(CLI::App& app, du_appconfi
   configure_cli11_f1u_args(*f1u_subcmd, du_cfg.f1u_cfg);
 
   // Metrics section.
-  CLI::App* metrics_subcmd = app.add_subcommand("metrics", "Metrics configuration")->configurable();
+  CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
   configure_cli11_metrics_args(*metrics_subcmd, du_cfg.metrics_cfg);
   app_services::configure_cli11_with_app_resource_usage_config_schema(app, du_cfg.metrics_cfg.rusage_config);
   app_services::configure_cli11_with_metrics_appconfig_schema(app, du_cfg.metrics_cfg.metrics_service_cfg);

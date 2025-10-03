@@ -11,6 +11,7 @@
 #include "app_execution_metrics_builder.h"
 #include "app_execution_metrics_consumer.h"
 #include "app_execution_metrics_producer.h"
+#include "apps/helpers/metrics/metrics_config.h"
 #include "apps/helpers/metrics/metrics_helpers.h"
 
 using namespace srsran;

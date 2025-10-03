@@ -352,6 +352,8 @@ int main(int argc, char** argv)
 
   workers.add_execution_metrics_to_metrics_service(
       app_metrics, du_cfg.metrics_cfg.executors_metrics_cfg.common_metrics_cfg, metrics_notifier_forwarder);
+  buffer_pool_service.add_metrics_to_metrics_service(
+      app_metrics, du_cfg.buffer_pool_config.metrics_config, metrics_notifier_forwarder);
 
   o_du_unit_dependencies du_dependencies;
   du_dependencies.workers            = &workers;

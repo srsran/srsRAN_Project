@@ -363,6 +363,8 @@ int main(int argc, char** argv)
 
   workers.add_execution_metrics_to_metrics_service(
       metrics_configs, cu_up_cfg.metrics_cfg.executors_metrics_cfg.common_metrics_cfg, metrics_notifier_forwarder);
+  buffer_pool_service.add_metrics_to_metrics_service(
+      metrics_configs, cu_up_cfg.buffer_pool_config.metrics_config, metrics_notifier_forwarder);
 
   // TODO: Create console helper object for commands and metrics printing.
 

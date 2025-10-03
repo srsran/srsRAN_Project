@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "apps/helpers/metrics/metrics_config.h"
 #include "apps/services/metrics/metrics_config.h"
 
 namespace srsran {
