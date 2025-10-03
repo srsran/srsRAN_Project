@@ -17,11 +17,12 @@
 
 namespace srsran {
 
-/// Asynchronous task that sequentially runs other enqueued asynchronous tasks
+/// Asynchronous task that sequentially runs other enqueued asynchronous tasks.
 class fifo_async_task_scheduler
 {
 public:
-  fifo_async_task_scheduler(size_t queue_size) : queue(queue_size) { run(); }
+  explicit fifo_async_task_scheduler(size_t queue_size) : queue(queue_size) { run(); }
+
   fifo_async_task_scheduler(const fifo_async_task_scheduler&)            = delete;
   fifo_async_task_scheduler& operator=(const fifo_async_task_scheduler&) = delete;
 
@@ -47,7 +48,7 @@ public:
 
   eager_async_task<void> request_stop()
   {
-    // Enqueue task in case main loop is waiting for new procedure
+    // Enqueue task in case main loop is waiting for new procedure.
     running = false;
     queue.clear();
     queue.try_push(launch_async([](coro_context<async_task<void>>& ctx) {
@@ -69,12 +70,12 @@ private:
     loop_task = launch_async([this](coro_context<eager_async_task<void>>& ctx) {
       CORO_BEGIN(ctx);
 
-      // runs until requested to stop.
+      // Runs until requested to stop.
       while (running) {
         // Wait for new procedure to be enqueued.
         CORO_AWAIT_VALUE(next_task, queue);
 
-        // Await for popped task to complete
+        // Await for popped task to complete.
         CORO_AWAIT(std::move(next_task));
       }
 
@@ -92,11 +93,6 @@ private:
 /// when the former is complete.
 ///
 /// This function is useful to synchronize two procedures running in separate task schedulers.
-/// \tparam Callback
-/// \tparam ReturnType
-/// \param task_sched
-/// \param task_to_run
-/// \return
 template <typename Callback,
           typename ReturnType = detail::function_return_t<decltype(&std::decay_t<Callback>::operator())>,
           std::enable_if_t<std::is_same_v<ReturnType, void>, int> = 0>
@@ -184,15 +180,15 @@ async_task<std::optional<ReturnType>> when_completed_on_task_sched(fifo_async_ta
   return launch_async<task_offloader>(task_sched, std::forward<Callback>(task_to_run));
 }
 
-/// \brief Launches a coroutine on the given task sequencer and returns an async task that is only
-/// complete when the former is complete.
+/// \brief Launches a coroutine on the given task sequencer and returns an async task that is only complete when the
+/// former is complete.
 ///
 /// This function is useful to synchronize two procedures running in separate task schedulers.
-/// \tparam Routine Type of the routine to run in the provided task scheduler.
-/// \tparam ReturnType Return type of coroutine's operator. Must be void.
-/// \param task_sched Task scheduler to which switch the execution too.
+/// \tparam Routine       Type of the routine to run in the provided task scheduler.
+/// \tparam ReturnType    Return type of coroutine's operator. Must be void.
+/// \param task_sched     Task scheduler to which switch the execution too.
 /// \param routine_to_run Routine to run in the task scheduler.
-/// \return Returns and async_task<bool> that can be awaited on.
+/// \return               Returns and async_task<bool> that can be awaited on.
 template <typename Routine,
           typename ReturnType = detail::function_return_t<decltype(&std::decay_t<Routine>::operator())>,
           std::enable_if_t<std::is_same_v<ReturnType, void>, int> = 0>
@@ -238,4 +234,5 @@ async_task<bool> when_coroutine_completed_on_task_sched(fifo_async_task_schedule
 
   return launch_async<task_offloader>(task_sched, std::forward<Routine>(routine_to_run));
 }
+
 } // namespace srsran

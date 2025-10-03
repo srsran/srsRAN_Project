@@ -16,10 +16,9 @@
 #include <vector>
 
 namespace srsran {
-
 namespace detail {
 
-/// Memory chunk to store object. It uses small object optimization
+/// Memory chunk to store objects using small object optimization.
 template <std::size_t SmallBufferSize, std::size_t SmallBufferAlignment = alignof(std::max_align_t)>
 struct small_memory_buffer_t {
   ~small_memory_buffer_t() { srsran_sanity_check(empty(), "Removing small memory buffer without deleting object"); }
@@ -44,7 +43,7 @@ struct small_memory_buffer_t {
     new (mem_ptr) Object(std::forward<Args>(args)...);
   }
 
-  /// Clear memory buffer
+  /// Clear memory buffer.
   template <typename Object>
   void clear()
   {
@@ -52,7 +51,7 @@ struct small_memory_buffer_t {
     mem_ptr = nullptr;
   }
 
-  /// Checks whether memory buffer has no object
+  /// Checks whether memory buffer has no object.
   bool empty() const { return mem_ptr == nullptr; }
 
 private:
@@ -61,11 +60,11 @@ private:
   void*                                                         mem_ptr = nullptr;
 };
 
-/// Metafunction to get Awaiter Type from Awaitable
+/// Metafunction to get Awaiter Type from Awaitable.
 template <typename Awaitable>
 using awaiter_t = decltype(std::declval<Awaitable>().get_awaiter());
 
-/// Memory chunk to store Awaitable (value or reference) + Awaiter
+/// Memory chunk to store Awaitable (value or reference) + Awaiter.
 template <std::size_t InlineBuffer>
 struct awaiter_memory_storage_t {
   template <typename Awaitable>
@@ -74,6 +73,7 @@ struct awaiter_memory_storage_t {
     using awaiter_type   = awaiter_t<Awaitable>;
 
     explicit stored_awaiter(Awaitable a) : awaitable(std::forward<Awaitable>(a)), awaiter(awaitable.get_awaiter()) {}
+
     stored_awaiter(const stored_awaiter<Awaitable>&)            = delete;
     stored_awaiter(stored_awaiter<Awaitable>&&)                 = delete;
     stored_awaiter& operator=(const stored_awaiter<Awaitable>&) = delete;
@@ -85,42 +85,42 @@ struct awaiter_memory_storage_t {
 
   ~awaiter_memory_storage_t() { srsran_assert(empty(), "Emptying non-destroyed object"); }
 
-  /// Get stored awaiter object
+  /// Get stored awaiter object.
   template <typename Awaitable>
   stored_awaiter<Awaitable>* get_storage()
   {
     return storage.template get<stored_awaiter<Awaitable>>();
   }
 
-  /// Storage Awaitable and respective awaiter
+  /// Storage Awaitable and respective awaiter.
   template <typename Awaitable>
   void emplace(Awaitable&& a)
   {
     storage.template emplace<stored_awaiter<Awaitable>>(std::forward<Awaitable>(a));
   }
 
-  /// Clear memory buffer
+  /// Clear memory buffer.
   template <typename Awaitable>
   void clear()
   {
     storage.template clear<stored_awaiter<Awaitable>>();
   }
 
-  /// Get stored awaiter reference
+  /// Get stored awaiter reference.
   template <typename Awaitable>
   typename stored_awaiter<Awaitable>::awaiter_type& get_awaiter()
   {
     return get_storage<Awaitable>()->awaiter;
   }
 
-  /// Get stored awaitable reference
+  /// Get stored awaitable reference.
   template <typename Awaitable>
   typename stored_awaiter<Awaitable>::awaitable_type& get_awaitable()
   {
     return get_storage<Awaitable>()->awaitable;
   }
 
-  /// Checks whether awaiter is stored in memory buffer
+  /// Checks whether awaiter is stored in memory buffer.
   bool empty() const { return storage.empty(); }
 
 private:
@@ -128,5 +128,4 @@ private:
 };
 
 } // namespace detail
-
 } // namespace srsran

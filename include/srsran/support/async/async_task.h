@@ -33,7 +33,7 @@ public:
 
       void await_resume() {}
 
-      /// Points to itself as an awaiter
+      /// Points to itself as an awaiter.
       final_awaiter& get_awaiter() { return *this; }
     };
 
@@ -76,7 +76,7 @@ public:
 private:
   friend class detail::common_task_crtp<async_task<R>, R>;
 
-  unique_coroutine<promise_type> handle;
+  detail::unique_coroutine<promise_type> handle;
 };
 
 } // namespace srsran

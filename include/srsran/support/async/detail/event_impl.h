@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/support/async/coroutine.h"
 #include <utility>
 
 namespace srsran {
@@ -30,13 +29,15 @@ void flush_awaiter_list(AwaiterType* current)
 /// \brief Base class implementation with functionality that is common to manual_event<R> and manual_event_flag.
 ///
 /// Awaiters for the event are stored in an intrusive linked list, where each awaiter is stored in the embedded memory
-/// buffer of the coroutine frame
+/// buffer of the coroutine frame.
 class manual_event_common
 {
 public:
   struct awaiter_common {
     explicit awaiter_common(manual_event_common& event_) : event(&event_) {}
+
     bool await_ready() const { return event->is_set(); }
+
     void await_suspend(coro_handle<> c)
     {
       // Store suspending coroutine.
@@ -69,9 +70,9 @@ public:
 
 protected:
   /// Event state. Can be in 3 states:
-  /// - this - event is set
-  /// - nullptr - event is not set and with no awaiters pending
-  /// - other - state is not set. Points to first element in linked list of awaiters
+  /// - this - event is set.
+  /// - nullptr - event is not set and with no awaiters pending.
+  /// - other - state is not set. Points to first element in linked list of awaiters.
   void* state = nullptr;
 
   /// Triggers all awaiting coroutines after event is set.
@@ -86,5 +87,4 @@ protected:
 };
 
 } // namespace detail
-
 } // namespace srsran

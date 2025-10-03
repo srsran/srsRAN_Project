@@ -14,6 +14,7 @@
 #include <utility>
 
 namespace srsran {
+namespace detail {
 
 /// Handle to coroutine object that ensures safe move ctor, move assignment and destruction.
 template <typename Promise>
@@ -24,6 +25,7 @@ public:
 
   unique_coroutine() = default;
   explicit unique_coroutine(coro_handle<promise_type> cb) : handle(cb) {}
+
   unique_coroutine(const unique_coroutine&)            = delete;
   unique_coroutine& operator=(const unique_coroutine&) = delete;
   unique_coroutine(unique_coroutine&& other) noexcept : handle(std::exchange(other.handle, nullptr)) {}
@@ -35,6 +37,7 @@ public:
     handle = std::exchange(other.handle, nullptr);
     return *this;
   }
+
   ~unique_coroutine()
   {
     if (not handle.empty()) {
@@ -55,4 +58,5 @@ private:
   coro_handle<promise_type> handle;
 };
 
+} // namespace detail
 } // namespace srsran

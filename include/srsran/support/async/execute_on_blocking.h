@@ -15,7 +15,6 @@
 #include "srsran/support/timers.h"
 
 namespace srsran {
-
 namespace detail {
 
 template <bool IsExecute, typename TaskExecutor, typename OnFailureToDispatch>
@@ -86,7 +85,6 @@ auto dispatch_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
 
     if constexpr (std::is_same_v<return_type, void>) {
       // CASE: callable has the signature void().
-
       return launch_async([&return_exec,
                            &dispatch_exec,
                            task       = std::forward<Callable>(callable),
@@ -105,10 +103,8 @@ auto dispatch_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
 
         CORO_RETURN();
       });
-
     } else {
       // CASE: callable has the signature R(), where R is the non-void "return_type".
-
       return launch_async([&return_exec,
                            &dispatch_exec,
                            task       = std::forward<Callable>(callable),
@@ -135,7 +131,6 @@ auto dispatch_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
 
     if constexpr (std::is_same_v<return_type, void>) {
       // CASE: callback is an awaitable with "return_type" as void.
-
       return launch_async([&return_exec,
                            &dispatch_exec,
                            task       = std::forward<Callable>(callable),
@@ -156,7 +151,6 @@ auto dispatch_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
       });
     } else {
       // CASE: callback is an awaitable with "return_type" non-void.
-
       return launch_async([&return_exec,
                            &dispatch_exec,
                            task       = std::forward<Callable>(callable),
@@ -184,6 +178,7 @@ auto dispatch_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
 
 /// \brief Returns an awaitable that resumes the suspended coroutine in a different execution context. If the call
 /// to execute fails, the awaitable yields and will retry the dispatch at a later point, until it succeeds.
+///
 /// \param[in] exec Executor used to dispatch coroutine to a new execution context.
 /// \param[in] timers Timer service used to handle reattempts to dispatch task to new execution context.
 /// \param[in] on_failure Callback invoked in case the dispatch to executor fails at first attempt.
@@ -195,8 +190,9 @@ execute_on_blocking(TaskExecutor& exec, timer_manager& timers, OnFailureToDispat
       exec, timers, std::forward<OnFailureToDispatch>(on_failure));
 }
 
-/// \brief Returns an awaitable that resumes the suspended coroutine in a different execution context. If the call
-/// to defer fails, the awaitable yields and will retry the dispatch at a later point, until it succeeds.
+/// \brief Returns an awaitable that resumes the suspended coroutine in a different execution context. If the call to
+/// defer fails, the awaitable yields and will retry the dispatch at a later point, until it succeeds.
+///
 /// \param[in] exec Executor used to dispatch coroutine to a new execution context.
 /// \param[in] timers Timer service used to handle reattempts to dispatch task to new execution context.
 /// \param[in] on_failure Callback invoked in case the dispatch to executor fails at first attempt.
@@ -208,8 +204,8 @@ defer_on_blocking(TaskExecutor& exec, timer_manager& timers, OnFailureToDispatch
       exec, timers, std::forward<OnFailureToDispatch>(on_failure));
 }
 
-/// \brief Returns an async_task<ReturnType> that runs a given invocable task in a \c dispatch_exec executor, and once
-/// the task is complete, it resumes the suspended coroutine in a \c return_exec executor.
+/// Returns an async_task<ReturnType> that runs a given invocable task in a \c dispatch_exec executor, and once the task
+/// is complete, it resumes the suspended coroutine in a \c return_exec executor.
 template <typename DispatchTaskExecutor,
           typename CurrentTaskExecutor,
           typename Callable,
@@ -226,6 +222,7 @@ auto execute_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
                                                          std::forward<Callable>(callable),
                                                          std::forward<OnFailureToDispatch>(on_failure));
 }
+
 template <typename DispatchTaskExecutor,
           typename CurrentTaskExecutor,
           typename Callable,
