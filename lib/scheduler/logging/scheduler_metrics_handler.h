@@ -37,13 +37,12 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
   struct ue_metric_context {
     /// \brief In this struct we store all the metadata that is reset at every report.
     struct non_persistent_data {
-      unsigned   count_uci_harq_acks   = 0;
-      unsigned   count_uci_harqs       = 0;
-      unsigned   count_crc_acks        = 0;
-      unsigned   count_crc_pdus        = 0;
-      unsigned   count_pucch_harq_pdus = 0;
-      unsigned   count_pusch_harq_pdus = 0;
-      slot_point last_sr_slot;
+      unsigned   count_uci_harq_acks            = 0;
+      unsigned   count_uci_harqs                = 0;
+      unsigned   count_crc_acks                 = 0;
+      unsigned   count_crc_pdus                 = 0;
+      unsigned   count_pucch_harq_pdus          = 0;
+      unsigned   count_pusch_harq_pdus          = 0;
       unsigned   count_sr                       = 0;
       unsigned   count_handled_sr               = 0;
       unsigned   dl_mcs                         = 0;
@@ -76,6 +75,11 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
       unsigned   sum_ul_ce_delay_slots          = 0;
       unsigned   max_ul_ce_delay_slots          = 0;
       unsigned   nof_ul_ces                     = 0;
+      slot_point last_sr_slot;
+      slot_point last_pusch_slot;
+      slot_point last_pdsch_slot;
+      unsigned   max_pusch_distance_slots = 0;
+      unsigned   max_pdsch_distance_slots = 0;
       /// TA statistics over the metrics report interval, in seconds.
       sample_statistics<float> ta;
       /// PUSCH TA statistics over the metrics report interval, in seconds.

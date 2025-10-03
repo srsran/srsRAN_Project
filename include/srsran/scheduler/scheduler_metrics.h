@@ -87,9 +87,11 @@ struct scheduler_ue_metrics {
   std::optional<float> avg_sr_to_pusch_delay_ms;
   std::optional<float> max_sr_to_pusch_delay_ms;
   /// @}
-  std::optional<float> last_dl_olla;
-  std::optional<float> last_ul_olla;
-  std::optional<int>   last_phr;
+  std::optional<float>    last_dl_olla;
+  std::optional<float>    last_ul_olla;
+  std::optional<int>      last_phr;
+  std::optional<unsigned> max_pdsch_distance_ms;
+  std::optional<unsigned> max_pusch_distance_ms;
   /// Time advance statistics in seconds.
   sample_statistics<float> ta_stats;
   sample_statistics<float> pusch_ta_stats;

@@ -84,6 +84,8 @@ void to_json(nlohmann::json& json, const scheduler_ue_metrics& metrics)
   json["ul_nof_ok"]                      = metrics.ul_nof_ok;
   json["ul_nof_nok"]                     = metrics.ul_nof_nok;
   json["last_phr"]                       = metrics.last_phr;
+  json["max_pusch_distance"]             = metrics.max_pusch_distance_ms;
+  json["max_pdsch_distance"]             = metrics.max_pdsch_distance_ms;
   json["bsr"]                            = metrics.bsr;
   json["nof_pucch_f0f1_invalid_harqs"]   = metrics.nof_pucch_f0f1_invalid_harqs;
   json["nof_pucch_f2f3f4_invalid_harqs"] = metrics.nof_pucch_f2f3f4_invalid_harqs;

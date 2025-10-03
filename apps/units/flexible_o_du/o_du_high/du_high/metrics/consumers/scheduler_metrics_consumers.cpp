@@ -375,6 +375,8 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
         fmt::format_to(out_it, " srs_ta=n/a");
       }
       fmt::format_to(out_it, " last_phr={}", format_value_or(ue.last_phr, "n/a"));
+      fmt::format_to(out_it, " max_pdsch_distance={}", format_unit_or(ue.max_pdsch_distance_ms, "ms", "n/a"));
+      fmt::format_to(out_it, " max_pusch_distance={}", format_unit_or(ue.max_pusch_distance_ms, "ms", "n/a"));
       fmt::format_to(out_it, " avg_ul_ce_delay={:.3}", format_unit_or(ue.avg_ce_delay_ms, "ms", "n/a"));
       fmt::format_to(out_it, " max_ul_ce_delay={:.3}", format_unit_or(ue.max_ce_delay_ms, "ms", "n/a"));
       fmt::format_to(out_it, " avg_crc_delay={:.3}", format_unit_or(ue.avg_crc_delay_ms, "ms", "n/a"));

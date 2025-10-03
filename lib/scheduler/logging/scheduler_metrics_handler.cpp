@@ -480,6 +480,11 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
       dl_prbs_used_per_tdd_slot_idx[last_slot_tx.count() % dl_prbs_used_per_tdd_slot_idx.size()] += grant_prbs;
     }
     u.last_dl_olla = dl_grant.context.olla_offset;
+    if (u.data.last_pdsch_slot.valid()) {
+      u.data.max_pdsch_distance_slots =
+          std::max(static_cast<unsigned>(last_slot_tx - u.data.last_pdsch_slot), u.data.max_pdsch_distance_slots);
+    }
+    u.data.last_pdsch_slot = last_slot_tx;
   }
 
   data.nof_ue_pusch_grants += slot_result.ul.puschs.size();
@@ -513,6 +518,11 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
       u.data.count_handled_sr++;
     }
     ++u.data.nof_puschs;
+    if (u.data.last_pusch_slot.valid()) {
+      u.data.max_pusch_distance_slots =
+          std::max(static_cast<unsigned>(last_slot_tx - u.data.last_pusch_slot), u.data.max_pusch_distance_slots);
+    }
+    u.data.last_pusch_slot = last_slot_tx;
   }
 
   // PUCCH resource usage.
@@ -609,6 +619,8 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   ret.pucch_ta_stats                 = data.pucch_ta;
   ret.srs_ta_stats                   = data.srs_ta;
   ret.last_phr                       = last_phr;
+  ret.max_pdsch_distance_ms          = convert_slots_to_ms(data.max_pdsch_distance_slots);
+  ret.max_pusch_distance_ms          = convert_slots_to_ms(data.max_pusch_distance_slots);
   ret.nof_pucch_f0f1_invalid_harqs   = data.nof_pucch_f0f1_invalid_harqs;
   ret.nof_pucch_f2f3f4_invalid_harqs = data.nof_pucch_f2f3f4_invalid_harqs;
   ret.nof_pucch_f2f3f4_invalid_harqs = data.nof_pucch_f2f3f4_invalid_harqs;
