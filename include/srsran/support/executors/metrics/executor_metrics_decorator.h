@@ -30,7 +30,7 @@ class executor_metrics_decorator : public task_executor
   /// Maximum number of elements the pool can hold.
   static constexpr unsigned POOL_SIZE = 32 * 1024;
 
-  // Called before an allocated task is reclaimed by the pool, to ensure its capture is reset.
+  /// Called before an allocated task is reclaimed by the pool, to ensure its capture is reset.
   struct task_pool_resetter {
     void operator()(unique_task& t)
     {
@@ -146,12 +146,12 @@ private:
     metric_channel.update(metrics);
   }
 
-  std::string                      name;
-  ExecutorType                     exec;
-  executor_metrics_channel&        metric_channel;
-  srslog::basic_logger&            logger;
-  Tracer*                          tracer;
-  const std::string                trace_name;
+  std::string               name;
+  ExecutorType              exec;
+  executor_metrics_channel& metric_channel;
+  srslog::basic_logger&     logger;
+  Tracer*                   tracer;
+  const std::string         trace_name;
 
   /// Object pool of unique_tasks.
   task_pool_type task_pool;
