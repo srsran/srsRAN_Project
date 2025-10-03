@@ -36,9 +36,9 @@ public:
     // Create cell config with space for two PDCCHs in the SearchSpace#1.
     add_cell(sched_config_helper::make_default_sched_cell_configuration_request(builder_params));
 
-    srsran_assert(not this->cell_cfg_list[0].nzp_csi_rs_list.empty(),
+    srsran_assert(not this->cell_cfg(to_du_cell_index(0)).nzp_csi_rs_list.empty(),
                   "This test assumes a setup with NZP CSI-RS enabled");
-    srsran_assert(not this->cell_cfg_list[0].zp_csi_rs_list.empty(),
+    srsran_assert(not this->cell_cfg(to_du_cell_index(0)).zp_csi_rs_list.empty(),
                   "This test assumes a setup with ZP CSI-RS enabled");
 
     // Create a UE with a DRB active.
@@ -68,8 +68,7 @@ TEST_F(scheduler_conres_without_pdu_test, when_conres_ce_is_enqueued_and_no_msg4
   this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
 
   // Ensure the ConRes CE is scheduled without a Msg4 SDU.
-  ASSERT_TRUE(this->run_slot_until(
-      [this]() { return find_ue_pdsch(rnti, *this->last_sched_res_list[to_du_cell_index(0)]) != nullptr; }));
+  ASSERT_TRUE(this->run_slot_until([this]() { return find_ue_pdsch(rnti, *this->last_sched_result()) != nullptr; }));
 }
 
 // ------------------------------------------------------------------------------------------------------------------ //
@@ -116,7 +115,7 @@ TEST_P(scheduler_con_res_msg4_test,
   enqueue_random_number_of_rach_indications();
 
   // Run until all RARs are scheduled.
-  this->run_slot_until([this]() { return this->last_sched_res_list[to_du_cell_index(0)]->dl.rar_grants.empty(); });
+  this->run_slot_until([this]() { return this->last_sched_result()->dl.rar_grants.empty(); });
 
   // Enqueue ConRes CE.
   this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
@@ -125,9 +124,8 @@ TEST_P(scheduler_con_res_msg4_test,
   this->push_dl_buffer_state(dl_buffer_state_indication_message{this->ue_index, params.msg4_lcid, msg4_size});
 
   // Ensure the Msg4 is scheduled together with the ConRes CE.
-  ASSERT_TRUE(this->run_slot_until(
-      [this]() { return find_ue_pdsch(rnti, *this->last_sched_res_list[to_du_cell_index(0)]) != nullptr; }));
-  const dl_msg_alloc* msg4_alloc = find_ue_pdsch(rnti, *this->last_sched_res_list[to_du_cell_index(0)]);
+  ASSERT_TRUE(this->run_slot_until([this]() { return find_ue_pdsch(rnti, *this->last_sched_result()) != nullptr; }));
+  const dl_msg_alloc* msg4_alloc = find_ue_pdsch(rnti, *this->last_sched_result());
   ASSERT_EQ(msg4_alloc->tb_list.size(), 1);
   ASSERT_EQ(msg4_alloc->tb_list[0].lc_chs_to_sched.size(), 2);
   ASSERT_EQ(msg4_alloc->tb_list[0].lc_chs_to_sched[0].lcid, lcid_dl_sch_t::UE_CON_RES_ID);
@@ -143,7 +141,7 @@ TEST_P(scheduler_con_res_msg4_test,
   ASSERT_EQ(find_ue_dl_pdcch(rnti)->dci.type, dci_dl_rnti_config_type::tc_rnti_f1_0);
 
   // Ensure no PDSCH multiplexing with CSI-RS.
-  ASSERT_TRUE(this->last_sched_res_list[to_du_cell_index(0)]->dl.csi_rs.empty());
+  ASSERT_TRUE(this->last_sched_result()->dl.csi_rs.empty());
 }
 
 static bool is_f1_pucch(const pucch_info& pucch, bool is_common, bool has_sr)
@@ -165,8 +163,8 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
 
   // Wait for ConRes + Msg4 PDCCH, PDSCH and PUCCH to be scheduled.
   ASSERT_TRUE(this->run_slot_until([this]() {
-    return std::any_of(this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs.begin(),
-                       this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs.end(),
+    return std::any_of(this->last_sched_result()->ul.pucchs.begin(),
+                       this->last_sched_result()->ul.pucchs.end(),
                        [rnti = this->rnti](const pucch_info& pucch) {
                          return pucch.crnti == rnti and pucch.format() == pucch_format::FORMAT_1 and
                                 pucch.uci_bits.harq_ack_nof_bits > 0;
@@ -185,12 +183,11 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
   this->push_dl_buffer_state(dl_buffer_state_indication_message{this->ue_index, LCID_SRB1, crnti_msg_size});
 
   // Ensure common resources for PDCCH and PDSCH are used rather than UE-dedicated.
-  ASSERT_TRUE(this->run_slot_until(
-      [this]() { return find_ue_pdsch(rnti, *this->last_sched_res_list[to_du_cell_index(0)]) != nullptr; }));
+  ASSERT_TRUE(this->run_slot_until([this]() { return find_ue_pdsch(rnti, *this->last_sched_result()) != nullptr; }));
   const pdcch_dl_information& dl_pdcch = *find_ue_dl_pdcch(rnti);
   ASSERT_EQ(dl_pdcch.dci.type, dci_dl_rnti_config_type::c_rnti_f1_0) << "Invalid format used for UE in fallback mode";
   ASSERT_EQ(dl_pdcch.ctx.coreset_cfg->id, to_coreset_id(0));
-  const dl_msg_alloc& pdsch = *find_ue_pdsch(rnti, *this->last_sched_res_list[to_du_cell_index(0)]);
+  const dl_msg_alloc& pdsch = *find_ue_pdsch(rnti, *this->last_sched_result());
   ASSERT_EQ(pdsch.pdsch_cfg.dci_fmt, dci_dl_format::f1_0);
 
   // Ensure both common and PUCCH resources are used.
@@ -209,7 +206,7 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
     // - 1 PUCCH F1 ded. with 1 HARQ-ACK bit and NO SR and 1 PUCCH F1 ded. with 1 HARQ-ACK bit and SR.
     // - 1 PUCCH F2 ded. with 1 HARQ-ACK bit and CSI, with optional SR.
 
-    const auto& pucchs     = this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs;
+    const auto& pucchs     = this->last_sched_result()->ul.pucchs;
     unsigned    nof_pucchs = pucchs.size();
 
     if (nof_pucchs == 1) {
@@ -269,7 +266,7 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_ss_is_us
   bool                              is_common_ss_used = false;
   const search_space_configuration* ss_used           = nullptr;
   for (const search_space_configuration& ss :
-       cell_cfg_list.front().dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
+       cell_cfg(to_du_cell_index(0)).dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
     if (dl_pdcch.ctx.context.ss_id == ss.get_id()) {
       is_common_ss_used = true;
       ss_used           = &ss;
@@ -343,19 +340,19 @@ TEST_P(scheduler_conres_expiry_test, when_conres_ce_arrives_after_conres_timer_e
   auto ce_enqueue_slot = conres_expiry_slot + test_rgen::uniform_int<unsigned>(0, 10);
   while (next_slot < ce_enqueue_slot) {
     run_slot();
-    ASSERT_EQ(find_ue_pdsch(rnti, *last_sched_res_list[cell_index]), nullptr)
+    ASSERT_EQ(find_ue_pdsch(rnti, *last_sched_result(cell_index)), nullptr)
         << "PDSCH scheduled but there is no pending data";
   }
   this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
 
   // Ensure the ConRes CE is not scheduled.
   ASSERT_FALSE(this->run_slot_until(
-      [this]() { return find_ue_pdsch(rnti, *this->last_sched_res_list[cell_index]) != nullptr; }, 100));
+      [this]() { return find_ue_pdsch(rnti, *this->last_sched_result(cell_index)) != nullptr; }, 100));
 }
 
 TEST_P(scheduler_conres_expiry_test, when_conres_retx_goes_after_conres_timer_expiry_it_is_not_scheduled)
 {
-  auto pdsch_is_sched = [this]() { return find_ue_pdsch(rnti, *this->last_sched_res_list[cell_index]) != nullptr; };
+  auto pdsch_is_sched = [this]() { return find_ue_pdsch(rnti, *this->last_sched_result(cell_index)) != nullptr; };
 
   // Get closer to the conRes expiry slot.
   while (next_slot < conres_expiry_slot - 10) {
@@ -369,13 +366,13 @@ TEST_P(scheduler_conres_expiry_test, when_conres_retx_goes_after_conres_timer_ex
 
   // Wait for common PUCCH.
   ASSERT_TRUE(this->run_slot_until(
-      [this]() { return find_ue_pucch(rnti, *this->last_sched_res_list[cell_index]) != nullptr; }, 100));
+      [this]() { return find_ue_pucch(rnti, *this->last_sched_result(cell_index)) != nullptr; }, 100));
 
   // Enqueue a NACK after ConRes timer expires.
   uci_indication uci_ind;
   uci_ind.cell_index = cell_index;
   uci_ind.slot_rx    = next_slot - 1;
-  for (const pucch_info& pucch : this->last_sched_res_list[cell_index]->ul.pucchs) {
+  for (const pucch_info& pucch : this->last_sched_result(cell_index)->ul.pucchs) {
     uci_ind.ucis.push_back(test_helper::create_uci_indication_pdu(ue_index, pucch, mac_harq_ack_report_status::nack));
   }
   while (next_slot < conres_expiry_slot) {
@@ -391,7 +388,7 @@ TEST_P(scheduler_conres_expiry_test, when_conres_retx_goes_after_conres_timer_ex
 TEST_P(scheduler_conres_expiry_test, when_ntn_cell_conres_timer_extended_with_rtt)
 {
   static const unsigned msg4_size = 128;
-  auto pdsch_is_sched = [this]() { return find_ue_pdsch(rnti, *this->last_sched_res_list[cell_index]) != nullptr; };
+  auto pdsch_is_sched = [this]() { return find_ue_pdsch(rnti, *this->last_sched_result(cell_index)) != nullptr; };
 
   // Advance by link RTT.
   while (next_slot < ul_ccch_slot_rx + nof_rtt_slots) {

@@ -26,16 +26,33 @@ public:
 class dummy_scheduler_cell_metrics_notifier : public scheduler_cell_metrics_notifier
 {
 public:
-  scheduler_cell_metrics last_metrics;
+  const scheduler_cell_metrics& last() const
+  {
+    srsran_assert(set, "No metrics have been set");
+    return last_metrics;
+  }
+
+  void request_metrics() { metrics_requested = true; }
 
   scheduler_cell_metrics& get_next() override { return last_metrics; }
 
   void commit(scheduler_cell_metrics& ptr) override
   {
     srsran_assert(&ptr == &last_metrics, "Invalid reference passed");
+    set = true;
   }
 
-  bool is_sched_report_required(slot_point sl_tx) const override { return false; }
+  bool is_sched_report_required(slot_point sl_tx) const override
+  {
+    bool ret          = metrics_requested;
+    metrics_requested = false;
+    return ret;
+  }
+
+private:
+  scheduler_cell_metrics last_metrics{};
+  mutable bool           metrics_requested = false;
+  bool                   set               = false;
 };
 
 } // namespace srsran

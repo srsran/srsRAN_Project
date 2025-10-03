@@ -14,7 +14,7 @@
 #include "mac_ctrl_test_dummies.h"
 #include "mac_test_helpers.h"
 #include "tests/test_doubles/mac/dummy_mac_metrics_notifier.h"
-#include "tests/test_doubles/mac/dummy_scheduler_ue_metric_notifier.h"
+#include "tests/test_doubles/scheduler/dummy_scheduler_ue_metric_notifier.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "srsran/support/async/eager_async_task.h"
 #include "srsran/support/executors/blocking_task_worker.h"

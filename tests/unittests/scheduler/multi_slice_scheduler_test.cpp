@@ -98,8 +98,8 @@ TEST_F(single_slice_limited_max_rbs_scheduler_test, single_ue_limited_to_max_rbs
   this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(0), LCID_MIN_DRB, 500});
 
   ASSERT_TRUE(this->run_slot_until(
-      [this, rnti]() { return find_ue_pdsch(rnti, this->last_sched_res_list[0]->dl.ue_grants) != nullptr; }));
-  const dl_msg_alloc* msg = find_ue_pdsch(rnti, this->last_sched_res_list[0]->dl.ue_grants);
+      [this, rnti]() { return find_ue_pdsch(rnti, this->last_sched_result()->dl.ue_grants) != nullptr; }));
+  const dl_msg_alloc* msg = find_ue_pdsch(rnti, this->last_sched_result()->dl.ue_grants);
 
   ASSERT_TRUE(msg->pdsch_cfg.rbs.type1().length() <= max_slice_rbs);
 }
@@ -116,9 +116,9 @@ TEST_F(single_slice_limited_max_rbs_scheduler_test, multi_ue_limited_to_max_rbs)
   }
 
   ASSERT_TRUE(this->run_slot_until(
-      [&]() { return find_ue_pdsch(rntis.front(), this->last_sched_res_list[0]->dl.ue_grants) != nullptr; }));
+      [&]() { return find_ue_pdsch(rntis.front(), this->last_sched_result()->dl.ue_grants) != nullptr; }));
   unsigned nof_rbs = 0;
-  for (const dl_msg_alloc& msg : this->last_sched_res_list[0]->dl.ue_grants) {
+  for (const dl_msg_alloc& msg : this->last_sched_result()->dl.ue_grants) {
     nof_rbs += msg.pdsch_cfg.rbs.type1().length();
   }
 
@@ -152,10 +152,10 @@ TEST_F(multi_slice_with_prio_slice_scheduler_test, multi_ue_limited_to_max_rbs)
   unsigned                nof_checks = 4;
   std::array<unsigned, 3> rnti_sum_rbs{0};
   for (unsigned i = 0; i < nof_checks; i++) {
-    ASSERT_TRUE(this->run_slot_until([&]() { return not this->last_sched_res_list[0]->dl.ue_grants.empty(); }));
+    ASSERT_TRUE(this->run_slot_until([&]() { return not this->last_sched_result()->dl.ue_grants.empty(); }));
 
     std::array<unsigned, 3> rnti_rbs{0};
-    for (const dl_msg_alloc& msg : this->last_sched_res_list[0]->dl.ue_grants) {
+    for (const dl_msg_alloc& msg : this->last_sched_result()->dl.ue_grants) {
       unsigned idx = static_cast<unsigned>(msg.pdsch_cfg.rnti) - 0x4601;
       rnti_rbs[idx] += msg.pdsch_cfg.rbs.type1().length();
     }

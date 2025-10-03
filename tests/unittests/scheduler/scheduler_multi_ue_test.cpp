@@ -45,7 +45,7 @@ public:
     auto&                f1_params = pucch_basic_params.f0_or_f1_params.emplace<pucch_f1_params>();
     f1_params.nof_cyc_shifts       = pucch_nof_cyclic_shifts::twelve;
     f1_params.occ_supported        = true;
-    pucch_cfg_builder.setup(cell_cfg_list[0], pucch_basic_params);
+    pucch_cfg_builder.setup(cell_cfg(), pucch_basic_params);
 
     // Add UEs.
     for (unsigned i = 0, sz = test_params.nof_ues; i != sz; ++i) {
@@ -74,24 +74,38 @@ public:
 
   void run_slot()
   {
+    // Push BSRs and DL buffer occupancy updates for a subset of UEs.
+    const unsigned bsr_step = 16;
+    auto&          rnti_map = this->rnti_to_ue_index_mapping();
+    // Round-robin groups of UEs.
+    auto start_it = rnti_map.begin();
+    bsr_offset    = bsr_offset % rnti_map.size();
+    std::advance(start_it, bsr_offset);
+    bsr_offset += bsr_step;
+
     if (test_params.auto_dl_bs > 0) {
-      for (const auto& u : this->rnti_to_ue_index_mapping()) {
+      unsigned count = 0;
+      for (auto it = start_it; it != rnti_map.end() and count < bsr_step; ++it) {
         // Enqueue enough bytes for continuous DL tx.
         const unsigned dl_bs_val = std::min(test_params.auto_dl_bs, std::numeric_limits<unsigned>::max() / 2);
-        dl_buffer_state_indication_message dl_buf_st{u.second, LCID_MIN_DRB, dl_bs_val, this->next_slot_rx()};
+        dl_buffer_state_indication_message dl_buf_st{it->second, LCID_MIN_DRB, dl_bs_val, this->next_slot_rx()};
         this->push_dl_buffer_state(dl_buf_st);
+        ++count;
       }
     }
 
     if (test_params.auto_ul_bs > 0) {
-      for (const auto& u : this->rnti_to_ue_index_mapping()) {
+      unsigned count = 0;
+      for (auto it = start_it; it != rnti_map.end() and count < bsr_step; ++it) {
+        // Enqueue BSR.
         const unsigned            ul_bsr = std::min(test_params.auto_ul_bs, std::numeric_limits<uint32_t>::max() / 2);
         ul_bsr_indication_message bsr{to_du_cell_index(0),
-                                      u.second,
-                                      u.first,
+                                      it->second,
+                                      it->first,
                                       bsr_format::LONG_BSR,
                                       ul_bsr_lcg_report_list{{uint_to_lcg_id(2), ul_bsr}}};
         this->push_bsr(bsr);
+        ++count;
       }
     }
 
@@ -101,6 +115,7 @@ public:
   multi_ue_test_params          test_params;
   cell_config_builder_params    params;
   pucch_res_builder_test_helper pucch_cfg_builder;
+  unsigned                      bsr_offset = 0;
 };
 
 class scheduler_multi_ue_latency_test : public ::testing::TestWithParam<multi_ue_test_params>,
