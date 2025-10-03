@@ -30,9 +30,19 @@ class executor_metrics_decorator : public task_executor
   /// Maximum number of elements the pool can hold.
   static constexpr unsigned POOL_SIZE = 32 * 1024;
 
+  // Called before an allocated task is reclaimed by the pool, to ensure its capture is reset.
+  struct task_pool_resetter {
+    void operator()(unique_task& t)
+    {
+      // Reset task to release any captured resources.
+      t = {};
+    }
+  };
+
   using snapshot        = srsran::resource_usage::snapshot;
   using time_point      = trace_clock::time_point;
-  using unique_task_ptr = bounded_object_pool<unique_task>::ptr;
+  using task_pool_type  = bounded_object_pool<unique_task, task_pool_resetter>;
+  using unique_task_ptr = typename task_pool_type::ptr;
 
 public:
   template <typename U>
@@ -76,7 +86,7 @@ public:
     time_point enqueue_tp = std::chrono::steady_clock::now();
 
     unique_task_ptr pooled_task_ptr = task_pool.get();
-    if (!pooled_task_ptr) {
+    if (pooled_task_ptr == nullptr) {
       logger.warning("Unable to execute new task in the '{}' metrics executor decorator", name);
       return false;
     }
@@ -98,7 +108,10 @@ private:
     auto start_tp   = std::chrono::steady_clock::now();
     auto start_rusg = resource_usage::now();
 
+    // Run task.
     (*task_ptr)();
+
+    // Release task back to the pool (this will also clear the task captured resources).
     task_ptr.reset();
 
     handle_metrics(isExec, enqueue_tp, start_tp, start_rusg);
@@ -139,7 +152,9 @@ private:
   srslog::basic_logger&            logger;
   Tracer*                          tracer;
   const std::string                trace_name;
-  bounded_object_pool<unique_task> task_pool;
+
+  /// Object pool of unique_tasks.
+  task_pool_type task_pool;
 };
 
 } // namespace srsran
