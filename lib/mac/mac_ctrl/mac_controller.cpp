@@ -49,8 +49,7 @@ mac_cell_controller& mac_controller::add_cell(const mac_cell_creation_request& c
       metrics.add_cell(cell_add_req.cell_index, cell_add_req.scs_common, tdd_period_slots, *cell_time_source);
 
   // > Fill sched cell configuration message and pass it to the scheduler.
-  sched_cfg.add_cell(mac_scheduler_cell_creation_request{
-      cell_add_req, cell_metrics_cfg.report_period, cell_metrics_cfg.sched_notifier});
+  sched_cfg.add_cell(mac_scheduler_cell_creation_request{cell_add_req, cell_metrics_cfg.sched_notifier});
 
   // > Create MAC Cell DL Handler.
   return dl_unit.add_cell(cell_add_req,

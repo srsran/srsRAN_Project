@@ -12,24 +12,37 @@
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/pucch_res_test_builder_helper.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
 
 struct multi_ue_test_params {
-  unsigned nof_ues           = 1;
-  unsigned auto_dl_bs        = std::numeric_limits<uint32_t>::max() / 2;
-  unsigned auto_ul_bs        = std::numeric_limits<uint32_t>::max() / 2;
-  unsigned max_pdsch_latency = 20;
-  unsigned max_pusch_latency = 20;
+  unsigned nof_ues    = 1;
+  unsigned auto_dl_bs = std::numeric_limits<uint32_t>::max() / 2;
+  unsigned auto_ul_bs = std::numeric_limits<uint32_t>::max() / 2;
 };
+
+void PrintTo(const multi_ue_test_params& value, ::std::ostream* os)
+{
+  *os << fmt::format("nof_ues={}, auto_dl_bs={}, auto_ul_bs={}", value.nof_ues, value.auto_dl_bs, value.auto_ul_bs);
+}
 
 class scheduler_multi_ue_test : public scheduler_test_simulator
 {
 public:
   scheduler_multi_ue_test(const multi_ue_test_params& tparams) :
-    scheduler_test_simulator(
-        scheduler_test_sim_config{.max_scs = subcarrier_spacing::kHz30, .auto_uci = true, .auto_crc = true}),
+    scheduler_test_simulator(scheduler_test_sim_config{.sched_cfg =
+                                                           []() {
+                                                             scheduler_expert_config cfg =
+                                                                 config_helpers::make_default_scheduler_expert_config();
+                                                             cfg.ue.max_pucchs_per_slot    = 63;
+                                                             cfg.ue.max_ul_grants_per_slot = 64;
+                                                             return cfg;
+                                                           }(),
+                                                       .max_scs  = subcarrier_spacing::kHz30,
+                                                       .auto_uci = true,
+                                                       .auto_crc = true}),
     test_params(tparams),
     params(cell_config_builder_profiles::tdd(subcarrier_spacing::kHz30))
   {
@@ -40,8 +53,9 @@ public:
     // Create PUCCH builder that will be used to add UEs.
     pucch_builder_params pucch_basic_params{.nof_ue_pucch_f0_or_f1_res_harq       = 8,
                                             .nof_ue_pucch_f2_or_f3_or_f4_res_harq = 8,
-                                            .nof_sr_resources                     = 32,
-                                            .nof_csi_resources                    = 32};
+                                            .nof_cell_harq_pucch_res_sets         = 2,
+                                            .nof_sr_resources                     = 80,
+                                            .nof_csi_resources                    = 80};
     auto&                f1_params = pucch_basic_params.f0_or_f1_params.emplace<pucch_f1_params>();
     f1_params.nof_cyc_shifts       = pucch_nof_cyclic_shifts::twelve;
     f1_params.occ_supported        = true;
@@ -51,6 +65,8 @@ public:
     for (unsigned i = 0, sz = test_params.nof_ues; i != sz; ++i) {
       add_ue(to_rnti(0x4601 + i));
     }
+
+    srslog::flush();
   }
 
   void add_ue(rnti_t rnti)
@@ -118,15 +134,69 @@ public:
   unsigned                      bsr_offset = 0;
 };
 
-class scheduler_multi_ue_latency_test : public ::testing::TestWithParam<multi_ue_test_params>,
-                                        public scheduler_multi_ue_test
+class scheduler_rb_distribution_test : public ::testing::TestWithParam<multi_ue_test_params>,
+                                       public scheduler_multi_ue_test
 {
 public:
-  scheduler_multi_ue_latency_test() : scheduler_multi_ue_test(GetParam()) {}
+  scheduler_rb_distribution_test() : scheduler_multi_ue_test(GetParam())
+  {
+    // Extract metrics to start from scratch in the test.
+    this->request_metrics_on_next_slot();
+    run_slot();
+  }
 };
 
-TEST_P(scheduler_multi_ue_latency_test, pxsch_latency_within_provided_limits) {}
+template <typename T>
+double jain_index(span<const scheduler_ue_metrics> ues, T scheduler_ue_metrics::*member)
+{
+  T sum = 0;
+  T sq  = 0;
+  for (const auto& u : ues) {
+    sum += u.*member;
+    sq += std::pow(u.*member, 2);
+  }
+  return pow(sum, 2) / static_cast<double>(ues.size() * sq);
+}
 
-INSTANTIATE_TEST_SUITE_P(scheduler_multi_ue_latency_test,
-                         scheduler_multi_ue_latency_test,
-                         ::testing::Values(multi_ue_test_params{300}));
+template <typename T>
+std::vector<T> extract(span<const scheduler_ue_metrics> ues, T scheduler_ue_metrics::*member)
+{
+  std::vector<T> res;
+  for (const auto& u : ues) {
+    res.push_back(u.*member);
+  }
+  return res;
+}
+
+TEST_P(scheduler_rb_distribution_test, rbs_fairly_distributed)
+{
+  test_logger.info("STATUS: All UEs were created. Starting to compute metrics...");
+  unsigned max_slots = std::max(test_params.nof_ues * 4, 256U);
+  for (unsigned i = 0; i != max_slots; ++i) {
+    run_slot();
+  }
+  this->request_metrics_on_next_slot();
+  run_slot();
+  const scheduler_cell_metrics& metrics = *this->last_metrics();
+
+  ASSERT_EQ(metrics.ue_metrics.size(), test_params.nof_ues);
+  double pdsch_rbs_jain = jain_index(metrics.ue_metrics, &scheduler_ue_metrics::tot_pdsch_prbs_used);
+  double pusch_rbs_jain = jain_index(metrics.ue_metrics, &scheduler_ue_metrics::tot_pusch_prbs_used);
+  srslog::flush();
+  EXPECT_GE(pdsch_rbs_jain, 0.75) << fmt::format(
+      "Low PDSCH fairness index in {} UL slots, with #PDSCHs-per-slot={:.2}. UEs: {}",
+      metrics.nof_dl_slots,
+      metrics.dl_grants_count / static_cast<double>(metrics.nof_dl_slots),
+      fmt::join(extract(metrics.ue_metrics, &scheduler_ue_metrics::tot_pdsch_prbs_used), ", "));
+  EXPECT_GE(pusch_rbs_jain, 0.75) << fmt::format(
+      "Low PUSCH fairness index in {} UL slots, with #PUSCHs-per-slot={:.2}. UEs: {}",
+      metrics.nof_ul_slots,
+      metrics.ul_grants_count / static_cast<double>(metrics.nof_ul_slots),
+      fmt::join(extract(metrics.ue_metrics, &scheduler_ue_metrics::tot_pusch_prbs_used), ", "));
+}
+
+INSTANTIATE_TEST_SUITE_P(scheduler_rb_distribution_test,
+                         scheduler_rb_distribution_test,
+                         ::testing::Values(multi_ue_test_params{16},
+                                           multi_ue_test_params{64},
+                                           multi_ue_test_params{512}));

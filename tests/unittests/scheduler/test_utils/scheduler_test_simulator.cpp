@@ -74,7 +74,9 @@ scheduler_test_simulator::~scheduler_test_simulator()
 void scheduler_test_simulator::add_cell(const sched_cell_configuration_request_message& cell_cfg_req)
 {
   sim_cells.push_back(std::make_unique<sim_cell_context>(sched_cfg, cell_cfg_req));
-  sched->handle_cell_configuration_request(cell_cfg_req);
+  auto cpy             = cell_cfg_req;
+  cpy.metrics.notifier = &sim_cells.back()->cell_metrics;
+  sched->handle_cell_configuration_request(cpy);
 }
 
 void scheduler_test_simulator::add_ue(const sched_ue_creation_request_message& ue_request, bool wait_notification)

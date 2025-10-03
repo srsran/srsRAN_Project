@@ -157,14 +157,13 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
   };
 
   scheduler_cell_metrics_notifier& notifier;
-  const std::chrono::milliseconds  report_period;
   const cell_configuration&        cell_cfg;
 
   // Derived values.
   const unsigned nof_slots_per_sf;
-  const unsigned report_period_slots;
 
   slot_point last_slot_tx;
+  slot_point last_report_slot_tx;
 
   slotted_id_vector<du_ue_index_t, ue_metric_context> ues;
   flat_map<rnti_t, du_ue_index_t>                     rnti_to_ue_index_lookup;
@@ -240,7 +239,7 @@ public:
   void push_result(slot_point sl_tx, const sched_result& slot_result, std::chrono::microseconds slot_decision_latency);
 
   /// \brief Checks whether the metrics reporting is active.
-  bool enabled() const { return report_period_slots != 0; }
+  bool enabled() const;
 
   /// \brief Called when the cell is stopped. This will trigger a cell stop report.
   void handle_cell_deactivation();

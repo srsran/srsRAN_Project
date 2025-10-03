@@ -58,7 +58,7 @@ void srsran_scheduler_adapter::add_cell(const mac_scheduler_cell_creation_reques
 
   // Forward cell configuration to scheduler.
   auto sched_req    = msg.cell_params.sched_req;
-  sched_req.metrics = {msg.metric_report_period, msg.metric_notifier};
+  sched_req.metrics = {msg.metric_notifier};
   sched_impl->handle_cell_configuration_request(sched_req);
 }
 

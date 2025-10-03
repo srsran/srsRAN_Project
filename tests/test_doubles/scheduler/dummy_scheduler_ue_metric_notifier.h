@@ -26,20 +26,18 @@ public:
 class dummy_scheduler_cell_metrics_notifier : public scheduler_cell_metrics_notifier
 {
 public:
-  const scheduler_cell_metrics& last() const
-  {
-    srsran_assert(set, "No metrics have been set");
-    return last_metrics;
-  }
+  const std::optional<scheduler_cell_metrics>& last() const { return last_metrics; }
 
   void request_metrics() { metrics_requested = true; }
 
-  scheduler_cell_metrics& get_next() override { return last_metrics; }
+  scheduler_cell_metrics& get_next() override { return current_metrics; }
 
   void commit(scheduler_cell_metrics& ptr) override
   {
-    srsran_assert(&ptr == &last_metrics, "Invalid reference passed");
-    set = true;
+    srsran_assert(&ptr == &current_metrics, "Invalid reference passed");
+    last_metrics = current_metrics;
+    current_metrics.ue_metrics.clear();
+    current_metrics.events.clear();
   }
 
   bool is_sched_report_required(slot_point sl_tx) const override
@@ -50,9 +48,9 @@ public:
   }
 
 private:
-  scheduler_cell_metrics last_metrics{};
-  mutable bool           metrics_requested = false;
-  bool                   set               = false;
+  scheduler_cell_metrics                current_metrics{};
+  std::optional<scheduler_cell_metrics> last_metrics;
+  mutable bool                          metrics_requested = false;
 };
 
 } // namespace srsran

@@ -464,11 +464,13 @@ void pucch_allocator_impl::pucch_allocate_csi_opportunity(cell_slot_resource_all
   resource_manager.reset_latest_reserved_res_tracker();
 
   // [Implementation-defined] We only allow a max number of PUCCH + PUSCH grants per slot.
-  if (pucch_slot_alloc.result.ul.pucchs.size() >=
-      get_max_pucch_grants(static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size()))) {
-    logger.warning("rnti={}: CSI occasion allocation for slot={} skipped. Cause: max number of UL grants reached",
+  const unsigned max_pucch_grants =
+      get_max_pucch_grants(static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size()));
+  if (pucch_slot_alloc.result.ul.pucchs.size() >= max_pucch_grants) {
+    logger.warning("rnti={}: CSI occasion allocation for slot={} skipped. Cause: max number of UL grants {} reached",
                    crnti,
-                   pucch_slot_alloc.slot);
+                   pucch_slot_alloc.slot,
+                   max_pucch_grants);
     return;
   }
 

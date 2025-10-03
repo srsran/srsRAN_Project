@@ -52,7 +52,6 @@ struct sched_grid_resource {
 /// \remark See O-RAN WG8, Section 9.2.3.2.1, Table 9.18.
 struct sched_cell_configuration_request_message {
   struct metrics_config {
-    std::chrono::milliseconds        report_period{0};
     scheduler_cell_metrics_notifier* notifier = nullptr;
     /// Maximum number of UE events per report.
     unsigned max_ue_events_per_report = 64;

@@ -116,7 +116,7 @@ public:
   {
     sim_cells[cell_idx]->cell_metrics.request_metrics();
   }
-  const scheduler_cell_metrics& last_metrics(du_cell_index_t cell_idx = to_du_cell_index(0)) const
+  const std::optional<scheduler_cell_metrics>& last_metrics(du_cell_index_t cell_idx = to_du_cell_index(0)) const
   {
     return sim_cells.at(cell_idx)->cell_metrics.last();
   }
@@ -129,11 +129,7 @@ private:
 
     sim_cell_context(const scheduler_expert_config&                  sched_cfg,
                      const sched_cell_configuration_request_message& cell_cfg_req) :
-      cfg(sched_cfg, [this, cell_cfg_req]() {
-        auto cpy             = cell_cfg_req;
-        cpy.metrics.notifier = &cell_metrics;
-        return cpy;
-      }())
+      cfg(sched_cfg, cell_cfg_req)
     {
     }
   };
