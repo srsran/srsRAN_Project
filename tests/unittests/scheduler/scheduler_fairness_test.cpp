@@ -17,6 +17,11 @@
 
 using namespace srsran;
 
+namespace {
+
+// Change if you want to see logs.
+srslog::basic_levels sched_log_level = srslog::basic_levels::warning;
+
 struct multi_ue_test_params {
   unsigned nof_ues    = 1;
   unsigned auto_dl_bs = std::numeric_limits<uint32_t>::max() / 2;
@@ -44,8 +49,10 @@ public:
                                                        .auto_uci = true,
                                                        .auto_crc = true}),
     test_params(tparams),
-    params(cell_config_builder_profiles::tdd(subcarrier_spacing::kHz30))
+    params(cell_config_builder_profiles::tdd(subcarrier_spacing::kHz30, bs_channel_bandwidth::MHz100))
   {
+    this->logger.set_level(sched_log_level);
+
     // Add Cell.
     auto cell_cfg_req = sched_config_helper::make_default_sched_cell_configuration_request(params);
     this->add_cell(cell_cfg_req);
@@ -76,16 +83,10 @@ public:
     ue_cfg.crnti    = rnti;
     report_fatal_error_if_not(pucch_cfg_builder.add_build_new_ue_pucch_cfg(ue_cfg.cfg.cells.value()[0].serv_cell_cfg),
                               "Failed to allocate PUCCH resources");
+    csi_period = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+                     ue_cfg.cfg.cells.value()[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list[0].report_cfg_type)
+                     .report_slot_period;
     scheduler_test_simulator::add_ue(ue_cfg, true);
-
-    // Enqueue BSR.
-    const unsigned            BSR_VALUE = std::numeric_limits<uint32_t>::max() / 2;
-    ul_bsr_indication_message bsr{to_du_cell_index(0),
-                                  ue_cfg.ue_index,
-                                  ue_cfg.crnti,
-                                  bsr_format::LONG_BSR,
-                                  ul_bsr_lcg_report_list{{uint_to_lcg_id(2), BSR_VALUE}}};
-    this->push_bsr(bsr);
   }
 
   void run_slot()
@@ -132,6 +133,7 @@ public:
   cell_config_builder_params    params;
   pucch_res_builder_test_helper pucch_cfg_builder;
   unsigned                      bsr_offset = 0;
+  csi_report_periodicity        csi_period = csi_report_periodicity::slots320;
 };
 
 class scheduler_rb_distribution_test : public ::testing::TestWithParam<multi_ue_test_params>,
@@ -140,22 +142,35 @@ class scheduler_rb_distribution_test : public ::testing::TestWithParam<multi_ue_
 public:
   scheduler_rb_distribution_test() : scheduler_multi_ue_test(GetParam())
   {
-    // Extract metrics to start from scratch in the test.
+    // Wait for all CQI reports to be received.
+    for (unsigned i = 0; i != (unsigned)csi_period - 1; ++i) {
+      run_slot();
+    }
+    // Extract metrics to start metrics from scratch in the test.
     this->request_metrics_on_next_slot();
     run_slot();
   }
 };
 
 template <typename T>
-double jain_index(span<const scheduler_ue_metrics> ues, T scheduler_ue_metrics::*member)
+T sum(span<const scheduler_ue_metrics> ues, T scheduler_ue_metrics::*member)
 {
   T sum = 0;
-  T sq  = 0;
   for (const auto& u : ues) {
     sum += u.*member;
+  }
+  return sum;
+}
+
+template <typename T>
+double jain_index(span<const scheduler_ue_metrics> ues, T scheduler_ue_metrics::*member)
+{
+  T      sum_val = sum(ues, member);
+  double sq      = 0;
+  for (const auto& u : ues) {
     sq += std::pow(u.*member, 2);
   }
-  return pow(sum, 2) / static_cast<double>(ues.size() * sq);
+  return pow(sum_val, 2) / static_cast<double>(ues.size() * sq);
 }
 
 template <typename T>
@@ -168,10 +183,12 @@ std::vector<T> extract(span<const scheduler_ue_metrics> ues, T scheduler_ue_metr
   return res;
 }
 
+} // namespace
+
 TEST_P(scheduler_rb_distribution_test, rbs_fairly_distributed)
 {
-  test_logger.info("STATUS: All UEs were created. Starting to compute metrics...");
-  unsigned max_slots = std::max(test_params.nof_ues * 4, 256U);
+  const unsigned max_slots = 4096;
+  test_logger.info("STATUS: {} UEs were created. Running for {} slots...", test_params.nof_ues, max_slots);
   for (unsigned i = 0; i != max_slots; ++i) {
     run_slot();
   }
@@ -180,15 +197,36 @@ TEST_P(scheduler_rb_distribution_test, rbs_fairly_distributed)
   const scheduler_cell_metrics& metrics = *this->last_metrics();
 
   ASSERT_EQ(metrics.ue_metrics.size(), test_params.nof_ues);
-  double pdsch_rbs_jain = jain_index(metrics.ue_metrics, &scheduler_ue_metrics::tot_pdsch_prbs_used);
-  double pusch_rbs_jain = jain_index(metrics.ue_metrics, &scheduler_ue_metrics::tot_pusch_prbs_used);
-  srslog::flush();
-  EXPECT_GE(pdsch_rbs_jain, 0.75) << fmt::format(
+  const double pdsch_rbs_jain   = jain_index(metrics.ue_metrics, &scheduler_ue_metrics::tot_pdsch_prbs_used);
+  const double pdsch_brate_jain = jain_index(metrics.ue_metrics, &scheduler_ue_metrics::dl_brate_kbps);
+  const double pusch_rbs_jain   = jain_index(metrics.ue_metrics, &scheduler_ue_metrics::tot_pusch_prbs_used);
+  const double pusch_brate_jain = jain_index(metrics.ue_metrics, &scheduler_ue_metrics::ul_brate_kbps);
+
+  test_logger.info(
+      "Results:"
+      "\n- DL: #slots={}, #pdschs_per_slot={:.3}, #rbs_per_slot={:.3}, brate={:.3}Mbps, jain_rb_fairness={:.3}, "
+      "jain_brate_fairness={:.3}"
+      "\n- UL: #slots={}, #puschs_per_slot={:.3}, #rbs_per_slot={:.3}, brate={:.3}Mbps, jain_rb_fairness={:.3}, "
+      "jain_brate_fairness={:.3}",
+      metrics.nof_dl_slots,
+      metrics.dl_grants_count / static_cast<double>(metrics.nof_dl_slots),
+      sum(metrics.ue_metrics, &scheduler_ue_metrics::tot_pdsch_prbs_used) / static_cast<double>(metrics.nof_dl_slots),
+      sum(metrics.ue_metrics, &scheduler_ue_metrics::dl_brate_kbps) / 1000,
+      pdsch_rbs_jain,
+      pdsch_brate_jain,
+      metrics.nof_ul_slots,
+      metrics.ul_grants_count / static_cast<double>(metrics.nof_ul_slots),
+      sum(metrics.ue_metrics, &scheduler_ue_metrics::tot_pusch_prbs_used) / static_cast<double>(metrics.nof_ul_slots),
+      sum(metrics.ue_metrics, &scheduler_ue_metrics::ul_brate_kbps) / 1000,
+      pusch_rbs_jain,
+      pusch_brate_jain);
+
+  EXPECT_GE(pdsch_rbs_jain, 0.95) << fmt::format(
       "Low PDSCH fairness index in {} UL slots, with #PDSCHs-per-slot={:.2}. UEs: {}",
       metrics.nof_dl_slots,
       metrics.dl_grants_count / static_cast<double>(metrics.nof_dl_slots),
       fmt::join(extract(metrics.ue_metrics, &scheduler_ue_metrics::tot_pdsch_prbs_used), ", "));
-  EXPECT_GE(pusch_rbs_jain, 0.75) << fmt::format(
+  EXPECT_GE(pusch_rbs_jain, 0.95) << fmt::format(
       "Low PUSCH fairness index in {} UL slots, with #PUSCHs-per-slot={:.2}. UEs: {}",
       metrics.nof_ul_slots,
       metrics.ul_grants_count / static_cast<double>(metrics.nof_ul_slots),

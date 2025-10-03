@@ -602,7 +602,7 @@ void ue_cell_event_manager::handle_uci_indication(const uci_indication& ind)
 
         // Process CSI.
         if (pusch_pdu->csi.has_value()) {
-          handle_csi(*ue_cc, *pusch_pdu->csi);
+          handle_csi(*ue_cc, uci_sl, *pusch_pdu->csi);
         }
       } else if (const auto* pucch_f2f3f4 =
                      std::get_if<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(&uci_pdu->pdu)) {
@@ -626,7 +626,7 @@ void ue_cell_event_manager::handle_uci_indication(const uci_indication& ind)
 
         // Process CSI.
         if (pucch_f2f3f4->csi.has_value()) {
-          handle_csi(*ue_cc, *pucch_f2f3f4->csi);
+          handle_csi(*ue_cc, uci_sl, *pucch_f2f3f4->csi);
         }
 
         const bool is_uci_valid =
@@ -973,13 +973,13 @@ void ue_cell_event_manager::handle_harq_ind(ue_cell&                            
   }
 }
 
-void ue_cell_event_manager::handle_csi(ue_cell& ue_cc, const csi_report_data& csi_rep)
+void ue_cell_event_manager::handle_csi(ue_cell& ue_cc, slot_point sl_rx, const csi_report_data& csi_rep)
 {
   // Forward CSI bits to UE.
   ue_cc.handle_csi_report(csi_rep);
 
   // Log event.
-  ev_logger.enqueue(scheduler_event_logger::csi_report_event{ue_cc.ue_index, ue_cc.rnti(), csi_rep});
+  ev_logger.enqueue(scheduler_event_logger::csi_report_event{ue_cc.ue_index, ue_cc.rnti(), sl_rx, csi_rep});
 }
 
 void ue_cell_event_manager::push_event(du_cell_index_t cell_index, event_t event)

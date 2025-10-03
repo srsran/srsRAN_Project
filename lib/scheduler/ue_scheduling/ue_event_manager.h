@@ -138,7 +138,7 @@ private:
                        slot_point                             uci_sl,
                        span<const mac_harq_ack_report_status> harq_bits,
                        std::optional<float>                   pucch_snr);
-  void handle_csi(ue_cell& ue_cc, const csi_report_data& csi_rep);
+  void handle_csi(ue_cell& ue_cc, slot_point sl_rx, const csi_report_data& csi_rep);
 
   // shared parameters.
   ue_event_manager&     parent;
