@@ -41,7 +41,7 @@ private:
   void create_subscriber(scoped_sync_token token);
   void destroy_subscriber();
 
-  void read_time(int raw_fd);
+  void read_time(int raw_fd, scoped_sync_token& token);
 
   const std::chrono::milliseconds tick_period;
   timer_manager&                  tick_sink;
@@ -54,8 +54,7 @@ private:
   std::atomic<bool> running{false};
 
   // Synchronization primitive to stop the timer source.
-  sync_event        stop_flag;
-  scoped_sync_token read_time_token;
+  sync_event stop_flag;
 };
 
 } // namespace srsran

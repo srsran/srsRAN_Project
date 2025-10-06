@@ -53,7 +53,7 @@ io_timer_source::io_timer_source(timer_manager&            tick_sink_,
 io_timer_source::~io_timer_source()
 {
   running.store(false, std::memory_order_release);
-  stop_flag.wait();
+  // The dtor of stop_flag will block until all tasks using the token have completed.
 }
 
 void io_timer_source::resume()
@@ -92,10 +92,11 @@ void io_timer_source::create_subscriber(scoped_sync_token token)
   }
 
   logger.info("Starting IO timer ticking source...");
-  auto fd         = create_timer_fd(tick_period);
-  int  raw_fd     = fd.value();
-  read_time_token = std::move(token);
-  io_sub          = broker.register_fd(std::move(fd), tick_exec, [this, raw_fd]() { read_time(raw_fd); });
+  auto      fd     = create_timer_fd(tick_period);
+  const int raw_fd = fd.value();
+  io_sub = broker.register_fd(std::move(fd), tick_exec, [this, raw_fd, stop_token = std::move(token)]() mutable {
+    read_time(raw_fd, stop_token);
+  });
   report_fatal_error_if_not(io_sub.registered(), "Failed to create timer source");
 }
 
@@ -108,18 +109,16 @@ void io_timer_source::destroy_subscriber()
   logger.info("Stopping IO timer ticking source...");
   io_sub.reset();
   logger.info("IO timer source stopped.");
-
-  // Mark token as reset.
-  read_time_token.reset();
 }
 
-void io_timer_source::read_time(int raw_fd)
+void io_timer_source::read_time(int raw_fd, scoped_sync_token& stop_token)
 {
   // Note: Called inside the ticking executor.
 
   if (not running.load(std::memory_order_acquire)) {
     // Destroy subscriber and signal the completion of the stop by resetting the token.
     destroy_subscriber();
+    stop_token.reset();
     // Note: Do not touch any variable here as the ~io_timer_source() might be running concurrently.
     return;
   }
