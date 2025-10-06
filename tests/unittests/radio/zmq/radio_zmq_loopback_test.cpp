@@ -35,7 +35,7 @@ static const srslog::basic_levels log_level = srslog::basic_levels::warning;
 class RadioZmqE2EFixture : public ::testing::TestWithParam<radio_zmq_e2e_test_parameters>
 {
 protected:
-  static constexpr float ASSERT_MAX_ERROR = 1e-6;
+  static constexpr int16_t ASSERT_MAX_ERROR = 1;
 
   class radio_notifier_spy : public radio_notification_handler
   {
@@ -271,10 +271,9 @@ TEST_P(RadioZmqE2EFixture, RadioZmqE2EFlow)
       for (unsigned channel_id = 0; channel_id != nof_channels; ++channel_id, ++port_id) {
         span<const ci16_t> buffer = rx_buffer[channel_id];
         for (const ci16_t& sample : buffer) {
-          cf_t   value           = rx_dist(rx_rgen[port_id]);
-          ci16_t expected_sample = to_ci16(cf_t(value.real() * INT16_MAX, value.imag() * INT16_MAX));
-          EXPECT_NEAR(expected_sample.real(), sample.real(), ASSERT_MAX_ERROR);
-          EXPECT_NEAR(expected_sample.imag(), sample.imag(), ASSERT_MAX_ERROR);
+          ci16_t expected_sample = to_ci16(rx_dist(rx_rgen[port_id]) * static_cast<float>(INT16_MAX));
+          ASSERT_LT(std::abs(expected_sample - sample), ASSERT_MAX_ERROR)
+              << fmt::format("expected={} sample={}", expected_sample, sample);
         }
       }
     }
