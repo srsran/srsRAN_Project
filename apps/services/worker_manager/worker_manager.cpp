@@ -90,7 +90,7 @@ private:
 } // namespace
 
 worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
-  app_logger(srslog::fetch_basic_logger("ALL")), low_prio_affinity_mng({worker_cfg.main_pool_affinity_cfg})
+  app_logger(srslog::fetch_basic_logger("ALL")), main_pool_affinity_mng({worker_cfg.main_pool_affinity_cfg})
 {
   // Add preinitialization of resources to created threads.
   unique_thread::add_observer(std::make_unique<thread_resource_preinitializer>(*worker_cfg.app_timers));
@@ -448,12 +448,10 @@ void worker_manager::create_du_low_executors(const worker_manager_config::du_low
 
   // Instantiate workers for the DU-low.
   if (not rt_mode) {
-    // Create a single worker, shared by the whole PHY. As it is shared for all the PHY, pick the first cell of the
-    // affinity manager.
     create_prio_worker("phy_worker",
                        "phy_exec",
                        task_worker_queue_size,
-                       affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::l1_dl),
+                       main_pool_affinity_mng.calcute_affinity_mask(sched_affinity_mask_types::main),
                        os_thread_realtime_priority::no_realtime());
 
     // Get common physical layer executor.

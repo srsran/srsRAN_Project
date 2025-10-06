@@ -11,7 +11,6 @@
 #pragma once
 
 #include "apps/helpers/metrics/metrics_config.h"
-#include "apps/services/worker_manager/os_sched_affinity_manager.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/direct_current_offset.h"
@@ -27,7 +26,6 @@
 #include "srsran/ran/qos/five_qi.h"
 #include "srsran/ran/rb_id.h"
 #include "srsran/ran/rnti.h"
-#include "srsran/ran/s_nssai.h"
 #include "srsran/ran/sib/system_info_config.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/subcarrier_spacing.h"

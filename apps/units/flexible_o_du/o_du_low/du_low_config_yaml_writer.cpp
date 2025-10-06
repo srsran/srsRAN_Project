@@ -50,23 +50,6 @@ static void fill_du_low_expert_execution_section(YAML::Node node, const du_low_u
     upper_node["max_pusch_and_srs_concurrency"] = config.threads.max_pusch_and_srs_concurrency;
     upper_node["max_pdsch_concurrency"]         = config.threads.max_pdsch_concurrency;
   }
-
-  auto cell_affinities_node = node["cell_affinities"];
-  while (config.cell_affinities.size() > cell_affinities_node.size()) {
-    cell_affinities_node.push_back(YAML::Node());
-  }
-
-  unsigned index = 0;
-  for (auto cell : cell_affinities_node) {
-    const auto& expert = config.cell_affinities[index];
-
-    if (expert.l1_dl_cpu_cfg.mask.any()) {
-      cell["l1_dl_cpus"] = fmt::format("{:,}", span<const size_t>(expert.l1_dl_cpu_cfg.mask.get_cpu_ids()));
-    }
-    cell["l1_dl_pinning"] = to_string(expert.l1_dl_cpu_cfg.pinning_policy);
-
-    ++index;
-  }
 }
 
 static void fill_du_low_expert_section(YAML::Node node, const du_low_unit_expert_upper_phy_config& config)

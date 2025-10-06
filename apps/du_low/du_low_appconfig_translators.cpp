@@ -17,6 +17,9 @@ using namespace std::chrono_literals;
 
 void srsran::fill_du_low_worker_manager_config(worker_manager_config& config, const du_low_appconfig& app_cfg)
 {
+  // Current DU low application only supports one cell.
+  config.config_affinities.resize(1);
+
   config.nof_main_pool_threads     = app_cfg.expert_execution_cfg.threads.main_pool.nof_threads;
   config.main_pool_task_queue_size = app_cfg.expert_execution_cfg.threads.main_pool.task_queue_size;
   config.main_pool_backoff_period =

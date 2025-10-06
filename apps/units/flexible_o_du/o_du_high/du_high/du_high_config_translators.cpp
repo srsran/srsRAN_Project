@@ -1199,6 +1199,8 @@ void srsran::fill_du_high_worker_manager_config(worker_manager_config&     confi
                                                 const du_high_unit_config& unit_cfg,
                                                 bool                       is_blocking_mode_enabled)
 {
+  config.config_affinities.resize(unit_cfg.cells_cfg.size());
+
   auto& du_hi_cfg = config.du_hi_cfg.emplace();
 
   du_hi_cfg.ue_data_tasks_queue_size = unit_cfg.expert_execution_cfg.du_queue_cfg.ue_data_executor_queue_size;

@@ -150,7 +150,7 @@ private:
   /// Collection of task executor decorators.
   std::vector<std::unique_ptr<task_executor>> executor_decorators_exec;
 
-  os_sched_affinity_manager              low_prio_affinity_mng;
+  os_sched_affinity_manager              main_pool_affinity_mng;
   os_sched_affinity_bitmask              ru_timing_mask;
   std::vector<os_sched_affinity_bitmask> ru_txrx_affinity_masks;
 
