@@ -37,6 +37,10 @@ tests:
           enable_executor: true
           enable_rlc: true
           enable_ru: true
+      trace:
+        layers:
+          du_high_enable: true
+          phy_enable: true
       cu_cp:
         rrc:
           rrc_procedure_guard_time_ms: 2000
