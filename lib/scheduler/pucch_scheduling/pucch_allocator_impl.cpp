@@ -925,6 +925,13 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(const cell_slot_resource_alloc
 
   auto check_ul_collisions =
       [this](const grant_info& first_hop_grant, const grant_info& second_hop_grant, const ul_sched_result& result) {
+        if (not result.srss.empty()) {
+          // [Implementation defined] Since we configure SRS to occupy the whole band, common PUCCH resources will
+          // always collide with SRS grants.
+          // TODO: refine this check once we restrict SRS to not collide with common PUCCH resources.
+          return true;
+        }
+
         for (const auto& pusch : result.puschs) {
           const grant_info pusch_grant = get_pusch_grant_info(pusch);
           if (pusch_grant.overlaps(first_hop_grant) or pusch_grant.overlaps(second_hop_grant)) {
@@ -941,7 +948,7 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(const cell_slot_resource_alloc
 
         for (const auto& pucch : result.pucchs) {
           if (pucch.pdu_context.is_common) {
-            // Common PUCCH resources do not collide between each other.
+            // Common PUCCH resources do not collide with each other.
             continue;
           }
 

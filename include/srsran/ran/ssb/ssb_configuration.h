@@ -12,6 +12,7 @@
 
 #include "srsran/ran/ssb/ssb_properties.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include <array>
 
 namespace srsran {
 

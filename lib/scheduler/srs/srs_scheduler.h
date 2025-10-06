@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "srsran/ran/du_types.h"
+#include "srsran/ran/rnti.h"
 namespace srsran {
 
 struct cell_resource_allocator;

@@ -221,5 +221,14 @@ std::vector<test_grant_info> srsran::get_ul_grants(const cell_configuration& cel
     }
   }
 
+  // Fill SRSs.
+  for (const srs_info& srs : ul_res.srss) {
+    grants.emplace_back();
+    grants.back().type = test_grant_info::SRS;
+    // [Implementation defined] We always configure SRS to occupy as many as CRBs as possible, which might result in
+    // occupying the whole band.
+    grants.back().grant = grant_info(srs.bwp_cfg->scs, srs.symbols, srs.bwp_cfg->crbs);
+  }
+
   return grants;
 }
