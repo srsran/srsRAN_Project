@@ -40,7 +40,10 @@ void cu_cp_e1_reset_procedure::operator()(coro_context<async_task<void>>& ctx)
   transaction = ev_mng.transactions.create_transaction(e1ap_cfg.proc_timeout);
 
   // Forward message to CU-UP.
-  send_e1_reset();
+  if (not send_e1_reset()) {
+    logger.debug("\"{}\" terminated early, as there are no UEs present at CU-UP", name());
+    CORO_EARLY_RETURN();
+  }
 
   // Await CU-UP response.
   CORO_AWAIT(transaction);
@@ -57,7 +60,7 @@ void cu_cp_e1_reset_procedure::operator()(coro_context<async_task<void>>& ctx)
   CORO_RETURN();
 }
 
-void cu_cp_e1_reset_procedure::send_e1_reset()
+bool cu_cp_e1_reset_procedure::send_e1_reset()
 {
   // Pack message into PDU.
   e1ap_message e1ap_msg;
@@ -68,33 +71,43 @@ void cu_cp_e1_reset_procedure::send_e1_reset()
   if (reset.interface_reset) {
     // Reset all UEs.
     e1_reset->reset_type.set_e1_interface() = asn1::e1ap::reset_all_opts::options::reset_all;
-  } else {
-    // Reset only specific UEs.
-    asn1::e1ap::ue_associated_lc_e1_conn_list_res_l& reset_part_of_e1_interface =
-        e1_reset->reset_type.set_part_of_e1_interface();
-    for (auto& ue : reset.ues_to_reset) {
-      if (!ue_ctxt_list.contains(ue)) {
-        logger.warning("ue={}: Excluding UE from E1 Reset. UE context does not exist", ue);
-      } else {
-        auto& ue_ctxt = ue_ctxt_list[ue];
 
-        asn1::protocol_ie_single_container_s<asn1::e1ap::ue_associated_lc_e1_conn_item_res_o> item_container;
-        asn1::e1ap::ue_associated_lc_e1_conn_item_s& conn_item = item_container->ue_associated_lc_e1_conn_item();
+    // Send E1 Reset to CU-UP.
+    pdu_notifier.on_new_message(e1ap_msg);
+    return true;
+  }
 
-        if (ue_ctxt.ue_ids.cu_cp_ue_e1ap_id != gnb_cu_cp_ue_e1ap_id_t::invalid) {
-          conn_item.gnb_cu_cp_ue_e1ap_id_present = true;
-          conn_item.gnb_cu_cp_ue_e1ap_id         = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_cp_ue_e1ap_id);
-        }
-        if (ue_ctxt.ue_ids.cu_up_ue_e1ap_id != gnb_cu_up_ue_e1ap_id_t::invalid) {
-          conn_item.gnb_cu_up_ue_e1ap_id_present = true;
-          conn_item.gnb_cu_up_ue_e1ap_id         = gnb_cu_up_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_up_ue_e1ap_id);
-        }
+  // Reset only specific UEs.
+  asn1::e1ap::ue_associated_lc_e1_conn_list_res_l& reset_part_of_e1_interface =
+      e1_reset->reset_type.set_part_of_e1_interface();
+  for (auto& ue : reset.ues_to_reset) {
+    if (!ue_ctxt_list.contains(ue)) {
+      logger.warning("ue={}: Excluding UE from E1 Reset. UE context does not exist", ue);
+    } else {
+      auto& ue_ctxt = ue_ctxt_list[ue];
 
-        reset_part_of_e1_interface.push_back(item_container);
+      asn1::protocol_ie_single_container_s<asn1::e1ap::ue_associated_lc_e1_conn_item_res_o> item_container;
+      asn1::e1ap::ue_associated_lc_e1_conn_item_s& conn_item = item_container->ue_associated_lc_e1_conn_item();
+
+      if (ue_ctxt.ue_ids.cu_cp_ue_e1ap_id != gnb_cu_cp_ue_e1ap_id_t::invalid) {
+        conn_item.gnb_cu_cp_ue_e1ap_id_present = true;
+        conn_item.gnb_cu_cp_ue_e1ap_id         = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_cp_ue_e1ap_id);
       }
+      if (ue_ctxt.ue_ids.cu_up_ue_e1ap_id != gnb_cu_up_ue_e1ap_id_t::invalid) {
+        conn_item.gnb_cu_up_ue_e1ap_id_present = true;
+        conn_item.gnb_cu_up_ue_e1ap_id         = gnb_cu_up_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_up_ue_e1ap_id);
+      }
+
+      reset_part_of_e1_interface.push_back(item_container);
     }
   }
 
-  // Send the message to CU-UP.
+  if (reset_part_of_e1_interface.size() == 0u) {
+    // No E1 UEs to release. Skipping sending E1 reset.
+    return false;
+  }
+
+  // Send the E1 Reset to CU-UP.
   pdu_notifier.on_new_message(e1ap_msg);
+  return true;
 }

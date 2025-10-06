@@ -37,7 +37,7 @@ public:
 private:
   const char* name() const { return "E1 Reset Procedure"; }
 
-  void send_e1_reset();
+  bool send_e1_reset();
 
   const e1ap_configuration  e1ap_cfg;
   const cu_cp_reset         reset;
