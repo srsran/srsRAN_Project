@@ -96,7 +96,7 @@ protected:
 
   slotted_id_table<du_cell_index_t, cell_context, MAX_CELLS_PER_DU> cells;
 
-  slot_point next_point{0, 1};
+  slot_point next_point{0, 0};
 
   mac_dl_cell_metric_handler& add_cell(du_cell_index_t cell_index)
   {

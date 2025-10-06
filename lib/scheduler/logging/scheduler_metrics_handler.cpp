@@ -392,7 +392,7 @@ void cell_metrics_handler::report_metrics()
 {
   auto next_report = notifier.get_builder();
 
-  const unsigned                  report_period_slots = last_slot_tx - last_report_slot_tx;
+  const unsigned                  report_period_slots = last_slot_tx - start_report_slot_tx;
   const std::chrono::milliseconds report_period{report_period_slots / last_slot_tx.nof_slots_per_subframe()};
   for (ue_metric_context& ue : ues) {
     // Compute statistics of the UE metrics and push the result to the report.
@@ -401,7 +401,7 @@ void cell_metrics_handler::report_metrics()
   next_report->events.swap(pending_events);
 
   next_report->pci                       = cell_cfg.pci;
-  next_report->slot                      = last_report_slot_tx;
+  next_report->slot                      = start_report_slot_tx;
   next_report->nof_slots                 = report_period_slots;
   next_report->nof_error_indications     = data.error_indication_counter;
   next_report->average_decision_latency  = data.decision_latency_sum / next_report->nof_slots;
@@ -435,8 +435,8 @@ void cell_metrics_handler::report_metrics()
   }
 
   // Reset cell-wide metric counters.
-  data                = {};
-  last_report_slot_tx = last_slot_tx;
+  data                 = {};
+  start_report_slot_tx = last_slot_tx;
 
   // Clear the PRB vectors for the next report.
   for (unsigned& rb_count : ul_prbs_used_per_tdd_slot_idx) {
@@ -566,7 +566,7 @@ void cell_metrics_handler::push_result(slot_point                sl_tx,
     return;
   }
   if (SRSRAN_UNLIKELY(not last_slot_tx.valid())) {
-    last_report_slot_tx = sl_tx - 1;
+    start_report_slot_tx = sl_tx - 1;
   }
   last_slot_tx = sl_tx;
 

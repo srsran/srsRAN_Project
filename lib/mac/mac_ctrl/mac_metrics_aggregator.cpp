@@ -97,9 +97,11 @@ public:
   void on_cell_activation() override
   {
     // Determine the next report slot.
-    last_sl_tx          = time_source.now();
-    unsigned slot_mod   = last_sl_tx.count() % period_slots;
-    next_report_slot_tx = last_sl_tx + period_slots - slot_mod;
+    last_sl_tx        = time_source.now();
+    unsigned slot_mod = last_sl_tx.count() % period_slots;
+    // We are "slotting" the time when reports are produced. E.g. for a period of 10 slots and SCS=15kHz, the reports
+    // will be for slots 0.0-0.9, 1.0-1.9, 2.0-2.9, ...
+    next_report_slot_tx = last_sl_tx + period_slots - slot_mod - 1;
 
     // Notify the backend of a cell activation.
     defer_until_success(parent.ctrl_exec, parent.timers, [this, sl = next_report_slot_tx]() {
