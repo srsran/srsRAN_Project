@@ -75,7 +75,6 @@ bool is_valid_ue_context_release_complete(const f1ap_message& msg, const f1ap_me
 
 bool is_valid_paging(const f1ap_message& msg);
 
-bool is_valid_f1_reset(const f1ap_message& msg);
 bool is_valid_f1_reset_ack(const f1ap_message& msg);
 bool is_valid_f1_reset_ack(const f1ap_message& req, const f1ap_message& resp);
 

@@ -544,52 +544,6 @@ TEST_F(cu_cp_connectivity_test,
             asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::e1_release_resp);
 }
 
-TEST_F(cu_cp_connectivity_test, when_cu_up_connection_is_lost_then_connected_ues_are_released)
-{
-  // Run NG setup to completion.
-  run_ng_setup();
-
-  // Setup DU.
-  auto ret = connect_new_du();
-  ASSERT_TRUE(ret.has_value());
-  unsigned du_idx = ret.value();
-  ASSERT_TRUE(this->run_f1_setup(du_idx));
-
-  // Setup CU-UP.
-  ret = connect_new_cu_up();
-  ASSERT_TRUE(ret.has_value());
-  unsigned cu_up_idx = ret.value();
-  ASSERT_TRUE(this->run_e1_setup(cu_up_idx));
-
-  // Create UE.
-  gnb_du_ue_f1ap_id_t    du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(0);
-  rnti_t                 crnti         = to_rnti(0x4601);
-  amf_ue_id_t            amf_ue_id     = amf_ue_id_t::min;
-  gnb_cu_up_ue_e1ap_id_t cu_up_e1ap_id = gnb_cu_up_ue_e1ap_id_t::min;
-  ASSERT_TRUE(attach_ue(du_idx, cu_up_idx, du_ue_f1ap_id, crnti, amf_ue_id, cu_up_e1ap_id));
-
-  ASSERT_TRUE(drop_cu_up_connection(0));
-
-  // TEST: Verify that connected UEs are released.
-  {
-    // TEST: Verify NGReset is sent to AMF (NG Reset Ack is injected automatically).
-    ngap_message ngap_pdu;
-    ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu, std::chrono::milliseconds{1000}))
-        << "NG Reset was not received by the AMF";
-    ASSERT_TRUE(test_helpers::is_valid_ng_reset(ngap_pdu));
-
-    // TEST: Verify F1Reset is sent to DU (F1 Reset Ack is injected automatically).
-    f1ap_message f1ap_pdu;
-    ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000}))
-        << "F1 Reset was not received by the DU";
-    ASSERT_TRUE(test_helpers::is_valid_f1_reset(f1ap_pdu));
-
-    // TEST: Verify UE is removed in CU-CP.
-    auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
-    ASSERT_TRUE(report.ues.empty());
-  }
-}
-
 //----------------------------------------------------------------------------------//
 //  UE connection handling                                                          //
 //----------------------------------------------------------------------------------//

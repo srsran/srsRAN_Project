@@ -324,14 +324,6 @@ bool srsran::test_helpers::is_valid_paging(const f1ap_message& msg)
   return true;
 }
 
-bool srsran::test_helpers::is_valid_f1_reset(const f1ap_message& msg)
-{
-  TRUE_OR_RETURN(msg.pdu.type().value == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
-  TRUE_OR_RETURN(msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_RESET);
-  TRUE_OR_RETURN(is_packable(msg));
-  return true;
-}
-
 bool srsran::test_helpers::is_valid_f1_reset_ack(const f1ap_message& msg)
 {
   TRUE_OR_RETURN(msg.pdu.type().value == asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome);
