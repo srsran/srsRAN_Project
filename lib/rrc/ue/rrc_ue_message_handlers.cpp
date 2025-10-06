@@ -165,13 +165,10 @@ void rrc_ue_impl::handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu)
       handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().ue_cap_info().rrc_transaction_id);
       break;
     case ul_dcch_msg_type_c::c1_c_::types_opts::rrc_recfg_complete:
+      handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_recfg_complete().rrc_transaction_id);
       if (context.transfer_context.has_value() && context.transfer_context.value().is_inter_cu_handover) {
-        logger.log_debug("Received a RRC Reconfiguration Complete during inter CU handover. Notifying NGAP");
-        ngap_notifier.on_inter_cu_ho_rrc_recfg_complete_received(context.ue_index, context.cell.cgi, context.cell.tac);
         context.transfer_context.value().is_inter_cu_handover = false;
         cu_cp_notifier.on_rrc_reconfiguration_complete_indicator();
-      } else {
-        handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_recfg_complete().rrc_transaction_id);
       }
       break;
     case ul_dcch_msg_type_c::c1_c_::types_opts::rrc_reest_complete:
@@ -656,6 +653,14 @@ rrc_ue_reestablishment_context_response rrc_ue_impl::get_context()
 byte_buffer rrc_ue_impl::get_rrc_handover_command(const rrc_reconfiguration_procedure_request& request,
                                                   unsigned                                     transaction_id)
 {
+  // Unpack MasterCellGroup to extract T304.
+  asn1::rrc_nr::cell_group_cfg_s cell_group_cfg;
+  asn1::cbit_ref                 bref2(request.non_crit_ext->master_cell_group);
+  if (cell_group_cfg.unpack(bref2) != asn1::SRSASN_SUCCESS) {
+    report_fatal_error("Failed to unpack MasterCellGroupCfg");
+  }
+  context.cell.timers.t304 = std::chrono::milliseconds{cell_group_cfg.sp_cell_cfg.recfg_with_sync.t304.to_number()};
+
   // Pack RRCReconfiguration.
   rrc_recfg_s rrc_reconfig;
   fill_asn1_rrc_reconfiguration_msg(rrc_reconfig, transaction_id, request);

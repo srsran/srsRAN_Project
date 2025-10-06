@@ -15,8 +15,7 @@
 
 namespace srsran::srs_cu_cp {
 
-async_task<void> start_inter_cu_handover_execution_target_routine(ue_index_t                   ue_index,
-                                                                  const up_resource_manager&   up_manager,
+async_task<void> start_inter_cu_handover_execution_target_routine(cu_cp_ue*                    ue,
                                                                   e1ap_bearer_context_manager& e1ap,
                                                                   ngap_interface&              ngap,
                                                                   srslog::basic_logger&        logger);

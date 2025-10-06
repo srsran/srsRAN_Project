@@ -197,7 +197,7 @@ public:
   /// \returns True if the Handover command is valid and was successfully handled by the DU.
   virtual async_task<bool> on_new_handover_command(ue_index_t ue_index, byte_buffer command) = 0;
 
-  /// \brief Start N2 handover execution routine in target gNB.
+  /// \brief Notify the CU-CP to await the RRC Reconfiguration Complete and the DL Status Transfer.
   /// \param[in] ue_index The index of the UE.
   virtual void on_n2_handover_execution(ue_index_t ue_index) = 0;
 

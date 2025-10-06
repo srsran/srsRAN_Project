@@ -33,7 +33,7 @@ public:
 
   const ue_index_t                   ue_index; // UE index assigned by the DU processor
   const rnti_t                       c_rnti;   // current C-RNTI
-  const rrc_cell_context             cell;     // current cell
+  rrc_cell_context                   cell;     // current cell
   const rrc_ue_cfg_t                 cfg;
   plmn_identity                      plmn_id = plmn_identity::test_value(); // PLMN identity of the UE
   rrc_state                          state   = rrc_state::idle;

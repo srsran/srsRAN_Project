@@ -15,12 +15,10 @@ using namespace srs_cu_cp;
 
 #ifndef SRSRAN_HAS_ENTERPRISE
 
-async_task<void>
-srsran::srs_cu_cp::start_inter_cu_handover_execution_target_routine(ue_index_t                   ue_index,
-                                                                    const up_resource_manager&   up_manager,
-                                                                    e1ap_bearer_context_manager& e1ap,
-                                                                    ngap_interface&              ngap,
-                                                                    srslog::basic_logger&        logger)
+async_task<void> srsran::srs_cu_cp::start_inter_cu_handover_execution_target_routine(cu_cp_ue*                    ue,
+                                                                                     e1ap_bearer_context_manager& e1ap,
+                                                                                     ngap_interface&              ngap,
+                                                                                     srslog::basic_logger& logger)
 {
   logger.error("Inter-CU handover execution target routine failed. Cause: Inter-CU handover not supported");
 

@@ -15,6 +15,7 @@
 #include "rrc_ue_logger.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
+#include "srsran/rrc/rrc_cell_context.h"
 #include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
@@ -82,6 +83,7 @@ public:
 
   // rrc_ue_context_handler
   rrc_ue_reestablishment_context_response get_context() override;
+  rrc_cell_context                        get_cell_context() const override { return context.cell; }
 
 private:
   void stop() override;

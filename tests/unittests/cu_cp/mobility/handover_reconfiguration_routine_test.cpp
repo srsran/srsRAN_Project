@@ -12,6 +12,7 @@
 #include "mobility_test_helpers.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/rrc/rrc_cell_context.h"
 #include "srsran/rrc/rrc_types.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/async/coroutine.h"
@@ -179,6 +180,12 @@ public:
   {
     logger.info("Received a new request to get RRC UE reestablishment context");
     return rrc_ue_reestablishment_context_response{};
+  }
+
+  rrc_cell_context get_cell_context() const override
+  {
+    logger.info("Received a new request to get RRC UE cell context");
+    return rrc_cell_context{};
   }
 
   // RRC UE Reestablishment proc notifier

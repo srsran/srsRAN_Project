@@ -721,7 +721,7 @@ void cu_cp_impl::handle_n2_handover_execution(ue_index_t ue_index)
 
   ngap_interface* ngap = ngap_db.find_ngap(ue->get_ue_context().plmn);
   if (ngap == nullptr) {
-    logger.warning("ue={}: Could not start handover execution phase of handover. Cause: missing N2 interface.");
+    logger.warning("ue={}: NGAP not found for PLMN={}", ue_index, ue->get_ue_context().plmn);
     return;
   }
 
@@ -733,13 +733,7 @@ void cu_cp_impl::handle_n2_handover_execution(ue_index_t ue_index)
   }
   e1ap_bearer_context_manager& e1ap = cu_up->get_e1ap_bearer_context_manager();
 
-  e1ap_bearer_context_modification_request e1ap_request;
-  e1ap_request.ue_index = ue_index;
-
-  up_resource_manager& up_manager = ue->get_up_resource_manager();
-
-  ue->get_task_sched().schedule_async_task(
-      start_inter_cu_handover_execution_target_routine(ue_index, up_manager, e1ap, *ngap, logger));
+  ue->get_task_sched().schedule_async_task(start_inter_cu_handover_execution_target_routine(ue, e1ap, *ngap, logger));
 }
 
 void cu_cp_impl::handle_transmission_of_handover_required()
