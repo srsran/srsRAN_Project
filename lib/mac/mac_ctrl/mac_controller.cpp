@@ -44,7 +44,6 @@ mac_cell_controller& mac_controller::add_cell(const mac_cell_creation_request& c
   unsigned tdd_period_slots = cell_add_req.sched_req.tdd_ul_dl_cfg_common.has_value()
                                   ? nof_slots_per_tdd_period(*cell_add_req.sched_req.tdd_ul_dl_cfg_common)
                                   : 0U;
-  fmt::println("tdd_period={}", tdd_period_slots);
 
   auto cell_metrics_cfg =
       metrics.add_cell(cell_add_req.cell_index, cell_add_req.scs_common, tdd_period_slots, *cell_time_source);
