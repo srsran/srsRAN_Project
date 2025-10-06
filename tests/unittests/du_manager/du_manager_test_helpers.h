@@ -13,6 +13,9 @@
 #include "lib/du/du_high/du_manager/ran_resource_management/du_ran_resource_manager.h"
 #include "srsran/du/du_high/du_manager/du_manager_params.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
+#include "srsran/mac/mac_cell_manager.h"
+#include "srsran/mac/mac_manager.h"
+#include "srsran/mac/mac_paging_information_handler.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
@@ -247,7 +250,8 @@ public:
   std::string f1u_ext_addr = "auto";
 };
 
-class mac_test_dummy : public mac_cell_manager,
+class mac_test_dummy : public mac_manager,
+                       public mac_cell_manager,
                        public mac_ue_configurator,
                        public mac_ue_control_information_handler,
                        public mac_paging_information_handler
@@ -293,6 +297,9 @@ public:
   wait_manual_event_tester<mac_ue_reconfiguration_response> wait_ue_reconf;
   wait_manual_event_tester<mac_ue_delete_response>          wait_ue_delete;
   bool                                                      next_ul_ccch_msg_result = true;
+
+  mac_cell_manager&    get_cell_manager() override { return *this; }
+  mac_ue_configurator& get_ue_configurator() override { return *this; }
 
   mac_cell_controller&  add_cell(const mac_cell_creation_request& cell_cfg) override { return mac_cell; }
   void                  remove_cell(du_cell_index_t cell_index) override {}

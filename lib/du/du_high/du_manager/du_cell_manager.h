@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/du/du_high/du_manager/du_manager_params.h"
+#include "srsran/mac/cell_configuration.h"
 #include "srsran/ran/du_types.h"
 
 namespace srsran {

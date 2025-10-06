@@ -13,6 +13,7 @@
 #include "../du_cell_manager.h"
 #include "../du_ue/du_ue_manager_repository.h"
 #include "srsran/du/du_high/du_manager/du_configurator.h"
+#include "srsran/mac/mac_cell_manager.h"
 
 namespace srsran {
 namespace srs_du {

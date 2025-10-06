@@ -62,7 +62,7 @@ manual_event<du_mac_sched_control_config_response>& du_ue_ric_configuration_proc
                                CORO_AWAIT_VALUE(const mac_ue_reconfiguration_response result, handle_mac_config());
 
                                if (result.result) {
-                                 du_params.mac.ue_cfg.handle_ue_config_applied(result.ue_index);
+                                 du_params.mac.mgr.get_ue_configurator().handle_ue_config_applied(result.ue_index);
                                }
 
                                // Signal completion of UE configuration to external coroutine.
@@ -111,5 +111,5 @@ async_task<mac_ue_reconfiguration_response> du_ue_ric_configuration_procedure::h
                                            : du_params.mac.sched_cfg.ue.max_nof_dl_harq_retxs;
   res_alloc_cfg.max_pusch_harq_retxs = res_alloc_cfg.max_pdsch_harq_retxs;
 
-  return du_params.mac.ue_cfg.handle_ue_reconfiguration_request(mac_request);
+  return du_params.mac.mgr.get_ue_configurator().handle_ue_reconfiguration_request(mac_request);
 }

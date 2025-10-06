@@ -99,7 +99,7 @@ void du_setup_procedure::configure_du_cells()
     }
 
     // Forward config to MAC.
-    ctxt.params.mac.cell_mng.add_cell(
+    ctxt.params.mac.mgr.get_cell_manager().add_cell(
         make_mac_cell_config(cell_index, du_cfg, sys_info.sib1, sys_info.si_messages, sched_cfg));
   }
 }

@@ -17,6 +17,9 @@
 #include "srsran/ran/rnti.h"
 
 namespace srsran {
+
+class mac_ue_radio_link_notifier;
+
 namespace srs_du {
 
 /// \brief This class holds the context of an UE in the DU.

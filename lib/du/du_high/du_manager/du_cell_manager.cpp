@@ -13,6 +13,7 @@
 #include "converters/scheduler_configuration_helpers.h"
 #include "srsran/du/du_cell_config_validation.h"
 #include "srsran/du/du_high/du_manager/du_configurator.h"
+#include "srsran/mac/mac_cell_manager.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/srslog/srslog.h"
 
@@ -195,7 +196,7 @@ async_task<bool> du_cell_manager::start(du_cell_index_t cell_index) const
     }
 
     // Start cell in the MAC.
-    CORO_AWAIT(cfg.mac.cell_mng.get_cell_controller(cell_index).start());
+    CORO_AWAIT(cfg.mac.mgr.get_cell_manager().get_cell_controller(cell_index).start());
 
     cells[cell_index]->state = du_cell_context::state_t::active;
 
@@ -219,7 +220,7 @@ async_task<void> du_cell_manager::stop(du_cell_index_t cell_index) const
     cells[cell_index]->state = du_cell_context::state_t::inactive;
 
     // Stop cell in the MAC.
-    CORO_AWAIT(cfg.mac.cell_mng.get_cell_controller(cell_index).stop());
+    CORO_AWAIT(cfg.mac.mgr.get_cell_manager().get_cell_controller(cell_index).stop());
 
     CORO_RETURN();
   });
@@ -234,7 +235,7 @@ async_task<void> du_cell_manager::stop_all() const
       if (cells[i] != nullptr and cells[i]->state == du_cell_context::state_t::active) {
         cells[i]->state = du_cell_context::state_t::inactive;
 
-        CORO_AWAIT(cfg.mac.cell_mng.get_cell_controller(to_du_cell_index(i)).stop());
+        CORO_AWAIT(cfg.mac.mgr.get_cell_manager().get_cell_controller(to_du_cell_index(i)).stop());
       }
     }
 
@@ -247,7 +248,7 @@ void du_cell_manager::remove_all_cells()
   for (unsigned i = 0; i != cells.size(); ++i) {
     srsran_assert(cells[i] != nullptr, "Cell {} is null", i);
     srsran_assert(cells[i]->state != du_cell_context::state_t::active, "Cell {} is still active", i);
-    cfg.mac.cell_mng.remove_cell(to_du_cell_index(i));
+    cfg.mac.mgr.get_cell_manager().remove_cell(to_du_cell_index(i));
   }
   cells.clear();
 }

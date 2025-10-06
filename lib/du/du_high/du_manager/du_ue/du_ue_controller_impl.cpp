@@ -9,6 +9,7 @@
  */
 
 #include "du_ue_controller_impl.h"
+#include "srsran/mac/mac_ue_configurator.h"
 #include "srsran/support/async/async_no_op_task.h"
 #include "srsran/support/async/execute_on_blocking.h"
 

@@ -164,5 +164,5 @@ du_param_config_procedure::handle_mac_cell_update(const du_cell_reconfig_result&
     req.slice_reconf_req.emplace(changed_cell.slice_reconf_req.value());
   }
 
-  return du_params.mac.cell_mng.get_cell_controller(changed_cell.cell_index).reconfigure(req);
+  return du_params.mac.mgr.get_cell_manager().get_cell_controller(changed_cell.cell_index).reconfigure(req);
 }

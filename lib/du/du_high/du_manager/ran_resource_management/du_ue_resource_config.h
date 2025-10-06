@@ -15,6 +15,7 @@
 #include "srsran/mac/mac_cell_group_config.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/logical_channel/lcid.h"
+#include "srsran/ran/meas_gap_config.h"
 #include "srsran/ran/physical_cell_group.h"
 #include "srsran/ran/qos/qos_parameters.h"
 #include "srsran/rlc/rlc_config.h"
