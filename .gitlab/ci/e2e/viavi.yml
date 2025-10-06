@@ -48,7 +48,7 @@
       requests: "500Mi"
     ephemeral-storage:
       requests: "1G"
-  labels: ["kubernetes.io/hostname=k8s-worker-uhd1"]
+  labels: ["kubernetes.io/hostname=hp-oran"]
   environment:
     - TELEGRAF_INPUT_INTERVAL: ${TELEGRAF_INPUT_INTERVAL}
     - TELEGRAF_OUTPUT_INTERVAL: ${TELEGRAF_OUTPUT_INTERVAL}
