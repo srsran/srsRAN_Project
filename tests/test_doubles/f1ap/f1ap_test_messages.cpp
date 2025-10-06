@@ -57,28 +57,6 @@ f1ap_message srsran::test_helpers::generate_f1ap_reset_message(
   return msg;
 }
 
-f1ap_message
-srsran::test_helpers::generate_f1ap_reset_ack(uint8_t                                                transaction_id,
-                                              const asn1::f1ap::ue_associated_lc_f1_conn_list_res_l& f1_reset_ues)
-{
-  f1ap_message f1ap_msg;
-
-  f1ap_msg.pdu.set_successful_outcome();
-  f1ap_msg.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_RESET);
-  auto& f1_reset_ack           = f1ap_msg.pdu.successful_outcome().value.reset_ack();
-  f1_reset_ack->transaction_id = transaction_id;
-  if (f1_reset_ues.size() > 0) {
-    f1_reset_ack->ue_associated_lc_f1_conn_list_res_ack_present = true;
-    for (const auto& ue : f1_reset_ues) {
-      asn1::protocol_ie_single_container_s<asn1::f1ap::ue_associated_lc_f1_conn_item_res_ack_o> item_container;
-      item_container->ue_associated_lc_f1_conn_item() = ue->ue_associated_lc_f1_conn_item();
-      f1_reset_ack->ue_associated_lc_f1_conn_list_res_ack.push_back(item_container);
-    }
-  }
-
-  return f1ap_msg;
-}
-
 static byte_buffer generate_rrc_container(uint32_t pdcp_sn, unsigned pdu_len)
 {
   return test_helpers::create_pdcp_pdu(

@@ -127,10 +127,6 @@ class du_processor_configuration_update_interface
 public:
   virtual ~du_processor_configuration_update_interface() = default;
 
-  /// \brief Initiate the F1 Reset procedure as per TS 38.473 section 8.2.1.
-  /// \param[in] reset The F1 Reset message to transmit.
-  virtual async_task<void> handle_cu_cp_f1_reset_message(const cu_cp_reset& reset) = 0;
-
   /// \brief Apply neccesary configuration changes and forward the GNB CU Configuration Update to the F1AP.
   /// \param[in] request The F1AP GNB CU Configuration Update.
   /// \return The F1AP GNB CU Configuration Update response.

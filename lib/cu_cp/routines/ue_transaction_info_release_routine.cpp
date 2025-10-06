@@ -22,14 +22,12 @@ ue_transaction_info_release_routine::ue_transaction_info_release_routine(
     ue_manager&                           ue_mng_,
     ngap_repository&                      ngap_db_,
     cu_up_processor_repository&           cu_up_db_,
-    du_processor_repository&              du_db_,
     cu_cp_ue_removal_handler&             ue_rem_handler_,
     srslog::basic_logger&                 logger_) :
   loss_event(loss_event_),
   ue_mng(ue_mng_),
   ngap_db(ngap_db_),
   cu_up_db(cu_up_db_),
-  du_db(du_db_),
   ue_rem_handler(ue_rem_handler_),
   logger(logger_)
 {
@@ -67,20 +65,6 @@ void ue_transaction_info_release_routine::operator()(coro_context<async_task<voi
     }
 
     CORO_AWAIT(cu_up->handle_cu_cp_e1_reset_message(cu_up_id_it->second));
-  }
-
-  // Prepare F1 Reset messages for each DU.
-  prepare_f1_reset_messages();
-
-  // Run F1 Reset to signal to the CU-UP the reset of UEs.
-  for (du_id_it = f1_reset_per_du.begin(); du_id_it != f1_reset_per_du.end(); ++du_id_it) {
-    du = du_db.find_du_processor(du_id_it->first);
-    if (du == nullptr) {
-      logger.debug("DU processor not found for du_index={}. Skipping F1Reset", du_id_it->first);
-      continue;
-    }
-
-    CORO_AWAIT(du->handle_cu_cp_f1_reset_message(du_id_it->second));
   }
 
   // Launch removal procedure for the provided UEs.
@@ -141,26 +125,6 @@ void ue_transaction_info_release_routine::prepare_e1_reset_messages()
 
     // Add reset message to the CU-UP list.
     e1_reset_per_cu_up[ue->get_cu_up_index()].ues_to_reset.push_back(ue_idx);
-  }
-}
-
-void ue_transaction_info_release_routine::prepare_f1_reset_messages()
-{
-  for (const auto& ue_idx : loss_event.ues_lost) {
-    auto* ue = ue_mng.find_du_ue(ue_idx);
-    if (ue == nullptr) {
-      logger.debug("ue={}: UE not found in UE manager. Skipping F1Reset", ue_idx);
-      continue;
-    }
-
-    if (f1_reset_per_du.find(ue->get_du_index()) == f1_reset_per_du.end()) {
-      // Create a new entry for the DU.
-      f1ap_cause_t reset_cause            = f1ap_cause_radio_network_t::action_desirable_for_radio_reasons;
-      f1_reset_per_du[ue->get_du_index()] = cu_cp_reset{reset_cause, false, {}};
-    }
-
-    // Add reset message to the DU list.
-    f1_reset_per_du[ue->get_du_index()].ues_to_reset.push_back(ue_idx);
   }
 }
 

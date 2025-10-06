@@ -59,7 +59,6 @@ public:
   }
 
   // du_processor_configuration_update_interface
-  async_task<void> handle_cu_cp_f1_reset_message(const cu_cp_reset& reset) override;
   async_task<f1ap_gnb_cu_configuration_update_response>
   handle_configuration_update(const f1ap_gnb_cu_configuration_update& request) override;
 

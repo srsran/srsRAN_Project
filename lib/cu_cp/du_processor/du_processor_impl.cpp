@@ -303,11 +303,6 @@ bool du_processor_impl::has_cell(nr_cell_global_id_t cgi)
   return cfg.du_cfg_hdlr->get_context().find_cell(cgi) != nullptr;
 }
 
-async_task<void> du_processor_impl::handle_cu_cp_f1_reset_message(const cu_cp_reset& reset)
-{
-  return f1ap->handle_cu_cp_f1_reset_message(reset);
-}
-
 async_task<f1ap_gnb_cu_configuration_update_response>
 du_processor_impl::handle_configuration_update(const f1ap_gnb_cu_configuration_update& request)
 {
