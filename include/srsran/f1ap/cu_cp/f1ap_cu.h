@@ -156,10 +156,6 @@ class f1ap_interface_management_handler
 public:
   virtual ~f1ap_interface_management_handler() = default;
 
-  /// \brief Initiate the F1 Reset procedure as per TS 38.473 section 8.2.1.
-  /// \param[in] reset The F1 Reset message to transmit.
-  virtual async_task<void> handle_cu_cp_f1_reset_message(const cu_cp_reset& reset) = 0;
-
   /// \brief Initiates the gNB-CU Configuration Update procedure  as per TS 38.473 section 8.2.5.
   /// \param[in] request The gNB-CU Configuration Update message to transmit.
   /// \return Returns a f1ap_gnb_cu_configuration_update_response struct with the success member set to

@@ -10,7 +10,6 @@
 
 #include "f1ap_cu_impl.h"
 #include "asn1_helpers.h"
-#include "cu_cp/procedures/cu_cp_f1_reset_procedure.h"
 #include "f1ap_asn1_helpers.h"
 #include "f1ap_asn1_utils.h"
 #include "log_helpers.h"
@@ -49,7 +48,6 @@ f1ap_cu_impl::~f1ap_cu_impl() {}
 
 async_task<void> f1ap_cu_impl::stop()
 {
-  f1ap_stopping = true;
   return launch_async<f1ap_stop_procedure>(du_processor_notifier, ue_ctxt_list);
 }
 
@@ -218,27 +216,6 @@ f1ap_cu_impl::handle_positioning_measurement_request(const measurement_request_t
 }
 
 #endif // SRSRAN_HAS_ENTERPRISE
-
-async_task<void> f1ap_cu_impl::handle_cu_cp_f1_reset_message(const cu_cp_reset& reset)
-{
-  if (f1ap_stopping) {
-    logger.debug("Dropping F1 Reset message as F1AP is stopping");
-    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
-      CORO_BEGIN(ctx);
-      CORO_RETURN();
-    });
-  }
-
-  if (!std::holds_alternative<f1ap_cause_t>(reset.cause)) {
-    logger.error("Invalid cause type for F1 Reset");
-    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
-      CORO_BEGIN(ctx);
-      CORO_RETURN();
-    });
-  }
-
-  return launch_async<cu_cp_f1_reset_procedure>(cfg, reset, tx_pdu_notifier, ev_mng, ue_ctxt_list, logger);
-}
 
 async_task<f1ap_gnb_cu_configuration_update_response>
 f1ap_cu_impl::handle_gnb_cu_configuration_update(const f1ap_gnb_cu_configuration_update& request)
@@ -447,16 +424,6 @@ void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcom
   std::optional<uint8_t> transaction_id = std::nullopt;
 
   switch (outcome.value.type().value) {
-    case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::reset_ack:
-      transaction_id = get_transaction_id(outcome);
-      if (not transaction_id.has_value()) {
-        logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
-        break;
-      }
-      if (not ev_mng.transactions.set_response(transaction_id.value(), outcome)) {
-        logger.warning("Unexpected transaction id={}", transaction_id.value());
-      }
-      break;
     case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_release_complete:
       if (auto* ue_ctxt = get_ue_ctxt_in_ue_assoc_msg(outcome)) {
         ue_ctxt->ev_mng.context_release_complete.set(outcome.value.ue_context_release_complete());
