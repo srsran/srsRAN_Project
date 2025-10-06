@@ -12,7 +12,6 @@
 
 #include "srsran/support/synchronization/sync_event.h"
 #include <atomic>
-#include <cstdint>
 #include <utility>
 
 namespace srsran {
@@ -40,7 +39,21 @@ public:
     token_count(std::exchange(other.token_count, nullptr)), dtor_guard(std::exchange(other.dtor_guard, nullptr))
   {
   }
-  ~stop_event_token() { reset(); }
+  ~stop_event_token()
+  {
+    if (token_count != nullptr) {
+      auto cur = token_count->fetch_sub(1, std::memory_order_acq_rel) - 1;
+      if ((cur & count_mask) == 0) {
+        // count reached zero.
+        // Wake all stoppers.
+        futex_util::wake_all(*token_count);
+        // Update dtor guard.
+        dtor_guard->store(false, std::memory_order_release);
+      }
+      token_count = nullptr;
+      dtor_guard  = nullptr;
+    }
+  }
   stop_event_token& operator=(const stop_event_token& other)
   {
     if (this != &other) {
@@ -66,20 +79,12 @@ public:
   }
 
   /// Destroys the observer.
-  void reset()
+  void reset() { stop_event_token{}.swap(*this); }
+
+  void swap(stop_event_token& other) noexcept
   {
-    if (token_count != nullptr) {
-      auto cur = token_count->fetch_sub(1, std::memory_order_acq_rel) - 1;
-      if ((cur & count_mask) == 0) {
-        // count reached zero.
-        // Wake all stoppers.
-        futex_util::wake_all(*token_count);
-        // Update dtor guard.
-        dtor_guard->store(false, std::memory_order_release);
-      }
-      token_count = nullptr;
-      dtor_guard  = nullptr;
-    }
+    std::swap(token_count, other.token_count);
+    std::swap(dtor_guard, other.dtor_guard);
   }
 
 private:

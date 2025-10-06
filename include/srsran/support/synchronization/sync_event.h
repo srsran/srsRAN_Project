@@ -34,7 +34,20 @@ public:
     token_count(std::exchange(other.token_count, nullptr)), dtor_guard(std::exchange(other.dtor_guard, nullptr))
   {
   }
-  ~scoped_sync_token() { reset(); }
+  ~scoped_sync_token()
+  {
+    if (token_count != nullptr) {
+      auto cur = token_count->fetch_sub(1, std::memory_order_acq_rel) - 1;
+      if (cur == 0) {
+        // Count is zero. Wake all waiters.
+        futex_util::wake_all(*token_count);
+        // Update dtor guard.
+        dtor_guard->store(false, std::memory_order_release);
+      }
+      token_count = nullptr;
+      dtor_guard  = nullptr;
+    }
+  }
   scoped_sync_token& operator=(const scoped_sync_token& other)
   {
     if (this != &other) {
@@ -54,19 +67,12 @@ public:
   }
 
   /// Destroys the token and potentially unlocks sync_event::wait().
-  void reset()
+  void reset() { scoped_sync_token{}.swap(*this); }
+
+  void swap(scoped_sync_token& other) noexcept
   {
-    if (token_count != nullptr) {
-      auto cur = token_count->fetch_sub(1, std::memory_order_acq_rel) - 1;
-      if (cur == 0) {
-        // Count is zero. Wake all waiters.
-        futex_util::wake_all(*token_count);
-        // Update dtor guard.
-        dtor_guard->store(false, std::memory_order_release);
-      }
-      token_count = nullptr;
-      dtor_guard  = nullptr;
-    }
+    std::swap(token_count, other.token_count);
+    std::swap(dtor_guard, other.dtor_guard);
   }
 
 private:
