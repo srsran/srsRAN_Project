@@ -96,6 +96,7 @@ void pdcp_entity_tx::stop()
     if (cfg.discard_timer.has_value()) {
       discard_timer.stop();
     }
+    crypto_reordering_timer.stop();
     metrics_timer.stop();
     token_mngr.stop();
     logger.log_debug("Stopped PDCP entity");
