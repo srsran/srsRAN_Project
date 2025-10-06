@@ -436,20 +436,20 @@ else (ENABLE_UHD)
 endif (ENABLE_UHD)
 
 # Yaml-cpp
-find_package(YAMLCPP)
-if (YAMLCPP_FOUND)
-    include_directories(${YAMLCPP_INCLUDE_DIR})
-    link_directories(${YAMLCPP_LIBRARY})
+find_package(YAMLCPP REQUIRED)
+if (YAML_CPP_FOUND)
+    include_directories(${YAML_CPP_INCLUDE_DIR})
+    link_directories(${YAML_CPP_LIBRARY_DIR})
     sbom_add(
         PACKAGE            "yaml-cpp"
         DOWNLOAD_LOCATION  "https://github.com/jbeder/yaml-cpp"
         SUPPLIER           "yaml-cpp project"
         LICENSE            "MIT"
-        VERSION            ${PC_YAMLCPP_VERSION}
+        VERSION            ${YAML_CPP_VERSION}
     )
-else (YAMLCPP_FOUND)
+else (YAML_CPP_FOUND)
     message(FATAL_ERROR "yaml-cpp is required to build ${CMAKE_PROJECT_NAME}")
-endif (YAMLCPP_FOUND)
+endif (YAML_CPP_FOUND)
 
 # ZeroMQ
 if (ENABLE_ZEROMQ)

@@ -46,7 +46,7 @@ set(SOURCES
 )
 
 add_library(srsran_support STATIC ${SOURCES})
-target_link_libraries(srsran_support PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${YAMLCPP_LIBRARY}
+target_link_libraries(srsran_support PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${YAML_CPP_LIBRARIES}
         ${NUMA_LIBRARIES} srslog)
 add_backward(srsran_support)
 
