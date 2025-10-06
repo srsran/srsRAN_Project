@@ -157,6 +157,10 @@ void scheduler_event_logger::enqueue_impl(const csi_report_event& csi)
                    fmt::underlying(csi.ue_index),
                    csi.rnti,
                    csi.sl_rx);
+    if (not csi.csi.first_tb_wideband_cqi.has_value() and not csi.csi.ri.has_value() and not csi.csi.pmi.has_value()) {
+      fmt::format_to(std::back_inserter(fmtbuf), " invalid");
+      return;
+    }
     if (csi.csi.first_tb_wideband_cqi.has_value()) {
       fmt::format_to(std::back_inserter(fmtbuf), " cqi={}", *csi.csi.first_tb_wideband_cqi);
     }

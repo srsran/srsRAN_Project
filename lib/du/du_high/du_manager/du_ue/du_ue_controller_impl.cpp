@@ -155,8 +155,9 @@ public:
     // The release timer is not running yet. We need to store the cause and start the timer.
     current_cause    = cause;
     auto timeout_val = get_release_timeout();
-    logger.warning("ue={}: RLF detected with cause=\"{}\". Timer of {} msec to release UE started...",
-                   fmt::underlying(ue_ctx.ue_index),
+    logger.warning("ue={} rnti={}: RLF detected with cause \"{}\". Timer of {} msec to release UE started...",
+                   ue_ctx.ue_index,
+                   ue_ctx.rnti,
                    get_rlf_cause_str(cause),
                    timeout_val.count());
 
