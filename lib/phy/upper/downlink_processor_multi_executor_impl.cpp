@@ -245,6 +245,7 @@ downlink_processor_multi_executor_impl::configure_resource_grid(const resource_g
   pdsch_list.clear();
   ssb_list.clear();
   nzp_csi_rs_list.clear();
+  prs_list.clear();
 
   l1_dl_tracer << instant_trace_event("configure_rg", instant_trace_event::cpu_scope::global);
 
