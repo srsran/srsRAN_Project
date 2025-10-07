@@ -170,7 +170,7 @@ error_type<std::string> rrm_policy_ratio_remote_command::execute(const nlohmann:
     if (!min_prb_policy_ratio->is_number_integer()) {
       return make_unexpected("'min_prb_policy_ratio' object value type should be an integer");
     }
-    min_prb_policy_ratio_value = (unsigned)min_prb_policy_ratio->get<int>();
+    min_prb_policy_ratio_value = static_cast<unsigned>(min_prb_policy_ratio->get<int>());
     if (min_prb_policy_ratio_value < 0 || min_prb_policy_ratio_value > 100) {
       return make_unexpected(
           fmt::format("'min_prb_policy_ratio' value out of range, received '{}', valid range is from 0 to 100",
@@ -185,7 +185,7 @@ error_type<std::string> rrm_policy_ratio_remote_command::execute(const nlohmann:
     if (!max_prb_policy_ratio->is_number_integer()) {
       return make_unexpected("'max_prb_policy_ratio' object value type should be an integer");
     }
-    max_prb_policy_ratio_value = (unsigned)max_prb_policy_ratio->get<int>();
+    max_prb_policy_ratio_value = static_cast<unsigned>(max_prb_policy_ratio->get<int>());
     if (max_prb_policy_ratio_value < 0 || max_prb_policy_ratio_value > 100) {
       return make_unexpected(
           fmt::format("'max_prb_policy_ratio' value out of range, received '{}', valid range is from 0 to 100",
@@ -200,7 +200,7 @@ error_type<std::string> rrm_policy_ratio_remote_command::execute(const nlohmann:
     if (!dedicated_ratio->is_number_integer()) {
       return make_unexpected("'dedicated_ratio' object value type should be an integer");
     }
-    dedicated_ratio_value = (unsigned)dedicated_ratio->get<int>();
+    dedicated_ratio_value = static_cast<unsigned>(dedicated_ratio->get<int>());
     if (dedicated_ratio_value < 0 || dedicated_ratio_value > 100) {
       return make_unexpected(
           fmt::format("'dedicated_ratio' value out of range, received '{}', valid range is from 0 to 100",
@@ -212,7 +212,7 @@ error_type<std::string> rrm_policy_ratio_remote_command::execute(const nlohmann:
   rrm_policy_group.maximum_ratio   = max_prb_policy_ratio_value;
   rrm_policy_group.dedicated_ratio = dedicated_ratio_value;
 
-  req.cells.emplace_back(std::nullopt, std::nullopt, std::vector<rrm_policy_ratio_group>{rrm_policy_group});
+  req.cells.emplace_back(nr_cell_global_id_t{}, std::nullopt, std::vector<rrm_policy_ratio_group>{rrm_policy_group});
 
   if (configurator.handle_operator_config_request(req).success) {
     return {};

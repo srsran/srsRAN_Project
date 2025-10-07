@@ -61,15 +61,11 @@ static srs_du::du_param_config_request convert_to_du_config_request(const e2sm_r
     std::string plmn_str    = e2_plmn_id.mcc.to_string() + e2_plmn_id.mnc.to_string();
     auto        plmn_id_exp = plmn_identity::parse(plmn_str);
     if (plmn_id_exp.has_value()) {
-      cell_cfg.nr_cgi.emplace();
-      cell_cfg.nr_cgi->plmn_id = plmn_id_exp.value();
+      cell_cfg.nr_cgi.plmn_id = plmn_id_exp.value();
     }
     auto nr_cell_identity_exp = nr_cell_identity::create(e2_cell_ctrl.cell_global_id.nr_cgi().nr_cell_id.to_number());
     if (nr_cell_identity_exp.has_value()) {
-      if (!cell_cfg.nr_cgi.has_value()) {
-        cell_cfg.nr_cgi.emplace();
-      }
-      cell_cfg.nr_cgi->nci = nr_cell_identity_exp.value();
+      cell_cfg.nr_cgi.nci = nr_cell_identity_exp.value();
     }
 
     for (auto const& e2_cfg_struct : e2_cell_ctrl.list_of_cfg_structures) {
@@ -145,8 +141,8 @@ static void log_du_config_request(srslog::basic_logger& logger, const srs_du::du
   for (const auto& cell_cfg : req.cells) {
     fmt::format_to(std::back_inserter(log_buffer),
                    "E2SM-CCC: O-RRMPolicyRatio Control Request for NR-CGI=[plmn: {}, nci: {}]\n",
-                   cell_cfg.nr_cgi.has_value() ? cell_cfg.nr_cgi.value().plmn_id.to_string() : "na",
-                   cell_cfg.nr_cgi.has_value() ? cell_cfg.nr_cgi.value().nci.value() : 0U);
+                   cell_cfg.nr_cgi.plmn_id.to_string(),
+                   cell_cfg.nr_cgi.nci);
     fmt::format_to(std::back_inserter(log_buffer), "RRM Policy Ratio Group:\n");
     for (const auto& rrm_policy_ratio : cell_cfg.rrm_policy_ratio_list) {
       fmt::format_to(std::back_inserter(log_buffer), " RRM Policy:\n");

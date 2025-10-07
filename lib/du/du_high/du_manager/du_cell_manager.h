@@ -12,7 +12,6 @@
 
 #include "srsran/du/du_high/du_manager/du_manager_params.h"
 #include "srsran/ran/du_types.h"
-#include "srsran/scheduler/scheduler_sys_info_handler.h"
 
 namespace srsran {
 namespace srs_du {
@@ -77,7 +76,7 @@ public:
   }
 
   /// Stop accepting new UE creations in the given cell.
-  void stop_accepting_ues(du_cell_index_t cell_index)
+  void stop_accepting_ues(du_cell_index_t cell_index) const
   {
     cells[cell_index]->state = du_cell_context::state_t::deactivating;
   }
