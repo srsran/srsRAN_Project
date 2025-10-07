@@ -512,6 +512,8 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
       logger.error("ue={} c-rnti={}: Failed to allocate PDSCH CRBs",
                    fmt::underlying(grant_builder.ue().ue_index()),
                    grant_builder.ue().crnti());
+      // We let the grant be empty. It will be skipped in the post-processing scheduling step.
+      grant_builder.set_pdsch_params({}, {}, enable_pdsch_interleaving);
       continue;
     }
 
@@ -625,6 +627,8 @@ unsigned intra_slice_scheduler::schedule_ul_newtx_candidates(ul_ran_slice_candid
       logger.error("ue={} c-rnti={}: Failed to allocate PUSCH CRBs",
                    fmt::underlying(grant_builder.ue().ue_index()),
                    grant_builder.ue().crnti());
+      // We let the grant be empty. It will be skipped in the post-processing scheduling step.
+      grant_builder.set_pusch_params({});
       continue;
     }
 

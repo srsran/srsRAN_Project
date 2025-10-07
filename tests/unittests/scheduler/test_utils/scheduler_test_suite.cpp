@@ -470,7 +470,7 @@ void assert_rar_grant_msg3_pusch_consistency(const cell_configuration& cell_cfg,
 {
   ASSERT_EQ(rar_grant.temp_crnti, msg3_pusch.rnti);
   ASSERT_TRUE(msg3_pusch.rbs.is_type1());
-  ASSERT_FALSE(msg3_pusch.rbs.any()) << fmt::format("Msg3 with temp-c-rnti={} has no RBs", msg3_pusch.rnti);
+  ASSERT_TRUE(msg3_pusch.rbs.any()) << fmt::format("Msg3 with temp-c-rnti={} has no RBs", msg3_pusch.rnti);
 
   unsigned     N_rb_ul_bwp = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
   vrb_interval vrbs        = msg3_pusch.rbs.type1();

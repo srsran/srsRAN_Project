@@ -760,6 +760,22 @@ void ue_cell_grid_allocator::post_process_results()
 {
   auto& slot_alloc = cell_alloc[0];
 
+  // Remove PUSCHs and PDSCHs with empty RB allocations.
+  for (auto it = slot_alloc.result.dl.ue_grants.begin(); it != slot_alloc.result.dl.ue_grants.end();) {
+    if (it->pdsch_cfg.rbs.empty()) {
+      it = slot_alloc.result.dl.ue_grants.erase(it);
+    } else {
+      ++it;
+    }
+  }
+  for (auto it = slot_alloc.result.ul.puschs.begin(); it != slot_alloc.result.ul.puschs.end();) {
+    if (it->pusch_cfg.rbs.empty()) {
+      it = slot_alloc.result.ul.puschs.erase(it);
+    } else {
+      ++it;
+    }
+  }
+
   // Update the PUCCH power control data.
   post_process_pucch_pw_ctrl_results(slot_alloc.slot);
 
