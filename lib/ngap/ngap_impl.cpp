@@ -362,11 +362,8 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
   // Check wether another context doesn't exist already for the same AMF UE ID with mismatched RAN UE ID.
   if (not validate_consistent_ue_id_pair(uint_to_ran_ue_id(msg->ran_ue_ngap_id),
                                          uint_to_amf_ue_id(msg->amf_ue_ngap_id))) {
-    send_error_indication(tx_pdu_notifier,
-                          logger,
-                          uint_to_ran_ue_id(msg->ran_ue_ngap_id),
-                          uint_to_amf_ue_id(msg->amf_ue_ngap_id),
-                          ngap_cause_radio_network_t::inconsistent_remote_ue_ngap_id);
+    // Release old UE context and send error indication with the received UE IDs to the AMF.
+    handle_inconsistent_ue_id_pair(uint_to_ran_ue_id(msg->ran_ue_ngap_id), uint_to_amf_ue_id(msg->amf_ue_ngap_id));
     return;
   }
 
@@ -428,11 +425,9 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
   // Check wether another context doesn't exist already for the same AMF UE ID with mismatched RAN UE ID.
   if (not validate_consistent_ue_id_pair(uint_to_ran_ue_id(request->ran_ue_ngap_id),
                                          uint_to_amf_ue_id(request->amf_ue_ngap_id))) {
-    send_error_indication(tx_pdu_notifier,
-                          logger,
-                          uint_to_ran_ue_id(request->ran_ue_ngap_id),
-                          uint_to_amf_ue_id(request->amf_ue_ngap_id),
-                          ngap_cause_radio_network_t::inconsistent_remote_ue_ngap_id);
+    // Release old UE context and send error indication with the received UE IDs to the AMF.
+    handle_inconsistent_ue_id_pair(uint_to_ran_ue_id(request->ran_ue_ngap_id),
+                                   uint_to_amf_ue_id(request->amf_ue_ngap_id));
     return;
   }
 
@@ -1304,6 +1299,38 @@ bool ngap_impl::validate_consistent_ue_id_pair(ran_ue_id_t ran_ue_ngap_id, amf_u
     }
   }
   return true;
+}
+
+void ngap_impl::handle_inconsistent_ue_id_pair(ran_ue_id_t ran_ue_ngap_id, amf_ue_id_t amf_ue_ngap_id)
+{
+  if (ue_ctxt_list.contains(amf_ue_ngap_id)) {
+    ngap_ue_context& ue_ctxt = ue_ctxt_list[amf_ue_ngap_id];
+
+    // Release old UE context if AMF UE ID is already associated with another RAN UE ID.
+    auto* ue = ue_ctxt.get_cu_cp_ue();
+    srsran_assert(ue != nullptr,
+                  "ue={} ran_ue={} amf_ue={}: UE for UE context doesn't exist",
+                  fmt::underlying(ue_ctxt.ue_ids.ue_index),
+                  fmt::underlying(ue_ctxt.ue_ids.ran_ue_id),
+                  fmt::underlying(ue_ctxt.ue_ids.amf_ue_id));
+
+    ue_ctxt.release_scheduled = true;
+
+    ue->schedule_async_task(
+        launch_async([this, ue_index = ue_ctxt.ue_ids.ue_index](coro_context<async_task<void>>& ctx) {
+          CORO_BEGIN(ctx);
+          CORO_AWAIT(cu_cp_notifier.on_new_ue_context_release_command(
+              {ue_index, cause_protocol_t::msg_not_compatible_with_receiver_state, true}));
+          CORO_RETURN();
+        }));
+
+    // Send error indication with the received UE IDs to the AMF.
+    send_error_indication(tx_pdu_notifier,
+                          logger,
+                          ran_ue_ngap_id,
+                          amf_ue_ngap_id,
+                          ngap_cause_radio_network_t::inconsistent_remote_ue_ngap_id);
+  }
 }
 
 static auto log_pdu_helper(srslog::basic_logger&         logger,

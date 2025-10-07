@@ -206,6 +206,12 @@ private:
   /// \return True if the pair is consistent, false otherwise.
   [[nodiscard]] bool validate_consistent_ue_id_pair(ran_ue_id_t ran_ue_ngap_id, amf_ue_id_t amf_ue_ngap_id);
 
+  /// \brief Handles an inconsistent UE id pair. It releases the old UE context and sends an error indication to the
+  /// AMF.
+  /// \param[in] ran_ue_ngap_id The inconsistent RAN-UE-NGAP-ID.
+  /// \param[in] amf_ue_ngap_id The inconsistent AMF-UE-NGAP-ID.
+  void handle_inconsistent_ue_id_pair(ran_ue_id_t ran_ue_ngap_id, amf_ue_id_t amf_ue_ngap_id);
+
   /// \brief Log NGAP RX PDU.
   void log_rx_pdu(const ngap_message& msg);
 
