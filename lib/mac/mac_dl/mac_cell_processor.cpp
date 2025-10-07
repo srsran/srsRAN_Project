@@ -168,12 +168,6 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
       CORO_AWAIT(defer_on_blocking(ctrl_exec, timers));
     }
 
-    if (request.positioning.has_value()) {
-      // Positioning measurement request has been received.
-      CORO_AWAIT_VALUE(resp.positioning,
-                       sched.handle_positioning_measurement_request(cell_cfg.cell_index, request.positioning.value()));
-    }
-
     if (request.new_si_pdu_info.has_value()) {
       sib_assembler.enqueue_si_message_pdu_updates(*request.new_si_pdu_info);
       resp.si_pdus_enqueued = true;

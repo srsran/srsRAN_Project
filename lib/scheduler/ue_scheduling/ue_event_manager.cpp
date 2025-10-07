@@ -15,6 +15,7 @@
 #include "../support/sr_helper.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
 #include "srsran/support/memory_pool/bounded_object_pool.h"
+#include <memory>
 
 using namespace srsran;
 
@@ -134,7 +135,7 @@ class srsran::pdu_indication_pool
   using crc_pool          = bounded_object_pool<ul_crc_pdu_indication>;
   using srs_pool          = bounded_object_pool<srs_indication::srs_indication_pdu>;
   using bsr_pool          = bounded_object_pool<ul_bsr_indication_message>;
-  using pos_req_pool      = bounded_object_pool<positioning_measurement_request>;
+  using pos_req_pool      = bounded_object_pool<positioning_measurement_request::cell_info>;
   using slice_reconf_pool = bounded_object_pool<du_cell_slice_reconfig_request>;
 
 public:
@@ -780,28 +781,32 @@ void ue_cell_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indicati
   push_event(cfg.cell_index, event_t{"DL MAC CE", ce.ue_index, std::move(handle_mac_ce_impl)});
 }
 
-void ue_cell_event_manager::handle_positioning_measurement_request(const positioning_measurement_request& req)
+void ue_cell_event_manager::handle_positioning_measurement_request(
+    const positioning_measurement_request::cell_info& req)
 {
+  srsran_assert(req.cell_index == cfg.cell_index, "Received positioning request for wrong cell");
+
   auto req_ptr = ind_pdu_pool->create_pdu(req);
   if (req_ptr == nullptr) {
     return;
   }
+
   auto task = [this, req_ptr = std::move(req_ptr)]() {
     srs_sched.handle_positioning_measurement_request(*req_ptr);
     return event_result::processed;
   };
 
-  push_event(req.cell_index, event_t{"POS MEAS REQ", std::move(task)});
+  push_event(req_ptr->cell_index, event_t{"POS MEAS REQ", std::move(task)});
 }
 
-void ue_cell_event_manager::handle_positioning_measurement_stop(du_cell_index_t cell_index, rnti_t pos_rnti)
+void ue_cell_event_manager::handle_positioning_measurement_stop(rnti_t pos_rnti)
 {
-  auto task = [this, cell_index, pos_rnti]() {
-    srs_sched.handle_positioning_measurement_stop(cell_index, pos_rnti);
+  auto task = [this, pos_rnti]() {
+    srs_sched.handle_positioning_measurement_stop(pos_rnti);
     return event_result::processed;
   };
 
-  push_event(cell_index, event_t{"pos_meas_stop", std::move(task)});
+  push_event(cfg.cell_index, event_t{"pos_meas_stop", std::move(task)});
 }
 
 void ue_cell_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)

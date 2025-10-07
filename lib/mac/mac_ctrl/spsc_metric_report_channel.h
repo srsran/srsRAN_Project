@@ -33,16 +33,19 @@ class spsc_metric_report_channel : public zero_copy_notifier<ReportType>
     }
   };
 
+  struct noop_ctor {
+    ReportType operator()() const { return ReportType{}; }
+  };
+
 public:
   using builder = typename zero_copy_notifier<ReportType>::builder;
   using reader  = std::unique_ptr<ReportType, consumer>;
 
-  template <typename ConstructReport>
-  spsc_metric_report_channel(
-      size_t                 capacity,
-      srslog::basic_logger&  logger_,
-      const ConstructReport& report_ctor   = []() { return ReportType{}; },
-      const RecycleFunc&     recycle_func_ = {}) :
+  template <typename ConstructReport = noop_ctor>
+  spsc_metric_report_channel(size_t                 capacity,
+                             srslog::basic_logger&  logger_,
+                             const ConstructReport& report_ctor   = noop_ctor{},
+                             const RecycleFunc&     recycle_func_ = {}) :
     logger(logger_), recycle_func(recycle_func_), free_list(capacity), pending(capacity)
   {
     srsran_assert(capacity >= 2, "Capacity must be greater than 1");
@@ -61,31 +64,6 @@ public:
   }
   spsc_metric_report_channel(const spsc_metric_report_channel&) = delete;
   spsc_metric_report_channel(spsc_metric_report_channel&&)      = delete;
-
-  ReportType& get_next() override
-  {
-    unsigned idx;
-    if (not free_list.try_pop(idx)) {
-      logger.warning("Metric report queue is depleted. Discarding next report...");
-      return dummy_report;
-    }
-    return reports[idx];
-  }
-
-  void commit(ReportType& report) override
-  {
-    if (&report == &dummy_report) {
-      // Ignored.
-      recycle_func(report);
-      return;
-    }
-    unsigned idx = &report - reports.data();
-    srsran_sanity_check(idx < reports.size(), "Invalid report being committed");
-    if (not pending.try_push(idx)) {
-      logger.error("Failed to push metric report. Discarding it...");
-      recycle_func(report);
-    }
-  }
 
   reader pop()
   {
@@ -112,6 +90,31 @@ public:
 
 private:
   using queue_type = concurrent_queue<unsigned, concurrent_queue_policy::lockfree_spsc>;
+
+  ReportType& get_next() override
+  {
+    unsigned idx;
+    if (not free_list.try_pop(idx)) {
+      logger.warning("Metric report queue is depleted. Discarding next report...");
+      return dummy_report;
+    }
+    return reports[idx];
+  }
+
+  void commit(ReportType& report) override
+  {
+    if (&report == &dummy_report) {
+      // Ignored.
+      recycle_func(report);
+      return;
+    }
+    unsigned idx = &report - reports.data();
+    srsran_sanity_check(idx < reports.size(), "Invalid report being committed");
+    if (not pending.try_push(idx)) {
+      logger.error("Failed to push metric report. Discarding it...");
+      recycle_func(report);
+    }
+  }
 
   /// Called when the report has been consumed and can be returned to the free list.
   void dispose(ReportType& report)

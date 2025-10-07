@@ -14,6 +14,7 @@ namespace srsran {
 
 class mac_cell_manager;
 class mac_ue_configurator;
+class mac_positioning_measurement_handler;
 
 /// Interface used by the management plane of the DU.
 class mac_manager
@@ -26,6 +27,9 @@ public:
 
   /// Interface to manage the creation, reconfiguration and deletion of UEs in the MAC.
   virtual mac_ue_configurator& get_ue_configurator() = 0;
+
+  /// Fetch positioning measurement handler.
+  virtual mac_positioning_measurement_handler& get_positioning_handler() = 0;
 };
 
 } // namespace srsran

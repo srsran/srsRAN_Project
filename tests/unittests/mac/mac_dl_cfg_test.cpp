@@ -110,7 +110,7 @@ TEST_F(mac_dl_cfg_test, test_dl_ue_procedure_execution_contexts)
   dummy_dl_executor_mapper    dl_exec_mapper{dl_execs[0]};
   mac_dl_config               mac_dl_cfg{ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap, timers};
 
-  srsran_scheduler_adapter sched_cfg_adapter{srsran_mac_sched_config{macfg, ctrl_worker, schedcfg}, rnti_mng};
+  srsran_scheduler_adapter sched_cfg_adapter{srsran_mac_sched_config{macfg, ctrl_worker, timers, schedcfg}, rnti_mng};
   mac_dl_processor         mac_dl(mac_dl_cfg, sched_cfg_adapter, rnti_mng);
 
   auto mac_cell_req      = test_helpers::make_default_mac_cell_config();
@@ -155,7 +155,7 @@ TEST_F(mac_dl_cfg_test, test_dl_ue_procedure_tsan)
   dummy_scheduler_cell_metrics_notifier sched_cell_metrics_notif;
   mac_dl_config mac_dl_cfg{ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap, timers};
 
-  srsran_scheduler_adapter sched_cfg_adapter{srsran_mac_sched_config{macfg, ctrl_worker, schedcfg}, rnti_mng};
+  srsran_scheduler_adapter sched_cfg_adapter{srsran_mac_sched_config{macfg, ctrl_worker, timers, schedcfg}, rnti_mng};
   mac_dl_processor         mac_dl(mac_dl_cfg, sched_cfg_adapter, rnti_mng);
 
   // Action: Add Cells.

@@ -16,6 +16,7 @@
 #include "srsran/mac/mac_cell_manager.h"
 #include "srsran/mac/mac_manager.h"
 #include "srsran/mac/mac_paging_information_handler.h"
+#include "srsran/mac/mac_positioning_measurement_handler.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
@@ -254,7 +255,8 @@ class mac_test_dummy : public mac_manager,
                        public mac_cell_manager,
                        public mac_ue_configurator,
                        public mac_ue_control_information_handler,
-                       public mac_paging_information_handler
+                       public mac_paging_information_handler,
+                       public mac_positioning_measurement_handler
 {
 public:
   class mac_cell_dummy : public mac_cell_controller
@@ -298,8 +300,9 @@ public:
   wait_manual_event_tester<mac_ue_delete_response>          wait_ue_delete;
   bool                                                      next_ul_ccch_msg_result = true;
 
-  mac_cell_manager&    get_cell_manager() override { return *this; }
-  mac_ue_configurator& get_ue_configurator() override { return *this; }
+  mac_cell_manager&                    get_cell_manager() override { return *this; }
+  mac_ue_configurator&                 get_ue_configurator() override { return *this; }
+  mac_positioning_measurement_handler& get_positioning_handler() override { return *this; }
 
   mac_cell_controller&  add_cell(const mac_cell_creation_request& cell_cfg) override { return mac_cell; }
   void                  remove_cell(du_cell_index_t cell_index) override {}
@@ -335,6 +338,12 @@ public:
   }
 
   void handle_paging_information(const paging_information& msg) override {}
+
+  async_task<mac_positioning_measurement_response>
+  handle_positioning_measurement_request(const mac_positioning_measurement_request& msg) override
+  {
+    return launch_no_op_task(mac_positioning_measurement_response{});
+  }
 };
 
 class dummy_ue_resource_configurator_factory : public du_ran_resource_manager

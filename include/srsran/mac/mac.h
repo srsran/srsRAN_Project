@@ -11,13 +11,11 @@
 #pragma once
 
 #include "srsran/mac/mac_cell_control_information_handler.h"
-#include "srsran/mac/mac_cell_manager.h"
 #include "srsran/mac/mac_cell_rach_handler.h"
 #include "srsran/mac/mac_cell_slot_handler.h"
 #include "srsran/mac/mac_manager.h"
 #include "srsran/mac/mac_paging_information_handler.h"
 #include "srsran/mac/mac_pdu_handler.h"
-#include "srsran/mac/mac_ue_configurator.h"
 #include "srsran/mac/mac_ue_control_information_handler.h"
 
 namespace srsran {

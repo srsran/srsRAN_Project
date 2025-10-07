@@ -18,6 +18,8 @@
 
 namespace srsran {
 
+class mac_positioning_measurement_handler;
+
 /// Start configured cell.
 struct mac_cell_start {
   du_cell_index_t cell_index;
@@ -68,8 +70,6 @@ struct mac_cell_sys_info_pdu_update {
 struct mac_cell_reconfig_request {
   /// If not empty, contains the new system information to broadcast.
   std::optional<mac_cell_sys_info_config> new_sys_info;
-  /// If not empty, the MAC is requested to collect a new positioning measurement.
-  std::optional<mac_cell_positioning_measurement_request> positioning;
   /// If not empty, contains the new SI PDU to be updated.
   std::optional<mac_cell_sys_info_pdu_update> new_si_pdu_info;
   /// If not empty, contains the updates to be applied to the RRM policies.
