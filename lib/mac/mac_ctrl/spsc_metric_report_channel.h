@@ -64,12 +64,12 @@ public:
 
   ReportType& get_next() override
   {
-    unsigned* idx = free_list.front();
-    if (idx == nullptr) {
+    unsigned idx;
+    if (not free_list.try_pop(idx)) {
       logger.warning("Metric report queue is depleted. Discarding next report...");
       return dummy_report;
     }
-    return reports[*idx];
+    return reports[idx];
   }
 
   void commit(ReportType& report) override
