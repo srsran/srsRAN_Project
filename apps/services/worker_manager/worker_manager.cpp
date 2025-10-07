@@ -14,6 +14,7 @@
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/ru/ofh/ru_ofh_executor_mapper_factory.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/executors/executor_decoration_factory.h"
 #include "srsran/support/executors/inline_task_executor.h"
 #include "srsran/support/executors/strand_executor.h"
 
@@ -556,13 +557,31 @@ void worker_manager::create_split6_executors()
     report_fatal_error("Failed to instantiate {} execution context", split6_worker.name);
   }
 
-  split6_exec = exec_mng.executors().at(exec_name);
+  // Associate executor.
+  if (exec_metrics_backend) {
+    execution_decoration_config cfg;
+    cfg.metrics.emplace("split6_exec", *exec_metrics_backend, false);
+    auto split6_decorator = decorate_executor(*exec_mng.executors().at(exec_name), cfg);
+
+    split6_exec = split6_decorator.get();
+    executor_decorators_exec.push_back(std::move(split6_decorator));
+  } else {
+    split6_exec = exec_mng.executors().at(exec_name);
+  }
 
   // Split6 control executor.
   auto split6_ctrl_strand =
       make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(non_rt_medium_prio_exec, task_worker_queue_size);
-  split6_crtl_exec = split6_ctrl_strand.get();
-  executor_decorators_exec.push_back(std::move(split6_ctrl_strand));
+  if (exec_metrics_backend) {
+    execution_decoration_config cfg;
+    cfg.metrics.emplace("split6_ctrl_exec", *exec_metrics_backend, false);
+    auto split6_ctrl_decorator = decorate_executor(std::move(split6_ctrl_strand), cfg);
+    split6_crtl_exec           = split6_ctrl_decorator.get();
+    executor_decorators_exec.push_back(std::move(split6_ctrl_decorator));
+  } else {
+    split6_crtl_exec = split6_ctrl_strand.get();
+    executor_decorators_exec.push_back(std::move(split6_ctrl_strand));
+  }
 }
 
 void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_sdr_config& config)
