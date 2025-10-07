@@ -223,9 +223,10 @@ test_bench::test_bench(const test_bench_params& params,
       case pucch_format::FORMAT_3:
         pucch_params.f2_or_f3_or_f4_params.emplace<pucch_f3_params>();
         break;
-      case pucch_format::FORMAT_4:
-        pucch_params.f2_or_f3_or_f4_params.emplace<pucch_f4_params>();
-        break;
+      case pucch_format::FORMAT_4: {
+        auto& f4_params         = pucch_params.f2_or_f3_or_f4_params.emplace<pucch_f4_params>();
+        f4_params.occ_supported = true;
+      } break;
       default:
         srsran_assertion_failure("Invalid PUCCH Format for Set Id 1 (valid values are 2, 3 or 4)");
     }

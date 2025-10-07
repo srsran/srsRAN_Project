@@ -440,7 +440,9 @@ struct du_high_unit_pucch_config {
   /// Set true for PUCCH Format 4 additional DM-RS.
   bool f4_additional_dmrs = false;
   /// Set true to use pi/2-BPSK as the modulation for PUCCH Format 4.
-  bool     f4_pi2_bpsk   = false;
+  bool f4_pi2_bpsk = false;
+  /// Enable Orthogonal Cover Code multiplexing for PUCCH Format 4.
+  bool     f4_enable_occ = false;
   unsigned f4_occ_length = 2;
   /// @}
 

@@ -1130,6 +1130,8 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   add_option(app, "--f4_occ_length", pucch_params.f4_occ_length, "OCC length for PUCCH F4")
       ->capture_default_str()
       ->check(CLI::IsMember({2, 4}));
+  add_option(app, "--f4_enable_occ", pucch_params.f4_enable_occ, "Enable OCC multiplexing for PUCCH F4")
+      ->capture_default_str();
   add_option(app,
              "--min_k1",
              pucch_params.min_k1,
