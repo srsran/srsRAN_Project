@@ -32,7 +32,7 @@ public:
   bool is_sched_report_required(slot_point sl_tx) const override
   {
     if (not next_sl_report.valid()) {
-      next_sl_report = sl_tx + period_slots - (sl_tx.count() % period_slots);
+      next_sl_report = sl_tx + period_slots - (sl_tx.count() % period_slots) - 1;
     }
     if (sl_tx >= next_sl_report) {
       next_sl_report += period_slots;
