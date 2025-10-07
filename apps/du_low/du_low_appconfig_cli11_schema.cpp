@@ -12,6 +12,7 @@
 #include "apps/helpers/hal/hal_cli11_schema.h"
 #include "apps/helpers/logger/logger_appconfig_cli11_schema.h"
 #include "apps/helpers/tracing/tracer_appconfig_cli11_schema.h"
+#include "apps/services/app_execution_metrics/executor_metrics_config_cli11_schema.h"
 #include "apps/services/app_resource_usage/app_resource_usage_config_cli11_schema.h"
 #include "apps/services/metrics/metrics_config_cli11_schema.h"
 #include "apps/services/remote_control/remote_control_appconfig_cli11_schema.h"
@@ -34,6 +35,7 @@ void srsran::configure_cli11_with_du_low_appconfig_schema(CLI::App& app, du_low_
   configure_cli11_with_worker_manager_appconfig_schema(app, config.expert_execution_cfg);
 
   // Metrics section.
+  app_services::configure_cli11_with_executor_metrics_appconfig_schema(app, config.metrics_cfg.executors_metrics_cfg);
   app_services::configure_cli11_with_app_resource_usage_config_schema(app, config.metrics_cfg.rusage_config);
   app_services::configure_cli11_with_metrics_appconfig_schema(app, config.metrics_cfg.metrics_service_cfg);
 

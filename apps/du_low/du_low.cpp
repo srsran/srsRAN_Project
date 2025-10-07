@@ -29,6 +29,7 @@
 #include "srsran/support/config_parsers.h"
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/io/io_broker_factory.h"
+#include "srsran/support/io/io_timer_source.h"
 #include "srsran/support/signal_handling.h"
 #include "srsran/support/signal_observer.h"
 #include "srsran/support/sysinfo.h"
@@ -253,6 +254,10 @@ int main(int argc, char** argv)
   // Create IO broker.
   io_broker_config           io_broker_cfg(os_thread_realtime_priority::min() + 5, main_pool_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
+
+  // Create time source that ticks the timers.
+  std::optional<io_timer_source> time_source(
+      std::in_place_t{}, app_timers, *epoll_broker, workers.get_timer_source_executor(), std::chrono::milliseconds{1});
 
   // Register the commands.
   app_services::cmdline_command_dispatcher command_parser(*epoll_broker, workers.get_cmd_line_executor(), {});
