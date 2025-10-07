@@ -84,7 +84,7 @@ endif(BUILD_TESTING)
 
 # Set linker options and default value.
 set(LINKER "default" CACHE STRING "Which linker to use")
-set_property(CACHE LINKER PROPERTY STRINGS default bfd lld)
+set_property(CACHE LINKER PROPERTY STRINGS default bfd lld mold)
 
 # Set assertion level options and default value.
 set(ASSERT_LEVEL "AUTO" CACHE STRING "Assertion paranoia level")
@@ -247,6 +247,9 @@ if(NOT LINKER STREQUAL "default")
     elseif (LINKER STREQUAL "lld")
         add_link_options(-fuse-ld=lld)
         message(STATUS "Linker set to LLD")
+    elseif (LINKER STREQUAL "mold")
+        add_link_options(-fuse-ld=mold)
+        message(STATUS "Linker set to Mold")
     else ()
         message(FATAL_ERROR "Unsupported linker ${LINKER} for compiler ${CMAKE_CXX_COMPILER_ID}")
     endif ()
