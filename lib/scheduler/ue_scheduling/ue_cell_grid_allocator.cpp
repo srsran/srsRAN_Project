@@ -236,6 +236,15 @@ void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                    
   cell_slot_resource_allocator& pdcch_alloc = cell_alloc[0];
   cell_slot_resource_allocator& pdsch_alloc = cell_alloc[pdsch_td_cfg.k0];
 
+  if (vrbs.empty()) {
+    // RBs could not be allocated. Cancel associated grants.
+    grant.pdcch->ctx.rnti       = rnti_t::INVALID_RNTI;
+    grant.pdsch->pdsch_cfg.rnti = rnti_t::INVALID_RNTI;
+    // TODO: Cancel UCI allocation.
+    grant.h_dl.reset();
+    return;
+  }
+
   srsran_sanity_check(not(pdsch_alloc.dl_res_grid.collides(scs, pdsch_td_cfg.symbols, crbs.first) or
                           pdsch_alloc.dl_res_grid.collides(scs, pdsch_td_cfg.symbols, crbs.second)),
                       "Invalid calculation of PDSCH RBs. Used CRBs={:i}. Allocated CRBs={}{}.",
@@ -569,6 +578,14 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_in
   const unsigned                final_k2    = pusch_td_cfg.k2 + cell_cfg.ntn_cs_koffset;
   cell_slot_resource_allocator& pusch_alloc = cell_alloc[final_k2];
 
+  if (vrbs.empty()) {
+    // RBs could not be allocated. Cancel associated grants.
+    grant.pdcch->ctx.rnti       = rnti_t::INVALID_RNTI;
+    grant.pusch->pusch_cfg.rnti = rnti_t::INVALID_RNTI;
+    grant.h_ul.reset();
+    return;
+  }
+
   // Compute exact MCS and TBS for this transmission.
   expected<sch_mcs_tbs, compute_ul_mcs_tbs_error> mcs_tbs_info;
   // TODO: find TS reference for -> Since, PUSCH always uses non interleaved mapping, prbs = vrbs.
@@ -760,16 +777,30 @@ void ue_cell_grid_allocator::post_process_results()
 {
   auto& slot_alloc = cell_alloc[0];
 
-  // Remove PUSCHs and PDSCHs with empty RB allocations.
+  // Remove cancelled allocations.
+  for (auto it = slot_alloc.result.dl.dl_pdcchs.begin(); it != slot_alloc.result.dl.dl_pdcchs.end();) {
+    if (it->ctx.rnti == rnti_t::INVALID_RNTI) {
+      it = slot_alloc.result.dl.dl_pdcchs.erase(it);
+    } else {
+      ++it;
+    }
+  }
+  for (auto it = slot_alloc.result.dl.ul_pdcchs.begin(); it != slot_alloc.result.dl.ul_pdcchs.end();) {
+    if (it->ctx.rnti == rnti_t::INVALID_RNTI) {
+      it = slot_alloc.result.dl.ul_pdcchs.erase(it);
+    } else {
+      ++it;
+    }
+  }
   for (auto it = slot_alloc.result.dl.ue_grants.begin(); it != slot_alloc.result.dl.ue_grants.end();) {
-    if (it->pdsch_cfg.rbs.empty()) {
+    if (it->pdsch_cfg.rnti == rnti_t::INVALID_RNTI) {
       it = slot_alloc.result.dl.ue_grants.erase(it);
     } else {
       ++it;
     }
   }
   for (auto it = slot_alloc.result.ul.puschs.begin(); it != slot_alloc.result.ul.puschs.end();) {
-    if (it->pusch_cfg.rbs.empty()) {
+    if (it->pusch_cfg.rnti == rnti_t::INVALID_RNTI) {
       it = slot_alloc.result.ul.puschs.erase(it);
     } else {
       ++it;

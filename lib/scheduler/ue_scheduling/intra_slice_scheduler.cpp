@@ -509,9 +509,10 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
     // Derive recommended parameters for the DL newTx grant.
     vrb_interval alloc_vrbs = grant_builder.recommended_vrbs(used_dl_vrbs, max_grant_size);
     if (alloc_vrbs.empty()) {
-      logger.error("ue={} c-rnti={}: Failed to allocate PDSCH CRBs",
-                   fmt::underlying(grant_builder.ue().ue_index()),
-                   grant_builder.ue().crnti());
+      logger.warning("ue={} c-rnti={}: Failed to allocate RBs for PDSCH grant at slot={}",
+                     fmt::underlying(grant_builder.ue().ue_index()),
+                     grant_builder.ue().crnti(),
+                     slice.get_slot_tx());
       // We let the grant be empty. It will be skipped in the post-processing scheduling step.
       grant_builder.set_pdsch_params({}, {}, enable_pdsch_interleaving);
       continue;
@@ -624,9 +625,10 @@ unsigned intra_slice_scheduler::schedule_ul_newtx_candidates(ul_ran_slice_candid
     // Derive recommended parameters for the DL newTx grant.
     vrb_interval alloc_vrbs = grant_builder.recommended_vrbs(used_ul_vrbs, max_grant_size);
     if (alloc_vrbs.empty()) {
-      logger.error("ue={} c-rnti={}: Failed to allocate PUSCH CRBs",
+      logger.error("ue={} c-rnti={}: Failed to allocate RBs for PUSCH grant at slot={}",
                    fmt::underlying(grant_builder.ue().ue_index()),
-                   grant_builder.ue().crnti());
+                   grant_builder.ue().crnti(),
+                   slice.get_slot_tx());
       // We let the grant be empty. It will be skipped in the post-processing scheduling step.
       grant_builder.set_pusch_params({});
       continue;
