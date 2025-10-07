@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include "fmt/base.h"
 #include <chrono>
 
 namespace fmt {
