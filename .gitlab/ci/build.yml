@@ -228,7 +228,7 @@ variables:
     TEST_MODE: coverage
     ENABLE_GCOV: "True"
     MARCH: x86-64-v3
-    LINKER: lld
+    LINKER: mold
     INFRASTRUCTURE_TAG: amd64-avx2
 
 .smoke relwithdeb:
@@ -249,7 +249,7 @@ variables:
     ENABLE_FFTW: "True"
     TEST_MODE: default
     MARCH: x86-64-v3
-    LINKER: lld
+    LINKER: mold
     INFRASTRUCTURE_TAG: amd64-avx2
 
 .smoke tsan:
@@ -263,6 +263,7 @@ variables:
     ENABLE_TSAN: "True"
     TEST_MODE: tsan
     MARCH: x86-64-v3
+    LINKER: mold
     INFRASTRUCTURE_TAG: amd64-avx2
 
 .smoke archlinux:
@@ -291,7 +292,7 @@ variables:
     ENABLE_FFTW: "True"
     DPDK_VERSION: "24.11.2_avx2"
     MARCH: x86-64-v3
-    LINKER: lld
+    LINKER: mold
     INFRASTRUCTURE_TAG: amd64-avx2
 
 .smoke valgrind:
@@ -317,7 +318,7 @@ variables:
     ENABLE_FFTW: "True"
     TEST_MODE: default
     MARCH: x86-64-v4
-    LINKER: lld
+    LINKER: mold
     INFRASTRUCTURE_TAG: amd64-avx2-avx512
 
 .smoke arm:
@@ -330,7 +331,7 @@ variables:
     ENABLE_FFTW: "True"
     TEST_MODE: default
     MARCH: armv8-a
-    LINKER: lld
+    LINKER: mold
     INFRASTRUCTURE_TAG: arm64
 
 .smoke arm neon:
@@ -343,7 +344,7 @@ variables:
     ENABLE_FFTW: "True"
     TEST_MODE: default
     MARCH: armv8.2-a+crypto+fp16+dotprod
-    LINKER: lld
+    LINKER: mold
     INFRASTRUCTURE_TAG: arm64
 
 # Combinations to use in schedules matrix
