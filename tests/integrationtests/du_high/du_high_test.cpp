@@ -431,7 +431,30 @@ TEST_F(du_high_tester, when_reestablishment_takes_place_then_previous_ue_capabil
       nof_slots_test));
 }
 
-TEST_F(du_high_tester, when_rrm_policy_remote_command_is_reveived_then_it_is_handled)
+class du_high_rrm_policy_tester : public du_high_env_simulator, public testing::Test
+{
+public:
+  du_high_rrm_policy_tester(plmn_identity plmn_id_ = plmn_identity{mobile_country_code::from_string("001").value(),
+                                                                   mobile_network_code::from_string("01").value()},
+                            s_nssai_t     s_nssai_ = s_nssai_t{.sst = slice_service_type{1}}) :
+    du_high_env_simulator([plmn_id_, s_nssai_]() {
+      du_high_configuration du_cfg = create_du_high_configuration();
+      du_cfg.ran.cells[0].rrm_policy_members.emplace_back(
+          slice_rrm_policy_config{.rrc_member = rrm_policy_member{.plmn_id = plmn_id_, .s_nssai = s_nssai_}});
+      return du_cfg;
+    }()),
+    plmn_id(plmn_id_),
+    s_nssai(s_nssai_)
+  {
+  }
+
+protected:
+  plmn_identity plmn_id;
+  /// Single Network Slice Selection Assistance Information (S-NSSAI).
+  s_nssai_t s_nssai;
+};
+
+TEST_F(du_high_rrm_policy_tester, when_rrm_policy_remote_command_is_reveived_then_it_is_handled)
 {
   /*
   {
@@ -457,9 +480,9 @@ TEST_F(du_high_tester, when_rrm_policy_remote_command_is_reveived_then_it_is_han
   req["policies"]["resourceType"]        = "PRB";
   req["policies"]["rRMPolicyMemberList"] = nlohmann::json::array();
   nlohmann::json policy;
-  policy["plmn"] = "00101";
-  policy["sst"]  = 1;
-  policy["sd"]   = 0xffffff;
+  policy["plmn"] = plmn_id.to_string();
+  policy["sst"]  = s_nssai.sst.value();
+  policy["sd"]   = s_nssai.sd.value();
   req["policies"]["rRMPolicyMemberList"].push_back(policy);
   req["policies"]["min_prb_policy_ratio"] = 30;
   req["policies"]["max_prb_policy_ratio"] = 100;
@@ -468,5 +491,6 @@ TEST_F(du_high_tester, when_rrm_policy_remote_command_is_reveived_then_it_is_han
   std::unique_ptr<app_services::remote_command> remote =
       std::make_unique<rrm_policy_ratio_remote_command>(this->du_hi->get_du_configurator());
 
-  ASSERT_FALSE(remote->execute(req).has_value());
+  error_type<std::string> cmd_exec_res = remote->execute(req);
+  ASSERT_TRUE(cmd_exec_res.has_value()) << cmd_exec_res.error();
 }

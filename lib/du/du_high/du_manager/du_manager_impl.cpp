@@ -244,29 +244,14 @@ du_param_config_response du_manager_impl::handle_operator_config_request(const d
   std::promise<du_param_config_response> p;
   std::future<du_param_config_response>  fut = p.get_future();
 
-  // Handle the case of RRM policy ratio reconfiguration, for which the operation needs to be applied to all cells.
-  du_param_config_request new_req  = {};
-  const bool rrm_req_for_all_cells = req.cells.size() == 1 and not req.cells.front().rrm_policy_ratio_list.empty() and
-                                     not req.cells.front().ssb_pwr_mod.has_value();
-  if (rrm_req_for_all_cells) {
-    for (unsigned cell_idx = MIN_DU_CELL_INDEX; rrm_req_for_all_cells != cell_mng.nof_cells(); ++cell_idx) {
-      if (const auto cell_index = to_du_cell_index(cell_idx); cell_mng.is_cell_active(cell_index)) {
-        const nr_cell_global_id_t nr_cgi = cell_mng.get_cell_cfg(cell_index).nr_cgi;
-        new_req.cells.emplace_back(nr_cgi, std::nullopt, req.cells.front().rrm_policy_ratio_list);
-      }
-    }
-  } else {
-    new_req.cells = std::move(req.cells);
-  }
-
   // Switch to DU manager execution context.
-  execute_until_success(params.services.du_mng_exec, params.services.timers, [this, new_req, &p]() {
+  execute_until_success(params.services.du_mng_exec, params.services.timers, [this, req, &p]() {
     // Dispatch common task.
     schedule_async_task(launch_async([&](coro_context<async_task<void>>& ctx) {
       CORO_BEGIN(ctx);
 
       // Launch config procedure.
-      CORO_AWAIT_VALUE(auto resp, launch_async<du_param_config_procedure>(new_req, params, cell_mng));
+      CORO_AWAIT_VALUE(auto resp, launch_async<du_param_config_procedure>(req, params, cell_mng));
 
       // Signal back to caller.
       p.set_value(resp);

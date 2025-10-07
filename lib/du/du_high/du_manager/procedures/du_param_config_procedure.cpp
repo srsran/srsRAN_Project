@@ -10,7 +10,6 @@
 
 #include "du_param_config_procedure.h"
 #include "../converters/f1ap_configuration_helpers.h"
-#include "../converters/scheduler_configuration_helpers.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/async/async_no_op_task.h"
 
@@ -52,14 +51,35 @@ void du_param_config_procedure::operator()(coro_context<async_task<du_param_conf
 
 bool du_param_config_procedure::handle_cell_config_updates()
 {
-  for (const du_cell_param_config_request& cell_to_update : request.cells) {
-    auto result = du_cells.handle_cell_reconf_request(cell_to_update);
-    if (not result.has_value()) {
-      continue;
-    }
+  const bool rrm_policy_update =
+      request.cells.size() == 1 and not request.cells.front().rrm_policy_ratio_list.empty() and
+      not request.cells.front().ssb_pwr_mod.has_value() and not request.cells.front().nr_cgi.has_value();
 
-    // Mark that cell was changed.
-    changed_cells.push_back(result.value());
+  // When the RRC policy update command is sent through O1, it doesn't contain a NR-CGI and thus needs to be propagated
+  // to all (active) cells.
+  if (rrm_policy_update) {
+    for (unsigned cell_idx = MIN_DU_CELL_INDEX; cell_idx != du_cells.nof_cells(); ++cell_idx) {
+      if (const auto cell_index = to_du_cell_index(cell_idx); du_cells.is_cell_active(cell_index)) {
+        const nr_cell_global_id_t nr_cgi = du_cells.get_cell_cfg(cell_index).nr_cgi;
+        auto                      result = du_cells.handle_cell_reconf_request(
+            du_cell_param_config_request(nr_cgi, std::nullopt, request.cells.front().rrm_policy_ratio_list));
+        if (not result.has_value()) {
+          continue;
+        }
+        // Mark that cell was changed.
+        changed_cells.push_back(result.value());
+      }
+    }
+  } else {
+    for (const du_cell_param_config_request& cell_to_update : request.cells) {
+      auto result = du_cells.handle_cell_reconf_request(cell_to_update);
+      if (not result.has_value()) {
+        continue;
+      }
+
+      // Mark that cell was changed.
+      changed_cells.push_back(result.value());
+    }
   }
 
   return not changed_cells.empty();
@@ -87,7 +107,7 @@ async_task<gnbdu_config_update_response> du_param_config_procedure::handle_f1_gn
 }
 
 async_task<mac_cell_reconfig_response>
-du_param_config_procedure::handle_mac_cell_update(const du_cell_reconfig_result& changed_cell)
+du_param_config_procedure::handle_mac_cell_update(const du_cell_reconfig_result& changed_cell) const
 {
   if (not changed_cell.sched_notif_required and not changed_cell.slice_reconf_req.has_value()) {
     return launch_no_op_task(mac_cell_reconfig_response{});

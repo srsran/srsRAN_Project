@@ -83,7 +83,7 @@ public:
 
   /// Handle request to update a cell configuration.
   /// \return true if a change was detected and applied.
-  expected<du_cell_reconfig_result> handle_cell_reconf_request(const du_cell_param_config_request& req);
+  expected<du_cell_reconfig_result> handle_cell_reconf_request(const du_cell_param_config_request& req) const;
 
   /// Retrieve current cell system information configuration.
   const mac_cell_sys_info_config& get_sys_info(du_cell_index_t cell_index) const
@@ -93,13 +93,13 @@ public:
   }
 
   /// Start a specific cell in the DU.
-  async_task<bool> start(du_cell_index_t cell_index);
+  async_task<bool> start(du_cell_index_t cell_index) const;
 
   /// Stop a specific cell in the DU.
-  async_task<void> stop(du_cell_index_t cell_index);
+  async_task<void> stop(du_cell_index_t cell_index) const;
 
   /// Stop all cells in the DU.
-  async_task<void> stop_all();
+  async_task<void> stop_all() const;
 
   /// Remove all cell configurations.
   void remove_all_cells();

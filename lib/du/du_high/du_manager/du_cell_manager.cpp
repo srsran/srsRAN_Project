@@ -78,11 +78,18 @@ void du_cell_manager::add_cell(const du_cell_config& cell_cfg)
   cell.si_cfg.si_sched_cfg = std::move(si_sched_req);
 }
 
-expected<du_cell_reconfig_result> du_cell_manager::handle_cell_reconf_request(const du_cell_param_config_request& req)
+expected<du_cell_reconfig_result>
+du_cell_manager::handle_cell_reconf_request(const du_cell_param_config_request& req) const
 {
-  du_cell_index_t cell_index = get_cell_index(req.nr_cgi);
+  if (!req.nr_cgi.has_value()) {
+    logger.warning("DU Cell Reconfiguration request without NR CGI is not supported");
+    return make_unexpected(default_error_t{});
+  }
+
+  du_cell_index_t cell_index = get_cell_index(req.nr_cgi.value());
   if (cell_index == INVALID_DU_CELL_INDEX) {
-    logger.warning("Discarding cell {} changes. Cause: No cell with the provided CGI was found", req.nr_cgi.nci);
+    logger.warning("Discarding cell {} changes. Cause: No cell with the provided CGI was found",
+                   req.nr_cgi.value().nci);
     return make_unexpected(default_error_t{});
   }
   auto& cell = *cells[cell_index];
@@ -174,7 +181,7 @@ expected<du_cell_reconfig_result> du_cell_manager::handle_cell_reconf_request(co
   return result;
 }
 
-async_task<bool> du_cell_manager::start(du_cell_index_t cell_index)
+async_task<bool> du_cell_manager::start(du_cell_index_t cell_index) const
 {
   return launch_async([this, cell_index](coro_context<async_task<bool>>& ctx) {
     CORO_BEGIN(ctx);
@@ -196,7 +203,7 @@ async_task<bool> du_cell_manager::start(du_cell_index_t cell_index)
   });
 }
 
-async_task<void> du_cell_manager::stop(du_cell_index_t cell_index)
+async_task<void> du_cell_manager::stop(du_cell_index_t cell_index) const
 {
   return launch_async([this, cell_index](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
@@ -218,7 +225,7 @@ async_task<void> du_cell_manager::stop(du_cell_index_t cell_index)
   });
 }
 
-async_task<void> du_cell_manager::stop_all()
+async_task<void> du_cell_manager::stop_all() const
 {
   return launch_async([this, i = 0U](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
