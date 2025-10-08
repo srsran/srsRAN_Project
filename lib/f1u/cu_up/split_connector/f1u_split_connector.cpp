@@ -142,10 +142,12 @@ f1u_split_connector::f1u_split_connector(const gtpu_gateway_maps& udp_gw_maps,
   for (const std::unique_ptr<gtpu_gateway>& udp_gw : udp_gw_maps.default_gws) {
     f1u_sessions.default_gw_sessions.push_back(udp_gw->create(*gw_data_gtpu_demux_adapter));
   }
-  std::map<five_qi_t, std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>> five_qi_gw_sessions;
-  for (auto const& [five_qi, five_qi_gws] : udp_gw_maps.five_qi_gws) {
-    for (auto const& five_qi_gw : five_qi_gws) {
-      f1u_sessions.five_qi_gw_sessions[five_qi].push_back(five_qi_gw->create(*gw_data_gtpu_demux_adapter));
+
+  for (auto const& [s_nssai, s_nssai_gws] : udp_gw_maps.gw_maps) {
+    for (auto const& [five_qi, five_qi_gws] : s_nssai_gws) {
+      for (auto const& gw : five_qi_gws) {
+        f1u_sessions.session_maps[s_nssai][five_qi].push_back(gw->create(*gw_data_gtpu_demux_adapter));
+      }
     }
   }
   gw_data_gtpu_demux_adapter->connect_gtpu_demux(demux);

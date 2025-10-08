@@ -12,13 +12,18 @@
 
 #include "srsran/gtpu/gtpu_gateway.h"
 #include "srsran/ran/qos/five_qi.h"
+#include "srsran/ran/s_nssai.h"
 #include <map>
 
 namespace srsran {
 
+using f1u_session_list        = std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>;
+using f1u_five_qi_session_map = std::map<five_qi_t, f1u_session_list>;
+using f1u_s_nssai_session_map = std::map<s_nssai_t, f1u_five_qi_session_map>;
+
 struct f1u_session_maps {
-  std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>                      default_gw_sessions;
-  std::map<five_qi_t, std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>> five_qi_gw_sessions;
+  f1u_session_list        default_gw_sessions;
+  f1u_s_nssai_session_map session_maps;
 };
 
 class f1u_session_manager

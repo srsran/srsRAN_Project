@@ -13,13 +13,18 @@
 
 #include "srsran/gtpu/gtpu_gateway.h"
 #include "srsran/ran/qos/five_qi.h"
+#include "srsran/ran/s_nssai.h"
 #include <map>
 
 namespace srsran {
 
+using f1u_gw_list        = std::vector<std::unique_ptr<gtpu_gateway>>;
+using f1u_five_qi_gw_map = std::map<five_qi_t, f1u_gw_list>;
+using f1u_s_nssai_gw_map = std::map<s_nssai_t, f1u_five_qi_gw_map>;
+
 struct gtpu_gateway_maps {
-  std::vector<std::unique_ptr<gtpu_gateway>>                      default_gws;
-  std::map<five_qi_t, std::vector<std::unique_ptr<gtpu_gateway>>> five_qi_gws;
+  f1u_gw_list        default_gws;
+  f1u_s_nssai_gw_map gw_maps;
 };
 
 } // namespace srsran

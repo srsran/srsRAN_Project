@@ -13,6 +13,7 @@
 #include "apps/helpers/network/udp_appconfig.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/ran/qos/five_qi.h"
+#include "srsran/ran/s_nssai.h"
 #include <vector>
 
 namespace srsran {
@@ -21,6 +22,8 @@ namespace srsran {
 struct f1u_socket_appconfig {
   /// Bind address used by the F1-U interface.
   std::string bind_addr = "127.0.10.1";
+  /// If the S-NSSAI is not present, the socket will be used by default.
+  std::optional<s_nssai_t> s_nssai;
   /// If the 5QI is not present, the socket will be used by default.
   std::optional<five_qi_t> five_qi;
   udp_appconfig            udp_config;
