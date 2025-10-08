@@ -131,18 +131,26 @@ TEST_F(single_slice_limited_max_rbs_scheduler_test, multi_ue_limited_to_max_rbs_
   unsigned            nof_ues = test_rgen::uniform_int<unsigned>(2, 10);
   unsigned            dl_bo   = test_rgen::uniform_int<unsigned>(10, 50);
   std::vector<rnti_t> rntis;
+  unsigned            nof_rbs = 0;
   for (unsigned i = 0; i < nof_ues; i++) {
     rntis.push_back(this->add_ue({std::make_pair(LCID_MIN_DRB, get_nssai(1, 1))}));
-    this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(i), LCID_MIN_DRB, dl_bo});
   }
 
-  ASSERT_TRUE(this->run_slot_until(
-      [&]() { return find_ue_pdsch(rntis.front(), this->last_sched_result()->dl.ue_grants) != nullptr; }));
-  unsigned nof_rbs = 0;
-  for (const dl_msg_alloc& msg : this->last_sched_result()->dl.ue_grants) {
-    nof_rbs += msg.pdsch_cfg.rbs.type1().length();
-  }
+  auto run_scheduler = [this, nof_ues, &rntis, &nof_rbs, dl_bo]() {
+    for (unsigned i = 0; i < nof_ues; i++) {
+      this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(i), LCID_MIN_DRB, dl_bo});
+    }
 
+    ASSERT_TRUE(this->run_slot_until(
+        [&]() { return find_ue_pdsch(rntis.front(), this->last_sched_result()->dl.ue_grants) != nullptr; }));
+
+    for (const dl_msg_alloc& msg : this->last_sched_result()->dl.ue_grants) {
+      nof_rbs += msg.pdsch_cfg.rbs.type1().length();
+    }
+  };
+
+  // Run scheduler with the first set of parameters.
+  run_scheduler();
   ASSERT_TRUE(nof_rbs <= max_slice_rbs);
 
   // Apply reconfiguration here.
@@ -157,17 +165,9 @@ TEST_F(single_slice_limited_max_rbs_scheduler_test, multi_ue_limited_to_max_rbs_
 
   test_logger.info("Slice reconfiguration applied");
 
-  for (unsigned i = 0; i < nof_ues; i++) {
-    rntis.push_back(this->add_ue({std::make_pair(LCID_MIN_DRB, get_nssai(1, 1))}));
-    this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(i), LCID_MIN_DRB, dl_bo});
-  }
-
-  ASSERT_TRUE(this->run_slot_until(
-      [&]() { return find_ue_pdsch(rntis.front(), this->last_sched_result()->dl.ue_grants) != nullptr; }));
+  // Re-run scheduler with the new set of parameters.
   nof_rbs = 0;
-  for (const dl_msg_alloc& msg : this->last_sched_result()->dl.ue_grants) {
-    nof_rbs += msg.pdsch_cfg.rbs.type1().length();
-  }
+  run_scheduler();
   ASSERT_TRUE(nof_rbs <= new_max_rbs);
 }
 
@@ -227,26 +227,33 @@ TEST_F(multi_slice_with_prio_slice_scheduler_test, multi_ue_limited_to_max_rbs_r
   this->add_ue({std::make_pair(LCID_MIN_DRB, get_nssai(1, 2))});
   this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(2), LCID_MIN_DRB, 100000});
 
-  unsigned                nof_checks = 4;
-  std::array<unsigned, 3> rnti_sum_rbs{0};
-  for (unsigned i = 0; i < nof_checks; i++) {
-    ASSERT_TRUE(this->run_slot_until([&]() { return not this->last_sched_result()->dl.ue_grants.empty(); }));
+  auto run_scheduler_assess_rbs =
+      [this](unsigned max_rbs_sl1, unsigned min_rbs_sl1, unsigned max_rbs_sl2, unsigned min_rbs_sl2) {
+        unsigned                nof_checks = 4;
+        std::array<unsigned, 3> rnti_sum_rbs{0};
+        for (unsigned i = 0; i < nof_checks; i++) {
+          ASSERT_TRUE(this->run_slot_until([&]() { return not this->last_sched_result()->dl.ue_grants.empty(); }));
 
-    std::array<unsigned, 3> rnti_rbs{0};
-    for (const dl_msg_alloc& msg : this->last_sched_result()->dl.ue_grants) {
-      unsigned idx = static_cast<unsigned>(msg.pdsch_cfg.rnti) - 0x4601;
-      rnti_rbs[idx] += msg.pdsch_cfg.rbs.type1().length();
-    }
-    ASSERT_GE(rnti_rbs[0] + rnti_rbs[1], slice1_min_rbs);
-    ASSERT_LE(rnti_rbs[0] + rnti_rbs[1], slice1_max_rbs);
-    ASSERT_GT(rnti_rbs[2], 0);
+          std::array<unsigned, 3> rnti_rbs{0};
+          for (const dl_msg_alloc& msg : this->last_sched_result()->dl.ue_grants) {
+            unsigned idx = static_cast<unsigned>(msg.pdsch_cfg.rnti) - 0x4601;
+            rnti_rbs[idx] += msg.pdsch_cfg.rbs.type1().length();
+          }
+          ASSERT_GE(rnti_rbs[0] + rnti_rbs[1], min_rbs_sl1);
+          ASSERT_LE(rnti_rbs[0] + rnti_rbs[1], max_rbs_sl1);
+          ASSERT_GT(rnti_rbs[2], min_rbs_sl2);
+          ASSERT_LE(rnti_rbs[2], max_rbs_sl2);
 
-    for (unsigned j = 0; j != rnti_rbs.size(); j++) {
-      rnti_sum_rbs[j] += rnti_rbs[j];
-    }
-  }
+          for (unsigned j = 0; j != rnti_rbs.size(); j++) {
+            rnti_sum_rbs[j] += rnti_rbs[j];
+          }
+        }
 
-  ASSERT_TRUE(std::all_of(rnti_sum_rbs.begin(), rnti_sum_rbs.end(), [](unsigned n) { return n > 0; }));
+        ASSERT_TRUE(std::all_of(rnti_sum_rbs.begin(), rnti_sum_rbs.end(), [](unsigned n) { return n > 0; }));
+      };
+
+  // Run scheduler with the first set of parameters.
+  run_scheduler_assess_rbs(slice1_max_rbs, slice1_min_rbs, MAX_NOF_PRBS, 0);
 
   // Apply reconfiguration here.
   constexpr unsigned             new_max_slice1_rbs = 15;
@@ -264,24 +271,6 @@ TEST_F(multi_slice_with_prio_slice_scheduler_test, multi_ue_limited_to_max_rbs_r
 
   test_logger.info("Slice reconfiguration applied");
 
-  rnti_sum_rbs = {0, 0, 0};
-  for (unsigned i = 0; i < nof_checks; i++) {
-    ASSERT_TRUE(this->run_slot_until([&]() { return not this->last_sched_result()->dl.ue_grants.empty(); }));
-
-    std::array<unsigned, 3> rnti_rbs{0};
-    for (const dl_msg_alloc& msg : this->last_sched_result()->dl.ue_grants) {
-      unsigned idx = static_cast<unsigned>(msg.pdsch_cfg.rnti) - 0x4601;
-      rnti_rbs[idx] += msg.pdsch_cfg.rbs.type1().length();
-    }
-    ASSERT_GE(rnti_rbs[0] + rnti_rbs[1], new_min_slice1_rbs);
-    ASSERT_LE(rnti_rbs[0] + rnti_rbs[1], new_max_slice1_rbs);
-    ASSERT_GT(rnti_rbs[2], 0);
-    ASSERT_LE(rnti_rbs[2], new_max_slice2_rbs);
-
-    for (unsigned j = 0; j != rnti_rbs.size(); j++) {
-      rnti_sum_rbs[j] += rnti_rbs[j];
-    }
-  }
-
-  ASSERT_TRUE(std::all_of(rnti_sum_rbs.begin(), rnti_sum_rbs.end(), [](unsigned n) { return n > 0; }));
+  // Re-run scheduler with the new set of parameters.
+  run_scheduler_assess_rbs(new_max_slice1_rbs, new_min_slice1_rbs, new_max_slice2_rbs, 0);
 }

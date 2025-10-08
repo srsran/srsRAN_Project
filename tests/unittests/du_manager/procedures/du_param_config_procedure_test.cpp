@@ -20,12 +20,12 @@ using namespace srs_du;
 class du_manager_procedure_tester
 {
 public:
-  du_manager_procedure_tester(std::vector<du_cell_config> cgfs = {config_helpers::make_default_du_cell_config()}) :
-    cell_cfgs(cgfs), dependencies(cell_cfgs), du_mng(create_du_manager(dependencies.params))
+  du_manager_procedure_tester(std::vector<du_cell_config> cfgs = {config_helpers::make_default_du_cell_config()}) :
+    cell_cfgs(cfgs), dependencies(cell_cfgs), du_mng(create_du_manager(dependencies.params))
   {
     // Generate automatic responses from F1AP and MAC.
-    dependencies.f1ap.wait_f1_setup.result.value().cells_to_activate.resize(cgfs.size());
-    for (unsigned i = 0; i != cgfs.size(); ++i) {
+    dependencies.f1ap.wait_f1_setup.result.value().cells_to_activate.resize(cfgs.size());
+    for (unsigned i = 0; i != cfgs.size(); ++i) {
       dependencies.f1ap.wait_f1_setup.result.value().cells_to_activate[i].cgi = cell_cfgs[i].nr_cgi;
     }
     dependencies.f1ap.wait_f1_setup.ready_ev.set();

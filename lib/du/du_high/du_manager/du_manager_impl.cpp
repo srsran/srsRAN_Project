@@ -239,10 +239,49 @@ du_manager_impl::configure_ue_mac_scheduler(du_mac_sched_control_config reconf)
   return launch_async<du_ue_ric_configuration_procedure>(reconf, ue_mng, params);
 }
 
+static error_type<std::string> validate_du_param_config_request(const du_param_config_request& req)
+{
+  // There must be at least a cell config request.
+  if (req.cells.empty()) {
+    return make_unexpected("At least one cell configuration must be present");
+  }
+
+  for (auto& cell : req.cells) {
+    if (not cell.ssb_pwr_mod.has_value() and cell.rrm_policy_ratio_list.empty()) {
+      return make_unexpected("Cell config requests must specify either SSB power mod. or rrm_policy_ratio_list");
+    }
+  }
+
+  if (req.cells.size() == 1) {
+    if (not req.cells.front().nr_cgi.has_value()) {
+      // When the NR-CGI is not specified, then the request cannot be for SSB pwr modification.
+      if (req.cells.front().ssb_pwr_mod.has_value()) {
+        return make_unexpected("SSB power modification requires NR-CGI");
+      }
+    }
+  }
+  // If there are config requests for 2 or more cells, then each of them must specify the NR-CGI.
+  else {
+    for (auto& cell : req.cells) {
+      if (not cell.nr_cgi.has_value()) {
+        return make_unexpected("Missing NR-CGI for one of the cell config requests");
+      }
+    }
+  }
+
+  return {};
+}
+
 du_param_config_response du_manager_impl::handle_operator_config_request(const du_param_config_request& req)
 {
   std::promise<du_param_config_response> p;
   std::future<du_param_config_response>  fut = p.get_future();
+
+  auto validation_result = validate_du_param_config_request(req);
+  if (not validation_result.has_value()) {
+    logger.warning("Invalid DU parameters config request. Cause: {}", validation_result.error());
+    return {.success = false};
+  }
 
   // Switch to DU manager execution context.
   execute_until_success(params.services.du_mng_exec, params.services.timers, [this, req, &p]() {

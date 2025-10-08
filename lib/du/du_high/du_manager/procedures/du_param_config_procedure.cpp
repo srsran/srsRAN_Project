@@ -51,13 +51,10 @@ void du_param_config_procedure::operator()(coro_context<async_task<du_param_conf
 
 bool du_param_config_procedure::handle_cell_config_updates()
 {
-  const bool rrm_policy_update =
-      request.cells.size() == 1 and not request.cells.front().rrm_policy_ratio_list.empty() and
-      not request.cells.front().ssb_pwr_mod.has_value() and not request.cells.front().nr_cgi.has_value();
-
-  // When the RRC policy update command is sent through O1, it doesn't contain a NR-CGI and thus needs to be propagated
-  // to all (active) cells.
-  if (rrm_policy_update) {
+  // When the request has no NR-CGI set, then it is for the RRC policy update to be propagated to all cells.
+  // NOTE: the request has been validated by one of the callers.
+  const bool broadcast_change_to_all_cells = not request.cells.front().nr_cgi.has_value();
+  if (broadcast_change_to_all_cells) {
     for (unsigned cell_idx = MIN_DU_CELL_INDEX; cell_idx != du_cells.nof_cells(); ++cell_idx) {
       if (const auto cell_index = to_du_cell_index(cell_idx); du_cells.is_cell_active(cell_index)) {
         const nr_cell_global_id_t nr_cgi = du_cells.get_cell_cfg(cell_index).nr_cgi;

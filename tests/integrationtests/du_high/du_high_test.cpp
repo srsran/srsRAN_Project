@@ -448,49 +448,117 @@ public:
   {
   }
 
+  void apply_rrm_reconfiguration(unsigned max_rbs, unsigned min_rbs)
+  {
+    nlohmann::json req;
+
+    /*
+      {
+        "cmd": "rrm_policy_ratio_set",
+        "policies": {
+          "resourceType": "PRB",
+          "rRMPolicyMemberList": [
+            {
+              "plmn": "00101",
+              "sst": 1,
+              "sd": 0xffffff
+            }
+          ],
+          "min_prb_policy_ratio": min_rbs,
+          "max_prb_policy_ratio": max_rbs,
+          "dedicated_ratio": 0
+        }
+      }
+    */
+
+    req["cmd"]                             = "rrm_policy_ratio_set";
+    req["policies"]["resourceType"]        = "PRB";
+    req["policies"]["rRMPolicyMemberList"] = nlohmann::json::array();
+    nlohmann::json policy;
+    policy["plmn"] = plmn_id.to_string();
+    policy["sst"]  = s_nssai.sst.value();
+    policy["sd"]   = s_nssai.sd.value();
+    req["policies"]["rRMPolicyMemberList"].push_back(policy);
+    req["policies"]["min_prb_policy_ratio"] = min_rbs;
+    req["policies"]["max_prb_policy_ratio"] = max_rbs;
+    req["policies"]["dedicated_ratio"]      = 0;
+
+    std::unique_ptr<app_services::remote_command> remote =
+        std::make_unique<rrm_policy_ratio_remote_command>(this->du_hi->get_du_configurator());
+
+    error_type<std::string> cmd_exec_res = remote->execute(req);
+    ASSERT_TRUE(cmd_exec_res.has_value()) << cmd_exec_res.error();
+  }
+
+  void push_dl_pdus()
+  {
+    const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
+    for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
+      nru_dl_message f1u_pdu{
+          .t_pdu = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ false, i, pdcp_pdu_size, i)};
+      cu_up_sim.bearers.begin()->second.rx_notifier->on_new_pdu(f1u_pdu);
+    }
+  }
+
 protected:
   plmn_identity plmn_id;
   /// Single Network Slice Selection Assistance Information (S-NSSAI).
   s_nssai_t s_nssai;
 };
 
-TEST_F(du_high_rrm_policy_tester, when_rrm_policy_remote_command_is_reveived_then_it_is_handled)
+TEST_F(du_high_rrm_policy_tester, when_rrm_policy_remote_command_is_received_then_it_is_handled)
 {
-  /*
-  {
-    "cmd": "rrm_policy_ratio_set",
-    "policies": {
-      "resourceType": "PRB",
-      "rRMPolicyMemberList": [
-        {
-          "plmn": "00101",
-          "sst": 1,
-          "sd": 0xffffff
-        }
-      ],
-      "min_prb_policy_ratio": 30,
-      "max_prb_policy_ratio": 100,
-      "dedicated_ratio": 0
+  // Create UE.
+  rnti_t rnti = to_rnti(0x4601);
+  ASSERT_TRUE(add_ue(rnti));
+  ASSERT_TRUE(run_rrc_setup(rnti));
+  ASSERT_TRUE(run_ue_context_setup(rnti));
+
+  // Ensure DU<->CU-UP tunnel was created.
+  ASSERT_EQ(cu_up_sim.last_drb_id.value(), drb_id_t::drb1);
+
+  unsigned max_rbs = 100;
+  unsigned min_rbs = 10;
+
+  auto run_sched_and_assess_rbs = [this, max_rbs]() {
+    phy.cells[0].last_dl_data.reset();
+    constexpr unsigned nof_slots_to_assess_rrm_cfg = 10;
+    for (unsigned sl = 0; sl != nof_slots_to_assess_rrm_cfg; ++sl) {
+      run_slot();
+
+      unsigned rbs       = 0;
+      auto&    ue_grants = phy.cells[0].last_dl_res.value().dl_res->ue_grants;
+      for (auto& ue_grant : ue_grants) {
+        rbs += ue_grant.pdsch_cfg.rbs.type1().length();
+      }
+      ASSERT_LT(rbs, max_rbs);
+      phy.cells[0].last_dl_data.reset();
     }
-  }
-  */
+  };
 
-  nlohmann::json req;
-  req["cmd"]                             = "rrm_policy_ratio_set";
-  req["policies"]["resourceType"]        = "PRB";
-  req["policies"]["rRMPolicyMemberList"] = nlohmann::json::array();
-  nlohmann::json policy;
-  policy["plmn"] = plmn_id.to_string();
-  policy["sst"]  = s_nssai.sst.value();
-  policy["sd"]   = s_nssai.sd.value();
-  req["policies"]["rRMPolicyMemberList"].push_back(policy);
-  req["policies"]["min_prb_policy_ratio"] = 30;
-  req["policies"]["max_prb_policy_ratio"] = 100;
-  req["policies"]["dedicated_ratio"]      = 0;
+  // 1. Apply RRM config first.
+  apply_rrm_reconfiguration(max_rbs, min_rbs);
 
-  std::unique_ptr<app_services::remote_command> remote =
-      std::make_unique<rrm_policy_ratio_remote_command>(this->du_hi->get_du_configurator());
+  // 1-A. Run the scheduler for a few slots, to clear previous allocations.
+  run_until([]() { return true; }, 10);
 
-  error_type<std::string> cmd_exec_res = remote->execute(req);
-  ASSERT_TRUE(cmd_exec_res.has_value()) << cmd_exec_res.error();
+  // 1-B. Forward several DRB PDUs.
+  push_dl_pdus();
+
+  // 1-C. Run the scheduler and assess RBs are according to the RRM config.
+  run_sched_and_assess_rbs();
+
+  // 2. Apply new RRM config.
+  max_rbs = 30;
+  min_rbs = 5;
+  apply_rrm_reconfiguration(max_rbs, min_rbs);
+
+  // 2-A Run the scheduler for a few slots, to clear previous allocations.
+  run_until([]() { return true; }, 10);
+
+  // 2-B. Forward several DRB PDUs.
+  push_dl_pdus();
+
+  // 2-C. Run the scheduler and assess RBs are according to the RRM config.
+  run_sched_and_assess_rbs();
 }
