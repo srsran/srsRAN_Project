@@ -23,14 +23,19 @@ namespace {
 srslog::basic_levels sched_log_level = srslog::basic_levels::warning;
 
 struct multi_ue_test_params {
-  unsigned nof_ues    = 1;
-  unsigned auto_dl_bs = std::numeric_limits<uint32_t>::max() / 2;
-  unsigned auto_ul_bs = std::numeric_limits<uint32_t>::max() / 2;
+  unsigned nof_ues            = 1;
+  unsigned nof_no_traffic_ues = 0;
+  unsigned auto_dl_bs         = std::numeric_limits<uint32_t>::max() / 2;
+  unsigned auto_ul_bs         = std::numeric_limits<uint32_t>::max() / 2;
 };
 
 void PrintTo(const multi_ue_test_params& value, ::std::ostream* os)
 {
-  *os << fmt::format("nof_ues={}, auto_dl_bs={}, auto_ul_bs={}", value.nof_ues, value.auto_dl_bs, value.auto_ul_bs);
+  *os << fmt::format("nof_ues={}, nof_no_traffic_ues={}, auto_dl_bs={}, auto_ul_bs={}",
+                     value.nof_ues,
+                     value.nof_no_traffic_ues,
+                     value.auto_dl_bs,
+                     value.auto_ul_bs);
 }
 
 class scheduler_multi_ue_test : public scheduler_test_simulator
@@ -73,6 +78,16 @@ public:
       add_ue(to_rnti(0x4601 + i));
     }
 
+    // Fill no traffic UE set.
+    {
+      std::vector<unsigned> tmp(test_params.nof_ues, 0);
+      std::iota(tmp.begin(), tmp.end(), 0);
+      std::shuffle(tmp.begin(), tmp.end(), test_rgen::get());
+      for (auto it = tmp.begin(); it != tmp.begin() + test_params.nof_no_traffic_ues; ++it) {
+        no_traffic_ues.insert(to_rnti(0x4601 + *it));
+      }
+    }
+
     // Wait for all CQI reports to be received.
     for (unsigned i = 0; i != (unsigned)csi_period - 1; ++i) {
       run_slot();
@@ -111,6 +126,9 @@ public:
     if (test_params.auto_dl_bs > 0) {
       unsigned count = 0;
       for (auto it = start_it; it != rnti_map.end() and count < bsr_step; ++it) {
+        if (no_traffic_ues.count(it->first) > 0) {
+          continue;
+        }
         // Enqueue enough bytes for continuous DL tx.
         const unsigned dl_bs_val = std::min(test_params.auto_dl_bs, std::numeric_limits<unsigned>::max() / 2);
         dl_buffer_state_indication_message dl_buf_st{it->second, LCID_MIN_DRB, dl_bs_val, this->next_slot_rx()};
@@ -122,6 +140,9 @@ public:
     if (test_params.auto_ul_bs > 0) {
       unsigned count = 0;
       for (auto it = start_it; it != rnti_map.end() and count < bsr_step; ++it) {
+        if (no_traffic_ues.count(it->first) > 0) {
+          continue;
+        }
         // Enqueue BSR.
         const unsigned            ul_bsr = std::min(test_params.auto_ul_bs, std::numeric_limits<uint32_t>::max() / 2);
         ul_bsr_indication_message bsr{to_du_cell_index(0),
@@ -142,6 +163,8 @@ public:
   pucch_res_builder_test_helper pucch_cfg_builder;
   unsigned                      bsr_offset = 0;
   csi_report_periodicity        csi_period = csi_report_periodicity::slots320;
+
+  std::set<rnti_t> no_traffic_ues;
 };
 
 class scheduler_rb_distribution_test : public ::testing::TestWithParam<multi_ue_test_params>,
@@ -187,7 +210,10 @@ std::vector<T> extract(span<const scheduler_ue_metrics> ues, T scheduler_ue_metr
 TEST_P(scheduler_rb_distribution_test, when_equal_ue_cfgs_then_rbs_are_fully_utilized_and_fairly_distributed)
 {
   const unsigned max_slots = 4096;
-  test_logger.info("STATUS: {} UEs were created. Running for {} slots...", test_params.nof_ues, max_slots);
+  test_logger.info("STATUS: {} UEs were created. {} UEs have traffic. Running for {} slots...",
+                   test_params.nof_ues,
+                   test_params.nof_ues - test_params.nof_no_traffic_ues,
+                   max_slots);
   for (unsigned i = 0; i != max_slots; ++i) {
     run_slot();
   }
@@ -201,13 +227,25 @@ TEST_P(scheduler_rb_distribution_test, when_equal_ue_cfgs_then_rbs_are_fully_uti
       sum(metrics.ue_metrics, &scheduler_ue_metrics::tot_pdsch_prbs_used) / static_cast<double>(metrics.nof_dl_slots);
   const double pusch_rbs_per_slot =
       sum(metrics.ue_metrics, &scheduler_ue_metrics::tot_pusch_prbs_used) / static_cast<double>(metrics.nof_ul_slots);
-  const double pdsch_rbs_jain   = jain_index(metrics.ue_metrics, &scheduler_ue_metrics::tot_pdsch_prbs_used);
-  const double pdsch_brate_jain = jain_index(metrics.ue_metrics, &scheduler_ue_metrics::dl_brate_kbps);
-  const double pusch_rbs_jain   = jain_index(metrics.ue_metrics, &scheduler_ue_metrics::tot_pusch_prbs_used);
-  const double pusch_brate_jain = jain_index(metrics.ue_metrics, &scheduler_ue_metrics::ul_brate_kbps);
+
+  std::vector<scheduler_ue_metrics> ues_with_traffic;
+  std::vector<scheduler_ue_metrics> ues_with_no_traffic;
+  for (const auto& u : metrics.ue_metrics) {
+    if (no_traffic_ues.count(u.rnti) > 0) {
+      ues_with_no_traffic.push_back(u);
+    } else {
+      ues_with_traffic.push_back(u);
+    }
+  }
+
+  // Fairness metrics for UEs with traffic only.
+  const double pdsch_rbs_jain   = jain_index(ues_with_traffic, &scheduler_ue_metrics::tot_pdsch_prbs_used);
+  const double pdsch_brate_jain = jain_index(ues_with_traffic, &scheduler_ue_metrics::dl_brate_kbps);
+  const double pusch_rbs_jain   = jain_index(ues_with_traffic, &scheduler_ue_metrics::tot_pusch_prbs_used);
+  const double pusch_brate_jain = jain_index(ues_with_traffic, &scheduler_ue_metrics::ul_brate_kbps);
 
   test_logger.info(
-      "Results:"
+      "Results for UEs with traffic:"
       "\n- DL: #slots={}, #pdschs_per_slot={:.3}, #rbs_per_slot={:.3}, brate={:.3}Mbps, jain_rb_fairness={:.3}, "
       "jain_brate_fairness={:.3}"
       "\n- UL: #slots={}, #puschs_per_slot={:.3}, #rbs_per_slot={:.3}, brate={:.3}Mbps, jain_rb_fairness={:.3}, "
@@ -225,11 +263,15 @@ TEST_P(scheduler_rb_distribution_test, when_equal_ue_cfgs_then_rbs_are_fully_uti
       pusch_rbs_jain,
       pusch_brate_jain);
 
-  // TEST CASE 1: The RB usage should be close to the number of cell RBs.
+  // TEST CASE: Check that the UEs with no traffic have no PDSCH/PUSCH usage.
+  ASSERT_LT(sum(ues_with_no_traffic, &scheduler_ue_metrics::tot_pdsch_prbs_used), 0.1 * metrics.nof_dl_slots);
+  ASSERT_LT(sum(ues_with_no_traffic, &scheduler_ue_metrics::tot_pusch_prbs_used), 0.1 * metrics.nof_ul_slots);
+
+  // TEST CASE: The RB usage should be close to the number of cell RBs.
   EXPECT_GE(pdsch_rbs_per_slot, 0.95 * cell_cfg().dl_cfg_common.init_dl_bwp.generic_params.crbs.length());
   EXPECT_GE(pusch_rbs_per_slot, 0.95 * cell_cfg().ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
 
-  // TEST CASE 2: Jain index for PDSCH and PUSCH RBs and bitrates should be very high.
+  // TEST CASE: Jain index for PDSCH and PUSCH RBs and bitrates should be very high.
   EXPECT_GE(pdsch_rbs_jain, 0.95) << fmt::format(
       "Low PDSCH fairness index in {} UL slots, with #PDSCHs-per-slot={:.2}. UEs: {}",
       metrics.nof_dl_slots,
@@ -248,4 +290,6 @@ INSTANTIATE_TEST_SUITE_P(scheduler_rb_distribution_test,
                          scheduler_rb_distribution_test,
                          ::testing::Values(multi_ue_test_params{16},
                                            multi_ue_test_params{64},
-                                           multi_ue_test_params{512}));
+                                           multi_ue_test_params{512},
+                                           multi_ue_test_params{16, 4},
+                                           multi_ue_test_params{512, 128}));

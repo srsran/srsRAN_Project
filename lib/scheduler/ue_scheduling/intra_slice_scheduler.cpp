@@ -447,9 +447,13 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
   bool     pucch_grant_limit_exceeded = false;
   for (const auto& ue_candidate : newtx_candidates) {
     if (pucch_grant_limit_exceeded) {
-      // Only select UE if it has a UCI already pending in a future slot.
-      if (not ue_candidate.ue_cc->harqs.last_ack_slot().valid() or
-          ue_candidate.ue_cc->harqs.last_ack_slot() < pdsch_slot) {
+      // The PUCCH is likely saturated and there is no space for new PUCCHs.
+      // As an heuristic, we only allocate DL grants to UEs which already have a PUCCH or a PUSCH in a future slot that
+      // can likely accommodate more HARQ-ACK bits.
+      if (not(ue_candidate.ue_cc->harqs.last_ack_slot().valid() and
+              ue_candidate.ue_cc->harqs.last_ack_slot() > pdsch_slot) and
+          not(ue_candidate.ue_cc->harqs.last_pusch_slot().valid() and
+              ue_candidate.ue_cc->harqs.last_pusch_slot() > pdsch_slot)) {
         continue;
       }
     }
