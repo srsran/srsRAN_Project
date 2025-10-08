@@ -111,8 +111,7 @@ public:
   size_t size() const { return pending.size(); }
 
 private:
-  using queue_type =
-      concurrent_queue<unsigned, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::non_blocking>;
+  using queue_type = concurrent_queue<unsigned, concurrent_queue_policy::lockfree_spsc>;
 
   /// Called when the report has been consumed and can be returned to the free list.
   void dispose(ReportType& report)
@@ -124,7 +123,7 @@ private:
     recycle_func(report);
 
     // Make the report reusable.
-    if (free_list.try_push(idx)) {
+    if (not free_list.try_push(idx)) {
       logger.error("Failed to recycle metric report");
     }
   }
