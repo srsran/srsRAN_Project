@@ -41,8 +41,8 @@ public:
                                                            []() {
                                                              scheduler_expert_config cfg =
                                                                  config_helpers::make_default_scheduler_expert_config();
-                                                             cfg.ue.max_pucchs_per_slot    = 63;
-                                                             cfg.ue.max_ul_grants_per_slot = 64;
+                                                             cfg.ue.max_pucchs_per_slot    = 120;
+                                                             cfg.ue.max_ul_grants_per_slot = 128;
                                                              return cfg;
                                                            }(),
                                                        .max_scs  = subcarrier_spacing::kHz30,
@@ -72,6 +72,14 @@ public:
     for (unsigned i = 0, sz = test_params.nof_ues; i != sz; ++i) {
       add_ue(to_rnti(0x4601 + i));
     }
+
+    // Wait for all CQI reports to be received.
+    for (unsigned i = 0; i != (unsigned)csi_period - 1; ++i) {
+      run_slot();
+    }
+    // Extract metrics to start metrics from scratch in the test.
+    this->request_metrics_on_next_slot();
+    run_slot();
 
     srslog::flush();
   }
@@ -140,16 +148,7 @@ class scheduler_rb_distribution_test : public ::testing::TestWithParam<multi_ue_
                                        public scheduler_multi_ue_test
 {
 public:
-  scheduler_rb_distribution_test() : scheduler_multi_ue_test(GetParam())
-  {
-    // Wait for all CQI reports to be received.
-    for (unsigned i = 0; i != (unsigned)csi_period - 1; ++i) {
-      run_slot();
-    }
-    // Extract metrics to start metrics from scratch in the test.
-    this->request_metrics_on_next_slot();
-    run_slot();
-  }
+  scheduler_rb_distribution_test() : scheduler_multi_ue_test(GetParam()) {}
 };
 
 template <typename T>
@@ -185,7 +184,7 @@ std::vector<T> extract(span<const scheduler_ue_metrics> ues, T scheduler_ue_metr
 
 } // namespace
 
-TEST_P(scheduler_rb_distribution_test, rbs_fairly_distributed)
+TEST_P(scheduler_rb_distribution_test, when_equal_ue_cfgs_then_rbs_are_fully_utilized_and_fairly_distributed)
 {
   const unsigned max_slots = 4096;
   test_logger.info("STATUS: {} UEs were created. Running for {} slots...", test_params.nof_ues, max_slots);
@@ -196,7 +195,12 @@ TEST_P(scheduler_rb_distribution_test, rbs_fairly_distributed)
   run_slot();
   const scheduler_cell_metrics& metrics = *this->last_metrics();
 
-  ASSERT_EQ(metrics.ue_metrics.size(), test_params.nof_ues);
+  ASSERT_EQ(metrics.ue_metrics.size(), test_params.nof_ues) << "Not all UEs reported metrics";
+
+  const double pdsch_rbs_per_slot =
+      sum(metrics.ue_metrics, &scheduler_ue_metrics::tot_pdsch_prbs_used) / static_cast<double>(metrics.nof_dl_slots);
+  const double pusch_rbs_per_slot =
+      sum(metrics.ue_metrics, &scheduler_ue_metrics::tot_pusch_prbs_used) / static_cast<double>(metrics.nof_ul_slots);
   const double pdsch_rbs_jain   = jain_index(metrics.ue_metrics, &scheduler_ue_metrics::tot_pdsch_prbs_used);
   const double pdsch_brate_jain = jain_index(metrics.ue_metrics, &scheduler_ue_metrics::dl_brate_kbps);
   const double pusch_rbs_jain   = jain_index(metrics.ue_metrics, &scheduler_ue_metrics::tot_pusch_prbs_used);
@@ -210,17 +214,22 @@ TEST_P(scheduler_rb_distribution_test, rbs_fairly_distributed)
       "jain_brate_fairness={:.3}",
       metrics.nof_dl_slots,
       metrics.dl_grants_count / static_cast<double>(metrics.nof_dl_slots),
-      sum(metrics.ue_metrics, &scheduler_ue_metrics::tot_pdsch_prbs_used) / static_cast<double>(metrics.nof_dl_slots),
+      pdsch_rbs_per_slot,
       sum(metrics.ue_metrics, &scheduler_ue_metrics::dl_brate_kbps) / 1000,
       pdsch_rbs_jain,
       pdsch_brate_jain,
       metrics.nof_ul_slots,
       metrics.ul_grants_count / static_cast<double>(metrics.nof_ul_slots),
-      sum(metrics.ue_metrics, &scheduler_ue_metrics::tot_pusch_prbs_used) / static_cast<double>(metrics.nof_ul_slots),
+      pusch_rbs_per_slot,
       sum(metrics.ue_metrics, &scheduler_ue_metrics::ul_brate_kbps) / 1000,
       pusch_rbs_jain,
       pusch_brate_jain);
 
+  // TEST CASE 1: The RB usage should be close to the number of cell RBs.
+  EXPECT_GE(pdsch_rbs_per_slot, 0.95 * cell_cfg().dl_cfg_common.init_dl_bwp.generic_params.crbs.length());
+  EXPECT_GE(pusch_rbs_per_slot, 0.95 * cell_cfg().ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
+
+  // TEST CASE 2: Jain index for PDSCH and PUSCH RBs and bitrates should be very high.
   EXPECT_GE(pdsch_rbs_jain, 0.95) << fmt::format(
       "Low PDSCH fairness index in {} UL slots, with #PDSCHs-per-slot={:.2}. UEs: {}",
       metrics.nof_dl_slots,
@@ -231,6 +240,8 @@ TEST_P(scheduler_rb_distribution_test, rbs_fairly_distributed)
       metrics.nof_ul_slots,
       metrics.ul_grants_count / static_cast<double>(metrics.nof_ul_slots),
       fmt::join(extract(metrics.ue_metrics, &scheduler_ue_metrics::tot_pusch_prbs_used), ", "));
+  EXPECT_GE(pdsch_brate_jain, 0.95) << fmt::format("Low DL bitrate fairness index");
+  EXPECT_GE(pusch_brate_jain, 0.95) << fmt::format("Low UL bitrate fairness index");
 }
 
 INSTANTIATE_TEST_SUITE_P(scheduler_rb_distribution_test,

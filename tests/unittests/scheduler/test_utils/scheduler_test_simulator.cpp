@@ -207,6 +207,7 @@ void scheduler_test_simulator::handle_auto_feedback(du_cell_index_t cell_idx)
 
   // Forward indications to the scheduler.
   if (not uci_ind.ucis.empty()) {
+    on_uci_indication(uci_ind);
     this->sched->handle_uci_indication(uci_ind);
   }
   if (not crc_ind.crcs.empty()) {

@@ -121,6 +121,10 @@ public:
     return sim_cells.at(cell_idx)->cell_metrics.last();
   }
 
+  /// Register UCI indication event adapter, which will be called before an UCI indication is forwarded to the
+  /// scheduler.
+  void register_uci_handler(std::function<void(uci_indication&)> func) { on_uci_indication = std::move(func); }
+
 private:
   struct sim_cell_context {
     dummy_scheduler_cell_metrics_notifier cell_metrics;
@@ -140,6 +144,8 @@ private:
   std::vector<std::unique_ptr<sim_cell_context>> sim_cells;
 
   std::unordered_map<rnti_t, du_ue_index_t> rnti_to_ue_index;
+
+  std::function<void(uci_indication&)> on_uci_indication = [](uci_indication&) {};
 };
 
 } // namespace srsran
