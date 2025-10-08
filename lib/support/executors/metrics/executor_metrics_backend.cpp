@@ -76,6 +76,10 @@ void executor_metrics_backend::fetch_metrics()
     return;
   }
 
+  if (SRSRAN_UNLIKELY(notifier == nullptr)) {
+    return;
+  }
+
   // Rearm the timer.
   timer.run();
 
