@@ -766,7 +766,7 @@ def test_zmq(
 )
 @mark.zmq
 # pylint: disable=too-many-arguments,too-many-positional-arguments
-def test_zmq_transform_precoding(
+def test_zmq_precoding(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_32: Tuple[UEStub, ...],

@@ -84,7 +84,7 @@ def test_smoke_sequentially(
 @mark.zmq
 @mark.flaky(reruns=2, only_rerun=_ONLY_RERUN)
 # pylint: disable=too-many-arguments,too-many-positional-arguments
-def test_zmq_reestablishment_sequentially(
+def test_zmq_sequentially(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_8: Tuple[UEStub, ...],
@@ -185,7 +185,7 @@ def _reestablishment_sequentially_ping(
 @mark.zmq
 @mark.flaky(reruns=2, only_rerun=_ONLY_RERUN)
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
-def test_zmq_reestablishment_sequentially_full_rate(
+def test_zmq_sequentially_full_rate(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_8: Tuple[UEStub, ...],
@@ -254,7 +254,7 @@ def test_zmq_reestablishment_sequentially_full_rate(
 
 @mark.zmq
 @mark.flaky(reruns=2, only_rerun=_ONLY_RERUN)
-def test_zmq_reestablishment_sequentially_full_rate_verify_bitrate(
+def test_zmq_sequentially_full_rate_verify_bitrate(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue: Tuple[UEStub, ...],
@@ -353,7 +353,7 @@ def test_zmq_reestablishment_sequentially_full_rate_verify_bitrate(
 @mark.zmq
 @mark.flaky(reruns=2, only_rerun=_ONLY_RERUN)
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
-def test_zmq_reestablishment_parallel(
+def test_zmq_parallel(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_8: Tuple[UEStub, ...],
@@ -423,7 +423,7 @@ def test_zmq_reestablishment_parallel(
 @mark.zmq
 @mark.flaky(reruns=2, only_rerun=_ONLY_RERUN)
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
-def test_zmq_reestablishment_parallel_full_rate(
+def test_zmq_parallel_full_rate(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_8: Tuple[UEStub, ...],
