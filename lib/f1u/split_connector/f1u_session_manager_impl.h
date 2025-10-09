@@ -20,7 +20,7 @@ public:
   ~f1u_session_manager_impl() override = default;
   explicit f1u_session_manager_impl(const f1u_session_maps& f1u_sessions_);
 
-  gtpu_tnl_pdu_session& get_next_f1u_gateway(five_qi_t five_qi) override;
+  gtpu_tnl_pdu_session& get_next_f1u_gateway(s_nssai_t s_nssai, five_qi_t five_qi) override;
 
 private:
   srslog::basic_logger&                              logger;

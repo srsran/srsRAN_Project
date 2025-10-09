@@ -27,19 +27,16 @@ f1u_session_manager_impl::f1u_session_manager_impl(const f1u_session_maps& f1u_s
   }
 }
 
-gtpu_tnl_pdu_session& f1u_session_manager_impl::get_next_f1u_gateway(five_qi_t five_qi)
+gtpu_tnl_pdu_session& f1u_session_manager_impl::get_next_f1u_gateway(s_nssai_t s_nssai, five_qi_t five_qi)
 {
-  s_nssai_t s_nssai = {}; // TODO change interface to use real s_nssai.
-                          //
-  // Try to select 5QI specific session.
-
+  // Try to select S-NSSAI/5QI specific session.
   auto s_nssai_it = f1u_sessions.session_maps.find(s_nssai);
   if (s_nssai_it != f1u_sessions.session_maps.end()) {
     auto five_qi_it = s_nssai_it->second.find(five_qi);
     if (five_qi_it != s_nssai_it->second.end()) {
       uint32_t index = next_gw_map[s_nssai][five_qi] % five_qi_it->second.size();
       next_gw_map[s_nssai][five_qi]++;
-      logger.debug("Found F1-U gateway for DRB. {}", five_qi);
+      logger.debug("Found F1-U gateway for DRB. {}, {}", s_nssai, five_qi);
       return *five_qi_it->second[index];
     }
   }
@@ -47,6 +44,6 @@ gtpu_tnl_pdu_session& f1u_session_manager_impl::get_next_f1u_gateway(five_qi_t f
   // Could not find any S-NSSAI/5QI specific session, use default sessions.
   uint32_t index = next_gw % f1u_sessions.default_gw_sessions.size();
   next_gw++;
-  logger.debug("Found F1-U default gateway for DRB. {}", five_qi);
+  logger.debug("Found F1-U default gateway for DRB. {}, {}", s_nssai, five_qi);
   return *f1u_sessions.default_gw_sessions[index];
 }

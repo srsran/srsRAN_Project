@@ -70,8 +70,9 @@ f1u_split_connector::create_du_bearer(uint32_t                                  
   logger_du.info(
       "Creating DU gateway local bearer with UL GTP Tunnel={} DL TEID={} {}", ul_up_tnl_info, dl_teid, five_qi);
 
+  s_nssai_t s_nssai{}; // todo fix.
   // Get DL UP TNL address.
-  auto&       udp_session = f1u_session_mngr->get_next_f1u_gateway(five_qi);
+  auto&       udp_session = f1u_session_mngr->get_next_f1u_gateway(s_nssai, five_qi);
   std::string bind_addr;
   if (not udp_session.get_bind_address(bind_addr)) {
     logger_du.error("Could not get bind address for F1-U tunnel. ue={} drb={}", ue_index, drb_id);

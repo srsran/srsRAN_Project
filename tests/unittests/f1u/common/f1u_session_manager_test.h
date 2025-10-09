@@ -25,6 +25,7 @@ class f1u_session_manager_test : public ::testing::Test
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
+    // Setup default GWs.
     {
       unsigned nof_gws = 2;
       for (unsigned i = 0; i < nof_gws; i++) {
@@ -35,15 +36,19 @@ class f1u_session_manager_test : public ::testing::Test
       }
     }
 
+    // Setup 5QI GWs for S-NSSAIs {1,10} and {1,11}.
     {
-      s_nssai_t s_nssai{}; // todo fixme.
-      five_qi_t five_qi{7};
-      unsigned  nof_gws = 2;
-      for (unsigned i = 0; i < nof_gws; i++) {
-        auto        f1u_gw = std::make_unique<dummy_gtpu_gateway>();
-        std::string addr   = fmt::format("127.0.10.{}", 1 + i);
-        f1u_gw->set_bind_address(addr);
-        f1u_sessions.session_maps[s_nssai][five_qi].push_back(std::move(f1u_gw));
+      for (unsigned sd_int = 10; sd_int < 12; sd_int++) {
+        auto      sd = slice_differentiator::create(sd_int);
+        s_nssai_t s_nssai{slice_service_type{1}, *sd};
+        five_qi_t five_qi{7};
+        unsigned  nof_gws = 2;
+        for (unsigned i = 0; i < nof_gws; i++) {
+          auto        f1u_gw = std::make_unique<dummy_gtpu_gateway>();
+          std::string addr   = fmt::format("127.0.{}.{}", sd->value(), 1 + i);
+          f1u_gw->set_bind_address(addr);
+          f1u_sessions.session_maps[s_nssai][five_qi].push_back(std::move(f1u_gw));
+        }
       }
     }
 
