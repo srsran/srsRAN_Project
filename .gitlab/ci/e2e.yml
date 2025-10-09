@@ -239,8 +239,6 @@ amari 8UE:
         KEYWORDS: "not sequentially"
       - E2E_FILE_OR_DIR: tests/handover.py
         KEYWORDS: sequentially
-      - E2E_FILE_OR_DIR: tests/handover.py
-        KEYWORDS: "not sequentially"
 
 amari 32UE:
   extends: .zmq
@@ -258,6 +256,8 @@ amari 32UE:
             "tcp and not band:3 and not precoding",
             "tcp and not band:3 and precoding",
           ]
+      - E2E_FILE_OR_DIR: tests/handover.py
+        KEYWORDS: "not sequentially"
 
 amari 32UE [tests/pucch.py]:
   extends: .zmq
