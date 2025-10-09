@@ -129,7 +129,7 @@ public:
   [[nodiscard]] bool send_rrc_reconfiguration_complete_and_await_bearer_context_modification_request()
   {
     get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
-        target_du_ue_id, target_cu_ue_id, srb_id_t::srb1, make_byte_buffer("8000080035c41efd").value()));
+        target_du_ue_id, target_cu_ue_id, srb_id_t::srb1, make_byte_buffer("80000800db659eb2").value()));
     report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu),
                               "Failed to receive Bearer Context Modification Request");
     report_fatal_error_if_not(test_helpers::is_valid_bearer_context_modification_request(e1ap_pdu),
@@ -198,7 +198,7 @@ public:
   [[nodiscard]] bool send_rrc_reconfiguration_complete()
   {
     get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
-        target_du_ue_id, target_cu_ue_id, srb_id_t::srb1, make_byte_buffer("8000080035c41efd").value()));
+        target_du_ue_id, target_cu_ue_id, srb_id_t::srb1, make_byte_buffer("80000800db659eb2").value()));
     return true;
   }
 
@@ -316,7 +316,7 @@ public:
     byte_buffer pdu = test_helpers::pack_ul_dcch_msg(test_helpers::create_rrc_reestablishment_complete());
     // > Prepend PDCP header and append MAC.
     report_error_if_not(pdu.prepend(std::array<uint8_t, 2>{0x00U, 0x00U}), "bad alloc");
-    report_error_if_not(pdu.append(std::array<uint8_t, 4>{0x01, 0x1d, 0x37, 0x38}), "bad alloc");
+    report_error_if_not(pdu.append(std::array<uint8_t, 4>{0x85, 0xc1, 0x04, 0xf1}), "bad alloc");
     // > Send UL RRC Message to CU-CP.
     get_du(du_idx).push_ul_pdu(
         test_helpers::generate_ul_rrc_message_transfer(new_du_ue_id, *old_ue.cu_ue_id, srb_id_t::srb1, std::move(pdu)));
@@ -364,7 +364,7 @@ public:
     pdu = test_helpers::pack_ul_dcch_msg(test_helpers::create_rrc_reconfiguration_complete(1U));
     // > Prepend PDCP header and append MAC.
     report_error_if_not(pdu.prepend(std::array<uint8_t, 2>{0x00U, 0x01U}), "bad alloc");
-    report_error_if_not(pdu.append(std::array<uint8_t, 4>{0xd3, 0x69, 0xb8, 0xf7}), "bad alloc");
+    report_error_if_not(pdu.append(std::array<uint8_t, 4>{0xf1, 0x21, 0x02, 0x5e}), "bad alloc");
     get_du(du_idx).push_ul_pdu(
         test_helpers::generate_ul_rrc_message_transfer(new_du_ue_id, *old_ue.cu_ue_id, srb_id_t::srb1, std::move(pdu)));
 

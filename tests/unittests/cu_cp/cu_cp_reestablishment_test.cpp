@@ -511,7 +511,7 @@ TEST_F(cu_cp_reestablishment_test, when_reestablishment_succeeds_then_amf_is_con
       new_du_ue_id,
       this->find_ue_context(du_idx, new_du_ue_id)->cu_ue_id.value(),
       srb_id_t::srb1,
-      make_byte_buffer("00023a0c3f016f19764701bf0022808005f900788801002060000306805ed46e67").value());
+      make_byte_buffer("00023a0c3f016f19764701bf0022808005f9007888010020600003068014367cc5").value());
   get_du(du_idx).push_ul_pdu(ul_rrc_msg_transfer);
   ngap_message ngap_pdu;
   ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu));
