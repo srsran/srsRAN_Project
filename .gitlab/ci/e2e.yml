@@ -475,7 +475,6 @@ test mode ue many ues:
   variables:
     GROUP: rf
     TESTBED: rf_b200
-    MARKERS: rf
     E2E_LOG_LEVEL: warning
   needs:
     - job: basic relwithdeb

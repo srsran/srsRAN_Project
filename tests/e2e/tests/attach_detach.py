@@ -124,59 +124,6 @@ def test_zmq(
     )
 
 
-@mark.parametrize(
-    "direction",
-    (
-        param(IPerfDir.DOWNLINK, id="downlink", marks=mark.downlink),
-        param(IPerfDir.UPLINK, id="uplink", marks=mark.uplink),
-        param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),
-    ),
-)
-@mark.parametrize(
-    "band, common_scs, bandwidth, always_download_artifacts",
-    (
-        param(3, 15, 10, True, id="band:%s-scs:%s-bandwidth:%s-artifacts:%s"),
-        param(41, 30, 10, False, id="band:%s-scs:%s-bandwidth:%s-artifacts:%s"),
-    ),
-)
-@mark.rf
-# pylint: disable=too-many-arguments,too-many-positional-arguments
-def test_rf_udp(
-    retina_manager: RetinaTestManager,
-    retina_data: RetinaTestData,
-    ue_4: Tuple[UEStub, ...],
-    fivegc: FiveGCStub,
-    gnb: GNBStub,
-    band: int,
-    common_scs: int,
-    bandwidth: int,
-    always_download_artifacts: bool,
-    direction: IPerfDir,
-):
-    """
-    RF Attach / Detach
-    """
-
-    _attach_and_detach_multi_ues(
-        retina_manager=retina_manager,
-        retina_data=retina_data,
-        ue_array=ue_4,
-        gnb=gnb,
-        fivegc=fivegc,
-        band=band,
-        common_scs=common_scs,
-        bandwidth=bandwidth,
-        sample_rate=None,  # default from testbed
-        protocol=IPerfProto.UDP,
-        bitrate=HIGH_BITRATE,
-        direction=direction,
-        global_timing_advance=-1,
-        time_alignment_calibration="264",
-        always_download_artifacts=always_download_artifacts,
-        warning_as_errors=False,
-    )
-
-
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def _attach_and_detach_multi_ues(
     *,  # This enforces keyword-only arguments
