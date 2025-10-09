@@ -16,16 +16,59 @@
 using namespace srsran;
 using namespace srs_du;
 
+static error_type<std::string> validate_du_param_config_request(const du_param_config_request& req)
+{
+  // There must be at least a cell config request.
+  if (req.cells.empty()) {
+    return make_unexpected("At least one cell configuration must be present");
+  }
+
+  for (auto& cell : req.cells) {
+    if (not cell.ssb_pwr_mod.has_value() and cell.rrm_policy_ratio_list.empty()) {
+      return make_unexpected("Cell config requests must specify either SSB power mod. or rrm_policy_ratio_list");
+    }
+  }
+
+  if (req.cells.size() == 1) {
+    if (not req.cells.front().nr_cgi.has_value()) {
+      // When the NR-CGI is not specified, then the request cannot be for SSB pwr modification.
+      if (req.cells.front().ssb_pwr_mod.has_value()) {
+        return make_unexpected("SSB power modification requires NR-CGI");
+      }
+    }
+  }
+  // If there are config requests for 2 or more cells, then each of them must specify the NR-CGI.
+  else {
+    for (auto& cell : req.cells) {
+      if (not cell.nr_cgi.has_value()) {
+        return make_unexpected("Missing NR-CGI for one of the cell config requests");
+      }
+    }
+  }
+
+  return {};
+}
+
 du_param_config_procedure::du_param_config_procedure(const du_param_config_request& request_,
                                                      const du_manager_params&       du_params_,
                                                      du_cell_manager&               du_cells_) :
-  request(request_), du_params(du_params_), du_cells(du_cells_), logger(srslog::fetch_basic_logger("DU-MNG"))
+  request(request_),
+  du_params(du_params_),
+  du_cells(du_cells_),
+  req_validation_outcome(validate_du_param_config_request(request)),
+  logger(srslog::fetch_basic_logger("DU-MNG"))
 {
 }
 
 void du_param_config_procedure::operator()(coro_context<async_task<du_param_config_response>>& ctx)
 {
   CORO_BEGIN(ctx);
+
+  if (not req_validation_outcome.has_value()) {
+    logger.warning("Invalid DU parameters config request. Cause: {}", req_validation_outcome.error());
+    resp.success = false;
+    CORO_EARLY_RETURN(resp);
+  }
 
   // Update DU cell configs.
   if (not handle_cell_config_updates()) {

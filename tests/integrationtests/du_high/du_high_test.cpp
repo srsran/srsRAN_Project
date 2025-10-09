@@ -517,10 +517,10 @@ TEST_F(du_high_rrm_policy_tester, when_rrm_policy_remote_command_is_received_the
   // Ensure DU<->CU-UP tunnel was created.
   ASSERT_EQ(cu_up_sim.last_drb_id.value(), drb_id_t::drb1);
 
-  unsigned max_rbs = 100;
-  unsigned min_rbs = 10;
+  unsigned max_rbs = 30;
+  unsigned min_rbs = 5;
 
-  auto run_sched_and_assess_rbs = [this, max_rbs]() {
+  auto run_sched_and_assess_rbs = [this](unsigned max_slice_rbs) {
     phy.cells[0].last_dl_data.reset();
     constexpr unsigned nof_slots_to_assess_rrm_cfg = 10;
     for (unsigned sl = 0; sl != nof_slots_to_assess_rrm_cfg; ++sl) {
@@ -531,7 +531,7 @@ TEST_F(du_high_rrm_policy_tester, when_rrm_policy_remote_command_is_received_the
       for (auto& ue_grant : ue_grants) {
         rbs += ue_grant.pdsch_cfg.rbs.type1().length();
       }
-      ASSERT_LT(rbs, max_rbs);
+      ASSERT_LT(rbs, max_slice_rbs);
       phy.cells[0].last_dl_data.reset();
     }
   };
@@ -540,25 +540,25 @@ TEST_F(du_high_rrm_policy_tester, when_rrm_policy_remote_command_is_received_the
   apply_rrm_reconfiguration(max_rbs, min_rbs);
 
   // 1-A. Run the scheduler for a few slots, to clear previous allocations.
-  run_until([]() { return true; }, 10);
+  run_until([]() { return false; }, 10);
 
   // 1-B. Forward several DRB PDUs.
   push_dl_pdus();
 
   // 1-C. Run the scheduler and assess RBs are according to the RRM config.
-  run_sched_and_assess_rbs();
+  run_sched_and_assess_rbs(max_rbs);
 
   // 2. Apply new RRM config.
-  max_rbs = 30;
-  min_rbs = 5;
+  max_rbs = 100;
+  min_rbs = 10;
   apply_rrm_reconfiguration(max_rbs, min_rbs);
 
   // 2-A Run the scheduler for a few slots, to clear previous allocations.
-  run_until([]() { return true; }, 10);
+  run_until([]() { return false; }, 10);
 
   // 2-B. Forward several DRB PDUs.
   push_dl_pdus();
 
   // 2-C. Run the scheduler and assess RBs are according to the RRM config.
-  run_sched_and_assess_rbs();
+  run_sched_and_assess_rbs(max_rbs);
 }

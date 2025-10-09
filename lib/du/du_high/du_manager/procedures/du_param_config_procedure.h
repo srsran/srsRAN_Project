@@ -40,6 +40,7 @@ private:
   const du_param_config_request request;
   const du_manager_params&      du_params;
   du_cell_manager&              du_cells;
+  error_type<std::string>       req_validation_outcome;
   srslog::basic_logger&         logger;
 
   unsigned next_cell_idx = 0;
