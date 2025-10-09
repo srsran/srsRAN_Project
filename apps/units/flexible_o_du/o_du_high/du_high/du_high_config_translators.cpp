@@ -682,11 +682,29 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     }
 
     // Parameters for PUCCH-Config builder (these parameters will be used later on to generate the PUCCH resources).
-    pucch_builder_params&            du_pucch_cfg   = out_cell.pucch_cfg;
-    const du_high_unit_pucch_config& user_pucch_cfg = base_cell.pucch_cfg;
-    du_pucch_cfg.nof_cell_harq_pucch_res_sets       = user_pucch_cfg.nof_cell_harq_pucch_sets;
-    du_pucch_cfg.nof_sr_resources                   = user_pucch_cfg.nof_cell_sr_resources;
-    du_pucch_cfg.nof_csi_resources                  = param.csi_rs_enabled ? user_pucch_cfg.nof_cell_csi_resources : 0U;
+    pucch_builder_params&            du_pucch_cfg                  = out_cell.pucch_cfg;
+    const du_high_unit_pucch_config& user_pucch_cfg_pre_processing = base_cell.pucch_cfg;
+    du_high_unit_pucch_config        user_pucch_cfg                = user_pucch_cfg_pre_processing;
+    // For 5MHz BW, the default PUCCH configuration would use too many PRBs, we need to reduce them not to waste the
+    // useful UL BW.
+    if (param.channel_bw_mhz < bs_channel_bandwidth::MHz10 and
+        user_pucch_cfg_pre_processing == du_high_unit_pucch_config{}) {
+      constexpr unsigned nof_ue_res_harq_per_set_bw_5mhz      = 7;
+      constexpr unsigned nof_cell_harq_pucch_res_sets_bw_5mhz = 1;
+      constexpr unsigned f1_nof_cell_res_sr_5mhz              = 7;
+      constexpr unsigned f2_nof_cell_res_csi_5mhz             = 7;
+      user_pucch_cfg.nof_cell_harq_pucch_sets                 = nof_cell_harq_pucch_res_sets_bw_5mhz;
+      user_pucch_cfg.nof_ue_pucch_res_harq_per_set =
+          std::min(nof_ue_res_harq_per_set_bw_5mhz, user_pucch_cfg_pre_processing.nof_ue_pucch_res_harq_per_set);
+      user_pucch_cfg.nof_cell_sr_resources =
+          std::min(f1_nof_cell_res_sr_5mhz, user_pucch_cfg_pre_processing.nof_cell_sr_resources);
+      user_pucch_cfg.nof_cell_csi_resources =
+          std::min(f2_nof_cell_res_csi_5mhz, user_pucch_cfg_pre_processing.nof_cell_csi_resources);
+      user_pucch_cfg.f1_enable_occ = true;
+    }
+    du_pucch_cfg.nof_cell_harq_pucch_res_sets = user_pucch_cfg.nof_cell_harq_pucch_sets;
+    du_pucch_cfg.nof_sr_resources             = user_pucch_cfg.nof_cell_sr_resources;
+    du_pucch_cfg.nof_csi_resources            = param.csi_rs_enabled ? user_pucch_cfg.nof_cell_csi_resources : 0U;
 
     if (user_pucch_cfg.use_format_0) {
       auto& f0_params = du_pucch_cfg.f0_or_f1_params.emplace<pucch_f0_params>();

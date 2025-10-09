@@ -463,6 +463,40 @@ struct du_high_unit_pucch_config {
   float pucch_f0_sinr_target_dB{10.0f};
   float pucch_f2_sinr_target_dB{6.0f};
   float pucch_f3_sinr_target_dB{1.0f};
+
+  template <typename T>
+  bool almost_equal(T a, T b) const
+  {
+    // This is only to detect if a given parameter differs from the default value.
+    constexpr T tolerance = 0.01;
+    return std::fabs(a - b) <= tolerance;
+  }
+
+  bool operator==(const du_high_unit_pucch_config& rhs) const
+  {
+    return p0_nominal == rhs.p0_nominal && pucch_resource_common == rhs.pucch_resource_common &&
+           use_format_0 == rhs.use_format_0 && set1_format == rhs.set1_format &&
+           nof_ue_pucch_res_harq_per_set == rhs.nof_ue_pucch_res_harq_per_set &&
+           nof_cell_harq_pucch_sets == rhs.nof_cell_harq_pucch_sets &&
+           nof_cell_sr_resources == rhs.nof_cell_sr_resources && nof_cell_csi_resources == rhs.nof_cell_csi_resources &&
+           almost_equal<float>(sr_period_msec, rhs.sr_period_msec) &&
+           f0_intraslot_freq_hopping == rhs.f0_intraslot_freq_hopping && f1_enable_occ == rhs.f1_enable_occ &&
+           f1_nof_cyclic_shifts == rhs.f1_nof_cyclic_shifts &&
+           f1_intraslot_freq_hopping == rhs.f1_intraslot_freq_hopping && f2_max_nof_rbs == rhs.f2_max_nof_rbs &&
+           f2_max_payload_bits == rhs.f2_max_payload_bits && f2_max_code_rate == rhs.f2_max_code_rate &&
+           f2_intraslot_freq_hopping == rhs.f2_intraslot_freq_hopping && f3_max_nof_rbs == rhs.f3_max_nof_rbs &&
+           f3_max_payload_bits == rhs.f3_max_payload_bits && f3_max_code_rate == rhs.f3_max_code_rate &&
+           f3_intraslot_freq_hopping == rhs.f3_intraslot_freq_hopping && f3_additional_dmrs == rhs.f3_additional_dmrs &&
+           f3_pi2_bpsk == rhs.f3_pi2_bpsk && f4_max_code_rate == rhs.f4_max_code_rate &&
+           f4_intraslot_freq_hopping == rhs.f4_intraslot_freq_hopping && f4_additional_dmrs == rhs.f4_additional_dmrs &&
+           f4_pi2_bpsk == rhs.f4_pi2_bpsk && f4_enable_occ == rhs.f4_enable_occ && f4_occ_length == rhs.f4_occ_length &&
+           min_k1 == rhs.min_k1 && max_consecutive_kos == rhs.max_consecutive_kos &&
+           enable_closed_loop_pw_control == rhs.enable_closed_loop_pw_control &&
+           almost_equal<float>(pucch_f0_sinr_target_dB, rhs.pucch_f0_sinr_target_dB) &&
+           almost_equal<float>(pucch_f2_sinr_target_dB, rhs.pucch_f2_sinr_target_dB) &&
+           almost_equal<float>(pucch_f3_sinr_target_dB, rhs.pucch_f3_sinr_target_dB);
+  }
+  bool operator!=(const du_high_unit_pucch_config& rhs) const { return !(*this == rhs); }
 };
 
 struct du_high_unit_srs_config {

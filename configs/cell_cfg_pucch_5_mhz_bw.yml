@@ -1,0 +1,10 @@
+#   This file contains the PUCCH configuration for the gNB to support 5MHz BW.
+
+cell_cfg:
+  pucch:
+    nof_ue_res_harq_per_set: 7
+    nof_cell_harq_pucch_res_sets: 1
+    f1_nof_cyclic_shifts: 1
+    f1_enable_occ: true
+    f0_or_f1_nof_cell_res_sr: 7
+    f2_or_f3_or_f4_nof_cell_res_csi: 7

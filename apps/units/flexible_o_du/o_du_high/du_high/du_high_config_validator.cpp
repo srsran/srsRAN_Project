@@ -614,10 +614,12 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
   if (config.nof_antennas_dl == 1 and f2_f3_f4_max_payload < 4U) {
     fmt::print("With the given parameters and 1 DL antenna, PUCCH F2 max payload must be at least 4 bits.\n");
     return false;
-  } else if (config.nof_antennas_dl == 2 and f2_f3_f4_max_payload < 7U) {
+  }
+  if (config.nof_antennas_dl == 2 and f2_f3_f4_max_payload < 7U) {
     fmt::print("With the given parameters and 2 DL antennas, PUCCH F2 max payload must be at least 7 bits.\n");
     return false;
-  } else if (config.nof_antennas_dl == 4 and f2_f3_f4_max_payload < 11U) {
+  }
+  if (config.nof_antennas_dl == 4 and f2_f3_f4_max_payload < 11U) {
     fmt::print("With the given parameters and 4 DL antennas, PUCCH F2 max payload must be at least 11 bits.\n");
     return false;
   }
@@ -625,10 +627,16 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
   // Verify the number of RBs for the PUCCH resources does not exceed the BWP size.
   // [Implementation-defined] We do not allow the PUCCH resources to occupy more than 50% of the BWP. This is an extreme
   // case, and ideally the PUCCH configuration should result in a much lower PRBs usage.
-  constexpr float max_allowed_prbs_usage = 0.5F;
-  if (static_cast<float>(nof_f0_f1_rbs + nof_f2_f3_f4_rbs) / static_cast<float>(nof_crbs) >= max_allowed_prbs_usage) {
-    fmt::print("With the given parameters, the number of PRBs for PUCCH exceeds the 50% of the BWP PRBs.\n");
-    return false;
+  // NOTE: for 5MHz BW, the default PUCCH config will be overwritten to force it to pass this check; skip this check
+  // here.
+  const bool def_cfg_for_5_mhz_bw =
+      config.channel_bw_mhz < bs_channel_bandwidth::MHz10 and pucch_cfg == du_high_unit_pucch_config{};
+  if (not def_cfg_for_5_mhz_bw) {
+    constexpr float max_allowed_prbs_usage = 0.5F;
+    if (static_cast<float>(nof_f0_f1_rbs + nof_f2_f3_f4_rbs) / static_cast<float>(nof_crbs) >= max_allowed_prbs_usage) {
+      fmt::print("With the given parameters, the number of PRBs for PUCCH exceeds the 50% of the BWP PRBs.\n");
+      return false;
+    }
   }
 
   return true;
@@ -982,7 +990,7 @@ static bool validate_dl_ul_arfcn_and_band(const du_high_unit_base_cell_config& c
 static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_cfg)
 {
   // See TS 38.331, V17.0.0, \c type1-r17 in \c SIB-TypeInfo-v1700.
-  static const unsigned r17_min_sib_type = 15;
+  static constexpr unsigned r17_min_sib_type = 15;
 
   const du_high_unit_sib_config& sib_cfg = cell_cfg.sib_cfg;
 
