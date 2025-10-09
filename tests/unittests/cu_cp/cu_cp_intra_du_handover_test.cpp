@@ -281,8 +281,8 @@ public:
   reestablish_target_ue(gnb_du_ue_f1ap_id_t new_du_ue_id, rnti_t new_crnti, rnti_t old_crnti, pci_t old_pci)
   {
     // Send Initial UL RRC Message (containing RRC Reestablishment Request) to CU-CP.
-    byte_buffer rrc_container =
-        pack_ul_ccch_msg(create_rrc_reestablishment_request(old_crnti, old_pci, "1111010001000010"));
+    byte_buffer rrc_container = test_helpers::pack_ul_ccch_msg(
+        test_helpers::create_rrc_reestablishment_request(old_crnti, old_pci, "1111010001000010"));
     f1ap_message f1ap_init_ul_rrc_msg =
         test_helpers::generate_init_ul_rrc_message_transfer(new_du_ue_id, new_crnti, {}, std::move(rrc_container));
     get_du(du_idx).push_ul_pdu(f1ap_init_ul_rrc_msg);
@@ -313,7 +313,7 @@ public:
 
     // EVENT: Send RRC Reestablishment Complete.
     // > Generate UL-DCCH message (containing RRC Reestablishment Complete).
-    byte_buffer pdu = pack_ul_dcch_msg(create_rrc_reestablishment_complete());
+    byte_buffer pdu = test_helpers::pack_ul_dcch_msg(test_helpers::create_rrc_reestablishment_complete());
     // > Prepend PDCP header and append MAC.
     report_error_if_not(pdu.prepend(std::array<uint8_t, 2>{0x00U, 0x00U}), "bad alloc");
     report_error_if_not(pdu.append(std::array<uint8_t, 4>{0x01, 0x1d, 0x37, 0x38}), "bad alloc");
@@ -361,7 +361,7 @@ public:
                               "Invalid DL RRC Message Transfer");
 
     // EVENT: DU sends F1AP UL RRC Message Transfer (containing RRC Reconfiguration Complete).
-    pdu = pack_ul_dcch_msg(create_rrc_reconfiguration_complete(1U));
+    pdu = test_helpers::pack_ul_dcch_msg(test_helpers::create_rrc_reconfiguration_complete(1U));
     // > Prepend PDCP header and append MAC.
     report_error_if_not(pdu.prepend(std::array<uint8_t, 2>{0x00U, 0x01U}), "bad alloc");
     report_error_if_not(pdu.append(std::array<uint8_t, 4>{0xd3, 0x69, 0xb8, 0xf7}), "bad alloc");

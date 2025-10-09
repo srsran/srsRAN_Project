@@ -18,6 +18,7 @@
 #include "srsran/ran/subcarrier_spacing.h"
 
 namespace srsran {
+namespace test_helpers {
 
 /// Generates a dummy RRC handoverPrepInformation as per TS 38.331.
 byte_buffer create_ho_prep_info();
@@ -25,4 +26,5 @@ byte_buffer create_ho_prep_info();
 /// \brief Generates a dummy Measurement Timing Configuration.
 byte_buffer create_meas_timing_cfg(uint32_t carrier_freq, subcarrier_spacing scs);
 
+} // namespace test_helpers
 } // namespace srsran

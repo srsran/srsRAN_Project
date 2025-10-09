@@ -15,7 +15,7 @@
 using namespace srsran;
 using namespace asn1::rrc_nr;
 
-ul_ccch_msg_s srsran::create_rrc_setup_request()
+ul_ccch_msg_s srsran::test_helpers::create_rrc_setup_request()
 {
   ul_ccch_msg_s msg;
 
@@ -27,8 +27,9 @@ ul_ccch_msg_s srsran::create_rrc_setup_request()
   return msg;
 }
 
-ul_ccch_msg_s
-srsran::create_rrc_reestablishment_request(rnti_t old_crnti, pci_t old_pci, const std::string& short_mac_i)
+ul_ccch_msg_s srsran::test_helpers::create_rrc_reestablishment_request(rnti_t             old_crnti,
+                                                                       pci_t              old_pci,
+                                                                       const std::string& short_mac_i)
 {
   ul_ccch_msg_s msg;
 
@@ -42,7 +43,7 @@ srsran::create_rrc_reestablishment_request(rnti_t old_crnti, pci_t old_pci, cons
   return msg;
 }
 
-ul_dcch_msg_s srsran::create_rrc_setup_complete(uint8_t sel_plmn_id)
+ul_dcch_msg_s srsran::test_helpers::create_rrc_setup_complete(uint8_t sel_plmn_id)
 {
   ul_dcch_msg_s msg;
 
@@ -57,7 +58,7 @@ ul_dcch_msg_s srsran::create_rrc_setup_complete(uint8_t sel_plmn_id)
   return msg;
 }
 
-asn1::rrc_nr::ul_dcch_msg_s srsran::create_rrc_reestablishment_complete()
+asn1::rrc_nr::ul_dcch_msg_s srsran::test_helpers::create_rrc_reestablishment_complete()
 {
   ul_dcch_msg_s msg;
 
@@ -68,7 +69,7 @@ asn1::rrc_nr::ul_dcch_msg_s srsran::create_rrc_reestablishment_complete()
   return msg;
 }
 
-asn1::rrc_nr::ul_dcch_msg_s srsran::create_rrc_reconfiguration_complete(uint8_t transaction_id)
+asn1::rrc_nr::ul_dcch_msg_s srsran::test_helpers::create_rrc_reconfiguration_complete(uint8_t transaction_id)
 {
   ul_dcch_msg_s msg;
 
@@ -79,7 +80,7 @@ asn1::rrc_nr::ul_dcch_msg_s srsran::create_rrc_reconfiguration_complete(uint8_t 
   return msg;
 }
 
-byte_buffer srsran::pack_ul_ccch_msg(const ul_ccch_msg_s& msg)
+byte_buffer srsran::test_helpers::pack_ul_ccch_msg(const ul_ccch_msg_s& msg)
 {
   byte_buffer   pdu;
   asn1::bit_ref bref{pdu};
@@ -89,7 +90,7 @@ byte_buffer srsran::pack_ul_ccch_msg(const ul_ccch_msg_s& msg)
   return byte_buffer{};
 }
 
-byte_buffer srsran::pack_ul_dcch_msg(const ul_dcch_msg_s& msg)
+byte_buffer srsran::test_helpers::pack_ul_dcch_msg(const ul_dcch_msg_s& msg)
 {
   byte_buffer   pdu;
   asn1::bit_ref bref{pdu};

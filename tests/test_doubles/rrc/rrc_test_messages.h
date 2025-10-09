@@ -16,6 +16,7 @@
 #include "srsran/ran/rnti.h"
 
 namespace srsran {
+namespace test_helpers {
 
 /// \brief Generates a dummy RRC Setup Request message.
 asn1::rrc_nr::ul_ccch_msg_s create_rrc_setup_request();
@@ -40,4 +41,5 @@ byte_buffer pack_ul_ccch_msg(const asn1::rrc_nr::ul_ccch_msg_s& msg);
 /// \brief Packs an RRC UL-DCCH message into a byte buffer.
 byte_buffer pack_ul_dcch_msg(const asn1::rrc_nr::ul_dcch_msg_s& msg);
 
+} // namespace test_helpers
 } // namespace srsran

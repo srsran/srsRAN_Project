@@ -589,7 +589,8 @@ TEST_F(cu_cp_connectivity_test, when_ng_f1_e1_are_setup_then_ues_can_attach)
 
   // Send RRC Setup Complete.
   // > Generate UL RRC Message (containing RRC Setup Complete) with PDCP SN=0.
-  get_du(du_idx).push_rrc_ul_dcch_message(du_ue_f1ap_id, srb_id_t::srb1, pack_ul_dcch_msg(create_rrc_setup_complete()));
+  get_du(du_idx).push_rrc_ul_dcch_message(
+      du_ue_f1ap_id, srb_id_t::srb1, test_helpers::pack_ul_dcch_msg(test_helpers::create_rrc_setup_complete()));
   report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.dus[0].rrc_metrics.attempted_rrc_connection_establishments.get_count(establishment_cause_t::mo_sig),
             1);

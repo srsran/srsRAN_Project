@@ -15,7 +15,7 @@
 
 using namespace srsran;
 
-byte_buffer srsran::create_ho_prep_info()
+byte_buffer srsran::test_helpers::create_ho_prep_info()
 {
   ho_prep_info_s ho_prep;
   ho_prep.crit_exts.set_c1().set_ho_prep_info();
@@ -29,7 +29,7 @@ byte_buffer srsran::create_ho_prep_info()
   return byte_buffer{};
 }
 
-byte_buffer srsran::create_meas_timing_cfg(uint32_t carrier_freq, subcarrier_spacing scs)
+byte_buffer srsran::test_helpers::create_meas_timing_cfg(uint32_t carrier_freq, subcarrier_spacing scs)
 {
   asn1::rrc_nr::meas_timing_cfg_s asn1_meas_timing_cfg;
   auto&                           meas_timing_conf = asn1_meas_timing_cfg.crit_exts.set_c1().set_meas_timing_conf();

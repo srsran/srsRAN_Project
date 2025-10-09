@@ -88,7 +88,7 @@ gnb_du_served_cells_item_s srsran::test_helpers::generate_served_cells_item(cons
   served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nr_scs.value = nr_scs_opts::scs30;
   served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nr_nrb.value = nr_nrb_opts::nrb51;
   served_cells_item.served_cell_info.meas_timing_cfg =
-      create_meas_timing_cfg(info.meas_timing_cfg.carrier_freq, info.meas_timing_cfg.scs);
+      test_helpers::create_meas_timing_cfg(info.meas_timing_cfg.carrier_freq, info.meas_timing_cfg.scs);
 
   served_cells_item.gnb_du_sys_info_present = true;
   served_cells_item.gnb_du_sys_info.mib_msg.from_string("01c586");
