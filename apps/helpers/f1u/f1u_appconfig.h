@@ -23,7 +23,8 @@ struct f1u_socket_appconfig {
   /// Bind address used by the F1-U interface.
   std::string bind_addr = "127.0.10.1";
   /// If the S-NSSAI is not present, the socket will be used by default.
-  std::optional<s_nssai_t> s_nssai;
+  std::optional<uint8_t> sst;
+  uint32_t               sd = 0xffffffU;
   /// If the 5QI is not present, the socket will be used by default.
   std::optional<five_qi_t> five_qi;
   udp_appconfig            udp_config;

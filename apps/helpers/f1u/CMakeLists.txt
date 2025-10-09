@@ -7,6 +7,7 @@
 #
 
 set(SOURCES f1u_cli11_schema.cpp
+            f1u_cli11_validator.cpp
             f1u_config_yaml_writer.cpp
 )
 
