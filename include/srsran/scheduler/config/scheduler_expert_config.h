@@ -188,18 +188,12 @@ struct scheduler_ue_expert_config {
   unsigned min_pucch_pusch_prb_distance = 1;
   /// Expert parameters to be passed to the policy scheduler.
   policy_scheduler_expert_config strategy_cfg = time_qos_scheduler_expert_config{};
-  /// \brief Size of the group of UEs that is considered for newTx DL allocation in a given slot. The groups of UEs
+  /// \brief Size of the group of UEs that is considered for newTx allocation in a given slot. The groups of UEs
   /// will rotate in a round-robin fashion.
   /// To minimize computation load, a lower group size can be used. If the QoS scheduler policy is used, this will
   /// mean that the QoS priority is only computed to a subset of UEs and the scheduler will operate like a hybrid of
   /// round-robin and QoS.
-  unsigned pre_policy_rr_dl_ue_group_size = 32;
-  /// \brief Size of the group of UEs that is considered for newTx UL allocation in a given slot.
-  unsigned pre_policy_rr_ul_ue_group_size = 32;
-  /// \brief Periodicity in slots of the round-robin UE group rotation for DL.
-  unsigned pre_policy_rr_dl_ue_group_period = 3;
-  /// \brief Periodicity in slots of the round-robin UE group rotation for UL.
-  unsigned pre_policy_rr_ul_ue_group_period = 1;
+  unsigned pre_policy_rr_ue_group_size = 32;
   /// Expert PUCCH/PUSCH power control parameters.
   ul_power_control ul_power_ctrl = ul_power_control{};
 };

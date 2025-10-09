@@ -11,58 +11,9 @@
 #include "intra_slice_scheduler.h"
 #include "../logging/scheduler_metrics_handler.h"
 #include "srsran/ran/pdcch/search_space.h"
+#include "srsran/support/math/mod_math_utils.h"
 
 using namespace srsran;
-
-/// Helper function to form groups of UE candidates in a round-robin fashion.
-/// \return The next \c next_ue_index_offset and \c group_rr_count to be used.
-template <typename UECandidateFactory>
-static std::pair<du_ue_index_t, unsigned> round_robin_ue_candidate_groups(std::vector<ue_newtx_candidate>& candidates,
-                                                                          const slice_ue_repository&       slice_ues,
-                                                                          unsigned                         group_size,
-                                                                          unsigned      group_rr_period,
-                                                                          du_ue_index_t next_ue_index_offset,
-                                                                          unsigned      group_rr_count,
-                                                                          const UECandidateFactory& factory)
-{
-  candidates.clear();
-
-  const unsigned nof_ues = slice_ues.size();
-  group_size             = std::min(nof_ues, group_size);
-
-  unsigned count   = 0;
-  auto     next_it = slice_ues.lower_bound(next_ue_index_offset);
-  next_it          = next_it == slice_ues.end() ? slice_ues.begin() : next_it;
-  for (auto ue_it = next_it; count != nof_ues; ++ue_it) {
-    ++count;
-    if (ue_it == slice_ues.end()) {
-      // wrap-around.
-      ue_it = slice_ues.begin();
-    }
-
-    std::optional<ue_newtx_candidate> ue_candidate = factory(*ue_it);
-    if (ue_candidate.has_value()) {
-      candidates.push_back(ue_candidate.value());
-      if (candidates.size() >= group_size) {
-        break;
-      }
-    }
-  }
-
-  if (candidates.empty() or count >= nof_ues) {
-    // In case all UEs have been traversed, we do not need to implement Round-robin of UE groups.
-    return std::make_pair(to_du_ue_index(0), 0U);
-  }
-
-  if (++group_rr_count < group_rr_period) {
-    // If we are not at the end of the group RR period, we return the same next UE index offset.
-    return std::make_pair(next_ue_index_offset, group_rr_count);
-  }
-  group_rr_count = 0;
-
-  // Determine the next UE group RR offset as the UE after the last UE candidate.
-  return std::make_pair(to_du_ue_index(candidates.back().ue->ue_index() + 1), group_rr_count);
-}
 
 /// \brief Helper function to determine the expected number of PDSCHs that can be allocated per slot in a manner that
 /// ensures fair distribution of PDSCHs across slots.
@@ -92,6 +43,72 @@ static unsigned compute_expected_pdschs_per_slot(const cell_configuration& cell_
 
   pdschs_per_slot = std::max(1U, pdschs_per_slot);
   return pdschs_per_slot;
+}
+
+// class intra_slice_scheduler::slice_ue_group_scheduler
+
+void intra_slice_scheduler::slice_ue_group_scheduler::fill_ue_dl_candidate_group(
+    std::vector<ue_newtx_candidate>& candidates,
+    const dl_ran_slice_candidate&    slice)
+{
+  fill_ue_candidate_group(candidates, slice.get_slot_tx(), true, slice.get_slice_ues());
+}
+
+void intra_slice_scheduler::slice_ue_group_scheduler::fill_ue_ul_candidate_group(
+    std::vector<ue_newtx_candidate>& candidates,
+    const ul_ran_slice_candidate&    slice)
+{
+  fill_ue_candidate_group(candidates, slice.get_slot_tx(), false, slice.get_slice_ues());
+}
+
+void intra_slice_scheduler::slice_ue_group_scheduler::fill_ue_candidate_group(
+    std::vector<ue_newtx_candidate>& candidates,
+    slot_point                       sl_tx,
+    bool                             is_dl,
+    const slice_ue_repository&       slice_ues)
+{
+  candidates.clear();
+
+  const unsigned nof_ues = slice_ues.size();
+  if (nof_ues > parent->expert_cfg.pre_policy_rr_ue_group_size and
+      (not last_sl_tx.valid() or last_sl_tx.sfn() != sl_tx.sfn())) {
+    // Update offset whenever we enter a new SFN.
+    group_offset   = modular_min(last_dl_ue_idx + 1, last_ul_ue_idx + 1, nof_ues);
+    last_dl_ue_idx = group_offset;
+    last_ul_ue_idx = group_offset;
+  }
+  last_sl_tx = sl_tx;
+
+  // Build list of candidates, starting from the UE group offset.
+  unsigned       count      = 0;
+  const unsigned group_size = std::min(nof_ues, parent->expert_cfg.pre_policy_rr_ue_group_size);
+  auto           next_it    = slice_ues.lower_bound(to_du_ue_index(group_offset));
+  next_it                   = next_it == slice_ues.end() ? slice_ues.begin() : next_it;
+  for (auto ue_it = next_it; count != nof_ues; ++ue_it) {
+    ++count;
+    if (ue_it == slice_ues.end()) {
+      // wrap-around.
+      ue_it = slice_ues.begin();
+    }
+
+    std::optional<ue_newtx_candidate> ue_candidate =
+        is_dl ? parent->create_newtx_dl_candidate(*ue_it) : parent->create_newtx_ul_candidate(*ue_it);
+    if (ue_candidate.has_value()) {
+      candidates.push_back(ue_candidate.value());
+      if (candidates.size() >= group_size) {
+        break;
+      }
+    }
+  }
+
+  if (candidates.empty() or count >= nof_ues) {
+    // In case all UEs have been traversed, we do not need to implement round-robin of UE groups.
+    return;
+  }
+
+  // Update the next UE group offset, if the last UE index went beyond next group offset.
+  auto& last_ue_idx = is_dl ? last_dl_ue_idx : last_ul_ue_idx;
+  last_ue_idx       = modular_max(last_ue_idx, static_cast<unsigned>(candidates.back().ue->ue_index()), nof_ues);
 }
 
 // class intra_slice_scheduler
@@ -353,21 +370,11 @@ void intra_slice_scheduler::prepare_newtx_dl_candidates(const dl_ran_slice_candi
                                                         scheduler_policy&             dl_policy)
 {
   // Build list of UE candidates for newTx.
-  const slice_ue_repository& slice_ues = slice.get_slice_ues();
   if (not slice_ctxt_list.contains(slice.id())) {
-    slice_ctxt_list.emplace(slice.id());
+    slice_ctxt_list.emplace(slice.id(), *this);
   }
   auto& slice_sched = slice_ctxt_list[slice.id()];
-  auto [next_offset, next_count] =
-      round_robin_ue_candidate_groups(newtx_candidates,
-                                      slice_ues,
-                                      expert_cfg.pre_policy_rr_dl_ue_group_size,
-                                      expert_cfg.pre_policy_rr_dl_ue_group_period,
-                                      slice_sched.dl_next_rr_group_offset,
-                                      slice_sched.dl_rr_count,
-                                      [this](const slice_ue& u) { return create_newtx_dl_candidate(u); });
-  slice_sched.dl_next_rr_group_offset = next_offset;
-  slice_sched.dl_rr_count             = next_count;
+  slice_sched.fill_ue_dl_candidate_group(newtx_candidates, slice);
   if (newtx_candidates.empty()) {
     return;
   }
@@ -391,21 +398,11 @@ void intra_slice_scheduler::prepare_newtx_ul_candidates(const ul_ran_slice_candi
                                                         scheduler_policy&             ul_policy)
 {
   // Build list of UE candidates for newTx.
-  const slice_ue_repository& slice_ues = slice.get_slice_ues();
   if (not slice_ctxt_list.contains(slice.id())) {
-    slice_ctxt_list.emplace(slice.id());
+    slice_ctxt_list.emplace(slice.id(), *this);
   }
   auto& slice_sched = slice_ctxt_list[slice.id()];
-  auto [next_offset, next_count] =
-      round_robin_ue_candidate_groups(newtx_candidates,
-                                      slice_ues,
-                                      expert_cfg.pre_policy_rr_ul_ue_group_size,
-                                      expert_cfg.pre_policy_rr_ul_ue_group_period,
-                                      slice_sched.ul_next_rr_group_offset,
-                                      slice_sched.ul_rr_count,
-                                      [this](const slice_ue& u) { return create_newtx_ul_candidate(u); });
-  slice_sched.ul_next_rr_group_offset = next_offset;
-  slice_sched.ul_rr_count             = next_count;
+  slice_sched.fill_ue_ul_candidate_group(newtx_candidates, slice);
   if (newtx_candidates.empty()) {
     return;
   }

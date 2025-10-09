@@ -1118,8 +1118,6 @@ static scheduler_expert_config generate_scheduler_expert_config(const du_high_un
   out_cfg.ue.dl_harq_retx_timeout              = std::chrono::milliseconds{pdsch.harq_retx_timeout};
   out_cfg.ue.ul_harq_retx_timeout              = std::chrono::milliseconds{pusch.harq_retx_timeout};
   out_cfg.ue.max_pdschs_per_slot               = pdsch.max_pdschs_per_slot;
-  out_cfg.ue.pre_policy_rr_dl_ue_group_size    = pdsch.nof_preselected_newtx_ues;
-  out_cfg.ue.pre_policy_rr_dl_ue_group_period  = pdsch.newtx_ues_selection_period;
   out_cfg.ue.max_pdcch_alloc_attempts_per_slot = pdsch.max_pdcch_alloc_attempts_per_slot;
   out_cfg.ue.pdcch_al_cqi_offset               = pdcch.dedicated.al_cqi_offset;
   out_cfg.ue.pdsch_nof_rbs                     = {pdsch.min_rb_size, pdsch.max_rb_size};
@@ -1135,8 +1133,6 @@ static scheduler_expert_config generate_scheduler_expert_config(const du_high_un
   out_cfg.ue.enable_csi_rs_pdsch_multiplexing = pdsch.enable_csi_rs_pdsch_multiplexing;
   out_cfg.ue.initial_ul_dc_offset             = pusch.dc_offset;
   out_cfg.ue.max_puschs_per_slot              = pusch.max_puschs_per_slot;
-  out_cfg.ue.pre_policy_rr_ul_ue_group_size   = pusch.nof_preselected_newtx_ues;
-  out_cfg.ue.pre_policy_rr_ul_ue_group_period = pusch.newtx_ues_selection_period;
   out_cfg.ue.olla_ul_target_bler              = pusch.olla_target_bler;
   out_cfg.ue.olla_ul_snr_inc                  = pusch.olla_snr_inc;
   out_cfg.ue.olla_max_ul_snr_offset           = pusch.olla_max_snr_offset;
@@ -1157,6 +1153,7 @@ static scheduler_expert_config generate_scheduler_expert_config(const du_high_un
       app_sched_expert_cfg.ta_sched_cfg.ta_measurement_slot_prohibit_period;
   out_cfg.ue.ta_update_measurement_ul_sinr_threshold =
       app_sched_expert_cfg.ta_sched_cfg.ta_update_measurement_ul_sinr_threshold;
+  out_cfg.ue.pre_policy_rr_ue_group_size = app_sched_expert_cfg.nof_preselected_newtx_ues;
 
   // PUCCH and scheduler expert parameters.
   out_cfg.ue.max_ul_grants_per_slot                   = cell.ul_common_cfg.max_ul_grants_per_slot;
