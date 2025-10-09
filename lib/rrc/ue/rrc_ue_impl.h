@@ -72,6 +72,7 @@ public:
   rrc_ue_transfer_context     get_transfer_context() override;
   std::optional<rrc_meas_cfg> generate_meas_config(const std::optional<rrc_meas_cfg>& current_meas_config) override;
   byte_buffer                 get_packed_meas_config() override;
+  std::optional<uint8_t>      get_serving_cell_mo() override;
   byte_buffer                 get_rrc_handover_command(const rrc_reconfiguration_procedure_request& request,
                                                        unsigned                                     transaction_id) override;
   byte_buffer                 handle_rrc_handover_command(byte_buffer cmd) override;

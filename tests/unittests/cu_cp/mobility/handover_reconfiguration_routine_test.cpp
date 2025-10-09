@@ -135,6 +135,12 @@ public:
     return {};
   }
 
+  std::optional<uint8_t> get_serving_cell_mo() override
+  {
+    logger.info("Received a new request to get serving cell measurement object");
+    return {};
+  }
+
   byte_buffer handle_rrc_handover_command(byte_buffer cmd) override { return byte_buffer{}; }
 
   byte_buffer get_rrc_handover_command(const rrc_reconfiguration_procedure_request& request,

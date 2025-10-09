@@ -38,6 +38,7 @@ public:
   plmn_identity                      plmn_id = plmn_identity::test_value(); // PLMN identity of the UE
   rrc_state                          state   = rrc_state::idle;
   std::optional<rrc_meas_cfg>        meas_cfg;
+  std::optional<uint8_t>             serving_cell_mo;
   std::optional<cu_cp_five_g_s_tmsi> five_g_s_tmsi;
   std::variant<uint64_t, asn1::fixed_bitstring<39>>
                                      setup_ue_id; ///< this is either a random value or the 5G-S-TMSI-PART1

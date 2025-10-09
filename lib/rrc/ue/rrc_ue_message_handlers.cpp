@@ -600,6 +600,18 @@ std::optional<rrc_meas_cfg> rrc_ue_impl::generate_meas_config(const std::optiona
   // (Re-)generate measurement config and return result.
   context.meas_cfg = measurement_notifier.on_measurement_config_request(context.cell.cgi.nci, current_meas_config);
 
+  // Store serving cell MO if available.
+  if (context.meas_cfg.has_value()) {
+    for (const auto& meas_obj : context.meas_cfg.value().meas_obj_to_add_mod_list) {
+      if (meas_obj.meas_obj_nr.has_value()) {
+        if (meas_obj.meas_obj_nr.value().ssb_freq == context.cell.ssb_arfcn) {
+          context.serving_cell_mo = meas_obj_id_to_uint(meas_obj.meas_obj_id);
+          break;
+        }
+      }
+    }
+  }
+
   return context.meas_cfg;
 }
 
@@ -614,6 +626,16 @@ byte_buffer rrc_ue_impl::get_packed_meas_config()
   }
 
   return {};
+}
+
+std::optional<uint8_t> rrc_ue_impl::get_serving_cell_mo()
+{
+  // If the measurement config was never generated, generate it now.
+  if (!context.meas_cfg.has_value()) {
+    context.meas_cfg = generate_meas_config(std::nullopt);
+  }
+
+  return context.serving_cell_mo;
 }
 
 rrc_ue_transfer_context rrc_ue_impl::get_transfer_context()

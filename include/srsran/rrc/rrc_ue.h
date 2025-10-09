@@ -274,6 +274,9 @@ public:
   /// \brief Get the packed RRC measurement config for the current serving cell of the UE.
   virtual byte_buffer get_packed_meas_config() = 0;
 
+  /// \brief Get the serving cell measurement object for the current serving cell of the UE.
+  virtual std::optional<uint8_t> get_serving_cell_mo() = 0;
+
   /// \brief Handle the handover command RRC PDU.
   /// \param[in] cmd The handover command RRC PDU.
   /// \returns The handover RRC Reconfiguration PDU. If the handover command is invalid, the PDU is empty.
