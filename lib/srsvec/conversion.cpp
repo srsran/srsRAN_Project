@@ -184,6 +184,33 @@ static void convert_f_to_bf16_simd(bf16_t* out, const float* in, unsigned len)
   }
 }
 
+static void convert_and_scale_f_to_bf16_simd(bf16_t* out, const float* in, float scale, unsigned len)
+{
+  unsigned i = 0;
+
+#if SRSRAN_SIMD_F_SIZE && SRSRAN_SIMD_S_SIZE
+  constexpr unsigned FLOATS_PER_ITERATION = 2 * SRSRAN_SIMD_F_SIZE;
+
+  simd_f_t scaling = srsran_simd_f_set1(scale);
+
+  for (unsigned end = (len / FLOATS_PER_ITERATION) * FLOATS_PER_ITERATION; i != end; i += FLOATS_PER_ITERATION) {
+    simd_f_t float_vec_1 = srsran_simd_f_loadu(in + i);
+    simd_f_t float_vec_2 = srsran_simd_f_loadu(in + i + SRSRAN_SIMD_F_SIZE);
+
+    // Multiply with the scaling factor.
+    float_vec_1 = srsran_simd_f_mul(float_vec_1, scaling);
+    float_vec_2 = srsran_simd_f_mul(float_vec_2, scaling);
+
+    // Convert float to brain float and store the result back to memory.
+    srsran_simd_bf16_storeu(out + i, float_vec_1, float_vec_2);
+  }
+#endif // SRSRAN_SIMD_F_SIZE && SRSRAN_SIMD_S_SIZE
+
+  for (; i != len; ++i) {
+    out[i] = to_bf16(in[i] * scale);
+  }
+}
+
 static void convert_bf16_to_int16_simd(int16_t* out, const bf16_t* in, float scale, unsigned len)
 {
   unsigned i = 0;
@@ -495,6 +522,13 @@ void srsran::srsvec::convert(span<cbf16_t> out, span<const cf_t> in)
   srsran_assert(in.size() == out.size(), "Invalid input or output span sizes");
   convert_f_to_bf16_simd(
       reinterpret_cast<bf16_t*>(out.data()), reinterpret_cast<const float*>(in.data()), 2 * in.size());
+}
+
+void srsran::srsvec::convert(span<cbf16_t> out, span<const cf_t> in, float scale)
+{
+  srsran_assert(in.size() == out.size(), "Invalid input or output span sizes");
+  convert_and_scale_f_to_bf16_simd(
+      reinterpret_cast<bf16_t*>(out.data()), reinterpret_cast<const float*>(in.data()), scale, 2 * in.size());
 }
 
 void srsran::srsvec::convert(span<bf16_t> out, span<const float> in)

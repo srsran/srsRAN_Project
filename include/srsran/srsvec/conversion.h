@@ -55,6 +55,13 @@ void convert(span<float> z, span<const int16_t> x, float scale);
 /// \param[in]  in  Data to convert.
 void convert(span<cbf16_t> out, span<const cf_t> in);
 
+/// \brief Converts and scales a sequence of numbers from complex float to complex brain float.
+///
+/// \param[out] out     Resultant data.
+/// \param[in]  in      Data to convert.
+/// \param [in] scale   Scaling factor.
+void convert(span<cbf16_t> out, span<const cf_t> in, float scale);
+
 /// \brief Converts a sequence of numbers from single precision float to brain float.
 ///
 /// \param[out] out Resultant data.
