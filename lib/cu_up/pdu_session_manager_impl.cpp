@@ -340,6 +340,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   gtpu_teid_t f1u_ul_teid = ret.value();
 
   new_drb->f1u_gw_bearer = f1u_gw.create_cu_bearer(ue_index,
+                                                   new_session.snssai,
                                                    drb_to_setup.drb_id,
                                                    five_qi,
                                                    new_drb->f1u_cfg,
@@ -455,6 +456,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
       }
       // create new F1-U and connect it. This will automatically disconnect the old F1-U.
       drb->f1u_gw_bearer = f1u_gw.create_cu_bearer(ue_index,
+                                                   pdu_session->snssai,
                                                    drb->drb_id,
                                                    five_qi,
                                                    drb->f1u_cfg,

@@ -15,6 +15,7 @@
 #include "srsran/f1u/cu_up/f1u_tx_pdu_notifier.h"
 #include "srsran/ran/qos/five_qi.h"
 #include "srsran/ran/rb_id.h"
+#include "srsran/ran/s_nssai.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/support/executors/task_executor.h"
 
@@ -52,6 +53,7 @@ public:
   f1u_cu_up_gateway& operator=(f1u_cu_up_gateway&&)      = default;
 
   virtual std::unique_ptr<f1u_cu_up_gateway_bearer> create_cu_bearer(uint32_t                              ue_index,
+                                                                     s_nssai_t                             s_nssai,
                                                                      drb_id_t                              drb_id,
                                                                      five_qi_t                             five_qi,
                                                                      const srs_cu_up::f1u_config&          config,
