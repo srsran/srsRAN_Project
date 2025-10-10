@@ -10,6 +10,9 @@
 #            Pretty-Printers
 ############################################
 
+# If you add a pretty printer, please create the corresponding test in
+# tests/utils/gdb/pretty_printers
+
 python
 
 import struct
@@ -17,6 +20,8 @@ import struct
 ###### static_vector<T, N> ########
 
 class StaticVectorPrinter(object):
+    # Test: tests/utils/gdb/pretty_printers/pretty_printer_static_vector_test.cpp
+
     def __init__(self, val):
         self.val = val
         self.value_type = self.val.type.template_argument(0)
@@ -46,25 +51,27 @@ gdb.pretty_printers.append(make_static_vector)
 ###### bounded_bitset<N, reversed> ########
 
 class BoundedBitsetPrinter(object):
-  def __init__(self, val):
-      self.val = val
-  
-  def to_string(self):
-      length = int(self.val['cur_size'])
-      capacity = int(self.val.type.template_argument(0))
-      buffer = self.val['buffer']['_M_elems']
-      bitstring = ''
-      nof_words = (length + 63) // 64
-      nof_bits_in_word = 64
-      for idx in reversed(range(nof_words)):
-          bitstring += '{:064b}'.format(int(buffer[idx]))
-      # last word might have a lower number of bits
-      last_word_nof_bits = length % 64
-      bitstring = bitstring[64-last_word_nof_bits::] 
-      return f'bounded_bitset of length {length}, capacity {capacity} = {bitstring}'
-  
-  def display_hint(self):
-      return 'string'
+    # Test: tests/utils/gdb/pretty_printers/pretty_printer_bounded_bitset_test.cpp
+
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        length = int(self.val['cur_size'])
+        capacity = int(self.val.type.template_argument(0))
+        buffer = self.val['buffer']['_M_elems']
+        bitstring = ''
+        nof_words = (length + 63) // 64
+        nof_bits_in_word = 64
+        for idx in reversed(range(nof_words)):
+            bitstring += '{:064b}'.format(int(buffer[idx]))
+        # last word might have a lower number of bits
+        last_word_nof_bits = length % 64
+        bitstring = bitstring[64-last_word_nof_bits::]
+        return f'bounded_bitset of length {length}, capacity {capacity} = {bitstring}'
+
+    def display_hint(self):
+        return 'array'
 
 
 def make_bounded_bitset(val):
@@ -77,6 +84,8 @@ gdb.pretty_printers.append(make_bounded_bitset)
 ###### tiny_optional<T> #######
 
 class TinyOptionalPrinter(object):
+    # Test: tests/utils/gdb/pretty_printers/pretty_printer_tiny_optional_test.cpp
+
     def __init__(self, val):
         self.val = val
         self.has_val = TinyOptionalPrinter.get_has_value(self.val)
@@ -91,7 +100,7 @@ class TinyOptionalPrinter(object):
         return 'tiny_optional (empty)'
 
     def display_hint(self):
-        return 'string'
+        return 'array'
 
     @staticmethod
     def get_has_value(gdb_val):
@@ -127,23 +136,29 @@ gdb.pretty_printers.append(make_tiny_optional)
 ###### slotted_array<T, N> #######
 
 class SlotArrayPrinter(object):
-  def __init__(self, val):
-      self.val = val
-      self.value_type = self.val.type.strip_typedefs().template_argument(0)
-      self.capacity = int(self.val.type.strip_typedefs().template_argument(1))
-      self.nof_elems = int(self.val['nof_elems'])
+    # Test: tests/utils/gdb/pretty_printers/pretty_printer_slotted_array_test.cpp
 
-  def children(self):
-      vec = self.val['vec']['_M_elems']
-      for idx in range(self.capacity):
-          if TinyOptionalPrinter.get_has_value(vec[idx]):
-              yield f'[{idx}]', TinyOptionalPrinter.get_value(vec[idx])
+    def __init__(self, val):
+        self.val = val
+        self.value_type = self.val.type.strip_typedefs().template_argument(0)
+        self.capacity = int(self.val.type.strip_typedefs().template_argument(1))
+        self.nof_elems = int(self.val['nof_elems'])
 
-  def to_string(self):
-      return f'slotted_array of {self.nof_elems} elements, capacity {self.capacity}'
+    def children(self):
+        vec = self.val['vec']['_M_elems']
+        count = 0
+        for idx in range(self.capacity):
+            if TinyOptionalPrinter.get_has_value(vec[idx]):
+                yield f'{count}', f'{idx}'
+                count += 1
+                yield f'{count}', TinyOptionalPrinter.get_value(vec[idx])
+                count += 1
 
-  def display_hint(self):
-      return 'string'
+    def to_string(self):
+        return f'slotted_array of {self.nof_elems} elements, capacity {self.capacity}'
+
+    def display_hint(self):
+        return 'map'
 
 def make_slotted_array(val):
     s = str(val.type.strip_typedefs())
@@ -155,6 +170,8 @@ gdb.pretty_printers.append(make_slotted_array)
 ###### slotted_vector<T> #######
 
 class SlotVectorPrinter(object):
+    # Test: tests/utils/gdb/pretty_printers/pretty_printer_slotted_vector_test.cpp
+
     def __init__(self, val):
         self.val = val
         self.value_type = self.val.type.strip_typedefs().template_argument(0)
@@ -167,15 +184,19 @@ class SlotVectorPrinter(object):
         max_int = 2**64 - 1
         indexmapper_ptr = indexmapper['_M_impl']['_M_start']
         object_ptr = self.objects['_M_impl']['_M_start']
+        count = 0
         for idx in range(nof_idxs):
             if int(indexmapper_ptr[idx]) != max_int:
-                yield f'[{idx}]', object_ptr[indexmapper_ptr[idx]]
+                yield f'{count}', f'{idx}'
+                count += 1
+                yield f'{count}', object_ptr[indexmapper_ptr[idx]]
+                count += 1
 
     def to_string(self):
         return f'slotted_vector of {self.nof_elems} elements'
 
     def display_hint(self):
-        return 'string'
+        return 'map'
 
 def make_slotted_vector(val):
     s = str(val.type.strip_typedefs())
@@ -187,6 +208,8 @@ gdb.pretty_printers.append(make_slotted_vector)
 ###### Brain Floating Point 16 (bf16_t) ######
 
 class BFloat16(object):
+    # Test: tests/utils/gdb/pretty_printers/pretty_printer_bf16_test.cpp
+
     def __init__(self, val):
         self.__val = val
 
@@ -207,6 +230,8 @@ def make_bf16_t(val):
 gdb.pretty_printers.append(make_bf16_t)
 
 class BFloat16Complex(object):
+    # Test: tests/utils/gdb/pretty_printers/pretty_printer_cbf16_test.cpp
+
     def __init__(self, val):
         self.__val = val
 
