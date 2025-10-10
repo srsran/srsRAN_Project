@@ -332,17 +332,7 @@ int main(int argc, char** argv)
         *epoll_broker,
         workers.get_du_high_executor_mapper().ue_mapper().mac_ul_pdu_executor(to_du_ue_index(0)),
         workers.get_du_high_executor_mapper().f1u_rx_executor());
-
-    if (not sock_cfg.five_qi.has_value() || not sock_cfg.sst.has_value()) {
-      f1u_gw_maps.default_gws.push_back(std::move(f1u_gw));
-    } else {
-      expected<slice_differentiator> sd = slice_differentiator::create(sock_cfg.sd);
-      if (sd.has_value()) {
-        report_error("Invalid F1U socket configuration. SD is invalid");
-      }
-      s_nssai_t s_nssai{slice_service_type{*sock_cfg.sst}, sd.value()};
-      f1u_gw_maps.gw_maps[s_nssai][sock_cfg.five_qi.value()].push_back(std::move(f1u_gw));
-    }
+    f1u_gw_maps.add_gtpu_gateway(sock_cfg.sst, sock_cfg.sd, sock_cfg.five_qi, std::move(f1u_gw));
   }
 
   // > Create F1-U split connector.
