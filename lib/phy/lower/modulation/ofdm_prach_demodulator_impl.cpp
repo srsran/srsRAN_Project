@@ -12,8 +12,8 @@
 #include "srsran/phy/constants.h"
 #include "srsran/ran/prach/prach_frequency_mapping.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
-#include "srsran/srsvec/conversion.h"
 #include "srsran/srsvec/copy.h"
+#include "srsran/srsvec/sc_prod.h"
 
 using namespace srsran;
 
@@ -194,14 +194,14 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
           unsigned N = std::min(prach_grid_size / 2 - k_start, preamble_info.sequence_length);
 
           // Copy first N subcarriers of the sequence in the lower half grid.
-          srsvec::convert(prach_symbol.first(N), lower_grid.subspan(k_start, N), dft_scaling);
+          srsvec::sc_prod(prach_symbol.first(N), lower_grid.subspan(k_start, N), dft_scaling);
 
           // Copy the remainder of the sequence in the upper half grid.
-          srsvec::convert(prach_symbol.last(preamble_info.sequence_length - N),
+          srsvec::sc_prod(prach_symbol.last(preamble_info.sequence_length - N),
                           upper_grid.first(preamble_info.sequence_length - N),
                           dft_scaling);
         } else {
-          srsvec::convert(prach_symbol,
+          srsvec::sc_prod(prach_symbol,
                           upper_grid.subspan(k_start - prach_grid_size / 2, preamble_info.sequence_length),
                           dft_scaling);
         }
