@@ -17,6 +17,7 @@
 #include "../support/mcs_calculator.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/prbs_calculator.h"
+#include "../support/pucch/pucch_guardbands.h"
 #include "../support/pusch/pusch_td_resource_indices.h"
 #include "../uci_scheduling/uci_allocator.h"
 #include "srsran/ran/resource_block.h"
@@ -45,7 +46,7 @@ ue_fallback_scheduler::ue_fallback_scheduler(const scheduler_ue_expert_config& e
   ss_cfg(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common
              .search_spaces[cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id]),
   cs_cfg(cell_cfg.get_common_coreset(ss_cfg.get_coreset_id())),
-  pucch_crbs(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length()),
+  pucch_crbs(srsran::compute_pucch_crbs(cell_cfg)),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
   // Pre-reserve memory to avoid allocations in RT.
@@ -64,12 +65,6 @@ ue_fallback_scheduler::ue_fallback_scheduler(const scheduler_ue_expert_config& e
     dci_1_0_k1_values.push_back(k1_value);
   }
   slots_with_no_pdxch_space.fill(false);
-
-  // Compute the PRBs that might be used for PUCCH transmissions, to avoid scheduling PUSCH over them.
-  for (const auto& pucch_res : cell_cfg.pucch_guardbands) {
-    // TODO: Convert PRBs to CRBs once multiple BWPs are supported.
-    pucch_crbs.fill(pucch_res.prbs.start(), pucch_res.prbs.stop());
-  }
 }
 
 void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)

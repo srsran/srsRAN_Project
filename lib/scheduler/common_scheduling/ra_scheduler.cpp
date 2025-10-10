@@ -17,10 +17,11 @@
 #include "../support/dmrs_helpers.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
+#include "../support/pucch/pucch_guardbands.h"
+#include "../support/rb_helper.h"
 #include "../support/sch_pdu_builder.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
-#include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/support/compiler.h"
 
 using namespace srsran;
@@ -130,19 +131,13 @@ ra_scheduler::ra_scheduler(const scheduler_ra_expert_config& sched_cfg_,
   pending_rachs(RACH_IND_QUEUE_SIZE),
   pending_crcs(CRC_IND_QUEUE_SIZE),
   pending_msg3s(MAX_NOF_MSG3),
-  pucch_crbs(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length())
+  pucch_crbs(srsran::compute_pucch_crbs(cell_cfg))
 {
   // Precompute RAR PDSCH and DCI PDUs.
   precompute_rar_fields();
 
   // Precompute Msg3 PUSCH and DCI PDUs.
   precompute_msg3_pdus();
-
-  // Compute the PRBs that might be used for PUCCH transmissions, to avoid scheduling PUSCH over them.
-  for (const auto& pucch_res : cell_cfg.pucch_guardbands) {
-    // TODO: Convert PRBs to CRBs once multiple BWPs are supported.
-    pucch_crbs.fill(pucch_res.prbs.start(), pucch_res.prbs.stop());
-  }
 }
 
 void ra_scheduler::precompute_rar_fields()

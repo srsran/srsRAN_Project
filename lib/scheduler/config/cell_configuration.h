@@ -48,8 +48,8 @@ public:
   const uint8_t           coreset0;
   const uint8_t           searchspace0;
 
-  /// List of PUCCH guardbands.
-  const std::vector<sched_grid_resource> pucch_guardbands;
+  /// List of dedicated PUCCH resources.
+  const std::vector<pucch_resource> ded_pucch_resources;
 
   /// List of zp-CSI-RS resources.
   std::vector<zp_csi_rs_resource> zp_csi_rs_list;

@@ -39,7 +39,7 @@ cell_configuration::cell_configuration(const scheduler_expert_config&           
   ul_carrier(msg.ul_carrier),
   coreset0(msg.coreset0),
   searchspace0(msg.searchspace0),
-  pucch_guardbands(msg.pucch_guardbands),
+  ded_pucch_resources(msg.ded_pucch_resources),
   zp_csi_rs_list(msg.zp_csi_rs_list),
   nzp_csi_rs_list(msg.nzp_csi_rs_res_list),
   dl_data_to_ul_ack(msg.dl_data_to_ul_ack),
