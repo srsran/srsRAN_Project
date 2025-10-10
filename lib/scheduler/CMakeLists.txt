@@ -22,6 +22,7 @@ set(SOURCES
         policy/scheduler_time_qos.cpp
         pucch_scheduling/pucch_allocator_impl.cpp
         pucch_scheduling/pucch_allocator_helpers.cpp
+        pucch_scheduling/pucch_collision_manager.cpp
         pucch_scheduling/pucch_resource_manager.cpp
         uci_scheduling/uci_scheduler_impl.cpp
         uci_scheduling/uci_allocator_impl.cpp
