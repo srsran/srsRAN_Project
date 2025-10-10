@@ -293,3 +293,56 @@ INSTANTIATE_TEST_SUITE_P(scheduler_rb_distribution_test,
                                            multi_ue_test_params{512},
                                            multi_ue_test_params{16, 4},
                                            multi_ue_test_params{512, 128}));
+
+class scheduler_buffer_occupancy_test : public scheduler_multi_ue_test, public ::testing::Test
+{
+public:
+  scheduler_buffer_occupancy_test() : scheduler_multi_ue_test(multi_ue_test_params{16, 0, 0, 0}) {}
+};
+
+TEST_F(scheduler_buffer_occupancy_test, when_dl_bo_is_set_then_enough_dl_tbs_is_scheduled)
+{
+  ASSERT_FALSE(run_slot_until([this]() { return this->last_sched_result()->dl.ue_grants.size() > 0; }, 1000))
+      << "If no DL BO is forwarded, no DL grant should be scheduled";
+
+  // Push DL BO for all UEs.
+  std::vector<unsigned> ue_dl_bos(test_params.nof_ues);
+  std::vector<unsigned> ue_dl_drb_sched(test_params.nof_ues);
+  for (unsigned i = 0; i != test_params.nof_ues; ++i) {
+    ue_dl_bos[i] = test_rgen::uniform_int<unsigned>(1, 20000);
+    dl_buffer_state_indication_message dl_buf_st{to_du_ue_index(i), LCID_MIN_DRB, ue_dl_bos[i], this->next_slot_rx()};
+    this->push_dl_buffer_state(dl_buf_st);
+  }
+
+  // The scheduler should schedule enough bytes for each UE.
+  unsigned max_nof_slots = 10000;
+  unsigned ues_completed = 0;
+  for (unsigned i = 0; i < max_nof_slots and ues_completed < test_params.nof_ues; ++i) {
+    run_slot();
+
+    for (const auto& grant : last_sched_result()->dl.ue_grants) {
+      for (auto& tb : grant.tb_list[0].lc_chs_to_sched) {
+        if (tb.lcid == LCID_MIN_DRB) {
+          auto& ue_sched_bytes = ue_dl_drb_sched[grant.context.ue_index];
+          if (ue_sched_bytes < ue_dl_bos[grant.context.ue_index] and
+              ue_sched_bytes + tb.sched_bytes >= ue_dl_bos[grant.context.ue_index]) {
+            ues_completed++;
+            if (ues_completed == test_params.nof_ues) {
+              test_logger.info("All UEs have received enough DL bytes after {} slots", i + 1);
+              // Run some extra slots to ensure that any overhead is scheduled.
+              max_nof_slots = i + 100;
+            }
+          }
+          ue_sched_bytes += tb.sched_bytes;
+        }
+      }
+    }
+  }
+  ASSERT_EQ(ues_completed, test_params.nof_ues) << "Not enough bytes scheduled for some UEs";
+
+  // We have the guarantee now that all UEs have been scheduled sufficiently.
+  // However, we also want to ensure they were not over-scheduled.
+  for (unsigned i = 0; i != test_params.nof_ues; ++i) {
+    ASSERT_LE(ue_dl_drb_sched[i], (ue_dl_bos[i] * 1.1 + 10));
+  }
+}
