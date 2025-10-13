@@ -72,7 +72,10 @@ void intra_slice_scheduler::slice_ue_group_scheduler::fill_ue_candidate_group(
   const unsigned nof_ues = slice_ues.size();
   if (nof_ues > parent->expert_cfg.pre_policy_rr_ue_group_size and
       (not last_sl_tx.valid() or last_sl_tx.sfn() != sl_tx.sfn())) {
-    // Update offset whenever we enter a new SFN.
+    // Update group_offset whenever we enter a new SFN.
+    // The new group offset is chosen as the UE index after the last UE index considered in the previous group.
+    // Given that DL and UL UE groups are independent, we choose the minimum of the two last UE indexes, to ensure
+    // that no UE is left unconsidered in any direction.
     group_offset   = modular_min(last_dl_ue_idx + 1, last_ul_ue_idx + 1, nof_ues);
     last_dl_ue_idx = group_offset;
     last_ul_ue_idx = group_offset;

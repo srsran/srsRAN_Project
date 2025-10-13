@@ -20,6 +20,12 @@ namespace srsran {
 /// or anticlockwise), each direction represented by a different sign.
 /// This operation can be represented mathematically as ((lhs - rhs + N/2) mod N) - N/2, where N is the modulus.
 /// The result is in the range [-N/2, N/2).
+/// \tparam N The modulus. Must be a positive integer.
+/// \param lhs The left-hand side operand. It must be an unsigned integer, but does not need to be limited to the range
+/// [0, N).
+/// \param rhs The right-hand side operand. It must be an unsigned integer, but does not need to be limited to the range
+/// [0, N).
+/// \return The signed modular difference between lhs and rhs.
 template <auto N, typename Integer>
 constexpr auto signed_modular_difference(Integer lhs, Integer rhs)
 {

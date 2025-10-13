@@ -64,7 +64,8 @@ private:
 
     intra_slice_scheduler* parent;
 
-    /// UE index offset of the next UE group to be scheduled.
+    /// Offset to the start UE index of the next UE group to be scheduled. It will be updated every SFN based on
+    /// on the \c last_dl_ue_idx and \c last_ul_ue_idx.
     unsigned group_offset = 0;
     /// Last slot at which this slice was scheduled.
     slot_point last_sl_tx;
