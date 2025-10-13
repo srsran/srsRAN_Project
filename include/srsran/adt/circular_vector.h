@@ -43,6 +43,15 @@ public:
   void resize(size_t n) { data.resize(n); }
   void resize(size_t n, const T& value) { data.resize(n, value); }
 
+  void reserve(size_t n) { data.reserve(n); }
+  void push_back(const T& value) { data.push_back(value); }
+  void push_back(T&& value) { data.push_back(std::move(value)); }
+  template <typename... Args>
+  void emplace_back(Args&&... args)
+  {
+    data.emplace_back(std::forward<Args>(args)...);
+  }
+
   void clear() { data.clear(); }
 
 private:
