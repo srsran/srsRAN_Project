@@ -25,14 +25,14 @@ namespace {
 /// Helper class to decorate executors with extra functionalities.
 struct executor_decorator {
   template <typename Exec>
-  task_executor& decorate(Exec&&                    exec,
-                          bool                      is_sync,
-                          bool                      tracing_enabled,
-                          std::optional<unsigned>   throttle_thres,
-                          executor_metrics_backend* metrics_backend,
-                          const std::string&        exec_name = "")
+  task_executor& decorate(Exec&&                             exec,
+                          bool                               is_sync,
+                          bool                               tracing_enabled,
+                          std::optional<unsigned>            throttle_thres,
+                          executor_metrics_channel_registry* metrics_channel_registry,
+                          const std::string&                 exec_name = "")
   {
-    if (not is_sync and not tracing_enabled and not metrics_backend and not throttle_thres) {
+    if (not is_sync and not tracing_enabled and not metrics_channel_registry and not throttle_thres) {
       // No decoration needed, return the original executor.
       return exec;
     }
@@ -44,8 +44,8 @@ struct executor_decorator {
     if (throttle_thres.has_value()) {
       cfg.throttle = execution_decoration_config::throttle_option{*throttle_thres};
     }
-    if (metrics_backend) {
-      cfg.metrics.emplace(exec_name, *metrics_backend, tracing_enabled);
+    if (metrics_channel_registry != nullptr) {
+      cfg.metrics.emplace(exec_name, *metrics_channel_registry, tracing_enabled);
     } else if (tracing_enabled) {
       cfg.trace = execution_decoration_config::trace_option{exec_name};
     }
@@ -88,14 +88,14 @@ private:
 };
 
 struct base_cu_up_executor_pool_config {
-  task_executor&            main_exec;
-  span<task_executor*>      dl_executors;
-  span<task_executor*>      ul_executors;
-  span<task_executor*>      ctrl_executors;
-  task_executor&            crypto_exec;
-  timer_manager&            timers;
-  bool                      tracing_enabled;
-  executor_metrics_backend* metrics_backend;
+  task_executor&                     main_exec;
+  span<task_executor*>               dl_executors;
+  span<task_executor*>               ul_executors;
+  span<task_executor*>               ctrl_executors;
+  task_executor&                     crypto_exec;
+  timer_manager&                     timers;
+  bool                               tracing_enabled;
+  executor_metrics_channel_registry* metrics_channel_registry;
 };
 
 class round_robin_cu_up_exec_pool
@@ -124,7 +124,7 @@ public:
                          *config.dl_executors[i],
                          config.crypto_exec,
                          config.tracing_enabled,
-                         config.metrics_backend);
+                         config.metrics_channel_registry);
     }
   }
 
@@ -147,19 +147,19 @@ private:
     task_executor& dl_exec;
     task_executor& crypto_exec;
 
-    ue_executor_context(unsigned                  index_,
-                        task_executor&            ctrl_exec_,
-                        task_executor&            ul_exec_,
-                        task_executor&            dl_exec_,
-                        task_executor&            crypto_exec_,
-                        bool                      tracing_enabled,
-                        executor_metrics_backend* metrics_backend) :
+    ue_executor_context(unsigned                           index_,
+                        task_executor&                     ctrl_exec_,
+                        task_executor&                     ul_exec_,
+                        task_executor&                     dl_exec_,
+                        task_executor&                     crypto_exec_,
+                        bool                               tracing_enabled,
+                        executor_metrics_channel_registry* channel_registry) :
       ctrl_exec_name("cu_up_ue_ctrl_exec_" + std::to_string(index_)),
       dl_exec_name("cu_up_ue_dl_exec_" + std::to_string(index_)),
       ul_exec_name("cu_up_ue_ul_exec_" + std::to_string(index_)),
-      ctrl_exec(decorator.decorate(ctrl_exec_, false, tracing_enabled, std::nullopt, metrics_backend, ctrl_exec_name)),
-      ul_exec(decorator.decorate(ul_exec_, false, tracing_enabled, std::nullopt, metrics_backend, ul_exec_name)),
-      dl_exec(decorator.decorate(dl_exec_, false, tracing_enabled, std::nullopt, metrics_backend, dl_exec_name)),
+      ctrl_exec(decorator.decorate(ctrl_exec_, false, tracing_enabled, std::nullopt, channel_registry, ctrl_exec_name)),
+      ul_exec(decorator.decorate(ul_exec_, false, tracing_enabled, std::nullopt, channel_registry, ul_exec_name)),
+      dl_exec(decorator.decorate(dl_exec_, false, tracing_enabled, std::nullopt, channel_registry, dl_exec_name)),
       crypto_exec(crypto_exec_)
     {
     }
@@ -196,13 +196,13 @@ public:
                                  false,
                                  config.tracing_enabled,
                                  std::nullopt,
-                                 config.exec_metrics_backend,
+                                 config.exec_metrics_channel_registry,
                                  "cu_up_strand_ctrl_exec")),
     n3_exec(decorator.decorate(config.low_prio_executor,
                                false,
                                config.tracing_enabled,
                                std::nullopt,
-                               config.exec_metrics_backend,
+                               config.exec_metrics_channel_registry,
                                "n3_exec")),
     f1u_exec(config.low_prio_executor),
     e1_exec(config.sctp_io_reader_executor),
@@ -274,7 +274,7 @@ private:
                                            config.medium_prio_executor,
                                            *config.timers,
                                            config.tracing_enabled,
-                                           config.exec_metrics_backend};
+                                           config.exec_metrics_channel_registry};
   }
   // Tracing helpers.
   executor_decorator decorator = {};

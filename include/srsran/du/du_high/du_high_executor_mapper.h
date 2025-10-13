@@ -20,7 +20,7 @@
 
 namespace srsran {
 
-class executor_metrics_backend;
+class executor_metrics_channel_registry;
 
 namespace srs_du {
 
@@ -164,8 +164,10 @@ struct du_high_executor_config {
   bool is_rt_mode_enabled = true;
   /// Whether to trace executed tasks.
   bool trace_exec_tasks = false;
-  /// Executor metrics backend.
-  executor_metrics_backend* exec_metrics_backend = nullptr;
+  /// \brief Optional executor metrics channel registry.
+  ///
+  /// If it is initialized, the executor mapper wraps the executors with metric decorators.
+  executor_metrics_channel_registry* exec_metrics_channel_registry = nullptr;
 };
 
 /// \brief Creates an executor mapper for the DU-high.

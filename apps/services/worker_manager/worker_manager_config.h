@@ -15,6 +15,7 @@
 namespace srsran {
 
 class timer_manager;
+class executor_metrics_channel_registry;
 
 /// Worker manager configuration.
 struct worker_manager_config {
@@ -113,12 +114,6 @@ struct worker_manager_config {
     bool is_rlc_enabled  = false;
   };
 
-  /// Execution metrics configuration.
-  struct exec_metrics_config {
-    /// Periodicity of executors metrics in milliseconds.
-    std::chrono::milliseconds report_period;
-  };
-
   /// Size, in number of threads, of the main thread pool.
   std::optional<unsigned> nof_main_pool_threads;
   /// Main thread pool task queue size.
@@ -151,8 +146,8 @@ struct worker_manager_config {
   std::optional<ru_ofh_config> ru_ofh_cfg;
   /// RU dummy configuration.
   std::optional<ru_dummy_config> ru_dummy_cfg;
-  /// Execution metrics configuration.
-  std::optional<exec_metrics_config> exec_metrics_cfg;
+  /// Executor metrics channel registry.
+  executor_metrics_channel_registry* exec_metrics_channel_registry;
 };
 
 } // namespace srsran

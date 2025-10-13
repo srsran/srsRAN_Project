@@ -25,9 +25,4 @@ void srsran::fill_du_low_worker_manager_config(worker_manager_config& config, co
   config.main_pool_backoff_period =
       std::chrono::microseconds{app_cfg.expert_execution_cfg.threads.main_pool.backoff_period};
   config.main_pool_affinity_cfg = app_cfg.expert_execution_cfg.affinities.main_pool_cpu_cfg;
-
-  if (app_cfg.metrics_cfg.executors_metrics_cfg.enable_executor_metrics) {
-    auto& exec_metrics_cfg         = config.exec_metrics_cfg.emplace();
-    exec_metrics_cfg.report_period = app_cfg.metrics_cfg.executors_metrics_cfg.report_period_ms;
-  }
 }

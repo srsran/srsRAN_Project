@@ -11,6 +11,8 @@
 #pragma once
 
 #include "executor_metrics_channel.h"
+#include "executor_metrics_channel_registry.h"
+#include "srsran/support/synchronization/stop_event.h"
 #include "srsran/support/timers.h"
 #include <chrono>
 #include <memory>
@@ -24,15 +26,13 @@ class executor_metrics_notifier;
 ///
 /// This class is responsible for handling metrics produced by different executors.
 /// An executor registers itself in the backend by getting a unique metrics channel.
-class executor_metrics_backend
+class executor_metrics_backend : public executor_metrics_channel_registry
 {
-  enum class worker_status { idle, running, stopped };
+  enum class worker_status { running, stopped };
 
 public:
-  /// Constructor receives metrics period.
-  executor_metrics_backend(std::chrono::milliseconds period_, unique_timer timer_);
-
-  ~executor_metrics_backend();
+  executor_metrics_backend() = default;
+  ~executor_metrics_backend() override;
 
   /// Delete copy and move constructors, a single object is used application-wise.
   executor_metrics_backend(const executor_metrics_backend& other) = delete;
@@ -40,14 +40,14 @@ public:
   void operator=(const executor_metrics_backend& other)           = delete;
   void operator=(executor_metrics_backend&& other)                = delete;
 
-  /// Creates metrics channel, that a calling executor can use to send its metrics.
-  executor_metrics_channel& create_channel(const std::string& exec_name);
+  // See interface for documentation.
+  executor_metrics_channel& add_channel(const std::string& exec_name) override;
 
   /// Stops periodic metrics reporting.
   void stop();
 
-  /// Start the backend worker using the stored timer and periodically report metrics to the given notifier object.
-  void start(executor_metrics_notifier& notifier_);
+  /// Start the backend worker using the passed timer and periodically report metrics to the given notifier object.
+  void start(std::chrono::milliseconds period_, unique_timer timer_, executor_metrics_notifier& notifier_);
 
 private:
   /// Periodic work done by this backend.
@@ -61,7 +61,9 @@ private:
   /// An interface to a metrics handler.
   executor_metrics_notifier* notifier;
   /// Backend worker status.
-  std::atomic<worker_status> status{worker_status::idle};
+  std::atomic<worker_status> status{worker_status::stopped};
+  /// Stop control.
+  stop_event_source stop_control;
 
   /// List of metrics channels.
   std::mutex                                             mutex;

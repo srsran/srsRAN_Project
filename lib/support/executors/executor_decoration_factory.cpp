@@ -12,7 +12,7 @@
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/executor_throttler.h"
 #include "srsran/support/executors/executor_tracer.h"
-#include "srsran/support/executors/metrics/executor_metrics_backend.h"
+#include "srsran/support/executors/metrics/executor_metrics_channel_registry.h"
 #include "srsran/support/executors/metrics/executor_metrics_decorator.h"
 #include "srsran/support/executors/sync_task_executor.h"
 #include "srsran/support/tracing/event_tracing.h"
@@ -78,7 +78,7 @@ static void make_executor_decorator_helper(std::unique_ptr<task_executor>&   res
                                      executor_metrics_decorator<ComposedExecutor, file_event_tracer<true>>(
                                          first_policy->name,
                                          std::forward<ComposedExecutor>(exec),
-                                         first_policy->backend.create_channel(first_policy->name),
+                                         first_policy->channel_registry.add_channel(first_policy->name),
                                          first_policy->tracer ? first_policy->tracer : &tracer),
                                      policies...);
     } else {
@@ -86,7 +86,7 @@ static void make_executor_decorator_helper(std::unique_ptr<task_executor>&   res
           result,
           executor_metrics_decorator<ComposedExecutor>(first_policy->name,
                                                        std::forward<ComposedExecutor>(exec),
-                                                       first_policy->backend.create_channel(first_policy->name)),
+                                                       first_policy->channel_registry.add_channel(first_policy->name)),
           policies...);
     }
   } else if constexpr (std::is_same_v<Decoration, execution_decoration_config::trace_option>) {

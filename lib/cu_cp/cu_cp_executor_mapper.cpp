@@ -29,9 +29,9 @@ public:
     ctrl_strand(std::make_unique<strand_type>(&config.pool_executor, task_worker_queue_size))
   {
     // Decorate strand if needed.
-    if (config.exec_metrics_backend) {
+    if (config.exec_metrics_channel_registry != nullptr) {
       execution_decoration_config cfg;
-      cfg.metrics.emplace("cu_cp_exec", *config.exec_metrics_backend, false);
+      cfg.metrics.emplace("cu_cp_exec", *config.exec_metrics_channel_registry, false);
       ctrl_strand = decorate_executor(std::move(ctrl_strand), cfg);
     }
   }

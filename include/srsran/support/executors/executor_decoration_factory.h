@@ -19,7 +19,7 @@
 
 namespace srsran {
 
-class executor_metrics_backend;
+class executor_metrics_channel_registry;
 
 /// Description of the decorators to be applied to an executor.
 struct execution_decoration_config {
@@ -35,18 +35,18 @@ struct execution_decoration_config {
   struct metrics_option {
     /// Name of the executor for which metrics are to be reported.
     std::string name;
-    /// Executor metrics backend.
-    executor_metrics_backend& backend;
+    /// Executor metrics channel registry.
+    executor_metrics_channel_registry& channel_registry;
     /// Whether to use metric captures for tracing.
     bool tracing_enabled = false;
     /// Tracer.
     file_event_tracer<true>* tracer = nullptr;
 
-    metrics_option(std::string               name_,
-                   executor_metrics_backend& backend_,
-                   bool                      tracing_enabled_,
-                   file_event_tracer<true>*  tracer_ = nullptr) :
-      name(std::move(name_)), backend(backend_), tracing_enabled(tracing_enabled_), tracer(tracer_)
+    metrics_option(std::string                        name_,
+                   executor_metrics_channel_registry& channel_registry_,
+                   bool                               tracing_enabled_,
+                   file_event_tracer<true>*           tracer_ = nullptr) :
+      name(std::move(name_)), channel_registry(channel_registry_), tracing_enabled(tracing_enabled_), tracer(tracer_)
     {
     }
   };

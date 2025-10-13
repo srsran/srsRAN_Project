@@ -17,7 +17,6 @@ add_library(srsran_worker_manager_app_service STATIC ${SOURCES})
 target_include_directories(srsran_worker_manager_app_service PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(srsran_worker_manager_app_service
         srsran_cpu_affinities_helper
-        srsran_exec_metrics_app_service
         srsran_cu_up      # TODO: Temp
         srsran_du_high    # TODO: Temp
         srsran_cu_cp      # TODO: Temp
