@@ -59,6 +59,7 @@ f1u_split_connector::f1u_split_connector(const gtpu_gateway_maps& udp_gw_maps,
 std::unique_ptr<f1u_du_gateway_bearer>
 f1u_split_connector::create_du_bearer(uint32_t                                   ue_index,
                                       drb_id_t                                   drb_id,
+                                      s_nssai_t                                  s_nssai,
                                       five_qi_t                                  five_qi,
                                       srs_du::f1u_config                         config,
                                       const gtpu_teid_t&                         dl_teid,
@@ -70,7 +71,6 @@ f1u_split_connector::create_du_bearer(uint32_t                                  
   logger_du.info(
       "Creating DU gateway local bearer with UL GTP Tunnel={} DL TEID={} {}", ul_up_tnl_info, dl_teid, five_qi);
 
-  s_nssai_t s_nssai{}; // todo fix.
   // Get DL UP TNL address.
   auto&       udp_session = f1u_session_mngr->get_next_f1u_gateway(s_nssai, five_qi);
   std::string bind_addr;

@@ -141,6 +141,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
   drb->f1u_gw_bearer = drb_info.du_params.f1u.f1u_gw.create_du_bearer(
       ue_index,
       drb->drb_id,
+      drb->s_nssai,
       drb->five_qi,
       drb_info.f1u_cfg,
       dl_teid.value(),

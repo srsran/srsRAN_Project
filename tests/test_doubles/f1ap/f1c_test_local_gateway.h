@@ -110,6 +110,7 @@ class f1u_test_local_gateway : public srs_du::f1u_du_gateway
 {
   std::unique_ptr<srs_du::f1u_du_gateway_bearer> create_du_bearer(uint32_t                       ue_index,
                                                                   drb_id_t                       drb_id,
+                                                                  s_nssai_t                      s_nssai,
                                                                   five_qi_t                      five_qi,
                                                                   srs_du::f1u_config             config,
                                                                   const gtpu_teid_t&             dl_teid,

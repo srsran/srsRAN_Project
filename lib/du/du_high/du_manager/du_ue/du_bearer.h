@@ -92,7 +92,8 @@ struct du_ue_srb {
 struct du_ue_drb {
   drb_id_t  drb_id;
   lcid_t    lcid;
-  five_qi_t five_qi; /// multiple 5QIs can exist withing a DRB. For now, we take the 5QI of the QoS descriptor.
+  s_nssai_t s_nssai;
+  five_qi_t five_qi; /// multiple 5QIs can exist within a DRB. For now, we take the 5QI of the QoS descriptor.
   std::vector<up_transport_layer_info>   uluptnl_info_list;
   std::vector<up_transport_layer_info>   dluptnl_info_list;
   std::unique_ptr<f1u_du_gateway_bearer> f1u_gw_bearer;
@@ -110,6 +111,7 @@ struct drb_creation_info {
   du_cell_index_t                      pcell_index;
   drb_id_t                             drb_id;
   lcid_t                               lcid;
+  s_nssai_t                            s_nssai;
   five_qi_t                            five_qi;
   const rlc_config&                    rlc_cfg;
   const f1u_config&                    f1u_cfg;
