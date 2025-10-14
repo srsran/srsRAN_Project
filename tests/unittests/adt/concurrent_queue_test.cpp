@@ -8,6 +8,7 @@
  *
  */
 
+#include "srsran/adt/moodycamel_bounded_mpmc_queue.h"
 #include "srsran/adt/moodycamel_mpmc_queue.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/adt/mutexed_mpmc_queue.h"
@@ -49,9 +50,9 @@ protected:
   base_concurrent_queue_test(std::false_type /**/, size_t qsize) : queue(qsize) {}
 
   base_concurrent_queue_test(size_t qsize = 128) :
-    base_concurrent_queue_test(std::conditional_t<QueueType::wait_policy == concurrent_queue_wait_policy::sleep,
-                                                  std::true_type,
-                                                  std::false_type>{},
+    base_concurrent_queue_test(std::conditional_t < QueueType::wait_policy == concurrent_queue_wait_policy::sleep,
+                               std::true_type,
+                               std::false_type > {},
                                qsize)
   {
   }
@@ -71,7 +72,9 @@ using bounded_non_blocking_queue_types =
               concurrent_queue<int, qpolicy::lockfree_mpmc, wpolicy::non_blocking>,
               concurrent_queue<moveonly_test_object, qpolicy::lockfree_mpmc, wpolicy::non_blocking>,
               concurrent_queue<int, qpolicy::locking_mpsc, wpolicy::non_blocking>,
-              concurrent_queue<moveonly_test_object, qpolicy::locking_mpsc, wpolicy::non_blocking>>;
+              concurrent_queue<moveonly_test_object, qpolicy::locking_mpsc, wpolicy::non_blocking>,
+              concurrent_queue<int, qpolicy::moodycamel_lockfree_bounded_mpmc, wpolicy::non_blocking>,
+              concurrent_queue<moveonly_test_object, qpolicy::moodycamel_lockfree_bounded_mpmc, wpolicy::non_blocking>>;
 using unbounded_non_blocking_queue_types =
     type_list<concurrent_queue<int, qpolicy::moodycamel_lockfree_mpmc, wpolicy::non_blocking>,
               concurrent_queue<moveonly_test_object, qpolicy::moodycamel_lockfree_mpmc, wpolicy::non_blocking>>;
@@ -88,7 +91,9 @@ using bounded_blocking_queue_types =
               concurrent_queue<int, qpolicy::locking_mpsc, wpolicy::sleep>,
               concurrent_queue<moveonly_test_object, qpolicy::locking_mpsc, wpolicy::sleep>,
               concurrent_queue<int, qpolicy::locking_mpsc, wpolicy::condition_variable>,
-              concurrent_queue<moveonly_test_object, qpolicy::locking_mpsc, wpolicy::condition_variable>>;
+              concurrent_queue<moveonly_test_object, qpolicy::locking_mpsc, wpolicy::condition_variable>,
+              concurrent_queue<int, qpolicy::moodycamel_lockfree_bounded_mpmc, wpolicy::sleep>,
+              concurrent_queue<moveonly_test_object, qpolicy::moodycamel_lockfree_bounded_mpmc, wpolicy::sleep>>;
 using unbounded_blocking_queue_types =
     type_list<concurrent_queue<int, qpolicy::moodycamel_lockfree_mpmc, wpolicy::sleep>,
               concurrent_queue<moveonly_test_object, qpolicy::moodycamel_lockfree_mpmc, wpolicy::sleep>>;

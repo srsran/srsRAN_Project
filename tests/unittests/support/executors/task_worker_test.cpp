@@ -82,7 +82,8 @@ protected:
 };
 using worker_pool_types = ::testing::Types<task_worker_pool<concurrent_queue_policy::lockfree_mpmc>,
                                            task_worker_pool<concurrent_queue_policy::locking_mpmc>,
-                                           task_worker_pool<concurrent_queue_policy::moodycamel_lockfree_mpmc>>;
+                                           task_worker_pool<concurrent_queue_policy::moodycamel_lockfree_mpmc>,
+                                           task_worker_pool<concurrent_queue_policy::moodycamel_lockfree_bounded_mpmc>>;
 TYPED_TEST_SUITE(task_worker_pool_test, worker_pool_types);
 
 TYPED_TEST(task_worker_pool_test, correct_initialization)
@@ -156,15 +157,17 @@ protected:
   pool_type pool;
 };
 
-INSTANTIATE_TEST_SUITE_P(priority_task_worker_different_policies,
-                         prio_task_worker_pool_test,
-                         testing::Values(std::vector<concurrent_queue_policy>{concurrent_queue_policy::lockfree_mpmc,
-                                                                              concurrent_queue_policy::lockfree_mpmc},
-                                         std::vector<concurrent_queue_policy>{concurrent_queue_policy::locking_mpmc,
-                                                                              concurrent_queue_policy::locking_mpmc},
-                                         std::vector<concurrent_queue_policy>{
-                                             concurrent_queue_policy::moodycamel_lockfree_mpmc,
-                                             concurrent_queue_policy::moodycamel_lockfree_mpmc}));
+INSTANTIATE_TEST_SUITE_P(
+    priority_task_worker_different_policies,
+    prio_task_worker_pool_test,
+    testing::Values(std::vector<concurrent_queue_policy>{concurrent_queue_policy::lockfree_mpmc,
+                                                         concurrent_queue_policy::lockfree_mpmc},
+                    std::vector<concurrent_queue_policy>{concurrent_queue_policy::locking_mpmc,
+                                                         concurrent_queue_policy::locking_mpmc},
+                    std::vector<concurrent_queue_policy>{concurrent_queue_policy::moodycamel_lockfree_mpmc,
+                                                         concurrent_queue_policy::moodycamel_lockfree_mpmc},
+                    std::vector<concurrent_queue_policy>{concurrent_queue_policy::moodycamel_lockfree_bounded_mpmc,
+                                                         concurrent_queue_policy::moodycamel_lockfree_bounded_mpmc}));
 
 TEST_P(prio_task_worker_pool_test, correct_initialization)
 {

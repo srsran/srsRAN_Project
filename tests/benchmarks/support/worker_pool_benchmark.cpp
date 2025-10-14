@@ -64,7 +64,8 @@ class benchmark_environment
 public:
   using pool_storage =
       std::variant<std::unique_ptr<task_worker_pool<concurrent_queue_policy::lockfree_mpmc>>,
-                   std::unique_ptr<task_worker_pool<concurrent_queue_policy::moodycamel_lockfree_mpmc>>>;
+                   std::unique_ptr<task_worker_pool<concurrent_queue_policy::moodycamel_lockfree_mpmc>>,
+                   std::unique_ptr<task_worker_pool<concurrent_queue_policy::moodycamel_lockfree_bounded_mpmc>>>;
 
   benchmark_environment(concurrent_queue_policy   policy,
                         unsigned                  nof_workers_,
@@ -84,6 +85,12 @@ public:
       task_exec   = make_task_worker_pool_executor_ptr(*pool);
       storage     = std::move(pool);
       description = "moodycamel_mpmc";
+    } else if (policy == concurrent_queue_policy::moodycamel_lockfree_bounded_mpmc) {
+      auto pool = std::make_unique<task_worker_pool<concurrent_queue_policy::moodycamel_lockfree_bounded_mpmc>>(
+          "moodyl_bounded_mpmc", nof_workers, qsize);
+      task_exec   = make_task_worker_pool_executor_ptr(*pool);
+      storage     = std::move(pool);
+      description = "moodycamel_bounded_mpmc";
     } else {
       throw std::invalid_argument("Unsupported queue policy");
     }
@@ -131,6 +138,11 @@ public:
                        &storage)) {
       (*moody_pool)->wait_pending_tasks();
       (*moody_pool)->stop();
+    } else if (auto* moody_bounded_pool = std::get_if<
+                   std::unique_ptr<task_worker_pool<concurrent_queue_policy::moodycamel_lockfree_bounded_mpmc>>>(
+                   &storage)) {
+      (*moody_bounded_pool)->wait_pending_tasks();
+      (*moody_bounded_pool)->stop();
     } else {
       report_fatal_error("Unexpected storage type in benchmark_environment");
     }
@@ -201,10 +213,9 @@ void run_benchmarks(const bench_params& params)
     }
     nof_workers_list.push_back(next_nof_workers);
   }
-  std::vector<concurrent_queue_policy> policies = {
-      concurrent_queue_policy::lockfree_mpmc,
-      concurrent_queue_policy::moodycamel_lockfree_mpmc,
-  };
+  std::vector<concurrent_queue_policy>   policies = {concurrent_queue_policy::lockfree_mpmc,
+                                                     concurrent_queue_policy::moodycamel_lockfree_mpmc,
+                                                     concurrent_queue_policy::moodycamel_lockfree_bounded_mpmc};
   std::vector<std::chrono::microseconds> task_durations{std::chrono::microseconds{0}, std::chrono::microseconds{10}};
   const unsigned                         qsize = 8192;
 
