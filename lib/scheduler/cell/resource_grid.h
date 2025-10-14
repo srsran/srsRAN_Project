@@ -251,10 +251,9 @@ struct cell_slot_resource_allocator {
                                         span<scs_specific_carrier> ul_scs_carriers);
 
   /// copies and moves are disabled to ensure pointer/reference validity.
-  cell_slot_resource_allocator(const cell_slot_resource_allocator&)                = delete;
-  cell_slot_resource_allocator(cell_slot_resource_allocator&&) noexcept            = default;
-  cell_slot_resource_allocator& operator=(const cell_slot_resource_allocator&)     = delete;
-  cell_slot_resource_allocator& operator=(cell_slot_resource_allocator&&) noexcept = default;
+  cell_slot_resource_allocator(const cell_slot_resource_allocator&)            = delete;
+  cell_slot_resource_allocator(cell_slot_resource_allocator&&) noexcept        = default;
+  cell_slot_resource_allocator& operator=(const cell_slot_resource_allocator&) = delete;
 
   /// Sets new slot.
   void slot_indication(slot_point sl);
