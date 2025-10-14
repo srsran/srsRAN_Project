@@ -1,0 +1,915 @@
+{
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": {
+                    "type": "grafana",
+                    "uid": "-- Grafana --"
+                },
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard"
+            }
+        ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 2,
+    "links": [],
+    "panels": [
+        {
+            "datasource": {
+                "type": "influxdb",
+                "uid": "JOSE3g9KVz"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 5,
+                "x": 0,
+                "y": 0
+            },
+            "id": 1,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "last"
+                    ],
+                    "fields": "/^connected$/",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.0.2",
+            "targets": [
+                {
+                    "dataset": "iox",
+                    "datasource": {
+                        "type": "influxdb",
+                        "uid": "JOSE3g9KVz"
+                    },
+                    "editorMode": "code",
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT * FROM ngaps WHERE amf_name = '$amf_name' AND time >= $__timeFrom AND time <= $__timeTo ORDER BY time",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [
+                                    {
+                                        "name": "*",
+                                        "type": "functionParameter"
+                                    }
+                                ],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ]
+                    },
+                    "table": "ngap"
+                }
+            ],
+            "title": "",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "datasource",
+                "uid": "-- Dashboard --"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 10,
+                "x": 5,
+                "y": 0
+            },
+            "id": 13,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "/^supported_plmns$/",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.0.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "datasource",
+                        "uid": "-- Dashboard --"
+                    },
+                    "panelId": 1,
+                    "refId": "A"
+                }
+            ],
+            "title": "Supported PLMNs",
+            "type": "stat"
+        },
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 4
+            },
+            "id": 4,
+            "panels": [],
+            "title": "PDU session management",
+            "type": "row"
+        },
+        {
+            "datasource": {
+                "type": "influxdb",
+                "uid": "JOSE3g9KVz"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 5,
+                "x": 0,
+                "y": 5
+            },
+            "id": 3,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "/^pdu_session_management_nof_pdu_sessions_requested_to_setup$/",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.0.2",
+            "targets": [
+                {
+                    "dataset": "iox",
+                    "datasource": {
+                        "type": "influxdb",
+                        "uid": "JOSE3g9KVz"
+                    },
+                    "editorMode": "builder",
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT \"pdu_session_management_nof_pdu_sessions_requested_to_setup\", \"pdu_session_management_nof_pdu_sessions_successfully_setup\", \"paging_measurement_nof_cn_initiated_paging_requests\" FROM \"ngaps\" WHERE \"time\" >= $__timeFrom AND \"time\" <= $__timeTo AND (\"snssai\" = '$snssai' AND \"amf_name\" = '$amf_name') ",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [
+                                    {
+                                        "name": "pdu_session_management_nof_pdu_sessions_requested_to_setup",
+                                        "type": "functionParameter"
+                                    }
+                                ],
+                                "type": "function"
+                            },
+                            {
+                                "parameters": [
+                                    {
+                                        "name": "pdu_session_management_nof_pdu_sessions_successfully_setup",
+                                        "type": "functionParameter"
+                                    }
+                                ],
+                                "type": "function"
+                            },
+                            {
+                                "parameters": [
+                                    {
+                                        "name": "paging_measurement_nof_cn_initiated_paging_requests",
+                                        "type": "functionParameter"
+                                    }
+                                ],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "whereJsonTree": {
+                            "children1": [
+                                {
+                                    "id": "98a9ab98-cdef-4012-b456-7199dda7249c",
+                                    "properties": {
+                                        "field": "snssai",
+                                        "fieldSrc": "field",
+                                        "operator": "equal",
+                                        "value": [
+                                            "$snssai"
+                                        ],
+                                        "valueError": [
+                                            null
+                                        ],
+                                        "valueSrc": [
+                                            "value"
+                                        ],
+                                        "valueType": [
+                                            "text"
+                                        ]
+                                    },
+                                    "type": "rule"
+                                },
+                                {
+                                    "id": "9b999aab-4567-489a-bcde-f199dda92d18",
+                                    "properties": {
+                                        "field": "amf_name",
+                                        "fieldSrc": "field",
+                                        "operator": "equal",
+                                        "value": [
+                                            "$amf_name"
+                                        ],
+                                        "valueError": [
+                                            null
+                                        ],
+                                        "valueSrc": [
+                                            "value"
+                                        ],
+                                        "valueType": [
+                                            "text"
+                                        ]
+                                    },
+                                    "type": "rule"
+                                }
+                            ],
+                            "id": "888bab89-0123-4456-b89a-b199dd904258",
+                            "type": "group"
+                        },
+                        "whereString": "(snssai = '$snssai' AND amf_name = '$amf_name')"
+                    },
+                    "table": "ngaps"
+                }
+            ],
+            "title": "PDU sessions requested to setup",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "datasource",
+                "uid": "-- Dashboard --"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 5,
+                "x": 5,
+                "y": 5
+            },
+            "id": 2,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "last"
+                    ],
+                    "fields": "/^pdu_session_management_nof_pdu_sessions_successfully_setup$/",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.0.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "datasource",
+                        "uid": "-- Dashboard --"
+                    },
+                    "panelId": 3,
+                    "refId": "A"
+                }
+            ],
+            "title": "PDU sessions successfully setup",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "influxdb",
+                "uid": "JOSE3g9KVz"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 5,
+                "x": 10,
+                "y": 5
+            },
+            "id": 5,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.0.2",
+            "targets": [
+                {
+                    "dataset": "iox",
+                    "datasource": {
+                        "type": "influxdb",
+                        "uid": "JOSE3g9KVz"
+                    },
+                    "editorMode": "code",
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT \n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_misc-ctrl_processing_overload\" AS 'misc-ctrl_processing_overload',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_misc-hardware_fail\" AS 'misc-hardware_fail',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_misc-not_enough_user_plane_processing_res\" AS 'misc-not_enough_user_plane_processing_res',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_misc-om_intervention\" AS 'misc-om_intervention',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_misc-unknown_plmn_or_sn_pn\" AS 'misc-unknown_plmn_or_sn_pn',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_nas-authentication_fail\" AS 'nas-authentication_fail',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_nas-deregister\" AS 'nas-deregister',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_nas-normal_release\" AS 'nas-normal_release',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_nas-unspecified\" AS 'nas-unspecified',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_protocol-abstract_syntax_error_falsely_constructed_msg\" AS 'protocol-abstract_syntax_error_falsely_constructed_msg',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_protocol-abstract_syntax_error_ignore_and_notify\" AS 'protocol-abstract_syntax_error_ignore_and_notify',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_protocol-abstract_syntax_error_reject\" AS 'protocol-abstract_syntax_error_reject',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_protocol-msg_not_compatible_with_receiver_state\" AS 'protocol-msg_not_compatible_with_receiver_state',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_protocol-semantic_error\" AS 'protocol-semantic_error',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_protocol-transfer_syntax_error\" AS 'protocol-transfer_syntax_error',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_protocol-unspecified\" AS 'protocol-unspecified',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-cag_only_access_denied\" AS 'radio_network-cag_only_access_denied',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-cell_not_available\" AS 'radio_network-cell_not_available',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-encryption_and_or_integrity_protection_algorithms_not_supported\" AS 'radio_network-encryption_and_or_integrity_protection_algorithms_not_supported',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-fail_in_radio_interface_proc\" AS 'radio_network-fail_in_radio_interface_proc',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-ho_cancelled\" AS 'radio_network-ho_cancelled',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-ho_desirable_for_radio_reason\" AS 'radio_network-ho_desirable_for_radio_reason',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-ho_fail_in_target_5_gc_ngran_node_or_target_sys\" AS 'radio_network-ho_fail_in_target_5_gc_ngran_node_or_target_sys',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-ho_target_not_allowed\" AS 'radio_network-ho_target_not_allowed',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-ims_voice_eps_fallback_or_rat_fallback_triggered\" AS 'radio_network-ims_voice_eps_fallback_or_rat_fallback_triggered',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-inconsistent_remote_ue_ngap_id\" AS 'radio_network-inconsistent_remote_ue_ngap_id',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-inconsistent_slice_info_for_the_session\" AS 'radio_network-inconsistent_slice_info_for_the_session',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-indicated_mbs_session_area_info_not_served_by_the_gnb\" AS 'radio_network-indicated_mbs_session_area_info_not_served_by_the_gnb',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-insufficient_ue_cap\" AS 'radio_network-insufficient_ue_cap',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-interaction_with_other_proc\" AS 'radio_network-interaction_with_other_proc',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-invalid_qos_combination\" AS 'radio_network-invalid_qos_combination',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-misaligned_assoc_for_multicast_unicast\" AS 'radio_network-misaligned_assoc_for_multicast_unicast',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-multiple_location_report_ref_id_instances\" AS 'radio_network-multiple_location_report_ref_id_instances',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-multiple_pdu_session_id_instances\" AS 'radio_network-multiple_pdu_session_id_instances',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-multiple_qos_flow_id_instances\" AS 'radio_network-multiple_qos_flow_id_instances',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-n26_interface_not_available\" AS 'radio_network-n26_interface_not_available',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-ng_inter_sys_ho_triggered\" AS 'radio_network-ng_inter_sys_ho_triggered',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-ng_intra_sys_ho_triggered\" AS 'radio_network-ng_intra_sys_ho_triggered',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-no_radio_res_available_in_target_cell\" AS 'radio_network-no_radio_res_available_in_target_cell',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-not_supported_5qi_value\" AS 'radio_network-not_supported_5qi_value',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-npn_access_denied\" AS 'radio_network-npn_access_denied',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-partial_ho\" AS 'radio_network-partial_ho',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-radio_conn_with_ue_lost\" AS 'radio_network-radio_conn_with_ue_lost',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-radio_res_not_available\" AS 'radio_network-radio_res_not_available',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-redcap_ue_not_supported\" AS 'radio_network-redcap_ue_not_supported',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-redirection\" AS 'radio_network-redirection',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-reduce_load_in_serving_cell\" AS 'radio_network-reduce_load_in_serving_cell',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-release_due_to_5gc_generated_reason\" AS 'radio_network-release_due_to_5gc_generated_reason',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-release_due_to_cn_detected_mob\" AS 'radio_network-release_due_to_cn_detected_mob',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-release_due_to_ngran_generated_reason\" AS 'radio_network-release_due_to_ngran_generated_reason',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-release_due_to_pre_emption\" AS 'radio_network-release_due_to_pre_emption',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-res_not_available_for_the_slice\" AS 'radio_network-res_not_available_for_the_slice',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-res_optim_ho\" AS 'radio_network-res_optim_ho',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-rsn_not_available_for_the_up\" AS 'radio_network-rsn_not_available_for_the_up',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-slice_not_supported\" AS 'radio_network-slice_not_supported',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-successful_ho\" AS 'radio_network-successful_ho',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-time_crit_ho\" AS 'radio_network-time_crit_ho',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-tngrelocoverall_expiry\" AS 'radio_network-tngrelocoverall_expiry',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-tngrelocprep_expiry\" AS 'radio_network-tngrelocprep_expiry',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-txnrelocoverall_expiry\" AS 'radio_network-txnrelocoverall_expiry',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-ue_context_transfer\" AS 'radio_network-ue_context_transfer',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-ue_in_rrc_inactive_state_not_reachable\" AS 'radio_network-ue_in_rrc_inactive_state_not_reachable',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-ue_max_integrity_protected_data_rate_reason\" AS 'radio_network-ue_max_integrity_protected_data_rate_reason',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-unknown_local_ue_ngap_id\" AS 'radio_network-unknown_local_ue_ngap_id',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-unknown_mbs_session_id\" AS 'radio_network-unknown_mbs_session_id',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-unknown_pdu_session_id\" AS 'radio_network-unknown_pdu_session_id',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-unknown_target_id\" AS 'radio_network-unknown_target_id',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-unkown_qos_flow_id\" AS 'radio_network-unkown_qos_flow_id',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-unspecified\" AS 'radio_network-unspecified',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-up_confidentiality_protection_not_possible\" AS 'radio_network-up_confidentiality_protection_not_possible',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-up_integrity_protection_not_possible\" AS 'radio_network-up_integrity_protection_not_possible',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-user_inactivity\" AS 'radio_network-user_inactivity',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_radio_network-xn_ho_triggered\" AS 'radio_network-xn_ho_triggered',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_transport-transport_res_unavailable\" AS 'transport-transport_res_unavailable',\n  ngaps.\"pdu_session_management_nof_pdu_sessions_failed_to_setup_transport-unspecified\" AS 'transport-unspecified'\n\nFROM \"ngaps\" WHERE \"time\" >= $__timeFrom AND \"time\" <= $__timeTo AND \"snssai\" == '$snssai' AND \"amf_name\" == '$amf_name'\n",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [
+                                    {
+                                        "name": "pdu_session_management*",
+                                        "type": "functionParameter"
+                                    }
+                                ],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "whereJsonTree": {
+                            "children1": [],
+                            "id": "aabbaa8a-0123-4456-b89a-b199cdde8a02",
+                            "type": "group"
+                        }
+                    },
+                    "table": "ngaps"
+                }
+            ],
+            "title": "PDU sessions failed to setup",
+            "transformations": [
+                {
+                    "id": "reduce",
+                    "options": {
+                        "labelsToFields": false,
+                        "reducers": [
+                            "sum"
+                        ]
+                    }
+                }
+            ],
+            "type": "stat"
+        },
+        {
+            "collapsed": true,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 9
+            },
+            "id": 11,
+            "panels": [
+                {
+                    "datasource": {
+                        "type": "datasource",
+                        "uid": "-- Dashboard --"
+                    },
+                    "fieldConfig": {
+                        "defaults": {
+                            "color": {
+                                "mode": "fixed"
+                            },
+                            "fieldMinMax": false,
+                            "mappings": [],
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "green"
+                                    }
+                                ]
+                            }
+                        },
+                        "overrides": []
+                    },
+                    "gridPos": {
+                        "h": 7,
+                        "w": 19,
+                        "x": 0,
+                        "y": 10
+                    },
+                    "id": 12,
+                    "options": {
+                        "displayMode": "basic",
+                        "legend": {
+                            "calcs": [],
+                            "displayMode": "list",
+                            "placement": "bottom",
+                            "showLegend": false
+                        },
+                        "maxVizHeight": 300,
+                        "minVizHeight": 16,
+                        "minVizWidth": 8,
+                        "namePlacement": "left",
+                        "orientation": "horizontal",
+                        "reduceOptions": {
+                            "calcs": [
+                                "lastNotNull"
+                            ],
+                            "fields": "",
+                            "values": false
+                        },
+                        "showUnfilled": true,
+                        "sizing": "manual",
+                        "text": {},
+                        "valueMode": "color"
+                    },
+                    "pluginVersion": "12.0.2",
+                    "targets": [
+                        {
+                            "datasource": {
+                                "type": "datasource",
+                                "uid": "-- Dashboard --"
+                            },
+                            "panelId": 5,
+                            "refId": "A"
+                        }
+                    ],
+                    "title": "PDU sessions failed to setup (detail)",
+                    "type": "bargauge"
+                }
+            ],
+            "title": "PDU sessions failed to setup (details)",
+            "type": "row"
+        },
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 10
+            },
+            "id": 6,
+            "panels": [],
+            "title": "Paging",
+            "type": "row"
+        },
+        {
+            "datasource": {
+                "type": "datasource",
+                "uid": "-- Dashboard --"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 5,
+                "x": 0,
+                "y": 11
+            },
+            "id": 8,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "/^paging_measurement_nof_cn_initiated_paging_requests$/",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.0.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "datasource",
+                        "uid": "-- Dashboard --"
+                    },
+                    "panelId": 3,
+                    "refId": "A"
+                }
+            ],
+            "title": "CN initiated paging requests",
+            "type": "stat"
+        },
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 15
+            },
+            "id": 7,
+            "panels": [],
+            "title": "Handover (all AMFs)",
+            "type": "row"
+        },
+        {
+            "datasource": {
+                "type": "influxdb",
+                "uid": "JOSE3g9KVz"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 5,
+                "x": 0,
+                "y": 16
+            },
+            "id": 9,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "/^nof_handover_preparations_requested$/",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.0.2",
+            "targets": [
+                {
+                    "dataset": "iox",
+                    "datasource": {
+                        "type": "influxdb",
+                        "uid": "JOSE3g9KVz"
+                    },
+                    "editorMode": "builder",
+                    "format": "table",
+                    "rawSql": "SELECT \"nof_handover_preparations_requested\", \"nof_successful_handover_preparations\" FROM \"cu_cp\" WHERE \"time\" >= $__timeFrom AND \"time\" <= $__timeTo ",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [
+                                    {
+                                        "name": "nof_handover_preparations_requested",
+                                        "type": "functionParameter"
+                                    }
+                                ],
+                                "type": "function"
+                            },
+                            {
+                                "parameters": [
+                                    {
+                                        "name": "nof_successful_handover_preparations",
+                                        "type": "functionParameter"
+                                    }
+                                ],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ]
+                    },
+                    "table": "cu_cp"
+                }
+            ],
+            "title": "Handover preparations requested",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "datasource",
+                "uid": "-- Dashboard --"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 5,
+                "x": 5,
+                "y": 16
+            },
+            "id": 10,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "/^nof_successful_handover_preparations$/",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.0.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "datasource",
+                        "uid": "-- Dashboard --"
+                    },
+                    "panelId": 9,
+                    "refId": "A"
+                }
+            ],
+            "title": "Successful handover preparations",
+            "type": "stat"
+        }
+    ],
+    "preload": false,
+    "schemaVersion": 41,
+    "tags": [],
+    "templating": {
+        "list": [
+            {
+                "allowCustomValue": false,
+                "current": {
+                    "text": "open5gs-amf0",
+                    "value": "open5gs-amf0"
+                },
+                "datasource": {
+                    "type": "influxdb",
+                    "uid": "JOSE3g9KVz"
+                },
+                "definition": "SELECT amf_name FROM ngaps GROUP BY amf_name",
+                "label": "AMF name",
+                "name": "amf_name",
+                "options": [],
+                "query": {
+                    "query": "SELECT amf_name FROM ngaps GROUP BY amf_name",
+                    "refId": "InfluxVariableQueryEditor-VariableQuery"
+                },
+                "refresh": 2,
+                "regex": "",
+                "sort": 1,
+                "type": "query"
+            },
+            {
+                "allowCustomValue": false,
+                "current": {
+                    "text": "(sst=1 sd=na)",
+                    "value": "(sst=1 sd=na)"
+                },
+                "datasource": {
+                    "type": "influxdb",
+                    "uid": "JOSE3g9KVz"
+                },
+                "definition": "SELECT snssai FROM ngaps WHERE snssai is NOT NULL GROUP BY snssai",
+                "name": "snssai",
+                "options": [],
+                "query": {
+                    "query": "SELECT snssai FROM ngaps WHERE snssai is NOT NULL GROUP BY snssai",
+                    "refId": "InfluxVariableQueryEditor-VariableQuery"
+                },
+                "refresh": 1,
+                "regex": "",
+                "sort": 1,
+                "type": "query"
+            }
+        ]
+    },
+    "time": {
+        "from": "now-6h",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "NGAP",
+    "uid": "2de86bfa-632c-485d-b44e-909f72ce1fa6",
+    "version": 2
+}
