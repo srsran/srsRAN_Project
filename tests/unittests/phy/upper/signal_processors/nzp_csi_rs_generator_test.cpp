@@ -10,8 +10,8 @@
 
 #include "nzp_csi_rs_generator_test_data.h"
 #include "srsran/phy/support/support_factories.h"
+#include "srsran/phy/upper/signal_processors/nzp_csi_rs/nzp_csi_rs_formatter.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
-#include "srsran/phy/upper/signal_processors/signal_processor_formatters.h"
 #include <fmt/ostream.h>
 #include <gtest/gtest.h>
 

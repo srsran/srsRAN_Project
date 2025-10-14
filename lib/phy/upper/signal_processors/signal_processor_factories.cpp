@@ -25,7 +25,7 @@
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/support/support_formatters.h"
 #include "srsran/phy/support/time_alignment_estimator/time_alignment_estimator_factories.h"
-#include "srsran/phy/upper/signal_processors/signal_processor_formatters.h"
+#include "srsran/phy/upper/signal_processors/nzp_csi_rs/nzp_csi_rs_formatter.h"
 
 using namespace srsran;
 
