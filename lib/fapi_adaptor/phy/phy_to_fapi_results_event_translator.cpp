@@ -35,9 +35,13 @@ public:
 /// actual data-specific notifier, which will be later set up through the \ref set_slot_data_message_notifier() method.
 static slot_data_message_notifier_dummy dummy_data_notifier;
 
-phy_to_fapi_results_event_translator::phy_to_fapi_results_event_translator(unsigned              sector_id_,
+phy_to_fapi_results_event_translator::phy_to_fapi_results_event_translator(unsigned sector_id_,
+                                                                           float    dBFS_calibration_value_,
                                                                            srslog::basic_logger& logger_) :
-  sector_id(sector_id_), logger(logger_), data_notifier(dummy_data_notifier)
+  sector_id(sector_id_),
+  dBFS_calibration_value(dBFS_calibration_value_),
+  logger(logger_),
+  data_notifier(dummy_data_notifier)
 {
 }
 

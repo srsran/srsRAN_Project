@@ -242,6 +242,14 @@ split6_flexible_o_du_low_session_factory::create_o_du_low(const fapi::fapi_cell_
   fapi_sector.prach_ports                   = prach_ports;
   fapi_sector.scs                           = config.phy_cfg.scs;
   fapi_sector.scs_common                    = config.phy_cfg.scs;
+  fapi_sector.dBFS_calibration_value        = 1.F;
+  // When the sampling rate is provided, calculate the dBFS calibration value as sqrt(sampling rate / subcarrier
+  // spacing). This factor is the magnitude of a single subcarrier in normalized PHY linear units equivalent to
+  // a constant signal with a power of 0 dBFS.
+  if (sampling_rate_MHz) {
+    fapi_sector.dBFS_calibration_value = std::sqrt(*sampling_rate_MHz * 1e3 / scs_to_khz(config.phy_cfg.scs));
+  }
+
   // :TODO: add a parse option for the sector, so it will be easier to debug problems when running more than one
   // instance.
   fapi_sector.sector_id = 0;
@@ -386,6 +394,8 @@ split6_flexible_o_du_low_session_factory::create_radio_unit(split6_flexible_o_du
   if (const auto* cfg = std::get_if<ru_sdr_unit_config>(&ru_cfg)) {
     ru_sdr_unit_config updated_srate_config = *cfg;
     updated_srate_config.srate_MHz          = derive_srate_MHz_from_bandwith(config.carrier_cfg.dl_bandwidth);
+    // Update the samping rate.
+    sampling_rate_MHz.emplace(updated_srate_config.srate_MHz);
 
     auto ru_sdr_dependencies = get_ru_sdr_validation_dependencies(config);
     if (!validate_ru_sdr_config(updated_srate_config, ru_sdr_dependencies)) {
