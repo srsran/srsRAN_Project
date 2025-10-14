@@ -221,3 +221,72 @@ TEST(soa_table_test, destructuring)
   ASSERT_EQ(i2, 42);
   ASSERT_EQ(f2, 3.14f);
 }
+
+TEST(soa_table_test, reserve_and_clear_resets_state)
+{
+  // This test guards the reset logic after bulk cleanup.
+  soa::table<int, float> table;
+  table.reserve(10);
+  ASSERT_GE(table.capacity(), 10);
+
+  auto rowid0 = table.insert(42, 3.14f);
+  table.insert(43, 4.14f);
+  ASSERT_EQ(table.size(), 2);
+
+  table.clear();
+  ASSERT_TRUE(table.empty());
+  ASSERT_EQ(table.size(), 0);
+  ASSERT_GE(table.capacity(), 10);
+
+  auto rowid2 = table.insert(44, 5.14f);
+  ASSERT_EQ(rowid2, rowid0) << "row_id should be reused";
+  ASSERT_EQ(table.size(), 1);
+  ASSERT_EQ(table.at<0>(rowid2), 44);
+  ASSERT_EQ(table.at<1>(rowid2), 5.14f);
+  ASSERT_FALSE(false);
+}
+
+TEST(soa_table_test, erase_invalid_row_id_is_noop)
+{
+  soa::table<int, float> table;
+  auto                   row_id0 = table.insert(42, 3.14f);
+  table.insert(43, 3.15f);
+  auto row_id2 = table.insert(44, 3.16f);
+
+  // Erasing invalid row should be no-op.
+  ASSERT_EQ(table.size(), 3);
+  ASSERT_FALSE(table.erase(soa::row_id{row_id2.value() + 1}));
+  ASSERT_EQ(table.size(), 3);
+  ASSERT_TRUE(table.has_row_id(row_id0));
+  ASSERT_TRUE(table.has_row_id(row_id2));
+
+  // Erasing again should be a noop.
+  ASSERT_TRUE(table.erase(soa::row_id{row_id0}));
+  ASSERT_EQ(table.size(), 2);
+  ASSERT_FALSE(table.has_row_id(row_id0));
+  ASSERT_TRUE(table.has_row_id(row_id2));
+  ASSERT_FALSE(table.erase(soa::row_id{row_id0}));
+  ASSERT_EQ(table.size(), 2);
+  ASSERT_TRUE(table.has_row_id(row_id2));
+  ASSERT_FALSE(table.has_row_id(row_id0));
+}
+
+TEST(soa_table_test, move_only_columns)
+{
+  soa::table<std::unique_ptr<int>, std::string> table;
+  auto                                          ptr1     = std::make_unique<int>(42);
+  auto*                                         ptr1_raw = ptr1.get();
+  auto                                          ptr2     = std::make_unique<int>(43);
+  auto*                                         ptr2_raw = ptr2.get();
+  auto                                          row_id0  = table.insert(std::move(ptr1), "foo");
+  auto                                          row_id1  = table.insert(std::move(ptr2), "bar");
+  ASSERT_EQ(table.at<0>(row_id0).get(), ptr1_raw);
+  ASSERT_EQ(table.at<0>(row_id1).get(), ptr2_raw);
+  ASSERT_EQ(*table.at<0>(row_id0), 42);
+  ASSERT_EQ(*table.at<0>(row_id1), 43);
+  ASSERT_EQ(ptr1, nullptr);
+  ASSERT_EQ(ptr2, nullptr);
+  table.erase(row_id0);
+  ASSERT_FALSE(table.has_row_id(row_id0));
+  ASSERT_EQ(*table.at<0>(row_id1), 43);
+}
