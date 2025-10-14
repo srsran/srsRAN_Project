@@ -791,12 +791,13 @@ void ue_cell_event_manager::handle_positioning_measurement_request(
     return;
   }
 
-  auto task = [this, req_ptr = std::move(req_ptr)]() {
+  const du_cell_index_t cell_index = req.cell_index;
+  auto                  task       = [this, req_ptr = std::move(req_ptr)]() {
     srs_sched.handle_positioning_measurement_request(*req_ptr);
     return event_result::processed;
   };
 
-  push_event(req_ptr->cell_index, event_t{"POS MEAS REQ", std::move(task)});
+  push_event(cell_index, event_t{"POS MEAS REQ", std::move(task)});
 }
 
 void ue_cell_event_manager::handle_positioning_measurement_stop(rnti_t pos_rnti)
