@@ -14,7 +14,7 @@
 //   + "srsPUCCHdmrsUnittest.m"
 
 #include "../../support/resource_grid_test_doubles.h"
-#include "srsran/phy/upper/signal_processors/dmrs_pucch_estimator.h"
+#include "srsran/phy/upper/signal_processors/pucch/dmrs_pucch_estimator.h"
 #include "srsran/support/file_vector.h"
 #include <variant>
 

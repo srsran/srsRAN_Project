@@ -17,16 +17,16 @@ set(SOURCES
         srs/srs_estimator_factory.cpp
         srs/srs_estimator_generic_impl.cpp
         srs/srs_validator_generic_impl.cpp
-        dmrs_pbch_processor_impl.cpp
-        dmrs_pdcch_processor_impl.cpp
-        dmrs_pdsch_processor_impl.cpp
-        dmrs_pusch_estimator_impl.cpp
-        nzp_csi_rs_generator_impl.cpp
-        port_channel_estimator_average_impl.cpp
-        port_channel_estimator_helpers.cpp
+        ssb/dmrs_pbch_processor_impl.cpp
+        pdcch/dmrs_pdcch_processor_impl.cpp
+        pdsch/dmrs_pdsch_processor_impl.cpp
+        pusch/dmrs_pusch_estimator_impl.cpp
+        nzp_csi_rs/nzp_csi_rs_generator_impl.cpp
+        channel_estimator/port_channel_estimator_average_impl.cpp
+        channel_estimator/port_channel_estimator_helpers.cpp
         signal_processor_factories.cpp
-        pss_processor_impl.cpp
-        sss_processor_impl.cpp
+        ssb/pss_processor_impl.cpp
+        ssb/sss_processor_impl.cpp
 )
 
 add_library(srsran_signal_processors STATIC ${SOURCES})

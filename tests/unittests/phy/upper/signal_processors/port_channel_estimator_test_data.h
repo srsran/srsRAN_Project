@@ -14,8 +14,8 @@
 //   + "srsChEstimatorUnittest.m"
 
 #include "../../support/resource_grid_test_doubles.h"
-#include "srsran/phy/upper/signal_processors/port_channel_estimator.h"
-#include "srsran/phy/upper/signal_processors/port_channel_estimator_parameters.h"
+#include "srsran/phy/upper/signal_processors/channel_estimator/port_channel_estimator.h"
+#include "srsran/phy/upper/signal_processors/channel_estimator/port_channel_estimator_parameters.h"
 #include "srsran/support/file_vector.h"
 #include <optional>
 

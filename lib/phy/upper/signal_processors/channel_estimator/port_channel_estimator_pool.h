@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/phy/upper/signal_processors/port_channel_estimator.h"
+#include "srsran/phy/upper/signal_processors/channel_estimator/port_channel_estimator.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/memory_pool/bounded_object_pool.h"
 

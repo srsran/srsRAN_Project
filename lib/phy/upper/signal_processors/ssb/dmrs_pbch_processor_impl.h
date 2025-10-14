@@ -13,7 +13,7 @@
 #include "srsran/adt/complex.h"
 #include "srsran/phy/constants.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
-#include "srsran/phy/upper/signal_processors/dmrs_pbch_processor.h"
+#include "srsran/phy/upper/signal_processors/ssb/dmrs_pbch_processor.h"
 
 namespace srsran {
 

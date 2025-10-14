@@ -12,7 +12,7 @@
 
 #include "srsran/phy/support/re_buffer.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
-#include "srsran/phy/upper/signal_processors/dmrs_pdcch_processor.h"
+#include "srsran/phy/upper/signal_processors/pdcch/dmrs_pdcch_processor.h"
 #include "srsran/ran/pdcch/pdcch_constants.h"
 #include <memory>
 

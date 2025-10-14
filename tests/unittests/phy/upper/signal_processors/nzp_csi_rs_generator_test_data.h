@@ -14,7 +14,7 @@
 //   + "srsNZPCSIRSGeneratorUnittest.m"
 
 #include "../../support/resource_grid_test_doubles.h"
-#include "srsran/phy/upper/signal_processors/nzp_csi_rs_generator.h"
+#include "srsran/phy/upper/signal_processors/nzp_csi_rs/nzp_csi_rs_generator.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/support/file_vector.h"
 

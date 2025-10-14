@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/phy/metrics/phy_metrics_notifiers.h"
-#include "srsran/phy/upper/signal_processors/port_channel_estimator.h"
+#include "srsran/phy/upper/signal_processors/channel_estimator/port_channel_estimator.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
 
 namespace srsran {

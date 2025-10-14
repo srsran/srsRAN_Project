@@ -11,7 +11,7 @@
 #pragma once
 
 #include "../../phy_test_utils.h"
-#include "srsran/phy/upper/signal_processors/dmrs_pucch_estimator.h"
+#include "srsran/phy/upper/signal_processors/pucch/dmrs_pucch_estimator.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
 
 namespace srsran {

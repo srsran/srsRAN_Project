@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/phy/upper/signal_processors/nzp_csi_rs_generator.h"
+#include "srsran/phy/upper/signal_processors/nzp_csi_rs/nzp_csi_rs_generator.h"
 #include "srsran/support/memory_pool/bounded_object_pool.h"
 
 namespace srsran {

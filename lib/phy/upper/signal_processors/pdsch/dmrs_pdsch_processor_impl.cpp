@@ -9,7 +9,7 @@
  */
 
 #include "dmrs_pdsch_processor_impl.h"
-#include "dmrs_helper.h"
+#include "../dmrs_helper.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/sc_prod.h"

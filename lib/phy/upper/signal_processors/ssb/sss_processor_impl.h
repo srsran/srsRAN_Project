@@ -12,7 +12,7 @@
 
 #include "srsran/adt/complex.h"
 #include "srsran/phy/upper/sequence_generators/sss_sequence_generator.h"
-#include "srsran/phy/upper/signal_processors/sss_processor.h"
+#include "srsran/phy/upper/signal_processors/ssb/sss_processor.h"
 
 namespace srsran {
 class sss_processor_impl : public sss_processor

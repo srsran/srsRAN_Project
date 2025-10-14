@@ -15,8 +15,8 @@
 
 #include "srsran/phy/upper/sequence_generators/low_papr_sequence_generator.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
-#include "srsran/phy/upper/signal_processors/dmrs_pusch_estimator.h"
-#include "srsran/phy/upper/signal_processors/port_channel_estimator.h"
+#include "srsran/phy/upper/signal_processors/channel_estimator/port_channel_estimator.h"
+#include "srsran/phy/upper/signal_processors/pusch/dmrs_pusch_estimator.h"
 #include "srsran/support/executors/task_executor.h"
 
 namespace srsran {

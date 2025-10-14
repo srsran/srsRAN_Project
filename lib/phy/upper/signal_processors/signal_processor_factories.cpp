@@ -9,24 +9,23 @@
  */
 
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
-#include "dmrs_pbch_processor_impl.h"
-#include "dmrs_pdcch_processor_impl.h"
-#include "dmrs_pdsch_processor_impl.h"
-#include "dmrs_pusch_estimator_impl.h"
-#include "nzp_csi_rs_generator_impl.h"
-#include "nzp_csi_rs_generator_pool.h"
-#include "port_channel_estimator_average_impl.h"
-#include "port_channel_estimator_pool.h"
-#include "pss_processor_impl.h"
+#include "channel_estimator/port_channel_estimator_average_impl.h"
+#include "channel_estimator/port_channel_estimator_pool.h"
+#include "nzp_csi_rs/nzp_csi_rs_generator_impl.h"
+#include "nzp_csi_rs/nzp_csi_rs_generator_pool.h"
+#include "pdcch/dmrs_pdcch_processor_impl.h"
+#include "pdsch/dmrs_pdsch_processor_impl.h"
 #include "pucch/dmrs_pucch_estimator_format2.h"
 #include "pucch/dmrs_pucch_estimator_formats3_4.h"
 #include "pucch/dmrs_pucch_estimator_impl.h"
-#include "sss_processor_impl.h"
+#include "pusch/dmrs_pusch_estimator_impl.h"
+#include "ssb/dmrs_pbch_processor_impl.h"
+#include "ssb/pss_processor_impl.h"
+#include "ssb/sss_processor_impl.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/support/support_formatters.h"
 #include "srsran/phy/support/time_alignment_estimator/time_alignment_estimator_factories.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_formatters.h"
-#include <map>
 
 using namespace srsran;
 

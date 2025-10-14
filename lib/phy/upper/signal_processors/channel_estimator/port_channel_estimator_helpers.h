@@ -16,8 +16,8 @@
 #include "srsran/phy/support/re_buffer.h"
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/support/time_alignment_estimator/time_alignment_estimator.h"
-#include "srsran/phy/upper/signal_processors/port_channel_estimator.h"
-#include "srsran/phy/upper/signal_processors/port_channel_estimator_parameters.h"
+#include "srsran/phy/upper/signal_processors/channel_estimator/port_channel_estimator.h"
+#include "srsran/phy/upper/signal_processors/channel_estimator/port_channel_estimator_parameters.h"
 
 namespace srsran {
 

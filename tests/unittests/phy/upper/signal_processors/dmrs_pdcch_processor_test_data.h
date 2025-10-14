@@ -14,7 +14,7 @@
 //   + "srsPDCCHdmrsUnittest.m"
 
 #include "../../support/resource_grid_test_doubles.h"
-#include "srsran/phy/upper/signal_processors/dmrs_pdcch_processor.h"
+#include "srsran/phy/upper/signal_processors/pdcch/dmrs_pdcch_processor.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/support/file_vector.h"
 
