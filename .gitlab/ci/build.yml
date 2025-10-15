@@ -1429,6 +1429,26 @@ build uhd alt:
         UHD_VERSION:
           ["4.8.0.0", "4.7.0.0", "4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
 
+# Validate test gdb pretty printers
+
+gdb pretty printers:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 300 minutes
+  interruptible: false
+  variables:
+    OS: ubuntu-24.04
+    COMPILER: gcc
+    CMAKE_BUILD_TYPE: Debug
+    ASSERT_LEVEL: PARANOID
+    ENABLE_FFTW: "True"
+    TEST_GDB_PRINTERS: "True"
+    TEST_MODE: pretty_printers
+    MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
+
 # Build + unit tests combinations
 
 ubuntu-25.04 amd64 native:

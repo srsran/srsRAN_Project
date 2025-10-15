@@ -15,7 +15,7 @@ RUN TZ=Europe/Madrid && \
     echo $TZ > /etc/timezone && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
-    git git-lfs \
+    git git-lfs gdb \
     clang llvm lld mold \
     ccache gcovr valgrind \
     python3-dev python3-venv && \
