@@ -14,6 +14,46 @@
 
 using namespace srsran;
 
+// class ue_cell_repository
+
+ue_cell_repository::ue_cell_repository(du_cell_index_t cell_idx_, srslog::basic_logger& logger_) :
+  cell_idx(cell_idx_), logger(logger_)
+{
+  rnti_to_ue_index_lookup.reserve(MAX_NOF_DU_UES);
+}
+
+void ue_cell_repository::add_ue(std::shared_ptr<ue_cell> u)
+{
+  rnti_t        rnti     = u->rnti();
+  du_ue_index_t ue_index = u->ue_index;
+  ues.insert(u->ue_index, std::move(u));
+  rnti_to_ue_index_lookup.insert(std::make_pair(rnti, ue_index));
+}
+
+void ue_cell_repository::rem_ue(du_ue_index_t ue_index)
+{
+  if (not ues.contains(ue_index)) {
+    logger.error("ue={} : UE not found in the cell UE repository", fmt::underlying(ue_index));
+  }
+  std::shared_ptr<ue_cell>& u      = ues[ue_index];
+  const rnti_t              crnti  = u->rnti();
+  const du_ue_index_t       ue_idx = u->ue_index;
+
+  // Remove UE from lookup.
+  auto it = rnti_to_ue_index_lookup.find(crnti);
+  if (it != rnti_to_ue_index_lookup.end()) {
+    rnti_to_ue_index_lookup.erase(it);
+  } else {
+    logger.error("ue={} rnti={}: UE with provided c-rnti not found in RNTI-to-UE-index lookup table.",
+                 fmt::underlying(ue_idx),
+                 crnti);
+  }
+  // Take the ue cell from the repository.
+  ues.erase(ue_idx);
+}
+
+// class ue_repository
+
 ue_repository::ue_repository() : logger(srslog::fetch_basic_logger("SCHED")), ues_to_destroy(MAX_NOF_DU_UES)
 {
   rnti_to_ue_index_lookup.reserve(MAX_NOF_DU_UES);
@@ -107,6 +147,36 @@ void ue_repository::add_ue(std::unique_ptr<ue> u)
 
   // Update RNTI -> UE index lookup.
   rnti_to_ue_index_lookup.insert(std::make_pair(rnti, ue_index));
+
+  // Add UE in cell-specific repositories.
+  for (std::shared_ptr<ue_cell>& c : ues[ue_index]->ue_du_cells) {
+    const du_cell_index_t c_idx = c->cell_index;
+    cell_ues[c_idx].add_ue(c);
+  }
+}
+
+void ue_repository::reconfigure_ue(const ue_reconf_command& cmd, bool reestablished_)
+{
+  srsran_sanity_check(
+      ues.contains(cmd.cfg.ue_index), "ue={} : UE not found in the repository", fmt::underlying(cmd.cfg.ue_index));
+  auto& u = ues[cmd.cfg.ue_index];
+  u->handle_reconfiguration_request(cmd, reestablished_);
+
+  for (ue_cell_repository& cell_repo : cell_ues) {
+    if (cell_repo.contains(u->ue_index) and u->find_cell(cell_repo.cell_index()) == nullptr) {
+      // Cell has been removed from the UE configuration.
+      cell_repo.rem_ue(u->ue_index);
+    }
+  }
+  for (unsigned i = 0, sz = cmd.cfg.nof_cells(); i != sz; ++i) {
+    const auto&           cell_cfg   = cmd.cfg.ue_cell_cfg(to_ue_cell_index(i));
+    const du_cell_index_t cell_index = cell_cfg.cell_cfg_common.cell_index;
+
+    if (u->ue_du_cells[cell_index] == nullptr) {
+      // New cell being instantiated.
+      cell_ues[cell_index].add_ue(u->ue_du_cells[cell_index]);
+    }
+  }
 }
 
 void ue_repository::schedule_ue_rem(ue_config_delete_event ev)

@@ -11,7 +11,7 @@
 #pragma once
 
 #include "lib/scheduler/config/du_cell_group_config_pool.h"
-#include "lib/scheduler/ue_scheduling/ue_repository.h"
+#include "lib/scheduler/ue_context/ue_repository.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"

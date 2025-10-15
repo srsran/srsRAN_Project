@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../ue_scheduling/ue_repository.h"
+#include "../ue_context/ue_repository.h"
 #include "uci_scheduler.h"
 
 namespace srsran {

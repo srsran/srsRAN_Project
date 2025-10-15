@@ -131,7 +131,7 @@ void ue::set_config(const ue_configuration& new_cfg, std::optional<slot_point> m
     du_cell_index_t cell_index   = ue_ded_cfg->ue_cell_cfg(to_ue_cell_index(ue_cell_index)).cell_cfg_common.cell_index;
     auto&           ue_cell_inst = ue_du_cells[cell_index];
     if (ue_cell_inst == nullptr) {
-      ue_cell_inst = std::make_unique<ue_cell>(
+      ue_cell_inst = std::make_shared<ue_cell>(
           ue_index, crnti, ue_ded_cfg->ue_cell_cfg(cell_index), pcell_harq_pool, drx, msg3_slot_rx);
       if (ue_cell_index >= ue_cells.size()) {
         ue_cells.resize(ue_cell_index + 1);

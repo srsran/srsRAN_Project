@@ -10,7 +10,7 @@
 
 #include "lib/scheduler/config/sched_config_manager.h"
 #include "lib/scheduler/slicing/slice_ue_repository.h"
-#include "lib/scheduler/ue_scheduling/ue_repository.h"
+#include "lib/scheduler/ue_context/ue_repository.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include <gtest/gtest.h>

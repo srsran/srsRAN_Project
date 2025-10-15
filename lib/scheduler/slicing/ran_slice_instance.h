@@ -12,7 +12,7 @@
 
 #include "../cell/resource_grid.h"
 #include "../config/cell_configuration.h"
-#include "../ue_scheduling/ue_repository.h"
+#include "../ue_context/ue_repository.h"
 #include "ran_slice_id.h"
 #include "slice_ue_repository.h"
 #include "srsran/scheduler/config/slice_rrm_policy_config.h"

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../ue_scheduling/ue_repository.h"
+#include "../ue_context/ue_repository.h"
 #include "srs_scheduler.h"
 #include "srsran/ran/srs/srs_configuration.h"
 

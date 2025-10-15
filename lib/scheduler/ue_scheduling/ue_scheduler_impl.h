@@ -15,11 +15,11 @@
 #include "../slicing/inter_slice_scheduler.h"
 #include "../srs/srs_scheduler_impl.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
+#include "../ue_context/ue_repository.h"
 #include "intra_slice_scheduler.h"
 #include "ue_cell_grid_allocator.h"
 #include "ue_event_manager.h"
 #include "ue_fallback_scheduler.h"
-#include "ue_repository.h"
 #include "ue_scheduler.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include <mutex>
