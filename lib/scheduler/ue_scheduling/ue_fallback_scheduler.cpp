@@ -486,7 +486,7 @@ static std::optional<uci_allocation> allocate_ue_fallback_pucch(ue&             
   if (not common_alloc and ded_alloc) {
     // UE dedicated-only PUCCH allocation.
     std::optional<uci_allocation> uci =
-        uci_alloc.alloc_uci_harq_ue(res_alloc, u.crnti, u.get_pcell().cfg(), pdsch_delay, k1_values);
+        uci_alloc.alloc_harq_ack(res_alloc, u.crnti, u.get_pcell().cfg(), pdsch_delay, k1_values);
     return uci;
   }
 
@@ -505,11 +505,11 @@ static std::optional<uci_allocation> allocate_ue_fallback_pucch(ue&             
 
     std::optional<unsigned> pucch_res_indicator;
     if (ded_alloc) {
-      pucch_res_indicator = pucch_alloc.alloc_common_and_ded_harq_res(
+      pucch_res_indicator = pucch_alloc.alloc_common_and_ded_harq_ack(
           res_alloc, u.crnti, u.get_pcell().cfg(), pdsch_delay, k1_candidate, pdcch_info);
     } else {
       pucch_res_indicator =
-          pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_delay, k1_candidate, pdcch_info);
+          pucch_alloc.alloc_common_harq_ack(res_alloc, u.crnti, pdsch_delay, k1_candidate, pdcch_info);
     }
     if (pucch_res_indicator.has_value()) {
       return uci_allocation{k1_candidate, 0, pucch_res_indicator};

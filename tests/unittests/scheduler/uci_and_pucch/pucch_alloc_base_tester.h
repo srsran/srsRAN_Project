@@ -35,67 +35,67 @@ protected:
   // Add a SR grant to the main UE.
   void add_sr_grant()
   {
-    t_bench.pucch_alloc.pucch_allocate_sr_opportunity(t_bench.res_grid[t_bench.k0 + t_bench.k1],
-                                                      t_bench.get_main_ue().crnti,
-                                                      t_bench.get_main_ue().get_pcell().cfg());
+    t_bench.pucch_alloc.alloc_sr_opportunity(t_bench.res_grid[t_bench.k0 + t_bench.k1],
+                                             t_bench.get_main_ue().crnti,
+                                             t_bench.get_main_ue().get_pcell().cfg());
   }
 
   // Add a HARQ grant of PUCCH Formats 0/1 (1 bit) to the main UE.
   void add_harq_grant()
   {
-    t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+    t_bench.pucch_alloc.alloc_ded_harq_ack(
         t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
   }
 
   // Add a HARQ grant of PUCCH Formats 2/3/4 (> 2 bits) to the main UE.
   std::optional<unsigned> add_format2_3_4_harq_grant()
   {
-    t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+    t_bench.pucch_alloc.alloc_ded_harq_ack(
         t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
-    t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+    t_bench.pucch_alloc.alloc_ded_harq_ack(
         t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
-    return t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+    return t_bench.pucch_alloc.alloc_ded_harq_ack(
         t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
   }
 
   // Add a CSI grant to the main UE.
   void add_csi_grant(unsigned csi_part1_bits = 4)
   {
-    t_bench.pucch_alloc.pucch_allocate_csi_opportunity(t_bench.res_grid[t_bench.k0 + t_bench.k1],
-                                                       t_bench.get_main_ue().crnti,
-                                                       t_bench.get_main_ue().get_pcell().cfg(),
-                                                       csi_part1_bits);
+    t_bench.pucch_alloc.alloc_csi_opportunity(t_bench.res_grid[t_bench.k0 + t_bench.k1],
+                                              t_bench.get_main_ue().crnti,
+                                              t_bench.get_main_ue().get_pcell().cfg(),
+                                              csi_part1_bits);
   }
 
   // Add an extra UE and allocate a HARQ grant to it.
   void add_ue_with_harq_grant()
   {
     t_bench.add_ue();
-    t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(t_bench.res_grid,
-                                                    t_bench.last_allocated_rnti,
-                                                    t_bench.get_ue(t_bench.last_allocated_ue_idx).get_pcell().cfg(),
-                                                    t_bench.k0,
-                                                    t_bench.k1);
+    t_bench.pucch_alloc.alloc_ded_harq_ack(t_bench.res_grid,
+                                           t_bench.last_allocated_rnti,
+                                           t_bench.get_ue(t_bench.last_allocated_ue_idx).get_pcell().cfg(),
+                                           t_bench.k0,
+                                           t_bench.k1);
   }
 
   // Add a HARQ grant of PUCCH Formats 2/3/4 (> 2 bits) to the last allocated UE.
   void add_harq_f2_3_4_to_last_allocated_ue()
   {
-    t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(t_bench.res_grid,
-                                                    t_bench.last_allocated_rnti,
-                                                    t_bench.get_ue(t_bench.last_allocated_ue_idx).get_pcell().cfg(),
-                                                    t_bench.k0,
-                                                    t_bench.k1);
-    t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(t_bench.res_grid,
-                                                    t_bench.last_allocated_rnti,
-                                                    t_bench.get_ue(t_bench.last_allocated_ue_idx).get_pcell().cfg(),
-                                                    t_bench.k0,
-                                                    t_bench.k1);
-    t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(t_bench.res_grid,
-                                                    t_bench.last_allocated_rnti,
-                                                    t_bench.get_ue(t_bench.last_allocated_ue_idx).get_pcell().cfg(),
-                                                    t_bench.k0,
-                                                    t_bench.k1);
+    t_bench.pucch_alloc.alloc_ded_harq_ack(t_bench.res_grid,
+                                           t_bench.last_allocated_rnti,
+                                           t_bench.get_ue(t_bench.last_allocated_ue_idx).get_pcell().cfg(),
+                                           t_bench.k0,
+                                           t_bench.k1);
+    t_bench.pucch_alloc.alloc_ded_harq_ack(t_bench.res_grid,
+                                           t_bench.last_allocated_rnti,
+                                           t_bench.get_ue(t_bench.last_allocated_ue_idx).get_pcell().cfg(),
+                                           t_bench.k0,
+                                           t_bench.k1);
+    t_bench.pucch_alloc.alloc_ded_harq_ack(t_bench.res_grid,
+                                           t_bench.last_allocated_rnti,
+                                           t_bench.get_ue(t_bench.last_allocated_ue_idx).get_pcell().cfg(),
+                                           t_bench.k0,
+                                           t_bench.k1);
   }
 
   // Add an extra UE and allocate a HARQ grant of PUCCH Formats 2/3/4 (> 2 bits) to it.
@@ -109,9 +109,9 @@ protected:
   void add_ue_with_sr_and_harq_f2_3_4()
   {
     t_bench.add_ue();
-    t_bench.pucch_alloc.pucch_allocate_sr_opportunity(t_bench.res_grid[t_bench.k0 + t_bench.k1],
-                                                      t_bench.last_allocated_rnti,
-                                                      t_bench.get_ue(t_bench.last_allocated_ue_idx).get_pcell().cfg());
+    t_bench.pucch_alloc.alloc_sr_opportunity(t_bench.res_grid[t_bench.k0 + t_bench.k1],
+                                             t_bench.last_allocated_rnti,
+                                             t_bench.get_ue(t_bench.last_allocated_ue_idx).get_pcell().cfg());
     add_harq_f2_3_4_to_last_allocated_ue();
   }
 
@@ -120,10 +120,10 @@ protected:
   {
     unsigned csi_part1_bits = 4;
     t_bench.add_ue();
-    t_bench.pucch_alloc.pucch_allocate_csi_opportunity(t_bench.res_grid[t_bench.k0 + t_bench.k1],
-                                                       t_bench.last_allocated_rnti,
-                                                       t_bench.get_ue(t_bench.last_allocated_ue_idx).get_pcell().cfg(),
-                                                       csi_part1_bits);
+    t_bench.pucch_alloc.alloc_csi_opportunity(t_bench.res_grid[t_bench.k0 + t_bench.k1],
+                                              t_bench.last_allocated_rnti,
+                                              t_bench.get_ue(t_bench.last_allocated_ue_idx).get_pcell().cfg(),
+                                              csi_part1_bits);
     add_harq_f2_3_4_to_last_allocated_ue();
   }
 };

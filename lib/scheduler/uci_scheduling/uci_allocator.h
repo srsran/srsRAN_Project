@@ -50,12 +50,28 @@ public:
   /// \param[in] fallback_dci_info pointer to the information with DL DCI, used for scheduling the UCI on common PUCCH
   /// resources. If this is not \c nullptr, it triggers the UCI scheduling using common PUCCH resources; else, UCI will
   /// be scheduled either on dedicated PUCCH resources.
-  virtual std::optional<uci_allocation> alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,
-                                                          rnti_t                       crnti,
-                                                          const ue_cell_configuration& ue_cell_cfg,
-                                                          unsigned                     k0,
-                                                          span<const uint8_t>          k1_list,
-                                                          const pdcch_dl_information*  fallback_dci_info = nullptr) = 0;
+  virtual std::optional<uci_allocation> alloc_harq_ack(cell_resource_allocator&     res_alloc,
+                                                       rnti_t                       crnti,
+                                                       const ue_cell_configuration& ue_cell_cfg,
+                                                       unsigned                     k0,
+                                                       span<const uint8_t>          k1_list,
+                                                       const pdcch_dl_information*  fallback_dci_info = nullptr) = 0;
+
+  /// Allocates the SR opportunities for a given UE.
+  /// \param[out,in] slot_alloc struct with scheduling results.
+  /// \param[in] crnti C-RNTI of the UE.
+  /// \param[in] ue_cell_cfg user configuration.
+  virtual void alloc_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
+                                    rnti_t                        crnti,
+                                    const ue_cell_configuration&  ue_cell_cfg) = 0;
+
+  /// Allocates the CSI opportunities for a given UE.
+  /// \param[out,in] slot_alloc struct with scheduling results.
+  /// \param[in] crnti C-RNTI of the UE.
+  /// \param[in] ue_cell_cfg user configuration.
+  virtual void alloc_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
+                                     rnti_t                        crnti,
+                                     const ue_cell_configuration&  ue_cell_cfg) = 0;
 
   /// Multiplexes the UCI on PUSCH, by removing the UCI on the PUCCH (if present) and adding it to the PUSCH.
   /// \param[out,in] pusch_grant struct with PUSCH PDU where UCI need to be allocated.
@@ -67,22 +83,6 @@ public:
                                       const ue_cell_configuration&  ue_cell_cfg,
                                       rnti_t                        crnti) = 0;
 
-  /// Allocates the SR opportunities for a given UE.
-  /// \param[out,in] slot_alloc struct with scheduling results.
-  /// \param[in] crnti C-RNTI of the UE.
-  /// \param[in] ue_cell_cfg user configuration.
-  virtual void uci_allocate_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
-                                           rnti_t                        crnti,
-                                           const ue_cell_configuration&  ue_cell_cfg) = 0;
-
-  /// Allocates the CSI opportunities for a given UE.
-  /// \param[out,in] slot_alloc struct with scheduling results.
-  /// \param[in] crnti C-RNTI of the UE.
-  /// \param[in] ue_cell_cfg user configuration.
-  virtual void uci_allocate_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
-                                            rnti_t                        crnti,
-                                            const ue_cell_configuration&  ue_cell_cfg) = 0;
-
   /// Get the number of PDSCHs currently scheduled for a given UE UCI.
   /// \param[in] uci_slot UCI slot of the respective PDSCHs.
   /// \param[in] crnti C-RNTI of the UE.
@@ -93,7 +93,7 @@ public:
   /// \param[in] crnti C-RNTI of the UE.
   /// \param[in] sl_tx UCI slot.
   /// \return Returns true if a UCI HARQ-ACK allocated on common PUCCH resource exists. False, otherwise.
-  virtual bool has_uci_harq_on_common_pucch_res(rnti_t crnti, slot_point sl_tx) = 0;
+  virtual bool has_harq_ack_on_common_pucch_res(rnti_t crnti, slot_point sl_tx) = 0;
 };
 
 } // namespace srsran

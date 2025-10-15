@@ -14,6 +14,7 @@
 #include "../config/ue_configuration.h"
 #include "pucch_allocator.h"
 #include "pucch_resource_manager.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 
@@ -33,33 +34,33 @@ public:
   /// Called on cell deactivation.
   void stop();
 
-  std::optional<unsigned> alloc_common_pucch_harq_ack_ue(cell_resource_allocator&    res_alloc,
-                                                         rnti_t                      tcrnti,
-                                                         unsigned                    k0,
-                                                         unsigned                    k1,
-                                                         const pdcch_dl_information& dci_info) override;
+  std::optional<unsigned> alloc_common_harq_ack(cell_resource_allocator&    res_alloc,
+                                                rnti_t                      tcrnti,
+                                                unsigned                    k0,
+                                                unsigned                    k1,
+                                                const pdcch_dl_information& dci_info) override;
 
-  std::optional<unsigned> alloc_common_and_ded_harq_res(cell_resource_allocator&     res_alloc,
+  std::optional<unsigned> alloc_common_and_ded_harq_ack(cell_resource_allocator&     res_alloc,
                                                         rnti_t                       rnti,
                                                         const ue_cell_configuration& ue_cell_cfg,
                                                         unsigned                     k0,
                                                         unsigned                     k1,
                                                         const pdcch_dl_information&  dci_info) override;
 
-  std::optional<unsigned> alloc_ded_pucch_harq_ack_ue(cell_resource_allocator&     res_alloc,
-                                                      rnti_t                       crnti,
-                                                      const ue_cell_configuration& ue_cell_cfg,
-                                                      unsigned                     k0,
-                                                      unsigned                     k1) override;
+  std::optional<unsigned> alloc_ded_harq_ack(cell_resource_allocator&     res_alloc,
+                                             rnti_t                       crnti,
+                                             const ue_cell_configuration& ue_cell_cfg,
+                                             unsigned                     k0,
+                                             unsigned                     k1) override;
 
-  void pucch_allocate_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
-                                     rnti_t                        crnti,
-                                     const ue_cell_configuration&  ue_cell_cfg) override;
+  void alloc_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
+                            rnti_t                        crnti,
+                            const ue_cell_configuration&  ue_cell_cfg) override;
 
-  void pucch_allocate_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
-                                      rnti_t                        crnti,
-                                      const ue_cell_configuration&  ue_cell_cfg,
-                                      unsigned                      csi_part1_nof_bits) override;
+  void alloc_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
+                             rnti_t                        crnti,
+                             const ue_cell_configuration&  ue_cell_cfg,
+                             unsigned                      csi_part1_nof_bits) override;
 
   pucch_uci_bits remove_ue_uci_from_pucch(cell_slot_resource_allocator& slot_alloc,
                                           rnti_t                        crnti,
@@ -93,11 +94,26 @@ private:
     uint8_t           pucch_res_ind = 0;
   };
 
-  /// Defines the type of resource.
-  /// HARQ indicates the HAR-ACK resource (it can carry HARQ-ACK and/or SR and/or CSI bits).
-  /// SR indicates the resource dedicated for SR (it can carry SR and HARQ-ACK bits).
-  /// CSI indicates the resource dedicated for CSI (it can carry CSI and SR bits).
+  /// \brief Defines the type of PUCCH resource.
+  /// - harq_ack indicates the HAR-ACK resource (it can carry HARQ-ACK and/or SR and/or CSI bits).
+  /// - sr indicates the resource dedicated for SR (it can carry SR and HARQ-ACK bits).
+  /// - csi indicates the resource dedicated for CSI (it can carry CSI and SR bits).
   enum class pucch_grant_type { harq_ack, sr, csi };
+
+  /// Converts a pucch_grant_type to string.
+  static std::string to_string(pucch_grant_type type)
+  {
+    switch (type) {
+      case pucch_grant_type::harq_ack:
+        return "HARQ-ACK";
+      case pucch_grant_type::sr:
+        return "SR";
+      case pucch_grant_type::csi:
+        return "CSI";
+      default:
+        return "unknown";
+    }
+  }
 
   /// \brief Defines a PUCCH grant (and its relevant information) currently allocated to a given UE.
   /// It is used internally to keep track of the UEs' allocations of the PUCCH grants with dedicated resources.
@@ -141,6 +157,18 @@ private:
   using slot_pucch_grants = static_vector<ue_grants, MAX_PUCCH_PDUS_PER_SLOT>;
 
   /// ////////////  Main private functions   //////////////
+
+  /// Returns whether a given UE can be allocated a PUCCH resource in a given slot.
+  bool can_allocate_pucch_resources(const cell_slot_resource_allocator& pucch_slot_alloc,
+                                    rnti_t                              rnti,
+                                    std::optional<const ue_grants*>     existing_ue_grants,
+                                    pucch_grant_type                    grant_type,
+                                    bool                                common_and_ded) const;
+
+  /// Returns whether a given UE can be allocated a common PUCCH resource in a given slot.
+  bool can_allocate_common_pucch_resource(const cell_slot_resource_allocator& pucch_slot_alloc,
+                                          rnti_t                              rnti,
+                                          std::optional<const ue_grants*>     existing_ue_grants) const;
 
   // Allocates the PUCCH (common) resource for HARQ-(N)-ACK.
   std::optional<pucch_res_alloc_cfg> alloc_pucch_common_res_harq(const cell_slot_resource_allocator& pucch_alloc,

@@ -144,47 +144,50 @@ pucch_allocator_impl::pucch_allocator_impl(const cell_configuration& cell_cfg_,
 
 pucch_allocator_impl::~pucch_allocator_impl() = default;
 
-std::optional<unsigned> pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_resource_allocator&    res_alloc,
-                                                                             rnti_t                      tcrnti,
-                                                                             unsigned                    k0,
-                                                                             unsigned                    k1,
-                                                                             const pdcch_dl_information& dci_info)
+void pucch_allocator_impl::slot_indication(slot_point sl_tx)
+{
+  // If last_sl_ind is not valid (not initialized), then the check sl_tx == last_sl_ind + 1 does not matter.
+  srsran_sanity_check(not last_sl_ind.valid() or sl_tx == last_sl_ind + 1, "Detected a skipped slot");
+
+  // Update Slot.
+  last_sl_ind = sl_tx;
+
+  resource_manager.slot_indication(sl_tx);
+
+  // Clear previous slot PUCCH grants allocations.
+  pucch_grants_alloc_grid[(sl_tx - 1).to_uint()].clear();
+}
+
+void pucch_allocator_impl::stop()
+{
+  resource_manager.stop();
+  for (auto& grants : pucch_grants_alloc_grid) {
+    grants.clear();
+  }
+  last_sl_ind = {};
+}
+
+std::optional<unsigned> pucch_allocator_impl::alloc_common_harq_ack(cell_resource_allocator&    res_alloc,
+                                                                    rnti_t                      tcrnti,
+                                                                    unsigned                    k0,
+                                                                    unsigned                    k1,
+                                                                    const pdcch_dl_information& dci_info)
 {
   // Get the slot allocation grid considering the PDSCH delay (k0) and the PUCCH delay wrt PDSCH (k1).
-  cell_slot_resource_allocator& pucch_slot_alloc  = res_alloc[k0 + k1 + res_alloc.cfg.ntn_cs_koffset];
-  auto&                         pucch_grants_slot = pucch_grants_alloc_grid[pucch_slot_alloc.slot.to_uint()];
+  cell_slot_resource_allocator& pucch_slot_alloc = res_alloc[k0 + k1 + res_alloc.cfg.ntn_cs_koffset];
 
-  auto* grants_ue_it = std::find_if(pucch_grants_slot.begin(),
-                                    pucch_grants_slot.end(),
-                                    [tcrnti](const ue_grants& grants) { return grants.rnti == tcrnti; });
-  // [Implementation-defined] We only allow a max number of PUCCH + PUSCH grants per slot.
-  if (pucch_slot_alloc.result.ul.pucchs.size() >=
-          get_max_pucch_grants(static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size())) or
-      (grants_ue_it == pucch_grants_slot.end() and pucch_grants_slot.full())) {
+  auto& pucch_grants = pucch_grants_alloc_grid[pucch_slot_alloc.slot.to_uint()];
+  auto* ue_grants_it = std::find_if(
+      pucch_grants.begin(), pucch_grants.end(), [tcrnti](const ue_grants& grants) { return grants.rnti == tcrnti; });
+
+  std::optional<const ue_grants*> existing_ue_grants =
+      ue_grants_it != pucch_grants.end() ? std::optional{ue_grants_it} : std::nullopt;
+  if (not can_allocate_pucch_resources(
+          pucch_slot_alloc, tcrnti, existing_ue_grants, pucch_grant_type::harq_ack, false)) {
     return std::nullopt;
   }
 
-  if (not cell_cfg.is_fully_ul_enabled(pucch_slot_alloc.slot)) {
-    return std::nullopt;
-  }
-  if (std::any_of(pucch_slot_alloc.result.ul.puschs.begin(),
-                  pucch_slot_alloc.result.ul.puschs.end(),
-                  [tcrnti](const ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == tcrnti; })) {
-    // Do not schedule PUCCH in case there is already a PUSCH allocated for the same UE in the same slot.
-    return std::nullopt;
-  }
-
-  // If there are existing PUCCH grants that are either F2/F3/F4 for CSI or F0/F1 for SR, allocate the PUCCH common
-  // grant anyway without multiplexing it with the existing one. Otherwise, if the existing grant is F0/F1 for HARQ-ACK,
-  // do not allocate on the same slot.
-  const bool has_existing_ded_harq_grants =
-      grants_ue_it != pucch_grants_slot.end() and grants_ue_it->pucch_grants.harq_resource.has_value();
-  const bool has_existing_common_grants = grants_ue_it != pucch_grants_slot.end() and grants_ue_it->has_common_pucch;
-  if (has_existing_ded_harq_grants or has_existing_common_grants) {
-    logger.debug("tc-rnti={}: PUCCH common not allocated for slot={}. Cause: A PUCCH grant with HARQ-ACK bits "
-                 "already exists in the same slot",
-                 tcrnti,
-                 pucch_slot_alloc.slot);
+  if (not can_allocate_common_pucch_resource(pucch_slot_alloc, tcrnti, existing_ue_grants)) {
     return std::nullopt;
   }
 
@@ -209,16 +212,16 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cel
   fill_pucch_harq_common_grant(pucch_info, tcrnti, pucch_res.value());
   unsigned pucch_res_indicator = pucch_res.value().pucch_res_indicator;
 
-  if (grants_ue_it != pucch_grants_slot.end()) {
-    grants_ue_it->has_common_pucch = true;
+  if (ue_grants_it != pucch_grants.end()) {
+    ue_grants_it->has_common_pucch = true;
   } else {
-    pucch_grants_slot.emplace_back(ue_grants{.rnti = tcrnti, .has_common_pucch = true});
+    pucch_grants.emplace_back(ue_grants{.rnti = tcrnti, .has_common_pucch = true});
   }
 
   return pucch_res_indicator;
 }
 
-std::optional<unsigned> pucch_allocator_impl::alloc_common_and_ded_harq_res(cell_resource_allocator&     res_alloc,
+std::optional<unsigned> pucch_allocator_impl::alloc_common_and_ded_harq_ack(cell_resource_allocator&     res_alloc,
                                                                             rnti_t                       rnti,
                                                                             const ue_cell_configuration& ue_cell_cfg,
                                                                             unsigned                     k0,
@@ -227,56 +230,22 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_and_ded_harq_res(cell
 {
   // Get the slot allocation grid considering the PDSCH delay (k0) and the PUCCH delay wrt PDSCH (k1).
   cell_slot_resource_allocator& pucch_slot_alloc = res_alloc[k0 + k1 + res_alloc.cfg.ntn_cs_koffset];
-  slot_point                    pucch_slot       = pucch_slot_alloc.slot;
 
-  if (not cell_cfg.is_fully_ul_enabled(pucch_slot)) {
-    return std::nullopt;
-  }
-  if (std::any_of(pucch_slot_alloc.result.ul.puschs.begin(),
-                  pucch_slot_alloc.result.ul.puschs.end(),
-                  [rnti](const ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == rnti; })) {
-    // Do not schedule PUCCH in case there is already a PUSCH allocated for the same UE in the same slot.
-    return std::nullopt;
-  }
-
-  auto& pucch_grants = pucch_grants_alloc_grid[pucch_slot.to_uint()];
+  auto& pucch_grants = pucch_grants_alloc_grid[pucch_slot_alloc.slot.to_uint()];
   auto* ue_grants_it = std::find_if(
       pucch_grants.begin(), pucch_grants.end(), [rnti](const ue_grants& grants) { return grants.rnti == rnti; });
 
-  // NOTE: this function is called by the UE fallback scheduler, which iterates over several PDCCH slots and different
-  // k1 values. It can happen that the UE fallback scheduler attempts to allocate a grant on a slot where it previously
-  // allocated another grant. If that is the case, quit the PUCCH allocation.
-  const bool has_existing_ded_harq_grants =
-      ue_grants_it != pucch_grants.end() and ue_grants_it->pucch_grants.harq_resource.has_value();
-  const bool has_existing_common_grants = ue_grants_it != pucch_grants.end() and ue_grants_it->has_common_pucch;
-  if (has_existing_ded_harq_grants or has_existing_common_grants) {
-    logger.debug("rnti={}: PUCCH HARQ-ACK for slot={} not allocated. Cause: another PUCCH grant with HARQ-ACK bits "
-                 "already exists for the same UE for the same slot",
-                 rnti,
-                 pucch_slot);
+  std::optional<const ue_grants*> existing_ue_grants =
+      ue_grants_it != pucch_grants.end() ? std::optional{ue_grants_it} : std::nullopt;
+  if (not can_allocate_pucch_resources(pucch_slot_alloc, rnti, existing_ue_grants, pucch_grant_type::harq_ack, true)) {
     return std::nullopt;
   }
 
-  srsran_assert(not(ue_grants_it != pucch_grants.end() and ue_grants_it->pucch_grants.sr_resource.has_value() and
-                    ue_grants_it->pucch_grants.csi_resource.has_value()),
-                "It is expected that there are either no grants, or at most 1 PUCCH grant (SR grant or CSI grant)");
-
-  // If there are no existing grants or if the existing one is for SR with Format 0/1, we need to add 2 additional PUCCH
-  // grants: 1 on common resources and 1 on dedicated resources (for HARQ-ACK bit).
-  // In the case of CSI, the number of PUCCH additional grants depends on the PUCCH resources configuration, but it will
-  // never be more than 2. The exact number cannot be known at this point.
-  unsigned extra_pucch_grants_to_allocate = 2;
-
-  // [Implementation-defined] We only allow a max number of PUCCH + PUSCH grants per slot.
-  if (pucch_slot_alloc.result.ul.pucchs.size() + extra_pucch_grants_to_allocate >
-          pucch_slot_alloc.result.ul.pucchs.capacity() or
-      pucch_slot_alloc.result.ul.pucchs.size() + extra_pucch_grants_to_allocate >
-          get_max_pucch_grants(static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size())) or
-      (ue_grants_it == pucch_grants.end() and pucch_grants.full())) {
+  if (not can_allocate_common_pucch_resource(pucch_slot_alloc, rnti, existing_ue_grants)) {
     return std::nullopt;
   }
 
-  const bool new_ue_grant_added = ue_grants_it == pucch_grants.end();
+  const bool new_ue_grant_added = not existing_ue_grants.has_value();
 
   // Keep track of whether a new ue_grant has been added; in case the function fails, remove it before exiting.
   if (new_ue_grant_added) {
@@ -306,17 +275,14 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_and_ded_harq_res(cell
   return std::nullopt;
 }
 
-std::optional<unsigned> pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_resource_allocator&     res_alloc,
-                                                                          rnti_t                       crnti,
-                                                                          const ue_cell_configuration& ue_cell_cfg,
-                                                                          unsigned                     k0,
-                                                                          unsigned                     k1)
+std::optional<unsigned> pucch_allocator_impl::alloc_ded_harq_ack(cell_resource_allocator&     res_alloc,
+                                                                 rnti_t                       crnti,
+                                                                 const ue_cell_configuration& ue_cell_cfg,
+                                                                 unsigned                     k0,
+                                                                 unsigned                     k1)
 {
   // NOTE: This function does not check whether there are PUSCH grants allocated for the same UE. The check needs to
   // be performed by the caller.
-
-  // Get the slot allocation grid considering the PDSCH delay (k0) and the PUCCH delay wrt PDSCH (k1).
-  cell_slot_resource_allocator& pucch_slot_alloc = res_alloc[k0 + k1 + res_alloc.cfg.ntn_cs_koffset];
 
   // The PUCCH allocation may result in a temporary reservation of PUCCH resources, which need to be released in case of
   // failure or in case the multiplexing results in a different final PUCCH resource. If we don't reset the previous
@@ -324,25 +290,34 @@ std::optional<unsigned> pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_r
   // different slot.
   resource_manager.reset_latest_reserved_res_tracker();
 
-  slot_point sl_ack = pucch_slot_alloc.slot;
+  // Get the slot allocation grid considering the PDSCH delay (k0) and the PUCCH delay wrt PDSCH (k1).
+  cell_slot_resource_allocator& pucch_slot_alloc = res_alloc[k0 + k1 + res_alloc.cfg.ntn_cs_koffset];
 
-  auto& ue_pucchs = pucch_grants_alloc_grid[sl_ack.to_uint()];
+  auto& pucch_grants = pucch_grants_alloc_grid[pucch_slot_alloc.slot.to_uint()];
+  auto* ue_grants_it = std::find_if(
+      pucch_grants.begin(), pucch_grants.end(), [crnti](const ue_grants& pucch) { return pucch.rnti == crnti; });
 
-  auto* existing_grant_it =
-      std::find_if(ue_pucchs.begin(), ue_pucchs.end(), [crnti](const ue_grants& pucch) { return pucch.rnti == crnti; });
+  std::optional<const ue_grants*> existing_ue_grants =
+      ue_grants_it != pucch_grants.end() ? std::optional{ue_grants_it} : std::nullopt;
+  if (not can_allocate_pucch_resources(
+          pucch_slot_alloc, crnti, existing_ue_grants, pucch_grant_type::harq_ack, false)) {
+    return std::nullopt;
+  }
 
   // Allocate PUCCH HARQ-ACK grant depending on whether there existing PUCCH grants.
-  if (existing_grant_it != ue_pucchs.end()) {
+  if (existing_ue_grants.has_value()) {
+    // As per Section 9.2.1, TS 38.213:
+    // - If a UE is not provided pdsch-HARQ-ACK-Codebook, the UE generates at most one HARQ-ACK information bit.
     // Multiplexing of multiple HARQ-ACK bits in a PUCCH common grant is not allowed.
-    if (existing_grant_it->has_common_pucch) {
+    if (ue_grants_it->has_common_pucch) {
       logger.debug(
           "rnti={}: PUCCH HARQ-ACK for slot={} not allocated. Cause: The UE has a PUCCH common grant at the same slot",
           crnti,
-          sl_ack);
+          pucch_slot_alloc.slot);
       return std::nullopt;
     }
 
-    const pucch_uci_bits current_uci_bits = existing_grant_it->pucch_grants.get_uci_bits();
+    const pucch_uci_bits current_uci_bits = ue_grants_it->pucch_grants.get_uci_bits();
     pucch_uci_bits       new_bits         = current_uci_bits;
     ++new_bits.harq_ack_nof_bits;
 
@@ -357,46 +332,35 @@ std::optional<unsigned> pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_r
 
     std::optional<unsigned> pucch_res_ind =
         is_multiplexing_needed
-            ? multiplex_and_allocate_pucch(pucch_slot_alloc, new_bits, *existing_grant_it, ue_cell_cfg, std::nullopt)
-            : allocate_without_multiplexing(pucch_slot_alloc, new_bits, *existing_grant_it, ue_cell_cfg);
+            ? multiplex_and_allocate_pucch(pucch_slot_alloc, new_bits, *ue_grants_it, ue_cell_cfg, std::nullopt)
+            : allocate_without_multiplexing(pucch_slot_alloc, new_bits, *ue_grants_it, ue_cell_cfg);
 
     if (not pucch_res_ind) {
-      resource_manager.cancel_last_ue_res_reservations(sl_ack, crnti, ue_cell_cfg);
+      resource_manager.cancel_last_ue_res_reservations(pucch_slot_alloc.slot, crnti, ue_cell_cfg);
     }
     return pucch_res_ind;
   }
   return allocate_harq_grant(pucch_slot_alloc, crnti, ue_cell_cfg);
 }
 
-void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
-                                                         rnti_t                        crnti,
-                                                         const ue_cell_configuration&  ue_cell_cfg)
+void pucch_allocator_impl::alloc_sr_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
+                                                rnti_t                        crnti,
+                                                const ue_cell_configuration&  ue_cell_cfg)
 {
-  const slot_point sl_tx = pucch_slot_alloc.slot;
+  auto& pucch_grants = pucch_grants_alloc_grid[pucch_slot_alloc.slot.to_uint()];
+  auto* ue_grants_it = std::find_if(
+      pucch_grants.begin(), pucch_grants.end(), [crnti](const ue_grants& grants) { return grants.rnti == crnti; });
 
-  // [Implementation-defined] We only allow a max number of PUCCH + PUSCH grants per slot.
-  if (pucch_slot_alloc.result.ul.pucchs.size() >=
-      get_max_pucch_grants(static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size()))) {
-    logger.warning("rnti={}: SR occasion allocation for slot={} skipped. Cause: max number of UL grants reached",
-                   crnti,
-                   pucch_slot_alloc.slot);
+  std::optional<const ue_grants*> existing_ue_grants =
+      ue_grants_it != pucch_grants.end() ? std::optional{ue_grants_it} : std::nullopt;
+  if (not can_allocate_pucch_resources(pucch_slot_alloc, crnti, existing_ue_grants, pucch_grant_type::sr, false)) {
     return;
   }
 
-  if (pucch_grants_alloc_grid[sl_tx.to_uint()].full()) {
-    logger.info("rnti={}: PUCCH HARQ-ACK allocation for slot={} skipped. Cause: PUCCH allocator grant list is full",
-                crnti,
-                pucch_slot_alloc.slot);
-    return;
-  }
-
-  const auto* existing_grant_it = std::find_if(pucch_grants_alloc_grid[sl_tx.to_uint()].begin(),
-                                               pucch_grants_alloc_grid[sl_tx.to_uint()].end(),
-                                               [crnti](const ue_grants& ue) { return ue.rnti == crnti; });
-  if (existing_grant_it != pucch_grants_alloc_grid[sl_tx.to_uint()].end()) {
+  if (existing_ue_grants.has_value()) {
     // Allocation of dedicated + common resources are handled by allocating PUCCH common on existing SR, not the other
     // way around. If the function enters the path, it means it too early to start scheduling the SR.
-    if (existing_grant_it->has_common_pucch) {
+    if (ue_grants_it->has_common_pucch) {
       logger.info("rnti={}: SR occasion allocation for slot={} skipped. Cause: existing PUCCH common grant",
                   crnti,
                   pucch_slot_alloc.slot);
@@ -404,7 +368,7 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
     }
     // NOTE: This check can be removed in future refactors, it's not required by the SR allocator. At the moment, we
     // schedule the SRs before anything else, therefore we don't expect to find any existing PUCCH grant.
-    if (not existing_grant_it->pucch_grants.is_empty()) {
+    if (not ue_grants_it->pucch_grants.is_empty()) {
       logger.info("No PUCCH grants are expected before allocating a new SR grant", crnti, pucch_slot_alloc.slot);
       return;
     }
@@ -444,47 +408,40 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
   mark_pucch_in_resource_grid(pucch_slot_alloc, *pucch_sr_res, ue_cell_cfg);
 
   // Save the info in the scheduler list of PUCCH grants.
-  auto& sr_pucch_grant = pucch_grants_alloc_grid[sl_tx.to_uint()].emplace_back(ue_grants{.rnti = crnti});
+  auto& sr_pucch_grant = pucch_grants.emplace_back(ue_grants{.rnti = crnti});
   sr_pucch_grant.pucch_grants.sr_resource.emplace(pucch_grant{.type = pucch_grant_type::sr});
   sr_pucch_grant.pucch_grants.sr_resource.value().set_res_config(*pucch_sr_res);
   sr_pucch_grant.pucch_grants.sr_resource.value().bits.sr_bits = sr_nof_bits::one;
 }
 
-void pucch_allocator_impl::pucch_allocate_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
-                                                          rnti_t                        crnti,
-                                                          const ue_cell_configuration&  ue_cell_cfg,
-                                                          unsigned                      csi_part1_nof_bits)
+void pucch_allocator_impl::alloc_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
+                                                 rnti_t                        crnti,
+                                                 const ue_cell_configuration&  ue_cell_cfg,
+                                                 unsigned                      csi_part1_nof_bits)
 {
-  const slot_point sl_tx = pucch_slot_alloc.slot;
-
   // The PUCCH allocation may result in a temporary reservation of PUCCH resources, which need to be released in case of
   // failure or in case the multiplexing results in a different final PUCCH resource. If we don't reset the previous
   // record, we could release the resources that have been allocated for other UEs of allocated for this UE in a
   // different slot.
   resource_manager.reset_latest_reserved_res_tracker();
 
-  // [Implementation-defined] We only allow a max number of PUCCH + PUSCH grants per slot.
-  const unsigned max_pucch_grants =
-      get_max_pucch_grants(static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size()));
-  if (pucch_slot_alloc.result.ul.pucchs.size() >= max_pucch_grants) {
-    logger.warning("rnti={}: CSI occasion allocation for slot={} skipped. Cause: max number of UL grants {} reached",
-                   crnti,
-                   pucch_slot_alloc.slot,
-                   max_pucch_grants);
+  auto& pucch_grants = pucch_grants_alloc_grid[pucch_slot_alloc.slot.to_uint()];
+  auto* ue_grants_it = std::find_if(
+      pucch_grants.begin(), pucch_grants.end(), [crnti](const ue_grants& grants) { return grants.rnti == crnti; });
+
+  std::optional<const ue_grants*> existing_ue_grants =
+      ue_grants_it != pucch_grants.end() ? std::optional{ue_grants_it} : std::nullopt;
+  if (not can_allocate_pucch_resources(pucch_slot_alloc, crnti, existing_ue_grants, pucch_grant_type::csi, false)) {
     return;
   }
 
-  auto* existing_grant_it = std::find_if(pucch_grants_alloc_grid[sl_tx.to_uint()].begin(),
-                                         pucch_grants_alloc_grid[sl_tx.to_uint()].end(),
-                                         [crnti](const ue_grants& ue) { return ue.rnti == crnti; });
-
   // Handle case of no existing PUCCH grant.
-  if (existing_grant_it == pucch_grants_alloc_grid[sl_tx.to_uint()].end()) {
+  if (not existing_ue_grants.has_value()) {
     allocate_csi_grant(pucch_slot_alloc, crnti, ue_cell_cfg, csi_part1_nof_bits);
     return;
   }
 
-  if (existing_grant_it->has_common_pucch) {
+  if (ue_grants_it->has_common_pucch) {
     // Allocation of dedicated + common resources are handled by allocating PUCCH common on existing CSI, not the
     // other way around. If the function enters the path, it means it too early to start scheduling the CSI.
     logger.info("rnti={}: CSI occasion allocation for slot={} skipped. Cause: There is a PUCCH common grant"
@@ -495,13 +452,13 @@ void pucch_allocator_impl::pucch_allocate_csi_opportunity(cell_slot_resource_all
   }
 
   // Handle case of existing PUCCHs with possible multiplexing.
-  pucch_uci_bits bits_for_uci = existing_grant_it->pucch_grants.get_uci_bits();
+  pucch_uci_bits bits_for_uci = ue_grants_it->pucch_grants.get_uci_bits();
   srsran_assert(bits_for_uci.csi_part1_nof_bits == 0, "PUCCH grant for CSI has already been allocated");
   bits_for_uci.csi_part1_nof_bits = csi_part1_nof_bits;
   auto alloc_outcome =
-      multiplex_and_allocate_pucch(pucch_slot_alloc, bits_for_uci, *existing_grant_it, ue_cell_cfg, std::nullopt);
+      multiplex_and_allocate_pucch(pucch_slot_alloc, bits_for_uci, *ue_grants_it, ue_cell_cfg, std::nullopt);
   if (not alloc_outcome.has_value()) {
-    resource_manager.cancel_last_ue_res_reservations(sl_tx, crnti, ue_cell_cfg);
+    resource_manager.cancel_last_ue_res_reservations(pucch_slot_alloc.slot, crnti, ue_cell_cfg);
   }
 }
 
@@ -566,29 +523,6 @@ pucch_uci_bits pucch_allocator_impl::remove_ue_uci_from_pucch(cell_slot_resource
   }
 
   return removed_uci_info;
-}
-
-void pucch_allocator_impl::slot_indication(slot_point sl_tx)
-{
-  // If last_sl_ind is not valid (not initialized), then the check sl_tx == last_sl_ind + 1 does not matter.
-  srsran_sanity_check(not last_sl_ind.valid() or sl_tx == last_sl_ind + 1, "Detected a skipped slot");
-
-  // Update Slot.
-  last_sl_ind = sl_tx;
-
-  resource_manager.slot_indication(sl_tx);
-
-  // Clear previous slot PUCCH grants allocations.
-  pucch_grants_alloc_grid[(sl_tx - 1).to_uint()].clear();
-}
-
-void pucch_allocator_impl::stop()
-{
-  resource_manager.stop();
-  for (auto& grants : pucch_grants_alloc_grid) {
-    grants.clear();
-  }
-  last_sl_ind = {};
 }
 
 //////////////     Sub-class definitions       //////////////
@@ -884,6 +818,104 @@ void existing_pucch_pdus_handler::update_harq_pdu_bits(unsigned                 
 
 //////////////    Private functions       //////////////
 
+/// Returns whether a given UE can be allocated a PUCCH resource in a given slot.
+bool pucch_allocator_impl::can_allocate_pucch_resources(const cell_slot_resource_allocator& pucch_slot_alloc,
+                                                        rnti_t                              rnti,
+                                                        std::optional<const ue_grants*>     existing_ue_grants,
+                                                        pucch_grant_type                    grant_type,
+                                                        bool                                common_and_ded) const
+{
+  // [Implementation-defined] We only allocate PUCCH grants on fully UL slots.
+  if (not cell_cfg.is_fully_ul_enabled(pucch_slot_alloc.slot)) {
+    return false;
+  }
+
+  // If there are no existing grants or if the existing one is for SR with Format 0/1, we need to add 2 additional PUCCH
+  // grants: 1 on common resources and 1 on dedicated resources (for HARQ-ACK bit).
+  // In the case of CSI, the number of PUCCH additional grants depends on the PUCCH resources configuration, but it will
+  // never be more than 2. The exact number cannot be known at this point.
+  const unsigned grants_to_allocate = common_and_ded ? 2U : 1U;
+
+  // [Implementation-defined] We only allow a max number of PUCCH + PUSCH grants per slot.
+  const unsigned max_pucch_grants =
+      get_max_pucch_grants(static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size()));
+  if (pucch_slot_alloc.result.ul.pucchs.size() + grants_to_allocate > max_pucch_grants) {
+    if (grant_type != pucch_grant_type::harq_ack) {
+      // We don't expect SR/CSI grants to fail as they are allocated first.
+      logger.warning("rnti={}: PUCCH {} allocation for slot={} skipped. Cause: max number of UL grants reached",
+                     rnti,
+                     to_string(grant_type),
+                     pucch_slot_alloc.slot);
+    } else {
+      logger.info("rnti={}: PUCCH {} allocation for slot={} skipped. Cause: max number of UL grants reached",
+                  rnti,
+                  to_string(grant_type),
+                  pucch_slot_alloc.slot);
+    }
+    return false;
+  }
+
+  // Check if there is space in the PUCCH PDUs list of the slot.
+  if (pucch_slot_alloc.result.ul.pucchs.size() + grants_to_allocate > pucch_slot_alloc.result.ul.pucchs.capacity()) {
+    logger.info("rnti={}: PUCCH {} allocation for slot={} skipped. Cause: not enough space in the PUCCH PDUs list",
+                rnti,
+                to_string(grant_type),
+                pucch_slot_alloc.slot);
+    return false;
+  }
+
+  // Check if there is space in the PUCCH grants list of the slot.
+  const auto& pucch_grants_slot = pucch_grants_alloc_grid[pucch_slot_alloc.slot.to_uint()];
+  if (not existing_ue_grants.has_value() and pucch_grants_slot.full()) {
+    logger.info("rnti={}: PUCCH {} allocation for slot={} skipped. Cause: PUCCH allocator grant list is full",
+                rnti,
+                to_string(grant_type),
+                pucch_slot_alloc.slot);
+    return false;
+  }
+
+  return true;
+}
+
+bool pucch_allocator_impl::can_allocate_common_pucch_resource(const cell_slot_resource_allocator& pucch_slot_alloc,
+                                                              rnti_t                              rnti,
+                                                              std::optional<const ue_grants*> existing_ue_grants) const
+{
+  // The UE can't multiplex PUCCH and PUSCH during fallback, so skip PUCCH if there is an existing PUSCH for that UE.
+  // Note: if the PUSCH and PUCCH don't overlap in OFDM symbols, they wouldn't require multiplexing and we could
+  // schedule both, but this will never happen in the current implementation due to:
+  // - PUSCH taking all symbols unless SRS is configured for the last N symbols.
+  // - SRS using all RBs.
+  if (std::any_of(pucch_slot_alloc.result.ul.puschs.begin(),
+                  pucch_slot_alloc.result.ul.puschs.end(),
+                  [rnti](const ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == rnti; })) {
+    return false;
+  }
+
+  if (existing_ue_grants.has_value()) {
+    const auto& grants = *existing_ue_grants.value();
+
+    // As per Section 9.2.1, TS 38.213:
+    // - If a UE is not provided pdsch-HARQ-ACK-Codebook, the UE generates at most one HARQ-ACK information bit.
+    // Since we don't ever expect to have multiple HARQ-ACK bits to be sent in the same slot during fallback, there
+    // shouldn't be any existing HARQ-ACK PUCCH grants for this UE. This is a defensive check for possible bugs.
+    const bool has_existing_ded_harq_ack_grant = grants.pucch_grants.harq_resource.has_value();
+    const bool has_existing_common_grant       = grants.has_common_pucch;
+    if (has_existing_common_grant or has_existing_ded_harq_ack_grant) {
+      logger.error("rnti={}: common PUCCH for slot={} not allocated. Cause: another PUCCH grant with HARQ-ACK bits "
+                   "already exists for the same UE for the same slot (this should never happen during fallback)",
+                   rnti,
+                   pucch_slot_alloc.slot);
+      return false;
+    }
+
+    srsran_assert(not(grants.pucch_grants.sr_resource.has_value() and grants.pucch_grants.csi_resource.has_value()),
+                  "It is expected that there are either no grants, or at most 1 PUCCH grant (SR grant or CSI grant)");
+  }
+
+  return true;
+}
+
 // The function returns an available common PUCCH resource (i.e., not used by other UEs); it returns a null optional
 // if no resource is available.
 std::optional<pucch_allocator_impl::pucch_res_alloc_cfg>
@@ -1166,7 +1198,7 @@ void pucch_allocator_impl::fill_pucch_harq_common_grant(pucch_info&             
       break;
     }
     default:
-      srsran_assert(false, "Only PUCCH Format 0 and 1 can be used for PUCCH common resources");
+      srsran_assertion_failure("Only PUCCH Format 0 and 1 can be used for PUCCH common resources");
   }
 }
 

@@ -104,12 +104,12 @@ public:
 
   void slot_indication(slot_point sl_tx) override { next_uci_allocation.reset(); }
 
-  std::optional<uci_allocation> alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,
-                                                  rnti_t                       crnti,
-                                                  const ue_cell_configuration& ue_cell_cfg,
-                                                  unsigned                     k0,
-                                                  span<const uint8_t>          k1_list,
-                                                  const pdcch_dl_information*  fallback_dci_info = nullptr) override
+  std::optional<uci_allocation> alloc_harq_ack(cell_resource_allocator&     res_alloc,
+                                               rnti_t                       crnti,
+                                               const ue_cell_configuration& ue_cell_cfg,
+                                               unsigned                     k0,
+                                               span<const uint8_t>          k1_list,
+                                               const pdcch_dl_information*  fallback_dci_info = nullptr) override
   {
     return next_uci_allocation;
   }
@@ -121,21 +121,21 @@ public:
   {
   }
 
-  void uci_allocate_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
-                                   rnti_t                        crnti,
-                                   const ue_cell_configuration&  ue_cell_cfg) override
+  void alloc_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
+                            rnti_t                        crnti,
+                            const ue_cell_configuration&  ue_cell_cfg) override
   {
   }
 
-  void uci_allocate_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
-                                    rnti_t                        crnti,
-                                    const ue_cell_configuration&  ue_cell_cfg) override
+  void alloc_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
+                             rnti_t                        crnti,
+                             const ue_cell_configuration&  ue_cell_cfg) override
   {
   }
 
   uint8_t get_scheduled_pdsch_counter_in_ue_uci(slot_point uci_slot, rnti_t crnti) override { return 0; }
 
-  bool has_uci_harq_on_common_pucch_res(rnti_t crnti, slot_point sl_tx) override { return false; }
+  bool has_harq_ack_on_common_pucch_res(rnti_t crnti, slot_point sl_tx) override { return false; }
 };
 
 class sched_cfg_dummy_notifier : public sched_configuration_notifier
