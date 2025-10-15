@@ -21,6 +21,8 @@ using namespace srsran;
 using namespace srsran::srs_du;
 using namespace asn1::f1ap;
 
+static constexpr std::chrono::milliseconds f1_setup_response_timeout{3000};
+
 f1ap_du_setup_procedure::f1ap_du_setup_procedure(const f1_setup_request_message& request_,
                                                  f1ap_message_notifier&          cu_notif_,
                                                  f1ap_event_manager&             ev_mng_,
@@ -40,7 +42,7 @@ void f1ap_du_setup_procedure::operator()(coro_context<async_task<f1_setup_result
   CORO_BEGIN(ctx);
 
   while (true) {
-    transaction = ev_mng.transactions.create_transaction();
+    transaction = ev_mng.transactions.create_transaction(f1_setup_response_timeout);
     if (not transaction.valid()) {
       CORO_EARLY_RETURN(create_f1_setup_result());
     }
@@ -117,6 +119,7 @@ bool f1ap_du_setup_procedure::retry_required()
     // Timeout or cancellation case.
     return false;
   }
+
   const f1ap_transaction_response& cu_pdu_response = transaction.response();
   if (cu_pdu_response.has_value()) {
     // Success case.
