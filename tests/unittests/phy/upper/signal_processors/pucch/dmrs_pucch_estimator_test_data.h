@@ -13,7 +13,7 @@
 // This file was generated using the following MATLAB class on 03-07-2025 (seed 0):
 //   + "srsPUCCHdmrsUnittest.m"
 
-#include "../../support/resource_grid_test_doubles.h"
+#include "../../../support/resource_grid_test_doubles.h"
 #include "srsran/phy/upper/signal_processors/pucch/dmrs_pucch_estimator.h"
 #include "srsran/support/file_vector.h"
 #include <variant>

@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "../../phy_test_utils.h"
-#include "srsran/phy/upper/signal_processors/ssb/factories.h"
+#include "../../../phy_test_utils.h"
+#include "srsran/phy/upper/signal_processors/pdcch/factories.h"
 
 namespace srsran {
 
-class pss_processor_spy : public pss_processor
+class dmrs_pdcch_processor_spy : public dmrs_pdcch_processor
 {
 private:
   struct entry_t {
@@ -37,6 +37,6 @@ public:
   const std::vector<entry_t>& get_entries() const { return entries; }
 };
 
-PHY_SPY_FACTORY_TEMPLATE(pss_processor);
+PHY_SPY_FACTORY_TEMPLATE(dmrs_pdcch_processor);
 
 } // namespace srsran

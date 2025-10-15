@@ -8,7 +8,7 @@
  *
  */
 
-#include "../../support/resource_grid_test_doubles.h"
+#include "../../../support/resource_grid_test_doubles.h"
 #include "srsran/phy/constants.h"
 #include "srsran/phy/upper/signal_processors/ssb/factories.h"
 #include <random>

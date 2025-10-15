@@ -13,7 +13,7 @@
 // This file was generated using the following MATLAB class on 27-06-2024 (seed 0):
 //   + "srsNZPCSIRSGeneratorUnittest.m"
 
-#include "../../support/resource_grid_test_doubles.h"
+#include "../../../support/resource_grid_test_doubles.h"
 #include "srsran/phy/upper/signal_processors/nzp_csi_rs/nzp_csi_rs_generator.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/support/file_vector.h"

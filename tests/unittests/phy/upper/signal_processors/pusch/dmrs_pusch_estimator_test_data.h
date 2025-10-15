@@ -13,7 +13,7 @@
 // This file was generated using the following MATLAB class on 27-01-2025 (seed 0):
 //   + "srsPUSCHdmrsUnittest.m"
 
-#include "../../support/resource_grid_test_doubles.h"
+#include "../../../support/resource_grid_test_doubles.h"
 #include "srsran/phy/upper/signal_processors/pusch/dmrs_pusch_estimator.h"
 #include "srsran/support/file_vector.h"
 

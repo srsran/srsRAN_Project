@@ -13,7 +13,7 @@
 // This file was generated using the following MATLAB class on 13-12-2023 (seed 0):
 //   + "srsPBCHdmrsUnittest.m"
 
-#include "../../support/resource_grid_test_doubles.h"
+#include "../../../support/resource_grid_test_doubles.h"
 #include "srsran/phy/upper/signal_processors/ssb/dmrs_pbch_processor.h"
 #include "srsran/support/file_vector.h"
 

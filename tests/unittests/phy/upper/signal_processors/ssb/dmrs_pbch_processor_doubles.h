@@ -1,12 +1,21 @@
+/*
+ *
+ * Copyright 2021-2025 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
 
 #pragma once
 
-#include "../../phy_test_utils.h"
-#include "srsran/phy/upper/signal_processors/pdsch/factories.h"
+#include "../../../phy_test_utils.h"
+#include "srsran/phy/upper/signal_processors/ssb/factories.h"
 
 namespace srsran {
 
-class dmrs_pdsch_processor_spy : public dmrs_pdsch_processor
+class dmrs_pbch_processor_spy : public dmrs_pbch_processor
 {
 private:
   struct entry_t {
@@ -28,6 +37,6 @@ public:
   const std::vector<entry_t>& get_entries() const { return entries; }
 };
 
-PHY_SPY_FACTORY_TEMPLATE(dmrs_pdsch_processor);
+PHY_SPY_FACTORY_TEMPLATE(dmrs_pbch_processor);
 
 } // namespace srsran
