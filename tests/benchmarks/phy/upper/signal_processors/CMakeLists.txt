@@ -10,7 +10,8 @@ add_executable(dmrs_pdsch_processor_benchmark dmrs_pdsch_processor_benchmark.cpp
 target_link_libraries(dmrs_pdsch_processor_benchmark
         srsvec
         srslog
-        srsran_signal_processors
+        srsran_dmrs_pdsch
+        srsran_phy_support
         srsran_sequence_generators
         srsran_channel_precoder)
 add_test(dmrs_pdsch_processor_benchmark dmrs_pdsch_processor_benchmark -D -s -R 1)
@@ -21,6 +22,8 @@ target_link_libraries(srs_estimator_benchmark
         srsvec
         srslog
         srsran_channel_precoder
-        srsran_signal_processors
+        srsran_srs_estimator
+        srsran_phy_support
+        srsran_dft
         srsran_sequence_generators)
 add_test(srs_estimator_benchmark srs_estimator_benchmark -D -s -R 1)
