@@ -115,12 +115,6 @@ public:
   /// Called when the UE confirms that it applied the new configuration.
   void handle_config_applied();
 
-  /// Determines whether a UE reconfiguration is being processed.
-  bool is_reconfig_ongoing() const { return reconf_ongoing; }
-
-  /// Determines whether the UE has been reestablished.
-  bool is_reestablished() const { return reestablished; }
-
   /// \brief Handles DL Buffer State indication.
   void handle_dl_buffer_state_indication(lcid_t lcid, unsigned bs, slot_point hol_toa = {});
 
@@ -218,12 +212,6 @@ private:
   ul_logical_channel_manager ul_lc_ch_mgr;
 
   slot_point last_sl_tx;
-
-  /// Whether a UE reconfiguration is taking place.
-  bool reconf_ongoing = false;
-
-  /// Whether the UE has been reestablished.
-  bool reestablished = false;
 
   /// UE Timing Advance Manager.
   ta_manager ta_mgr;

@@ -89,6 +89,7 @@ struct test_bench {
   pucch_allocator_impl          pucch_alloc{cell_cfg, 31U, 32U};
   uci_allocator_impl            uci_alloc{pucch_alloc};
   ue_repository                 ue_db;
+  ue_cell_repository&           ue_cell_db;
   ue_fallback_scheduler         fallback_sched;
   csi_rs_scheduler              csi_rs_sched;
 
@@ -98,6 +99,7 @@ struct test_bench {
     sched_cfg{std::move(sched_cfg_)},
     builder_params{builder_params_},
     cell_cfg{*[&]() { return cfg_mng.add_cell(cell_req); }()},
+    ue_cell_db(ue_db.add_cell(to_du_cell_index(0))),
     fallback_sched(expert_cfg, cell_cfg, pdcch_sch, pucch_alloc, uci_alloc, ue_db),
     csi_rs_sched(cell_cfg)
   {
@@ -122,7 +124,7 @@ struct test_bench {
     }
     ue_db.add_ue(std::move(u));
     auto& ue = ue_db[create_req.ue_index];
-    ue.get_pcell().set_fallback_state(true);
+    ue.get_pcell().set_fallback_state(true, false, false);
     ev.notify_completion();
     return true;
   }

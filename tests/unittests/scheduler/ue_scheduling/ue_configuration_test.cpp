@@ -99,8 +99,8 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
 
   // Confirm that the UE is in fallback.
   ASSERT_TRUE(u.get_pcell().is_in_fallback_mode());
-  ASSERT_TRUE(u.is_reconfig_ongoing());
-  ASSERT_FALSE(u.is_reestablished());
+  ASSERT_TRUE(u.get_pcell().get_pcell_state().reconf_ongoing);
+  ASSERT_FALSE(u.get_pcell().get_pcell_state().reestablished);
 
   // While in fallback, DL buffer status that are not for SRB0/SRB1, do not get represented in pending bytes.
   ASSERT_FALSE(u.has_pending_dl_newtx_bytes());

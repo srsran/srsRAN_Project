@@ -55,6 +55,8 @@ protected:
 
     next_slot = {to_numerology_value(req.scs_common), 0};
 
+    ue_db.add_cell(to_du_cell_index(0));
+
     slices.push_back(std::make_unique<slice_ue_repository>(SRB_RAN_SLICE_ID, du_cell_index_t(0)));
     slices.push_back(std::make_unique<slice_ue_repository>(DEFAULT_DRB_RAN_SLICE_ID, du_cell_index_t(0)));
     slices.push_back(std::make_unique<slice_ue_repository>(ran_slice_id_t{2}, du_cell_index_t(0)));

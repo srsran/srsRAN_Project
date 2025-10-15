@@ -138,6 +138,18 @@ void ue_repository::slot_indication(slot_point sl_tx)
   }
 }
 
+ue_cell_repository& ue_repository::add_cell(du_cell_index_t cell_index)
+{
+  srsran_sanity_check(not cell_ues.contains(cell_index), "Cell index {} is duplicate", fmt::underlying(cell_index));
+  cell_ues.emplace(cell_index, cell_index, logger);
+  return cell_ues[cell_index];
+}
+
+void ue_repository::rem_cell(du_cell_index_t cell_index)
+{
+  cell_ues.erase(cell_index);
+}
+
 void ue_repository::add_ue(std::unique_ptr<ue> u)
 {
   // Add UE in repository.
@@ -149,9 +161,9 @@ void ue_repository::add_ue(std::unique_ptr<ue> u)
   rnti_to_ue_index_lookup.insert(std::make_pair(rnti, ue_index));
 
   // Add UE in cell-specific repositories.
-  for (std::shared_ptr<ue_cell>& c : ues[ue_index]->ue_du_cells) {
-    const du_cell_index_t c_idx = c->cell_index;
-    cell_ues[c_idx].add_ue(c);
+  for (ue_cell* cc : ues[ue_index]->ue_cells) {
+    const du_cell_index_t c_idx = cc->cell_index;
+    cell_ues[c_idx].add_ue(ues[ue_index]->ue_du_cells[c_idx]);
   }
 }
 
@@ -187,9 +199,9 @@ void ue_repository::schedule_ue_rem(ue_config_delete_event ev)
     u->deactivate();
 
     // Register UE for later removal.
-    // We define a time window when the UE removal is not allowed, as there are pending CSI/SR PDUs in the resource grid
-    // ready to be sent to the PHY. Removing the UE earlier would mean that its PUCCH resources would become available
-    // to a newly created UE and there could be a PUCCH collision.
+    // We define a time window when the UE removal is not allowed, as there are pending CSI/SR PDUs in the resource
+    // grid ready to be sent to the PHY. Removing the UE earlier would mean that its PUCCH resources would become
+    // available to a newly created UE and there could be a PUCCH collision.
     slot_point rem_slot =
         last_sl_tx + get_max_slot_ul_alloc_delay(u->get_pcell().cfg().cell_cfg_common.ntn_cs_koffset) + 1;
     ues_to_rem.push(std::make_pair(rem_slot, std::move(ev)));
@@ -220,6 +232,12 @@ void ue_repository::rem_ue(const ue& u)
   const rnti_t        crnti  = u.crnti;
   const du_ue_index_t ue_idx = u.ue_index;
 
+  // Remove UE cc from the cell-specific repositories.
+  for (auto* ue_cc : u.ue_cells) {
+    const du_cell_index_t c_idx = ue_cc->cell_index;
+    cell_ues[c_idx].rem_ue(ue_idx);
+  }
+
   // Remove UE from lookup.
   auto it = rnti_to_ue_index_lookup.find(crnti);
   if (it != rnti_to_ue_index_lookup.end()) {
@@ -248,8 +266,8 @@ void ue_repository::handle_cell_deactivation(du_cell_index_t cell_index)
       continue;
     }
 
-    // Note: We now remove the UE from the repository, indepedently of whether it is a PCell or SCell. It would be very
-    // hard to handle a UE that has a config for a cell that is not active.
+    // Note: We now remove the UE from the repository, indepedently of whether it is a PCell or SCell. It would be
+    // very hard to handle a UE that has a config for a cell that is not active.
     rem_ue(*u);
   }
 

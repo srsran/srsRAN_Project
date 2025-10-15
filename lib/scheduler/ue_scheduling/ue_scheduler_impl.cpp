@@ -26,6 +26,7 @@ ue_cell_scheduler* ue_scheduler_impl::do_add_cell(const ue_cell_scheduler_creati
   // Create a cell-specific UE event manager.
   cell.ev_mng = event_mng.add_cell(cell_creation_event{*params.cell_res_alloc,
                                                        cell.cell_harqs,
+                                                       cell.ue_cell_db,
                                                        cell.fallback_sched,
                                                        cell.uci_sched,
                                                        cell.slice_sched,
@@ -247,6 +248,7 @@ ue_scheduler_impl::cell_context::cell_context(ue_scheduler_impl&                
       params.cell_res_alloc->cfg.ntn_cs_koffset,
       params.cell_res_alloc->cfg.dl_harq_mode_b,
       params.cell_res_alloc->cfg.ul_harq_mode_b),
+  ue_cell_db(parent.ue_db.add_cell(params.cell_index)),
   uci_sched(params.cell_res_alloc->cfg, *params.uci_alloc, parent.ue_db),
   fallback_sched(parent.expert_cfg,
                  params.cell_res_alloc->cfg,
@@ -265,4 +267,9 @@ ue_scheduler_impl::cell_context::cell_context(ue_scheduler_impl&                
                     srslog::fetch_basic_logger("SCHED")),
   srs_sched(params.cell_res_alloc->cfg, parent.ue_db)
 {
+}
+
+ue_scheduler_impl::cell_context::~cell_context()
+{
+  parent.ue_db.rem_cell(ue_cell_db.cell_index());
 }

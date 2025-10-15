@@ -42,7 +42,7 @@ ue::ue(const ue_creation_command& cmd) :
 
   for (auto& cell : ue_du_cells) {
     if (cell != nullptr) {
-      cell->set_fallback_state(cmd.starts_in_fallback);
+      cell->set_fallback_state(cmd.starts_in_fallback, false, false);
     }
   }
 }
@@ -86,9 +86,7 @@ void ue::release_resources()
 void ue::handle_reconfiguration_request(const ue_reconf_command& cmd, bool reestablished_)
 {
   // UE enters fallback mode when a Reconfiguration takes place.
-  reconf_ongoing = true;
-  reestablished  = reestablished_;
-  get_pcell().set_fallback_state(true);
+  get_pcell().set_fallback_state(true, true, reestablished_);
   dl_lc_ch_mgr.set_fallback_state(true);
 
   // Update UE config.
@@ -97,10 +95,8 @@ void ue::handle_reconfiguration_request(const ue_reconf_command& cmd, bool reest
 
 void ue::handle_config_applied()
 {
-  get_pcell().set_fallback_state(false);
+  get_pcell().set_fallback_state(false, false, false);
   dl_lc_ch_mgr.set_fallback_state(false);
-  reconf_ongoing = false;
-  reestablished  = false;
 }
 
 void ue::set_config(const ue_configuration& new_cfg, std::optional<slot_point> msg3_slot_rx)
@@ -131,8 +127,13 @@ void ue::set_config(const ue_configuration& new_cfg, std::optional<slot_point> m
     du_cell_index_t cell_index   = ue_ded_cfg->ue_cell_cfg(to_ue_cell_index(ue_cell_index)).cell_cfg_common.cell_index;
     auto&           ue_cell_inst = ue_du_cells[cell_index];
     if (ue_cell_inst == nullptr) {
-      ue_cell_inst = std::make_shared<ue_cell>(
-          ue_index, crnti, ue_ded_cfg->ue_cell_cfg(cell_index), pcell_harq_pool, drx, msg3_slot_rx);
+      ue_cell_inst = std::make_shared<ue_cell>(ue_index,
+                                               crnti,
+                                               to_ue_cell_index(ue_cell_index),
+                                               ue_ded_cfg->ue_cell_cfg(cell_index),
+                                               pcell_harq_pool,
+                                               ue_shared_context{drx},
+                                               msg3_slot_rx);
       if (ue_cell_index >= ue_cells.size()) {
         ue_cells.resize(ue_cell_index + 1);
       }

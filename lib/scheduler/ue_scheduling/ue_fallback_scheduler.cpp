@@ -281,7 +281,7 @@ bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_allo
     }
 
     const bool srb0_or_srb1_only = alloc_type != dl_new_tx_alloc_type::conres_only and not u.is_conres_ce_pending();
-    if (srb0_or_srb1_only and not u.get_pcell().is_conres_complete()) {
+    if (srb0_or_srb1_only and not u.get_pcell().get_pcell_state().conres_complete) {
       // If the UE hasn't acked the ConRes, we cannot schedule the SRB0 or SRB1, as any MAC PDU received without ConRes
       // MAC CE would make the Contention Resolution fail, as per TS 38.331, Section 5.1.5.
       ++next_ue;
@@ -376,12 +376,12 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
     // If the UE hasn't acked (or received) the ConRes (for a new tx or retx) and ra-ContentionResolutionTimer will
     // expire by the slot it will receive the ConRes, abort the allocation; the \ref slot_indication function will take
     // care of removing the UE.
-    if (u.get_pcell().get_msg3_rx_slot().valid() and not u.get_pcell().is_conres_complete()) {
+    if (u.get_pcell().get_pcell_state().msg3_rx_slot.valid() and not u.get_pcell().get_pcell_state().conres_complete) {
       const auto ra_conres_timer_subframes =
           static_cast<uint32_t>(
               u.get_pcell().cfg().init_bwp().ul_common.value()->rach_cfg_common.value().ra_con_res_timer.count()) +
           cell_cfg.ntn_cs_koffset;
-      const int conres_msg3_slot_diff = pdsch_alloc.slot - u.get_pcell().get_msg3_rx_slot();
+      const int conres_msg3_slot_diff = pdsch_alloc.slot - u.get_pcell().get_pcell_state().msg3_rx_slot;
       if (conres_msg3_slot_diff < 0 or
           divide_ceil<uint32_t, uint32_t>(static_cast<uint32_t>(conres_msg3_slot_diff),
                                           pdsch_alloc.slot.nof_slots_per_subframe()) > ra_conres_timer_subframes) {
@@ -658,8 +658,9 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
   // allocations.
   // Note: \c u.is_reestablished() is only set at the start of the RRC Reconfiguration procedure following a
   // re-establishment.
-  const bool use_common    = not u.is_reconfig_ongoing() or u.is_reestablished();
-  bool       use_dedicated = u.is_reconfig_ongoing();
+  const bool use_common =
+      not u.get_pcell().get_pcell_state().reconf_ongoing or u.get_pcell().get_pcell_state().reestablished;
+  bool use_dedicated = u.get_pcell().get_pcell_state().reconf_ongoing;
   if (u.ue_cfg_dedicated()->is_ue_cfg_complete()) {
     // Note: this check is meant for the case of the GNB missing the ACK for RRCSetup and then retransmitting it. In
     // this case, we need to schedule also on dedicated because the UE already has a dedicated configuration, even
@@ -1354,13 +1355,13 @@ static bool handle_conres_expiry(ue& u, slot_point sl_tx, srslog::basic_logger& 
 {
   auto& ue_pcell = u.get_pcell();
 
-  if (ue_pcell.is_conres_complete() or not ue_pcell.get_msg3_rx_slot().valid()) {
+  if (ue_pcell.get_pcell_state().conres_complete or not ue_pcell.get_pcell_state().msg3_rx_slot.valid()) {
     return false;
   }
 
   const auto conres_timer = ue_pcell.cfg().init_bwp().ul_common.value()->rach_cfg_common->ra_con_res_timer.count();
   const auto conres_timer_slots = (conres_timer + ntn_cs_koffset) * sl_tx.nof_slots_per_subframe();
-  const auto sl_conres          = ue_pcell.get_msg3_rx_slot() + conres_timer_slots;
+  const auto sl_conres          = ue_pcell.get_pcell_state().msg3_rx_slot + conres_timer_slots;
   if (sl_conres > sl_tx) {
     // ConRes window has not yet elapsed.
     return false;

@@ -31,6 +31,7 @@ class pdu_indication_pool;
 struct cell_creation_event {
   cell_resource_allocator& cell_res_grid;
   cell_harq_manager&       cell_harqs;
+  ue_cell_repository&      ue_cell_db;
   ue_fallback_scheduler&   fallback_sched;
   uci_scheduler_impl&      uci_sched;
   inter_slice_scheduler&   slice_sched;

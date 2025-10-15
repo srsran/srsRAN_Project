@@ -56,6 +56,9 @@ private:
     /// HARQ pool for this cell.
     cell_harq_manager cell_harqs;
 
+    /// Repository of UEs for this cell.
+    ue_cell_repository& ue_cell_db;
+
     /// PUCCH scheduler.
     uci_scheduler_impl uci_sched;
 
@@ -75,6 +78,7 @@ private:
     std::unique_ptr<ue_cell_event_manager> ev_mng;
 
     cell_context(ue_scheduler_impl& parent, const ue_cell_scheduler_creation_request& params);
+    ~cell_context();
 
     void run_slot(slot_point sl_tx) override { parent.run_slot_impl(sl_tx); }
 

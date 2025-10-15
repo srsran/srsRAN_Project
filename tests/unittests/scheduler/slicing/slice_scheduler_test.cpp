@@ -46,6 +46,8 @@ protected:
   {
     logger.set_level(srslog::basic_levels::debug);
     srslog::init();
+
+    ues.add_cell(cell_cfg.cell_index);
   }
 
   ~slice_scheduler_test() { srslog::flush(); }

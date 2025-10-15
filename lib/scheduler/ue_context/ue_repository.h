@@ -92,6 +92,9 @@ public:
   ue&       operator[](du_ue_index_t ue_index) { return *ues[ue_index]; }
   const ue& operator[](du_ue_index_t ue_index) const { return *ues[ue_index]; }
 
+  ue_cell_repository& add_cell(du_cell_index_t cell_index);
+  void                rem_cell(du_cell_index_t cell_index);
+
   // Access UEs per cell.
   ue_cell_repository&       cell(du_cell_index_t cell_index) { return cell_ues[cell_index]; }
   const ue_cell_repository& cell(du_cell_index_t cell_index) const { return cell_ues[cell_index]; }
