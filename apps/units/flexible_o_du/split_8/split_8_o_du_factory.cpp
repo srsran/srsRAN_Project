@@ -10,15 +10,9 @@
 
 #include "split_8_o_du_factory.h"
 #include "helpers/ru_sdr_factories.h"
+#include "helpers/ru_sdr_helpers.h"
 
 using namespace srsran;
-
-/// Calculates the dBFS calibration value as sqrt(sampling rate / subcarrier spacing). This factor is the magnitude of a
-/// single subcarrier in normalized PHY linear units equivalent to a constant signal with a power of 0 dBFS.
-static float calculate_dBFS_calibration_value(float sampling_rate_MHz, subcarrier_spacing scs)
-{
-  return std::sqrt(sampling_rate_MHz * 1e3 / scs_to_khz(scs));
-}
 
 split8_du_factory::split8_du_factory(const split_8_o_du_unit_config& config_) :
   flexible_o_du_factory(

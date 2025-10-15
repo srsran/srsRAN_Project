@@ -17,6 +17,7 @@
 #include "apps/units/flexible_o_du/split_7_2/helpers/ru_ofh_factories.h"
 #include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_config_validator.h"
 #include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_factories.h"
+#include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_helpers.h"
 #include "apps/units/flexible_o_du/split_helpers/flexible_o_du_configs.h"
 #include "external/fmt/include/fmt/chrono.h"
 #include "split6_constants.h"
@@ -247,7 +248,7 @@ split6_flexible_o_du_low_session_factory::create_o_du_low(const fapi::fapi_cell_
   // spacing). This factor is the magnitude of a single subcarrier in normalized PHY linear units equivalent to
   // a constant signal with a power of 0 dBFS.
   if (sampling_rate_MHz) {
-    fapi_sector.dBFS_calibration_value = std::sqrt(*sampling_rate_MHz * 1e3 / scs_to_khz(config.phy_cfg.scs));
+    fapi_sector.dBFS_calibration_value = calculate_dBFS_calibration_value(*sampling_rate_MHz, config.phy_cfg.scs);
   }
 
   // :TODO: add a parse option for the sector, so it will be easier to debug problems when running more than one

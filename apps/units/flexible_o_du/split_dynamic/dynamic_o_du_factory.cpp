@@ -12,6 +12,7 @@
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/flexible_o_du/split_7_2/helpers/ru_ofh_factories.h"
 #include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_factories.h"
+#include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_helpers.h"
 #include "dynamic_o_du_translators.h"
 #include "srsran/ru/dummy/ru_dummy_factory.h"
 
@@ -24,7 +25,7 @@ generate_ru_config(const std::variant<ru_sdr_unit_config, ru_ofh_unit_parsed_con
   if (const auto* ru = std::get_if<ru_sdr_unit_config>(&ru_cfg)) {
     return {ru->metrics_cfg.metrics_cfg,
             ru->metrics_cfg.enable_ru_metrics,
-            static_cast<float>(std::sqrt(ru->srate_MHz * 1e3 / scs_to_khz(scs)))};
+            calculate_dBFS_calibration_value(ru->srate_MHz, scs)};
   }
 
   if (const auto* ru = std::get_if<ru_dummy_unit_config>(&ru_cfg)) {
