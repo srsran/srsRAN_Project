@@ -10,7 +10,7 @@
 
 #include "dmrs_pdsch_processor_test_data.h"
 #include "srsran/phy/support/support_factories.h"
-#include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
+#include "srsran/phy/upper/signal_processors/pdsch/factories.h"
 
 using namespace srsran;
 

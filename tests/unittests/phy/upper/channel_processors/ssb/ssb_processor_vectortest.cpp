@@ -11,9 +11,7 @@
 #include "ssb_processor_test_data.h"
 #include "srsran/phy/upper/channel_processors/ssb/factories.h"
 #include "srsran/phy/upper/channel_processors/ssb/formatters.h"
-#include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
-#include "srsran/phy/upper/signal_processors/ssb/pss_processor.h"
-#include "srsran/phy/upper/signal_processors/ssb/sss_processor.h"
+#include "srsran/phy/upper/signal_processors/ssb/factories.h"
 
 using namespace srsran;
 

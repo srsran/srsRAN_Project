@@ -10,7 +10,7 @@
 
 #include "../../support/resource_grid_test_doubles.h"
 #include "dmrs_pucch_estimator_test_data.h"
-#include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
+#include "srsran/phy/upper/signal_processors/pucch/factories.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 

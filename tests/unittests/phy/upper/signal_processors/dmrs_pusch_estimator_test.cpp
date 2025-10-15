@@ -12,7 +12,7 @@
 #include "dmrs_pusch_estimator_test_data.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_phy_capabilities.h"
-#include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
+#include "srsran/phy/upper/signal_processors/pusch/factories.h"
 #include "srsran/srsvec/zero.h"
 #include "srsran/support/executors/inline_task_executor.h"
 #include "fmt/ostream.h"
