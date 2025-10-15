@@ -73,6 +73,8 @@ struct du_low_unit_expert_upper_phy_config {
   bool allow_request_on_empty_uplink_slot = false;
   /// Enables the PHY tap plugin if present.
   bool enable_phy_tap = false;
+  /// PHY tap plugin arguments.
+  std::string phy_tap_arguments = "";
 };
 
 /// DU low logging functionalities.

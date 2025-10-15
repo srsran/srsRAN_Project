@@ -290,7 +290,7 @@ struct upper_phy_factory_configuration {
   /// Boolean flag for dumping PRACH symbols when set to true.
   bool rx_symbol_printer_prach;
   /// Enables the PHY tap plugin if present.
-  bool enable_phy_tap;
+  std::optional<std::string> phy_tap_arguments;
   /// \brief LDPC encoder type.
   ///
   /// Use of these options:
@@ -413,20 +413,6 @@ create_rx_symbol_handler_printer_decorator_factory(std::shared_ptr<upper_phy_rx_
                                                    interval<unsigned>                                   ul_print_ports_,
                                                    bool                                                 print_prach_);
 
-/// \brief Creates an RX symbol handler tap factory.
-///
-/// This factory is used to create an RX symbol handler that exposes the received symbols to external applications.
-///
-/// \param[in] factory             The RX symbol handler base factory.
-/// \param[in] nof_rb              The number of resource blocks to process in the resource grid.
-/// \param[in] nof_ports           The number of ports to process.
-/// \param[in] processor_arguments Custom arguments for the external processor, if any.
-std::shared_ptr<upper_phy_rx_symbol_handler_factory>
-create_rx_symbol_handler_tap_factory(std::shared_ptr<upper_phy_rx_symbol_handler_factory> factory,
-                                     unsigned                                             nof_rb,
-                                     unsigned                                             nof_ports,
-                                     const std::string&                                   processor_arguments = "");
-
 /// Factory interface for creating an upper physical layer tap. This factory msut be defined in the physical layer tap
 /// plugin.
 class phy_tap_factory
@@ -441,6 +427,6 @@ public:
 
 /// Creates a physical layer tap factory.
 std::shared_ptr<phy_tap_factory>
-create_phy_tap_factory(unsigned nof_rb, unsigned nof_ports, const std::string& processor_arguments = "");
+create_phy_tap_factory(unsigned nof_rb, unsigned nof_ports, const std::string& processor_arguments);
 
 } // namespace srsran

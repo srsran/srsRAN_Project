@@ -63,7 +63,9 @@ static srs_du::du_low_config generate_du_low_config(const du_low_unit_config&   
   upper_phy_factory_config.pusch_max_nof_layers              = pusch_max_nof_layers;
   upper_phy_factory_config.enable_metrics                    = du_low.metrics_cfg.enable_du_low;
   upper_phy_factory_config.ldpc_decoder_type                 = "auto";
-  upper_phy_factory_config.enable_phy_tap                    = du_low.expert_phy_cfg.enable_phy_tap;
+  if (du_low.expert_phy_cfg.enable_phy_tap) {
+    upper_phy_factory_config.phy_tap_arguments = du_low.expert_phy_cfg.phy_tap_arguments;
+  }
 
   // The flexible PDSCH processor implementation will be used by default.
   const auto& upper_phy_threads_cfg = du_low.expert_execution_cfg.threads;

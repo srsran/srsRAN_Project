@@ -251,6 +251,11 @@ static void configure_cli11_expert_phy_args(CLI::App& app, du_low_unit_expert_up
              expert_phy_params.enable_phy_tap,
              "Enables or disables the PHY tap plugin if it is present while building the application.")
       ->capture_default_str();
+  add_option(app,
+             "--phy_tap_arguments",
+             expert_phy_params.phy_tap_arguments,
+             "PHY tap plugin argument string passed during construction.")
+      ->capture_default_str();
 }
 
 #ifdef DPDK_FOUND

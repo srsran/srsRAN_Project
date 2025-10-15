@@ -917,8 +917,8 @@ create_ul_processor_factory(const upper_phy_factory_configuration& config,
 
   // Create a PHY TAP factory if the feature is enabled.
   std::shared_ptr<phy_tap_factory> tap_factory;
-  if (config.enable_phy_tap) {
-    tap_factory = create_phy_tap_factory(config.ul_bw_rb, config.nof_rx_ports);
+  if (config.phy_tap_arguments) {
+    tap_factory = create_phy_tap_factory(config.ul_bw_rb, config.nof_rx_ports, *config.phy_tap_arguments);
   }
 
   // Create base factory.
