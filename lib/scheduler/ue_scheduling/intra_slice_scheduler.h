@@ -65,14 +65,14 @@ private:
     intra_slice_scheduler* parent;
 
     /// Offset to the start UE index of the next UE group to be scheduled. It will be updated every SFN based on
-    /// on the \c last_dl_ue_idx and \c last_ul_ue_idx.
+    /// on the \c last_dl_count and \c last_ul_count.
     unsigned group_offset = 0;
-    /// Last slot at which this slice was scheduled.
-    slot_point last_sl_tx;
-    /// Last UE to be considered as candidate DL scheduling.
-    unsigned last_dl_ue_idx = 0;
-    /// Last UE to be considered as candidate UL scheduling.
-    unsigned last_ul_ue_idx = 0;
+    /// Last PDCCH slot at which this slice was scheduled.
+    slot_point last_pdcch_tx;
+    /// Number of UEs evaluated during the DL candidate group selection for the last frame.
+    unsigned max_dl_ue_count = 0;
+    /// Number of UEs evaluated during the UL candidate group selection for the last frame.
+    unsigned max_ul_ue_count = 0;
   };
 
   /// Determines whether a UE can be DL scheduled in a given slot.

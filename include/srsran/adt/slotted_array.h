@@ -236,8 +236,8 @@ public:
   }
 
   /// Get iterator with index equal or higher than the provided index.
-  iterator       lower_bound(size_t idx) { return iterator{vec, idx}; }
-  const_iterator lower_bound(size_t idx) const { return const_iterator{vec, idx}; }
+  iterator       lower_bound(size_t idx) { return iterator{vec, std::min(idx, vec.size())}; }
+  const_iterator lower_bound(size_t idx) const { return const_iterator{vec, std::min(idx, vec.size())}; }
 
   /// Find first position that is empty
   size_t find_first_empty(size_t start_guess = 0) const

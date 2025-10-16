@@ -70,24 +70,30 @@ void intra_slice_scheduler::slice_ue_group_scheduler::fill_ue_candidate_group(
   candidates.clear();
 
   const unsigned nof_ues = slice_ues.size();
-  if (nof_ues > parent->expert_cfg.pre_policy_rr_ue_group_size and
-      (not last_sl_tx.valid() or last_sl_tx.sfn() != sl_tx.sfn())) {
-    // Update group_offset whenever we enter a new SFN.
-    // The new group offset is chosen as the UE index after the last UE index considered in the previous group.
-    // Given that DL and UL UE groups are independent, we choose the minimum of the two last UE indexes, to ensure
-    // that no UE is left unconsidered in any direction.
-    group_offset   = modular_min(last_dl_ue_idx + 1, last_ul_ue_idx + 1, nof_ues);
-    last_dl_ue_idx = group_offset;
-    last_ul_ue_idx = group_offset;
+  if (nof_ues > parent->expert_cfg.pre_policy_rr_ue_group_size) {
+    if (not last_pdcch_tx.valid() or last_pdcch_tx.sfn() != parent->pdcch_slot.sfn()) {
+      // Update group_offset whenever we enter a new SFN.
+      // The new group offset is chosen as the UE index after the last UE index considered in the previous group.
+      // > Compute max ue index + 1, which will be used to perform the wrap-around of the group offset.
+      const unsigned ue_idx_mod = (--slice_ues.end())->ue_index() + 1;
+      // > Given that DL and UL UE groups are independent, we choose the minimum of the two last UE indexes, to ensure
+      // that no UE is left unconsidered in any direction.
+      group_offset    = (group_offset + std::min(max_dl_ue_count, max_ul_ue_count)) % ue_idx_mod;
+      max_dl_ue_count = 0;
+      max_ul_ue_count = 0;
+    }
+  } else {
+    // The number of UEs is less than the group size, so we consider all UEs from the beginning.
+    group_offset = 0;
   }
-  last_sl_tx = sl_tx;
+  last_pdcch_tx = parent->pdcch_slot;
 
   // Build list of candidates, starting from the UE group offset.
-  unsigned       count      = 0;
-  const unsigned group_size = std::min(nof_ues, parent->expert_cfg.pre_policy_rr_ue_group_size);
-  auto           next_it    = slice_ues.lower_bound(to_du_ue_index(group_offset));
-  next_it                   = next_it == slice_ues.end() ? slice_ues.begin() : next_it;
-  for (auto ue_it = next_it; count != nof_ues; ++ue_it) {
+  unsigned       count                = 0;
+  unsigned       last_candidate_count = 0;
+  const unsigned group_size           = std::min(nof_ues, parent->expert_cfg.pre_policy_rr_ue_group_size);
+  auto           start_ue_it          = slice_ues.lower_bound(to_du_ue_index(group_offset));
+  for (auto ue_it = start_ue_it; count != nof_ues; ++ue_it) {
     ++count;
     if (ue_it == slice_ues.end()) {
       // wrap-around.
@@ -98,20 +104,16 @@ void intra_slice_scheduler::slice_ue_group_scheduler::fill_ue_candidate_group(
         is_dl ? parent->create_newtx_dl_candidate(*ue_it) : parent->create_newtx_ul_candidate(*ue_it);
     if (ue_candidate.has_value()) {
       candidates.push_back(ue_candidate.value());
+      last_candidate_count = count;
       if (candidates.size() >= group_size) {
         break;
       }
     }
   }
 
-  if (candidates.empty() or count >= nof_ues) {
-    // In case all UEs have been traversed, we do not need to implement round-robin of UE groups.
-    return;
-  }
-
   // Update the next UE group offset, if the last UE index went beyond next group offset.
-  auto& last_ue_idx = is_dl ? last_dl_ue_idx : last_ul_ue_idx;
-  last_ue_idx       = modular_max(last_ue_idx, static_cast<unsigned>(candidates.back().ue->ue_index()), nof_ues);
+  auto& max_count = is_dl ? max_dl_ue_count : max_ul_ue_count;
+  max_count       = std::max(max_count, last_candidate_count);
 }
 
 // class intra_slice_scheduler
