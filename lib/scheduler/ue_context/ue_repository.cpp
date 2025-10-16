@@ -20,14 +20,17 @@ ue_cell_repository::ue_cell_repository(du_cell_index_t cell_idx_, srslog::basic_
   cell_idx(cell_idx_), logger(logger_)
 {
   rnti_to_ue_index_lookup.reserve(MAX_NOF_DU_UES);
+  ues.reserve(MAX_NOF_DU_UES);
 }
 
-void ue_cell_repository::add_ue(std::shared_ptr<ue_cell> u)
+void ue_cell_repository::add_ue(ue_cell& u)
 {
-  rnti_t        rnti     = u->rnti();
-  du_ue_index_t ue_index = u->ue_index;
-  ues.insert(u->ue_index, std::move(u));
-  rnti_to_ue_index_lookup.insert(std::make_pair(rnti, ue_index));
+  rnti_t        rnti     = u.rnti();
+  du_ue_index_t ue_index = u.ue_index;
+  bool          ret      = ues.insert(u.ue_index, &u);
+  srsran_assert(ret, "UE with duplicate index being added to the cell UE repository");
+  auto res = rnti_to_ue_index_lookup.insert(std::make_pair(rnti, ue_index));
+  srsran_assert(res.second, "UE with duplicate RNTI being added to the cell UE repository");
 }
 
 void ue_cell_repository::rem_ue(du_ue_index_t ue_index)
@@ -35,9 +38,9 @@ void ue_cell_repository::rem_ue(du_ue_index_t ue_index)
   if (not ues.contains(ue_index)) {
     logger.error("ue={} : UE not found in the cell UE repository", fmt::underlying(ue_index));
   }
-  std::shared_ptr<ue_cell>& u      = ues[ue_index];
-  const rnti_t              crnti  = u->rnti();
-  const du_ue_index_t       ue_idx = u->ue_index;
+  const ue_cell&      u      = *ues[ue_index];
+  const rnti_t        crnti  = u.rnti();
+  const du_ue_index_t ue_idx = u.ue_index;
 
   // Remove UE from lookup.
   auto it = rnti_to_ue_index_lookup.find(crnti);
@@ -153,17 +156,20 @@ void ue_repository::rem_cell(du_cell_index_t cell_index)
 void ue_repository::add_ue(std::unique_ptr<ue> u)
 {
   // Add UE in repository.
-  du_ue_index_t ue_index = u->ue_index;
-  rnti_t        rnti     = u->crnti;
-  ues.insert(ue_index, std::move(u));
+  const du_ue_index_t ue_index = u->ue_index;
+  const rnti_t        rnti     = u->crnti;
+  bool                ret      = ues.insert(ue_index, std::move(u));
+  srsran_assert(ret, "UE with duplicate index being added to the repository");
 
   // Update RNTI -> UE index lookup.
-  rnti_to_ue_index_lookup.insert(std::make_pair(rnti, ue_index));
+  auto res = rnti_to_ue_index_lookup.insert(std::make_pair(rnti, ue_index));
+  srsran_assert(res.second, "UE with duplicate RNTI being added to the repository");
 
   // Add UE in cell-specific repositories.
-  for (ue_cell* cc : ues[ue_index]->ue_cells) {
-    const du_cell_index_t c_idx = cc->cell_index;
-    cell_ues[c_idx].add_ue(ues[ue_index]->ue_du_cells[c_idx]);
+  auto& ue_added = ues[ue_index];
+  for (unsigned i = 0, sz = ue_added->nof_cells(); i != sz; ++i) {
+    auto& ue_cc = ue_added->get_cell(to_ue_cell_index(i));
+    cell_ues[ue_cc.cell_index].add_ue(ue_cc);
   }
 }
 
@@ -171,22 +177,24 @@ void ue_repository::reconfigure_ue(const ue_reconf_command& cmd, bool reestablis
 {
   srsran_sanity_check(
       ues.contains(cmd.cfg.ue_index), "ue={} : UE not found in the repository", fmt::underlying(cmd.cfg.ue_index));
+
+  for (ue_cell_repository& cell_repo : cell_ues) {
+    if (cell_repo.contains(cmd.cfg.ue_index) and not cmd.cfg.contains(cell_repo.cell_index())) {
+      // Cell has been removed from the UE configuration.
+      cell_repo.rem_ue(cmd.cfg.ue_index);
+    }
+  }
+
   auto& u = ues[cmd.cfg.ue_index];
   u->handle_reconfiguration_request(cmd, reestablished_);
 
-  for (ue_cell_repository& cell_repo : cell_ues) {
-    if (cell_repo.contains(u->ue_index) and u->find_cell(cell_repo.cell_index()) == nullptr) {
-      // Cell has been removed from the UE configuration.
-      cell_repo.rem_ue(u->ue_index);
-    }
-  }
   for (unsigned i = 0, sz = cmd.cfg.nof_cells(); i != sz; ++i) {
     const auto&           cell_cfg   = cmd.cfg.ue_cell_cfg(to_ue_cell_index(i));
     const du_cell_index_t cell_index = cell_cfg.cell_cfg_common.cell_index;
 
-    if (u->ue_du_cells[cell_index] == nullptr) {
+    if (not cell_ues[cell_index].contains(u->ue_index)) {
       // New cell being instantiated.
-      cell_ues[cell_index].add_ue(u->ue_du_cells[cell_index]);
+      cell_ues[cell_index].add_ue(*u->find_cell(cell_index));
     }
   }
 }
@@ -233,9 +241,9 @@ void ue_repository::rem_ue(const ue& u)
   const du_ue_index_t ue_idx = u.ue_index;
 
   // Remove UE cc from the cell-specific repositories.
-  for (auto* ue_cc : u.ue_cells) {
-    const du_cell_index_t c_idx = ue_cc->cell_index;
-    cell_ues[c_idx].rem_ue(ue_idx);
+  for (unsigned i = 0, sz = u.nof_cells(); i != sz; ++i) {
+    const auto& ue_cc = u.get_cell(to_ue_cell_index(i));
+    cell_ues[ue_cc.cell_index].rem_ue(ue_idx);
   }
 
   // Remove UE from lookup.

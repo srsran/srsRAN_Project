@@ -20,7 +20,7 @@ namespace srsran {
 /// Container that stores all the UEs that are configured in a given cell.
 class ue_cell_repository
 {
-  using ue_list = slotted_id_vector<du_ue_index_t, std::shared_ptr<ue_cell>>;
+  using ue_list = slotted_id_vector<du_ue_index_t, ue_cell*>;
 
 public:
   using value_type     = ue_list::value_type;
@@ -41,23 +41,23 @@ public:
 
   ue_cell&       operator[](du_ue_index_t ue_index) { return *ues[ue_index]; }
   const ue_cell& operator[](du_ue_index_t ue_index) const { return *ues[ue_index]; }
-  ue_cell*       find(du_ue_index_t ue_index) { return ues.contains(ue_index) ? ues[ue_index].get() : nullptr; }
-  const ue_cell* find(du_ue_index_t ue_index) const { return ues.contains(ue_index) ? ues[ue_index].get() : nullptr; }
+  ue_cell*       find(du_ue_index_t ue_index) { return ues.contains(ue_index) ? ues[ue_index] : nullptr; }
+  const ue_cell* find(du_ue_index_t ue_index) const { return ues.contains(ue_index) ? ues[ue_index] : nullptr; }
   ue_cell*       find_by_rnti(rnti_t rnti)
   {
     auto it = rnti_to_ue_index_lookup.find(rnti);
-    return it != rnti_to_ue_index_lookup.end() ? ues[it->second].get() : nullptr;
+    return it != rnti_to_ue_index_lookup.end() ? ues[it->second] : nullptr;
   }
   const ue_cell* find_by_rnti(rnti_t rnti) const
   {
     auto it = rnti_to_ue_index_lookup.find(rnti);
-    return it != rnti_to_ue_index_lookup.end() ? ues[it->second].get() : nullptr;
+    return it != rnti_to_ue_index_lookup.end() ? ues[it->second] : nullptr;
   }
 
 private:
   friend class ue_repository;
 
-  void add_ue(std::shared_ptr<ue_cell> u);
+  void add_ue(ue_cell& u_cc);
   void rem_ue(du_ue_index_t ue_index);
 
   const du_cell_index_t cell_idx;

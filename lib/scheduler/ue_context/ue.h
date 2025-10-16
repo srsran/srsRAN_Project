@@ -134,8 +134,6 @@ public:
   ul_logical_channel_manager&       ul_logical_channels() { return ul_lc_ch_mgr; }
 
 private:
-  friend class ue_repository;
-
   /// Update UE configuration.
   void set_config(const ue_configuration& new_cfg, std::optional<slot_point> msg3_rx_slot = std::nullopt);
 
@@ -150,7 +148,7 @@ private:
 
   /// List of UE cells indexed by \c du_cell_index_t. If an element is null, it means that the DU cell is not
   /// configured to be used by the UE.
-  std::array<std::shared_ptr<ue_cell>, MAX_NOF_DU_CELLS> ue_du_cells;
+  std::array<std::unique_ptr<ue_cell>, MAX_NOF_DU_CELLS> ue_du_cells;
 
   /// List of UE cells indexed by \c ue_cell_index_t. The size of the list is equal to the number of cells aggregated
   /// and configured for the UE. PCell corresponds to ue_cell_index=0. the first SCell corresponds to ue_cell_index=1,
