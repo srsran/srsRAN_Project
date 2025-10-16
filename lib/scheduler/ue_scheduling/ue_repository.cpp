@@ -161,7 +161,8 @@ void ue_repository::rem_ue(const ue& u)
   }
 
   // Take the UE from the repository and schedule its destruction outside the critical section.
-  auto ue_ptr = ues.take(ue_idx);
+  auto ue_ptr = std::move(ues[ue_idx]);
+  ues.erase(ue_idx);
   ue_ptr->release_resources();
   if (not ues_to_destroy.try_push(std::move(ue_ptr))) {
     logger.warning("Failed to offload UE destruction. Performance may be affected");
