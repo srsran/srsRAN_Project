@@ -22,9 +22,11 @@
 #include "srsran/ran/pdcch/pdcch_candidates.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/pucch/pucch_info.h"
+#include "srsran/ran/ssb/ssb_mapping.h"
 #include "srsran/rlc/rlc_srb_config_factory.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
 #include "srsran/scheduler/config/csi_helper.h"
+#include "srsran/scheduler/config/rlm_helper.h"
 #include "srsran/scheduler/config/sched_cell_config_helpers.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/scheduler/config/scheduler_expert_config_validator.h"
@@ -905,6 +907,21 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     std::vector<std::string> cell_plmns{base_cell.plmn};
     out_cell.rrm_policy_members = generate_du_slicing_rrm_policy_config(
         cell_plmns, base_cell.slice_cfg, nof_crbs, *cell.cell.sched_expert_cfg.policy_sched_expert_cfg);
+
+    // RLM configuration.
+    if (cell.cell.rlm_cfg.resource_type != rlm_resource_type::default_type) {
+      rlm_helper::rlm_builder_params rlm_params(cell.cell.rlm_cfg.resource_type,
+                                                ssb_get_L_max(out_cell.ssb_cfg.scs, param.dl_f_ref_arfcn, param.band),
+                                                out_cell.ssb_cfg.ssb_bitmap,
+                                                out_cell.ssb_cfg.beam_ids);
+      radio_link_monitoring_config   rlm_cfg = rlm_helper::make_radio_link_monitoring_config(
+          rlm_params,
+          out_cell.ue_ded_serv_cell_cfg.csi_meas_cfg.has_value()
+                ? out_cell.ue_ded_serv_cell_cfg.csi_meas_cfg.value().nzp_csi_rs_res_list
+                : std::vector<nzp_csi_rs_resource>{});
+      out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.rlm_cfg =
+          rlm_cfg.rlm_resources.empty() ? std::nullopt : std::optional<radio_link_monitoring_config>(rlm_cfg);
+    }
 
     error_type<std::string> error = is_du_cell_config_valid(out_cfg.back());
     if (!error) {

@@ -1506,6 +1506,30 @@ static void configure_cli11_slicing_args(CLI::App& app, du_high_unit_cell_slice_
   configure_cli11_slicing_scheduling_args(*sched_cfg_subcmd, slice_params.sched_cfg);
 }
 
+static void configure_cli11_rlm_args(CLI::App& app, du_high_unit_rlm_config& rlm_params)
+{
+  auto map_rlm_resource_type = [](rlm_resource_type& res_type) {
+    return [&res_type](const std::string& value) {
+      if (value == "default_type") {
+        res_type = rlm_resource_type::default_type;
+      } else if (value == "ssb") {
+        res_type = rlm_resource_type::ssb;
+      } else if (value == "csi_rs") {
+        res_type = rlm_resource_type::csi_rs;
+      } else if (value == "ssb_and_csi_rs") {
+        res_type = rlm_resource_type::ssb_and_csi_rs;
+      }
+    };
+  };
+
+  add_option_function<std::string>(app,
+                                   "--rlm_resource_type",
+                                   map_rlm_resource_type(rlm_params.resource_type),
+                                   "Radio Link Monitoring resource detection type {default_type, ssb, csi_rs, "
+                                   "ssb_and_csi_rs}. Default: default_type")
+      ->check(CLI::IsMember({"default_type", "ssb", "csi_rs", "ssb_and_csi_rs"}, CLI::ignore_case));
+}
+
 static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_cell_config& cell_params)
 {
   add_option(app, "--pci", cell_params.pci, "PCI")->capture_default_str()->check(CLI::Range(0, 1007));
@@ -1696,6 +1720,10 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
     }
   };
   add_option_cell(app, "--slicing", slicing_lambda, "Network slicing configuration");
+
+  // Radio Link Monitoring configuration.
+  CLI::App* rlm_subcmd = add_subcommand(app, "rlm", "Radio Link Monitoring parameters");
+  configure_cli11_rlm_args(*rlm_subcmd, cell_params.rlm_cfg);
 }
 
 static void configure_cli11_cells_args(CLI::App& app, du_high_unit_cell_config& cell_params)

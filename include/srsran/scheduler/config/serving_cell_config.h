@@ -19,6 +19,7 @@
 #include "srsran/ran/pucch/srs_tpc.h"
 #include "srsran/ran/pusch/pusch_configuration.h"
 #include "srsran/ran/pusch/pusch_tpc.h"
+#include "srsran/ran/radio_link_monitoring.h"
 #include "srsran/ran/resource_allocation/vrb_to_prb.h"
 #include "srsran/ran/serv_cell_index.h"
 #include "srsran/ran/srs/srs_configuration.h"
@@ -167,14 +168,17 @@ struct pdsch_config {
 
 /// "BWP-DownlinkDedicated" as per TS 38.331.
 struct bwp_downlink_dedicated {
-  std::optional<pdcch_config> pdcch_cfg;
-  std::optional<pdsch_config> pdsch_cfg;
+  std::optional<pdcch_config>                 pdcch_cfg;
+  std::optional<pdsch_config>                 pdsch_cfg;
+  std::optional<radio_link_monitoring_config> rlm_cfg;
   // TODO: Remaining
 
   bool operator==(const bwp_downlink_dedicated& other) const
   {
-    return pdcch_cfg == other.pdcch_cfg and pdsch_cfg == other.pdsch_cfg;
+    return pdcch_cfg == other.pdcch_cfg and pdsch_cfg == other.pdsch_cfg and rlm_cfg == other.rlm_cfg;
   }
+
+  bool operator!=(const bwp_downlink_dedicated& other) const { return !(other == *this); }
 };
 
 /// "BWP-Downlink" as per TS 38.331.

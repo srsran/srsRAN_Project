@@ -1163,6 +1163,13 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     return false;
   }
 
+  if ((config.rlm_cfg.resource_type == rlm_resource_type::csi_rs or
+       config.rlm_cfg.resource_type == rlm_resource_type::ssb_and_csi_rs) and
+      not config.csi_cfg.csi_rs_enabled) {
+    fmt::print("CSI-RS based Radio Link Monitoring requires CSI-RS to be enabled.\n");
+    return false;
+  }
+
   return true;
 }
 

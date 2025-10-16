@@ -102,9 +102,9 @@ static carrier_configuration make_default_carrier_configuration(const cell_confi
 static_vector<uint8_t, 8> srsran::config_helpers::generate_k1_candidates(const tdd_ul_dl_config_common& tdd_cfg,
                                                                          uint8_t                        min_k1)
 {
-  static const unsigned MAX_K1_CANDIDATES = 8;
-  const unsigned        tdd_period        = nof_slots_per_tdd_period(tdd_cfg);
-  unsigned              nof_dl_slots = tdd_cfg.pattern1.nof_dl_slots + (tdd_cfg.pattern1.nof_dl_symbols > 0 ? 1 : 0);
+  static constexpr unsigned MAX_K1_CANDIDATES = 8;
+  const unsigned            tdd_period        = nof_slots_per_tdd_period(tdd_cfg);
+  unsigned nof_dl_slots = tdd_cfg.pattern1.nof_dl_slots + (tdd_cfg.pattern1.nof_dl_symbols > 0 ? 1 : 0);
   if (tdd_cfg.pattern2.has_value()) {
     nof_dl_slots += tdd_cfg.pattern2->nof_dl_slots + (tdd_cfg.pattern2->nof_dl_symbols > 0 ? 1 : 0);
   }
@@ -416,7 +416,7 @@ ssb_configuration srsran::config_helpers::make_default_ssb_config(const cell_con
   cfg.k_ssb             = *params.k_ssb;
 
   static constexpr unsigned beam_index = 63;
-  cfg.ssb_bitmap                       = uint64_t(1) << beam_index;
+  cfg.ssb_bitmap                       = static_cast<uint64_t>(1) << beam_index;
   cfg.beam_ids[beam_index]             = 0;
 
   // The values we assign to these parameters are implementation-defined.
@@ -647,11 +647,11 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
   const unsigned                sr_period = get_nof_slots_per_subframe(params.scs_common) * 40;
   const std::optional<unsigned> sr_offset =
       params.tdd_ul_dl_cfg_common.has_value() ? find_next_tdd_full_ul_slot(params.tdd_ul_dl_cfg_common.value()) : 0;
-  const unsigned sr_res_id = (unsigned)pucch_cfg.pucch_res_list.size() - 1U;
+  const unsigned sr_res_id = static_cast<unsigned>(pucch_cfg.pucch_res_list.size()) - 1U;
   pucch_cfg.sr_res_list.push_back(
       scheduling_request_resource_config{.sr_res_id    = 1,
                                          .sr_id        = uint_to_sched_req_id(0),
-                                         .period       = (sr_periodicity)sr_period,
+                                         .period       = static_cast<sr_periodicity>(sr_period),
                                          .offset       = *sr_offset,
                                          .pucch_res_id = pucch_res_id_t{sr_res_id, sr_res_id}});
 
@@ -903,7 +903,7 @@ srsran::config_helpers::make_pdsch_time_domain_resource(uint8_t                 
   }
 
   // See TS 38.214, Table 5.1.2.1-1: Valid S and L combinations.
-  static const unsigned pdsch_mapping_typeA_min_L_value = 3;
+  static constexpr unsigned pdsch_mapping_typeA_min_L_value = 3;
 
   // TODO: Consider SearchSpace periodicity while generating PDSCH OFDM symbol range. If there is no PDCCH, there is no
   //  PDSCH since we dont support k0 != 0 yet.

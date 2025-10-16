@@ -1247,6 +1247,49 @@ calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_config& 
   // TODO: Remaining.
 }
 
+static asn1::rrc_nr::radio_link_monitoring_rs_s
+make_asn1_rrc_rlm_resource(const radio_link_monitoring_config::radio_link_monitoring_rs& cfg)
+{
+  radio_link_monitoring_rs_s rlm_res;
+
+  rlm_res.radio_link_monitoring_rs_id = static_cast<uint8_t>(cfg.res_id);
+  switch (cfg.resource_purpose) {
+    case radio_link_monitoring_config::radio_link_monitoring_rs::purpose::beam_failure:
+      rlm_res.purpose = radio_link_monitoring_rs_s::purpose_opts::beam_fail;
+      break;
+    case radio_link_monitoring_config::radio_link_monitoring_rs::purpose::rlf:
+      rlm_res.purpose = radio_link_monitoring_rs_s::purpose_opts::rlf;
+      break;
+    case radio_link_monitoring_config::radio_link_monitoring_rs::purpose::both:
+      rlm_res.purpose = radio_link_monitoring_rs_s::purpose_opts::both;
+    default:
+      srsran_assertion_failure("Invalid RLM resource purpose={}", fmt::underlying(cfg.resource_purpose));
+  }
+
+  if (std::holds_alternative<ssb_id_t>(cfg.detection_resource)) {
+    rlm_res.detection_res.set_ssb_idx() = std::get<ssb_id_t>(cfg.detection_resource);
+  } else {
+    rlm_res.detection_res.set_csi_rs_idx() = std::get<nzp_csi_rs_res_id_t>(cfg.detection_resource);
+  }
+
+  return rlm_res;
+}
+
+static void calculate_rlmonitoring_config_diff(asn1::rrc_nr::radio_link_monitoring_cfg_s& out,
+                                               const radio_link_monitoring_config&        src,
+                                               const radio_link_monitoring_config&        dest)
+{
+  calculate_addmodremlist_diff(
+      out.fail_detection_res_to_add_mod_list,
+      out.fail_detection_res_to_release_list,
+      src.rlm_resources,
+      dest.rlm_resources,
+      [](const radio_link_monitoring_config::radio_link_monitoring_rs& res) { return make_asn1_rrc_rlm_resource(res); },
+      [](const radio_link_monitoring_config::radio_link_monitoring_rs& res) {
+        return static_cast<uint8_t>(res.res_id);
+      });
+}
+
 static bool calculate_bwp_dl_dedicated_diff(asn1::rrc_nr::bwp_dl_ded_s&   out,
                                             const bwp_downlink_dedicated& src,
                                             const bwp_downlink_dedicated& dest)
@@ -1272,9 +1315,21 @@ static bool calculate_bwp_dl_dedicated_diff(asn1::rrc_nr::bwp_dl_ded_s&   out,
     out.pdsch_cfg_present = true;
     out.pdsch_cfg.set_release();
   }
-  // TODO: sps-Config and radioLinkMonitoringConfig.
 
-  return out.pdcch_cfg_present || out.pdsch_cfg_present;
+  if ((dest.rlm_cfg.has_value() && not src.rlm_cfg.has_value()) ||
+      (dest.rlm_cfg.has_value() && src.rlm_cfg.has_value() && dest.rlm_cfg != src.rlm_cfg)) {
+    out.radio_link_monitoring_cfg_present = true;
+    calculate_rlmonitoring_config_diff(out.radio_link_monitoring_cfg.set_setup(),
+                                       src.rlm_cfg.has_value() ? src.rlm_cfg.value() : radio_link_monitoring_config{},
+                                       dest.rlm_cfg.value());
+  } else if (src.rlm_cfg.has_value() && not dest.rlm_cfg.has_value()) {
+    out.radio_link_monitoring_cfg_present = true;
+    out.radio_link_monitoring_cfg.set_release();
+  }
+
+  // TODO: sps-Config.
+
+  return out.pdcch_cfg_present || out.pdsch_cfg_present || out.radio_link_monitoring_cfg_present;
 }
 
 asn1::rrc_nr::pucch_res_set_s srsran::srs_du::make_asn1_rrc_pucch_resource_set(const pucch_resource_set& cfg)

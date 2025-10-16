@@ -24,6 +24,7 @@
 #include "srsran/ran/pucch/pucch_configuration.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/qos/five_qi.h"
+#include "srsran/ran/radio_link_monitoring.h"
 #include "srsran/ran/rb_id.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/sib/system_info_config.h"
@@ -843,6 +844,16 @@ struct du_high_unit_cell_slice_sched_config {
   std::optional<policy_scheduler_expert_config> slice_policy_sched_cfg;
 };
 
+/// Radio Link Monitoring Config for a cell.
+struct du_high_unit_rlm_config {
+  /// Resource type used for Radio Resource Monitoring.
+  /// "default_type" sets the default resources (the same as used for TCI states for PDCCH reception).
+  /// "ssb" sets the only SSB resource of the cell.
+  /// "csi_rs" sets the CSI-RS resources used for tracking, if enabled.
+  /// "ssb_and_csi_rs" sets both SSB and CSI-RS resources used for tracking.
+  rlm_resource_type resource_type = rlm_resource_type::default_type;
+};
+
 /// Slice configuration for a cell.
 struct du_high_unit_cell_slice_config {
   /// Slice/Service Type.
@@ -920,6 +931,8 @@ struct du_high_unit_base_cell_config {
   std::vector<du_high_unit_cell_slice_config> slice_cfg;
   /// NTN configuration.
   std::optional<ntn_config> ntn_cfg;
+  /// Radio Link Monitoring configuration.
+  du_high_unit_rlm_config rlm_cfg;
 };
 
 struct du_high_unit_test_mode_ue_config {
