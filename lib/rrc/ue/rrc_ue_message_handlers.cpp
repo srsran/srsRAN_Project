@@ -203,7 +203,8 @@ void rrc_ue_impl::handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu
 
   std::vector<byte_buffer> rrc_pdus = pdcp_unpacking_result.pop_pdus();
   if (rrc_pdus.empty()) {
-    logger.log_warning("PDCP unpacking did not provide any SDU");
+    logger.log_debug(
+        "PDCP did not provide any SDU. PDU could be out-of-order, failed integrity or be outside of the RX window");
     return;
   }
   for (byte_buffer& pdu : rrc_pdus) {
