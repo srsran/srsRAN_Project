@@ -243,3 +243,15 @@ TEST(slotted_array, move_ctor_moves_the_value_of_elements)
   ASSERT_EQ(vec2[idx], moveonly_test_object(value));
   ASSERT_FALSE(vec[idx].has_value());
 }
+
+TEST(slotted_array, lower_bound_beyond_max_returns_end)
+{
+  slotted_array<int, 20> vec;
+  vec.insert(1, 1);
+  vec.insert(5, 5);
+  ASSERT_EQ(vec.lower_bound(1), vec.begin());
+  ASSERT_EQ(vec.lower_bound(4), ++vec.begin());
+  ASSERT_EQ(vec.lower_bound(5), ++vec.begin());
+  ASSERT_EQ(vec.lower_bound(6), vec.end());
+  ASSERT_EQ(vec.lower_bound(21), vec.end());
+}
