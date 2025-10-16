@@ -40,6 +40,9 @@ class ue_cell
 public:
   /// State in case carrier corresponds to UE pcell.
   struct ue_pcell_state {
+    /// Fallback state of the UE. When in "fallback" mode, only the search spaces and the configuration of
+    /// cellConfigCommon are used.
+    bool in_fallback_mode = true;
     /// \brief Whether the MAC CE Contention Resolution has been transmitted and acked by the UE.
     bool conres_complete = false;
     /// Whether a UE reconfiguration is taking place.
@@ -72,7 +75,7 @@ public:
   bool is_active() const { return active; }
 
   /// Whether the UE is in fallback mode.
-  bool is_in_fallback_mode() const { return in_fallback_mode; }
+  bool is_in_fallback_mode() const { return pcell_state.has_value() and pcell_state->in_fallback_mode; }
 
   const ue_cell_configuration& cfg() const { return *ue_cfg; }
 
@@ -199,10 +202,6 @@ private:
 
   /// \brief Whether cell is currently active.
   bool active = true;
-
-  /// Fallback state of the UE. When in "fallback" mode, only the search spaces and the configuration of
-  /// cellConfigCommon are used.
-  bool in_fallback_mode = true;
 
   /// State relative to the PCell of the UE, if applicable.
   std::optional<ue_pcell_state> pcell_state;

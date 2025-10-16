@@ -108,21 +108,26 @@ void ue_cell::handle_reconfiguration_request(const ue_cell_configuration& ue_cel
 
 void ue_cell::set_fallback_state(bool set_fallback, bool is_reconfig, bool reestablished)
 {
-  if (pcell_state.has_value()) {
-    // In case of Pcell, update reconf_ongoing state.
-    pcell_state->reconf_ongoing = is_reconfig;
-    pcell_state->reestablished  = reestablished;
-  }
-  if (in_fallback_mode == set_fallback) {
+  srsran_assert(pcell_state.has_value(),
+                "ue={} rnti={}: Cannot set fallback state on non-Pcell",
+                fmt::underlying(ue_index),
+                rnti());
+
+  // In case of Pcell, update reconf_ongoing state.
+  pcell_state->reconf_ongoing = is_reconfig;
+  pcell_state->reestablished  = reestablished;
+  if (pcell_state->in_fallback_mode == set_fallback) {
+    // No state change.
     return;
   }
-  in_fallback_mode = set_fallback;
+  pcell_state->in_fallback_mode = set_fallback;
 
   // Cancel pending HARQs retxs of different state.
   harqs.cancel_retxs();
-
-  logger.debug(
-      "ue={} rnti={}: {} fallback mode", fmt::underlying(ue_index), rnti(), in_fallback_mode ? "Entering" : "Leaving");
+  logger.debug("ue={} rnti={}: {} fallback mode",
+               fmt::underlying(ue_index),
+               rnti(),
+               pcell_state->in_fallback_mode ? "Entering" : "Leaving");
 }
 
 std::optional<ue_cell::dl_ack_info_result> ue_cell::handle_dl_ack_info(slot_point                 uci_slot,
