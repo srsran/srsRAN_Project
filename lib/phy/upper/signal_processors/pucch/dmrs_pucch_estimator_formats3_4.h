@@ -98,10 +98,10 @@ private:
   /// \brief Generates the PUCCH DM-RS allocation pattern.
   ///
   /// Implements the PUCCH DM-RS mapping, as described in TS38.211 Section 6.4.1.3.3.2.
-  /// \param[in] config Number of PRBs.
-  ///
+  /// \param[in] config        Configuration parameters.
+  /// \param[in] nof_prb_grid  Number of resource blocks in the grid.
   /// \return The DM-RS allocation pattern.
-  static layer_dmrs_pattern generate_dmrs_pattern(const estimate_config& config);
+  static layer_dmrs_pattern generate_dmrs_pattern(const estimate_config& config, unsigned nof_prb_grid);
 };
 
 } // namespace srsran
