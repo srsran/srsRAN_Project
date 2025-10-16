@@ -209,35 +209,3 @@ unsigned ue::pending_ul_newtx_bytes() const
   // If there are no pending bytes, check if a SR is pending.
   return pending_bytes > 0 ? pending_bytes : (ul_lc_ch_mgr.has_pending_sr() ? SR_GRANT_BYTES : 0);
 }
-
-bool ue::has_pending_sr() const
-{
-  return ul_lc_ch_mgr.has_pending_sr();
-}
-
-unsigned ue::build_dl_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes, ran_slice_id_t slice_id)
-{
-  unsigned total_subpdu_bytes = 0;
-  total_subpdu_bytes += allocate_mac_ces(tb_info, dl_lc_ch_mgr, tb_size_bytes);
-  for (const auto lcid : dl_lc_ch_mgr.get_prioritized_logical_channels()) {
-    if (dl_lc_ch_mgr.get_slice_id(lcid) == slice_id) {
-      total_subpdu_bytes +=
-          allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes, uint_to_lcid(lcid));
-    }
-  }
-  return total_subpdu_bytes;
-}
-
-unsigned ue::build_dl_fallback_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes)
-{
-  unsigned total_subpdu_bytes = 0;
-  total_subpdu_bytes += allocate_ue_con_res_id_mac_ce(tb_info, dl_lc_ch_mgr, tb_size_bytes);
-  // Since SRB0 PDU cannot be segmented, skip SRB0 if remaining TB size is not enough to fit entire PDU.
-  if (dl_lc_ch_mgr.has_pending_bytes(LCID_SRB0) and
-      ((tb_size_bytes - total_subpdu_bytes) >= dl_lc_ch_mgr.pending_bytes(LCID_SRB0))) {
-    total_subpdu_bytes += allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes, LCID_SRB0);
-    return total_subpdu_bytes;
-  }
-  total_subpdu_bytes += allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes, LCID_SRB1);
-  return total_subpdu_bytes;
-}

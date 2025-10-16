@@ -60,7 +60,10 @@ public:
 
   /// \brief Computes the number of DL pending bytes for a given LCID that are not already allocated in a DL HARQ.
   /// \return Computed DL pending bytes.
-  unsigned pending_dl_newtx_bytes(lcid_t lcid) const { return contains(lcid) ? u.pending_dl_newtx_bytes(lcid) : 0; }
+  unsigned pending_dl_newtx_bytes(lcid_t lcid) const
+  {
+    return contains(lcid) ? u.dl_logical_channels().pending_bytes(lcid) : 0;
+  }
 
   /// \brief Computes the number of UL pending bytes in bearers belonging to this slice that are not already allocated
   /// in a UL HARQ.
@@ -74,7 +77,7 @@ public:
   }
 
   /// \brief Returns whether a SR indication handling is pending.
-  bool has_pending_sr() const { return u.has_pending_sr(); }
+  bool has_pending_sr() const { return u.ul_logical_channels().has_pending_sr(); }
 
   /// Get QoS information of DRBs configured for the UE.
   logical_channel_config_list_ptr logical_channels() const { return u.ue_cfg_dedicated()->logical_channels(); }
