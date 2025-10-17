@@ -9,6 +9,7 @@
  */
 
 #include "apps/cu_up/cu_up_appconfig_cli11_schema.h"
+#include "apps/cu_up/cu_up_appconfig_validator.h"
 #include "apps/helpers/f1u/f1u_appconfig.h"
 #include "apps/helpers/metrics/metrics_helpers.h"
 #include "apps/services/app_execution_metrics/executor_metrics_manager.h"
@@ -218,7 +219,11 @@ int main(int argc, char** argv)
     fmt::println("NOTE: No JSON metrics will be generated as the remote server is disabled");
   }
 
-  // TODO: validate appconfig
+  // Validate appconfig.
+  if (!validate_cu_up_appconfig(cu_up_cfg) ||
+      !o_cu_up_app_unit->on_configuration_validation(not cu_up_cfg.trace_cfg.filename.empty())) {
+    report_error("Invalid configuration detected.\n");
+  }
 
   // Set up logging.
   initialize_log(cu_up_cfg.log_cfg.filename);

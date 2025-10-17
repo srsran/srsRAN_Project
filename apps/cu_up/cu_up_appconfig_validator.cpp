@@ -8,24 +8,25 @@
  *
  */
 
-#include "du_appconfig_validators.h"
+#include "cu_up_appconfig_validator.h"
 #include "apps/helpers/f1u/f1u_cli11_validator.h"
 #include "apps/helpers/logger/logger_appconfig_validator.h"
+#include "apps/services/worker_manager/worker_manager_appconfig_validator.h"
+#include "cu_up_appconfig.h"
 
 using namespace srsran;
 
-bool srsran::validate_appconfig(const du_appconfig& config)
+bool srsran::validate_cu_up_appconfig(const cu_up_appconfig& config)
 {
   if (!validate_logger_appconfig(config.log_cfg)) {
     return false;
   }
 
-  if (config.f1ap_cfg.cu_cp_address.empty()) {
-    fmt::print("CU-CP F1-C address is mandatory\n");
+  if (!validate_expert_execution_appconfig(config.expert_execution_cfg)) {
     return false;
   }
 
-  if (!validate_f1u_sockets_appconfig(config.f1u_cfg.f1u_sockets)) {
+  if (!validate_f1u_sockets_appconfig(config.f1u_cfg)) {
     return false;
   }
 
