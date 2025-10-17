@@ -1192,6 +1192,23 @@ static void configure_cli11_srs_args(CLI::App& app, du_high_unit_srs_config& srs
              "Enable the reuse of SRS sequence id with the set reuse factor")
       ->capture_default_str()
       ->check(CLI::IsMember({1, 2, 3, 5, 6, 10, 15, 30}));
+  add_option(app,
+             "--srs_p0",
+             srs_params.p0,
+             "P0 value for SRS. Value in dBm. Valid values must be multiple of 2 and "
+             "within the [-202, 24] interval.  Default: -84")
+      ->capture_default_str()
+      ->check([](const std::string& value) -> std::string {
+        std::stringstream ss(value);
+        int               pw;
+        ss >> pw;
+        const std::string& error_message = "Must be a multiple of 2 and within the [-202, 24] interval";
+        if (pw < -202 or pw > 24 or pw % 2 != 0) {
+          return error_message;
+        }
+
+        return "";
+      });
 }
 
 static void configure_cli11_si_sched_info(CLI::App& app, du_high_unit_sib_config::si_sched_info_config& si_sched_info)

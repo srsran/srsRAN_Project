@@ -525,6 +525,8 @@ struct du_high_unit_srs_config {
   /// Values: {1, 2, 3, 5, 6, 10, 15, 30}.
   /// Refer to Section 6.4.1.4.2, TS 38.211 for the definition of "sequenceId".
   unsigned sequence_id_reuse_factor = 1;
+  /// \c p0, TS 38.331. Value in dBm. Only even values allowed within {-202,...,24}.
+  int p0 = -84;
 };
 
 /// Parameters that are used to initialize or build the \c PhysicalCellGroupConfig, TS 38.331.

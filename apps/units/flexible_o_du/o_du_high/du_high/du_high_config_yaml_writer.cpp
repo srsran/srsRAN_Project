@@ -639,6 +639,7 @@ static YAML::Node build_du_high_srs_section(const du_high_unit_srs_config& confi
   node["srs_tx_comb"]              = config.tx_comb;
   node["srs_cyclic_shift_reuse"]   = config.cyclic_shift_reuse_factor;
   node["srs_sequence_id_reuse"]    = config.sequence_id_reuse_factor;
+  node["srs_p0"]                   = config.p0;
 
   return node;
 }
