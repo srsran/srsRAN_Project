@@ -12,7 +12,7 @@
 
 namespace srsran {
 
-class f1u_sockets_appconfig;
+struct f1u_sockets_appconfig;
 
 /// TODO write docs.
 bool validate_f1u_sockets_appconfig(const f1u_sockets_appconfig& config);
