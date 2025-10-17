@@ -11,7 +11,6 @@
 #include "phy_to_fapi_results_event_translator.h"
 #include "srsran/fapi/message_builders.h"
 #include "srsran/fapi/message_validators.h"
-#include "srsran/srsvec/bit.h"
 #include "srsran/support/math/math_utils.h"
 
 using namespace srsran;
@@ -97,8 +96,6 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
     // NOTE: Clamp values defined in SCF-222 v4.0 Section 3.4.11 Table RACH.indication message body.
     static constexpr float MIN_PREAMBLE_POWER_VALUE = -140.F;
     static constexpr float MAX_PREAMBLE_POWER_VALUE = 30.F;
-    static constexpr float MIN_PREAMBLE_SNR_VALUE   = -64.F;
-    static constexpr float MAX_PREAMBLE_SNR_VALUE   = 63.F;
 
     double TA_ns = preamble.time_advance.to_seconds() * 1e9;
     // Ignore preambles with a negative TA value.
@@ -110,14 +107,13 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
       continue;
     }
 
-    builder_pdu.add_preamble(
-        preamble.preamble_index,
-        {},
-        TA_ns,
-        std::clamp(convert_to_dBFS(convert_power_to_dB(preamble.detection_metric), dBFS_calibration_value),
-                   MIN_PREAMBLE_POWER_VALUE,
-                   MAX_PREAMBLE_POWER_VALUE),
-        std::clamp(convert_power_to_dB(preamble.detection_metric), MIN_PREAMBLE_SNR_VALUE, MAX_PREAMBLE_SNR_VALUE));
+    builder_pdu.add_preamble(preamble.preamble_index,
+                             {},
+                             TA_ns,
+                             std::clamp(convert_to_dBFS(preamble.preamble_power_dB, dBFS_calibration_value),
+                                        MIN_PREAMBLE_POWER_VALUE,
+                                        MAX_PREAMBLE_POWER_VALUE),
+                             {});
   }
 
   error_type<fapi::validator_report> validation_result = validate_rach_indication(msg);
