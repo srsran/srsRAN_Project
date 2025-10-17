@@ -15,7 +15,7 @@ cu_up:
         # Socket used for a specific slice/5QI. This socket will be used if both the S-NSSAI
         # and the 5QI match. Slice differentiator is optional.
         sst: 1                # Slice/Service type.
-        sd: 1                 # Slice differentiator.
+        # sd: 1               # Slice differentiator is optional.
         five_qi: 9            # 5G QoS Identifier.
         bind_addr: 127.1.3.1  # Address that the F1-U socket will bind to.
         #ext_addr: 8.8.8.8    # Address that is reported as the F1-U bind address.

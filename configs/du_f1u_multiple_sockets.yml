@@ -12,7 +12,7 @@ f1u:
 
     -
       sst: 1                # Slice/Service type.
-      sd: 1                 # Slice differentiator.
+      # sd: 1               # Slice differentiator is optional.
       five_qi: 9            # Socket used for a specific 5QI.  
       bind_addr: 127.1.2.1  # Address that the F1-U socket will bind to.
       #ext_addr: 8.8.8.8    # Address that is reported as the F1-U bind address.
