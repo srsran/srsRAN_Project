@@ -8,7 +8,7 @@
  *
  */
 
-#include "f1u_cli11_validator.h"
+#include "f1u_appconfig_validator.h"
 #include "f1u_appconfig.h"
 
 using namespace srsran;

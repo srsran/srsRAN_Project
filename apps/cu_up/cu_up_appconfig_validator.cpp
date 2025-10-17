@@ -9,7 +9,7 @@
  */
 
 #include "cu_up_appconfig_validator.h"
-#include "apps/helpers/f1u/f1u_cli11_validator.h"
+#include "apps/helpers/f1u/f1u_appconfig_validator.h"
 #include "apps/helpers/logger/logger_appconfig_validator.h"
 #include "apps/services/worker_manager/worker_manager_appconfig_validator.h"
 #include "cu_up_appconfig.h"

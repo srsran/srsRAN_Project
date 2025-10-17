@@ -9,7 +9,7 @@
  */
 
 #include "du_appconfig_validators.h"
-#include "apps/helpers/f1u/f1u_cli11_validator.h"
+#include "apps/helpers/f1u/f1u_appconfig_validator.h"
 #include "apps/helpers/logger/logger_appconfig_validator.h"
 
 using namespace srsran;
