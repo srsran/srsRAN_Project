@@ -15,6 +15,8 @@
 
 using namespace srsran;
 
+static constexpr unsigned RLC_SEGMENTATION_OVERHEAD = 4;
+
 static lcid_dl_sch_t get_random_dl_mac_ce()
 {
   return (lcid_dl_sch_t)test_rgen::uniform_int<unsigned>((unsigned)lcid_dl_sch_t::SCELL_ACTIV_4_OCTET,
@@ -224,14 +226,19 @@ TEST_F(single_ue_dl_logical_channel_system_test, multiple_mac_ces_are_scheduled_
   ASSERT_TRUE(ue_lchs.handle_mac_ce_indication({.ce_lcid = ce_lcid}));
   ASSERT_TRUE(ue_lchs.handle_mac_ce_indication({.ce_lcid = ce_lcid}));
   const unsigned mac_ce_required_bytes = lcid_dl_sch_t{ce_lcid}.sizeof_ce() + FIXED_SIZED_MAC_CE_SUBHEADER_SIZE;
-  const unsigned tb_size               = mac_ce_required_bytes;
+  ASSERT_EQ(ue_lchs.pending_ce_bytes(), 2 * mac_ce_required_bytes);
+
+  const unsigned tb_size = mac_ce_required_bytes;
   dl_msg_lc_info subpdu;
   auto           allocated_bytes = ue_lchs.allocate_mac_ce(subpdu, tb_size);
   ASSERT_EQ(allocated_bytes, mac_ce_required_bytes);
+  ASSERT_EQ(ue_lchs.pending_ce_bytes(), mac_ce_required_bytes);
   allocated_bytes = ue_lchs.allocate_mac_ce(subpdu, tb_size);
   ASSERT_EQ(allocated_bytes, mac_ce_required_bytes);
+  ASSERT_EQ(ue_lchs.pending_ce_bytes(), 0);
   allocated_bytes = ue_lchs.allocate_mac_ce(subpdu, tb_size);
   ASSERT_EQ(allocated_bytes, 0);
+  ASSERT_EQ(ue_lchs.pending_ce_bytes(), 0);
 }
 
 TEST_F(single_ue_dl_logical_channel_system_test, mac_sdu_is_scheduled_if_tb_has_space)
@@ -262,9 +269,8 @@ TEST_F(single_ue_dl_logical_channel_system_test, mac_sdu_is_scheduled_if_tb_has_
       rem_sdu_size -= subpdu.sched_bytes;
       // Note: In the case the logical channel was not totally flushed, the manager adds some extra bytes to account for
       // RLC overhead.
-      const unsigned RLC_SEGMENTATION_OVERHEAD = 4;
-      unsigned       req_bytes                 = get_mac_sdu_required_bytes(rem_sdu_size);
-      unsigned       lc_pending_bytes          = ue_lchs.total_pending_bytes() - RLC_SEGMENTATION_OVERHEAD;
+      unsigned req_bytes        = get_mac_sdu_required_bytes(rem_sdu_size);
+      unsigned lc_pending_bytes = ue_lchs.total_pending_bytes() - RLC_SEGMENTATION_OVERHEAD;
       if (req_bytes >= 254 and req_bytes <= 258) {
         // Note: account for ambiguity in transition between MAC subheader sizes.
         req_bytes++;
@@ -400,6 +406,28 @@ TEST_F(single_ue_dl_logical_channel_system_test,
   ue_lchs.handle_dl_buffer_status_indication(LCID_MIN_DRB, 0);
   ASSERT_TRUE(ue_lchs.has_pending_bytes(ran_slice_id_t{0}));
   ASSERT_FALSE(ue_lchs.has_pending_bytes(ran_slice_id_t{1}));
+}
+
+TEST_F(single_ue_dl_logical_channel_system_test, when_sdu_is_scheduled_pending_slice_bytes_are_updated_accordingly)
+{
+  ue_lchs.register_ran_slice(ran_slice_id_t{0});
+  ue_lchs.register_ran_slice(ran_slice_id_t{1});
+  ue_lchs.set_lcid_ran_slice(LCID_SRB1, ran_slice_id_t{0});
+  ue_lchs.set_lcid_ran_slice(LCID_MIN_DRB, ran_slice_id_t{1});
+
+  const unsigned srb1_bytes = 1000, drb1_bytes = 2000;
+  ue_lchs.handle_dl_buffer_status_indication(LCID_SRB1, srb1_bytes);
+  ue_lchs.handle_dl_buffer_status_indication(LCID_MIN_DRB, drb1_bytes);
+
+  dl_msg_lc_info subpdu;
+  unsigned       allocated_bytes = ue_lchs.allocate_mac_sdu(subpdu, 5000, LCID_SRB1);
+  ASSERT_EQ(allocated_bytes, get_mac_sdu_required_bytes(srb1_bytes));
+  ASSERT_EQ(ue_lchs.pending_bytes(ran_slice_id_t{0}), 0);
+
+  allocated_bytes = ue_lchs.allocate_mac_sdu(subpdu, 1000, LCID_MIN_DRB);
+  ASSERT_EQ(allocated_bytes, 1000);
+  ASSERT_EQ(ue_lchs.pending_bytes(ran_slice_id_t{1}),
+            get_mac_sdu_required_bytes(drb1_bytes + RLC_SEGMENTATION_OVERHEAD - subpdu.sched_bytes));
 }
 
 TEST_F(single_ue_dl_logical_channel_system_test, qos_gbr_bearer_bitrate_is_tracked)

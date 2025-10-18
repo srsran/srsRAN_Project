@@ -83,13 +83,15 @@ private:
     bool fallback_state = false;
     // Whether a CON RES CE needs to be sent.
     bool pending_con_res_id{false};
+    /// Sum of pending CE bytes for this UE.
+    uint32_t pending_ce_bytes{0};
     /// Context of channels currently configured. The index of the array matches the LCID.
     slotted_id_table<lcid_t, soa::row_id, MAX_NOF_RB_LCIDS> channels;
     /// List of active logical channel IDs sorted in decreasing order of priority. i.e. first element has the highest
     /// priority.
     std::vector<lcid_t> sorted_channels;
     /// Mapping of RAN slice ID to the list of associated LCIDs.
-    slotted_id_vector<ran_slice_id_t, std::vector<soa::row_id>> slice_lcid_list_lookup;
+    slotted_id_vector<ran_slice_id_t, std::pair<unsigned, std::vector<soa::row_id>>> slice_lcid_list_lookup;
     /// Currently enqueued CEs for this UE.
     std::optional<soa::row_id> pending_ces;
   };
