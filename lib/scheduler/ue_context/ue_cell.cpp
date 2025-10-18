@@ -57,7 +57,7 @@ ue_cell::ue_cell(du_ue_index_t                ue_index_,
 {
   if (ue_cell_index_ == to_ue_cell_index(0)) {
     // Set ConRes procedure complete by default. Variable only needed for RACHs where MSG3 contains ConRes MAC-CE.
-    pcell_state.emplace();
+    pcell_state.emplace(ue_pcell_state{});
     pcell_state->conres_complete = true;
     if (msg3_slot_rx.has_value()) {
       pcell_state->msg3_rx_slot = msg3_slot_rx.value();
