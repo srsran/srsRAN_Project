@@ -19,6 +19,16 @@
 
 namespace srsran {
 
+/// Indicates the number of SSBs per RACH occasion (L1 parameter 'SSB-per-rach-occasion'). See TS 38.331, \c
+/// ssb-perRACH-OccasionAndCB-PreamblesPerSSB. Values {1/8, 1/4, 1/2, 1, 2, 4, 8, 16}.
+/// Value 1/8 corresponds to one SSB associated with 8 RACH occasions and so on so forth.
+enum class ssb_per_rach_occasions : uint8_t { one_eighth = 0, one_forth, one_half, one, two, four, eight, sixteen };
+
+inline float ssb_per_rach_occ_to_float(ssb_per_rach_occasions value)
+{
+  return static_cast<float>(1U << (static_cast<unsigned>(value))) / 8.0f;
+}
+
 /// \brief Contains the PRACH configuration parameters.
 ///
 /// The parameters are used in TS38.211 Section 6.3.3.2 and they are derived from TS38.211 Tables 6.3.3.2-2, 6.3.3.2-3

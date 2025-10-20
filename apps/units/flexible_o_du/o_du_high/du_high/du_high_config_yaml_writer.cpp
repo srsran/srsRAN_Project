@@ -518,7 +518,7 @@ static YAML::Node build_du_high_prach_section(const du_high_unit_prach_config& c
   node["preamble_rx_target_pw"]     = config.preamble_rx_target_pw;
   node["preamble_trans_max"]        = static_cast<unsigned>(config.preamble_trans_max);
   node["power_ramping_step_db"]     = static_cast<unsigned>(config.power_ramping_step_db);
-  node["nof_ssb_per_ro"]            = config.nof_ssb_per_ro;
+  node["nof_ssb_per_ro"]            = ssb_per_rach_occ_to_float(config.nof_ssb_per_ro);
   node["nof_cb_preambles_per_ssb"]  = static_cast<unsigned>(config.nof_cb_preambles_per_ssb);
   for (auto id : config.ports) {
     node["ports"].push_back(static_cast<unsigned>(id));

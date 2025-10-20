@@ -21,6 +21,7 @@
 #include "srsran/ran/pci.h"
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
+#include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/pucch/pucch_configuration.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/qos/five_qi.h"
@@ -820,9 +821,8 @@ struct du_high_unit_prach_config {
   /// Ports list for PRACH reception.
   std::vector<uint8_t> ports = {0};
   /// Indicates the number of SSBs per RACH occasion (L1 parameter 'SSB-per-rach-occasion'). See TS 38.331, \c
-  /// ssb-perRACH-OccasionAndCB-PreamblesPerSSB. Values {1/8, 1/4, 1/2, 1, 2, 4, 8, 16}.
-  /// Value 1/8 corresponds to one SSB associated with 8 RACH occasions and so on so forth.
-  float nof_ssb_per_ro = 1;
+  /// ssb-perRACH-OccasionAndCB-PreamblesPerSSB.
+  ssb_per_rach_occasions nof_ssb_per_ro = ssb_per_rach_occasions::one;
   /// Indicates the number of Contention Based preambles per SSB (L1 parameter 'CB-preambles-per-SSB'). See TS 38.331,
   /// \c ssb-perRACH-OccasionAndCB-PreamblesPerSSB.
   /// \remark Values of \c cb_preambles_per_ssb depends on value of \c ssb_per_ro.

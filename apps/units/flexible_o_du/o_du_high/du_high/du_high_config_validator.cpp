@@ -782,19 +782,21 @@ validate_prach_cell_unit_config(const du_high_unit_prach_config& config, nr_band
   // See TS 38.331, ssb-perRACH-OccasionAndCB-PreamblesPerSSB and totalNumberOfRA-Preambles.
   // totalNumberOfRA-Preambles should be a multiple of the number of SSBs per RACH occasion.
   bool is_total_nof_ra_preambles_valid = true;
-  if (config.nof_ssb_per_ro >= 1) {
-    if (config.total_nof_ra_preambles % static_cast<uint8_t>(config.nof_ssb_per_ro) != 0) {
+  if (config.nof_ssb_per_ro >= ssb_per_rach_occasions::one) {
+    if (config.total_nof_ra_preambles % static_cast<uint8_t>(ssb_per_rach_occ_to_float(config.nof_ssb_per_ro)) != 0) {
       is_total_nof_ra_preambles_valid = false;
     }
     // Ensure \c config.total_nof_ra_preambles can accommodate contention based RA preambles.
     // NOTE: \c config.total_nof_ra_preambles nof. RA preambles are shared among \c config.nof_ssb_per_ro nof. SSB
     // beams.
-    if ((config.nof_cb_preambles_per_ssb * config.nof_ssb_per_ro) > config.total_nof_ra_preambles) {
+    if (config.nof_cb_preambles_per_ssb * static_cast<unsigned>(ssb_per_rach_occ_to_float(config.nof_ssb_per_ro)) >
+        config.total_nof_ra_preambles) {
       is_total_nof_ra_preambles_valid = false;
     }
   } else {
     // Number of SSBs per RACH occasion is 1/8 or 1/4 or 1/2.
-    const auto product = config.total_nof_ra_preambles * config.nof_ssb_per_ro;
+    const auto product =
+        static_cast<float>(config.total_nof_ra_preambles) * ssb_per_rach_occ_to_float(config.nof_ssb_per_ro);
     if ((product - static_cast<uint8_t>(product)) > 0) {
       is_total_nof_ra_preambles_valid = false;
     }
@@ -809,7 +811,7 @@ validate_prach_cell_unit_config(const du_high_unit_prach_config& config, nr_band
   if (not is_total_nof_ra_preambles_valid) {
     fmt::print("Total nof. RA preambles ({}) should be a multiple of the number of SSBs per RACH occasion ({}).\n",
                config.total_nof_ra_preambles,
-               config.nof_ssb_per_ro);
+               ssb_per_rach_occ_to_float(config.nof_ssb_per_ro));
     return false;
   }
 

@@ -1095,7 +1095,7 @@ static std::map<srb_id_t, srs_du::du_srb_config> generate_du_srb_config(const du
     srb_cfg.at(srb_id_t::srb3).rlc = make_default_srb_rlc_config();
   }
 
-  for (auto& cell : config.cells_cfg) {
+  for (const auto& cell : config.cells_cfg) {
     if (cell.cell.ntn_cfg.has_value()) {
       ntn_augment_du_srb_config(cell.cell.ntn_cfg.value(), srb_cfg);
     }

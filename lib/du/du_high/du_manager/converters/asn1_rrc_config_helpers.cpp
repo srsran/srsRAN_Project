@@ -766,7 +766,7 @@ asn1::rrc_nr::bwp_ul_common_s srsran::srs_du::make_asn1_rrc_initial_up_bwp(const
     rach.total_nof_ra_preambs         = rach_cfg.total_nof_ra_preambles;
   }
   ssb_per_rach_occasion_and_cb_preambles_per_ssb_to_asn1(
-      rach_cfg.nof_ssb_per_ro, rach_cfg.nof_cb_preambles_per_ssb, rach);
+      ssb_per_rach_occ_to_float(rach_cfg.nof_ssb_per_ro), rach_cfg.nof_cb_preambles_per_ssb, rach);
   bool success = asn1::number_to_enum(rach.ra_contention_resolution_timer, rach_cfg.ra_con_res_timer.count());
   srsran_assert(success, "Invalid ra-ContentionResolutionTimer");
   if (rach_cfg.msg3_transform_precoder) {
