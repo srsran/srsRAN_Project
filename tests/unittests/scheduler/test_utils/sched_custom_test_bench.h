@@ -41,6 +41,7 @@ public:
       return *cell_cfg_list[to_du_cell_index(0)];
     }()},
     cell_harqs{MAX_NOF_DU_UES, MAX_NOF_HARQS, std::make_unique<dummy_harq_timeout_notifier>()},
+    cell_ues(ues.add_cell(to_du_cell_index(0))),
     current_sl_tx{to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
   {
     slot_indication(current_sl_tx);
@@ -54,6 +55,7 @@ public:
   const cell_configuration&      cell_cfg;
   cell_harq_manager              cell_harqs;
   ue_repository                  ues;
+  ue_cell_repository&            cell_ues;
   std::vector<ue_configuration>  ue_ded_cfgs;
   cell_resource_allocator        res_grid{cell_cfg};
   slot_point                     current_sl_tx;
