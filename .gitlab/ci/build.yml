@@ -1297,6 +1297,8 @@ debian 13 amd64 avx512:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 30 minutes
   interruptible: false
   variables:
     ASSERT_LEVEL: PARANOID
@@ -1451,6 +1453,8 @@ build uhd alt:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 15 minutes
   interruptible: false
   variables:
     TEST_MODE: none
