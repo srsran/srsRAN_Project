@@ -108,7 +108,7 @@ private:
     if ((elapsed_return_ns == 0) || (elapsed_data_ns == 0)) {
       return;
     }
-    if (!elapsed_data_and_return_ns.compare_exchange_weak(current_elapsed_data_and_return_ns, 0)) {
+    if (!elapsed_data_and_return_ns.compare_exchange_strong(current_elapsed_data_and_return_ns, 0)) {
       return;
     }
 
