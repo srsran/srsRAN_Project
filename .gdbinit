@@ -145,9 +145,11 @@ class SlotArrayPrinter(object):
         self.nof_elems = int(self.val['nof_elems'])
 
     def children(self):
-        vec = self.val['vec']['_M_elems']
+        opt_value = gdb.lookup_type(f'srsran::tiny_optional<{self.value_type}>')
+        vec_size = self.val['vec']['sz']
+        vec = self.val['vec']['array']['_M_elems'].cast(opt_value.pointer())
         count = 0
-        for idx in range(self.capacity):
+        for idx in range(vec_size):
             if TinyOptionalPrinter.get_has_value(vec[idx]):
                 yield f'{count}', f'{idx}'
                 count += 1
