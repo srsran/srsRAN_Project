@@ -1132,9 +1132,9 @@ void pdcp_entity_tx::discard_callback()
 void pdcp_entity_tx::crypto_reordering_timeout()
 {
   if (stopped) {
-    logger.log_warning("Crypto reordering timer expired after bearer was stopped. timeout={} st={}",
-                       pdcp_tx_crypto_reordering_timeout_ms,
-                       st);
+    logger.log_debug("Crypto reordering timer expired after bearer was stopped. timeout={} st={}",
+                     pdcp_tx_crypto_reordering_timeout_ms,
+                     st);
     return;
   }
   logger.log_warning("Crypto reordering timer expired. timeout={} st={}", pdcp_tx_crypto_reordering_timeout_ms, st);
