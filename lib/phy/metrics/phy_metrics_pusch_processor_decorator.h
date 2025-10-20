@@ -49,8 +49,8 @@ public:
     // Setup times.
     time_start                 = std::chrono::steady_clock::now();
     elapsed_data_and_return_ns = 0;
-    elapsed_uci_ns             = 0;
-    cpu_time_usage_ns          = 0;
+    elapsed_uci_ns.store(0, std::memory_order_relaxed);
+    cpu_time_usage_ns.store(0, std::memory_order_relaxed);
 
     resource_usage_utils::measurements measurements;
     {
@@ -58,7 +58,7 @@ public:
       resource_usage_utils::scoped_resource_usage rusage_tracker(measurements);
       processor->process(data, std::move(rm_buffer), *this, grid, pdu);
     }
-    cpu_time_usage_ns = measurements.duration.count();
+    cpu_time_usage_ns.store(measurements.duration.count(), std::memory_order_relaxed);
     elapsed_data_and_return_ns |=
         std::min(std::chrono::nanoseconds(std::chrono::steady_clock::now() - time_start).count(), 0xffffffffL);
 
@@ -73,7 +73,8 @@ private:
     srsran_assert(notifier, "Invalid notifier");
 
     // Save UCI reporting time.
-    elapsed_uci_ns = std::chrono::nanoseconds(std::chrono::steady_clock::now() - time_start).count();
+    elapsed_uci_ns.store(std::chrono::nanoseconds(std::chrono::steady_clock::now() - time_start).count(),
+                         std::memory_order_relaxed);
 
     // Notify higher layers.
     notifier->on_uci(uci);
@@ -113,7 +114,7 @@ private:
     }
 
     // Load the elapsed time to deliver UCI. It is present only if it is not zero.
-    uint64_t                                local_elapsed_uci_ns = elapsed_uci_ns.load();
+    uint64_t                                local_elapsed_uci_ns = elapsed_uci_ns.load(std::memory_order_relaxed);
     std::optional<std::chrono::nanoseconds> elapsed_uci;
     if (local_elapsed_uci_ns != 0) {
       elapsed_uci.emplace(local_elapsed_uci_ns);
@@ -129,7 +130,7 @@ private:
                                    .elapsed_return    = std::chrono::nanoseconds(elapsed_return_ns),
                                    .elapsed_data      = std::chrono::nanoseconds(elapsed_data_ns),
                                    .elapsed_uci       = elapsed_uci,
-                                   .cpu_time_usage_ns = cpu_time_usage_ns,
+                                   .cpu_time_usage_ns = cpu_time_usage_ns.load(std::memory_order_relaxed),
                                    .sinr_dB           = sinr_dB,
                                    .evm               = evm});
 

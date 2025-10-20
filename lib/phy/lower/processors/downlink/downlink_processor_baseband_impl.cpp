@@ -208,5 +208,5 @@ downlink_processor_baseband_impl::process(baseband_gateway_timestamp timestamp)
 
 void downlink_processor_baseband_impl::set_tx_time_offset(phy_time_unit tx_time_offset_)
 {
-  tx_time_offset = tx_time_offset_.to_nearest_samples(rate.to_Hz());
+  tx_time_offset.store(tx_time_offset_.to_nearest_samples(rate.to_Hz()), std::memory_order_relaxed);
 }

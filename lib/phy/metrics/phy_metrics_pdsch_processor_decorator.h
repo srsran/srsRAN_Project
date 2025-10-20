@@ -53,7 +53,7 @@ public:
       resource_usage_utils::scoped_resource_usage rusage_tracker(measurements);
       base->process(grid, *this, data, pdu);
     }
-    self_cpu_usage_ns = measurements.duration.count();
+    self_cpu_usage_ns.store(measurements.duration.count(), std::memory_order_relaxed);
     elapsed_completion_and_return_ns |=
         std::min(std::chrono::nanoseconds(std::chrono::high_resolution_clock::now() - start_time).count(), 0xffffffffL);
 
@@ -88,12 +88,12 @@ private:
       return;
     }
 
-    notifier.on_new_metric(
-        pdsch_processor_metrics{.slot                = slot,
-                                .tbs                 = tbs,
-                                .elapsed_return      = std::chrono::nanoseconds(elapsed_return_ns),
-                                .elapsed_completion  = std::chrono::nanoseconds(elapsed_completion_ns),
-                                .self_cpu_time_usage = std::chrono::nanoseconds(self_cpu_usage_ns)});
+    notifier.on_new_metric(pdsch_processor_metrics{
+        .slot                = slot,
+        .tbs                 = tbs,
+        .elapsed_return      = std::chrono::nanoseconds(elapsed_return_ns),
+        .elapsed_completion  = std::chrono::nanoseconds(elapsed_completion_ns),
+        .self_cpu_time_usage = std::chrono::nanoseconds(self_cpu_usage_ns.load(std::memory_order_relaxed))});
 
     // Notify the completion of the PDSCH processing. From now on, the processor might become available.
     pdsch_processor_notifier* current_proc_notifier = std::exchange(processor_notifier, nullptr);

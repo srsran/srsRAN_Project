@@ -88,7 +88,7 @@ void uplink_processor_impl::stop()
 unique_uplink_pdu_slot_repository uplink_processor_impl::get_pdu_slot_repository(slot_point slot)
 {
   // It is not possible to configure a new slot if the resource grid is still present in a scope.
-  if (grid_ref_counter != 0) {
+  if (grid_ref_counter.load(std::memory_order_acquire) != 0) {
     return {};
   }
 
@@ -102,8 +102,8 @@ unique_uplink_pdu_slot_repository uplink_processor_impl::get_pdu_slot_repository
   }
 
   // Reset processor states.
-  current_slot          = slot;
-  count_pusch_adaptors  = 0;
+  current_slot = slot;
+  count_pusch_adaptors.store(0, std::memory_order_release);
   nof_processed_symbols = 0;
   rx_payload_pool.reset();
   pdu_repository.clear_queues();
@@ -303,7 +303,7 @@ void uplink_processor_impl::process_pusch(const uplink_pdu_slot_repository::pusc
   bool success = task_executors.pusch_executor.defer([this, data, rm_buffer2 = std::move(rm_buffer), &pdu]() mutable {
     // Select and configure notifier adaptor.
     // Assume that count_pusch_adaptors will not exceed MAX_PUSCH_PDUS_PER_SLOT.
-    unsigned                         notifier_adaptor_id = count_pusch_adaptors.fetch_add(1);
+    unsigned                         notifier_adaptor_id = count_pusch_adaptors.fetch_add(1, std::memory_order_acq_rel);
     pusch_processor_result_notifier& processor_notifier  = pusch_adaptors[notifier_adaptor_id].configure(
         notifier, to_rnti(pdu.pdu.rnti), pdu.pdu.slot, to_harq_id(pdu.harq_id), data, [this]() {
           state_machine.on_finish_processing_pdu();

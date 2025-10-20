@@ -86,7 +86,7 @@ bool puxch_processor_impl::process_symbol(const baseband_gateway_buffer_reader& 
 void puxch_processor_impl::handle_request(const shared_resource_grid& grid, const resource_grid_context& context)
 {
   // Ignore request if the processor has stopped.
-  if (stopped) {
+  if (stopped.load(std::memory_order_relaxed)) {
     return;
   }
 
