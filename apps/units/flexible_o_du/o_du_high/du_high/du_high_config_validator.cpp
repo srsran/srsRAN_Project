@@ -12,6 +12,7 @@
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/nr_cell_identity.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
+#include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/prach/prach_helper.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/ran/pucch/pucch_info.h"
@@ -743,6 +744,14 @@ validate_prach_cell_unit_config(const du_high_unit_prach_config& config, nr_band
   duplex_mode     dplx_mode  = band_helper::get_duplex_mode(band);
 
   auto code = prach_helper::prach_config_index_is_valid(config.prach_config_index.value(), freq_range, dplx_mode);
+  if (not code.has_value()) {
+    fmt::print("{}", code.error());
+    return false;
+  }
+
+  const prach_configuration prach_config =
+      prach_configuration_get(freq_range, dplx_mode, config.prach_config_index.value());
+  code = prach_helper::prach_root_sequence_index_is_valid(config.prach_root_sequence_index, prach_config.format);
   if (not code.has_value()) {
     fmt::print("{}", code.error());
     return false;

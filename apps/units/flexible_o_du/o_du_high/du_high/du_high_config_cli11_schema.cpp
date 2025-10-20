@@ -1237,7 +1237,11 @@ static void configure_cli11_prach_args(CLI::App& app, du_high_unit_prach_config&
              "PRACH configuration index. If not set, the value is derived, so that the PRACH fits in an UL slot")
       ->capture_default_str()
       ->check(CLI::Range(0, 255));
-  add_option(app, "--prach_root_sequence_index", prach_params.prach_root_sequence_index, "PRACH root sequence index")
+  add_option(
+      app,
+      "--prach_root_sequence_index",
+      prach_params.prach_root_sequence_index,
+      "PRACH root sequence index. NOTE: values: [0, 837] for PRACH format 0, 1, 2, 3. [0, 137] for other formats")
       ->capture_default_str()
       ->check(CLI::Range(0, 837));
   add_option(app, "--zero_correlation_zone", prach_params.zero_correlation_zone, "Zero correlation zone index")
