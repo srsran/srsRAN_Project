@@ -8,7 +8,7 @@
  *
  */
 
-#include "lib/scheduler/ue_context/ue.h"
+#include "lib/scheduler/ue_context/ue_repository.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
@@ -25,9 +25,21 @@ protected:
   sched_cell_configuration_request_message msg = sched_config_helper::make_default_sched_cell_configuration_request();
   sched_ue_creation_request_message ue_create_msg = sched_config_helper::create_default_sched_ue_creation_request();
 
-  cell_common_configuration_list cell_cfg_db;
-  du_cell_group_config_pool      cfg_pool;
+  cell_common_configuration_list                 cell_cfg_db;
+  du_cell_group_config_pool                      cfg_pool;
+  std::vector<std::unique_ptr<ue_configuration>> ue_cfg_pool;
   cell_harq_manager cell_harqs{1, MAX_NOF_HARQS, std::make_unique<scheduler_harq_timeout_dummy_notifier>()};
+  ue_repository     ue_db;
+
+  ue& add_ue(const sched_ue_creation_request_message& ue_req)
+  {
+    ue_cfg_pool.push_back(
+        std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_db, cfg_pool.add_ue(ue_req)));
+    std::unique_ptr<ue> u =
+        std::make_unique<ue>(ue_creation_command{*ue_cfg_pool.back(), ue_req.starts_in_fallback, cell_harqs});
+    ue_db.add_ue(std::move(u), ue_cfg_pool.back()->logical_channels());
+    return ue_db[ue_req.ue_index];
+  }
 };
 
 TEST_F(ue_configuration_test, configuration_valid_on_creation)
@@ -83,9 +95,9 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
 {
   // Test Preamble.
   cell_cfg_db.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(sched_cfg, msg));
+  ue_db.add_cell(to_du_cell_index(0));
   cfg_pool.add_cell(msg);
-  ue_configuration ue_ded_cfg{ue_create_msg.ue_index, ue_create_msg.crnti, cell_cfg_db, cfg_pool.add_ue(ue_create_msg)};
-  ue               u{ue_creation_command{ue_ded_cfg, ue_create_msg.starts_in_fallback, cell_harqs}};
+  auto& u = add_ue(ue_create_msg);
 
   // Pass Reconfiguration to UE with an new Logical Channel.
   sched_ue_reconfiguration_message recfg{};
@@ -93,7 +105,7 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
   recfg.crnti    = ue_create_msg.crnti;
   recfg.cfg      = ue_create_msg.cfg;
   recfg.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(uint_to_lcid(4)));
-  ue_configuration ue_ded_cfg2{ue_ded_cfg};
+  ue_configuration ue_ded_cfg2{*u.ue_cfg_dedicated()};
   ue_ded_cfg2.update(cell_cfg_db, cfg_pool.reconf_ue(recfg));
   u.handle_reconfiguration_request(ue_reconf_command{ue_ded_cfg2}, false);
 

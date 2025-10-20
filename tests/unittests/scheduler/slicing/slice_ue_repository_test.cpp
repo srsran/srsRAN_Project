@@ -77,7 +77,7 @@ protected:
     req.cfg.lc_config_list         = lc_cfg_list;
     const ue_configuration* ue_cfg = test_cfg.add_ue(req);
     std::unique_ptr<ue>     u      = std::make_unique<ue>(ue_creation_command{*ue_cfg, false, cell_harqs});
-    ue_db.add_ue(std::move(u));
+    ue_db.add_ue(std::move(u), ue_cfg->logical_channels());
 
     for (const auto& lc_ch : lc_chs) {
       slices[lc_ch.slice_id.value()]->add_logical_channel(ue_db[ue_idx], lc_ch.lcid, lc_ch.lcg_id);

@@ -57,7 +57,8 @@ void ue_cell_repository::rem_ue(du_ue_index_t ue_index)
 
 // class ue_repository
 
-ue_repository::ue_repository() : logger(srslog::fetch_basic_logger("SCHED")), ues_to_destroy(MAX_NOF_DU_UES)
+ue_repository::ue_repository() :
+  logger(srslog::fetch_basic_logger("SCHED")), dl_lc_ch_sys(subcarrier_spacing::kHz30), ues_to_destroy(MAX_NOF_DU_UES)
 {
   rnti_to_ue_index_lookup.reserve(MAX_NOF_DU_UES);
 }
@@ -136,6 +137,7 @@ void ue_repository::slot_indication(slot_point sl_tx)
   }
 
   // Update state of existing UEs.
+  dl_lc_ch_sys.slot_indication();
   for (auto& u : ues) {
     u->slot_indication(sl_tx);
   }
@@ -153,12 +155,13 @@ void ue_repository::rem_cell(du_cell_index_t cell_index)
   cell_ues.erase(cell_index);
 }
 
-void ue_repository::add_ue(std::unique_ptr<ue> u)
+void ue_repository::add_ue(std::unique_ptr<ue> u, logical_channel_config_list_ptr lc_cfgs)
 {
   // Add UE in repository.
   const du_ue_index_t ue_index = u->ue_index;
   const rnti_t        rnti     = u->crnti;
-  bool                ret      = ues.insert(ue_index, std::move(u));
+  u->setup(dl_lc_ch_sys.create_ue(u->get_pcell().is_in_fallback_mode(), lc_cfgs));
+  bool ret = ues.insert(ue_index, std::move(u));
   srsran_assert(ret, "UE with duplicate index being added to the repository");
 
   // Update RNTI -> UE index lookup.

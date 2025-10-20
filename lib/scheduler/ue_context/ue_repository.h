@@ -11,7 +11,8 @@
 #pragma once
 
 #include "../config/sched_config_manager.h"
-#include "ue.h"
+#include "../ue_context/dl_logical_channel_system.h"
+#include "../ue_context/ue.h"
 #include "srsran/adt/flat_map.h"
 #include "srsran/adt/ring_buffer.h"
 
@@ -104,7 +105,7 @@ public:
   const ue* find_by_rnti(rnti_t rnti) const;
 
   /// \brief Add new UE in the UE repository.
-  void add_ue(std::unique_ptr<ue> u);
+  void add_ue(std::unique_ptr<ue> u, logical_channel_config_list_ptr lc_cfgs);
 
   /// \brief Reconfigure existing UE.
   void reconfigure_ue(const ue_reconf_command& cmd, bool reestablished_);
@@ -136,6 +137,9 @@ private:
   void rem_ue(const ue& u);
 
   srslog::basic_logger& logger;
+
+  /// Management of all UE logical channels.
+  dl_logical_channel_system dl_lc_ch_sys;
 
   // Repository of UEs.
   ue_list ues;

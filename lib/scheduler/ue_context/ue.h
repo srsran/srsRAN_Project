@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "dl_logical_channel_manager.h"
+#include "dl_logical_channel_system.h"
 #include "ta_manager.h"
 #include "ue_cell.h"
 #include "ue_drx_controller.h"
@@ -44,6 +44,8 @@ public:
 
   const du_ue_index_t ue_index;
   const rnti_t        crnti;
+
+  void setup(ue_dl_logical_channel_repository dl_lch_repo);
 
   void slot_indication(slot_point sl_tx);
 
@@ -126,8 +128,8 @@ public:
   ue_drx_controller& drx_controller() { return drx; }
 
   /// \brief UE DL logical channels.
-  const dl_logical_channel_manager& dl_logical_channels() const { return dl_lc_ch_mgr; }
-  dl_logical_channel_manager&       dl_logical_channels() { return dl_lc_ch_mgr; }
+  const ue_dl_logical_channel_repository& dl_logical_channels() const { return dl_lc_ch_mgr; }
+  ue_dl_logical_channel_repository&       dl_logical_channels() { return dl_lc_ch_mgr; }
 
   /// \brief UE UL logical channels.
   const ul_logical_channel_manager& ul_logical_channels() const { return ul_lc_ch_mgr; }
@@ -156,7 +158,7 @@ private:
   static_vector<ue_cell*, MAX_NOF_DU_CELLS> ue_cells;
 
   /// UE DL Logical Channel Manager.
-  dl_logical_channel_manager dl_lc_ch_mgr;
+  ue_dl_logical_channel_repository dl_lc_ch_mgr;
 
   /// UE UL Logical Channel Manager.
   ul_logical_channel_manager ul_lc_ch_mgr;

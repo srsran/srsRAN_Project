@@ -194,7 +194,8 @@ public:
         cell_cfg_list[to_du_cell_index(0)]->ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
         cell_cfg.tdd_cfg_common);
     ue_ded_cfgs.emplace_back(ue_req.ue_index, ue_req.crnti, cell_cfg_list, cfg_pool.add_ue(ue_req));
-    ues.add_ue(std::make_unique<ue>(ue_creation_command{ue_ded_cfgs.back(), ue_req.starts_in_fallback, cell_harqs}));
+    ues.add_ue(std::make_unique<ue>(ue_creation_command{ue_ded_cfgs.back(), ue_req.starts_in_fallback, cell_harqs}),
+               ue_ded_cfgs.back().logical_channels());
     srs_sched.add_ue(ues[ue_req.ue_index].get_pcell().cfg());
   }
 

@@ -122,7 +122,7 @@ struct test_bench {
       // UE already exists.
       return false;
     }
-    ue_db.add_ue(std::move(u));
+    ue_db.add_ue(std::move(u), ev.next_config().logical_channels());
     auto& ue = ue_db[create_req.ue_index];
     ue.get_pcell().set_fallback_state(true, false, false);
     ev.notify_completion();

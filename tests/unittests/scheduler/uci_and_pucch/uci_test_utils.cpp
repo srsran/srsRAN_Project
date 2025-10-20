@@ -346,7 +346,8 @@ test_bench::test_bench(const test_bench_params& params,
   ue_req_main = ue_req;
   ue_ded_cfgs.push_back(
       std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, cfg_pool.add_ue(ue_req)));
-  ues.add_ue(std::make_unique<ue>(ue_creation_command{*ue_ded_cfgs.back(), ue_req.starts_in_fallback, cell_harqs, {}}));
+  ues.add_ue(std::make_unique<ue>(ue_creation_command{*ue_ded_cfgs.back(), ue_req.starts_in_fallback, cell_harqs, {}}),
+             ue_ded_cfgs.back()->logical_channels());
   uci_sched.add_ue(ues[ue_req.ue_index].get_pcell().cfg());
   last_allocated_rnti   = ue_req.crnti;
   last_allocated_ue_idx = main_ue_idx;
@@ -378,7 +379,8 @@ void test_bench::add_ue()
 
   ue_ded_cfgs.push_back(
       std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, cfg_pool.add_ue(ue_req)));
-  ues.add_ue(std::make_unique<ue>(ue_creation_command{*ue_ded_cfgs.back(), ue_req.starts_in_fallback, cell_harqs}));
+  ues.add_ue(std::make_unique<ue>(ue_creation_command{*ue_ded_cfgs.back(), ue_req.starts_in_fallback, cell_harqs}),
+             ue_ded_cfgs.back()->logical_channels());
   last_allocated_rnti = ue_req.crnti;
 }
 

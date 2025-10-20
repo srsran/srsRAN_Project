@@ -36,7 +36,7 @@ public:
     std::variant<ta_cmd_ce_payload, dummy_ce_payload> ce_payload = dummy_ce_payload{0};
   };
 
-  dl_logical_channel_system(subcarrier_spacing scs_common);
+  dl_logical_channel_system(subcarrier_spacing max_scs);
 
   /// Signal the start of a new slot.
   void slot_indication();
@@ -176,6 +176,7 @@ class ue_dl_logical_channel_repository
   }
 
 public:
+  ue_dl_logical_channel_repository()                                        = default;
   ue_dl_logical_channel_repository(const ue_dl_logical_channel_repository&) = delete;
   ue_dl_logical_channel_repository(ue_dl_logical_channel_repository&& other) noexcept :
     parent(std::exchange(other.parent, nullptr)), ue_row_id(other.ue_row_id)
@@ -197,6 +198,8 @@ public:
       parent = nullptr;
     }
   }
+
+  bool valid() const { return parent != nullptr; }
 
   /// Current list of of logical channel configurations for the given UE.
   const logical_channel_config_list& cfg() const { return *get_ue_ctx().channel_configs; }
@@ -355,8 +358,53 @@ private:
   const channel_context* find_channel_ctx(lcid_t lcid) const { return find_channel_ctx(get_ue_ctx(), lcid); }
   channel_context*       find_channel_ctx(lcid_t lcid) { return find_channel_ctx(get_ue_ctx(), lcid); }
 
-  dl_logical_channel_system* parent;
-  soa::row_id                ue_row_id;
+  dl_logical_channel_system* parent = nullptr;
+  soa::row_id                ue_row_id{std::numeric_limits<uint32_t>::max()};
 };
+
+/// \brief Allocate MAC SDUs and corresponding MAC subPDU subheaders.
+/// \param[in] tb_info TB on which MAC subPDUs will be stored.
+/// \param[in] lch_mng UE DL logical channel manager.
+/// \param[in] total_tbs available space in bytes for subPDUs.
+/// \param[in] lcid if provided, LCID of the logical channel to be allocated. Otherwise, the LCID with higher priority
+/// is chosen.
+/// \return Total number of bytes allocated (including MAC subheaders).
+unsigned allocate_mac_sdus(dl_msg_tb_info&                   tb_info,
+                           ue_dl_logical_channel_repository& lch_mng,
+                           unsigned                          total_tbs,
+                           lcid_t                            lcid = INVALID_LCID);
+
+/// \brief Allocate MAC subPDUs for pending MAC CEs.
+/// \param[in] tb_info TB on which MAC subPDUs will be stored.
+/// \param[in] lch_mng UE DL logical channel manager.
+/// \param[in] total_tbs available space in bytes for subPDUs.
+/// \return Total number of bytes allocated (including MAC subheaders).
+/// \remark Excludes UE Contention Resolution Identity CE.
+unsigned allocate_mac_ces(dl_msg_tb_info& tb_info, ue_dl_logical_channel_repository& lch_mng, unsigned total_tbs);
+
+/// \brief Allocate MAC subPDUs for pending UE Contention Resolution Identity MAC CE.
+/// \param[in] tb_info TB on which MAC subPDUs will be stored.
+/// \param[in] lch_mng UE DL logical channel manager.
+/// \param[in] total_tbs available space in bytes for subPDUs.
+/// \return Total number of bytes allocated (including MAC subheaders).
+unsigned
+allocate_ue_con_res_id_mac_ce(dl_msg_tb_info& tb_info, ue_dl_logical_channel_repository& lch_mng, unsigned total_tbs);
+
+/// \brief Defines the list of subPDUs, including LCID and payload size, that will compose the transport block for
+/// SRB0 or for SRB1 in fallback mode.
+/// It includes the UE Contention Resolution Identity CE if it is pending.
+/// \return Returns the number of bytes reserved in the TB for subPDUs (other than padding).
+unsigned build_dl_fallback_transport_block_info(dl_msg_tb_info&                   tb_info,
+                                                ue_dl_logical_channel_repository& lch_mng,
+                                                unsigned                          tb_size_bytes);
+
+/// \brief Defines the list of subPDUs, including LCID and payload size, that will compose the transport block for a
+/// given RAN slice.
+/// \return Returns the number of bytes reserved in the TB for subPDUs (other than padding).
+/// \remark Excludes SRB0, as this operation is specific to a given RAN slice.
+unsigned build_dl_transport_block_info(dl_msg_tb_info&                   tb_info,
+                                       ue_dl_logical_channel_repository& lch_mng,
+                                       unsigned                          tb_size_bytes,
+                                       ran_slice_id_t                    slice_id);
 
 } // namespace srsran

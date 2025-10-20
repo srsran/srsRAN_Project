@@ -118,8 +118,8 @@ void dl_logical_channel_system::configure(soa::row_id ue_rid, logical_channel_co
         deregister_lc_ran_slice(ue_rid, old_lc->lcid);
 
         // Finally delete the LC context.
-        ue_ctx.channels.erase(old_lc->lcid);
         configured_channels.erase(ue_ctx.channels[old_lc->lcid]);
+        ue_ctx.channels.erase(old_lc->lcid);
       }
     }
   }
@@ -629,4 +629,103 @@ unsigned ue_dl_logical_channel_repository::allocate_mac_ce(dl_msg_lc_info& lch_i
 unsigned ue_dl_logical_channel_repository::allocate_ue_con_res_id_mac_ce(dl_msg_lc_info& lch_info, unsigned rem_bytes)
 {
   return parent->allocate_ue_con_res_id_mac_ce(ue_row_id, lch_info, rem_bytes);
+}
+
+unsigned srsran::allocate_mac_sdus(dl_msg_tb_info&                   tb_info,
+                                   ue_dl_logical_channel_repository& lch_mng,
+                                   unsigned                          total_tbs,
+                                   lcid_t                            lcid)
+{
+  static constexpr unsigned min_mac_sdu_space = 4; // Needs to fit at least MAC SDU subheader and RLC header.
+  unsigned                  rem_tbs           = total_tbs;
+
+  // If we do not have enough bytes to fit MAC subheader, skip MAC SDU allocation.
+  // Note: We assume upper layer accounts for its own subheaders when updating the buffer state.
+  while (rem_tbs > min_mac_sdu_space and not tb_info.lc_chs_to_sched.full()) {
+    dl_msg_lc_info subpdu;
+    unsigned       alloc_bytes = lch_mng.allocate_mac_sdu(subpdu, rem_tbs, lcid);
+    if (alloc_bytes == 0) {
+      break;
+    }
+
+    // Add new subPDU.
+    tb_info.lc_chs_to_sched.push_back(subpdu);
+
+    // Update remaining space taking into account the MAC SDU subheader.
+    rem_tbs -= alloc_bytes;
+  }
+
+  return total_tbs - rem_tbs;
+}
+
+unsigned
+srsran::allocate_mac_ces(dl_msg_tb_info& tb_info, ue_dl_logical_channel_repository& lch_mng, unsigned total_tbs)
+{
+  unsigned rem_tbs = total_tbs;
+
+  while (lch_mng.has_pending_ces() and not tb_info.lc_chs_to_sched.full()) {
+    dl_msg_lc_info subpdu;
+    unsigned       alloc_bytes = lch_mng.allocate_mac_ce(subpdu, rem_tbs);
+    if (alloc_bytes == 0) {
+      break;
+    }
+
+    // Add new subPDU.
+    tb_info.lc_chs_to_sched.push_back(subpdu);
+
+    // Update remaining space taking into account the MAC CE subheader.
+    rem_tbs -= alloc_bytes;
+  }
+  return total_tbs - rem_tbs;
+}
+
+unsigned srsran::allocate_ue_con_res_id_mac_ce(dl_msg_tb_info&                   tb_info,
+                                               ue_dl_logical_channel_repository& lch_mng,
+                                               unsigned                          total_tbs)
+{
+  unsigned rem_tbs = total_tbs;
+
+  if (not tb_info.lc_chs_to_sched.full()) {
+    dl_msg_lc_info subpdu;
+    unsigned       alloc_bytes = lch_mng.allocate_ue_con_res_id_mac_ce(subpdu, rem_tbs);
+    if (alloc_bytes != 0) {
+      // Add new subPDU.
+      tb_info.lc_chs_to_sched.push_back(subpdu);
+
+      // Update remaining space taking into account the MAC CE subheader.
+      rem_tbs -= alloc_bytes;
+    }
+  }
+  return total_tbs - rem_tbs;
+}
+
+unsigned srsran::build_dl_fallback_transport_block_info(dl_msg_tb_info&                   tb_info,
+                                                        ue_dl_logical_channel_repository& lch_mng,
+                                                        unsigned                          tb_size_bytes)
+{
+  unsigned total_subpdu_bytes = 0;
+  total_subpdu_bytes += allocate_ue_con_res_id_mac_ce(tb_info, lch_mng, tb_size_bytes);
+  // Since SRB0 PDU cannot be segmented, skip SRB0 if remaining TB size is not enough to fit entire PDU.
+  if (lch_mng.has_pending_bytes(LCID_SRB0) and
+      ((tb_size_bytes - total_subpdu_bytes) >= lch_mng.pending_bytes(LCID_SRB0))) {
+    total_subpdu_bytes += allocate_mac_sdus(tb_info, lch_mng, tb_size_bytes - total_subpdu_bytes, LCID_SRB0);
+    return total_subpdu_bytes;
+  }
+  total_subpdu_bytes += allocate_mac_sdus(tb_info, lch_mng, tb_size_bytes - total_subpdu_bytes, LCID_SRB1);
+  return total_subpdu_bytes;
+}
+
+unsigned srsran::build_dl_transport_block_info(dl_msg_tb_info&                   tb_info,
+                                               ue_dl_logical_channel_repository& lch_mng,
+                                               unsigned                          tb_size_bytes,
+                                               ran_slice_id_t                    slice_id)
+{
+  unsigned total_subpdu_bytes = 0;
+  total_subpdu_bytes += allocate_mac_ces(tb_info, lch_mng, tb_size_bytes);
+  for (const auto lcid : lch_mng.get_prioritized_logical_channels()) {
+    if (lch_mng.get_slice_id(lcid) == slice_id) {
+      total_subpdu_bytes += allocate_mac_sdus(tb_info, lch_mng, tb_size_bytes - total_subpdu_bytes, uint_to_lcid(lcid));
+    }
+  }
+  return total_subpdu_bytes;
 }

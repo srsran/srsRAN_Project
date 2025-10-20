@@ -22,9 +22,6 @@ ue::ue(const ue_creation_command& cmd) :
   ue_ded_cfg(&cmd.cfg),
   pcell_harq_pool(cmd.pcell_harq_pool),
   logger(srslog::fetch_basic_logger("SCHED")),
-  dl_lc_ch_mgr(cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs,
-               cmd.starts_in_fallback,
-               cmd.cfg.logical_channels()),
   ul_lc_ch_mgr(cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs, cmd.cfg.logical_channels()),
   ta_mgr(expert_cfg.ta_control,
          cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs,
@@ -47,10 +44,15 @@ ue::ue(const ue_creation_command& cmd) :
   }
 }
 
+void ue::setup(ue_dl_logical_channel_repository dl_lch_repo)
+{
+  dl_lc_ch_mgr = std::move(dl_lch_repo);
+  dl_lc_ch_mgr.configure(ue_ded_cfg->logical_channels());
+}
+
 void ue::slot_indication(slot_point sl_tx)
 {
   last_sl_tx = sl_tx;
-  dl_lc_ch_mgr.slot_indication();
   ul_lc_ch_mgr.slot_indication();
   ta_mgr.slot_indication(sl_tx);
   drx.slot_indication(sl_tx);
@@ -105,7 +107,9 @@ void ue::set_config(const ue_configuration& new_cfg, std::optional<slot_point> m
   ue_ded_cfg = &new_cfg;
 
   // Configure Logical Channels.
-  dl_lc_ch_mgr.configure(ue_ded_cfg->logical_channels());
+  if (dl_lc_ch_mgr.valid()) {
+    dl_lc_ch_mgr.configure(ue_ded_cfg->logical_channels());
+  }
   ul_lc_ch_mgr.configure(ue_ded_cfg->logical_channels());
 
   // DRX config.
