@@ -347,6 +347,19 @@ variables:
     LINKER: mold
     INFRASTRUCTURE_TAG: arm64
 
+.smoke printers:
+  extends: .build_and_unit
+  variables: &gdb_printers_variables
+    OS: ubuntu-24.04
+    COMPILER: gcc
+    CMAKE_BUILD_TYPE: Debug
+    ASSERT_LEVEL: PARANOID
+    ENABLE_FFTW: "True"
+    TEST_GDB_PRINTERS: "True"
+    TEST_MODE: pretty_printers
+    MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
+
 # Combinations to use in schedules matrix
 
 .combinations: &basic_combinations
@@ -491,6 +504,28 @@ smoke arm neon cached:
   cache:
     - *cache_build_get
 
+smoke pretty printers cached:
+  extends: .smoke printers
+  stage: manual
+  timeout: 1 hour
+  rules:
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_TARGET_BRANCH_PROTECTED == "true" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != $CI_DEFAULT_BRANCH
+      when: never
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
+      when: never
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
+      changes: &gdb_printers_changes
+        paths:
+          - include/srsran/adt/**/*
+          - .gdbinit
+    - if: $ON_MR
+      changes:
+        <<: *gdb_printers_changes
+      when: manual
+      allow_failure: false
+  cache:
+    - *cache_build_get
+
 smoke relwithdeb clean:
   extends: .smoke relwithdeb
   rules:
@@ -549,6 +584,15 @@ smoke arm neon clean:
     - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
       changes:
         <<: *instruction_set_changes
+
+smoke pretty printers clean:
+  extends: .smoke printers
+  rules:
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_TARGET_BRANCH_PROTECTED == "true" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != $CI_DEFAULT_BRANCH
+      when: never
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
+      changes:
+        <<: *gdb_printers_changes
 
 # Intermediate commits
 
@@ -1439,15 +1483,7 @@ gdb pretty printers:
       start_in: 300 minutes
   interruptible: false
   variables:
-    OS: ubuntu-24.04
-    COMPILER: gcc
-    CMAKE_BUILD_TYPE: Debug
-    ASSERT_LEVEL: PARANOID
-    ENABLE_FFTW: "True"
-    TEST_GDB_PRINTERS: "True"
-    TEST_MODE: pretty_printers
-    MARCH: x86-64-v3
-    INFRASTRUCTURE_TAG: amd64-avx2
+    <<: *gdb_printers_variables
 
 # Build + unit tests combinations
 
