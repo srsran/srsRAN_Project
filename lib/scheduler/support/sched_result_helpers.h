@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../cell/resource_grid.h"
+#include "srsran/ran/band_helper.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/prach/prach_frequency_mapping.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
@@ -101,7 +102,7 @@ get_prach_grant_info(const cell_configuration&                                  
   }
 
   prach_configuration prach_cfg =
-      prach_configuration_get(frequency_range::FR1,
+      prach_configuration_get(band_helper::get_freq_range(cell_cfg.band),
                               cell_cfg.paired_spectrum ? duplex_mode::FDD : duplex_mode::TDD,
                               cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index);
 

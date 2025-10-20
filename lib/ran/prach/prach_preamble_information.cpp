@@ -201,6 +201,7 @@ prach_symbols_slots_duration srsran::get_prach_duration_info(const prach_configu
                 prach_cfg.nof_prach_slots_within_subframe != 1
             ? 2U
             : 1U;
+    output.start_symbol_pusch_scs = prach_cfg.starting_symbol;
   }
 
   return output;
