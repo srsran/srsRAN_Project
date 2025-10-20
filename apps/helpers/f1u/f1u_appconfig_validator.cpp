@@ -19,7 +19,7 @@ bool srsran::validate_f1u_sockets_appconfig(const f1u_sockets_appconfig& config)
     if (f1u_socket.sst.has_value() && not f1u_socket.five_qi.has_value()) {
       if (f1u_socket.sd.has_value()) {
         fmt::println(
-            "F1-U socket has S-NSSAI configured, but no associated 5QI. Please, configure 5QI too. sst={} sd={}",
+            "F1-U socket has S-NSSAI configured, but no associated 5QI. Please, configure 5QI too. sst={} sd={:#x}",
             *f1u_socket.sst,
             *f1u_socket.sd);
       } else {

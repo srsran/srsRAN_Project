@@ -36,7 +36,7 @@ struct gtpu_gateway_maps {
     } else {
       s_nssai_t s_nssai{slice_service_type{*sst}, {}};
       if (sd.has_value()) {
-        auto exp = slice_differentiator::create(*sd);
+        expected<slice_differentiator> exp = slice_differentiator::create(*sd);
         if (not exp.has_value()) {
           report_error("Invalid F1U socket configuration. SD is invalid");
         }

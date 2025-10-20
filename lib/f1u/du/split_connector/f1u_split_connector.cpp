@@ -45,7 +45,7 @@ f1u_split_connector::f1u_split_connector(const gtpu_gateway_maps& udp_gw_maps,
 
   for (auto const& [s_nssai, s_nssai_gws] : udp_gw_maps.gw_maps) {
     for (auto const& [five_qi, five_qi_gws] : s_nssai_gws) {
-      for (auto const& gw : five_qi_gws) {
+      for (const std::unique_ptr<gtpu_gateway>& gw : five_qi_gws) {
         f1u_sessions.session_maps[s_nssai][five_qi].push_back(gw->create(*gw_data_gtpu_demux_adapter));
       }
     }
