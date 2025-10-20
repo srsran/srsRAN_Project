@@ -37,8 +37,6 @@ TEST(mac_ce_size_test, derivation_of_mac_ce_size)
 class dl_logical_channel_system_test
 {
 protected:
-  dl_logical_channel_system_test() : lch_system(subcarrier_spacing::kHz30) {}
-
   logical_channel_config_list_ptr create_empty_config()
   {
     return cfg_pool.create(std::vector<logical_channel_config>{});
@@ -65,7 +63,8 @@ class single_ue_dl_logical_channel_system_test : public dl_logical_channel_syste
 {
 protected:
   std::vector<lcid_t>              lcids{LCID_SRB0, LCID_SRB1, LCID_MIN_DRB};
-  ue_dl_logical_channel_repository ue_lchs{lch_system.create_ue(false, create_lcid_config(lcids))};
+  ue_dl_logical_channel_repository ue_lchs{
+      lch_system.create_ue(subcarrier_spacing::kHz30, false, create_lcid_config(lcids))};
 };
 
 TEST_F(single_ue_dl_logical_channel_system_test, no_pending_data)
@@ -491,7 +490,8 @@ TEST_F(multi_ue_dl_logical_channel_system_test, multiple_ue_creation)
   const auto                                    nof_ues = test_rgen::uniform_int<unsigned>(2, 10);
   std::vector<ue_dl_logical_channel_repository> ues;
   for (unsigned i = 0; i != nof_ues; ++i) {
-    ues.push_back(lch_system.create_ue(false, create_lcid_config({LCID_SRB0, LCID_SRB1, LCID_MIN_DRB})));
+    ues.push_back(lch_system.create_ue(
+        subcarrier_spacing::kHz30, false, create_lcid_config({LCID_SRB0, LCID_SRB1, LCID_MIN_DRB})));
   }
   ASSERT_EQ(lch_system.nof_ues(), nof_ues);
   ASSERT_EQ(lch_system.nof_logical_channels(), nof_ues * 3);

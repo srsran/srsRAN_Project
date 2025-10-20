@@ -7,7 +7,6 @@
 #
 
 add_executable(ue_scheduler_test
-        dl_logical_channel_test.cpp
         fallback_scheduler_test.cpp
         ue_cell_test.cpp
         ue_configuration_test.cpp

@@ -21,8 +21,7 @@ static unsigned get_mac_sdu_size(unsigned sdu_and_subheader_bytes)
   return sdu_size < MAC_SDU_SUBHEADER_LENGTH_THRES ? sdu_size : sdu_size - 1;
 }
 
-dl_logical_channel_system::dl_logical_channel_system(subcarrier_spacing scs_common) :
-  slots_per_sec(get_nof_slots_per_subframe(scs_common) * 1000)
+dl_logical_channel_system::dl_logical_channel_system()
 {
   static constexpr unsigned PRERESERVED_NOF_LCS_PER_UE  = 5;
   static constexpr unsigned PRERESERVED_NOF_DRBS_PER_UE = 2;
@@ -45,11 +44,14 @@ void dl_logical_channel_system::slot_indication()
 }
 
 ue_dl_logical_channel_repository
-dl_logical_channel_system::create_ue(bool starts_in_fallback, logical_channel_config_list_ptr log_channels_configs)
+dl_logical_channel_system::create_ue(subcarrier_spacing              scs_common,
+                                     bool                            starts_in_fallback,
+                                     logical_channel_config_list_ptr log_channels_configs)
 {
   soa::row_id ue_rid    = ue_contexts.insert(ue_context{});
   ue_context& ue_ctx    = ue_contexts.row(ue_rid).at<0>();
   ue_ctx.fallback_state = starts_in_fallback;
+  ue_ctx.slots_per_msec = get_nof_slots_per_subframe(scs_common);
   if (log_channels_configs.has_value()) {
     configure(ue_rid, log_channels_configs);
   }
@@ -156,7 +158,7 @@ void dl_logical_channel_system::configure(soa::row_id ue_rid, logical_channel_co
         auto qos_rid      = qos_channels.insert(qos_context{});
         ch_ctx->stats_row = qos_rid;
       }
-      qos_channels.row(*ch_ctx->stats_row).at<0>().avg_bytes_per_slot.resize(win_size_msec * slots_per_sec / 1000);
+      qos_channels.row(*ch_ctx->stats_row).at<0>().avg_bytes_per_slot.resize(win_size_msec * ue_ctx.slots_per_msec);
     } else if (ch_ctx->stats_row.has_value()) {
       // Remove from QoS tracking.
       qos_channels.erase(*ch_ctx->stats_row);

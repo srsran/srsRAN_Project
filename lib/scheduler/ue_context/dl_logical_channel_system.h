@@ -36,13 +36,14 @@ public:
     std::variant<ta_cmd_ce_payload, dummy_ce_payload> ce_payload = dummy_ce_payload{0};
   };
 
-  dl_logical_channel_system(subcarrier_spacing max_scs);
+  dl_logical_channel_system();
 
   /// Signal the start of a new slot.
   void slot_indication();
 
   /// Creates a new UE logical channel repository.
-  ue_dl_logical_channel_repository create_ue(bool                            starts_in_fallback,
+  ue_dl_logical_channel_repository create_ue(subcarrier_spacing              scs_common,
+                                             bool                            starts_in_fallback,
                                              logical_channel_config_list_ptr log_channels_configs);
 
   /// Number of UEs managed by the system.
@@ -83,6 +84,8 @@ private:
     bool fallback_state = false;
     // Whether a CON RES CE needs to be sent.
     bool pending_con_res_id{false};
+    /// Number of slots per millisecond for this UE, based on the subcarrier spacing.
+    unsigned slots_per_msec{0};
     /// Sum of pending CE bytes for this UE.
     uint32_t pending_ce_bytes{0};
     /// Context of channels currently configured. The index of the array matches the LCID.
@@ -147,9 +150,6 @@ private:
 
   /// \brief Returns the next highest priority LCID. The prioritization policy is implementation-defined.
   lcid_t get_max_prio_lcid(soa::row_id ue_rid) const;
-
-  /// Number of slots per second given the used SCS. Parameter used to compute bit rates.
-  const unsigned slots_per_sec;
 
   /// List of MAC CEs pending transmission.
   soa::table<mac_ce_context> pending_ces;
@@ -297,11 +297,12 @@ public:
   /// \brief Average bit rate, in bps, for a given LCID.
   double average_bit_rate(lcid_t lcid) const
   {
-    auto* ch_ctx = find_channel_ctx(lcid);
+    auto& ue_ctx = get_ue_ctx();
+    auto* ch_ctx = find_channel_ctx(ue_ctx, lcid);
     auto* qos_ch = (ch_ctx != nullptr and ch_ctx->active and ch_ctx->stats_row.has_value())
                        ? &parent->qos_channels.row(ch_ctx->stats_row.value()).at<0>()
                        : nullptr;
-    return qos_ch != nullptr ? qos_ch->avg_bytes_per_slot.average() * 8 * parent->slots_per_sec : 0.0;
+    return qos_ch != nullptr ? qos_ch->avg_bytes_per_slot.average() * 8 * ue_ctx.slots_per_msec * 1000 : 0.0;
   }
 
   slot_point hol_toa(lcid_t lcid) const

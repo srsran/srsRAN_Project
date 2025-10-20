@@ -37,6 +37,7 @@ ue::ue(const ue_creation_command& cmd) :
   // Apply configuration.
   set_config(cmd.cfg, cmd.ul_ccch_slot_rx);
 
+  // Set the UE carriers as fallback or normal operation.
   for (auto& cell : ue_du_cells) {
     if (cell != nullptr) {
       cell->set_fallback_state(cmd.starts_in_fallback, false, false);
@@ -46,6 +47,7 @@ ue::ue(const ue_creation_command& cmd) :
 
 void ue::setup(ue_dl_logical_channel_repository dl_lch_repo)
 {
+  // Setups UE DL logical channel manager.
   dl_lc_ch_mgr = std::move(dl_lch_repo);
   dl_lc_ch_mgr.configure(ue_ded_cfg->logical_channels());
 }
