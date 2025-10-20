@@ -23,7 +23,7 @@ static error_type<std::string> validate_du_param_config_request(const du_param_c
     return make_unexpected("At least one cell configuration must be present");
   }
 
-  for (auto& cell : req.cells) {
+  for (const auto& cell : req.cells) {
     if (not cell.ssb_pwr_mod.has_value() and cell.rrm_policy_ratio_list.empty()) {
       return make_unexpected("Cell config requests must specify either SSB power mod. or rrm_policy_ratio_list");
     }
@@ -39,7 +39,7 @@ static error_type<std::string> validate_du_param_config_request(const du_param_c
   }
   // If there are config requests for 2 or more cells, then each of them must specify the NR-CGI.
   else {
-    for (auto& cell : req.cells) {
+    for (const auto& cell : req.cells) {
       if (not cell.nr_cgi.has_value()) {
         return make_unexpected("Missing NR-CGI for one of the cell config requests");
       }
@@ -89,6 +89,10 @@ void du_param_config_procedure::operator()(coro_context<async_task<du_param_conf
   CORO_AWAIT_VALUE(gnbdu_config_update_response f1resp, handle_f1_gnbdu_config_update());
 
   resp.success = f1resp.result;
+  if (resp.success) {
+    logger.info("DU reconfiguration procedure for {} completed",
+                request.cells.front().ssb_pwr_mod.has_value() ? "SSB power modification" : "RRM policy update");
+  }
   CORO_RETURN(resp);
 }
 
