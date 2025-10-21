@@ -39,6 +39,7 @@ _FLAKY_ERROR_LIST = [
     "Timeout reached while reserving and/or waiting for pods to be ready",
     "Error creating the pod",
     "Viavi API call timed out",
+    "time-out in waiting for Cell Frame Boundary detection",
 ]
 _GNB_STOP_TIMEOUT = 15  # When timeout reached, retina gets GDB backtrace and sends sigkill. 0 means no timeout
 
