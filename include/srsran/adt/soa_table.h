@@ -43,6 +43,7 @@ class row_view
 {
 public:
   row_view(TableType& table_, unsigned offset_) : table(&table_), offset(offset_) {}
+  row_view(const row_view<std::remove_const_t<TableType>>& other) : table(other.table), offset(other.offset) {}
 
   /// Number of columns in the table.
   static constexpr size_t nof_columns() { return TableType::nof_columns(); }
@@ -68,6 +69,22 @@ public:
     return cols[offset];
   }
 
+  /// Retrieves a cell from the table for column of type T.
+  template <typename T>
+  auto& at()
+  {
+    auto& cols = std::get<std::vector<T>>(table->columns);
+    srsran_sanity_check(offset < cols.size(), "Row offset out of range");
+    return cols[offset];
+  }
+  template <typename T>
+  const auto& at() const
+  {
+    auto& cols = std::get<std::vector<T>>(table->columns);
+    srsran_sanity_check(offset < cols.size(), "Row offset out of range");
+    return cols[offset];
+  }
+
   template <std::size_t ColIndex>
   friend auto& get(const row_view& rv)
   {
@@ -77,6 +94,16 @@ public:
   friend auto& get(row_view&& rv)
   {
     return rv.at<ColIndex>();
+  }
+  template <typename T>
+  friend auto& get(const row_view& rv)
+  {
+    return rv.at<T>();
+  }
+  template <typename T>
+  friend auto& get(row_view&& rv)
+  {
+    return rv.at<T>();
   }
 
   bool operator==(const row_view& other) const
@@ -93,6 +120,8 @@ public:
   bool operator!=(const row_view& other) const { return not(*this == other); }
 
 private:
+  friend class row_view<const TableType>;
+
   TableType* table;
   unsigned   offset;
 };
