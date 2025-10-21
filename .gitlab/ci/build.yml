@@ -517,6 +517,7 @@ smoke pretty printers cached:
       changes: &gdb_printers_changes
         paths:
           - include/srsran/adt/**/*
+          - tests/utils/gdb/pretty_printers/*
           - .gdbinit
     - if: $ON_MR
       changes:
