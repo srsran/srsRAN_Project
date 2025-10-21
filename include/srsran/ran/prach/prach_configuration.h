@@ -8,14 +8,14 @@
  *
  */
 
+#pragma once
+
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/frequency_range.h"
 #include "srsran/ran/prach/prach_format_type.h"
 #include "srsran/ran/slot_point.h"
 #include <cstdint>
-
-#pragma once
 
 namespace srsran {
 
