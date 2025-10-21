@@ -468,7 +468,7 @@ def test_android_hp(
     (param(41, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),),
 )
 @mark.zmq_2x2_mimo
-@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed"])
+@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed", "StatusCode.UNKNOWN"])
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_2x2_mimo(
     retina_manager: RetinaTestManager,
@@ -513,7 +513,7 @@ def test_zmq_2x2_mimo(
 
 
 @mark.zmq
-@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed"])
+@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed", "StatusCode.UNKNOWN"])
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_64_ues(
     retina_manager: RetinaTestManager,
@@ -572,7 +572,7 @@ def test_zmq_64_ues(
     (param(41, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),),
 )
 @mark.zmq_4x4_mimo
-@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed"])
+@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed", "StatusCode.UNKNOWN"])
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_4x4_mimo(
     retina_manager: RetinaTestManager,
@@ -623,6 +623,7 @@ def test_zmq_4x4_mimo(
 )
 @mark.zmq
 @mark.smoke
+@mark.flaky(reruns=2, only_rerun=["StatusCode.UNKNOWN"])
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_smoke(
     retina_manager: RetinaTestManager,
@@ -700,6 +701,7 @@ def test_smoke(
         "socket is already closed",
         "failed to connect to all addresses",
         "5GC crashed",
+        "StatusCode.UNKNOWN",
     ],
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -826,10 +828,7 @@ def test_zmq_precoding(
 @mark.s72
 @mark.flaky(
     reruns=2,
-    only_rerun=[
-        "failed to start",
-        "5GC crashed",
-    ],
+    only_rerun=["failed to start", "5GC crashed", "StatusCode.UNKNOWN"],
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_s72(

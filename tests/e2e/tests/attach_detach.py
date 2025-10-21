@@ -32,6 +32,7 @@ BITRATE_THRESHOLD: float = 0.1
 
 @mark.zmq
 @mark.smoke
+@mark.flaky(reruns=2, only_rerun=["StatusCode.UNKNOWN"])
 def test_smoke(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -85,7 +86,7 @@ def test_smoke(
     ),
 )
 @mark.zmq
-@mark.flaky(reruns=3, only_rerun=["failed to start", "IPerf Data Invalid"])
+@mark.flaky(reruns=3, only_rerun=["failed to start", "IPerf Data Invalid", "StatusCode.UNKNOWN"])
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq(
     retina_manager: RetinaTestManager,

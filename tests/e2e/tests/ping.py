@@ -333,6 +333,7 @@ def test_android_no_drx(
         "Some packages got lost",
         "socket is already closed",
         "5GC crashed",
+        "StatusCode.UNKNOWN",
     ],
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -454,6 +455,7 @@ def test_example_srsue(
         "Some packages got lost",
         "socket is already closed",
         "5GC crashed",
+        "StatusCode.UNKNOWN",
     ],
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments

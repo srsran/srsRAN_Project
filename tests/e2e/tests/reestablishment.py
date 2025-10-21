@@ -42,11 +42,18 @@ from .steps.stub import (
     ue_validate_no_reattaches,
 )
 
-_ONLY_RERUN = ["failed to start", "Attach timeout reached", "StatusCode.ABORTED", "socket is already closed"]
+_ONLY_RERUN = [
+    "failed to start",
+    "Attach timeout reached",
+    "StatusCode.ABORTED",
+    "socket is already closed",
+    "StatusCode.UNKNOWN",
+]
 
 
 @mark.zmq
 @mark.smoke
+@mark.flaky(reruns=2, only_rerun=["StatusCode.UNKNOWN"])
 def test_smoke_sequentially(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,

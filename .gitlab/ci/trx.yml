@@ -19,7 +19,7 @@ build trx driver:
   extends: .build_and_unit
   variables:
     AMARISOFT_PACKAGE_REGISTRY: ${CI_API_V4_URL}/projects/44296988/packages/generic/amarisoft
-    AMARISOFT_VERSION: "2023-09-08"
+    AMARISOFT_VERSION: "2025-09-19"
     KUBERNETES_CPU_REQUEST: ${SRS_CPU_LIMIT}
     KUBERNETES_CPU_LIMIT: ${SRS_CPU_LIMIT}
     KUBERNETES_MEMORY_REQUEST: ${SRS_MEMORY_LIMIT}
@@ -93,21 +93,6 @@ build amariue zmq driver:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
 
-build uesim zmq driver:
-  extends: build trx driver
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
-  variables:
-    OS: fedora-39
-    AMARISOFT_VERSION: "2024-03-15"
-
-build amariue ntn zmq driver:
-  extends: build trx driver
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
-  variables:
-    AMARISOFT_VERSION: "2025-09-19"
-
 custom zmq driver:
   extends: build trx driver
   rules:
@@ -121,13 +106,6 @@ custom zmq driver:
       when: never
     - if: $GROUP == "viavi" || $GROUP == "rf"
       when: never
-    - if: $GROUP == "uesim"
-      variables:
-        OS: fedora-39
-        AMARISOFT_VERSION: "2024-03-15"
-    - if: $TESTBED == "zmq_ntn"
-      variables:
-        AMARISOFT_VERSION: "2025-09-19"
     - if: $TESTBED != ""
       variables:
-        AMARISOFT_VERSION: "2023-09-08"
+        AMARISOFT_VERSION: "2025-09-19"

@@ -8,9 +8,9 @@
 
 - name: amarisoft-ue
   type: ue
-  image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_S72_NTN_VERSION}_${RETINA_VERSION}
+  image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${RETINA_VERSION}
   labels:
-    - ${ZMQ_HOSTLABEL_1}
+    - kubernetes.io/hostname=ci-buildmaster
   nof_ports: 16
   requirements:
     cpu:
@@ -24,7 +24,7 @@
       limits: "8G"
   resources:
     - type: license
-      model: amarisoft-5g-ext
+      model: amarisoft-ue.*
     - type: ru
       model: amariue-s72
 
