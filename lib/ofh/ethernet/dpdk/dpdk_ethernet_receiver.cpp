@@ -13,7 +13,7 @@
 #include "srsran/ofh/ethernet/dpdk/dpdk_ethernet_rx_buffer.h"
 #include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
 #include "srsran/support/executors/task_executor.h"
-#include <future>
+#include "srsran/support/synchronization/sync_event.h"
 #include <rte_ethdev.h>
 #include <thread>
 
@@ -49,23 +49,19 @@ dpdk_receiver_impl::dpdk_receiver_impl(task_executor&                     execut
 
 void dpdk_receiver_impl::start(frame_notifier& notifier_)
 {
+  logger.info("Starting the DPDK ethernet frame receiver");
+
   stop_manager.reset();
 
   notifier = &notifier_;
 
-  std::promise<void> p;
-  std::future<void>  fut = p.get_future();
-
-  if (!executor.defer([this, &p]() {
-        // Signal to the start() caller thread that the operation is complete.
-        p.set_value();
-        receive_loop();
-      })) {
+  sync_event wait_event;
+  if (!executor.defer([this, token = wait_event.get_token()]() { receive_loop(); })) {
     report_error("Unable to start the DPDK ethernet frame receiver on port '{}'", port_ctx->get_port_id());
   }
 
   // Block waiting for timing executor to start.
-  fut.wait();
+  wait_event.wait();
 
   logger.info("Started the DPDK ethernet frame receiver on port '{}'", port_ctx->get_port_id());
 }
@@ -74,7 +70,6 @@ void dpdk_receiver_impl::stop()
 {
   logger.info("Requesting stop of the DPDK ethernet frame receiver on port '{}'", port_ctx->get_port_id());
   stop_manager.stop();
-
   logger.info("Stopped the DPDK ethernet frame receiver on port '{}'", port_ctx->get_port_id());
 }
 

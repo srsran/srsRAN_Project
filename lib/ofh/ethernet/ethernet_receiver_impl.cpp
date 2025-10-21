@@ -15,9 +15,9 @@
 #include "srsran/ofh/ethernet/ethernet_properties.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/synchronization/sync_event.h"
 #include <arpa/inet.h>
 #include <cstring>
-#include <future>
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <thread>
@@ -86,25 +86,19 @@ receiver_impl::~receiver_impl()
 
 void receiver_impl::start(frame_notifier& notifier_)
 {
-  stop_manager.reset();
-
   logger.info("Starting the ethernet frame receiver");
+
+  stop_manager.reset();
 
   notifier = &notifier_;
 
-  std::promise<void> p;
-  std::future<void>  fut = p.get_future();
-
-  if (!executor.defer([this, &p]() {
-        // Signal to the start() caller thread that the operation is complete.
-        p.set_value();
-        receive_loop();
-      })) {
+  sync_event wait_event;
+  if (!executor.defer([this, token = wait_event.get_token()] { receive_loop(); })) {
     report_error("Unable to start the ethernet frame receiver, fd = '{}'", socket_fd);
   }
 
   // Block waiting for timing executor to start.
-  fut.wait();
+  wait_event.wait();
 
   logger.info("Started the ethernet frame receiver with fd = '{}'", socket_fd);
 }
@@ -112,9 +106,7 @@ void receiver_impl::start(frame_notifier& notifier_)
 void receiver_impl::stop()
 {
   logger.info("Requesting stop of the ethernet frame receiver with fd = '{}'", socket_fd);
-
   stop_manager.stop();
-
   logger.info("Stopped the ethernet frame receiver with fd = '{}'", socket_fd);
 }
 
