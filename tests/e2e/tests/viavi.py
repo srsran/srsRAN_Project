@@ -431,7 +431,7 @@ def _test_viavi(
             logging.info("Stopping GNB")
             stop(
                 ue_array=(),
-                gnb=gnb,
+                gnb_array=[gnb],
                 fivegc=None,
                 retina_data=retina_data,
                 gnb_stop_timeout=gnb_stop_timeout,

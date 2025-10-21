@@ -329,6 +329,18 @@ cudu amari 64UE:
       - E2E_FILE_OR_DIR: tests/inter_du_handover.py
         KEYWORDS: sequentially
 
+2gnb amari 8UE:
+  extends: .zmq
+  timeout: 2h
+  variables:
+    TESTBED: zmq_2gnb
+    MARKERS: "zmq and not smoke"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+  parallel:
+    matrix:
+      - E2E_FILE_OR_DIR: tests/inter_cu_handover.py
+        KEYWORDS: sequentially
+
 ric:
   extends: .zmq
   variables:

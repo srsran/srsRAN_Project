@@ -13,6 +13,7 @@ import logging
 from typing import Tuple
 
 from google.protobuf.empty_pb2 import Empty
+from google.protobuf.wrappers_pb2 import UInt32Value
 from pytest import fail, mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
@@ -65,8 +66,10 @@ def test_slicing(
 
     logging.info("Slicing Test")
 
-    start_network(ue_array=ue_4, gnb=gnb, fivegc=fivegc)
-    ue_attach_info_dict = ue_start_and_attach(ue_array=ue_4, du_definition=[gnb.GetDefinition(Empty())], fivegc=fivegc)
+    start_network(ue_array=ue_4, gnb_array=[gnb], fivegc=fivegc)
+    ue_attach_info_dict = ue_start_and_attach(
+        ue_array=ue_4, du_definition=[gnb.GetDefinition(UInt32Value(value=0))], fivegc=fivegc
+    )
     slice1_ue_rnti = ue_attach_info_dict[ue_4[0]].rnti
 
     # DL iperf test
@@ -81,7 +84,7 @@ def test_slicing(
 
     stop(
         ue_array=ue_4,
-        gnb=gnb,
+        gnb_array=[gnb],
         fivegc=fivegc,
         retina_data=retina_data,
         fail_if_kos=True,

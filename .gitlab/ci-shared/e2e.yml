@@ -6,6 +6,7 @@ variables:
       - "zmq_deb"
       - "zmq_cudu"
       - "zmq_1cu2du"
+      - "zmq_2gnb"
       - "zmq_srsue"
       - "zmq_ric"
       - "zmq_ntn"

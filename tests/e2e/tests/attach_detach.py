@@ -13,7 +13,7 @@ import logging
 from time import sleep
 from typing import Optional, Sequence, Tuple, Union
 
-from google.protobuf.empty_pb2 import Empty
+from google.protobuf.wrappers_pb2 import UInt32Value
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
@@ -175,10 +175,10 @@ def _attach_and_detach_multi_ues(
         always_download_artifacts=always_download_artifacts,
     )
 
-    start_network(ue_array=ue_array, gnb=gnb, fivegc=fivegc)
+    start_network(ue_array=ue_array, gnb_array=[gnb], fivegc=fivegc)
     ue_attach_info_dict = ue_start_and_attach(
         ue_array=ue_array,
-        du_definition=[gnb.GetDefinition(Empty())],
+        du_definition=[gnb.GetDefinition(UInt32Value(value=0))],
         fivegc=fivegc,
         ue_startup_timeout=ue_startup_timeout,
     )
@@ -211,7 +211,7 @@ def _attach_and_detach_multi_ues(
         ue_stop(ue_array=ue_array_to_attach, retina_data=retina_data, ue_stop_timeout=ue_stop_timeout)
         sleep(ue_settle_time)
         ue_attach_info_dict = ue_start_and_attach(
-            ue_array=ue_array_to_attach, du_definition=[gnb.GetDefinition(Empty())], fivegc=fivegc
+            ue_array=ue_array_to_attach, du_definition=[gnb.GetDefinition(UInt32Value(value=0))], fivegc=fivegc
         )
     # final stop will be triggered by teardown
 
@@ -227,7 +227,7 @@ def _attach_and_detach_multi_ues(
 
     stop(
         ue_array=ue_array,
-        gnb=gnb,
+        gnb_array=[gnb],
         fivegc=fivegc,
         retina_data=retina_data,
         ue_stop_timeout=ue_stop_timeout,

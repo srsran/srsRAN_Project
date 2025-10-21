@@ -15,7 +15,6 @@ from time import sleep
 from typing import Dict, Generator, Optional, Sequence, Tuple, Union
 
 import pytest
-from google.protobuf.empty_pb2 import Empty
 from google.protobuf.wrappers_pb2 import UInt32Value
 from pytest import mark
 from retina.client.manager import RetinaTestManager
@@ -65,7 +64,7 @@ def test_smoke_sequentially(
         retina_data=retina_data,
         ue_array=ue_2,
         fivegc=fivegc,
-        gnb=gnb,
+        gnb_array=[gnb],
         metrics_summary=None,
         band=41,
         common_scs=30,
@@ -93,7 +92,7 @@ def test_s72_sequentially(
         retina_data=retina_data,
         ue_array=ue_2,
         fivegc=fivegc,
-        gnb=gnb,
+        gnb_array=[gnb],
         metrics_summary=None,
         band=41,
         common_scs=30,
@@ -141,7 +140,7 @@ def test_zmq_handover_sequentially(
         retina_data=retina_data,
         ue_array=ue_8,
         fivegc=fivegc,
-        gnb=gnb,
+        gnb_array=[gnb],
         metrics_summary=metrics_summary,
         band=band,
         common_scs=common_scs,
@@ -163,7 +162,7 @@ def _handover_sequentially(
     bandwidth: int,
     noise_spd: int,
     sleep_between_movement_steps,
-    gnb: Optional[GNBStub] = None,
+    gnb_array: Optional[Sequence[GNBStub]] = None,
     cu: Optional[CUStub] = None,
     du_array: Optional[Sequence[DUStub]] = None,
     metrics_summary: Optional[MetricsSummary] = None,
@@ -175,27 +174,27 @@ def _handover_sequentially(
     stop_gnb_first: bool = False,
     verbose_cu_mac: bool = True,
 ):
-    if not gnb and not du_array and not cu:
-        logging.error("Invalid configuration: either gNB or CU and DU(s) are required")
+    if not gnb_array and not du_array and not cu:
+        logging.error("Invalid configuration: either gNB(s) or CU and DU(s) are required")
         return
 
-    if gnb:
+    if gnb_array:
         if cu or du_array:
-            logging.error("Invalid configuration: either gNB or CU and DU array must be provided, not both")
+            logging.error("Invalid configuration: either gNB(s) or CU and DU(s) must be provided, not both")
             return
     else:
         if cu and not du_array:
-            logging.error("Invalid configuration: If CU is provided, DU array must also be provided")
+            logging.error("Invalid configuration: If CU is provided, DU(s) must also be provided")
             return
         if not cu and du_array:
-            logging.error("Invalid configuration: If DU array is provided, CU must also be provided")
+            logging.error("Invalid configuration: If DU(s) is provided, CU must also be provided")
             return
 
     with _handover_multi_ues(
         retina_manager=retina_manager,
         retina_data=retina_data,
         ue_array=ue_array,
-        gnb=gnb,
+        gnb_array=gnb_array,
         cu=cu,
         du_array=du_array,
         fivegc=fivegc,
@@ -273,7 +272,7 @@ def test_zmq_handover_parallel(
         retina_manager=retina_manager,
         retina_data=retina_data,
         ue_array=ue_32,
-        gnb=gnb,
+        gnb_array=[gnb],
         fivegc=fivegc,
         metrics_summary=metrics_summary,
         band=band,
@@ -323,7 +322,7 @@ def _handover_multi_ues(
     time_alignment_calibration: Union[int, str],
     always_download_artifacts: bool,
     noise_spd: int,
-    gnb: Optional[GNBStub] = None,
+    gnb_array: Optional[Sequence[GNBStub]] = None,
     cu: Optional[CUStub] = None,
     du_array: Optional[Sequence[DUStub]] = None,
     metrics_summary: Optional[MetricsSummary] = None,
@@ -345,8 +344,11 @@ def _handover_multi_ues(
     None,
     None,
 ]:
-    if gnb:
-        logging.info("Handover Test (Ping)")
+    if gnb_array:
+        if len(gnb_array) == 1:
+            logging.info("Handover Test (Ping)")
+        else:
+            logging.info("Inter-CU Handover Test (Ping)")
     else:
         logging.info("Inter-DU Handover Test (Ping)")
 
@@ -367,6 +369,7 @@ def _handover_multi_ues(
         log_ip_level="debug",
         nof_antennas_dl=nof_antennas_dl,
         prach_config_index=prach_config_index,
+        enable_2gnbs=(gnb_array is not None and len(gnb_array) == 2),
     )
 
     configure_artifacts(
@@ -376,19 +379,26 @@ def _handover_multi_ues(
 
     start_network(
         ue_array=ue_array,
-        gnb=gnb,
+        gnb_array=gnb_array,
         cu=cu,
         du_array=du_array,
         fivegc=fivegc,
-        gnb_post_cmd=(("log --cu_level=debug --hex_max_size=32", "log --mac_level=debug") if verbose_cu_mac else ()),
+        gnb_post_cmd=(
+            (
+                "log --du_level=debug --cu_level=debug --f1ap_level=debug --ngap_level=debug --hex_max_size=32",
+                "log --mac_level=debug",
+            )
+            if verbose_cu_mac
+            else ()
+        ),
         cu_post_cmd=(
             ("log --cu_level=debug --f1ap_level=debug --ngap_level=debug --hex_max_size=32",) if verbose_cu_mac else ()
         ),
         du_post_cmd=(("log --mac_level=debug",) if verbose_cu_mac else ()),
     )
 
-    if gnb:
-        du_definition = [gnb.GetDefinition(Empty())]
+    if gnb_array:
+        du_definition = [gnb.GetDefinition(UInt32Value(value=idx)) for idx, gnb in enumerate(gnb_array)]
     elif du_array and cu:
         du_definition = [du.GetDefinition(UInt32Value(value=idx)) for idx, du in enumerate(du_array)]
 
@@ -423,7 +433,7 @@ def _handover_multi_ues(
 
         stop(
             ue_array=ue_array,
-            gnb=gnb,
+            gnb_array=gnb_array,
             cu=cu,
             du_array=du_array,
             fivegc=fivegc,
@@ -433,8 +443,8 @@ def _handover_multi_ues(
             stop_gnb_first=stop_gnb_first,
         )
     finally:
-        if gnb:
-            get_kpis(du_or_gnb_array=[gnb], ue_array=ue_array, metrics_summary=metrics_summary)
+        if gnb_array:
+            get_kpis(du_or_gnb_array=gnb_array, ue_array=ue_array, metrics_summary=metrics_summary)
         if du_array:
             get_kpis(du_or_gnb_array=du_array, ue_array=ue_array, metrics_summary=metrics_summary)
 
@@ -479,7 +489,7 @@ def test_zmq_handover_iperf(
         retina_manager=retina_manager,
         retina_data=retina_data,
         ue_array=[ue],
-        gnb=gnb,
+        gnb_array=[gnb],
         fivegc=fivegc,
         metrics_summary=metrics_summary,
         band=band,
@@ -493,7 +503,7 @@ def test_zmq_handover_iperf(
         time_alignment_calibration=0,
         always_download_artifacts=True,
         noise_spd=noise_spd,
-        sleep_between_movement_steps=10,
+        sleep_between_movement_steps=1,
         warning_as_errors=True,
     ) as (ue_attach_info_dict, movements, _):
 
@@ -554,7 +564,7 @@ def test_zmq_handover_noise(
         retina_manager=retina_manager,
         retina_data=retina_data,
         ue_array=[ue],
-        gnb=gnb,
+        gnb_array=[gnb],
         fivegc=fivegc,
         metrics_summary=metrics_summary,
         band=band,
@@ -568,7 +578,7 @@ def test_zmq_handover_noise(
         time_alignment_calibration=0,
         always_download_artifacts=True,
         noise_spd=noise_spd,
-        sleep_between_movement_steps=10,
+        sleep_between_movement_steps=1,
         warning_as_errors=True,
         allow_failure=True,
     ) as (ue_attach_info_dict, movements, _):
@@ -599,7 +609,7 @@ def _handover_multi_ues_iperf(
     retina_data: RetinaTestData,
     ue_array: Sequence[UEStub],
     fivegc: FiveGCStub,
-    gnb: GNBStub,
+    gnb_array: Sequence[GNBStub],
     metrics_summary: Optional[MetricsSummary],
     band: int,
     common_scs: int,
@@ -667,13 +677,15 @@ def _handover_multi_ues_iperf(
 
     start_network(
         ue_array=ue_array,
-        gnb=gnb,
+        gnb_array=gnb_array,
         fivegc=fivegc,
         gnb_post_cmd=("log --cu_level=debug --hex_max_size=32", "log --mac_level=debug"),
     )
 
     ue_attach_info_dict = ue_start_and_attach(
-        ue_array=ue_array, du_definition=[gnb.GetDefinition(Empty())], fivegc=fivegc
+        ue_array=ue_array,
+        du_definition=[gnb.GetDefinition(UInt32Value(value=idx)) for idx, gnb in enumerate(gnb_array)],
+        fivegc=fivegc,
     )
 
     try:
@@ -729,14 +741,14 @@ def _handover_multi_ues_iperf(
 
         stop(
             ue_array=ue_array,
-            gnb=gnb,
+            gnb_array=gnb_array,
             fivegc=fivegc,
             retina_data=retina_data,
             ue_stop_timeout=16,
             warning_as_errors=warning_as_errors,
         )
     finally:
-        get_kpis(du_or_gnb_array=[gnb], ue_array=ue_array, metrics_summary=metrics_summary)
+        get_kpis(du_or_gnb_array=gnb_array, ue_array=ue_array, metrics_summary=metrics_summary)
 
 
 def _do_ho(

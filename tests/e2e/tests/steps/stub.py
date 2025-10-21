@@ -90,7 +90,7 @@ def start_ntn_channel_emulator(
         if ue_def.zmq_ip is not None:
             ue_def_for_gnb = ue_def
 
-    du_definition = gnb.GetDefinition(Empty())
+    du_definition = gnb.GetDefinition(UInt32Value(value=0))
     channel_emulator_start_info = ChannelEmulatorStartInfo(
         du_definition=du_definition,
         ue_definition=ue_def_for_gnb,
@@ -133,7 +133,7 @@ def start_and_attach(
     """
     start_network(
         ue_array=ue_array,
-        gnb=gnb,
+        gnb_array=[gnb],
         fivegc=fivegc,
         gnb_startup_timeout=gnb_startup_timeout,
         fivegc_startup_timeout=fivegc_startup_timeout,
@@ -146,7 +146,7 @@ def start_and_attach(
 
     return ue_start_and_attach(
         ue_array=ue_array,
-        du_definition=[gnb.GetDefinition(Empty())],
+        du_definition=[gnb.GetDefinition(UInt32Value(value=0))],
         fivegc=fivegc,
         ue_startup_timeout=ue_startup_timeout,
         attach_timeout=attach_timeout,
@@ -165,12 +165,12 @@ def _get_hplmn(imsi: str) -> PLMN:
     return hplmn
 
 
-# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
+# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals,too-many-branches
 def start_network(
     *,  # This enforces keyword-only arguments
     ue_array: Sequence[UEStub],
     fivegc: FiveGCStub,
-    gnb: Optional[GNBStub] = None,
+    gnb_array: Optional[Sequence[GNBStub]] = None,
     cu: Optional[CUStub] = None,
     du_array: Optional[Sequence[DUStub]] = None,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
@@ -189,7 +189,7 @@ def start_network(
     Start Network (5GC + gNB/CU+DU + RIC(optional))
     """
 
-    if gnb and (cu or du_array):
+    if gnb_array and (cu or du_array):
         pytest.fail("Either gNB or CU and DU array must be provided, not both")
 
     if (cu and not du_array) or (not cu and du_array):
@@ -244,22 +244,23 @@ def start_network(
             ric_definition = ric.GetDefinition(Empty())
             logging.info("RIC: %s", MessageToString(ric_definition, indent=2))
 
-    if gnb:
-        with handle_start_error(name=f"GNB [{id(gnb)}]"):
-            # GNB Start
-            gnb.Start(
-                GNBStartInfo(
-                    plmn=plmn,
-                    ue_definition=ue_def_for_gnb,
-                    fivegc_definition=fivegc.GetDefinition(Empty()),
-                    ric_definition=ric_definition,
-                    start_info=StartInfo(
-                        timeout=gnb_startup_timeout,
-                        pre_commands=gnb_pre_cmd,
-                        post_commands=gnb_post_cmd,
-                    ),
+    if gnb_array:
+        for gnb in gnb_array:
+            with handle_start_error(name=f"GNB [{id(gnb)}]"):
+                # GNB Start
+                gnb.Start(
+                    GNBStartInfo(
+                        plmn=plmn,
+                        ue_definition=ue_def_for_gnb,
+                        fivegc_definition=fivegc.GetDefinition(Empty()),
+                        ric_definition=ric_definition,
+                        start_info=StartInfo(
+                            timeout=gnb_startup_timeout,
+                            pre_commands=gnb_pre_cmd,
+                            post_commands=gnb_post_cmd,
+                        ),
+                    )
                 )
-            )
         return
 
     if cu and du_array:
@@ -944,7 +945,7 @@ def stop(
     *,  # This enforces keyword-only arguments
     ue_array: Sequence[UEStub],
     retina_data: RetinaTestData,
-    gnb: Optional[GNBStub] = None,
+    gnb_array: Optional[Sequence[GNBStub]] = None,
     cu: Optional[CUStub] = None,
     du_array: Optional[Sequence[DUStub]] = None,
     fivegc: Optional[FiveGCStub] = None,
@@ -963,15 +964,16 @@ def stop(
     """
     # Stop
     error_msg_array = []
-    if (stop_gnb_first is True) and (gnb is not None):
-        error_message, _ = _stop_stub(
-            stub=gnb,
-            name="GNB",
-            retina_data=retina_data,
-            timeout=gnb_stop_timeout,
-            log_search=log_search,
-            warning_as_errors=warning_as_errors,
-        )
+    if (stop_gnb_first is True) and (gnb_array is not None):
+        for index, gnb in enumerate(gnb_array):
+            error_message, _ = _stop_stub(
+                stub=gnb,
+                name=f"GNB_{index+1}",
+                retina_data=retina_data,
+                timeout=gnb_stop_timeout,
+                log_search=log_search,
+                warning_as_errors=warning_as_errors,
+            )
         error_msg_array.append(error_message)
 
     for index, ue_stub in enumerate(ue_array):
@@ -985,16 +987,17 @@ def stop(
         )
         error_msg_array.append(error_message)
 
-    if (stop_gnb_first is False) and (gnb is not None):
-        error_message, _ = _stop_stub(
-            stub=gnb,
-            name="GNB",
-            retina_data=retina_data,
-            timeout=gnb_stop_timeout,
-            log_search=log_search,
-            warning_as_errors=warning_as_errors,
-        )
-        error_msg_array.append(error_message)
+    if (stop_gnb_first is False) and (gnb_array is not None):
+        for index, gnb in enumerate(gnb_array):
+            error_message, _ = _stop_stub(
+                stub=gnb,
+                name=f"GNB_{index+1}",
+                retina_data=retina_data,
+                timeout=gnb_stop_timeout,
+                log_search=log_search,
+                warning_as_errors=warning_as_errors,
+            )
+            error_msg_array.append(error_message)
 
     if du_array is not None:
         for index, du_stub in enumerate(du_array):

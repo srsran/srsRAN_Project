@@ -14,7 +14,7 @@ from contextlib import contextmanager
 from typing import Dict, Generator, Optional, Sequence, Tuple, Union
 
 import pytest
-from google.protobuf.empty_pb2 import Empty
+from google.protobuf.wrappers_pb2 import UInt32Value
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
@@ -616,7 +616,7 @@ def _test_reestablishments(
 
     start_network(
         ue_array=ue_array,
-        gnb=gnb,
+        gnb_array=[gnb],
         fivegc=fivegc,
         gnb_post_cmd=(
             "log --cu_level=debug",
@@ -627,7 +627,7 @@ def _test_reestablishments(
 
     ue_attach_info_dict = ue_start_and_attach(
         ue_array=ue_array,
-        du_definition=[gnb.GetDefinition(Empty())],
+        du_definition=[gnb.GetDefinition(UInt32Value(value=0))],
         fivegc=fivegc,
         ue_startup_timeout=ue_startup_timeout,
     )
@@ -638,7 +638,13 @@ def _test_reestablishments(
         for ue_stub in ue_array:
             ue_validate_no_reattaches(ue_stub)
 
-        stop(ue_array=ue_array, gnb=gnb, fivegc=fivegc, retina_data=retina_data, warning_as_errors=warning_as_errors)
+        stop(
+            ue_array=ue_array,
+            gnb_array=[gnb],
+            fivegc=fivegc,
+            retina_data=retina_data,
+            warning_as_errors=warning_as_errors,
+        )
 
     finally:
         get_kpis(du_or_gnb_array=[gnb], ue_array=ue_array, metrics_summary=metrics_summary)

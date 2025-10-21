@@ -138,10 +138,32 @@ def configure_test_parameters(
     slices: Optional[List[dict]] = None,
     ue_sds: Optional[List[str]] = None,
     warning_allowlist: Optional[List[str]] = None,
+    enable_2gnbs: bool = False,
 ):
     """
     Configure test parameters
     """
+    gnb_node_list = []
+    if enable_2gnbs:
+        gnb_node_list = [
+            {
+                "name": "srs-gnb0-0",
+                "parameters": {
+                    "gnb_id": 500,
+                    "cell_offset": 0,
+                    "num_cells": 1,
+                },
+            },
+            {
+                "name": "srs-gnb1-0",
+                "parameters": {
+                    "gnb_id": 501,
+                    "cell_offset": 1,
+                    "num_cells": 1,
+                },
+            },
+        ]
+
     retina_data.test_config = {
         "ue": {
             "parameters": {
@@ -165,6 +187,7 @@ def configure_test_parameters(
             },
         },
         "gnb": {
+            "node_list": gnb_node_list,
             "parameters": {
                 "band": band,
                 "dl_arfcn": _get_dl_arfcn(band),

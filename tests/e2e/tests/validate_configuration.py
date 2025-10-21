@@ -16,6 +16,7 @@ from pprint import pformat
 from time import sleep
 
 from google.protobuf.empty_pb2 import Empty
+from google.protobuf.wrappers_pb2 import UInt32Value
 from pytest import mark, param
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
@@ -131,7 +132,7 @@ def run_config(
 
     plmn = PLMN(mcc="001", mnc="01")
 
-    gnb.GetDefinition(Empty())
+    gnb.GetDefinition(UInt32Value(value=0))
     fivegc_def: FiveGCDefinition = fivegc.GetDefinition(Empty())
 
     fivegc.Start(
@@ -161,4 +162,4 @@ def run_config(
     logging.info("Waiting 60s...")
     sleep(60)
 
-    stop(ue_array=tuple(), gnb=gnb, fivegc=fivegc, retina_data=retina_data, log_search=False)
+    stop(ue_array=tuple(), gnb_array=[gnb], fivegc=fivegc, retina_data=retina_data, log_search=False)
