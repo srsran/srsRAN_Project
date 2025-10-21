@@ -441,6 +441,7 @@ public:
   /// Assertion is triggered if the resultant size exceeds the maximum size of the bitset.
   void push_back(bool val)
   {
+    static_assert(not LowestInfoBitIsMSB, "push_back only works for LowestInfoBitIsMSB == false");
     unsigned bitpos = size();
     resize(size() + 1);
     set(bitpos, val);
@@ -455,14 +456,10 @@ public:
   template <typename Integer>
   void push_back(Integer val, unsigned nof_bits)
   {
-    static_assert(std::is_unsigned<Integer>::value, "push_back only works for unsigned integers");
+    static_assert(not LowestInfoBitIsMSB, "push_back only works for LowestInfoBitIsMSB == false");
+    static_assert(std::is_unsigned_v<Integer>, "push_back only works for unsigned integers");
     unsigned bitpos = size();
     resize(size() + nof_bits);
-    if (LowestInfoBitIsMSB) {
-      for (unsigned bit_index = 0; bit_index != bitpos; ++bit_index) {
-        set(bit_index, test(bit_index + nof_bits));
-      }
-    }
     for (unsigned bit_index = 0; bit_index != nof_bits; ++bit_index) {
       set(bitpos + bit_index, (val >> (nof_bits - 1 - bit_index)) & 1U);
     }
@@ -1066,7 +1063,7 @@ public:
   template <typename UnsignedInteger>
   void to_unpacked_bits(span<UnsignedInteger> unpacked_bits) const
   {
-    static_assert(std::is_unsigned<UnsignedInteger>::value, "Only unsigned integers are supported");
+    static_assert(std::is_unsigned_v<UnsignedInteger>, "Only unsigned integers are supported");
     srsran_assert(size() == unpacked_bits.size(),
                   "ERROR: provided array size='{}' does not match bitset size='{}'",
                   unpacked_bits.size(),

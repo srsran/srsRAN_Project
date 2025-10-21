@@ -166,9 +166,9 @@ static coreset_configuration generate_coreset_configuration()
   if (config.id == to_coreset_id(0)) {
     config.set_coreset0_crbs({0, 48});
   } else {
-    freq_resource_bitmap freq_res_bitmap;
+    freq_resource_bitmap freq_res_bitmap(freq_res_bitmap.max_size());
     for (unsigned i = 0, e = freq_res_bitmap.max_size(); i != e; ++i) {
-      freq_res_bitmap.push_back(generate_bool());
+      freq_res_bitmap.set(i, generate_bool());
     }
     config.set_freq_domain_resources(freq_res_bitmap);
   }

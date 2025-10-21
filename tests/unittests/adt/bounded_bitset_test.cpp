@@ -858,11 +858,36 @@ TEST(BoundedBitset, push_back)
 {
   {
     bounded_bitset<10> bitset;
-    bitset.push_back(1);
-    bitset.push_back(0);
-    bitset.push_back(1);
-    bitset.push_back(1);
+    bitset.push_back(true);
+    bitset.push_back(false);
+    bitset.push_back(true);
+    bitset.push_back(true);
+    ASSERT_EQ(bitset.size(), 4);
+    ASSERT_TRUE(bitset.test(0));
+    ASSERT_FALSE(bitset.test(1));
     ASSERT_EQ(bitset, bounded_bitset<10>({1, 0, 1, 1}));
+  }
+  {
+    bounded_bitset<10> bitset;
+    bitset.push_back(0xbU, 4);
+    ASSERT_EQ(bitset, bounded_bitset<10>({1, 0, 1, 1}));
+  }
+}
+
+TEST(BoundedBitset, push_back_many_bits)
+{
+  {
+    bounded_bitset<10> bitset;
+    bitset.push_back(0b10U, 2);
+    bitset.push_back(0b11U, 2);
+    ASSERT_EQ(bitset.size(), 4);
+    ASSERT_TRUE(bitset.test(0));
+    ASSERT_FALSE(bitset.test(1));
+    ASSERT_EQ(bitset, bounded_bitset<10>({1, 0, 1, 1}));
+    static_vector<bool, 10> expected_vec = {1, 0, 1, 1};
+    static_vector<bool, 10> unpacked(4);
+    bitset.to_unpacked_bits(span<bool>{unpacked.data(), 4});
+    ASSERT_EQ(unpacked, expected_vec);
   }
   {
     bounded_bitset<10> bitset;
@@ -876,34 +901,6 @@ TEST(BoundedBitset, extract)
   static constexpr uint64_t            nof_values = 100;
   bounded_bitset<64 * nof_values>      bitset;
   std::vector<std::array<uint64_t, 3>> data;
-
-  for (unsigned i_value = 0, offset = 0; i_value != nof_values; ++i_value) {
-    uint64_t size  = test_rgen::uniform_int(1, 64);
-    uint64_t value = (test_rgen::get()() & mask_lsb_ones<uint64_t>(size));
-
-    bitset.push_back(value, size);
-
-    data.push_back({offset, size, value});
-
-    offset += size;
-  }
-
-  for (const auto& entry : data) {
-    uint64_t offset = entry[0];
-    uint64_t size   = entry[1];
-    uint64_t value  = entry[2];
-
-    ASSERT_EQ(bitset.extract<uint64_t>(offset, size), value);
-
-    offset += size;
-  }
-}
-
-TEST(BoundedBitset, extract_inverted)
-{
-  static constexpr uint64_t             nof_values = 10;
-  bounded_bitset<64 * nof_values, true> bitset;
-  std::vector<std::array<uint64_t, 3>>  data;
 
   for (unsigned i_value = 0, offset = 0; i_value != nof_values; ++i_value) {
     uint64_t size  = test_rgen::uniform_int(1, 64);

@@ -178,8 +178,9 @@ dl_pdcch_pdu unittest::build_valid_dl_pdcch_pdu()
   pdu.precoder_granularity           = static_cast<coreset_configuration::precoder_granularity_type>(generate_bool());
   pdu.maintenance_v3.pdcch_pdu_index = generate_uint16();
 
+  pdu.freq_domain_resource.resize(pdu.freq_domain_resource.max_size());
   for (unsigned i = 0, e = pdu.freq_domain_resource.max_size(); i != e; ++i) {
-    pdu.freq_domain_resource.push_back(generate_bool());
+    pdu.freq_domain_resource.set(i, generate_bool());
   }
   // Add a DCI.
   pdu.dl_dci.emplace_back();
