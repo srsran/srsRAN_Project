@@ -13,7 +13,7 @@
 #include "srsran/instrumentation/traces/ofh_traces.h"
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
 #include "srsran/support/rtsan.h"
-#include <future>
+#include "srsran/support/synchronization/sync_event.h"
 #include <thread>
 
 using namespace srsran;
@@ -60,12 +60,10 @@ void realtime_timing_worker::start()
 
   stop_manager.reset();
 
-  std::promise<void> p;
-  std::future<void>  fut = p.get_future();
-
-  if (!executor.defer([this, &p, token = stop_manager.get_token()]() {
+  sync_event wait_event;
+  if (!executor.defer([this, start_token = wait_event.get_token(), stop_token = stop_manager.get_token()]() mutable {
         // Signal start() caller thread that the operation is complete.
-        p.set_value();
+        start_token.reset();
 
         auto now                  = gps_clock::now();
         auto ns_fraction          = calculate_ns_fraction_from(now);
@@ -78,7 +76,7 @@ void realtime_timing_worker::start()
   }
 
   // Block waiting for timing executor to start.
-  fut.wait();
+  wait_event.wait();
 
   logger.info("Started the realtime timing worker");
 }
@@ -86,8 +84,8 @@ void realtime_timing_worker::start()
 void realtime_timing_worker::stop()
 {
   logger.info("Requesting stop of the realtime timing worker");
-  stop_manager.stop();
 
+  stop_manager.stop();
   // Clear the subscribed notifiers.
   ota_notifiers.clear();
 
