@@ -10,8 +10,9 @@
 
 #pragma once
 
-#include "srsran/support/synchronization/sync_event.h"
+#include "srsran/support/synchronization/futex_util.h"
 #include <atomic>
+#include <thread>
 #include <utility>
 
 namespace srsran {
@@ -31,6 +32,7 @@ public:
   {
     inc_token();
   }
+
   stop_event_token(const stop_event_token& other) : token_count(other.token_count), dtor_guard(other.dtor_guard)
   {
     inc_token();
@@ -39,21 +41,7 @@ public:
     token_count(std::exchange(other.token_count, nullptr)), dtor_guard(std::exchange(other.dtor_guard, nullptr))
   {
   }
-  ~stop_event_token()
-  {
-    if (token_count != nullptr) {
-      auto cur = token_count->fetch_sub(1, std::memory_order_acq_rel) - 1;
-      if ((cur & count_mask) == 0) {
-        // count reached zero.
-        // Wake all stoppers.
-        futex_util::wake_all(*token_count);
-        // Update dtor guard.
-        dtor_guard->store(false, std::memory_order_release);
-      }
-      token_count = nullptr;
-      dtor_guard  = nullptr;
-    }
-  }
+
   stop_event_token& operator=(const stop_event_token& other)
   {
     if (this != &other) {
@@ -72,7 +60,23 @@ public:
     return *this;
   }
 
-  /// Checks if the associated sync_event has been stopped.
+  ~stop_event_token()
+  {
+    if (token_count != nullptr) {
+      auto cur = token_count->fetch_sub(1, std::memory_order_acq_rel) - 1;
+      if ((cur & count_mask) == 0) {
+        // count reached zero.
+        // Wake all stoppers.
+        futex_util::wake_all(*token_count);
+        // Update dtor guard.
+        dtor_guard->store(false, std::memory_order_release);
+      }
+      token_count = nullptr;
+      dtor_guard  = nullptr;
+    }
+  }
+
+  /// Checks if the associated stop_event_source has been stopped.
   [[nodiscard]] bool stop_requested() const
   {
     return token_count == nullptr or (token_count->load(std::memory_order_acquire) & stop_bit) > 0;
@@ -129,7 +133,7 @@ public:
   }
 
   /// Creates a new observer of stop() requests.
-  stop_event_token get_token() { return stop_event_token{token_count, dtor_guard}; }
+  [[nodiscard]] stop_event_token get_token() { return stop_event_token{token_count, dtor_guard}; }
 
   /// Requests all tokens to stop and blocks until all tokens are reset.
   void stop()
@@ -149,7 +153,7 @@ public:
   {
     auto cur = token_count.load(std::memory_order_acquire);
     while (cur >= stop_bit) {
-      // In case a stop is on-going (cur > stop_bit), we need to wait until it completes before resetting.
+      // In case a stop is ongoing (cur > stop_bit), we need to wait until it completes before resetting.
       while (cur > stop_bit) {
         futex_util::wait(token_count, cur);
         cur = token_count.load(std::memory_order_acquire);
@@ -172,7 +176,7 @@ public:
 private:
   /// State variable composed by 1 MSB bit for signalling stop and 31 LSB bits for counting observers.
   std::atomic<uint32_t> token_count{0};
-  /// Variable use to protect token_count from destruction when token still has to call futex wake.
+  /// Variable used to protect token_count from destruction when token still has to call futex wake.
   std::atomic<bool> dtor_guard{false};
 };
 

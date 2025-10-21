@@ -16,7 +16,7 @@
 
 namespace srsran {
 
-/// \brief Scoped token that notifies the associated sync_event when it gets destroyed or reset.
+/// Scoped token that notifies the associated sync_event when it gets destroyed or reset.
 class scoped_sync_token
 {
 public:
@@ -26,28 +26,17 @@ public:
   {
     inc_token();
   }
+
   scoped_sync_token(const scoped_sync_token& other) : token_count(other.token_count), dtor_guard(other.dtor_guard)
   {
     inc_token();
   }
+
   scoped_sync_token(scoped_sync_token&& other) noexcept :
     token_count(std::exchange(other.token_count, nullptr)), dtor_guard(std::exchange(other.dtor_guard, nullptr))
   {
   }
-  ~scoped_sync_token()
-  {
-    if (token_count != nullptr) {
-      auto cur = token_count->fetch_sub(1, std::memory_order_acq_rel) - 1;
-      if (cur == 0) {
-        // Count is zero. Wake all waiters.
-        futex_util::wake_all(*token_count);
-        // Update dtor guard.
-        dtor_guard->store(false, std::memory_order_release);
-      }
-      token_count = nullptr;
-      dtor_guard  = nullptr;
-    }
-  }
+
   scoped_sync_token& operator=(const scoped_sync_token& other)
   {
     if (this != &other) {
@@ -64,6 +53,21 @@ public:
     token_count = std::exchange(other.token_count, nullptr);
     dtor_guard  = std::exchange(other.dtor_guard, nullptr);
     return *this;
+  }
+
+  ~scoped_sync_token()
+  {
+    if (token_count != nullptr) {
+      auto cur = token_count->fetch_sub(1, std::memory_order_acq_rel) - 1;
+      if (cur == 0) {
+        // Count is zero. Wake all waiters.
+        futex_util::wake_all(*token_count);
+        // Update dtor guard.
+        dtor_guard->store(false, std::memory_order_release);
+      }
+      token_count = nullptr;
+      dtor_guard  = nullptr;
+    }
   }
 
   /// Destroys the token and potentially unlocks sync_event::wait().
@@ -108,7 +112,7 @@ public:
   }
 
   /// Creates a new observer of stop() requests.
-  scoped_sync_token get_token() { return scoped_sync_token{token_count, dtor_guard}; }
+  [[nodiscard]] scoped_sync_token get_token() { return scoped_sync_token{token_count, dtor_guard}; }
 
   /// Waits for all tokens to be reset. At the end of this call, all tokens are guaranteed to be reset.
   void wait()
