@@ -29,7 +29,7 @@ public:
   virtual async_task<void> remove_ue(ue_index_t ue_index)       = 0;
   virtual ue_context*      find_ue(ue_index_t ue_index)         = 0;
   virtual size_t           get_nof_ues() const                  = 0;
-  virtual up_state         get_up_state() const                 = 0;
+  virtual up_state_t       get_up_state() const                 = 0;
 };
 
 } // namespace srs_cu_up

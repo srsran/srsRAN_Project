@@ -59,9 +59,9 @@ public:
   async_task<void> remove_ue(ue_index_t ue_index) override;
   ue_context*      find_ue(ue_index_t ue_index) override;
   size_t           get_nof_ues() const override { return ue_db.size(); }
-  up_state         get_up_state() const override
+  up_state_t       get_up_state() const override
   {
-    up_state st;
+    up_state_t st;
     for (const std::pair<const ue_index_t, std::unique_ptr<ue_context>>& ue : ue_db) {
       st.insert({ue.first, ue.second->get_pdu_session_state()});
     }

@@ -162,7 +162,7 @@ public:
   }
   size_t get_nof_pdu_sessions() override { return pdu_session_manager.get_nof_pdu_sessions(); }
 
-  pdu_session_state get_pdu_session_state() override { return pdu_session_manager.get_pdu_session_state(); }
+  pdu_session_state_t get_pdu_session_state() override { return pdu_session_manager.get_pdu_session_state(); }
 
   [[nodiscard]] ue_index_t get_index() const { return index; }
 

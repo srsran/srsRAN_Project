@@ -210,21 +210,28 @@ fill_test_mode_bearer_context_setup_request(cu_up_test_mode_config test_mode_cfg
   return bearer_context_setup;
 }
 
-inline e1ap_bearer_context_modification_request
-fill_test_mode_bearer_context_modification_request(const e1ap_bearer_context_setup_response& setup_resp)
+inline e1ap_bearer_context_modification_request fill_test_mode_bearer_context_modification_request(const up_state_t& st)
 {
+  report_error_if_not(st.size() == 1, "CU-UP test mode only supports one UE");
+
+  const std::map<pdu_session_id_t, std::map<drb_id_t, qos_flow_id_t>>& ps_state = st.begin()->second;
+  report_error_if_not(ps_state.size() == 1, "CU-UP test mode only supports one PDU session per UE");
+
+  const std::map<drb_id_t, qos_flow_id_t>& drb_state = ps_state.begin()->second;
+  report_error_if_not(drb_state.size() == 1, "CU-UP test mode only supports DRB per UE");
+
   // Modifiy bearer
   e1ap_bearer_context_modification_request bearer_modify = {};
-  bearer_modify.ue_index                                 = setup_resp.ue_index;
+  bearer_modify.ue_index                                 = st.begin()->first;
 
   e1ap_ng_ran_bearer_context_mod_request bearer_mod_item = {};
 
   e1ap_pdu_session_res_to_modify_item pdu_session_to_mod = {};
-  pdu_session_to_mod.pdu_session_id = setup_resp.pdu_session_resource_setup_list.begin()->pdu_session_id;
+  pdu_session_to_mod.pdu_session_id                      = ps_state.begin()->first;
 
   e1ap_drb_to_modify_item_ng_ran drb_to_mod = {};
   drb_to_mod.dl_up_params.resize(1);
-  drb_to_mod.drb_id = setup_resp.pdu_session_resource_setup_list.begin()->drb_setup_list_ng_ran.begin()->drb_id;
+  drb_to_mod.drb_id                                 = drb_state.begin()->first;
   drb_to_mod.dl_up_params[0].up_tnl_info.tp_address = transport_layer_address::create_from_string("127.0.10.2");
   drb_to_mod.dl_up_params[0].up_tnl_info.gtp_teid   = int_to_gtpu_teid(0x02);
 
