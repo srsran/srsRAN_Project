@@ -93,11 +93,13 @@ private:
     /// List of active logical channel IDs sorted in decreasing order of priority. i.e. first element has the highest
     /// priority.
     std::vector<lcid_t> sorted_channels;
-    /// Mapping of RAN slice ID to the list of associated LCIDs.
-    slotted_id_vector<ran_slice_id_t, std::pair<unsigned, std::vector<soa::row_id>>> slice_lcid_list_lookup;
+    /// Mapping of RAN slice ID to the pending bytes of that slice, excluding any CE.
+    slotted_id_vector<ran_slice_id_t, unsigned> pending_bytes_per_slice;
     /// Currently enqueued CEs for this UE.
     std::optional<soa::row_id> pending_ces;
   };
+  using ue_table = soa::table<ue_context>;
+  using ue_row   = soa::row_view<ue_table>;
 
   ue_context&       get_ue_ctx(soa::row_id ue_rid) { return ue_contexts.row(ue_rid).at<0>(); }
   const ue_context& get_ue_ctx(soa::row_id ue_rid) const { return ue_contexts.row(ue_rid).at<0>(); }
@@ -149,7 +151,7 @@ private:
   unsigned pending_ce_bytes(const ue_context& ue_ctx) const;
 
   /// \brief Returns the next highest priority LCID. The prioritization policy is implementation-defined.
-  lcid_t get_max_prio_lcid(soa::row_id ue_rid) const;
+  lcid_t get_max_prio_lcid(const ue_context& ue_ctx) const;
 
   /// List of MAC CEs pending transmission.
   soa::table<mac_ce_context> pending_ces;
@@ -164,11 +166,13 @@ private:
   soa::table<ue_context> ue_contexts;
 };
 
+/// Handle of UE DL logical channel repository.
 class ue_dl_logical_channel_repository
 {
   using mac_ce_info     = dl_logical_channel_system::mac_ce_info;
   using ue_context      = dl_logical_channel_system::ue_context;
   using channel_context = dl_logical_channel_system::channel_context;
+  using ue_row          = dl_logical_channel_system::ue_row;
 
   ue_dl_logical_channel_repository(dl_logical_channel_system& parent_, soa::row_id ue_row_) :
     parent(&parent_), ue_row_id(ue_row_)
@@ -226,24 +230,27 @@ public:
   void deregister_ran_slice(ran_slice_id_t slice_id);
 
   /// Determines whether a RAN slice has at least one bearer associated with it.
-  bool has_slice(ran_slice_id_t slice_id) const { return get_ue_ctx().slice_lcid_list_lookup.contains(slice_id); }
+  [[nodiscard]] bool has_slice(ran_slice_id_t slice_id) const
+  {
+    return get_ue_ctx().pending_bytes_per_slice.contains(slice_id);
+  }
 
   /// Get the RAN slice ID associated with a logical channel.
   std::optional<ran_slice_id_t> get_slice_id(lcid_t lcid) const
   {
-    const auto* ch = find_channel_ctx(lcid);
-    return ch != nullptr ? find_channel_ctx(lcid)->slice_id : std::nullopt;
+    const auto* ch = find_channel_ctx(get_ue_ctx(), lcid);
+    return ch != nullptr ? ch->slice_id : std::nullopt;
   }
 
   /// \brief Verifies if logical channel is activated for DL.
-  bool is_active(lcid_t lcid) const
+  [[nodiscard]] bool is_active(lcid_t lcid) const
   {
-    const auto* ch_ctx = find_channel_ctx(lcid);
+    const auto* ch_ctx = find_channel_ctx(get_ue_ctx(), lcid);
     return ch_ctx != nullptr and ch_ctx->active;
   }
 
   /// \brief Check whether the UE has pending data, given its current state.
-  bool has_pending_bytes() const
+  [[nodiscard]] bool has_pending_bytes() const
   {
     const auto& ue_ctx = get_ue_ctx();
     if (ue_ctx.fallback_state) {
@@ -307,22 +314,16 @@ public:
 
   slot_point hol_toa(lcid_t lcid) const
   {
-    const channel_context* ch_ctx = find_channel_ctx(lcid);
+    const channel_context* ch_ctx = find_channel_ctx(get_ue_ctx(), lcid);
     return ch_ctx != nullptr and ch_ctx->active ? ch_ctx->hol_toa : slot_point{};
   }
 
   /// \brief Update DL buffer status for a given LCID.
-  void handle_dl_buffer_status_indication(lcid_t lcid, unsigned buffer_status, slot_point hol_toa = {})
-  {
-    parent->handle_dl_buffer_status_indication(ue_row_id, lcid, buffer_status, hol_toa);
-  }
+  void handle_dl_buffer_status_indication(lcid_t lcid, unsigned buffer_status, slot_point hol_toa = {});
 
   /// \brief Enqueue new MAC CE to be scheduled.
   /// \return True if the MAC CE was enqueued successfully, false if the queue was full.
-  [[nodiscard]] bool handle_mac_ce_indication(const mac_ce_info& ce)
-  {
-    return parent->handle_mac_ce_indication(ue_row_id, ce);
-  }
+  [[nodiscard]] bool handle_mac_ce_indication(const mac_ce_info& ce);
 
   /// \brief Allocates highest priority MAC SDU within space of \c rem_bytes bytes. Updates \c lch_info with allocated
   /// bytes for the MAC SDU (no MAC subheader).
@@ -356,8 +357,6 @@ private:
   {
     return ue_ctx.channels.contains(lcid) ? &parent->configured_channels.row(ue_ctx.channels[lcid]).at<0>() : nullptr;
   }
-  const channel_context* find_channel_ctx(lcid_t lcid) const { return find_channel_ctx(get_ue_ctx(), lcid); }
-  channel_context*       find_channel_ctx(lcid_t lcid) { return find_channel_ctx(get_ue_ctx(), lcid); }
 
   dl_logical_channel_system* parent = nullptr;
   soa::row_id                ue_row_id{std::numeric_limits<uint32_t>::max()};

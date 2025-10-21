@@ -34,6 +34,40 @@ TEST(mac_ce_size_test, derivation_of_mac_ce_size)
   ASSERT_EQ(lcid_dl_sch_t{lcid_dl_sch_t::SCELL_ACTIV_4_OCTET}.sizeof_ce(), 4);
 }
 
+/// Battery of tests to ensure the logical consistency of the ue_dl_logical_channel_repository state.
+static void assert_ue_lch_valid(const ue_dl_logical_channel_repository& u)
+{
+  EXPECT_TRUE(u.has_pending_bytes() == (u.pending_bytes() > 0));
+  EXPECT_TRUE(u.has_pending_ces() == (u.pending_ce_bytes() > 0));
+  auto sorted_channels = u.get_prioritized_logical_channels();
+  EXPECT_LE(sorted_channels.size(), u.cfg().size());
+  for (auto& lc : u.cfg().logical_channels()) {
+    EXPECT_EQ(std::find(sorted_channels.begin(), sorted_channels.end(), lc->lcid) != sorted_channels.end(),
+              u.is_active(lc->lcid));
+  }
+  unsigned ces     = u.pending_ce_bytes();
+  unsigned buffers = 0;
+  for (lcid_t lcid : sorted_channels) {
+    EXPECT_TRUE(u.has_pending_bytes(lcid) == (u.pending_bytes(lcid) > 0));
+    buffers += u.pending_bytes(lcid);
+  }
+  EXPECT_EQ(buffers + ces, u.total_pending_bytes());
+  std::map<ran_slice_id_t, unsigned> slice_bytes;
+  unsigned                           slices_total = 0;
+  for (lcid_t lcid : sorted_channels) {
+    if (u.get_slice_id(lcid).has_value()) {
+      slice_bytes.insert(std::pair<ran_slice_id_t, unsigned>(u.get_slice_id(lcid).value(), 0));
+      slice_bytes.at(u.get_slice_id(lcid).value()) += u.pending_bytes(lcid);
+      slices_total += u.pending_bytes(lcid);
+    }
+  }
+  ASSERT_LE(slices_total, u.total_pending_bytes());
+  for (auto& [slice_id, bytes] : slice_bytes) {
+    EXPECT_GE(u.pending_bytes(slice_id), bytes);
+    EXPECT_LE(u.pending_bytes(slice_id), bytes + ces);
+  }
+}
+
 class dl_logical_channel_system_test
 {
 protected:
@@ -62,6 +96,13 @@ protected:
 class single_ue_dl_logical_channel_system_test : public dl_logical_channel_system_test, public ::testing::Test
 {
 protected:
+  ~single_ue_dl_logical_channel_system_test() override
+  {
+    if (ue_lchs.valid()) {
+      assert_ue_lch_valid(ue_lchs);
+    }
+  }
+
   std::vector<lcid_t>              lcids{LCID_SRB0, LCID_SRB1, LCID_MIN_DRB};
   ue_dl_logical_channel_repository ue_lchs{
       lch_system.create_ue(subcarrier_spacing::kHz30, false, create_lcid_config(lcids))};
@@ -81,6 +122,7 @@ TEST_F(single_ue_dl_logical_channel_system_test, no_pending_data)
   ASSERT_EQ(ue_lchs.pending_bytes(lcid_t::LCID_SRB0), 0);
   ASSERT_EQ(ue_lchs.pending_bytes(lcid_t::LCID_SRB1), 0);
   ASSERT_FALSE(ue_lchs.has_slice(ran_slice_id_t{0}));
+  assert_ue_lch_valid(ue_lchs);
 }
 
 TEST_F(single_ue_dl_logical_channel_system_test, ue_removal)
@@ -149,6 +191,7 @@ TEST_F(single_ue_dl_logical_channel_system_test, deactivate_ue)
               ue_lchs.is_active(lcid_t::LCID_MIN_DRB));
   ASSERT_TRUE(ue_lchs.has_pending_bytes(lcid));
   ASSERT_TRUE(ue_lchs.has_pending_bytes());
+  assert_ue_lch_valid(ue_lchs);
   ue_lchs.deactivate();
   ASSERT_EQ(this->lch_system.nof_ues(), 1);
   ASSERT_EQ(ue_lchs.cfg().size(), 3);
@@ -203,11 +246,13 @@ TEST_F(single_ue_dl_logical_channel_system_test, mac_ce_is_scheduled_if_tb_has_s
   dl_msg_lc_info subpdu;
 
   unsigned allocated_bytes = 0;
+  assert_ue_lch_valid(ue_lchs);
   if (ce_lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
     allocated_bytes = ue_lchs.allocate_ue_con_res_id_mac_ce(subpdu, tb_size);
   } else {
     allocated_bytes = ue_lchs.allocate_mac_ce(subpdu, tb_size);
   }
+  assert_ue_lch_valid(ue_lchs);
   if (mac_ce_required_bytes <= tb_size) {
     ASSERT_EQ(allocated_bytes, mac_ce_required_bytes);
     ASSERT_EQ(subpdu.lcid, ce_lcid);
@@ -229,12 +274,15 @@ TEST_F(single_ue_dl_logical_channel_system_test, multiple_mac_ces_are_scheduled_
 
   const unsigned tb_size = mac_ce_required_bytes;
   dl_msg_lc_info subpdu;
-  auto           allocated_bytes = ue_lchs.allocate_mac_ce(subpdu, tb_size);
+  assert_ue_lch_valid(ue_lchs);
+  auto allocated_bytes = ue_lchs.allocate_mac_ce(subpdu, tb_size);
   ASSERT_EQ(allocated_bytes, mac_ce_required_bytes);
   ASSERT_EQ(ue_lchs.pending_ce_bytes(), mac_ce_required_bytes);
+  assert_ue_lch_valid(ue_lchs);
   allocated_bytes = ue_lchs.allocate_mac_ce(subpdu, tb_size);
   ASSERT_EQ(allocated_bytes, mac_ce_required_bytes);
   ASSERT_EQ(ue_lchs.pending_ce_bytes(), 0);
+  assert_ue_lch_valid(ue_lchs);
   allocated_bytes = ue_lchs.allocate_mac_ce(subpdu, tb_size);
   ASSERT_EQ(allocated_bytes, 0);
   ASSERT_EQ(ue_lchs.pending_ce_bytes(), 0);
@@ -251,7 +299,8 @@ TEST_F(single_ue_dl_logical_channel_system_test, mac_sdu_is_scheduled_if_tb_has_
   do {
     unsigned       pending_bytes = ue_lchs.total_pending_bytes();
     dl_msg_lc_info subpdu;
-    unsigned       allocated_bytes = ue_lchs.allocate_mac_sdu(subpdu, rem_bytes, lcid);
+    assert_ue_lch_valid(ue_lchs);
+    unsigned allocated_bytes = ue_lchs.allocate_mac_sdu(subpdu, rem_bytes, lcid);
     if (not subpdu.lcid.is_valid()) {
       // There was not enough space in the TB to deplete all the pending tx bytes.
       ASSERT_LT(tb_size, get_mac_sdu_required_bytes(sdu_size));
@@ -290,7 +339,8 @@ TEST_F(single_ue_dl_logical_channel_system_test, check_scheduling_of_ue_con_res_
   unsigned tb_size               = 10;
 
   dl_msg_lc_info subpdu;
-  unsigned       allocated_bytes = ue_lchs.allocate_ue_con_res_id_mac_ce(subpdu, tb_size);
+  assert_ue_lch_valid(ue_lchs);
+  unsigned allocated_bytes = ue_lchs.allocate_ue_con_res_id_mac_ce(subpdu, tb_size);
 
   ASSERT_EQ(allocated_bytes, mac_ce_required_bytes);
   ASSERT_EQ(subpdu.lcid, ce_lcid);
@@ -317,6 +367,7 @@ TEST_F(single_ue_dl_logical_channel_system_test, assign_leftover_bytes_to_sdu_if
   dl_msg_lc_info subpdu;
 
   unsigned allocated_bytes = 0;
+  assert_ue_lch_valid(ue_lchs);
   // ConRes occupies 7 bytes => 6 bytes ConRes CE + 1 bytes header.
   allocated_bytes += ue_lchs.allocate_ue_con_res_id_mac_ce(subpdu, tb_size);
   // SRB0 SDU requires at least 298 bytes => 295 payload size + 3 bytes MAC header. Leftover bytes = 4 bytes.

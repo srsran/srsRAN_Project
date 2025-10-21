@@ -142,9 +142,9 @@ void dl_logical_channel_system::configure(soa::row_id ue_rid, logical_channel_co
 
     // Implicitly set channel as active when configured.
     if (not ch_ctx->active and ch_ctx->slice_id.has_value()) {
-      // Update slice pending bytes.
-      auto& lst_pair = ue_ctx.slice_lcid_list_lookup[*ch_ctx->slice_id];
-      lst_pair.first += get_mac_sdu_required_bytes(ch_ctx->buf_st);
+      // Update slice pending bytes, because we are activating the logical channel.
+      auto& pending_bytes = ue_ctx.pending_bytes_per_slice[*ch_ctx->slice_id];
+      pending_bytes += get_mac_sdu_required_bytes(ch_ctx->buf_st);
     }
     ch_ctx->active = true;
 
@@ -190,38 +190,30 @@ void dl_logical_channel_system::deactivate(soa::row_id ue_rid)
   ue_ctx.pending_ces      = std::nullopt;
   ue_ctx.pending_ce_bytes = 0;
 
-  // Deactivate all bearers.
+  // Deactivate (not erase) all bearers.
   for (soa::row_id ch_row_id : ue_ctx.channels) {
     channel_context& ch_ctx = configured_channels.row(ch_row_id).at<0>();
 
     if (ch_ctx.stats_row.has_value()) {
-      // Stop tracking QoS.
+      // Eliminate associated QoS being tracked.
       qos_channels.erase(*ch_ctx.stats_row);
     }
 
     // Detach from RAN slice.
-    if (ch_ctx.slice_id.has_value()) {
-      // Erase LC from the slice lookup.
-      auto& lst_pair = ue_ctx.slice_lcid_list_lookup[*ch_ctx.slice_id];
-      lst_pair.first -= get_mac_sdu_required_bytes(ch_ctx.active ? ch_ctx.buf_st : 0);
-      auto& lst = lst_pair.second;
-      lst.erase(std::remove_if(lst.begin(), lst.end(), [ch_row_id](soa::row_id rid) { return rid == ch_row_id; }),
-                lst.end());
-      ch_ctx.slice_id.reset();
-    }
+    ch_ctx.slice_id.reset();
 
     ch_ctx.active = false;
   }
 
   // Clear channel lookups.
   ue_ctx.sorted_channels.clear();
-  ue_ctx.slice_lcid_list_lookup.clear();
+  ue_ctx.pending_bytes_per_slice.clear();
 }
 
 void dl_logical_channel_system::set_lcid_ran_slice(soa::row_id ue_rid, lcid_t lcid, ran_slice_id_t slice_id)
 {
   ue_context& ue_ctx = get_ue_ctx(ue_rid);
-  srsran_assert(ue_ctx.slice_lcid_list_lookup.contains(slice_id), "Invalid slice ID");
+  srsran_assert(ue_ctx.pending_bytes_per_slice.contains(slice_id), "Invalid slice ID");
   srsran_assert(ue_ctx.channels.contains(lcid), "LCID not configured");
   soa::row_id      ch_row_id = ue_ctx.channels[lcid];
   channel_context& ch_ctx    = configured_channels.row(ch_row_id).at<0>();
@@ -234,15 +226,14 @@ void dl_logical_channel_system::set_lcid_ran_slice(soa::row_id ue_rid, lcid_t lc
   deregister_lc_ran_slice(ue_rid, lcid);
 
   // Add LCID to new slice.
-  ue_ctx.slice_lcid_list_lookup[slice_id].second.push_back(ch_row_id);
   ch_ctx.slice_id = slice_id;
-  ue_ctx.slice_lcid_list_lookup[slice_id].first += get_mac_sdu_required_bytes(ch_ctx.active ? ch_ctx.buf_st : 0);
+  ue_ctx.pending_bytes_per_slice[slice_id] += get_mac_sdu_required_bytes(ch_ctx.active ? ch_ctx.buf_st : 0);
 }
 
 void dl_logical_channel_system::register_ran_slice(soa::row_id ue_rid, ran_slice_id_t slice_id)
 {
   ue_context& ue_ctx = get_ue_ctx(ue_rid);
-  ue_ctx.slice_lcid_list_lookup.emplace(slice_id, 0, std::vector<soa::row_id>{});
+  ue_ctx.pending_bytes_per_slice.emplace(slice_id, 0);
 }
 
 void dl_logical_channel_system::deregister_lc_ran_slice(soa::row_id ue_rid, lcid_t lcid)
@@ -253,11 +244,8 @@ void dl_logical_channel_system::deregister_lc_ran_slice(soa::row_id ue_rid, lcid
     channel_context& ch_ctx    = configured_channels.row(ch_row_id).at<0>();
     if (ch_ctx.slice_id.has_value()) {
       // Erase LC from the slice lookup.
-      auto& lst_pair = ue_ctx.slice_lcid_list_lookup[*ch_ctx.slice_id];
-      auto& lst      = lst_pair.second;
-      lst_pair.first -= get_mac_sdu_required_bytes(ch_ctx.active ? ch_ctx.buf_st : 0);
-      lst.erase(std::remove_if(lst.begin(), lst.end(), [ch_row_id](soa::row_id rid) { return rid == ch_row_id; }),
-                lst.end());
+      auto& slice_bytes = ue_ctx.pending_bytes_per_slice[*ch_ctx.slice_id];
+      slice_bytes -= get_mac_sdu_required_bytes(ch_ctx.active ? ch_ctx.buf_st : 0);
     }
     ch_ctx.slice_id.reset();
   }
@@ -266,11 +254,14 @@ void dl_logical_channel_system::deregister_lc_ran_slice(soa::row_id ue_rid, lcid
 void dl_logical_channel_system::deregister_ran_slice(soa::row_id ue_rid, ran_slice_id_t slice_id)
 {
   auto& ue_ctx = get_ue_ctx(ue_rid);
-  if (ue_ctx.slice_lcid_list_lookup.contains(slice_id)) {
-    for (soa::row_id ch_rid : ue_ctx.slice_lcid_list_lookup[slice_id].second) {
-      configured_channels.row(ch_rid).at<0>().slice_id.reset();
+  if (ue_ctx.pending_bytes_per_slice.contains(slice_id)) {
+    for (auto row_id : ue_ctx.channels) {
+      if (configured_channels.row(row_id).at<0>().slice_id == slice_id) {
+        // Detach logical channel from the slice.
+        configured_channels.row(row_id).at<0>().slice_id.reset();
+      }
     }
-    ue_ctx.slice_lcid_list_lookup.erase(slice_id);
+    ue_ctx.pending_bytes_per_slice.erase(slice_id);
   }
 }
 
@@ -289,7 +280,7 @@ void dl_logical_channel_system::handle_dl_buffer_status_indication(soa::row_id u
     ch_ctx.buf_st     = std::min(buffer_status, max_buffer_status);
     ch_ctx.hol_toa    = hol_toa;
     if (ch_ctx.slice_id.has_value()) {
-      ue_ctx.slice_lcid_list_lookup[*ch_ctx.slice_id].first +=
+      ue_ctx.pending_bytes_per_slice[*ch_ctx.slice_id] +=
           ch_ctx.active ? (get_mac_sdu_required_bytes(ch_ctx.buf_st) - get_mac_sdu_required_bytes(prev_buf_st)) : 0;
     }
   }
@@ -344,9 +335,8 @@ unsigned dl_logical_channel_system::pending_ce_bytes(const ue_context& ue_ctx) c
   return pending_con_res_ce_bytes(ue_ctx) + ue_ctx.pending_ce_bytes;
 }
 
-lcid_t dl_logical_channel_system::get_max_prio_lcid(soa::row_id ue_rid) const
+lcid_t dl_logical_channel_system::get_max_prio_lcid(const ue_context& ue_ctx) const
 {
-  const auto& ue_ctx = get_ue_ctx(ue_rid);
   for (const auto lcid : ue_ctx.sorted_channels) {
     if (has_pending_bytes(ue_ctx, lcid)) {
       return lcid;
@@ -394,7 +384,7 @@ dl_logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& 
     qos_channels.row(*ch_ctx.stats_row).at<0>().last_sched_bytes = last_sched_bytes;
   }
   if (ch_ctx.slice_id.has_value()) {
-    auto& slice_pending_bytes = ue_ctx.slice_lcid_list_lookup[*ch_ctx.slice_id].first;
+    auto& slice_pending_bytes = ue_ctx.pending_bytes_per_slice[*ch_ctx.slice_id];
     srsran_sanity_check(slice_pending_bytes + get_mac_sdu_required_bytes(ch_ctx.buf_st) >=
                             get_mac_sdu_required_bytes(prev_buf_st),
                         "Invalid slice pending bytes");
@@ -410,7 +400,7 @@ dl_logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& 
     prev_buf_st = ch_ctx.buf_st;
     ch_ctx.buf_st += RLC_SEGMENTATION_OVERHEAD;
     if (ch_ctx.slice_id.has_value()) {
-      auto& slice_pending_bytes = ue_ctx.slice_lcid_list_lookup[*ch_ctx.slice_id].first;
+      auto& slice_pending_bytes = ue_ctx.pending_bytes_per_slice[*ch_ctx.slice_id];
       slice_pending_bytes += get_mac_sdu_required_bytes(ch_ctx.buf_st) - get_mac_sdu_required_bytes(prev_buf_st);
     }
   }
@@ -427,7 +417,7 @@ dl_logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& 
   subpdu.lcid        = lcid_dl_sch_t::MIN_RESERVED;
   subpdu.sched_bytes = 0;
 
-  lcid_t lcid_with_prio = lcid == INVALID_LCID ? get_max_prio_lcid(ue_rid) : lcid;
+  lcid_t lcid_with_prio = lcid == INVALID_LCID ? get_max_prio_lcid(get_ue_ctx(ue_rid)) : lcid;
   if (lcid_with_prio == INVALID_LCID) {
     return 0;
   }
@@ -548,25 +538,20 @@ bool ue_dl_logical_channel_repository::has_pending_bytes(ran_slice_id_t slice_id
 {
   const ue_context& ue_ctx = get_ue_ctx();
   if (ue_ctx.fallback_state or not has_slice(slice_id)) {
+    // In fallback mode, slices are disabled.
     return false;
   }
-
-  // Iterate through bearers of the slice until we find one with pending data.
-  if (ue_ctx.slice_lcid_list_lookup[slice_id].first > 0) {
+  if (ue_ctx.pending_bytes_per_slice[slice_id] > 0) {
     return true;
   }
 
   // In case SRB slice was selected (but with no data) and there are pending CE bytes.
   if (slice_id == SRB_RAN_SLICE_ID and has_pending_ces()) {
-    // Check if any other bearers have pending data. If they do, CE is not considered.
+    // Check if any other slices have pending data. If they do, CE is not considered.
     // Note: This extra check is to avoid multiple slices report pending data.
-    for (lcid_t lcid : ue_ctx.sorted_channels) {
-      auto& ch_ctx = parent->configured_channels.row(ue_ctx.channels[lcid]).at<0>();
-      if (ch_ctx.slice_id != SRB_RAN_SLICE_ID and has_pending_bytes(lcid)) {
-        return false;
-      }
-    }
-    return true;
+    return std::all_of(ue_ctx.pending_bytes_per_slice.begin(),
+                       ue_ctx.pending_bytes_per_slice.end(),
+                       [](const auto& sl_bytes) { return sl_bytes == 0; });
   }
 
   return false;
@@ -593,9 +578,9 @@ unsigned ue_dl_logical_channel_repository::pending_bytes(ran_slice_id_t slice_id
   }
 
   // Compute pending bytes for the given slice bearers.
-  unsigned total_bytes = ue_ctx.slice_lcid_list_lookup[slice_id].first;
+  unsigned total_bytes = ue_ctx.pending_bytes_per_slice[slice_id];
 
-  unsigned ce_bytes = pending_ce_bytes();
+  const unsigned ce_bytes = pending_ce_bytes();
   if (ce_bytes > 0) {
     // There are also pending CE bytes.
     if (total_bytes > 0) {
@@ -606,16 +591,28 @@ unsigned ue_dl_logical_channel_repository::pending_bytes(ran_slice_id_t slice_id
       // bytes iff the UE has no pending data on the remaining, non-selected bearers.
       // This is to avoid the situation where a UE, for instance, has DRB data to transmit, but the CE is allocated in
       // the SRB slice instead.
-      for (lcid_t lcid : ue_ctx.sorted_channels) {
-        if (lcid > LCID_SRB1 and pending_bytes(lcid) > 0) {
-          return 0;
-        }
+      if (std::all_of(ue_ctx.pending_bytes_per_slice.begin(),
+                      ue_ctx.pending_bytes_per_slice.end(),
+                      [](unsigned sl_bytes) { return sl_bytes == 0; })) {
+        return ce_bytes;
       }
-      return ce_bytes;
+      return 0;
     }
   }
 
   return total_bytes;
+}
+
+void ue_dl_logical_channel_repository::handle_dl_buffer_status_indication(lcid_t     lcid,
+                                                                          unsigned   buffer_status,
+                                                                          slot_point hol_toa)
+{
+  parent->handle_dl_buffer_status_indication(ue_row_id, lcid, buffer_status, hol_toa);
+}
+
+bool ue_dl_logical_channel_repository::handle_mac_ce_indication(const mac_ce_info& ce)
+{
+  return parent->handle_mac_ce_indication(ue_row_id, ce);
 }
 
 unsigned ue_dl_logical_channel_repository::allocate_mac_sdu(dl_msg_lc_info& lch_info, unsigned rem_bytes, lcid_t lcid)
