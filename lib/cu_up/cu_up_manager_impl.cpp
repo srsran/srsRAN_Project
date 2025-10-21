@@ -190,7 +190,7 @@ async_task<void> cu_up_manager_impl::handle_e1_reset(const e1ap_reset& msg)
 
 async_task<void> cu_up_manager_impl::enable_test_mode()
 {
-  return launch_async<cu_up_enable_test_mode_routine>(test_mode_cfg, *this, ngu_demux);
+  return launch_async<cu_up_enable_test_mode_routine>(test_mode_cfg, *this, *ue_mng, ngu_demux);
 }
 
 async_task<void> cu_up_manager_impl::disable_test_mode()

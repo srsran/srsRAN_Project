@@ -17,9 +17,11 @@ using namespace srs_cu_up;
 /// Enable test mode routine.
 cu_up_enable_test_mode_routine::cu_up_enable_test_mode_routine(cu_up_test_mode_config test_mode_cfg_,
                                                                cu_up_manager_impl&    cu_up_mngr_,
+                                                               ue_manager&            ue_mngr_,
                                                                gtpu_demux_ctrl&       ngu_demux_) :
   test_mode_cfg(test_mode_cfg_),
   cu_up_mngr(cu_up_mngr_),
+  ue_mngr(ue_mngr_),
   ngu_demux(ngu_demux_),
   logger(srslog::fetch_basic_logger("CU-UP"))
 {

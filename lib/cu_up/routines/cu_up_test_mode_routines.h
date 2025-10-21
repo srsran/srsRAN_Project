@@ -24,6 +24,7 @@ class cu_up_enable_test_mode_routine
 public:
   cu_up_enable_test_mode_routine(cu_up_test_mode_config test_mode_cfg_,
                                  cu_up_manager_impl&    cu_up_mngr_,
+                                 ue_manager&            ue_mngr_,
                                  gtpu_demux_ctrl&       ngu_demux_);
 
   void operator()(coro_context<async_task<void>>& ctx);
@@ -33,6 +34,7 @@ public:
 private:
   const cu_up_test_mode_config test_mode_cfg;
   cu_up_manager_impl&          cu_up_mngr;
+  ue_manager&                  ue_mngr;
   gtpu_demux_ctrl&             ngu_demux;
 
   unique_timer test_mode_ue_timer;
