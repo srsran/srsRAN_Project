@@ -13,6 +13,7 @@
 #include "ngu_session_manager.h"
 #include "ue_manager_interfaces.h"
 #include "srsran/adt/slotted_array.h"
+#include "srsran/cu_up/cu_up_state.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
@@ -58,6 +59,14 @@ public:
   async_task<void> remove_ue(ue_index_t ue_index) override;
   ue_context*      find_ue(ue_index_t ue_index) override;
   size_t           get_nof_ues() const override { return ue_db.size(); }
+  up_state         get_up_state() const override
+  {
+    up_state st;
+    for (const std::pair<const ue_index_t, std::unique_ptr<ue_context>>& ue : ue_db) {
+      st.insert({ue.first, ue.second->get_pdu_session_state()});
+    }
+    return st;
+  }
 
   void schedule_ue_async_task(ue_index_t ue_index, async_task<void> task);
 

@@ -57,6 +57,7 @@ public:
                                                      bool new_ul_tnl_info_required) override;
   void                            remove_pdu_session(pdu_session_id_t pdu_session_id) override;
   size_t                          get_nof_pdu_sessions() override;
+  pdu_session_state               get_pdu_session_state() override;
 
   void disconnect_pdu_session(pdu_session_id_t pdu_session_id);
   void disconnect_all_pdu_sessions();

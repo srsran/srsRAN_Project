@@ -10,8 +10,10 @@
 
 #pragma once
 
+#include "srsran/cu_up/cu_up_state.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"
 #include "srsran/support/async/async_task.h"
+#include <map>
 
 namespace srsran::srs_cu_up {
 
@@ -72,6 +74,7 @@ public:
   virtual async_task<void> stop()             = 0;
   virtual async_task<void> enable_test_mode() = 0;
   virtual size_t           get_nof_ues()      = 0;
+  virtual up_state         get_up_state()     = 0;
 };
 
 } // namespace srsran::srs_cu_up

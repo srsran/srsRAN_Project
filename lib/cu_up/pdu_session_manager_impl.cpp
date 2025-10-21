@@ -760,3 +760,8 @@ size_t pdu_session_manager_impl::get_nof_pdu_sessions()
 {
   return pdu_sessions.size();
 }
+
+pdu_session_state pdu_session_manager_impl::get_pdu_session_state()
+{
+  return {};
+}
