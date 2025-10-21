@@ -120,7 +120,7 @@ static std::unique_ptr<detail::any_task_queue> make_any_task_queue(const concurr
           params.size, params.nof_prereserved_producers);
     case concurrent_queue_policy::moodycamel_lockfree_bounded_mpmc:
       return std::make_unique<any_task_queue_impl<concurrent_queue_policy::moodycamel_lockfree_bounded_mpmc>>(
-          params.size);
+          params.size, params.nof_prereserved_producers);
     default:
       report_fatal_error("Unknown concurrent_queue_policy");
   }

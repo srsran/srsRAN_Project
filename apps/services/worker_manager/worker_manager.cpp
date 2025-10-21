@@ -384,9 +384,9 @@ void worker_manager::create_main_worker_pool(const worker_manager_config& worker
       // Used for upper PHY DL and MAC scheduling
       {{"rt_prio_exec", concurrent_queue_policy::moodycamel_lockfree_bounded_mpmc, qsize, nof_producers},
        // Used for control plane and timer management.
-       {"high_prio_exec", concurrent_queue_policy::moodycamel_lockfree_bounded_mpmc, qsize, nof_producers},
+       {"high_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize, nof_producers},
        // Used for PCAP writing and CU-UP.
-       {"medium_prio_exec", concurrent_queue_policy::moodycamel_lockfree_bounded_mpmc, qsize, nof_producers},
+       {"medium_prio_exec", concurrent_queue_policy::moodycamel_lockfree_mpmc, qsize, nof_producers},
        // Used for receiving data from external nodes.
        {"low_prio_exec", concurrent_queue_policy::moodycamel_lockfree_bounded_mpmc, qsize, nof_producers}},
       worker_cfg.main_pool_backoff_period,

@@ -50,9 +50,9 @@ protected:
   base_concurrent_queue_test(std::false_type /**/, size_t qsize) : queue(qsize) {}
 
   base_concurrent_queue_test(size_t qsize = 128) :
-    base_concurrent_queue_test(std::conditional_t < QueueType::wait_policy == concurrent_queue_wait_policy::sleep,
-                               std::true_type,
-                               std::false_type > {},
+    base_concurrent_queue_test(std::conditional_t<QueueType::wait_policy == concurrent_queue_wait_policy::sleep,
+                                                  std::true_type,
+                                                  std::false_type>{},
                                qsize)
   {
   }
@@ -159,7 +159,8 @@ TYPED_TEST(all_concurrent_queue_test, test_consumer_api)
 
 TYPED_TEST(bounded_concurrent_queue_test, try_push_to_full_queue_fails)
 {
-  ASSERT_EQ(this->queue.capacity(), 128);
+  // Moodycamel bounded MPMC queue reserves more than requested.
+  ASSERT_GE(this->queue.capacity(), 128);
   for (unsigned i = 0; i != this->queue.capacity(); ++i) {
     ASSERT_EQ(this->queue.size(), i);
     ASSERT_TRUE(this->queue.try_push(i));

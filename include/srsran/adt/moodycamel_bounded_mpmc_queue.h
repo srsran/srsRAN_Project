@@ -21,14 +21,20 @@ namespace srsran {
 ///
 /// The moodycamel bounded lockfree MPMC queue is not technically a queue. It is more linked list of sub-queues, each
 /// sub-queue used by a different producer. The consumer will round-robin across the sub-queues to dequeue elements.
-/// This means that there are no linearizability guarantees. While this queue provides a bounded queue API, it is hard
-/// to use it because it requires that the users know how many producers they will need.
+/// This means that there are no linearizability guarantees.
 template <typename T>
 class concurrent_queue<T,
                        concurrent_queue_policy::moodycamel_lockfree_bounded_mpmc,
                        concurrent_queue_wait_policy::non_blocking>
 {
   using queue_impl = moodycamel::ConcurrentQueue<T>;
+
+  /// Calculate the actual capacity reserved by MoodyCamel queue.
+  size_t calculate_capacity(size_t qsize, size_t nof_prereserved_producers) const
+  {
+    return ((((qsize + queue_impl::BLOCK_SIZE - 1) / queue_impl::BLOCK_SIZE) - 1) + 2 * (nof_prereserved_producers)) *
+           queue_impl::BLOCK_SIZE;
+  }
 
 public:
   /// Value stored in the queue.
@@ -56,12 +62,17 @@ public:
   };
 
   /// \brief Constructs a concurrent queue and pre-reserves the configured capacity.
-  /// \param[in] qsize The capacity to reserve.
+  ///
+  /// \param[in] qsize                  The minimum capacity to reserve.
+  /// \param[in] nof_reserved_producers Number of producers for the queue.
   /// \remark Given the moodycamel queue particularities, there is no guarantee that the provided capacity will
   /// always be available in the case of multiple producers.
-  explicit concurrent_queue(size_t qsize) : bounded_queue_size(qsize), queue(qsize) {}
+  explicit concurrent_queue(size_t qsize, size_t nof_reserved_producers = 2) :
+    bounded_queue_size(calculate_capacity(qsize, nof_reserved_producers)), queue(qsize, 0, nof_reserved_producers)
+  {
+  }
 
-  /// \brief Pushes an element to the queue. If the producer sub-queue is full, returns false.
+  /// Pushes an element to the queue. If the producer sub-queue is full, returns false.
   [[nodiscard]] bool try_push(const T& elem) { return queue.try_enqueue(elem); }
   [[nodiscard]] bool try_push(T&& elem) { return queue.try_enqueue(std::move(elem)); }
   template <typename U>
@@ -73,7 +84,7 @@ public:
     return queue.try_enqueue_bulk(std::make_move_iterator(batch.begin()), batch.size()) ? batch.size() : 0;
   }
 
-  /// \brief Pushes an element to the queue in a blocking fashion.
+  /// Pushes an element to the queue in a blocking fashion.
   template <typename U>
   void push_blocking(U&& elem)
   {
@@ -85,7 +96,7 @@ public:
   /// If the queue is empty, the call returns false.
   [[nodiscard]] bool try_pop(T& elem) { return queue.try_dequeue(elem); }
 
-  /// \brief Pops a batch of elements from the queue in a non-blocking fashion.
+  /// Pops a batch of elements from the queue in a non-blocking fashion.
   [[nodiscard]] size_t try_pop_bulk(span<T> batch) { return queue.try_dequeue_bulk(batch.begin(), batch.size()); }
 
   /// Returns an estimate of the total number of elements currently in the queue.
@@ -166,6 +177,13 @@ public:
 
   explicit concurrent_queue(size_t qsize, std::chrono::microseconds sleep_time_ = std::chrono::microseconds{0}) :
     blocking_ext_base(sleep_time_), non_block_queue_base(qsize)
+  {
+  }
+
+  explicit concurrent_queue(size_t                    qsize,
+                            size_t                    nof_prereserved_producers = 2,
+                            std::chrono::microseconds sleep_time_               = std::chrono::microseconds{0}) :
+    blocking_ext_base(sleep_time_), non_block_queue_base(qsize, nof_prereserved_producers)
   {
   }
 

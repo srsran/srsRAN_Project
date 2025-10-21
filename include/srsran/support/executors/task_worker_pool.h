@@ -112,8 +112,8 @@ template <>
 class base_task_queue<concurrent_queue_policy::moodycamel_lockfree_bounded_mpmc>
 {
 protected:
-  base_task_queue(size_t qsize, std::chrono::microseconds wait_sleep_time, unsigned /* unused */) :
-    queue(qsize, wait_sleep_time)
+  base_task_queue(size_t qsize, std::chrono::microseconds wait_sleep_time, unsigned nof_prereserved_producers) :
+    queue(qsize, nof_prereserved_producers, wait_sleep_time)
   {
   }
 
