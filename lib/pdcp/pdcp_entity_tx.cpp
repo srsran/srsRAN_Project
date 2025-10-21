@@ -527,7 +527,11 @@ void pdcp_entity_tx::apply_security(pdcp_tx_buffer_info buf_info)
   // apply reordering in UE executor
   auto fn = [this, pdu_info = std::move(pdu_info)]() mutable { apply_reordering(std::move(pdu_info)); };
   if (not ue_dl_executor.execute(std::move(fn))) {
-    logger.log_warning("Dropped PDU, UE executor queue is full. count={}", tx_count);
+    if (cfg.custom.warn_on_drop) {
+      logger.log_warning("Dropped PDU, UE executor queue is full. count={}", tx_count);
+    } else {
+      logger.log_debug("Dropped PDU, UE executor queue is full. count={}", tx_count);
+    }
   }
 }
 
