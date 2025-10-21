@@ -317,11 +317,11 @@ cudu amari 64UE:
     MARKERS: "zmq and not smoke"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
 
-cu2du amari 8UE:
+1cu2du amari 8UE:
   extends: .zmq
   timeout: 2h
   variables:
-    TESTBED: zmq_cu2du
+    TESTBED: zmq_1cu2du
     MARKERS: "zmq and not smoke"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
   parallel:
