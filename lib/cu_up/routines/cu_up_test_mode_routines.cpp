@@ -41,7 +41,7 @@ void cu_up_enable_test_mode_routine::operator()(coro_context<async_task<void>>& 
   ngu_demux.apply_test_teid(teid);
 
   //  Modify bearer
-  // st            = ue_mngr.get_up_state();
+  st            = ue_mngr.get_up_state();
   bearer_modify = fill_test_mode_bearer_context_modification_request(st);
 
   CORO_AWAIT(cu_up_mngr.handle_bearer_context_modification_request(bearer_modify));

@@ -212,12 +212,13 @@ fill_test_mode_bearer_context_setup_request(cu_up_test_mode_config test_mode_cfg
 
 inline e1ap_bearer_context_modification_request fill_test_mode_bearer_context_modification_request(const up_state_t& st)
 {
-  report_error_if_not(st.size() == 1, "CU-UP test mode only supports one UE");
+  report_error_if_not(st.size() == 1, "CU-UP test mode only supports one UE. ues={}", st.size());
 
-  const std::map<pdu_session_id_t, std::map<drb_id_t, qos_flow_id_t>>& ps_state = st.begin()->second;
-  report_error_if_not(ps_state.size() == 1, "CU-UP test mode only supports one PDU session per UE");
+  const std::map<pdu_session_id_t, std::map<drb_id_t, std::set<qos_flow_id_t>>>& ps_state = st.begin()->second;
+  report_error_if_not(
+      ps_state.size() == 1, "CU-UP test mode only supports one PDU session per UE. pdu_sessions={}", ps_state.size());
 
-  const std::map<drb_id_t, qos_flow_id_t>& drb_state = ps_state.begin()->second;
+  const std::map<drb_id_t, std::set<qos_flow_id_t>>& drb_state = ps_state.begin()->second;
   report_error_if_not(drb_state.size() == 1, "CU-UP test mode only supports DRB per UE");
 
   // Modifiy bearer

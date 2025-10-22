@@ -75,8 +75,6 @@ public:
 
   size_t get_nof_ues() override { return ue_mng->get_nof_ues(); }
 
-  up_state_t get_up_state() override { return ue_mng->get_up_state(); }
-
   void trigger_enable_test_mode();
   void trigger_disable_test_mode();
 

@@ -764,5 +764,16 @@ size_t pdu_session_manager_impl::get_nof_pdu_sessions()
 pdu_session_state_t pdu_session_manager_impl::get_pdu_session_state()
 {
   pdu_session_state_t st;
-  return {};
+  for (const auto& [psi, pdu_session] : pdu_sessions) {
+    drb_state_t drb_st;
+    for (const auto& [drb_id, drb] : pdu_session->drbs) {
+      std::set<qos_flow_id_t> qos_flow_st;
+      for (const auto& [qfi, qos_flow] : drb->qos_flows) {
+        qos_flow_st.insert(qfi);
+      }
+      drb_st.insert({drb_id, qos_flow_st});
+    }
+    st.insert({psi, drb_st});
+  }
+  return st;
 }

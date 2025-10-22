@@ -74,7 +74,6 @@ public:
   virtual async_task<void> stop()             = 0;
   virtual async_task<void> enable_test_mode() = 0;
   virtual size_t           get_nof_ues()      = 0;
-  virtual up_state_t       get_up_state()     = 0;
 };
 
 } // namespace srsran::srs_cu_up
