@@ -47,6 +47,7 @@ void cu_up_enable_test_mode_routine::operator()(coro_context<async_task<void>>& 
   CORO_AWAIT(cu_up_mngr.handle_bearer_context_modification_request(bearer_modify));
 
   cu_up_mngr.trigger_disable_test_mode();
+  cu_up_mngr.trigger_reestablish_test_mode();
 
   CORO_RETURN();
 }
@@ -70,9 +71,10 @@ void cu_up_disable_test_mode_routine::operator()(coro_context<async_task<void>>&
 }
 
 /// Reestablish test mode routine.
-cu_up_reestablish_test_mode_routine::cu_up_reestablish_test_mode_routine(cu_up_manager_impl& cu_up_mngr_,
-                                                                         ue_manager&         ue_mngr_) :
-  cu_up_mngr(cu_up_mngr_), ue_mngr(ue_mngr_)
+cu_up_reestablish_test_mode_routine::cu_up_reestablish_test_mode_routine(cu_up_test_mode_config test_mode_cfg_,
+                                                                         cu_up_manager_impl&    cu_up_mngr_,
+                                                                         ue_manager&            ue_mngr_) :
+  test_mode_cfg(test_mode_cfg_), cu_up_mngr(cu_up_mngr_), ue_mngr(ue_mngr_)
 {
   st = ue_mngr.get_up_state();
 }
@@ -81,6 +83,9 @@ void cu_up_reestablish_test_mode_routine::operator()(coro_context<async_task<voi
 {
   CORO_BEGIN(ctx);
 
-  bearer_modify = fill_test_mode_bearer_context_modification_request(st);
+  bearer_modify               = fill_test_mode_bearer_context_modification_request(st);
+  bearer_modify.security_info = fill_test_mode_security_info(test_mode_cfg);
+  CORO_AWAIT(cu_up_mngr.handle_bearer_context_modification_request(bearer_modify));
+  cu_up_mngr.trigger_reestablish_test_mode();
   CORO_RETURN();
 }

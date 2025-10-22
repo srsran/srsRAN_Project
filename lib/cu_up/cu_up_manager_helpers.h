@@ -155,20 +155,28 @@ inline void fill_sec_as_config(security::sec_as_config& sec_as_config, const e1a
 ///
 /// Test mode helpers
 ///
+inline e1ap_security_info fill_test_mode_security_info(cu_up_test_mode_config test_mode_cfg)
+{
+  e1ap_security_info sec_info;
+  sec_info.security_algorithm.ciphering_algo =
+      static_cast<srsran::security::ciphering_algorithm>(test_mode_cfg.nea_algo);
+  sec_info.security_algorithm.integrity_protection_algorithm =
+      static_cast<srsran::security::integrity_algorithm>(test_mode_cfg.nia_algo);
+  sec_info.up_security_key.encryption_key =
+      make_byte_buffer("0001020304050607080910111213141516171819202122232425262728293031").value();
+  sec_info.up_security_key.integrity_protection_key =
+      make_byte_buffer("0001020304050607080910111213141516171819202122232425262728293031").value();
+  return sec_info;
+}
+
 inline e1ap_bearer_context_setup_request
 fill_test_mode_bearer_context_setup_request(cu_up_test_mode_config test_mode_cfg)
 {
   // Convert to common type
   e1ap_bearer_context_setup_request bearer_context_setup = {};
 
-  bearer_context_setup.security_info.security_algorithm.ciphering_algo =
-      static_cast<srsran::security::ciphering_algorithm>(test_mode_cfg.nea_algo);
-  bearer_context_setup.security_info.security_algorithm.integrity_protection_algorithm =
-      static_cast<srsran::security::integrity_algorithm>(test_mode_cfg.nia_algo);
-  bearer_context_setup.security_info.up_security_key.encryption_key =
-      make_byte_buffer("0001020304050607080910111213141516171819202122232425262728293031").value();
-  bearer_context_setup.security_info.up_security_key.integrity_protection_key =
-      make_byte_buffer("0001020304050607080910111213141516171819202122232425262728293031").value();
+  bearer_context_setup.security_info = fill_test_mode_security_info(test_mode_cfg);
+
   bearer_context_setup.ue_inactivity_timer = std::chrono::seconds(3600);
 
   bearer_context_setup.ue_dl_aggregate_maximum_bit_rate = test_mode_cfg.ue_ambr;

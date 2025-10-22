@@ -46,6 +46,7 @@ srs_cu_up::cu_up_config srsran::generate_cu_up_config(const cu_up_unit_config& c
   out_cfg.test_mode_cfg.nia_algo             = config.test_mode_cfg.nia_algo;
   out_cfg.test_mode_cfg.ue_ambr              = config.test_mode_cfg.ue_ambr;
   out_cfg.test_mode_cfg.attach_detach_period = config.test_mode_cfg.attach_detach_period;
+  out_cfg.test_mode_cfg.reestablish_period   = config.test_mode_cfg.reestablish_period;
   return out_cfg;
 }
 

@@ -54,6 +54,7 @@ struct cu_up_test_mode_config {
   uint16_t                  nia_algo          = 2;
   uint64_t                  ue_ambr           = 40000000000;
   std::chrono::milliseconds attach_detach_period{0};
+  std::chrono::milliseconds reestablish_period{0};
 };
 
 /// CU-UP configuration.
