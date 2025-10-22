@@ -1141,7 +1141,12 @@ void pdcp_entity_tx::crypto_reordering_timeout()
                      st);
     return;
   }
-  logger.log_warning("Crypto reordering timer expired. timeout={} st={}", pdcp_tx_crypto_reordering_timeout_ms, st);
+
+  if (cfg.custom.warn_on_drop) {
+    logger.log_warning("Crypto reordering timer expired. timeout={} st={}", pdcp_tx_crypto_reordering_timeout_ms, st);
+  } else {
+    logger.log_debug("Crypto reordering timer expired. timeout={} st={}", pdcp_tx_crypto_reordering_timeout_ms, st);
+  }
 
   // Advance the TX_TRANS_CRYPTO to TX_REORD_CRYPTO.
   // Deliver all processed PDUs up until TX_REORD_CRYPTO.
