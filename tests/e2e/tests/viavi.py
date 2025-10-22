@@ -11,6 +11,7 @@ Launch tests in Viavi
 """
 import logging
 import operator
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path, PureWindowsPath
 from typing import Callable, List, Optional
@@ -579,7 +580,7 @@ def check_metrics_criteria(
     for criteria in criteria_result:
         if not criteria.is_ok:
             criteria_errors_str.append(criteria.criteria_name)
-    if criteria_errors_str:
+    if sys.exc_info()[0] is None and criteria_errors_str:
         pytest.fail("Test didn't pass the following criteria: " + ", ".join(criteria_errors_str))
 
 
