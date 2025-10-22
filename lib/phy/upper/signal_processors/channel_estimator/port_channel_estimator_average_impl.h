@@ -132,16 +132,16 @@ private:
   void initialize_symbol_start_epochs(cyclic_prefix cp, subcarrier_spacing scs);
 
   /// \brief Applies the time domain interpolation strategy for a given OFDM symbol within the hop transmission.
-  /// \param[out] destination      Estimated resource grid OFDM symbol for a single channel.
-  /// \param[in]  dmrs_mask        Time-domain DM-RS mask.
-  /// \param[in]  freq_response    Frequency-domain channel estimates for the given channel for each of the OFDM symbols
-  ///                              containing DM-RS.
-  /// \param[in]  hop_first_symbol Start symbol index for the hop within the slot.
-  /// \param[in]  hop_last_symbol  Last symbol index for the hop within the slot.
-  /// \param[in]  i_symbol         OFDM symbol index within the slot to calculate.
-  void apply_td_domain_strategy(span<cbf16_t>                 destination,
+  /// \param[out] estimated_rg        Estimated resource grid OFDM symbol for a single channel.
+  /// \param[in]  dmrs_mask           Time-domain DM-RS mask.
+  /// \param[in]  freq_response_dmrs  Frequency-domain channel estimates for the given channel for each of the OFDM
+  ///                                 symbols containing DM-RS.
+  /// \param[in]  hop_first_symbol    Start symbol index for the hop within the slot.
+  /// \param[in]  hop_last_symbol     Last symbol index for the hop within the slot.
+  /// \param[in]  i_symbol            OFDM symbol index within the slot to calculate.
+  void apply_td_domain_strategy(span<cbf16_t>                 estimated_rg,
                                 const symbol_slot_mask&       dmrs_mask,
-                                const re_buffer_reader<cf_t>& freq_response,
+                                const re_buffer_reader<cf_t>& freq_response_dmrs,
                                 unsigned                      hop_first_symbol,
                                 unsigned                      hop_last_symbol,
                                 unsigned                      i_symbol) const;

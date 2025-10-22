@@ -80,6 +80,6 @@ if (USE_PHY_TESTVECTORS)
     add_test_vector(nzp_csi_rs_generator_test nzp_csi_rs/nzp_csi_rs_generator_test_data.tar.gz "")
 
     add_executable(port_channel_estimator_test channel_estimator/port_channel_estimator_test.cpp)
-    target_link_libraries(port_channel_estimator_test srsran_channel_estimator srsran_pusch_processor srsran_dft srslog gtest gtest_main)
+    target_link_libraries(port_channel_estimator_test srsran_channel_estimator srsran_dft srslog gtest gtest_main)
     add_test_vector(port_channel_estimator_test channel_estimator/port_channel_estimator_test_data.tar.gz "")
 endif (USE_PHY_TESTVECTORS)
