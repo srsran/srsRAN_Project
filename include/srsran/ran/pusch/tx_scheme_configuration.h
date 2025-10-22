@@ -30,6 +30,20 @@ enum class tx_scheme_codebook_subset : unsigned {
   non_coherent
 };
 
+/// Converts a transmitter scheme codebook subset to a constant string.
+inline const char* to_string(tx_scheme_codebook_subset subset)
+{
+  switch (subset) {
+    case tx_scheme_codebook_subset::fully_and_partial_and_non_coherent:
+      return "fully-and-partial-and-non-coherent";
+    case tx_scheme_codebook_subset::partial_and_non_coherent:
+      return "partial-and-non-coherent";
+    case tx_scheme_codebook_subset::non_coherent:
+    default:
+      return "non-coherent";
+  }
+}
+
 /// \defgroup tx_schemes PUSCH transmission schemes defined in TS 38.214 Section 6.1.1.
 /// @{
 /// \brief Codebook based transmit scheme.
