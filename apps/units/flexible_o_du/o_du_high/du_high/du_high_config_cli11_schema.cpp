@@ -1484,6 +1484,12 @@ static void configure_cli11_slicing_scheduling_args(CLI::App&                   
              "Maximum percentage of PRBs to be allocated to the slice")
       ->capture_default_str()
       ->check(CLI::Range(1U, 100U));
+  add_option(app,
+             "--ded_prb_policy_ratio",
+             slice_sched_params.ded_prb_policy_ratio,
+             "Dedicated percentage of PRBs to be allocated to the slice")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, 100U));
   add_option(app, "--priority", slice_sched_params.priority, "Slice priority")
       ->capture_default_str()
       ->check(CLI::Range(0U, 254U));

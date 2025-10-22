@@ -271,7 +271,8 @@ generate_du_slicing_rrm_policy_config(span<const std::string>                   
       rrm_policy_cfgs.back().rrc_member.plmn_id = plmn_identity::parse(plmn).value();
       unsigned min_rbs                          = (nof_cell_crbs * cfg.sched_cfg.min_prb_policy_ratio) / 100;
       unsigned max_rbs                          = (nof_cell_crbs * cfg.sched_cfg.max_prb_policy_ratio) / 100;
-      rrm_policy_cfgs.back().rbs                = {min_rbs, max_rbs};
+      unsigned ded_rbs                          = (nof_cell_crbs * cfg.sched_cfg.ded_prb_policy_ratio) / 100;
+      rrm_policy_cfgs.back().rbs                = {ded_rbs, min_rbs, max_rbs};
       rrm_policy_cfgs.back().priority           = cfg.sched_cfg.priority;
       rrm_policy_cfgs.back().policy_sched_cfg = cfg.sched_cfg.slice_policy_sched_cfg.value_or(default_policy_sched_cfg);
     }

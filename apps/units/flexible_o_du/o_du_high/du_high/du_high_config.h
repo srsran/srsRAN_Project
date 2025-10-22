@@ -838,9 +838,11 @@ struct du_high_unit_cell_slice_sched_config {
   unsigned min_prb_policy_ratio = 0;
   /// Sets the maximum percentage of PRBs to be allocated to this group.
   unsigned max_prb_policy_ratio = 100;
+  /// Sets the dedicated percentage of PRBs to be allocated to this group.
+  unsigned ded_prb_policy_ratio = 0;
   /// Sets the slice priority. Values: {0,...,254}. 255 is reserved for the SRBs.
   unsigned priority = 0;
-  /// Policy scheduler parameters for the slice. Default: Time-domain round robin.
+  /// Policy scheduler parameters for the slice. Default: Time-domain round-robin.
   std::optional<policy_scheduler_expert_config> slice_policy_sched_cfg;
 };
 

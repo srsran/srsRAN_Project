@@ -657,6 +657,23 @@ static YAML::Node build_du_high_drx_section(const du_high_unit_drx_config& confi
   return node;
 }
 
+static YAML::Node build_du_high_slice(const du_high_unit_cell_slice_config& config)
+{
+  YAML::Node node;
+
+  node["sst"] = config.sst;
+  node["sd"]  = config.sd;
+
+  YAML::Node sched_cfg_node;
+  sched_cfg_node["min_prb_policy_ratio"] = config.sched_cfg.min_prb_policy_ratio;
+  sched_cfg_node["max_prb_policy_ratio"] = config.sched_cfg.max_prb_policy_ratio;
+  sched_cfg_node["ded_prb_policy_ratio"] = config.sched_cfg.ded_prb_policy_ratio;
+  sched_cfg_node["priority"]             = config.sched_cfg.priority;
+  node["sched_cfg"]                      = sched_cfg_node;
+
+  return node;
+}
+
 static YAML::Node build_cell_entry(const du_high_unit_base_cell_config& config)
 {
   YAML::Node node;
@@ -701,6 +718,10 @@ static YAML::Node build_cell_entry(const du_high_unit_base_cell_config& config)
 
   if (config.ntn_cfg) {
     node["ntn"] = build_du_high_ntn_section(config.ntn_cfg.value());
+  }
+
+  for (auto& slice : config.slice_cfg) {
+    node["slicing"].push_back(build_du_high_slice(slice));
   }
 
   return node;
