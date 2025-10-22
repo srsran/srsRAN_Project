@@ -28,13 +28,13 @@ public:
                                          task_executor&                executor_,
                                          ota_symbol_boundary_notifier& dl_window_checker_,
                                          ota_symbol_boundary_notifier& ul_window_checker_,
-                                         ota_symbol_boundary_notifier& symbol_handler_) :
+                                         ota_symbol_boundary_notifier& msg_symbol_handler_) :
     sector_id(sector_id_),
     logger(logger_),
     executor(executor_),
     dl_window_checker(dl_window_checker_),
     ul_window_checker(ul_window_checker_),
-    symbol_handler(symbol_handler_)
+    msg_symbol_handler(msg_symbol_handler_)
   {
   }
 
@@ -47,7 +47,7 @@ public:
   // See interface for documentation.
   void on_new_symbol(const slot_symbol_point_context& symbol_point_context) override
   {
-    if (stop_manager.stop_was_requested()) {
+    if (SRSRAN_UNLIKELY(stop_manager.stop_was_requested())) {
       return;
     }
 
@@ -55,8 +55,8 @@ public:
     ul_window_checker.on_new_symbol(symbol_point_context);
 
     if (!executor.defer(
-            [&, symbol_point_context, token = stop_manager.get_token()]() noexcept SRSRAN_RTSAN_NONBLOCKING {
-              symbol_handler.on_new_symbol(symbol_point_context);
+            [this, symbol_point_context, token = stop_manager.get_token()]() noexcept SRSRAN_RTSAN_NONBLOCKING {
+              msg_symbol_handler.on_new_symbol(symbol_point_context);
             })) {
       logger.warning(
           "Sector #{}: Failed to dispatch new symbol task in the message transmitter for slot '{}' and symbol '{}'",
@@ -72,7 +72,7 @@ private:
   task_executor&                executor;
   ota_symbol_boundary_notifier& dl_window_checker;
   ota_symbol_boundary_notifier& ul_window_checker;
-  ota_symbol_boundary_notifier& symbol_handler;
+  ota_symbol_boundary_notifier& msg_symbol_handler;
   stop_event_source             stop_manager;
 };
 

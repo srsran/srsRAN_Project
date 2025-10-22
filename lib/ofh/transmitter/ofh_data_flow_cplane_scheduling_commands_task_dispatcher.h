@@ -46,7 +46,7 @@ public:
   void enqueue_section_type_1_message(const data_flow_cplane_type_1_context& context) override
   {
     // Do not process Control Plane if the stop was requested.
-    if (stop_manager.stop_was_requested()) {
+    if (SRSRAN_UNLIKELY(stop_manager.stop_was_requested())) {
       return;
     }
 
@@ -62,7 +62,7 @@ public:
   void enqueue_section_type_3_prach_message(const data_flow_cplane_scheduling_prach_context& context) override
   {
     // Do not process Control Plane if the stop was requested.
-    if (stop_manager.stop_was_requested()) {
+    if (SRSRAN_UNLIKELY(stop_manager.stop_was_requested())) {
       return;
     }
 

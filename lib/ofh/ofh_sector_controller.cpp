@@ -23,5 +23,6 @@ void sector_controller::stop()
 {
   ofh_tx.get_operation_controller().stop();
   ofh_rx.get_operation_controller().stop();
+  // This should be cleared last as during the stop procedure repository entries may still be added.
   slot_repo->clear();
 }

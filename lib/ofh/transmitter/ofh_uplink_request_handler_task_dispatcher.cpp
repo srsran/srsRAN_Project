@@ -30,7 +30,7 @@ void uplink_request_handler_task_dispatcher::handle_prach_occasion(const prach_b
                                                                    prach_buffer&               buffer)
 {
   // Do not process if stop was requested.
-  if (stop_manager.stop_was_requested()) {
+  if (SRSRAN_UNLIKELY(stop_manager.stop_was_requested())) {
     return;
   }
 
@@ -46,9 +46,10 @@ void uplink_request_handler_task_dispatcher::handle_new_uplink_slot(const resour
                                                                     const shared_resource_grid&  grid)
 {
   // Do not process if stop was requested.
-  if (stop_manager.stop_was_requested()) {
+  if (SRSRAN_UNLIKELY(stop_manager.stop_was_requested())) {
     return;
   }
+
   if (!executor.defer(
           [context, rg = grid.copy(), this, token = stop_manager.get_token()]() noexcept SRSRAN_RTSAN_NONBLOCKING {
             uplink_handler.handle_new_uplink_slot(context, rg);

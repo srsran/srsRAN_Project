@@ -47,7 +47,7 @@ public:
                                       const shared_resource_grid&                   grid) override
   {
     // Do not process User Plane if the stop was requested.
-    if (stop_manager.stop_was_requested()) {
+    if (SRSRAN_UNLIKELY(stop_manager.stop_was_requested())) {
       return;
     }
 

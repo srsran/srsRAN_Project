@@ -133,6 +133,7 @@ TEST(ofh_downlink_handler_impl, handling_downlink_data_use_control_and_user_plan
                                               ofh::data_direction::downlink)};
 
   downlink_handler_impl handler(config, std::move(dependencies));
+  handler.start();
 
   resource_grid_reader_spy rg_reader_spy(1, 1, 1);
   rg_reader_spy.write(resource_grid_reader_spy::expected_entry_t{});
@@ -198,6 +199,7 @@ TEST(ofh_downlink_handler_impl, late_rg_is_not_handled)
                                               ofh::data_direction::downlink)};
 
   downlink_handler_impl handler(config, std::move(dependencies));
+  handler.start();
 
   resource_grid_reader_spy rg_reader_spy(1, 1, 1);
   rg_reader_spy.write(resource_grid_reader_spy::expected_entry_t{});
@@ -254,6 +256,7 @@ TEST(ofh_downlink_handler_impl, same_slot_fails)
                                               ofh::data_direction::downlink)};
 
   downlink_handler_impl handler(config, std::move(dependencies));
+  handler.start();
 
   resource_grid_reader_spy rg_reader_spy(1, 1, 1);
   rg_reader_spy.write(resource_grid_reader_spy::expected_entry_t{});
@@ -306,6 +309,7 @@ TEST(ofh_downlink_handler_impl, rg_in_the_frontier_is_handled)
                                               ofh::data_direction::downlink)};
 
   downlink_handler_impl handler(config, std::move(dependencies));
+  handler.start();
 
   resource_grid_reader_spy rg_reader_spy(1, 1, 1);
   rg_reader_spy.write(resource_grid_reader_spy::expected_entry_t{});

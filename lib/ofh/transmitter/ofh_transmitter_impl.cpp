@@ -110,8 +110,8 @@ void transmitter_impl::start()
 
 void transmitter_impl::stop()
 {
-  ul_task_dispatcher.stop();
   dl_handler.stop();
+  ul_task_dispatcher.stop();
   ota_dispatcher.stop();
 }
 

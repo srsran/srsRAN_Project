@@ -99,12 +99,12 @@ private:
   }
 
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane;
+  operation_controller_dummy                            controller;
 
-  std::atomic<uint32_t>      count          = {};
-  std::atomic<uint64_t>      sum_elapsed_ns = {};
-  std::atomic<uint32_t>      min_latency_ns = default_min_latency_ns;
-  std::atomic<uint32_t>      max_latency_ns = default_max_latency_ns;
-  operation_controller_dummy controller;
+  std::atomic<uint32_t> count          = {};
+  std::atomic<uint64_t> sum_elapsed_ns = {};
+  std::atomic<uint32_t> min_latency_ns = default_min_latency_ns;
+  std::atomic<uint32_t> max_latency_ns = default_max_latency_ns;
 };
 
 } // namespace ofh
