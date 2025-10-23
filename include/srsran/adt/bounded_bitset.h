@@ -116,6 +116,7 @@ public:
   {
     if (this != &other) {
       // In case of shrink, reset erased bits.
+      // Note: We use < comparison because other can be larger than this.
       for (size_t i = other.nof_words_(), sz = nof_words_(); i < sz; ++i) {
         buffer[i] = static_cast<word_t>(0);
       }
@@ -995,14 +996,12 @@ private:
   SRSRAN_FORCE_INLINE word_t& get_word_(size_t bitidx) noexcept
   {
     const size_t word_idx = bitidx / bits_per_word;
-    srsran_assume(word_idx < buffer.size());
     return buffer[word_idx];
   }
 
   SRSRAN_FORCE_INLINE const word_t& get_word_(size_t bitidx) const
   {
     const size_t word_idx = bitidx / bits_per_word;
-    srsran_assume(word_idx < buffer.size());
     return buffer[word_idx];
   }
 
@@ -1134,6 +1133,7 @@ private:
   /// \brief Formatting helper to convert bitset to hexadecimal digits.
   /// \tparam OutputIt Output fmt memory buffer type.
   /// \param[out] mem_buffer Fmt memory buffer.
+  /// \param[in] reverse In which bit order to represent this bitset.
   /// \return The memory buffer passed as argument.
   template <typename OutputIt>
   OutputIt to_string_of_hex(OutputIt&& mem_buffer, bool reverse) const

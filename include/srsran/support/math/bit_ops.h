@@ -31,10 +31,10 @@ constexpr Integer mask_msb_zeros(size_t N)
   return (N == 0) ? static_cast<Integer>(-1) : ((N == sizeof(Integer) * 8U) ? 0 : (static_cast<Integer>(-1) >> (N)));
 }
 
-/// \brief Returns an unsigned integer with the N least significant bits (LSB) set to 1, and the remaining bits set
-/// to 0. e.g.
+/// \brief Returns an unsigned integer with the N least significant bits (LSB) set to one, and the remaining bits set
+/// to 1. e.g.
 /// - mask_lsb_ones<uint8_t>(0) == 0x00U
-/// - mask_lsb_ones<uint8_t>(1) == 0xfeU
+/// - mask_lsb_ones<uint8_t>(1) == 0x01U
 /// - mask_lsb_ones<uint8_t>(7) == 0x7fU
 /// - mask_lsb_ones<uint8_t>(8) == 0xffU
 /// \tparam Integer Type of unsigned integer returned by the function.
@@ -57,8 +57,8 @@ constexpr Integer mask_msb_ones(size_t N)
   return ~mask_msb_zeros<Integer>(N);
 }
 
-/// \brief Returns an unsigned integer with the N least significant bits (LSB) set to one, and the remaining bits set
-/// to zero.
+/// \brief Returns an unsigned integer with the N least significant bits (LSB) set to zero, and the remaining bits set
+/// to one.
 /// \tparam Integer Type of unsigned integer returned by the function.
 /// \param[in] N Number of LSB bits set to one.
 /// \return Resulting integer bitmap.
