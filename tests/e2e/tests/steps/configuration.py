@@ -139,6 +139,7 @@ def configure_test_parameters(
     ue_sds: Optional[List[str]] = None,
     warning_allowlist: Optional[List[str]] = None,
     enable_2gnbs: bool = False,
+    inter_freq_ho: bool = False,
 ):
     """
     Configure test parameters
@@ -163,16 +164,71 @@ def configure_test_parameters(
                 },
             },
         ]
+    du_node_list = []
+    ue_cell_bands = []
+    if inter_freq_ho:
+        inter_freq_band = 78
+        inter_freq_cell_1_dl_arfcn = 649980
+        inter_freq_cell_2_dl_arfcn = 650000
+        inter_freq_ssb_nr_arfcn = 649632
+        inter_freq_scs = 30
+        inter_freq_bandwidth = 20
+
+        du_node_list = [
+            {
+                "name": "du0-0",
+                "parameters": {
+                    "band": inter_freq_band,
+                    "dl_arfcn": inter_freq_cell_1_dl_arfcn,
+                    "common_scs": inter_freq_scs,
+                    "bandwidth": inter_freq_bandwidth,
+                },
+            },
+            {
+                "name": "du1-0",
+                "parameters": {
+                    "band": inter_freq_band,
+                    "dl_arfcn": inter_freq_cell_2_dl_arfcn,
+                    "common_scs": inter_freq_scs,
+                    "bandwidth": inter_freq_bandwidth,
+                },
+            },
+        ]
+
+        ue_cell_bands = [
+            {
+                "band": inter_freq_band,
+                "bandwidth": inter_freq_bandwidth,
+                "dl_nr_arfcn": inter_freq_cell_1_dl_arfcn,
+                "ssb_nr_arfcn": inter_freq_ssb_nr_arfcn,
+                "subcarrier_spacing": inter_freq_scs,
+                "ssb_subcarrier_spacing": inter_freq_scs,
+            },
+            {
+                "band": inter_freq_band,
+                "bandwidth": inter_freq_bandwidth,
+                "dl_nr_arfcn": inter_freq_cell_2_dl_arfcn,
+                "ssb_nr_arfcn": inter_freq_ssb_nr_arfcn,
+                "subcarrier_spacing": inter_freq_scs,
+                "ssb_subcarrier_spacing": inter_freq_scs,
+            },
+        ]
+    else:
+        ue_cell_bands = [
+            {
+                "band": band,
+                "bandwidth": bandwidth,
+                "dl_nr_arfcn": _get_dl_arfcn(band),
+                "ssb_nr_arfcn": _get_ssb_arfcn(band, bandwidth),
+                "subcarrier_spacing": common_scs,
+                "ssb_subcarrier_spacing": common_scs,
+            }
+            for _ in range(num_cells)
+        ]
 
     retina_data.test_config = {
         "ue": {
             "parameters": {
-                "band": band,
-                "dl_arfcn": _get_dl_arfcn(band),
-                "ssb_arfcn": _get_ssb_arfcn(band, bandwidth),
-                "common_scs": common_scs,
-                "ssb_scs": common_scs,
-                "bandwidth": bandwidth,
                 "global_timing_advance": global_timing_advance,
                 "log_ip_level": log_ip_level,
                 "ul_noise_spd": ul_noise_spd,
@@ -184,6 +240,7 @@ def configure_test_parameters(
                 "nof_antennas_ul": nof_antennas_ul,
                 "pdcch_log": pdcch_log,
                 "ue_sds": ue_sds if ue_sds is not None else [],
+                "cells": ue_cell_bands,
             },
         },
         "gnb": {
@@ -217,6 +274,7 @@ def configure_test_parameters(
             },
         },
         "du": {
+            "node_list": du_node_list,
             "parameters": {
                 "band": band,
                 "dl_arfcn": _get_dl_arfcn(band),

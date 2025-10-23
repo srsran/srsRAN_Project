@@ -67,3 +67,39 @@ def test_zmq_sequentially(
         noise_spd=noise_spd,
         sleep_between_movement_steps=1,
     )
+
+
+@mark.zmq
+@mark.flaky(
+    reruns=1, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED", "StatusCode.UNKNOWN"]
+)
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def test_zmq_inter_freq_sequentially(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_8: UEStub,
+    fivegc: FiveGCStub,
+    cu: CUStub,
+    du_2: DUStub,
+    metrics_summary: MetricsSummary,
+):
+    """
+    ZMQ Inter-DU Handover tests
+    """
+
+    # _inter_du_inter_frequency_handover_sequentially(
+    _handover_sequentially(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=ue_8,
+        fivegc=fivegc,
+        cu=cu,
+        du_array=du_2,
+        metrics_summary=metrics_summary,
+        band=3,
+        common_scs=15,
+        bandwidth=50,
+        noise_spd=0,
+        sleep_between_movement_steps=1,
+        inter_freq_ho=True,
+    )

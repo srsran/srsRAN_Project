@@ -173,14 +173,18 @@ def _handover_sequentially(
     warning_as_errors: bool = True,
     stop_gnb_first: bool = False,
     verbose_cu_mac: bool = True,
+    inter_freq_ho: bool = False,
 ):
     if not gnb_array and not du_array and not cu:
-        logging.error("Invalid configuration: either gNB(s) or CU and DU(s) are required")
+        logging.error("Invalid configuration: Either gNB(s) or CU and DU(s) are required")
         return
 
     if gnb_array:
         if cu or du_array:
-            logging.error("Invalid configuration: either gNB(s) or CU and DU(s) must be provided, not both")
+            logging.error("Invalid configuration: Either gNB(s) or CU and DU(s) must be provided, not both")
+            return
+        if inter_freq_ho:
+            logging.error("Invalid configuration: Only Inter-DU inter-frequency handover is supported")
             return
     else:
         if cu and not du_array:
@@ -214,6 +218,7 @@ def _handover_sequentially(
         stop_gnb_first=stop_gnb_first,
         verbose_cu_mac=verbose_cu_mac,
         ue_startup_timeout=ue_startup_timeout,
+        inter_freq_ho=inter_freq_ho,
     ) as (ue_attach_info_dict, movements, traffic_seconds):
 
         for ue_stub, ue_attach_info in ue_attach_info_dict.items():
@@ -335,6 +340,7 @@ def _handover_multi_ues(
     stop_gnb_first: bool = False,
     verbose_cu_mac: bool = True,
     ue_startup_timeout: int = UE_STARTUP_TIMEOUT,
+    inter_freq_ho: bool = False,
 ) -> Generator[
     Tuple[
         Dict[UEStub, UEAttachedInfo],
@@ -350,7 +356,7 @@ def _handover_multi_ues(
         else:
             logging.info("Inter-CU Handover Test (Ping)")
     else:
-        logging.info("Inter-DU Handover Test (Ping)")
+        logging.info("Inter-DU %sHandover Test (Ping)", "Inter-Frequency " if inter_freq_ho else "")
 
     original_position = (0, 0, 0)
 
@@ -370,6 +376,7 @@ def _handover_multi_ues(
         nof_antennas_dl=nof_antennas_dl,
         prach_config_index=prach_config_index,
         enable_2gnbs=(gnb_array is not None and len(gnb_array) == 2),
+        inter_freq_ho=inter_freq_ho,
     )
 
     configure_artifacts(
