@@ -181,11 +181,8 @@ private:
 /// PRACH context repository.
 class prach_context_repository
 {
-  static constexpr size_t INCREASED_TASK_BUFFER_SIZE = 80;
-  using unique_task_prach                            = unique_function<void(), INCREASED_TASK_BUFFER_SIZE>;
-  using queue_type                                   = concurrent_queue<unique_task_prach,
-                                                                        concurrent_queue_policy::lockfree_mpmc,
-                                                                        concurrent_queue_wait_policy::non_blocking>;
+  using queue_type =
+      concurrent_queue<unique_task, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>;
 
   queue_type                 pending_context_to_add;
   std::vector<prach_context> buffer;
@@ -226,7 +223,7 @@ public:
   /// Process the enqueued contexts to the repository.
   void process_pending_contexts()
   {
-    unique_task_prach task;
+    unique_task task;
     while (pending_context_to_add.try_pop(task)) {
       task();
     }
