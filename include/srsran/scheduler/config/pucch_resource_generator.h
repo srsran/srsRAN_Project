@@ -20,7 +20,6 @@ struct serving_cell_config;
 namespace config_helpers {
 
 /// The following values have to be set according to the \ref pucch_resource_manager capabilities.
-/// The following values have to be set according to the \ref pucch_resource_manager capabilities.
 /// Maximum number of PUCCH F0/F1 resources per UE for HARQ-ACK reporting.
 constexpr unsigned max_ue_f0_f1_res_harq = 8;
 /// Maximum number of PUCCH F2/F3/F4 resources per UE for HARQ-ACK reporting.
@@ -65,12 +64,12 @@ generate_cell_pucch_res_list(unsigned                                           
                              unsigned                                                               bwp_size_rbs,
                              bounded_integer<unsigned, 1, 14>                                       max_nof_symbols);
 
-/// \brief Generates the list of PUCCH resources for a given UE.
+/// \brief Builds the PUCCH configuration for a given UE.
 ///
-/// This function generates the list of PUCCH F0/F1 and F2/F3/F4 resources for a given UE, including the resources for
-/// HARQ-ACK reporting, SR and CSI. It also updates the PUCCH resource sets accordingly, as well as the pointers to the
-/// PUCCH F0/F1 resource for SR and to the PUCCH F2/F3/F4 resource for CSI. This function overwrites the default \c
-/// ServingCellConfig passed as a function input.
+/// This function generates the list of PUCCH resources for a given UE, including the resources for HARQ-ACK, SR and
+/// CSI. It also updates the PUCCH resource sets accordingly, as well as the pointers to the PUCCH F0/F1 resource for SR
+/// and to the PUCCH F2/F3/F4 resource for CSI. This function overwrites the default \c ServingCellConfig passed as a
+/// function input.
 ///
 /// The UE's PUCCH resource list composed of:
 /// - \ref nof_ue_pucch_f0_f1_res_harq PUCCH Format 0/1 resources for HARQ-ACK reporting, chosen from
@@ -80,11 +79,10 @@ generate_cell_pucch_res_list(unsigned                                           
 /// - \ref nof_ue_pucch_f2_f3_f4_res_harq PUCCH Format 2/3/4 resources for HARQ-ACK reporting, chosen from
 ///   \ref nof_harq_pucch_sets possible sets of PUCCH Format 2/3/4 cell resources.
 /// - 1 PUCCH Format 2/3/4 resource for CSI chosen from \ref nof_cell_pucch_f2_f3_f4_res_csi possible sets of PUCCH
-/// Format
-///   2/3/4 cell resources.
+///   Format 2/3/4 cell resources.
 ///
 /// The returned UE PUCCH resource list \ref pucch_res_list contains the following resources, sorted as follows:
-///       [ F0/F1-HARQ_0 ... F0/F1-HARQ_N-1 F0/F1-SR F2/F3-HARQ_0 ... F2/F3/F4-HARQ_M-1 F2/F3/F4-CSI ]
+///       [ F0/F1-HARQ_0 ... F0/F1-HARQ_N-1 F0/F1-SR F2/F3/F4-HARQ_0 ... F2/F3/F4-HARQ_M-1 F2/F3/F4-CSI ]
 /// where N = nof_ue_pucch_f0_f1_res_harq and M = nof_ue_pucch_f2_f3_f4_res_harq,
 /// and with the following indices \ref res_id:
 /// - The first \ref nof_ue_pucch_f0_f1_res_harq are the PUCCH F0/F1 resources for HARQ-ACK and have index
@@ -104,7 +102,7 @@ generate_cell_pucch_res_list(unsigned                                           
 ///                     nof_cell_pucch_f2_f3_f4_res_csi.
 ///
 /// \param[in,out] serv_cell_cfg default \c ServingCellConfig that will be overwritten by this function.
-/// \param[in] res_list cell PUCCH resource list from which the function picks the UE PUCCH resources.
+/// \param[in] cell_res_list cell PUCCH resource list from which the function picks the UE PUCCH resources.
 /// \param[in] cell_harq_set_idx defines which PUCCH resource set for HARQ to be assigned to this UE among
 ///            \ref nof_harq_pucch_sets possible ones; the chosen set for this UE has index
 ///            cell_harq_set_idx % nof_harq_pucch_sets.
@@ -114,12 +112,13 @@ generate_cell_pucch_res_list(unsigned                                           
 ///            \ref nof_cell_pucch_f2_f3_f4_res_csi possible ones.  Values: {0, ..., nof_cell_pucch_f2_f3_f4_res_csi-1}.
 /// \param[in] nof_ue_pucch_f0_f1_res_harq desired number of UE PUCCH F0/F1 resources (HARQ-ACK) in UE configuration.
 /// \param[in] nof_ue_pucch_f2_f3_f4_res_harq desired number of UE PUCCH F2/F3/F4 resources (HARQ-ACK) in UE
-/// configuration. \param[in] nof_harq_pucch_sets number of possible HARQ sets available in the cell. \param[in]
-/// nof_cell_pucch_f0_f1_res_sr number of PUCCH F0/F1 resources for SR available in the cell. \param[in]
-/// nof_cell_pucch_f2_f3_f4_res_csi number of PUCCH F2/F3/F4 resources for CSI available in the cell. \return true if
-/// the building is successful, false otherwise.
+///            configuration.
+/// \param[in] nof_harq_pucch_sets number of possible HARQ sets available in the cell.
+/// \param[in] nof_cell_pucch_f0_f1_res_sr number of PUCCH F0/F1 resources for SR available in the cell.
+/// \param[in] nof_cell_pucch_f2_f3_f4_res_csi number of PUCCH F2/F3/F4 resources for CSI available in the cell.
+/// \return true if the building is successful, false otherwise.
 bool ue_pucch_config_builder(serving_cell_config&                                   serv_cell_cfg,
-                             const std::vector<pucch_resource>&                     res_list,
+                             const std::vector<pucch_resource>&                     cell_res_list,
                              unsigned                                               cell_harq_set_idx,
                              unsigned                                               cell_sr_res_idx,
                              unsigned                                               cell_csi_res_idx,
