@@ -24,16 +24,16 @@
 using namespace srsran;
 
 template <typename T>
-class bitmask_tester : public ::testing::Test
+class bitmask_test : public ::testing::Test
 {
 protected:
   using Integer                    = T;
   static constexpr size_t nof_bits = sizeof(Integer) * 8U;
 };
 using mask_integer_types = ::testing::Types<uint8_t, uint16_t, uint32_t, uint64_t>;
-TYPED_TEST_SUITE(bitmask_tester, mask_integer_types);
+TYPED_TEST_SUITE(bitmask_test, mask_integer_types);
 
-TYPED_TEST(bitmask_tester, lsb_ones)
+TYPED_TEST(bitmask_test, lsb_ones)
 {
   using IntegerType = typename TestFixture::Integer;
   // sanity checks.
@@ -49,7 +49,7 @@ TYPED_TEST(bitmask_tester, lsb_ones)
   }
 }
 
-TYPED_TEST(bitmask_tester, lsb_zeros)
+TYPED_TEST(bitmask_test, lsb_zeros)
 {
   using IntegerType = typename TestFixture::Integer;
   // sanity checks.
@@ -65,7 +65,7 @@ TYPED_TEST(bitmask_tester, lsb_zeros)
   }
 }
 
-TYPED_TEST(bitmask_tester, msb_ones)
+TYPED_TEST(bitmask_test, msb_ones)
 {
   using IntegerType = typename TestFixture::Integer;
   // sanity checks.
@@ -83,7 +83,7 @@ TYPED_TEST(bitmask_tester, msb_ones)
   }
 }
 
-TYPED_TEST(bitmask_tester, msb_zeros)
+TYPED_TEST(bitmask_test, msb_zeros)
 {
   using IntegerType = typename TestFixture::Integer;
   // sanity checks.
@@ -103,7 +103,7 @@ TYPED_TEST(bitmask_tester, msb_zeros)
   }
 }
 
-TYPED_TEST(bitmask_tester, first_lsb_one)
+TYPED_TEST(bitmask_test, first_lsb_one)
 {
   using IntegerType = typename TestFixture::Integer;
   std::uniform_int_distribution<IntegerType> rd_int{0, std::numeric_limits<IntegerType>::max()};
@@ -125,7 +125,7 @@ TYPED_TEST(bitmask_tester, first_lsb_one)
   }
 }
 
-TYPED_TEST(bitmask_tester, first_msb_one)
+TYPED_TEST(bitmask_test, first_msb_one)
 {
   using IntegerType = typename TestFixture::Integer;
   std::uniform_int_distribution<IntegerType> rd_int{0, std::numeric_limits<IntegerType>::max()};
@@ -192,8 +192,14 @@ protected:
 };
 using bitset_types = ::testing::Types<bounded_bitset<25>,
                                       bounded_bitset<25, true>,
+                                      bounded_bitset<32>,
+                                      bounded_bitset<32, true>,
+                                      bounded_bitset<64>,
+                                      bounded_bitset<64, true>,
                                       bounded_bitset<120>,
                                       bounded_bitset<120, true>,
+                                      bounded_bitset<128>,
+                                      bounded_bitset<128, true>,
                                       bounded_bitset<512>,
                                       bounded_bitset<512, true>>;
 TYPED_TEST_SUITE(bounded_bitset_tester, bitset_types);
@@ -234,6 +240,7 @@ TYPED_TEST(bounded_bitset_tester, initializer_list_constructor)
   ASSERT_EQ(bitmap.size(), 5);
   ASSERT_TRUE(bitmap.test(0));
   ASSERT_TRUE(bitmap.test(1));
+  ASSERT_TRUE(bitmap.test(2));
   ASSERT_TRUE(bitmap.test(3));
   ASSERT_FALSE(bitmap.test(4));
 }
@@ -251,7 +258,7 @@ TYPED_TEST(bounded_bitset_tester, iterator_constructor)
 
 TYPED_TEST(bounded_bitset_tester, all_ones)
 {
-  typename TestFixture::bitset_type ones_bitmap = this->create_bitset_with_ones(this->get_random_size());
+  auto ones_bitmap = this->create_bitset_with_ones(this->get_random_size());
 
   ASSERT_TRUE(ones_bitmap.all());
   ASSERT_TRUE(ones_bitmap.any());
@@ -421,13 +428,17 @@ TYPED_TEST(bounded_bitset_tester, slice)
 
   for (unsigned i = 0; i != small_bitmap.size(); ++i) {
     ASSERT_EQ(small_bitmap.test(i), big_bitmap.test(i + offset))
-        << fmt::format("For slice={} of size={} taken from [{}, {}) of big_bitmap={} of size={}",
+        << fmt::format("For slice={} of size={} taken from [{}, {}) of big_bitmap={} of size={}, there is a mismatch "
+                       "in position {} ({}!={})",
                        small_bitmap,
                        small_bitmap.size(),
                        offset,
                        end_offset,
                        big_bitmap,
-                       big_bitmap.size());
+                       big_bitmap.size(),
+                       i,
+                       small_bitmap.test(i),
+                       big_bitmap.test(i + offset));
   }
 }
 
@@ -503,6 +514,51 @@ TYPED_TEST(bounded_bitset_tester, hex_format_is_mirror_of_hex_format_reverse)
 
   ASSERT_EQ(str_reverse, str_reverse);
   ASSERT_EQ(str, str2_reverse);
+}
+
+TYPED_TEST(bounded_bitset_tester, push_back)
+{
+  std::vector<bool>                 vec = this->create_random_vector(this->get_random_size());
+  typename TestFixture::bitset_type bitmap;
+
+  unsigned count = 0;
+  for (bool v : vec) {
+    bitmap.push_back(v);
+    ASSERT_EQ(bitmap.size(), count + 1);
+    ASSERT_EQ(bitmap.test(count), v);
+    ++count;
+  }
+
+  ASSERT_EQ(bitmap.size(), vec.size());
+  std::vector<bool> actual(vec.size());
+  for (unsigned i = 0; i < vec.size(); ++i) {
+    actual[i] = bitmap.test(i);
+  }
+  ASSERT_EQ(actual, vec);
+}
+
+TYPED_TEST(bounded_bitset_tester, push_back_multiple_bits)
+{
+  std::vector<bool> vec      = this->create_random_vector(this->get_random_size());
+  const unsigned    bit_step = test_rgen::uniform_int<unsigned>(1U, std::min(32U, (unsigned)vec.size()));
+  typename TestFixture::bitset_type bitmap;
+
+  for (unsigned offset = 0; offset < vec.size(); offset += bit_step) {
+    unsigned nof_packed = std::min(bit_step, (unsigned)vec.size() - offset);
+    uint32_t to_pack    = 0;
+    for (unsigned i = 0; i != nof_packed; ++i) {
+      to_pack <<= 1;
+      to_pack |= vec[offset + i];
+    }
+    bitmap.push_back(to_pack, nof_packed);
+  }
+
+  ASSERT_EQ(bitmap.size(), vec.size());
+  std::vector<bool> actual(vec.size());
+  for (unsigned i = 0; i < vec.size(); ++i) {
+    actual[i] = bitmap.test(i);
+  }
+  ASSERT_EQ(actual, vec);
 }
 
 TEST(bounded_bitset_test, bitset_integer_conversion_consistent_with_std_bitset)
@@ -694,7 +750,7 @@ TEST(BoundedBitset, bitwise_resize)
     ASSERT_TRUE(bitset.all() and bitset.size() == 100);
 
     bitset.resize(25);
-    ASSERT_TRUE(bitset.to_uint64() == 0x1ffffff);
+    ASSERT_EQ(bitset.to_uint64(), 0x1ffffff);
     ASSERT_TRUE(bitset.all() and bitset.size() == 25); // keeps the data it had for the non-erased bits
 
     bitset.resize(100);
@@ -712,7 +768,7 @@ TEST(BoundedBitset, bitwise_resize)
     ASSERT_TRUE(bitset.all() and bitset.size() == 100);
 
     bitset.resize(25);
-    ASSERT_TRUE(bitset.to_uint64() == 0x1ffffff);
+    ASSERT_EQ(bitset.to_uint64(), 0x1ffffff);
     ASSERT_TRUE(bitset.all() and bitset.size() == 25); // keeps the data it had for the non-erased bits
 
     bitset.resize(100);

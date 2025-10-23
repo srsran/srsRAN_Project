@@ -16,7 +16,7 @@
 #include "srsran/support/math/math_utils.h"
 #include "srsran/support/srsran_assert.h"
 #include "fmt/format.h"
-#include <inttypes.h>
+#include <cinttypes>
 #include <string>
 
 namespace srsran {
@@ -37,15 +37,15 @@ struct default_bounded_bitset_tag {};
 /// different orders. E.g.
 ///
 /// bounded_bitset<6, false> a(5); // Bitset of 5 bits. LSB is Lowest Information Bit (bit 0).
-/// a.set(0);
-/// assert(a.to_uint64() == 0b1);
+/// a.set(1);
+/// assert(a.to_uint64() == 0b00010);
 /// bounded_bitset<6, true> b(5); // Bitset of 5 bits. MSB is Lowest Information Bit (bit 0).
 /// b.set(1);
-/// assert(a.to_uint64() == 0b1000);
+/// assert(a.to_uint64() == 0b0100000000000000);
 ///
 /// The \c LowestInfoBitIsMSB template argument also affects the default string representation of the bitset. E.g.
-/// fmt::print("{:b}", a); // prints "00001".
-/// fmt::print("{:x}", a); // prints "1".
+/// fmt::print("{:b}", a); // prints "00010".
+/// fmt::print("{:x}", a); // prints "2".
 /// fmt::print("{:b}", b); // prints "01000".
 /// fmt::print("{:x}", b); // prints "8".
 ///
@@ -60,15 +60,16 @@ struct default_bounded_bitset_tag {};
 template <size_t N, bool LowestInfoBitIsMSB = false, typename Tag = detail::default_bounded_bitset_tag>
 class bounded_bitset
 {
-  using word_t                      = uint64_t;
-  static const size_t bits_per_word = 8U * sizeof(word_t);
+  using word_t                          = uint64_t;
+  static constexpr size_t bits_per_word = 8U * sizeof(word_t);
 
 public:
   constexpr bounded_bitset() = default;
 
   constexpr explicit bounded_bitset(size_t cur_size_) : cur_size(cur_size_)
   {
-    srsran_assert(cur_size_ <= N, "The bounded_bitset current size cannot exceed its maximum size");
+    report_fatal_error_if_not(cur_size_ <= max_size(),
+                              "The bounded_bitset current size cannot exceed its maximum size");
   }
 
   constexpr bounded_bitset(const bounded_bitset& other) noexcept : cur_size(other.cur_size)
@@ -89,14 +90,10 @@ public:
   constexpr bounded_bitset(Iterator begin, Iterator end)
   {
     resize(end - begin);
-    std::for_each(begin, end, [this, n = 0](bool value) mutable {
-      if (value) {
-        set_(n);
-      } else {
-        reset_(n);
-      }
-      ++n;
-    });
+    size_t count = 0;
+    for (auto it = begin; it != end; ++it) {
+      set_(count++, *it);
+    }
   }
 
   /// \brief Constructs a bitset from an initializer list.
@@ -107,22 +104,17 @@ public:
   constexpr bounded_bitset(const std::initializer_list<const bool>& values)
   {
     resize(values.size());
-    std::for_each(values.begin(), values.end(), [this, n = 0](bool value) mutable {
-      assert_within_bounds_(n, true);
-      if (value) {
-        set_(n);
-      } else {
-        reset_(n);
-      }
-      ++n;
-    });
+    size_t count = 0;
+    for (auto it = values.begin(); it != values.end(); ++it) {
+      set_(count++, *it);
+    }
   }
 
   constexpr bounded_bitset& operator=(const bounded_bitset& other) noexcept
   {
     if (this != &other) {
       // In case of shrink, reset erased bits.
-      for (size_t i = other.nof_words_(); i < nof_words_(); ++i) {
+      for (size_t i = other.nof_words_(), sz = nof_words_(); i < sz; ++i) {
         buffer[i] = static_cast<word_t>(0);
       }
       cur_size = other.cur_size;
@@ -157,18 +149,21 @@ public:
   /// created are set to zero.
   void resize(size_t new_size)
   {
-    srsran_assert(new_size <= max_size(), "ERROR: new size='{}' exceeds bitset capacity='{}'", new_size, max_size());
     if (new_size == cur_size) {
       return;
     }
-    const size_t prev_nof_words = nof_words_();
-    cur_size                    = new_size;
-    sanitize_();
-    const size_t new_nof_words = nof_words_();
-    const size_t start = std::min(prev_nof_words, new_nof_words), end = std::max(prev_nof_words, new_nof_words);
-    // The words created/deleted are set to zero.
-    for (size_t i = start; i != end; ++i) {
-      buffer[i] = static_cast<word_t>(0);
+    report_fatal_error_if_not(
+        new_size <= max_size(), "ERROR: new size='{}' exceeds bitset capacity='{}'", new_size, max_size());
+    const size_t prev_size = size();
+    cur_size               = new_size;
+    if (new_size < prev_size) {
+      // Shrinking case. Need to sanitize removed bits.
+      sanitize_();
+      const size_t prev_nof_words = divide_ceil(prev_size, bits_per_word);
+      srsran_assume(prev_nof_words <= buffer.size());
+      for (size_t i = nof_words_(); i < prev_nof_words; ++i) {
+        buffer[i] = static_cast<word_t>(0);
+      }
     }
   }
 
@@ -178,11 +173,7 @@ public:
   void set(size_t pos, bool val)
   {
     assert_within_bounds_(pos, true);
-    if (val) {
-      set_(pos);
-    } else {
-      reset_(pos);
-    }
+    set_(pos, val);
   }
 
   /// \brief Set bit with provided index to true. Assertion is triggered if pos >= N.
@@ -204,7 +195,7 @@ public:
   /// Reset all bits in the bounded_bitset to false. The size of the bitset is maintained.
   void reset() noexcept
   {
-    for (size_t i = 0; i < nof_words_(); ++i) {
+    for (size_t i = 0, nw = nof_words_(); i != nw; ++i) {
       buffer[i] = static_cast<word_t>(0);
     }
   }
@@ -216,7 +207,7 @@ public:
       reset();
       return;
     }
-    for (size_t i = 0; i < nof_words_(); ++i) {
+    for (size_t i = 0, nw = nof_words_(); i != nw; ++i) {
       buffer[i] = static_cast<word_t>(-1);
     }
     sanitize_();
@@ -227,9 +218,8 @@ public:
   /// Assertion is triggered if the resultant size exceeds the maximum size of the bitset.
   void push_back(bool val)
   {
-    static_assert(not LowestInfoBitIsMSB, "push_back only works for LowestInfoBitIsMSB == false");
-    unsigned bitpos = size();
-    resize(size() + 1);
+    size_t bitpos = size();
+    resize(bitpos + 1);
     set(bitpos, val);
   }
 
@@ -242,10 +232,9 @@ public:
   template <typename Integer>
   void push_back(Integer val, unsigned nof_bits)
   {
-    static_assert(not LowestInfoBitIsMSB, "push_back only works for LowestInfoBitIsMSB == false");
     static_assert(std::is_unsigned_v<Integer>, "push_back only works for unsigned integers");
     unsigned bitpos = size();
-    resize(size() + nof_bits);
+    resize(bitpos + nof_bits);
     for (unsigned bit_index = 0; bit_index != nof_bits; ++bit_index) {
       set(bitpos + bit_index, (val >> (nof_bits - 1 - bit_index)) & 1U);
     }
@@ -259,7 +248,7 @@ public:
   template <typename Integer = unsigned>
   Integer extract(unsigned startpos, unsigned nof_bits) const
   {
-    static_assert(std::is_unsigned<Integer>::value, "Extract only works for unsigned integers");
+    static_assert(std::is_unsigned_v<Integer>, "Extract only works for unsigned integers");
     srsran_assert(nof_bits <= sizeof(Integer) * 8,
                   "The number of bits (i.e., {}) exceeds the destination bit-width (i.e., {}).",
                   nof_bits,
@@ -301,7 +290,7 @@ public:
     bounded_bitset<Factor * N> result(size() * other.size());
 
     // Places the contents of other centered at the positions indicated by the true bits.
-    std::function<void(unsigned)> kronecker_expansion = [&other, &result](unsigned bit_index) {
+    auto kronecker_expansion = [&other, &result](unsigned bit_index) {
       unsigned bitpos = bit_index * Factor;
       word_t   word   = other.buffer[0];
 
@@ -376,7 +365,7 @@ public:
   /// \return Returns this object.
   bounded_bitset& flip() noexcept
   {
-    for (size_t i = 0; i < nof_words_(); ++i) {
+    for (size_t i = 0, nw = nof_words_(); i != nw; ++i) {
       buffer[i] = ~buffer[i];
     }
     sanitize_();
@@ -391,6 +380,7 @@ public:
   bounded_bitset& fill(size_t startpos, size_t endpos, bool value = true)
   {
     find_first_word_(startpos, endpos, [this, value](size_t word_idx, const word_t& mask) {
+      srsran_assume(word_idx < buffer.size());
       if (value) {
         buffer[word_idx] |= mask;
       } else {
@@ -410,25 +400,32 @@ public:
   bounded_bitset<N2, LowestInfoBitIsMSB, NewTag> slice(size_t startpos, size_t endpos) const
   {
     bounded_bitset<N2, LowestInfoBitIsMSB> sliced(endpos - startpos);
-    if (LowestInfoBitIsMSB) {
-      std::swap(startpos, endpos);
-      startpos = get_bitidx_(startpos) + 1;
-      endpos   = get_bitidx_(endpos) + 1;
-    }
-    unsigned start_word = startpos / bits_per_word;
-    unsigned start_mod  = startpos % bits_per_word;
+    const unsigned                         start_word = startpos / bits_per_word;
+    unsigned                               start_mod  = startpos % bits_per_word;
+    const auto                             nwords     = nof_words_();
 
     if (start_mod != 0) {
-      word_t left_mask  = mask_lsb_ones<word_t>(bits_per_word - start_mod);
-      word_t right_mask = mask_lsb_ones<word_t>(start_mod);
-      for (unsigned i = 0; i != sliced.nof_words_(); ++i) {
-        sliced.buffer[i] = (buffer[i + start_word] >> start_mod) & left_mask;
-        if (i + start_word + 1 < nof_words_()) {
-          sliced.buffer[i] |= (buffer[i + start_word + 1] & right_mask) << (bits_per_word - start_mod);
+      if constexpr (LowestInfoBitIsMSB) {
+        const auto left_mask  = mask_msb_ones<word_t>(bits_per_word - start_mod);
+        const auto right_mask = mask_msb_ones<word_t>(start_mod);
+        for (unsigned i = 0, sl_nw = sliced.nof_words_(); i != sl_nw; ++i) {
+          sliced.buffer[i] = (buffer[i + start_word] << start_mod) & left_mask;
+          if (i + start_word + 1 < nwords) {
+            sliced.buffer[i] |= (buffer[i + start_word + 1] & right_mask) >> (bits_per_word - start_mod);
+          }
+        }
+      } else {
+        const auto left_mask  = mask_lsb_ones<word_t>(bits_per_word - start_mod);
+        const auto right_mask = mask_lsb_ones<word_t>(start_mod);
+        for (unsigned i = 0, sl_nw = sliced.nof_words_(); i != sl_nw; ++i) {
+          sliced.buffer[i] = (buffer[i + start_word] >> start_mod) & left_mask;
+          if (i + start_word + 1 < nwords) {
+            sliced.buffer[i] |= (buffer[i + start_word + 1] & right_mask) << (bits_per_word - start_mod);
+          }
         }
       }
     } else {
-      for (unsigned i = 0; i != sliced.nof_words_(); ++i) {
+      for (unsigned i = 0, sl_nw = sliced.nof_words_(); i != sl_nw; ++i) {
         sliced.buffer[i] = buffer[i + start_word];
       }
     }
@@ -448,15 +445,24 @@ public:
   /// \return Returns the lowest found bit index or -1 in case no bit was found with the provided value argument.
   int find_lowest(size_t startpos, size_t endpos, bool value = true) const noexcept
   {
-    assert_range_bounds_(startpos, endpos);
-    if (startpos == endpos) {
-      return -1;
-    }
-
-    if (not LowestInfoBitIsMSB) {
-      return find_first_(startpos, endpos, value);
-    }
-    return find_first_reversed_(startpos, endpos, value);
+    int pos = -1;
+    find_first_word_(startpos, endpos, [this, value, &pos](size_t word_idx, const word_t& mask) {
+      srsran_assume(word_idx < buffer.size());
+      word_t w = value ? buffer[word_idx] : ~buffer[word_idx];
+      w &= mask;
+      if (w != 0) {
+        // Found bit. Store its position.
+        pos = word_idx * bits_per_word;
+        if constexpr (LowestInfoBitIsMSB) {
+          pos += convert_bitpos_(find_first_msb_one(w));
+        } else {
+          pos += find_first_lsb_one(w);
+        }
+        return true;
+      }
+      return false;
+    });
+    return pos;
   }
 
   /// \brief Executes a function for all \c true (or all \c false) bits in the given bitset interval.
@@ -468,7 +474,7 @@ public:
   template <class T>
   void for_each(size_t startpos, size_t endpos, T&& function, bool value = true) const noexcept
   {
-    static_assert(std::is_convertible<T, std::function<void(size_t)>>::value,
+    static_assert(std::is_convertible_v<T, std::function<void(size_t)>>,
                   "The function must have void(size_t) signature.");
     static_assert(!LowestInfoBitIsMSB, "The for_each method is not yet available for reversed bitsets.");
 
@@ -594,7 +600,11 @@ public:
         return false;
       }
     }
-    return buffer[nw - 1] == (allset >> (nw * bits_per_word - size()));
+    if constexpr (LowestInfoBitIsMSB) {
+      return buffer[nw - 1] == (allset << (nw * bits_per_word - size()));
+    } else {
+      return buffer[nw - 1] == (allset >> (nw * bits_per_word - size()));
+    }
   }
 
   /// \brief Checks if all bits within a bit index range are set to 1.
@@ -620,26 +630,50 @@ public:
   int find_highest(size_t startpos, size_t endpos, bool value = true) const noexcept
   {
     assert_range_bounds_(startpos, endpos);
-
     if (startpos == endpos) {
       return -1;
     }
+    size_t startword = startpos / bits_per_word;
+    size_t lastword  = (endpos - 1) / bits_per_word;
 
-    if (LowestInfoBitIsMSB) {
-      int ret = find_first_(size() - endpos, size() - startpos, value);
-      if (ret == -1) {
-        return ret;
+    for (size_t i = lastword; i != startword - 1; --i) {
+      word_t w = buffer[i];
+      if (not value) {
+        w = ~w;
       }
-      return size() - 1 - ret;
+
+      if (i == startword) {
+        size_t removed_bits = startpos % bits_per_word;
+        if constexpr (LowestInfoBitIsMSB) {
+          w &= mask_msb_zeros<word_t>(removed_bits);
+        } else {
+          w &= mask_lsb_zeros<word_t>(removed_bits);
+        }
+      }
+      if (i == lastword) {
+        size_t kept_bits = ((endpos - 1) % bits_per_word) + 1;
+        if constexpr (LowestInfoBitIsMSB) {
+          w &= mask_msb_ones<word_t>(kept_bits);
+        } else {
+          w &= mask_lsb_ones<word_t>(kept_bits);
+        }
+      }
+      if (w != 0) {
+        if constexpr (LowestInfoBitIsMSB) {
+          return static_cast<int>(i * bits_per_word + convert_bitpos_(find_first_lsb_one(w)));
+        } else {
+          return static_cast<int>(i * bits_per_word + find_first_msb_one(w));
+        }
+      }
     }
-    return find_last_(startpos, endpos, value);
+    return -1;
   }
 
   /// \brief Checks if at least one bit in the bitset is set to 1.
   /// \return Returns true if at least one bit is 1.
   bool any() const noexcept
   {
-    for (size_t i = 0; i < nof_words_(); ++i) {
+    for (size_t i = 0, sz = nof_words_(); i != sz; ++i) {
       if (buffer[i] != static_cast<word_t>(0)) {
         return true;
       }
@@ -709,7 +743,7 @@ public:
   size_t count() const noexcept
   {
     int result = 0;
-    for (size_t i = 0; i < nof_words_(); i++) {
+    for (size_t i = 0, nw = nof_words_(); i != nw; ++i) {
       result += count_ones(buffer[i]);
     }
     return result;
@@ -722,7 +756,7 @@ public:
     if (size() != other.size()) {
       return false;
     }
-    for (uint32_t i = 0; i < nof_words_(); ++i) {
+    for (size_t i = 0, nw = nof_words_(); i != nw; ++i) {
       if (buffer[i] != other.buffer[i]) {
         return false;
       }
@@ -741,7 +775,7 @@ public:
                   "ERROR: operator|= called for bitsets of different sizes ('{}'!='{}')",
                   size(),
                   other.size());
-    for (size_t i = 0; i < nof_words_(); ++i) {
+    for (size_t i = 0, nw = nof_words_(); i != nw; ++i) {
       buffer[i] |= other.buffer[i];
     }
     return *this;
@@ -756,7 +790,7 @@ public:
                   "ERROR: operator&= called for bitsets of different sizes ('{}'!='{}')",
                   size(),
                   other.size());
-    for (size_t i = 0; i < nof_words_(); ++i) {
+    for (size_t i = 0, nw = nof_words_(); i != nw; ++i) {
       buffer[i] &= other.buffer[i];
     }
     return *this;
@@ -777,6 +811,9 @@ public:
   uint64_t to_uint64() const
   {
     srsran_assert(nof_words_() == 1, "ERROR: cannot convert bitset of size='{}' to uint64_t", size());
+    if constexpr (LowestInfoBitIsMSB) {
+      return get_word_(0) >> (bits_per_word - (size() % bits_per_word));
+    }
     return get_word_(0);
   }
 
@@ -803,11 +840,12 @@ public:
   size_t to_packed_bits(span<UnsignedInteger> packed_bits) const
   {
     static_assert(sizeof(UnsignedInteger) <= sizeof(word_t), "ERROR: provided array type is too large");
-    static_assert(std::is_unsigned<UnsignedInteger>::value, "Only unsigned integers are supported");
+    static_assert(std::is_unsigned_v<UnsignedInteger>, "Only unsigned integers are supported");
     static constexpr size_t steps_per_word      = sizeof(word_t) / sizeof(UnsignedInteger);
     static constexpr size_t bits_per_integer    = sizeof(UnsignedInteger) * 8U;
-    static constexpr word_t integer_mask        = mask_lsb_ones<word_t>(bits_per_integer);
-    const unsigned          last_word_steps     = divide_ceil(size() % bits_per_word, bits_per_integer);
+    static constexpr auto   integer_mask        = mask_lsb_ones<word_t>(bits_per_integer);
+    const word_t            sz                  = size();
+    const unsigned          last_word_steps     = divide_ceil(sz % bits_per_word, bits_per_integer);
     const unsigned          nof_words           = nof_words_();
     const unsigned          nof_integers_packed = (nof_words - 1) * steps_per_word + last_word_steps;
     srsran_assert(
@@ -823,10 +861,9 @@ public:
       }
     } else {
       for (unsigned i = 0; i != nof_words; ++i) {
-        word_t   w         = buffer[nof_words - i - 1];
+        word_t   w         = buffer[i];
         unsigned nof_steps = steps_per_word;
         if (i == nof_words - 1) {
-          w <<= (bits_per_word - (size() % bits_per_word));
           nof_steps = last_word_steps;
         }
         for (unsigned j = 0; j != nof_steps; ++j) {
@@ -871,10 +908,9 @@ public:
   {
     static_vector<size_t, N> positions;
 
-    size_t i_bit = 0;
-    while (i_bit < size()) {
+    for (size_t i_bit = 0, sz = size(); i_bit != sz;) {
       // Find the next bit position of the bit set to value.
-      int next_position = find_lowest(i_bit, size(), value);
+      int next_position = find_lowest(i_bit, sz, value);
       if (next_position < 0) {
         break;
       }
@@ -897,22 +933,26 @@ private:
   // Capacity of the underlying array in number of words.
   static constexpr size_t max_nof_words_() noexcept { return (N + bits_per_word - 1) / bits_per_word; }
 
-  std::array<word_t, max_nof_words_()> buffer   = {0};
+  std::array<word_t, max_nof_words_()> buffer{};
   size_t                               cur_size = 0;
 
   void sanitize_()
   {
-    size_t n      = size() % bits_per_word;
-    size_t nwords = nof_words_();
-    if (n != 0 and nwords > 0) {
-      buffer[nwords - 1] &= ~((~static_cast<word_t>(0)) << n);
+    const size_t n = size() % bits_per_word;
+    if (n != 0) {
+      const size_t nwords = nof_words_();
+      if constexpr (LowestInfoBitIsMSB) {
+        buffer[nwords - 1] &= ~((~static_cast<word_t>(0)) >> n);
+      } else {
+        buffer[nwords - 1] &= ~((~static_cast<word_t>(0)) << n);
+      }
     }
   }
 
-  SRSRAN_FORCE_INLINE size_t get_bitidx_(size_t bitpos) const noexcept
+  SRSRAN_FORCE_INLINE size_t convert_bitpos_(size_t bitpos) const noexcept
   {
     if constexpr (LowestInfoBitIsMSB) {
-      return size() - 1 - bitpos;
+      return bits_per_word - 1 - (bitpos % bits_per_word);
     } else {
       return bitpos;
     }
@@ -920,23 +960,34 @@ private:
 
   SRSRAN_FORCE_INLINE bool test_(size_t bitpos) const noexcept
   {
-    bitpos = get_bitidx_(bitpos);
-    return ((get_word_(bitpos) & maskbit(bitpos)) != static_cast<word_t>(0));
+    const auto   w       = get_word_(bitpos);
+    const word_t bitmask = maskbit(bitpos);
+    return ((w & bitmask) != static_cast<word_t>(0));
   }
 
+  void set_(size_t bitpos, bool val) noexcept
+  {
+    if (val) {
+      set_(bitpos);
+    } else {
+      reset_(bitpos);
+    }
+  }
   void set_(size_t bitpos) noexcept
   {
-    bitpos = get_bitidx_(bitpos);
-    get_word_(bitpos) |= maskbit(bitpos);
+    auto&        w       = get_word_(bitpos);
+    const word_t bitmask = maskbit(bitpos);
+    w |= bitmask;
   }
 
   void reset_(size_t bitpos) noexcept
   {
-    bitpos = get_bitidx_(bitpos);
-    srsran_assume(bitpos < cur_size);
-    get_word_(bitpos) &= ~(maskbit(bitpos));
+    auto&        w       = get_word_(bitpos);
+    const word_t bitmask = maskbit(bitpos);
+    w &= ~bitmask;
   }
 
+  /// Number of words currently in use.
   SRSRAN_FORCE_INLINE size_t nof_words_() const noexcept { return divide_ceil(size(), bits_per_word); }
 
   SRSRAN_FORCE_INLINE word_t& get_word_(size_t bitidx) noexcept
@@ -974,87 +1025,11 @@ private:
 
   SRSRAN_FORCE_INLINE static word_t maskbit(size_t pos) noexcept
   {
-    return (static_cast<word_t>(1)) << (pos % bits_per_word);
-  }
-
-  int find_last_(size_t startpos, size_t endpos, bool value) const noexcept
-  {
-    size_t startword = startpos / bits_per_word;
-    size_t lastword  = (endpos - 1) / bits_per_word;
-
-    for (size_t i = lastword; i != startword - 1; --i) {
-      word_t w = buffer[i];
-      if (not value) {
-        w = ~w;
-      }
-
-      if (i == startword) {
-        size_t offset = startpos % bits_per_word;
-        w &= (LowestInfoBitIsMSB) ? mask_msb_zeros<word_t>(offset) : mask_lsb_zeros<word_t>(offset);
-      }
-      if (i == lastword) {
-        size_t offset = (endpos - 1) % bits_per_word;
-        w &= (LowestInfoBitIsMSB) ? mask_msb_ones<word_t>(offset + 1) : mask_lsb_ones<word_t>(offset + 1);
-      }
-      if (w != 0) {
-        return static_cast<int>(i * bits_per_word + find_first_msb_one(w));
-      }
+    if constexpr (LowestInfoBitIsMSB) {
+      return static_cast<word_t>(1U) << (bits_per_word - 1 - (pos % bits_per_word));
+    } else {
+      return static_cast<word_t>(1U) << (pos % bits_per_word);
     }
-    return -1;
-  }
-
-  int find_first_(size_t startpos, size_t endpos, bool value) const noexcept
-  {
-    size_t startword = startpos / bits_per_word;
-    size_t lastword  = (endpos - 1) / bits_per_word;
-
-    for (size_t i = startword; i <= lastword; ++i) {
-      word_t w = buffer[i];
-      if (not value) {
-        w = ~w;
-      }
-
-      if (i == startword) {
-        size_t offset = startpos % bits_per_word;
-        w &= mask_lsb_zeros<word_t>(offset);
-      }
-      if (i == lastword) {
-        size_t offset = (endpos - 1) % bits_per_word;
-        w &= mask_lsb_ones<word_t>(offset + 1);
-      }
-      if (w != 0) {
-        return static_cast<int>(i * bits_per_word + find_first_lsb_one(w));
-      }
-    }
-    return -1;
-  }
-
-  int find_first_reversed_(size_t startpos, size_t endpos, bool value) const noexcept
-  {
-    size_t startbitpos = get_bitidx_(startpos), lastbitpos = get_bitidx_(endpos - 1);
-    size_t startword = startbitpos / bits_per_word;
-    size_t lastword  = lastbitpos / bits_per_word;
-
-    for (size_t i = startword; i != lastword - 1; --i) {
-      word_t w = buffer[i];
-      if (not value) {
-        w = ~w;
-      }
-
-      if (i == startword) {
-        size_t offset = startbitpos % bits_per_word;
-        w &= mask_lsb_ones<word_t>(offset + 1);
-      }
-      if (i == lastword) {
-        size_t offset = lastbitpos % bits_per_word;
-        w &= mask_lsb_zeros<word_t>(offset);
-      }
-      if (w != 0) {
-        word_t pos = find_first_msb_one(w);
-        return static_cast<int>(size() - 1 - (pos + i * bits_per_word));
-      }
-    }
-    return -1;
   }
 
   /// \brief Finds first word, aka integer bitmap, within the provided bit index bounds for which the provided
@@ -1074,36 +1049,57 @@ private:
   bool find_first_word_(size_t start, size_t stop, const C& c) const
   {
     assert_range_bounds_(start, stop);
-    return find_first_word_(start, stop, c, std::integral_constant<bool, LowestInfoBitIsMSB>{});
-  }
+    const size_t startmod   = start % bits_per_word;
+    const size_t stopmod    = stop % bits_per_word;
+    const size_t start_word = word_idx_(start);
+    const size_t end_word   = word_idx_(stop) + (stopmod != 0 ? 1U : 0U);
+    if (start == stop) {
+      return false;
+    }
 
-  template <typename C>
-  bool find_first_word_(size_t start, size_t stop, const C& c, std::true_type /*unused*/) const
-  {
-    std::swap(start, stop);
-    start = get_bitidx_(start) + 1;
-    stop  = get_bitidx_(stop) + 1;
-    return find_first_word_(start, stop, c, std::false_type{});
-  }
-
-  template <typename C>
-  bool find_first_word_(size_t start, size_t stop, const C& c, std::false_type /*unused*/) const
-  {
-    size_t start_word = word_idx_(start);
-    size_t end_word   = word_idx_(stop) + (stop % bits_per_word > 0 ? 1U : 0U);
-    for (size_t i = start_word; i != end_word; ++i) {
+    size_t i = start_word;
+    if (startmod != 0) {
+      // the first word is not complete. We need to apply a mask.
       word_t mask = ~static_cast<word_t>(0);
-      if (i == start_word) {
-        mask &= mask_lsb_zeros<word_t>(start % bits_per_word);
+      if constexpr (LowestInfoBitIsMSB) {
+        mask &= mask_msb_zeros<word_t>(startmod);
+      } else {
+        mask &= mask_lsb_zeros<word_t>(startmod);
       }
       if (i == end_word - 1) {
-        mask &= mask_msb_zeros<word_t>(end_word * bits_per_word - stop);
+        // first word is also the last. We apply the endmask as well.
+        if constexpr (LowestInfoBitIsMSB) {
+          mask &= mask_lsb_zeros<word_t>(end_word * bits_per_word - stop);
+        } else {
+          mask &= mask_msb_zeros<word_t>(end_word * bits_per_word - stop);
+        }
+        // return right away.
+        return c(i, mask);
       }
       if (c(i, mask)) {
         return true;
       }
+      // first word now processed.
+      ++i;
     }
-    return false;
+
+    // Iterate through full words.
+    for (; i != end_word - 1; ++i) {
+      if (c(i, ~static_cast<word_t>(0))) {
+        return true;
+      }
+    }
+
+    // Last word reached. Apply mask if required.
+    word_t mask = ~static_cast<word_t>(0);
+    if (stopmod != 0) {
+      if constexpr (LowestInfoBitIsMSB) {
+        mask &= mask_lsb_zeros<word_t>(end_word * bits_per_word - stop);
+      } else {
+        mask &= mask_msb_zeros<word_t>(end_word * bits_per_word - stop);
+      }
+    }
+    return c(i, mask);
   }
 
   /// \brief Formatting helper to convert bitset to string of bits.
@@ -1140,30 +1136,50 @@ private:
   template <typename OutputIt>
   OutputIt to_string_of_hex(OutputIt&& mem_buffer, bool reverse) const
   {
-    if (size() == 0) {
+    const size_t sz = size();
+    if (sz == 0) {
       return mem_buffer;
     }
+    const size_t rem_bits   = sz % bits_per_word;
+    const size_t rem_digits = divide_ceil(rem_bits, 4U);
+    const size_t nwords     = nof_words_();
 
     if (not reverse) {
-      // first word may not print 16 hex digits
-      int    i          = nof_words_() - 1;
-      size_t rem_digits = divide_ceil((size() - (size() / bits_per_word) * bits_per_word), 4U);
-      fmt::format_to(mem_buffer, "{:0>{}x}", buffer[i], rem_digits);
-      // remaining words will occupy 16 hex digits each (4 bits per hex digit).
-      for (--i; i >= 0; --i) {
-        fmt::format_to(mem_buffer, "{:0>16x}", buffer[i]);
+      if constexpr (LowestInfoBitIsMSB) {
+        unsigned i = 0;
+        for (; i != nwords - 1; ++i) {
+          uint64_t w = buffer[i];
+          fmt::format_to(mem_buffer, "{:0>16x}", w);
+        }
+        word_t w = buffer[i] >> (bits_per_word - rem_bits);
+        fmt::format_to(mem_buffer, "{:0>{}x}", w, rem_digits);
+      } else {
+        int    i = nwords - 1;
+        word_t w = buffer[i];
+        fmt::format_to(mem_buffer, "{:0>{}x}", w, rem_digits);
+        // remaining words will occupy 16 hex digits each (4 bits per hex digit).
+        for (--i; i >= 0; --i) {
+          fmt::format_to(mem_buffer, "{:0>16x}", buffer[i]);
+        }
       }
     } else {
-      unsigned i = 0;
-      for (; i != nof_words_() - 1; ++i) {
-        uint64_t w = bit_reverse(buffer[i]);
-        fmt::format_to(mem_buffer, "{:0>16x}", w);
+      if constexpr (LowestInfoBitIsMSB) {
+        // first, potentially incomplete, word
+        int    i = nwords - 1;
+        word_t w = bit_reverse(buffer[i]);
+        fmt::format_to(mem_buffer, "{:0>{}x}", w, rem_digits);
+        for (--i; i >= 0; --i) {
+          fmt::format_to(mem_buffer, "{:0>16x}", bit_reverse(buffer[i]));
+        }
+      } else {
+        unsigned i = 0;
+        for (; i != nwords - 1; ++i) {
+          uint64_t w = bit_reverse(buffer[i]);
+          fmt::format_to(mem_buffer, "{:0>16x}", w);
+        }
+        word_t w = bit_reverse(buffer[i]) >> (bits_per_word - rem_bits);
+        fmt::format_to(mem_buffer, "{:0>{}x}", w, rem_digits);
       }
-      // last word may not print 16 hex digits
-      size_t   rem_bits   = size() - (size() / bits_per_word) * bits_per_word;
-      size_t   rem_digits = divide_ceil(rem_bits, 4U);
-      uint64_t w          = bit_reverse(buffer[i]) >> (bits_per_word - rem_bits);
-      fmt::format_to(mem_buffer, "{:0>{}x}", w, rem_digits);
     }
     return mem_buffer;
   }
@@ -1267,7 +1283,7 @@ void for_each_interval(const bounded_bitset<N, LowestInfoBitIsMSB, Tag>& bitset,
                        Func&&                                            function,
                        bool                                              value = true)
 {
-  static_assert(std::is_convertible<Func, std::function<void(size_t, size_t)>>::value,
+  static_assert(std::is_convertible_v<Func, std::function<void(size_t, size_t)>>,
                 "The function must have void(size_t) signature.");
 
   // Iterate for all intervals.
