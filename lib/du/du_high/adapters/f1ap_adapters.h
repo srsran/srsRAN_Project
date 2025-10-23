@@ -93,7 +93,12 @@ public:
 
   async_task<void> request_ue_drb_deactivation(du_ue_index_t ue_index) override
   {
-    return du_mng->handle_ue_deactivation_request(ue_index);
+    return du_mng->handle_ue_drb_deactivation_request(ue_index);
+  }
+
+  async_task<void> request_ue_full_deactivation(du_ue_index_t ue_index) override
+  {
+    return du_mng->handle_ue_full_deactivation_request(ue_index);
   }
 
   async_task<gnbcu_config_update_response>

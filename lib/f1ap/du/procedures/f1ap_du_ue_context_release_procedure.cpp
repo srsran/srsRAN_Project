@@ -27,11 +27,13 @@ static constexpr std::chrono::milliseconds rrc_container_delivery_timeout{120};
 f1ap_du_ue_context_release_procedure::f1ap_du_ue_context_release_procedure(
     const asn1::f1ap::ue_context_release_cmd_s& msg_,
     f1ap_du_ue_manager&                         ues,
-    const srs_du::f1ap_du_context&              ctxt_) :
+    const f1ap_du_context&                      ctxt_,
+    timer_factory                               timers_) :
   msg(msg_),
   ue(*ues.find(int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id))),
   cu_msg_notifier(ue.f1ap_msg_notifier),
-  du_ctxt(ctxt_)
+  du_ctxt(ctxt_),
+  timers(timers_)
 {
 }
 
@@ -44,15 +46,22 @@ void f1ap_du_ue_context_release_procedure::operator()(coro_context<async_task<vo
   // Mark UE context for release, so that any UE Context Release Request coming from lower layers due to RLF is ignored.
   ue.context.marked_for_release = true;
 
-  // Stop activity in the DRBs before sending the UE's RRC release and performing the UE context removal.
-  CORO_AWAIT(ue.du_handler.request_ue_drb_deactivation(ue.context.ue_index));
-
   // If the UE CONTEXT RELEASE COMMAND message contains the RRC-Container IE, the gNB-DU shall send the RRC
   // container to the UE via the SRB indicated by the SRB ID IE.
   if (msg->rrc_container_present) {
-    CORO_AWAIT_VALUE(bool ret, handle_rrc_container());
-    if (ret) {
+    // Stop activity in the DRBs before sending the UE's RRC release and performing the UE context removal.
+    CORO_AWAIT(ue.du_handler.request_ue_drb_deactivation(ue.context.ue_index));
+    CORO_AWAIT_VALUE(success, handle_rrc_container());
+    if (success) {
       logger.debug("{}: RRC container delivered successfully.", f1ap_log_prefix{ue.context, name()});
+
+      // Note: As per TS 38.331, 5.3.8.3, it is optional for the UE to immediately shutdown or wait the full 60msec
+      // after it ACKs the RRC Release. If it decides to stay awake for those full 60msec, it will keep using RAN
+      // resources (e.g. for CSI and SR). To avoid the reallocation of RAN resources to other UEs too early (and
+      // potentially cause collisions), we postpone the UE context full removal from the DU.
+      CORO_AWAIT(ue.du_handler.request_ue_full_deactivation(ue.context.ue_index));
+      CORO_AWAIT(async_wait_for(timers.create_timer(), std::chrono::milliseconds{60}));
+
     } else {
       const f1ap_du_cell_context& cell_ctx = du_ctxt.served_cells[ue.context.sp_cell_index];
       std::chrono::milliseconds   timeout  = rrc_container_delivery_timeout + cell_ctx.ntn_link_rtt;
@@ -61,6 +70,9 @@ void f1ap_du_ue_context_release_procedure::operator()(coro_context<async_task<vo
           f1ap_log_prefix{ue.context, name()},
           timeout.count());
     }
+  } else {
+    // Stop all bearer activity before proceeding with the UE removal.
+    CORO_AWAIT(ue.du_handler.request_ue_full_deactivation(ue.context.ue_index));
   }
 
   // Remove UE from DU manager.
@@ -96,7 +108,7 @@ async_task<bool> f1ap_du_ue_context_release_procedure::handle_rrc_container()
   const f1ap_du_cell_context& cell_ctx = du_ctxt.served_cells[ue.context.sp_cell_index];
   std::chrono::milliseconds   timeout  = rrc_container_delivery_timeout + cell_ctx.ntn_link_rtt;
 
-  // Forward F1AP PDU to lower layers, and await for PDU to be transmitted over-the-air.
+  // Forward F1AP PDU to lower layers, and await for PDU to be ACKed.
   return srb->handle_pdu_and_await_delivery(
       msg->rrc_container.copy(), msg->rrc_delivery_status_request_present, timeout);
 }

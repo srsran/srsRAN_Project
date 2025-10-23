@@ -102,13 +102,22 @@ async_task<void> du_ue_manager::handle_ue_delete_request(const f1ap_ue_delete_re
   return launch_async<ue_deletion_procedure>(msg.ue_index, *this, cfg);
 }
 
-async_task<void> du_ue_manager::handle_ue_deactivation_request(du_ue_index_t ue_index)
+async_task<void> du_ue_manager::handle_ue_drb_deactivation_request(du_ue_index_t ue_index)
 {
   if (not ue_db.contains(ue_index)) {
-    logger.warning("ue={}: UE deactivation request for inexistent UE index", fmt::underlying(ue_index));
+    logger.warning("ue={}: UE DRB deactivation request for inexistent UE index", fmt::underlying(ue_index));
     return launch_no_op_task();
   }
   return ue_db[ue_index].handle_activity_stop_request(false);
+}
+
+async_task<void> du_ue_manager::handle_ue_full_deactivation_request(du_ue_index_t ue_index)
+{
+  if (not ue_db.contains(ue_index)) {
+    logger.warning("ue={}: UE RB deactivation request for inexistent UE index", fmt::underlying(ue_index));
+    return launch_no_op_task();
+  }
+  return ue_db[ue_index].handle_activity_stop_request(true);
 }
 
 void du_ue_manager::handle_reestablishment_request(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index)

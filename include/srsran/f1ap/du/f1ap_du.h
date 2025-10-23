@@ -188,6 +188,9 @@ public:
   /// \param ue_index Index of the UE for which the DRB deactivation is requested.
   virtual async_task<void> request_ue_drb_deactivation(du_ue_index_t ue_index) = 0;
 
+  /// \brief Request by the F1AP to the DU to deactivate all bearer activity for a given UE.
+  virtual async_task<void> request_ue_full_deactivation(du_ue_index_t ue_index) = 0;
+
   /// \brief Notify DU that a given UE is performing RRC Reestablishment.
   virtual void notify_reestablishment_of_old_ue(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index) = 0;
 

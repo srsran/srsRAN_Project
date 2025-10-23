@@ -131,6 +131,7 @@ private:
   task_executor&           ctrl_exec;
   f1ap_du_configurator&    du_mng;
   f1ap_du_paging_notifier& paging_notifier;
+  timer_manager&           timers;
 
   f1ap_du_connection_handler connection_handler;
 
