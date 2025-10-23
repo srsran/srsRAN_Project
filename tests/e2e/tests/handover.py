@@ -39,6 +39,7 @@ from .steps.stub import (
     ue_expect_handover,
     ue_move,
     ue_start_and_attach,
+    UE_STARTUP_TIMEOUT,
     ue_validate_no_reattaches,
 )
 
@@ -48,7 +49,7 @@ BITRATE_THRESHOLD: float = 0.1
 
 @mark.zmq
 @mark.smoke
-@mark.flaky(reruns=2, only_rerun=["StatusCode.UNKNOWN"])
+@mark.flaky(reruns=2, only_rerun=["License unavailable"])
 def test_smoke_sequentially(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -72,6 +73,7 @@ def test_smoke_sequentially(
         noise_spd=0,
         sleep_between_movement_steps=1,
         always_download_artifacts=False,
+        ue_startup_timeout=30,
     )
 
 
@@ -116,7 +118,7 @@ def test_s72_sequentially(
 )
 @mark.zmq
 @mark.flaky(
-    reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED", "StatusCode.UNKNOWN"]
+    reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED", "License unavailable"]
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_handover_sequentially(
@@ -166,6 +168,7 @@ def _handover_sequentially(
     du_array: Optional[Sequence[DUStub]] = None,
     metrics_summary: Optional[MetricsSummary] = None,
     always_download_artifacts: bool = True,
+    ue_startup_timeout: int = UE_STARTUP_TIMEOUT,
     nof_antennas_dl: int = 1,
     prach_config_index: int = -1,
     warning_as_errors: bool = True,
@@ -211,6 +214,7 @@ def _handover_sequentially(
         prach_config_index=prach_config_index,
         stop_gnb_first=stop_gnb_first,
         verbose_cu_mac=verbose_cu_mac,
+        ue_startup_timeout=ue_startup_timeout,
     ) as (ue_attach_info_dict, movements, traffic_seconds):
 
         for ue_stub, ue_attach_info in ue_attach_info_dict.items():
@@ -245,7 +249,7 @@ def _handover_sequentially(
 )
 @mark.zmq
 @mark.flaky(
-    reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED", "StatusCode.UNKNOWN"]
+    reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED", "License unavailable"]
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def test_zmq_handover_parallel(
@@ -331,6 +335,7 @@ def _handover_multi_ues(
     cell_position_offset: Tuple[float, float, float] = (1000, 0, 0),
     stop_gnb_first: bool = False,
     verbose_cu_mac: bool = True,
+    ue_startup_timeout: int = UE_STARTUP_TIMEOUT,
 ) -> Generator[
     Tuple[
         Dict[UEStub, UEAttachedInfo],
@@ -390,7 +395,9 @@ def _handover_multi_ues(
     else:
         raise ValueError("Either gnb or du_array and cu must be provided")
 
-    ue_attach_info_dict = ue_start_and_attach(ue_array=ue_array, du_definition=du_definition, fivegc=fivegc)
+    ue_attach_info_dict = ue_start_and_attach(
+        ue_array=ue_array, du_definition=du_definition, fivegc=fivegc, ue_startup_timeout=ue_startup_timeout
+    )
 
     try:
         # HO while pings
@@ -448,7 +455,7 @@ def _handover_multi_ues(
 )
 @mark.zmq_single_ue
 @mark.flaky(
-    reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED", "StatusCode.UNKNOWN"]
+    reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED", "License unavailable"]
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_handover_iperf(
@@ -523,7 +530,7 @@ def test_zmq_handover_iperf(
 )
 @mark.zmq_single_ue
 @mark.flaky(
-    reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED", "StatusCode.UNKNOWN"]
+    reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED", "License unavailable"]
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_handover_noise(

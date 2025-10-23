@@ -32,7 +32,7 @@ from .handover import _handover_sequentially
 )
 @mark.zmq
 @mark.flaky(
-    reruns=1, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED", "StatusCode.UNKNOWN"]
+    reruns=1, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED", "License unavailable"]
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_sequentially(

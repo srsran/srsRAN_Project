@@ -39,6 +39,7 @@ from .steps.stub import (
     ue_reestablishment,
     ue_reestablishment_parallel,
     ue_start_and_attach,
+    UE_STARTUP_TIMEOUT,
     ue_validate_no_reattaches,
 )
 
@@ -47,13 +48,13 @@ _ONLY_RERUN = [
     "Attach timeout reached",
     "StatusCode.ABORTED",
     "socket is already closed",
-    "StatusCode.UNKNOWN",
+    "License unavailable",
 ]
 
 
 @mark.zmq
 @mark.smoke
-@mark.flaky(reruns=2, only_rerun=["StatusCode.UNKNOWN"])
+@mark.flaky(reruns=2, only_rerun=["License unavailable"])
 def test_smoke_sequentially(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -75,6 +76,7 @@ def test_smoke_sequentially(
         common_scs=30,
         bandwidth=50,
         noise_spd=0,
+        ue_startup_timeout=30,
         always_download_artifacts=False,
     )
 
@@ -122,6 +124,7 @@ def test_zmq_sequentially(
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def _reestablishment_sequentially_ping(
+    *,  # This enforces keyword-only arguments
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_array: Tuple[UEStub, ...],
@@ -132,6 +135,7 @@ def _reestablishment_sequentially_ping(
     common_scs: int,
     bandwidth: int,
     noise_spd: int,
+    ue_startup_timeout: int = UE_STARTUP_TIMEOUT,
     always_download_artifacts: bool = True,
 ):
     """
@@ -157,6 +161,7 @@ def _reestablishment_sequentially_ping(
         noise_spd=noise_spd,
         log_ip_level="debug",
         warning_as_errors=True,
+        ue_startup_timeout=ue_startup_timeout,
     ):
         # Launch pings
         ping_task_array = ping_start(
@@ -525,6 +530,7 @@ def _iterator_over_attached_ues(
     noise_spd: int,
     log_ip_level: str,
     warning_as_errors: bool = True,
+    ue_startup_timeout: int = UE_STARTUP_TIMEOUT,
 ) -> Generator[Tuple[Dict[UEStub, UEAttachedInfo], Dict[UEStub, UEAttachedInfo]], None, None]:
 
     with _test_reestablishments(
@@ -544,6 +550,7 @@ def _iterator_over_attached_ues(
         noise_spd=noise_spd,
         log_ip_level=log_ip_level,
         warning_as_errors=warning_as_errors,
+        ue_startup_timeout=ue_startup_timeout,
     ) as ue_attach_info_dict:
 
         # Reestablishment while traffic
@@ -583,6 +590,7 @@ def _test_reestablishments(
     noise_spd: int,
     log_ip_level: str,
     warning_as_errors: bool = True,
+    ue_startup_timeout: int = UE_STARTUP_TIMEOUT,
 ) -> Generator[Dict[UEStub, UEAttachedInfo], None, None]:
 
     logging.info("Reestablishment Test")
@@ -618,7 +626,10 @@ def _test_reestablishments(
     )
 
     ue_attach_info_dict = ue_start_and_attach(
-        ue_array=ue_array, du_definition=[gnb.GetDefinition(Empty())], fivegc=fivegc
+        ue_array=ue_array,
+        du_definition=[gnb.GetDefinition(Empty())],
+        fivegc=fivegc,
+        ue_startup_timeout=ue_startup_timeout,
     )
 
     try:

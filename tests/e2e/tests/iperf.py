@@ -58,6 +58,7 @@ from .steps.stub import (
     stop,
     stop_kpm_mon_xapp,
     stop_rc_xapp,
+    UE_STARTUP_TIMEOUT,
 )
 
 ZMQ_ID = "band:%s-scs:%s-bandwidth:%s-bitrate:%s"
@@ -468,7 +469,7 @@ def test_android_hp(
     (param(41, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),),
 )
 @mark.zmq_2x2_mimo
-@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed", "StatusCode.UNKNOWN"])
+@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed", "License unavailable"])
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_2x2_mimo(
     retina_manager: RetinaTestManager,
@@ -513,7 +514,7 @@ def test_zmq_2x2_mimo(
 
 
 @mark.zmq
-@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed", "StatusCode.UNKNOWN"])
+@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed", "License unavailable"])
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_64_ues(
     retina_manager: RetinaTestManager,
@@ -572,7 +573,7 @@ def test_zmq_64_ues(
     (param(41, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),),
 )
 @mark.zmq_4x4_mimo
-@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed", "StatusCode.UNKNOWN"])
+@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed", "License unavailable"])
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_4x4_mimo(
     retina_manager: RetinaTestManager,
@@ -623,7 +624,7 @@ def test_zmq_4x4_mimo(
 )
 @mark.zmq
 @mark.smoke
-@mark.flaky(reruns=2, only_rerun=["StatusCode.UNKNOWN"])
+@mark.flaky(reruns=2, only_rerun=["License unavailable"])
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_smoke(
     retina_manager: RetinaTestManager,
@@ -658,6 +659,7 @@ def test_smoke(
         time_alignment_calibration=0,
         always_download_artifacts=False,
         bitrate_threshold=0,
+        ue_startup_timeout=30,
         ue_stop_timeout=30,
         gnb_post_cmd=("", "metrics --enable_log=True"),
     )
@@ -701,7 +703,7 @@ def test_smoke(
         "socket is already closed",
         "failed to connect to all addresses",
         "5GC crashed",
-        "StatusCode.UNKNOWN",
+        "License unavailable",
     ],
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -828,7 +830,7 @@ def test_zmq_precoding(
 @mark.s72
 @mark.flaky(
     reruns=2,
-    only_rerun=["failed to start", "5GC crashed", "StatusCode.UNKNOWN"],
+    only_rerun=["failed to start", "5GC crashed", "License unavailable"],
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_s72(
@@ -902,6 +904,7 @@ def _iperf(
     always_download_artifacts: bool,
     warning_as_errors: bool = True,
     bitrate_threshold: float = 0,  # bitrate != 0
+    ue_startup_timeout: int = UE_STARTUP_TIMEOUT,
     gnb_post_cmd: Tuple[str, ...] = tuple(),
     plmn: Optional[PLMN] = None,
     common_search_space_enable: bool = False,
@@ -973,6 +976,7 @@ def _iperf(
         inter_ue_start_period=inter_ue_start_period,
         ric=ric,
         channel_emulator=channel_emulator,
+        ue_startup_timeout=ue_startup_timeout,
     )
 
     if ric:

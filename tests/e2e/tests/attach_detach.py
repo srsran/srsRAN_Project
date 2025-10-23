@@ -24,7 +24,15 @@ from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters
-from .steps.stub import iperf_start, iperf_wait_until_finish, start_network, stop, ue_start_and_attach, ue_stop
+from .steps.stub import (
+    iperf_start,
+    iperf_wait_until_finish,
+    start_network,
+    stop,
+    ue_start_and_attach,
+    UE_STARTUP_TIMEOUT,
+    ue_stop,
+)
 
 HIGH_BITRATE = int(15e6)
 BITRATE_THRESHOLD: float = 0.1
@@ -32,7 +40,7 @@ BITRATE_THRESHOLD: float = 0.1
 
 @mark.zmq
 @mark.smoke
-@mark.flaky(reruns=2, only_rerun=["StatusCode.UNKNOWN"])
+@mark.flaky(reruns=2, only_rerun=["License unavailable"])
 def test_smoke(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -58,6 +66,7 @@ def test_smoke(
         direction=IPerfDir.BIDIRECTIONAL,
         global_timing_advance=0,
         time_alignment_calibration=0,
+        ue_startup_timeout=30,
         ue_stop_timeout=15,
         always_download_artifacts=False,
     )
@@ -86,7 +95,7 @@ def test_smoke(
     ),
 )
 @mark.zmq
-@mark.flaky(reruns=3, only_rerun=["failed to start", "IPerf Data Invalid", "StatusCode.UNKNOWN"])
+@mark.flaky(reruns=3, only_rerun=["failed to start", "IPerf Data Invalid", "License unavailable"])
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq(
     retina_manager: RetinaTestManager,
@@ -145,6 +154,7 @@ def _attach_and_detach_multi_ues(
     always_download_artifacts: bool,
     warning_as_errors: bool = True,
     reattach_count: int = 1,
+    ue_startup_timeout: int = UE_STARTUP_TIMEOUT,
     ue_stop_timeout: int = 30,
     ue_settle_time: int = 0,
 ):
@@ -167,7 +177,10 @@ def _attach_and_detach_multi_ues(
 
     start_network(ue_array=ue_array, gnb=gnb, fivegc=fivegc)
     ue_attach_info_dict = ue_start_and_attach(
-        ue_array=ue_array, du_definition=[gnb.GetDefinition(Empty())], fivegc=fivegc
+        ue_array=ue_array,
+        du_definition=[gnb.GetDefinition(Empty())],
+        fivegc=fivegc,
+        ue_startup_timeout=ue_startup_timeout,
     )
 
     ue_array_to_iperf = ue_array[::2]
