@@ -27,7 +27,7 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
                                     rach_cfg_common().rach_cfg_generic.prach_config_index))
 {
   // With SCS 15kHz and 30kHz, only normal CP is supported.
-  static const unsigned nof_symbols_per_slot = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+  static constexpr unsigned nof_symbols_per_slot = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
 
   // Convert list of PRACH subframe occasions to bitmap.
   for (const unsigned pos : prach_cfg.slots) {
@@ -39,7 +39,7 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
 
   // Derive PRACH duration information.
   // The information we need are not related to whether it is the last PRACH occasion.
-  const bool                       is_last_prach_occasion = false;
+  constexpr bool                   is_last_prach_occasion = false;
   const prach_preamble_information info =
       is_long_preamble(prach_cfg.format)
           ? get_prach_preamble_long_info(prach_cfg.format)
@@ -60,12 +60,12 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
     const unsigned prach_nof_prbs =
         prach_frequency_mapping_get(info.scs, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs).nof_rb_ra;
     // This is the start of the PRBs dedicated to PRACH.
-    const uint8_t prb_start = rach_cfg_common().rach_cfg_generic.msg1_frequency_start + id_fd_ra * prach_nof_prbs;
-    // NOTE: prach_to_pusch_guardband is added to every PRACH occasion, but only at the end of it. We don't consider the
-    // prach_to_pusch_guardband to compute the next PRACH occasion starting_PRB; the purpose of this guardband is to
-    // avoid overlapping with PUSCH (placed on the PRBs with higher index compared to the PRACH occasion) when we fill
-    // the resource grid.
-    const prb_interval prach_prbs{prb_start, prb_start + prach_nof_prbs + prach_to_pusch_guardband};
+    const unsigned prb_start = rach_cfg_common().rach_cfg_generic.msg1_frequency_start + id_fd_ra * prach_nof_prbs;
+    // Add a guardband on the left side of the PRACH RBs, to prevent PUSCH to be allocated in the [0, prb_start)
+    // interval.
+    const unsigned prb_start_with_guardband =
+        prb_start > prach_to_pusch_guardband ? prb_start - prach_to_pusch_guardband : 0U;
+    const prb_interval prach_prbs{prb_start_with_guardband, prb_start + prach_nof_prbs + prach_to_pusch_guardband};
     const crb_interval crbs = prb_to_crb(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, prach_prbs);
 
     if (is_long_preamble(prach_cfg.format)) {
