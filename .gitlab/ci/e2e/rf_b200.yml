@@ -25,7 +25,7 @@
     - type: sdr
       model: b200
     - type: license
-      model: amarisoft-5g
+      model: amarisoft-ue.*
 
 - name: srs-gnb
   type: gnb

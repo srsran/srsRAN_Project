@@ -463,6 +463,10 @@ test mode ue many ues:
 
 amari b200 asan:
   extends: .rf
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+      when: delayed
+      start_in: 8 hours # let zmq finish first so they don't fight for resources
   variables:
     MARKERS: rf_not_crash
   needs:
@@ -472,6 +476,10 @@ amari b200 asan:
 
 validate b200 config:
   extends: .rf
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+      when: delayed
+      start_in: 8 hours # let zmq finish first so they don't fight for resources
   variables:
     MARKERS: rf_b200
 
@@ -670,12 +678,12 @@ viavi 24h:
   extends: .e2e-run
   variables:
     GROUP: rf
-    TESTBED: s72_uesim
+    TESTBED: s72
     E2E_LOG_LEVEL: warning
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
       when: delayed
-      start_in: 8 hours # woraround: let zmq-uesim finish first
+      start_in: 8 hours # let zmq finish first so they don't fight for resources
   needs:
     - job: basic avx2 dpdk rtsan
       artifacts: true
