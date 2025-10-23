@@ -393,7 +393,7 @@ void mac_test_mode_cell_adapter::on_new_uplink_scheduler_results(const mac_ul_sc
 void mac_test_mode_cell_adapter::on_cell_results_completion(slot_point slot)
 {
   // Wait in slots between consecutive UL-CCCH messages to create test mode UEs.
-  static constexpr unsigned wait_between_ul_ccchs = 5;
+  static constexpr unsigned wait_between_ul_ccchs = 10;
 
   // Forward results to lower layers.
   result_notifier.on_cell_results_completion(slot);
