@@ -13,7 +13,6 @@
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/bounded_integer.h"
 #include "srsran/adt/expected.h"
-#include "srsran/adt/static_vector.h"
 #include "srsran/ran/dmrs.h"
 #include "srsran/ran/pdcch/pdcch_constants.h"
 #include "srsran/ran/physical_cell_group.h"
@@ -24,7 +23,7 @@
 namespace srsran {
 
 /// DCI payload data type.
-using dci_payload = bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>;
+using dci_payload = bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE, true>;
 
 /// \brief Resource allocation type for DCI formats 0_1 and 1_1.
 /// \remark See TS38.214 Sections 5.1.2.2 and 6.1.2.2.
