@@ -33,7 +33,7 @@ closed_rx_window_handler::closed_rx_window_handler(const closed_rx_window_handle
 
 void closed_rx_window_handler::on_new_symbol(const slot_symbol_point_context& symbol_point_context)
 {
-  if (stop_manager.stop_was_requested()) {
+  if (SRSRAN_UNLIKELY(stop_manager.stop_was_requested())) {
     return;
   }
 

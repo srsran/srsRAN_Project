@@ -57,7 +57,7 @@ public:
   // See interface for documentation.
   void on_new_frame(ether::unique_rx_buffer buffer) override
   {
-    if (stop_manager.stop_was_requested()) {
+    if (SRSRAN_UNLIKELY(stop_manager.stop_was_requested())) {
       return;
     }
 
