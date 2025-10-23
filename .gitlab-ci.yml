@@ -150,6 +150,7 @@ validate blocked MRs:
       if [[ -z $TO_VALIDATE_PLUGIN_COMMIT_SHA ]]; then
         TO_VALIDATE_PLUGIN_COMMIT_SHA=$REPO_PLUGIN_COMMIT_SHA
       fi
+      echo "Validating if the related MR is ready, with a successful pipeline and in auto-merge state!"
     - test "$TO_VALIDATE_PLUGIN_COMMIT_SHA" = "$CI_PLUGIN_COMMIT_SHA"
   dependencies:
     - get plugin commit
