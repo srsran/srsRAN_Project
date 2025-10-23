@@ -14,6 +14,7 @@
 #include "srsran/adt/bounded_integer.h"
 #include "srsran/ran/nr_band.h"
 #include "srsran/ran/ntn.h"
+#include "srsran/ran/plmn_identity.h"
 #include <variant>
 #include <vector>
 
