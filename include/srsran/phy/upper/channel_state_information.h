@@ -10,10 +10,14 @@
 
 #pragma once
 
+#include "srsran/adt/span.h"
+#include "srsran/adt/static_vector.h"
 #include "srsran/phy/constants.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/phy_time_unit.h"
+#include <cmath>
 #include <optional>
+#include <string>
 
 namespace srsran {
 
