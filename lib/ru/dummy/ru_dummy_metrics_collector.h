@@ -13,16 +13,17 @@
 #include "ru_dummy_sector.h"
 #include "srsran/adt/span.h"
 #include "srsran/ru/ru_metrics_collector.h"
+#include <vector>
 
 namespace srsran {
 
 /// Dummy RU metrics collector implementation
 class ru_dummy_metrics_collector : public ru_metrics_collector
 {
-  span<ru_dummy_sector> sectors;
+  std::vector<ru_dummy_sector*> sectors;
 
 public:
-  explicit ru_dummy_metrics_collector(span<ru_dummy_sector> sectors_) : sectors(sectors_) {}
+  explicit ru_dummy_metrics_collector(std::vector<ru_dummy_sector*> sectors_) : sectors(std::move(sectors_)) {}
 
   // See interface for documentation.
   void collect_metrics(ru_metrics& metrics) override;

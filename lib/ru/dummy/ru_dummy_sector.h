@@ -10,8 +10,6 @@
 
 #pragma once
 
-#include "ru_dummy_rx_prach_buffer.h"
-#include "ru_dummy_rx_resource_grid.h"
 #include "srsran/phy/constants.h"
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/phy/support/resource_grid_context.h"
@@ -23,6 +21,7 @@
 #include "srsran/ru/ru_error_notifier.h"
 #include "srsran/ru/ru_uplink_plane.h"
 #include "srsran/srslog/logger.h"
+#include "srsran/support/synchronization/stop_event.h"
 #include <thread>
 #include <utility>
 #include <vector>
@@ -48,41 +47,18 @@ class ru_dummy_sector : public ru_uplink_plane_handler, public ru_downlink_plane
 
 public:
   /// \brief Creates a dummy RU sector.
-  /// \param sector_id          Sector identifier.
-  /// \param rx_rg_nof_prb      Receive resource grid number of PRB.
-  /// \param rx_rg_nof_ports    Receive resource grid number of ports.
-  /// \param rx_prach_nof_ports Receive PRACH buffer number of ports.
   /// \param dl_data_margin_    Downlink data handling margin.
   /// \param logger_            Internal logger, used for notifying real-time failures.
   /// \param symbol_notifier_   Receive symbol notifier.
   /// \param error_notifier_    RU error notifier notifier.
-  ru_dummy_sector(unsigned                            sector_id,
-                  unsigned                            rx_rg_nof_prb,
-                  unsigned                            rx_rg_nof_ports,
-                  unsigned                            rx_prach_nof_ports,
-                  unsigned                            dl_data_margin_,
+  ru_dummy_sector(unsigned                            dl_data_margin_,
                   srslog::basic_logger&               logger_,
                   ru_uplink_plane_rx_symbol_notifier& symbol_notifier_,
                   ru_error_notifier&                  error_notifier_) :
     logger(logger_),
     symbol_notifier(symbol_notifier_),
     error_notifier(error_notifier_),
-    rx_symbols_resource_grid(sector_id, rx_rg_nof_prb * NRE, MAX_NSYMB_PER_SLOT, rx_rg_nof_ports),
-    rx_symbols_prach_buffer(sector_id, rx_prach_nof_ports),
     dl_data_margin(dl_data_margin_),
-    ul_request(get_request_buffer_size(dl_data_margin)),
-    prach_request(get_request_buffer_size(dl_data_margin)),
-    dl_request(get_request_buffer_size(dl_data_margin))
-  {
-  }
-
-  ru_dummy_sector(ru_dummy_sector&& other) noexcept :
-    logger(other.logger),
-    symbol_notifier(other.symbol_notifier),
-    error_notifier(other.error_notifier),
-    rx_symbols_resource_grid(std::move(other.rx_symbols_resource_grid)),
-    rx_symbols_prach_buffer(std::move(other.rx_symbols_prach_buffer)),
-    dl_data_margin(other.dl_data_margin),
     ul_request(get_request_buffer_size(dl_data_margin)),
     prach_request(get_request_buffer_size(dl_data_margin)),
     dl_request(get_request_buffer_size(dl_data_margin))
@@ -92,9 +68,15 @@ public:
   // See ru_downlink_plane_handler interface for documentation.
   void handle_dl_data(const resource_grid_context& context, const shared_resource_grid& grid) override
   {
+    auto token = stop_control.get_token();
+    if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
+      return;
+    }
+
     // Set the current slot information.
     std::optional<resource_grid_context> late_context =
-        dl_request[context.slot.system_slot() % dl_request.size()].new_request(context, grid.copy());
+        dl_request[context.slot.system_slot() % dl_request.size()].new_request(
+            context, grid.copy(), stop_control.get_token());
     total_dl_request_count.fetch_add(1, std::memory_order_relaxed);
 
     // If the previous slot is valid, it is a late.
@@ -112,8 +94,14 @@ public:
   // See ru_uplink_plane_handler interface for documentation.
   void handle_prach_occasion(const prach_buffer_context& context, prach_buffer& buffer) override
   {
+    auto token = stop_control.get_token();
+    if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
+      return;
+    }
+
     std::optional<prach_buffer_context> late_context =
-        prach_request[context.slot.system_slot() % prach_request.size()].new_request(context, {});
+        prach_request[context.slot.system_slot() % prach_request.size()].new_request(
+            context, &buffer, stop_control.get_token());
     total_prach_request_count.fetch_add(1, std::memory_order_relaxed);
 
     // Detect if there is an unhandled request from a different slot.
@@ -130,8 +118,14 @@ public:
   // See ru_uplink_plane_handler interface for documentation.
   void handle_new_uplink_slot(const resource_grid_context& context, const shared_resource_grid& grid) override
   {
+    auto token = stop_control.get_token();
+    if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
+      return;
+    }
+
     std::optional<resource_grid_context> late_context =
-        ul_request[context.slot.system_slot() % ul_request.size()].new_request(context, grid.copy());
+        ul_request[context.slot.system_slot() % ul_request.size()].new_request(
+            context, grid.copy(), stop_control.get_token());
     total_ul_request_count.fetch_add(1, std::memory_order_relaxed);
 
     // Detect if there is an unhandled request from a different slot.
@@ -153,10 +147,7 @@ public:
     slot_point current_dl_slot = slot + dl_data_margin;
 
     // Obtain current slot information.
-    resource_grid_context dl_context = {};
-    shared_resource_grid  dl_grid    = {};
-
-    std::tie(dl_context, dl_grid) = dl_request[current_dl_slot.system_slot() % dl_request.size()].pop();
+    auto [dl_context, dl_grid] = dl_request[current_dl_slot.system_slot() % dl_request.size()].pop();
 
     // Notify with a warning message if the DL previous saved context do not match with the current slot.
     if (dl_context.slot.valid() && (dl_context.slot != current_dl_slot)) {
@@ -170,9 +161,7 @@ public:
     }
 
     // Process UL request for this slot.
-    resource_grid_context ul_context = {};
-    shared_resource_grid  ul_grid    = {};
-    std::tie(ul_context, ul_grid)    = ul_request[slot.system_slot() % ul_request.size()].pop();
+    auto [ul_context, ul_grid] = ul_request[slot.system_slot() % ul_request.size()].pop();
 
     // Check if the UL context from the request list is valid.
     if (ul_context.slot.valid()) {
@@ -201,13 +190,13 @@ public:
     }
 
     // Process PRACH request for this slot.
-    prach_buffer_context prach_context = prach_request[slot.system_slot() % prach_request.size()].pop().first;
+    auto [prach_context, prach_buffer] = prach_request[slot.system_slot() % prach_request.size()].pop();
 
     // Check if the UL context from the request list is valid.
     if (prach_context.slot.valid()) {
       if (prach_context.slot == slot) {
         // Notify received PRACH buffer.
-        symbol_notifier.on_new_prach_window_data(prach_context, rx_symbols_prach_buffer.get_buffer(prach_context));
+        symbol_notifier.on_new_prach_window_data(prach_context, *prach_buffer);
       } else {
         // Notify with a warning message if the UL previous saved context do not match with the current slot.
         logger.warning(slot.sfn(),
@@ -220,19 +209,11 @@ public:
     }
   }
 
+  /// Instruct the sector radio unit to start processing any incoming requests.
+  void start() { stop_control.reset(); }
+
   /// Instruct the sector radio unit to stop and wait for the RU to clear all pending request.
-  void stop()
-  {
-    for (auto& req : dl_request) {
-      req.stop();
-    }
-    for (auto& req : ul_request) {
-      req.stop();
-    }
-    for (auto& req : prach_request) {
-      req.stop();
-    }
-  }
+  void stop() { stop_control.stop(); }
 
   /// Collects the RU dummy sector metrics. It does not reset the metrics.
   void collect_metrics(ru_dummy_sector_metrics& metrics) const
@@ -247,19 +228,14 @@ public:
 
 private:
   /// Encapsulates transmit and receive requests with their respective context and resource grids.
-  template <typename Context>
+  template <typename Context, typename Resource>
   class request_information
   {
   public:
-    /// \brief Emplace a new request with a new context and grid.
-    /// \return \c std::nullptr if there is no previous request, otherwise the context of the previous request.
-    std::optional<Context> new_request(const Context& new_context, const shared_resource_grid& new_resource)
+    /// Emplace a new request with a new context and grid.
+    /// \return \c std::nullopt if there is no previous request, otherwise the context of the previous request.
+    std::optional<Context> new_request(const Context& new_context, Resource new_resource, stop_event_token tk)
     {
-      // If the state is stopped return an empty request.
-      if (internal_state.load() == internal_states::stopped) {
-        return {};
-      }
-
       // Exchange the current internal state.
       internal_states previous_state = internal_state.exchange(internal_states::locked);
 
@@ -273,7 +249,8 @@ private:
 
       // Overwrite contents.
       context  = new_context;
-      resource = new_resource.copy();
+      resource = std::move(new_resource);
+      token    = std::move(tk);
 
       // Transition to in-use.
       internal_state.store(internal_states::in_use);
@@ -288,13 +265,8 @@ private:
     }
 
     /// Pops the current context and grid.
-    std::pair<Context, shared_resource_grid> pop()
+    std::pair<Context, Resource> pop()
     {
-      // If the state is stopped return an empty request.
-      if (internal_state.load() == internal_states::stopped) {
-        return {};
-      }
-
       // Exchange the current internal state.
       internal_states previous_state = internal_state.exchange(internal_states::locked);
 
@@ -304,8 +276,8 @@ private:
       }
 
       // Default context and resource.
-      Context              current_context  = {};
-      shared_resource_grid current_resource = {};
+      Context  current_context  = {};
+      Resource current_resource = {};
 
       // If the previous state is in-use, obtain the context and the resource.
       if (previous_state == internal_states::in_use) {
@@ -316,27 +288,20 @@ private:
       // Transition to available.
       internal_state.store(internal_states::available);
 
+      // Signal that this request object is available again.
+      token.reset();
+
       // Return the context and resource.
       return {current_context, std::move(current_resource)};
     }
 
-    /// Stops the request information from handling new requests.
-    void stop()
-    {
-      // Waits for the state to be available before transitioning to stopped.
-      for (internal_states expected_state = internal_states::available;
-           !internal_state.compare_exchange_weak(expected_state, internal_states::stopped);
-           expected_state = internal_states::available) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-      }
-    }
-
   private:
-    enum class internal_states : uint32_t { available = 0, locked, in_use, stopped };
+    enum class internal_states : uint32_t { available = 0, locked, in_use };
 
     std::atomic<internal_states> internal_state = internal_states::available;
     Context                      context        = {};
-    shared_resource_grid         resource;
+    Resource                     resource       = {};
+    stop_event_token             token;
   };
 
   /// Logger.
@@ -345,18 +310,16 @@ private:
   ru_uplink_plane_rx_symbol_notifier& symbol_notifier;
   /// RU error notifier.
   ru_error_notifier& error_notifier;
-  /// Receive resource grid.
-  ru_dummy_rx_resource_grid rx_symbols_resource_grid;
-  /// Receive PRACH buffer.
-  ru_dummy_rx_prach_buffer rx_symbols_prach_buffer;
   /// Downlink request margin.
   unsigned dl_data_margin;
   /// Buffer containing the UL requests slots.
-  std::vector<request_information<resource_grid_context>> ul_request;
+  std::vector<request_information<resource_grid_context, shared_resource_grid>> ul_request;
   /// Buffer containing the PRACH requests slots.
-  std::vector<request_information<prach_buffer_context>> prach_request;
+  std::vector<request_information<prach_buffer_context, prach_buffer*>> prach_request;
   /// Circular buffer containing the DL requests indexed by system slot.
-  std::vector<request_information<resource_grid_context>> dl_request;
+  std::vector<request_information<resource_grid_context, shared_resource_grid>> dl_request;
+  /// Stop control.
+  stop_event_source stop_control;
   /// \name  Group of event counters.
   ///
   /// These counters are informative and printed when print_metrics() is called.

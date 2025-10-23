@@ -27,8 +27,7 @@ struct worker_manager_config;
 /// Generates the dummy RU configuration from the given application unit configuration.
 ru_dummy_configuration generate_ru_dummy_config(const ru_dummy_unit_config&                      ru_cfg,
                                                 span<const flexible_o_du_ru_config::cell_config> du_cells,
-                                                unsigned max_processing_delay_slots,
-                                                unsigned nof_prach_ports);
+                                                unsigned max_processing_delay_slots);
 
 /// Fills the dynamic_du worker manager parameters of the given worker manager configuration.
 void fill_dynamic_du_worker_manager_config(worker_manager_config& config, const dynamic_o_du_unit_config& unit_cfg);

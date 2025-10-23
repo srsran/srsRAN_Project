@@ -23,6 +23,6 @@ void ru_dummy_metrics_collector::collect_metrics(ru_metrics& metrics)
   for (auto& sector : sectors) {
     ru_dummy_sector_metrics& cell_metrics = dummy_metrics.sectors[i];
     cell_metrics.sector_id                = i++;
-    sector.collect_metrics(cell_metrics);
+    sector->collect_metrics(cell_metrics);
   }
 }
