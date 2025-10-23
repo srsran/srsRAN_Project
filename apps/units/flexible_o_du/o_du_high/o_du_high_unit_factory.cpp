@@ -248,6 +248,7 @@ o_du_high_unit srsran::make_o_du_high_unit(const o_du_high_unit_config&  o_du_hi
     du_hi_cfg.test_cfg.test_ue = srs_du::du_test_mode_config::test_mode_ue_config{
         du_high_unit_cfg.test_mode_cfg.test_ue.rnti,
         du_high_unit_cfg.test_mode_cfg.test_ue.nof_ues,
+        du_high_unit_cfg.test_mode_cfg.test_ue.ue_creation_stagger_slots,
         du_high_unit_cfg.test_mode_cfg.test_ue.auto_ack_indication_delay,
         du_high_unit_cfg.test_mode_cfg.test_ue.pdsch_active,
         du_high_unit_cfg.test_mode_cfg.test_ue.pusch_active,

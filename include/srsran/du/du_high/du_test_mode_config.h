@@ -19,8 +19,10 @@ namespace srs_du {
 /// Configuration that enable DU test mode operation.
 struct du_test_mode_config {
   struct test_mode_ue_config {
-    rnti_t                  rnti;
-    uint16_t                nof_ues;
+    rnti_t   rnti    = to_rnti(0x4444);
+    uint16_t nof_ues = 1;
+    /// Number of slots between consecutive test mode UE creations for a given cell.
+    unsigned                ue_creation_stagger_slots = 10;
     std::optional<unsigned> auto_ack_indication_delay;
     bool                    pdsch_active;
     bool                    pusch_active;

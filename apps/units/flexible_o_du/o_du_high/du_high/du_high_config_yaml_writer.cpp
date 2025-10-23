@@ -813,8 +813,9 @@ static YAML::Node build_du_high_testmode_section(const du_high_unit_test_mode_co
   {
     YAML::Node ue_node;
 
-    ue_node["rnti"]    = to_value(config.test_ue.rnti);
-    ue_node["nof_ues"] = config.test_ue.nof_ues;
+    ue_node["rnti"]                      = to_value(config.test_ue.rnti);
+    ue_node["nof_ues"]                   = config.test_ue.nof_ues;
+    ue_node["ue_creation_stagger_slots"] = config.test_ue.ue_creation_stagger_slots;
     if (config.test_ue.auto_ack_indication_delay.has_value()) {
       ue_node["auto_ack_indication_delay"] = config.test_ue.auto_ack_indication_delay.value();
     }

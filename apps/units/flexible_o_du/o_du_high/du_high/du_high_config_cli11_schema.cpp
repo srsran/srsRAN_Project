@@ -1744,6 +1744,12 @@ static void configure_cli11_test_ue_mode_args(CLI::App& app, du_high_unit_test_m
       ->capture_default_str()
       ->check(CLI::Range((uint16_t)1, (uint16_t)MAX_NOF_DU_UES));
   add_option(app,
+             "--ue_creation_stagger_slots",
+             test_params.ue_creation_stagger_slots,
+             "Number of slots between consecutive test mode UE creations")
+      ->capture_default_str()
+      ->check(CLI::Range(0U, 10240U));
+  add_option(app,
              "--auto_ack_indication_delay",
              test_params.auto_ack_indication_delay,
              "Delay before the UL and DL HARQs are automatically ACKed. This feature should only be used if the UL "

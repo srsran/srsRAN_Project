@@ -940,6 +940,8 @@ struct du_high_unit_test_mode_ue_config {
   rnti_t rnti = rnti_t::INVALID_RNTI;
   /// Number of test UE(s) to create.
   uint16_t nof_ues = 1;
+  /// Number of slots between consecutive test mode UE creations.
+  unsigned ue_creation_stagger_slots = 10;
   /// \brief Delay, in slots, before the MAC test mode auto-generates the UCI/CRC indication to pass to the scheduler.
   /// This feature should be avoided if the OFH/UL PHY are operational, otherwise the auto-generated indications
   /// may interfere with the UL PHY HARQ handling.

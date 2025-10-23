@@ -208,7 +208,9 @@ protected:
 class mac_test_mode_test : public base_mac_test_mode_test, public ::testing::Test
 {
 protected:
-  mac_test_mode_test() : base_mac_test_mode_test(test_params{1, {to_rnti(0x4444), 1, std::nullopt, true, true, 12}}) {}
+  mac_test_mode_test() : base_mac_test_mode_test(test_params{1, {to_rnti(0x4444), 1, 10, std::nullopt, true, true, 12}})
+  {
+  }
 };
 
 TEST_F(mac_test_mode_test, when_test_mode_ue_has_pucch_grants_then_uci_indications_are_auto_forwarded_to_mac)
@@ -510,12 +512,12 @@ INSTANTIATE_TEST_SUITE_P(test_configs,
                          // clang-format off
 ::testing::Values(
 //           ports rnti           nof_ues            CQI RI PMI i1_1 i1_3  i2
-  test_params{1, {to_rnti(0x4601), 1, 8, true, true, 12}},
-  test_params{1, {to_rnti(0x4601), 1, 8, true, true, 5}},
-  test_params{2, {to_rnti(0x4601), 1, 8, true, true, 12,  2,  1}},
-  test_params{2, {to_rnti(0x4601), 1, 8, true, true, 3,   1,  3}},
-  test_params{4, {to_rnti(0x4601), 1, 8, true, true, 12,  4,  0,   2,   0,  1}},
-  test_params{4, {to_rnti(0x4601), 1, 8, true, true, 12,  1,  0,   1,   0,  3}},
-  test_params{4, {to_rnti(0x4601), 1, 8, true, true, 12,  2,  0,   7,   1,  0}}
+  test_params{1, {to_rnti(0x4601), 1, 10, 8, true, true, 12}},
+  test_params{1, {to_rnti(0x4601), 1, 10, 8, true, true, 5}},
+  test_params{2, {to_rnti(0x4601), 1, 10, 8, true, true, 12,  2,  1}},
+  test_params{2, {to_rnti(0x4601), 1, 10, 8, true, true, 3,   1,  3}},
+  test_params{4, {to_rnti(0x4601), 1, 10, 8, true, true, 12,  4,  0,   2,   0,  1}},
+  test_params{4, {to_rnti(0x4601), 1, 10, 8, true, true, 12,  1,  0,   1,   0,  3}},
+  test_params{4, {to_rnti(0x4601), 1, 10, 8, true, true, 12,  2,  0,   7,   1,  0}}
 ));
 // clang-format on
