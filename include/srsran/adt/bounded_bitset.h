@@ -90,9 +90,10 @@ public:
   constexpr bounded_bitset(Iterator begin, Iterator end)
   {
     resize(end - begin);
-    size_t count = 0;
-    for (auto it = begin; it != end; ++it) {
-      set_(count++, *it);
+    auto it = begin;
+    for (size_t count = 0; count != cur_size; ++count) {
+      set_(count, *it);
+      ++it;
     }
   }
 
@@ -104,9 +105,10 @@ public:
   constexpr bounded_bitset(const std::initializer_list<const bool>& values)
   {
     resize(values.size());
-    size_t count = 0;
-    for (auto it = values.begin(); it != values.end(); ++it) {
-      set_(count++, *it);
+    auto it = values.begin();
+    for (size_t count = 0; count != cur_size; ++count) {
+      set_(count, *it);
+      ++it;
     }
   }
 
