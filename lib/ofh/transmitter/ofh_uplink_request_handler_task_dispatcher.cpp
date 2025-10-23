@@ -34,7 +34,7 @@ void uplink_request_handler_task_dispatcher::handle_prach_occasion(const prach_b
     return;
   }
 
-  if (!executor.defer([context, &buffer, this]() noexcept SRSRAN_RTSAN_NONBLOCKING {
+  if (!executor.defer([context, &buffer, this, token = stop_manager.get_token()]() noexcept SRSRAN_RTSAN_NONBLOCKING {
         uplink_handler.handle_prach_occasion(context, buffer);
       })) {
     logger.warning(
