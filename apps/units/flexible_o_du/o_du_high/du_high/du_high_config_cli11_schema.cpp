@@ -2114,36 +2114,6 @@ static void derive_auto_params(du_high_unit_config& config)
 
     derive_cell_auto_params(cell.cell);
   }
-
-  // Auto derive NTN SIB19 scheduling info.
-  for (auto& cell : config.cells_cfg) {
-    if (cell.cell.ntn_cfg.has_value()) {
-      auto& sib_cfg = cell.cell.sib_cfg;
-      auto& ntn_cfg = cell.cell.ntn_cfg;
-      for (unsigned i = 0, ie = sib_cfg.si_sched_info.size(); i != ie; ++i) {
-        const auto& si_msg = sib_cfg.si_sched_info[i];
-        for (unsigned j = 0, je = si_msg.sib_mapping_info.size(); j != je; ++j) {
-          if (si_msg.sib_mapping_info[j] == 19) {
-            ntn_cfg->si_msg_idx          = i;
-            ntn_cfg->si_period_rf        = si_msg.si_period_rf;
-            ntn_cfg->si_window_len_slots = sib_cfg.si_window_len_slots;
-            ntn_cfg->si_window_position  = si_msg.si_window_position;
-          }
-        }
-      }
-      auto&                      cell_cfg = cell.cell;
-      expected<plmn_identity>    plmn     = plmn_identity::parse(cell_cfg.plmn);
-      expected<nr_cell_identity> nci      = nr_cell_identity::create(config.gnb_id, cell_cfg.sector_id.value());
-      if (not plmn.has_value()) {
-        report_error("Invalid PLMN: {}", cell_cfg.plmn);
-      }
-      if (not nci.has_value()) {
-        report_error("Invalid NR-NCI");
-      }
-      ntn_cfg->nr_cgi.plmn_id = plmn.value();
-      ntn_cfg->nr_cgi.nci     = nci.value();
-    }
-  }
 }
 
 void srsran::autoderive_du_high_parameters_after_parsing(CLI::App& app, du_high_unit_config& unit_cfg)

@@ -10,10 +10,8 @@
 
 #pragma once
 
-#include "nr_cgi.h"
 #include <cstdint>
 #include <optional>
-#include <string>
 #include <variant>
 
 namespace srsran {
@@ -150,13 +148,6 @@ struct ntn_config {
   std::optional<ntn_polarization_t> polarization;
   /// When this field is included in SIB19, it indicates reporting of timing advanced is enabled.
   std::optional<bool> ta_report;
-  /// SIB19 scheduling information.
-  unsigned                si_msg_idx;
-  unsigned                si_period_rf;
-  unsigned                si_window_len_slots;
-  std::optional<unsigned> si_window_position;
-  // NR-CGI
-  nr_cell_global_id_t nr_cgi;
 };
 
 } // namespace srsran
