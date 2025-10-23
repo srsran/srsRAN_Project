@@ -748,7 +748,8 @@ create_ul_processor_factory(const upper_phy_factory_configuration& config,
   if (!dependencies.hw_decoder_factory) {
     pusch_decoder_factory_sw_configuration decoder_config;
     decoder_config.crc_factory     = pusch_crc_calc_factory;
-    decoder_config.decoder_factory = create_ldpc_decoder_factory_sw(config.ldpc_decoder_type);
+    decoder_config.decoder_factory = create_ldpc_decoder_factory_sw(
+        config.ldpc_decoder_type, {.force_decoding = config.ldpc_decoder_force_decoding});
     report_fatal_error_if_not(
         decoder_config.decoder_factory, "Invalid LDPC decoder factory of type {}.", config.crc_calculator_type);
     decoder_config.dematcher_factory = create_ldpc_rate_dematcher_factory_sw(config.ldpc_rate_dematcher_type);
@@ -827,7 +828,6 @@ create_ul_processor_factory(const upper_phy_factory_configuration& config,
   pusch_config.uci_dec_factory            = uci_dec_factory;
   pusch_config.dec_nof_iterations         = config.ldpc_decoder_iterations;
   pusch_config.dec_enable_early_stop      = config.ldpc_decoder_early_stop;
-  pusch_config.dec_force_decoding         = config.ldpc_decoder_force_decoding;
   pusch_config.csi_sinr_calc_method       = config.pusch_sinr_calc_method;
   pusch_config.max_nof_concurrent_threads = dependencies.executors.pusch_executor.max_concurrency;
 

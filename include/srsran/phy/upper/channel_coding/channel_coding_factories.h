@@ -41,11 +41,16 @@ std::shared_ptr<crc_calculator_factory> create_crc_calculator_factory_sw(const s
 class ldpc_decoder_factory
 {
 public:
+  struct ldpc_decoder_factory_configuration {
+    bool force_decoding;
+  };
   virtual ~ldpc_decoder_factory()                = default;
   virtual std::unique_ptr<ldpc_decoder> create() = 0;
 };
 
-std::shared_ptr<ldpc_decoder_factory> create_ldpc_decoder_factory_sw(const std::string& dec_type);
+std::shared_ptr<ldpc_decoder_factory>
+create_ldpc_decoder_factory_sw(const std::string&                                              dec_type,
+                               const ldpc_decoder_factory::ldpc_decoder_factory_configuration& cfg);
 
 class ldpc_encoder_factory
 {

@@ -222,7 +222,8 @@ protected:
     ASSERT_NE(crc_calc_factory, nullptr) << "Cannot create CRC calculator factory.";
 
     // Create LDPC decoder factory.
-    std::shared_ptr<ldpc_decoder_factory> ldpc_dec_factory = create_ldpc_decoder_factory_sw("generic");
+    std::shared_ptr<ldpc_decoder_factory> ldpc_dec_factory =
+        create_ldpc_decoder_factory_sw("generic", {.force_decoding = false});
     ASSERT_NE(ldpc_dec_factory, nullptr);
 
     // Create LDPC rate dematcher factory.

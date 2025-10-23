@@ -30,20 +30,10 @@ public:
 
   /// Decoder configuration.
   struct configuration {
-    /// LDPC decoding algorithm configuration parameters.
-    struct algorithm_details {
-      /// Forces the decoder to decode even if there are not enough soft bits at the input.
-      bool force_decoding = false;
-      /// Maximum number of iterations.
-      unsigned max_iterations = 6;
-      /// Scaling factor of the normalized min-sum decoding algorithm.
-      float scaling_factor = 0.8;
-    };
-
     /// Codeblock configuration.
     codeblock_metadata block_conf;
-    /// LDPC decoding algorithm configuration.
-    algorithm_details algorithm_conf;
+    /// Maximum number of iterations.
+    unsigned max_iterations = 6;
   };
 
   /// \brief Decodes a codeblock.
@@ -58,8 +48,8 @@ public:
   /// \param[in]  cfg     Decoder configuration.
   /// \return If the decoding is successful, returns the number of LDPC iterations needed by the decoder. Otherwise, no
   ///         value is returned.
-  /// \note A codeblock of all zero-valued log-likelihood ratios will automatically will return an empty value (i.e.,
-  /// failed CRC) and set all the output bits to one.
+  /// \note A codeblock of all zero-valued log-likelihood ratios will automatically return an empty value (i.e., failed
+  /// CRC) and set all the output bits to one.
   virtual std::optional<unsigned>
   decode(bit_buffer& output, span<const log_likelihood_ratio> input, crc_calculator* crc, const configuration& cfg) = 0;
 };

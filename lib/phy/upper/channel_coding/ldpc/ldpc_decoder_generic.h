@@ -20,7 +20,12 @@ namespace srsran {
 /// Generic LDPC decoder implementation without any optimization.
 class ldpc_decoder_generic : public ldpc_decoder_impl
 {
-  // See above for the documentation.
+public:
+  /// Constructor: configures the force_decoding flag.
+  explicit ldpc_decoder_generic(bool cfg_force_decoding) : ldpc_decoder_impl(cfg_force_decoding) {}
+
+private:
+  // See ldpc_decoder_impl for the documentation.
   void specific_init() override { node_size_byte = lifting_size; }
 
   void compute_var_to_check_msgs(span<log_likelihood_ratio>       this_var_to_check,

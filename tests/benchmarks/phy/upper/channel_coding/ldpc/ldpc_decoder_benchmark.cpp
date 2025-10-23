@@ -94,7 +94,8 @@ int main(int argc, char** argv)
       std::unique_ptr<crc_calculator> crc16   = nullptr;
       std::unique_ptr<ldpc_encoder>   encoder = nullptr;
       // Decoder.
-      std::shared_ptr<ldpc_decoder_factory> decoder_factory = create_ldpc_decoder_factory_sw(dec_type);
+      std::shared_ptr<ldpc_decoder_factory> decoder_factory =
+          create_ldpc_decoder_factory_sw(dec_type, {.force_decoding = false});
       TESTASSERT(decoder_factory);
       std::unique_ptr<ldpc_decoder> decoder = decoder_factory->create();
       TESTASSERT(decoder);
@@ -179,7 +180,7 @@ int main(int argc, char** argv)
                        cb_length,
                        static_cast<double>(msg_length) / static_cast<double>(cb_length));
         perf_meas_generic.new_measure(to_string(descr_buffer), msg_length, [&]() {
-          decoder->decode(message, codeblock, crc16.get(), {cfg_dec, {false, nof_iterations, 0.8}});
+          decoder->decode(message, codeblock, crc16.get(), {cfg_dec, nof_iterations});
           do_not_optimize(codeblock);
         });
       }

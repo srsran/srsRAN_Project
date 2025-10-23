@@ -197,7 +197,8 @@ srsran::create_sw_pusch_processor_factory(task_executor&                        
   std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
   report_fatal_error_if_not(crc_calc_factory, "Failed to create factory.");
 
-  std::shared_ptr<ldpc_decoder_factory> ldpc_decoder_factory = create_ldpc_decoder_factory_sw("auto");
+  std::shared_ptr<ldpc_decoder_factory> ldpc_decoder_factory =
+      create_ldpc_decoder_factory_sw("auto", {.force_decoding = false});
   report_fatal_error_if_not(ldpc_decoder_factory, "Failed to create factory.");
 
   std::shared_ptr<ldpc_rate_dematcher_factory> ldpc_rate_dematcher_factory =
