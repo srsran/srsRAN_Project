@@ -34,9 +34,11 @@ void cu_up_bearer_context_modification_routine::operator()(
   if (msg.security_info.has_value()) {
     fill_sec_as_config(security_info, msg.security_info.value());
 
-    // Await pending crypto processing to be finished, so that keys
-    // can be safely replaced. No more SDUs/PDUs will arrive at the PDCP as this procedure will
-    // block the process of further packets to this UE.
+    // Await pending crypto processing to be finished, so that keys can be safely replaced. Any
+    // SDUs/PDUs that arrive at the PDCP between now and the end of this function will be buffered.
+    // We flush the buffer at the end of the function, so that if there is a re-establishment, the flush is
+    // done after any state change and after PDCP retransmissions.
+    ue_ctxt.begin_pdcp_buffering();
     ue_ctxt.notify_pdcp_pdu_processing_stopped();
     CORO_AWAIT(ue_ctxt.await_rx_crypto_tasks());
     CORO_AWAIT(ue_ctxt.await_tx_crypto_tasks());
@@ -48,6 +50,9 @@ void cu_up_bearer_context_modification_routine::operator()(
 
   if (not msg.ng_ran_bearer_context_mod_request.has_value()) {
     ue_ctxt.get_logger().log_warning("Bearer Context Modification Request does not setup/modify any NR PDU sessions");
+    if (msg.security_info.has_value()) {
+      ue_ctxt.end_pdcp_buffering();
+    }
     CORO_EARLY_RETURN(response);
   }
 
@@ -78,6 +83,11 @@ void cu_up_bearer_context_modification_routine::operator()(
     ue_ctxt.get_logger().log_info("Removing {}", pdu_session_item);
     ue_ctxt.remove_pdu_session(pdu_session_item);
     // There is no IE to confirm successful removal.
+  }
+
+  // End PDCP buffering if it was required due to key changes.
+  if (msg.security_info.has_value()) {
+    ue_ctxt.end_pdcp_buffering();
   }
 
   // 3. Create response

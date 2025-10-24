@@ -700,6 +700,32 @@ void pdu_session_manager_impl::restart_pdcp_pdu_processing()
   }
 }
 
+void pdu_session_manager_impl::begin_pdcp_buffering()
+{
+  logger.log_debug("Begin PDCP buffering");
+
+  for (const auto& [psi, pdu_session] : pdu_sessions) {
+    for (const auto& [drb_id, drb] : pdu_session->drbs) {
+      // TODO enable UL buffering.
+      auto& pdcp_tx_ctrl = drb->pdcp->get_tx_upper_control_interface();
+      pdcp_tx_ctrl.begin_buffering();
+    }
+  }
+}
+
+void pdu_session_manager_impl::end_pdcp_buffering()
+{
+  logger.log_debug("End of PDCP buffering");
+
+  for (const auto& [psi, pdu_session] : pdu_sessions) {
+    for (const auto& [drb_id, drb] : pdu_session->drbs) {
+      // TODO enable UL buffering.
+      auto& pdcp_tx_ctrl = drb->pdcp->get_tx_upper_control_interface();
+      pdcp_tx_ctrl.end_buffering();
+    }
+  }
+}
+
 async_task<void> pdu_session_manager_impl::await_crypto_rx_all_pdu_sessions()
 {
   logger.log_debug("Awaiting all RX crypto tasks to finish in UE");

@@ -143,6 +143,9 @@ public:
   void notify_pdcp_pdu_processing_stopped() { pdu_session_manager.notify_pdcp_pdu_processing_stopped(); }
   void restart_pdcp_pdu_processing() { pdu_session_manager.restart_pdcp_pdu_processing(); }
 
+  void begin_pdcp_buffering() { pdu_session_manager.begin_pdcp_buffering(); }
+  void end_pdcp_buffering() { pdu_session_manager.end_pdcp_buffering(); }
+
   async_task<void> await_rx_crypto_tasks() { return pdu_session_manager.await_crypto_rx_all_pdu_sessions(); }
   async_task<void> await_tx_crypto_tasks() { return pdu_session_manager.await_crypto_tx_all_pdu_sessions(); }
 

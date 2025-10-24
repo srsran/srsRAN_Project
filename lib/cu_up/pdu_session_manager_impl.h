@@ -66,6 +66,9 @@ public:
   void notify_pdcp_pdu_processing_stopped();
   void restart_pdcp_pdu_processing();
 
+  void begin_pdcp_buffering();
+  void end_pdcp_buffering();
+
   async_task<void> await_crypto_rx_all_pdu_sessions();
   async_task<void> await_crypto_rx_all_drbs(const std::unique_ptr<pdu_session>& pdu_session);
   async_task<void> await_crypto_tx_all_pdu_sessions();
