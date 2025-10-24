@@ -19,7 +19,7 @@ du_low_impl::du_low_impl(std::vector<std::unique_ptr<upper_phy>> upper_) :
   upper(std::move(upper_)), metrics_collector([](span<std::unique_ptr<upper_phy>> phys) {
     std::vector<upper_phy_metrics_collector*> output;
     for (auto& phy : phys) {
-      if (auto collector = phy->get_metrics_collector()) {
+      if (auto* collector = phy->get_metrics_collector()) {
         output.push_back(collector);
       }
     }
@@ -31,9 +31,6 @@ du_low_impl::du_low_impl(std::vector<std::unique_ptr<upper_phy>> upper_) :
   }(upper))
 {
   srsran_assert(!upper.empty(), "Invalid upper PHY");
-  for (auto& up : upper) {
-    upper_ptrs.push_back(up.get());
-  }
 }
 
 upper_phy& du_low_impl::get_upper_phy(unsigned cell_id)

@@ -42,7 +42,6 @@ public:
 
 private:
   std::vector<std::unique_ptr<upper_phy>> upper;
-  std::vector<upper_phy*>                 upper_ptrs;
   du_low_metrics_collector_impl           metrics_collector;
 };
 

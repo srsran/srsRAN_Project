@@ -209,7 +209,7 @@ private:
     // Instantiate a priority task strand if several priority levels are requested.
     std::vector<concurrent_queue_params> qparams;
     qparams.reserve(queue_sizes.size());
-    for (auto& qsize : queue_sizes) {
+    for (auto qsize : queue_sizes) {
       qparams.emplace_back(concurrent_queue_params{concurrent_queue_policy::lockfree_mpmc, qsize});
     }
     auto prio_strand_ptr = make_priority_task_strand_ptr(*base_executor.executor, qparams);
