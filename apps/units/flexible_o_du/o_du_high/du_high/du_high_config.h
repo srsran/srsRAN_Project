@@ -834,11 +834,13 @@ struct du_high_unit_prach_config {
 
 /// Slice scheduling configuration for a cell.
 struct du_high_unit_cell_slice_sched_config {
-  /// Sets the minimum percentage of PRBs to be allocated to this group.
+  /// Sets the minimum percentage of PRBs to be allocated to this slice.
   unsigned min_prb_policy_ratio = 0;
-  /// Sets the maximum percentage of PRBs to be allocated to this group.
+  /// Sets the maximum percentage of PRBs to be allocated to this slice.
+  /// \remark This parameter must satisfy the inequality min_prb_policy_ratio <= max_prb_policy_ratio.
   unsigned max_prb_policy_ratio = 100;
-  /// Sets the dedicated percentage of PRBs to be allocated to this group.
+  /// Sets the dedicated percentage of PRBs to be allocated to this slice.
+  /// \remark This parameter must satisfy the inequality ded_prb_policy_ratio <= min_prb_policy_ratio.
   unsigned ded_prb_policy_ratio = 0;
   /// Sets the slice priority. Values: {0,...,254}. 255 is reserved for the SRBs.
   unsigned priority = 0;

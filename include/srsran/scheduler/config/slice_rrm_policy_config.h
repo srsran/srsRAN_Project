@@ -27,7 +27,7 @@ struct slice_rrm_policy_config {
   ///
   /// These limits are computed based on the rrmPolicyRatios provided for the RRM policy and based on the number of RBs
   /// of the cell.
-  rrm_policy_radio_block_limits rbs;
+  rrm_policy_ratio_rb_limits rbs;
   /// RAN slice scheduling priority. Values: {0, ..., 255}.
   unsigned priority = 0;
   /// Policy scheduler configuration for the slice.
