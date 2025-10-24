@@ -38,10 +38,12 @@ void cu_up_bearer_context_modification_routine::operator()(
     // SDUs/PDUs that arrive at the PDCP between now and the end of this function will be buffered.
     // We flush the buffer at the end of the function, so that if there is a re-establishment, the flush is
     // done after any state change and after PDCP retransmissions.
+    ue_ctxt.get_logger().log_debug("Bearer Context Modification Request with security info received");
     ue_ctxt.begin_pdcp_buffering();
     ue_ctxt.notify_pdcp_pdu_processing_stopped();
     CORO_AWAIT(ue_ctxt.await_rx_crypto_tasks());
     CORO_AWAIT(ue_ctxt.await_tx_crypto_tasks());
+    ue_ctxt.get_logger().log_debug("Bearer Context Modification Request changed security keys");
 
     // SDU/PDU processing is finished, safely update the keys now.
     ue_ctxt.set_security_config(security_info);
