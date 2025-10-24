@@ -37,10 +37,6 @@ enum class pucch_resource_usage { NOT_USED = 0, HARQ_SET_0, HARQ_SET_1, SR, CSI 
 /// (iv)  UEs can have different PUCCH resource lists; however the PUCCH resource ID is unique within the cell. This
 ///       implies that if two UEs have the same PUCCH resource within their lists, their PUCCH resource ID must be the
 ///       same.
-/// (v)   Indexing of the PUCCH F0/F1 and PUCCH F2/F3/F4 resources for HARQ-ACK reporting must be contiguous within the
-///       F0/F1 group and with F2/F3/F4 group. However, the last PUCCH F0/F1 group resource's and the first PUCCH
-///       F2/F3/F4 group resource's indices need not be contiguous. E.g., PUCCH F0/F1 indices (for HARQ-ACK reporting) =
-///       {0, ..., 7}, and PUCCH F2/F3/F4 indices (for HARQ-ACK reporting) = {10, ..., 17}.
 class pucch_resource_manager
 {
 public:
@@ -192,11 +188,11 @@ private:
                                                                    const pucch_config& pucch_cfg,
                                                                    pucch_res_set_idx   res_set_idx);
 
-  const pucch_resource* reserve_harq_res_by_res_indicator(slot_point          slot_harq,
-                                                          rnti_t              crnti,
-                                                          unsigned            res_indicator,
-                                                          const pucch_config& pucch_cfg,
-                                                          pucch_res_set_idx   res_set_idx);
+  const pucch_resource* reserve_harq_res_by_r_pucch(slot_point          slot_harq,
+                                                    rnti_t              crnti,
+                                                    unsigned            res_indicator,
+                                                    const pucch_config& pucch_cfg,
+                                                    pucch_res_set_idx   r_pucch);
 
   bool release_harq_resource(slot_point          slot_harq,
                              rnti_t              crnti,

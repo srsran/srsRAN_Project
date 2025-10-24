@@ -117,7 +117,7 @@ const pucch_resource* pucch_resource_manager::reserve_set_0_res_by_res_indicator
                                                                                  unsigned            res_indicator,
                                                                                  const pucch_config& pucch_cfg)
 {
-  return reserve_harq_res_by_res_indicator(slot_harq, crnti, res_indicator, pucch_cfg, pucch_res_set_idx::set_0);
+  return reserve_harq_res_by_r_pucch(slot_harq, crnti, res_indicator, pucch_cfg, pucch_res_set_idx::set_0);
 }
 
 const pucch_resource* pucch_resource_manager::reserve_set_1_res_by_res_indicator(slot_point          slot_harq,
@@ -125,7 +125,7 @@ const pucch_resource* pucch_resource_manager::reserve_set_1_res_by_res_indicator
                                                                                  unsigned            res_indicator,
                                                                                  const pucch_config& pucch_cfg)
 {
-  return reserve_harq_res_by_res_indicator(slot_harq, crnti, res_indicator, pucch_cfg, pucch_res_set_idx::set_1);
+  return reserve_harq_res_by_r_pucch(slot_harq, crnti, res_indicator, pucch_cfg, pucch_res_set_idx::set_1);
 }
 
 const pucch_resource* pucch_resource_manager::reserve_csi_resource(slot_point                   slot_csi,
@@ -365,69 +365,69 @@ pucch_harq_resource_alloc_record pucch_resource_manager::reserve_next_harq_res_a
 
   auto& slot_res_array = res_counter.ues_using_pucch_res;
 
-  // Get the span over the array of resources for the specific UE.
-  const auto& ue_res_id_set_for_harq =
-      pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(res_set_idx)].pucch_res_id_list;
-  unsigned ue_first_res_id = ue_res_id_set_for_harq.front().cell_res_id;
+  // Get the array of resources for the specific UE.
+  const auto& ue_res_set_id_list = pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(res_set_idx)].pucch_res_id_list;
 
   // [Implementation-defined] Format 0/1 resources are at the beginning of the list, while Format 2/3/4 are at the end.
-  const bool is_format0 = pucch_cfg.pucch_res_list.front().format == pucch_format::FORMAT_0;
-  const bool is_format2 = pucch_cfg.pucch_res_list.back().format == pucch_format::FORMAT_2;
+  const bool is_f0_and_f2 = pucch_cfg.pucch_res_list.front().format == pucch_format::FORMAT_0 and
+                            pucch_cfg.pucch_res_list.back().format == pucch_format::FORMAT_2;
 
-  srsran_assert(ue_first_res_id + ue_res_id_set_for_harq.size() <= slot_res_array.size(),
-                "Indexing of PUCCH resource set exceeds the size of the cell resource array");
-  // For PUCCH format 0 and format 2, we don't use the last 2 resources of the PUCCH resource set; these are reserved
-  // the UE for CSI and SR slots and should only be picked for through the specific PUCCH resource indicator.
-  const unsigned nof_eligible_resource =
-      is_format0 and is_format2 ? ue_res_id_set_for_harq.size() - 2U : ue_res_id_set_for_harq.size();
+  // For PUCCH F0 and F2, we don't use the last 2 resources of the PUCCH resource set; these are reserved for CSI and SR
+  // slots and should only be picked for through the specific PUCCH resource indicator.
+  const unsigned nof_eligible_resource = is_f0_and_f2 ? ue_res_set_id_list.size() - 2U : ue_res_set_id_list.size();
   srsran_assert(nof_eligible_resource >= 1U,
                 "rnti={}: Not enough eligible resources from PUCCH resource set={}",
                 crnti,
                 pucch_res_set_idx_to_uint(res_set_idx));
-  span<resource_tracker> slot_ue_res_array(&slot_res_array[ue_first_res_id], nof_eligible_resource);
 
-  // Check first if there is any PUCCH resource already used by this UE.
-  auto* available_resource = std::find_if(slot_ue_res_array.begin(),
-                                          slot_ue_res_array.end(),
-                                          [crnti](const resource_tracker res) { return res.rnti == crnti; });
+  std::optional<unsigned> available_r_pucch;
+  for (unsigned r_pucch = 0; r_pucch != nof_eligible_resource; ++r_pucch) {
+    const unsigned cell_res_id = ue_res_set_id_list[r_pucch].cell_res_id;
+    srsran_assert(cell_res_id < slot_res_array.size(),
+                  "PUCCH resource index from PUCCH resource set exceeds the size of the cell resource array");
+    auto& res = slot_res_array[cell_res_id];
 
-  // If not, find an available resource.
-  if (available_resource == slot_ue_res_array.end()) {
-    available_resource = std::find_if(slot_ue_res_array.begin(),
-                                      slot_ue_res_array.end(),
-                                      [](const resource_tracker res) { return res.rnti == rnti_t::INVALID_RNTI; });
+    if (res.rnti == crnti) {
+      // If a resource is already allocated to this RNTI, use it.
+      available_r_pucch = r_pucch;
+      break;
+    }
+    if (not available_r_pucch.has_value() and res.rnti == rnti_t::INVALID_RNTI) {
+      // Else, keep track of the first available resource.
+      available_r_pucch = r_pucch;
+    }
   }
 
   const auto& pucch_res_list = pucch_cfg.pucch_res_list;
 
-  // If there is an available resource, try to allocate it.
-  if (available_resource != slot_ue_res_array.end() and
-      static_cast<unsigned>(available_resource - slot_ue_res_array.begin()) < nof_eligible_resource) {
-    // Get the PUCCH resource indicator from the available resource position within the span.
-    const auto pucch_res_indicator = static_cast<unsigned>(available_resource - slot_ue_res_array.begin());
+  // If there is an available resource, allocate it.
+  if (available_r_pucch.has_value()) {
+    const unsigned r_pucch = available_r_pucch.value();
     // Get the PUCCH resource ID from the PUCCH resource indicator and the PUCCH resource set.
-    const unsigned pucch_res_idx_from_list = ue_res_id_set_for_harq[pucch_res_indicator].cell_res_id;
+    const unsigned cell_res_id = ue_res_set_id_list[r_pucch].cell_res_id;
 
     // Search for the PUCCH resource with the correct PUCCH resource ID from the PUCCH resource list.
-    const auto* res_cfg = std::find_if(
-        pucch_res_list.begin(), pucch_res_list.end(), [pucch_res_idx_from_list](const pucch_resource& res) {
-          return res.res_id.cell_res_id == pucch_res_idx_from_list;
+    const auto* res_cfg =
+        std::find_if(pucch_res_list.begin(), pucch_res_list.end(), [cell_res_id](const pucch_resource& res) {
+          return res.res_id.cell_res_id == cell_res_id;
         });
+    srsran_sanity_check(res_cfg != pucch_res_list.end(),
+                        "rnti={}: PUCCH resource with cell_res_id={} not found in PUCCH resource list",
+                        crnti,
+                        cell_res_id);
 
-    // If so, allocate it.
-    if (res_cfg != pucch_res_list.end()) {
-      available_resource->rnti = crnti;
-      return pucch_harq_resource_alloc_record{.pucch_res = res_cfg, .pucch_res_indicator = pucch_res_indicator};
-    }
+    // Allocate it and return it.
+    slot_res_array[cell_res_id].rnti = crnti;
+    return pucch_harq_resource_alloc_record{.pucch_res = res_cfg, .pucch_res_indicator = available_r_pucch.value()};
   }
   return pucch_harq_resource_alloc_record{.pucch_res = nullptr};
 }
 
-const pucch_resource* pucch_resource_manager::reserve_harq_res_by_res_indicator(slot_point          slot_harq,
-                                                                                rnti_t              crnti,
-                                                                                unsigned            res_indicator,
-                                                                                const pucch_config& pucch_cfg,
-                                                                                pucch_res_set_idx   res_set_idx)
+const pucch_resource* pucch_resource_manager::reserve_harq_res_by_r_pucch(slot_point          slot_harq,
+                                                                          rnti_t              crnti,
+                                                                          unsigned            res_indicator,
+                                                                          const pucch_config& pucch_cfg,
+                                                                          pucch_res_set_idx   r_pucch)
 {
   srsran_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PUCCH being allocated too far into the future");
@@ -435,8 +435,7 @@ const pucch_resource* pucch_resource_manager::reserve_harq_res_by_res_indicator(
   // Get resource list of wanted slot.
   rnti_pucch_res_id_slot_record& res_counter = get_slot_resource_counter(slot_harq);
   // Retrieve the PUCCH resource set.
-  const auto& ue_res_id_set_for_harq =
-      pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(res_set_idx)].pucch_res_id_list;
+  const auto& ue_res_id_set_for_harq = pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(r_pucch)].pucch_res_id_list;
 
   // Make sure the resource indicator points to a valid resource.
   if (res_indicator >= ue_res_id_set_for_harq.size()) {
@@ -447,13 +446,13 @@ const pucch_resource* pucch_resource_manager::reserve_harq_res_by_res_indicator(
   const auto pucch_res_id = ue_res_id_set_for_harq[res_indicator];
 
   // [Implementation-defined] Format 0/1 resources are at the beginning of the list, while Format 2/3/4 are at the end.
-  const bool is_format0 = pucch_cfg.pucch_res_list.front().format == pucch_format::FORMAT_0;
-  const bool is_format2 = pucch_cfg.pucch_res_list.back().format == pucch_format::FORMAT_2;
+  const bool is_f0_and_f2 = pucch_cfg.pucch_res_list.front().format == pucch_format::FORMAT_0 and
+                            pucch_cfg.pucch_res_list.back().format == pucch_format::FORMAT_2;
 
   // For Format 0 and Format 2, the resources indexed by PUCCH res. indicators >= ue_res_id_set_for_harq.size() - 2 are
   // reserved for CSI and SR slots. In the case, we don't need to reserve these in the PUCCH resource manager, we only
   // need to return the resouces.
-  if (is_format0 and is_format2 and res_indicator >= ue_res_id_set_for_harq.size() - 2U) {
+  if (is_f0_and_f2 and res_indicator >= ue_res_id_set_for_harq.size() - 2U) {
     const auto* res_cfg = std::find_if(
         pucch_cfg.pucch_res_list.begin(), pucch_cfg.pucch_res_list.end(), [pucch_res_id](const pucch_resource& res) {
           return res.res_id.ue_res_id == pucch_res_id.ue_res_id;
@@ -509,34 +508,31 @@ bool pucch_resource_manager::release_harq_resource(slot_point          slot_harq
   auto& slot_res_array = res_counter.ues_using_pucch_res;
 
   // [Implementation-defined] Format 0/1 resources are at the beginning of the list, while Format 2/3/4 are at the end.
-  const bool is_format0 = pucch_cfg.pucch_res_list.front().format == pucch_format::FORMAT_0;
-  const bool is_format2 = pucch_cfg.pucch_res_list.back().format == pucch_format::FORMAT_2;
+  const bool is_f0_and_f2 = pucch_cfg.pucch_res_list.front().format == pucch_format::FORMAT_0 and
+                            pucch_cfg.pucch_res_list.back().format == pucch_format::FORMAT_2;
 
-  // Get the span over the array of resources for the specific UE.
-  const auto& ue_res_id_set_for_harq =
-      pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(res_set_idx)].pucch_res_id_list;
-  unsigned ue_first_res_id = ue_res_id_set_for_harq.front().cell_res_id;
-  srsran_assert(ue_first_res_id + ue_res_id_set_for_harq.size() <= slot_res_array.size(),
-                "Indexing of PUCCH resource set exceeds the size of the cell resource array");
-  // For PUCCH format 0 and format 2, we don't use the last 2 resources of the PUCCH resource set; these are reserved
-  // the UE for CSI and SR slots and should only be picked for through the specific PUCCH resource indicator.
-  const unsigned nof_eligible_resource =
-      is_format0 and is_format2 ? ue_res_id_set_for_harq.size() - 2U : ue_res_id_set_for_harq.size();
+  // Get the array of resources for the specific UE.
+  const auto& ue_res_set_id_list = pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(res_set_idx)].pucch_res_id_list;
+
+  // For PUCCH F0 and F2, we don't use the last 2 resources of the PUCCH resource set; these are reserved for CSI and SR
+  // slots and should only be picked for through the specific PUCCH resource indicator.
+  const unsigned nof_eligible_resource = is_f0_and_f2 ? ue_res_set_id_list.size() - 2U : ue_res_set_id_list.size();
   srsran_assert(nof_eligible_resource >= 1U,
                 "rnti={}: Not enough eligible resources from PUCCH resource set={}",
                 crnti,
                 pucch_res_set_idx_to_uint(res_set_idx));
-  span<resource_tracker> slot_ue_res_array(&slot_res_array[ue_first_res_id], nof_eligible_resource);
 
-  // Check first if the target PUCCH resource (given the RNTI) exists within the resource tracker.
-  auto* target_res = std::find_if(slot_ue_res_array.begin(),
-                                  slot_ue_res_array.end(),
-                                  [crnti](const resource_tracker& res) { return res.rnti == crnti; });
+  for (unsigned r_pucch = 0; r_pucch != nof_eligible_resource; ++r_pucch) {
+    const unsigned cell_res_id = ue_res_set_id_list[r_pucch].cell_res_id;
+    srsran_assert(cell_res_id < slot_res_array.size(),
+                  "PUCCH resource index from PUCCH resource set exceeds the size of the cell resource array");
+    auto& res = slot_res_array[cell_res_id];
 
-  // If the resources was found, then release it (i.e., remove the C-RNTI of the user allocated to it).
-  if (target_res != slot_ue_res_array.end()) {
-    target_res->rnti = rnti_t::INVALID_RNTI;
-    return true;
+    if (res.rnti == crnti) {
+      // Release the resource.
+      res.rnti = rnti_t::INVALID_RNTI;
+      return true;
+    }
   }
 
   return false;
