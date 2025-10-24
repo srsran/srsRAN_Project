@@ -60,7 +60,7 @@ void dpdk_receiver_impl::start(frame_notifier& notifier_)
     report_error("Unable to start the DPDK ethernet frame receiver on port '{}'", port_ctx->get_port_id());
   }
 
-  // Block waiting for timing executor to start.
+  // Block waiting for receiver executor to start.
   wait_event.wait();
 
   logger.info("Started the DPDK ethernet frame receiver on port '{}'", port_ctx->get_port_id());
