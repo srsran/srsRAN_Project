@@ -40,28 +40,39 @@ struct formatter<srsran::srs_estimator_configuration> {
   template <typename FormatContext>
   auto format(const srsran::srs_estimator_configuration& config, FormatContext& ctx) const
   {
-    srsran::bounded_bitset<srsran::NOF_SUBCARRIERS_PER_RB> re_mask(srsran::NOF_SUBCARRIERS_PER_RB);
-    srsran::srs_information                                info = {};
-    for (unsigned i_antenna_port = 0, nof_antennas = static_cast<unsigned>(config.resource.nof_antenna_ports);
-         i_antenna_port != nof_antennas;
-         ++i_antenna_port) {
-      info = srsran::get_srs_information(config.resource, i_antenna_port);
-
-      unsigned initial_re      = info.mapping_initial_subcarrier % srsran::NOF_SUBCARRIERS_PER_RB;
-      unsigned nof_srs_per_prb = srsran::NOF_SUBCARRIERS_PER_RB / info.comb_size;
-      for (unsigned i = 0; i != nof_srs_per_prb; ++i) {
-        re_mask.set(i * info.comb_size + initial_re);
-      }
-    }
-
-    srsran::crb_interval rb_range = {info.mapping_initial_subcarrier / srsran::NOF_SUBCARRIERS_PER_RB,
-                                     info.sequence_length * info.comb_size / srsran::NOF_SUBCARRIERS_PER_RB};
     if (config.context) {
       helper.format_always(ctx, "{}", *config.context);
     }
     helper.format_if_verbose(ctx, "slot={}", config.slot);
-    helper.format_always(ctx, "crb={}", rb_range);
-    helper.format_always(ctx, "re={{{:n}}}", re_mask);
+
+    // Format CRBs and REs only if the resource is supported.
+    if (config.resource.is_valid() && !config.resource.has_frequency_hopping() &&
+        (config.resource.hopping == srsran::srs_resource_configuration::group_or_sequence_hopping_enum::neither)) {
+      srsran::bounded_bitset<srsran::NOF_SUBCARRIERS_PER_RB> re_mask(srsran::NOF_SUBCARRIERS_PER_RB);
+      srsran::srs_information                                info = {};
+      for (unsigned i_antenna_port = 0, nof_antennas = static_cast<unsigned>(config.resource.nof_antenna_ports);
+           i_antenna_port != nof_antennas;
+           ++i_antenna_port) {
+        info = srsran::get_srs_information(config.resource, i_antenna_port);
+
+        unsigned initial_re      = info.mapping_initial_subcarrier % info.comb_size;
+        unsigned nof_srs_per_prb = srsran::NOF_SUBCARRIERS_PER_RB / info.comb_size;
+        for (unsigned i = 0; i != nof_srs_per_prb; ++i) {
+          re_mask.set(i * info.comb_size + initial_re);
+        }
+      }
+
+      unsigned             start_crb_index = info.mapping_initial_subcarrier / srsran::NOF_SUBCARRIERS_PER_RB;
+      srsran::crb_interval rb_range        = {
+          start_crb_index, start_crb_index + info.sequence_length * info.comb_size / srsran::NOF_SUBCARRIERS_PER_RB};
+
+      helper.format_always(ctx, "crb={}", rb_range);
+      helper.format_always(ctx, "re={{{:n}}}", re_mask);
+    } else {
+      helper.format_always(ctx, "crb=invalid");
+      helper.format_always(ctx, "re=invalid");
+    }
+
     helper.format_if_verbose(ctx, "ports=[{}]", srsran::span<const uint8_t>(config.ports));
 
     return ctx.out();
