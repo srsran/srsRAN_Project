@@ -143,14 +143,14 @@ public:
   static constexpr size_t max_size() noexcept { return N; }
 
   /// Current size of the bounded_bitset in bits.
-  SRSRAN_FORCE_INLINE size_t size() const noexcept { return cur_size; }
+  SRSRAN_FORCE_INLINE constexpr size_t size() const noexcept { return cur_size; }
 
   /// Returns true if the bounded_bitset size is 0.
-  SRSRAN_FORCE_INLINE bool empty() const noexcept { return size() == 0; }
+  SRSRAN_FORCE_INLINE constexpr bool empty() const noexcept { return size() == 0; }
 
   /// \brief Resize of the bounded_bitset. If <tt> new_size > max_size() </tt>, an assertion is triggered. The newly
   /// created are set to zero.
-  void resize(size_t new_size)
+  constexpr void resize(size_t new_size)
   {
     if (new_size == cur_size) {
       return;
@@ -163,8 +163,9 @@ public:
       // Shrinking case. Need to sanitize removed bits.
       sanitize_();
       const size_t prev_nof_words = divide_ceil(prev_size, bits_per_word);
+      const size_t new_nof_words  = divide_ceil(new_size, bits_per_word);
       srsran_assume(prev_nof_words <= buffer.size());
-      for (size_t i = nof_words_(); i < prev_nof_words; ++i) {
+      for (size_t i = new_nof_words; i < prev_nof_words; ++i) {
         buffer[i] = static_cast<word_t>(0);
       }
     }
@@ -346,7 +347,7 @@ public:
   /// \brief Check if bit with provided index is set to true.
   /// \param[in] pos Position in bitset.
   /// \return Returns true if bit at position pos is set.
-  bool test(size_t pos) const
+  [[nodiscard]] constexpr bool test(size_t pos) const
   {
     assert_within_bounds_(pos, true);
     return test_(pos);
@@ -815,9 +816,9 @@ public:
   {
     srsran_assert(nof_words_() == 1, "ERROR: cannot convert bitset of size='{}' to uint64_t", size());
     if constexpr (LowestInfoBitIsMSB) {
-      return get_word_(0) >> (bits_per_word - (size() % bits_per_word));
+      return buffer[0] >> (bits_per_word - (size() % bits_per_word));
     }
-    return get_word_(0);
+    return buffer[0];
   }
 
   /// \brief Conversion of unsigned integer of 64 bits to bounded_bitset. If passed bitmap doesn't fit in the bitset,
@@ -939,7 +940,7 @@ private:
   std::array<word_t, max_nof_words_()> buffer{};
   size_t                               cur_size = 0;
 
-  void sanitize_()
+  constexpr void sanitize_()
   {
     const size_t n = size() % bits_per_word;
     if (n != 0) {
@@ -961,14 +962,15 @@ private:
     }
   }
 
-  SRSRAN_FORCE_INLINE bool test_(size_t bitpos) const noexcept
+  SRSRAN_FORCE_INLINE constexpr bool test_(size_t bitpos) const noexcept
   {
-    const auto   w       = get_word_(bitpos);
+    const size_t word_idx = bitpos / bits_per_word;
+    srsran_assume(word_idx < buffer.size());
     const word_t bitmask = maskbit(bitpos);
-    return ((w & bitmask) != static_cast<word_t>(0));
+    return ((buffer[word_idx] & bitmask) != static_cast<word_t>(0));
   }
 
-  void set_(size_t bitpos, bool val) noexcept
+  constexpr void set_(size_t bitpos, bool val) noexcept
   {
     if (val) {
       set_(bitpos);
@@ -976,38 +978,26 @@ private:
       reset_(bitpos);
     }
   }
-  void set_(size_t bitpos) noexcept
+  constexpr void set_(size_t bitpos) noexcept
   {
-    auto&        w       = get_word_(bitpos);
-    const word_t bitmask = maskbit(bitpos);
-    w |= bitmask;
+    const size_t word_idx = bitpos / bits_per_word;
+    srsran_assume(word_idx < buffer.size());
+    buffer[word_idx] |= maskbit(bitpos);
   }
 
-  void reset_(size_t bitpos) noexcept
+  constexpr void reset_(size_t bitpos) noexcept
   {
-    auto&        w       = get_word_(bitpos);
-    const word_t bitmask = maskbit(bitpos);
-    w &= ~bitmask;
+    const size_t word_idx = bitpos / bits_per_word;
+    srsran_assume(word_idx < buffer.size());
+    buffer[word_idx] &= ~maskbit(bitpos);
   }
 
   /// Number of words currently in use.
   SRSRAN_FORCE_INLINE size_t nof_words_() const noexcept { return divide_ceil(size(), bits_per_word); }
 
-  SRSRAN_FORCE_INLINE word_t& get_word_(size_t bitidx) noexcept
-  {
-    const size_t word_idx = bitidx / bits_per_word;
-    return buffer[word_idx];
-  }
+  constexpr size_t word_idx_(size_t bitidx) const { return bitidx / bits_per_word; }
 
-  SRSRAN_FORCE_INLINE const word_t& get_word_(size_t bitidx) const
-  {
-    const size_t word_idx = bitidx / bits_per_word;
-    return buffer[word_idx];
-  }
-
-  size_t word_idx_(size_t bitidx) const { return bitidx / bits_per_word; }
-
-  void assert_within_bounds_(size_t pos, bool strict) const noexcept
+  constexpr void assert_within_bounds_(size_t pos, bool strict) const noexcept
   {
     srsran_assert(pos < size() or (not strict and pos == size()),
                   "ERROR: index='{}' is out-of-bounds for bitset of size='{}'",
@@ -1015,7 +1005,7 @@ private:
                   size());
   }
 
-  void assert_range_bounds_(size_t startpos, size_t endpos) const noexcept
+  constexpr void assert_range_bounds_(size_t startpos, size_t endpos) const noexcept
   {
     srsran_assert(startpos <= endpos and endpos <= size(),
                   "ERROR: range ['{}', '{}') out-of-bounds for bitsize of size='{}'",
@@ -1024,7 +1014,7 @@ private:
                   size());
   }
 
-  SRSRAN_FORCE_INLINE static word_t maskbit(size_t pos) noexcept
+  SRSRAN_FORCE_INLINE static constexpr word_t maskbit(size_t pos) noexcept
   {
     if constexpr (LowestInfoBitIsMSB) {
       return static_cast<word_t>(1U) << (bits_per_word - 1 - (pos % bits_per_word));

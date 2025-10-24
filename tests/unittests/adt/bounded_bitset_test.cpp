@@ -147,7 +147,16 @@ TYPED_TEST(bitmask_test, first_msb_one)
   }
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ** bounded_bitset constexpr tests
+
+static_assert(bounded_bitset<4>{}.max_size() == 4, "invalid max_size() method");
+static_assert(bounded_bitset<4>{}.size() == 0, "invalid size() method");
+static_assert(bounded_bitset<4>{}.empty(), "invalid empty() method");
+static_assert(bounded_bitset<4>{{false, true, true}}.size() == 3, "invalid size() method");
+static_assert(bounded_bitset<4>{{false, true, true}}.test(2), "invalid test() method");
+static_assert(not bounded_bitset<4>{{false, true, true}}.test(0), "invalid test() method");
+
+// ** bounded_bitset runtime tests
 
 template <typename BoundedBitset>
 class bounded_bitset_tester : public ::testing::Test

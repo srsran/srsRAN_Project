@@ -75,7 +75,7 @@ void f1ap_du_ue_context_release_procedure::operator()(coro_context<async_task<vo
 
   // Remove UE from DU manager.
   logger.debug("{}: Initiate UE release in lower layers.", f1ap_log_prefix{ue.context, name()});
-  CORO_AWAIT(ue.du_handler.request_ue_removal(f1ap_ue_delete_request{ue.context.ue_index, ue_full_release_timeout}));
+  CORO_AWAIT(ue.du_handler.request_ue_removal(f1ap_ue_delete_request{ue.context.ue_index, rem_timeout}));
 
   // Note: UE F1AP context deleted at this point.
 
