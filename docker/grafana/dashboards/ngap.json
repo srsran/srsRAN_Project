@@ -18,7 +18,7 @@
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
-    "id": 2,
+    "id": 8,
     "links": [],
     "panels": [
         {
@@ -450,7 +450,7 @@
                 "percentChangeColorMode": "standard",
                 "reduceOptions": {
                     "calcs": [
-                        "lastNotNull"
+                        "max"
                     ],
                     "fields": "",
                     "values": false
@@ -506,7 +506,19 @@
                 {
                     "id": "reduce",
                     "options": {
+                        "includeTimeField": false,
                         "labelsToFields": false,
+                        "mode": "reduceFields",
+                        "reducers": [
+                            "lastNotNull"
+                        ]
+                    }
+                },
+                {
+                    "id": "reduce",
+                    "options": {
+                        "includeTimeField": false,
+                        "mode": "seriesToRows",
                         "reducers": [
                             "sum"
                         ]
@@ -516,7 +528,7 @@
             "type": "stat"
         },
         {
-            "collapsed": true,
+            "collapsed": false,
             "gridPos": {
                 "h": 1,
                 "w": 24,
@@ -524,79 +536,78 @@
                 "y": 9
             },
             "id": 11,
-            "panels": [
+            "panels": [],
+            "title": "PDU sessions failed to setup (details)",
+            "type": "row"
+        },
+        {
+            "datasource": {
+                "type": "datasource",
+                "uid": "-- Dashboard --"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "fixed"
+                    },
+                    "fieldMinMax": false,
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 19,
+                "x": 0,
+                "y": 10
+            },
+            "id": 12,
+            "options": {
+                "displayMode": "basic",
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": false
+                },
+                "maxVizHeight": 300,
+                "minVizHeight": 16,
+                "minVizWidth": 8,
+                "namePlacement": "left",
+                "orientation": "horizontal",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showUnfilled": true,
+                "sizing": "manual",
+                "text": {},
+                "valueMode": "color"
+            },
+            "pluginVersion": "12.0.2",
+            "targets": [
                 {
                     "datasource": {
                         "type": "datasource",
                         "uid": "-- Dashboard --"
                     },
-                    "fieldConfig": {
-                        "defaults": {
-                            "color": {
-                                "mode": "fixed"
-                            },
-                            "fieldMinMax": false,
-                            "mappings": [],
-                            "thresholds": {
-                                "mode": "absolute",
-                                "steps": [
-                                    {
-                                        "color": "green"
-                                    }
-                                ]
-                            }
-                        },
-                        "overrides": []
-                    },
-                    "gridPos": {
-                        "h": 7,
-                        "w": 19,
-                        "x": 0,
-                        "y": 10
-                    },
-                    "id": 12,
-                    "options": {
-                        "displayMode": "basic",
-                        "legend": {
-                            "calcs": [],
-                            "displayMode": "list",
-                            "placement": "bottom",
-                            "showLegend": false
-                        },
-                        "maxVizHeight": 300,
-                        "minVizHeight": 16,
-                        "minVizWidth": 8,
-                        "namePlacement": "left",
-                        "orientation": "horizontal",
-                        "reduceOptions": {
-                            "calcs": [
-                                "lastNotNull"
-                            ],
-                            "fields": "",
-                            "values": false
-                        },
-                        "showUnfilled": true,
-                        "sizing": "manual",
-                        "text": {},
-                        "valueMode": "color"
-                    },
-                    "pluginVersion": "12.0.2",
-                    "targets": [
-                        {
-                            "datasource": {
-                                "type": "datasource",
-                                "uid": "-- Dashboard --"
-                            },
-                            "panelId": 5,
-                            "refId": "A"
-                        }
-                    ],
-                    "title": "PDU sessions failed to setup (detail)",
-                    "type": "bargauge"
+                    "panelId": 5,
+                    "refId": "A"
                 }
             ],
-            "title": "PDU sessions failed to setup (details)",
-            "type": "row"
+            "title": "PDU sessions failed to setup (detail)",
+            "type": "bargauge"
         },
         {
             "collapsed": false,
@@ -604,7 +615,7 @@
                 "h": 1,
                 "w": 24,
                 "x": 0,
-                "y": 10
+                "y": 17
             },
             "id": 6,
             "panels": [],
@@ -641,7 +652,7 @@
                 "h": 4,
                 "w": 5,
                 "x": 0,
-                "y": 11
+                "y": 18
             },
             "id": 8,
             "options": {
@@ -681,7 +692,7 @@
                 "h": 1,
                 "w": 24,
                 "x": 0,
-                "y": 15
+                "y": 22
             },
             "id": 7,
             "panels": [],
@@ -718,7 +729,7 @@
                 "h": 4,
                 "w": 5,
                 "x": 0,
-                "y": 16
+                "y": 23
             },
             "id": 9,
             "options": {
@@ -816,7 +827,7 @@
                 "h": 4,
                 "w": 5,
                 "x": 5,
-                "y": 16
+                "y": 23
             },
             "id": 10,
             "options": {
@@ -911,5 +922,5 @@
     "timezone": "browser",
     "title": "NGAP",
     "uid": "2de86bfa-632c-485d-b44e-909f72ce1fa6",
-    "version": 2
+    "version": 1
 }
