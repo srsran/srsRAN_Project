@@ -26,6 +26,8 @@
 #include "srsran/adt/interval.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/duplex_mode.h"
+#include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/ran/prach/prach_format_type.h"
 #include "srsran/ran/prach/rach_config_common.h"
 #include <optional>
 
@@ -60,8 +62,11 @@ std::optional<uint8_t> find_valid_prach_config_index(subcarrier_spacing         
 
 /// \brief Checks whether the nof. SSB per RACH occasion and nof. contention based preambles per SSB is valid.
 /// \return In case config is not supported, a string with an error message is returned.
-error_type<std::string> nof_ssb_per_ro_and_nof_cb_preambles_per_ssb_is_valid(float   nof_ssb_per_ro,
+error_type<std::string> nof_ssb_per_ro_and_nof_cb_preambles_per_ssb_is_valid(ssb_per_rach_occasions nof_ssb_per_ro,
                                                                              uint8_t nof_cb_preambles_per_ssb);
 
+/// \brief Checks whether a given PRACH Root Sequence Index is valid for a given PRACH format.
+/// \return \c default_success_t if the given parameters are supported, otherwise an error message is provided.
+error_type<std::string> prach_root_sequence_index_is_valid(unsigned prach_root_seq_idx, prach_format_type format);
 } // namespace prach_helper
 } // namespace srsran

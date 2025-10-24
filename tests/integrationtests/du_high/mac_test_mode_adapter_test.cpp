@@ -28,6 +28,7 @@
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
+#include <srsran/mac/mac_positioning_measurement_handler.h>
 
 using namespace srsran;
 using namespace srs_du;
@@ -61,7 +62,8 @@ class mac_dummy : public mac_interface,
                   public mac_pdu_handler,
                   public mac_paging_information_handler,
                   public mac_cell_controller,
-                  public mac_cell_time_mapper
+                  public mac_cell_time_mapper,
+                  public mac_positioning_measurement_handler
 {
 public:
   mac_event_interceptor& events;
@@ -78,6 +80,7 @@ public:
   mac_cell_slot_handler&                get_slot_handler(du_cell_index_t cell_index) override { return *this; }
   mac_cell_manager&                     get_cell_manager() override { return *this; }
   mac_ue_configurator&                  get_ue_configurator() override { return *this; }
+  mac_positioning_measurement_handler&  get_positioning_handler() override { return *this; }
   mac_pdu_handler&                      get_pdu_handler() override { return *this; }
   mac_paging_information_handler&       get_cell_paging_info_handler() override { return *this; }
 
@@ -131,6 +134,12 @@ public:
   std::optional<mac_cell_slot_time_info> get_last_mapping() const override { return std::nullopt; }
   std::optional<time_point>              get_time_point(slot_point slot) const override { return std::nullopt; }
   std::optional<slot_point>              get_slot_point(time_point time) const override { return std::nullopt; }
+
+  async_task<mac_positioning_measurement_response>
+  handle_positioning_measurement_request(const mac_positioning_measurement_request& request) override
+  {
+    return launch_no_op_task(mac_positioning_measurement_response{});
+  }
 };
 
 struct test_params {

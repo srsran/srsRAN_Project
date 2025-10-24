@@ -73,10 +73,11 @@ struct formatter<srsran::prach_detection_result::preamble_indication> {
   auto format(const srsran::prach_detection_result::preamble_indication& preamble, FormatContext& ctx) const
   {
     format_to(ctx.out(),
-              "{{idx={} ta={:.2f}us detection_metric={:.1f}}}",
+              "{{idx={} ta={:.2f}us detection_metric={:.1f} power_dB={:.2f}}}",
               preamble.preamble_index,
               preamble.time_advance.to_seconds() * 1e6,
-              preamble.detection_metric);
+              preamble.detection_metric,
+              preamble.preamble_power_dB);
     return ctx.out();
   }
 };

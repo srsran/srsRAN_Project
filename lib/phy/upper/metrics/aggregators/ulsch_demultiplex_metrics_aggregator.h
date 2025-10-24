@@ -36,7 +36,8 @@ public:
   double get_average_init_time_us() const
   {
     return count.load(std::memory_order_relaxed)
-               ? static_cast<double>(sum_elapsed_init_ns) / static_cast<double>(count) / 1000.0
+               ? static_cast<double>(sum_elapsed_init_ns.load(std::memory_order_relaxed)) /
+                     static_cast<double>(count.load(std::memory_order_relaxed)) / 1000.0
                : 0;
   }
 
@@ -44,7 +45,8 @@ public:
   double get_average_finish_time_us() const
   {
     return count.load(std::memory_order_relaxed)
-               ? static_cast<double>(sum_elapsed_on_end_codeword_ns) / static_cast<double>(count) / 1000.0
+               ? static_cast<double>(sum_elapsed_on_end_codeword_ns.load(std::memory_order_relaxed)) /
+                     static_cast<double>(count.load(std::memory_order_relaxed)) / 1000.0
                : 0;
   }
 
@@ -52,40 +54,43 @@ public:
   double get_average_rate_Mbps() const
   {
     return sum_elapsed_on_new_block_ns.load(std::memory_order_relaxed)
-               ? static_cast<double>(sum_nof_bits) / static_cast<double>(sum_elapsed_on_new_block_ns) * 1000.0
+               ? static_cast<double>(sum_nof_bits.load(std::memory_order_relaxed)) /
+                     static_cast<double>(sum_elapsed_on_new_block_ns.load(std::memory_order_relaxed)) * 1000.0
                : 0;
   }
 
   /// Gets the total time spent by the UL-SCH demultiplexer.
   std::chrono::nanoseconds get_total_time() const
   {
-    return std::chrono::nanoseconds(sum_elapsed_init_ns + sum_elapsed_on_new_block_ns + sum_elapsed_on_end_codeword_ns);
+    return std::chrono::nanoseconds(sum_elapsed_init_ns.load(std::memory_order_relaxed) +
+                                    sum_elapsed_on_new_block_ns.load(std::memory_order_relaxed) +
+                                    sum_elapsed_on_end_codeword_ns.load(std::memory_order_relaxed));
   }
 
   /// Gets the CPU usage in microseconds of the UL-SCH demultiplexer.
-  double get_cpu_usage_us() const { return sum_used_cpu_time_ns / 1000; }
+  double get_cpu_usage_us() const { return sum_used_cpu_time_ns.load(std::memory_order_relaxed) / 1000; }
 
   /// Resets values of all internal counters.
   void reset()
   {
-    sum_elapsed_init_ns            = 0;
-    sum_elapsed_on_new_block_ns    = 0;
-    sum_elapsed_on_end_codeword_ns = 0;
-    sum_nof_bits                   = 0;
-    count                          = 0;
-    sum_used_cpu_time_ns           = 0;
+    sum_elapsed_init_ns.store(0, std::memory_order_relaxed);
+    sum_elapsed_on_new_block_ns.store(0, std::memory_order_relaxed);
+    sum_elapsed_on_end_codeword_ns.store(0, std::memory_order_relaxed);
+    sum_nof_bits.store(0, std::memory_order_relaxed);
+    count.store(0, std::memory_order_relaxed);
+    sum_used_cpu_time_ns.store(0, std::memory_order_relaxed);
   }
 
 private:
   // See interface for documentation.
   void on_new_metric(const ulsch_demultiplex_metrics& metrics) override
   {
-    sum_elapsed_init_ns += metrics.elapsed_init.count();
-    sum_elapsed_on_new_block_ns += metrics.elapsed_on_new_block.count();
-    sum_elapsed_on_end_codeword_ns += metrics.elapsed_on_end_codeword.count();
-    sum_nof_bits += metrics.sum_nof_bits;
-    sum_used_cpu_time_ns += metrics.cpu_time_usage.count();
-    ++count;
+    sum_elapsed_init_ns.fetch_add(metrics.elapsed_init.count(), std::memory_order_relaxed);
+    sum_elapsed_on_new_block_ns.fetch_add(metrics.elapsed_on_new_block.count(), std::memory_order_relaxed);
+    sum_elapsed_on_end_codeword_ns.fetch_add(metrics.elapsed_on_end_codeword.count(), std::memory_order_relaxed);
+    sum_nof_bits.fetch_add(metrics.sum_nof_bits, std::memory_order_relaxed);
+    sum_used_cpu_time_ns.fetch_add(metrics.cpu_time_usage.count(), std::memory_order_relaxed);
+    count.fetch_add(1, std::memory_order_relaxed);
   }
 
   std::atomic<uint64_t> sum_elapsed_init_ns            = {};

@@ -98,7 +98,7 @@ protected:
 
   single_slice_limited_max_rbs_scheduler_test() :
     base_multi_slice_scheduler_tester(
-        multi_slice_test_params{{slice_rrm_policy_config{get_rrm_policy(1, 1), 0, max_slice_rbs}}})
+        multi_slice_test_params{{slice_rrm_policy_config{get_rrm_policy(1, 1), {0, max_slice_rbs}}}})
   {
   }
 };
@@ -110,8 +110,8 @@ TEST_F(single_slice_limited_max_rbs_scheduler_test, single_ue_limited_to_max_rbs
   this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(0), LCID_MIN_DRB, 500});
 
   ASSERT_TRUE(this->run_slot_until(
-      [this, rnti]() { return find_ue_pdsch(rnti, this->last_sched_res_list[0]->dl.ue_grants) != nullptr; }));
-  const dl_msg_alloc* msg = find_ue_pdsch(rnti, this->last_sched_res_list[0]->dl.ue_grants);
+      [this, rnti]() { return find_ue_pdsch(rnti, this->last_sched_result()->dl.ue_grants) != nullptr; }));
+  const dl_msg_alloc* msg = find_ue_pdsch(rnti, this->last_sched_result()->dl.ue_grants);
 
   ASSERT_TRUE(msg->pdsch_cfg.rbs.type1().length() <= max_slice_rbs);
 }
@@ -128,13 +128,59 @@ TEST_F(single_slice_limited_max_rbs_scheduler_test, multi_ue_limited_to_max_rbs)
   }
 
   ASSERT_TRUE(this->run_slot_until(
-      [&]() { return find_ue_pdsch(rntis.front(), this->last_sched_res_list[0]->dl.ue_grants) != nullptr; }));
+      [&]() { return find_ue_pdsch(rntis.front(), this->last_sched_result()->dl.ue_grants) != nullptr; }));
   unsigned nof_rbs = 0;
-  for (const dl_msg_alloc& msg : this->last_sched_res_list[0]->dl.ue_grants) {
+  for (const dl_msg_alloc& msg : this->last_sched_result()->dl.ue_grants) {
     nof_rbs += msg.pdsch_cfg.rbs.type1().length();
   }
 
   ASSERT_TRUE(nof_rbs <= max_slice_rbs);
+}
+
+TEST_F(single_slice_limited_max_rbs_scheduler_test, multi_ue_limited_to_max_rbs_reconf)
+{
+  // Create UE and fill its buffer.
+  unsigned            nof_ues = test_rgen::uniform_int<unsigned>(2, 10);
+  unsigned            dl_bo   = test_rgen::uniform_int<unsigned>(10, 50);
+  std::vector<rnti_t> rntis;
+  unsigned            nof_rbs = 0;
+  for (unsigned i = 0; i < nof_ues; i++) {
+    rntis.push_back(this->add_ue({std::make_pair(LCID_MIN_DRB, get_nssai(1, 1))}));
+  }
+
+  auto run_scheduler = [this, nof_ues, &rntis, &nof_rbs, dl_bo]() {
+    for (unsigned i = 0; i < nof_ues; i++) {
+      this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(i), LCID_MIN_DRB, dl_bo});
+    }
+
+    ASSERT_TRUE(this->run_slot_until(
+        [&]() { return find_ue_pdsch(rntis.front(), this->last_sched_result()->dl.ue_grants) != nullptr; }));
+
+    for (const dl_msg_alloc& msg : this->last_sched_result()->dl.ue_grants) {
+      nof_rbs += msg.pdsch_cfg.rbs.type1().length();
+    }
+  };
+
+  // Run scheduler with the first set of parameters.
+  run_scheduler();
+  ASSERT_TRUE(nof_rbs <= max_slice_rbs);
+
+  // Apply reconfiguration here.
+  constexpr unsigned             new_max_rbs = 8;
+  constexpr unsigned             new_min_rbs = 2;
+  du_cell_slice_reconfig_request slice_reconfig_req;
+  slice_reconfig_req.cell_index = cell_cfg().cell_index;
+  du_cell_slice_reconfig_request::rrm_policy_config rrm_policy_cfg{.rrc_member = get_rrm_policy(1, 1),
+                                                                   .rbs        = {new_min_rbs, new_max_rbs}};
+  slice_reconfig_req.rrm_policies.emplace_back(rrm_policy_cfg);
+  sched->handle_slice_reconfiguration_request(slice_reconfig_req);
+
+  test_logger.info("Slice reconfiguration applied");
+
+  // Re-run scheduler with the new set of parameters.
+  nof_rbs = 0;
+  run_scheduler();
+  ASSERT_TRUE(nof_rbs <= new_max_rbs);
 }
 
 class multi_slice_with_prio_slice_scheduler_test : public base_multi_slice_scheduler_tester, public ::testing::Test
@@ -145,8 +191,8 @@ protected:
 
   multi_slice_with_prio_slice_scheduler_test() :
     base_multi_slice_scheduler_tester(
-        multi_slice_test_params{{slice_rrm_policy_config{get_rrm_policy(1, 1), slice1_min_rbs, slice1_max_rbs},
-                                 slice_rrm_policy_config{get_rrm_policy(1, 2), 0, MAX_NOF_PRBS}}})
+        multi_slice_test_params{{slice_rrm_policy_config{get_rrm_policy(1, 1), {slice1_min_rbs, slice1_max_rbs}},
+                                 slice_rrm_policy_config{get_rrm_policy(1, 2), {0, MAX_NOF_PRBS}}}})
   {
   }
 };
@@ -164,10 +210,10 @@ TEST_F(multi_slice_with_prio_slice_scheduler_test, multi_ue_limited_to_max_rbs)
   unsigned                nof_checks = 4;
   std::array<unsigned, 3> rnti_sum_rbs{0};
   for (unsigned i = 0; i < nof_checks; i++) {
-    ASSERT_TRUE(this->run_slot_until([&]() { return not this->last_sched_res_list[0]->dl.ue_grants.empty(); }));
+    ASSERT_TRUE(this->run_slot_until([&]() { return not this->last_sched_result()->dl.ue_grants.empty(); }));
 
     std::array<unsigned, 3> rnti_rbs{0};
-    for (const dl_msg_alloc& msg : this->last_sched_res_list[0]->dl.ue_grants) {
+    for (const dl_msg_alloc& msg : this->last_sched_result()->dl.ue_grants) {
       unsigned idx = static_cast<unsigned>(msg.pdsch_cfg.rnti) - 0x4601;
       rnti_rbs[idx] += msg.pdsch_cfg.rbs.type1().length();
     }
@@ -181,4 +227,62 @@ TEST_F(multi_slice_with_prio_slice_scheduler_test, multi_ue_limited_to_max_rbs)
   }
 
   ASSERT_TRUE(std::all_of(rnti_sum_rbs.begin(), rnti_sum_rbs.end(), [](unsigned n) { return n > 0; }));
+}
+
+TEST_F(multi_slice_with_prio_slice_scheduler_test, multi_ue_limited_to_max_rbs_reconf)
+{
+  // Create 3 UEs and fill their buffers.
+  this->add_ue({std::make_pair(LCID_MIN_DRB, get_nssai(1, 1))});
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(0), LCID_MIN_DRB, 100000});
+  this->add_ue({std::make_pair(LCID_MIN_DRB, get_nssai(1, 1))});
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(1), LCID_MIN_DRB, 100000});
+  this->add_ue({std::make_pair(LCID_MIN_DRB, get_nssai(1, 2))});
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(2), LCID_MIN_DRB, 100000});
+
+  auto run_scheduler_assess_rbs =
+      [this](unsigned max_rbs_sl1, unsigned min_rbs_sl1, unsigned max_rbs_sl2, unsigned min_rbs_sl2) {
+        unsigned                nof_checks = 4;
+        std::array<unsigned, 3> rnti_sum_rbs{0};
+        for (unsigned i = 0; i < nof_checks; i++) {
+          ASSERT_TRUE(this->run_slot_until([&]() { return not this->last_sched_result()->dl.ue_grants.empty(); }));
+
+          std::array<unsigned, 3> rnti_rbs{0};
+          for (const dl_msg_alloc& msg : this->last_sched_result()->dl.ue_grants) {
+            unsigned idx = static_cast<unsigned>(msg.pdsch_cfg.rnti) - 0x4601;
+            rnti_rbs[idx] += msg.pdsch_cfg.rbs.type1().length();
+          }
+          ASSERT_GE(rnti_rbs[0] + rnti_rbs[1], min_rbs_sl1);
+          ASSERT_LE(rnti_rbs[0] + rnti_rbs[1], max_rbs_sl1);
+          ASSERT_GT(rnti_rbs[2], min_rbs_sl2);
+          ASSERT_LE(rnti_rbs[2], max_rbs_sl2);
+
+          for (unsigned j = 0; j != rnti_rbs.size(); j++) {
+            rnti_sum_rbs[j] += rnti_rbs[j];
+          }
+        }
+
+        ASSERT_TRUE(std::all_of(rnti_sum_rbs.begin(), rnti_sum_rbs.end(), [](unsigned n) { return n > 0; }));
+      };
+
+  // Run scheduler with the first set of parameters.
+  run_scheduler_assess_rbs(slice1_max_rbs, slice1_min_rbs, MAX_NOF_PRBS, 0);
+
+  // Apply reconfiguration here.
+  constexpr unsigned             new_max_slice1_rbs = 15;
+  constexpr unsigned             new_min_slice1_rbs = 5;
+  constexpr unsigned             new_max_slice2_rbs = 20;
+  du_cell_slice_reconfig_request slice_reconfig_req;
+  slice_reconfig_req.cell_index = cell_cfg().cell_index;
+  du_cell_slice_reconfig_request::rrm_policy_config rrm_policy_cfg_sl_1{
+      .rrc_member = get_rrm_policy(1, 1), .rbs = {new_min_slice1_rbs, new_max_slice1_rbs}};
+  slice_reconfig_req.rrm_policies.emplace_back(rrm_policy_cfg_sl_1);
+  du_cell_slice_reconfig_request::rrm_policy_config rrm_policy_cfg_sl_2{.rrc_member = get_rrm_policy(1, 2),
+                                                                        .rbs        = {0, new_max_slice2_rbs}};
+  slice_reconfig_req.rrm_policies.emplace_back(rrm_policy_cfg_sl_2);
+  sched->handle_slice_reconfiguration_request(slice_reconfig_req);
+
+  test_logger.info("Slice reconfiguration applied");
+
+  // Re-run scheduler with the new set of parameters.
+  run_scheduler_assess_rbs(new_max_slice1_rbs, new_min_slice1_rbs, new_max_slice2_rbs, 0);
 }

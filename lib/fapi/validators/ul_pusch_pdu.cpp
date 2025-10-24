@@ -256,7 +256,7 @@ static bool validate_rv_index(unsigned value, validator_report& report)
 static bool validate_harq_process_id(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
-  static constexpr unsigned MAX_VALUE = 15;
+  static constexpr unsigned MAX_VALUE = MAX_HARQ_ID;
 
   return validate_field(MIN_VALUE, MAX_VALUE, value, "HARQ process id", msg_type, pdu_type, report);
 }

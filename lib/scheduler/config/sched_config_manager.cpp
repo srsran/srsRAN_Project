@@ -122,9 +122,8 @@ void sched_config_manager::update_cell(const sched_cell_reconfiguration_request_
       bool found = false;
       for (auto& slice : added_cells[cell_index]->rrm_policy_members) {
         if (slice.rrc_member == rrm.rrc_member) {
-          found         = true;
-          slice.max_prb = rrm.max_prb;
-          slice.min_prb = rrm.min_prb;
+          found     = true;
+          slice.rbs = rrm.rbs;
           break;
         }
       }
@@ -231,7 +230,7 @@ ue_config_update_event sched_config_manager::update_ue(const sched_ue_reconfigur
     logger.error("ue={} c-rnti={}: Discarding UE configuration. Cause: UE with provided C-RNTI does not exist.",
                  fmt::underlying(cfg_req.ue_index),
                  cfg_req.crnti);
-    return ue_config_update_event{cfg_req.ue_index, *this, nullptr, {}, slot_point(), cfg_req.reestablished};
+    return ue_config_update_event{cfg_req.ue_index, *this, nullptr, {}, slot_point(), cfg_req.cfg.reestablished};
   }
 
   // Make a copy of the current UE dedicated config.
@@ -242,7 +241,7 @@ ue_config_update_event sched_config_manager::update_ue(const sched_ue_reconfigur
 
   // Return RAII event.
   return ue_config_update_event{
-      cfg_req.ue_index, *this, std::move(next_ded_cfg), {}, slot_point(), cfg_req.reestablished};
+      cfg_req.ue_index, *this, std::move(next_ded_cfg), {}, slot_point(), cfg_req.cfg.reestablished};
 }
 
 ue_config_delete_event sched_config_manager::remove_ue(du_ue_index_t ue_index)

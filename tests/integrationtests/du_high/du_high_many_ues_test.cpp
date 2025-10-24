@@ -53,11 +53,14 @@ static du_high_env_sim_params create_many_ues_config()
   params.pucch_cfg.emplace();
   params.pucch_cfg->nof_ue_pucch_f0_or_f1_res_harq       = 8;
   params.pucch_cfg->nof_ue_pucch_f2_or_f3_or_f4_res_harq = 8;
-  params.pucch_cfg->nof_sr_resources                     = 4;
-  params.pucch_cfg->nof_csi_resources                    = 4;
-  auto& f1_params                                        = params.pucch_cfg->f0_or_f1_params.emplace<pucch_f1_params>();
-  f1_params.nof_cyc_shifts                               = pucch_nof_cyclic_shifts::twelve;
-  f1_params.occ_supported                                = true;
+  params.pucch_cfg->nof_cell_harq_pucch_res_sets         = 2;
+  params.pucch_cfg->nof_sr_resources                     = 80;
+  params.pucch_cfg->nof_csi_resources                    = 80;
+  params.sched_ue_expert_cfg.emplace();
+  params.sched_ue_expert_cfg->max_pucchs_per_slot = 64;
+  auto& f1_params                                 = params.pucch_cfg->f0_or_f1_params.emplace<pucch_f1_params>();
+  f1_params.nof_cyc_shifts                        = pucch_nof_cyclic_shifts::twelve;
+  f1_params.occ_supported                         = true;
   // Set the PRACH frequency start to avoid PRACH collisions with the PUCCH on the upper RBs of the BWP (this would
   // trigger an error and abort the test).
   // NOTE: this results in the PRACH overlapping with the PUCCH resources on the lower RBs of the BWP, but it doesn't
@@ -66,7 +69,18 @@ static du_high_env_sim_params create_many_ues_config()
   return params;
 }
 
-class du_high_many_ues_tester : public du_high_env_simulator, public testing::Test
+struct test_params {
+  unsigned slots_between_ue_creations = 0;
+  unsigned expected_max_ues           = 1;
+};
+
+void PrintTo(const test_params& value, ::std::ostream* os)
+{
+  *os << fmt::format(
+      "period_per_ue_creation={}slots, #ues={}", value.slots_between_ue_creations, value.expected_max_ues);
+}
+
+class du_high_many_ues_tester : public du_high_env_simulator, public testing::TestWithParam<test_params>
 {
 protected:
   du_high_many_ues_tester() : du_high_env_simulator(create_many_ues_config())
@@ -78,10 +92,11 @@ protected:
   uint16_t next_rnti = 0x4601;
 };
 
-TEST_F(du_high_many_ues_tester, when_many_ues_are_created_concurrently_then_ues_complete_conres_and_rrc_setup)
+TEST_P(du_high_many_ues_tester, when_many_ues_are_created_concurrently_then_ues_complete_conres_and_rrc_setup)
 {
-  const unsigned max_ues  = 30;
-  unsigned       ue_count = 0;
+  const unsigned max_ues                    = GetParam().expected_max_ues;
+  const unsigned slot_diff_per_ue_creations = GetParam().slots_between_ue_creations;
+  unsigned       ue_count                   = 0;
 
   // Launch async tasks for UE creation and RRC setup.
   for (; ue_count != max_ues; ++ue_count) {
@@ -89,11 +104,18 @@ TEST_F(du_high_many_ues_tester, when_many_ues_are_created_concurrently_then_ues_
     auto   ue_creation_task = launch_ue_creation_task(rnti, to_du_cell_index(0), true);
     auto   rrc_setup_task   = launch_rrc_setup_task(rnti, true);
     this->schedule_task(async_then(std::move(ue_creation_task), std::move(rrc_setup_task)));
+    for (unsigned count = 0; count != slot_diff_per_ue_creations; ++count) {
+      this->run_slot();
+    }
   }
 
   // Await completion of all tasks.
   this->run_until_all_pending_tasks_completion();
 }
+
+INSTANTIATE_TEST_SUITE_P(du_high_many_ues_test,
+                         du_high_many_ues_tester,
+                         testing::Values(test_params{0, 60}, test_params{5, 590}));
 
 class du_high_few_ues_test : public du_high_env_simulator, public testing::Test
 {

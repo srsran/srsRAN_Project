@@ -10,7 +10,7 @@
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
   labels:
-    - ${ZMQ_HOSTLABEL_0}
+    - ${ZMQ_HOSTLABEL}
   requirements:
     cpu:
       requests: 1
@@ -43,4 +43,4 @@
       limits: "6G"
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
   labels:
-    - ${ZMQ_HOSTLABEL_0}
+    - ${ZMQ_HOSTLABEL}

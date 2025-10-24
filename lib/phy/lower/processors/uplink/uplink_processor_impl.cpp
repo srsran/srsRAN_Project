@@ -29,6 +29,7 @@
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_baseband.h"
 #include "srsran/phy/lower/processors/uplink/uplink_processor_notifier.h"
 #include "srsran/srsvec/compare.h"
+#include "srsran/srsvec/conversion.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/dot_prod.h"
 #include "srsran/support/math/stats.h"
@@ -50,7 +51,8 @@ lower_phy_uplink_processor_impl::lower_phy_uplink_processor_impl(std::unique_ptr
   temp_buffer(config.nof_rx_ports, 2 * config.rate.get_dft_size(config.scs)),
   prach_proc(std::move(prach_proc_)),
   puxch_proc(std::move(puxch_proc_)),
-  cfo_processor(config.rate)
+  cfo_processor(config.rate),
+  temp_cf_buffer({2 * config.rate.get_dft_size(config.scs), config.nof_rx_ports})
 {
   srsran_assert(prach_proc, "Invalid PRACH processor.");
   srsran_assert(puxch_proc, "Invalid PUxCH processor.");
@@ -201,10 +203,10 @@ void lower_phy_uplink_processor_impl::process_collecting(const baseband_gateway_
   // For each port, concatenate samples.
   for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
     // Select view of the temporary buffer.
-    span<cf_t> temp_buffer_dst = temp_buffer[i_port].subspan(temp_buffer_write_index, nof_samples);
+    span<ci16_t> temp_buffer_dst = temp_buffer[i_port].subspan(temp_buffer_write_index, nof_samples);
 
     // Select view of the input samples.
-    span<const cf_t> temp_buffer_src = samples.get_channel_buffer(i_port).first(nof_samples);
+    span<const ci16_t> temp_buffer_src = samples.get_channel_buffer(i_port).first(nof_samples);
 
     // Append input samples into the temporary buffer.
     srsvec::copy(temp_buffer_dst, temp_buffer_src);
@@ -219,10 +221,17 @@ void lower_phy_uplink_processor_impl::process_collecting(const baseband_gateway_
     return;
   }
 
+  // View over the temporary float-based complex samples for CFO processor.
+  span<cf_t> view;
   // Perform carrier frequency offset compensation.
   for (unsigned i_channel = 0; i_channel != temp_buffer.get_nof_channels(); ++i_channel) {
-    span<cf_t> channel_buffer = temp_buffer.get_writer().get_channel_buffer(i_channel);
-    cfo_processor.process(channel_buffer);
+    // The CFO compensation is not currently supported for 16-bit complex integer samples. So, it must convert it to
+    // single-precision complex floating-point samples.
+    span<ci16_t> channel_buffer = temp_buffer.get_writer().get_channel_buffer(i_channel);
+    view                        = temp_cf_buffer.get_view({i_channel}).subspan(0, channel_buffer.size());
+    srsvec::convert(view, channel_buffer, scaling_factor_ci16_to_cf);
+    cfo_processor.process(view);
+    srsvec::convert(channel_buffer, view, scaling_factor_cf_to_ci16);
   }
 
   // Advance CFO processor number of samples.
@@ -253,12 +262,11 @@ void lower_phy_uplink_processor_impl::process_collecting(const baseband_gateway_
 
     // Process received signal before demodulation.
     for (unsigned i_channel = 0; i_channel != nof_channels; ++i_channel) {
-      // Perform signal measurements.
-      span<cf_t> channel_buffer = temp_buffer.get_writer().get_channel_buffer(i_channel);
-      avg_power.update(srsvec::average_power(channel_buffer));
-      peak_power.update(srsvec::max_abs_element(channel_buffer).second);
-      nof_clipped_samples += srsvec::count_if_part_abs_greater_than(channel_buffer, 0.95);
-      total_processed_samples += channel_buffer.size();
+      // Perform signal measurements. Reuse the previous view of the float-based complex samples.
+      avg_power.update(srsvec::average_power(view));
+      peak_power.update(srsvec::max_abs_element(view).second);
+      nof_clipped_samples += srsvec::count_if_part_abs_greater_than(view, 0.95);
+      total_processed_samples += view.size();
     }
 
     metrics.avg_power  = avg_power.get_mean();

@@ -38,16 +38,39 @@ namespace srsran {
 struct ul_crc_pdu_indication;
 struct pdsch_config_params;
 struct pusch_config_params;
+class dl_logical_channel_manager;
+
+/// State shared across UE carriers.
+struct ue_shared_context {
+  /// DRX controller.
+  ue_drx_controller& drx_ctrl;
+};
 
 /// \brief Context respective to a UE serving cell.
 class ue_cell
 {
 public:
+  /// State in case carrier corresponds to UE pcell.
+  struct ue_pcell_state {
+    /// Fallback state of the UE. When in "fallback" mode, only the search spaces and the configuration of
+    /// cellConfigCommon are used.
+    bool in_fallback_mode = true;
+    /// \brief Whether the MAC CE Contention Resolution has been transmitted and acked by the UE.
+    bool conres_complete = false;
+    /// Whether a UE reconfiguration is taking place.
+    bool reconf_ongoing = false;
+    /// Whether the UE has been reestablished.
+    bool reestablished = false;
+    /// MSG3 rx-slot, if applicable (e.g. The UE was created via RA procedure).
+    slot_point msg3_rx_slot;
+  };
+
   ue_cell(du_ue_index_t                ue_index_,
           rnti_t                       crnti_val,
+          ue_cell_index_t              ue_cell_index_,
           const ue_cell_configuration& ue_cell_cfg_,
           cell_harq_manager&           cell_harq_pool,
-          ue_drx_controller&           drx_ctrl,
+          ue_shared_context            shared_ctx,
           std::optional<slot_point>    msg3_slot_rx);
 
   const du_ue_index_t   ue_index;
@@ -64,7 +87,7 @@ public:
   bool is_active() const { return active; }
 
   /// Whether the UE is in fallback mode.
-  bool is_in_fallback_mode() const { return in_fallback_mode; }
+  bool is_in_fallback_mode() const { return pcell_state.has_value() and pcell_state->in_fallback_mode; }
 
   const ue_cell_configuration& cfg() const { return *ue_cfg; }
 
@@ -73,11 +96,12 @@ public:
 
   void handle_reconfiguration_request(const ue_cell_configuration& ue_cell_cfg);
 
-  void set_fallback_state(bool in_fallback);
+  /// Update UE fallback state.
+  void set_fallback_state(bool in_fallback, bool is_reconfig, bool reestablished);
 
   bool is_pdcch_enabled(slot_point dl_slot) const
   {
-    return active and cfg().is_dl_enabled(dl_slot) and drx_ctrl.is_pdcch_enabled();
+    return active and cfg().is_dl_enabled(dl_slot) and shared_ctx.drx_ctrl.is_pdcch_enabled();
   }
   bool is_pdsch_enabled(slot_point pdcch_slot, slot_point pdsch_slot) const
   {
@@ -169,13 +193,13 @@ public:
   /// \brief Returns an estimated UL rate in bytes per slot based on the given input parameters.
   double get_estimated_ul_rate(const pusch_config_params& pusch_cfg, sch_mcs_index mcs, unsigned nof_prbs) const;
 
-  bool is_conres_complete() const { return conres_procedure.complete; }
+  bool is_pcell() const { return pcell_state.has_value(); }
 
   /// Sets the Contention Resolution procedure state as started (if "false") or complete (if "true").
   void set_conres_state(bool state);
 
-  /// Returns the slot in which the MSG3 was received, if available; if not, returns a non-valid slot_point.
-  slot_point get_msg3_rx_slot() const { return conres_procedure.msg3_rx_slot.value_or(slot_point{}); }
+  /// Retrieve the current Pcell state of the UE, if applicable.
+  const ue_pcell_state& get_pcell_state() const { return pcell_state.value(); }
 
 private:
   /// \brief Performs link adaptation procedures such as cancelling HARQs etc.
@@ -185,27 +209,14 @@ private:
   const cell_configuration&         cell_cfg;
   const ue_cell_configuration*      ue_cfg;
   const scheduler_ue_expert_config& expert_cfg;
-  ue_drx_controller&                drx_ctrl;
+  ue_shared_context                 shared_ctx;
   srslog::basic_logger&             logger;
-
-  /// \brief Tracks state of the Contention Resolution procedure for RACHs where MSG3 contains a MAC CE with ConRes.
-  struct conres_state {
-    /// \brief Whether the MAC CE Contention Resolution has been transmitted and acked by the UE.
-    bool complete = false;
-
-    /// MSG3 rx-slot, if available. Used to issue a warning if the ConRes doesn't get scheduled on time.
-    std::optional<slot_point> msg3_rx_slot = std::nullopt;
-  };
 
   /// \brief Whether cell is currently active.
   bool active = true;
 
-  /// Fallback state of the UE. When in "fallback" mode, only the search spaces and the configuration of
-  /// cellConfigCommon are used.
-  bool in_fallback_mode = true;
-
-  // This is not used in case of RACH followed by a MSG3 with MAC CE C-RNTI.
-  conres_state conres_procedure;
+  /// State relative to the PCell of the UE, if applicable.
+  std::optional<ue_pcell_state> pcell_state;
 
   ue_channel_state_manager channel_state;
 

@@ -29,6 +29,6 @@ using namespace app_services;
 void srsran::app_services::fill_metrics_appconfig_in_yaml_schema(YAML::Node& node, const metrics_appconfig& config)
 {
   YAML::Node metrics_node                     = node["metrics"];
-  YAML::Node periodicity_node                 = node["periodicity"];
+  YAML::Node periodicity_node                 = metrics_node["periodicity"];
   periodicity_node["app_usage_report_period"] = config.app_usage_report_period;
 }

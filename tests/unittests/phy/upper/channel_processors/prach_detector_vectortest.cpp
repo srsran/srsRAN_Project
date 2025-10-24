@@ -30,27 +30,10 @@
 
 using namespace srsran;
 
-static bool is_recognized_conf(const srsran::prach_detector::configuration& conf)
+static bool is_stable_conf(const srsran::prach_detector::configuration& conf)
 {
-  if (conf.nof_rx_ports == 1) {
-    if ((conf.format == prach_format_type::zero) && (conf.zero_correlation_zone == 1)) {
-      return true;
-    }
-    if ((conf.format == prach_format_type::B4) && (conf.zero_correlation_zone == 11)) {
-      return true;
-    }
-    return false;
-  }
-  if (conf.nof_rx_ports == 2) {
-    if ((conf.format == prach_format_type::zero) && (conf.zero_correlation_zone == 1)) {
-      return true;
-    }
-    if ((conf.format == prach_format_type::A1) && (conf.zero_correlation_zone == 11)) {
-      return true;
-    }
-    return false;
-  }
-  return false;
+  // Skip FR2 configurations, which are still experimental.
+  return (conf.ra_scs != prach_subcarrier_spacing::kHz120);
 }
 
 namespace srsran {
@@ -162,7 +145,7 @@ TEST_P(PrachDetectorFixture, FromVector)
     time_error_tolerance = phy_time_unit::from_seconds(0.26e-6F);
   }
 
-  if (is_recognized_conf(config)) {
+  if (is_stable_conf(config)) {
     // Assert the required preamble was found. The detector thresholds are tweaked to have a small FA probability when
     // there is no signal. However, when there is signal, spurious false detections may appear, especially when the SNR
     // is high.
@@ -187,13 +170,17 @@ TEST_P(PrachDetectorFixture, FromVector)
                 preamble_indication.time_advance.to_seconds(),
                 result.time_resolution.to_seconds());
 
-    // Allow a 1% difference between expected and measured detection metric.
+    // Allow a small difference between expected and measured detection metric.
+    float error_factor = (config.zero_correlation_zone < 11) ? 2.0F : 2.2F;
     ASSERT_NEAR(expected_result.preambles.front().detection_metric,
                 preamble_indication.detection_metric,
-                std::abs(preamble_indication.detection_metric) / 100);
+                error_factor * std::abs(preamble_indication.detection_metric) / 100);
 
     // Allow a 1% difference between expected and measured RSSI.
     ASSERT_NEAR(expected_result.rssi_dB, result.rssi_dB, std::abs(result.rssi_dB) / 100);
+
+    // Measured preamble power should be around 0 dB: allow two dB tolerance.
+    ASSERT_NEAR(result.preambles.front().preamble_power_dB, 0.0F, 2.0F);
   }
 }
 

@@ -23,18 +23,25 @@
 #include "ue_transaction_info_release_routine.h"
 #include "../ngap_repository.h"
 #include "srsran/adt/scope_exit.h"
+#include "srsran/ran/cause/e1ap_cause.h"
 #include "srsran/support/async/coroutine.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
 
 ue_transaction_info_release_routine::ue_transaction_info_release_routine(
-    const f1_ue_transaction_info_loss_event& loss_event_,
-    ue_manager&                              ue_mng_,
-    ngap_repository&                         ngap_db_,
-    cu_cp_ue_removal_handler&                ue_rem_handler_,
-    srslog::basic_logger&                    logger_) :
-  loss_event(loss_event_), ue_mng(ue_mng_), ngap_db(ngap_db_), ue_rem_handler(ue_rem_handler_), logger(logger_)
+    const ue_transaction_info_loss_event& loss_event_,
+    ue_manager&                           ue_mng_,
+    ngap_repository&                      ngap_db_,
+    cu_up_processor_repository&           cu_up_db_,
+    cu_cp_ue_removal_handler&             ue_rem_handler_,
+    srslog::basic_logger&                 logger_) :
+  loss_event(loss_event_),
+  ue_mng(ue_mng_),
+  ngap_db(ngap_db_),
+  cu_up_db(cu_up_db_),
+  ue_rem_handler(ue_rem_handler_),
+  logger(logger_)
 {
 }
 
@@ -42,10 +49,12 @@ void ue_transaction_info_release_routine::operator()(coro_context<async_task<voi
 {
   CORO_BEGIN(ctx);
 
+  logger.debug("\"{}\" started...", name());
+
   // Prepare NG Reset messages for each PLMN.
   prepare_ng_reset_messages();
 
-  // Run NG Reset to signal to the AMF the reset UEs.
+  // Run NG Reset to signal to the AMF the reset of UEs.
   for (plmn_id_it = ng_reset_per_plmn.begin(); plmn_id_it != ng_reset_per_plmn.end(); ++plmn_id_it) {
     ngap = ngap_db.find_ngap(plmn_id_it->first);
     if (ngap == nullptr) {
@@ -54,6 +63,20 @@ void ue_transaction_info_release_routine::operator()(coro_context<async_task<voi
     }
 
     CORO_AWAIT(ngap->handle_ng_reset_message(plmn_id_it->second));
+  }
+
+  // Prepare E1 Reset messages for each CU-UP.
+  prepare_e1_reset_messages();
+
+  // Run E1 Reset to signal to the CU-UP the reset of UEs.
+  for (cu_up_id_it = e1_reset_per_cu_up.begin(); cu_up_id_it != e1_reset_per_cu_up.end(); ++cu_up_id_it) {
+    cu_up = cu_up_db.find_cu_up_processor(cu_up_id_it->first);
+    if (cu_up == nullptr) {
+      logger.debug("CU-UP processor not found for cu_up_index={}. Skipping E1Reset", cu_up_id_it->first);
+      continue;
+    }
+
+    CORO_AWAIT(cu_up->handle_cu_cp_e1_reset_message(cu_up_id_it->second));
   }
 
   // Launch removal procedure for the provided UEs.
@@ -66,6 +89,8 @@ void ue_transaction_info_release_routine::operator()(coro_context<async_task<voi
   if (ues_remaining_count != 0) {
     CORO_AWAIT(all_ues_reset);
   }
+
+  logger.debug("\"{}\" finished successfully", name());
 
   CORO_RETURN();
 }
@@ -82,11 +107,36 @@ void ue_transaction_info_release_routine::prepare_ng_reset_messages()
     if (ng_reset_per_plmn.find(ue->get_ue_context().plmn) == ng_reset_per_plmn.end()) {
       // Create a new entry for the PLMN.
       ngap_cause_t reset_cause                     = ngap_cause_radio_network_t::radio_conn_with_ue_lost;
-      ng_reset_per_plmn[ue->get_ue_context().plmn] = cu_cp_ng_reset{reset_cause, false, {}};
+      ng_reset_per_plmn[ue->get_ue_context().plmn] = cu_cp_reset{reset_cause, false, {}};
     }
 
     // Add reset message to the PLMN list.
     ng_reset_per_plmn[ue->get_ue_context().plmn].ues_to_reset.push_back(ue_idx);
+  }
+}
+
+void ue_transaction_info_release_routine::prepare_e1_reset_messages()
+{
+  for (const auto& ue_idx : loss_event.ues_lost) {
+    auto* ue = ue_mng.find_du_ue(ue_idx);
+    if (ue == nullptr) {
+      logger.debug("ue={}: UE not found in UE manager. Skipping E1Reset", ue_idx);
+      continue;
+    }
+
+    if (ue->get_cu_up_index() == cu_up_index_t::invalid) {
+      logger.debug("ue={}: UE was not connected to CU-UP or has invalid CU-UP index. Skipping E1Reset", ue_idx);
+      continue;
+    }
+
+    if (e1_reset_per_cu_up.find(ue->get_cu_up_index()) == e1_reset_per_cu_up.end()) {
+      // Create a new entry for the CU-UP.
+      e1ap_cause_t reset_cause                  = e1ap_cause_transport_t::transport_res_unavailable;
+      e1_reset_per_cu_up[ue->get_cu_up_index()] = cu_cp_reset{reset_cause, false, {}};
+    }
+
+    // Add reset message to the CU-UP list.
+    e1_reset_per_cu_up[ue->get_cu_up_index()].ues_to_reset.push_back(ue_idx);
   }
 }
 

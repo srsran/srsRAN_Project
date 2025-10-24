@@ -94,6 +94,7 @@ du_served_cell_info srsran::srs_du::make_f1ap_du_cell_info(const du_cell_config&
     serv_cell.ul_carrier = du_cfg.ul_carrier;
   }
   serv_cell.packed_meas_time_cfg = make_asn1_meas_time_cfg_buffer(du_cfg);
+  serv_cell.ntn_link_rtt         = std::chrono::milliseconds(du_cfg.ntn_cs_koffset);
 
   return serv_cell;
 }

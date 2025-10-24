@@ -27,6 +27,28 @@ using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::e1ap;
 
+e1ap_message
+srsran::srs_cu_cp::generate_cu_cp_e1_reset_ack(uint8_t                                                transaction_id,
+                                               const asn1::e1ap::ue_associated_lc_e1_conn_list_res_l& e1_reset_ues)
+{
+  e1ap_message e1ap_msg;
+
+  e1ap_msg.pdu.set_successful_outcome();
+  e1ap_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_RESET);
+  auto& e1_reset_ack           = e1ap_msg.pdu.successful_outcome().value.reset_ack();
+  e1_reset_ack->transaction_id = transaction_id;
+  if (e1_reset_ues.size() > 0) {
+    e1_reset_ack->ue_associated_lc_e1_conn_list_res_ack_present = true;
+    for (const auto& ue : e1_reset_ues) {
+      asn1::protocol_ie_single_container_s<asn1::e1ap::ue_associated_lc_e1_conn_item_res_ack_o> item_container;
+      item_container->ue_associated_lc_e1_conn_item() = ue->ue_associated_lc_e1_conn_item();
+      e1_reset_ack->ue_associated_lc_e1_conn_list_res_ack.push_back(item_container);
+    }
+  }
+
+  return e1ap_msg;
+}
+
 asn1::e1ap::supported_plmns_item_s srsran::srs_cu_cp::generate_supported_plmns_item(nr_cell_identity nrcell_id)
 {
   asn1::e1ap::supported_plmns_item_s supported_plmns_item = {};
@@ -54,7 +76,7 @@ e1ap_message srsran::srs_cu_cp::generate_cu_up_e1_setup_request_base()
   e1_setup_request_base.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_GNB_CU_UP_E1_SETUP);
 
   auto& setup_req                   = e1_setup_request_base.pdu.init_msg().value.gnb_cu_up_e1_setup_request();
-  setup_req->transaction_id         = 99;
+  setup_req->transaction_id         = 0;
   setup_req->gnb_cu_up_id           = 1;
   setup_req->gnb_cu_up_name_present = true;
   setup_req->gnb_cu_up_name.from_string("srsCU-UP");

@@ -334,7 +334,7 @@ private:
   static const bool dummy = []() {                                                                                     \
     srsran::test_rgen::set_seed(seed);                                                                                 \
     return dummy;                                                                                                      \
-  }();
+  }()
 
 /// \brief Helper macro to make sure that logs are flushed when ASSERT_TRUE fails.
 #define FLUSH_AND_ASSERT_TRUE(val1)                                                                                    \

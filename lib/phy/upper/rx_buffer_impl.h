@@ -208,7 +208,7 @@ public:
   bool try_lock() override
   {
     state expected_state = state::reserved;
-    return current_state.compare_exchange_weak(expected_state, state::locked);
+    return current_state.compare_exchange_strong(expected_state, state::locked);
   }
 
   // See interface for documentation.
@@ -244,7 +244,7 @@ public:
   bool expire()
   {
     state expected_state = state::reserved;
-    bool  from_reserved  = current_state.compare_exchange_weak(expected_state, state::available);
+    bool  from_reserved  = current_state.compare_exchange_strong(expected_state, state::available);
 
     // The buffer cannot be freed if it is locked.
     if (!from_reserved) {

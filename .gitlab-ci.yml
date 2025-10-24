@@ -334,7 +334,7 @@ plugin nightly:
 ## Static
 ################################################################################
 headers:
-  image: ubuntu
+  image: ubuntu:24.04
   stage: static
   variables:
     GIT_LFS_SKIP_SMUDGE: 1

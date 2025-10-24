@@ -23,7 +23,6 @@
 #pragma once
 
 #include "apps/helpers/metrics/metrics_config.h"
-#include "apps/services/worker_manager/os_sched_affinity_manager.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/direct_current_offset.h"
@@ -34,12 +33,13 @@
 #include "srsran/ran/pci.h"
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
+#include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/pucch/pucch_configuration.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/qos/five_qi.h"
+#include "srsran/ran/radio_link_monitoring.h"
 #include "srsran/ran/rb_id.h"
 #include "srsran/ran/rnti.h"
-#include "srsran/ran/s_nssai.h"
 #include "srsran/ran/sib/system_info_config.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/subcarrier_spacing.h"
@@ -71,6 +71,12 @@ struct du_high_unit_logger_config {
   bool high_latency_diagnostics_enabled = false;
 };
 
+/// DU high tracing functionalities.
+struct du_high_unit_tracer_config {
+  /// \brief Whether to enable tracing of the DU-high executors.
+  bool executor_tracing_enable = false;
+};
+
 /// Timing Advance MAC CE scheduling expert configuration.
 struct du_high_unit_ta_sched_expert_config {
   /// Measurements periodicity in nof. slots over which the new Timing Advance Command is computed.
@@ -89,6 +95,13 @@ struct du_high_unit_ta_sched_expert_config {
 
 /// Scheduler expert configuration.
 struct du_high_unit_scheduler_expert_config {
+  /// \brief Number of UEs pre-selected for PDSCH/PUSCH newTx scheduling in each slot. The scheduling policy will only
+  /// be applied to the pre-selected UEs.
+  ///
+  /// When \c nof_preselected_newtx_ues is lower than the total number of active UEs in the cell, the scheduler will
+  /// operate as a hybrid between a Round-Robin scheduler and whichever scheduler policy was selected (e.g. QoS-aware).
+  /// This parameter is useful to reduce the complexity of the scheduling decision, at the cost of some performance.
+  unsigned nof_preselected_newtx_ues = 32;
   /// Policy scheduler expert parameters.
   std::optional<policy_scheduler_expert_config> policy_sched_expert_cfg;
   /// Timing Advance MAC CE scheduling expert configuration.
@@ -144,6 +157,9 @@ struct du_high_unit_pdsch_config {
   unsigned fixed_rar_mcs = 0;
   /// SI modulation and coding scheme index.
   unsigned fixed_sib1_mcs = 5;
+  /// Set DL HARQ Mode B in NTN cell.
+  /// HARQ mode B allows scheduling and reusing a HARQ process before the RTT of the previous HARQ process has elapsed.
+  bool harq_mode_b = false;
   /// Number of UE DL HARQ processes.
   unsigned nof_harqs = 16;
   /// Maximum number of times a DL HARQ process can be retransmitted, before it gets discarded.
@@ -169,14 +185,6 @@ struct du_high_unit_pdsch_config {
   unsigned max_pdschs_per_slot = MAX_PDSCH_PDUS_PER_SLOT;
   /// Maximum number of DL or UL PDCCH allocation attempts per slot.
   unsigned max_pdcch_alloc_attempts_per_slot = std::max(MAX_DL_PDCCH_PDUS_PER_SLOT, MAX_UL_PDCCH_PDUS_PER_SLOT);
-  /// Number of UEs pre-selected for PDSCH newTx scheduling in each slot.
-  unsigned nof_preselected_newtx_ues = 32;
-  /// \brief Period in slots at which the pre-selected newTx UE candidates are recomputed.
-  ///
-  /// Increasing this value will mean that the same list of UE candidates is used for more slots. Reducing this value
-  /// may improve latency but it will reduce the efficiency of UCI multiplexing, as there will be less HARQ-ACK bits
-  /// per slot.
-  unsigned newtx_ues_selection_period = 3;
   /// CQI offset increment used in outer loop link adaptation (OLLA) algorithm. If set to zero, OLLA is disabled.
   float olla_cqi_inc{0.001};
   /// DL Target BLER to be achieved with OLLA.
@@ -216,6 +224,11 @@ struct du_high_unit_pusch_config {
   /// Maximum modulation and coding scheme index for C-RNTI PUSCH allocations. To set a fixed MCS, set \c min_ue_mcs
   /// equal to the \c max_ue_mcs.
   unsigned max_ue_mcs = 28;
+  /// Set UL HARQ Mode B in NTN cell.
+  /// HARQ mode B allows scheduling and reusing a HARQ process before the RTT of the previous HARQ process has elapsed.
+  bool harq_mode_b = false;
+  /// Number of UE UL HARQ processes.
+  unsigned nof_harqs = 16;
   /// Maximum number of times a UL HARQ process can be retransmitted, before it gets discarded.
   unsigned max_nof_harq_retxs = 4;
   /// \brief Maximum time, in milliseconds, between a CRC=KO and the scheduler allocating the respective HARQ for
@@ -297,10 +310,6 @@ struct du_high_unit_pusch_config {
   unsigned min_k2 = 4;
   /// Maximum number of PUSCH grants per slot.
   unsigned max_puschs_per_slot = MAX_PUSCH_PDUS_PER_SLOT;
-  /// Number of UEs pre-selected for PUSCH newTx scheduling in each slot.
-  unsigned nof_preselected_newtx_ues = 32;
-  /// \brief Period in slots at which the pre-selected newTx UE candidates are recomputed.
-  unsigned newtx_ues_selection_period = 1;
   /// \brief Direct Current (DC) offset, in number of subcarriers, used in PUSCH.
   ///
   /// The numerology of the active UL BWP is used as a reference to determine the number of subcarriers.
@@ -438,7 +447,9 @@ struct du_high_unit_pucch_config {
   /// Set true for PUCCH Format 4 additional DM-RS.
   bool f4_additional_dmrs = false;
   /// Set true to use pi/2-BPSK as the modulation for PUCCH Format 4.
-  bool     f4_pi2_bpsk   = false;
+  bool f4_pi2_bpsk = false;
+  /// Enable Orthogonal Cover Code multiplexing for PUCCH Format 4.
+  bool     f4_enable_occ = false;
   unsigned f4_occ_length = 2;
   /// @}
 
@@ -461,6 +472,40 @@ struct du_high_unit_pucch_config {
   float pucch_f0_sinr_target_dB{10.0f};
   float pucch_f2_sinr_target_dB{6.0f};
   float pucch_f3_sinr_target_dB{1.0f};
+
+  template <typename T>
+  bool almost_equal(T a, T b) const
+  {
+    // This is only to detect if a given parameter differs from the default value.
+    constexpr T tolerance = 0.01;
+    return std::fabs(a - b) <= tolerance;
+  }
+
+  bool operator==(const du_high_unit_pucch_config& rhs) const
+  {
+    return p0_nominal == rhs.p0_nominal && pucch_resource_common == rhs.pucch_resource_common &&
+           use_format_0 == rhs.use_format_0 && set1_format == rhs.set1_format &&
+           nof_ue_pucch_res_harq_per_set == rhs.nof_ue_pucch_res_harq_per_set &&
+           nof_cell_harq_pucch_sets == rhs.nof_cell_harq_pucch_sets &&
+           nof_cell_sr_resources == rhs.nof_cell_sr_resources && nof_cell_csi_resources == rhs.nof_cell_csi_resources &&
+           almost_equal<float>(sr_period_msec, rhs.sr_period_msec) &&
+           f0_intraslot_freq_hopping == rhs.f0_intraslot_freq_hopping && f1_enable_occ == rhs.f1_enable_occ &&
+           f1_nof_cyclic_shifts == rhs.f1_nof_cyclic_shifts &&
+           f1_intraslot_freq_hopping == rhs.f1_intraslot_freq_hopping && f2_max_nof_rbs == rhs.f2_max_nof_rbs &&
+           f2_max_payload_bits == rhs.f2_max_payload_bits && f2_max_code_rate == rhs.f2_max_code_rate &&
+           f2_intraslot_freq_hopping == rhs.f2_intraslot_freq_hopping && f3_max_nof_rbs == rhs.f3_max_nof_rbs &&
+           f3_max_payload_bits == rhs.f3_max_payload_bits && f3_max_code_rate == rhs.f3_max_code_rate &&
+           f3_intraslot_freq_hopping == rhs.f3_intraslot_freq_hopping && f3_additional_dmrs == rhs.f3_additional_dmrs &&
+           f3_pi2_bpsk == rhs.f3_pi2_bpsk && f4_max_code_rate == rhs.f4_max_code_rate &&
+           f4_intraslot_freq_hopping == rhs.f4_intraslot_freq_hopping && f4_additional_dmrs == rhs.f4_additional_dmrs &&
+           f4_pi2_bpsk == rhs.f4_pi2_bpsk && f4_enable_occ == rhs.f4_enable_occ && f4_occ_length == rhs.f4_occ_length &&
+           min_k1 == rhs.min_k1 && max_consecutive_kos == rhs.max_consecutive_kos &&
+           enable_closed_loop_pw_control == rhs.enable_closed_loop_pw_control &&
+           almost_equal<float>(pucch_f0_sinr_target_dB, rhs.pucch_f0_sinr_target_dB) &&
+           almost_equal<float>(pucch_f2_sinr_target_dB, rhs.pucch_f2_sinr_target_dB) &&
+           almost_equal<float>(pucch_f3_sinr_target_dB, rhs.pucch_f3_sinr_target_dB);
+  }
+  bool operator!=(const du_high_unit_pucch_config& rhs) const { return !(*this == rhs); }
 };
 
 struct du_high_unit_srs_config {
@@ -494,6 +539,8 @@ struct du_high_unit_srs_config {
   /// Values: {1, 2, 3, 5, 6, 10, 15, 30}.
   /// Refer to Section 6.4.1.4.2, TS 38.211 for the definition of "sequenceId".
   unsigned sequence_id_reuse_factor = 1;
+  /// \c p0, TS 38.331. Value in dBm. Only even values allowed within {-202,...,24}.
+  int p0 = -84;
 };
 
 /// Parameters that are used to initialize or build the \c PhysicalCellGroupConfig, TS 38.331.
@@ -786,9 +833,8 @@ struct du_high_unit_prach_config {
   /// Ports list for PRACH reception.
   std::vector<uint8_t> ports = {0};
   /// Indicates the number of SSBs per RACH occasion (L1 parameter 'SSB-per-rach-occasion'). See TS 38.331, \c
-  /// ssb-perRACH-OccasionAndCB-PreamblesPerSSB. Values {1/8, 1/4, 1/2, 1, 2, 4, 8, 16}.
-  /// Value 1/8 corresponds to one SSB associated with 8 RACH occasions and so on so forth.
-  float nof_ssb_per_ro = 1;
+  /// ssb-perRACH-OccasionAndCB-PreamblesPerSSB.
+  ssb_per_rach_occasions nof_ssb_per_ro = ssb_per_rach_occasions::one;
   /// Indicates the number of Contention Based preambles per SSB (L1 parameter 'CB-preambles-per-SSB'). See TS 38.331,
   /// \c ssb-perRACH-OccasionAndCB-PreamblesPerSSB.
   /// \remark Values of \c cb_preambles_per_ssb depends on value of \c ssb_per_ro.
@@ -808,6 +854,16 @@ struct du_high_unit_cell_slice_sched_config {
   unsigned priority = 0;
   /// Policy scheduler parameters for the slice. Default: Time-domain round robin.
   std::optional<policy_scheduler_expert_config> slice_policy_sched_cfg;
+};
+
+/// Radio Link Monitoring Config for a cell.
+struct du_high_unit_rlm_config {
+  /// Resource type used for Radio Resource Monitoring.
+  /// "default_type" sets the default resources (the same as used for TCI states for PDCCH reception).
+  /// "ssb" sets the only SSB resource of the cell.
+  /// "csi_rs" sets the CSI-RS resources used for tracking, if enabled.
+  /// "ssb_and_csi_rs" sets both SSB and CSI-RS resources used for tracking.
+  rlm_resource_type resource_type = rlm_resource_type::default_type;
 };
 
 /// Slice configuration for a cell.
@@ -887,6 +943,8 @@ struct du_high_unit_base_cell_config {
   std::vector<du_high_unit_cell_slice_config> slice_cfg;
   /// NTN configuration.
   std::optional<ntn_config> ntn_cfg;
+  /// Radio Link Monitoring configuration.
+  du_high_unit_rlm_config rlm_cfg;
 };
 
 struct du_high_unit_test_mode_ue_config {
@@ -931,8 +989,6 @@ struct du_high_unit_metrics_layer_config {
   bool enable_scheduler = true;
   bool enable_rlc       = false;
   bool enable_mac       = false;
-  /// Whether to log performace metrics of the DU-high executors.
-  bool enable_executor_log_metrics = false;
 
   /// Returns true if one or more layers are enabled, otherwise false.
   bool are_metrics_enabled() const { return enable_scheduler || enable_rlc || enable_mac; }
@@ -986,9 +1042,6 @@ struct du_high_unit_execution_queues_config {
 struct du_high_unit_expert_execution_config {
   /// \brief Task executor configuration for the DU.
   du_high_unit_execution_queues_config du_queue_cfg;
-
-  /// \brief Whether to enable tracing of the DU-high executors.
-  bool executor_tracing_enable = false;
 };
 
 /// RLC UM TX configuration
@@ -1079,6 +1132,8 @@ struct du_high_unit_config {
   du_high_unit_metrics_config metrics;
   /// Loggers.
   du_high_unit_logger_config loggers;
+  /// Tracer.
+  du_high_unit_tracer_config tracer;
   /// Configuration for testing purposes.
   du_high_unit_test_mode_config test_mode_cfg = {};
   /// \brief Cell configuration.

@@ -25,6 +25,7 @@
 #include "../du_cell_manager.h"
 #include "../du_ue/du_ue_manager_repository.h"
 #include "srsran/du/du_high/du_manager/du_configurator.h"
+#include "srsran/mac/mac_cell_manager.h"
 
 namespace srsran {
 namespace srs_du {
@@ -47,11 +48,12 @@ private:
   async_task<gnbdu_config_update_response> handle_f1_gnbdu_config_update();
 
   /// Helper to update MAC of the new cell parameters.
-  async_task<mac_cell_reconfig_response> handle_mac_cell_update(const du_cell_reconfig_result& changed_cell);
+  async_task<mac_cell_reconfig_response> handle_mac_cell_update(const du_cell_reconfig_result& changed_cell) const;
 
   const du_param_config_request request;
   const du_manager_params&      du_params;
   du_cell_manager&              du_cells;
+  error_type<std::string>       req_validation_outcome;
   srslog::basic_logger&         logger;
 
   unsigned next_cell_idx = 0;

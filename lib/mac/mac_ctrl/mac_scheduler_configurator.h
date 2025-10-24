@@ -32,7 +32,6 @@ class scheduler_cell_metrics_notifier;
 
 struct mac_scheduler_cell_creation_request {
   const mac_cell_creation_request& cell_params;
-  std::chrono::milliseconds        metric_report_period;
   scheduler_cell_metrics_notifier* metric_notifier;
 };
 

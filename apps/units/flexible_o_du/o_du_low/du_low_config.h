@@ -26,7 +26,6 @@
 #include "apps/services/worker_manager/os_sched_affinity_manager.h"
 #include <optional>
 #include <string>
-#include <vector>
 
 namespace srsran {
 
@@ -85,7 +84,9 @@ struct du_low_unit_expert_upper_phy_config {
   /// An uplink slot is considered empty when it does not contain PUCCH/PUSCH/SRS PDUs.
   bool allow_request_on_empty_uplink_slot = false;
   /// Enables the PHY tap plugin if present.
-  bool enable_phy_tap = true;
+  bool enable_phy_tap = false;
+  /// PHY tap plugin arguments.
+  std::string phy_tap_arguments = "";
 };
 
 /// DU low logging functionalities.
@@ -106,10 +107,10 @@ struct du_low_unit_logger_config {
   bool phy_rx_symbols_prach = false;
 };
 
-/// CPU affinities configuration for the cell.
-struct du_low_unit_cpu_affinities_cell_config {
-  /// L1 downlink workers CPU affinity mask.
-  os_sched_affinity_config l1_dl_cpu_cfg = {sched_affinity_mask_types::l1_dl, {}, sched_affinity_mask_policy::mask};
+/// DU low tracing functionalities.
+struct du_low_unit_tracer_config {
+  /// \brief Whether to enable tracing of the physical layer executors.
+  bool executor_tracing_enable = false;
 };
 
 /// Expert threads configuration of the gNB app.
@@ -172,10 +173,6 @@ struct du_low_unit_expert_threads_config {
 struct du_low_unit_expert_execution_config {
   /// Expert thread configuration of the gNB app.
   du_low_unit_expert_threads_config threads;
-  /// \brief CPU affinities per cell of the gNB app.
-  ///
-  /// \note Add one cell by default.
-  std::vector<du_low_unit_cpu_affinities_cell_config> cell_affinities = {{}};
 };
 
 /// Hardware-accelerated PDSCH encoder configuration of the DU low.
@@ -244,14 +241,15 @@ struct du_low_unit_hal_config {
 /// Metrics configuration of the DU low.
 struct du_low_unit_metrics_config {
   app_helpers::metrics_config common_metrics_cfg;
-  bool                        enable_du_low    = false;
-  unsigned                    du_report_period = 1000;
+  bool                        enable_du_low = false;
 };
 
 /// DU low configuration.
 struct du_low_unit_config {
   /// Loggers.
   du_low_unit_logger_config loggers;
+  /// Tracers.
+  du_low_unit_tracer_config tracer;
   /// Expert physical layer configuration.
   du_low_unit_expert_upper_phy_config expert_phy_cfg;
   /// Expert execution parameters for the DU low.

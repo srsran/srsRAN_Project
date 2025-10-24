@@ -80,8 +80,6 @@ struct ru_sdr_unit_logger_config {
 struct ru_sdr_unit_cpu_affinities_cell_config {
   /// Radio Unit workers CPU affinity mask.
   os_sched_affinity_config ru_cpu_cfg = {sched_affinity_mask_types::ru, {}, sched_affinity_mask_policy::mask};
-  /// L1 downlink workers CPU affinity mask.
-  os_sched_affinity_config l1_dl_cpu_cfg = {sched_affinity_mask_types::l1_dl, {}, sched_affinity_mask_policy::mask};
 };
 
 /// Lower physical layer thread profiles.

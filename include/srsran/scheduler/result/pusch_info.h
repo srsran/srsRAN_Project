@@ -74,7 +74,7 @@ struct pusch_information {
   enum class dmrs_hopping_mode { no_hopping, group_hopping, sequence_hopping } dmrs_hopping_mode;
   /// Redundancy version index (see TS38.214 Table 6.1.4). Values: {0,...,3}.
   uint8_t rv_index;
-  /// HARQ process number as per TS38.212 Section 6.3.1.1. Values: {0,...,15}.
+  /// HARQ process number as per TS38.212 Section 6.3.1.1. Values: {0,...,31}.
   harq_id_t harq_id;
   /// \brief Signals whether the PUSCH PDU corresponds to an initial transmission or a retransmission of a MAC PDU for
   /// this HARQ process ID for this TB. Note: Unlike NDI, new_data does not toggle to indicate new transmission,

@@ -77,7 +77,7 @@ public:
   span<const cbf16_t> get_view(unsigned port, unsigned l) const override;
 
   /// Checks if a port is empty.
-  bool is_port_empty(unsigned i_port) const { return (empty & (1U << i_port)) != 0; }
+  bool is_port_empty(unsigned i_port) const { return (empty.load(std::memory_order_acquire) & (1U << i_port)) != 0; }
 
 private:
   const storage_type&          data;

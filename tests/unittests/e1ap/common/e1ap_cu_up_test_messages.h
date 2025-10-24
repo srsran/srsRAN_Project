@@ -51,5 +51,8 @@ e1ap_message generate_invalid_bearer_context_modification_request(unsigned cu_cp
 /// \brief Generate a dummy bearer context release command.
 e1ap_message generate_bearer_context_release_command(unsigned cu_cp_ue_e1ap_id, unsigned cu_up_ue_e1ap_id);
 
+/// \brief Generate a dummy E1 Reset message.
+e1ap_message generate_e1_reset(std::vector<std::pair<gnb_cu_cp_ue_e1ap_id_t, gnb_cu_up_ue_e1ap_id_t>> ues);
+
 } // namespace srs_cu_up
 } // namespace srsran

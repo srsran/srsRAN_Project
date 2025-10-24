@@ -40,16 +40,17 @@ public:
       return std::numeric_limits<double>::quiet_NaN();
     }
     const metrics_per_layer& temp = metrics_collection[nof_layers - 1];
-    return static_cast<double>(temp.sum_nof_re_layer) / static_cast<double>(temp.sum_elapsed_ns) * 1000.0;
+    return static_cast<double>(temp.sum_nof_re_layer.load(std::memory_order_relaxed)) /
+           static_cast<double>(temp.sum_elapsed_ns.load(std::memory_order_relaxed)) * 1000.0;
   }
 
   /// Gets the total time spent by the channel equalizer.
   std::chrono::nanoseconds get_total_time() const
   {
-    uint64_t sum_ns = std::accumulate(metrics_collection.begin(),
-                                      metrics_collection.end(),
-                                      0UL,
-                                      [](uint64_t sum, const metrics_per_layer& m) { return sum + m.sum_elapsed_ns; });
+    uint64_t sum_ns = std::accumulate(
+        metrics_collection.begin(), metrics_collection.end(), 0UL, [](uint64_t sum, const metrics_per_layer& m) {
+          return sum + m.sum_elapsed_ns.load(std::memory_order_relaxed);
+        });
     return std::chrono::nanoseconds(sum_ns);
   }
 
@@ -58,7 +59,7 @@ public:
   {
     uint64_t sum = 0;
     for (const auto& m : metrics_collection) {
-      sum += m.sum_elapsed_ns;
+      sum += m.sum_elapsed_ns.load(std::memory_order_relaxed);
     }
     return static_cast<double>(sum) / 1000.0;
   }
@@ -79,21 +80,18 @@ private:
       return;
     }
     metrics_per_layer& temp = metrics_collection[metrics.nof_layers - 1];
-    temp.sum_nof_re_layer += metrics.nof_re;
-    temp.sum_elapsed_ns += metrics.measurements.duration.count();
-    ++temp.count;
+    temp.sum_nof_re_layer.fetch_add(metrics.nof_re, std::memory_order_relaxed);
+    temp.sum_elapsed_ns.fetch_add(metrics.measurements.duration.count(), std::memory_order_relaxed);
   }
 
   struct metrics_per_layer {
     std::atomic<uint64_t> sum_nof_re_layer = {};
     std::atomic<uint64_t> sum_elapsed_ns   = {};
-    std::atomic<uint64_t> count            = {};
 
     void reset()
     {
-      sum_nof_re_layer = 0;
-      sum_elapsed_ns   = 0;
-      count            = 0;
+      sum_nof_re_layer.store(0, std::memory_order_relaxed);
+      sum_elapsed_ns.store(0, std::memory_order_relaxed);
     }
   };
 

@@ -278,9 +278,9 @@ void uci_scheduler_impl::schedule_updated_ues_ucis(cell_resource_allocator& cell
 
     // Schedule UCI up to the farthest slot.
     for (unsigned n = 0; n != cell_alloc.max_ul_slot_alloc_delay; ++n) {
-      auto& slot_ucis = periodic_uci_slot_wheel[(cell_alloc.slot_tx() + n).to_uint() % periodic_uci_slot_wheel.size()];
+      auto& slot_ucis = periodic_uci_slot_wheel[(cell_alloc.slot_tx() + n).count() % periodic_uci_slot_wheel.size()];
 
-      // Skip UCI scheduling for this UE and slot, if the maximum number of PUCCHs has been reached.
+      // Skip UCI scheduling for this UE and slot, if they collide with other resources.
       if (not has_space_for_uci_pdu(cell_alloc[n].result, rnti, cell_cfg.expert_cfg.ue)) {
         if (logger.debug.enabled()) {
           // If we want more detailed logs on the skipped allocations.

@@ -113,7 +113,7 @@ protected:
       // Radix 2.
       ditfft(out.first(N / 2), in, table, N / 2, 2 * s);
       ditfft(out.last(N / 2), in.last(in.size() - s), table, N / 2, 2 * s);
-      for (unsigned k = 0; k != N / 2; ++k) {
+      for (unsigned k = 0, k_end = N / 2; k != k_end; ++k) {
         cf_t p         = out[k];
         cf_t q         = table[k * (table.size() / N)] * out[k + N / 2];
         out[k]         = p + q;
@@ -148,7 +148,7 @@ protected:
       exp[idx] = std::polar(1.0F, sign * TWOPI * static_cast<float>(idx) / N);
     }
 
-    // Compute theoretical discrete fourier transform.
+    // Compute theoretical discrete Fourier transform.
     ditfft(output, input, exp, N, 1);
   }
 };

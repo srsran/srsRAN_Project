@@ -89,9 +89,10 @@ struct pdcp_tx_state {
 
 /// Helper struct to pass buffer to security functions.
 struct pdcp_tx_buffer_info {
-  byte_buffer       buf;     /// In/Out parameter for SDU+Header/PDU.
+  bool              is_retx;
+  uint16_t          retx_id; /// ID used to identify if PDU is out of date.
   uint32_t          count;   /// COUNT associated with this SDU/PDU.
-  uint32_t          retx_id; /// ID used to identify if PDU is out of date.
+  byte_buffer       buf;     /// In/Out parameter for SDU+Header/PDU.
   pdcp_crypto_token token;   /// Crypto token to count in-flight PDUs.
 };
 
@@ -156,6 +157,7 @@ public:
       logger.log_warning("Status transfer applied to bearer with non-zero state. st={} count={}", st, count);
     }
     st = {count, count, count, count, count};
+    logger.log_info("Setted PDCP TX state. {}", st);
   }
 
   // Tx/Rx interconnect
@@ -248,7 +250,7 @@ private:
   uint32_t      max_nof_crypto_workers;
 
   /// Id used to identify out of date PDUs after a retransmission.
-  uint32_t retransmit_id = 0;
+  uint16_t retransmit_id = 0;
 
   using sec_engine_vec = std::vector<std::unique_ptr<security::security_engine_tx>>;
   sec_engine_vec sec_engine_pool;
@@ -265,14 +267,14 @@ private:
 
   /// Apply ciphering and integrity protection to SDU+header buffer.
   /// It will pass this buffer to the crypto engine for parallization.
-  void apply_reordering(pdcp_tx_buffer_info buf_info, bool is_retx);
+  void apply_reordering(pdcp_tx_buffer_info buf_info);
 
   void write_data_pdu_to_lower_layers(pdcp_tx_pdu_info&& pdu, bool is_retx);
 
   void write_control_pdu_to_lower_layers(byte_buffer buf);
 
   /// TODO add docs
-  void apply_security(pdcp_tx_buffer_info buf_info, bool is_retx);
+  void apply_security(pdcp_tx_buffer_info buf_info);
 
   /// Apply ciphering and integrity protection to the payload
   security::security_result apply_ciphering_and_integrity_protection(byte_buffer buf, uint32_t count);

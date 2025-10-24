@@ -37,26 +37,3 @@
     - local_path: ${GNB_BUILD_PATH}/apps/gnb/gnb
       remote_path: /usr/local/bin/gnb
       is_executable: true
-
-- name: metrics-server
-  type: generic
-  requirements:
-    cpu:
-      requests: 1
-      limits: 1
-    memory:
-      requests: "500Mi"
-    ephemeral-storage:
-      requests: "1G"
-  labels: ["kubernetes.io/hostname=k8s-worker-uhd1"]
-  environment:
-    - TELEGRAF_INPUT_INTERVAL: ${TELEGRAF_INPUT_INTERVAL}
-    - TELEGRAF_OUTPUT_INTERVAL: ${TELEGRAF_OUTPUT_INTERVAL}
-    - TELEGRAF_BUFFER_LIMIT: "${TELEGRAF_BUFFER_LIMIT}"
-    - INFLUXDB3_RATE_LIMIT: "${INFLUXDB3_RATE_LIMIT}"
-    - INFLUXDB3_RATE_LIMIT_PERIOD: ${INFLUXDB3_RATE_LIMIT_PERIOD}
-    - INFLUXDB3_EXTERNAL_URL: ${INFLUXDB3_EXTERNAL_URL}
-    - INFLUXDB3_BUCKET: ${INFLUXDB3_BUCKET}
-    - INFLUXDB3_TESTBED: ${CI_JOB_NAME_SLUG}
-    - INFLUXDB3_AUTH_TOKEN: ${INFLUXDB3_AUTH_TOKEN}
-  image: registry.gitlab.com/softwareradiosystems/srsgnb/telegraf:${SRS_TELEGRAF_VERSION}

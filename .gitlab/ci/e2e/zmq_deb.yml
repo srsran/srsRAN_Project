@@ -10,12 +10,12 @@
   type: ue
   image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${RETINA_VERSION}
   labels:
-    - ${ZMQ_HOSTLABEL_0}
+    - ${ZMQ_HOSTLABEL}
   nof_ports: 4
   requirements:
     cpu:
-      requests: 5
-      limits: 5
+      requests: 6
+      limits: 6
     memory:
       requests: "26G"
       limits: "26G"
@@ -25,7 +25,7 @@
   resources:
     - type: zmq
     - type: license
-      model: amarisoft-5g
+      model: amarisoft-ue.*
   shared_files:
     - local_path: ${AMARISOFT_TXRX_BINARY_PATH}
       remote_path: /opt/lteue/trx_srsran.so
@@ -35,11 +35,11 @@
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/agent-ubuntu-${UBUNTU_VERSION}:${RETINA_VERSION}
   labels:
-    - ${ZMQ_HOSTLABEL_0}
+    - ${ZMQ_HOSTLABEL}
   requirements:
     cpu:
-      requests: 5
-      limits: 5
+      requests: 6
+      limits: 6
     memory:
       requests: "26G"
       limits: "26G"
@@ -57,8 +57,8 @@
   type: 5gc
   requirements:
     cpu:
-      requests: 1
-      limits: 1
+      requests: 2
+      limits: 2
     memory:
       requests: "8G"
       limits: "8G"
@@ -67,4 +67,4 @@
       limits: "6G"
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
   labels:
-    - ${ZMQ_HOSTLABEL_0}
+    - ${ZMQ_HOSTLABEL}

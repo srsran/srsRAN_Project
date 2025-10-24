@@ -58,9 +58,6 @@ protected:
   /// \brief Helper method to setup a bearer at the CU-UP
   void setup_bearer(unsigned cu_cp_ue_e1ap_id);
 
-  /// Dummy E1AP gateway to connect to CU-CP and send E1AP PDUs.
-  dummy_e1_connection_client e1ap_gw;
-
   timer_manager timers;
 
   srslog::basic_logger& e1ap_logger = srslog::fetch_basic_logger("E1AP");
@@ -69,6 +66,9 @@ protected:
   dummy_e1ap_cu_up_notifier       cu_up_notifier;
   manual_task_worker              cu_up_worker{128};
   std::unique_ptr<e1ap_interface> e1ap;
+
+  /// Dummy E1AP gateway to connect to CU-CP and send E1AP PDUs.
+  dummy_e1_connection_client e1ap_gw;
 };
 
 } // namespace srs_cu_up

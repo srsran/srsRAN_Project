@@ -23,7 +23,7 @@
 #include "cu_up_impl.h"
 #include "cu_up_manager_impl.h"
 #include "ngu_session_manager_impl.h"
-#include "routines/initial_cu_up_setup_routine.h"
+#include "routines/cu_up_setup_routine.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_factory.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
 #include "srsran/gtpu/gtpu_echo_factory.h"
@@ -48,11 +48,12 @@ static void assert_cu_up_dependencies_valid(const cu_up_dependencies& dependenci
 
 static cu_up_manager_impl_config generate_cu_up_manager_impl_config(const cu_up_config& config)
 {
-  return {config.qos, config.n3_cfg, config.test_mode_cfg};
+  return {config.cu_up_id, config.cu_up_name, config.plmn, config.qos, config.n3_cfg, config.test_mode_cfg};
 }
 
 static cu_up_manager_impl_dependencies
-generate_cu_up_manager_impl_dependencies(const cu_up_dependencies&  dependencies,
+generate_cu_up_manager_impl_dependencies(std::atomic<bool>&         stop_command,
+                                         const cu_up_dependencies&  dependencies,
                                          e1ap_interface&            e1ap,
                                          gtpu_demux&                ngu_demux,
                                          ngu_session_manager&       ngu_session_mngr,
@@ -60,7 +61,8 @@ generate_cu_up_manager_impl_dependencies(const cu_up_dependencies&  dependencies
                                          gtpu_teid_pool&            f1u_teid_allocator,
                                          fifo_async_task_scheduler& main_ctrl_loop)
 {
-  return {e1ap,
+  return {stop_command,
+          e1ap,
           ngu_demux,
           ngu_session_mngr,
           n3_teid_allocator,
@@ -140,10 +142,15 @@ cu_up::cu_up(const cu_up_config& config_, const cu_up_dependencies& dependencies
                      dependencies.exec_mapper->ctrl_executor());
 
   /// > Create CU-UP manager
-  cu_up_mng = std::make_unique<cu_up_manager_impl>(
-      generate_cu_up_manager_impl_config(cfg),
-      generate_cu_up_manager_impl_dependencies(
-          dependencies, *e1ap, *ngu_demux, *ngu_session_mngr, *n3_teid_allocator, *f1u_teid_allocator, main_ctrl_loop));
+  cu_up_mng = std::make_unique<cu_up_manager_impl>(generate_cu_up_manager_impl_config(cfg),
+                                                   generate_cu_up_manager_impl_dependencies(stop_command,
+                                                                                            dependencies,
+                                                                                            *e1ap,
+                                                                                            *ngu_demux,
+                                                                                            *ngu_session_mngr,
+                                                                                            *n3_teid_allocator,
+                                                                                            *f1u_teid_allocator,
+                                                                                            main_ctrl_loop));
 
   /// > Connect E1AP to CU-UP manager
   e1ap_cu_up_mng_adapter.connect_cu_up_manager(*cu_up_mng);
@@ -174,12 +181,13 @@ void cu_up::start()
   std::promise<void> p;
   std::future<void>  fut = p.get_future();
 
-  if (not ctrl_executor.execute([this, &p]() {
-        main_ctrl_loop.schedule([this, &p](coro_context<async_task<void>>& ctx) {
+  bool connected = false;
+  if (not ctrl_executor.execute([this, &p, &connected]() {
+        main_ctrl_loop.schedule([this, &p, &connected](coro_context<async_task<void>>& ctx) {
           CORO_BEGIN(ctx);
 
           // Connect to CU-CP and send E1 Setup Request and await for E1 setup response.
-          CORO_AWAIT(launch_async<initial_cu_up_setup_routine>(cfg, *e1ap));
+          CORO_AWAIT_VALUE(connected, launch_async<cu_up_setup_routine>(cfg.cu_up_id, cfg.cu_up_name, cfg.plmn, *e1ap));
 
           if (cfg.test_mode_cfg.enabled) {
             logger.info("enabling test mode...");
@@ -198,7 +206,9 @@ void cu_up::start()
 
   // Block waiting for CU-UP setup to complete.
   fut.wait();
-
+  if (not connected) {
+    report_error("CU-UP failed to connect to CU-CP");
+  }
   logger.info("CU-UP started successfully");
 }
 
@@ -244,6 +254,7 @@ void cu_up::stop()
   };
 
   // Dispatch task to stop CU-UP main loop.
+  stop_command = true;
   defer_until_success(ctrl_executor, timers, stop_cu_up_main_loop);
 
   // Wait until the all tasks of the main loop are completed and main loop has stopped.
@@ -268,10 +279,6 @@ async_task<void> cu_up::handle_stop_command()
 
   return launch_async([this](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
-
-    // Stop dedicated executor for control TEID.
-    CORO_AWAIT(echo_exec_mapper->stop());
-    echo_exec_mapper = nullptr;
 
     // Stop CU-UP manager and remove all UEs.
     CORO_AWAIT(cu_up_mng->stop());

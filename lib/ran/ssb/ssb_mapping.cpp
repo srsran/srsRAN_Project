@@ -68,13 +68,16 @@ crb_interval srsran::get_ssb_crbs(subcarrier_spacing    ssb_scs,
                                   ssb_subcarrier_offset k_ssb)
 {
   report_fatal_error_if_not(ssb_scs == scs_common, "Mixed numerology not supported");
-  report_fatal_error_if_not(scs_common <= subcarrier_spacing::kHz30, "Only FR1 frequency supported");
+  report_fatal_error_if_not((scs_common <= subcarrier_spacing::kHz30) || (scs_common == subcarrier_spacing::kHz120),
+                            "{} subcarrier spacing for SCScommon is not supported",
+                            to_string(scs_common));
 
   // With SCScommon kHz30, offset_to_pointA must be a multiple of 2. This is because it is measured in 15kHz RB, while
   // it points at a CRB which is based on 30kHz.
-  if (scs_common == subcarrier_spacing::kHz30) {
+  if ((scs_common == subcarrier_spacing::kHz30) || ((scs_common == subcarrier_spacing::kHz120))) {
     srsran_sanity_check(offset_to_pA.to_uint() % 2 == 0,
-                        "With SCScommon with 30kHz OffsetToPointA must be an even number");
+                        "With SCScommon with {} OffsetToPointA must be an even number",
+                        to_string(scs_common));
   }
   unsigned ssb_crbs_start =
       scs_common == subcarrier_spacing::kHz15 ? offset_to_pA.to_uint() : offset_to_pA.to_uint() / 2;

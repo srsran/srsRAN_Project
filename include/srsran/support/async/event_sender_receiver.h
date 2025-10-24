@@ -33,7 +33,7 @@ class event_receiver;
 template <typename Data>
 class event_sender
 {
-  event_sender(event_receiver<Data>& receiver_) : receiver(&receiver_) {}
+  explicit event_sender(event_receiver<Data>& receiver_) : receiver(&receiver_) {}
 
 public:
   event_sender(const event_sender<Data>&) = delete;
@@ -44,6 +44,7 @@ public:
     receiver = std::exchange(other.receiver, nullptr);
     return *this;
   }
+
   ~event_sender()
   {
     if (receiver != nullptr) {
@@ -69,7 +70,7 @@ private:
 template <>
 class event_sender<void>
 {
-  event_sender(event_receiver<void>& receiver_) : receiver(&receiver_) {}
+  explicit event_sender(event_receiver<void>& receiver_) : receiver(&receiver_) {}
 
 public:
   event_sender(const event_sender<void>&) = delete;
@@ -80,6 +81,7 @@ public:
     receiver = std::exchange(other.receiver, nullptr);
     return *this;
   }
+
   ~event_sender();
 
   void set();
@@ -96,11 +98,13 @@ class event_receiver
   enum class state_t : int8_t { uninit, unset, cancelled, set };
 
 public:
-  event_receiver()                                 = default;
+  event_receiver() = default;
+
   event_receiver(const event_receiver&)            = delete;
   event_receiver(event_receiver&&)                 = delete;
   event_receiver& operator=(const event_receiver&) = delete;
   event_receiver& operator=(event_receiver&&)      = delete;
+
   ~event_receiver()
   {
     srsran_assert(state != state_t::unset, "Event receiver destroyed without being set or cancelled");
@@ -123,7 +127,7 @@ public:
     return data.value();
   }
 
-  // Awaiter/Awaitable interface.
+  /// Awaiter/Awaitable interface.
   event_receiver<Data>& get_awaiter() { return *this; }
   bool                  await_ready() const { return completed(); }
   void                  await_suspend(coro_handle<> c)
@@ -147,6 +151,7 @@ private:
       suspended_handle.resume();
     }
   }
+
   void cancel()
   {
     srsran_assert(state == state_t::unset, "The event cannot be set multiple times");
@@ -169,11 +174,13 @@ class event_receiver<void>
   enum class state_t : int8_t { uninit, unset, cancelled, set };
 
 public:
-  event_receiver()                                 = default;
+  event_receiver() = default;
+
   event_receiver(const event_receiver&)            = delete;
   event_receiver(event_receiver&&)                 = delete;
   event_receiver& operator=(const event_receiver&) = delete;
   event_receiver& operator=(event_receiver&&)      = delete;
+
   ~event_receiver()
   {
     srsran_assert(state != state_t::unset, "Event receiver destroyed without being set or cancelled");
@@ -190,7 +197,7 @@ public:
   bool successful() const { return state == state_t::set; }
   bool aborted() const { return state == state_t::cancelled; }
 
-  // Awaiter/Awaitable interface.
+  /// Awaiter/Awaitable interface.
   event_receiver<void>& get_awaiter() { return *this; }
   bool                  await_ready() const { return completed(); }
   void                  await_suspend(coro_handle<> c)
@@ -213,6 +220,7 @@ private:
       suspended_handle.resume();
     }
   }
+
   void cancel()
   {
     srsran_assert(state == state_t::unset, "The event cannot be set multiple times");

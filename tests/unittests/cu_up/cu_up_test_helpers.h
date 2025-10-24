@@ -56,14 +56,6 @@ class dummy_cu_up_executor_mapper final : public srs_cu_up::cu_up_executor_mappe
     task_executor& dl_pdu_executor() override { return *exec; }
     task_executor& crypto_executor() override { return *exec; }
 
-    async_task<void> stop() override
-    {
-      return launch_async([](coro_context<async_task<void>>& ctx) {
-        CORO_BEGIN(ctx);
-        CORO_RETURN();
-      });
-    }
-
     task_executor* exec;
   };
 

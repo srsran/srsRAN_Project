@@ -102,6 +102,17 @@ private:
   unsigned select_srs_nof_ports(du_cell_index_t cell_idx) const;
   /// Selects the PUSCH maximum number of layers.
   unsigned select_pusch_max_rank(du_cell_index_t cell_idx) const;
+  /// Selects the maximum number of DL HARQ processes.
+  unsigned select_max_dl_nof_harqs(du_cell_index_t cell_idx) const;
+  /// Selects the maximum number of DL HARQ processes.
+  unsigned select_max_ul_nof_harqs(du_cell_index_t cell_idx) const;
+  /// Selects the DL HARQ Process Number field size.
+  unsigned select_dl_dci_harq_num_field_size(du_cell_index_t cell_idx) const;
+  /// Selects the UL HARQ Process Number field size.
+  unsigned select_ul_dci_harq_num_field_size(du_cell_index_t cell_idx) const;
+  /// Selects the UL HARQ Mode B.
+  bool select_ul_harq_mode_b(du_cell_index_t cell_idx) const;
+
   // Updates the DRX config of the UE.
   void update_drx(du_ue_resource_config& ue_res_cfg);
 

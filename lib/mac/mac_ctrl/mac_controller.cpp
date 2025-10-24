@@ -26,6 +26,8 @@
 #include "ue_creation_procedure.h"
 #include "ue_reconfiguration_procedure.h"
 #include "srsran/mac/mac_clock_controller.h"
+#include "srsran/ran/tdd/tdd_ul_dl_config.h"
+#include "fmt/base.h"
 
 using namespace srsran;
 
@@ -51,11 +53,15 @@ mac_cell_controller& mac_controller::add_cell(const mac_cell_creation_request& c
   auto cell_time_source = time_ctrl.add_cell(cell_add_req.cell_index);
 
   // Add cell to metrics reports.
-  auto cell_metrics_cfg = metrics.add_cell(cell_add_req.cell_index, cell_add_req.scs_common, *cell_time_source);
+  unsigned tdd_period_slots = cell_add_req.sched_req.tdd_ul_dl_cfg_common.has_value()
+                                  ? nof_slots_per_tdd_period(*cell_add_req.sched_req.tdd_ul_dl_cfg_common)
+                                  : 0U;
+
+  auto cell_metrics_cfg =
+      metrics.add_cell(cell_add_req.cell_index, cell_add_req.scs_common, tdd_period_slots, *cell_time_source);
 
   // > Fill sched cell configuration message and pass it to the scheduler.
-  sched_cfg.add_cell(mac_scheduler_cell_creation_request{
-      cell_add_req, cell_metrics_cfg.report_period, cell_metrics_cfg.sched_notifier});
+  sched_cfg.add_cell(mac_scheduler_cell_creation_request{cell_add_req, cell_metrics_cfg.sched_notifier});
 
   // > Create MAC Cell DL Handler.
   return dl_unit.add_cell(cell_add_req,

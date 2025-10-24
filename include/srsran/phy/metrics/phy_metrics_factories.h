@@ -26,7 +26,6 @@
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsran/phy/upper/channel_processors/pdsch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
-#include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
 #include "srsran/phy/upper/upper_phy_factories.h"
 
 namespace srsran {

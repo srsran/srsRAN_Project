@@ -62,6 +62,7 @@ variables:
     ENABLE_RTSAN: "" # Empty for cmake default
     ENABLE_WERROR: "" # Empty for cmake default
     ENABLE_PLUGINS: "" # Empty for cmake default
+    TEST_GDB_PRINTERS: "" # Empty for cmake default
     FORCE_DEBUG_INFO: "" # Empty for cmake default
     MARCH: "" # Empty for cmake default
     MTUNE: "" # Empty for cmake default
@@ -93,8 +94,8 @@ variables:
         ENABLE_UHD ENABLE_DPDK ENABLE_ZEROMQ \
         ENABLE_ASAN ENABLE_TSAN ENABLE_GCOV \
         ENABLE_UBSAN ENABLE_UBSAN_MIN ENABLE_RTSAN \
-        ENABLE_WERROR ENABLE_PLUGINS FORCE_DEBUG_INFO \
-        MARCH MTUNE \
+        ENABLE_WERROR ENABLE_PLUGINS TEST_GDB_PRINTERS \
+        FORCE_DEBUG_INFO MARCH MTUNE \
       ; do
         if [ -n "${!var}" ]; then
           BUILD_ARGS="-D${var}=${!var} ${BUILD_ARGS}"

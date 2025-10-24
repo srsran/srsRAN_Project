@@ -40,12 +40,12 @@ public:
 
   void notify_push()
   {
-    // do nothing.
+    // Do nothing.
   }
 
   void notify_pop()
   {
-    // do nothing.
+    // Do nothing.
   }
 
   template <typename HasSpace>
@@ -75,7 +75,7 @@ private:
   std::chrono::microseconds sleep_time;
 };
 
-// Barrier implementation based on condition variable.
+/// Barrier implementation based on condition variable.
 struct queue_cond_var_barrier {
 public:
   void request_stop()

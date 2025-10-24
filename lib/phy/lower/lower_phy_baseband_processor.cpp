@@ -29,10 +29,10 @@ using namespace srsran;
 
 lower_phy_baseband_processor::lower_phy_baseband_processor(const lower_phy_baseband_processor::configuration& config) :
   srate(config.srate),
+  nof_samples_per_super_frame(config.srate.to_kHz() * NOF_SFNS * NOF_SUBFRAMES_PER_FRAME),
   rx_buffer_size(config.rx_buffer_size),
   slot_duration(1000 / pow2(to_numerology_value(config.scs))),
-  cpu_throttling_time(static_cast<uint64_t>(config.system_time_throttling * 1e6) /
-                      pow2(to_numerology_value(config.scs))),
+  system_time_throttling_ratio(config.system_time_throttling),
   rx_executor(*config.rx_task_executor),
   tx_executor(*config.tx_task_executor),
   uplink_executor(*config.ul_task_executor),
@@ -69,10 +69,10 @@ lower_phy_baseband_processor::lower_phy_baseband_processor(const lower_phy_baseb
   }
 }
 
-void lower_phy_baseband_processor::start(baseband_gateway_timestamp init_time, bool start_with_sfn0)
+void lower_phy_baseband_processor::start(baseband_gateway_timestamp init_time, baseband_gateway_timestamp sfn0_ref_time)
 {
   // If it is required to start with system frame number 0, then set a time offset to start an SFN earlier.
-  start_time_sfn0   = start_with_sfn0 ? (init_time - NOF_SUBFRAMES_PER_FRAME * srate.to_kHz()) : 0;
+  start_time_sfn0   = sfn0_ref_time;
   last_rx_timestamp = init_time;
 
   rx_state.start();
@@ -117,18 +117,27 @@ void lower_phy_baseband_processor::dl_process(baseband_gateway_timestamp timesta
   }
 
   // Throttling mechanism to slow down the baseband processing.
-  if ((cpu_throttling_time.count() > 0) && (last_tx_time.has_value())) {
+  if ((system_time_throttling_ratio > 0.0) && (last_tx_time.has_value()) && (last_tx_buffer_size != 0)) {
+    // Get current time and calculate the elapsed time since the last call.
     std::chrono::time_point<std::chrono::high_resolution_clock> now     = std::chrono::high_resolution_clock::now();
     std::chrono::nanoseconds                                    elapsed = now - *last_tx_time;
 
-    if (elapsed < cpu_throttling_time) {
-      std::this_thread::sleep_until(*last_tx_time + cpu_throttling_time);
+    // Calculate the number of samples from the previous transmission to the next one and convert it seconds.
+    float expected_elapsed_s = static_cast<double>(last_tx_buffer_size) / srate.to_Hz<float>();
+
+    // Calculate the minimum elapsed time required to satisfy the throttling time.
+    std::chrono::nanoseconds minimum_elapsed(
+        static_cast<uint64_t>(expected_elapsed_s * 1e9 * system_time_throttling_ratio));
+
+    if (elapsed < minimum_elapsed) {
+      std::this_thread::sleep_until(*last_tx_time + minimum_elapsed);
     }
   }
   last_tx_time.emplace(std::chrono::high_resolution_clock::now());
 
   // Process downlink buffer.
-  downlink_processor_baseband::processing_result result = downlink_processor.process(timestamp - start_time_sfn0);
+  downlink_processor_baseband::processing_result result =
+      downlink_processor.process(apply_timestamp_sfn0_ref(timestamp));
   srsran_assert(result.buffer, "The buffer must be valid.");
 
   // Set transmission timestamp.
@@ -142,11 +151,13 @@ void lower_phy_baseband_processor::dl_process(baseband_gateway_timestamp timesta
 
   ru_tracer << trace_event("transmit_baseband", tx_tp);
 
+  // Update last buffer size.
+  last_tx_buffer_size = result.buffer->get_nof_samples();
+
   // Enqueue DL process task.
-  report_fatal_error_if_not(tx_executor.defer([this, new_timestamp = timestamp + result.buffer->get_nof_samples()]() {
-    dl_process(new_timestamp);
-  }),
-                            "Failed to execute downlink processing task");
+  report_fatal_error_if_not(
+      tx_executor.defer([this, new_timestamp = timestamp + last_tx_buffer_size]() { dl_process(new_timestamp); }),
+      "Failed to execute downlink processing task");
 }
 
 void lower_phy_baseband_processor::ul_process()
@@ -172,7 +183,7 @@ void lower_phy_baseband_processor::ul_process()
     trace_point ul_tp = ru_tracer.now();
 
     // Process UL.
-    uplink_processor.process(ul_buffer->get_reader(), rx_metadata.ts - start_time_sfn0);
+    uplink_processor.process(ul_buffer->get_reader(), apply_timestamp_sfn0_ref(rx_metadata.ts));
 
     // Return buffer to receive.
     rx_buffers.push_blocking(std::move(ul_buffer));

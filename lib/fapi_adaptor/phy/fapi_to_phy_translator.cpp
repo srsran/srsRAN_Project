@@ -32,6 +32,7 @@
 #include "srsran/fapi_adaptor/phy/messages/pusch.h"
 #include "srsran/fapi_adaptor/phy/messages/srs.h"
 #include "srsran/fapi_adaptor/phy/messages/ssb.h"
+#include "srsran/instrumentation/traces/critical_traces.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/phy/support/resource_grid_pool.h"
@@ -325,7 +326,8 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
     // Raise out of sync error.
     error_notifier.get().on_error_indication(fapi::build_out_of_sync_error_indication(
         msg.sfn, msg.slot, fapi::message_type_id::dl_tti_request, current_slot.sfn(), current_slot.slot_index()));
-    l2_tracer << instant_trace_event{"dl_tti_req_late", instant_trace_event::cpu_scope::global};
+    general_critical_tracer << instant_trace_event{
+        "dl_tti_req_late", instant_trace_event::cpu_scope::global, instant_trace_event::event_criticality::severe};
     return;
   }
 
@@ -473,7 +475,7 @@ static expected<uplink_pdus> translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tt
       }
       case fapi::ul_pdu_type::SRS: {
         uplink_pdu_slot_repository::srs_pdu& ul_pdu = pdus.srs.emplace_back();
-        convert_srs_fapi_to_phy(ul_pdu, pdu.srs_pdu, carrier_cfg.num_rx_ant, msg.sfn, msg.slot);
+        convert_srs_fapi_to_phy(ul_pdu, pdu.srs_pdu, sector_id, carrier_cfg.num_rx_ant, msg.sfn, msg.slot);
         error_type<std::string> srs_validation = ul_pdu_validator.is_valid(ul_pdu.config);
         if (!srs_validation.has_value()) {
           logger.warning(
@@ -515,7 +517,8 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
     // Raise out of sync error.
     error_notifier.get().on_error_indication(fapi::build_out_of_sync_error_indication(
         msg.sfn, msg.slot, fapi::message_type_id::ul_tti_request, current_slot.sfn(), current_slot.slot_index()));
-    l2_tracer << instant_trace_event{"ul_tti_req_late", instant_trace_event::cpu_scope::global};
+    general_critical_tracer << instant_trace_event{
+        "ul_tti_req_late", instant_trace_event::cpu_scope::global, instant_trace_event::event_criticality::severe};
     return;
   }
 
@@ -534,7 +537,8 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
     // Raise out of sync error.
     error_notifier.get().on_error_indication(
         fapi::build_msg_error_indication(msg.sfn, msg.slot, fapi::message_type_id::ul_tti_request));
-    l2_tracer << instant_trace_event{"ul_tti_req_busy", instant_trace_event::cpu_scope::global};
+    general_critical_tracer << instant_trace_event{
+        "ul_tti_req_busy", instant_trace_event::cpu_scope::global, instant_trace_event::event_criticality::severe};
     return;
   }
 
@@ -610,7 +614,8 @@ void fapi_to_phy_translator::ul_dci_request(const fapi::ul_dci_request_message& 
     // Raise invalid sfn error.
     error_notifier.get().on_error_indication(fapi::build_invalid_sfn_error_indication(
         msg.sfn, msg.slot, fapi::message_type_id::ul_dci_request, current_slot.sfn(), current_slot.slot_index()));
-    l2_tracer << instant_trace_event{"ul_dci_req_late", instant_trace_event::cpu_scope::global};
+    general_critical_tracer << instant_trace_event{
+        "ul_dci_req_late", instant_trace_event::cpu_scope::global, instant_trace_event::event_criticality::severe};
     return;
   }
 
@@ -665,7 +670,8 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
     // Raise invalid sfn error.
     error_notifier.get().on_error_indication(fapi::build_invalid_sfn_error_indication(
         msg.sfn, msg.slot, fapi::message_type_id::tx_data_request, current_slot.sfn(), current_slot.slot_index()));
-    l2_tracer << instant_trace_event{"tx_data_req_late", instant_trace_event::cpu_scope::global};
+    general_critical_tracer << instant_trace_event{
+        "tx_data_req_late", instant_trace_event::cpu_scope::global, instant_trace_event::event_criticality::severe};
 
     pdsch_repository.clear();
 

@@ -32,8 +32,6 @@ async_task<void> srsran::srs_cu_cp::start_ngap_handover_resource_allocation(cons
                                                                             ngap_ue_context_list&        ue_ctxt_list,
                                                                             ngap_cu_cp_notifier&         cu_cp_notifier,
                                                                             ngap_message_notifier&       amf_notifier,
-                                                                            timer_manager&               timers,
-                                                                            task_executor&               task_exec,
                                                                             srslog::basic_logger&        logger)
 {
   logger.info("NG Handover resource allocation failed. Cause: NG handover not supported");

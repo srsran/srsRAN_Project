@@ -37,6 +37,10 @@ class e1ap_connection_manager
 public:
   virtual ~e1ap_connection_manager() = default;
 
+  /// \brief Initiate the E1 Reset procedure as per TS 38.483 section 8.2.1.
+  /// \param[in] reset The E1 Reset message to transmit.
+  virtual async_task<void> handle_cu_cp_e1_reset_message(const cu_cp_reset& reset) = 0;
+
   /// \brief Creates and transmits the E1 Setup outcome to the CU-UP.
   /// \param[in] msg The cu_up_e1_setup_response to transmit.
   /// \remark The CU-CP transmits the E1SetupResponse/E1SetupFailure as per TS 38.463 section 8.2.3.
@@ -158,23 +162,40 @@ public:
   /// \param[in] msg The received Bearer Context Inactivity Notification message.
   virtual void on_bearer_context_inactivity_notification_received(const cu_cp_inactivity_notification& msg) = 0;
 
+  /// \brief Notify the CU-CP to release a UE.
+  /// \param[in] request The release request.
+  virtual async_task<void> on_ue_release_required(const cu_cp_ue_context_release_request& request) = 0;
+
   /// \brief Notifies about the reception of an E1 Release Request message.
   /// \param[in] cu_up_index The index of the CU-UP processor.
-  /// \param[in] ue_list The indices of the UEs connected to the CU-UP.
-  virtual void on_e1_release_request_received(cu_up_index_t cu_up_index, const std::vector<ue_index_t>& ue_list) = 0;
+  virtual void on_e1_release_request_received(cu_up_index_t cu_up_index) = 0;
+
+  /// \brief Indicates that there was some loss of transaction information for some UEs.
+  /// \return Asynchronous task that handles the event
+  virtual async_task<void> on_transaction_info_loss(const ue_transaction_info_loss_event& ev) = 0;
 };
 
 /// Combined entry point for E1AP handling.
-class e1ap_interface : public e1ap_message_handler,
-                       public e1ap_event_handler,
-                       public e1ap_connection_manager,
-                       public e1ap_bearer_context_manager,
-                       public e1ap_ue_handler,
-                       public e1ap_bearer_context_removal_handler,
-                       public e1ap_statistics_handler
+class e1ap_cu_cp : public e1ap_message_handler,
+                   public e1ap_event_handler,
+                   public e1ap_connection_manager,
+                   public e1ap_bearer_context_manager,
+                   public e1ap_ue_handler,
+                   public e1ap_bearer_context_removal_handler,
+                   public e1ap_statistics_handler
 {
 public:
-  virtual ~e1ap_interface() = default;
+  virtual ~e1ap_cu_cp() = default;
+
+  virtual async_task<void> stop() = 0;
+
+  virtual e1ap_message_handler&                get_e1ap_message_handler()                = 0;
+  virtual e1ap_event_handler&                  get_e1ap_event_handler()                  = 0;
+  virtual e1ap_connection_manager&             get_e1ap_connection_manager()             = 0;
+  virtual e1ap_bearer_context_manager&         get_e1ap_bearer_context_manager()         = 0;
+  virtual e1ap_ue_handler&                     get_e1ap_ue_handler()                     = 0;
+  virtual e1ap_bearer_context_removal_handler& get_e1ap_bearer_context_removal_handler() = 0;
+  virtual e1ap_statistics_handler&             get_e1ap_statistics_handler()             = 0;
 };
 
 } // namespace srs_cu_cp

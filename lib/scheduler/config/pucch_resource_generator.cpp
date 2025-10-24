@@ -470,7 +470,7 @@ static std::vector<pucch_grant> compute_f4_res(unsigned                         
 {
   std::vector<pucch_grant>  res_list;
   const unsigned            nof_f4_symbols = params.nof_symbols.to_uint();
-  const unsigned            occ_length     = static_cast<unsigned>(params.occ_length);
+  const unsigned            nof_occs       = params.occ_supported ? static_cast<unsigned>(params.occ_length) : 1U;
   static constexpr unsigned f4_max_rbs     = 1U;
 
   // With intraslot freq. hopping.
@@ -485,7 +485,7 @@ static std::vector<pucch_grant> compute_f4_res(unsigned                         
       for (unsigned sym_idx = 0; sym_idx + nof_f4_symbols <= max_nof_symbols.to_uint(); sym_idx += nof_f4_symbols) {
         const ofdm_symbol_range symbols{sym_idx, sym_idx + nof_f4_symbols};
 
-        for (unsigned occ_index = 0; occ_index != occ_length; ++occ_index) {
+        for (unsigned occ_index = 0; occ_index != nof_occs; ++occ_index) {
           // Allocate resources for first hop.
           res_list.emplace_back(pucch_grant{.format         = pucch_format::FORMAT_4,
                                             .symbols        = symbols,
@@ -520,7 +520,7 @@ static std::vector<pucch_grant> compute_f4_res(unsigned                         
       // Generate resource for increasing Symbol index, until the num. of required resources is reached.
       for (unsigned sym_idx = 0; sym_idx + nof_f4_symbols <= max_nof_symbols.to_uint(); sym_idx += nof_f4_symbols) {
         const ofdm_symbol_range symbols{sym_idx, sym_idx + nof_f4_symbols};
-        for (unsigned occ_index = 0; occ_index != occ_length; ++occ_index) {
+        for (unsigned occ_index = 0; occ_index != nof_occs; ++occ_index) {
           res_list.emplace_back(pucch_grant{.format     = pucch_format::FORMAT_4,
                                             .symbols    = symbols,
                                             .prbs       = prbs_low_spectrum,
@@ -535,7 +535,7 @@ static std::vector<pucch_grant> compute_f4_res(unsigned                         
       // the BWP.
       for (unsigned sym_idx = 0; sym_idx + nof_f4_symbols <= max_nof_symbols.to_uint(); sym_idx += nof_f4_symbols) {
         const ofdm_symbol_range symbols{sym_idx, sym_idx + nof_f4_symbols};
-        for (unsigned occ_index = 0; occ_index != occ_length; ++occ_index) {
+        for (unsigned occ_index = 0; occ_index != nof_occs; ++occ_index) {
           res_list.emplace_back(pucch_grant{
               .format = pucch_format::FORMAT_4, .symbols = symbols, .prbs = prbs_hi_spectrum, .occ_cs_idx = occ_index});
           if (res_list.size() == nof_res_f4) {
@@ -665,8 +665,8 @@ error_type<std::string> config_helpers::pucch_parameters_validator(
     // PUCCH Format 4.
     const auto& f4_params = std::get<pucch_f4_params>(f2_f3_f4_params);
 
-    const unsigned nof_f4_blocks =
-        static_cast<unsigned>(f4_params.occ_length) * max_nof_symbols.to_uint() / f4_params.nof_symbols.to_uint();
+    const unsigned nof_occs      = f4_params.occ_supported ? static_cast<unsigned>(f4_params.occ_length) : 1U;
+    const unsigned nof_f4_blocks = nof_occs * max_nof_symbols.to_uint() / f4_params.nof_symbols.to_uint();
     nof_f2_f3_f4_rbs =
         static_cast<unsigned>(std::ceil(static_cast<float>(nof_res_f2_f3_f4) / static_cast<float>(nof_f4_blocks)));
     // With intraslot_freq_hopping, the nof of RBs is an even number of the PUCCH resource size in RB.

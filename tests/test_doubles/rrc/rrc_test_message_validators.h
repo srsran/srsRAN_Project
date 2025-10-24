@@ -53,12 +53,14 @@ bool is_valid_rrc_reconfiguration(const asn1::rrc_nr::dl_dcch_msg_s&          ms
                                   bool                                        contains_nas_pdu,
                                   const std::optional<std::vector<srb_id_t>>& expected_srbs_to_add_mod,
                                   const std::optional<std::vector<drb_id_t>>& expected_drbs_to_add_mod,
-                                  const std::optional<std::vector<drb_id_t>>& expected_drbs_to_release);
+                                  const std::optional<std::vector<drb_id_t>>& expected_drbs_to_release,
+                                  std::optional<uint8_t>                      serving_cell_mo);
 bool is_valid_rrc_reconfiguration(const byte_buffer&                          dl_dcch_msg,
                                   bool                                        contains_nas_pdu         = true,
                                   const std::optional<std::vector<srb_id_t>>& expected_srbs_to_add_mod = std::nullopt,
                                   const std::optional<std::vector<drb_id_t>>& expected_drbs_to_add_mod = std::nullopt,
-                                  const std::optional<std::vector<drb_id_t>>& expected_drbs_to_release = std::nullopt);
+                                  const std::optional<std::vector<drb_id_t>>& expected_drbs_to_release = std::nullopt,
+                                  std::optional<uint8_t>                      serving_cell_mo          = std::nullopt);
 
 bool is_valid_rrc_handover_preparation_info(const asn1::rrc_nr::ho_prep_info_s& ho_prep_info);
 bool is_valid_rrc_handover_preparation_info(const byte_buffer& ho_prep_info);

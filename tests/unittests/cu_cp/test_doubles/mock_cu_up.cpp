@@ -21,7 +21,10 @@
  */
 
 #include "mock_cu_up.h"
+#include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "srsran/adt/mutexed_mpmc_queue.h"
+#include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/e1ap/common/e1ap_message.h"
 
@@ -78,7 +81,23 @@ private:
   struct rx_pdu_notifier : public e1ap_message_notifier {
     rx_pdu_notifier(synchronized_mock_cu_up& parent_) : parent(parent_) {}
 
-    void on_new_message(const e1ap_message& msg) override { parent.handle_rx_pdu(msg); }
+    void on_new_message(const e1ap_message& msg) override
+    {
+      // If a E1 Reset is sent, we inject a E1 Reset Acknowledge message.
+      if (msg.pdu.type().value == asn1::e1ap::e1ap_pdu_c::types_opts::init_msg &&
+          msg.pdu.init_msg().proc_code == ASN1_E1AP_ID_RESET) {
+        auto& e1_reset = msg.pdu.init_msg().value.reset();
+
+        e1ap_message e1_reset_ack = generate_cu_cp_e1_reset_ack(
+            msg.pdu.init_msg().value.reset()->transaction_id,
+            (e1_reset->reset_type.type() == asn1::e1ap::reset_type_c::types_opts::options::part_of_e1_interface)
+                ? e1_reset->reset_type.part_of_e1_interface()
+                : asn1::e1ap::ue_associated_lc_e1_conn_list_res_l{});
+        parent.push_tx_pdu(e1_reset_ack);
+      }
+
+      parent.handle_rx_pdu(msg);
+    }
 
   private:
     synchronized_mock_cu_up& parent;

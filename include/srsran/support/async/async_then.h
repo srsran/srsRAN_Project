@@ -27,7 +27,7 @@
 namespace srsran {
 
 template <typename Task>
-Task async_then(Task&& first, Task&& second)
+[[nodiscard]] Task async_then(Task&& first, Task&& second)
 {
   return launch_async(
       [first = std::forward<Task>(first), second = std::forward<Task>(second)](coro_context<Task>& ctx) mutable {

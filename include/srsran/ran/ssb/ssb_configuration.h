@@ -24,6 +24,7 @@
 
 #include "srsran/ran/ssb/ssb_properties.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include <array>
 
 namespace srsran {
 
@@ -38,14 +39,14 @@ constexpr size_t NOF_BEAMS = 64;
 struct ssb_configuration {
   /// SSB subcarrier spacing.
   subcarrier_spacing scs;
-  /// Represents the offset to Point A in PRBs as per TS38.331 Section 6.3.2 IE offsetToPointA.
+  /// Represents the offset to Point A in PRBs as per TS 38.331 Section 6.3.2 IE offsetToPointA.
   /// Possible values: {0, ..., 2199}.
   ssb_offset_to_pointA offset_to_point_A;
   /// SSB periodicity.
   ssb_periodicity ssb_period;
   /// k_ssb or SSB SubcarrierOffest, as per TS38.211 Section 7.4.3.1. Possible values: {0, ..., 23}.
   ssb_subcarrier_offset k_ssb;
-  /// Each bit in this bitmap represents if a beam is active or not as per TS38.331 Section 6.3.2 IE
+  /// Each bit in this bitmap represents whether a beam is active or not as per TS 38.331 Section 6.3.2 IE
   /// ssb-PositionsInBurst.
   uint64_t ssb_bitmap;
   /// The n-th element of the array indicates what Beam ID to use for the n-th SSB occasion in \c ssb_bitmap. Only

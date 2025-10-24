@@ -24,6 +24,7 @@
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.h"
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
+#include "srsran/ran/du_types.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/srsran_test.h"
 #include <gtest/gtest.h>
@@ -31,8 +32,8 @@
 using namespace srsran;
 
 // Helper global variables to pass pcap_writer to all tests.
-bool      g_enable_pcap = false;
-dlt_pcap* g_pcap        = nullptr;
+static bool      g_enable_pcap = false;
+static dlt_pcap* g_pcap        = nullptr;
 
 class e2_rlc_metrics_notifier : public e2_du_metrics_notifier, public e2_du_metrics_interface
 {
@@ -213,7 +214,7 @@ protected:
   std::unique_ptr<e2sm_kpm_cu_up_meas_provider_impl> cu_meas_provider;
 };
 
-rlc_metrics generate_rlc_metrics(uint32_t ue_idx, uint32_t bearer_id)
+static rlc_metrics generate_rlc_metrics(uint32_t ue_idx, uint32_t bearer_id)
 {
   rlc_metrics rlc_metric;
   rlc_metric.metrics_period        = std::chrono::milliseconds(1000);
@@ -243,10 +244,10 @@ rlc_metrics generate_rlc_metrics(uint32_t ue_idx, uint32_t bearer_id)
   return rlc_metric;
 }
 
-scheduler_cell_metrics generate_sched_metrics(uint32_t                           nof_prbs,
-                                              uint32_t                           nof_slots,
-                                              std::vector<std::vector<uint32_t>> dl_grants,
-                                              std::vector<std::vector<uint32_t>> ul_grants)
+static scheduler_cell_metrics generate_sched_metrics(uint32_t                           nof_prbs,
+                                                     uint32_t                           nof_slots,
+                                                     std::vector<std::vector<uint32_t>> dl_grants,
+                                                     std::vector<std::vector<uint32_t>> ul_grants)
 {
   scheduler_cell_metrics sched_metric;
   sched_metric.nof_prbs     = nof_prbs;
@@ -257,9 +258,10 @@ scheduler_cell_metrics generate_sched_metrics(uint32_t                          
   assert(ul_grants[0].size() == nof_slots);
 
   for (uint32_t ue_idx = 0; ue_idx < nof_slots; ++ue_idx) {
-    scheduler_ue_metrics ue_metrics = {0};
-    ue_metrics.pci                  = 1;
-    ue_metrics.rnti                 = static_cast<rnti_t>(0x1000 + ue_idx);
+    scheduler_ue_metrics ue_metrics;
+    ue_metrics.ue_index = to_du_ue_index(0);
+    ue_metrics.pci      = 1;
+    ue_metrics.rnti     = static_cast<rnti_t>(0x1000 + ue_idx);
     ue_metrics.tot_pdsch_prbs_used =
         (ue_idx < dl_grants.size()) ? std::accumulate(dl_grants[ue_idx].begin(), dl_grants[ue_idx].end(), 0) : 0;
     ue_metrics.tot_pusch_prbs_used =

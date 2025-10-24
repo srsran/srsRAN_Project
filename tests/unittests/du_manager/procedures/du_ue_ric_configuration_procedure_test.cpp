@@ -61,16 +61,16 @@ TEST_F(du_ue_ric_config_tester,
   du_mac_sched_control_config config_req;
   config_req.ue_id = test_ue->f1ap_ue_id;
   rrm_policy_ratio_group pol;
-  pol.max_prb_policy_ratio = 50;
-  pol.min_prb_policy_ratio = 5;
-  pol.ded_prb_policy_ratio = 100;
+  pol.maximum_ratio   = 50;
+  pol.minimum_ratio   = 5;
+  pol.dedicated_ratio = 100;
   config_req.rrm_policy_ratio_list.push_back(pol);
 
   unsigned nof_prbs         = get_max_Nprb(params.ran.cells[0].dl_carrier.carrier_bw_mhz,
                                    params.ran.cells[0].scs_common,
                                    band_helper::get_freq_range(params.ran.cells[0].dl_carrier.band));
-  int      expected_min_prb = static_cast<int>((1.0 * pol.min_prb_policy_ratio.value() / 100) * nof_prbs);
-  int      expected_max_prb = static_cast<int>((1.0 * pol.max_prb_policy_ratio.value() / 100) * nof_prbs);
+  int      expected_min_prb = static_cast<int>((1.0 * pol.minimum_ratio.value() / 100) * nof_prbs);
+  int      expected_max_prb = static_cast<int>((1.0 * pol.maximum_ratio.value() / 100) * nof_prbs);
 
   start_procedure(config_req);
 

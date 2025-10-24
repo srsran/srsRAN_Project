@@ -108,6 +108,8 @@ void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_c
       ue_mng.remove_ue(target_ue_context_setup_request.ue_index);
       CORO_EARLY_RETURN(response_msg);
     }
+    // Connect the target UE to the same CU-UP as the source UE.
+    ue_mng.find_du_ue(target_ue_context_setup_request.ue_index)->set_cu_up_index(source_ue->get_cu_up_index());
 
     // Prepare F1AP UE Context Setup Command and call F1AP notifier of target DU.
     if (!generate_ue_context_setup_request(
@@ -116,6 +118,7 @@ void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_c
       CORO_EARLY_RETURN(response_msg);
     }
     target_ue_context_setup_request.cu_to_du_rrc_info.meas_cfg = source_ue->get_rrc_ue()->get_packed_meas_config();
+    target_ue_context_setup_request.serving_cell_mo            = source_ue->get_rrc_ue()->get_serving_cell_mo();
 
     CORO_AWAIT_VALUE(target_ue_context_setup_response,
                      target_du_f1ap_ue_ctxt_mng.handle_ue_context_setup_request(target_ue_context_setup_request,

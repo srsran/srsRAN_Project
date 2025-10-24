@@ -51,6 +51,13 @@ void e1ap_cu_up_release_procedure::operator()(coro_context<async_task<void>>& ct
 
   // Send the E1AP release request and await response.
   transaction = ev_mng.transactions.create_transaction(std::chrono::milliseconds{1000});
+  if (not transaction.valid()) {
+    // Just shutdown the TNL association and finish procedure.
+    logger.error("{}: Unable to allocate transaction. Shutting down E1 TNL association...", name());
+    CORO_AWAIT(cu_up_conn_handler.handle_tnl_association_removal());
+    logger.info("{}: E1 TNL association shut down", name());
+    CORO_EARLY_RETURN();
+  }
 
   // Send request to CU-CP.
   send_e1ap_release_request();
@@ -60,7 +67,10 @@ void e1ap_cu_up_release_procedure::operator()(coro_context<async_task<void>>& ct
 
   handle_e1ap_release_response();
 
-  // TODO: Tear down TNL association and await it.
+  // Tear down TNL association and await it.
+  logger.debug("{}: Shutting down E1 TNL association...", name());
+  CORO_AWAIT(cu_up_conn_handler.handle_tnl_association_removal());
+  logger.info("{}: E1 TNL association shut down", name());
 
   CORO_RETURN();
 }

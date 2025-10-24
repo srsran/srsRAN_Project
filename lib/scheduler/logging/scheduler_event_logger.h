@@ -77,6 +77,7 @@ public:
   struct csi_report_event {
     du_ue_index_t   ue_index;
     rnti_t          rnti;
+    slot_point      sl_rx;
     csi_report_data csi;
   };
   struct bsr_event {

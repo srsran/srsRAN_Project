@@ -100,7 +100,10 @@ INSTANTIATE_TEST_SUITE_P(HarqID,
                                           testing::Values(test_case_data{0, true},
                                                           test_case_data{8, true},
                                                           test_case_data{15, true},
-                                                          test_case_data{16, false})));
+                                                          test_case_data{16, true},
+                                                          test_case_data{24, true},
+                                                          test_case_data{31, true},
+                                                          test_case_data{32, false})));
 
 INSTANTIATE_TEST_SUITE_P(PDUTag,
                          validate_rx_data_indication_field,
@@ -146,7 +149,7 @@ TEST(validate_rx_data_indication, invalid_indication_fails)
   auto msg = build_valid_rx_data_indication();
 
   msg.pdus.back().rapid   = 64U;
-  msg.pdus.back().harq_id = 16U;
+  msg.pdus.back().harq_id = 32U;
   msg.pdus.back().pdu_tag = rx_data_indication_pdu::pdu_tag_type::MAC_PDU;
 
   const auto& result = validate_rx_data_indication(msg);

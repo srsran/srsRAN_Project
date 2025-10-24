@@ -719,7 +719,7 @@ int main(int argc, char** argv)
 
   // Start processing.
   radio->start(start_time);
-  lower_phy_instance->get_controller().start(start_time, false);
+  lower_phy_instance->get_controller().start(start_time);
 
   // Receive and transmit per block basis.
   for (unsigned slot_count = 0; slot_count != duration_slots && !stop; ++slot_count) {

@@ -29,6 +29,7 @@
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_request_handler.h"
 #include "srsran/phy/lower/processors/uplink/uplink_processor_baseband.h"
 #include "srsran/phy/lower/processors/uplink/uplink_processor_factories.h"
+#include "srsran/srsvec/conversion.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 #include <random>
@@ -106,8 +107,8 @@ bool operator==(const baseband_gateway_buffer_reader& left, const baseband_gatew
   unsigned nof_channels = left.get_nof_channels();
 
   for (unsigned i_channel = 0; i_channel != nof_channels; ++i_channel) {
-    span<const cf_t> left_channel  = left.get_channel_buffer(i_channel);
-    span<const cf_t> right_channel = right.get_channel_buffer(i_channel);
+    span<const ci16_t> left_channel  = left.get_channel_buffer(i_channel);
+    span<const ci16_t> right_channel = right.get_channel_buffer(i_channel);
     if (!std::equal(left_channel.begin(), left_channel.end(), right_channel.begin(), right_channel.end())) {
       return false;
     }
@@ -254,9 +255,10 @@ TEST_P(LowerPhyUplinkProcessorFixture, FlowNoRequest)
 
           // Fill buffer.
           for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
-            span<cf_t> port_buffer = buffer[i_port];
-            std::generate(
-                port_buffer.begin(), port_buffer.end(), []() { return cf_t(dist_sample(rgen), dist_sample(rgen)); });
+            span<ci16_t> port_buffer = buffer[i_port];
+            std::generate(port_buffer.begin(), port_buffer.end(), []() {
+              return to_ci16(cf_t(dist_sample(rgen) * INT16_MAX, dist_sample(rgen) * INT16_MAX));
+            });
           }
 
           // Clear spies.
@@ -302,6 +304,8 @@ TEST_P(LowerPhyUplinkProcessorFixture, FlowFloodRequest)
   puxch_processor_notifier_spy puxch_proc_notifier_spy;
   puxch_proc->connect(puxch_proc_notifier_spy);
 
+  std::vector<cf_t> cf_buffer;
+
   slot_point slot(to_numerology_value(scs), 0);
   for (unsigned i_frame = 0; i_frame != nof_frames_test; ++i_frame) {
     for (unsigned i_subframe = 0; i_subframe != NOF_SUBFRAMES_PER_FRAME; ++i_subframe) {
@@ -317,12 +321,14 @@ TEST_P(LowerPhyUplinkProcessorFixture, FlowFloodRequest)
           unsigned cp_size = cp.get_length(i_symbol_subframe, scs).to_samples(srate.to_Hz());
           // Setup buffer.
           buffer.resize(cp_size + base_symbol_size);
+          cf_buffer.resize(cp_size + base_symbol_size);
 
           // Fill buffer.
           for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
-            span<cf_t> port_buffer = buffer[i_port];
-            std::generate(
-                port_buffer.begin(), port_buffer.end(), []() { return cf_t(dist_sample(rgen), dist_sample(rgen)); });
+            span<ci16_t> port_buffer = buffer[i_port];
+            std::generate(port_buffer.begin(), port_buffer.end(), []() {
+              return to_ci16(cf_t(dist_sample(rgen) * INT16_MAX, dist_sample(rgen) * INT16_MAX));
+            });
           }
 
           // Clear spies.
@@ -343,7 +349,9 @@ TEST_P(LowerPhyUplinkProcessorFixture, FlowFloodRequest)
           ASSERT_EQ(ofdm_demod_entries.size(), nof_rx_ports);
           for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
             const auto& ofdm_demod_entry = ofdm_demod_entries[i_port];
-            ASSERT_EQ(span<const cf_t>(ofdm_demod_entry.input), buffer[i_port]);
+            srsvec::convert(cf_buffer, buffer[i_port], INT16_MAX);
+
+            ASSERT_EQ(ofdm_demod_entry.input, cf_buffer);
             ASSERT_EQ(static_cast<const void*>(ofdm_demod_entry.grid), static_cast<const void*>(&rg_writer_spy));
             ASSERT_EQ(ofdm_demod_entry.port_index, i_port);
             ASSERT_EQ(ofdm_demod_entry.symbol_index, i_symbol_subframe);
@@ -369,6 +377,7 @@ TEST_P(LowerPhyUplinkProcessorFixture, LateRequest)
   unsigned base_symbol_size = srate.get_dft_size(scs);
 
   baseband_gateway_buffer_dynamic buffer(nof_rx_ports, 2 * base_symbol_size);
+  std::vector<cf_t>               cf_buffer;
 
   unsigned nof_symbols_per_slot   = get_nsymb_per_slot(cp);
   unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(scs);
@@ -408,12 +417,14 @@ TEST_P(LowerPhyUplinkProcessorFixture, LateRequest)
         unsigned cp_size = cp.get_length(i_symbol_subframe, scs).to_samples(srate.to_Hz());
         // Setup buffer.
         buffer.resize(cp_size + base_symbol_size);
+        cf_buffer.resize(cp_size + base_symbol_size);
 
         // Fill buffer.
         for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
-          span<cf_t> port_buffer = buffer[i_port];
-          std::generate(
-              port_buffer.begin(), port_buffer.end(), []() { return cf_t(dist_sample(rgen), dist_sample(rgen)); });
+          span<ci16_t> port_buffer = buffer[i_port];
+          std::generate(port_buffer.begin(), port_buffer.end(), []() {
+            return to_ci16(cf_t(dist_sample(rgen) * INT16_MAX, dist_sample(rgen) * INT16_MAX));
+          });
         }
 
         // Clear spies.
@@ -436,7 +447,9 @@ TEST_P(LowerPhyUplinkProcessorFixture, LateRequest)
           ASSERT_EQ(ofdm_demod_entries.size(), nof_rx_ports);
           for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
             const auto& ofdm_demod_entry = ofdm_demod_entries[i_port];
-            ASSERT_EQ(span<const cf_t>(ofdm_demod_entry.input), buffer[i_port]);
+            srsvec::convert(cf_buffer, buffer[i_port], INT16_MAX);
+
+            ASSERT_EQ(ofdm_demod_entry.input, cf_buffer);
             ASSERT_EQ(static_cast<const void*>(ofdm_demod_entry.grid), static_cast<const void*>(rg_spy_ptr));
             ASSERT_EQ(ofdm_demod_entry.port_index, i_port);
             ASSERT_EQ(ofdm_demod_entry.symbol_index, i_symbol_subframe);

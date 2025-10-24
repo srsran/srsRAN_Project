@@ -35,6 +35,8 @@ namespace srs_du {
 class du_configurator;
 class du_manager_time_mapper_accessor;
 
+} // namespace srs_du
+
 /// \brief Adds NTN config update remote command.
 /// \param commands Application unit commands.
 /// \param ntn_cfg  NTN config.
@@ -44,12 +46,12 @@ class du_manager_time_mapper_accessor;
 /// \param timers   Timers for the update task.
 /// \param timer_exec Task executor for the periodic SIB19 update task.
 /// \return True on success.
-void add_ntn_config_update_remote_command(application_unit_commands&       commands,
-                                          const ntn_config&                ntn_cfg,
-                                          du_configurator&                 du_cfgtr,
-                                          du_manager_time_mapper_accessor& du_time_mapper_accessor,
-                                          ru_controller&                   ru_ctrl,
-                                          timer_manager&                   timers,
-                                          task_executor&                   timer_exec);
-} // namespace srs_du
+void add_ntn_config_update_remote_command(application_unit_commands&               commands,
+                                          const ntn_config&                        ntn_cfg,
+                                          srs_du::du_configurator&                 du_cfgtr,
+                                          srs_du::du_manager_time_mapper_accessor& du_time_mapper_accessor,
+                                          ru_controller&                           ru_ctrl,
+                                          timer_manager&                           timers,
+                                          task_executor&                           timer_exec);
+
 } // namespace srsran

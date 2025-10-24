@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/ran/gnb_constants.h"
+#include "fmt/format.h"
 #include <cstdint>
 #include <type_traits>
 
@@ -82,3 +83,43 @@ enum du_cell_group_index_t : uint16_t {
 };
 
 } // namespace srsran
+
+namespace fmt {
+
+template <>
+struct formatter<srsran::du_ue_index_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsran::du_ue_index_t ue_idx, FormatContext& ctx) const
+  {
+    if (srsran::is_du_ue_index_valid(ue_idx)) {
+      return format_to(ctx.out(), "{}", underlying(ue_idx));
+    }
+    return format_to(ctx.out(), "invalid");
+  }
+};
+
+template <>
+struct formatter<srsran::du_cell_index_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsran::du_cell_index_t cell_idx, FormatContext& ctx) const
+  {
+    if (cell_idx < srsran::du_cell_index_t::MAX_NOF_DU_CELLS) {
+      return format_to(ctx.out(), "{}", underlying(cell_idx));
+    }
+    return format_to(ctx.out(), "invalid");
+  }
+};
+
+} // namespace fmt

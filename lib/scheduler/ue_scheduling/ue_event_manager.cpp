@@ -27,6 +27,7 @@
 #include "../support/sr_helper.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
 #include "srsran/support/memory_pool/bounded_object_pool.h"
+#include <memory>
 
 using namespace srsran;
 
@@ -146,7 +147,7 @@ class srsran::pdu_indication_pool
   using crc_pool          = bounded_object_pool<ul_crc_pdu_indication>;
   using srs_pool          = bounded_object_pool<srs_indication::srs_indication_pdu>;
   using bsr_pool          = bounded_object_pool<ul_bsr_indication_message>;
-  using pos_req_pool      = bounded_object_pool<positioning_measurement_request>;
+  using pos_req_pool      = bounded_object_pool<positioning_measurement_request::cell_info>;
   using slice_reconf_pool = bounded_object_pool<du_cell_slice_reconfig_request>;
 
 public:
@@ -361,7 +362,7 @@ void ue_cell_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
     }
 
     // Configure existing UE.
-    ue_db[ue_idx].handle_reconfiguration_request(ue_reconf_command{ev.next_config()}, ev.is_reestablished());
+    ue_db.reconfigure_ue(ue_reconf_command{ev.next_config()}, ev.is_reestablished());
 
     // Update slice scheduler.
     for (unsigned i = 0, e = u.nof_cells(); i != e; ++i) {
@@ -593,7 +594,7 @@ void ue_cell_event_manager::handle_uci_indication(const uci_indication& ind)
           ev_logger.enqueue(scheduler_event_logger::sr_event{ue_cc->ue_index, ue_cc->rnti()});
 
           // Report SR to metrics.
-          metrics.handle_sr_indication(ue_cc->ue_index);
+          metrics.handle_sr_indication(ue_cc->ue_index, uci_sl);
         }
 
         const bool is_uci_valid = not pucch_f0f1->harqs.empty() or pucch_f0f1->sr_detected;
@@ -614,7 +615,7 @@ void ue_cell_event_manager::handle_uci_indication(const uci_indication& ind)
 
         // Process CSI.
         if (pusch_pdu->csi.has_value()) {
-          handle_csi(*ue_cc, *pusch_pdu->csi);
+          handle_csi(*ue_cc, uci_sl, *pusch_pdu->csi);
         }
       } else if (const auto* pucch_f2f3f4 =
                      std::get_if<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(&uci_pdu->pdu)) {
@@ -633,12 +634,12 @@ void ue_cell_event_manager::handle_uci_indication(const uci_indication& ind)
           ev_logger.enqueue(scheduler_event_logger::sr_event{ue_cc->ue_index, ue_cc->rnti()});
 
           // Report SR to metrics.
-          metrics.handle_sr_indication(ue_cc->ue_index);
+          metrics.handle_sr_indication(ue_cc->ue_index, uci_sl);
         }
 
         // Process CSI.
         if (pucch_f2f3f4->csi.has_value()) {
-          handle_csi(*ue_cc, *pucch_f2f3f4->csi);
+          handle_csi(*ue_cc, uci_sl, *pucch_f2f3f4->csi);
         }
 
         const bool is_uci_valid =
@@ -792,28 +793,33 @@ void ue_cell_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indicati
   push_event(cfg.cell_index, event_t{"DL MAC CE", ce.ue_index, std::move(handle_mac_ce_impl)});
 }
 
-void ue_cell_event_manager::handle_positioning_measurement_request(const positioning_measurement_request& req)
+void ue_cell_event_manager::handle_positioning_measurement_request(
+    const positioning_measurement_request::cell_info& req)
 {
+  srsran_assert(req.cell_index == cfg.cell_index, "Received positioning request for wrong cell");
+
   auto req_ptr = ind_pdu_pool->create_pdu(req);
   if (req_ptr == nullptr) {
     return;
   }
-  auto task = [this, req_ptr = std::move(req_ptr)]() {
+
+  const du_cell_index_t cell_index = req.cell_index;
+  auto                  task       = [this, req_ptr = std::move(req_ptr)]() {
     srs_sched.handle_positioning_measurement_request(*req_ptr);
     return event_result::processed;
   };
 
-  push_event(req.cell_index, event_t{"POS MEAS REQ", std::move(task)});
+  push_event(cell_index, event_t{"POS MEAS REQ", std::move(task)});
 }
 
-void ue_cell_event_manager::handle_positioning_measurement_stop(du_cell_index_t cell_index, rnti_t pos_rnti)
+void ue_cell_event_manager::handle_positioning_measurement_stop(rnti_t pos_rnti)
 {
-  auto task = [this, cell_index, pos_rnti]() {
-    srs_sched.handle_positioning_measurement_stop(cell_index, pos_rnti);
+  auto task = [this, pos_rnti]() {
+    srs_sched.handle_positioning_measurement_stop(pos_rnti);
     return event_result::processed;
   };
 
-  push_event(cell_index, event_t{"pos_meas_stop", std::move(task)});
+  push_event(cfg.cell_index, event_t{"pos_meas_stop", std::move(task)});
 }
 
 void ue_cell_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
@@ -972,7 +978,7 @@ void ue_cell_event_manager::handle_harq_ind(ue_cell&                            
       // NOTE: this is for the first attachment only. In this case, the first ACK is the one that acks the ConRes or the
       // ConRes + MSG4; there is only 1 HARQ process waiting for ACKs, which acks the ConRes. Until this is acked, no
       // other DL grant should be scheduled.
-      if (not ue_cc.is_conres_complete() and result->h_dl.empty()) {
+      if (ue_cc.is_pcell() and not ue_cc.get_pcell_state().conres_complete and result->h_dl.empty()) {
         ue_cc.set_conres_state(true);
       }
 
@@ -985,13 +991,13 @@ void ue_cell_event_manager::handle_harq_ind(ue_cell&                            
   }
 }
 
-void ue_cell_event_manager::handle_csi(ue_cell& ue_cc, const csi_report_data& csi_rep)
+void ue_cell_event_manager::handle_csi(ue_cell& ue_cc, slot_point sl_rx, const csi_report_data& csi_rep)
 {
   // Forward CSI bits to UE.
   ue_cc.handle_csi_report(csi_rep);
 
   // Log event.
-  ev_logger.enqueue(scheduler_event_logger::csi_report_event{ue_cc.ue_index, ue_cc.rnti(), csi_rep});
+  ev_logger.enqueue(scheduler_event_logger::csi_report_event{ue_cc.ue_index, ue_cc.rnti(), sl_rx, csi_rep});
 }
 
 void ue_cell_event_manager::push_event(du_cell_index_t cell_index, event_t event)

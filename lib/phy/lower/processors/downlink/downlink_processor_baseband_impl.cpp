@@ -27,6 +27,7 @@
 #include "srsran/phy/lower/lower_phy_timing_context.h"
 #include "srsran/srsvec/dot_prod.h"
 #include "srsran/srsvec/zero.h"
+#include <srsran/srsvec/conversion.h>
 
 using namespace srsran;
 
@@ -44,6 +45,7 @@ downlink_processor_baseband_impl::downlink_processor_baseband_impl(
   nof_slots_per_subframe(get_nof_slots_per_subframe(config.scs)),
   nof_symbols_per_slot(get_nsymb_per_slot(config.cp)),
   temp_buffer(config.nof_tx_ports, 2 * config.rate.get_dft_size(config.scs)),
+  cf_buffer({config.rate.to_kHz(), config.nof_tx_ports}),
   cfo_processor(config.rate),
   buffer_pool(nof_slots_per_subframe * NOF_SUBFRAMES_PER_FRAME, config.nof_tx_ports, nof_samples_per_subframe)
 {
@@ -58,7 +60,7 @@ downlink_processor_baseband_impl::downlink_processor_baseband_impl(
   }
 }
 
-// Fills the unprocessed reagions of a baseband buffer with zeros, according to the downink processor baseband metadata.
+// Fills the unprocessed regions of a baseband buffer with zeros, according to the downlink processor baseband metadata.
 static void fill_zeros(baseband_gateway_buffer_writer& buffer, const baseband_gateway_transmitter_metadata& md)
 {
   // If discontinous mode is disabled, fill the non-processed regions with zeros and report full buffer metadata.
@@ -77,6 +79,20 @@ static void fill_zeros(baseband_gateway_buffer_writer& buffer, const baseband_ga
         srsvec::zero(buffer.get_channel_buffer(i_channel).last(buffer.get_nof_samples() - *md.tx_end));
       }
     }
+  }
+}
+
+// Fills the unprocessed destination buffer with the last samples in the source.
+static void fill_buffer_from_tail(baseband_gateway_buffer_writer&       destination,
+                                  const baseband_gateway_buffer_reader& source)
+{
+  srsran_assert((destination.get_nof_samples() <= source.get_nof_samples()) &&
+                    (destination.get_nof_channels() == source.get_nof_channels()),
+                "Unmatch buffer dimensions.");
+  unsigned nof_samples = destination.get_nof_samples();
+  for (unsigned i_channel = 0, i_channel_end = destination.get_nof_channels(); i_channel != i_channel_end;
+       ++i_channel) {
+    srsvec::copy(destination[i_channel], source[i_channel].last(nof_samples));
   }
 }
 
@@ -109,44 +125,66 @@ downlink_processor_baseband_impl::process(baseband_gateway_timestamp timestamp)
   }
 
   // Calculate system slot index and the symbol index within the slot.
-  unsigned i_slot   = i_sf * nof_slots_per_subframe + i_symbol_sf / nof_symbols_per_slot;
-  unsigned i_symbol = i_symbol_sf % nof_symbols_per_slot;
+  unsigned i_slot_sf = i_symbol_sf / nof_symbols_per_slot;
+  unsigned i_slot    = i_sf * nof_slots_per_subframe + i_slot_sf;
 
-  // If the timestamp is not aligned with the beginning of a slot, Align with the next subframe.
-  if ((i_symbol != 0) || (i_sample_symbol != 0)) {
-    // Prepare result metadata and obtain baseband buffer from the pool.
-    processing_result result = {};
-    result.metadata.ts       = timestamp;
-    result.metadata.is_empty = true;
-    result.buffer            = buffer_pool.get();
-    report_fatal_error_if_not(result.buffer, "Failed to retrieve a baseband buffer.");
+  // Calculate the number of samples in the slot.
+  span<const unsigned> symbol_sizes_slot =
+      span<const unsigned>(symbol_sizes_sf).subspan(i_slot_sf * nof_symbols_per_slot, nof_symbols_per_slot);
+  unsigned nof_samples_slot = std::accumulate(symbol_sizes_slot.begin(), symbol_sizes_slot.end(), 0U);
 
-    // Calculate the number of samples to the next subframe.
-    unsigned nof_samples_to_next_sf = nof_samples_per_subframe - i_sample_sf;
-
-    // Resize buffer and zero.
-    result.buffer->resize(nof_samples_to_next_sf);
-    fill_zeros(result.buffer->get_writer(), result.metadata);
-
-    return result;
-  }
+  // Calculate the sample index from the beginning of the slot.
+  span<const unsigned> symbol_sizes_before_slot =
+      span<const unsigned>(symbol_sizes_sf).first(i_slot_sf * nof_symbols_per_slot);
+  unsigned i_sample_slot =
+      i_sample_sf - std::accumulate(symbol_sizes_before_slot.begin(), symbol_sizes_before_slot.end(), 0U);
 
   // Create slot point.
   slot_point slot(to_numerology_value(scs), i_slot);
 
-  // Notify slot boundary.
-  trace_point              tp = ru_tracer.now();
-  lower_phy_timing_context context;
-  context.slot       = slot + nof_slot_tti_in_advance;
-  context.time_point = std::chrono::system_clock::now() + nof_slot_tti_in_advance_ns;
-  notifier->on_tti_boundary(context);
-  ru_tracer << trace_event("on_tti_boundary", tp);
+  // Note that the slot could be equal to the previous slot if tx_time_offset was modified. So, the processor notifies
+  // the slot boundary only if no previous slot has been processed before or the new slot is different from the
+  // previous.
+  pdxch_processor_baseband::slot_result pdxch_baseband_result;
+  if (!previous_slot.has_value() || (*previous_slot != slot)) {
+    srsran_assert(notifier != nullptr, "Timing notifier is not connected.");
+    trace_point              tp = ru_tracer.now();
+    lower_phy_timing_context context;
+    context.slot       = slot + nof_slot_tti_in_advance;
+    context.time_point = std::chrono::system_clock::now() + nof_slot_tti_in_advance_ns;
+    notifier->on_tti_boundary(context);
+    previous_slot = slot;
+    ru_tracer << trace_event("on_tti_boundary", tp);
 
-  // Obtain the downlink baseband processing for the slot.
-  auto slot_result = pdxch_proc_baseband.process_slot({.slot = slot, .sector = sector_id});
+    // Obtain the downlink baseband processing for the slot independently of the sample alignment. This avoids leaving
+    // resource grids in the PDxCH processor.
+    pdxch_baseband_result = pdxch_proc_baseband.process_slot({.slot = slot, .sector = sector_id});
+  }
 
-  // If the results do not contain any buffer, then return a buffer containing zeros.
-  if (!slot_result.buffer) {
+  // Handle CFO and metrics if the PDxCH baseband result contains a buffer.
+  if (pdxch_baseband_result.buffer) {
+    // Apply carrier frequency offset for the entire transmit slot buffer.
+    cfo_processor.next_cfo_command();
+    for (unsigned i_port = 0, i_port_end = pdxch_baseband_result.buffer->get_nof_channels(); i_port != i_port_end;
+         ++i_port) {
+      // The CFO compensation is not currently supported for 16-bit complex integer samples. So, it must convert it to
+      // single-precision complex floating-point samples.
+      span<ci16_t> channel_buffer = pdxch_baseband_result.buffer->get_writer().get_channel_buffer(i_port);
+      span<cf_t>   cf_buf         = cf_buffer.get_view({i_port}).first(channel_buffer.size());
+
+      srsvec::convert(cf_buf, channel_buffer, scaling_factor_ci16_to_cf);
+      cfo_processor.process(cf_buf);
+      srsvec::convert(channel_buffer, cf_buf, scaling_factor_cf_to_ci16);
+    }
+
+    // Notify metrics.
+    srsran_assert(notifier != nullptr, "Timing notifier is not connected.");
+    notifier->on_new_metrics(pdxch_baseband_result.metrics);
+  }
+
+  // Align with the next slot using a different baseband buffer if the next sample is not aligned with the beginning of
+  // a slot or no PDxCH baseband is available to transmit.
+  if ((i_sample_slot != 0) || !pdxch_baseband_result.buffer) {
     // Prepare result metadata and obtain baseband buffer from the pool.
     processing_result result = {};
     result.metadata.ts       = timestamp;
@@ -154,29 +192,33 @@ downlink_processor_baseband_impl::process(baseband_gateway_timestamp timestamp)
     result.buffer            = buffer_pool.get();
     report_fatal_error_if_not(result.buffer, "Failed to retrieve a baseband buffer.");
 
-    // Calculate the slot number of samples.
-    span<unsigned> symbol_sizes_slot = span<unsigned>(symbol_sizes_sf).subspan(i_symbol_sf, nof_symbols_per_slot);
-    unsigned       nof_samples_slot  = std::accumulate(symbol_sizes_slot.begin(), symbol_sizes_slot.end(), 0U);
+    // Calculate the number of samples to the next slot.
+    unsigned nof_samples_to_next_slot = nof_samples_slot - i_sample_slot;
 
     // Resize buffer and zero.
-    result.buffer->resize(nof_samples_slot);
-    fill_zeros(result.buffer->get_writer(), result.metadata);
+    result.buffer->resize(nof_samples_to_next_slot);
+
+    // Fill the baseband buffer with the generated PDxCH if possible. Otherwise, fill it with zeros.
+    if (pdxch_baseband_result.buffer) {
+      fill_buffer_from_tail(result.buffer->get_writer(), pdxch_baseband_result.buffer->get_reader());
+      result.metadata.is_empty = false;
+    } else {
+      fill_zeros(result.buffer->get_writer(), result.metadata);
+      result.metadata.is_empty = true;
+    }
 
     return result;
   }
-
-  // Notify metrics.
-  notifier->on_new_metrics(slot_result.metrics);
 
   // Prepare result metadata.
   processing_result result = {};
   result.metadata.ts       = timestamp;
   result.metadata.is_empty = false;
-  result.buffer            = std::move(slot_result.buffer);
+  result.buffer            = std::move(pdxch_baseband_result.buffer);
   return result;
 }
 
 void downlink_processor_baseband_impl::set_tx_time_offset(phy_time_unit tx_time_offset_)
 {
-  tx_time_offset = tx_time_offset_.to_nearest_samples(rate.to_Hz());
+  tx_time_offset.store(tx_time_offset_.to_nearest_samples(rate.to_Hz()), std::memory_order_relaxed);
 }

@@ -265,4 +265,21 @@ unsigned allocate_mac_ces(dl_msg_tb_info& tb_info, dl_logical_channel_manager& l
 unsigned
 allocate_ue_con_res_id_mac_ce(dl_msg_tb_info& tb_info, dl_logical_channel_manager& lch_mng, unsigned total_tbs);
 
+/// \brief Defines the list of subPDUs, including LCID and payload size, that will compose the transport block for
+/// SRB0 or for SRB1 in fallback mode.
+/// It includes the UE Contention Resolution Identity CE if it is pending.
+/// \return Returns the number of bytes reserved in the TB for subPDUs (other than padding).
+unsigned build_dl_fallback_transport_block_info(dl_msg_tb_info&             tb_info,
+                                                dl_logical_channel_manager& lch_mng,
+                                                unsigned                    tb_size_bytes);
+
+/// \brief Defines the list of subPDUs, including LCID and payload size, that will compose the transport block for a
+/// given RAN slice.
+/// \return Returns the number of bytes reserved in the TB for subPDUs (other than padding).
+/// \remark Excludes SRB0, as this operation is specific to a given RAN slice.
+unsigned build_dl_transport_block_info(dl_msg_tb_info&             tb_info,
+                                       dl_logical_channel_manager& lch_mng,
+                                       unsigned                    tb_size_bytes,
+                                       ran_slice_id_t              slice_id);
+
 } // namespace srsran

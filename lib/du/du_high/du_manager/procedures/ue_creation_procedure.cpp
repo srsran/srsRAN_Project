@@ -91,7 +91,7 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   // > Start Initial UL RRC Message Transfer by signalling MAC to notify CCCH to upper layers.
   if (not req.ul_ccch_msg.empty()) {
-    if (not du_params.mac.ue_cfg.handle_ul_ccch_msg(ue_ctx->ue_index, req.ul_ccch_msg.copy())) {
+    if (not du_params.mac.mgr.get_ue_configurator().handle_ul_ccch_msg(ue_ctx->ue_index, req.ul_ccch_msg.copy())) {
       proc_logger.log_proc_failure("Failed to notify CCCH message to upper layers");
       CORO_AWAIT(clear_ue());
       CORO_EARLY_RETURN();
@@ -141,7 +141,7 @@ async_task<void> ue_creation_procedure::clear_ue()
     }
 
     if (mac_resp.allocated_crnti != rnti_t::INVALID_RNTI) {
-      CORO_AWAIT(du_params.mac.ue_cfg.handle_ue_delete_request(
+      CORO_AWAIT(du_params.mac.mgr.get_ue_configurator().handle_ue_delete_request(
           mac_ue_delete_request{req.pcell_index, req.ue_index, mac_resp.allocated_crnti}));
     }
 
@@ -243,7 +243,7 @@ async_task<mac_ue_create_response> ue_creation_procedure::create_mac_ue()
   mac_ue_create_msg.sched_cfg = create_scheduler_ue_config_request(*ue_ctx, *ue_ctx->resources);
 
   // Request MAC to create new UE.
-  return du_params.mac.ue_cfg.handle_ue_create_request(mac_ue_create_msg);
+  return du_params.mac.mgr.get_ue_configurator().handle_ue_create_request(mac_ue_create_msg);
 }
 
 f1ap_ue_creation_response ue_creation_procedure::create_f1ap_ue()

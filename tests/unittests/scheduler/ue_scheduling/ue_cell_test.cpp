@@ -112,7 +112,13 @@ protected:
 
 TEST_F(ue_cell_tester, when_dl_nof_prb_allocated_increases_estimated_dl_rate_increases)
 {
-  ue_cell ue_cc{to_du_ue_index(0), to_rnti(0x4601), ue_cc_cfg, cell_harqs, drx_controller, std::nullopt};
+  ue_cell ue_cc{to_du_ue_index(0),
+                to_rnti(0x4601),
+                to_ue_cell_index(0),
+                ue_cc_cfg,
+                cell_harqs,
+                ue_shared_context{drx_controller},
+                std::nullopt};
 
   double current_rate = 0;
 
@@ -137,7 +143,13 @@ TEST_F(ue_cell_tester, when_mcs_increases_estimated_dl_rate_increases)
   // Maximum MCS value for 64QAM MCS table.
   const sch_mcs_index max_mcs = 28;
 
-  ue_cell ue_cc{to_du_ue_index(0), to_rnti(0x4601), ue_cc_cfg, cell_harqs, drx_controller, std::nullopt};
+  ue_cell ue_cc{to_du_ue_index(0),
+                to_rnti(0x4601),
+                to_ue_cell_index(0),
+                ue_cc_cfg,
+                cell_harqs,
+                ue_shared_context{drx_controller},
+                std::nullopt};
 
   double current_rate = 0;
 
@@ -161,7 +173,13 @@ TEST_F(ue_cell_tester, when_mcs_increases_estimated_dl_rate_increases)
 
 TEST_F(ue_cell_tester, when_ul_nof_prb_allocated_increases_estimated_ul_rate_increases)
 {
-  ue_cell ue_cc{to_du_ue_index(0), to_rnti(0x4601), ue_cc_cfg, cell_harqs, drx_controller, std::nullopt};
+  ue_cell ue_cc{to_du_ue_index(0),
+                to_rnti(0x4601),
+                to_ue_cell_index(0),
+                ue_cc_cfg,
+                cell_harqs,
+                ue_shared_context{drx_controller},
+                std::nullopt};
 
   double current_rate = 0;
 
@@ -186,7 +204,13 @@ TEST_F(ue_cell_tester, when_mcs_increases_estimated_ul_rate_increases)
   // Maximum MCS value for 64QAM MCS table.
   const sch_mcs_index max_mcs = 28;
 
-  ue_cell ue_cc{to_du_ue_index(0), to_rnti(0x4601), ue_cc_cfg, cell_harqs, drx_controller, std::nullopt};
+  ue_cell ue_cc{to_du_ue_index(0),
+                to_rnti(0x4601),
+                to_ue_cell_index(0),
+                ue_cc_cfg,
+                cell_harqs,
+                ue_shared_context{drx_controller},
+                std::nullopt};
 
   double current_rate = 0;
 

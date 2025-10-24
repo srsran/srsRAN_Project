@@ -31,8 +31,9 @@
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_modulator.h"
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
 #include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
+#include "srsran/phy/upper/signal_processors/pdsch/factories.h"
 #include "srsran/phy/upper/signal_processors/ptrs/ptrs_pdsch_generator_factory.h"
-#include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
+#include "srsran/srslog/logger.h"
 #include "srsran/support/executors/task_executor.h"
 #include <memory>
 

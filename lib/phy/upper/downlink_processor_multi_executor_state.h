@@ -39,7 +39,8 @@ public:
   {
     // Transition to accepting PDUs only if the current state is idle.
     uint32_t expected_idle = state_pending_pdus_idle;
-    return state_pending_pdus.compare_exchange_weak(expected_idle, state_pending_pdus_mask_accepting_pdus);
+    return state_pending_pdus.compare_exchange_strong(
+        expected_idle, state_pending_pdus_mask_accepting_pdus, std::memory_order_acq_rel);
   }
 
   /// \brief Notifies that all PDUs have already been queued and no more PDUs are accepted.
@@ -48,7 +49,7 @@ public:
   bool on_finish_requested()
   {
     // Remove the accepting PDU mask.
-    uint32_t prev = state_pending_pdus.fetch_xor(state_pending_pdus_mask_accepting_pdus);
+    uint32_t prev = state_pending_pdus.fetch_xor(state_pending_pdus_mask_accepting_pdus, std::memory_order_acq_rel);
 
     // Assert that the accepting PDUs mask was there.
     srsran_assert((prev & state_pending_pdus_mask_accepting_pdus) != 0,
@@ -64,7 +65,7 @@ public:
   void on_grid_sent()
   {
     // Transition to idle regardless of the state and trigger an assertion if the state is not expected.
-    [[maybe_unused]] uint32_t prev = state_pending_pdus.exchange(state_pending_pdus_idle);
+    [[maybe_unused]] uint32_t prev = state_pending_pdus.exchange(state_pending_pdus_idle, std::memory_order_acq_rel);
     srsran_assert(
         prev == state_pending_pdus_finishing, "The downlink processor is in an unexpected state state 0x{:08x}.", prev);
   }
@@ -73,7 +74,7 @@ public:
   /// \remark An assertion is triggered if the current state does not accept new processing PDUs.
   void on_task_creation()
   {
-    [[maybe_unused]] uint32_t prev = state_pending_pdus.fetch_add(1);
+    [[maybe_unused]] uint32_t prev = state_pending_pdus.fetch_add(1, std::memory_order_acq_rel);
     srsran_assert((prev & state_pending_pdus_mask_accepting_pdus) != 0,
                   "The downlink processor is in an unexpected state state 0x{:08x}.",
                   prev);
@@ -84,7 +85,7 @@ public:
   /// \remark An assertion is triggered if the current state is zero which means no task was pending.
   bool on_task_completion()
   {
-    uint32_t prev = state_pending_pdus.fetch_sub(1);
+    uint32_t prev = state_pending_pdus.fetch_sub(1, std::memory_order_acq_rel);
     srsran_assert((prev & state_pending_pdus_mask_count) != 0,
                   "The downlink processor number of pending PDUs cannot be zero.");
     return prev == 1;
@@ -94,8 +95,8 @@ public:
   void stop()
   {
     // Try transitioning to the stopped state from idle until it is successful.
-    for (uint32_t expected_state = state_pending_pdus_idle;
-         !state_pending_pdus.compare_exchange_weak(expected_state, state_pending_pdus_mask_stopped);
+    for (uint32_t expected_state = state_pending_pdus_idle; !state_pending_pdus.compare_exchange_weak(
+             expected_state, state_pending_pdus_mask_stopped, std::memory_order_acq_rel);
          expected_state = state_pending_pdus_idle) {
       std::this_thread::sleep_for(std::chrono::microseconds(10));
     }

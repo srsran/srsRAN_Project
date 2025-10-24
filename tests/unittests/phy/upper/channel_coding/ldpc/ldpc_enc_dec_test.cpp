@@ -152,8 +152,13 @@ protected:
     nof_messages = test_data.nof_messages;
 
     // Encoder/decoder configurations.
-    cfg_enc = {bg, ls};
-    cfg_dec = {{cfg_enc}, {}};
+    cfg_enc                                   = {};
+    cfg_enc.base_graph                        = bg;
+    cfg_enc.lifting_size                      = ls;
+    cfg_dec                                   = {};
+    cfg_dec.block_conf.tb_common.lifting_size = ls;
+    cfg_dec.block_conf.tb_common.base_graph   = bg;
+
     // There is no noise - one decoder iteration should be enough.
     cfg_dec.algorithm_conf.max_iterations = 1;
   }
@@ -221,8 +226,8 @@ protected:
   unsigned             min_cb_length;
   unsigned             max_cb_length;
 
-  srsran::codeblock_metadata::tb_common_metadata cfg_enc;
-  srsran::ldpc_decoder::configuration            cfg_dec;
+  ldpc_encoder::configuration cfg_enc;
+  ldpc_decoder::configuration cfg_dec;
 };
 
 std::shared_ptr<ldpc_encoder_factory> LDPCEncDecFixture::enc_factory_generic = nullptr;

@@ -65,7 +65,7 @@ generate_fapi_to_phy_translator_dependencies(phy_fapi_sector_adaptor_dependencie
 
 phy_fapi_sector_adaptor_impl::phy_fapi_sector_adaptor_impl(const phy_fapi_sector_adaptor_config&  config,
                                                            phy_fapi_sector_adaptor_dependencies&& dependencies) :
-  results_translator(config.sector_id, *dependencies.logger),
+  results_translator(config.sector_id, config.dBFS_calibration_value, *dependencies.logger),
   fapi_translator(generate_fapi_to_phy_translator_config(config),
                   generate_fapi_to_phy_translator_dependencies(std::move(dependencies))),
   time_translator(fapi_translator)

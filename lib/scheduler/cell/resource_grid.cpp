@@ -333,9 +333,12 @@ cell_resource_allocator::cell_resource_allocator(const cell_configuration& cfg_)
   std::vector<scs_specific_carrier> dl_scs_carriers, ul_scs_carriers;
   subcarrier_spacing                max_scs = cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().scs;
   max_scs = std::max(max_scs, cfg.ul_cfg_common.freq_info_ul.scs_carrier_list.back().scs);
-  slots.resize(RING_ALLOCATOR_SIZE);
+
+  const unsigned ring_size =
+      get_allocator_ring_size_gt_min(RING_MAX_HISTORY_SIZE + get_max_slot_ul_alloc_delay(cfg.ntn_cs_koffset));
+  slots.reserve(ring_size);
   unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(max_scs);
-  for (unsigned i = 0; i < slots.size(); ++i) {
+  for (unsigned i = 0; i != ring_size; ++i) {
     for (const auto& carrier : cfg.dl_cfg_common.freq_info_dl.scs_carrier_list) {
       unsigned current_slot_dur = nof_slots_per_subframe / get_nof_slots_per_subframe(carrier.scs);
       if (i % current_slot_dur == 0) {
@@ -348,7 +351,7 @@ cell_resource_allocator::cell_resource_allocator(const cell_configuration& cfg_)
         ul_scs_carriers.emplace_back(carrier);
       }
     }
-    slots[i] = std::make_unique<cell_slot_resource_allocator>(cfg, dl_scs_carriers, ul_scs_carriers);
+    slots.emplace_back(cfg, dl_scs_carriers, ul_scs_carriers);
     dl_scs_carriers.clear();
     ul_scs_carriers.clear();
   }
@@ -362,14 +365,14 @@ void cell_resource_allocator::slot_indication(slot_point sl_tx)
 
   if (SRSRAN_UNLIKELY(not last_slot_ind.valid())) {
     // First call to slot_indication. Set slot of all slot cell resource grids.
-    for (unsigned i = 0; i < slots.size(); ++i) {
-      slots[(sl_tx + i).to_uint() % slots.size()]->slot_indication(sl_tx + i);
+    for (unsigned i = 0, sz = slots.size(); i != sz; ++i) {
+      slots[(sl_tx + i).count()].slot_indication(sl_tx + i);
     }
   } else {
     // Reset old slot state and set its new future slot.
     slot_point slot_to_reset = sl_tx - static_cast<unsigned>(RING_MAX_HISTORY_SIZE);
-    auto&      old_slot_res  = slots[slot_to_reset.to_uint() % slots.size()];
-    old_slot_res->slot_indication(slot_to_reset + slots.size());
+    auto&      old_slot_res  = slots[slot_to_reset.count()];
+    old_slot_res.slot_indication(slot_to_reset + slots.size());
   }
   last_slot_ind = sl_tx;
 }
@@ -377,7 +380,7 @@ void cell_resource_allocator::slot_indication(slot_point sl_tx)
 void cell_resource_allocator::stop()
 {
   for (unsigned i = 0, sz = slots.size(); i != sz; ++i) {
-    slots[i]->clear();
+    slots[i].clear();
   }
   last_slot_ind = {};
 }

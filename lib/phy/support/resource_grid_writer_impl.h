@@ -69,7 +69,7 @@ public:
   span<cbf16_t> get_view(unsigned port, unsigned l) override;
 
   /// Helper function to mark port as not empty.
-  inline void clear_empty(unsigned i_port) { empty &= ~(1U << i_port); }
+  void clear_empty(unsigned i_port) { empty.fetch_and(~(1U << i_port), std::memory_order_acq_rel); }
 
 private:
   storage_type&          data;

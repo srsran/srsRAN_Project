@@ -74,7 +74,7 @@ manual_event<du_mac_sched_control_config_response>& du_ue_ric_configuration_proc
                                CORO_AWAIT_VALUE(const mac_ue_reconfiguration_response result, handle_mac_config());
 
                                if (result.result) {
-                                 du_params.mac.ue_cfg.handle_ue_config_applied(result.ue_index);
+                                 du_params.mac.mgr.get_ue_configurator().handle_ue_config_applied(result.ue_index);
                                }
 
                                // Signal completion of UE configuration to external coroutine.
@@ -106,12 +106,8 @@ async_task<mac_ue_reconfiguration_response> du_ue_ric_configuration_procedure::h
                                    du_params.ran.cells[0].scs_common,
                                    band_helper::get_freq_range(du_params.ran.cells[0].dl_carrier.band));
 
-  unsigned min_prb_ratio = res_alloc_cfg.rrm_policy_group.min_prb_policy_ratio.has_value()
-                               ? res_alloc_cfg.rrm_policy_group.min_prb_policy_ratio.value()
-                               : 0;
-  unsigned max_prb_ratio = res_alloc_cfg.rrm_policy_group.max_prb_policy_ratio.has_value()
-                               ? res_alloc_cfg.rrm_policy_group.max_prb_policy_ratio.value()
-                               : 100;
+  unsigned min_prb_ratio = res_alloc_cfg.rrm_policy_group.minimum_ratio.value_or(0);
+  unsigned max_prb_ratio = res_alloc_cfg.rrm_policy_group.maximum_ratio.value_or(100);
 
   min_prb_ratio = std::clamp(min_prb_ratio, static_cast<unsigned>(0), static_cast<unsigned>(100));
   max_prb_ratio = std::clamp(max_prb_ratio, static_cast<unsigned>(0), static_cast<unsigned>(100));
@@ -127,5 +123,5 @@ async_task<mac_ue_reconfiguration_response> du_ue_ric_configuration_procedure::h
                                            : du_params.mac.sched_cfg.ue.max_nof_dl_harq_retxs;
   res_alloc_cfg.max_pusch_harq_retxs = res_alloc_cfg.max_pdsch_harq_retxs;
 
-  return du_params.mac.ue_cfg.handle_ue_reconfiguration_request(mac_request);
+  return du_params.mac.mgr.get_ue_configurator().handle_ue_reconfiguration_request(mac_request);
 }

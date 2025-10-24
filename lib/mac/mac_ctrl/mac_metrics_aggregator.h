@@ -53,8 +53,10 @@ public:
                          srslog::basic_logger&                     logger_);
   ~mac_metrics_aggregator();
 
-  cell_metric_report_config
-  add_cell(du_cell_index_t cell_index, subcarrier_spacing scs_common, mac_cell_clock_controller& time_source);
+  cell_metric_report_config add_cell(du_cell_index_t            cell_index,
+                                     subcarrier_spacing         scs_common,
+                                     unsigned                   tdd_period_slots,
+                                     mac_cell_clock_controller& time_source);
 
   void rem_cell(du_cell_index_t cell_index);
 

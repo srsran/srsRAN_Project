@@ -177,30 +177,35 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
   for (const auto& cell : report->cells) {
     fmt::memory_buffer buffer;
 
-    unsigned sum_dl_bitrate_kbps = 0;
-    unsigned sum_ul_bitrate_kbps = 0;
-    unsigned sum_pdsch_rbs       = 0;
-    unsigned sum_pusch_rbs       = 0;
-    float    max_crc_delay       = std::numeric_limits<float>::min();
-    float    max_ce_delay        = std::numeric_limits<float>::min();
-    float    max_pucch_delay     = std::numeric_limits<float>::min();
-    float    max_pusch_delay     = std::numeric_limits<float>::min();
+    unsigned sum_dl_bitrate_kbps   = 0;
+    unsigned sum_ul_bitrate_kbps   = 0;
+    unsigned sum_pdsch_rbs         = 0;
+    unsigned sum_pusch_rbs         = 0;
+    float    max_crc_delay         = std::numeric_limits<float>::min();
+    float    max_ce_delay          = std::numeric_limits<float>::min();
+    float    max_pucch_delay       = std::numeric_limits<float>::min();
+    float    max_pusch_delay       = std::numeric_limits<float>::min();
+    float    max_sr_to_pusch_delay = std::numeric_limits<float>::min();
     for (const auto& ue : cell.ue_metrics) {
       sum_dl_bitrate_kbps += ue.dl_brate_kbps;
       sum_ul_bitrate_kbps += ue.ul_brate_kbps;
       sum_pdsch_rbs += ue.tot_pdsch_prbs_used;
       sum_pusch_rbs += ue.tot_pusch_prbs_used;
+
       if (ue.max_crc_delay_ms.has_value()) {
         max_crc_delay = std::max(max_crc_delay, ue.max_crc_delay_ms.value());
       }
       if (ue.max_ce_delay_ms.has_value()) {
         max_ce_delay = std::max(max_ce_delay, ue.max_ce_delay_ms.value());
       }
+      if (ue.max_pusch_harq_delay_ms.has_value()) {
+        max_pusch_delay = std::max(max_pusch_delay, ue.max_pusch_harq_delay_ms.value());
+      }
       if (ue.max_pucch_harq_delay_ms.has_value()) {
         max_pucch_delay = std::max(max_pucch_delay, ue.max_pucch_harq_delay_ms.value());
       }
-      if (ue.max_pusch_harq_delay_ms.has_value()) {
-        max_pusch_delay = std::max(max_pusch_delay, ue.max_pusch_harq_delay_ms.value());
+      if (ue.max_sr_to_pusch_delay_ms.has_value()) {
+        max_sr_to_pusch_delay = std::max(max_pusch_delay, ue.max_sr_to_pusch_delay_ms.value());
       }
     }
 
@@ -236,6 +241,18 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
         cell.nof_failed_pdsch_allocs_late_harqs,
         cell.nof_failed_pusch_allocs_late_harqs,
         cell.pucch_tot_rb_usage_avg);
+    if (cell.pusch_prbs_used_per_tdd_slot_idx.size()) {
+      fmt::format_to(
+          std::back_inserter(buffer),
+          " pusch_rbs_per_tdd_slot_idx=[{}]",
+          fmt::join(cell.pusch_prbs_used_per_tdd_slot_idx.begin(), cell.pusch_prbs_used_per_tdd_slot_idx.end(), ", "));
+    }
+    if (cell.pdsch_prbs_used_per_tdd_slot_idx.size()) {
+      fmt::format_to(
+          std::back_inserter(buffer),
+          " pdsch_rbs_per_tdd_slot_idx=[{}]",
+          fmt::join(cell.pdsch_prbs_used_per_tdd_slot_idx.begin(), cell.pdsch_prbs_used_per_tdd_slot_idx.end(), ", "));
+    }
     if (max_crc_delay != std::numeric_limits<float>::min()) {
       fmt::format_to(std::back_inserter(buffer), " max_crc_delay={}ms", max_crc_delay);
     }
@@ -247,6 +264,9 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
     }
     if (max_pusch_delay != std::numeric_limits<float>::min()) {
       fmt::format_to(std::back_inserter(buffer), " max_pusch_harq_delay={}ms", max_pusch_delay);
+    }
+    if (max_sr_to_pusch_delay != std::numeric_limits<float>::min()) {
+      fmt::format_to(std::back_inserter(buffer), " max_sr_to_pusch_delay={}ms", max_sr_to_pusch_delay);
     }
     fmt::format_to(
         std::back_inserter(buffer), " avg_prach_delay={:.3}", format_value_or(cell.avg_prach_delay_slots, "n/a"));
@@ -272,7 +292,11 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
 
     // log ue-specific metrics
     for (const auto& ue : cell.ue_metrics) {
-      fmt::format_to(std::back_inserter(buffer), "Scheduler UE pci={} rnti={} metrics:", ue.pci, ue.rnti);
+      fmt::format_to(std::back_inserter(buffer),
+                     "Scheduler UE ue={} pci={} rnti={} metrics:",
+                     fmt::underlying(ue.ue_index),
+                     ue.pci,
+                     ue.rnti);
       if (ue.cqi_stats.get_nof_observations() > 0) {
         fmt::format_to(
             std::back_inserter(buffer), " cqi={}", static_cast<unsigned>(std::round(ue.cqi_stats.get_mean())));
@@ -363,6 +387,8 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
         fmt::format_to(out_it, " srs_ta=n/a");
       }
       fmt::format_to(out_it, " last_phr={}", format_value_or(ue.last_phr, "n/a"));
+      fmt::format_to(out_it, " max_pdsch_distance={}", format_unit_or(ue.max_pdsch_distance_ms, "ms", "n/a"));
+      fmt::format_to(out_it, " max_pusch_distance={}", format_unit_or(ue.max_pusch_distance_ms, "ms", "n/a"));
       fmt::format_to(out_it, " avg_ul_ce_delay={:.3}", format_unit_or(ue.avg_ce_delay_ms, "ms", "n/a"));
       fmt::format_to(out_it, " max_ul_ce_delay={:.3}", format_unit_or(ue.max_ce_delay_ms, "ms", "n/a"));
       fmt::format_to(out_it, " avg_crc_delay={:.3}", format_unit_or(ue.avg_crc_delay_ms, "ms", "n/a"));
@@ -371,6 +397,8 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
       fmt::format_to(out_it, " max_pusch_harq_delay={:.3}", format_unit_or(ue.max_pusch_harq_delay_ms, "ms", "n/a"));
       fmt::format_to(out_it, " avg_pucch_harq_delay={:.3}", format_unit_or(ue.avg_pucch_harq_delay_ms, "ms", "n/a"));
       fmt::format_to(out_it, " max_pucch_harq_delay={:.3}", format_unit_or(ue.max_pucch_harq_delay_ms, "ms", "n/a"));
+      fmt::format_to(out_it, " avg_sr_to_pusch_delay={:.3}", format_unit_or(ue.avg_sr_to_pusch_delay_ms, "ms", "n/a"));
+      fmt::format_to(out_it, " max_sr_to_pusch_delay={:.3}", format_unit_or(ue.max_sr_to_pusch_delay_ms, "ms", "n/a"));
 
       log_chan("{}", to_c_str(buffer));
       buffer.clear();
@@ -384,6 +412,7 @@ void scheduler_cell_metrics_consumer_e2::handle_metric(const std::optional<sched
     return;
   }
 
-  for (const auto& cell : report->cells)
+  for (const auto& cell : report->cells) {
     notifier.report_metrics(cell);
+  }
 }

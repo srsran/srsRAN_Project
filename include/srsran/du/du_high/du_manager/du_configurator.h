@@ -54,13 +54,15 @@ struct du_mac_sched_control_config_response {
 /// Parameters of a cell that need to be configured during the DU cell operation.
 struct du_cell_param_config_request {
   du_cell_param_config_request() = default;
-  du_cell_param_config_request(nr_cell_global_id_t nr_cgi_, std::optional<int> ssb_pwr_mod_) :
-    nr_cgi(nr_cgi_), ssb_pwr_mod(ssb_pwr_mod_)
+  du_cell_param_config_request(const std::optional<nr_cell_global_id_t>& nr_cgi_,
+                               std::optional<int>                        ssb_pwr_mod_,
+                               std::vector<rrm_policy_ratio_group>       rrm_policy_ratio_list_ = {}) :
+    nr_cgi(nr_cgi_), ssb_pwr_mod(ssb_pwr_mod_), rrm_policy_ratio_list(std::move(rrm_policy_ratio_list_))
   {
   }
 
   /// NR Cell Global ID of the cell being configured.
-  nr_cell_global_id_t nr_cgi;
+  std::optional<nr_cell_global_id_t> nr_cgi;
   /// SSB power modification to be applied to the cell. If absent, no modification is applied.
   std::optional<int> ssb_pwr_mod;
   /// Radio resource management policy list to be applied to the cell, If empty, no modification is applied.

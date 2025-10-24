@@ -65,19 +65,19 @@ protected:
 
   bool is_rnti_scheduled(rnti_t rnti) const
   {
-    if (srsran::find_ue_dl_pdcch(rnti, *last_sched_res_list[0]) != nullptr) {
+    if (srsran::find_ue_dl_pdcch(rnti, *last_sched_result()) != nullptr) {
       return true;
     }
-    if (srsran::find_ue_ul_pdcch(rnti, *last_sched_res_list[0]) != nullptr) {
+    if (srsran::find_ue_ul_pdcch(rnti, *last_sched_result()) != nullptr) {
       return true;
     }
-    if (find_ue_pdsch(rnti, *last_sched_res_list[0]) != nullptr) {
+    if (find_ue_pdsch(rnti, *last_sched_result()) != nullptr) {
       return true;
     }
-    if (find_ue_pucch(rnti, *last_sched_res_list[0]) != nullptr) {
+    if (find_ue_pucch(rnti, *last_sched_result()) != nullptr) {
       return true;
     }
-    if (find_ue_pusch(rnti, *last_sched_res_list[0]) != nullptr) {
+    if (find_ue_pusch(rnti, *last_sched_result()) != nullptr) {
       return true;
     }
     return false;
@@ -133,7 +133,7 @@ TEST_F(sched_ue_removal_test, when_ue_has_pending_harqs_then_scheduler_waits_for
   const unsigned      TX_TIMEOUT = 10;
   for (unsigned i = 0; i != TX_TIMEOUT; ++i) {
     this->run_slot();
-    alloc = find_ue_pdsch(rnti, *last_sched_res_list[to_du_cell_index(0)]);
+    alloc = find_ue_pdsch(rnti, *last_sched_result());
     if (alloc != nullptr) {
       break;
     }
@@ -149,10 +149,10 @@ TEST_F(sched_ue_removal_test, when_ue_has_pending_harqs_then_scheduler_waits_for
   const pucch_info* pucch       = nullptr;
   for (unsigned count = 0; count != ACK_TIMEOUT; ++count) {
     this->run_slot();
-    ASSERT_EQ(find_ue_pdsch(rnti, *last_sched_res_list[to_du_cell_index(0)]), nullptr)
+    ASSERT_EQ(find_ue_pdsch(rnti, *last_sched_result()), nullptr)
         << "UE allocated despite having no SRB pending bytes and being marked for removal";
 
-    pucch = find_ue_pucch(rnti, *last_sched_res_list[to_du_cell_index(0)]);
+    pucch = find_ue_pucch(rnti, *last_sched_result());
     if (pucch != nullptr and pucch->uci_bits.harq_ack_nof_bits > 0) {
       break;
     }
@@ -166,7 +166,7 @@ TEST_F(sched_ue_removal_test, when_ue_has_pending_harqs_then_scheduler_waits_for
   uci.slot_rx    = last_result_slot();
   // Note: There can be more than one PUCCH for the same UE. We need to ACK all of them, otherwise the HARQ is not
   // emptied.
-  for (const auto& pucch_alloc : last_sched_res_list[to_du_cell_index(0)]->ul.pucchs) {
+  for (const auto& pucch_alloc : last_sched_result()->ul.pucchs) {
     if (pucch_alloc.crnti == rnti) {
       uci.ucis.push_back(create_uci_pdu_with_harq_ack(ue_index, pucch_alloc));
     }
@@ -246,7 +246,7 @@ TEST_F(sched_ue_removal_test,
   const unsigned       TX_TIMEOUT = 10;
   for (unsigned i = 0; i != TX_TIMEOUT; ++i) {
     this->run_slot();
-    alloc = find_ue_pusch(rnti, *last_sched_res_list[to_du_cell_index(0)]);
+    alloc = find_ue_pusch(rnti, *last_sched_result());
     if (alloc != nullptr) {
       break;
     }
@@ -260,10 +260,9 @@ TEST_F(sched_ue_removal_test,
   const unsigned UE_REM_TIMEOUT = 1000;
   for (unsigned count = 0; count != UE_REM_TIMEOUT and not notif.last_ue_index_deleted.has_value(); ++count) {
     this->run_slot();
-    ASSERT_EQ(find_ue_pusch(rnti, *last_sched_res_list[to_du_cell_index(0)]), nullptr)
-        << "UE UL allocated despite being marked for removal";
+    ASSERT_EQ(find_ue_pusch(rnti, *last_sched_result()), nullptr) << "UE UL allocated despite being marked for removal";
 
-    const pucch_info* pucch = find_ue_pucch(rnti, *last_sched_res_list[to_du_cell_index(0)]);
+    const pucch_info* pucch = find_ue_pucch(rnti, *last_sched_result());
     if (pucch != nullptr and
         (pucch->format() == pucch_format::FORMAT_1 and pucch->uci_bits.sr_bits != sr_nof_bits::no_sr)) {
       // UCI indication sets SR indication.

@@ -24,6 +24,7 @@
 #include "srsran/gateways/baseband/baseband_gateway_transmitter.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/radio/radio_factory.h"
+#include "srsran/srsvec/conversion.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/math/complex_normal_random.h"
 #include "srsran/support/math/math_utils.h"
@@ -67,42 +68,62 @@ public:
   int64_t get_rx_overflow_count() const { return rx_overflow_count; }
 };
 
-class baseband_gateway_buffer_trx : public baseband_gateway_buffer_reader, public baseband_gateway_buffer_writer
+class baseband_gateway_buffer_trx
 {
-private:
-  cf_t**   buffer;
-  unsigned nof_samples;
-  unsigned nof_channels;
-
 public:
-  /// Constructs the buffer from a read-only buffer for the transmitter.
-  baseband_gateway_buffer_trx(const void** psamples, int nof_samples_, int nof_channels_) :
-    buffer((cf_t**)(psamples)), nof_samples(nof_samples_), nof_channels(nof_channels_)
+  /// Constructs the buffer.
+  baseband_gateway_buffer_trx(unsigned nof_channels, unsigned max_nof_samples) : buffer(nof_channels, max_nof_samples)
   {
     // Do nothing.
   }
 
-  /// Constructs the buffer from a buffer for the receiver.
-  baseband_gateway_buffer_trx(void** psamples, int nof_samples_, int nof_channels_) :
-    buffer((cf_t**)(psamples)), nof_samples(nof_samples_), nof_channels(nof_channels_)
+  /// Resizes the buffer.
+  void resize(unsigned nof_samples) { buffer.resize(nof_samples); }
+
+  /// Writes floating point complex samples to the buffer.
+  void write_cf_samples(const void** samples, unsigned nof_samples)
   {
-    // Do nothing.
+    // Conversion scaling factor.
+    static constexpr float scaling_factor = std::numeric_limits<int16_t>::max();
+
+    // Reinterpret samples pointer to floating point complex samples.
+    const cf_t** cf_samples = reinterpret_cast<const cf_t**>(samples);
+
+    // Update buffer number of samples.
+    buffer.resize(nof_samples);
+
+    // Convert floating point to 16-bit integer complex samples.
+    for (unsigned i_channel = 0, nof_channels = buffer.get_nof_channels(); i_channel != nof_channels; ++i_channel) {
+      srsvec::convert(
+          buffer.get_writer()[i_channel], span<const cf_t>(cf_samples[i_channel], nof_samples), scaling_factor);
+    }
   }
 
-  // See interface for documentation
-  unsigned get_nof_channels() const override { return nof_channels; }
-
-  // See interface for documentation
-  unsigned get_nof_samples() const override { return nof_samples; }
-
-  // See interface for documentation
-  span<cf_t> get_channel_buffer(unsigned channel_idx) override { return span<cf_t>(buffer[channel_idx], nof_samples); }
-
-  // See interface for documentation
-  span<const cf_t> get_channel_buffer(unsigned channel_idx) const override
+  /// Reads floating point complex samples from the buffer.
+  void read_cf_samples(void** samples, unsigned nof_samples)
   {
-    return span<cf_t>(buffer[channel_idx], nof_samples);
+    srsran_assert(buffer.get_nof_samples() == nof_samples, "Unmatched number of samples.");
+
+    // Conversion scaling factor.
+    static constexpr float scaling_factor = std::numeric_limits<int16_t>::max();
+
+    // Reinterpret samples pointer to floating point complex samples.
+    cf_t** cf_samples = reinterpret_cast<cf_t**>(samples);
+
+    // Convert 16-bit integer to floating point complex samples.
+    for (unsigned i_channel = 0, nof_channels = buffer.get_nof_channels(); i_channel != nof_channels; ++i_channel) {
+      srsvec::convert(span<cf_t>(cf_samples[i_channel], nof_samples), buffer.get_reader()[i_channel], scaling_factor);
+    }
   }
+
+  // Get buffer writer.
+  baseband_gateway_buffer_writer& get_writer() { return buffer.get_writer(); }
+
+  // Get buffer reader.
+  const baseband_gateway_buffer_reader& get_reader() { return buffer.get_reader(); }
+
+private:
+  baseband_gateway_buffer_dynamic buffer;
 };
 
 class baseband_gateway_buffer_zeros : public baseband_gateway_buffer_reader
@@ -111,8 +132,8 @@ private:
   unsigned nof_channels;
   unsigned nof_samples;
 
-  static std::mutex        data_mutex;
-  static std::vector<cf_t> data;
+  static std::mutex          data_mutex;
+  static std::vector<ci16_t> data;
 
 public:
   baseband_gateway_buffer_zeros(unsigned nof_channels_, unsigned nof_samples_) :
@@ -120,7 +141,7 @@ public:
   {
     std::unique_lock<std::mutex> lock(data_mutex);
     if (data.size() < nof_samples) {
-      data.resize(nof_samples, cf_t());
+      data.resize(nof_samples, ci16_t());
     }
   }
 
@@ -131,11 +152,11 @@ public:
   unsigned get_nof_samples() const override { return nof_samples; }
 
   // See interface for documentation
-  span<const cf_t> get_channel_buffer(unsigned) const override { return span<const cf_t>(data).first(nof_samples); }
+  span<const ci16_t> get_channel_buffer(unsigned) const override { return span<const ci16_t>(data).first(nof_samples); }
 };
 
-std::mutex        baseband_gateway_buffer_zeros::data_mutex;
-std::vector<cf_t> baseband_gateway_buffer_zeros::data(61440, cf_t());
+std::mutex          baseband_gateway_buffer_zeros::data_mutex;
+std::vector<ci16_t> baseband_gateway_buffer_zeros::data(61440, ci16_t());
 
 } // namespace
 
@@ -154,6 +175,10 @@ struct trx_srsran_session_context {
   std::unique_ptr<radio_factory> factory;
   // Radio session.
   std::unique_ptr<radio_session> session;
+  /// Transmit temporary buffers in 16-bit integer complex.
+  std::vector<baseband_gateway_buffer_trx> tx_buffers;
+  /// Receive temporary buffers in 16-bit integer complex.
+  std::vector<baseband_gateway_buffer_trx> rx_buffers;
   // Task worker.
   std::unique_ptr<task_worker> async_task_worker;
   // Asynchronous task executor.
@@ -257,21 +282,24 @@ static void trx_srsran_write2(TRXState*         s1,
   }
 
   // Prepare buffer.
-  baseband_gateway_buffer_trx buffer(psamples, count, context.tx_port_channel_count[tx_port_index]);
+  baseband_gateway_buffer_trx& buffer = context.tx_buffers[tx_port_index];
+  buffer.write_cf_samples(psamples, count);
 
   // Add noise if enabled.
   if (context.noise_spd.has_value()) {
     for (unsigned i_chan = 0, nof_channels = context.tx_port_channel_count[tx_port_index]; i_chan != nof_channels;
          ++i_chan) {
-      span<cf_t> chan_buffer = buffer.get_channel_buffer(i_chan);
-      std::transform(chan_buffer.begin(), chan_buffer.end(), chan_buffer.begin(), [&context](cf_t sample) {
-        return sample + context.dist(context.rgen);
+      span<ci16_t> chan_buffer = buffer.get_writer()[i_chan];
+      std::transform(chan_buffer.begin(), chan_buffer.end(), chan_buffer.begin(), [&context](ci16_t sample) {
+        cf_t rand  = context.dist(context.rgen);
+        cf_t value = cf_t(rand.real() * INT16_MAX, rand.imag() * INT16_MAX);
+        return sample + to_ci16(value);
       });
     }
   }
 
   // Transmit baseband.
-  transmitter.transmit(buffer, metadata);
+  transmitter.transmit(buffer.get_reader(), metadata);
 }
 
 static int trx_srsran_read2(TRXState*        s1,
@@ -317,10 +345,14 @@ static int trx_srsran_read2(TRXState*        s1,
   // }
 
   // Prepare buffer.
-  baseband_gateway_buffer_trx buffer(psamples, count, context.rx_port_channel_count[rf_port_index]);
+  baseband_gateway_buffer_trx& buffer = context.rx_buffers[rf_port_index];
+  buffer.resize(count);
 
   // Receive baseband.
-  baseband_gateway_receiver::metadata metadata = receiver.receive(buffer);
+  baseband_gateway_receiver::metadata metadata = receiver.receive(buffer.get_writer());
+
+  // Read samples from the buffer.
+  buffer.read_cf_samples(psamples, count);
 
   // Fill reception metadata.
   if (ptimestamp != nullptr) {
@@ -389,7 +421,7 @@ static int trx_srsran_start(TRXState* s1, const TRXDriverParams* p)
   if (context.noise_spd.has_value()) {
     // Convert to standard deviation and initialize noise generator.
     float noise_std = std::sqrt(convert_dB_to_power(context.noise_spd.value()) * sampling_rate_Hz);
-    context.dist    = complex_normal_distribution<>(0.0, noise_std);
+    context.dist    = complex_normal_distribution<>(cf_t(0.0f, 0.0f), noise_std);
   }
 
   // Check that all sampling rates for all channels are the same.
@@ -402,6 +434,13 @@ static int trx_srsran_start(TRXState* s1, const TRXDriverParams* p)
                                      x.den == sampling_rates_frac.front().den;
                             }),
                 "Not all sampling rates are equal.");
+
+  // Create transmit and receive buffers for each RF port. Assume no transmit or receive burst will be longer than 1ms.
+  unsigned trx_max_buffer_sz = sampling_rate_Hz / 1000;
+  for (int i_rf_port = 0, rf_port_count = context.rf_port_count; i_rf_port != rf_port_count; ++i_rf_port) {
+    context.tx_buffers.emplace_back(p->tx_port_channel_count[i_rf_port], trx_max_buffer_sz);
+    context.rx_buffers.emplace_back(p->rx_port_channel_count[i_rf_port], trx_max_buffer_sz);
+  }
 
   // Prepare configuration.
   radio_configuration::radio configuration = {};

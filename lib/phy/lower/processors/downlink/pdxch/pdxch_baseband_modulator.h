@@ -40,6 +40,7 @@
 #include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/srsvec/compare.h"
+#include "srsran/srsvec/conversion.h"
 #include "srsran/srsvec/dot_prod.h"
 #include "srsran/srsvec/zero.h"
 #include "srsran/support/executors/task_executor.h"
@@ -75,7 +76,8 @@ public:
     executor(executor_),
     modulator(modulator_),
     amplitude_control(amplitude_control_),
-    notifier(notifier_)
+    notifier(notifier_),
+    cf_buffer({srate.to_kHz(), nof_ports})
   {
     unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(scs);
 
@@ -155,26 +157,32 @@ public:
       // Calculate OFDM symbol within the subframe.
       unsigned i_symbol_sf = i_symbol + i_symbol_sf_begin;
 
-      // Create view to the writer offset.
-      baseband_gateway_buffer_writer_view symbol_buffer(
-          current_result.buffer->get_writer(), i_symbol_start, symbol_sizes_sf[i_symbol_sf]);
-
       // Process each port individually.
       for (unsigned i_port = 0; i_port != nof_ports; ++i_port, ++i_metric) {
-        bool success = executor.defer([this, i_symbol_sf, i_port, i_metric, buf = symbol_buffer[i_port]]() {
+        bool success = executor.defer([this, i_symbol_sf, i_port, i_metric, i_symbol_start]() {
+          unsigned symbol_size = symbol_sizes_sf[i_symbol_sf];
+
+          // Create view to the writer offset.
+          span<ci16_t> ci16_buf = current_result.buffer->get_writer()[i_port].subspan(i_symbol_start, symbol_size);
+          // Get a view over the temporary buffer holding float-based complex samples.
+          span<cf_t> cf_buf = cf_buffer.get_view({i_port}).subspan(i_symbol_start, symbol_size);
+
           // Start tracing.
           trace_point tp = ru_tracer.now();
 
           // OFDM modulation.
-          modulator.modulate(buf, current_grid.get_reader(), i_port, i_symbol_sf);
+          modulator.modulate(cf_buf, current_grid.get_reader(), i_port, i_symbol_sf);
 
           // Apply amplitude control.
-          amplitude_control.process(buf, buf);
+          amplitude_control.process(cf_buf, cf_buf);
 
           // Perform signal measurements.
-          metrics_collection[i_metric].avg_power  = srsvec::average_power(buf);
-          metrics_collection[i_metric].peak_power = srsvec::max_abs_element(buf).second;
-          metrics_collection[i_metric].clipping   = {srsvec::count_if_part_abs_greater_than(buf, 0.95), buf.size()};
+          metrics_collection[i_metric].avg_power  = srsvec::average_power(cf_buf);
+          metrics_collection[i_metric].peak_power = srsvec::max_abs_element(cf_buf).second;
+          metrics_collection[i_metric].clipping = {srsvec::count_if_part_abs_greater_than(cf_buf, 0.95), cf_buf.size()};
+
+          // Convert complex floating-point buffer to complex integer-based.
+          srsvec::convert(ci16_buf, cf_buf, scaling_factor_cf_to_ci16);
 
           ru_tracer << trace_event("PDxCH modulation", tp);
 
@@ -187,7 +195,9 @@ public:
                        current_context.slot.slot_index(),
                        "Failed to enqueue modulation task for symbol {}.",
                        i_symbol_sf);
-          srsvec::zero(symbol_buffer[i_port]);
+          span<ci16_t> ci16_buf =
+              current_result.buffer->get_writer()[i_port].subspan(i_symbol_start, symbol_sizes_sf[i_symbol_sf]);
+          srsvec::zero(ci16_buf);
           complete_symbol_task();
         }
       }
@@ -252,6 +262,8 @@ private:
       MAX_NSYMB_PER_SLOT * pow2(to_numerology_value(subcarrier_spacing::kHz240));
   /// Maximum number of tasks. Used for keeping record of the metrics per symbol basis.
   static constexpr unsigned max_nof_tasks = MAX_NSYMB_PER_SLOT * MAX_PORTS;
+  /// Scaling factor for converting from complex float to 16-bit complex integer.
+  static constexpr float scaling_factor_cf_to_ci16 = std::numeric_limits<int16_t>::max();
 
   /// Physical layer logger. Used for logging when the executor cannot defer the modulation task..
   srslog::basic_logger& logger;
@@ -280,6 +292,8 @@ private:
   amplitude_controller& amplitude_control;
   /// Notifier containing the completion notification callback.
   pdxch_processor_modulator_notifier& notifier;
+  /// Buffer to hold complex floating-point based samples for processing.
+  dynamic_tensor<2, cf_t> cf_buffer;
 };
 
 } // namespace srsran

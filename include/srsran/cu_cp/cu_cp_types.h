@@ -24,9 +24,10 @@
 
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/slotted_array.h"
 #include "srsran/adt/slotted_vector.h"
 #include "srsran/pdcp/pdcp_config.h"
+#include "srsran/ran/cause/e1ap_cause.h"
+#include "srsran/ran/cause/f1ap_cause.h"
 #include "srsran/ran/cause/ngap_cause.h"
 #include "srsran/ran/crit_diagnostics.h"
 #include "srsran/ran/cu_types.h"
@@ -134,6 +135,18 @@ constexpr std::underlying_type_t<amf_index_t> amf_index_to_uint(amf_index_t amf_
 {
   return static_cast<std::underlying_type_t<amf_index_t>>(amf_index);
 }
+
+/// Notification from the E1AP/F1AP that transaction reference information for some UEs has been lost.
+struct ue_transaction_info_loss_event {
+  std::vector<ue_index_t> ues_lost;
+};
+
+/// Common interface reset message for E1AP (E1 Reset), F1AP (F1 Reset) and NGAP (NG Reset).
+struct cu_cp_reset {
+  std::variant<e1ap_cause_t, f1ap_cause_t, ngap_cause_t> cause;
+  bool                                                   interface_reset = false;
+  std::vector<ue_index_t>                                ues_to_reset;
+};
 
 /// QoS Configuration, i.e. 5QI and the associated PDCP
 /// and SDAP configuration for DRBs

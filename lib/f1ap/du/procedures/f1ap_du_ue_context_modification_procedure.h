@@ -28,10 +28,14 @@
 namespace srsran {
 namespace srs_du {
 
+struct f1ap_du_context;
+
 class f1ap_du_ue_context_modification_procedure
 {
 public:
-  f1ap_du_ue_context_modification_procedure(const asn1::f1ap::ue_context_mod_request_s& msg, f1ap_du_ue& ue_);
+  f1ap_du_ue_context_modification_procedure(const asn1::f1ap::ue_context_mod_request_s& msg,
+                                            f1ap_du_ue&                                 ue_,
+                                            const f1ap_du_context&                      ctxt_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -47,6 +51,7 @@ private:
 
   const asn1::f1ap::ue_context_mod_request_s req;
   f1ap_du_ue&                                ue;
+  const f1ap_du_context&                     du_ctxt;
   f1ap_ue_context_update_request             du_request;
 
   f1ap_ue_context_update_response du_response;

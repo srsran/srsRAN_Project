@@ -107,14 +107,26 @@ void ru_controller_generic_impl::start()
     // Get current radio timestamp.
     baseband_gateway_timestamp current_radio_ts = radio->read_current_time();
 
-    // Round time to the next second.
-    uint64_t                   nof_ticks_per_second = static_cast<uint64_t>(srate_MHz * 1e6);
-    baseband_gateway_timestamp start_ts = divide_ceil(current_radio_ts, nof_ticks_per_second) * nof_ticks_per_second;
+    // Calculate some constants that depend on the sampling rate.
+    uint64_t nof_ticks_per_second  = static_cast<uint64_t>(srate_MHz * 1e6);
+    uint64_t nof_ticks_subframe    = nof_ticks_per_second / 1000;
+    uint64_t nof_ticks_super_frame = NOF_SUBFRAMES_PER_FRAME * NOF_SFNS * nof_ticks_subframe;
+    uint64_t start_advance_10ms    = nof_ticks_per_second / 100;
+
+    // Round time to the next 1PPS rising-edge.
+    baseband_gateway_timestamp time_next_pps =
+        divide_ceil(current_radio_ts, nof_ticks_per_second) * nof_ticks_per_second;
+
+    // Calculate the SFN0 reference time for matching the SFN0 to the 1PPS rising edge.
+    baseband_gateway_timestamp sfn0_ref_time = time_next_pps % nof_ticks_super_frame;
+
+    // Start streaming 10-ms before the 1PPS rising edge.
+    baseband_gateway_timestamp time_start = time_next_pps - start_advance_10ms;
 
     // Start radio and lower physical layer at the given timestamp.
-    radio->start(start_ts);
+    radio->start(time_start);
     for (auto& low_phy : low_phy_crtl) {
-      low_phy->get_controller().start(start_ts, true);
+      low_phy->get_controller().start(time_start, sfn0_ref_time);
     }
 
     return;
@@ -132,7 +144,7 @@ void ru_controller_generic_impl::start()
   // Start radio and lower physical layer at the given timestamp.
   radio->start(start_ts);
   for (auto& low_phy : low_phy_crtl) {
-    low_phy->get_controller().start(start_ts, false);
+    low_phy->get_controller().start(start_ts);
   }
 }
 
@@ -153,11 +165,6 @@ void ru_controller_generic_impl::set_lower_phy_sectors(std::vector<lower_phy_sec
   cfo_controller            = ru_cfo_controller_generic_impl(low_phy_crtl);
   center_freq_controller    = ru_center_frequency_controller_generic_impl(low_phy_crtl, radio);
   tx_time_offset_controller = ru_tx_time_offset_controller_generic_impl(low_phy_crtl);
-}
-
-ru_center_frequency_controller* ru_controller_generic_impl::get_center_frequency_controller()
-{
-  return nullptr;
 }
 
 bool ru_gain_controller_generic_impl::set_tx_gain(unsigned port_id, double gain_dB)

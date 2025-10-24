@@ -51,8 +51,8 @@ cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message
   cu_up_ctxt.e1ap_tx_pdu_notifier = std::move(e1ap_tx_pdu_notifier);
 
   // TODO: use real config
-  cu_up_processor_config_t                        cu_up_cfg = {"srs_cu_cp", cu_up_index, cfg.cu_cp, logger};
-  std::unique_ptr<cu_up_processor_impl_interface> cu_up     = create_cu_up_processor(
+  cu_up_processor_config_t         cu_up_cfg = {"srs_cu_cp", cu_up_index, cfg.cu_cp, logger};
+  std::unique_ptr<cu_up_processor> cu_up     = create_cu_up_processor(
       std::move(cu_up_cfg), *cu_up_ctxt.e1ap_tx_pdu_notifier, cfg.e1ap_ev_notifier, cfg.common_task_sched);
 
   srsran_assert(cu_up != nullptr, "Failed to create CU-UP processor");
@@ -89,13 +89,10 @@ async_task<void> cu_up_processor_repository::remove_cu_up(cu_up_index_t cu_up_in
     }
 
     // Stop CU-UP activity, eliminating pending transactions for the CU-UP and respective UEs.
-    // TODO
+    CORO_AWAIT(cu_up_db.find(cu_up_index)->second.processor->get_e1ap_handler().stop());
 
-    // Remove CU-UP
-    removed_cu_up_db.insert(std::make_pair(cu_up_index, std::move(cu_up_db.at(cu_up_index))));
+    // Remove CU-UP.
     cu_up_db.erase(cu_up_index);
-
-    // Remove CU-UP
     logger.info("Removed CU-UP {}", cu_up_index);
 
     CORO_RETURN();
@@ -109,13 +106,33 @@ cu_up_processor_e1ap_interface& cu_up_processor_repository::get_cu_up(cu_up_inde
   return *cu_up_db.at(cu_up_index).processor;
 }
 
-cu_up_processor_impl_interface* cu_up_processor_repository::find_cu_up_processor(cu_up_index_t cu_up_index)
+cu_up_processor* cu_up_processor_repository::find_cu_up_processor(cu_up_index_t cu_up_index)
 {
   srsran_assert(cu_up_index != cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
   if (cu_up_db.find(cu_up_index) == cu_up_db.end()) {
     return nullptr;
   }
   return cu_up_db.at(cu_up_index).processor.get();
+}
+
+cu_up_index_t cu_up_processor_repository::select_cu_up()
+{
+  if (cu_up_db.empty()) {
+    return cu_up_index_t::invalid;
+  }
+
+  // Equally distribute UEs among available CU-UPs.
+  unsigned      min_nof_ues    = 0;
+  cu_up_index_t selected_cu_up = cu_up_index_t::invalid;
+  for (const auto& [cu_up_idx, cu_up] : cu_up_db) {
+    if (cu_up.processor->get_e1ap_statistics_handler().get_nof_ues() < min_nof_ues ||
+        selected_cu_up == cu_up_index_t::invalid) {
+      min_nof_ues    = cu_up.processor->get_e1ap_statistics_handler().get_nof_ues();
+      selected_cu_up = cu_up_idx;
+    }
+  }
+
+  return selected_cu_up;
 }
 
 size_t cu_up_processor_repository::get_nof_e1ap_ues()

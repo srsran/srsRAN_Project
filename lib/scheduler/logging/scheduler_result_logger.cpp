@@ -747,15 +747,19 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
       nof_pdschs += result.dl.bc.sibs.size();
     }
     const unsigned nof_puschs       = result.ul.puschs.size();
+    const unsigned nof_pucchs       = result.ul.pucchs.size();
     const unsigned nof_failed_pdcch = result.failed_attempts.pdcch;
     const unsigned nof_failed_uci   = result.failed_attempts.uci;
-    logger.debug("Slot decisions pci={} t={}us ({} PDSCH{}, {} PUSCH{}, {} attempted PDCCH{}, {} attempted UCI{}):{}",
+    logger.debug("Slot decisions pci={} t={}us ({} PDSCH{}, {} PUSCH{}, {} PUCCH{}, {} attempted PDCCH{}, {} attempted "
+                 "UCI{}):{}",
                  pci,
                  decision_latency.count(),
                  nof_pdschs,
                  nof_pdschs == 1 ? "" : "s",
                  nof_puschs,
                  nof_puschs == 1 ? "" : "s",
+                 nof_pucchs,
+                 nof_pucchs == 1 ? "" : "s",
                  nof_failed_pdcch,
                  nof_failed_pdcch == 1 ? "" : "s",
                  nof_failed_uci,
@@ -777,13 +781,16 @@ void scheduler_result_logger::log_info(const sched_result& result, std::chrono::
       nof_pdschs += result.dl.bc.sibs.size();
     }
     const unsigned nof_puschs = result.ul.puschs.size();
-    logger.info("Slot decisions pci={} t={}us ({} PDSCH{}, {} PUSCH{}): {}",
+    const unsigned nof_pucchs = result.ul.pucchs.size();
+    logger.info("Slot decisions pci={} t={}us ({} PDSCH{}, {} PUSCH{}, {} PUCCH{}): {}",
                 pci,
                 decision_latency.count(),
                 nof_pdschs,
                 nof_pdschs == 1 ? "" : "s",
                 nof_puschs,
                 nof_puschs == 1 ? "" : "s",
+                nof_pucchs,
+                nof_pucchs == 1 ? "" : "s",
                 make_info_log_entry(result, log_broadcast));
   }
 }

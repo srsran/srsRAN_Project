@@ -34,6 +34,7 @@ f1ap_ue_creation_response srsran::srs_du::create_f1ap_ue(const f1ap_ue_creation_
 {
   f1ap_du_ue& u                        = ues.add_ue(req.ue_index);
   u.context.rnti                       = req.c_rnti;
+  u.context.sp_cell_index              = req.pcell_index;
   const f1ap_du_cell_context& ue_pcell = du_ctx.served_cells[req.pcell_index];
 
   // Create an F1c bearer for each requested SRB.

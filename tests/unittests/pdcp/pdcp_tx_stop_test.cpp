@@ -144,7 +144,7 @@ TEST_P(pdcp_tx_stop_test, full_crypto_engine_does_not_stall)
     FLUSH_AND_ASSERT_EQ(m.num_pdus, 0);
   }
 
-  tick_all(10);
+  tick_all(pdcp_tx_crypto_reordering_timeout_ms);
   {
     pdcp_tx_metrics_container m = pdcp_tx->get_metrics_and_reset();
     logger.error("{}", m);

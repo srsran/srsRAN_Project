@@ -258,8 +258,32 @@ static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_ce
   cell.ul_cfg_common         = make_asn1_rrc_ul_config_common(du_cfg.ul_cfg_common);
 
   // SSB params.
-  cell.ssb_positions_in_burst.in_one_group.from_number(static_cast<uint64_t>(du_cfg.ssb_cfg.ssb_bitmap) >>
-                                                       static_cast<uint64_t>(56U));
+  if (frequency_range::FR2 == band_helper::get_freq_range(du_cfg.dl_carrier.band)) {
+    // Populate FR2 SSB params based on TS38.331 section 6.3.2 IE "ServingCellConfigCommonSIB".
+    uint8_t group_presence = 0;
+    uint8_t in_one_group   = 0;
+
+    for (int i = 7; i >= 0; --i) {
+      uint8_t ssb_group = (du_cfg.ssb_cfg.ssb_bitmap >> (8 * i)) & 255;
+      if (ssb_group > 0) {
+        group_presence |= (1 << i);
+
+        if (in_one_group != ssb_group && i < 7) {
+          report_fatal_error("Invalid FR2 SIB1 SSB params. The pattern of transmitted SS/PBCH blocks must be the same "
+                             "for all groups.");
+        }
+        in_one_group = ssb_group;
+      }
+    }
+
+    cell.ssb_positions_in_burst.in_one_group.from_number(in_one_group);
+    cell.ssb_positions_in_burst.group_presence.from_number(group_presence);
+    cell.ssb_positions_in_burst.group_presence_present = true;
+  } else {
+    cell.ssb_positions_in_burst.in_one_group.from_number(static_cast<uint64_t>(du_cfg.ssb_cfg.ssb_bitmap) >>
+                                                         static_cast<uint64_t>(56U));
+  }
+
   asn1::number_to_enum(cell.ssb_periodicity_serving_cell, ssb_periodicity_to_value(du_cfg.ssb_cfg.ssb_period));
   cell.ss_pbch_block_pwr = du_cfg.ssb_cfg.ssb_block_power;
 

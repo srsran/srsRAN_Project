@@ -23,6 +23,7 @@
 #include "cu_up_manager_impl.h"
 #include "cu_up_manager_helpers.h"
 #include "routines/cu_up_bearer_context_modification_routine.h"
+#include "routines/cu_up_e1_connection_loss_routine.h"
 #include "routines/cu_up_test_mode_routines.h"
 #include "srsran/support/async/execute_on_blocking.h"
 
@@ -53,6 +54,11 @@ static ue_manager_dependencies generate_ue_manager_dependencies(const cu_up_mana
 
 cu_up_manager_impl::cu_up_manager_impl(const cu_up_manager_impl_config&       config,
                                        const cu_up_manager_impl_dependencies& dependencies) :
+  cu_up_id(config.cu_up_id),
+  cu_up_name(config.cu_up_name),
+  plmn(config.plmn),
+  stop_command(dependencies.stop_command),
+  e1ap(dependencies.e1ap),
   qos(config.qos),
   n3_cfg(config.n3_cfg),
   test_mode_cfg(config.test_mode_cfg),
@@ -158,6 +164,40 @@ cu_up_manager_impl::handle_bearer_context_release_command(const e1ap_bearer_cont
   ue_ctxt->get_logger().log_debug("Received E1 Bearer Context Release Command");
 
   return ue_mng->remove_ue(msg.ue_index);
+}
+
+void cu_up_manager_impl::handle_e1ap_connection_drop()
+{
+  schedule_cu_up_async_task(launch_async<cu_up_e1_connection_loss_routine>(
+      cu_up_id, cu_up_name, plmn, stop_command, e1ap, *ue_mng, timers, exec_mapper.ctrl_executor()));
+}
+
+async_task<void> cu_up_manager_impl::handle_e1_reset(const e1ap_reset& msg)
+{
+  // Full E1 reset, release all bearer contexts.
+  if (msg.type == e1ap_reset::full) {
+    return ue_mng->remove_all_ues();
+  }
+
+  // Partial E1 reset, release the indicated bearer contexts.
+  if (msg.ues.empty()) {
+    logger.error("Received partial E1 reset, but no UEs to release");
+    return launch_async([](coro_context<async_task<void>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
+  return launch_async(
+      [this, msg, ue_it = std::vector<ue_index_t>::const_iterator{}](coro_context<async_task<void>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+        ue_it = msg.ues.begin();
+        while (ue_it != msg.ues.end()) {
+          CORO_AWAIT(ue_mng->remove_ue(*ue_it));
+          ue_it++;
+        }
+        CORO_RETURN();
+      });
 }
 
 async_task<void> cu_up_manager_impl::enable_test_mode()

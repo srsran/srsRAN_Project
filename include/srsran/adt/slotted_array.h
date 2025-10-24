@@ -45,8 +45,8 @@ public:
   using iterator_category = std::forward_iterator_tag;
   using value_type        = typename ArrayOfOpts::value_type::value_type;
   using difference_type   = std::ptrdiff_t;
-  using reference         = std::conditional_t<std::is_const<ArrayOfOpts>::value, const value_type, value_type>&;
-  using pointer           = std::conditional_t<std::is_const<ArrayOfOpts>::value, const value_type, value_type>*;
+  using reference         = std::conditional_t<std::is_const_v<ArrayOfOpts>, const value_type, value_type>&;
+  using pointer           = std::conditional_t<std::is_const_v<ArrayOfOpts>, const value_type, value_type>*;
 
   slotted_array_iter_impl() = default;
   slotted_array_iter_impl(ArrayOfOpts& vec_, size_t idx_) : vec(&vec_), idx(idx_)
@@ -55,12 +55,12 @@ public:
       ++idx;
     }
   }
-  template <typename U, std::enable_if_t<not std::is_same<ArrayOfOpts, U>::value, int> = 0>
+  template <typename U, std::enable_if_t<not std::is_same_v<ArrayOfOpts, U>, int> = 0>
   slotted_array_iter_impl(const slotted_array_iter_impl<U>& other) : vec(other.vec), idx(other.idx)
   {
   }
 
-  template <typename U, std::enable_if_t<not std::is_same<ArrayOfOpts, U>::value, int> = 0>
+  template <typename U, std::enable_if_t<not std::is_same_v<ArrayOfOpts, U>, int> = 0>
   slotted_array_iter_impl& operator=(const slotted_array_iter_impl<U>& other)
   {
     vec = other.vec;
@@ -133,27 +133,36 @@ template <typename T, size_t N, bool EmbeddedStorage = true>
 class slotted_array
 {
   using array_type =
-      std::conditional_t<EmbeddedStorage, std::array<tiny_optional<T>, N>, std::vector<tiny_optional<T>>>;
-
-  template <typename A>
-  auto dimension_vec(std::array<A, N>& a)
-  {
-    // do nothing, if std::array
-  }
-  template <typename A>
-  void dimension_vec(std::vector<A>& a)
-  {
-    a.resize(N);
-  }
+      std::conditional_t<EmbeddedStorage, static_vector<tiny_optional<T>, N>, std::vector<tiny_optional<T>>>;
 
 public:
   using value_type     = T;
   using iterator       = detail::slotted_array_iter_impl<array_type>;
   using const_iterator = detail::slotted_array_iter_impl<const array_type>;
 
-  slotted_array() { dimension_vec(vec); }
+  slotted_array()
+  {
+    if constexpr (not EmbeddedStorage) {
+      this->vec.reserve(N);
+    }
+  }
+  slotted_array(slotted_array&& other) noexcept : nof_elems(other.nof_elems), vec(std::move(other.vec))
+  {
+    other.clear();
+  }
+  slotted_array(const slotted_array& other) = default;
+  slotted_array& operator=(slotted_array&& other) noexcept
+  {
+    if (this != &other) {
+      nof_elems = other.nof_elems;
+      vec       = std::move(other.vec);
+      other.clear();
+    }
+    return *this;
+  }
+  slotted_array& operator=(const slotted_array& other) = default;
 
-  bool contains(size_t idx) const noexcept { return idx < vec.size() and vec[idx].has_value(); }
+  [[nodiscard]] bool contains(size_t idx) const noexcept { return idx < vec.size() and vec[idx].has_value(); }
 
   /// \brief Index-based element lookup. This operation has O(1) complexity in the worst-case scenario.
   T& operator[](size_t idx) noexcept
@@ -185,12 +194,15 @@ public:
   template <typename U>
   bool insert(size_t idx, U&& u)
   {
-    static_assert(std::is_convertible<U, value_type>::value, "Ctor T(U&&) does not exist.");
-    srsran_assert(idx < this->vec.size(), "Out-of-bounds access to array: {}>={}", idx, this->vec.size());
+    static_assert(std::is_convertible_v<U, value_type>, "Ctor T(U&&) does not exist.");
+    srsran_assert(idx < N, "Index {} exceeds maximum size of slotted_array {}", idx, N);
     if (contains(idx)) {
       return false;
     }
-    this->nof_elems++;
+    if (idx >= this->vec.size()) {
+      this->vec.resize(idx + 1);
+    }
+    ++this->nof_elems;
     this->vec[idx] = std::forward<U>(u);
     return true;
   }
@@ -201,8 +213,11 @@ public:
   template <typename... Args>
   void emplace(size_t idx, Args&&... args)
   {
-    static_assert(std::is_constructible<value_type, Args&&...>::value, "Ctor T(Args...) does not exist.");
-    srsran_assert(idx < this->vec.size(), "Out-of-bounds access to array: {}>={}", idx, this->vec.size());
+    static_assert(std::is_constructible_v<value_type, Args&&...>, "Ctor T(Args...) does not exist.");
+    srsran_assert(idx < N, "Index {} exceeds maximum size of slotted_array {}", idx, N);
+    if (idx >= this->vec.size()) {
+      this->vec.resize(idx + 1);
+    }
     this->nof_elems += this->contains(idx) ? 0 : 1;
     this->vec[idx].emplace(std::forward<Args>(args)...);
     srsran_assert(this->vec[idx].has_value(), "Inserted object must be represent an optional with value");
@@ -212,10 +227,10 @@ public:
   /// \param idx Position of the erased element in the array
   bool erase(size_t idx) noexcept
   {
-    srsran_assert(idx < this->vec.size(), "Out-of-bounds access to array: {}>={}", idx, this->vec.size());
     if (this->contains(idx)) {
-      this->nof_elems--;
+      --this->nof_elems;
       this->vec[idx].reset();
+      clear_back_elems();
       return true;
     }
     return false;
@@ -225,45 +240,52 @@ public:
   /// \param idx Position of the erased element in the array
   T take(size_t idx) noexcept
   {
-    srsran_assert(idx < this->vec.size(), "Out-of-bounds access to array: {}>={}", idx, this->vec.size());
     srsran_assert(this->contains(idx), "Empty position in index {}", idx);
 
-    this->nof_elems--;
+    --this->nof_elems;
     T obj = std::move(*this->vec[idx]);
     this->vec[idx].reset();
+    clear_back_elems();
     return obj;
   }
 
   /// Erase object pointed by the given iterator. Iterator must point to valid element
   /// \param it container iterator
-  void erase(iterator it) noexcept { erase(this->extract_iterator_index(it)); }
+  void erase(iterator it) noexcept
+  {
+    bool ret = erase(this->extract_iterator_index(it));
+    (void)ret;
+    srsran_assert(ret, "Iterator must point to valid element");
+  }
 
   /// Clear all elements of the container
   void clear() noexcept
   {
     this->nof_elems = 0;
-    for (auto& e : this->vec) {
-      e.reset();
-    }
+    this->vec.clear();
   }
 
   /// Get iterator with index equal or higher than the provided index.
-  iterator       lower_bound(size_t idx) { return iterator{vec, idx}; }
-  const_iterator lower_bound(size_t idx) const { return const_iterator{vec, idx}; }
+  iterator       lower_bound(size_t idx) { return iterator{vec, std::min(idx, vec.size())}; }
+  const_iterator lower_bound(size_t idx) const { return const_iterator{vec, std::min(idx, vec.size())}; }
 
   /// Find first position that is empty
-  size_t find_first_empty(size_t start_guess = 0) const
+  [[nodiscard]] size_t find_first_empty(size_t start_guess = 0) const
   {
-    srsran_assert(start_guess < vec.size(), "invalid first guess array index");
-    if (nof_elems == vec.size()) {
-      return vec.size();
+    if (start_guess >= N) {
+      return N;
     }
-    for (size_t i = start_guess; i < vec.size(); ++i) {
+    const size_t sz = vec.size();
+    if (nof_elems == sz) {
+      // there are no holes.
+      return std::max(start_guess, sz);
+    }
+    for (size_t i = start_guess; i < sz; ++i) {
       if (not vec[i].has_value()) {
         return i;
       }
     }
-    return vec.size();
+    return std::max(start_guess, sz);
   }
 
 private:
@@ -271,6 +293,13 @@ private:
   static size_t extract_iterator_index(It it)
   {
     return it.idx;
+  }
+
+  void clear_back_elems()
+  {
+    while (vec.size() > 0 and not vec.back().has_value()) {
+      vec.pop_back();
+    }
   }
 
   size_t     nof_elems = 0; ///< Number of present fields
@@ -286,7 +315,7 @@ template <typename IdType,
 class slotted_id_table : private IdToIntConversion
 {
   static_assert(
-      std::is_convertible<decltype(std::declval<IdToIntConversion>().get_index(std::declval<IdType>())), size_t>::value,
+      std::is_convertible_v<decltype(std::declval<IdToIntConversion>().get_index(std::declval<IdType>())), size_t>,
       "IdType must be convertible to size_t");
 
 public:

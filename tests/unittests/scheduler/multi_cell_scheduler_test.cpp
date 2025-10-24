@@ -25,7 +25,6 @@
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/indication_generators.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_simulator.h"
-#include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsran/ran/duplex_mode.h"
 #include <gtest/gtest.h>
 
@@ -58,16 +57,6 @@ protected:
       sched_cell_cfg_req.cell_index       = to_du_cell_index(cell_idx);
       this->add_cell(sched_cell_cfg_req);
     }
-  }
-
-  void run_slot_all_cells()
-  {
-    logger.set_context(next_slot.sfn(), next_slot.slot_index());
-    for (unsigned cell_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++cell_idx) {
-      last_sched_res_list[cell_idx] = &sched->slot_indication(next_slot, to_du_cell_index(cell_idx));
-      test_scheduler_result_consistency(cell_cfg_list[cell_idx], next_slot, *last_sched_res_list[cell_idx]);
-    }
-    ++next_slot;
   }
 
   template <typename StopCondition>
@@ -156,13 +145,13 @@ protected:
 
   std::optional<pucch_info> get_pucch_sr_scheduled(uint16_t cell_idx, uint16_t ue_idx)
   {
-    if (last_sched_res_list[cell_idx] == nullptr) {
+    if (last_sched_result(to_du_cell_index(cell_idx)) == nullptr) {
       return {};
     }
-    auto* pucch_res = std::find_if(last_sched_res_list[cell_idx]->ul.pucchs.begin(),
-                                   last_sched_res_list[cell_idx]->ul.pucchs.end(),
+    auto* pucch_res = std::find_if(last_sched_result(to_du_cell_index(cell_idx))->ul.pucchs.begin(),
+                                   last_sched_result(to_du_cell_index(cell_idx))->ul.pucchs.end(),
                                    [ue_idx](const pucch_info& pucch) { return pucch.crnti == get_ue_crnti(ue_idx); });
-    if (pucch_res == last_sched_res_list[cell_idx]->ul.pucchs.end()) {
+    if (pucch_res == last_sched_result(to_du_cell_index(cell_idx))->ul.pucchs.end()) {
       return {};
     }
 
@@ -189,17 +178,18 @@ public:
 TEST_P(multi_cell_scheduler_tester, test_ssb_allocation_for_multiple_cells)
 {
   const auto ssb_period_slots =
-      ssb_periodicity_to_value(cell_cfg_list[to_du_cell_index(0)].ssb_cfg.ssb_period) *
+      ssb_periodicity_to_value(cell_cfg(to_du_cell_index(0)).ssb_cfg.ssb_period) *
       get_nof_slots_per_subframe(cell_cfg_builder_params_list[to_du_cell_index(0)].scs_common);
 
   std::vector<bool> is_ssb_scheduled_atleast_once(cell_cfg_builder_params_list.size(), false);
   for (unsigned slot_count = 0; slot_count < ssb_period_slots * 10; ++slot_count) {
     for (unsigned cell_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++cell_idx) {
-      if (last_sched_res_list[cell_idx] != nullptr and not is_ssb_scheduled_atleast_once[cell_idx]) {
-        is_ssb_scheduled_atleast_once[cell_idx] = not last_sched_res_list[cell_idx]->dl.bc.ssb_info.empty();
+      if (last_sched_result(to_du_cell_index(cell_idx)) != nullptr and not is_ssb_scheduled_atleast_once[cell_idx]) {
+        is_ssb_scheduled_atleast_once[cell_idx] =
+            not last_sched_result(to_du_cell_index(cell_idx))->dl.bc.ssb_info.empty();
       }
     }
-    run_slot_all_cells();
+    run_slot();
   }
   for (unsigned cell_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++cell_idx) {
     ASSERT_TRUE(is_ssb_scheduled_atleast_once[cell_idx])
@@ -210,18 +200,19 @@ TEST_P(multi_cell_scheduler_tester, test_ssb_allocation_for_multiple_cells)
 TEST_P(multi_cell_scheduler_tester, test_sib1_allocation_for_multiple_cells)
 {
   const auto sib1_period_slots =
-      std::max(ssb_periodicity_to_value(cell_cfg_list[to_du_cell_index(0)].ssb_cfg.ssb_period),
+      std::max(ssb_periodicity_to_value(cell_cfg(to_du_cell_index(0)).ssb_cfg.ssb_period),
                sib1_rtx_periodicity_to_value(sched_cfg.si.sib1_retx_period)) *
       get_nof_slots_per_subframe(cell_cfg_builder_params_list[to_du_cell_index(0)].scs_common);
 
   std::vector<bool> is_sib1_scheduled_atleast_once(cell_cfg_builder_params_list.size(), false);
   for (unsigned slot_count = 0; slot_count < sib1_period_slots * 2; ++slot_count) {
     for (unsigned cell_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++cell_idx) {
-      if (last_sched_res_list[cell_idx] != nullptr and not is_sib1_scheduled_atleast_once[cell_idx]) {
-        is_sib1_scheduled_atleast_once[cell_idx] = not last_sched_res_list[cell_idx]->dl.bc.sibs.empty();
+      if (last_sched_result(to_du_cell_index(cell_idx)) != nullptr and not is_sib1_scheduled_atleast_once[cell_idx]) {
+        is_sib1_scheduled_atleast_once[cell_idx] =
+            not last_sched_result(to_du_cell_index(cell_idx))->dl.bc.sibs.empty();
       }
     }
-    run_slot_all_cells();
+    run_slot();
   }
   for (unsigned cell_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++cell_idx) {
     ASSERT_TRUE(is_sib1_scheduled_atleast_once[cell_idx])
@@ -236,7 +227,7 @@ TEST_P(multi_cell_scheduler_tester, test_rar_scheduling_for_ues_in_different_cel
   static const unsigned nof_preambles_per_rach_indication = 1;
 
   auto next_ul_opportunity_condition = [this](uint16_t cell_index) {
-    return not cell_cfg_list[to_du_cell_index(cell_index)].is_fully_ul_enabled(next_slot_rx() - 1);
+    return not cell_cfg(to_du_cell_index(cell_index)).is_fully_ul_enabled(next_slot_rx() - 1);
   };
   for (unsigned cell_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++cell_idx) {
     run_slot_until(next_ul_opportunity_condition, cell_idx);
@@ -251,15 +242,15 @@ TEST_P(multi_cell_scheduler_tester, test_rar_scheduling_for_ues_in_different_cel
   std::vector<bool> is_rar_scheduled(cell_cfg_builder_params_list.size(), false);
   for (unsigned slot_count = 0; slot_count < test_run_nof_slots; ++slot_count) {
     for (unsigned cell_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++cell_idx) {
-      if (last_sched_res_list[cell_idx] != nullptr and not is_rar_scheduled[cell_idx]) {
-        is_rar_scheduled[cell_idx] = std::any_of(last_sched_res_list[cell_idx]->dl.dl_pdcchs.begin(),
-                                                 last_sched_res_list[cell_idx]->dl.dl_pdcchs.end(),
+      if (last_sched_result(to_du_cell_index(cell_idx)) != nullptr and not is_rar_scheduled[cell_idx]) {
+        is_rar_scheduled[cell_idx] = std::any_of(last_sched_result(to_du_cell_index(cell_idx))->dl.dl_pdcchs.begin(),
+                                                 last_sched_result(to_du_cell_index(cell_idx))->dl.dl_pdcchs.end(),
                                                  [](const pdcch_dl_information& dl_pdcch) {
                                                    return dl_pdcch.dci.type == srsran::dci_dl_rnti_config_type::ra_f1_0;
                                                  });
       }
     }
-    run_slot_all_cells();
+    run_slot();
   }
   for (unsigned cell_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++cell_idx) {
     ASSERT_TRUE(is_rar_scheduled[cell_idx]) << fmt::format("RAR not scheduled for cell with index={}", cell_idx);
@@ -283,10 +274,10 @@ TEST_P(multi_cell_scheduler_tester, test_dl_scheduling_for_ues_in_different_cell
   std::vector<bool> is_ue_dl_scheduled_in_cell(cell_cfg_builder_params_list.size(), false);
   for (unsigned slot_count = 0; slot_count < test_run_nof_slots; ++slot_count) {
     for (unsigned cell_idx = 0, ue_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++ue_idx, ++cell_idx) {
-      if (last_sched_res_list[cell_idx] != nullptr) {
+      if (last_sched_result(to_du_cell_index(cell_idx)) != nullptr) {
         const bool is_ue_scheduled = std::any_of(
-            last_sched_res_list[cell_idx]->dl.dl_pdcchs.begin(),
-            last_sched_res_list[cell_idx]->dl.dl_pdcchs.end(),
+            last_sched_result(to_du_cell_index(cell_idx))->dl.dl_pdcchs.begin(),
+            last_sched_result(to_du_cell_index(cell_idx))->dl.dl_pdcchs.end(),
             [ue_idx](const pdcch_dl_information& dl_pdcch) { return dl_pdcch.ctx.rnti == get_ue_crnti(ue_idx); });
         // Since only one UE is added by per cell, no other UEs should be scheduled in this cell i.e. ue_idx != cell_idx
         // should not be scheduled in this cell.
@@ -298,7 +289,7 @@ TEST_P(multi_cell_scheduler_tester, test_dl_scheduling_for_ues_in_different_cell
         }
       }
     }
-    run_slot_all_cells();
+    run_slot();
   }
   // Check whether all UEs DL traffic got scheduled in their respective cell.
   for (unsigned cell_idx = 0, ue_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++ue_idx, ++cell_idx) {
@@ -327,10 +318,10 @@ TEST_P(multi_cell_scheduler_tester, test_sr_indication_for_ues_in_different_cell
       if (pucch_res.has_value() and not is_ue_sr_scheduled_in_cell[cell_idx]) {
         sched->handle_uci_indication(create_sr_uci_ind(cell_idx, ue_idx, next_slot, *pucch_res));
       }
-      if (last_sched_res_list[cell_idx] != nullptr) {
+      if (last_sched_result(to_du_cell_index(cell_idx)) != nullptr) {
         const bool is_ue_scheduled = std::any_of(
-            last_sched_res_list[cell_idx]->dl.ul_pdcchs.begin(),
-            last_sched_res_list[cell_idx]->dl.ul_pdcchs.end(),
+            last_sched_result(to_du_cell_index(cell_idx))->dl.ul_pdcchs.begin(),
+            last_sched_result(to_du_cell_index(cell_idx))->dl.ul_pdcchs.end(),
             [ue_idx](const pdcch_ul_information& ul_pdcch) { return ul_pdcch.ctx.rnti == get_ue_crnti(ue_idx); });
         // Since only one UE is added by per cell, no other UEs should be scheduled in this cell i.e. ue_idx != cell_idx
         // should not be scheduled in this cell.
@@ -342,7 +333,7 @@ TEST_P(multi_cell_scheduler_tester, test_sr_indication_for_ues_in_different_cell
         }
       }
     }
-    run_slot_all_cells();
+    run_slot();
   }
   // Check whether all UE with SR got scheduled in their respective cell.
   for (unsigned cell_idx = 0, ue_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++ue_idx, ++cell_idx) {
@@ -372,10 +363,10 @@ TEST_P(multi_cell_scheduler_tester, test_ul_scheduling_for_ues_in_different_cell
   std::vector<bool> is_ue_ul_scheduled_in_cell(cell_cfg_builder_params_list.size(), false);
   for (unsigned slot_count = 0; slot_count < test_run_nof_slots; ++slot_count) {
     for (unsigned cell_idx = 0, ue_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++ue_idx, ++cell_idx) {
-      if (last_sched_res_list[cell_idx] != nullptr) {
+      if (last_sched_result(to_du_cell_index(cell_idx)) != nullptr) {
         const bool is_ue_scheduled = std::any_of(
-            last_sched_res_list[cell_idx]->dl.ul_pdcchs.begin(),
-            last_sched_res_list[cell_idx]->dl.ul_pdcchs.end(),
+            last_sched_result(to_du_cell_index(cell_idx))->dl.ul_pdcchs.begin(),
+            last_sched_result(to_du_cell_index(cell_idx))->dl.ul_pdcchs.end(),
             [ue_idx](const pdcch_ul_information& ul_pdcch) { return ul_pdcch.ctx.rnti == get_ue_crnti(ue_idx); });
         // Since only one UE is added by per cell, no other UEs should be scheduled in this cell i.e. ue_idx != cell_idx
         // should not be scheduled in this cell.
@@ -387,7 +378,7 @@ TEST_P(multi_cell_scheduler_tester, test_ul_scheduling_for_ues_in_different_cell
         }
       }
     }
-    run_slot_all_cells();
+    run_slot();
   }
   // Check whether all UEs UL traffic got scheduled in their respective cell.
   for (unsigned cell_idx = 0, ue_idx = 0; cell_idx < cell_cfg_builder_params_list.size(); ++ue_idx, ++cell_idx) {

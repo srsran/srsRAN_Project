@@ -25,7 +25,7 @@
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_buffer.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_tx.h"
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_block_processor.h"
-#include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
+#include "srsran/phy/upper/signal_processors/pdsch/dmrs_pdsch_processor.h"
 #include "srsran/phy/upper/signal_processors/ptrs/ptrs_pdsch_generator.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_executor.h"

@@ -39,14 +39,15 @@ public:
   double get_avg_data_latency_us() const
   {
     return count.load(std::memory_order_relaxed)
-               ? static_cast<double>(sum_data_elapsed_ns) / static_cast<double>(count) * 1e-3
+               ? static_cast<double>(sum_data_elapsed_ns.load(std::memory_order_relaxed)) /
+                     static_cast<double>(count.load(std::memory_order_relaxed)) * 1e-3
                : 0;
   }
 
   /// Gets the minimum data processing latency in microseconds.
   double get_min_data_latency_us() const
   {
-    uint64_t min_data_latency_ns = unpack_duration(packed_min_data_latency_ns);
+    uint64_t min_data_latency_ns = unpack_duration(packed_min_data_latency_ns.load(std::memory_order_relaxed));
     return (min_data_latency_ns == unpack_duration(default_packed_min_latency_ns))
                ? 0
                : static_cast<double>(min_data_latency_ns) / 1000.0;
@@ -55,25 +56,31 @@ public:
   /// Gets the maximum transmission latency in microseconds and the slot point in which was detected.
   std::pair<double, slot_point> get_max_data_latency_us() const
   {
-    uint64_t   max_data_latency_ns = unpack_duration(packed_max_data_latency_ns);
-    slot_point slot                = unpack_slot(packed_max_data_latency_ns);
+    uint64_t   max_data_latency_ns = unpack_duration(packed_max_data_latency_ns.load(std::memory_order_relaxed));
+    slot_point slot                = unpack_slot(packed_max_data_latency_ns.load(std::memory_order_relaxed));
     return {static_cast<double>(max_data_latency_ns) / 1000.0, slot};
   }
 
   /// Gets the minimum UCI processing latency in microseconds.
   double get_min_uci_latency_us() const
   {
-    return (min_uci_latency_ns == UINT64_MAX) ? 0 : static_cast<double>(min_uci_latency_ns) / 1000.0;
+    return (min_uci_latency_ns.load(std::memory_order_relaxed) == UINT64_MAX)
+               ? 0
+               : static_cast<double>(min_uci_latency_ns.load(std::memory_order_relaxed)) / 1000.0;
   }
 
   /// Gets the maximum UCI processing latency in microseconds.
-  double get_max_uci_latency_us() const { return static_cast<double>(max_uci_latency_ns) / 1000.0; }
+  double get_max_uci_latency_us() const
+  {
+    return static_cast<double>(max_uci_latency_ns.load(std::memory_order_relaxed)) / 1000.0;
+  }
 
   /// Gets the average codeblock latency in microseconds.
   double get_avg_uci_latency_us() const
   {
     return uci_count.load(std::memory_order_relaxed)
-               ? static_cast<double>(sum_uci_elapsed_ns) / static_cast<double>(uci_count) * 1e-3
+               ? static_cast<double>(sum_uci_elapsed_ns.load(std::memory_order_relaxed)) /
+                     static_cast<double>(uci_count.load(std::memory_order_relaxed)) * 1e-3
                : 0;
   }
 
@@ -83,47 +90,59 @@ public:
   double get_processing_rate_Mbps() const
   {
     return sum_data_elapsed_ns.load(std::memory_order_relaxed)
-               ? static_cast<double>(sum_tbs) / static_cast<double>(sum_data_elapsed_ns) * 1000
+               ? static_cast<double>(sum_tbs.load(std::memory_order_relaxed)) /
+                     static_cast<double>(sum_data_elapsed_ns.load(std::memory_order_relaxed)) * 1000
                : 0;
   }
 
   /// Gets the total time spend by PUSCH processors.
-  std::chrono::nanoseconds get_total_time() const { return std::chrono::nanoseconds(sum_data_elapsed_ns); }
+  std::chrono::nanoseconds get_total_time() const
+  {
+    return std::chrono::nanoseconds(sum_data_elapsed_ns.load(std::memory_order_relaxed));
+  }
 
   /// Gets the total time spent by the PUSCH processors waiting for the asynchronous decoding to be completed.
-  std::chrono::nanoseconds get_total_wait_time() const { return std::chrono::nanoseconds(sum_waiting_ns); }
+  std::chrono::nanoseconds get_total_wait_time() const
+  {
+    return std::chrono::nanoseconds(sum_waiting_ns.load(std::memory_order_relaxed));
+  }
 
   /// Gets the CPU usage in microseconds of scrambling operations.
-  double get_cpu_usage_us() const { return static_cast<double>(sum_used_cpu_time_ns) / 1000.0; }
+  double get_cpu_usage_us() const
+  {
+    return static_cast<double>(sum_used_cpu_time_ns.load(std::memory_order_relaxed)) / 1000.0;
+  }
 
   /// Gets SINR in decibels as a result of channel estimation.
-  float get_ch_est_sinr() const { return ch_est_sinr_db; }
+  float get_ch_est_sinr() const { return ch_est_sinr_db.load(std::memory_order_relaxed); }
 
   /// Gets EVM as a result of channel estimation.
-  float get_ch_est_evm() const { return ch_est_evm; }
+  float get_ch_est_evm() const { return ch_est_evm.load(std::memory_order_relaxed); }
 
   double get_decoding_bler() const
   {
-    return count.load(std::memory_order_relaxed) ? static_cast<double>(count - sum_crc_ok) / static_cast<double>(count)
+    return count.load(std::memory_order_relaxed) ? static_cast<double>(count.load(std::memory_order_relaxed) -
+                                                                       sum_crc_ok.load(std::memory_order_relaxed)) /
+                                                       static_cast<double>(count.load(std::memory_order_relaxed))
                                                  : 0;
   }
 
   /// Resets values of all internal counters.
   void reset()
   {
-    sum_tbs                    = 0;
-    sum_crc_ok                 = 0;
-    sum_return_elapsed_ns      = 0;
-    sum_data_elapsed_ns        = 0;
-    sum_uci_elapsed_ns         = 0;
-    sum_waiting_ns             = 0;
-    count                      = 0;
-    uci_count                  = 0;
-    sum_used_cpu_time_ns       = 0;
-    packed_min_data_latency_ns = default_packed_min_latency_ns;
-    packed_max_data_latency_ns = default_packed_max_latency_ns;
-    min_uci_latency_ns         = UINT64_MAX;
-    max_uci_latency_ns         = 0;
+    sum_tbs.store(0, std::memory_order_relaxed);
+    sum_crc_ok.store(0, std::memory_order_relaxed);
+    sum_return_elapsed_ns.store(0, std::memory_order_relaxed);
+    sum_data_elapsed_ns.store(0, std::memory_order_relaxed);
+    sum_uci_elapsed_ns.store(0, std::memory_order_relaxed);
+    sum_waiting_ns.store(0, std::memory_order_relaxed);
+    count.store(0, std::memory_order_relaxed);
+    uci_count.store(0, std::memory_order_relaxed);
+    sum_used_cpu_time_ns.store(0, std::memory_order_relaxed);
+    packed_min_data_latency_ns.store(default_packed_min_latency_ns, std::memory_order_relaxed);
+    packed_max_data_latency_ns.store(default_packed_min_latency_ns, std::memory_order_relaxed);
+    min_uci_latency_ns.store(UINT64_MAX, std::memory_order_relaxed);
+    max_uci_latency_ns.store(0, std::memory_order_relaxed);
   }
 
 private:
@@ -135,29 +154,30 @@ private:
   // See interface for documentation.
   void on_new_metric(const pusch_processor_metrics& metrics) override
   {
-    sum_tbs += metrics.tbs.to_bits().value();
-    sum_data_elapsed_ns += metrics.elapsed_data.count();
-    sum_return_elapsed_ns += metrics.elapsed_return.count();
+    sum_tbs.fetch_add(metrics.tbs.to_bits().value(), std::memory_order_relaxed);
+    sum_data_elapsed_ns.fetch_add(metrics.elapsed_data.count(), std::memory_order_relaxed);
+    sum_return_elapsed_ns.fetch_add(metrics.elapsed_return.count(), std::memory_order_relaxed);
     if (metrics.elapsed_data > metrics.elapsed_return) {
-      sum_waiting_ns += metrics.elapsed_data.count() - metrics.elapsed_return.count();
+      sum_waiting_ns.fetch_add(metrics.elapsed_data.count() - metrics.elapsed_return.count(),
+                               std::memory_order_relaxed);
     }
     if (metrics.crc_ok) {
-      ++sum_crc_ok;
+      sum_crc_ok.fetch_add(1, std::memory_order_relaxed);
     }
-    ++count;
+    count.fetch_add(1, std::memory_order_relaxed);
     update_slotmax(metrics.slot, metrics.elapsed_data.count(), packed_max_data_latency_ns);
     update_slotmin(metrics.slot, metrics.elapsed_data.count(), packed_min_data_latency_ns);
     if (metrics.elapsed_uci.has_value()) {
-      sum_uci_elapsed_ns += metrics.elapsed_uci->count();
+      sum_uci_elapsed_ns.fetch_add(metrics.elapsed_uci->count(), std::memory_order_relaxed);
       update_minmax(metrics.elapsed_uci->count(), max_uci_latency_ns, min_uci_latency_ns);
-      ++uci_count;
+      uci_count.fetch_add(1, std::memory_order_relaxed);
     }
 
-    sum_used_cpu_time_ns += metrics.cpu_time_usage_ns;
+    sum_used_cpu_time_ns.fetch_add(metrics.cpu_time_usage_ns, std::memory_order_relaxed);
 
     // Save last channel estimation metrics.
-    ch_est_sinr_db = metrics.sinr_dB;
-    ch_est_evm     = metrics.evm;
+    ch_est_sinr_db.store(metrics.sinr_dB, std::memory_order_relaxed);
+    ch_est_evm.store(metrics.evm, std::memory_order_relaxed);
   }
 
   std::atomic<uint64_t> sum_tbs                    = {};

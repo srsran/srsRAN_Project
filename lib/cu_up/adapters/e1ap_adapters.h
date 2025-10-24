@@ -71,6 +71,27 @@ public:
     return cu_up_handler->handle_bearer_context_release_command(msg);
   }
 
+  async_task<void> on_e1_reset_received(const e1ap_reset& msg) override
+  {
+    if (cu_up_handler == nullptr) {
+      logger.warning("Could not handle E1 reset, no CU-UP handler present");
+      return launch_async([](coro_context<async_task<void>>& ctx) {
+        CORO_BEGIN(ctx);
+        CORO_RETURN();
+      });
+    }
+    return cu_up_handler->handle_e1_reset(msg);
+  }
+
+  void on_schedule_cu_up_async_task(async_task<void> task) override
+  {
+    if (cu_up_handler == nullptr) {
+      logger.error("Could not schedule CU-UP task, no CU-UP handler present");
+      return;
+    }
+    cu_up_handler->schedule_cu_up_async_task(std::move(task));
+  }
+
   void on_schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) override
   {
     if (cu_up_handler == nullptr) {
@@ -78,6 +99,15 @@ public:
       return;
     }
     cu_up_handler->schedule_ue_async_task(ue_index, std::move(task));
+  }
+
+  void on_connection_loss() override
+  {
+    if (cu_up_handler == nullptr) {
+      logger.error("Connection loss detected, but no CU-UP handler present.");
+      return;
+    }
+    cu_up_handler->handle_e1ap_connection_drop();
   }
 
 private:

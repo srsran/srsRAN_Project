@@ -78,7 +78,7 @@ public:
       return {};
     }
     pdcp_tx_metrics_container ret        = metrics.copy();
-    ret.sum_crypto_processing_latency_ns = sum_crypto_processing_latency_ns;
+    ret.sum_crypto_processing_latency_ns = sum_crypto_processing_latency_ns.load(std::memory_order_relaxed);
     return ret;
   }
 
@@ -129,7 +129,7 @@ public:
     metrics          = {};
     metrics.counter  = counter;
 
-    sum_crypto_processing_latency_ns = 0;
+    sum_crypto_processing_latency_ns.store(0, std::memory_order_relaxed);
   }
 
 private:

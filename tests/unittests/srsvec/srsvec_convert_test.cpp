@@ -29,6 +29,11 @@
 static std::mt19937 rgen(0);
 static const float  ASSERT_CF_MAX_ERROR    = 1e-5;
 static const float  ASSERT_FLOAT_MAX_ERROR = 1e-5;
+/// Note: SIMD and non-SIMD float-to-integer conversions may produce different results.
+/// For instance, Intel’s intrinsics round to the nearest integer with ties to even (2.5 -> 2), while std::round rounds
+/// halfway cases away from zero (2.5 -> 3). A +/-1 tolerance is applied to account for these differing rounding
+/// behaviors.
+static const float ASSERT_ROUNDING_MAX_ERROR = 1;
 
 using namespace srsran;
 
@@ -79,8 +84,8 @@ TEST_P(SrsvecConvertFixture, SrsvecConvertTestComplexInt16)
   for (size_t i = 0; i != size; ++i) {
     int16_t gold_re = static_cast<int16_t>(std::round(x[i].real() * scale));
     int16_t gold_im = static_cast<int16_t>(std::round(x[i].imag() * scale));
-    ASSERT_EQ(gold_re, z[2 * i + 0]);
-    ASSERT_EQ(gold_im, z[2 * i + 1]);
+    ASSERT_NEAR(gold_re, z[2 * i + 0], ASSERT_ROUNDING_MAX_ERROR);
+    ASSERT_NEAR(gold_im, z[2 * i + 1], ASSERT_ROUNDING_MAX_ERROR);
   }
 }
 
@@ -123,7 +128,7 @@ TEST_P(SrsvecConvertFixture, SrsvecConvertTestFloatInt16)
 
   for (size_t i = 0; i != size; ++i) {
     int16_t gold = static_cast<int16_t>(std::round(x[i] * scale));
-    TESTASSERT(gold == z[i]);
+    ASSERT_NEAR(gold, z[i], ASSERT_ROUNDING_MAX_ERROR);
   }
 }
 

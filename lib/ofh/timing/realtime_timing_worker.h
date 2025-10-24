@@ -55,6 +55,36 @@ struct realtime_worker_cfg {
 /// Realtime worker that generates OTA symbol notifications.
 class realtime_timing_worker : public operation_controller, public ota_symbol_boundary_notifier_manager
 {
+  /// A GPS clock implementation.
+  struct gps_clock {
+    /// Difference between Unix seconds to GPS seconds.
+    /// GPS epoch: 1980.1.6 00:00:00 (UTC); Unix time epoch: 1970:1.1 00:00:00 UTC
+    /// Last leap second added in 31st Dec 2016 by IERS.
+    /// 1970:1.1 - 1980.1.6: 3657 days
+    /// 3657*24*3600=315 964 800 seconds (Unix seconds value at 1980.1.6 00:00:00 (UTC))
+    /// There are 18 leap seconds inserted after 1980.1.6 00:00:00 (UTC), which means GPS is 18 seconds larger.
+    static constexpr uint64_t UNIX_TO_GPS_SECONDS_OFFSET = 315964800ULL - 18ULL;
+
+    /// Offset for converting from UTC to GPS time including Alpha and Beta parameters.
+    static inline std::chrono::nanoseconds gps_offset = std::chrono::seconds(UNIX_TO_GPS_SECONDS_OFFSET);
+
+    using duration   = std::chrono::nanoseconds;
+    using rep        = duration::rep;
+    using period     = duration::period;
+    using time_point = std::chrono::time_point<gps_clock>;
+    // static constexpr bool is_steady = false;
+
+    static time_point now()
+    {
+      ::timespec ts;
+      ::clock_gettime(CLOCK_REALTIME, &ts);
+
+      time_point now(std::chrono::seconds(ts.tv_sec) + std::chrono::nanoseconds(ts.tv_nsec));
+
+      return now - gps_offset;
+    }
+  };
+
   srslog::basic_logger&                          logger;
   std::vector<ota_symbol_boundary_notifier*>     ota_notifiers;
   task_executor&                                 executor;
@@ -64,7 +94,8 @@ class realtime_timing_worker : public operation_controller, public ota_symbol_bo
   const std::chrono::duration<double, std::nano> symbol_duration;
   const std::chrono::nanoseconds                 sleep_time;
   bool                                           enable_log_warnings_for_lates;
-  unsigned                                       previous_symb_index = 0;
+  unsigned                                       previous_symb_index       = 0;
+  gps_clock::rep                                 previous_time_since_epoch = 0;
   stop_event_source                              stop_manager;
   timing_metrics_collector_impl                  metrics_collector;
 
@@ -92,6 +123,13 @@ private:
 
   /// Notifies the given slot symbol point through the registered notifiers.
   void notify_slot_symbol_point(const slot_symbol_point_context& slot_context);
+
+  /// Calculates the fractional part inside a second from the given time point.
+  static std::chrono::nanoseconds calculate_ns_fraction_from(gps_clock::time_point tp)
+  {
+    auto tp_sec = std::chrono::time_point_cast<std::chrono::seconds>(tp);
+    return tp - tp_sec;
+  }
 };
 
 } // namespace ofh

@@ -29,6 +29,7 @@
 #include "positioning_handler.h"
 #include "rlf_detector.h"
 #include "uci_cell_decoder.h"
+#include "srsran/adt/slotted_array.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/support/async/manual_event.h"
 
@@ -38,6 +39,8 @@ struct srsran_mac_sched_config {
   const mac_expert_config& mac_cfg;
   /// Executor for DU control-plane operations.
   task_executor& ctrl_exec;
+  /// APP Timers.
+  timer_manager& timers;
   // Parameters passed to MAC scheduler.
   const scheduler_expert_config& sched_cfg;
 };
@@ -96,9 +99,7 @@ public:
 
   void handle_si_change_indication(const si_scheduling_update_request& request) override;
 
-  async_task<mac_cell_positioning_measurement_response>
-  handle_positioning_measurement_request(du_cell_index_t                                 cell_index,
-                                         const mac_cell_positioning_measurement_request& req) override;
+  mac_positioning_measurement_handler& get_positioning_handler() override { return *pos_handler; }
 
   void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req) override;
 
@@ -117,6 +118,7 @@ private:
   {
   public:
     cell_handler(srsran_scheduler_adapter& parent_, const sched_cell_configuration_request_message& sched_cfg);
+    ~cell_handler() override;
 
     void handle_crc(const mac_crc_indication_message& msg) override;
 
@@ -128,7 +130,7 @@ private:
 
     uci_cell_decoder uci_decoder;
 
-    std::unique_ptr<positioning_handler> pos_handler;
+    std::unique_ptr<cell_positioning_handler> pos_handler;
 
   private:
     const du_cell_index_t     cell_idx = INVALID_DU_CELL_INDEX;
@@ -155,6 +157,7 @@ private:
   /// Detector of UE RLFs.
   rlf_detector          rlf_handler;
   task_executor&        ctrl_exec;
+  timer_manager&        timers;
   srslog::basic_logger& logger;
 
   /// Notifier that is used by MAC to start and await configurations of the scheduler.
@@ -174,6 +177,9 @@ private:
     manual_event<bool> ue_config_ready;
   };
   std::array<ue_notification_context, MAX_NOF_DU_UES> sched_cfg_notif_map;
+
+  /// Positioning measurement handler.
+  std::unique_ptr<positioning_handler> pos_handler;
 
   /// Handler for each DU cell.
   slotted_id_table<du_cell_index_t, cell_handler, MAX_NOF_DU_CELLS> cell_handlers;

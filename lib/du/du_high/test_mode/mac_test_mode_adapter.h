@@ -26,6 +26,7 @@
 #include "mac_test_mode_ue_repository.h"
 #include "srsran/du/du_high/du_test_mode_config.h"
 #include "srsran/mac/mac.h"
+#include "srsran/mac/mac_cell_manager.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/srslog/srslog.h"
 
@@ -128,9 +129,9 @@ class mac_test_mode_adapter final : public mac_interface,
                                     public mac_cell_manager
 {
 public:
-  explicit mac_test_mode_adapter(const srs_du::du_test_mode_config::test_mode_ue_config& test_ue_cfg,
-                                 mac_result_notifier&                                    phy_notifier_,
-                                 unsigned                                                nof_cells);
+  explicit mac_test_mode_adapter(const du_test_mode_config::test_mode_ue_config& test_ue_cfg,
+                                 mac_result_notifier&                            phy_notifier_,
+                                 unsigned                                        nof_cells);
   ~mac_test_mode_adapter() override;
 
   void connect(std::unique_ptr<mac_interface> mac_ptr);
@@ -148,6 +149,11 @@ public:
   }
 
   mac_cell_manager& get_cell_manager() override { return *this; }
+
+  mac_positioning_measurement_handler& get_positioning_handler() override
+  {
+    return mac_adapted->get_positioning_handler();
+  }
 
   mac_ue_control_information_handler& get_ue_control_info_handler() override { return *this; }
 

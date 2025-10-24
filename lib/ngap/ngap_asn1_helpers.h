@@ -32,7 +32,6 @@
 #include "srsran/ngap/ngap_handover.h"
 #include "srsran/ngap/ngap_init_context_setup.h"
 #include "srsran/ngap/ngap_nas.h"
-#include "srsran/ngap/ngap_reset.h"
 #include "srsran/ngap/ngap_setup.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/ran/cu_types.h"
@@ -153,29 +152,6 @@ inline void fill_ngap_ng_setup_result(ngap_ng_setup_result& result, const asn1::
   }
 
   result = fail;
-}
-
-inline void fill_asn1_ng_reset(asn1::ngap::ng_reset_s& asn1_reset, const ngap_ng_reset& reset)
-{
-  asn1_reset->cause = cause_to_asn1(reset.cause);
-
-  if (reset.reset_type.index() == 0) {
-    asn1_reset->reset_type.set_ng_interface();
-  } else {
-    asn1_reset->reset_type.set_part_of_ng_interface();
-    for (const auto& item : std::get<ngap_reset_type_part_of_interface>(reset.reset_type)) {
-      asn1::ngap::ue_associated_lc_ng_conn_item_s asn1_item;
-      if (item.amf_ue_id.has_value()) {
-        asn1_item.amf_ue_ngap_id_present = true;
-        asn1_item.amf_ue_ngap_id         = amf_ue_id_to_uint(item.amf_ue_id.value());
-      }
-      if (item.ran_ue_id.has_value()) {
-        asn1_item.ran_ue_ngap_id_present = true;
-        asn1_item.ran_ue_ngap_id         = ran_ue_id_to_uint(item.ran_ue_id.value());
-      }
-      asn1_reset->reset_type.part_of_ng_interface().push_back(asn1_item);
-    }
-  }
 }
 
 /// \brief Fills the common type \c ngap_dl_nas_transport_message struct.
@@ -473,11 +449,11 @@ inline bool fill_ngap_initial_context_setup_request(ngap_init_context_setup_requ
   }
 
   // Fill security context.
-  copy_asn1_key(request.security_context.k, asn1_request->security_key);
-  fill_supported_algorithms(request.security_context.supported_int_algos,
-                            asn1_request->ue_security_cap.nr_integrity_protection_algorithms);
-  fill_supported_algorithms(request.security_context.supported_enc_algos,
-                            asn1_request->ue_security_cap.nr_encryption_algorithms);
+  asn1_utils::copy_asn1_key(request.security_context.k, asn1_request->security_key);
+  asn1_utils::fill_supported_algorithms(request.security_context.supported_int_algos,
+                                        asn1_request->ue_security_cap.nr_integrity_protection_algorithms);
+  asn1_utils::fill_supported_algorithms(request.security_context.supported_enc_algos,
+                                        asn1_request->ue_security_cap.nr_encryption_algorithms);
 
   // Fill UE radio capabilities.
   if (asn1_request->ue_radio_cap_present) {

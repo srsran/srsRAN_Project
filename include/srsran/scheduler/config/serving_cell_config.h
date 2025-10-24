@@ -31,6 +31,7 @@
 #include "srsran/ran/pucch/srs_tpc.h"
 #include "srsran/ran/pusch/pusch_configuration.h"
 #include "srsran/ran/pusch/pusch_tpc.h"
+#include "srsran/ran/radio_link_monitoring.h"
 #include "srsran/ran/resource_allocation/vrb_to_prb.h"
 #include "srsran/ran/serv_cell_index.h"
 #include "srsran/ran/srs/srs_configuration.h"
@@ -96,6 +97,14 @@ struct pdsch_config {
 
   enum class max_no_codeword_scheduled_by_dci { n1, n2 };
 
+  /// \brief HARQ process number for DCI Format 1_1.
+  /// \remark See TS38.212, Section 7.3.1.2.2 Format 1_1.
+  enum class harq_process_num_dci_1_1_size { n4 = 4, n5 = 5 };
+
+  /// \brief HARQ process number for DCI Format 1_2.
+  /// \remark See TS38.212, Section 7.3.1.2.3 Format 1_2.
+  enum class harq_process_num_dci_1_2_size { n0 = 0, n1 = 1, n2 = 2, n3 = 3, n4 = 4, n5 = 5 };
+
   /// Identifier used to initialize data scrambling (c_init) for PDSCH. If the field is absent, the UE applies the PCI.
   /// See TS38.331, \e dataScramblingIdentityPDSCH, and TS38.211, 7.3.1.1. Values: {0,...,1023}.
   std::optional<uint16_t> data_scrambling_id_pdsch;
@@ -141,6 +150,15 @@ struct pdsch_config {
   /// A set of periodically occurring ZP-CSI-RS-Resources. The network uses the ZP-CSI-RSResourceSetId=0 for this set.
   std::optional<zp_csi_rs_resource_set> p_zp_csi_rs_res;
 
+  /// The UE specific HARQ Process number field size in DCI Format 1_1.
+  /// 5 bits if higher layer parameter harq-ProcessNumberSizeDCI-1-1 is configured; otherwise 4 bits.
+  std::optional<harq_process_num_dci_1_1_size> harq_process_num_size_dci_1_1{harq_process_num_dci_1_1_size::n4};
+
+  /// The UE specific HARQ Process number field size in DCI Format 1_2.
+  /// 0, 1, 2, 3, 4 or 5 bits determined by higher layer parameter harq-ProcessNumberSizeDCI-1-2-v1700 if configured.
+  /// otherwise 0, 1, 2, 3 or 4 bits determined by higher layer parameter harq-ProcessNumberSizeDCI-1-2.
+  std::optional<harq_process_num_dci_1_2_size> harq_process_num_size_dci_1_2{harq_process_num_dci_1_2_size::n4};
+
   // TODO: Remaining.
 
   bool operator==(const pdsch_config& rhs) const
@@ -153,21 +171,26 @@ struct pdsch_config {
            pdsch_td_alloc_list == rhs.pdsch_td_alloc_list && rate_match_pattrn == rhs.rate_match_pattrn &&
            rbg_sz == rhs.rbg_sz && mcs_table == rhs.mcs_table &&
            is_max_cw_sched_by_dci_is_two == rhs.is_max_cw_sched_by_dci_is_two && prb_bndlg == rhs.prb_bndlg &&
-           zp_csi_rs_res_list == rhs.zp_csi_rs_res_list and p_zp_csi_rs_res == rhs.p_zp_csi_rs_res;
+           zp_csi_rs_res_list == rhs.zp_csi_rs_res_list and p_zp_csi_rs_res == rhs.p_zp_csi_rs_res &&
+           harq_process_num_size_dci_1_1 == rhs.harq_process_num_size_dci_1_1 &&
+           harq_process_num_size_dci_1_2 == rhs.harq_process_num_size_dci_1_2;
   }
   bool operator!=(const pdsch_config& rhs) const { return !(rhs == *this); }
 };
 
 /// "BWP-DownlinkDedicated" as per TS 38.331.
 struct bwp_downlink_dedicated {
-  std::optional<pdcch_config> pdcch_cfg;
-  std::optional<pdsch_config> pdsch_cfg;
+  std::optional<pdcch_config>                 pdcch_cfg;
+  std::optional<pdsch_config>                 pdsch_cfg;
+  std::optional<radio_link_monitoring_config> rlm_cfg;
   // TODO: Remaining
 
   bool operator==(const bwp_downlink_dedicated& other) const
   {
-    return pdcch_cfg == other.pdcch_cfg and pdsch_cfg == other.pdsch_cfg;
+    return pdcch_cfg == other.pdcch_cfg and pdsch_cfg == other.pdsch_cfg and rlm_cfg == other.rlm_cfg;
   }
+
+  bool operator!=(const bwp_downlink_dedicated& other) const { return !(other == *this); }
 };
 
 /// "BWP-Downlink" as per TS 38.331.
@@ -213,13 +236,25 @@ struct pusch_serving_cell_config {
     }
   };
 
+  /// \c nrofHARQ-ProcessesForPUSCH.
+  enum class nof_harq_proc_for_pusch { n16 = 16, n32 = 32 };
+
+  /// See TS 38.331, \c uplinkHARQ-mode.
+  bool harq_mode_b = false;
+
+  /// See TS 38.331, \c nrofHARQ-ProcessesForPUSCH.
+  nof_harq_proc_for_pusch nof_harq_proc{nof_harq_proc_for_pusch::n16};
+
   std::optional<pusch_code_block_group_transmission> cbg_tx;
   x_overhead                                         x_ov_head{x_overhead::not_set};
 
   bool operator==(const pusch_serving_cell_config& other) const
   {
-    return cbg_tx == other.cbg_tx and x_ov_head == other.x_ov_head;
+    return cbg_tx == other.cbg_tx and x_ov_head == other.x_ov_head and nof_harq_proc == other.nof_harq_proc and
+           harq_mode_b == other.harq_mode_b;
   }
+
+  bool operator!=(const pusch_serving_cell_config& rhs) const { return !(rhs == *this); }
 };
 
 /// Uplink configuration, as per \c UplinkConfig, in \c ServingCellConfig, TS 38.331.
@@ -254,7 +289,7 @@ struct pdsch_code_block_group_transmission {
 /// \c PDSCH-ServingCellConfig, as per TS38.331.
 struct pdsch_serving_cell_config {
   /// \c nrofHARQ-ProcessesForPDSCH.
-  enum class nof_harq_proc_for_pdsch { n2 = 2, n4 = 4, n6 = 6, n8 = 8, n10 = 10, n12 = 12, n16 = 16 };
+  enum class nof_harq_proc_for_pdsch { n2 = 2, n4 = 4, n6 = 6, n8 = 8, n10 = 10, n12 = 12, n16 = 16, n32 = 32 };
 
   std::optional<pdsch_code_block_group_transmission> code_block_group_tx;
   x_overhead                                         x_ov_head{x_overhead::not_set};

@@ -1001,22 +1001,17 @@ ngap_message srsran::srs_cu_cp::generate_valid_handover_command(amf_ue_id_t amf_
   // Fill target to source transparent container.
   asn1::ngap::target_ngran_node_to_source_ngran_node_transparent_container_s transparent_container;
   // Fill RRC container.
-  transparent_container.rrc_container = make_byte_buffer("08190115200204d00f00102f1f852020605701ac00445ebb1c041878002c0"
-                                                         "0445ebb1c041878002c24445ebb1c041878002c700d3133b414"
-                                                         "831f0203e0102341e0400024a771002900000000c000140000034ec00187c"
-                                                         "8a000000697386589000401833251870024e1106fbf56c70eb0"
-                                                         "04162301620981950001ffff8000000306e10840000702ca0041904000040"
-                                                         "d31a01100102002a28908900081001514488500040800a8a246"
-                                                         "30002040054514060088681aab2420e2048a163068e1e4a78fa0428918f04"
-                                                         "000850404800b50405000850505800b50506000850606800b50"
-                                                         "6071a48500079a4b5000b9a4b5040f0050703e68410101a10484268414111"
-                                                         "a10584668418129a10720496302645c24d03a41078bbf030438"
-                                                         "00000071ffa5294a529e502c0000432ec000000000000a0000018ad545004"
-                                                         "7001800082002a210054401c040421000a88401560070201104"
-                                                         "002a210055801c0c0421000a88401568070401104002a210055a001000000"
-                                                         "10430102030403834000a8a2000000200400080600080900220"
-                                                         "0a600002298094e3800c00")
-                                            .value();
+  transparent_container.rrc_container =
+      make_byte_buffer(
+          "081a115568220201204550001e1004bcc012121600020509a0000193f7c7000000243434840be2e0260030258380f80408d078100009"
+          "39dc601349798002692f120200046402051320c6b6c6bb003704020000080800041a235246c013497890000023271adb19127c058332"
+          "55ff8092748837146e30dc71b9637dfab6387580221603400c162300e0102908024985950001ff000000000306e10840003c02ca0041"
+          "8000001034c080a28500071c48000133557c841c001040c2050c1c9c48a163068e1e408800004280004005a8000864428000c645a800"
+          "10024280014025a8001862428001c625a800200842800240c8200a0320902c0c8280c0320b0340c8300e0320d03c0c83810162080440"
+          "e829024b92a4a1814388e8acf1379340e9041e2efc0c10e0000001c7feb311aa6ab940b000010cbb00000000000000000008422b5514"
+          "011c00401020800388402710038082042000710804e10070204104000e21009c200e0608108001c420138601c10104100038840270c0"
+          "020000002086020406080706800071c40000002004000806000809002200a60000231002271c00600040")
+          .value();
   ho_cmd->target_to_source_transparent_container = pack_into_pdu(transparent_container);
 
   return ngap_msg;
@@ -1044,6 +1039,20 @@ ngap_handover_preparation_request srsran::srs_cu_cp::generate_handover_preparati
   }
 
   return request;
+}
+
+ngap_message srsran::srs_cu_cp::generate_valid_dl_ran_status_transfer(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id)
+{
+  ngap_message ngap_msg;
+
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_DL_RAN_STATUS_TRANSFER);
+
+  auto& dl_status = ngap_msg.pdu.init_msg().value.dl_ran_status_transfer();
+
+  dl_status->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
+  dl_status->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
+  return ngap_msg;
 }
 
 ngap_message srsran::srs_cu_cp::generate_handover_cancel_ack(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id)

@@ -101,7 +101,6 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
 
   // Set masterCellGroupConfig as received by DU.
   rrc_recfg_v1530_ies rrc_recfg_v1530_ies;
-  rrc_recfg_v1530_ies.master_cell_group = du_to_cu_rrc_info.cell_group_cfg.copy();
 
   // Verify DU container content.
   if (!du_to_cu_rrc_info.cell_group_cfg.empty()) {

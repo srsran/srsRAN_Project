@@ -109,14 +109,20 @@ public:
 class base_harq_manager_test
 {
 protected:
-  base_harq_manager_test(unsigned nof_ues, unsigned ntn_cs_koffset = 0) :
+  base_harq_manager_test(unsigned nof_ues,
+                         unsigned ntn_cs_koffset = 0,
+                         bool     dl_harq_mode_b = false,
+                         bool     ul_harq_mode_b = false) :
     cell_harqs(nof_ues,
                max_harqs_per_ue,
+               timeout_handler.make_notifier(),
                timeout_handler.make_notifier(),
                max_harq_retx_timeout,
                max_harq_retx_timeout,
                max_ack_wait_timeout,
-               ntn_cs_koffset)
+               ntn_cs_koffset,
+               dl_harq_mode_b,
+               ul_harq_mode_b)
   {
     logger.set_level(srslog::basic_levels::warning);
     srslog::init();
@@ -146,8 +152,11 @@ protected:
 class base_single_harq_entity_test : public base_harq_manager_test
 {
 protected:
-  base_single_harq_entity_test(unsigned max_retxs_ = 4, unsigned ntn_cs_koffset_ = 0) :
-    base_harq_manager_test(1, ntn_cs_koffset_)
+  base_single_harq_entity_test(unsigned max_retxs_      = 4,
+                               unsigned ntn_cs_koffset_ = 0,
+                               bool     dl_harq_mode_b  = false,
+                               bool     ul_harq_mode_b  = false) :
+    base_harq_manager_test(1, ntn_cs_koffset_, dl_harq_mode_b, ul_harq_mode_b)
   {
     max_retxs      = max_retxs_;
     ntn_cs_koffset = ntn_cs_koffset_;
@@ -182,8 +191,11 @@ class single_ue_harq_entity_test : public base_single_harq_entity_test, public :
 class single_harq_process_test : public base_single_harq_entity_test, public ::testing::Test
 {
 protected:
-  single_harq_process_test(unsigned max_retxs_ = 4, unsigned ntn_cs_koffset_ = 0) :
-    base_single_harq_entity_test(max_retxs_, ntn_cs_koffset_)
+  single_harq_process_test(unsigned max_retxs_      = 4,
+                           unsigned ntn_cs_koffset_ = 0,
+                           bool     dl_harq_mode_b  = false,
+                           bool     ul_harq_mode_b  = false) :
+    base_single_harq_entity_test(max_retxs_, ntn_cs_koffset_, dl_harq_mode_b, ul_harq_mode_b)
   {
     ue_pdsch = make_dummy_ue_pdsch_info();
     dl_harq_alloc_context harq_ctxt{dci_dl_rnti_config_type::c_rnti_f1_0};
@@ -294,7 +306,7 @@ class single_ue_harq_entity_harq_5bit_tester : public base_single_harq_entity_te
 class single_ntn_ue_harq_process_test : public single_harq_process_test
 {
 public:
-  single_ntn_ue_harq_process_test() : single_harq_process_test(0, NTN_CELL_SPECIFIC_KOFFSET_MAX) {}
+  single_ntn_ue_harq_process_test() : single_harq_process_test(0, NTN_CELL_SPECIFIC_KOFFSET_MAX, true, true) {}
 };
 
 } // namespace

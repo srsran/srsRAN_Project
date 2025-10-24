@@ -74,6 +74,20 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
 {
   CORO_BEGIN(ctx);
 
+  // Find the cell index from the NR-CGI.
+  sp_cell_index =
+      get_cell_index_from_nr_cgi({plmn_identity::from_bytes(msg->sp_cell_id.plmn_id.to_bytes()).value(),
+                                  nr_cell_identity::create(msg->sp_cell_id.nr_cell_id.to_number()).value()});
+  if (not sp_cell_index.has_value()) {
+    // Failed to create UE context in the DU.
+    logger.warning("{}: Failed to to find spCell with PLMN '{}' and NCI '{}' in DU.",
+                   f1ap_log_prefix{int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id), name()},
+                   plmn_identity::from_bytes(msg->sp_cell_id.plmn_id.to_bytes()).value(),
+                   nr_cell_identity::create(msg->sp_cell_id.nr_cell_id.to_number()).value());
+    send_ue_context_setup_failure();
+    CORO_EARLY_RETURN();
+  }
+
   if (msg->gnb_du_ue_f1ap_id_present) {
     const gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id);
     const gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id);
@@ -96,25 +110,9 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
   } else {
     // [TS38.473, 8.3.1.2] If no UE-associated logical F1-connection exists, the UE-associated logical F1-connection
     // shall be established as part of the procedure.
-
-    // Find the cell index from the NR-CGI.
-    sp_cell_index =
-        get_cell_index_from_nr_cgi({plmn_identity::from_bytes(msg->sp_cell_id.plmn_id.to_bytes()).value(),
-                                    nr_cell_identity::create(msg->sp_cell_id.nr_cell_id.to_number()).value()});
-    if (not sp_cell_index.has_value()) {
-      // Failed to create UE context in the DU.
-      logger.warning("{}: Failed to to find spCell with PLMN '{}' and NCI '{}' in DU.",
-                     f1ap_log_prefix{int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id), name()},
-                     plmn_identity::from_bytes(msg->sp_cell_id.plmn_id.to_bytes()).value(),
-                     nr_cell_identity::create(msg->sp_cell_id.nr_cell_id.to_number()).value());
-      send_ue_context_setup_failure();
-      CORO_EARLY_RETURN();
-    }
-
     // Request the creation of a new UE context in the DU.
     CORO_AWAIT_VALUE(du_ue_create_response,
-                     du_mng.request_ue_creation(
-                         f1ap_ue_context_creation_request{ue_index, to_du_cell_index(sp_cell_index.value())}));
+                     du_mng.request_ue_creation(f1ap_ue_context_creation_request{ue_index, sp_cell_index.value()}));
     if (not du_ue_create_response->result) {
       // Failed to create UE context in the DU.
       logger.warning("{}: Failed to allocate new UE context in DU.",
@@ -157,9 +155,11 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
     if (ret) {
       logger.debug("{}: RRC container sent successfully.", f1ap_log_prefix{ue->context, name()});
     } else {
+      const f1ap_du_cell_context& cell_ctx = du_ctxt.served_cells[sp_cell_index.value()];
+      std::chrono::milliseconds   timeout  = rrc_container_delivery_timeout + cell_ctx.ntn_link_rtt;
       logger.error("{}: Failed to send RRC container after timeout of {}msec",
                    f1ap_log_prefix{ue->context, name()},
-                   rrc_container_delivery_timeout.count());
+                   timeout.count());
       send_ue_context_setup_failure();
       CORO_EARLY_RETURN();
     }
@@ -178,17 +178,19 @@ async_task<bool> f1ap_du_ue_context_setup_procedure::handle_rrc_container()
     logger.error("{}: Failed to find SRB1 bearer to send RRC container.", f1ap_log_prefix{ue->context, name()});
     return launch_no_op_task(false);
   }
-
+  const f1ap_du_cell_context& cell_ctx = du_ctxt.served_cells[sp_cell_index.value()];
+  std::chrono::milliseconds   timeout  = rrc_container_delivery_timeout + cell_ctx.ntn_link_rtt;
   return srb1->handle_pdu_and_await_transmission(
-      msg->rrc_container.copy(), msg->rrc_delivery_status_request_present, rrc_container_delivery_timeout);
+      msg->rrc_container.copy(), msg->rrc_delivery_status_request_present, timeout);
 }
 
-expected<unsigned> f1ap_du_ue_context_setup_procedure::get_cell_index_from_nr_cgi(nr_cell_global_id_t nr_cgi) const
+expected<du_cell_index_t>
+f1ap_du_ue_context_setup_procedure::get_cell_index_from_nr_cgi(nr_cell_global_id_t nr_cgi) const
 {
   // Find the spCell index in the F1AP DU context.
   const auto* cell = du_ctxt.find_cell(nr_cgi);
   if (cell != nullptr) {
-    return static_cast<unsigned>(cell->cell_index);
+    return cell->cell_index;
   }
 
   return make_unexpected(default_error_t());

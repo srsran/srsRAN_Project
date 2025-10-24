@@ -291,7 +291,7 @@ generate_ric_control_request_style2_action6(srslog::basic_logger&               
     min_prb.ran_param_value_type.set_ran_p_choice_elem_false();
     min_prb.ran_param_value_type.ran_p_choice_elem_false().ran_param_value_present = true;
     min_prb.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() =
-        *rrm_policy_ratio_grp.min_prb_policy_ratio;
+        *rrm_policy_ratio_grp.minimum_ratio;
     // 12 - Max PRB Policy Ratio.
     auto& max_prb = rrm_policy_ratio_list_group.ran_param_value_type.ran_p_choice_structure()
                         .ran_param_structure.seq_of_ran_params[2];
@@ -299,7 +299,7 @@ generate_ric_control_request_style2_action6(srslog::basic_logger&               
     max_prb.ran_param_value_type.set_ran_p_choice_elem_false();
     max_prb.ran_param_value_type.ran_p_choice_elem_false().ran_param_value_present = true;
     max_prb.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() =
-        *rrm_policy_ratio_grp.max_prb_policy_ratio;
+        *rrm_policy_ratio_grp.maximum_ratio;
     // 13 - Dedicated PRB Policy Ratio.
     auto& ded_prb = rrm_policy_ratio_list_group.ran_param_value_type.ran_p_choice_structure()
                         .ran_param_structure.seq_of_ran_params[3];
@@ -307,7 +307,7 @@ generate_ric_control_request_style2_action6(srslog::basic_logger&               
     ded_prb.ran_param_value_type.set_ran_p_choice_elem_false();
     ded_prb.ran_param_value_type.ran_p_choice_elem_false().ran_param_value_present = true;
     ded_prb.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() =
-        *rrm_policy_ratio_grp.ded_prb_policy_ratio;
+        *rrm_policy_ratio_grp.dedicated_ratio;
   }
 
   srsran::byte_buffer ctrl_msg_buff;

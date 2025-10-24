@@ -21,7 +21,7 @@
  */
 
 #include "../../../support/resource_grid_test_doubles.h"
-#include "../../signal_processors/dmrs_pdsch_processor_test_doubles.h"
+#include "../../signal_processors/pdsch/dmrs_pdsch_processor_test_doubles.h"
 #include "../../signal_processors/ptrs/ptrs_pdsch_generator_test_doubles.h"
 #include "pdsch_encoder_test_doubles.h"
 #include "pdsch_modulator_test_doubles.h"

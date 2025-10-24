@@ -536,11 +536,6 @@ void srsran::fill_cu_cp_worker_manager_config(worker_manager_config& config, con
   // CU-CP executors are needed.
   config.cu_cp_cfg.emplace();
 
-  // Enable metrics if configured.
-  if (unit_cfg.metrics.layers_cfg.enable_cu_cp_executor) {
-    config.cu_up_cfg.value().metrics_period = std::chrono::milliseconds(unit_cfg.metrics.cu_cp_report_period);
-  }
-
   // Enable PCAPs.
   auto& pcap_cfg = config.pcap_cfg;
   if (unit_cfg.pcap_cfg.e1ap.enabled) {

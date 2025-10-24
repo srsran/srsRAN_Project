@@ -1015,7 +1015,7 @@ public:
   void from_uint64(uint64_t v)
   {
     srsran_assert(nof_words_() == 1, "ERROR: cannot convert bitset of size='{}' to uint64_t", size());
-    srsran_assert(v < (static_cast<uint64_t>(1U) << size()),
+    srsran_assert((size() == 64U) || (v < (static_cast<uint64_t>(1U) << size())),
                   "ERROR: Provided mask='{}' does not fit in bitset of size='{}'",
                   v,
                   size());

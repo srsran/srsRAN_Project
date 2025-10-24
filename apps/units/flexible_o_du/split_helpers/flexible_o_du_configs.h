@@ -43,6 +43,7 @@ struct flexible_o_du_unit_config {
   struct ru_config {
     app_helpers::metrics_config config;
     bool                        enable_ru_metrics;
+    float                       dBFS_calibration_value = 1.F;
   };
 
   /// O-RAN DU high configuration.

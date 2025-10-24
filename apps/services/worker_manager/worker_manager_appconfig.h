@@ -32,7 +32,7 @@ struct cpu_affinities_appconfig {
   os_sched_affinity_config main_pool_cpu_cfg = {sched_affinity_mask_types::main, {}, sched_affinity_mask_policy::mask};
 };
 
-/// Non real time thread configuration for the application.
+/// Main thread configuration for the application.
 struct main_thread_pool_appconfig {
   /// Number of threads for processing of upper phy, DU-high, CU-CP and CU-UP.
   std::optional<unsigned> nof_threads;

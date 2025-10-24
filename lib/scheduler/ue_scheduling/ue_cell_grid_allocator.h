@@ -25,8 +25,8 @@
 #include "../cell/resource_grid.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../uci_scheduling/uci_allocator.h"
+#include "../ue_context/ue_repository.h"
 #include "grant_params_selector.h"
-#include "ue_repository.h"
 #include "srsran/adt/noop_functor.h"
 
 namespace srsran {

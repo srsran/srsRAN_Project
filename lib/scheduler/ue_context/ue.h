@@ -127,66 +127,15 @@ public:
   /// Called when the UE confirms that it applied the new configuration.
   void handle_config_applied();
 
-  /// Determines whether a UE reconfiguration is being processed.
-  bool is_reconfig_ongoing() const { return reconf_ongoing; }
-
-  /// Determines whether the UE has been reestablished.
-  bool is_reestablished() const { return reestablished; }
-
   /// \brief Handles DL Buffer State indication.
   void handle_dl_buffer_state_indication(lcid_t lcid, unsigned bs, slot_point hol_toa = {});
-
-  /// \brief Checks if there are DL pending bytes that are yet to be allocated in a DL HARQ.
-  /// This method is faster than computing \c pending_dl_newtx_bytes() > 0.
-  bool has_pending_dl_newtx_bytes() const { return dl_lc_ch_mgr.has_pending_bytes(); }
-
-  /// \brief Checks if there are DL pending bytes for a specific LCID that are yet to be allocated in a DL HARQ.
-  bool has_pending_dl_newtx_bytes(lcid_t lcid) const { return dl_lc_ch_mgr.has_pending_bytes(lcid); }
-
-  /// \brief Whether MAC ConRes CE is pending.
-  bool is_conres_ce_pending() const { return dl_lc_ch_mgr.is_con_res_id_pending(); }
-
-  /// \brief Returns the UE pending ConRes CE bytes to be scheduled, if any.
-  unsigned pending_conres_ce_bytes() const { return dl_lc_ch_mgr.pending_con_res_ce_bytes(); }
-
-  /// \brief Returns the UE pending CEs' bytes to be scheduled, if any.
-  unsigned pending_ce_bytes() const { return dl_lc_ch_mgr.pending_ce_bytes(); }
-
-  /// \brief Returns whether the UE has pending CEs' bytes to be scheduled, if any.
-  bool has_pending_ce_bytes() const { return dl_lc_ch_mgr.has_pending_ces(); }
-
-  /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ.
-  /// \param[in] lcid If the LCID is provided, the method will return the number of pending bytes for that LCID.
-  ///           Otherwise it will return the sum of all LCIDs pending bytes, considering the UE current state.
-  /// \return The number of DL pending bytes that are not already allocated in a DL HARQ.
-  unsigned pending_dl_newtx_bytes(lcid_t lcid = lcid_t::INVALID_LCID) const
-  {
-    return lcid != INVALID_LCID ? dl_lc_ch_mgr.pending_bytes(lcid) : dl_lc_ch_mgr.pending_bytes();
-  }
 
   /// \brief Computes the number of UL pending bytes that are not already allocated in a UL HARQ. The value is used
   /// to derive the required transport block size for an UL grant.
   unsigned pending_ul_newtx_bytes() const;
 
-  /// \brief Computes the number of UL pending bytes for a LCG ID.
-  unsigned pending_ul_newtx_bytes(lcg_id_t lcg_id) const { return ul_lc_ch_mgr.pending_bytes(lcg_id); }
-
-  /// \brief Returns whether a SR indication handling is pending.
-  bool has_pending_sr() const;
-
   /// \brief Retrieves UE DRX controller.
   ue_drx_controller& drx_controller() { return drx; }
-
-  /// \brief Defines the list of subPDUs, including LCID and payload size, that will compose the transport block.
-  /// \return Returns the number of bytes reserved in the TB for subPDUs (other than padding).
-  /// \remark Excludes SRB0.
-  unsigned build_dl_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes, ran_slice_id_t slice_id);
-
-  /// \brief Defines the list of subPDUs, including LCID and payload size, that will compose the transport block for
-  /// SRB0 or for SRB1 in fallback mode.
-  /// It includes the UE Contention Resolution Identity CE if it is pending.
-  /// \return Returns the number of bytes reserved in the TB for subPDUs (other than padding).
-  unsigned build_dl_fallback_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes);
 
   /// \brief UE DL logical channels.
   const dl_logical_channel_manager& dl_logical_channels() const { return dl_lc_ch_mgr; }
@@ -195,9 +144,6 @@ public:
   /// \brief UE UL logical channels.
   const ul_logical_channel_manager& ul_logical_channels() const { return ul_lc_ch_mgr; }
   ul_logical_channel_manager&       ul_logical_channels() { return ul_lc_ch_mgr; }
-
-  /// \brief Handle UL TB scheduling.
-  void handle_ul_transport_block_info(unsigned tb_size_bytes) { ul_lc_ch_mgr.handle_ul_grant(tb_size_bytes); }
 
 private:
   /// Update UE configuration.
@@ -228,12 +174,6 @@ private:
   ul_logical_channel_manager ul_lc_ch_mgr;
 
   slot_point last_sl_tx;
-
-  /// Whether a UE reconfiguration is taking place.
-  bool reconf_ongoing = false;
-
-  /// Whether the UE has been reestablished.
-  bool reestablished = false;
 
   /// UE Timing Advance Manager.
   ta_manager ta_mgr;

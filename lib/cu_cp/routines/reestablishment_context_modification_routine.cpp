@@ -160,6 +160,9 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
     }
   }
 
+  // Mark unused DRB IDs as clean after successful re-establishment.
+  up_resource_mng.refresh_drb_id_after_key_change();
+
   // we are done
   CORO_RETURN(true);
 }

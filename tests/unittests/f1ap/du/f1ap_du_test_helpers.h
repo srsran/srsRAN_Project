@@ -31,6 +31,7 @@
 #include "srsran/f1ap/f1ap_message.h"
 #include "srsran/f1ap/gateways/f1c_connection_client.h"
 #include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
+#include "srsran/mac/mac_paging_information_handler.h"
 #include "srsran/support/async/async_no_op_task.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/executors/manual_task_worker.h"

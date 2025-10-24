@@ -99,6 +99,13 @@ static void configure_cli11_log_args(CLI::App& app, du_high_unit_logger_config& 
       ->always_capture_default();
 }
 
+static void configure_cli11_trace_args(CLI::App& app, du_high_unit_tracer_config& config)
+{
+  CLI::App* layers_subcmd = add_subcommand(app, "layers", "Layer basis tracing configuration")->configurable();
+  add_option(*layers_subcmd, "--du_high_enable", config.executor_tracing_enable, "Enable tracing for DU-high executors")
+      ->capture_default_str();
+}
+
 static void configure_cli11_expert_execution_args(CLI::App& app, du_high_unit_expert_execution_config& config)
 {
   CLI::App* queues_subcmd = add_subcommand(app, "queues", "Task executor queue parameters")->configurable();
@@ -106,10 +113,6 @@ static void configure_cli11_expert_execution_args(CLI::App& app, du_high_unit_ex
              "--du_ue_data_executor_queue_size",
              config.du_queue_cfg.ue_data_executor_queue_size,
              "DU's UE executor task queue size for PDU processing")
-      ->capture_default_str();
-  CLI::App* tracing_subcmd = add_subcommand(app, "tracing", "Task executor tracing parameters")->configurable();
-  add_option(
-      *tracing_subcmd, "--du_high_enable", config.executor_tracing_enable, "Enable tracing for DU-high executors")
       ->capture_default_str();
 }
 
@@ -223,9 +226,11 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
   add_option(app, "--fixed_sib1_mcs", pdsch_params.fixed_sib1_mcs, "Fixed SIB1 MCS")
       ->capture_default_str()
       ->check(CLI::Range(0, 28));
+  add_option(app, "--harq_mode_b", pdsch_params.harq_mode_b, "Set HARQ Mode B (only for NTN cells)")
+      ->always_capture_default();
   add_option(app, "--nof_harqs", pdsch_params.nof_harqs, "Number of DL HARQ processes")
       ->capture_default_str()
-      ->check(CLI::IsMember({2, 4, 6, 8, 10, 12, 16}));
+      ->check(CLI::IsMember({2, 4, 6, 8, 10, 12, 16, 32}));
   add_option(app,
              "--max_nof_harq_retxs",
              pdsch_params.max_nof_harq_retxs,
@@ -288,18 +293,6 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
              "Maximum number of DL or UL PDCCH grant allocation attempts per slot before scheduler skips the slot")
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)std::max(MAX_DL_PDCCH_PDUS_PER_SLOT, MAX_UL_PDCCH_PDUS_PER_SLOT)));
-  add_option(app,
-             "--nof_preselected_newtx_ues",
-             pdsch_params.nof_preselected_newtx_ues,
-             "Number of UEs pre-selected for a potential DL newTx allocation in a slot")
-      ->capture_default_str()
-      ->check(CLI::Range(1U, (unsigned)MAX_NOF_DU_UES));
-  add_option(app,
-             "--newtx_ues_selection_period",
-             pdsch_params.newtx_ues_selection_period,
-             "Number of slots between each computation of newTx UE candidates for potential allocation in a slot")
-      ->capture_default_str()
-      ->check(CLI::Range(1U, (unsigned)MAX_NOF_DU_UES));
   add_option(app,
              "--olla_cqi_inc_step",
              pdsch_params.olla_cqi_inc,
@@ -665,6 +658,13 @@ static void configure_cli11_ta_scheduler_expert_args(CLI::App& app, du_high_unit
 
 static void configure_cli11_scheduler_expert_args(CLI::App& app, du_high_unit_scheduler_expert_config& expert_params)
 {
+  add_option(app,
+             "--nof_preselected_newtx_ues",
+             expert_params.nof_preselected_newtx_ues,
+             "Number of UEs pre-selected for potential newTx allocations in a slot. The scheduling policy will only be "
+             "applied to the pre-selected UEs.")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)MAX_NOF_DU_UES));
   CLI::App* policy_sched_cfg_subcmd =
       add_subcommand(app,
                      "policy_sched_cfg",
@@ -745,6 +745,11 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
   add_option(app, "--max_ue_mcs", pusch_params.max_ue_mcs, "Maximum UE MCS")
       ->capture_default_str()
       ->check(CLI::Range(0, 28));
+  add_option(app, "--harq_mode_b", pusch_params.harq_mode_b, "Set HARQ Mode B (only for NTN cells)")
+      ->always_capture_default();
+  add_option(app, "--nof_harqs", pusch_params.nof_harqs, "Number of UL HARQ processes")
+      ->capture_default_str()
+      ->check(CLI::IsMember({16, 32}));
   add_option(app,
              "--max_nof_harq_retxs",
              pusch_params.max_nof_harq_retxs,
@@ -833,18 +838,6 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
   add_option(app, "--max_puschs_per_slot", pusch_params.max_puschs_per_slot, "Maximum number of PUSCH grants per slot")
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)MAX_PUSCH_PDUS_PER_SLOT));
-  add_option(app,
-             "--nof_preselected_newtx_ues",
-             pusch_params.nof_preselected_newtx_ues,
-             "Number of UEs pre-selected for a potential UL newTx allocation in a slot")
-      ->capture_default_str()
-      ->check(CLI::Range(1U, (unsigned)MAX_NOF_DU_UES));
-  add_option(app,
-             "--newtx_ues_selection_period",
-             pusch_params.newtx_ues_selection_period,
-             "Number of slots between each computation of newTx UE candidates for potential allocation in a slot")
-      ->capture_default_str()
-      ->check(CLI::Range(1U, (unsigned)MAX_NOF_DU_UES));
   add_option(
       app, "--beta_offset_ack_idx_1", pusch_params.beta_offset_ack_idx_1, "betaOffsetACK-Index1 part of UCI-OnPUSCH")
       ->capture_default_str()
@@ -1132,6 +1125,8 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   add_option(app, "--f4_occ_length", pucch_params.f4_occ_length, "OCC length for PUCCH F4")
       ->capture_default_str()
       ->check(CLI::IsMember({2, 4}));
+  add_option(app, "--f4_enable_occ", pucch_params.f4_enable_occ, "Enable OCC multiplexing for PUCCH F4")
+      ->capture_default_str();
   add_option(app,
              "--min_k1",
              pucch_params.min_k1,
@@ -1209,6 +1204,23 @@ static void configure_cli11_srs_args(CLI::App& app, du_high_unit_srs_config& srs
              "Enable the reuse of SRS sequence id with the set reuse factor")
       ->capture_default_str()
       ->check(CLI::IsMember({1, 2, 3, 5, 6, 10, 15, 30}));
+  add_option(app,
+             "--srs_p0",
+             srs_params.p0,
+             "P0 value for SRS. Value in dBm. Valid values must be multiple of 2 and "
+             "within the [-202, 24] interval.  Default: -84")
+      ->capture_default_str()
+      ->check([](const std::string& value) -> std::string {
+        std::stringstream ss(value);
+        int               pw;
+        ss >> pw;
+        const std::string& error_message = "Must be a multiple of 2 and within the [-202, 24] interval";
+        if (pw < -202 or pw > 24 or pw % 2 != 0) {
+          return error_message;
+        }
+
+        return "";
+      });
 }
 
 static void configure_cli11_si_sched_info(CLI::App& app, du_high_unit_sib_config::si_sched_info_config& si_sched_info)
@@ -1237,7 +1249,11 @@ static void configure_cli11_prach_args(CLI::App& app, du_high_unit_prach_config&
              "PRACH configuration index. If not set, the value is derived, so that the PRACH fits in an UL slot")
       ->capture_default_str()
       ->check(CLI::Range(0, 255));
-  add_option(app, "--prach_root_sequence_index", prach_params.prach_root_sequence_index, "PRACH root sequence index")
+  add_option(
+      app,
+      "--prach_root_sequence_index",
+      prach_params.prach_root_sequence_index,
+      "PRACH root sequence index. NOTE: values: [0, 837] for PRACH format 0, 1, 2, 3. [0, 137] for other formats")
       ->capture_default_str()
       ->check(CLI::Range(0, 837));
   add_option(app, "--zero_correlation_zone", prach_params.zero_correlation_zone, "Zero correlation zone index")
@@ -1506,6 +1522,30 @@ static void configure_cli11_slicing_args(CLI::App& app, du_high_unit_cell_slice_
   configure_cli11_slicing_scheduling_args(*sched_cfg_subcmd, slice_params.sched_cfg);
 }
 
+static void configure_cli11_rlm_args(CLI::App& app, du_high_unit_rlm_config& rlm_params)
+{
+  auto map_rlm_resource_type = [](rlm_resource_type& res_type) {
+    return [&res_type](const std::string& value) {
+      if (value == "default_type") {
+        res_type = rlm_resource_type::default_type;
+      } else if (value == "ssb") {
+        res_type = rlm_resource_type::ssb;
+      } else if (value == "csi_rs") {
+        res_type = rlm_resource_type::csi_rs;
+      } else if (value == "ssb_and_csi_rs") {
+        res_type = rlm_resource_type::ssb_and_csi_rs;
+      }
+    };
+  };
+
+  add_option_function<std::string>(app,
+                                   "--rlm_resource_type",
+                                   map_rlm_resource_type(rlm_params.resource_type),
+                                   "Radio Link Monitoring resource detection type {default_type, ssb, csi_rs, "
+                                   "ssb_and_csi_rs}. Default: default_type")
+      ->check(CLI::IsMember({"default_type", "ssb", "csi_rs", "ssb_and_csi_rs"}, CLI::ignore_case));
+}
+
 static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_cell_config& cell_params)
 {
   add_option(app, "--pci", cell_params.pci, "PCI")->capture_default_str()->check(CLI::Range(0, 1007));
@@ -1696,6 +1736,10 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
     }
   };
   add_option_cell(app, "--slicing", slicing_lambda, "Network slicing configuration");
+
+  // Radio Link Monitoring configuration.
+  CLI::App* rlm_subcmd = add_subcommand(app, "rlm", "Radio Link Monitoring parameters");
+  configure_cli11_rlm_args(*rlm_subcmd, cell_params.rlm_cfg);
 }
 
 static void configure_cli11_cells_args(CLI::App& app, du_high_unit_cell_config& cell_params)
@@ -1815,9 +1859,6 @@ static void configure_cli11_metrics_layers_args(CLI::App& app, du_high_unit_metr
       ->capture_default_str();
   add_option(app, "--enable_rlc", metrics_params.enable_rlc, "Enable RLC metrics")->capture_default_str();
   add_option(app, "--enable_mac", metrics_params.enable_mac, "Enable MAC metrics")->capture_default_str();
-  add_option(
-      app, "--enable_executor", metrics_params.enable_executor_log_metrics, "Whether to log DU-high executor metrics")
-      ->capture_default_str();
 }
 
 static void configure_cli11_metrics_args(CLI::App& app, du_high_unit_metrics_config& metrics_params)
@@ -1901,6 +1942,10 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
   // Loggers section.
   CLI::App* log_subcmd = add_subcommand(app, "log", "Logging configuration")->configurable();
   configure_cli11_log_args(*log_subcmd, parsed_cfg.config.loggers);
+
+  // Trace section.
+  CLI::App* trace_subcmd = add_subcommand(app, "trace", "General tracer configuration")->configurable();
+  configure_cli11_trace_args(*trace_subcmd, parsed_cfg.config.tracer);
 
   // Metrics section.
   CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();

@@ -28,7 +28,8 @@
 #include "srsran/phy/upper/channel_processors/pdcch/pdcch_encoder.h"
 #include "srsran/phy/upper/channel_processors/pdcch/pdcch_modulator.h"
 #include "srsran/phy/upper/channel_processors/pdcch/pdcch_processor.h"
-#include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
+#include "srsran/phy/upper/signal_processors/pdcch/factories.h"
+#include "srsran/srslog/logger.h"
 #include <memory>
 
 namespace srsran {

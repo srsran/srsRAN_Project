@@ -25,7 +25,6 @@
 #include "apps/services/app_resource_usage/app_resource_usage.h"
 #include "apps/services/metrics/metrics_notifier.h"
 #include "apps/services/metrics/metrics_producer.h"
-#include "srsran/support/timers.h"
 
 namespace srsran {
 

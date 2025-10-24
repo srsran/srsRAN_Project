@@ -119,6 +119,10 @@ public:
   /// \returns True if the Handover Command was successfully handled, false otherwise.
   virtual async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) = 0;
 
+  /// \brief Handle the handover execution phase of the handover at target gNB.
+  /// \param[in] ue_index The index of the UE that is performing the handover.
+  virtual void handle_n2_handover_execution(ue_index_t ue_index) = 0;
+
   /// \brief Handles UE index allocation request for N2 handover at target gNB.
   virtual ue_index_t handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi, const plmn_identity& plmn) = 0;
 
@@ -173,10 +177,16 @@ public:
   /// \param[in] msg The received Bearer Context Inactivity Notification message.
   virtual void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) = 0;
 
+  /// \brief Handle a UE release request.
+  /// \param[in] request The release request.
+  virtual async_task<void> handle_ue_context_release(const cu_cp_ue_context_release_request& request) = 0;
+
   /// \brief Handles the reception of an E1 Release Request message.
   /// \param[in] cu_up_index The index of the CU-UP processor.
-  /// \param[in] ue_list The indices of the UEs connected to the CU-UP.
-  virtual void handle_e1_release_request(cu_up_index_t cu_up_index, const std::vector<ue_index_t>& ue_list) = 0;
+  virtual void handle_e1_release_request(cu_up_index_t cu_up_index) = 0;
+
+  /// \brief Handle transaction information loss in the E1AP.
+  virtual async_task<void> handle_transaction_info_loss(const ue_transaction_info_loss_event& ev) = 0;
 };
 
 /// Interface used to handle DU specific procedures.
@@ -197,7 +207,7 @@ public:
   virtual byte_buffer handle_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi) = 0;
 
   /// \brief Handle transaction information loss in the F1AP.
-  virtual async_task<void> handle_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) = 0;
+  virtual async_task<void> handle_transaction_info_loss(const ue_transaction_info_loss_event& ev) = 0;
 };
 
 /// Interface for an RRC UE entity to communicate with the CU-CP.

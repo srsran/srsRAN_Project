@@ -33,8 +33,4 @@ void srsran::fill_logger_appconfig_in_yaml_schema(YAML::Node& node, const logger
   log_node["e2ap_level"]   = srslog::basic_level_to_string(config.e2ap_level);
   log_node["config_level"] = srslog::basic_level_to_string(config.config_level);
   log_node["hex_max_size"] = config.hex_max_size;
-
-  if (!config.tracing_filename.empty()) {
-    log_node["tracing_filename"] = config.tracing_filename;
-  }
 }

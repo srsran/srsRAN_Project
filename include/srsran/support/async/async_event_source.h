@@ -31,23 +31,25 @@ namespace srsran {
 template <typename T>
 class async_single_event_observer;
 
-/// \brief Publisher of async events. One single subscriber/listener/observer of type \c async_event_subscriber can
-/// subscribe to this class to listen for incoming messages.
+/// Publisher of async events. One single subscriber/listener/observer of type \c async_event_subscriber can subscribe
+/// to this class to listen for incoming messages.
 template <typename T>
 class async_event_source
 {
 public:
   explicit async_event_source(timer_factory timer_db) : running_timer(timer_db.create_timer()) {}
+
   async_event_source(const async_event_source&)            = delete;
   async_event_source(async_event_source&&)                 = delete;
   async_event_source& operator=(const async_event_source&) = delete;
   async_event_source& operator=(async_event_source&&)      = delete;
+
   ~async_event_source() { srsran_assert(not has_subscriber(), "Observers must not outlive event sources"); }
 
-  /// \brief Checks if there is any listener registered.
+  /// Checks if there is any listener registered.
   bool has_subscriber() const { return sub != nullptr; }
 
-  /// \brief Forwards a result to the registered listener/subscriber. If no subscriber is registered, returns false.
+  /// Forwards a result to the registered listener/subscriber. If no subscriber is registered, returns false.
   template <typename U>
   bool set(U&& u)
   {
@@ -69,7 +71,7 @@ private:
     srsran_assert(not has_subscriber(), "This class only allows one observer/sink/listener per transaction");
     srsran_assert(not sub_.connected(), "The observer cannot be already registered");
     if (sub_.complete()) {
-      // observer finished the previous transaction. Its last result can be reset.
+      // Observer finished the previous transaction. Its last result can be reset.
       sub_.reset();
     }
     sub         = &sub_;
@@ -98,8 +100,8 @@ private:
   unique_timer                    running_timer;
 };
 
-/// \brief Awaitable type that implements a observer/subscriber/listener for a single async event. This awaitable
-/// is single-use, meaning that after it auto-unsubscribes after receiving a message from the event source/publisher.
+/// Awaitable type that implements a observer/subscriber/listener for a single async event. This awaitable is
+/// single-use, meaning that after it auto-unsubscribes after receiving a message from the event source/publisher.
 template <typename T>
 class async_single_event_observer
 {
@@ -108,11 +110,13 @@ public:
   using awaiter_type = typename manual_event<result_type>::awaiter_type;
 
   async_single_event_observer() = default;
-  async_single_event_observer(async_event_source<T>& publisher) { subscribe_to(publisher); }
+  explicit async_single_event_observer(async_event_source<T>& publisher) { subscribe_to(publisher); }
+
   async_single_event_observer(async_single_event_observer&& other)                 = delete;
   async_single_event_observer(const async_single_event_observer& other)            = delete;
   async_single_event_observer& operator=(async_single_event_observer&& other)      = delete;
   async_single_event_observer& operator=(const async_single_event_observer& other) = delete;
+
   ~async_single_event_observer()
   {
     if (parent != nullptr) {
@@ -120,33 +124,34 @@ public:
     }
   }
 
-  /// \brief Subscribes this sink/observer/listener to an \c async_event_source. Only one simultaneous subscriber is
-  /// allowed.
+  /// Subscribes this sink/observer/listener to an \c async_event_source. Only one simultaneous subscriber is allowed.
   void subscribe_to(async_event_source<T>& publisher) { publisher.set_observer(*this); }
 
-  /// \brief Subscribes this observer/listener to an \c async_event_source and sets a timeout for automatic
-  /// unsubscription. Only one simultaneous subscriber is allowed.
+  /// Subscribes this observer/listener to an \c async_event_source and sets a timeout for automatic unsubscription.
+  /// Only one simultaneous subscriber is allowed.
   template <typename U>
   void subscribe_to(async_event_source<T>& publisher, std::chrono::milliseconds time_to_cancel, U&& cancelled_value)
   {
     publisher.set_observer(*this, time_to_cancel, std::forward<U>(cancelled_value));
   }
 
-  /// \brief Checks whether this sink has been registered to an event source.
+  /// Checks whether this sink has been registered to an event source.
   bool connected() const { return parent != nullptr; }
 
-  /// \brief Checks if result has been set successfully by the event source.
+  /// Checks if result has been set successfully by the event source.
   bool complete() const { return event.is_set(); }
 
-  /// \brief Clears the stored result.
+  /// Clears the stored result.
   void reset() { event.reset(); }
 
-  /// \brief Result set by event source.
+  /// Result set by event source.
   const T& result() const&
   {
     srsran_assert(complete(), "Trying to fetch result of incomplete transaction");
     return event.get();
   }
+
+  /// Result set by event source.
   T result() &&
   {
     srsran_assert(complete(), "Trying to fetch result of incomplete transaction");

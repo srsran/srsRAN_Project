@@ -23,6 +23,7 @@ addopts = "--tb=short --random-order --random-order-bucket=class --log-folder=./
 filterwarnings = [
   "ignore:HTTPResponse.getheaders:DeprecationWarning",
 ]
+generate_report_on_test = true
 log_cli = true
 log_date_format = "%Y-%m-%d %H:%M:%S"
 log_format = "%(asctime)s [%(levelname)s] %(message)s"
@@ -31,7 +32,6 @@ markers = [
   "smoke",
   "zmq",
   "zmq_single_ue",
-  "rf",
   "android",
   "android_hp",
   "android_drx",
@@ -40,7 +40,6 @@ markers = [
   "downlink",
   "uplink",
   "bidirectional",
-  "multiue",
   "zmq_valgrind",
   "rf_b200",
   "rf_n300",

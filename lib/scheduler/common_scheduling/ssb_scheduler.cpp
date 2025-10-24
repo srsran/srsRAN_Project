@@ -80,6 +80,9 @@ void ssb_scheduler::schedule_ssb(cell_slot_resource_allocator& res_grid)
     case ssb_pattern_case::B:
       ssb_alloc_case_B(ssb_list, sl_point_mod);
       break;
+    case ssb_pattern_case::D:
+      ssb_alloc_case_D(ssb_list, sl_point_mod);
+      break;
     default:
       srsran_assert(cell_cfg.ssb_case < ssb_pattern_case::invalid, "Only SSB case A, B and C are currently supported");
   }
@@ -194,6 +197,64 @@ void ssb_scheduler::ssb_alloc_case_B(ssb_information_list& ssb_list, slot_point 
       }
       ssb_idx_mask = ssb_idx_mask >> 1;
     }
+  }
+}
+
+void ssb_scheduler::ssb_alloc_case_D(ssb_information_list& ssb_list, slot_point sl_point_mod)
+{
+  // Number of slots within a 5ms burst for the SSB subcarrier spacing of 120kHz.
+  static constexpr unsigned nof_slots_ssb_burst = 5 * pow2(to_numerology_value(subcarrier_spacing::kHz120));
+
+  // In Case D, the candidate OFDM symbols (within the SSB burst) where to allocate the SSB are indexed as:
+  // {4, 8, 16, 20} + 28 * n where n = 0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18 as defined in TS 38.213
+  // Section 4.1.
+  static constexpr std::array<unsigned, 16> slot_pairs = {0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18};
+
+  uint32_t slot_idx = sl_point_mod.to_uint();
+
+  // Skip if the slot index is out of the 5ms burst.
+  if (slot_idx >= nof_slots_ssb_burst) {
+    return;
+  }
+
+  // For case D, it supports up to 64 SSB positions. It takes the entire SSB bitmap.
+  bounded_bitset<64, true> in_burst_bitmap(64);
+  in_burst_bitmap.from_uint64(cell_cfg.ssb_cfg.ssb_bitmap);
+
+  // Get the slot pair index if it is available.
+  auto slot_pair_it = std::find(slot_pairs.begin(), slot_pairs.end(), slot_idx / 2);
+  if (slot_pair_it == slot_pairs.end()) {
+    return;
+  }
+
+  // Calculate the first SSB index within the 5ms burst for the first SSB position in this slot. Each 'n' contains 4
+  // positions and each slot 2 positions.
+  unsigned first_ssb_idx = 4 * std::distance(slot_pairs.begin(), slot_pair_it) + 2 * (slot_idx % 2);
+
+  // The starting symbols for the first SSB position in the slot correspond to symbol 4 if the slot index is even,
+  // otherwise to symbol 2.
+  if (in_burst_bitmap.test(first_ssb_idx)) {
+    unsigned start_symbol_idx = (slot_idx % 2 == 0) ? 4 : 2;
+    fill_ssb_parameters(ssb_list,
+                        cell_cfg.ssb_cfg.offset_to_point_A,
+                        cell_cfg.ssb_cfg.k_ssb,
+                        cell_cfg.ssb_cfg.scs,
+                        cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
+                        start_symbol_idx,
+                        first_ssb_idx);
+  }
+
+  // The starting symbols for the first SSB position in the slot correspond to symbol 8 if the slot index is even,
+  // otherwise to symbol 6.
+  if (in_burst_bitmap.test(first_ssb_idx + 1)) {
+    unsigned start_symbol_idx = (slot_idx % 2 == 0) ? 8 : 6;
+    fill_ssb_parameters(ssb_list,
+                        cell_cfg.ssb_cfg.offset_to_point_A,
+                        cell_cfg.ssb_cfg.k_ssb,
+                        cell_cfg.ssb_cfg.scs,
+                        cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
+                        start_symbol_idx,
+                        first_ssb_idx + 1);
   }
 }
 

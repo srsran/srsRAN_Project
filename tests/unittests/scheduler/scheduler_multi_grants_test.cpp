@@ -61,7 +61,7 @@ protected:
     auto&                f1_params = pucch_basic_params.f0_or_f1_params.emplace<pucch_f1_params>();
     f1_params.nof_cyc_shifts       = pucch_nof_cyclic_shifts::twelve;
     f1_params.occ_supported        = true;
-    pucch_cfg_builder.setup(cell_cfg_list[0], pucch_basic_params);
+    pucch_cfg_builder.setup(cell_cfg(to_du_cell_index(0)), pucch_basic_params);
   }
 
   void add_ue()
@@ -114,8 +114,8 @@ TEST_F(sched_limited_grants_per_slot_test, test_max_ul_grants_per_slot_lower_tha
   for (unsigned i = 0; i != nof_test_slots; ++i) {
     run_slot();
 
-    unsigned ul_grants =
-        this->last_sched_res_list[0]->ul.pucchs.size() + this->last_sched_res_list[0]->ul.puschs.size();
+    unsigned ul_grants = this->last_sched_result(to_du_cell_index(0))->ul.pucchs.size() +
+                         this->last_sched_result(to_du_cell_index(0))->ul.puschs.size();
     EXPECT_LE(ul_grants, sched_cfg.ue.max_ul_grants_per_slot) << "UL grants exceeded the limit of grants per slot";
   }
 }

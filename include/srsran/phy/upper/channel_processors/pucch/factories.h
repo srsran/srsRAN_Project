@@ -30,7 +30,7 @@
 #include "srsran/phy/upper/channel_processors/uci/factories.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
 #include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
-#include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
+#include "srsran/phy/upper/signal_processors/pucch/factories.h"
 #include "srsran/srslog/logger.h"
 
 namespace srsran {

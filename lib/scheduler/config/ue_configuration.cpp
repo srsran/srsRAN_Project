@@ -178,8 +178,10 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
       init_ul_bwp.generic_params.crbs.length(),
       active_ul_bwp.crbs.length(),
       init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0};
-  dci_sz_cfg.cross_carrier_configured = false;
-  dci_sz_cfg.sul_configured           = false;
+  dci_sz_cfg.cross_carrier_configured          = false;
+  dci_sz_cfg.sul_configured                    = false;
+  dci_sz_cfg.dl_harq_process_number_field_size = 4;
+  dci_sz_cfg.ul_harq_process_number_field_size = 4;
   // TODO: Need to fetch from physical_cell_group_config.
   dci_sz_cfg.pdsch_harq_ack_cb = pdsch_harq_ack_codebook::dynamic;
 
@@ -254,6 +256,11 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
         dci_sz_cfg.pusch_dmrs_B_max_len = opt_pusch_cfg.value().pusch_mapping_type_b_dmrs.value().is_max_length_len2
                                               ? dmrs_max_length::len2
                                               : dmrs_max_length::len1;
+      }
+      if (opt_pusch_cfg->harq_process_num_size_dci_0_1.has_value()) {
+        if (opt_pusch_cfg->harq_process_num_size_dci_0_1.value() == pusch_config::harq_process_num_dci_0_1_size::n5) {
+          dci_sz_cfg.ul_harq_process_number_field_size = 5;
+        }
       }
     }
     if (opt_srs_cfg.has_value()) {
@@ -353,6 +360,12 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
       dci_sz_cfg.pdsch_dmrs_B_max_len = opt_pdsch_cfg.value().pdsch_mapping_type_b_dmrs.value().is_max_length_len2
                                             ? dmrs_max_length::len2
                                             : dmrs_max_length::len1;
+    }
+    if (opt_pdsch_cfg.value().harq_process_num_size_dci_1_1.has_value()) {
+      if (opt_pdsch_cfg.value().harq_process_num_size_dci_1_1.value() ==
+          pdsch_config::harq_process_num_dci_1_1_size::n5) {
+        dci_sz_cfg.dl_harq_process_number_field_size = 5;
+      }
     }
   }
   dci_sz_cfg.multiple_scells     = is_ue_configured_multiple_serving_cells;

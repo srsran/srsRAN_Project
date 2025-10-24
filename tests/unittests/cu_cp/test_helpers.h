@@ -24,7 +24,7 @@
 
 #include "lib/cu_cp/cu_cp_controller/node_connection_notifier.h"
 #include "lib/cu_cp/cu_cp_impl_interface.h"
-#include "lib/cu_cp/cu_up_processor/cu_up_processor_impl_interface.h"
+#include "lib/cu_cp/cu_up_processor/cu_up_processor.h"
 #include "lib/cu_cp/du_processor/du_processor.h"
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "srsran/asn1/f1ap/f1ap.h"
@@ -112,7 +112,7 @@ public:
     });
   }
 
-  async_task<void> on_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) override
+  async_task<void> on_transaction_info_loss(const ue_transaction_info_loss_event& ev) override
   {
     return launch_async([](coro_context<async_task<void>>& ctx) mutable {
       CORO_BEGIN(ctx);

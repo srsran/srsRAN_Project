@@ -119,8 +119,8 @@ bool operator==(const baseband_gateway_buffer_reader& left, const baseband_gatew
   unsigned nof_channels = left.get_nof_channels();
 
   for (unsigned i_channel = 0; i_channel != nof_channels; ++i_channel) {
-    span<const cf_t> left_channel  = left.get_channel_buffer(i_channel);
-    span<const cf_t> right_channel = right.get_channel_buffer(i_channel);
+    span<const ci16_t> left_channel  = left.get_channel_buffer(i_channel);
+    span<const ci16_t> right_channel = right.get_channel_buffer(i_channel);
     if (!std::equal(left_channel.begin(), left_channel.end(), right_channel.begin(), right_channel.end())) {
       return false;
     }

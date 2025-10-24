@@ -49,6 +49,10 @@ tests:
           enable_executor: true
           enable_rlc: true
           enable_ru: true
+      trace:
+        layers:
+          du_high_enable: true
+          phy_enable: true
       cu_cp:
         rrc:
           rrc_procedure_guard_time_ms: 2000
@@ -69,6 +73,7 @@ tests:
     warning_as_errors: true
     warning_allowlist: &base_warning_allowlist
       - missed incoming User-Plane PRACH messages
+      - Tracing thread cannot keep up
 
   - id: "32UE ideal UDP bidirectional"
     campaign_filename: *campaign_filename
@@ -121,6 +126,7 @@ tests:
     warning_allowlist:
       - missed incoming User-Plane PRACH messages
       - missed incoming User-Plane uplink messages for slot
+      - Tracing thread cannot keep up
 
   - id: "1UE fading UDP uplink"
     campaign_filename: *campaign_filename
@@ -134,6 +140,8 @@ tests:
     expected_max_late_harqs: 4
     expected_nof_kos: .inf
     warning_as_errors: false
+    warning_allowlist:
+      - Tracing thread cannot keep up
 
   - id: "1UE fading noise UDP uplink"
     campaign_filename: *campaign_filename
@@ -147,6 +155,8 @@ tests:
     expected_max_late_harqs: 4
     expected_nof_kos: .inf
     warning_as_errors: false
+    warning_allowlist:
+      - Tracing thread cannot keep up
 
   - id: "1UE ideal TCP downlink"
     campaign_filename: *campaign_filename
@@ -204,6 +214,8 @@ tests:
     expected_max_late_harqs: 4
     expected_nof_kos: .inf
     warning_as_errors: false
+    warning_allowlist:
+      - Tracing thread cannot keep up
 
   - id: "32UE fading UDP attach-detach with traffic"
     campaign_filename: *campaign_filename
@@ -217,6 +229,8 @@ tests:
     expected_max_late_harqs: 4
     expected_nof_kos: .inf
     warning_as_errors: false
+    warning_allowlist:
+      - Tracing thread cannot keep up
 
   - id: "32UE ideal UDP attach-detach with traffic"
     campaign_filename: *campaign_filename
@@ -280,7 +294,7 @@ tests:
           nof_ul_symbols: 0
         pdcch:
           common:
-            ss1_n_candidates: 0 0 2 0 0          
+            ss1_n_candidates: 0 0 2 0 0
       expert_execution:
         threads:
           upper_phy:
@@ -313,7 +327,7 @@ tests:
           nof_ul_symbols: 0
         pdcch:
           common:
-            ss1_n_candidates: 0 0 2 0 0          
+            ss1_n_candidates: 0 0 2 0 0
       expert_execution:
         threads:
           upper_phy:
@@ -352,7 +366,7 @@ tests:
             nof_ul_symbols: 0
         pdcch:
           common:
-            ss1_n_candidates: 0 0 2 0 0            
+            ss1_n_candidates: 0 0 2 0 0
       expert_execution:
         threads:
           upper_phy:
@@ -385,7 +399,7 @@ tests:
           nof_ul_symbols: 0
         pdcch:
           common:
-            ss1_n_candidates: 0 0 2 0 0          
+            ss1_n_candidates: 0 0 2 0 0
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
@@ -467,6 +481,8 @@ tests:
     expected_max_late_harqs: 4
     expected_nof_kos: .inf
     warning_as_errors: false
+    warning_allowlist:
+      - Tracing thread cannot keep up
 
   - id: "32UE ideal UDP bidirectional Long 1h"
     campaign_filename: *campaign_filename
@@ -480,6 +496,8 @@ tests:
     expected_max_late_harqs: 4
     expected_nof_kos: 5
     warning_as_errors: true
+    warning_allowlist:
+      - Tracing thread cannot keep up
 
   - id: "32UE ideal UDP bidirectional Long 3h"
     campaign_filename: *campaign_filename
@@ -493,6 +511,8 @@ tests:
     expected_max_late_harqs: 4
     expected_nof_kos: 5
     warning_as_errors: true
+    warning_allowlist:
+      - Tracing thread cannot keep up
 
   - id: "32UE ideal UDP bidirectional Long 24h"
     campaign_filename: *campaign_filename
@@ -519,3 +539,5 @@ tests:
     expected_max_late_harqs: 4
     expected_nof_kos: .inf
     warning_as_errors: true
+    warning_allowlist:
+      - Tracing thread cannot keep up

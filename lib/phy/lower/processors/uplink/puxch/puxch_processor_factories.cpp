@@ -62,6 +62,7 @@ public:
     proc_config.cp                 = config.cp;
     proc_config.nof_rx_ports       = config.nof_rx_ports;
     proc_config.request_queue_size = request_queue_size;
+    proc_config.dft_size           = demodulator_config.dft_size;
 
     return std::make_unique<puxch_processor_impl>(ofdm_factory->create_ofdm_symbol_demodulator(demodulator_config),
                                                   proc_config);

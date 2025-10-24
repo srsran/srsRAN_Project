@@ -49,6 +49,7 @@ public:
     {
     public:
       dummy_cu_up_tx_pdu_notifier(dummy_cu_cp_handler& parent_) : parent(parent_) {}
+      ~dummy_cu_up_tx_pdu_notifier() override { parent.cu_up_rx_pdu_notifier.reset(); }
 
       void on_new_message(const e1ap_message& msg) override
       {

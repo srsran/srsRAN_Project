@@ -89,7 +89,8 @@ private:
   ssb_pattern_case ssb_case;
   /// First symbol where the 1st SSB within the burst gets allocated, as per TS 38.211, Section 4.1.
   unsigned ssb_first_symbol;
-  /// Maximum value of row index of Table 13-11, TS 38.213 that can be addressed for a specific configuration.
+  /// Maximum value of row index of Table 13-11 for FR1 and Table 13-12 for FR2, TS 38.213 that can be addressed for a
+  /// specific configuration.
   uint8_t max_ss0_idx;
 
   /// This is the \f$N\f$ parameter in the synchronization raster, as per Table 5.4.3.1-1, TS 38.104.

@@ -1077,6 +1077,7 @@ protected:
                               .intraslot_freq_hopping = false,
                               .additional_dmrs        = false,
                               .pi2_bpsk               = false,
+                              .occ_supported          = false,
                               .occ_length             = pucch_f4_occ_len::n2}),
     serv_cell_cfg(sched_config_helper::create_default_sched_ue_creation_request().cfg.cells->front().serv_cell_cfg)
   {

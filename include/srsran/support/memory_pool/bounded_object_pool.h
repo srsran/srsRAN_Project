@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/bounded_bitset.h"
+#include "srsran/adt/noop_functor.h"
 #include "srsran/support/cpu_architecture_info.h"
 #include "srsran/support/math/math_utils.h"
 #include <atomic>
@@ -60,7 +61,7 @@ public:
   void        increment_scanned_segments() { scanned_segment_counter.fetch_add(1, std::memory_order_relaxed); }
 };
 
-template <typename SegmentType, bool MetricsEnabled = false>
+template <typename SegmentType, typename OnClear = noop_operation, bool MetricsEnabled = false>
 class bounded_object_pool_impl : public bounded_object_pool_metrics_collector<MetricsEnabled>
 {
 public:
@@ -76,6 +77,7 @@ public:
     void operator()(typename SegmentType::value_type* val)
     {
       if (val != nullptr) {
+        parent->on_clear(*val);
         parent->reclaim(seg_idx, obj_idx);
       }
     }
@@ -112,8 +114,9 @@ public:
     static size_t max_size() { return 64; }
   };
 
-  template <typename Factory>
-  bounded_object_pool_impl(unsigned nof_objects, Factory&& factory) : nof_objs(nof_objects)
+  template <typename Factory, typename OnClearTask = OnClear>
+  bounded_object_pool_impl(unsigned nof_objects, Factory&& factory, OnClearTask&& on_clear_ = {}) :
+    nof_objs(nof_objects), on_clear(std::forward<OnClear>(on_clear_))
   {
     report_fatal_error_if_not(capacity() > 0, "Number of objects must be greater than zero");
     const unsigned nof_segments = divide_ceil(capacity(), base_segment::max_size());
@@ -135,9 +138,9 @@ public:
     }
   }
 
-  size_t capacity() const { return nof_objs; }
+  [[nodiscard]] size_t capacity() const { return nof_objs; }
 
-  size_t size_approx() const
+  [[nodiscard]] size_t size_approx() const
   {
     size_t sum_used = 0;
     for (unsigned i = 0; i != segments.size(); ++i) {
@@ -210,6 +213,8 @@ public:
   unsigned cpu_seg_offset_dist_coeff;
   /// Used to determine the bit shift distance between contiguous CPUs.
   unsigned cpu_bit_shift_dist_coeff;
+  OnClear  on_clear;
+
   /// List of segments that contain the objects.
   std::vector<std::unique_ptr<SegmentType>> segments;
 };
@@ -222,7 +227,7 @@ public:
 /// additionally contains a bitmap that tracks which objects are currently allocated within the same segment.
 /// The cpu_id is used as a hash to select the starting position in the vector of segments to search for free
 /// objects.
-template <typename T, bool MetricsEnabled = false>
+template <typename T, typename OnClear = noop_operation, bool MetricsEnabled = false>
 class bounded_object_pool
 {
   struct segment : public detail::bounded_object_pool_impl<T>::base_segment {
@@ -250,7 +255,7 @@ class bounded_object_pool
     }
   };
 
-  using obj_reclaimer = typename detail::bounded_object_pool_impl<segment, MetricsEnabled>::obj_reclaimer;
+  using obj_reclaimer = typename detail::bounded_object_pool_impl<segment, OnClear, MetricsEnabled>::obj_reclaimer;
 
 public:
   using value_type = T;
@@ -262,6 +267,20 @@ public:
   bounded_object_pool(size_t nof_objects, Args... args) :
     impl(nof_objects,
          [args...](unsigned /* unused */, unsigned seg_size) { return std::make_unique<segment>(seg_size, args...); })
+  {
+  }
+  template <typename... Args>
+  bounded_object_pool(const OnClear& on_clear, size_t nof_objects, Args... args) :
+    impl(nof_objects, on_clear, [args...](unsigned /* unused */, unsigned seg_size) {
+      return std::make_unique<segment>(seg_size, args...);
+    })
+  {
+  }
+  template <typename... Args>
+  bounded_object_pool(OnClear&& on_clear, size_t nof_objects, Args... args) :
+    impl(nof_objects, std::move(on_clear), [args...](unsigned /* unused */, unsigned seg_size) {
+      return std::make_unique<segment>(seg_size, args...);
+    })
   {
   }
 
@@ -288,7 +307,7 @@ public:
   uint64_t nof_scanned_segments() const { return impl.nof_scanned_segments(); }
 
 private:
-  detail::bounded_object_pool_impl<segment, MetricsEnabled> impl;
+  detail::bounded_object_pool_impl<segment, OnClear, MetricsEnabled> impl;
 };
 
 /// \brief A bounded thread-safe object pool. Unlike \c bounded_object_pool, this pool stores objects in unique_ptr<T>,
@@ -322,7 +341,8 @@ class bounded_unique_object_pool
     }
   };
 
-  using obj_reclaimer = typename detail::bounded_object_pool_impl<segment, MetricsEnabled>::obj_reclaimer;
+  using obj_reclaimer =
+      typename detail::bounded_object_pool_impl<segment, noop_operation, MetricsEnabled>::obj_reclaimer;
 
 public:
   using value_type             = T;
@@ -370,7 +390,7 @@ public:
   uint64_t nof_scanned_segments() const { return impl.nof_scanned_segments(); }
 
 private:
-  detail::bounded_object_pool_impl<segment, MetricsEnabled> impl;
+  detail::bounded_object_pool_impl<segment, noop_operation, MetricsEnabled> impl;
 };
 
 } // namespace srsran

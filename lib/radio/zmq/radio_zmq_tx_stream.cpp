@@ -21,6 +21,7 @@
  */
 
 #include "radio_zmq_tx_stream.h"
+#include "srsran/srsvec/conversion.h"
 
 using namespace srsran;
 
@@ -28,7 +29,7 @@ radio_zmq_tx_stream::radio_zmq_tx_stream(void*                       zmq_context
                                          const stream_description&   config,
                                          task_executor&              async_executor_,
                                          radio_notification_handler& notification_handler_) :
-  notification_handler(notification_handler_)
+  notification_handler(notification_handler_), cf_buffer(config.buffer_size)
 {
   // For each channel...
   for (unsigned channel_id = 0; channel_id != config.address.size(); ++channel_id) {
@@ -111,6 +112,8 @@ void radio_zmq_tx_stream::transmit(const baseband_gateway_buffer_reader&        
   }
 
   for (unsigned channel_id = 0; channel_id != channels.size(); ++channel_id) {
-    channels[channel_id]->transmit(data.get_channel_buffer(channel_id));
+    span<cf_t> view = span<cf_t>(cf_buffer).first(data.get_channel_buffer(channel_id).size());
+    srsvec::convert(view, data.get_channel_buffer(channel_id), scaling_factor_ci16_to_cf);
+    channels[channel_id]->transmit(view);
   }
 }

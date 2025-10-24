@@ -37,14 +37,14 @@ namespace {
 /// Helper class to decorate executors with extra functionalities.
 struct executor_decorator {
   template <typename Exec>
-  task_executor& decorate(Exec&&                                          exec,
-                          bool                                            is_sync,
-                          bool                                            tracing_enabled,
-                          std::optional<unsigned>                         throttle_thres,
-                          const std::optional<std::chrono::milliseconds>& metrics_period,
-                          const std::string&                              exec_name = "")
+  task_executor& decorate(Exec&&                             exec,
+                          bool                               is_sync,
+                          bool                               tracing_enabled,
+                          std::optional<unsigned>            throttle_thres,
+                          executor_metrics_channel_registry* metrics_channel_registry,
+                          const std::string&                 exec_name = "")
   {
-    if (not is_sync and not tracing_enabled and not metrics_period and not throttle_thres) {
+    if (not is_sync and not tracing_enabled and not metrics_channel_registry and not throttle_thres) {
       // No decoration needed, return the original executor.
       return exec;
     }
@@ -56,11 +56,10 @@ struct executor_decorator {
     if (throttle_thres.has_value()) {
       cfg.throttle = execution_decoration_config::throttle_option{*throttle_thres};
     }
-    if (tracing_enabled) {
+    if (metrics_channel_registry != nullptr) {
+      cfg.metrics.emplace(exec_name, *metrics_channel_registry, tracing_enabled);
+    } else if (tracing_enabled) {
       cfg.trace = execution_decoration_config::trace_option{exec_name};
-    }
-    if (metrics_period) {
-      cfg.metrics = execution_decoration_config::metrics_option{exec_name, *metrics_period};
     }
     decorators.push_back(decorate_executor(std::forward<Exec>(exec), cfg));
 
@@ -71,57 +70,6 @@ private:
   std::vector<std::unique_ptr<task_executor>> decorators;
 };
 
-/// Task executor adaptor that allows cancelling pending tasks, from within the executor's context.
-class cancellable_task_executor final : public task_executor
-{
-public:
-  cancellable_task_executor(task_executor& exec_, const std::atomic<bool>& cancelled_flag, timer_manager& timers_) :
-    exec(&exec_), cancelled(cancelled_flag), timers(timers_)
-  {
-  }
-
-  ~cancellable_task_executor() override
-  {
-    if (!cancelled) {
-      logger.error("cancellable_task_executor destroyed before tasks being cancelled");
-    }
-  }
-
-  [[nodiscard]] bool execute(unique_task task) override
-  {
-    return exec->execute([this, task = std::move(task)]() {
-      if (cancelled.load(std::memory_order_acquire)) {
-        return;
-      }
-      task();
-    });
-  }
-
-  [[nodiscard]] bool defer(unique_task task) override
-  {
-    return exec->defer([this, task = std::move(task)]() {
-      if (cancelled.load(std::memory_order_acquire)) {
-        return;
-      }
-      task();
-    });
-  }
-
-  auto defer_on()
-  {
-    // We use the underlying executor to ignore cancelled flag.
-    return defer_on_blocking(*exec, timers);
-  }
-
-private:
-  task_executor*           exec;
-  const std::atomic<bool>& cancelled;
-  timer_manager&           timers;
-
-  // logger
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-UP", false);
-};
-
 /// Implementation of the UE executor mapper.
 class ue_executor_mapper_impl final : public ue_executor_mapper
 {
@@ -129,40 +77,12 @@ public:
   ue_executor_mapper_impl(task_executor& ctrl_exec_,
                           task_executor& ul_exec_,
                           task_executor& dl_exec_,
-                          task_executor& crypto_exec_,
-                          timer_manager& timers_) :
-    timers(timers_),
-    ctrl_exec(ctrl_exec_, cancelled_flag, timers),
-    ul_exec(ul_exec_, cancelled_flag, timers),
-    dl_exec(dl_exec_, cancelled_flag, timers),
-    crypto_exec(crypto_exec_)
+                          task_executor& crypto_exec_) :
+    ctrl_exec(ctrl_exec_), ul_exec(ul_exec_), dl_exec(dl_exec_), crypto_exec(crypto_exec_)
   {
   }
 
-  ~ue_executor_mapper_impl() override
-  {
-    if (!cancelled_flag.load(std::memory_order_relaxed)) {
-      logger.error("ue_executor_mapper_impl destroyed before tasks being cancelled");
-    }
-  }
-
-  async_task<void> stop() override
-  {
-    return launch_async([this](coro_context<async_task<void>>& ctx) mutable {
-      CORO_BEGIN(ctx);
-
-      if (cancel_tasks()) {
-        // Await for tasks for the given UE to be completely flushed, before proceeding.
-        // TODO: Use when_all.
-        CORO_AWAIT(dl_exec.defer_on());
-        CORO_AWAIT(ul_exec.defer_on());
-        // Revert back to ctrl exec.
-        CORO_AWAIT(ctrl_exec.defer_on());
-      }
-
-      CORO_RETURN();
-    });
-  }
+  ~ue_executor_mapper_impl() override {}
 
   task_executor& ctrl_executor() override { return ctrl_exec; }
   task_executor& ul_pdu_executor() override { return ul_exec; }
@@ -170,34 +90,30 @@ public:
   task_executor& crypto_executor() override { return crypto_exec; }
 
 private:
-  bool cancel_tasks() { return not cancelled_flag.exchange(true, std::memory_order_acq_rel); }
-
-  std::atomic<bool>         cancelled_flag{false};
-  timer_manager&            timers;
-  cancellable_task_executor ctrl_exec;
-  cancellable_task_executor ul_exec;
-  cancellable_task_executor dl_exec;
-  task_executor&            crypto_exec;
+  task_executor& ctrl_exec;
+  task_executor& ul_exec;
+  task_executor& dl_exec;
+  task_executor& crypto_exec;
 
   // logger
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-UP", false);
 };
 
 struct base_cu_up_executor_pool_config {
-  task_executor&                           main_exec;
-  span<task_executor*>                     dl_executors;
-  span<task_executor*>                     ul_executors;
-  span<task_executor*>                     ctrl_executors;
-  task_executor&                           crypto_exec;
-  timer_manager&                           timers;
-  bool                                     tracing_enabled;
-  std::optional<std::chrono::milliseconds> metrics_period;
+  task_executor&                     main_exec;
+  span<task_executor*>               dl_executors;
+  span<task_executor*>               ul_executors;
+  span<task_executor*>               ctrl_executors;
+  task_executor&                     crypto_exec;
+  timer_manager&                     timers;
+  bool                               tracing_enabled;
+  executor_metrics_channel_registry* metrics_channel_registry;
 };
 
 class round_robin_cu_up_exec_pool
 {
 public:
-  round_robin_cu_up_exec_pool(base_cu_up_executor_pool_config config) : timers(config.timers)
+  round_robin_cu_up_exec_pool(base_cu_up_executor_pool_config config)
   {
     srsran_assert(config.ctrl_executors.size() > 0, "At least one DL executor must be specified");
     if (config.dl_executors.empty()) {
@@ -220,15 +136,14 @@ public:
                          *config.dl_executors[i],
                          config.crypto_exec,
                          config.tracing_enabled,
-                         config.metrics_period);
+                         config.metrics_channel_registry);
     }
   }
 
   std::unique_ptr<ue_executor_mapper> create_ue_executor_mapper()
   {
     auto& ctxt = execs[round_robin_index.fetch_add(1, std::memory_order_relaxed) % execs.size()];
-    return std::make_unique<ue_executor_mapper_impl>(
-        ctxt.ctrl_exec, ctxt.ul_exec, ctxt.dl_exec, ctxt.crypto_exec, timers);
+    return std::make_unique<ue_executor_mapper_impl>(ctxt.ctrl_exec, ctxt.ul_exec, ctxt.dl_exec, ctxt.crypto_exec);
   }
 
 private:
@@ -244,26 +159,23 @@ private:
     task_executor& dl_exec;
     task_executor& crypto_exec;
 
-    ue_executor_context(unsigned                                 index_,
-                        task_executor&                           ctrl_exec_,
-                        task_executor&                           ul_exec_,
-                        task_executor&                           dl_exec_,
-                        task_executor&                           crypto_exec_,
-                        bool                                     tracing_enabled,
-                        std::optional<std::chrono::milliseconds> metrics_period) :
+    ue_executor_context(unsigned                           index_,
+                        task_executor&                     ctrl_exec_,
+                        task_executor&                     ul_exec_,
+                        task_executor&                     dl_exec_,
+                        task_executor&                     crypto_exec_,
+                        bool                               tracing_enabled,
+                        executor_metrics_channel_registry* channel_registry) :
       ctrl_exec_name("cu_up_ue_ctrl_exec_" + std::to_string(index_)),
       dl_exec_name("cu_up_ue_dl_exec_" + std::to_string(index_)),
       ul_exec_name("cu_up_ue_ul_exec_" + std::to_string(index_)),
-      ctrl_exec(decorator.decorate(ctrl_exec_, false, tracing_enabled, std::nullopt, metrics_period, ctrl_exec_name)),
-      ul_exec(decorator.decorate(ul_exec_, false, tracing_enabled, std::nullopt, metrics_period, ul_exec_name)),
-      dl_exec(decorator.decorate(dl_exec_, false, tracing_enabled, std::nullopt, metrics_period, dl_exec_name)),
+      ctrl_exec(decorator.decorate(ctrl_exec_, false, tracing_enabled, std::nullopt, channel_registry, ctrl_exec_name)),
+      ul_exec(decorator.decorate(ul_exec_, false, tracing_enabled, std::nullopt, channel_registry, ul_exec_name)),
+      dl_exec(decorator.decorate(dl_exec_, false, tracing_enabled, std::nullopt, channel_registry, dl_exec_name)),
       crypto_exec(crypto_exec_)
     {
     }
   };
-
-  // Main executor of the CU-UP.
-  timer_manager& timers;
 
   // List of UE executor mapper contexts created.
   std::vector<ue_executor_context> execs;
@@ -296,11 +208,14 @@ public:
                                  false,
                                  config.tracing_enabled,
                                  std::nullopt,
-                                 config.metrics_period,
+                                 config.exec_metrics_channel_registry,
                                  "cu_up_strand_ctrl_exec")),
-    n3_exec(
-        decorator
-            .decorate(config.low_prio_executor, false, config.tracing_enabled, std::nullopt, std::nullopt, "n3_exec")),
+    n3_exec(decorator.decorate(config.low_prio_executor,
+                               false,
+                               config.tracing_enabled,
+                               std::nullopt,
+                               config.exec_metrics_channel_registry,
+                               "n3_exec")),
     f1u_exec(config.low_prio_executor),
     e1_exec(config.sctp_io_reader_executor),
     e2_exec(config.sctp_io_reader_executor),
@@ -371,7 +286,7 @@ private:
                                            config.medium_prio_executor,
                                            *config.timers,
                                            config.tracing_enabled,
-                                           config.metrics_period};
+                                           config.exec_metrics_channel_registry};
   }
   // Tracing helpers.
   executor_decorator decorator = {};

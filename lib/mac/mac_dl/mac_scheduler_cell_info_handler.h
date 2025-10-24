@@ -22,13 +22,14 @@
 
 #pragma once
 
-#include "mac_dl_ue_repository.h"
-#include "srsran/mac/mac_cell_control_information_handler.h"
+#include "srsran/mac/mac_cell_manager.h"
+#include "srsran/mac/mac_cell_slot_handler.h"
 #include "srsran/mac/mac_ue_control_information_handler.h"
 #include "srsran/ran/du_types.h"
 
 namespace srsran {
 
+struct si_scheduling_update_request;
 struct sched_result;
 
 /// \brief Interface used by MAC Cell Processor to interact with the MAC scheduler.
@@ -63,13 +64,6 @@ public:
   /// \brief Update SIB1 and SI scheduling information in scheduler.
   /// \param[in] request Request to change SI sched info and messages.
   virtual void handle_si_change_indication(const si_scheduling_update_request& request) = 0;
-
-  /// \brief Handle request to measure the metrics related with a UE position.
-  /// \param[in] cell_index Index of the cell for which the measurement is directed.
-  /// \param[in] req Request to measure a UE position.
-  virtual async_task<mac_cell_positioning_measurement_response>
-  handle_positioning_measurement_request(du_cell_index_t                                 cell_index,
-                                         const mac_cell_positioning_measurement_request& req) = 0;
 
   /// \brief Handle request to update the slice configuration of a cell.
   /// \param[in] cell_index Index of the cell for which the measurement is directed.

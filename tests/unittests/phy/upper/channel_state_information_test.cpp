@@ -61,7 +61,7 @@ protected:
       csi.set_total_evm(real_dist(rgen));
     }
     if (enable_rsrp) {
-      csi.set_rsrp(real_dist(rgen));
+      csi.set_rsrp_dB(real_dist(rgen));
     }
     if (enable_epre) {
       csi.set_epre(real_dist(rgen));

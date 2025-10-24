@@ -33,6 +33,8 @@
 namespace srsran {
 namespace srs_du {
 
+struct f1ap_du_context;
+
 class f1ap_du_ue
 {
 public:
@@ -56,7 +58,8 @@ public:
   ue_bearer_manager      bearers;
 
   /// \brief Handles UE CONTEXT MODIFICATION REQUEST as per TS38.473, Section 8.3.2.
-  void handle_ue_context_modification_request(const asn1::f1ap::ue_context_mod_request_s& msg);
+  void handle_ue_context_modification_request(const asn1::f1ap::ue_context_mod_request_s& msg,
+                                              const f1ap_du_context&                      ctxt_);
 };
 
 } // namespace srs_du

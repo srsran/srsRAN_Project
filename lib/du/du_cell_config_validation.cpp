@@ -243,6 +243,62 @@ static check_outcome check_dl_config_common(const du_cell_config& cell_cfg)
   return {};
 }
 
+static check_outcome check_rlm_config(const du_cell_config& cell_cfg)
+{
+  const auto& rlm_cfg = cell_cfg.ue_ded_serv_cell_cfg.init_dl_bwp.rlm_cfg.value();
+
+  for (auto& rlm_res : rlm_cfg.rlm_resources) {
+    CHECK_TRUE(rlm_res.resource_purpose == radio_link_monitoring_config::radio_link_monitoring_rs::purpose::rlf,
+               "Radio Link Failure is the only supported Radio Link Monitoring purpose");
+    if (not cell_cfg.ue_ded_serv_cell_cfg.csi_meas_cfg.has_value()) {
+      CHECK_TRUE(not std::holds_alternative<nzp_csi_rs_res_id_t>(rlm_res.detection_resource),
+                 "RLM resources cannot use CSI-RS resources if CSI is not enabled");
+    } else {
+      if (std::holds_alternative<nzp_csi_rs_res_id_t>(rlm_res.detection_resource)) {
+        const auto&               csi_cfg   = cell_cfg.ue_ded_serv_cell_cfg.csi_meas_cfg.value();
+        const nzp_csi_rs_res_id_t csi_rs_id = std::get<nzp_csi_rs_res_id_t>(rlm_res.detection_resource);
+        const auto                csi_res_it =
+            std::find_if(csi_cfg.nzp_csi_rs_res_list.begin(),
+                         csi_cfg.nzp_csi_rs_res_list.end(),
+                         [csi_rs_id](const nzp_csi_rs_resource& csi_r) { return csi_r.res_id == csi_rs_id; });
+        CHECK_TRUE(csi_res_it != csi_cfg.nzp_csi_rs_res_list.end(),
+                   "RLM resource id={} points at CSI-RS resource id={}, which wasn't found in the CSI configuration",
+                   fmt::underlying(rlm_res.res_id),
+                   fmt::underlying(csi_rs_id));
+        CHECK_TRUE(csi_res_it->res_mapping.cdm == csi_rs_cdm_type::no_CDM,
+                   "Only CSI-RS resource with no_CDM can be used for RLM");
+        CHECK_TRUE(csi_res_it->res_mapping.nof_ports == 1U,
+                   "Only CSI-RS resource configured with 1 port can be used for RLM");
+        CHECK_TRUE(csi_res_it->res_mapping.freq_density == csi_rs_freq_density_type::one or
+                       csi_res_it->res_mapping.freq_density == csi_rs_freq_density_type::three,
+                   "Only CSI-RS resource with frequency density one or three can be used for RLM");
+      }
+    }
+
+    if (std::holds_alternative<ssb_id_t>(rlm_res.detection_resource)) {
+      const ssb_id_t ssb_rs_id = std::get<ssb_id_t>(rlm_res.detection_resource);
+      CHECK_TRUE(std::any_of(cell_cfg.ssb_cfg.beam_ids.begin(),
+                             cell_cfg.ssb_cfg.beam_ids.end(),
+                             [ssb_rs_id](const uint8_t ssb_idx) { return ssb_idx == static_cast<uint8_t>(ssb_rs_id); }),
+                 "RLM resource id={} points at SSB index={}, which wasn't found in SSB configuration",
+                 fmt::underlying(rlm_res.res_id),
+                 fmt::underlying(ssb_rs_id));
+    }
+  }
+
+  const uint8_t l_max = ssb_get_L_max(cell_cfg.ssb_cfg.scs, cell_cfg.dl_carrier.arfcn_f_ref, cell_cfg.dl_carrier.band);
+  // Check the constrains on N_RLM values in Table 5-1, TS 38.213, are met.
+  if (l_max == 4U) {
+    CHECK_TRUE(rlm_cfg.rlm_resources.size() <= 2, "With SSB L_max = 4, max 2 RLM resources can be configured");
+  } else if (l_max == 8U) {
+    CHECK_TRUE(rlm_cfg.rlm_resources.size() <= 4, "With SSB L_max = 8, max 4 RLM resources can be configured");
+  } else if (l_max == 64U) {
+    CHECK_TRUE(rlm_cfg.rlm_resources.size() <= 8, "With SSB L_max = 64, max 8 RLM resources can be configured");
+  }
+
+  return {};
+}
+
 static check_outcome check_dl_config_dedicated(const du_cell_config& cell_cfg)
 {
   const bwp_downlink_dedicated& bwp = cell_cfg.ue_ded_serv_cell_cfg.init_dl_bwp;
@@ -289,6 +345,11 @@ static check_outcome check_dl_config_dedicated(const du_cell_config& cell_cfg)
                       "Nof. PDCCH candidates monitored per slot for a DL BWP={} exceeds maximum value={}\n",
                       total_nof_monitored_pdcch_candidates,
                       max_nof_monitored_pdcch_candidates(cell_cfg.scs_common));
+  }
+
+  if (bwp.rlm_cfg.has_value()) {
+    check_outcome rlm_validation = check_rlm_config(cell_cfg);
+    CHECK_TRUE(rlm_validation.has_value(), "Invalid Radio Link Monitoring config: {}", rlm_validation.error());
   }
 
   return {};

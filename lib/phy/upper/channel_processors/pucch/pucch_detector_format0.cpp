@@ -236,7 +236,7 @@ pucch_detector_format0::detect(const srsran::resource_grid_reader&          grid
 
   channel_state_information csi(channel_state_information::sinr_type::post_equalization);
   csi.set_sinr_dB(channel_state_information::sinr_type::post_equalization, convert_power_to_dB(best_metric));
-  csi.set_rsrp(convert_power_to_dB(best_rsrp));
+  csi.set_rsrp_dB(convert_power_to_dB(best_rsrp));
   csi.set_epre(convert_power_to_dB(epre));
 
   return std::make_pair(message, csi);

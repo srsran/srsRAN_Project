@@ -33,18 +33,18 @@
 
 using namespace srsran;
 
-static_assert(std::is_same<static_vector<int, 5>::value_type, int>::value, "Invalid traits");
-static_assert(std::is_trivially_destructible<static_vector<int, 5>>::value, "Invalid traits");
-static_assert(std::is_default_constructible<static_vector<int, 5>>::value, "Invalid traits");
-static_assert(not std::is_trivially_destructible<static_vector<moveonly_test_object, 5>>::value, "Invalid traits");
-static_assert(std::is_default_constructible<static_vector<moveonly_test_object, 5>>::value, "Invalid traits");
-static_assert(std::is_default_constructible<static_vector<nondefault_ctor_test_object, 5>>::value, "Invalid traits");
+static_assert(std::is_same_v<static_vector<int, 5>::value_type, int>, "Invalid traits");
+static_assert(std::is_trivially_destructible_v<static_vector<int, 5>>, "Invalid traits");
+static_assert(std::is_default_constructible_v<static_vector<int, 5>>, "Invalid traits");
+static_assert(not std::is_trivially_destructible_v<static_vector<moveonly_test_object, 5>>, "Invalid traits");
+static_assert(std::is_default_constructible_v<static_vector<moveonly_test_object, 5>>, "Invalid traits");
+static_assert(std::is_default_constructible_v<static_vector<nondefault_ctor_test_object, 5>>, "Invalid traits");
 
 std::vector<int> create_test_vector(size_t sz)
 {
   std::vector<int> v(sz);
-  for (unsigned i = 0; i != v.size(); ++i) {
-    v[i] = test_rgen::uniform_int<int>();
+  for (int& i : v) {
+    i = test_rgen::uniform_int<int>();
   }
   return v;
 }
@@ -177,8 +177,8 @@ TYPED_TEST(static_vector_tester, push_back_creates_new_element_at_the_back)
   std::vector<int>     expected = create_test_vector(test_rgen::uniform_int<size_t>(0, 10));
   static_vector<T, 10> vec;
 
-  for (unsigned i = 0; i != expected.size(); ++i) {
-    vec.push_back(T(expected[i]));
+  for (int i : expected) {
+    vec.push_back(T(i));
   }
 
   ASSERT_EQ(vec.size(), expected.size());

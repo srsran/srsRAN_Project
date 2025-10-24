@@ -72,6 +72,7 @@ services:
     # Its content would be the value of the file used to create the config
     configs:
       - gnb_config.yml
+      - gnb_compose_config.yml
     # Customize your desired network mode.
     # current netowrk configuration creastes a private netwoek with both containers attached
     # An alterantive would be `network: host"`. That would expose your host network into the container. It's the easiest to use if the 5gc is not in your PC
@@ -85,75 +86,26 @@ services:
       5gc:
         condition: service_healthy
     # Command to run into the final container
-    command: gnb -c /gnb_config.yml cu_cp amf --addr ${OPEN5GS_IP:-10.53.1.2} --bind_addr ${GNB_IP:-10.53.1.3}
-
-  telegraf:
-    container_name: telegraf
-    image: srsran/telegraf
-    build:
-      context: telegraf  
-    depends_on:
-      influxdb:
-        condition: service_healthy
-    env_file:
-      - .env
-    # volumes:
-    #   - /tmp/metrics.txt:/etc/srs/metrics.txt:ro # Uncomment to use an input metrics file
-    networks:
-      metrics:
-        ipv4_address: 172.19.1.4
-
-  influxdb:
-    container_name: influxdb
-    image: influxdb:${INFLUXDB3_VERSION}
-    user: "0:0"
-    volumes:
-      - influxdb-storage:/var/lib/influxdb3:rw
-    env_file:
-      - .env
-    environment:
-      - LOG_FILTER=${INFLUXDB3_LOG_LEVEL}
-    command: >
-      --object-store=memory --data-dir=/var/lib/influxdb3 --plugin-dir=/var/lib/influxdb3-plugins --node-id="${INFLUXDB_NODE_ID:-node0}" --http-bind="${INFLUXDB3_HTTP_BIND_ADDR}" --without-auth
-    restart: on-failure:10
-    healthcheck:
-      test: >
-        curl -f ${INFLUXDB3_HOST_URL}/health
-      timeout: 5s
-      interval: 1s
-    networks:
-      metrics:
-        ipv4_address: 172.19.1.5
-
-  grafana:
-    container_name: grafana
-    image: srsran/grafana
-    build:
-      context: grafana
-      args:
-        GF_VERSION: ${GF_VERSION}
-        LOGO_URL: ${GF_LOGO_URL}
-    volumes:
-      - grafana-storage:/var/lib/grafana:rw
-    env_file:
-      - .env
-    depends_on:
-      telegraf:
-        condition: service_started    
-    ports:
-      - 3300:${GF_PORT}
-    networks:
-      metrics:
-        ipv4_address: 172.19.1.6
+    command: gnb -c /gnb_config.yml -c /gnb_compose_config.yml
 
 configs:
   gnb_config.yml:
     file: ${GNB_CONFIG_PATH:-../configs/gnb_rf_b200_tdd_n78_20mhz.yml} # Path to your desired config file
+  gnb_compose_config.yml:
+    content: |
+      cu_cp:
+        amf:
+          addr: ${OPEN5GS_IP:-10.53.1.2}
+          bind_addr: ${GNB_IP:-10.53.1.3}
+      metrics:
+        autostart_stdout_metrics: true
+        enable_json: true
+      remote_control:
+        bind_addr: 0.0.0.0
+        enabled: true
 
 volumes:
   gnb-storage:
-  grafana-storage:
-  influxdb-storage:
 
 networks:
   ran:

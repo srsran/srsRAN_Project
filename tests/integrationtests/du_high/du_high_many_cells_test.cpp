@@ -317,7 +317,7 @@ protected:
 
   du_high_many_cells_deferred_activation_test() :
     du_high_env_simulator(
-        du_high_env_sim_params{nof_cells, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false})
+        du_high_env_sim_params{.nof_cells = nof_cells, .auto_start = true, .active_cells_on_start = false})
   {
   }
 };
@@ -427,10 +427,12 @@ TEST_F(du_high_many_cells_metrics_test, when_du_metrics_are_configured_then_metr
   const unsigned metrics_period_slots =
       METRICS_PERIOD.count() * get_nof_slots_per_subframe(du_high_cfg.ran.cells[0].scs_common);
   const unsigned nof_test_slots = metrics_period_slots + 20;
-  if (not run_until([this]() { return du_metrics.last_report.has_value(); }, nof_test_slots)) {
-    this->workers.flush_pending_control_tasks();
-    ASSERT_TRUE(du_metrics.last_report.has_value());
-  }
+  ASSERT_TRUE(run_until(
+      [this]() {
+        this->workers.flush_pending_control_tasks();
+        return du_metrics.last_report.has_value();
+      },
+      nof_test_slots));
   du_metrics.last_report.reset();
 
   // Wait for the next report.

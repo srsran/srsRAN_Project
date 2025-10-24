@@ -385,6 +385,8 @@ io_broker::subscriber io_broker_epoll::register_fd(unique_fd        fd,
     return subscriber{};
   }
 
+  report_error_if_not(fd_read_in_callback < 0, "Cannot register a new file descriptor inside the read callback");
+
   std::promise<bool> p;
   std::future<bool>  fut = p.get_future();
 
@@ -417,6 +419,9 @@ bool io_broker_epoll::unregister_fd(int fd, std::promise<bool>* complete_notifie
     return false;
   }
   logger.debug("fd={}: Deregistering file descriptor...", fd);
+
+  report_error_if_not(not(fd_read_in_callback >= 0 and fd_read_in_callback != fd),
+                      "Cannot deregister an unrelated file descriptor inside the read callback");
 
   // Handle the case of calling unregister from the read callback.
   if (fd_read_in_callback == fd) {

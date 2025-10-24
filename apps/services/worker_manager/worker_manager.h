@@ -36,6 +36,10 @@
 
 namespace srsran {
 
+namespace app_services {
+class metrics_notifier;
+}
+
 /// Mapper of PCAP executors for the APP.
 class gnb_pcap_executor_mapper : public du_pcap_executor_mapper,
                                  public cu_cp_pcap_executor_mapper,
@@ -144,10 +148,13 @@ private:
   /// Manager of execution contexts and respective executors instantiated by the application.
   task_execution_manager exec_mng;
 
+  /// Executor metrics channel registry.
+  executor_metrics_channel_registry* exec_metrics_channel_registry = nullptr;
+
   /// Collection of task executor decorators.
   std::vector<std::unique_ptr<task_executor>> executor_decorators_exec;
 
-  os_sched_affinity_manager              low_prio_affinity_mng;
+  os_sched_affinity_manager              main_pool_affinity_mng;
   os_sched_affinity_bitmask              ru_timing_mask;
   std::vector<os_sched_affinity_bitmask> ru_txrx_affinity_masks;
 

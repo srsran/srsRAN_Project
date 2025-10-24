@@ -24,6 +24,7 @@
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_reader_view.h"
 #include "srsran/instrumentation/traces/ru_traces.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
+#include "srsran/srsvec/conversion.h"
 #include "srsran/srsvec/copy.h"
 
 using namespace srsran;
@@ -90,7 +91,8 @@ void prach_processor_worker::accumulate_samples(const baseband_gateway_buffer_re
                   samples.get_nof_channels());
 
     // PRACH buffer destination buffer view.
-    span<cf_t> dst_prach_buffer = temp_baseband.get_writer().get_channel_buffer(i_channel).subspan(nof_samples, count);
+    span<ci16_t> dst_prach_buffer =
+        temp_baseband.get_writer().get_channel_buffer(i_channel).subspan(nof_samples, count);
 
     // Append samples in temporary buffer.
     srsvec::copy(dst_prach_buffer, samples.get_channel_buffer(i_port).first(count));
@@ -124,9 +126,14 @@ void prach_processor_worker::accumulate_samples(const baseband_gateway_buffer_re
 
           // Make a view of the first samples in the buffer.
           baseband_gateway_buffer_reader_view buffered_samples(temp_baseband.get_reader(), 0, nof_samples);
+          // Get a view over the temporary buffer holding float-based complex samples.
+          span<cf_t> cf_buf = temp_cf_baseband.get_view({i_port}).subspan(0, nof_samples);
+
+          // Convert them into floating-point samples using the temporary buffer.
+          srsvec::convert(cf_buf, buffered_samples.get_channel_buffer(i_port), scaling_factor_ci16_to_cf);
 
           // Demodulate all candidates.
-          demodulator->demodulate(*buffer, buffered_samples.get_channel_buffer(i_port), config);
+          demodulator->demodulate(*buffer, cf_buf, config);
         }
 
         ru_tracer << trace_event("prach_demodulate", tp);

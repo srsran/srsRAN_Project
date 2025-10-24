@@ -72,6 +72,7 @@ void du_high_worker_manager::flush_pending_dl_pdus()
     report_fatal_error_if_not(ret, "unable to dispatch task");
   }
   ev.wait();
+  test_worker.run_pending_tasks();
 }
 
 void du_high_worker_manager::flush_pending_control_tasks()
@@ -81,4 +82,5 @@ void du_high_worker_manager::flush_pending_control_tasks()
   });
   report_fatal_error_if_not(ret, "unable to dispatch task");
   ev.wait();
+  test_worker.run_pending_tasks();
 }

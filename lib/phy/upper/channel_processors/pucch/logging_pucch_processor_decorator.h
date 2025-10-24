@@ -24,6 +24,7 @@
 
 #include "srsran/phy/support/support_formatters.h"
 #include "srsran/phy/upper/channel_processors/pucch/pucch_processor.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 

@@ -30,6 +30,8 @@ using namespace srsran;
 using namespace srsran::srs_cu_up;
 using namespace asn1::e1ap;
 
+static constexpr std::chrono::milliseconds e1_setup_response_timeout{3000};
+
 e1ap_cu_up_setup_procedure::e1ap_cu_up_setup_procedure(const cu_up_e1_setup_request& request_,
                                                        e1ap_message_notifier&        cu_cp_notif_,
                                                        e1ap_event_manager&           ev_mng_,
@@ -51,7 +53,7 @@ void e1ap_cu_up_setup_procedure::operator()(coro_context<async_task<cu_up_e1_set
   logger.debug("\"{}\" initialized", name());
 
   while (true) {
-    transaction = ev_mng.transactions.create_transaction();
+    transaction = ev_mng.transactions.create_transaction(e1_setup_response_timeout);
 
     // Send request to CU.
     send_cu_up_e1_setup_request();
@@ -135,7 +137,7 @@ cu_up_e1_setup_response e1ap_cu_up_setup_procedure::create_e1_setup_result()
 
   if (transaction.aborted()) {
     // Abortion/timeout case.
-    logger.error("\"{}\" failed (timeout reached)");
+    logger.warning("\"{}\" failed (timeout reached)");
     res.success = false;
     return res;
   }

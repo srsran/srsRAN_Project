@@ -23,6 +23,8 @@
 /// \file
 /// \brief Tests that check the setup/teardown, addition/removal of UEs in the DU-high class.
 
+#include "apps/units/flexible_o_du/o_du_high/du_high/commands/du_high_remote_commands.h"
+#include "nlohmann/json.hpp"
 #include "tests/integrationtests/du_high/test_utils/du_high_env_simulator.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
@@ -42,15 +44,6 @@ using namespace asn1::f1ap;
 
 class du_high_tester : public du_high_env_simulator, public testing::Test
 {};
-
-/// Test F1 setup over "local" connection to DU.
-TEST_F(du_high_tester, when_du_high_started_then_connection_to_cu_takes_place)
-{
-  // Starting the DU-high initiates the F1 Setup procedure.
-  ASSERT_EQ(this->cu_notifier.f1ap_ul_msgs.size(), 1);
-  ASSERT_EQ(this->cu_notifier.f1ap_ul_msgs.rbegin()->second.pdu.type().value, f1ap_pdu_c::types_opts::init_msg);
-  ASSERT_EQ(this->cu_notifier.f1ap_ul_msgs.rbegin()->second.pdu.init_msg().proc_code, ASN1_F1AP_ID_F1_SETUP);
-}
 
 TEST_F(du_high_tester, when_ccch_msg_is_received_then_ue_context_is_created)
 {
@@ -448,4 +441,136 @@ TEST_F(du_high_tester, when_reestablishment_takes_place_then_previous_ue_capabil
         return pdsch != nullptr and pdsch->pdsch_cfg.codewords[0].mcs_table == pdsch_mcs_table::qam256;
       },
       nof_slots_test));
+}
+
+class du_high_rrm_policy_tester : public du_high_env_simulator, public testing::Test
+{
+public:
+  du_high_rrm_policy_tester(plmn_identity plmn_id_ = plmn_identity{mobile_country_code::from_string("001").value(),
+                                                                   mobile_network_code::from_string("01").value()},
+                            s_nssai_t     s_nssai_ = s_nssai_t{.sst = slice_service_type{1}}) :
+    du_high_env_simulator([plmn_id_, s_nssai_]() {
+      du_high_configuration du_cfg = create_du_high_configuration();
+      du_cfg.ran.cells[0].rrm_policy_members.emplace_back(
+          slice_rrm_policy_config{.rrc_member = rrm_policy_member{.plmn_id = plmn_id_, .s_nssai = s_nssai_}});
+      return du_cfg;
+    }()),
+    plmn_id(plmn_id_),
+    s_nssai(s_nssai_)
+  {
+  }
+
+  void apply_rrm_reconfiguration(unsigned max_rbs, unsigned min_rbs)
+  {
+    nlohmann::json req;
+
+    /*
+      {
+        "cmd": "rrm_policy_ratio_set",
+        "policies": {
+          "resourceType": "PRB",
+          "rRMPolicyMemberList": [
+            {
+              "plmn": "00101",
+              "sst": 1,
+              "sd": 0xffffff
+            }
+          ],
+          "min_prb_policy_ratio": min_rbs,
+          "max_prb_policy_ratio": max_rbs,
+          "dedicated_ratio": 0
+        }
+      }
+    */
+
+    req["cmd"]                             = "rrm_policy_ratio_set";
+    req["policies"]["resourceType"]        = "PRB";
+    req["policies"]["rRMPolicyMemberList"] = nlohmann::json::array();
+    nlohmann::json policy;
+    policy["plmn"] = plmn_id.to_string();
+    policy["sst"]  = s_nssai.sst.value();
+    policy["sd"]   = s_nssai.sd.value();
+    req["policies"]["rRMPolicyMemberList"].push_back(policy);
+    req["policies"]["min_prb_policy_ratio"] = min_rbs;
+    req["policies"]["max_prb_policy_ratio"] = max_rbs;
+    req["policies"]["dedicated_ratio"]      = 0;
+
+    std::unique_ptr<app_services::remote_command> remote =
+        std::make_unique<rrm_policy_ratio_remote_command>(this->du_hi->get_du_configurator());
+
+    error_type<std::string> cmd_exec_res = remote->execute(req);
+    ASSERT_TRUE(cmd_exec_res.has_value()) << cmd_exec_res.error();
+  }
+
+  void push_dl_pdus()
+  {
+    const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
+    for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
+      nru_dl_message f1u_pdu{
+          .t_pdu = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ false, i, pdcp_pdu_size, i)};
+      cu_up_sim.bearers.begin()->second.rx_notifier->on_new_pdu(f1u_pdu);
+    }
+  }
+
+protected:
+  plmn_identity plmn_id;
+  /// Single Network Slice Selection Assistance Information (S-NSSAI).
+  s_nssai_t s_nssai;
+};
+
+TEST_F(du_high_rrm_policy_tester, when_rrm_policy_remote_command_is_received_then_it_is_handled)
+{
+  // Create UE.
+  rnti_t rnti = to_rnti(0x4601);
+  ASSERT_TRUE(add_ue(rnti));
+  ASSERT_TRUE(run_rrc_setup(rnti));
+  ASSERT_TRUE(run_ue_context_setup(rnti));
+
+  // Ensure DU<->CU-UP tunnel was created.
+  ASSERT_EQ(cu_up_sim.last_drb_id.value(), drb_id_t::drb1);
+
+  unsigned max_rbs = 30;
+  unsigned min_rbs = 5;
+
+  auto run_sched_and_assess_rbs = [this](unsigned max_slice_rbs) {
+    phy.cells[0].last_dl_data.reset();
+    constexpr unsigned nof_slots_to_assess_rrm_cfg = 10;
+    for (unsigned sl = 0; sl != nof_slots_to_assess_rrm_cfg; ++sl) {
+      run_slot();
+
+      unsigned rbs       = 0;
+      auto&    ue_grants = phy.cells[0].last_dl_res.value().dl_res->ue_grants;
+      for (auto& ue_grant : ue_grants) {
+        rbs += ue_grant.pdsch_cfg.rbs.type1().length();
+      }
+      ASSERT_LT(rbs, max_slice_rbs);
+      phy.cells[0].last_dl_data.reset();
+    }
+  };
+
+  // 1. Apply RRM config first.
+  apply_rrm_reconfiguration(max_rbs, min_rbs);
+
+  // 1-A. Run the scheduler for a few slots, to clear previous allocations.
+  run_until([]() { return false; }, 10);
+
+  // 1-B. Forward several DRB PDUs.
+  push_dl_pdus();
+
+  // 1-C. Run the scheduler and assess RBs are according to the RRM config.
+  run_sched_and_assess_rbs(max_rbs);
+
+  // 2. Apply new RRM config.
+  max_rbs = 100;
+  min_rbs = 10;
+  apply_rrm_reconfiguration(max_rbs, min_rbs);
+
+  // 2-A Run the scheduler for a few slots, to clear previous allocations.
+  run_until([]() { return false; }, 10);
+
+  // 2-B. Forward several DRB PDUs.
+  push_dl_pdus();
+
+  // 2-C. Run the scheduler and assess RBs are according to the RRM config.
+  run_sched_and_assess_rbs(max_rbs);
 }

@@ -61,6 +61,8 @@ struct srs_builder_params {
   /// not in a dense multi-cell environment, we can reuse different sequence ID for different cell UEs.
   /// Values: {1, 2, 3, 5, 6, 10, 15, 30}.
   unsigned sequence_id_reuse_factor = 1;
+  /// \c p0, TS 38.331. Value in dBm. Only even values allowed within {-202,...,24}.
+  int p0 = -84;
 };
 
 } // namespace srsran

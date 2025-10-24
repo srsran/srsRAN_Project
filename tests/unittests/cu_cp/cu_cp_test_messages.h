@@ -42,8 +42,14 @@ cu_cp_pdu_session_resource_setup_request generate_pdu_session_resource_setup(ue_
                                                                              unsigned   num_pdu_sessions = 1,
                                                                              unsigned   num_qos_flows    = 1);
 
+/// \brief Generate a dummy PDU Session Resource Setup request with a specific PDU session id and QoS flow id.
+cu_cp_pdu_session_resource_setup_request
+generate_pdu_session_resource_setup(ue_index_t ue_index, pdu_session_id_t psi, qos_flow_id_t qfi);
+
 /// \brief Generate a dummy PDU Session Resource Release Command.
-cu_cp_pdu_session_resource_release_command generate_pdu_session_resource_release(ue_index_t ue_index = ue_index_t::min);
+cu_cp_pdu_session_resource_release_command
+generate_pdu_session_resource_release(ue_index_t       ue_index = ue_index_t::min,
+                                      pdu_session_id_t psi      = pdu_session_id_t{1});
 
 /// \brief Generate a dummy PDU Session Resource Modification Request.
 cu_cp_pdu_session_resource_modify_request

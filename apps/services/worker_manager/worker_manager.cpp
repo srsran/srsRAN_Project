@@ -21,11 +21,11 @@
  */
 
 #include "worker_manager.h"
-#include "apps/helpers/metrics/metrics_helpers.h"
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/mpmc_queue.h"
 #include "srsran/ru/ofh/ru_ofh_executor_mapper_factory.h"
 #include "srsran/srslog/srslog.h"
-#include "srsran/support/executors/concurrent_metrics_executor.h"
+#include "srsran/support/executors/executor_decoration_factory.h"
 #include "srsran/support/executors/inline_task_executor.h"
 #include "srsran/support/executors/strand_executor.h"
 
@@ -102,7 +102,7 @@ private:
 } // namespace
 
 worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
-  app_logger(srslog::fetch_basic_logger("ALL")), low_prio_affinity_mng({worker_cfg.main_pool_affinity_cfg})
+  app_logger(srslog::fetch_basic_logger("ALL")), main_pool_affinity_mng({worker_cfg.main_pool_affinity_cfg})
 {
   // Add preinitialization of resources to created threads.
   unique_thread::add_observer(std::make_unique<thread_resource_preinitializer>(*worker_cfg.app_timers));
@@ -126,6 +126,9 @@ worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
   for (const auto& cell_affinities : worker_cfg.config_affinities) {
     affinity_mng.emplace_back(cell_affinities);
   }
+
+  // Save executor metrics channel registry.
+  exec_metrics_channel_registry = worker_cfg.exec_metrics_channel_registry;
 
   // Create the main worker pool for the application.
   create_main_worker_pool(worker_cfg);
@@ -250,12 +253,14 @@ std::vector<execution_config_helper::single_worker> worker_manager::create_fapi_
 void worker_manager::create_cu_cp_executors(const worker_manager_config::cu_cp_config& config, timer_manager& timers)
 {
   cu_cp_exec_mapper = srs_cu_cp::make_cu_cp_executor_mapper(
-      srs_cu_cp::strand_based_executor_config{*non_rt_hi_prio_exec, config.metrics_period});
+      srs_cu_cp::strand_based_executor_config{*non_rt_hi_prio_exec, exec_metrics_channel_registry});
 }
 
 void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_config& config, timer_manager& timers)
 {
   using namespace execution_config_helper;
+
+  auto* metrics_channel_mngr = config.skip_cu_up_executor ? nullptr : exec_metrics_channel_registry;
 
   cu_up_exec_mapper =
       srs_cu_up::make_cu_up_executor_mapper(srs_cu_up::strand_based_executor_config{config.max_nof_ue_strands,
@@ -270,7 +275,7 @@ void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_c
                                                                                     config.dedicated_io_ul_strand,
                                                                                     &timers,
                                                                                     config.executor_tracing_enable,
-                                                                                    config.metrics_period});
+                                                                                    metrics_channel_mngr});
 }
 
 void worker_manager::create_du_high_executors(const worker_manager_config::du_high_config& du_hi)
@@ -292,7 +297,7 @@ void worker_manager::create_du_high_executors(const worker_manager_config::du_hi
   cfg.ctrl_executors.pool_executor     = non_rt_hi_prio_exec;
   cfg.is_rt_mode_enabled               = du_hi.is_rt_mode_enabled;
   cfg.trace_exec_tasks                 = du_hi.executor_tracing_enable;
-  cfg.metrics_period                   = du_hi.metrics_period;
+  cfg.exec_metrics_channel_registry    = exec_metrics_channel_registry;
 
   du_high_exec_mapper = create_du_high_executor_mapper(cfg);
 }
@@ -449,12 +454,10 @@ void worker_manager::create_du_low_executors(const worker_manager_config::du_low
 
   // Instantiate workers for the DU-low.
   if (not rt_mode) {
-    // Create a single worker, shared by the whole PHY. As it is shared for all the PHY, pick the first cell of the
-    // affinity manager.
     create_prio_worker("phy_worker",
                        "phy_exec",
                        task_worker_queue_size,
-                       affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::l1_dl),
+                       main_pool_affinity_mng.calcute_affinity_mask(sched_affinity_mask_types::main),
                        os_thread_realtime_priority::no_realtime());
 
     // Get common physical layer executor.
@@ -477,13 +480,9 @@ void worker_manager::create_du_low_executors(const worker_manager_config::du_low
         .max_pusch_and_srs_concurrency = du_low.max_pusch_and_srs_concurrency,
         .max_pdsch_concurrency         = du_low.max_pdsch_concurrency};
 
-    // Setup metrics configuration.
-    if (du_low.metrics_period.has_value()) {
-      du_low_exec_mapper_config.metrics.emplace(
-          srs_du::du_low_executor_mapper_metric_config{.period              = *du_low.metrics_period,
-                                                       .sequential_executor = *metrics_exec,
-                                                       .logger = app_helpers::fetch_logger_metrics_log_channel()});
-    }
+    // Propagate metrics channel registry.
+    du_low_exec_mapper_config.exec_metrics_channel_registry = exec_metrics_channel_registry;
+    du_low_exec_mapper_config.executor_tracing_enable       = du_low.executor_tracing_enable;
   }
 
   // Create DU low executor mapper.
@@ -563,13 +562,31 @@ void worker_manager::create_split6_executors()
     report_fatal_error("Failed to instantiate {} execution context", split6_worker.name);
   }
 
-  split6_exec = exec_mng.executors().at(exec_name);
+  // Associate executor.
+  if (exec_metrics_channel_registry) {
+    execution_decoration_config cfg;
+    cfg.metrics.emplace("split6_exec", *exec_metrics_channel_registry, false);
+    auto split6_decorator = decorate_executor(*exec_mng.executors().at(exec_name), cfg);
+
+    split6_exec = split6_decorator.get();
+    executor_decorators_exec.push_back(std::move(split6_decorator));
+  } else {
+    split6_exec = exec_mng.executors().at(exec_name);
+  }
 
   // Split6 control executor.
   auto split6_ctrl_strand =
       make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(non_rt_medium_prio_exec, task_worker_queue_size);
-  split6_crtl_exec = split6_ctrl_strand.get();
-  executor_decorators_exec.push_back(std::move(split6_ctrl_strand));
+  if (exec_metrics_channel_registry) {
+    execution_decoration_config cfg;
+    cfg.metrics.emplace("split6_ctrl_exec", *exec_metrics_channel_registry, false);
+    auto split6_ctrl_decorator = decorate_executor(std::move(split6_ctrl_strand), cfg);
+    split6_crtl_exec           = split6_ctrl_decorator.get();
+    executor_decorators_exec.push_back(std::move(split6_ctrl_decorator));
+  } else {
+    split6_crtl_exec = split6_ctrl_strand.get();
+    executor_decorators_exec.push_back(std::move(split6_ctrl_strand));
+  }
 }
 
 void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_sdr_config& config)

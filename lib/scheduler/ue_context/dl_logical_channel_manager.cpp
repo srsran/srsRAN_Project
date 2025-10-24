@@ -171,6 +171,9 @@ void dl_logical_channel_manager::configure(logical_channel_config_list_ptr log_c
       }
     }
   }
+  if (not channel_configs.has_value()) {
+    return;
+  }
 
   // Set new LC configurations.
   for (logical_channel_config_ptr ch_cfg : *channel_configs) {
@@ -500,4 +503,35 @@ srsran::allocate_ue_con_res_id_mac_ce(dl_msg_tb_info& tb_info, dl_logical_channe
     }
   }
   return total_tbs - rem_tbs;
+}
+
+unsigned srsran::build_dl_fallback_transport_block_info(dl_msg_tb_info&             tb_info,
+                                                        dl_logical_channel_manager& lch_mng,
+                                                        unsigned                    tb_size_bytes)
+{
+  unsigned total_subpdu_bytes = 0;
+  total_subpdu_bytes += allocate_ue_con_res_id_mac_ce(tb_info, lch_mng, tb_size_bytes);
+  // Since SRB0 PDU cannot be segmented, skip SRB0 if remaining TB size is not enough to fit entire PDU.
+  if (lch_mng.has_pending_bytes(LCID_SRB0) and
+      ((tb_size_bytes - total_subpdu_bytes) >= lch_mng.pending_bytes(LCID_SRB0))) {
+    total_subpdu_bytes += allocate_mac_sdus(tb_info, lch_mng, tb_size_bytes - total_subpdu_bytes, LCID_SRB0);
+    return total_subpdu_bytes;
+  }
+  total_subpdu_bytes += allocate_mac_sdus(tb_info, lch_mng, tb_size_bytes - total_subpdu_bytes, LCID_SRB1);
+  return total_subpdu_bytes;
+}
+
+unsigned srsran::build_dl_transport_block_info(dl_msg_tb_info&             tb_info,
+                                               dl_logical_channel_manager& lch_mng,
+                                               unsigned                    tb_size_bytes,
+                                               ran_slice_id_t              slice_id)
+{
+  unsigned total_subpdu_bytes = 0;
+  total_subpdu_bytes += allocate_mac_ces(tb_info, lch_mng, tb_size_bytes);
+  for (const auto lcid : lch_mng.get_prioritized_logical_channels()) {
+    if (lch_mng.get_slice_id(lcid) == slice_id) {
+      total_subpdu_bytes += allocate_mac_sdus(tb_info, lch_mng, tb_size_bytes - total_subpdu_bytes, uint_to_lcid(lcid));
+    }
+  }
+  return total_subpdu_bytes;
 }

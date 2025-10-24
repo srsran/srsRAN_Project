@@ -78,7 +78,7 @@ uci_indication::uci_pdu test_helper::create_uci_indication_pdu(du_ue_index_t    
       uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu f2{};
       f2.harqs.resize(pucch_pdu.uci_bits.harq_ack_nof_bits);
       std::fill(f2.harqs.begin(), f2.harqs.end(), ack_status);
-      if (pucch_pdu.uci_bits.harq_ack_nof_bits > 0) {
+      if (pucch_pdu.uci_bits.csi_part1_nof_bits > 0) {
         f2.csi.emplace();
         f2.csi->first_tb_wideband_cqi = 15;
       }

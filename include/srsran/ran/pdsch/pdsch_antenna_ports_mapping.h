@@ -22,8 +22,9 @@
 
 #pragma once
 
-#include "srsran/adt/static_vector.h"
-#include "srsran/scheduler/config/dmrs.h"
+#include "srsran/adt/span.h"
+#include "srsran/ran/dmrs.h"
+#include <vector>
 
 namespace srsran {
 
@@ -41,6 +42,22 @@ struct pdsch_antenna_ports_mapping {
   /// default value is Len1 i.e. 1 symbol.
   unsigned nof_front_load_symbols = 1;
 };
+
+/// \brief Gets the PDSCH antenna ports mapping table.
+///
+/// Retrieves the antenna port mapping table for PDSCH transmission based on the specified DM-RS configuration
+/// parameters. The mapping table defines how antenna ports are assigned to PDSCH resources according to TS38.212
+/// Section 7.3.1.2.2.
+///
+/// \param dmrs_cfg_type        UE dedicated DM-RS type configuration.
+/// \param dmrs_max_len         UE dedicated DM-RS maximum length configuration.
+/// \param are_both_cws_enabled Set to true if both codewords are enabled for PDSCH transmission.
+/// \return A constant span view to the PDSCH antenna ports mapping table associated with the given parameters.
+/// \remark A fatal failure is triggered if the specified parameters do not correspond to a valid antenna port mapping
+///         table.
+span<const pdsch_antenna_ports_mapping> get_pdsch_antenna_port_mapping_table(dmrs_config_type dmrs_cfg_type,
+                                                                             dmrs_max_length  dmrs_max_len,
+                                                                             bool             are_both_cws_enabled);
 
 /// \brief Returns the PDSCH antenna ports mapping from TS 38.212, tables 7.3.1.2.2-1/2/3/4 based on input
 /// configuration.

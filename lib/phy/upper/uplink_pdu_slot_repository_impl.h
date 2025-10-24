@@ -169,7 +169,7 @@ public:
     fsm_notifier.stop_accepting_pdu();
 
     // Set grid reference counter to one.
-    grid_ref_counter = 1;
+    grid_ref_counter.store(1, std::memory_order_release);
 
     return {*this, grid_ref_counter};
   }

@@ -33,6 +33,9 @@ namespace srsran {
 class radio_zmq_rx_stream : public baseband_gateway_receiver
 {
 private:
+  /// Scaling factor for converting from complex float to 16-bit complex integer.
+  static constexpr float scaling_factor_cf_to_ci16 = std::numeric_limits<int16_t>::max();
+
   /// Alignment timeout. Waits this time before padding zeros.
   const std::chrono::milliseconds RECEIVE_TS_ALIGN_TIMEOUT = std::chrono::milliseconds(100);
   /// Transmitter alignment interface.
@@ -43,6 +46,8 @@ private:
   std::vector<std::unique_ptr<radio_zmq_rx_channel>> channels;
   /// Counts the number of received samples.
   uint64_t sample_count = 0;
+  /// Buffer to hold complex floating-point based samples.
+  std::vector<cf_t> cf_buffer;
 
 public:
   /// Describes the necessary parameters to create a ZMQ Tx stream.

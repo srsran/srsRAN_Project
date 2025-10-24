@@ -124,6 +124,7 @@ bool radio_session_uhd_impl::set_tx_gain_unprotected(unsigned port_idx, double g
   // Setup gain.
   if (!device.set_tx_gain(port_idx, gain_dB)) {
     fmt::print("Error: setting gain for transmitter {}. {}\n", port_idx, device.get_error_message());
+    return false;
   }
 
   return true;

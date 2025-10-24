@@ -24,7 +24,7 @@
 #include "lib/mac/mac_dl/mac_dl_metric_handler.h"
 #include "mac_test_helpers.h"
 #include "tests/test_doubles/mac/dummy_mac_metrics_notifier.h"
-#include "tests/test_doubles/mac/dummy_scheduler_ue_metric_notifier.h"
+#include "tests/test_doubles/scheduler/dummy_scheduler_ue_metric_notifier.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/test_utils.h"
 #include "srsran/support/timers.h"
@@ -37,19 +37,13 @@ static void print_report(const mac_dl_metric_report& rep)
   fmt::print("New report:\n", rep.cells.size());
   for (unsigned i = 0; i != rep.cells.size(); ++i) {
     auto& cell = rep.cells[i];
-    fmt::print("- cell={}: slots={} wall_latency={{avg={}, min={}, max={}}}nsec, user_latency={{avg={}, min={}, "
-               "max={}}}, sys_latency={{avg={}, min={}, max={}}}, vol_ctx_switches={} invol_ctx_switches={}\n",
+    fmt::print("- cell={}: slots={} wall_latency={{avg={}, min={}, max={}}}nsec, vol_ctx_switches={}, "
+               "invol_ctx_switches={}\n",
                i,
                cell.nof_slots,
                cell.wall_clock_latency.average.count(),
                cell.wall_clock_latency.min.count(),
                cell.wall_clock_latency.max.count(),
-               cell.user_time.average.count(),
-               cell.user_time.min.count(),
-               cell.user_time.max.count(),
-               cell.sys_time.average.count(),
-               cell.sys_time.min.count(),
-               cell.sys_time.max.count(),
                cell.count_voluntary_context_switches,
                cell.count_involuntary_context_switches);
   }
@@ -114,13 +108,13 @@ protected:
 
   slotted_id_table<du_cell_index_t, cell_context, MAX_CELLS_PER_DU> cells;
 
-  slot_point next_point{0, 1};
+  slot_point next_point{0, 0};
 
   mac_dl_cell_metric_handler& add_cell(du_cell_index_t cell_index)
   {
     pci_t pci         = static_cast<unsigned>(cell_index);
     auto  time_source = timer_ctrl.add_cell(cell_index);
-    auto  metrics_cfg = metrics.add_cell(to_du_cell_index(cell_index), scs, *time_source);
+    auto  metrics_cfg = metrics.add_cell(to_du_cell_index(cell_index), scs, 0U, *time_source);
     cells.emplace(cell_index, *metrics_cfg.sched_notifier, *metrics_cfg.mac_notifier, std::move(time_source), pci, scs);
     return cells[cell_index].mac;
   }

@@ -22,76 +22,78 @@
 
 #pragma once
 
-#include "srsran/support/async/awaiter_memory_storage.h"
+#include "srsran/support/async/detail/awaiter_memory_storage.h"
 #include "srsran/support/async/detail/function_signature.h"
 #include "srsran/support/compiler.h"
 #include "srsran/support/srsran_assert.h"
 
 namespace srsran {
-
 namespace detail {
 
-/// Special coroutine suspension point indexes
+/// Special coroutine suspension point indexes.
 enum coro_state_tag_t : int32_t { tag_cancelled = -3, tag_final_suspend = -2, tag_destroyed = -1, tag_init = 0 };
 
-/// Metafunction for deriving Awaitable -> Awaiter
+/// Metafunction for deriving Awaitable -> Awaiter.
 template <typename Awaitable>
 using awaiter_t = decltype(std::declval<Awaitable>().get_awaiter());
 
-/// Metafunction for deriving Awaitable -> Result
+/// Metafunction for deriving Awaitable -> Result.
 template <typename Awaitable>
 using awaitable_result_t = decltype(std::declval<awaiter_t<Awaitable>>().await_resume());
 
 /// SFINAE based on whether Result is void.
 template <typename Result, typename FunctionReturn = Result>
-using enable_if_void = std::enable_if_t<std::is_same<Result, void>::value, FunctionReturn>;
+using enable_if_void = std::enable_if_t<std::is_same_v<Result, void>, FunctionReturn>;
 template <typename Result, typename FunctionReturn = Result>
-using enable_if_nonvoid = std::enable_if_t<not std::is_same<Result, void>::value, FunctionReturn>;
+using enable_if_nonvoid = std::enable_if_t<not std::is_same_v<Result, void>, FunctionReturn>;
 
-/// Metafunction for deriving coroutine implementation -> Promise
+/// Metafunction for deriving coroutine implementation -> Promise.
 template <typename F>
 using promise_of =
     typename std::decay_t<type_list_helper::type_at_t<0, decltype(callable_arguments<F>())>>::promise_type;
 
-/// Metafunction for deriving coroutine implementation -> Future Type
+/// Metafunction for deriving coroutine implementation -> Future Type.
 template <typename F>
 using future_of = typename std::decay_t<type_list_helper::type_at_t<0, decltype(callable_arguments<F>())>>::future_type;
 
-/// Base class for coroutine frames
+/// Base class for coroutine frames.
 template <typename Promise>
 struct base_coro_frame;
 
-/// Common coroutine frame functionality that is independent of the promise type
-/// Contains a small memory buffer to store awaiters and the current coroutine state
+/// Common coroutine frame functionality that is independent of the promise type.
+/// Contains a small memory buffer to store awaiters and the current coroutine state.
 template <>
 struct base_coro_frame<void> {
-  base_coro_frame()                                              = default;
+  base_coro_frame() = default;
+
   base_coro_frame(const base_coro_frame<void>&)                  = delete;
   base_coro_frame(base_coro_frame<void>&&)                       = delete;
   base_coro_frame<void>& operator=(const base_coro_frame<void>&) = delete;
   base_coro_frame<void>& operator=(base_coro_frame<void>&&)      = delete;
-  virtual ~base_coro_frame()                                     = default;
 
-  /// Resume coroutine from previously suspended point
+  virtual ~base_coro_frame() = default;
+
+  /// Resume coroutine from previously suspended point.
   virtual void resume() = 0;
 
-  /// Destroy coroutine frame
+  /// Destroy coroutine frame.
   virtual void destroy() = 0;
 
-  /// Destroy coroutine function local objects. Note: Promise and coroutine state stay intact
+  /// Destroy coroutine function local objects.
+  /// Note: Promise and coroutine state stay intact.
   virtual void on_return() = 0;
 
-  /// Used to save the state of the coroutine at suspension points
+  /// Used to save the state of the coroutine at suspension points.
   int32_t state_index = (int32_t)detail::tag_init;
 
-  /// in-place memory buffer to store awaiter
+  /// In-place memory buffer to store awaiter.
   static const std::size_t                                     default_mem_buffer_storage = 32;
   detail::awaiter_memory_storage_t<default_mem_buffer_storage> mem_buffer;
 
-  /// Checks if coroutine is at a suspension point
+  /// Checks if coroutine is at a suspension point.
   bool is_suspended() const { return not mem_buffer.empty(); }
 
-  /// called by coroutine to clear awaiter, after a awaitable is set
+  /// Called by coroutine to clear awaiter, after a awaitable is set.
   template <typename Awaitable, typename EventType = detail::awaitable_result_t<Awaitable>>
   detail::enable_if_nonvoid<EventType> on_await_resume()
   {
@@ -99,14 +101,14 @@ struct base_coro_frame<void> {
         std::conditional_t<std::is_rvalue_reference<Awaitable>::value, std::decay_t<Awaitable>, Awaitable>;
     srsran_assert(is_suspended(), "Trying to resume non-suspended coroutine");
 
-    // Extract result from awaiter and clear awaiter from memory buffer
+    // Extract result from awaiter and clear awaiter from memory buffer.
     auto&     awaiter = mem_buffer.get_awaiter<ForwardedAwaitable>();
     EventType ev      = awaiter.await_resume();
     mem_buffer.clear<ForwardedAwaitable>();
     return ev;
   }
 
-  /// called by resumable to clear awaiter and extract result, after a awaitable is set
+  /// Called by resumable to clear awaiter and extract result, after a awaitable is set.
   template <typename Awaitable, typename EventType = detail::awaitable_result_t<Awaitable>>
   detail::enable_if_void<EventType> on_await_resume()
   {
@@ -114,7 +116,7 @@ struct base_coro_frame<void> {
         std::conditional_t<std::is_rvalue_reference<Awaitable>::value, std::decay_t<Awaitable>, Awaitable>;
     srsran_assert(is_suspended(), "Trying to resume non-suspended coroutine");
 
-    // Clear awaiter from memory buffer
+    // Clear awaiter from memory buffer.
     auto& a = mem_buffer.get_awaiter<ForwardedAwaitable>();
     a.await_resume();
     mem_buffer.clear<ForwardedAwaitable>();
@@ -132,22 +134,24 @@ struct base_coro_frame<void> {
   }
 };
 
-/// Extension of base_coro_frame<void> when Promise type is specified. Besides the coro state, it stores the promise
+/// Extension of base_coro_frame<void> when Promise type is specified. Besides the coro state, it stores the promise.
 template <typename Promise>
 struct base_coro_frame : public base_coro_frame<void>, private Promise {
   using promise_type = Promise;
   using future_type  = decltype(std::declval<promise_type>().get_return_object());
 
-  /// Get promise object
+  /// Get promise object.
   Promise&       promise() { return *this; }
   const Promise& promise() const { return *this; }
 
-  /// From promise object, obtain the coroutine frame pointer
+  /// From promise object, obtain the coroutine frame pointer.
   static base_coro_frame<Promise>* from_promise(Promise* p) { return static_cast<base_coro_frame<Promise>*>(p); }
 
-  /// called during await operation to save the awaitable/awaiter in mem buffer, and pass resumable as continuation
-  /// \param awaitable_obj object that coroutine awaits on
-  /// \return true if awaitable is ready and false if the coroutine needs to suspend
+  /// \brief Called during await operation to save the awaitable/awaiter in mem buffer, and pass resumable as
+  /// continuation.
+  ///
+  /// \param awaitable_obj Object that coroutine awaits on.
+  /// \return True if awaitable is ready and false if the coroutine needs to suspend.
   template <typename Awaitable>
   bool on_await_call(Awaitable&& awaitable_obj)
   {
@@ -155,10 +159,10 @@ struct base_coro_frame : public base_coro_frame<void>, private Promise {
         std::conditional_t<std::is_rvalue_reference<Awaitable>::value, std::decay_t<Awaitable>, Awaitable>;
     srsran_assert(not is_suspended(), "Trying to suspend already suspended coroutine");
 
-    // store awaitable/awaiter in memory buffer
+    // Store awaitable/awaiter in memory buffer.
     mem_buffer.emplace(std::forward<Awaitable>(awaitable_obj));
 
-    // check if awaiter is ready. If not, suspend coroutine
+    // Check if awaiter is ready. If not, suspend coroutine.
     awaiter_t<ForwardedAwaitable>& awaiter_obj = mem_buffer.get_awaiter<ForwardedAwaitable>();
     if (not awaiter_obj.await_ready()) {
       // Tag-based dispatch - Check whether awaiter uses symmetric transfer / tail-resume on await_suspend.
@@ -191,42 +195,42 @@ private:
   }
 };
 
-/// Coroutine Frame. Besides the coro state and promise, it stores the coroutine function
+/// Coroutine Frame. Besides the coro state and promise, it stores the coroutine function.
 template <typename FunT>
 struct coro_frame : public base_coro_frame<detail::promise_of<FunT>> {
   template <typename... Args>
-  explicit coro_frame(Args&&... args)
+  coro_frame(Args&&... args)
   {
-    // Create coroutine object in embedded memory buffer
+    // Create coroutine object in embedded memory buffer.
     new (&task_storage) FunT(std::forward<Args>(args)...);
   }
 
-  /// Resume coroutine from last suspended point
+  /// Resume coroutine from last suspended point.
   void resume() final { (*get_impl())(*this); }
 
-  /// Destroy coroutine frame
-  /// This function can only be called when coroutine is suspended
+  /// Destroy coroutine frame. This function can only be called when coroutine is suspended.
   void destroy() noexcept final
   {
     srsran_sanity_check(not this->mem_buffer.empty(), "coroutine that is not suspended should not be destroyed");
 
-    // resume via cancel path until final suspension point
+    // Resume via cancel path until final suspension point.
     cancel();
     srsran_sanity_check(this->state_index == coro_state_tag_t::tag_cancelled, "Invalid coroutine state");
 
-    // called after final suspension in order to destroy & deallocate coroutine frame
+    // Called after final suspension in order to destroy & deallocate coroutine frame.
     delete this;
   }
 
-  /// Destroy coroutine function object at the moment of return
+  /// Destroy coroutine function object at the moment of return.
   void on_return() final { get_impl()->~FunT(); }
 
 private:
   FunT* get_impl() { return std::launder(reinterpret_cast<FunT*>(&task_storage)); }
-  void  cancel()
+
+  void cancel()
   {
     if (this->state_index < 0) {
-      // already cancelled or finished
+      // Already cancelled or finished.
       if (this->state_index == coro_state_tag_t::tag_final_suspend) {
         this->template on_await_cancel<decltype(this->promise().final_suspend())>();
         this->state_index = coro_state_tag_t::tag_cancelled;
@@ -242,15 +246,16 @@ private:
 
 } // namespace detail
 
-/// Coroutine handle that will be passed between awaitables
+/// Coroutine handle that will be passed between awaitables.
 template <typename Promise = void>
 struct coro_handle;
 
-/// Specialization with common functionality that is independent of promise type
+/// Specialization with common functionality that is independent of promise type.
 template <>
 struct coro_handle<void> {
   coro_handle() = default;
   coro_handle(detail::base_coro_frame<void>* frame_ptr_) : frame_ptr(frame_ptr_) {}
+
   coro_handle& operator=(detail::base_coro_frame<void>* frame_ptr_)
   {
     frame_ptr = frame_ptr_;
@@ -267,28 +272,29 @@ protected:
   detail::base_coro_frame<void>* frame_ptr = nullptr;
 };
 
-/// Specialization that extends coro_handle<void> with functionality that depends on the promise_type
+/// Specialization that extends coro_handle<void> with functionality that depends on the promise_type.
 template <typename Promise>
 struct coro_handle : public coro_handle<> {
   coro_handle() = default;
   coro_handle(detail::base_coro_frame<Promise>* frame_ptr_) : coro_handle<void>(frame_ptr_) {}
+
   coro_handle<Promise>& operator=(detail::base_coro_frame<Promise>* frame_ptr_)
   {
     this->frame_ptr = frame_ptr_;
     return *this;
   }
 
-  /// Get stored promise object
+  /// Get stored promise object.
   Promise&       promise() { return static_cast<detail::base_coro_frame<Promise>*>(frame_ptr)->promise(); }
   const Promise& promise() const { return static_cast<detail::base_coro_frame<Promise>*>(frame_ptr)->promise(); }
 
-  /// From promise, extract coroutine handle
+  /// From promise, extract coroutine handle.
   static coro_handle<Promise> from_promise(Promise* p)
   {
     return coro_handle<Promise>{detail::base_coro_frame<Promise>::from_promise(p)};
   }
 
-  /// Destroy coroutine frame
+  /// Destroy coroutine frame.
   void destroy()
   {
     if (frame_ptr != nullptr) {
@@ -298,11 +304,11 @@ struct coro_handle : public coro_handle<> {
     }
   }
 
-  /// Check if coroutine run until final suspension point
+  /// Check if coroutine run until final suspension point.
   bool done() const { return promise().ready(); }
 };
 
-/// Awaitable that never suspends
+/// Awaitable that never suspends.
 struct suspend_never {
   bool           await_ready() const { return true; }
   void           await_suspend(coro_handle<> cb) const {}
@@ -310,7 +316,7 @@ struct suspend_never {
   suspend_never& get_awaiter() { return *this; }
 };
 
-/// Awaitable that always suspends
+/// Awaitable that always suspends.
 struct suspend_always {
   bool            await_ready() const { return false; }
   void            await_suspend(coro_handle<> cb) const {}
@@ -318,12 +324,13 @@ struct suspend_always {
   suspend_always& get_awaiter() { return *this; }
 };
 
-/// Coroutine whose resumption does nothing
+/// Coroutine whose resumption does nothing.
 struct noop_coroutine_promise {
   struct future_type {};
-  future_type get_return_object() { return {}; }
+  [[nodiscard]] future_type get_return_object() { return {}; }
 };
-inline coro_handle<noop_coroutine_promise> noop_coroutine() noexcept
+
+[[nodiscard]] inline coro_handle<noop_coroutine_promise> noop_coroutine() noexcept
 {
   class noop_frame final : public detail::base_coro_frame<noop_coroutine_promise>
   {
@@ -331,38 +338,39 @@ inline coro_handle<noop_coroutine_promise> noop_coroutine() noexcept
     void destroy() final {}
     void on_return() final {}
   };
+
   static noop_frame frame;
   return coro_handle<noop_coroutine_promise>{&frame};
 }
 
-/// Creates coroutine frame and launches task if eager
+/// Creates coroutine frame and launches task if eager.
 template <typename FunT, typename... Args>
-auto launch_async(Args&&... args) -> typename detail::future_of<FunT>
+[[nodiscard]] auto launch_async(Args&&... args) -> typename detail::future_of<FunT>
 {
   auto* frame = new detail::coro_frame<FunT>(std::forward<Args>(args)...);
   return frame->promise().get_return_object();
 }
 
-/// Creates coroutine frame and launches task if eager
+/// Creates coroutine frame and launches task if eager.
 template <typename FunT>
-auto launch_async(FunT&& f) -> typename detail::future_of<FunT>
+[[nodiscard]] auto launch_async(FunT&& f) -> typename detail::future_of<FunT>
 {
   auto* frame = new detail::coro_frame<FunT>(std::forward<FunT>(f));
   return frame->promise().get_return_object();
 }
 
-/// Helper to pass coroutine frame context to operator() of coroutines
+/// Helper to pass coroutine frame context to operator() of coroutines.
 template <typename FutureType>
 using coro_context = detail::base_coro_frame<typename FutureType::promise_type>;
 
-/// Helper macro to set suspension point
-#define _CORO_MARK_SUSPENSION_POINT()                                                                                  \
+/// Helper macro to set suspension point.
+#define CORO_MARK_SUSPENSION_POINT_()                                                                                  \
   coro_context__.state_index = __LINE__;                                                                               \
   case __LINE__:
 
-/// Helper macro to set suspension point with awaitable
-/// In case index is negative, the coroutine resumption enters cancel path
-#define _CORO_AWAIT_SUSPEND(awaitable_var)                                                                             \
+/// Helper macro to set suspension point with awaitable.
+/// In case index is negative, the coroutine resumption enters cancel path.
+#define CORO_AWAIT_SUSPEND_(awaitable_var)                                                                             \
   coro_context__.state_index = __LINE__;                                                                               \
   if (not coro_context__.on_await_call(awaitable_var)) {                                                               \
     return;                                                                                                            \
@@ -374,8 +382,8 @@ using coro_context = detail::base_coro_frame<typename FutureType::promise_type>;
   }                                                                                                                    \
   case __LINE__:
 
-/// Helper macro to delete coroutine function body and suspend on final suspension point
-#define _CORO_ENTER_FINAL_SUSPEND()                                                                                    \
+/// Helper macro to delete coroutine function body and suspend on final suspension point.
+#define CORO_ENTER_FINAL_SUSPEND_()                                                                                    \
   coro_context__.state_index = ::srsran::detail::coro_state_tag_t::tag_final_suspend;                                  \
   coro_context__.on_return();                                                                                          \
   if (coro_context__.on_await_call(coro_context__.promise().final_suspend())) {                                        \
@@ -383,14 +391,14 @@ using coro_context = detail::base_coro_frame<typename FutureType::promise_type>;
   }                                                                                                                    \
   return
 
-/// Await operation, in case awaitable doesn't return a value
+/// Await operation, in case awaitable doesn't return a value.
 #define CORO_AWAIT(awaitable_var)                                                                                      \
-  _CORO_AWAIT_SUSPEND(awaitable_var)                                                                                   \
+  CORO_AWAIT_SUSPEND_(awaitable_var)                                                                                   \
   coro_context__.template on_await_resume<decltype((awaitable_var))>()
 
-/// Await operation, in case the awaitable returns a data value
+/// Await operation, in case the awaitable returns a data value.
 #define CORO_AWAIT_VALUE(result, awaitable_var)                                                                        \
-  _CORO_AWAIT_SUSPEND(awaitable_var)                                                                                   \
+  CORO_AWAIT_SUSPEND_(awaitable_var)                                                                                   \
   result = coro_context__.template on_await_resume<decltype((awaitable_var))>()
 
 /// Macro inserted at the beginning of coroutine resume function body.
@@ -405,10 +413,10 @@ using coro_context = detail::base_coro_frame<typename FutureType::promise_type>;
       CORO_AWAIT(coro_context__.promise().initial_suspend())
 
 /// Macro placed at the end of coroutine resume function body. Operations:
-/// 1. save return value in coroutine promise
-/// 2. call destructor of coroutine resumable object
+/// 1. save return value in coroutine promise.
+/// 2. call destructor of coroutine resumable object.
 /// 3. await on final suspension point.
-/// 4. if final suspension point awaitable doesn't suspend (e.g. suspend_never), destroy and deallocate coroutine frame
+/// 4. if final suspension point awaitable doesn't suspend (e.g. suspend_never), destroy and deallocate coroutine frame.
 #define CORO_RETURN(...)                                                                                               \
   CORO_EARLY_RETURN(__VA_ARGS__);                                                                                      \
   }                                                                                                                    \
@@ -419,6 +427,6 @@ using coro_context = detail::base_coro_frame<typename FutureType::promise_type>;
   return
 #define CORO_EARLY_RETURN(...)                                                                                         \
   coro_context__.promise().return_value(__VA_ARGS__);                                                                  \
-  _CORO_ENTER_FINAL_SUSPEND();
+  CORO_ENTER_FINAL_SUSPEND_();
 
 } // namespace srsran

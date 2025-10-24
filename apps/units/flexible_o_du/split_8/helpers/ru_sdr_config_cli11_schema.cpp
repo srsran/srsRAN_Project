@@ -178,23 +178,6 @@ static void configure_cli11_cell_affinity_args(CLI::App& app, ru_sdr_unit_cpu_af
 {
   add_option_function<std::string>(
       app,
-      "--l1_dl_cpus",
-      [&config](const std::string& value) { parse_affinity_mask(config.l1_dl_cpu_cfg.mask, value, "l1_dl_cpus"); },
-      "CPU cores assigned to L1 downlink tasks");
-
-  add_option_function<std::string>(
-      app,
-      "--l1_dl_pinning",
-      [&config](const std::string& value) {
-        config.l1_dl_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
-        if (config.l1_dl_cpu_cfg.pinning_policy == sched_affinity_mask_policy::last) {
-          report_error("Incorrect value={} used in {} property", value, "l1_dl_pinning");
-        }
-      },
-      "Policy used for assigning CPU cores to L1 downlink tasks");
-
-  add_option_function<std::string>(
-      app,
       "--ru_cpus",
       [&config](const std::string& value) { parse_affinity_mask(config.ru_cpu_cfg.mask, value, "ru_cpus"); },
       "Number of CPUs used for the Radio Unit tasks");

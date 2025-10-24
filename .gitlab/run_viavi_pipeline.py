@@ -4,7 +4,7 @@ import argparse
 import pathlib
 import sys
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict
 
 try:
     import yaml
@@ -69,10 +69,11 @@ BUILD_DEFINITIONS: Dict[str, _BuildDefinition] = {
 class _ArgsDefinition:
     """ """
 
-    testlist: bool = False
     token: str = ""
     branch: str = ""
     testid: str = ""
+    campaign_path: str = ""
+    test_name: str = ""
     campaign_path: str = ""
     timeout: int = ""
     gnb_cli: str = ""
@@ -92,14 +93,14 @@ def _convert_extra_config_into_command(extra_config: dict) -> str:
     return cmd_args
 
 
-def get_viavi_tests():
+def get_viavi_tests() -> Dict[str, _TestDefinition]:
     viavi_test_declaration = (
         pathlib.Path(__file__).parent / ".." / "tests" / "e2e" / "tests" / "viavi" / "test_declaration.yml"
     ).resolve()
     with open(viavi_test_declaration, "r", encoding="utf-8") as file:
         data = yaml.safe_load(file)
 
-    test_list: List[_TestDefinition] = []
+    test_dict = {}
     for test in data["tests"]:
         test_definition = _TestDefinition()
         test_definition.id = test["id"]
@@ -107,44 +108,33 @@ def get_viavi_tests():
         test_definition.test_name = test["test_name"]
         test_definition.description = test.get("description", "")
         test_definition.gnb_extra_config = test.get("gnb_extra_config", "")
-        test_list.append(test_definition)
-    return test_list
+        test_dict[test_definition.id] = test_definition
+
+    return test_dict
 
 
 def validate_args(args) -> _ArgsDefinition:
     args_definition = _ArgsDefinition()
-    args_definition.testlist = args.testlist
     args_definition.token = args.token
     args_definition.branch = args.branch
     args_definition.testid = args.testid
+    args_definition.campaign_path = args.campaign
+    args_definition.test_name = args.test
     args_definition.timeout = args.timeout
     args_definition.gnb_cli = args.srsgnb_cli
     args_definition.build_mode = args.build_mode
 
-    if not args_definition.testlist:
-        fail_validate = False
-        if not args_definition.token:
-            print("Token is required to run a test.")
-            fail_validate = True
-        if not args_definition.branch:
-            print("Branch is required to run a test.")
-            fail_validate = True
-        if not args_definition.testid:
-            print("Testid is required to run a test.")
-            fail_validate = True
+    print("")
 
-        if fail_validate:
-            exit(1)
+    if (args_definition.testid and args_definition.test_name) or (  # id and name set
+        not args_definition.testid and not args_definition.test_name  # id / name not set
+    ):
+        print(
+            "You either select an already existing test with --testid or provide a new one by using --test (+ --campaign)."
+        )
+        exit(1)
+
     return args_definition
-
-
-def show_test_list():
-    test_list = get_viavi_tests()
-    print("Available tests:")
-    for test in test_list:
-        print(f"    ⊛ id: {test.id}")
-        print(f"        · Description: {test.description}")
-        print()
 
 
 def run_test(args_definition: _ArgsDefinition, test_definition: _TestDefinition):
@@ -156,17 +146,20 @@ def run_test(args_definition: _ArgsDefinition, test_definition: _TestDefinition)
     retina_launcher_args = f'--viavi-manual-campaign-filename "{test_definition.campaign_filename}" --viavi-manual-test-name "{test_definition.id}" --viavi-manual-test-timeout {timeout}'
     if args_definition.gnb_cli:
         retina_launcher_args += f' --viavi-manual-gnb-arguments "{args_definition.gnb_cli}"'
-        print("")
-        print(
-            "⚠️  Using srsgnb-cli overwrites the configuration defined in the test_declaration.yml for the test. Please review your new config carefully!!"
-        )
-        print("⚠️  OLD configuration: ", _convert_extra_config_into_command(test_definition.gnb_extra_config))
-        print("⚠️  NEW configuration: ", args_definition.gnb_cli)
-        print("")
-        if input("Do you want to continue with the new configuration? (yes/no): ").strip().lower() not in ("y", "yes"):
-            print("Exiting as per user request.")
-            sys.exit(0)
-        print("")
+        if test_definition.gnb_extra_config:
+            print(
+                "⚠️  Using srsgnb-cli overwrites the configuration defined in the test_declaration.yml for the test. Please review your new config carefully!!"
+            )
+            print("⚠️  OLD configuration: ", _convert_extra_config_into_command(test_definition.gnb_extra_config))
+            print("⚠️  NEW configuration: ", args_definition.gnb_cli)
+            print("")
+            if input("Do you want to continue with the new configuration? (yes/no): ").strip().lower() not in (
+                "y",
+                "yes",
+            ):
+                print("Exiting as per user request.")
+                sys.exit(0)
+            print("")
 
     variables = [
         {"key": "INFRASTRUCTURE_TAG", "value": build_definition.tag},
@@ -184,12 +177,15 @@ def run_test(args_definition: _ArgsDefinition, test_definition: _TestDefinition)
         {"key": "RETINA_PARAM_ARGS", "value": "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.rlc_rb_type=srb"},
         {"key": "E2E_LOG_LEVEL", "value": "warning"},
         {"key": "GROUP", "value": "viavi"},
-        {"key": "CLUSTER", "value": "retina-e2e-amd64"},
+        {"key": "CLUSTER", "value": "new-retina-e2e-amd64"},
         {"key": "PIPELINE_DESCRIPTION", "value": "Viavi manual test"},
     ]
 
     print(f"Creating Viavi pipeline for branch {branch}...")
-    print(f"    - Test ID: {test_definition.id}")
+    if args_definition.testid:
+        print(f"    - Test ID: {test_definition.id}")
+    else:
+        print(f"    - Custom test: {test_definition.campaign_filename} / {test_definition.test_name}")
     print(f"    - Build mode: {args_definition.build_mode}")
     print(f"      - OS {build_definition.os}")
     print(f"      - BUILD_ARGS {build_definition.build_args}")
@@ -208,52 +204,70 @@ def main():
     """
     Entrypoint runner.
     """
-    parser = argparse.ArgumentParser(description="List the available tests (--testlist) or run a test.")
-    parser.add_argument(
-        "--testlist",
-        action="store_true",
-        help="List of tests to run.",
+    test_dict = get_viavi_tests()
+
+    parser = argparse.ArgumentParser(
+        description="Run a Viavi test in Gitlab CI.\n"
+        " A) Use --testid to select an existing test from the CI.\n"
+        '    $ run_viavi_pipeline.py --testid "1UE ideal UDP bidirectional" ... \n'
+        " B) Use --campaign and --test to select any test defined in Viavi.\n"
+        '    $ run_viavi_pipeline.py --test "32UE ideal UDP attach-detach with traffic conservative" [--campaign "C:\\ci\\CI 4x4 ORAN-FH-complete.xml"] ...',
+        formatter_class=argparse.RawTextHelpFormatter,
     )
 
+    # Common
     parser.add_argument(
         "--token",
         help="[REQUIRED] Gitlab private token: https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#create-a-personal-access-token",
+        required=True,
     )
-
-    parser.add_argument("--branch", help="[REQUIRED] Remote branch in srsgnb repository.")
-
-    parser.add_argument(
-        "--testid",
-        help="[REQUIRED] Testid in the campaign.",
-    )
-
-    parser.add_argument(
-        "--srsgnb-cli",
-        default="",
-        help='Arguments passed to the gnb binary. E.g: "log --all_level=info". This overwrites the arguments in the test_declaration.yml file.',
-    )
-
+    parser.add_argument("--branch", help="[REQUIRED] Remote branch in srsgnb repository.", required=True)
     parser.add_argument(
         "--build-mode",
         help='Build mode for gnb. Default: "rtsan"',
         default="rtsan",
         choices=BUILD_DEFINITIONS.keys(),
     )
+    parser.add_argument(
+        "--timeout", help="Timeout in seconds for the test. If not specified, it will use the timeout defined in Viavi"
+    )
 
-    parser.add_argument("--timeout", help="Timeout in seconds for the test")
+    # Defined tests
+    parser.add_argument(
+        "--testid",
+        help="Testid in the campaign.",
+        metavar="{" + " | ".join(test_dict.keys()) + "}",
+        choices=test_dict.keys(),
+    )
+
+    # Custom tests
+    parser.add_argument(
+        "--campaign",
+        help="Campaign path. [Only for custom tests]. Default: CI campaign",
+        default=tuple(test_dict.values())[0].campaign_filename,
+    )
+    parser.add_argument("--test", help="Test name. [Only for custom tests]")
+
+    parser.add_argument(
+        "--srsgnb-cli",
+        default="",
+        help='Arguments passed to the gnb binary. E.g: "log --all_level=info". This overwrites any argument in the test_declaration.yml file.',
+    )
 
     args_definition = validate_args(parser.parse_args())
-    if args_definition.testlist:
-        show_test_list()
+    if args_definition.testid:
+        run_test(args_definition, test_dict[args_definition.testid])
     else:
-        test_list = get_viavi_tests()
-        for test_definition in test_list:
-            if test_definition.id == args_definition.testid:
-                run_test(args_definition, test_definition)
-                break
-        else:
-            print(f"Testid {args_definition.testid} not found.")
-        exit(1)
+        run_test(
+            args_definition,
+            _TestDefinition(
+                id=args_definition.test_name,
+                campaign_filename=args_definition.campaign_path,
+                test_name=args_definition.test_name,
+                description="Custom test",
+                gnb_extra_config={},
+            ),
+        )
 
 
 if __name__ == "__main__":

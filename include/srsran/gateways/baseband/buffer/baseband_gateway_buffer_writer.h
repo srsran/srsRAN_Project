@@ -45,10 +45,10 @@ public:
   /// \param[in] channel_idx Indicates the channel index.
   /// \return A view to a baseband buffer.
   /// \note An invalid channel index causes undefined behaviour.
-  virtual span<cf_t> get_channel_buffer(unsigned channel_idx) = 0;
+  virtual span<ci16_t> get_channel_buffer(unsigned channel_idx) = 0;
 
   /// See get_channel_buffer() documentation.
-  span<cf_t> operator[](unsigned channel_index) { return get_channel_buffer(channel_index); }
+  span<ci16_t> operator[](unsigned channel_index) { return get_channel_buffer(channel_index); }
 };
 
 } // namespace srsran

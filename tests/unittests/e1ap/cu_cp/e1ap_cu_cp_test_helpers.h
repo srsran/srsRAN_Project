@@ -58,16 +58,33 @@ public:
     logger.info("Received an inactivity notification");
   }
 
-  void on_e1_release_request_received(cu_up_index_t                             cu_up_index,
-                                      const std::vector<srs_cu_cp::ue_index_t>& ue_list) override
+  async_task<void> on_ue_release_required(const cu_cp_ue_context_release_request& request) override
   {
-    logger.info("Received E1 Release Request for {} UEs", ue_list.size());
+    logger.info("ue={}: Requested a UE release", request.ue_index);
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
+  void on_e1_release_request_received(cu_up_index_t cu_up_index) override
+  {
+    logger.info("Received E1 Release Request for CU-UP {}", cu_up_index);
   }
 
   bool schedule_async_task(ue_index_t ue_index, async_task<void> task) override
   {
     srsran_assert(ue_mng.find_ue_task_scheduler(ue_index) != nullptr, "UE task scheduler must be present");
     return ue_mng.find_ue_task_scheduler(ue_index)->schedule_async_task(std::move(task));
+  }
+
+  async_task<void> on_transaction_info_loss(const ue_transaction_info_loss_event& ev) override
+  {
+    logger.info("Received transaction info loss for {} UEs", ev.ues_lost.size());
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
   }
 
   srs_cu_cp::cu_cp_bearer_context_release_request last_release_request;
@@ -167,9 +184,9 @@ protected:
   manual_task_worker                  ctrl_worker{128};
   cu_cp_configuration                 cu_cp_cfg;
 
-  ue_manager                      ue_mng{cu_cp_cfg};
-  dummy_e1ap_cu_cp_notifier       cu_cp_notifier{ue_mng};
-  std::unique_ptr<e1ap_interface> e1ap;
+  ue_manager                  ue_mng{cu_cp_cfg};
+  dummy_e1ap_cu_cp_notifier   cu_cp_notifier{ue_mng};
+  std::unique_ptr<e1ap_cu_cp> e1ap;
 };
 
 } // namespace srs_cu_cp

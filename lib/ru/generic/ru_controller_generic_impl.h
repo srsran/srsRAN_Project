@@ -120,7 +120,7 @@ public:
   // See interface for documentation.
   ru_cfo_controller* get_cfo_controller() override { return &cfo_controller; }
 
-  ru_center_frequency_controller* get_center_frequency_controller() override;
+  ru_center_frequency_controller* get_center_frequency_controller() override { return &center_freq_controller; }
 
   // See interface for documentation.
   ru_tx_time_offset_controller* get_tx_time_offset_controller() override { return &tx_time_offset_controller; }
@@ -134,9 +134,8 @@ public:
   /// Sets the radio session of this controller.
   void set_radio(radio_session& session)
   {
-    radio                  = &session;
-    center_freq_controller = ru_center_frequency_controller_generic_impl(low_phy_crtl, radio);
-    gain_controller        = ru_gain_controller_generic_impl(radio);
+    radio           = &session;
+    gain_controller = ru_gain_controller_generic_impl(radio);
   }
 
   /// Set low phy sectors.

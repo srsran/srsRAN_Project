@@ -42,6 +42,8 @@ public:
   virtual srs_du::du_high_executor_mapper& get_exec_mapper() = 0;
 
   virtual task_executor& timer_executor() = 0;
+
+  virtual void wait_pending_tasks() = 0;
 };
 
 struct du_high_worker_config {

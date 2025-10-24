@@ -101,6 +101,7 @@ struct test_bench {
   pucch_allocator_impl          pucch_alloc{cell_cfg, 31U, 32U};
   uci_allocator_impl            uci_alloc{pucch_alloc};
   ue_repository                 ue_db;
+  ue_cell_repository&           ue_cell_db;
   ue_fallback_scheduler         fallback_sched;
   csi_rs_scheduler              csi_rs_sched;
 
@@ -110,6 +111,7 @@ struct test_bench {
     sched_cfg{std::move(sched_cfg_)},
     builder_params{builder_params_},
     cell_cfg{*[&]() { return cfg_mng.add_cell(cell_req); }()},
+    ue_cell_db(ue_db.add_cell(to_du_cell_index(0))),
     fallback_sched(expert_cfg, cell_cfg, pdcch_sch, pucch_alloc, uci_alloc, ue_db),
     csi_rs_sched(cell_cfg)
   {
@@ -134,7 +136,7 @@ struct test_bench {
     }
     ue_db.add_ue(std::move(u));
     auto& ue = ue_db[create_req.ue_index];
-    ue.get_pcell().set_fallback_state(true);
+    ue.get_pcell().set_fallback_state(true, false, false);
     ev.notify_completion();
     return true;
   }
@@ -384,12 +386,13 @@ protected:
 
   unsigned get_srb0_pending_bytes(du_ue_index_t ue_idx)
   {
-    return bench->ue_db[ue_idx].pending_dl_newtx_bytes(LCID_SRB0);
+    return bench->ue_db[ue_idx].dl_logical_channels().pending_bytes(LCID_SRB0);
   }
 
   unsigned get_srb0_and_ce_pending_bytes(du_ue_index_t ue_idx)
   {
-    return bench->ue_db[ue_idx].pending_dl_newtx_bytes(LCID_SRB0) + bench->ue_db[ue_idx].pending_ce_bytes();
+    return bench->ue_db[ue_idx].dl_logical_channels().pending_bytes(LCID_SRB0) +
+           bench->ue_db[ue_idx].dl_logical_channels().pending_ce_bytes();
   }
 
   ue& get_ue(du_ue_index_t ue_idx) { return bench->ue_db[ue_idx]; }
@@ -455,7 +458,7 @@ TEST_P(fallback_scheduler_tester, successfully_allocated_resources)
   }
   ASSERT_TRUE(is_ue_allocated_pdcch);
   ASSERT_TRUE(is_ue_allocated_pdsch);
-  ASSERT_FALSE(test_ue.has_pending_dl_newtx_bytes(LCID_SRB0));
+  ASSERT_FALSE(test_ue.dl_logical_channels().has_pending_bytes(LCID_SRB0));
 }
 
 TEST_P(fallback_scheduler_tester, successfully_allocated_resources_for_srb1_pdu_even_if_cqi_is_zero)
@@ -506,7 +509,7 @@ TEST_P(fallback_scheduler_tester, successfully_allocated_resources_for_srb1_pdu_
   }
   ASSERT_TRUE(is_ue_allocated_pdcch);
   ASSERT_TRUE(is_ue_allocated_pdsch);
-  ASSERT_FALSE(test_ue.has_pending_dl_newtx_bytes(LCID_SRB1));
+  ASSERT_FALSE(test_ue.dl_logical_channels().has_pending_bytes(LCID_SRB1));
 }
 
 TEST_P(fallback_scheduler_tester, failed_allocating_resources)
@@ -815,7 +818,7 @@ TEST_P(fallback_scheduler_tester, test_large_srb0_buffer_size)
   ASSERT_TRUE(is_ue_allocated_pdcch);
   ASSERT_TRUE(is_ue_allocated_pdsch);
 
-  ASSERT_FALSE(test_ue.has_pending_dl_newtx_bytes(LCID_SRB0));
+  ASSERT_FALSE(test_ue.dl_logical_channels().has_pending_bytes(LCID_SRB0));
 }
 
 TEST_P(fallback_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_index)
@@ -904,7 +907,8 @@ TEST_F(fallback_scheduler_tdd_tester, test_allocation_in_appropriate_slots_in_td
 
   for (unsigned ue_idx = 0; ue_idx < MAX_UES; ue_idx++) {
     const auto& test_ue = get_ue(to_du_ue_index(ue_idx));
-    ASSERT_FALSE(test_ue.has_pending_dl_newtx_bytes(LCID_SRB0)) << "UE " << ue_idx << " has still pending DL bytes";
+    ASSERT_FALSE(test_ue.dl_logical_channels().has_pending_bytes(LCID_SRB0))
+        << "UE " << ue_idx << " has still pending DL bytes";
   }
 }
 
@@ -1487,7 +1491,7 @@ TEST_P(fallback_scheduler_srb1_segmentation, test_scheduling_srb1_segmentation)
 
   for (auto& tester : ues_testers) {
     ASSERT_EQ(0, tester.missing_retx);
-    ASSERT_FALSE(tester.test_ue.has_pending_dl_newtx_bytes())
+    ASSERT_FALSE(tester.test_ue.dl_logical_channels().has_pending_bytes())
         << fmt::format("UE {} has still pending DL bytes", fmt::underlying(tester.test_ue.ue_index));
   }
 }
@@ -1746,10 +1750,10 @@ TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_reconf_is_after_reest_both_common
   ASSERT_TRUE(u.get_pcell().cfg().init_bwp().ul_ded.has_value());
 
   // Signal a UE reconfiguration that happens after re-establishment.
-  auto ue_cfg = sched_config_helper::create_default_sched_ue_creation_request(bench->builder_params);
-  sched_ue_reconfiguration_message reconf_msg{
-      .ue_index = du_ue_index, .crnti = rnti, .cfg = ue_cfg.cfg, .reestablished = true};
-  auto ev = bench->cfg_mng.update_ue(reconf_msg);
+  auto ue_cfg              = sched_config_helper::create_default_sched_ue_creation_request(bench->builder_params);
+  ue_cfg.cfg.reestablished = true;
+  sched_ue_reconfiguration_message reconf_msg{.ue_index = du_ue_index, .crnti = rnti, .cfg = ue_cfg.cfg};
+  auto                             ev = bench->cfg_mng.update_ue(reconf_msg);
   u.handle_reconfiguration_request(ue_reconf_command{.cfg = ev.next_config()}, true);
 
   slot_point slot_update_srb_traffic{current_slot.numerology(), generate_srb_traffic_slot()};

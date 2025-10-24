@@ -32,6 +32,11 @@
 namespace srsran {
 namespace srs_cu_cp {
 
+/// \brief Generate a dummy CU-CP E1 Reset Acknowledge.
+/// \return The CU-CP E1 Reset Acknowledge.
+e1ap_message generate_cu_cp_e1_reset_ack(uint8_t                                                transaction_id,
+                                         const asn1::e1ap::ue_associated_lc_e1_conn_list_res_l& e1_reset_ues);
+
 /// \brief Generate dummy Supported PLMNs Item.
 /// \param[in] nrcell_id The NR Cell Id to use.
 /// \return The dummy Supported PLMNs Item.

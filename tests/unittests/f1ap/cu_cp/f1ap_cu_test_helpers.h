@@ -185,7 +185,7 @@ public:
 
   bool schedule_async_task(async_task<void> task) override { return task_sched.schedule(std::move(task)); }
 
-  async_task<void> on_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) override
+  async_task<void> on_transaction_info_loss(const ue_transaction_info_loss_event& ev) override
   {
     return launch_async([](coro_context<async_task<void>>& ctx) {
       CORO_BEGIN(ctx);

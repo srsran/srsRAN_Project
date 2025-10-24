@@ -48,13 +48,12 @@ struct mac_dl_cell_metric_report {
   std::chrono::nanoseconds slot_duration;
   /// Description of the wall clock latency of the MAC at handling slot indications.
   latency_report wall_clock_latency;
-  /// Description of the time spent by the MAC in user mode when handling slot indications.
-  latency_report user_time;
-  /// Description of the time spent by the MAC in kernel mode when handling slot indications.
-  latency_report sys_time;
   /// \brief Description of the wall clock latency between the lower layers signalling a slot indication and the MAC
   /// starting to handle it.
-  latency_report slot_ind_handle_latency;
+  latency_report slot_ind_dequeue_latency;
+  /// \brief Description of the delay in the MAC scheduler between receiving a slot indication and completing the
+  /// scheduling
+  latency_report sched_latency;
   /// \brief Description of the delays between the MAC starting the processing of a slot indication and generating a DL
   /// TTI request.
   latency_report dl_tti_req_latency;

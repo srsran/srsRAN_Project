@@ -25,6 +25,7 @@
 #include "../du_manager_test_helpers.h"
 #include "lib/du/du_high/du_manager/du_ue/du_ue.h"
 #include "lib/du/du_high/du_manager/du_ue/du_ue_manager_repository.h"
+#include "srsran/mac/mac_pdu_handler.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 
 namespace srsran {

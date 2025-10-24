@@ -21,6 +21,7 @@
  */
 
 #include "apps/helpers/metrics/metrics_helpers.h"
+#include "apps/services/app_execution_metrics/executor_metrics_manager.h"
 #include "apps/services/app_resource_usage/app_resource_usage.h"
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
@@ -41,6 +42,7 @@
 #include "srsran/support/config_parsers.h"
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/io/io_broker_factory.h"
+#include "srsran/support/io/io_timer_source.h"
 #include "srsran/support/signal_handling.h"
 #include "srsran/support/signal_observer.h"
 #include "srsran/support/sysinfo.h"
@@ -214,8 +216,11 @@ int main(int argc, char** argv)
   }
 
   app_services::application_tracer app_tracer;
-  if (not du_low_cfg.log_cfg.tracing_filename.empty()) {
-    app_tracer.enable_tracer(du_low_cfg.log_cfg.tracing_filename, app_logger);
+  if (not du_low_cfg.trace_cfg.filename.empty()) {
+    app_tracer.enable_tracer(du_low_cfg.trace_cfg.filename,
+                             du_low_cfg.trace_cfg.max_tracing_events_per_file,
+                             du_low_cfg.trace_cfg.nof_tracing_events_after_severe,
+                             app_logger);
   }
 
   // Log CPU architecture.
@@ -248,11 +253,19 @@ int main(int argc, char** argv)
   // Create manager of timers for DU, which will be driven by the PHY slot ticks.
   timer_manager app_timers{256};
 
+  app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
+
+  // Instantiate executor metrics service.
+  app_services::executor_metrics_service_and_metrics exec_metrics_service = build_executor_metrics_service(
+      metrics_notifier_forwarder, app_timers, du_low_cfg.metrics_cfg.executors_metrics_cfg);
+  std::vector<app_services::metrics_config> app_metrics = std::move(exec_metrics_service.metrics);
+
   // Instantiate worker manager.
   worker_manager_config worker_manager_cfg;
   fill_du_low_worker_manager_config(worker_manager_cfg, du_low_cfg);
   o_du_app_unit->fill_worker_manager_config(worker_manager_cfg);
-  worker_manager_cfg.app_timers = &app_timers;
+  worker_manager_cfg.app_timers                    = &app_timers;
+  worker_manager_cfg.exec_metrics_channel_registry = exec_metrics_service.channel_registry;
 
   worker_manager workers{worker_manager_cfg};
 
@@ -263,16 +276,20 @@ int main(int argc, char** argv)
   io_broker_config           io_broker_cfg(os_thread_realtime_priority::min() + 5, main_pool_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
+  // Create time source that ticks the timers.
+  std::optional<io_timer_source> time_source(
+      std::in_place_t{}, app_timers, *epoll_broker, workers.get_timer_source_executor(), std::chrono::milliseconds{1});
+
   // Register the commands.
   app_services::cmdline_command_dispatcher command_parser(*epoll_broker, workers.get_cmd_line_executor(), {});
-
-  app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
 
   // Create app-level resource usage service and metrics.
   auto app_resource_usage_service = app_services::build_app_resource_usage_service(
       metrics_notifier_forwarder, du_low_cfg.metrics_cfg.rusage_config, srslog::fetch_basic_logger("APP"));
 
-  std::vector<app_services::metrics_config> app_metrics = std::move(app_resource_usage_service.metrics);
+  for (auto& metric : app_resource_usage_service.metrics) {
+    app_metrics.push_back(std::move(metric));
+  }
 
   auto du = o_du_app_unit->create_flexible_o_du_low(
       workers, metrics_notifier_forwarder, app_timers, srslog::fetch_basic_logger("APP"));
@@ -299,6 +316,10 @@ int main(int argc, char** argv)
 
   {
     app_services::application_message_banners app_banner(app_name, du_low_cfg.log_cfg.filename);
+
+    auto exec_metrics_session = exec_metrics_service.service
+                                    ? exec_metrics_service.service->create_session(workers.get_metrics_executor())
+                                    : app_services::app_executor_metrics_service::create_dummy_session();
 
     while (is_app_running) {
       std::this_thread::sleep_for(std::chrono::milliseconds(250));

@@ -71,6 +71,9 @@ private:
   /// \brief Perform SSB allocation for case B (both paired and unpaired spectrum) - TS 38.213, Section 4.1.
   void ssb_alloc_case_B(ssb_information_list& ssb_list, slot_point sl_point_mod);
 
+  /// \brief Perform SSB allocation for case D for FR2 120kHz SCS - TS 38.213, Section 4.1.
+  void ssb_alloc_case_D(ssb_information_list& ssb_list, slot_point sl_point_mod);
+
   static void fill_ssb_parameters(ssb_information_list& ssb_list,
                                   ssb_offset_to_pointA  offset_to_point_A,
                                   ssb_subcarrier_offset ssb_subc_offset,

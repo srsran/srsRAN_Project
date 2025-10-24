@@ -30,6 +30,7 @@
 #include "srsran/cu_cp/cu_cp_ue_messages.h"
 #include "srsran/ran/plmn_identity.h"
 #include "srsran/ran/rnti.h"
+#include "srsran/rrc/rrc_cell_context.h"
 #include "srsran/rrc/rrc_types.h"
 #include "srsran/rrc/rrc_ue_config.h"
 #include "srsran/security/security.h"
@@ -195,11 +196,6 @@ public:
   /// \brief Notify about an Uplink NAS Transport message.
   /// \param[in] msg The Uplink NAS Transport message.
   virtual void on_ul_nas_transport_message(const cu_cp_ul_nas_transport& msg) = 0;
-
-  /// \brief Notify about the reception of an inter CU handove related RRC Reconfiguration Complete.
-  virtual void on_inter_cu_ho_rrc_recfg_complete_received(const ue_index_t           ue_index,
-                                                          const nr_cell_global_id_t& cgi,
-                                                          const tac_t                tac) = 0;
 };
 
 struct rrc_reconfiguration_response_message {
@@ -289,6 +285,9 @@ public:
 
   /// \brief Get the packed RRC measurement config for the current serving cell of the UE.
   virtual byte_buffer get_packed_meas_config() = 0;
+
+  /// \brief Get the serving cell measurement object for the current serving cell of the UE.
+  virtual std::optional<uint8_t> get_serving_cell_mo() = 0;
 
   /// \brief Handle the handover command RRC PDU.
   /// \param[in] cmd The handover command RRC PDU.
@@ -455,6 +454,10 @@ public:
   /// \brief Get the RRC Reestablishment UE context to transfer it to new UE.
   /// \returns The RRC Reestablishment UE Context.
   virtual rrc_ue_reestablishment_context_response get_context() = 0;
+
+  /// \brief Get the cell context of the RRC UE.
+  /// \returns The cell context.
+  virtual rrc_cell_context get_cell_context() const = 0;
 };
 
 class rrc_ue_event_notifier

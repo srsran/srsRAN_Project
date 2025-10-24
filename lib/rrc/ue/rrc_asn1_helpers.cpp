@@ -243,8 +243,8 @@ void srsran::srs_cu_cp::fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recf
 
   // non crit ext
   if (rrc_reconf.non_crit_ext.has_value()) {
-    asn1_reconfig_ies.non_crit_ext_present = true;
-    const auto& non_crit_ext               = rrc_reconf.non_crit_ext.value();
+    asn1_reconfig_ies.non_crit_ext_present  = true;
+    const rrc_recfg_v1530_ies& non_crit_ext = rrc_reconf.non_crit_ext.value();
 
     // full cfg
     asn1_reconfig_ies.non_crit_ext.full_cfg_present = non_crit_ext.full_cfg_present;

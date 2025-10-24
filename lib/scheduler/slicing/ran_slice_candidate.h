@@ -23,6 +23,7 @@
 #pragma once
 
 #include "ran_slice_instance.h"
+#include "srsran/ran/slot_point.h"
 
 namespace srsran {
 namespace detail {
@@ -33,7 +34,7 @@ class common_ran_slice_candidate
 {
 public:
   common_ran_slice_candidate(ran_slice_instance& instance_, slot_point slot_tx_, unsigned max_rbs_ = 0) :
-    inst(&instance_), max_rbs(max_rbs_ == 0 ? inst->cfg.max_prb : max_rbs_), slot_tx(slot_tx_)
+    inst(&instance_), max_rbs(max_rbs_ == 0 ? inst->cfg.rbs.max() : max_rbs_), slot_tx(slot_tx_)
   {
   }
 
@@ -62,9 +63,9 @@ public:
     if constexpr (IsDl) {
       return max_rbs < inst->pdsch_rb_count ? 0 : max_rbs - inst->pdsch_rb_count;
     }
-    return max_rbs < inst->pusch_rb_count_per_slot[slot_tx.to_uint() % inst->pusch_rb_count_per_slot.size()]
+    return max_rbs < inst->pusch_rb_count_per_slot[slot_tx.count() % inst->pusch_rb_count_per_slot.size()]
                ? 0
-               : max_rbs - inst->pusch_rb_count_per_slot[slot_tx.to_uint() % inst->pusch_rb_count_per_slot.size()];
+               : max_rbs - inst->pusch_rb_count_per_slot[slot_tx.count() % inst->pusch_rb_count_per_slot.size()];
   }
 
   /// Returns slot at which PUSCH/PDSCH needs to be scheduled for this slice candidate.

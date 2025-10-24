@@ -22,7 +22,7 @@ ARG GF_VERSION=12.0.2
 FROM grafana/grafana-oss:${GF_VERSION}
 
 ADD provisioning /etc/grafana/provisioning
-ADD dashboards   /etc/dashboards
+ADD dashboards   /usr/share/grafana/public/dashboards
 
 USER root
 RUN rm -rf /usr/share/grafana/public/app/plugins/panel/table

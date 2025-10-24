@@ -22,6 +22,7 @@
 
 #include "ue_capability_manager.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
+#include "srsran/ran/band_helper.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -164,6 +165,49 @@ static void set_pdsch_interleaving(serving_cell_config& cell_cfg, vrb_to_prb::ma
   }
 }
 
+static void set_max_dl_nof_harqs(serving_cell_config& cell_cfg, unsigned nof_harqs)
+{
+  if (cell_cfg.pdsch_serv_cell_cfg.has_value()) {
+    cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
+        static_cast<pdsch_serving_cell_config::nof_harq_proc_for_pdsch>(nof_harqs);
+  }
+}
+
+static void set_max_ul_nof_harqs(serving_cell_config& cell_cfg, unsigned nof_harqs)
+{
+  if (cell_cfg.ul_config.has_value() and cell_cfg.ul_config->pusch_serv_cell_cfg.has_value()) {
+    cell_cfg.ul_config->pusch_serv_cell_cfg->nof_harq_proc =
+        static_cast<pusch_serving_cell_config::nof_harq_proc_for_pusch>(nof_harqs);
+  }
+}
+
+static void set_dl_dci_harq_num_field_size(serving_cell_config& cell_cfg, unsigned field_size)
+{
+  if (cell_cfg.init_dl_bwp.pdsch_cfg.has_value()) {
+    cell_cfg.init_dl_bwp.pdsch_cfg->harq_process_num_size_dci_1_1 =
+        static_cast<pdsch_config::harq_process_num_dci_1_1_size>(field_size);
+    cell_cfg.init_dl_bwp.pdsch_cfg->harq_process_num_size_dci_1_2 =
+        static_cast<pdsch_config::harq_process_num_dci_1_2_size>(field_size);
+  }
+}
+
+static void set_ul_dci_harq_num_field_size(serving_cell_config& cell_cfg, unsigned field_size)
+{
+  if (cell_cfg.ul_config.has_value() and cell_cfg.ul_config->init_ul_bwp.pusch_cfg.has_value()) {
+    cell_cfg.ul_config->init_ul_bwp.pusch_cfg->harq_process_num_size_dci_0_1 =
+        static_cast<pusch_config::harq_process_num_dci_0_1_size>(field_size);
+    cell_cfg.ul_config->init_ul_bwp.pusch_cfg->harq_process_num_size_dci_0_2 =
+        static_cast<pusch_config::harq_process_num_dci_0_2_size>(field_size);
+  }
+}
+
+static void set_ul_harq_mode_b(serving_cell_config& cell_cfg, bool harq_mode_b_supported)
+{
+  if (cell_cfg.ul_config.has_value() and cell_cfg.ul_config->pusch_serv_cell_cfg.has_value()) {
+    cell_cfg.ul_config->pusch_serv_cell_cfg->harq_mode_b = harq_mode_b_supported;
+  }
+}
+
 ue_capability_manager::ue_capability_manager(span<const du_cell_config> cell_cfg_list_,
                                              du_drx_resource_manager&   drx_mng_,
                                              srslog::basic_logger&      logger_,
@@ -183,6 +227,11 @@ void ue_capability_manager::handle_ue_creation(du_ue_resource_config& ue_res_cfg
   set_pdsch_interleaving(pcell_cfg, select_pdsch_interleaving(cell_idx));
   set_ul_mimo(
       pcell_cfg, select_pusch_max_rank(cell_idx), select_srs_nof_ports(cell_idx), select_tx_codebook_subset(cell_idx));
+  set_max_dl_nof_harqs(pcell_cfg, select_max_dl_nof_harqs(cell_idx));
+  set_max_ul_nof_harqs(pcell_cfg, select_max_ul_nof_harqs(cell_idx));
+  set_dl_dci_harq_num_field_size(pcell_cfg, select_dl_dci_harq_num_field_size(cell_idx));
+  set_ul_dci_harq_num_field_size(pcell_cfg, select_ul_dci_harq_num_field_size(cell_idx));
+  set_ul_harq_mode_b(pcell_cfg, select_ul_harq_mode_b(cell_idx));
 
   // Initialize UE with DRX disabled.
   drx_res_mng.handle_ue_creation(ue_res_cfg.cell_group);
@@ -225,6 +274,17 @@ void ue_capability_manager::update_impl(du_ue_resource_config& ue_res_cfg)
   // Setup UL MIMO parameters.
   set_ul_mimo(
       pcell_cfg, select_pusch_max_rank(cell_idx), select_srs_nof_ports(cell_idx), select_tx_codebook_subset(cell_idx));
+
+  // Set max DL/UL nof HARQs.
+  set_max_dl_nof_harqs(pcell_cfg, select_max_dl_nof_harqs(cell_idx));
+  set_max_ul_nof_harqs(pcell_cfg, select_max_ul_nof_harqs(cell_idx));
+
+  // Set DL/UL DCI HARQ Process Number size.
+  set_dl_dci_harq_num_field_size(pcell_cfg, select_dl_dci_harq_num_field_size(cell_idx));
+  set_ul_dci_harq_num_field_size(pcell_cfg, select_ul_dci_harq_num_field_size(cell_idx));
+
+  // Set UL HARQ Mode B enabled.
+  set_ul_harq_mode_b(pcell_cfg, select_ul_harq_mode_b(cell_idx));
 
   // Setup DRX config.
   update_drx(ue_res_cfg);
@@ -392,6 +452,179 @@ unsigned ue_capability_manager::select_pusch_max_rank(du_cell_index_t cell_idx) 
   }
 
   return std::min(pusch_max_rank, ue_caps->bands.at(band).pusch_max_rank);
+}
+
+unsigned ue_capability_manager::select_max_dl_nof_harqs(du_cell_index_t cell_idx) const
+{
+  // Configured maximum number of DL HARQs.
+  const auto& pdsch_serv_cell_cfg = base_cell_cfg_list[cell_idx].ue_ded_serv_cell_cfg.pdsch_serv_cell_cfg;
+
+  if (not pdsch_serv_cell_cfg.has_value()) {
+    return ue_capability_summary::default_max_harq_process_num;
+  }
+
+  auto cell_max_nof_dl_harq_proc = (unsigned)pdsch_serv_cell_cfg->nof_harq_proc;
+
+  if (test_cfg.test_ue.has_value() and test_cfg.test_ue->rnti != rnti_t::INVALID_RNTI) {
+    // In case of test mode, we do not need to rely on capabilities.
+    return cell_max_nof_dl_harq_proc;
+  }
+
+  nr_band band = base_cell_cfg_list[cell_idx].dl_carrier.band;
+
+  // TODO: need a better solution. Currently, HARQs created before UE caps are received.
+  // To bypass this: if no UE capabilities available yet, but NTN band, we reserve configured nof HARQs (up to 32).
+  // Better: if 32 HARQ requested in cfg, return 16 here, then if UE supports change to 32 and reserve more HARQs.
+  if (not ue_caps.has_value() and band_helper::is_ntn_band(band)) {
+    // UE capabilities have not been decoded yet, but NTN band.
+    return cell_max_nof_dl_harq_proc;
+  }
+
+  // UE capabilities have not been decoded yet, band info no available, or UE does not support NTN, return at most 16.
+  if (not ue_caps.has_value() || ue_caps->bands.count(band) == 0 || not ue_caps->ntn_supported) {
+    return std::min(cell_max_nof_dl_harq_proc, ue_capability_summary::default_max_harq_process_num);
+  }
+
+  return std::min(cell_max_nof_dl_harq_proc, (unsigned)ue_caps->bands.at(band).max_ul_harq_process_num);
+}
+
+unsigned ue_capability_manager::select_max_ul_nof_harqs(du_cell_index_t cell_idx) const
+{
+  const auto& ul_config = base_cell_cfg_list[cell_idx].ue_ded_serv_cell_cfg.ul_config;
+
+  if (not ul_config.has_value()) {
+    return ue_capability_summary::default_max_harq_process_num;
+  }
+
+  const auto& pusch_serv_cell_cfg = ul_config->pusch_serv_cell_cfg;
+  if (not pusch_serv_cell_cfg.has_value()) {
+    return ue_capability_summary::default_max_harq_process_num;
+  }
+
+  // Configured maximum number of UL HARQs.
+  auto cell_max_nof_ul_harq_proc = (unsigned)pusch_serv_cell_cfg->nof_harq_proc;
+
+  if (test_cfg.test_ue.has_value() and test_cfg.test_ue->rnti != rnti_t::INVALID_RNTI) {
+    // In case of test mode, we do not need to rely on capabilities.
+    return cell_max_nof_ul_harq_proc;
+  }
+
+  nr_band band = base_cell_cfg_list[cell_idx].ul_carrier.band;
+
+  // TODO: need a better solution. Currently, HARQs created before UE caps are received.
+  // To bypass this: if no UE capabilities available yet, but NTN band, we reserve configured nof HARQs (up to 32).
+  // Better: if 32 HARQ requested in cfg, return 16 here, then if UE supports change to 32 and reserve more HARQs.
+  if (not ue_caps.has_value() and band_helper::is_ntn_band(band)) {
+    // UE capabilities have not been decoded yet, but NTN band.
+    return cell_max_nof_ul_harq_proc;
+  }
+
+  // UE capabilities have not been decoded yet, band info no available, or UE does not support NTN, return at most 16.
+  if (not ue_caps.has_value() || ue_caps->bands.count(band) == 0 || not ue_caps->ntn_supported) {
+    return std::min(cell_max_nof_ul_harq_proc, ue_capability_summary::default_max_harq_process_num);
+  }
+
+  return std::min(cell_max_nof_ul_harq_proc, (unsigned)ue_caps->bands.at(band).max_ul_harq_process_num);
+}
+
+unsigned ue_capability_manager::select_dl_dci_harq_num_field_size(du_cell_index_t cell_idx) const
+{
+  auto default_dci_size = log2_ceil(ue_capability_summary::default_max_harq_process_num);
+
+  if (test_cfg.test_ue.has_value() and test_cfg.test_ue->rnti != rnti_t::INVALID_RNTI) {
+    // In case of test mode, we do not need to rely on capabilities.
+    return default_dci_size;
+  }
+
+  // Configured maximum number of UL HARQs.
+  const auto& pdsch_serv_cell_cfg = base_cell_cfg_list[cell_idx].ue_ded_serv_cell_cfg.pdsch_serv_cell_cfg;
+
+  if (not pdsch_serv_cell_cfg.has_value()) {
+    return default_dci_size;
+  }
+
+  auto cell_max_nof_dl_harq_proc = (unsigned)pdsch_serv_cell_cfg->nof_harq_proc;
+  auto cell_dci_size             = log2_ceil(cell_max_nof_dl_harq_proc);
+
+  nr_band band = base_cell_cfg_list[cell_idx].dl_carrier.band;
+
+  // UE capabilities have not been decoded yet, band info no available, or UE does not support NTN.
+  if (not band_helper::is_ntn_band(band) || not ue_caps.has_value() || ue_caps->bands.count(band) == 0 ||
+      not ue_caps->ntn_supported) {
+    // return 4
+    return default_dci_size;
+  }
+
+  auto band_dci_size = log2_ceil((unsigned)ue_caps->bands.at(band).max_dl_harq_process_num);
+  // return 4 or 5
+  return std::max(std::min(cell_dci_size, band_dci_size), default_dci_size);
+}
+
+unsigned ue_capability_manager::select_ul_dci_harq_num_field_size(du_cell_index_t cell_idx) const
+{
+  auto default_dci_size = log2_ceil(ue_capability_summary::default_max_harq_process_num);
+
+  if (test_cfg.test_ue.has_value() and test_cfg.test_ue->rnti != rnti_t::INVALID_RNTI) {
+    // In case of test mode, we do not need to rely on capabilities.
+    return default_dci_size;
+  }
+
+  const auto& ul_config = base_cell_cfg_list[cell_idx].ue_ded_serv_cell_cfg.ul_config;
+
+  if (not ul_config.has_value()) {
+    return default_dci_size;
+  }
+
+  const auto& pusch_serv_cell_cfg = ul_config->pusch_serv_cell_cfg;
+  if (not pusch_serv_cell_cfg.has_value()) {
+    return default_dci_size;
+  }
+
+  // Configured maximum number of UL HARQs.
+  auto cell_max_nof_ul_harq_proc = (unsigned)pusch_serv_cell_cfg->nof_harq_proc;
+  auto cell_dci_size             = log2_ceil(cell_max_nof_ul_harq_proc);
+
+  nr_band band = base_cell_cfg_list[cell_idx].ul_carrier.band;
+
+  // UE capabilities have not been decoded yet, band info no available, or UE does not support NTN.
+  if (not band_helper::is_ntn_band(band) || not ue_caps.has_value() || ue_caps->bands.count(band) == 0 ||
+      not ue_caps->ntn_supported) {
+    // return 4
+    return default_dci_size;
+  }
+
+  auto band_dci_size = log2_ceil((unsigned)ue_caps->bands.at(band).max_ul_harq_process_num);
+  // return 4 or 5
+  return std::max(std::min(cell_dci_size, band_dci_size), default_dci_size);
+}
+
+bool ue_capability_manager::select_ul_harq_mode_b(du_cell_index_t cell_idx) const
+{
+  // Configured disabled UL HARQ mode B.
+  const auto& ul_config = base_cell_cfg_list[cell_idx].ue_ded_serv_cell_cfg.ul_config;
+
+  if (not ul_config.has_value()) {
+    return false;
+  }
+  const auto& pusch_serv_cell_cfg = ul_config->pusch_serv_cell_cfg;
+  if (not pusch_serv_cell_cfg.has_value()) {
+    return false;
+  }
+
+  bool cell_harq_mode_b = pusch_serv_cell_cfg->harq_mode_b;
+
+  if (test_cfg.test_ue.has_value() and test_cfg.test_ue->rnti != rnti_t::INVALID_RNTI) {
+    // In case of test mode, we do not need to rely on capabilities.
+    return cell_harq_mode_b;
+  }
+
+  // UE capabilities have not been decoded yet, but NTN band.
+  if (not ue_caps.has_value() || not ue_caps->ntn_supported) {
+    // If the UE does not support NTN capabilities, HARQ mode B cannot be enabled.
+    return false;
+  }
+
+  return cell_harq_mode_b and ue_caps->ul_harq_mode_b_supported;
 }
 
 void ue_capability_manager::update_drx(du_ue_resource_config& ue_res_cfg)

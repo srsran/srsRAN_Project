@@ -35,6 +35,9 @@ namespace srsran::srs_cu_up {
 
 /// CU-UP manager implementation configuration.
 struct cu_up_manager_impl_config {
+  gnb_cu_up_id_t                        cu_up_id;
+  std::string                           cu_up_name;
+  std::string                           plmn;
   std::map<five_qi_t, cu_up_qos_config> qos;
   n3_interface_config                   n3_cfg;
   cu_up_test_mode_config                test_mode_cfg;
@@ -42,6 +45,7 @@ struct cu_up_manager_impl_config {
 
 /// CU-UP manager implementation dependencies.
 struct cu_up_manager_impl_dependencies {
+  std::atomic<bool>&         stop_command;
   e1ap_interface&            e1ap;
   gtpu_demux&                ngu_demux;
   ngu_session_manager&       ngu_session_mngr;
@@ -68,7 +72,12 @@ public:
 
   async_task<void> handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg) override;
 
-  void schedule_cu_up_async_task(async_task<void> task);
+  void handle_e1ap_connection_drop() override;
+
+  async_task<void> handle_e1_reset(const e1ap_reset& msg) override;
+
+  void schedule_cu_up_async_task(async_task<void> task) override;
+
   void schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) override;
 
   // cu_up_e1ap_connection_notifier
@@ -87,6 +96,12 @@ private:
   async_task<void> enable_test_mode() override;
   async_task<void> disable_test_mode();
 
+  gnb_cu_up_id_t cu_up_id;
+  std::string    cu_up_name;
+  std::string    plmn;
+
+  std::atomic<bool>&                    stop_command;
+  e1ap_connection_manager&              e1ap;
   std::map<five_qi_t, cu_up_qos_config> qos;
   const network_interface_config        net_cfg;
   const n3_interface_config             n3_cfg;

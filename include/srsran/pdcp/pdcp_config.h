@@ -140,6 +140,9 @@ constexpr int16_t pdcp_discard_timer_to_int(pdcp_discard_timer discard_timer)
   return static_cast<int16_t>(discard_timer);
 }
 
+/// Reordering timeout for serialization of TX PDUs after parallelized crypto operations.
+constexpr uint32_t pdcp_tx_crypto_reordering_timeout_ms = 40;
+
 /// The PDCP cannot re-use COUNTs, see TS 38.331, section 5.3.1.2.
 /// To avoid this, we define two thresholds, one where we accept messages but notify the RRC and another where we no
 /// longer accept messages. Here, we define some default values for this, both for TX and RX.

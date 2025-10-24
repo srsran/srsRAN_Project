@@ -42,9 +42,11 @@ namespace srs_du {
 
 /// Parameters to set the DU-high environment simulator.
 struct du_high_env_sim_params {
-  unsigned                                  nof_cells = 1;
+  unsigned                                  nof_cells  = 1;
+  bool                                      auto_start = true;
   std::optional<cell_config_builder_params> builder_params;
   std::optional<pucch_builder_params>       pucch_cfg;
+  std::optional<scheduler_ue_expert_config> sched_ue_expert_cfg;
   std::optional<unsigned>                   prach_frequency_start;
   std::optional<srs_periodicity>            srs_period;
   bool                                      active_cells_on_start = true;
@@ -56,7 +58,9 @@ class du_high_env_simulator
 {
 public:
   du_high_env_simulator(du_high_env_sim_params params = du_high_env_sim_params{});
-  du_high_env_simulator(const du_high_configuration& du_hi_cfg, bool active_cells_on_start = true);
+  explicit du_high_env_simulator(const du_high_configuration& du_hi_cfg,
+                                 bool                         auto_start            = true,
+                                 bool                         active_cells_on_start = true);
   virtual ~du_high_env_simulator();
 
   bool add_ue(rnti_t rnti, du_cell_index_t cell_index = to_du_cell_index(0));

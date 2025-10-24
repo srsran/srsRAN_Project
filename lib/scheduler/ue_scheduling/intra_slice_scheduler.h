@@ -59,15 +59,32 @@ public:
 
 private:
   /// Context for a given slice scheduling.
-  struct slice_sched_context {
-    // UE index offset of the next UE group to be scheduled in DL.
-    du_ue_index_t dl_next_rr_group_offset = to_du_ue_index(0);
-    // How many slots have elapsed using the same dl_next_rr_group_offset.
-    unsigned dl_rr_count = 0;
-    // UE index offset of the next UE group to be scheduled in UL.
-    du_ue_index_t ul_next_rr_group_offset = to_du_ue_index(0);
-    // How many slots have elapsed using the same ul_next_rr_group_offset.
-    unsigned ul_rr_count = 0;
+  struct slice_ue_group_scheduler {
+    slice_ue_group_scheduler(intra_slice_scheduler& parent_) : parent(&parent_) {}
+
+    /// Generate a group of UE candidates for DL scheduling in a round-robin fashion.
+    void fill_ue_dl_candidate_group(std::vector<ue_newtx_candidate>& candidates, const dl_ran_slice_candidate& slice);
+
+    /// Generate a group of UE candidates for UL scheduling in a round-robin fashion.
+    void fill_ue_ul_candidate_group(std::vector<ue_newtx_candidate>& candidates, const ul_ran_slice_candidate& slice);
+
+  private:
+    void fill_ue_candidate_group(std::vector<ue_newtx_candidate>& candidates,
+                                 slot_point                       sl_tx,
+                                 bool                             is_dl,
+                                 const slice_ue_repository&       slice_ues);
+
+    intra_slice_scheduler* parent;
+
+    /// Offset to the start UE index of the next UE group to be scheduled. It will be updated every SFN based on
+    /// on the \c last_dl_count and \c last_ul_count.
+    unsigned group_offset = 0;
+    /// Last PDCCH slot at which this slice was scheduled.
+    slot_point last_pdcch_tx;
+    /// Number of UEs evaluated during the DL candidate group selection for the last frame.
+    unsigned max_dl_ue_count = 0;
+    /// Number of UEs evaluated during the UL candidate group selection for the last frame.
+    unsigned max_ul_ue_count = 0;
   };
 
   /// Determines whether a UE can be DL scheduled in a given slot.
@@ -125,7 +142,7 @@ private:
   unsigned ul_attempts_count = 0;
 
   // Information related with the scheduling of each slice that needs to be stored and retrieved across different slots.
-  slotted_id_vector<ran_slice_id_t, slice_sched_context> slice_ctxt_list;
+  slotted_id_vector<ran_slice_id_t, slice_ue_group_scheduler> slice_ctxt_list;
 
   // UE candidates for on-going scheduling.
   std::vector<ue_newtx_candidate> newtx_candidates;
@@ -133,7 +150,7 @@ private:
   slot_point pdsch_slot;
   slot_point pusch_slot;
   vrb_bitmap used_dl_vrbs;
-  bool       enable_pdsch_interleaving;
+  bool       enable_pdsch_interleaving = false;
   vrb_bitmap used_ul_vrbs;
 
   // Grants being built for the current slice.

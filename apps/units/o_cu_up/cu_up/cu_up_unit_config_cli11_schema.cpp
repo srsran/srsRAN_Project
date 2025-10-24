@@ -183,8 +183,10 @@ static void configure_cli11_metrics_layers_args(CLI::App& app, cu_up_unit_metric
 {
   add_option(app, "--enable_e1ap", metrics_params.enable_e1ap, "Enable E1AP metrics")->capture_default_str();
   add_option(app, "--enable_pdcp", metrics_params.enable_pdcp, "Enable PDCP metrics")->capture_default_str();
-  add_option(
-      app, "--enable_cu_up_executor", metrics_params.enable_cu_up_executor, "Whether to log CU-UP executor metrics")
+  add_option(app,
+             "--skip_cu_up_executor",
+             metrics_params.skip_cu_up_executor,
+             "Whether to skip logging CU-UP executor metrics when executor logging is enabled application wide")
       ->capture_default_str();
 }
 

@@ -22,7 +22,7 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 03-09-2024 (seed 0):
+// This file was generated using the following MATLAB class on 03-10-2025 (seed 0):
 //   + "srsPRACHDetectorUnittest.m"
 
 #include "../../support/prach_buffer_test_doubles.h"

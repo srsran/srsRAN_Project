@@ -177,13 +177,10 @@ void rrc_ue_impl::handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu)
       handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().ue_cap_info().rrc_transaction_id);
       break;
     case ul_dcch_msg_type_c::c1_c_::types_opts::rrc_recfg_complete:
+      handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_recfg_complete().rrc_transaction_id);
       if (context.transfer_context.has_value() && context.transfer_context.value().is_inter_cu_handover) {
-        logger.log_debug("Received a RRC Reconfiguration Complete during inter CU handover. Notifying NGAP");
-        ngap_notifier.on_inter_cu_ho_rrc_recfg_complete_received(context.ue_index, context.cell.cgi, context.cell.tac);
         context.transfer_context.value().is_inter_cu_handover = false;
         cu_cp_notifier.on_rrc_reconfiguration_complete_indicator();
-      } else {
-        handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_recfg_complete().rrc_transaction_id);
       }
       break;
     case ul_dcch_msg_type_c::c1_c_::types_opts::rrc_reest_complete:
@@ -218,7 +215,8 @@ void rrc_ue_impl::handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu
 
   std::vector<byte_buffer> rrc_pdus = pdcp_unpacking_result.pop_pdus();
   if (rrc_pdus.empty()) {
-    logger.log_warning("PDCP unpacking did not provide any SDU");
+    logger.log_debug(
+        "PDCP did not provide any SDU. PDU could be out-of-order, failed integrity or be outside of the RX window");
     return;
   }
   for (byte_buffer& pdu : rrc_pdus) {
@@ -615,6 +613,18 @@ std::optional<rrc_meas_cfg> rrc_ue_impl::generate_meas_config(const std::optiona
   // (Re-)generate measurement config and return result.
   context.meas_cfg = measurement_notifier.on_measurement_config_request(context.cell.cgi.nci, current_meas_config);
 
+  // Store serving cell MO if available.
+  if (context.meas_cfg.has_value()) {
+    for (const auto& meas_obj : context.meas_cfg.value().meas_obj_to_add_mod_list) {
+      if (meas_obj.meas_obj_nr.has_value()) {
+        if (meas_obj.meas_obj_nr.value().ssb_freq == context.cell.ssb_arfcn) {
+          context.serving_cell_mo = meas_obj_id_to_uint(meas_obj.meas_obj_id);
+          break;
+        }
+      }
+    }
+  }
+
   return context.meas_cfg;
 }
 
@@ -629,6 +639,16 @@ byte_buffer rrc_ue_impl::get_packed_meas_config()
   }
 
   return {};
+}
+
+std::optional<uint8_t> rrc_ue_impl::get_serving_cell_mo()
+{
+  // If the measurement config was never generated, generate it now.
+  if (!context.meas_cfg.has_value()) {
+    context.meas_cfg = generate_meas_config(std::nullopt);
+  }
+
+  return context.serving_cell_mo;
 }
 
 rrc_ue_transfer_context rrc_ue_impl::get_transfer_context()
@@ -668,6 +688,14 @@ rrc_ue_reestablishment_context_response rrc_ue_impl::get_context()
 byte_buffer rrc_ue_impl::get_rrc_handover_command(const rrc_reconfiguration_procedure_request& request,
                                                   unsigned                                     transaction_id)
 {
+  // Unpack MasterCellGroup to extract T304.
+  asn1::rrc_nr::cell_group_cfg_s cell_group_cfg;
+  asn1::cbit_ref                 bref2(request.non_crit_ext->master_cell_group);
+  if (cell_group_cfg.unpack(bref2) != asn1::SRSASN_SUCCESS) {
+    report_fatal_error("Failed to unpack MasterCellGroupCfg");
+  }
+  context.cell.timers.t304 = std::chrono::milliseconds{cell_group_cfg.sp_cell_cfg.recfg_with_sync.t304.to_number()};
+
   // Pack RRCReconfiguration.
   rrc_recfg_s rrc_reconfig;
   fill_asn1_rrc_reconfiguration_msg(rrc_reconfig, transaction_id, request);

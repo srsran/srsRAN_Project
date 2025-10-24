@@ -29,7 +29,8 @@
 #include "srsran/du/du_high/du_test_mode_config.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/f1u/du/f1u_gateway.h"
-#include "srsran/mac/mac.h"
+#include "srsran/mac/mac_manager.h"
+#include "srsran/mac/mac_ue_control_information_handler.h"
 #include "srsran/pcap/rlc_pcap.h"
 #include "srsran/ran/gnb_du_id.h"
 #include "srsran/rlc/rlc_metrics.h"
@@ -82,10 +83,9 @@ struct du_manager_params {
   };
 
   struct mac_config_params {
-    mac_cell_manager&       cell_mng;
-    mac_ue_configurator&    ue_cfg;
+    /// Interface to configure the MAC layer.
+    mac_manager&            mgr;
     scheduler_expert_config sched_cfg;
-    mac_metrics_notifier*   mac_metrics_notif = nullptr;
   };
 
   struct metrics_config_params {

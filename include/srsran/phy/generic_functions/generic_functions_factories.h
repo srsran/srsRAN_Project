@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/phy/generic_functions/dft_processor.h"
+#include "srsran/phy/generic_functions/dft_processor_ci16.h"
 
 namespace srsran {
 
@@ -88,5 +89,23 @@ create_dft_processor_factory_fftw_fast(bool avoid_wisdom = false, const std::str
   return create_dft_processor_factory_fftw("measure", 5.0, avoid_wisdom, wisdom_filename);
 #endif
 }
+
+/// Factory for the Discrete Fourier Transform (DFT) processor for 16-bit complex integer values.
+class dft_processor_ci16_factory
+{
+public:
+  /// Default destructor.
+  virtual ~dft_processor_ci16_factory() = default;
+
+  /// \brief Creates a DFT processor.
+  /// \param[in] config Configuration parameters.
+  /// \return A unique pointer to a DFT processor if the configuration is valid. Otherwise, \c nullptr.
+  virtual std::unique_ptr<dft_processor_ci16> create(const dft_processor_ci16::configuration& config) = 0;
+};
+
+/// \brief Creates a factory for DFT processors for 16-bit complex integer values.
+///
+/// \return A DFT processor factory.
+std::shared_ptr<dft_processor_ci16_factory> create_dft_processor_ci16_factory_avx2();
 
 } // namespace srsran

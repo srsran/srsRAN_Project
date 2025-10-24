@@ -124,6 +124,12 @@ public:
     return cu_cp_handler->handle_new_handover_command(ue_index, std::move(command));
   }
 
+  void on_n2_handover_execution(ue_index_t ue_index) override
+  {
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
+    cu_cp_handler->handle_n2_handover_execution(ue_index);
+  }
+
   ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t cgi, const plmn_identity& plmn) override
   {
     srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");

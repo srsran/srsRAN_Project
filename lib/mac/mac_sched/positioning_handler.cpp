@@ -21,33 +21,43 @@
  */
 
 #include "positioning_handler.h"
+#include "srsran/support/async/async_no_op_task.h"
 
 #ifndef SRSRAN_HAS_ENTERPRISE
-
-#include "positioning_handler.h"
-#include "srsran/support/async/async_no_op_task.h"
 
 using namespace srsran;
 
 namespace {
 
+/// Positioning handler when feature is not available.
 class disabled_positioning_handler final : public positioning_handler
 {
 public:
-  async_task<mac_cell_positioning_measurement_response>
-  handle_positioning_measurement_request(const mac_cell_positioning_measurement_request& req) override
+  class disabled_cell_positioning_handler final : public cell_positioning_handler
   {
-    return launch_no_op_task(mac_cell_positioning_measurement_response{});
+    void handle_srs_indication(const mac_srs_indication_message& msg) override
+    {
+      // do nothing.
+    }
+  };
+
+  std::unique_ptr<cell_positioning_handler> add_cell(du_cell_index_t cell_index) override
+  {
+    return std::make_unique<disabled_cell_positioning_handler>();
   }
 
-  void handle_srs_indication(const mac_srs_indication_message& msg) override {}
+  async_task<mac_positioning_measurement_response>
+  handle_positioning_measurement_request(const mac_positioning_measurement_request& req) override
+  {
+    return launch_no_op_task(mac_positioning_measurement_response{});
+  }
 };
 
 } // namespace
 
 std::unique_ptr<positioning_handler> srsran::create_positioning_handler(scheduler_positioning_handler& sched,
-                                                                        du_cell_index_t                cell_index,
                                                                         task_executor&                 ctrl_exec,
+                                                                        timer_manager&                 timers,
                                                                         srslog::basic_logger&          logger)
 {
   return std::make_unique<disabled_positioning_handler>();

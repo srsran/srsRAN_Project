@@ -25,7 +25,6 @@
 #include "../policy/scheduler_policy.h"
 #include "ran_slice_candidate.h"
 #include "ran_slice_instance.h"
-#include <queue>
 
 namespace srsran {
 
@@ -75,12 +74,13 @@ private:
     }
 
     /// Determines the slice candidate priority.
-    priority_type get_prio(bool is_dl, slot_point pdcch_slot, slot_point pxsch_slot, bool slice_resched) const;
+    priority_type get_prio(bool is_dl, slot_point pdcch_slot, slot_point pxsch_slot, unsigned rb_lims) const;
   };
 
   struct slice_candidate_context {
-    ran_slice_id_t     id;
-    priority_type      prio;
+    ran_slice_id_t id;
+    priority_type  prio;
+    /// Range of RBs within which this slice candidate is valid.
     interval<unsigned> rb_lims;
     /// Slot at which PUSCH/PDSCH needs to be scheduled for this slice candidate.
     slot_point slot_tx;
@@ -95,29 +95,46 @@ private:
     bool operator>(const slice_candidate_context& rhs) const { return prio > rhs.prio; }
   };
 
-  // Note: the std::priority_queue makes its underlying container protected, so it seems that they are ok with
-  // inheritance.
-  class slice_prio_queue : public std::priority_queue<slice_candidate_context>
+  class slice_prio_queue
   {
   public:
-    // Note: faster than while(!empty()) pop() because it avoids the O(NlogN). Faster than = {}, because it preserves
-    // memory.
-    void clear()
-    {
-      // Access to underlying vector.
-      this->c.clear();
-    }
+    void reserve(size_t cap) { queue.reserve(cap); }
 
-    void reserve(size_t capacity) { c.reserve(capacity); }
-
-    // Adapter of the priority_queue push method to avoid adding candidates with skip priority level.
-    void push(const slice_candidate_context& elem)
+    void push(const slice_candidate_context& candidate)
     {
-      if (elem.prio == skip_prio) {
+      if (candidate.prio == skip_prio) {
         return;
       }
-      std::priority_queue<slice_candidate_context>::push(elem);
+      queue.push_back(candidate);
     }
+
+    void sort() { std::sort(queue.begin(), queue.end(), std::greater<slice_candidate_context>{}); }
+
+    const slice_candidate_context& top() const { return queue[next_pop]; }
+
+    void pop() { next_pop++; }
+
+    bool empty() const { return next_pop >= queue.size(); }
+
+    void clear()
+    {
+      next_pop = 0;
+      queue.clear();
+    }
+
+  private:
+    std::vector<slice_candidate_context> queue;
+    unsigned                             next_pop = 0;
+  };
+
+  struct slot_context {
+    /// \brief List of valid PUSCH time domain resources for a given DL slot.
+    /// Note: This list will be empty for UL slots.
+    std::vector<unsigned> valid_pusch_td_list;
+    /// Dedicated PDSCH RBs allocated for this slot.
+    unsigned count_dl_ded_rbs = 0;
+    /// Dedicated PUSCH RBs allocated for this slot.
+    unsigned count_ul_ded_rbs = 0;
   };
 
   ran_slice_instance& get_slice(const logical_channel_config& lc_cfg);
@@ -140,7 +157,7 @@ private:
 
   /// Vector circularly indexed by slot with the list of applicable PUSCH time domain resources per slot.
   /// NOTE: The list would be empty for UL slots.
-  std::vector<static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>> valid_pusch_td_list_per_slot;
+  std::vector<slot_context> slot_ring;
 
   std::vector<ran_slice_sched_context> slices;
 

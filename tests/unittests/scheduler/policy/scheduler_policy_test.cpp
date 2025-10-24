@@ -68,6 +68,7 @@ protected:
       return cell_cfg_list.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(sched_cfg, cell_cfg_req))
           .get();
     }()),
+    cell_ues(ues.add_cell(to_du_cell_index(0))),
     slice_sched(cell_cfg, ues),
     cell_metrics(cell_cfg, cell_cfg_req.metrics),
     intra_slice_sched(cell_cfg.expert_cfg.ue, ues, pdcch_alloc, uci_alloc, res_grid, cell_metrics, cell_harqs, logger)
@@ -201,6 +202,7 @@ protected:
   pucch_allocator_impl pucch_alloc{cell_cfg, sched_cfg.ue.max_pucchs_per_slot, sched_cfg.ue.max_ul_grants_per_slot};
   uci_allocator_impl   uci_alloc{pucch_alloc};
   ue_repository        ues;
+  ue_cell_repository&  cell_ues;
   // NOTE: Policy scheduler is part of RAN slice instances created in slice scheduler.
   inter_slice_scheduler slice_sched;
   cell_metrics_handler  cell_metrics;

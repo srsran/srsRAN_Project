@@ -30,6 +30,8 @@
 
 namespace srsran {
 
+class mac_positioning_measurement_handler;
+
 /// Start configured cell.
 struct mac_cell_start {
   du_cell_index_t cell_index;
@@ -39,27 +41,6 @@ struct mac_cell_start {
 /// Network slice configuration
 struct mac_slice_configuration {
   // TODO: Fill remaining fields
-};
-
-/// MAC cell positioning measurement request.
-struct mac_cell_positioning_measurement_request {
-  /// UE identifier in case the SRSConfig belongs to a UE connected to this DU. Otherwise, it is empty.
-  std::optional<du_ue_index_t> ue_index;
-  std::optional<rnti_t>        rnti;
-  /// SRS resources to measure.
-  srs_config srs_to_meas;
-};
-
-/// MAC cell positioning measurement response.
-struct mac_cell_positioning_measurement_response {
-  struct ul_rtoa_meas {
-    phy_time_unit        ul_rtoa;
-    std::optional<float> rsrp_dbfs;
-  };
-
-  /// Slot at which the measurement (SRS) was received at PHY layer.
-  slot_point                sl_rx;
-  std::vector<ul_rtoa_meas> ul_rtoa_meass;
 };
 
 /// Structure used to update SI PDU messages, without SI change notifications nor in a modification of valueTag in SIB1.
@@ -80,8 +61,6 @@ struct mac_cell_sys_info_pdu_update {
 struct mac_cell_reconfig_request {
   /// If not empty, contains the new system information to broadcast.
   std::optional<mac_cell_sys_info_config> new_sys_info;
-  /// If not empty, the MAC is requested to collect a new positioning measurement.
-  std::optional<mac_cell_positioning_measurement_request> positioning;
   /// If not empty, contains the new SI PDU to be updated.
   std::optional<mac_cell_sys_info_pdu_update> new_si_pdu_info;
   /// If not empty, contains the updates to be applied to the RRM policies.
@@ -90,8 +69,7 @@ struct mac_cell_reconfig_request {
 
 struct mac_cell_reconfig_response {
   /// Whether a pending SI reconfiguration was successful.
-  bool                                                     si_updated = false;
-  std::optional<mac_cell_positioning_measurement_response> positioning;
+  bool si_updated = false;
   /// Whether a SI PDUs were successfully enqueued.
   bool si_pdus_enqueued = false;
 };

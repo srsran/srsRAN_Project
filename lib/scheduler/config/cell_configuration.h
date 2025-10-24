@@ -82,9 +82,16 @@ public:
   bool             paired_spectrum;
   const nr_band    band;
   uint8_t          L_max;
-  // NTN/CS koffset
+
+  /// NTN parameters.
+  /// Cell-Specific K-offset.
   unsigned ntn_cs_koffset;
-  bool     is_tdd() const { return tdd_cfg_common.has_value(); }
+  /// DL HARQ Mode B.
+  bool dl_harq_mode_b;
+  /// UL HARQ Mode B.
+  bool ul_harq_mode_b;
+
+  bool is_tdd() const { return tdd_cfg_common.has_value(); }
 
   /// Checks if DL/UL is active for current slot
   bool is_fully_dl_enabled(slot_point sl) const

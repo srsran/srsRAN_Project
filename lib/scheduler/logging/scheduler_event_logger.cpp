@@ -164,7 +164,15 @@ void scheduler_event_logger::enqueue_impl(const sr_event& sr)
 void scheduler_event_logger::enqueue_impl(const csi_report_event& csi)
 {
   if (mode == debug) {
-    fmt::format_to(std::back_inserter(fmtbuf), "\n- CSI: ue={} rnti={}:", fmt::underlying(csi.ue_index), csi.rnti);
+    fmt::format_to(std::back_inserter(fmtbuf),
+                   "\n- CSI: ue={} rnti={}: slot_rx={}",
+                   fmt::underlying(csi.ue_index),
+                   csi.rnti,
+                   csi.sl_rx);
+    if (not csi.csi.first_tb_wideband_cqi.has_value() and not csi.csi.ri.has_value() and not csi.csi.pmi.has_value()) {
+      fmt::format_to(std::back_inserter(fmtbuf), " invalid");
+      return;
+    }
     if (csi.csi.first_tb_wideband_cqi.has_value()) {
       fmt::format_to(std::back_inserter(fmtbuf), " cqi={}", *csi.csi.first_tb_wideband_cqi);
     }
@@ -235,7 +243,7 @@ void scheduler_event_logger::enqueue_impl(const crc_event& crc_ev)
   if (mode == debug) {
     if (crc_ev.ul_sinr_db.has_value()) {
       fmt::format_to(std::back_inserter(fmtbuf),
-                     "\n- CRC: ue={} rnti={} pci={} rx_slot={} h_id={} crc={} sinr={:.2}dB",
+                     "\n- CRC: ue={} rnti={} pci={} rx_slot={} h_id={} crc={} sinr={:.3}dB",
                      fmt::underlying(crc_ev.ue_index),
                      crc_ev.rnti,
                      pci,

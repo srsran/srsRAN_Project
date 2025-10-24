@@ -20,12 +20,12 @@
  *
  */
 
+#pragma once
+
 #include "lib/sdap/sdap_entity_impl.h"
 #include "srsran/sdap/sdap.h"
 #include <gtest/gtest.h>
 #include <queue>
-
-#pragma once
 
 namespace srsran {
 

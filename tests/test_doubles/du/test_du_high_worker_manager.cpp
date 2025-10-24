@@ -99,6 +99,7 @@ public:
                                cfg.nof_cell_workers,
                                task_worker_queue_size,
                                task_worker_queue_size,
+                               &low_prio_exec,
                                &low_prio_exec};
     exec_cfg.ctrl_executors = {task_worker_queue_size, &high_prio_exec};
 
@@ -118,6 +119,8 @@ public:
   du_high_executor_mapper& get_exec_mapper() override { return *exec_mapper; }
 
   task_executor& timer_executor() override { return *timer_strand; }
+
+  void wait_pending_tasks() override { worker_pool.wait_pending_tasks(); }
 
 private:
   // Instantiated workers.

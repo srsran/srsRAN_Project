@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/scheduler/scheduler_metrics.h"
+#include "srsran/srslog/log_channel.h"
 #include <optional>
 
 namespace srsran {

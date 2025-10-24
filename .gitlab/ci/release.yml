@@ -219,12 +219,16 @@ update private branch:
           fi
       done < <(grep -v '^#' "$PLUGINS_DATA_FILE")
     - |
-      git commit -a --amend --no-edit
-    - |
       if [ "$HEADERS" = "true" ]; then
+        # Update headers with AGPL license
         .gitlab/ci/release/update_headers.sh
-        git commit -a --amend --no-edit
+      else
+        sed -i -E 's/option\(ENABLE_FFTW(.*)ON\)/option(ENABLE_FFTW\1OFF)/'               ${CI_PROJECT_DIR}/CMakeLists.txt
       fi
+      sed -i -E 's/option\(BUILD_TESTING(.*)ON\)/option(BUILD_TESTING\1OFF)/'             ${CI_PROJECT_DIR}/CMakeLists.txt
+      sed -i -E 's/option\(USE_PHY_TESTVECTORS(.*)ON\)/option(USE_PHY_TESTVECTORS\1OFF)/' ${CI_PROJECT_DIR}/CMakeLists.txt
+    - |
+      git commit -a --amend --no-edit
     - |
       if [ "$MODE" = "push" ]; then
         git push origin "${PRIVATE_BRANCH}"

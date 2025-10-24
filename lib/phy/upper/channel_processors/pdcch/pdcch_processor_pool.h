@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/phy/upper/channel_processors/pdcch/pdcch_processor.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/memory_pool/bounded_object_pool.h"
 
 namespace srsran {

@@ -147,7 +147,7 @@ radio_uhd_tx_stream::radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
 
   // Build stream arguments.
   uhd::stream_args_t stream_args = {};
-  stream_args.cpu_format         = "fc32";
+  stream_args.cpu_format         = "sc16";
   switch (description.otw_format) {
     case radio_configuration::over_the_wire_format::DEFAULT:
     case radio_configuration::over_the_wire_format::SC16:

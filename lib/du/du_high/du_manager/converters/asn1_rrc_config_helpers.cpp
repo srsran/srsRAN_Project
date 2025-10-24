@@ -778,7 +778,7 @@ asn1::rrc_nr::bwp_ul_common_s srsran::srs_du::make_asn1_rrc_initial_up_bwp(const
     rach.total_nof_ra_preambs         = rach_cfg.total_nof_ra_preambles;
   }
   ssb_per_rach_occasion_and_cb_preambles_per_ssb_to_asn1(
-      rach_cfg.nof_ssb_per_ro, rach_cfg.nof_cb_preambles_per_ssb, rach);
+      ssb_per_rach_occ_to_float(rach_cfg.nof_ssb_per_ro), rach_cfg.nof_cb_preambles_per_ssb, rach);
   bool success = asn1::number_to_enum(rach.ra_contention_resolution_timer, rach_cfg.ra_con_res_timer.count());
   srsran_assert(success, "Invalid ra-ContentionResolutionTimer");
   if (rach_cfg.msg3_transform_precoder) {
@@ -1240,7 +1240,66 @@ calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_config& 
         return make_asn1_zp_csi_rs_resource_set(s);
       });
 
+  // DCI Format 1_1 size.
+  if (dest.harq_process_num_size_dci_1_1.has_value() and
+      dest.harq_process_num_size_dci_1_1 == pdsch_config::harq_process_num_dci_1_1_size::n5) {
+    out.ext                                       = true;
+    out.harq_process_num_size_dci_1_1_r17_present = true;
+    out.harq_process_num_size_dci_1_1_r17         = 5;
+  }
+
+  // DCI Format 1_2 size.
+  if (dest.harq_process_num_size_dci_1_2.has_value() and
+      dest.harq_process_num_size_dci_1_2 == pdsch_config::harq_process_num_dci_1_2_size::n5) {
+    out.ext                                         = true;
+    out.harq_process_num_size_dci_1_2_v1700_present = true;
+    out.harq_process_num_size_dci_1_2_v1700         = 5;
+  }
+
   // TODO: Remaining.
+}
+
+static asn1::rrc_nr::radio_link_monitoring_rs_s
+make_asn1_rrc_rlm_resource(const radio_link_monitoring_config::radio_link_monitoring_rs& cfg)
+{
+  radio_link_monitoring_rs_s rlm_res;
+
+  rlm_res.radio_link_monitoring_rs_id = static_cast<uint8_t>(cfg.res_id);
+  switch (cfg.resource_purpose) {
+    case radio_link_monitoring_config::radio_link_monitoring_rs::purpose::beam_failure:
+      rlm_res.purpose = radio_link_monitoring_rs_s::purpose_opts::beam_fail;
+      break;
+    case radio_link_monitoring_config::radio_link_monitoring_rs::purpose::rlf:
+      rlm_res.purpose = radio_link_monitoring_rs_s::purpose_opts::rlf;
+      break;
+    case radio_link_monitoring_config::radio_link_monitoring_rs::purpose::both:
+      rlm_res.purpose = radio_link_monitoring_rs_s::purpose_opts::both;
+    default:
+      srsran_assertion_failure("Invalid RLM resource purpose={}", fmt::underlying(cfg.resource_purpose));
+  }
+
+  if (std::holds_alternative<ssb_id_t>(cfg.detection_resource)) {
+    rlm_res.detection_res.set_ssb_idx() = std::get<ssb_id_t>(cfg.detection_resource);
+  } else {
+    rlm_res.detection_res.set_csi_rs_idx() = std::get<nzp_csi_rs_res_id_t>(cfg.detection_resource);
+  }
+
+  return rlm_res;
+}
+
+static void calculate_rlmonitoring_config_diff(asn1::rrc_nr::radio_link_monitoring_cfg_s& out,
+                                               const radio_link_monitoring_config&        src,
+                                               const radio_link_monitoring_config&        dest)
+{
+  calculate_addmodremlist_diff(
+      out.fail_detection_res_to_add_mod_list,
+      out.fail_detection_res_to_release_list,
+      src.rlm_resources,
+      dest.rlm_resources,
+      [](const radio_link_monitoring_config::radio_link_monitoring_rs& res) { return make_asn1_rrc_rlm_resource(res); },
+      [](const radio_link_monitoring_config::radio_link_monitoring_rs& res) {
+        return static_cast<uint8_t>(res.res_id);
+      });
 }
 
 static bool calculate_bwp_dl_dedicated_diff(asn1::rrc_nr::bwp_dl_ded_s&   out,
@@ -1268,9 +1327,21 @@ static bool calculate_bwp_dl_dedicated_diff(asn1::rrc_nr::bwp_dl_ded_s&   out,
     out.pdsch_cfg_present = true;
     out.pdsch_cfg.set_release();
   }
-  // TODO: sps-Config and radioLinkMonitoringConfig.
 
-  return out.pdcch_cfg_present || out.pdsch_cfg_present;
+  if ((dest.rlm_cfg.has_value() && not src.rlm_cfg.has_value()) ||
+      (dest.rlm_cfg.has_value() && src.rlm_cfg.has_value() && dest.rlm_cfg != src.rlm_cfg)) {
+    out.radio_link_monitoring_cfg_present = true;
+    calculate_rlmonitoring_config_diff(out.radio_link_monitoring_cfg.set_setup(),
+                                       src.rlm_cfg.has_value() ? src.rlm_cfg.value() : radio_link_monitoring_config{},
+                                       dest.rlm_cfg.value());
+  } else if (src.rlm_cfg.has_value() && not dest.rlm_cfg.has_value()) {
+    out.radio_link_monitoring_cfg_present = true;
+    out.radio_link_monitoring_cfg.set_release();
+  }
+
+  // TODO: sps-Config.
+
+  return out.pdcch_cfg_present || out.pdsch_cfg_present || out.radio_link_monitoring_cfg_present;
 }
 
 asn1::rrc_nr::pucch_res_set_s srsran::srs_du::make_asn1_rrc_pucch_resource_set(const pucch_resource_set& cfg)
@@ -2114,6 +2185,22 @@ calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_config& 
     out.uci_on_pusch_present = true;
     out.uci_on_pusch.set_release();
   }
+
+  // DCI Format 0_1 size.
+  if (dest.harq_process_num_size_dci_0_1.has_value() and
+      dest.harq_process_num_size_dci_0_1 == pusch_config::harq_process_num_dci_0_1_size::n5) {
+    out.ext                                       = true;
+    out.harq_process_num_size_dci_0_1_r17_present = true;
+    out.harq_process_num_size_dci_0_1_r17         = 5;
+  }
+
+  // DCI Format 0_2 size.
+  if (dest.harq_process_num_size_dci_0_2.has_value() and
+      dest.harq_process_num_size_dci_0_2 == pusch_config::harq_process_num_dci_0_2_size::n5) {
+    out.ext                                         = true;
+    out.harq_process_num_size_dci_0_2_v1700_present = true;
+    out.harq_process_num_size_dci_0_2_v1700         = 5;
+  }
 }
 
 static srs_res_set_s make_asn1_rrc_srs_res_set(const srs_config::srs_resource_set& cfg)
@@ -2497,14 +2584,46 @@ static bool calculate_bwp_ul_dedicated_diff(asn1::rrc_nr::bwp_ul_ded_s& out,
   return out.pucch_cfg_present || out.pusch_cfg_present || out.srs_cfg_present;
 }
 
+static void calculate_pusch_serving_cell_cfg_diff(asn1::rrc_nr::pusch_serving_cell_cfg_s& out,
+                                                  const pusch_serving_cell_config&        src,
+                                                  const pusch_serving_cell_config&        dest)
+{
+  if (dest.nof_harq_proc != pusch_serving_cell_config::nof_harq_proc_for_pusch::n16) {
+    out.ext                                       = true;
+    out.nrof_harq_processes_for_pusch_r17_present = true;
+  }
+
+  if (dest.harq_mode_b) {
+    out.ext = true;
+    out.ul_harq_mode_r17.set_present();
+    auto* ul_harq_mode_b_ptr = out.ul_harq_mode_r17.get();
+    auto& ul_harq_mode_b     = ul_harq_mode_b_ptr->set_setup();
+    ul_harq_mode_b.from_number(0xffffffff);
+  }
+
+  // TODO: Remaining.
+}
+
 static bool
 calculate_uplink_config_diff(asn1::rrc_nr::ul_cfg_s& out, const uplink_config& src, const uplink_config& dest)
 {
   out.init_ul_bwp_present = calculate_bwp_ul_dedicated_diff(out.init_ul_bwp, src.init_ul_bwp, dest.init_ul_bwp);
 
+  if ((dest.pusch_serv_cell_cfg.has_value() && not src.pusch_serv_cell_cfg.has_value()) ||
+      (dest.pusch_serv_cell_cfg.has_value() && src.pusch_serv_cell_cfg.has_value() &&
+       dest.pusch_serv_cell_cfg != src.pusch_serv_cell_cfg)) {
+    out.pusch_serving_cell_cfg_present = true;
+    calculate_pusch_serving_cell_cfg_diff(out.pusch_serving_cell_cfg.set_setup(),
+                                          src.pusch_serv_cell_cfg.has_value() ? src.pusch_serv_cell_cfg.value()
+                                                                              : pusch_serving_cell_config{},
+                                          dest.pusch_serv_cell_cfg.value());
+  } else if (src.pusch_serv_cell_cfg.has_value() && not dest.pusch_serv_cell_cfg.has_value()) {
+    out.pusch_serving_cell_cfg_present = true;
+    out.pusch_serving_cell_cfg.set_release();
+  }
   // TODO: Remaining.
 
-  return out.init_ul_bwp_present;
+  return out.init_ul_bwp_present || out.pusch_serving_cell_cfg_present;
 }
 
 static void calculate_pdsch_serving_cell_cfg_diff(asn1::rrc_nr::pdsch_serving_cell_cfg_s& out,
@@ -2579,6 +2698,11 @@ static void calculate_pdsch_serving_cell_cfg_diff(asn1::rrc_nr::pdsch_serving_ce
         break;
       case pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n16:
         out.nrof_harq_processes_for_pdsch = pdsch_serving_cell_cfg_s::nrof_harq_processes_for_pdsch_opts::n16;
+        break;
+      case pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n32:
+        out.nrof_harq_processes_for_pdsch_present       = false;
+        out.ext                                         = true;
+        out.nrof_harq_processes_for_pdsch_v1700_present = true;
         break;
       default:
         srsran_assertion_failure("Invalid max. nof.HARQ process for PDSCH={}", fmt::underlying(dest.nof_harq_proc));

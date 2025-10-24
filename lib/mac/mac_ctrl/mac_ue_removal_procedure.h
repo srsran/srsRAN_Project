@@ -50,7 +50,7 @@ public:
 
   void operator()(coro_context<async_task<mac_ue_delete_response>>& ctx);
 
-  static const char* name() { return "UE Delete Request"; }
+  static const char* name() { return "MAC UE Removal"; }
 
 private:
   mac_ue_delete_request       req;

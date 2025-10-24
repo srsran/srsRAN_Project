@@ -25,7 +25,6 @@
 #include "srsran/fapi/messages/config_request_tlvs.h"
 #include "srsran/fapi_adaptor/precoding_matrix_repository.h"
 #include "srsran/fapi_adaptor/uci_part2_correspondence_repository.h"
-#include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/srslog/logger.h"
 
 namespace srsran {
@@ -34,7 +33,7 @@ class downlink_processor_pool;
 class resource_grid_pool;
 class uplink_pdu_validator;
 class uplink_request_processor;
-class uplink_pdu_slot_repository;
+class uplink_pdu_slot_repository_pool;
 
 namespace srs_du {
 struct du_cell_config;
@@ -60,6 +59,8 @@ struct phy_fapi_sector_adaptor_config {
   fapi::prach_config prach_cfg;
   /// PRACH port list.
   std::vector<uint8_t> prach_ports;
+  /// dBFS calibration value.
+  float dBFS_calibration_value;
 };
 
 /// PHY&ndash;FAPI sector adaptor dependencies.

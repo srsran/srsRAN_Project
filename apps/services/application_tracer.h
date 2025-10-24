@@ -39,13 +39,16 @@ class application_tracer
 
 public:
   /// Enables the tracer using the given filename.
-  void enable_tracer(std::string_view file_name, srslog::basic_logger& logger_)
+  void enable_tracer(std::string_view      file_name,
+                     unsigned              split_after_n,
+                     unsigned              event_trigger_n,
+                     srslog::basic_logger& logger_)
   {
     srsran_assert(!enabled, "Tracer service already enabled");
     logger  = &logger_;
     enabled = true;
     logger_.info("Opening event tracer in file '{}' ...", file_name);
-    open_trace_file(file_name);
+    open_trace_file(file_name, split_after_n, event_trigger_n);
     logger_.info("Event tracer opened successfully");
   }
 

@@ -50,6 +50,11 @@ if ((ENABLE_MKL AND MKL_FOUND) OR (ENABLE_ARMPL AND ARMPL_FOUND) OR (ENABLE_FFTW
     list(APPEND SRSRAN_DFT_DEFINITIONS "HAVE_FFTW")
 endif ((ENABLE_MKL AND MKL_FOUND) OR (ENABLE_ARMPL AND ARMPL_FOUND) OR (ENABLE_FFTW AND FFTW3F_FOUND))
 
+if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+    list(APPEND SRSRAN_DFT_SOURCES dft_processor_ci16_avx2.cpp)
+    set_source_files_properties(dft_processor_ci16_avx2.cpp PROPERTIES COMPILE_OPTIONS "-mavx2;")
+endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+
 add_library(srsran_dft STATIC ${SRSRAN_DFT_SOURCES})
 target_include_directories(srsran_dft PRIVATE ${SRSRAN_DFT_INCLUDE_DIRS})
 target_link_directories(srsran_dft PRIVATE ${SRSRAN_DFT_LIBRARY_DIRS})

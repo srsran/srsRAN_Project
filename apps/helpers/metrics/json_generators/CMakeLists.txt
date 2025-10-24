@@ -24,6 +24,7 @@ add_subdirectory(du_high)
 add_subdirectory(ru)
 
 set(SOURCES
+        executors.cpp
         o_du_high.cpp
         o_du_low.cpp
         resource_usage.cpp)

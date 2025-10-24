@@ -27,6 +27,7 @@
 #include "rrc_ue_logger.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
+#include "srsran/rrc/rrc_cell_context.h"
 #include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
@@ -83,6 +84,7 @@ public:
   rrc_ue_transfer_context     get_transfer_context() override;
   std::optional<rrc_meas_cfg> generate_meas_config(const std::optional<rrc_meas_cfg>& current_meas_config) override;
   byte_buffer                 get_packed_meas_config() override;
+  std::optional<uint8_t>      get_serving_cell_mo() override;
   byte_buffer                 get_rrc_handover_command(const rrc_reconfiguration_procedure_request& request,
                                                        unsigned                                     transaction_id) override;
   byte_buffer                 handle_rrc_handover_command(byte_buffer cmd) override;
@@ -94,6 +96,7 @@ public:
 
   // rrc_ue_context_handler
   rrc_ue_reestablishment_context_response get_context() override;
+  rrc_cell_context                        get_cell_context() const override { return context.cell; }
 
 private:
   void stop() override;

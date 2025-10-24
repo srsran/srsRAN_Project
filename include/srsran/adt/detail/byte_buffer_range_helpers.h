@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/adt/detail/byte_buffer_segment_list.h"
-#include "srsran/adt/detail/has_member.h"
+#include "srsran/support/has_method.h"
 
 namespace srsran {
 namespace detail {
@@ -75,7 +75,7 @@ bool compare_byte_buffer_range(const LhsContainer& lhs, const RhsContainer& rhs)
     auto                                 seg_it2   = segments2.begin();
 
     if (seg_it1->begin() == seg_it2->begin() and seg_it1->end() == seg_it2->end()) {
-      // shortcut in case the two byte buffers point to the same underlying memory.
+      // Shortcut in case the two byte buffers point to the same underlying memory.
       return true;
     }
     unsigned offset1 = 0;
@@ -108,7 +108,7 @@ bool compare_byte_buffer_range(const LhsContainer& lhs, const RhsContainer& rhs)
     }
   }
 
-  // fallback comparison with any type of container.
+  // Fallback comparison with any type of container.
   return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
 }
 

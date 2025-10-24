@@ -56,7 +56,7 @@ void f1_removal_procedure::operator()(coro_context<async_task<void>>& ctx)
 
 async_task<void> f1_removal_procedure::handle_ue_transaction_info_loss()
 {
-  f1_ue_transaction_info_loss_event ev;
+  ue_transaction_info_loss_event ev;
 
   // Add DU UEs to the list of UEs with transaction information lost.
   ev.ues_lost.reserve(ue_list.size());

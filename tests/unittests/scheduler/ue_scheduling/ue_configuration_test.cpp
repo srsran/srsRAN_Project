@@ -111,17 +111,17 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
 
   // Confirm that the UE is in fallback.
   ASSERT_TRUE(u.get_pcell().is_in_fallback_mode());
-  ASSERT_TRUE(u.is_reconfig_ongoing());
-  ASSERT_FALSE(u.is_reestablished());
+  ASSERT_TRUE(u.get_pcell().get_pcell_state().reconf_ongoing);
+  ASSERT_FALSE(u.get_pcell().get_pcell_state().reestablished);
 
   // While in fallback, DL buffer status that are not for SRB0/SRB1, do not get represented in pending bytes.
-  ASSERT_FALSE(u.has_pending_dl_newtx_bytes());
+  ASSERT_FALSE(u.dl_logical_channels().has_pending_bytes());
   for (const auto& lc : *recfg.cfg.lc_config_list) {
     u.handle_dl_buffer_state_indication(lc.lcid, 10);
     if (lc.lcid <= LCID_SRB1) {
-      ASSERT_TRUE(u.has_pending_dl_newtx_bytes());
+      ASSERT_TRUE(u.dl_logical_channels().has_pending_bytes());
     } else {
-      ASSERT_FALSE(u.has_pending_dl_newtx_bytes());
+      ASSERT_FALSE(u.dl_logical_channels().has_pending_bytes());
     }
     u.handle_dl_buffer_state_indication(lc.lcid, 0);
   }
@@ -136,14 +136,14 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
       continue;
     }
     u.handle_dl_buffer_state_indication(lc.lcid, 10);
-    ASSERT_TRUE(u.has_pending_dl_newtx_bytes());
+    ASSERT_TRUE(u.dl_logical_channels().has_pending_bytes());
     u.handle_dl_buffer_state_indication(lc.lcid, 0);
-    ASSERT_FALSE(u.has_pending_dl_newtx_bytes());
+    ASSERT_FALSE(u.dl_logical_channels().has_pending_bytes());
   }
 
   // Verify that inactive logical channels do not affect pending bytes.
   u.handle_dl_buffer_state_indication(uint_to_lcid(6), 10);
-  ASSERT_FALSE(u.pending_dl_newtx_bytes());
+  ASSERT_FALSE(u.dl_logical_channels().has_pending_bytes());
 }
 
 TEST_F(ue_configuration_test, search_spaces_pdcch_candidate_lists_does_not_surpass_limit)

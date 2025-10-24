@@ -20,9 +20,9 @@
  *
  */
 
-#include "rlc_am_pdu.h"
-
 #pragma once
+
+#include "rlc_am_pdu.h"
 
 namespace srsran {
 

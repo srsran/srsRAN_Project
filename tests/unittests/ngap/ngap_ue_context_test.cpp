@@ -25,7 +25,6 @@
 #include "srsran/support/test_utils.h"
 #include <cstdint>
 #include <gtest/gtest.h>
-#include <memory>
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -34,7 +33,10 @@ using namespace srs_cu_cp;
 class ngap_ue_context_list_test : public ngap_ue_context_list
 {
 public:
-  ngap_ue_context_list_test(srslog::basic_logger& logger_) : ngap_ue_context_list(logger_) {}
+  ngap_ue_context_list_test(timer_factory& timers_, srslog::basic_logger& logger_) :
+    ngap_ue_context_list(timers_, logger_)
+  {
+  }
 };
 
 /// Fixture class for NGAP UE context
@@ -69,7 +71,7 @@ protected:
   manual_task_worker           ctrl_worker{128};
   timer_factory                timers{timer_mng, ctrl_worker};
   dummy_ngap_cu_cp_ue_notifier ue_notifier;
-  ngap_ue_context_list_test    ue_ctxt_list{ngap_logger};
+  ngap_ue_context_list_test    ue_ctxt_list{timers, ngap_logger};
 };
 
 TEST_F(ngap_ue_context_test, when_ue_added_then_ue_exists)
@@ -77,7 +79,7 @@ TEST_F(ngap_ue_context_test, when_ue_added_then_ue_exists)
   ue_index_t  ue_index  = generate_random_ue_index();
   ran_ue_id_t ran_ue_id = generate_random_ran_ue_id();
 
-  ue_ctxt_list.add_ue(ue_index, ran_ue_id, ue_notifier, timer_mng, ctrl_worker);
+  ue_ctxt_list.add_ue(ue_index, ran_ue_id, ue_notifier);
 
   ASSERT_TRUE(ue_ctxt_list.contains(ran_ue_id));
   ASSERT_TRUE(ue_ctxt_list.contains(ue_index));
@@ -102,7 +104,7 @@ TEST_F(ngap_ue_context_test, when_ue_exists_then_removal_succeeds)
   ue_index_t  ue_index  = generate_random_ue_index();
   ran_ue_id_t ran_ue_id = generate_random_ran_ue_id();
 
-  ue_ctxt_list.add_ue(ue_index, ran_ue_id, ue_notifier, timer_mng, ctrl_worker);
+  ue_ctxt_list.add_ue(ue_index, ran_ue_id, ue_notifier);
 
   // test removal
   ue_ctxt_list.remove_ue_context(ue_index);
@@ -118,7 +120,7 @@ TEST_F(ngap_ue_context_test, when_ue_is_added_then_next_ue_id_is_increased)
 
   ASSERT_EQ((unsigned)ran_ue_id, (unsigned)ran_ue_id_t::min);
 
-  ue_ctxt_list.add_ue(ue_index, ran_ue_id, ue_notifier, timer_mng, ctrl_worker);
+  ue_ctxt_list.add_ue(ue_index, ran_ue_id, ue_notifier);
 
   // remove ue
   ue_ctxt_list.remove_ue_context(ue_index);

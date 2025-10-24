@@ -33,6 +33,7 @@
 #include "srsran/support/srsran_test.h"
 #include <getopt.h>
 #include <random>
+#include <variant>
 
 using namespace srsran;
 

@@ -188,5 +188,10 @@ struct ngap_ul_ran_status_transfer {
   slotted_id_vector<drb_id_t, ngap_drbs_subject_to_status_transfer_item> drbs_subject_to_status_transfer_list;
 };
 
+struct ngap_dl_ran_status_transfer {
+  ue_index_t                                                             ue_index = ue_index_t::invalid;
+  slotted_id_vector<drb_id_t, ngap_drbs_subject_to_status_transfer_item> drbs_subject_to_status_transfer_list;
+};
+
 } // namespace srs_cu_cp
 } // namespace srsran

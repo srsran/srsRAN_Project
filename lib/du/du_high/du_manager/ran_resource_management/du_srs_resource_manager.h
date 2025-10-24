@@ -110,6 +110,7 @@ private:
     struct srs_cell_common {
       unsigned c_srs;
       unsigned freq_shift;
+      int      p0;
     };
 
     // Maximum number of SRS resources that can be generated in a cell.

@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include "srsran/ran/du_types.h"
+#include "srsran/ran/rnti.h"
 namespace srsran {
 
 struct cell_resource_allocator;
@@ -54,13 +56,12 @@ public:
   /// \brief Handles a new request to measure the position of a UE.
   ///
   /// The UE whose position is being measured may either be connected the current cell or to a neighbor cell.
-  /// \param[in] req Request for positioning measurement.
-  virtual void handle_positioning_measurement_request(const positioning_measurement_request& req) = 0;
+  /// \param[in] cell_req Request for positioning measurement for this cell.
+  virtual void handle_positioning_measurement_request(const positioning_measurement_request::cell_info& cell_req) = 0;
 
   /// Handles a stop of a positioning measurement that is on-going.
-  /// \param[in] Cell where the positioning measurement takes place.
-  /// \param[in] Identifier of the measurement procedure that is on-going.
-  virtual void handle_positioning_measurement_stop(du_cell_index_t cell_index, rnti_t pos_rnti) = 0;
+  /// \param[in] pos_rnti Identifier of the measurement procedure that is on-going.
+  virtual void handle_positioning_measurement_stop(rnti_t pos_rnti) = 0;
 };
 
 } // namespace srsran

@@ -154,10 +154,7 @@ public:
   /// \brief Push a new task to be processed by the worker pool. If the task queue is full, blocks.
   /// \param prio Priority of the dispatched task.
   /// \param task Task to be run in the thread pool.
-  bool push_task_blocking(enqueue_priority prio, unique_task task)
-  {
-    return queue.push_blocking(prio, std::move(task));
-  }
+  void push_task_blocking(enqueue_priority prio, unique_task task) { queue.push_blocking(prio, std::move(task)); }
 
   /// Stop task worker pool, if running.
   void stop();

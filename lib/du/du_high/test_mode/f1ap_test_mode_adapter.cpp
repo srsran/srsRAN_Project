@@ -64,6 +64,7 @@ public:
   {
     return adapted->handle_du_config_update(request);
   }
+  bool                      is_f1_setup() const override { return adapted->is_f1_setup(); }
   f1ap_ue_creation_response handle_ue_creation_request(const f1ap_ue_creation_request& msg) override
   {
     return adapted->handle_ue_creation_request(msg);

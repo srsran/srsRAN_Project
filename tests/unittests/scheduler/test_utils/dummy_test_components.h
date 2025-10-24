@@ -164,7 +164,9 @@ public:
 class scheduler_ue_metrics_dummy_notifier : public scheduler_metrics_notifier
 {
 public:
-  void report_metrics(const scheduler_cell_metrics& ue_metrics) override {}
+  std::optional<scheduler_cell_metrics> last_reported_metrics;
+
+  void report_metrics(const scheduler_cell_metrics& ue_metrics) override { last_reported_metrics = ue_metrics; }
 };
 
 class scheduler_harq_timeout_dummy_notifier : public harq_timeout_notifier

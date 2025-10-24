@@ -43,7 +43,7 @@ public:
 class split6_flexible_o_du_low_app_service_metrics_impl : public app_services::metrics_set
 {
   const split6_flexible_o_du_low_app_service_metrics_properties_impl properties;
-  const split6_flexible_o_du_low_metrics&                            metrics;
+  const split6_flexible_o_du_low_metrics                             metrics;
 
 public:
   explicit split6_flexible_o_du_low_app_service_metrics_impl(const split6_flexible_o_du_low_metrics& metrics_) :

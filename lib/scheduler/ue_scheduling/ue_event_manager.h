@@ -29,6 +29,7 @@
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/adt/unique_function.h"
 #include "srsran/ran/du_types.h"
+#include "srsran/scheduler/scheduler_positioning_handler.h"
 
 namespace srsran {
 
@@ -42,6 +43,7 @@ class pdu_indication_pool;
 struct cell_creation_event {
   cell_resource_allocator& cell_res_grid;
   cell_harq_manager&       cell_harqs;
+  ue_cell_repository&      ue_cell_db;
   ue_fallback_scheduler&   fallback_sched;
   uci_scheduler_impl&      uci_sched;
   inter_slice_scheduler&   slice_sched;
@@ -55,7 +57,7 @@ class ue_event_manager;
 /// Handler of UE events for a given cell.
 class ue_cell_event_manager final : public sched_ue_configuration_handler,
                                     public scheduler_feedback_handler,
-                                    public scheduler_positioning_handler,
+                                    public scheduler_cell_positioning_handler,
                                     public scheduler_dl_buffer_state_indication_handler
 {
 public:
@@ -88,9 +90,9 @@ public:
   void handle_ul_phr_indication(const ul_phr_indication_message& phr_ind) override;
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) override;
 
-  // scheduler_positioning_handler methods.
-  void handle_positioning_measurement_request(const positioning_measurement_request& req) override;
-  void handle_positioning_measurement_stop(du_cell_index_t cell_index, rnti_t pos_rnti) override;
+  // scheduler_cell_positioning_handler methods.
+  void handle_positioning_measurement_request(const positioning_measurement_request::cell_info& req) override;
+  void handle_positioning_measurement_stop(rnti_t pos_rnti) override;
 
   // scheduler_dl_buffer_state_indication_handler methods.
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override;
@@ -150,7 +152,7 @@ private:
                        slot_point                             uci_sl,
                        span<const mac_harq_ack_report_status> harq_bits,
                        std::optional<float>                   pucch_snr);
-  void handle_csi(ue_cell& ue_cc, const csi_report_data& csi_rep);
+  void handle_csi(ue_cell& ue_cc, slot_point sl_rx, const csi_report_data& csi_rep);
 
   // shared parameters.
   ue_event_manager&     parent;

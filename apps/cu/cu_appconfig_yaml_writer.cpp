@@ -23,6 +23,8 @@
 #include "cu_appconfig_yaml_writer.h"
 #include "apps/helpers/f1u/f1u_config_yaml_writer.h"
 #include "apps/helpers/logger/logger_appconfig_yaml_writer.h"
+#include "apps/helpers/tracing/tracer_appconfig_yaml_writer.h"
+#include "apps/services/app_execution_metrics/executor_metrics_config_yaml_writer.h"
 #include "apps/services/app_resource_usage/app_resource_usage_config_yaml_writer.h"
 #include "apps/services/metrics/metrics_config_yaml_writer.h"
 #include "cu_appconfig.h"
@@ -59,7 +61,9 @@ void srsran::fill_cu_appconfig_in_yaml_schema(YAML::Node& node, const cu_appconf
 {
   app_services::fill_app_resource_usage_config_in_yaml_schema(node, config.metrics_cfg.rusage_config);
   app_services::fill_metrics_appconfig_in_yaml_schema(node, config.metrics_cfg.metrics_service_cfg);
+  app_services::fill_app_exec_metrics_config_in_yaml_schema(node, config.metrics_cfg.executors_metrics_cfg);
   fill_logger_appconfig_in_yaml_schema(node, config.log_cfg);
+  fill_tracer_appconfig_in_yaml_schema(node, config.trace_cfg);
   fill_cu_appconfig_buffer_pool_section(node["buffer_pool"], config.buffer_pool_config);
   fill_cu_appconfig_remote_control_section(node["remote_control"], config.remote_control_config);
   fill_cu_appconfig_f1ap_section(node, config.f1ap_cfg);

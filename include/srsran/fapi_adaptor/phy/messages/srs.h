@@ -31,6 +31,7 @@ namespace fapi_adaptor {
 /// Helper function that converts an SRS FAPI PDU into an SRS uplink slot PDU using the system frame number and slot.
 void convert_srs_fapi_to_phy(uplink_pdu_slot_repository::srs_pdu& pdu,
                              const fapi::ul_srs_pdu&              fapi_pdu,
+                             unsigned                             sector_id_,
                              unsigned                             nof_rx_antennas,
                              uint16_t                             sfn,
                              uint16_t                             slot);

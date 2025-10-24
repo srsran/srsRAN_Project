@@ -24,8 +24,8 @@
 #include "srsran/phy/constants.h"
 #include "srsran/ran/prach/prach_frequency_mapping.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
-#include "srsran/srsvec/conversion.h"
 #include "srsran/srsvec/copy.h"
+#include "srsran/srsvec/sc_prod.h"
 
 using namespace srsran;
 
@@ -150,6 +150,10 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
     unsigned       cyclic_prefix_length = preamble_info.cp_length.to_samples(srate.to_Hz());
     unsigned       nof_symbols          = preamble_info.nof_symbols;
 
+    // DFT scaling factor, equal to the inverse of the square root of the DFT size. This ensures that the energy of the
+    // DFT output is equal to the energy of the signal inside the DFT window.
+    float dft_scaling = 1.0F / std::sqrt(ofdm_symbol_len);
+
     // Make sure the number of occasions and symbols fit in the buffer.
     srsran_assert(nof_symbols <= buffer.get_max_nof_symbols(),
                   "The number of symbols (i.e., {}) must be less than or equal to the maximum number of symbols of the "
@@ -202,14 +206,16 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
           unsigned N = std::min(prach_grid_size / 2 - k_start, preamble_info.sequence_length);
 
           // Copy first N subcarriers of the sequence in the lower half grid.
-          srsvec::convert(prach_symbol.first(N), lower_grid.subspan(k_start, N));
+          srsvec::sc_prod(prach_symbol.first(N), lower_grid.subspan(k_start, N), dft_scaling);
 
           // Copy the remainder of the sequence in the upper half grid.
-          srsvec::convert(prach_symbol.last(preamble_info.sequence_length - N),
-                          upper_grid.first(preamble_info.sequence_length - N));
+          srsvec::sc_prod(prach_symbol.last(preamble_info.sequence_length - N),
+                          upper_grid.first(preamble_info.sequence_length - N),
+                          dft_scaling);
         } else {
-          // Copy the sequence in the upper half grid.
-          srsvec::copy(prach_symbol, upper_grid.subspan(k_start - prach_grid_size / 2, preamble_info.sequence_length));
+          srsvec::sc_prod(prach_symbol,
+                          upper_grid.subspan(k_start - prach_grid_size / 2, preamble_info.sequence_length),
+                          dft_scaling);
         }
       }
     }

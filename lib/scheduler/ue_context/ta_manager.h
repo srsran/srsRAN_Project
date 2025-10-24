@@ -27,7 +27,6 @@
 #include "srsran/ran/time_alignment_config.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/srslog/srslog.h"
-#include <cstdint>
 
 namespace srsran {
 

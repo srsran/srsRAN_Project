@@ -372,21 +372,6 @@ static std::optional<float> convert_fapi_to_mac_preamble_power_dB(uint32_t fapi_
   return std::nullopt;
 }
 
-/// Converts the given FAPI RACH preamble SNR to dB as per SCF-222 v4.0 section 3.4.11.
-static float to_prach_preamble_snr_dB(int fapi_snr)
-{
-  return (fapi_snr - 128) * 0.5F;
-}
-
-/// Converts the given FAPI RACH preamble SNR to dB as per SCF-222 v4.0 section 3.4.11.
-static std::optional<float> convert_fapi_to_mac_preamble_snr_dB(uint8_t fapi_snr)
-{
-  if (fapi_snr != std::numeric_limits<decltype(fapi_snr)>::max()) {
-    return to_prach_preamble_snr_dB(fapi_snr);
-  }
-  return std::nullopt;
-}
-
 void fapi_to_mac_data_msg_translator::on_rach_indication(const fapi::rach_indication_message& msg)
 {
   mac_rach_indication indication;
@@ -403,7 +388,6 @@ void fapi_to_mac_data_msg_translator::on_rach_indication(const fapi::rach_indica
       mac_pream.index                               = preamble.preamble_index;
       mac_pream.time_advance = phy_time_unit::from_seconds(preamble.timing_advance_offset_ns * 1e-9);
       mac_pream.pwr_dBFS     = convert_fapi_to_mac_preamble_power_dB(preamble.preamble_pwr);
-      mac_pream.snr_dB       = convert_fapi_to_mac_preamble_snr_dB(preamble.preamble_snr);
     }
   }
 

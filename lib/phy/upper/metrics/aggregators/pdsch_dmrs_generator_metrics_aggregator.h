@@ -35,30 +35,36 @@ public:
   /// Gets the average latency in microseconds.
   double get_avg_latency_us() const
   {
-    return count.load(std::memory_order_relaxed)
-               ? static_cast<double>(sum_elapsed_ns) / static_cast<double>(count) * 1e-3
-               : 0;
+    return count.load(std::memory_order_relaxed) ? static_cast<double>(sum_elapsed_ns.load(std::memory_order_relaxed)) /
+                                                       static_cast<double>(count.load(std::memory_order_relaxed)) * 1e-3
+                                                 : 0;
   }
 
   /// Gets the total processing time.
-  std::chrono::nanoseconds get_total_time() const { return std::chrono::nanoseconds(sum_elapsed_ns); }
+  std::chrono::nanoseconds get_total_time() const
+  {
+    return std::chrono::nanoseconds(sum_elapsed_ns.load(std::memory_order_relaxed));
+  }
 
   /// Gets the CPU usage in microseconds of the DM-RS generator.
-  double get_cpu_usage_us() const { return static_cast<double>(sum_elapsed_ns) / 1000.0; }
+  double get_cpu_usage_us() const
+  {
+    return static_cast<double>(sum_elapsed_ns.load(std::memory_order_relaxed)) / 1000.0;
+  }
 
   /// Resets values of all internal counters.
   void reset()
   {
-    sum_elapsed_ns = 0;
-    count          = 0;
+    sum_elapsed_ns.store(0, std::memory_order_relaxed);
+    count.store(0, std::memory_order_relaxed);
   }
 
 private:
   // See interface for documentation.
   void on_new_metric(const pdsch_dmrs_generator_metrics& metrics) override
   {
-    sum_elapsed_ns += metrics.measurements.duration.count();
-    ++count;
+    sum_elapsed_ns.fetch_add(metrics.measurements.duration.count(), std::memory_order_relaxed);
+    count.fetch_add(1, std::memory_order_relaxed);
   }
 
   std::atomic<uint64_t> sum_elapsed_ns = {};

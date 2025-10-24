@@ -55,6 +55,7 @@ uplink_processor_impl::uplink_processor_impl(std::unique_ptr<prach_detector>  pr
                                              std::unique_ptr<pucch_processor> pucch_proc_,
                                              std::unique_ptr<srs_estimator>   srs_,
                                              std::unique_ptr<resource_grid>   grid_,
+                                             std::unique_ptr<phy_tap>         ul_tap_,
                                              task_executor_collection&        task_executors_,
                                              rx_buffer_pool&                  rm_buffer_pool_,
                                              upper_phy_rx_results_notifier&   notifier_,
@@ -72,7 +73,8 @@ uplink_processor_impl::uplink_processor_impl(std::unique_ptr<prach_detector>  pr
   rm_buffer_pool(rm_buffer_pool_),
   rx_payload_pool(max_nof_prb, max_nof_layers),
   logger(srslog::fetch_basic_logger("PHY", true)),
-  notifier(notifier_)
+  notifier(notifier_),
+  ul_tap(std::move(ul_tap_))
 {
   srsran_assert(prach, "A valid PRACH detector must be provided");
   srsran_assert(pusch_proc, "A valid PUSCH processor must be provided");
@@ -98,7 +100,7 @@ void uplink_processor_impl::stop()
 unique_uplink_pdu_slot_repository uplink_processor_impl::get_pdu_slot_repository(slot_point slot)
 {
   // It is not possible to configure a new slot if the resource grid is still present in a scope.
-  if (grid_ref_counter != 0) {
+  if (grid_ref_counter.load(std::memory_order_acquire) != 0) {
     return {};
   }
 
@@ -112,8 +114,8 @@ unique_uplink_pdu_slot_repository uplink_processor_impl::get_pdu_slot_repository
   }
 
   // Reset processor states.
-  current_slot          = slot;
-  count_pusch_adaptors  = 0;
+  current_slot = slot;
+  count_pusch_adaptors.store(0, std::memory_order_release);
   nof_processed_symbols = 0;
   rx_payload_pool.reset();
   pdu_repository.clear_queues();
@@ -185,21 +187,54 @@ void uplink_processor_impl::handle_rx_symbol(unsigned end_symbol_index, bool is_
   for (unsigned end_processed_symbol = std::min(end_symbol_index + 1, MAX_NSYMB_PER_SLOT);
        nof_processed_symbols != end_processed_symbol;
        ++nof_processed_symbols) {
-    for (const auto& pdu : pdu_repository.get_pucch_pdus(nof_processed_symbols)) {
-      process_pucch(pdu);
+    // Process the PDUs belonging to the received symbols.
+    process_symbol_pdus(nof_processed_symbols);
+  }
+}
+
+void uplink_processor_impl::process_symbol_pdus(unsigned end_symbol_index)
+{
+  // Obtain all PDUs for the given end symbol index.
+  span<const uplink_pdu_slot_repository::pusch_pdu> pusch_pdus = pdu_repository.get_pusch_pdus(end_symbol_index);
+  span<const uplink_pdu_slot_repository::pucch_pdu> pucch_pdus = pdu_repository.get_pucch_pdus(end_symbol_index);
+  span<const uplink_pdu_slot_repository_impl::pucch_f1_collection> pucch_f1_pdus =
+      pdu_repository.get_pucch_f1_repository(end_symbol_index);
+  span<const uplink_pdu_slot_repository::srs_pdu> srs_pdus = pdu_repository.get_srs_pdus(end_symbol_index);
+
+  // If the phy tap is configured, send the UL symbols through the tap interface along with their associated PDUs.
+  if (ul_tap) {
+    // Extract PUCCH Format 1 common PDU parameters.
+    static_vector<pucch_processor::format1_common_configuration, MAX_PUCCH_PDUS_PER_SLOT> pucch_f1_common_configs;
+    for (const auto& pucch_f1 : pucch_f1_pdus) {
+      pucch_f1_common_configs.push_back(pucch_f1.config.common_config);
     }
 
-    for (const auto& collection : pdu_repository.get_pucch_f1_repository(nof_processed_symbols)) {
-      process_pucch_f1(collection);
-    }
+    // Send the symbols to the tap plugin for external analysis and processing.
+    ul_tap->handle_ul_symbol(grid->get_writer(),
+                             grid->get_reader(),
+                             current_slot,
+                             nof_processed_symbols,
+                             pusch_pdus,
+                             pucch_pdus,
+                             pucch_f1_common_configs,
+                             srs_pdus);
+  }
 
-    for (const auto& pdu : pdu_repository.get_pusch_pdus(nof_processed_symbols)) {
-      process_pusch(pdu);
-    }
+  // Process each PDU.
+  for (const auto& pdu : pucch_pdus) {
+    process_pucch(pdu);
+  }
 
-    for (const auto& pdu : pdu_repository.get_srs_pdus(nof_processed_symbols)) {
-      process_srs(pdu);
-    }
+  for (const auto& collection : pucch_f1_pdus) {
+    process_pucch_f1(collection);
+  }
+
+  for (const auto& pdu : pusch_pdus) {
+    process_pusch(pdu);
+  }
+
+  for (const auto& pdu : srs_pdus) {
+    process_srs(pdu);
   }
 }
 
@@ -280,7 +315,7 @@ void uplink_processor_impl::process_pusch(const uplink_pdu_slot_repository::pusc
   bool success = task_executors.pusch_executor.defer([this, data, rm_buffer2 = std::move(rm_buffer), &pdu]() mutable {
     // Select and configure notifier adaptor.
     // Assume that count_pusch_adaptors will not exceed MAX_PUSCH_PDUS_PER_SLOT.
-    unsigned                         notifier_adaptor_id = count_pusch_adaptors.fetch_add(1);
+    unsigned                         notifier_adaptor_id = count_pusch_adaptors.fetch_add(1, std::memory_order_acq_rel);
     pusch_processor_result_notifier& processor_notifier  = pusch_adaptors[notifier_adaptor_id].configure(
         notifier, to_rnti(pdu.pdu.rnti), pdu.pdu.slot, to_harq_id(pdu.harq_id), data, [this]() {
           state_machine.on_finish_processing_pdu();

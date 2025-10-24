@@ -48,6 +48,9 @@ public:
   /// \brief Get the index of the DU where the UE is connected.
   virtual du_index_t get_du_index() const = 0;
 
+  /// \brief Get the CU-UP index of the UE.
+  virtual cu_up_index_t get_cu_up_index() const = 0;
+
   /// \brief Get the UP resource manager of the UE.
   virtual up_resource_manager& get_up_resource_manager() = 0;
 

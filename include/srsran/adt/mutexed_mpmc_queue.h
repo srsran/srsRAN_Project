@@ -50,6 +50,14 @@ public:
     return detail::queue_helper::try_push_bulk_generic(*this, batch);
   }
 
+  /// Pushes a new element into the queue in a blocking fashion. If the queue is full, the call blocks until space is
+  /// made available.
+  template <typename U>
+  void push_blocking(U&& elem)
+  {
+    queue.push_blocking(std::forward<U>(elem));
+  }
+
   [[nodiscard]] bool try_pop(T& elem) { return queue.try_pop(elem); }
 
   /// \brief Pops a batch of elements from the queue in a non-blocking fashion.

@@ -22,6 +22,7 @@
 
 #include "f1ap_du_removal_procedure.h"
 #include "../../f1ap_common_messages.h"
+#include "../f1ap_du_context.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/f1ap/f1ap_message.h"
@@ -32,10 +33,12 @@ using namespace asn1::f1ap;
 
 f1ap_du_removal_procedure::f1ap_du_removal_procedure(f1ap_du_connection_handler& du_conn_handler_,
                                                      f1ap_message_notifier&      tx_pdu_notifier_,
-                                                     f1ap_event_manager&         ev_mng_) :
+                                                     f1ap_event_manager&         ev_mng_,
+                                                     f1ap_du_context&            du_ctxt_) :
   du_conn_handler(du_conn_handler_),
   cu_notifier(tx_pdu_notifier_),
   ev_mng(ev_mng_),
+  du_ctxt(du_ctxt_),
   logger(srslog::fetch_basic_logger("DU-F1"))
 {
 }
@@ -58,6 +61,9 @@ void f1ap_du_removal_procedure::operator()(coro_context<async_task<void>>& ctx)
     logger.info("{}: F1 TNL association shut down", name());
     CORO_EARLY_RETURN();
   }
+
+  // Set the F1 state as not setup, regardless of the outcome.
+  du_ctxt.f1c_setup = false;
 
   // Send request to CU.
   send_f1_removal_request();

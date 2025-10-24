@@ -40,8 +40,7 @@ public:
   du_manager_metrics_aggregator_impl(const du_manager_params::metrics_config_params& params_,
                                      task_executor&                                  du_mng_exec_,
                                      timer_manager&                                  timers_,
-                                     f1ap_metrics_collector&                         f1ap_collector_,
-                                     mac_metrics_notifier*                           mac_notifier_);
+                                     f1ap_metrics_collector&                         f1ap_collector_);
   ~du_manager_metrics_aggregator_impl() override;
 
   // DU metrics collector interface
@@ -56,7 +55,6 @@ private:
   const du_manager_params::metrics_config_params params;
   task_executor&                                 du_mng_exec;
   timer_manager&                                 timers;
-  mac_metrics_notifier*                          mac_notifier = nullptr;
   f1ap_metrics_collector&                        f1ap_collector;
 
   unsigned          next_version = 0;

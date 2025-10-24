@@ -132,10 +132,13 @@ ra_scheduler::ra_scheduler(const scheduler_ra_expert_config& sched_cfg_,
   msg3_harqs(MAX_NOF_MSG3,
              1,
              std::make_unique<msg3_harq_timeout_notifier>(pending_msg3s),
+             std::make_unique<msg3_harq_timeout_notifier>(pending_msg3s),
              sched_cfg.harq_retx_timeout.count() * get_nof_slots_per_subframe(cell_cfg.scs_common),
              sched_cfg.harq_retx_timeout.count() * get_nof_slots_per_subframe(cell_cfg.scs_common),
              cell_harq_manager::DEFAULT_ACK_TIMEOUT_SLOTS,
-             cell_cfg.ntn_cs_koffset),
+             cell_cfg.ntn_cs_koffset,
+             cell_cfg.dl_harq_mode_b,
+             cell_cfg.ul_harq_mode_b),
   pending_rachs(RACH_IND_QUEUE_SIZE),
   pending_crcs(CRC_IND_QUEUE_SIZE),
   pending_msg3s(MAX_NOF_MSG3),
@@ -437,7 +440,9 @@ void ra_scheduler::stop()
   while (pending_crcs.try_pop(crc)) {
   }
   pending_rars.clear();
-  pending_msg3s.clear();
+  for (auto& msg3 : pending_msg3s) {
+    msg3.msg3_harq_ent.reset();
+  }
 }
 
 void ra_scheduler::update_pending_rars(slot_point pdcch_slot)

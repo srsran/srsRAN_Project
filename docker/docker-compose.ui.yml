@@ -1,0 +1,90 @@
+#
+# Copyright 2021-2025 Software Radio Systems Limited
+#
+# This file is part of srsRAN
+#
+# srsRAN is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of
+# the License, or (at your option) any later version.
+#
+# srsRAN is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# A copy of the GNU Affero General Public License can be found in
+# the LICENSE file in the top-level directory of this distribution
+# and at http://www.gnu.org/licenses/.
+#
+
+services:
+  telegraf:
+    container_name: telegraf
+    image: srsran/telegraf
+    build:
+      context: telegraf
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    env_file:
+      - .env
+    # volumes:
+    #   - /tmp/metrics.txt:/etc/srs/metrics.txt:ro # Uncomment to use an input metrics file
+    networks:
+      metrics:
+        ipv4_address: 172.19.1.4
+
+  influxdb:
+    container_name: influxdb
+    image: influxdb:${INFLUXDB3_VERSION}
+    user: "0:0"
+    volumes:
+      - influxdb-storage:/var/lib/influxdb3:rw
+    env_file:
+      - .env
+    environment:
+      - LOG_FILTER=${INFLUXDB3_LOG_LEVEL}
+    command: >
+      --object-store=memory --data-dir=/var/lib/influxdb3 --plugin-dir=/var/lib/influxdb3-plugins --node-id="${INFLUXDB_NODE_ID:-node0}" --http-bind="${INFLUXDB3_HTTP_BIND_ADDR}" --without-auth
+    restart: on-failure:10
+    healthcheck:
+      test: >
+        curl -f ${INFLUXDB3_HOST_URL}/health
+      timeout: 5s
+      interval: 1s
+    networks:
+      metrics:
+        ipv4_address: 172.19.1.5
+
+  grafana:
+    container_name: grafana
+    image: srsran/grafana
+    build:
+      context: grafana
+      args:
+        GF_VERSION: ${GF_VERSION}
+        LOGO_URL: ${GF_LOGO_URL}
+    volumes:
+      - grafana-storage:/var/lib/grafana:rw
+    env_file:
+      - .env
+    depends_on:
+      telegraf:
+        condition: service_started
+    ports:
+      - 3300:${GF_PORT}
+    networks:
+      metrics:
+        ipv4_address: 172.19.1.6
+
+volumes:
+  grafana-storage:
+  influxdb-storage:
+
+networks:
+  metrics:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.19.1.0/24

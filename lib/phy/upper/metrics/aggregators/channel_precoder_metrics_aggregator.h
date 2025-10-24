@@ -42,7 +42,8 @@ public:
     }
     const metrics_per_layer& temp = metrics_collection[nof_layers - 1];
     return temp.sum_elapsed_ns.load(std::memory_order_relaxed)
-               ? static_cast<double>(temp.sum_nof_re_layer) / static_cast<double>(temp.sum_elapsed_ns) * 1000.0
+               ? static_cast<double>(temp.sum_nof_re_layer.load(std::memory_order_relaxed)) /
+                     static_cast<double>(temp.sum_elapsed_ns.load(std::memory_order_relaxed)) * 1000.0
                : 0;
   }
 
@@ -53,14 +54,17 @@ public:
       return {};
     }
     const metrics_per_layer& temp = metrics_collection[nof_layers - 1];
-    return std::chrono::nanoseconds(temp.sum_elapsed_ns);
+    return std::chrono::nanoseconds(temp.sum_elapsed_ns.load(std::memory_order_relaxed));
   }
 
   /// Gets the total time spent by the channel precoder.
-  uint64_t get_total_time_ns() const { return total_elapsed_ns; }
+  uint64_t get_total_time_ns() const { return total_elapsed_ns.load(std::memory_order_relaxed); }
 
   /// Gets the CPU usage in microseconds of the layer mapper and precoder.
-  double get_cpu_usage_us() const { return static_cast<double>(total_elapsed_ns) / 1000.0; }
+  double get_cpu_usage_us() const
+  {
+    return static_cast<double>(total_elapsed_ns.load(std::memory_order_relaxed)) / 1000.0;
+  }
 
   /// Resets values of all internal counters.
   void reset()
@@ -68,7 +72,7 @@ public:
     for (auto& metrics : metrics_collection) {
       metrics.reset();
     }
-    total_elapsed_ns = 0;
+    total_elapsed_ns.store(0, std::memory_order_relaxed);
   }
 
 private:
@@ -79,22 +83,19 @@ private:
       return;
     }
     metrics_per_layer& temp = metrics_collection[metrics.nof_layers - 1];
-    temp.sum_nof_re_layer += metrics.nof_re;
-    temp.sum_elapsed_ns += metrics.measurements.duration.count();
-    ++temp.count;
-    total_elapsed_ns += metrics.measurements.duration.count();
+    temp.sum_nof_re_layer.fetch_add(metrics.nof_re, std::memory_order_relaxed);
+    temp.sum_elapsed_ns.fetch_add(metrics.measurements.duration.count(), std::memory_order_relaxed);
+    total_elapsed_ns.fetch_add(metrics.measurements.duration.count(), std::memory_order_relaxed);
   }
 
   struct metrics_per_layer {
     std::atomic<uint64_t> sum_nof_re_layer = {};
     std::atomic<uint64_t> sum_elapsed_ns   = {};
-    std::atomic<uint64_t> count            = {};
 
     void reset()
     {
-      sum_nof_re_layer = 0;
-      sum_elapsed_ns   = 0;
-      count            = 0;
+      sum_nof_re_layer.store(0, std::memory_order_relaxed);
+      sum_elapsed_ns.store(0, std::memory_order_relaxed);
     }
   };
 

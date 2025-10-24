@@ -24,6 +24,7 @@
 #include "mobility_test_helpers.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/rrc/rrc_cell_context.h"
 #include "srsran/rrc/rrc_types.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/async/coroutine.h"
@@ -146,6 +147,12 @@ public:
     return {};
   }
 
+  std::optional<uint8_t> get_serving_cell_mo() override
+  {
+    logger.info("Received a new request to get serving cell measurement object");
+    return {};
+  }
+
   byte_buffer handle_rrc_handover_command(byte_buffer cmd) override { return byte_buffer{}; }
 
   byte_buffer get_rrc_handover_command(const rrc_reconfiguration_procedure_request& request,
@@ -191,6 +198,12 @@ public:
   {
     logger.info("Received a new request to get RRC UE reestablishment context");
     return rrc_ue_reestablishment_context_response{};
+  }
+
+  rrc_cell_context get_cell_context() const override
+  {
+    logger.info("Received a new request to get RRC UE cell context");
+    return rrc_cell_context{};
   }
 
   // RRC UE Reestablishment proc notifier

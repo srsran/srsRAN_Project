@@ -61,7 +61,10 @@ public:
   void handle_pdcp_max_count_reached(ue_index_t ue_index) override;
 
   // e1ap event handler functions
-  void handle_connection_loss() override {}
+  void handle_connection_loss() override
+  {
+    // TODO
+  }
 
   // e1ap_statistics_handler functions
   size_t get_nof_ues() const override { return ue_ctxt_list.size(); }
@@ -101,6 +104,8 @@ private:
   /// This starts the UE context release at the UE manager and E1.
   /// \param[in] msg The Bearer Context Release Command.
   void handle_bearer_context_release_command(const asn1::e1ap::bearer_context_release_cmd_s& msg);
+
+  void handle_cu_up_e1ap_reset(const asn1::e1ap::reset_s& msg);
 
   /// \brief Notify about the reception of an successful outcome.
   /// \param[in] msg The received successful outcome message.

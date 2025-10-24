@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "srsran/support/async/coroutine.h"
 #include "srsran/support/async/detail/promise_data.h"
 #include "srsran/support/async/detail/unique_coroutine.h"
 
@@ -35,7 +34,7 @@ struct task_promise_base {
   /// Pending continuation task.
   coro_handle<> continuation;
 
-  /// Check if return has been stored
+  /// Check if return has been stored.
   bool ready() const { return has_value; }
 };
 
@@ -49,7 +48,7 @@ public:
   /// Checks if async task has an handle.
   bool empty() const { return derived().handle.empty(); }
 
-  /// Returns true if base_task is complete
+  /// Returns true if base_task is complete.
   bool ready() const { return empty() or derived().handle.promise().ready(); }
 
   /// Called to get result of task once it is complete.
@@ -59,6 +58,8 @@ public:
     srsran_assert(not empty() and derived().handle.promise().ready(), "Called task::get() for task that is not ready");
     return derived().handle.promise().get();
   }
+
+  /// Called to get result of task once it is complete.
   template <typename Res = std::decay_t<result_type>, std::enable_if_t<not std::is_same_v<Res, void>, bool> = true>
   Res get() &&
   {

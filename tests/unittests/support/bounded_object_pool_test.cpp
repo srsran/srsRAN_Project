@@ -45,8 +45,8 @@ protected:
   static constexpr size_t pool_capacity = 1024;
   Pool                    pool{pool_capacity};
 };
-using test_value_types =
-    ::testing::Types<bounded_unique_object_pool<int, EnableMetrics>, bounded_object_pool<int, EnableMetrics>>;
+using test_value_types = ::testing::Types<bounded_unique_object_pool<int, EnableMetrics>,
+                                          bounded_object_pool<int, noop_operation, EnableMetrics>>;
 TYPED_TEST_SUITE(common_bounded_object_pool_test, test_value_types);
 
 TYPED_TEST(common_bounded_object_pool_test, pool_initiated_with_provided_capacity)

@@ -125,3 +125,58 @@ std::vector<nea_test_set> nea1_test_set = {
             "83CD0DEF6D00",
     },
 };
+
+/// 128-NEA1 Test Set Extra
+/// This set contains additional custom test cases
+std::vector<nea_test_set> nea1_test_set_extra = {
+    nea_test_set{
+        .name            = "128_NEA1_Test_Set_Extra_Len_0",
+        .key_cstr        = "00112233445566778899AABBCCDDEEFF",
+        .count           = 0x55555555,
+        .bearer          = 0x11,
+        .direction       = 1,
+        .length          = 0,
+        .plaintext_cstr  = "",
+        .ciphertext_cstr = "",
+    },
+    nea_test_set{
+        .name            = "128_NEA1_Test_Set_Extra_Len_1",
+        .key_cstr        = "00112233445566778899AABBCCDDEEFF",
+        .count           = 0x55555555,
+        .bearer          = 0x11,
+        .direction       = 1,
+        .length          = 8,
+        .plaintext_cstr  = "AA",
+        .ciphertext_cstr = "16",
+    },
+    nea_test_set{
+        .name            = "128_NEA1_Test_Set_Extra_Len_2",
+        .key_cstr        = "00112233445566778899AABBCCDDEEFF",
+        .count           = 0x55555555,
+        .bearer          = 0x11,
+        .direction       = 1,
+        .length          = 16,
+        .plaintext_cstr  = "AABB",
+        .ciphertext_cstr = "1674",
+    },
+    nea_test_set{
+        .name            = "128_NEA1_Test_Set_Extra_Len_4",
+        .key_cstr        = "00112233445566778899AABBCCDDEEFF",
+        .count           = 0x55555555,
+        .bearer          = 0x11,
+        .direction       = 1,
+        .length          = 32,
+        .plaintext_cstr  = "AABBCCDD",
+        .ciphertext_cstr = "167451BC",
+    },
+    nea_test_set{
+        .name            = "128_NEA1_Test_Set_Extra_Len_8",
+        .key_cstr        = "00112233445566778899AABBCCDDEEFF",
+        .count           = 0x55555555,
+        .bearer          = 0x11,
+        .direction       = 1,
+        .length          = 64,
+        .plaintext_cstr  = "AABBCCDDEEFF0011",
+        .ciphertext_cstr = "167451BC2F3F1923",
+    },
+};

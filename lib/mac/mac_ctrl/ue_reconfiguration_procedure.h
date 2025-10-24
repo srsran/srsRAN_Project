@@ -42,7 +42,7 @@ public:
 
   void operator()(coro_context<async_task<mac_ue_reconfiguration_response>>& ctx);
 
-  static const char* name() { return "UE Reconfiguration Request"; }
+  static const char* name() { return "MAC UE Reconfiguration"; }
 
 private:
   mac_ue_reconfiguration_response handle_result(bool result);

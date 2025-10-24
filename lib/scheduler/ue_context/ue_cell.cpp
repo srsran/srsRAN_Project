@@ -32,40 +32,49 @@
 
 using namespace srsran;
 
-/// Number of UL HARQs reserved per UE (Implementation-defined)
-static constexpr unsigned NOF_UL_HARQS = 16;
-
 /// The default number of HARQ processes to be used on the PDSCH of a serving cell. See TS 38.331, \c
 /// nrofHARQ-ProcessesForPDSCH.
 static constexpr unsigned DEFAULT_NOF_DL_HARQS = 8;
 
+/// The default number of HARQ processes to be used on the PUSCH of a serving cell. See TS 38.331, \c
+/// nrofHARQ-ProcessesForPUSCH.
+static constexpr unsigned DEFAULT_NOF_UL_HARQS = 16;
+
 ue_cell::ue_cell(du_ue_index_t                ue_index_,
                  rnti_t                       crnti_val,
+                 ue_cell_index_t              ue_cell_index_,
                  const ue_cell_configuration& ue_cell_cfg_,
                  cell_harq_manager&           cell_harq_pool,
-                 ue_drx_controller&           drx_ctrl_,
+                 ue_shared_context            shared_ctx_,
                  std::optional<slot_point>    msg3_slot_rx) :
   ue_index(ue_index_),
   cell_index(ue_cell_cfg_.cell_cfg_common.cell_index),
-  harqs(cell_harq_pool.add_ue(ue_index,
-                              crnti_val,
-                              ue_cell_cfg_.pdsch_serving_cell_cfg() != nullptr
-                                  ? (unsigned)ue_cell_cfg_.pdsch_serving_cell_cfg()->nof_harq_proc
-                                  : DEFAULT_NOF_DL_HARQS,
-                              NOF_UL_HARQS)),
+  harqs(cell_harq_pool.add_ue(
+      ue_index,
+      crnti_val,
+      ue_cell_cfg_.pdsch_serving_cell_cfg() != nullptr ? (unsigned)ue_cell_cfg_.pdsch_serving_cell_cfg()->nof_harq_proc
+                                                       : DEFAULT_NOF_DL_HARQS,
+      ue_cell_cfg_.pusch_serving_cell_cfg() != nullptr ? (unsigned)ue_cell_cfg_.pusch_serving_cell_cfg()->nof_harq_proc
+                                                       : DEFAULT_NOF_UL_HARQS)),
   crnti_(crnti_val),
   cell_cfg(ue_cell_cfg_.cell_cfg_common),
   ue_cfg(&ue_cell_cfg_),
   expert_cfg(cell_cfg.expert_cfg.ue),
-  drx_ctrl(drx_ctrl_),
+  shared_ctx(shared_ctx_),
   logger(srslog::fetch_basic_logger("SCHED")),
-  // Set ConRes procedure complete by default. Variable only needed for RACHs where MSG3 contains ConRes MAC-CE.
-  conres_procedure({.complete = true, .msg3_rx_slot = msg3_slot_rx}),
   channel_state(cell_cfg.expert_cfg.ue, ue_cfg->get_nof_dl_ports()),
   ue_mcs_calculator(ue_cell_cfg_.cell_cfg_common, channel_state),
   pusch_pwr_controller(ue_cell_cfg_, channel_state),
   pucch_pwr_controller(ue_cell_cfg_)
 {
+  if (ue_cell_index_ == to_ue_cell_index(0)) {
+    // Set ConRes procedure complete by default. Variable only needed for RACHs where MSG3 contains ConRes MAC-CE.
+    pcell_state.emplace(ue_pcell_state{});
+    pcell_state->conres_complete = true;
+    if (msg3_slot_rx.has_value()) {
+      pcell_state->msg3_rx_slot = msg3_slot_rx.value();
+    }
+  }
 }
 
 void ue_cell::deactivate()
@@ -109,18 +118,28 @@ void ue_cell::handle_reconfiguration_request(const ue_cell_configuration& ue_cel
   get_pusch_power_controller().reconfigure(ue_cell_cfg);
 }
 
-void ue_cell::set_fallback_state(bool set_fallback)
+void ue_cell::set_fallback_state(bool set_fallback, bool is_reconfig, bool reestablished)
 {
-  if (in_fallback_mode == set_fallback) {
+  srsran_assert(pcell_state.has_value(),
+                "ue={} rnti={}: Cannot set fallback state on non-Pcell",
+                fmt::underlying(ue_index),
+                rnti());
+
+  // In case of Pcell, update reconf_ongoing state.
+  pcell_state->reconf_ongoing = is_reconfig;
+  pcell_state->reestablished  = reestablished;
+  if (pcell_state->in_fallback_mode == set_fallback) {
+    // No state change.
     return;
   }
-  in_fallback_mode = set_fallback;
+  pcell_state->in_fallback_mode = set_fallback;
 
   // Cancel pending HARQs retxs of different state.
   harqs.cancel_retxs();
-
-  logger.debug(
-      "ue={} rnti={}: {} fallback mode", fmt::underlying(ue_index), rnti(), in_fallback_mode ? "Entering" : "Leaving");
+  logger.debug("ue={} rnti={}: {} fallback mode",
+               fmt::underlying(ue_index),
+               rnti(),
+               pcell_state->in_fallback_mode ? "Entering" : "Leaving");
 }
 
 std::optional<ue_cell::dl_ack_info_result> ue_cell::handle_dl_ack_info(slot_point                 uci_slot,
@@ -137,7 +156,7 @@ std::optional<ue_cell::dl_ack_info_result> ue_cell::handle_dl_ack_info(slot_poin
   dl_harq_process_handle::status_update outcome = h_dl->dl_ack_info(ack_value, pucch_snr);
 
   if (outcome == dl_harq_process_handle::status_update::nacked) {
-    drx_ctrl.on_dl_harq_nack(uci_slot);
+    shared_ctx.drx_ctrl.on_dl_harq_nack(uci_slot);
   }
 
   if (outcome == dl_harq_process_handle::status_update::acked or
@@ -497,12 +516,12 @@ double ue_cell::get_estimated_ul_rate(const pusch_config_params& pusch_cfg, sch_
 
 void ue_cell::set_conres_state(bool state)
 {
-  if (conres_procedure.complete == state) {
+  if (pcell_state->conres_complete == state) {
     return;
   }
-  conres_procedure.complete = state;
+  pcell_state->conres_complete = state;
   if (state) {
-    conres_procedure.msg3_rx_slot.reset();
+    pcell_state->msg3_rx_slot = slot_point{};
     logger.debug("ue={} rnti={}: ConRes procedure completed", fmt::underlying(ue_index), rnti());
   } else {
     logger.debug("ue={} rnti={}: ConRes procedure started", fmt::underlying(ue_index), rnti());

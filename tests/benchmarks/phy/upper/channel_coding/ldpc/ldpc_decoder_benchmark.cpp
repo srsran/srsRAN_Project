@@ -158,8 +158,11 @@ int main(int argc, char** argv)
           unsigned checksum = crc16->calculate(msg_span);
           to_encode.insert(checksum, msg_len_minus_crc, 16);
           // Encode entire message.
-          srsran::codeblock_metadata::tb_common_metadata cfg_enc;
-          cfg_enc                              = {bg, ls};
+          ldpc_encoder::configuration cfg_enc = {
+              .base_graph   = bg,
+              .lifting_size = ls,
+              .Nref         = 0,
+          };
           const ldpc_encoder_buffer& rm_buffer = encoder->encode(to_encode, cfg_enc);
 
           // Write codeblock in the encoded intermediate buffer.

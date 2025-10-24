@@ -25,6 +25,10 @@
 #include "lib/du/du_high/du_manager/ran_resource_management/du_ran_resource_manager.h"
 #include "srsran/du/du_high/du_manager/du_manager_params.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
+#include "srsran/mac/mac_cell_manager.h"
+#include "srsran/mac/mac_manager.h"
+#include "srsran/mac/mac_paging_information_handler.h"
+#include "srsran/mac/mac_positioning_measurement_handler.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
@@ -153,6 +157,8 @@ public:
     return launch_no_op_task(gnbdu_config_update_response{true});
   }
 
+  bool is_f1_setup() const override { return true; }
+
   /// Initiates creation of UE context in F1.
   f1ap_ue_creation_response handle_ue_creation_request(const f1ap_ue_creation_request& msg) override
   {
@@ -257,10 +263,12 @@ public:
   std::string f1u_ext_addr = "auto";
 };
 
-class mac_test_dummy : public mac_cell_manager,
+class mac_test_dummy : public mac_manager,
+                       public mac_cell_manager,
                        public mac_ue_configurator,
                        public mac_ue_control_information_handler,
-                       public mac_paging_information_handler
+                       public mac_paging_information_handler,
+                       public mac_positioning_measurement_handler
 {
 public:
   class mac_cell_dummy : public mac_cell_controller
@@ -304,6 +312,10 @@ public:
   wait_manual_event_tester<mac_ue_delete_response>          wait_ue_delete;
   bool                                                      next_ul_ccch_msg_result = true;
 
+  mac_cell_manager&                    get_cell_manager() override { return *this; }
+  mac_ue_configurator&                 get_ue_configurator() override { return *this; }
+  mac_positioning_measurement_handler& get_positioning_handler() override { return *this; }
+
   mac_cell_controller&  add_cell(const mac_cell_creation_request& cell_cfg) override { return mac_cell; }
   void                  remove_cell(du_cell_index_t cell_index) override {}
   mac_cell_controller&  get_cell_controller(du_cell_index_t cell_index) override { return mac_cell; }
@@ -338,6 +350,12 @@ public:
   }
 
   void handle_paging_information(const paging_information& msg) override {}
+
+  async_task<mac_positioning_measurement_response>
+  handle_positioning_measurement_request(const mac_positioning_measurement_request& msg) override
+  {
+    return launch_no_op_task(mac_positioning_measurement_response{});
+  }
 };
 
 class dummy_ue_resource_configurator_factory : public du_ran_resource_manager

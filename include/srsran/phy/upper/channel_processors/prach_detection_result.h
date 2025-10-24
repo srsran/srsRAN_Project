@@ -38,9 +38,11 @@ struct prach_detection_result {
     phy_time_unit time_advance;
     /// Detection metric normalized with respect to the detection threshold.
     float detection_metric;
+    /// Preamble received power in normalized dB units.
+    float preamble_power_dB;
   };
 
-  /// Average RSSI value in dB.
+  /// Average RSSI value in normalized dB units.
   float rssi_dB;
   /// \brief Detector time resolution.
   ///

@@ -81,5 +81,7 @@ drb_id_t allocate_drb_id(const up_pdu_session_context_update& new_session_contex
 pdcp_config   set_rrc_pdcp_config(five_qi_t five_qi, const up_resource_manager_cfg& cfg);
 sdap_config_t set_rrc_sdap_config(const up_drb_context& context);
 
+unsigned get_dirty_drb_index(drb_id_t drb_id);
+
 } // namespace srs_cu_cp
 } // namespace srsran

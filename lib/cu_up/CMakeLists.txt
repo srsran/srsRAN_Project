@@ -26,7 +26,8 @@ set(SOURCES
         ue_manager.cpp
         pdu_session_manager_impl.cpp
         ngu_session_manager_impl.cpp
-        routines/initial_cu_up_setup_routine.cpp
+        routines/cu_up_setup_routine.cpp
+        routines/cu_up_e1_connection_loss_routine.cpp
         routines/cu_up_bearer_context_modification_routine.cpp
         routines/cu_up_test_mode_routines.cpp
 )

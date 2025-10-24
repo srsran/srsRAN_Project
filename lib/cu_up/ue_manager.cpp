@@ -53,6 +53,12 @@ async_task<void> ue_manager::stop()
   gtpu_rx_demux.stop();
 
   // Routine to stop all UEs
+  return remove_all_ues();
+}
+
+async_task<void> ue_manager::remove_all_ues()
+{
+  // Routine to stop all UEs
   auto ue_it = ue_db.begin();
   return launch_async([this, ue_it](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);

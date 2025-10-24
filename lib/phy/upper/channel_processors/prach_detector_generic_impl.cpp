@@ -172,7 +172,7 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
       rssi += srsvec::average_power(input.get_symbol(i_port, i_td_occasion, i_fd_occasion, i_symbol));
     }
   }
-  rssi /= static_cast<float>(config.nof_rx_ports * nof_symbols * L_ra);
+  rssi /= static_cast<float>(config.nof_rx_ports * nof_symbols);
 
   // Prepare results.
   prach_detection_result result;
@@ -259,8 +259,9 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
         srsvec::modulus_square(mod_square, no_root_time_simple);
 
         // Normalize the signal: we divide by the DFT size to compensate for the inherent scaling of the DFT, and by
-        // L_ra^2 to compensate for the amplitude of the ZC sequence in the frequency domain.
-        srsvec::sc_prod(mod_square, mod_square, 1.0F / static_cast<float>(dft_size * L_ra * L_ra));
+        // L_ra to compensate for the amplitude of the ZC sequence in the frequency domain (provided by
+        // by the internal generator in the span "root").
+        srsvec::sc_prod(mod_square, mod_square, 1.0F / static_cast<float>(dft_size * L_ra));
 
         // Process each shift of the sequence.
         for (unsigned i_window = 0; i_window != nof_shifts; ++i_window) {
@@ -339,6 +340,10 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
             phy_time_unit::from_seconds(static_cast<double>(delay) / static_cast<double>(sampling_rate_Hz));
         // Normalize the detection metric with respect to the threshold.
         info.detection_metric = peak / threshold;
+        // TODO: this may need refining with combine_symbols == true.
+        float preamble_power = srsvec::accumulate(window_metric_global_num) /
+                               static_cast<float>(config.nof_rx_ports * dft_size * nof_symbols * nof_symbols);
+        info.preamble_power_dB = convert_power_to_dB(preamble_power);
       }
     }
   }

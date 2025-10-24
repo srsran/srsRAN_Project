@@ -22,8 +22,8 @@
 
 #pragma once
 
+#include "cu_up_processor.h"
 #include "cu_up_processor_config.h"
-#include "cu_up_processor_impl_interface.h"
 #include "srsran/cu_cp/common_task_scheduler.h"
 #include "srsran/e1ap/common/e1ap_common.h"
 #include <memory>
@@ -32,11 +32,10 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// Creates an instance of an CU-UP processor interface
-std::unique_ptr<cu_up_processor_impl_interface>
-create_cu_up_processor(const cu_up_processor_config_t cu_up_processor_config_,
-                       e1ap_message_notifier&         e1ap_notifier_,
-                       e1ap_cu_cp_notifier&           cu_cp_notifier_,
-                       common_task_scheduler&         common_task_sched_);
+std::unique_ptr<cu_up_processor> create_cu_up_processor(const cu_up_processor_config_t cu_up_processor_config_,
+                                                        e1ap_message_notifier&         e1ap_notifier_,
+                                                        e1ap_cu_cp_notifier&           cu_cp_notifier_,
+                                                        common_task_scheduler&         common_task_sched_);
 
 } // namespace srs_cu_cp
 } // namespace srsran

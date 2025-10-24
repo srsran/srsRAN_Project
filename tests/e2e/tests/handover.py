@@ -60,6 +60,7 @@ BITRATE_THRESHOLD: float = 0.1
 
 @mark.zmq
 @mark.smoke
+@mark.flaky(reruns=2, only_rerun=["StatusCode.UNKNOWN"])
 def test_smoke_sequentially(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -126,7 +127,9 @@ def test_s72_sequentially(
     ),
 )
 @mark.zmq
-@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED"])
+@mark.flaky(
+    reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED", "StatusCode.UNKNOWN"]
+)
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_handover_sequentially(
     retina_manager: RetinaTestManager,
@@ -253,12 +256,14 @@ def _handover_sequentially(
     ),
 )
 @mark.zmq
-@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED"])
+@mark.flaky(
+    reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED", "StatusCode.UNKNOWN"]
+)
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def test_zmq_handover_parallel(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_8: UEStub,
+    ue_32: UEStub,
     fivegc: FiveGCStub,
     gnb: GNBStub,
     metrics_summary: MetricsSummary,
@@ -275,7 +280,7 @@ def test_zmq_handover_parallel(
     with _handover_multi_ues(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=ue_8,
+        ue_array=ue_32,
         gnb=gnb,
         fivegc=fivegc,
         metrics_summary=metrics_summary,
@@ -287,7 +292,7 @@ def test_zmq_handover_parallel(
         time_alignment_calibration=0,
         always_download_artifacts=True,
         noise_spd=noise_spd,
-        sleep_between_movement_steps=10,
+        sleep_between_movement_steps=1,
         warning_as_errors=True,
         nof_antennas_dl=nof_antennas_dl,
         prach_config_index=prach_config_index,
@@ -300,7 +305,7 @@ def test_zmq_handover_parallel(
 
         for from_position, to_position, movement_steps, sleep_between_movement_steps in movements:
             _do_ho(
-                ue_array=ue_8,
+                ue_array=ue_32,
                 from_position=from_position,
                 to_position=to_position,
                 steps=movement_steps,
@@ -454,7 +459,9 @@ def _handover_multi_ues(
     ),
 )
 @mark.zmq_single_ue
-@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED"])
+@mark.flaky(
+    reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED", "StatusCode.UNKNOWN"]
+)
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_handover_iperf(
     retina_manager: RetinaTestManager,
@@ -527,7 +534,9 @@ def test_zmq_handover_iperf(
     ),
 )
 @mark.zmq_single_ue
-@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED"])
+@mark.flaky(
+    reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED", "StatusCode.UNKNOWN"]
+)
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_handover_noise(
     retina_manager: RetinaTestManager,

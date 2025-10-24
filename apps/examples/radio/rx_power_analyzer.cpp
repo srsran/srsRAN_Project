@@ -39,6 +39,7 @@
 #include "srsran/gateways/baseband/baseband_gateway_transmitter.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/radio/radio_factory.h"
+#include "srsran/srsvec/conversion.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/dot_prod.h"
 #include "srsran/support/executors/task_worker.h"
@@ -223,9 +224,10 @@ static void resize_buffers(baseband_gateway_buffer_dynamic& tx_baseband_buffer,
 
   // Generate random data in Tx buffer.
   for (unsigned channel_idx = 0; channel_idx != nof_channels; ++channel_idx) {
-    span<cf_t> data = tx_baseband_buffer[channel_idx];
-    for (cf_t& iq : data) {
-      iq = dist(rgen);
+    span<ci16_t> data = tx_baseband_buffer[channel_idx];
+    for (ci16_t& iq : data) {
+      cf_t value = dist(rgen);
+      iq         = to_ci16(cf_t(value.real() * INT16_MAX, value.imag() * INT16_MAX));
     }
   }
   rx_baseband_buffer.resize(block_size);
@@ -287,6 +289,10 @@ int main(int argc, char** argv)
 
   // Create a measurement buffer that holds all received samples for a sweep point.
   baseband_gateway_buffer_dynamic rx_measurement_buffer(nof_channels, total_nof_samples);
+
+  // Create a buffer to hold floating-point based complex samples.
+  std::vector<cf_t> cf_buffer;
+  cf_buffer.resize(total_nof_samples);
 
   // For each channel in the stream...
   radio_configuration::stream rx_stream_config;
@@ -351,7 +357,7 @@ int main(int argc, char** argv)
 
       // Copy the received samples into the measurement buffer.
       for (unsigned i_channel = 0; i_channel != nof_channels; ++i_channel) {
-        span<cf_t> dest = rx_measurement_buffer.get_writer()[i_channel].subspan(sample_count, block_size);
+        span<ci16_t> dest = rx_measurement_buffer.get_writer()[i_channel].subspan(sample_count, block_size);
         srsvec::copy(dest, rx_baseband_buffer.get_reader()[i_channel]);
       }
 
@@ -394,10 +400,11 @@ int main(int argc, char** argv)
     }
 
     for (unsigned i_channel = 0; i_channel != nof_channels; ++i_channel) {
-      span<const cf_t> rx_samples = rx_measurement_buffer.get_reader()[i_channel].first(sample_count);
+      span<const ci16_t> rx_samples = rx_measurement_buffer.get_reader()[i_channel].first(sample_count);
+      srsvec::convert(cf_buffer, rx_samples, INT16_MAX);
 
       // Compute average power relative to the full scale value.
-      float avg_power_dBFS = convert_power_to_dB(srsvec::average_power(rx_samples));
+      float avg_power_dBFS = convert_power_to_dB(srsvec::average_power(cf_buffer));
 
       // Store the measurement results for the current sweep point.
       measurement_results.emplace_back(rx_gain, i_channel, avg_power_dBFS);

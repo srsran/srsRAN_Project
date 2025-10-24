@@ -79,7 +79,12 @@ void pdsch_block_processor_impl::new_codeblock()
   segment_buffer->read_codeblock(cb_data, transport_block, next_i_cb);
 
   // Encode the segment into a codeblock.
-  const ldpc_encoder_buffer& rm_buffer = encoder->encode(cb_data, cb_metadata.tb_common);
+  ldpc_encoder::configuration encoder_config = {
+      .base_graph   = cb_metadata.tb_common.base_graph,
+      .lifting_size = cb_metadata.tb_common.lifting_size,
+      .Nref         = cb_metadata.tb_common.Nref,
+  };
+  const ldpc_encoder_buffer& rm_buffer = encoder->encode(cb_data, encoder_config);
 
   // Rate match the codeblock.
   static_bit_buffer<ldpc::MAX_CODEBLOCK_RM_SIZE> temp_codeblock(rm_length);

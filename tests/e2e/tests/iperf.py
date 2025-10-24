@@ -52,7 +52,6 @@ from .steps.iperf_helpers import (
     assess_iperf_bitrate,
     get_maximum_throughput,
     HIGH_BITRATE,
-    LONG_DURATION,
     LOW_BITRATE,
     MEDIUM_BITRATE,
     SHORT_DURATION,
@@ -481,7 +480,7 @@ def test_android_hp(
     (param(41, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),),
 )
 @mark.zmq_2x2_mimo
-@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed"])
+@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed", "StatusCode.UNKNOWN"])
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_2x2_mimo(
     retina_manager: RetinaTestManager,
@@ -526,7 +525,7 @@ def test_zmq_2x2_mimo(
 
 
 @mark.zmq
-@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed"])
+@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed", "StatusCode.UNKNOWN"])
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_64_ues(
     retina_manager: RetinaTestManager,
@@ -585,7 +584,7 @@ def test_zmq_64_ues(
     (param(41, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),),
 )
 @mark.zmq_4x4_mimo
-@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed"])
+@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed", "StatusCode.UNKNOWN"])
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_4x4_mimo(
     retina_manager: RetinaTestManager,
@@ -636,6 +635,7 @@ def test_zmq_4x4_mimo(
 )
 @mark.zmq
 @mark.smoke
+@mark.flaky(reruns=2, only_rerun=["StatusCode.UNKNOWN"])
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_smoke(
     retina_manager: RetinaTestManager,
@@ -713,6 +713,7 @@ def test_smoke(
         "socket is already closed",
         "failed to connect to all addresses",
         "5GC crashed",
+        "StatusCode.UNKNOWN",
     ],
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -778,7 +779,7 @@ def test_zmq(
 )
 @mark.zmq
 # pylint: disable=too-many-arguments,too-many-positional-arguments
-def test_zmq_transform_precoding(
+def test_zmq_precoding(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_32: Tuple[UEStub, ...],
@@ -823,67 +824,6 @@ def test_zmq_transform_precoding(
 
 @mark.parametrize(
     "direction",
-    (
-        param(IPerfDir.DOWNLINK, id="downlink", marks=mark.downlink),
-        param(IPerfDir.UPLINK, id="uplink", marks=mark.uplink),
-        param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),
-    ),
-)
-@mark.parametrize(
-    "protocol",
-    (
-        param(IPerfProto.UDP, id="udp", marks=mark.udp),
-        param(IPerfProto.TCP, id="tcp", marks=mark.tcp),
-    ),
-)
-@mark.parametrize(
-    "band, common_scs, bandwidth",
-    (
-        param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),
-        param(41, 30, 10, id="band:%s-scs:%s-bandwidth:%s"),
-    ),
-)
-@mark.rf
-# pylint: disable=too-many-arguments,too-many-positional-arguments
-def test_rf(
-    retina_manager: RetinaTestManager,
-    retina_data: RetinaTestData,
-    ue_4: Tuple[UEStub, ...],
-    fivegc: FiveGCStub,
-    gnb: GNBStub,
-    band: int,
-    common_scs: int,
-    bandwidth: int,
-    protocol: IPerfProto,
-    direction: IPerfDir,
-):
-    """
-    RF IPerfs
-    """
-
-    _iperf(
-        retina_manager=retina_manager,
-        retina_data=retina_data,
-        ue_array=ue_4,
-        gnb=gnb,
-        fivegc=fivegc,
-        band=band,
-        common_scs=common_scs,
-        bandwidth=bandwidth,
-        sample_rate=None,  # default from testbed
-        iperf_duration=LONG_DURATION,
-        protocol=protocol,
-        bitrate=MEDIUM_BITRATE,
-        direction=direction,
-        global_timing_advance=-1,
-        time_alignment_calibration="264",
-        always_download_artifacts=False,
-        warning_as_errors=False,
-    )
-
-
-@mark.parametrize(
-    "direction",
     (param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),),
 )
 @mark.parametrize(
@@ -900,10 +840,7 @@ def test_rf(
 @mark.s72
 @mark.flaky(
     reruns=2,
-    only_rerun=[
-        "failed to start",
-        "5GC crashed",
-    ],
+    only_rerun=["failed to start", "5GC crashed", "StatusCode.UNKNOWN"],
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_s72(

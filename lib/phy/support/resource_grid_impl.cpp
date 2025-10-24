@@ -45,7 +45,7 @@ void resource_grid_impl::set_all_zero()
       srsvec::zero(rg_buffer.get_view<static_cast<unsigned>(resource_grid_dimensions::port)>({port}));
     }
   }
-  empty = (1U << nof_ports) - 1;
+  empty.store((1U << nof_ports) - 1, std::memory_order_release);
 }
 
 resource_grid_writer& resource_grid_impl::get_writer()

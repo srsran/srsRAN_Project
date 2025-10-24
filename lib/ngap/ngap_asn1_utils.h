@@ -24,6 +24,8 @@
 
 #include "srsran/adt/expected.h"
 #include "srsran/asn1/asn1_utils.h"
+#include "srsran/asn1/ngap/ngap.h"
+#include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/security/security.h"
@@ -43,6 +45,7 @@ struct ngap_pdu_c;
 
 namespace srsran {
 namespace srs_cu_cp {
+namespace asn1_utils {
 
 /// Get string with NGAP error cause.
 const char* get_cause_str(const asn1::ngap::cause_c& cause);
@@ -77,5 +80,6 @@ inline void fill_supported_algorithms(security::supported_algorithms&           
   }
 }
 
+} // namespace asn1_utils
 } // namespace srs_cu_cp
 } // namespace srsran

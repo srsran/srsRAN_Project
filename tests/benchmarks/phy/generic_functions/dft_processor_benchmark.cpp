@@ -31,7 +31,6 @@ using namespace srsran;
 // Random generator.
 static std::mt19937 rgen(0);
 
-static std::string dft_factory_str            = "generic";
 static std::string fftw_optimization_str      = "estimate";
 static double      fftw_plan_creation_timeout = 1.0;
 static unsigned    nof_repetitions            = 1000;
@@ -40,10 +39,10 @@ static bool        silent                     = false;
 static void usage(const char* prog)
 {
   fmt::print("Usage: {} [-F DFT factory] [-R repetitions]\n", prog);
-  fmt::print("\t-F Select DFT factory [Default {}]\n", dft_factory_str);
-  fmt::print("\t-O Select FFTW optimization flag (estimate, measure, exhaustive) [Default {}]\n", dft_factory_str);
+  fmt::print("\t-O Select FFTW optimization flag (estimate, measure, exhaustive) [Default {}]\n",
+             fftw_optimization_str);
   fmt::print("\t-T Select FFTW plan creation maximum time in seconds, set to zero or lower for infinite [Default {}]\n",
-             dft_factory_str);
+             fftw_plan_creation_timeout);
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
   fmt::print("\t-s Toggle silent operation [Default {}]\n", silent);
   fmt::print("\t-h Show this message\n");
@@ -52,11 +51,8 @@ static void usage(const char* prog)
 static void parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "F:R:O:T:sh")) != -1) {
+  while ((opt = getopt(argc, argv, "R:O:T:sh")) != -1) {
     switch (opt) {
-      case 'F':
-        dft_factory_str = std::string(optarg);
-        break;
       case 'R':
         nof_repetitions = std::strtol(optarg, nullptr, 10);
         break;
@@ -83,54 +79,85 @@ int main(int argc, char** argv)
 
   std::uniform_real_distribution<float> dist(-1.0, +1.0);
 
-  std::shared_ptr<dft_processor_factory> dft_factory = nullptr;
-  if (dft_factory_str == "generic") {
-    dft_factory = create_dft_processor_factory_generic();
-  } else if (dft_factory_str == "fftw") {
-    dft_factory = create_dft_processor_factory_fftw(fftw_optimization_str, fftw_plan_creation_timeout);
-  } else {
-    fmt::print("Invalid DFT factory.");
-    return -1;
-  }
-  srsran_assert(dft_factory, "DFT factory of type {} is not available.", dft_factory_str);
+  std::shared_ptr<dft_processor_factory> generic_dft_factory = create_dft_processor_factory_generic();
 
-  benchmarker perf_meas("DFT " + dft_factory_str, nof_repetitions);
+  std::shared_ptr<dft_processor_factory> fftw_dft_factory =
+      create_dft_processor_factory_fftw(fftw_optimization_str, fftw_plan_creation_timeout);
+
+  // Create DFT for 16-bit complex integers. It might not be available for machines other than x86.
+  std::shared_ptr<dft_processor_ci16_factory> dft_ci16_factory = create_dft_processor_ci16_factory_avx2();
+
+  benchmarker perf_meas("DFT", nof_repetitions);
 
   // Test for the most common DFT sizes
   for (unsigned size :
        {128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096, 4608, 6144, 9216, 12288, 18432, 24576, 36864, 49152}) {
     for (dft_processor::direction direction : {dft_processor::direction::DIRECT, dft_processor::direction::INVERSE}) {
-      // Performance measurements.
-      std::vector<unsigned> perf_results;
-      perf_results.reserve(nof_repetitions);
-
       // Create FFTW configuration;
       dft_processor::configuration config;
       config.size = size;
       config.dir  = direction;
 
-      // Measurement description.
-      std::string meas_descr =
-          std::to_string(size) + " " + (direction == dft_processor::direction::DIRECT ? "direct" : "inverse");
+      // Benchmark generic DFT if available.
+      {
+        std::unique_ptr<dft_processor> dft = generic_dft_factory->create(config);
+        if (dft != nullptr) {
+          // Get DFT input buffer
+          span<cf_t> input = dft->get_input();
 
-      // Create processor
-      std::unique_ptr<dft_processor> dft = dft_factory->create(config);
+          // Generate input random data.
+          for (cf_t& value : input) {
+            value = {dist(rgen), dist(rgen)};
+          }
 
-      // Skip processor silently if it is not available.
-      if (dft == nullptr) {
-        continue;
+          // Measure performance.
+          perf_meas.new_measure(fmt::format("generic {} {}", size, dft_processor::direction_to_string(direction)),
+                                size,
+                                [&dft]() { dft->run(); });
+        }
       }
 
-      // Get DFT input buffer
-      span<cf_t> input = dft->get_input();
+      // Benchmark FFTW DFT if available.
+      {
+        std::unique_ptr<dft_processor> dft = fftw_dft_factory->create(config);
+        if (dft != nullptr) {
+          // Get DFT input buffer
+          span<cf_t> input = dft->get_input();
 
-      // Generate input random data.
-      for (cf_t& value : input) {
-        value = {dist(rgen), dist(rgen)};
+          // Generate input random data.
+          for (cf_t& value : input) {
+            value = {dist(rgen), dist(rgen)};
+          }
+
+          // Measure performance.
+          perf_meas.new_measure(fmt::format("fftw {} {}", size, dft_processor::direction_to_string(direction)),
+                                size,
+                                [&dft]() { dft->run(); });
+        }
       }
 
-      // Measure performance.
-      perf_meas.new_measure(meas_descr, size, [&]() { dft->run(); });
+      // Benchmark FFTW DFT if available.
+      if (dft_ci16_factory) {
+        dft_processor_ci16::configuration config_ci16;
+        config_ci16.size = size;
+        config_ci16.dir  = direction == dft_processor::direction::DIRECT ? dft_processor_ci16::direction::direct
+                                                                         : dft_processor_ci16::direction::inverse;
+
+        std::unique_ptr<dft_processor_ci16> dft = dft_ci16_factory->create(config_ci16);
+        if (dft != nullptr) {
+          std::vector<ci16_t> input_ci16(size);
+          std::vector<ci16_t> output_ci16(size);
+
+          for (ci16_t& value : input_ci16) {
+            value = to_ci16({dist(rgen), dist(rgen)});
+          }
+
+          // Measure performance.
+          perf_meas.new_measure(fmt::format("ci16 {} {}", size, dft_processor::direction_to_string(direction)),
+                                size,
+                                [&dft, &input_ci16, &output_ci16]() { dft->run(output_ci16, input_ci16); });
+        }
+      }
     }
   }
 

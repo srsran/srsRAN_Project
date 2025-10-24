@@ -119,6 +119,7 @@ public:
     auto it = ue_index_to_ue_f1ap_id.find(ue_idx);
     return it != ue_index_to_ue_f1ap_id.end() ? &ues.at(it->second) : nullptr;
   }
+
   f1ap_ue_context* find(ue_index_t ue_idx)
   {
     auto it = ue_index_to_ue_f1ap_id.find(ue_idx);

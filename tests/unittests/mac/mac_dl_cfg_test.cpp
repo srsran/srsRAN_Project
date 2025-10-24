@@ -26,7 +26,7 @@
 #include "mac_ctrl_test_dummies.h"
 #include "mac_test_helpers.h"
 #include "tests/test_doubles/mac/dummy_mac_metrics_notifier.h"
-#include "tests/test_doubles/mac/dummy_scheduler_ue_metric_notifier.h"
+#include "tests/test_doubles/scheduler/dummy_scheduler_ue_metric_notifier.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "srsran/support/async/eager_async_task.h"
 #include "srsran/support/executors/blocking_task_worker.h"
@@ -122,13 +122,12 @@ TEST_F(mac_dl_cfg_test, test_dl_ue_procedure_execution_contexts)
   dummy_dl_executor_mapper    dl_exec_mapper{dl_execs[0]};
   mac_dl_config               mac_dl_cfg{ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap, timers};
 
-  srsran_scheduler_adapter sched_cfg_adapter{srsran_mac_sched_config{macfg, ctrl_worker, schedcfg}, rnti_mng};
+  srsran_scheduler_adapter sched_cfg_adapter{srsran_mac_sched_config{macfg, ctrl_worker, timers, schedcfg}, rnti_mng};
   mac_dl_processor         mac_dl(mac_dl_cfg, sched_cfg_adapter, rnti_mng);
 
   auto mac_cell_req      = test_helpers::make_default_mac_cell_config();
   mac_cell_req.sched_req = sched_config_helper::make_default_sched_cell_configuration_request();
-  sched_cfg_adapter.add_cell(mac_scheduler_cell_creation_request{
-      mac_cell_req, std::chrono::milliseconds{1000}, &scheduler_cell_metrics_notif});
+  sched_cfg_adapter.add_cell(mac_scheduler_cell_creation_request{mac_cell_req, &scheduler_cell_metrics_notif});
 
   // Set this to a valid ARFCN value (band 3, in this case, but it doesn't matter) - Required for SSB.
   mac_dl.add_cell(mac_cell_req, {});
@@ -168,23 +167,21 @@ TEST_F(mac_dl_cfg_test, test_dl_ue_procedure_tsan)
   dummy_scheduler_cell_metrics_notifier sched_cell_metrics_notif;
   mac_dl_config mac_dl_cfg{ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap, timers};
 
-  srsran_scheduler_adapter sched_cfg_adapter{srsran_mac_sched_config{macfg, ctrl_worker, schedcfg}, rnti_mng};
+  srsran_scheduler_adapter sched_cfg_adapter{srsran_mac_sched_config{macfg, ctrl_worker, timers, schedcfg}, rnti_mng};
   mac_dl_processor         mac_dl(mac_dl_cfg, sched_cfg_adapter, rnti_mng);
 
   // Action: Add Cells.
   mac_cell_creation_request cell_cfg1 = test_helpers::make_default_mac_cell_config();
   cell_cfg1.sched_req                 = sched_config_helper::make_default_sched_cell_configuration_request();
   // Set this to a valid ARFCN value (band 3, in this case, but it doesn't matter) - Required for SSB.
-  sched_cfg_adapter.add_cell(
-      mac_scheduler_cell_creation_request{cell_cfg1, std::chrono::milliseconds{1000}, &sched_cell_metrics_notif});
+  sched_cfg_adapter.add_cell(mac_scheduler_cell_creation_request{cell_cfg1, &sched_cell_metrics_notif});
   mac_dl.add_cell(cell_cfg1, {});
   mac_cell_creation_request cell_cfg2  = test_helpers::make_default_mac_cell_config();
   cell_cfg2.cell_index                 = to_du_cell_index(1);
   cell_cfg2.sched_req                  = sched_config_helper::make_default_sched_cell_configuration_request();
   cell_cfg2.sched_req.cell_index       = to_du_cell_index(1);
   cell_cfg2.sched_req.cell_group_index = (du_cell_group_index_t)1;
-  sched_cfg_adapter.add_cell(
-      mac_scheduler_cell_creation_request{cell_cfg2, std::chrono::milliseconds{1000}, &sched_cell_metrics_notif});
+  sched_cfg_adapter.add_cell(mac_scheduler_cell_creation_request{cell_cfg2, &sched_cell_metrics_notif});
   mac_dl.add_cell(cell_cfg2, {});
 
   // TEST: Thread used for resumption does not change

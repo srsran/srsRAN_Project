@@ -219,15 +219,14 @@ static const std::array<pdsch_antenna_ports_mapping, antenna_port_mapping_dmrs_t
         {3, {0, 1, 2, 3, 4, 5}, 1},
         {2, {0, 1, 2, 3, 6}, 2},
         {2, {0, 1, 2, 3, 6, 8}, 2},
-        {2, {0, 1, 2, 3, 6, 7,8}, 2},
-        {2, {0, 1, 2, 3, 6, 7,8, 9}, 2},
+        {2, {0, 1, 2, 3, 6, 7, 8}, 2},
+        {2, {0, 1, 2, 3, 6, 7, 8, 9}, 2},
         // clang-format on
     }};
 
-// Helper function to fetch the PDSCH antenna ports mapping table to use based on input configuration.
-static span<const pdsch_antenna_ports_mapping> get_pdsch_antenna_port_mapping_table(dmrs_config_type dmrs_cfg_type,
-                                                                                    dmrs_max_length  dmrs_max_len,
-                                                                                    bool are_both_cws_enabled)
+span<const pdsch_antenna_ports_mapping> srsran::get_pdsch_antenna_port_mapping_table(dmrs_config_type dmrs_cfg_type,
+                                                                                     dmrs_max_length  dmrs_max_len,
+                                                                                     bool are_both_cws_enabled)
 {
   if (dmrs_cfg_type == dmrs_config_type::type1 and dmrs_max_len == dmrs_max_length::len1) {
     return antenna_port_mapping_dmrs_type1_max_length1;

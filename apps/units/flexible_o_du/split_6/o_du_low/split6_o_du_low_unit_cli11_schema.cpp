@@ -106,6 +106,5 @@ void srsran::autoderive_split6_o_du_low_parameters_after_parsing(CLI::App& app, 
 
   // NOTE: TDD is hardcoded because it does not matter as max proc delay parameter is mandatory in this application
   // unit.
-  autoderive_du_low_parameters_after_parsing(
-      app, config.du_low_cfg, duplex_mode::TDD, split6_du_low::NOF_CELLS_SUPPORTED);
+  autoderive_du_low_parameters_after_parsing(app, config.du_low_cfg, duplex_mode::TDD);
 }

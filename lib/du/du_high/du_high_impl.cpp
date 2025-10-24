@@ -102,7 +102,7 @@ du_high_impl::du_high_impl(const du_high_configuration& config_, const du_high_d
       {*f1ap, *f1ap, f1ap->get_metrics_collector()},
       {*dependencies.f1u_gw},
       {mac->get_ue_control_info_handler(), *f1ap, *f1ap, *dependencies.rlc_p, dependencies.rlc_metrics_notif},
-      {mac->get_cell_manager(), mac->get_ue_configurator(), cfg.ran.sched_cfg, nullptr},
+      {*mac, cfg.ran.sched_cfg},
       {cfg.metrics.period,
        dependencies.du_notifier,
        cfg.metrics.enable_f1ap,

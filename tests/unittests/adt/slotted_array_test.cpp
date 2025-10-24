@@ -80,7 +80,7 @@ TYPED_TEST(slotted_array_tester, insert_creates_entry_in_slotted_array)
   int      value = get_random_int();
   unsigned idx   = get_random_int(0, 19);
 
-  this->vec.insert(idx, this->create_elem(value));
+  ASSERT_TRUE(this->vec.insert(idx, this->create_elem(value)));
   ASSERT_EQ(this->vec.size(), 1);
   ASSERT_FALSE(this->vec.empty());
   ASSERT_TRUE(this->vec.contains(idx));
@@ -240,7 +240,7 @@ TEST(slotted_vector, move_ctor_empties_original_vector)
   ASSERT_EQ(vec2[idx], moveonly_test_object(value));
 }
 
-TEST(slotted_array, move_ctor_moves_the_value_of_elements)
+TEST(slotted_array, move_ctor_moves_elements)
 {
   slotted_array<moveonly_test_object, 20> vec;
   int                                     value = get_random_int();
@@ -248,10 +248,21 @@ TEST(slotted_array, move_ctor_moves_the_value_of_elements)
   vec.insert(idx, moveonly_test_object(value));
 
   auto vec2 = std::move(vec);
-  ASSERT_EQ(vec.size(), 1);
+  ASSERT_EQ(vec.size(), 0);
   ASSERT_EQ(vec2.size(), 1);
-  ASSERT_TRUE(vec.contains(idx));
+  ASSERT_FALSE(vec.contains(idx));
   ASSERT_TRUE(vec2.contains(idx));
   ASSERT_EQ(vec2[idx], moveonly_test_object(value));
-  ASSERT_FALSE(vec[idx].has_value());
+}
+
+TEST(slotted_array, lower_bound_beyond_max_returns_end)
+{
+  slotted_array<int, 20> vec;
+  vec.insert(1, 1);
+  vec.insert(5, 5);
+  ASSERT_EQ(vec.lower_bound(1), vec.begin());
+  ASSERT_EQ(vec.lower_bound(4), ++vec.begin());
+  ASSERT_EQ(vec.lower_bound(5), ++vec.begin());
+  ASSERT_EQ(vec.lower_bound(6), vec.end());
+  ASSERT_EQ(vec.lower_bound(21), vec.end());
 }

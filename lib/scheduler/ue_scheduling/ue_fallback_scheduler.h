@@ -23,7 +23,7 @@
 #pragma once
 
 #include "../support/sch_pdu_builder.h"
-#include "ue_repository.h"
+#include "../ue_context/ue_repository.h"
 #include "srsran/ran/resource_allocation/rb_bitmap.h"
 
 namespace srsran {

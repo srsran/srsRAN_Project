@@ -30,7 +30,6 @@
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/f1ap/f1ap_message.h"
 #include "srsran/ran/positioning/positioning_ids.h"
-#include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/support/test_utils.h"
 
 using namespace srsran;
@@ -100,10 +99,10 @@ gnb_du_served_cells_item_s srsran::test_helpers::generate_served_cells_item(cons
   served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nr_scs.value = nr_scs_opts::scs30;
   served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nr_nrb.value = nr_nrb_opts::nrb51;
   served_cells_item.served_cell_info.meas_timing_cfg =
-      create_meas_timing_cfg(info.meas_timing_cfg.carrier_freq, info.meas_timing_cfg.scs);
+      test_helpers::create_meas_timing_cfg(info.meas_timing_cfg.carrier_freq, info.meas_timing_cfg.scs);
 
   served_cells_item.gnb_du_sys_info_present = true;
-  served_cells_item.gnb_du_sys_info.mib_msg.from_string("01c586");
+  served_cells_item.gnb_du_sys_info.mib_msg.from_string("02000c");
   served_cells_item.gnb_du_sys_info.sib1_msg.from_string(info.sib1_str);
 
   return served_cells_item;
@@ -608,7 +607,8 @@ srsran::test_helpers::generate_ue_context_modification_response(gnb_du_ue_f1ap_i
                                                                 gnb_cu_ue_f1ap_id_t          cu_ue_id,
                                                                 rnti_t                       crnti,
                                                                 const std::vector<drb_id_t>& drbs_setup_mod_list,
-                                                                const std::vector<drb_id_t>& drbs_modified_list)
+                                                                const std::vector<drb_id_t>& drbs_modified_list,
+                                                                byte_buffer                  cell_group_config)
 {
   f1ap_message pdu = {};
 
@@ -635,6 +635,12 @@ srsran::test_helpers::generate_ue_context_modification_response(gnb_du_ue_f1ap_i
     ue_context_mod_resp->drbs_modified_list.back().load_info_obj(ASN1_F1AP_ID_DRBS_MODIFIED_ITEM);
     ue_context_mod_resp->drbs_modified_list.back().value().drbs_modified_item().drb_id = drb_id_to_uint(drb);
   }
+
+  if (!cell_group_config.empty()) {
+    ue_context_mod_resp->du_to_cu_rrc_info_present        = true;
+    ue_context_mod_resp->du_to_cu_rrc_info.cell_group_cfg = cell_group_config.copy();
+  }
+
   return pdu;
 }
 

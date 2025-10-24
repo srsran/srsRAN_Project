@@ -34,7 +34,7 @@ e1ap_message srsran::generate_error_indication(uint8_t                          
 {
   e1ap_message msg;
   msg.pdu.set_init_msg().load_info_obj(ASN1_E1AP_ID_ERROR_IND);
-  asn1::e1ap::error_ind_s error_ind = msg.pdu.init_msg().value.error_ind();
+  asn1::e1ap::error_ind_s& error_ind = msg.pdu.init_msg().value.error_ind();
 
   error_ind->transaction_id = transaction_id;
 

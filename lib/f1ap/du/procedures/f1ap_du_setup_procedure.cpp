@@ -33,6 +33,8 @@ using namespace srsran;
 using namespace srsran::srs_du;
 using namespace asn1::f1ap;
 
+static constexpr std::chrono::milliseconds f1_setup_response_timeout{3000};
+
 f1ap_du_setup_procedure::f1ap_du_setup_procedure(const f1_setup_request_message& request_,
                                                  f1ap_message_notifier&          cu_notif_,
                                                  f1ap_event_manager&             ev_mng_,
@@ -52,7 +54,7 @@ void f1ap_du_setup_procedure::operator()(coro_context<async_task<f1_setup_result
   CORO_BEGIN(ctx);
 
   while (true) {
-    transaction = ev_mng.transactions.create_transaction();
+    transaction = ev_mng.transactions.create_transaction(f1_setup_response_timeout);
     if (not transaction.valid()) {
       CORO_EARLY_RETURN(create_f1_setup_result());
     }
@@ -129,6 +131,7 @@ bool f1ap_du_setup_procedure::retry_required()
     // Timeout or cancellation case.
     return false;
   }
+
   const f1ap_transaction_response& cu_pdu_response = transaction.response();
   if (cu_pdu_response.has_value()) {
     // Success case.
@@ -224,10 +227,14 @@ f1_setup_result f1ap_du_setup_procedure::create_f1_setup_result()
   // Update F1 DU Context (taking values from request).
   du_ctxt.du_id       = request.gnb_du_id;
   du_ctxt.gnb_du_name = request.gnb_du_name;
+  du_ctxt.f1c_setup   = true;
   du_ctxt.served_cells.clear();
   for (unsigned i = 0, sz = request.served_cells.size(); i != sz; ++i) {
     const du_cell_index_t cell_idx = request.served_cells[i].cell_index;
-    du_ctxt.served_cells.emplace(cell_idx, f1ap_du_cell_context{cell_idx, request.served_cells[i].cell_info.nr_cgi});
+    du_ctxt.served_cells.emplace(cell_idx,
+                                 f1ap_du_cell_context{cell_idx,
+                                                      request.served_cells[i].cell_info.nr_cgi,
+                                                      request.served_cells[i].cell_info.ntn_link_rtt});
   }
   if (asn1_success.cells_to_be_activ_list_present) {
     success.cells_to_activate.resize(asn1_success.cells_to_be_activ_list.size());

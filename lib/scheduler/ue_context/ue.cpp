@@ -54,7 +54,7 @@ ue::ue(const ue_creation_command& cmd) :
 
   for (auto& cell : ue_du_cells) {
     if (cell != nullptr) {
-      cell->set_fallback_state(cmd.starts_in_fallback);
+      cell->set_fallback_state(cmd.starts_in_fallback, false, false);
     }
   }
 }
@@ -98,9 +98,7 @@ void ue::release_resources()
 void ue::handle_reconfiguration_request(const ue_reconf_command& cmd, bool reestablished_)
 {
   // UE enters fallback mode when a Reconfiguration takes place.
-  reconf_ongoing = true;
-  reestablished  = reestablished_;
-  get_pcell().set_fallback_state(true);
+  get_pcell().set_fallback_state(true, true, reestablished_);
   dl_lc_ch_mgr.set_fallback_state(true);
 
   // Update UE config.
@@ -109,10 +107,8 @@ void ue::handle_reconfiguration_request(const ue_reconf_command& cmd, bool reest
 
 void ue::handle_config_applied()
 {
-  get_pcell().set_fallback_state(false);
+  get_pcell().set_fallback_state(false, false, false);
   dl_lc_ch_mgr.set_fallback_state(false);
-  reconf_ongoing = false;
-  reestablished  = false;
 }
 
 void ue::set_config(const ue_configuration& new_cfg, std::optional<slot_point> msg3_slot_rx)
@@ -143,8 +139,13 @@ void ue::set_config(const ue_configuration& new_cfg, std::optional<slot_point> m
     du_cell_index_t cell_index   = ue_ded_cfg->ue_cell_cfg(to_ue_cell_index(ue_cell_index)).cell_cfg_common.cell_index;
     auto&           ue_cell_inst = ue_du_cells[cell_index];
     if (ue_cell_inst == nullptr) {
-      ue_cell_inst = std::make_unique<ue_cell>(
-          ue_index, crnti, ue_ded_cfg->ue_cell_cfg(cell_index), pcell_harq_pool, drx, msg3_slot_rx);
+      ue_cell_inst = std::make_unique<ue_cell>(ue_index,
+                                               crnti,
+                                               to_ue_cell_index(ue_cell_index),
+                                               ue_ded_cfg->ue_cell_cfg(cell_index),
+                                               pcell_harq_pool,
+                                               ue_shared_context{drx},
+                                               msg3_slot_rx);
       if (ue_cell_index >= ue_cells.size()) {
         ue_cells.resize(ue_cell_index + 1);
       }
@@ -219,36 +220,4 @@ unsigned ue::pending_ul_newtx_bytes() const
 
   // If there are no pending bytes, check if a SR is pending.
   return pending_bytes > 0 ? pending_bytes : (ul_lc_ch_mgr.has_pending_sr() ? SR_GRANT_BYTES : 0);
-}
-
-bool ue::has_pending_sr() const
-{
-  return ul_lc_ch_mgr.has_pending_sr();
-}
-
-unsigned ue::build_dl_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes, ran_slice_id_t slice_id)
-{
-  unsigned total_subpdu_bytes = 0;
-  total_subpdu_bytes += allocate_mac_ces(tb_info, dl_lc_ch_mgr, tb_size_bytes);
-  for (const auto lcid : dl_lc_ch_mgr.get_prioritized_logical_channels()) {
-    if (dl_lc_ch_mgr.get_slice_id(lcid) == slice_id) {
-      total_subpdu_bytes +=
-          allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes, uint_to_lcid(lcid));
-    }
-  }
-  return total_subpdu_bytes;
-}
-
-unsigned ue::build_dl_fallback_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes)
-{
-  unsigned total_subpdu_bytes = 0;
-  total_subpdu_bytes += allocate_ue_con_res_id_mac_ce(tb_info, dl_lc_ch_mgr, tb_size_bytes);
-  // Since SRB0 PDU cannot be segmented, skip SRB0 if remaining TB size is not enough to fit entire PDU.
-  if (dl_lc_ch_mgr.has_pending_bytes(LCID_SRB0) and
-      ((tb_size_bytes - total_subpdu_bytes) >= dl_lc_ch_mgr.pending_bytes(LCID_SRB0))) {
-    total_subpdu_bytes += allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes, LCID_SRB0);
-    return total_subpdu_bytes;
-  }
-  total_subpdu_bytes += allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes, LCID_SRB1);
-  return total_subpdu_bytes;
 }

@@ -73,7 +73,7 @@ public:
     return common_task_sched->schedule_async_task(std::move(task));
   }
 
-  async_task<void> on_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) override
+  async_task<void> on_transaction_info_loss(const ue_transaction_info_loss_event& ev) override
   {
     return parent.cu_cp_notifier.on_transaction_info_loss(ev);
   }

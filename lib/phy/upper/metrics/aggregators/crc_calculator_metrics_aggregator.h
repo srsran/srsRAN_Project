@@ -37,7 +37,8 @@ public:
   {
     const metrics_per_polynomial& metrics_poly = select_metrics(poly);
     return metrics_poly.count.load(std::memory_order_relaxed)
-               ? static_cast<double>(metrics_poly.sum_elapsed_ns) / static_cast<double>(metrics_poly.count) * 1e-3
+               ? static_cast<double>(metrics_poly.sum_elapsed_ns.load(std::memory_order_relaxed)) /
+                     static_cast<double>(metrics_poly.count.load(std::memory_order_relaxed)) * 1e-3
                : 0;
   }
 
@@ -46,8 +47,8 @@ public:
   {
     const metrics_per_polynomial& metrics_poly = select_metrics(poly);
     return metrics_poly.sum_elapsed_ns.load(std::memory_order_relaxed)
-               ? static_cast<double>(metrics_poly.sum_nof_bits) / static_cast<double>(metrics_poly.sum_elapsed_ns) *
-                     1000
+               ? static_cast<double>(metrics_poly.sum_nof_bits.load(std::memory_order_relaxed)) /
+                     static_cast<double>(metrics_poly.sum_elapsed_ns.load(std::memory_order_relaxed)) * 1000
                : 0;
   }
 
@@ -55,14 +56,16 @@ public:
   std::chrono::nanoseconds get_total_time(crc_generator_poly poly) const
   {
     const metrics_per_polynomial& metrics_poly = select_metrics(poly);
-    return std::chrono::nanoseconds(metrics_poly.sum_elapsed_ns);
+    return std::chrono::nanoseconds(metrics_poly.sum_elapsed_ns.load(std::memory_order_relaxed));
   }
 
   /// Gets the CPU usage in microseconds of the CRC calculation.
   double get_cpu_usage_us() const
   {
-    return static_cast<double>(crc16_metrics_collection.sum_elapsed_ns + crc24A_metrics_collection.sum_elapsed_ns +
-                               crc24B_metrics_collection.sum_elapsed_ns + other_metrics_collection.sum_elapsed_ns) /
+    return static_cast<double>(crc16_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed) +
+                               crc24A_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed) +
+                               crc24B_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed) +
+                               other_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed)) /
            1000.0;
   }
 
@@ -85,9 +88,9 @@ private:
     /// Reset all values to 0.
     void reset()
     {
-      sum_nof_bits   = 0;
-      sum_elapsed_ns = 0;
-      count          = 0;
+      sum_nof_bits.store(0, std::memory_order_relaxed);
+      sum_elapsed_ns.store(0, std::memory_order_relaxed);
+      count.store(0, std::memory_order_relaxed);
     }
   };
 
@@ -131,9 +134,9 @@ private:
   void on_new_metric(const crc_calculator_metrics& metrics) override
   {
     metrics_per_polynomial& metrics_poly = select_metrics(metrics.poly);
-    metrics_poly.sum_nof_bits += metrics.nof_bits.value();
-    metrics_poly.sum_elapsed_ns += metrics.measurements.duration.count();
-    ++metrics_poly.count;
+    metrics_poly.sum_nof_bits.fetch_add(metrics.nof_bits.value(), std::memory_order_relaxed);
+    metrics_poly.sum_elapsed_ns.fetch_add(metrics.measurements.duration.count(), std::memory_order_relaxed);
+    metrics_poly.count.fetch_add(1, std::memory_order_relaxed);
   }
 
   metrics_per_polynomial crc16_metrics_collection;

@@ -144,3 +144,9 @@ mac_cell_rach_handler_impl& mac_rach_handler::add_cell(const sched_cell_configur
   cell_map.emplace(sched_cfg.cell_index, std::make_unique<mac_cell_rach_handler_impl>(*this, sched_cfg));
   return *cell_map[sched_cfg.cell_index];
 }
+
+void mac_rach_handler::rem_cell(du_cell_index_t cell_index)
+{
+  srsran_assert(cell_map.contains(cell_index), "Cell does not exist");
+  cell_map.erase(cell_index);
+}

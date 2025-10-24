@@ -47,7 +47,7 @@ private:
   void handle_request(prach_buffer& buffer, const prach_buffer_context& context) override
   {
     // Ignore request if the processor has stopped.
-    if (stopped) {
+    if (stopped.load(std::memory_order_relaxed)) {
       return;
     }
 

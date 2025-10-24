@@ -75,7 +75,7 @@ public:
     return ue_context_handler->handle_ue_context_release(request);
   }
 
-  async_task<void> on_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) override
+  async_task<void> on_transaction_info_loss(const ue_transaction_info_loss_event& ev) override
   {
     return cu_cp_handler->handle_transaction_info_loss(ev);
   }

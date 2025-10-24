@@ -54,9 +54,6 @@ static void configure_cli11_log_args(CLI::App& app, logger_appconfig& log_params
       app, "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")
       ->capture_default_str()
       ->check(CLI::Range(0, 1024));
-  add_option(app, "--tracing_filename", log_params.tracing_filename, "Set to a valid file path to enable tracing")
-      ->always_capture_default();
-
   // Post-parsing callback. This allows us to set the log level to "all" level, if no level is provided.
   app.callback([&]() {
     // Do nothing when all_level is not defined or it is defined as warning.

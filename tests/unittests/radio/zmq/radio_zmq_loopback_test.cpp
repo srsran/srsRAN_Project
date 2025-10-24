@@ -47,7 +47,7 @@ static const srslog::basic_levels log_level = srslog::basic_levels::warning;
 class RadioZmqE2EFixture : public ::testing::TestWithParam<radio_zmq_e2e_test_parameters>
 {
 protected:
-  static constexpr float ASSERT_MAX_ERROR = 1e-6;
+  static constexpr float ASSERT_MAX_ERROR_COMPLEX = 1.414213562f;
 
   class radio_notifier_spy : public radio_notification_handler
   {
@@ -120,6 +120,12 @@ protected:
     }
 
     return result;
+  }
+
+  static ci16_t generate_random_ci16(complex_normal_distribution<cf_t> dist, std::mt19937 gen)
+  {
+    static constexpr float scaling_factor = std::numeric_limits<int16_t>::max() / 4;
+    return to_ci16(dist(gen) * static_cast<float>(scaling_factor));
   }
 
   void SetUp() override
@@ -237,9 +243,9 @@ TEST_P(RadioZmqE2EFixture, RadioZmqE2EFlow)
 
         // Generate transmit random data for each channel.
         for (unsigned channel_id = 0; channel_id != nof_channels; ++channel_id, ++port_id) {
-          span<cf_t> buffer = tx_buffer[channel_id];
-          for (cf_t& sample : buffer) {
-            sample = tx_dist(tx_rgen[port_id]);
+          span<ci16_t> buffer = tx_buffer[channel_id];
+          for (ci16_t& sample : buffer) {
+            sample = generate_random_ci16(tx_dist, tx_rgen[port_id]);
           }
         }
 
@@ -280,11 +286,11 @@ TEST_P(RadioZmqE2EFixture, RadioZmqE2EFlow)
 
       // Validate data for each channel.
       for (unsigned channel_id = 0; channel_id != nof_channels; ++channel_id, ++port_id) {
-        span<const cf_t> buffer = rx_buffer[channel_id];
-        for (const cf_t& sample : buffer) {
-          cf_t expected_sample = rx_dist(rx_rgen[port_id]);
-          EXPECT_NEAR(expected_sample.real(), sample.real(), ASSERT_MAX_ERROR);
-          EXPECT_NEAR(expected_sample.imag(), sample.imag(), ASSERT_MAX_ERROR);
+        span<const ci16_t> buffer = rx_buffer[channel_id];
+        for (const ci16_t& sample : buffer) {
+          ci16_t expected_sample = generate_random_ci16(rx_dist, rx_rgen[port_id]);
+          ASSERT_LE(std::abs(expected_sample - sample), ASSERT_MAX_ERROR_COMPLEX)
+              << fmt::format("expected={} sample={}", expected_sample, sample);
         }
       }
     }

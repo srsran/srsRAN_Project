@@ -66,7 +66,7 @@ static nlohmann::json generate_ethernet_rx(const ether::receiver_metrics& metric
 {
   nlohmann::json json;
 
-  json["average_throughput_Mbps"] = validate_fp_value(static_cast<float>(metrics.total_nof_bytes * CHAR_BIT) /
+  json["average_throughput_mbps"] = validate_fp_value(static_cast<float>(metrics.total_nof_bytes * CHAR_BIT) /
                                                       static_cast<float>(metrics_period_ms * 1e3));
   json["average_latency_us"]      = validate_fp_value(metrics.avg_packet_rx_latency_us);
   json["max_latency_us"]          = validate_fp_value(metrics.max_packet_rx_latency_us);
@@ -121,7 +121,7 @@ static nlohmann::json generate_ethernet_tx(const ether::transmitter_metrics& met
 {
   nlohmann::json json;
 
-  json["average_throughput_Mbps"] = validate_fp_value(static_cast<float>(metrics.total_nof_bytes * CHAR_BIT) /
+  json["average_throughput_mbps"] = validate_fp_value(static_cast<float>(metrics.total_nof_bytes * CHAR_BIT) /
                                                       static_cast<float>(metrics_period_ms * 1e3));
   json["average_latency_us"]      = validate_fp_value(metrics.avg_packet_tx_latency_us);
   json["max_latency_us"]          = validate_fp_value(metrics.max_packet_tx_latency_us);

@@ -25,6 +25,7 @@
 #include "converters/scheduler_configuration_helpers.h"
 #include "srsran/du/du_cell_config_validation.h"
 #include "srsran/du/du_high/du_manager/du_configurator.h"
+#include "srsran/mac/mac_cell_manager.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/srslog/srslog.h"
 
@@ -90,11 +91,18 @@ void du_cell_manager::add_cell(const du_cell_config& cell_cfg)
   cell.si_cfg.si_sched_cfg = std::move(si_sched_req);
 }
 
-expected<du_cell_reconfig_result> du_cell_manager::handle_cell_reconf_request(const du_cell_param_config_request& req)
+expected<du_cell_reconfig_result>
+du_cell_manager::handle_cell_reconf_request(const du_cell_param_config_request& req) const
 {
-  du_cell_index_t cell_index = get_cell_index(req.nr_cgi);
+  if (!req.nr_cgi.has_value()) {
+    logger.warning("DU Cell Reconfiguration request without NR CGI is not supported");
+    return make_unexpected(default_error_t{});
+  }
+
+  du_cell_index_t cell_index = get_cell_index(req.nr_cgi.value());
   if (cell_index == INVALID_DU_CELL_INDEX) {
-    logger.warning("Discarding cell {} changes. Cause: No cell with the provided CGI was found", req.nr_cgi.nci);
+    logger.warning("Discarding cell {} changes. Cause: No cell with the provided CGI was found",
+                   req.nr_cgi.value().nci);
     return make_unexpected(default_error_t{});
   }
   auto& cell = *cells[cell_index];
@@ -116,7 +124,7 @@ expected<du_cell_reconfig_result> du_cell_manager::handle_cell_reconf_request(co
   du_cell_reconfig_result result;
   result.slice_reconf_req.emplace();
   for (const auto& rrm_policy_ratio : req.rrm_policy_ratio_list) {
-    if (not(rrm_policy_ratio.min_prb_policy_ratio.has_value() or rrm_policy_ratio.max_prb_policy_ratio.has_value())) {
+    if (not(rrm_policy_ratio.minimum_ratio.has_value() or rrm_policy_ratio.maximum_ratio.has_value())) {
       continue;
     }
 
@@ -126,10 +134,8 @@ expected<du_cell_reconfig_result> du_cell_manager::handle_cell_reconf_request(co
         if (policy_cfg.rrc_member == policy_member) {
           found = true;
           // Update the policy member configuration.
-          unsigned min_prb_ratio =
-              rrm_policy_ratio.min_prb_policy_ratio.has_value() ? rrm_policy_ratio.min_prb_policy_ratio.value() : 0;
-          unsigned max_prb_ratio =
-              rrm_policy_ratio.max_prb_policy_ratio.has_value() ? rrm_policy_ratio.max_prb_policy_ratio.value() : 100;
+          unsigned min_prb_ratio = rrm_policy_ratio.minimum_ratio.value_or(0);
+          unsigned max_prb_ratio = rrm_policy_ratio.maximum_ratio.value_or(100);
 
           min_prb_ratio = std::clamp(min_prb_ratio, static_cast<unsigned>(0), static_cast<unsigned>(100));
           max_prb_ratio = std::clamp(max_prb_ratio, static_cast<unsigned>(0), static_cast<unsigned>(100));
@@ -147,14 +153,13 @@ expected<du_cell_reconfig_result> du_cell_manager::handle_cell_reconf_request(co
             break;
           }
 
-          if ((policy_cfg.min_prb != min_prb) or (policy_cfg.max_prb != max_prb)) {
+          if ((policy_cfg.rbs.min() != min_prb) or (policy_cfg.rbs.max() != max_prb)) {
             // Policy configuration has been updated.
             result.slice_reconf_req->rrm_policies.push_back(
-                du_cell_slice_reconfig_request::rrm_policy_config{policy_member, min_prb, max_prb});
+                du_cell_slice_reconfig_request::rrm_policy_config{policy_member, {min_prb, max_prb}});
           }
 
-          policy_cfg.min_prb = min_prb;
-          policy_cfg.max_prb = max_prb;
+          policy_cfg.rbs = {min_prb, max_prb};
           break;
         }
       }
@@ -189,7 +194,7 @@ expected<du_cell_reconfig_result> du_cell_manager::handle_cell_reconf_request(co
   return result;
 }
 
-async_task<bool> du_cell_manager::start(du_cell_index_t cell_index)
+async_task<bool> du_cell_manager::start(du_cell_index_t cell_index) const
 {
   return launch_async([this, cell_index](coro_context<async_task<bool>>& ctx) {
     CORO_BEGIN(ctx);
@@ -203,7 +208,7 @@ async_task<bool> du_cell_manager::start(du_cell_index_t cell_index)
     }
 
     // Start cell in the MAC.
-    CORO_AWAIT(cfg.mac.cell_mng.get_cell_controller(cell_index).start());
+    CORO_AWAIT(cfg.mac.mgr.get_cell_manager().get_cell_controller(cell_index).start());
 
     cells[cell_index]->state = du_cell_context::state_t::active;
 
@@ -211,7 +216,7 @@ async_task<bool> du_cell_manager::start(du_cell_index_t cell_index)
   });
 }
 
-async_task<void> du_cell_manager::stop(du_cell_index_t cell_index)
+async_task<void> du_cell_manager::stop(du_cell_index_t cell_index) const
 {
   return launch_async([this, cell_index](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
@@ -227,13 +232,13 @@ async_task<void> du_cell_manager::stop(du_cell_index_t cell_index)
     cells[cell_index]->state = du_cell_context::state_t::inactive;
 
     // Stop cell in the MAC.
-    CORO_AWAIT(cfg.mac.cell_mng.get_cell_controller(cell_index).stop());
+    CORO_AWAIT(cfg.mac.mgr.get_cell_manager().get_cell_controller(cell_index).stop());
 
     CORO_RETURN();
   });
 }
 
-async_task<void> du_cell_manager::stop_all()
+async_task<void> du_cell_manager::stop_all() const
 {
   return launch_async([this, i = 0U](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
@@ -242,12 +247,22 @@ async_task<void> du_cell_manager::stop_all()
       if (cells[i] != nullptr and cells[i]->state == du_cell_context::state_t::active) {
         cells[i]->state = du_cell_context::state_t::inactive;
 
-        CORO_AWAIT(cfg.mac.cell_mng.get_cell_controller(to_du_cell_index(i)).stop());
+        CORO_AWAIT(cfg.mac.mgr.get_cell_manager().get_cell_controller(to_du_cell_index(i)).stop());
       }
     }
 
     CORO_RETURN();
   });
+}
+
+void du_cell_manager::remove_all_cells()
+{
+  for (unsigned i = 0; i != cells.size(); ++i) {
+    srsran_assert(cells[i] != nullptr, "Cell {} is null", i);
+    srsran_assert(cells[i]->state != du_cell_context::state_t::active, "Cell {} is still active", i);
+    cfg.mac.mgr.get_cell_manager().remove_cell(to_du_cell_index(i));
+  }
+  cells.clear();
 }
 
 du_cell_index_t du_cell_manager::get_cell_index(nr_cell_global_id_t nr_cgi) const

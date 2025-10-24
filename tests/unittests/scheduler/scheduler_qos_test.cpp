@@ -90,7 +90,7 @@ public:
     auto&                f1_params = pucch_basic_params.f0_or_f1_params.emplace<pucch_f1_params>();
     f1_params.nof_cyc_shifts       = pucch_nof_cyclic_shifts::twelve;
     f1_params.occ_supported        = true;
-    pucch_cfg_builder.setup(cell_cfg_list[0], pucch_basic_params);
+    pucch_cfg_builder.setup(cell_cfg(), pucch_basic_params);
   }
 
   void add_ue_with_drb_qos(logical_channel_config::qos_info drb_qos)
@@ -129,12 +129,12 @@ public:
     scheduler_test_simulator::run_slot();
 
     // Register DL sched bytes.
-    span<const dl_msg_alloc> ue_grants = this->last_sched_res_list[0]->dl.ue_grants;
+    span<const dl_msg_alloc> ue_grants = this->last_sched_result()->dl.ue_grants;
     for (const dl_msg_alloc& grant : ue_grants) {
       ue_stats_map[grant.context.ue_index].dl_bytes_sum += grant.pdsch_cfg.codewords[0].tb_size_bytes;
     }
     // Register UL sched bytes.
-    span<const ul_sched_info> ul_grants = this->last_sched_res_list[0]->ul.puschs;
+    span<const ul_sched_info> ul_grants = this->last_sched_result()->ul.puschs;
     for (const ul_sched_info& grant : ul_grants) {
       ue_stats_map[grant.context.ue_index].ul_bytes_sum += grant.pusch_cfg.tb_size_bytes;
     }

@@ -22,7 +22,7 @@
 
 #include "lib/scheduler/config/sched_config_manager.h"
 #include "lib/scheduler/slicing/slice_ue_repository.h"
-#include "lib/scheduler/ue_scheduling/ue_repository.h"
+#include "lib/scheduler/ue_context/ue_repository.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include <gtest/gtest.h>
@@ -66,6 +66,8 @@ protected:
     test_cfg.add_cell(req);
 
     next_slot = {to_numerology_value(req.scs_common), 0};
+
+    ue_db.add_cell(to_du_cell_index(0));
 
     slices.push_back(std::make_unique<slice_ue_repository>(SRB_RAN_SLICE_ID, du_cell_index_t(0)));
     slices.push_back(std::make_unique<slice_ue_repository>(DEFAULT_DRB_RAN_SLICE_ID, du_cell_index_t(0)));

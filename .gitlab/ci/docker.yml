@@ -44,6 +44,7 @@ no docker changes:
     - if: $ON_MR
       changes:
         - docker/docker-compose.yml
+        - docker/docker-compose.*.yml
         - docker/.env
         - docker/Dockerfile
         - docker/open5gs/**/*
@@ -160,9 +161,12 @@ gnb docker compose:
   script:
     - docker compose -f docker/docker-compose.yml build --build-arg NUM_JOBS=${KUBERNETES_CPU_LIMIT} --build-arg UHD_VERSION=${DOCKER_UHD_VERSION} --build-arg DPDK_VERSION=${DOCKER_DPDK_VERSION} gnb
     - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb which srscu"
+    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb which srscucp"
+    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb which srscuup"
     - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb which srsdu"
     - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb which srsdu_split_8"
     - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb which srsdu_split_7_2"
+    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb which srsdu_low"
     - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb which gnb"
     - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb which gnb_split_8"
     - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb which gnb_split_7_2"
@@ -192,11 +196,11 @@ grafana docker compose:
         paths:
           - docker/.env
           - docker/grafana/**/*
-          - docker/docker-compose.yml
+          - docker/docker-compose.ui.yml
     - if: $CI_DESCRIPTION =~ /Weekly/
       interruptible: false
   script:
-    - docker compose -f docker/docker-compose.yml run --no-deps grafana --version
+    - docker compose -f docker/docker-compose.ui.yml run --no-deps grafana --version
 
 influxdb and telegraf docker compose:
   extends: .docker compose
@@ -206,20 +210,20 @@ influxdb and telegraf docker compose:
         paths:
           - docker/.env
           - docker/telegraf/**/*
-          - docker/docker-compose.yml
+          - docker/docker-compose.ui.yml
     - if: $CI_DESCRIPTION =~ /Weekly/
       interruptible: false
   script:
-    - docker compose -f docker/docker-compose.yml up influxdb telegraf -d --wait
+    - docker compose -f docker/docker-compose.ui.yml up influxdb telegraf -d --wait
     - |
       echo '{"timestamp": 1750248119.559, "fake_metric": {"field": 0}}' | nc -u -w1 localhost 55555
     - |
-      if docker compose -f docker/docker-compose.yml logs telegraf | grep -E 'E!|error'; then
-        docker compose -f docker/docker-compose.yml down --volumes
+      if docker compose -f docker/docker-compose.ui.yml logs telegraf | grep -E 'E!|error'; then
+        docker compose -f docker/docker-compose.ui.yml down --volumes
         exit 1
       fi
-    - docker compose -f docker/docker-compose.yml logs
-    - docker compose -f docker/docker-compose.yml down --volumes
+    - docker compose -f docker/docker-compose.ui.yml logs
+    - docker compose -f docker/docker-compose.ui.yml down --volumes
 
 ################################################################################
 # Publish

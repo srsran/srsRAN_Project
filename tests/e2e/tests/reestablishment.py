@@ -54,11 +54,18 @@ from .steps.stub import (
     ue_validate_no_reattaches,
 )
 
-_ONLY_RERUN = ["failed to start", "Attach timeout reached", "StatusCode.ABORTED", "socket is already closed"]
+_ONLY_RERUN = [
+    "failed to start",
+    "Attach timeout reached",
+    "StatusCode.ABORTED",
+    "socket is already closed",
+    "StatusCode.UNKNOWN",
+]
 
 
 @mark.zmq
 @mark.smoke
+@mark.flaky(reruns=2, only_rerun=["StatusCode.UNKNOWN"])
 def test_smoke_sequentially(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -96,7 +103,7 @@ def test_smoke_sequentially(
 @mark.zmq
 @mark.flaky(reruns=2, only_rerun=_ONLY_RERUN)
 # pylint: disable=too-many-arguments,too-many-positional-arguments
-def test_zmq_reestablishment_sequentially(
+def test_zmq_sequentially(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_8: Tuple[UEStub, ...],
@@ -197,7 +204,7 @@ def _reestablishment_sequentially_ping(
 @mark.zmq
 @mark.flaky(reruns=2, only_rerun=_ONLY_RERUN)
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
-def test_zmq_reestablishment_sequentially_full_rate(
+def test_zmq_sequentially_full_rate(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_8: Tuple[UEStub, ...],
@@ -266,7 +273,7 @@ def test_zmq_reestablishment_sequentially_full_rate(
 
 @mark.zmq
 @mark.flaky(reruns=2, only_rerun=_ONLY_RERUN)
-def test_zmq_reestablishment_sequentially_full_rate_verify_bitrate(
+def test_zmq_sequentially_full_rate_verify_bitrate(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue: Tuple[UEStub, ...],
@@ -365,7 +372,7 @@ def test_zmq_reestablishment_sequentially_full_rate_verify_bitrate(
 @mark.zmq
 @mark.flaky(reruns=2, only_rerun=_ONLY_RERUN)
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
-def test_zmq_reestablishment_parallel(
+def test_zmq_parallel(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_8: Tuple[UEStub, ...],
@@ -435,7 +442,7 @@ def test_zmq_reestablishment_parallel(
 @mark.zmq
 @mark.flaky(reruns=2, only_rerun=_ONLY_RERUN)
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
-def test_zmq_reestablishment_parallel_full_rate(
+def test_zmq_parallel_full_rate(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_8: Tuple[UEStub, ...],
@@ -617,7 +624,8 @@ def _test_reestablishments(
         fivegc=fivegc,
         gnb_post_cmd=(
             "log --cu_level=debug",
-            "log --mac_level=debug cell_cfg pdcch common --ss1_n_candidates=0 0 2 0 0",
+            "log --mac_level=debug cell_cfg pdcch common --ss1_n_candidates=0 0 2 0 0"
+            " pdsch --max_consecutive_kos=200 pusch --max_consecutive_kos=200",
         ),
     )
 

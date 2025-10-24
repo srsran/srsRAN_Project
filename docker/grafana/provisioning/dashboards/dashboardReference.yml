@@ -26,5 +26,5 @@ providers:
     type: file
     updateIntervalSeconds: 30
     options:
-      path: /etc/dashboards
+      path: /usr/share/grafana/public/dashboards
       foldersFromFilesStructure: true

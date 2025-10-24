@@ -60,7 +60,7 @@ public:
     // Generate random data for populating the buffers.
     std::uniform_real_distribution<float> sample_dist(-1, 1);
     std::generate(random_data.begin(), random_data.end(), [this, &sample_dist]() {
-      return cf_t(sample_dist(rgen), sample_dist(rgen));
+      return to_ci16(cf_t(sample_dist(rgen) * INT16_MAX, sample_dist(rgen) * INT16_MAX));
     });
 
     // Calculate symbol sizes in a subframe.
@@ -89,11 +89,11 @@ public:
 
     // Generate random data.
     for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
-      span<cf_t> buffer_view = buffer->get_writer()[i_port];
+      span<ci16_t> buffer_view = buffer->get_writer()[i_port];
       std::generate(buffer_view.begin(), buffer_view.end(), [this]() {
         unsigned index    = random_data_index;
         random_data_index = (random_data_index + 1) % random_data.size();
-        return random_data[index];
+        return to_ci16(cf_t(random_data[index].real() * INT16_MAX, random_data[index].imag() * INT16_MAX));
       });
     }
 

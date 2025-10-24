@@ -49,14 +49,16 @@ public:
     /// Notifies the call to configure grid.
     void on_configure_grid(slot_point slot_)
     {
-      slot           = slot_;
-      time_configure = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+      slot = slot_;
+      time_configure.store(std::chrono::high_resolution_clock::now().time_since_epoch().count(),
+                           std::memory_order_relaxed);
     }
 
     /// Notifies the call to finish PDU.
     void on_finish_processing_pdus()
     {
-      time_finish_processing_pdu = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+      time_finish_processing_pdu.store(std::chrono::high_resolution_clock::now().time_since_epoch().count(),
+                                       std::memory_order_relaxed);
     }
 
     /// Gets the reference to the gateway notifier.
@@ -70,13 +72,13 @@ public:
       auto end_tp = std::chrono::high_resolution_clock::now();
 
       // Recover slot configure time point.
-      std::chrono::high_resolution_clock::time_point configure_tp =
-          std::chrono::high_resolution_clock::time_point(std::chrono::steady_clock::duration(time_configure));
+      std::chrono::high_resolution_clock::time_point configure_tp = std::chrono::high_resolution_clock::time_point(
+          std::chrono::steady_clock::duration(time_configure.load(std::memory_order_relaxed)));
 
       // Recover finish processing PDU time point
       std::chrono::high_resolution_clock::time_point finish_processing_pdu_tp =
           std::chrono::high_resolution_clock::time_point(
-              std::chrono::steady_clock::duration(time_finish_processing_pdu));
+              std::chrono::steady_clock::duration(time_finish_processing_pdu.load(std::memory_order_relaxed)));
 
       // Notify metrics.
       notifier.on_new_metric({.slot              = slot,

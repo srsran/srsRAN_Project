@@ -122,6 +122,7 @@ public:
       logger.log_warning("Status transfer applied to bearer with non-zero state. st={} count={}", st, count);
     }
     st = {count, count, count};
+    logger.log_info("Setted PDCP RX state. {}", st);
   }
 
   /// \brief Retrun awaitable to wait for cripto tasks to be

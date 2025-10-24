@@ -45,7 +45,7 @@ public:
   /// \brief Initialize byte_buffer_segment with a given buffer and headroom size. The payload size is set to 0 and the
   /// tailroom size will be equal to the given buffer size minus the headroom size.
   ///
-  /// \param buffer_ Buffer where bytes will be stored.
+  /// \param buffer_   Buffer where bytes will be stored.
   /// \param headroom_ Initial size of the headroom.
   explicit byte_buffer_segment(span<uint8_t> buffer_, size_t headroom_) :
     buffer(buffer_), payload(buffer_.subspan(headroom_, 0))

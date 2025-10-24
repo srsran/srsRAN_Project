@@ -51,8 +51,8 @@ public:
   concurrent_queue_wait_policy wait_policy() const { return wpolicy; }
 
   virtual void                               request_stop()                    = 0;
-  virtual bool                               push_blocking(unique_task task)   = 0;
   virtual bool                               try_push(unique_task task)        = 0;
+  virtual void                               push_blocking(unique_task task)   = 0;
   virtual bool                               try_pop(unique_task& t)           = 0;
   virtual size_t                             try_pop_bulk(span<unique_task> t) = 0;
   virtual size_t                             size() const                      = 0;
@@ -86,14 +86,7 @@ public:
       q.request_stop();
     }
   }
-  bool push_blocking(unique_task task) override
-  {
-    if constexpr (WaitPolicy != concurrent_queue_wait_policy::non_blocking) {
-      return q.push_blocking(std::move(task));
-    }
-    report_fatal_error("Blocking API not supported for this type");
-    return false;
-  }
+  void   push_blocking(unique_task task) override { q.push_blocking(std::move(task)); }
   bool   try_push(unique_task task) override { return q.try_push(std::move(task)); }
   bool   try_pop(unique_task& t) override { return q.try_pop(t); }
   size_t try_pop_bulk(span<unique_task> batch) override { return q.try_pop_bulk(batch); }
@@ -162,10 +155,10 @@ void detail::priority_task_queue::request_stop()
   }
 }
 
-bool detail::priority_task_queue::push_blocking(task_priority prio, unique_task task)
+void detail::priority_task_queue::push_blocking(task_priority prio, unique_task task)
 {
   const size_t idx = get_queue_idx(prio);
-  return queues[idx]->push_blocking(std::move(task));
+  queues[idx]->push_blocking(std::move(task));
 }
 
 bool detail::priority_task_queue::try_push(task_priority prio, unique_task task)

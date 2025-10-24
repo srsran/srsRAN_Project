@@ -23,7 +23,7 @@
 #include "srsran/du/du_low/du_low_executor_mapper.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/phy/upper/upper_phy_execution_configuration.h"
-#include "srsran/support/executors/concurrent_metrics_executor.h"
+#include "srsran/support/executors/executor_decoration_factory.h"
 #include "srsran/support/executors/inline_task_executor.h"
 #include "srsran/support/executors/strand_executor.h"
 #include "srsran/support/executors/task_fork_limiter.h"
@@ -33,6 +33,47 @@ using namespace srsran;
 using namespace srs_du;
 
 namespace {
+
+/// Helper class to decorate executors with extra functionalities.
+struct executor_decorator {
+  template <typename Exec, typename Tracer = detail::null_event_tracer>
+  task_executor& decorate(Exec&&                             exec,
+                          bool                               is_sync,
+                          bool                               tracing_enabled,
+                          std::optional<unsigned>            throttle_thres,
+                          executor_metrics_channel_registry* metrics_channel_registry,
+                          const std::string&                 exec_name = "",
+                          Tracer*                            tracer    = nullptr)
+  {
+    if (not is_sync and not tracing_enabled and not metrics_channel_registry and not throttle_thres) {
+      // No decoration needed, return the original executor.
+      return exec;
+    }
+
+    execution_decoration_config cfg;
+    if (is_sync) {
+      cfg.sync = execution_decoration_config::sync_option{};
+    }
+    if (throttle_thres.has_value()) {
+      cfg.throttle = execution_decoration_config::throttle_option{*throttle_thres};
+    }
+    if (metrics_channel_registry != nullptr) {
+      if constexpr (std::is_same_v<Tracer, file_event_tracer<true>>) {
+        cfg.metrics.emplace(exec_name, *metrics_channel_registry, tracing_enabled, tracer);
+      } else {
+        cfg.metrics.emplace(exec_name, *metrics_channel_registry, tracing_enabled);
+      }
+    } else if (tracing_enabled) {
+      cfg.trace = execution_decoration_config::trace_option{exec_name};
+    }
+    decorators.push_back(decorate_executor(std::forward<Exec>(exec), cfg));
+
+    return *decorators.back();
+  }
+
+private:
+  std::vector<std::unique_ptr<task_executor>> decorators;
+};
 
 class du_low_executor_mapper_impl : public du_low_executor_mapper
 {
@@ -109,27 +150,44 @@ public:
     srsran_assert(phy_config.prach_executor.is_valid(), "Invalid PRACH executor.");
     srsran_assert(phy_config.srs_executor.is_valid(), "Invalid SRS executor.");
 
-    if (config.metrics.has_value()) {
-      const du_low_executor_mapper_metric_config& metrics_config = *config.metrics;
-      phy_config.pdcch_executor  = wrap_executor_with_metric(phy_config.pdcch_executor, "pdcch_exec", metrics_config);
-      phy_config.pdsch_executor  = wrap_executor_with_metric(phy_config.pdsch_executor, "pdsch_exec", metrics_config);
-      phy_config.ssb_executor    = wrap_executor_with_metric(phy_config.ssb_executor, "ssb_exec", metrics_config);
-      phy_config.csi_rs_executor = wrap_executor_with_metric(phy_config.csi_rs_executor, "csi_rs_exec", metrics_config);
-      phy_config.prs_executor    = wrap_executor_with_metric(phy_config.prs_executor, "prs_exec", metrics_config);
+    if (config.exec_metrics_channel_registry || config.executor_tracing_enable) {
+      bool                               executor_tracing_enable  = config.executor_tracing_enable;
+      executor_metrics_channel_registry* metrics_channel_registry = config.exec_metrics_channel_registry;
+
+      phy_config.pdcch_executor = wrap_executor_with_metric_tracing(
+          phy_config.pdcch_executor, "pdcch_exec", executor_tracing_enable, metrics_channel_registry);
+      phy_config.pdsch_executor = wrap_executor_with_metric_tracing(
+          phy_config.pdsch_executor, "pdsch_exec", executor_tracing_enable, metrics_channel_registry);
+      phy_config.ssb_executor = wrap_executor_with_metric_tracing(
+          phy_config.ssb_executor, "ssb_exec", executor_tracing_enable, metrics_channel_registry);
+      phy_config.csi_rs_executor = wrap_executor_with_metric_tracing(
+          phy_config.csi_rs_executor, "csi_rs_exec", executor_tracing_enable, metrics_channel_registry);
+      phy_config.prs_executor = wrap_executor_with_metric_tracing(
+          phy_config.prs_executor, "prs_exec", executor_tracing_enable, metrics_channel_registry);
       if (phy_config.pdsch_codeblock_executor.is_valid()) {
-        phy_config.pdsch_codeblock_executor =
-            wrap_executor_with_metric(phy_config.pdsch_codeblock_executor, "pdsch_codeblock_exec", metrics_config);
+        phy_config.pdsch_codeblock_executor = wrap_executor_with_metric_tracing(phy_config.pdsch_codeblock_executor,
+                                                                                "pdsch_codeblock_exec",
+                                                                                config.executor_tracing_enable,
+                                                                                config.exec_metrics_channel_registry);
       }
-      phy_config.prach_executor = wrap_executor_with_metric(phy_config.prach_executor, "prach_exec", metrics_config);
-      phy_config.pusch_executor = wrap_executor_with_metric(phy_config.pusch_executor, "pusch_exec", metrics_config);
-      phy_config.pusch_ch_estimator_executor =
-          wrap_executor_with_metric(phy_config.pusch_ch_estimator_executor, "pusch_ch_est_exec", metrics_config);
+      phy_config.prach_executor = wrap_executor_with_metric_tracing(
+          phy_config.prach_executor, "prach_exec", executor_tracing_enable, metrics_channel_registry);
+      phy_config.pusch_executor = wrap_executor_with_metric_tracing(
+          phy_config.pusch_executor, "pusch_exec", executor_tracing_enable, metrics_channel_registry);
+      phy_config.pusch_ch_estimator_executor = wrap_executor_with_metric_tracing(phy_config.pusch_ch_estimator_executor,
+                                                                                 "pusch_ch_est_exec",
+                                                                                 config.executor_tracing_enable,
+                                                                                 config.exec_metrics_channel_registry);
       if (phy_config.pusch_decoder_executor.is_valid()) {
-        phy_config.pusch_decoder_executor =
-            wrap_executor_with_metric(phy_config.pusch_decoder_executor, "pusch_dec_exec", metrics_config);
+        phy_config.pusch_decoder_executor = wrap_executor_with_metric_tracing(phy_config.pusch_decoder_executor,
+                                                                              "pusch_dec_exec",
+                                                                              config.executor_tracing_enable,
+                                                                              config.exec_metrics_channel_registry);
       }
-      phy_config.pucch_executor = wrap_executor_with_metric(phy_config.pucch_executor, "pucch_exec", metrics_config);
-      phy_config.srs_executor   = wrap_executor_with_metric(phy_config.srs_executor, "srs_exec", metrics_config);
+      phy_config.pucch_executor = wrap_executor_with_metric_tracing(
+          phy_config.pucch_executor, "pucch_exec", executor_tracing_enable, metrics_channel_registry);
+      phy_config.srs_executor = wrap_executor_with_metric_tracing(
+          phy_config.srs_executor, "srs_exec", executor_tracing_enable, metrics_channel_registry);
     }
   }
 
@@ -225,14 +283,15 @@ private:
   }
 
   /// Wraps an executor with a metric decorator.
-  upper_phy_executor wrap_executor_with_metric(upper_phy_executor                          base_executor,
-                                               std::string                                 exec_name,
-                                               const du_low_executor_mapper_metric_config& config)
+  upper_phy_executor wrap_executor_with_metric_tracing(upper_phy_executor                 base_executor,
+                                                       std::string                        exec_name,
+                                                       bool                               tracing_enabled,
+                                                       executor_metrics_channel_registry* metrics_channel_registry)
   {
     srsran_assert(base_executor.is_valid(), "Invalid executor.");
-    executors.emplace_back(make_concurrent_metrics_executor_ptr(
-        exec_name, *base_executor.executor, config.sequential_executor, config.logger, config.period));
-    return {executors.back().get(), base_executor.max_concurrency};
+    auto* decorated_executor = &decorator.decorate(
+        *base_executor.executor, false, tracing_enabled, std::nullopt, metrics_channel_registry, exec_name);
+    return {decorated_executor, base_executor.max_concurrency};
   }
 
   /// Upper physical layer executor configuration.
@@ -242,7 +301,8 @@ private:
   /// Strands and task fork limiters used by the mapper.
   std::vector<std::variant<std::unique_ptr<priority_task_strand<task_executor&>>,
                            std::unique_ptr<task_fork_limiter<task_executor&>>>>
-      adaptors;
+                     adaptors;
+  executor_decorator decorator;
 };
 
 } // namespace

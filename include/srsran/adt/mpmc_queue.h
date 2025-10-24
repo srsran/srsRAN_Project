@@ -48,6 +48,11 @@ public:
   {
     return detail::queue_helper::try_push_bulk_generic(*this, batch);
   }
+  template <typename U>
+  void push_blocking(U&& elem)
+  {
+    queue.push(std::forward<U>(elem));
+  }
 
   [[nodiscard]] bool try_pop(T& elem) { return queue.try_pop(elem); }
 

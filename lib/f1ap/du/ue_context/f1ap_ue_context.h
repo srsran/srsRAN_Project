@@ -41,6 +41,7 @@ struct f1ap_ue_context {
   rnti_t                    rnti               = rnti_t::INVALID_RNTI;
   ue_rrc_state              rrc_state          = ue_rrc_state::no_config;
   bool                      marked_for_release = false;
+  du_cell_index_t           sp_cell_index      = INVALID_DU_CELL_INDEX;
 
   f1ap_ue_context(du_ue_index_t ue_index_, gnb_du_ue_f1ap_id_t du_f1ap_ue_id_) :
     ue_index(ue_index_), gnb_du_ue_f1ap_id(du_f1ap_ue_id_)

@@ -78,6 +78,7 @@ public:
                                                            std::move(pucch_proc),
                                                            std::move(srs),
                                                            std::move(grid),
+                                                           std::unique_ptr<phy_tap>(),
                                                            executors,
                                                            buffer_pool_spy,
                                                            results_notifier,

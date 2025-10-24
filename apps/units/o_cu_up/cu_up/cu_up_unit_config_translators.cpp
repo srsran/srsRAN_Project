@@ -99,14 +99,12 @@ void srsran::fill_cu_up_worker_manager_config(worker_manager_config& config, con
 {
   config.cu_up_cfg = worker_manager_config::cu_up_config{};
 
-  config.cu_up_cfg.value().dl_ue_executor_queue_size   = unit_cfg.exec_cfg.dl_ue_executor_queue_size;
-  config.cu_up_cfg.value().ul_ue_executor_queue_size   = unit_cfg.exec_cfg.ul_ue_executor_queue_size;
-  config.cu_up_cfg.value().ctrl_ue_executor_queue_size = unit_cfg.exec_cfg.ctrl_ue_executor_queue_size;
-  config.cu_up_cfg.value().strand_batch_size           = unit_cfg.exec_cfg.strand_batch_size;
-  config.cu_up_cfg.value().executor_tracing_enable     = unit_cfg.exec_cfg.executor_tracing_enable;
-  if (unit_cfg.metrics.layers_cfg.enable_cu_up_executor) {
-    config.cu_up_cfg.value().metrics_period = std::chrono::milliseconds(unit_cfg.metrics.cu_up_report_period);
-  }
+  config.cu_up_cfg->dl_ue_executor_queue_size   = unit_cfg.exec_cfg.dl_ue_executor_queue_size;
+  config.cu_up_cfg->ul_ue_executor_queue_size   = unit_cfg.exec_cfg.ul_ue_executor_queue_size;
+  config.cu_up_cfg->ctrl_ue_executor_queue_size = unit_cfg.exec_cfg.ctrl_ue_executor_queue_size;
+  config.cu_up_cfg->strand_batch_size           = unit_cfg.exec_cfg.strand_batch_size;
+  config.cu_up_cfg->executor_tracing_enable     = unit_cfg.exec_cfg.executor_tracing_enable;
+  config.cu_up_cfg->skip_cu_up_executor         = unit_cfg.metrics.layers_cfg.skip_cu_up_executor;
 
   auto& pcap_cfg = config.pcap_cfg;
   if (unit_cfg.pcap_cfg.e1ap.enabled) {

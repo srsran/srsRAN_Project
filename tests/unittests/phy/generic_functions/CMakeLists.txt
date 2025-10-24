@@ -28,8 +28,13 @@ add_subdirectory(transform_precoding)
 
 add_executable(dft_processor_test dft_processor_test.cpp)
 target_link_libraries(dft_processor_test srslog srsran_dft gtest gtest_main)
-
 add_test(dft_processor_test dft_processor_test)
+
+if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+    add_executable(dft_processor_ci16_test dft_processor_ci16_test.cpp)
+    target_link_libraries(dft_processor_ci16_test srslog srsran_dft gtest gtest_main)
+    add_test(dft_processor_ci16_test dft_processor_ci16_test)
+endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
 
 if ((ENABLE_MKL AND MKL_FOUND) OR (ENABLE_ARMPL AND ARMPL_FOUND) OR (ENABLE_FFTW AND FFTW3F_FOUND))
     target_compile_definitions(dft_processor_test PRIVATE HAVE_FFTW)

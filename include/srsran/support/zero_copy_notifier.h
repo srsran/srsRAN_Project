@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include <memory>
+
 namespace srsran {
 
 /// Notifier of objects of type T. The interface uses a builder type to minimize the amount of copying.

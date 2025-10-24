@@ -35,7 +35,8 @@ template <typename Result>
 class wait_manual_event_tester
 {
 public:
-  wait_manual_event_tester() {}
+  wait_manual_event_tester() = default;
+
   wait_manual_event_tester(const Result& r) : result(r) {}
   wait_manual_event_tester(Result&& r) : result(std::move(r)) {}
 
@@ -65,12 +66,13 @@ public:
       CORO_RETURN();
     });
   }
+
   manual_event_flag ready_ev;
 };
 
 template <typename R>
 struct lazy_task_launcher : public eager_async_task<R> {
-  lazy_task_launcher(async_task<R>& t_) : t(t_)
+  explicit lazy_task_launcher(async_task<R>& t_) : t(t_)
   {
     *static_cast<eager_async_task<R>*>(this) = launch_async([this](coro_context<eager_async_task<R>>& ctx) {
       CORO_BEGIN(ctx);
@@ -87,7 +89,7 @@ private:
 
 template <>
 struct lazy_task_launcher<void> : public eager_async_task<void> {
-  lazy_task_launcher(async_task<void>& t_) : t(t_)
+  explicit lazy_task_launcher(async_task<void>& t_) : t(t_)
   {
     *static_cast<eager_async_task<void>*>(this) = launch_async([this](coro_context<eager_async_task<void>>& ctx) {
       CORO_BEGIN(ctx);

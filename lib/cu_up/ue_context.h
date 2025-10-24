@@ -135,9 +135,8 @@ public:
       CORO_AWAIT(execute_on_blocking(ue_exec_mapper->dl_pdu_executor(), timers));
       CORO_AWAIT(pdu_session_manager.await_crypto_tx_all_pdu_sessions());
 
-      // Return to UE control executor and stop UE specific executors.
+      // Return to UE control executor.
       CORO_AWAIT(execute_on_blocking(ue_exec_mapper->ctrl_executor(), timers));
-      CORO_AWAIT(ue_exec_mapper->stop());
 
       // Continuation in the original executor.
       CORO_AWAIT(execute_on_blocking(ctrl_executor, timers));

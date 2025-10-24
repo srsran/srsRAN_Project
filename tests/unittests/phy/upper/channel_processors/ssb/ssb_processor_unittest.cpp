@@ -21,9 +21,9 @@
  */
 
 #include "../../../support/resource_grid_test_doubles.h"
-#include "../../signal_processors/dmrs_pbch_processor_doubles.h"
-#include "../../signal_processors/pss_processor_doubles.h"
-#include "../../signal_processors/sss_processor_doubles.h"
+#include "../../signal_processors/ssb/dmrs_pbch_processor_doubles.h"
+#include "../../signal_processors/ssb/pss_processor_doubles.h"
+#include "../../signal_processors/ssb/sss_processor_doubles.h"
 #include "pbch_encoder_doubles.h"
 #include "pbch_modulator_doubles.h"
 #include "srsran/phy/upper/channel_processors/ssb/ssb_processor.h"

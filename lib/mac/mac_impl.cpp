@@ -28,7 +28,7 @@ using namespace srsran;
 mac_impl::mac_impl(const mac_config& params) :
   rnti_table(params.mac_cfg.initial_crnti),
   mac_sched(std::make_unique<srsran_scheduler_adapter>(
-      srsran_mac_sched_config{params.mac_cfg, params.ctrl_exec, params.sched_cfg},
+      srsran_mac_sched_config{params.mac_cfg, params.ctrl_exec, params.timers.get_timer_manager(), params.sched_cfg},
       rnti_table)),
   dl_unit(mac_dl_config{params.ue_exec_mapper,
                         params.cell_exec_mapper,

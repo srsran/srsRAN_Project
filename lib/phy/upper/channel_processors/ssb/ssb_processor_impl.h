@@ -25,9 +25,9 @@
 #include "srsran/phy/upper/channel_processors/ssb/pbch_encoder.h"
 #include "srsran/phy/upper/channel_processors/ssb/pbch_modulator.h"
 #include "srsran/phy/upper/channel_processors/ssb/ssb_processor.h"
-#include "srsran/phy/upper/signal_processors/dmrs_pbch_processor.h"
-#include "srsran/phy/upper/signal_processors/pss_processor.h"
-#include "srsran/phy/upper/signal_processors/sss_processor.h"
+#include "srsran/phy/upper/signal_processors/ssb/dmrs_pbch_processor.h"
+#include "srsran/phy/upper/signal_processors/ssb/pss_processor.h"
+#include "srsran/phy/upper/signal_processors/ssb/sss_processor.h"
 
 namespace srsran {
 

@@ -217,77 +217,86 @@ void srs_scheduler_impl::reconf_ue(const ue_cell_configuration& new_ue_cfg, cons
   add_ue_to_grid(new_ue_cfg, true);
 }
 
-void srs_scheduler_impl::handle_positioning_measurement_request(const positioning_measurement_request& req)
+void srs_scheduler_impl::handle_positioning_measurement_request(
+    const positioning_measurement_request::cell_info& cell_req)
 {
+  srsran_assert(cell_req.cell_index == cell_cfg.cell_index,
+                "Received positioning request for wrong cell: expected {}, got {}",
+                fmt::underlying(cell_cfg.cell_index),
+                fmt::underlying(cell_req.cell_index));
+
   // Ensure uniqueness of RNTI in the \c pending_pos_requests.
-  if (std::any_of(
-          pending_pos_requests.begin(),
-          pending_pos_requests.end(),
-          [&req](const positioning_measurement_request& prev_req) { return prev_req.pos_rnti == req.pos_rnti; })) {
+  if (std::any_of(pending_pos_requests.begin(),
+                  pending_pos_requests.end(),
+                  [&cell_req](const positioning_measurement_request::cell_info& prev_req) {
+                    return prev_req.pos_rnti == cell_req.pos_rnti;
+                  })) {
     // Avoid more than one positioning request per C-RNTI.
     logger.info("rnti={}: Positioning measurement request discarded. Cause: A previous request with the same RNTI is "
                 "currently active",
-                req.pos_rnti);
+                cell_req.pos_rnti);
     return;
   }
 
-  if (req.ue_index.has_value()) {
+  if (cell_req.ue_index.has_value()) {
     // It is a positioning request for a connected UE.
-    if (not ues.contains(req.ue_index.value())) {
+    if (not ues.contains(cell_req.ue_index.value())) {
       logger.warning("ue={}: Positioning measurement request discarded. Cause: Non-existent UE",
-                     fmt::underlying(req.ue_index.value()));
+                     fmt::underlying(cell_req.ue_index.value()));
       return;
     }
-    auto& u = ues[req.ue_index.value()];
-    if (u.crnti != req.pos_rnti) {
+    auto& u = ues[cell_req.ue_index.value()];
+    if (u.crnti != cell_req.pos_rnti) {
       logger.warning("ue={}: Positioning measurement request discarded. Cause: Incorrect C-RNTI",
-                     fmt::underlying(req.ue_index.value()));
+                     fmt::underlying(cell_req.ue_index.value()));
       return;
     }
     const auto& ul_cfg = u.get_pcell().cfg().init_bwp().ul_ded;
 
     if (not ul_cfg.has_value() or not ul_cfg->srs_cfg.has_value()) {
       logger.warning("ue={}: Positioning measurement request discarded. Cause: UE has no configured SRS config",
-                     fmt::underlying(req.ue_index.value()));
+                     fmt::underlying(cell_req.ue_index.value()));
       return;
     }
 
     // Register positioning request.
-    updated_ues.push_back({req.pos_rnti, ue_update::type_t::positioning_request});
-    pending_pos_requests.push_back(req);
+    updated_ues.push_back({cell_req.pos_rnti, ue_update::type_t::positioning_request});
+    pending_pos_requests.push_back(cell_req);
   } else {
     // It is a positioning measurement for a UE of another cell.
-    srsran_assert(not is_crnti(req.pos_rnti),
+    srsran_assert(not is_crnti(cell_req.pos_rnti),
                   "UEs of neighbor cells should be represented by RNTIs in the reserved range");
 
     // Add SRS config to slot wheel.
     bool res_added = false;
-    for (const auto& srs_res : req.srs_to_measure.srs_res_list) {
+    for (const auto& srs_res : cell_req.srs_to_measure.srs_res_list) {
       if (not srs_res.periodicity_and_offset.has_value()) {
         // Only periodic SRSs are handled at the moment.
         continue;
       }
-      add_resource(req.pos_rnti,
+      add_resource(cell_req.pos_rnti,
                    srs_res.periodicity_and_offset.value().period,
                    srs_res.periodicity_and_offset.value().offset,
                    srs_res.id.ue_res_id);
       res_added = true;
-      logger.debug("rnti={}: neighbor cell UE's SRS for positioning added to SRS scheduler", req.pos_rnti);
+      logger.debug("rnti={}: neighbor cell UE's SRS for positioning added to SRS scheduler", cell_req.pos_rnti);
     }
-    srsran_assert(res_added, "Invalid positioning measurement request for rnti={}", req.pos_rnti);
+    srsran_assert(res_added, "Invalid positioning measurement request for rnti={}", cell_req.pos_rnti);
 
     // Register positioning request.
-    pending_pos_requests.push_back(req);
-    updated_ues.push_back({req.pos_rnti, ue_update::type_t::positioning_request});
+    pending_pos_requests.push_back(cell_req);
+    updated_ues.push_back({cell_req.pos_rnti, ue_update::type_t::positioning_request});
   }
+
+  return;
 }
 
-void srs_scheduler_impl::handle_positioning_measurement_stop(du_cell_index_t cell_index, rnti_t pos_rnti)
+void srs_scheduler_impl::handle_positioning_measurement_stop(rnti_t pos_rnti)
 {
   auto it = std::find_if(
       pending_pos_requests.begin(),
       pending_pos_requests.end(),
-      [pos_rnti](const positioning_measurement_request& prev_req) { return prev_req.pos_rnti == pos_rnti; });
+      [pos_rnti](const positioning_measurement_request::cell_info& prev_req) { return prev_req.pos_rnti == pos_rnti; });
   if (it == pending_pos_requests.end()) {
     logger.warning("rnti={}: Positioning measurement could not be stopped. Cause: No matching positioning procedure "
                    "for the same RNTI",
@@ -308,7 +317,7 @@ void srs_scheduler_impl::handle_positioning_measurement_stop(du_cell_index_t cel
   // Update allocated SRSs.
   updated_ues.push_back({pos_rnti, ue_update::type_t::positioning_stop});
 
-  // Remote positioning request from pending list.
+  // Remove positioning request from pending list.
   pending_pos_requests.erase(it);
 }
 
@@ -378,8 +387,8 @@ bool srs_scheduler_impl::allocate_srs_opportunity(cell_slot_resource_allocator& 
   }
 
   // Check if there is a pending positioning request.
-  const positioning_measurement_request* pos_req = nullptr;
-  for (const positioning_measurement_request& pending_req : pending_pos_requests) {
+  const positioning_measurement_request::cell_info* pos_req = nullptr;
+  for (const auto& pending_req : pending_pos_requests) {
     if (pending_req.pos_rnti == srs_opportunity.rnti) {
       pos_req = &pending_req;
       break;

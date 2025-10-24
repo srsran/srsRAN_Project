@@ -27,6 +27,7 @@
 #include "srsran/phy/upper/channel_processors/ssb/ssb_processor.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/srsvec/bit.h"
+#include "srsran/srsvec/zero.h"
 
 namespace srsran {
 

@@ -275,8 +275,8 @@ public:
                                                               pci_t               old_pci_)
   {
     // Generate RRC Reestablishment Request.
-    byte_buffer rrc_container =
-        pack_ul_ccch_msg(create_rrc_reestablishment_request(old_rnti_, old_pci_, "1111010001000010"));
+    byte_buffer rrc_container = test_helpers::pack_ul_ccch_msg(
+        test_helpers::create_rrc_reestablishment_request(old_rnti_, old_pci_, "1111010001000010"));
 
     // Send Initial UL RRC Message to CU-CP.
     f1ap_message f1ap_init_ul_rrc_msg =
@@ -329,7 +329,7 @@ public:
   [[nodiscard]] bool ue_sends_rrc_setup_complete(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id)
   {
     // Generate RRC Setup Complete.
-    byte_buffer pdu = pack_ul_dcch_msg(create_rrc_setup_complete());
+    byte_buffer pdu = test_helpers::pack_ul_dcch_msg(test_helpers::create_rrc_setup_complete());
 
     // Prepend PDCP header and append MAC.
     if (!pdu.prepend(std::array<uint8_t, 2>{0x00U, 0x00U})) {
@@ -349,7 +349,7 @@ public:
   [[nodiscard]] bool ue_sends_rrc_reest_complete(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id)
   {
     // Generate RRC Reestablishment Complete.
-    byte_buffer pdu = pack_ul_dcch_msg(create_rrc_reestablishment_complete());
+    byte_buffer pdu = test_helpers::pack_ul_dcch_msg(test_helpers::create_rrc_reestablishment_complete());
 
     // Prepend PDCP header and append MAC.
     if (!pdu.prepend(std::array<uint8_t, 2>{0x00U, 0x00U})) {
@@ -523,7 +523,7 @@ TEST_F(cu_cp_reestablishment_test, when_reestablishment_succeeds_then_amf_is_con
       new_du_ue_id,
       this->find_ue_context(du_idx, new_du_ue_id)->cu_ue_id.value(),
       srb_id_t::srb1,
-      make_byte_buffer("00023a0c3f016f19764701bf0022808005f900788801002060000306805ed46e67").value());
+      make_byte_buffer("00023a0c3f016f19764701bf0022808005f9007888010020600003068014367cc5").value());
   get_du(du_idx).push_ul_pdu(ul_rrc_msg_transfer);
   ngap_message ngap_pdu;
   ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu));

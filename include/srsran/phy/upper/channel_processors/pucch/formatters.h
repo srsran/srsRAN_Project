@@ -24,7 +24,7 @@
 
 #include "srsran/phy/support/precoding_formatters.h"
 #include "srsran/phy/support/re_pattern_formatters.h"
-#include "srsran/phy/upper/channel_processors/ssb/ssb_processor.h"
+#include "srsran/phy/upper/channel_processors/pucch/pucch_processor.h"
 #include "srsran/phy/upper/channel_state_information_formatters.h"
 #include "srsran/ran/pucch/pucch_context_formatter.h"
 #include "srsran/support/format/delimited_formatter.h"
@@ -222,6 +222,8 @@ struct formatter<srsran::pucch_processor::format4_configuration> {
         ctx, "prb2={}", config.second_hop_prb.has_value() ? std::to_string(*config.second_hop_prb) : "na");
     helper.format_always(
         ctx, "symb=[{}, {})", config.start_symbol_index, config.start_symbol_index + config.nof_symbols);
+    helper.format_always(ctx, "occ={}", config.occ_index);
+    helper.format_always(ctx, "occ_len={}", config.occ_length);
 
     helper.format_if_verbose(ctx, "n_id_scr={}", config.n_id_scrambling);
     helper.format_if_verbose(ctx, "n_id_hop={}", config.n_id_hopping);
@@ -230,8 +232,6 @@ struct formatter<srsran::pucch_processor::format4_configuration> {
     helper.format_if_verbose(ctx, "ports={}", srsran::span<const uint8_t>(config.ports));
     helper.format_if_verbose(ctx, "pi2_bpsk={}", config.pi2_bpsk);
     helper.format_if_verbose(ctx, "add_dmrs={}", config.additional_dmrs);
-    helper.format_if_verbose(ctx, "occ={}", config.occ_index);
-    helper.format_if_verbose(ctx, "occ_len={}", config.occ_length);
 
     return ctx.out();
   }

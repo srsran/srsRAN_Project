@@ -33,7 +33,8 @@ using namespace srsran;
 namespace {
 
 // Valid SRS configuration used as a base for the test case.
-const srs_estimator_configuration base_config = {{0, 130, 8, 0},
+const srs_estimator_configuration base_config = {std::nullopt,
+                                                 {0, 130, 8, 0},
                                                  {srs_resource_configuration::one_two_four_enum(2),
                                                   srs_resource_configuration::one_two_four_enum(1),
                                                   12,

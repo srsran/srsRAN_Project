@@ -165,9 +165,9 @@ TEST_F(ngap_asn1_packer_test, when_unpack_init_ctx_extract_sec_params_correctly)
   security::sec_key              security_key_o;
   security::supported_algorithms inte_algos;
   security::supported_algorithms ciph_algos;
-  copy_asn1_key(security_key_o, request->security_key);
-  fill_supported_algorithms(inte_algos, request->ue_security_cap.nr_integrity_protection_algorithms);
-  fill_supported_algorithms(ciph_algos, request->ue_security_cap.nr_encryption_algorithms);
+  asn1_utils::copy_asn1_key(security_key_o, request->security_key);
+  asn1_utils::fill_supported_algorithms(inte_algos, request->ue_security_cap.nr_integrity_protection_algorithms);
+  asn1_utils::fill_supported_algorithms(ciph_algos, request->ue_security_cap.nr_encryption_algorithms);
   test_logger.debug("{}", inte_algos);
   test_logger.debug("{}", ciph_algos);
 

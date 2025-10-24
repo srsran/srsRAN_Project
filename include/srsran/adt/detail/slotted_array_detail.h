@@ -25,7 +25,6 @@
 #include "srsran/adt/span.h"
 
 namespace srsran {
-
 namespace detail {
 
 template <typename IdType>
@@ -35,5 +34,4 @@ struct cast_to_size_operator {
 };
 
 } // namespace detail
-
 } // namespace srsran

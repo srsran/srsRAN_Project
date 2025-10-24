@@ -130,6 +130,13 @@ public:
   /// Returns the estimated RSRP for the path between the given Rx port and Tx layer (linear scale).
   float get_rsrp(unsigned rx_port, unsigned tx_layer = 0) const { return rsrp[path_to_index(rx_port, tx_layer)]; }
 
+  /// Returns a view to the estimated RSRP for all Rx ports for the given Tx layer (linear scale).
+  span<const float> get_rsrp_all_ports(unsigned tx_layer = 0) const
+  {
+    unsigned start_idx = path_to_index(0, tx_layer);
+    return span<const float>(rsrp).subspan(start_idx, nof_rx_ports);
+  }
+
   /// Returns the estimated RSRP for the path between the given Rx port and Tx layer (dB scale).
   float get_rsrp_dB(unsigned rx_port, unsigned tx_layer = 0) const
   {
@@ -239,13 +246,11 @@ public:
   {
     // EPRE and RSRP are reported as a linear average of the results for all Rx ports.
     float    epre_lin      = 0.0F;
-    float    rsrp_lin      = 0.0F;
     unsigned best_rx_port  = 0;
     float    best_path_snr = 0.0F;
     for (unsigned i_rx_port = 0; i_rx_port != nof_rx_ports; ++i_rx_port) {
       // Accumulate EPRE and RSRP values.
       epre_lin += get_epre(i_rx_port);
-      rsrp_lin += get_rsrp(i_rx_port, 0);
 
       // Determine the Rx port with better SNR.
       float port_snr = get_snr(i_rx_port);
@@ -255,11 +260,12 @@ public:
       }
     }
 
+    // Set the RSRP according to the estimated values for each receive port. For now, only the RSRP of layer 0 is used.
+    csi.set_rsrp_lin(get_rsrp_all_ports());
+
     epre_lin /= static_cast<float>(nof_rx_ports);
-    rsrp_lin /= static_cast<float>(nof_rx_ports);
 
     csi.set_epre(convert_power_to_dB(epre_lin));
-    csi.set_rsrp(convert_power_to_dB(rsrp_lin));
 
     // Use the time alignment of the channel path with best SNR.
     csi.set_time_alignment(get_time_alignment(best_rx_port, 0));

@@ -39,9 +39,9 @@ TEST_F(e2_test_setup, ric_control_procedure_setup)
   // Generate e2sm-rc PRB-quota control message.
   std::vector<rrm_policy_ratio_group> rrm_policy_ratio_list_def;
   rrm_policy_ratio_group              rrm_policy_ratio_grp_def;
-  rrm_policy_ratio_grp_def.min_prb_policy_ratio = 10;
-  rrm_policy_ratio_grp_def.max_prb_policy_ratio = 20;
-  rrm_policy_ratio_grp_def.ded_prb_policy_ratio = 30;
+  rrm_policy_ratio_grp_def.minimum_ratio   = 10;
+  rrm_policy_ratio_grp_def.maximum_ratio   = 20;
+  rrm_policy_ratio_grp_def.dedicated_ratio = 30;
   rrm_policy_ratio_grp_def.policy_members_list.resize(2);
   rrm_policy_ratio_grp_def.policy_members_list[0].plmn_id = plmn_identity::parse("11111").value();
   rrm_policy_ratio_grp_def.policy_members_list[0].s_nssai =
@@ -51,9 +51,9 @@ TEST_F(e2_test_setup, ric_control_procedure_setup)
       s_nssai_t{slice_service_type{21}, slice_differentiator::create(21).value()};
 
   rrm_policy_ratio_list_def.push_back(rrm_policy_ratio_grp_def);
-  rrm_policy_ratio_grp_def.min_prb_policy_ratio = 14;
-  rrm_policy_ratio_grp_def.max_prb_policy_ratio = 25;
-  rrm_policy_ratio_grp_def.ded_prb_policy_ratio = 36;
+  rrm_policy_ratio_grp_def.minimum_ratio   = 14;
+  rrm_policy_ratio_grp_def.maximum_ratio   = 25;
+  rrm_policy_ratio_grp_def.dedicated_ratio = 36;
   rrm_policy_ratio_grp_def.policy_members_list.resize(1);
   rrm_policy_ratio_grp_def.policy_members_list[0].plmn_id = plmn_identity::parse("99999").value();
   rrm_policy_ratio_grp_def.policy_members_list[0].s_nssai =
@@ -75,9 +75,9 @@ TEST_F(e2_test_setup, ric_control_procedure_setup)
   for (unsigned g = 0, k = ctrl_config.rrm_policy_ratio_list.size(); g < k; ++g) {
     const auto& rrm_policy_ratio_def = rrm_policy_ratio_list_def[g];
     const auto& rrm_policy_ratio     = ctrl_config.rrm_policy_ratio_list[g];
-    ASSERT_EQ(*rrm_policy_ratio.min_prb_policy_ratio, rrm_policy_ratio_def.min_prb_policy_ratio);
-    ASSERT_EQ(*rrm_policy_ratio.max_prb_policy_ratio, rrm_policy_ratio_def.max_prb_policy_ratio);
-    ASSERT_EQ(*rrm_policy_ratio.ded_prb_policy_ratio, rrm_policy_ratio_def.ded_prb_policy_ratio);
+    ASSERT_EQ(*rrm_policy_ratio.minimum_ratio, rrm_policy_ratio_def.minimum_ratio);
+    ASSERT_EQ(*rrm_policy_ratio.maximum_ratio, rrm_policy_ratio_def.maximum_ratio);
+    ASSERT_EQ(*rrm_policy_ratio.dedicated_ratio, rrm_policy_ratio_def.dedicated_ratio);
     ASSERT_EQ(rrm_policy_ratio.policy_members_list.size(), rrm_policy_ratio_def.policy_members_list.size());
     for (unsigned i = 0, e = rrm_policy_ratio.policy_members_list.size(); i < e; ++i) {
       const auto& policy_member_def = rrm_policy_ratio_def.policy_members_list[i];
@@ -125,9 +125,9 @@ TEST_F(e2_test_setup, ric_control_procedure_packed)
 
   ASSERT_EQ(ctrl_config.rrm_policy_ratio_list.size(), 1);
   const auto& rrm_policy_ratio = ctrl_config.rrm_policy_ratio_list[0];
-  ASSERT_EQ(*rrm_policy_ratio.min_prb_policy_ratio, 10);
-  ASSERT_EQ(*rrm_policy_ratio.max_prb_policy_ratio, 30);
-  ASSERT_EQ(*rrm_policy_ratio.ded_prb_policy_ratio, 100);
+  ASSERT_EQ(*rrm_policy_ratio.minimum_ratio, 10);
+  ASSERT_EQ(*rrm_policy_ratio.maximum_ratio, 30);
+  ASSERT_EQ(*rrm_policy_ratio.dedicated_ratio, 100);
   ASSERT_EQ(rrm_policy_ratio.policy_members_list.size(), 1);
   const auto& policy_member = rrm_policy_ratio.policy_members_list[0];
   ASSERT_EQ(policy_member.plmn_id.to_string(), "12345");

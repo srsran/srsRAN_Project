@@ -91,7 +91,9 @@ struct pucch_f4_params {
   bool                             intraslot_freq_hopping{false};
   bool                             additional_dmrs{false};
   bool                             pi2_bpsk{false};
-  pucch_f4_occ_len                 occ_length{pucch_f4_occ_len::n2};
+  /// Indicates whether OCCs (as per \c PUCCH-format4, in \c PUCCH-Config, TS 38.331) are supported.
+  bool             occ_supported{false};
+  pucch_f4_occ_len occ_length{pucch_f4_occ_len::n2};
 };
 
 /// \brief Parameters for PUCCH configuration.

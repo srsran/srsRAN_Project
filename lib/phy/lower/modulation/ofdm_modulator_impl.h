@@ -74,7 +74,10 @@ public:
   }
 
   // See the interface for documentation.
-  void set_center_frequency(double center_frequency_Hz) override { next_center_freq_Hz = center_frequency_Hz; }
+  void set_center_frequency(double center_frequency_Hz) override
+  {
+    next_center_freq_Hz.store(center_frequency_Hz, std::memory_order_relaxed);
+  }
 
   // See the interface for documentation.
   void

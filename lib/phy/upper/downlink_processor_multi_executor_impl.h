@@ -195,7 +195,7 @@ private:
   static_vector<pdcch_processor::pdu_t, MAX_DL_PDCCH_PDUS_PER_SLOT + MAX_UL_PDCCH_PDUS_PER_SLOT> pdcch_list;
   static_vector<pdsch_proc_args, MAX_PDSCH_PDUS_PER_SLOT>                                        pdsch_list;
   static_vector<ssb_processor::pdu_t, MAX_SSB_PER_SLOT>                                          ssb_list;
-  static_vector<nzp_csi_rs_generator::config_t, MAX_SSB_PER_SLOT>                                nzp_csi_rs_list;
+  static_vector<nzp_csi_rs_generator::config_t, MAX_CSI_RS_PDUS_PER_SLOT>                        nzp_csi_rs_list;
   static_vector<prs_generator_configuration, MAX_PRS_PDUS_PER_SLOT>                              prs_list;
   /// @}
   /// \defgroup phy_chan_processors

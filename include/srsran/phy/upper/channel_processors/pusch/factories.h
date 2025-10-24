@@ -33,7 +33,8 @@
 #include "srsran/phy/upper/channel_processors/uci/factories.h"
 #include "srsran/phy/upper/channel_processors/uci/uci_decoder.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
-#include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
+#include "srsran/phy/upper/signal_processors/pusch/factories.h"
+#include "srsran/srslog/logger.h"
 #include <memory>
 
 namespace srsran {

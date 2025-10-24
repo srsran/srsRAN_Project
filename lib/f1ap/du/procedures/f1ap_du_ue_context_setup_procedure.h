@@ -56,7 +56,7 @@ private:
   async_task<bool> handle_rrc_container();
 
   /// Gets the cell index that matches the given NR-CGI from the F1AP DU context.
-  expected<unsigned> get_cell_index_from_nr_cgi(nr_cell_global_id_t nr_cgi) const;
+  expected<du_cell_index_t> get_cell_index_from_nr_cgi(nr_cell_global_id_t nr_cgi) const;
 
   /// Returns the name of this procedure.
   static const char* name() { return "UE Context Setup"; }
@@ -69,8 +69,8 @@ private:
 
   f1ap_du_ue* ue = nullptr;
 
-  const f1ap_du_context& du_ctxt;
-  expected<unsigned>     sp_cell_index = 0;
+  const f1ap_du_context&    du_ctxt;
+  expected<du_cell_index_t> sp_cell_index = make_unexpected(default_error_t());
 
   std::optional<f1ap_ue_context_creation_response> du_ue_create_response;
   f1ap_ue_context_update_response                  du_ue_cfg_response;

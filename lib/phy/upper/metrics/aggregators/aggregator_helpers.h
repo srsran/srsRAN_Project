@@ -30,8 +30,8 @@ namespace srsran {
 /// Atomically compares and updates the values of the passed atomics if the respective condition is true.
 inline void update_minmax(uint64_t new_value, std::atomic<uint64_t>& max, std::atomic<uint64_t>& min)
 {
-  auto current_min = min.load();
-  auto current_max = max.load();
+  auto current_min = min.load(std::memory_order_relaxed);
+  auto current_max = max.load(std::memory_order_relaxed);
   while (new_value < current_min && !min.compare_exchange_weak(current_min, new_value)) {
   }
   while (new_value > current_max && !max.compare_exchange_weak(current_max, new_value)) {
@@ -74,7 +74,7 @@ constexpr slot_point unpack_slot(uint64_t packed)
 inline void update_slotmax(slot_point slot, uint64_t duration_ns, std::atomic<uint64_t>& max_packed)
 {
   uint64_t new_packed         = pack_slot_and_duration(slot, duration_ns);
-  auto     current_max_packed = max_packed.load();
+  auto     current_max_packed = max_packed.load(std::memory_order_relaxed);
   while (duration_ns > unpack_duration(current_max_packed) &&
          !max_packed.compare_exchange_weak(current_max_packed, new_packed)) {
   }
@@ -84,7 +84,7 @@ inline void update_slotmax(slot_point slot, uint64_t duration_ns, std::atomic<ui
 inline void update_slotmin(slot_point slot, uint64_t duration_ns, std::atomic<uint64_t>& min_packed)
 {
   uint64_t new_packed         = pack_slot_and_duration(slot, duration_ns);
-  auto     current_max_packed = min_packed.load();
+  auto     current_max_packed = min_packed.load(std::memory_order_relaxed);
   while (duration_ns < unpack_duration(current_max_packed) &&
          !min_packed.compare_exchange_weak(current_max_packed, new_packed)) {
   }

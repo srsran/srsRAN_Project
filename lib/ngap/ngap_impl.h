@@ -32,7 +32,6 @@
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_configuration.h"
 #include "srsran/ngap/ngap_ue_radio_capability_management.h"
-#include "srsran/support/compiler.h"
 #include "srsran/support/executors/task_executor.h"
 #include <memory>
 
@@ -53,21 +52,21 @@ public:
   bool
   update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index, ngap_cu_cp_ue_notifier& new_ue_notifier) override;
 
-  // ngap connection manager functions
+  // NGAP connection manager functions.
   bool                             handle_amf_tnl_connection_request() override;
   async_task<void>                 handle_amf_disconnection_request() override;
   async_task<ngap_ng_setup_result> handle_ng_setup_request(unsigned max_setup_retries) override;
-  async_task<void>                 handle_ng_reset_message(const cu_cp_ng_reset& msg) override;
+  async_task<void>                 handle_ng_reset_message(const cu_cp_reset& msg) override;
 
-  // ngap_nas_message_handler
+  // ngap_nas_message_handler.
   void handle_initial_ue_message(const cu_cp_initial_ue_message& msg) override;
   void handle_ul_nas_transport_message(const cu_cp_ul_nas_transport& msg) override;
 
-  // ngap_ue_radio_capability_management_handler
+  // ngap_ue_radio_capability_management_handler.
   void
   handle_tx_ue_radio_capability_info_indication_required(const ngap_ue_radio_capability_info_indication& msg) override;
 
-  // ngap message handler functions
+  // NGAP message handler functions.
   void handle_message(const ngap_message& msg) override;
   void handle_connection_loss() override {}
 
@@ -76,24 +75,26 @@ public:
   async_task<ngap_handover_preparation_response>
        handle_handover_preparation_request(const ngap_handover_preparation_request& msg) override;
   void handle_ul_ran_status_transfer(const ngap_ul_ran_status_transfer& ul_ran_status_transfer) override;
-  void handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
-                                             const nr_cell_global_id_t& cgi,
-                                             const unsigned             tac) override;
+  async_task<expected<ngap_dl_ran_status_transfer>>
+                        handle_dl_ran_status_transfer_required(ue_index_t ue_index) override;
+  void                  handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
+                                                              const nr_cell_global_id_t& cgi,
+                                                              const unsigned             tac) override;
   const ngap_context_t& get_ngap_context() const override { return context; }
   void             handle_ul_ue_associated_nrppa_transport(ue_index_t ue_index, const byte_buffer& nrppa_pdu) override;
   async_task<void> handle_ul_non_ue_associated_nrppa_transport(const byte_buffer& nrppa_pdu) override;
 
-  // ngap_metrics_handler
+  // ngap_metrics_handler.
   ngap_info handle_ngap_metrics_report_request() const override;
 
-  // ngap_statistics_handler
+  // ngap_statistics_handler.
   size_t get_nof_ues() const override { return ue_ctxt_list.size(); }
 
-  // ngap_ue_context_removal_handler
+  // ngap_ue_context_removal_handler.
   void remove_ue_context(ue_index_t ue_index) override;
 
-  // ngap_ue_id_translator
-  ue_index_t  get_ue_index(const amf_ue_id_t& amf_ue_id) override;
+  // ngap_ue_id_translator.
+  ue_index_t  get_ue_index(const amf_ue_id_t& amf_ue_ngap_id) override;
   amf_ue_id_t get_amf_ue_id(const ue_index_t& ue_index) override;
 
   ngap_message_handler&                        get_ngap_message_handler() override { return *this; }
@@ -179,6 +180,10 @@ private:
   /// \param[in] msg The received handover request message.
   void handle_handover_request(const asn1::ngap::ho_request_s& msg);
 
+  /// \brief Handle the reception of the DL RAN Status Transfer message.
+  /// \param[in] msg The received DL RAN Status Transfer.
+  void handle_dl_ran_status_transfer(const asn1::ngap::dl_ran_status_transfer_s& msg);
+
   /// \brief Notifiy about the reception of a DL UE Associated NRPPA Transport message.
   void handle_dl_ue_associated_nrppa_transport(const asn1::ngap::dl_ue_associated_nrppa_transport_s& msg);
 
@@ -212,6 +217,12 @@ private:
   /// \param[in] amf_ue_ngap_id The received AMF-UE-NGAP-ID.
   /// \return True if the pair is consistent, false otherwise.
   [[nodiscard]] bool validate_consistent_ue_id_pair(ran_ue_id_t ran_ue_ngap_id, amf_ue_id_t amf_ue_ngap_id);
+
+  /// \brief Handles an inconsistent UE id pair. It releases the old UE context and sends an error indication to the
+  /// AMF.
+  /// \param[in] ran_ue_ngap_id The inconsistent RAN-UE-NGAP-ID.
+  /// \param[in] amf_ue_ngap_id The inconsistent AMF-UE-NGAP-ID.
+  void handle_inconsistent_ue_id_pair(ran_ue_id_t ran_ue_ngap_id, amf_ue_id_t amf_ue_ngap_id);
 
   /// \brief Log NGAP RX PDU.
   void log_rx_pdu(const ngap_message& msg);

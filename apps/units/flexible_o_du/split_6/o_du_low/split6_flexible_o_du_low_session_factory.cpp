@@ -29,6 +29,7 @@
 #include "apps/units/flexible_o_du/split_7_2/helpers/ru_ofh_factories.h"
 #include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_config_validator.h"
 #include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_factories.h"
+#include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_helpers.h"
 #include "apps/units/flexible_o_du/split_helpers/flexible_o_du_configs.h"
 #include "external/fmt/include/fmt/chrono.h"
 #include "split6_constants.h"
@@ -254,6 +255,14 @@ split6_flexible_o_du_low_session_factory::create_o_du_low(const fapi::fapi_cell_
   fapi_sector.prach_ports                   = prach_ports;
   fapi_sector.scs                           = config.phy_cfg.scs;
   fapi_sector.scs_common                    = config.phy_cfg.scs;
+  fapi_sector.dBFS_calibration_value        = 1.F;
+  // When the sampling rate is provided, calculate the dBFS calibration value as sqrt(sampling rate / subcarrier
+  // spacing). This factor is the magnitude of a single subcarrier in normalized PHY linear units equivalent to
+  // a constant signal with a power of 0 dBFS.
+  if (sampling_rate_MHz) {
+    fapi_sector.dBFS_calibration_value = calculate_dBFS_calibration_value(*sampling_rate_MHz, config.phy_cfg.scs);
+  }
+
   // :TODO: add a parse option for the sector, so it will be easier to debug problems when running more than one
   // instance.
   fapi_sector.sector_id = 0;
@@ -357,6 +366,20 @@ get_ru_sdr_validation_dependencies(const fapi::fapi_cell_config& config)
   return out_cfg;
 }
 
+/// Derives the sampling rate from the frequency.
+static double derive_srate_MHz_from_bandwith(unsigned bandwidth_MHz)
+{
+  if (bandwidth_MHz <= 15) {
+    return 23.04;
+  } else if (bandwidth_MHz <= 30) {
+    return 46.08;
+  } else if (bandwidth_MHz <= 60) {
+    return 92.16;
+  }
+
+  return 184.32;
+}
+
 std::unique_ptr<radio_unit>
 split6_flexible_o_du_low_session_factory::create_radio_unit(split6_flexible_o_du_low_session& odu_low,
                                                             const fapi::fapi_cell_config&     config)
@@ -382,12 +405,18 @@ split6_flexible_o_du_low_session_factory::create_radio_unit(split6_flexible_o_du
   }
 
   if (const auto* cfg = std::get_if<ru_sdr_unit_config>(&ru_cfg)) {
+    ru_sdr_unit_config updated_srate_config = *cfg;
+    updated_srate_config.srate_MHz          = derive_srate_MHz_from_bandwith(config.carrier_cfg.dl_bandwidth);
+    // Update the samping rate.
+    sampling_rate_MHz.emplace(updated_srate_config.srate_MHz);
+
     auto ru_sdr_dependencies = get_ru_sdr_validation_dependencies(config);
-    if (!validate_ru_sdr_config(*cfg, ru_sdr_dependencies)) {
+    if (!validate_ru_sdr_config(updated_srate_config, ru_sdr_dependencies)) {
       return nullptr;
     }
 
-    return create_sdr_radio_unit(*cfg, ru_config, ru_dependencies, start_time_calc.calculate_start_time());
+    return create_sdr_radio_unit(
+        updated_srate_config, ru_config, ru_dependencies, start_time_calc.calculate_start_time());
   }
 
   report_error("Could not detect valid Radio Unit configuration");

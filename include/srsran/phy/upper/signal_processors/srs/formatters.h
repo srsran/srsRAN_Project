@@ -26,6 +26,7 @@
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator_result.h"
 #include "srsran/ran/srs/srs_channel_matrix.h"
 #include "srsran/ran/srs/srs_channel_matrix_formatters.h"
+#include "srsran/ran/srs/srs_context_formatter.h"
 #include "srsran/ran/srs/srs_resource_formatter.h"
 #include <limits>
 
@@ -49,6 +50,9 @@ struct formatter<srsran::srs_estimator_configuration> {
   template <typename FormatContext>
   auto format(const srsran::srs_estimator_configuration& config, FormatContext& ctx) const
   {
+    if (config.context) {
+      helper.format_always(ctx, "{}", *config.context);
+    }
     helper.format_if_verbose(ctx, "slot={}", config.slot);
     helper.format_always(ctx, "{}", config.resource);
     helper.format_if_verbose(ctx, "ports=[{}]", srsran::span<const uint8_t>(config.ports));

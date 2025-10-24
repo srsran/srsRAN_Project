@@ -278,8 +278,8 @@ int main(int argc, char** argv)
   parse_args(argc, argv);
 
   // Random data generator.
-  std::mt19937                          rgen(0);
-  std::uniform_real_distribution<float> dist(-1.0, +1.0);
+  std::mt19937                           rgen(0);
+  std::uniform_int_distribution<int16_t> dist(INT16_MIN, INT16_MAX);
 
   unsigned tx_rx_delay_samples = static_cast<unsigned>(sampling_rate_Hz * tx_rx_delay_s);
 
@@ -323,8 +323,8 @@ int main(int argc, char** argv)
       stream_config.channels.emplace_back(ch_config);
 
       // Generate random data in buffer.
-      span<cf_t> data = tx_baseband_buffers.back()[channel_idx];
-      for (cf_t& iq : data) {
+      span<ci16_t> data = tx_baseband_buffers.back()[channel_idx];
+      for (ci16_t& iq : data) {
         iq = {dist(rgen), dist(rgen)};
       }
     }
@@ -363,9 +363,9 @@ int main(int argc, char** argv)
   uint64_t sample_count      = 0;
 
   // Open file sink if mot empty.
-  std::unique_ptr<file_vector<cf_t>> rx_file;
+  std::unique_ptr<file_vector<ci16_t>> rx_file;
   if (!rx_filename.empty()) {
-    rx_file = std::make_unique<file_vector<cf_t>>(rx_filename.c_str(), openmode::write_only);
+    rx_file = std::make_unique<file_vector<ci16_t>>(rx_filename.c_str(), openmode::write_only);
   }
 
   // Counter for the number of empty transmission buffers.

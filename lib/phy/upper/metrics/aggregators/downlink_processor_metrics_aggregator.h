@@ -38,14 +38,15 @@ public:
   double get_avg_latency_us() const
   {
     return count.load(std::memory_order_relaxed)
-               ? static_cast<double>(sum_elapsed_finish_ns) / static_cast<double>(count) * 1e-3
+               ? static_cast<double>(sum_elapsed_finish_ns.load(std::memory_order_relaxed)) /
+                     static_cast<double>(count.load(std::memory_order_relaxed)) * 1e-3
                : 0;
   }
 
   /// Gets the minimum transmission latency in microseconds.
   double get_min_latency_us() const
   {
-    uint64_t min_latency_ns = unpack_duration(packed_min_latency_ns);
+    uint64_t min_latency_ns = unpack_duration(packed_min_latency_ns.load(std::memory_order_relaxed));
     return (min_latency_ns == unpack_duration(default_packed_min_latency_ns))
                ? 0
                : static_cast<double>(min_latency_ns) / 1000.0;
@@ -54,7 +55,7 @@ public:
   /// Gets the maximum transmission latency in microseconds and the slot point in which was detected.
   std::pair<double, slot_point> get_max_latency_us() const
   {
-    uint64_t   packed_max_latency = packed_max_latency_ns;
+    uint64_t   packed_max_latency = packed_max_latency_ns.load(std::memory_order_relaxed);
     uint64_t   max_latency_ns     = unpack_duration(packed_max_latency);
     slot_point slot               = unpack_slot(packed_max_latency);
     return {static_cast<double>(max_latency_ns) / 1000.0, slot};
@@ -63,12 +64,12 @@ public:
   /// Resets values of all internal counters.
   void reset()
   {
-    count                    = 0;
-    sum_elapsed_data_ns      = 0;
-    sum_elapsed_configure_ns = 0;
-    sum_elapsed_finish_ns    = 0;
-    packed_min_latency_ns    = default_packed_min_latency_ns;
-    packed_max_latency_ns    = default_packed_max_latency_ns;
+    count.store(0, std::memory_order_relaxed);
+    sum_elapsed_data_ns.store(0, std::memory_order_relaxed);
+    sum_elapsed_configure_ns.store(0, std::memory_order_relaxed);
+    sum_elapsed_finish_ns.store(0, std::memory_order_relaxed);
+    packed_min_latency_ns.store(default_packed_min_latency_ns, std::memory_order_relaxed);
+    packed_max_latency_ns.store(default_packed_max_latency_ns, std::memory_order_relaxed);
   }
 
 private:
@@ -80,12 +81,12 @@ private:
   // See interface for documentation.
   void on_new_metric(const downlink_processor_metrics& metrics) override
   {
-    sum_elapsed_data_ns += metrics.elapsed_data.count();
-    sum_elapsed_configure_ns += metrics.elapsed_configure.count();
-    sum_elapsed_finish_ns += metrics.elapsed_finish.count();
+    sum_elapsed_data_ns.fetch_add(metrics.elapsed_data.count(), std::memory_order_relaxed);
+    sum_elapsed_configure_ns.fetch_add(metrics.elapsed_configure.count(), std::memory_order_relaxed);
+    sum_elapsed_finish_ns.fetch_add(metrics.elapsed_finish.count(), std::memory_order_relaxed);
     update_slotmin(metrics.slot, metrics.elapsed_finish.count(), packed_min_latency_ns);
     update_slotmax(metrics.slot, metrics.elapsed_finish.count(), packed_max_latency_ns);
-    ++count;
+    count.fetch_add(1, std::memory_order_relaxed);
   }
 
   std::atomic<uint64_t> sum_elapsed_data_ns      = {};

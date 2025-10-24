@@ -238,12 +238,16 @@ void scheduler_impl::handle_paging_information(const sched_paging_information& p
 
 void scheduler_impl::handle_positioning_measurement_request(const positioning_measurement_request& req)
 {
-  srsran_assert(cells.contains(req.cell_index), "cell={} does not exist", fmt::underlying(req.cell_index));
-  cells[req.cell_index]->get_positioning_handler().handle_positioning_measurement_request(req);
+  for (const auto& cell_req : req.cells) {
+    srsran_assert(cells.contains(cell_req.cell_index), "cell={} does not exist", fmt::underlying(cell_req.cell_index));
+    cells[cell_req.cell_index]->get_positioning_handler().handle_positioning_measurement_request(cell_req);
+  }
 }
 
-void scheduler_impl::handle_positioning_measurement_stop(du_cell_index_t cell_index, rnti_t pos_rnti)
+void scheduler_impl::handle_positioning_measurement_stop(const positioning_measurement_stop_request& req)
 {
-  srsran_assert(cells.contains(cell_index), "cell={} does not exist", fmt::underlying(cell_index));
-  cells[cell_index]->get_positioning_handler().handle_positioning_measurement_stop(cell_index, pos_rnti);
+  for (const auto& [cell_index, pos_rnti] : req.completed_meas) {
+    srsran_assert(cells.contains(cell_index), "cell={} does not exist", fmt::underlying(cell_index));
+    cells[cell_index]->get_positioning_handler().handle_positioning_measurement_stop(pos_rnti);
+  }
 }

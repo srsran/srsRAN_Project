@@ -129,6 +129,19 @@ create_sched_ue_creation_request_for_srs_cfg(srs_periodicity                    
   return ue_req;
 }
 
+static positioning_measurement_request::cell_info make_positioning_cell_request(rnti_t                       pos_rnti,
+                                                                                std::optional<du_ue_index_t> ue_index,
+                                                                                du_cell_index_t              cell_index,
+                                                                                const srs_config& srs_to_measure)
+{
+  positioning_measurement_request::cell_info cell{};
+  cell.pos_rnti       = pos_rnti;
+  cell.ue_index       = ue_index;
+  cell.cell_index     = cell_index;
+  cell.srs_to_measure = srs_to_measure;
+  return cell;
+}
+
 namespace srs_periodicity_test {
 
 struct srs_test_params {
@@ -160,6 +173,7 @@ public:
       return *cell_cfg_list[to_du_cell_index(0)];
     }()},
     cell_harqs{MAX_NOF_DU_UES, MAX_NOF_HARQS, std::make_unique<dummy_harq_timeout_notifier>()},
+    cell_ues(ues.add_cell(to_du_cell_index(0))),
     srs_sched(cell_cfg, ues),
     current_sl_tx{to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
   {
@@ -174,6 +188,7 @@ public:
   const cell_configuration&      cell_cfg;
   cell_harq_manager              cell_harqs;
   ue_repository                  ues;
+  ue_cell_repository&            cell_ues;
   std::vector<ue_configuration>  ue_ded_cfgs;
   cell_resource_allocator        res_grid{cell_cfg};
   srs_scheduler_impl             srs_sched;
@@ -388,11 +403,11 @@ TEST_F(srs_positioning_scheduler_test, when_connected_ue_positioning_is_requeste
   // Positioning requested.
   auto& ue_srs_cfg = ues[to_du_ue_index(0)].ue_cfg_dedicated()->pcell_cfg().init_bwp().ul_ded->srs_cfg.value();
   this->srs_sched.handle_positioning_measurement_request(
-      positioning_measurement_request{rnti, to_du_ue_index(0), to_du_cell_index(0), ue_srs_cfg});
+      make_positioning_cell_request(rnti, to_du_ue_index(0), to_du_cell_index(0), ue_srs_cfg));
   ASSERT_TRUE(is_positioning_being_requested());
 
   // Positioning stops being requested.
-  this->srs_sched.handle_positioning_measurement_stop(to_du_cell_index(0), rnti);
+  this->srs_sched.handle_positioning_measurement_stop(rnti);
   ASSERT_FALSE(is_positioning_being_requested());
 }
 
@@ -407,7 +422,7 @@ TEST_F(srs_positioning_scheduler_test, when_neighbor_cell_ue_positioning_is_requ
       cell_cfg.tdd_cfg_common);
   auto& ue_srs_cfg = dummy_ue_req.cfg.cells.value().front().serv_cell_cfg.ul_config.value().init_ul_bwp.srs_cfg.value();
   this->srs_sched.handle_positioning_measurement_request(
-      positioning_measurement_request{pos_rnti, std::nullopt, to_du_cell_index(0), ue_srs_cfg});
+      make_positioning_cell_request(pos_rnti, std::nullopt, to_du_cell_index(0), ue_srs_cfg));
 
   // Positioning is being requested.
   const auto* pdu = this->next_srs_info(pos_rnti);
@@ -415,7 +430,7 @@ TEST_F(srs_positioning_scheduler_test, when_neighbor_cell_ue_positioning_is_requ
   ASSERT_TRUE(pdu->positioning_report_requested);
 
   // Stop positioning.
-  this->srs_sched.handle_positioning_measurement_stop(to_du_cell_index(0), pos_rnti);
+  this->srs_sched.handle_positioning_measurement_stop(pos_rnti);
 
   // Positioning stops being requested.
   // Note: given that some SRS were already scheduled in the grid, we have a transition period where SRSs are scheduled

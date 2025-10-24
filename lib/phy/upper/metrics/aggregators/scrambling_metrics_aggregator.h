@@ -38,7 +38,8 @@ public:
   double get_average_init_time_us() const
   {
     return init_count.load(std::memory_order_relaxed)
-               ? static_cast<double>(sum_init_elapsed_ns) / static_cast<double>(init_count) / 1000.0
+               ? static_cast<double>(sum_init_elapsed_ns.load(std::memory_order_relaxed)) /
+                     static_cast<double>(init_count.load(std::memory_order_relaxed)) / 1000.0
                : 0;
   }
 
@@ -46,7 +47,8 @@ public:
   double get_advance_rate_Mbps() const
   {
     return sum_advance_elapsed_ns.load(std::memory_order_relaxed)
-               ? static_cast<double>(sum_advance_nof_bits) / static_cast<double>(sum_advance_elapsed_ns) * 1000.0
+               ? static_cast<double>(sum_advance_nof_bits.load(std::memory_order_relaxed)) /
+                     static_cast<double>(sum_advance_elapsed_ns.load(std::memory_order_relaxed)) * 1000.0
                : 0;
   }
 
@@ -54,29 +56,36 @@ public:
   double get_generate_rate_Mbps() const
   {
     return sum_elapsed_ns.load(std::memory_order_relaxed)
-               ? static_cast<double>(sum_nof_bits) / static_cast<double>(sum_elapsed_ns) * 1000.0
+               ? static_cast<double>(sum_nof_bits.load(std::memory_order_relaxed)) /
+                     static_cast<double>(sum_elapsed_ns.load(std::memory_order_relaxed)) * 1000.0
                : 0;
   }
 
   /// Gets the total time spent by the scrambler.
-  std::chrono::nanoseconds get_total_time() const { return std::chrono::nanoseconds(sum_elapsed_ns); }
+  std::chrono::nanoseconds get_total_time() const
+  {
+    return std::chrono::nanoseconds(sum_elapsed_ns.load(std::memory_order_relaxed));
+  }
 
   /// Gets the CPU usage in microseconds of scrambling operations.
   double get_cpu_usage_us() const
   {
-    return static_cast<double>(sum_init_elapsed_ns + sum_advance_elapsed_ns + sum_elapsed_ns) / 1000.0;
+    return static_cast<double>(sum_init_elapsed_ns.load(std::memory_order_relaxed) +
+                               sum_advance_elapsed_ns.load(std::memory_order_relaxed) +
+                               sum_elapsed_ns.load(std::memory_order_relaxed)) /
+           1000.0;
   }
 
   /// Resets values of all internal counters.
   void reset()
   {
-    sum_init_elapsed_ns    = 0;
-    init_count             = 0;
-    sum_advance_nof_bits   = 0;
-    sum_advance_elapsed_ns = 0;
-    sum_nof_bits           = 0;
-    sum_elapsed_ns         = 0;
-    count                  = 0;
+    sum_init_elapsed_ns.store(0, std::memory_order_relaxed);
+    init_count.store(0, std::memory_order_relaxed);
+    sum_advance_nof_bits.store(0, std::memory_order_relaxed);
+    sum_advance_elapsed_ns.store(0, std::memory_order_relaxed);
+    sum_nof_bits.store(0, std::memory_order_relaxed);
+    sum_elapsed_ns.store(0, std::memory_order_relaxed);
+    count.store(0, std::memory_order_relaxed);
   }
 
 private:
@@ -85,23 +94,23 @@ private:
   {
     switch (metrics.method) {
       case pseudo_random_sequence_generator_metrics::methods::init:
-        sum_init_elapsed_ns += metrics.measurements.duration.count();
-        ++init_count;
+        sum_init_elapsed_ns.fetch_add(metrics.measurements.duration.count(), std::memory_order_relaxed);
+        init_count.fetch_add(1, std::memory_order_relaxed);
         break;
       case pseudo_random_sequence_generator_metrics::methods::advance:
-        sum_advance_nof_bits += metrics.nof_bits;
-        sum_advance_elapsed_ns += metrics.measurements.duration.count();
+        sum_advance_nof_bits.fetch_add(metrics.nof_bits, std::memory_order_relaxed);
+        sum_advance_elapsed_ns.fetch_add(metrics.measurements.duration.count(), std::memory_order_relaxed);
         break;
       case pseudo_random_sequence_generator_metrics::methods::apply_xor_soft_bit:
       case pseudo_random_sequence_generator_metrics::methods::apply_xor_unpacked:
       case pseudo_random_sequence_generator_metrics::methods::apply_xor_packed:
       case pseudo_random_sequence_generator_metrics::methods::generate_bit_packed:
       case pseudo_random_sequence_generator_metrics::methods::generate_float:
-        sum_nof_bits += metrics.nof_bits;
-        sum_elapsed_ns += metrics.measurements.duration.count();
+        sum_nof_bits.fetch_add(metrics.nof_bits, std::memory_order_relaxed);
+        sum_elapsed_ns.fetch_add(metrics.measurements.duration.count(), std::memory_order_relaxed);
         break;
     }
-    ++count;
+    count.fetch_add(1, std::memory_order_relaxed);
   }
 
   std::atomic<uint64_t> sum_init_elapsed_ns    = {};

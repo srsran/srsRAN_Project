@@ -25,6 +25,7 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/srs/srs_constants.h"
+#include "srsran/ran/srs/srs_context.h"
 #include "srsran/ran/srs/srs_resource_configuration.h"
 #include <cstdint>
 
@@ -32,6 +33,8 @@ namespace srsran {
 
 /// Parameters required to receive the Sounding Reference Signals described in 3GPP TS38.211 Section 6.4.1.4.
 struct srs_estimator_configuration {
+  /// Context information.
+  std::optional<srs_context> context;
   /// Numerology, SFN and slot index.
   slot_point slot;
   /// SRS resource configuration.

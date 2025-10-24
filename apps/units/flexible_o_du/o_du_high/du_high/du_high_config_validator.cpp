@@ -24,6 +24,7 @@
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/nr_cell_identity.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
+#include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/prach/prach_helper.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/ran/pucch/pucch_info.h"
@@ -255,7 +256,8 @@ static bool validate_rv_sequence(span<const unsigned> rv_sequence)
 /// Validates the given PDSCH cell application configuration. Returns true on success, otherwise false.
 static bool validate_pdsch_cell_unit_config(const du_high_unit_pdsch_config& config,
                                             unsigned                         cell_bw_crbs,
-                                            unsigned                         nof_antennas_dl)
+                                            unsigned                         nof_antennas_dl,
+                                            bool                             is_ntn_band)
 {
   if (config.min_ue_mcs > config.max_ue_mcs) {
     fmt::print("Invalid UE MCS range (i.e., [{}, {}]). The min UE MCS must be less than or equal to the max UE MCS.\n",
@@ -314,12 +316,24 @@ static bool validate_pdsch_cell_unit_config(const du_high_unit_pdsch_config& con
     }
   }
 
+  if (config.nof_harqs == 32 and not is_ntn_band) {
+    fmt::print("Number of UE DL HARQ processes can be equal to 32 only in NTN cells.\n");
+    return false;
+  }
+
+  if (config.harq_mode_b and not is_ntn_band) {
+    fmt::print("DL HARQ Mode B can be used only in NTN cells.\n");
+    return false;
+  }
+
   return true;
 }
 
 /// Validates the given PUSCH cell application configuration. Returns true on success, otherwise false.
-static bool
-validate_pusch_cell_unit_config(const du_high_unit_pusch_config& config, unsigned cell_crbs, unsigned min_k1)
+static bool validate_pusch_cell_unit_config(const du_high_unit_pusch_config& config,
+                                            unsigned                         cell_crbs,
+                                            unsigned                         min_k1,
+                                            bool                             is_ntn_band)
 {
   if (config.min_ue_mcs > config.max_ue_mcs) {
     fmt::print("Invalid UE MCS range (i.e., [{}, {}]). The min UE MCS must be less than or equal to the max UE MCS.\n",
@@ -379,6 +393,16 @@ validate_pusch_cell_unit_config(const du_high_unit_pusch_config& config, unsigne
     fmt::print("The value min_k2 {} set for PUSCH cannot be greater than the min_k1 {} set for PUCCH config.\n",
                config.min_k2,
                min_k1);
+    return false;
+  }
+
+  if (config.nof_harqs == 32 and not is_ntn_band) {
+    fmt::print("Number of UE UL HARQ processes can be equal to 32 only in NTN cells.\n");
+    return false;
+  }
+
+  if (config.harq_mode_b and not is_ntn_band) {
+    fmt::print("UL HARQ Mode B can be used only in NTN cells.\n");
     return false;
   }
 
@@ -603,10 +627,12 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
   if (config.nof_antennas_dl == 1 and f2_f3_f4_max_payload < 4U) {
     fmt::print("With the given parameters and 1 DL antenna, PUCCH F2 max payload must be at least 4 bits.\n");
     return false;
-  } else if (config.nof_antennas_dl == 2 and f2_f3_f4_max_payload < 7U) {
+  }
+  if (config.nof_antennas_dl == 2 and f2_f3_f4_max_payload < 7U) {
     fmt::print("With the given parameters and 2 DL antennas, PUCCH F2 max payload must be at least 7 bits.\n");
     return false;
-  } else if (config.nof_antennas_dl == 4 and f2_f3_f4_max_payload < 11U) {
+  }
+  if (config.nof_antennas_dl == 4 and f2_f3_f4_max_payload < 11U) {
     fmt::print("With the given parameters and 4 DL antennas, PUCCH F2 max payload must be at least 11 bits.\n");
     return false;
   }
@@ -614,10 +640,16 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
   // Verify the number of RBs for the PUCCH resources does not exceed the BWP size.
   // [Implementation-defined] We do not allow the PUCCH resources to occupy more than 50% of the BWP. This is an extreme
   // case, and ideally the PUCCH configuration should result in a much lower PRBs usage.
-  constexpr float max_allowed_prbs_usage = 0.5F;
-  if (static_cast<float>(nof_f0_f1_rbs + nof_f2_f3_f4_rbs) / static_cast<float>(nof_crbs) >= max_allowed_prbs_usage) {
-    fmt::print("With the given parameters, the number of PRBs for PUCCH exceeds the 50% of the BWP PRBs.\n");
-    return false;
+  // NOTE: for 5MHz BW, the default PUCCH config will be overwritten to force it to pass this check; skip this check
+  // here.
+  const bool def_cfg_for_5_mhz_bw =
+      config.channel_bw_mhz < bs_channel_bandwidth::MHz10 and pucch_cfg == du_high_unit_pucch_config{};
+  if (not def_cfg_for_5_mhz_bw) {
+    constexpr float max_allowed_prbs_usage = 0.5F;
+    if (static_cast<float>(nof_f0_f1_rbs + nof_f2_f3_f4_rbs) / static_cast<float>(nof_crbs) >= max_allowed_prbs_usage) {
+      fmt::print("With the given parameters, the number of PRBs for PUCCH exceeds the 50% of the BWP PRBs.\n");
+      return false;
+    }
   }
 
   return true;
@@ -729,6 +761,14 @@ validate_prach_cell_unit_config(const du_high_unit_prach_config& config, nr_band
     return false;
   }
 
+  const prach_configuration prach_config =
+      prach_configuration_get(freq_range, dplx_mode, config.prach_config_index.value());
+  code = prach_helper::prach_root_sequence_index_is_valid(config.prach_root_sequence_index, prach_config.format);
+  if (not code.has_value()) {
+    fmt::print("{}", code.error());
+    return false;
+  }
+
   code = prach_helper::zero_correlation_zone_is_valid(
       config.zero_correlation_zone, config.prach_config_index.value(), freq_range, dplx_mode);
   if (not code.has_value()) {
@@ -754,19 +794,21 @@ validate_prach_cell_unit_config(const du_high_unit_prach_config& config, nr_band
   // See TS 38.331, ssb-perRACH-OccasionAndCB-PreamblesPerSSB and totalNumberOfRA-Preambles.
   // totalNumberOfRA-Preambles should be a multiple of the number of SSBs per RACH occasion.
   bool is_total_nof_ra_preambles_valid = true;
-  if (config.nof_ssb_per_ro >= 1) {
-    if (config.total_nof_ra_preambles % static_cast<uint8_t>(config.nof_ssb_per_ro) != 0) {
+  if (config.nof_ssb_per_ro >= ssb_per_rach_occasions::one) {
+    if (config.total_nof_ra_preambles % static_cast<uint8_t>(ssb_per_rach_occ_to_float(config.nof_ssb_per_ro)) != 0) {
       is_total_nof_ra_preambles_valid = false;
     }
     // Ensure \c config.total_nof_ra_preambles can accommodate contention based RA preambles.
     // NOTE: \c config.total_nof_ra_preambles nof. RA preambles are shared among \c config.nof_ssb_per_ro nof. SSB
     // beams.
-    if ((config.nof_cb_preambles_per_ssb * config.nof_ssb_per_ro) > config.total_nof_ra_preambles) {
+    if (config.nof_cb_preambles_per_ssb * static_cast<unsigned>(ssb_per_rach_occ_to_float(config.nof_ssb_per_ro)) >
+        config.total_nof_ra_preambles) {
       is_total_nof_ra_preambles_valid = false;
     }
   } else {
     // Number of SSBs per RACH occasion is 1/8 or 1/4 or 1/2.
-    const auto product = config.total_nof_ra_preambles * config.nof_ssb_per_ro;
+    const auto product =
+        static_cast<float>(config.total_nof_ra_preambles) * ssb_per_rach_occ_to_float(config.nof_ssb_per_ro);
     if ((product - static_cast<uint8_t>(product)) > 0) {
       is_total_nof_ra_preambles_valid = false;
     }
@@ -781,7 +823,7 @@ validate_prach_cell_unit_config(const du_high_unit_prach_config& config, nr_band
   if (not is_total_nof_ra_preambles_valid) {
     fmt::print("Total nof. RA preambles ({}) should be a multiple of the number of SSBs per RACH occasion ({}).\n",
                config.total_nof_ra_preambles,
-               config.nof_ssb_per_ro);
+               ssb_per_rach_occ_to_float(config.nof_ssb_per_ro));
     return false;
   }
 
@@ -971,7 +1013,7 @@ static bool validate_dl_ul_arfcn_and_band(const du_high_unit_base_cell_config& c
 static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_cfg)
 {
   // See TS 38.331, V17.0.0, \c type1-r17 in \c SIB-TypeInfo-v1700.
-  static const unsigned r17_min_sib_type = 15;
+  static constexpr unsigned r17_min_sib_type = 15;
 
   const du_high_unit_sib_config& sib_cfg = cell_cfg.sib_cfg;
 
@@ -1103,7 +1145,8 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
   const unsigned nof_crbs =
       band_helper::get_n_rbs_from_bw(config.channel_bw_mhz, config.common_scs, band_helper::get_freq_range(band));
 
-  if (!validate_pdsch_cell_unit_config(config.pdsch_cfg, nof_crbs, config.nof_antennas_dl)) {
+  const bool is_ntn_band = band_helper::is_ntn_band(band);
+  if (!validate_pdsch_cell_unit_config(config.pdsch_cfg, nof_crbs, config.nof_antennas_dl, is_ntn_band)) {
     return false;
   }
 
@@ -1123,7 +1166,7 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     return false;
   }
 
-  if (!validate_pusch_cell_unit_config(config.pusch_cfg, nof_crbs, config.pucch_cfg.min_k1)) {
+  if (!validate_pusch_cell_unit_config(config.pusch_cfg, nof_crbs, config.pucch_cfg.min_k1, is_ntn_band)) {
     return false;
   }
 
@@ -1140,6 +1183,13 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
   }
 
   if (!validate_cell_sib_config(config)) {
+    return false;
+  }
+
+  if ((config.rlm_cfg.resource_type == rlm_resource_type::csi_rs or
+       config.rlm_cfg.resource_type == rlm_resource_type::ssb_and_csi_rs) and
+      not config.csi_cfg.csi_rs_enabled) {
+    fmt::print("CSI-RS based Radio Link Monitoring requires CSI-RS to be enabled.\n");
     return false;
   }
 

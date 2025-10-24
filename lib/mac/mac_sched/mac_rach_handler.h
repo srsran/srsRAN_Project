@@ -73,6 +73,8 @@ public:
   /// Create new handler of RACH indications for a cell.
   mac_cell_rach_handler_impl& add_cell(const sched_cell_configuration_request_message& sched_cfg);
 
+  void rem_cell(du_cell_index_t cell_index);
+
 private:
   friend class mac_cell_rach_handler_impl;
 

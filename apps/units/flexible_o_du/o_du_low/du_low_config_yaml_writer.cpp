@@ -41,6 +41,16 @@ static void fill_du_low_log_section(YAML::Node node, const du_low_unit_logger_co
   node["phy_rx_symbols_prach"] = config.phy_rx_symbols_prach;
 }
 
+static void fill_du_low_tracer_layers_section(YAML::Node node, const du_low_unit_tracer_config& config)
+{
+  node["phy_enable"] = config.executor_tracing_enable;
+}
+
+static void fill_du_low_trace_section(YAML::Node node, const du_low_unit_tracer_config& config)
+{
+  fill_du_low_tracer_layers_section(node["layers"], config);
+}
+
 static void fill_du_low_expert_execution_section(YAML::Node node, const du_low_unit_expert_execution_config& config)
 {
   {
@@ -51,23 +61,6 @@ static void fill_du_low_expert_execution_section(YAML::Node node, const du_low_u
     upper_node["max_pucch_concurrency"]         = config.threads.max_pucch_concurrency;
     upper_node["max_pusch_and_srs_concurrency"] = config.threads.max_pusch_and_srs_concurrency;
     upper_node["max_pdsch_concurrency"]         = config.threads.max_pdsch_concurrency;
-  }
-
-  auto cell_affinities_node = node["cell_affinities"];
-  while (config.cell_affinities.size() > cell_affinities_node.size()) {
-    cell_affinities_node.push_back(YAML::Node());
-  }
-
-  unsigned index = 0;
-  for (auto cell : cell_affinities_node) {
-    const auto& expert = config.cell_affinities[index];
-
-    if (expert.l1_dl_cpu_cfg.mask.any()) {
-      cell["l1_dl_cpus"] = fmt::format("{:,}", span<const size_t>(expert.l1_dl_cpu_cfg.mask.get_cpu_ids()));
-    }
-    cell["l1_dl_pinning"] = to_string(expert.l1_dl_cpu_cfg.pinning_policy);
-
-    ++index;
   }
 }
 
@@ -85,6 +78,7 @@ static void fill_du_low_expert_section(YAML::Node node, const du_low_unit_expert
   node["max_request_headroom_slots"]               = config.nof_slots_request_headroom;
   node["allow_request_on_empty_uplink_slot"]       = config.allow_request_on_empty_uplink_slot;
   node["enable_phy_tap"]                           = config.enable_phy_tap;
+  node["phy_tap_arguments"]                        = config.phy_tap_arguments;
 }
 
 static void fill_du_low_bbdev_pdsch_enc_section(YAML::Node node, const hwacc_pdsch_appconfig& config)
@@ -149,6 +143,7 @@ void srsran::fill_du_low_config_in_yaml_schema(YAML::Node& node, const du_low_un
 {
   fill_du_low_metrics_section(node, config.metrics_cfg);
   fill_du_low_log_section(node["log"], config.loggers);
+  fill_du_low_trace_section(node["trace"], config.tracer);
   fill_du_low_expert_execution_section(node["expert_execution"], config.expert_execution_cfg);
   fill_du_low_expert_section(node["expert_phy"], config.expert_phy_cfg);
   if (config.hal_config) {

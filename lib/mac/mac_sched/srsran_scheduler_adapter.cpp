@@ -23,6 +23,7 @@
 #include "srsran_scheduler_adapter.h"
 #include "srsran/scheduler/result/sched_result.h"
 #include "srsran/scheduler/scheduler_factory.h"
+#include "srsran/support/executors/execute_until_success.h"
 
 using namespace srsran;
 
@@ -44,10 +45,9 @@ static sched_ue_reconfiguration_message
 make_scheduler_ue_reconfiguration_request(const mac_ue_reconfiguration_request& request)
 {
   sched_ue_reconfiguration_message ret{};
-  ret.ue_index      = request.ue_index;
-  ret.crnti         = request.crnti;
-  ret.cfg           = request.sched_cfg;
-  ret.reestablished = request.reestablished;
+  ret.ue_index = request.ue_index;
+  ret.crnti    = request.crnti;
+  ret.cfg      = request.sched_cfg;
   return ret;
 }
 
@@ -55,10 +55,12 @@ srsran_scheduler_adapter::srsran_scheduler_adapter(const srsran_mac_sched_config
   rnti_mng(rnti_mng_),
   rlf_handler(params.mac_cfg),
   ctrl_exec(params.ctrl_exec),
+  timers(params.timers),
   logger(srslog::fetch_basic_logger("MAC")),
   notifier(*this),
   sched_impl(create_scheduler(scheduler_config{params.sched_cfg, notifier})),
-  rach_handler(*sched_impl, rnti_mng, logger)
+  rach_handler(*sched_impl, rnti_mng, logger),
+  pos_handler(create_positioning_handler(*sched_impl, params.ctrl_exec, params.timers, logger))
 {
   srsran_assert(last_slot_point.is_lock_free(), "slot point is not lock free");
   srsran_assert(last_slot_tp.is_lock_free(), "slot time_point is not lock free");
@@ -71,7 +73,7 @@ void srsran_scheduler_adapter::add_cell(const mac_scheduler_cell_creation_reques
 
   // Forward cell configuration to scheduler.
   auto sched_req    = msg.cell_params.sched_req;
-  sched_req.metrics = {msg.metric_report_period, msg.metric_notifier};
+  sched_req.metrics = {msg.metric_notifier};
   sched_impl->handle_cell_configuration_request(sched_req);
 }
 
@@ -312,13 +314,6 @@ void srsran_scheduler_adapter::handle_si_change_indication(const si_scheduling_u
   sched_impl->handle_si_update_request(request);
 }
 
-async_task<mac_cell_positioning_measurement_response>
-srsran_scheduler_adapter::handle_positioning_measurement_request(du_cell_index_t cell_index,
-                                                                 const mac_cell_positioning_measurement_request& req)
-{
-  return cell_handlers[cell_index].pos_handler->handle_positioning_measurement_request(req);
-}
-
 void srsran_scheduler_adapter::handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req)
 {
   // Update RRM policies in the scheduler.
@@ -331,12 +326,9 @@ void srsran_scheduler_adapter::sched_config_notif_adapter::on_ue_config_complete
   srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ue index={}", fmt::underlying(ue_index));
 
   // Remove continuation of task in ctrl executor.
-  if (not parent.ctrl_exec.defer([this, ue_index, ue_creation_result]() {
-        parent.sched_cfg_notif_map[ue_index].ue_config_ready.set(ue_creation_result);
-      })) {
-    parent.logger.error("ue={}: Unable to finish UE configuration. Cause: DU task queue is full.",
-                        fmt::underlying(ue_index));
-  }
+  defer_until_success(parent.ctrl_exec, parent.timers, [this, ue_index, ue_creation_result]() {
+    parent.sched_cfg_notif_map[ue_index].ue_config_ready.set(ue_creation_result);
+  });
 }
 
 void srsran_scheduler_adapter::sched_config_notif_adapter::on_ue_deletion_completed(du_ue_index_t ue_index)
@@ -344,10 +336,9 @@ void srsran_scheduler_adapter::sched_config_notif_adapter::on_ue_deletion_comple
   srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ue index={}", fmt::underlying(ue_index));
 
   // Continuation of ue remove task dispatched to the ctrl executor.
-  if (not parent.ctrl_exec.defer(
-          [this, ue_index]() { parent.sched_cfg_notif_map[ue_index].ue_config_ready.set(true); })) {
-    parent.logger.error("ue={}: Unable to remove UE. Cause: DU task queue is full.", fmt::underlying(ue_index));
-  }
+  defer_until_success(parent.ctrl_exec, parent.timers, [this, ue_index]() {
+    parent.sched_cfg_notif_map[ue_index].ue_config_ready.set(true);
+  });
 }
 
 void srsran_scheduler_adapter::handle_paging_information(const paging_information& msg)
@@ -367,11 +358,16 @@ void srsran_scheduler_adapter::handle_paging_information(const paging_informatio
 srsran_scheduler_adapter::cell_handler::cell_handler(srsran_scheduler_adapter&                       parent_,
                                                      const sched_cell_configuration_request_message& sched_cfg) :
   uci_decoder(sched_cfg, parent_.rnti_mng, parent_.rlf_handler),
-  pos_handler(create_positioning_handler(*parent_.sched_impl, sched_cfg.cell_index, parent_.ctrl_exec, parent_.logger)),
+  pos_handler(parent_.pos_handler->add_cell(sched_cfg.cell_index)),
   cell_idx(sched_cfg.cell_index),
   parent(parent_),
   rach_handler(parent.rach_handler.add_cell(sched_cfg))
 {
+}
+
+srsran_scheduler_adapter::cell_handler::~cell_handler()
+{
+  parent.rach_handler.rem_cell(cell_idx);
 }
 
 void srsran_scheduler_adapter::cell_handler::handle_crc(const mac_crc_indication_message& msg)

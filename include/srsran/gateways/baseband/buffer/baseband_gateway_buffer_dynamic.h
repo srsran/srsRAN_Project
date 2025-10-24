@@ -43,7 +43,7 @@ class baseband_gateway_buffer_reader_tensor : public baseband_gateway_buffer_rea
 {
 public:
   using storage_type = tensor<static_cast<unsigned>(detail::baseband_gateway_buffer_dims::all),
-                              cf_t,
+                              ci16_t,
                               detail::baseband_gateway_buffer_dims>;
 
   /// Creates a gateway buffer reader based on a tensor storage type.
@@ -56,7 +56,7 @@ public:
   unsigned get_nof_samples() const override { return data.get_dimension_size(baseband_gateway_buffer_dims::sample); }
 
   // See interface for documentation.
-  span<const cf_t> get_channel_buffer(unsigned i_channel) const override { return data.get_view({i_channel}); }
+  span<const ci16_t> get_channel_buffer(unsigned i_channel) const override { return data.get_view({i_channel}); }
 
 private:
   const storage_type& data;
@@ -67,7 +67,7 @@ class baseband_gateway_buffer_writer_tensor : public baseband_gateway_buffer_wri
 {
 public:
   using storage_type = tensor<static_cast<unsigned>(detail::baseband_gateway_buffer_dims::all),
-                              cf_t,
+                              ci16_t,
                               detail::baseband_gateway_buffer_dims>;
 
   /// Creates a gateway buffer writer based on a tensor storage type.
@@ -80,7 +80,7 @@ public:
   unsigned get_nof_samples() const override { return data.get_dimension_size(baseband_gateway_buffer_dims::sample); }
 
   // See interface for documentation.
-  span<cf_t> get_channel_buffer(unsigned i_channel) override { return data.get_view({i_channel}); }
+  span<ci16_t> get_channel_buffer(unsigned i_channel) override { return data.get_view({i_channel}); }
 
 private:
   storage_type& data;
@@ -110,7 +110,7 @@ public:
   baseband_gateway_buffer_writer& get_writer() { return writer; }
 
   /// Gets a data view of a channel.
-  span<cf_t> operator[](unsigned i_channel) { return writer.get_channel_buffer(i_channel); }
+  span<ci16_t> operator[](unsigned i_channel) { return writer.get_channel_buffer(i_channel); }
 
   /// \brief Resize buffer.
   /// \param[in] new_nof_samples Indicates the new number of samples per channel.
@@ -118,8 +118,8 @@ public:
   void resize(unsigned new_nof_samples) { data.resize({new_nof_samples, get_nof_channels()}); }
 
   /// \brief Default constructor.
-  /// \param[in] nof_channels_ Indicates the number of channels to create.
-  /// \param[in] max_nof_samples_  Indicates the maximum number of samples.
+  /// \param[in] nof_channels    Indicates the number of channels to create.
+  /// \param[in] max_nof_samples Indicates the maximum number of samples.
   baseband_gateway_buffer_dynamic(unsigned nof_channels, unsigned max_nof_samples) :
     data({max_nof_samples, nof_channels}), reader(data), writer(data)
   {
@@ -133,7 +133,7 @@ public:
 
 private:
   dynamic_tensor<static_cast<unsigned>(detail::baseband_gateway_buffer_dims::all),
-                 cf_t,
+                 ci16_t,
                  detail::baseband_gateway_buffer_dims>
                                                 data;
   detail::baseband_gateway_buffer_reader_tensor reader;

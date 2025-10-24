@@ -19,7 +19,8 @@
 #
 
 set(SOURCES
-        buffer_pool_appconfig_cli11_schema.cpp)
+        buffer_pool_appconfig_cli11_schema.cpp
+        metrics/buffer_pool_metrics_builder.cpp)
 
 add_library(srsran_buffer_pool_app_service STATIC ${SOURCES})
 target_include_directories(srsran_buffer_pool_app_service PRIVATE ${CMAKE_SOURCE_DIR})

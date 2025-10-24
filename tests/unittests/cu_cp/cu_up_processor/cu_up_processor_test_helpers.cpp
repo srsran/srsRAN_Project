@@ -51,7 +51,7 @@ cu_up_processor_test::cu_up_processor_test() :
   srslog::init();
 
   // create and start CU-UP processor
-  cu_up_processor_config_t cu_up_cfg = {"srs_cu_cp", uint_to_cu_up_index(0), cu_cp_cfg, cu_cp_logger};
+  cu_up_processor_config_t cu_up_cfg = {"srs_cu_cp", cu_up_index_t::min, cu_cp_cfg, cu_cp_logger};
 
   cu_up_processor_obj = create_cu_up_processor(std::move(cu_up_cfg), e1ap_notifier, cu_cp_notifier, *common_task_sched);
 }

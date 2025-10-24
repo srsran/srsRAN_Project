@@ -26,19 +26,25 @@
 using namespace srsran;
 
 mac_dl_cell_metric_report::latency_report
-mac_dl_cell_metric_handler::non_persistent_data::latency_data::get_report(unsigned nof_slots_) const
+mac_dl_cell_metric_handler::non_persistent_data::latency_data::get_report() const
 {
   mac_dl_cell_metric_report::latency_report result;
-  result.min      = min;
-  result.max      = max;
-  result.average  = sum / nof_slots_;
-  result.max_slot = max_slot;
+  result.min = min;
+  result.max = max;
+  if (count > 0) {
+    result.average  = sum / count;
+    result.max_slot = max_slot;
+  } else {
+    result.average  = std::chrono::nanoseconds(0);
+    result.max_slot = slot_point{};
+  }
   return result;
 }
 
 void mac_dl_cell_metric_handler::non_persistent_data::latency_data::save_sample(slot_point               sl_tx,
                                                                                 std::chrono::nanoseconds tdiff)
 {
+  ++count;
   sum += tdiff;
   min = std::min(min, tdiff);
   if (max < tdiff) {
@@ -87,7 +93,8 @@ void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& 
   if (not enabled() or not active()) {
     return;
   }
-  last_sl_tx = meas.sl_tx;
+  const unsigned nof_skipped_slots = last_sl_tx.valid() ? meas.sl_tx - last_sl_tx : 0;
+  last_sl_tx                       = meas.sl_tx;
 
   // Time difference
   const auto                     stop_tp           = metric_clock::now();
@@ -110,7 +117,7 @@ void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& 
   expected<resource_usage::diff, int> rusg_diff = compute_diff();
 
   std::chrono::nanoseconds consecutive_slot_ind_time_diff{0};
-  if (last_slot_ind_enqueue_tp != metric_clock::time_point{}) {
+  if (last_slot_ind_enqueue_tp != metric_clock::time_point{} and nof_skipped_slots == 1) {
     consecutive_slot_ind_time_diff = meas.slot_ind_enqueue_tp - last_slot_ind_enqueue_tp;
   }
   last_slot_ind_enqueue_tp = meas.slot_ind_enqueue_tp;
@@ -121,8 +128,9 @@ void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& 
     data.start_slot = meas.sl_tx;
   }
   data.wall.save_sample(meas.sl_tx, time_diff);
-  data.slot_enqueue.save_sample(meas.sl_tx, enqueue_time_diff);
-  auto last_tp = meas.start_tp;
+  data.slot_dequeue.save_sample(meas.sl_tx, enqueue_time_diff);
+  data.sched.save_sample(meas.sl_tx, meas.sched_tp - meas.start_tp);
+  auto last_tp = meas.sched_tp;
   if (meas.dl_tti_req_tp != metric_clock::time_point{}) {
     data.dl_tti_req.save_sample(meas.sl_tx, meas.dl_tti_req_tp - last_tp);
     last_tp = meas.dl_tti_req_tp;
@@ -138,10 +146,10 @@ void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& 
     auto& rusg_val = rusg_diff.value();
     data.count_vol_context_switches += rusg_val.vol_ctxt_switch_count;
     data.count_invol_context_switches += rusg_val.invol_ctxt_switch_count;
-    data.user.save_sample(meas.sl_tx, std::chrono::nanoseconds{rusg_val.user_time});
-    data.sys.save_sample(meas.sl_tx, std::chrono::nanoseconds{rusg_val.sys_time});
   }
-  data.slot_distance.save_sample(meas.sl_tx, consecutive_slot_ind_time_diff);
+  if (consecutive_slot_ind_time_diff != std::chrono::nanoseconds{0}) {
+    data.slot_distance.save_sample(meas.sl_tx, consecutive_slot_ind_time_diff);
+  }
 
   if (notifier->is_report_required(meas.sl_tx)) {
     send_new_report();
@@ -152,20 +160,17 @@ void mac_dl_cell_metric_handler::send_new_report()
 {
   // Prepare cell report.
   mac_dl_cell_metric_report report;
-  report.pci           = cell_pci;
-  report.start_slot    = data.start_slot;
-  report.slot_duration = slot_duration;
-  report.nof_slots     = data.nof_slots;
-  if (data.nof_slots > 0) {
-    report.wall_clock_latency      = data.wall.get_report(data.nof_slots);
-    report.user_time               = data.user.get_report(data.nof_slots);
-    report.sys_time                = data.sys.get_report(data.nof_slots);
-    report.slot_ind_handle_latency = data.slot_enqueue.get_report(data.nof_slots);
-    report.dl_tti_req_latency      = data.dl_tti_req.get_report(data.nof_slots);
-    report.tx_data_req_latency     = data.tx_data_req.get_report(data.nof_slots);
-    report.ul_tti_req_latency      = data.ul_tti_req.get_report(data.nof_slots);
-    report.slot_ind_msg_time_diff  = data.slot_distance.get_report(data.nof_slots);
-  }
+  report.pci                                = cell_pci;
+  report.start_slot                         = data.start_slot;
+  report.slot_duration                      = slot_duration;
+  report.nof_slots                          = data.nof_slots;
+  report.wall_clock_latency                 = data.wall.get_report();
+  report.slot_ind_dequeue_latency           = data.slot_dequeue.get_report();
+  report.sched_latency                      = data.sched.get_report();
+  report.dl_tti_req_latency                 = data.dl_tti_req.get_report();
+  report.tx_data_req_latency                = data.tx_data_req.get_report();
+  report.ul_tti_req_latency                 = data.ul_tti_req.get_report();
+  report.slot_ind_msg_time_diff             = data.slot_distance.get_report();
   report.count_voluntary_context_switches   = data.count_vol_context_switches;
   report.count_involuntary_context_switches = data.count_invol_context_switches;
   report.cell_deactivated                   = data.last_report;

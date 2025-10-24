@@ -64,7 +64,7 @@ public:
   bool start_new_slot(slot_point slot)
   {
     uint32_t expected_pending_pdu_count = pending_pdu_count_idle;
-    if (!pending_pdu_count.compare_exchange_weak(expected_pending_pdu_count, accepting_pdu_mask)) {
+    if (!pending_pdu_count.compare_exchange_strong(expected_pending_pdu_count, accepting_pdu_mask)) {
       return false;
     }
     configured_slot = slot;

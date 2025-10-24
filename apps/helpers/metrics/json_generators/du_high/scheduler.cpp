@@ -55,6 +55,7 @@ void to_json(nlohmann::json& json, const scheduler_cell_event& metrics)
 
 void to_json(nlohmann::json& json, const scheduler_ue_metrics& metrics)
 {
+  json["ue"]   = metrics.ue_index;
   json["pci"]  = metrics.pci;
   json["rnti"] = metrics.rnti;
   if (metrics.cqi_stats.get_nof_observations() > 0) {
@@ -95,6 +96,8 @@ void to_json(nlohmann::json& json, const scheduler_ue_metrics& metrics)
   json["ul_nof_ok"]                      = metrics.ul_nof_ok;
   json["ul_nof_nok"]                     = metrics.ul_nof_nok;
   json["last_phr"]                       = metrics.last_phr;
+  json["max_pusch_distance"]             = metrics.max_pusch_distance_ms;
+  json["max_pdsch_distance"]             = metrics.max_pdsch_distance_ms;
   json["bsr"]                            = metrics.bsr;
   json["nof_pucch_f0f1_invalid_harqs"]   = metrics.nof_pucch_f0f1_invalid_harqs;
   json["nof_pucch_f2f3f4_invalid_harqs"] = metrics.nof_pucch_f2f3f4_invalid_harqs;
@@ -109,6 +112,8 @@ void to_json(nlohmann::json& json, const scheduler_ue_metrics& metrics)
   json["max_pusch_harq_delay"]           = metrics.max_pusch_harq_delay_ms;
   json["avg_pucch_harq_delay"]           = metrics.avg_pucch_harq_delay_ms;
   json["max_pucch_harq_delay"]           = metrics.max_pucch_harq_delay_ms;
+  json["avg_sr_to_pusch_delay"]          = metrics.avg_sr_to_pusch_delay_ms;
+  json["max_sr_to_pusch_delay"]          = metrics.max_sr_to_pusch_delay_ms;
 }
 
 void to_json(nlohmann::json& json, const scheduler_cell_metrics& metrics)
@@ -127,6 +132,12 @@ void to_json(nlohmann::json& json, const scheduler_cell_metrics& metrics)
   cell_json["late_dl_harqs"]           = metrics.nof_failed_pdsch_allocs_late_harqs;
   cell_json["late_ul_harqs"]           = metrics.nof_failed_pusch_allocs_late_harqs;
   cell_json["pucch_tot_rb_usage_avg"]  = metrics.pucch_tot_rb_usage_avg;
+  if (metrics.pusch_prbs_used_per_tdd_slot_idx.size()) {
+    cell_json["pusch_prbs_used_per_tdd_slot_idx"] = metrics.pusch_prbs_used_per_tdd_slot_idx;
+  }
+  if (metrics.pdsch_prbs_used_per_tdd_slot_idx.size()) {
+    cell_json["pdsch_prbs_used_per_tdd_slot_idx"] = metrics.pdsch_prbs_used_per_tdd_slot_idx;
+  }
 
   if (!metrics.ue_metrics.empty()) {
     json["ue_list"] = metrics.ue_metrics;

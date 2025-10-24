@@ -25,6 +25,7 @@
 #include "../du_ue/du_ue_manager_repository.h"
 #include "procedure_logger.h"
 #include "srsran/du/du_high/du_manager/du_manager_params.h"
+#include "srsran/mac/mac_ue_configurator.h"
 
 namespace srsran {
 namespace srs_du {

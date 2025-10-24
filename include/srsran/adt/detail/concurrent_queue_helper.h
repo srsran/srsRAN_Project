@@ -23,16 +23,14 @@
 #pragma once
 
 #include "srsran/adt/span.h"
-#include "srsran/support/detail/has_method.h"
+#include "srsran/support/has_method.h"
 #include "srsran/support/math/math_utils.h"
 #include <atomic>
 #include <optional>
 #include <thread>
 
 namespace srsran {
-
 namespace detail {
-
 namespace queue_helper {
 
 /// Generic implementation of try_pop_bulk for queues that do not have a specialized implementation.

@@ -24,6 +24,7 @@
 #include "mac_ctrl_test_dummies.h"
 #include "tests/test_doubles/mac/dummy_mac_metrics_notifier.h"
 #include "tests/unittests/mac/mac_test_helpers.h"
+#include "srsran/pcap/mac_pcap.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/async/manual_event.h"
 #include "srsran/support/executors/manual_task_worker.h"

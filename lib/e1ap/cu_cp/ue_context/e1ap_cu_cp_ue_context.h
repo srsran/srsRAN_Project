@@ -106,6 +106,12 @@ public:
     return &it->second;
   }
 
+  e1ap_ue_context* find_ue(ue_index_t ue_idx)
+  {
+    auto it = ue_index_to_ue_e1ap_id.find(ue_idx);
+    return it != ue_index_to_ue_e1ap_id.end() ? &ues.at(it->second) : nullptr;
+  }
+
   e1ap_ue_context& operator[](gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id)
   {
     srsran_assert(ues.find(cu_cp_ue_e1ap_id) != ues.end(),

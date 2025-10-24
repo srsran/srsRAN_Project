@@ -99,18 +99,12 @@ smoke zmq:
       allow_failure: false
   interruptible: true
   variables:
-    TESTBED: "" # Check before_script
+    TESTBED: zmq
     MARKERS: smoke
-    RETINA_LAUNCHER_ARGS: -x ${EXTRA_SMOKE_ZMQ}
+    RETINA_LAUNCHER_ARGS: -x
     RETINA_PARAM_ARGS: gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True
     E2E_LOG_LEVEL: info
     CLUSTER: new-retina-e2e-amd64
-  before_script:
-    - |
-      export TESTBED=zmq
-      if [ -n "${EXTRA_SMOKE_ZMQ}" ]; then
-        export TESTBED=zmq_smoke
-      fi
   timeout: 1 hour
   needs:
     - job: smoke relwithdeb cached
@@ -128,25 +122,12 @@ smoke zmq:
   variables:
     TESTBED: zmq
     E2E_LOG_LEVEL: info
+    RETINA_LAUNCHER_ARGS: -n 2
     CLUSTER: new-retina-e2e-amd64
   needs:
     - job: basic relwithdeb
       artifacts: true
     - *txrx-lib
-    - *retina-needs
-
-.zmq-uesim:
-  stage: zmq
-  extends: .e2e-run
-  variables:
-    GROUP: uesim
-    TESTBED: zmq_uesim
-    E2E_LOG_LEVEL: info
-  needs:
-    - job: basic relwithdeb
-      artifacts: true
-    - job: build uesim zmq driver
-      artifacts: true
     - *retina-needs
 
 srsue:
@@ -156,14 +137,14 @@ srsue:
     MARKERS: zmq_srsue
 
 amari 1UE:
-  extends: .zmq-uesim
+  extends: .zmq
   variables:
     MARKERS: zmq_single_ue
     E2E_LOG_LEVEL: warning
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
 
 amari 1UE 4x4 mimo:
-  extends: .zmq-uesim
+  extends: .zmq
   variables:
     MARKERS: zmq_4x4_mimo
     RETINA_PARAM_ARGS: "gnb.all.enable_integrity_protection=True"
@@ -171,6 +152,7 @@ amari 1UE 4x4 mimo:
 amari 4UE:
   extends: .zmq
   variables:
+    RETINA_LAUNCHER_ARGS:
     E2E_FILE_OR_DIR: tests/slicing.py
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
 
@@ -189,7 +171,7 @@ amari 4UE deb:
     - *retina-needs
 
 amari 4UE asan:
-  extends: .zmq-uesim
+  extends: .zmq
   variables:
     MARKERS: smoke
     KEYWORDS: iperf
@@ -201,7 +183,7 @@ amari 4UE asan:
     - *retina-needs
 
 amari 4UE tsan:
-  extends: .zmq-uesim
+  extends: .zmq
   variables:
     MARKERS: smoke
     KEYWORDS: iperf
@@ -213,8 +195,9 @@ amari 4UE tsan:
     - *retina-needs
 
 amari 4UE memcheck:
-  extends: .zmq-uesim
+  extends: .zmq
   variables:
+    RETINA_LAUNCHER_ARGS:
     MARKERS: zmq_valgrind
     E2E_LOG_LEVEL: warning
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
@@ -225,7 +208,7 @@ amari 4UE memcheck:
     - *retina-needs
 
 amari 8UE:
-  extends: .zmq-uesim
+  extends: .zmq
   variables:
     MARKERS: zmq and not smoke
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
@@ -239,8 +222,6 @@ amari 8UE:
         KEYWORDS: "not sequentially"
       - E2E_FILE_OR_DIR: tests/handover.py
         KEYWORDS: sequentially
-      - E2E_FILE_OR_DIR: tests/handover.py
-        KEYWORDS: "not sequentially"
 
 amari 32UE:
   extends: .zmq
@@ -258,23 +239,25 @@ amari 32UE:
             "tcp and not band:3 and not precoding",
             "tcp and not band:3 and precoding",
           ]
+      - E2E_FILE_OR_DIR: tests/handover.py
+        KEYWORDS: "not sequentially"
 
 amari 32UE [tests/pucch.py]:
   extends: .zmq
   variables:
-    TESTBED: zmq_ntn
+    TESTBED: zmq
     MARKERS: "zmq and not smoke"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
     E2E_FILE_OR_DIR: tests/pucch.py
   needs:
     - job: basic relwithdeb
       artifacts: true
-    - job: build amariue ntn zmq driver
+    - job: build amariue zmq driver
       artifacts: true
     - *retina-needs
 
 amari 32UE [ping]:
-  extends: .zmq-uesim
+  extends: .zmq
   variables:
     E2E_FILE_OR_DIR: tests/ping.py
     MARKERS: "zmq and not smoke"
@@ -282,14 +265,16 @@ amari 32UE [ping]:
     KEYWORDS: "32"
 
 amari 32UE 2x2 mimo:
-  extends: .zmq-uesim
+  extends: .zmq
   variables:
+    RETINA_LAUNCHER_ARGS:
     MARKERS: zmq_2x2_mimo
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
 
 amari 64UE 2x2 mimo:
   extends: .zmq
   variables:
+    RETINA_LAUNCHER_ARGS:
     E2E_FILE_OR_DIR: tests/iperf.py
     KEYWORDS: "64"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
@@ -349,16 +334,11 @@ ntn:
   variables:
     TESTBED: zmq_ntn
     MARKERS: zmq_ntn
+    RETINA_LAUNCHER_ARGS:
   parallel:
     matrix:
       - E2E_FILE_OR_DIR: tests/ping.py
       - E2E_FILE_OR_DIR: tests/iperf.py
-  needs:
-    - job: basic relwithdeb
-      artifacts: true
-    - job: build amariue ntn zmq driver
-      artifacts: true
-    - *retina-needs
 
 ################################################################################
 # TEST MODE
@@ -396,6 +376,7 @@ test mode ru:
   stage: test mode
   extends: .e2e-run
   variables:
+    CLUSTER: new-retina-e2e-amd64
     GROUP: viavi
     TESTBED: viavi
     MARKERS: test_mode
@@ -474,7 +455,6 @@ test mode ue many ues:
   variables:
     GROUP: rf
     TESTBED: rf_b200
-    MARKERS: rf
     E2E_LOG_LEVEL: warning
   needs:
     - job: basic relwithdeb
@@ -562,6 +542,7 @@ android drx:
   extends: .e2e-run
   timeout: 8h
   variables:
+    CLUSTER: new-retina-e2e-amd64
     GROUP: viavi
     TESTBED: viavi
     MARKERS: viavi

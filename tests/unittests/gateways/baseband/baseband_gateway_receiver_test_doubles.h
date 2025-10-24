@@ -51,7 +51,7 @@ public:
   {
     // Fill data with random samples.
     for (unsigned channel = 0; channel != data.get_nof_channels(); ++channel) {
-      span<cf_t> buffer = data[channel];
+      span<ci16_t> buffer = data[channel];
       std::generate(buffer.begin(), buffer.end(), [this]() {
         unsigned idx           = i_cached_random_sample;
         i_cached_random_sample = (i_cached_random_sample + 1) % nof_cached_random_samples;

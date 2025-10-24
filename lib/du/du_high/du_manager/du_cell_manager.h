@@ -23,8 +23,8 @@
 #pragma once
 
 #include "srsran/du/du_high/du_manager/du_manager_params.h"
+#include "srsran/mac/cell_configuration.h"
 #include "srsran/ran/du_types.h"
-#include "srsran/scheduler/scheduler_sys_info_handler.h"
 
 namespace srsran {
 namespace srs_du {
@@ -89,14 +89,14 @@ public:
   }
 
   /// Stop accepting new UE creations in the given cell.
-  void stop_accepting_ues(du_cell_index_t cell_index)
+  void stop_accepting_ues(du_cell_index_t cell_index) const
   {
     cells[cell_index]->state = du_cell_context::state_t::deactivating;
   }
 
   /// Handle request to update a cell configuration.
   /// \return true if a change was detected and applied.
-  expected<du_cell_reconfig_result> handle_cell_reconf_request(const du_cell_param_config_request& req);
+  expected<du_cell_reconfig_result> handle_cell_reconf_request(const du_cell_param_config_request& req) const;
 
   /// Retrieve current cell system information configuration.
   const mac_cell_sys_info_config& get_sys_info(du_cell_index_t cell_index) const
@@ -106,13 +106,16 @@ public:
   }
 
   /// Start a specific cell in the DU.
-  async_task<bool> start(du_cell_index_t cell_index);
+  async_task<bool> start(du_cell_index_t cell_index) const;
 
   /// Stop a specific cell in the DU.
-  async_task<void> stop(du_cell_index_t cell_index);
+  async_task<void> stop(du_cell_index_t cell_index) const;
 
   /// Stop all cells in the DU.
-  async_task<void> stop_all();
+  async_task<void> stop_all() const;
+
+  /// Remove all cell configurations.
+  void remove_all_cells();
 
 private:
   void assert_cell_exists(du_cell_index_t cell_index) const

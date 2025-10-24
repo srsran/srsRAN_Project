@@ -64,10 +64,23 @@ void to_json(nlohmann::json& json, const ngap_metrics& metrics)
   }
 }
 
+void to_json(nlohmann::json& json, const std::vector<plmn_identity>& plmns)
+{
+  // PLMN identity.
+  std::string plmn_str = "[ ";
+  for (const auto& plmn : plmns) {
+    plmn_str += fmt::format("{}, ", plmn);
+  }
+  plmn_str += "]";
+  json = fmt::format("{}", plmn_str);
+}
+
 void to_json(nlohmann::json& json, const ngap_info& metrics)
 {
   // NGAP info.
   json["amf_name"]                                = metrics.amf_name;
+  json["connected"]                               = metrics.connected;
+  json["supported_plmns"]                         = metrics.supported_plmns;
   json["pdu_session_management"]                  = metrics.metrics;
   nlohmann::json& paging_json                     = json["paging_measurement"];
   paging_json["nof_cn_initiated_paging_requests"] = metrics.metrics.nof_cn_initiated_paging_requests;

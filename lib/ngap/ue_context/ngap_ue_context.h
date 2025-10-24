@@ -23,6 +23,7 @@
 #pragma once
 
 #include "ngap_ue_logger.h"
+#include "ngap_ue_transaction_manager.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/support/timers.h"
@@ -43,20 +44,20 @@ struct ngap_ue_context {
   guami_t                 serving_guami;
   uint64_t                aggregate_maximum_bit_rate_dl = 0;
   uint64_t                aggregate_maximum_bit_rate_ul = 0;
-  unique_timer            request_pdu_session_timer     = {};
-  bool                    release_requested             = false;
-  bool                    release_scheduled             = false;
-  byte_buffer    last_pdu_session_resource_modify_request; // To check if a received modify request is a duplicate
-  ngap_ue_logger logger;
+  unique_timer            request_pdu_session_timer;
+  bool                    release_requested = false;
+  bool                    release_scheduled = false;
+  byte_buffer last_pdu_session_resource_modify_request; // To check if a received modify request is a duplicate
+  ngap_ue_transaction_manager ev_mng;
+  ngap_ue_logger              logger;
 
   ngap_ue_context(ue_index_t              ue_index_,
                   ran_ue_id_t             ran_ue_id_,
                   ngap_cu_cp_ue_notifier& ue_notifier_,
-                  timer_manager&          timers_,
-                  task_executor&          task_exec_) :
-    ue_ids({ue_index_, ran_ue_id_}), ue(&ue_notifier_), logger("NGAP", {ue_index_, ran_ue_id_})
+                  timer_factory&          timers_) :
+    ue_ids({ue_index_, ran_ue_id_}), ue(&ue_notifier_), ev_mng(timers_), logger("NGAP", {ue_index_, ran_ue_id_})
   {
-    request_pdu_session_timer = timers_.create_unique_timer(task_exec_);
+    request_pdu_session_timer = timers_.create_timer();
   }
 
   [[nodiscard]] ngap_cu_cp_ue_notifier* get_cu_cp_ue() const { return ue; }
@@ -65,7 +66,7 @@ struct ngap_ue_context {
 class ngap_ue_context_list
 {
 public:
-  ngap_ue_context_list(srslog::basic_logger& logger_) : logger(logger_) {}
+  ngap_ue_context_list(timer_factory timers_, srslog::basic_logger& logger_) : timers(timers_), logger(logger_) {}
 
   /// \brief Checks whether a UE with the given RAN UE ID exists.
   /// \param[in] ran_ue_id The RAN UE ID used to find the UE.
@@ -135,6 +136,7 @@ public:
     }
     return &it->second;
   }
+
   const ngap_ue_context* find(ran_ue_id_t ran_ue_id) const
   {
     auto it = ues.find(ran_ue_id);
@@ -144,11 +146,23 @@ public:
     return &it->second;
   }
 
-  ngap_ue_context& add_ue(ue_index_t              ue_index,
-                          ran_ue_id_t             ran_ue_id,
-                          ngap_cu_cp_ue_notifier& ue_notifier,
-                          timer_manager&          timers,
-                          task_executor&          task_exec)
+  ngap_ue_context* find(amf_ue_id_t amf_ue_id)
+  {
+    if (amf_ue_id_to_ran_ue_id.find(amf_ue_id) == amf_ue_id_to_ran_ue_id.end()) {
+      return nullptr;
+    }
+    return find(amf_ue_id_to_ran_ue_id.at(amf_ue_id));
+  }
+
+  const ngap_ue_context* find(amf_ue_id_t amf_ue_id) const
+  {
+    if (amf_ue_id_to_ran_ue_id.find(amf_ue_id) == amf_ue_id_to_ran_ue_id.end()) {
+      return nullptr;
+    }
+    return find(amf_ue_id_to_ran_ue_id.at(amf_ue_id));
+  }
+
+  ngap_ue_context& add_ue(ue_index_t ue_index, ran_ue_id_t ran_ue_id, ngap_cu_cp_ue_notifier& ue_notifier)
   {
     srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", fmt::underlying(ue_index));
     srsran_assert(ran_ue_id != ran_ue_id_t::invalid, "Invalid ran_ue={}", fmt::underlying(ran_ue_id));
@@ -156,7 +170,7 @@ public:
     logger.debug("ue={} ran_ue={}: NGAP UE context created", fmt::underlying(ue_index), fmt::underlying(ran_ue_id));
     ues.emplace(std::piecewise_construct,
                 std::forward_as_tuple(ran_ue_id),
-                std::forward_as_tuple(ue_index, ran_ue_id, ue_notifier, timers, task_exec));
+                std::forward_as_tuple(ue_index, ran_ue_id, ue_notifier, timers));
     ue_index_to_ran_ue_id.emplace(ue_index, ran_ue_id);
     return ues.at(ran_ue_id);
   }
@@ -285,6 +299,7 @@ protected:
   ran_ue_id_t next_ran_ue_id = ran_ue_id_t::min;
 
 private:
+  timer_factory         timers;
   srslog::basic_logger& logger;
 
   inline void increase_next_ran_ue_id()

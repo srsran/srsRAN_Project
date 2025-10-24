@@ -283,6 +283,8 @@ o_du_high_unit srsran::make_o_du_high_unit(const o_du_high_unit_config&  o_du_hi
   // Create remote commands.
   odu_unit.commands.remote.push_back(
       std::make_unique<ssb_modify_remote_command>(odu_unit.o_du_hi->get_du_high().get_du_configurator()));
+  odu_unit.commands.remote.push_back(
+      std::make_unique<rrm_policy_ratio_remote_command>(odu_unit.o_du_hi->get_du_high().get_du_configurator()));
 
   return odu_unit;
 }

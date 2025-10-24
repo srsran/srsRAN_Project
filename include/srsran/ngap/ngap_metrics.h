@@ -24,6 +24,7 @@
 
 #include "srsran/cu_cp/mobility_management_metrics.h"
 #include "srsran/ran/cause/ngap_cause.h"
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/ran/s_nssai.h"
 #include "srsran/support/format/fmt_to_c_str.h"
 #include "srsran/support/srsran_assert.h"
@@ -140,8 +141,10 @@ struct ngap_metrics {
 /// \brief NGAP metrics per AMF.
 struct ngap_info {
   /// Name of the AMF connected to the CU-CP.
-  std::string  amf_name;
-  ngap_metrics metrics;
+  std::string                amf_name;
+  bool                       connected = false;
+  std::vector<plmn_identity> supported_plmns;
+  ngap_metrics               metrics;
 };
 
 inline std::string format_ngap_metrics(const std::vector<ngap_info>&      report,
@@ -152,7 +155,14 @@ inline std::string format_ngap_metrics(const std::vector<ngap_info>&      report
   for (const auto& ngap_info : report) {
     // log ngap metrics
     fmt::format_to(std::back_inserter(buffer), "[");
-    fmt::format_to(std::back_inserter(buffer), " amf_name={}", ngap_info.amf_name);
+    fmt::format_to(std::back_inserter(buffer),
+                   " amf_name={} connected={} supported_plmns=[",
+                   ngap_info.amf_name,
+                   ngap_info.connected);
+    for (const auto& plmn : ngap_info.supported_plmns) {
+      fmt::format_to(std::back_inserter(buffer), " {},", plmn);
+    }
+    fmt::format_to(std::back_inserter(buffer), " ]");
 
     for (const auto& pdu_session_metric : ngap_info.metrics.pdu_session_metrics) {
       fmt::format_to(std::back_inserter(buffer),

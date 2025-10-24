@@ -48,7 +48,7 @@ void ue_removal_routine::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={}: \"{}\" initialized", ue_index, name());
+  logger.debug("ue={}: \"{}\" started...", ue_index, name());
 
   // Remove RRC UE.
   rrc_du_notifier.remove_ue(ue_index);
@@ -72,7 +72,7 @@ void ue_removal_routine::operator()(coro_context<async_task<void>>& ctx)
   // Remove UE from UE manager.
   ue_mng.remove_ue(ue_index);
 
-  logger.info("ue={}: \"{}\" finalized", ue_index, name());
+  logger.info("ue={}: \"{}\" finished successfully", ue_index, name());
 
   CORO_RETURN();
 }

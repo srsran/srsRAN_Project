@@ -121,7 +121,8 @@ struct vrb_alloc {
   }
 
   /// \brief Verifies if grant is not empty in terms of RBs.
-  bool any() const { return is_type0() ? type0().count() : type1().empty(); }
+  bool any() const { return is_type0() ? type0().any() : not type1().empty(); }
+  bool empty() const { return is_type0() ? not type0().any() : type1().empty(); }
 
 private:
   bool alloc_type_0 = false;

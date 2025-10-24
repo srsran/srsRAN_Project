@@ -22,6 +22,7 @@
 
 #include "adapters/f1_gateways.h"
 #include "apps/helpers/metrics/metrics_helpers.h"
+#include "apps/services/app_execution_metrics/executor_metrics_manager.h"
 #include "apps/services/app_resource_usage/app_resource_usage.h"
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
@@ -241,8 +242,11 @@ int main(int argc, char** argv)
 
   srslog::basic_logger&            du_logger = srslog::fetch_basic_logger("DU");
   app_services::application_tracer app_tracer;
-  if (not du_cfg.log_cfg.tracing_filename.empty()) {
-    app_tracer.enable_tracer(du_cfg.log_cfg.tracing_filename, du_logger);
+  if (not du_cfg.trace_cfg.filename.empty()) {
+    app_tracer.enable_tracer(du_cfg.trace_cfg.filename,
+                             du_cfg.trace_cfg.max_tracing_events_per_file,
+                             du_cfg.trace_cfg.nof_tracing_events_after_severe,
+                             du_logger);
   }
 
 #ifdef DPDK_FOUND
@@ -278,11 +282,19 @@ int main(int argc, char** argv)
   // Create manager of timers for DU, which will be driven by the PHY slot ticks.
   timer_manager app_timers{256};
 
+  app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
+
+  // Instantiate executor metrics service.
+  app_services::executor_metrics_service_and_metrics exec_metrics_service =
+      build_executor_metrics_service(metrics_notifier_forwarder, app_timers, du_cfg.metrics_cfg.executors_metrics_cfg);
+  std::vector<app_services::metrics_config> app_metrics = std::move(exec_metrics_service.metrics);
+
   // Instantiate worker manager.
   worker_manager_config worker_manager_cfg;
   o_du_app_unit->fill_worker_manager_config(worker_manager_cfg);
   fill_du_worker_manager_config(worker_manager_cfg, du_cfg);
-  worker_manager_cfg.app_timers = &app_timers;
+  worker_manager_cfg.app_timers                    = &app_timers;
+  worker_manager_cfg.exec_metrics_channel_registry = exec_metrics_service.channel_registry;
 
   worker_manager workers{worker_manager_cfg};
 
@@ -351,13 +363,16 @@ int main(int argc, char** argv)
                                         *du_pcaps.e2ap,
                                         E2_DU_PPID));
 
-  app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
-
   // Create app-level resource usage service and metrics.
   auto app_resource_usage_service = app_services::build_app_resource_usage_service(
       metrics_notifier_forwarder, du_cfg.metrics_cfg.rusage_config, srslog::fetch_basic_logger("GNB"));
 
-  std::vector<app_services::metrics_config> app_metrics = std::move(app_resource_usage_service.metrics);
+  for (auto& metric : app_resource_usage_service.metrics) {
+    app_metrics.push_back(std::move(metric));
+  }
+
+  buffer_pool_service.add_metrics_to_metrics_service(
+      app_metrics, du_cfg.buffer_pool_config.metrics_config, metrics_notifier_forwarder);
 
   o_du_unit_dependencies du_dependencies;
   du_dependencies.workers            = &workers;
@@ -407,6 +422,10 @@ int main(int argc, char** argv)
   {
     app_services::application_message_banners app_banner(
         app_name, du_cfg.log_cfg.filename == "stdout" ? std::string_view() : du_cfg.log_cfg.filename);
+
+    auto exec_metrics_session = exec_metrics_service.service
+                                    ? exec_metrics_service.service->create_session(workers.get_metrics_executor())
+                                    : app_services::app_executor_metrics_service::create_dummy_session();
 
     while (is_app_running) {
       std::this_thread::sleep_for(std::chrono::milliseconds(250));

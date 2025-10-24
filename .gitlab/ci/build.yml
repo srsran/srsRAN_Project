@@ -228,7 +228,7 @@ variables:
     TEST_MODE: coverage
     ENABLE_GCOV: "True"
     MARCH: x86-64-v3
-    LINKER: lld
+    LINKER: mold
     INFRASTRUCTURE_TAG: amd64-avx2
 
 .smoke relwithdeb:
@@ -249,7 +249,7 @@ variables:
     ENABLE_FFTW: "True"
     TEST_MODE: default
     MARCH: x86-64-v3
-    LINKER: lld
+    LINKER: mold
     INFRASTRUCTURE_TAG: amd64-avx2
 
 .smoke tsan:
@@ -263,6 +263,7 @@ variables:
     ENABLE_TSAN: "True"
     TEST_MODE: tsan
     MARCH: x86-64-v3
+    LINKER: mold
     INFRASTRUCTURE_TAG: amd64-avx2
 
 .smoke archlinux:
@@ -291,7 +292,7 @@ variables:
     ENABLE_FFTW: "True"
     DPDK_VERSION: "24.11.2_avx2"
     MARCH: x86-64-v3
-    LINKER: lld
+    LINKER: mold
     INFRASTRUCTURE_TAG: amd64-avx2
 
 .smoke valgrind:
@@ -317,7 +318,7 @@ variables:
     ENABLE_FFTW: "True"
     TEST_MODE: default
     MARCH: x86-64-v4
-    LINKER: lld
+    LINKER: mold
     INFRASTRUCTURE_TAG: amd64-avx2-avx512
 
 .smoke arm:
@@ -330,7 +331,7 @@ variables:
     ENABLE_FFTW: "True"
     TEST_MODE: default
     MARCH: armv8-a
-    LINKER: lld
+    LINKER: mold
     INFRASTRUCTURE_TAG: arm64
 
 .smoke arm neon:
@@ -343,8 +344,21 @@ variables:
     ENABLE_FFTW: "True"
     TEST_MODE: default
     MARCH: armv8.2-a+crypto+fp16+dotprod
-    LINKER: lld
+    LINKER: mold
     INFRASTRUCTURE_TAG: arm64
+
+.smoke printers:
+  extends: .build_and_unit
+  variables: &gdb_printers_variables
+    OS: ubuntu-24.04
+    COMPILER: gcc
+    CMAKE_BUILD_TYPE: Debug
+    ASSERT_LEVEL: PARANOID
+    ENABLE_FFTW: "True"
+    TEST_GDB_PRINTERS: "True"
+    TEST_MODE: pretty_printers
+    MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
 
 # Combinations to use in schedules matrix
 
@@ -490,6 +504,29 @@ smoke arm neon cached:
   cache:
     - *cache_build_get
 
+smoke pretty printers cached:
+  extends: .smoke printers
+  stage: manual
+  timeout: 1 hour
+  rules:
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_TARGET_BRANCH_PROTECTED == "true" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != $CI_DEFAULT_BRANCH
+      when: never
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
+      when: never
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
+      changes: &gdb_printers_changes
+        paths:
+          - include/srsran/adt/**/*
+          - tests/utils/gdb/pretty_printers/*
+          - .gdbinit
+    - if: $ON_MR
+      changes:
+        <<: *gdb_printers_changes
+      when: manual
+      allow_failure: false
+  cache:
+    - *cache_build_get
+
 smoke relwithdeb clean:
   extends: .smoke relwithdeb
   rules:
@@ -548,6 +585,15 @@ smoke arm neon clean:
     - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
       changes:
         <<: *instruction_set_changes
+
+smoke pretty printers clean:
+  extends: .smoke printers
+  rules:
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_TARGET_BRANCH_PROTECTED == "true" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != $CI_DEFAULT_BRANCH
+      when: never
+    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
+      changes:
+        <<: *gdb_printers_changes
 
 # Intermediate commits
 
@@ -634,6 +680,12 @@ valgrind changed tests:
       build_srsgnb
     - echo "This test execution has a timeout of ${TEST_EXECUTION_TIMEOUT}. If the execution excess that timer, the job will be marked as allowed_to_fail. This will avoid the job to have a huge duration in a MR pipeline."
     - launch_tests
+  after_script:
+    - mv ${CI_PROJECT_DIR}/build/Testing/Temporary /tmp/Testing_Temporary
+    - cd build
+    - make clean
+    - mkdir -p ${CI_PROJECT_DIR}/build/Testing
+    - mv /tmp/Testing_Temporary ${CI_PROJECT_DIR}/build/Testing/Temporary
   cache:
     - *cache_build_get
   artifacts: &valgrind_artifacts
@@ -1246,6 +1298,8 @@ debian 13 amd64 avx512:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 30 minutes
   interruptible: false
   variables:
     ASSERT_LEVEL: PARANOID
@@ -1400,6 +1454,8 @@ build uhd alt:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 15 minutes
   interruptible: false
   variables:
     TEST_MODE: none
@@ -1421,6 +1477,18 @@ build uhd alt:
         COMPILER: [gcc, clang]
         UHD_VERSION:
           ["4.8.0.0", "4.7.0.0", "4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
+
+# Validate test gdb pretty printers
+
+gdb pretty printers:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 300 minutes
+  interruptible: false
+  variables:
+    <<: *gdb_printers_variables
 
 # Build + unit tests combinations
 

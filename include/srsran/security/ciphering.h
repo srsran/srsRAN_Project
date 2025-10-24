@@ -52,7 +52,7 @@ inline void security_nea1(const sec_128_key& key,
   state_ptr        = &state;
   msg_len_block_8  = (msg_len + 7) / 8;
   msg_len_block_32 = (msg_len + 31) / 32;
-  if (msg_len_block_8 <= len) {
+  if (msg_len_block_8 <= len && len > 0) {
     // Transform key
     for (i = 3; i >= 0; i--) {
       k[i] = (key[4 * (3 - i) + 0] << 24) | (key[4 * (3 - i) + 1] << 16) | (key[4 * (3 - i) + 2] << 8) |
@@ -127,7 +127,7 @@ inline void security_nea2(const sec_128_key& key,
     return;
   }
 
-  if (msg_len_block_8 <= len) {
+  if (msg_len_block_8 <= len && len > 0) {
     if (ret == 0) {
       // Construct nonce
       nonce_cnt[0] = (count >> 24) & 0xff;
@@ -175,7 +175,7 @@ inline void security_nea3(const sec_128_key& key,
 
   msg_len_block_8  = (msg_len + 7) / 8;
   msg_len_block_32 = (msg_len + 31) / 32;
-  if (msg_len_block_8 <= len) {
+  if (msg_len_block_8 <= len && len > 0) {
     // Construct iv
     iv[0]  = (count >> 24) & 0xff;
     iv[1]  = (count >> 16) & 0xff;

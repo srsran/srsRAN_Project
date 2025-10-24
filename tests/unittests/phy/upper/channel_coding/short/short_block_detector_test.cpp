@@ -41,7 +41,13 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
              "message_length={} codeblock_length={} mod={}",
              test_case.message_length,
              test_case.codeblock_length,
-             fmt::underlying(test_case.mod));
+             to_string(test_case.mod));
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, span<const uint8_t> bits)
+{
+  fmt::print(os, "{}", bits);
   return os;
 }
 
@@ -83,26 +89,25 @@ std::unique_ptr<short_block_detector>         ShortBlockDetectorFixture::test_de
 
 TEST_P(ShortBlockDetectorFixture, ShortBlockDetectorTest)
 {
-  for (const auto& test_data : short_block_detector_test_data) {
-    unsigned          nof_messages     = test_data.nof_messages;
-    unsigned          message_length   = test_data.message_length;
-    unsigned          codeblock_length = test_data.codeblock_length;
-    modulation_scheme mod              = test_data.mod;
+  const test_case_t& test_data        = GetParam();
+  unsigned           nof_messages     = test_data.nof_messages;
+  unsigned           message_length   = test_data.message_length;
+  unsigned           codeblock_length = test_data.codeblock_length;
+  modulation_scheme  mod              = test_data.mod;
 
-    const std::vector<uint8_t> messages = test_data.messages.read();
-    ASSERT_EQ(messages.size(), nof_messages * message_length) << "Error reading messages.";
-    std::vector<log_likelihood_ratio> codeblocks = test_data.codeblocks.read();
-    ASSERT_EQ(codeblocks.size(), nof_messages * codeblock_length) << "Error reading codeblocks.";
+  const std::vector<uint8_t> messages = test_data.messages.read();
+  ASSERT_EQ(messages.size(), nof_messages * message_length) << "Error reading messages.";
+  std::vector<log_likelihood_ratio> codeblocks = test_data.codeblocks.read();
+  ASSERT_EQ(codeblocks.size(), nof_messages * codeblock_length) << "Error reading codeblocks.";
 
-    std::vector<uint8_t> messages_test(messages.size());
-    for (unsigned msg_idx = 0; msg_idx != nof_messages; ++msg_idx) {
-      span<const log_likelihood_ratio> input =
-          span<const log_likelihood_ratio>(codeblocks).subspan(msg_idx * codeblock_length, codeblock_length);
-      span<uint8_t> output = span<uint8_t>(messages_test).subspan(msg_idx * message_length, message_length);
-      ASSERT_TRUE(test_detector->detect(output, input, mod)) << "Meaningless detection.";
-    }
-    ASSERT_EQ(span<const uint8_t>(messages_test), span<const uint8_t>(messages)) << "Detection went wrong.";
+  std::vector<uint8_t> messages_test(messages.size());
+  for (unsigned msg_idx = 0; msg_idx != nof_messages; ++msg_idx) {
+    span<const log_likelihood_ratio> input =
+        span<const log_likelihood_ratio>(codeblocks).subspan(msg_idx * codeblock_length, codeblock_length);
+    span<uint8_t> output = span<uint8_t>(messages_test).subspan(msg_idx * message_length, message_length);
+    ASSERT_TRUE(test_detector->detect(output, input, mod)) << "Failed detection.";
   }
+  ASSERT_EQ(span<const uint8_t>(messages_test), span<const uint8_t>(messages)) << "Wrong detected messages.";
 }
 
 TEST_P(ShortBlockDetectorFixture, ShortBlockDetectorTestZeroLLR)
@@ -115,7 +120,7 @@ TEST_P(ShortBlockDetectorFixture, ShortBlockDetectorTestZeroLLR)
 
   for (unsigned msg_idx = 0; msg_idx != nof_messages; ++msg_idx) {
     std::vector<uint8_t>              output(message_length);
-    std::vector<log_likelihood_ratio> input(nof_messages * codeblock_length, log_likelihood_ratio(0));
+    std::vector<log_likelihood_ratio> input(codeblock_length, log_likelihood_ratio(0));
 
     // Detection must be invalid and all values to one.
     ASSERT_FALSE(test_detector->detect(output, input, mod)) << "Invalid detection.";

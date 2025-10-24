@@ -36,31 +36,37 @@ public:
   double get_avg_rate_Mbps(modulation_scheme modulation) const
   {
     const metrics_per_modulation& metrics = select_metrics(modulation);
-    return static_cast<double>(get_bits_per_symbol(modulation) * metrics.sum_nof_symbols) /
-           static_cast<double>(metrics.sum_elapsed_ns) * 1000;
+    return static_cast<double>(get_bits_per_symbol(modulation) *
+                               metrics.sum_nof_symbols.load(std::memory_order_relaxed)) /
+           static_cast<double>(metrics.sum_elapsed_ns.load(std::memory_order_relaxed)) * 1000;
   }
 
   /// Gets the processing rate in millions of bauds per second.
   double get_avg_rate_MBaudps(modulation_scheme modulation) const
   {
     const metrics_per_modulation& metrics = select_metrics(modulation);
-    return static_cast<double>(metrics.sum_nof_symbols) / static_cast<double>(metrics.sum_elapsed_ns) * 1000;
+    return static_cast<double>(metrics.sum_nof_symbols.load(std::memory_order_relaxed)) /
+           static_cast<double>(metrics.sum_elapsed_ns.load(std::memory_order_relaxed)) * 1000;
   }
 
   /// Gets the total amount of time the modulation mapper spent calculating.
   std::chrono::nanoseconds get_total_time() const
   {
-    return std::chrono::nanoseconds(qpsk_metrics_collection.sum_elapsed_ns + qam16_metrics_collection.sum_elapsed_ns +
-                                    qam64_metrics_collection.sum_elapsed_ns + qam256_metrics_collection.sum_elapsed_ns +
-                                    other_metrics_collection.sum_elapsed_ns);
+    return std::chrono::nanoseconds(qpsk_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed) +
+                                    qam16_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed) +
+                                    qam64_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed) +
+                                    qam256_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed) +
+                                    other_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed));
   }
 
   /// Gets the CPU usage in microseconds of the modulation mapper.
   double get_cpu_usage_us() const
   {
-    return static_cast<double>(qpsk_metrics_collection.sum_elapsed_ns + qam16_metrics_collection.sum_elapsed_ns +
-                               qam64_metrics_collection.sum_elapsed_ns + qam256_metrics_collection.sum_elapsed_ns +
-                               other_metrics_collection.sum_elapsed_ns) /
+    return static_cast<double>(qpsk_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed) +
+                               qam16_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed) +
+                               qam64_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed) +
+                               qam256_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed) +
+                               other_metrics_collection.sum_elapsed_ns.load(std::memory_order_relaxed)) /
            1000.0;
   }
 
@@ -82,8 +88,8 @@ private:
 
     void reset()
     {
-      sum_nof_symbols = 0;
-      sum_elapsed_ns  = 0;
+      sum_nof_symbols.store(0, std::memory_order_relaxed);
+      sum_elapsed_ns.store(0, std::memory_order_relaxed);
     }
   };
 
@@ -129,8 +135,8 @@ private:
   void on_new_metric(const channel_modulation_metrics& metrics) override
   {
     metrics_per_modulation& metrics_modulation = select_metrics(metrics.modulation);
-    metrics_modulation.sum_nof_symbols += metrics.nof_symbols;
-    metrics_modulation.sum_elapsed_ns += metrics.measurements.duration.count();
+    metrics_modulation.sum_nof_symbols.fetch_add(metrics.nof_symbols, std::memory_order_relaxed);
+    metrics_modulation.sum_elapsed_ns.fetch_add(metrics.measurements.duration.count(), std::memory_order_relaxed);
   }
 
   metrics_per_modulation qpsk_metrics_collection;

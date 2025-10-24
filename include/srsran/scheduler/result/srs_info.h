@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
+#include "srsran/ran/rnti.h"
 #include "srsran/ran/srs/srs_configuration.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
 

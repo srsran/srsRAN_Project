@@ -27,7 +27,7 @@
 
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
-#include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
+#include "srsran/phy/upper/signal_processors/pdsch/dmrs_pdsch_processor.h"
 #include "srsran/phy/upper/signal_processors/ptrs/ptrs_pdsch_generator.h"
 #include "srsran/ran/dmrs.h"
 #include "srsran/ran/ptrs/ptrs_pattern.h"

@@ -19,6 +19,7 @@
 #
 
 add_library(srsran_instrumentation
+        traces/critical_traces.cpp
         traces/du_traces.cpp
         traces/ru_traces.cpp
         traces/up_traces.cpp

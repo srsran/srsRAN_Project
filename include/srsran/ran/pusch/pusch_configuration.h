@@ -144,6 +144,14 @@ struct pusch_config {
   /// \remark See TS 38.214, clause 6.1.3.
   enum class transform_precoder : unsigned { enabled, disabled, not_set };
 
+  /// \brief HARQ process number for DCI Format 0_1.
+  /// \remark See TS38.212, Section 7.3.1.1.2 Format 0_1.
+  enum class harq_process_num_dci_0_1_size { n4 = 4, n5 = 5 };
+
+  /// \brief HARQ process number for DCI Format 0_2.
+  /// \remark See TS38.212, Section 7.3.1.1.3 Format 0_2.
+  enum class harq_process_num_dci_0_2_size { n0 = 0, n1 = 1, n2 = 2, n3 = 3, n4 = 4, n5 = 5 };
+
   /// Identifier used to initalite data scrambling (c_init) for PUSCH. If the field is absent, the UE applies the
   /// physical cell ID. See TS 38.211, clause 6.3.1.1.
   std::optional<uint16_t> data_scrambling_id_pusch;
@@ -172,13 +180,24 @@ struct pusch_config {
   /// \c uci-OnPUSCH.
   std::optional<uci_on_pusch> uci_cfg;
 
+  /// The UE specific HARQ Process number field size in DCI Format 0_1.
+  /// 5 bits if higher layer parameter harq-ProcessNumberSizeDCI-0-1 is configured; otherwise 4 bit.
+  std::optional<harq_process_num_dci_0_1_size> harq_process_num_size_dci_0_1{harq_process_num_dci_0_1_size::n4};
+
+  /// The UE specific HARQ Process number field size in DCI Format 0_2.
+  /// 5 bits determined by higher layer parameter harq-ProcessNumberSizeDCI-0-2-v1700 if configured.
+  /// otherwise 0, 1, 2, 3 or 4 bits determined by higher layer parameter harq-ProcessNumberSizeDCI-0-2.
+  std::optional<harq_process_num_dci_0_2_size> harq_process_num_size_dci_0_2{harq_process_num_dci_0_2_size::n4};
+
   bool operator==(const pusch_config& rhs) const
   {
     return data_scrambling_id_pusch == rhs.data_scrambling_id_pusch && tx_cfg == rhs.tx_cfg &&
            pusch_mapping_type_a_dmrs == rhs.pusch_mapping_type_a_dmrs &&
            pusch_mapping_type_b_dmrs == rhs.pusch_mapping_type_b_dmrs && pusch_pwr_ctrl == rhs.pusch_pwr_ctrl &&
            res_alloc == rhs.res_alloc && mcs_table == rhs.mcs_table && trans_precoder == rhs.trans_precoder &&
-           uci_cfg == rhs.uci_cfg && pusch_td_alloc_list == rhs.pusch_td_alloc_list;
+           uci_cfg == rhs.uci_cfg && pusch_td_alloc_list == rhs.pusch_td_alloc_list &&
+           harq_process_num_size_dci_0_1 == rhs.harq_process_num_size_dci_0_1 &&
+           harq_process_num_size_dci_0_2 == rhs.harq_process_num_size_dci_0_2;
   }
   bool operator!=(const pusch_config& rhs) const { return !(rhs == *this); }
 };

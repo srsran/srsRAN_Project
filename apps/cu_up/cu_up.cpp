@@ -23,6 +23,7 @@
 #include "apps/cu_up/cu_up_appconfig_cli11_schema.h"
 #include "apps/helpers/f1u/f1u_appconfig.h"
 #include "apps/helpers/metrics/metrics_helpers.h"
+#include "apps/services/app_execution_metrics/executor_metrics_manager.h"
 #include "apps/services/app_resource_usage/app_resource_usage.h"
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
@@ -159,11 +160,11 @@ static void register_app_logs(const cu_up_appconfig& cu_up_cfg, o_cu_up_applicat
   cu_up_app_unit.on_loggers_registration();
 }
 
-static void fill_cu_worker_manager_config(worker_manager_config& config, const cu_up_appconfig& unit_cfg)
+static void fill_cu_worker_manager_config(worker_manager_config& config, const cu_up_appconfig& app_cfg)
 {
-  config.nof_main_pool_threads     = unit_cfg.expert_execution_cfg.threads.main_pool.nof_threads;
-  config.main_pool_task_queue_size = unit_cfg.expert_execution_cfg.threads.main_pool.task_queue_size;
-  config.main_pool_affinity_cfg    = unit_cfg.expert_execution_cfg.affinities.main_pool_cpu_cfg;
+  config.nof_main_pool_threads     = app_cfg.expert_execution_cfg.threads.main_pool.nof_threads;
+  config.main_pool_task_queue_size = app_cfg.expert_execution_cfg.threads.main_pool.task_queue_size;
+  config.main_pool_affinity_cfg    = app_cfg.expert_execution_cfg.affinities.main_pool_cpu_cfg;
 }
 
 static void autoderive_cu_up_parameters_after_parsing(cu_up_appconfig& cu_up_config, o_cu_up_unit_config& o_cu_up_cfg)
@@ -250,8 +251,11 @@ int main(int argc, char** argv)
   // TODO: Log input configuration.
 
   app_services::application_tracer app_tracer;
-  if (not cu_up_cfg.log_cfg.tracing_filename.empty()) {
-    app_tracer.enable_tracer(cu_up_cfg.log_cfg.tracing_filename, cu_up_logger);
+  if (not cu_up_cfg.trace_cfg.filename.empty()) {
+    app_tracer.enable_tracer(cu_up_cfg.trace_cfg.filename,
+                             cu_up_cfg.trace_cfg.max_tracing_events_per_file,
+                             cu_up_cfg.trace_cfg.nof_tracing_events_after_severe,
+                             cu_up_logger);
   }
 
   // configure cgroups
@@ -283,11 +287,19 @@ int main(int argc, char** argv)
   timer_manager  app_timers{256};
   timer_manager* cu_up_timers = &app_timers;
 
+  app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
+
+  // Instantiate executor metrics service.
+  app_services::executor_metrics_service_and_metrics exec_metrics_service = build_executor_metrics_service(
+      metrics_notifier_forwarder, app_timers, cu_up_cfg.metrics_cfg.executors_metrics_cfg);
+  std::vector<app_services::metrics_config> metrics_configs = std::move(exec_metrics_service.metrics);
+
   // Create worker manager.
   worker_manager_config worker_manager_cfg;
   fill_cu_worker_manager_config(worker_manager_cfg, cu_up_cfg);
   o_cu_up_app_unit->fill_worker_manager_config(worker_manager_cfg);
-  worker_manager_cfg.app_timers = &app_timers;
+  worker_manager_cfg.app_timers                    = &app_timers;
+  worker_manager_cfg.exec_metrics_channel_registry = exec_metrics_service.channel_registry;
   worker_manager workers{worker_manager_cfg};
 
   // Create IO broker.
@@ -357,13 +369,16 @@ int main(int argc, char** argv)
                                         *cu_up_dlt_pcaps.e2ap,
                                         E2_UP_PPID));
 
-  app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
-
   // Create app-level resource usage service and metrics.
   auto app_resource_usage_service = app_services::build_app_resource_usage_service(
       metrics_notifier_forwarder, cu_up_cfg.metrics_cfg.rusage_config, cu_up_logger);
 
-  std::vector<app_services::metrics_config> metrics_configs = std::move(app_resource_usage_service.metrics);
+  for (auto& metric : app_resource_usage_service.metrics) {
+    metrics_configs.push_back(std::move(metric));
+  }
+
+  buffer_pool_service.add_metrics_to_metrics_service(
+      metrics_configs, cu_up_cfg.buffer_pool_config.metrics_config, metrics_notifier_forwarder);
 
   // TODO: Create console helper object for commands and metrics printing.
 
@@ -403,6 +418,10 @@ int main(int argc, char** argv)
     app_services::application_message_banners app_banner(
         app_name, cu_up_cfg.log_cfg.filename == "stdout" ? std::string_view() : cu_up_cfg.log_cfg.filename);
 
+    auto exec_metrics_session = exec_metrics_service.service
+                                    ? exec_metrics_service.service->create_session(workers.get_metrics_executor())
+                                    : app_services::app_executor_metrics_service::create_dummy_session();
+
     while (is_app_running) {
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
@@ -416,9 +435,6 @@ int main(int argc, char** argv)
 
   // Stop O-CU-UP activity.
   o_cuup_unit.unit->get_operation_controller().stop();
-
-  // FIXME: closing the E1 gateway should be part of the E1 Release procedure
-  e1_gw.reset();
 
   return 0;
 }

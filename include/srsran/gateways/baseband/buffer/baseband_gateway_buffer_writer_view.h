@@ -56,7 +56,7 @@ public:
   unsigned get_nof_samples() const override { return nof_samples; }
 
   // See interface for documentation.
-  span<cf_t> get_channel_buffer(unsigned i_channel) override
+  span<ci16_t> get_channel_buffer(unsigned i_channel) override
   {
     return buffer.get_channel_buffer(i_channel).subspan(offset, nof_samples);
   }

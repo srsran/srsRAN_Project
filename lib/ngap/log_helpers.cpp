@@ -51,12 +51,12 @@ void srsran::srs_cu_cp::log_ngap_pdu(srslog::basic_logger&            logger,
     return;
   }
 
-  std::optional<ran_ue_id_t> ran_ue_id = get_ran_ue_id(pdu);
-  std::optional<amf_ue_id_t> amf_ue_id = get_amf_ue_id(pdu);
+  std::optional<ran_ue_id_t> ran_ue_id = asn1_utils::get_ran_ue_id(pdu);
+  std::optional<amf_ue_id_t> amf_ue_id = asn1_utils::get_amf_ue_id(pdu);
 
   // Custom formattable object whose formatting function will run in the log backend.
-  auto pdu_log_entry =
-      make_formattable([is_rx, ran_ue_id, amf_ue_id, ue_idx, msg_name = get_message_type_str(pdu)](auto& ctx) {
+  auto pdu_log_entry = make_formattable(
+      [is_rx, ran_ue_id, amf_ue_id, ue_idx, msg_name = asn1_utils::get_message_type_str(pdu)](auto& ctx) {
         return fmt::format_to(ctx.out(),
                               "{} PDU{}{}{}: {}",
                               is_rx ? "Rx" : "Tx",

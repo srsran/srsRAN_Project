@@ -39,14 +39,24 @@ public:
   /// Default destructor.
   virtual ~ldpc_encoder() = default;
 
+  /// Collects the necessary parameters for encoding an LDPC codeblock.
+  struct configuration {
+    /// Code base graph.
+    ldpc_base_graph_type base_graph = ldpc_base_graph_type::BG1;
+    /// Code lifting size.
+    ldpc::lifting_size_t lifting_size = ldpc::LS2;
+    /// \brief Limited buffer rate matching length, as per TS38.212 Section 5.4.2.
+    /// \note Set to zero for unlimited buffer length.
+    unsigned Nref = 0;
+  };
+
   /// \brief Encodes a message.
   ///
   /// \param[in]  input   Message: original information bits, with the filler bits (if any) set to zero.
   /// \param[in]  cfg     Encoder configuration for the current codeblock.
   /// \return A reference to the LDPC encoder buffer.
   /// \note The length of the output codeblock is deduced from the size of parameter \c output.
-  virtual const ldpc_encoder_buffer& encode(const bit_buffer&                             input,
-                                            const codeblock_metadata::tb_common_metadata& cfg) = 0;
+  virtual const ldpc_encoder_buffer& encode(const bit_buffer& input, const configuration& cfg) = 0;
 };
 
 } // namespace srsran

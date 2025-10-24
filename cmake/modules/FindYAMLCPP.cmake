@@ -20,35 +20,38 @@
 
 # - Try to find yaml-cpp - a YAML parser for C++
 # Once done this will define
-#  YAMLCPP_FOUND - System has yaml-cpp
-#  YAMLCPP_INCLUDE_DIR - The yaml-cpp include directories
-#  YAMLCPP_LIBRARY - The library needed to use yaml-cpp
+#  YAML_CPP_FOUND - System has yaml-cpp
+#  YAML_CPP_INCLUDE_DIR - The yaml-cpp include directories
+#  YAML_CPP_LIBRARY_DIR - Directory containing libraries
+#  YAML_CPP_LIBRARIES - The libraries needed to use yaml-cpp
+#  YAML_CPP_VERSION - Version of the yaml-cpp library
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(PC_YAMLCPP REQUIRED yaml-cpp)
-set(YAMLCPP_DEFINITIONS ${PC_YAMLCPP_CFLAGS_OTHER})
+unset(YAML_CPP_FOUND)
 
-find_path(
-        YAMLCPP_INCLUDE_DIR
-        NAMES yaml-cpp/yaml.h
-        PATHS /usr/local/include
-        /usr/include
-)
+# First try to locate yaml-cpp using the CMake config mode
+find_package(yaml-cpp CONFIG QUIET)
 
-find_library(
-        YAMLCPP_LIBRARY
-        NAMES yaml-cpp libyaml-cpp
-        HINTS ${PC_YAMLCPP_LIBDIR} ${PC_YAMLCPP_LIBRARY_DIRS}
-        PATHS /usr/local/lib
-        /usr/local/lib64
-        /usr/lib
-        /usr/lib64
-        /usr/lib/x86_64-linux-gnu
-)
+if (yaml-cpp_FOUND)
+    set(YAML_CPP_FOUND TRUE)
+    set(YAML_CPP_VERSION ${yaml-cpp_VERSION})
+else (yaml-cpp_FOUND)
+    # Otherwise try to find yaml-cpp pkgconfig definition
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(PC_YAMLCPP QUIET yaml-cpp)
 
-message(STATUS "YAMLCPP LIBRARIES: " ${YAMLCPP_LIBRARY})
-message(STATUS "YAMLCPP INCLUDE DIRS: " ${YAMLCPP_INCLUDE_DIR})
+    if (PC_YAMLCPP_FOUND)
+        set(YAML_CPP_FOUND TRUE)
 
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(YAMLCPP DEFAULT_MSG YAMLCPP_LIBRARY YAMLCPP_INCLUDE_DIR)
-mark_as_advanced(YAMLCPP_LIBRARY YAMLCPP_INCLUDE_DIR)
+        set(YAML_CPP_INCLUDE_DIR ${PC_YAMLCPP_INCLUDE_DIRS})
+        set(YAML_CPP_LIBRARY_DIR ${PC_YAMLCPP_LIBRARY_DIRS})
+        set(YAML_CPP_LIBRARIES ${PC_YAMLCPP_LIBRARIES})
+        set(YAML_CPP_VERSION ${PC_YAMLCPP_VERSION})
+    endif (PC_YAMLCPP_FOUND)
+endif (yaml-cpp_FOUND)
+
+if (YAML_CPP_FOUND)
+    message(STATUS "Found yaml-cpp, version " ${YAML_CPP_VERSION})
+    message(STATUS "YAMLCPP LIBRARIES: " ${YAML_CPP_LIBRARIES})
+    message(STATUS "YAMLCPP INCLUDE DIRS: " ${YAML_CPP_INCLUDE_DIR})
+    message(STATUS "YAMLCPP LIBRARY DIRS: " ${YAML_CPP_LIBRARY_DIR})
+endif (YAML_CPP_FOUND)

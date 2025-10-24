@@ -27,11 +27,11 @@
 #include "../slicing/inter_slice_scheduler.h"
 #include "../srs/srs_scheduler_impl.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
+#include "../ue_context/ue_repository.h"
 #include "intra_slice_scheduler.h"
 #include "ue_cell_grid_allocator.h"
 #include "ue_event_manager.h"
 #include "ue_fallback_scheduler.h"
-#include "ue_repository.h"
 #include "ue_scheduler.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include <mutex>
@@ -68,6 +68,9 @@ private:
     /// HARQ pool for this cell.
     cell_harq_manager cell_harqs;
 
+    /// Repository of UEs for this cell.
+    ue_cell_repository& ue_cell_db;
+
     /// PUCCH scheduler.
     uci_scheduler_impl uci_sched;
 
@@ -87,6 +90,7 @@ private:
     std::unique_ptr<ue_cell_event_manager> ev_mng;
 
     cell_context(ue_scheduler_impl& parent, const ue_cell_scheduler_creation_request& params);
+    ~cell_context();
 
     void run_slot(slot_point sl_tx) override { parent.run_slot_impl(sl_tx); }
 
@@ -101,7 +105,7 @@ private:
     }
 
     scheduler_feedback_handler&                   get_feedback_handler() override { return *ev_mng; }
-    scheduler_positioning_handler&                get_positioning_handler() override { return *ev_mng; }
+    scheduler_cell_positioning_handler&           get_positioning_handler() override { return *ev_mng; }
     scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() override { return *ev_mng; }
     sched_ue_configuration_handler&               get_ue_configurator() override { return *ev_mng; }
 

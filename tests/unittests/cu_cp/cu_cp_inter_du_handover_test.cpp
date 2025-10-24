@@ -26,6 +26,7 @@
 #include "tests/test_doubles/ngap/ngap_test_message_validators.h"
 #include "tests/test_doubles/rrc/rrc_test_message_validators.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/f1ap/f1ap_message.h"
 #include "srsran/f1ap/f1ap_ue_id_types.h"
@@ -86,6 +87,12 @@ public:
                               "Failed to receive UE Context Setup Request");
     report_fatal_error_if_not(test_helpers::is_valid_ue_context_setup_request_with_ue_capabilities(target_f1ap_pdu),
                               "Invalid UE Context Setup Request");
+
+    report_fatal_error_if_not(target_f1ap_pdu.pdu.init_msg().value.ue_context_setup_request()->serving_cell_mo_present,
+                              "ServingCellMO not present in UE Context Setup Request");
+
+    serving_cell_mo = target_f1ap_pdu.pdu.init_msg().value.ue_context_setup_request()->serving_cell_mo;
+
     return true;
   }
 
@@ -140,21 +147,15 @@ public:
             ue_ctx->cu_ue_id.value(),
             ue_ctx->du_ue_id.value(),
             crnti,
-            make_byte_buffer("5c06c0060030258380f80408d07810000929dc601349798002692f"
-                             "1200000464c6b6c61b3704020000080800041a235246c0134978"
-                             "90000023271adb19127c03033255878092748837146e30dc71b963"
-                             "7dfab6387580221603400c162300e20981950001ff0000000003"
-                             "06e10840000402ca0041904000040d31a01100102000e388844800"
-                             "4080038e2221400102000e3888c60004080038e24060088681aa"
-                             "b2420e0008206102860e4a60c9a3670e8f00000850000800b50001"
-                             "000850101800b50102000850202800b50203000850303800b503"
-                             "0b8c8b5040c00504032014120d00505036014160e0050603a0141a"
-                             "120c506a0496302a72fd159e26f2681d2083c5df81821c000000"
-                             "38ffd294a5294f28160000219760000000000005000001456aa280"
-                             "23800c00041000710804e20070101084000e21009c200e040220"
-                             "8001c420138401c0c042100038840270c038200882000710804e18"
-                             "004000000410c04080c100e0d0000e388000000400800100c001"
-                             "0120044014c00004620090e3800c")
+            make_byte_buffer(
+                "5c04c00604b0701f00811a0f020001273b8c02692f30004d25e24040008c8040a26418d6d8d76006e08040000101000083446a"
+                "48d802692f1200000464e35b63224f80b0664abff0124e9106e28dc61b8e372c6fbf56c70eb00442c0680182c4602c02052100"
+                "4930b2a0003fe00000000060dc210800078059402830000002068c080a28500071c48000133557c841c001040c2050c1c9c48a"
+                "163068e1e408800044280004045a8000860428000c605a80010064280014065a800185e428001c5e5a80020084280024588240"
+                "a1620a02c5882c0c1620c034588340e1620e03c0e8201003a090440e829024b92a4a1814388e8acf1379343e9041e2efc0c10e"
+                "000000131ffacc46a9aae502c0000432ec0000000000000000002108ad5450047001004082000e21009c400e0208108001c420"
+                "138401c081041000388402708038182042000710804e18070404104000e21009c300080000008218081018201c1a0001c71000"
+                "000080100020180020240088029800008c40089c72018000")
                 .value()));
 
     report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(source_du_idx, source_f1ap_pdu),
@@ -170,7 +171,8 @@ public:
 
       const byte_buffer& rrc_container = test_helpers::get_rrc_container(source_f1ap_pdu);
       report_fatal_error_if_not(
-          test_helpers::is_valid_rrc_reconfiguration(test_helpers::extract_dl_dcch_msg(rrc_container), false, {}, {}),
+          test_helpers::is_valid_rrc_reconfiguration(
+              test_helpers::extract_dl_dcch_msg(rrc_container), false, {}, {}, {}, serving_cell_mo),
           "Invalid RRC Reconfiguration");
     }
     return true;
@@ -244,7 +246,7 @@ public:
         .push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(ue_ctx->du_ue_id.value(),
                                                                     ue_ctx->cu_ue_id.value(),
                                                                     srb_id_t::srb1,
-                                                                    make_byte_buffer("8000080035c41efd").value()));
+                                                                    make_byte_buffer("80000800db659eb2").value()));
     report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu),
                               "Failed to receive Bearer Context Modification Request");
     report_fatal_error_if_not(test_helpers::is_valid_bearer_context_modification_request(e1ap_pdu),
@@ -308,6 +310,8 @@ public:
       test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
   gnb_cu_up_ue_e1ap_id_t cu_up_e1ap_id = gnb_cu_up_ue_e1ap_id_t::min;
   gnb_cu_cp_ue_e1ap_id_t cu_cp_e1ap_id;
+
+  std::optional<uint8_t> serving_cell_mo = std::nullopt;
 
   const ue_context* ue_ctx = nullptr;
 
@@ -525,7 +529,7 @@ TEST_F(cu_cp_inter_du_handover_test, when_ho_succeeds_then_target_ue_is_connecte
       du_ue_id,
       ue_ctx->cu_ue_id.value(),
       srb_id_t::srb1,
-      make_byte_buffer("00013a0c3f016f19764701bf0022808005f900788801002060000306803b4d579f").value());
+      make_byte_buffer("00013a0c3f016f19764701bf0022808005f900788801002060000306802bffe479").value());
   get_du(target_du_idx).push_ul_pdu(ul_rrc_msg_transfer);
   ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu));
   ASSERT_TRUE(test_helpers::is_valid_ul_nas_transport_message(ngap_pdu));

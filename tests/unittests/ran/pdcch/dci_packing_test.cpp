@@ -356,6 +356,10 @@ protected:
     // is not currently supported.
     dci_config.sul_configured = false;
 
+    // Set default HARQ Process Number field size.
+    dci_config.dl_harq_process_number_field_size = 4;
+    dci_config.ul_harq_process_number_field_size = 4;
+
     // Generate all possible DCI sizes.
     dci_config.dci_0_0_and_1_0_ue_ss = true;
     dci_config.dci_0_1_and_1_1_ue_ss = true;

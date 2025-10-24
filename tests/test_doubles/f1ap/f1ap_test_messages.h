@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "../rrc/rrc_packed_test_messages.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/f1ap/common/interface_management.h"
@@ -48,7 +49,7 @@ namespace test_helpers {
 
 struct served_cell_item_info {
   struct meas_timing_config {
-    uint32_t           carrier_freq = 535930;
+    uint32_t           carrier_freq = 620928;
     subcarrier_spacing scs          = subcarrier_spacing::kHz30;
   };
 
@@ -56,11 +57,9 @@ struct served_cell_item_info {
   pci_t              pci      = 0;
   tac_t              tac      = 7;
   nr_band            band     = nr_band::n78;
-  uint32_t           nr_arfcn = 626748;
+  uint32_t           nr_arfcn = 620688;
   meas_timing_config meas_timing_cfg;
-  std::string        sib1_str =
-      "d20405c04300100e6640400000e000cd80018056109a000200046402051320c6b6c61b3704020000080800041a235241213042692f120000"
-      "0464e35b63224f80b0664abff0124e9106e28dc61b8e372c6fbf56c70ea008580d003058b68228";
+  std::string        sib1_str = create_sib1_hex_string();
 };
 
 /// \brief Generates dummy F1 RESET message, sent by the CU to the DU, as per TS 38.473 section 8.2.1.1.
@@ -122,12 +121,11 @@ f1ap_message generate_ue_context_setup_request(gnb_cu_ue_f1ap_id_t              
 
 /// \brief Generates dummy F1AP UE CONTEXT SETUP RESPONSE message, sent by the DU to the CU, as per TS 38.473
 /// section 8.3.1.2.
-f1ap_message generate_ue_context_setup_response(
-    gnb_cu_ue_f1ap_id_t   cu_ue_id,
-    gnb_du_ue_f1ap_id_t   du_ue_id,
-    std::optional<rnti_t> crnti = std::nullopt,
-    byte_buffer           cell_group_config =
-        make_byte_buffer("5c02b091117aec701061e000b1c03544cde4a20c7c080408c008241000100000").value());
+f1ap_message
+generate_ue_context_setup_response(gnb_cu_ue_f1ap_id_t   cu_ue_id,
+                                   gnb_du_ue_f1ap_id_t   du_ue_id,
+                                   std::optional<rnti_t> crnti             = std::nullopt,
+                                   byte_buffer           cell_group_config = test_helpers::create_cell_group_config());
 
 /// \brief Generates dummy F1AP UE CONTEXT SETUP FAILURE message, sent by the DU to the CU, as per TS 38.473
 /// section 8.3.1.3.
@@ -166,7 +164,8 @@ generate_ue_context_modification_response(gnb_du_ue_f1ap_id_t          du_ue_id,
                                           gnb_cu_ue_f1ap_id_t          cu_ue_id,
                                           rnti_t                       crnti               = to_rnti(0x4601),
                                           const std::vector<drb_id_t>& drbs_setup_mod_list = {drb_id_t::drb1},
-                                          const std::vector<drb_id_t>& drbs_modified_list  = {});
+                                          const std::vector<drb_id_t>& drbs_modified_list  = {},
+                                          byte_buffer cell_group_config = test_helpers::create_cell_group_config());
 
 /// \brief Generates dummy F1AP UE CONTEXT MODIFICATION FAILURE message, sent by the DU to the CU, as per TS 38.473
 /// section 8.3.4.3.

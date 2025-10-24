@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "srsran/support/detail/has_method.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/has_method.h"
 #include "srsran/support/srsran_assert.h"
 
 namespace srsran {

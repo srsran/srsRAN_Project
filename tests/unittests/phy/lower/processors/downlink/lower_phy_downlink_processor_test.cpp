@@ -65,6 +65,12 @@ std::ostream& operator<<(std::ostream& os, cyclic_prefix cp)
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, slot_point slot)
+{
+  fmt::print(os, "{}", slot);
+  return os;
+}
+
 std::ostream& operator<<(std::ostream& os, const pdxch_processor_configuration& config)
 {
   fmt::print(os,
@@ -102,8 +108,8 @@ bool operator==(const baseband_gateway_buffer_reader& left, const baseband_gatew
 
   bool same_data = true;
   for (unsigned i_channel = 0; i_channel != nof_channels; ++i_channel) {
-    span<const cf_t> left_channel  = left.get_channel_buffer(i_channel);
-    span<const cf_t> right_channel = right.get_channel_buffer(i_channel);
+    span<const ci16_t> left_channel  = left.get_channel_buffer(i_channel);
+    span<const ci16_t> right_channel = right.get_channel_buffer(i_channel);
     same_data &= (left_channel.data() == right_channel.data());
   }
 
@@ -112,14 +118,19 @@ bool operator==(const baseband_gateway_buffer_reader& left, const baseband_gatew
   }
 
   for (unsigned i_channel = 0; i_channel != nof_channels; ++i_channel) {
-    span<const cf_t> left_channel  = left.get_channel_buffer(i_channel);
-    span<const cf_t> right_channel = right.get_channel_buffer(i_channel);
+    span<const ci16_t> left_channel  = left.get_channel_buffer(i_channel);
+    span<const ci16_t> right_channel = right.get_channel_buffer(i_channel);
     if (!std::equal(left_channel.begin(), left_channel.end(), right_channel.begin(), right_channel.end())) {
       return false;
     }
   }
 
   return true;
+}
+
+bool operator!=(const baseband_gateway_buffer_reader& left, const baseband_gateway_buffer_reader& right)
+{
+  return !(left == right);
 }
 
 bool operator==(const pdxch_processor_configuration& left, const pdxch_processor_configuration& right)
@@ -190,9 +201,8 @@ protected:
     pdxch_proc_spy = &pdxch_proc_factory->get_spy();
   }
 
-  static constexpr unsigned                                    nof_frames_test    = 3;
-  static constexpr unsigned                                    initial_slot_index = 0;
-  static constexpr unsigned                                    sector_id          = 0;
+  static constexpr unsigned                                    nof_frames_test = 3;
+  static constexpr unsigned                                    sector_id       = 0;
   static std::mt19937                                          rgen;
   static std::uniform_int_distribution<unsigned>               dist_bandwidth_prb;
   static std::uniform_real_distribution<double>                dist_center_freq_Hz;
@@ -322,11 +332,11 @@ TEST_P(LowerPhyDownlinkProcessorFixture, UnalignedFlow)
 
   downlink_processor_baseband& dl_proc_baseband = dl_processor->get_baseband();
 
-  // Initial timestamp, aligned to the slot 0.
-  baseband_gateway_timestamp timestamp = 1;
+  // Initial timestamp, aligned to the last slot of the subframe.
+  baseband_gateway_timestamp timestamp = srate.to_kHz() - 1;
 
   // Process a few slots.
-  for (slot_point slot_begin{to_numerology_value(scs), initial_slot_index},
+  for (slot_point slot_begin{to_numerology_value(scs), nof_slots_per_subframe - 1},
        slot(slot_begin),
        slot_end = slot_begin + NOF_SUBFRAMES_PER_FRAME * nof_slots_per_subframe * nof_frames_test;
        slot != slot_end;
@@ -343,44 +353,35 @@ TEST_P(LowerPhyDownlinkProcessorFixture, UnalignedFlow)
     ASSERT_TRUE(result.buffer);
     ASSERT_EQ(result.metadata.ts, timestamp);
 
+    // Prepare expected PDxCH baseband entry context.
+    pdxch_processor_baseband::slot_context slot_context = {.slot = slot, .sector = sector_id};
+
+    // Assert processing results. The buffer must be valid and the metadata indicate there are samples.
+    ASSERT_FALSE(result.metadata.is_empty);
+    ASSERT_FALSE(result.metadata.tx_start.has_value());
+    ASSERT_FALSE(result.metadata.tx_end.has_value());
+
     // The first slot must be for alignment.
     if (slot == slot_begin) {
-      // Assert processing results. The buffer must be valid and the metadata as it contains a full slot.
-      ASSERT_TRUE(result.metadata.is_empty);
-      ASSERT_FALSE(result.metadata.tx_start.has_value());
-      ASSERT_FALSE(result.metadata.tx_end.has_value());
-
-      // Assert no PDxCH processor call.
+      // Assert PDxCH processor call. The PDxCH baseband buffer is partially discarded.
       auto& pdxch_proc_entries = pdxch_proc_spy->get_baseband_entries();
-      ASSERT_EQ(pdxch_proc_entries.size(), 0);
-
-      // Assert no TTI boundary notification.
-      const auto& tti_boundary_entries = downlink_proc_notifier_spy.get_tti_boundaries();
-      ASSERT_EQ(tti_boundary_entries.size(), 0);
-
-      // Increment slot to the next subframe.
-      slot += nof_slots_per_subframe - 1;
+      ASSERT_EQ(pdxch_proc_entries.size(), 1);
+      auto& pdxch_proc_entry = pdxch_proc_entries.back();
+      ASSERT_EQ(pdxch_proc_entry.context, slot_context);
+      ASSERT_NE(pdxch_proc_entry.samples, result.buffer->get_reader());
     } else {
-      // Assert processing results. The buffer must be valid and the metadata as it contains a full slot.
-      ASSERT_FALSE(result.metadata.is_empty);
-      ASSERT_FALSE(result.metadata.tx_start.has_value());
-      ASSERT_FALSE(result.metadata.tx_end.has_value());
-
-      // Prepare expected PDxCH baseband entry context.
-      pdxch_processor_baseband::slot_context slot_context = {.slot = slot, .sector = sector_id};
-
       // Assert PDxCH processor call.
       auto& pdxch_proc_entries = pdxch_proc_spy->get_baseband_entries();
       ASSERT_EQ(pdxch_proc_entries.size(), 1);
       auto& pdxch_proc_entry = pdxch_proc_entries.back();
       ASSERT_EQ(pdxch_proc_entry.context, slot_context);
       ASSERT_EQ(pdxch_proc_entry.samples, result.buffer->get_reader());
-
-      // Assert TTI boundary notification.
-      const auto& tti_boundary_entries = downlink_proc_notifier_spy.get_tti_boundaries();
-      ASSERT_EQ(tti_boundary_entries.size(), 1);
-      ASSERT_EQ(tti_boundary_entries.front().slot, slot);
     }
+
+    // Assert the slot boundary. The slot must be notified always.
+    const auto& tti_boundary_entries = downlink_proc_notifier_spy.get_tti_boundaries();
+    ASSERT_EQ(tti_boundary_entries.size(), 1);
+    ASSERT_EQ(tti_boundary_entries.front().slot, slot);
 
     // No PDxCH notifications.
     ASSERT_EQ(pdxch_proc_notifier_spy.get_nof_notifications(), 0);

@@ -47,13 +47,13 @@ static void derive_coreset0(cell_config_builder_params& params)
   params.search_space0_index = ss0_idx;
 }
 
-cell_config_builder_params cell_config_builder_profiles::tdd(subcarrier_spacing scs)
+cell_config_builder_params cell_config_builder_profiles::tdd(subcarrier_spacing scs, bs_channel_bandwidth bw)
 {
   cell_config_builder_params params{};
   params.scs_common     = scs;
   params.dl_f_ref_arfcn = 520002;
   params.band           = band_helper::get_band_from_dl_arfcn(params.dl_f_ref_arfcn);
-  params.channel_bw_mhz = bs_channel_bandwidth::MHz20;
+  params.channel_bw_mhz = bw;
 
   derive_coreset0(params);
 

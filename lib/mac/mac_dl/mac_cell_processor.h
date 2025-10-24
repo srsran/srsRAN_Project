@@ -80,8 +80,7 @@ public:
   async_task<bool> remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids_to_rem);
 
 private:
-  void handle_slot_indication_impl(slot_point                                     sl_tx,
-                                   std::chrono::high_resolution_clock::time_point enqueue_slot_tp) noexcept;
+  void handle_slot_indication_impl(slot_point sl_tx, metric_clock::time_point enqueue_slot_tp) noexcept;
 
   /// Assemble struct that is going to be passed down to PHY with the DL scheduling result.
   /// \remark FAPI will use this struct to generate a DL_TTI.Request.

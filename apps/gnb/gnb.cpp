@@ -20,8 +20,8 @@
  *
  */
 
-#include "apps/helpers/e2/e2_metric_connector_manager.h"
 #include "apps/helpers/metrics/metrics_helpers.h"
+#include "apps/services/app_execution_metrics/executor_metrics_manager.h"
 #include "apps/services/app_resource_usage/app_resource_usage.h"
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
@@ -284,7 +284,7 @@ int main(int argc, char** argv)
 
   // Check the modified configuration.
   if (!validate_appconfig(gnb_cfg) || !o_cu_cp_app_unit->on_configuration_validation() ||
-      !o_cu_up_app_unit->on_configuration_validation(not gnb_cfg.log_cfg.tracing_filename.empty()) ||
+      !o_cu_up_app_unit->on_configuration_validation(not gnb_cfg.trace_cfg.filename.empty()) ||
       !o_du_app_unit->on_configuration_validation() ||
       !validate_plmn_and_tacs(o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config,
                               o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg)) {
@@ -320,8 +320,11 @@ int main(int argc, char** argv)
   }
 
   app_services::application_tracer app_tracer;
-  if (not gnb_cfg.log_cfg.tracing_filename.empty()) {
-    app_tracer.enable_tracer(gnb_cfg.log_cfg.tracing_filename, gnb_logger);
+  if (not gnb_cfg.trace_cfg.filename.empty()) {
+    app_tracer.enable_tracer(gnb_cfg.trace_cfg.filename,
+                             gnb_cfg.trace_cfg.max_tracing_events_per_file,
+                             gnb_cfg.trace_cfg.nof_tracing_events_after_severe,
+                             gnb_logger);
   }
 
 #ifdef DPDK_FOUND
@@ -357,13 +360,21 @@ int main(int argc, char** argv)
   // Setup application timers.
   timer_manager app_timers{1024};
 
+  app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
+
+  // Instantiate executor metrics service.
+  app_services::executor_metrics_service_and_metrics exec_metrics_service =
+      build_executor_metrics_service(metrics_notifier_forwarder, app_timers, gnb_cfg.metrics_cfg.executors_metrics_cfg);
+  std::vector<app_services::metrics_config> metrics_configs = std::move(exec_metrics_service.metrics);
+
   // Instantiate worker manager.
   worker_manager_config worker_manager_cfg;
   o_cu_cp_app_unit->fill_worker_manager_config(worker_manager_cfg);
   o_cu_up_app_unit->fill_worker_manager_config(worker_manager_cfg);
   o_du_app_unit->fill_worker_manager_config(worker_manager_cfg);
   fill_gnb_worker_manager_config(worker_manager_cfg, gnb_cfg);
-  worker_manager_cfg.app_timers = &app_timers;
+  worker_manager_cfg.app_timers                    = &app_timers;
+  worker_manager_cfg.exec_metrics_channel_registry = exec_metrics_service.channel_registry;
   worker_manager workers{worker_manager_cfg};
 
   // Create IO broker.
@@ -406,13 +417,16 @@ int main(int argc, char** argv)
   // Create F1-U connector
   std::unique_ptr<f1u_local_connector> f1u_conn = std::make_unique<f1u_local_connector>();
 
-  app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
-
   // Create app-level resource usage service and metrics.
   auto app_resource_usage_service = app_services::build_app_resource_usage_service(
       metrics_notifier_forwarder, gnb_cfg.metrics_cfg.rusage_config, gnb_logger);
 
-  std::vector<app_services::metrics_config> metrics_configs = std::move(app_resource_usage_service.metrics);
+  for (auto& metric : app_resource_usage_service.metrics) {
+    metrics_configs.push_back(std::move(metric));
+  }
+
+  buffer_pool_service.add_metrics_to_metrics_service(
+      metrics_configs, gnb_cfg.buffer_pool_config.metrics_config, metrics_notifier_forwarder);
 
   // Instantiate E2AP client gateways.
   std::unique_ptr<e2_connection_client> e2_gw_du = create_e2_gateway_client(
@@ -538,6 +552,10 @@ int main(int argc, char** argv)
   {
     app_services::application_message_banners app_banner(
         app_name, gnb_cfg.log_cfg.filename == "stdout" ? std::string_view() : gnb_cfg.log_cfg.filename);
+
+    auto exec_metrics_session = exec_metrics_service.service
+                                    ? exec_metrics_service.service->create_session(workers.get_metrics_executor())
+                                    : app_services::app_executor_metrics_service::create_dummy_session();
 
     while (is_app_running) {
       std::this_thread::sleep_for(std::chrono::milliseconds(250));

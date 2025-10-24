@@ -1,0 +1,636 @@
+{
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": {
+                    "type": "grafana",
+                    "uid": "-- Grafana --"
+                },
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard"
+            }
+        ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 6,
+    "links": [],
+    "panels": [
+        {
+            "datasource": {
+                "uid": "InfluxDB"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 3,
+                "w": 8,
+                "x": 0,
+                "y": 0
+            },
+            "id": 3,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "/^id$/",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.0.2",
+            "targets": [
+                {
+                    "dataset": "iox",
+                    "editorMode": "code",
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT \"id\" FROM \"cu_cp\" WHERE \"time\" >= $__timeFrom AND \"time\" <= $__timeTo ",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [
+                                    {
+                                        "name": "id",
+                                        "type": "functionParameter"
+                                    }
+                                ],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ]
+                    },
+                    "table": "cu_cp"
+                }
+            ],
+            "title": "ID",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "influxdb",
+                "uid": "JOSE3g9KVz"
+            },
+            "description": "Number of AMFs connected",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "fieldMinMax": false,
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 4,
+                "x": 0,
+                "y": 3
+            },
+            "id": 1,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "sum"
+                    ],
+                    "fields": "/^connected \\(lastNotNull\\)$/",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.0.2",
+            "targets": [
+                {
+                    "dataset": "iox",
+                    "datasource": {
+                        "type": "influxdb",
+                        "uid": "JOSE3g9KVz"
+                    },
+                    "editorMode": "code",
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT \"amf_name\", \"connected\" FROM \"ngaps\" WHERE \"time\" >= $__timeFrom AND \"time\" <= $__timeTo ",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [
+                                    {
+                                        "name": "connected",
+                                        "type": "functionParameter"
+                                    }
+                                ],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ]
+                    },
+                    "table": "ngaps"
+                }
+            ],
+            "title": "AMFs connected",
+            "transformations": [
+                {
+                    "id": "groupBy",
+                    "options": {
+                        "fields": {
+                            "amf_name": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "connected": {
+                                "aggregations": [
+                                    "lastNotNull"
+                                ],
+                                "operation": "aggregate"
+                            }
+                        }
+                    }
+                },
+                {
+                    "id": "convertFieldType",
+                    "options": {
+                        "conversions": [
+                            {
+                                "destinationType": "number",
+                                "targetField": "connected (lastNotNull)"
+                            }
+                        ],
+                        "fields": {}
+                    }
+                }
+            ],
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "datasource",
+                "uid": "-- Dashboard --"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 4,
+                "x": 4,
+                "y": 3
+            },
+            "id": 2,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "count"
+                    ],
+                    "fields": "/^connected \\(lastNotNull\\)$/",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.0.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "datasource",
+                        "uid": "-- Dashboard --"
+                    },
+                    "panelId": 1,
+                    "refId": "A"
+                }
+            ],
+            "title": "AMFs configured",
+            "transformations": [
+                {
+                    "id": "groupBy",
+                    "options": {
+                        "fields": {
+                            "amf_name": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "connected": {
+                                "aggregations": [
+                                    "lastNotNull"
+                                ],
+                                "operation": "aggregate"
+                            }
+                        }
+                    }
+                },
+                {
+                    "id": "convertFieldType",
+                    "options": {
+                        "conversions": [
+                            {
+                                "destinationType": "number",
+                                "targetField": "connected (lastNotNull)"
+                            }
+                        ],
+                        "fields": {}
+                    }
+                }
+            ],
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "influxdb",
+                "uid": "JOSE3g9KVz"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 4,
+                "x": 0,
+                "y": 7
+            },
+            "id": 8,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "count"
+                    ],
+                    "fields": "/^gnb_du_id$/",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.0.2",
+            "targets": [
+                {
+                    "dataset": "iox",
+                    "editorMode": "builder",
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT \"gnb_du_id\" FROM \"rrcs\" WHERE \"time\" >= $__timeFrom AND \"time\" <= $__timeTo GROUP BY \"gnb_du_id\" ",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [
+                                    {
+                                        "name": "gnb_du_id",
+                                        "type": "functionParameter"
+                                    }
+                                ],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "name": "gnb_du_id",
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ]
+                    },
+                    "table": "rrcs"
+                }
+            ],
+            "title": "DUs connected",
+            "type": "stat"
+        },
+        {
+            "collapsed": true,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 11
+            },
+            "id": 5,
+            "panels": [
+                {
+                    "datasource": {
+                        "type": "datasource",
+                        "uid": "-- Dashboard --"
+                    },
+                    "fieldConfig": {
+                        "defaults": {
+                            "color": {
+                                "mode": "thresholds"
+                            },
+                            "mappings": [],
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "green"
+                                    },
+                                    {
+                                        "color": "red",
+                                        "value": 80
+                                    }
+                                ]
+                            }
+                        },
+                        "overrides": []
+                    },
+                    "gridPos": {
+                        "h": 4,
+                        "w": 8,
+                        "x": 0,
+                        "y": 12
+                    },
+                    "id": 4,
+                    "options": {
+                        "displayMode": "gradient",
+                        "legend": {
+                            "calcs": [],
+                            "displayMode": "list",
+                            "placement": "bottom",
+                            "showLegend": false
+                        },
+                        "maxVizHeight": 300,
+                        "minVizHeight": 16,
+                        "minVizWidth": 8,
+                        "namePlacement": "auto",
+                        "orientation": "horizontal",
+                        "reduceOptions": {
+                            "calcs": [
+                                "lastNotNull"
+                            ],
+                            "fields": "/^connected \\(lastNotNull\\)$/",
+                            "values": true
+                        },
+                        "showUnfilled": false,
+                        "sizing": "auto",
+                        "valueMode": "color"
+                    },
+                    "pluginVersion": "12.0.2",
+                    "targets": [
+                        {
+                            "datasource": {
+                                "type": "datasource",
+                                "uid": "-- Dashboard --"
+                            },
+                            "panelId": 1,
+                            "refId": "A"
+                        }
+                    ],
+                    "title": "AMF connection status",
+                    "transformations": [
+                        {
+                            "id": "groupBy",
+                            "options": {
+                                "fields": {
+                                    "amf_name": {
+                                        "aggregations": [],
+                                        "operation": "groupby"
+                                    },
+                                    "connected": {
+                                        "aggregations": [
+                                            "lastNotNull"
+                                        ],
+                                        "operation": "aggregate"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "type": "bargauge"
+                }
+            ],
+            "title": "AMFs",
+            "type": "row"
+        },
+        {
+            "collapsed": true,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 12
+            },
+            "id": 6,
+            "panels": [
+                {
+                    "datasource": {
+                        "type": "influxdb",
+                        "uid": "JOSE3g9KVz"
+                    },
+                    "fieldConfig": {
+                        "defaults": {
+                            "color": {
+                                "mode": "thresholds"
+                            },
+                            "mappings": [],
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "green"
+                                    },
+                                    {
+                                        "color": "red",
+                                        "value": 80
+                                    }
+                                ]
+                            }
+                        },
+                        "overrides": []
+                    },
+                    "gridPos": {
+                        "h": 4,
+                        "w": 4,
+                        "x": 0,
+                        "y": 13
+                    },
+                    "id": 7,
+                    "options": {
+                        "displayMode": "gradient",
+                        "legend": {
+                            "calcs": [],
+                            "displayMode": "list",
+                            "placement": "bottom",
+                            "showLegend": false
+                        },
+                        "maxVizHeight": 300,
+                        "minVizHeight": 16,
+                        "minVizWidth": 8,
+                        "namePlacement": "auto",
+                        "orientation": "horizontal",
+                        "reduceOptions": {
+                            "calcs": [
+                                "lastNotNull"
+                            ],
+                            "fields": "/.*/",
+                            "values": false
+                        },
+                        "showUnfilled": false,
+                        "sizing": "auto",
+                        "valueMode": "color"
+                    },
+                    "pluginVersion": "12.0.2",
+                    "targets": [
+                        {
+                            "dataset": "iox",
+                            "editorMode": "builder",
+                            "format": "table",
+                            "rawSql": "SELECT \"gnb_du_id\" FROM \"rrcs\" WHERE \"time\" >= $__timeFrom AND \"time\" <= $__timeTo ",
+                            "refId": "A",
+                            "sql": {
+                                "columns": [
+                                    {
+                                        "parameters": [
+                                            {
+                                                "name": "gnb_du_id",
+                                                "type": "functionParameter"
+                                            }
+                                        ],
+                                        "type": "function"
+                                    }
+                                ],
+                                "groupBy": [
+                                    {
+                                        "property": {
+                                            "type": "string"
+                                        },
+                                        "type": "groupBy"
+                                    }
+                                ]
+                            },
+                            "table": "rrcs"
+                        }
+                    ],
+                    "title": "Connected DU IDs",
+                    "type": "bargauge"
+                }
+            ],
+            "title": "DUs",
+            "type": "row"
+        }
+    ],
+    "preload": false,
+    "schemaVersion": 41,
+    "tags": [],
+    "templating": {
+        "list": []
+    },
+    "time": {
+        "from": "now-6h",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "CU-CP",
+    "uid": "d354cd67-3529-41a2-802a-6a88ab08519e",
+    "version": 1
+}

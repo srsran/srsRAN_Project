@@ -22,7 +22,7 @@
 
 #include "srsran/support/executors/task_worker_pool.h"
 #include "execution_context_description_setup.h"
-#include <future>
+#include "srsran/support/synchronization/sync_event.h"
 
 using namespace srsran;
 
@@ -124,7 +124,7 @@ void priority_task_worker_pool::stop()
 void priority_task_worker_pool::wait_pending_tasks()
 {
   std::mutex              mutex;
-  std::condition_variable cvar_all_sync, cvar_caller_return;
+  std::condition_variable cvar_all_sync;
 
   // Check if there are workers still running.
   unsigned workers_running = 0;
@@ -139,36 +139,25 @@ void priority_task_worker_pool::wait_pending_tasks()
   }
 
   // This will block all workers until all of them are running the enqueued task.
-  unsigned count_workers_not_sync = workers_running;
-  unsigned counter_caller         = workers_running;
+  unsigned   count_workers_not_sync = workers_running;
+  sync_event wait_event;
   for (unsigned i = 0; i != workers_running; ++i) {
-    if (not this->queue.push_blocking(
-            enqueue_priority::min,
-            [&mutex, &cvar_all_sync, &cvar_caller_return, &count_workers_not_sync, &counter_caller]() {
-              std::unique_lock<std::mutex> lock(mutex);
+    this->queue.push_blocking(
+        enqueue_priority::min, [&mutex, &cvar_all_sync, &count_workers_not_sync, tk = wait_event.get_token()]() {
+          std::unique_lock<std::mutex> lock(mutex);
 
-              // Sync all workers. Only when all workers are in sync, we can carry on.
-              count_workers_not_sync--;
-              if (count_workers_not_sync > 0) {
-                cvar_all_sync.wait(lock, [&count_workers_not_sync]() { return count_workers_not_sync == 0; });
-              } else {
-                cvar_all_sync.notify_all();
-              }
-
-              // When all workers passed the condition variable, we can notify the caller.
-              if (--counter_caller == 0) {
-                cvar_caller_return.notify_one();
-              }
-            })) {
-      // Queue was deactivated.
-      std::unique_lock<std::mutex> lock(mutex);
-      count_workers_not_sync--;
-    }
+          // Sync all workers. Only when all workers are in sync, we can carry on.
+          count_workers_not_sync--;
+          if (count_workers_not_sync > 0) {
+            cvar_all_sync.wait(lock, [&count_workers_not_sync]() { return count_workers_not_sync == 0; });
+          } else {
+            cvar_all_sync.notify_all();
+          }
+        });
   }
 
   // Caller blocks waiting for all workers to sync.
-  std::unique_lock<std::mutex> lock(mutex);
-  cvar_caller_return.wait(lock, [&counter_caller]() { return counter_caller == 0; });
+  wait_event.wait();
 }
 
 // ---- non-prioritized task worker pool

@@ -100,7 +100,7 @@ public:
                                                             meas_handler);
   }
   byte_buffer handle_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi) override { return {}; }
-  async_task<void> handle_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) override
+  async_task<void> handle_transaction_info_loss(const ue_transaction_info_loss_event& ev) override
   {
     return launch_no_op_task();
   }

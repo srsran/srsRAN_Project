@@ -136,6 +136,31 @@ static void sc_prod_sss_simd(const int16_t* x, int16_t h, int16_t* z, std::size_
   }
 }
 
+static void sc_prod_cfc_simd(const cf_t* x, float h, cbf16_t* z, unsigned len)
+{
+  std::size_t i = 0;
+
+#if SRSRAN_SIMD_CF_SIZE
+
+  simd_f_t b = srsran_simd_f_set1(h);
+
+  for (unsigned end = (len / SRSRAN_SIMD_CF_SIZE) * SRSRAN_SIMD_CF_SIZE; i != end; i += SRSRAN_SIMD_CF_SIZE) {
+    // Load interleaved complex float values into SIMD registers.
+    simd_cf_t a = srsran_simd_cfi_loadu(x + i);
+
+    // Multiply with the scaling factor.
+    simd_cf_t r = srsran_simd_cf_mul(a, b);
+
+    // Convert complex float to complex brain float and store the result back to memory.
+    srsran_simd_cbf16_storeu(z + i, r);
+  }
+#endif // SRSRAN_SIMD_CF_SIZE
+
+  for (; i != len; ++i) {
+    z[i] = to_cbf16(x[i] * h);
+  }
+}
+
 void srsran::srsvec::sc_prod(span<cf_t> z, span<const cf_t> x, cf_t h)
 {
   srsran_srsvec_assert_size(x, z);
@@ -169,4 +194,10 @@ void srsran::srsvec::sc_prod(span<int16_t> z, span<const int16_t> x, int16_t h)
   srsran_srsvec_assert_size(x, z);
 
   sc_prod_sss_simd(x.data(), h, z.data(), x.size());
+}
+
+void srsran::srsvec::sc_prod(span<cbf16_t> z, span<const cf_t> x, float h)
+{
+  srsran_srsvec_assert_size(x, z);
+  sc_prod_cfc_simd(x.data(), h, z.data(), x.size());
 }

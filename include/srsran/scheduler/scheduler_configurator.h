@@ -64,7 +64,6 @@ struct sched_grid_resource {
 /// \remark See O-RAN WG8, Section 9.2.3.2.1, Table 9.18.
 struct sched_cell_configuration_request_message {
   struct metrics_config {
-    std::chrono::milliseconds        report_period{0};
     scheduler_cell_metrics_notifier* notifier = nullptr;
     /// Maximum number of UE events per report.
     unsigned max_ue_events_per_report = 64;
@@ -113,7 +112,13 @@ struct sched_cell_configuration_request_message {
   /// List of RAN slices to support in the scheduler.
   std::vector<slice_rrm_policy_config> rrm_policy_members;
 
+  /// NTN parameters.
+  /// Cell-Specific K-offset.
   unsigned ntn_cs_koffset = 0;
+  /// DL HARQ Mode B.
+  bool dl_harq_mode_b = false;
+  /// UL HARQ Mode B.
+  bool ul_harq_mode_b = false;
 
   bool cfra_enabled = false;
 
@@ -177,7 +182,6 @@ struct sched_ue_reconfiguration_message {
   du_ue_index_t           ue_index;
   rnti_t                  crnti;
   sched_ue_config_request cfg;
-  bool                    reestablished;
 };
 
 /// UE Delete Request.

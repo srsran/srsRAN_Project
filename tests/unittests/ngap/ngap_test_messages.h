@@ -240,6 +240,9 @@ ngap_message generate_handover_preparation_failure(amf_ue_id_t amf_ue_id, ran_ue
 /// \brief Generate a valid dummy Handover Command message.
 ngap_message generate_valid_handover_command(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 
+/// \brief Generate a valid dummy DL RAN Status Transfer.
+ngap_message generate_valid_dl_ran_status_transfer(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
+
 /// \brief Generate a handover preparation request.
 ngap_handover_preparation_request
 generate_handover_preparation_request(ue_index_t                                                ue_index,

@@ -31,6 +31,7 @@
 #include "srsran/hal/phy/upper/channel_processors/pusch/ext_harq_buffer_context_repository_factory.h"
 #include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_factories.h"
 #include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_pusch_dec_factory.h"
+#include "srsran/srslog/srslog.h"
 #endif // HWACC_PDSCH_ENABLED && HWACC_PUSCH_ENABLED
 
 using namespace srsran;

@@ -142,7 +142,7 @@ du_manager_test_bench::du_manager_test_bench(span<const du_cell_config> cells) :
          {f1ap, f1ap, f1ap},
          {f1u_gw},
          {mac, f1ap, f1ap, rlc_pcap},
-         {mac, mac}},
+         {mac}},
   logger(srslog::fetch_basic_logger("DU-MNG"))
 {
   logger.set_level(srslog::basic_levels::debug);

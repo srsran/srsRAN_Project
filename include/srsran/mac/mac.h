@@ -23,17 +23,16 @@
 #pragma once
 
 #include "srsran/mac/mac_cell_control_information_handler.h"
-#include "srsran/mac/mac_cell_manager.h"
 #include "srsran/mac/mac_cell_rach_handler.h"
 #include "srsran/mac/mac_cell_slot_handler.h"
+#include "srsran/mac/mac_manager.h"
 #include "srsran/mac/mac_paging_information_handler.h"
 #include "srsran/mac/mac_pdu_handler.h"
-#include "srsran/mac/mac_ue_configurator.h"
 #include "srsran/mac/mac_ue_control_information_handler.h"
 
 namespace srsran {
 
-class mac_interface
+class mac_interface : public mac_manager
 {
 public:
   virtual ~mac_interface() = default;
@@ -50,12 +49,6 @@ public:
   /// \brief Returns handler of slot indications for a cell with provided cell_index.
   /// \param cell_index Index of cell currently activated in the DU.
   virtual mac_cell_slot_handler& get_slot_handler(du_cell_index_t cell_index) = 0;
-
-  /// Returns MAC management handler.
-  virtual mac_cell_manager& get_cell_manager() = 0;
-
-  /// Returns MAC UE configuration handler.
-  virtual mac_ue_configurator& get_ue_configurator() = 0;
 
   /// Returns PDU handler.
   virtual mac_pdu_handler& get_pdu_handler() = 0;

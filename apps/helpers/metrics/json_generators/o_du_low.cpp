@@ -38,7 +38,7 @@ static nlohmann::json generate_ldpc_encoder(const upper_phy_ldpc_metrics::ldpc_e
   json["average_latency_us"]      = validate_fp_value(metrics.avg_cb_latency_us);
   json["min_latency_us"]          = validate_fp_value(metrics.min_cb_latency_us);
   json["max_latency_us"]          = validate_fp_value(metrics.max_cb_latency_us);
-  json["average_throughput_Mbps"] = validate_fp_value(metrics.encoding_rate_Mbps);
+  json["average_throughput_mbps"] = validate_fp_value(metrics.encoding_rate_Mbps);
   double cpu_usage                = validate_fp_value(100.0 * metrics.cpu_usage_us / metric_period_us);
   json["cpu_usage_percent"]       = validate_fp_value(cpu_usage);
 
@@ -53,7 +53,7 @@ static nlohmann::json generate_rate_matcher(const upper_phy_ldpc_metrics::ldpc_r
   json["average_latency_us"]      = validate_fp_value(metrics.avg_cb_latency);
   json["min_latency_us"]          = validate_fp_value(metrics.min_cb_latency_us);
   json["max_latency_us"]          = validate_fp_value(metrics.max_cb_latency_us);
-  json["average_throughput_Mbps"] = validate_fp_value(metrics.processing_rate_Mbps);
+  json["average_throughput_mbps"] = validate_fp_value(metrics.processing_rate_Mbps);
   double cpu_usage                = validate_fp_value(100.0 * metrics.cpu_usage_us / metric_period_us);
   json["cpu_usage_percent"]       = validate_fp_value(cpu_usage);
 
@@ -75,10 +75,10 @@ static nlohmann::json generate_modulation_mapper(const upper_phy_mod_demod_evm_m
 {
   nlohmann::json json;
 
-  json["qpsk_mod_throughput_Mbps"]   = validate_fp_value(metrics.qpsk_avg_rate_Mbps);
-  json["qam16_mod_throughput_Mbps"]  = validate_fp_value(metrics.qam16_avg_rate_Mbps);
-  json["qam64_mod_throughput_Mbps"]  = validate_fp_value(metrics.qam64_avg_rate_Mbps);
-  json["qam256_mod_throughput_Mbps"] = validate_fp_value(metrics.qam256_avg_rate_Mbps);
+  json["qpsk_mod_throughput_mbps"]   = validate_fp_value(metrics.qpsk_avg_rate_Mbps);
+  json["qam16_mod_throughput_mbps"]  = validate_fp_value(metrics.qam16_avg_rate_Mbps);
+  json["qam64_mod_throughput_mbps"]  = validate_fp_value(metrics.qam64_avg_rate_Mbps);
+  json["qam256_mod_throughput_mbps"] = validate_fp_value(metrics.qam256_avg_rate_Mbps);
 
   double cpu_usage          = validate_fp_value(100.0 * metrics.cpu_usage_us / metric_period_us);
   json["cpu_usage_percent"] = validate_fp_value(cpu_usage);
@@ -94,7 +94,7 @@ static nlohmann::json generate_precoding_mapping(const upper_phy_pdsch_metrics::
 
   json["average_latency_us"] =
       validate_fp_value(static_cast<double>(metrics.total_latency_ns) / static_cast<double>(tbs_processed) / 100.0);
-  json["throughput_per_nof_layers_MREsps"] = {validate_fp_value(metrics.avg_rate_MRes_one_layer),
+  json["throughput_per_nof_layers_mresps"] = {validate_fp_value(metrics.avg_rate_MRes_one_layer),
                                               validate_fp_value(metrics.avg_rate_MRes_two_layers),
                                               validate_fp_value(metrics.avg_rate_MRes_three_layers),
                                               validate_fp_value(metrics.avg_rate_MRes_four_layers)};
@@ -109,7 +109,7 @@ static nlohmann::json generate_dl_fec(const upper_phy_ldpc_metrics::ldpc_encoder
 {
   nlohmann::json json;
 
-  json["average_throughput_Mbps"] = validate_fp_value(metrics_enc.encoding_rate_Mbps);
+  json["average_throughput_mbps"] = validate_fp_value(metrics_enc.encoding_rate_Mbps);
   json["cpu_usage_percent"]       = validate_fp_value(cpu_usage);
 
   return json;
@@ -163,7 +163,7 @@ static nlohmann::json generate_ldpc_decoder(const upper_phy_ldpc_metrics::ldpc_d
   json["average_latency_us"]      = validate_fp_value(metrics.avg_cb_latency_us);
   json["min_latency_us"]          = validate_fp_value(metrics.min_cb_latency_us);
   json["max_latency_us"]          = validate_fp_value(metrics.max_cb_latency_us);
-  json["average_throughput_Mbps"] = validate_fp_value(metrics.decoding_rate_Mbps);
+  json["average_throughput_mbps"] = validate_fp_value(metrics.decoding_rate_Mbps);
   double cpu_usage                = validate_fp_value(100.0 * metrics.cpu_usage_us / metric_period_us);
   json["cpu_usage_percent"]       = validate_fp_value(cpu_usage);
 
@@ -178,7 +178,7 @@ static nlohmann::json generate_rate_dematcher(const upper_phy_ldpc_metrics::ldpc
   json["average_latency_us"]      = validate_fp_value(metrics.avg_cb_latency);
   json["min_latency_us"]          = validate_fp_value(metrics.min_cb_latency_us);
   json["max_latency_us"]          = validate_fp_value(metrics.max_cb_latency_us);
-  json["average_throughput_Mbps"] = validate_fp_value(metrics.processing_rate_Mbps);
+  json["average_throughput_mbps"] = validate_fp_value(metrics.processing_rate_Mbps);
   double cpu_usage                = validate_fp_value(100.0 * metrics.cpu_usage_us / metric_period_us);
   json["cpu_usage_percent"]       = validate_fp_value(cpu_usage);
 
@@ -200,10 +200,10 @@ static nlohmann::json generate_demodulation_mapper(const upper_phy_mod_demod_evm
 {
   nlohmann::json json;
 
-  json["qpsk_mod_throughput_Mbps"]   = validate_fp_value(metrics.qpsk_avg_rate_Mbps);
-  json["qam16_mod_throughput_Mbps"]  = validate_fp_value(metrics.qam16_avg_rate_Mbps);
-  json["qam64_mod_throughput_Mbps"]  = validate_fp_value(metrics.qam64_avg_rate_Mbps);
-  json["qam256_mod_throughput_Mbps"] = validate_fp_value(metrics.qam256_avg_rate_Mbps);
+  json["qpsk_mod_throughput_mbps"]   = validate_fp_value(metrics.qpsk_avg_rate_Mbps);
+  json["qam16_mod_throughput_mbps"]  = validate_fp_value(metrics.qam16_avg_rate_Mbps);
+  json["qam64_mod_throughput_mbps"]  = validate_fp_value(metrics.qam64_avg_rate_Mbps);
+  json["qam256_mod_throughput_mbps"] = validate_fp_value(metrics.qam256_avg_rate_Mbps);
 
   double cpu_usage          = validate_fp_value(100.0 * metrics.cpu_usage_us / metric_period_us);
   json["cpu_usage_percent"] = validate_fp_value(cpu_usage);
@@ -219,7 +219,7 @@ static nlohmann::json generate_channel_estimation(const upper_phy_pusch_metrics:
   json["average_latency_us"]      = validate_fp_value(metrics.avg_processing_latency);
   json["min_latency_us"]          = validate_fp_value(metrics.min_proc_latency_us);
   json["max_latency_us"]          = validate_fp_value(metrics.max_proc_latency_us);
-  json["average_throughput_Mbps"] = validate_fp_value(metrics.processing_rate_Mbps);
+  json["average_throughput_mbps"] = validate_fp_value(metrics.processing_rate_Mbps);
 
   double cpu_usage          = validate_fp_value(100.0 * metrics.cpu_usage_us / metric_period_us);
   json["cpu_usage_percent"] = validate_fp_value(cpu_usage);
@@ -233,7 +233,7 @@ static nlohmann::json generate_transform_precoder(const upper_phy_pusch_metrics:
   nlohmann::json json;
 
   json["average_latency_us"]       = validate_fp_value(metrics.avg_latency_us);
-  json["average_throughput_MREps"] = validate_fp_value(metrics.avg_rate_MREps);
+  json["average_throughput_mreps"] = validate_fp_value(metrics.avg_rate_MREps);
 
   double cpu_usage          = validate_fp_value(100.0 * metrics.cpu_usage_us / metric_period_us);
   json["cpu_usage_percent"] = validate_fp_value(cpu_usage);
@@ -245,7 +245,7 @@ static nlohmann::json generate_ul_fec(const upper_phy_ldpc_metrics::ldpc_decoder
 {
   nlohmann::json json;
 
-  json["average_throughput_Mbps"] = validate_fp_value(metrics_enc.decoding_rate_Mbps);
+  json["average_throughput_mbps"] = validate_fp_value(metrics_enc.decoding_rate_Mbps);
   json["cpu_usage_percent"]       = validate_fp_value(cpu_usage);
 
   return json;
@@ -293,7 +293,7 @@ static nlohmann::json generate_cell_uplink(const upper_phy_metrics& metrics)
   json["average_latency_us"]      = validate_fp_value(pusch_proc_metrics.avg_data_latency_us);
   json["max_latency_us"]          = validate_fp_value(pusch_proc_metrics.max_data_latency_us.first);
   json["max_latency_slot"]        = pusch_proc_metrics.max_data_latency_us.second;
-  json["average_throughput_Mbps"] = validate_fp_value(pusch_proc_metrics.processing_rate_Mbps);
+  json["average_throughput_mbps"] = validate_fp_value(pusch_proc_metrics.processing_rate_Mbps);
 
   // Since FEC is running asynchronously in a separate thread pool, we add its CPU usage to the rest of L1 processing.
   double upper_phy_ul_cpu_usage =

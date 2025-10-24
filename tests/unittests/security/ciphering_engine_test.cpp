@@ -191,14 +191,29 @@ INSTANTIATE_TEST_SUITE_P(nea1,
                          ::testing::ValuesIn(nea1_test_set.begin(), nea1_test_set.end()),
                          test_param_info_to_string);
 
+INSTANTIATE_TEST_SUITE_P(nea1_extra,
+                         fxt_nea1,
+                         ::testing::ValuesIn(nea1_test_set_extra.begin(), nea1_test_set_extra.end()),
+                         test_param_info_to_string);
+
 INSTANTIATE_TEST_SUITE_P(nea2,
                          fxt_nea2,
                          ::testing::ValuesIn(nea2_test_set.begin(), nea2_test_set.end()),
                          test_param_info_to_string);
 
+INSTANTIATE_TEST_SUITE_P(nea2_extra,
+                         fxt_nea2,
+                         ::testing::ValuesIn(nea2_test_set_extra.begin(), nea2_test_set_extra.end()),
+                         test_param_info_to_string);
+
 INSTANTIATE_TEST_SUITE_P(nea3,
                          fxt_nea3,
                          ::testing::ValuesIn(nea3_test_set.begin(), nea3_test_set.end()),
+                         test_param_info_to_string);
+
+INSTANTIATE_TEST_SUITE_P(nea3_extra,
+                         fxt_nea3,
+                         ::testing::ValuesIn(nea3_test_set_extra.begin(), nea3_test_set_extra.end()),
                          test_param_info_to_string);
 
 int main(int argc, char** argv)

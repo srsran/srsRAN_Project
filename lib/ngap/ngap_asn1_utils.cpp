@@ -30,7 +30,7 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::ngap;
 
-const char* srsran::srs_cu_cp::get_cause_str(const asn1::ngap::cause_c& cause)
+const char* srsran::srs_cu_cp::asn1_utils::get_cause_str(const asn1::ngap::cause_c& cause)
 {
   using namespace asn1::ngap;
   switch (cause.type()) {
@@ -50,7 +50,7 @@ const char* srsran::srs_cu_cp::get_cause_str(const asn1::ngap::cause_c& cause)
   return "unknown";
 }
 
-const char* srsran::srs_cu_cp::get_message_type_str(const asn1::ngap::ngap_pdu_c& pdu)
+const char* srsran::srs_cu_cp::asn1_utils::get_message_type_str(const asn1::ngap::ngap_pdu_c& pdu)
 {
   using namespace asn1::ngap;
   switch (pdu.type().value) {
@@ -66,7 +66,7 @@ const char* srsran::srs_cu_cp::get_message_type_str(const asn1::ngap::ngap_pdu_c
   report_fatal_error("Invalid NGAP PDU type \"{}\"", pdu.type().to_string());
 }
 
-std::optional<ran_ue_id_t> srsran::srs_cu_cp::get_ran_ue_id(const asn1::ngap::init_msg_s& init_msg)
+std::optional<ran_ue_id_t> srsran::srs_cu_cp::asn1_utils::get_ran_ue_id(const asn1::ngap::init_msg_s& init_msg)
 {
   using namespace asn1::ngap;
   using init_types = ngap_elem_procs_o::init_msg_c::types_opts;
@@ -119,7 +119,8 @@ std::optional<ran_ue_id_t> srsran::srs_cu_cp::get_ran_ue_id(const asn1::ngap::in
   return std::nullopt;
 }
 
-std::optional<ran_ue_id_t> srsran::srs_cu_cp::get_ran_ue_id(const asn1::ngap::successful_outcome_s& success_outcome)
+std::optional<ran_ue_id_t>
+srsran::srs_cu_cp::asn1_utils::get_ran_ue_id(const asn1::ngap::successful_outcome_s& success_outcome)
 {
   using namespace asn1::ngap;
   using success_types = ngap_elem_procs_o::successful_outcome_c::types_opts;
@@ -157,7 +158,7 @@ std::optional<ran_ue_id_t> srsran::srs_cu_cp::get_ran_ue_id(const asn1::ngap::su
 }
 
 std::optional<ran_ue_id_t>
-srsran::srs_cu_cp::get_ran_ue_id(const asn1::ngap::unsuccessful_outcome_s& unsuccessful_outcome)
+srsran::srs_cu_cp::asn1_utils::get_ran_ue_id(const asn1::ngap::unsuccessful_outcome_s& unsuccessful_outcome)
 {
   using namespace asn1::ngap;
   using unsuccess_types = ngap_elem_procs_o::unsuccessful_outcome_c::types_opts;
@@ -178,7 +179,7 @@ srsran::srs_cu_cp::get_ran_ue_id(const asn1::ngap::unsuccessful_outcome_s& unsuc
   return std::nullopt;
 }
 
-std::optional<ran_ue_id_t> srsran::srs_cu_cp::get_ran_ue_id(const asn1::ngap::ngap_pdu_c& pdu)
+std::optional<ran_ue_id_t> srsran::srs_cu_cp::asn1_utils::get_ran_ue_id(const asn1::ngap::ngap_pdu_c& pdu)
 {
   using namespace asn1::ngap;
   switch (pdu.type().value) {
@@ -194,7 +195,7 @@ std::optional<ran_ue_id_t> srsran::srs_cu_cp::get_ran_ue_id(const asn1::ngap::ng
   return std::nullopt;
 }
 
-std::optional<amf_ue_id_t> srsran::srs_cu_cp::get_amf_ue_id(const asn1::ngap::init_msg_s& init_msg)
+std::optional<amf_ue_id_t> srsran::srs_cu_cp::asn1_utils::get_amf_ue_id(const asn1::ngap::init_msg_s& init_msg)
 {
   using namespace asn1::ngap;
   using init_types = ngap_elem_procs_o::init_msg_c::types_opts;
@@ -247,7 +248,8 @@ std::optional<amf_ue_id_t> srsran::srs_cu_cp::get_amf_ue_id(const asn1::ngap::in
   return std::nullopt;
 }
 
-std::optional<amf_ue_id_t> srsran::srs_cu_cp::get_amf_ue_id(const asn1::ngap::successful_outcome_s& success_outcome)
+std::optional<amf_ue_id_t>
+srsran::srs_cu_cp::asn1_utils::get_amf_ue_id(const asn1::ngap::successful_outcome_s& success_outcome)
 {
   using namespace asn1::ngap;
   using success_types = ngap_elem_procs_o::successful_outcome_c::types_opts;
@@ -287,7 +289,7 @@ std::optional<amf_ue_id_t> srsran::srs_cu_cp::get_amf_ue_id(const asn1::ngap::su
 }
 
 std::optional<amf_ue_id_t>
-srsran::srs_cu_cp::get_amf_ue_id(const asn1::ngap::unsuccessful_outcome_s& unsuccessful_outcome)
+srsran::srs_cu_cp::asn1_utils::get_amf_ue_id(const asn1::ngap::unsuccessful_outcome_s& unsuccessful_outcome)
 {
   using namespace asn1::ngap;
   using unsuccess_types = ngap_elem_procs_o::unsuccessful_outcome_c::types_opts;
@@ -312,7 +314,7 @@ srsran::srs_cu_cp::get_amf_ue_id(const asn1::ngap::unsuccessful_outcome_s& unsuc
   return std::nullopt;
 }
 
-std::optional<amf_ue_id_t> srsran::srs_cu_cp::get_amf_ue_id(const asn1::ngap::ngap_pdu_c& pdu)
+std::optional<amf_ue_id_t> srsran::srs_cu_cp::asn1_utils::get_amf_ue_id(const asn1::ngap::ngap_pdu_c& pdu)
 {
   using namespace asn1::ngap;
   switch (pdu.type().value) {

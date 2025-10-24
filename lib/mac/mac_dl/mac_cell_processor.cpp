@@ -180,12 +180,6 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
       CORO_AWAIT(defer_on_blocking(ctrl_exec, timers));
     }
 
-    if (request.positioning.has_value()) {
-      // Positioning measurement request has been received.
-      CORO_AWAIT_VALUE(resp.positioning,
-                       sched.handle_positioning_measurement_request(cell_cfg.cell_index, request.positioning.value()));
-    }
-
     if (request.new_si_pdu_info.has_value()) {
       sib_assembler.enqueue_si_message_pdu_updates(*request.new_si_pdu_info);
       resp.si_pdus_enqueued = true;
@@ -362,6 +356,7 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point               sl
 
   // Generate DL scheduling result for provided slot and cell.
   const sched_result& sl_res = sched.slot_indication(sl_tx, cell_cfg.cell_index);
+  metrics_meas.on_sched();
   if (not sl_res.success) {
     logger.warning(
         "Unable to compute scheduling result for slot={}, cell={}", sl_tx, fmt::underlying(cell_cfg.cell_index));
@@ -369,26 +364,28 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point               sl
       mac_dl_sched_result mac_dl_res{};
       mac_dl_res.slot = sl_tx;
       phy_cell.on_new_downlink_scheduler_results(mac_dl_res);
+      metrics_meas.on_dl_tti_req();
     }
     if (sl_res.ul.nof_ul_symbols > 0) {
       mac_ul_sched_result mac_ul_res{};
       mac_ul_res.slot = sl_tx;
       phy_cell.on_new_uplink_scheduler_results(mac_ul_res);
+      metrics_meas.on_ul_tti_req();
     }
     phy_cell.on_cell_results_completion(sl_tx);
     return;
   }
 
-  mac_dl_sched_result mac_dl_res{};
-  mac_dl_data_result  data_res{};
-
   l2_tracer << trace_event{"mac_sched", sched_tp};
+
+  mac_dl_data_result data_res{};
 
   // If it is a DL slot, process results.
   if (sl_res.dl.nof_dl_symbols > 0) {
     trace_point dl_tti_req_tp = l2_tracer.now();
 
     // Assemble MAC DL scheduling request that is going to be passed to the PHY.
+    mac_dl_sched_result mac_dl_res{};
     assemble_dl_sched_request(mac_dl_res, sl_tx, cell_cfg.cell_index, sl_res.dl);
 
     // Send DL sched result to PHY.

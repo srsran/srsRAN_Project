@@ -35,9 +35,9 @@ namespace srsran {
 class baseband_gateway_buffer_read_only : public baseband_gateway_buffer_reader
 {
 private:
-  unsigned          nof_channels;
-  unsigned          nof_samples;
-  std::vector<cf_t> data;
+  unsigned            nof_channels;
+  unsigned            nof_samples;
+  std::vector<ci16_t> data;
 
 public:
   // See interface for documentation.
@@ -47,13 +47,13 @@ public:
   unsigned get_nof_samples() const override { return nof_samples; }
 
   // See interface for documentation.
-  span<const cf_t> get_channel_buffer(unsigned channel_idx) const override
+  span<const ci16_t> get_channel_buffer(unsigned channel_idx) const override
   {
     report_fatal_error_if_not(!data.empty(), "Data is empty. Was the buffer moved?");
     report_fatal_error_if_not(
         channel_idx < nof_channels, "Channel index ({}) is out-of-range ({}).", channel_idx, nof_channels);
     unsigned offset = nof_samples * channel_idx;
-    return span<const cf_t>(data).subspan(offset, nof_samples);
+    return span<const ci16_t>(data).subspan(offset, nof_samples);
   }
 
   /// Creates a default empty buffer.
@@ -83,7 +83,7 @@ public:
     nof_channels(other.get_nof_channels()), nof_samples(other.get_nof_samples()), data(nof_channels * nof_samples)
   {
     for (unsigned channel = 0; channel != nof_channels; ++channel) {
-      span<cf_t> buffer = span<cf_t>(data).subspan(nof_samples * channel, nof_samples);
+      span<ci16_t> buffer = span<ci16_t>(data).subspan(nof_samples * channel, nof_samples);
       srsvec::copy(buffer, other[channel]);
     }
   }
@@ -95,7 +95,7 @@ public:
     data.clear();
     data.reserve(nof_channels * nof_samples);
     for (unsigned channel = 0; channel != nof_channels; ++channel) {
-      span<const cf_t> source = other[channel];
+      span<const ci16_t> source = other[channel];
       data.insert(data.end(), source.begin(), source.end());
     }
   }

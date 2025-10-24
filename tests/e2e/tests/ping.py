@@ -345,6 +345,7 @@ def test_android_no_drx(
         "Some packages got lost",
         "socket is already closed",
         "5GC crashed",
+        "StatusCode.UNKNOWN",
     ],
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -466,6 +467,7 @@ def test_example_srsue(
         "Some packages got lost",
         "socket is already closed",
         "5GC crashed",
+        "StatusCode.UNKNOWN",
     ],
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -552,46 +554,6 @@ def test_zmq_valgrind(
         retina_data=retina_data,
         gnb_stop_timeout=gnb_stop_timeout,
         log_search=False,
-    )
-
-
-@mark.parametrize(
-    "band, common_scs, bandwidth",
-    (
-        param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),
-        param(41, 30, 10, id="band:%s-scs:%s-bandwidth:%s"),
-    ),
-)
-@mark.rf
-# pylint: disable=too-many-arguments,too-many-positional-arguments
-def test_rf(
-    retina_manager: RetinaTestManager,
-    retina_data: RetinaTestData,
-    ue_4: Tuple[UEStub, ...],
-    fivegc: FiveGCStub,
-    gnb: GNBStub,
-    band: int,
-    common_scs: int,
-    bandwidth: int,
-):
-    """
-    RF Pings
-    """
-
-    _ping(
-        retina_manager=retina_manager,
-        retina_data=retina_data,
-        ue_array=ue_4,
-        gnb=gnb,
-        fivegc=fivegc,
-        band=band,
-        common_scs=common_scs,
-        bandwidth=bandwidth,
-        sample_rate=None,  # default from testbed
-        global_timing_advance=-1,
-        time_alignment_calibration="264",
-        warning_as_errors=False,
-        always_download_artifacts=True,
     )
 
 

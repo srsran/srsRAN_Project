@@ -33,6 +33,9 @@
 #include <vector>
 
 namespace srsran {
+
+class executor_metrics_channel_registry;
+
 namespace srs_du {
 
 /// \brief DU low executor mapper interface.
@@ -119,10 +122,12 @@ struct du_low_executor_mapper_metric_config {
 struct du_low_executor_mapper_config {
   /// Common executor configuration.
   du_low_executor_mapper_exec_config executors;
-  /// \brief Optional executor metric configuration.
+  /// \brief Optional executor metrics channel registry.
   ///
-  /// If it is present, the executor mapper wraps the executors with metric decorators.
-  std::optional<du_low_executor_mapper_metric_config> metrics;
+  /// If it is initialized, the executor mapper wraps the executors with metric decorators.
+  executor_metrics_channel_registry* exec_metrics_channel_registry = nullptr;
+  /// Enable task tracing.
+  bool executor_tracing_enable = false;
 };
 
 /// \brief Creates an executor mapper for the DU-low.

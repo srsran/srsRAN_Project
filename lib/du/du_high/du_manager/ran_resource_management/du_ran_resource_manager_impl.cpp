@@ -89,22 +89,30 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
   ra_res_alloc(cell_cfg_list)
 {
   for (const auto& cell : cell_cfg_list) {
-    const du_cell_index_t cell_idx    = cell.ue_ded_serv_cell_cfg.cell_index;
-    unsigned              max_nof_ues = pucch_res_mng.get_nof_sr_free_res_offsets(cell_idx);
+    const du_cell_index_t cell_idx  = cell.ue_ded_serv_cell_cfg.cell_index;
+    unsigned              sr_limit  = pucch_res_mng.get_nof_sr_free_res_offsets(cell_idx);
+    unsigned              csi_limit = 0;
+    unsigned              srs_limit = 0;
 
+    unsigned max_nof_ues = sr_limit;
     if (cell.ue_ded_serv_cell_cfg.csi_meas_cfg.has_value()) {
-      max_nof_ues = std::min(max_nof_ues, pucch_res_mng.get_nof_csi_free_res_offsets(cell_idx));
+      csi_limit   = pucch_res_mng.get_nof_csi_free_res_offsets(cell_idx);
+      max_nof_ues = std::min(max_nof_ues, csi_limit);
     }
-
     if (cell.srs_cfg.srs_period.has_value()) {
-      max_nof_ues = std::min(max_nof_ues, srs_res_mng->get_nof_srs_free_res_offsets(cell_idx));
+      srs_limit   = srs_res_mng->get_nof_srs_free_res_offsets(cell_idx);
+      max_nof_ues = std::min(max_nof_ues, srs_limit);
     }
 
     logger.info("The upper-bound on the number of UEs supported by cell {{pci={}, du_cell_index={}}} is {} (the actual "
-                "number might be lower than that).",
+                "number might be lower than that). This is determined by the lowest of the following limits: SR ({}), "
+                "CSI ({}) and SRS ({}).",
                 cell.pci,
                 fmt::underlying(cell_idx),
-                max_nof_ues);
+                max_nof_ues,
+                sr_limit,
+                cell.ue_ded_serv_cell_cfg.csi_meas_cfg.has_value() ? fmt::to_string(csi_limit) : "n/a",
+                cell.srs_cfg.srs_period.has_value() ? fmt::to_string(srs_limit) : "n/a");
   }
 }
 

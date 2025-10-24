@@ -435,8 +435,9 @@ static dci_0_1_size dci_f0_1_bits_before_padding(const dci_size_config& dci_conf
   // Redundancy version - 2 bits.
   sizes.total += units::bits(2);
 
-  // HARQ process number - 4 bits.
-  sizes.total += units::bits(4);
+  // HARQ process number - 4 or 5 bits.
+  sizes.harq_process_number = units::bits(dci_config.ul_harq_process_number_field_size);
+  sizes.total += sizes.harq_process_number;
 
   // First downlink assignment index - 1 or 2 bits.
   sizes.first_dl_assignment_idx =
@@ -577,8 +578,9 @@ static dci_1_1_size dci_f1_1_bits_before_padding(const dci_size_config& dci_conf
     sizes.total += sizes.tb2_redundancy_version;
   }
 
-  // HARQ process number - 4 bits.
-  sizes.total += units::bits(4);
+  // HARQ process number - 4 or 5 bits.
+  sizes.harq_process_number = units::bits(dci_config.dl_harq_process_number_field_size);
+  sizes.total += sizes.harq_process_number;
 
   // Downlink Assignment Index (DAI) - 0, 2 or 4 bits.
   if (dci_config.pdsch_harq_ack_cb == pdsch_harq_ack_codebook::dynamic) {
@@ -1268,8 +1270,8 @@ dci_payload srsran::dci_0_1_pack(const dci_0_1_configuration& config)
   // Redundancy version - 2 bits.
   payload.push_back(config.redundancy_version, 2);
 
-  // HARQ process number - 4 bits.
-  payload.push_back(config.harq_process_number, 4);
+  // HARQ process number - 4 or 5 bits.
+  payload.push_back(config.harq_process_number, config.payload_size.harq_process_number.value());
 
   // 1st downlink assignment index - 1 or 2 bits.
   payload.push_back(config.first_dl_assignment_index, config.payload_size.first_dl_assignment_idx.value());
@@ -1424,8 +1426,8 @@ dci_payload srsran::dci_1_1_pack(const dci_1_1_configuration& config)
     payload.push_back(config.tb2_redundancy_version.value(), config.payload_size.tb2_redundancy_version.value());
   }
 
-  // HARQ process number - 4 bits.
-  payload.push_back(config.harq_process_number, 4);
+  // HARQ process number - 4 or 5 bits.
+  payload.push_back(config.harq_process_number, config.payload_size.harq_process_number.value());
 
   // Downlink Assignment Index (DAI) - 0, 2 or 4 bits.
   if (config.downlink_assignment_index.has_value()) {
@@ -1525,6 +1527,7 @@ error_type<std::string> srsran::validate_dci_size_config(const dci_size_config& 
   static constexpr interval<unsigned, true> nof_pdsch_ack_timings_range(1, 8);
   static constexpr interval<unsigned, true> nof_rb_groups_range(1, MAX_NOF_RBGS);
   static constexpr interval<unsigned, true> pusch_max_layers_range(1, 4);
+  static constexpr interval<unsigned, true> harq_process_num_field_size_range(4, 5);
 
   // Check that UL and DL BWP and CORESET 0 bandwidths are within range.
   if (!bwp_bw_range.contains(config.dl_bwp_initial_bw)) {
@@ -1602,6 +1605,20 @@ error_type<std::string> srsran::validate_dci_size_config(const dci_size_config& 
       return make_unexpected(fmt::format("The number of HARQ-ACK feedback timing entries {} is out of range {}.",
                                          config.nof_pdsch_ack_timings,
                                          nof_pdsch_ack_timings_range));
+    }
+
+    // DL HARQ process number field size exceeds the valid range {4, 5}.
+    if (!harq_process_num_field_size_range.contains(config.dl_harq_process_number_field_size)) {
+      return make_unexpected(fmt::format("DL HARQ process number field size {} is out of range {}.",
+                                         config.dl_harq_process_number_field_size,
+                                         harq_process_num_field_size_range));
+    }
+
+    // UL HARQ process number field size exceeds the valid range {4, 5}.
+    if (!harq_process_num_field_size_range.contains(config.ul_harq_process_number_field_size)) {
+      return make_unexpected(fmt::format("DL HARQ process number field size {} is out of range {}.",
+                                         config.ul_harq_process_number_field_size,
+                                         harq_process_num_field_size_range));
     }
 
     // Requirements if transform precoding is enabled.

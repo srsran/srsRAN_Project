@@ -258,7 +258,7 @@ private:
   /// Notifiers for the CU-CP interface.
   std::map<unsigned, cu_cp_test_amf_config> amf_configs;
 
-  // emulated CU-UP nodes.
+  // Emulated CU-UP nodes.
   std::unordered_map<unsigned, std::unique_ptr<mock_cu_up>> cu_ups;
   unsigned                                                  next_cu_up_idx = 0;
 

@@ -233,9 +233,9 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
 
 cu_cp_test_environment::~cu_cp_test_environment()
 {
+  cu_cp_inst->stop();
   dus.clear();
   cu_ups.clear();
-  cu_cp_inst->stop();
   cu_cp_workers->stop();
 
   srslog::flush();
@@ -444,7 +444,7 @@ bool cu_cp_test_environment::connect_new_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t
 
   // Send RRC Setup Complete.
   // > Generate UL DCCH message (containing RRC Setup Complete).
-  byte_buffer pdu = pack_ul_dcch_msg(create_rrc_setup_complete());
+  byte_buffer pdu = test_helpers::pack_ul_dcch_msg(test_helpers::create_rrc_setup_complete());
   // > Generate UL RRC Message (containing RRC Setup Complete) with PDCP SN=0.
   get_du(du_idx).push_rrc_ul_dcch_message(du_ue_id, srb_id_t::srb1, std::move(pdu));
 
@@ -969,8 +969,8 @@ bool cu_cp_test_environment::reestablish_ue(unsigned            du_idx,
   f1ap_message f1ap_pdu;
 
   // Send Initial UL RRC Message (containing RRC Reestablishment Request) to CU-CP.
-  byte_buffer rrc_container =
-      pack_ul_ccch_msg(create_rrc_reestablishment_request(old_crnti, old_pci, "1111010001000010"));
+  byte_buffer rrc_container = test_helpers::pack_ul_ccch_msg(
+      test_helpers::create_rrc_reestablishment_request(old_crnti, old_pci, "1111010001000010"));
   f1ap_message f1ap_init_ul_rrc_msg =
       test_helpers::generate_init_ul_rrc_message_transfer(new_du_ue_id, new_crnti, {}, std::move(rrc_container));
   get_du(du_idx).push_ul_pdu(f1ap_init_ul_rrc_msg);
@@ -989,7 +989,7 @@ bool cu_cp_test_environment::reestablish_ue(unsigned            du_idx,
 
     // Send RRC Setup Complete.
     // > Generate UL DCCH message (containing RRC Setup Complete).
-    byte_buffer pdu = pack_ul_dcch_msg(create_rrc_setup_complete());
+    byte_buffer pdu = test_helpers::pack_ul_dcch_msg(test_helpers::create_rrc_setup_complete());
     // > Generate UL RRC Message (containing RRC Setup Complete) with PDCP SN=0.
     get_du(du_idx).push_rrc_ul_dcch_message(new_du_ue_id, srb_id_t::srb1, std::move(pdu));
 
@@ -1026,10 +1026,10 @@ bool cu_cp_test_environment::reestablish_ue(unsigned            du_idx,
 
   // EVENT: Send RRC Reestablishment Complete.
   // > Generate UL-DCCH message (containing RRC Reestablishment Complete).
-  byte_buffer pdu = pack_ul_dcch_msg(create_rrc_reestablishment_complete());
+  byte_buffer pdu = test_helpers::pack_ul_dcch_msg(test_helpers::create_rrc_reestablishment_complete());
   // > Prepend PDCP header and append MAC.
   report_error_if_not(pdu.prepend(std::array<uint8_t, 2>{0x00U, 0x00U}), "bad alloc");
-  report_error_if_not(pdu.append(std::array<uint8_t, 4>{0x01, 0x1d, 0x37, 0x38}), "bad alloc");
+  report_error_if_not(pdu.append(std::array<uint8_t, 4>{0x85, 0xc1, 0x04, 0xf1}), "bad alloc");
   // > Send UL RRC Message to CU-CP.
   get_du(du_idx).push_ul_pdu(
       test_helpers::generate_ul_rrc_message_transfer(new_du_ue_id, *old_ue.cu_ue_id, srb_id_t::srb1, std::move(pdu)));
@@ -1070,10 +1070,10 @@ bool cu_cp_test_environment::reestablish_ue(unsigned            du_idx,
                             "Invalid DL RRC Message Transfer");
 
   // EVENT: DU sends F1AP UL RRC Message Transfer (containing RRC Reconfiguration Complete).
-  pdu = pack_ul_dcch_msg(create_rrc_reconfiguration_complete(1U));
+  pdu = test_helpers::pack_ul_dcch_msg(test_helpers::create_rrc_reconfiguration_complete(1U));
   // > Prepend PDCP header and append MAC.
   report_error_if_not(pdu.prepend(std::array<uint8_t, 2>{0x00U, 0x01U}), "bad alloc");
-  report_error_if_not(pdu.append(std::array<uint8_t, 4>{0xd3, 0x69, 0xb8, 0xf7}), "bad alloc");
+  report_error_if_not(pdu.append(std::array<uint8_t, 4>{0xf1, 0x21, 0x02, 0x5e}), "bad alloc");
   get_du(du_idx).push_ul_pdu(
       test_helpers::generate_ul_rrc_message_transfer(new_du_ue_id, *old_ue.cu_ue_id, srb_id_t::srb1, std::move(pdu)));
 

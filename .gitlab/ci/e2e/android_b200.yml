@@ -28,8 +28,8 @@
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
   requirements:
     cpu:
-      requests: 6
-      limits: 6
+      requests: 4
+      limits: 4
     memory:
       requests: "10G"
       limits: "10G"
@@ -49,11 +49,11 @@
 - name: open5gs
   type: 5gc
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
-  labels: ["kubernetes.io/hostname=k8s-worker-uhd1"]
+  taints: ["purpose=retina"]
   requirements:
     cpu:
-      requests: 4
-      limits: 4
+      requests: 2
+      limits: 2
     memory:
       requests: "4G"
       limits: "4G"

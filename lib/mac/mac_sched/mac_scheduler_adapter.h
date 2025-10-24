@@ -25,6 +25,9 @@
 #include "../mac_ctrl/mac_scheduler_configurator.h"
 #include "../mac_dl/mac_scheduler_cell_info_handler.h"
 #include "../mac_ul/mac_scheduler_ce_info_handler.h"
+#include "srsran/mac/mac_cell_control_information_handler.h"
+#include "srsran/mac/mac_cell_rach_handler.h"
+#include "srsran/mac/mac_paging_information_handler.h"
 
 namespace srsran {
 
@@ -48,6 +51,10 @@ public:
   /// \param cell_index DU-specific index of the cell for which the control info handler is being retrieved.
   /// \return Cell-specific control info handler.
   virtual mac_cell_control_information_handler& get_cell_control_info_handler(du_cell_index_t cell_index) = 0;
+
+  /// \brief Gets the positioning measurement handler.
+  /// \return Positioning measurement handler.
+  virtual mac_positioning_measurement_handler& get_positioning_handler() = 0;
 };
 
 } // namespace srsran

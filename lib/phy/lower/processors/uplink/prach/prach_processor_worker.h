@@ -66,6 +66,9 @@ private:
     processing
   };
 
+  /// Scaling factor for converting from 16-bit complex integer to complex float.
+  static constexpr float scaling_factor_ci16_to_cf = std::numeric_limits<int16_t>::max();
+
   /// PHY logger.
   srslog::basic_logger& logger;
   /// OFDM PRACH demodulator.
@@ -88,6 +91,8 @@ private:
   unsigned window_length = 0;
   /// Current number of collected samples.
   unsigned nof_samples = 0;
+  /// Buffer to hold complex floating-point based samples for demodulation.
+  dynamic_tensor<2, cf_t> temp_cf_baseband;
 
   /// Runs state \c wait.
   void run_state_wait(const baseband_gateway_buffer_reader&           samples,
@@ -110,7 +115,9 @@ public:
     demodulator(std::move(demodulator_)),
     async_task_executor(async_task_executor_),
     sampling_rate_Hz(srate.to_Hz()),
-    temp_baseband(max_nof_ports, prach_constants::MAX_WINDOW_LENGTH.to_samples(sampling_rate_Hz))
+    temp_baseband(max_nof_ports, prach_constants::MAX_WINDOW_LENGTH.to_samples(sampling_rate_Hz)),
+    temp_cf_baseband(
+        {static_cast<unsigned>(prach_constants::MAX_WINDOW_LENGTH.to_samples(sampling_rate_Hz)), max_nof_ports})
   {
     srsran_assert(sampling_rate_Hz && prach_constants::MAX_WINDOW_LENGTH.is_sample_accurate(sampling_rate_Hz),
                   "Invalid sampling rate of {} Hz.",

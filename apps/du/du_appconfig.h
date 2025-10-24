@@ -25,6 +25,8 @@
 #include "apps/helpers/f1u/f1u_appconfig.h"
 #include "apps/helpers/hal/hal_appconfig.h"
 #include "apps/helpers/logger/logger_appconfig.h"
+#include "apps/helpers/tracing/tracer_appconfig.h"
+#include "apps/services/app_execution_metrics/executor_metrics_config.h"
 #include "apps/services/app_resource_usage/app_resource_usage_config.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
 #include "apps/services/metrics/metrics_appconfig.h"
@@ -52,6 +54,7 @@ struct f1u_appconfig {
 struct metrics_appconfig {
   app_services::app_resource_usage_config rusage_config;
   app_services::metrics_appconfig         metrics_service_cfg;
+  app_services::executor_metrics_config   executors_metrics_cfg;
   bool                                    autostart_stdout_metrics = false;
 };
 
@@ -63,6 +66,8 @@ struct du_appconfig {
   du_appconfig() { log_cfg.filename = "/tmp/du.log"; }
   /// Loggers configuration.
   logger_appconfig log_cfg;
+  /// Tracers configuration.
+  tracer_appconfig trace_cfg;
   /// Metrics configuration.
   srs_du::metrics_appconfig metrics_cfg;
   /// F1-C configuration.

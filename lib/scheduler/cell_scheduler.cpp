@@ -98,7 +98,7 @@ void cell_scheduler::run_slot(slot_point sl_tx)
   if (SRSRAN_LIKELY(res_grid.slot_tx().valid())) {
     while (SRSRAN_UNLIKELY(res_grid.slot_tx() + 1 != sl_tx)) {
       slot_point skipped_slot = res_grid.slot_tx() + 1;
-      logger.info("Status: Detected skipped slot={}.", skipped_slot);
+      logger.info("cell={}: Detected skipped slot={}.", fmt::underlying(cell_cfg.cell_index), skipped_slot);
       reset_resource_grid(skipped_slot);
     }
   } else {

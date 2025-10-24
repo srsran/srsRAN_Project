@@ -53,7 +53,8 @@ byte_buffer srsran::srs_cu_cp::generate_rrc_setup_complete()
 byte_buffer srsran::srs_cu_cp::generate_rrc_reconfiguration_complete_pdu(unsigned transaction_id, uint8_t count)
 {
   byte_buffer pdu_with_count = byte_buffer::create({0x00, count}).value();
-  if (!pdu_with_count.append(pack_ul_dcch_msg(create_rrc_reconfiguration_complete(transaction_id)))) {
+  if (!pdu_with_count.append(
+          test_helpers::pack_ul_dcch_msg(test_helpers::create_rrc_reconfiguration_complete(transaction_id)))) {
     return {};
   }
 

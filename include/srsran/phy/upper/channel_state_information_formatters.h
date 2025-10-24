@@ -114,7 +114,6 @@ struct formatter<srsran::channel_state_information> {
 
       // Extract CSI measurements. It could be some of them are not available.
       std::optional<float>                 epre_dB       = csi.get_epre_dB();
-      std::optional<float>                 rsrp_dB       = csi.get_rsrp_dB();
       std::optional<float>                 sinr_dB       = csi.get_sinr_dB();
       std::optional<srsran::phy_time_unit> time_aligment = csi.get_time_alignment();
       std::optional<float>                 cfo_Hz        = csi.get_cfo_Hz();
@@ -125,11 +124,20 @@ struct formatter<srsran::channel_state_information> {
       } else {
         helper.format_always(ctx, "epre=na");
       }
-      if (rsrp_dB.has_value()) {
-        helper.format_always(ctx, "rsrp={:+.1f}dB", *rsrp_dB);
+
+      // Print the RSRP for each port, if available. Otherwise, print the average RSRP.
+      srsran::span<const float> port_rsrp = csi.get_port_rsrp_dB();
+      if (std::any_of(port_rsrp.begin(), port_rsrp.end(), [](auto elem) { return !std::isnan(elem); })) {
+        helper.format_if_verbose(ctx, "rsrp=[{:.1f}]dB", port_rsrp);
       } else {
-        helper.format_always(ctx, "rsrp=na");
+        std::optional<float> rsrp_dB = csi.get_rsrp_dB();
+        if (rsrp_dB.has_value()) {
+          helper.format_if_verbose(ctx, "rsrp={:.1f}dB", rsrp_dB);
+        } else {
+          helper.format_if_verbose(ctx, "rsrp=na");
+        }
       }
+
       if (sinr_dB.has_value()) {
         helper.format_if_verbose(ctx, "sinr={:+.1f}dB", *sinr_dB);
       } else {

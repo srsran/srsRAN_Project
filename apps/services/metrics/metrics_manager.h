@@ -86,7 +86,7 @@ public:
     }
   }
 
-  /// Fowards the given metric to the subscribers.
+  /// Forwards the given metric to the subscribers.
   void on_new_metric(const metrics_set& metric) override
   {
     std::string_view metrics_name = metric.get_properties().name();

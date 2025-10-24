@@ -86,6 +86,7 @@ class split6_flexible_o_du_low_session_factory
   split6_flexible_o_du_low_metrics_notifier*           notifier;
   std::unique_ptr<fapi::slot_messages_adaptor_factory> slot_messages_adaptor_factory;
   start_time_calculator                                start_time_calc;
+  std::optional<float>                                 sampling_rate_MHz;
 
 public:
   split6_flexible_o_du_low_session_factory(
@@ -102,6 +103,10 @@ public:
     start_time_calc(std::chrono::milliseconds{unit_config.start_time_jitter_ms}, srslog::fetch_basic_logger("APP"))
   {
     report_error_if_not(slot_messages_adaptor_factory, "Invalid FAPI slot messages adaptor factory");
+
+    if (const auto* ru_cfg = std::get_if<ru_sdr_unit_config>(&unit_config.ru_cfg)) {
+      sampling_rate_MHz.emplace(ru_cfg->srate_MHz);
+    }
   }
 
   /// Creates the split 6 flexible O-DU low session.

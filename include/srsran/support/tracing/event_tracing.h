@@ -40,7 +40,7 @@ namespace srsran {
 /// \brief Trace Event clock type.
 ///
 /// \remark We use high_resolution_clock instead of steady_clock for time stamps to be aligned with logging.
-using trace_clock    = std::chrono::high_resolution_clock;
+using trace_clock    = std::chrono::steady_clock;
 using trace_point    = trace_clock::time_point;
 using trace_duration = std::chrono::microseconds;
 
@@ -52,10 +52,16 @@ constexpr resource_usage::snapshot null_rusage_snapshot{};
 
 /// Open a file to write trace events to.
 /// \param[in] trace_file_name Name of the generated file.
-/// \param[in] split_after_n If positive, the events will be written into split files, each with a number of events
-/// lower or equal to \c split_after_n. This way, we avoid generating an enormous single trace file. If
-/// \c trace_file_name is "trace.json", the splitted files will be called "trace0.json", "trace1.json", etc.
-void open_trace_file(std::string_view trace_file_name = "/tmp/srsran_trace.json", unsigned split_after_n = 1e6);
+/// \param[in] split_after_n   If positive, the events will be written into split files, each with a number of events
+///                            lower or equal to \c split_after_n. This way, we avoid generating an enormous single
+///                            trace \c trace_file_name is "trace.json", the splitted files will be called
+///                            "trace0.json", "trace1.json", etc.
+/// \param[in] event_trigger_n If positive, the events will only be written if an instant severe event is detected. In,
+///                            this case, only the prior \c event_trigger_n number of events will be written in the
+///                            file.
+void open_trace_file(std::string_view trace_file_name = "/tmp/srsran_trace.json",
+                     unsigned         split_after_n   = 1e6,
+                     unsigned         event_trigger_n = 0);
 
 /// Close the trace file. This function is called automatically when the program exits.
 void close_trace_file();
@@ -88,12 +94,19 @@ struct trace_thres_event {
 /// \brief Trace event type with defined name, starting point but no duration.
 /// \remark The creation of this type should be trivial so that compiler optimizes it out for null tracers.
 struct instant_trace_event {
-  enum class cpu_scope { global, process, thread };
+  enum class cpu_scope : uint8_t { global, process, thread };
+  enum class event_criticality : uint8_t { normal = 0, severe };
 
-  const char* name;
-  cpu_scope   scope;
+  const char*       name;
+  cpu_scope         scope;
+  event_criticality criticality;
 
-  SRSRAN_FORCE_INLINE constexpr instant_trace_event(const char* name_, cpu_scope scope_) : name(name_), scope(scope_) {}
+  SRSRAN_FORCE_INLINE constexpr instant_trace_event(const char*       name_,
+                                                    cpu_scope         scope_,
+                                                    event_criticality criticality_ = event_criticality::normal) :
+    name(name_), scope(scope_), criticality(criticality_)
+  {
+  }
 };
 
 struct rusage_trace_event {

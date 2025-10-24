@@ -63,6 +63,11 @@ public:
 
   mac_paging_information_handler& get_cell_paging_info_handler() override { return *mac_sched; }
 
+  mac_positioning_measurement_handler& get_positioning_handler() override
+  {
+    return mac_sched->get_positioning_handler();
+  }
+
 private:
   /// Used to allocate new TC-RNTIs and convert from C-RNTI to UE index.
   rnti_manager rnti_table;

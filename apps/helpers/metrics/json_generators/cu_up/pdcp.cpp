@@ -46,7 +46,7 @@ static nlohmann::json generate_pdcp_tx(const pdcp_tx_metrics_container& metrics,
     json["max_latency_us"] = validate_fp_value(static_cast<double>(metrics.max_pdu_latency_ns.value()) * 1e-3);
   }
 
-  json["average_throughput_Mbps"] =
+  json["average_throughput_mbps"] =
       validate_fp_value(static_cast<double>(metrics.num_pdu_bytes) * 8.0 * 1000.0 * 1e-6 / static_cast<double>(period));
   json["cpu_usage_percent"] = validate_fp_value(cpu_usage);
 
@@ -69,7 +69,7 @@ static nlohmann::json generate_pdcp_rx(const pdcp_rx_metrics_container& metrics,
     json["max_latency_us"] = validate_fp_value(static_cast<double>(metrics.max_sdu_latency_ns.value()) * 1e-3);
   }
 
-  json["average_throughput_Mbps"] =
+  json["average_throughput_mbps"] =
       validate_fp_value(static_cast<double>(metrics.num_pdu_bytes) * 8.0 * 1000.0 * 1e-6 / static_cast<double>(period));
   json["cpu_usage_percent"] = validate_fp_value(cpu_usage);
 

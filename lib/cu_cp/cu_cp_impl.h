@@ -86,7 +86,7 @@ public:
   // CU-UP handler.
   void handle_bearer_context_release_request(const cu_cp_bearer_context_release_request& msg) override;
   void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
-  void handle_e1_release_request(cu_up_index_t cu_up_index, const std::vector<ue_index_t>& ue_list) override;
+  void handle_e1_release_request(cu_up_index_t cu_up_index) override;
 
   // cu_cp_rrc_ue_interface.
   bool handle_ue_plmn_selected(ue_index_t ue_index, const plmn_identity& plmn) override;
@@ -127,6 +127,7 @@ public:
   void             handle_transmission_of_handover_required() override;
   async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) override;
   ue_index_t handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi, const plmn_identity& plmn) override;
+  void       handle_n2_handover_execution(ue_index_t ue_index) override;
   void       handle_dl_ue_associated_nrppa_transport_pdu(ue_index_t ue_index, const byte_buffer& nrppa_pdu) override;
   void handle_dl_non_ue_associated_nrppa_transport_pdu(amf_index_t amf_index, const byte_buffer& nrppa_pdu) override;
   void handle_n2_disconnection(amf_index_t amf_index) override;
@@ -187,7 +188,7 @@ private:
 
   byte_buffer handle_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi) override;
 
-  async_task<void> handle_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) override;
+  async_task<void> handle_transaction_info_loss(const ue_transaction_info_loss_event& ev) override;
 
   // NGAP UE creation handler.
   ngap_cu_cp_ue_notifier* handle_new_ngap_ue(ue_index_t ue_index) override;

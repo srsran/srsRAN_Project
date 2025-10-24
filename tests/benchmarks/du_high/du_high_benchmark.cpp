@@ -754,9 +754,9 @@ public:
 
     // Wait until it's a full UL slot to send Msg3.
     auto next_ul_slot = [this]() {
-      // Force this to sleep, otherwise the scheduler might starve the exec that runs the UE creation procedure.
-      // TODO: fix this in a more elegant way.
-      std::this_thread::sleep_for(std::chrono::milliseconds(1U));
+      // Synchronization point to avoid that the upper layer executors get starved.
+      this->workers->wait_pending_tasks();
+
       return not cfg.ran.cells[to_du_cell_index(0)].tdd_ul_dl_cfg_common.has_value() or
              not is_tdd_full_ul_slot(cfg.ran.cells[to_du_cell_index(0)].tdd_ul_dl_cfg_common.value(),
                                      slot_point(next_sl_tx - tx_rx_delay - 1).slot_index());
@@ -774,9 +774,9 @@ public:
 
     // Wait for Msg4.
     auto dl_pdu_sched = [this, rnti]() {
-      // Force this to sleep, otherwise the scheduler might starve the exec that runs the UE creation procedure.
-      // TODO: fix this in a more elegant way.
-      std::this_thread::sleep_for(std::chrono::milliseconds(1U));
+      // Synchronization point to avoid that the upper layer executors get starved.
+      this->workers->wait_pending_tasks();
+
       if (sim_phy.slot_dl_result.dl_res != nullptr) {
         return find_ue_pdsch_with_lcid(rnti, LCID_SRB0, sim_phy.slot_dl_result.dl_res->ue_grants) != nullptr;
       }
@@ -796,9 +796,9 @@ public:
     // Wait for RRC Setup Complete.
     std::unique_ptr<f1ap_message> pdu;
     auto                          ul_rrc_msg_rx = [this, &pdu]() {
-      // Force this to sleep, otherwise the scheduler might starve the exec that runs the UE creation procedure.
-      // TODO: fix this in a more elegant way.
-      std::this_thread::sleep_for(std::chrono::milliseconds(1U));
+      // Synchronization point to avoid that the upper layer executors get starved.
+      this->workers->wait_pending_tasks();
+
       return sim_cu_cp.rx_f1ap_pdus.try_pop(pdu) and
              pdu->pdu.type().value == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg and
              pdu->pdu.init_msg().value.type().value ==
@@ -827,9 +827,9 @@ public:
 
     // Wait for UE Context Setup Response.
     auto ue_setup_resp_rx = [this, &pdu]() {
-      // Force this to sleep, otherwise the scheduler might starve the exec that runs the UE creation procedure.
-      // TODO: fix this in a more elegant way.
-      std::this_thread::sleep_for(std::chrono::milliseconds(1U));
+      // Synchronization point to avoid that the upper layer executors get starved.
+      this->workers->wait_pending_tasks();
+
       return sim_cu_cp.rx_f1ap_pdus.try_pop(pdu) and
              pdu->pdu.type().value == asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome and
              pdu->pdu.successful_outcome().value.type().value ==
@@ -851,10 +851,9 @@ public:
     bool rlc_status_rx      = false;
     bool rrc_reconf_comp_rx = false;
     report_fatal_error_if_not(run_slot_until([&]() {
-                                // Force this to sleep, otherwise the scheduler might starve the exec that runs the UE
-                                // creation procedure.
-                                // TODO: fix this in a more elegant way.
-                                std::this_thread::sleep_for(std::chrono::milliseconds(1U));
+                                // Synchronization point to avoid that the upper layer executors get starved.
+                                this->workers->wait_pending_tasks();
+
                                 rlc_status_rx |= dl_pdu_sched_srb1();
                                 rrc_reconf_comp_rx |= ul_rrc_msg_rx();
                                 return rlc_status_rx & rrc_reconf_comp_rx;

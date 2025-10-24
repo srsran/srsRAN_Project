@@ -144,8 +144,8 @@ bool operator==(const baseband_gateway_buffer_reader& left, const baseband_gatew
 
   bool same_data = true;
   for (unsigned i_channel = 0; i_channel != nof_channels; ++i_channel) {
-    span<const cf_t> left_channel  = left.get_channel_buffer(i_channel);
-    span<const cf_t> right_channel = right.get_channel_buffer(i_channel);
+    span<const ci16_t> left_channel  = left.get_channel_buffer(i_channel);
+    span<const ci16_t> right_channel = right.get_channel_buffer(i_channel);
     same_data &= (left_channel.data() == right_channel.data());
   }
 
@@ -154,8 +154,8 @@ bool operator==(const baseband_gateway_buffer_reader& left, const baseband_gatew
   }
 
   for (unsigned i_channel = 0; i_channel != nof_channels; ++i_channel) {
-    span<const cf_t> left_channel  = left.get_channel_buffer(i_channel);
-    span<const cf_t> right_channel = right.get_channel_buffer(i_channel);
+    span<const ci16_t> left_channel  = left.get_channel_buffer(i_channel);
+    span<const ci16_t> right_channel = right.get_channel_buffer(i_channel);
     if (!std::equal(left_channel.begin(), left_channel.end(), right_channel.begin(), right_channel.end())) {
       return false;
     }
@@ -800,7 +800,7 @@ TEST_P(LowerPhyFixture, BasebandDownlinkFlow)
   // Set initial time and start streaming.
   baseband_gateway_timestamp current_timestamp = 100;
   bb_gateway_spy.set_receiver_current_timestamp(current_timestamp);
-  lphy_controller.start(current_timestamp, false);
+  lphy_controller.start(current_timestamp);
 
   // Repeat for a number of baseband blocks.
   for (unsigned i_slot = 0; i_slot != nof_slots; ++i_slot) {
@@ -857,7 +857,7 @@ TEST_P(LowerPhyFixture, BasebandUplinkFlow)
   // Set initial time and start streaming.
   baseband_gateway_timestamp init_time = 100;
   bb_gateway_spy.set_receiver_current_timestamp(init_time);
-  lphy_controller.start(init_time, false);
+  lphy_controller.start(init_time);
 
   // Repeat for a number of baseband blocks.
   for (unsigned i_slot = 0; i_slot != nof_slots; ++i_slot) {

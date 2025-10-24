@@ -35,13 +35,8 @@ du_manager_metrics_aggregator_impl::du_manager_metrics_aggregator_impl(
     const du_manager_params::metrics_config_params& params_,
     task_executor&                                  du_mng_exec_,
     timer_manager&                                  timers_,
-    f1ap_metrics_collector&                         f1ap_collector_,
-    mac_metrics_notifier*                           mac_notifier_) :
-  params(params_),
-  du_mng_exec(du_mng_exec_),
-  timers(timers_),
-  mac_notifier(mac_notifier_),
-  f1ap_collector(f1ap_collector_)
+    f1ap_metrics_collector&                         f1ap_collector_) :
+  params(params_), du_mng_exec(du_mng_exec_), timers(timers_), f1ap_collector(f1ap_collector_)
 {
   (void)du_mng_exec;
   (void)timers;
@@ -60,11 +55,6 @@ du_manager_metrics_aggregator_impl::~du_manager_metrics_aggregator_impl() = defa
 
 void du_manager_metrics_aggregator_impl::aggregate_mac_metrics_report(const mac_metric_report& report)
 {
-  // Forward the MAC report to notifier.
-  if (mac_notifier != nullptr) {
-    mac_notifier->on_new_metrics_report(report);
-  }
-
   // In case the DU metrics notifier was specified, report the DU metrics.
   if (params.du_metrics != nullptr) {
     next_report.mac = report;

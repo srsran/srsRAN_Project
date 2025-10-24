@@ -22,6 +22,7 @@
 
 #include "f1ap_du_ue_context_modification_procedure.h"
 #include "../../asn1_helpers.h"
+#include "../f1ap_du_context.h"
 #include "proc_logger.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/f1ap/f1ap_message.h"
@@ -33,8 +34,9 @@ using namespace asn1::f1ap;
 
 f1ap_du_ue_context_modification_procedure::f1ap_du_ue_context_modification_procedure(
     const asn1::f1ap::ue_context_mod_request_s& msg,
-    f1ap_du_ue&                                 ue_) :
-  req(msg), ue(ue_), logger(srslog::fetch_basic_logger("DU-F1"))
+    f1ap_du_ue&                                 ue_,
+    const f1ap_du_context&                      ctxt_) :
+  req(msg), ue(ue_), du_ctxt(ctxt_), logger(srslog::fetch_basic_logger("DU-F1"))
 {
 }
 
@@ -250,9 +252,12 @@ async_task<bool> f1ap_du_ue_context_modification_procedure::handle_rrc_container
     return launch_no_op_task(false);
   }
 
+  const f1ap_du_cell_context& cell_ctx = du_ctxt.served_cells[ue.context.sp_cell_index];
+  std::chrono::milliseconds   timeout  = rrc_container_delivery_timeout + cell_ctx.ntn_link_rtt;
+
   // If RRC delivery status is requested, we wait for the PDU delivery and report the status afterwards.
   return srb1->handle_pdu_and_await_transmission(
-      req->rrc_container.copy(), req->rrc_delivery_status_request_present, rrc_container_delivery_timeout);
+      req->rrc_container.copy(), req->rrc_delivery_status_request_present, timeout);
 }
 
 async_task<void> f1ap_du_ue_context_modification_procedure::handle_tx_action_indicator()

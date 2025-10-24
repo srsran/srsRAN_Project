@@ -23,10 +23,12 @@
 #pragma once
 
 #include "../mac_config_interfaces.h"
+#include "../mac_dl/mac_dl_metric_handler.h"
 #include "mac_config.h"
 #include "mac_metrics_aggregator.h"
 #include "mac_scheduler_configurator.h"
 #include "srsran/mac/mac_config.h"
+#include "srsran/mac/mac_positioning_measurement_handler.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/du_ue_list.h"
 

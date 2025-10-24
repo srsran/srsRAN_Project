@@ -119,16 +119,6 @@ static bool validate_log_options(const du_low_unit_logger_config& config, const 
 bool srsran::validate_du_low_config(const du_low_unit_config&                  config,
                                     span<const du_low_prach_validation_config> prach_cells_config)
 {
-  // Configure more cells for expert execution than the number of cells is an error.
-  if (config.expert_execution_cfg.cell_affinities.size() != prach_cells_config.size()) {
-    fmt::print(
-        "Using different number of cells for DU low expert execution '{}' than the number of defined cells '{}'\n",
-        config.expert_execution_cfg.cell_affinities.size(),
-        prach_cells_config.size());
-
-    return false;
-  }
-
   if (!validate_log_options(config.loggers, prach_cells_config.front())) {
     return false;
   }

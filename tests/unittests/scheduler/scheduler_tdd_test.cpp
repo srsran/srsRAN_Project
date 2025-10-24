@@ -109,9 +109,9 @@ TEST_P(scheduler_dl_tdd_tester, all_dl_slots_are_scheduled)
     this->run_slot();
 
     // For every DL slot.
-    if (cell_cfg_list[0].is_dl_enabled(this->last_result_slot())) {
+    if (cell_cfg(to_du_cell_index(0)).is_dl_enabled(this->last_result_slot())) {
       // Ensure UE PDSCH allocations are made.
-      ASSERT_FALSE(this->last_sched_res_list[to_du_cell_index(0)]->dl.ue_grants.empty()) << fmt::format(
+      ASSERT_FALSE(this->last_sched_result(to_du_cell_index(0))->dl.ue_grants.empty()) << fmt::format(
           "The UE configuration is leading to slot {} not having DL UE grant scheduled", this->last_result_slot());
     }
   }
@@ -128,7 +128,7 @@ public:
     this->push_bsr(bsr);
 
     // Run some slots to ensure that there is space for PDCCH to be scheduled.
-    unsigned tdd_period = nof_slots_per_tdd_period(*cell_cfg_list[0].tdd_cfg_common);
+    unsigned tdd_period = nof_slots_per_tdd_period(*cell_cfg(to_du_cell_index(0)).tdd_cfg_common);
     for (unsigned i = 0; i != 2 * tdd_period; ++i) {
       run_slot();
     }
@@ -143,9 +143,9 @@ TEST_P(scheduler_ul_tdd_tester, all_ul_slots_are_scheduled)
 
     // For every UL slot.
     // Note: Skip special slots in test for now.
-    if (cell_cfg_list[0].is_fully_ul_enabled(this->last_result_slot())) {
+    if (cell_cfg().is_fully_ul_enabled(this->last_result_slot())) {
       // Ensure UE PUSCH allocations are made.
-      ASSERT_FALSE(this->last_sched_res_list[to_du_cell_index(0)]->ul.puschs.empty()) << fmt::format(
+      ASSERT_FALSE(this->last_sched_result()->ul.puschs.empty()) << fmt::format(
           "The UE configuration is leading to slot {} not having UL UE grant scheduled", this->last_result_slot());
     }
   }

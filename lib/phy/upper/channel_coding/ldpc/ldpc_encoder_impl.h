@@ -38,11 +38,11 @@ class ldpc_encoder_impl : public ldpc_encoder, private ldpc_encoder_buffer
 {
 public:
   // See interface for the documentation.
-  ldpc_encoder_buffer& encode(const bit_buffer& input, const codeblock_metadata::tb_common_metadata& cfg) override;
+  ldpc_encoder_buffer& encode(const bit_buffer& input, const configuration& cfg) override;
 
 private:
   /// Initializes the encoder inner variables.
-  void init(const codeblock_metadata::tb_common_metadata& cfg);
+  void init(const configuration& cfg);
   /// Selects the appropriate encoding strategy.
   virtual void select_strategy() {}
   /// Loads the input bits into the inner register.

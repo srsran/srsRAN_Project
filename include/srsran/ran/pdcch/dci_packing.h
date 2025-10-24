@@ -114,6 +114,20 @@ struct dci_size_config {
   /// Set according to the higher layer parameter \e pdsch-HARQ-ACK-Codebook (see TS38.331 Section 6.3.2, Information
   /// Element \e PhysicalCellGroupConfig).
   pdsch_harq_ack_codebook pdsch_harq_ack_cb;
+
+  /// \brief DL HARQ process number field size.
+  ///
+  /// Set according to the higher layer parameter \e nrofHARQ-ProcessesForPDSCH (see TS38.331 Section 6.3.2,
+  /// Information Element \e PDSCH-ServingCellConfig) and UE capabilities (see TS38.306 Section 4.2.7.2,
+  /// Information Element \e max-HARQ-ProcessNumber-r17).
+  unsigned dl_harq_process_number_field_size;
+
+  /// \brief UL HARQ process number field size.
+  ///
+  /// Set according to the higher layer parameter \e nrofHARQ-ProcessesForPUSCH (see TS38.331 Section 6.3.2,
+  /// Information Element \e PUSCH-ServingCellConfig) and UE capabilities (see TS38.306 Section 4.2.7.2,
+  /// Information Element \e max-HARQ-ProcessNumber-r17).
+  unsigned ul_harq_process_number_field_size;
   /// @}
 
   /// \name Parameters for DCI format 0_1.
@@ -401,6 +415,8 @@ struct dci_0_1_size {
   units::bits frequency_resource;
   /// Time domain resource assignment field size - 0, 1, 2, 3 or 4 bits.
   units::bits time_resource;
+  /// HARQ process number field size - 4 or 5 bits.
+  units::bits harq_process_number;
   /// Frequency hopping flag field size - 0 or 1 bit.
   units::bits freq_hopping_flag;
   /// 1st downlink assignment index field size - 1 or 2 bits.
@@ -440,6 +456,8 @@ struct dci_1_1_size {
   units::bits carrier_indicator;
   /// BWP indicator field size - 0, 1 or 2 bits.
   units::bits bwp_indicator;
+  /// HARQ process number field size - 4 or 5 bits.
+  units::bits harq_process_number;
   /// Frequency domain resource assignment field size.
   units::bits frequency_resource;
   /// Time domain resource assignment field size - 0, 1, 2, 3 or 4 bits.
@@ -865,7 +883,7 @@ struct dci_0_1_configuration {
   unsigned new_data_indicator;
   /// Redundancy version - 2 bits as per TS38.212 Table 7.3.1.1.1-2.
   unsigned redundancy_version;
-  /// HARQ process number - 4 bits.
+  /// HARQ process number - 4 or 5 bits.
   unsigned harq_process_number;
   /// \brief 1st downlink assignment index - 1 or 2 bits.
   ///
@@ -1046,7 +1064,7 @@ struct dci_1_1_configuration {
   /// Set as per TS38.212 Table 7.3.1.1.1-2 if DCI is configured to schedule two codewords, i.e., if \ref
   /// dci_size_config::pdsch_two_codewords is set to \c true when computing the DCI sizes.
   std::optional<unsigned> tb2_redundancy_version;
-  /// HARQ process number - 4 bits.
+  /// HARQ process number - 4 or 5 bits.
   unsigned harq_process_number;
   /// \brief Downlink Assignment Index (DAI) - 0, 2 or 4 bits.
   ///

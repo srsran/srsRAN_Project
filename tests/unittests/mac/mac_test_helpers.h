@@ -23,6 +23,7 @@
 #pragma once
 
 #include "lib/mac/mac_sched/mac_scheduler_adapter.h"
+#include "srsran/adt/slotted_array.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/mac/config/mac_cell_group_config_factory.h"
 #include "srsran/mac/config/mac_config_helpers.h"
@@ -126,7 +127,7 @@ public:
   void handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index, error_outcome event) override {}
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override {}
   void handle_positioning_measurement_request(const positioning_measurement_request& req) override {}
-  void handle_positioning_measurement_stop(du_cell_index_t cell_index, rnti_t pos_rnti) override {}
+  void handle_positioning_measurement_stop(const positioning_measurement_stop_request& req) override {}
   void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req) override {}
 };
 
@@ -155,13 +156,6 @@ public:
   void handle_si_change_indication(const si_scheduling_update_request& request) override {}
 
   void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req) override {}
-
-  async_task<mac_cell_positioning_measurement_response>
-  handle_positioning_measurement_request(du_cell_index_t                                 cell_index,
-                                         const mac_cell_positioning_measurement_request& req) override
-  {
-    return launch_no_op_task(mac_cell_positioning_measurement_response{});
-  }
 };
 
 class dummy_mac_cell_result_notifier : public mac_cell_result_notifier

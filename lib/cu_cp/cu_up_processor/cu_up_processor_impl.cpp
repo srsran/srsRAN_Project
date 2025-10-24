@@ -110,6 +110,11 @@ void cu_up_processor_impl::send_cu_up_e1_setup_failure(e1ap_cause_t cause)
   e1ap->handle_cu_up_e1_setup_response(response);
 }
 
+async_task<void> cu_up_processor_impl::handle_cu_cp_e1_reset_message(const cu_cp_reset& reset)
+{
+  return e1ap->handle_cu_cp_e1_reset_message(reset);
+}
+
 void cu_up_processor_impl::update_ue_index(ue_index_t ue_index, ue_index_t old_ue_index)
 {
   e1ap->update_ue_context(ue_index, old_ue_index);

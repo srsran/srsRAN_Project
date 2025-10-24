@@ -59,13 +59,6 @@ public:
     logger.info("Received UL NAS Transport message");
   }
 
-  void on_inter_cu_ho_rrc_recfg_complete_received(const ue_index_t           ue_index,
-                                                  const nr_cell_global_id_t& cgi,
-                                                  const tac_t                tac) override
-  {
-    logger.info("ue={}: Received inter CU handover related RRC Reconfiguration Complete", ue_index);
-  }
-
   bool initial_ue_msg_received = false;
 
 private:

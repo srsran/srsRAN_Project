@@ -32,7 +32,7 @@ struct ul_sched_result;
 /// Parameters of a grant allocation in the cell resource grid.
 
 struct test_grant_info {
-  enum type_t { SSB, DL_PDCCH, UL_PDCCH, SIB, RAR, UE_DL, UE_UL, PUCCH, PRACH, PAGING } type;
+  enum type_t { SSB, DL_PDCCH, UL_PDCCH, SIB, RAR, UE_DL, UE_UL, PUCCH, PRACH, SRS, PAGING } type;
   rnti_t     rnti;
   grant_info grant;
 };
@@ -81,12 +81,6 @@ std::pair<grant_info, grant_info> get_pdsch_grant_info(const bwp_downlink_common
 
 /// \brief Creates a list with the grants allocated in a cell DL resource grid. This includes PDCCHs, PDSCHs and SSB.
 std::vector<test_grant_info> get_dl_grants(const cell_configuration& cell_cfg, const dl_sched_result& dl_res);
-
-/// Extract PUCCH grant info of PUCCH allocation.
-///
-/// \param pucch PUCCH grant parameters.
-/// \return Parameters of the grant.
-std::pair<grant_info, grant_info> get_pucch_grant_info(const pucch_info& pucch);
 
 /// \brief Creates a list with the grants allocated in a cell UL resource grid. This includes PUSCHs, PUCCHs and PRACH
 /// PDUs.

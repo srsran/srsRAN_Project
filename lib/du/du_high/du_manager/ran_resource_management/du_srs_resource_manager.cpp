@@ -152,6 +152,7 @@ du_srs_policy_max_ul_rate::du_srs_policy_max_ul_rate(span<const du_cell_config> 
         compute_freq_shift(c_srs.value(), cell.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
     srsran_assert(freq_shift.has_value(), "SRS parameters didn't provide a valid freq_shift value");
     cell.srs_common_params.freq_shift = freq_shift.value();
+    cell.srs_common_params.p0         = cell.cell_cfg.srs_cfg.p0;
 
     // TODO: evaluate whether we need to consider the case of multiple cells.
     cell.cell_srs_res_list = generate_cell_srs_list(cell.cell_cfg);
@@ -297,6 +298,9 @@ bool du_srs_policy_max_ul_rate::alloc_resources(cell_group_config& cell_grp_cfg)
 
     // Update the SRS resource set with the SRS id.
     ue_srs_cfg.srs_res_set_list.front().srs_res_id_list.front() = only_ue_srs_res.id.ue_res_id;
+
+    // Update the SRS resource set with the p0.
+    ue_srs_cfg.srs_res_set_list.front().p0 = ue_du_cell.srs_common_params.p0;
 
     // Remove the allocated SRS resource from the free list.
     free_srs_list.erase(srs_res_id_offset);

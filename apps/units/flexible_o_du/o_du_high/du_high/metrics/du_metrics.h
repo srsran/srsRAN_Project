@@ -25,9 +25,11 @@
 #include "apps/services/metrics/metrics_consumer.h"
 #include "apps/services/metrics/metrics_properties.h"
 #include "apps/services/metrics/metrics_set.h"
+#include "srsran/adt/span.h"
 #include "srsran/du/du_high/du_metrics_report.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/support/executors/task_executor.h"
+#include <utility>
 
 namespace srsran {
 
@@ -45,7 +47,7 @@ class du_metrics_impl : public app_services::metrics_set
   srs_du::du_metrics_report  report;
 
 public:
-  explicit du_metrics_impl(const srs_du::du_metrics_report& report_) : report(report_) {}
+  explicit du_metrics_impl(srs_du::du_metrics_report report_) : report(std::move(report_)) {}
 
   // See interface for documentation.
   const app_services::metrics_properties& get_properties() const override { return properties; }

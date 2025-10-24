@@ -28,7 +28,6 @@
 #include "srsran/support/async/manual_event.h"
 #include "srsran/support/compiler.h"
 #include "srsran/support/timers.h"
-#include <array>
 #include <unordered_map>
 #include <variant>
 
@@ -44,11 +43,11 @@ constexpr protocol_transaction_id_t invalid_protocol_transaction_id =
 template <typename ResponseType>
 class protocol_transaction_manager;
 
-/// \brief Error causes for the case of transactions that timed out or were cancelled.
+/// Error causes for the case of transactions that timed out or were cancelled.
 enum class protocol_transaction_failure { timeout, cancel, abnormal };
 
-/// \brief Protocol Transaction Awaitable. This awaitable is single-use, after which, the respective
-/// transaction_manager class will reset its underlying event state.
+/// Protocol Transaction Awaitable. This awaitable is single-use, after which, the respective transaction_manager class
+/// will reset its underlying event state.
 template <typename ResponseType>
 class protocol_transaction
 {
@@ -65,6 +64,7 @@ public:
     parent(&parent_), transaction_id(transaction_id_), ev(&ev_)
   {
   }
+
   protocol_transaction(const protocol_transaction&) = delete;
   protocol_transaction(protocol_transaction&& other) noexcept :
     parent(std::exchange(other.parent, nullptr)),
@@ -72,7 +72,7 @@ public:
     ev(std::exchange(other.ev, nullptr))
   {
   }
-  ~protocol_transaction() { release(); }
+
   protocol_transaction& operator=(const protocol_transaction&) = delete;
   protocol_transaction& operator=(protocol_transaction&& other) noexcept
   {
@@ -83,41 +83,43 @@ public:
     return *this;
   }
 
+  ~protocol_transaction() { release(); }
+
   /// Gets transaction id.
   unsigned id() const { return transaction_id; }
 
   /// Checks whether this transaction represents a valid, allocation transaction.
   bool valid() const { return parent != nullptr; }
 
-  /// \brief Checks if transaction result has been set.
+  /// Checks if transaction result has been set.
   bool complete() const
   {
     srsran_assert(valid(), "Trying to check completion of invalid transaction");
     return ev->is_set();
   }
 
-  /// \brief Check whether transaction finished successfully with a response.
+  /// Check whether transaction finished successfully with a response.
   bool has_response() const
   {
     srsran_assert(valid(), "Trying to check completion of invalid transaction");
     return complete() and ev->get().has_value();
   }
 
-  /// \brief Check whether transaction was aborted (e.g. timeout or cancellation).
+  /// Check whether transaction was aborted (e.g. timeout or cancellation).
   bool aborted() const
   {
     srsran_assert(valid(), "Trying to check completion of invalid transaction");
     return complete() and not ev->get().has_value();
   }
 
-  /// \brief Get cause of transaction failure.
+  /// Get cause of transaction failure.
   const protocol_transaction_failure& failure_cause() const
   {
     srsran_assert(aborted(), "Trying to get result of invalid transaction");
     return ev->get().error();
   }
 
-  /// \brief Result of the transaction.
+  /// Result of the transaction.
   const response_type& response() const&
   {
     srsran_assert(has_response(), "Trying to get response of transaction without a response");
@@ -165,10 +167,11 @@ private:
 
 /// \brief Manager of multiple concurrent protocol transactions. Each managed transaction can be uniquely identified by
 /// a "transaction_id" integer value, which is automatically assigned by the \c protocol_transaction_manager.
+///
 /// Transactions are single-use, meaning that the user will have to create new transaction objects, with different
 /// transaction_ids for every message exchange.
-/// To create a new transaction, the user may call "create_transaction(...)", where a timeout for the transaction
-/// can be optionally defined.
+/// To create a new transaction, the user may call "create_transaction(...)", where a timeout for the transaction can be
+/// optionally defined.
 /// \tparam T type of the response to the transaction.
 template <typename T>
 class protocol_transaction_manager
@@ -179,10 +182,11 @@ public:
   /// Time limit for a transaction to complete.
   static const std::chrono::milliseconds max_timeout;
 
-  explicit protocol_transaction_manager(protocol_transaction_id_t nof_transaction_ids_, timer_factory timer_service_) :
+  protocol_transaction_manager(protocol_transaction_id_t nof_transaction_ids_, timer_factory timer_service_) :
     nof_transaction_ids(nof_transaction_ids_), timer_service(timer_service_)
   {
   }
+
   ~protocol_transaction_manager()
   {
     if (not running_transactions.empty()) {
@@ -203,8 +207,8 @@ public:
     }
   }
 
-  /// \brief Creates a new protocol transaction with automatically assigned transaction ID and with a timeout, after
-  /// which the transaction gets cancelled.
+  /// Creates a new protocol transaction with automatically assigned transaction ID and with a timeout, after which the
+  /// transaction gets cancelled.
   [[nodiscard]] protocol_transaction<T> create_transaction(std::chrono::milliseconds time_to_cancel = max_timeout)
   {
     // Allocate a new transaction id for the protocol transaction.
@@ -224,7 +228,7 @@ public:
     return create_transaction(transaction_id, time_to_cancel);
   }
 
-  /// \brief Creates a new protocol transaction with pre-defined transaction ID.
+  /// Creates a new protocol transaction with pre-defined transaction ID.
   [[nodiscard]] protocol_transaction<T> create_transaction(protocol_transaction_id_t transaction_id,
                                                            std::chrono::milliseconds time_to_cancel = max_timeout)
   {
@@ -256,8 +260,9 @@ public:
   }
 
   /// \brief Sets the result of a managed transaction with the provided transaction_id.
+  ///
   /// \param[in] transaction_id Id of the transaction.
-  /// \param[in] result Result of the transaction.
+  /// \param[in] result         Result of the transaction.
   /// \return True if result of the transaction was successfully set. False, if the transaction has already finished.
   template <typename U>
   [[nodiscard]] bool set_response(unsigned transaction_id, U&& result)
@@ -266,7 +271,7 @@ public:
     return set_transaction_outcome(transaction_id, std::forward<U>(result));
   }
 
-  /// \brief Cancel a running transaction.
+  /// Cancel a running transaction.
   bool cancel_transaction(unsigned transaction_id)
   {
     return set_transaction_outcome(transaction_id, protocol_transaction_failure::cancel);
@@ -329,12 +334,13 @@ struct no_fail_response_path {};
 template <typename SuccessResp, typename FailureResp>
 class protocol_transaction_outcome_observer;
 
-/// \brief Publisher of application protocol transaction outcomes to which an observer can subscribe to.
+/// Publisher of application protocol transaction outcomes to which an observer can subscribe to.
 template <typename SuccessResp, typename FailureResp = no_fail_response_path>
 class protocol_transaction_event_source
 {
 public:
   explicit protocol_transaction_event_source(timer_factory timer_db) : ev_source(timer_db) {}
+
   ~protocol_transaction_event_source()
   {
     // Automatically cancels any pending transaction.
@@ -347,7 +353,7 @@ public:
     set(protocol_transaction_failure::cancel);
   }
 
-  /// \brief Forwards a result to the registered listener/subscriber/observer.
+  /// Forwards a result to the registered listener/subscriber/observer.
   /// \return If no subscriber is registered, returns false.
   template <typename U>
   bool set(U&& u)
@@ -362,12 +368,12 @@ private:
   async_event_source<std::variant<SuccessResp, FailureResp, protocol_transaction_failure>> ev_source;
 };
 
-/// \brief Observer of application protocol transaction outcome.
+/// Observer of application protocol transaction outcome.
 template <typename SuccessResp, typename FailureResp = no_fail_response_path>
 class protocol_transaction_outcome_observer
 {
-  static_assert(not std::is_same<SuccessResp, protocol_transaction_failure>::value, "Invalid Success Response");
-  static_assert(not std::is_same<FailureResp, protocol_transaction_failure>::value, "Invalid Success Response");
+  static_assert(not std::is_same_v<SuccessResp, protocol_transaction_failure>, "Invalid Success Response");
+  static_assert(not std::is_same_v<FailureResp, protocol_transaction_failure>, "Invalid Success Response");
 
   using observer_type =
       async_single_event_observer<std::variant<SuccessResp, FailureResp, protocol_transaction_failure>>;
@@ -378,8 +384,8 @@ public:
   using event_source_type     = protocol_transaction_event_source<success_response_type, failure_response_type>;
   using awaiter_type          = typename observer_type::awaiter_type;
 
-  /// \brief Subscribes this observer to transaction event source of type \c protocol_transaction_event_source and
-  /// sets a timeout to get a response. Only one simultaneous subscriber is allowed.
+  /// Subscribes this observer to transaction event source of type \c protocol_transaction_event_source and sets a
+  /// timeout to get a response. Only one simultaneous subscriber is allowed.
   void subscribe_to(event_source_type& publisher, std::chrono::milliseconds time_to_cancel)
   {
     observer.subscribe_to(publisher.ev_source, time_to_cancel, protocol_transaction_failure::timeout);
@@ -389,33 +395,32 @@ public:
     }
   }
 
-  /// \brief Checks whether this sink has been registered to an event source.
+  /// Checks whether this sink has been registered to an event source.
   bool connected() const { return observer.connected(); }
 
-  /// \brief Checks if result has been set by the event source.
+  /// Checks if result has been set by the event source.
   bool complete() const { return observer.complete(); }
 
-  /// \brief Checks whether the result of transaction was successful.
+  /// Checks whether the result of transaction was successful.
   bool successful() const { return complete() and std::holds_alternative<success_response_type>(observer.result()); }
 
-  /// \brief Checks whether the result of the transaction was a failure message.
+  /// Checks whether the result of the transaction was a failure message.
   bool failed() const { return complete() and std::holds_alternative<failure_response_type>(observer.result()); }
 
-  /// \brief Checks if the protocol transaction could not be completed, due to abnormal conditions, cancellations or
-  /// timeout.
+  /// Checks if the protocol transaction could not be completed, due to abnormal conditions, cancellations or timeout.
   bool protocol_transaction_failed() const
   {
     return complete() and std::holds_alternative<protocol_transaction_failure>(observer.result());
   }
 
-  /// \brief Checks whether there was a transaction timeout.
+  /// Checks whether there was a transaction timeout.
   bool timeout_expired() const
   {
     return protocol_transaction_failed() and
            std::get<protocol_transaction_failure>(observer.result()) == protocol_transaction_failure::timeout;
   }
 
-  /// \brief Result set by event source.
+  /// Result set by event source.
   const success_response_type& response() const
   {
     srsran_assert(successful(), "Trying to fetch incorrect transaction result");

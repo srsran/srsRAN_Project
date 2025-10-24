@@ -21,6 +21,7 @@
  */
 
 #include "cu_cp_test_environment.h"
+#include "tests/test_doubles/e1ap/e1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/ngap/ngap_test_message_validators.h"
 #include "tests/test_doubles/rrc/rrc_test_messages.h"
@@ -387,6 +388,12 @@ TEST_F(cu_cp_connectivity_test, when_du_connection_is_lost_then_connected_ues_ar
         << "NG Reset was not received by the AMF";
     ASSERT_TRUE(test_helpers::is_valid_ng_reset(ngap_pdu));
 
+    // TEST: Verify E1Reset is sent to CU-UP (E1 Reset Ack is injected automatically).
+    e1ap_message e1ap_pdu;
+    ASSERT_TRUE(this->wait_for_e1ap_tx_pdu(du_idx, e1ap_pdu, std::chrono::milliseconds{1000}))
+        << "E1 Reset was not received by the CU-UP";
+    ASSERT_TRUE(test_helpers::is_valid_e1_reset(e1ap_pdu));
+
     // TEST: Verify UE is removed in CU-CP.
     auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
     ASSERT_TRUE(report.ues.empty());
@@ -594,7 +601,8 @@ TEST_F(cu_cp_connectivity_test, when_ng_f1_e1_are_setup_then_ues_can_attach)
 
   // Send RRC Setup Complete.
   // > Generate UL RRC Message (containing RRC Setup Complete) with PDCP SN=0.
-  get_du(du_idx).push_rrc_ul_dcch_message(du_ue_f1ap_id, srb_id_t::srb1, pack_ul_dcch_msg(create_rrc_setup_complete()));
+  get_du(du_idx).push_rrc_ul_dcch_message(
+      du_ue_f1ap_id, srb_id_t::srb1, test_helpers::pack_ul_dcch_msg(test_helpers::create_rrc_setup_complete()));
   report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.dus[0].rrc_metrics.attempted_rrc_connection_establishments.get_count(establishment_cause_t::mo_sig),
             1);

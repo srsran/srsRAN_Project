@@ -342,6 +342,7 @@ public:
   const unsigned          max_ul_grants_per_slot;
   du_ue_index_t           main_ue_idx{MIN_DU_UE_INDEX};
   ue_repository           ues;
+  ue_cell_repository&     ue_cell_db;
   bool                    pucch_f2_f3_more_prbs;
   const bool              use_format_0;
   const pucch_format      set1_format;

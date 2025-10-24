@@ -70,6 +70,16 @@ static void fill_du_high_log_section(YAML::Node node, const du_high_unit_logger_
   node["f1ap_json_enabled"]                = config.f1ap_json_enabled;
 }
 
+static void fill_du_high_tracer_layers_section(YAML::Node node, const du_high_unit_tracer_config& config)
+{
+  node["du_high_enable"] = config.executor_tracing_enable;
+}
+
+static void fill_du_high_trace_section(YAML::Node node, const du_high_unit_tracer_config& config)
+{
+  fill_du_high_tracer_layers_section(node["layers"], config);
+}
+
 static YAML::Node build_du_section(const du_high_unit_config& config)
 {
   YAML::Node node;
@@ -520,7 +530,7 @@ static YAML::Node build_du_high_prach_section(const du_high_unit_prach_config& c
   node["preamble_rx_target_pw"]     = config.preamble_rx_target_pw;
   node["preamble_trans_max"]        = static_cast<unsigned>(config.preamble_trans_max);
   node["power_ramping_step_db"]     = static_cast<unsigned>(config.power_ramping_step_db);
-  node["nof_ssb_per_ro"]            = config.nof_ssb_per_ro;
+  node["nof_ssb_per_ro"]            = ssb_per_rach_occ_to_float(config.nof_ssb_per_ro);
   node["nof_cb_preambles_per_ssb"]  = static_cast<unsigned>(config.nof_cb_preambles_per_ssb);
   for (auto id : config.ports) {
     node["ports"].push_back(static_cast<unsigned>(id));
@@ -641,6 +651,7 @@ static YAML::Node build_du_high_srs_section(const du_high_unit_srs_config& confi
   node["srs_tx_comb"]              = config.tx_comb;
   node["srs_cyclic_shift_reuse"]   = config.cyclic_shift_reuse_factor;
   node["srs_sequence_id_reuse"]    = config.sequence_id_reuse_factor;
+  node["srs_p0"]                   = config.p0;
 
   return node;
 }
@@ -842,6 +853,7 @@ void srsran::fill_du_high_config_in_yaml_schema(YAML::Node& node, const du_high_
 
   app_helpers::fill_metrics_appconfig_in_yaml_schema(node, config.metrics.common_metrics_cfg);
   fill_du_high_log_section(node["log"], config.loggers);
+  fill_du_high_trace_section(node["trace"], config.tracer);
   fill_du_high_metrics_section(node["metrics"], config.metrics);
   fill_du_high_pcap_section(node["pcap"], config.pcaps);
   node["du"] = build_du_section(config);

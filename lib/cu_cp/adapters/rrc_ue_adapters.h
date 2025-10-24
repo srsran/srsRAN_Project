@@ -76,14 +76,6 @@ public:
     ngap->get_ngap_nas_message_handler().handle_ul_nas_transport_message(msg);
   }
 
-  void on_inter_cu_ho_rrc_recfg_complete_received(const ue_index_t           ue_index,
-                                                  const nr_cell_global_id_t& cgi,
-                                                  const tac_t                tac) override
-  {
-    srsran_assert(ngap != nullptr, "ue={}: NGAP not found", ue_index);
-    ngap->get_ngap_control_message_handler().handle_inter_cu_ho_rrc_recfg_complete(ue_index, cgi, tac);
-  }
-
 private:
   ngap_interface* ngap = nullptr;
 };

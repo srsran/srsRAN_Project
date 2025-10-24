@@ -23,9 +23,8 @@
 #pragma once
 
 #include "../du_ue/du_ue_manager_repository.h"
-#include "procedure_logger.h"
 #include "srsran/du/du_high/du_manager/du_configurator.h"
-#include "srsran/ran/rrm.h"
+#include "srsran/mac/mac_ue_configurator.h"
 #include "srsran/support/async/manual_event.h"
 
 namespace srsran {

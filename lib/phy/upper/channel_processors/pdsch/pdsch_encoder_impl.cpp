@@ -53,7 +53,12 @@ void pdsch_encoder_impl::encode(span<uint8_t>        codeword,
     segment_buffer.read_codeblock(cb_data, transport_block, i_cb);
 
     // Encode the segment into a codeblock.
-    const ldpc_encoder_buffer& rm_buffer = encoder->encode(cb_data, cb_metadata.tb_common);
+    ldpc_encoder::configuration ldpc_config = {
+        .base_graph   = cb_metadata.tb_common.base_graph,
+        .lifting_size = cb_metadata.tb_common.lifting_size,
+        .Nref         = cb_metadata.tb_common.Nref,
+    };
+    const ldpc_encoder_buffer& rm_buffer = encoder->encode(cb_data, ldpc_config);
 
     // Select the correct chunk of the output codeword.
     unsigned rm_length = segment_buffer.get_rm_length(i_cb);

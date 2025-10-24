@@ -25,6 +25,7 @@
 #include "../pucch_scheduling/pucch_allocator.h"
 #include "../uci_scheduling/uci_allocator.h"
 #include "srsran/scheduler/scheduler_configurator.h"
+#include "srsran/scheduler/scheduler_positioning_handler.h"
 
 namespace srsran {
 
@@ -70,7 +71,7 @@ public:
   virtual scheduler_feedback_handler& get_feedback_handler() = 0;
 
   /// Retrieves handler of UE positioning for a given cell.
-  virtual scheduler_positioning_handler& get_positioning_handler() = 0;
+  virtual scheduler_cell_positioning_handler& get_positioning_handler() = 0;
 
   /// Retrieves handler of DL buffer state updates for a given cell.
   virtual scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() = 0;

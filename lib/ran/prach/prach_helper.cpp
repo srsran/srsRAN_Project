@@ -64,7 +64,7 @@ error_type<std::string> srsran::prach_helper::zero_correlation_zone_is_valid(uin
                                                                              frequency_range freq_range,
                                                                              duplex_mode     dplx_mode)
 {
-  prach_configuration prach_config = prach_configuration_get(freq_range, dplx_mode, prach_cfg_idx);
+  const prach_configuration prach_config = prach_configuration_get(freq_range, dplx_mode, prach_cfg_idx);
   if (prach_config.format == prach_format_type::invalid) {
     return make_unexpected(fmt::format("Invalid PRACH configuration index: {}\n", prach_cfg_idx));
   }
@@ -94,7 +94,7 @@ error_type<interval<uint8_t>> srsran::prach_helper::prach_fits_in_tdd_pattern(su
                                                                               uint8_t            prach_cfg_idx,
                                                                               const tdd_ul_dl_config_common& tdd_cfg)
 {
-  frequency_range fr = (pusch_scs < subcarrier_spacing::kHz120) ? frequency_range::FR1 : frequency_range::FR2;
+  const frequency_range fr = (pusch_scs < subcarrier_spacing::kHz120) ? frequency_range::FR1 : frequency_range::FR2;
 
   const prach_configuration prach_cfg = prach_configuration_get(fr, duplex_mode::TDD, prach_cfg_idx);
   if (prach_cfg.format == prach_format_type::invalid) {
@@ -135,7 +135,7 @@ std::optional<uint8_t> srsran::prach_helper::find_valid_prach_config_index(subca
 {
   static constexpr size_t NOF_PRACH_CONFIG_INDEXES = 256;
 
-  frequency_range fr = (pusch_scs < subcarrier_spacing::kHz120) ? frequency_range::FR1 : frequency_range::FR2;
+  const frequency_range fr = (pusch_scs < subcarrier_spacing::kHz120) ? frequency_range::FR1 : frequency_range::FR2;
 
   // Iterate over different PRACH configuration indexes until a valid one is found.
   for (unsigned prach_cfg_idx = 0; prach_cfg_idx != NOF_PRACH_CONFIG_INDEXES; ++prach_cfg_idx) {
@@ -149,42 +149,64 @@ std::optional<uint8_t> srsran::prach_helper::find_valid_prach_config_index(subca
 }
 
 error_type<std::string>
-srsran::prach_helper::nof_ssb_per_ro_and_nof_cb_preambles_per_ssb_is_valid(float   nof_ssb_per_ro,
+srsran::prach_helper::nof_ssb_per_ro_and_nof_cb_preambles_per_ssb_is_valid(ssb_per_rach_occasions nof_ssb_per_ro,
                                                                            uint8_t nof_cb_preambles_per_ssb)
 {
   bool is_valid = true;
 
-  if (nof_ssb_per_ro == 1 / 8 or nof_ssb_per_ro == 1 / 4 or nof_ssb_per_ro == 1 / 2 or nof_ssb_per_ro == 1) {
+  if (nof_ssb_per_ro <= ssb_per_rach_occasions::one) {
     // As per TS 38.331, ssb-perRACH-OccasionAndCB-PreamblesPerSSB, valid values are {4, 8, 12, 16, 20, 24, 28, 32, 36,
     // 40, 44, 48, 52, 56, 60, 64}.
     if (nof_cb_preambles_per_ssb < 4 or nof_cb_preambles_per_ssb > 64 or nof_cb_preambles_per_ssb % 4 != 0) {
       is_valid = false;
     }
-  } else if (nof_ssb_per_ro == 2) {
+  } else if (nof_ssb_per_ro == ssb_per_rach_occasions::two) {
     // As per TS 38.331, ssb-perRACH-OccasionAndCB-PreamblesPerSSB, valid values are {4, 8, 12, 16, 20, 24, 28, 32}.
     if (nof_cb_preambles_per_ssb < 4 or nof_cb_preambles_per_ssb > 32 or nof_cb_preambles_per_ssb % 4 != 0) {
       is_valid = false;
     }
-  } else if (nof_ssb_per_ro == 4) {
+  } else if (nof_ssb_per_ro == ssb_per_rach_occasions::four) {
     // As per TS 38.331, ssb-perRACH-OccasionAndCB-PreamblesPerSSB, valid values are {1,...,16}.
     if (nof_cb_preambles_per_ssb < 1 or nof_cb_preambles_per_ssb > 16) {
       is_valid = false;
     }
-  } else if (nof_ssb_per_ro == 8) {
+  } else if (nof_ssb_per_ro == ssb_per_rach_occasions::eight) {
     // As per TS 38.331, ssb-perRACH-OccasionAndCB-PreamblesPerSSB, valid values are {1,...,8}.
     if (nof_cb_preambles_per_ssb < 1 or nof_cb_preambles_per_ssb > 8) {
       is_valid = false;
     }
-  } else if (nof_ssb_per_ro == 16) {
+  } else if (nof_ssb_per_ro == ssb_per_rach_occasions::sixteen) {
     // As per TS 38.331, ssb-perRACH-OccasionAndCB-PreamblesPerSSB, valid values are {1,...,4}.
-    is_valid = false;
+    if (nof_cb_preambles_per_ssb < 1 or nof_cb_preambles_per_ssb > 4) {
+      is_valid = false;
+    }
   }
 
   if (not is_valid) {
     return make_unexpected(
         fmt::format("Invalid nof. contention based preambles per SSB ({}) for nof. SSB per RACH occasion ({}).\n",
                     nof_cb_preambles_per_ssb,
-                    nof_ssb_per_ro));
+                    ssb_per_rach_occ_to_float(nof_ssb_per_ro)));
+  }
+
+  return {};
+}
+
+error_type<std::string> srsran::prach_helper::prach_root_sequence_index_is_valid(unsigned          prach_root_seq_idx,
+                                                                                 prach_format_type format)
+{
+  if (format >= prach_format_type::invalid) {
+    return make_unexpected(fmt::format("Invalid PRACH format {}.\n", to_string(format)));
+  }
+
+  // As per Section 6.3.3.1, TS 38.211.
+  const unsigned max_prach_root_seq_idx = format < prach_format_type::A1 ? 837U : 137U;
+  if (prach_root_seq_idx > max_prach_root_seq_idx) {
+    return make_unexpected(
+        fmt::format("Invalid PRACH root sequence index {}: valid values for format {} are [0, {}).\n",
+                    prach_root_seq_idx,
+                    to_string(format),
+                    max_prach_root_seq_idx));
   }
 
   return {};

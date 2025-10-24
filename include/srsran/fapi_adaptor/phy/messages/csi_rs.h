@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/fapi/messages/dl_tti_request.h"
-#include "srsran/phy/upper/signal_processors/nzp_csi_rs_generator.h"
+#include "srsran/phy/upper/signal_processors/nzp_csi_rs/nzp_csi_rs_generator.h"
 #include "srsran/ran/csi_rs/csi_rs_pattern.h"
 
 namespace srsran {

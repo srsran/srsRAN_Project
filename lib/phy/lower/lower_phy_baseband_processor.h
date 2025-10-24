@@ -91,7 +91,7 @@ public:
   explicit lower_phy_baseband_processor(const configuration& config);
 
   // See interface for documentation.
-  void start(baseband_gateway_timestamp init_time, bool start_with_sfn0) override;
+  void start(baseband_gateway_timestamp init_time, baseband_gateway_timestamp sfn0_ref_time) override;
 
   // See interface for documentation.
   void stop() override;
@@ -179,10 +179,25 @@ private:
   /// Processes uplink baseband.
   void ul_process();
 
+  /// \brief Subtracts the System Frame Number (SFN) Zero reference time to a given timestamp.
+  ///
+  /// To avoid an overflow in the substraction, a number of samples is added to the timestamp that results in the same
+  /// SFN and slot.
+  baseband_gateway_timestamp apply_timestamp_sfn0_ref(baseband_gateway_timestamp timestamp) const
+  {
+    // Add the time of a superframe which is 1024 frames to avoid overflow.
+    if (timestamp < start_time_sfn0) {
+      timestamp += divide_ceil(start_time_sfn0, nof_samples_per_super_frame) * nof_samples_per_super_frame;
+    }
+
+    return timestamp - start_time_sfn0;
+  }
+
   sampling_rate                                                              srate;
+  uint64_t                                                                   nof_samples_per_super_frame;
   unsigned                                                                   rx_buffer_size;
   std::chrono::microseconds                                                  slot_duration;
-  std::chrono::nanoseconds                                                   cpu_throttling_time;
+  float                                                                      system_time_throttling_ratio;
   task_executor&                                                             rx_executor;
   task_executor&                                                             tx_executor;
   task_executor&                                                             uplink_executor;
@@ -198,6 +213,7 @@ private:
   internal_fsm                                                               rx_state;
   std::atomic<baseband_gateway_timestamp>                                    last_rx_timestamp;
   std::optional<std::chrono::time_point<std::chrono::high_resolution_clock>> last_tx_time;
+  unsigned                                                                   last_tx_buffer_size = 0;
 };
 
 } // namespace srsran

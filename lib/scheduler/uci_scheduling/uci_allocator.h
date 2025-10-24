@@ -22,6 +22,13 @@
 
 #pragma once
 
+#include "../cell/resource_grid.h"
+#include "../config/ue_configuration.h"
+#include "srsran/ran/rnti.h"
+#include "srsran/ran/slot_point.h"
+#include <cstdint>
+#include <optional>
+
 namespace srsran {
 
 /// Contains the results of the UCI allocation.

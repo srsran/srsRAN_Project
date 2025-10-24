@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/support/io/io_broker.h"
+#include "srsran/support/synchronization/sync_event.h"
 
 namespace srsran {
 
@@ -39,7 +40,7 @@ public:
                   bool                      auto_start = true);
 
   /// This call blocks until the last tick is processed.
-  ~io_timer_source() { wait_for_stop(); }
+  ~io_timer_source();
 
   /// Resume ticking in case it was previously halted.
   void resume();
@@ -48,17 +49,11 @@ public:
   /// Note: This call does not block, so a tick might take place after this call.
   void request_stop();
 
-  /// Requests a stop and waits until the last tick is processed.
-  void wait_for_stop();
-
 private:
-  void create_subscriber();
+  void create_subscriber(scoped_sync_token token);
   void destroy_subscriber();
 
-  void read_time(int raw_fd);
-
-  void update_state(bool start);
-  bool handle_state_update(bool defer_stop);
+  void read_time(int raw_fd, scoped_sync_token& token);
 
   const std::chrono::milliseconds tick_period;
   timer_manager&                  tick_sink;
@@ -67,10 +62,11 @@ private:
   srslog::basic_logger&           logger;
   io_broker::subscriber           io_sub;
 
-  std::atomic<bool>     running{false};
-  std::atomic<uint32_t> job_count{0};
+  // Current state of the timer source.
+  std::atomic<bool> running{false};
 
-  bool request_to_stop = false;
+  // Synchronization primitive to stop the timer source.
+  sync_event stop_flag;
 };
 
 } // namespace srsran

@@ -21,7 +21,7 @@
  */
 
 #include "../../../support/resource_grid_test_doubles.h"
-#include "../../signal_processors/dmrs_pucch_estimator_test_doubles.h"
+#include "../../signal_processors/pucch/dmrs_pucch_estimator_test_doubles.h"
 #include "../uci/uci_decoder_test_doubles.h"
 #include "pucch_detector_test_doubles.h"
 #include "srsran/phy/upper/channel_processors/pucch/pucch_processor.h"

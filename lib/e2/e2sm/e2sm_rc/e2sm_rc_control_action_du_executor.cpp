@@ -142,15 +142,15 @@ void e2sm_rc_control_action_2_6_du_executor::parse_action_ran_parameter_value(
         slice_differentiator::create(sd).value();
   } else if (ran_param_id == 11) {
     // Min PRB Policy Ratio.
-    ctrl_cfg.rrm_policy_ratio_list.back().min_prb_policy_ratio =
+    ctrl_cfg.rrm_policy_ratio_list.back().minimum_ratio =
         ran_param.ran_p_choice_elem_false().ran_param_value.value_int();
   } else if (ran_param_id == 12) {
     // Max PRB Policy Ratio.
-    ctrl_cfg.rrm_policy_ratio_list.back().max_prb_policy_ratio =
+    ctrl_cfg.rrm_policy_ratio_list.back().maximum_ratio =
         ran_param.ran_p_choice_elem_false().ran_param_value.value_int();
   } else if (ran_param_id == 13) {
     // Dedicated PRB Policy Ratio.
-    ctrl_cfg.rrm_policy_ratio_list.back().ded_prb_policy_ratio =
+    ctrl_cfg.rrm_policy_ratio_list.back().dedicated_ratio =
         ran_param.ran_p_choice_elem_false().ran_param_value.value_int();
   } else {
     logger.error("Unknown RAN parameter ID {}", ran_param_id);
@@ -186,13 +186,13 @@ e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2sm_ri
   }
   // If PRB quota not provided, return failure.
   for (const auto& policy : ctrl_config.rrm_policy_ratio_list) {
-    if (!policy.min_prb_policy_ratio.has_value()) {
+    if (!policy.minimum_ratio.has_value()) {
       return return_ctrl_failure(req);
     }
-    if (!policy.max_prb_policy_ratio.has_value()) {
+    if (!policy.maximum_ratio.has_value()) {
       return return_ctrl_failure(req);
     }
-    if (!policy.ded_prb_policy_ratio.has_value()) {
+    if (!policy.dedicated_ratio.has_value()) {
       return return_ctrl_failure(req);
     }
   }
@@ -205,12 +205,10 @@ e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2sm_ri
   fmt::format_to(std::back_inserter(log_buffer), "RRM Policy Ratio Group:\n");
   for (const auto& rrm_policy_ratio : ctrl_config.rrm_policy_ratio_list) {
     fmt::format_to(std::back_inserter(log_buffer), " RRM Policy:\n");
+    fmt::format_to(std::back_inserter(log_buffer), "  Min PRB Policy Ratio: {}\n", *rrm_policy_ratio.minimum_ratio);
+    fmt::format_to(std::back_inserter(log_buffer), "  Max PRB Policy Ratio: {}\n", *rrm_policy_ratio.maximum_ratio);
     fmt::format_to(
-        std::back_inserter(log_buffer), "  Min PRB Policy Ratio: {}\n", *rrm_policy_ratio.min_prb_policy_ratio);
-    fmt::format_to(
-        std::back_inserter(log_buffer), "  Max PRB Policy Ratio: {}\n", *rrm_policy_ratio.max_prb_policy_ratio);
-    fmt::format_to(
-        std::back_inserter(log_buffer), "  Dedicated PRB Policy Ratio: {}\n", *rrm_policy_ratio.ded_prb_policy_ratio);
+        std::back_inserter(log_buffer), "  Dedicated PRB Policy Ratio: {}\n", *rrm_policy_ratio.dedicated_ratio);
     fmt::format_to(std::back_inserter(log_buffer), "  RRM Policy Member List:\n");
     for (const auto& policy_member : rrm_policy_ratio.policy_members_list) {
       fmt::format_to(std::back_inserter(log_buffer),

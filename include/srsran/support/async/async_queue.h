@@ -33,10 +33,11 @@ class async_queue
 {
 public:
   async_queue(size_t queue_size) : queue(queue_size) {}
+
   async_queue(const async_queue&)            = delete;
   async_queue& operator=(const async_queue&) = delete;
 
-  // Pushing interface
+  /// Pushing interface.
   bool try_push(const T& t)
   {
     if (queue.try_push(t)) {
@@ -59,16 +60,17 @@ public:
   size_t size() const { return queue.size(); }
 
   struct awaiter_type {
-    awaiter_type(async_queue* parent_) : parent(parent_) {}
+    explicit awaiter_type(async_queue* parent_) : parent(parent_) {}
 
     bool await_ready() { return not parent->queue.empty(); }
+
     void await_suspend(coro_handle<> ch)
     {
       srsran_assert(this->next == nullptr, "Trying to suspend already suspended coroutine");
       suspended_handle = ch;
-      // enqueue awaiter
+      // Enqueue awaiter.
       if (parent->last == nullptr) {
-        // queue of awaiters is empty.
+        // Queue of awaiters is empty.
         parent->last  = this;
         parent->front = this;
       } else {
@@ -76,6 +78,7 @@ public:
         parent->last       = this;
       }
     }
+
     T await_resume()
     {
       srsran_sanity_check(not parent->queue.empty(), "Callback being resumed but queue is still empty");
@@ -89,7 +92,7 @@ public:
     coro_handle<> suspended_handle;
   };
 
-  awaiter_type get_awaiter() { return {this}; }
+  awaiter_type get_awaiter() { return awaiter_type{this}; }
 
 private:
   void notify_one_awaiter()

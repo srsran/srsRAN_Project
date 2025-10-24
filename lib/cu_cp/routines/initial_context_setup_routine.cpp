@@ -82,6 +82,7 @@ void initial_context_setup_routine::operator()(
     if (request.ue_aggr_max_bit_rate.has_value()) {
       ue_context_setup_request.gnb_du_ue_ambr_ul = request.ue_aggr_max_bit_rate.value().ue_aggr_max_bit_rate_ul;
     }
+    ue_context_setup_request.serving_cell_mo = rrc_ue.get_serving_cell_mo();
 
     // Call F1AP procedure.
     CORO_AWAIT_VALUE(ue_context_setup_response,

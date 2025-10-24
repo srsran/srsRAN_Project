@@ -27,6 +27,7 @@ add_library(srsran_e1ap_cu_up
         procedures/bearer_context_modification_procedure.cpp
         procedures/bearer_context_release_procedure.cpp
         procedures/e1ap_cu_up_release_procedure.cpp
+        procedures/e1ap_cu_up_reset_procedure.cpp
         )
 target_include_directories(srsran_e1ap_cu_up PRIVATE ..)
 target_link_libraries(srsran_e1ap_cu_up e1ap_asn1 srsran_e1ap_common)

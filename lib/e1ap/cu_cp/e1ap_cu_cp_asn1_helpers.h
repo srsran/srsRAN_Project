@@ -608,6 +608,17 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
             asn1_drb_to_mod_item.pdcp_sn_status_request         = asn1::e1ap::pdcp_sn_status_request_opts::requested;
           }
 
+          if (drb_to_mod_item.pdcp_sn_status_info.has_value()) {
+            asn1_drb_to_mod_item.pdcp_sn_status_info_present = true;
+            asn1_drb_to_mod_item.pdcp_sn_status_info.pdcp_status_transfer_ul.count_value.hfn =
+                drb_to_mod_item.pdcp_sn_status_info->pdcp_status_transfer_ul.count_value.hfn;
+            asn1_drb_to_mod_item.pdcp_sn_status_info.pdcp_status_transfer_ul.count_value.pdcp_sn =
+                drb_to_mod_item.pdcp_sn_status_info->pdcp_status_transfer_ul.count_value.pdcp_sn;
+            asn1_drb_to_mod_item.pdcp_sn_status_info.pdcp_status_transfer_dl.hfn =
+                drb_to_mod_item.pdcp_sn_status_info->pdcp_status_transfer_dl.hfn;
+            asn1_drb_to_mod_item.pdcp_sn_status_info.pdcp_status_transfer_dl.pdcp_sn =
+                drb_to_mod_item.pdcp_sn_status_info->pdcp_status_transfer_dl.pdcp_sn;
+          }
           asn1_res_to_mod_item.drb_to_modify_list_ng_ran.push_back(asn1_drb_to_mod_item);
         }
 
@@ -651,6 +662,19 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
 
           // Fill PDCP config.
           asn1_drb_to_setup_mod_item.pdcp_cfg = pdcp_config_to_e1ap_asn1(drb_to_setup_mod_item.pdcp_cfg);
+
+          // Fill PDCP status info if present.
+          if (drb_to_setup_mod_item.pdcp_sn_status_info.has_value()) {
+            asn1_drb_to_setup_mod_item.pdcp_sn_status_info_present = true;
+            asn1_drb_to_setup_mod_item.pdcp_sn_status_info.pdcp_status_transfer_ul.count_value.hfn =
+                drb_to_setup_mod_item.pdcp_sn_status_info->pdcp_status_transfer_ul.count_value.hfn;
+            asn1_drb_to_setup_mod_item.pdcp_sn_status_info.pdcp_status_transfer_ul.count_value.pdcp_sn =
+                drb_to_setup_mod_item.pdcp_sn_status_info->pdcp_status_transfer_ul.count_value.pdcp_sn;
+            asn1_drb_to_setup_mod_item.pdcp_sn_status_info.pdcp_status_transfer_dl.hfn =
+                drb_to_setup_mod_item.pdcp_sn_status_info->pdcp_status_transfer_dl.hfn;
+            asn1_drb_to_setup_mod_item.pdcp_sn_status_info.pdcp_status_transfer_dl.pdcp_sn =
+                drb_to_setup_mod_item.pdcp_sn_status_info->pdcp_status_transfer_dl.pdcp_sn;
+          }
 
           for (const auto& cell_group_info_item : drb_to_setup_mod_item.cell_group_info) {
             asn1::e1ap::cell_group_info_item_s asn1_cell_group_info_item;

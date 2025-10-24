@@ -21,6 +21,7 @@
  */
 
 #include "radio_zmq_rx_stream.h"
+#include "srsran/srsvec/conversion.h"
 
 using namespace srsran;
 
@@ -29,7 +30,7 @@ radio_zmq_rx_stream::radio_zmq_rx_stream(void*                         zmq_conte
                                          task_executor&                async_executor_,
                                          radio_zmq_tx_align_interface& tx_align_,
                                          radio_notification_handler&   notification_handler) :
-  tx_align(tx_align_)
+  tx_align(tx_align_), cf_buffer(config.buffer_size)
 {
   // For each channel...
   for (unsigned channel_id = 0; channel_id != config.address.size(); ++channel_id) {
@@ -100,7 +101,9 @@ baseband_gateway_receiver::metadata radio_zmq_rx_stream::receive(baseband_gatewa
 
   // Receive samples for each channel.
   for (unsigned channel_id = 0; channel_id != channels.size(); ++channel_id) {
-    channels[channel_id]->receive(data.get_channel_buffer(channel_id));
+    span<cf_t> view = span<cf_t>(cf_buffer).first(data.get_channel_buffer(channel_id).size());
+    channels[channel_id]->receive(view);
+    srsvec::convert(data.get_channel_buffer(channel_id), view, scaling_factor_cf_to_ci16);
   }
 
   // Increment the number of samples.

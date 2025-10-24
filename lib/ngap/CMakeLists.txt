@@ -37,6 +37,7 @@ set(SOURCES
         procedures/ngap_pdu_session_resource_release_procedure.cpp
         procedures/ngap_handover_preparation_procedure.cpp
         procedures/ngap_handover_resource_allocation_procedure.cpp
+        procedures/ngap_dl_ran_status_transfer_procedure.cpp
         procedures/ngap_ue_context_release_procedure.cpp
     )
 

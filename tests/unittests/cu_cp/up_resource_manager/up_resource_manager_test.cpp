@@ -266,3 +266,93 @@ TEST_F(up_resource_manager_test, when_pdu_session_gets_removed_all_resources_are
   // Setting up initial PDU session is possible again.
   setup_initial_pdu_session();
 }
+
+TEST_F(up_resource_manager_test, when_all_drbs_are_dirty_drb_id_allocation_fails)
+{
+  // Preamble.
+  setup_initial_pdu_session();
+
+  for (unsigned i = 0; i < MAX_NOF_DRBS - 1; i++) {
+    // Attempt to create new session with PSI=2.
+    pdu_session_id_t                         psi{2};
+    cu_cp_pdu_session_resource_setup_request setup_msg =
+        generate_pdu_session_resource_setup(ue_index_t::min, psi, qos_flow_id_t::min);
+    ASSERT_TRUE(manager.validate_request(setup_msg.pdu_session_res_setup_items));
+
+    // Calculate update
+    up_config_update update = manager.calculate_update(setup_msg.pdu_session_res_setup_items);
+
+    // Verify calculated update.
+    ASSERT_EQ(update.pdu_sessions_to_setup_list.size(), 1);
+    ASSERT_EQ(update.pdu_sessions_to_modify_list.size(), 0);
+    ASSERT_EQ(update.pdu_sessions_to_remove_list.size(), 0);
+    ASSERT_EQ(update.drb_to_remove_list.size(), 0);
+
+    // Apply update.
+    up_config_update_result result;
+    result.pdu_sessions_added_list.push_back(update.pdu_sessions_to_setup_list.at(psi));
+    manager.apply_config_update(result);
+
+    // There are two PDU sessions.
+    ASSERT_EQ(manager.get_nof_pdu_sessions(), 2);
+    ASSERT_EQ(manager.get_total_nof_qos_flows(), 2);
+    ASSERT_EQ(manager.get_nof_drbs(), 2);
+
+    // Remove PDU session so DRB id is marked as dirty.
+    cu_cp_pdu_session_resource_release_command release_msg =
+        generate_pdu_session_resource_release(ue_index_t::min, psi);
+    ASSERT_TRUE(manager.validate_request(release_msg));
+
+    up_config_update rel_update = manager.calculate_update(release_msg);
+
+    // Verify calculated update.
+    ASSERT_EQ(rel_update.pdu_sessions_to_setup_list.size(), 0);
+    ASSERT_EQ(rel_update.pdu_sessions_to_modify_list.size(), 0);
+    ASSERT_EQ(rel_update.pdu_sessions_to_remove_list.size(), 1);
+    ASSERT_EQ(rel_update.drb_to_remove_list.size(), 1);
+
+    // Apply update.
+    up_config_update_result rel_result;
+    rel_result.pdu_sessions_removed_list.push_back(rel_update.pdu_sessions_to_remove_list.front());
+    manager.apply_config_update(rel_result);
+
+    // All resources are removed.
+    ASSERT_EQ(manager.get_nof_pdu_sessions(), 1);
+    ASSERT_EQ(manager.get_total_nof_qos_flows(), 1);
+    ASSERT_EQ(manager.get_nof_drbs(), 1);
+  }
+
+  // All DRBs were used. There are no more DRB IDs available and allocation will fail.
+  {
+    pdu_session_id_t                         psi{2};
+    cu_cp_pdu_session_resource_setup_request setup_msg =
+        generate_pdu_session_resource_setup(ue_index_t::min, psi, qos_flow_id_t::min);
+    ASSERT_TRUE(manager.validate_request(setup_msg.pdu_session_res_setup_items));
+
+    // Calculate update
+    up_config_update update = manager.calculate_update(setup_msg.pdu_session_res_setup_items);
+
+    // Verify calculated update.
+    ASSERT_EQ(update.pdu_sessions_to_setup_list.size(), 0);
+    ASSERT_EQ(update.pdu_sessions_to_modify_list.size(), 0);
+    ASSERT_EQ(update.pdu_sessions_to_remove_list.size(), 0);
+    ASSERT_EQ(update.drb_to_remove_list.size(), 0);
+  }
+  // After marking the keys as changed, we can create DRBs again.
+  manager.refresh_drb_id_after_key_change();
+  {
+    pdu_session_id_t                         psi{2};
+    cu_cp_pdu_session_resource_setup_request setup_msg =
+        generate_pdu_session_resource_setup(ue_index_t::min, psi, qos_flow_id_t::min);
+    ASSERT_TRUE(manager.validate_request(setup_msg.pdu_session_res_setup_items));
+
+    // Calculate update
+    up_config_update update = manager.calculate_update(setup_msg.pdu_session_res_setup_items);
+
+    // Verify calculated update.
+    ASSERT_EQ(update.pdu_sessions_to_setup_list.size(), 1);
+    ASSERT_EQ(update.pdu_sessions_to_modify_list.size(), 0);
+    ASSERT_EQ(update.pdu_sessions_to_remove_list.size(), 0);
+    ASSERT_EQ(update.drb_to_remove_list.size(), 0);
+  }
+}

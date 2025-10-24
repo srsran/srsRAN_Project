@@ -118,6 +118,11 @@ private:
   /// \param[in] timestamp Time instant in which the first sample within \c samples was received.
   void process_collecting(const baseband_gateway_buffer_reader& samples, baseband_gateway_timestamp timestamp);
 
+  /// Scaling factor for converting from 16-bit complex integer to complex float.
+  static constexpr float scaling_factor_ci16_to_cf = std::numeric_limits<int16_t>::max();
+  /// Scaling factor for converting from complex float to 16-bit complex integer.
+  static constexpr float scaling_factor_cf_to_ci16 = scaling_factor_ci16_to_cf;
+
   /// Finite state machine state.
   fsm_states state = fsm_states::alignment;
   /// Sector identifier.
@@ -159,6 +164,8 @@ private:
   uplink_processor_notifier* notifier = nullptr;
   /// Carrier Frequency Offset processor.
   baseband_cfo_processor cfo_processor;
+  /// Buffer to hold complex floating-point based samples for demodulation.
+  dynamic_tensor<2, cf_t> temp_cf_buffer;
 };
 
 } // namespace srsran

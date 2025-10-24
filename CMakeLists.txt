@@ -78,7 +78,7 @@ option(ENABLE_RTSAN          "Enable clang real-time sanitizer"           OFF)
 option(ENABLE_GCOV           "Enable code coverage"                       OFF)
 option(ENABLE_BACKWARD       "Enable backward"                            ON)
 option(ENABLE_UHD            "Enable UHD"                                 ON)
-option(ENABLE_ZEROMQ         "Enable ZeroMQ"                              OFF)
+option(ENABLE_ZEROMQ         "Enable ZeroMQ"                              ON)
 option(ENABLE_FFTW           "Enable FFTW"                                ON)
 option(ENABLE_MKL            "Enable Intel MKL"                           ON)
 option(ENABLE_ARMPL          "Enable ARM performance library"             ON)
@@ -92,11 +92,14 @@ option(ENABLE_GPROF          "Enable gprof"                               OFF)
 option(FORCE_DEBUG_INFO      "Add debug information to Release build"     OFF)
 if (BUILD_TESTING)
 option(USE_PHY_TESTVECTORS   "Enable testvector PHY tests"                OFF)
+    if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+        option(TEST_GDB_PRINTERS  "Enable tests for GDB pretty printers"  OFF)
+    endif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 endif(BUILD_TESTING)
 
 # Set linker options and default value.
 set(LINKER "default" CACHE STRING "Which linker to use")
-set_property(CACHE LINKER PROPERTY STRINGS default bfd lld)
+set_property(CACHE LINKER PROPERTY STRINGS default bfd lld mold)
 
 # Set assertion level options and default value.
 set(ASSERT_LEVEL "AUTO" CACHE STRING "Assertion paranoia level")
@@ -259,6 +262,9 @@ if(NOT LINKER STREQUAL "default")
     elseif (LINKER STREQUAL "lld")
         add_link_options(-fuse-ld=lld)
         message(STATUS "Linker set to LLD")
+    elseif (LINKER STREQUAL "mold")
+        add_link_options(-fuse-ld=mold)
+        message(STATUS "Linker set to Mold")
     else ()
         message(FATAL_ERROR "Unsupported linker ${LINKER} for compiler ${CMAKE_CXX_COMPILER_ID}")
     endif ()
@@ -448,20 +454,20 @@ else (ENABLE_UHD)
 endif (ENABLE_UHD)
 
 # Yaml-cpp
-find_package(YAMLCPP)
-if (YAMLCPP_FOUND)
-    include_directories(${YAMLCPP_INCLUDE_DIR})
-    link_directories(${YAMLCPP_LIBRARY})
+find_package(YAMLCPP REQUIRED)
+if (YAML_CPP_FOUND)
+    include_directories(${YAML_CPP_INCLUDE_DIR})
+    link_directories(${YAML_CPP_LIBRARY_DIR})
     sbom_add(
         PACKAGE            "yaml-cpp"
         DOWNLOAD_LOCATION  "https://github.com/jbeder/yaml-cpp"
         SUPPLIER           "yaml-cpp project"
         LICENSE            "MIT"
-        VERSION            ${PC_YAMLCPP_VERSION}
+        VERSION            ${YAML_CPP_VERSION}
     )
-else (YAMLCPP_FOUND)
+else (YAML_CPP_FOUND)
     message(FATAL_ERROR "yaml-cpp is required to build ${CMAKE_PROJECT_NAME}")
-endif (YAMLCPP_FOUND)
+endif (YAML_CPP_FOUND)
 
 # ZeroMQ
 if (ENABLE_ZEROMQ)
@@ -625,6 +631,9 @@ if (BUILD_TESTING)
     add_subdirectory(tests/unittests)
     add_subdirectory(tests/integrationtests)
     add_subdirectory(tests/benchmarks)
+    if (TEST_GDB_PRINTERS)
+        add_subdirectory(tests/utils/gdb/pretty_printers)
+    endif (TEST_GDB_PRINTERS)
 endif (BUILD_TESTING)
 
 if (ENABLE_PLUGINS)

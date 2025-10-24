@@ -36,34 +36,39 @@ public:
   double get_average_processing_time_us() const
   {
     return count.load(std::memory_order_relaxed)
-               ? static_cast<double>(sum_elapsed_ns) / static_cast<double>(count) / 1000.0
+               ? static_cast<double>(sum_elapsed_ns.load(std::memory_order_relaxed)) /
+                     static_cast<double>(count.load(std::memory_order_relaxed)) / 1000.0
                : 0;
   }
 
   /// Gets the PUSCH demodulator total processing time excluding buffer operations in us.
   std::chrono::nanoseconds get_total_time() const
   {
-    return std::chrono::nanoseconds(sum_elapsed_ns - sum_elapsed_buffer_ns);
+    return std::chrono::nanoseconds(sum_elapsed_ns.load(std::memory_order_relaxed) -
+                                    sum_elapsed_buffer_ns.load(std::memory_order_relaxed));
   }
 
   /// Gets the CPU usage in microseconds of the PUSCH demodulator.
-  double get_cpu_usage_us() const { return static_cast<double>(sum_elapsed_ns) / 1000.0; }
+  double get_cpu_usage_us() const
+  {
+    return static_cast<double>(sum_elapsed_ns.load(std::memory_order_relaxed)) / 1000.0;
+  }
 
   /// Resets values of all internal counters.
   void reset()
   {
-    count                 = 0;
-    sum_elapsed_ns        = 0;
-    sum_elapsed_buffer_ns = 0;
+    count.store(0, std::memory_order_relaxed);
+    sum_elapsed_ns.store(0, std::memory_order_relaxed);
+    sum_elapsed_buffer_ns.store(0, std::memory_order_relaxed);
   }
 
 private:
   // See interface for documentation.
   void on_new_metric(const pusch_demodulator_metrics& metrics) override
   {
-    sum_elapsed_ns += metrics.measurements.duration.count();
-    sum_elapsed_buffer_ns += metrics.elapsed_buffer.count();
-    ++count;
+    sum_elapsed_ns.fetch_add(metrics.measurements.duration.count(), std::memory_order_relaxed);
+    sum_elapsed_buffer_ns.fetch_add(metrics.elapsed_buffer.count(), std::memory_order_relaxed);
+    count.fetch_add(1, std::memory_order_relaxed);
   }
 
   std::atomic<uint64_t> sum_elapsed_ns        = {};

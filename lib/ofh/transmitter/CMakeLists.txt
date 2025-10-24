@@ -31,6 +31,10 @@ set(SOURCES
 
 add_library(srsran_ofh_transmitter STATIC ${SOURCES})
 target_link_libraries(srsran_ofh_transmitter
+        srsran_ofh_ecpri
+        srsran_ofh_compression
+        srsran_ofh_message_serdes
+        srsran_ofh_ethernet
         srsran_ran
         srsran_instrumentation
         srslog

@@ -21,6 +21,7 @@
  */
 
 #include "f1ap_du_ue_context_release_procedure.h"
+#include "../f1ap_du_context.h"
 #include "proc_logger.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/f1ap/f1ap_message.h"
@@ -37,8 +38,12 @@ static constexpr std::chrono::milliseconds rrc_container_delivery_timeout{120};
 
 f1ap_du_ue_context_release_procedure::f1ap_du_ue_context_release_procedure(
     const asn1::f1ap::ue_context_release_cmd_s& msg_,
-    f1ap_du_ue_manager&                         ues) :
-  msg(msg_), ue(*ues.find(int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id))), cu_msg_notifier(ue.f1ap_msg_notifier)
+    f1ap_du_ue_manager&                         ues,
+    const srs_du::f1ap_du_context&              ctxt_) :
+  msg(msg_),
+  ue(*ues.find(int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id))),
+  cu_msg_notifier(ue.f1ap_msg_notifier),
+  du_ctxt(ctxt_)
 {
 }
 
@@ -61,10 +66,12 @@ void f1ap_du_ue_context_release_procedure::operator()(coro_context<async_task<vo
     if (ret) {
       logger.debug("{}: RRC container delivered successfully.", f1ap_log_prefix{ue.context, name()});
     } else {
+      const f1ap_du_cell_context& cell_ctx = du_ctxt.served_cells[ue.context.sp_cell_index];
+      std::chrono::milliseconds   timeout  = rrc_container_delivery_timeout + cell_ctx.ntn_link_rtt;
       logger.info(
           "{}: RRC container not ACKed within a time window of {}msec. Proceeding with the UE context release...",
           f1ap_log_prefix{ue.context, name()},
-          rrc_container_delivery_timeout.count());
+          timeout.count());
     }
   }
 
@@ -98,9 +105,12 @@ async_task<bool> f1ap_du_ue_context_release_procedure::handle_rrc_container()
     return launch_no_op_task(false);
   }
 
+  const f1ap_du_cell_context& cell_ctx = du_ctxt.served_cells[ue.context.sp_cell_index];
+  std::chrono::milliseconds   timeout  = rrc_container_delivery_timeout + cell_ctx.ntn_link_rtt;
+
   // Forward F1AP PDU to lower layers, and await for PDU to be transmitted over-the-air.
   return srb->handle_pdu_and_await_delivery(
-      msg->rrc_container.copy(), msg->rrc_delivery_status_request_present, rrc_container_delivery_timeout);
+      msg->rrc_container.copy(), msg->rrc_delivery_status_request_present, timeout);
 }
 
 void f1ap_du_ue_context_release_procedure::send_ue_context_release_complete()

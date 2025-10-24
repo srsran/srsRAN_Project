@@ -85,19 +85,57 @@ srsran::srs_cu_cp::generate_pdu_session_resource_setup(ue_index_t ue_index,
   return req;
 }
 
-cu_cp_pdu_session_resource_release_command srsran::srs_cu_cp::generate_pdu_session_resource_release(ue_index_t ue_index)
+cu_cp_pdu_session_resource_setup_request
+srsran::srs_cu_cp::generate_pdu_session_resource_setup(ue_index_t ue_index, pdu_session_id_t psi, qos_flow_id_t qfi)
+{
+  cu_cp_pdu_session_resource_setup_request req;
+  req.ue_index = ue_index;
+
+  req.ue_aggregate_maximum_bit_rate_dl = 1000;
+  req.ue_aggregate_maximum_bit_rate_ul = 1000;
+
+  cu_cp_pdu_session_res_setup_item item;
+  item.pdu_session_id = psi;
+  (void)item.pdu_session_nas_pdu.resize(2);
+  item.pdu_session_nas_pdu[0] = 0xaa;
+  item.pdu_session_nas_pdu[1] = 0xbb;
+  item.s_nssai.sst            = slice_service_type{1};
+
+  item.pdu_session_aggregate_maximum_bit_rate_dl = 100;
+  item.pdu_session_aggregate_maximum_bit_rate_ul = 100;
+  item.ul_ngu_up_tnl_info = {transport_layer_address::create_from_string("127.0.0.1"), int_to_gtpu_teid(0x1)};
+  item.pdu_session_type   = pdu_session_type_t::ipv4;
+  item.security_ind       = {};
+
+  qos_flow_setup_request_item qos_item;
+  qos_item.qos_flow_id = qfi;
+
+  non_dyn_5qi_descriptor non_dyn_5qi;
+  non_dyn_5qi.five_qi                         = uint_to_five_qi(9); // all with same FiveQI
+  qos_item.qos_flow_level_qos_params.qos_desc = non_dyn_5qi;
+
+  qos_item.qos_flow_level_qos_params.alloc_retention_prio.prio_level_arp = 8;
+
+  item.qos_flow_setup_request_items.emplace(qos_item.qos_flow_id, qos_item);
+
+  req.pdu_session_res_setup_items.emplace(psi, std::move(item));
+
+  return req;
+}
+
+cu_cp_pdu_session_resource_release_command
+srsran::srs_cu_cp::generate_pdu_session_resource_release(ue_index_t ue_index, pdu_session_id_t psi)
 {
   cu_cp_pdu_session_resource_release_command cmd;
-  pdu_session_id_t                           pdu_session_id = uint_to_pdu_session_id(1);
 
   cmd.ue_index = ue_index;
 
   cu_cp_pdu_session_res_to_release_item_rel_cmd pdu_session_res_to_release_item_rel_cmd;
-  pdu_session_res_to_release_item_rel_cmd.pdu_session_id = pdu_session_id;
+  pdu_session_res_to_release_item_rel_cmd.pdu_session_id = psi;
   pdu_session_res_to_release_item_rel_cmd.pdu_session_res_release_cmd_transfer.cause =
       ngap_cause_radio_network_t::unspecified;
 
-  cmd.pdu_session_res_to_release_list_rel_cmd.emplace(pdu_session_id, pdu_session_res_to_release_item_rel_cmd);
+  cmd.pdu_session_res_to_release_list_rel_cmd.emplace(psi, pdu_session_res_to_release_item_rel_cmd);
 
   return cmd;
 }

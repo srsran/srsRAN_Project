@@ -143,13 +143,13 @@ public:
   byte_buffer_segment_byte_iterator_impl(byte_buffer_segment_list::node_t* start_segment, size_t offset_ = 0) :
     current_segment(start_segment), offset(offset_)
   {
-    while (current_segment != nullptr and current_segment->length() == 0) {
+    while (current_segment != nullptr and current_segment->empty()) {
       current_segment = current_segment->next;
     }
   }
 
   /// Conversion from iterators of uint8_t (iterator) to const uint8_t (const_iterator).
-  template <typename U, std::enable_if_t<not std::is_same<U, T>::value, bool> = true>
+  template <typename U, std::enable_if_t<not std::is_same_v<U, T>, bool> = true>
   byte_buffer_segment_byte_iterator_impl(const byte_buffer_segment_byte_iterator_impl<U>& other) :
     current_segment(other.current_segment), offset(other.offset)
   {
@@ -228,7 +228,7 @@ using byte_buffer_segment_list_byte_const_iterator = byte_buffer_segment_byte_it
 template <typename NodeSegmentType>
 class byte_buffer_segment_list_span_iterator_impl
 {
-  using byte_type = std::conditional_t<std::is_const<NodeSegmentType>::value, const uint8_t, uint8_t>;
+  using byte_type = std::conditional_t<std::is_const_v<NodeSegmentType>, const uint8_t, uint8_t>;
 
 public:
   using iterator_type     = byte_buffer_segment_list_span_iterator_impl<NodeSegmentType>;

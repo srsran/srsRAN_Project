@@ -44,7 +44,7 @@ public:
   bool is_sched_report_required(slot_point sl_tx) const override
   {
     if (not next_sl_report.valid()) {
-      next_sl_report = sl_tx + period_slots - (sl_tx.count() % period_slots);
+      next_sl_report = sl_tx + period_slots - (sl_tx.count() % period_slots) - 1;
     }
     if (sl_tx >= next_sl_report) {
       next_sl_report += period_slots;
@@ -70,7 +70,7 @@ protected:
     report_period(period),
     cell_cfg(config_helpers::make_default_scheduler_expert_config(),
              sched_config_helper::make_default_sched_cell_configuration_request()),
-    metrics(cell_cfg, sched_cell_configuration_request_message::metrics_config{period, &metrics_notif})
+    metrics(cell_cfg, sched_cell_configuration_request_message::metrics_config{&metrics_notif})
   {
     metrics_notif.period_slots = report_period.count() * get_nof_slots_per_subframe(cell_cfg.scs_common);
     metrics.handle_ue_creation(test_ue_index, to_rnti(0x4601), pci_t{0});
@@ -255,11 +255,12 @@ TEST_F(scheduler_metrics_handler_tester, compute_bitrate)
   metrics.handle_crc_indication(next_sl_tx - 1, crc_pdu, ul_tbs);
 
   this->get_next_metric();
-  scheduler_ue_metrics ue_metrics = metrics_notif.last_report.ue_metrics[0];
+  unsigned             msec_elapsed = metrics_notif.last_report.nof_slots * next_sl_tx.nof_slots_per_subframe();
+  scheduler_ue_metrics ue_metrics   = metrics_notif.last_report.ue_metrics[0];
   ASSERT_EQ(ue_metrics.rnti, to_rnti(0x4601));
   ASSERT_EQ(ue_metrics.pci, pci_t{0});
-  ASSERT_EQ(ue_metrics.dl_brate_kbps, static_cast<double>(dl_tbs.value() * 8) / report_period.count());
-  ASSERT_EQ(ue_metrics.ul_brate_kbps, static_cast<double>(ul_tbs.value() * 8) / report_period.count());
+  ASSERT_EQ(ue_metrics.dl_brate_kbps, static_cast<double>(dl_tbs.value() * 8) / msec_elapsed);
+  ASSERT_EQ(ue_metrics.ul_brate_kbps, static_cast<double>(ul_tbs.value() * 8) / msec_elapsed);
 
   // Slot with no ACKs.
   this->get_next_metric();

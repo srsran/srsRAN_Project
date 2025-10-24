@@ -89,8 +89,7 @@ public:
   void request_stop();
 
   /// Dispatch a task to be run. If the internal queue associated with the priority level is full, block caller.
-  /// Return false, if the queue has been closed.
-  bool push_blocking(task_priority prio, unique_task task);
+  void push_blocking(task_priority prio, unique_task task);
 
   /// Dispatch a task to be run. If the internal queue associated with the priority level is full, drop the task and
   /// return false.

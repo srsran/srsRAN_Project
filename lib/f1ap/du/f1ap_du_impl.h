@@ -54,6 +54,7 @@ public:
   async_task<f1_setup_result>              handle_f1_setup_request(const f1_setup_request_message& request) override;
   async_task<void>                         handle_f1_removal_request() override;
   async_task<gnbdu_config_update_response> handle_du_config_update(const gnbdu_config_update_request& request) override;
+  bool                                     is_f1_setup() const override { return ctxt.f1c_setup; }
 
   // F1AP RRC Message Transfer Procedure functions as per TS38.473, Section 8.4.
   void handle_rrc_delivery_report(const f1ap_rrc_delivery_report_msg& report) override {}

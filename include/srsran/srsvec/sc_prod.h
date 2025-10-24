@@ -41,6 +41,7 @@ void sc_prod(span<cbf16_t> z, span<const cbf16_t> x, cf_t h);
 void sc_prod(span<cf_t> z, span<const cf_t> x, float h);
 void sc_prod(span<float> z, span<const float> x, float h);
 void sc_prod(span<int16_t> z, span<const int16_t> x, int16_t h);
+void sc_prod(span<cbf16_t> z, span<const cf_t> x, float h);
 ///@}
 
 } // namespace srsvec

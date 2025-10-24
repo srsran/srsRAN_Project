@@ -23,6 +23,7 @@
 #include "lib/du/du_high/du_manager/du_ue/du_ue_manager.h"
 #include "tests/unittests/du_manager/du_manager_test_helpers.h"
 #include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/mac/mac_pdu_handler.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -114,7 +115,7 @@ protected:
                            {f1ap_dummy, f1ap_dummy, f1ap_dummy},
                            {f1u_dummy},
                            {mac_dummy, f1ap_dummy, f1ap_dummy, rlc_pcap},
-                           {mac_dummy, mac_dummy}};
+                           {mac_dummy}};
 
   du_ue_manager ue_mng{params, cell_res_alloc};
 };

@@ -39,8 +39,8 @@ void to_json(nlohmann::json& json, const resource_usage_metrics& metrics)
   double mem_usage = validate_fp_value(static_cast<double>(metrics.memory_stats.memory_usage.value()) / BYTES_IN_MB);
 
   json["cpu_usage_percent"] = validate_fp_value(validate_fp_value(metrics.cpu_stats.cpu_usage_percentage * 100.0));
-  json["memory_usage_MB"]   = validate_fp_value(mem_usage);
-  json["power_consumption_Watts"] = validate_fp_value(metrics.power_usage_watts);
+  json["memory_usage_mb"]   = validate_fp_value(mem_usage);
+  json["power_consumption_watts"] = validate_fp_value(metrics.power_usage_watts);
 }
 
 } // namespace srsran

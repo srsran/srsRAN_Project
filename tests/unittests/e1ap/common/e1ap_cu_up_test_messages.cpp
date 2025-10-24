@@ -238,3 +238,36 @@ e1ap_message srsran::srs_cu_up::generate_bearer_context_release_command(unsigned
 
   return bearer_context_release_command;
 }
+
+e1ap_message
+srsran::srs_cu_up::generate_e1_reset(std::vector<std::pair<gnb_cu_cp_ue_e1ap_id_t, gnb_cu_up_ue_e1ap_id_t>> ues)
+{
+  e1ap_message msg = {};
+
+  msg.pdu.set_init_msg();
+  msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_RESET);
+
+  reset_s& e1_reset = msg.pdu.init_msg().value.reset();
+  if (ues.empty()) {
+    e1_reset->reset_type.set_e1_interface();
+  } else {
+    ue_associated_lc_e1_conn_list_res_l& reset_part_of_e1_interface = e1_reset->reset_type.set_part_of_e1_interface();
+    for (auto ue_ids : ues) {
+      asn1::protocol_ie_single_container_s<asn1::e1ap::ue_associated_lc_e1_conn_item_res_o> item_container;
+      asn1::e1ap::ue_associated_lc_e1_conn_item_s& conn_item = item_container->ue_associated_lc_e1_conn_item();
+
+      if (ue_ids.first != gnb_cu_cp_ue_e1ap_id_t::invalid) {
+        conn_item.gnb_cu_cp_ue_e1ap_id_present = true;
+        conn_item.gnb_cu_cp_ue_e1ap_id         = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ids.first);
+      }
+      if (ue_ids.second != gnb_cu_up_ue_e1ap_id_t::invalid) {
+        conn_item.gnb_cu_up_ue_e1ap_id_present = true;
+        conn_item.gnb_cu_up_ue_e1ap_id         = gnb_cu_up_ue_e1ap_id_to_uint(ue_ids.second);
+      }
+
+      reset_part_of_e1_interface.push_back(item_container);
+    }
+  }
+
+  return msg;
+}

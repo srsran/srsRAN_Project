@@ -1,0 +1,1040 @@
+{
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": {
+                    "type": "grafana",
+                    "uid": "-- Grafana --"
+                },
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard"
+            }
+        ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 7,
+    "links": [],
+    "panels": [
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "id": 3,
+            "panels": [],
+            "title": "RRC connections",
+            "type": "row"
+        },
+        {
+            "datasource": {
+                "type": "influxdb",
+                "uid": "JOSE3g9KVz"
+            },
+            "description": "Mean number of RRC connections",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 0,
+                "y": 1
+            },
+            "id": 11,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "/^mean$/",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.0.2",
+            "targets": [
+                {
+                    "dataset": "iox",
+                    "datasource": {
+                        "type": "influxdb",
+                        "uid": "JOSE3g9KVz"
+                    },
+                    "editorMode": "code",
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT \"rrc_connection_number_max_nof_rrc_connections\" AS 'max', \"rrc_connection_number_mean_nof_rrc_connections\" AS 'mean' FROM \"rrcs\" WHERE \"time\" >= $__timeFrom AND \"time\" <= $__timeTo AND \"gnb_du_id\" == '$gnb_du_id'",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [
+                                    {
+                                        "name": "rrc_connection_number_max_nof_rrc_connections",
+                                        "type": "functionParameter"
+                                    }
+                                ],
+                                "type": "function"
+                            },
+                            {
+                                "parameters": [
+                                    {
+                                        "name": "rrc_connection_number_mean_nof_rrc_connections",
+                                        "type": "functionParameter"
+                                    }
+                                ],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ]
+                    },
+                    "table": "rrcs"
+                }
+            ],
+            "title": "Mean",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "datasource",
+                "uid": "-- Dashboard --"
+            },
+            "description": "Maximum number of RRC connections",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 6,
+                "y": 1
+            },
+            "id": 15,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "/^max$/",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.0.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "datasource",
+                        "uid": "-- Dashboard --"
+                    },
+                    "panelId": 11,
+                    "refId": "A"
+                }
+            ],
+            "title": "Max",
+            "type": "stat"
+        },
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 5
+            },
+            "id": 2,
+            "panels": [],
+            "title": "RRC connection establishment",
+            "type": "row"
+        },
+        {
+            "datasource": {
+                "type": "influxdb",
+                "uid": "JOSE3g9KVz"
+            },
+            "description": "Attempted RRC connection establishments",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 0,
+                "y": 6
+            },
+            "id": 6,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.0.2",
+            "targets": [
+                {
+                    "dataset": "iox",
+                    "datasource": {
+                        "type": "influxdb",
+                        "uid": "JOSE3g9KVz"
+                    },
+                    "editorMode": "code",
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT \n    \"rrc_connection_establishment_attempted_rrc_connection_establishments_emergency\" AS 'emergency',\n    \"rrc_connection_establishment_attempted_rrc_connection_establishments_high_prio_access\" AS 'high_prio_access',\n    \"rrc_connection_establishment_attempted_rrc_connection_establishments_mcs_prio_access\" AS 'mcs_prio_access',\n    \"rrc_connection_establishment_attempted_rrc_connection_establishments_mo_data\" AS 'mo_data',\n    \"rrc_connection_establishment_attempted_rrc_connection_establishments_mo_sig\" AS 'mo_sig',\n    \"rrc_connection_establishment_attempted_rrc_connection_establishments_mo_sms\" AS 'mo_sms',\n    \"rrc_connection_establishment_attempted_rrc_connection_establishments_mo_video_call\" AS 'mo_video_call',\n    \"rrc_connection_establishment_attempted_rrc_connection_establishments_mo_voice_call\" AS 'mo_voice_call',\n    \"rrc_connection_establishment_attempted_rrc_connection_establishments_mps_prio_access\" AS 'mps_prio_access',\n    \"rrc_connection_establishment_attempted_rrc_connection_establishments_mt_access\" AS 'mt_access'\n              \nFROM \"rrcs\" WHERE \"time\" >= $__timeFrom AND \"time\" <= $__timeTo AND gnb_du_id ='$gnb_du_id'",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [
+                                    {
+                                        "name": "rrc_connection_establishment_attempted_rrc_connection_establishments_emergency",
+                                        "type": "functionParameter"
+                                    }
+                                ],
+                                "type": "function"
+                            },
+                            {
+                                "parameters": [
+                                    {
+                                        "name": "rrc_connection_establishment_attempted_rrc_connection_establishments_high_prio_access",
+                                        "type": "functionParameter"
+                                    }
+                                ],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ]
+                    },
+                    "table": "rrcs"
+                }
+            ],
+            "title": "Attempted",
+            "transformations": [
+                {
+                    "id": "reduce",
+                    "options": {
+                        "reducers": [
+                            "sum"
+                        ]
+                    }
+                }
+            ],
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "influxdb",
+                "uid": "JOSE3g9KVz"
+            },
+            "description": "Successful RRC connection establishments",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 6,
+                "y": 6
+            },
+            "id": 7,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.0.2",
+            "targets": [
+                {
+                    "dataset": "iox",
+                    "datasource": {
+                        "type": "influxdb",
+                        "uid": "JOSE3g9KVz"
+                    },
+                    "editorMode": "code",
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT\n    \"rrc_connection_establishment_successful_rrc_connection_establishments_emergency\" AS 'emergency',\n    \"rrc_connection_establishment_successful_rrc_connection_establishments_high_prio_access\" AS 'high_prio_access',\n    \"rrc_connection_establishment_successful_rrc_connection_establishments_mcs_prio_access\" AS 'mcs_prio_access',\n    \"rrc_connection_establishment_successful_rrc_connection_establishments_mo_data\" AS 'mo_data',\n    \"rrc_connection_establishment_successful_rrc_connection_establishments_mo_sig\" AS 'mo_sig',\n    \"rrc_connection_establishment_successful_rrc_connection_establishments_mo_sms\" AS 'mo_sms',\n    \"rrc_connection_establishment_successful_rrc_connection_establishments_mo_video_call\" AS 'mo_video_call',\n    \"rrc_connection_establishment_successful_rrc_connection_establishments_mo_voice_call\" AS 'mo_voice_call',\n    \"rrc_connection_establishment_successful_rrc_connection_establishments_mps_prio_access\" AS 'mps_prio_access',\n    \"rrc_connection_establishment_successful_rrc_connection_establishments_mt_access\" AS 'mt_access'\n\nFROM \"rrcs\" WHERE \"time\" >= $__timeFrom AND \"time\" <= $__timeTo AND \"gnb_du_id\" == '$gnb_du_id'\n",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "title": "Successful",
+            "transformations": [
+                {
+                    "id": "reduce",
+                    "options": {
+                        "reducers": [
+                            "sum"
+                        ]
+                    }
+                }
+            ],
+            "type": "stat"
+        },
+        {
+            "collapsed": true,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 10
+            },
+            "id": 8,
+            "panels": [
+                {
+                    "datasource": {
+                        "type": "datasource",
+                        "uid": "-- Dashboard --"
+                    },
+                    "description": "Attempted RRC connection establishments (detail)",
+                    "fieldConfig": {
+                        "defaults": {
+                            "color": {
+                                "mode": "thresholds"
+                            },
+                            "mappings": [],
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "green"
+                                    }
+                                ]
+                            }
+                        },
+                        "overrides": []
+                    },
+                    "gridPos": {
+                        "h": 8,
+                        "w": 11,
+                        "x": 0,
+                        "y": 11
+                    },
+                    "id": 9,
+                    "options": {
+                        "displayMode": "gradient",
+                        "legend": {
+                            "calcs": [],
+                            "displayMode": "list",
+                            "placement": "bottom",
+                            "showLegend": false
+                        },
+                        "maxVizHeight": 300,
+                        "minVizHeight": 16,
+                        "minVizWidth": 8,
+                        "namePlacement": "left",
+                        "orientation": "horizontal",
+                        "reduceOptions": {
+                            "calcs": [
+                                "lastNotNull"
+                            ],
+                            "fields": "",
+                            "values": false
+                        },
+                        "showUnfilled": true,
+                        "sizing": "manual",
+                        "valueMode": "color"
+                    },
+                    "pluginVersion": "12.0.2",
+                    "targets": [
+                        {
+                            "datasource": {
+                                "type": "datasource",
+                                "uid": "-- Dashboard --"
+                            },
+                            "panelId": 6,
+                            "refId": "A"
+                        }
+                    ],
+                    "title": "Attempted (detail)",
+                    "type": "bargauge"
+                },
+                {
+                    "datasource": {
+                        "type": "datasource",
+                        "uid": "-- Dashboard --"
+                    },
+                    "description": "Successful RRC connection establishments (details)",
+                    "fieldConfig": {
+                        "defaults": {
+                            "color": {
+                                "mode": "thresholds"
+                            },
+                            "mappings": [],
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "green"
+                                    }
+                                ]
+                            }
+                        },
+                        "overrides": []
+                    },
+                    "gridPos": {
+                        "h": 8,
+                        "w": 12,
+                        "x": 11,
+                        "y": 11
+                    },
+                    "id": 10,
+                    "options": {
+                        "displayMode": "gradient",
+                        "legend": {
+                            "calcs": [],
+                            "displayMode": "list",
+                            "placement": "bottom",
+                            "showLegend": false
+                        },
+                        "maxVizHeight": 300,
+                        "minVizHeight": 16,
+                        "minVizWidth": 8,
+                        "namePlacement": "auto",
+                        "orientation": "horizontal",
+                        "reduceOptions": {
+                            "calcs": [
+                                "lastNotNull"
+                            ],
+                            "fields": "",
+                            "values": false
+                        },
+                        "showUnfilled": true,
+                        "sizing": "auto",
+                        "valueMode": "color"
+                    },
+                    "pluginVersion": "12.0.2",
+                    "targets": [
+                        {
+                            "datasource": {
+                                "type": "datasource",
+                                "uid": "-- Dashboard --"
+                            },
+                            "panelId": 7,
+                            "refId": "A"
+                        }
+                    ],
+                    "title": "Successful (details)",
+                    "type": "bargauge"
+                }
+            ],
+            "title": "RRC connection establishment (details)",
+            "type": "row"
+        },
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 11
+            },
+            "id": 4,
+            "panels": [],
+            "title": "RRC connection reestablishment",
+            "type": "row"
+        },
+        {
+            "datasource": {
+                "type": "influxdb",
+                "uid": "JOSE3g9KVz"
+            },
+            "description": "Attempted RRC connection reestablishments",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 0,
+                "y": 12
+            },
+            "id": 12,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "/^rrc_connection_reestablishment_attempted_rrc_connection_reestablishments$/",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.0.2",
+            "targets": [
+                {
+                    "dataset": "iox",
+                    "datasource": {
+                        "type": "influxdb",
+                        "uid": "JOSE3g9KVz"
+                    },
+                    "editorMode": "code",
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT\n    \"rrc_connection_reestablishment_attempted_rrc_connection_reestablishments\",\n    \"rrc_connection_reestablishment_successful_rrc_connection_reestablishments_with_ue_context\",\n    \"rrc_connection_reestablishment_successful_rrc_connection_reestablishments_without_ue_context\"\nFROM \"rrcs\" WHERE \"time\" >= $__timeFrom AND \"time\" <= $__timeTo AND \"gnb_du_id\" == '$gnb_du_id'",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [
+                                    {
+                                        "name": "rrc_connection_reestablishment_attempted_rrc_connection_reestablishments",
+                                        "type": "functionParameter"
+                                    }
+                                ],
+                                "type": "function"
+                            },
+                            {
+                                "parameters": [
+                                    {
+                                        "name": "rrc_connection_reestablishment_successful_rrc_connection_reestablishments_with_ue_context",
+                                        "type": "functionParameter"
+                                    }
+                                ],
+                                "type": "function"
+                            },
+                            {
+                                "parameters": [
+                                    {
+                                        "name": "rrc_connection_reestablishment_successful_rrc_connection_reestablishments_without_ue_context",
+                                        "type": "functionParameter"
+                                    }
+                                ],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ]
+                    },
+                    "table": "rrcs"
+                }
+            ],
+            "title": "Attempted",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "datasource",
+                "uid": "-- Dashboard --"
+            },
+            "description": "Successful RRC connection reestablishments with ue context",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 6,
+                "y": 12
+            },
+            "id": 13,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "/^rrc_connection_reestablishment_successful_rrc_connection_reestablishments_with_ue_context$/",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.0.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "datasource",
+                        "uid": "-- Dashboard --"
+                    },
+                    "panelId": 12,
+                    "refId": "A"
+                }
+            ],
+            "title": "Successful with ue context",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "datasource",
+                "uid": "-- Dashboard --"
+            },
+            "description": "Successful RRC connection reestablishments without ue context",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 12,
+                "y": 12
+            },
+            "id": 14,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "/^rrc_connection_reestablishment_successful_rrc_connection_reestablishments_without_ue_context$/",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.0.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "datasource",
+                        "uid": "-- Dashboard --"
+                    },
+                    "panelId": 12,
+                    "refId": "A"
+                }
+            ],
+            "title": "Successful without ue context",
+            "type": "stat"
+        },
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 16
+            },
+            "id": 5,
+            "panels": [],
+            "title": "Handover (all DUs)",
+            "type": "row"
+        },
+        {
+            "datasource": {
+                "type": "influxdb",
+                "uid": "JOSE3g9KVz"
+            },
+            "description": "Number of handover executions requested",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 0,
+                "y": 17
+            },
+            "id": 16,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "/^nof_handover_executions_requested$/",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.0.2",
+            "targets": [
+                {
+                    "dataset": "iox",
+                    "datasource": {
+                        "type": "influxdb",
+                        "uid": "JOSE3g9KVz"
+                    },
+                    "editorMode": "code",
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT \"nof_handover_executions_requested\", \"nof_successful_handover_executions\" FROM \"cu_cp\" WHERE \"time\" >= $__timeFrom AND \"time\" <= $__timeTo ",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [
+                                    {
+                                        "name": "nof_handover_executions_requested",
+                                        "type": "functionParameter"
+                                    }
+                                ],
+                                "type": "function"
+                            },
+                            {
+                                "parameters": [
+                                    {
+                                        "name": "nof_successful_handover_executions",
+                                        "type": "functionParameter"
+                                    }
+                                ],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ]
+                    },
+                    "table": "cu_cp"
+                }
+            ],
+            "title": "Requested",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "datasource",
+                "uid": "-- Dashboard --"
+            },
+            "description": "Number of successful handover executions",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 6,
+                "y": 17
+            },
+            "id": 17,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "/^nof_successful_handover_executions$/",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.0.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "datasource",
+                        "uid": "-- Dashboard --"
+                    },
+                    "panelId": 16,
+                    "refId": "A"
+                }
+            ],
+            "title": "Successful",
+            "type": "stat"
+        }
+    ],
+    "preload": false,
+    "schemaVersion": 41,
+    "tags": [],
+    "templating": {
+        "list": [
+            {
+                "allowCustomValue": false,
+                "current": {
+                    "text": "0",
+                    "value": "0"
+                },
+                "datasource": {
+                    "type": "influxdb",
+                    "uid": "JOSE3g9KVz"
+                },
+                "definition": "SELECT gnb_du_id from rrcs GROUP BY gnb_du_id",
+                "label": "gNB DU ID",
+                "name": "gnb_du_id",
+                "options": [],
+                "query": {
+                    "query": "SELECT gnb_du_id from rrcs GROUP BY gnb_du_id",
+                    "refId": "InfluxVariableQueryEditor-VariableQuery"
+                },
+                "refresh": 1,
+                "regex": "",
+                "sort": 1,
+                "type": "query"
+            }
+        ]
+    },
+    "time": {
+        "from": "now-6h",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "RRC",
+    "uid": "32109133-8b1c-454a-bd6a-68f169cc9543",
+    "version": 3
+}

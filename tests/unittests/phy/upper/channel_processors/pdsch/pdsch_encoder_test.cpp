@@ -29,6 +29,7 @@
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
 #include "srsran/hal/phy/upper/channel_processors/hw_accelerator_factories.h"
 #include "srsran/hal/phy/upper/channel_processors/hw_accelerator_pdsch_enc_factory.h"
+#include "srsran/srslog/srslog.h"
 #endif // HWACC_PDSCH_ENABLED
 #include <getopt.h>
 

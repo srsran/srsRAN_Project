@@ -25,8 +25,8 @@
 #include "srsran/phy/upper/channel_processors/pdcch/formatters.h"
 #include "srsran/phy/upper/channel_processors/pdsch/formatters.h"
 #include "srsran/phy/upper/channel_processors/ssb/formatters.h"
+#include "srsran/phy/upper/signal_processors/nzp_csi_rs/nzp_csi_rs_formatter.h"
 #include "srsran/phy/upper/signal_processors/prs/formatters.h"
-#include "srsran/phy/upper/signal_processors/signal_processor_formatters.h"
 #include "srsran/phy/upper/upper_phy_rg_gateway.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_executor.h"
@@ -257,6 +257,7 @@ downlink_processor_multi_executor_impl::configure_resource_grid(const resource_g
   pdsch_list.clear();
   ssb_list.clear();
   nzp_csi_rs_list.clear();
+  prs_list.clear();
 
   l1_dl_tracer << instant_trace_event("configure_rg", instant_trace_event::cpu_scope::global);
 

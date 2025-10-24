@@ -1,12 +1,20 @@
 # srsRAN Project Multi-Container Solution
 
-This folder contains a multi-container application, composed of:
+This folder contains multiple docker compose configurations for different deployment scenarios:
 
-- srsRAN gnb: it will build and launch the gnb.
-- Open5g core: an open source core to use with srsRAN gnb.
-- Grafana (+ InfluxDB + Telegraf): a UI solution to monitor metrics from srsRAN gnb.
+## Available Docker Compose Files
 
-To launch the full multi-container solution, please run:
+| Compose File | Services | Purpose |
+|--------------|----------|---------|
+| `docker-compose.yml` | `5gc`, `gnb` | Complete gNB + Core deployment |
+| `docker-compose.split.yml` | `cu-cp`, `cu-up`, `du` | CU/DU split architecture that replace the gNB |
+| `docker-compose.ui.yml` | `telegraf`, `influxdb`, `grafana` | Monitoring and metrics visualization |
+
+## Quick Start
+
+### Running the default stack
+
+To just launch the solution with gNB + core network:
 
 ```bash
 docker compose -f docker/docker-compose.yml up
@@ -19,9 +27,36 @@ cd docker/
 docker compose up
 ```
 
-- To force a new build of the containers (including a new build of srsRAN gnb), please add a `--build` flag at the end of the previous command.
+### Combining Multiple Compose Files to run custom deployments
+
+You can use [docker compose override feature](https://docs.docker.com/compose/how-tos/multiple-compose-files/merge/) to combine the compose files to create custom deployments:
+
+```bash
+# Run gNB + core
+docker compose -f docker/docker-compose.yml up
+
+# Run cu-cp + cu-up + du + core (gNB is replaced)
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.split.yml up
+
+# Run gNB + core with monitoring stack
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.ui.yml up
+
+# Run split architecture with monitoring stack
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.split.yml -f docker/docker-compose.ui.yml up
+
+# Run only the monitoring components (useful when connecting to external gNB
+docker compose -f docker/docker-compose.ui.yml up
+```
+
+## Service Management
+
+### Extra Start Options
+
+- To force a new build of the containers (including a new build of srsRAN gNB), please add a `--build` flag at the end of the previous command.
 - To run it in background, please add a `-d` flag at the end of the previous command.
 - For more options, check `docker compose up --help`
+
+### See logs
 
 To see services' output, you can run:
 
@@ -31,10 +66,12 @@ docker compose logs [OPTIONS] [SERVICE...]
 
 - For more options, check `docker compose logs --help`
 
-To stop it:
+### Tear down the deployment
+
+To stop any deployment:
 
 ```bash
-docker compose -f docker/docker-compose.yml down
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.split.yml -f docker/docker-compose.ui.yml down --remove-orphans
 ```
 
 - If you also want to remove all internal data except the setup, you can add `--volumes` flag at the end of the previous command.
@@ -42,36 +79,36 @@ docker compose -f docker/docker-compose.yml down
 
 If you're not familiarized with `docker compose` tool, it will be recommended to check its [website](https://docs.docker.com/compose/) and `docker compose --help` output.
 
-## Enabling metrics reporting in the gnb
+## Configuration
 
-To be able to see gnb's metric in the UI solution (Grafana + InfluxDB + Telegraf) it's required to enable metrics reporting in the gnb config.
-For example:
+### Enabling metrics reporting in the gNB
+
+To be able to see gNB's metrics in the monitoring UI (Grafana + InfluxDB + Telegraf), it's required to enable metrics reporting in the gNB config.
+
+**Note**: When using the monitoring stack (`docker-compose.ui.yml` or combined deployments), ensure your gNB configuration includes:
 
 ```yml
 metrics:
-  enable_json_metrics: true
-  addr: 172.19.1.4  # Telegraf IP
-  port: 55555       # Telegraf Port
+  autostart_stdout_metrics: true
+  enable_json: true
+remote_control:
+  bind_addr: 0.0.0.0
+  enabled: true
 ```
 
-## Run some services
+`gnb` and `du` services already have those options configured in their respective docker-compose.yml files.
 
-Instead of running all services provided, a partial run is allowed by doing:
-
-```bash
-docker compose -f docker/docker-compose.yml up <service_to_run>
-```
-
-Main options are:
-
-- `gnb`: It will start the srsRAN Project gNB + Open5G core, without UI stack.
-- `grafana`: It will start the full Grafana + InfluxDB + Telegraf stack, without srsRAN Project gnb and Open5g services.
-
-However, any service declared in the docker-compose.yml can be started standalone, like `5gc` or `influxdb`.
-
-## Customizations
+### Customizations
 
 - Default docker compose uses `configs/gnb_rf_b200_tdd_n78_20mhz.yml` config file. You can change it by setting the variable `${GNB_CONFIG_PATH}` in the shell, in the `docker compose up` command line or using the existing env-file `.env`. More info about how to do it in docker documentation here: <https://docs.docker.com/compose/environment-variables/set-environment-variables/>
+
+F.e.:
+
+```bash
+# Set variables for specific deployment
+export GNB_CONFIG_PATH=configs/gnb_custom.yml
+docker compose -f docker-compose.yml -f docker-compose.ui.yml up
+```
 
 - Network: If you are using an existing core-network on same machine, then you can comment the `5gc` service section and also link your srsran container to some existing AMF N2/N3 subnet, doing something like this:
 
@@ -88,8 +125,6 @@ networks:
 ```
 
 More info here: <https://docs.docker.com/compose/networking/>
-
-## Advanced Usage
 
 ### Open5GS Container Parameters
 

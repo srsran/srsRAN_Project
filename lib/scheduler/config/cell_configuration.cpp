@@ -62,7 +62,9 @@ cell_configuration::cell_configuration(const scheduler_expert_config&           
   paired_spectrum(band_helper::is_paired_spectrum(msg.dl_carrier.band)),
   band(msg.dl_carrier.band),
   L_max(ssb_get_L_max(msg.ssb_config.scs, msg.dl_carrier.arfcn_f_ref, msg.dl_carrier.band)),
-  ntn_cs_koffset(msg.ntn_cs_koffset)
+  ntn_cs_koffset(msg.ntn_cs_koffset),
+  dl_harq_mode_b(msg.dl_harq_mode_b),
+  ul_harq_mode_b(msg.ul_harq_mode_b)
 {
   if (tdd_cfg_common.has_value()) {
     // Cache list of DL and UL slots in case of TDD

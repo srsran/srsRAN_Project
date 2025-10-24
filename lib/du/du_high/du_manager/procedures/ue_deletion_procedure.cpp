@@ -74,7 +74,7 @@ async_task<mac_ue_delete_response> ue_deletion_procedure::launch_mac_ue_delete()
   mac_msg.ue_index   = ue->ue_index;
   mac_msg.rnti       = ue->rnti;
   mac_msg.cell_index = ue->pcell_index;
-  return du_params.mac.ue_cfg.handle_ue_delete_request(mac_msg);
+  return du_params.mac.mgr.get_ue_configurator().handle_ue_delete_request(mac_msg);
 }
 
 async_task<void> ue_deletion_procedure::stop_ue_bearer_traffic()

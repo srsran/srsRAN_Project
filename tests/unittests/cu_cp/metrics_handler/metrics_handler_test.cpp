@@ -92,7 +92,9 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
   s_nssai_t    snssai{slice_service_type{1}, slice_differentiator{}};
   next_ngap_metrics.pdu_session_metrics.emplace(snssai, pdu_session_metrics);
   next_ngap_metrics.nof_cn_initiated_paging_requests = 5;
-  metrics_hdlr.next_metrics.ngaps.emplace_back(ngap_info{"open5gs-amf0", next_ngap_metrics});
+  metrics_hdlr.next_metrics.ngaps.emplace_back(
+      ngap_info{"open5gs-amf0", true, {plmn_identity::test_value()}, next_ngap_metrics});
+  metrics_hdlr.next_metrics.ngaps.emplace_back(ngap_info{"na", false, {plmn_identity::test_value()}, {}});
 
   metrics_hdlr.next_metrics.mobility.nof_handover_executions_requested    = 2;
   metrics_hdlr.next_metrics.mobility.nof_successful_handover_executions   = 1;
@@ -101,7 +103,8 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
 
   std::string ngap_out_str = format_ngap_metrics(metrics_hdlr.next_metrics.ngaps, metrics_hdlr.next_metrics.mobility);
   std::string ngap_exp_str =
-      "[ amf_name=open5gs-amf0 s-nssai=(sst=1 sd=na) nof_pdu_sessions_requested_to_setup=2 "
+      "[ amf_name=open5gs-amf0 connected=true supported_plmns=[ 00101, ] s-nssai=(sst=1 sd=na) "
+      "nof_pdu_sessions_requested_to_setup=2 "
       "nof_pdu_sessions_successfully_setup=1 nof_pdu_sessions_failed_to_setup=[ radio_network-unspecified=0 "
       "radio_network-txnrelocoverall_expiry=0 radio_network-successful_ho=0 "
       "radio_network-release_due_to_ngran_generated_reason=0 radio_network-release_due_to_5gc_generated_reason=0 "
@@ -137,6 +140,7 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
       "protocol-semantic_error=0 protocol-abstract_syntax_error_falsely_constructed_msg=0 protocol-unspecified=0 "
       "misc-ctrl_processing_overload=0 misc-not_enough_user_plane_processing_res=0 misc-hardware_fail=0 "
       "misc-om_intervention=0 misc-unknown_plmn_or_sn_pn=0 ] nof_cn_initiated_paging_requests=5 ], "
+      "[ amf_name=na connected=false supported_plmns=[ 00101, ], "
       "nof_handover_preparations_requested=2 nof_successful_handover_preparations=1";
 
   std::string rrc_out_str = format_rrc_metrics(metrics_hdlr.next_metrics.dus, metrics_hdlr.next_metrics.mobility);
@@ -177,7 +181,11 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
   ASSERT_EQ(metrics_notifier.last_metrics_report->dus[0]
                 .rrc_metrics.successful_rrc_connection_reestablishments_without_ue_context,
             3);
+  ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps.size(), 2);
   ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[0].amf_name, "open5gs-amf0");
+  ASSERT_TRUE(metrics_notifier.last_metrics_report->ngaps[0].connected);
+  ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[0].supported_plmns.size(), 1);
+  ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[0].supported_plmns[0], plmn_identity::test_value());
   ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[0].metrics.pdu_session_metrics.size(), 1);
   ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[0].metrics.pdu_session_metrics.begin()->first, snssai);
   ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[0]
@@ -193,6 +201,10 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
                 ->second.nof_pdu_sessions_failed_to_setup.get_count(cause),
             1);
   ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[0].metrics.nof_cn_initiated_paging_requests, 5);
+  ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[1].amf_name, "na");
+  ASSERT_FALSE(metrics_notifier.last_metrics_report->ngaps[1].connected);
+  ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[1].supported_plmns.size(), 1);
+  ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[1].supported_plmns[0], plmn_identity::test_value());
   ASSERT_EQ(metrics_notifier.last_metrics_report->mobility.nof_handover_executions_requested, 2);
   ASSERT_EQ(metrics_notifier.last_metrics_report->mobility.nof_successful_handover_executions, 1);
   ASSERT_EQ(metrics_notifier.last_metrics_report->mobility.nof_handover_preparations_requested, 2);

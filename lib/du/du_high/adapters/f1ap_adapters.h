@@ -77,7 +77,7 @@ public:
 
   f1ap_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) override { return ues[ue_index]; }
 
-  void on_f1c_disconnection() override { return du_mng->handle_du_stop_request(); }
+  void on_f1c_disconnection() override { return du_mng->handle_f1c_connection_loss(); }
 
   async_task<void> request_reset(const std::vector<du_ue_index_t>& ues_to_reset) override
   {

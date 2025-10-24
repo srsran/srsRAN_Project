@@ -50,7 +50,10 @@ public:
   unsigned get_symbol_size(unsigned symbol_index) const override { return base->get_symbol_size(symbol_index); }
 
   // See the interface for documentation.
-  void set_center_frequency(double center_frequency_Hz_) override { center_frequency_Hz = center_frequency_Hz_; }
+  void set_center_frequency(double center_frequency_Hz_) override
+  {
+    center_frequency_Hz.store(center_frequency_Hz_, std::memory_order_relaxed);
+  }
 
   // See the interface for documentation.
   void
@@ -63,7 +66,7 @@ public:
       return;
     }
 
-    double current_center_frequency_Hz = center_frequency_Hz.load();
+    double current_center_frequency_Hz = center_frequency_Hz.load(std::memory_order_relaxed);
     if (std::isnormal(current_center_frequency_Hz)) {
       demodulator->set_center_frequency(current_center_frequency_Hz);
     }

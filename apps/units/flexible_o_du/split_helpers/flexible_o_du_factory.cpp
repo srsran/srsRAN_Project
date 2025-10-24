@@ -94,6 +94,7 @@ static fapi::carrier_config generate_carrier_config_tlv(const srs_du::du_cell_co
 }
 
 static o_du_low_unit_config generate_o_du_low_config(const du_low_unit_config&            du_low_unit_cfg,
+                                                     float                                dBFS_calibration_value,
                                                      span<const srs_du::du_cell_config>   cells,
                                                      span<const du_high_unit_cell_config> du_hi_cells)
 {
@@ -111,6 +112,7 @@ static o_du_low_unit_config generate_o_du_low_config(const du_low_unit_config&  
     fapi_sector.prach_ports                   = du_hi_cell.cell.prach_cfg.ports;
     fapi_sector.scs                           = cell.scs_common;
     fapi_sector.scs_common                    = cell.scs_common;
+    fapi_sector.dBFS_calibration_value        = dBFS_calibration_value;
     fapi_sector.sector_id                     = i;
 
     auto&   du_low_cell    = odu_low_cfg.cells.emplace_back();
@@ -193,7 +195,8 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
   // Create flexible O-DU implementation.
   auto du_impl = std::make_unique<flexible_o_du_impl>(nof_cells, flexible_odu_metrics_notifier);
 
-  o_du_low_unit_config       odu_low_cfg          = generate_o_du_low_config(du_lo, du_cells, du_hi.cells_cfg);
+  o_du_low_unit_config odu_low_cfg =
+      generate_o_du_low_config(du_lo, config.ru_cfg.dBFS_calibration_value, du_cells, du_hi.cells_cfg);
   o_du_low_unit_dependencies odu_low_dependencies = {.rg_gateway = du_impl->get_upper_ru_dl_rg_adapter(),
                                                      .rx_symbol_request_notifier =
                                                          du_impl->get_upper_ru_ul_request_adapter(),
