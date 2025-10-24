@@ -119,6 +119,17 @@ void pdcp_entity_tx::restart_pdu_processing()
   }
 }
 
+void pdcp_entity_tx::begin_buffering()
+{
+  buffering = true;
+}
+
+void pdcp_entity_tx::end_buffering()
+{
+  buffering = false;
+  // TODO flush buffer.
+}
+
 manual_event_flag& pdcp_entity_tx::crypto_awaitable()
 {
   return token_mngr.get_awaitable();
@@ -142,6 +153,12 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
       logger.log_warning("Dropping SDU. Entity is stopped");
     }
     metrics.add_lost_sdus(1);
+    return;
+  }
+
+  if (buffering) {
+    // TODO store in buffer.
+    logger.log_debug("Buffering SDU. Entity is paused.");
     return;
   }
 
