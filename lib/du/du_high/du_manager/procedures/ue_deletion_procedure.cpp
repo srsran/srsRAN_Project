@@ -9,6 +9,7 @@
  */
 
 #include "ue_deletion_procedure.h"
+#include "srsran/support/async/async_timer.h"
 #include "srsran/support/async/execute_on.h"
 
 using namespace srsran;
@@ -16,10 +17,12 @@ using namespace srs_du;
 
 ue_deletion_procedure::ue_deletion_procedure(du_ue_index_t             ue_index_,
                                              du_ue_manager_repository& ue_mng_,
-                                             const du_manager_params&  du_params_) :
+                                             const du_manager_params&  du_params_,
+                                             std::chrono::milliseconds ran_res_release_timeout_) :
   ue_index(ue_index_),
   ue_mng(ue_mng_),
   du_params(du_params_),
+  ran_res_release_timeout(ran_res_release_timeout_),
   proc_logger(srslog::fetch_basic_logger("DU-MNG"), name(), ue_index)
 {
 }
@@ -43,9 +46,17 @@ void ue_deletion_procedure::operator()(coro_context<async_task<void>>& ctx)
   du_params.f1ap.ue_mng.handle_ue_deletion_request(ue_index);
 
   // > Remove UE from MAC.
-  CORO_AWAIT_VALUE(const mac_ue_delete_response mac_resp, launch_mac_ue_delete());
-  if (not mac_resp.result) {
-    proc_logger.log_proc_failure("Failed to remove UE from MAC.");
+  {
+    CORO_AWAIT_VALUE(const mac_ue_delete_response mac_resp, launch_mac_ue_delete());
+    if (not mac_resp.result) {
+      proc_logger.log_proc_failure("Failed to remove UE from MAC.");
+    }
+  }
+
+  if (ran_res_release_timeout.count() > 0) {
+    // Timeout specified between UE deactivation and UE actual removal.
+    CORO_AWAIT(async_wait_for(du_params.services.timers.create_unique_timer(du_params.services.du_mng_exec),
+                              ran_res_release_timeout));
   }
 
   // > Remove UE object from DU UE manager.

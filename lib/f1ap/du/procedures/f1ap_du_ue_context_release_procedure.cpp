@@ -39,6 +39,9 @@ f1ap_du_ue_context_release_procedure::f1ap_du_ue_context_release_procedure(
 
 void f1ap_du_ue_context_release_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
+  /// Time between RRC Release and actual UE deletion. See \c f1ap_ue_delete_request for more information.
+  static constexpr std::chrono::milliseconds ue_full_release_timeout{60};
+
   CORO_BEGIN(ctx);
 
   logger.debug("{}: Started.", f1ap_log_prefix{ue.context, name()});
@@ -55,29 +58,24 @@ void f1ap_du_ue_context_release_procedure::operator()(coro_context<async_task<vo
     if (success) {
       logger.debug("{}: RRC container delivered successfully.", f1ap_log_prefix{ue.context, name()});
 
-      // Note: As per TS 38.331, 5.3.8.3, it is optional for the UE to immediately shutdown or wait the full 60msec
-      // after it ACKs the RRC Release. If it decides to stay awake for those full 60msec, it will keep using RAN
-      // resources (e.g. for CSI and SR). To avoid the reallocation of RAN resources to other UEs too early (and
-      // potentially cause collisions), we postpone the UE context full removal from the DU.
-      CORO_AWAIT(ue.du_handler.request_ue_full_deactivation(ue.context.ue_index));
-      CORO_AWAIT(async_wait_for(timers.create_timer(), std::chrono::milliseconds{60}));
-
+      // We are gonna add a wait period between the UE deactivation and removal, to ensure we don't remove the UE RAN
+      // resources, when the UE is still using them (which could cause collisions in PUCCH).
+      rem_timeout = ue_full_release_timeout;
     } else {
       const f1ap_du_cell_context& cell_ctx = du_ctxt.served_cells[ue.context.sp_cell_index];
-      std::chrono::milliseconds   timeout  = rrc_container_delivery_timeout + cell_ctx.ntn_link_rtt;
       logger.info(
           "{}: RRC container not ACKed within a time window of {}msec. Proceeding with the UE context release...",
           f1ap_log_prefix{ue.context, name()},
-          timeout.count());
+          (rrc_container_delivery_timeout + cell_ctx.ntn_link_rtt).count());
     }
   } else {
-    // Stop all bearer activity before proceeding with the UE removal.
-    CORO_AWAIT(ue.du_handler.request_ue_full_deactivation(ue.context.ue_index));
+    // No need to apply wait period between RRC release and UE deletion.
+    rem_timeout = std::chrono::milliseconds{0};
   }
 
   // Remove UE from DU manager.
   logger.debug("{}: Initiate UE release in lower layers.", f1ap_log_prefix{ue.context, name()});
-  CORO_AWAIT(ue.du_handler.request_ue_removal(f1ap_ue_delete_request{ue.context.ue_index}));
+  CORO_AWAIT(ue.du_handler.request_ue_removal(f1ap_ue_delete_request{ue.context.ue_index, ue_full_release_timeout}));
 
   // Note: UE F1AP context deleted at this point.
 

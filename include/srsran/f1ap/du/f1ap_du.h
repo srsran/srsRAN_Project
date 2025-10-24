@@ -53,7 +53,15 @@ struct f1ap_ue_inactivity_notification_message {};
 struct f1ap_notify_message {};
 
 struct f1ap_ue_delete_request {
+  /// Identifier of the UE context to be removed from the DU.
   du_ue_index_t ue_index = INVALID_DU_UE_INDEX;
+  /// \brief How much time to wait between UE deactivation (stop activity in all bearers and scheduling) and UE full
+  /// removal (including deallocation of its RAN resources).
+  /// \remark As per TS 38.331, 5.3.8.3, it is optional for the UE to immediately shutdown or wait the full 60msec
+  /// after it receives the RRC Release. If it decides to stay awake for those full 60msec, it will keep using RAN
+  /// resources (e.g. for CSI and SR). To avoid the reallocation of RAN resources to other UEs too early (and
+  /// potentially cause collisions), we may need to postpone the UE context full removal from the DU.
+  std::chrono::milliseconds ran_resource_release_timeout{0};
 };
 
 /// Handle F1AP UE context management procedures as defined in TS 38.473 section 8.3.
@@ -187,9 +195,6 @@ public:
   /// any pending SRB PDUs.
   /// \param ue_index Index of the UE for which the DRB deactivation is requested.
   virtual async_task<void> request_ue_drb_deactivation(du_ue_index_t ue_index) = 0;
-
-  /// \brief Request by the F1AP to the DU to deactivate all bearer activity for a given UE.
-  virtual async_task<void> request_ue_full_deactivation(du_ue_index_t ue_index) = 0;
 
   /// \brief Notify DU that a given UE is performing RRC Reestablishment.
   virtual void notify_reestablishment_of_old_ue(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index) = 0;

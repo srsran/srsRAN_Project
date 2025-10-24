@@ -43,7 +43,8 @@ private:
   const f1ap_du_context&                     du_ctxt;
   timer_factory                              timers;
 
-  bool success = false;
+  std::chrono::milliseconds rem_timeout;
+  bool                      success = false;
 };
 
 } // namespace srs_du
