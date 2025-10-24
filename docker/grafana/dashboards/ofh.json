@@ -241,7 +241,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT \"dl_ethernet_transmitter_average_throughput_Mbps\" AS avg_throughput_mbps, time FROM ofh WHERE pci == $pci AND time >= $__timeFrom AND time <= $__timeTo ORDER BY time",
+          "rawSql": "SELECT \"dl_ethernet_transmitter_average_throughput_mbps\" AS avg_throughput_mbps, time FROM ofh WHERE pci == $pci AND time >= $__timeFrom AND time <= $__timeTo ORDER BY time",
           "refId": "A",
           "sql": {
             "columns": [
@@ -859,7 +859,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT \"ul_ethernet_receiver_average_throughput_Mbps\" AS avg_throughput_mbps, time FROM ofh WHERE pci == $pci AND time >= $__timeFrom AND time <= $__timeTo ORDER BY time",
+          "rawSql": "SELECT \"ul_ethernet_receiver_average_throughput_mbps\" AS avg_throughput_mbps, time FROM ofh WHERE pci == $pci AND time >= $__timeFrom AND time <= $__timeTo ORDER BY time",
           "refId": "A",
           "sql": {
             "columns": [
