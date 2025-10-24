@@ -98,7 +98,7 @@ public:
   /// PUCCH resource indicator corresponding to the PUCCH resource that will be used by the UE. Else, the pointer passed
   /// will be \c nullptr, whereas the PUCCH resource indicator is to be ignored.
   const pucch_resource*
-  reserve_csi_resource(slot_point slot_harq, rnti_t crnti, const ue_cell_configuration& ue_cell_cfg);
+  reserve_csi_resource(slot_point slot_csi, rnti_t crnti, const ue_cell_configuration& ue_cell_cfg);
 
   /// \brief Returns the specific PUCCH resource config to be used for SR, if available.
   /// \return If the specific PUCCH resource is available, it returns (i) the pointer to the configuration and (ii) the
@@ -157,8 +157,7 @@ private:
 
   // Tracks usage of PUCCH resources.
   struct resource_tracker {
-    rnti_t               rnti;
-    pucch_resource_usage resource_usage;
+    rnti_t rnti;
   };
 
   using pucch_res_record_array  = std::array<resource_tracker, pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES>;
