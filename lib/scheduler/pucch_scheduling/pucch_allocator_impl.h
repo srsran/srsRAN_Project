@@ -9,7 +9,6 @@
  */
 
 #pragma once
-
 #include "../cell/resource_grid.h"
 #include "../config/ue_configuration.h"
 #include "pucch_allocator.h"
@@ -154,21 +153,36 @@ private:
     pucch_grant_list pucch_grants;
   };
 
-  using slot_pucch_grants = static_vector<ue_grants, MAX_PUCCH_PDUS_PER_SLOT>;
+  /// Keeps track of the PUCCH allocation context for a given slot.
+  struct slot_context {
+    static_vector<ue_grants, MAX_PUCCH_PDUS_PER_SLOT> ue_grants_list;
+
+    /// Clears the slot context.
+    void clear() { ue_grants_list.clear(); }
+
+    /// Finds the UE grants for a given RNTI.
+    [[nodiscard]] ue_grants* find_ue_grants(rnti_t rnti)
+    {
+      auto* it = std::find_if(ue_grants_list.begin(), ue_grants_list.end(), [rnti](const ue_grants& grants) {
+        return grants.rnti == rnti;
+      });
+      return it != ue_grants_list.end() ? it : nullptr;
+    }
+  };
 
   /// ////////////  Main private functions   //////////////
 
   /// Returns whether a given UE can be allocated a PUCCH resource in a given slot.
   bool can_allocate_pucch_resources(const cell_slot_resource_allocator& pucch_slot_alloc,
                                     rnti_t                              rnti,
-                                    std::optional<const ue_grants*>     existing_ue_grants,
+                                    const ue_grants*                    existing_ue_grants,
                                     pucch_grant_type                    grant_type,
                                     bool                                common_and_ded) const;
 
   /// Returns whether a given UE can be allocated a common PUCCH resource in a given slot.
   bool can_allocate_common_pucch_resource(const cell_slot_resource_allocator& pucch_slot_alloc,
                                           rnti_t                              rnti,
-                                          std::optional<const ue_grants*>     existing_ue_grants) const;
+                                          const ue_grants*                    existing_ue_grants) const;
 
   // Allocates the PUCCH (common) resource for HARQ-(N)-ACK.
   std::optional<pucch_res_alloc_cfg> alloc_pucch_common_res_harq(const cell_slot_resource_allocator& pucch_alloc,
@@ -296,7 +310,7 @@ private:
   unsigned get_max_pucch_grants(unsigned currently_allocated_puschs) const;
 
   // \brief Ring of PUCCH allocations indexed by slot.
-  circular_array<slot_pucch_grants, cell_resource_allocator::RING_ALLOCATOR_SIZE> pucch_grants_alloc_grid;
+  circular_array<slot_context, cell_resource_allocator::RING_ALLOCATOR_SIZE> slots_ctx;
 
   const cell_configuration& cell_cfg;
   const unsigned            max_pucch_grants_per_slot;
