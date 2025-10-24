@@ -18,7 +18,7 @@
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
-    "id": 7,
+    "id": 11,
     "links": [],
     "panels": [
         {
@@ -254,7 +254,7 @@
                 "percentChangeColorMode": "standard",
                 "reduceOptions": {
                     "calcs": [
-                        "lastNotNull"
+                        "max"
                     ],
                     "fields": "",
                     "values": false
@@ -314,6 +314,16 @@
                 {
                     "id": "reduce",
                     "options": {
+                        "includeTimeField": false,
+                        "mode": "reduceFields",
+                        "reducers": [
+                            "lastNotNull"
+                        ]
+                    }
+                },
+                {
+                    "id": "reduce",
+                    "options": {
                         "reducers": [
                             "sum"
                         ]
@@ -364,7 +374,7 @@
                 "percentChangeColorMode": "standard",
                 "reduceOptions": {
                     "calcs": [
-                        "lastNotNull"
+                        "max"
                     ],
                     "fields": "",
                     "values": false
@@ -406,6 +416,16 @@
             ],
             "title": "Successful",
             "transformations": [
+                {
+                    "id": "reduce",
+                    "options": {
+                        "includeTimeField": false,
+                        "mode": "reduceFields",
+                        "reducers": [
+                            "lastNotNull"
+                        ]
+                    }
+                },
                 {
                     "id": "reduce",
                     "options": {
@@ -1036,5 +1056,5 @@
     "timezone": "browser",
     "title": "RRC",
     "uid": "32109133-8b1c-454a-bd6a-68f169cc9543",
-    "version": 3
+    "version": 1
 }
