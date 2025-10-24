@@ -58,7 +58,7 @@ void f1ap_du_ue_context_release_procedure::operator()(coro_context<async_task<vo
     if (success) {
       logger.debug("{}: RRC container delivered successfully.", f1ap_log_prefix{ue.context, name()});
 
-      // We are gonna add a wait period between the UE deactivation and removal, to ensure we don't remove the UE RAN
+      // We will apply a guard period between the UE deactivation and removal, to ensure we don't remove the UE RAN
       // resources, when the UE is still using them (which could cause collisions in PUCCH).
       rem_timeout = ue_full_release_timeout;
     } else {
@@ -68,9 +68,6 @@ void f1ap_du_ue_context_release_procedure::operator()(coro_context<async_task<vo
           f1ap_log_prefix{ue.context, name()},
           (rrc_container_delivery_timeout + cell_ctx.ntn_link_rtt).count());
     }
-  } else {
-    // No need to apply wait period between RRC release and UE deletion.
-    rem_timeout = std::chrono::milliseconds{0};
   }
 
   // Remove UE from DU manager.

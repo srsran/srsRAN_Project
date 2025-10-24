@@ -38,11 +38,11 @@ private:
   // to start the deletion of the associated bearer contexts.
   async_task<void> stop_ue_bearer_traffic();
 
-  const du_ue_index_t       ue_index;
-  du_ue_manager_repository& ue_mng;
-  const du_manager_params&  du_params;
-  std::chrono::milliseconds ran_res_release_timeout;
-  ue_procedure_logger       proc_logger;
+  const du_ue_index_t             ue_index;
+  du_ue_manager_repository&       ue_mng;
+  const du_manager_params&        du_params;
+  const std::chrono::milliseconds ran_res_release_timeout;
+  ue_procedure_logger             proc_logger;
 
   du_ue* ue = nullptr;
 };

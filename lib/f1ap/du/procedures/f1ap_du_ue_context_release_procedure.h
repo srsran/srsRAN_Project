@@ -43,7 +43,7 @@ private:
   const f1ap_du_context&                     du_ctxt;
   timer_factory                              timers;
 
-  std::chrono::milliseconds rem_timeout;
+  std::chrono::milliseconds rem_timeout{0};
   bool                      success = false;
 };
 
