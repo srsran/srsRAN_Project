@@ -97,7 +97,7 @@ void receiver_impl::start(frame_notifier& notifier_)
     report_error("Unable to start the ethernet frame receiver, fd = '{}'", socket_fd);
   }
 
-  // Block waiting for timing executor to start.
+  // Block waiting for receiver executor to start.
   wait_event.wait();
 
   logger.info("Started the ethernet frame receiver with fd = '{}'", socket_fd);
