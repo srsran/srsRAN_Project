@@ -48,19 +48,17 @@ downlink_handler_impl::downlink_handler_impl(const downlink_handler_impl_config&
 
 void downlink_handler_impl::start()
 {
+  stop_control.reset();
+
   // Start the data flows.
   data_flow_cplane->get_operation_controller().start();
   data_flow_uplane->get_operation_controller().start();
-
-  is_running.store(true);
 }
 
 void downlink_handler_impl::stop()
 {
   // Stop accepting grids.
-  if (!is_running.exchange(false)) {
-    return;
-  }
+  stop_control.stop();
 
   // Stop the data flows.
   data_flow_cplane->get_operation_controller().stop();
@@ -69,10 +67,11 @@ void downlink_handler_impl::stop()
 
 void downlink_handler_impl::handle_dl_data(const resource_grid_context& context, const shared_resource_grid& grid)
 {
-  // Do nothing if handler is not running.
-  if (SRSRAN_UNLIKELY(!is_running.load(std::memory_order_relaxed))) {
+  if (SRSRAN_UNLIKELY(stop_control.stop_was_requested())) {
     return;
   }
+
+  auto stop_token = stop_control.get_token();
 
   const resource_grid_reader& reader = grid.get_reader();
   srsran_assert(reader.get_nof_ports() <= dl_eaxc.size(),
