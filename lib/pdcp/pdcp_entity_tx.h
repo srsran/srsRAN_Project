@@ -20,6 +20,7 @@
 #include "pdcp_tx_window.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/byte_buffer_chain.h"
+#include "srsran/adt/ring_buffer.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/security/security.h"
@@ -260,7 +261,8 @@ private:
   pdcp_crypto_token_manager token_mngr;
 
   /// Buffer
-  bool buffering = false;
+  bool                     buffering = false;
+  ring_buffer<byte_buffer> sdu_buffer{2048};
 
   /// Apply ciphering and integrity protection to SDU+header buffer.
   /// It will pass this buffer to the crypto engine for parallization.

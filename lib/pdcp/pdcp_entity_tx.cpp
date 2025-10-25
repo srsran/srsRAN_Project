@@ -127,7 +127,11 @@ void pdcp_entity_tx::begin_buffering()
 void pdcp_entity_tx::end_buffering()
 {
   buffering = false;
-  // TODO flush buffer.
+  while (not sdu_buffer.empty()) {
+    byte_buffer buf = std::move(sdu_buffer.top());
+    sdu_buffer.pop();
+    handle_sdu(std::move(buf));
+  }
 }
 
 manual_event_flag& pdcp_entity_tx::crypto_awaitable()
@@ -157,8 +161,14 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   }
 
   if (buffering) {
-    // TODO store in buffer.
-    logger.log_debug("Buffering SDU. Entity is paused.");
+    if (not sdu_buffer.try_push(std::move(buf))) {
+      if (cfg.custom.warn_on_drop) {
+        logger.log_warning("Dropping SDU. SDU buffer is full.");
+      } else {
+        logger.log_debug("Dropping SDU. SDU buffer is full.");
+      }
+    }
+    logger.log_debug("Buffered SDU. Entity is paused.");
     return;
   }
 
