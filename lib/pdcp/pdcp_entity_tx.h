@@ -260,7 +260,6 @@ private:
   /// when destroying DRB.
   pdcp_crypto_token_manager token_mngr;
 
-  /// Buffer
   bool                     buffering = false;
   ring_buffer<byte_buffer> sdu_buffer{2048};
 

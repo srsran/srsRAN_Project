@@ -107,6 +107,13 @@ public:
   /// Trigger re-establishment
   virtual void reestablish(security::sec_128_as_config sec_cfg) = 0;
 
+  /// Tell the PDCP to buffer SDUs. Useful, e.g., for waiting for the crypto
+  /// processing to be finished before changing the security keys of an active DRB.
+  virtual void begin_buffering() = 0;
+
+  /// Tell the PDCP to stop buffering SDUs. The PDCP will flush the currently buffered SDUs.
+  virtual void end_buffering() = 0;
+
   /// Get the RX count for status transfer
   virtual pdcp_count_info get_count() const = 0;
 
