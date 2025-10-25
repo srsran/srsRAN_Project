@@ -706,7 +706,8 @@ void pdu_session_manager_impl::begin_pdcp_buffering()
 
   for (const auto& [psi, pdu_session] : pdu_sessions) {
     for (const auto& [drb_id, drb] : pdu_session->drbs) {
-      // TODO enable UL buffering.
+      auto& pdcp_rx_ctrl = drb->pdcp->get_rx_upper_control_interface();
+      pdcp_rx_ctrl.begin_buffering();
       auto& pdcp_tx_ctrl = drb->pdcp->get_tx_upper_control_interface();
       pdcp_tx_ctrl.begin_buffering();
     }
@@ -719,7 +720,8 @@ void pdu_session_manager_impl::end_pdcp_buffering()
 
   for (const auto& [psi, pdu_session] : pdu_sessions) {
     for (const auto& [drb_id, drb] : pdu_session->drbs) {
-      // TODO enable UL buffering.
+      auto& pdcp_rx_ctrl = drb->pdcp->get_rx_upper_control_interface();
+      pdcp_rx_ctrl.end_buffering();
       auto& pdcp_tx_ctrl = drb->pdcp->get_tx_upper_control_interface();
       pdcp_tx_ctrl.end_buffering();
     }
