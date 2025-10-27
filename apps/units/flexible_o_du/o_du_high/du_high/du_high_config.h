@@ -66,7 +66,7 @@ struct du_high_unit_tracer_config {
 };
 
 /// Timing Advance MAC CE scheduling expert configuration.
-struct du_high_unit_ta_sched_expert_config {
+struct du_high_unit_ta_sched_control_config {
   /// Measurements periodicity in nof. slots over which the new Timing Advance Command is computed.
   unsigned ta_measurement_slot_period = 80;
   ///  Delay in nof. slots between issuing the TA_CMD and starting TA measurements.
@@ -81,8 +81,8 @@ struct du_high_unit_ta_sched_expert_config {
   float ta_update_measurement_ul_sinr_threshold = 0.0F;
 };
 
-/// Scheduler expert configuration.
-struct du_high_unit_scheduler_expert_config {
+/// Configuration for radio resource scheduling.
+struct du_high_unit_scheduler_config {
   /// \brief Number of UEs pre-selected for PDSCH/PUSCH newTx scheduling in each slot. The scheduling policy will only
   /// be applied to the pre-selected UEs.
   ///
@@ -90,10 +90,8 @@ struct du_high_unit_scheduler_expert_config {
   /// operate as a hybrid between a Round-Robin scheduler and whichever scheduler policy was selected (e.g. QoS-aware).
   /// This parameter is useful to reduce the complexity of the scheduling decision, at the cost of some performance.
   unsigned nof_preselected_newtx_ues = 32;
-  /// Scheduler policy configuration.
+  /// Scheduler policy employed to prioritize or deprioritize pre-selected UE candidates.
   std::optional<scheduler_policy_config> policy_cfg;
-  /// Timing Advance MAC CE scheduling expert configuration.
-  du_high_unit_ta_sched_expert_config ta_sched_cfg;
   /// Number of RBs that are used as guardband on each side of the PRACH RBs dedicated interval for short PRACH
   /// formats.
   unsigned nof_prach_guardbands_rbs = 5;
@@ -930,8 +928,10 @@ struct du_high_unit_base_cell_config {
   du_high_unit_paging_config paging_cfg;
   /// CSI configuration.
   du_high_unit_csi_config csi_cfg;
-  /// Scheduler expert configuration.
-  du_high_unit_scheduler_expert_config sched_expert_cfg;
+  /// Scheduler radio resource allocation configuration.
+  du_high_unit_scheduler_config scheduler_cfg;
+  /// Timing Advance MAC CE control-loop management and scheduling configuration.
+  du_high_unit_ta_sched_control_config ta_cfg;
   /// DRX configuration used when cell corresponds to PCell.
   du_high_unit_drx_config drx_cfg;
   /// Network slice configuration.

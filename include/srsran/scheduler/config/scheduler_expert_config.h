@@ -83,6 +83,39 @@ struct ul_power_control {
   float pucch_f3_sinr_target_dB = -3.0f;
 };
 
+/// \brief Time Advance (TA) control-loop and MAC CE scheduling parameters.
+///
+/// These parameters define the behaviour of the Time Advance manager and on how the Time Advance Command (\f$T_A\f$)
+/// is triggered.
+///
+/// The TA measurement is reported from the physical layer, averaged over a \ref ta_measurement_slot_period and
+/// outliers are filtered out. The final estimated TA is rounded to the nearest TA unit.
+/// \remark T_A is defined in TS 38.213, clause 4.2.
+struct scheduler_ta_control_config {
+  /// Measurements periodicity in nof. slots over which the new Timing Advance Command is computed.
+  unsigned measurement_period{80};
+  /// \brief Delay in nof. slots between issuing the TA_CMD and starting TA measurements.
+  ///
+  /// This parameter specifies the mandatory waiting period (i.e. the prohibit period) that must elapse after the
+  /// Timing Advance command (TA_CMD) is issued before the system begins its Timing Advance measurements.
+  /// The delay allows the system to settle, ensuring that measurements are taken under stable conditions.
+  unsigned measurement_prohibit_period{0};
+  /// \brief Timing Advance Command (T_A) offset threshold.
+  ///
+  /// A TA command is triggered if the estimated TA is equal to or greater than this threshold. Possible valid values
+  /// are {0,...,32}.
+  ///
+  /// If set to less than zero, issuing of TA Command is disabled.
+  int8_t ta_cmd_offset_threshold{1};
+  /// \brief Timing Advance target in units of TA.
+  ///
+  /// Offsets the target TA measurements so the signal from the UE is kept delayed. This parameter is useful for
+  /// avoiding negative TA when the UE is getting away.
+  float target = 0.0F;
+  /// UL SINR threshold (in dB) above which reported N_TA update measurement is considered valid.
+  float update_measurement_ul_sinr_threshold = 0.0F;
+};
+
 /// \brief UE scheduling statically configurable expert parameters.
 struct scheduler_ue_expert_config {
   /// Range of allowed MCS indices for DL UE scheduling. To use a fixed mcs, set the minimum mcs equal to the maximum.
@@ -113,40 +146,6 @@ struct scheduler_ue_expert_config {
   interval<unsigned> pdsch_nof_rbs{1, MAX_NOF_PRBS};
   /// Set boundaries, in number of RBs, for UE PUSCH grants.
   interval<unsigned> pusch_nof_rbs{1, MAX_NOF_PRBS};
-  /// \defgroup ta_manager_params
-  /// \brief Time Advance (TA) manager parameters.
-  ///
-  /// These parameters define the behaviour of the Time Advance manager and on how the Time Advance Command (\f$T_A\f$)
-  /// is triggered.
-  ///
-  /// The TA measurement is reported from the physical layer, averaged over a \ref ta_measurement_slot_period and
-  /// outliers are filtered out. The final estimated TA is rounded to the nearest TA unit.
-  ///
-  /// \remark T_A is defined in TS 38.213, clause 4.2.
-  /// @{
-  /// Measurements periodicity in nof. slots over which the new Timing Advance Command is computed.
-  unsigned ta_measurement_slot_period{80};
-  /// \brief Delay in nof. slots between issuing the TA_CMD and starting TA measurements.
-  ///
-  /// This parameter specifies the mandatory waiting period (i.e. the prohibit period) that must elapse after the
-  /// Timing Advance command (TA_CMD) is issued before the system begins its Timing Advance measurements.
-  /// The delay allows the system to settle, ensuring that measurements are taken under stable conditions.
-  unsigned ta_measurement_slot_prohibit_period{0};
-  /// \brief Timing Advance Command (T_A) offset threshold.
-  ///
-  /// A TA command is triggered if the estimated TA is equal to or greater than this threshold. Possible valid values
-  /// are {0,...,32}.
-  ///
-  /// If set to less than zero, issuing of TA Command is disabled.
-  int8_t ta_cmd_offset_threshold = 1;
-  /// \brief Timing Advance target in units of TA.
-  ///
-  /// Offsets the target TA measurements so the signal from the UE is kept delayed. This parameter is useful for
-  /// avoiding negative TA when the UE is getting away.
-  float ta_target = 0.0F;
-  /// UL SINR threshold (in dB) above which reported N_TA update measurement is considered valid.
-  float ta_update_measurement_ul_sinr_threshold = 0.0F;
-  /// @}
   /// Direct Current (DC) offset, in number of subcarriers, used in PUSCH, by default. The gNB may supersede this DC
   /// offset value through RRC messaging. See TS38.331 - "txDirectCurrentLocation".
   dc_offset_t initial_ul_dc_offset{dc_offset_t::center};
@@ -193,7 +192,7 @@ struct scheduler_ue_expert_config {
   /// Minimum distance between PUCCH and PUSCH in number of PRBs.
   unsigned min_pucch_pusch_prb_distance = 1;
   /// Configuration of the scheduler policy. Currently, time-domain round-robin and time-domain QoS-aware are supported.
-  scheduler_policy_config strategy_cfg = time_qos_scheduler_config{};
+  scheduler_policy_config policy_cfg = time_qos_scheduler_config{};
   /// \brief Size of the group of UEs that is considered for newTx allocation in a given slot. The groups of UEs
   /// will rotate in a round-robin fashion.
   /// To minimize computation load, a lower group size can be used. If the QoS scheduler policy is used, this will
@@ -202,6 +201,8 @@ struct scheduler_ue_expert_config {
   unsigned pre_policy_rr_ue_group_size = 32;
   /// Expert PUCCH/PUSCH power control parameters.
   ul_power_control ul_power_ctrl = ul_power_control{};
+  /// TA control parameters.
+  scheduler_ta_control_config ta_control;
 };
 
 /// \brief System Information scheduling statically configurable expert parameters.

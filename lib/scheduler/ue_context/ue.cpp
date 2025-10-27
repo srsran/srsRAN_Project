@@ -26,7 +26,7 @@ ue::ue(const ue_creation_command& cmd) :
                cmd.starts_in_fallback,
                cmd.cfg.logical_channels()),
   ul_lc_ch_mgr(cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs, cmd.cfg.logical_channels()),
-  ta_mgr(expert_cfg,
+  ta_mgr(expert_cfg.ta_control,
          cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs,
          ue_ded_cfg->pcell_cfg().tag_id(),
          &dl_lc_ch_mgr),

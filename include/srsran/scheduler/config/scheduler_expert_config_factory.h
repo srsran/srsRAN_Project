@@ -23,15 +23,7 @@ inline scheduler_expert_config make_default_scheduler_expert_config()
   // Table 5.1.3.1-1 of TS 38.214.
   // Note: A MCS index of 7 can handle Msg4 of size 458 bytes for PDSCH occupying symbols (2,..,14].
   // Note: A MCS index of 8 can handle Msg4 of size 325 bytes for PDSCH occupying symbols (3,..,14].
-  cfg.ue.max_msg4_mcs                            = 9;
-  cfg.ue.initial_ul_sinr                         = 5;
-  cfg.ue.enable_csi_rs_pdsch_multiplexing        = true;
-  cfg.ue.ta_measurement_slot_period              = 80;
-  cfg.ue.ta_measurement_slot_prohibit_period     = 0;
-  cfg.ue.ta_cmd_offset_threshold                 = 1;
-  cfg.ue.ta_target                               = 0.0F;
-  cfg.ue.ta_update_measurement_ul_sinr_threshold = 0.0F;
-
+  cfg.ue.max_msg4_mcs        = 9;
   cfg.log_broadcast_messages = true;
 
   return cfg;

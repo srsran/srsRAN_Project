@@ -55,7 +55,7 @@ inter_slice_scheduler::inter_slice_scheduler(const cell_configuration& cell_cfg_
     rrm_adjusted.priority = std::min(rrm.priority, slice_rrm_policy_config::max_priority);
     // Set policy scheduler based on slice configuration.
     scheduler_ue_expert_config slice_scheduler_ue_expert_cfg{cell_cfg.expert_cfg.ue};
-    slice_scheduler_ue_expert_cfg.strategy_cfg = rrm.policy_sched_cfg;
+    slice_scheduler_ue_expert_cfg.policy_cfg = rrm.policy_sched_cfg;
     // Create custom RAN slice.
     slices.emplace_back(id_count,
                         cell_cfg,

@@ -609,7 +609,7 @@ static YAML::Node build_du_high_csi_section(const du_high_unit_csi_config& confi
   return node;
 }
 
-static void fill_du_high_sched_expert_section(YAML::Node& node, const du_high_unit_scheduler_expert_config& config)
+static void fill_du_high_sched_expert_section(YAML::Node& node, const du_high_unit_scheduler_config& config)
 {
   if (config.policy_cfg.has_value() and std::holds_alternative<time_qos_scheduler_config>(*config.policy_cfg)) {
     YAML::Node sched_node;
@@ -711,7 +711,7 @@ static YAML::Node build_cell_entry(const du_high_unit_base_cell_config& config)
   if (config.drx_cfg.long_cycle != 0) {
     node["drx"] = build_du_high_drx_section(config.drx_cfg);
   }
-  fill_du_high_sched_expert_section(node, config.sched_expert_cfg);
+  fill_du_high_sched_expert_section(node, config.scheduler_cfg);
 
   if (config.ntn_cfg) {
     node["ntn"] = build_du_high_ntn_section(config.ntn_cfg.value());

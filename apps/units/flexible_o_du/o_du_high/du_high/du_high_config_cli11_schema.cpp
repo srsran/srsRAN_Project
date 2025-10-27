@@ -613,17 +613,17 @@ static void configure_cli11_scheduler_policy_args(CLI::App& app, std::optional<s
   });
 }
 
-static void configure_cli11_ta_scheduler_expert_args(CLI::App& app, du_high_unit_ta_sched_expert_config& ta_params)
+static void configure_cli11_ta_control_args(CLI::App& app, du_high_unit_ta_sched_control_config& ta_params)
 {
   add_option(app,
              "--ta_measurement_slot_period",
              ta_params.ta_measurement_slot_period,
-             "Measurements periodicity in nof. slots over which the new Timing Advance Command is computed")
+             "Measurements periodicity in number of slots over which the new Timing Advance Command is computed")
       ->capture_default_str();
   add_option(app,
              "--ta_measurement_slot_prohibit_period",
              ta_params.ta_measurement_slot_prohibit_period,
-             "Delay in nof. slots between issuing the TA_CMD and starting TA measurements.")
+             "Delay in number of slots between issuing the TA_CMD and starting TA measurements.")
       ->capture_default_str()
       ->check(CLI::Range(0, 10000));
   add_option(app,
@@ -643,26 +643,22 @@ static void configure_cli11_ta_scheduler_expert_args(CLI::App& app, du_high_unit
       ->capture_default_str();
 }
 
-static void configure_cli11_scheduler_expert_args(CLI::App& app, du_high_unit_scheduler_expert_config& expert_params)
+static void configure_cli11_scheduler_args(CLI::App& app, du_high_unit_scheduler_config& sched_params)
 {
   add_option(app,
              "--nof_preselected_newtx_ues",
-             expert_params.nof_preselected_newtx_ues,
+             sched_params.nof_preselected_newtx_ues,
              "Number of UEs pre-selected for potential newTx allocations in a slot. The scheduling policy will only be "
              "applied to the pre-selected UEs.")
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)MAX_NOF_DU_UES));
   CLI::App* policy_cfg_cmd =
-      add_subcommand(
-          app, "policy_cfg", "Scheduler policy configuration. By default, time-domain QoS-aware policy is used.")
+      add_subcommand(app, "policy", "Scheduler policy configuration. By default, time-domain QoS-aware policy is used.")
           ->configurable();
-  configure_cli11_scheduler_policy_args(*policy_cfg_cmd, expert_params.policy_cfg);
-  CLI::App* ta_sched_cfg_subcmd =
-      add_subcommand(app, "ta_sched_cfg", "Timing Advance MAC CE scheduling expert configuration")->configurable();
-  configure_cli11_ta_scheduler_expert_args(*ta_sched_cfg_subcmd, expert_params.ta_sched_cfg);
+  configure_cli11_scheduler_policy_args(*policy_cfg_cmd, sched_params.policy_cfg);
   add_option(app,
              "--nof_prach_guardbands_rbs",
-             expert_params.nof_prach_guardbands_rbs,
+             sched_params.nof_prach_guardbands_rbs,
              "Number of RBs that are used as guardband on each side of the PRACH RBs interval for short PRACH formats.")
       ->capture_default_str()
       ->check(CLI::Range(1U, 10U));
@@ -1712,8 +1708,12 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
   configure_cli11_csi_args(*csi_subcmd, cell_params.csi_cfg);
 
   // Scheduler expert configuration.
-  CLI::App* sched_expert_subcmd = add_subcommand(app, "sched_expert_cfg", "Scheduler expert parameters");
-  configure_cli11_scheduler_expert_args(*sched_expert_subcmd, cell_params.sched_expert_cfg);
+  CLI::App* sched_cfg_subcmd = add_subcommand(app, "scheduler", "Scheduler parameters");
+  configure_cli11_scheduler_args(*sched_cfg_subcmd, cell_params.scheduler_cfg);
+
+  // Scheduler TA configuration.
+  CLI::App* ta_sched_cfg_subcmd = add_subcommand(app, "ta", "Time Advance (TA) parameters")->configurable();
+  configure_cli11_ta_control_args(*ta_sched_cfg_subcmd, cell_params.ta_cfg);
 
   CLI::App* drx_subcmd = add_subcommand(app, "drx", "DRX parameters");
   configure_cli11_drx_args(*drx_subcmd, cell_params.drx_cfg);
@@ -2076,8 +2076,8 @@ static void derive_cell_auto_params(du_high_unit_base_cell_config& cell_cfg)
   if (not cell_cfg.band.has_value()) {
     cell_cfg.band = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_f_ref_arfcn);
   }
-  if (not cell_cfg.sched_expert_cfg.policy_cfg.has_value()) {
-    cell_cfg.sched_expert_cfg.policy_cfg.emplace(time_qos_scheduler_config{});
+  if (not cell_cfg.scheduler_cfg.policy_cfg.has_value()) {
+    cell_cfg.scheduler_cfg.policy_cfg.emplace(time_qos_scheduler_config{});
   }
 
   // If in TDD mode, and pattern was not set, generate a pattern DDDDDDXUUU.

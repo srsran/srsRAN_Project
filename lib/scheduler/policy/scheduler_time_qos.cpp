@@ -23,7 +23,7 @@ static constexpr unsigned MAX_PF_COEFF = 10;
 static constexpr unsigned MAX_SLOT_SKIPPED = 20;
 
 scheduler_time_qos::scheduler_time_qos(const scheduler_ue_expert_config& expert_cfg_, du_cell_index_t cell_index_) :
-  params(std::get<time_qos_scheduler_config>(expert_cfg_.strategy_cfg)), cell_index(cell_index_)
+  params(std::get<time_qos_scheduler_config>(expert_cfg_.policy_cfg)), cell_index(cell_index_)
 {
 }
 
