@@ -30,8 +30,14 @@ public:
 
   /// Decoder configuration.
   struct configuration {
-    /// Codeblock configuration.
-    codeblock_metadata block_conf;
+    /// Code base graph.
+    ldpc_base_graph_type base_graph = ldpc_base_graph_type::BG1;
+    /// Code lifting size.
+    ldpc::lifting_size_t lifting_size = ldpc::LS2;
+    /// Number of filler bits in the full codeblock.
+    unsigned nof_filler_bits = 0;
+    /// CRC bits
+    unsigned nof_crc_bits = 16;
     /// Maximum number of iterations.
     unsigned max_iterations = 6;
   };

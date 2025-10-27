@@ -13,7 +13,6 @@
 
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_encoder_buffer.h"
-#include "srsran/srsvec/bit.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/srsran_test.h"
 #include <getopt.h>
@@ -166,11 +165,11 @@ int main(int argc, char** argv)
         // Prepare message storage.
         dynamic_bit_buffer message(msg_length);
 
-        srsran::codeblock_metadata cfg_dec  = {};
-        cfg_dec.tb_common.lifting_size      = ls;
-        cfg_dec.tb_common.base_graph        = bg;
-        cfg_dec.cb_specific.nof_crc_bits    = 16;
-        cfg_dec.cb_specific.nof_filler_bits = 0;
+        srsran::ldpc_decoder::configuration cfg_dec = {.base_graph      = bg,
+                                                       .lifting_size    = ls,
+                                                       .nof_filler_bits = 0,
+                                                       .nof_crc_bits    = 16,
+                                                       .max_iterations  = nof_iterations};
 
         fmt::memory_buffer descr_buffer;
         fmt::format_to(std::back_inserter(descr_buffer),
@@ -180,7 +179,7 @@ int main(int argc, char** argv)
                        cb_length,
                        static_cast<double>(msg_length) / static_cast<double>(cb_length));
         perf_meas_generic.new_measure(to_string(descr_buffer), msg_length, [&]() {
-          decoder->decode(message, codeblock, crc16.get(), {cfg_dec, nof_iterations});
+          decoder->decode(message, codeblock, crc16.get(), cfg_dec);
           do_not_optimize(codeblock);
         });
       }

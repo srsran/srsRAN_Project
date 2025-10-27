@@ -34,8 +34,11 @@ std::optional<unsigned> pusch_codeblock_decoder::decode(bit_buffer              
 
   // Prepare LDPC decoder configuration.
   ldpc_decoder::configuration decoder_config;
-  decoder_config.block_conf     = metadata;
-  decoder_config.max_iterations = nof_ldpc_iterations;
+  decoder_config.base_graph      = metadata.tb_common.base_graph;
+  decoder_config.lifting_size    = metadata.tb_common.lifting_size;
+  decoder_config.nof_filler_bits = metadata.cb_specific.nof_filler_bits;
+  decoder_config.nof_crc_bits    = metadata.cb_specific.nof_crc_bits;
+  decoder_config.max_iterations  = nof_ldpc_iterations;
 
   // Select CRC calculator.
   crc_calculator* crc = select_crc(crc_poly);

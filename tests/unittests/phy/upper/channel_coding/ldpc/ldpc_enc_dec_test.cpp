@@ -143,12 +143,12 @@ protected:
     nof_messages = test_data.nof_messages;
 
     // Encoder/decoder configurations.
-    cfg_enc                                   = {};
-    cfg_enc.base_graph                        = bg;
-    cfg_enc.lifting_size                      = ls;
-    cfg_dec                                   = {};
-    cfg_dec.block_conf.tb_common.lifting_size = ls;
-    cfg_dec.block_conf.tb_common.base_graph   = bg;
+    cfg_enc              = {};
+    cfg_enc.base_graph   = bg;
+    cfg_enc.lifting_size = ls;
+    cfg_dec              = {};
+    cfg_dec.lifting_size = ls;
+    cfg_dec.base_graph   = bg;
 
     // There is no noise - one decoder iteration should be enough.
     cfg_dec.max_iterations = 1;
