@@ -10,7 +10,6 @@
 
 #include "pucch_allocator_impl.h"
 #include "../support/pucch/pucch_default_resource.h"
-#include "../support/sched_result_helpers.h"
 #include "pucch_allocator_helpers.h"
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
 #include "srsran/ran/pucch/pucch_configuration.h"
@@ -20,6 +19,7 @@
 #include "srsran/scheduler/result/sched_result.h"
 #include "srsran/srslog/srslog.h"
 #include <algorithm>
+#include <array>
 #include <variant>
 
 using namespace srsran;
@@ -607,48 +607,6 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(const cell_slot_resource_alloc
   // initialized.
   bool backup_res_initialized = false;
 
-  auto check_ul_collisions =
-      [this](const grant_info& first_hop_grant, const grant_info& second_hop_grant, const ul_sched_result& result) {
-        if (not result.srss.empty()) {
-          // [Implementation defined] Since we configure SRS to occupy the whole band, common PUCCH resources will
-          // always collide with SRS grants.
-          // TODO: refine this check once we restrict SRS to not collide with common PUCCH resources.
-          return true;
-        }
-
-        for (const auto& pusch : result.puschs) {
-          const grant_info pusch_grant = get_pusch_grant_info(pusch);
-          if (pusch_grant.overlaps(first_hop_grant) or pusch_grant.overlaps(second_hop_grant)) {
-            return true;
-          }
-        }
-
-        auto prach_grants = get_prach_grant_info(cell_cfg, result.prachs);
-        for (const auto& prach : prach_grants) {
-          if (prach.overlaps(first_hop_grant) or prach.overlaps(second_hop_grant)) {
-            return true;
-          }
-        }
-
-        for (const auto& pucch : result.pucchs) {
-          if (pucch.pdu_context.is_common) {
-            // Common PUCCH resources do not collide with each other.
-            continue;
-          }
-
-          const auto pucch_grants = get_pucch_grant_info(pucch);
-          if (pucch_grants.first.overlaps(first_hop_grant) or pucch_grants.first.overlaps(second_hop_grant)) {
-            return true;
-          }
-          if (pucch_grants.second.has_value() and (pucch_grants.second.value().overlaps(first_hop_grant) or
-                                                   pucch_grants.second.value().overlaps(second_hop_grant))) {
-            return true;
-          }
-        }
-
-        return false;
-      };
-
   // The scope of the loop below is to allocate the PUCCH common resource while pursuing the following objectives:
   // - Avoiding the common PUCCH resources that are already allocated to other UEs. If there is no resource available,
   // then the allocation fails.
@@ -687,7 +645,9 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(const cell_slot_resource_alloc
 
     // If both 1st and 2nd hop grants do not collide with any UL grants, then the allocator chooses this PUCCH
     // resource.
-    if (not check_ul_collisions(first_hop_grant, second_hop_grant, pucch_alloc.result.ul)) {
+    //
+    std::array<grant_info, 2> grants{first_hop_grant, second_hop_grant};
+    if (not check_ul_collisions(grants, pucch_alloc.result.ul, cell_cfg, true)) {
       // Set outputs before exiting the function.
       candidate_pucch_resource.first_hop_res       = first_hop_grant;
       candidate_pucch_resource.cs                  = cyclic_shift;
@@ -981,18 +941,17 @@ std::optional<unsigned> pucch_allocator_impl::allocate_harq_grant(cell_slot_reso
   }
 
   // Save the info in the scheduler list of PUCCH grants.
-  const auto pucch_res_indicator = static_cast<unsigned>(pucch_harq_res_info.d_pri);
-  auto&      grants              = slots_ctx[sl_tx.to_uint()].ue_grants_list.emplace_back(ue_grants{.rnti = crnti});
+  auto& grants = slots_ctx[sl_tx.to_uint()].ue_grants_list.emplace_back(ue_grants{.rnti = crnti});
   grants.pucch_grants.harq_resource.emplace(pucch_grant{.type = pucch_grant_type::harq_ack});
   grants.pucch_grants.harq_resource.value().set_res_config(*pucch_harq_res_info.resource);
   grants.pucch_grants.harq_resource.value().harq_id.pucch_set_idx  = pucch_res_set_idx::set_0;
-  grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind  = pucch_res_indicator;
+  grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind  = pucch_harq_res_info.d_pri;
   grants.pucch_grants.harq_resource.value().bits.harq_ack_nof_bits = harq_bits_in_new_pucch_grant;
 
   // TODO: unmark on multiplexing (take into account CS/OCC).
   mark_pucch_in_resource_grid(pucch_slot_alloc, *pucch_harq_res_info.resource, ue_cell_cfg);
 
-  return pucch_res_indicator;
+  return pucch_harq_res_info.d_pri;
 }
 
 void pucch_allocator_impl::allocate_csi_grant(cell_slot_resource_allocator& pucch_slot_alloc,
@@ -1342,12 +1301,6 @@ void pucch_allocator_impl::remove_unused_pucch_res(slot_point                   
   }
 }
 
-static bool check_ded_grants_collisions(const std::pair<grant_info, std::optional<grant_info>>& ded_grants,
-                                        const grant_info&                                       other)
-{
-  return other.overlaps(ded_grants.first) or (ded_grants.second.has_value() and other.overlaps(*ded_grants.second));
-}
-
 std::optional<unsigned>
 pucch_allocator_impl::multiplex_and_allocate_pucch(cell_slot_resource_allocator& pucch_slot_alloc,
                                                    pucch_uci_bits                new_bits,
@@ -1378,73 +1331,43 @@ pucch_allocator_impl::multiplex_and_allocate_pucch(cell_slot_resource_allocator&
   }
 
   // If the grants for the common PUCCH resource are provided, this PUCCH is allocated by the fallback scheduler.
-  // Make sure the grants_to_tx do not collide with the common grants or with existing PUSCH/PRACH grants.
   if (common_grants.has_value()) {
-    auto        prach_grants = get_prach_grant_info(ue_cell_cfg.cell_cfg_common, pucch_slot_alloc.result.ul.prachs);
-    const auto& init_ul_bwp  = ue_cell_cfg.init_bwp().ul_common.value()->generic_params;
-
-    if (grants_to_tx.csi_resource.has_value()) {
-      const auto ded_grants =
-          pucch_resource_to_grant_info(init_ul_bwp, *grants_to_tx.csi_resource.value().pucch_res_cfg);
-      if (check_ded_grants_collisions(ded_grants, common_grants->first) or
-          check_ded_grants_collisions(ded_grants, common_grants->second)) {
-        return std::nullopt;
-      }
-
-      for (const auto& pusch : pucch_slot_alloc.result.ul.puschs) {
-        const grant_info pusch_grant = get_pusch_grant_info(pusch);
-        if (check_ded_grants_collisions(ded_grants, pusch_grant)) {
-          return std::nullopt;
-        }
-      }
-
-      for (const auto& prach : prach_grants) {
-        if (check_ded_grants_collisions(ded_grants, prach)) {
-          return std::nullopt;
-        }
+    // At most 3 PUCCH resources with 2 grants each.
+    static_vector<grant_info, 6> rg_grants;
+    const auto&                  init_ul_bwp = ue_cell_cfg.init_bwp().ul_common.value()->generic_params;
+    if (grants_to_tx.harq_resource.has_value()) {
+      const auto grants = pucch_resource_to_grant_info(init_ul_bwp, *grants_to_tx.harq_resource.value().pucch_res_cfg);
+      rg_grants.emplace_back(grants.first);
+      if (grants.second.has_value()) {
+        rg_grants.emplace_back(grants.second.value());
       }
     }
     if (grants_to_tx.sr_resource.has_value()) {
-      const auto ded_grants =
-          pucch_resource_to_grant_info(init_ul_bwp, *grants_to_tx.sr_resource.value().pucch_res_cfg);
-      if (check_ded_grants_collisions(ded_grants, common_grants->first) or
-          check_ded_grants_collisions(ded_grants, common_grants->second)) {
-        return std::nullopt;
-      }
-
-      for (const auto& pusch : pucch_slot_alloc.result.ul.puschs) {
-        const grant_info pusch_grant = get_pusch_grant_info(pusch);
-        if (check_ded_grants_collisions(ded_grants, pusch_grant)) {
-          return std::nullopt;
-        }
-      }
-
-      for (const auto& prach : prach_grants) {
-        if (check_ded_grants_collisions(ded_grants, prach)) {
-          return std::nullopt;
-        }
+      const auto grants = pucch_resource_to_grant_info(init_ul_bwp, *grants_to_tx.sr_resource.value().pucch_res_cfg);
+      rg_grants.emplace_back(grants.first);
+      if (grants.second.has_value()) {
+        rg_grants.emplace_back(grants.second.value());
       }
     }
-    if (grants_to_tx.harq_resource.has_value()) {
-      const auto ded_grants =
-          pucch_resource_to_grant_info(init_ul_bwp, *grants_to_tx.harq_resource.value().pucch_res_cfg);
-      if (check_ded_grants_collisions(ded_grants, common_grants->first) or
-          check_ded_grants_collisions(ded_grants, common_grants->second)) {
+    if (grants_to_tx.csi_resource.has_value()) {
+      const auto grants = pucch_resource_to_grant_info(init_ul_bwp, *grants_to_tx.csi_resource.value().pucch_res_cfg);
+      rg_grants.emplace_back(grants.first);
+      if (grants.second.has_value()) {
+        rg_grants.emplace_back(grants.second.value());
+      }
+    }
+
+    // Check that the dedicated grants do not collide with the common grants.
+    for (const auto& rg_grant : rg_grants) {
+      if (common_grants.has_value() and
+          (common_grants->first.overlaps(rg_grant) or common_grants->second.overlaps(rg_grant))) {
         return std::nullopt;
       }
+    }
 
-      for (const auto& pusch : pucch_slot_alloc.result.ul.puschs) {
-        const grant_info pusch_grant = get_pusch_grant_info(pusch);
-        if (check_ded_grants_collisions(ded_grants, pusch_grant)) {
-          return std::nullopt;
-        }
-      }
-
-      for (const auto& prach : prach_grants) {
-        if (check_ded_grants_collisions(ded_grants, prach)) {
-          return std::nullopt;
-        }
-      }
+    // Check that the dedicated grants do not collide with existing UL grants.
+    if (check_ul_collisions(rg_grants, pucch_slot_alloc.result.ul, cell_cfg, false)) {
+      return std::nullopt;
     }
   }
 

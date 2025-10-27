@@ -9,6 +9,7 @@
  */
 
 #include "pucch_allocator_helpers.h"
+#include "../support/sched_result_helpers.h"
 #include "srsran/ran/pucch/pucch_configuration.h"
 #include "srsran/ran/pucch/pucch_info.h"
 
@@ -36,6 +37,57 @@ unsigned srsran::get_n_id0_scrambling(const ue_cell_configuration& ue_cell_cfg, 
   }
 
   return cell_pci;
+}
+
+bool srsran::check_ul_collisions(span<const grant_info>    grants,
+                                 const ul_sched_result&    result,
+                                 const cell_configuration& cell_cfg,
+                                 bool                      is_common)
+{
+  if (is_common and not result.srss.empty()) {
+    // [Implementation defined] Since we configure SRS to occupy the whole band, common PUCCH resources will
+    // always collide with SRS grants.
+    // TODO: refine this check once we restrict SRS to not collide with common PUCCH resources.
+    return true;
+  }
+
+  for (const auto& pusch : result.puschs) {
+    const grant_info pusch_grant = get_pusch_grant_info(pusch);
+    for (const auto& grant : grants) {
+      if (pusch_grant.overlaps(grant)) {
+        return true;
+      }
+    }
+  }
+
+  auto prach_grants = get_prach_grant_info(cell_cfg, result.prachs);
+  for (const auto& prach : prach_grants) {
+    for (const auto& grant : grants) {
+      if (prach.overlaps(grant)) {
+        return true;
+      }
+    }
+  }
+
+  for (const auto& pucch : result.pucchs) {
+    if (is_common == pucch.pdu_context.is_common) {
+      // Common PUCCH resources do not collide with each other.
+      // [Implementation-defined] Dedicated PUCCH resources do not collide with each other.
+      continue;
+    }
+
+    const auto pucch_grants = get_pucch_grant_info(pucch);
+    for (const auto& grant : grants) {
+      if (pucch_grants.first.overlaps(grant)) {
+        return true;
+      }
+      if (pucch_grants.second.has_value() and pucch_grants.second.value().overlaps(grant)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 void srsran::mark_pucch_in_resource_grid(cell_slot_resource_allocator&    pucch_slot_alloc,
@@ -147,8 +199,8 @@ pucch_existing_pdus_handler::pucch_existing_pdus_handler(rnti_t              crn
 
       if (pucch.format() == pucch_format::FORMAT_0) {
         // With Format 0, when there are both HARQ bits and SR bits in the same PDU (this means that the PUCCH HARQ
-        // resource and SR resource have overlapping symbols), we only use the HARQ-ACK resource; the only case when the
-        // SR PUCCH F0 is used is when there are only SR bits.
+        // resource and SR resource have overlapping symbols), we only use the HARQ-ACK resource; the only case when
+        // the SR PUCCH F0 is used is when there are only SR bits.
         if (pucch.uci_bits.sr_bits != sr_nof_bits::no_sr and pucch.uci_bits.harq_ack_nof_bits == 0U) {
           sr_pdu = &pucch;
           ++pdus_cnt;

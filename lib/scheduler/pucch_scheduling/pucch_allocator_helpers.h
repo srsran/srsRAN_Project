@@ -15,10 +15,16 @@
 #include "../config/ue_configuration.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/result/pucch_info.h"
+#include "srsran/scheduler/result/sched_result.h"
 
 namespace srsran {
 
 unsigned get_n_id0_scrambling(const ue_cell_configuration& ue_cell_cfg, unsigned cell_pci);
+
+bool check_ul_collisions(span<const grant_info>    grants,
+                         const ul_sched_result&    result,
+                         const cell_configuration& cell_cfg,
+                         bool                      is_common);
 
 void mark_pucch_in_resource_grid(cell_slot_resource_allocator&    pucch_slot_alloc,
                                  const grant_info&                first_hop_grant,
