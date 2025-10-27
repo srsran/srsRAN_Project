@@ -29,6 +29,8 @@ class stop_event_source
   static constexpr uint32_t stop_bit   = 1U << 31U;
   static constexpr uint32_t count_mask = stop_bit - 1;
 
+  [[nodiscard]] bool was_stop_requested() const { return token_count.load(std::memory_order_acquire) >= stop_bit; }
+
 public:
   ~stop_event_source()
   {
@@ -76,8 +78,6 @@ public:
     }
   }
 
-  [[nodiscard]] bool stop_was_requested() const { return token_count.load(std::memory_order_acquire) >= stop_bit; }
-
   [[nodiscard]] uint32_t nof_tokens_approx() const { return token_count.load(std::memory_order_relaxed) & count_mask; }
 
 private:
@@ -97,9 +97,11 @@ class stop_event_token
   static constexpr uint32_t stop_bit   = 1U << 31U;
   static constexpr uint32_t count_mask = stop_bit - 1;
 
+  friend class stop_event_source;
+  explicit stop_event_token(stop_event_source& parent_) : parent(&parent_) { inc_token(); }
+
 public:
   stop_event_token() = default;
-  explicit stop_event_token(stop_event_source& parent_) : parent(&parent_) { inc_token(); }
 
   stop_event_token(const stop_event_token& other) : parent(other.parent) { inc_token(); }
   stop_event_token(stop_event_token&& other) noexcept : parent(std::exchange(other.parent, nullptr)) {}
@@ -136,7 +138,7 @@ public:
   }
 
   /// Checks if the associated stop_event_source has been stopped.
-  [[nodiscard]] bool stop_requested() const
+  [[nodiscard]] bool is_stop_requested() const
   {
     return (parent == nullptr) or ((parent->token_count.load(std::memory_order_acquire) & stop_bit) > 0);
   }
@@ -168,7 +170,7 @@ private:
 
 inline stop_event_token stop_event_source::get_token()
 {
-  return stop_event_token{*this};
+  return was_stop_requested() ? stop_event_token{} : stop_event_token{*this};
 }
 
 } // namespace srsran

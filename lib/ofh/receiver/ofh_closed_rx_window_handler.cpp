@@ -33,13 +33,14 @@ closed_rx_window_handler::closed_rx_window_handler(const closed_rx_window_handle
 
 void closed_rx_window_handler::on_new_symbol(const slot_symbol_point_context& symbol_point_context)
 {
-  if (SRSRAN_UNLIKELY(stop_manager.stop_was_requested())) {
+  auto token = stop_manager.get_token();
+  if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
     return;
   }
 
   if (!executor.defer([internal_slot = symbol_point_context.symbol_point - notification_delay_in_symbols,
                        this,
-                       token = stop_manager.get_token()]() {
+                       tk = std::move(token)]() {
         // Add pending contexts to the repository.
         uplink_repo->process_pending_contexts();
         prach_repo->process_pending_contexts();

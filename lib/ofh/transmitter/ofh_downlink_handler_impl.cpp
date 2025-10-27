@@ -67,11 +67,10 @@ void downlink_handler_impl::stop()
 
 void downlink_handler_impl::handle_dl_data(const resource_grid_context& context, const shared_resource_grid& grid)
 {
-  if (SRSRAN_UNLIKELY(stop_control.stop_was_requested())) {
+  auto token = stop_control.get_token();
+  if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
     return;
   }
-
-  auto stop_token = stop_control.get_token();
 
   const resource_grid_reader& reader = grid.get_reader();
   srsran_assert(reader.get_nof_ports() <= dl_eaxc.size(),

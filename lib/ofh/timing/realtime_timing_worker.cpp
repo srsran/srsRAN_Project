@@ -70,7 +70,7 @@ void realtime_timing_worker::start()
         previous_symb_index       = get_symbol_index(ns_fraction, symbol_duration);
         previous_time_since_epoch = now.time_since_epoch().count();
 
-        timing_loop();
+        timing_loop(stop_token);
       })) {
     report_fatal_error("Unable to start the realtime timing worker");
   }
@@ -92,9 +92,9 @@ void realtime_timing_worker::stop()
   logger.info("Stopped the realtime timing worker");
 }
 
-void realtime_timing_worker::timing_loop() noexcept SRSRAN_RTSAN_NONBLOCKING
+void realtime_timing_worker::timing_loop(const stop_event_token& token) noexcept SRSRAN_RTSAN_NONBLOCKING
 {
-  while (SRSRAN_LIKELY(!stop_manager.stop_was_requested())) {
+  while (SRSRAN_LIKELY(!token.is_stop_requested())) {
     poll();
   }
 }

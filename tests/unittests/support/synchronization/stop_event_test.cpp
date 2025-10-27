@@ -30,7 +30,7 @@ TEST_F(stop_event_test, stop_blocks_until_observer_is_reset)
 {
   auto obs = ev.get_token();
 
-  ASSERT_FALSE(obs.stop_requested());
+  ASSERT_FALSE(obs.is_stop_requested());
 
   // Call stop from another thread to avoid deadlock.
   std::atomic<bool> finished{false};
@@ -40,7 +40,7 @@ TEST_F(stop_event_test, stop_blocks_until_observer_is_reset)
   }));
 
   // Stop was requested, but event source did not unlock.
-  while (not obs.stop_requested()) {
+  while (not obs.is_stop_requested()) {
     std::this_thread::sleep_for(std::chrono::microseconds(10));
   }
   ASSERT_FALSE(finished);
@@ -68,12 +68,12 @@ TEST_F(stop_event_test, multiple_stop_block_until_all_observers_are_reset)
     }));
   }
 
-  while (not observers[0].stop_requested()) {
+  while (not observers[0].is_stop_requested()) {
     std::this_thread::sleep_for(std::chrono::microseconds(10));
   }
 
   for (int i = 0; i != num_observers; i++) {
-    ASSERT_TRUE(observers[i].stop_requested()) << "All observers should be the stop() signal at this point";
+    ASSERT_TRUE(observers[i].is_stop_requested()) << "All observers should be the stop() signal at this point";
   }
   for (int i = 0; i != num_stoppers; i++) {
     ASSERT_FALSE(finished[i]) << "No stopper should have finished yet";
@@ -103,24 +103,11 @@ TEST_F(stop_event_test, reset_on_event_not_stopped_is_noop)
   ASSERT_EQ(ev.nof_tokens_approx(), 1);
 }
 
-TEST_F(stop_event_test, reset_on_stopped_event_makes_it_reusable)
-{
-  ASSERT_FALSE(ev.stop_was_requested());
-  auto obs = ev.get_token();
-  ASSERT_FALSE(ev.stop_was_requested());
-  obs.reset();
-  ASSERT_FALSE(ev.stop_was_requested());
-  ev.stop();
-  ASSERT_TRUE(ev.stop_was_requested());
-  ev.reset();
-  ASSERT_FALSE(ev.stop_was_requested());
-}
-
 TEST_F(stop_event_test, reset_waits_for_ungoing_stop)
 {
   auto obs = ev.get_token();
   workers.push_back(std::make_unique<std::thread>([this]() { ev.stop(); }));
-  while (not obs.stop_requested()) {
+  while (not obs.is_stop_requested()) {
     std::this_thread::sleep_for(std::chrono::microseconds(10));
   }
 
@@ -140,5 +127,5 @@ TEST_F(stop_event_test, token_to_already_stopped_event_is_empty)
 {
   ev.stop();
   auto obs = ev.get_token();
-  ASSERT_TRUE(obs.stop_requested());
+  ASSERT_TRUE(obs.is_stop_requested());
 }

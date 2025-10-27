@@ -47,14 +47,14 @@ public:
                                       const shared_resource_grid&                   grid) override
   {
     // Do not process User Plane if the stop was requested.
-    if (SRSRAN_UNLIKELY(stop_manager.stop_was_requested())) {
+    auto token = stop_manager.get_token();
+    if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
       return;
     }
 
-    if (!executor.defer(
-            [this, context, rg = grid.copy(), token = stop_manager.get_token()]() noexcept SRSRAN_RTSAN_NONBLOCKING {
-              data_flow_uplane->enqueue_section_type_1_message(context, rg);
-            })) {
+    if (!executor.defer([this, context, rg = grid.copy(), tk = std::move(token)]() noexcept SRSRAN_RTSAN_NONBLOCKING {
+          data_flow_uplane->enqueue_section_type_1_message(context, rg);
+        })) {
       logger.warning("Sector#{}: failed to dispatch message in the downlink data flow User-Plane for slot '{}'",
                      sector_id,
                      context.slot);

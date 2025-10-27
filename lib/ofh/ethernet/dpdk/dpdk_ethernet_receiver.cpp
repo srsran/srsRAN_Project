@@ -75,14 +75,15 @@ void dpdk_receiver_impl::stop()
 
 void dpdk_receiver_impl::receive_loop()
 {
-  if (stop_manager.stop_was_requested()) {
+  auto token = stop_manager.get_token();
+  if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
     return;
   }
 
   receive();
 
   // Retry the task deferring when it fails.
-  while (!executor.defer([this, token = stop_manager.get_token()]() { receive_loop(); })) {
+  while (!executor.defer([this, tk = std::move(token)]() { receive_loop(); })) {
     std::this_thread::sleep_for(std::chrono::microseconds(10));
   }
 }

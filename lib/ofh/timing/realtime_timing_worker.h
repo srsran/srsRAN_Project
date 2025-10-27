@@ -104,7 +104,7 @@ public:
 
 private:
   /// Main timing loop.
-  void timing_loop() noexcept;
+  void timing_loop(const stop_event_token& token) noexcept;
 
   /// Polls the system time checking for the start of a new OTA symbol.
   void poll();

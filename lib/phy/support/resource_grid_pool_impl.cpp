@@ -98,9 +98,9 @@ resource_grid_pool_impl::~resource_grid_pool_impl()
 
 shared_resource_grid resource_grid_pool_impl::allocate_resource_grid(slot_point slot)
 {
-  // Get a stop token, return an invalid grid if it is stopping.
-  stop_event_token token = stop_control.get_token();
-  if (token.stop_requested()) {
+  // Get a stop token, return an invalid grid if it is stopping or stopped.
+  auto token = stop_control.get_token();
+  if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
     return {};
   }
 

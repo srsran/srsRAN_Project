@@ -59,9 +59,7 @@ private:
   /// Periodic timer.
   unique_timer timer;
   /// An interface to a metrics handler.
-  executor_metrics_notifier* notifier;
-  /// Backend worker status.
-  std::atomic<worker_status> status{worker_status::stopped};
+  executor_metrics_notifier* notifier = nullptr;
   /// Stop control.
   stop_event_source stop_control;
 

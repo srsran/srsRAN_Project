@@ -83,7 +83,7 @@ void ru_dummy_impl::defer_loop()
 {
   // Do not defer if stop was requested.
   auto token = stop_control.get_token();
-  if (stop_control.stop_was_requested()) {
+  if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
     return;
   }
 

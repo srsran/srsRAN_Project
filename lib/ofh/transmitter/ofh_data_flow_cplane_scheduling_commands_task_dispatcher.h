@@ -46,11 +46,12 @@ public:
   void enqueue_section_type_1_message(const data_flow_cplane_type_1_context& context) override
   {
     // Do not process Control Plane if the stop was requested.
-    if (SRSRAN_UNLIKELY(stop_manager.stop_was_requested())) {
+    auto token = stop_manager.get_token();
+    if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
       return;
     }
 
-    if (!executor.defer([this, context, token = stop_manager.get_token()]() noexcept SRSRAN_RTSAN_NONBLOCKING {
+    if (!executor.defer([this, context, tk = std::move(token)]() noexcept SRSRAN_RTSAN_NONBLOCKING {
           data_flow_cplane->enqueue_section_type_1_message(context);
         })) {
       logger.warning(
@@ -62,11 +63,12 @@ public:
   void enqueue_section_type_3_prach_message(const data_flow_cplane_scheduling_prach_context& context) override
   {
     // Do not process Control Plane if the stop was requested.
-    if (SRSRAN_UNLIKELY(stop_manager.stop_was_requested())) {
+    auto token = stop_manager.get_token();
+    if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
       return;
     }
 
-    if (!executor.defer([this, context, token = stop_manager.get_token()]() noexcept SRSRAN_RTSAN_NONBLOCKING {
+    if (!executor.defer([this, context, tk = std::move(token)]() noexcept SRSRAN_RTSAN_NONBLOCKING {
           data_flow_cplane->enqueue_section_type_3_prach_message(context);
         })) {
       logger.warning(

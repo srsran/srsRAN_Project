@@ -47,17 +47,17 @@ public:
   // See interface for documentation.
   void on_new_symbol(const slot_symbol_point_context& symbol_point_context) override
   {
-    if (SRSRAN_UNLIKELY(stop_manager.stop_was_requested())) {
+    auto token = stop_manager.get_token();
+    if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
       return;
     }
 
     dl_window_checker.on_new_symbol(symbol_point_context);
     ul_window_checker.on_new_symbol(symbol_point_context);
 
-    if (!executor.defer(
-            [this, symbol_point_context, token = stop_manager.get_token()]() noexcept SRSRAN_RTSAN_NONBLOCKING {
-              msg_symbol_handler.on_new_symbol(symbol_point_context);
-            })) {
+    if (!executor.defer([this, symbol_point_context, tk = std::move(token)]() noexcept SRSRAN_RTSAN_NONBLOCKING {
+          msg_symbol_handler.on_new_symbol(symbol_point_context);
+        })) {
       logger.warning(
           "Sector #{}: Failed to dispatch new symbol task in the message transmitter for slot '{}' and symbol '{}'",
           sector_id,
