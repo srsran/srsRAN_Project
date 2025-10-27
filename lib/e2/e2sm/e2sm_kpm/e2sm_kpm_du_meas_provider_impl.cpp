@@ -146,6 +146,8 @@ void e2sm_kpm_du_meas_provider_impl::report_metrics(const scheduler_cell_metrics
   for (auto& ue_metric : cell_metrics.ue_metrics) {
     last_ue_metrics.push_back(ue_metric);
   }
+  // Scheduler metrics are always delivered, RLC only when UEs are present to clear RLC history.
+  clear_rlc_metrics();
 }
 
 void e2sm_kpm_du_meas_provider_impl::report_metrics(const rlc_metrics& metrics)
@@ -154,6 +156,30 @@ void e2sm_kpm_du_meas_provider_impl::report_metrics(const rlc_metrics& metrics)
   ue_aggr_rlc_metrics[metrics.ue_index].push_back(metrics);
   if (ue_aggr_rlc_metrics[metrics.ue_index].size() > max_rlc_metrics) {
     ue_aggr_rlc_metrics[metrics.ue_index].pop_front();
+  }
+}
+
+void e2sm_kpm_du_meas_provider_impl::clear_rlc_metrics()
+{
+  // Check if enough time has passed since last clear (at least 1 second)
+  auto current_time = std::chrono::system_clock::now();
+  auto time_since_last_clear =
+      std::chrono::duration_cast<std::chrono::milliseconds>(current_time - last_rlc_metrics_clear_time);
+
+  if (time_since_last_clear.count() <= 1000) {
+    return;
+  }
+
+  last_rlc_metrics_clear_time = current_time;
+  auto it                     = ue_aggr_rlc_metrics.begin();
+  while (it != ue_aggr_rlc_metrics.end()) {
+    du_ue_index_t       ue_index    = to_du_ue_index(it->first);
+    gnb_cu_ue_f1ap_id_t ue_f1_ap_id = f1ap_ue_id_provider.get_gnb_cu_ue_f1ap_id(ue_index);
+    if (ue_f1_ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
+      it = ue_aggr_rlc_metrics.erase(it);
+    } else {
+      ++it;
+    }
   }
 }
 
