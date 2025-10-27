@@ -31,7 +31,7 @@ static srs_info create_srs_pdu(rnti_t                          rnti,
   pdu.nof_repetitions = srs_res_cfg.res_mapping.rept_factor;
 
   pdu.config_index         = srs_res_cfg.freq_hop.c_srs;
-  pdu.sequence_id          = static_cast<uint8_t>(srs_res_cfg.sequence_id);
+  pdu.sequence_id          = srs_res_cfg.sequence_id;
   pdu.bw_index             = srs_res_cfg.freq_hop.b_srs;
   pdu.tx_comb              = srs_res_cfg.tx_comb.size;
   pdu.comb_offset          = srs_res_cfg.tx_comb.tx_comb_offset;
