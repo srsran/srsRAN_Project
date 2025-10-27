@@ -616,6 +616,7 @@ public:
   bool all(size_t start, size_t stop) const
   {
     bool not_all_found = find_first_word_(start, stop, [this](size_t word_idx, const word_t& mask) {
+      srsran_assume(word_idx <= buffer.size());
       return (buffer[word_idx] | ~mask) != ~static_cast<word_t>(0);
     });
     return !not_all_found;
@@ -690,6 +691,7 @@ public:
   bool any(size_t start, size_t stop) const
   {
     bool any_found = find_first_word_(start, stop, [this](size_t word_idx, const word_t& mask) {
+      srsran_assume(word_idx < buffer.size());
       return (buffer[word_idx] & mask) != static_cast<word_t>(0);
     });
     return any_found;
