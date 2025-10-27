@@ -23,7 +23,7 @@ static constexpr unsigned MAX_PF_COEFF = 10;
 static constexpr unsigned MAX_SLOT_SKIPPED = 20;
 
 scheduler_time_qos::scheduler_time_qos(const scheduler_ue_expert_config& expert_cfg_, du_cell_index_t cell_index_) :
-  params(std::get<time_qos_scheduler_expert_config>(expert_cfg_.strategy_cfg)), cell_index(cell_index_)
+  params(std::get<time_qos_scheduler_config>(expert_cfg_.strategy_cfg)), cell_index(cell_index_)
 {
 }
 
@@ -111,13 +111,13 @@ static double compute_pf_metric(double estim_rate, double avg_rate, double fairn
   return pf_weight;
 }
 
-static double combine_qos_metrics(double                                  pf_weight,
-                                  double                                  gbr_weight,
-                                  double                                  prio_weight,
-                                  double                                  delay_weight,
-                                  const time_qos_scheduler_expert_config& policy_params)
+static double combine_qos_metrics(double                           pf_weight,
+                                  double                           gbr_weight,
+                                  double                           prio_weight,
+                                  double                           delay_weight,
+                                  const time_qos_scheduler_config& policy_params)
 {
-  if (policy_params.qos_weight_func == time_qos_scheduler_expert_config::weight_function::gbr_prioritized and
+  if (policy_params.combine_function == time_qos_scheduler_config::combine_function_type::gbr_prioritized and
       gbr_weight > 1.0) {
     // GBR target has not been met and we prioritize GBR over PF.
     pf_weight = std::max(1.0, pf_weight);
@@ -128,11 +128,11 @@ static double combine_qos_metrics(double                                  pf_wei
 }
 
 /// \brief Computes DL rate weight used in computation of DL priority value for a UE in a slot.
-static double compute_dl_qos_weights(const slice_ue&                         u,
-                                     double                                  estim_dl_rate,
-                                     double                                  avg_dl_rate,
-                                     slot_point                              slot_tx,
-                                     const time_qos_scheduler_expert_config& policy_params)
+static double compute_dl_qos_weights(const slice_ue&                  u,
+                                     double                           estim_dl_rate,
+                                     double                           avg_dl_rate,
+                                     slot_point                       slot_tx,
+                                     const time_qos_scheduler_config& policy_params)
 {
   if (avg_dl_rate == 0) {
     // Highest priority to UEs that have not yet received any allocation.
@@ -193,10 +193,10 @@ static double compute_dl_qos_weights(const slice_ue&                         u,
 }
 
 /// \brief Computes UL weights used in computation of UL priority value for a UE in a slot.
-static double compute_ul_qos_weights(const slice_ue&                         u,
-                                     double                                  estim_ul_rate,
-                                     double                                  avg_ul_rate,
-                                     const time_qos_scheduler_expert_config& policy_params)
+static double compute_ul_qos_weights(const slice_ue&                  u,
+                                     double                           estim_ul_rate,
+                                     double                           avg_ul_rate,
+                                     const time_qos_scheduler_config& policy_params)
 {
   if (u.has_pending_sr() or avg_ul_rate == 0) {
     // Highest priority to SRs and UEs that have not yet received any allocation.

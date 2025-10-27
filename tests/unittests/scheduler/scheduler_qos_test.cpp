@@ -67,7 +67,7 @@ public:
     cell_cfg_req.rrm_policy_members.resize(1);
     cell_cfg_req.rrm_policy_members[0].rrc_member.s_nssai.sst = slice_service_type{1};
     cell_cfg_req.rrm_policy_members[0].policy_sched_cfg =
-        time_qos_scheduler_expert_config{time_qos_scheduler_expert_config::weight_function::gbr_prioritized, 2.0};
+        time_qos_scheduler_config{time_qos_scheduler_config::combine_function_type::gbr_prioritized, 2.0};
     this->add_cell(cell_cfg_req);
 
     // Create PUCCH builder that will be used to add UEs.

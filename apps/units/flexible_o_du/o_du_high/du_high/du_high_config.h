@@ -90,8 +90,8 @@ struct du_high_unit_scheduler_expert_config {
   /// operate as a hybrid between a Round-Robin scheduler and whichever scheduler policy was selected (e.g. QoS-aware).
   /// This parameter is useful to reduce the complexity of the scheduling decision, at the cost of some performance.
   unsigned nof_preselected_newtx_ues = 32;
-  /// Policy scheduler expert parameters.
-  std::optional<policy_scheduler_expert_config> policy_sched_expert_cfg;
+  /// Scheduler policy configuration.
+  std::optional<scheduler_policy_config> policy_cfg;
   /// Timing Advance MAC CE scheduling expert configuration.
   du_high_unit_ta_sched_expert_config ta_sched_cfg;
   /// Number of RBs that are used as guardband on each side of the PRACH RBs dedicated interval for short PRACH
@@ -847,8 +847,8 @@ struct du_high_unit_cell_slice_sched_config {
   unsigned ded_prb_policy_ratio = 0;
   /// Sets the slice priority. Values: {0,...,254}. 255 is reserved for the SRBs.
   unsigned priority = 0;
-  /// Policy scheduler parameters for the slice. Default: Time-domain round-robin.
-  std::optional<policy_scheduler_expert_config> slice_policy_sched_cfg;
+  /// Scheduler policy configuration for the slice. Default: Policy configured for the cell.
+  std::optional<scheduler_policy_config> slice_policy_cfg;
 };
 
 /// Radio Link Monitoring Config for a cell.

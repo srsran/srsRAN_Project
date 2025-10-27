@@ -550,23 +550,23 @@ static void configure_cli11_csi_args(CLI::App& app, du_high_unit_csi_config& csi
       ->check(CLI::Range(-8, 15));
 }
 
-static void configure_cli11_qos_scheduler_expert_args(CLI::App& app, time_qos_scheduler_expert_config& expert_params)
+static void configure_cli11_qos_aware_policy_args(CLI::App& app, time_qos_scheduler_config& expert_params)
 {
   add_option_function<std::string>(
       app,
-      "--qos_weight_function",
+      "--combine_function",
       [&expert_params](const std::string& value) {
         if (value == "gbr_prioritized") {
-          expert_params.qos_weight_func = time_qos_scheduler_expert_config::weight_function::gbr_prioritized;
-        } else if (value == "multivariate") {
-          expert_params.qos_weight_func = time_qos_scheduler_expert_config::weight_function::multivariate;
+          expert_params.combine_function = time_qos_scheduler_config::combine_function_type::gbr_prioritized;
+        } else if (value == "geometric_mean") {
+          expert_params.combine_function = time_qos_scheduler_config::combine_function_type::geometric_mean;
         } else {
-          report_fatal_error("Invalid qos weight function {}", value);
+          report_fatal_error("Invalid QoS weight combining function {}", value);
         }
       },
-      "QoS-aware scheduler policy weight function")
+      "QoS-aware scheduler policy weight combining function")
       ->default_str("gbr_prioritized")
-      ->check(CLI::IsMember({"gbr_prioritized", "multivariate"}, CLI::ignore_case));
+      ->check(CLI::IsMember({"gbr_prioritized", "geometric_mean"}, CLI::ignore_case));
   add_option(app,
              "--pf_fairness_coeff",
              expert_params.pf_fairness_coeff,
@@ -589,27 +589,26 @@ static void configure_cli11_qos_scheduler_expert_args(CLI::App& app, time_qos_sc
       ->capture_default_str();
 }
 
-static void configure_cli11_policy_scheduler_expert_args(CLI::App&                                      app,
-                                                         std::optional<policy_scheduler_expert_config>& expert_params)
+static void configure_cli11_scheduler_policy_args(CLI::App& app, std::optional<scheduler_policy_config>& policy_cfg)
 {
-  static time_qos_scheduler_expert_config qos_sched_expert_cfg;
-  CLI::App*                               qos_sched_cfg_subcmd =
-      add_subcommand(app, "qos_sched", "QoS-aware policy scheduler expert configuration")->configurable();
-  configure_cli11_qos_scheduler_expert_args(*qos_sched_cfg_subcmd, qos_sched_expert_cfg);
+  static time_qos_scheduler_config qos_cfg;
+  CLI::App*                        qos_sched_cfg_subcmd =
+      add_subcommand(app, "qos_sched", "Time-domain QoS-aware policy configuration")->configurable();
+  configure_cli11_qos_aware_policy_args(*qos_sched_cfg_subcmd, qos_cfg);
   auto qos_sched_verify_callback = [&]() {
     CLI::App* qos_sched_sub_cmd = app.get_subcommand("qos_sched");
     if (qos_sched_sub_cmd->count() != 0) {
-      expert_params = qos_sched_expert_cfg;
+      policy_cfg = qos_cfg;
     }
   };
   qos_sched_cfg_subcmd->parse_complete_callback(qos_sched_verify_callback);
 
   CLI::App* rr_sched_cfg_subcmd =
-      add_subcommand(app, "rr_sched", "Round-robin policy scheduler expert configuration")->configurable();
+      add_subcommand(app, "rr_sched", "Time-domain Round-robin policy configuration")->configurable();
   rr_sched_cfg_subcmd->parse_complete_callback([&]() {
     CLI::App* rr_sched_sub_cmd = app.get_subcommand("rr_sched");
     if (rr_sched_sub_cmd->count() != 0) {
-      expert_params = time_rr_scheduler_expert_config{};
+      policy_cfg = time_rr_scheduler_config{};
     }
   });
 }
@@ -653,12 +652,11 @@ static void configure_cli11_scheduler_expert_args(CLI::App& app, du_high_unit_sc
              "applied to the pre-selected UEs.")
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)MAX_NOF_DU_UES));
-  CLI::App* policy_sched_cfg_subcmd =
-      add_subcommand(app,
-                     "policy_sched_cfg",
-                     "Policy scheduler expert configuration. By default, time-domain QoS-aware policy is used.")
+  CLI::App* policy_cfg_cmd =
+      add_subcommand(
+          app, "policy_cfg", "Scheduler policy configuration. By default, time-domain QoS-aware policy is used.")
           ->configurable();
-  configure_cli11_policy_scheduler_expert_args(*policy_sched_cfg_subcmd, expert_params.policy_sched_expert_cfg);
+  configure_cli11_scheduler_policy_args(*policy_cfg_cmd, expert_params.policy_cfg);
   CLI::App* ta_sched_cfg_subcmd =
       add_subcommand(app, "ta_sched_cfg", "Timing Advance MAC CE scheduling expert configuration")->configurable();
   configure_cli11_ta_scheduler_expert_args(*ta_sched_cfg_subcmd, expert_params.ta_sched_cfg);
@@ -1500,14 +1498,14 @@ static void configure_cli11_slicing_scheduling_args(CLI::App&                   
       ->capture_default_str()
       ->check(CLI::Range(0U, 254U));
 
-  // Policy scheduler configuration.
-  CLI::App* policy_sched_cfg_subcmd =
+  // Scheduler policy configuration.
+  CLI::App* policy_cfg_cmd =
       add_subcommand(
           app,
-          "policy_sched_cfg",
-          "Policy scheduler configuration for the slice. If not specified, the general scheduler policy is used")
+          "policy_cfg",
+          "Scheduler policy configuration for the slice. If not specified, the policy configured for the cell is used")
           ->configurable();
-  configure_cli11_policy_scheduler_expert_args(*policy_sched_cfg_subcmd, slice_sched_params.slice_policy_sched_cfg);
+  configure_cli11_scheduler_policy_args(*policy_cfg_cmd, slice_sched_params.slice_policy_cfg);
 }
 
 static void configure_cli11_slicing_args(CLI::App& app, du_high_unit_cell_slice_config& slice_params)
@@ -2078,8 +2076,8 @@ static void derive_cell_auto_params(du_high_unit_base_cell_config& cell_cfg)
   if (not cell_cfg.band.has_value()) {
     cell_cfg.band = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_f_ref_arfcn);
   }
-  if (not cell_cfg.sched_expert_cfg.policy_sched_expert_cfg.has_value()) {
-    cell_cfg.sched_expert_cfg.policy_sched_expert_cfg.emplace(time_qos_scheduler_expert_config{});
+  if (not cell_cfg.sched_expert_cfg.policy_cfg.has_value()) {
+    cell_cfg.sched_expert_cfg.policy_cfg.emplace(time_qos_scheduler_config{});
   }
 
   // If in TDD mode, and pattern was not set, generate a pattern DDDDDDXUUU.
