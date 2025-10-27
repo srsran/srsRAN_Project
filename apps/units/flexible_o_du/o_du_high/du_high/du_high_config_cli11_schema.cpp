@@ -662,6 +662,12 @@ static void configure_cli11_scheduler_expert_args(CLI::App& app, du_high_unit_sc
   CLI::App* ta_sched_cfg_subcmd =
       add_subcommand(app, "ta_sched_cfg", "Timing Advance MAC CE scheduling expert configuration")->configurable();
   configure_cli11_ta_scheduler_expert_args(*ta_sched_cfg_subcmd, expert_params.ta_sched_cfg);
+  add_option(app,
+             "--nof_prach_guardbands_rbs",
+             expert_params.nof_prach_guardbands_rbs,
+             "Number of RBs that are used as guardband on each side of the PRACH RBs interval for short PRACH formats.")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, 10U));
 }
 
 static void configure_cli11_drx_args(CLI::App& app, du_high_unit_drx_config& drx_params)

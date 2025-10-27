@@ -94,6 +94,9 @@ struct du_high_unit_scheduler_expert_config {
   std::optional<policy_scheduler_expert_config> policy_sched_expert_cfg;
   /// Timing Advance MAC CE scheduling expert configuration.
   du_high_unit_ta_sched_expert_config ta_sched_cfg;
+  /// Number of RBs that are used as guardband on each side of the PRACH RBs dedicated interval for short PRACH
+  /// formats.
+  unsigned nof_prach_guardbands_rbs = 5;
 };
 
 /// DRX configuration.
