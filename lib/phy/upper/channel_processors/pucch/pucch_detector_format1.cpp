@@ -76,9 +76,9 @@ static void validate_config(const pucch_detector::format1_configuration& config,
     srsran_assert(this_pucch.time_domain_occ <= 6,
                   "Setting {} as the time-domain OCC index, but only values between 0 and 6 are valid.",
                   this_pucch.time_domain_occ);
-    srsran_assert(config.time_domain_occ < config.nof_symbols / symbol_occ_ratio,
+    srsran_assert(this_pucch.time_domain_occ < config.nof_symbols / symbol_occ_ratio,
                   "Cannot have OCCI {} with {} allocated OFDM symbols and frequency hopping {}.",
-                  config.time_domain_occ,
+                  this_pucch.time_domain_occ,
                   config.nof_symbols,
                   (config.second_hop_prb.has_value() ? "enabled" : "disabled"));
     srsran_assert(this_pucch.value <= 2, "At most two ACK bits - requested {}.", this_pucch.value);

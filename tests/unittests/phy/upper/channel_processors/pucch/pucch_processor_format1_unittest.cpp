@@ -14,12 +14,22 @@
 #include "pucch_detector_test_doubles.h"
 #include "srsran/phy/upper/channel_processors/pucch/pucch_processor.h"
 #include "srsran/ran/pucch/pucch_constants.h"
+#include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
 
 static constexpr unsigned nof_repetitions = 100;
 static constexpr unsigned nof_mux_ues     = 5;
+
+namespace srsran {
+
+std::ostream& operator<<(std::ostream& out, span<const uint8_t> data)
+{
+  return out << fmt::format("[{}]", data);
+}
+
+} // namespace srsran
 
 namespace {
 
@@ -98,6 +108,8 @@ protected:
 
     detector_spy = detector_factory_spy->get_entries().back();
     ASSERT_NE(detector_spy, nullptr);
+
+    detector_spy->clear();
   }
 
   pucch_processor::format1_batch_configuration GetConfig()
@@ -210,53 +222,60 @@ TEST_P(PucchProcessorFormat1Fixture, UnitTest)
   // Process.
   const auto& results = processor->process(grid, batch_config);
 
-  ASSERT_EQ(detector_spy->get_entries_format1().size(), nof_mux_ues);
+  ASSERT_EQ(detector_spy->get_entries_format1().size(), 1);
+  const auto& detector_entry = detector_spy->get_entries_format1().back();
 
-  for (const auto& detector_entry : detector_spy->get_entries_format1()) {
-    // Verify PUCCH detector.
-    ASSERT_EQ(detector_entry.config.slot, batch_config.common_config.slot);
-    ASSERT_EQ(detector_entry.config.cp, batch_config.common_config.cp);
-    ASSERT_EQ(detector_entry.config.starting_prb,
-              batch_config.common_config.starting_prb + batch_config.common_config.bwp_start_rb);
-    if (batch_config.common_config.second_hop_prb.has_value()) {
-      ASSERT_TRUE(detector_entry.config.second_hop_prb.has_value());
-      ASSERT_EQ(detector_entry.config.second_hop_prb.value(),
-                batch_config.common_config.second_hop_prb.value() + batch_config.common_config.bwp_start_rb);
-    } else {
-      ASSERT_FALSE(detector_entry.config.second_hop_prb.has_value());
-    }
-    ASSERT_EQ(detector_entry.config.start_symbol_index, batch_config.common_config.start_symbol_index);
-    ASSERT_EQ(detector_entry.config.nof_symbols, batch_config.common_config.nof_symbols);
-    ASSERT_EQ(detector_entry.config.group_hopping, pucch_group_hopping::NEITHER);
-    ASSERT_EQ(detector_entry.config.ports, batch_config.common_config.ports);
-    ASSERT_EQ(detector_entry.config.beta_pucch, 1.0F);
-    ASSERT_EQ(detector_entry.config.n_id, batch_config.common_config.n_id);
+  // Verify PUCCH detector.
+  ASSERT_EQ(detector_entry.config.slot, batch_config.common_config.slot);
+  ASSERT_EQ(detector_entry.config.cp, batch_config.common_config.cp);
+  ASSERT_EQ(detector_entry.config.starting_prb,
+            batch_config.common_config.starting_prb + batch_config.common_config.bwp_start_rb);
+  if (batch_config.common_config.second_hop_prb.has_value()) {
+    ASSERT_TRUE(detector_entry.config.second_hop_prb.has_value());
+    ASSERT_EQ(detector_entry.config.second_hop_prb.value(),
+              batch_config.common_config.second_hop_prb.value() + batch_config.common_config.bwp_start_rb);
+  } else {
+    ASSERT_FALSE(detector_entry.config.second_hop_prb.has_value());
+  }
+  ASSERT_EQ(detector_entry.config.start_symbol_index, batch_config.common_config.start_symbol_index);
+  ASSERT_EQ(detector_entry.config.nof_symbols, batch_config.common_config.nof_symbols);
+  ASSERT_EQ(detector_entry.config.group_hopping, pucch_group_hopping::NEITHER);
+  ASSERT_EQ(detector_entry.config.ports, batch_config.common_config.ports);
+  ASSERT_EQ(detector_entry.config.beta_pucch, 1.0F);
+  ASSERT_EQ(detector_entry.config.n_id, batch_config.common_config.n_id);
 
-    ASSERT_TRUE(batch_config.entries.contains(detector_entry.config.initial_cyclic_shift,
-                                              detector_entry.config.time_domain_occ));
-    const auto& config =
-        batch_config.entries.get(detector_entry.config.initial_cyclic_shift, detector_entry.config.time_domain_occ);
-    ASSERT_EQ(detector_entry.config.nof_harq_ack, config.nof_harq_ack);
+  for (const auto& item : detector_entry.mux_nof_harq_ack) {
+    unsigned ics  = item.initial_cyclic_shift;
+    unsigned occi = item.time_domain_occ;
+
+    ASSERT_TRUE(batch_config.entries.contains(ics, occi));
+
+    const auto& config = batch_config.entries.get(ics, occi);
+    ASSERT_EQ(item.value, config.nof_harq_ack);
 
     // Validate UCI message.
-    ASSERT_TRUE(results.contains(detector_entry.config.initial_cyclic_shift, detector_entry.config.time_domain_occ));
-    const auto& this_result =
-        results.get(detector_entry.config.initial_cyclic_shift, detector_entry.config.time_domain_occ);
+    ASSERT_TRUE(results.contains(ics, occi));
+    const auto& rx_result  = results.get(ics, occi);
+    const auto& rx_message = rx_result.message;
 
-    ASSERT_EQ(this_result.message.get_status(), detector_entry.msg.get_status());
-    ASSERT_EQ(this_result.message.get_full_payload().size(), config.nof_harq_ack);
-    ASSERT_EQ(this_result.message.get_harq_ack_bits().size(), config.nof_harq_ack);
-    ASSERT_EQ(this_result.message.get_harq_ack_bits(), detector_entry.msg.get_harq_ack_bits());
-    ASSERT_EQ(this_result.message.get_csi_part1_bits().size(), 0);
-    ASSERT_EQ(this_result.message.get_csi_part2_bits().size(), 0);
+    // Extract results.
+    const pucch_detector::pucch_detection_result_csi& detector_result_csi = detector_entry.mux_results.get(ics, occi);
+    const pucch_detector::pucch_detection_result&     detector_result     = detector_result_csi.detection_result;
+
+    ASSERT_EQ(rx_message.get_status(), detector_result.uci_message.get_status());
+    ASSERT_EQ(rx_message.get_full_payload().size(), config.nof_harq_ack);
+    ASSERT_EQ(rx_message.get_harq_ack_bits().size(), config.nof_harq_ack);
+    ASSERT_EQ(rx_message.get_harq_ack_bits(), detector_result.uci_message.get_harq_ack_bits());
+    ASSERT_EQ(rx_message.get_csi_part1_bits().size(), 0);
+    ASSERT_EQ(rx_message.get_csi_part2_bits().size(), 0);
 
     // Validate CSI.
-    ASSERT_TRUE(this_result.csi.get_epre_dB().has_value());
-    ASSERT_TRUE(this_result.csi.get_rsrp_dB().has_value());
-    ASSERT_TRUE(this_result.csi.get_sinr_dB().has_value());
-    ASSERT_FALSE(this_result.csi.get_total_evm().has_value());
-    ASSERT_FALSE(this_result.csi.get_cfo_Hz().has_value());
-    ASSERT_FALSE(this_result.csi.get_time_alignment().has_value());
+    ASSERT_TRUE(rx_result.csi.get_epre_dB().has_value());
+    ASSERT_TRUE(rx_result.csi.get_rsrp_dB().has_value());
+    ASSERT_TRUE(rx_result.csi.get_sinr_dB().has_value());
+    ASSERT_FALSE(rx_result.csi.get_total_evm().has_value());
+    ASSERT_FALSE(rx_result.csi.get_cfo_Hz().has_value());
+    ASSERT_FALSE(rx_result.csi.get_time_alignment().has_value());
   }
 }
 
