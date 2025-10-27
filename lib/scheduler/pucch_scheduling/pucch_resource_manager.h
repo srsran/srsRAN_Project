@@ -16,12 +16,12 @@
 
 namespace srsran {
 
-/// Containers used to return the output of the PUCCH resource manager.
+/// Container used to return the result of a PUCCH HARQ resource allocation request.
 struct pucch_harq_resource_alloc_record {
   /// Pointer to PUCCH resource configuration to be used.
-  const pucch_resource* pucch_res;
-  /// PUCCH resource indicator corresponding to the resource that will be used by the UE.
-  unsigned pucch_res_indicator;
+  const pucch_resource* resource;
+  /// PUCCH resource indicator of the resource to be used.
+  uint8_t d_pri;
 };
 
 /// Defines the PUCCH resource usage.
@@ -48,83 +48,69 @@ public:
   void stop();
 
   /// Returns true if the common PUCCH resource indexed by r_pucch is available at the given slot.
-  bool is_common_resource_available(slot_point sl, size_t r_pucch);
+  bool is_harq_common_resource_available(slot_point sl, size_t r_pucch);
 
   /// Set the common PUCCH resource indexed by r_pucch at the given slot as currently "not available".
-  void reserve_common_resource(slot_point sl, size_t r_pucch);
+  void reserve_harq_common_resource(slot_point sl, size_t r_pucch);
 
-  /// \brief Returns the next PUCCH resource available to be used for HARQ-ACK (format 0 or 1).
-  /// \remark The format of the resource to be reserved depends on how PUCCH resource set 0 is configured.
-  /// \return If any PUCCH resource available, it returns (i) the pointer to the configuration and (ii) the PUCCH
-  /// resource indicator corresponding to the PUCCH resource that will be used by the UE. If there are no PUCCH
-  /// resources available, the pointer passed will be \c nullptr, whereas the PUCCH resource indicator is to be ignored.
+  /// \brief Reserve the next available PUCCH resource in PUCCH Resource Set ID 0.
+  /// \return If there is any PUCCH resource available, it returns (i) the pointer to the configuration and (ii) the
+  /// PUCCH resource indicator of the resource that will be used by the UE. Otherwise, the pointer will be \c nullptr,
+  /// and \c d_pri is to be ignored.
   pucch_harq_resource_alloc_record
-  reserve_next_set_0_harq_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
+  reserve_harq_set_0_resource_next_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
 
-  /// \brief Returns the next PUCCH resource available to be used for HARQ-ACK (format 2, 3 or 4).
+  /// \brief Reserve the next available PUCCH resource in PUCCH Resource Set ID 1.
   /// \remark If SR and CSI multiplexing is enabled, this resource can be used for HARQ-ACK + SR and/or CSI.
-  /// \return If any PUCCH resource available, it returns (i) the pointer to the configuration and (ii) the PUCCH
-  /// resource indicator corresponding to the PUCCH resource that will be used by the UE. If there are no PUCCH
-  /// resources available, the pointer passed will be \c nullptr, whereas the PUCCH resource indicator is to be ignored.
+  /// \return If there is any PUCCH resource available, it returns (i) the pointer to the configuration and (ii) the
+  /// PUCCH resource indicator of the resource that will be used by the UE. Otherwise, the pointer will be \c nullptr,
+  /// and \c d_pri is to be ignored.
   pucch_harq_resource_alloc_record
-  reserve_next_set_1_harq_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
+  reserve_harq_set_1_resource_next_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
 
-  /// \brief Returns a specific PUCCH format 0 or 1 resource (identified by the res. indicator) to be used for HARQ-ACK.
-  /// \remark The format of the resource to be reserved depends on how PUCCH resource set 0 is configured.
-  /// \return If the specific PUCCH resource is available, it returns the pointer to the configuration. Else, it returns
-  /// \c nullptr.
-  const pucch_resource* reserve_set_0_res_by_res_indicator(slot_point          slot_harq,
-                                                           rnti_t              crnti,
-                                                           unsigned            res_indicator,
-                                                           const pucch_config& pucch_cfg);
+  /// \brief Reserve a specific PUCCH Resource Set ID 0 resource by its PUCCH resource indicator.
+  /// \return A pointer to the resource configuration, if available. Otherwise, \c nullptr.
+  const pucch_resource*
+  reserve_harq_set_0_resource_by_pri(slot_point slot_harq, rnti_t crnti, unsigned d_pri, const pucch_config& pucch_cfg);
 
-  /// \brief Returns a specific PUCCH format 2, 3 or 4 resource (identified by the res. indicator) to be used for
-  /// HARQ-ACK.
+  /// \brief Reserve a specific PUCCH Resource Set ID 1 resource by its PUCCH resource indicator.
   /// \remark If SR and CSI multiplexing is enabled, this resource can be used for HARQ-ACK + SR and/or CSI.
-  /// \return If the specific PUCCH resource is available, it returns the pointer to the configuration. Else, it returns
-  /// \c nullptr.
-  const pucch_resource* reserve_set_1_res_by_res_indicator(slot_point          slot_harq,
-                                                           rnti_t              crnti,
-                                                           unsigned            res_indicator,
-                                                           const pucch_config& pucch_cfg);
+  /// \return A pointer to the resource configuration, if available. Otherwise, \c nullptr.
+  const pucch_resource*
+  reserve_harq_set_1_resource_by_pri(slot_point slot_harq, rnti_t crnti, unsigned d_pri, const pucch_config& pucch_cfg);
 
-  /// \brief Returns the specific PUCCH resource config to be used for CSI, if available.
+  /// \brief Reserve the UE's CSI PUCCH resource, if available.
   /// \remark If SR multiplexing is enabled, this resource can be used for CSI + SR.
-  /// \return If the specific PUCCH resource is available, it returns (i) the pointer to the configuration and (ii) the
-  /// PUCCH resource indicator corresponding to the PUCCH resource that will be used by the UE. Else, the pointer passed
-  /// will be \c nullptr, whereas the PUCCH resource indicator is to be ignored.
+  /// \return A pointer to the resource configuration, if available. Otherwise, \c nullptr.
   const pucch_resource*
   reserve_csi_resource(slot_point slot_csi, rnti_t crnti, const ue_cell_configuration& ue_cell_cfg);
 
-  /// \brief Returns the specific PUCCH resource config to be used for SR, if available.
-  /// \return If the specific PUCCH resource is available, it returns (i) the pointer to the configuration and (ii) the
-  /// PUCCH resource indicator corresponding to the PUCCH resource that will be used by the UE. Else, the pointer passed
-  /// will be \c nullptr, whereas the PUCCH resource indicator is to be ignored.
-  const pucch_resource* reserve_sr_res_available(slot_point slot_sr, rnti_t crnti, const pucch_config& pucch_cfg);
+  /// \brief Reserve the UE's SR PUCCH resource, if available.
+  /// \return A pointer to the resource configuration, if available. Otherwise, \c nullptr.
+  const pucch_resource* reserve_sr_resource(slot_point slot_sr, rnti_t crnti, const pucch_config& pucch_cfg);
 
-  /// \brief Release PUCCH (format 0 or 1) resource from being allocated to a given UE.
-  /// \remark The format of the resource to be released depends on how PUCCH resource set 0 is configured.
+  /// \brief Release PUCCH resource from Resource Set ID 0 from being allocated to a given UE.
   /// \param[in] slot_harq slot for which the PUCCH resource was scheduled.
   /// \param[in] crnti UE from which the resource needs to be released.
   /// \param[in] pucch_cfg UE's PUCCH config.
   /// \return True if the resource for the UE was found in the allocation records for the given slot.
   bool release_harq_set_0_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
 
-  /// \brief Release PUCCH (format 2, 3 or 4) resource from being allocated to a given UE.
+  /// \brief Release PUCCH resource from Resource Set ID 1 from being allocated to a given UE.
   /// \param[in] slot_harq slot for which the PUCCH resource was scheduled.
   /// \param[in] crnti UE from which the resource needs to be released.
   /// \param[in] pucch_cfg UE's PUCCH config.
   /// \return True if the resource for the UE was found in the allocation records for the given slot.
   bool release_harq_set_1_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
 
-  /// \brief Release PUCCH (format 0 or 1) resource used for SR from being allocated to a given UE.
+  /// \brief Release SR PUCCH resource from being allocated to a given UE.
   /// \param[in] slot_sr slot for which the PUCCH resource was scheduled.
   /// \param[in] crnti UE from which the resource needs to be released.
   /// \param[in] pucch_cfg UE's PUCCH config.
   /// \return True if the resource for the UE was found in the allocation records for the given slot.
   bool release_sr_resource(slot_point slot_sr, rnti_t crnti, const pucch_config& pucch_cfg);
 
-  /// \brief Release PUCCH (format 2, 3 or 4) resource used for CSI from being allocated to a given UE.
+  /// \brief Release CSI PUCCH resource from being allocated to a given UE.
   /// \param[in] slot_csi slot for which the PUCCH resource was scheduled.
   /// \param[in] crnti UE from which the resource needs to be released.
   /// \param[in] ue_cell_cfg UE's dedicated cell configuration.
@@ -136,13 +122,13 @@ public:
   /// reserved.
   void reset_latest_reserved_res_tracker();
 
-  /// \brief Adds a records that a given resource has been reserved for the current slot for a given UE.
+  /// \brief Add a records that a given resource has been reserved for the current slot for a given UE.
   void set_new_resource_allocation(rnti_t rnti, pucch_resource_usage res_type);
 
-  /// \brief Checks whether a given resource has been reserved for the current slot for a given UE.
+  /// \brief Check whether a given resource has been reserved for the current slot for a given UE.
   [[nodiscard]] bool is_resource_allocated(rnti_t rnti, pucch_resource_usage res_type) const;
 
-  /// \brief Releases the resources that have been recorded as reserved for the current slot for a given UE.
+  /// \brief Release the resources that have been recorded as reserved for the current slot for a given UE.
   void cancel_last_ue_res_reservations(slot_point slot_tx, rnti_t crnti, const ue_cell_configuration& ue_cell_cfg);
 
 private:
@@ -188,11 +174,11 @@ private:
                                                                    const pucch_config& pucch_cfg,
                                                                    pucch_res_set_idx   res_set_idx);
 
-  const pucch_resource* reserve_harq_res_by_r_pucch(slot_point          slot_harq,
-                                                    rnti_t              crnti,
-                                                    unsigned            res_indicator,
-                                                    const pucch_config& pucch_cfg,
-                                                    pucch_res_set_idx   r_pucch);
+  const pucch_resource* reserve_harq_resource_by_r_pucch(slot_point          slot_harq,
+                                                         rnti_t              crnti,
+                                                         unsigned            r_pucch,
+                                                         const pucch_config& pucch_cfg,
+                                                         pucch_res_set_idx   res_set_idx);
 
   bool release_harq_resource(slot_point          slot_harq,
                              rnti_t              crnti,

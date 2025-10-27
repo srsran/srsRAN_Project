@@ -84,48 +84,48 @@ void pucch_resource_manager::stop()
   last_sl_ind = {};
 }
 
-bool pucch_resource_manager::is_common_resource_available(slot_point sl, size_t r_pucch)
+bool pucch_resource_manager::is_harq_common_resource_available(slot_point sl, size_t r_pucch)
 {
   srsran_assert(r_pucch < 16, "r_PUCCH must be less than 16");
   return not get_slot_resource_counter(sl).used_common_resources[r_pucch];
 }
 
-void pucch_resource_manager::reserve_common_resource(slot_point sl, size_t r_pucch)
+void pucch_resource_manager::reserve_harq_common_resource(slot_point sl, size_t r_pucch)
 {
   srsran_assert(r_pucch < 16, "r_PUCCH must be less than 16");
   get_slot_resource_counter(sl).used_common_resources[r_pucch] = true;
 }
 
 pucch_harq_resource_alloc_record
-pucch_resource_manager::reserve_next_set_0_harq_res_available(slot_point          slot_harq,
-                                                              rnti_t              crnti,
-                                                              const pucch_config& pucch_cfg)
+pucch_resource_manager::reserve_harq_set_0_resource_next_available(slot_point          slot_harq,
+                                                                   rnti_t              crnti,
+                                                                   const pucch_config& pucch_cfg)
 {
   return reserve_next_harq_res_available(slot_harq, crnti, pucch_cfg, pucch_res_set_idx::set_0);
 }
 
 pucch_harq_resource_alloc_record
-pucch_resource_manager::reserve_next_set_1_harq_res_available(slot_point          slot_harq,
-                                                              rnti_t              crnti,
-                                                              const pucch_config& pucch_cfg)
+pucch_resource_manager::reserve_harq_set_1_resource_next_available(slot_point          slot_harq,
+                                                                   rnti_t              crnti,
+                                                                   const pucch_config& pucch_cfg)
 {
   return reserve_next_harq_res_available(slot_harq, crnti, pucch_cfg, pucch_res_set_idx::set_1);
 }
 
-const pucch_resource* pucch_resource_manager::reserve_set_0_res_by_res_indicator(slot_point          slot_harq,
+const pucch_resource* pucch_resource_manager::reserve_harq_set_0_resource_by_pri(slot_point          slot_harq,
                                                                                  rnti_t              crnti,
-                                                                                 unsigned            res_indicator,
+                                                                                 unsigned            d_pri,
                                                                                  const pucch_config& pucch_cfg)
 {
-  return reserve_harq_res_by_r_pucch(slot_harq, crnti, res_indicator, pucch_cfg, pucch_res_set_idx::set_0);
+  return reserve_harq_resource_by_r_pucch(slot_harq, crnti, d_pri, pucch_cfg, pucch_res_set_idx::set_0);
 }
 
-const pucch_resource* pucch_resource_manager::reserve_set_1_res_by_res_indicator(slot_point          slot_harq,
+const pucch_resource* pucch_resource_manager::reserve_harq_set_1_resource_by_pri(slot_point          slot_harq,
                                                                                  rnti_t              crnti,
-                                                                                 unsigned            res_indicator,
+                                                                                 unsigned            d_pri,
                                                                                  const pucch_config& pucch_cfg)
 {
-  return reserve_harq_res_by_r_pucch(slot_harq, crnti, res_indicator, pucch_cfg, pucch_res_set_idx::set_1);
+  return reserve_harq_resource_by_r_pucch(slot_harq, crnti, d_pri, pucch_cfg, pucch_res_set_idx::set_1);
 }
 
 const pucch_resource* pucch_resource_manager::reserve_csi_resource(slot_point                   slot_csi,
@@ -171,7 +171,7 @@ const pucch_resource* pucch_resource_manager::reserve_csi_resource(slot_point   
 }
 
 const pucch_resource*
-pucch_resource_manager::reserve_sr_res_available(slot_point slot_sr, rnti_t crnti, const pucch_config& pucch_cfg)
+pucch_resource_manager::reserve_sr_resource(slot_point slot_sr, rnti_t crnti, const pucch_config& pucch_cfg)
 {
   srsran_sanity_check(slot_sr < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PUCCH being allocated too far into the future");
@@ -380,8 +380,8 @@ pucch_harq_resource_alloc_record pucch_resource_manager::reserve_next_harq_res_a
                 crnti,
                 pucch_res_set_idx_to_uint(res_set_idx));
 
-  std::optional<unsigned> available_r_pucch;
-  for (unsigned r_pucch = 0; r_pucch != nof_eligible_resource; ++r_pucch) {
+  std::optional<uint8_t> available_r_pucch;
+  for (uint8_t r_pucch = 0; r_pucch != nof_eligible_resource; ++r_pucch) {
     const unsigned cell_res_id = ue_res_set_id_list[r_pucch].cell_res_id;
     srsran_assert(cell_res_id < slot_res_array.size(),
                   "PUCCH resource index from PUCCH resource set exceeds the size of the cell resource array");
@@ -418,16 +418,16 @@ pucch_harq_resource_alloc_record pucch_resource_manager::reserve_next_harq_res_a
 
     // Allocate it and return it.
     slot_res_array[cell_res_id].rnti = crnti;
-    return pucch_harq_resource_alloc_record{.pucch_res = res_cfg, .pucch_res_indicator = available_r_pucch.value()};
+    return pucch_harq_resource_alloc_record{.resource = res_cfg, .d_pri = available_r_pucch.value()};
   }
-  return pucch_harq_resource_alloc_record{.pucch_res = nullptr};
+  return pucch_harq_resource_alloc_record{.resource = nullptr};
 }
 
-const pucch_resource* pucch_resource_manager::reserve_harq_res_by_r_pucch(slot_point          slot_harq,
-                                                                          rnti_t              crnti,
-                                                                          unsigned            res_indicator,
-                                                                          const pucch_config& pucch_cfg,
-                                                                          pucch_res_set_idx   r_pucch)
+const pucch_resource* pucch_resource_manager::reserve_harq_resource_by_r_pucch(slot_point          slot_harq,
+                                                                               rnti_t              crnti,
+                                                                               unsigned            r_pucch,
+                                                                               const pucch_config& pucch_cfg,
+                                                                               pucch_res_set_idx   res_set_idx)
 {
   srsran_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PUCCH being allocated too far into the future");
@@ -435,15 +435,16 @@ const pucch_resource* pucch_resource_manager::reserve_harq_res_by_r_pucch(slot_p
   // Get resource list of wanted slot.
   rnti_pucch_res_id_slot_record& res_counter = get_slot_resource_counter(slot_harq);
   // Retrieve the PUCCH resource set.
-  const auto& ue_res_id_set_for_harq = pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(r_pucch)].pucch_res_id_list;
+  const auto& ue_res_id_set_for_harq =
+      pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(res_set_idx)].pucch_res_id_list;
 
   // Make sure the resource indicator points to a valid resource.
-  if (res_indicator >= ue_res_id_set_for_harq.size()) {
+  if (r_pucch >= ue_res_id_set_for_harq.size()) {
     return nullptr;
   }
 
   // Get PUCCH resource ID from the PUCCH resource set.
-  const auto pucch_res_id = ue_res_id_set_for_harq[res_indicator];
+  const auto pucch_res_id = ue_res_id_set_for_harq[r_pucch];
 
   // [Implementation-defined] Format 0/1 resources are at the beginning of the list, while Format 2/3/4 are at the end.
   const bool is_f0_and_f2 = pucch_cfg.pucch_res_list.front().format == pucch_format::FORMAT_0 and
@@ -452,7 +453,7 @@ const pucch_resource* pucch_resource_manager::reserve_harq_res_by_r_pucch(slot_p
   // For Format 0 and Format 2, the resources indexed by PUCCH res. indicators >= ue_res_id_set_for_harq.size() - 2 are
   // reserved for CSI and SR slots. In the case, we don't need to reserve these in the PUCCH resource manager, we only
   // need to return the resouces.
-  if (is_f0_and_f2 and res_indicator >= ue_res_id_set_for_harq.size() - 2U) {
+  if (is_f0_and_f2 and r_pucch >= ue_res_id_set_for_harq.size() - 2U) {
     const auto* res_cfg = std::find_if(
         pucch_cfg.pucch_res_list.begin(), pucch_cfg.pucch_res_list.end(), [pucch_res_id](const pucch_resource& res) {
           return res.res_id.ue_res_id == pucch_res_id.ue_res_id;
