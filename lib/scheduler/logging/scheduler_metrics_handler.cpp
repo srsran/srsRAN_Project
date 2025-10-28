@@ -400,7 +400,7 @@ void cell_metrics_handler::report_metrics()
   next_report->events.swap(pending_events);
 
   next_report->pci                       = cell_cfg.pci;
-  next_report->slot                      = start_report_slot_tx;
+  next_report->slot                      = last_slot_tx - data.nof_slots;
   next_report->nof_slots                 = data.nof_slots;
   next_report->nof_error_indications     = data.error_indication_counter;
   next_report->average_decision_latency  = data.decision_latency_sum / next_report->nof_slots;
@@ -434,8 +434,7 @@ void cell_metrics_handler::report_metrics()
   }
 
   // Reset cell-wide metric counters.
-  data                 = {};
-  start_report_slot_tx = last_slot_tx;
+  data = {};
 
   // Clear the PRB vectors for the next report.
   for (unsigned& rb_count : ul_prbs_used_per_tdd_slot_idx) {
@@ -455,8 +454,7 @@ void cell_metrics_handler::handle_slot_result(slot_point                sl_tx,
                                               std::chrono::microseconds slot_decision_latency)
 {
   if (SRSRAN_UNLIKELY(not last_slot_tx.valid())) {
-    start_report_slot_tx = sl_tx - 1;
-    data.nof_slots       = 1;
+    data.nof_slots = 1;
   } else {
     data.nof_slots += sl_tx - last_slot_tx;
   }

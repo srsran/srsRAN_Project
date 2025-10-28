@@ -164,10 +164,8 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
   // Derived values.
   const unsigned nof_slots_per_sf;
 
+  /// Last slot indication handled.
   slot_point last_slot_tx;
-
-  /// Slot point at which metrics started being collected for the current report.
-  slot_point start_report_slot_tx;
 
   slotted_id_vector<du_ue_index_t, ue_metric_context> ues;
   flat_map<rnti_t, du_ue_index_t>                     rnti_to_ue_index_lookup;
