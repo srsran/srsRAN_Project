@@ -66,12 +66,17 @@ private:
   static constexpr unsigned nof_common_res         = pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES;
   static constexpr unsigned max_nof_cell_resources = nof_common_res + pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES;
 
+  // Collision matrix indicating which resources collide with each other.
+  // C[i][j] = 1 if resource i collides with resource j, 0 otherwise.
   using collision_matrix_t = static_vector<bounded_bitset<max_nof_cell_resources>, max_nof_cell_resources>;
 
   const cell_configuration& cell_cfg;
-  collision_matrix_t        collision_matrix;
+  const collision_matrix_t  collision_matrix;
 
+  /// Allocation context for a specific slot.
   struct slot_context {
+    /// Bitset representing the current usage state of all PUCCH resources (common and dedicated) in this slot.
+    /// S[i] = 1 if resource i is in use, 0 otherwise.
     bounded_bitset<max_nof_cell_resources> current_state;
   };
 
@@ -80,6 +85,9 @@ private:
 
   // Keeps track of the last slot_point used by the resource manager.
   slot_point last_sl_ind;
+
+  /// Computes the collision matrix for all PUCCH resources in the cell configuration.
+  static collision_matrix_t compute_collisions(const cell_configuration& cell_cfg);
 };
 
 } // namespace srsran

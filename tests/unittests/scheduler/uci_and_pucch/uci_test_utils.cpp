@@ -11,6 +11,7 @@
 #include "uci_test_utils.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/scheduler/config/csi_helper.h"
+#include "srsran/scheduler/config/sched_cell_config_helpers.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 
 using namespace srsran;
@@ -193,15 +194,8 @@ test_bench::test_bench(const test_bench_params& params,
           srsran_assertion_failure("Invalid PUCCH Format for Set Id 1 (valid values are 2, 3 or 4)");
       }
 
-      cell_pucch_resources = config_helpers::generate_cell_pucch_res_list(
-          pucch_params.nof_ue_pucch_f0_or_f1_res_harq.to_uint() * pucch_params.nof_cell_harq_pucch_res_sets +
-              pucch_params.nof_sr_resources,
-          pucch_params.nof_ue_pucch_f2_or_f3_or_f4_res_harq.to_uint() * pucch_params.nof_cell_harq_pucch_res_sets +
-              pucch_params.nof_csi_resources,
-          pucch_params.f0_or_f1_params,
-          pucch_params.f2_or_f3_or_f4_params,
-          cell_cfg_list[to_du_cell_index(0)]->ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
-          pucch_params.max_nof_symbols);
+      cell_pucch_resources = config_helpers::build_pucch_resource_list(
+          pucch_params, cell_cfg_list[to_du_cell_index(0)]->ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
     }
 
     if (params.pucch_f2_f3_more_prbs) {

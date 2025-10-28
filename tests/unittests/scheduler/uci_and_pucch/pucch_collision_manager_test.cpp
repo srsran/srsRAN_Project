@@ -118,15 +118,13 @@ TEST(pucch_collision_manager_test, multiplexed_resources_collide_if_different_ti
   // Test the collisions between Dedicated Res 0 and the common resources that overlap in time/freq.
   // Common Res 0 overlaps in time/freq and has the same mux index.
   ASSERT_TRUE(col_manager.check_common_to_ded_collision(0, 0));
-  // Common Res 1 overlaps in time/freq, but only for the first hop, and since it has a different mux index and the
-  // sequences will be aligned for the colliding REs, they do NOT collide.
-  // [Implementation defined] Our logic is not sophisticated enough to check this, and will assume they DO collide.
+  // Common Res 9 overlaps in time/freq for the second hop, and even though they have the same format and different mux
+  // indices, the time/freq grants are not equal, so they collide.
   ASSERT_TRUE(col_manager.check_common_to_ded_collision(1, 0));
   // Common Res 8 overlaps in time/freq and has the same mux index.
   ASSERT_TRUE(col_manager.check_common_to_ded_collision(8, 0));
-  // Common Res 9 overlaps in time/freq for the second hop, and since it has a different mux index and the sequences
-  // will be aligned for the colliding REs, they do NOT collide.
-  // [Implementation defined] Our logic is not sophisticated enough to check this, and will assume they DO collide.
+  // Common Res 9 overlaps in time/freq for the second hop, and even though they have the same format and different mux
+  // indices, the time/freq grants are not equal, so they collide.
   ASSERT_TRUE(col_manager.check_common_to_ded_collision(9, 0));
 }
 

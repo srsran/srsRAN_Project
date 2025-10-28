@@ -14,6 +14,7 @@
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/pucch_res_test_builder_helper.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
+#include "srsran/scheduler/config/sched_cell_config_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -77,16 +78,8 @@ public:
     auto&                f1_params   = pucch_basic_params.f0_or_f1_params.emplace<pucch_f1_params>();
     f1_params.nof_cyc_shifts         = pucch_nof_cyclic_shifts::twelve;
     f1_params.occ_supported          = true;
-    cell_cfg_req.ded_pucch_resources = config_helpers::generate_cell_pucch_res_list(
-        pucch_basic_params.nof_ue_pucch_f0_or_f1_res_harq.to_uint() * pucch_basic_params.nof_cell_harq_pucch_res_sets +
-            pucch_basic_params.nof_sr_resources,
-        pucch_basic_params.nof_ue_pucch_f2_or_f3_or_f4_res_harq.to_uint() *
-                pucch_basic_params.nof_cell_harq_pucch_res_sets +
-            pucch_basic_params.nof_csi_resources,
-        pucch_basic_params.f0_or_f1_params,
-        pucch_basic_params.f2_or_f3_or_f4_params,
-        cell_cfg_req.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
-        pucch_basic_params.max_nof_symbols);
+    cell_cfg_req.ded_pucch_resources = config_helpers::build_pucch_resource_list(
+        pucch_basic_params, cell_cfg_req.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
     this->add_cell(cell_cfg_req);
 
     pucch_cfg_builder.setup(cell_cfg(), pucch_basic_params);

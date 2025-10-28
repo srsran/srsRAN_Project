@@ -116,16 +116,8 @@ protected:
     f1_params.nof_cyc_shifts       = pucch_nof_cyclic_shifts::twelve;
     f1_params.occ_supported        = true;
 
-    msg.ded_pucch_resources = config_helpers::generate_cell_pucch_res_list(
-        pucch_basic_params.nof_ue_pucch_f0_or_f1_res_harq.to_uint() * pucch_basic_params.nof_cell_harq_pucch_res_sets +
-            pucch_basic_params.nof_sr_resources,
-        pucch_basic_params.nof_ue_pucch_f2_or_f3_or_f4_res_harq.to_uint() *
-                pucch_basic_params.nof_cell_harq_pucch_res_sets +
-            pucch_basic_params.nof_csi_resources,
-        pucch_basic_params.f0_or_f1_params,
-        pucch_basic_params.f2_or_f3_or_f4_params,
-        msg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
-        pucch_basic_params.max_nof_symbols);
+    msg.ded_pucch_resources = config_helpers::build_pucch_resource_list(
+        pucch_basic_params, msg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
     bench.emplace(expert_cfg, msg);
 
     // Initialize.
