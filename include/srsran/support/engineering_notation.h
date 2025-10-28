@@ -75,7 +75,7 @@ inline std::string float_to_string(float f, int digits, int field_width, bool al
 
 inline std::string float_to_eng_string(float f, int digits, bool align_right)
 {
-  static char const* const prefixes[2][9] = {
+  static constexpr char const* prefixes[2][9] = {
       {
           "",
           "m",

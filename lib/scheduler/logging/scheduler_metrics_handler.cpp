@@ -392,8 +392,7 @@ void cell_metrics_handler::report_metrics()
 {
   auto next_report = notifier.get_builder();
 
-  const unsigned                  report_period_slots = last_slot_tx - start_report_slot_tx;
-  const std::chrono::milliseconds report_period{report_period_slots / last_slot_tx.nof_slots_per_subframe()};
+  const std::chrono::milliseconds report_period{data.nof_slots / last_slot_tx.nof_slots_per_subframe()};
   for (ue_metric_context& ue : ues) {
     // Compute statistics of the UE metrics and push the result to the report.
     next_report->ue_metrics.push_back(ue.compute_report(report_period, nof_slots_per_sf));
@@ -402,7 +401,7 @@ void cell_metrics_handler::report_metrics()
 
   next_report->pci                       = cell_cfg.pci;
   next_report->slot                      = start_report_slot_tx;
-  next_report->nof_slots                 = report_period_slots;
+  next_report->nof_slots                 = data.nof_slots;
   next_report->nof_error_indications     = data.error_indication_counter;
   next_report->average_decision_latency  = data.decision_latency_sum / next_report->nof_slots;
   next_report->max_decision_latency      = data.max_decision_latency;
@@ -451,12 +450,17 @@ void cell_metrics_handler::report_metrics()
   next_report.reset();
 }
 
-void cell_metrics_handler::handle_slot_result(const sched_result&       slot_result,
+void cell_metrics_handler::handle_slot_result(slot_point                sl_tx,
+                                              const sched_result&       slot_result,
                                               std::chrono::microseconds slot_decision_latency)
 {
-  if (not enabled()) {
-    return;
+  if (SRSRAN_UNLIKELY(not last_slot_tx.valid())) {
+    start_report_slot_tx = sl_tx - 1;
+    data.nof_slots       = 1;
+  } else {
+    data.nof_slots += sl_tx - last_slot_tx;
   }
+  last_slot_tx = sl_tx;
 
   data.nof_ue_pdsch_grants += slot_result.dl.ue_grants.size();
   for (const dl_msg_alloc& dl_grant : slot_result.dl.ue_grants) {
@@ -481,7 +485,7 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
       grant_prbs = (dl_grant.pdsch_cfg.rbs.type1().length());
     }
     u.data.tot_dl_prbs_used += grant_prbs;
-    if (dl_prbs_used_per_tdd_slot_idx.size()) {
+    if (not dl_prbs_used_per_tdd_slot_idx.empty()) {
       dl_prbs_used_per_tdd_slot_idx[last_slot_tx.count() % dl_prbs_used_per_tdd_slot_idx.size()] += grant_prbs;
     }
     u.last_dl_olla = dl_grant.context.olla_offset;
@@ -540,8 +544,8 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
   data.pucch_rbs_used += pucch_prbs.count();
 
   // Count DL and UL slots.
-  data.nof_dl_slots += (slot_result.dl.nof_dl_symbols > 0);
-  data.nof_ul_slots += (slot_result.ul.nof_ul_symbols == 14); // Note: PUSCH in special slot not supported.;
+  data.nof_dl_slots += slot_result.dl.nof_dl_symbols > 0;
+  data.nof_ul_slots += slot_result.ul.nof_ul_symbols > 0;
 
   // Process latency.
   data.decision_latency_sum += slot_decision_latency;
@@ -565,12 +569,8 @@ void cell_metrics_handler::push_result(slot_point                sl_tx,
   if (not enabled()) {
     return;
   }
-  if (SRSRAN_UNLIKELY(not last_slot_tx.valid())) {
-    start_report_slot_tx = sl_tx - 1;
-  }
-  last_slot_tx = sl_tx;
 
-  handle_slot_result(slot_result, slot_decision_latency);
+  handle_slot_result(sl_tx, slot_result, slot_decision_latency);
 
   if (notifier.is_sched_report_required(sl_tx)) {
     // Prepare report and forward it to the notifier.
