@@ -135,10 +135,10 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)
 
   if (buffering) {
     if (not pdu_buffer.try_push(std::move(buf))) {
-      logger.log_debug("Dropping PDU. SDU buffer is full.");
+      logger.log_debug("Dropping PDU. SDU buffer is full");
       return;
     }
-    logger.log_debug("Buffered PDU. Entity is paused.");
+    logger.log_debug("Buffered PDU. Entity is paused");
     return;
   }
 

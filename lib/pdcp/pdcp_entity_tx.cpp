@@ -165,9 +165,9 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   if (buffering) {
     if (not sdu_buffer.try_push(std::move(buf))) {
       if (cfg.custom.warn_on_drop) {
-        logger.log_warning("Dropping SDU. SDU buffer is full.");
+        logger.log_warning("Dropping SDU. SDU buffer is full");
       } else {
-        logger.log_debug("Dropping SDU. SDU buffer is full.");
+        logger.log_debug("Dropping SDU. SDU buffer is full");
       }
       return;
     }

@@ -400,7 +400,7 @@ TEST_P(pdcp_rx_test, rx_buffer)
     pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu)).value());
   }
 
-  // Wait for crypto and reordering
+  // Wait for crypto and reordering.
   wait_pending_crypto();
   worker.run_pending_tasks();
 

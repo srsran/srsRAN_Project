@@ -647,7 +647,8 @@ TEST_P(pdcp_tx_test, tx_buffer)
 
   // Check PDUs were transmitted correctly.
   FLUSH_AND_ASSERT_EQ(5, test_frame.pdu_queue.size());
-  test_frame.pdu_queue = {}; // clear queue.
+  // Clear queue.
+  test_frame.pdu_queue = {};
 
   // Begin buffering and push SDUs.
   pdcp_tx->begin_buffering();
