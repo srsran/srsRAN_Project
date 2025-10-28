@@ -34,7 +34,8 @@ protected:
   Pool                    pool{pool_capacity};
 };
 using test_value_types = ::testing::Types<bounded_unique_object_pool<int, EnableMetrics>,
-                                          bounded_object_pool<int, noop_operation, EnableMetrics>>;
+                                          bounded_object_pool<int, noop_operation, EnableMetrics>,
+                                          bounded_rc_object_pool<int, EnableMetrics>>;
 TYPED_TEST_SUITE(common_bounded_object_pool_test, test_value_types);
 
 TYPED_TEST(common_bounded_object_pool_test, pool_initiated_with_provided_capacity)
@@ -166,4 +167,31 @@ TYPED_TEST(bounded_object_pool_non_pwr2_test, non_power2_capacity_is_respected)
   objs.pop_back();
   obj = this->pool.get();
   ASSERT_NE(obj, nullptr);
+}
+
+TEST(bounded_rc_object_pool_test, object_reclaimed_on_zero_rc)
+{
+  bounded_rc_object_pool<int> pool{16};
+
+  ASSERT_EQ(pool.size_approx(), pool.capacity());
+  auto ptr = pool.get(); // rc == 1
+  ASSERT_NE(ptr, nullptr);
+  ASSERT_TRUE(ptr.unique());
+  ASSERT_EQ(pool.size_approx(), pool.capacity() - 1);
+
+  auto ptr2 = ptr.clone(); // rc == 2
+  ASSERT_NE(ptr2, nullptr);
+  ASSERT_EQ(ptr, ptr2);
+  ASSERT_FALSE(ptr.unique());
+  ASSERT_EQ(pool.size_approx(), pool.capacity() - 1);
+
+  ptr.reset(); // rc == 1
+  ASSERT_EQ(ptr, nullptr);
+  ASSERT_NE(ptr2, nullptr);
+  ASSERT_TRUE(ptr2.unique());
+  ASSERT_EQ(pool.size_approx(), pool.capacity() - 1);
+
+  ptr2.reset(); // rc == 0
+  ASSERT_EQ(ptr2, nullptr);
+  ASSERT_EQ(pool.size_approx(), pool.capacity());
 }

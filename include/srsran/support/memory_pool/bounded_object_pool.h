@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/adt/bounded_bitset.h"
+#include "srsran/adt/detail/intrusive_ptr.h"
 #include "srsran/adt/noop_functor.h"
 #include "srsran/support/cpu_architecture_info.h"
 #include "srsran/support/math/math_utils.h"
@@ -364,6 +365,159 @@ public:
     }
     srsran_sanity_check(obj_idx < impl.segments[seg_idx]->objects.size(), "Invalid object index");
     return ptr{impl.segments[seg_idx]->objects[obj_idx].get(), obj_reclaimer{impl, seg_idx, obj_idx}};
+  }
+
+  /// Maximum number of objects that can be allocated in the pool.
+  size_t capacity() const { return impl.capacity(); }
+
+  /// Gets approximate number of objects currently allocated in the pool.
+  size_t size_approx() const { return impl.size_approx(); }
+
+  /// Collect metrics from the pool.
+  bool     are_metrics_activate() const { return impl.metrics_active(); }
+  uint64_t nof_alloc_reattempts() const { return impl.nof_alloc_reattempts(); }
+  uint64_t nof_scanned_segments() const { return impl.nof_scanned_segments(); }
+
+private:
+  detail::bounded_object_pool_impl<segment, noop_operation, MetricsEnabled> impl;
+};
+
+/// \brief A bounded thread-safe object pool. Unlike \c bounded_unique_object_pool, this pool returns objects
+/// whose lifetime is reference counted.
+template <typename T, bool MetricsEnabled = false>
+class bounded_rc_object_pool
+{
+  struct obj_control_block {
+    /// Actual pool object data.
+    std::unique_ptr<T> obj;
+    /// Parent pool.
+    bounded_rc_object_pool& parent;
+    /// Segment where object is saved.
+    uint32_t seg_idx{std::numeric_limits<uint32_t>::max()};
+    /// Offset within the segment where object is saved.
+    uint32_t obj_idx{std::numeric_limits<uint32_t>::max()};
+    /// Intrusive ptr reference counter.
+    intrusive_ptr_atomic_ref_counter ref_count;
+
+    obj_control_block(bounded_rc_object_pool& parent_) : parent(parent_) {}
+
+    friend void intrusive_ptr_inc_ref(obj_control_block* ptr) { ptr->ref_count.inc_ref(); }
+    friend void intrusive_ptr_dec_ref(obj_control_block* ptr)
+    {
+      if (ptr->ref_count.dec_ref()) {
+        // Return object back to the pool.
+        obj_reclaimer reclaimer{ptr->parent.impl, ptr->seg_idx, ptr->obj_idx};
+        reclaimer(ptr);
+      }
+    }
+    friend bool intrusive_ptr_is_unique(obj_control_block* ptr) { return ptr->ref_count.unique(); }
+  };
+
+  struct segment : public detail::bounded_object_pool_impl<obj_control_block>::base_segment {
+    using base_type  = typename detail::bounded_object_pool_impl<obj_control_block>::base_segment;
+    using value_type = obj_control_block;
+
+    /// Array of objects in the segment.
+    obj_control_block* objects;
+
+    segment(bounded_rc_object_pool& parent, unsigned nof_objects_) : base_type(nof_objects_)
+    {
+      // Create objs.
+      objects = static_cast<obj_control_block*>(::operator new(this->size() * sizeof(obj_control_block)));
+      for (unsigned i = 0; i != this->size(); ++i) {
+        new (objects + i) obj_control_block{parent};
+      }
+    }
+    ~segment()
+    {
+      for (unsigned i = 0; i != this->size(); ++i) {
+        objects[i].~obj_control_block();
+      }
+      ::operator delete(objects);
+    }
+  };
+
+  using obj_reclaimer =
+      typename detail::bounded_object_pool_impl<segment, noop_operation, MetricsEnabled>::obj_reclaimer;
+
+public:
+  using value_type             = T;
+  using metrics_collector_type = detail::bounded_object_pool_metrics_collector<true>;
+  class ptr
+  {
+    explicit ptr(intrusive_ptr<obj_control_block> ptr_) : rc(std::move(ptr_)) {}
+
+  public:
+    using value_type = T;
+
+    ptr(const ptr& other)                = delete;
+    ptr(ptr&& other) noexcept            = default;
+    ptr& operator=(const ptr& other)     = delete;
+    ptr& operator=(ptr&& other) noexcept = default;
+
+    T*       operator->() { return rc->obj.get(); }
+    const T* operator->() const { return rc->obj.get(); }
+    T&       operator*() { return *rc->obj; }
+    const T& operator*() const { return *rc->obj; }
+    T*       get() { return rc->obj.get(); }
+    const T* get() const { return rc->obj.get(); }
+
+    bool unique() const { return rc.unique(); }
+
+    void reset() { return rc.reset(); }
+
+    ptr clone() const { return ptr{rc}; }
+
+    bool operator==(const ptr& other) const { return rc == other.rc; }
+    bool operator==(std::nullptr_t) const { return rc == nullptr; }
+    bool operator!=(const ptr& other) const { return rc != other.rc; }
+    bool operator!=(std::nullptr_t) const { return rc != nullptr; }
+
+  private:
+    friend class bounded_rc_object_pool;
+
+    intrusive_ptr<obj_control_block> rc;
+  };
+
+  /// Creates an object pool with the objects passed in the ctor.
+  bounded_rc_object_pool(span<std::unique_ptr<T>> objects_) :
+    impl(objects_.size(), [this, &objects_](unsigned seg_idx, unsigned seg_nof_objs) {
+      auto     seg    = std::make_unique<segment>(*this, seg_nof_objs);
+      unsigned offset = seg_idx * segment::max_size();
+      for (unsigned i = 0, sz = seg_nof_objs; i != sz; ++i) {
+        seg->objects[i].obj     = std::move(objects_[offset + i]);
+        seg->objects[i].seg_idx = seg_idx;
+        seg->objects[i].obj_idx = i;
+      }
+      return seg;
+    })
+  {
+  }
+
+  /// Creates an object pool with capacity equal to \c nof_objects.
+  template <typename... Args>
+  bounded_rc_object_pool(unsigned nof_objects, Args... args) :
+    impl(nof_objects, [this, args...](unsigned seg_idx, unsigned seg_nof_objs) {
+      auto seg = std::make_unique<segment>(*this, seg_nof_objs);
+      for (unsigned i = 0, sz = seg_nof_objs; i != sz; ++i) {
+        seg->objects[i].obj     = std::make_unique<T>(args...);
+        seg->objects[i].seg_idx = seg_idx;
+        seg->objects[i].obj_idx = i;
+      }
+      return seg;
+    })
+  {
+  }
+
+  /// \brief Retrieves a RAII pointer to an object of the pool.
+  ptr get()
+  {
+    auto [seg_idx, obj_idx] = impl.get();
+    if (seg_idx == static_cast<unsigned>(-1)) {
+      // No free objects available.
+      return ptr{nullptr};
+    }
+    return ptr{intrusive_ptr<obj_control_block>{impl.segments[seg_idx]->objects + obj_idx}};
   }
 
   /// Maximum number of objects that can be allocated in the pool.
