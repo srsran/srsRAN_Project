@@ -122,10 +122,12 @@ void pdcp_entity_tx::restart_pdu_processing()
 void pdcp_entity_tx::begin_buffering()
 {
   buffering = true;
+  logger.log_debug("Begin SDU buffering");
 }
 
 void pdcp_entity_tx::end_buffering()
 {
+  logger.log_debug("End SDU buffering");
   buffering = false;
   while (not sdu_buffer.empty()) {
     byte_buffer buf = std::move(sdu_buffer.top());
@@ -169,7 +171,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
       }
       return;
     }
-    logger.log_debug("Buffered SDU. Entity is paused.");
+    logger.log_debug("Buffered SDU. Entity is paused. buffer_size={}", sdu_buffer.size());
     return;
   }
 

@@ -661,11 +661,13 @@ TEST_P(pdcp_tx_test, tx_buffer)
 
   FLUSH_AND_ASSERT_EQ(0, test_frame.pdu_queue.size());
   pdcp_tx->reestablish(sec_cfg);
+  wait_pending_crypto();
+  worker.run_pending_tasks();
   pdcp_tx->end_buffering();
   wait_pending_crypto();
   worker.run_pending_tasks();
-  FLUSH_AND_ASSERT_EQ(5, test_frame.pdu_queue.size());
   FLUSH_AND_ASSERT_EQ(5, test_frame.retx_queue.size());
+  FLUSH_AND_ASSERT_EQ(5, test_frame.pdu_queue.size());
 }
 
 ///////////////////////////////////////////////////////////////////
