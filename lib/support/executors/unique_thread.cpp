@@ -138,6 +138,9 @@ public:
   /// Called on every thread creation.
   void on_thread_creation()
   {
+    // Pre-initialize thread_local variable storing the thread name.
+    this_thread_name();
+
     // Note: we use index-based loop because list of observers may increase (never decrease) throughout the loop.
     std::unique_lock<std::mutex> lock(mutex);
     for (unsigned i = 0; i < observers.size(); ++i) {
