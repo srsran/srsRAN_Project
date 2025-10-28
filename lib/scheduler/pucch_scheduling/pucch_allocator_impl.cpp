@@ -32,6 +32,7 @@ pucch_allocator_impl::pucch_allocator_impl(const cell_configuration& cell_cfg_,
   cell_cfg(cell_cfg_),
   max_pucch_grants_per_slot(max_pucchs_per_slot),
   max_ul_grants_per_slot(max_ul_grants_per_slot_),
+  resource_manager(cell_cfg_),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
 }
@@ -574,11 +575,6 @@ std::optional<pucch_allocator_impl::pucch_res_alloc_cfg>
 pucch_allocator_impl::alloc_pucch_common_res_harq(const cell_slot_resource_allocator& pucch_alloc,
                                                   const dci_context_information&      dci_info)
 {
-  // As per Section 9.2.1, TS 38.213, this is the max value of \f$\Delta_{PRI}\f$, which is a 3-bit unsigned.
-  static constexpr unsigned max_d_pri = 7;
-  // As per Section 9.2.1, TS 38.213, r_pucch can take values within {0,...,15}.
-  static constexpr unsigned r_pucch_invalid = 16;
-
   // Get the parameter N_bwp_size, which is the Initial UL BWP size in PRBs, as per TS 38.213, Section 9.2.1.
   const unsigned size_ul_bwp = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
 
@@ -599,21 +595,11 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(const cell_slot_resource_alloc
 
   const bwp_configuration& init_ul_bwp_param = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
 
-  pucch_res_alloc_cfg candidate_pucch_resource{};
-  // Initialize r_pucch candidate with an invalid value. This is to verify whether an available resource exists at the
-  // end of the loop.
-  unsigned candidate_r_pucch = r_pucch_invalid;
-  // Flag to check if the backup resource (i.e., an available resource that collides with the grid) has been
-  // initialized.
-  bool backup_res_initialized = false;
-
-  // The scope of the loop below is to allocate the PUCCH common resource while pursuing the following objectives:
-  // - Avoiding the common PUCCH resources that are already allocated to other UEs. If there is no resource available,
-  // then the allocation fails.
-  // - Trying to allocate the common PUCCH resource in grid REs that are free. Should this not be possible (as the
-  // UE-specific PUCCH guardbands can take quite some space on the band), the PUCCH allocator will choose the first
-  // available common PUCCH resource (i.e., not used by other UEs), even though this will result in collision with the
-  // grid.
+  // As per Section 9.2.1, TS 38.213, this is the max value of \f$\Delta_{PRI}\f$, which is a 3-bit unsigned.
+  static constexpr unsigned max_d_pri = 7;
+  // The scope of the loop below is to allocate a PUCCH common resource that meets the following conditions:
+  // - Not allocated to other UEs.
+  // - Does not collide with any UL grants in the same slot.
   //
   // Loop over the values of \Delta_PRI to find an available common PUCCH resource that possibly doesn't collide with
   // the UL grid.
@@ -622,6 +608,7 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(const cell_slot_resource_alloc
     const unsigned r_pucch = get_pucch_default_resource_index(start_cce_idx, nof_coreset_cces, d_pri);
     srsran_assert(r_pucch < 16, "r_PUCCH must be less than 16");
 
+    // Look for an available PUCCH common resource.
     if (not resource_manager.is_harq_common_resource_available(pucch_alloc.slot, r_pucch)) {
       continue;
     }
@@ -645,36 +632,17 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(const cell_slot_resource_alloc
 
     // If both 1st and 2nd hop grants do not collide with any UL grants, then the allocator chooses this PUCCH
     // resource.
-    //
     std::array<grant_info, 2> grants{first_hop_grant, second_hop_grant};
     if (not check_ul_collisions(grants, pucch_alloc.result.ul, cell_cfg, true)) {
-      // Set outputs before exiting the function.
-      candidate_pucch_resource.first_hop_res       = first_hop_grant;
-      candidate_pucch_resource.cs                  = cyclic_shift;
-      candidate_pucch_resource.format              = pucch_res.format;
-      candidate_pucch_resource.second_hop_res      = second_hop_grant;
-      candidate_pucch_resource.pucch_res_indicator = d_pri;
       resource_manager.reserve_harq_common_resource(pucch_alloc.slot, r_pucch);
-      return std::optional<pucch_allocator_impl::pucch_res_alloc_cfg>{candidate_pucch_resource};
+      return pucch_res_alloc_cfg{
+          .pucch_res_indicator = d_pri,
+          .first_hop_res       = first_hop_grant,
+          .second_hop_res      = second_hop_grant,
+          .cs                  = cyclic_shift,
+          .format              = pucch_res.format,
+      };
     }
-
-    // Save the first available common PUCCH resource. If no other resource not colliding with the grid, then we
-    // allocate this back-up resource at the end of the loop.
-    if (not backup_res_initialized) {
-      backup_res_initialized                       = true;
-      candidate_pucch_resource.first_hop_res       = first_hop_grant;
-      candidate_pucch_resource.cs                  = cyclic_shift;
-      candidate_pucch_resource.format              = pucch_res.format;
-      candidate_pucch_resource.second_hop_res      = second_hop_grant;
-      candidate_pucch_resource.pucch_res_indicator = d_pri;
-      candidate_r_pucch                            = r_pucch;
-    }
-  }
-
-  // This is the case in which the only common PUCCH resources available collides with the grid.
-  if (candidate_r_pucch < r_pucch_invalid) {
-    resource_manager.reserve_harq_common_resource(pucch_alloc.slot, candidate_r_pucch);
-    return std::optional<pucch_allocator_impl::pucch_res_alloc_cfg>{candidate_pucch_resource};
   }
 
   // This is the case in which there exists no available resource.
@@ -826,9 +794,6 @@ pucch_allocator_impl::find_common_and_ded_harq_res_available(cell_slot_resource_
   const unsigned nof_coreset_cces = dci_info.coreset_cfg->get_nof_cces();
   const unsigned start_cce_idx    = dci_info.cces.ncce;
 
-  // As per Section 9.2.1, TS 38.213, this is the max value of \f$\Delta_{PRI}\f$, which is a 3-bit unsigned.
-  static constexpr unsigned max_d_pri = 7;
-
   // Get the parameter N_bwp_size, which is the Initial UL BWP size in PRBs, as per TS 38.213, Section 9.2.1.
   const unsigned size_ul_bwp = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
 
@@ -836,6 +801,8 @@ pucch_allocator_impl::find_common_and_ded_harq_res_available(cell_slot_resource_
   pucch_default_resource pucch_res = get_pucch_default_resource(
       cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common, size_ul_bwp);
 
+  // As per Section 9.2.1, TS 38.213, this is the max value of \f$\Delta_{PRI}\f$, which is a 3-bit unsigned.
+  static constexpr unsigned max_d_pri = 7;
   for (unsigned d_pri = 0; d_pri != max_d_pri + 1; ++d_pri) {
     // The PUCCH allocation may result in a temporary reservation of PUCCH resources, which need to be released in
     // case of failure or in case the multiplexing results in a different final PUCCH resource. If we don't reset the
@@ -853,10 +820,8 @@ pucch_allocator_impl::find_common_and_ded_harq_res_available(cell_slot_resource_
       continue;
     }
 
-    const pucch_config&     pucch_cfg = ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value();
-    std::optional<unsigned> pucch_res_ind;
-
     // Look for an available PUCCH dedicated resource with the same PUCCH resource indicator as the common's.
+    const pucch_config&   pucch_cfg = ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value();
     const pucch_resource* ded_resource =
         resource_manager.reserve_harq_set_0_resource_by_res_indicator(pucch_alloc.slot, rnti, d_pri, pucch_cfg);
     if (ded_resource == nullptr) {
@@ -877,18 +842,20 @@ pucch_allocator_impl::find_common_and_ded_harq_res_available(cell_slot_resource_
     const auto common_grants =
         get_common_pucch_grants(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, pucch_res, r_pucch);
     // The PUCCH resource indicator must match the one used for the common resource.
-    pucch_res_ind =
+    std::optional<unsigned> d_pri_ded =
         multiplex_and_allocate_pucch(pucch_alloc, bits_for_uci, existing_grants, ue_cell_cfg, d_pri, common_grants);
 
-    // In the case of PUCCH Format 0, the PUCCH (dedicated) resources that can be used when there are SR/CSI
+    // In the case of Formats 0 and 2, the PUCCH (dedicated) resources that can be used when there are SR/CSI
     // pre-allocated are constrained in the PUCCH resource indicator. Therefore, the \ref multiplex_and_allocate_pucch
     // function might not preserve the requested PUCCH resource indicator \ref d_pri.
-    const bool is_format0 = pucch_cfg.pucch_res_list.front().format == pucch_format::FORMAT_0;
-    if (not pucch_res_ind.has_value() or (is_format0 and pucch_res_ind.value() != d_pri)) {
+    const bool is_f0_and_f2 = pucch_cfg.pucch_res_list.front().format == pucch_format::FORMAT_0 and
+                              pucch_cfg.pucch_res_list.back().format == pucch_format::FORMAT_2;
+    if (not d_pri_ded.has_value() or (is_f0_and_f2 and d_pri_ded.value() != d_pri)) {
       resource_manager.cancel_last_ue_res_reservations(pucch_alloc.slot, rnti, ue_cell_cfg);
       continue;
     }
-    srsran_assert(pucch_res_ind.value() == d_pri, "PUCCH resource indicator must match the one given as an input");
+    srsran_assert(d_pri_ded.value() == d_pri, "The PUCCH resource indicator must match for common and ded. resources");
+    resource_manager.reserve_harq_common_resource(pucch_alloc.slot, r_pucch);
 
     return pucch_common_params{.pucch_res_indicator = d_pri, .r_pucch = r_pucch};
   };
@@ -979,10 +946,9 @@ void pucch_allocator_impl::allocate_csi_grant(cell_slot_resource_allocator& pucc
   }
 
   // Get the F2/F3/F4 resource specific for with CSI.
-  const pucch_resource* csi_f2_f3_f4_res =
-      resource_manager.reserve_csi_resource(pucch_slot_alloc.slot, crnti, ue_cell_cfg);
+  const pucch_resource* csi_res = resource_manager.reserve_csi_resource(pucch_slot_alloc.slot, crnti, ue_cell_cfg);
 
-  if (csi_f2_f3_f4_res == nullptr) {
+  if (csi_res == nullptr) {
     logger.warning("rnti={}: CSI could not be allocated for slot={}. Cause: PUCCH F2/F3/F4 resource not available",
                    crnti,
                    pucch_slot_alloc.slot);
@@ -991,8 +957,7 @@ void pucch_allocator_impl::allocate_csi_grant(cell_slot_resource_allocator& pucc
   // When this function is called, it means that there are no SR grants to be multiplexed with CSI; thus, the CSI bits
   // are the only UCI bits to be considered.
   // It's the validator that should make sure the CSI bits fit into a PUCCH Format 2/3/4 resource.
-  const unsigned max_payload =
-      ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value().get_max_payload(csi_f2_f3_f4_res->format);
+  const unsigned max_payload = ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value().get_max_payload(csi_res->format);
   srsran_assert(csi_part1_bits <= max_payload,
                 "rnti={}: PUCCH F2/F3/F4 max payload {} is insufficient for {} candidate UCI bits",
                 crnti,
@@ -1004,13 +969,13 @@ void pucch_allocator_impl::allocate_csi_grant(cell_slot_resource_allocator& pucc
   // No HARQ-ACK bits.
   static constexpr unsigned    harq_ack_bits_only_csi = 0U;
   static constexpr sr_nof_bits sr_bits_only_csi       = sr_nof_bits::no_sr;
-  switch (csi_f2_f3_f4_res->format) {
+  switch (csi_res->format) {
     case pucch_format::FORMAT_2:
       fill_pucch_format2_grant(pucch_pdu,
                                crnti,
-                               *csi_f2_f3_f4_res,
+                               *csi_res,
                                ue_cell_cfg,
-                               std::get<pucch_format_2_3_cfg>(csi_f2_f3_f4_res->format_params).nof_prbs,
+                               std::get<pucch_format_2_3_cfg>(csi_res->format_params).nof_prbs,
                                harq_ack_bits_only_csi,
                                sr_bits_only_csi,
                                csi_part1_bits);
@@ -1018,28 +983,28 @@ void pucch_allocator_impl::allocate_csi_grant(cell_slot_resource_allocator& pucc
     case pucch_format::FORMAT_3:
       fill_pucch_format3_grant(pucch_pdu,
                                crnti,
-                               *csi_f2_f3_f4_res,
+                               *csi_res,
                                ue_cell_cfg,
-                               std::get<pucch_format_2_3_cfg>(csi_f2_f3_f4_res->format_params).nof_prbs,
+                               std::get<pucch_format_2_3_cfg>(csi_res->format_params).nof_prbs,
                                harq_ack_bits_only_csi,
                                sr_bits_only_csi,
                                csi_part1_bits);
       break;
     case pucch_format::FORMAT_4:
       fill_pucch_format4_grant(
-          pucch_pdu, crnti, *csi_f2_f3_f4_res, ue_cell_cfg, harq_ack_bits_only_csi, sr_bits_only_csi, csi_part1_bits);
+          pucch_pdu, crnti, *csi_res, ue_cell_cfg, harq_ack_bits_only_csi, sr_bits_only_csi, csi_part1_bits);
       break;
     default:
       srsran_assertion_failure("PUCCH resource for CSI must be of Formats 2, 3 or 4");
   }
 
   // TODO: unmark on multiplexing (take into account CS/OCC).
-  mark_pucch_in_resource_grid(pucch_slot_alloc, *csi_f2_f3_f4_res, ue_cell_cfg);
+  mark_pucch_in_resource_grid(pucch_slot_alloc, *csi_res, ue_cell_cfg);
 
   // Save the info in the scheduler list of PUCCH grants.
   auto& grants = slots_ctx[sl_tx.to_uint()].ue_grants_list.emplace_back(ue_grants{.rnti = crnti});
   grants.pucch_grants.csi_resource.emplace(pucch_grant{.type = pucch_grant_type::csi});
-  grants.pucch_grants.csi_resource.value().set_res_config(*csi_f2_f3_f4_res);
+  grants.pucch_grants.csi_resource.value().set_res_config(*csi_res);
   grants.pucch_grants.csi_resource.value().bits.csi_part1_nof_bits = csi_part1_bits;
 }
 

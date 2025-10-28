@@ -54,10 +54,11 @@ TEST(pucch_collision_manager_test, common_resources_dont_collide_with_each_other
   pucch_collision_manager col_manager(cell_cfg);
 
   slot_point sl(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, 0);
+  col_manager.slot_indication(sl);
   for (unsigned r_pucch = 0; r_pucch < pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES; ++r_pucch) {
-    ASSERT_FALSE(col_manager.does_common_collide(sl, r_pucch));
-    col_manager.allocate_common(sl, r_pucch);
-    ASSERT_TRUE(col_manager.does_common_collide(sl, r_pucch));
+    ASSERT_TRUE(col_manager.can_alloc_common(sl, r_pucch));
+    col_manager.alloc_common(sl, r_pucch);
+    ASSERT_FALSE(col_manager.can_alloc_common(sl, r_pucch));
   }
 }
 
@@ -78,17 +79,17 @@ TEST(pucch_collision_manager_test, resources_of_different_formats_collide_if_the
 
   // Common Res 2..7 and 10..15 don't overlap with the dedicated resources in time/freq, so they don't collide.
   for (unsigned r_pucch = 2; r_pucch != 8; ++r_pucch) {
-    ASSERT_FALSE(col_manager.check_common_and_ded_collision(r_pucch, 0));
+    ASSERT_FALSE(col_manager.check_common_to_ded_collision(r_pucch, 0));
   }
   for (unsigned r_pucch = 10; r_pucch != 16; ++r_pucch) {
-    ASSERT_FALSE(col_manager.check_common_and_ded_collision(r_pucch, 0));
+    ASSERT_FALSE(col_manager.check_common_to_ded_collision(r_pucch, 0));
   }
 
   // Common Res 0, 1, 8, and 9 overlap with the dedicated resource in time/freq, so they collide.
-  ASSERT_TRUE(col_manager.check_common_and_ded_collision(0, 0));
-  ASSERT_TRUE(col_manager.check_common_and_ded_collision(1, 0));
-  ASSERT_TRUE(col_manager.check_common_and_ded_collision(8, 0));
-  ASSERT_TRUE(col_manager.check_common_and_ded_collision(9, 0));
+  ASSERT_TRUE(col_manager.check_common_to_ded_collision(0, 0));
+  ASSERT_TRUE(col_manager.check_common_to_ded_collision(1, 0));
+  ASSERT_TRUE(col_manager.check_common_to_ded_collision(8, 0));
+  ASSERT_TRUE(col_manager.check_common_to_ded_collision(9, 0));
 }
 
 TEST(pucch_collision_manager_test, multiplexed_resources_collide_if_different_time_freq_grants)
@@ -108,25 +109,25 @@ TEST(pucch_collision_manager_test, multiplexed_resources_collide_if_different_ti
 
   // Common Res 2..7 and 10..15 don't overlap with the dedicated resources in time/freq, so they don't collide.
   for (unsigned r_pucch = 2; r_pucch != 8; ++r_pucch) {
-    ASSERT_FALSE(col_manager.check_common_and_ded_collision(r_pucch, 0));
+    ASSERT_FALSE(col_manager.check_common_to_ded_collision(r_pucch, 0));
   }
   for (unsigned r_pucch = 10; r_pucch != 16; ++r_pucch) {
-    ASSERT_FALSE(col_manager.check_common_and_ded_collision(r_pucch, 0));
+    ASSERT_FALSE(col_manager.check_common_to_ded_collision(r_pucch, 0));
   }
 
   // Test the collisions between Dedicated Res 0 and the common resources that overlap in time/freq.
   // Common Res 0 overlaps in time/freq and has the same mux index.
-  ASSERT_TRUE(col_manager.check_common_and_ded_collision(0, 0));
+  ASSERT_TRUE(col_manager.check_common_to_ded_collision(0, 0));
   // Common Res 1 overlaps in time/freq, but only for the first hop, and since it has a different mux index and the
   // sequences will be aligned for the colliding REs, they do NOT collide.
   // [Implementation defined] Our logic is not sophisticated enough to check this, and will assume they DO collide.
-  ASSERT_TRUE(col_manager.check_common_and_ded_collision(1, 0));
+  ASSERT_TRUE(col_manager.check_common_to_ded_collision(1, 0));
   // Common Res 8 overlaps in time/freq and has the same mux index.
-  ASSERT_TRUE(col_manager.check_common_and_ded_collision(8, 0));
+  ASSERT_TRUE(col_manager.check_common_to_ded_collision(8, 0));
   // Common Res 9 overlaps in time/freq for the second hop, and since it has a different mux index and the sequences
   // will be aligned for the colliding REs, they do NOT collide.
   // [Implementation defined] Our logic is not sophisticated enough to check this, and will assume they DO collide.
-  ASSERT_TRUE(col_manager.check_common_and_ded_collision(9, 0));
+  ASSERT_TRUE(col_manager.check_common_to_ded_collision(9, 0));
 }
 
 TEST(pucch_collision_manager_test, f0_multiplexed_resources_dont_collide)
@@ -148,7 +149,7 @@ TEST(pucch_collision_manager_test, f0_multiplexed_resources_dont_collide)
 
   for (unsigned i = 0; i != ded_res_list.size(); ++i) {
     for (unsigned j = i + 1; j != ded_res_list.size(); ++j) {
-      ASSERT_FALSE(col_manager.check_ded_and_ded_collision(i, j));
+      ASSERT_FALSE(col_manager.check_ded_to_ded_collision(i, j));
     }
   }
 }
@@ -174,7 +175,7 @@ TEST(pucch_collision_manager_test, f1_multiplexed_resources_dont_collide)
 
   for (unsigned i = 0; i != ded_res_list.size(); ++i) {
     for (unsigned j = i + 1; j != ded_res_list.size(); ++j) {
-      ASSERT_FALSE(col_manager.check_ded_and_ded_collision(i, j));
+      ASSERT_FALSE(col_manager.check_ded_to_ded_collision(i, j));
     }
   }
 }
@@ -199,7 +200,7 @@ TEST(pucch_collision_manager_test, f4_multiplexed_resources_dont_collide)
 
   for (unsigned i = 0; i != ded_res_list.size(); ++i) {
     for (unsigned j = i + 1; j != ded_res_list.size(); ++j) {
-      ASSERT_FALSE(col_manager.check_ded_and_ded_collision(i, j));
+      ASSERT_FALSE(col_manager.check_ded_to_ded_collision(i, j));
     }
   }
 }

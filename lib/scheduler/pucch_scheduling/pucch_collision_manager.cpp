@@ -160,7 +160,7 @@ pucch_collision_manager::pucch_collision_manager(const cell_configuration& cell_
 
   // Collect all resources (common + dedicated).
   static_vector<resource_info, max_nof_cell_resources> all_resources;
-  for (unsigned r_pucch = 0; r_pucch < nof_common_res; ++r_pucch) {
+  for (unsigned r_pucch = 0; r_pucch != nof_common_res; ++r_pucch) {
     all_resources.push_back(resource_info(common_default_res, r_pucch, size_ul_bwp));
   }
   for (const auto& res : cell_cfg.ded_pucch_resources) {
@@ -184,8 +184,13 @@ pucch_collision_manager::pucch_collision_manager(const cell_configuration& cell_
 
 void pucch_collision_manager::slot_indication(slot_point sl_tx)
 {
+  // If last_sl_ind is not valid (not initialized), then the check sl_tx == last_sl_ind + 1 does not matter.
+  srsran_sanity_check(not last_sl_ind.valid() or sl_tx == last_sl_ind + 1, "Detected a skipped slot");
+
   // Clear previous slot context.
   slots_ctx[(sl_tx - 1).to_uint()].current_state.reset();
+  // Update last slot indication.
+  last_sl_ind = sl_tx;
 }
 
 void pucch_collision_manager::stop()
@@ -194,9 +199,10 @@ void pucch_collision_manager::stop()
   for (auto& ctx : slots_ctx) {
     ctx.current_state.reset();
   }
+  last_sl_ind = {};
 }
 
-bool pucch_collision_manager::check_ded_and_ded_collision(unsigned cell_res_id1, unsigned cell_res_id2) const
+bool pucch_collision_manager::check_ded_to_ded_collision(unsigned cell_res_id1, unsigned cell_res_id2) const
 {
   srsran_assert(cell_res_id1 < cell_cfg.ded_pucch_resources.size(),
                 "cell_res_id1 ({}) is out of range ({})",
@@ -210,7 +216,7 @@ bool pucch_collision_manager::check_ded_and_ded_collision(unsigned cell_res_id1,
   return collision_matrix[nof_common_res + cell_res_id1].test(nof_common_res + cell_res_id2);
 }
 
-bool pucch_collision_manager::check_common_and_ded_collision(r_pucch_t r_pucch, unsigned cell_res_id) const
+bool pucch_collision_manager::check_common_to_ded_collision(r_pucch_t r_pucch, unsigned cell_res_id) const
 {
   srsran_assert(cell_res_id < cell_cfg.ded_pucch_resources.size(),
                 "cell_res_id ({}) is out of range ({})",
@@ -220,34 +226,63 @@ bool pucch_collision_manager::check_common_and_ded_collision(r_pucch_t r_pucch, 
   return collision_matrix[r_pucch.value()].test(nof_common_res + cell_res_id);
 }
 
-bool pucch_collision_manager::does_common_collide(slot_point sl, r_pucch_t r_pucch) const
+bool pucch_collision_manager::can_alloc_common(slot_point sl, r_pucch_t r_pucch) const
 {
+  srsran_sanity_check(sl < last_sl_ind + cell_resource_allocator::RING_ALLOCATOR_SIZE,
+                      "PUCCH resource ring-buffer accessed too far into the future");
+
   const auto& ctx = slots_ctx[sl.to_uint()];
   const auto& row = collision_matrix[r_pucch.value()];
 
-  return (row & ctx.current_state).any();
+  return (row & ctx.current_state).none();
 }
 
-bool pucch_collision_manager::does_ded_collide(slot_point sl, unsigned cell_res_id) const
+bool pucch_collision_manager::can_alloc_ded(slot_point sl, unsigned cell_res_id) const
 {
+  srsran_sanity_check(sl < last_sl_ind + cell_resource_allocator::RING_ALLOCATOR_SIZE,
+                      "PUCCH resource ring-buffer accessed too far into the future");
   srsran_assert(cell_res_id < cell_cfg.ded_pucch_resources.size(), "cell_res_id out of range");
 
   const auto& ctx = slots_ctx[sl.to_uint()];
   const auto& row = collision_matrix[nof_common_res + cell_res_id];
 
-  return (row & ctx.current_state).any();
+  return (row & ctx.current_state).none();
 }
 
-void pucch_collision_manager::allocate_common(slot_point sl, r_pucch_t r_pucch)
+void pucch_collision_manager::alloc_common(slot_point sl, r_pucch_t r_pucch)
 {
+  srsran_sanity_check(sl < last_sl_ind + cell_resource_allocator::RING_ALLOCATOR_SIZE,
+                      "PUCCH resource ring-buffer accessed too far into the future");
+
   auto& ctx = slots_ctx[sl.to_uint()];
   ctx.current_state.set(r_pucch.value());
 }
 
-void pucch_collision_manager::allocate_ded(slot_point sl, unsigned cell_res_id)
+void pucch_collision_manager::alloc_ded(slot_point sl, unsigned cell_res_id)
 {
+  srsran_sanity_check(sl < last_sl_ind + cell_resource_allocator::RING_ALLOCATOR_SIZE,
+                      "PUCCH resource ring-buffer accessed too far into the future");
   srsran_assert(cell_res_id < cell_cfg.ded_pucch_resources.size(), "cell_res_id out of range");
 
   auto& ctx = slots_ctx[sl.to_uint()];
   ctx.current_state.set(nof_common_res + cell_res_id);
+}
+
+void pucch_collision_manager::free_common(slot_point sl, r_pucch_t r_pucch)
+{
+  srsran_sanity_check(sl < last_sl_ind + cell_resource_allocator::RING_ALLOCATOR_SIZE,
+                      "PUCCH resource ring-buffer accessed too far into the future");
+
+  auto& ctx = slots_ctx[sl.to_uint()];
+  ctx.current_state.reset(r_pucch.value());
+}
+
+void pucch_collision_manager::free_ded(slot_point sl, unsigned cell_res_id)
+{
+  srsran_sanity_check(sl < last_sl_ind + cell_resource_allocator::RING_ALLOCATOR_SIZE,
+                      "PUCCH resource ring-buffer accessed too far into the future");
+  srsran_assert(cell_res_id < cell_cfg.ded_pucch_resources.size(), "cell_res_id out of range");
+
+  auto& ctx = slots_ctx[sl.to_uint()];
+  ctx.current_state.reset(nof_common_res + cell_res_id);
 }

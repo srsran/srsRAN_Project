@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../config/ue_configuration.h"
+#include "pucch_collision_manager.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/scheduler/resource_grid_util.h"
 
@@ -40,7 +41,7 @@ enum class pucch_resource_usage { NOT_USED = 0, HARQ_SET_0, HARQ_SET_1, SR, CSI 
 class pucch_resource_manager
 {
 public:
-  pucch_resource_manager();
+  pucch_resource_manager(const cell_configuration& cell_cfg_);
 
   /// Reset all resources to "unused".
   void slot_indication(slot_point slot_tx);
@@ -83,15 +84,15 @@ public:
                                                                      unsigned            d_pri,
                                                                      const pucch_config& pucch_cfg);
 
+  /// \brief Reserve the UE's SR PUCCH resource, if available.
+  /// \return A pointer to the resource configuration, if available. Otherwise, \c nullptr.
+  const pucch_resource* reserve_sr_resource(slot_point slot_sr, rnti_t crnti, const pucch_config& pucch_cfg);
+
   /// \brief Reserve the UE's CSI PUCCH resource, if available.
   /// \remark If SR multiplexing is enabled, this resource can be used for CSI + SR.
   /// \return A pointer to the resource configuration, if available. Otherwise, \c nullptr.
   const pucch_resource*
   reserve_csi_resource(slot_point slot_csi, rnti_t crnti, const ue_cell_configuration& ue_cell_cfg);
-
-  /// \brief Reserve the UE's SR PUCCH resource, if available.
-  /// \return A pointer to the resource configuration, if available. Otherwise, \c nullptr.
-  const pucch_resource* reserve_sr_resource(slot_point slot_sr, rnti_t crnti, const pucch_config& pucch_cfg);
 
   /// \brief Release PUCCH resource from Resource Set ID 0 from being allocated to a given UE.
   /// \param[in] slot_harq slot for which the PUCCH resource was scheduled.
@@ -141,20 +142,11 @@ private:
   static const size_t RES_MANAGER_RING_BUFFER_SIZE =
       get_allocator_ring_size_gt_min(SCHEDULER_MAX_K0 + SCHEDULER_MAX_K1 + NTN_CELL_SPECIFIC_KOFFSET_MAX);
 
-  // Tracks usage of PUCCH resources.
-  struct resource_tracker {
-    rnti_t rnti;
-  };
-
-  using pucch_res_record_array  = std::array<resource_tracker, pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES>;
-  using common_res_record_array = std::array<bool, pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES>;
-
   // Record for the RNTI and PUCCH resource indicator used for a given resource at a given slot; this information is
   // used to keep track of which resources are available and which UE is using them. This information is preserved over
   // the slots.
-  struct rnti_pucch_res_id_slot_record {
-    common_res_record_array used_common_resources;
-    pucch_res_record_array  ues_using_pucch_res;
+  struct slot_context {
+    static_vector<rnti_t, pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES> ues_using_pucch_res;
   };
 
   // Keeps track of which PUCCH cell resources have been allocated to a UE at the current slot.
@@ -168,9 +160,6 @@ private:
     bool   csi        = false;
     bool   sr         = false;
   };
-
-  // Returns the resource manager allocation record for a given slot.
-  rnti_pucch_res_id_slot_record& get_slot_resource_counter(slot_point sl);
 
   // Helper functions that implement the public interface methods.
   pucch_harq_resource_alloc_record reserve_next_harq_res_available(slot_point          slot_harq,
@@ -189,8 +178,10 @@ private:
                              const pucch_config& pucch_cfg,
                              pucch_res_set_idx   res_set_idx);
 
-  // Ring buffer of rnti_pucch_res_id_slot_record for PUCCH resources.
-  std::array<rnti_pucch_res_id_slot_record, RES_MANAGER_RING_BUFFER_SIZE> resource_slots;
+  pucch_collision_manager collision_manager;
+
+  // Ring buffer of slot contexts to keep track of PUCCH resource usage in recent slots.
+  circular_array<slot_context, cell_resource_allocator::RING_ALLOCATOR_SIZE> slots_ctx;
 
   current_slot_ue_allocations last_ue_allocations;
 

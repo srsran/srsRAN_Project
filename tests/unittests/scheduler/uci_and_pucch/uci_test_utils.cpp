@@ -9,6 +9,7 @@
  */
 
 #include "uci_test_utils.h"
+#include "srsran/ran/du_types.h"
 #include "srsran/scheduler/config/csi_helper.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 
@@ -161,6 +162,69 @@ test_bench::test_bench(const test_bench_params& params,
         params.pucch_res_common, params.is_tdd, params.cfg_for_mimo_4x4 ? 4 : 1);
     cfg_pool.add_cell(cell_req);
     cell_cfg_list.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(expert_cfg, cell_req));
+
+    cell_config_builder_params cfg_params{};
+    cfg_params.csi_rs_enabled  = true;
+    cfg_params.scs_common      = params.is_tdd ? subcarrier_spacing::kHz30 : subcarrier_spacing::kHz15;
+    cfg_params.dl_f_ref_arfcn  = params.is_tdd ? 520000U : 365000U;
+    auto& cell_pucch_resources = cell_cfg_list[to_du_cell_index(0)]->ded_pucch_resources;
+
+    cell_pucch_resources = test_helpers::make_test_cell_dedicated_pucch_resources(cfg_params);
+
+    if (params.use_format_0 or params.set1_format != pucch_format::FORMAT_2 or params.pucch_f2_f3_more_prbs) {
+      // Generate the cell resource list through the DU PUCCH builder.
+      pucch_builder_params pucch_params{};
+      if (params.use_format_0) {
+        pucch_params.f0_or_f1_params.emplace<pucch_f0_params>();
+        pucch_params.nof_ue_pucch_f0_or_f1_res_harq       = 6;
+        pucch_params.nof_ue_pucch_f2_or_f3_or_f4_res_harq = 6;
+      }
+      switch (params.set1_format) {
+        case pucch_format::FORMAT_2:
+          break;
+        case pucch_format::FORMAT_3:
+          pucch_params.f2_or_f3_or_f4_params.emplace<pucch_f3_params>();
+          break;
+        case pucch_format::FORMAT_4: {
+          auto& f4_params         = pucch_params.f2_or_f3_or_f4_params.emplace<pucch_f4_params>();
+          f4_params.occ_supported = true;
+        } break;
+        default:
+          srsran_assertion_failure("Invalid PUCCH Format for Set Id 1 (valid values are 2, 3 or 4)");
+      }
+
+      cell_pucch_resources = config_helpers::generate_cell_pucch_res_list(
+          pucch_params.nof_ue_pucch_f0_or_f1_res_harq.to_uint() * pucch_params.nof_cell_harq_pucch_res_sets +
+              pucch_params.nof_sr_resources,
+          pucch_params.nof_ue_pucch_f2_or_f3_or_f4_res_harq.to_uint() * pucch_params.nof_cell_harq_pucch_res_sets +
+              pucch_params.nof_csi_resources,
+          pucch_params.f0_or_f1_params,
+          pucch_params.f2_or_f3_or_f4_params,
+          cell_cfg_list[to_du_cell_index(0)]->ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
+          pucch_params.max_nof_symbols);
+    }
+
+    if (params.pucch_f2_f3_more_prbs) {
+      static constexpr unsigned pucch_f2_f3_nof_prbs = 3U;
+      for (auto& pucch_res : cell_pucch_resources) {
+        if (pucch_res.format == params.set1_format and
+            std::holds_alternative<pucch_format_2_3_cfg>(pucch_res.format_params)) {
+          std::get<pucch_format_2_3_cfg>(pucch_res.format_params).nof_prbs = pucch_f2_f3_nof_prbs;
+        }
+      }
+    }
+
+    // TODO: extend for PUCCH Formats 3/4
+    if (params.cfg_for_mimo_4x4) {
+      if (params.pucch_f2_f3_more_prbs) {
+        for (auto& res_it : cell_pucch_resources) {
+          if (res_it.format == set1_format and std::holds_alternative<pucch_format_2_3_cfg>(res_it.format_params)) {
+            std::get<pucch_format_2_3_cfg>(res_it.format_params).nof_prbs = 2U;
+          }
+        }
+      }
+    }
+
     return *cell_cfg_list[to_du_cell_index(0)];
   }()},
   cell_harqs{MAX_NOF_DU_UES, MAX_NOF_HARQS, std::make_unique<dummy_harq_timeout_notifier>()},

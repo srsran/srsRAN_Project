@@ -9,6 +9,8 @@
  */
 
 #include "pucch_resource_manager.h"
+#include "pucch_collision_manager.h"
+#include "srsran/adt/static_vector.h"
 
 using namespace srsran;
 
@@ -16,7 +18,7 @@ using namespace srsran;
 
 /////////////   Static function   /////////////
 
-static int get_pucch_res_idx_for_csi(const ue_cell_configuration& ue_cell_cfg)
+static int get_csi_cell_res_id(const ue_cell_configuration& ue_cell_cfg)
 {
   // We assume we use only 1 CSI report.
   const unsigned csi_report_cfg_idx = 0;
@@ -39,18 +41,11 @@ static int get_pucch_res_idx_for_csi(const ue_cell_configuration& ue_cell_cfg)
 
 /////////////   Public methods   /////////////
 
-pucch_resource_manager::pucch_resource_manager()
+pucch_resource_manager::pucch_resource_manager(const cell_configuration& cell_cfg_) :
+  collision_manager(cell_cfg_),
+  slots_ctx({static_vector<rnti_t, pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES>(cell_cfg_.ded_pucch_resources.size(),
+                                                                                  rnti_t::INVALID_RNTI)})
 {
-  auto reset_slot_record = [](rnti_pucch_res_id_slot_record& res_counter) {
-    for (auto& ue_rec : res_counter.ues_using_pucch_res) {
-      ue_rec.rnti = rnti_t::INVALID_RNTI;
-    }
-    for (auto& res : res_counter.used_common_resources) {
-      res = false;
-    }
-  };
-
-  std::for_each(resource_slots.begin(), resource_slots.end(), reset_slot_record);
 }
 
 void pucch_resource_manager::slot_indication(slot_point slot_tx)
@@ -61,39 +56,32 @@ void pucch_resource_manager::slot_indication(slot_point slot_tx)
   // Update Slot.
   last_sl_ind = slot_tx;
 
-  rnti_pucch_res_id_slot_record& res_counter = get_slot_resource_counter(last_sl_ind - 1);
+  // Clear previous slot context.
+  auto& ctx = slots_ctx[slot_tx.to_uint() - 1];
+  std::fill(ctx.ues_using_pucch_res.begin(), ctx.ues_using_pucch_res.end(), rnti_t::INVALID_RNTI);
 
-  for (auto& ue_rec : res_counter.ues_using_pucch_res) {
-    ue_rec.rnti = rnti_t::INVALID_RNTI;
-  }
-  for (auto& res : res_counter.used_common_resources) {
-    res = false;
-  }
+  collision_manager.slot_indication(slot_tx);
 }
 
 void pucch_resource_manager::stop()
 {
-  for (auto& res_counter : resource_slots) {
-    for (auto& ue_rec : res_counter.ues_using_pucch_res) {
-      ue_rec.rnti = rnti_t::INVALID_RNTI;
-    }
-    for (auto& res : res_counter.used_common_resources) {
-      res = false;
-    }
+  for (auto& ctx : slots_ctx) {
+    std::fill(ctx.ues_using_pucch_res.begin(), ctx.ues_using_pucch_res.end(), rnti_t::INVALID_RNTI);
   }
   last_sl_ind = {};
+  collision_manager.stop();
 }
 
 bool pucch_resource_manager::is_harq_common_resource_available(slot_point sl, size_t r_pucch)
 {
   srsran_assert(r_pucch < 16, "r_PUCCH must be less than 16");
-  return not get_slot_resource_counter(sl).used_common_resources[r_pucch];
+  return collision_manager.can_alloc_common(sl, r_pucch);
 }
 
 void pucch_resource_manager::reserve_harq_common_resource(slot_point sl, size_t r_pucch)
 {
   srsran_assert(r_pucch < 16, "r_PUCCH must be less than 16");
-  get_slot_resource_counter(sl).used_common_resources[r_pucch] = true;
+  collision_manager.alloc_common(sl, r_pucch);
 }
 
 pucch_harq_resource_alloc_record
@@ -130,6 +118,53 @@ pucch_resource_manager::reserve_harq_set_1_resource_by_res_indicator(slot_point 
   return reserve_harq_resource_by_res_indicator(slot_harq, crnti, d_pri, pucch_cfg, pucch_res_set_idx::set_1);
 }
 
+const pucch_resource*
+pucch_resource_manager::reserve_sr_resource(slot_point slot_sr, rnti_t crnti, const pucch_config& pucch_cfg)
+{
+  srsran_sanity_check(slot_sr < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
+                      "PUCCH being allocated too far into the future");
+  srsran_sanity_check(pucch_cfg.sr_res_list.size() == 1, "UE SR resource list must have size 1.");
+
+  // We assume each UE only has 1 SR Resource Config configured.
+  const unsigned cell_res_id = pucch_cfg.sr_res_list[0].pucch_res_id.cell_res_id;
+
+  // Get resource list of wanted slot.
+  auto& ctx = slots_ctx[slot_sr.to_uint()];
+  srsran_assert(cell_res_id < ctx.ues_using_pucch_res.size(),
+                "rnti={}: CSI PUCCH resource index exceeds the size of the cell resource array",
+                crnti);
+
+  // Check if the wanted resource is already allocated to another UE in this slot.
+  auto& res_rnti = ctx.ues_using_pucch_res[cell_res_id];
+  if (res_rnti != rnti_t::INVALID_RNTI and res_rnti != crnti) {
+    return nullptr;
+  }
+
+  // Search for the PUCCH resource with the correct PUCCH resource ID from the PUCCH resource list.
+  const auto& pucch_res_list = pucch_cfg.pucch_res_list;
+  const auto* res_cfg =
+      std::find_if(pucch_res_list.begin(), pucch_res_list.end(), [cell_res_id](const pucch_resource& res) {
+        return res.res_id.cell_res_id == cell_res_id;
+      });
+  srsran_assert(res_cfg != pucch_res_list.end(),
+                "rnti={}: PUCCH resource with cell_res_id={} not found in PUCCH resource list",
+                crnti,
+                cell_res_id);
+
+  // If the PUCCH res with correct ID was not allocated to the UE's RNTI, allocate it to this RNTI; otherwise, it means
+  // the resource had already been allocated, just return it.
+  if (res_rnti != crnti) {
+    // Check for collisions.
+    if (not collision_manager.can_alloc_ded(slot_sr, cell_res_id)) {
+      return nullptr;
+    }
+    res_rnti = crnti;
+    collision_manager.alloc_ded(slot_sr, cell_res_id);
+  }
+
+  return res_cfg;
+}
+
 const pucch_resource* pucch_resource_manager::reserve_csi_resource(slot_point                   slot_csi,
                                                                    rnti_t                       crnti,
                                                                    const ue_cell_configuration& ue_cell_cfg)
@@ -138,73 +173,42 @@ const pucch_resource* pucch_resource_manager::reserve_csi_resource(slot_point   
                       "PUCCH being allocated too far into the future");
 
   // Get CSI specific PUCCH resource ID from the CSI meas config.
-  const int csi_pucch_res_idx_int = get_pucch_res_idx_for_csi(ue_cell_cfg);
-  if (csi_pucch_res_idx_int < 0) {
-    return nullptr;
-  }
-  const auto csi_pucch_res_idx = static_cast<unsigned>(csi_pucch_res_idx_int);
+  const int cell_res_id_int = get_csi_cell_res_id(ue_cell_cfg);
+  srsran_assert(cell_res_id_int >= 0, "rnti={}: CSI PUCCH resource index could not be found", crnti);
+  const auto cell_res_id = static_cast<unsigned>(cell_res_id_int);
 
   // Get resource list of wanted slot.
-  auto& slot_record = get_slot_resource_counter(slot_csi);
-  if (csi_pucch_res_idx >= slot_record.ues_using_pucch_res.size() or
-      (slot_record.ues_using_pucch_res[csi_pucch_res_idx].rnti != rnti_t::INVALID_RNTI and
-       slot_record.ues_using_pucch_res[csi_pucch_res_idx].rnti != crnti)) {
-    return nullptr;
-  }
+  auto& ctx = slots_ctx[slot_csi.to_uint()];
+  srsran_assert(cell_res_id < ctx.ues_using_pucch_res.size(),
+                "rnti={}: CSI PUCCH resource index exceeds the size of the cell resource array",
+                crnti);
 
-  span<const pucch_resource> pucch_res_list = ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value().pucch_res_list;
-  // Search for the PUCCH resource with the correct PUCCH resource ID from the PUCCH resource list.
-  const auto* res_cfg =
-      std::find_if(pucch_res_list.begin(), pucch_res_list.end(), [csi_pucch_res_idx](const pucch_resource& res) {
-        return res.res_id.cell_res_id == csi_pucch_res_idx;
-      });
-
-  if (res_cfg == pucch_res_list.end()) {
-    return nullptr;
-  }
-
-  // If the PUCCH res with correct ID was not allocated to the UE's RNTI, allocate it to this RNTI; otherwise, it means
-  // the resource had already been allocated, just return it.
-  if (slot_record.ues_using_pucch_res[csi_pucch_res_idx].rnti != crnti) {
-    slot_record.ues_using_pucch_res[csi_pucch_res_idx].rnti = crnti;
-  }
-
-  return res_cfg;
-}
-
-const pucch_resource*
-pucch_resource_manager::reserve_sr_resource(slot_point slot_sr, rnti_t crnti, const pucch_config& pucch_cfg)
-{
-  srsran_sanity_check(slot_sr < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
-                      "PUCCH being allocated too far into the future");
-  srsran_sanity_check(pucch_cfg.sr_res_list.size() == 1, "UE SR resource list must have size 1.");
-
-  auto& slot_record = get_slot_resource_counter(slot_sr);
-
-  // We assume each UE only has 1 SR Resource Config configured.
-  const unsigned sr_pucch_res_id = pucch_cfg.sr_res_list[0].pucch_res_id.cell_res_id;
   // Check if the wanted resource is already allocated to another UE in this slot.
-  if (sr_pucch_res_id >= slot_record.ues_using_pucch_res.size() or
-      (slot_record.ues_using_pucch_res[sr_pucch_res_id].rnti != rnti_t::INVALID_RNTI and
-       slot_record.ues_using_pucch_res[sr_pucch_res_id].rnti != crnti)) {
+  auto& res_rnti = ctx.ues_using_pucch_res[cell_res_id];
+  if (res_rnti != rnti_t::INVALID_RNTI and res_rnti != crnti) {
     return nullptr;
   }
 
-  const auto& pucch_res_list = pucch_cfg.pucch_res_list;
   // Search for the PUCCH resource with the correct PUCCH resource ID from the PUCCH resource list.
+  const auto& pucch_res_list = ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value().pucch_res_list;
   const auto* res_cfg =
-      std::find_if(pucch_res_list.begin(), pucch_res_list.end(), [sr_pucch_res_id](const pucch_resource& res) {
-        return res.res_id.cell_res_id == sr_pucch_res_id;
+      std::find_if(pucch_res_list.begin(), pucch_res_list.end(), [cell_res_id](const pucch_resource& res) {
+        return res.res_id.cell_res_id == cell_res_id;
       });
-
-  if (res_cfg == pucch_res_list.end()) {
-    return nullptr;
-  }
+  srsran_assert(res_cfg != pucch_res_list.end(),
+                "rnti={}: PUCCH resource with cell_res_id={} not found in PUCCH resource list",
+                crnti,
+                cell_res_id);
 
   // If the PUCCH res with correct ID was not allocated to the UE's RNTI, allocate it to this RNTI; otherwise, it means
   // the resource had already been allocated, just return it.
-  if (slot_record.ues_using_pucch_res[sr_pucch_res_id].rnti != crnti) {
-    slot_record.ues_using_pucch_res[sr_pucch_res_id].rnti = crnti;
+  if (res_rnti != crnti) {
+    // Check for collisions.
+    if (not collision_manager.can_alloc_ded(slot_csi, cell_res_id)) {
+      return nullptr;
+    }
+    res_rnti = crnti;
+    collision_manager.alloc_ded(slot_csi, cell_res_id);
   }
 
   return res_cfg;
@@ -230,17 +234,23 @@ bool pucch_resource_manager::release_sr_resource(slot_point slot_sr, rnti_t crnt
                       "PUCCH being allocated too far into the future");
   srsran_sanity_check(pucch_cfg.sr_res_list.size() == 1, "UE SR resource list must have size 1.");
 
-  auto& slot_record = get_slot_resource_counter(slot_sr);
-
   // We assume each UE only has 1 SR Resource Config configured.
-  const unsigned sr_pucch_res_id = pucch_cfg.sr_res_list[0].pucch_res_id.cell_res_id;
+  const unsigned cell_res_id = pucch_cfg.sr_res_list[0].pucch_res_id.cell_res_id;
 
-  if (sr_pucch_res_id >= slot_record.ues_using_pucch_res.size() or
-      slot_record.ues_using_pucch_res[sr_pucch_res_id].rnti != crnti) {
+  // Get resource list of wanted slot.
+  auto& ctx = slots_ctx[slot_sr.to_uint()];
+  srsran_assert(cell_res_id < ctx.ues_using_pucch_res.size(),
+                "rnti={}: SR PUCCH resource index exceeds the size of the cell resource array",
+                crnti);
+
+  // Check if the resource is allocated to this RNTI.
+  if (ctx.ues_using_pucch_res[cell_res_id] != crnti) {
     return false;
   }
 
-  slot_record.ues_using_pucch_res[sr_pucch_res_id].rnti = rnti_t::INVALID_RNTI;
+  // Release the resource.
+  ctx.ues_using_pucch_res[cell_res_id] = rnti_t::INVALID_RNTI;
+  collision_manager.free_ded(slot_sr, cell_res_id);
   return true;
 }
 
@@ -251,19 +261,25 @@ bool pucch_resource_manager::release_csi_resource(slot_point                   s
   srsran_sanity_check(slot_csi < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PUCCH being allocated too far into the future");
 
-  auto& slot_record = get_slot_resource_counter(slot_csi);
+  // Get CSI specific PUCCH resource ID from the CSI meas config.
+  const int cell_res_id_int = get_csi_cell_res_id(ue_cell_cfg);
+  srsran_assert(cell_res_id_int >= 0, "rnti={}: CSI PUCCH resource index could not be found", crnti);
+  const auto cell_res_id = static_cast<unsigned>(cell_res_id_int);
 
-  // We assume each UE only has 1 CSI Resource Config configured.
-  const int csi_pucch_res_idx = get_pucch_res_idx_for_csi(ue_cell_cfg);
-  if (csi_pucch_res_idx < 0) {
+  // Get resource list of wanted slot.
+  auto& ctx = slots_ctx[slot_csi.to_uint()];
+  srsran_assert(cell_res_id < ctx.ues_using_pucch_res.size(),
+                "rnti={}: SR PUCCH resource index exceeds the size of the cell resource array",
+                crnti);
+
+  // Check if the resource is allocated to this RNTI.
+  if (ctx.ues_using_pucch_res[cell_res_id] != crnti) {
     return false;
   }
-  if (static_cast<unsigned>(csi_pucch_res_idx) >= slot_record.ues_using_pucch_res.size() or
-      slot_record.ues_using_pucch_res[csi_pucch_res_idx].rnti != crnti) {
-    return false;
-  }
 
-  slot_record.ues_using_pucch_res[csi_pucch_res_idx].rnti = rnti_t::INVALID_RNTI;
+  // Release the resource.
+  ctx.ues_using_pucch_res[cell_res_id] = rnti_t::INVALID_RNTI;
+  collision_manager.free_ded(slot_csi, cell_res_id);
   return true;
 }
 
@@ -362,11 +378,6 @@ pucch_harq_resource_alloc_record pucch_resource_manager::reserve_next_harq_res_a
   srsran_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PUCCH being allocated too far into the future");
 
-  // Get resource list of wanted slot.
-  rnti_pucch_res_id_slot_record& res_counter = get_slot_resource_counter(slot_harq);
-
-  auto& slot_res_array = res_counter.ues_using_pucch_res;
-
   // Get the array of resources for the specific UE.
   const auto& ue_res_set_id_list = pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(res_set_idx)].pucch_res_id_list;
 
@@ -382,19 +393,25 @@ pucch_harq_resource_alloc_record pucch_resource_manager::reserve_next_harq_res_a
                 crnti,
                 pucch_res_set_idx_to_uint(res_set_idx));
 
+  // Get context of wanted slot.
+  auto& ctx = slots_ctx[slot_harq.to_uint()];
+
   std::optional<uint8_t> available_r_pucch;
   for (uint8_t r_pucch = 0; r_pucch != nof_eligible_resource; ++r_pucch) {
     const unsigned cell_res_id = ue_res_set_id_list[r_pucch].cell_res_id;
-    srsran_assert(cell_res_id < slot_res_array.size(),
-                  "PUCCH resource index from PUCCH resource set exceeds the size of the cell resource array");
-    auto& res = slot_res_array[cell_res_id];
 
-    if (res.rnti == crnti) {
+    srsran_assert(cell_res_id < ctx.ues_using_pucch_res.size(),
+                  "PUCCH resource index from PUCCH resource set exceeds the size of the cell resource array");
+    auto& res_rnti = ctx.ues_using_pucch_res[cell_res_id];
+
+    if (res_rnti == crnti) {
       // If a resource is already allocated to this RNTI, use it.
       available_r_pucch = r_pucch;
       break;
     }
-    if (not available_r_pucch.has_value() and res.rnti == rnti_t::INVALID_RNTI) {
+
+    if (not available_r_pucch.has_value() and res_rnti == rnti_t::INVALID_RNTI and
+        collision_manager.can_alloc_ded(slot_harq, cell_res_id)) {
       // Else, keep track of the first available resource.
       available_r_pucch = r_pucch;
     }
@@ -419,7 +436,8 @@ pucch_harq_resource_alloc_record pucch_resource_manager::reserve_next_harq_res_a
                         cell_res_id);
 
     // Allocate it and return it.
-    slot_res_array[cell_res_id].rnti = crnti;
+    ctx.ues_using_pucch_res[cell_res_id] = crnti;
+    collision_manager.alloc_ded(slot_harq, cell_res_id);
     return pucch_harq_resource_alloc_record{.resource = res_cfg, .pucch_res_indicator = available_r_pucch.value()};
   }
   return pucch_harq_resource_alloc_record{.resource = nullptr};
@@ -434,8 +452,6 @@ const pucch_resource* pucch_resource_manager::reserve_harq_resource_by_res_indic
   srsran_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PUCCH being allocated too far into the future");
 
-  // Get resource list of wanted slot.
-  rnti_pucch_res_id_slot_record& res_counter = get_slot_resource_counter(slot_harq);
   // Retrieve the PUCCH resource set.
   const auto& ue_res_id_set_for_harq =
       pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(res_set_idx)].pucch_res_id_list;
@@ -464,37 +480,45 @@ const pucch_resource* pucch_resource_manager::reserve_harq_resource_by_res_indic
     return res_cfg != pucch_cfg.pucch_res_list.end() ? &(*res_cfg) : nullptr;
   }
 
+  // Get resource list of wanted slot.
+  slot_context& ctx = slots_ctx[slot_harq.to_uint()];
+
   // Get PUCCH resource ID from the PUCCH resource set.
-  const unsigned pucch_cell_res_id = pucch_res_id.cell_res_id;
-
-  // Extra safe check. Make sure cell_res_id is valid, even though this should be ensured by the UE config validator.
-  if (pucch_cell_res_id >= res_counter.ues_using_pucch_res.size()) {
-    return nullptr;
-  }
-
-  // Get the PUCCH resource tracker in the PUCCH resource manager.
-  auto&       pucch_res_tracker = res_counter.ues_using_pucch_res[pucch_cell_res_id];
-  const auto& pucch_res_list    = pucch_cfg.pucch_res_list;
+  const unsigned cell_res_id = pucch_res_id.cell_res_id;
+  srsran_assert(cell_res_id < ctx.ues_using_pucch_res.size(),
+                "rnti={}: PUCCH resource index from PUCCH resource set exceeds the size of the cell resource array",
+                crnti);
 
   // Check first if the wanted PUCCH resource is available.
-  if (pucch_res_tracker.rnti != rnti_t::INVALID_RNTI and pucch_res_tracker.rnti != crnti) {
+  auto& res_rnti = ctx.ues_using_pucch_res[cell_res_id];
+  if (res_rnti != rnti_t::INVALID_RNTI and res_rnti != crnti) {
     return nullptr;
   }
 
   // Search for the PUCCH resource with the correct PUCCH resource ID from the PUCCH resource list.
+  const auto& pucch_res_list = pucch_cfg.pucch_res_list;
   const auto* res_cfg =
-      std::find_if(pucch_res_list.begin(), pucch_res_list.end(), [pucch_cell_res_id](const pucch_resource& res) {
-        return res.res_id.cell_res_id == pucch_cell_res_id;
+      std::find_if(pucch_res_list.begin(), pucch_res_list.end(), [cell_res_id](const pucch_resource& res) {
+        return res.res_id.cell_res_id == cell_res_id;
       });
+  srsran_assert(res_cfg != pucch_res_list.end(),
+                "rnti={}: PUCCH resource with cell_res_id={} not found in PUCCH resource list",
+                crnti,
+                cell_res_id);
 
-  if (res_cfg == pucch_res_list.end()) {
+  if (res_rnti == crnti) {
+    // If the resource is already allocated to this RNTI, just return it.
+    return res_cfg;
+  }
+
+  // Check for collisions.
+  if (not collision_manager.can_alloc_ded(slot_harq, cell_res_id)) {
     return nullptr;
   }
 
-  // If the PUCCH res with correct ID is found and previously not used by given UE's RNTI, then allocate it this RNTI.
-  if (pucch_res_tracker.rnti == rnti_t::INVALID_RNTI) {
-    pucch_res_tracker.rnti = crnti;
-  }
+  // Allocate the resource to this RNTI.
+  res_rnti = crnti;
+  collision_manager.alloc_ded(slot_harq, cell_res_id);
   return res_cfg;
 }
 
@@ -506,17 +530,12 @@ bool pucch_resource_manager::release_harq_resource(slot_point          slot_harq
   srsran_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PUCCH being allocated too far into the future");
 
-  // Get resource list of wanted slot.
-  rnti_pucch_res_id_slot_record& res_counter = get_slot_resource_counter(slot_harq);
-
-  auto& slot_res_array = res_counter.ues_using_pucch_res;
+  // Get the array of resources for the specific UE.
+  const auto& ue_res_set_id_list = pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(res_set_idx)].pucch_res_id_list;
 
   // [Implementation-defined] Format 0/1 resources are at the beginning of the list, while Format 2/3/4 are at the end.
   const bool is_f0_and_f2 = pucch_cfg.pucch_res_list.front().format == pucch_format::FORMAT_0 and
                             pucch_cfg.pucch_res_list.back().format == pucch_format::FORMAT_2;
-
-  // Get the array of resources for the specific UE.
-  const auto& ue_res_set_id_list = pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(res_set_idx)].pucch_res_id_list;
 
   // For PUCCH F0 and F2, we don't use the last 2 resources of the PUCCH resource set; these are reserved for CSI and SR
   // slots and should only be picked for through the specific PUCCH resource indicator.
@@ -526,25 +545,22 @@ bool pucch_resource_manager::release_harq_resource(slot_point          slot_harq
                 crnti,
                 pucch_res_set_idx_to_uint(res_set_idx));
 
+  // Get resource list of wanted slot.
+  slot_context& ctx = slots_ctx[slot_harq.to_uint()];
+
   for (unsigned r_pucch = 0; r_pucch != nof_eligible_resource; ++r_pucch) {
     const unsigned cell_res_id = ue_res_set_id_list[r_pucch].cell_res_id;
-    srsran_assert(cell_res_id < slot_res_array.size(),
-                  "PUCCH resource index from PUCCH resource set exceeds the size of the cell resource array");
-    auto& res = slot_res_array[cell_res_id];
+    srsran_assert(cell_res_id < ctx.ues_using_pucch_res.size(),
+                  "rnti={}: HARQ PUCCH resource index exceeds the size of the cell resource array");
+    auto& res_rnti = ctx.ues_using_pucch_res[cell_res_id];
 
-    if (res.rnti == crnti) {
+    if (res_rnti == crnti) {
       // Release the resource.
-      res.rnti = rnti_t::INVALID_RNTI;
+      res_rnti = rnti_t::INVALID_RNTI;
+      collision_manager.free_ded(slot_harq, cell_res_id);
       return true;
     }
   }
 
   return false;
-}
-
-pucch_resource_manager::rnti_pucch_res_id_slot_record& pucch_resource_manager::get_slot_resource_counter(slot_point sl)
-{
-  srsran_sanity_check(sl < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
-                      "PUCCH resource ring-buffer accessed too far into the future");
-  return resource_slots[sl.to_uint() % RES_MANAGER_RING_BUFFER_SIZE];
 }
