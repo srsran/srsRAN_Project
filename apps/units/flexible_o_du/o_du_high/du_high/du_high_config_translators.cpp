@@ -1124,11 +1124,11 @@ static scheduler_expert_config generate_scheduler_expert_config(const du_high_un
   const du_high_unit_base_cell_config& cell = config.cells_cfg.front().cell;
 
   // UE parameters.
-  const du_high_unit_pdsch_config&            pdsch                = cell.pdsch_cfg;
-  const du_high_unit_pdcch_config&            pdcch                = cell.pdcch_cfg;
-  const du_high_unit_pusch_config&            pusch                = cell.pusch_cfg;
-  const du_high_unit_scheduler_config&        app_sched_expert_cfg = cell.scheduler_cfg;
-  out_cfg.ue.dl_mcs                                                = {pdsch.min_ue_mcs, pdsch.max_ue_mcs};
+  const du_high_unit_pdsch_config&     pdsch                = cell.pdsch_cfg;
+  const du_high_unit_pdcch_config&     pdcch                = cell.pdcch_cfg;
+  const du_high_unit_pusch_config&     pusch                = cell.pusch_cfg;
+  const du_high_unit_scheduler_config& app_sched_expert_cfg = cell.scheduler_cfg;
+  out_cfg.ue.dl_mcs                                         = {pdsch.min_ue_mcs, pdsch.max_ue_mcs};
   out_cfg.ue.pdsch_rv_sequence.assign(pdsch.rv_sequence.begin(), pdsch.rv_sequence.end());
   out_cfg.ue.dl_harq_la_cqi_drop_threshold     = pdsch.harq_la_cqi_drop_threshold;
   out_cfg.ue.dl_harq_la_ri_drop_threshold      = pdsch.harq_la_ri_drop_threshold;
@@ -1190,7 +1190,7 @@ static scheduler_expert_config generate_scheduler_expert_config(const du_high_un
   out_cfg.ra.max_nof_msg3_harq_retxs  = prach.max_msg3_harq_retx;
   out_cfg.ra.msg3_mcs_index           = prach.fixed_msg3_mcs;
   out_cfg.ra.harq_retx_timeout        = std::chrono::milliseconds{pusch.harq_retx_timeout};
-  out_cfg.ra.nof_prach_guardbands_rbs = app_sched_expert_cfg.nof_prach_guardbands_rbs;
+  out_cfg.ra.nof_prach_guardbands_rbs = prach.nof_prach_guardbands_rbs;
 
   // SI parameters.
   out_cfg.si.sib1_mcs_index    = pdsch.fixed_sib1_mcs;

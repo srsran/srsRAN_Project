@@ -656,12 +656,6 @@ static void configure_cli11_scheduler_args(CLI::App& app, du_high_unit_scheduler
       add_subcommand(app, "policy", "Scheduler policy configuration. By default, time-domain QoS-aware policy is used.")
           ->configurable();
   configure_cli11_scheduler_policy_args(*policy_cfg_cmd, sched_params.policy_cfg);
-  add_option(app,
-             "--nof_prach_guardbands_rbs",
-             sched_params.nof_prach_guardbands_rbs,
-             "Number of RBs that are used as guardband on each side of the PRACH RBs interval for short PRACH formats.")
-      ->capture_default_str()
-      ->check(CLI::Range(1U, 10U));
 }
 
 static void configure_cli11_drx_args(CLI::App& app, du_high_unit_drx_config& drx_params)
@@ -1316,6 +1310,12 @@ static void configure_cli11_prach_args(CLI::App& app, du_high_unit_prach_config&
   add_option(app, "--ra_resp_window", prach_params.ra_resp_window, "RA-Response window length in number of slots.")
       ->capture_default_str()
       ->check(CLI::IsMember({1, 2, 4, 8, 10, 20, 40, 80}));
+  add_option(app,
+             "--nof_prach_guardbands_rbs",
+             prach_params.nof_prach_guardbands_rbs,
+             "Number of RBs that are used as guardband on each side of the PRACH RBs interval for short PRACH formats.")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, 10U));
 }
 
 static void configure_cli11_etws_args(CLI::App& app, du_high_unit_sib_config::etws_config& sib_params)

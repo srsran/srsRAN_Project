@@ -92,9 +92,6 @@ struct du_high_unit_scheduler_config {
   unsigned nof_preselected_newtx_ues = 32;
   /// Scheduler policy employed to prioritize or deprioritize pre-selected UE candidates.
   std::optional<scheduler_policy_config> policy_cfg;
-  /// Number of RBs that are used as guardband on each side of the PRACH RBs dedicated interval for short PRACH
-  /// formats.
-  unsigned nof_prach_guardbands_rbs = 5;
 };
 
 /// DRX configuration.
@@ -831,6 +828,9 @@ struct du_high_unit_prach_config {
   /// RA-Response (MSG2) window length in number of slots. Values: {1, 2, 4, 8, 10, 20, 40, 80}.  If not specified, it
   /// is automatically derived to be equal to 10ms.
   std::optional<unsigned> ra_resp_window;
+  /// Number of RBs that are used as guardband on each side of the PRACH RBs dedicated interval for short PRACH
+  /// formats.
+  unsigned nof_prach_guardbands_rbs = 5;
 };
 
 /// Slice scheduling configuration for a cell.
