@@ -218,7 +218,7 @@ private:
     // Request UE release to the CU.
     using cause_type = f1ap_ue_context_release_request::cause_type;
     cause_type cause = *current_cause == rlf_cause::max_mac_kos_reached ? cause_type::rlf_mac : cause_type::rlf_rlc;
-    cfg.f1ap.ue_mng.handle_ue_context_release_request(srs_du::f1ap_ue_context_release_request{ue_ctx.ue_index, cause});
+    cfg.f1ap.ue_mng.handle_ue_context_release_request(f1ap_ue_context_release_request{ue_ctx.ue_index, cause});
 
     // Stop handling of RLFs, so that no new RLFs are triggered after the UE is scheduled for release.
     deactivate();

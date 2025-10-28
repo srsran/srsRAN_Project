@@ -293,15 +293,26 @@ void f1ap_du_impl::handle_ue_context_release_request(const f1ap_ue_context_relea
 {
   f1ap_du_ue* ue = ues.find(request.ue_index);
   if (ue == nullptr) {
-    logger.warning("ue={}: Discarding UeContextReleaseRequest. Cause: UE not found", fmt::underlying(request.ue_index));
+    logger.error("ue={}: Skipping UEContextReleaseRequest transmission. Cause: UE not found",
+                 fmt::underlying(request.ue_index));
+    return;
+  }
+  if (ue->context.gnb_cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
+    // The DU never received a F1AP PDU from the CU-CP assigning a gNB-CU-UE-F1AP-ID to the UE.
+    logger.warning(
+        "ue={} du_ue_id={}: Skipping UEContextReleaseRequest transmission. Cause: gNB-CU-UE-F1AP-ID does not exist",
+        request.ue_index,
+        fmt::underlying(ue->context.gnb_du_ue_f1ap_id));
+    ue->du_handler.schedule_async_task(ue->du_handler.request_ue_removal(f1ap_ue_delete_request{request.ue_index}));
     return;
   }
 
   if (ue->context.marked_for_release) {
     // UE context is already being released. Ignore the request.
-    logger.debug(
-        "ue={}: UE Context Release Request ignored. Cause: An UE Context Release procedure has already started.",
-        fmt::underlying(request.ue_index));
+    logger.debug("ue={} du_ue_id={}: Ignoring UEContextReleaseRequest. Cause: An UE Context Release procedure has "
+                 "already started.",
+                 request.ue_index,
+                 fmt::underlying(ue->context.gnb_du_ue_f1ap_id));
     return;
   }
 
