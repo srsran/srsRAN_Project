@@ -69,24 +69,6 @@ bool srsran::check_ul_collisions(span<const grant_info>    grants,
     }
   }
 
-  for (const auto& pucch : result.pucchs) {
-    if (is_common == pucch.pdu_context.is_common) {
-      // Common PUCCH resources do not collide with each other.
-      // [Implementation-defined] Dedicated PUCCH resources do not collide with each other.
-      continue;
-    }
-
-    const auto pucch_grants = get_pucch_grant_info(pucch);
-    for (const auto& grant : grants) {
-      if (pucch_grants.first.overlaps(grant)) {
-        return true;
-      }
-      if (pucch_grants.second.has_value() and pucch_grants.second.value().overlaps(grant)) {
-        return true;
-      }
-    }
-  }
-
   return false;
 }
 
