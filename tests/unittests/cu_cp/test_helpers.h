@@ -128,16 +128,6 @@ public:
     });
   }
 
-  async_task<bool> handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) override
-  {
-    logger.info("ue={} old_ue={}: Received UE transfer required", ue_index, old_ue_index);
-
-    return launch_async([this](coro_context<async_task<bool>>& ctx) mutable {
-      CORO_BEGIN(ctx);
-      CORO_RETURN(ue_transfer_outcome);
-    });
-  }
-
   void handle_handover_reconfiguration_sent(const cu_cp_intra_cu_handover_target_request& request) override
   {
     logger.info("ue={}: Awaiting a RRC Reconfiguration Complete (transaction_id={})",
@@ -161,8 +151,7 @@ public:
   unsigned last_transaction_id = 99999;
 
 private:
-  srslog::basic_logger& logger              = srslog::fetch_basic_logger("TEST");
-  bool                  ue_transfer_outcome = true;
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
 };
 
 class dummy_cu_cp_ue_removal_handler : public cu_cp_ue_removal_handler
