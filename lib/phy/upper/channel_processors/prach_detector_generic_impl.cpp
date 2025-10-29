@@ -328,9 +328,13 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
             phy_time_unit::from_seconds(static_cast<double>(delay) / static_cast<double>(sampling_rate_Hz));
         // Normalize the detection metric with respect to the threshold.
         info.detection_metric = peak / threshold;
-        // TODO: this may need refining with combine_symbols == true.
-        float preamble_power = srsvec::accumulate(window_metric_global_num) /
-                               static_cast<float>(config.nof_rx_ports * dft_size * nof_symbols * nof_symbols);
+
+        // Compute preamble power.
+        unsigned power_normalization = config.nof_rx_ports * L_ra * nof_symbols;
+        if (combine_symbols) {
+          power_normalization *= nof_symbols;
+        }
+        float preamble_power   = window_metric_global_num[delay] / static_cast<float>(power_normalization);
         info.preamble_power_dB = convert_power_to_dB(preamble_power);
       }
     }
