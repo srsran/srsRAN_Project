@@ -1410,8 +1410,10 @@ pucch_allocator_impl::get_pucch_res_pre_multiplexing(slot_point                 
     // config that was reserved previously.
     const pucch_resource* csi_resource =
         resource_manager.reserve_csi_resource(sl_tx, ue_current_grants.rnti, ue_cell_cfg);
-    // Save the resources that have been generated; if at some point the allocation fails, we need to release them.
-    resource_manager.set_new_resource_allocation(ue_current_grants.rnti, pucch_resource_usage::CSI);
+    if (not ue_current_grants.pucch_grants.csi_resource.has_value()) {
+      // Save the resources that have been generated; if at some point the allocation fails, we need to release them.
+      resource_manager.set_new_resource_allocation(ue_current_grants.rnti, pucch_resource_usage::CSI);
+    }
     if (csi_resource == nullptr) {
       srsran_assertion_failure("rnti={}: PUCCH CSI resource previously reserved not available anymore",
                                ue_current_grants.rnti);
