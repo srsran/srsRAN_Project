@@ -17,7 +17,7 @@
 
 namespace srsran {
 
-/// \brief Implement baseband gateway interface for UHD.
+/// \brief Implement baseband gateway interface for ZMQ.
 ///
 /// It contains a transmit stream and a receive stream.
 class radio_zmq_baseband_gateway : public baseband_gateway

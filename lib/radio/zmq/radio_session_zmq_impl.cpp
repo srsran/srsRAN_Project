@@ -24,9 +24,9 @@ radio_session_zmq_impl::radio_session_zmq_impl(const radio_configuration::radio&
                 config.rx_streams.size());
 
   // Make ZMQ context.
-  zmq_context = zmq_ctx_new();
+  zmq_context = ::zmq_ctx_new();
   if (zmq_context == nullptr) {
-    logger.error("Failed to create ZMQ context. {}.", zmq_strerror(zmq_errno()));
+    logger.error("Failed to create ZMQ context. {}.", ::zmq_strerror(::zmq_errno()));
     return;
   }
 
@@ -46,39 +46,49 @@ radio_session_zmq_impl::radio_session_zmq_impl(const radio_configuration::radio&
     const radio_configuration::stream& tx_radio_stream_config = config.tx_streams[stream_id];
 
     // Prepare transmit stream configuration.
-    radio_zmq_tx_stream::stream_description tx_stream_config;
-    tx_stream_config.socket_type = ZMQ_REP;
-    for (unsigned channel_id = 0; channel_id != tx_radio_stream_config.channels.size(); ++channel_id) {
-      tx_stream_config.address.push_back(tx_radio_stream_config.channels[channel_id].args);
-    }
-    tx_stream_config.stream_id         = stream_id;
-    tx_stream_config.stream_id_str     = "zmq:tx:" + std::to_string(stream_id);
-    tx_stream_config.log_level         = log_level;
-    tx_stream_config.trx_timeout_ms    = DEFAULT_TRX_TIMEOUT_MS;
-    tx_stream_config.linger_timeout_ms = DEFAULT_LINGER_TIMEOUT_MS;
-    tx_stream_config.buffer_size       = DEFAULT_STREAM_BUFFER_SIZE;
+    radio_zmq_tx_stream::stream_description tx_stream_config = {.socket_type = ZMQ_REP,
+                                                                .address =
+                                                                    [&tx_radio_stream_config]() {
+                                                                      std::vector<std::string> address;
+                                                                      for (const auto& channel :
+                                                                           tx_radio_stream_config.channels) {
+                                                                        address.push_back(channel.args);
+                                                                      }
+                                                                      return address;
+                                                                    }(),
+                                                                .stream_id      = stream_id,
+                                                                .stream_id_str  = "zmq:tx:" + std::to_string(stream_id),
+                                                                .log_level      = log_level,
+                                                                .trx_timeout_ms = DEFAULT_TRX_TIMEOUT_MS,
+                                                                .linger_timeout_ms = DEFAULT_LINGER_TIMEOUT_MS,
+                                                                .buffer_size       = DEFAULT_STREAM_BUFFER_SIZE};
 
     const radio_configuration::stream& rx_radio_stream_config = config.rx_streams[stream_id];
 
-    // Prepare transmit stream configuration.
-    radio_zmq_rx_stream::stream_description rx_stream_config;
-    rx_stream_config.socket_type = ZMQ_REQ;
-    for (unsigned channel_id = 0; channel_id != rx_radio_stream_config.channels.size(); ++channel_id) {
-      rx_stream_config.address.push_back(rx_radio_stream_config.channels[channel_id].args);
-    }
-    rx_stream_config.stream_id         = stream_id;
-    rx_stream_config.stream_id_str     = "zmq:rx:" + std::to_string(stream_id);
-    rx_stream_config.log_level         = log_level;
-    rx_stream_config.trx_timeout_ms    = DEFAULT_TRX_TIMEOUT_MS;
-    rx_stream_config.linger_timeout_ms = DEFAULT_LINGER_TIMEOUT_MS;
-    rx_stream_config.buffer_size       = DEFAULT_STREAM_BUFFER_SIZE;
+    // Prepare receive stream configuration.
+    radio_zmq_rx_stream::stream_description rx_stream_config = {.socket_type = ZMQ_REQ,
+                                                                .address =
+                                                                    [&rx_radio_stream_config]() {
+                                                                      std::vector<std::string> address;
+                                                                      for (const auto& channel :
+                                                                           rx_radio_stream_config.channels) {
+                                                                        address.push_back(channel.args);
+                                                                      }
+                                                                      return address;
+                                                                    }(),
+                                                                .stream_id      = stream_id,
+                                                                .stream_id_str  = "zmq:rx:" + std::to_string(stream_id),
+                                                                .log_level      = log_level,
+                                                                .trx_timeout_ms = DEFAULT_TRX_TIMEOUT_MS,
+                                                                .linger_timeout_ms = DEFAULT_LINGER_TIMEOUT_MS,
+                                                                .buffer_size       = DEFAULT_STREAM_BUFFER_SIZE};
 
     // Create baseband gateway.
-    bb_gateways.emplace_back(std::make_unique<radio_zmq_baseband_gateway>(
+    auto& gateway = bb_gateways.emplace_back(std::make_unique<radio_zmq_baseband_gateway>(
         zmq_context, async_task_executor, notifier, tx_stream_config, rx_stream_config));
 
     // Make sure streams are created successfully.
-    if (!bb_gateways.back()->get_tx_stream().is_successful() || !bb_gateways.back()->get_rx_stream().is_successful()) {
+    if (!gateway->get_tx_stream().is_successful() || !gateway->get_rx_stream().is_successful()) {
       return;
     }
   }
@@ -93,8 +103,8 @@ radio_session_zmq_impl::~radio_session_zmq_impl()
 
   // Destroy ZMQ context.
   if (zmq_context != nullptr) {
-    zmq_ctx_shutdown(zmq_context);
-    zmq_ctx_destroy(zmq_context);
+    ::zmq_ctx_shutdown(zmq_context);
+    ::zmq_ctx_destroy(zmq_context);
     zmq_context = nullptr;
   }
 }
@@ -109,12 +119,6 @@ void radio_session_zmq_impl::stop()
   // Signal stop for each receive stream.
   for (auto& gateway : bb_gateways) {
     gateway->get_rx_stream().stop();
-  }
-
-  // Wait for streams to join.
-  for (auto& gateway : bb_gateways) {
-    gateway->get_tx_stream().wait_stop();
-    gateway->get_rx_stream().wait_stop();
   }
 }
 
@@ -142,10 +146,12 @@ baseband_gateway_timestamp radio_session_zmq_impl::read_current_time()
 {
   return 0;
 }
+
 bool radio_session_zmq_impl::set_tx_freq(unsigned stream_id, double center_freq_Hz)
 {
   return false;
 }
+
 bool radio_session_zmq_impl::set_rx_freq(unsigned stream_id, double center_freq_Hz)
 {
   return false;

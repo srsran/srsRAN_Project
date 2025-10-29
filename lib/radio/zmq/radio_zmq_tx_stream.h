@@ -21,12 +21,11 @@ namespace srsran {
 /// Implements a gateway receiver based on ZMQ transmit socket.
 class radio_zmq_tx_stream : public baseband_gateway_transmitter, public radio_zmq_tx_align_interface
 {
-private:
   /// Scaling factor for converting from 16-bit complex integer to complex float.
   static constexpr float scaling_factor_ci16_to_cf = std::numeric_limits<int16_t>::max();
-
   /// Alignment timeout. Waits this time before padding zeros.
-  const std::chrono::milliseconds TRANSMIT_TS_ALIGN_TIMEOUT = std::chrono::milliseconds(0);
+  static constexpr std::chrono::milliseconds TRANSMIT_TS_ALIGN_TIMEOUT = std::chrono::milliseconds(0);
+
   /// Radio notification handler interface.
   radio_notification_handler& notification_handler;
   /// Indicates whether the class was initialized successfully.
@@ -73,8 +72,6 @@ public:
   void start(baseband_gateway_timestamp init_time);
 
   void stop();
-
-  void wait_stop();
 };
 
 } // namespace srsran
