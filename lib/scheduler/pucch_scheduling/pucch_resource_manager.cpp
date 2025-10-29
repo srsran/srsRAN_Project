@@ -471,7 +471,7 @@ const pucch_resource* pucch_resource_manager::reserve_harq_resource_by_res_indic
 
   // For Format 0 and Format 2, the resources indexed by PUCCH res. indicators >= ue_res_id_set_for_harq.size() - 2 are
   // reserved for CSI and SR slots. In the case, we don't need to reserve these in the PUCCH resource manager, we only
-  // need to return the resouces.
+  // need to return the resources.
   if (is_f0_and_f2 and d_pri >= ue_res_id_set_for_harq.size() - 2U) {
     const auto* res_cfg = std::find_if(
         pucch_cfg.pucch_res_list.begin(), pucch_cfg.pucch_res_list.end(), [pucch_res_id](const pucch_resource& res) {

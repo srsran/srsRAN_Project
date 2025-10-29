@@ -39,23 +39,18 @@ public:
   /// \brief Reset the internal counter of the allocated PDSCHs to be acknowledged per slot.
   virtual void slot_indication(slot_point sl_tx) = 0;
 
-  /// Allocate a PUCCH resource for HARQ-ACK for a given UE.
+  /// Allocate a dedicated PUCCH resource for HARQ-ACK for a given UE.
   /// \param[out,in] res_alloc struct with scheduling results.
   /// \param[in] crnti RNTI of the UE.
-  /// \param[in] ue_cell_cfg user configuration. For the fallback mode case, this configuration is used to determine
-  /// whether the slot coincides with a CSI report opportunity; in which case, the allocation of the UCI on common PUCCH
-  /// resources will be skipped.
+  /// \param[in] ue_cell_cfg user configuration.
   /// \param[in] k0 k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
   /// \param[in] k1_list List of k1 candidates configured for UE.
-  /// \param[in] fallback_dci_info pointer to the information with DL DCI, used for scheduling the UCI on common PUCCH
-  /// resources. If this is not \c nullptr, it triggers the UCI scheduling using common PUCCH resources; else, UCI will
-  /// be scheduled either on dedicated PUCCH resources.
+  /// \return Returns the UCI allocation result if successful, std::nullopt otherwise.
   virtual std::optional<uci_allocation> alloc_harq_ack(cell_resource_allocator&     res_alloc,
                                                        rnti_t                       crnti,
                                                        const ue_cell_configuration& ue_cell_cfg,
                                                        unsigned                     k0,
-                                                       span<const uint8_t>          k1_list,
-                                                       const pdcch_dl_information*  fallback_dci_info = nullptr) = 0;
+                                                       span<const uint8_t>          k1_list) = 0;
 
   /// Allocates the SR opportunities for a given UE.
   /// \param[out,in] slot_alloc struct with scheduling results.
