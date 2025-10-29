@@ -37,47 +37,31 @@ namespace {
 class mac_rlf_du_adapter final : public mac_ue_radio_link_notifier
 {
 public:
-  mac_rlf_du_adapter(du_ue_index_t ue_index_, du_ue_manager_repository& ue_db_, task_executor& ctrl_exec_) :
-    ue_index(ue_index_), ue_db(ue_db_), ctrl_exec(ctrl_exec_)
-  {
-  }
+  mac_rlf_du_adapter(du_ue_index_t ue_index_, du_ue_manager_repository& ue_db_) : ue_index(ue_index_), ue_db(ue_db_) {}
 
   void on_rlf_detected() override
   {
-    // Dispatch RLF handling to DU manager execution context.
-    bool dispatched = ctrl_exec.execute([ue_idx = ue_index, ue_db_ptr = &ue_db]() {
-      // Note: The UE might have already been deleted by the time this method is called, so we need to check if it still
-      // exists.
-      du_ue* u = ue_db_ptr->find_ue(ue_idx);
-      if (u == nullptr) {
-        return;
-      }
-      u->handle_rlf_detection(rlf_cause::max_mac_kos_reached);
-    });
-    if (not dispatched) {
-      logger.warning("ue={}: Failed to dispatch RLF detection handling", fmt::underlying(ue_index));
+    // Note: The UE might have already been deleted by the time this method is called, so we need to check if it still
+    // exists.
+    du_ue* u = ue_db.find_ue(ue_index);
+    if (u == nullptr) {
+      return;
     }
+    u->handle_rlf_detection(rlf_cause::max_mac_kos_reached);
   }
 
   void on_crnti_ce_received() override
   {
-    bool dispatched = ctrl_exec.execute([ue_idx = ue_index, ue_db_ptr = &ue_db]() {
-      du_ue* u = ue_db_ptr->find_ue(ue_idx);
-      if (u == nullptr) {
-        return;
-      }
-      u->handle_crnti_ce_detection();
-    });
-    if (not dispatched) {
-      logger.warning("ue={}: Failed to dispatch RLF detection handling", fmt::underlying(ue_index));
+    du_ue* u = ue_db.find_ue(ue_index);
+    if (u == nullptr) {
+      return;
     }
+    u->handle_crnti_ce_detection();
   }
 
 private:
   du_ue_index_t             ue_index;
   du_ue_manager_repository& ue_db;
-  task_executor&            ctrl_exec;
-  srslog::basic_logger&     logger = srslog::fetch_basic_logger("DU-MNG");
 };
 
 /// Adapter between RLC and DU manager RLF detection handler.
@@ -127,7 +111,7 @@ private:
 
 // -------------
 
-class srsran::srs_du::du_ue_controller_impl::rlf_state_machine
+class du_ue_controller_impl::rlf_state_machine
 {
 public:
   rlf_state_machine(du_ue_controller_impl& ue_ctx_, const du_manager_params& cfg_, du_ue_manager_repository& ue_db_) :
@@ -251,7 +235,7 @@ du_ue_controller_impl::du_ue_controller_impl(const du_ue_context&         contex
   ue_db(ue_db_),
   cfg(cfg_),
   rlf_handler(std::make_unique<rlf_state_machine>(*this, cfg, ue_db)),
-  mac_rlf_notifier(std::make_unique<mac_rlf_du_adapter>(ue_index, ue_db, cfg.services.du_mng_exec)),
+  mac_rlf_notifier(std::make_unique<mac_rlf_du_adapter>(ue_index, ue_db)),
   rlc_rlf_notifier(std::make_unique<rlc_rlf_du_adapter>(ue_index, ue_db, cfg.services.du_mng_exec))
 {
 }

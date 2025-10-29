@@ -303,7 +303,6 @@ void f1ap_du_impl::handle_ue_context_release_request(const f1ap_ue_context_relea
         "ue={} du_ue_id={}: Skipping UEContextReleaseRequest transmission. Cause: gNB-CU-UE-F1AP-ID does not exist",
         request.ue_index,
         fmt::underlying(ue->context.gnb_du_ue_f1ap_id));
-    ue->du_handler.schedule_async_task(ue->du_handler.request_ue_removal(f1ap_ue_delete_request{request.ue_index}));
     return;
   }
 

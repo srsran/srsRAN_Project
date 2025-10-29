@@ -41,7 +41,7 @@ make_scheduler_ue_reconfiguration_request(const mac_ue_reconfiguration_request& 
 
 srsran_scheduler_adapter::srsran_scheduler_adapter(const srsran_mac_sched_config& params, rnti_manager& rnti_mng_) :
   rnti_mng(rnti_mng_),
-  rlf_handler(params.mac_cfg),
+  rlf_handler(params.mac_cfg, params.ctrl_exec),
   ctrl_exec(params.ctrl_exec),
   timers(params.timers),
   logger(srslog::fetch_basic_logger("MAC")),

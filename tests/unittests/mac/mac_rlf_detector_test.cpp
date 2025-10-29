@@ -10,6 +10,7 @@
 
 #include "lib/mac/mac_sched/rlf_detector.h"
 #include "mac_test_helpers.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -20,13 +21,14 @@ class mac_rlf_detector_test : public ::testing::Test
 protected:
   static constexpr unsigned MAX_KOS = 100;
 
-  mac_rlf_detector_test() : rlf_handler(mac_expert_config{.configs = {{MAX_KOS, MAX_KOS, MAX_KOS}}})
+  mac_rlf_detector_test() : rlf_handler(mac_expert_config{.configs = {{MAX_KOS, MAX_KOS, MAX_KOS}}}, worker)
   {
     srslog::init();
     srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::debug);
   }
-  ~mac_rlf_detector_test() { srslog::flush(); }
+  ~mac_rlf_detector_test() override { srslog::flush(); }
 
+  manual_task_worker                  worker{64};
   test_helpers::dummy_ue_rlf_notifier rlf_notif;
   rlf_detector                        rlf_handler;
 };
@@ -46,6 +48,8 @@ TEST_F(mac_rlf_detector_test, when_consecutive_harq_kos_reaches_limit_then_rlf_i
     ASSERT_FALSE(rlf_notif.rlf_detected);
     rlf_handler.handle_ack(ue_index, cell_index, false);
   }
+  ASSERT_FALSE(rlf_notif.rlf_detected);
+  worker.run_pending_tasks();
   ASSERT_TRUE(rlf_notif.rlf_detected);
 
   // Check that the RLF is not triggered again, if more KOs are detected.
@@ -53,6 +57,7 @@ TEST_F(mac_rlf_detector_test, when_consecutive_harq_kos_reaches_limit_then_rlf_i
   for (unsigned i = 0; i != MAX_KOS; ++i) {
     rlf_handler.handle_ack(ue_index, cell_index, false);
   }
+  worker.run_pending_tasks();
   ASSERT_FALSE(rlf_notif.rlf_detected);
 }
 
@@ -67,6 +72,7 @@ TEST_F(mac_rlf_detector_test, when_consecutive_harq_kos_limit_not_reached_then_r
   }
   rlf_handler.handle_ack(ue_index, cell_index, true);
   rlf_handler.handle_ack(ue_index, cell_index, false);
+  worker.run_pending_tasks();
   ASSERT_FALSE(rlf_notif.rlf_detected);
 }
 
@@ -80,12 +86,14 @@ TEST_F(mac_rlf_detector_test, when_consecutive_undetected_csi_reaches_limit_then
   for (unsigned i = 0; i != nof_oks; ++i) {
     rlf_handler.handle_csi(ue_index, cell_index, true);
   }
+  worker.run_pending_tasks();
   ASSERT_FALSE(rlf_notif.rlf_detected);
 
   for (unsigned i = 0; i != MAX_KOS; ++i) {
-    ASSERT_FALSE(rlf_notif.rlf_detected);
     rlf_handler.handle_csi(ue_index, cell_index, false);
   }
+  ASSERT_FALSE(rlf_notif.rlf_detected);
+  worker.run_pending_tasks();
   ASSERT_TRUE(rlf_notif.rlf_detected);
 
   // Check that the RLF is not triggered again, if any more undetected CSIs.
@@ -93,5 +101,6 @@ TEST_F(mac_rlf_detector_test, when_consecutive_undetected_csi_reaches_limit_then
   for (unsigned i = 0; i != MAX_KOS; ++i) {
     rlf_handler.handle_csi(ue_index, cell_index, false);
   }
+  worker.run_pending_tasks();
   ASSERT_FALSE(rlf_notif.rlf_detected);
 }
