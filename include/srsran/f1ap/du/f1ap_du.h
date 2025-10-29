@@ -96,6 +96,10 @@ public:
   /// \brief Initiate the Notify procedure as per TS 38.473 section 8.3.7
   /// \param[in] msg The Notify message to transmit.
   virtual void handle_notify(const f1ap_notify_message& msg) = 0;
+
+  /// \brief Checks if UE was assigned a gNB-CU-UE-F1AP-ID by the CU-CP.
+  /// \param[in] ue_index of a given UE.
+  virtual bool has_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index) const = 0;
 };
 
 /// This interface is used to get mapping between ue_index, gnb_cu_ue_f1ap_id and gnb_du_ue_f1ap_id.
@@ -107,12 +111,13 @@ public:
   /// \brief Map ue_index to gnb_cu_ue_f1ap_id.
   /// \param[in] ue_index of a given UE.
   /// \param[out] gnb_cu_ue_f1ap_id of the given UE.
-  virtual gnb_cu_ue_f1ap_id_t get_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index) = 0;
+  virtual std::optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index) const = 0;
 
   /// \brief Map gnb_du_ue_f1ap_id to gnb_cu_ue_f1ap_id.
   /// \param[in] gnb_du_ue_f1ap_id of a given UE.
   /// \param[out] gnb_cu_ue_f1ap_id of the given UE.
-  virtual gnb_cu_ue_f1ap_id_t get_gnb_cu_ue_f1ap_id(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id) = 0;
+  virtual std::optional<gnb_cu_ue_f1ap_id_t>
+  get_gnb_cu_ue_f1ap_id(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id) const = 0;
 
   /// \brief Map ue_index to gnb_du_ue_f1ap_id.
   /// \param[in] ue_index of a given UE.

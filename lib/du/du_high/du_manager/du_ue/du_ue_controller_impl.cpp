@@ -114,7 +114,7 @@ private:
 class du_ue_controller_impl::rlf_state_machine
 {
 public:
-  rlf_state_machine(du_ue_controller_impl& ue_ctx_, const du_manager_params& cfg_, du_ue_manager_repository& ue_db_) :
+  rlf_state_machine(du_ue_controller_impl& ue_ctx_, const du_manager_params& cfg_) :
     ue_ctx(ue_ctx_), cfg(cfg_), release_timer(cfg.services.timers.create_unique_timer(cfg.services.du_mng_exec))
   {
   }
@@ -123,6 +123,16 @@ public:
   {
     if (not is_handling_new_rlfs()) {
       // Either the RLF has been triggered or the UE is already being destroyed.
+      return;
+    }
+
+    if (not cfg.f1ap.ue_mng.has_gnb_cu_ue_f1ap_id(ue_ctx.ue_index)) {
+      // Ignore RLF, because the CU-CP has not yet provided a gNB-CU-UE-F1AP-ID for this UE (we need it for UE
+      // context release request).
+      logger.warning("ue={}, rnti={}: RLF detected but ignored. Cause: The UE still has no assigned "
+                     "gnb-CU-UE-F1AP-ID",
+                     ue_ctx.ue_index,
+                     ue_ctx.rnti);
       return;
     }
 
@@ -234,7 +244,7 @@ du_ue_controller_impl::du_ue_controller_impl(const du_ue_context&         contex
   du_ue(context_, std::move(ue_ran_res_)),
   ue_db(ue_db_),
   cfg(cfg_),
-  rlf_handler(std::make_unique<rlf_state_machine>(*this, cfg, ue_db)),
+  rlf_handler(std::make_unique<rlf_state_machine>(*this, cfg)),
   mac_rlf_notifier(std::make_unique<mac_rlf_du_adapter>(ue_index, ue_db)),
   rlc_rlf_notifier(std::make_unique<rlc_rlf_du_adapter>(ue_index, ue_db, cfg.services.du_mng_exec))
 {

@@ -615,24 +615,23 @@ void f1ap_du_impl::handle_positioning_information_request(const asn1::f1ap::posi
       .schedule_async_task(start_positioning_exchange_procedure(msg, du_mng, *ue));
 }
 
-gnb_cu_ue_f1ap_id_t f1ap_du_impl::get_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index)
+std::optional<gnb_cu_ue_f1ap_id_t> f1ap_du_impl::get_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index) const
 {
-  gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::invalid;
-  const f1ap_du_ue*   ue                = ues.find(ue_index);
-  if (ue) {
-    gnb_cu_ue_f1ap_id = ue->context.gnb_cu_ue_f1ap_id;
+  const f1ap_du_ue* ue = ues.find(ue_index);
+  if (ue == nullptr or ue->context.gnb_cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
+    return std::nullopt;
   }
-  return gnb_cu_ue_f1ap_id;
+  return ue->context.gnb_cu_ue_f1ap_id;
 }
 
-gnb_cu_ue_f1ap_id_t f1ap_du_impl::get_gnb_cu_ue_f1ap_id(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id)
+std::optional<gnb_cu_ue_f1ap_id_t>
+f1ap_du_impl::get_gnb_cu_ue_f1ap_id(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id) const
 {
-  gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::invalid;
-  const f1ap_du_ue*   ue                = ues.find(gnb_du_ue_f1ap_id);
-  if (ue) {
-    gnb_cu_ue_f1ap_id = ue->context.gnb_cu_ue_f1ap_id;
+  const f1ap_du_ue* ue = ues.find(gnb_du_ue_f1ap_id);
+  if (ue == nullptr or ue->context.gnb_cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
+    return std::nullopt;
   }
-  return gnb_cu_ue_f1ap_id;
+  return ue->context.gnb_cu_ue_f1ap_id;
 }
 
 gnb_du_ue_f1ap_id_t f1ap_du_impl::get_gnb_du_ue_f1ap_id(const du_ue_index_t& ue_index)

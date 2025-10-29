@@ -173,9 +173,9 @@ void e2sm_kpm_du_meas_provider_impl::clear_rlc_metrics()
   last_rlc_metrics_clear_time = current_time;
   auto it                     = ue_aggr_rlc_metrics.begin();
   while (it != ue_aggr_rlc_metrics.end()) {
-    du_ue_index_t       ue_index    = to_du_ue_index(it->first);
-    gnb_cu_ue_f1ap_id_t ue_f1_ap_id = f1ap_ue_id_provider.get_gnb_cu_ue_f1ap_id(ue_index);
-    if (ue_f1_ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
+    du_ue_index_t       ue_index   = to_du_ue_index(it->first);
+    gnb_du_ue_f1ap_id_t ue_f1ap_id = f1ap_ue_id_provider.get_gnb_du_ue_f1ap_id(ue_index);
+    if (ue_f1ap_id == gnb_du_ue_f1ap_id_t::invalid) {
       it = ue_aggr_rlc_metrics.erase(it);
     } else {
       ++it;
@@ -240,14 +240,14 @@ bool e2sm_kpm_du_meas_provider_impl::get_ues_matching_test_conditions(
 {
   // TODO: add test condition checking, now return all UEs
   for (const auto& ue : ue_aggr_rlc_metrics) {
-    du_ue_index_t       ue_index          = to_du_ue_index(ue.first);
-    gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = f1ap_ue_id_provider.get_gnb_cu_ue_f1ap_id(ue_index);
-    if (gnb_cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
+    du_ue_index_t                      ue_index          = to_du_ue_index(ue.first);
+    std::optional<gnb_cu_ue_f1ap_id_t> gnb_cu_ue_f1ap_id = f1ap_ue_id_provider.get_gnb_cu_ue_f1ap_id(ue_index);
+    if (not gnb_cu_ue_f1ap_id.has_value()) {
       continue;
     }
     ue_id_c        ueid;
     ue_id_gnb_du_s ueid_gnb_du{};
-    ueid_gnb_du.gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id);
+    ueid_gnb_du.gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id.value());
     ueid_gnb_du.ran_ue_id_present = false;
     ueid.set_gnb_du_ue_id()       = ueid_gnb_du;
     ues.push_back(ueid);
@@ -262,14 +262,14 @@ bool e2sm_kpm_du_meas_provider_impl::get_ues_matching_test_conditions(
 {
   // TODO: add test condition checking, now return all UEs
   for (const auto& ue : ue_aggr_rlc_metrics) {
-    du_ue_index_t       ue_index          = to_du_ue_index(ue.first);
-    gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = f1ap_ue_id_provider.get_gnb_cu_ue_f1ap_id(ue_index);
-    if (gnb_cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
+    du_ue_index_t                      ue_index          = to_du_ue_index(ue.first);
+    std::optional<gnb_cu_ue_f1ap_id_t> gnb_cu_ue_f1ap_id = f1ap_ue_id_provider.get_gnb_cu_ue_f1ap_id(ue_index);
+    if (not gnb_cu_ue_f1ap_id.has_value()) {
       continue;
     }
     ue_id_c        ueid;
     ue_id_gnb_du_s ueid_gnb_du{};
-    ueid_gnb_du.gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id);
+    ueid_gnb_du.gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id.value());
     ueid_gnb_du.ran_ue_id_present = false;
     ueid.set_gnb_du_ue_id()       = ueid_gnb_du;
     ues.push_back(ueid);
