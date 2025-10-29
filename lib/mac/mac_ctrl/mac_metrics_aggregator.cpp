@@ -113,9 +113,12 @@ public:
   {
     next_report_slot_tx = {};
     last_sl_tx          = {};
-    last_report         = report;
-    defer_until_success(
-        parent.ctrl_exec, parent.timers, [this]() { parent.handle_cell_deactivation(cell_index, last_report); });
+    // Save MAC report and commit it.
+    if (mac_builder != nullptr) {
+      mac_builder->mac = report;
+      mac_builder.reset();
+    }
+    defer_until_success(parent.ctrl_exec, parent.timers, [this]() { parent.handle_cell_deactivation(cell_index); });
   }
 
   void on_cell_metric_report(const mac_dl_cell_metric_report& report) override
@@ -190,7 +193,6 @@ private:
   report_queue_type          report_queue;
   report_queue_type::builder mac_builder;
   report_queue_type::builder sched_builder;
-  mac_dl_cell_metric_report  last_report{};
 
   // Cached metric report being built.
   slot_point_extended last_sl_tx;
@@ -256,8 +258,9 @@ void mac_metrics_aggregator::handle_pending_reports()
       }
     }
     if (pop_count != nof_reports) {
-      // Not all reports have been processed. Wait for more reports.
-      logger.warning("Not all reports have been processed");
+      // Not all metric reports have been processed. Wait for more metric reports.
+      logger.warning("Not all metric reports have been processed. next_report_start_slot={}",
+                     next_report_start_slot.without_hyper_sfn());
       pop_count = nof_reports;
     }
     nof_reports = report_count.fetch_sub(pop_count, std::memory_order_acq_rel) - pop_count;
@@ -361,44 +364,21 @@ void mac_metrics_aggregator::handle_cell_activation(du_cell_index_t cell_index, 
   ++nof_active_cells;
 }
 
-void mac_metrics_aggregator::handle_cell_deactivation(du_cell_index_t                  cell_index,
-                                                      const mac_dl_cell_metric_report& last_report)
+void mac_metrics_aggregator::handle_cell_deactivation(du_cell_index_t cell_index)
 {
   srsran_assert(cells.contains(cell_index), "MAC cell activated but not configured");
   auto& cell = *cells[cell_index];
   srsran_assert(cell.active_flag, "Deactivation of already deactivated cell not supported");
-  srsran_assert(last_report.cell_deactivated, "Expected cell deactivated flag to be set");
 
-  auto push_last_report = [&]() {
-    if (last_report.start_slot.valid()) {
-      slot_point next_start_sl_tx = next_report_start_slot.without_hyper_sfn();
-      if (last_report.start_slot >= next_start_sl_tx and
-          last_report.start_slot < next_start_sl_tx + cell.period_slots) {
-        next_report.dl.cells.push_back(last_report);
-        return true;
-      }
-    }
-    return false;
-  };
-
-  // Save last report before deactivating cell.
-  bool report_pushed = push_last_report();
-  cell.active_flag   = false;
+  cell.active_flag = false;
   if (--nof_active_cells == 0) {
-    // No more cells are active.
+    // No more cells are active. Flush whatever reports are pending.
+    report_count.fetch_add(1, std::memory_order_relaxed);
 
     // Stop aggregation timer.
     aggr_timer.stop();
 
-    // We don't expect more reports. Verify if there is nothing pending to be processed.
     handle_pending_reports();
-
-    if (not report_pushed) {
-      // It can happen that the next_report_start_slot was updated in handle_pending_reports() and therefore,
-      // the last report can be pushed.
-      push_last_report();
-    }
-    try_send_new_report();
 
     // Reset the next aggregated report start slot.
     next_report_start_slot = {};

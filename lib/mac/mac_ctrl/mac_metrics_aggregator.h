@@ -56,7 +56,7 @@ private:
 
   void handle_cell_activation(du_cell_index_t cell_index, slot_point_extended report_slot);
 
-  void handle_cell_deactivation(du_cell_index_t cell_index, const mac_dl_cell_metric_report& last_report);
+  void handle_cell_deactivation(du_cell_index_t cell_index);
 
   bool pop_report(cell_metric_handler& cell);
 

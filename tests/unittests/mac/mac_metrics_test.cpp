@@ -44,6 +44,7 @@ struct dummy_sched_metric_handler {
 
   void slot_indication(slot_point sl_tx)
   {
+    last_sl_tx = sl_tx;
     report_slot_count++;
 
     if (notif.is_sched_report_required(sl_tx)) {
@@ -55,8 +56,22 @@ struct dummy_sched_metric_handler {
     }
   }
 
+  void on_cell_deactivation()
+  {
+    if (last_sl_tx.valid()) {
+      builder->slot      = last_sl_tx - report_slot_count;
+      builder->nof_slots = report_slot_count;
+      builder.reset();
+      builder           = notif.get_builder();
+      report_slot_count = 0;
+      last_sl_tx        = {};
+    }
+  }
+
   scheduler_cell_metrics_notifier& notif;
-  unsigned                         report_slot_count{0};
+
+  slot_point last_sl_tx;
+  unsigned   report_slot_count{0};
 
   zero_copy_notifier<scheduler_cell_metrics>::builder builder;
 };
@@ -110,8 +125,8 @@ protected:
   void run_slot()
   {
     for (auto& cell : cells) {
-      cell.timer_source->on_slot_indication(next_point);
       if (cell.active) {
+        cell.timer_source->on_slot_indication(next_point);
         cell.sched.slot_indication(next_point);
         cell.mac.start_slot(next_point, metric_clock::now());
       }
@@ -123,6 +138,7 @@ protected:
   void deactivate_cell(du_cell_index_t cell_index)
   {
     cells[cell_index].active = false;
+    cells[cell_index].sched.on_cell_deactivation();
     cells[cell_index].mac.on_cell_deactivation();
   }
 };

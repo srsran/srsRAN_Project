@@ -118,9 +118,6 @@ async_task<void> mac_cell_processor::stop()
     // Notify lower layers that the cell is being stopped.
     // TODO: Rely on FAPI STOP procedure to signal the cell stop. For now, we just skip this step.
 
-    // Notify that cell metrics stopped being collected.
-    metrics.on_cell_deactivation();
-
     // Clear all UEs.
     ue_mng.clear();
 
@@ -130,6 +127,9 @@ async_task<void> mac_cell_processor::stop()
     // Signal to the scheduler that the cell was successfully stopped in the lower layers.
     // Note: This is done in the control executor context to avoid concurrency with other CTRL procedures.
     sched.handle_cell_deactivation(cell_cfg.cell_index);
+
+    // Notify that cell metrics stopped being collected.
+    metrics.on_cell_deactivation();
 
     // Clear DL buffers associated with this cell.
     dl_harq_buffers.clear();

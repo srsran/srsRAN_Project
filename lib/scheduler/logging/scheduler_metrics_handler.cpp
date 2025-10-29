@@ -399,11 +399,12 @@ void cell_metrics_handler::report_metrics()
   }
   next_report->events.swap(pending_events);
 
-  next_report->pci                       = cell_cfg.pci;
-  next_report->slot                      = last_slot_tx - data.nof_slots;
-  next_report->nof_slots                 = data.nof_slots;
-  next_report->nof_error_indications     = data.error_indication_counter;
-  next_report->average_decision_latency  = data.decision_latency_sum / next_report->nof_slots;
+  next_report->pci                   = cell_cfg.pci;
+  next_report->slot                  = last_slot_tx - data.nof_slots;
+  next_report->nof_slots             = data.nof_slots;
+  next_report->nof_error_indications = data.error_indication_counter;
+  next_report->average_decision_latency =
+      next_report->nof_slots > 0 ? data.decision_latency_sum / next_report->nof_slots : std::chrono::microseconds{0};
   next_report->max_decision_latency      = data.max_decision_latency;
   next_report->max_decision_latency_slot = data.max_decision_latency_slot;
   next_report->latency_histogram         = data.decision_latency_hist;
@@ -418,14 +419,15 @@ void cell_metrics_handler::report_metrics()
   next_report->nof_msg3_ok               = data.nof_msg3_ok;
   next_report->nof_msg3_nok              = data.nof_msg3_nok;
   next_report->avg_prach_delay_slots =
-      data.nof_prach_preambles
+      data.nof_prach_preambles > 0
           ? std::optional{static_cast<float>(data.sum_prach_delay_slots) / static_cast<float>(data.nof_prach_preambles)}
           : std::nullopt;
   next_report->nof_failed_pdsch_allocs_late_harqs = data.nof_failed_pdsch_allocs_late_harqs;
   next_report->nof_failed_pusch_allocs_late_harqs = data.nof_failed_pusch_allocs_late_harqs;
   next_report->nof_filtered_events                = data.filtered_events_counter;
   // Note: PUCCH is only allocated on full UL slots.
-  next_report->pucch_tot_rb_usage_avg = static_cast<float>(data.pucch_rbs_used) / data.nof_ul_slots;
+  next_report->pucch_tot_rb_usage_avg =
+      data.nof_ul_slots > 0 ? static_cast<float>(data.pucch_rbs_used) / data.nof_ul_slots : 0;
   for (unsigned rb_count : ul_prbs_used_per_tdd_slot_idx) {
     next_report->pusch_prbs_used_per_tdd_slot_idx.push_back(rb_count);
   }
@@ -580,6 +582,7 @@ void cell_metrics_handler::handle_cell_deactivation()
 {
   // Commit whatever is pending for the report.
   report_metrics();
+  last_slot_tx = {};
 }
 
 scheduler_ue_metrics
