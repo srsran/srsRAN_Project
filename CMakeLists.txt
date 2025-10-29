@@ -346,6 +346,18 @@ else ()
     endmacro()
 endif ()
 
+# ROHC
+find_package(ROHC)
+if(ROHC_FOUND)
+    sbom_add(
+        PACKAGE            "ROHC library"
+        DOWNLOAD_LOCATION  "https://rohc-lib.org"
+        SUPPLIER           "ROHC library project"
+        LICENSE            "LGPL-2.1-or-later"
+        VERSION            ${ROHC_VERSION}
+    )
+endif()
+
 # Crypto
 find_package(MbedTLS REQUIRED)
 if (MBEDTLS_FOUND)
