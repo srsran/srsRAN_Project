@@ -21,7 +21,7 @@ struct pucch_harq_resource_alloc_record {
   /// Pointer to PUCCH resource configuration to be used.
   const pucch_resource* resource;
   /// PUCCH resource indicator of the resource to be used.
-  uint8_t d_pri;
+  uint8_t pucch_res_indicator;
 };
 
 /// Defines the PUCCH resource usage.
@@ -70,14 +70,18 @@ public:
 
   /// \brief Reserve a specific PUCCH Resource Set ID 0 resource by its PUCCH resource indicator.
   /// \return A pointer to the resource configuration, if available. Otherwise, \c nullptr.
-  const pucch_resource*
-  reserve_harq_set_0_resource_by_pri(slot_point slot_harq, rnti_t crnti, unsigned d_pri, const pucch_config& pucch_cfg);
+  const pucch_resource* reserve_harq_set_0_resource_by_res_indicator(slot_point          slot_harq,
+                                                                     rnti_t              crnti,
+                                                                     unsigned            d_pri,
+                                                                     const pucch_config& pucch_cfg);
 
   /// \brief Reserve a specific PUCCH Resource Set ID 1 resource by its PUCCH resource indicator.
   /// \remark If SR and CSI multiplexing is enabled, this resource can be used for HARQ-ACK + SR and/or CSI.
   /// \return A pointer to the resource configuration, if available. Otherwise, \c nullptr.
-  const pucch_resource*
-  reserve_harq_set_1_resource_by_pri(slot_point slot_harq, rnti_t crnti, unsigned d_pri, const pucch_config& pucch_cfg);
+  const pucch_resource* reserve_harq_set_1_resource_by_res_indicator(slot_point          slot_harq,
+                                                                     rnti_t              crnti,
+                                                                     unsigned            d_pri,
+                                                                     const pucch_config& pucch_cfg);
 
   /// \brief Reserve the UE's CSI PUCCH resource, if available.
   /// \remark If SR multiplexing is enabled, this resource can be used for CSI + SR.
@@ -174,11 +178,11 @@ private:
                                                                    const pucch_config& pucch_cfg,
                                                                    pucch_res_set_idx   res_set_idx);
 
-  const pucch_resource* reserve_harq_resource_by_r_pucch(slot_point          slot_harq,
-                                                         rnti_t              crnti,
-                                                         unsigned            r_pucch,
-                                                         const pucch_config& pucch_cfg,
-                                                         pucch_res_set_idx   res_set_idx);
+  const pucch_resource* reserve_harq_resource_by_res_indicator(slot_point          slot_harq,
+                                                               rnti_t              crnti,
+                                                               unsigned            d_pri,
+                                                               const pucch_config& pucch_cfg,
+                                                               pucch_res_set_idx   res_set_idx);
 
   bool release_harq_resource(slot_point          slot_harq,
                              rnti_t              crnti,

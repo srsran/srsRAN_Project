@@ -100,7 +100,7 @@ private:
   enum class pucch_grant_type { harq_ack, sr, csi };
 
   /// Converts a pucch_grant_type to string.
-  static std::string to_string(pucch_grant_type type)
+  static const char* to_string(pucch_grant_type type)
   {
     switch (type) {
       case pucch_grant_type::harq_ack:
@@ -217,7 +217,8 @@ private:
 
   // Implements the main steps of the multiplexing procedure as defined in TS 38.213, Section 9.2.5.
   // Note: If \c common_grants is set, it means that the function is called while allocating common and dedicated
-  // resources together. In this case, the allocation will fail if the multiplexed resources collide with it.
+  // resources together. In this case, the allocation will fail if the multiplexed resources collide with it or with any
+  // other UL grant.
   std::optional<unsigned>
   multiplex_and_allocate_pucch(cell_slot_resource_allocator&                    pucch_slot_alloc,
                                pucch_uci_bits                                   new_bits,

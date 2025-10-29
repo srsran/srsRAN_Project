@@ -19,22 +19,27 @@
 
 namespace srsran {
 
+/// Retrieves the correct N_{ID}^0 parameter for PUCCH scrambling from the UE configuration.
 unsigned get_n_id0_scrambling(const ue_cell_configuration& ue_cell_cfg, unsigned cell_pci);
 
+/// Checks for collisions between a set of UL PUCCH grants and the existing UL allocations in the scheduler result.
 bool check_ul_collisions(span<const grant_info>    grants,
                          const ul_sched_result&    result,
                          const cell_configuration& cell_cfg,
                          bool                      is_common);
 
+/// Marks a pair of PUCCH grants in the resource grid.
 void mark_pucch_in_resource_grid(cell_slot_resource_allocator&    pucch_slot_alloc,
                                  const grant_info&                first_hop_grant,
                                  const std::optional<grant_info>& second_hop_grant,
                                  const crb_interval&              ul_bwp_crbs,
                                  const scheduler_expert_config&   expert_cfg);
 
+/// Converts a PUCCH resource configuration to grant_info structures for the first and second hop (if applicable).
 std::pair<grant_info, std::optional<grant_info>> pucch_resource_to_grant_info(const bwp_configuration& init_ul_bwp,
                                                                               const pucch_resource&    pucch_res);
 
+/// Marks a PUCCH resource in the resource grid.
 void mark_pucch_in_resource_grid(cell_slot_resource_allocator& pucch_slot_alloc,
                                  const pucch_resource&         pucch_res,
                                  const ue_cell_configuration&  ue_cell_cfg);

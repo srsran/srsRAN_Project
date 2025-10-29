@@ -1093,13 +1093,13 @@ bool config_helpers::ue_pucch_config_builder(
       tot_nof_cell_f0_f1_res + (cell_harq_set_idx % nof_harq_pucch_sets) * nof_ue_pucch_f2_f3_f4_res_harq.to_uint();
 
   // [Implementation-defined] We build the PUCCH-Config of all UEs in a way that will prevent the scheduling of multiple
-  // PUCCH transmissions per slot, since not all UEs are capable of that. To achieve this, we make sure that there is
-  // always an option to schedule different UCI types on overlapping symbols, so that the UE will multiplex the
+  // PUCCH transmissions per UE per slot, since not all UEs are capable of that. To achieve this, we make sure that
+  // there is always an option to schedule different UCI types on overlapping symbols, so that the UE will multiplex the
   // different UCI types on a single PUCCH.
   //
   // This is done differently depending on the configured PUCCH formats:
-  // - F1 and F2/F3/F4: since F1 resources always take 14 symbols, all F2/F3/F4 resources will overlap in symbols with
-  // F1 resources.
+  // - F1 and F2/F3/F4: since we configure F1 resources to always take all available symbols in the slot, all F2/F3/F4
+  //   resources will overlap in symbols with F1 resources.
   // - F0 and F3/F4: for now we do not allow this combination. TODO: figure out this case.
   // - F0 and F2: we reserve two resources in each Resource Set to be used for HARQ-ACK when CSI or SR is scheduled.
   //
