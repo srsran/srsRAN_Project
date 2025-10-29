@@ -43,7 +43,7 @@ public:
   using correspondence_info_container =
       static_vector<uci_part2_correspondence_information, uci_part2_size_description::max_nof_entries>;
 
-  explicit uci_part2_correspondence_mapper(std::vector<correspondence_info_container>&& correspondence_map_) :
+  explicit uci_part2_correspondence_mapper(std::vector<correspondence_info_container> correspondence_map_) :
     correspondence_map(std::move(correspondence_map_))
   {
     srsran_assert(!correspondence_map.empty(), "Empty container");

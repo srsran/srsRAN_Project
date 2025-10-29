@@ -21,7 +21,7 @@ namespace fapi_adaptor {
 class precoding_matrix_repository
 {
 public:
-  explicit precoding_matrix_repository(std::vector<precoding_weight_matrix>&& repo_) : repo(std::move(repo_))
+  explicit precoding_matrix_repository(std::vector<precoding_weight_matrix> repo_) : repo(std::move(repo_))
   {
     srsran_assert(!repo.empty(), "Empty container");
   }

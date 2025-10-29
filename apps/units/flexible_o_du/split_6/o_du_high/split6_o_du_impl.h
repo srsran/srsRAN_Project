@@ -13,7 +13,7 @@
 #include "srsran/du/du.h"
 #include "srsran/du/du_high/o_du_high.h"
 #include "srsran/du/du_operation_controller.h"
-#include "srsran/fapi_adaptor/fapi_adaptor.h"
+#include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
 #include <memory>
 #include <vector>
 
@@ -25,8 +25,9 @@ class radio_unit;
 class split6_o_du_impl : public srs_du::du, public du_operation_controller
 {
 public:
-  explicit split6_o_du_impl(std::vector<std::unique_ptr<fapi::fapi_adaptor>> adaptors_,
-                            std::unique_ptr<srs_du::o_du_high>               odu_hi_);
+  explicit split6_o_du_impl(unsigned                                        nof_cells_,
+                            std::unique_ptr<fapi_adaptor::phy_fapi_adaptor> adaptor_,
+                            std::unique_ptr<srs_du::o_du_high>              odu_hi_);
 
   // See interface for documentation.
   du_operation_controller& get_operation_controller() override { return *this; }
@@ -38,8 +39,9 @@ public:
   void stop() override;
 
 private:
-  std::unique_ptr<srs_du::o_du_high>               odu_hi;
-  std::vector<std::unique_ptr<fapi::fapi_adaptor>> adaptors;
+  const unsigned                                  nof_cells;
+  std::unique_ptr<srs_du::o_du_high>              odu_hi;
+  std::unique_ptr<fapi_adaptor::phy_fapi_adaptor> adaptor;
 };
 
 } // namespace srsran

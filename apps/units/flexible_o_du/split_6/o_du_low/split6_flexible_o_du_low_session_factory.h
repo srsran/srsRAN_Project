@@ -11,9 +11,9 @@
 #pragma once
 
 #include "apps/units/flexible_o_du/o_du_low/o_du_low_unit_factory.h"
+#include "fapi_adaptor/mac_fapi_p7_sector_adaptor_factory.h"
 #include "split6_flexible_o_du_low_session.h"
 #include "split6_o_du_low_unit_config.h"
-#include "srsran/fapi_adaptor/fapi_slot_messages_adaptor_factory.h"
 
 namespace srsran {
 
@@ -68,21 +68,21 @@ class split6_flexible_o_du_low_session_factory
     std::optional<std::chrono::system_clock::time_point> calculate_start_time() const;
   };
 
-  const split6_o_du_low_unit_config                    unit_config;
-  worker_manager&                                      workers;
-  timer_manager&                                       timers;
-  split6_flexible_o_du_low_metrics_notifier*           notifier;
-  std::unique_ptr<fapi::slot_messages_adaptor_factory> slot_messages_adaptor_factory;
-  start_time_calculator                                start_time_calc;
-  std::optional<float>                                 sampling_rate_MHz;
+  const split6_o_du_low_unit_config                                 unit_config;
+  worker_manager&                                                   workers;
+  timer_manager&                                                    timers;
+  split6_flexible_o_du_low_metrics_notifier*                        notifier;
+  std::unique_ptr<fapi_adaptor::mac_fapi_p7_sector_adaptor_factory> slot_messages_adaptor_factory;
+  start_time_calculator                                             start_time_calc;
+  std::optional<float>                                              sampling_rate_MHz;
 
 public:
   split6_flexible_o_du_low_session_factory(
-      split6_o_du_low_unit_config                          unit_config_,
-      worker_manager&                                      workers_,
-      timer_manager&                                       timers_,
-      split6_flexible_o_du_low_metrics_notifier*           notifier_,
-      std::unique_ptr<fapi::slot_messages_adaptor_factory> slot_messages_adaptor_factory_) :
+      split6_o_du_low_unit_config                                       unit_config_,
+      worker_manager&                                                   workers_,
+      timer_manager&                                                    timers_,
+      split6_flexible_o_du_low_metrics_notifier*                        notifier_,
+      std::unique_ptr<fapi_adaptor::mac_fapi_p7_sector_adaptor_factory> slot_messages_adaptor_factory_) :
     unit_config(std::move(unit_config_)),
     workers(workers_),
     timers(timers_),

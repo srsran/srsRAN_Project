@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/du/du_low/du_low_config.h"
-#include "srsran/fapi_adaptor/phy/phy_fapi_adaptor_config.h"
+#include "srsran/fapi_adaptor/phy/phy_fapi_fastpath_adaptor_config.h"
 
 namespace srsran {
 namespace srs_du {
@@ -22,7 +22,7 @@ using cell_prach_ports_entry = std::vector<uint8_t>;
 struct o_du_low_config {
   du_low_config du_low_cfg;
   /// FAPI adaptor configuration.
-  fapi_adaptor::phy_fapi_adaptor_config fapi_cfg;
+  fapi_adaptor::phy_fapi_fastpath_adaptor_config fapi_cfg;
   /// Metrics configuration. Set to \c true to enable the DU low metrics.
   bool enable_metrics;
 };

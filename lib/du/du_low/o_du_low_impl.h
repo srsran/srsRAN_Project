@@ -14,7 +14,7 @@
 #include "srsran/du/du_low/du_low.h"
 #include "srsran/du/du_low/o_du_low.h"
 #include "srsran/du/du_operation_controller.h"
-#include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
+#include "srsran/fapi_adaptor/phy/phy_fapi_fastpath_adaptor.h"
 #include <memory>
 
 namespace srsran {
@@ -23,9 +23,9 @@ namespace srs_du {
 class o_du_low_impl final : public o_du_low, public du_operation_controller
 {
 public:
-  o_du_low_impl(std::unique_ptr<du_low>                         du_lo_,
-                std::unique_ptr<fapi_adaptor::phy_fapi_adaptor> fapi_adaptor_,
-                unsigned                                        nof_cells);
+  o_du_low_impl(std::unique_ptr<du_low>                                  du_lo_,
+                std::unique_ptr<fapi_adaptor::phy_fapi_fastpath_adaptor> fapi_adaptor_,
+                unsigned                                                 nof_cells);
 
   // See interface for documentation.
   du_low& get_du_low() override;
@@ -34,7 +34,7 @@ public:
   du_operation_controller& get_operation_controller() override { return *this; }
 
   // See interface for documentation.
-  fapi_adaptor::phy_fapi_adaptor& get_phy_fapi_adaptor() override;
+  fapi_adaptor::phy_fapi_fastpath_adaptor& get_phy_fapi_fastpath_adaptor() override;
 
   // See interface for documentation.
   o_du_low_metrics_collector_impl* get_metrics_collector() override;
@@ -46,9 +46,9 @@ public:
   void stop() override;
 
 private:
-  std::unique_ptr<du_low>                         du_lo;
-  std::unique_ptr<fapi_adaptor::phy_fapi_adaptor> fapi_adaptor;
-  o_du_low_metrics_collector_impl                 metrics_collector;
+  std::unique_ptr<du_low>                                  du_lo;
+  std::unique_ptr<fapi_adaptor::phy_fapi_fastpath_adaptor> fapi_fastpath_adaptor;
+  o_du_low_metrics_collector_impl                          metrics_collector;
 };
 
 } // namespace srs_du

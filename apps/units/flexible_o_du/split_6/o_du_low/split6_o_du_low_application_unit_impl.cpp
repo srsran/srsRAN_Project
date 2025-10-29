@@ -17,6 +17,7 @@
 #include "apps/units/flexible_o_du/split_7_2/helpers/ru_ofh_config_yaml_writer.h"
 #include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_config_translator.h"
 #include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_config_yaml_writer.h"
+#include "fapi_adaptor/phy_fapi_p5_sector_operation_request_adaptor.h"
 #include "metrics/split6_flexible_o_du_low_metrics_builder.h"
 #include "split6_constants.h"
 #include "split6_flexible_o_du_low.h"
@@ -118,17 +119,15 @@ split6_o_du_low_application_unit_impl::create_flexible_o_du_low(worker_manager& 
 
   // Split 6 flexible O-DU low manager dependencies.
   split6_flexible_o_du_low_dependencies dependencies;
-  dependencies.config_interface_collection = fapi::create_fapi_config_message_interface_collection(logger);
-  dependencies.config_adaptor =
-      plugin->create_config_messages_adaptor(dependencies.config_interface_collection->get_config_message_gateway(),
-                                             *workers.split6_exec,
-                                             *workers.split6_crtl_exec);
+  dependencies.phy_p5_adaptor = std::make_unique<fapi_adaptor::phy_fapi_p5_sector_operation_request_adaptor>(logger);
+  dependencies.mac_p5_adaptor = plugin->create_fapi_p5_sector_adaptor(
+      dependencies.phy_p5_adaptor->get_config_message_gateway(), *workers.split6_exec, *workers.split6_crtl_exec);
   dependencies.odu_low_session_factory = std::make_unique<split6_flexible_o_du_low_session_factory>(
       unit_cfg,
       workers,
       timers,
       notifier,
-      plugin->create_slot_messages_adaptor_factory(*workers.split6_exec, *workers.split6_crtl_exec));
+      plugin->create_fapi_p7_sector_adaptor_factory(*workers.split6_exec, *workers.split6_crtl_exec));
 
   auto odu_low = std::make_unique<split6_flexible_o_du_low>(std::move(dependencies));
 

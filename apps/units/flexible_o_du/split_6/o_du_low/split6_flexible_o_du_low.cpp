@@ -9,31 +9,33 @@
  */
 
 #include "split6_flexible_o_du_low.h"
-#include "srsran/fapi_adaptor/fapi_operation_controller.h"
+#include "srsran/fapi_adaptor/mac/operation_controller.h"
 
 using namespace srsran;
 
-split6_flexible_o_du_low::split6_flexible_o_du_low(split6_flexible_o_du_low_dependencies&& dependencies) :
+split6_flexible_o_du_low::split6_flexible_o_du_low(split6_flexible_o_du_low_dependencies dependencies) :
   odu_low_session_manager(std::move(dependencies.odu_low_session_factory)),
-  config_msg_adaptor(std::move(dependencies.config_adaptor)),
-  config_interface_collection(std::move(dependencies.config_interface_collection))
+  mac_p5_adaptor(std::move(dependencies.mac_p5_adaptor)),
+  phy_p5_adaptor(std::move(dependencies.phy_p5_adaptor))
 {
-  srsran_assert(config_msg_adaptor, "Invalid FAPI configuration message adaptor");
-  srsran_assert(config_interface_collection, "Invalid FAPI configuration message interface collection");
+  srsran_assert(mac_p5_adaptor, "Invalid MAC-FAPI P5 sector adaptor");
+  srsran_assert(phy_p5_adaptor, "Invalid PHY-FAPI P5 sector adaptor");
 
-  config_interface_collection->set_cell_operation_request_notifier(odu_low_session_manager);
-  config_interface_collection->set_error_message_notifier(config_msg_adaptor->get_error_message_notifier());
-  config_interface_collection->set_config_message_notifier(config_msg_adaptor->get_config_message_notifier());
+  // Connect MAC-PHY FAPI P5 adaptors.
+  phy_p5_adaptor->set_cell_operation_request_notifier(odu_low_session_manager);
+  phy_p5_adaptor->set_error_message_notifier(mac_p5_adaptor->get_error_message_notifier());
+  phy_p5_adaptor->set_config_message_notifier(mac_p5_adaptor->get_config_message_notifier());
 }
 
 void split6_flexible_o_du_low::start()
 {
-  config_msg_adaptor->get_operation_controller().start();
+  mac_p5_adaptor->get_operation_controller().start();
 }
 
 void split6_flexible_o_du_low::stop()
 {
-  config_msg_adaptor->get_operation_controller().stop();
+  mac_p5_adaptor->get_operation_controller().stop();
+
   // Clear running session.
   odu_low_session_manager.on_stop_request();
 }

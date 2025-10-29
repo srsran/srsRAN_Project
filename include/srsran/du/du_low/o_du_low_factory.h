@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/adt/span.h"
 #include "srsran/du/du_low/o_du_low.h"
 #include <memory>
 

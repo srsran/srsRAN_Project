@@ -24,8 +24,9 @@
 #include "split6_flexible_o_du_low_session.h"
 #include "srsran/du/du_low/o_du_low_config.h"
 #include "srsran/fapi/cell_config.h"
-#include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
-#include "srsran/fapi_adaptor/phy/phy_fapi_sector_adaptor.h"
+#include "srsran/fapi_adaptor/phy/p7/phy_fapi_p7_sector_fastpath_adaptor.h"
+#include "srsran/fapi_adaptor/phy/phy_fapi_fastpath_adaptor.h"
+#include "srsran/fapi_adaptor/phy/phy_fapi_sector_fastpath_adaptor.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 
@@ -83,14 +84,15 @@ split6_flexible_o_du_low_session_factory::create_o_du_low_session(const fapi::fa
   }
 
   // Get the FAPI sector adaptor to get the dependencies.
-  auto& fapi_sector_adaptor = odu_low.o_du_lo->get_phy_fapi_adaptor().get_sector_adaptor(split6_du_low::CELL_ID);
+  auto& fapi_sector_adaptor = odu_low.o_du_lo->get_phy_fapi_fastpath_adaptor()
+                                  .get_sector_adaptor(split6_du_low::CELL_ID)
+                                  .get_p7_sector_adaptor();
 
   // Create FAPI slot messages adaptor.
-  auto adaptor =
-      slot_messages_adaptor_factory->create_slot_messages_adaptor(config,
-                                                                  fapi_sector_adaptor.get_slot_message_gateway(),
-                                                                  fapi_sector_adaptor.get_slot_last_message_notifier(),
-                                                                  ru->get_controller());
+  auto adaptor = slot_messages_adaptor_factory->create(config,
+                                                       fapi_sector_adaptor.get_slot_message_gateway(),
+                                                       fapi_sector_adaptor.get_slot_last_message_notifier(),
+                                                       ru->get_controller());
 
   if (!adaptor) {
     return nullptr;
@@ -234,26 +236,27 @@ split6_flexible_o_du_low_session_factory::create_o_du_low(const fapi::fapi_cell_
 
   o_du_low_unit_config odu_low_cfg = {unit_config.du_low_cfg, {}, {}};
 
-  auto& fapi_sector = odu_low_cfg.fapi_cfg.sectors.emplace_back();
+  auto& p7_fapi_sector = odu_low_cfg.fapi_cfg.sectors.emplace_back().p7_config;
 
-  fapi_sector.carrier_cfg                   = config.carrier_cfg;
-  fapi_sector.prach_cfg                     = config.prach_cfg;
-  fapi_sector.allow_request_on_empty_ul_tti = unit_config.du_low_cfg.expert_phy_cfg.allow_request_on_empty_uplink_slot;
-  fapi_sector.nof_slots_request_headroom    = unit_config.du_low_cfg.expert_phy_cfg.nof_slots_request_headroom;
-  fapi_sector.prach_ports                   = prach_ports;
-  fapi_sector.scs                           = config.phy_cfg.scs;
-  fapi_sector.scs_common                    = config.phy_cfg.scs;
-  fapi_sector.dBFS_calibration_value        = 1.F;
+  p7_fapi_sector.carrier_cfg = config.carrier_cfg;
+  p7_fapi_sector.prach_cfg   = config.prach_cfg;
+  p7_fapi_sector.allow_request_on_empty_ul_tti =
+      unit_config.du_low_cfg.expert_phy_cfg.allow_request_on_empty_uplink_slot;
+  p7_fapi_sector.nof_slots_request_headroom = unit_config.du_low_cfg.expert_phy_cfg.nof_slots_request_headroom;
+  p7_fapi_sector.prach_ports                = prach_ports;
+  p7_fapi_sector.scs                        = config.phy_cfg.scs;
+  p7_fapi_sector.scs_common                 = config.phy_cfg.scs;
+  p7_fapi_sector.dBFS_calibration_value     = 1.F;
   // When the sampling rate is provided, calculate the dBFS calibration value as sqrt(sampling rate / subcarrier
   // spacing). This factor is the magnitude of a single subcarrier in normalized PHY linear units equivalent to
   // a constant signal with a power of 0 dBFS.
   if (sampling_rate_MHz) {
-    fapi_sector.dBFS_calibration_value = calculate_dBFS_calibration_value(*sampling_rate_MHz, config.phy_cfg.scs);
+    p7_fapi_sector.dBFS_calibration_value = calculate_dBFS_calibration_value(*sampling_rate_MHz, config.phy_cfg.scs);
   }
 
   // :TODO: add a parse option for the sector, so it will be easier to debug problems when running more than one
   // instance.
-  fapi_sector.sector_id = 0;
+  p7_fapi_sector.sector_id = 0;
 
   auto& du_low_cell = odu_low_cfg.cells.emplace_back();
 

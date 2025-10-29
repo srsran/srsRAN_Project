@@ -13,9 +13,10 @@
 #include "o_du_high_metrics_notifier_proxy.h"
 #include "srsran/du/du_high/du_high.h"
 #include "srsran/du/du_high/o_du_high.h"
+#include "srsran/du/du_high/o_du_high_config.h"
 #include "srsran/du/du_operation_controller.h"
-#include "srsran/du/o_du_config.h"
 #include "srsran/e2/e2.h"
+#include "srsran/fapi_adaptor/mac/mac_fapi_fastpath_adaptor.h"
 
 namespace srsran {
 
@@ -25,9 +26,9 @@ namespace srs_du {
 
 /// O-RAN DU high implementation dependencies.
 struct o_du_high_impl_dependencies {
-  srslog::basic_logger*                           logger;
-  std::unique_ptr<fapi_adaptor::mac_fapi_adaptor> du_high_adaptor;
-  du_metrics_notifier*                            metrics_notifier;
+  srslog::basic_logger*                                    logger;
+  std::unique_ptr<fapi_adaptor::mac_fapi_fastpath_adaptor> fapi_fastpath_adaptor;
+  du_metrics_notifier*                                     metrics_notifier;
 };
 
 /// O-RAN DU high implementation.
@@ -46,7 +47,7 @@ public:
   void stop() override;
 
   // See interface for documentation.
-  fapi_adaptor::mac_fapi_adaptor& get_mac_fapi_adaptor() override;
+  fapi_adaptor::mac_fapi_fastpath_adaptor& get_mac_fapi_fastpath_adaptor() override;
 
   // See interface for documentation.
   du_high& get_du_high() override;
@@ -67,13 +68,13 @@ public:
   du_metrics_notifier& get_du_metrics_notifier() { return metrics_notifier_poxy; }
 
 private:
-  const unsigned                                  nof_cells;
-  srslog::basic_logger&                           logger;
-  o_du_high_metrics_notifier_proxy                metrics_notifier_poxy;
-  std::unique_ptr<fapi_adaptor::mac_fapi_adaptor> du_high_adaptor;
-  std::unique_ptr<mac_result_notifier>            du_high_result_notifier;
-  std::unique_ptr<du_high>                        du_hi;
-  std::unique_ptr<e2_agent>                       e2agent;
+  const unsigned                                           nof_cells;
+  srslog::basic_logger&                                    logger;
+  o_du_high_metrics_notifier_proxy                         metrics_notifier_poxy;
+  std::unique_ptr<fapi_adaptor::mac_fapi_fastpath_adaptor> fapi_fastpath_adaptor;
+  std::unique_ptr<mac_result_notifier>                     du_high_result_notifier;
+  std::unique_ptr<du_high>                                 du_hi;
+  std::unique_ptr<e2_agent>                                e2agent;
 };
 
 } // namespace srs_du

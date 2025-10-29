@@ -13,9 +13,25 @@
 namespace srsran {
 namespace fapi_adaptor {
 
-class phy_fapi_sector_adaptor;
+class phy_fapi_p7_sector_adaptor;
 
-/// PHY&ndash;FAPI bidirectional adaptor interface.
+/// \brief PHY-FAPI bidirectional sector adaptor interface.
+///
+/// This adaptor represents a sector in FAPI, containing P5 (control/configuration) and P7 (user/slot) FAPI data planes.
+class phy_fapi_sector_adaptor
+{
+public:
+  virtual ~phy_fapi_sector_adaptor() = default;
+
+  // :TODO: return p5 adaptor and remove start/stop.
+  virtual void start() = 0;
+  virtual void stop()  = 0;
+
+  /// Returns the P7 sector adaptor of this PHY-FAPI sector adaptor.
+  virtual phy_fapi_p7_sector_adaptor& get_p7_sector_adaptor() = 0;
+};
+
+/// PHY-FAPI bidirectional adaptor interface.
 class phy_fapi_adaptor
 {
 public:

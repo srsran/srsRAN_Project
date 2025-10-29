@@ -8,8 +8,8 @@
 
 set_directory_properties(PROPERTIES LABELS "fapi_adaptor")
 
-add_subdirectory(mac)
-add_subdirectory(phy)
+add_subdirectory(mac/p7)
+add_subdirectory(phy/p7)
 
 add_executable(precoding_matrix_table_generator_test precoding_matrix_table_generator_test.cpp)
 target_link_libraries(precoding_matrix_table_generator_test srsran_fapi_precoding_matrix_tools srslog gtest gtest_main)

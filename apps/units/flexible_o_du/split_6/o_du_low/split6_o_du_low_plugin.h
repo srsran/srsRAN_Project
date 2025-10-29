@@ -10,9 +10,9 @@
 
 #pragma once
 
+#include "fapi_adaptor/mac_fapi_p7_sector_adaptor_factory.h"
 #include "split6_flexible_o_du_low_session_factory.h"
-#include "srsran/fapi_adaptor/fapi_config_messages_adaptor.h"
-#include "srsran/fapi_adaptor/fapi_slot_messages_adaptor_factory.h"
+#include "srsran/fapi_adaptor/mac/p5/mac_fapi_p5_sector_adaptor.h"
 #include <memory>
 
 namespace CLI {
@@ -40,15 +40,15 @@ public:
   /// Registers the loggers of this application unit.
   virtual void on_loggers_registration() = 0;
 
-  /// Creates and returns a FAPI config messages adaptor using the given arguments.
-  virtual std::unique_ptr<fapi::config_messages_adaptor>
-  create_config_messages_adaptor(fapi::config_message_gateway& gateway,
-                                 task_executor&                executor,
-                                 task_executor&                control_executor) = 0;
+  /// Creates and returns a MAC-FAPI P5 sector adaptor using the given arguments.
+  virtual std::unique_ptr<fapi_adaptor::mac_fapi_p5_sector_adaptor>
+  create_fapi_p5_sector_adaptor(fapi::config_message_gateway& gateway,
+                                task_executor&                executor,
+                                task_executor&                control_executor) = 0;
 
-  /// Creates and returns a FAPI slot messages adaptor factory using the given arguments.
-  virtual std::unique_ptr<fapi::slot_messages_adaptor_factory>
-  create_slot_messages_adaptor_factory(task_executor& executor, task_executor& control_executor) = 0;
+  /// Creates and returns a MAC-FAPI P7 sector adaptor factory using the given arguments.
+  virtual std::unique_ptr<fapi_adaptor::mac_fapi_p7_sector_adaptor_factory>
+  create_fapi_p7_sector_adaptor_factory(task_executor& executor, task_executor& control_executor) = 0;
 
   /// Fills the given worker manager split 6 configuration.
   virtual void fill_worker_manager_config(worker_manager_config& config) = 0;

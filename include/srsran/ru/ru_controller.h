@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/ran/phy_time_unit.h"
+#include <chrono>
 #include <optional>
 
 namespace srsran {

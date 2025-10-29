@@ -6,6 +6,7 @@
 # the distribution.
 #
 
+add_subdirectory(fapi_adaptor)
 add_subdirectory(metrics)
 
 set(SOURCES
@@ -25,7 +26,7 @@ add_library(srsran_flexible_o_du_low_split_6 STATIC ${SOURCES})
 target_include_directories(srsran_flexible_o_du_low_split_6 PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(srsran_flexible_o_du_low_split_6 PRIVATE
         srsran_split6_flexible_o_du_low_unit_metrics_helpers
-        srsran_fapi_config_gateway
+        srsran_split6_flexible_o_du_low_unit_phy_fapi_p5_adaptor
         srsran_o_du_low_unit_helpers
         srsran_split_8_app_unit_helpers
         srsran_split_7_2_app_unit_helpers

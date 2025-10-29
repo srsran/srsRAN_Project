@@ -11,9 +11,8 @@
 #pragma once
 
 #include "srsran/adt/span.h"
-#include "srsran/fapi_adaptor/fapi_adaptor.h"
+#include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
 #include <memory>
-#include <vector>
 
 namespace CLI {
 class App;
@@ -46,7 +45,7 @@ public:
   virtual void on_loggers_registration() = 0;
 
   /// Creates and returns a vector of fapi adaptors, each of them representing a cell.
-  virtual std::vector<std::unique_ptr<fapi::fapi_adaptor>>
+  virtual std::unique_ptr<fapi_adaptor::phy_fapi_adaptor>
   create_fapi_adaptor(const srs_du::du_high_configuration& du_high_cfg, const o_du_unit_dependencies& dependencies) = 0;
 
   /// Fills the given worker manager split 6 configuration.

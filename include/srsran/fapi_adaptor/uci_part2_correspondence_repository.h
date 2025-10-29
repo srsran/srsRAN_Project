@@ -26,7 +26,7 @@ class uci_part2_correspondence_repository
 
 public:
   explicit uci_part2_correspondence_repository(
-      std::vector<static_vector<uint16_t, uci_part2_size_description::max_size_table>>&& repo_map_) :
+      std::vector<static_vector<uint16_t, uci_part2_size_description::max_size_table>> repo_map_) :
     repo_map(std::move(repo_map_))
   {
     srsran_assert(!repo_map.empty(), "Empty container");

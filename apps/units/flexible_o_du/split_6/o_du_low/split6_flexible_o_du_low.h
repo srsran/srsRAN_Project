@@ -10,19 +10,19 @@
 
 #pragma once
 
+#include "fapi_adaptor/phy_fapi_p5_sector_operation_request_adaptor.h"
 #include "split6_flexible_o_du_low_session_manager.h"
 #include "srsran/du/du_operation_controller.h"
-#include "srsran/fapi/fapi_config_message_interface_collection.h"
-#include "srsran/fapi_adaptor/fapi_config_messages_adaptor.h"
+#include "srsran/fapi_adaptor/mac/p5/mac_fapi_p5_sector_adaptor.h"
 #include <memory>
 
 namespace srsran {
 
 /// Split 6 flexible O-DU low dependencies.
 struct split6_flexible_o_du_low_dependencies {
-  std::unique_ptr<split6_flexible_o_du_low_session_factory>       odu_low_session_factory;
-  std::unique_ptr<fapi::config_messages_adaptor>                  config_adaptor;
-  std::unique_ptr<fapi::fapi_config_message_interface_collection> config_interface_collection;
+  std::unique_ptr<split6_flexible_o_du_low_session_factory>                   odu_low_session_factory;
+  std::unique_ptr<fapi_adaptor::mac_fapi_p5_sector_adaptor>                   mac_p5_adaptor;
+  std::unique_ptr<fapi_adaptor::phy_fapi_p5_sector_operation_request_adaptor> phy_p5_adaptor;
 };
 
 /// \brief Split 6 flexible O-DU low.
@@ -34,7 +34,7 @@ struct split6_flexible_o_du_low_dependencies {
 class split6_flexible_o_du_low : public du_operation_controller
 {
 public:
-  explicit split6_flexible_o_du_low(split6_flexible_o_du_low_dependencies&& dependencies);
+  explicit split6_flexible_o_du_low(split6_flexible_o_du_low_dependencies dependencies);
 
   // See interface for documentation.
   void start() override;
@@ -43,9 +43,9 @@ public:
   void stop() override;
 
 private:
-  split6_flexible_o_du_low_session_manager                        odu_low_session_manager;
-  std::unique_ptr<fapi::config_messages_adaptor>                  config_msg_adaptor;
-  std::unique_ptr<fapi::fapi_config_message_interface_collection> config_interface_collection;
+  split6_flexible_o_du_low_session_manager                                    odu_low_session_manager;
+  std::unique_ptr<fapi_adaptor::mac_fapi_p5_sector_adaptor>                   mac_p5_adaptor;
+  std::unique_ptr<fapi_adaptor::phy_fapi_p5_sector_operation_request_adaptor> phy_p5_adaptor;
 };
 
 } // namespace srsran

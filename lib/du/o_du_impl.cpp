@@ -13,7 +13,7 @@
 #include "srsran/du/du_low/o_du_low_metrics_collector.h"
 #include "srsran/du/o_du_metrics.h"
 #include "srsran/du/o_du_metrics_notifier.h"
-#include "srsran/fapi_adaptor/mac/mac_fapi_adaptor.h"
+#include "srsran/fapi_adaptor/mac/mac_fapi_fastpath_adaptor.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;
@@ -69,7 +69,7 @@ void o_du_impl::start()
 void o_du_impl::stop()
 {
   // Stop the MAC-FAPI adaptor first.
-  odu_hi->get_mac_fapi_adaptor().stop();
+  odu_hi->get_mac_fapi_fastpath_adaptor().stop();
 
   odu_lo->get_operation_controller().stop();
   odu_hi->get_operation_controller().stop();

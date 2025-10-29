@@ -12,7 +12,10 @@
 #include "srsran/du/du_high/du_high_configuration.h"
 #include "srsran/fapi/slot_last_message_notifier.h"
 #include "srsran/fapi/slot_message_gateway.h"
-#include "srsran/fapi_adaptor/fapi_operation_controller.h"
+#include "srsran/fapi_adaptor/phy/p7/phy_fapi_p7_sector_adaptor.h"
+#include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
+
+using namespace srsran;
 
 namespace srsran::fapi {
 struct dl_tti_request_message;
@@ -20,14 +23,13 @@ struct ul_tti_request_message;
 struct ul_dci_request_message;
 struct tx_data_request_message;
 } // namespace srsran::fapi
-using namespace srsran;
 
 namespace {
 
 /// Dummy FAPI adaptor implementation.
-class fapi_adaptor_dummy : public fapi::fapi_adaptor,
-                           fapi::fapi_message_interface_collection,
-                           fapi::operation_controller
+class fapi_adaptor_dummy : public fapi_adaptor::phy_fapi_adaptor,
+                           fapi_adaptor::phy_fapi_sector_adaptor,
+                           fapi_adaptor::phy_fapi_p7_sector_adaptor
 {
   /// Dummy slot message gateway implementation.
   class slot_message_gateway_dummy : public fapi::slot_message_gateway
@@ -56,16 +58,16 @@ class fapi_adaptor_dummy : public fapi::fapi_adaptor,
 
 public:
   // See interface for documentation.
-  fapi::operation_controller& get_operation_controller() override { return *this; }
+  void start() override {}
 
   // See interface for documentation.
-  fapi_message_interface_collection& get_message_interface_collection() override { return *this; }
+  void stop() override {}
 
   // See interface for documentation.
-  bool start() override { return false; }
+  phy_fapi_p7_sector_adaptor& get_p7_sector_adaptor() override { return *this; }
 
   // See interface for documentation.
-  bool stop() override { return false; }
+  phy_fapi_sector_adaptor& get_sector_adaptor(unsigned cell_id) override { return *this; }
 
   // See interface for documentation.
   fapi::slot_message_gateway& get_slot_message_gateway() override { return *gateway; }
@@ -85,16 +87,11 @@ public:
 
 } // namespace
 
-std::vector<std::unique_ptr<fapi::fapi_adaptor>>
+std::unique_ptr<fapi_adaptor::phy_fapi_adaptor>
 split6_plugin_dummy::create_fapi_adaptor(const srs_du::du_high_configuration& du_high_cfg,
                                          const o_du_unit_dependencies&        dependencies)
 {
-  std::vector<std::unique_ptr<fapi::fapi_adaptor>> output(du_high_cfg.ran.cells.size());
-  for (auto& cell : output) {
-    cell = std::make_unique<fapi_adaptor_dummy>();
-  }
-
-  return output;
+  return std::make_unique<fapi_adaptor_dummy>();
 }
 
 #ifndef SRSRAN_HAS_ENTERPRISE
