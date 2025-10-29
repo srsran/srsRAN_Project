@@ -37,11 +37,6 @@ error_type<std::string> srsran::validate_prach_detector_phy(prach_format_type   
   auto flag = detail::get_threshold_flag(th_params);
 
   if (flag == detail::threshold_flag::red) {
-    fmt::print("\nThe PRACH detector does not support the configuration {{Format {}, ZCZ {}, SCS {}, Rx ports {}}}.\n",
-               to_string(format),
-               zero_correlation_zone,
-               to_string(scs),
-               nof_rx_ports);
     return make_unexpected(fmt::format(
         "The PRACH detector does not support the configuration {{Format {}, ZCZ {}, SCS {}, Rx ports {}}}.\n",
         to_string(format),
