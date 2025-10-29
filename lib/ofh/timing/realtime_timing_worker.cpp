@@ -10,6 +10,7 @@
 
 #include "realtime_timing_worker.h"
 #include "../support/logger_utils.h"
+#include "../support/metrics_helpers.h"
 #include "srsran/instrumentation/traces/ofh_traces.h"
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
 #include "srsran/support/rtsan.h"
@@ -152,8 +153,10 @@ void realtime_timing_worker::poll()
 
   // Check if we have missed more than one symbol.
   if (SRSRAN_UNLIKELY(delta > 1)) {
-    logger.info("Real-time timing worker woke up late, skipped '{}' symbols", delta);
-    metrics_collector.update_metrics(delta);
+    logger.info("Real-time timing worker woke up late, skipped '{}' symbols, current symbol is '{}'",
+                delta,
+                current_symbol_index % nof_symbols_per_slot);
+    metrics_collector.update_skipped_symbols(delta);
   }
   if (SRSRAN_UNLIKELY(delta >= nof_symbols_per_slot)) {
     log_conditional_warning(
@@ -183,9 +186,11 @@ void realtime_timing_worker::notify_slot_symbol_point(const slot_symbol_point_co
 {
   ofh_tracer << instant_trace_event("ofh_timing_notify_symbol", instant_trace_event::cpu_scope::global);
 
+  time_execution_measurer meas(true);
   for (auto* notifier : ota_notifiers) {
     notifier->on_new_symbol(slot_context);
   }
+  metrics_collector.update_symbol_notification_latency(meas.stop());
 }
 
 void realtime_timing_worker::subscribe(span<ota_symbol_boundary_notifier*> notifiers)

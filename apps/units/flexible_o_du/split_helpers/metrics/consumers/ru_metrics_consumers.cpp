@@ -156,9 +156,12 @@ static void log_ru_ofh_metrics(srslog::log_channel&     log_chan,
   fmt::basic_memory_buffer<char, str_buffer_size> buffer;
 
   fmt::format_to(std::back_inserter(buffer),
-                 "OFH metrics: timing metrics: nof_skipped_symbols={} skipped_symbols_max_burst={}; ",
+                 "OFH metrics: timing metrics: nof_skipped_symbols={} skipped_symbols_max_burst={} "
+                 "symbol_notification_max_latency={:.2f}us symbol_notification_avg_latency={:.2f}us; ",
                  metrics.timing.nof_skipped_symbols,
-                 metrics.timing.skipped_symbols_max_burst);
+                 metrics.timing.skipped_symbols_max_burst,
+                 metrics.timing.notification_max_latency_us,
+                 metrics.timing.notification_avg_latency_us);
 
   for (const auto& cell_metrics : metrics.sectors) {
     const ofh::received_messages_metrics& rx_ofh_metrics    = cell_metrics.rx_metrics.rx_messages_metrics;
