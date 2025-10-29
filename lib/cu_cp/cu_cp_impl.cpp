@@ -402,8 +402,21 @@ void cu_cp_impl::handle_rrc_reconf_complete_indicator(ue_index_t ue_index)
 
 async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index)
 {
-  srsran_assert(cu_up_db.get_nof_cu_ups() != 0, "No CU-UP connected");
-  srsran_assert(ue_mng.find_ue(ue_index) != nullptr, "ue={} not found", ue_index);
+  if (cu_up_db.get_nof_cu_ups() == 0) {
+    logger.warning("No CU-UP connected");
+    return launch_async([](coro_context<async_task<bool>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(false);
+    });
+  }
+
+  if (ue_mng.find_ue(ue_index) == nullptr) {
+    logger.warning("ue={} not found", ue_index);
+    return launch_async([](coro_context<async_task<bool>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(false);
+    });
+  }
 
   cu_cp_ue* old_ue = ue_mng.find_du_ue(old_ue_index);
   if (old_ue == nullptr) {
