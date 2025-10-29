@@ -160,7 +160,8 @@ cell_harq_repository<IsDl>::cell_harq_repository(unsigned               max_ues,
                                                  bool                   harq_mode_b,
                                                  harq_timeout_notifier& timeout_notifier_,
                                                  srslog::basic_logger&  logger_) :
-  max_ack_wait_in_slots(ntn_cs_koffset_ > 0 and harq_mode_b ? NTN_ACK_WAIT_TIMEOUT : max_ack_wait_timeout),
+  max_ack_wait_in_slots(ntn_cs_koffset_ > 0 and harq_mode_b ? NTN_ACK_WAIT_TIMEOUT
+                                                            : (max_ack_wait_timeout + ntn_cs_koffset_)),
   harq_retx_timeout(harq_retx_timeout_),
   max_harqs_per_ue(max_harqs_per_ue_),
   timeout_notifier(timeout_notifier_),
