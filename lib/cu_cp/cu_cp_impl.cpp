@@ -405,6 +405,18 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
   srsran_assert(cu_up_db.get_nof_cu_ups() != 0, "No CU-UP connected");
   srsran_assert(ue_mng.find_ue(ue_index) != nullptr, "ue={} not found", ue_index);
 
+  cu_cp_ue* old_ue = ue_mng.find_du_ue(old_ue_index);
+  if (old_ue == nullptr) {
+    logger.warning("Old UE index={} got removed", old_ue_index);
+    return launch_async([](coro_context<async_task<bool>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(false);
+    });
+  }
+
+  // Cancel all ongoing RRC transactions of the old UE.
+  old_ue->get_rrc_ue()->get_rrc_ue_control_message_handler().cancel_all_transactions();
+
   // Task to run in old UE task scheduler.
   auto handle_ue_context_transfer_impl = [this, ue_index, old_ue_index]() {
     if (ue_mng.find_du_ue(old_ue_index) == nullptr) {
@@ -412,9 +424,11 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
       return false;
     }
 
-    auto* old_ue = ue_mng.find_du_ue(old_ue_index);
-    srsran_assert(
-        old_ue->get_cu_up_index() != cu_up_index_t::invalid, "ue={}: could not find CU-UP of the old UE", old_ue_index);
+    auto* source_ue = ue_mng.find_du_ue(old_ue_index);
+    if (source_ue->get_cu_up_index() == cu_up_index_t::invalid) {
+      logger.warning("ue={}: could not find CU-UP of the old UE", old_ue_index);
+      return false;
+    }
 
     if (ue_mng.find_du_ue(ue_index) == nullptr) {
       logger.warning("UE index={} got removed", ue_index);
@@ -424,12 +438,13 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
     auto* ue = ue_mng.find_du_ue(ue_index);
 
     // Transfer CU-UP index.
-    ue->set_cu_up_index(old_ue->get_cu_up_index());
+    ue->set_cu_up_index(source_ue->get_cu_up_index());
 
-    // Notify old F1AP UE context to F1AP.
-    if (old_ue->get_du_index() == ue->get_du_index()) {
-      const bool result =
-          du_db.get_du_processor(old_ue->get_du_index()).get_f1ap_handler().handle_ue_id_update(ue_index, old_ue_index);
+    // Transfer source F1AP UE context to F1AP.
+    if (source_ue->get_du_index() == ue->get_du_index()) {
+      const bool result = du_db.get_du_processor(source_ue->get_du_index())
+                              .get_f1ap_handler()
+                              .handle_ue_id_update(ue_index, old_ue_index);
       if (not result) {
         logger.warning("The F1AP UE context of the old UE index {} does not exist", old_ue_index);
         return false;
@@ -452,7 +467,7 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
     ue_mng.get_rrc_ue_ngap_adapter(ue_index).connect_ngap(ngap);
 
     // Transfer E1AP UE Context to new UE and remove old context.
-    cu_up_db.find_cu_up_processor(old_ue->get_cu_up_index())->update_ue_index(ue_index, old_ue_index);
+    cu_up_db.find_cu_up_processor(source_ue->get_cu_up_index())->update_ue_index(ue_index, old_ue_index);
 
     return true;
   };
