@@ -680,6 +680,13 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
     amf_ue_id = uint_to_amf_ue_id(cmd->ue_ngap_ids.ue_ngap_id_pair().amf_ue_ngap_id);
     ran_ue_id = uint_to_ran_ue_id(cmd->ue_ngap_ids.ue_ngap_id_pair().ran_ue_ngap_id);
 
+    // Check wether another context doesn't exist already for the same AMF UE ID with mismatched RAN UE ID.
+    if (not validate_consistent_ue_id_pair(ran_ue_id, amf_ue_id)) {
+      // Release old UE context and send error indication with the received UE IDs to the AMF.
+      handle_inconsistent_ue_id_pair(ran_ue_id, amf_ue_id);
+      return;
+    }
+
     if (!ue_ctxt_list.contains(ran_ue_id)) {
       // TS 38.413 section 8.3.3 doesn't specify abnormal conditions, so we just drop the message and send an error
       // indication.
