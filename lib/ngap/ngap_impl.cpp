@@ -948,6 +948,21 @@ void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
 
   ue_ctxt.logger.log_info("Received ErrorIndication{}", msg_cause.empty() ? "" : ". Cause: " + msg_cause);
 
+  // If an Error Indication was received while waiting for a UE Context Release Command, we consider the request failed
+  // and release the UE locally.
+  if (ue_ctxt.release_requested) {
+    ue_ctxt.release_requested = false;
+    ue_ctxt.release_scheduled = true;
+
+    ue->schedule_async_task(
+        launch_async([this, ue_index = ue_ctxt.ue_ids.ue_index](coro_context<async_task<void>>& ctx) {
+          CORO_BEGIN(ctx);
+          CORO_AWAIT(cu_cp_notifier.on_new_ue_context_release_command(
+              {ue_index, ngap_cause_radio_network_t::release_due_to_5gc_generated_reason, true}));
+          CORO_RETURN();
+        }));
+  }
+
   // Request UE release.
   ue->schedule_async_task(launch_async([this, ue_index](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
