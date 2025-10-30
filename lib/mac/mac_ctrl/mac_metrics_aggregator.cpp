@@ -371,7 +371,7 @@ void mac_metrics_aggregator::try_send_new_report()
                (next_report_start_slot + period_slots).without_hyper_sfn());
 }
 
-void mac_metrics_aggregator::handle_cell_activation(du_cell_index_t cell_index, slot_point_extended report_sl_tx)
+void mac_metrics_aggregator::handle_cell_activation(du_cell_index_t cell_index, slot_point_extended report_end_sl_tx)
 {
   srsran_assert(cells.contains(cell_index), "MAC cell activated but not configured");
   auto& cell = *cells[cell_index];
@@ -379,8 +379,10 @@ void mac_metrics_aggregator::handle_cell_activation(du_cell_index_t cell_index, 
 
   cell.active_flag = true;
   if (not next_report_start_slot.valid()) {
-    next_report_start_slot = report_sl_tx - cell.period_slots;
+    next_report_start_slot = report_end_sl_tx - cell.period_slots;
     period_slots           = cell.period_slots;
+    srsran_sanity_check(next_report_start_slot.count() % period_slots == 0,
+                        "Invalid report end slot provided during the first MAC cell activation");
   }
   ++nof_active_cells;
 }

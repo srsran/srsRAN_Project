@@ -400,7 +400,9 @@ void cell_metrics_handler::report_metrics()
   next_report->events.swap(pending_events);
 
   next_report->pci = cell_cfg.pci;
-  // e.g. if report period is 10, and we are at slot 0.9, then the start slot is 0.9 + 1 - 1.0 == 0
+  // The window of slots for a report should be [start, stop) = [last_slot_tx + 1 - period, last_slot_tx + 1).
+  // e.g. if the report period is 10, and we are at slot 0.9 (the last slot of the report), then the start slot is
+  // 0.9 + 0.1 - 1.0 == 0.
   next_report->slot                  = last_slot_tx + 1 - data.nof_slots;
   next_report->nof_slots             = data.nof_slots;
   next_report->nof_error_indications = data.error_indication_counter;

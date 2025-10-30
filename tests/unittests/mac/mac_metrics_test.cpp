@@ -185,6 +185,32 @@ TEST_F(mac_metric_handler_test, when_single_cell_and_deactivated_before_period_t
   ASSERT_TRUE(metric_notifier.last_report.has_value());
 }
 
+TEST_F(mac_metric_handler_test, when_single_cell_and_multiple_full_periods_elapse_then_reports_are_different)
+{
+  add_cell(to_du_cell_index(0));
+
+  unsigned nof_periods = test_rgen::uniform_int(2, 8);
+  unsigned wait_slots  = period_slots + aggr_timeout_slots;
+
+  slot_point prev_start_slot;
+  for (unsigned i = 0; i != nof_periods; ++i) {
+    for (unsigned j = 0; j != wait_slots; ++j) {
+      ASSERT_FALSE(metric_notifier.last_report.has_value());
+      run_slot();
+    }
+    ASSERT_TRUE(metric_notifier.last_report.has_value());
+    ASSERT_EQ(metric_notifier.last_report.value().dl.cells.size(), 1);
+    ASSERT_EQ(metric_notifier.last_report.value().dl.cells[0].nof_slots, period.count());
+    if (prev_start_slot.valid()) {
+      ASSERT_EQ(metric_notifier.last_report.value().dl.cells[0].start_slot, prev_start_slot + period.count());
+    }
+
+    prev_start_slot = metric_notifier.last_report.value().dl.cells[0].start_slot;
+    wait_slots      = period_slots;
+    metric_notifier.last_report.reset();
+  }
+}
+
 TEST_F(mac_metric_handler_test, when_multi_cell_then_mac_report_generated_when_all_cells_generated_report)
 {
   add_cell(to_du_cell_index(0));

@@ -85,8 +85,11 @@ private:
   /// Number of cells currently active.
   unsigned nof_active_cells = 0;
 
-  /// Next report to be sent.
-  circular_array<report_context, 4> report_ring;
+  /// Ring of metric reports under construction.
+  /// \remark The size of this ring is large enough to avoid that cell reports for different slots end up overwriting
+  /// each other.
+  static constexpr size_t                          report_ring_size = 4;
+  circular_array<report_context, report_ring_size> report_ring;
 
   // Timer that when triggered aggregates all existing cell reports.
   unique_timer aggr_timer;
