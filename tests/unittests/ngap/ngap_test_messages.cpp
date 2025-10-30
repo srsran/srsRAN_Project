@@ -835,7 +835,8 @@ ngap_message srsran::srs_cu_cp::generate_invalid_paging_message()
   return ngap_msg;
 }
 
-ngap_message srsran::srs_cu_cp::generate_error_indication_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id)
+ngap_message
+srsran::srs_cu_cp::generate_error_indication_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id, ngap_cause_t cause)
 {
   ngap_message ngap_msg;
 
@@ -851,8 +852,7 @@ ngap_message srsran::srs_cu_cp::generate_error_indication_message(amf_ue_id_t am
   error_indication->ran_ue_ngap_id         = ran_ue_id_to_uint(ran_ue_id);
 
   error_indication->cause_present = true;
-  auto& cause                     = error_indication->cause.set_radio_network();
-  cause                           = asn1::ngap::cause_radio_network_opts::options::unknown_pdu_session_id;
+  error_indication->cause         = cause_to_asn1(cause);
 
   return ngap_msg;
 }
