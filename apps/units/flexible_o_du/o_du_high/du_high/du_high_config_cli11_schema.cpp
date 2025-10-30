@@ -1498,7 +1498,7 @@ static void configure_cli11_slicing_scheduling_args(CLI::App&                   
   CLI::App* policy_cfg_cmd =
       add_subcommand(
           app,
-          "policy_cfg",
+          "policy",
           "Scheduler policy configuration for the slice. If not specified, the policy configured for the cell is used")
           ->configurable();
   configure_cli11_scheduler_policy_args(*policy_cfg_cmd, slice_sched_params.slice_policy_cfg);

@@ -86,7 +86,7 @@ tests:
       <<: *base_config
       cell_cfg:
         scheduler:
-          policy_cfg:
+          policy:
             rr_sched:
     # Pass / Fail Criteria
     expected_dl_bitrate: 1.2e+9
