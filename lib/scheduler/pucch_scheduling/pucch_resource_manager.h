@@ -178,7 +178,8 @@ private:
                              const pucch_config& pucch_cfg,
                              pucch_res_set_idx   res_set_idx);
 
-  pucch_collision_manager collision_manager;
+  const cell_configuration& cell_cfg;
+  pucch_collision_manager   collision_manager;
 
   // Ring buffer of slot contexts to keep track of PUCCH resource usage in recent slots.
   circular_array<slot_context, cell_resource_allocator::RING_ALLOCATOR_SIZE> slots_ctx;

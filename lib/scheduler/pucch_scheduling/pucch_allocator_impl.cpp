@@ -857,9 +857,7 @@ pucch_allocator_impl::find_common_and_ded_harq_res_available(cell_slot_resource_
     // In the case of Formats 0 and 2, the PUCCH (dedicated) resources that can be used when there are SR/CSI
     // pre-allocated are constrained in the PUCCH resource indicator. Therefore, the \ref multiplex_and_allocate_pucch
     // function might not preserve the requested PUCCH resource indicator \ref d_pri.
-    const bool is_f0_and_f2 = pucch_cfg.pucch_res_list.front().format == pucch_format::FORMAT_0 and
-                              pucch_cfg.pucch_res_list.back().format == pucch_format::FORMAT_2;
-    if (not d_pri_ded.has_value() or (is_f0_and_f2 and d_pri_ded.value() != d_pri)) {
+    if (not d_pri_ded.has_value() or (cell_cfg.is_pucch_f0_and_f2() and d_pri_ded.value() != d_pri)) {
       resource_manager.cancel_last_ue_res_reservations(pucch_alloc.slot, rnti, ue_cell_cfg);
       continue;
     }
@@ -1441,20 +1439,15 @@ pucch_allocator_impl::get_pucch_res_pre_multiplexing(slot_point                 
     // set 1.
     const pucch_res_set_idx pucch_set_idx =
         new_bits.harq_ack_nof_bits <= 2U ? pucch_res_set_idx::set_0 : pucch_res_set_idx::set_1;
-    // NOTE: Not all UEs are capable of transmitting more than 1 PUCCH; this would be the case in which the UE has
-    // Format 0 resources, and it needs to transmit HARQ-ACK bits + SR or CSI in the same slot, and the resource symbols
-    // for HARQ and SR/CSI do not overlap. In these slots, we force, the UE to use a PUCCH resource for HARQ-ACK that is
-    // guaranteed to overlap (in symbols) with the SR or CSI resource.
-    const bool has_format_0 =
-        std::find_if(pucch_cfg.pucch_res_list.begin(), pucch_cfg.pucch_res_list.end(), [](const auto& pucch_res) {
-          return pucch_res.format == pucch_format::FORMAT_0;
-        }) != pucch_cfg.pucch_res_list.end();
-    const bool has_format_2 =
-        std::find_if(pucch_cfg.pucch_res_list.begin(), pucch_cfg.pucch_res_list.end(), [](const auto& pucch_res) {
-          return pucch_res.format == pucch_format::FORMAT_2;
-        }) != pucch_cfg.pucch_res_list.end();
-    const bool ue_with_f0_sr_csi_allocation =
-        has_format_0 and has_format_2 and (new_bits.sr_bits != sr_nof_bits::no_sr or new_bits.csi_part1_nof_bits != 0U);
+
+    // Not all UEs support transmission of more than 1 PUCCHs per slot. This would be the case if:
+    //  - UE configured with F0 and F2 resources
+    //  - UE needs to transmit HARQ-ACK + SR or CSI in the same slot
+    //  - The resource for HARQ-ACK and the resource for SR/CSI do not overlap in symbols
+    //  [Implementation-defined] In this case, we force the UE to use a PUCCH resource for HARQ-ACK that is guaranteed
+    //  to overlap (in symbols) with the SR or CSI resource.
+    const bool ue_with_f0_sr_and_f2_csi_alloc =
+        cell_cfg.is_pucch_f0_and_f2() and (new_bits.sr_bits != sr_nof_bits::no_sr or new_bits.csi_part1_nof_bits != 0U);
 
     candidate_resources.harq_resource.emplace(pucch_grant{.type = pucch_grant_type::harq_ack});
     pucch_grant& harq_candidate_grant = candidate_resources.harq_resource.value();
@@ -1464,11 +1457,11 @@ pucch_allocator_impl::get_pucch_res_pre_multiplexing(slot_point                 
     // or CSI in the same slot.
     if ((ue_current_grants.pucch_grants.harq_resource.has_value() and
          ue_current_grants.pucch_grants.harq_resource.value().harq_id.pucch_set_idx == pucch_set_idx) or
-        ue_with_f0_sr_csi_allocation) {
+        ue_with_f0_sr_and_f2_csi_alloc) {
       // NOTE: If the UE has Format 0 resources, and it needs to transmit HARQ-ACK bits + SR or CSI in the same slot,
       // use the HARQ-ACK resource that has highest PUCCH resource indicator; the UE's dedicated PUCCH config has been
       // constructed in such a way that this resource overlaps with the SR or CSI resource.
-      const unsigned pucch_res_ind = ue_with_f0_sr_csi_allocation
+      const unsigned pucch_res_ind = ue_with_f0_sr_and_f2_csi_alloc
                                          ? get_pucch_resource_ind_f0_sr_csi(new_bits, pucch_cfg)
                                          : ue_current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind;
 
@@ -1478,7 +1471,7 @@ pucch_allocator_impl::get_pucch_res_pre_multiplexing(slot_point                 
                                             : resource_manager.reserve_harq_set_1_resource_by_res_indicator(
                                                   sl_tx, ue_current_grants.rnti, pucch_res_ind, pucch_cfg);
       if (pucch_res == nullptr) {
-        if (ue_with_f0_sr_csi_allocation) {
+        if (ue_with_f0_sr_and_f2_csi_alloc) {
           srsran_assertion_failure("rnti={}: PUCCH HARQ-ACK that should be reserved for this UE is not available",
                                    ue_current_grants.rnti);
         } else {

@@ -42,6 +42,7 @@ static int get_csi_cell_res_id(const ue_cell_configuration& ue_cell_cfg)
 /////////////   Public methods   /////////////
 
 pucch_resource_manager::pucch_resource_manager(const cell_configuration& cell_cfg_) :
+  cell_cfg(cell_cfg_),
   collision_manager(cell_cfg_),
   slots_ctx({static_vector<rnti_t, pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES>(cell_cfg_.ded_pucch_resources.size(),
                                                                                   rnti_t::INVALID_RNTI)})
@@ -381,13 +382,10 @@ pucch_harq_resource_alloc_record pucch_resource_manager::reserve_next_harq_res_a
   // Get the array of resources for the specific UE.
   const auto& ue_res_set_id_list = pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(res_set_idx)].pucch_res_id_list;
 
-  // [Implementation-defined] Format 0/1 resources are at the beginning of the list, while Format 2/3/4 are at the end.
-  const bool is_f0_and_f2 = pucch_cfg.pucch_res_list.front().format == pucch_format::FORMAT_0 and
-                            pucch_cfg.pucch_res_list.back().format == pucch_format::FORMAT_2;
-
   // For PUCCH F0 and F2, we don't use the last 2 resources of the PUCCH resource set; these are reserved for CSI and SR
   // slots and should only be picked for through the specific PUCCH resource indicator.
-  const unsigned nof_eligible_resource = is_f0_and_f2 ? ue_res_set_id_list.size() - 2U : ue_res_set_id_list.size();
+  const unsigned nof_eligible_resource =
+      cell_cfg.is_pucch_f0_and_f2() ? ue_res_set_id_list.size() - 2U : ue_res_set_id_list.size();
   srsran_assert(nof_eligible_resource >= 1U,
                 "rnti={}: Not enough eligible resources from PUCCH resource set={}",
                 crnti,
@@ -465,14 +463,10 @@ const pucch_resource* pucch_resource_manager::reserve_harq_resource_by_res_indic
   // [Implementation-defined] We assume at most 8 resources per resource set. If this is the case, r_pucch = d_pri.
   const auto pucch_res_id = ue_res_id_set_for_harq[d_pri];
 
-  // [Implementation-defined] Format 0/1 resources are at the beginning of the list, while Format 2/3/4 are at the end.
-  const bool is_f0_and_f2 = pucch_cfg.pucch_res_list.front().format == pucch_format::FORMAT_0 and
-                            pucch_cfg.pucch_res_list.back().format == pucch_format::FORMAT_2;
-
   // For Format 0 and Format 2, the resources indexed by PUCCH res. indicators >= ue_res_id_set_for_harq.size() - 2 are
   // reserved for CSI and SR slots. In the case, we don't need to reserve these in the PUCCH resource manager, we only
   // need to return the resources.
-  if (is_f0_and_f2 and d_pri >= ue_res_id_set_for_harq.size() - 2U) {
+  if (cell_cfg.is_pucch_f0_and_f2() and d_pri >= ue_res_id_set_for_harq.size() - 2U) {
     const auto* res_cfg = std::find_if(
         pucch_cfg.pucch_res_list.begin(), pucch_cfg.pucch_res_list.end(), [pucch_res_id](const pucch_resource& res) {
           return res.res_id.ue_res_id == pucch_res_id.ue_res_id;
@@ -533,13 +527,10 @@ bool pucch_resource_manager::release_harq_resource(slot_point          slot_harq
   // Get the array of resources for the specific UE.
   const auto& ue_res_set_id_list = pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(res_set_idx)].pucch_res_id_list;
 
-  // [Implementation-defined] Format 0/1 resources are at the beginning of the list, while Format 2/3/4 are at the end.
-  const bool is_f0_and_f2 = pucch_cfg.pucch_res_list.front().format == pucch_format::FORMAT_0 and
-                            pucch_cfg.pucch_res_list.back().format == pucch_format::FORMAT_2;
-
   // For PUCCH F0 and F2, we don't use the last 2 resources of the PUCCH resource set; these are reserved for CSI and SR
   // slots and should only be picked for through the specific PUCCH resource indicator.
-  const unsigned nof_eligible_resource = is_f0_and_f2 ? ue_res_set_id_list.size() - 2U : ue_res_set_id_list.size();
+  const unsigned nof_eligible_resource =
+      cell_cfg.is_pucch_f0_and_f2() ? ue_res_set_id_list.size() - 2U : ue_res_set_id_list.size();
   srsran_assert(nof_eligible_resource >= 1U,
                 "rnti={}: Not enough eligible resources from PUCCH resource set={}",
                 crnti,

@@ -79,9 +79,10 @@ public:
   /// UL HARQ Mode B.
   bool ul_harq_mode_b;
 
+  /// Checks if the cell is configured in TDD mode.
   bool is_tdd() const { return tdd_cfg_common.has_value(); }
 
-  /// Checks if DL/UL is active for current slot
+  /// Checks if DL is active for all symbols in the given slot.
   bool is_fully_dl_enabled(slot_point sl) const
   {
     if (dl_symbols_per_slot_lst.empty()) {
@@ -95,6 +96,8 @@ public:
     return dl_symbols_per_slot_lst[sl.to_uint() % dl_symbols_per_slot_lst.size()] ==
            get_nsymb_per_slot(dl_cfg_common.init_dl_bwp.generic_params.cp);
   }
+
+  /// Checks if UL is active for all symbols in the given slot.
   bool is_fully_ul_enabled(slot_point sl) const
   {
     if (ul_symbols_per_slot_lst.empty()) {
@@ -109,6 +112,7 @@ public:
            get_nsymb_per_slot(ul_cfg_common.init_ul_bwp.generic_params.cp);
   }
 
+  /// Checks if DL is active for at least one symbol in the given slot.
   bool is_dl_enabled(slot_point sl) const
   {
     if (dl_symbols_per_slot_lst.empty()) {
@@ -121,6 +125,8 @@ public:
     }
     return dl_symbols_per_slot_lst[sl.to_uint() % dl_symbols_per_slot_lst.size()] > 0;
   }
+
+  /// Checks if UL is active for at least one symbol in the given slot.
   bool is_ul_enabled(slot_point sl) const
   {
     if (ul_symbols_per_slot_lst.empty()) {
@@ -133,6 +139,8 @@ public:
     }
     return ul_symbols_per_slot_lst[sl.to_uint() % ul_symbols_per_slot_lst.size()] > 0;
   }
+
+  /// Returns the number of active DL symbols in the given slot.
   unsigned get_nof_dl_symbol_per_slot(slot_point sl) const
   {
     if (dl_symbols_per_slot_lst.empty()) {
@@ -145,6 +153,8 @@ public:
     }
     return dl_symbols_per_slot_lst[sl.to_uint() % dl_symbols_per_slot_lst.size()];
   }
+
+  /// Returns the number of active UL symbols in the given slot.
   unsigned get_nof_ul_symbol_per_slot(slot_point sl) const
   {
     if (ul_symbols_per_slot_lst.empty()) {
@@ -157,6 +167,8 @@ public:
     }
     return ul_symbols_per_slot_lst[sl.to_uint() % ul_symbols_per_slot_lst.size()];
   }
+
+  /// Returns the coreset configuration for the given coreset ID.
   const coreset_configuration& get_common_coreset(coreset_id cs_id) const
   {
     // The existence of the Coreset (either CommonCoreset or Coreset0) has been verified by the validator.
@@ -164,6 +176,15 @@ public:
                    dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value().id == cs_id
                ? dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value()
                : dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.value();
+  }
+
+  /// Checks if the cell is configured with PUCCH Format 0 and Format 2 resources.
+  bool is_pucch_f0_and_f2() const
+  {
+    // [Implementation-defined] Format 0/1 resources are at the beginning of the list, while Format 2/3/4 are at the
+    // end.
+    return not ded_pucch_resources.empty() and ded_pucch_resources.front().format == pucch_format::FORMAT_0 and
+           ded_pucch_resources.back().format == pucch_format::FORMAT_2;
   }
 
   /// \brief Determines the use of transform precoding according to the parameter \e msg3-transformPrecoder.
