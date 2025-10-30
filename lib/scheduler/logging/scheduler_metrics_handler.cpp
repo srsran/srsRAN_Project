@@ -399,8 +399,9 @@ void cell_metrics_handler::report_metrics()
   }
   next_report->events.swap(pending_events);
 
-  next_report->pci                   = cell_cfg.pci;
-  next_report->slot                  = last_slot_tx - data.nof_slots;
+  next_report->pci = cell_cfg.pci;
+  // e.g. if report period is 10, and we are at slot 0.9, then the start slot is 0.9 + 1 - 1.0 == 0
+  next_report->slot                  = last_slot_tx + 1 - data.nof_slots;
   next_report->nof_slots             = data.nof_slots;
   next_report->nof_error_indications = data.error_indication_counter;
   next_report->average_decision_latency =

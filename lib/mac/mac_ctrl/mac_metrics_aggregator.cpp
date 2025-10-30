@@ -10,18 +10,18 @@
 
 #include "mac_metrics_aggregator.h"
 #include "spsc_metric_report_channel.h"
+#include "srsran/adt/scope_exit.h"
 #include "srsran/mac/mac_metrics_notifier.h"
-#include "srsran/ran/tdd/tdd_ul_dl_config.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/support/executors/execute_until_success.h"
 
 using namespace srsran;
 
+namespace {
+
 // Size of each cell queue. Should be large enough to account for the details in waking up the mac_dl_metric_handler
 // to aggregate all cells separate reports.
-static constexpr unsigned cell_report_queue_size = 32;
-
-namespace {
+constexpr unsigned cell_report_queue_size = 8;
 
 /// Cell metrics report containing scheduler and MAC.
 struct full_cell_report {
@@ -29,9 +29,7 @@ struct full_cell_report {
   std::optional<mac_dl_cell_metric_report> mac;
 };
 
-} // namespace
-
-static full_cell_report report_preinit(unsigned max_ue_events = 64U, unsigned tdd_period_slots = 0U)
+full_cell_report report_preinit(unsigned max_ue_events = 64U, unsigned tdd_period_slots = 0U)
 {
   full_cell_report report{};
   // Pre-reserve space for UE metrics.
@@ -43,6 +41,8 @@ static full_cell_report report_preinit(unsigned max_ue_events = 64U, unsigned td
   report.sched.pdsch_prbs_used_per_tdd_slot_idx.reserve(tdd_period_slots);
   return report;
 }
+
+} // namespace
 
 class mac_metrics_aggregator::cell_metric_handler final : public mac_cell_metric_notifier,
                                                           public scheduler_cell_metrics_notifier
@@ -67,31 +67,45 @@ public:
 
   bool is_report_required(slot_point slot_tx) override
   {
-    // Note: Called from the cell execution context.
+    // Note: Called by MAC, from the cell execution context.
+
     if (SRSRAN_UNLIKELY(not last_sl_tx.valid())) {
       // Cell not yet active.
       return false;
     }
+
+    // Add HFN.
     slot_point_extended new_last_sl_tx{slot_tx, last_sl_tx.hyper_sfn()};
     if (SRSRAN_UNLIKELY(new_last_sl_tx < last_sl_tx)) {
       // SFN rollover detected.
       new_last_sl_tx += slot_tx.nof_slots_per_hyper_system_frame();
     }
+
     last_sl_tx = new_last_sl_tx;
-    return mac_builder != nullptr and last_sl_tx >= next_report_slot_tx;
+
+    // Check if this is the last slot of the report.
+    // Note: We compare with end-1, because this function is called when the scheduler is done with its scheduling
+    // decision. e.g. for a report period of 10, we want to produce report at slots 0.9, 1.9, etc.
+    return mac_builder != nullptr and last_sl_tx >= next_report_end_slot_tx - 1;
   }
 
   bool is_sched_report_required(slot_point slot_tx) const override
   {
+    // Note: Called by SCHED, from the cell execution context.
+
     if (SRSRAN_UNLIKELY(not last_sl_tx.valid())) {
       return false;
     }
+
+    // Add HFN.
     slot_point_extended new_last_sl_tx{slot_tx, last_sl_tx.hyper_sfn()};
     if (SRSRAN_UNLIKELY(new_last_sl_tx < last_sl_tx)) {
       // SFN rollover detected.
       new_last_sl_tx += slot_tx.nof_slots_per_hyper_system_frame();
     }
-    return new_last_sl_tx >= next_report_slot_tx;
+
+    // Check if this is the last slot of the report.
+    return new_last_sl_tx >= next_report_end_slot_tx - 1;
   }
 
   void on_cell_activation() override
@@ -99,20 +113,21 @@ public:
     // Determine the next report slot.
     last_sl_tx        = time_source.now();
     unsigned slot_mod = last_sl_tx.count() % period_slots;
+
     // We are "slotting" the time when reports are produced. E.g. for a period of 10 slots and SCS=15kHz, the reports
     // will be for slots 0.0-0.9, 1.0-1.9, 2.0-2.9, ...
-    next_report_slot_tx = last_sl_tx + period_slots - slot_mod - 1;
+    next_report_end_slot_tx = last_sl_tx + period_slots - slot_mod;
 
     // Notify the backend of a cell activation.
-    defer_until_success(parent.ctrl_exec, parent.timers, [this, sl = next_report_slot_tx]() {
+    defer_until_success(parent.ctrl_exec, parent.timers, [this, sl = next_report_end_slot_tx]() {
       parent.handle_cell_activation(cell_index, sl);
     });
   }
 
   void on_cell_deactivation(const mac_dl_cell_metric_report& report) override
   {
-    next_report_slot_tx = {};
-    last_sl_tx          = {};
+    next_report_end_slot_tx = {};
+    last_sl_tx              = {};
     // Save MAC report and commit it.
     if (mac_builder != nullptr) {
       mac_builder->mac = report;
@@ -130,15 +145,17 @@ public:
     mac_builder->mac = report;
 
     // Update next report slot.
-    next_report_slot_tx += period_slots;
+    auto current_report_start_slot_tx = next_report_end_slot_tx - period_slots;
+    next_report_end_slot_tx += period_slots;
 
     // Commit report to MAC metric aggregator.
     mac_builder.reset();
 
     // If the token is acquired, it means that it is this thread's job to dispatch a job to handle pending reports.
-    bool token_acquired = parent.report_count.fetch_add(1U, std::memory_order_acq_rel) == 0;
+    unsigned ring_index = current_report_start_slot_tx.count() / period_slots;
+    bool token_acquired = not parent.report_ring[ring_index].end_slot_flag.exchange(true, std::memory_order_acq_rel);
     if (not token_acquired) {
-      // Another thread is already handling the reports.
+      // Another cell is already handling the reports.
       return;
     }
 
@@ -196,7 +213,7 @@ private:
 
   // Cached metric report being built.
   slot_point_extended last_sl_tx;
-  slot_point_extended next_report_slot_tx;
+  slot_point_extended next_report_end_slot_tx;
 
   // Stateful flags access from the control executor.
   bool active_flag = false;
@@ -224,11 +241,12 @@ cell_metric_report_config mac_metrics_aggregator::add_cell(du_cell_index_t      
   srsran_assert(not cells.contains(cell_index), "Duplicate cell creation");
 
   // Reserve space in reports for new cell.
-  next_report.dl.cells.reserve(cells.size());
-  next_report.sched.cells.reserve(cells.size());
+  for (auto& rep : report_ring) {
+    rep.report.dl.cells.reserve(cells.size() + 1);
+    rep.report.sched.cells.reserve(cells.size() + 1);
+  }
 
   // Create a handler for the new cell.
-
   auto cell_handler =
       std::make_unique<cell_metric_handler>(*this, cell_index, scs_common, tdd_period_slots, time_source, logger);
   auto& cell_ref = *cell_handler;
@@ -246,28 +264,14 @@ void mac_metrics_aggregator::rem_cell(du_cell_index_t cell_index)
 
 void mac_metrics_aggregator::handle_pending_reports()
 {
-  uint32_t nof_reports = report_count.load(std::memory_order_acquire);
-  while (nof_reports > 0) {
-    unsigned pop_count = 0;
-    for (auto& cell : cells) {
-      for (bool report_popped = pop_report(*cell); report_popped; report_popped = pop_report(*cell)) {
-        if (++pop_count == nof_reports) {
-          // All reports have been processed.
-          break;
-        }
-      }
+  // Pop all pending reports.
+  for (auto& cell : cells) {
+    for (bool report_popped = pop_report(*cell); report_popped; report_popped = pop_report(*cell)) {
     }
-    if (pop_count != nof_reports) {
-      // Not all metric reports have been processed. Wait for more metric reports.
-      logger.warning("Not all metric reports have been processed. next_report_start_slot={}",
-                     next_report_start_slot.without_hyper_sfn());
-      pop_count = nof_reports;
-    }
-    nof_reports = report_count.fetch_sub(pop_count, std::memory_order_acq_rel) - pop_count;
-
-    // Send an aggregated report if ready.
-    try_send_new_report();
   }
+
+  // Send an aggregated report if ready.
+  try_send_new_report();
 }
 
 bool mac_metrics_aggregator::pop_report(cell_metric_handler& cell)
@@ -280,12 +284,7 @@ bool mac_metrics_aggregator::pop_report(cell_metric_handler& cell)
     return false;
   }
 
-  if (not next_report_start_slot.valid()) {
-    // All cells are deactivated.
-    logger.warning("cell={}: Discarding report as all cells are deactivated", fmt::underlying(cell.cell_index));
-    return false;
-  }
-
+  // Convert report start slot to extended form (with HFN).
   slot_point_extended start_slot{next_ev->sched.slot, next_report_start_slot.hyper_sfn()};
   if (std::abs(start_slot - next_report_start_slot) >= next_ev->sched.slot.nof_slots_per_hyper_system_frame() / 2) {
     if (start_slot < next_report_start_slot) {
@@ -295,60 +294,81 @@ bool mac_metrics_aggregator::pop_report(cell_metric_handler& cell)
     }
   }
 
-  if (start_slot >= next_report_start_slot and start_slot < (next_report_start_slot + cell.period_slots)) {
-    // Report is within expected window.
-    if (next_ev->mac.has_value()) {
-      next_report.dl.cells.push_back(*next_ev->mac);
+  // Fetch position in the report ring where to save report.
+  const auto      ring_key   = start_slot.count() / cell.period_slots;
+  report_context& report_ctx = report_ring[ring_key];
+
+  const bool is_in_window = report_ctx.start_slot.valid() and
+                            start_slot.is_in_interval(report_ctx.start_slot, report_ctx.start_slot + cell.period_slots);
+  if (not is_in_window) {
+    // Report is not within expected window for this ring slot.
+
+    if (not report_ctx.report.sched.cells.empty()) {
+      logger.warning("Discarding metric report for slot={}. Cause: Some cells failed to produce their report",
+                     report_ctx.report.sched.cells[0].slot);
+      report_ctx.report.sched.cells.clear();
+      report_ctx.report.dl.cells.clear();
     }
-    next_report.sched.cells.push_back(next_ev->sched);
-    cell.report_queue.pop();
-    return true;
+
+    // Update start slot in the respective ring report context.
+    // Note: We are "slotting" the time when reports are produced. E.g. for a period of 10 slots and SCS=15kHz, the
+    // reports will be for slots 0.0-0.9, 1.0-1.9, 2.0-2.9, ...
+    unsigned slot_mod     = start_slot.count() % cell.period_slots;
+    report_ctx.start_slot = start_slot - slot_mod;
   }
 
-  if (start_slot >= next_report_start_slot + cell.period_slots) {
-    // Report is the one coming right after the expected one. Leave it in the queue to be dequeued later.
-    return false;
+  // Add front to pending report in the report_ring.
+  if (next_ev->mac.has_value()) {
+    report_ctx.report.dl.cells.push_back(*next_ev->mac);
   }
+  report_ctx.report.sched.cells.push_back(next_ev->sched);
 
-  // Report falls in invalid window. Discard it.
+  // Pop report from respective queue.
   cell.report_queue.pop();
-  if (start_slot >= next_report_start_slot - cell.period_slots) {
-    logger.info("cell={}: Discarding old metric report. Expected report for slot={} but got it for slot={}",
-                fmt::underlying(cell.cell_index),
-                next_report_start_slot.without_hyper_sfn(),
-                start_slot.without_hyper_sfn());
-  } else {
-    logger.warning("cell={}: Discarding metric report falling in invalid report window. Expected report for slot={}, "
-                   "but got for slot={}",
-                   fmt::underlying(cell.cell_index),
-                   next_report_start_slot.without_hyper_sfn(),
-                   start_slot.without_hyper_sfn());
-  }
+
   return true;
 }
 
 void mac_metrics_aggregator::try_send_new_report()
 {
+  auto& ring_elem   = report_ring[next_report_start_slot.count() / period_slots];
+  auto& next_report = ring_elem.report;
+
+  if (not ring_elem.end_slot_flag.exchange(false, std::memory_order_acquire)) {
+    // There might be pending reports for this ring position, but that does not mean that all cells have provided their
+    // report yet.
+    return;
+  }
+  auto clear_report = make_scope_exit([&]() {
+    // Clear processed report.
+    ring_elem.report.dl.cells.clear();
+    ring_elem.report.sched.cells.clear();
+    ring_elem.start_slot = {};
+
+    // Update next report window start slot.
+    next_report_start_slot += period_slots;
+  });
+
   if (next_report.dl.cells.empty() and next_report.sched.cells.empty()) {
     // No cells -> no report.
+    return;
+  }
+
+  if (ring_elem.start_slot != next_report_start_slot) {
+    // Invalid ring slot.
+    logger.warning("Discarding metric report for slot={}. Cause: Expected report for slot={}",
+                   ring_elem.start_slot.without_hyper_sfn(),
+                   next_report_start_slot.without_hyper_sfn());
     return;
   }
 
   // Forward the full report.
   cfg.mac_notifier.on_new_metrics_report(next_report);
 
-  const unsigned period_slots = next_report.dl.cells[0].start_slot.nof_slots_per_subframe() * cfg.period.count();
   logger.debug("Metric report of {} cells completed for slots=[{}, {})",
                next_report.dl.cells.size(),
                next_report_start_slot.without_hyper_sfn(),
                (next_report_start_slot + period_slots).without_hyper_sfn());
-
-  // Update next report window start slot.
-  next_report_start_slot += period_slots;
-
-  // Reset report.
-  next_report.dl.cells.clear();
-  next_report.sched.cells.clear();
 }
 
 void mac_metrics_aggregator::handle_cell_activation(du_cell_index_t cell_index, slot_point_extended report_sl_tx)
@@ -360,6 +380,7 @@ void mac_metrics_aggregator::handle_cell_activation(du_cell_index_t cell_index, 
   cell.active_flag = true;
   if (not next_report_start_slot.valid()) {
     next_report_start_slot = report_sl_tx - cell.period_slots;
+    period_slots           = cell.period_slots;
   }
   ++nof_active_cells;
 }
@@ -372,12 +393,14 @@ void mac_metrics_aggregator::handle_cell_deactivation(du_cell_index_t cell_index
 
   cell.active_flag = false;
   if (--nof_active_cells == 0) {
-    // No more cells are active. Flush whatever reports are pending.
-    report_count.fetch_add(1, std::memory_order_relaxed);
+    // This is last active cell.
 
     // Stop aggregation timer.
     aggr_timer.stop();
 
+    // No more cells are active. Flush whatever reports are pending.
+    auto& ring_elem = report_ring[next_report_start_slot.count() / period_slots];
+    ring_elem.end_slot_flag.store(true, std::memory_order_release);
     handle_pending_reports();
 
     // Reset the next aggregated report start slot.

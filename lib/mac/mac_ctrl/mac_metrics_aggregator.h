@@ -12,6 +12,7 @@
 
 #include "../mac_dl/mac_dl_configurator.h"
 #include "mac_config.h"
+#include "srsran/adt/circular_array.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/support/timers.h"
 #include <atomic>
@@ -51,6 +52,12 @@ public:
 private:
   class cell_metric_handler;
 
+  struct report_context {
+    slot_point_extended start_slot;
+    std::atomic<bool>   end_slot_flag{false};
+    mac_metric_report   report;
+  };
+
   /// Called when pending reports should be handled.
   void handle_pending_reports();
 
@@ -73,15 +80,13 @@ private:
 
   /// Expected start slot for the next report.
   slot_point_extended next_report_start_slot;
+  unsigned            period_slots;
 
   /// Number of cells currently active.
   unsigned nof_active_cells = 0;
 
   /// Next report to be sent.
-  mac_metric_report next_report;
-
-  // Number of cell reports pending to be processed.
-  std::atomic<unsigned> report_count{0};
+  circular_array<report_context, 4> report_ring;
 
   // Timer that when triggered aggregates all existing cell reports.
   unique_timer aggr_timer;

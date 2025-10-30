@@ -48,7 +48,7 @@ struct dummy_sched_metric_handler {
     report_slot_count++;
 
     if (notif.is_sched_report_required(sl_tx)) {
-      builder->slot      = sl_tx - report_slot_count;
+      builder->slot      = sl_tx + 1 - report_slot_count;
       builder->nof_slots = report_slot_count;
       builder.reset();
       builder           = notif.get_builder();
@@ -59,7 +59,7 @@ struct dummy_sched_metric_handler {
   void on_cell_deactivation()
   {
     if (last_sl_tx.valid()) {
-      builder->slot      = last_sl_tx - report_slot_count;
+      builder->slot      = last_sl_tx + 1 - report_slot_count;
       builder->nof_slots = report_slot_count;
       builder.reset();
       builder           = notif.get_builder();
