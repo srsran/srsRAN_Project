@@ -364,3 +364,16 @@ TEST_F(cu_cp_ue_context_release_test,
   // Inject E1AP Bearer Context Release Request and await NGAP UE Context Release Request
   ASSERT_TRUE(send_e1ap_bearer_context_release_request_and_await_ngap_ue_context_release_request());
 }
+
+TEST_F(cu_cp_ue_context_release_test, when_pdu_session_setup_is_not_requested_then_ue_is_released)
+{
+  // Attach UE.
+  ASSERT_TRUE(attach_ue());
+
+  // Expire request_pdu_session_timer.
+  ASSERT_FALSE(tick_until(this->get_cu_cp_cfg().ue.request_pdu_session_timeout, [&]() { return false; }, false));
+
+  // UE release is requested from AMF.
+  ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu)) << "Failed to receive NGAP UE Context Release Request";
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_release_request(ngap_pdu)) << "Invalid NGAP UE Context Release Request";
+}
