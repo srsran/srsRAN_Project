@@ -547,6 +547,59 @@ def test_zmq_valgrind(
 
 @mark.parametrize(
     "band, common_scs, bandwidth",
+    (param(261, 120, 100, id="band:%s-scs:%s-bandwidth:%s"),),
+)
+@mark.zmq
+@mark.fr2
+@mark.flaky(
+    reruns=2,
+    only_rerun=[
+        "failed to start",
+        "Attach timeout reached",
+        "Some packages got lost",
+        "socket is already closed",
+        "5GC crashed",
+        "License unavailable",
+    ],
+)
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def test_zmq_fr2(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue: UEStub,
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+):
+    """
+    ZMQ FR2 Ping test
+    """
+
+    _ping(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=[ue],
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=122880000,
+        ul_noise_spd=-210,
+        rx_to_tx_latency=4,
+        global_timing_advance=-1,
+        time_alignment_calibration=0,
+        ue_stop_timeout=3,
+        pdcch_log=True,
+        warning_as_errors=False,
+        always_download_artifacts=True,
+    )
+
+
+@mark.parametrize(
+    "band, common_scs, bandwidth",
     (param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),),
 )
 @mark.rf_not_crash
@@ -684,6 +737,9 @@ def _ping(
     ping_interval: float = 1.0,
     channel_emulator: Optional[ChannelEmulatorStub] = None,
     ntn_scenario_def: Optional[NtnScenarioDefinition] = None,
+    ul_noise_spd: int = 0,
+    rx_to_tx_latency: int = -1,
+    pdcch_log: bool = False,
 ):
     logging.info("Ping Test")
 
@@ -716,6 +772,9 @@ def _ping(
         pdsch_mcs_table=pdsch_mcs_table,
         pusch_mcs_table=pusch_mcs_table,
         ntn_config=ntn_config,
+        ul_noise_spd=ul_noise_spd,
+        rx_to_tx_latency=rx_to_tx_latency,
+        pdcch_log=pdcch_log,
     )
     configure_artifacts(
         retina_data=retina_data,
