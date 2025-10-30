@@ -158,7 +158,14 @@ void port_channel_estimator_average_impl::do_compute(channel_estimate&          
   // Compute the estimated data received power by scaling the RSRP.
   float datarp = rsrp * nof_tx_layers / cfg.scaling / cfg.scaling;
 
-  estimate.set_snr((noise_var != 0) ? datarp / noise_var : 1000, port);
+  // Determine the linear SNR measurement. The linear SNR must result to zero if the noise variance is zero, NaN or
+  // infinity.
+  float snr = 0;
+  if (std::isnormal(noise_var)) {
+    snr = datarp / noise_var;
+  }
+
+  estimate.set_snr(snr, port);
 
   // Report stats for each layer.
   for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
@@ -310,10 +317,17 @@ void port_channel_estimator_average_impl::compute_hop(srsran::channel_estimate& 
                          interpolator_cfg.stride,
                          fd_smoothing_strategy);
 
-      // Measure reference signal received power after filtering.
-      rsrp += srsvec::average_power(filtered_pilots_lse.get_symbol(i_symbol, i_layer)) *
-              filtered_pilots_lse.get_symbol(i_symbol, i_layer).size() * beta_scaling * beta_scaling *
-              static_cast<float>(nof_dmrs_symbols) / static_cast<float>(nof_lse_symbols);
+      // Energy of the DM-RS in the current symbol and layer.
+      float avg = srsvec::average_power(filtered_pilots_lse.get_symbol(i_symbol, i_layer)) *
+                  filtered_pilots_lse.get_symbol(i_symbol, i_layer).size();
+
+      // Normalization factor: the factor nof_dmrs_symbols / nof_lse_symbols accounts for whether the
+      // symbols carrying DM-RS have been combined or not (i.e., td_interpolation_strategy is average or interpolate,
+      // respectively), while beta_scaling^2 accounts for the data-to-DM-RS scaling.
+      float power_normalization_factor =
+          beta_scaling * beta_scaling * static_cast<float>(nof_dmrs_symbols) / static_cast<float>(nof_lse_symbols);
+      avg *= power_normalization_factor;
+      rsrp += avg;
 
       // Interpolate frequency response for this symbol.
       freq_interpolator->interpolate(
@@ -772,7 +786,8 @@ static float estimate_noise(const dmrs_symbol_list&                   pilots,
   // Process each OFDM containing DM-RS.
   dmrs_mask.for_each(first_hop_symbol, last_hop_symbol, estimate_noise_symbol);
 
-  return noise_energy;
+  // Return 0 if the resultant noise is NaN or infinity.
+  return std::isnormal(noise_energy) ? noise_energy : 0;
 }
 
 __attribute_noinline__ static void

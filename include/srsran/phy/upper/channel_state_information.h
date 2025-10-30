@@ -232,8 +232,8 @@ public:
     for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
       float rsrp_lin = rsrp_per_port_lin[i_port];
       // Set the RSRP to NaN if the measurement is not valid and don't include it in the total RSRP.
-      if (std::isnan(rsrp_lin)) {
-        port_rsrp_dB[i_port] = std::numeric_limits<float>::quiet_NaN();
+      if (!std::isnormal(rsrp_lin)) {
+        port_rsrp_dB[i_port] = -std::numeric_limits<float>::infinity();
         continue;
       }
 
@@ -245,11 +245,11 @@ public:
     }
 
     // Compute a global RSRP metric as the average of all valid RSRP values.
-    if (rsrp_total_lin > 0.0F) {
-      rsrp_dB = convert_power_to_dB(rsrp_total_lin / static_cast<float>(nof_valid_rsrp_values));
-    } else {
-      rsrp_dB.reset();
+    float rsrp_lin = 0;
+    if (nof_valid_rsrp_values != 0) {
+      rsrp_lin = rsrp_total_lin / static_cast<float>(nof_valid_rsrp_values);
     }
+    rsrp_dB = convert_power_to_dB(rsrp_lin);
   }
 
   /// \brief Gets the Reference Signal Received Power (RSRP) in normalized dB units.

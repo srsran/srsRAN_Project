@@ -160,8 +160,7 @@ public:
       return rsrp_all_ports / noise_var_all_ports;
     }
 
-    // If noise variance is 0, report and SNR of 60 dB.
-    return 1e6;
+    return 0;
   }
 
   /// Returns the estimated SNR for the given Rx port (dB scale).

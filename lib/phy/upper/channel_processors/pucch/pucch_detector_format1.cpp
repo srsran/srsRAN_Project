@@ -221,10 +221,15 @@ pucch_detector_format1::detect(const resource_grid_reader&                  grid
       ++this_metric_hop1;
     }
 
+    // Determine SINR. Set the SINR to zero if the noise variance is zero, NaN or infinity.
+    float sinr = 0;
+    if (std::isnormal(noise_var)) {
+      sinr = rsrp / noise_var;
+    }
+
     channel_state_information csi;
     csi.set_epre(convert_power_to_dB(epre));
     csi.set_rsrp_dB(convert_power_to_dB(rsrp));
-    float sinr = std::isnormal(noise_var) ? rsrp / noise_var : std::numeric_limits<float>::quiet_NaN();
     csi.set_sinr_dB(channel_state_information::sinr_type::channel_estimator, convert_power_to_dB(sinr));
     csi.reset_time_alignment();
 

@@ -78,6 +78,7 @@ TEST_P(PucchProcessorFormat1Fixture, FromVector)
       << fmt::format("The number of ports of the resource grid {} and the number of configured ports {} do not match.",
                      grid.get_nof_ports(),
                      tmp_conf.ports.size());
+
   pucch_processor::format1_batch_configuration batch_config(tmp_conf);
   batch_config.entries.clear();
 
@@ -162,6 +163,59 @@ TEST_P(PucchProcessorFormat1Fixture, FromVector)
                                                         actual_bits.size());
       }
     }
+  }
+  ASSERT_LE(nof_false_alarms, 1) << "Too many false alarms.";
+}
+
+TEST_P(PucchProcessorFormat1Fixture, FromVectorZeros)
+{
+  // Prepare resource grid.
+  resource_grid_reader_spy                                grid;
+  std::vector<resource_grid_reader_spy::expected_entry_t> grid_entries = GetParam().grid.read();
+  for (auto& entry : grid_entries) {
+    entry.value = cf_t(0, 0);
+  }
+  grid.write(grid_entries);
+
+  const PucchProcessorFormat1Param& param = GetParam();
+
+  pucch_processor::format1_configuration       tmp_conf = param.common_config;
+  pucch_processor::format1_batch_configuration batch_config(tmp_conf);
+  batch_config.entries.clear();
+
+  for (const auto& mux_pucch : param.payloads) {
+    tmp_conf.initial_cyclic_shift = mux_pucch.initial_cyclic_shift;
+    tmp_conf.time_domain_occ      = mux_pucch.time_domain_occ;
+    tmp_conf.nof_harq_ack         = mux_pucch.nof_harq_ack;
+
+    // Make sure configuration is valid.
+    ASSERT_TRUE(validator->is_valid(tmp_conf));
+
+    batch_config.entries.insert(
+        tmp_conf.initial_cyclic_shift, tmp_conf.time_domain_occ, {std::nullopt, tmp_conf.nof_harq_ack});
+  }
+
+  const pucch_format1_map<pucch_processor_result>& results = processor->process(grid, batch_config);
+
+  ASSERT_EQ(results.size(), batch_config.entries.size())
+      << "The number of configured and processed PUCCHs does not match.";
+
+  unsigned nof_false_alarms = 0;
+  for (const auto& mux_pucch : param.payloads) {
+    unsigned initial_cyclic_shift = mux_pucch.initial_cyclic_shift;
+    unsigned time_domain_occ      = mux_pucch.time_domain_occ;
+
+    ASSERT_TRUE(results.contains(initial_cyclic_shift, time_domain_occ)) << fmt::format(
+        "PUCCH with ICS {} and OCCI {} is missing from the results.", initial_cyclic_shift, time_domain_occ);
+
+    const pucch_processor_result& this_result = results.get(initial_cyclic_shift, time_domain_occ);
+
+    // UCI payload is expected to be invalid.
+    ASSERT_EQ(this_result.message.get_status(), uci_status::invalid);
+    // The resource grid is empty, so SINR, EPRE & RSRP are expected to be -inf (0 in linear scale).
+    ASSERT_EQ(*this_result.csi.get_sinr_dB(), -std::numeric_limits<float>::infinity());
+    ASSERT_EQ(*this_result.csi.get_epre_dB(), -std::numeric_limits<float>::infinity());
+    ASSERT_EQ(*this_result.csi.get_rsrp_dB(), -std::numeric_limits<float>::infinity());
   }
   ASSERT_LE(nof_false_alarms, 1) << "Too many false alarms.";
 }

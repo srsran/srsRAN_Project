@@ -77,6 +77,38 @@ TEST_P(PucchProcessorF4Fixture, PucchProcessorF4VectorTest)
   ASSERT_EQ(span<const uint8_t>(result.message.get_csi_part2_bits()), span<const uint8_t>());
 }
 
+TEST_P(PucchProcessorF4Fixture, PucchProcessorF4VectorZerosTest)
+{
+  const test_case_t&                            test_case = GetParam();
+  const context_t&                              context   = test_case.context;
+  const pucch_processor::format4_configuration& config    = context.config;
+  std::vector<uint8_t>                          uci_bits  = test_case.uci_bits.read();
+
+  // Prepare resource grid.
+  resource_grid_reader_spy                                grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_NOF_PRBS);
+  std::vector<resource_grid_reader_spy::expected_entry_t> grid_entries = GetParam().grid.read();
+  for (auto& entry : grid_entries) {
+    entry.value = cf_t(0, 0);
+  }
+  grid.write(grid_entries);
+
+  // Make sure configuration is valid.
+  error_type<std::string> validation = validator->is_valid(config);
+  ASSERT_TRUE(validation.has_value()) << fmt::format("PUCCH configuration validation failed with message:\n {}",
+                                                     validation.error());
+
+  // Process PUCCH.
+  pucch_processor_result result = processor->process(grid, config);
+
+  // UCI payload is expected to be invalid.
+  ASSERT_EQ(result.message.get_status(), uci_status::invalid);
+
+  // The resource grid is empty, so SINR, EPRE & RSRP are expected to be -inf (0 in linear scale).
+  ASSERT_EQ(*result.csi.get_sinr_dB(), -std::numeric_limits<float>::infinity());
+  ASSERT_EQ(*result.csi.get_epre_dB(), -std::numeric_limits<float>::infinity());
+  ASSERT_EQ(*result.csi.get_rsrp_dB(), -std::numeric_limits<float>::infinity());
+}
+
 // Creates test suite that combines all possible parameters.
 INSTANTIATE_TEST_SUITE_P(PucchProcessorF4VectorTest,
                          PucchProcessorF4Fixture,
