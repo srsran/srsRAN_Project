@@ -196,24 +196,14 @@ test_bench::test_bench(const test_bench_params& params,
 
       cell_pucch_resources = config_helpers::build_pucch_resource_list(
           pucch_params, cell_cfg_list[to_du_cell_index(0)]->ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
-    }
 
-    if (params.pucch_f2_f3_more_prbs) {
-      static constexpr unsigned pucch_f2_f3_nof_prbs = 3U;
-      for (auto& pucch_res : cell_pucch_resources) {
-        if (pucch_res.format == params.set1_format and
-            std::holds_alternative<pucch_format_2_3_cfg>(pucch_res.format_params)) {
-          std::get<pucch_format_2_3_cfg>(pucch_res.format_params).nof_prbs = pucch_f2_f3_nof_prbs;
-        }
-      }
-    }
-
-    // TODO: extend for PUCCH Formats 3/4
-    if (params.cfg_for_mimo_4x4) {
       if (params.pucch_f2_f3_more_prbs) {
-        for (auto& res_it : cell_pucch_resources) {
-          if (res_it.format == set1_format and std::holds_alternative<pucch_format_2_3_cfg>(res_it.format_params)) {
-            std::get<pucch_format_2_3_cfg>(res_it.format_params).nof_prbs = 2U;
+        // TODO: extend for PUCCH Formats 3/4
+        const unsigned pucch_f2_f3_nof_prbs = params.cfg_for_mimo_4x4 ? 2U : 3U;
+        for (auto& pucch_res : cell_pucch_resources) {
+          if (pucch_res.format == params.set1_format and
+              std::holds_alternative<pucch_format_2_3_cfg>(pucch_res.format_params)) {
+            std::get<pucch_format_2_3_cfg>(pucch_res.format_params).nof_prbs = pucch_f2_f3_nof_prbs;
           }
         }
       }
