@@ -477,7 +477,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time, \"memory_usage_MB\" FROM app_resource_usage WHERE time >= $__timeFrom AND time <= $__timeTo ORDER BY time",
+          "rawSql": "SELECT time, \"memory_usage_mb\" FROM app_resource_usage WHERE time >= $__timeFrom AND time <= $__timeTo ORDER BY time",
           "refId": "A",
           "sql": {
             "columns": [
@@ -862,7 +862,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT time, \"power_consumption_Watts\" FROM app_resource_usage WHERE time >= $__timeFrom AND time <= $__timeTo ORDER BY time",
+          "rawSql": "SELECT time, \"power_consumption_watts\" FROM app_resource_usage WHERE time >= $__timeFrom AND time <= $__timeTo ORDER BY time",
           "refId": "A",
           "sql": {
             "columns": [
