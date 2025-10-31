@@ -54,7 +54,7 @@ void dlt_pcap_impl::push_pdu(const_span<uint8_t> pdu)
   if (not pdu_buffer.has_value()) {
     return;
   }
-  writer.write_pdu(std::move(pdu_buffer.value()));
+  writer.write_pdu(std::move(pdu_buffer.value()), "ngap");
 }
 
 void dlt_pcap_impl::push_pdu(byte_buffer pdu)
@@ -63,7 +63,7 @@ void dlt_pcap_impl::push_pdu(byte_buffer pdu)
     // skip.
     return;
   }
-  writer.write_pdu(std::move(pdu));
+  writer.write_pdu(std::move(pdu), "ngap");
 }
 
 static std::unique_ptr<dlt_pcap>

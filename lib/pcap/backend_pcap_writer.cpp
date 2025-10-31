@@ -99,7 +99,7 @@ void backend_pcap_writer::close()
   fmt::print("{} PCAP stored in {}\n", layer_name, filename);
 }
 
-void backend_pcap_writer::write_pdu(byte_buffer pdu)
+void backend_pcap_writer::write_pdu(byte_buffer pdu, const char* dissector)
 {
   if (pdu.empty()) {
     return;
@@ -108,7 +108,8 @@ void backend_pcap_writer::write_pdu(byte_buffer pdu)
     logger.warning("Dropped {} PCAP PDU. Cause: The PCAP file is closed", layer_name);
     return;
   }
-  if (not backend_exec.defer([this, pdu = std::move(pdu)]() { write_pdu_impl(pdu); })) {
+  if (not backend_exec.defer(
+          [this, pdu = std::move(pdu), dissector = dissector]() { write_pdu_impl(pdu, dissector); })) {
     logger.warning("Dropped {} PCAP PDU. Cause: Task executor queue is full", layer_name);
   }
 }
@@ -128,7 +129,7 @@ void backend_pcap_writer::write_pdu(pcap_pdu_data pdu)
   }
 }
 
-void backend_pcap_writer::write_pdu_impl(const byte_buffer& pdu)
+void backend_pcap_writer::write_pdu_impl(const byte_buffer& pdu, const char* dissector)
 {
   if (not is_write_enabled()) {
     logger.warning("Dropped {} PCAP PDU. Cause: The PCAP file is closed", layer_name);
@@ -140,7 +141,7 @@ void backend_pcap_writer::write_pdu_impl(const byte_buffer& pdu)
   writer.write_pdu_header(length);
 
   // write exported_pdu header
-  writer.write_exported_pdu_header("ngap");
+  writer.write_exported_pdu_header(dissector);
 
   // write PDU payload
   writer.write_pdu(pdu);

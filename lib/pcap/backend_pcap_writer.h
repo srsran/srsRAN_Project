@@ -82,14 +82,14 @@ public:
 
   bool is_write_enabled() const { return is_open.load(std::memory_order_relaxed); }
 
-  void write_pdu(byte_buffer pdu);
+  void write_pdu(byte_buffer pdu, const char* dissector);
 
   void write_pdu(pcap_pdu_data pdu);
 
 private:
   void flush_impl();
 
-  void write_pdu_impl(const byte_buffer& pdu);
+  void write_pdu_impl(const byte_buffer& pdu, const char* dissector);
 
   void write_context_pdu_impl(const pcap_pdu_data& pdu);
 };
