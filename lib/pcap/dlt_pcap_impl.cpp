@@ -15,7 +15,7 @@
 using namespace srsran;
 
 // DLT PCAP values for different layers.
-static constexpr uint16_t PCAP_NGAP_DLT = 152;
+static constexpr uint16_t PCAP_NGAP_DLT = 252;
 static constexpr uint16_t PCAP_E1AP_DLT = 153;
 static constexpr uint16_t PCAP_F1AP_DLT = 154;
 static constexpr uint16_t PCAP_E2AP_DLT = 155;

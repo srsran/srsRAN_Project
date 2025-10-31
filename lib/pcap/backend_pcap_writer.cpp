@@ -118,6 +118,7 @@ void backend_pcap_writer::write_pdu(pcap_pdu_data pdu)
   if (pdu.payload().empty()) {
     return;
   }
+
   if (not is_write_enabled()) {
     logger.warning("Dropped {} PCAP PDU. Cause: The PCAP file is closed", layer_name);
     return;
@@ -137,6 +138,9 @@ void backend_pcap_writer::write_pdu_impl(const byte_buffer& pdu)
   // write packet header
   unsigned length = pdu.length();
   writer.write_pdu_header(length);
+
+  // write exported_pdu header
+  writer.write_exported_pdu_header("ngap");
 
   // write PDU payload
   writer.write_pdu(pdu);

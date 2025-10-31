@@ -86,12 +86,38 @@ void pcap_file_writer::write_pdu_header(uint32_t length)
   gettimeofday(&t, nullptr);
   packet_header.ts_sec   = t.tv_sec;
   packet_header.ts_usec  = t.tv_usec;
-  packet_header.incl_len = length;
-  packet_header.orig_len = length;
+  packet_header.incl_len = length + EXP_PDU_METADATA_LENGTH;
+  packet_header.orig_len = length + EXP_PDU_METADATA_LENGTH;
 
   pcap_fstream.write((char*)&packet_header, sizeof(packet_header));
   if (pcap_fstream.fail()) {
     logger.error("Failed to write to PCAP: {}", ::strerror(errno));
+    return;
+  }
+}
+
+void pcap_file_writer::write_exported_pdu_header(const std::string& dissector)
+{
+  if (not is_write_enabled()) {
+    return;
+  }
+
+  if (not pcap_fstream.write((char*)&EXP_PDU_TAG_DISSECTOR_NAME, sizeof(uint16_t))) {
+    logger.error("Failed to write packet header to pcap: {}", strerror(errno));
+    return;
+  }
+  uint16_t opt_size = ntohs(dissector.size());
+  if (not pcap_fstream.write((char*)&opt_size, sizeof(uint16_t))) {
+    logger.error("Failed to write packet header to pcap: {}", strerror(errno));
+    return;
+  }
+  // TODO use padding if required
+  if (not pcap_fstream.write(dissector.data(), dissector.size())) {
+    logger.error("Failed to write packet header to pcap: {}", strerror(errno));
+    return;
+  }
+  if (not pcap_fstream.write((char*)&EXP_PDU_TAG_END_OF_OPT, sizeof(uint32_t))) {
+    logger.error("Failed to write packet header to pcap: {}", strerror(errno));
     return;
   }
 }
