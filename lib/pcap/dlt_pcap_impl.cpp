@@ -99,7 +99,7 @@ std::unique_ptr<dlt_pcap> srsran::create_e1ap_pcap(const std::string& filename, 
 
 std::unique_ptr<dlt_pcap> srsran::create_gtpu_pcap(const std::string& filename, task_executor& backend_exec)
 {
-  return create_dlt_pcap(PCAP_GTPU_DLT, "GTPU", filename, "gtp ", backend_exec);
+  return create_dlt_pcap(PCAP_GTPU_DLT, "GTPU", filename, "gtp", backend_exec);
 }
 
 std::unique_ptr<dlt_pcap> srsran::create_e2ap_pcap(const std::string& filename, task_executor& backend_exec)
