@@ -267,26 +267,38 @@ TEST_P(scheduler_rb_distribution_test, when_equal_ue_cfgs_then_rbs_are_fully_uti
       pusch_brate_jain);
 
   // TEST CASE: Check that the UEs with no traffic have no PDSCH/PUSCH usage.
-  ASSERT_LT(sum(ues_with_no_traffic, &scheduler_ue_metrics::tot_pdsch_prbs_used), 0.1 * metrics.nof_dl_slots);
-  ASSERT_LT(sum(ues_with_no_traffic, &scheduler_ue_metrics::tot_pusch_prbs_used), 0.1 * metrics.nof_ul_slots);
+  if (test_params.auto_dl_bs > 0) {
+    ASSERT_LT(sum(ues_with_no_traffic, &scheduler_ue_metrics::tot_pdsch_prbs_used), 0.1 * metrics.nof_dl_slots);
+  }
+  if (test_params.auto_ul_bs > 0) {
+    ASSERT_LT(sum(ues_with_no_traffic, &scheduler_ue_metrics::tot_pusch_prbs_used), 0.1 * metrics.nof_ul_slots);
+  }
 
   // TEST CASE: The RB usage should be close to the number of cell RBs.
-  EXPECT_GE(pdsch_rbs_per_slot, 0.95 * cell_cfg().dl_cfg_common.init_dl_bwp.generic_params.crbs.length());
-  EXPECT_GE(pusch_rbs_per_slot, 0.95 * cell_cfg().ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
+  if (test_params.auto_dl_bs > 0) {
+    EXPECT_GE(pdsch_rbs_per_slot, 0.95 * cell_cfg().dl_cfg_common.init_dl_bwp.generic_params.crbs.length());
+  }
+  if (test_params.auto_ul_bs > 0) {
+    EXPECT_GE(pusch_rbs_per_slot, 0.95 * cell_cfg().ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
+  }
 
   // TEST CASE: Jain index for PDSCH and PUSCH RBs and bitrates should be very high.
-  EXPECT_GE(pdsch_rbs_jain, 0.95) << fmt::format(
-      "Low PDSCH fairness index in {} UL slots, with #PDSCHs-per-slot={:.2}. UEs: {}",
-      metrics.nof_dl_slots,
-      metrics.dl_grants_count / static_cast<double>(metrics.nof_dl_slots),
-      fmt::join(extract(metrics.ue_metrics, &scheduler_ue_metrics::tot_pdsch_prbs_used), ", "));
-  EXPECT_GE(pusch_rbs_jain, 0.95) << fmt::format(
-      "Low PUSCH fairness index in {} UL slots, with #PUSCHs-per-slot={:.2}. UEs: {}",
-      metrics.nof_ul_slots,
-      metrics.ul_grants_count / static_cast<double>(metrics.nof_ul_slots),
-      fmt::join(extract(metrics.ue_metrics, &scheduler_ue_metrics::tot_pusch_prbs_used), ", "));
-  EXPECT_GE(pdsch_brate_jain, 0.95) << fmt::format("Low DL bitrate fairness index");
-  EXPECT_GE(pusch_brate_jain, 0.95) << fmt::format("Low UL bitrate fairness index");
+  if (test_params.auto_dl_bs > 0) {
+    EXPECT_GE(pdsch_rbs_jain, 0.95) << fmt::format(
+        "Low PDSCH fairness index in {} UL slots, with #PDSCHs-per-slot={:.2}. UEs: {}",
+        metrics.nof_dl_slots,
+        metrics.dl_grants_count / static_cast<double>(metrics.nof_dl_slots),
+        fmt::join(extract(metrics.ue_metrics, &scheduler_ue_metrics::tot_pdsch_prbs_used), ", "));
+    EXPECT_GE(pdsch_brate_jain, 0.95) << fmt::format("Low DL bitrate fairness index");
+  }
+  if (test_params.auto_ul_bs > 0) {
+    EXPECT_GE(pusch_rbs_jain, 0.95) << fmt::format(
+        "Low PUSCH fairness index in {} UL slots, with #PUSCHs-per-slot={:.2}. UEs: {}",
+        metrics.nof_ul_slots,
+        metrics.ul_grants_count / static_cast<double>(metrics.nof_ul_slots),
+        fmt::join(extract(metrics.ue_metrics, &scheduler_ue_metrics::tot_pusch_prbs_used), ", "));
+    EXPECT_GE(pusch_brate_jain, 0.95) << fmt::format("Low UL bitrate fairness index");
+  }
 }
 
 INSTANTIATE_TEST_SUITE_P(scheduler_rb_distribution_test,
@@ -294,6 +306,8 @@ INSTANTIATE_TEST_SUITE_P(scheduler_rb_distribution_test,
                          ::testing::Values(multi_ue_test_params{16},
                                            multi_ue_test_params{64},
                                            multi_ue_test_params{512},
+                                           multi_ue_test_params{.nof_ues = 512, .auto_ul_bs = 0},
+                                           multi_ue_test_params{.nof_ues = 512, .auto_dl_bs = 0},
                                            multi_ue_test_params{16, 4},
                                            multi_ue_test_params{512, 128}));
 

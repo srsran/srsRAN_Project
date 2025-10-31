@@ -78,7 +78,8 @@ void intra_slice_scheduler::slice_ue_group_scheduler::fill_ue_candidate_group(
       const unsigned ue_idx_mod = (--slice_ues.end())->ue_index() + 1;
       // > Given that DL and UL UE groups are independent, we choose the minimum of the two last UE indexes, to ensure
       // that no UE is left unconsidered in any direction.
-      group_offset    = (group_offset + std::min(max_dl_ue_count, max_ul_ue_count)) % ue_idx_mod;
+      auto jump = std::max(std::min(max_dl_ue_count, max_ul_ue_count), parent->expert_cfg.pre_policy_rr_ue_group_size);
+      group_offset    = (group_offset + jump) % ue_idx_mod;
       max_dl_ue_count = 0;
       max_ul_ue_count = 0;
     }
