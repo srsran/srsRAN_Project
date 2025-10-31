@@ -51,6 +51,11 @@ private:
 
   const rach_config_common& rach_cfg_common() const { return *cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common; }
 
+  /// \brief Performs PRACH allocation for this slot.
+  ///
+  /// One PRACH PDU per preamble for long preambles, and 1 or 2 PRACH PDUs for short preambles depending on
+  /// prach_length_slots. In the case of short preamble, when the burst of PRACH opportunities spans over 2 (SCS common)
+  /// slots,  we allocate a PRACH PDU for each of these 2 slots, as expected from the scheduler output interface.
   void allocate_slot_prach_pdus(cell_resource_allocator& res_grid, slot_point sl);
 
   const cell_configuration& cell_cfg;

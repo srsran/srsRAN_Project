@@ -183,8 +183,14 @@ void prach_scheduler::stop()
 void prach_scheduler::allocate_slot_prach_pdus(cell_resource_allocator& res_grid, slot_point sl)
 {
   // If any of the slots over which the PRACH preamble should be allocated isn't an UL slot, return.
-  for (unsigned sl_idx = 0; sl_idx != prach_length_slots; ++sl_idx) {
-    if (not cell_cfg.is_fully_ul_enabled(sl + sl_idx)) {
+  if (use_long_preamble) {
+    for (unsigned sl_idx = 0; sl_idx != prach_length_slots; ++sl_idx) {
+      if (not cell_cfg.is_fully_ul_enabled(sl + sl_idx)) {
+        return;
+      }
+    }
+  } else {
+    if (not cell_cfg.is_fully_ul_enabled(sl)) {
       return;
     }
   }
@@ -192,11 +198,6 @@ void prach_scheduler::allocate_slot_prach_pdus(cell_resource_allocator& res_grid
   // Check if the current SFN is a valid PRACH occasion.
   const bool prach_occasion_sfn = prach_sfn_occasions.test(sl.sfn() % prach_sfn_period);
   if (!prach_occasion_sfn) {
-    return;
-  }
-
-  // Skip if using short preamble and the slot is not enabled for PRACH.
-  if (!use_long_preamble && !prach_slot_occasions.test(sl.slot_index())) {
     return;
   }
 
