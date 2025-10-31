@@ -59,6 +59,7 @@ class app_executor_metrics_service
           // Start the executor metrics backend.
           exec_metrics_backend.start(report_period, timers.create_unique_timer(*metrics_exec), notifier);
         });
+        wait_all.wait();
       }
     }
 
@@ -69,6 +70,7 @@ class app_executor_metrics_service
         sync_event wait_all;
         defer_until_success(
             *metrics_exec, timers, [this, token = wait_all.get_token()]() mutable { exec_metrics_backend.stop(); });
+        wait_all.wait();
       }
     }
 

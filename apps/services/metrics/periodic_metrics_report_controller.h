@@ -65,6 +65,7 @@ public:
     if (not stopped.exchange(true, std::memory_order_relaxed)) {
       sync_event wait_all;
       defer_until_success(executor, timers, [this, token = wait_all.get_token()]() mutable { timer.stop(); });
+      wait_all.wait();
     }
   }
 
