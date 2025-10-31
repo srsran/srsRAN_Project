@@ -22,6 +22,7 @@ public:
   dlt_pcap_impl(unsigned           dlt_,
                 const std::string& layer_name_,
                 const std::string& filename,
+                const char*        dissector,
                 task_executor&     backend_exec_);
 
   ~dlt_pcap_impl() override;
@@ -44,6 +45,7 @@ public:
 private:
   srslog::basic_logger& logger;
   backend_pcap_writer   writer;
+  const char*           dissector;
 };
 
 } // namespace srsran

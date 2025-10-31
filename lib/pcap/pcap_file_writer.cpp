@@ -116,6 +116,7 @@ void pcap_file_writer::write_exported_pdu_header(const std::string& dissector)
     logger.error("Failed to write packet header to pcap: {}", strerror(errno));
     return;
   }
+
   if (not pcap_fstream.write((char*)&EXP_PDU_TAG_END_OF_OPT, sizeof(uint32_t))) {
     logger.error("Failed to write packet header to pcap: {}", strerror(errno));
     return;
