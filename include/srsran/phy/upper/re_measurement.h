@@ -59,6 +59,8 @@ template <typename measure_type>
 class re_measurement
 {
 public:
+  using value_type = std::remove_cv_t<measure_type>;
+
   /// Default destructor
   virtual ~re_measurement() = default;
 
@@ -80,12 +82,42 @@ public:
 };
 
 /// \brief Modular resource element measurement.
+///
+/// A modular resource element is a collection of views to symbols organized in slices. All symbols must have the same
+/// size (number of subcarriers).
+///
+/// A \c modular_re_measurement object can be created from another \c re_measurement-based object, for instance to
+/// restrict access to a subset of subcarriers. The constructor preserves the const-qualification of the original object
+/// (e.g., a read-only \c re_measurement generates a read-only \c modular_re_measurement).
+///
 /// \tparam measure_type  Underlying data type.
-/// \tparam MaxNofSymbols Maximum number of symbols.
+/// \tparam MaxNofSymbols Maximum number of symbols per slice.
 /// \tparam MaxNofSlices  Maximum number of slices.
 template <typename measure_type, unsigned MaxNofSymbols, unsigned MaxNofSlices>
 class modular_re_measurement : public re_measurement<measure_type>
 {
+private:
+  /// Metaprogramming for checking types in the constructors.
+  ///@{
+  /// Default failing compatibility test.
+  template <typename T, typename = void>
+  struct is_modular_compatible : std::false_type {};
+
+  /// \brief Compatibility test for type \c T.
+  ///
+  /// Type T can be used to construct a modular_re_measurement<measure_type> object if re_measurement is the base class
+  /// of T and if we can create span<measure_type> from span<T::value_type>.
+  template <typename T>
+  struct is_modular_compatible<T, std::void_t<typename T::value_type>>
+    : std::conditional_t<
+          std::is_base_of_v<re_measurement<typename T::value_type>, T> &&
+              std::is_convertible_v<
+                  std::conditional_t<std::is_const_v<T>, const typename T::value_type, typename T::value_type> (*)[],
+                  measure_type (*)[]>,
+          std::true_type,
+          std::false_type> {};
+  ///@}
+
 public:
   /// Default constructor - creates an empty RE measurement object.
   modular_re_measurement() = default;
@@ -94,13 +126,15 @@ public:
   modular_re_measurement(const re_measurement_dimensions& dimensions_) { resize(dimensions_); }
 
   /// Creates a modular RE measurement object from another RE measurement object.
-  modular_re_measurement(re_measurement<measure_type>& other) : modular_re_measurement(other, 0, other.size().nof_subc)
+  template <typename U, std::enable_if_t<is_modular_compatible<U>::value, int> = 0>
+  modular_re_measurement(U& other) : modular_re_measurement(other, 0, other.size().nof_subc)
   {
   }
 
   /// Creates a modular RE measurement object from another RE measurement object with an offset and number of
   /// subcarriers.
-  modular_re_measurement(re_measurement<measure_type>& other, unsigned offset, unsigned nof_subc)
+  template <typename U, std::enable_if_t<is_modular_compatible<U>::value, int> = 0>
+  modular_re_measurement(U& other, unsigned offset, unsigned nof_subc)
   {
     assign(other, offset, nof_subc);
   }
@@ -152,8 +186,12 @@ public:
     std::fill_n(data.get_data().begin(), dims.nof_slices * dims.nof_symbols, span<measure_type>());
   }
 
-  /// Sets a symbol view.
-  void set_symbol(unsigned i_symbol, unsigned i_slice, span<measure_type> view)
+  /// \brief Sets a symbol view.
+  ///
+  /// This method is available only if a view <t>span<U></t> is compatible with the data type of the RE measurements
+  /// stored in the calling object.
+  template <typename U, std::enable_if_t<std::is_convertible_v<U (*)[], measure_type (*)[]>, int> = 0>
+  void set_symbol(unsigned i_symbol, unsigned i_slice, span<U> view)
   {
     srsran_assert(i_slice < dimensions.nof_slices,
                   "Slice index (i.e., {}) exceeds the number of slices (i.e., {}).",
@@ -171,10 +209,15 @@ public:
   }
 
   /// Assigns the views of the resource element measurement to another measurement.
-  void assign(re_measurement<measure_type>& other) { assign(other, 0, other.size().nof_subc); }
+  template <typename U, std::enable_if_t<is_modular_compatible<U>::value, int> = 0>
+  void assign(U& other)
+  {
+    assign(other, 0, other.size().nof_subc);
+  }
 
   /// Assigns the views of the resource element measurement to another measurement with a subcarrier offset.
-  void assign(re_measurement<measure_type>& other, unsigned offset, unsigned nof_subc)
+  template <typename U, std::enable_if_t<is_modular_compatible<U>::value, int> = 0>
+  void assign(U& other, unsigned offset, unsigned nof_subc)
   {
     const re_measurement_dimensions& base_dims = other.size();
     srsran_assert(offset + nof_subc <= base_dims.nof_subc, "Invalid offset and number of subcarriers.");
@@ -191,8 +234,7 @@ public:
 private:
   re_measurement_dimensions                                          dimensions;
   static_tensor<2, span<measure_type>, MaxNofSymbols * MaxNofSlices> data;
-
-}; // namespace srsran
+};
 
 namespace detail {
 
@@ -322,8 +364,8 @@ public:
   /// Constructor: checks template type.
   static_re_measurement()
   {
-    static_assert(std::is_same<measure_type, float>::value || std::is_same<measure_type, cf_t>::value ||
-                      std::is_same<measure_type, cbf16_t>::value,
+    static_assert(std::is_same_v<measure_type, float> || std::is_same_v<measure_type, cf_t> ||
+                      std::is_same_v<measure_type, cbf16_t>,
                   "At the moment, this template is only available for float, cf_t and cbf16_t.");
     base::reserved_dims = {MAX_NOF_SUBC, MAX_NOF_SYMBOLS, MAX_NOF_SLICES};
   }
@@ -331,7 +373,7 @@ public:
   /// Constructor: sets the size of the internal buffer.
   explicit static_re_measurement(const re_measurement_dimensions& dims) : static_re_measurement()
   {
-    static_assert(std::is_same<measure_type, float>::value || std::is_same<measure_type, cf_t>::value,
+    static_assert(std::is_same_v<measure_type, float> || std::is_same_v<measure_type, cf_t>,
                   "At the moment, this template is only available for float and cf_t.");
     base::resize(dims);
   }
@@ -356,7 +398,7 @@ public:
   /// Constructor: checks template type and reserves internal memory.
   dynamic_re_measurement()
   {
-    static_assert(std::is_same<measure_type, float>::value || std::is_same<measure_type, cf_t>::value,
+    static_assert(std::is_same_v<measure_type, float> || std::is_same_v<measure_type, cf_t>,
                   "At the moment, this template is only available for float and cf_t.");
   }
 
@@ -367,7 +409,7 @@ public:
   /// \warning This method entails a heap memory allocation.
   void reserve(const re_measurement_dimensions& dims)
   {
-    static_assert(std::is_same<measure_type, float>::value || std::is_same<measure_type, cf_t>::value,
+    static_assert(std::is_same_v<measure_type, float> || std::is_same_v<measure_type, cf_t>,
                   "At the moment, this template is only available for float and cf_t.");
 
     base::reserved_dims = dims;
