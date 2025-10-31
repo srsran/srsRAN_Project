@@ -484,11 +484,30 @@ bool pucch_allocator_impl::can_allocate_pucch_resources(const cell_slot_resource
     return false;
   }
 
-  // If there are no existing grants or if the existing one is for SR with Format 0/1, we need to add 2 additional PUCCH
-  // grants: 1 on common resources and 1 on dedicated resources (for HARQ-ACK bit).
-  // In the case of CSI, the number of PUCCH additional grants depends on the PUCCH resources configuration, but it will
-  // never be more than 2. The exact number cannot be known at this point.
-  const unsigned grants_to_allocate = common_and_ded ? 2U : 1U;
+  // Check if there is space in the PUCCH grants list of the slot.
+  const auto& slot_ctx = slots_ctx[pucch_slot_alloc.slot.to_uint()];
+  if (existing_ue_grants == nullptr and slot_ctx.ue_grants_list.full()) {
+    logger.info("rnti={}: PUCCH {} allocation for slot={} skipped. Cause: PUCCH allocator grant list is full",
+                rnti,
+                to_string(grant_type),
+                pucch_slot_alloc.slot);
+    return false;
+  }
+
+  // If there are existing grants for this UE, the total number of grants won't change, as either they will be
+  // multiplexed or the allocation will fail.
+  unsigned grants_to_allocate = existing_ue_grants == nullptr ? 1U : 0U;
+  if (common_and_ded) {
+    // If there are no existing grants or if the existing one is for SR with Format 0/1, we need to add 2 additional
+    // PUCCH grants: 1 on common resources and 1 on dedicated resources (for HARQ-ACK bit). In the case of CSI, the
+    // number of PUCCH additional grants depends on the PUCCH resources configuration, but it will never be more
+    // than 2. The exact number cannot be known at this point.
+    grants_to_allocate = 2U;
+  }
+
+  if (grants_to_allocate == 0U) {
+    return true;
+  }
 
   // [Implementation-defined] We only allow a max number of PUCCH + PUSCH grants per slot.
   const unsigned max_pucch_grants =
@@ -512,16 +531,6 @@ bool pucch_allocator_impl::can_allocate_pucch_resources(const cell_slot_resource
   // Check if there is space in the PUCCH PDUs list of the slot.
   if (pucch_slot_alloc.result.ul.pucchs.size() + grants_to_allocate > pucch_slot_alloc.result.ul.pucchs.capacity()) {
     logger.info("rnti={}: PUCCH {} allocation for slot={} skipped. Cause: not enough space in the PUCCH PDUs list",
-                rnti,
-                to_string(grant_type),
-                pucch_slot_alloc.slot);
-    return false;
-  }
-
-  // Check if there is space in the PUCCH grants list of the slot.
-  const auto& slot_ctx = slots_ctx[pucch_slot_alloc.slot.to_uint()];
-  if (existing_ue_grants == nullptr and slot_ctx.ue_grants_list.full()) {
-    logger.info("rnti={}: PUCCH {} allocation for slot={} skipped. Cause: PUCCH allocator grant list is full",
                 rnti,
                 to_string(grant_type),
                 pucch_slot_alloc.slot);
