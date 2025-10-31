@@ -9,12 +9,14 @@
  */
 
 #include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
 #include "srsran/support/test_utils.h"
 #include <cstdio>
 #include <gtest/gtest.h>
 
 using namespace asn1;
 using namespace asn1::rrc_nr;
+using namespace srsran;
 
 #define JSON_OUTPUT 0
 
@@ -579,4 +581,16 @@ TEST_F(asn1_rrc_nr_test, when_ue_nr_capabilities_rel16_v2_correct_then_unpacking
   ue_nr_cap.to_json(json_writer);
   test_logger.info("UE capabilities: {}\n", json_writer.to_string().c_str());
 #endif
+}
+
+TEST_F(asn1_rrc_nr_test, unpack_malformed_rrc_setup_complete)
+{
+  byte_buffer pdu =
+      byte_buffer::create({0x00, 0x00, 0x18, 0x00, 0x05, 0xdf, 0x80, 0x10, 0x5e, 0x40, 0x03, 0x40, 0x40, 0x3c,
+                           0x44, 0x00, 0x00, 0x00, 0x00, 0x04, 0x0c, 0x95, 0x1d, 0x82, 0x0b, 0x80, 0xbc, 0x1c})
+          .value();
+  ul_dcch_msg_s rrc_msg;
+
+  cbit_ref bref{pdu};
+  ASSERT_NE(rrc_msg.unpack(bref), SRSASN_SUCCESS);
 }

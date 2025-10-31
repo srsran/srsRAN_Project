@@ -774,6 +774,7 @@ SRSASN_CODE unpack_length(uint32_t& val, cbit_ref& bref, bool aligned)
       val = (val << 8u) + val_octet_2;
       return SRSASN_SUCCESS;
     }
+    val = 0;
     log_error("Not handling octet strings longer than 16383 octets");
     return SRSASN_ERROR_DECODE_FAIL;
   }
