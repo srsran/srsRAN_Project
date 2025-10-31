@@ -66,8 +66,9 @@ static lower_phy_configuration generate_low_phy_config(const flexible_o_du_ru_co
   // Get lower PHY system time throttling.
   out_cfg.system_time_throttling = ru_cfg.expert_cfg.lphy_dl_throttling;
 
-  // Currently, only one concurrent PRACH request is supported.
-  out_cfg.max_nof_prach_concurrent_requests = 1;
+  // Set max concurrent PRACH requests to the max processing delay (in slots) plus 2 extra slots: one for sample
+  // collection and one for potential processing delay.
+  out_cfg.max_nof_prach_concurrent_requests = max_processing_delay_slot + 2;
 
   // Apply gain back-off to account for the PAPR of the signal and the DFT power normalization.
   out_cfg.amplitude_config.input_gain_dB =

@@ -593,7 +593,6 @@ def test_zmq_fr2(
         time_alignment_calibration=0,
         ue_stop_timeout=3,
         pdcch_log=True,
-        warning_as_errors=False,
         always_download_artifacts=True,
     )
 
