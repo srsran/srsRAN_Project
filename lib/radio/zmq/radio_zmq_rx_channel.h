@@ -17,8 +17,8 @@
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/async/async_queue.h"
 #include "srsran/support/executors/task_executor.h"
-#include <atomic>
 #include "srsran/support/synchronization/stop_event.h"
+#include <atomic>
 #include <set>
 #include <zmq.h>
 

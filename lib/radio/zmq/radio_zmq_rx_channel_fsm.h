@@ -67,7 +67,7 @@ public:
     }
   }
 
-  /// Notifies a block of data was sent.
+  /// Notifies that a block of data was sent.
   void data_received()
   {
     std::scoped_lock lock(mutex);

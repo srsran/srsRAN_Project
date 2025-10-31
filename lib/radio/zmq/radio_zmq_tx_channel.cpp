@@ -330,6 +330,7 @@ void radio_zmq_tx_channel::start(uint64_t init_time)
           })) {
     logger.error("Unable to initiate radio zmq tx async task");
   }
+  start_event.wait();
 }
 
 void radio_zmq_tx_channel::stop()

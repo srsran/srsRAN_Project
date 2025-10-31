@@ -19,9 +19,6 @@ namespace srsran {
 class radio_factory_zmq_impl : public radio_factory
 {
 public:
-  /// Default constructor.
-  radio_factory_zmq_impl() = default;
-
   // See interface for documentation.
   const radio_configuration::validator& get_configuration_validator() const override;
 

@@ -71,8 +71,7 @@ baseband_gateway_receiver::metadata radio_zmq_rx_stream::receive(baseband_gatewa
                             channels.size());
 
   // Prepare return metadata.
-  baseband_gateway_receiver::metadata ret;
-  ret.ts = get_sample_count();
+  baseband_gateway_receiver::metadata ret = {.ts = get_sample_count()};
 
   // Calculate transmit timestamp that has already expired.
   uint64_t passed_timestamp = ret.ts + data.get_nof_samples();
