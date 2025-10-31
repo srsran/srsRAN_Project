@@ -9,6 +9,7 @@
  */
 
 #include "radio_uhd_rx_stream.h"
+#include "srsran/srsvec/zero.h"
 
 using namespace srsran;
 
@@ -20,12 +21,6 @@ bool radio_uhd_rx_stream::receive_block(unsigned&                       nof_rxd_
   // Extract number of samples.
   unsigned num_samples = data.get_nof_samples() - offset;
 
-  // Ignore reception if it is not streaming.
-  if (state != states::STREAMING) {
-    nof_rxd_samples = num_samples;
-    return true;
-  }
-
   // Make sure the number of channels is equal.
   srsran_assert(data.get_nof_channels() == nof_channels, "Number of channels does not match.");
 
@@ -36,9 +31,6 @@ bool radio_uhd_rx_stream::receive_block(unsigned&                       nof_rxd_
   }
 
   uhd::rx_streamer::buffs_type buffs_cpp(buffs_flat_ptr.data(), nof_channels);
-
-  // Protect the UHD Tx stream against concurrent access.
-  std::unique_lock<std::mutex> lock(stream_mutex);
 
   return safe_execution([this, buffs_cpp, num_samples, &md, &nof_rxd_samples]() {
     nof_rxd_samples = stream->recv(buffs_cpp, num_samples, md, RECEIVE_TIMEOUT_S, ONE_PACKET);
@@ -78,17 +70,16 @@ radio_uhd_rx_stream::radio_uhd_rx_stream(uhd::usrp::multi_usrp::sptr& usrp,
     return;
   }
 
-  state = states::SUCCESSFUL_INIT;
+  is_init_successful = true;
 }
 
 bool radio_uhd_rx_stream::start(const uhd::time_spec_t& time_spec)
 {
-  if (state != states::SUCCESSFUL_INIT) {
-    return true;
+  if (!is_init_successful) {
+    return false;
   }
 
-  // Protect the UHD Tx stream against concurrent access.
-  std::unique_lock<std::mutex> lock(stream_mutex);
+  stop_control.reset();
 
   if (!safe_execution([this, &time_spec]() {
         uhd::stream_cmd_t stream_cmd(uhd::stream_cmd_t::STREAM_MODE_START_CONTINUOUS);
@@ -100,9 +91,6 @@ bool radio_uhd_rx_stream::start(const uhd::time_spec_t& time_spec)
     fmt::println("Error: failed to start receive stream {}. {}.", id, get_error_message().c_str());
   }
 
-  // Transition to streaming state.
-  state = states::STREAMING;
-
   return true;
 }
 
@@ -110,9 +98,19 @@ baseband_gateway_receiver::metadata radio_uhd_rx_stream::receive(baseband_gatewa
 {
   baseband_gateway_receiver::metadata ret = {};
   uhd::rx_metadata_t                  md;
-  unsigned                            nsamples            = buffs[0].size();
-  unsigned                            rxd_samples_total   = 0;
-  unsigned                            timeout_trial_count = 0;
+
+  auto token = stop_control.get_token();
+  if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
+    for (unsigned i = 0, e = buffs.get_nof_channels(); i != e; ++i) {
+      srsvec::zero(buffs[i]);
+    }
+    ret.ts = md.time_spec.to_ticks(srate_Hz);
+    return ret;
+  }
+
+  unsigned nsamples            = buffs[0].size();
+  unsigned rxd_samples_total   = 0;
+  unsigned timeout_trial_count = 0;
 
   // Receive stream in multiple blocks.
   while (rxd_samples_total < nsamples) {
@@ -131,11 +129,11 @@ baseband_gateway_receiver::metadata radio_uhd_rx_stream::receive(baseband_gatewa
     rxd_samples_total += rxd_samples;
 
     // Prepare notification event.
-    radio_notification_handler::event_description event = {};
-    event.stream_id                                     = id;
-    event.channel_id                                    = radio_notification_handler::UNKNOWN_ID;
-    event.source                                        = radio_notification_handler::event_source::RECEIVE;
-    event.type                                          = radio_notification_handler::event_type::UNDEFINED;
+    radio_notification_handler::event_description event = {.stream_id  = id,
+                                                           .channel_id = radio_notification_handler::UNKNOWN_ID,
+                                                           .source = radio_notification_handler::event_source::RECEIVE,
+                                                           .type   = radio_notification_handler::event_type::UNDEFINED,
+                                                           .timestamp = std::nullopt};
 
     // Handle error.
     switch (md.error_code) {
@@ -174,11 +172,7 @@ baseband_gateway_receiver::metadata radio_uhd_rx_stream::receive(baseband_gatewa
 
 bool radio_uhd_rx_stream::stop()
 {
-  // Transition state to stop before locking to prevent real time priority thread owning the lock constantly.
-  state = states::STOP;
-
-  // Protect the UHD Tx stream against concurrent access.
-  std::unique_lock<std::mutex> lock(stream_mutex);
+  stop_control.stop();
 
   // Try to stop the stream.
   if (!safe_execution([this]() {
@@ -193,15 +187,4 @@ bool radio_uhd_rx_stream::stop()
   }
 
   return true;
-}
-
-void radio_uhd_rx_stream::wait_stop()
-{
-  // nothing to wait here
-  return;
-}
-
-unsigned radio_uhd_rx_stream::get_buffer_size() const
-{
-  return max_packet_size;
 }

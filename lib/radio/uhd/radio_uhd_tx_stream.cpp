@@ -25,10 +25,10 @@ void radio_uhd_tx_stream::recv_async_msg()
   if (!exception_handler.safe_execution([this, &valid, &async_metadata]() {
         valid = stream->recv_async_msg(async_metadata, RECV_ASYNC_MSG_TIMEOUT_S);
       })) {
-    fmt::print(stderr,
-               "Error: receiving asynchronous message for stream {}. {}.\n",
-               stream_id,
-               exception_handler.get_error_message().c_str());
+    fmt::println(stderr,
+                 "Error: receiving asynchronous message for stream {}. {}.",
+                 stream_id,
+                 exception_handler.get_error_message().c_str());
     return;
   }
 
@@ -38,11 +38,13 @@ void radio_uhd_tx_stream::recv_async_msg()
   }
 
   // Handle event.
-  radio_notification_handler::event_description event_description = {};
-  event_description.stream_id                                     = stream_id;
-  event_description.channel_id                                    = async_metadata.channel;
-  event_description.source                                        = radio_notification_handler::event_source::TRANSMIT;
-  event_description.type                                          = radio_notification_handler::event_type::UNDEFINED;
+  radio_notification_handler::event_description event_description = {
+      .stream_id  = stream_id,
+      .channel_id = static_cast<unsigned>(async_metadata.channel),
+      .source     = radio_notification_handler::event_source::TRANSMIT,
+      .type       = radio_notification_handler::event_type::UNDEFINED,
+      .timestamp  = std::nullopt};
+
   switch (async_metadata.event_code) {
     case uhd::async_metadata_t::EVENT_CODE_BURST_ACK:
       state_fsm.async_event_end_of_burst_ack();
@@ -76,9 +78,8 @@ void radio_uhd_tx_stream::recv_async_msg()
 
 void radio_uhd_tx_stream::run_recv_async_msg()
 {
-  // If stop was called, then stop enqueueing the task.
-  if (state_fsm.is_stopping()) {
-    state_fsm.async_task_stopped();
+  auto token = stop_control.get_token();
+  if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
     return;
   }
 
@@ -86,10 +87,8 @@ void radio_uhd_tx_stream::run_recv_async_msg()
   recv_async_msg();
 
   // Enqueue the task again.
-  if (not async_executor.defer([this]() { run_recv_async_msg(); })) {
-    fmt::print(stderr, "Unable to run recv async UHD stream task\n");
-    state_fsm.async_task_stopped();
-  }
+  report_error_if_not(async_executor.defer([this, tk = std::move(token)]() { run_recv_async_msg(); }),
+                      "Unable to run recv async UHD stream task");
 }
 
 bool radio_uhd_tx_stream::transmit_block(unsigned&                             nof_txd_samples,
@@ -179,16 +178,15 @@ radio_uhd_tx_stream::radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
 
   // Notify FSM that it was successfully initialized.
   state_fsm.init_successful();
-
-  // Create asynchronous task.
-  run_recv_async_msg();
 }
 
 void radio_uhd_tx_stream::transmit(const baseband_gateway_buffer_reader&        data,
                                    const baseband_gateway_transmitter_metadata& tx_md)
 {
-  // Protect stream transmitter.
-  std::unique_lock<std::mutex> lock(stream_transmit_mutex);
+  auto token = stop_control.get_token();
+  if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
+    return;
+  }
 
   uhd::tx_metadata_t uhd_metadata;
 
@@ -216,12 +214,13 @@ void radio_uhd_tx_stream::transmit(const baseband_gateway_buffer_reader&        
 
   // Notify start of burst.
   if (uhd_metadata.start_of_burst) {
-    radio_notification_handler::event_description event_description;
-    event_description.stream_id  = stream_id;
-    event_description.channel_id = 0;
-    event_description.source     = radio_notification_handler::event_source::TRANSMIT;
-    event_description.type       = radio_notification_handler::event_type::START_OF_BURST;
-    event_description.timestamp.emplace(time_spec.to_ticks(srate_hz));
+    radio_notification_handler::event_description event_description = {
+        .stream_id  = stream_id,
+        .channel_id = 0,
+        .source     = radio_notification_handler::event_source::TRANSMIT,
+        .type       = radio_notification_handler::event_type::START_OF_BURST,
+        .timestamp  = time_spec.to_ticks(srate_hz)};
+
     notifier.on_radio_rt_event(event_description);
 
     // Transmit zeros before the actual transmission to absorb power ramping effects.
@@ -256,7 +255,7 @@ void radio_uhd_tx_stream::transmit(const baseband_gateway_buffer_reader&        
               baseband_gateway_buffer_reader_view(power_ramping_buffer.get_reader(), 0, nof_padding_samples);
 
           if (!transmit_block(txd_samples, tx_padding, txd_padding_sps_total, power_ramping_metadata)) {
-            fmt::println("Error: failed transmitting power ramping padding. {}.\n", get_error_message().c_str());
+            fmt::println("Error: failed transmitting power ramping padding. {}.", get_error_message().c_str());
             return;
           }
 
@@ -270,12 +269,12 @@ void radio_uhd_tx_stream::transmit(const baseband_gateway_buffer_reader&        
 
   // Notify end of burst.
   if (uhd_metadata.end_of_burst) {
-    radio_notification_handler::event_description event_description;
-    event_description.stream_id  = stream_id;
-    event_description.channel_id = 0;
-    event_description.source     = radio_notification_handler::event_source::TRANSMIT;
-    event_description.type       = radio_notification_handler::event_type::END_OF_BURST;
-    event_description.timestamp.emplace(time_spec.to_ticks(srate_hz));
+    radio_notification_handler::event_description event_description = {
+        .stream_id  = stream_id,
+        .channel_id = 0,
+        .source     = radio_notification_handler::event_source::TRANSMIT,
+        .type       = radio_notification_handler::event_type::END_OF_BURST,
+        .timestamp  = time_spec.to_ticks(srate_hz)};
     notifier.on_radio_rt_event(event_description);
   }
 
@@ -311,21 +310,28 @@ void radio_uhd_tx_stream::transmit(const baseband_gateway_buffer_reader&        
   last_tx_timespec = time_spec + uhd::time_spec_t::from_ticks(txd_samples_total, srate_hz);
 }
 
+void radio_uhd_tx_stream::start()
+{
+  stop_control.reset();
+
+  report_error_if_not(async_executor.defer([this, stop_token = stop_control.get_token()]() { run_recv_async_msg(); }),
+                      "Unable to run recv async UHD stream task");
+}
+
 void radio_uhd_tx_stream::stop()
 {
-  uhd::tx_metadata_t md;
-  state_fsm.stop(md);
+  // Once the stop is complete, no more asynchronous calls and transmissions will take place.
+  stop_control.stop();
 
   // Send end-of-burst if it is in the middle of a burst.
-  if (md.end_of_burst) {
-    std::unique_lock<std::mutex> transmit_lock(stream_transmit_mutex);
-
+  if (state_fsm.on_stop()) {
     // Notify end of burst.
-    radio_notification_handler::event_description event_description = {};
-    event_description.stream_id                                     = stream_id;
-    event_description.channel_id                                    = 0;
-    event_description.source = radio_notification_handler::event_source::TRANSMIT;
-    event_description.type   = radio_notification_handler::event_type::END_OF_BURST;
+    radio_notification_handler::event_description event_description = {
+        .stream_id  = stream_id,
+        .channel_id = 0,
+        .source     = radio_notification_handler::event_source::TRANSMIT,
+        .type       = radio_notification_handler::event_type::END_OF_BURST,
+        .timestamp  = std::nullopt};
     notifier.on_radio_rt_event(event_description);
 
     // Flatten buffers.
@@ -339,19 +345,11 @@ void radio_uhd_tx_stream::stop()
     uhd::tx_streamer::buffs_type buffs_cpp(buffs_flat_ptr.data(), nof_channels);
 
     // Safe transmission. Ignore return.
+    uhd::tx_metadata_t md{};
+    md.end_of_burst = true;
     safe_execution([this, &buffs_cpp, &md]() {
       // Actual transmission. Ignore number of transmitted samples.
       stream->send(buffs_cpp, 0, md, TRANSMIT_TIMEOUT_S);
     });
   }
-}
-
-void radio_uhd_tx_stream::wait_stop()
-{
-  state_fsm.wait_stop();
-}
-
-unsigned radio_uhd_tx_stream::get_buffer_size() const
-{
-  return max_packet_size;
 }

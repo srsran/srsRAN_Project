@@ -17,10 +17,12 @@
 #include "srsran/radio/radio_session.h"
 #include "srsran/srslog/srslog.h"
 
+namespace srsran {
+
 /// \brief Determines whether a frequency is valid within a range.
 ///
 /// A frequency is considered valid within a range if the range clips the frequency value within 1 Hz error.
-static bool radio_uhd_device_validate_freq_range(const uhd::freq_range_t& range, double freq)
+inline bool radio_uhd_device_validate_freq_range(const uhd::freq_range_t& range, double freq)
 {
   double clipped_freq = range.clip(freq);
   return std::abs(clipped_freq - freq) < 1.0;
@@ -29,7 +31,7 @@ static bool radio_uhd_device_validate_freq_range(const uhd::freq_range_t& range,
 /// \brief Determines whether a gain is valid within a range.
 ///
 /// A gain is considered valid within a range if the range clips the frequency value within 0.01 error.
-static bool radio_uhd_device_validate_gain_range(const uhd::gain_range_t& range, double gain)
+inline bool radio_uhd_device_validate_gain_range(const uhd::gain_range_t& range, double gain)
 {
   int64_t clipped_gain = static_cast<uint64_t>(std::round(range.clip(gain, true) * 100));
   int64_t uint_gain    = static_cast<uint64_t>(gain * 100);
@@ -37,12 +39,10 @@ static bool radio_uhd_device_validate_gain_range(const uhd::gain_range_t& range,
   return (clipped_gain == uint_gain);
 }
 
-static double to_MHz(double value_Hz)
+constexpr double to_MHz(double value_Hz)
 {
   return value_Hz * 1e-6;
 }
-
-namespace srsran {
 
 class radio_uhd_device : public uhd_exception_handler
 {
@@ -55,11 +55,11 @@ public:
   {
     // Parse args into dictionary.
     uhd::device_addr_t device_addr;
-    if (!safe_execution([device_address, &device_addr]() { device_addr = uhd::device_addr_t(device_address); })) {
+    if (!safe_execution([&device_address, &device_addr]() { device_addr = uhd::device_addr_t(device_address); })) {
       return false;
     }
 
-    // Destroy any previous USRP instance
+    // Destroy any previous USRP instance.
     usrp = nullptr;
 
     // If device type or name not given in args, select device from found list.
@@ -148,6 +148,7 @@ public:
 
     return safe_execution([this, &device_addr]() { usrp = uhd::usrp::multi_usrp::make(device_addr); });
   }
+
   bool is_connection_valid()
   {
     // If the device is a B2xx, check if the USB is version 3.
@@ -167,46 +168,57 @@ public:
 
     return true;
   }
+
   radio_uhd_device_type get_type() const { return type; }
-  bool                  get_mboard_sensor_names(std::vector<std::string>& sensors)
+
+  bool get_mboard_sensor_names(std::vector<std::string>& sensors)
   {
     return safe_execution([this, &sensors]() { sensors = usrp->get_mboard_sensor_names(); });
   }
+
   bool get_rx_sensor_names(std::vector<std::string>& sensors)
   {
     return safe_execution([this, &sensors]() { sensors = usrp->get_rx_sensor_names(); });
   }
+
   bool get_sensor(const std::string& sensor_name, double& sensor_value)
   {
     return safe_execution(
         [this, &sensor_name, &sensor_value]() { sensor_value = usrp->get_mboard_sensor(sensor_name).to_real(); });
   }
+
   bool get_sensor(const std::string& sensor_name, bool& sensor_value)
   {
     return safe_execution(
         [this, &sensor_name, &sensor_value]() { sensor_value = usrp->get_mboard_sensor(sensor_name).to_bool(); });
   }
+
   bool get_rx_sensor(const std::string& sensor_name, bool& sensor_value)
   {
     return safe_execution(
         [this, &sensor_name, &sensor_value]() { sensor_value = usrp->get_rx_sensor(sensor_name).to_bool(); });
   }
+
   bool set_time_unknown_pps(const uhd::time_spec_t& timespec)
   {
     return safe_execution([this, &timespec]() { usrp->set_time_unknown_pps(timespec); });
   }
+
   bool get_rx_antennas(std::vector<std::string>& rx_antennas, unsigned channel_id)
   {
-    return safe_execution([this, &rx_antennas, &channel_id]() { rx_antennas = usrp->get_rx_antennas(channel_id); });
+    return safe_execution([this, &rx_antennas, channel_id]() { rx_antennas = usrp->get_rx_antennas(channel_id); });
   }
+
   bool set_rx_antenna(const std::string& rx_antenna, unsigned channel_id)
   {
-    return safe_execution([this, &rx_antenna, &channel_id]() { usrp->set_rx_antenna(rx_antenna, channel_id); });
+    return safe_execution([this, &rx_antenna, channel_id]() { usrp->set_rx_antenna(rx_antenna, channel_id); });
   }
+
   bool get_selected_tx_antenna(std::string& tx_antenna, unsigned channel_id)
   {
-    return safe_execution([this, &tx_antenna, &channel_id]() { tx_antenna = usrp->get_tx_antenna(channel_id); });
+    return safe_execution([this, &tx_antenna, channel_id]() { tx_antenna = usrp->get_tx_antenna(channel_id); });
   }
+
   bool set_automatic_master_clock_rate(double srate_Hz)
   {
     // Skip automatic master clock rate if it is not available.
@@ -214,7 +226,7 @@ public:
       return true;
     }
 
-    return safe_execution([this, &srate_Hz]() {
+    return safe_execution([this, srate_Hz]() {
       // Get range of valid master clock rates.
       uhd::meta_range_t range = usrp->get_master_clock_rate_range();
 
@@ -224,10 +236,12 @@ public:
       usrp->set_master_clock_rate(mcr_Hz);
     });
   }
+
   bool get_time_now(uhd::time_spec_t& timespec)
   {
     return safe_execution([this, &timespec]() { timespec = usrp->get_time_now(); });
   }
+
   bool set_sync_source(const radio_configuration::clock_sources& config)
   {
     // Convert clock source to string.
@@ -281,6 +295,7 @@ public:
     return safe_execution([this, &sync_source, &clock_source]() { usrp->set_sync_source(clock_source, sync_source); });
 #endif
   }
+
   bool set_rx_rate(double& actual_rate, double rate)
   {
     logger.debug("Setting Rx Rate to {} MHz.", to_MHz(rate));
@@ -298,6 +313,7 @@ public:
       actual_rate = usrp->get_rx_rate();
     });
   }
+
   bool set_tx_rate(double& actual_rate, double rate)
   {
     logger.debug("Setting Tx Rate to {} MHz.", to_MHz(rate));
@@ -315,10 +331,12 @@ public:
       actual_rate = usrp->get_tx_rate();
     });
   }
+
   bool set_command_time(const uhd::time_spec_t& timespec)
   {
     return safe_execution([this, &timespec]() { usrp->set_command_time(timespec); });
   }
+
   std::unique_ptr<radio_uhd_tx_stream> create_tx_stream(task_executor&                                 async_executor,
                                                         radio_notification_handler&                    notifier,
                                                         const radio_uhd_tx_stream::stream_description& description)
@@ -332,6 +350,7 @@ public:
 
     return nullptr;
   }
+
   std::unique_ptr<radio_uhd_rx_stream> create_rx_stream(radio_notification_handler&                    notifier,
                                                         const radio_uhd_rx_stream::stream_description& description)
   {
@@ -344,6 +363,7 @@ public:
     fmt::println("Error: failed to create receive stream {}. {}.", description.id, stream->get_error_message().c_str());
     return nullptr;
   }
+
   bool set_tx_gain(unsigned ch, double gain)
   {
     logger.debug("Setting channel {} Tx gain to {:.2f} dB.", ch, gain);
@@ -363,6 +383,7 @@ public:
       usrp->set_tx_gain(gain, ch);
     });
   }
+
   bool set_rx_gain(size_t ch, double gain)
   {
     logger.debug("Setting channel {} Rx gain to {:.2f} dB.", ch, gain);
@@ -382,6 +403,7 @@ public:
       usrp->set_rx_gain(gain, ch);
     });
   }
+
   bool set_tx_freq(uint32_t ch, const radio_configuration::lo_frequency& config)
   {
     logger.debug("Setting channel {} Tx frequency to {} MHz.", ch, to_MHz(config.center_frequency_Hz));
@@ -409,6 +431,7 @@ public:
       usrp->set_tx_freq(tune_request, ch);
     });
   }
+
   bool set_rx_freq(uint32_t ch, const radio_configuration::lo_frequency& config)
   {
     logger.debug("Setting channel {} Rx frequency to {} MHz.", ch, to_MHz(config.center_frequency_Hz));

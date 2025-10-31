@@ -19,6 +19,7 @@
 #include "srsran/radio/radio_configuration.h"
 #include "srsran/radio/radio_notification_handler.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/synchronization/stop_event.h"
 #include <mutex>
 
 namespace srsran {
@@ -26,7 +27,6 @@ namespace srsran {
 /// Implements a gateway transmitter based on UHD transmit stream.
 class radio_uhd_tx_stream : public baseband_gateway_transmitter, public uhd_exception_handler
 {
-private:
   /// Receive asynchronous message timeout in seconds.
   static constexpr double RECV_ASYNC_MSG_TIMEOUT_S = 0.001;
   /// Transmit timeout in seconds.
@@ -42,8 +42,6 @@ private:
   uhd::tx_streamer::sptr stream;
   /// Maximum number of samples in a single packet.
   unsigned max_packet_size;
-  /// Protects concurrent stream transmit.
-  std::mutex stream_transmit_mutex;
   /// Sampling rate in Hz.
   double srate_hz;
   /// Indicates the number of channels.
@@ -58,6 +56,8 @@ private:
   uhd::time_spec_t last_tx_timespec;
   /// Power ramping transmit buffer. It is filled with zeros, used to absorb power ramping when starting a transmission.
   baseband_gateway_buffer_dynamic power_ramping_buffer;
+  /// Stop control.
+  stop_event_source stop_control;
 
   /// Receive asynchronous message.
   void recv_async_msg();
@@ -106,16 +106,17 @@ public:
                       radio_notification_handler&  notifier_);
 
   /// Gets the optimal transmitter buffer size.
-  unsigned get_buffer_size() const;
+  unsigned get_buffer_size() const { return max_packet_size; }
 
   // See interface for documentation.
   void transmit(const baseband_gateway_buffer_reader&        data,
                 const baseband_gateway_transmitter_metadata& metadata) override;
 
+  /// Start the transmission.
+  void start();
+
   /// Stop the transmission.
   void stop();
-
-  /// Wait until radio is notify_stop.
-  void wait_stop();
 };
+
 } // namespace srsran
