@@ -15,6 +15,7 @@
 #include "srsran/ran/pucch/pucch_mapping.h"
 #include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 #include "srsran/ran/resource_allocation/rb_interval.h"
+#include <algorithm>
 
 using namespace srsran;
 
@@ -133,8 +134,44 @@ struct resource_info {
   }
 };
 
+/// \brief Represents a multiplexing region of PUCCH resources.
+/// Contains parameters that all resources in the region have in common.
+struct mux_region {
+  /// Time-frequency grants of the region.
+  time_freq_grants grants;
+  /// PUCCH format of the region.
+  pucch_format format;
+
+  /// Check if a a given resource belongs to this multiplexing region.
+  bool does_resource_belong(const resource_info& res) const { return res.format == format and res.grants == grants; }
+};
+
 } // namespace
 
+/// Collects all PUCCH resources (common + dedicated) from the cell configuration.
+static static_vector<resource_info, pucch_collision_manager::max_nof_cell_resources>
+get_all_resources(const cell_configuration& cell_cfg)
+{
+  // Get the parameter N_bwp_size, which is the Initial UL BWP size in PRBs, as per TS 38.213, Section 9.2.1.
+  const unsigned size_ul_bwp = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
+
+  // Get PUCCH common resource config from Table 9.2.1-1, TS 38.213.
+  const pucch_default_resource common_default_res = get_pucch_default_resource(
+      cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common, size_ul_bwp);
+
+  // Collect all resources (common + dedicated).
+  static_vector<resource_info, pucch_collision_manager::max_nof_cell_resources> all_resources;
+  for (unsigned r_pucch = 0; r_pucch != pucch_collision_manager::nof_common_res; ++r_pucch) {
+    all_resources.push_back(resource_info(common_default_res, r_pucch, size_ul_bwp));
+  }
+  for (const auto& res : cell_cfg.ded_pucch_resources) {
+    all_resources.push_back(resource_info(res));
+  }
+
+  return all_resources;
+}
+
+/// Checks if two PUCCH resources collide.
 static bool do_resources_collide(const resource_info& res1, const resource_info& res2)
 {
   if (not res1.grants.overlaps(res2.grants)) {
@@ -160,6 +197,7 @@ static bool do_resources_collide(const resource_info& res1, const resource_info&
 pucch_collision_manager::pucch_collision_manager(const cell_configuration& cell_cfg_) :
   cell_cfg(cell_cfg_),
   collision_matrix(compute_collisions(cell_cfg)),
+  mux_matrix(compute_mux_regions(cell_cfg)),
   slots_ctx({bounded_bitset<max_nof_cell_resources>(nof_common_res + cell_cfg.ded_pucch_resources.size())})
 {
 }
@@ -272,33 +310,19 @@ void pucch_collision_manager::free_ded(slot_point sl, unsigned cell_res_id)
 pucch_collision_manager::collision_matrix_t
 pucch_collision_manager::compute_collisions(const cell_configuration& cell_cfg)
 {
-  collision_matrix_t matrix(
-      nof_common_res + cell_cfg.ded_pucch_resources.size(),
-      bounded_bitset<max_nof_cell_resources>(nof_common_res + cell_cfg.ded_pucch_resources.size()));
-
-  // Get the parameter N_bwp_size, which is the Initial UL BWP size in PRBs, as per TS 38.213, Section 9.2.1.
-  const unsigned size_ul_bwp = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
-
-  // Get PUCCH common resource config from Table 9.2.1-1, TS 38.213.
-  const pucch_default_resource common_default_res = get_pucch_default_resource(
-      cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common, size_ul_bwp);
+  const unsigned     nof_res = nof_common_res + cell_cfg.ded_pucch_resources.size();
+  collision_matrix_t matrix(nof_res, bounded_bitset<max_nof_cell_resources>(nof_res));
 
   // Collect all resources (common + dedicated).
-  static_vector<resource_info, max_nof_cell_resources> all_resources;
-  for (unsigned r_pucch = 0; r_pucch != nof_common_res; ++r_pucch) {
-    all_resources.push_back(resource_info(common_default_res, r_pucch, size_ul_bwp));
-  }
-  for (const auto& res : cell_cfg.ded_pucch_resources) {
-    all_resources.push_back(resource_info(res));
-  }
+  static_vector<resource_info, max_nof_cell_resources> all_resources = get_all_resources(cell_cfg);
 
   // Precompute the collision matrix.
-  for (size_t i = 0; i != all_resources.size(); ++i) {
+  for (size_t i = 0; i != nof_res; ++i) {
     // A resource always collides with itself.
     matrix[i].set(i);
 
     // Note: The collision matrix is symmetric.
-    for (size_t j = i + 1; j != all_resources.size(); ++j) {
+    for (size_t j = i + 1; j != nof_res; ++j) {
       if (do_resources_collide(all_resources[i], all_resources[j])) {
         matrix[i].set(j);
         matrix[j].set(i);
@@ -307,4 +331,53 @@ pucch_collision_manager::compute_collisions(const cell_configuration& cell_cfg)
   }
 
   return matrix;
+}
+
+pucch_collision_manager::mux_regions_matrix_t
+pucch_collision_manager::compute_mux_regions(const cell_configuration& cell_cfg)
+{
+  unsigned             nof_res = nof_common_res + cell_cfg.ded_pucch_resources.size();
+  mux_regions_matrix_t mux_regions;
+
+  // Collect all resources (common + dedicated).
+  static_vector<resource_info, max_nof_cell_resources> all_resources = get_all_resources(cell_cfg);
+
+  // Helper structure to keep track of multiplexing regions and their members.
+  struct region_record {
+    mux_region                             region;
+    bounded_bitset<max_nof_cell_resources> members;
+  };
+  static_vector<region_record, max_nof_cell_resources> tmp_regions;
+
+  for (size_t i = 0; i != nof_res; ++i) {
+    const auto& res = all_resources[i];
+
+    // Find if the resource belongs to an existing multiplexing region.
+    auto* region_it = std::find_if(tmp_regions.begin(), tmp_regions.end(), [&res](const region_record& record) {
+      return record.region.does_resource_belong(res);
+    });
+
+    if (region_it == tmp_regions.end()) {
+      // If the multiplexing region does not exist yet, create it.
+      region_it = &tmp_regions.emplace_back(region_record{mux_region{
+                                                              .grants = res.grants,
+                                                              .format = res.format,
+                                                          },
+                                                          bounded_bitset<max_nof_cell_resources>(nof_res)});
+    }
+
+    // Add the resource to the multiplexing region.
+    region_it->members.set(i);
+  }
+
+  // Return only multiplexing regions with more than one resource.
+  for (const auto& record : tmp_regions) {
+    if (record.members.count() < 2) {
+      continue;
+    }
+
+    mux_regions.push_back(record.members);
+  }
+
+  return mux_regions;
 }
