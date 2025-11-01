@@ -15,22 +15,68 @@
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/bounded_integer.h"
 #include "srsran/adt/circular_array.h"
+#include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/ran/slot_point.h"
+#include <optional>
 
 namespace srsran {
+
+namespace detail {
+
+/// Represents the time-frequency grants of a PUCCH resource.
+struct pucch_grants {
+  /// Time-frequency grants of the first hop.
+  grant_info first_hop;
+  /// Time-frequency grant of the second hop (if intra-slot frequency hopping is enabled).
+  std::optional<grant_info> second_hop;
+
+  bool operator==(const pucch_grants& other) const
+  {
+    return first_hop == other.first_hop and second_hop == other.second_hop;
+  }
+  bool operator!=(const pucch_grants& other) const { return not(*this == other); }
+
+  /// Checks if this pucch_grants overlaps with another pucch_grants.
+  bool overlaps(const pucch_grants& other) const
+  {
+    // Check if the first grant overlaps with any of the other's grants.
+    if (first_hop.overlaps(other.first_hop) or
+        (other.second_hop.has_value() and first_hop.overlaps(*other.second_hop))) {
+      return true;
+    }
+    // Check if the second grant (if any) overlaps with any of the other's grants.
+    if (second_hop.has_value() and (second_hop->overlaps(other.first_hop) or
+                                    (other.second_hop.has_value() and second_hop->overlaps(*other.second_hop)))) {
+      return true;
+    }
+    return false;
+  }
+};
+
+/// Represents the relevant information of a PUCCH resource for collision checking.
+struct resource_info {
+  /// PUCCH format of the resource.
+  pucch_format format;
+  /// Multiplexing index of the resource. Resources with different multiplexing indices are orthogonal and do not
+  /// collide. It is computed from different parameters depending on the format:
+  ///  - Format 0: initial cyclic shift.
+  ///  - Format 1: initial cyclic shift, time domain OCC index.
+  ///  - Format 2/3: not multiplexed (always 0).
+  ///  - Format 4: OCC index.
+  unsigned multiplexing_index;
+  /// Time-frequency grants of the resource.
+  pucch_grants grants;
+};
+
+} // namespace detail
 
 /// \brief This class manages PUCCH resource collisions within a cell.
 /// It keeps track of the usage of both common and dedicated resources for each slot.
 class pucch_collision_manager
 {
 public:
-  /// Maximum number of common PUCCH resources managed by the collision manager.
-  static constexpr unsigned nof_common_res = pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES;
-  /// Maximum number of PUCCH resources managed by the collision manager (common + dedicated).
-  static constexpr unsigned max_nof_cell_resources = nof_common_res + pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES;
-
   /// Bounded integer representing a common PUCCH resource index (r_pucch).
   using r_pucch_t = bounded_integer<unsigned, 0, 15>;
 
@@ -71,6 +117,13 @@ public:
   void free_ded(slot_point sl, unsigned cell_res_id);
 
 private:
+  /// Maximum number of common PUCCH resources managed by the collision manager.
+  static constexpr unsigned nof_common_res = pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES;
+  /// Maximum number of PUCCH resources managed by the collision manager (common + dedicated).
+  static constexpr unsigned max_nof_cell_resources = nof_common_res + pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES;
+
+  /// \brief List of all PUCCH resources (common + dedicated) in the cell configuration.
+  using cell_resources_t = static_vector<detail::resource_info, max_nof_cell_resources>;
   /// \brief Collision matrix indicating which resources collide with each other.
   ///  - C[i][j] = 1 if resource i collides with resource j, 0 otherwise.
   using collision_matrix_t = static_vector<bounded_bitset<max_nof_cell_resources>, max_nof_cell_resources>;
@@ -82,6 +135,7 @@ private:
   using mux_regions_matrix_t = static_vector<bounded_bitset<max_nof_cell_resources>, max_nof_cell_resources / 2>;
 
   const cell_configuration&  cell_cfg;
+  const cell_resources_t     resources;
   const collision_matrix_t   collision_matrix;
   const mux_regions_matrix_t mux_matrix;
 
@@ -99,10 +153,13 @@ private:
   slot_point last_sl_ind;
 
   /// Computes the collision matrix for all PUCCH resources in the cell configuration.
-  static collision_matrix_t compute_collisions(const cell_configuration& cell_cfg);
+  static cell_resources_t compute_resources(const cell_configuration& cell_cfg);
+
+  /// Computes the collision matrix for all PUCCH resources in the cell configuration.
+  static collision_matrix_t compute_collisions(span<const detail::resource_info> resources);
 
   /// Computes the multiplexing matrix for all PUCCH resources in the cell configuration.
-  static mux_regions_matrix_t compute_mux_regions(const cell_configuration& cell_cfg);
+  static mux_regions_matrix_t compute_mux_regions(span<const detail::resource_info> resources);
 };
 
 } // namespace srsran
