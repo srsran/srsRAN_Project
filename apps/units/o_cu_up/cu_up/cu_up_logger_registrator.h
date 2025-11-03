@@ -43,6 +43,14 @@ inline void register_cu_up_loggers(const cu_up_unit_logger_config& log_cfg)
   auto& sdap_logger = srslog::fetch_basic_logger("SDAP", false);
   sdap_logger.set_level(log_cfg.sdap_level);
   sdap_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
+
+  auto& sec_logger = srslog::fetch_basic_logger("SEC", false);
+  sec_logger.set_level(log_cfg.sec_level);
+  sec_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
+
+  auto& rohc_logger = srslog::fetch_basic_logger("ROHC", false);
+  rohc_logger.set_level(log_cfg.rohc_level);
+  rohc_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 }
 
 } // namespace srsran

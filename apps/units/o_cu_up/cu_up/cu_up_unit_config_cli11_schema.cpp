@@ -146,6 +146,8 @@ static void configure_cli11_log_args(CLI::App& app, cu_up_unit_logger_config& lo
   app_helpers::add_log_option(app, log_params.e1ap_level, "--e1ap_level", "E1AP log level");
   app_helpers::add_log_option(app, log_params.f1u_level, "--f1u_level", "F1-U log level");
   app_helpers::add_log_option(app, log_params.cu_level, "--cu_level", "Log level for the CU");
+  app_helpers::add_log_option(app, log_params.sec_level, "--sec_level", "Security functions log level");
+  app_helpers::add_log_option(app, log_params.rohc_level, "--rohc_level", "ROHC log level");
 
   add_option(app,
              "--hex_max_size",
