@@ -259,9 +259,10 @@ void pucch_allocator_impl::alloc_sr_opportunity(cell_slot_resource_allocator& pu
   const pucch_resource* pucch_sr_res = resource_manager.reserve_sr_resource(
       pucch_slot_alloc.slot, crnti, ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value());
   if (pucch_sr_res == nullptr) {
-    logger.warning("rnti={}: SR occasion allocation for slot={} skipped. Cause: PUCCH F1 ded. resource not available",
-                   crnti,
-                   pucch_slot_alloc.slot);
+    logger.warning(
+        "rnti={}: SR occasion allocation for slot={} skipped. Cause: PUCCH resource configured for SR not available",
+        crnti,
+        pucch_slot_alloc.slot);
     return;
   }
 

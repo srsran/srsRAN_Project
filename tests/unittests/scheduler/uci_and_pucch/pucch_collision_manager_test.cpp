@@ -58,9 +58,11 @@ TEST(pucch_collision_manager_test, common_resources_dont_collide_with_each_other
   slot_point sl(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, 0);
   col_manager.slot_indication(sl);
   for (unsigned r_pucch = 0; r_pucch < pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES; ++r_pucch) {
-    ASSERT_TRUE(col_manager.can_alloc_common(sl, r_pucch));
-    col_manager.alloc_common(sl, r_pucch);
-    ASSERT_FALSE(col_manager.can_alloc_common(sl, r_pucch));
+    auto res = col_manager.alloc_common(sl, r_pucch);
+    ASSERT_TRUE(res.has_value());
+    res = col_manager.alloc_common(sl, r_pucch);
+    ASSERT_FALSE(res.has_value());
+    ASSERT_EQ(res.error(), pucch_collision_manager::alloc_failure_reason::PUCCH_COLLISION);
   }
 }
 

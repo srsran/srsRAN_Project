@@ -76,7 +76,15 @@ void pucch_resource_manager::stop()
 bool pucch_resource_manager::is_harq_common_resource_available(slot_point sl, size_t r_pucch)
 {
   srsran_assert(r_pucch < 16, "r_PUCCH must be less than 16");
-  return collision_manager.can_alloc_common(sl, r_pucch);
+  // TODO: Remove this method and use collision_manager.alloc_common directly once it checks for UL grant collisions
+  // correctly.
+  auto res = collision_manager.alloc_common(sl, r_pucch);
+  if (res.has_value()) {
+    // Allocation was successful, free the resource and return true.
+    collision_manager.free_common(sl, r_pucch);
+    return true;
+  }
+  return false;
 }
 
 void pucch_resource_manager::reserve_harq_common_resource(slot_point sl, size_t r_pucch)
@@ -156,11 +164,10 @@ pucch_resource_manager::reserve_sr_resource(slot_point slot_sr, rnti_t crnti, co
   // the resource had already been allocated, just return it.
   if (res_rnti != crnti) {
     // Check for collisions.
-    if (not collision_manager.can_alloc_ded(slot_sr, cell_res_id)) {
+    if (not collision_manager.alloc_ded(slot_sr, cell_res_id).has_value()) {
       return nullptr;
     }
     res_rnti = crnti;
-    collision_manager.alloc_ded(slot_sr, cell_res_id);
   }
 
   return res_cfg;
@@ -205,11 +212,10 @@ const pucch_resource* pucch_resource_manager::reserve_csi_resource(slot_point   
   // the resource had already been allocated, just return it.
   if (res_rnti != crnti) {
     // Check for collisions.
-    if (not collision_manager.can_alloc_ded(slot_csi, cell_res_id)) {
+    if (not collision_manager.alloc_ded(slot_csi, cell_res_id).has_value()) {
       return nullptr;
     }
     res_rnti = crnti;
-    collision_manager.alloc_ded(slot_csi, cell_res_id);
   }
 
   return res_cfg;
@@ -384,9 +390,9 @@ pucch_harq_resource_alloc_record pucch_resource_manager::reserve_next_harq_res_a
 
   // For PUCCH F0 and F2, we don't use the last 2 resources of the PUCCH resource set; these are reserved for CSI and SR
   // slots and should only be picked for through the specific PUCCH resource indicator.
-  const unsigned nof_eligible_resource =
+  const unsigned nof_eligible_resources =
       cell_cfg.is_pucch_f0_and_f2() ? ue_res_set_id_list.size() - 2U : ue_res_set_id_list.size();
-  srsran_assert(nof_eligible_resource >= 1U,
+  srsran_assert(nof_eligible_resources >= 1U,
                 "rnti={}: Not enough eligible resources from PUCCH resource set={}",
                 crnti,
                 pucch_res_set_idx_to_uint(res_set_idx));
@@ -394,49 +400,51 @@ pucch_harq_resource_alloc_record pucch_resource_manager::reserve_next_harq_res_a
   // Get context of wanted slot.
   auto& ctx = slots_ctx[slot_harq.to_uint()];
 
-  std::optional<uint8_t> available_r_pucch;
-  for (uint8_t r_pucch = 0; r_pucch != nof_eligible_resource; ++r_pucch) {
-    const unsigned cell_res_id = ue_res_set_id_list[r_pucch].cell_res_id;
+  std::optional<std::pair<uint8_t, unsigned>> available_res;
 
+  // If a resource is already allocated to this RNTI, use it.
+  for (uint8_t r_pucch = 0; r_pucch != nof_eligible_resources; ++r_pucch) {
+    const unsigned cell_res_id = ue_res_set_id_list[r_pucch].cell_res_id;
     srsran_assert(cell_res_id < ctx.ues_using_pucch_res.size(),
                   "PUCCH resource index from PUCCH resource set exceeds the size of the cell resource array");
     auto& res_rnti = ctx.ues_using_pucch_res[cell_res_id];
 
     if (res_rnti == crnti) {
-      // If a resource is already allocated to this RNTI, use it.
-      available_r_pucch = r_pucch;
+      available_res = {r_pucch, cell_res_id};
       break;
-    }
-
-    if (not available_r_pucch.has_value() and res_rnti == rnti_t::INVALID_RNTI and
-        collision_manager.can_alloc_ded(slot_harq, cell_res_id)) {
-      // Else, keep track of the first available resource.
-      available_r_pucch = r_pucch;
     }
   }
 
-  const auto& pucch_res_list = pucch_cfg.pucch_res_list;
+  if (not available_res.has_value()) {
+    // Else, keep track of the first available resource.
+    for (uint8_t r_pucch = 0; r_pucch != nof_eligible_resources; ++r_pucch) {
+      const unsigned cell_res_id = ue_res_set_id_list[r_pucch].cell_res_id;
+      srsran_assert(cell_res_id < ctx.ues_using_pucch_res.size(),
+                    "PUCCH resource index from PUCCH resource set exceeds the size of the cell resource array");
+      auto& res_rnti = ctx.ues_using_pucch_res[cell_res_id];
 
-  // If there is an available resource, allocate it.
-  if (available_r_pucch.has_value()) {
-    const unsigned r_pucch = available_r_pucch.value();
-    // Get the PUCCH resource ID from the PUCCH resource indicator and the PUCCH resource set.
-    const unsigned cell_res_id = ue_res_set_id_list[r_pucch].cell_res_id;
+      if (res_rnti == rnti_t::INVALID_RNTI and collision_manager.alloc_ded(slot_harq, cell_res_id).has_value()) {
+        ctx.ues_using_pucch_res[cell_res_id] = crnti;
+        available_res                        = {r_pucch, cell_res_id};
+        break;
+      }
+    }
+  }
 
+  // If an available resource was found, return it.
+  if (available_res.has_value()) {
     // Search for the PUCCH resource with the correct PUCCH resource ID from the PUCCH resource list.
-    const auto* res_cfg =
-        std::find_if(pucch_res_list.begin(), pucch_res_list.end(), [cell_res_id](const pucch_resource& res) {
+    const auto& pucch_res_list = pucch_cfg.pucch_res_list;
+    const auto* res_cfg        = std::find_if(
+        pucch_res_list.begin(), pucch_res_list.end(), [cell_res_id = available_res->second](const pucch_resource& res) {
           return res.res_id.cell_res_id == cell_res_id;
         });
     srsran_sanity_check(res_cfg != pucch_res_list.end(),
                         "rnti={}: PUCCH resource with cell_res_id={} not found in PUCCH resource list",
                         crnti,
-                        cell_res_id);
+                        available_res->second);
 
-    // Allocate it and return it.
-    ctx.ues_using_pucch_res[cell_res_id] = crnti;
-    collision_manager.alloc_ded(slot_harq, cell_res_id);
-    return pucch_harq_resource_alloc_record{.resource = res_cfg, .pucch_res_indicator = available_r_pucch.value()};
+    return pucch_harq_resource_alloc_record{.resource = res_cfg, .pucch_res_indicator = available_res->first};
   }
   return pucch_harq_resource_alloc_record{.resource = nullptr};
 }
@@ -505,14 +513,11 @@ const pucch_resource* pucch_resource_manager::reserve_harq_resource_by_res_indic
     return res_cfg;
   }
 
-  // Check for collisions.
-  if (not collision_manager.can_alloc_ded(slot_harq, cell_res_id)) {
+  // Allocate the resource to this RNTI.
+  if (not collision_manager.alloc_ded(slot_harq, cell_res_id).has_value()) {
     return nullptr;
   }
-
-  // Allocate the resource to this RNTI.
   res_rnti = crnti;
-  collision_manager.alloc_ded(slot_harq, cell_res_id);
   return res_cfg;
 }
 

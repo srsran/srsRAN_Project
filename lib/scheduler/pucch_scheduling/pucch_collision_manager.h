@@ -15,6 +15,7 @@
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/bounded_integer.h"
 #include "srsran/adt/circular_array.h"
+#include "srsran/adt/expected.h"
 #include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/pucch/pucch_constants.h"
@@ -85,35 +86,34 @@ public:
   void slot_indication(slot_point sl_tx);
   void stop();
 
-  /// Checks if two dedicated PUCCH resources collide.
+  /// Check if two dedicated PUCCH resources collide.
   bool check_ded_to_ded_collision(unsigned cell_res_id1, unsigned cell_res_id2) const;
 
-  /// Checks if a common PUCCH resource collides with a dedicated PUCCH resource.
+  /// Check if a common PUCCH resource collides with a dedicated PUCCH resource.
   bool check_common_to_ded_collision(r_pucch_t r_pucch, unsigned cell_res_id) const;
 
-  /// Returns the number of multiplexing regions defined in the cell configuration.
+  /// Return the number of multiplexing regions defined in the cell configuration.
   unsigned nof_mux_regions() const { return mux_matrix.size(); }
 
-  /// \brief Checks if a common PUCCH resource can be allocated at a given slot.
-  /// A resource can be allocated if it is not in use and it does not collide with any other resource already allocated
-  /// at the same slot.
-  bool can_alloc_common(slot_point sl, r_pucch_t r_pucch) const;
+  /// Reasons for a PUCCH allocation failure.
+  enum class alloc_failure_reason {
+    PUCCH_COLLISION,
+    UL_GRANT_COLLISION,
+  };
+  using alloc_result_t = error_type<alloc_failure_reason>;
 
-  /// \brief Checks if a dedicated PUCCH resource can be allocated at a given slot.
-  /// A resource can be allocated if it is not in use and it does not collide with any other resource already allocated
-  /// at the same slot.
-  bool can_alloc_ded(slot_point sl, unsigned cell_res_id) const;
+  /// \brief Allocate a common PUCCH resource at a given slot.
+  /// \return Success if the allocation was successful, otherwise an error indicating the reason of failure.
+  alloc_result_t alloc_common(slot_point sl, r_pucch_t r_pucch);
 
-  /// Allocates a common PUCCH resource at a given slot.
-  void alloc_common(slot_point sl, r_pucch_t r_pucch);
+  /// \brief Allocate a dedicated PUCCH resource at a given slot.
+  /// \return Success if the allocation was successful, otherwise an error indicating the reason of failure.
+  alloc_result_t alloc_ded(slot_point sl, unsigned cell_res_id);
 
-  /// Allocates a dedicated PUCCH resource at a given slot.
-  void alloc_ded(slot_point sl, unsigned cell_res_id);
-
-  /// Frees a common PUCCH resource at a given slot.
+  /// Free a common PUCCH resource at a given slot.
   void free_common(slot_point sl, r_pucch_t r_pucch);
 
-  /// Frees a dedicated PUCCH resource at a given slot.
+  /// Free a dedicated PUCCH resource at a given slot.
   void free_ded(slot_point sl, unsigned cell_res_id);
 
 private:
@@ -152,14 +152,20 @@ private:
   // Keeps track of the last slot_point used by the resource manager.
   slot_point last_sl_ind;
 
-  /// Computes the collision matrix for all PUCCH resources in the cell configuration.
+  /// Compute the collision matrix for all PUCCH resources in the cell configuration.
   static cell_resources_t compute_resources(const cell_configuration& cell_cfg);
 
-  /// Computes the collision matrix for all PUCCH resources in the cell configuration.
+  /// Compute the collision matrix for all PUCCH resources in the cell configuration.
   static collision_matrix_t compute_collisions(span<const detail::resource_info> resources);
 
-  /// Computes the multiplexing matrix for all PUCCH resources in the cell configuration.
+  /// Compute the multiplexing matrix for all PUCCH resources in the cell configuration.
   static mux_regions_matrix_t compute_mux_regions(span<const detail::resource_info> resources);
+
+  /// Allocate the PUCCH resource at \ref res_idx at a given slot.
+  alloc_result_t alloc_resource(slot_point sl, unsigned res_idx);
+
+  /// Free the PUCCH resource at \ref res_idx at a given slot.
+  void free_resource(slot_point sl, unsigned res_idx);
 };
 
 } // namespace srsran
