@@ -148,7 +148,7 @@ variables:
       export LOGNAME=ci_${GROUP}
     # Run Retina
     - |
-      E2E_CMD="retina-launcher ${E2E_FILE_OR_DIR} ${RETINA_LAUNCHER_ARGS} --retina-request=${SRSRANDIR}/.gitlab/ci/e2e/${TESTBED}.yml -k '${KEYWORDS}' -m '${MARKERS}' --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL 5gc.all.log_level=$E2E_LOG_LEVEL ${RETINA_PARAM_ARGS}"
+      E2E_CMD="retina-launcher '${E2E_FILE_OR_DIR}' ${RETINA_LAUNCHER_ARGS} --retina-request=${SRSRANDIR}/.gitlab/ci/e2e/${TESTBED}.yml -k '${KEYWORDS}' -m '${MARKERS}' --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL 5gc.all.log_level=$E2E_LOG_LEVEL ${RETINA_PARAM_ARGS}"
       echo "${E2E_CMD}"
       eval $E2E_CMD
   after_script:
