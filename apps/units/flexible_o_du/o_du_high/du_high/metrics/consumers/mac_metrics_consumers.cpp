@@ -9,6 +9,7 @@
  */
 
 #include "mac_metrics_consumers.h"
+#include "srsran/support/format/custom_formattable.h"
 #include "srsran/support/format/fmt_to_c_str.h"
 
 using namespace srsran;
@@ -37,14 +38,25 @@ void mac_metrics_consumer_log::handle_metric(const mac_dl_metric_report& report)
   for (unsigned i = 0, e = report.cells.size(); i != e; ++i) {
     const mac_dl_cell_metric_report& cell = report.cells[i];
 
-    fmt::format_to(std::back_inserter(buffer),
-                   "MAC cell pci={} metrics: nof_slots={} slot_duration={}usec nof_voluntary_context_switches={} "
-                   "nof_involuntary_context_switches={} ",
-                   static_cast<unsigned>(cell.pci),
-                   cell.nof_slots,
-                   std::round(cell.slot_duration.count() * 1e-3),
-                   cell.count_voluntary_context_switches,
-                   cell.count_involuntary_context_switches);
+    fmt::format_to(
+        std::back_inserter(buffer),
+        "MAC cell pci={} metrics: slots=[{}, {}{}) nof_slots={} slot_duration={}usec nof_voluntary_context_switches={} "
+        "nof_involuntary_context_switches={} ",
+        static_cast<unsigned>(cell.pci),
+        cell.start_slot,
+        cell.start_slot + cell.nof_slots,
+        // Also print the number of HFN wrap-arounds. Useful for long report periods.
+        make_formattable([x = cell.start_slot, n = cell.nof_slots](auto& out) {
+          auto nof_wrap_arounds = (x.count() + n) / x.nof_slots_per_hyper_system_frame();
+          if (nof_wrap_arounds > 0) {
+            return fmt::format_to(out.out(), "(+{} HFNs)", nof_wrap_arounds);
+          }
+          return out.out();
+        }),
+        cell.nof_slots,
+        std::chrono::duration_cast<std::chrono::microseconds>(cell.slot_duration).count(),
+        cell.count_voluntary_context_switches,
+        cell.count_involuntary_context_switches);
 
     write_latency_information(buffer, cell.wall_clock_latency, "wall_clock_latency");
     write_latency_information(buffer, cell.sched_latency, "sched_latency");

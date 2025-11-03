@@ -357,8 +357,8 @@ void mac_metrics_aggregator::try_send_new_report()
   if (ring_elem.start_slot != next_report_start_slot) {
     // Invalid ring slot.
     logger.warning("Discarding metric report for slot={}. Cause: Expected report for slot={}",
-                   ring_elem.start_slot.without_hyper_sfn(),
-                   next_report_start_slot.without_hyper_sfn());
+                   ring_elem.start_slot,
+                   next_report_start_slot);
     return;
   }
 
@@ -367,8 +367,8 @@ void mac_metrics_aggregator::try_send_new_report()
 
   logger.debug("Metric report of {} cells completed for slots=[{}, {})",
                next_report.dl.cells.size(),
-               next_report_start_slot.without_hyper_sfn(),
-               (next_report_start_slot + period_slots).without_hyper_sfn());
+               next_report_start_slot,
+               (next_report_start_slot + period_slots));
 }
 
 void mac_metrics_aggregator::handle_cell_activation(du_cell_index_t cell_index, slot_point_extended report_end_sl_tx)

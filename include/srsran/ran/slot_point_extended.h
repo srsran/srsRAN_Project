@@ -192,3 +192,22 @@ inline slot_point_extended min(slot_point_extended lhs, slot_point_extended rhs)
 }
 
 } // namespace srsran
+
+namespace fmt {
+
+/// FMT formatter of slot_point type.
+template <>
+struct formatter<srsran::slot_point_extended> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
+  template <typename FormatContext>
+  auto format(srsran::slot_point_extended slot, FormatContext& ctx) const
+  {
+    return format_to(ctx.out(), "{}.{}.{}", slot.hyper_sfn(), slot.sfn(), slot.slot_index());
+  }
+};
+
+} // namespace fmt
