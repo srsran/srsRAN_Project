@@ -241,7 +241,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT \"dl_ethernet_transmitter_average_throughput_mbps\" AS dl_avg_throughput_mbps, \"ul_ethernet_receiver_average_throughput_mbps\" AS ul_avg_throughput_mbps, time FROM ofh WHERE pci == $pci AND time >= $__timeFrom AND time <= $__timeTo ORDER BY time",
+          "rawSql": "SELECT dl_ethernet_transmitter_average_throughput_mbps AS dl_avg_throughput_mbps, ul_ethernet_receiver_average_throughput_mbps AS ul_avg_throughput_mbps, time FROM ofh WHERE pci == $pci AND time >= $__timeFrom AND time <= $__timeTo ORDER BY time",
           "refId": "A",
           "sql": {
             "columns": [
@@ -666,7 +666,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT ul_received_packets_total AS total, ul_received_packets_early AS early, ul_received_packets_on_time AS on_time, ul_received_packets_late AS late, ul_rx_window_stats_nof_missed_prach_occasions AS missed_prach, ul_rx_window_stats_nof_missed_uplink_symbols AS missed_uplink, timing_stats_nof_skipped_symbols AS timing_nof_skipped_symbols, timing_stats_skipped_symbols_max_burst AS timing_skipped_symbols_max_burst, time FROM ofh WHERE pci == $pci AND time >= $__timeFrom AND time <= $__timeTo ORDER BY time",
+          "rawSql": "SELECT ul_received_packets_total AS total, ul_received_packets_early AS early, ul_received_packets_on_time AS on_time, ul_received_packets_late AS late, ul_rx_window_stats_nof_missed_prach_occasions AS missed_prach, ul_rx_window_stats_nof_missed_uplink_symbols AS missed_uplink, time FROM ofh WHERE pci == $pci AND time >= $__timeFrom AND time <= $__timeTo ORDER BY time",
           "refId": "A",
           "sql": {
             "columns": [
@@ -902,19 +902,6 @@
       "type": "timeseries",
       "repeat": "pci",
       "repeatDirection": "v"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 51
-      },
-      "id": 102,
-      "panels": [],
-      "title": "System Timer Scheduling",
-      "type": "row"
     }
   ],
   "preload": false,
