@@ -77,6 +77,7 @@ def test_smoke_sequentially(
 
 
 @mark.s72
+@mark.flaky(reruns=2, only_rerun=["License unavailable"])
 def test_s72_sequentially(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
