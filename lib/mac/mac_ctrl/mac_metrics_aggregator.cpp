@@ -25,6 +25,7 @@ constexpr unsigned cell_report_queue_size = 8;
 
 /// Cell metrics report containing scheduler and MAC.
 struct full_cell_report {
+  slot_point_extended                      start_slot;
   scheduler_cell_metrics                   sched;
   std::optional<mac_dl_cell_metric_report> mac;
 };
@@ -145,14 +146,15 @@ public:
     mac_builder->mac = report;
 
     // Update next report slot.
-    auto current_report_start_slot_tx = next_report_end_slot_tx - period_slots;
+    auto start_slot         = next_report_end_slot_tx - period_slots;
+    mac_builder->start_slot = start_slot;
     next_report_end_slot_tx += period_slots;
 
     // Commit report to MAC metric aggregator.
     mac_builder.reset();
 
     // If the token is acquired, it means that it is this thread's job to dispatch a job to handle pending reports.
-    unsigned ring_index = current_report_start_slot_tx.count() / period_slots;
+    unsigned ring_index     = start_slot.count() / period_slots;
     bool token_acquired = not parent.report_ring[ring_index].end_slot_flag.exchange(true, std::memory_order_acq_rel);
     if (not token_acquired) {
       // Another cell is already handling the reports.
@@ -284,22 +286,13 @@ bool mac_metrics_aggregator::pop_report(cell_metric_handler& cell)
     return false;
   }
 
-  // Convert report start slot to extended form (with HFN).
-  slot_point_extended start_slot{next_ev->sched.slot, next_report_start_slot.hyper_sfn()};
-  if (std::abs(start_slot - next_report_start_slot) >= next_ev->sched.slot.nof_slots_per_hyper_system_frame() / 2) {
-    if (start_slot < next_report_start_slot) {
-      start_slot += next_ev->sched.slot.nof_slots_per_hyper_system_frame();
-    } else {
-      start_slot -= next_ev->sched.slot.nof_slots_per_hyper_system_frame();
-    }
-  }
-
   // Fetch position in the report ring where to save report.
-  const auto      ring_key   = start_slot.count() / cell.period_slots;
+  const auto      ring_key   = next_ev->start_slot.count() / cell.period_slots;
   report_context& report_ctx = report_ring[ring_key];
 
-  const bool is_in_window = report_ctx.start_slot.valid() and
-                            start_slot.is_in_interval(report_ctx.start_slot, report_ctx.start_slot + cell.period_slots);
+  const bool is_in_window =
+      report_ctx.start_slot.valid() and
+      next_ev->start_slot.is_in_interval(report_ctx.start_slot, report_ctx.start_slot + cell.period_slots);
   if (not is_in_window) {
     // Report is not within expected window for this ring slot.
 
@@ -311,10 +304,7 @@ bool mac_metrics_aggregator::pop_report(cell_metric_handler& cell)
     }
 
     // Update start slot in the respective ring report context.
-    // Note: We are "slotting" the time when reports are produced. E.g. for a period of 10 slots and SCS=15kHz, the
-    // reports will be for slots 0.0-0.9, 1.0-1.9, 2.0-2.9, ...
-    unsigned slot_mod     = start_slot.count() % cell.period_slots;
-    report_ctx.start_slot = start_slot - slot_mod;
+    report_ctx.start_slot = next_ev->start_slot;
   }
 
   // Add front to pending report in the report_ring.
