@@ -29,8 +29,7 @@ from retina.protocol.ue_pb2_grpc import UEStub
 from .steps.configuration import configure_test_parameters
 from .steps.kpis import get_kpis
 from .steps.stub import (
-    iperf_start,
-    iperf_wait_until_finish,
+    multi_ue_mobility_iperf,
     ping_start,
     ping_wait_until_finish,
     start_network,
@@ -493,7 +492,7 @@ def test_zmq_handover_iperf(
     ZMQ Handover iperf test
     """
 
-    with _handover_multi_ues_iperf(
+    with multi_ue_mobility_iperf(
         retina_manager=retina_manager,
         retina_data=retina_data,
         ue_array=[ue],
@@ -568,7 +567,7 @@ def test_zmq_handover_noise(
     ZMQ Handover noise test
     """
 
-    with _handover_multi_ues_iperf(
+    with multi_ue_mobility_iperf(
         retina_manager=retina_manager,
         retina_data=retina_data,
         ue_array=[ue],
@@ -607,156 +606,6 @@ def test_zmq_handover_noise(
                     sleep_between_steps=_sleep_between_movement_steps,
                     allow_failure=True,
                 )
-
-
-# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
-@contextmanager
-def _handover_multi_ues_iperf(
-    *,  # This enforces keyword-only arguments
-    retina_manager: RetinaTestManager,
-    retina_data: RetinaTestData,
-    ue_array: Sequence[UEStub],
-    fivegc: FiveGCStub,
-    gnb_array: Sequence[GNBStub],
-    metrics_summary: Optional[MetricsSummary],
-    band: int,
-    common_scs: int,
-    bandwidth: int,
-    bitrate: int,
-    protocol: IPerfProto,
-    direction: IPerfDir,
-    sample_rate: Optional[int],
-    global_timing_advance: int,
-    time_alignment_calibration: Union[int, str],
-    always_download_artifacts: bool,
-    noise_spd: int,
-    warning_as_errors: bool = True,
-    movement_steps: int = 10,
-    sleep_between_movement_steps: int = 2,
-    cell_position_offset: Tuple[float, float, float] = (1000, 0, 0),
-    allow_failure: bool = False,
-) -> Generator[
-    Tuple[
-        Dict[UEStub, UEAttachedInfo],
-        Tuple[Tuple[Tuple[float, float, float], Tuple[float, float, float], int, int], ...],
-        int,
-    ],
-    None,
-    None,
-]:
-    logging.info("Handover Test (iPerf%s)", ", allowing failure)" if allow_failure else "")
-
-    original_position = (0, 0, 0)
-
-    configure_test_parameters(
-        retina_manager=retina_manager,
-        retina_data=retina_data,
-        band=band,
-        common_scs=common_scs,
-        bandwidth=bandwidth,
-        sample_rate=sample_rate,
-        global_timing_advance=global_timing_advance,
-        time_alignment_calibration=time_alignment_calibration,
-        noise_spd=noise_spd,
-        num_cells=2,
-        cell_position_offset=cell_position_offset,
-        log_ip_level="debug",
-        warning_allowlist=[
-            "MAC max KOs reached",
-            "Reached maximum number of RETX",
-            "UL buffering timed out",
-            'RRC Setup Procedure" timed out',
-            'RRC Reconfiguration Procedure" timed out',
-            'Intra CU Handover Target Routine" failed',
-            "RRC reconfiguration failed",
-            "Some or all PDUSessionResourceSetupItems failed to setup",
-            "UL buffering timed out",
-            "Discarding SDU",
-            "Discarding PDU",
-            "PDCP unpacking did not provide any SDU",
-            "Could not allocate Paging's DCI in PDCCH",
-        ],
-    )
-
-    configure_artifacts(
-        retina_data=retina_data,
-        always_download_artifacts=always_download_artifacts,
-    )
-
-    start_network(
-        ue_array=ue_array,
-        gnb_array=gnb_array,
-        fivegc=fivegc,
-        gnb_post_cmd=("log --cu_level=debug --hex_max_size=32", "log --mac_level=debug"),
-    )
-
-    ue_attach_info_dict = ue_start_and_attach(
-        ue_array=ue_array,
-        du_definition=[gnb.GetDefinition(UInt32Value(value=idx)) for idx, gnb in enumerate(gnb_array)],
-        fivegc=fivegc,
-    )
-
-    try:
-        # HO while iPerf
-        movement_duration = (movement_steps + 1) * sleep_between_movement_steps
-        movements: Tuple[Tuple[Tuple[float, float, float], Tuple[float, float, float], int, int], ...] = (
-            (original_position, cell_position_offset, movement_steps, sleep_between_movement_steps),
-            (cell_position_offset, original_position, movement_steps, sleep_between_movement_steps),
-            (original_position, cell_position_offset, movement_steps, sleep_between_movement_steps),
-            (cell_position_offset, original_position, movement_steps, sleep_between_movement_steps),
-        )
-        traffic_seconds = (len(movements) * movement_duration) + len(ue_array)
-
-        # Starting iperf in the UEs
-        iperf_array = []
-        for ue_stub in ue_array:
-            iperf_array.append(
-                (
-                    ue_attach_info_dict[ue_stub],
-                    *iperf_start(
-                        ue_stub=ue_stub,
-                        ue_attached_info=ue_attach_info_dict[ue_stub],
-                        fivegc=fivegc,
-                        protocol=protocol,
-                        direction=direction,
-                        duration=traffic_seconds,
-                        bitrate=bitrate,
-                    ),
-                )
-            )
-
-        yield ue_attach_info_dict, movements, traffic_seconds
-
-        # Stop and validate iperfs.
-        if allow_failure:
-            # The BITRATE_THRESHOLD is reduced because of noise and possible handover failures
-            bitrate_threshold = BITRATE_THRESHOLD * 0.05
-        else:
-            bitrate_threshold = BITRATE_THRESHOLD
-
-        for ue_attached_info, task, iperf_request in iperf_array:
-            iperf_wait_until_finish(
-                ue_attached_info=ue_attached_info,
-                fivegc=fivegc,
-                task=task,
-                iperf_request=iperf_request,
-                bitrate_threshold_ratio=bitrate_threshold,
-            )
-
-        if not allow_failure:
-            for ue_stub in ue_array:
-                ue_validate_no_reattaches(ue_stub)
-
-        stop(
-            ue_array=ue_array,
-            gnb_array=gnb_array,
-            fivegc=fivegc,
-            retina_data=retina_data,
-            ue_stop_timeout=16,
-            warning_as_errors=warning_as_errors,
-        )
-    finally:
-        get_kpis(du_or_gnb_array=gnb_array, ue_array=ue_array, metrics_summary=metrics_summary)
 
 
 def _do_ho(

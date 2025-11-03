@@ -21,7 +21,8 @@ from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
 
-from .handover import _do_ho, _handover_multi_ues_iperf, _handover_sequentially
+from .handover import _do_ho, _handover_sequentially
+from .steps.stub import multi_ue_mobility_iperf
 
 HIGH_BITRATE = int(15e6)
 
@@ -102,7 +103,7 @@ def test_zmq_handover_iperf(
     ZMQ Handover iperf test
     """
 
-    with _handover_multi_ues_iperf(
+    with multi_ue_mobility_iperf(
         retina_manager=retina_manager,
         retina_data=retina_data,
         ue_array=[ue],
