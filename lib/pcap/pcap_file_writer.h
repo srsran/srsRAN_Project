@@ -33,9 +33,6 @@ const uint32_t EXP_PDU_LENGTH_END_OF_OPT = 4;
 // protocol being used to transport the protocol in question.
 const uint16_t EXP_PDU_TAG_DISSECTOR_NAME = ntohs(12);
 
-// Length of the options used by the EXPORT_PDU
-const uint16_t EXP_PDU_METADATA_LENGTH = 12;
-
 /// This structure gets written to the start of the file
 struct pcap_hdr_t {
   unsigned       magic_number;  ///< magic number

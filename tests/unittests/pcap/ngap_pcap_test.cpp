@@ -51,7 +51,7 @@ TEST_F(pcap_ngap_test, write_pdu)
                                 0x67, 0x6e, 0x62, 0x30, 0x31, 0x00, 0x66, 0x00, 0x0d, 0x00, 0x00, 0x00, 0x00, 0x07,
                                 0x00, 0x00, 0xf1, 0x10, 0x00, 0x00, 0x00, 0x08, 0x00, 0x15, 0x40, 0x01, 0x60};
   ngap_pcap_writer->push_pdu(tv);
-  sleep(5);
+  worker.wait_pending_tasks();
 }
 
 TEST_F(pcap_ngap_test, write_many_spans)
@@ -74,6 +74,7 @@ TEST_F(pcap_ngap_test, write_many_spans)
   for (std::thread& thread : writer_threads) {
     thread.join();
   }
+  worker.wait_pending_tasks();
 }
 
 TEST_F(pcap_ngap_test, write_many_byte_buffers)
@@ -96,6 +97,7 @@ TEST_F(pcap_ngap_test, write_many_byte_buffers)
   for (std::thread& thread : writer_threads) {
     thread.join();
   }
+  worker.wait_pending_tasks();
 }
 
 // Write #num_pdus DL MAC NR PDUs using PCAP handle (spans)
