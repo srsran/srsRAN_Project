@@ -21,8 +21,9 @@
 
 namespace srsran {
 
-// End-of-options Tag
-const uint32_t EXP_PDU_TAG_END_OF_OPT = 0;
+// End-of-options
+const uint32_t EXP_PDU_TAG_END_OF_OPT    = 0;
+const uint32_t EXP_PDU_LENGTH_END_OF_OPT = 4;
 
 // The value part should be an ASCII non NULL terminated string
 // of the registered dissector used by Wireshark e.g "sip"
@@ -72,7 +73,7 @@ public:
   bool open(uint32_t dlt, const std::string& filename);
   void flush();
   void close();
-  void write_pdu_header(uint32_t length);
+  void write_pdu_header(uint32_t length, const std::string& dissector);
   void write_exported_pdu_header(const std::string& dissector);
   void write_pdu(srsran::const_span<uint8_t> pdu);
   void write_pdu(const byte_buffer& pdu);

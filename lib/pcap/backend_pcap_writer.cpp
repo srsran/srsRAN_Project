@@ -49,7 +49,11 @@ backend_pcap_writer::backend_pcap_writer(uint32_t           dlt,
                                          const std::string& filename_,
                                          const std::string& dissector_,
                                          task_executor&     backend_exec_) :
-  layer_name(layer_name_), filename(filename_), backend_exec(backend_exec_), logger(srslog::fetch_basic_logger("ALL"))
+  layer_name(layer_name_),
+  filename(filename_),
+  dissector(dissector_),
+  backend_exec(backend_exec_),
+  logger(srslog::fetch_basic_logger("ALL"))
 {
   writer.open(dlt, filename);
 }
@@ -138,7 +142,8 @@ void backend_pcap_writer::write_pdu_impl(const byte_buffer& pdu)
 
   // write packet header
   unsigned length = pdu.length();
-  writer.write_pdu_header(length);
+  fmt::println("{}", dissector);
+  writer.write_pdu_header(length, dissector);
 
   // write exported_pdu header
   writer.write_exported_pdu_header(dissector);
@@ -155,7 +160,7 @@ void backend_pcap_writer::write_context_pdu_impl(const pcap_pdu_data& pdu)
   }
 
   // write packet header
-  writer.write_pdu_header(pdu.header().length() + pdu.payload().length());
+  writer.write_pdu_header(pdu.header().length() + pdu.payload().length(), dissector);
 
   // write PDU header
   writer.write_pdu(pdu.header());

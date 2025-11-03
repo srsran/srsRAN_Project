@@ -66,6 +66,32 @@ void pcap_file_writer::flush()
   logger.info("Failed to flush closed PCAP (DLT={})", dlt);
 }
 
+uint16_t get_dissector_name_size(const std::string& dissector)
+{
+  uint16_t dissector_size = dissector.size();
+  if (dissector_size == 0) {
+    return 0;
+  }
+
+  // Size of dissector name option.
+  uint16_t size_remainder = dissector_size % 4;
+  return dissector_size - size_remainder + 4; // round to multiple of 4.
+}
+
+uint16_t get_export_pdu_metadata_length(const std::string& dissector)
+{
+  uint16_t dissector_size = dissector.size();
+  if (dissector_size == 0) {
+    fmt::println("no dissector!!{}", dissector_size);
+    return 0;
+  }
+
+  uint16_t dissector_name_size      = get_dissector_name_size(dissector);
+  uint16_t dissector_name_opts_size = dissector_name_size + 4;
+
+  return dissector_name_opts_size + EXP_PDU_LENGTH_END_OF_OPT;
+}
+
 void pcap_file_writer::close()
 {
   flush();
@@ -77,17 +103,19 @@ void pcap_file_writer::close()
   logger.info("Failed to close already closed PCAP (DLT={})", dlt);
 }
 
-void pcap_file_writer::write_pdu_header(uint32_t length)
+void pcap_file_writer::write_pdu_header(uint32_t length, const std::string& dissector)
 {
   pcaprec_hdr_t packet_header = {};
 
+  uint16_t exp_pdu_sz = get_export_pdu_metadata_length(dissector);
+  fmt::println("{}", exp_pdu_sz);
   // PCAP header
   struct timeval t = {};
   gettimeofday(&t, nullptr);
   packet_header.ts_sec   = t.tv_sec;
   packet_header.ts_usec  = t.tv_usec;
-  packet_header.incl_len = length + EXP_PDU_METADATA_LENGTH;
-  packet_header.orig_len = length + EXP_PDU_METADATA_LENGTH;
+  packet_header.incl_len = length + exp_pdu_sz;
+  packet_header.orig_len = length + exp_pdu_sz;
 
   pcap_fstream.write((char*)&packet_header, sizeof(packet_header));
   if (pcap_fstream.fail()) {
