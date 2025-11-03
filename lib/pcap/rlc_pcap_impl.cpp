@@ -33,7 +33,11 @@ rlc_pcap_impl::rlc_pcap_impl(const std::string& filename_,
   logger(srslog::fetch_basic_logger("ALL")),
   srb_enabled(capture_srb),
   drb_enabled(capture_drb),
-  writer(UDP_DLT, "RLC", filename_, backend_exec)
+  writer(UDP_DLT,
+         "RLC",
+         filename_,
+         "", // TODO switch to EXPORT_PDU.
+         backend_exec)
 {
 }
 

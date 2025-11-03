@@ -101,13 +101,18 @@ void pcap_file_writer::write_exported_pdu_header(const std::string& dissector)
   if (not is_write_enabled()) {
     return;
   }
+  uint16_t dissector_len = dissector.size();
+  if (dissector_len == 0) {
+    return;
+  }
 
   if (not pcap_fstream.write((char*)&EXP_PDU_TAG_DISSECTOR_NAME, sizeof(uint16_t))) {
     logger.error("Failed to write packet header to pcap: {}", strerror(errno));
     return;
   }
 
-  uint16_t opt_size = ntohs(4);
+  uint16_t size_remainder = dissector_len % 4;
+  uint16_t opt_size       = ntohs(dissector_len - size_remainder + 4); // round to multiple of 4.
   if (not pcap_fstream.write((char*)&opt_size, sizeof(uint16_t))) {
     logger.error("Failed to write packet header to pcap: {}", strerror(errno));
     return;

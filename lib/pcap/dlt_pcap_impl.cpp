@@ -14,19 +14,15 @@
 
 using namespace srsran;
 
-// DLT PCAP values for different layers.
-static constexpr uint16_t PCAP_NGAP_DLT = 252;
-static constexpr uint16_t PCAP_E1AP_DLT = 252;
-static constexpr uint16_t PCAP_F1AP_DLT = 252;
-static constexpr uint16_t PCAP_E2AP_DLT = 252;
-static constexpr uint16_t PCAP_GTPU_DLT = 252;
+// DLT for EXPORT PDU pcaps.
+static constexpr uint16_t PCAP_EXPORT_PDU_DLT = 252;
 
 dlt_pcap_impl::dlt_pcap_impl(uint32_t           dlt,
                              const std::string& layer_name_,
                              const std::string& filename,
-                             const char*        dissector_,
+                             const std::string& dissector_,
                              task_executor&     backend_exec_) :
-  logger(srslog::fetch_basic_logger("ALL")), writer(dlt, layer_name_, filename, backend_exec_), dissector(dissector_)
+  logger(srslog::fetch_basic_logger("ALL")), writer(dlt, layer_name_, filename, dissector_, backend_exec_)
 {
 }
 
@@ -55,7 +51,7 @@ void dlt_pcap_impl::push_pdu(const_span<uint8_t> pdu)
   if (not pdu_buffer.has_value()) {
     return;
   }
-  writer.write_pdu(std::move(pdu_buffer.value()), dissector);
+  writer.write_pdu(std::move(pdu_buffer.value()));
 }
 
 void dlt_pcap_impl::push_pdu(byte_buffer pdu)
@@ -64,7 +60,7 @@ void dlt_pcap_impl::push_pdu(byte_buffer pdu)
     // skip.
     return;
   }
-  writer.write_pdu(std::move(pdu), dissector);
+  writer.write_pdu(std::move(pdu));
 }
 
 static std::unique_ptr<dlt_pcap> create_dlt_pcap(unsigned           dlt,
@@ -84,25 +80,25 @@ std::unique_ptr<dlt_pcap> srsran::create_null_dlt_pcap()
 
 std::unique_ptr<dlt_pcap> srsran::create_ngap_pcap(const std::string& filename, task_executor& backend_exec)
 {
-  return create_dlt_pcap(PCAP_NGAP_DLT, "NGAP", filename, "ngap", backend_exec);
+  return create_dlt_pcap(PCAP_EXPORT_PDU_DLT, "NGAP", filename, "ngap", backend_exec);
 }
 
 std::unique_ptr<dlt_pcap> srsran::create_f1ap_pcap(const std::string& filename, task_executor& backend_exec)
 {
-  return create_dlt_pcap(PCAP_F1AP_DLT, "F1AP", filename, "f1ap", backend_exec);
+  return create_dlt_pcap(PCAP_EXPORT_PDU_DLT, "F1AP", filename, "f1ap", backend_exec);
 }
 
 std::unique_ptr<dlt_pcap> srsran::create_e1ap_pcap(const std::string& filename, task_executor& backend_exec)
 {
-  return create_dlt_pcap(PCAP_E1AP_DLT, "E1AP", filename, "e1ap", backend_exec);
+  return create_dlt_pcap(PCAP_EXPORT_PDU_DLT, "E1AP", filename, "e1ap", backend_exec);
 }
 
 std::unique_ptr<dlt_pcap> srsran::create_gtpu_pcap(const std::string& filename, task_executor& backend_exec)
 {
-  return create_dlt_pcap(PCAP_GTPU_DLT, "GTPU", filename, "gtp", backend_exec);
+  return create_dlt_pcap(PCAP_EXPORT_PDU_DLT, "GTPU", filename, "gtp", backend_exec);
 }
 
 std::unique_ptr<dlt_pcap> srsran::create_e2ap_pcap(const std::string& filename, task_executor& backend_exec)
 {
-  return create_dlt_pcap(PCAP_E2AP_DLT, "E2AP", filename, "e2ap", backend_exec);
+  return create_dlt_pcap(PCAP_EXPORT_PDU_DLT, "E2AP", filename, "e2ap", backend_exec);
 }
