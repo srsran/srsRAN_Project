@@ -83,6 +83,7 @@ private:
   std::ofstream         pcap_fstream;
   std::string           filename;
   uint32_t              dlt = 0;
+  std::array<char, 4>   padding{};
 };
 
 } // namespace srsran

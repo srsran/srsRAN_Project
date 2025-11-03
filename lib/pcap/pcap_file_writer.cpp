@@ -13,6 +13,9 @@
 
 using namespace srsran;
 
+static uint16_t get_dissector_name_size(const std::string& dissector);
+static uint16_t get_export_pdu_metadata_length(const std::string& dissector);
+
 pcap_file_writer::pcap_file_writer() : logger(srslog::fetch_basic_logger("ALL")) {}
 
 pcap_file_writer::~pcap_file_writer()
@@ -66,32 +69,6 @@ void pcap_file_writer::flush()
   logger.info("Failed to flush closed PCAP (DLT={})", dlt);
 }
 
-uint16_t get_dissector_name_size(const std::string& dissector)
-{
-  uint16_t dissector_size = dissector.size();
-  if (dissector_size == 0) {
-    return 0;
-  }
-
-  // Size of dissector name option.
-  uint16_t size_remainder = dissector_size % 4;
-  return dissector_size - size_remainder + 4; // round to multiple of 4.
-}
-
-uint16_t get_export_pdu_metadata_length(const std::string& dissector)
-{
-  uint16_t dissector_size = dissector.size();
-  if (dissector_size == 0) {
-    fmt::println("no dissector!!{}", dissector_size);
-    return 0;
-  }
-
-  uint16_t dissector_name_size      = get_dissector_name_size(dissector);
-  uint16_t dissector_name_opts_size = dissector_name_size + 4;
-
-  return dissector_name_opts_size + EXP_PDU_LENGTH_END_OF_OPT;
-}
-
 void pcap_file_writer::close()
 {
   flush();
@@ -106,9 +83,8 @@ void pcap_file_writer::close()
 void pcap_file_writer::write_pdu_header(uint32_t length, const std::string& dissector)
 {
   pcaprec_hdr_t packet_header = {};
+  uint16_t      exp_pdu_sz    = get_export_pdu_metadata_length(dissector);
 
-  uint16_t exp_pdu_sz = get_export_pdu_metadata_length(dissector);
-  fmt::println("{}", exp_pdu_sz);
   // PCAP header
   struct timeval t = {};
   gettimeofday(&t, nullptr);
@@ -139,9 +115,9 @@ void pcap_file_writer::write_exported_pdu_header(const std::string& dissector)
     return;
   }
 
-  uint16_t size_remainder = dissector_len % 4;
-  uint16_t opt_size       = ntohs(dissector_len - size_remainder + 4); // round to multiple of 4.
-  if (not pcap_fstream.write((char*)&opt_size, sizeof(uint16_t))) {
+  uint16_t opt_size   = get_dissector_name_size(dissector);
+  uint16_t opt_size_n = htons(opt_size);
+  if (not pcap_fstream.write((char*)&opt_size_n, sizeof(uint16_t))) {
     logger.error("Failed to write packet header to pcap: {}", strerror(errno));
     return;
   }
@@ -152,8 +128,9 @@ void pcap_file_writer::write_exported_pdu_header(const std::string& dissector)
     return;
   }
 
-  if (dissector.size() == 3) {
-    if (not pcap_fstream.write("\0", 1)) {
+  uint16_t rem = dissector.size() % 4;
+  if (rem != 0) {
+    if (not pcap_fstream.write(padding.data(), 4 - rem)) {
       logger.error("Failed to write packet header to pcap: {}", strerror(errno));
       return;
     }
@@ -191,4 +168,32 @@ void pcap_file_writer::write_pdu(const byte_buffer& pdu)
       return;
     }
   }
+}
+
+///
+/// Export PDU helper functions.
+///
+static uint16_t get_dissector_name_size(const std::string& dissector)
+{
+  uint16_t dissector_size = dissector.size();
+  if (dissector_size == 0) {
+    return 0;
+  }
+
+  // Size of dissector name option.
+  uint16_t size_remainder = dissector_size % 4;
+  return size_remainder == 0 ? dissector_size : dissector_size - size_remainder + 4; // round to multiple of 4.
+}
+
+static uint16_t get_export_pdu_metadata_length(const std::string& dissector)
+{
+  uint16_t dissector_size = dissector.size();
+  if (dissector_size == 0) {
+    return 0;
+  }
+
+  uint16_t dissector_name_size      = get_dissector_name_size(dissector);
+  uint16_t dissector_name_opts_size = dissector_name_size + 4;
+
+  return dissector_name_opts_size + EXP_PDU_LENGTH_END_OF_OPT;
 }

@@ -142,7 +142,6 @@ void backend_pcap_writer::write_pdu_impl(const byte_buffer& pdu)
 
   // write packet header
   unsigned length = pdu.length();
-  fmt::println("{}", dissector);
   writer.write_pdu_header(length, dissector);
 
   // write exported_pdu header
