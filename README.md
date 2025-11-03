@@ -66,8 +66,8 @@ git lfs install
 Download and build srsRAN:
 
 ```bash
-git clone https://gitlab.com/softwareradiosystems/srsran.git
-cd srsran
+git clone https://gitlab.com/softwareradiosystems/srsgnb.git
+cd srsgnb
 git lfs pull
 mkdir build
 cd build
