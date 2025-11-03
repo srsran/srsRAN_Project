@@ -76,7 +76,7 @@ struct dummy_sched_metric_handler {
   zero_copy_notifier<scheduler_cell_metrics>::builder builder;
 };
 
-class mac_metric_handler_test : public ::testing::Test
+class base_mac_metrics_test
 {
 protected:
   struct cell_context {
@@ -95,7 +95,12 @@ protected:
     }
   };
 
-  const std::chrono::milliseconds period{10};
+  base_mac_metrics_test(std::chrono::milliseconds period_ = std::chrono::milliseconds{10}, unsigned start_hfn = 0) :
+    period(period_), timer_ctrl(timers, start_hfn)
+  {
+  }
+
+  const std::chrono::milliseconds period;
   const subcarrier_spacing        scs = subcarrier_spacing::kHz15;
   const unsigned                  period_slots{static_cast<unsigned>(period.count() * get_nof_slots_per_subframe(scs))};
   unsigned aggr_timeout_slots = mac_metrics_aggregator::aggregation_timeout.count() * get_nof_slots_per_subframe(scs);
@@ -142,6 +147,9 @@ protected:
     cells[cell_index].mac.on_cell_deactivation();
   }
 };
+
+class mac_metric_handler_test : public base_mac_metrics_test, public ::testing::Test
+{};
 
 } // namespace
 
@@ -289,4 +297,45 @@ TEST_F(mac_metric_handler_test, when_one_cell_gets_removed_then_last_report_stil
   auto& rep_cells = metric_notifier.last_report.value().dl.cells;
   ASSERT_EQ(rep_cells[0].nof_slots, count_until_cell_rem);
   ASSERT_EQ(rep_cells[1].nof_slots, period_slots);
+}
+
+class mac_metric_handler_hfn_wrap_around_test : public base_mac_metrics_test, public ::testing::Test
+{
+protected:
+  mac_metric_handler_hfn_wrap_around_test() : base_mac_metrics_test(std::chrono::milliseconds{100}, 1021) {}
+};
+
+TEST_F(mac_metric_handler_hfn_wrap_around_test, when_hfn_is_wrapped_around_metrics_are_still_reported_correctly)
+{
+  add_cell(to_du_cell_index(0));
+
+  // Retrieve first report.
+  unsigned wait_slots = period_slots + aggr_timeout_slots;
+  for (unsigned i = 0; i != wait_slots; ++i) {
+    run_slot();
+    if (metric_notifier.last_report.has_value()) {
+      break;
+    }
+  }
+  ASSERT_TRUE(metric_notifier.last_report.has_value());
+  slot_point next_report_slot = metric_notifier.last_report.value().sched.cells[0].slot +
+                                metric_notifier.last_report.value().sched.cells[0].nof_slots;
+  metric_notifier.last_report.reset();
+
+  // Check if report is generated at the right slot even after HFN wrap-around.
+  const unsigned max_slots   = next_report_slot.nof_slots_per_hyper_system_frame() * 3;
+  unsigned       nof_reports = 0;
+  for (unsigned i = 0; i != max_slots; ++i) {
+    run_slot();
+    if (metric_notifier.last_report.has_value()) {
+      auto report_slot = metric_notifier.last_report.value().sched.cells[0].slot;
+      ASSERT_EQ(report_slot, next_report_slot)
+          << fmt::format("Expected slot={} but got {}", next_report_slot, report_slot);
+      next_report_slot += period_slots;
+      metric_notifier.last_report.reset();
+      nof_reports++;
+    }
+  }
+  // Just a simple assurance that the reports never stopped flowing.
+  ASSERT_GE(nof_reports, max_slots / period_slots);
 }

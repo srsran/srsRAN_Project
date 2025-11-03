@@ -209,7 +209,7 @@ public:
       if (not parent.active_cells[cell_index]) {
         parent.active_cells[cell_index] = true;
         if (parent.nof_active_cells == 0) {
-          parent.master_slot = slot_point_extended{sl_tx - 1, 0};
+          parent.master_slot = slot_point_extended{sl_tx - 1, parent.start_hfn};
         }
         parent.nof_active_cells++;
       }
@@ -246,7 +246,9 @@ public:
     du_cell_index_t             cell_index;
   };
 
-  dummy_mac_clock_controller(timer_manager& timers_) : timers(timers_) {}
+  dummy_mac_clock_controller(timer_manager& timers_, unsigned start_hfn_ = 0) : timers(timers_), start_hfn(start_hfn_)
+  {
+  }
 
   std::unique_ptr<mac_cell_clock_controller> add_cell(du_cell_index_t cell_index) override
   {
@@ -257,6 +259,7 @@ public:
 
 private:
   timer_manager& timers;
+  const unsigned start_hfn;
 
   unsigned                           nof_active_cells = 0;
   slot_point_extended                master_slot;
