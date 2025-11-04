@@ -1228,8 +1228,9 @@ def stop(
     metrics_msg_array = []
     for index, ue_stub in enumerate(ue_array):
         metrics_msg_array.append(_get_metrics_msg(stub=ue_stub, name=f"UE_{index+1}", fail_if_kos=fail_if_kos))
-    if gnb is not None:
-        metrics_msg_array.append(_get_metrics_msg(stub=gnb, name="GNB", fail_if_kos=fail_if_kos))
+    if gnb_array is not None:
+        for index, gnb in enumerate(gnb_array):
+            metrics_msg_array.append(_get_metrics_msg(stub=gnb, name=f"GNB_{index+1}", fail_if_kos=fail_if_kos))
     if fivegc is not None:
         metrics_msg_array.append(_get_metrics_msg(stub=fivegc, name="5GC", fail_if_kos=fail_if_kos))
 

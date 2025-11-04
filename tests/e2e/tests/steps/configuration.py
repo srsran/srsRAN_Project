@@ -176,7 +176,7 @@ def configure_test_parameters(
 
         du_node_list = [
             {
-                "name": "du0-0",
+                "name": "srs-du-1-1",
                 "parameters": {
                     "band": inter_freq_band,
                     "dl_arfcn": inter_freq_cell_1_dl_arfcn,
@@ -185,7 +185,7 @@ def configure_test_parameters(
                 },
             },
             {
-                "name": "du1-0",
+                "name": "srs-du-2-1",
                 "parameters": {
                     "band": inter_freq_band,
                     "dl_arfcn": inter_freq_cell_2_dl_arfcn,
