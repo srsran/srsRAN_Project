@@ -109,6 +109,12 @@ public:
     /// \return A pointer to the resource configuration, if available. Otherwise, \c nullptr.
     const pucch_resource* reserve_csi_resource();
 
+    /// Peek at the configured SR PUCCH resource for the UE without reserving it.
+    const pucch_resource* peek_sr_resource() const;
+
+    /// Peek at the configured CSI PUCCH resource for the UE without reserving it.
+    const pucch_resource* peek_csi_resource() const;
+
     /// \brief Release PUCCH resource from Resource Set ID 0 from being allocated to a given UE.
     /// \param[in] slot_harq slot for which the PUCCH resource was scheduled.
     /// \return True if the resource for the UE was found in the allocation records for the given slot.

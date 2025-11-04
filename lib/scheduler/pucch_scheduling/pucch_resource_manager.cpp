@@ -231,6 +231,52 @@ const pucch_resource* pucch_resource_manager::ue_reservation_guard::reserve_csi_
   return res_cfg;
 }
 
+const pucch_resource* pucch_resource_manager::ue_reservation_guard::peek_sr_resource() const
+{
+  srsran_assert(parent != nullptr, "Trying to make a new PUCCH resource reservation after commit has been called");
+  const auto& pucch_cfg = ue_cfg.init_bwp().ul_ded->pucch_cfg.value();
+
+  // We assume each UE only has 1 SR Resource Config configured.
+  srsran_sanity_check(pucch_cfg.sr_res_list.size() == 1, "UE SR resource list must have size 1.");
+  const unsigned cell_res_id = pucch_cfg.sr_res_list[0].pucch_res_id.cell_res_id;
+
+  // Search for the PUCCH resource with the correct PUCCH resource ID from the PUCCH resource list.
+  const auto& pucch_res_list = pucch_cfg.pucch_res_list;
+  const auto* res_cfg =
+      std::find_if(pucch_res_list.begin(), pucch_res_list.end(), [cell_res_id](const pucch_resource& res) {
+        return res.res_id.cell_res_id == cell_res_id;
+      });
+  srsran_assert(res_cfg != pucch_res_list.end(),
+                "rnti={}: PUCCH resource with cell_res_id={} not found in PUCCH resource list",
+                rnti,
+                cell_res_id);
+
+  return res_cfg;
+}
+
+const pucch_resource* pucch_resource_manager::ue_reservation_guard::peek_csi_resource() const
+{
+  srsran_assert(parent != nullptr, "Trying to make a new PUCCH resource reservation after commit has been called");
+
+  // Get CSI specific PUCCH resource ID from the CSI meas config.
+  const int cell_res_id_int = get_csi_cell_res_id(ue_cfg);
+  srsran_assert(cell_res_id_int >= 0, "rnti={}: CSI PUCCH resource index could not be found", rnti);
+  const auto cell_res_id = static_cast<unsigned>(cell_res_id_int);
+
+  // Search for the PUCCH resource with the correct PUCCH resource ID from the PUCCH resource list.
+  const auto& pucch_res_list = ue_cfg.init_bwp().ul_ded->pucch_cfg.value().pucch_res_list;
+  const auto* res_cfg =
+      std::find_if(pucch_res_list.begin(), pucch_res_list.end(), [cell_res_id](const pucch_resource& res) {
+        return res.res_id.cell_res_id == cell_res_id;
+      });
+  srsran_assert(res_cfg != pucch_res_list.end(),
+                "rnti={}: PUCCH resource with cell_res_id={} not found in PUCCH resource list",
+                rnti,
+                cell_res_id);
+
+  return res_cfg;
+}
+
 bool pucch_resource_manager::ue_reservation_guard::release_harq_set_0_resource()
 {
   return release_harq_resource(pucch_res_set_idx::set_0);

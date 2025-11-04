@@ -19,6 +19,7 @@
 #include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 #include "srsran/scheduler/result/sched_result.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/srsran_assert.h"
 #include <algorithm>
 #include <array>
 #include <variant>
@@ -1285,6 +1286,28 @@ pucch_allocator_impl::multiplex_and_allocate_pucch(cell_slot_resource_allocator&
     return std::nullopt;
   }
 
+  // Reserve the resources needed for the multiplexed grants.
+  if (grants_to_tx.sr_resource.has_value()) {
+    const auto* sr_res = guard.reserve_sr_resource();
+    if (sr_res == nullptr) {
+      logger.error("rnti={}: the multiplexing of PUCCH resources for slot={} could not be completed. Cause: SR "
+                   "resource not available",
+                   current_grants.rnti,
+                   pucch_slot_alloc.slot);
+      return std::nullopt;
+    }
+  }
+  if (grants_to_tx.csi_resource.has_value()) {
+    const auto* csi_res = guard.reserve_csi_resource();
+    if (csi_res == nullptr) {
+      logger.error("rnti={}: the multiplexing of PUCCH resources for slot={} could not be completed. Cause: CSI "
+                   "resource not available",
+                   current_grants.rnti,
+                   pucch_slot_alloc.slot);
+      return std::nullopt;
+    }
+  }
+
   // If the grants for the common PUCCH resource are provided, this PUCCH is allocated by the fallback scheduler.
   if (common_grants.has_value()) {
     // At most 3 PUCCH resources with 2 grants each.
@@ -1374,12 +1397,9 @@ pucch_allocator_impl::get_pucch_res_pre_multiplexing(pucch_resource_manager::ue_
     // Get the resource from the resource manager; the UCI bits will be added later.
     // NOTE: if the SR resource was already assigned to this UE, the resource manager will only return the PUCCH
     // config that was reserved previously.
-    const pucch_resource* sr_resource = guard.reserve_sr_resource();
-    if (sr_resource == nullptr) {
-      srsran_assertion_failure("rnti={}: PUCCH SR resource previously reserved not available anymore",
-                               ue_current_grants.rnti);
-      return std::nullopt;
-    }
+    const pucch_resource* sr_resource = guard.peek_sr_resource();
+    srsran_assert(
+        sr_resource != nullptr, "rnti={}: Peeking a PUCCH SR resource returned nullptr", ue_current_grants.rnti);
     sr_candidate_grant.set_res_config(*sr_resource);
     // Only copy the SR bits, as at this stage we only need to consider the UCI bits assuming the resources still
     // need to be multiplexed.
@@ -1395,12 +1415,9 @@ pucch_allocator_impl::get_pucch_res_pre_multiplexing(pucch_resource_manager::ue_
     // Get the resource from the resource manager; the UCI bits will be added later.
     // NOTE: if the CSI resource was already assigned to this UE, the resource manager will only return the PUCCH
     // config that was reserved previously.
-    const pucch_resource* csi_resource = guard.reserve_csi_resource();
-    if (csi_resource == nullptr) {
-      srsran_assertion_failure("rnti={}: PUCCH CSI resource previously reserved not available anymore",
-                               ue_current_grants.rnti);
-      return std::nullopt;
-    }
+    const pucch_resource* csi_resource = guard.peek_csi_resource();
+    srsran_assert(
+        csi_resource != nullptr, "rnti={}: Peeking a PUCCH CSI resource returned nullptr", ue_current_grants.rnti);
     csi_candidate_grant.set_res_config(*csi_resource);
     // Only copy the HARQ-ACK bits, as at this stage we only need to consider the UCI bits assuming the resources
     // still need to be multiplexed.
