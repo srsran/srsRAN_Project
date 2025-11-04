@@ -84,6 +84,7 @@ class realtime_timing_worker : public operation_controller, public ota_symbol_bo
   bool                                           enable_log_warnings_for_lates;
   unsigned                                       previous_symb_index       = 0;
   gps_clock::rep                                 previous_time_since_epoch = 0;
+  std::chrono::steady_clock::time_point          last_wakeup_tp;
   stop_event_source                              stop_manager;
   timing_metrics_collector_impl                  metrics_collector;
 
@@ -117,6 +118,16 @@ private:
   {
     auto tp_sec = std::chrono::time_point_cast<std::chrono::seconds>(tp);
     return tp - tp_sec;
+  }
+
+  /// Calculates the time passed since last wake-up using the steady clock.
+  std::chrono::microseconds calculate_sleeping_time()
+  {
+    auto tp_now        = std::chrono::steady_clock::now();
+    auto sleeping_time = std::chrono::duration_cast<std::chrono::microseconds>(tp_now - last_wakeup_tp);
+    last_wakeup_tp     = tp_now;
+
+    return sleeping_time;
   }
 };
 

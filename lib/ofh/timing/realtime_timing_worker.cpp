@@ -68,6 +68,7 @@ void realtime_timing_worker::start()
 
         auto now                  = gps_clock::now();
         auto ns_fraction          = calculate_ns_fraction_from(now);
+        last_wakeup_tp            = std::chrono::steady_clock::now();
         previous_symb_index       = get_symbol_index(ns_fraction, symbol_duration);
         previous_time_since_epoch = now.time_since_epoch().count();
 
@@ -122,6 +123,8 @@ calculate_slot_point(subcarrier_spacing scs, uint64_t gps_seconds, uint32_t frac
 
 void realtime_timing_worker::poll()
 {
+  auto sleeping_time = calculate_sleeping_time();
+
   auto now         = gps_clock::now();
   auto ns_fraction = calculate_ns_fraction_from(now);
 
@@ -158,6 +161,18 @@ void realtime_timing_worker::poll()
                 current_symbol_index % nof_symbols_per_slot);
     metrics_collector.update_skipped_symbols(delta);
   }
+  if (SRSRAN_UNLIKELY(delta >= 3)) {
+    log_conditional_warning(
+        logger,
+        enable_log_warnings_for_lates,
+        "Real-time timing worker woke up late, skipped '{}' symbols. Current symbol is '{}'. Equivalent realtime clock "
+        "sleep time has been '{}us', wall clock sleep time has been '{}us'",
+        delta,
+        current_symbol_index % nof_symbols_per_slot,
+        std::chrono::duration_cast<std::chrono::microseconds>(delta * symbol_duration).count(),
+        sleeping_time.count());
+  }
+
   if (SRSRAN_UNLIKELY(delta >= nof_symbols_per_slot)) {
     log_conditional_warning(
         logger,
