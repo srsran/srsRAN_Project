@@ -68,6 +68,14 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
     }
     CORO_EARLY_RETURN();
   }
+  auto& resp = transaction.response();
+  if (resp.msg.type().value != ul_dcch_msg_type_c::types_opts::c1 or
+      resp.msg.c1().type().value != ul_dcch_msg_type_c::c1_c_::types_opts::rrc_setup_complete) {
+    logger.log_warning("Unexpected UL-DCCH message type {} in RRC Setup Procedure",
+                       static_cast<int>(resp.msg.type().value));
+    rrc_ue.on_ue_release_required(cause_protocol_t::unspecified);
+    CORO_EARLY_RETURN();
+  }
 
   rrc_setup_complete_msg = transaction.response().msg.c1().rrc_setup_complete();
 
