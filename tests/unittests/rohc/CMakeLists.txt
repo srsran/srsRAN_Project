@@ -8,6 +8,10 @@
 
 set_directory_properties(PROPERTIES LABELS "rohc")
 
+add_executable(rohc_config_test rohc_config_test.cpp)
+target_link_libraries(rohc_config_test srsran_rohc srsran_support srslog gtest gtest_main)
+gtest_discover_tests(rohc_config_test)
+
 add_executable(rohc_factory_test rohc_factory_test.cpp)
 target_link_libraries(rohc_factory_test srsran_rohc srsran_support srslog gtest gtest_main)
 gtest_discover_tests(rohc_factory_test)
