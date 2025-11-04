@@ -574,6 +574,9 @@ TEST_F(asn1_rrc_nr_test, when_ue_nr_capabilities_rel16_v2_correct_then_unpacking
 
   ASSERT_EQ(ue_nr_cap.unpack(bref), SRSASN_SUCCESS);
 
+  ASSERT_TRUE(ue_nr_cap.feature_sets_present);
+  ASSERT_EQ(ue_nr_cap.feature_sets.feature_sets_dl.size(), 1);
+
   ASSERT_EQ(test_pack_unpack_consistency(ue_nr_cap), SRSASN_SUCCESS);
 
 #if JSON_OUTPUT
@@ -589,6 +592,8 @@ TEST_F(asn1_rrc_nr_test, unpack_malformed_rrc_setup_complete)
       byte_buffer::create({0x00, 0x00, 0x18, 0x00, 0x05, 0xdf, 0x80, 0x10, 0x5e, 0x40, 0x03, 0x40, 0x40, 0x3c,
                            0x44, 0x00, 0x00, 0x00, 0x00, 0x04, 0x0c, 0x95, 0x1d, 0x82, 0x0b, 0x80, 0xbc, 0x1c})
           .value();
+  // 0000180005df80105e400340403c4400000000040c951d820b80bc1c
+
   ul_dcch_msg_s rrc_msg;
 
   cbit_ref bref{pdu};

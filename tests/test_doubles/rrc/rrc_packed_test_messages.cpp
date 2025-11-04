@@ -11,7 +11,7 @@
 #include "rrc_packed_test_messages.h"
 #include "lib/rrc/ue/rrc_measurement_types_asn1_converters.h"
 #include "rrc_test_messages.h"
-#include "srsran/asn1/rrc_nr/meas_timing_cfg.h"
+#include "srsran/asn1/rrc_nr/rrc_nr.h"
 
 using namespace srsran;
 

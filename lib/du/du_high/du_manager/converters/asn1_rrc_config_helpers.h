@@ -12,7 +12,7 @@
 
 #include "../ran_resource_management/du_ue_resource_config.h"
 #include "srsran/asn1/rrc_nr/cell_group_config.h"
-#include "srsran/asn1/rrc_nr/ho_prep_info.h"
+#include "srsran/asn1/rrc_nr/rrc_nr.h"
 
 namespace srsran {
 namespace srs_du {
