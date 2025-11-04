@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsran/adt/span.h"
-#include "srsran/ran/pci.h"
 
 namespace srsran {
 
@@ -23,8 +22,7 @@ struct o_du_low_metrics;
 class o_du_low_metrics_consumer_json
 {
 public:
-  o_du_low_metrics_consumer_json(srslog::log_channel& log_chan_, span<const pci_t> pci_sector_map_) :
-    log_chan(log_chan_), pci_sector_map(pci_sector_map_)
+  explicit o_du_low_metrics_consumer_json(srslog::log_channel& log_chan_) : log_chan(log_chan_)
   {
     srsran_assert(log_chan.enabled(), "JSON log channel is not enabled");
   }
@@ -34,15 +32,13 @@ public:
 
 private:
   srslog::log_channel& log_chan;
-  span<const pci_t>    pci_sector_map;
 };
 
 /// Logger consumer for the O-DU low metrics.
 class o_du_low_metrics_consumer_log
 {
 public:
-  o_du_low_metrics_consumer_log(srslog::log_channel& log_chan_, span<const pci_t> pci_sector_map_, bool verbose_) :
-    log_chan(log_chan_), verbose(verbose_), pci_sector_map(pci_sector_map_)
+  o_du_low_metrics_consumer_log(srslog::log_channel& log_chan_, bool verbose_) : log_chan(log_chan_), verbose(verbose_)
   {
     srsran_assert(log_chan.enabled(), "JSON log channel is not enabled");
   }
@@ -53,7 +49,6 @@ public:
 private:
   srslog::log_channel& log_chan;
   const bool           verbose;
-  span<const pci_t>    pci_sector_map;
 };
 
 } // namespace srsran

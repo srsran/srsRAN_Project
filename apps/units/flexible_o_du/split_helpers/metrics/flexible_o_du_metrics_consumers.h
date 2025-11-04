@@ -27,7 +27,7 @@ public:
                                      bool                     verbose,
                                      std::chrono::nanoseconds symbol_duration) :
     pci_sector_map(std::move(pci_sector_map_)),
-    odu_low_metrics_handler(log_chan, pci_sector_map, verbose),
+    odu_low_metrics_handler(log_chan, verbose),
     ru_metrics_handler(log_chan, pci_sector_map, symbol_duration)
   {
   }
@@ -49,7 +49,7 @@ public:
                                       std::vector<pci_t>       pci_sector_map_,
                                       std::chrono::nanoseconds symbol_duration) :
     pci_sector_map(std::move(pci_sector_map_)),
-    odu_low_metrics_handler(log_chan, pci_sector_map),
+    odu_low_metrics_handler(log_chan),
     ru_metrics_handler(log_chan, pci_sector_map, symbol_duration)
   {
     srsran_assert(log_chan.enabled(), "JSON log channel is not enabled");

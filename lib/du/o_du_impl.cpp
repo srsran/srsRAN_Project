@@ -50,7 +50,8 @@ void o_du_impl::on_new_metrics(const o_du_high_metrics& metrics)
 
   // Get O-DU low metrics.
   if (auto* odu_low_collector = odu_lo->get_metrics_collector()) {
-    odu_low_collector->collect_metrics(du_metrics.low);
+    auto& odu_low_metrics = du_metrics.low.emplace();
+    odu_low_collector->collect_metrics(odu_low_metrics);
   }
 
   // Notify the metrics.
