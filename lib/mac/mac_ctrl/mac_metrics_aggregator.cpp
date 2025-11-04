@@ -127,11 +127,13 @@ public:
 
   void on_cell_deactivation(const mac_dl_cell_metric_report& report) override
   {
+    auto start_slot         = next_report_end_slot_tx - period_slots;
     next_report_end_slot_tx = {};
     last_sl_tx              = {};
     // Save MAC report and commit it.
     if (mac_builder != nullptr) {
-      mac_builder->mac = report;
+      mac_builder->mac        = report;
+      mac_builder->start_slot = start_slot;
       mac_builder.reset();
     }
     defer_until_success(parent.ctrl_exec, parent.timers, [this]() { parent.handle_cell_deactivation(cell_index); });
@@ -155,7 +157,8 @@ public:
 
     // If the token is acquired, it means that it is this thread's job to dispatch a job to handle pending reports.
     unsigned ring_index     = start_slot.count() / period_slots;
-    bool token_acquired = not parent.report_ring[ring_index].end_slot_flag.exchange(true, std::memory_order_acq_rel);
+    auto&    ring_slot      = parent.report_ring[ring_index];
+    bool     token_acquired = not ring_slot.end_slot_flag.exchange(true, std::memory_order_acq_rel);
     if (not token_acquired) {
       // Another cell is already handling the reports.
       return;
