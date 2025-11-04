@@ -43,7 +43,7 @@ public:
   // See interface for documentation.
   executor_metrics_channel& add_channel(const std::string& exec_name) override;
 
-  /// Stops periodic metrics reporting.
+  /// Stops periodic metrics reporting. This method is blocking.
   void stop();
 
   /// Start the backend worker using the passed timer and periodically report metrics to the given notifier object.

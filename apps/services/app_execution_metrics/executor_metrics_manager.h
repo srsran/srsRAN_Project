@@ -52,26 +52,20 @@ class app_executor_metrics_service
     {
       metrics_exec = &metrics_exec_;
 
-      if (stopped.exchange(false, std::memory_order_relaxed)) {
-        sync_event wait_all;
+      sync_event wait_all;
 
-        defer_until_success(*metrics_exec, timers, [this, token = wait_all.get_token()]() mutable {
-          // Start the executor metrics backend.
-          exec_metrics_backend.start(report_period, timers.create_unique_timer(*metrics_exec), notifier);
-        });
-        wait_all.wait();
-      }
+      defer_until_success(*metrics_exec, timers, [this, token = wait_all.get_token()]() mutable {
+        // Start the executor metrics backend.
+        exec_metrics_backend.start(report_period, timers.create_unique_timer(*metrics_exec), notifier);
+      });
+      wait_all.wait();
     }
 
     /// Stops the metrics backend.
     void stop()
     {
-      if (not stopped.exchange(true, std::memory_order_relaxed)) {
-        sync_event wait_all;
-        defer_until_success(
-            *metrics_exec, timers, [this, token = wait_all.get_token()]() mutable { exec_metrics_backend.stop(); });
-        wait_all.wait();
-      }
+      // Blocking call.
+      exec_metrics_backend.stop();
     }
 
     /// Application timers manager.
@@ -84,8 +78,6 @@ class app_executor_metrics_service
     executor_metrics_backend exec_metrics_backend;
     /// Notifier used by the backend to notify metrics.
     executor_metrics_notifier& notifier;
-    /// Operation status of this service.
-    std::atomic<bool> stopped{true};
   };
 
   /// Callback called on session destruction.

@@ -39,6 +39,7 @@ void executor_metrics_backend::stop()
 {
   // Signal stop to asynchronous timer thread.
   stop_control.stop();
+  // Stop the timer.
   timer.stop();
 
   notifier = nullptr;
