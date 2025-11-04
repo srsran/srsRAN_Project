@@ -83,7 +83,7 @@ def test_zmq_sequentially(
         param(41, 30, 50, 0, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
     ),
 )
-@mark.zmq_single_ue
+@mark.zmq
 @mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED"])
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def test_zmq_handover_iperf(

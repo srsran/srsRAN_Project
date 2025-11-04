@@ -329,7 +329,7 @@ cudu amari 64UE:
       - E2E_FILE_OR_DIR: tests/inter_du_handover.py
         KEYWORDS: sequentially
 
-2gnb amari 8UE:
+2gnb amari:
   extends: .zmq
   timeout: 2h
   variables:
@@ -339,7 +339,6 @@ cudu amari 64UE:
   parallel:
     matrix:
       - E2E_FILE_OR_DIR: tests/inter_cu_handover.py
-        KEYWORDS: sequentially
 
 ric:
   extends: .zmq
