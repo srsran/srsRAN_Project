@@ -888,6 +888,7 @@ def multi_ue_mobility_iperf(
     movement_steps: int = 10,
     sleep_between_movement_steps: int = 2,
     cell_position_offset: Tuple[float, float, float] = (1000, 0, 0),
+    nof_movements: int = 2,
     allow_failure: bool = False,
 ) -> Generator[
     Tuple[
@@ -960,9 +961,8 @@ def multi_ue_mobility_iperf(
         movements: Tuple[Tuple[Tuple[float, float, float], Tuple[float, float, float], int, int], ...] = (
             (original_position, cell_position_offset, movement_steps, sleep_between_movement_steps),
             (cell_position_offset, original_position, movement_steps, sleep_between_movement_steps),
-            (original_position, cell_position_offset, movement_steps, sleep_between_movement_steps),
-            (cell_position_offset, original_position, movement_steps, sleep_between_movement_steps),
-        )
+        ) * nof_movements
+
         traffic_seconds = (len(movements) * movement_duration) + len(ue_array)
 
         # Starting iperf in the UEs
