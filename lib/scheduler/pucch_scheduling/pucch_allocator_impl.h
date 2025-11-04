@@ -228,32 +228,26 @@ private:
                                std::optional<std::pair<grant_info, grant_info>> common_grants = std::nullopt);
 
   // Computes which resources are expected to be sent, depending on the UCI bits to be sent, before any multiplexing.
-  std::optional<pucch_grant_list> get_pucch_res_pre_multiplexing(slot_point                   sl_tx,
-                                                                 pucch_uci_bits               new_bits,
-                                                                 const ue_grants&             ue_current_grants,
-                                                                 const ue_cell_configuration& ue_cell_cfg);
+  std::optional<pucch_grant_list> get_pucch_res_pre_multiplexing(pucch_resource_manager::ue_reservation_guard& guard,
+                                                                 const ue_grants& ue_current_grants,
+                                                                 pucch_uci_bits   new_bits);
 
   // Execute the multiplexing algorithm as defined in TS 38.213, Section 9.2.5.
-  pucch_grant_list multiplex_resources(slot_point                   sl_tx,
-                                       rnti_t                       crnti,
-                                       const pucch_grant_list&      candidate_grants,
-                                       const ue_cell_configuration& ue_cell_cfg,
-                                       std::optional<uint8_t>       preserve_res_indicator);
+  pucch_grant_list multiplex_resources(pucch_resource_manager::ue_reservation_guard& guard,
+                                       const pucch_grant_list&                       candidate_grants,
+                                       std::optional<uint8_t>                        preserve_res_indicator);
 
   // Applies the multiplexing rules depending on the PUCCH resource format, as per TS 38.213, Section 9.2.5.1/2.
-  std::optional<pucch_grant> merge_pucch_resources(span<const pucch_grant> resources_to_merge,
-                                                   slot_point              slot_harq,
-                                                   rnti_t                  crnti,
-                                                   const pucch_config&     pucch_cfg,
-                                                   std::optional<uint8_t>  preserve_res_indicator);
+  std::optional<pucch_grant> merge_pucch_resources(pucch_resource_manager::ue_reservation_guard& guard,
+                                                   span<const pucch_grant>                       resources_to_merge,
+                                                   std::optional<uint8_t> preserve_res_indicator);
 
   // Allocate the PUCCH PDUs in the scheduler output, depending on the new PUCCH grants to be transmitted, and depending
   // on the PUCCH PDUs currently allocated.
-  std::optional<unsigned> allocate_grants(cell_slot_resource_allocator& pucch_slot_alloc,
-                                          ue_grants&                    existing_pucchs,
-                                          rnti_t                        crnti,
-                                          const pucch_grant_list&       grants_to_tx,
-                                          const ue_cell_configuration&  ue_cell_cfg);
+  std::optional<unsigned> allocate_grants(pucch_resource_manager::ue_reservation_guard& guard,
+                                          cell_slot_resource_allocator&                 pucch_slot_alloc,
+                                          ue_grants&                                    existing_pucchs,
+                                          const pucch_grant_list&                       grants_to_tx);
 
   // Fills the PUCCH HARQ PDU for common resources.
   void fill_pucch_harq_common_grant(pucch_info& pucch_info, rnti_t rnti, const pucch_res_alloc_cfg& pucch_res) const;
@@ -303,10 +297,9 @@ private:
 
   ///////////////  Private helpers   ///////////////
 
-  void remove_unused_pucch_res(slot_point                   sl_tx,
-                               const pucch_grant_list&      grants_to_tx,
-                               const ue_grants&             existing_pucchs,
-                               const ue_cell_configuration& ue_cell_cfg);
+  void remove_unused_pucch_res(pucch_resource_manager::ue_reservation_guard& guard,
+                               const ue_grants&                              existing_pucchs,
+                               const pucch_grant_list&                       grants_to_tx);
 
   unsigned get_max_pucch_grants(unsigned currently_allocated_puschs) const;
 
