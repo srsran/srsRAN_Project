@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/scheduler/sched_consts.h"
 #include "srsran/support/math/math_utils.h"
 
@@ -29,12 +30,14 @@ constexpr unsigned get_allocator_ring_size_gt_min(unsigned           minimum_val
                                                   subcarrier_spacing scs = subcarrier_spacing::kHz15)
 {
   auto power2_ceil = [](unsigned x) {
-    if (x <= 1)
+    if (x <= 1) {
       return 1U;
+    }
     unsigned power = 2;
     x--;
-    while (x >>= 1)
+    while (x >>= 1) {
       power <<= 1;
+    }
     return power;
   };
 

@@ -13,6 +13,8 @@
 #include "../config/ue_configuration.h"
 #include "pucch_allocator.h"
 #include "pucch_resource_manager.h"
+#include "srsran/ran/pucch/pucch_uci_bits.h"
+#include "srsran/scheduler/result/sched_result.h"
 #include "srsran/srslog/logger.h"
 
 namespace srsran {
@@ -170,19 +172,10 @@ private:
     }
   };
 
-  /// ////////////  Main private functions   //////////////
+  /// \brief Context information for a PUCCH allocation attempt.
+  struct alloc_context;
 
-  /// Returns whether a given UE can be allocated a PUCCH resource in a given slot.
-  bool can_allocate_pucch_resources(const cell_slot_resource_allocator& pucch_slot_alloc,
-                                    rnti_t                              rnti,
-                                    const ue_grants*                    existing_ue_grants,
-                                    pucch_grant_type                    grant_type,
-                                    bool                                common_and_ded) const;
-
-  /// Returns whether a given UE can be allocated a common PUCCH resource in a given slot.
-  bool can_allocate_common_pucch_resource(const cell_slot_resource_allocator& pucch_slot_alloc,
-                                          rnti_t                              rnti,
-                                          const ue_grants*                    existing_ue_grants) const;
+  ///////////////  Main private functions   //////////////
 
   // Allocates the PUCCH (common) resource for HARQ-(N)-ACK.
   std::optional<pucch_res_alloc_cfg> alloc_pucch_common_res_harq(const cell_slot_resource_allocator& pucch_alloc,
@@ -193,27 +186,28 @@ private:
                                              pucch_common_params           pucch_params);
 
   std::optional<pucch_common_params> find_common_and_ded_harq_res_available(cell_slot_resource_allocator& pucch_alloc,
-                                                                            ue_grants& existing_grants,
-                                                                            rnti_t     rnti,
-                                                                            const ue_cell_configuration&   ue_cell_cfg,
-                                                                            const dci_context_information& dci_info);
+                                                                            ue_grants&                   current_grants,
+                                                                            const ue_cell_configuration& ue_cell_cfg,
+                                                                            const dci_context_information& dci_info,
+                                                                            const alloc_context&           alloc_ctx);
 
   // Helper that allocates a NEW PUCCH HARQ grant (Format 0 or 1).
   std::optional<unsigned> allocate_harq_grant(cell_slot_resource_allocator& pucch_slot_alloc,
-                                              rnti_t                        crnti,
-                                              const ue_cell_configuration&  ue_cell_cfg);
+                                              const ue_cell_configuration&  ue_cell_cfg,
+                                              const alloc_context&          alloc_ctx);
 
   // Helper that allocates a new PUCCH HARQ grant (Format 2/3/4) for CSI.
   void allocate_csi_grant(cell_slot_resource_allocator& pucch_slot_alloc,
-                          rnti_t                        crnti,
                           const ue_cell_configuration&  ue_cell_cfg,
-                          unsigned                      csi_part1_bits);
+                          unsigned                      csi_part1_bits,
+                          const alloc_context&          alloc_ctx);
 
   // Update the grants data for the case in which multiplexing is not needed.
   std::optional<unsigned> allocate_without_multiplexing(cell_slot_resource_allocator& pucch_slot_alloc,
-                                                        pucch_uci_bits                new_bits,
+                                                        const pucch_uci_bits&         new_bits,
                                                         ue_grants&                    current_grants,
-                                                        const ue_cell_configuration&  ue_cell_cfg);
+                                                        const ue_cell_configuration&  ue_cell_cfg,
+                                                        const alloc_context&          alloc_ctx);
 
   // Implements the main steps of the multiplexing procedure as defined in TS 38.213, Section 9.2.5.
   // Note: If \c common_grants is set, it means that the function is called while allocating common and dedicated
@@ -221,16 +215,17 @@ private:
   // other UL grant.
   std::optional<unsigned>
   multiplex_and_allocate_pucch(cell_slot_resource_allocator&                    pucch_slot_alloc,
-                               pucch_uci_bits                                   new_bits,
+                               const pucch_uci_bits&                            new_bits,
                                ue_grants&                                       current_grants,
                                const ue_cell_configuration&                     ue_cell_cfg,
                                std::optional<uint8_t>                           preserve_res_indicator,
+                               const alloc_context&                             alloc_ctx,
                                std::optional<std::pair<grant_info, grant_info>> common_grants = std::nullopt);
 
   // Computes which resources are expected to be sent, depending on the UCI bits to be sent, before any multiplexing.
   std::optional<pucch_grant_list> get_pucch_res_pre_multiplexing(pucch_resource_manager::ue_reservation_guard& guard,
-                                                                 const ue_grants& ue_current_grants,
-                                                                 pucch_uci_bits   new_bits);
+                                                                 const ue_grants&      ue_current_grants,
+                                                                 const pucch_uci_bits& new_bits);
 
   // Execute the multiplexing algorithm as defined in TS 38.213, Section 9.2.5.
   pucch_grant_list multiplex_resources(pucch_resource_manager::ue_reservation_guard& guard,
@@ -247,61 +242,48 @@ private:
   std::optional<unsigned> allocate_grants(pucch_resource_manager::ue_reservation_guard& guard,
                                           cell_slot_resource_allocator&                 pucch_slot_alloc,
                                           ue_grants&                                    existing_pucchs,
-                                          const pucch_grant_list&                       grants_to_tx);
-
-  // Fills the PUCCH HARQ PDU for common resources.
-  void fill_pucch_harq_common_grant(pucch_info& pucch_info, rnti_t rnti, const pucch_res_alloc_cfg& pucch_res) const;
-
-  // Fills the PUCCH Format 0 PDU.
-  void fill_pucch_ded_format0_grant(pucch_info&           pucch_pdu,
-                                    rnti_t                crnti,
-                                    const pucch_resource& pucch_ded_res_cfg,
-                                    unsigned              harq_ack_bits,
-                                    sr_nof_bits           sr_bits) const;
-
-  // Fills the PUCCH Format 1 PDU.
-  void fill_pucch_ded_format1_grant(pucch_info&           pucch_pdu,
-                                    rnti_t                crnti,
-                                    const pucch_resource& pucch_ded_res_cfg,
-                                    unsigned              harq_ack_bits,
-                                    sr_nof_bits           sr_bits) const;
-
-  // Fills the PUCCH Format 2 PDU.
-  void fill_pucch_format2_grant(pucch_info&                  pucch_pdu,
-                                rnti_t                       crnti,
-                                const pucch_resource&        pucch_ded_res_cfg,
-                                const ue_cell_configuration& ue_cell_cfg,
-                                unsigned                     nof_prbs,
-                                unsigned                     harq_ack_bits,
-                                sr_nof_bits                  sr_bits,
-                                unsigned                     csi_part1_bits) const;
-
-  // Fills the PUCCH Format 3 PDU.
-  void fill_pucch_format3_grant(pucch_info&                  pucch_pdu,
-                                rnti_t                       crnti,
-                                const pucch_resource&        pucch_ded_res_cfg,
-                                const ue_cell_configuration& ue_cell_cfg,
-                                unsigned                     nof_prbs,
-                                unsigned                     harq_ack_bits,
-                                sr_nof_bits                  sr_bits,
-                                unsigned                     csi_part1_bits) const;
-
-  // Fills the PUCCH Format 4 PDU.
-  void fill_pucch_format4_grant(pucch_info&                  pucch_pdu,
-                                rnti_t                       crnti,
-                                const pucch_resource&        pucch_ded_res_cfg,
-                                const ue_cell_configuration& ue_cell_cfg,
-                                unsigned                     harq_ack_bits,
-                                sr_nof_bits                  sr_bits,
-                                unsigned                     csi_part1_bits) const;
+                                          const pucch_grant_list&                       grants_to_tx,
+                                          const alloc_context&                          alloc_ctx);
 
   ///////////////  Private helpers   ///////////////
+
+  /// Returns whether a given UE can be allocated PUCCH in a given slot.
+  bool can_allocate_pucch(const cell_slot_resource_allocator& pucch_slot_alloc,
+                          const ue_grants*                    existing_ue_grants,
+                          const alloc_context&                alloc_ctx) const;
+
+  /// Returns whether a given fallback UE can be allocated PUCCH in a given slot.
+  bool can_allocate_fallback_pucch(const cell_slot_resource_allocator& pucch_slot_alloc,
+                                   const ue_grants*                    existing_ue_grants,
+                                   const alloc_context&                alloc_ctx) const;
+
+  /// Returns whether there is space for new PUCCH grants in the given scheduler result.
+  bool is_there_space_for_new_pucch_grants(const sched_result& slot_result, unsigned nof_grants_to_allocate) const;
+
+  /// \brief Fills the PUCCH PDU for common HARQ-ACK resources.
+  /// \param[out] pucch_pdu PUCCH PDU to be filled.
+  /// \param[in] pucch_res PUCCH resource configuration.
+  /// \param[in] rnti RNTI of the UE.
+  void fill_common_pdu(pucch_info& pucch_pdu, const pucch_res_alloc_cfg& pucch_res, rnti_t rnti) const;
+
+  /// \brief Fills the PUCCH PDU for dedicated resources.
+  // \param[out] pucch_pdu PUCCH PDU to be filled.
+  // \param[in] pucch_res PUCCH resource configuration.
+  // \param[in] uci_bits UCI bits to be sent in the PUCCH.
+  // \param[in] ue_cell_cfg UE cell configuration.
+  // \param[in] rnti RNTI of the UE.
+  // \param[in] adjust_prbs If true, adjusts the number of PRBs based on the number of UCI bits to be carried.
+  //            Only applicable for PUCCH resources of Formats 2 or 3.
+  void fill_ded_pdu(pucch_info&                  pucch_pdu,
+                    const pucch_resource&        pucch_res,
+                    const pucch_uci_bits&        uci_bits,
+                    const ue_cell_configuration& ue_cell_cfg,
+                    rnti_t                       rnti,
+                    bool                         adjust_prbs) const;
 
   void remove_unused_pucch_res(pucch_resource_manager::ue_reservation_guard& guard,
                                const ue_grants&                              existing_pucchs,
                                const pucch_grant_list&                       grants_to_tx);
-
-  unsigned get_max_pucch_grants(unsigned currently_allocated_puschs) const;
 
   // \brief Ring of PUCCH allocations indexed by slot.
   circular_array<slot_context, cell_resource_allocator::RING_ALLOCATOR_SIZE> slots_ctx;

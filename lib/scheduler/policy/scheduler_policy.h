@@ -69,7 +69,7 @@ public:
   virtual void save_dl_newtx_grants(span<const dl_msg_alloc> dl_grants) = 0;
 
   /// Save UE UL newtx grants.
-  virtual void save_ul_newtx_grants(span<const ul_sched_info> dl_grants) = 0;
+  virtual void save_ul_newtx_grants(span<const ul_sched_info> ul_grants) = 0;
 };
 
 } // namespace srsran
