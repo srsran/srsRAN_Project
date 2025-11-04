@@ -541,8 +541,8 @@ def test_zmq_handover_iperf(
 @mark.parametrize(
     "band, common_scs, bandwidth, noise_spd",
     (
-        param(3, 15, 50, -175, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
-        param(41, 30, 50, -175, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
+        param(3, 15, 50, -170, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
+        param(41, 30, 50, -170, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
     ),
 )
 @mark.zmq_single_ue
@@ -587,6 +587,7 @@ def test_zmq_handover_noise(
         noise_spd=noise_spd,
         sleep_between_movement_steps=1,
         warning_as_errors=True,
+        nof_movements=5,
         allow_failure=True,
     ) as (ue_attach_info_dict, movements, _):
 
