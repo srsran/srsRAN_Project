@@ -13,8 +13,10 @@
 #include "rx_payload_buffer_pool.h"
 #include "uplink_pdu_slot_repository_impl.h"
 #include "uplink_processor_fsm.h"
+#include "uplink_slot_processor_alt_impl.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/resource_grid_context.h"
+#include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_result_notifier.h"
 #include "srsran/phy/upper/phy_tap/phy_tap.h"
@@ -29,6 +31,7 @@
 
 namespace srsran {
 namespace detail {
+
 /// \brief Adapts the PUSCH processor result notifier to the upper PHY receive results notifier.
 ///
 /// It collects the Channel State Information (CSI), control and data decoding information from a PUSCH processor object
@@ -157,30 +160,6 @@ public:
     task_executor& executor;
   };
 
-  /// Uplink processor dummy instance - it only processes PRACH and ignores the rest.
-  class dummy_instance : public uplink_slot_processor
-  {
-  public:
-    dummy_instance(uplink_slot_processor& base_) : base(base_) {}
-
-    void handle_rx_symbol(unsigned end_symbol_index, bool is_valid) override
-    {
-      // Ignore symbol.
-    }
-    void process_prach(const prach_buffer& buffer, const prach_buffer_context& context) override
-    {
-      base.process_prach(buffer, context);
-    }
-
-    void discard_slot() override
-    {
-      // Ignore.
-    }
-
-  private:
-    uplink_slot_processor& base;
-  };
-
   /// Collects task executors.
   struct task_executor_collection {
     /// Executor for the PUCCH tasks generated within this uplink processor.
@@ -280,9 +259,6 @@ private:
   std::unique_ptr<resource_grid> grid;
   /// Task executors.
   task_executor_collection task_executors;
-  /// Internal dummy instance to avoid exposing \c handle_rx_symbol() and \c discard_slot() in slots that do not match
-  /// the configured slot.
-  dummy_instance dummy;
   /// Receive buffer pool.
   rx_buffer_pool& rm_buffer_pool;
   /// Pool of containers for the payload.
@@ -297,5 +273,8 @@ private:
   unsigned nof_processed_symbols;
   /// Optional physical layer tap plugin.
   std::unique_ptr<phy_tap> ul_tap;
+  /// Internal alternative instance to avoid exposing \c handle_rx_symbol() and \c discard_slot() in slots that do not
+  /// contain any receive requests.
+  uplink_slot_processor_alt_impl alternative_processor;
 };
 } // namespace srsran

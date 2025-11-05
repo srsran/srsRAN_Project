@@ -59,15 +59,19 @@ public:
     return true;
   }
 
-  /// \brief Returns true if the repository is configured with the given slot and ready to process PDUs.
+  /// \brief Returns true if the uplink slot processor contains receive requests associated with the given slot.
   ///
-  /// The slot is considered invalid if:
+  /// The processor does not have requests if:
   /// - the current state is accepting PDUs, idle, locked, or stopped; or
   /// - the given slot is not equal to the configured one.
-  bool is_slot_valid(slot_point slot) const
+  ///
+  /// \param[in] slot Given slot.
+  /// \return True if the processor has requests associated with the slot.
+  bool has_receive_request(slot_point slot) const
   {
     uint32_t current_state = pending_pdu_count.load();
-    // Verify that the repository is in a valid state to process PDUs.
+
+    // Verify that the repository is in a valid state to process PDUs. Idle implies that there are no requests pending.
     if (is_state_idle(current_state) || is_state_accepting_pdu(current_state) || is_state_locked(current_state) ||
         is_state_stopped(current_state)) {
       return false;

@@ -61,6 +61,19 @@ public:
                                 span<const uplink_pdu_slot_repository::pucch_pdu>         pucch_pdus,
                                 span<const pucch_processor::format1_common_configuration> pucch_f1_pdus,
                                 span<const uplink_pdu_slot_repository::srs_pdu>           srs_pdus) = 0;
+
+  /// \brief Exposes the received uplink resource grid without any associated request to an external
+  /// processing unit.
+  ///
+  /// This method is called from the upper physical layer for the last received uplink symbol. It provides access to the
+  /// received symbols of the current \ref slot.
+  ///
+  /// \param[in] grid_reader Complete resource grid that is not expected to contain any receive request.
+  /// \param[in] slot        Slot context.
+  ///
+  /// \warning This method is called from the RU UL execution context. Performing heavy processing tasks synchronously
+  /// in this method may lead to realtime errors.
+  virtual void handle_quiet_grid(const resource_grid_reader& grid_reader, slot_point slot) = 0;
 };
 
 } // namespace srsran
