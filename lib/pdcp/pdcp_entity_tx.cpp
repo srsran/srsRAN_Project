@@ -11,6 +11,7 @@
 #include "pdcp_entity_tx.h"
 #include "../security/security_engine_impl.h"
 #include "srsran/instrumentation/traces/up_traces.h"
+#include "srsran/rohc/rohc_support.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/executors/execution_context_description.h"
 #include "srsran/support/srsran_assert.h"
@@ -54,17 +55,38 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
   }
 
   // Validate configuration
-  if (is_srb() && (cfg.sn_size != pdcp_sn_size::size12bits)) {
-    report_error("PDCP SRB with invalid sn_size. {}", cfg);
-  }
-  if (is_srb() && is_um()) {
-    report_error("PDCP SRB cannot be used with RLC UM. {}", cfg);
-  }
-  if (is_srb() && cfg.discard_timer != pdcp_discard_timer::infinity) {
-    logger.log_error("Invalid SRB config with discard_timer={}", cfg.discard_timer);
-  }
-  if (is_drb() && !cfg.discard_timer.has_value()) {
-    logger.log_error("Invalid DRB config, discard_timer is not configured");
+  if (is_srb()) {
+    if (cfg.sn_size != pdcp_sn_size::size12bits) {
+      report_error("PDCP SRB with invalid sn_size. {}", cfg);
+    }
+    if (is_um()) {
+      report_error("PDCP SRB cannot be used with RLC UM. {}", cfg);
+    }
+    if (cfg.discard_timer != pdcp_discard_timer::infinity) {
+      logger.log_error("Invalid SRB config with discard_timer={}", cfg.discard_timer);
+    }
+    if (cfg.header_compression.has_value()) {
+      report_error("ROHC not allowed for SRBs. {}", cfg);
+    }
+  } else if (is_drb()) {
+    if (!cfg.discard_timer.has_value()) {
+      logger.log_error("Invalid DRB config, discard_timer is not configured");
+    }
+    if (cfg.header_compression.has_value()) {
+      const auto& header_compression = cfg.header_compression.value();
+      if (header_compression.rohc_type == rohc::rohc_type_t::uplink_only_rohc) {
+        for (auto profile : rohc::all_rohc_profiles) {
+          if (profile != rohc::rohc_profile::profile0x0006 && header_compression.profiles.is_profile_enabled(profile)) {
+            logger.log_error(
+                "Invalid ROHC profile for {}. profiles={}", header_compression.rohc_type, header_compression.profiles);
+            break;
+          }
+        }
+      }
+      if (!rohc::rohc_supported()) {
+        report_error("ROHC is not not supported. {}", cfg);
+      }
+    }
   }
 
   logger.log_info("PDCP configured. {}", cfg);

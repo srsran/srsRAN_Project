@@ -11,6 +11,7 @@
 #include "pdcp_entity_rx.h"
 #include "../security/security_engine_impl.h"
 #include "srsran/instrumentation/traces/up_traces.h"
+#include "srsran/rohc/rohc_support.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/executors/execution_context_description.h"
 #include "srsran/support/resource_usage/scoped_resource_usage.h"
@@ -51,6 +52,35 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
     });
     metrics_timer.run();
   }
+
+  // Validate configuration
+  if (is_srb()) {
+    if (cfg.header_compression.has_value()) {
+      report_error("ROHC not allowed for SRBs. {}", cfg);
+    }
+  } else if (is_drb()) {
+    if (cfg.t_reordering == pdcp_t_reordering::infinity) {
+      logger.log_warning("t-Reordering of infinity on DRBs is not advised. It can cause data stalls.");
+    }
+    if (cfg.header_compression.has_value()) {
+      const auto& header_compression = cfg.header_compression.value();
+      if (header_compression.rohc_type == rohc::rohc_type_t::uplink_only_rohc) {
+        for (auto profile : rohc::all_rohc_profiles) {
+          if (profile != rohc::rohc_profile::profile0x0006 && header_compression.profiles.is_profile_enabled(profile)) {
+            logger.log_error(
+                "Invalid ROHC profile for {}. profiles={}", header_compression.rohc_type, header_compression.profiles);
+            break;
+          }
+        }
+      }
+      if (!rohc::rohc_supported()) {
+        report_error("ROHC is not not supported. {}", cfg);
+      }
+    }
+  }
+
+  logger.log_info("PDCP configured. {}", cfg);
+
   // t-Reordering timer
   if (cfg.t_reordering != pdcp_t_reordering::ms0 && cfg.t_reordering != pdcp_t_reordering::infinity) {
     reordering_timer = ue_ul_timer_factory.create_timer();
@@ -59,10 +89,6 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
                            reordering_callback{this});
     }
   }
-  if (cfg.rb_type == pdcp_rb_type::drb && cfg.t_reordering == pdcp_t_reordering::infinity) {
-    logger.log_warning("t-Reordering of infinity on DRBs is not advised. It can cause data stalls.");
-  }
-  logger.log_info("PDCP configured. {}", cfg);
 
   // Populate null security engines
   sec_engine_pool.reserve(max_nof_crypto_workers);
