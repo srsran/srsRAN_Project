@@ -748,37 +748,33 @@ inline asn1::e1ap::pdcp_cfg_s pdcp_config_to_e1ap_asn1(const e1ap_pdcp_config& p
   asn1_pdcp_cfg.rlc_mode = rlc_mode_to_asn1(pdcp_cfg.rlc_mod);
 
   // Fill ROHC params.
-  if (pdcp_cfg.rohc_params.has_value()) {
+  if (pdcp_cfg.rohc_config.has_value()) {
+    const auto& rohc_config           = pdcp_cfg.rohc_config.value();
     asn1_pdcp_cfg.rohc_params_present = true;
-    if (pdcp_cfg.rohc_params.value().rohc.has_value()) {
-      asn1_pdcp_cfg.rohc_params.set_rohc();
-      auto& e1ap_rohc         = asn1_pdcp_cfg.rohc_params.rohc();
-      e1ap_rohc.max_c_id      = pdcp_cfg.rohc_params.value().rohc.value().max_cid;
-      e1ap_rohc.rohc_profiles = pdcp_cfg.rohc_params.value().rohc.value().rohc_profiles;
-      if (pdcp_cfg.rohc_params.value().rohc.value().continue_rohc.has_value()) {
-        e1ap_rohc.continue_rohc_present = true;
-        if (pdcp_cfg.rohc_params.value().rohc.value().continue_rohc.value()) {
-          e1ap_rohc.continue_rohc = asn1::e1ap::rohc_s::continue_rohc_opts::options::true_value;
-        } else {
-          e1ap_rohc.continue_rohc = asn1::e1ap::rohc_s::continue_rohc_opts::options::nulltype;
+    switch (rohc_config.rohc_type) {
+      case e1ap_rohc_type::rohc: {
+        asn1_pdcp_cfg.rohc_params.set_rohc();
+        auto& e1ap_rohc         = asn1_pdcp_cfg.rohc_params.rohc();
+        e1ap_rohc.max_c_id      = rohc_config.rohc_params.max_cid;
+        e1ap_rohc.rohc_profiles = rohc_config.rohc_params.rohc_profiles;
+        if (rohc_config.rohc_params.continue_rohc) {
+          e1ap_rohc.continue_rohc_present = true;
+          e1ap_rohc.continue_rohc         = asn1::e1ap::rohc_s::continue_rohc_opts::options::true_value;
         }
-      }
-    } else if (pdcp_cfg.rohc_params.value().ul_only_rohc.has_value()) {
-      asn1_pdcp_cfg.rohc_params.set_ul_only_rohc();
-      auto& e1ap_rohc         = asn1_pdcp_cfg.rohc_params.ul_only_rohc();
-      e1ap_rohc.max_c_id      = pdcp_cfg.rohc_params.value().ul_only_rohc.value().max_cid;
-      e1ap_rohc.rohc_profiles = pdcp_cfg.rohc_params.value().ul_only_rohc.value().rohc_profiles;
-      if (pdcp_cfg.rohc_params.value().ul_only_rohc.value().continue_rohc.has_value()) {
-        e1ap_rohc.continue_rohc_present = true;
-        if (pdcp_cfg.rohc_params.value().ul_only_rohc.value().continue_rohc.value()) {
-          e1ap_rohc.continue_rohc = asn1::e1ap::ul_only_rohc_s::continue_rohc_opts::options::true_value;
-        } else {
-          e1ap_rohc.continue_rohc = asn1::e1ap::ul_only_rohc_s::continue_rohc_opts::options::nulltype;
+      } break;
+      case e1ap_rohc_type::uplink_only_rohc: {
+        asn1_pdcp_cfg.rohc_params.set_ul_only_rohc();
+        auto& e1ap_rohc         = asn1_pdcp_cfg.rohc_params.ul_only_rohc();
+        e1ap_rohc.max_c_id      = rohc_config.rohc_params.max_cid;
+        e1ap_rohc.rohc_profiles = rohc_config.rohc_params.rohc_profiles;
+        if (rohc_config.rohc_params.continue_rohc) {
+          e1ap_rohc.continue_rohc_present = true;
+          e1ap_rohc.continue_rohc         = asn1::e1ap::ul_only_rohc_s::continue_rohc_opts::options::true_value;
         }
-      }
-    } else {
-      asn1_pdcp_cfg.rohc_params_present = false;
+      } break;
     }
+  } else {
+    asn1_pdcp_cfg.rohc_params_present = false;
   }
 
   // Fill t reordering timer.
@@ -867,42 +863,39 @@ inline e1ap_pdcp_config e1ap_asn1_to_pdcp_config(const asn1::e1ap::pdcp_cfg_s& a
 
   // Fill ROHC params.
   if (asn1_pdcp_cfg.rohc_params_present) {
-    if (asn1_pdcp_cfg.rohc_params.type().value == asn1::e1ap::rohc_params_c::types_opts::rohc) {
-      e1ap_rohc_params rohc_params = {};
-      e1ap_rohc        rohc        = {};
-
-      rohc.max_cid       = asn1_pdcp_cfg.rohc_params.rohc().max_c_id;
-      rohc.rohc_profiles = asn1_pdcp_cfg.rohc_params.rohc().rohc_profiles;
-      if (asn1_pdcp_cfg.rohc_params.rohc().continue_rohc_present) {
-        if (asn1_pdcp_cfg.rohc_params.rohc().continue_rohc ==
-            asn1::e1ap::rohc_s::continue_rohc_opts::options::true_value) {
-          rohc.continue_rohc = true;
-        } else {
-          rohc.continue_rohc = false;
+    e1ap_rohc_config rohc_config = {};
+    switch (asn1_pdcp_cfg.rohc_params.type().value) {
+      case asn1::e1ap::rohc_params_c::types_opts::rohc:
+        rohc_config.rohc_type                 = e1ap_rohc_type::rohc;
+        rohc_config.rohc_params.max_cid       = asn1_pdcp_cfg.rohc_params.rohc().max_c_id;
+        rohc_config.rohc_params.rohc_profiles = asn1_pdcp_cfg.rohc_params.rohc().rohc_profiles;
+        if (asn1_pdcp_cfg.rohc_params.rohc().continue_rohc_present) {
+          if (asn1_pdcp_cfg.rohc_params.rohc().continue_rohc ==
+              asn1::e1ap::rohc_s::continue_rohc_opts::options::true_value) {
+            rohc_config.rohc_params.continue_rohc = true;
+          } else {
+            rohc_config.rohc_params.continue_rohc = false;
+          }
         }
-      }
+        break;
+      case asn1::e1ap::rohc_params_c::types_opts::ul_only_rohc:
+        rohc_config.rohc_type                 = e1ap_rohc_type::uplink_only_rohc;
+        rohc_config.rohc_params.max_cid       = asn1_pdcp_cfg.rohc_params.ul_only_rohc().max_c_id;
+        rohc_config.rohc_params.rohc_profiles = asn1_pdcp_cfg.rohc_params.ul_only_rohc().rohc_profiles;
 
-      rohc_params.rohc     = rohc;
-      pdcp_cfg.rohc_params = rohc_params;
-    } else if (asn1_pdcp_cfg.rohc_params.type().value == asn1::e1ap::rohc_params_c::types_opts::ul_only_rohc) {
-      e1ap_rohc_params rohc_params  = {};
-      e1ap_rohc        ul_only_rohc = {};
-
-      ul_only_rohc.max_cid       = asn1_pdcp_cfg.rohc_params.ul_only_rohc().max_c_id;
-      ul_only_rohc.rohc_profiles = asn1_pdcp_cfg.rohc_params.ul_only_rohc().rohc_profiles;
-
-      if (asn1_pdcp_cfg.rohc_params.ul_only_rohc().continue_rohc_present) {
-        if (asn1_pdcp_cfg.rohc_params.ul_only_rohc().continue_rohc ==
-            asn1::e1ap::ul_only_rohc_s::continue_rohc_opts::options::true_value) {
-          ul_only_rohc.continue_rohc = true;
-        } else {
-          ul_only_rohc.continue_rohc = false;
+        if (asn1_pdcp_cfg.rohc_params.ul_only_rohc().continue_rohc_present) {
+          if (asn1_pdcp_cfg.rohc_params.ul_only_rohc().continue_rohc ==
+              asn1::e1ap::ul_only_rohc_s::continue_rohc_opts::options::true_value) {
+            rohc_config.rohc_params.continue_rohc = true;
+          } else {
+            rohc_config.rohc_params.continue_rohc = false;
+          }
         }
-      }
-
-      rohc_params.ul_only_rohc = ul_only_rohc;
-      pdcp_cfg.rohc_params     = rohc_params;
+      default:
+        report_fatal_error("Cannot convert E1AP ASN.1 ROHC type {} to common type",
+                           fmt::underlying(asn1_pdcp_cfg.rohc_params.type().value));
     }
+    pdcp_cfg.rohc_config = rohc_config;
   }
 
   // Fill t reordering timer.

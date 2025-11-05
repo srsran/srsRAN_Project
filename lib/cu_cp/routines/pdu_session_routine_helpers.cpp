@@ -19,7 +19,26 @@ void srsran::srs_cu_cp::fill_e1ap_drb_pdcp_config(e1ap_pdcp_config& e1ap_pdcp_cf
   e1ap_pdcp_cfg.pdcp_sn_size_ul = cu_cp_pdcp_cfg.tx.sn_size;
   e1ap_pdcp_cfg.pdcp_sn_size_dl = cu_cp_pdcp_cfg.rx.sn_size;
   e1ap_pdcp_cfg.rlc_mod         = cu_cp_pdcp_cfg.rlc_mode;
-  e1ap_pdcp_cfg.discard_timer   = cu_cp_pdcp_cfg.tx.discard_timer;
+
+  // ROHC
+  if (cu_cp_pdcp_cfg.header_compression.has_value()) {
+    const auto&      rohc_cfg_in  = cu_cp_pdcp_cfg.header_compression.value();
+    e1ap_rohc_config rohc_cfg_out = {};
+    switch (rohc_cfg_in.rohc_type) {
+      case rohc::rohc_type_t::rohc:
+        rohc_cfg_out.rohc_type = e1ap_rohc_type::rohc;
+        break;
+      case rohc::rohc_type_t::uplink_only_rohc:
+        rohc_cfg_out.rohc_type = e1ap_rohc_type::uplink_only_rohc;
+        break;
+    }
+    rohc_cfg_out.rohc_params.max_cid       = rohc_cfg_in.max_cid;
+    rohc_cfg_out.rohc_params.rohc_profiles = rohc_cfg_in.profiles.get_profile_bitmap();
+    rohc_cfg_out.rohc_params.continue_rohc = rohc_cfg_in.continue_rohc;
+    e1ap_pdcp_cfg.rohc_config              = rohc_cfg_out;
+  }
+
+  e1ap_pdcp_cfg.discard_timer = cu_cp_pdcp_cfg.tx.discard_timer;
   if (cu_cp_pdcp_cfg.rx.t_reordering != pdcp_t_reordering::infinity) {
     e1ap_pdcp_cfg.t_reordering_timer = cu_cp_pdcp_cfg.rx.t_reordering;
   }
