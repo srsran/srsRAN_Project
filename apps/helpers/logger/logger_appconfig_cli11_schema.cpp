@@ -38,10 +38,12 @@ static void configure_cli11_log_args(CLI::App& app, logger_appconfig& log_params
       app, " --config_level", app_helpers::capture_log_level_function(log_params.config_level), "Config log level")
       ->default_str(srslog::basic_level_to_string(log_params.config_level))
       ->check(config_level_check);
-  add_option(
-      app, "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")
+  add_option(app,
+             "--hex_max_size",
+             log_params.hex_max_size,
+             "Maximum number of bytes to print in hex (zero for no hex dumps, -1 for unlimited bytes)")
       ->capture_default_str()
-      ->check(CLI::Range(0, 1024));
+      ->check(CLI::Range(-1, 1024));
   // Post-parsing callback. This allows us to set the log level to "all" level, if no level is provided.
   app.callback([&]() {
     // Do nothing when all_level is not defined or it is defined as warning.

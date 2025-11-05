@@ -31,10 +31,15 @@ static void fill_du_appconfig_expert_execution_section(YAML::Node node, const ex
   }
 
   {
-    YAML::Node threads_node           = node["threads"];
-    YAML::Node main_pool_node         = threads_node["main_pool"];
-    main_pool_node["nof_threads"]     = config.threads.main_pool.nof_threads.value();
+    YAML::Node threads_node   = node["threads"];
+    YAML::Node main_pool_node = threads_node["main_pool"];
+    if (config.threads.main_pool.nof_threads.has_value()) {
+      main_pool_node["nof_threads"] = config.threads.main_pool.nof_threads.value();
+    } else {
+      main_pool_node["nof_threads"] = "auto";
+    }
     main_pool_node["task_queue_size"] = config.threads.main_pool.task_queue_size;
+    main_pool_node["backoff_period"]  = config.threads.main_pool.backoff_period;
   }
 }
 

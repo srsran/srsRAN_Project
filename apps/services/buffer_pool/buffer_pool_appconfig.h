@@ -14,6 +14,7 @@
 #include "srsran/adt/byte_buffer.h"
 
 namespace srsran {
+namespace app_services {
 
 /// Buffer pool metrics configuration.
 struct buffer_pool_metrics_config {
@@ -31,4 +32,5 @@ struct buffer_pool_appconfig {
   buffer_pool_metrics_config metrics_config;
 };
 
+} // namespace app_services
 } // namespace srsran

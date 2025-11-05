@@ -66,10 +66,12 @@ static void configure_cli11_log_args(CLI::App& app, du_low_unit_logger_config& l
                  "\"phy_rx_symbols_filename\" is set.")
       ->capture_default_str();
 
-  add_option(
-      app, "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")
+  add_option(app,
+             "--hex_max_size",
+             log_params.hex_max_size,
+             "Maximum number of bytes to print in hex (zero for no hex dumps, -1 for unlimited bytes)")
       ->capture_default_str()
-      ->check(CLI::Range(0, 1024));
+      ->check(CLI::Range(-1, 1024));
 }
 
 static void configure_cli11_trace_args(CLI::App& app, du_low_unit_tracer_config& config)

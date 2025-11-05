@@ -63,7 +63,7 @@ struct du_appconfig {
   /// F1-U configuration.
   srs_du::f1u_appconfig f1u_cfg;
   /// Buffer pool configuration.
-  buffer_pool_appconfig buffer_pool_config;
+  app_services::buffer_pool_appconfig buffer_pool_config;
   /// Expert configuration.
   expert_execution_appconfig expert_execution_cfg;
   /// HAL configuration.

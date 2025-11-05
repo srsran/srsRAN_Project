@@ -56,7 +56,7 @@ struct cu_up_appconfig {
   /// F1-U configuration.
   f1u_sockets_appconfig f1u_cfg;
   /// Buffer pool configuration.
-  buffer_pool_appconfig buffer_pool_config;
+  app_services::buffer_pool_appconfig buffer_pool_config;
   /// Remote control configuration.
   remote_control_appconfig remote_control_config;
   /// Metrics configuration.

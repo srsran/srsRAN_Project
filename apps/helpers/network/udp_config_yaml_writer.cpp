@@ -16,6 +16,12 @@ using namespace srsran;
 /// Fills the UDP configuration in the given YAML node.
 void srsran::fill_udp_config_in_yaml_schema(YAML::Node node, const udp_appconfig& config)
 {
-  node["max_rx_msgs"]    = config.rx_max_msgs;
-  node["pool_threshold"] = config.pool_threshold;
+  node["max_rx_msgs"]     = config.rx_max_msgs;
+  node["tx_qsize"]        = config.tx_qsize;
+  node["max_tx_msgs"]     = config.tx_max_msgs;
+  node["max_tx_segments"] = config.tx_max_segments;
+  node["pool_threshold"]  = config.pool_threshold;
+  if (config.dscp.has_value()) {
+    node["dscp"] = *config.dscp;
+  }
 }

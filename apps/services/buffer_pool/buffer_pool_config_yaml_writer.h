@@ -10,15 +10,15 @@
 
 #pragma once
 
-#include "CLI/CLI11.hpp"
+#include <yaml-cpp/yaml.h>
 
 namespace srsran {
 namespace app_services {
 
 struct buffer_pool_appconfig;
 
-/// Configures the given CLI11 application with the buffer pool application configuration schema.
-void configure_cli11_with_buffer_pool_appconfig_schema(CLI::App& app, buffer_pool_appconfig& config);
+/// Fills the given node with the buffer pool configuration values.
+void fill_buffer_pool_config_in_yaml_schema(YAML::Node& node, const buffer_pool_appconfig& config);
 
 } // namespace app_services
 } // namespace srsran
