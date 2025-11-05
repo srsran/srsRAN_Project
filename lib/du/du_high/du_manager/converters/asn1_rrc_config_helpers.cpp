@@ -3412,6 +3412,13 @@ bool srsran::srs_du::calculate_reconfig_with_sync_diff(asn1::rrc_nr::recfg_with_
   out.smtc.set_present();
   *out.smtc = make_ssb_mtc(du_cell_cfg);
 
+  if (du_cell_cfg.ntn_cs_koffset) {
+    out.sp_cell_cfg_common.ext = true;
+    out.sp_cell_cfg_common.ntn_cfg_r17.set_present();
+    auto* ntn_cfg_r17                              = out.sp_cell_cfg_common.ntn_cfg_r17.get();
+    ntn_cfg_r17->cell_specific_koffset_r17_present = true;
+    ntn_cfg_r17->cell_specific_koffset_r17         = du_cell_cfg.ntn_cs_koffset;
+  }
   // TODO
 
   return true;
