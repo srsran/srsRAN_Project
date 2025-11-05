@@ -73,7 +73,11 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
     logger.log_debug("\"{}\" finished successfully", name());
     procedure_result = true;
   } else {
-    logger.log_warning("\"{}\" timed out after {}ms", name(), procedure_timeout.count());
+    if (transaction.failure_cause() == protocol_transaction_failure::timeout) {
+      logger.log_warning("\"{}\" timed out after {}ms", name(), procedure_timeout.count());
+    } else {
+      logger.log_info("\"{}\" cancelled", name());
+    }
   }
 
   CORO_RETURN(procedure_result);

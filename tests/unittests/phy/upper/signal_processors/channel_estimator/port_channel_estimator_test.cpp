@@ -27,7 +27,6 @@
 /// vectors.
 
 #include "port_channel_estimator_test_data.h"
-#include "srsran/phy/upper/channel_processors/pusch/pusch_processor_phy_capabilities.h"
 #include "srsran/phy/upper/signal_processors/channel_estimator/factories.h"
 #include "srsran/phy/upper/signal_processors/channel_estimator/port_channel_estimator_parameters.h"
 #include <gtest/gtest.h>
@@ -136,10 +135,6 @@ TEST_P(ChannelEstFixture, test)
   // For now, we consider at most 4 layers.
   unsigned nof_layers = cfg.dmrs_pattern.size();
   ASSERT_LE(nof_layers, 4) << "For now, at most four transmission layers are supported.";
-
-  if ((nof_layers > 1) && (get_pusch_processor_phy_capabilities().max_nof_layers < 2)) {
-    GTEST_SKIP() << "The channel estimator for 2 or more layers is not supported in this version - skipping the test.";
-  }
 
   // The test only considers a single port.
   ASSERT_EQ(cfg.rx_ports.size(), 1) << "The channel estimator test only considers a single Rx port.";

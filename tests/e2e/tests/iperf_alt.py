@@ -102,4 +102,11 @@ def test_multiple_configs_zmq(
         bitrate_threshold_ratio=0,  # bitrate != 0
     )
     sleep(wait_before_power_off)
-    stop(ue_array=(ue,), gnb=gnb, fivegc=fivegc, retina_data=retina_data, warning_as_errors=True, fail_if_kos=True)
+    stop(
+        ue_array=(ue,),
+        gnb_array=[gnb],
+        fivegc=fivegc,
+        retina_data=retina_data,
+        warning_as_errors=True,
+        fail_if_kos=True,
+    )

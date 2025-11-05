@@ -25,6 +25,7 @@ import logging
 from typing import Tuple
 
 from google.protobuf.empty_pb2 import Empty
+from google.protobuf.wrappers_pb2 import UInt32Value
 from pytest import fail, mark, param
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
@@ -49,6 +50,10 @@ from .steps.configuration import configure_test_parameters, get_minimum_sample_r
         param(False, 3, 0, id="f1_f3"),
         param(False, 4, 0, id="f1_f4"),
     ),
+)
+@mark.flaky(
+    reruns=2,
+    only_rerun=["License unavailable"],
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def test_pucch(
@@ -90,9 +95,9 @@ def test_pucch(
 
     logging.info("PUCCH F%d+F%d Test", pucch_set0_format, pucch_set1_format)
 
-    start_network(ue_array=ue_array, gnb=gnb, fivegc=fivegc)
+    start_network(ue_array=ue_array, gnb_array=[gnb], fivegc=fivegc)
     ue_attach_info_dict = ue_start_and_attach(
-        ue_array=ue_array, du_definition=[gnb.GetDefinition(Empty())], fivegc=fivegc
+        ue_array=ue_array, du_definition=[gnb.GetDefinition(UInt32Value(value=0))], fivegc=fivegc
     )
 
     # DL iperf test
@@ -117,7 +122,7 @@ def test_pucch(
 
     stop(
         ue_array=ue_array,
-        gnb=gnb,
+        gnb_array=[gnb],
         fivegc=fivegc,
         retina_data=retina_data,
         fail_if_kos=True,

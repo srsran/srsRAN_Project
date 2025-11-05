@@ -143,6 +143,12 @@ amari 1UE:
     E2E_LOG_LEVEL: warning
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
 
+amari 1UE FR2:
+  extends: .zmq
+  variables:
+    MARKERS: "fr2"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+
 amari 1UE 4x4 mimo:
   extends: .zmq
   variables:
@@ -311,17 +317,28 @@ cudu amari 64UE:
     MARKERS: "zmq and not smoke"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
 
-cu2du amari 8UE:
+1cu2du amari 8UE:
   extends: .zmq
   timeout: 2h
   variables:
-    TESTBED: zmq_cu2du
+    TESTBED: zmq_1cu2du
     MARKERS: "zmq and not smoke"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
   parallel:
     matrix:
       - E2E_FILE_OR_DIR: tests/inter_du_handover.py
         KEYWORDS: sequentially
+
+2gnb amari:
+  extends: .zmq
+  timeout: 2h
+  variables:
+    TESTBED: zmq_2gnb
+    MARKERS: "zmq and not smoke"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+  parallel:
+    matrix:
+      - E2E_FILE_OR_DIR: tests/inter_cu_handover.py
 
 ric:
   extends: .zmq
@@ -463,6 +480,10 @@ test mode ue many ues:
 
 amari b200 asan:
   extends: .rf
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+      when: delayed
+      start_in: 8 hours # let zmq finish first so they don't fight for resources
   variables:
     MARKERS: rf_not_crash
   needs:
@@ -472,6 +493,10 @@ amari b200 asan:
 
 validate b200 config:
   extends: .rf
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+      when: delayed
+      start_in: 8 hours # let zmq finish first so they don't fight for resources
   variables:
     MARKERS: rf_b200
 
@@ -670,12 +695,12 @@ viavi 24h:
   extends: .e2e-run
   variables:
     GROUP: rf
-    TESTBED: s72_uesim
+    TESTBED: s72
     E2E_LOG_LEVEL: warning
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
       when: delayed
-      start_in: 8 hours # woraround: let zmq-uesim finish first
+      start_in: 8 hours # let zmq finish first so they don't fight for resources
   needs:
     - job: basic avx2 dpdk rtsan
       artifacts: true

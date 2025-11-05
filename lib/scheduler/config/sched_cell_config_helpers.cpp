@@ -21,16 +21,18 @@
  */
 
 #include "srsran/scheduler/config/sched_cell_config_helpers.h"
+#include "srsran/scheduler/config/bwp_configuration.h"
 #include "srsran/scheduler/config/pucch_resource_generator.h"
+#include "srsran/scheduler/config/serving_cell_config.h"
 #include <map>
 
 using namespace srsran;
 
-std::vector<sched_grid_resource>
-srsran::config_helpers::build_pucch_guardbands_list(const pucch_builder_params& user_params, unsigned bwp_size)
+std::vector<pucch_resource> srsran::config_helpers::build_pucch_resource_list(const pucch_builder_params& user_params,
+                                                                              unsigned                    bwp_size)
 {
   // Compute the cell PUCCH resource list, depending on which parameter that has been passed.
-  std::vector<pucch_resource> res_list = config_helpers::generate_cell_pucch_res_list(
+  auto res_list = config_helpers::generate_cell_pucch_res_list(
       user_params.nof_ue_pucch_f0_or_f1_res_harq.to_uint() * user_params.nof_cell_harq_pucch_res_sets +
           user_params.nof_sr_resources,
       user_params.nof_ue_pucch_f2_or_f3_or_f4_res_harq.to_uint() * user_params.nof_cell_harq_pucch_res_sets +
@@ -42,44 +44,7 @@ srsran::config_helpers::build_pucch_guardbands_list(const pucch_builder_params& 
 
   srsran_assert(not res_list.empty(), "The PUCCH resource list cannot be empty");
 
-  std::vector<sched_grid_resource> pucch_guardbands;
-
-  auto list_contains_resource = [&pucch_guardbands](const sched_grid_resource& res) {
-    return std::find(pucch_guardbands.begin(), pucch_guardbands.end(), res) != pucch_guardbands.end();
-  };
-
-  for (const auto& pucch_res : res_list) {
-    unsigned starting_sym = pucch_res.starting_sym_idx;
-    unsigned nof_symbols  = pucch_res.nof_symbols;
-
-    // For PUCCH Formats 0/1/4, the resource has 1 PRB only.
-    const unsigned nof_prbs = std::holds_alternative<pucch_format_2_3_cfg>(pucch_res.format_params)
-                                  ? std::get<pucch_format_2_3_cfg>(pucch_res.format_params).nof_prbs
-                                  : 1U;
-
-    // In the following, \c res_no_freq_hop contains the PRBs/symbols of the PUCCH resource with no frequency hopping,
-    // or, if frequency hopping is enabled, the PRBs/symbols of the first hop.
-    // \c res_freq_hop is only used if frequency hopping is enabled and contains the PRBs/symbols of the second hop.
-    sched_grid_resource res_no_freq_hop;
-    sched_grid_resource res_freq_hop;
-    res_no_freq_hop.prbs.set(pucch_res.starting_prb, pucch_res.starting_prb + nof_prbs);
-
-    if (pucch_res.second_hop_prb.has_value()) {
-      res_freq_hop.prbs.set(pucch_res.second_hop_prb.value(), pucch_res.second_hop_prb.value() + nof_prbs);
-      res_no_freq_hop.symbols.set(starting_sym, starting_sym + nof_symbols / 2);
-      res_freq_hop.symbols.set(starting_sym + nof_symbols / 2, starting_sym + nof_symbols);
-    } else {
-      res_no_freq_hop.symbols.set(starting_sym, starting_sym + nof_symbols);
-    }
-
-    if (not res_no_freq_hop.is_empty() and not list_contains_resource(res_no_freq_hop)) {
-      pucch_guardbands.emplace_back(res_no_freq_hop);
-    }
-    if (not res_freq_hop.is_empty() and not list_contains_resource(res_freq_hop)) {
-      pucch_guardbands.emplace_back(res_freq_hop);
-    }
-  }
-  return pucch_guardbands;
+  return res_list;
 }
 
 unsigned

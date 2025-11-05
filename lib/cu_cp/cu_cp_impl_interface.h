@@ -276,11 +276,6 @@ public:
   /// \param[in] request The release request.
   virtual async_task<void> handle_ue_context_release(const cu_cp_ue_context_release_request& request) = 0;
 
-  /// \brief Transfer and remove UE contexts for an ongoing Reestablishment/Handover.
-  /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request or is the target UE.
-  /// \param[in] old_ue_index The old UE index of the UE that sent the Reestablishment Request or is the source UE.
-  virtual async_task<bool> handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
-
   /// \brief Handle the trasmission of the handover reconfiguration by notifying the target RRC UE to await a RRC
   /// Reconfiguration Complete.
   /// \param[in] request The intra CU handover target request.

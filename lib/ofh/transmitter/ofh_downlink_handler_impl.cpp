@@ -60,17 +60,17 @@ downlink_handler_impl::downlink_handler_impl(const downlink_handler_impl_config&
 
 void downlink_handler_impl::start()
 {
-  is_running.store(true, std::memory_order_relaxed);
+  stop_control.reset();
+
+  // Start the data flows.
+  data_flow_cplane->get_operation_controller().start();
+  data_flow_uplane->get_operation_controller().start();
 }
 
 void downlink_handler_impl::stop()
 {
-  if (!is_running.load(std::memory_order_relaxed)) {
-    return;
-  }
-
   // Stop accepting grids.
-  is_running.store(false, std::memory_order_relaxed);
+  stop_control.stop();
 
   // Stop the data flows.
   data_flow_cplane->get_operation_controller().stop();
@@ -79,8 +79,8 @@ void downlink_handler_impl::stop()
 
 void downlink_handler_impl::handle_dl_data(const resource_grid_context& context, const shared_resource_grid& grid)
 {
-  // Do nothing if handler is not running.
-  if (!is_running.load(std::memory_order_relaxed)) {
+  auto token = stop_control.get_token();
+  if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
     return;
   }
 
@@ -97,7 +97,7 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
   metrics_collector.update_up_dl_lates(frame_pool_dl_up->clear_slot(context.slot, context.sector));
 
   // Nothing to do on empty resource grids.
-  if (grid.get_reader().is_empty()) {
+  if (reader.is_empty()) {
     return;
   }
 

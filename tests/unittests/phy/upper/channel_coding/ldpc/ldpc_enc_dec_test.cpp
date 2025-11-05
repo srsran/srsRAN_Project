@@ -87,20 +87,23 @@ protected:
       enc_factory_neon = create_ldpc_encoder_factory_sw("neon");
       ASSERT_NE(enc_factory_neon, nullptr);
     }
+
+    ldpc_decoder_factory::ldpc_decoder_factory_configuration cfg;
+    cfg.force_decoding = false;
     if (!dec_factory_generic) {
-      dec_factory_generic = create_ldpc_decoder_factory_sw("generic");
+      dec_factory_generic = create_ldpc_decoder_factory_sw("generic", cfg);
       ASSERT_NE(dec_factory_generic, nullptr);
     }
     if (!dec_factory_avx2) {
-      dec_factory_avx2 = create_ldpc_decoder_factory_sw("avx2");
+      dec_factory_avx2 = create_ldpc_decoder_factory_sw("avx2", cfg);
       ASSERT_NE(dec_factory_avx2, nullptr);
     }
     if (!dec_factory_avx512) {
-      dec_factory_avx512 = create_ldpc_decoder_factory_sw("avx512");
+      dec_factory_avx512 = create_ldpc_decoder_factory_sw("avx512", cfg);
       ASSERT_NE(dec_factory_avx512, nullptr);
     }
     if (!dec_factory_neon) {
-      dec_factory_neon = create_ldpc_decoder_factory_sw("neon");
+      dec_factory_neon = create_ldpc_decoder_factory_sw("neon", cfg);
       ASSERT_NE(dec_factory_neon, nullptr);
     }
   }
@@ -152,15 +155,15 @@ protected:
     nof_messages = test_data.nof_messages;
 
     // Encoder/decoder configurations.
-    cfg_enc                                   = {};
-    cfg_enc.base_graph                        = bg;
-    cfg_enc.lifting_size                      = ls;
-    cfg_dec                                   = {};
-    cfg_dec.block_conf.tb_common.lifting_size = ls;
-    cfg_dec.block_conf.tb_common.base_graph   = bg;
+    cfg_enc              = {};
+    cfg_enc.base_graph   = bg;
+    cfg_enc.lifting_size = ls;
+    cfg_dec              = {};
+    cfg_dec.lifting_size = ls;
+    cfg_dec.base_graph   = bg;
 
     // There is no noise - one decoder iteration should be enough.
-    cfg_dec.algorithm_conf.max_iterations = 1;
+    cfg_dec.max_iterations = 1;
   }
 
   // Finalizes the test setup by asserting the creation of encoder and decoder as well as double-checking some of the

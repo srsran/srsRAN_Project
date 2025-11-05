@@ -150,19 +150,97 @@ def configure_test_parameters(
     slices: Optional[List[dict]] = None,
     ue_sds: Optional[List[str]] = None,
     warning_allowlist: Optional[List[str]] = None,
+    enable_2gnbs: bool = False,
+    inter_freq_ho: bool = False,
 ):
     """
     Configure test parameters
     """
+    gnb_node_list = []
+    if enable_2gnbs:
+        gnb_node_list = [
+            {
+                "name": "srs-gnb0-0",
+                "parameters": {
+                    "gnb_id": 500,
+                    "cell_offset": 0,
+                    "num_cells": 1,
+                },
+            },
+            {
+                "name": "srs-gnb1-0",
+                "parameters": {
+                    "gnb_id": 501,
+                    "cell_offset": 1,
+                    "num_cells": 1,
+                },
+            },
+        ]
+    du_node_list = []
+    ue_cell_bands = []
+    if inter_freq_ho:
+        inter_freq_band = 78
+        inter_freq_cell_1_dl_arfcn = 649980
+        inter_freq_cell_2_dl_arfcn = 650000
+        inter_freq_ssb_nr_arfcn = 649632
+        inter_freq_scs = 30
+        inter_freq_bandwidth = 20
+
+        du_node_list = [
+            {
+                "name": "srs-du-1-1",
+                "parameters": {
+                    "band": inter_freq_band,
+                    "dl_arfcn": inter_freq_cell_1_dl_arfcn,
+                    "common_scs": inter_freq_scs,
+                    "bandwidth": inter_freq_bandwidth,
+                },
+            },
+            {
+                "name": "srs-du-2-1",
+                "parameters": {
+                    "band": inter_freq_band,
+                    "dl_arfcn": inter_freq_cell_2_dl_arfcn,
+                    "common_scs": inter_freq_scs,
+                    "bandwidth": inter_freq_bandwidth,
+                },
+            },
+        ]
+
+        ue_cell_bands = [
+            {
+                "band": inter_freq_band,
+                "bandwidth": inter_freq_bandwidth,
+                "dl_nr_arfcn": inter_freq_cell_1_dl_arfcn,
+                "ssb_nr_arfcn": inter_freq_ssb_nr_arfcn,
+                "subcarrier_spacing": inter_freq_scs,
+                "ssb_subcarrier_spacing": inter_freq_scs,
+            },
+            {
+                "band": inter_freq_band,
+                "bandwidth": inter_freq_bandwidth,
+                "dl_nr_arfcn": inter_freq_cell_2_dl_arfcn,
+                "ssb_nr_arfcn": inter_freq_ssb_nr_arfcn,
+                "subcarrier_spacing": inter_freq_scs,
+                "ssb_subcarrier_spacing": inter_freq_scs,
+            },
+        ]
+    else:
+        ue_cell_bands = [
+            {
+                "band": band,
+                "bandwidth": bandwidth,
+                "dl_nr_arfcn": _get_dl_arfcn(band),
+                "ssb_nr_arfcn": _get_ssb_arfcn(band, bandwidth),
+                "subcarrier_spacing": common_scs,
+                "ssb_subcarrier_spacing": common_scs,
+            }
+            for _ in range(num_cells)
+        ]
+
     retina_data.test_config = {
         "ue": {
             "parameters": {
-                "band": band,
-                "dl_arfcn": _get_dl_arfcn(band),
-                "ssb_arfcn": _get_ssb_arfcn(band, bandwidth),
-                "common_scs": common_scs,
-                "ssb_scs": common_scs,
-                "bandwidth": bandwidth,
                 "global_timing_advance": global_timing_advance,
                 "log_ip_level": log_ip_level,
                 "ul_noise_spd": ul_noise_spd,
@@ -174,9 +252,11 @@ def configure_test_parameters(
                 "nof_antennas_ul": nof_antennas_ul,
                 "pdcch_log": pdcch_log,
                 "ue_sds": ue_sds if ue_sds is not None else [],
+                "cells": ue_cell_bands,
             },
         },
         "gnb": {
+            "node_list": gnb_node_list,
             "parameters": {
                 "band": band,
                 "dl_arfcn": _get_dl_arfcn(band),
@@ -206,6 +286,7 @@ def configure_test_parameters(
             },
         },
         "du": {
+            "node_list": du_node_list,
             "parameters": {
                 "band": band,
                 "dl_arfcn": _get_dl_arfcn(band),
@@ -279,7 +360,7 @@ def _get_dl_arfcn(band: int) -> int:
     """
     Get dl arfcn
     """
-    return {3: 368500, 7: 536020, 41: 520002, 78: 632628, 256: 437000}[band]
+    return {3: 368500, 7: 536020, 41: 520002, 78: 632628, 256: 437000, 261: 2074171}[band]
 
 
 def _get_ul_arfcn(band: int) -> int:
@@ -337,6 +418,12 @@ def _get_ssb_arfcn(band: int, bandwidth: int) -> int:
             lambda: 437090,
             {
                 5: 437090,
+            },
+        ),
+        261: defaultdict(
+            lambda: 2073691,
+            {
+                100: 2073691,
             },
         ),
     }[band][bandwidth]

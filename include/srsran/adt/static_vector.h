@@ -101,6 +101,7 @@ struct trivial_storage {
   constexpr void construct_(size_t idx, U&& arg0, Args&&... args) noexcept
   {
     static_assert(std::is_constructible<T, Args...>::value, "T(Args...) does not exist");
+    srsran_assume(idx < Capacity);
     array[idx] = T(std::forward<U>(arg0), std::forward<Args>(args)...);
   }
 

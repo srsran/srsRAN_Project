@@ -55,10 +55,11 @@ public:
 inline auto buffer_pool_metrics_callback = [](const app_services::metrics_set&      report,
                                               span<app_services::metrics_consumer*> consumers,
                                               task_executor&                        executor,
-                                              srslog::basic_logger&                 logger) {
+                                              srslog::basic_logger&                 logger,
+                                              stop_event_token                      token) {
   const auto& metric = static_cast<const buffer_pool_metrics_impl&>(report);
 
-  if (!executor.defer([metric, consumers]() {
+  if (!executor.defer([metric, consumers, stop_token = std::move(token)]() {
         for (auto& consumer : consumers) {
           consumer->handle_metric(metric);
         }

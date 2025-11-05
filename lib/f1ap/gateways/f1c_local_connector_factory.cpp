@@ -49,7 +49,7 @@ public:
     byte_buffer   buf;
     asn1::bit_ref bref(buf);
     if (msg.pdu.pack(bref) != asn1::SRSASN_SUCCESS) {
-      logger.error("Failed to pack PDU");
+      logger.error("Failed to write Rx PDU to PCAP. Cause: Failed to pack Rx PDU");
     } else {
       pcap_writer.push_pdu(std::move(buf));
     }

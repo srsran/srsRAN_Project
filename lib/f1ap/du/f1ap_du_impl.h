@@ -73,14 +73,18 @@ public:
        handle_ue_context_modification_required(const f1ap_ue_context_modification_required& msg) override;
   void handle_ue_inactivity_notification(const f1ap_ue_inactivity_notification_message& msg) override {}
   void handle_notify(const f1ap_notify_message& msg) override {}
+  bool has_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index) const override
+  {
+    return get_gnb_cu_ue_f1ap_id(ue_index).has_value();
+  }
 
   // F1AP UE ID translator functions.
-  gnb_cu_ue_f1ap_id_t get_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index) override;
-  gnb_cu_ue_f1ap_id_t get_gnb_cu_ue_f1ap_id(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id) override;
-  gnb_du_ue_f1ap_id_t get_gnb_du_ue_f1ap_id(const du_ue_index_t& ue_index) override;
-  gnb_du_ue_f1ap_id_t get_gnb_du_ue_f1ap_id(const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1ap_id) override;
-  du_ue_index_t       get_ue_index(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id) override;
-  du_ue_index_t       get_ue_index(const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1ap_id) override;
+  std::optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index) const override;
+  std::optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id) const override;
+  gnb_du_ue_f1ap_id_t                get_gnb_du_ue_f1ap_id(const du_ue_index_t& ue_index) override;
+  gnb_du_ue_f1ap_id_t                get_gnb_du_ue_f1ap_id(const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1ap_id) override;
+  du_ue_index_t                      get_ue_index(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id) override;
+  du_ue_index_t                      get_ue_index(const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1ap_id) override;
 
   f1ap_metrics_collector& get_metrics_collector() override { return metrics; }
 
@@ -143,6 +147,7 @@ private:
   task_executor&           ctrl_exec;
   f1ap_du_configurator&    du_mng;
   f1ap_du_paging_notifier& paging_notifier;
+  timer_manager&           timers;
 
   f1ap_du_connection_handler connection_handler;
 

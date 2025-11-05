@@ -31,7 +31,7 @@ namespace srsran {
 class resource_grid_reader;
 class resource_grid_writer;
 
-/// \brief Unique resource grid.
+/// \brief Shared resource grid.
 ///
 /// It feedbacks to the resource grid pool the destruction of the instance.
 class shared_resource_grid

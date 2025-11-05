@@ -94,6 +94,7 @@ struct cu_up_unit_test_mode_config {
   uint16_t                  nia_algo          = 2;
   uint64_t                  ue_ambr           = 40000000000; // 40 gbps
   std::chrono::milliseconds attach_detach_period{0}; // Period for attaching detaching tests. 0 means always attached.
+  std::chrono::milliseconds reestablish_period{0};   // Period for reestablishment tests. 0 means no re-establishments.
 };
 
 struct cu_up_unit_execution_config {

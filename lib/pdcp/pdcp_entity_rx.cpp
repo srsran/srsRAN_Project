@@ -116,6 +116,23 @@ void pdcp_entity_rx::restart_pdu_processing()
   }
 }
 
+void pdcp_entity_rx::begin_buffering()
+{
+  buffering = true;
+  logger.log_debug("Begin PDU buffering");
+}
+
+void pdcp_entity_rx::end_buffering()
+{
+  logger.log_debug("End PDU buffering");
+  buffering = false;
+  while (not pdu_buffer.empty()) {
+    byte_buffer_chain buf = std::move(pdu_buffer.top());
+    pdu_buffer.pop();
+    handle_pdu(std::move(buf));
+  }
+}
+
 manual_event_flag& pdcp_entity_rx::crypto_awaitable()
 {
   return token_mngr.get_awaitable();
@@ -125,6 +142,15 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)
 {
   if (stopped) {
     logger.log_info("Dropping PDU. Entity is stopped");
+    return;
+  }
+
+  if (buffering) {
+    if (not pdu_buffer.try_push(std::move(buf))) {
+      logger.log_debug("Dropping PDU. SDU buffer is full");
+      return;
+    }
+    logger.log_debug("Buffered PDU. Entity is paused");
     return;
   }
 

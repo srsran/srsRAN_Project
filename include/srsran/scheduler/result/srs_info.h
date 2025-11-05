@@ -45,7 +45,7 @@ struct srs_info {
   uint8_t config_index;
   /// SRS sequence ID or \c sequenceId, as per \c SRS-Resource, in \c SRS-Config, TS 38.331.
   /// Values {0,...,1023}.
-  unsigned sequence_id;
+  uint16_t sequence_id;
   /// Bandwidth index, given by \c b_SRS, as per \c freqHopping, \c SRS-Resource, in \c SRS-Config, TS 38.331.
   /// Values {0,...,3}.
   uint8_t bw_index;

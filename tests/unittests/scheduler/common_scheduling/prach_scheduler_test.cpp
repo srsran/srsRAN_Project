@@ -55,7 +55,14 @@ make_custom_sched_cell_configuration_request(const prach_test_params test_params
       .scs_common = test_params.scs, .channel_bw_mhz = srsran::bs_channel_bandwidth::MHz20, .band = test_params.band};
   // For TDD, set DL ARFCN according to the band.
   if (not band_helper::is_paired_spectrum(test_params.band)) {
-    params.dl_f_ref_arfcn = 520002;
+    if (band_helper::get_freq_range(test_params.band) == frequency_range::FR1) {
+      params.dl_f_ref_arfcn = 520002;
+    } else {
+      params.dl_f_ref_arfcn = 2074171;
+    }
+  }
+  if (band_helper::get_freq_range(test_params.band) == frequency_range::FR2) {
+    params.channel_bw_mhz = bs_channel_bandwidth::MHz100;
   }
   sched_cell_configuration_request_message sched_req =
       sched_config_helper::make_default_sched_cell_configuration_request(params);
@@ -73,7 +80,18 @@ make_custom_sched_cell_configuration_request(const prach_test_params test_params
     sched_req.dl_cfg_common.init_dl_bwp.generic_params.crbs = {
         0, sched_req.dl_cfg_common.freq_info_dl.scs_carrier_list[1].carrier_bandwidth};
   }
-  sched_req.dl_carrier.carrier_bw_mhz = 20;
+  // Change Carrier parameters when SCS is 120kHz.
+  else if (test_params.scs == subcarrier_spacing::kHz120) {
+    sched_req.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth = 66;
+    sched_req.dl_cfg_common.init_dl_bwp.generic_params.crbs =
+        crb_interval{0, sched_req.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth};
+  }
+
+  if (band_helper::get_freq_range(test_params.band) == frequency_range::FR2) {
+    sched_req.dl_carrier.carrier_bw_mhz = 100;
+  } else {
+    sched_req.dl_carrier.carrier_bw_mhz = 20;
+  }
 
   sched_req.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.prach_config_index =
       test_params.prach_cfg_index;
@@ -98,7 +116,7 @@ protected:
     prach_sch(cell_cfg),
     sl(to_numerology_value(GetParam().scs), 0),
     prach_cfg(prach_configuration_get(
-        frequency_range::FR1,
+        band_helper::get_freq_range(cell_cfg.band),
         cell_cfg.paired_spectrum ? duplex_mode::FDD : duplex_mode::TDD,
         cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index)),
     res_grid(cell_cfg)
@@ -120,11 +138,19 @@ protected:
   bool is_prach_slot()
   {
     bool prach_occasion_sfn =
-        std::any_of(prach_cfg.y.begin(), prach_cfg.y.end(), [this](uint8_t y) { return sl.sfn() % prach_cfg.x != y; });
-    if (prach_occasion_sfn) {
+        std::any_of(prach_cfg.y.begin(), prach_cfg.y.end(), [this](uint8_t y) { return sl.sfn() % prach_cfg.x == y; });
+    if (!prach_occasion_sfn) {
       return false;
     }
-    if (std::find(prach_cfg.slots.begin(), prach_cfg.slots.end(), sl.subframe_index()) == prach_cfg.slots.end()) {
+
+    subcarrier_spacing scs_ref = band_helper::get_freq_range(cell_cfg.band) == frequency_range::FR2
+                                     ? subcarrier_spacing::kHz60
+                                     : subcarrier_spacing::kHz15;
+    unsigned           scs_ratio =
+        pow2(to_numerology_value(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs) - to_numerology_value(scs_ref));
+
+    if (std::find(prach_cfg.slots.begin(), prach_cfg.slots.end(), sl.slot_index() / scs_ratio) ==
+        prach_cfg.slots.end()) {
       return false;
     }
 
@@ -132,8 +158,8 @@ protected:
       // With long Format PRACH, the starting_symbol refers to the SCS 15kHz. We need to map this starting symbol into
       // the slot of the SCS used by the system to know whether this is the slot with the PRACH opportunity.
       const unsigned start_slot_offset =
-          prach_cfg.starting_symbol *
-          (1U << to_numerology_value(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs)) / NOF_SYM_PER_SLOT;
+          prach_cfg.starting_symbol * pow2(to_numerology_value(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs)) /
+          NOF_SYM_PER_SLOT;
       if (sl.subframe_slot_index() != start_slot_offset) {
         return false;
       }
@@ -143,10 +169,12 @@ protected:
       // within a subframe" 1 or 2 (as per Tables 6.3.3.2-2 and 6.3.3.2-3, TS 38.211), the occasions (and the
       // transmission in one of the occasions) are expected in the second slot of the subframe (if number of PRACH
       // slots within a subframe = 1) or in both slots (number of PRACH slots within a subframe = 2).
-      if (to_ra_subcarrier_spacing(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs) ==
-              prach_subcarrier_spacing::kHz30 and
-          prach_cfg.nof_prach_slots_within_subframe == 1 and sl.subframe_slot_index() == 0U) {
-        return false;
+      if ((prach_cfg.nof_prach_slots_within_subframe == 1) && (scs_ratio == 2)) {
+        return sl.subframe_slot_index() % 2 == 1;
+      }
+
+      if (scs_ratio == 1) {
+        return sl.subframe_slot_index() % 2 == 0;
       }
     }
 
@@ -457,3 +485,60 @@ INSTANTIATE_TEST_SUITE_P(
     [](const testing::TestParamInfo<prach_tester::ParamType>& info_) {
       return fmt::format("tdd_scs_{}_prach_cfg_idx_{}", to_string(info_.param.scs), info_.param.prach_cfg_index);
     });
+
+INSTANTIATE_TEST_SUITE_P(prach_scheduler_tdd_120kHz_fr2,
+                         prach_tester,
+                         testing::Values(
+                             // Format A1.
+                             prach_test_params{.scs             = srsran::subcarrier_spacing::kHz120,
+                                               .band            = srsran::nr_band::n261,
+                                               .prach_cfg_index = 1},
+                             prach_test_params{.scs             = srsran::subcarrier_spacing::kHz120,
+                                               .band            = srsran::nr_band::n261,
+                                               .prach_cfg_index = 6},
+                             prach_test_params{.scs             = srsran::subcarrier_spacing::kHz120,
+                                               .band            = srsran::nr_band::n261,
+                                               .prach_cfg_index = 11},
+                             prach_test_params{.scs             = srsran::subcarrier_spacing::kHz120,
+                                               .band            = srsran::nr_band::n261,
+                                               .prach_cfg_index = 20},
+                             prach_test_params{.scs             = srsran::subcarrier_spacing::kHz120,
+                                               .band            = srsran::nr_band::n261,
+                                               .prach_cfg_index = 27},
+                             // Format A2.
+                             prach_test_params{.scs             = srsran::subcarrier_spacing::kHz120,
+                                               .band            = srsran::nr_band::n261,
+                                               .prach_cfg_index = 32},
+                             prach_test_params{.scs             = srsran::subcarrier_spacing::kHz120,
+                                               .band            = srsran::nr_band::n261,
+                                               .prach_cfg_index = 39},
+                             prach_test_params{.scs             = srsran::subcarrier_spacing::kHz120,
+                                               .band            = srsran::nr_band::n261,
+                                               .prach_cfg_index = 45},
+                             prach_test_params{.scs             = srsran::subcarrier_spacing::kHz120,
+                                               .band            = srsran::nr_band::n261,
+                                               .prach_cfg_index = 53},
+                             prach_test_params{.scs             = srsran::subcarrier_spacing::kHz120,
+                                               .band            = srsran::nr_band::n261,
+                                               .prach_cfg_index = 58},
+                             // Format B4.
+                             prach_test_params{.scs             = srsran::subcarrier_spacing::kHz120,
+                                               .band            = srsran::nr_band::n261,
+                                               .prach_cfg_index = 115},
+                             prach_test_params{.scs             = srsran::subcarrier_spacing::kHz120,
+                                               .band            = srsran::nr_band::n261,
+                                               .prach_cfg_index = 121},
+                             prach_test_params{.scs             = srsran::subcarrier_spacing::kHz120,
+                                               .band            = srsran::nr_band::n261,
+                                               .prach_cfg_index = 132},
+                             prach_test_params{.scs             = srsran::subcarrier_spacing::kHz120,
+                                               .band            = srsran::nr_band::n261,
+                                               .prach_cfg_index = 137},
+                             prach_test_params{.scs             = srsran::subcarrier_spacing::kHz120,
+                                               .band            = srsran::nr_band::n261,
+                                               .prach_cfg_index = 143}),
+                         [](const testing::TestParamInfo<prach_tester::ParamType>& info_) {
+                           return fmt::format("tdd_fr2_scs_{}_prach_cfg_idx_{}",
+                                              to_string(info_.param.scs),
+                                              info_.param.prach_cfg_index);
+                         });

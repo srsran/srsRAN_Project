@@ -50,6 +50,9 @@ public:
   void report_metrics(const scheduler_cell_metrics& ue_metrics) override;
   void report_metrics(const rlc_metrics& metrics) override;
 
+  /// Clear entries of the UEs that disconnected.
+  void clear_rlc_metrics();
+
   /// e2sm_kpm_meas_provider functions.
   std::vector<std::string> get_supported_metric_names(e2sm_kpm_metric_level_enum level) override;
 
@@ -127,7 +130,8 @@ private:
   unsigned                                           nof_ded_cell_preambles;
   std::vector<scheduler_ue_metrics>                  last_ue_metrics;
   std::map<uint16_t, std::deque<rlc_metrics>>        ue_aggr_rlc_metrics;
-  size_t                                             max_rlc_metrics = 1;
+  std::chrono::system_clock::time_point              last_rlc_metrics_clear_time = std::chrono::system_clock::now();
+  size_t                                             max_rlc_metrics             = 1;
   std::map<std::string, e2sm_kpm_supported_metric_t> supported_metrics;
 };
 

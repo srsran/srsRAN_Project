@@ -116,6 +116,33 @@ TEST_P(PucchProcessorFormat0Fixture, FromVector)
   ASSERT_TRUE(result.message.get_csi_part2_bits().empty());
 }
 
+TEST_P(PucchProcessorFormat0Fixture, FromVectorZeros)
+{
+  // Prepare resource grid.
+  resource_grid_reader_spy                                grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_NOF_PRBS);
+  std::vector<resource_grid_reader_spy::expected_entry_t> grid_entries = GetParam().grid.read();
+  for (auto& entry : grid_entries) {
+    entry.value = cf_t(0, 0);
+  }
+  grid.write(grid_entries);
+
+  const PucchProcessorFormat0Param& param = GetParam();
+
+  const pucch_entry& entry = param.entry;
+  // Make sure configuration is valid.
+  ASSERT_TRUE(validator->is_valid(entry.config));
+
+  pucch_processor_result result = processor->process(grid, entry.config);
+
+  // UCI payload is expected to be invalid.
+  ASSERT_EQ(result.message.get_status(), uci_status::invalid);
+
+  // The resource grid is empty, so SINR, EPRE & RSRP are expected to be -inf (0 in linear scale).
+  ASSERT_EQ(*result.csi.get_sinr_dB(), -std::numeric_limits<float>::infinity());
+  ASSERT_EQ(*result.csi.get_epre_dB(), -std::numeric_limits<float>::infinity());
+  ASSERT_EQ(*result.csi.get_rsrp_dB(), -std::numeric_limits<float>::infinity());
+}
+
 TEST_P(PucchProcessorFormat0Fixture, FalseAlarm)
 {
   std::vector<resource_grid_reader_spy::expected_entry_t> res = GetParam().grid.read();

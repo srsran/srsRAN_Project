@@ -124,7 +124,7 @@ ue_cell_grid_allocator::alloc_uci(const ue_cell& ue_cc, const search_space_info&
   // Allocate UCI. UCI destination (i.e., PUCCH or PUSCH) depends on whether there exist a PUSCH grant for the UE.
   span<const uint8_t>           k1_list = ss_info.get_k1_candidates();
   std::optional<uci_allocation> uci =
-      uci_alloc.alloc_uci_harq_ue(cell_alloc, ue_cc.rnti(), ue_cc.cfg(), pdsch_td_cfg.k0, k1_list, nullptr);
+      uci_alloc.alloc_harq_ack(cell_alloc, ue_cc.rnti(), ue_cc.cfg(), pdsch_td_cfg.k0, k1_list);
   if (not uci.has_value()) {
     logger.debug("ue={} rnti={}: Failed to allocate PDSCH. Cause: UCI allocation failed.",
                  fmt::underlying(ue_cc.ue_index),
@@ -518,7 +518,7 @@ ue_cell_grid_allocator::setup_ul_grant_builder(const slice_ue&                  
 
   // [Implementation-defined] We skip allocation of PUSCH if there is already a PUCCH grant scheduled using common
   // PUCCH resources.
-  if (uci_alloc.has_uci_harq_on_common_pucch_res(u.crnti, pusch_alloc.slot)) {
+  if (uci_alloc.has_harq_ack_on_common_pucch_res(u.crnti, pusch_alloc.slot)) {
     logger.debug("ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: UE has PUCCH grant using common PUCCH "
                  "resources scheduled",
                  fmt::underlying(u.ue_index),

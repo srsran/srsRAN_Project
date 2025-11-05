@@ -55,7 +55,8 @@ public:
     return [&](const app_services::metrics_set&      report,
                span<app_services::metrics_consumer*> consumers,
                task_executor&                        executor,
-               srslog::basic_logger&                 logger) {
+               srslog::basic_logger&                 logger,
+               stop_event_token                      token) {
       const auto& metric = static_cast<const executor_metrics_impl&>(report);
 
       // Fetch a metrics report object from the pool.
@@ -67,7 +68,7 @@ public:
       }
 
       *metrics_report = metric.get_metrics();
-      if (!executor.defer([new_report = std::move(metrics_report), consumers]() {
+      if (!executor.defer([new_report = std::move(metrics_report), consumers, stop_token = std::move(token)]() {
             for (auto& consumer : consumers) {
               consumer->handle_metric(executor_metrics_impl(*new_report));
             }

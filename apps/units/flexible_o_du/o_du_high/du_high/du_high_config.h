@@ -78,7 +78,7 @@ struct du_high_unit_tracer_config {
 };
 
 /// Timing Advance MAC CE scheduling expert configuration.
-struct du_high_unit_ta_sched_expert_config {
+struct du_high_unit_ta_sched_control_config {
   /// Measurements periodicity in nof. slots over which the new Timing Advance Command is computed.
   unsigned ta_measurement_slot_period = 80;
   ///  Delay in nof. slots between issuing the TA_CMD and starting TA measurements.
@@ -93,8 +93,8 @@ struct du_high_unit_ta_sched_expert_config {
   float ta_update_measurement_ul_sinr_threshold = 0.0F;
 };
 
-/// Scheduler expert configuration.
-struct du_high_unit_scheduler_expert_config {
+/// Configuration for radio resource scheduling.
+struct du_high_unit_scheduler_config {
   /// \brief Number of UEs pre-selected for PDSCH/PUSCH newTx scheduling in each slot. The scheduling policy will only
   /// be applied to the pre-selected UEs.
   ///
@@ -102,10 +102,8 @@ struct du_high_unit_scheduler_expert_config {
   /// operate as a hybrid between a Round-Robin scheduler and whichever scheduler policy was selected (e.g. QoS-aware).
   /// This parameter is useful to reduce the complexity of the scheduling decision, at the cost of some performance.
   unsigned nof_preselected_newtx_ues = 32;
-  /// Policy scheduler expert parameters.
-  std::optional<policy_scheduler_expert_config> policy_sched_expert_cfg;
-  /// Timing Advance MAC CE scheduling expert configuration.
-  du_high_unit_ta_sched_expert_config ta_sched_cfg;
+  /// Scheduler policy employed to prioritize or deprioritize pre-selected UE candidates.
+  std::optional<scheduler_policy_config> policy_cfg;
 };
 
 /// DRX configuration.
@@ -842,18 +840,25 @@ struct du_high_unit_prach_config {
   /// RA-Response (MSG2) window length in number of slots. Values: {1, 2, 4, 8, 10, 20, 40, 80}.  If not specified, it
   /// is automatically derived to be equal to 10ms.
   std::optional<unsigned> ra_resp_window;
+  /// Number of RBs that are used as guardband on each side of the PRACH RBs dedicated interval for short PRACH
+  /// formats.
+  unsigned nof_prach_guardbands_rbs = 5;
 };
 
 /// Slice scheduling configuration for a cell.
 struct du_high_unit_cell_slice_sched_config {
-  /// Sets the minimum percentage of PRBs to be allocated to this group.
+  /// Sets the minimum percentage of PRBs to be allocated to this slice.
   unsigned min_prb_policy_ratio = 0;
-  /// Sets the maximum percentage of PRBs to be allocated to this group.
+  /// Sets the maximum percentage of PRBs to be allocated to this slice.
+  /// \remark This parameter must satisfy the inequality min_prb_policy_ratio <= max_prb_policy_ratio.
   unsigned max_prb_policy_ratio = 100;
+  /// Sets the dedicated percentage of PRBs to be allocated to this slice.
+  /// \remark This parameter must satisfy the inequality ded_prb_policy_ratio <= min_prb_policy_ratio.
+  unsigned ded_prb_policy_ratio = 0;
   /// Sets the slice priority. Values: {0,...,254}. 255 is reserved for the SRBs.
   unsigned priority = 0;
-  /// Policy scheduler parameters for the slice. Default: Time-domain round robin.
-  std::optional<policy_scheduler_expert_config> slice_policy_sched_cfg;
+  /// Scheduler policy configuration for the slice. Default: Policy configured for the cell.
+  std::optional<scheduler_policy_config> slice_policy_cfg;
 };
 
 /// Radio Link Monitoring Config for a cell.
@@ -935,8 +940,10 @@ struct du_high_unit_base_cell_config {
   du_high_unit_paging_config paging_cfg;
   /// CSI configuration.
   du_high_unit_csi_config csi_cfg;
-  /// Scheduler expert configuration.
-  du_high_unit_scheduler_expert_config sched_expert_cfg;
+  /// Scheduler radio resource allocation configuration.
+  du_high_unit_scheduler_config scheduler_cfg;
+  /// Timing Advance MAC CE control-loop management and scheduling configuration.
+  du_high_unit_ta_sched_control_config ta_cfg;
   /// DRX configuration used when cell corresponds to PCell.
   du_high_unit_drx_config drx_cfg;
   /// Network slice configuration.
@@ -952,6 +959,8 @@ struct du_high_unit_test_mode_ue_config {
   rnti_t rnti = rnti_t::INVALID_RNTI;
   /// Number of test UE(s) to create.
   uint16_t nof_ues = 1;
+  /// Number of slots between consecutive test mode UE creations.
+  unsigned ue_creation_stagger_slots = 10;
   /// \brief Delay, in slots, before the MAC test mode auto-generates the UCI/CRC indication to pass to the scheduler.
   /// This feature should be avoided if the OFH/UL PHY are operational, otherwise the auto-generated indications
   /// may interfere with the UL PHY HARQ handling.

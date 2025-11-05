@@ -117,6 +117,28 @@ private:
   crc_calculator_metric_notifier&         notifier;
 };
 
+/// Metric decorator factory for LDPC decoder
+class metric_decorator_ldpc_decoder_factory : public ldpc_decoder_factory
+{
+public:
+  metric_decorator_ldpc_decoder_factory(std::shared_ptr<ldpc_decoder_factory> base_factory_,
+                                        ldpc_decoder_metric_notifier&         notifier_) :
+    base_factory(std::move(base_factory_)), notifier(notifier_)
+  {
+    srsran_assert(base_factory, "Invalid factory.");
+  }
+
+  // See interface for documentation.
+  std::unique_ptr<ldpc_decoder> create() override
+  {
+    return std::make_unique<phy_metrics_ldpc_decoder_decorator>(base_factory->create(), notifier);
+  }
+
+private:
+  std::shared_ptr<ldpc_decoder_factory> base_factory;
+  ldpc_decoder_metric_notifier&         notifier;
+};
+
 /// Metric decorator factory for port channel estimator.
 class metric_decorator_port_channel_estimator_factory : public port_channel_estimator_factory
 {
@@ -219,11 +241,7 @@ std::shared_ptr<ldpc_decoder_factory>
 srsran::create_ldpc_decoder_metric_decorator_factory(std::shared_ptr<ldpc_decoder_factory> base_factory,
                                                      ldpc_decoder_metric_notifier&         notifier)
 {
-  return std::make_shared<metric_decorator_factory<ldpc_decoder,
-                                                   ldpc_decoder_factory,
-                                                   ldpc_decoder_metric_notifier,
-                                                   phy_metrics_ldpc_decoder_decorator>>(std::move(base_factory),
-                                                                                        notifier);
+  return std::make_shared<metric_decorator_ldpc_decoder_factory>(std::move(base_factory), notifier);
 }
 
 std::shared_ptr<ldpc_rate_matcher_factory>

@@ -27,7 +27,7 @@
 #include "apps/services/metrics/metrics_set.h"
 #include "apps/services/metrics/periodic_metrics_report_controller.h"
 #include "metrics_properties.h"
-#include "srsran/support/executors/task_executor.h"
+#include "srsran/support/synchronization/stop_event.h"
 
 namespace srsran {
 namespace app_services {
@@ -89,6 +89,11 @@ public:
   /// Forwards the given metric to the subscribers.
   void on_new_metric(const metrics_set& metric) override
   {
+    auto token = stop_manager.get_token();
+    if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
+      return;
+    }
+
     std::string_view metrics_name = metric.get_properties().name();
     auto             iter         = std::find_if(
         supported_metrics.begin(), supported_metrics.end(), [&metrics_name](const metrics_entry& supported_metric) {
@@ -98,19 +103,30 @@ public:
     srsran_assert(iter != supported_metrics.end(), "Received unregistered metrics '{}'", metrics_name);
 
     if (!iter->consumers_helper.empty()) {
-      iter->callback(metric, iter->consumers_helper, executor, logger);
+      iter->callback(metric, iter->consumers_helper, executor, logger, std::move(token));
     }
   }
 
   /// Starts the periodic metrics report controller.
-  void start() { periodic_controller.start(); }
+  void start()
+  {
+    stop_manager.reset();
+
+    periodic_controller.start();
+  }
 
   /// Stops the periodic metrics report controller.
-  void stop() { periodic_controller.stop(); }
+  void stop()
+  {
+    periodic_controller.stop();
+
+    stop_manager.stop();
+  }
 
 private:
   srslog::basic_logger&              logger;
   task_executor&                     executor;
+  stop_event_source                  stop_manager;
   std::vector<metrics_entry>         supported_metrics;
   periodic_metrics_report_controller periodic_controller;
 };

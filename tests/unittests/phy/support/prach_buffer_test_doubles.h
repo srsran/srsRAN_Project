@@ -24,10 +24,8 @@
 
 #include "../../../lib/phy/support/prach_buffer_impl.h"
 #include "srsran/adt/tensor.h"
-#include "srsran/phy/support/support_factories.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/support/error_handling.h"
-#include "srsran/support/file_tensor.h"
 
 namespace srsran {
 

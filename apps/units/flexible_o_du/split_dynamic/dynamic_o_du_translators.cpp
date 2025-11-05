@@ -32,23 +32,16 @@ using namespace srsran;
 
 ru_dummy_configuration srsran::generate_ru_dummy_config(const ru_dummy_unit_config&                      ru_cfg,
                                                         span<const flexible_o_du_ru_config::cell_config> du_cells,
-                                                        unsigned max_processing_delay_slots,
-                                                        unsigned nof_prach_ports)
+                                                        unsigned max_processing_delay_slots)
 {
   ru_dummy_configuration out_cfg;
 
   const flexible_o_du_ru_config::cell_config& cell = du_cells.front();
 
-  // Derive parameters.
-  unsigned channel_bw_prb = band_helper::get_n_rbs_from_bw(cell.bw, cell.scs, cell.freq_range);
-
   // Fill configuration parameters.
   out_cfg.are_metrics_enabled        = ru_cfg.metrics_cfg.enable_ru_metrics;
   out_cfg.scs                        = cell.scs;
   out_cfg.nof_sectors                = du_cells.size();
-  out_cfg.rx_rg_nof_prb              = channel_bw_prb;
-  out_cfg.rx_rg_nof_ports            = cell.nof_rx_antennas;
-  out_cfg.rx_prach_nof_ports         = nof_prach_ports;
   out_cfg.max_processing_delay_slots = max_processing_delay_slots;
   out_cfg.dl_processing_delay        = ru_cfg.dl_processing_delay;
   out_cfg.time_scaling               = ru_cfg.time_scaling;

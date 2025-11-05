@@ -60,7 +60,7 @@ protected:
     res_logger(false, cell_cfg_req.pci),
     sched_cfg([&sched_cfg_, policy]() {
       if (policy == policy_scheduler_type::time_qos) {
-        sched_cfg_.ue.strategy_cfg = time_qos_scheduler_expert_config{};
+        sched_cfg_.ue.policy_cfg = time_qos_scheduler_config{};
       }
       return sched_cfg_;
     }()),

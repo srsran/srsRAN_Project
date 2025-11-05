@@ -25,17 +25,17 @@
 
 using namespace srsran;
 
-ta_manager::ta_manager(const scheduler_ue_expert_config& expert_cfg_,
-                       subcarrier_spacing                ul_scs_,
-                       time_alignment_group::id_t        pcell_tag_id,
-                       dl_logical_channel_manager*       dl_lc_ch_mgr_) :
+ta_manager::ta_manager(const scheduler_ta_control_config& ta_cfg_,
+                       subcarrier_spacing                 ul_scs_,
+                       time_alignment_group::id_t         pcell_tag_id,
+                       dl_logical_channel_manager*        dl_lc_ch_mgr_) :
   ul_scs(ul_scs_),
   dl_lc_ch_mgr(dl_lc_ch_mgr_),
-  expert_cfg(expert_cfg_),
+  ta_cfg(ta_cfg_),
   logger(srslog::fetch_basic_logger("SCHED")),
   state(state_t::idle)
 {
-  if (expert_cfg.ta_cmd_offset_threshold < 0) {
+  if (ta_cfg.ta_cmd_offset_threshold < 0) {
     state = state_t::disabled;
     return;
   }
@@ -49,7 +49,7 @@ void ta_manager::handle_ul_n_ta_update_indication(time_alignment_group::id_t tag
   // the UL SINR reported in the corresponding indication message is higher than the threshold.
   // NOTE: From the testing with COTS UE its observed that N_TA update measurements with UL SINR less than 10 dB were
   // majorly outliers.
-  if (state == state_t::measure and ul_sinr > expert_cfg.ta_update_measurement_ul_sinr_threshold) {
+  if (state == state_t::measure and ul_sinr > ta_cfg.update_measurement_ul_sinr_threshold) {
     // Note: Linear search is faster than binary for very small arrays.
     auto it = std::find_if(
         n_ta_reports.begin(), n_ta_reports.end(), [tag_id](const auto& meas) { return meas.tag_id == tag_id; });
@@ -67,7 +67,7 @@ void ta_manager::update_tags(span<const time_alignment_group::id_t> tag_ids)
   for (unsigned i = 0, e = n_ta_reports.size(); i != e; ++i) {
     n_ta_reports[i].tag_id = tag_ids[i];
     n_ta_reports[i].samples.clear();
-    n_ta_reports[i].samples.reserve(expert_cfg.ta_measurement_slot_period);
+    n_ta_reports[i].samples.reserve(ta_cfg.measurement_period);
   }
 }
 
@@ -87,7 +87,7 @@ void ta_manager::slot_indication(slot_point current_sl)
   }
 
   if (state == state_t::prohibit) {
-    if ((current_sl - prohibit_start_time) > static_cast<int>(expert_cfg.ta_measurement_slot_prohibit_period)) {
+    if ((current_sl - prohibit_start_time) > static_cast<int>(ta_cfg.measurement_prohibit_period)) {
       meas_start_time = current_sl;
       state           = state_t::measure;
     }
@@ -95,7 +95,7 @@ void ta_manager::slot_indication(slot_point current_sl)
   }
 
   // Early return if measurement interval is short.
-  if ((current_sl - meas_start_time) < static_cast<int>(expert_cfg.ta_measurement_slot_period)) {
+  if ((current_sl - meas_start_time) < static_cast<int>(ta_cfg.measurement_period)) {
     return;
   }
 
@@ -110,7 +110,7 @@ void ta_manager::slot_indication(slot_point current_sl)
     // The new Timing Advance Command is a value ranging from [0,...,63] as per TS 38.213, clause 4.2. Hence, we
     // need to subtract a value of 31 (as per equation in the same clause) to get the change in Timing Advance Command.
     const unsigned new_t_a = compute_new_t_a(compute_avg_n_ta_difference(tag_idx));
-    if (abs(static_cast<int>(new_t_a) - ta_cmd_offset_zero) >= expert_cfg.ta_cmd_offset_threshold) {
+    if (abs(static_cast<int>(new_t_a) - ta_cmd_offset_zero) >= ta_cfg.ta_cmd_offset_threshold) {
       // Send Timing Advance Command to UE.
       if (dl_lc_ch_mgr->handle_mac_ce_indication(
               {.ce_lcid    = lcid_dl_sch_t::TA_CMD,
@@ -127,7 +127,7 @@ void ta_manager::slot_indication(slot_point current_sl)
     reset_measurements(tag_idx);
   }
 
-  if (ta_cmd_sent and expert_cfg.ta_measurement_slot_prohibit_period > 0) {
+  if (ta_cmd_sent and ta_cfg.measurement_prohibit_period > 0) {
     // Set TA manager state to prohibit state.
     state               = state_t::prohibit;
     prohibit_start_time = current_sl;
@@ -180,7 +180,7 @@ unsigned ta_manager::compute_new_t_a(int64_t n_ta_diff)
 {
   return static_cast<unsigned>(
       std::round(static_cast<float>(n_ta_diff * pow2(to_numerology_value(ul_scs))) / static_cast<float>(16U * 64) +
-                 static_cast<float>(ta_cmd_offset_zero) - expert_cfg.ta_target));
+                 static_cast<float>(ta_cmd_offset_zero) - ta_cfg.target));
 }
 
 void ta_manager::reset_measurements(unsigned tag_idx)

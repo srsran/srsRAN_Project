@@ -30,6 +30,7 @@ from typing import Iterable
 
 import pytest
 from google.protobuf.empty_pb2 import Empty
+from google.protobuf.wrappers_pb2 import UInt32Value
 from pytest import mark, param
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
@@ -120,7 +121,7 @@ def test_ue(
         )
 
     with handle_start_error(name=f"GNB [{id(gnb)}]"):
-        du_def: DUDefinition = gnb.GetDefinition(Empty())
+        du_def: DUDefinition = gnb.GetDefinition(UInt32Value(value=0))
         gnb.Start(
             GNBStartInfo(
                 plmn=PLMN(mcc="001", mnc="01"),
@@ -142,7 +143,7 @@ def test_ue(
     # Stop
     stop(
         ue_array=tuple(),
-        gnb=gnb,
+        gnb_array=[gnb],
         fivegc=fivegc,
         retina_data=retina_data,
         gnb_stop_timeout=gnb_stop_timeout,
@@ -334,7 +335,7 @@ def _test_ru(
     # Stop
     stop(
         ue_array=tuple(),
-        gnb=gnb,
+        gnb_array=[gnb],
         fivegc=None,
         retina_data=retina_data,
         gnb_stop_timeout=gnb_stop_timeout,
@@ -422,7 +423,7 @@ def test_mode_many_ues(
     # Stop
     stop(
         ue_array=tuple(),
-        gnb=gnb,
+        gnb_array=[gnb],
         fivegc=None,
         retina_data=retina_data,
         gnb_stop_timeout=gnb_stop_timeout,

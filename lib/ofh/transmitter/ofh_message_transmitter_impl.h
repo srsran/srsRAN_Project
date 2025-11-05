@@ -38,11 +38,11 @@ class message_transmitter_impl : public ota_symbol_boundary_notifier
 {
   /// Logger.
   srslog::basic_logger& logger;
-  /// Ethernet frame pool.
+  /// Downlink Control-Plane ethernet frame pool.
   std::shared_ptr<ether::eth_frame_pool> pool_dl_cp;
-  /// Ethernet frame pool.
+  /// Uplink Control-Plane ethernet frame pool.
   std::shared_ptr<ether::eth_frame_pool> pool_ul_cp;
-  /// Ethernet frame pool.
+  /// Downlink User-Plane ethernet frame pool.
   std::shared_ptr<ether::eth_frame_pool> pool_dl_up;
   /// Ethernet transmitter.
   std::unique_ptr<ether::transmitter> eth_transmitter;

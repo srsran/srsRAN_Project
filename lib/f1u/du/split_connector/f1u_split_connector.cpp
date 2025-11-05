@@ -53,10 +53,12 @@ f1u_split_connector::f1u_split_connector(const gtpu_gateway_maps& udp_gw_maps,
   for (const std::unique_ptr<gtpu_gateway>& udp_gw : udp_gw_maps.default_gws) {
     f1u_sessions.default_gw_sessions.push_back(udp_gw->create(*gw_data_gtpu_demux_adapter));
   }
-  std::map<five_qi_t, std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>> five_qi_gw_sessions;
-  for (auto const& [five_qi, five_qi_gws] : udp_gw_maps.five_qi_gws) {
-    for (auto const& five_qi_gw : five_qi_gws) {
-      f1u_sessions.five_qi_gw_sessions[five_qi].push_back(five_qi_gw->create(*gw_data_gtpu_demux_adapter));
+
+  for (auto const& [s_nssai, s_nssai_gws] : udp_gw_maps.gw_maps) {
+    for (auto const& [five_qi, five_qi_gws] : s_nssai_gws) {
+      for (const std::unique_ptr<gtpu_gateway>& gw : five_qi_gws) {
+        f1u_sessions.session_maps[s_nssai][five_qi].push_back(gw->create(*gw_data_gtpu_demux_adapter));
+      }
     }
   }
   gw_data_gtpu_demux_adapter->connect_gtpu_demux(*demux);
@@ -68,6 +70,7 @@ f1u_split_connector::f1u_split_connector(const gtpu_gateway_maps& udp_gw_maps,
 std::unique_ptr<f1u_du_gateway_bearer>
 f1u_split_connector::create_du_bearer(uint32_t                                   ue_index,
                                       drb_id_t                                   drb_id,
+                                      s_nssai_t                                  s_nssai,
                                       five_qi_t                                  five_qi,
                                       srs_du::f1u_config                         config,
                                       const gtpu_teid_t&                         dl_teid,
@@ -80,7 +83,7 @@ f1u_split_connector::create_du_bearer(uint32_t                                  
       "Creating DU gateway local bearer with UL GTP Tunnel={} DL TEID={} {}", ul_up_tnl_info, dl_teid, five_qi);
 
   // Get DL UP TNL address.
-  auto&       udp_session = f1u_session_mngr->get_next_f1u_gateway(five_qi);
+  auto&       udp_session = f1u_session_mngr->get_next_f1u_gateway(s_nssai, five_qi);
   std::string bind_addr;
   if (not udp_session.get_bind_address(bind_addr)) {
     logger_du.error("Could not get bind address for F1-U tunnel. ue={} drb={}", ue_index, drb_id);
@@ -106,9 +109,8 @@ f1u_split_connector::create_du_bearer(uint32_t                                  
   if (not expected_dispatch_queue) {
     logger_du.error("Could not attach UL-TEID to demux RX. TEID {} already exists", ul_up_tnl_info.gtp_teid);
     return nullptr;
-  } else {
-    du_bearer->dispatch_queue = std::move(expected_dispatch_queue.value());
   }
+  du_bearer->dispatch_queue = std::move(expected_dispatch_queue.value());
 
   return du_bearer;
 }

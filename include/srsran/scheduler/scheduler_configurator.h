@@ -38,7 +38,6 @@
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"
 #include "srsran/ran/time_alignment_config.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
-#include "srsran/scheduler/config/dmrs.h"
 #include "srsran/scheduler/config/logical_channel_config.h"
 #include "srsran/scheduler/config/serving_cell_config.h"
 #include "srsran/scheduler/config/si_scheduling_config.h"
@@ -47,18 +46,6 @@
 namespace srsran {
 
 class scheduler_cell_metrics_notifier;
-
-/// Basic scheduler resource grid element for resource reservation.
-struct sched_grid_resource {
-  prb_interval      prbs;
-  ofdm_symbol_range symbols;
-
-  bool operator==(const sched_grid_resource& rhs) const { return prbs == rhs.prbs and symbols == rhs.symbols; }
-
-  bool operator!=(const sched_grid_resource& rhs) const { return !(rhs == *this); }
-
-  bool is_empty() const { return prbs.empty() and symbols.empty(); }
-};
 
 /// Cell Configuration Request.
 /// \remark See O-RAN WG8, Section 9.2.3.2.1, Table 9.18.
@@ -97,8 +84,8 @@ struct sched_cell_configuration_request_message {
   /// Scheduling of SI messages.
   std::optional<si_scheduling_config> si_scheduling;
 
-  /// List of PUCCH guardbands.
-  std::vector<sched_grid_resource> pucch_guardbands;
+  /// List of dedicated PUCCH resources.
+  std::vector<pucch_resource> ded_pucch_resources;
 
   /// List of zp-CSI-RS resources common to all UEs.
   std::vector<zp_csi_rs_resource> zp_csi_rs_list;

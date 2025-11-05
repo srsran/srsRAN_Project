@@ -202,12 +202,17 @@ async_task<void> cu_up_manager_impl::handle_e1_reset(const e1ap_reset& msg)
 
 async_task<void> cu_up_manager_impl::enable_test_mode()
 {
-  return launch_async<cu_up_enable_test_mode_routine>(test_mode_cfg, *this, ngu_demux);
+  return launch_async<cu_up_enable_test_mode_routine>(test_mode_cfg, *this, *ue_mng, ngu_demux);
 }
 
 async_task<void> cu_up_manager_impl::disable_test_mode()
 {
   return launch_async<cu_up_disable_test_mode_routine>(*this, *ue_mng);
+}
+
+async_task<void> cu_up_manager_impl::reestablish_test_mode()
+{
+  return launch_async<cu_up_reestablish_test_mode_routine>(test_mode_cfg, *this, *ue_mng);
 }
 
 void cu_up_manager_impl::trigger_enable_test_mode()
@@ -226,6 +231,16 @@ void cu_up_manager_impl::trigger_disable_test_mode()
     test_mode_ue_timer = timers.create_unique_timer(exec_mapper.ctrl_executor());
     test_mode_ue_timer.set(test_mode_cfg.attach_detach_period,
                            [this](timer_id_t /**/) { schedule_cu_up_async_task(disable_test_mode()); });
+    test_mode_ue_timer.run();
+  }
+}
+
+void cu_up_manager_impl::trigger_reestablish_test_mode()
+{
+  if (test_mode_cfg.reestablish_period.count() != 0) {
+    test_mode_ue_timer = timers.create_unique_timer(exec_mapper.ctrl_executor());
+    test_mode_ue_timer.set(test_mode_cfg.reestablish_period,
+                           [this](timer_id_t /**/) { schedule_cu_up_async_task(reestablish_test_mode()); });
     test_mode_ue_timer.run();
   }
 }

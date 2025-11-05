@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/cu_up/cu_up_state.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/ran/cause/e1ap_cause.h"
 #include "srsran/ran/cu_types.h"
@@ -86,6 +87,7 @@ public:
                                                              bool new_tnl_info_required)                       = 0;
   virtual void                            remove_pdu_session(pdu_session_id_t pdu_session_id)                  = 0;
   virtual size_t                          get_nof_pdu_sessions()                                               = 0;
+  virtual pdu_session_state_t             get_pdu_session_state()                                              = 0;
 };
 
 } // namespace srs_cu_up

@@ -21,6 +21,7 @@
  */
 
 #include "srsran/support/executors/detail/priority_task_queue.h"
+#include "srsran/adt/moodycamel_bounded_mpmc_queue.h"
 #include "srsran/adt/moodycamel_mpmc_queue.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/adt/mutexed_mpmc_queue.h"
@@ -128,6 +129,9 @@ static std::unique_ptr<detail::any_task_queue> make_any_task_queue(const concurr
           params.size);
     case concurrent_queue_policy::moodycamel_lockfree_mpmc:
       return std::make_unique<any_task_queue_impl<concurrent_queue_policy::moodycamel_lockfree_mpmc>>(
+          params.size, params.nof_prereserved_producers);
+    case concurrent_queue_policy::moodycamel_lockfree_bounded_mpmc:
+      return std::make_unique<any_task_queue_impl<concurrent_queue_policy::moodycamel_lockfree_bounded_mpmc>>(
           params.size, params.nof_prereserved_producers);
     default:
       report_fatal_error("Unknown concurrent_queue_policy");

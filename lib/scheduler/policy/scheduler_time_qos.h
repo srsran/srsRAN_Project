@@ -56,8 +56,8 @@ private:
   static constexpr double forbid_prio = std::numeric_limits<double>::lowest();
 
   // Policy parameters.
-  const time_qos_scheduler_expert_config params;
-  const du_cell_index_t                  cell_index;
+  const time_qos_scheduler_config params;
+  const du_cell_index_t           cell_index;
   /// Coefficient used to compute exponential moving average.
   const double exp_avg_alpha = 0.01;
 

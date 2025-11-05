@@ -71,7 +71,10 @@ static __always_inline __m512i ZERO_epi8()
 /// Maximum number of AVX512 vectors needed to represent a BG node.
 static constexpr unsigned MAX_NODE_SIZE_AVX512 = divide_ceil(ldpc::MAX_LIFTING_SIZE, AVX512_SIZE_BYTE);
 
-ldpc_decoder_avx512::ldpc_decoder_avx512() : help_check_to_var(MAX_NODE_SIZE_AVX512 * AVX512_SIZE_BYTE) {}
+ldpc_decoder_avx512::ldpc_decoder_avx512(bool cfg_force_decoding) :
+  ldpc_decoder_impl(cfg_force_decoding), help_check_to_var(MAX_NODE_SIZE_AVX512 * AVX512_SIZE_BYTE)
+{
+}
 
 void ldpc_decoder_avx512::specific_init()
 {

@@ -21,6 +21,7 @@
  */
 
 #include "cu_appconfig_validator.h"
+#include "apps/helpers/f1u/f1u_appconfig_validator.h"
 #include "apps/helpers/logger/logger_appconfig_validator.h"
 #include "apps/services/worker_manager/worker_manager_appconfig_validator.h"
 #include "cu_appconfig.h"
@@ -34,6 +35,10 @@ bool srsran::validate_cu_appconfig(const cu_appconfig& config)
   }
 
   if (!validate_expert_execution_appconfig(config.expert_execution_cfg)) {
+    return false;
+  }
+
+  if (!validate_f1u_sockets_appconfig(config.f1u_cfg)) {
     return false;
   }
 

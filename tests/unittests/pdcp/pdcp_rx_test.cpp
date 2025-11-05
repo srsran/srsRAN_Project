@@ -397,6 +397,43 @@ TEST_P(pdcp_rx_test, count_wraparound)
   test_max_count(rx_next_start);
 }
 
+/// Test TX SDU buffering.
+TEST_P(pdcp_rx_test, rx_buffer)
+{
+  uint32_t n_no_buffer_pdus = 1;
+  uint32_t n_buffer_pdus    = 2;
+  init(GetParam());
+
+  pdcp_rx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
+
+  for (uint32_t count = 0; count < n_no_buffer_pdus; count++) {
+    byte_buffer test_pdu;
+    get_test_pdu(count, test_pdu);
+    pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu)).value());
+  }
+
+  // Wait for crypto and reordering.
+  wait_pending_crypto();
+  worker.run_pending_tasks();
+
+  // Check SDUs were received correctly.
+  FLUSH_AND_ASSERT_EQ(1, test_frame->sdu_queue.size());
+  test_frame->sdu_queue = {}; // clear queue.
+
+  pdcp_rx->begin_buffering();
+  for (uint32_t n = 0; n < n_buffer_pdus; n++) {
+    uint32_t    count = n_no_buffer_pdus + n;
+    byte_buffer test_pdu;
+    get_test_pdu(count, test_pdu);
+    pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu)).value());
+  }
+  FLUSH_AND_ASSERT_EQ(0, test_frame->sdu_queue.size());
+  pdcp_rx->end_buffering();
+  wait_pending_crypto();
+  worker.run_pending_tasks();
+  FLUSH_AND_ASSERT_EQ(2, test_frame->sdu_queue.size());
+}
+
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////

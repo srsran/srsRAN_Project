@@ -385,12 +385,9 @@ int main(int argc, char** argv)
                                 *epoll_broker,
                                 workers.get_cu_up_executor_mapper().io_ul_executor(),
                                 workers.get_cu_up_executor_mapper().f1u_rx_executor());
-    if (not sock_cfg.five_qi.has_value()) {
-      f1u_gw_maps.default_gws.push_back(std::move(cu_f1u_gw));
-    } else {
-      f1u_gw_maps.five_qi_gws[sock_cfg.five_qi.value()].push_back(std::move(cu_f1u_gw));
-    }
+    f1u_gw_maps.add_gtpu_gateway(sock_cfg.sst, sock_cfg.sd, sock_cfg.five_qi, std::move(cu_f1u_gw));
   }
+
   std::unique_ptr<f1u_cu_up_udp_gateway> cu_f1u_conn =
       srs_cu_up::create_split_f1u_gw({f1u_gw_maps, *cu_f1u_gtpu_demux, *cu_up_dlt_pcaps.f1u, cu_cfg.f1u_cfg.peer_port});
 

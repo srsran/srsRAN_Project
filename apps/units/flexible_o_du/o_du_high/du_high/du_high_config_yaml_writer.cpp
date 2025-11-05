@@ -403,37 +403,37 @@ static YAML::Node build_du_high_pusch_section(const du_high_unit_pusch_config& c
 {
   YAML::Node node;
 
-  node["min_ue_mcs"]                      = config.min_ue_mcs;
-  node["max_ue_mcs"]                      = config.max_ue_mcs;
-  node["max_consecutive_kos"]             = config.max_consecutive_kos;
-  node["mcs_table"]                       = to_string(config.mcs_table);
-  node["max_rank"]                        = config.max_rank;
-  node["msg3_delta_preamble"]             = config.msg3_delta_preamble;
-  node["p0_nominal_with_grant"]           = config.p0_nominal_with_grant;
-  node["max_puschs_per_slot"]             = config.max_puschs_per_slot;
-  node["beta_offset_ack_idx_1"]           = config.beta_offset_ack_idx_1;
-  node["beta_offset_ack_idx_2"]           = config.beta_offset_ack_idx_2;
-  node["beta_offset_ack_idx_3"]           = config.beta_offset_ack_idx_3;
-  node["beta_offset_csi_p1_idx_1"]        = config.beta_offset_csi_p1_idx_1;
-  node["beta_offset_csi_p1_idx_2"]        = config.beta_offset_csi_p1_idx_2;
-  node["beta_offset_csi_p2_idx_1"]        = config.beta_offset_csi_p2_idx_1;
-  node["beta_offset_csi_p2_idx_2"]        = config.beta_offset_csi_p2_idx_2;
-  node["min_k2"]                          = config.min_k2;
-  node["dc_offset"]                       = to_string(config.dc_offset);
-  node["olla_snr_inc_step"]               = config.olla_snr_inc;
-  node["olla_target_bler"]                = config.olla_target_bler;
-  node["olla_max_snr_offset"]             = config.olla_max_snr_offset;
-  node["dmrs_additional_position"]        = config.dmrs_add_pos;
-  node["min_rb_size"]                     = config.min_rb_size;
-  node["max_rb_size"]                     = config.max_rb_size;
-  node["start_rb"]                        = config.start_rb;
-  node["end_rb"]                          = config.end_rb;
-  node["enable_closed_loop_pw_control"]   = config.enable_closed_loop_pw_control;
-  node["enable_phr_bw_adaptation"]        = config.enable_phr_bw_adaptation;
-  node["target_pusch_sinr"]               = config.target_pusch_sinr;
-  node["path_loss_for_target_pusch_sinr"] = config.path_loss_for_target_pusch_sinr;
-  node["path_loss_compensation_factor"]   = config.path_loss_compensation_factor;
-  node["enable_transform_precoding"]      = config.enable_transform_precoding;
+  node["min_ue_mcs"]                 = config.min_ue_mcs;
+  node["max_ue_mcs"]                 = config.max_ue_mcs;
+  node["max_consecutive_kos"]        = config.max_consecutive_kos;
+  node["mcs_table"]                  = to_string(config.mcs_table);
+  node["max_rank"]                   = config.max_rank;
+  node["msg3_delta_preamble"]        = config.msg3_delta_preamble;
+  node["p0_nominal_with_grant"]      = config.p0_nominal_with_grant;
+  node["max_puschs_per_slot"]        = config.max_puschs_per_slot;
+  node["beta_offset_ack_idx_1"]      = config.beta_offset_ack_idx_1;
+  node["beta_offset_ack_idx_2"]      = config.beta_offset_ack_idx_2;
+  node["beta_offset_ack_idx_3"]      = config.beta_offset_ack_idx_3;
+  node["beta_offset_csi_p1_idx_1"]   = config.beta_offset_csi_p1_idx_1;
+  node["beta_offset_csi_p1_idx_2"]   = config.beta_offset_csi_p1_idx_2;
+  node["beta_offset_csi_p2_idx_1"]   = config.beta_offset_csi_p2_idx_1;
+  node["beta_offset_csi_p2_idx_2"]   = config.beta_offset_csi_p2_idx_2;
+  node["min_k2"]                     = config.min_k2;
+  node["dc_offset"]                  = to_string(config.dc_offset);
+  node["olla_snr_inc_step"]          = config.olla_snr_inc;
+  node["olla_target_bler"]           = config.olla_target_bler;
+  node["olla_max_snr_offset"]        = config.olla_max_snr_offset;
+  node["dmrs_additional_position"]   = config.dmrs_add_pos;
+  node["min_rb_size"]                = config.min_rb_size;
+  node["max_rb_size"]                = config.max_rb_size;
+  node["start_rb"]                   = config.start_rb;
+  node["end_rb"]                     = config.end_rb;
+  node["enable_cl_loop_pw_control"]  = config.enable_closed_loop_pw_control;
+  node["enable_phr_bw_adaptation"]   = config.enable_phr_bw_adaptation;
+  node["target_sinr"]                = config.target_pusch_sinr;
+  node["ref_path_loss"]              = config.path_loss_for_target_pusch_sinr;
+  node["pl_compensation_factor"]     = config.path_loss_compensation_factor;
+  node["enable_transform_precoding"] = config.enable_transform_precoding;
 
   for (auto rv : config.rv_sequence) {
     node["rv_sequence"].push_back(rv);
@@ -621,21 +621,18 @@ static YAML::Node build_du_high_csi_section(const du_high_unit_csi_config& confi
   return node;
 }
 
-static void fill_du_high_sched_expert_section(YAML::Node& node, const du_high_unit_scheduler_expert_config& config)
+static void fill_du_high_sched_expert_section(YAML::Node& node, const du_high_unit_scheduler_config& config)
 {
-  if (config.policy_sched_expert_cfg.has_value() and
-      std::holds_alternative<time_qos_scheduler_expert_config>(*config.policy_sched_expert_cfg)) {
+  if (config.policy_cfg.has_value() and std::holds_alternative<time_qos_scheduler_config>(*config.policy_cfg)) {
     YAML::Node sched_node;
     YAML::Node policy_node;
     YAML::Node policy_pf_node;
-    policy_pf_node["pf_fairness_coeff"] =
-        std::get<time_qos_scheduler_expert_config>(*config.policy_sched_expert_cfg).pf_fairness_coeff;
-    policy_pf_node["prio_enabled"] =
-        std::get<time_qos_scheduler_expert_config>(*config.policy_sched_expert_cfg).priority_enabled;
+    policy_pf_node["pf_fairness_coeff"] = std::get<time_qos_scheduler_config>(*config.policy_cfg).pf_fairness_coeff;
+    policy_pf_node["prio_enabled"]      = std::get<time_qos_scheduler_config>(*config.policy_cfg).priority_enabled;
 
-    policy_node["qos_sched"]       = policy_pf_node;
-    sched_node["policy_sched_cfg"] = policy_node;
-    node["sched_expert_cfg"]       = sched_node;
+    policy_node["qos_sched"] = policy_pf_node;
+    sched_node["policy"]     = policy_node;
+    node["scheduler"]        = sched_node;
   }
 }
 
@@ -665,6 +662,23 @@ static YAML::Node build_du_high_drx_section(const du_high_unit_drx_config& confi
   node["retx_timer_dl"]     = config.retx_timer_dl;
   node["retx_timer_ul"]     = config.retx_timer_ul;
   node["long_cycle"]        = config.long_cycle;
+
+  return node;
+}
+
+static YAML::Node build_du_high_slice(const du_high_unit_cell_slice_config& config)
+{
+  YAML::Node node;
+
+  node["sst"] = config.sst;
+  node["sd"]  = config.sd;
+
+  YAML::Node sched_cfg_node;
+  sched_cfg_node["min_prb_policy_ratio"] = config.sched_cfg.min_prb_policy_ratio;
+  sched_cfg_node["max_prb_policy_ratio"] = config.sched_cfg.max_prb_policy_ratio;
+  sched_cfg_node["ded_prb_policy_ratio"] = config.sched_cfg.ded_prb_policy_ratio;
+  sched_cfg_node["priority"]             = config.sched_cfg.priority;
+  node["sched_cfg"]                      = sched_cfg_node;
 
   return node;
 }
@@ -709,10 +723,14 @@ static YAML::Node build_cell_entry(const du_high_unit_base_cell_config& config)
   if (config.drx_cfg.long_cycle != 0) {
     node["drx"] = build_du_high_drx_section(config.drx_cfg);
   }
-  fill_du_high_sched_expert_section(node, config.sched_expert_cfg);
+  fill_du_high_sched_expert_section(node, config.scheduler_cfg);
 
   if (config.ntn_cfg) {
     node["ntn"] = build_du_high_ntn_section(config.ntn_cfg.value());
+  }
+
+  for (auto& slice : config.slice_cfg) {
+    node["slicing"].push_back(build_du_high_slice(slice));
   }
 
   return node;
@@ -825,8 +843,9 @@ static YAML::Node build_du_high_testmode_section(const du_high_unit_test_mode_co
   {
     YAML::Node ue_node;
 
-    ue_node["rnti"]    = to_value(config.test_ue.rnti);
-    ue_node["nof_ues"] = config.test_ue.nof_ues;
+    ue_node["rnti"]                      = to_value(config.test_ue.rnti);
+    ue_node["nof_ues"]                   = config.test_ue.nof_ues;
+    ue_node["ue_creation_stagger_slots"] = config.test_ue.ue_creation_stagger_slots;
     if (config.test_ue.auto_ack_indication_delay.has_value()) {
       ue_node["auto_ack_indication_delay"] = config.test_ue.auto_ack_indication_delay.value();
     }

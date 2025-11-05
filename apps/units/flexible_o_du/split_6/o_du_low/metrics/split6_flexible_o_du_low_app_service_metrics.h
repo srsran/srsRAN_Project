@@ -29,6 +29,7 @@
 #include "srsran/adt/span.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/synchronization/stop_event.h"
 
 namespace srsran {
 
@@ -62,10 +63,11 @@ public:
 inline auto split6_flexible_o_du_low_metrics_callback = [](const app_services::metrics_set&      report,
                                                            span<app_services::metrics_consumer*> consumers,
                                                            task_executor&                        executor,
-                                                           srslog::basic_logger&                 logger) {
+                                                           srslog::basic_logger&                 logger,
+                                                           stop_event_token                      token) {
   const auto& metric = static_cast<const split6_flexible_o_du_low_app_service_metrics_impl&>(report);
 
-  if (!executor.defer([metric, consumers]() {
+  if (!executor.defer([metric, consumers, stop_token = std::move(token)]() {
         for (auto& consumer : consumers) {
           consumer->handle_metric(metric);
         }

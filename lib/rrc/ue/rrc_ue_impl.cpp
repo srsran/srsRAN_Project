@@ -134,6 +134,12 @@ void rrc_ue_impl::cancel_handover_reconfiguration_transaction(uint8_t transactio
   }
 }
 
+void rrc_ue_impl::cancel_all_transactions()
+{
+  logger.log_debug("Cancelling all ongoing RRC transactions");
+  event_mng->cancel_all();
+}
+
 void rrc_ue_impl::on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg)
 {
   send_dl_ccch(dl_ccch_msg);

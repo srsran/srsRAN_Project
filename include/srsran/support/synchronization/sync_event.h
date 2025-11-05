@@ -75,9 +75,11 @@ private:
 /// Scoped token that notifies the associated sync_event when it gets destroyed or reset.
 class scoped_sync_token
 {
+  friend class sync_event;
+  explicit scoped_sync_token(sync_event& parent_) : parent(&parent_) { inc_token(); }
+
 public:
   scoped_sync_token() = default;
-  explicit scoped_sync_token(sync_event& parent_) : parent(&parent_) { inc_token(); }
 
   scoped_sync_token(const scoped_sync_token& other) : parent(other.parent) { inc_token(); }
 

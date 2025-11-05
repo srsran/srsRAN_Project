@@ -75,7 +75,7 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
       logger.log_warning("\"{}\" timed out after {}ms", name(), procedure_timeout.count());
       rrc_ue.on_ue_release_required(cause_protocol_t::unspecified);
     } else {
-      logger.log_warning("\"{}\" cancelled", name());
+      logger.log_info("\"{}\" cancelled", name());
       // Do nothing. We are likely shutting down the DU processor.
     }
     CORO_EARLY_RETURN();

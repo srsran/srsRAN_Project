@@ -69,11 +69,12 @@ public:
   // See interface for documentation.
   void on_new_frame(ether::unique_rx_buffer buffer) override
   {
-    if (stop_manager.stop_was_requested()) {
+    auto token = stop_manager.get_token();
+    if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
       return;
     }
 
-    if (!executor.defer([this, buff = std::move(buffer), token = stop_manager.get_token()]() mutable {
+    if (!executor.defer([this, buff = std::move(buffer), tk = std::move(token)]() mutable {
           msg_receiver.on_new_frame(std::move(buff));
         })) {
       logger.warning("Failed to dispatch receiver task for sector#{}", sector);

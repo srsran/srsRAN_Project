@@ -44,8 +44,12 @@ public:
   /// (of maximum length max_BG_K + 4) and an extra variable node in the extension region.
   static constexpr unsigned MAX_CHECK_NODE_DEGREE = ldpc::MAX_BG_K + 5;
 
-  /// Default constructor.
-  ldpc_decoder_impl() = default;
+  /// Constructor: configures the force_decoding flag.
+  explicit ldpc_decoder_impl(bool cfg_force_decoding) : force_decoding(cfg_force_decoding)
+  {
+    srsran_assert((scaling_factor > 0) && (scaling_factor < 1),
+                  "Scaling factor must be between 0 and 1, not included.");
+  }
 
   // See interface for the documentation.
   std::optional<unsigned> decode(bit_buffer&                      output,
@@ -222,6 +226,8 @@ private:
 
   /// Maximum number of iterations
   unsigned max_iterations = 6;
+  /// Forces the decoder to decode even if there are not enough soft bits at the input.
+  bool force_decoding;
 
   /// \brief Buffer to store the current value of the variable-to-check messages.
   ///

@@ -55,7 +55,7 @@ public:
   // See interface for documentation.
   executor_metrics_channel& add_channel(const std::string& exec_name) override;
 
-  /// Stops periodic metrics reporting.
+  /// Stops periodic metrics reporting. This method is blocking.
   void stop();
 
   /// Start the backend worker using the passed timer and periodically report metrics to the given notifier object.
@@ -71,9 +71,7 @@ private:
   /// Periodic timer.
   unique_timer timer;
   /// An interface to a metrics handler.
-  executor_metrics_notifier* notifier;
-  /// Backend worker status.
-  std::atomic<worker_status> status{worker_status::stopped};
+  executor_metrics_notifier* notifier = nullptr;
   /// Stop control.
   stop_event_source stop_control;
 

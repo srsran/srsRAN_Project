@@ -201,4 +201,7 @@ void cell_scheduler::stop()
   pdcch_sch.stop();
   pucch_alloc.stop();
   uci_alloc.stop();
+
+  // Report last metrics.
+  metrics.handle_cell_deactivation();
 }

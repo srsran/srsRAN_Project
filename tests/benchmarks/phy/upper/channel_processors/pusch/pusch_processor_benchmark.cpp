@@ -435,7 +435,8 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
 static std::shared_ptr<pusch_decoder_factory>
 create_sw_pusch_decoder_factory(std::shared_ptr<crc_calculator_factory> crc_calculator_factory)
 {
-  std::shared_ptr<ldpc_decoder_factory> ldpc_decoder_factory = create_ldpc_decoder_factory_sw(ldpc_decoder_type);
+  std::shared_ptr<ldpc_decoder_factory> ldpc_decoder_factory =
+      create_ldpc_decoder_factory_sw(ldpc_decoder_type, {.force_decoding = false});
   TESTASSERT(ldpc_decoder_factory);
 
   std::shared_ptr<ldpc_rate_dematcher_factory> ldpc_rate_dematcher_factory =

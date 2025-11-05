@@ -108,7 +108,8 @@ private:
   static std::shared_ptr<pusch_decoder_factory>
   create_generic_pusch_decoder_factory(std::shared_ptr<crc_calculator_factory> crc_calculator_factory)
   {
-    std::shared_ptr<ldpc_decoder_factory> ldpc_decoder_factory = create_ldpc_decoder_factory_sw("auto");
+    std::shared_ptr<ldpc_decoder_factory> ldpc_decoder_factory =
+        create_ldpc_decoder_factory_sw("auto", {.force_decoding = false});
     if (!ldpc_decoder_factory) {
       return nullptr;
     }

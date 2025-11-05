@@ -90,12 +90,16 @@ public:
   {
     return adapted->handle_ue_inactivity_notification(msg);
   }
-  void                handle_notify(const f1ap_notify_message& msg) override { return adapted->handle_notify(msg); }
-  gnb_cu_ue_f1ap_id_t get_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index) override
+  void handle_notify(const f1ap_notify_message& msg) override { return adapted->handle_notify(msg); }
+  bool has_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index) const override
+  {
+    return get_gnb_cu_ue_f1ap_id(ue_index).has_value();
+  }
+  std::optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index) const override
   {
     return adapted->get_gnb_cu_ue_f1ap_id(ue_index);
   }
-  gnb_cu_ue_f1ap_id_t get_gnb_cu_ue_f1ap_id(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id) override
+  std::optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id) const override
   {
     return adapted->get_gnb_cu_ue_f1ap_id(gnb_du_ue_f1ap_id);
   }

@@ -131,6 +131,23 @@ void pdcp_entity_tx::restart_pdu_processing()
   }
 }
 
+void pdcp_entity_tx::begin_buffering()
+{
+  buffering = true;
+  logger.log_debug("Begin SDU buffering");
+}
+
+void pdcp_entity_tx::end_buffering()
+{
+  logger.log_debug("End SDU buffering");
+  buffering = false;
+  while (not sdu_buffer.empty()) {
+    byte_buffer buf = std::move(sdu_buffer.top());
+    sdu_buffer.pop();
+    handle_sdu(std::move(buf));
+  }
+}
+
 manual_event_flag& pdcp_entity_tx::crypto_awaitable()
 {
   return token_mngr.get_awaitable();
@@ -154,6 +171,19 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
       logger.log_warning("Dropping SDU. Entity is stopped");
     }
     metrics.add_lost_sdus(1);
+    return;
+  }
+
+  if (buffering) {
+    if (not sdu_buffer.try_push(std::move(buf))) {
+      if (cfg.custom.warn_on_drop) {
+        logger.log_warning("Dropping SDU. SDU buffer is full");
+      } else {
+        logger.log_debug("Dropping SDU. SDU buffer is full");
+      }
+      return;
+    }
+    logger.log_debug("Buffered SDU. Entity is paused. buffer_size={}", sdu_buffer.size());
     return;
   }
 

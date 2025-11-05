@@ -29,6 +29,7 @@
 #include "scheduler_output_test_helpers.h"
 #include "tests/test_doubles/scheduler/scheduler_test_message_validators.h"
 #include "srsran/adt/static_vector.h"
+#include "srsran/ran/band_helper.h"
 #include "srsran/ran/pdcch/dci_packing.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/pucch/pucch_constants.h"
@@ -557,7 +558,7 @@ void srsran::test_prach_opportunity_validity(const cell_configuration& cell_cfg,
   }
   const rach_config_common& rach_cfg_common = *cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common;
   const prach_configuration prach_cfg =
-      prach_configuration_get(frequency_range::FR1,
+      prach_configuration_get(band_helper::get_freq_range((cell_cfg.band)),
                               cell_cfg.paired_spectrum ? duplex_mode::FDD : duplex_mode::TDD,
                               rach_cfg_common.rach_cfg_generic.prach_config_index);
 

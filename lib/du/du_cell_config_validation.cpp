@@ -462,6 +462,35 @@ static check_outcome check_ul_config_common(const du_cell_config& cell_cfg)
                "The value set {} for msg3_delta_power must be a multiple of 2",
                pusch.msg3_delta_power.to_int());
   }
+
+  // \ref prach_scheduler for the derivation of this validation.
+  const prach_configuration prach_cfg =
+      prach_configuration_get(band_helper::get_freq_range(cell_cfg.dl_carrier.band),
+                              band_helper::get_duplex_mode(cell_cfg.dl_carrier.band),
+                              cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index);
+
+  // The information we need are not related to whether it is the last PRACH occasion.
+  constexpr bool                   is_last_prach_occasion = false;
+  const prach_preamble_information info =
+      is_long_preamble(prach_cfg.format)
+          ? get_prach_preamble_long_info(prach_cfg.format)
+          : get_prach_preamble_short_info(
+                prach_cfg.format,
+                to_ra_subcarrier_spacing(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs),
+                is_last_prach_occasion);
+  const unsigned prach_nof_prbs =
+      prach_frequency_mapping_get(info.scs, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs).nof_rb_ra;
+  const unsigned prach_prb_end =
+      cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start +
+      cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_fdm * prach_nof_prbs;
+  CHECK_TRUE(
+      prach_prb_end <= cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
+      "With the current PRACH configuration index {}, MSG1 frequency start {} and MSG1 FDM {}, the resulting PRACH "
+      "RBs fall outside the BWP.",
+      cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index,
+      cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start,
+      cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_fdm);
+
   return {};
 }
 

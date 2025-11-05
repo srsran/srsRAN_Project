@@ -32,6 +32,7 @@
 #include "pdcp_tx_window.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/byte_buffer_chain.h"
+#include "srsran/adt/ring_buffer.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/security/security.h"
@@ -137,6 +138,12 @@ public:
 
   /// \brief Triggers re-establishment as specified in TS 38.323, section 5.1.2
   void reestablish(security::sec_128_as_config sec_cfg) override;
+
+  /// \brief Tells the PDCP to start buffering SDUs.
+  void begin_buffering() override;
+
+  /// \brief Ends the PDCP the buffering of SDUs and flushes the current buffer.
+  void end_buffering() override;
 
   /// \brief Get the TX count for status transfer
   pdcp_count_info get_count() const override
@@ -265,6 +272,9 @@ private:
   /// when destroying DRB.
   pdcp_crypto_token_manager token_mngr;
 
+  bool                     buffering = false;
+  ring_buffer<byte_buffer> sdu_buffer{2048};
+
   /// Apply ciphering and integrity protection to SDU+header buffer.
   /// It will pass this buffer to the crypto engine for parallization.
   void apply_reordering(pdcp_tx_buffer_info buf_info);
@@ -273,7 +283,7 @@ private:
 
   void write_control_pdu_to_lower_layers(byte_buffer buf);
 
-  /// TODO add docs
+  /// Apply privacy and integrity protection to an SDU. Can be called concurrently.
   void apply_security(pdcp_tx_buffer_info buf_info);
 
   /// Apply ciphering and integrity protection to the payload

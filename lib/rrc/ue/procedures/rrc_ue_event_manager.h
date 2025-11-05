@@ -40,13 +40,15 @@ public:
   static constexpr size_t                   MAX_NOF_TRANSACTIONS = 4; // Two bit RRC transaction id
   protocol_transaction_manager<rrc_outcome> transactions;
 
-  explicit rrc_ue_event_manager(timer_factory timers) : transactions(MAX_NOF_TRANSACTIONS, timers) {}
-  ~rrc_ue_event_manager()
+  void cancel_all()
   {
     for (unsigned tid = 0; tid != rrc_ue_event_manager::MAX_NOF_TRANSACTIONS; ++tid) {
       transactions.cancel_transaction(tid);
     }
   }
+
+  explicit rrc_ue_event_manager(timer_factory timers) : transactions(MAX_NOF_TRANSACTIONS, timers) {}
+  ~rrc_ue_event_manager() { cancel_all(); }
 };
 
 } // namespace srs_cu_cp

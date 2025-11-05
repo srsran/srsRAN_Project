@@ -102,10 +102,14 @@ private:
 class ldpc_decoder_factory_sw : public ldpc_decoder_factory
 {
 private:
-  std::string dec_type;
+  std::string                        dec_type;
+  ldpc_decoder_factory_configuration cfg;
 
 public:
-  explicit ldpc_decoder_factory_sw(std::string dec_type_) : dec_type(std::move(dec_type_)) {}
+  ldpc_decoder_factory_sw(std::string dec_type_, const ldpc_decoder_factory_configuration& cfg_) :
+    dec_type(std::move(dec_type_)), cfg(cfg_)
+  {
+  }
 
   std::unique_ptr<ldpc_decoder> create() override
   {
@@ -114,21 +118,21 @@ public:
     bool supports_avx512 = cpu_supports_feature(cpu_feature::avx512f) && cpu_supports_feature(cpu_feature::avx512bw);
 
     if (((dec_type == "avx512") || (dec_type == "auto")) && supports_avx512) {
-      return std::make_unique<ldpc_decoder_avx512>();
+      return std::make_unique<ldpc_decoder_avx512>(cfg.force_decoding);
     }
     if (((dec_type == "avx2") || (dec_type == "auto")) && supports_avx2) {
-      return std::make_unique<ldpc_decoder_avx2>();
+      return std::make_unique<ldpc_decoder_avx2>(cfg.force_decoding);
     }
 #endif // __x86_64__
 #ifdef __aarch64__
     bool support_neon = cpu_supports_feature(cpu_feature::neon);
 
     if (((dec_type == "neon") || (dec_type == "auto")) && support_neon) {
-      return std::make_unique<ldpc_decoder_neon>();
+      return std::make_unique<ldpc_decoder_neon>(cfg.force_decoding);
     }
 #endif // __aarch64__
     if ((dec_type == "auto") || (dec_type == "generic")) {
-      return std::make_unique<ldpc_decoder_generic>();
+      return std::make_unique<ldpc_decoder_generic>(cfg.force_decoding);
     }
     return {};
   }
@@ -277,9 +281,11 @@ public:
 
 } // namespace
 
-std::shared_ptr<ldpc_decoder_factory> srsran::create_ldpc_decoder_factory_sw(const std::string& dec_type)
+std::shared_ptr<ldpc_decoder_factory>
+srsran::create_ldpc_decoder_factory_sw(const std::string&                                              dec_type,
+                                       const ldpc_decoder_factory::ldpc_decoder_factory_configuration& cfg)
 {
-  return std::make_unique<ldpc_decoder_factory_sw>(dec_type);
+  return std::make_unique<ldpc_decoder_factory_sw>(dec_type, cfg);
 }
 
 std::shared_ptr<ldpc_encoder_factory> srsran::create_ldpc_encoder_factory_sw(const std::string& enc_type)

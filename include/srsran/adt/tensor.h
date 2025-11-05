@@ -37,7 +37,7 @@ namespace srsran {
 /// \brief Base tensor interface.
 /// \tparam NDIMS Number of dimensions.
 /// \tparam Type  Type of data to store.
-/// \tparam Index_type Data type used for representing dimension indexes. It is used in method \ref
+/// \tparam Index_type Data type used for representing dimension indices. It is used in method \ref
 /// get_dimension_size().
 template <unsigned NDIMS, typename Type, typename Index_type = unsigned>
 class tensor
@@ -147,7 +147,7 @@ private:
 /// \tparam NDIMS        Number of dimensions.
 /// \tparam Type         Type of data to store.
 /// \tparam MAX_ELEMENTS maximum number of elements.
-/// \tparam Index_type Data type used for representing dimension indexes. It is used in method \ref
+/// \tparam Index_type Data type used for representing dimension indices. It is used in method \ref
 /// get_dimension_size().
 template <unsigned NDIMS, typename Type, unsigned MAX_ELEMENTS, typename Index_type = unsigned>
 class static_tensor : public tensor<NDIMS, Type, Index_type>
@@ -223,7 +223,7 @@ private:
 /// \brief Dynamic tensor - the dimensions can be resized dynamically.
 /// \tparam NDIMS        Number of dimensions.
 /// \tparam Type         Type of data to store.
-/// \tparam Index_type Data type used for representing dimension indexes. It is used in method \ref
+/// \tparam Index_type Data type used for representing dimension indices. It is used in method \ref
 /// get_dimension_size().
 template <unsigned NDIMS, typename Type, typename Index_type = unsigned>
 class dynamic_tensor : public tensor<NDIMS, Type, Index_type>

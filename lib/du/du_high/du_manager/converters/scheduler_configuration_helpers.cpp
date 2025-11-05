@@ -89,7 +89,7 @@ srsran::srs_du::make_sched_cell_config_req(du_cell_index_t                      
   sched_req.sib1_payload_size = sib1_len;
   sched_req.si_scheduling     = si_sched_cfg;
 
-  sched_req.pucch_guardbands = config_helpers::build_pucch_guardbands_list(
+  sched_req.ded_pucch_resources = config_helpers::build_pucch_resource_list(
       du_cfg.pucch_cfg, du_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
 
   sched_req.zp_csi_rs_list = du_cfg.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->zp_csi_rs_res_list;

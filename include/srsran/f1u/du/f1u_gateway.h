@@ -28,6 +28,7 @@
 #include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/qos/five_qi.h"
 #include "srsran/ran/rb_id.h"
+#include "srsran/ran/s_nssai.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/support/timers.h"
 
@@ -67,6 +68,7 @@ public:
 
   virtual std::unique_ptr<f1u_du_gateway_bearer> create_du_bearer(uint32_t                       ue_index,
                                                                   drb_id_t                       drb_id,
+                                                                  s_nssai_t                      s_nssai,
                                                                   five_qi_t                      five_qi,
                                                                   srs_du::f1u_config             config,
                                                                   const gtpu_teid_t&             dl_up_tnl_info,

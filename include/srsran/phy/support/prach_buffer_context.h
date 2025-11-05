@@ -25,7 +25,6 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/constants.h"
 #include "srsran/ran/prach/prach_format_type.h"
-#include "srsran/ran/prach/prach_subcarrier_spacing.h"
 #include "srsran/ran/prach/restricted_set_config.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/subcarrier_spacing.h"
@@ -41,6 +40,19 @@ struct prach_buffer_context {
   static_vector<uint8_t, MAX_PORTS> ports;
   /// Slot context within the system frame.
   slot_point slot;
+  /// \brief Uplink resource grid size in PRBs.
+  ///
+  /// Corresponds to parameter \f$N_{grid}^{size,\mu}\f$ in TS38.211 Section 5.3.2. The number of PRBs is computed
+  /// assuming a subcarrier spacing equal to \c pusch_scs.
+  uint16_t nof_prb_ul_grid;
+  /// Root sequence index {0, ..., 837}.
+  uint16_t root_sequence_index;
+  /// \brief Offset, in PRBs, between Point A and the PRB overlapping with the lowest RE of the first frequency-domain
+  /// PRACH occasion.
+  ///
+  /// Corresponds to parameter \f$k_1/N_{\textup{sc}}^{\textup{RB}}\f$ in TS38.211 Section 5.3.2. The number of PRBs is
+  /// computed assuming a subcarrier spacing equal to \c pusch_scs.
+  uint16_t rb_offset;
   /// Sector identifier.
   uint8_t sector;
   /// \brief OFDM symbol index within the slot that marks the start of the acquisition window for the first time-domain
@@ -50,12 +62,6 @@ struct prach_buffer_context {
   uint8_t start_symbol;
   /// Preamble format.
   prach_format_type format;
-  /// \brief Offset, in PRBs, between Point A and the PRB overlapping with the lowest RE of the first frequency-domain
-  /// PRACH occasion.
-  ///
-  /// Corresponds to parameter \f$k_1/N_{\textup{sc}}^{\textup{RB}}\f$ in TS38.211 Section 5.3.2. The number of PRBs is
-  /// computed assuming a subcarrier spacing equal to \c pusch_scs.
-  uint16_t rb_offset;
   /// \brief Number of PRACH time-domain occasions within the slot.
   ///
   /// Corresponds to parameter \f$N_\textup{t}^\textup{RA,slot}\f$ as per TS38.211 Section 5.3.2. It is selected from
@@ -68,15 +74,8 @@ struct prach_buffer_context {
   /// Corresponds to the higher layer parameter \e msg1-FDM (TS38.331 Section 6.3.2, Information Element \e
   /// RACH-ConfigGeneric). Possible values are 1, 2, 4 and 8.
   uint8_t nof_fd_occasions;
-  /// \brief Uplink resource grid size in PRBs.
-  ///
-  /// Corresponds to parameter \f$N_{grid}^{size,\mu}\f$ in TS38.211 Section 5.3.2. The number of PRBs is computed
-  /// assuming a subcarrier spacing equal to \c pusch_scs.
-  uint16_t nof_prb_ul_grid;
   /// PUSCH subcarrier spacing, parameter \f$\mu\f$ in TS38.211 Section 5.3.2.
   subcarrier_spacing pusch_scs;
-  /// Root sequence index {0, ..., 837}.
-  uint16_t root_sequence_index;
   /// Restricted set configuration.
   restricted_set_config restricted_set;
   /// Zero-correlation zone configuration index to calculate \f$N_{CS}\f$ as per TS38.211 Section 6.3.3.1. Range {0,

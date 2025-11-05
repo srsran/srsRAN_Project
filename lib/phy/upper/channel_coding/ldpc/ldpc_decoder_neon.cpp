@@ -56,7 +56,10 @@ static __always_inline int8x16_t LLR_NEG_INFINITY_s8()
 /// Maximum number of NEON vectors needed to represent a BG node.
 static constexpr unsigned MAX_NODE_SIZE_NEON = divide_ceil(ldpc::MAX_LIFTING_SIZE, NEON_SIZE_BYTE);
 
-ldpc_decoder_neon::ldpc_decoder_neon() : help_check_to_var(MAX_NODE_SIZE_NEON * NEON_SIZE_BYTE) {}
+ldpc_decoder_neon::ldpc_decoder_neon(bool cfg_force_decoding) :
+  ldpc_decoder_impl(cfg_force_decoding), help_check_to_var(MAX_NODE_SIZE_NEON * NEON_SIZE_BYTE)
+{
+}
 
 void ldpc_decoder_neon::specific_init()
 {

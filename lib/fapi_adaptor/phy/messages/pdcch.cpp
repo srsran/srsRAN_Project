@@ -57,9 +57,7 @@ static void fill_dci(pdcch_processor::pdu_t&            proc_pdu,
 
   // Unpack the payload.
   dci.payload.resize(fapi_dci.payload.size());
-  for (unsigned j = 0, je = fapi_dci.payload.size(); j != je; ++j) {
-    dci.payload[j] = fapi_dci.payload.test(j);
-  }
+  fapi_dci.payload.to_unpacked_bits(span<uint8_t>{dci.payload.data(), dci.payload.size()});
 
   srsran_assert(fapi_dci.precoding_and_beamforming.prgs.size() == 1U,
                 "Unsupported number of PRGs={}",

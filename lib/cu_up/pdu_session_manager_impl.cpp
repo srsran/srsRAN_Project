@@ -352,6 +352,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   gtpu_teid_t f1u_ul_teid = ret.value();
 
   new_drb->f1u_gw_bearer = f1u_gw.create_cu_bearer(ue_index,
+                                                   new_session.snssai,
                                                    drb_to_setup.drb_id,
                                                    five_qi,
                                                    new_drb->f1u_cfg,
@@ -467,6 +468,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
       }
       // create new F1-U and connect it. This will automatically disconnect the old F1-U.
       drb->f1u_gw_bearer = f1u_gw.create_cu_bearer(ue_index,
+                                                   pdu_session->snssai,
                                                    drb->drb_id,
                                                    five_qi,
                                                    drb->f1u_cfg,
@@ -710,6 +712,34 @@ void pdu_session_manager_impl::restart_pdcp_pdu_processing()
   }
 }
 
+void pdu_session_manager_impl::begin_pdcp_buffering()
+{
+  logger.log_debug("Begin PDCP buffering");
+
+  for (const auto& [psi, pdu_session] : pdu_sessions) {
+    for (const auto& [drb_id, drb] : pdu_session->drbs) {
+      auto& pdcp_rx_ctrl = drb->pdcp->get_rx_upper_control_interface();
+      pdcp_rx_ctrl.begin_buffering();
+      auto& pdcp_tx_ctrl = drb->pdcp->get_tx_upper_control_interface();
+      pdcp_tx_ctrl.begin_buffering();
+    }
+  }
+}
+
+void pdu_session_manager_impl::end_pdcp_buffering()
+{
+  logger.log_debug("End of PDCP buffering");
+
+  for (const auto& [psi, pdu_session] : pdu_sessions) {
+    for (const auto& [drb_id, drb] : pdu_session->drbs) {
+      auto& pdcp_rx_ctrl = drb->pdcp->get_rx_upper_control_interface();
+      pdcp_rx_ctrl.end_buffering();
+      auto& pdcp_tx_ctrl = drb->pdcp->get_tx_upper_control_interface();
+      pdcp_tx_ctrl.end_buffering();
+    }
+  }
+}
+
 async_task<void> pdu_session_manager_impl::await_crypto_rx_all_pdu_sessions()
 {
   logger.log_debug("Awaiting all RX crypto tasks to finish in UE");
@@ -771,4 +801,21 @@ async_task<void> pdu_session_manager_impl::await_crypto_tx_all_drbs(const std::u
 size_t pdu_session_manager_impl::get_nof_pdu_sessions()
 {
   return pdu_sessions.size();
+}
+
+pdu_session_state_t pdu_session_manager_impl::get_pdu_session_state()
+{
+  pdu_session_state_t st;
+  for (const auto& [psi, pdu_session] : pdu_sessions) {
+    drb_state_t drb_st;
+    for (const auto& [drb_id, drb] : pdu_session->drbs) {
+      std::set<qos_flow_id_t> qos_flow_st;
+      for (const auto& [qfi, qos_flow] : drb->qos_flows) {
+        qos_flow_st.insert(qfi);
+      }
+      drb_st.insert({drb_id, qos_flow_st});
+    }
+    st.insert({psi, drb_st});
+  }
+  return st;
 }

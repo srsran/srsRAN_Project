@@ -251,7 +251,7 @@ TEST_F(f1u_du_split_connector_test, send_sdu)
   dummy_f1u_du_gateway_bearer_rx_notifier du_rx;
 
   auto du_bearer = du_gw->create_du_bearer(
-      0, drb_id_t::drb1, five_qi_t{9}, f1u_du_cfg, dl_tnl.gtp_teid, ul_tnl, du_rx, timers, ue_worker);
+      0, drb_id_t::drb1, s_nssai_t{}, five_qi_t{9}, f1u_du_cfg, dl_tnl.gtp_teid, ul_tnl, du_rx, timers, ue_worker);
   ASSERT_NE(udp_tester, nullptr);
   start_receive_thread();
 
@@ -286,7 +286,7 @@ TEST_F(f1u_du_split_connector_test, recv_sdu)
   dummy_f1u_du_gateway_bearer_rx_notifier du_rx;
 
   auto du_bearer = du_gw->create_du_bearer(
-      0, drb_id_t::drb1, five_qi_t{9}, f1u_du_cfg, dl_tnl.gtp_teid, ul_tnl, du_rx, timers, ue_worker);
+      0, drb_id_t::drb1, s_nssai_t{}, five_qi_t{9}, f1u_du_cfg, dl_tnl.gtp_teid, ul_tnl, du_rx, timers, ue_worker);
 
   // Send SDU
   expected<byte_buffer> du_buf = make_byte_buffer("34ff000e00000002000000840200000000000000abcd");
@@ -312,7 +312,7 @@ TEST_F(f1u_du_split_connector_test, disconnect_stops_tx)
   dummy_f1u_du_gateway_bearer_rx_notifier du_rx;
 
   auto du_bearer = du_gw->create_du_bearer(
-      0, drb_id_t::drb1, five_qi_t{9}, f1u_du_cfg, dl_tnl.gtp_teid, ul_tnl, du_rx, timers, ue_worker);
+      0, drb_id_t::drb1, s_nssai_t{}, five_qi_t{9}, f1u_du_cfg, dl_tnl.gtp_teid, ul_tnl, du_rx, timers, ue_worker);
   ASSERT_NE(udp_tester, nullptr);
   start_receive_thread();
 
@@ -372,7 +372,7 @@ TEST_F(f1u_du_split_connector_test, destroy_bearer_disconnects_and_stops_rx)
   dummy_f1u_du_gateway_bearer_rx_notifier du_rx;
 
   auto du_bearer = du_gw->create_du_bearer(
-      0, drb_id_t::drb1, five_qi_t{9}, f1u_du_cfg, dl_tnl.gtp_teid, ul_tnl, du_rx, timers, ue_worker);
+      0, drb_id_t::drb1, s_nssai_t{}, five_qi_t{9}, f1u_du_cfg, dl_tnl.gtp_teid, ul_tnl, du_rx, timers, ue_worker);
 
   // Disconnect incorrect tunnel (no effect expected)
   du_gw->remove_du_bearer(

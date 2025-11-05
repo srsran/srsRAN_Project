@@ -21,6 +21,7 @@
  */
 
 #include "apps/cu_up/cu_up_appconfig_cli11_schema.h"
+#include "apps/cu_up/cu_up_appconfig_validator.h"
 #include "apps/helpers/f1u/f1u_appconfig.h"
 #include "apps/helpers/metrics/metrics_helpers.h"
 #include "apps/services/app_execution_metrics/executor_metrics_manager.h"
@@ -230,7 +231,11 @@ int main(int argc, char** argv)
     fmt::println("NOTE: No JSON metrics will be generated as the remote server is disabled");
   }
 
-  // TODO: validate appconfig
+  // Validate appconfig.
+  if (!validate_cu_up_appconfig(cu_up_cfg) ||
+      !o_cu_up_app_unit->on_configuration_validation(not cu_up_cfg.trace_cfg.filename.empty())) {
+    report_error("Invalid configuration detected.\n");
+  }
 
   // Set up logging.
   initialize_log(cu_up_cfg.log_cfg.filename);
@@ -339,11 +344,8 @@ int main(int argc, char** argv)
                                 *epoll_broker,
                                 workers.get_cu_up_executor_mapper().io_ul_executor(),
                                 workers.get_cu_up_executor_mapper().f1u_rx_executor());
-    if (not sock_cfg.five_qi.has_value()) {
-      f1u_gw_maps.default_gws.push_back(std::move(cu_f1u_gw));
-    } else {
-      f1u_gw_maps.five_qi_gws[sock_cfg.five_qi.value()].push_back(std::move(cu_f1u_gw));
-    }
+
+    f1u_gw_maps.add_gtpu_gateway(sock_cfg.sst, sock_cfg.sd, sock_cfg.five_qi, std::move(cu_f1u_gw));
   }
   std::unique_ptr<f1u_cu_up_udp_gateway> cu_f1u_conn = srs_cu_up::create_split_f1u_gw(
       {f1u_gw_maps, *cu_f1u_gtpu_demux, *cu_up_dlt_pcaps.f1u, cu_up_cfg.f1u_cfg.peer_port});

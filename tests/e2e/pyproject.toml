@@ -60,6 +60,7 @@ markers = [
   "example",
   "example_srsue",
   "s72",
+  "fr2",
 ]
 minversion = "6.0"
 python_files = [

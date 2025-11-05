@@ -97,8 +97,8 @@ tests:
     gnb_extra_config:
       <<: *base_config
       cell_cfg:
-        sched_expert_cfg:
-          policy_sched_cfg:
+        scheduler:
+          policy:
             rr_sched:
     # Pass / Fail Criteria
     expected_dl_bitrate: 1.2e+9

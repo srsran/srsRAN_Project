@@ -189,6 +189,8 @@ public:
 
   void handle_notify(const f1ap_notify_message& msg) override {}
 
+  bool has_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index) const override { return true; }
+
   void handle_message(const f1ap_message& msg) override {}
 
   void handle_rrc_delivery_report(const f1ap_rrc_delivery_report_msg& report) override {}
@@ -220,6 +222,7 @@ public:
 
   std::unique_ptr<f1u_du_gateway_bearer> create_du_bearer(uint32_t                                   ue_index,
                                                           drb_id_t                                   drb_id,
+                                                          s_nssai_t                                  s_nssai,
                                                           five_qi_t                                  five_qi,
                                                           srs_du::f1u_config                         config,
                                                           const gtpu_teid_t&                         dl_teid,

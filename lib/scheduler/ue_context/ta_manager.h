@@ -34,10 +34,10 @@ namespace srsran {
 class ta_manager
 {
 public:
-  explicit ta_manager(const scheduler_ue_expert_config& expert_cfg_,
-                      subcarrier_spacing                ul_scs_,
-                      time_alignment_group::id_t        pcell_tag_id,
-                      dl_logical_channel_manager*       dl_lc_ch_mgr_);
+  explicit ta_manager(const scheduler_ta_control_config& ta_cfg_,
+                      subcarrier_spacing                 ul_scs_,
+                      time_alignment_group::id_t         pcell_tag_id,
+                      dl_logical_channel_manager*        dl_lc_ch_mgr_);
 
   void update_tags(span<const time_alignment_group::id_t> tag_ids);
 
@@ -82,9 +82,9 @@ private:
   const subcarrier_spacing ul_scs;
   /// DL logical channel manager to push Timing Advance Command to UE.
   dl_logical_channel_manager* dl_lc_ch_mgr = nullptr;
-  /// Expert config parameters used for UE scheduler.
-  const scheduler_ue_expert_config& expert_cfg;
-  srslog::basic_logger&             logger;
+  /// TA control config parameters.
+  const scheduler_ta_control_config& ta_cfg;
+  srslog::basic_logger&              logger;
 
   /// Starting point of the measurement interval.
   slot_point meas_start_time;

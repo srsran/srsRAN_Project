@@ -322,6 +322,9 @@ public:
   /// \brief Cancel an ongoing handover reconfiguration transaction.
   /// \param[in] transaction_id The transaction ID of the handover reconfiguration transaction.
   virtual void cancel_handover_reconfiguration_transaction(uint8_t transaction_id) = 0;
+
+  /// \brief Cancel all ongoing transactions.
+  virtual void cancel_all_transactions() = 0;
 };
 
 class rrc_ue_cu_cp_ue_notifier

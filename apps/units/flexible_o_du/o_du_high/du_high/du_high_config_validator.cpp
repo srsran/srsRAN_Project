@@ -329,6 +329,21 @@ static bool validate_pdsch_cell_unit_config(const du_high_unit_pdsch_config& con
   return true;
 }
 
+/// Validates the given CSI cell application configuration. Returns true on success, otherwise false.
+static bool validate_csi_cell_unit_config(const du_high_unit_csi_config& config, unsigned cell_bw_crbs)
+{
+  // CSI RS period limitation due to TS 38.214 Section 5.1.6.1.1:
+  // "- the UE is not expected to be configured with the periodicity of 2 μ × 10 slots if the bandwidth of CSI-RS
+  //    resource is larger than 52 resource blocks."
+  if ((config.csi_rs_period_msec == 10) && (cell_bw_crbs > 52)) {
+    fmt::print("Invalid CSI-RS period. UEs are not expected to be configured with CSI-RS period of 10ms when the "
+               "bandwidth exceeds 52 resource blocks.\n");
+    return false;
+  }
+
+  return true;
+}
+
 /// Validates the given PUSCH cell application configuration. Returns true on success, otherwise false.
 static bool validate_pusch_cell_unit_config(const du_high_unit_pusch_config& config,
                                             unsigned                         cell_crbs,
@@ -1088,6 +1103,32 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
 
   return true;
 }
+static bool validate_cell_slicing_config(const du_high_unit_cell_slice_config& slice_cfg)
+{
+  const auto& slice_sched_cfg = slice_cfg.sched_cfg;
+
+  if (slice_sched_cfg.min_prb_policy_ratio > slice_sched_cfg.max_prb_policy_ratio) {
+    fmt::print("Invalid parameters for slice sst={} sd={}: expected min_prb_policy_ratio <= max_prb_policy_ratio, but "
+               "this was found instead ({}>{})\n",
+               slice_cfg.sst,
+               slice_cfg.sd,
+               slice_sched_cfg.min_prb_policy_ratio,
+               slice_sched_cfg.max_prb_policy_ratio);
+    return false;
+  }
+
+  if (slice_sched_cfg.ded_prb_policy_ratio > slice_sched_cfg.min_prb_policy_ratio) {
+    fmt::print("Invalid parameters for slice sst={} sd={}: expected ded_prb_policy_ratio <= min_prb_policy_ratio, but "
+               "this was found instead ({}>{})\n",
+               slice_cfg.sst,
+               slice_cfg.sd,
+               slice_sched_cfg.ded_prb_policy_ratio,
+               slice_sched_cfg.min_prb_policy_ratio);
+    return false;
+  }
+
+  return true;
+}
 
 /// Validates the given cell application configuration. Returns true on success, otherwise false.
 static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& config)
@@ -1150,6 +1191,10 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     return false;
   }
 
+  if (!validate_csi_cell_unit_config(config.csi_cfg, nof_crbs)) {
+    return false;
+  }
+
   if (!validate_pdcch_unit_config(config)) {
     return false;
   }
@@ -1191,6 +1236,12 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
       not config.csi_cfg.csi_rs_enabled) {
     fmt::print("CSI-RS based Radio Link Monitoring requires CSI-RS to be enabled.\n");
     return false;
+  }
+
+  for (const auto& slice_cfg : config.slice_cfg) {
+    if (not validate_cell_slicing_config(slice_cfg)) {
+      return false;
+    }
   }
 
   return true;

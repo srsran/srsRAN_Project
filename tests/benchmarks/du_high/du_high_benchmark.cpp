@@ -95,7 +95,7 @@ struct bench_params {
   /// \brief Logical cores used by the "du_cell" thread.
   std::vector<unsigned> du_cell_cores = {};
   /// \brief Policy scheduler type.
-  policy_scheduler_expert_config strategy_cfg = time_qos_scheduler_expert_config{};
+  scheduler_policy_config strategy_cfg = time_qos_scheduler_config{};
   /// \brief Whether the trace is enabled. This gives more diagnostics of the scheduler latency, at the cost of some
   /// slowdown.
   bool sched_trace_enabled = false;
@@ -187,9 +187,9 @@ static void parse_args(int argc, char** argv, bench_params& params)
         break;
       case 'P': {
         if (std::string(optarg) == "time_qos") {
-          params.strategy_cfg = time_qos_scheduler_expert_config{};
+          params.strategy_cfg = time_qos_scheduler_config{};
         } else if (std::string(optarg) == "time_rr") {
-          params.strategy_cfg = time_rr_scheduler_expert_config{};
+          params.strategy_cfg = time_rr_scheduler_config{};
         } else {
           usage(argv[0], params);
           std::exit(0);
@@ -232,7 +232,7 @@ static void print_args(const bench_params& params)
   fmt::print("- F1-U DL PDU size [bytes]: {}\n", params.pdu_size);
   fmt::print("- BSR size [bytes]: {}\n", params.ul_bsr_bytes);
   fmt::print("- Max DL RB grant size [RBs]: {}\n", params.max_dl_rb_grant);
-  if (std::holds_alternative<time_qos_scheduler_expert_config>(params.strategy_cfg)) {
+  if (std::holds_alternative<time_qos_scheduler_config>(params.strategy_cfg)) {
     fmt::print("- Policys scheduler: time_qos\n");
   } else {
     fmt::print("- Policys scheduler: time_rr\n");
@@ -426,6 +426,7 @@ public:
 
   std::unique_ptr<f1u_du_gateway_bearer> create_du_bearer(uint32_t                                   ue_index,
                                                           drb_id_t                                   drb_id,
+                                                          s_nssai_t                                  s_nssai,
                                                           five_qi_t                                  five_qi,
                                                           srs_du::f1u_config                         config,
                                                           const gtpu_teid_t&                         dl_teid,
@@ -574,14 +575,14 @@ class du_high_bench
   static constexpr unsigned PDCP_MAX_HDR_LEN    = 3;
 
 public:
-  du_high_bench(unsigned                              dl_bytes_per_slot_,
-                unsigned                              ul_bsr_bytes_,
-                unsigned                              max_nof_rbs_per_dl_grant,
-                units::bytes                          f1u_pdu_size_,
-                span<unsigned>                        du_cell_cores,
-                const policy_scheduler_expert_config& strategy_cfg,
-                bool                                  sched_tracing_enabled,
-                const cell_config_builder_params&     builder_params = {}) :
+  du_high_bench(unsigned                          dl_bytes_per_slot_,
+                unsigned                          ul_bsr_bytes_,
+                unsigned                          max_nof_rbs_per_dl_grant,
+                units::bytes                      f1u_pdu_size_,
+                span<unsigned>                    du_cell_cores,
+                const scheduler_policy_config&    strategy_cfg,
+                bool                              sched_tracing_enabled,
+                const cell_config_builder_params& builder_params = {}) :
     params(builder_params),
     f1u_dl_pdu_bytes_per_slot(dl_bytes_per_slot_),
     f1u_pdu_size(f1u_pdu_size_),
@@ -608,7 +609,7 @@ public:
     cfg.ran.cells                                  = {config_helpers::make_default_du_cell_config(params)};
     cfg.ran.sched_cfg                              = config_helpers::make_default_scheduler_expert_config();
     cfg.ran.sched_cfg.log_high_latency_diagnostics = sched_tracing_enabled;
-    cfg.ran.sched_cfg.ue.strategy_cfg              = strategy_cfg;
+    cfg.ran.sched_cfg.ue.policy_cfg                = strategy_cfg;
     cfg.ran.sched_cfg.ue.pdsch_nof_rbs             = {1, max_nof_rbs_per_dl_grant};
     cfg.ran.mac_cfg                                = mac_expert_config{.configs = {{10000, 10000, 10000}}};
     cfg.ran.qos = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 1000);
@@ -1236,17 +1237,17 @@ static cell_config_builder_params generate_custom_cell_config_builder_params(dup
 }
 
 /// \brief Benchmark DU-high with DL and/or UL only traffic using an RLC UM bearer.
-void benchmark_dl_ul_only_rlc_um(benchmarker&                          bm,
-                                 unsigned                              nof_ues,
-                                 duplex_mode                           dplx_mode,
-                                 unsigned                              dl_bytes_per_slot,
-                                 unsigned                              ul_bsr_bytes,
-                                 unsigned                              max_nof_rbs_per_dl_grant,
-                                 units::bytes                          dl_pdu_size,
-                                 span<unsigned>                        du_cell_cores,
-                                 bool                                  sched_tracing_enabled,
-                                 const policy_scheduler_expert_config& strategy_cfg,
-                                 unsigned                              nof_repetitions)
+void benchmark_dl_ul_only_rlc_um(benchmarker&                   bm,
+                                 unsigned                       nof_ues,
+                                 duplex_mode                    dplx_mode,
+                                 unsigned                       dl_bytes_per_slot,
+                                 unsigned                       ul_bsr_bytes,
+                                 unsigned                       max_nof_rbs_per_dl_grant,
+                                 units::bytes                   dl_pdu_size,
+                                 span<unsigned>                 du_cell_cores,
+                                 bool                           sched_tracing_enabled,
+                                 const scheduler_policy_config& strategy_cfg,
+                                 unsigned                       nof_repetitions)
 {
   auto                benchname = fmt::format("{}{}{}, {} UEs, RLC UM",
                                dl_bytes_per_slot > 0 ? "DL" : "",

@@ -254,3 +254,4 @@ void task_worker_pool<QueuePolicy>::wait_pending_tasks()
 template class srsran::task_worker_pool<concurrent_queue_policy::lockfree_mpmc>;
 template class srsran::task_worker_pool<concurrent_queue_policy::locking_mpmc>;
 template class srsran::task_worker_pool<concurrent_queue_policy::moodycamel_lockfree_mpmc>;
+template class srsran::task_worker_pool<concurrent_queue_policy::moodycamel_lockfree_bounded_mpmc>;

@@ -591,6 +591,7 @@ TEST_P(pdcp_tx_test, pdu_stall_with_discard)
     FAIL();
   }
 }
+
 /// Test COUNT wrap-around protection systems
 TEST_P(pdcp_tx_test, count_wraparound)
 {
@@ -630,6 +631,56 @@ TEST_P(pdcp_tx_test, count_wraparound)
   } else {
     FAIL();
   }
+}
+
+/// Test TX SDU buffering.
+TEST_P(pdcp_tx_test, tx_buffer)
+{
+  uint32_t n_no_buffer_sdus = 5;
+  uint32_t n_buffer_sdus    = 5;
+  init(GetParam());
+
+  // Set state of PDCP entiy.
+  pdcp_tx_state st = {0, 0, 0, 0, 0};
+  pdcp_tx->set_state(st);
+  pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
+
+  // Write first SDU.
+  for (uint32_t i = 0; i < n_no_buffer_sdus; i++) {
+    byte_buffer sdu = byte_buffer::create(sdu1).value();
+    pdcp_tx->handle_sdu(std::move(sdu));
+    // Wait for crypto and reordering.
+    wait_pending_crypto();
+    worker.run_pending_tasks();
+
+    // Send transmit notifications, but no ACK notifications.
+    pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next + i, sn_size));
+  }
+
+  // Check PDUs were transmitted correctly.
+  FLUSH_AND_ASSERT_EQ(5, test_frame.pdu_queue.size());
+  // Clear queue.
+  test_frame.pdu_queue = {};
+
+  // Begin buffering and push SDUs.
+  pdcp_tx->begin_buffering();
+  for (uint32_t i = 0; i < n_buffer_sdus; i++) {
+    byte_buffer sdu = byte_buffer::create(sdu1).value();
+    pdcp_tx->handle_sdu(std::move(sdu));
+    // Wait for crypto and reordering.
+    wait_pending_crypto();
+    worker.run_pending_tasks();
+  }
+
+  FLUSH_AND_ASSERT_EQ(0, test_frame.pdu_queue.size());
+  pdcp_tx->reestablish(sec_cfg);
+  wait_pending_crypto();
+  worker.run_pending_tasks();
+  pdcp_tx->end_buffering();
+  wait_pending_crypto();
+  worker.run_pending_tasks();
+  FLUSH_AND_ASSERT_EQ(5, test_frame.retx_queue.size());
+  FLUSH_AND_ASSERT_EQ(5, test_frame.pdu_queue.size());
 }
 
 ///////////////////////////////////////////////////////////////////

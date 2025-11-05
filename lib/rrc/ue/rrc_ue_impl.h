@@ -93,6 +93,7 @@ public:
   static_vector<srb_id_t, MAX_NOF_SRBS> get_srbs() override;
   rrc_state                             get_rrc_state() const override;
   void                                  cancel_handover_reconfiguration_transaction(uint8_t transaction_id) override;
+  void                                  cancel_all_transactions() override;
 
   // rrc_ue_context_handler
   rrc_ue_reestablishment_context_response get_context() override;
@@ -120,7 +121,7 @@ private:
   void on_ue_release_required(const ngap_cause_t& cause) override;
 
   // rrc_ue_security_mode_command_proc_notifier
-  void on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_ccch_msg) override;
+  void on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) override;
   void on_new_as_security_context() override;
 
   rrc_ue_context_t                context;

@@ -25,7 +25,6 @@
 
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_encoder_buffer.h"
-#include "srsran/srsvec/bit.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/srsran_test.h"
 #include <getopt.h>
@@ -106,7 +105,8 @@ int main(int argc, char** argv)
       std::unique_ptr<crc_calculator> crc16   = nullptr;
       std::unique_ptr<ldpc_encoder>   encoder = nullptr;
       // Decoder.
-      std::shared_ptr<ldpc_decoder_factory> decoder_factory = create_ldpc_decoder_factory_sw(dec_type);
+      std::shared_ptr<ldpc_decoder_factory> decoder_factory =
+          create_ldpc_decoder_factory_sw(dec_type, {.force_decoding = false});
       TESTASSERT(decoder_factory);
       std::unique_ptr<ldpc_decoder> decoder = decoder_factory->create();
       TESTASSERT(decoder);
@@ -177,11 +177,11 @@ int main(int argc, char** argv)
         // Prepare message storage.
         dynamic_bit_buffer message(msg_length);
 
-        srsran::codeblock_metadata cfg_dec  = {};
-        cfg_dec.tb_common.lifting_size      = ls;
-        cfg_dec.tb_common.base_graph        = bg;
-        cfg_dec.cb_specific.nof_crc_bits    = 16;
-        cfg_dec.cb_specific.nof_filler_bits = 0;
+        srsran::ldpc_decoder::configuration cfg_dec = {.base_graph      = bg,
+                                                       .lifting_size    = ls,
+                                                       .nof_filler_bits = 0,
+                                                       .nof_crc_bits    = 16,
+                                                       .max_iterations  = nof_iterations};
 
         fmt::memory_buffer descr_buffer;
         fmt::format_to(std::back_inserter(descr_buffer),
@@ -191,7 +191,7 @@ int main(int argc, char** argv)
                        cb_length,
                        static_cast<double>(msg_length) / static_cast<double>(cb_length));
         perf_meas_generic.new_measure(to_string(descr_buffer), msg_length, [&]() {
-          decoder->decode(message, codeblock, crc16.get(), {cfg_dec, {false, nof_iterations, 0.8}});
+          decoder->decode(message, codeblock, crc16.get(), cfg_dec);
           do_not_optimize(codeblock);
         });
       }

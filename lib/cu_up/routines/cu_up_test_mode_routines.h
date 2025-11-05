@@ -36,6 +36,7 @@ class cu_up_enable_test_mode_routine
 public:
   cu_up_enable_test_mode_routine(cu_up_test_mode_config test_mode_cfg_,
                                  cu_up_manager_impl&    cu_up_mngr_,
+                                 ue_manager&            ue_mngr_,
                                  gtpu_demux_ctrl&       ngu_demux_);
 
   void operator()(coro_context<async_task<void>>& ctx);
@@ -45,6 +46,7 @@ public:
 private:
   const cu_up_test_mode_config test_mode_cfg;
   cu_up_manager_impl&          cu_up_mngr;
+  ue_manager&                  ue_mngr;
   gtpu_demux_ctrl&             ngu_demux;
 
   unique_timer test_mode_ue_timer;
@@ -54,6 +56,7 @@ private:
   e1ap_bearer_context_setup_request        bearer_context_setup;
   e1ap_bearer_context_setup_response       setup_resp;
   gtpu_teid_t                              teid;
+  up_state_t                               st;
   e1ap_bearer_context_modification_request bearer_modify;
 };
 
@@ -72,6 +75,26 @@ private:
   srslog::basic_logger& logger;
 
   e1ap_bearer_context_release_command release_command;
+};
+
+class cu_up_reestablish_test_mode_routine
+{
+public:
+  cu_up_reestablish_test_mode_routine(cu_up_test_mode_config test_mode_cfg_,
+                                      cu_up_manager_impl&    cu_up_mngr_,
+                                      ue_manager&            ue_mngr_);
+
+  void operator()(coro_context<async_task<void>>& ctx);
+
+  static const char* name() { return "CU-UP re-establish test mode routine"; }
+
+private:
+  cu_up_test_mode_config test_mode_cfg;
+  cu_up_manager_impl&    cu_up_mngr;
+  ue_manager&            ue_mngr;
+
+  up_state_t                               st;
+  e1ap_bearer_context_modification_request bearer_modify;
 };
 
 } // namespace srs_cu_up

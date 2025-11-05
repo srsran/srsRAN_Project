@@ -11,8 +11,20 @@ f1u:
         pool_threshold: 0.9 # Pool occupancy threshold, after which packets are dropped.
 
     -
-      five_qi: 7            # Socket used for a specific 5QI.  
-      bind_addr: 127.0.2.2  # Address that the F1-U socket will bind to.
+      sst: 1                # Slice/Service type.
+      # sd: 1               # Slice differentiator is optional.
+      five_qi: 9            # Socket used for a specific 5QI.  
+      bind_addr: 127.1.2.1  # Address that the F1-U socket will bind to.
+      #ext_addr: 8.8.8.8    # Address that is reported as the F1-U bind address.
+                            # If empty, the real bind address is used.
+      udp:
+        max_rx_msgs: 256    # maximum packets read from the socket in a single syscall.
+        pool_threshold: 0.9 # Pool occupancy threshold, after which packets are dropped.
+    -
+      sst: 1                # Slice/Service type.
+      sd: 2                 # Slice differentiator.
+      five_qi: 9            # Socket used for a specific 5QI.  
+      bind_addr: 127.1.2.2  # Address that the F1-U socket will bind to.
       #ext_addr: 8.8.8.8    # Address that is reported as the F1-U bind address.
                             # If empty, the real bind address is used.
       udp:

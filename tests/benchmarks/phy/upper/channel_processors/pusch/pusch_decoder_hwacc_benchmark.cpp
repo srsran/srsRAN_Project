@@ -52,7 +52,6 @@ using namespace srsran;
 using test_case_type = std::tuple<segmenter_config, unsigned, unsigned, unsigned>;
 
 static std::string                        hwacc_decoder_type          = "acc100";
-static bool                               force_local_harq            = false;
 static bool                               external_harq               = false;
 static bool                               use_early_stop              = true;
 static unsigned                           nof_ldpc_iterations         = 2;
@@ -62,11 +61,12 @@ static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
     {false, false, true, false, false, false, false, false, false, false, false, false, false, false};
 
 #ifdef DPDK_FOUND
-static bool                 dedicated_queue = true;
-static bool                 test_harq       = false;
-static srslog::basic_levels hal_log_level   = srslog::basic_levels::error;
-static bool                 std_out_sink    = true;
-static std::string          eal_arguments   = "";
+static bool                 dedicated_queue  = true;
+static bool                 test_harq        = false;
+static bool                 force_local_harq = false;
+static srslog::basic_levels hal_log_level    = srslog::basic_levels::error;
+static bool                 std_out_sink     = true;
+static std::string          eal_arguments    = "";
 #endif // DPDK_FOUND
 
 // Test profile structure, initialized with default profile values.
@@ -181,7 +181,8 @@ static std::shared_ptr<pusch_decoder_factory> create_generic_pusch_decoder_facto
   std::shared_ptr<crc_calculator_factory> crc_calculator_factory = create_crc_calculator_factory_sw("auto");
   TESTASSERT(crc_calculator_factory);
 
-  std::shared_ptr<ldpc_decoder_factory> ldpc_decoder_factory = create_ldpc_decoder_factory_sw("auto");
+  std::shared_ptr<ldpc_decoder_factory> ldpc_decoder_factory =
+      create_ldpc_decoder_factory_sw("auto", {.force_decoding = false});
   TESTASSERT(ldpc_decoder_factory);
 
   std::shared_ptr<ldpc_rate_dematcher_factory> ldpc_rate_dematcher_factory =

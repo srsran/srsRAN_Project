@@ -37,12 +37,15 @@ namespace srsran {
 /// mutex contention.
 /// - moodycamel_lockfree_mpmc: Lock-free MPMC queue with unbounded capacity and that does not ensure elements
 /// enqueued by independent producers come out in the same order (not linearizable).
+/// - moodycamel_lockfree_bounded_mpmc: Lock-free MPMC queue with bounded capacity and that does not ensure elements
+/// enqueued by independent producers come out in the same order (not linearizable).
 enum class concurrent_queue_policy {
   lockfree_spsc,
   lockfree_mpmc,
   locking_mpmc,
   locking_mpsc,
-  moodycamel_lockfree_mpmc
+  moodycamel_lockfree_mpmc,
+  moodycamel_lockfree_bounded_mpmc
 };
 
 /// \brief Types of barriers used for blocking pushes/pops of elements. Three types:

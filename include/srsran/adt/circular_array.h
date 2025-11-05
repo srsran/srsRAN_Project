@@ -39,6 +39,9 @@ public:
   using iterator       = T*;
   using const_iterator = const T*;
 
+  circular_array() = default;
+  circular_array(const T& value) { data.fill(value); }
+
   T&       operator[](std::size_t pos) { return data[pos % N]; }
   const T& operator[](std::size_t pos) const { return data[pos % N]; }
 

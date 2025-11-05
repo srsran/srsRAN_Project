@@ -210,9 +210,9 @@ async_task<void> du_manager_impl::handle_ue_delete_request(const f1ap_ue_delete_
   return ue_mng.handle_ue_delete_request(request);
 }
 
-async_task<void> du_manager_impl::handle_ue_deactivation_request(du_ue_index_t ue_index)
+async_task<void> du_manager_impl::handle_ue_drb_deactivation_request(du_ue_index_t ue_index)
 {
-  return ue_mng.handle_ue_deactivation_request(ue_index);
+  return ue_mng.handle_ue_drb_deactivation_request(ue_index);
 }
 
 void du_manager_impl::handle_ue_reestablishment(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index)

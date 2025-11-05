@@ -272,7 +272,7 @@ static std::vector<slice_rrm_policy_config>
 generate_du_slicing_rrm_policy_config(span<const std::string>                    plmns,
                                       span<const du_high_unit_cell_slice_config> slice_cfg,
                                       unsigned                                   nof_cell_crbs,
-                                      const policy_scheduler_expert_config&      default_policy_sched_cfg)
+                                      const scheduler_policy_config&             default_policy_sched_cfg)
 {
   std::vector<slice_rrm_policy_config> rrm_policy_cfgs;
   for (const auto& plmn : plmns) {
@@ -283,9 +283,10 @@ generate_du_slicing_rrm_policy_config(span<const std::string>                   
       rrm_policy_cfgs.back().rrc_member.plmn_id = plmn_identity::parse(plmn).value();
       unsigned min_rbs                          = (nof_cell_crbs * cfg.sched_cfg.min_prb_policy_ratio) / 100;
       unsigned max_rbs                          = (nof_cell_crbs * cfg.sched_cfg.max_prb_policy_ratio) / 100;
-      rrm_policy_cfgs.back().rbs                = {min_rbs, max_rbs};
+      unsigned ded_rbs                          = (nof_cell_crbs * cfg.sched_cfg.ded_prb_policy_ratio) / 100;
+      rrm_policy_cfgs.back().rbs                = {ded_rbs, min_rbs, max_rbs};
       rrm_policy_cfgs.back().priority           = cfg.sched_cfg.priority;
-      rrm_policy_cfgs.back().policy_sched_cfg = cfg.sched_cfg.slice_policy_sched_cfg.value_or(default_policy_sched_cfg);
+      rrm_policy_cfgs.back().policy_sched_cfg   = cfg.sched_cfg.slice_policy_cfg.value_or(default_policy_sched_cfg);
     }
   }
   return rrm_policy_cfgs;
@@ -918,7 +919,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     // Slicing configuration.
     std::vector<std::string> cell_plmns{base_cell.plmn};
     out_cell.rrm_policy_members = generate_du_slicing_rrm_policy_config(
-        cell_plmns, base_cell.slice_cfg, nof_crbs, *cell.cell.sched_expert_cfg.policy_sched_expert_cfg);
+        cell_plmns, base_cell.slice_cfg, nof_crbs, *cell.cell.scheduler_cfg.policy_cfg);
 
     // RLM configuration.
     if (cell.cell.rlm_cfg.resource_type != rlm_resource_type::default_type) {
@@ -1135,11 +1136,11 @@ static scheduler_expert_config generate_scheduler_expert_config(const du_high_un
   const du_high_unit_base_cell_config& cell = config.cells_cfg.front().cell;
 
   // UE parameters.
-  const du_high_unit_pdsch_config&            pdsch                = cell.pdsch_cfg;
-  const du_high_unit_pdcch_config&            pdcch                = cell.pdcch_cfg;
-  const du_high_unit_pusch_config&            pusch                = cell.pusch_cfg;
-  const du_high_unit_scheduler_expert_config& app_sched_expert_cfg = cell.sched_expert_cfg;
-  out_cfg.ue.dl_mcs                                                = {pdsch.min_ue_mcs, pdsch.max_ue_mcs};
+  const du_high_unit_pdsch_config&     pdsch                = cell.pdsch_cfg;
+  const du_high_unit_pdcch_config&     pdcch                = cell.pdcch_cfg;
+  const du_high_unit_pusch_config&     pusch                = cell.pusch_cfg;
+  const du_high_unit_scheduler_config& app_sched_expert_cfg = cell.scheduler_cfg;
+  out_cfg.ue.dl_mcs                                         = {pdsch.min_ue_mcs, pdsch.max_ue_mcs};
   out_cfg.ue.pdsch_rv_sequence.assign(pdsch.rv_sequence.begin(), pdsch.rv_sequence.end());
   out_cfg.ue.dl_harq_la_cqi_drop_threshold     = pdsch.harq_la_cqi_drop_threshold;
   out_cfg.ue.dl_harq_la_ri_drop_threshold      = pdsch.harq_la_ri_drop_threshold;
@@ -1169,21 +1170,19 @@ static scheduler_expert_config generate_scheduler_expert_config(const du_high_un
   out_cfg.ue.pdsch_crb_limits                 = {pdsch.start_rb, pdsch.end_rb};
   out_cfg.ue.pdsch_interleaving_bundle_size   = pdsch.interleaving_bundle_size;
   out_cfg.ue.pusch_crb_limits                 = {pusch.start_rb, pusch.end_rb};
-  if (app_sched_expert_cfg.policy_sched_expert_cfg.has_value()) {
-    out_cfg.ue.strategy_cfg = *app_sched_expert_cfg.policy_sched_expert_cfg;
+  if (app_sched_expert_cfg.policy_cfg.has_value()) {
+    out_cfg.ue.policy_cfg = *app_sched_expert_cfg.policy_cfg;
   }
-  out_cfg.ue.ul_power_ctrl.enable_pusch_cl_pw_control      = pusch.enable_closed_loop_pw_control;
-  out_cfg.ue.ul_power_ctrl.enable_phr_bw_adaptation        = pusch.enable_phr_bw_adaptation;
-  out_cfg.ue.ul_power_ctrl.target_pusch_sinr               = pusch.target_pusch_sinr;
-  out_cfg.ue.ul_power_ctrl.path_loss_for_target_pusch_sinr = pusch.path_loss_for_target_pusch_sinr;
-  out_cfg.ue.ta_cmd_offset_threshold                       = app_sched_expert_cfg.ta_sched_cfg.ta_cmd_offset_threshold;
-  out_cfg.ue.ta_target                                     = app_sched_expert_cfg.ta_sched_cfg.ta_target;
-  out_cfg.ue.ta_measurement_slot_period = app_sched_expert_cfg.ta_sched_cfg.ta_measurement_slot_period;
-  out_cfg.ue.ta_measurement_slot_prohibit_period =
-      app_sched_expert_cfg.ta_sched_cfg.ta_measurement_slot_prohibit_period;
-  out_cfg.ue.ta_update_measurement_ul_sinr_threshold =
-      app_sched_expert_cfg.ta_sched_cfg.ta_update_measurement_ul_sinr_threshold;
-  out_cfg.ue.pre_policy_rr_ue_group_size = app_sched_expert_cfg.nof_preselected_newtx_ues;
+  out_cfg.ue.ul_power_ctrl.enable_pusch_cl_pw_control        = pusch.enable_closed_loop_pw_control;
+  out_cfg.ue.ul_power_ctrl.enable_phr_bw_adaptation          = pusch.enable_phr_bw_adaptation;
+  out_cfg.ue.ul_power_ctrl.target_pusch_sinr                 = pusch.target_pusch_sinr;
+  out_cfg.ue.ul_power_ctrl.path_loss_for_target_pusch_sinr   = pusch.path_loss_for_target_pusch_sinr;
+  out_cfg.ue.ta_control.ta_cmd_offset_threshold              = cell.ta_cfg.ta_cmd_offset_threshold;
+  out_cfg.ue.ta_control.target                               = cell.ta_cfg.ta_target;
+  out_cfg.ue.ta_control.measurement_period                   = cell.ta_cfg.ta_measurement_slot_period;
+  out_cfg.ue.ta_control.measurement_prohibit_period          = cell.ta_cfg.ta_measurement_slot_prohibit_period;
+  out_cfg.ue.ta_control.update_measurement_ul_sinr_threshold = cell.ta_cfg.ta_update_measurement_ul_sinr_threshold;
+  out_cfg.ue.pre_policy_rr_ue_group_size                     = app_sched_expert_cfg.nof_preselected_newtx_ues;
 
   // PUCCH and scheduler expert parameters.
   out_cfg.ue.max_ul_grants_per_slot                   = cell.ul_common_cfg.max_ul_grants_per_slot;
@@ -1199,10 +1198,11 @@ static scheduler_expert_config generate_scheduler_expert_config(const du_high_un
   // RA parameters.
   const du_high_unit_prach_config& prach = cell.prach_cfg;
 
-  out_cfg.ra.rar_mcs_index           = pdsch.fixed_rar_mcs;
-  out_cfg.ra.max_nof_msg3_harq_retxs = prach.max_msg3_harq_retx;
-  out_cfg.ra.msg3_mcs_index          = prach.fixed_msg3_mcs;
-  out_cfg.ra.harq_retx_timeout       = std::chrono::milliseconds{pusch.harq_retx_timeout};
+  out_cfg.ra.rar_mcs_index            = pdsch.fixed_rar_mcs;
+  out_cfg.ra.max_nof_msg3_harq_retxs  = prach.max_msg3_harq_retx;
+  out_cfg.ra.msg3_mcs_index           = prach.fixed_msg3_mcs;
+  out_cfg.ra.harq_retx_timeout        = std::chrono::milliseconds{pusch.harq_retx_timeout};
+  out_cfg.ra.nof_prach_guardbands_rbs = prach.nof_prach_guardbands_rbs;
 
   // SI parameters.
   out_cfg.si.sib1_mcs_index    = pdsch.fixed_sib1_mcs;

@@ -33,7 +33,8 @@ namespace srsran {
 class ldpc_decoder_avx512 : public ldpc_decoder_impl
 {
 public:
-  ldpc_decoder_avx512();
+  /// Constructor: configures the force_decoding flag.
+  explicit ldpc_decoder_avx512(bool cfg_force_decoding);
 
 private:
   // See ldpc_decoder_impl for the documentation.

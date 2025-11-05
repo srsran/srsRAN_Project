@@ -32,8 +32,8 @@ using namespace srsran::ldpc;
 
 void ldpc_decoder_impl::init(const configuration& cfg)
 {
-  uint8_t  pos   = get_lifting_size_position(cfg.block_conf.tb_common.lifting_size);
-  unsigned skip  = (cfg.block_conf.tb_common.base_graph == ldpc_base_graph_type::BG2) ? NOF_LIFTING_SIZES : 0;
+  uint8_t  pos   = get_lifting_size_position(cfg.lifting_size);
+  unsigned skip  = (cfg.base_graph == ldpc_base_graph_type::BG2) ? NOF_LIFTING_SIZES : 0;
   current_graph  = &graph_array[skip + pos];
   bg_N_full      = current_graph->get_nof_BG_var_nodes_full();
   bg_N_short     = current_graph->get_nof_BG_var_nodes_short();
@@ -41,18 +41,15 @@ void ldpc_decoder_impl::init(const configuration& cfg)
   bg_K           = current_graph->get_nof_BG_info_nodes();
   bg_N_high_rate = bg_K + 4;
   srsran_assert(bg_K == bg_N_full - bg_M, "Invalid bg_K value '{}'", bg_K);
-  lifting_size = static_cast<uint16_t>(cfg.block_conf.tb_common.lifting_size);
+  lifting_size = static_cast<uint16_t>(cfg.lifting_size);
 
-  max_iterations = cfg.algorithm_conf.max_iterations;
+  max_iterations = cfg.max_iterations;
   srsran_assert(max_iterations > 0, "Max iterations must be different to 0");
 
-  scaling_factor = cfg.algorithm_conf.scaling_factor;
-  srsran_assert((scaling_factor > 0) && (scaling_factor < 1), "Scaling factor must be between 0 and 1 exclusively");
-
-  unsigned nof_crc_bits = cfg.block_conf.cb_specific.nof_crc_bits;
+  unsigned nof_crc_bits = cfg.nof_crc_bits;
   srsran_assert((nof_crc_bits == 16) || (nof_crc_bits == 24), "Invalid number of CRC bits.");
 
-  nof_significant_bits = bg_K * lifting_size - cfg.block_conf.cb_specific.nof_filler_bits;
+  nof_significant_bits = bg_K * lifting_size - cfg.nof_filler_bits;
 
   specific_init();
 }
@@ -91,7 +88,7 @@ std::optional<unsigned> ldpc_decoder_impl::decode(bit_buffer&                   
 
   // The input meaningful number of bits must contain the message length number of bits to successfully decode the
   // codeblock.
-  if ((input_size < message_length) && !cfg.algorithm_conf.force_decoding) {
+  if ((input_size < message_length) && force_decoding) {
     // If the codeblock CRC check is external, set all bits to one (so that the CRC will fail).
     if (crc == nullptr) {
       output.one();

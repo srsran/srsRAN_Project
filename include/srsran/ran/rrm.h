@@ -58,13 +58,12 @@ struct rrm_policy_ratio_group {
 };
 
 /// Number of dedicated, prioritized and shared PRBs associated with a given RAN slice.
-struct rrm_policy_radio_block_limits {
-  rrm_policy_radio_block_limits() = default;
-  rrm_policy_radio_block_limits(unsigned min_rbs_, unsigned max_rbs_) :
-    rrm_policy_radio_block_limits(0, min_rbs_, max_rbs_)
+struct rrm_policy_ratio_rb_limits {
+  rrm_policy_ratio_rb_limits() = default;
+  rrm_policy_ratio_rb_limits(unsigned min_rbs_, unsigned max_rbs_) : rrm_policy_ratio_rb_limits(0, min_rbs_, max_rbs_)
   {
   }
-  rrm_policy_radio_block_limits(unsigned ded_rbs_, unsigned min_rbs_, unsigned max_rbs_) :
+  rrm_policy_ratio_rb_limits(unsigned ded_rbs_, unsigned min_rbs_, unsigned max_rbs_) :
     ded_rbs(ded_rbs_), min_rbs(min_rbs_), max_rbs(max_rbs_)
   {
     srsran_assert(ded_rbs_ <= min_rbs_, "Invalid RB limits: dedicated {} > minimum {}", ded_rbs_, min_rbs_);
@@ -100,7 +99,7 @@ struct du_cell_slice_reconfig_request {
   struct rrm_policy_config {
     rrm_policy_member rrc_member;
     /// RB limits for the RRM policy member.
-    rrm_policy_radio_block_limits rbs;
+    rrm_policy_ratio_rb_limits rbs;
   };
   static_vector<rrm_policy_config, MAX_SLICE_RECONF_POLICIES> rrm_policies;
 };

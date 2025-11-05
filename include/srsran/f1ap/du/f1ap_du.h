@@ -65,7 +65,15 @@ struct f1ap_ue_inactivity_notification_message {};
 struct f1ap_notify_message {};
 
 struct f1ap_ue_delete_request {
+  /// Identifier of the UE context to be removed from the DU.
   du_ue_index_t ue_index = INVALID_DU_UE_INDEX;
+  /// \brief How much time to wait between UE deactivation (stop activity in all bearers and scheduling) and UE full
+  /// removal (including deallocation of its RAN resources).
+  /// \remark As per TS 38.331, 5.3.8.3, it is optional for the UE to immediately shutdown or wait the full 60msec
+  /// after it receives the RRC Release. If it decides to stay awake for those full 60msec, it will keep using RAN
+  /// resources (e.g. for CSI and SR). To avoid the reallocation of RAN resources to other UEs too early (and
+  /// potentially cause collisions), we may need to postpone the UE context full removal from the DU.
+  std::chrono::milliseconds ran_resource_release_timeout{0};
 };
 
 /// Handle F1AP UE context management procedures as defined in TS 38.473 section 8.3.
@@ -100,6 +108,10 @@ public:
   /// \brief Initiate the Notify procedure as per TS 38.473 section 8.3.7
   /// \param[in] msg The Notify message to transmit.
   virtual void handle_notify(const f1ap_notify_message& msg) = 0;
+
+  /// \brief Checks if UE was assigned a gNB-CU-UE-F1AP-ID by the CU-CP.
+  /// \param[in] ue_index of a given UE.
+  virtual bool has_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index) const = 0;
 };
 
 /// This interface is used to get mapping between ue_index, gnb_cu_ue_f1ap_id and gnb_du_ue_f1ap_id.
@@ -111,12 +123,13 @@ public:
   /// \brief Map ue_index to gnb_cu_ue_f1ap_id.
   /// \param[in] ue_index of a given UE.
   /// \param[out] gnb_cu_ue_f1ap_id of the given UE.
-  virtual gnb_cu_ue_f1ap_id_t get_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index) = 0;
+  virtual std::optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index) const = 0;
 
   /// \brief Map gnb_du_ue_f1ap_id to gnb_cu_ue_f1ap_id.
   /// \param[in] gnb_du_ue_f1ap_id of a given UE.
   /// \param[out] gnb_cu_ue_f1ap_id of the given UE.
-  virtual gnb_cu_ue_f1ap_id_t get_gnb_cu_ue_f1ap_id(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id) = 0;
+  virtual std::optional<gnb_cu_ue_f1ap_id_t>
+  get_gnb_cu_ue_f1ap_id(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id) const = 0;
 
   /// \brief Map ue_index to gnb_du_ue_f1ap_id.
   /// \param[in] ue_index of a given UE.

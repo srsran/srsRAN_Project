@@ -82,7 +82,8 @@ private:
   unsigned pucch_res_idx_to_csi_du_res_idx(unsigned pucch_res_idx) const;
 
   std::vector<std::pair<unsigned, unsigned>>::const_iterator
-  find_optimal_csi_report_slot_offset(const std::vector<std::pair<unsigned, unsigned>>& available_csi_slot_offsets,
+  find_optimal_csi_report_slot_offset(du_cell_index_t                                   cell_index,
+                                      const std::vector<std::pair<unsigned, unsigned>>& available_csi_slot_offsets,
                                       unsigned                                          candidate_sr_offset,
                                       const pucch_resource&                             sr_res_cfg,
                                       const csi_meas_config&                            csi_meas_cfg);
@@ -91,7 +92,8 @@ private:
   /// exceed the max_pucch_grants_per_slot; (ii) the SR and CSI offsets will result in the PUCCH resource not exceeding
   /// the maximum PUCCH F2 payload.
   std::vector<std::pair<unsigned, unsigned>>::const_iterator
-  get_csi_resource_offset(const csi_meas_config&                            csi_meas_cfg,
+  get_csi_resource_offset(du_cell_index_t                                   cell_index,
+                          const csi_meas_config&                            csi_meas_cfg,
                           unsigned                                          candidate_sr_offset,
                           const pucch_resource&                             sr_res_cfg,
                           const std::vector<std::pair<unsigned, unsigned>>& free_csi_list);

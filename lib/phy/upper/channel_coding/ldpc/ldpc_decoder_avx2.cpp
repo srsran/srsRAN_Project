@@ -57,7 +57,10 @@ static __always_inline __m256i LLR_NEG_INFINITY_epi8()
 /// Maximum number of AVX2 vectors needed to represent a BG node.
 static constexpr unsigned MAX_NODE_SIZE_AVX2 = divide_ceil(ldpc::MAX_LIFTING_SIZE, AVX2_SIZE_BYTE);
 
-ldpc_decoder_avx2::ldpc_decoder_avx2() : help_check_to_var(MAX_NODE_SIZE_AVX2 * AVX2_SIZE_BYTE) {}
+ldpc_decoder_avx2::ldpc_decoder_avx2(bool cfg_force_decoding) :
+  ldpc_decoder_impl(cfg_force_decoding), help_check_to_var(MAX_NODE_SIZE_AVX2 * AVX2_SIZE_BYTE)
+{
+}
 
 void ldpc_decoder_avx2::specific_init()
 {

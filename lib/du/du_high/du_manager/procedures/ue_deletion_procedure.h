@@ -34,7 +34,10 @@ namespace srs_du {
 class ue_deletion_procedure
 {
 public:
-  ue_deletion_procedure(du_ue_index_t ue_index_, du_ue_manager_repository& ue_mng_, const du_manager_params& du_params);
+  ue_deletion_procedure(du_ue_index_t             ue_index_,
+                        du_ue_manager_repository& ue_mng_,
+                        const du_manager_params&  du_params,
+                        std::chrono::milliseconds ran_res_release_timeout = std::chrono::milliseconds{0});
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -47,10 +50,11 @@ private:
   // to start the deletion of the associated bearer contexts.
   async_task<void> stop_ue_bearer_traffic();
 
-  const du_ue_index_t       ue_index;
-  du_ue_manager_repository& ue_mng;
-  const du_manager_params&  du_params;
-  ue_procedure_logger       proc_logger;
+  const du_ue_index_t             ue_index;
+  du_ue_manager_repository&       ue_mng;
+  const du_manager_params&        du_params;
+  const std::chrono::milliseconds ran_res_release_timeout;
+  ue_procedure_logger             proc_logger;
 
   du_ue* ue = nullptr;
 };

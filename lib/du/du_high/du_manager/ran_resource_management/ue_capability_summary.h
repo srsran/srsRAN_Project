@@ -63,6 +63,21 @@ struct ue_capability_summary {
     bool ul_ta_reporting_supported = false;
     /// Indicates whether the UE supports the reception of UE-specific K_offset.
     bool ue_specific_k_offset_supported = false;
+
+    /// Equality operator.
+    bool operator==(const supported_band& other) const
+    {
+      if ((pusch_qam256_supported != other.pusch_qam256_supported) ||
+          (pusch_tx_coherence != other.pusch_tx_coherence) || (pusch_max_rank != other.pusch_max_rank) ||
+          (nof_srs_tx_ports != other.nof_srs_tx_ports) || (max_dl_harq_process_num != other.max_dl_harq_process_num) ||
+          (max_ul_harq_process_num != other.max_ul_harq_process_num) ||
+          (ul_pre_compensation_supported != other.ul_pre_compensation_supported) ||
+          (ul_ta_reporting_supported != other.ul_ta_reporting_supported) ||
+          (ue_specific_k_offset_supported != other.ue_specific_k_offset_supported)) {
+        return false;
+      }
+      return true;
+    }
   };
 
   /// Set to true if QAM-256 MCS table are supported for PDSCH transmissions.
@@ -85,6 +100,23 @@ struct ue_capability_summary {
   bool disabled_dl_harq_feedback_supported = false;
   /// Indicates whether the UE supports HARQ Mode B and the corresponding LCP restrictions for uplink transmission.
   bool ul_harq_mode_b_supported = false;
+
+  /// Equality operator.
+  bool operator==(const ue_capability_summary& other) const
+  {
+    if ((pdsch_qam256_supported != other.pdsch_qam256_supported) ||
+        (pdsch_qam64lowse_supported != other.pdsch_qam64lowse_supported) ||
+        (pusch_qam64lowse_supported != other.pusch_qam64lowse_supported) || (bands != other.bands) ||
+        (long_drx_cycle_supported != other.long_drx_cycle_supported) ||
+        (short_drx_cycle_supported != other.short_drx_cycle_supported) ||
+        (pdsch_interleaving_vrb_to_prb_supported != other.pdsch_interleaving_vrb_to_prb_supported) ||
+        (ntn_supported != other.ntn_supported) ||
+        (disabled_dl_harq_feedback_supported != other.disabled_dl_harq_feedback_supported) ||
+        (ul_harq_mode_b_supported != other.ul_harq_mode_b_supported)) {
+      return false;
+    }
+    return true;
+  }
 };
 
 } // namespace srs_du

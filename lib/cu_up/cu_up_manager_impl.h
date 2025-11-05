@@ -89,12 +89,14 @@ public:
 
   void trigger_enable_test_mode();
   void trigger_disable_test_mode();
+  void trigger_reestablish_test_mode();
 
 private:
   void on_statistics_report_timer_expired();
 
   async_task<void> enable_test_mode() override;
   async_task<void> disable_test_mode();
+  async_task<void> reestablish_test_mode();
 
   gnb_cu_up_id_t cu_up_id;
   std::string    cu_up_name;

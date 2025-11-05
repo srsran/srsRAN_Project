@@ -26,6 +26,7 @@
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "srsran/adt/circular_array.h"
 #include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/scheduler/config/sched_cell_config_helpers.h"
 #include "srsran/scheduler/result/sched_result.h"
 #include "srsran/scheduler/scheduler_factory.h"
 #include "srsran/srslog/srslog.h"
@@ -103,7 +104,7 @@ public:
     sched_cell_configuration_request_message cell_cfg_msg =
         sched_config_helper::make_default_sched_cell_configuration_request(builder_params);
 
-    cell_cfg_msg.pucch_guardbands = config_helpers::build_pucch_guardbands_list(
+    cell_cfg_msg.ded_pucch_resources = config_helpers::build_pucch_resource_list(
         du_cell_cfgs[0].pucch_cfg, cell_cfg_msg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
     sch->handle_cell_configuration_request(cell_cfg_msg);
 

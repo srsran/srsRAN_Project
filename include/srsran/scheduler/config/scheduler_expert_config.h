@@ -40,20 +40,26 @@
 
 namespace srsran {
 
-/// \brief QoS-aware policy scheduler expert parameters.
-struct time_qos_scheduler_expert_config {
-  /// \brief Types of scheduler weight functions to use. Supported:
+/// \brief QoS-aware scheduler policy parameters.
+struct time_qos_scheduler_config {
+  /// \brief Scheduler sub-weight combination function to use.
+  ///
+  /// It aggregates the multiple sub-weight functions (e.g. GBR, PF) into a single weight that will be used to
+  /// determine the scheduling priority of a given UE.
+  /// Supported:
   /// - gbr_prioritized - logical channels with GBR get always prioritized if their BR < GBR.
-  /// - multivariate - different weight functions (e.g. GBR, PF) for a given logical channel are "averaged" to obtain
-  /// the final weight function. This weight function was taken from B. Bojovic, N. Baldo, “A new Channel and QoS Aware
+  /// - geometric_mean - different weight functions (e.g. GBR, PF) for a given logical channel are "averaged" to obtain
+  /// the final weight function. This weight function was inspired by B. Bojovic, N. Baldo, “A new Channel and QoS Aware
   /// Scheduler to enhance the capacity of Voice over LTE systems”, in Proceedings of 11th International
-  /// Multi-Conference on Systems, Signals & Devices (SSD’14), Castelldefels, 11-14 February 2014,
-  /// Castelldefels (Spain).
-  enum class weight_function { gbr_prioritized, multivariate };
+  /// Multi-Conference on Systems, Signals & Devices (SSD’14), Castelldefels, 11-14 February 2014, Castelldefels
+  /// (Spain).
+  enum class combine_function_type { gbr_prioritized, geometric_mean };
 
-  /// \brief Determines the scheduler policy weight function to use.
-  weight_function qos_weight_func = weight_function::gbr_prioritized;
-  /// Fairness Coefficient to use in Proportional Fair weight of the QoS-aware policy.
+  /// \brief Determines how the scheduler policy will combine the different sub-weights.
+  combine_function_type combine_function = combine_function_type::gbr_prioritized;
+  /// \brief Fairness Coefficient to use in Proportional Fair weight of the QoS-aware policy.
+  /// For a coefficient of zero, the PF weight prioritizes maximum rate.
+  /// As the coefficient tends towards infinity, the PF weight prioritizes fairness in throughput distribution.
   double pf_fairness_coeff = 2.0;
   /// Whether to take into account or ignore the QoS Flow priority and ARP priority in the QoS-aware scheduling.
   bool priority_enabled = true;
@@ -64,10 +70,10 @@ struct time_qos_scheduler_expert_config {
 };
 
 /// \brief Round-Robin policy scheduler expert parameters.
-struct time_rr_scheduler_expert_config {};
+struct time_rr_scheduler_config {};
 
-/// \brief Policy scheduler expert parameters.
-using policy_scheduler_expert_config = std::variant<time_qos_scheduler_expert_config, time_rr_scheduler_expert_config>;
+/// \brief Scheduler policy parameters.
+using scheduler_policy_config = std::variant<time_qos_scheduler_config, time_rr_scheduler_config>;
 
 struct ul_power_control {
   /// Enable closed-loop PUSCH power control.
@@ -87,6 +93,39 @@ struct ul_power_control {
   float pucch_f0_sinr_target_dB = 6.0f;
   float pucch_f2_sinr_target_dB = 3.0f;
   float pucch_f3_sinr_target_dB = -3.0f;
+};
+
+/// \brief Time Advance (TA) control-loop and MAC CE scheduling parameters.
+///
+/// These parameters define the behaviour of the Time Advance manager and on how the Time Advance Command (\f$T_A\f$)
+/// is triggered.
+///
+/// The TA measurement is reported from the physical layer, averaged over a \ref ta_measurement_slot_period and
+/// outliers are filtered out. The final estimated TA is rounded to the nearest TA unit.
+/// \remark T_A is defined in TS 38.213, clause 4.2.
+struct scheduler_ta_control_config {
+  /// Measurements periodicity in nof. slots over which the new Timing Advance Command is computed.
+  unsigned measurement_period{80};
+  /// \brief Delay in nof. slots between issuing the TA_CMD and starting TA measurements.
+  ///
+  /// This parameter specifies the mandatory waiting period (i.e. the prohibit period) that must elapse after the
+  /// Timing Advance command (TA_CMD) is issued before the system begins its Timing Advance measurements.
+  /// The delay allows the system to settle, ensuring that measurements are taken under stable conditions.
+  unsigned measurement_prohibit_period{0};
+  /// \brief Timing Advance Command (T_A) offset threshold.
+  ///
+  /// A TA command is triggered if the estimated TA is equal to or greater than this threshold. Possible valid values
+  /// are {0,...,32}.
+  ///
+  /// If set to less than zero, issuing of TA Command is disabled.
+  int8_t ta_cmd_offset_threshold{1};
+  /// \brief Timing Advance target in units of TA.
+  ///
+  /// Offsets the target TA measurements so the signal from the UE is kept delayed. This parameter is useful for
+  /// avoiding negative TA when the UE is getting away.
+  float target = 0.0F;
+  /// UL SINR threshold (in dB) above which reported N_TA update measurement is considered valid.
+  float update_measurement_ul_sinr_threshold = 0.0F;
 };
 
 /// \brief UE scheduling statically configurable expert parameters.
@@ -119,40 +158,6 @@ struct scheduler_ue_expert_config {
   interval<unsigned> pdsch_nof_rbs{1, MAX_NOF_PRBS};
   /// Set boundaries, in number of RBs, for UE PUSCH grants.
   interval<unsigned> pusch_nof_rbs{1, MAX_NOF_PRBS};
-  /// \defgroup ta_manager_params
-  /// \brief Time Advance (TA) manager parameters.
-  ///
-  /// These parameters define the behaviour of the Time Advance manager and on how the Time Advance Command (\f$T_A\f$)
-  /// is triggered.
-  ///
-  /// The TA measurement is reported from the physical layer, averaged over a \ref ta_measurement_slot_period and
-  /// outliers are filtered out. The final estimated TA is rounded to the nearest TA unit.
-  ///
-  /// \remark T_A is defined in TS 38.213, clause 4.2.
-  /// @{
-  /// Measurements periodicity in nof. slots over which the new Timing Advance Command is computed.
-  unsigned ta_measurement_slot_period{80};
-  /// \brief Delay in nof. slots between issuing the TA_CMD and starting TA measurements.
-  ///
-  /// This parameter specifies the mandatory waiting period (i.e. the prohibit period) that must elapse after the
-  /// Timing Advance command (TA_CMD) is issued before the system begins its Timing Advance measurements.
-  /// The delay allows the system to settle, ensuring that measurements are taken under stable conditions.
-  unsigned ta_measurement_slot_prohibit_period{0};
-  /// \brief Timing Advance Command (T_A) offset threshold.
-  ///
-  /// A TA command is triggered if the estimated TA is equal to or greater than this threshold. Possible valid values
-  /// are {0,...,32}.
-  ///
-  /// If set to less than zero, issuing of TA Command is disabled.
-  int8_t ta_cmd_offset_threshold = 1;
-  /// \brief Timing Advance target in units of TA.
-  ///
-  /// Offsets the target TA measurements so the signal from the UE is kept delayed. This parameter is useful for
-  /// avoiding negative TA when the UE is getting away.
-  float ta_target = 0.0F;
-  /// UL SINR threshold (in dB) above which reported N_TA update measurement is considered valid.
-  float ta_update_measurement_ul_sinr_threshold = 0.0F;
-  /// @}
   /// Direct Current (DC) offset, in number of subcarriers, used in PUSCH, by default. The gNB may supersede this DC
   /// offset value through RRC messaging. See TS38.331 - "txDirectCurrentLocation".
   dc_offset_t initial_ul_dc_offset{dc_offset_t::center};
@@ -198,8 +203,8 @@ struct scheduler_ue_expert_config {
   crb_interval pusch_crb_limits{0, MAX_NOF_PRBS};
   /// Minimum distance between PUCCH and PUSCH in number of PRBs.
   unsigned min_pucch_pusch_prb_distance = 1;
-  /// Expert parameters to be passed to the policy scheduler.
-  policy_scheduler_expert_config strategy_cfg = time_qos_scheduler_expert_config{};
+  /// Configuration of the scheduler policy. Currently, time-domain round-robin and time-domain QoS-aware are supported.
+  scheduler_policy_config policy_cfg = time_qos_scheduler_config{};
   /// \brief Size of the group of UEs that is considered for newTx allocation in a given slot. The groups of UEs
   /// will rotate in a round-robin fashion.
   /// To minimize computation load, a lower group size can be used. If the QoS scheduler policy is used, this will
@@ -208,6 +213,8 @@ struct scheduler_ue_expert_config {
   unsigned pre_policy_rr_ue_group_size = 32;
   /// Expert PUCCH/PUSCH power control parameters.
   ul_power_control ul_power_ctrl = ul_power_control{};
+  /// TA control parameters.
+  scheduler_ta_control_config ta_control;
 };
 
 /// \brief System Information scheduling statically configurable expert parameters.
@@ -229,6 +236,8 @@ struct scheduler_ra_expert_config {
   sch_mcs_index msg3_mcs_index = 0;
   /// Maximum number of Msg3 PUSCH retransmissions.
   unsigned max_nof_msg3_harq_retxs = 4;
+  /// Number of RBs that are used as guardband on each side of the PRACH RBs dedicated interval for short PRACH formats.
+  unsigned nof_prach_guardbands_rbs = 5;
   /// Timeout for Msg3 HARQ with pending retransmission to be discarded.
   std::chrono::milliseconds harq_retx_timeout{100};
 };

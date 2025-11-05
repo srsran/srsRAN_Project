@@ -140,7 +140,7 @@ public:
     uci_count.store(0, std::memory_order_relaxed);
     sum_used_cpu_time_ns.store(0, std::memory_order_relaxed);
     packed_min_data_latency_ns.store(default_packed_min_latency_ns, std::memory_order_relaxed);
-    packed_max_data_latency_ns.store(default_packed_min_latency_ns, std::memory_order_relaxed);
+    packed_max_data_latency_ns.store(default_packed_max_latency_ns, std::memory_order_relaxed);
     min_uci_latency_ns.store(UINT64_MAX, std::memory_order_relaxed);
     max_uci_latency_ns.store(0, std::memory_order_relaxed);
   }

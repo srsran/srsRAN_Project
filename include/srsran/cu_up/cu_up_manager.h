@@ -22,8 +22,10 @@
 
 #pragma once
 
+#include "srsran/cu_up/cu_up_state.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"
 #include "srsran/support/async/async_task.h"
+#include <map>
 
 namespace srsran::srs_cu_up {
 

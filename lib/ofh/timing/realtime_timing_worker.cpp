@@ -22,10 +22,11 @@
 
 #include "realtime_timing_worker.h"
 #include "../support/logger_utils.h"
+#include "../support/metrics_helpers.h"
 #include "srsran/instrumentation/traces/ofh_traces.h"
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
 #include "srsran/support/rtsan.h"
-#include <future>
+#include "srsran/support/synchronization/sync_event.h"
 #include <thread>
 
 using namespace srsran;
@@ -72,25 +73,24 @@ void realtime_timing_worker::start()
 
   stop_manager.reset();
 
-  std::promise<void> p;
-  std::future<void>  fut = p.get_future();
-
-  if (!executor.defer([this, &p, token = stop_manager.get_token()]() {
+  sync_event wait_event;
+  if (!executor.defer([this, start_token = wait_event.get_token(), stop_token = stop_manager.get_token()]() mutable {
         // Signal start() caller thread that the operation is complete.
-        p.set_value();
+        start_token.reset();
 
         auto now                  = gps_clock::now();
         auto ns_fraction          = calculate_ns_fraction_from(now);
+        last_wakeup_tp            = std::chrono::steady_clock::now();
         previous_symb_index       = get_symbol_index(ns_fraction, symbol_duration);
         previous_time_since_epoch = now.time_since_epoch().count();
 
-        timing_loop();
+        timing_loop(stop_token);
       })) {
     report_fatal_error("Unable to start the realtime timing worker");
   }
 
   // Block waiting for timing executor to start.
-  fut.wait();
+  wait_event.wait();
 
   logger.info("Started the realtime timing worker");
 }
@@ -98,17 +98,17 @@ void realtime_timing_worker::start()
 void realtime_timing_worker::stop()
 {
   logger.info("Requesting stop of the realtime timing worker");
-  stop_manager.stop();
 
+  stop_manager.stop();
   // Clear the subscribed notifiers.
   ota_notifiers.clear();
 
   logger.info("Stopped the realtime timing worker");
 }
 
-void realtime_timing_worker::timing_loop() noexcept SRSRAN_RTSAN_NONBLOCKING
+void realtime_timing_worker::timing_loop(const stop_event_token& token) noexcept SRSRAN_RTSAN_NONBLOCKING
 {
-  while (SRSRAN_LIKELY(!stop_manager.stop_was_requested())) {
+  while (SRSRAN_LIKELY(!token.is_stop_requested())) {
     poll();
   }
 }
@@ -135,6 +135,8 @@ calculate_slot_point(subcarrier_spacing scs, uint64_t gps_seconds, uint32_t frac
 
 void realtime_timing_worker::poll()
 {
+  auto sleeping_time = calculate_sleeping_time();
+
   auto now         = gps_clock::now();
   auto ns_fraction = calculate_ns_fraction_from(now);
 
@@ -166,9 +168,23 @@ void realtime_timing_worker::poll()
 
   // Check if we have missed more than one symbol.
   if (SRSRAN_UNLIKELY(delta > 1)) {
-    logger.info("Real-time timing worker woke up late, skipped '{}' symbols", delta);
-    metrics_collector.update_metrics(delta);
+    logger.info("Real-time timing worker woke up late, skipped '{}' symbols, current symbol is '{}'",
+                delta,
+                current_symbol_index % nof_symbols_per_slot);
+    metrics_collector.update_skipped_symbols(delta);
   }
+  if (SRSRAN_UNLIKELY(delta >= 3)) {
+    log_conditional_warning(
+        logger,
+        enable_log_warnings_for_lates,
+        "Real-time timing worker woke up late, skipped '{}' symbols. Current symbol is '{}'. Equivalent realtime clock "
+        "sleep time has been '{}us', wall clock sleep time has been '{}us'",
+        delta,
+        current_symbol_index % nof_symbols_per_slot,
+        std::chrono::duration_cast<std::chrono::microseconds>(delta * symbol_duration).count(),
+        sleeping_time.count());
+  }
+
   if (SRSRAN_UNLIKELY(delta >= nof_symbols_per_slot)) {
     log_conditional_warning(
         logger,
@@ -197,9 +213,11 @@ void realtime_timing_worker::notify_slot_symbol_point(const slot_symbol_point_co
 {
   ofh_tracer << instant_trace_event("ofh_timing_notify_symbol", instant_trace_event::cpu_scope::global);
 
+  time_execution_measurer meas(true);
   for (auto* notifier : ota_notifiers) {
     notifier->on_new_symbol(slot_context);
   }
+  metrics_collector.update_symbol_notification_latency(meas.stop());
 }
 
 void realtime_timing_worker::subscribe(span<ota_symbol_boundary_notifier*> notifiers)

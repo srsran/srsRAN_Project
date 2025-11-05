@@ -108,7 +108,7 @@ private:
                   "Sector identifier (i.e., {}) is out-of-bounds {}.",
                   context.sector,
                   sector_range);
-    sectors[context.sector].handle_dl_data(context, grid);
+    sectors[context.sector]->handle_dl_data(context, grid);
   }
 
   // See ru_uplink_plane_handler for documentation.
@@ -119,7 +119,7 @@ private:
                   "Sector identifier (i.e., {}) is out-of-bounds {}.",
                   context.sector,
                   sector_range);
-    sectors[context.sector].handle_prach_occasion(context, buffer);
+    sectors[context.sector]->handle_prach_occasion(context, buffer);
   }
 
   // See ru_uplink_plane_handler for documentation.
@@ -130,10 +130,10 @@ private:
                   "Sector identifier (i.e., {}) is out-of-bounds {}.",
                   context.sector,
                   sector_range);
-    sectors[context.sector].handle_new_uplink_slot(context, grid);
+    sectors[context.sector]->handle_new_uplink_slot(context, grid);
   }
 
-  /// \brief Defer loop task if the RU is running.
+  /// Defer loop task if the RU is running.
   /// \remark A fatal error is triggered if the executor fails to defer the loop task.
   void defer_loop();
 
@@ -157,7 +157,7 @@ private:
   /// Current slot.
   slot_point current_slot;
   /// Radio unit sectors.
-  std::vector<ru_dummy_sector> sectors;
+  std::vector<std::unique_ptr<ru_dummy_sector>> sectors;
   /// RU dummy metrics collector.
   ru_dummy_metrics_collector metrics_collector;
 };

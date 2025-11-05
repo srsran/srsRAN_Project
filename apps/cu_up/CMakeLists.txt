@@ -21,6 +21,7 @@
 add_executable(srscuup
         cu_up.cpp
         cu_up_appconfig_cli11_schema.cpp
+        cu_up_appconfig_validator.cpp
 )
 
 install(TARGETS srscuup

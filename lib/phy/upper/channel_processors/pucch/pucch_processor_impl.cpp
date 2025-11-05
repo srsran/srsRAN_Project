@@ -108,22 +108,19 @@ pucch_format1_map<pucch_processor_result> pucch_processor_impl::process(const re
     mux_harq_size.insert(initial_cyclic_shift, time_domain_occ, nof_harq_ack);
   }
 
-  // Fill the detector configuration - recall that time_domain_occ, initial_cyclic_shift and nof_harq_ack are unused
-  // since given by mux_harq_size.
+  // Fill the detector configuration - recall that time_domain_occ, initial_cyclic_shift and nof_harq_ack are set
+  // via mux_harq_size.
   pucch_detector::format1_configuration detector_config = {
-      .slot                 = common_config.slot,
-      .cp                   = common_config.cp,
-      .starting_prb         = common_config.starting_prb + common_config.bwp_start_rb,
-      .second_hop_prb       = transform_optional(common_config.second_hop_prb, std::plus(), common_config.bwp_start_rb),
-      .start_symbol_index   = common_config.start_symbol_index,
-      .nof_symbols          = common_config.nof_symbols,
-      .group_hopping        = pucch_group_hopping::NEITHER,
-      .ports                = common_config.ports,
-      .beta_pucch           = 1.0F,
-      .time_domain_occ      = 0,
-      .initial_cyclic_shift = 0,
-      .n_id                 = common_config.n_id,
-      .nof_harq_ack         = 0};
+      .slot               = common_config.slot,
+      .cp                 = common_config.cp,
+      .starting_prb       = common_config.starting_prb + common_config.bwp_start_rb,
+      .second_hop_prb     = transform_optional(common_config.second_hop_prb, std::plus(), common_config.bwp_start_rb),
+      .start_symbol_index = common_config.start_symbol_index,
+      .nof_symbols        = common_config.nof_symbols,
+      .group_hopping      = pucch_group_hopping::NEITHER,
+      .ports              = common_config.ports,
+      .beta_pucch         = 1.0F,
+      .n_id               = common_config.n_id};
 
   const pucch_format1_map<pucch_detector::pucch_detection_result_csi>& detection_results =
       detector->detect(grid, detector_config, mux_harq_size);

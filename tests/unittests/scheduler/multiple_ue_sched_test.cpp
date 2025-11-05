@@ -103,7 +103,7 @@ protected:
     srslog::flush();
   }
 
-  void setup_sched(const scheduler_expert_config& expert_cfg, const sched_cell_configuration_request_message& msg)
+  void setup_sched(const scheduler_expert_config& expert_cfg, sched_cell_configuration_request_message msg)
   {
     current_slot = slot_point{to_numerology_value(msg.scs_common), 0};
 
@@ -120,13 +120,6 @@ protected:
       }
     }
 
-    bench.emplace(expert_cfg, msg);
-
-    // Initialize.
-    mac_logger.set_context(current_slot.sfn(), current_slot.slot_index());
-    test_logger.set_context(current_slot.sfn(), current_slot.slot_index());
-    bench->sched_res = &bench->sch.slot_indication(current_slot, to_du_cell_index(0));
-
     pucch_builder_params pucch_basic_params{.nof_ue_pucch_f0_or_f1_res_harq       = 8,
                                             .nof_ue_pucch_f2_or_f3_or_f4_res_harq = 8,
                                             .nof_sr_resources                     = 8,
@@ -134,6 +127,16 @@ protected:
     auto&                f1_params = pucch_basic_params.f0_or_f1_params.emplace<pucch_f1_params>();
     f1_params.nof_cyc_shifts       = pucch_nof_cyclic_shifts::twelve;
     f1_params.occ_supported        = true;
+
+    msg.ded_pucch_resources = config_helpers::build_pucch_resource_list(
+        pucch_basic_params, msg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
+    bench.emplace(expert_cfg, msg);
+
+    // Initialize.
+    mac_logger.set_context(current_slot.sfn(), current_slot.slot_index());
+    test_logger.set_context(current_slot.sfn(), current_slot.slot_index());
+    bench->sched_res = &bench->sch.slot_indication(current_slot, to_du_cell_index(0));
+
     pucch_cfg_builder.setup(bench->cell_cfg, pucch_basic_params);
   }
 

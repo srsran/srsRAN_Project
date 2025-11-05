@@ -24,6 +24,7 @@
 
 #include "../mac_dl/mac_dl_configurator.h"
 #include "mac_config.h"
+#include "srsran/adt/circular_array.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/support/timers.h"
 #include <atomic>
@@ -63,12 +64,18 @@ public:
 private:
   class cell_metric_handler;
 
+  struct report_context {
+    slot_point_extended start_slot;
+    std::atomic<bool>   end_slot_flag{false};
+    mac_metric_report   report;
+  };
+
   /// Called when pending reports should be handled.
   void handle_pending_reports();
 
   void handle_cell_activation(du_cell_index_t cell_index, slot_point_extended report_slot);
 
-  void handle_cell_deactivation(du_cell_index_t cell_index, const mac_dl_cell_metric_report& last_report);
+  void handle_cell_deactivation(du_cell_index_t cell_index);
 
   bool pop_report(cell_metric_handler& cell);
 
@@ -85,15 +92,16 @@ private:
 
   /// Expected start slot for the next report.
   slot_point_extended next_report_start_slot;
+  unsigned            period_slots;
 
   /// Number of cells currently active.
   unsigned nof_active_cells = 0;
 
-  /// Next report to be sent.
-  mac_metric_report next_report;
-
-  // Number of cell reports pending to be processed.
-  std::atomic<unsigned> report_count{0};
+  /// Ring of metric reports under construction.
+  /// \remark The size of this ring is large enough to avoid that cell reports for different slots end up overwriting
+  /// each other.
+  static constexpr size_t                          report_ring_size = 4;
+  circular_array<report_context, report_ring_size> report_ring;
 
   // Timer that when triggered aggregates all existing cell reports.
   unique_timer aggr_timer;

@@ -26,6 +26,7 @@
 #include "apps/services/metrics/metrics_producer.h"
 #include "srsran/adt/span.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/synchronization/stop_event.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -41,8 +42,8 @@ namespace app_services {
 /// This callback is used to notify metrics to the given metrics consumer running in a different execution context
 /// defined by the given task executor. The implementation of the callback must make sure that the metrics object lives
 /// longer than the handling of the metrics by the consumer.
-using metrics_callback =
-    std::function<void(const metrics_set&, span<metrics_consumer*>, task_executor&, srslog::basic_logger&)>;
+using metrics_callback = std::function<
+    void(const metrics_set&, span<metrics_consumer*>, task_executor&, srslog::basic_logger&, stop_event_token)>;
 
 /// Metrics configuration.
 struct metrics_config {

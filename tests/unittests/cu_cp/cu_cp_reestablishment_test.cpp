@@ -618,3 +618,55 @@ TEST_F(cu_cp_reestablishment_test,
   ASSERT_FALSE(reestablish_ue(du_idx, cu_up_idx, du_ue_id3, crnti3, old_crnti, old_pci))
       << "Fallback should have occurred";
 }
+
+TEST_F(cu_cp_reestablishment_test,
+       when_reestablishment_is_received_procedures_of_old_ue_are_canceled_and_reestablishment_succeeds)
+{
+  // Attach UE 0x4601.
+  EXPECT_TRUE(attach_ue(du_idx, cu_up_idx, old_du_ue_id, old_crnti, amf_ue_id, cu_up_e1ap_id));
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  // Run PDU Session Resource Modification but the RRC Reconfiguration is never received.
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  // Inject PDU Session Resource Modify Request and wait for Bearer Context Modification Request
+  get_amf().push_tx_pdu(generate_valid_pdu_session_resource_modify_request_message(
+      amf_ue_id, ran_ue_id_t::min, pdu_session_id_t::min, {uint_to_qos_flow_id(2)}, {}));
+  e1ap_message e1ap_pdu;
+  ASSERT_TRUE(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu))
+      << "Failed to receive Bearer Context Modification Request";
+  ASSERT_TRUE(test_helpers::is_valid_bearer_context_modification_request(e1ap_pdu))
+      << "Invalid Bearer Context Modification Request";
+
+  // Inject Bearer Context Modification Response and await UE Context Modification Request
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_ue_context_modification_request(
+      du_idx, cu_up_idx, old_du_ue_id, pdu_session_id_t::min, drb_id_t::drb1, uint_to_qos_flow_id(2)));
+
+  // Inject UE Context Modification Response and await Bearer Context Modification Request
+  ASSERT_TRUE(send_ue_context_modification_response_and_await_bearer_context_modification_request(
+      du_idx, cu_up_idx, old_du_ue_id, old_crnti));
+
+  // Inject E1AP Bearer Context Modification Response and wait for DL RRC Message (containing RRC Reconfiguration)
+  get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_modification_response(
+      gnb_cu_cp_ue_e1ap_id_t::min, cu_up_e1ap_id, {}, {{pdu_session_id_t::min, drb_id_t::drb1}}, {}));
+  f1ap_message f1ap_pdu;
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu))
+      << "Failed to receive F1AP DL RRC Message (containing RRC Reconfiguration)";
+  ASSERT_TRUE(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu)) << "Invalid DL RRC Message Transfer";
+
+  // RRC Reconfiguration is not sent to the DU so the old UE is stuck.
+
+  // Run Reestablishment. This should cancel the procedures of the old UE and succeed.
+  auto du_ue_id2 = int_to_gnb_du_ue_f1ap_id(1);
+  auto crnti2    = to_rnti(0x4602);
+  ASSERT_TRUE(reestablish_ue(du_idx, cu_up_idx, du_ue_id2, crnti2, old_crnti, old_pci)) << "Reestablishment failsed";
+
+  // Check metrics for successful RRC connection re-establishment.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus[0].rrc_metrics.attempted_rrc_connection_reestablishments, 1);
+  ASSERT_EQ(report.dus[0].rrc_metrics.successful_rrc_connection_establishments.get_count(establishment_cause_t::mo_sig),
+            1);
+  ASSERT_EQ(report.dus[0].rrc_metrics.successful_rrc_connection_reestablishments_with_ue_context, 1);
+  // Old UE should not be removed at this stage.
+  ASSERT_EQ(report.ues.size(), 1) << "Old UE should not be removed yet";
+}

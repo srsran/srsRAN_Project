@@ -250,8 +250,8 @@ TEST_F(f1u_cu_split_connector_test, send_sdu_with_dl_teid_attached)
 
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
-  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
+  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer = cu_gw->create_cu_bearer(
+      0, s_nssai_t{}, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   ASSERT_NE(udp_tester, nullptr);
@@ -283,8 +283,8 @@ TEST_F(f1u_cu_split_connector_test, send_sdu_without_dl_teid_attached)
 
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
-  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
+  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer = cu_gw->create_cu_bearer(
+      0, s_nssai_t{}, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
   // Not attaching DL TEID
 
   ASSERT_NE(udp_tester, nullptr);
@@ -314,8 +314,8 @@ TEST_F(f1u_cu_split_connector_test, recv_sdu_with_dl_teid_attached)
   up_transport_layer_info     dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
-  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
+  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer = cu_gw->create_cu_bearer(
+      0, s_nssai_t{}, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   // Send SDU
@@ -344,8 +344,8 @@ TEST_F(f1u_cu_split_connector_test, recv_sdu_without_dl_teid_attached)
   up_transport_layer_info     dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
-  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
+  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer = cu_gw->create_cu_bearer(
+      0, s_nssai_t{}, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
   // Not attaching DL TEID
 
   // Send SDU
@@ -372,8 +372,8 @@ TEST_F(f1u_cu_split_connector_test, disconnect_stops_tx)
 
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
-  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
+  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer = cu_gw->create_cu_bearer(
+      0, s_nssai_t{}, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   ASSERT_NE(udp_tester, nullptr);
@@ -430,8 +430,8 @@ TEST_F(f1u_cu_split_connector_test, destroy_bearer_disconnects_and_stops_rx)
   up_transport_layer_info     dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
-  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
+  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer = cu_gw->create_cu_bearer(
+      0, s_nssai_t{}, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   // Disconnect incorrect tunnel (no effect expected)

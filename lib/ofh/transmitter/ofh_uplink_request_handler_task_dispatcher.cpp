@@ -42,11 +42,12 @@ void uplink_request_handler_task_dispatcher::handle_prach_occasion(const prach_b
                                                                    prach_buffer&               buffer)
 {
   // Do not process if stop was requested.
-  if (stop_manager.stop_was_requested()) {
+  auto token = stop_manager.get_token();
+  if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
     return;
   }
 
-  if (!executor.defer([context, &buffer, this]() noexcept SRSRAN_RTSAN_NONBLOCKING {
+  if (!executor.defer([context, &buffer, this, tk = std::move(token)]() noexcept SRSRAN_RTSAN_NONBLOCKING {
         uplink_handler.handle_prach_occasion(context, buffer);
       })) {
     logger.warning(
@@ -58,13 +59,14 @@ void uplink_request_handler_task_dispatcher::handle_new_uplink_slot(const resour
                                                                     const shared_resource_grid&  grid)
 {
   // Do not process if stop was requested.
-  if (stop_manager.stop_was_requested()) {
+  auto token = stop_manager.get_token();
+  if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
     return;
   }
-  if (!executor.defer(
-          [context, rg = grid.copy(), this, token = stop_manager.get_token()]() noexcept SRSRAN_RTSAN_NONBLOCKING {
-            uplink_handler.handle_new_uplink_slot(context, rg);
-          })) {
+
+  if (!executor.defer([context, rg = grid.copy(), this, tk = std::move(token)]() noexcept SRSRAN_RTSAN_NONBLOCKING {
+        uplink_handler.handle_new_uplink_slot(context, rg);
+      })) {
     logger.warning(
         "Sector#{}: failed to handle uplink slot in the uplink request handler for slot '{}'", sector_id, context.slot);
   }

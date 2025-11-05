@@ -692,6 +692,13 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
     amf_ue_id = uint_to_amf_ue_id(cmd->ue_ngap_ids.ue_ngap_id_pair().amf_ue_ngap_id);
     ran_ue_id = uint_to_ran_ue_id(cmd->ue_ngap_ids.ue_ngap_id_pair().ran_ue_ngap_id);
 
+    // Check wether another context doesn't exist already for the same AMF UE ID with mismatched RAN UE ID.
+    if (not validate_consistent_ue_id_pair(ran_ue_id, amf_ue_id)) {
+      // Release old UE context and send error indication with the received UE IDs to the AMF.
+      handle_inconsistent_ue_id_pair(ran_ue_id, amf_ue_id);
+      return;
+    }
+
     if (!ue_ctxt_list.contains(ran_ue_id)) {
       // TS 38.413 section 8.3.3 doesn't specify abnormal conditions, so we just drop the message and send an error
       // indication.
@@ -959,6 +966,21 @@ void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
                 fmt::underlying(ue_ctxt.ue_ids.amf_ue_id));
 
   ue_ctxt.logger.log_info("Received ErrorIndication{}", msg_cause.empty() ? "" : ". Cause: " + msg_cause);
+
+  // If an Error Indication was received while waiting for a UE Context Release Command, we consider the request failed
+  // and release the UE locally.
+  if (ue_ctxt.release_requested) {
+    ue_ctxt.release_requested = false;
+    ue_ctxt.release_scheduled = true;
+
+    ue->schedule_async_task(
+        launch_async([this, ue_index = ue_ctxt.ue_ids.ue_index](coro_context<async_task<void>>& ctx) {
+          CORO_BEGIN(ctx);
+          CORO_AWAIT(cu_cp_notifier.on_new_ue_context_release_command(
+              {ue_index, ngap_cause_radio_network_t::release_due_to_5gc_generated_reason, true}));
+          CORO_RETURN();
+        }));
+  }
 
   // Request UE release.
   ue->schedule_async_task(launch_async([this, ue_index](coro_context<async_task<void>>& ctx) {

@@ -140,6 +140,8 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
     slot_point max_decision_latency_slot;
     // Histogram of scheduler latencies.
     std::array<unsigned, scheduler_cell_metrics::latency_hist_bins> decision_latency_hist{};
+    // Number of slot indications considered in this report.
+    unsigned nof_slots = 0;
     // Number of downlink slots.
     unsigned nof_dl_slots = 0;
     // Number of uplink slots.
@@ -174,10 +176,8 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
   // Derived values.
   const unsigned nof_slots_per_sf;
 
+  /// Last slot indication handled.
   slot_point last_slot_tx;
-
-  /// Slot point at which metrics started being collected for the current report.
-  slot_point start_report_slot_tx;
 
   slotted_id_vector<du_ue_index_t, ue_metric_context> ues;
   flat_map<rnti_t, du_ue_index_t>                     rnti_to_ue_index_lookup;
@@ -262,7 +262,9 @@ private:
   void handle_pucch_sinr(ue_metric_context& u, float sinr);
   void handle_csi_report(ue_metric_context& u, const csi_report_data& csi);
   void report_metrics();
-  void handle_slot_result(const sched_result& slot_result, std::chrono::microseconds slot_decision_latency);
+  void handle_slot_result(slot_point                sl_tx,
+                          const sched_result&       slot_result,
+                          std::chrono::microseconds slot_decision_latency);
 
   std::vector<scheduler_cell_event> pending_events;
 };

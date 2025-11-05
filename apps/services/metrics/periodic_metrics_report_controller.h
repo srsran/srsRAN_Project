@@ -57,15 +57,12 @@ public:
     if (!report_period.count()) {
       return;
     }
-    if (stopped.exchange(false, std::memory_order_relaxed)) {
-      std::promise<void> exit_signal;
-      auto               fut = exit_signal.get_future();
-      defer_until_success(executor, timers, [this, &exit_signal]() mutable {
-        timer.run();
-        exit_signal.set_value();
-      });
-      fut.wait();
-    }
+    stop_manager.reset();
+
+    sync_event wait_all;
+    defer_until_success(executor, timers, [this, token = wait_all.get_token()]() mutable { timer.run(); });
+    // Block waiting for the controller to start.
+    wait_all.wait();
   }
 
   /// Stops the metrics report timer.
@@ -74,19 +71,23 @@ public:
     if (!report_period.count()) {
       return;
     }
-    if (not stopped.exchange(true, std::memory_order_relaxed)) {
-      sync_event wait_all;
-      defer_until_success(executor, timers, [this, token = wait_all.get_token()]() mutable { timer.stop(); });
-    }
+
+    // Signal stop to asynchronous timer thread.
+    stop_manager.stop();
+    // Stop the timer.
+    timer.stop();
   }
 
 private:
   /// Trigger metrics report in all registered producers.
   void report_metrics()
   {
-    if (stopped.load(std::memory_order_relaxed)) {
+    auto token = stop_manager.get_token();
+    // Do not rearm the timer and process metrics if stop was requested.
+    if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
       return;
     }
+
     // Rearm the timer.
     timer.run();
 
@@ -103,7 +104,8 @@ private:
   unique_timer timer;
   /// Metrics report period.
   std::chrono::milliseconds report_period{0};
-  std::atomic<bool>         stopped{true};
+  /// Manager used for stopping this controller.
+  stop_event_source stop_manager;
   /// List of metrics producers managed by this controller.
   std::vector<metrics_producer*> producers;
 };

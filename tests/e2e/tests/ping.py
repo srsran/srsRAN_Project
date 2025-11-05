@@ -27,7 +27,7 @@ from typing import Optional, Sequence, Tuple, Union
 
 import grpc
 from _pytest.outcomes import Failed
-from google.protobuf.empty_pb2 import Empty
+from google.protobuf.wrappers_pb2 import UInt32Value
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
@@ -345,7 +345,7 @@ def test_android_no_drx(
         "Some packages got lost",
         "socket is already closed",
         "5GC crashed",
-        "StatusCode.UNKNOWN",
+        "License unavailable",
     ],
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -467,7 +467,7 @@ def test_example_srsue(
         "Some packages got lost",
         "socket is already closed",
         "5GC crashed",
-        "StatusCode.UNKNOWN",
+        "License unavailable",
     ],
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -549,11 +549,63 @@ def test_zmq_valgrind(
         )
     stop(
         ue_array=ue_4,
-        gnb=gnb,
+        gnb_array=[gnb],
         fivegc=fivegc,
         retina_data=retina_data,
         gnb_stop_timeout=gnb_stop_timeout,
         log_search=False,
+    )
+
+
+@mark.parametrize(
+    "band, common_scs, bandwidth",
+    (param(261, 120, 100, id="band:%s-scs:%s-bandwidth:%s"),),
+)
+@mark.zmq
+@mark.fr2
+@mark.flaky(
+    reruns=2,
+    only_rerun=[
+        "failed to start",
+        "Attach timeout reached",
+        "Some packages got lost",
+        "socket is already closed",
+        "5GC crashed",
+        "License unavailable",
+    ],
+)
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def test_zmq_fr2(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue: UEStub,
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+):
+    """
+    ZMQ FR2 Ping test
+    """
+
+    _ping(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=[ue],
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=122880000,
+        ul_noise_spd=-210,
+        rx_to_tx_latency=4,
+        global_timing_advance=-1,
+        time_alignment_calibration=0,
+        ue_stop_timeout=3,
+        pdcch_log=True,
+        always_download_artifacts=True,
     )
 
 
@@ -602,7 +654,7 @@ def test_rf_does_not_crash(
             log_search=False,
             always_download_artifacts=True,
         )
-    stop(ue_array=ue_4, gnb=gnb, fivegc=fivegc, retina_data=retina_data, log_search=False)
+    stop(ue_array=ue_4, gnb_array=[gnb], fivegc=fivegc, retina_data=retina_data, log_search=False)
 
 
 @mark.parametrize(
@@ -696,6 +748,9 @@ def _ping(
     ping_interval: float = 1.0,
     channel_emulator: Optional[ChannelEmulatorStub] = None,
     ntn_scenario_def: Optional[NtnScenarioDefinition] = None,
+    ul_noise_spd: int = 0,
+    rx_to_tx_latency: int = -1,
+    pdcch_log: bool = False,
 ):
     logging.info("Ping Test")
 
@@ -728,6 +783,9 @@ def _ping(
         pdsch_mcs_table=pdsch_mcs_table,
         pusch_mcs_table=pusch_mcs_table,
         ntn_config=ntn_config,
+        ul_noise_spd=ul_noise_spd,
+        rx_to_tx_latency=rx_to_tx_latency,
+        pdcch_log=pdcch_log,
     )
     configure_artifacts(
         retina_data=retina_data,
@@ -736,7 +794,7 @@ def _ping(
 
     start_network(
         ue_array=ue_array,
-        gnb=gnb,
+        gnb_array=[gnb],
         fivegc=fivegc,
         gnb_pre_cmd=pre_command,
         gnb_post_cmd=post_command,
@@ -744,7 +802,10 @@ def _ping(
         channel_emulator=channel_emulator,
     )
     ue_attach_info_dict = ue_start_and_attach(
-        ue_array=ue_array, du_definition=[gnb.GetDefinition(Empty())], fivegc=fivegc, channel_emulator=channel_emulator
+        ue_array=ue_array,
+        du_definition=[gnb.GetDefinition(UInt32Value(value=0))],
+        fivegc=fivegc,
+        channel_emulator=channel_emulator,
     )
 
     try:
@@ -754,7 +815,7 @@ def _ping(
         for _ in range(reattach_count):
             ue_stop(ue_array=ue_array, retina_data=retina_data)
             ue_attach_info_dict = ue_start_and_attach(
-                ue_array=ue_array, du_definition=[gnb.GetDefinition(Empty())], fivegc=fivegc
+                ue_array=ue_array, du_definition=[gnb.GetDefinition(UInt32Value(value=0))], fivegc=fivegc
             )
             ping(
                 ue_attach_info_dict=ue_attach_info_dict,
@@ -772,7 +833,7 @@ def _ping(
     # final stop
     stop(
         ue_array=ue_array,
-        gnb=gnb,
+        gnb_array=[gnb],
         fivegc=fivegc,
         retina_data=retina_data,
         gnb_stop_timeout=gnb_stop_timeout,

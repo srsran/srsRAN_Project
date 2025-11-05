@@ -132,6 +132,11 @@ static void configure_cli11_test_mode_args(CLI::App& app, cu_up_unit_test_mode_c
              test_mode_params.attach_detach_period,
              "Attach/detach period for test mode. 0 means always attached.")
       ->capture_default_str();
+  add_option(app,
+             "--reestablish_period",
+             test_mode_params.reestablish_period,
+             "Reestablish period for test mode. 0 means always attached.")
+      ->capture_default_str();
 }
 
 static void configure_cli11_cu_up_args(CLI::App& app, cu_up_unit_config& cu_up_params)

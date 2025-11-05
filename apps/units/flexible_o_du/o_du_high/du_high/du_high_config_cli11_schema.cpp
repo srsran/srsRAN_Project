@@ -562,23 +562,23 @@ static void configure_cli11_csi_args(CLI::App& app, du_high_unit_csi_config& csi
       ->check(CLI::Range(-8, 15));
 }
 
-static void configure_cli11_qos_scheduler_expert_args(CLI::App& app, time_qos_scheduler_expert_config& expert_params)
+static void configure_cli11_qos_aware_policy_args(CLI::App& app, time_qos_scheduler_config& expert_params)
 {
   add_option_function<std::string>(
       app,
-      "--qos_weight_function",
+      "--combine_function",
       [&expert_params](const std::string& value) {
         if (value == "gbr_prioritized") {
-          expert_params.qos_weight_func = time_qos_scheduler_expert_config::weight_function::gbr_prioritized;
-        } else if (value == "multivariate") {
-          expert_params.qos_weight_func = time_qos_scheduler_expert_config::weight_function::multivariate;
+          expert_params.combine_function = time_qos_scheduler_config::combine_function_type::gbr_prioritized;
+        } else if (value == "geometric_mean") {
+          expert_params.combine_function = time_qos_scheduler_config::combine_function_type::geometric_mean;
         } else {
-          report_fatal_error("Invalid qos weight function {}", value);
+          report_fatal_error("Invalid QoS weight combining function {}", value);
         }
       },
-      "QoS-aware scheduler policy weight function")
+      "QoS-aware scheduler policy weight combining function")
       ->default_str("gbr_prioritized")
-      ->check(CLI::IsMember({"gbr_prioritized", "multivariate"}, CLI::ignore_case));
+      ->check(CLI::IsMember({"gbr_prioritized", "geometric_mean"}, CLI::ignore_case));
   add_option(app,
              "--pf_fairness_coeff",
              expert_params.pf_fairness_coeff,
@@ -601,42 +601,41 @@ static void configure_cli11_qos_scheduler_expert_args(CLI::App& app, time_qos_sc
       ->capture_default_str();
 }
 
-static void configure_cli11_policy_scheduler_expert_args(CLI::App&                                      app,
-                                                         std::optional<policy_scheduler_expert_config>& expert_params)
+static void configure_cli11_scheduler_policy_args(CLI::App& app, std::optional<scheduler_policy_config>& policy_cfg)
 {
-  static time_qos_scheduler_expert_config qos_sched_expert_cfg;
-  CLI::App*                               qos_sched_cfg_subcmd =
-      add_subcommand(app, "qos_sched", "QoS-aware policy scheduler expert configuration")->configurable();
-  configure_cli11_qos_scheduler_expert_args(*qos_sched_cfg_subcmd, qos_sched_expert_cfg);
+  static time_qos_scheduler_config qos_cfg;
+  CLI::App*                        qos_sched_cfg_subcmd =
+      add_subcommand(app, "qos_sched", "Time-domain QoS-aware policy configuration")->configurable();
+  configure_cli11_qos_aware_policy_args(*qos_sched_cfg_subcmd, qos_cfg);
   auto qos_sched_verify_callback = [&]() {
     CLI::App* qos_sched_sub_cmd = app.get_subcommand("qos_sched");
     if (qos_sched_sub_cmd->count() != 0) {
-      expert_params = qos_sched_expert_cfg;
+      policy_cfg = qos_cfg;
     }
   };
   qos_sched_cfg_subcmd->parse_complete_callback(qos_sched_verify_callback);
 
   CLI::App* rr_sched_cfg_subcmd =
-      add_subcommand(app, "rr_sched", "Round-robin policy scheduler expert configuration")->configurable();
+      add_subcommand(app, "rr_sched", "Time-domain Round-robin policy configuration")->configurable();
   rr_sched_cfg_subcmd->parse_complete_callback([&]() {
     CLI::App* rr_sched_sub_cmd = app.get_subcommand("rr_sched");
     if (rr_sched_sub_cmd->count() != 0) {
-      expert_params = time_rr_scheduler_expert_config{};
+      policy_cfg = time_rr_scheduler_config{};
     }
   });
 }
 
-static void configure_cli11_ta_scheduler_expert_args(CLI::App& app, du_high_unit_ta_sched_expert_config& ta_params)
+static void configure_cli11_ta_control_args(CLI::App& app, du_high_unit_ta_sched_control_config& ta_params)
 {
   add_option(app,
              "--ta_measurement_slot_period",
              ta_params.ta_measurement_slot_period,
-             "Measurements periodicity in nof. slots over which the new Timing Advance Command is computed")
+             "Measurements periodicity in number of slots over which the new Timing Advance Command is computed")
       ->capture_default_str();
   add_option(app,
              "--ta_measurement_slot_prohibit_period",
              ta_params.ta_measurement_slot_prohibit_period,
-             "Delay in nof. slots between issuing the TA_CMD and starting TA measurements.")
+             "Delay in number of slots between issuing the TA_CMD and starting TA measurements.")
       ->capture_default_str()
       ->check(CLI::Range(0, 10000));
   add_option(app,
@@ -656,24 +655,19 @@ static void configure_cli11_ta_scheduler_expert_args(CLI::App& app, du_high_unit
       ->capture_default_str();
 }
 
-static void configure_cli11_scheduler_expert_args(CLI::App& app, du_high_unit_scheduler_expert_config& expert_params)
+static void configure_cli11_scheduler_args(CLI::App& app, du_high_unit_scheduler_config& sched_params)
 {
   add_option(app,
              "--nof_preselected_newtx_ues",
-             expert_params.nof_preselected_newtx_ues,
+             sched_params.nof_preselected_newtx_ues,
              "Number of UEs pre-selected for potential newTx allocations in a slot. The scheduling policy will only be "
              "applied to the pre-selected UEs.")
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)MAX_NOF_DU_UES));
-  CLI::App* policy_sched_cfg_subcmd =
-      add_subcommand(app,
-                     "policy_sched_cfg",
-                     "Policy scheduler expert configuration. By default, time-domain QoS-aware policy is used.")
+  CLI::App* policy_cfg_cmd =
+      add_subcommand(app, "policy", "Scheduler policy configuration. By default, time-domain QoS-aware policy is used.")
           ->configurable();
-  configure_cli11_policy_scheduler_expert_args(*policy_sched_cfg_subcmd, expert_params.policy_sched_expert_cfg);
-  CLI::App* ta_sched_cfg_subcmd =
-      add_subcommand(app, "ta_sched_cfg", "Timing Advance MAC CE scheduling expert configuration")->configurable();
-  configure_cli11_ta_scheduler_expert_args(*ta_sched_cfg_subcmd, expert_params.ta_sched_cfg);
+  configure_cli11_scheduler_policy_args(*policy_cfg_cmd, sched_params.policy_cfg);
 }
 
 static void configure_cli11_drx_args(CLI::App& app, du_high_unit_drx_config& drx_params)
@@ -1328,6 +1322,12 @@ static void configure_cli11_prach_args(CLI::App& app, du_high_unit_prach_config&
   add_option(app, "--ra_resp_window", prach_params.ra_resp_window, "RA-Response window length in number of slots.")
       ->capture_default_str()
       ->check(CLI::IsMember({1, 2, 4, 8, 10, 20, 40, 80}));
+  add_option(app,
+             "--nof_prach_guardbands_rbs",
+             prach_params.nof_prach_guardbands_rbs,
+             "Number of RBs that are used as guardband on each side of the PRACH RBs interval for short PRACH formats.")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, 10U));
 }
 
 static void configure_cli11_etws_args(CLI::App& app, du_high_unit_sib_config::etws_config& sib_params)
@@ -1496,18 +1496,24 @@ static void configure_cli11_slicing_scheduling_args(CLI::App&                   
              "Maximum percentage of PRBs to be allocated to the slice")
       ->capture_default_str()
       ->check(CLI::Range(1U, 100U));
+  add_option(app,
+             "--ded_prb_policy_ratio",
+             slice_sched_params.ded_prb_policy_ratio,
+             "Dedicated percentage of PRBs to be allocated to the slice")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, 100U));
   add_option(app, "--priority", slice_sched_params.priority, "Slice priority")
       ->capture_default_str()
       ->check(CLI::Range(0U, 254U));
 
-  // Policy scheduler configuration.
-  CLI::App* policy_sched_cfg_subcmd =
+  // Scheduler policy configuration.
+  CLI::App* policy_cfg_cmd =
       add_subcommand(
           app,
-          "policy_sched_cfg",
-          "Policy scheduler configuration for the slice. If not specified, the general scheduler policy is used")
+          "policy",
+          "Scheduler policy configuration for the slice. If not specified, the policy configured for the cell is used")
           ->configurable();
-  configure_cli11_policy_scheduler_expert_args(*policy_sched_cfg_subcmd, slice_sched_params.slice_policy_sched_cfg);
+  configure_cli11_scheduler_policy_args(*policy_cfg_cmd, slice_sched_params.slice_policy_cfg);
 }
 
 static void configure_cli11_slicing_args(CLI::App& app, du_high_unit_cell_slice_config& slice_params)
@@ -1714,8 +1720,12 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
   configure_cli11_csi_args(*csi_subcmd, cell_params.csi_cfg);
 
   // Scheduler expert configuration.
-  CLI::App* sched_expert_subcmd = add_subcommand(app, "sched_expert_cfg", "Scheduler expert parameters");
-  configure_cli11_scheduler_expert_args(*sched_expert_subcmd, cell_params.sched_expert_cfg);
+  CLI::App* sched_cfg_subcmd = add_subcommand(app, "scheduler", "Scheduler parameters");
+  configure_cli11_scheduler_args(*sched_cfg_subcmd, cell_params.scheduler_cfg);
+
+  // Scheduler TA configuration.
+  CLI::App* ta_sched_cfg_subcmd = add_subcommand(app, "ta", "Time Advance (TA) parameters")->configurable();
+  configure_cli11_ta_control_args(*ta_sched_cfg_subcmd, cell_params.ta_cfg);
 
   CLI::App* drx_subcmd = add_subcommand(app, "drx", "DRX parameters");
   configure_cli11_drx_args(*drx_subcmd, cell_params.drx_cfg);
@@ -1755,6 +1765,12 @@ static void configure_cli11_test_ue_mode_args(CLI::App& app, du_high_unit_test_m
   add_option(app, "--nof_ues", test_params.nof_ues, "Number of test UE(s) to create.")
       ->capture_default_str()
       ->check(CLI::Range((uint16_t)1, (uint16_t)MAX_NOF_DU_UES));
+  add_option(app,
+             "--ue_creation_stagger_slots",
+             test_params.ue_creation_stagger_slots,
+             "Number of slots between consecutive test mode UE creations")
+      ->capture_default_str()
+      ->check(CLI::Range(0U, 10240U));
   add_option(app,
              "--auto_ack_indication_delay",
              test_params.auto_ack_indication_delay,
@@ -2072,8 +2088,8 @@ static void derive_cell_auto_params(du_high_unit_base_cell_config& cell_cfg)
   if (not cell_cfg.band.has_value()) {
     cell_cfg.band = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_f_ref_arfcn);
   }
-  if (not cell_cfg.sched_expert_cfg.policy_sched_expert_cfg.has_value()) {
-    cell_cfg.sched_expert_cfg.policy_sched_expert_cfg.emplace(time_qos_scheduler_expert_config{});
+  if (not cell_cfg.scheduler_cfg.policy_cfg.has_value()) {
+    cell_cfg.scheduler_cfg.policy_cfg.emplace(time_qos_scheduler_config{});
   }
 
   // If in TDD mode, and pattern was not set, generate a pattern DDDDDDXUUU.
@@ -2119,36 +2135,6 @@ static void derive_auto_params(du_high_unit_config& config)
     }
 
     derive_cell_auto_params(cell.cell);
-  }
-
-  // Auto derive NTN SIB19 scheduling info.
-  for (auto& cell : config.cells_cfg) {
-    if (cell.cell.ntn_cfg.has_value()) {
-      auto& sib_cfg = cell.cell.sib_cfg;
-      auto& ntn_cfg = cell.cell.ntn_cfg;
-      for (unsigned i = 0, ie = sib_cfg.si_sched_info.size(); i != ie; ++i) {
-        const auto& si_msg = sib_cfg.si_sched_info[i];
-        for (unsigned j = 0, je = si_msg.sib_mapping_info.size(); j != je; ++j) {
-          if (si_msg.sib_mapping_info[j] == 19) {
-            ntn_cfg->si_msg_idx          = i;
-            ntn_cfg->si_period_rf        = si_msg.si_period_rf;
-            ntn_cfg->si_window_len_slots = sib_cfg.si_window_len_slots;
-            ntn_cfg->si_window_position  = si_msg.si_window_position;
-          }
-        }
-      }
-      auto&                      cell_cfg = cell.cell;
-      expected<plmn_identity>    plmn     = plmn_identity::parse(cell_cfg.plmn);
-      expected<nr_cell_identity> nci      = nr_cell_identity::create(config.gnb_id, cell_cfg.sector_id.value());
-      if (not plmn.has_value()) {
-        report_error("Invalid PLMN: {}", cell_cfg.plmn);
-      }
-      if (not nci.has_value()) {
-        report_error("Invalid NR-NCI");
-      }
-      ntn_cfg->nr_cgi.plmn_id = plmn.value();
-      ntn_cfg->nr_cgi.nci     = nci.value();
-    }
   }
 }
 

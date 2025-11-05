@@ -26,6 +26,7 @@
 #include "apps/services/metrics/metrics_config.h"
 #include "apps/units/application_unit_commands.h"
 #include "srsran/du/du.h"
+#include "srsran/ntn/ntn_configuration_manager.h"
 #include <memory>
 #include <vector>
 
@@ -56,7 +57,8 @@ struct o_du_unit {
   std::vector<app_services::metrics_config> metrics;
   application_unit_commands                 commands;
   std::unique_ptr<e2_metric_connector_manager<e2_du_metrics_connector, e2_du_metrics_notifier, e2_du_metrics_interface>>
-      e2_metric_connectors;
+                                                      e2_metric_connectors;
+  std::unique_ptr<srs_ntn::ntn_configuration_manager> ntn_configurator_manager;
 };
 
 /// O-RAN DU unit dependencies.

@@ -22,7 +22,6 @@
 
 #include "uci_allocator_impl.h"
 #include "../support/csi_report_helpers.h"
-#include "../support/pucch/pucch_default_resource.h"
 #include "../support/sr_helper.h"
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
@@ -129,45 +128,6 @@ unsigned uci_allocator_impl::get_min_pdsch_to_ack_slot_distance(slot_point pdsch
   return min_k1;
 }
 
-std::optional<uci_allocation>
-uci_allocator_impl::alloc_uci_harq_ue_helper(cell_resource_allocator&     res_alloc,
-                                             rnti_t                       crnti,
-                                             const ue_cell_configuration& ue_cell_cfg,
-                                             unsigned                     k0,
-                                             unsigned                     k1,
-                                             const pdcch_dl_information*  fallback_dci_info)
-{
-  cell_slot_resource_allocator& slot_alloc = res_alloc[k0 + k1 + res_alloc.cfg.ntn_cs_koffset];
-
-  // [Implementation-defined] Skip allocation of UCI if any existing PUSCH grants; this to avoid that the fallback
-  // scheduler calling this function allocates a PUCCH that can potentially collide with an existing PUSCH.
-  if (not slot_alloc.result.ul.puschs.empty()) {
-    return {};
-  }
-
-  const bool fallback_mode = fallback_dci_info != nullptr;
-
-  std::optional<unsigned> pucch_res_indicator;
-  if (fallback_mode) {
-    const auto* pucch_harq_grant_it = std::find_if(
-        slot_alloc.result.ul.pucchs.begin(), slot_alloc.result.ul.pucchs.end(), [crnti](const pucch_info& pucch_grant) {
-          return pucch_grant.crnti == crnti and pucch_grant.uci_bits.harq_ack_nof_bits != 0U;
-        });
-
-    // Do not allocate PUCCH on common resources if there is any pre-allocated grant using PUCCH dedicated resource
-    // with HARQ-ACK bits, as we don't support multiplexing of bits across common and dedicated resources.
-    if (pucch_harq_grant_it == slot_alloc.result.ul.pucchs.end()) {
-      pucch_res_indicator = pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, crnti, k0, k1, *fallback_dci_info);
-    }
-  }
-  // PUCCH, Non-fallback mode.
-  else {
-    pucch_res_indicator = pucch_alloc.alloc_ded_pucch_harq_ack_ue(res_alloc, crnti, ue_cell_cfg, k0, k1);
-  }
-  return pucch_res_indicator.has_value() ? std::optional{uci_allocation{.pucch_res_indicator = pucch_res_indicator}}
-                                         : std::nullopt;
-}
-
 ////////////    Public functions    ////////////
 
 void uci_allocator_impl::slot_indication(slot_point sl_tx)
@@ -183,12 +143,11 @@ void uci_allocator_impl::stop()
   }
 }
 
-std::optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,
-                                                                    rnti_t                       crnti,
-                                                                    const ue_cell_configuration& ue_cell_cfg,
-                                                                    unsigned                     k0,
-                                                                    span<const uint8_t>          k1_list,
-                                                                    const pdcch_dl_information*  fallback_dci_info)
+std::optional<uci_allocation> uci_allocator_impl::alloc_harq_ack(cell_resource_allocator&     res_alloc,
+                                                                 rnti_t                       crnti,
+                                                                 const ue_cell_configuration& ue_cell_cfg,
+                                                                 unsigned                     k0,
+                                                                 span<const uint8_t>          k1_list)
 {
   // [Implementation-defined] We restrict the number of HARQ bits per PUCCH that are expected to carry CSI reporting to
   // 2 , until the PUCCH allocator supports more than this.
@@ -217,6 +176,15 @@ std::optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue(cell_resourc
     // Retrieve the scheduling results for slot = k0 + k1;
     cell_slot_resource_allocator& slot_alloc = res_alloc[k0 + k1_candidate + res_alloc.cfg.ntn_cs_koffset];
     const slot_point              uci_slot   = slot_alloc.slot;
+
+    // As per Section 9, TS 38.213:
+    // > A UE does not expect to detect a DCI format scheduling a PDSCH reception or a SPS PDSCH release and indicating
+    // a resource for a PUCCH transmission with corresponding HARQ-ACK information in a slot if the UE previously
+    // detects a DCI format scheduling a PUSCH transmission in the slot and if the UE multiplexes HARQ-ACK information
+    // in the PUSCH transmission.
+    if (not slot_alloc.result.ul.puschs.empty()) {
+      continue;
+    }
 
     // Check whether UCI slot is UL enabled.
     if (not cell_cfg.is_fully_ul_enabled(uci_slot)) {
@@ -260,25 +228,75 @@ std::optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue(cell_resourc
     }
 
     // Step 2: Try to allocate UCI HARQ ACK for UE.
-    std::optional<uci_allocation> uci_output =
-        alloc_uci_harq_ue_helper(res_alloc, crnti, ue_cell_cfg, k0, k1_candidate, fallback_dci_info);
+    auto d_pri = pucch_alloc.alloc_ded_harq_ack(res_alloc, crnti, ue_cell_cfg, k0, k1_candidate);
 
     // Register new UCI allocation in the respective grid slot entry and derive DAI.
-    if (uci_output.has_value()) {
+    if (d_pri.has_value()) {
       auto* uci = get_uci_alloc(slot_alloc.slot, crnti);
       if (uci == nullptr) {
         uci                             = &uci_alloc_grid[slot_alloc.slot.to_uint()].ucis.emplace_back();
         uci->rnti                       = crnti;
         uci->scheduled_dl_pdcch_counter = 0;
       }
-      uci_output.value().harq_bit_idx = uci->scheduled_dl_pdcch_counter;
+      uci_allocation res{.k1                  = k1_candidate,
+                         .harq_bit_idx        = static_cast<uint8_t>(uci->scheduled_dl_pdcch_counter),
+                         .pucch_res_indicator = d_pri};
       ++uci->scheduled_dl_pdcch_counter;
-      uci_output.value().k1 = k1_candidate;
-
-      return uci_output;
+      return res;
     }
   }
   return {};
+}
+
+void uci_allocator_impl::alloc_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
+                                              rnti_t                        crnti,
+                                              const ue_cell_configuration&  ue_cell_cfg)
+{
+  // Retrieve the scheduling results for slot = k0 + k1;
+  auto&          puschs         = slot_alloc.result.ul.puschs;
+  ul_sched_info* existing_pusch = std::find_if(
+      puschs.begin(), puschs.end(), [crnti](const ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == crnti; });
+
+  const bool has_pusch_grants =
+      not slot_alloc.result.ul.puschs.empty() and existing_pusch != slot_alloc.result.ul.puschs.end();
+
+  // If there is a PUSCH allocated for this UE, do not allocate any PUCCH SR grants.
+  if (has_pusch_grants) {
+    logger.debug("rnti={}: SR allocation skipped due to PUSCH grant allocated.", crnti);
+    return;
+  }
+
+  pucch_alloc.alloc_sr_opportunity(slot_alloc, crnti, ue_cell_cfg);
+}
+
+void uci_allocator_impl::alloc_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
+                                               rnti_t                        crnti,
+                                               const ue_cell_configuration&  ue_cell_cfg)
+{
+  auto&          puschs         = slot_alloc.result.ul.puschs;
+  ul_sched_info* existing_pusch = std::find_if(
+      puschs.begin(), puschs.end(), [crnti](const ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == crnti; });
+
+  const bool has_pusch_grants =
+      not slot_alloc.result.ul.puschs.empty() and existing_pusch != slot_alloc.result.ul.puschs.end();
+
+  // TODO: check if this case is possible. The first PUSCH that is allocated outside the RAR grant is will be allocated
+  //       after the UE objected gets created with the UE dedicated configuration; this means the CSI scheduler should
+  //       start allocating CSI grants before any PUSCH grants (except the PUSCH scheduled in the RAR).
+  if (has_pusch_grants) {
+    // If there is UCI grant allocated, allocate it.
+    srsran_assert(not existing_pusch->uci.has_value(), "UCI on PUSCH grant for CSI cannot be already allocated");
+    existing_pusch->uci.emplace();
+    existing_pusch->uci.value().alpha = ue_cell_cfg.init_bwp().ul_ded->pusch_cfg.value().uci_cfg.value().scaling;
+
+    add_csi_to_uci_on_pusch(existing_pusch->uci.value().csi.emplace(uci_info::csi_info()), ue_cell_cfg);
+    return;
+  }
+
+  // Else, allocate the CSI on the PUCCH.
+  const auto& csi_report_cfg = create_csi_report_configuration(*ue_cell_cfg.csi_meas_cfg());
+  pucch_alloc.alloc_csi_opportunity(
+      slot_alloc, crnti, ue_cell_cfg, get_csi_report_pucch_size(csi_report_cfg).part1_size.value());
 }
 
 void uci_allocator_impl::multiplex_uci_on_pusch(ul_sched_info&                pusch_grant,
@@ -311,57 +329,6 @@ void uci_allocator_impl::multiplex_uci_on_pusch(ul_sched_info&                pu
   }
 }
 
-void uci_allocator_impl::uci_allocate_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
-                                                     rnti_t                        crnti,
-                                                     const ue_cell_configuration&  ue_cell_cfg)
-{
-  // Retrieve the scheduling results for slot = k0 + k1;
-  auto&          puschs         = slot_alloc.result.ul.puschs;
-  ul_sched_info* existing_pusch = std::find_if(
-      puschs.begin(), puschs.end(), [crnti](const ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == crnti; });
-
-  const bool has_pusch_grants =
-      not slot_alloc.result.ul.puschs.empty() and existing_pusch != slot_alloc.result.ul.puschs.end();
-
-  // If there is a PUSCH allocated for this UE, do not allocate any PUCCH SR grants.
-  if (has_pusch_grants) {
-    logger.debug("rnti={}: SR allocation skipped due to PUSCH grant allocated.", crnti);
-    return;
-  }
-
-  pucch_alloc.pucch_allocate_sr_opportunity(slot_alloc, crnti, ue_cell_cfg);
-}
-
-void uci_allocator_impl::uci_allocate_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
-                                                      rnti_t                        crnti,
-                                                      const ue_cell_configuration&  ue_cell_cfg)
-{
-  auto&          puschs         = slot_alloc.result.ul.puschs;
-  ul_sched_info* existing_pusch = std::find_if(
-      puschs.begin(), puschs.end(), [crnti](const ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == crnti; });
-
-  const bool has_pusch_grants =
-      not slot_alloc.result.ul.puschs.empty() and existing_pusch != slot_alloc.result.ul.puschs.end();
-
-  // TODO: check if this case is possible. The first PUSCH that is allocated outside the RAR grant is will be allocated
-  //       after the UE objected gets created with the UE dedicated configuration; this means the CSI scheduler should
-  //       start allocating CSI grants before any PUSCH grants (except the PUSCH scheduled in the RAR).
-  if (has_pusch_grants) {
-    // If there is UCI grant allocated, allocate it.
-    srsran_assert(not existing_pusch->uci.has_value(), "UCI on PUSCH grant for CSI cannot be already allocated");
-    existing_pusch->uci.emplace();
-    existing_pusch->uci.value().alpha = ue_cell_cfg.init_bwp().ul_ded->pusch_cfg.value().uci_cfg.value().scaling;
-
-    add_csi_to_uci_on_pusch(existing_pusch->uci.value().csi.emplace(uci_info::csi_info()), ue_cell_cfg);
-    return;
-  }
-
-  // Else, allocate the CSI on the PUCCH.
-  const auto& csi_report_cfg = create_csi_report_configuration(*ue_cell_cfg.csi_meas_cfg());
-  pucch_alloc.pucch_allocate_csi_opportunity(
-      slot_alloc, crnti, ue_cell_cfg, get_csi_report_pucch_size(csi_report_cfg).part1_size.value());
-}
-
 uint8_t uci_allocator_impl::get_scheduled_pdsch_counter_in_ue_uci(slot_point uci_slot, rnti_t crnti)
 {
   auto* uci = get_uci_alloc(uci_slot, crnti);
@@ -371,7 +338,7 @@ uint8_t uci_allocator_impl::get_scheduled_pdsch_counter_in_ue_uci(slot_point uci
   return uci->scheduled_dl_pdcch_counter;
 }
 
-bool uci_allocator_impl::has_uci_harq_on_common_pucch_res(rnti_t rnti, slot_point sl_tx)
+bool uci_allocator_impl::has_harq_ack_on_common_pucch_res(rnti_t rnti, slot_point sl_tx)
 {
   return pucch_alloc.has_common_pucch_grant(rnti, sl_tx);
 }

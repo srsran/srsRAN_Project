@@ -1991,7 +1991,7 @@ basic relwithdeb:
   variables:
     SRS_TARGET: srscu srsdu gnb
     OS: ubuntu-24.04
-    COMPILER: gcc
+    COMPILER: clang
     CMAKE_BUILD_TYPE: RelWithDebInfo
     ASSERT_LEVEL: PARANOID
     TEST_MODE: none

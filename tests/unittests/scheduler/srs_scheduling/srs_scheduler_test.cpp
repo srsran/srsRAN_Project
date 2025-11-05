@@ -124,7 +124,8 @@ create_sched_ue_creation_request_for_srs_cfg(srs_periodicity                    
   srsran_assert(srs_bw_cfg.has_value(), "C_SRS is required for this unittest");
   srs_res.freq_domain_shift = (nof_ul_crbs - srs_bw_cfg->m_srs) / 2U;
 
-  srs_res.sequence_id = 0U;
+  // Select a non-zero sequence identifier that requires more than 8 bits.
+  srs_res.sequence_id = 666U;
 
   return ue_req;
 }

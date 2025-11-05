@@ -29,6 +29,7 @@
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_handover.h"
 #include "srsran/ngap/ngap_types.h"
+#include "srsran/ran/cause/ngap_cause.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -229,7 +230,9 @@ ngap_message generate_valid_paging_message();
 ngap_message generate_invalid_paging_message();
 
 /// \brief Generate an Error Indication message.
-ngap_message generate_error_indication_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
+ngap_message generate_error_indication_message(amf_ue_id_t  amf_ue_id,
+                                               ran_ue_id_t  ran_ue_id,
+                                               ngap_cause_t cause = ngap_cause_radio_network_t::unknown_pdu_session_id);
 
 /// \brief Generate a valid dummy Handover Request message.
 ngap_message generate_valid_handover_request(amf_ue_id_t amf_ue_id);

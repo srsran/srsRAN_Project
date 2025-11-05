@@ -404,19 +404,22 @@ void cell_metrics_handler::report_metrics()
 {
   auto next_report = notifier.get_builder();
 
-  const unsigned                  report_period_slots = last_slot_tx - start_report_slot_tx;
-  const std::chrono::milliseconds report_period{report_period_slots / last_slot_tx.nof_slots_per_subframe()};
+  const std::chrono::milliseconds report_period{data.nof_slots / last_slot_tx.nof_slots_per_subframe()};
   for (ue_metric_context& ue : ues) {
     // Compute statistics of the UE metrics and push the result to the report.
     next_report->ue_metrics.push_back(ue.compute_report(report_period, nof_slots_per_sf));
   }
   next_report->events.swap(pending_events);
 
-  next_report->pci                       = cell_cfg.pci;
-  next_report->slot                      = start_report_slot_tx;
-  next_report->nof_slots                 = report_period_slots;
-  next_report->nof_error_indications     = data.error_indication_counter;
-  next_report->average_decision_latency  = data.decision_latency_sum / next_report->nof_slots;
+  next_report->pci = cell_cfg.pci;
+  // The window of slots for a report should be [start, stop) = [last_slot_tx + 1 - period, last_slot_tx + 1).
+  // e.g. if the report period is 10, and we are at slot 0.9 (the last slot of the report), then the start slot is
+  // 0.9 + 0.1 - 1.0 == 0.
+  next_report->slot                  = last_slot_tx + 1 - data.nof_slots;
+  next_report->nof_slots             = data.nof_slots;
+  next_report->nof_error_indications = data.error_indication_counter;
+  next_report->average_decision_latency =
+      next_report->nof_slots > 0 ? data.decision_latency_sum / next_report->nof_slots : std::chrono::microseconds{0};
   next_report->max_decision_latency      = data.max_decision_latency;
   next_report->max_decision_latency_slot = data.max_decision_latency_slot;
   next_report->latency_histogram         = data.decision_latency_hist;
@@ -431,14 +434,15 @@ void cell_metrics_handler::report_metrics()
   next_report->nof_msg3_ok               = data.nof_msg3_ok;
   next_report->nof_msg3_nok              = data.nof_msg3_nok;
   next_report->avg_prach_delay_slots =
-      data.nof_prach_preambles
+      data.nof_prach_preambles > 0
           ? std::optional{static_cast<float>(data.sum_prach_delay_slots) / static_cast<float>(data.nof_prach_preambles)}
           : std::nullopt;
   next_report->nof_failed_pdsch_allocs_late_harqs = data.nof_failed_pdsch_allocs_late_harqs;
   next_report->nof_failed_pusch_allocs_late_harqs = data.nof_failed_pusch_allocs_late_harqs;
   next_report->nof_filtered_events                = data.filtered_events_counter;
   // Note: PUCCH is only allocated on full UL slots.
-  next_report->pucch_tot_rb_usage_avg = static_cast<float>(data.pucch_rbs_used) / data.nof_ul_slots;
+  next_report->pucch_tot_rb_usage_avg =
+      data.nof_ul_slots > 0 ? static_cast<float>(data.pucch_rbs_used) / data.nof_ul_slots : 0;
   for (unsigned rb_count : ul_prbs_used_per_tdd_slot_idx) {
     next_report->pusch_prbs_used_per_tdd_slot_idx.push_back(rb_count);
   }
@@ -447,8 +451,7 @@ void cell_metrics_handler::report_metrics()
   }
 
   // Reset cell-wide metric counters.
-  data                 = {};
-  start_report_slot_tx = last_slot_tx;
+  data = {};
 
   // Clear the PRB vectors for the next report.
   for (unsigned& rb_count : ul_prbs_used_per_tdd_slot_idx) {
@@ -463,12 +466,16 @@ void cell_metrics_handler::report_metrics()
   next_report.reset();
 }
 
-void cell_metrics_handler::handle_slot_result(const sched_result&       slot_result,
+void cell_metrics_handler::handle_slot_result(slot_point                sl_tx,
+                                              const sched_result&       slot_result,
                                               std::chrono::microseconds slot_decision_latency)
 {
-  if (not enabled()) {
-    return;
+  if (SRSRAN_UNLIKELY(not last_slot_tx.valid())) {
+    data.nof_slots = 1;
+  } else {
+    data.nof_slots += sl_tx - last_slot_tx;
   }
+  last_slot_tx = sl_tx;
 
   data.nof_ue_pdsch_grants += slot_result.dl.ue_grants.size();
   for (const dl_msg_alloc& dl_grant : slot_result.dl.ue_grants) {
@@ -493,7 +500,7 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
       grant_prbs = (dl_grant.pdsch_cfg.rbs.type1().length());
     }
     u.data.tot_dl_prbs_used += grant_prbs;
-    if (dl_prbs_used_per_tdd_slot_idx.size()) {
+    if (not dl_prbs_used_per_tdd_slot_idx.empty()) {
       dl_prbs_used_per_tdd_slot_idx[last_slot_tx.count() % dl_prbs_used_per_tdd_slot_idx.size()] += grant_prbs;
     }
     u.last_dl_olla = dl_grant.context.olla_offset;
@@ -552,8 +559,8 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
   data.pucch_rbs_used += pucch_prbs.count();
 
   // Count DL and UL slots.
-  data.nof_dl_slots += (slot_result.dl.nof_dl_symbols > 0);
-  data.nof_ul_slots += (slot_result.ul.nof_ul_symbols == 14); // Note: PUSCH in special slot not supported.;
+  data.nof_dl_slots += slot_result.dl.nof_dl_symbols > 0;
+  data.nof_ul_slots += slot_result.ul.nof_ul_symbols > 0;
 
   // Process latency.
   data.decision_latency_sum += slot_decision_latency;
@@ -577,12 +584,8 @@ void cell_metrics_handler::push_result(slot_point                sl_tx,
   if (not enabled()) {
     return;
   }
-  if (SRSRAN_UNLIKELY(not last_slot_tx.valid())) {
-    start_report_slot_tx = sl_tx - 1;
-  }
-  last_slot_tx = sl_tx;
 
-  handle_slot_result(slot_result, slot_decision_latency);
+  handle_slot_result(sl_tx, slot_result, slot_decision_latency);
 
   if (notifier.is_sched_report_required(sl_tx)) {
     // Prepare report and forward it to the notifier.
@@ -594,6 +597,7 @@ void cell_metrics_handler::handle_cell_deactivation()
 {
   // Commit whatever is pending for the report.
   report_metrics();
+  last_slot_tx = {};
 }
 
 scheduler_ue_metrics

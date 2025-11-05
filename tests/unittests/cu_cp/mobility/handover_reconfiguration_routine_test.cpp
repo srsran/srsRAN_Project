@@ -184,6 +184,8 @@ public:
     logger.info("Received a new request to cancel RRC UE handover reconfiguration transaction");
   }
 
+  void cancel_all_transactions() override { logger.info("Cancelling all ongoing RRC UE transactions"); }
+
   // RRC UE Setup proc notifier
   void on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg) override {}
   void on_ue_release_required(const ngap_cause_t& cause) override {}

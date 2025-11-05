@@ -158,9 +158,7 @@ public:
 
   public:
     scoped_frame_buffer() : buffer(nullptr, buffer_deleter{nullptr}) {}
-    explicit scoped_frame_buffer(unique_frame_buffer* ptr, buffer_deleter&& deleter) : buffer(ptr, std::move(deleter))
-    {
-    }
+    scoped_frame_buffer(unique_frame_buffer* ptr, buffer_deleter deleter) : buffer(ptr, deleter) {}
 
     /// These two methods simplify access to the frame buffer directly.
     frame_buffer* operator->() const noexcept { return (*buffer).get(); }
@@ -407,7 +405,7 @@ public:
                                   static_vector<scoped_frame_buffer, MAX_TX_BURST_SIZE>& burst)
   {
     auto& p_entry = get_pool_entry(symbol_point.get_slot(), symbol_point.get_symbol_index());
-    return p_entry.enqueue_pending(burst);
+    p_entry.enqueue_pending(burst);
   }
 
   /// Enqueues buffers pending in the pools allocated for the given interval of symbols.
@@ -498,7 +496,7 @@ public:
   }
 
   /// Returns number of slots the pool can accommodate.
-  size_t pool_size_in_slots() const { return NUM_SLOTS; }
+  static size_t pool_size_in_slots() { return NUM_SLOTS; }
 
 private:
   srslog::basic_logger&                           logger;

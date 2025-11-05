@@ -21,7 +21,8 @@
  */
 
 #include "srsran/support/executors/unique_thread.h"
-#include "srsran/adt/mpmc_queue.h"
+#include "srsran/adt/scope_exit.h"
+#include "srsran/adt/static_vector.h"
 #include "fmt/std.h"
 #include <cstdio>
 #include <mutex>
@@ -150,6 +151,9 @@ public:
   /// Called on every thread creation.
   void on_thread_creation()
   {
+    // Pre-initialize thread_local variable storing the thread name.
+    this_thread_name();
+
     // Note: we use index-based loop because list of observers may increase (never decrease) throughout the loop.
     std::unique_lock<std::mutex> lock(mutex);
     for (unsigned i = 0; i < observers.size(); ++i) {
@@ -181,19 +185,14 @@ private:
 /// Class maintaining the unique thread indexes.
 class unique_thread_index_manager
 {
-  /// Queue type used for storing identifiers.
-  using queue_type =
-      concurrent_queue<unsigned, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>;
-
   /// Maximum number of threads supported by the application.
   static constexpr unsigned MAX_NOF_THREADS = 256;
 
 public:
-  unique_thread_index_manager() : free_list(MAX_NOF_THREADS)
+  unique_thread_index_manager()
   {
     for (unsigned i = 0; i != MAX_NOF_THREADS; ++i) {
-      bool discard = free_list.try_push(i);
-      report_error_if_not(discard, "Failed to fill free list of unique thread identifiers");
+      free_list.push_back(i);
     }
   }
 
@@ -203,28 +202,39 @@ public:
   /// Get free identifier.
   unsigned get_free_identifier()
   {
-    unsigned idx;
-    report_error_if_not(free_list.try_pop(idx), "Failed to get a free unique thread identifier");
+    std::unique_lock<std::mutex> lock(mutex);
+
+    report_error_if_not(!free_list.empty(), "Failed to get a free unique thread identifier");
+    unsigned idx = free_list.back();
+    free_list.pop_back();
+
     return idx;
   }
 
   /// Release used identifier.
   void release_identifier(unsigned id)
   {
-    srsran_sanity_check(id < MAX_NOF_THREADS, "Invalid unique thread identifier being released");
+    std::unique_lock<std::mutex> lock(mutex);
 
-    bool discard = free_list.try_push(id);
-    report_error_if_not(discard, "Failed to release used unique thread identifier");
+    srsran_sanity_check(id < MAX_NOF_THREADS, "Invalid unique thread identifier being released");
+    free_list.push_back(id);
   }
 
 private:
-  queue_type free_list;
+  std::mutex                               mutex;
+  static_vector<unsigned, MAX_NOF_THREADS> free_list;
 };
 
 } // namespace
 
-static unique_thread_index_manager thread_index_manager;
-thread_local unsigned              unique_thread_index;
+static unique_thread_index_manager& get_thread_index_manager()
+{
+  static unique_thread_index_manager thread_index_manager;
+  return thread_index_manager;
+}
+
+/// Unique index associated with each thread.
+thread_local unsigned unique_thread_index;
 
 /// Global unique list of thread lifetime observers.
 static unique_thread_observer_list thread_observers;
@@ -292,7 +302,9 @@ std::thread unique_thread::make_thread(const std::string&               name,
 #endif
 
     // Initialize unique thread index.
-    unique_thread_index = thread_index_manager.get_free_identifier();
+    unique_thread_index = get_thread_index_manager().get_free_identifier();
+    auto on_thread_destruction =
+        make_scope_exit([]() { get_thread_index_manager().release_identifier(unique_thread_index); });
 
     // Trigger observers.
     thread_observers.on_thread_creation();
@@ -302,9 +314,6 @@ std::thread unique_thread::make_thread(const std::string&               name,
 
     // Trigger observers.
     thread_observers.on_thread_destruction();
-
-    // Release unique thread identifier.
-    thread_index_manager.release_identifier(get_thread_index());
   });
 }
 

@@ -21,29 +21,72 @@
  */
 
 #include "prach_scheduler.h"
+#include "srsran/ran/band_helper.h"
 #include "srsran/ran/frame_types.h"
 #include "srsran/ran/prach/prach_cyclic_shifts.h"
 #include "srsran/ran/prach/prach_frequency_mapping.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/compiler.h"
-#include "srsran/support/error_handling.h"
 
 using namespace srsran;
 
 prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
-  cell_cfg(cfg_),
-  logger(srslog::fetch_basic_logger("SCHED")),
-  prach_cfg(prach_configuration_get(to_frequency_range(cell_cfg.ssb_case),
-                                    cell_cfg.paired_spectrum ? duplex_mode::FDD : duplex_mode::TDD,
-                                    rach_cfg_common().rach_cfg_generic.prach_config_index))
+  cell_cfg(cfg_), logger(srslog::fetch_basic_logger("SCHED"))
 {
-  // With SCS 15kHz and 30kHz, only normal CP is supported.
-  static const unsigned nof_symbols_per_slot = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+  // Obtain the PRACH configuration.
+  prach_configuration prach_cfg =
+      prach_configuration_get(to_frequency_range(cell_cfg.ssb_case),
+                              cell_cfg.paired_spectrum ? duplex_mode::FDD : duplex_mode::TDD,
+                              rach_cfg_common().rach_cfg_generic.prach_config_index);
 
-  // Convert list of PRACH subframe occasions to bitmap.
-  for (const unsigned pos : prach_cfg.slots) {
-    prach_slot_occasion_bitmap.set(pos, true);
+  // Determine if it is a long preamble.
+  use_long_preamble = is_long_preamble(prach_cfg.format);
+
+  // Determine if the cell is working in FR2.
+  const bool is_fr2 = band_helper::get_freq_range(cell_cfg.band) == frequency_range::FR2;
+
+  // With SCS 15kHz and 30kHz, only normal CP is supported.
+  static constexpr unsigned nof_symbols_per_slot = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+
+  // Determine reference subcarrier spacing for slot numerology as per TS 38.211 Section 6.3.3.2.
+  const subcarrier_spacing scs_ref = is_fr2 ? subcarrier_spacing::kHz60 : subcarrier_spacing::kHz15;
+
+  // Calculate ratio between the common SCS and the reference SCS.
+  const unsigned scs_ratio =
+      pow2(to_numerology_value(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs) - to_numerology_value(scs_ref));
+
+  // Convert list of the SFN occasions into the SFN occasions bitset.
+  for (unsigned y : prach_cfg.y) {
+    prach_sfn_occasions.set(y, true);
+  }
+  prach_sfn_period = prach_cfg.x;
+
+  // Convert the list of PRACH slots in the reference subcarrier spacing occasions to a set in the common subcarrier
+  // spacing slots.
+  for (const unsigned ref_slot : prach_cfg.slots) {
+    // The slot numbering must be converted from reference SCS to common SCS.
+    unsigned common_scs_slot = scs_ratio * ref_slot;
+    if (use_long_preamble) {
+      // In the case of long preamble, the starting position of the PRACH is referenced to SCS 15 kHz. It is converted
+      // to common SCS since it could fall into a different slot.
+      const unsigned common_starting_symbol      = scs_ratio * prach_cfg.starting_symbol;
+      const unsigned slot_offset_starting_symbol = common_starting_symbol / nof_symbols_per_slot;
+      common_scs_slot += slot_offset_starting_symbol;
+      // In the case of long preamble, the PRACH occasion might span multiple subframes or slots. For convenience, only
+      // the starting slot is stored in the bitset.
+      prach_slot_occasions.set(common_scs_slot, true);
+    } else {
+      // Adjust the slot according to TS 38.211 Section 5.3.2.
+      if (scs_ratio == 1) {
+        prach_slot_occasions.set(common_scs_slot, true);
+      } else if (scs_ratio == 2 && prach_cfg.nof_prach_slots_within_subframe == 1) {
+        prach_slot_occasions.set(common_scs_slot + 1, true);
+      } else {
+        prach_slot_occasions.set(common_scs_slot, true);
+        prach_slot_occasions.set(common_scs_slot + 1, true);
+      }
+    }
   }
 
   prach_symbols_slots_duration prach_duration_info =
@@ -51,7 +94,7 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
 
   // Derive PRACH duration information.
   // The information we need are not related to whether it is the last PRACH occasion.
-  const bool                       is_last_prach_occasion = false;
+  constexpr bool                   is_last_prach_occasion = false;
   const prach_preamble_information info =
       is_long_preamble(prach_cfg.format)
           ? get_prach_preamble_long_info(prach_cfg.format)
@@ -62,9 +105,11 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
   start_slot_pusch_scs = prach_duration_info.start_slot_pusch_scs;
   prach_length_slots   = prach_duration_info.prach_length_slots;
 
-  // This is a safety margin that prevents PUSCH REs to be decoded by the PRACH decoder with short PRACH formats.
+  // This is a safety margin that prevents PUSCH REs to be decoded by the PRACH decoder with short PRACH formats; we
+  // apply it to both side of the PRACH RBs, i.e., in both [0, prb_start) and [prb_stop, crbs_stop) intervals.
   // TODO: remove them when the PHY is supports short PRACH with adjacent PUCCH/PUSCH.
-  const unsigned prach_to_pusch_guardband = is_short_preamble(prach_cfg.format) ? 5U : 0U;
+  const unsigned prach_to_pusch_guardband =
+      is_short_preamble(prach_cfg.format) ? cell_cfg.expert_cfg.ra.nof_prach_guardbands_rbs : 0U;
 
   for (unsigned id_fd_ra = 0; id_fd_ra != rach_cfg_common().rach_cfg_generic.msg1_fdm; ++id_fd_ra) {
     cached_prach_occasion& cached_prach = cached_prachs.emplace_back();
@@ -72,17 +117,15 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
     const unsigned prach_nof_prbs =
         prach_frequency_mapping_get(info.scs, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs).nof_rb_ra;
     // This is the start of the PRBs dedicated to PRACH.
-    const uint8_t prb_start = rach_cfg_common().rach_cfg_generic.msg1_frequency_start + id_fd_ra * prach_nof_prbs;
-    // NOTE: prach_to_pusch_guardband is added to every PRACH occasion, but only at the end of it. We don't consider the
-    // prach_to_pusch_guardband to compute the next PRACH occasion starting_PRB; the purpose of this guardband is to
-    // avoid overlapping with PUSCH (placed on the PRBs with higher index compared to the PRACH occasion) when we fill
-    // the resource grid.
-    const prb_interval prach_prbs{prb_start, prb_start + prach_nof_prbs + prach_to_pusch_guardband};
+    const unsigned     prb_start = rach_cfg_common().rach_cfg_generic.msg1_frequency_start + id_fd_ra * prach_nof_prbs;
+    const prb_interval prach_prbs{prb_start - std::min(prach_to_pusch_guardband, prb_start),
+                                  std::min(prb_start + prach_nof_prbs + prach_to_pusch_guardband,
+                                           cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length())};
     const crb_interval crbs = prb_to_crb(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, prach_prbs);
 
     if (is_long_preamble(prach_cfg.format)) {
       // If the PRACH preamble is longer than 1 slot, then allocate a grant for each slot that include the preamble.
-      for (unsigned prach_slot_idx = 0; prach_slot_idx < prach_length_slots; ++prach_slot_idx) {
+      for (unsigned prach_slot_idx = 0; prach_slot_idx != prach_length_slots; ++prach_slot_idx) {
         // For the first slot, use the start_symbol_pusch_scs; in any other case, the preamble starts from the initial
         // symbol. For the last slot, compute the final symbol; in any other case, the preamble ends at the last slot's
         // symbol.
@@ -101,7 +144,7 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
                                                 prach_duration_info.nof_symbols};
       // If the burst of PRACH opportunities extends over 1 slot, then allocate a grant for each slot that include these
       // opportunities (1 or 2 slots).
-      for (unsigned prach_slot_idx = 0; prach_slot_idx < prach_length_slots; ++prach_slot_idx) {
+      for (unsigned prach_slot_idx = 0; prach_slot_idx != prach_length_slots; ++prach_slot_idx) {
         // For the short PRACH formats, both grants (if more than 1) occupy the same symbols within the slot.
         cached_prach.grant_list.emplace_back(
             grant_info{cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, prach_symbols, crbs});
@@ -152,45 +195,44 @@ void prach_scheduler::stop()
 void prach_scheduler::allocate_slot_prach_pdus(cell_resource_allocator& res_grid, slot_point sl)
 {
   // If any of the slots over which the PRACH preamble should be allocated isn't an UL slot, return.
-  for (unsigned sl_idx = 0; sl_idx < prach_length_slots; ++sl_idx) {
+  for (unsigned sl_idx = 0; sl_idx != prach_length_slots; ++sl_idx) {
     if (not cell_cfg.is_fully_ul_enabled(sl + sl_idx)) {
       return;
     }
   }
 
-  bool prach_occasion_sfn = std::any_of(
-      prach_cfg.y.begin(), prach_cfg.y.end(), [this, sl](uint8_t y) { return sl.sfn() % prach_cfg.x != y; });
-  if (prach_occasion_sfn) {
-    // PRACH is not enabled in this SFN.
+  // Check if the current SFN is a valid PRACH occasion.
+  const bool prach_occasion_sfn = prach_sfn_occasions.test(sl.sfn() % prach_sfn_period);
+  if (!prach_occasion_sfn) {
     return;
   }
-  if (sl.subframe_slot_index() != start_slot_pusch_scs) {
-    // PRACH does not start in this slot.
+
+  // Skip if using short preamble and the slot is not enabled for PRACH.
+  if (!use_long_preamble && !prach_slot_occasions.test(sl.slot_index())) {
     return;
   }
-  if (not prach_slot_occasion_bitmap.test(sl.subframe_index())) {
-    // PRACH is not enabled in this subframe.
+
+  // Skip if the slot is not enabled for PRACH. In the case of long preamble, this will skip non-starting slots. For the
+  // short preamble, this will skip any slot which does not contain any PRACH occasions.
+  if (!prach_slot_occasions.test(sl.slot_index())) {
     return;
   }
 
   for (const cached_prach_occasion& cached_prach : cached_prachs) {
-    if (is_long_preamble(prach_cfg.format)) {
+    if (use_long_preamble) {
       // Reserve RBs and symbols of the PRACH occasion in the resource grid for each grant (over multiple slots) of the
       // preamble.
-      for (unsigned sl_idx = 0; sl_idx < prach_length_slots; ++sl_idx) {
+      for (unsigned sl_idx = 0; sl_idx != prach_length_slots; ++sl_idx) {
         res_grid[sl + sl_idx].ul_res_grid.fill(cached_prach.grant_list[sl_idx]);
       }
-
       // Add PRACH occasion to scheduler slot output (one PRACH PDU per preamble).
       res_grid[sl].result.ul.prachs.push_back(cached_prach.occasion);
     } else {
       // Reserve RBs and symbols of the PRACH occasion in the resource grid for each grant (over 1 or 2 slots) of the
       // preamble and add the PRACH occasions to scheduler slot output (1 or 2 PRACH PDU per burst of PRACH
       // opportunities, depending on whether this burst repeats over 1 or 2 slots).
-      for (unsigned sl_idx = 0; sl_idx < prach_length_slots; ++sl_idx) {
-        res_grid[sl + sl_idx].ul_res_grid.fill(cached_prach.grant_list[sl_idx]);
-        res_grid[sl + sl_idx].result.ul.prachs.push_back(cached_prach.occasion);
-      }
+      res_grid[sl].ul_res_grid.fill(cached_prach.grant_list[sl.slot_index() % prach_length_slots]);
+      res_grid[sl].result.ul.prachs.push_back(cached_prach.occasion);
     }
   }
 }

@@ -63,7 +63,7 @@ sched_cell_configuration_request_message srsran::sched_config_helper::make_defau
   default_pucch_builder_params.f0_or_f1_params.emplace<pucch_f1_params>();
   default_pucch_builder_params.f2_or_f3_or_f4_params.emplace<pucch_f2_params>();
 
-  sched_req.pucch_guardbands = config_helpers::build_pucch_guardbands_list(
+  sched_req.ded_pucch_resources = config_helpers::build_pucch_resource_list(
       default_pucch_builder_params, sched_req.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
 
   if (params.csi_rs_enabled) {

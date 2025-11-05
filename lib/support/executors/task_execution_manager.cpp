@@ -298,7 +298,8 @@ struct priority_worker_pool_context final : public common_task_execution_context
     for (unsigned i = 0; i != params.queues.size(); ++i) {
       report_error_if_not(params.queues[i].policy != concurrent_queue_policy::lockfree_mpmc or
                               params.queues[i].policy != concurrent_queue_policy::locking_mpmc or
-                              params.queues[i].policy != concurrent_queue_policy::moodycamel_lockfree_mpmc,
+                              params.queues[i].policy != concurrent_queue_policy::moodycamel_lockfree_mpmc or
+                              params.queues[i].policy != concurrent_queue_policy::moodycamel_lockfree_bounded_mpmc,
                           "Only MPMC queues are supported for worker pools");
     }
   }

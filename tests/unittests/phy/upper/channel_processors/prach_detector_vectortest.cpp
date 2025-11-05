@@ -102,15 +102,12 @@ std::unique_ptr<prach_detector_validator> PrachDetectorFixture::validator = null
 
 TEST_P(PrachDetectorFixture, FromVector)
 {
-  const PrachDetectorParams&           params          = GetParam();
-  const prach_detector::configuration& config          = params.context.config;
-  const prach_detection_result&        expected_result = params.context.result;
-  const phy_time_unit&                 true_delay      = params.context.true_delay;
-  auto                                 sequence_data   = params.symbols.read();
+  const PrachDetectorParams& params = GetParam();
 
   // Make sure configuration is valid.
   // todo(david): this should be an assertion!
   // ASSERT_TRUE(validator->is_valid(config));
+  const prach_detector::configuration& config = params.context.config;
   if (!validator->is_valid(config)) {
     GTEST_SKIP() << "Unsupported PRACH configuration.";
   }
@@ -127,6 +124,7 @@ TEST_P(PrachDetectorFixture, FromVector)
   unsigned nof_symbols = preamble_info.nof_symbols;
 
   // Get frequency domain data.
+  auto                sequence_data = params.symbols.read();
   prach_buffer_tensor sequence(sequence_data);
   ASSERT_EQ(sequence.get_sequence_length(), preamble_info.sequence_length);
   ASSERT_EQ(sequence.get_max_nof_symbols(), nof_symbols);
@@ -145,43 +143,47 @@ TEST_P(PrachDetectorFixture, FromVector)
     time_error_tolerance = phy_time_unit::from_seconds(0.26e-6F);
   }
 
-  if (is_stable_conf(config)) {
-    // Assert the required preamble was found. The detector thresholds are tweaked to have a small FA probability when
-    // there is no signal. However, when there is signal, spurious false detections may appear, especially when the SNR
-    // is high.
-    auto* it = std::find_if(result.preambles.begin(),
-                            result.preambles.end(),
-                            [&expected_result](const prach_detection_result::preamble_indication& a) {
-                              return (a.preamble_index == expected_result.preambles.front().preamble_index);
-                            });
-
-    ASSERT_NE(it, result.preambles.end());
-
-    // Verify the preamble index.
-    const prach_detection_result::preamble_indication& preamble_indication = *it;
-    ASSERT_EQ(expected_result.preambles.front().preamble_index, preamble_indication.preamble_index);
-    // Assert the estimated time advance with respect to true one - should be less than time_error_tolerance.
-    ASSERT_NEAR(
-        preamble_indication.time_advance.to_seconds(), true_delay.to_seconds(), time_error_tolerance.to_seconds());
-
-    // Assert the estimated time advance with respect to the expected one - we allow at most a difference equal to the
-    // time resolution of the detection algorithm.
-    ASSERT_NEAR(expected_result.preambles.front().time_advance.to_seconds(),
-                preamble_indication.time_advance.to_seconds(),
-                result.time_resolution.to_seconds());
-
-    // Allow a small difference between expected and measured detection metric.
-    float error_factor = (config.zero_correlation_zone < 11) ? 2.0F : 2.2F;
-    ASSERT_NEAR(expected_result.preambles.front().detection_metric,
-                preamble_indication.detection_metric,
-                error_factor * std::abs(preamble_indication.detection_metric) / 100);
-
-    // Allow a 1% difference between expected and measured RSSI.
-    ASSERT_NEAR(expected_result.rssi_dB, result.rssi_dB, std::abs(result.rssi_dB) / 100);
-
-    // Measured preamble power should be around 0 dB: allow two dB tolerance.
-    ASSERT_NEAR(result.preambles.front().preamble_power_dB, 0.0F, 2.0F);
+  if (!is_stable_conf(config)) {
+    return;
   }
+
+  // Assert the required preamble was found. The detector thresholds are tweaked to have a small FA probability when
+  // there is no signal. However, when there is signal, spurious false detections may appear, especially when the SNR
+  // is high.
+  const prach_detection_result& expected_result = params.context.result;
+  auto*                         it              = std::find_if(result.preambles.begin(),
+                          result.preambles.end(),
+                          [&expected_result](const prach_detection_result::preamble_indication& a) {
+                            return (a.preamble_index == expected_result.preambles.front().preamble_index);
+                          });
+
+  ASSERT_NE(it, result.preambles.end());
+
+  // Verify the preamble index.
+  const prach_detection_result::preamble_indication& preamble_indication = *it;
+  ASSERT_EQ(expected_result.preambles.front().preamble_index, preamble_indication.preamble_index);
+  // Assert the estimated time advance with respect to true one - should be less than time_error_tolerance.
+  const phy_time_unit& true_delay = params.context.true_delay;
+  ASSERT_NEAR(
+      preamble_indication.time_advance.to_seconds(), true_delay.to_seconds(), time_error_tolerance.to_seconds());
+
+  // Assert the estimated time advance with respect to the expected one - we allow at most a difference equal to the
+  // time resolution of the detection algorithm.
+  ASSERT_NEAR(expected_result.preambles.front().time_advance.to_seconds(),
+              preamble_indication.time_advance.to_seconds(),
+              result.time_resolution.to_seconds());
+
+  // Allow a small difference between expected and measured detection metric.
+  float error_factor = (config.zero_correlation_zone < 11) ? 2.0F : 2.2F;
+  ASSERT_NEAR(expected_result.preambles.front().detection_metric,
+              preamble_indication.detection_metric,
+              error_factor * std::abs(preamble_indication.detection_metric) / 100);
+
+  // Allow a 1% difference between expected and measured RSSI.
+  ASSERT_NEAR(expected_result.rssi_dB, result.rssi_dB, std::abs(result.rssi_dB) / 100);
+
+  // Measured preamble power should be around 0 dB: allow two dB tolerance.
+  ASSERT_NEAR(expected_result.preambles.front().preamble_power_dB, result.preambles.front().preamble_power_dB, 0.3F);
 }
 
 // Creates test suite that combines all possible parameters. Denote zero_correlation_zone exceeds the maximum by one.

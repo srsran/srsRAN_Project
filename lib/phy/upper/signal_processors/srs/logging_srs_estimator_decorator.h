@@ -60,15 +60,23 @@ public:
       // Detailed log information, including a list of all PDU fields.
       logger.debug(config.slot.sfn(),
                    config.slot.slot_index(),
-                   "SRS: {:s} {:s} {}\n  {:n}\n  {:n}",
+                   "SRS: {:s} {:s} {:s} {}\n  {:n}\n  {:n}\n  {:n}",
                    config,
+                   config.resource,
                    result,
                    time_ns,
                    config,
+                   config.resource,
                    result);
     } else {
       // Single line log entry.
-      logger.info(config.slot.sfn(), config.slot.slot_index(), "SRS: {:s} {:s} {}", config, result, time_ns);
+      logger.info(config.slot.sfn(),
+                  config.slot.slot_index(),
+                  "SRS: {:s} {:s} {:s} {}",
+                  config,
+                  config.resource,
+                  result,
+                  time_ns);
     }
 
     return result;

@@ -100,6 +100,14 @@ protected:
   bool was_ue_removed() const { return ngap->get_nof_ues() == 0; }
 
   void clear_last_received_msg() { n2_gw.last_ngap_msgs.back() = {}; }
+
+  bool was_ue_release_requested(const test_ue& ue) const { return cu_cp_notifier.last_command.ue_index == ue.ue_index; }
+
+  bool was_error_indication_sent() const
+  {
+    return n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type() ==
+           asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::error_ind;
+  }
 };
 
 /// Test Initial Context Setup Request
@@ -460,6 +468,37 @@ TEST_F(ngap_ue_context_management_procedure_test, when_ue_context_setup_has_inco
       generate_valid_initial_context_setup_request_message(ue1.amf_ue_id.value(), ue2.ran_ue_id.value());
   ngap->handle_message(init_context_setup_request);
 
+  // Check that release of old UE has been requested.
+  ASSERT_TRUE(was_ue_release_requested(ue1));
+
+  // Check that error indication has been sent to AMF.
+  ASSERT_TRUE(was_error_indication_sent());
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.error_ind()->cause.radio_network(),
+            asn1::ngap::cause_radio_network_e::options::inconsistent_remote_ue_ngap_id);
+}
+
+/// Test when UE Context Release Command with inconsistent NGAP ID pair is received,
+/// an error indication is sent.
+TEST_F(ngap_ue_context_management_procedure_test,
+       when_ue_context_release_command_has_inconsistent_id_pair_err_indication_is_sent)
+{
+  // Test preamble
+  ue_index_t ue_index1 = this->start_procedure();
+  ue_index_t ue_index2 = this->start_procedure();
+
+  auto& ue1 = test_ues.at(ue_index1);
+  auto& ue2 = test_ues.at(ue_index2);
+
+  // Inject UE Context Release Command with inconsistent NGAP ID pair.
+  ngap_message ue_context_release_cmd =
+      generate_valid_ue_context_release_command_with_ue_ngap_id_pair(ue1.amf_ue_id.value(), ue2.ran_ue_id.value());
+  ngap->handle_message(ue_context_release_cmd);
+
+  // Check that release of old UE has been requested.
+  ASSERT_TRUE(was_ue_release_requested(ue1));
+
+  // Check that error indication has been sent to AMF.
+  ASSERT_TRUE(was_error_indication_sent());
   ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.error_ind()->cause.radio_network(),
             asn1::ngap::cause_radio_network_e::options::inconsistent_remote_ue_ngap_id);
 }

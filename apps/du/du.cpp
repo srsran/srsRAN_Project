@@ -344,11 +344,7 @@ int main(int argc, char** argv)
         *epoll_broker,
         workers.get_du_high_executor_mapper().ue_mapper().mac_ul_pdu_executor(to_du_ue_index(0)),
         workers.get_du_high_executor_mapper().f1u_rx_executor());
-    if (not sock_cfg.five_qi.has_value()) {
-      f1u_gw_maps.default_gws.push_back(std::move(f1u_gw));
-    } else {
-      f1u_gw_maps.five_qi_gws[sock_cfg.five_qi.value()].push_back(std::move(f1u_gw));
-    }
+    f1u_gw_maps.add_gtpu_gateway(sock_cfg.sst, sock_cfg.sd, sock_cfg.five_qi, std::move(f1u_gw));
   }
 
   // > Create F1-U split connector.
