@@ -161,6 +161,9 @@ void backend_pcap_writer::write_context_pdu_impl(const pcap_pdu_data& pdu)
   // write packet header
   writer.write_pdu_header(pdu.header().length() + pdu.payload().length(), dissector);
 
+  // write exported_pdu header
+  writer.write_exported_pdu_header(dissector);
+
   // write PDU header
   writer.write_pdu(pdu.header());
 

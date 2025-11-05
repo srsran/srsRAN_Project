@@ -13,8 +13,8 @@
 
 using namespace srsran;
 
-static constexpr uint16_t UDP_DLT = 149;
-static constexpr uint16_t MAC_DLT = 157;
+static constexpr uint16_t UDP_DLT = 252;
+static constexpr uint16_t MAC_DLT = 252;
 
 static int nr_pcap_pack_mac_context_to_buffer(const mac_nr_context_info& context, span<uint8_t> buffer);
 
@@ -24,7 +24,7 @@ mac_pcap_impl::mac_pcap_impl(const std::string& filename_, mac_pcap_type type_, 
   writer(type == mac_pcap_type::dlt ? MAC_DLT : UDP_DLT,
          "MAC",
          filename_,
-         "", // TODO switch to EXPORT_PDU
+         type == mac_pcap_type::dlt ? "mac-nr-framed" : "udp",
          backend_exec_)
 {
 }
