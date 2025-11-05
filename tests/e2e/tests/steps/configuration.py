@@ -148,7 +148,7 @@ def configure_test_parameters(
     if enable_2gnbs:
         gnb_node_list = [
             {
-                "name": "srs-gnb0-0",
+                "name": "srs-gnb-1-1",
                 "parameters": {
                     "gnb_id": 500,
                     "cell_offset": 0,
@@ -156,7 +156,7 @@ def configure_test_parameters(
                 },
             },
             {
-                "name": "srs-gnb1-0",
+                "name": "srs-gnb-2-1",
                 "parameters": {
                     "gnb_id": 501,
                     "cell_offset": 1,
