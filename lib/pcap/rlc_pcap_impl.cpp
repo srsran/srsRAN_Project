@@ -9,6 +9,7 @@
  */
 
 #include "rlc_pcap_impl.h"
+#include "pcap_dlts.h"
 #include <netinet/in.h>
 
 using namespace srsran;
@@ -21,9 +22,6 @@ static constexpr uint8_t     PCAP_RLC_NR_UEID_TAG        = 0x03;
 static constexpr uint8_t     PCAP_RLC_NR_BEARER_TYPE_TAG = 0x04;
 static constexpr uint8_t     PCAP_RLC_NR_BEARER_ID_TAG   = 0x05;
 
-/// Other constants.
-static constexpr uint16_t UDP_DLT = 252;
-
 int nr_pcap_pack_rlc_context_to_buffer(const pcap_rlc_pdu_context& context, uint8_t* buffer, unsigned length);
 
 rlc_pcap_impl::rlc_pcap_impl(const std::string& filename_,
@@ -33,7 +31,7 @@ rlc_pcap_impl::rlc_pcap_impl(const std::string& filename_,
   logger(srslog::fetch_basic_logger("ALL")),
   srb_enabled(capture_srb),
   drb_enabled(capture_drb),
-  writer(UDP_DLT, "RLC", filename_, "udp", backend_exec)
+  writer(PCAP_EXPORT_PDU_DLT, "RLC", filename_, "udp", backend_exec)
 {
 }
 

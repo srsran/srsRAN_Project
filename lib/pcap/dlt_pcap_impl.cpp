@@ -9,13 +9,10 @@
  */
 
 #include "dlt_pcap_impl.h"
+#include "pcap_dlts.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/support/executors/sync_task_executor.h"
 
 using namespace srsran;
-
-// DLT for EXPORT PDU pcaps.
-static constexpr uint16_t PCAP_EXPORT_PDU_DLT = 252;
 
 dlt_pcap_impl::dlt_pcap_impl(uint32_t           dlt,
                              const std::string& layer_name_,
