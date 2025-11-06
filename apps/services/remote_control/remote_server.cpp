@@ -13,6 +13,8 @@
 #include "apps/services/remote_control/remote_control_appconfig.h"
 #include "nlohmann/json.hpp"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/synchronization/stop_event.h"
+#include "srsran/support/synchronization/sync_event.h"
 #ifndef __clang__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
@@ -111,6 +113,7 @@ class remote_server_impl : public remote_server
   std::unordered_map<std::string, std::unique_ptr<remote_command>> commands;
   std::set<socket_type*>                                           metrics_subscribers;
   socket_type*                                                     current_cmd_client = nullptr;
+  stop_event_source                                                stop_control;
 
   /// Metrics subscription command.
   class metrics_subscribe_command : public remote_command
@@ -189,51 +192,56 @@ public:
       cmd       = std::move(remote_cmd);
     }
 
-    thread = unique_thread("ws_server", [this, bind_addr, port, enable_metrics_subscription]() {
-      uWS::App ws_server;
-      ws_server
-          .ws<dummy_type>("/*",
-                          {.compression              = uWS::CompressOptions(uWS::DISABLED),
-                           .maxPayloadLength         = 16 * 1024,
-                           .idleTimeout              = 120,
-                           .maxBackpressure          = 16 * 1024 * 1024,
-                           .closeOnBackpressureLimit = false,
-                           .resetIdleTimeoutOnSend   = false,
-                           .sendPingsAutomatically   = true,
-                           .message =
-                               [this](socket_type* ws, std::string_view message, uWS::OpCode opCode) {
-                                 // Only parse text based messages.
-                                 if (opCode != uWS::OpCode::TEXT) {
-                                   ws->send(
-                                       build_error_response("This WebSocket server only supports opcode TEXT messages"),
-                                       uWS::OpCode::TEXT,
-                                       false);
-                                   return;
-                                 }
+    sync_event start_event;
+    thread = unique_thread(
+        "ws_server", [this, bind_addr, port, enable_metrics_subscription, token = start_event.get_token()]() mutable {
+          uWS::App ws_server;
+          ws_server
+              .ws<dummy_type>(
+                  "/*",
+                  {.compression              = uWS::CompressOptions(uWS::DISABLED),
+                   .maxPayloadLength         = 16 * 1024,
+                   .idleTimeout              = 120,
+                   .maxBackpressure          = 16 * 1024 * 1024,
+                   .closeOnBackpressureLimit = false,
+                   .resetIdleTimeoutOnSend   = false,
+                   .sendPingsAutomatically   = true,
+                   .message =
+                       [this](socket_type* ws, std::string_view message, uWS::OpCode opCode) {
+                         // Only parse text based messages.
+                         if (opCode != uWS::OpCode::TEXT) {
+                           ws->send(build_error_response("This WebSocket server only supports opcode TEXT messages"),
+                                    uWS::OpCode::TEXT,
+                                    false);
+                           return;
+                         }
 
-                                 current_cmd_client  = ws;
-                                 auto restore_client = make_scope_exit([this]() { current_cmd_client = nullptr; });
+                         current_cmd_client  = ws;
+                         auto restore_client = make_scope_exit([this]() { current_cmd_client = nullptr; });
 
-                                 // Handle the incoming message and return back the response.
-                                 std::string response = handle_command(message);
-                                 ws->send(response, uWS::OpCode::TEXT, false);
-                               },
-                           .close = [this](socket_type* ws, int, std::string_view) { metrics_subscribers.erase(ws); }})
-          .listen(bind_addr, port, [bind_addr, port](auto* listen_socket) {
-            if (listen_socket) {
-              fmt::println("Remote control server listening on {}:{}", bind_addr, port);
-            } else {
-              fmt::println("Remote control server cannot listen on {}:{}", bind_addr, port);
-            }
-          });
+                         // Handle the incoming message and return back the response.
+                         std::string response = handle_command(message);
+                         ws->send(response, uWS::OpCode::TEXT, false);
+                       },
+                   .close = [this](socket_type* ws, int, std::string_view) { metrics_subscribers.erase(ws); }})
+              .listen(bind_addr, port, [bind_addr, port](auto* listen_socket) {
+                if (listen_socket) {
+                  fmt::println("Remote control server listening on {}:{}", bind_addr, port);
+                } else {
+                  fmt::println("Remote control server cannot listen on {}:{}", bind_addr, port);
+                }
+              });
 
-      server.store(&ws_server, std::memory_order_relaxed);
-      server_loop.store(uWS::Loop::get(), std::memory_order_relaxed);
-      if (enable_metrics_subscription) {
-        static_cast<remote_server_sink*>(srslog::find_sink(remote_server_sink::name()))->set_server(this);
-      }
-      ws_server.run();
-    });
+          server      = &ws_server;
+          server_loop = uWS::Loop::get();
+          if (enable_metrics_subscription) {
+            static_cast<remote_server_sink*>(srslog::find_sink(remote_server_sink::name()))->set_server(this);
+          }
+          token.reset();
+          ws_server.run();
+        });
+
+    start_event.wait();
   }
 
   // See interface for documentation.
@@ -244,21 +252,30 @@ public:
   {
     // Wait for completion.
     if (thread.running()) {
-      server_loop.load(std::memory_order_relaxed)->defer([this]() {
+      // Make sure all pending tasks have been completed before closing the server.
+      stop_control.stop();
+
+      server_loop.load()->defer([this]() {
         // Disconnect remote sink from the server, this will prevent metrics being processed after the server is closed.
         static_cast<remote_server_sink*>(srslog::find_sink(remote_server_sink::name()))->set_server(nullptr);
         server.load()->close();
       });
+
       thread.join();
-      server_loop.store(nullptr, std::memory_order_relaxed);
-      server.store(nullptr, std::memory_order_relaxed);
+      server_loop = nullptr;
+      server      = nullptr;
     }
   }
 
   /// Sends the given metrics to all registered metrics subscribers.
   void send_metrics(std::string metrics_)
   {
-    server_loop.load(std::memory_order_relaxed)->defer([metrics = std::move(metrics_), this]() {
+    auto token = stop_control.get_token();
+    if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
+      return;
+    }
+
+    server_loop.load()->defer([this, metrics = std::move(metrics_), tk = std::move(token)]() {
       for (auto* subscriber : metrics_subscribers) {
         subscriber->send(metrics, uWS::OpCode::TEXT, false);
       }
