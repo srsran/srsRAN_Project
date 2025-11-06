@@ -160,7 +160,52 @@ TEST_F(cu_cp_setup_test, when_initial_ul_rrc_message_has_no_rrc_container_then_u
             asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd);
   const auto& ue_rel = f1ap_pdu.pdu.init_msg().value.ue_context_release_cmd();
   ASSERT_TRUE(ue_rel->rrc_container_present);
-  // check that the SRB ID is set if the RRC Container is included
+  // Check that the SRB ID is set if the RRC Container is included.
+  ASSERT_TRUE(ue_rel->srb_id_present);
+  ASSERT_EQ(ue_rel->srb_id, 0);
+
+  // TEST: UE Context Release command contains an RRC Reject.
+  asn1::rrc_nr::dl_ccch_msg_s ccch;
+  {
+    asn1::cbit_ref bref{f1ap_pdu.pdu.init_msg().value.ue_context_release_cmd()->rrc_container};
+    ASSERT_EQ(ccch.unpack(bref), asn1::SRSASN_SUCCESS);
+  }
+  ASSERT_EQ(ccch.msg.c1().type().value, asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_reject);
+
+  // TEST: UE is not destroyed in CU-CP until UE Context Release Complete is received.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ues.size(), 1);
+  ASSERT_EQ(report.ues[0].rnti, to_rnti(0x4601));
+
+  // EVENT: DU sends F1AP UE Context Release Complete.
+  auto rel_complete = test_helpers::generate_ue_context_release_complete(
+      int_to_gnb_cu_ue_f1ap_id(ue_rel->gnb_cu_ue_f1ap_id), du_ue_f1ap_id);
+  get_du(du_idx).push_ul_pdu(rel_complete);
+
+  // TEST: UE context removed from CU-CP.
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_TRUE(report.ues.empty());
+}
+
+TEST_F(cu_cp_setup_test, when_du_sends_initial_ul_rrc_message_without_du_to_cu_container_then_ue_is_rejected)
+{
+  // Create UE by sending Initial UL RRC Message.
+  gnb_du_ue_f1ap_id_t du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(0);
+  rnti_t              crnti         = to_rnti(0x4601);
+  f1ap_message        init_rrc_msg  = test_helpers::generate_init_ul_rrc_message_transfer(du_ue_f1ap_id, crnti);
+  init_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->du_to_cu_rrc_container_present = false;
+  init_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->du_to_cu_rrc_container.clear();
+  get_du(du_idx).push_ul_pdu(init_rrc_msg);
+
+  // TEST: CU-CP sends a UE Context Release command over SRB0.
+  f1ap_message f1ap_pdu;
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+  ASSERT_EQ(f1ap_pdu.pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(f1ap_pdu.pdu.init_msg().value.type().value,
+            asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd);
+  const auto& ue_rel = f1ap_pdu.pdu.init_msg().value.ue_context_release_cmd();
+  ASSERT_TRUE(ue_rel->rrc_container_present);
+  // Check that the SRB ID is set if the RRC Container is included.
   ASSERT_TRUE(ue_rel->srb_id_present);
   ASSERT_EQ(ue_rel->srb_id, 0);
 
