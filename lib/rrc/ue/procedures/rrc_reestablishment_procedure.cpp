@@ -14,7 +14,6 @@
 #include "srsran/asn1/rrc_nr/nr_ue_variables.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/security/integrity.h"
-#include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -52,13 +51,10 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
 {
   CORO_BEGIN(ctx);
 
-  // Notify metrics about attempted RRC connection reestablishment.
-  metrics_notifier.on_attempted_rrc_connection_reestablishment();
-
-  logger.log_debug("\"{}\" for old c-rnti={}, pci={} initialized",
-                   name(),
-                   to_rnti(reestablishment_request.rrc_reest_request.ue_id.c_rnti),
-                   reestablishment_request.rrc_reest_request.ue_id.pci);
+  logger.log_info("\"{}\" for old c-rnti={}, pci={} started...",
+                  name(),
+                  to_rnti(reestablishment_request.rrc_reest_request.ue_id.c_rnti),
+                  reestablishment_request.rrc_reest_request.ue_id.pci);
 
   // Verify if we are in conditions for a Reestablishment, or should opt for RRC Setup as fallback.
   if (not is_reestablishment_accepted()) {
@@ -71,7 +67,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
   CORO_AWAIT_VALUE(context_transfer_success, cu_cp_notifier.on_ue_transfer_required(old_ue_reest_context.ue_index));
   if (not context_transfer_success) {
     CORO_AWAIT(handle_rrc_reestablishment_fallback());
-    logger.log_debug("\"{}\" for old_ue={} finalized", name(), old_ue_reest_context.ue_index);
+    logger.log_info("\"{}\" for old_ue={} finished successfully", name(), old_ue_reest_context.ue_index);
     CORO_EARLY_RETURN();
   }
 
@@ -111,20 +107,20 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
 
     // Trigger UE context release at AMF in case of failure.
     if (not context_modification_success) {
-      logger.log_debug(
+      logger.log_info(
           "\"{}\" for old_ue={} failed. Requesting UE context release", name(), old_ue_reest_context.ue_index);
       // Release the old UE.
       ue_context_release_request.ue_index = context.ue_index;
       ue_context_release_request.cause    = ngap_cause_radio_network_t::unspecified;
       CORO_AWAIT(cu_cp_notifier.on_ue_release_required(ue_context_release_request));
     } else {
-      logger.log_debug("\"{}\" for old_ue={} finalized", name(), old_ue_reest_context.ue_index);
+      logger.log_info("\"{}\" for old_ue={} finished successfully", name(), old_ue_reest_context.ue_index);
     }
 
   } else {
     logger.log_warning(
         "\"{}\" for old_ue={} timed out after {}ms", name(), old_ue_reest_context.ue_index, procedure_timeout.count());
-    logger.log_debug("\"{}\" for old_ue={} failed", name(), old_ue_reest_context.ue_index);
+    logger.log_info("\"{}\" for old_ue={} failed", name(), old_ue_reest_context.ue_index);
   }
 
   // Notify CU-CP to remove the old UE.
@@ -186,7 +182,7 @@ bool rrc_reestablishment_procedure::is_reestablishment_accepted()
     return false;
   }
 
-  // check if an old UE context with matching C-RNTI, PCI exists.
+  // Check if an old UE context with matching C-RNTI, PCI exists.
   if (old_ue_reest_context.ue_index == ue_index_t::invalid) {
     log_rejected_reestablishment("Old UE context not found");
     return false;
