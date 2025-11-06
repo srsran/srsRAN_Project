@@ -142,11 +142,11 @@ void srsran::fill_cu_up_config_in_yaml_schema(YAML::Node& node, const cu_up_unit
   fill_cu_up_metrics_section(node["metrics"], config.metrics);
 
   fill_cu_up_trace_section(node["trace"], config.trace_cfg);
+  fill_cu_up_log_section(node["log"], config.loggers);
+  fill_cu_up_pcap_section(node["pcap"], config.pcap_cfg);
 
   YAML::Node cu_up_node = node["cu_up"];
   fill_cu_up_section(cu_up_node, config);
-  fill_cu_up_log_section(cu_up_node["log"], config.loggers);
-  fill_cu_up_pcap_section(cu_up_node["pcap"], config.pcap_cfg);
   fill_cu_up_ngu_section(cu_up_node["ngu"], config.ngu_cfg);
 
   fill_cu_up_qos_section(cu_up_node, config.qos_cfg);
