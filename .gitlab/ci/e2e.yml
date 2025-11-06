@@ -410,7 +410,6 @@ test mode ru tsan:
   variables:
     MARKERS: test_mode_not_crash
     KEYWORDS: "test_ru and not 16cell"
-  when: manual
   allow_failure: true
   needs:
     - job: basic tsan
@@ -423,7 +422,6 @@ test mode ru asan:
   variables:
     MARKERS: test_mode_not_crash
     KEYWORDS: "test_ru and not 16cell"
-  when: manual
   allow_failure: true
   needs:
     - job: basic asan
@@ -436,7 +434,6 @@ test mode ru memcheck:
   variables:
     MARKERS: test_mode_not_crash
     KEYWORDS: "test_ru and not 16cell"
-  when: manual
   allow_failure: true
   needs:
     - job: basic memcheck
