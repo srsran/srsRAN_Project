@@ -10,18 +10,13 @@
 
 #include "split_8_o_du_factory.h"
 #include "helpers/ru_sdr_factories.h"
-#include "helpers/ru_sdr_helpers.h"
 
 using namespace srsran;
 
 split8_du_factory::split8_du_factory(const split_8_o_du_unit_config& config_) :
-  flexible_o_du_factory(
-      {config_.odu_high_cfg,
-       config_.du_low_cfg,
-       {config_.ru_cfg.metrics_cfg.metrics_cfg,
-        config_.ru_cfg.metrics_cfg.enable_ru_metrics,
-        calculate_dBFS_calibration_value(config_.ru_cfg.srate_MHz,
-                                         config_.odu_high_cfg.du_high_cfg.config.cells_cfg.front().cell.common_scs)}}),
+  flexible_o_du_factory({config_.odu_high_cfg,
+                         config_.du_low_cfg,
+                         {config_.ru_cfg.metrics_cfg.metrics_cfg, config_.ru_cfg.metrics_cfg.enable_ru_metrics}}),
   unit_config(config_)
 {
 }
