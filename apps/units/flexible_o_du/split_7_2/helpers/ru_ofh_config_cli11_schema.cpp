@@ -406,8 +406,8 @@ static void configure_cli11_expert_execution_args(CLI::App& app, ru_ofh_unit_exp
       add_subcommand(*affinities_subcmd, "ofh", "Open Fronthaul CPU affinities configuration")->configurable();
   add_option_function<std::string>(
       *ofh_subcmd,
-      "--ru_timing_cpu",
-      [&config](const std::string& value) { parse_affinity_mask(config.ru_timing_cpu, value, "ru_timing_cpu"); },
+      "--timing_cpu",
+      [&config](const std::string& value) { parse_affinity_mask(config.ru_timing_cpu, value, "timing_cpu"); },
       "CPU used for timing in the Radio Unit");
 
   // RU txrx affinity section.
