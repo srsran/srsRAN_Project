@@ -1,3 +1,6 @@
+include:
+  - local: .gitlab/ci/builders/version.yml
+
 .build_and_unit_template:
   image: ${CR_REGISTRY_URI}/srsgnb/builder-${OS}:${DOCKER_BUILDER_VERSION}
   variables:

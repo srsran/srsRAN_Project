@@ -80,9 +80,6 @@ variables:
   extends: .build_and_unit_template
   stage: build and unit tests
   needs:
-    - job: builder version
-      optional: false
-      artifacts: true
     - job: trigger builder
       optional: true
       artifacts: false
@@ -767,8 +764,6 @@ build on release branch:
     PLUGIN_INDEX_ARRAY: ""
   tags: ["amd64-avx2"]
   needs:
-    - job: builder version
-      artifacts: true
     - job: load build env for release branch
       artifacts: true
 

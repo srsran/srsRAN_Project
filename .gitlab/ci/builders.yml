@@ -43,6 +43,41 @@ tox python in builder:
     PY_DIR: .gitlab/ci/builders
     GIT_LFS_SKIP_SMUDGE: 1
 
+builder version increased:
+  stage: ci
+  image: alpine:3.16.0
+  variables:
+    GIT_LFS_SKIP_SMUDGE: 1
+  rules:
+    - if: $ON_MR
+      changes:
+        paths:
+          - .gitlab/ci/builders/**/*
+          - docker/scripts/**/*
+  script:
+    - apk add git git-lfs
+    - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 20
+    - NEW_VERSION=$(cat .gitlab/ci/builders/version.yml | grep DOCKER_BUILDER_VERSION | cut -d'"' -f2)
+    - export NEW_VERSION
+    - |
+      git checkout $CI_MERGE_REQUEST_DIFF_BASE_SHA
+      if [ ! $(cat .gitlab/ci/builders/version.yml | grep DOCKER_BUILDER_VERSION) ]; then
+          exit 0
+      fi
+    - OLD_VERSION=$(cat .gitlab/ci/builders/version.yml | grep DOCKER_BUILDER_VERSION | cut -d'"' -f2)
+    - export OLD_VERSION
+    - |
+      echo "OLD version: $OLD_VERSION -- NEW version: $NEW_VERSION"
+    - |
+      if [ "$NEW_VERSION" = "$OLD_VERSION" ]; then
+          echo "ERROR: Version not changed."
+          exit 1
+      elif [ "$OLD_VERSION" \> "$NEW_VERSION" ]; then
+          echo "ERROR: Version decreased."
+          exit 1
+      fi
+      echo "Version increased correctly."
+
 ################################################################################
 # UHD builder
 ################################################################################
@@ -306,7 +341,7 @@ ubuntu-dpdk-builder arm64:
     - mkdir -p $CONTEXT/lib $CONTEXT/uhd $CONTEXT/dpdk
     - ls -lah $CONTEXT $CONTEXT/lib $CONTEXT/uhd $CONTEXT/dpdk
   needs:
-    - builder version
+    - builder version increased
 
 .alternative-tag:
   extends: .docker copy
@@ -357,8 +392,6 @@ image-build-publish [codechecker]:
       export BUILD_ARGS="CR_REGISTRY_URI=${CR_REGISTRY_URI};CI_TOOLS_REPO=${CI_TOOLS_REPO}"
     - |
       cp -r ${CI_PROJECT_DIR}/docker/scripts/. ${CI_PROJECT_DIR}/${CONTEXT}
-  needs:
-    - builder version
 
 alternative-tag [codechecker]:
   extends: .docker copy
@@ -369,7 +402,6 @@ alternative-tag [codechecker]:
         docker://${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/codechecker:${DOCKER_BUILDER_VERSION} \
         docker://${GITLAB_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/codechecker:${DOCKER_BUILDER_VERSION}
   needs:
-    - builder version
     - image-build-publish [codechecker]
 
 ################################################################################
@@ -384,7 +416,6 @@ image-build-publish [ubuntu, 22.04, amd64]:
     OS_VERSION: "22.04"
     PLATFORM: amd64
   needs:
-    - builder version
     - job: ubuntu-uhd-builder avx2
       parallel:
         matrix:
@@ -414,7 +445,6 @@ alternative-tag [ubuntu, 22.04, amd64]:
     OS_VERSION: "22.04"
     VERSION: ${DOCKER_BUILDER_VERSION}-amd64
   needs:
-    - builder version
     - image-build-publish [ubuntu, 22.04, amd64]
 
 image-build-publish [ubuntu, 22.04, arm64]:
@@ -426,7 +456,6 @@ image-build-publish [ubuntu, 22.04, arm64]:
     OS_VERSION: "22.04"
     PLATFORM: arm64
   needs:
-    - builder version
     - job: ubuntu-uhd-builder arm64
       parallel:
         matrix:
@@ -446,7 +475,6 @@ alternative-tag [ubuntu, 22.04, arm64]:
     OS_VERSION: "22.04"
     VERSION: ${DOCKER_BUILDER_VERSION}-arm64
   needs:
-    - builder version
     - image-build-publish [ubuntu, 22.04, arm64]
 
 manifest [ubuntu, 22.04]:
@@ -455,7 +483,6 @@ manifest [ubuntu, 22.04]:
     OS_NAME: ubuntu
     OS_VERSION: "22.04"
   needs:
-    - builder version
     - job: alternative-tag [ubuntu, 22.04, amd64]
       optional: false
     - job: alternative-tag [ubuntu, 22.04, arm64]
@@ -476,7 +503,6 @@ image-build-publish [ubuntu, 24.04, amd64]:
     OS_VERSION: "24.04"
     PLATFORM: amd64
   needs:
-    - builder version
     - job: ubuntu-uhd-builder avx2
       parallel:
         matrix:
@@ -501,7 +527,6 @@ alternative-tag [ubuntu, 24.04, amd64]:
     OS_VERSION: "24.04"
     VERSION: ${DOCKER_BUILDER_VERSION}-amd64
   needs:
-    - builder version
     - image-build-publish [ubuntu, 24.04, amd64]
 
 image-build-publish [ubuntu, 24.04, arm64]:
@@ -513,7 +538,6 @@ image-build-publish [ubuntu, 24.04, arm64]:
     OS_VERSION: "24.04"
     PLATFORM: arm64
   needs:
-    - builder version
     - job: ubuntu-uhd-builder arm64
       parallel:
         matrix:
@@ -533,7 +557,6 @@ alternative-tag [ubuntu, 24.04, arm64]:
     OS_VERSION: "24.04"
     VERSION: ${DOCKER_BUILDER_VERSION}-arm64
   needs:
-    - builder version
     - image-build-publish [ubuntu, 24.04, arm64]
 
 manifest [ubuntu, 24.04]:
@@ -542,7 +565,6 @@ manifest [ubuntu, 24.04]:
     OS_NAME: ubuntu
     OS_VERSION: "24.04"
   needs:
-    - builder version
     - job: alternative-tag [ubuntu, 24.04, amd64]
       optional: false
     - job: alternative-tag [ubuntu, 24.04, arm64]
@@ -567,7 +589,6 @@ image-build-publish [ubuntu, 24.04-rtsan, amd64]:
   tags:
     - ${PLATFORM}-docker
   needs:
-    - builder version
     - job: ubuntu-uhd-builder avx2
       parallel:
         matrix:
@@ -592,7 +613,6 @@ alternative-tag [ubuntu, 24.04-rtsan, amd64]:
     OS_VERSION: "24.04-rtsan"
     VERSION: ${DOCKER_BUILDER_VERSION}-amd64
   needs:
-    - builder version
     - image-build-publish [ubuntu, 24.04-rtsan, amd64]
 
 image-build-publish [ubuntu, 24.04-rtsan, arm64]:
@@ -604,7 +624,6 @@ image-build-publish [ubuntu, 24.04-rtsan, arm64]:
     OS_VERSION: "24.04-rtsan"
     PLATFORM: arm64
   needs:
-    - builder version
     - job: ubuntu-uhd-builder arm64
       parallel:
         matrix:
@@ -624,7 +643,6 @@ alternative-tag [ubuntu, 24.04-rtsan, arm64]:
     OS_VERSION: "24.04-rtsan"
     VERSION: ${DOCKER_BUILDER_VERSION}-arm64
   needs:
-    - builder version
     - image-build-publish [ubuntu, 24.04-rtsan, arm64]
 
 manifest [ubuntu, 24.04-rtsan]:
@@ -633,7 +651,6 @@ manifest [ubuntu, 24.04-rtsan]:
     OS_NAME: ubuntu
     OS_VERSION: "24.04-rtsan"
   needs:
-    - builder version
     - job: alternative-tag [ubuntu, 24.04-rtsan, amd64]
       optional: false
     - job: alternative-tag [ubuntu, 24.04-rtsan, arm64]
@@ -654,7 +671,6 @@ image-build-publish [ubuntu, 25.04, amd64]:
     OS_VERSION: "25.04"
     PLATFORM: amd64
   needs:
-    - builder version
     - job: ubuntu-uhd-builder avx2
       parallel:
         matrix:
@@ -679,7 +695,6 @@ alternative-tag [ubuntu, 25.04, amd64]:
     OS_VERSION: "25.04"
     VERSION: ${DOCKER_BUILDER_VERSION}-amd64
   needs:
-    - builder version
     - image-build-publish [ubuntu, 25.04, amd64]
 
 image-build-publish [ubuntu, 25.04, arm64]:
@@ -691,7 +706,6 @@ image-build-publish [ubuntu, 25.04, arm64]:
     OS_VERSION: "25.04"
     PLATFORM: arm64
   needs:
-    - builder version
     - job: ubuntu-uhd-builder arm64
       parallel:
         matrix:
@@ -711,7 +725,6 @@ alternative-tag [ubuntu, 25.04, arm64]:
     OS_VERSION: "25.04"
     VERSION: ${DOCKER_BUILDER_VERSION}-arm64
   needs:
-    - builder version
     - image-build-publish [ubuntu, 25.04, arm64]
 
 manifest [ubuntu, 25.04]:
@@ -720,7 +733,6 @@ manifest [ubuntu, 25.04]:
     OS_NAME: ubuntu
     OS_VERSION: "25.04"
   needs:
-    - builder version
     - job: alternative-tag [ubuntu, 25.04, amd64]
       optional: false
     - job: alternative-tag [ubuntu, 25.04, arm64]
@@ -741,7 +753,6 @@ image-build-publish [ubuntu, 25.10, amd64]:
     OS_VERSION: "25.10"
     PLATFORM: amd64
   needs:
-    - builder version
     - job: ubuntu-uhd-builder avx2
       parallel:
         matrix:
@@ -766,7 +777,6 @@ alternative-tag [ubuntu, 25.10, amd64]:
     OS_VERSION: "25.10"
     VERSION: ${DOCKER_BUILDER_VERSION}-amd64
   needs:
-    - builder version
     - image-build-publish [ubuntu, 25.10, amd64]
 
 image-build-publish [ubuntu, 25.10, arm64]:
@@ -778,7 +788,6 @@ image-build-publish [ubuntu, 25.10, arm64]:
     OS_VERSION: "25.10"
     PLATFORM: arm64
   needs:
-    - builder version
     - job: ubuntu-uhd-builder arm64
       parallel:
         matrix:
@@ -798,7 +807,6 @@ alternative-tag [ubuntu, 25.10, arm64]:
     OS_VERSION: "25.10"
     VERSION: ${DOCKER_BUILDER_VERSION}-arm64
   needs:
-    - builder version
     - image-build-publish [ubuntu, 25.10, arm64]
 
 manifest [ubuntu, 25.10]:
@@ -807,7 +815,6 @@ manifest [ubuntu, 25.10]:
     OS_NAME: ubuntu
     OS_VERSION: "25.10"
   needs:
-    - builder version
     - job: alternative-tag [ubuntu, 25.10, amd64]
       optional: false
     - job: alternative-tag [ubuntu, 25.10, arm64]
@@ -832,8 +839,6 @@ image-build-publish [debian]:
         PLATFORM: [amd64, arm64]
       - OS_VERSION: "13"
         PLATFORM: [amd64, arm64]
-  needs:
-    - builder version
 
 alternative-tag [debian, 12, amd64]:
   extends:
@@ -843,7 +848,6 @@ alternative-tag [debian, 12, amd64]:
     OS_VERSION: "12"
     VERSION: ${DOCKER_BUILDER_VERSION}-amd64
   needs:
-    - builder version
     - job: image-build-publish [debian]
       parallel:
         matrix:
@@ -858,7 +862,6 @@ alternative-tag [debian, 12, arm64]:
     OS_VERSION: "12"
     VERSION: ${DOCKER_BUILDER_VERSION}-arm64
   needs:
-    - builder version
     - job: image-build-publish [debian]
       parallel:
         matrix:
@@ -871,7 +874,6 @@ manifest [debian, 12]:
     OS_NAME: debian
     OS_VERSION: "12"
   needs:
-    - builder version
     - job: alternative-tag [debian, 12, amd64]
       optional: false
     - job: alternative-tag [debian, 12, arm64]
@@ -888,7 +890,6 @@ alternative-tag [debian, 13, amd64]:
     OS_VERSION: "13"
     VERSION: ${DOCKER_BUILDER_VERSION}-amd64
   needs:
-    - builder version
     - job: image-build-publish [debian]
       parallel:
         matrix:
@@ -903,7 +904,6 @@ alternative-tag [debian, 13, arm64]:
     OS_VERSION: "13"
     VERSION: ${DOCKER_BUILDER_VERSION}-arm64
   needs:
-    - builder version
     - job: image-build-publish [debian]
       parallel:
         matrix:
@@ -916,7 +916,6 @@ manifest [debian, 13]:
     OS_NAME: debian
     OS_VERSION: "13"
   needs:
-    - builder version
     - job: alternative-tag [debian, 13, amd64]
       optional: false
     - job: alternative-tag [debian, 13, arm64]
@@ -937,8 +936,6 @@ image-build-publish [rhel, 8, amd64]:
     OS_VERSION: "8"
     RHEL_CT_VERSION: "2023.5_1.0.3"
     PLATFORM: amd64
-  needs:
-    - builder version
 
 alternative-tag [rhel, 8, amd64]:
   extends:
@@ -948,7 +945,6 @@ alternative-tag [rhel, 8, amd64]:
     OS_VERSION: "8"
     VERSION: ${DOCKER_BUILDER_VERSION}-amd64
   needs:
-    - builder version
     - image-build-publish [rhel, 8, amd64]
 
 image-build-publish [rhel, 8, arm64]:
@@ -960,8 +956,6 @@ image-build-publish [rhel, 8, arm64]:
     OS_VERSION: "8"
     RHEL_CT_VERSION: "2023.5_1.0.3"
     PLATFORM: arm64
-  needs:
-    - builder version
 
 alternative-tag [rhel, 8, arm64]:
   extends:
@@ -971,7 +965,6 @@ alternative-tag [rhel, 8, arm64]:
     OS_VERSION: "8"
     VERSION: ${DOCKER_BUILDER_VERSION}-arm64
   needs:
-    - builder version
     - image-build-publish [rhel, 8, arm64]
 
 manifest [rhel, 8]:
@@ -980,7 +973,6 @@ manifest [rhel, 8]:
     OS_NAME: rhel
     OS_VERSION: "8"
   needs:
-    - builder version
     - job: alternative-tag [rhel, 8, amd64]
       optional: false
     - job: alternative-tag [rhel, 8, arm64]
@@ -1000,8 +992,6 @@ image-build-publish [fedora, 39]:
     OS_NAME: fedora
     OS_VERSION: "39"
     PLATFORM: amd64
-  needs:
-    - builder version
   parallel:
     matrix:
       - PLATFORM: [amd64, arm64]
@@ -1014,7 +1004,6 @@ alternative-tag [fedora, 39, amd64]:
     OS_VERSION: "39"
     VERSION: ${DOCKER_BUILDER_VERSION}-amd64
   needs:
-    - builder version
     - job: image-build-publish [fedora, 39]
       parallel:
         matrix:
@@ -1028,7 +1017,6 @@ alternative-tag [fedora, 39, arm64]:
     OS_VERSION: "39"
     VERSION: ${DOCKER_BUILDER_VERSION}-arm64
   needs:
-    - builder version
     - job: image-build-publish [fedora, 39]
       parallel:
         matrix:
@@ -1040,7 +1028,6 @@ manifest [fedora, 39]:
     OS_NAME: fedora
     OS_VERSION: "39"
   needs:
-    - builder version
     - job: alternative-tag [fedora, 39, amd64]
       optional: false
     - job: alternative-tag [fedora, 39, arm64]
@@ -1060,8 +1047,6 @@ image-build-publish [archlinux, latest, amd64]:
     OS_NAME: archlinux
     OS_VERSION: latest
     PLATFORM: amd64
-  needs:
-    - builder version
 
 alternative-tag [archlinux, latest, amd64]:
   extends:
@@ -1071,7 +1056,6 @@ alternative-tag [archlinux, latest, amd64]:
     OS_VERSION: latest
     VERSION: ${DOCKER_BUILDER_VERSION}-amd64
   needs:
-    - builder version
     - image-build-publish [archlinux, latest, amd64]
 
 manifest [archlinux, latest]:
@@ -1089,6 +1073,5 @@ manifest [archlinux, latest]:
     matrix:
       - REGISTRY_URI: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
   needs:
-    - builder version
     - job: alternative-tag [archlinux, latest, amd64]
       optional: false

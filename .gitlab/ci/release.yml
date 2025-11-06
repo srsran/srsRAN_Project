@@ -308,7 +308,6 @@ basic build final branch:
     - job: download final branch
       optional: false
       artifacts: true
-    - job: builder version
 
 ################################################################################
 # Publish
@@ -393,8 +392,6 @@ publish matlab:
     - if: *on_public_push
     - if: *on_public_release
   needs:
-    - job: builder version
-      artifacts: true
     - job: publish main
       artifacts: false
   trigger:

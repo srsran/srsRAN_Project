@@ -38,4 +38,3 @@ include-guards:
     - launch_tests_srsran
   needs:
     - job: download srsran
-    - job: builder version

@@ -7,7 +7,6 @@ include:
     file: .gitlab/ci-shared/features/all.yml
   - local: .gitlab/ci-shared/e2e.yml
   - local: .gitlab/ci-shared/build.yml
-  - local: .gitlab/ci/builders/version.yml
 
 variables:
   # CI
@@ -87,21 +86,6 @@ download srsran:
       - $SRSRANDIR
   needs: []
 
-builder version:
-  extends: .builder version
-  rules:
-    - if: $ON_MR
-    - if: $ON_WEB
-    - if: $ON_API
-    - if: $ON_SCHEDULE
-    - if: $CI_DESCRIPTION =~ /Release/
-      when: never
-    - if: $CI_DESCRIPTION
-  variables:
-    SRSRANDIR: *srsran_dir
-  needs:
-    - job: download srsran
-
 #########
 # Build #
 #########
@@ -146,4 +130,3 @@ builder version:
   timeout: 1h
   needs:
     - job: download srsran
-    - job: builder version
