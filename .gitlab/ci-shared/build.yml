@@ -1,49 +1,10 @@
-variables:
-  INFRASTRUCTURE_TAG:
-    description: Computer architecture and supported instruction sets
-    options:
-      - amd64
-      - amd64-avx2
-      - amd64-avx2-avx512
-      - arm64
-      - on-prem-amd64
-      - on-prem-arm64
-      - aws-spot-amd64
-      - aws-spot-arm64
-    value: "amd64-avx2"
-  OS:
-    description: Operating system
-    options:
-      - "ubuntu-24.10"
-      - "ubuntu-24.04"
-      - "ubuntu-22.04"
-      - "debian-12"
-      - "debian-11"
-      - "archlinux-latest"
-      - "rhel-8"
-    value: "ubuntu-24.04"
-  COMPILER:
-    description: Compiler to use
-    options:
-      - "gcc"
-      - "clang"
-    value: "gcc"
-  BUILD_ARGS:
-    description: It will be passed to cmake
-    value: ""
-  UHD_VERSION:
-    description: must be one version supported in the specified OS
-    value: ""
-  DPDK_VERSION:
-    description: must be one version supported in the specified OS
-    value: ""
-  TEST_MODE:
-    description: Run tests with labels matching regular expression. "none" won't run any test at all.
-    value: "default"
-
 .build_and_unit_template:
   image: ${CR_REGISTRY_URI}/srsgnb/builder-${OS}:${DOCKER_BUILDER_VERSION}
   variables:
+    OS: "ubuntu-24.04"
+    COMPILER: "gcc"
+    UHD_VERSION: ""
+    DPDK_VERSION: ""
     CMAKE_BUILD_TYPE: "" # Empty for cmake default
     ASSERT_LEVEL: "" # Empty for cmake default
     ENABLE_EXPORT: "" # Empty for cmake default
@@ -70,8 +31,10 @@ variables:
     # CACHE
     CCACHE_MAXSIZE: 3G
     # TEST
+    TEST_MODE: "default"
     TEST_EXECUTION_TIMEOUT: 0
     # CI
+    INFRASTRUCTURE_TAG: amd64-avx2
     TRANSFER_METER_FREQUENCY: 5s
     ARTIFACT_COMPRESSION_LEVEL: slowest
     CACHE_COMPRESSION_LEVEL: slowest
