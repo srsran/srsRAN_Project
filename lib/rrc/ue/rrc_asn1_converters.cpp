@@ -60,8 +60,50 @@ asn1::rrc_nr::pdcp_cfg_s srsran::srs_cu_cp::pdcp_config_to_rrc_nr_asn1(const pdc
   // Fill DRB -- Cond DRB.
   rrc_pdcp_cfg.drb_present = true;
 
-  // Fill hdr compress.
-  rrc_pdcp_cfg.drb.hdr_compress.set_not_used(); // not supported.
+  // Fill header compression
+  if (pdcp_cfg.header_compression.has_value()) {
+    const auto& rohc_cfg_in = pdcp_cfg.header_compression.value();
+    switch (rohc_cfg_in.rohc_type) {
+      case rohc::rohc_type_t::rohc: {
+        rrc_pdcp_cfg.drb.hdr_compress.set_rohc();
+        auto& rrc_rohc = rrc_pdcp_cfg.drb.hdr_compress.rohc();
+        // Only pack non-default max_cid (see TS 38.331 Sec. A.3.5 and Sec. 6.3.2)
+        if (rrc_rohc.max_c_id != rohc::default_rohc_max_cid) {
+          rrc_rohc.max_c_id_present = true;
+          rrc_rohc.max_c_id         = rohc_cfg_in.max_cid;
+        }
+        rrc_rohc.profiles.profile0x0001 = rohc_cfg_in.profiles.is_profile_enabled(rohc::rohc_profile::profile0x0001);
+        rrc_rohc.profiles.profile0x0002 = rohc_cfg_in.profiles.is_profile_enabled(rohc::rohc_profile::profile0x0002);
+        rrc_rohc.profiles.profile0x0003 = rohc_cfg_in.profiles.is_profile_enabled(rohc::rohc_profile::profile0x0003);
+        rrc_rohc.profiles.profile0x0004 = rohc_cfg_in.profiles.is_profile_enabled(rohc::rohc_profile::profile0x0004);
+        rrc_rohc.profiles.profile0x0006 = rohc_cfg_in.profiles.is_profile_enabled(rohc::rohc_profile::profile0x0006);
+        rrc_rohc.profiles.profile0x0101 = rohc_cfg_in.profiles.is_profile_enabled(rohc::rohc_profile::profile0x0101);
+        rrc_rohc.profiles.profile0x0102 = rohc_cfg_in.profiles.is_profile_enabled(rohc::rohc_profile::profile0x0102);
+        rrc_rohc.profiles.profile0x0103 = rohc_cfg_in.profiles.is_profile_enabled(rohc::rohc_profile::profile0x0103);
+        rrc_rohc.profiles.profile0x0104 = rohc_cfg_in.profiles.is_profile_enabled(rohc::rohc_profile::profile0x0104);
+        if (rohc_cfg_in.continue_rohc) {
+          rrc_rohc.drb_continue_rohc_present = true;
+        }
+      } break;
+      case rohc::rohc_type_t::uplink_only_rohc: {
+        rrc_pdcp_cfg.drb.hdr_compress.set_ul_only_rohc();
+        auto& rrc_rohc = rrc_pdcp_cfg.drb.hdr_compress.ul_only_rohc();
+        // Only pack non-default max_cid (see TS 38.331 Sec. A.3.5 and Sec. 6.3.2)
+        if (rrc_rohc.max_c_id != rohc::default_rohc_max_cid) {
+          rrc_rohc.max_c_id_present = true;
+          rrc_rohc.max_c_id         = rohc_cfg_in.max_cid;
+        }
+        rrc_rohc.max_c_id_present       = true;
+        rrc_rohc.max_c_id               = rohc_cfg_in.max_cid;
+        rrc_rohc.profiles.profile0x0006 = rohc_cfg_in.profiles.is_profile_enabled(rohc::rohc_profile::profile0x0006);
+        if (rohc_cfg_in.continue_rohc) {
+          rrc_rohc.drb_continue_rohc_present = true;
+        }
+      } break;
+    }
+  } else {
+    rrc_pdcp_cfg.drb.hdr_compress.set_not_used();
+  }
 
   // Fill discard timer -- Cond Setup.
   if (pdcp_cfg.tx.discard_timer.has_value()) {
