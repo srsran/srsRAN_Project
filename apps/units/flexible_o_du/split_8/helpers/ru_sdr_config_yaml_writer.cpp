@@ -91,7 +91,21 @@ static void fill_ru_sdr_section(YAML::Node node, const ru_sdr_unit_config& confi
   node["sync"]          = config.synch_source;
   node["otw_format"]    = config.otw_format;
   if (config.time_alignment_calibration.has_value()) {
-    node["time_alignment_calibration"] = config.time_alignment_calibration.value();
+    node["time_alignment_calibration"] = *config.time_alignment_calibration;
+  } else {
+    node["time_alignment_calibration"] = "na";
+  }
+  if (config.start_time.has_value()) {
+    ::time_t tt = std::chrono::system_clock::to_time_t(*config.start_time);
+    ::tm     utc_time;
+    ::gmtime_r(&tt, &utc_time);
+
+    char buffer[100];
+    ::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &utc_time);
+
+    node["start_time"] = buffer;
+  } else {
+    node["start_time"] = "na";
   }
 
   {

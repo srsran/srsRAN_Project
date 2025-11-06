@@ -297,11 +297,14 @@ private:
         current_resource = std::move(resource);
       }
 
-      // Transition to available.
+      // Move token to stack before transitioning to a different state.
+      stop_event_token local_token = std::move(token);
+
+      // Transition to available. The object will become available again.
       internal_state.store(internal_states::available);
 
-      // Signal that this request object is available again.
-      token.reset();
+      // Reset the stop token.
+      local_token.reset();
 
       // Return the context and resource.
       return {current_context, std::move(current_resource)};

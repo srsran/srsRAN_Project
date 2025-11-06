@@ -27,6 +27,7 @@
 #include "srsran/du/du_operation_controller.h"
 #include "srsran/phy/upper/upper_phy.h"
 #include <memory>
+#include <vector>
 
 namespace srsran {
 namespace srs_du {

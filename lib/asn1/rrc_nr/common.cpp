@@ -82,232 +82,6 @@ void plmn_id_s::to_json(json_writer& j) const
   j.end_obj();
 }
 
-// SpatialRelationInfo-PDC-r17 ::= SEQUENCE
-SRSASN_CODE spatial_relation_info_pdc_r17_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(ref_sig.pack(bref));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE spatial_relation_info_pdc_r17_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(ref_sig.unpack(bref));
-
-  return SRSASN_SUCCESS;
-}
-void spatial_relation_info_pdc_r17_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("referenceSignal");
-  ref_sig.to_json(j);
-  j.end_obj();
-}
-
-void spatial_relation_info_pdc_r17_s::ref_sig_c_::destroy_()
-{
-  switch (type_) {
-    case types::srs:
-      c.destroy<srs_s_>();
-      break;
-    default:
-      break;
-  }
-}
-void spatial_relation_info_pdc_r17_s::ref_sig_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::ssb_idx:
-      break;
-    case types::csi_rs_idx:
-      break;
-    case types::dl_prs_pdc:
-      break;
-    case types::srs:
-      c.init<srs_s_>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "spatial_relation_info_pdc_r17_s::ref_sig_c_");
-  }
-}
-spatial_relation_info_pdc_r17_s::ref_sig_c_::ref_sig_c_(const spatial_relation_info_pdc_r17_s::ref_sig_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::ssb_idx:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::csi_rs_idx:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::dl_prs_pdc:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::srs:
-      c.init(other.c.get<srs_s_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "spatial_relation_info_pdc_r17_s::ref_sig_c_");
-  }
-}
-spatial_relation_info_pdc_r17_s::ref_sig_c_&
-spatial_relation_info_pdc_r17_s::ref_sig_c_::operator=(const spatial_relation_info_pdc_r17_s::ref_sig_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::ssb_idx:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::csi_rs_idx:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::dl_prs_pdc:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::srs:
-      c.set(other.c.get<srs_s_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "spatial_relation_info_pdc_r17_s::ref_sig_c_");
-  }
-
-  return *this;
-}
-uint8_t& spatial_relation_info_pdc_r17_s::ref_sig_c_::set_ssb_idx()
-{
-  set(types::ssb_idx);
-  return c.get<uint8_t>();
-}
-uint8_t& spatial_relation_info_pdc_r17_s::ref_sig_c_::set_csi_rs_idx()
-{
-  set(types::csi_rs_idx);
-  return c.get<uint8_t>();
-}
-uint8_t& spatial_relation_info_pdc_r17_s::ref_sig_c_::set_dl_prs_pdc()
-{
-  set(types::dl_prs_pdc);
-  return c.get<uint8_t>();
-}
-spatial_relation_info_pdc_r17_s::ref_sig_c_::srs_s_& spatial_relation_info_pdc_r17_s::ref_sig_c_::set_srs()
-{
-  set(types::srs);
-  return c.get<srs_s_>();
-}
-void spatial_relation_info_pdc_r17_s::ref_sig_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::ssb_idx:
-      j.write_int("ssb-Index", c.get<uint8_t>());
-      break;
-    case types::csi_rs_idx:
-      j.write_int("csi-RS-Index", c.get<uint8_t>());
-      break;
-    case types::dl_prs_pdc:
-      j.write_int("dl-PRS-PDC", c.get<uint8_t>());
-      break;
-    case types::srs:
-      j.write_fieldname("srs");
-      j.start_obj();
-      j.write_int("resourceId", c.get<srs_s_>().res_id);
-      j.write_int("uplinkBWP", c.get<srs_s_>().ul_bwp);
-      j.end_obj();
-      break;
-    default:
-      log_invalid_choice_id(type_, "spatial_relation_info_pdc_r17_s::ref_sig_c_");
-  }
-  j.end_obj();
-}
-SRSASN_CODE spatial_relation_info_pdc_r17_s::ref_sig_c_::pack(bit_ref& bref) const
-{
-  type_.pack(bref);
-  switch (type_) {
-    case types::ssb_idx:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)63u));
-      break;
-    case types::csi_rs_idx:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)191u));
-      break;
-    case types::dl_prs_pdc:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)63u));
-      break;
-    case types::srs:
-      HANDLE_CODE(pack_integer(bref, c.get<srs_s_>().res_id, (uint8_t)0u, (uint8_t)63u));
-      HANDLE_CODE(pack_integer(bref, c.get<srs_s_>().ul_bwp, (uint8_t)0u, (uint8_t)4u));
-      break;
-    default:
-      log_invalid_choice_id(type_, "spatial_relation_info_pdc_r17_s::ref_sig_c_");
-      return SRSASN_ERROR_ENCODE_FAIL;
-  }
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE spatial_relation_info_pdc_r17_s::ref_sig_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  e.unpack(bref);
-  set(e);
-  switch (type_) {
-    case types::ssb_idx:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)63u));
-      break;
-    case types::csi_rs_idx:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)191u));
-      break;
-    case types::dl_prs_pdc:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)63u));
-      break;
-    case types::srs:
-      HANDLE_CODE(unpack_integer(c.get<srs_s_>().res_id, bref, (uint8_t)0u, (uint8_t)63u));
-      HANDLE_CODE(unpack_integer(c.get<srs_s_>().ul_bwp, bref, (uint8_t)0u, (uint8_t)4u));
-      break;
-    default:
-      log_invalid_choice_id(type_, "spatial_relation_info_pdc_r17_s::ref_sig_c_");
-      return SRSASN_ERROR_DECODE_FAIL;
-  }
-  return SRSASN_SUCCESS;
-}
-
-const char* spatial_relation_info_pdc_r17_s::ref_sig_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"ssb-Index", "csi-RS-Index", "dl-PRS-PDC", "srs"};
-  return convert_enum_idx(names, 4, value, "spatial_relation_info_pdc_r17_s::ref_sig_c_::types");
-}
-
-// ServingCellAndBWP-Id-r17 ::= SEQUENCE
-SRSASN_CODE serving_cell_and_bwp_id_r17_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_integer(bref, servingcell_r17, (uint8_t)0u, (uint8_t)31u));
-  HANDLE_CODE(pack_integer(bref, bwp_r17, (uint8_t)0u, (uint8_t)4u));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE serving_cell_and_bwp_id_r17_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_integer(servingcell_r17, bref, (uint8_t)0u, (uint8_t)31u));
-  HANDLE_CODE(unpack_integer(bwp_r17, bref, (uint8_t)0u, (uint8_t)4u));
-
-  return SRSASN_SUCCESS;
-}
-void serving_cell_and_bwp_id_r17_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("servingcell-r17", servingcell_r17);
-  j.write_int("bwp-r17", bwp_r17);
-  j.end_obj();
-}
-
 // SRS-PeriodicityAndOffset ::= CHOICE
 void srs_periodicity_and_offset_c::destroy_() {}
 void srs_periodicity_and_offset_c::set(types::options e)
@@ -925,6 +699,232 @@ const char* srs_spatial_relation_info_s::ref_sig_c_::types_opts::to_string() con
   return convert_enum_idx(names, 3, value, "srs_spatial_relation_info_s::ref_sig_c_::types");
 }
 
+// ServingCellAndBWP-Id-r17 ::= SEQUENCE
+SRSASN_CODE serving_cell_and_bwp_id_r17_s::pack(bit_ref& bref) const
+{
+  HANDLE_CODE(pack_integer(bref, servingcell_r17, (uint8_t)0u, (uint8_t)31u));
+  HANDLE_CODE(pack_integer(bref, bwp_r17, (uint8_t)0u, (uint8_t)4u));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE serving_cell_and_bwp_id_r17_s::unpack(cbit_ref& bref)
+{
+  HANDLE_CODE(unpack_integer(servingcell_r17, bref, (uint8_t)0u, (uint8_t)31u));
+  HANDLE_CODE(unpack_integer(bwp_r17, bref, (uint8_t)0u, (uint8_t)4u));
+
+  return SRSASN_SUCCESS;
+}
+void serving_cell_and_bwp_id_r17_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_int("servingcell-r17", servingcell_r17);
+  j.write_int("bwp-r17", bwp_r17);
+  j.end_obj();
+}
+
+// SpatialRelationInfo-PDC-r17 ::= SEQUENCE
+SRSASN_CODE spatial_relation_info_pdc_r17_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(ref_sig.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE spatial_relation_info_pdc_r17_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(ref_sig.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void spatial_relation_info_pdc_r17_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_fieldname("referenceSignal");
+  ref_sig.to_json(j);
+  j.end_obj();
+}
+
+void spatial_relation_info_pdc_r17_s::ref_sig_c_::destroy_()
+{
+  switch (type_) {
+    case types::srs:
+      c.destroy<srs_s_>();
+      break;
+    default:
+      break;
+  }
+}
+void spatial_relation_info_pdc_r17_s::ref_sig_c_::set(types::options e)
+{
+  destroy_();
+  type_ = e;
+  switch (type_) {
+    case types::ssb_idx:
+      break;
+    case types::csi_rs_idx:
+      break;
+    case types::dl_prs_pdc:
+      break;
+    case types::srs:
+      c.init<srs_s_>();
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "spatial_relation_info_pdc_r17_s::ref_sig_c_");
+  }
+}
+spatial_relation_info_pdc_r17_s::ref_sig_c_::ref_sig_c_(const spatial_relation_info_pdc_r17_s::ref_sig_c_& other)
+{
+  type_ = other.type();
+  switch (type_) {
+    case types::ssb_idx:
+      c.init(other.c.get<uint8_t>());
+      break;
+    case types::csi_rs_idx:
+      c.init(other.c.get<uint8_t>());
+      break;
+    case types::dl_prs_pdc:
+      c.init(other.c.get<uint8_t>());
+      break;
+    case types::srs:
+      c.init(other.c.get<srs_s_>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "spatial_relation_info_pdc_r17_s::ref_sig_c_");
+  }
+}
+spatial_relation_info_pdc_r17_s::ref_sig_c_&
+spatial_relation_info_pdc_r17_s::ref_sig_c_::operator=(const spatial_relation_info_pdc_r17_s::ref_sig_c_& other)
+{
+  if (this == &other) {
+    return *this;
+  }
+  set(other.type());
+  switch (type_) {
+    case types::ssb_idx:
+      c.set(other.c.get<uint8_t>());
+      break;
+    case types::csi_rs_idx:
+      c.set(other.c.get<uint8_t>());
+      break;
+    case types::dl_prs_pdc:
+      c.set(other.c.get<uint8_t>());
+      break;
+    case types::srs:
+      c.set(other.c.get<srs_s_>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "spatial_relation_info_pdc_r17_s::ref_sig_c_");
+  }
+
+  return *this;
+}
+uint8_t& spatial_relation_info_pdc_r17_s::ref_sig_c_::set_ssb_idx()
+{
+  set(types::ssb_idx);
+  return c.get<uint8_t>();
+}
+uint8_t& spatial_relation_info_pdc_r17_s::ref_sig_c_::set_csi_rs_idx()
+{
+  set(types::csi_rs_idx);
+  return c.get<uint8_t>();
+}
+uint8_t& spatial_relation_info_pdc_r17_s::ref_sig_c_::set_dl_prs_pdc()
+{
+  set(types::dl_prs_pdc);
+  return c.get<uint8_t>();
+}
+spatial_relation_info_pdc_r17_s::ref_sig_c_::srs_s_& spatial_relation_info_pdc_r17_s::ref_sig_c_::set_srs()
+{
+  set(types::srs);
+  return c.get<srs_s_>();
+}
+void spatial_relation_info_pdc_r17_s::ref_sig_c_::to_json(json_writer& j) const
+{
+  j.start_obj();
+  switch (type_) {
+    case types::ssb_idx:
+      j.write_int("ssb-Index", c.get<uint8_t>());
+      break;
+    case types::csi_rs_idx:
+      j.write_int("csi-RS-Index", c.get<uint8_t>());
+      break;
+    case types::dl_prs_pdc:
+      j.write_int("dl-PRS-PDC", c.get<uint8_t>());
+      break;
+    case types::srs:
+      j.write_fieldname("srs");
+      j.start_obj();
+      j.write_int("resourceId", c.get<srs_s_>().res_id);
+      j.write_int("uplinkBWP", c.get<srs_s_>().ul_bwp);
+      j.end_obj();
+      break;
+    default:
+      log_invalid_choice_id(type_, "spatial_relation_info_pdc_r17_s::ref_sig_c_");
+  }
+  j.end_obj();
+}
+SRSASN_CODE spatial_relation_info_pdc_r17_s::ref_sig_c_::pack(bit_ref& bref) const
+{
+  type_.pack(bref);
+  switch (type_) {
+    case types::ssb_idx:
+      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)63u));
+      break;
+    case types::csi_rs_idx:
+      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)191u));
+      break;
+    case types::dl_prs_pdc:
+      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)63u));
+      break;
+    case types::srs:
+      HANDLE_CODE(pack_integer(bref, c.get<srs_s_>().res_id, (uint8_t)0u, (uint8_t)63u));
+      HANDLE_CODE(pack_integer(bref, c.get<srs_s_>().ul_bwp, (uint8_t)0u, (uint8_t)4u));
+      break;
+    default:
+      log_invalid_choice_id(type_, "spatial_relation_info_pdc_r17_s::ref_sig_c_");
+      return SRSASN_ERROR_ENCODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE spatial_relation_info_pdc_r17_s::ref_sig_c_::unpack(cbit_ref& bref)
+{
+  types e;
+  e.unpack(bref);
+  set(e);
+  switch (type_) {
+    case types::ssb_idx:
+      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)63u));
+      break;
+    case types::csi_rs_idx:
+      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)191u));
+      break;
+    case types::dl_prs_pdc:
+      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)63u));
+      break;
+    case types::srs:
+      HANDLE_CODE(unpack_integer(c.get<srs_s_>().res_id, bref, (uint8_t)0u, (uint8_t)63u));
+      HANDLE_CODE(unpack_integer(c.get<srs_s_>().ul_bwp, bref, (uint8_t)0u, (uint8_t)4u));
+      break;
+    default:
+      log_invalid_choice_id(type_, "spatial_relation_info_pdc_r17_s::ref_sig_c_");
+      return SRSASN_ERROR_DECODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+
+const char* spatial_relation_info_pdc_r17_s::ref_sig_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"ssb-Index", "csi-RS-Index", "dl-PRS-PDC", "srs"};
+  return convert_enum_idx(names, 4, value, "spatial_relation_info_pdc_r17_s::ref_sig_c_::types");
+}
+
 // SRS-Resource ::= SEQUENCE
 SRSASN_CODE srs_res_s::pack(bit_ref& bref) const
 {
@@ -1043,12 +1043,10 @@ SRSASN_CODE srs_res_s::unpack(cbit_ref& bref)
   }
 
   if (ext) {
-    ext_groups_unpacker_guard group_flags(3);
-    group_flags.unpack(bref);
+    ext_groups_unpacker group_unpacker(bref);
 
-    if (group_flags[0]) {
-      varlength_field_unpack_guard varlen_scope(bref, false);
-
+    HANDLE_CODE(group_unpacker.unpack_next_group());
+    if (group_unpacker.get_last_group_range(bref)) {
       unpack_presence_flag(res_map_r16, bref);
       if (res_map_r16.is_present()) {
         HANDLE_CODE(unpack_integer(res_map_r16->start_position_r16, bref, (uint8_t)0u, (uint8_t)13u));
@@ -1056,9 +1054,8 @@ SRSASN_CODE srs_res_s::unpack(cbit_ref& bref)
         HANDLE_CODE(res_map_r16->repeat_factor_r16.unpack(bref));
       }
     }
-    if (group_flags[1]) {
-      varlength_field_unpack_guard varlen_scope(bref, false);
-
+    HANDLE_CODE(group_unpacker.unpack_next_group());
+    if (group_unpacker.get_last_group_range(bref)) {
       unpack_presence_flag(spatial_relation_info_pdc_r17, bref);
       unpack_presence_flag(res_map_r17, bref);
       unpack_presence_flag(partial_freq_sr17, bref);
@@ -1084,15 +1081,15 @@ SRSASN_CODE srs_res_s::unpack(cbit_ref& bref)
         HANDLE_CODE(srs_tci_state_r17->unpack(bref));
       }
     }
-    if (group_flags[2]) {
-      varlength_field_unpack_guard varlen_scope(bref, false);
-
+    HANDLE_CODE(group_unpacker.unpack_next_group());
+    if (group_unpacker.get_last_group_range(bref)) {
       HANDLE_CODE(bref.unpack(repeat_factor_v1730_present, 1));
       unpack_presence_flag(srs_dl_or_joint_tci_state_v1730, bref);
       if (srs_dl_or_joint_tci_state_v1730.is_present()) {
         HANDLE_CODE(srs_dl_or_joint_tci_state_v1730->cell_and_bwp_r17.unpack(bref));
       }
     }
+    HANDLE_CODE(group_unpacker.consume_remaining_groups(bref));
   }
   return SRSASN_SUCCESS;
 }
@@ -1831,187 +1828,183 @@ const char* srs_res_s::srs_tci_state_r17_c_::types_opts::to_string() const
 // SRS-PosResourceAP-r16 ::= SEQUENCE
 SRSASN_CODE srs_pos_res_ap_r16_s::pack(bit_ref& bref) const
 {
-  HANDLE_CODE(max_num_ap_srs_pos_res_list_per_bwp_r16.pack(bref));
-  HANDLE_CODE(max_num_ap_srs_pos_res_list_per_bwp_per_slot_r16.pack(bref));
+  HANDLE_CODE(max_num_ap_srs_pos_res_per_bwp_r16.pack(bref));
+  HANDLE_CODE(max_num_ap_srs_pos_res_per_bwp_per_slot_r16.pack(bref));
 
   return SRSASN_SUCCESS;
 }
 SRSASN_CODE srs_pos_res_ap_r16_s::unpack(cbit_ref& bref)
 {
-  HANDLE_CODE(max_num_ap_srs_pos_res_list_per_bwp_r16.unpack(bref));
-  HANDLE_CODE(max_num_ap_srs_pos_res_list_per_bwp_per_slot_r16.unpack(bref));
+  HANDLE_CODE(max_num_ap_srs_pos_res_per_bwp_r16.unpack(bref));
+  HANDLE_CODE(max_num_ap_srs_pos_res_per_bwp_per_slot_r16.unpack(bref));
 
   return SRSASN_SUCCESS;
 }
 void srs_pos_res_ap_r16_s::to_json(json_writer& j) const
 {
   j.start_obj();
-  j.write_str("maxNumberAP-SRS-PosResourcesPerBWP-r16", max_num_ap_srs_pos_res_list_per_bwp_r16.to_string());
+  j.write_str("maxNumberAP-SRS-PosResourcesPerBWP-r16", max_num_ap_srs_pos_res_per_bwp_r16.to_string());
   j.write_str("maxNumberAP-SRS-PosResourcesPerBWP-PerSlot-r16",
-              max_num_ap_srs_pos_res_list_per_bwp_per_slot_r16.to_string());
+              max_num_ap_srs_pos_res_per_bwp_per_slot_r16.to_string());
   j.end_obj();
 }
 
-const char* srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_list_per_bwp_r16_opts::to_string() const
+const char* srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_r16_opts::to_string() const
 {
   static const char* names[] = {"n1", "n2", "n4", "n8", "n16", "n32", "n64"};
-  return convert_enum_idx(names, 7, value, "srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_list_per_bwp_r16_e_");
+  return convert_enum_idx(names, 7, value, "srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_r16_e_");
 }
-uint8_t srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_list_per_bwp_r16_opts::to_number() const
+uint8_t srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_r16_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 4, 8, 16, 32, 64};
-  return map_enum_number(numbers, 7, value, "srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_list_per_bwp_r16_e_");
+  return map_enum_number(numbers, 7, value, "srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_r16_e_");
 }
 
-const char* srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_list_per_bwp_per_slot_r16_opts::to_string() const
+const char* srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_per_slot_r16_opts::to_string() const
 {
   static const char* names[] = {"n1", "n2", "n3", "n4", "n5", "n6", "n8", "n10", "n12", "n14"};
-  return convert_enum_idx(
-      names, 10, value, "srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_list_per_bwp_per_slot_r16_e_");
+  return convert_enum_idx(names, 10, value, "srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_per_slot_r16_e_");
 }
-uint8_t srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_list_per_bwp_per_slot_r16_opts::to_number() const
+uint8_t srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_per_slot_r16_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 3, 4, 5, 6, 8, 10, 12, 14};
-  return map_enum_number(
-      numbers, 10, value, "srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_list_per_bwp_per_slot_r16_e_");
-}
-
-// SRS-PosResources-r16 ::= SEQUENCE
-SRSASN_CODE srs_pos_res_list_r16_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(max_num_srs_pos_res_set_per_bwp_r16.pack(bref));
-  HANDLE_CODE(max_num_srs_pos_res_list_per_bwp_r16.pack(bref));
-  HANDLE_CODE(max_num_srs_res_per_bwp_per_slot_r16.pack(bref));
-  HANDLE_CODE(max_num_periodic_srs_pos_res_list_per_bwp_r16.pack(bref));
-  HANDLE_CODE(max_num_periodic_srs_pos_res_list_per_bwp_per_slot_r16.pack(bref));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE srs_pos_res_list_r16_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(max_num_srs_pos_res_set_per_bwp_r16.unpack(bref));
-  HANDLE_CODE(max_num_srs_pos_res_list_per_bwp_r16.unpack(bref));
-  HANDLE_CODE(max_num_srs_res_per_bwp_per_slot_r16.unpack(bref));
-  HANDLE_CODE(max_num_periodic_srs_pos_res_list_per_bwp_r16.unpack(bref));
-  HANDLE_CODE(max_num_periodic_srs_pos_res_list_per_bwp_per_slot_r16.unpack(bref));
-
-  return SRSASN_SUCCESS;
-}
-void srs_pos_res_list_r16_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("maxNumberSRS-PosResourceSetPerBWP-r16", max_num_srs_pos_res_set_per_bwp_r16.to_string());
-  j.write_str("maxNumberSRS-PosResourcesPerBWP-r16", max_num_srs_pos_res_list_per_bwp_r16.to_string());
-  j.write_str("maxNumberSRS-ResourcesPerBWP-PerSlot-r16", max_num_srs_res_per_bwp_per_slot_r16.to_string());
-  j.write_str("maxNumberPeriodicSRS-PosResourcesPerBWP-r16", max_num_periodic_srs_pos_res_list_per_bwp_r16.to_string());
-  j.write_str("maxNumberPeriodicSRS-PosResourcesPerBWP-PerSlot-r16",
-              max_num_periodic_srs_pos_res_list_per_bwp_per_slot_r16.to_string());
-  j.end_obj();
-}
-
-const char* srs_pos_res_list_r16_s::max_num_srs_pos_res_set_per_bwp_r16_opts::to_string() const
-{
-  static const char* names[] = {"n1", "n2", "n4", "n8", "n12", "n16"};
-  return convert_enum_idx(names, 6, value, "srs_pos_res_list_r16_s::max_num_srs_pos_res_set_per_bwp_r16_e_");
-}
-uint8_t srs_pos_res_list_r16_s::max_num_srs_pos_res_set_per_bwp_r16_opts::to_number() const
-{
-  static const uint8_t numbers[] = {1, 2, 4, 8, 12, 16};
-  return map_enum_number(numbers, 6, value, "srs_pos_res_list_r16_s::max_num_srs_pos_res_set_per_bwp_r16_e_");
-}
-
-const char* srs_pos_res_list_r16_s::max_num_srs_pos_res_list_per_bwp_r16_opts::to_string() const
-{
-  static const char* names[] = {"n1", "n2", "n4", "n8", "n16", "n32", "n64"};
-  return convert_enum_idx(names, 7, value, "srs_pos_res_list_r16_s::max_num_srs_pos_res_list_per_bwp_r16_e_");
-}
-uint8_t srs_pos_res_list_r16_s::max_num_srs_pos_res_list_per_bwp_r16_opts::to_number() const
-{
-  static const uint8_t numbers[] = {1, 2, 4, 8, 16, 32, 64};
-  return map_enum_number(numbers, 7, value, "srs_pos_res_list_r16_s::max_num_srs_pos_res_list_per_bwp_r16_e_");
-}
-
-const char* srs_pos_res_list_r16_s::max_num_srs_res_per_bwp_per_slot_r16_opts::to_string() const
-{
-  static const char* names[] = {"n1", "n2", "n3", "n4", "n5", "n6", "n8", "n10", "n12", "n14"};
-  return convert_enum_idx(names, 10, value, "srs_pos_res_list_r16_s::max_num_srs_res_per_bwp_per_slot_r16_e_");
-}
-uint8_t srs_pos_res_list_r16_s::max_num_srs_res_per_bwp_per_slot_r16_opts::to_number() const
-{
-  static const uint8_t numbers[] = {1, 2, 3, 4, 5, 6, 8, 10, 12, 14};
-  return map_enum_number(numbers, 10, value, "srs_pos_res_list_r16_s::max_num_srs_res_per_bwp_per_slot_r16_e_");
-}
-
-const char* srs_pos_res_list_r16_s::max_num_periodic_srs_pos_res_list_per_bwp_r16_opts::to_string() const
-{
-  static const char* names[] = {"n1", "n2", "n4", "n8", "n16", "n32", "n64"};
-  return convert_enum_idx(names, 7, value, "srs_pos_res_list_r16_s::max_num_periodic_srs_pos_res_list_per_bwp_r16_e_");
-}
-uint8_t srs_pos_res_list_r16_s::max_num_periodic_srs_pos_res_list_per_bwp_r16_opts::to_number() const
-{
-  static const uint8_t numbers[] = {1, 2, 4, 8, 16, 32, 64};
-  return map_enum_number(numbers, 7, value, "srs_pos_res_list_r16_s::max_num_periodic_srs_pos_res_list_per_bwp_r16_e_");
-}
-
-const char* srs_pos_res_list_r16_s::max_num_periodic_srs_pos_res_list_per_bwp_per_slot_r16_opts::to_string() const
-{
-  static const char* names[] = {"n1", "n2", "n3", "n4", "n5", "n6", "n8", "n10", "n12", "n14"};
-  return convert_enum_idx(
-      names, 10, value, "srs_pos_res_list_r16_s::max_num_periodic_srs_pos_res_list_per_bwp_per_slot_r16_e_");
-}
-uint8_t srs_pos_res_list_r16_s::max_num_periodic_srs_pos_res_list_per_bwp_per_slot_r16_opts::to_number() const
-{
-  static const uint8_t numbers[] = {1, 2, 3, 4, 5, 6, 8, 10, 12, 14};
-  return map_enum_number(
-      numbers, 10, value, "srs_pos_res_list_r16_s::max_num_periodic_srs_pos_res_list_per_bwp_per_slot_r16_e_");
+  return map_enum_number(numbers, 10, value, "srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_per_slot_r16_e_");
 }
 
 // SRS-PosResourceSP-r16 ::= SEQUENCE
 SRSASN_CODE srs_pos_res_sp_r16_s::pack(bit_ref& bref) const
 {
-  HANDLE_CODE(max_num_sp_srs_pos_res_list_per_bwp_r16.pack(bref));
-  HANDLE_CODE(max_num_sp_srs_pos_res_list_per_bwp_per_slot_r16.pack(bref));
+  HANDLE_CODE(max_num_sp_srs_pos_res_per_bwp_r16.pack(bref));
+  HANDLE_CODE(max_num_sp_srs_pos_res_per_bwp_per_slot_r16.pack(bref));
 
   return SRSASN_SUCCESS;
 }
 SRSASN_CODE srs_pos_res_sp_r16_s::unpack(cbit_ref& bref)
 {
-  HANDLE_CODE(max_num_sp_srs_pos_res_list_per_bwp_r16.unpack(bref));
-  HANDLE_CODE(max_num_sp_srs_pos_res_list_per_bwp_per_slot_r16.unpack(bref));
+  HANDLE_CODE(max_num_sp_srs_pos_res_per_bwp_r16.unpack(bref));
+  HANDLE_CODE(max_num_sp_srs_pos_res_per_bwp_per_slot_r16.unpack(bref));
 
   return SRSASN_SUCCESS;
 }
 void srs_pos_res_sp_r16_s::to_json(json_writer& j) const
 {
   j.start_obj();
-  j.write_str("maxNumberSP-SRS-PosResourcesPerBWP-r16", max_num_sp_srs_pos_res_list_per_bwp_r16.to_string());
+  j.write_str("maxNumberSP-SRS-PosResourcesPerBWP-r16", max_num_sp_srs_pos_res_per_bwp_r16.to_string());
   j.write_str("maxNumberSP-SRS-PosResourcesPerBWP-PerSlot-r16",
-              max_num_sp_srs_pos_res_list_per_bwp_per_slot_r16.to_string());
+              max_num_sp_srs_pos_res_per_bwp_per_slot_r16.to_string());
   j.end_obj();
 }
 
-const char* srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_list_per_bwp_r16_opts::to_string() const
+const char* srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_r16_opts::to_string() const
 {
   static const char* names[] = {"n1", "n2", "n4", "n8", "n16", "n32", "n64"};
-  return convert_enum_idx(names, 7, value, "srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_list_per_bwp_r16_e_");
+  return convert_enum_idx(names, 7, value, "srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_r16_e_");
 }
-uint8_t srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_list_per_bwp_r16_opts::to_number() const
+uint8_t srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_r16_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 4, 8, 16, 32, 64};
-  return map_enum_number(numbers, 7, value, "srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_list_per_bwp_r16_e_");
+  return map_enum_number(numbers, 7, value, "srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_r16_e_");
 }
 
-const char* srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_list_per_bwp_per_slot_r16_opts::to_string() const
+const char* srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_per_slot_r16_opts::to_string() const
+{
+  static const char* names[] = {"n1", "n2", "n3", "n4", "n5", "n6", "n8", "n10", "n12", "n14"};
+  return convert_enum_idx(names, 10, value, "srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_per_slot_r16_e_");
+}
+uint8_t srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_per_slot_r16_opts::to_number() const
+{
+  static const uint8_t numbers[] = {1, 2, 3, 4, 5, 6, 8, 10, 12, 14};
+  return map_enum_number(numbers, 10, value, "srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_per_slot_r16_e_");
+}
+
+// SRS-PosResources-r16 ::= SEQUENCE
+SRSASN_CODE srs_pos_resources_r16_s::pack(bit_ref& bref) const
+{
+  HANDLE_CODE(max_num_srs_pos_res_set_per_bwp_r16.pack(bref));
+  HANDLE_CODE(max_num_srs_pos_res_per_bwp_r16.pack(bref));
+  HANDLE_CODE(max_num_srs_res_per_bwp_per_slot_r16.pack(bref));
+  HANDLE_CODE(max_num_periodic_srs_pos_res_per_bwp_r16.pack(bref));
+  HANDLE_CODE(max_num_periodic_srs_pos_res_per_bwp_per_slot_r16.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE srs_pos_resources_r16_s::unpack(cbit_ref& bref)
+{
+  HANDLE_CODE(max_num_srs_pos_res_set_per_bwp_r16.unpack(bref));
+  HANDLE_CODE(max_num_srs_pos_res_per_bwp_r16.unpack(bref));
+  HANDLE_CODE(max_num_srs_res_per_bwp_per_slot_r16.unpack(bref));
+  HANDLE_CODE(max_num_periodic_srs_pos_res_per_bwp_r16.unpack(bref));
+  HANDLE_CODE(max_num_periodic_srs_pos_res_per_bwp_per_slot_r16.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void srs_pos_resources_r16_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_str("maxNumberSRS-PosResourceSetPerBWP-r16", max_num_srs_pos_res_set_per_bwp_r16.to_string());
+  j.write_str("maxNumberSRS-PosResourcesPerBWP-r16", max_num_srs_pos_res_per_bwp_r16.to_string());
+  j.write_str("maxNumberSRS-ResourcesPerBWP-PerSlot-r16", max_num_srs_res_per_bwp_per_slot_r16.to_string());
+  j.write_str("maxNumberPeriodicSRS-PosResourcesPerBWP-r16", max_num_periodic_srs_pos_res_per_bwp_r16.to_string());
+  j.write_str("maxNumberPeriodicSRS-PosResourcesPerBWP-PerSlot-r16",
+              max_num_periodic_srs_pos_res_per_bwp_per_slot_r16.to_string());
+  j.end_obj();
+}
+
+const char* srs_pos_resources_r16_s::max_num_srs_pos_res_set_per_bwp_r16_opts::to_string() const
+{
+  static const char* names[] = {"n1", "n2", "n4", "n8", "n12", "n16"};
+  return convert_enum_idx(names, 6, value, "srs_pos_resources_r16_s::max_num_srs_pos_res_set_per_bwp_r16_e_");
+}
+uint8_t srs_pos_resources_r16_s::max_num_srs_pos_res_set_per_bwp_r16_opts::to_number() const
+{
+  static const uint8_t numbers[] = {1, 2, 4, 8, 12, 16};
+  return map_enum_number(numbers, 6, value, "srs_pos_resources_r16_s::max_num_srs_pos_res_set_per_bwp_r16_e_");
+}
+
+const char* srs_pos_resources_r16_s::max_num_srs_pos_res_per_bwp_r16_opts::to_string() const
+{
+  static const char* names[] = {"n1", "n2", "n4", "n8", "n16", "n32", "n64"};
+  return convert_enum_idx(names, 7, value, "srs_pos_resources_r16_s::max_num_srs_pos_res_per_bwp_r16_e_");
+}
+uint8_t srs_pos_resources_r16_s::max_num_srs_pos_res_per_bwp_r16_opts::to_number() const
+{
+  static const uint8_t numbers[] = {1, 2, 4, 8, 16, 32, 64};
+  return map_enum_number(numbers, 7, value, "srs_pos_resources_r16_s::max_num_srs_pos_res_per_bwp_r16_e_");
+}
+
+const char* srs_pos_resources_r16_s::max_num_srs_res_per_bwp_per_slot_r16_opts::to_string() const
+{
+  static const char* names[] = {"n1", "n2", "n3", "n4", "n5", "n6", "n8", "n10", "n12", "n14"};
+  return convert_enum_idx(names, 10, value, "srs_pos_resources_r16_s::max_num_srs_res_per_bwp_per_slot_r16_e_");
+}
+uint8_t srs_pos_resources_r16_s::max_num_srs_res_per_bwp_per_slot_r16_opts::to_number() const
+{
+  static const uint8_t numbers[] = {1, 2, 3, 4, 5, 6, 8, 10, 12, 14};
+  return map_enum_number(numbers, 10, value, "srs_pos_resources_r16_s::max_num_srs_res_per_bwp_per_slot_r16_e_");
+}
+
+const char* srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_r16_opts::to_string() const
+{
+  static const char* names[] = {"n1", "n2", "n4", "n8", "n16", "n32", "n64"};
+  return convert_enum_idx(names, 7, value, "srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_r16_e_");
+}
+uint8_t srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_r16_opts::to_number() const
+{
+  static const uint8_t numbers[] = {1, 2, 4, 8, 16, 32, 64};
+  return map_enum_number(numbers, 7, value, "srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_r16_e_");
+}
+
+const char* srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_per_slot_r16_opts::to_string() const
 {
   static const char* names[] = {"n1", "n2", "n3", "n4", "n5", "n6", "n8", "n10", "n12", "n14"};
   return convert_enum_idx(
-      names, 10, value, "srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_list_per_bwp_per_slot_r16_e_");
+      names, 10, value, "srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_per_slot_r16_e_");
 }
-uint8_t srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_list_per_bwp_per_slot_r16_opts::to_number() const
+uint8_t srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_per_slot_r16_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 3, 4, 5, 6, 8, 10, 12, 14};
   return map_enum_number(
-      numbers, 10, value, "srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_list_per_bwp_per_slot_r16_e_");
+      numbers, 10, value, "srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_per_slot_r16_e_");
 }
 
 // SRS-AllPosResources-r16 ::= SEQUENCE
@@ -2020,7 +2013,7 @@ SRSASN_CODE srs_all_pos_res_r16_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(srs_pos_res_ap_r16_present, 1));
   HANDLE_CODE(bref.pack(srs_pos_res_sp_r16_present, 1));
 
-  HANDLE_CODE(srs_pos_res_list_r16.pack(bref));
+  HANDLE_CODE(srs_pos_resources_r16.pack(bref));
   if (srs_pos_res_ap_r16_present) {
     HANDLE_CODE(srs_pos_res_ap_r16.pack(bref));
   }
@@ -2035,7 +2028,7 @@ SRSASN_CODE srs_all_pos_res_r16_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(srs_pos_res_ap_r16_present, 1));
   HANDLE_CODE(bref.unpack(srs_pos_res_sp_r16_present, 1));
 
-  HANDLE_CODE(srs_pos_res_list_r16.unpack(bref));
+  HANDLE_CODE(srs_pos_resources_r16.unpack(bref));
   if (srs_pos_res_ap_r16_present) {
     HANDLE_CODE(srs_pos_res_ap_r16.unpack(bref));
   }
@@ -2049,7 +2042,7 @@ void srs_all_pos_res_r16_s::to_json(json_writer& j) const
 {
   j.start_obj();
   j.write_fieldname("srs-PosResources-r16");
-  srs_pos_res_list_r16.to_json(j);
+  srs_pos_resources_r16.to_json(j);
   if (srs_pos_res_ap_r16_present) {
     j.write_fieldname("srs-PosResourceAP-r16");
     srs_pos_res_ap_r16.to_json(j);

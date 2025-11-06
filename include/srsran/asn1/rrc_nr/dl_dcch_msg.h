@@ -33,10 +33,6 @@
 namespace asn1 {
 namespace rrc_nr {
 
-/*******************************************************************************
- *                             Forward Declarations
- ******************************************************************************/
-
 struct rrc_recfg_s;
 struct rrc_resume_s;
 struct rrc_release_s;

@@ -113,10 +113,6 @@ if (ENABLE_WERROR)
     # Disable gcc's maybe uninitialized analysis as it raises false positives
     if (CMAKE_COMPILER_IS_GNUCXX)
         include(CheckCXXCompilerFlag)
-        check_cxx_compiler_flag("-Wmaybe-uninitialized" HAS_MAYBE_UNINITIALIZED)
-        if (HAS_MAYBE_UNINITIALIZED)
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=maybe-uninitialized")
-        endif()
         check_cxx_compiler_flag("-Wstringop-overflow" HAS_STRINGOP_OVERFLOW)
         if (HAS_STRINGOP_OVERFLOW)
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=stringop-overflow")
@@ -200,6 +196,9 @@ ADD_CXX_COMPILER_FLAG_IF_AVAILABLE(-Wextra-semi HAVE_EXTRA_SEMI)
 
 # Disable RTTI
 ADD_CXX_COMPILER_FLAG_IF_AVAILABLE(-fno-rtti HAVE_NO_RTTI)
+
+# Disable maybe-uninitialized warnings as it mainly raises false alarms
+ADD_CXX_COMPILER_FLAG_IF_AVAILABLE(-Wno-maybe-uninitialized HAVE_NO_MAYBE_UNINITIALIZED)
 
 # Set compiler flags for different build types.
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb -O0 -DDEBUG_MODE -DBUILD_TYPE_DEBUG")

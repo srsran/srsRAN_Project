@@ -303,49 +303,29 @@ static nlohmann::json generate_cell_uplink(const upper_phy_metrics& metrics)
   return json;
 }
 
-static nlohmann::json generate_upper_phy_cell(const upper_phy_metrics& metrics, pci_t pci)
+static nlohmann::json generate_upper_phy(const upper_phy_metrics& upper_phy)
 {
   nlohmann::json json;
 
-  json["pci"] = pci;
-  json["dl"]  = generate_cell_downlink(metrics);
-  json["ul"]  = generate_cell_uplink(metrics);
+  json["dl"] = generate_cell_downlink(upper_phy);
+  json["ul"] = generate_cell_uplink(upper_phy);
 
   return json;
 }
 
-static nlohmann::json generate_upper_phy(span<const upper_phy_metrics> upper_phy, span<const pci_t> pci_sector_map)
+nlohmann::json srsran::app_helpers::json_generators::generate(const srs_du::o_du_low_metrics& metrics)
 {
   nlohmann::json json;
 
-  for (auto& upper : upper_phy) {
-    srsran_assert(upper.sector_id < pci_sector_map.size(),
-                  "Invalid sector identifier '{}'. PCI look up table size is '{}'",
-                  upper.sector_id,
-                  pci_sector_map.size());
-    json.emplace_back(generate_upper_phy_cell(upper, pci_sector_map[upper.sector_id]));
-  }
+  json["timestamp"] = get_time_stamp();
+  json["du_low"]    = generate_upper_phy(metrics.du_lo_metrics.upper_metrics);
 
   return json;
 }
 
-nlohmann::json srsran::app_helpers::json_generators::generate(const srs_du::o_du_low_metrics& metrics,
-                                                              span<const pci_t>               pci_sector_map)
+std::string srsran::app_helpers::json_generators::generate_string(const srs_du::o_du_low_metrics& metrics, int indent)
 {
-  nlohmann::json json;
-
-  json["timestamp"]        = get_time_stamp();
-  auto& json_du_low        = json["du_low"];
-  json_du_low["upper_phy"] = generate_upper_phy(metrics.du_lo_metrics.sector_metrics, pci_sector_map);
-
-  return json;
-}
-
-std::string srsran::app_helpers::json_generators::generate_string(const srs_du::o_du_low_metrics& metrics,
-                                                                  span<const pci_t>               pci_sector_map,
-                                                                  int                             indent)
-{
-  nlohmann::json json = generate(metrics, pci_sector_map);
+  nlohmann::json json = generate(metrics);
 
   return json.dump(indent);
 }

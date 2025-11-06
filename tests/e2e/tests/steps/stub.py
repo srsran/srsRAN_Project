@@ -915,9 +915,31 @@ def multi_ue_mobility_iperf(
     Do mobility with multiple UEs
     """
 
-    logging.info("Mobility Test (iPerf%s)", ", allowing failure)" if allow_failure else "")
+    logging.info(
+        "%s-CU Mobility Test (iPerf%s)",
+        "Inter" if len(gnb_array) == 2 else "Intra",
+        ", allowing failure" if allow_failure else "",
+    )
 
     original_position = (0, 0, 0)
+
+    warning_allowlist = []
+    if allow_failure:
+        warning_allowlist = [
+            "MAC max KOs reached",
+            "Reached maximum number of RETX",
+            "UL buffering timed out",
+            'RRC Setup Procedure" timed out',
+            'RRC Reconfiguration Procedure" timed out',
+            'Intra CU Handover Target Routine" failed',
+            "RRC reconfiguration failed",
+            "Some or all PDUSessionResourceSetupItems failed to setup",
+            "UL buffering timed out",
+            "Discarding SDU",
+            "Discarding PDU",
+            "PDCP unpacking did not provide any SDU",
+            "Could not allocate Paging's DCI in PDCCH",
+        ]
 
     configure_test_parameters(
         retina_manager=retina_manager,
@@ -932,21 +954,8 @@ def multi_ue_mobility_iperf(
         num_cells=2,
         cell_position_offset=cell_position_offset,
         log_ip_level="debug",
-        warning_allowlist=[
-            "MAC max KOs reached",
-            "Reached maximum number of RETX",
-            "UL buffering timed out",
-            'RRC Setup Procedure" timed out',
-            'RRC Reconfiguration Procedure" timed out',
-            'Intra CU Handover Target Routine" failed',
-            "RRC reconfiguration failed",
-            "Some or all PDUSessionResourceSetupItems failed to setup",
-            "UL buffering timed out",
-            "Discarding SDU",
-            "Discarding PDU",
-            "PDCP unpacking did not provide any SDU",
-            "Could not allocate Paging's DCI in PDCCH",
-        ],
+        warning_allowlist=warning_allowlist,
+        enable_2gnbs=(gnb_array is not None and len(gnb_array) == 2),
     )
 
     configure_artifacts(
@@ -958,7 +967,10 @@ def multi_ue_mobility_iperf(
         ue_array=ue_array,
         gnb_array=gnb_array,
         fivegc=fivegc,
-        gnb_post_cmd=("log --cu_level=debug --hex_max_size=32", "log --mac_level=debug"),
+        gnb_post_cmd=(
+            "log --cu_level=debug  --f1ap_level=debug --ngap_level=debug --hex_max_size=32",
+            "log --du_level=debug",
+        ),
     )
 
     ue_attach_info_dict = ue_start_and_attach(

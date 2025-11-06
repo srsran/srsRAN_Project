@@ -27,22 +27,11 @@
 using namespace srsran;
 using namespace srs_du;
 
-du_low_impl::du_low_impl(std::vector<std::unique_ptr<upper_phy>> upper_) :
-  upper(std::move(upper_)), metrics_collector([](span<std::unique_ptr<upper_phy>> phys) {
-    std::vector<upper_phy_metrics_collector*> output;
-    for (auto& phy : phys) {
-      if (auto* collector = phy->get_metrics_collector()) {
-        output.push_back(collector);
-      }
-    }
-
-    srsran_assert(output.size() == phys.size() || output.empty(),
-                  "Metrics should be enabled or disabled for all sectors");
-
-    return output;
-  }(upper))
+du_low_impl::du_low_impl(std::vector<std::unique_ptr<upper_phy>> upper_) : upper(std::move(upper_))
 {
   srsran_assert(!upper.empty(), "Invalid upper PHY");
+  // All the upper PHYs share the same metrics collector. Use the first one to configure the DU low metrics collector.
+  metrics_collector = du_low_metrics_collector_impl(upper.front()->get_metrics_collector());
 }
 
 upper_phy& du_low_impl::get_upper_phy(unsigned cell_id)

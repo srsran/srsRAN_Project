@@ -193,12 +193,10 @@ SRSASN_CODE sl_bwp_cfg_common_r16_s::unpack(cbit_ref& bref)
   }
 
   if (ext) {
-    ext_groups_unpacker_guard group_flags(1);
-    group_flags.unpack(bref);
+    ext_groups_unpacker group_unpacker(bref);
 
-    if (group_flags[0]) {
-      varlength_field_unpack_guard varlen_scope(bref, false);
-
+    HANDLE_CODE(group_unpacker.unpack_next_group());
+    if (group_unpacker.get_last_group_range(bref)) {
       unpack_presence_flag(sl_bwp_pool_cfg_common_ps_r17, bref);
       unpack_presence_flag(sl_bwp_disc_pool_cfg_common_r17, bref);
       if (sl_bwp_pool_cfg_common_ps_r17.is_present()) {
@@ -208,6 +206,7 @@ SRSASN_CODE sl_bwp_cfg_common_r16_s::unpack(cbit_ref& bref)
         HANDLE_CODE(sl_bwp_disc_pool_cfg_common_r17->unpack(bref));
       }
     }
+    HANDLE_CODE(group_unpacker.consume_remaining_groups(bref));
   }
   return SRSASN_SUCCESS;
 }
@@ -233,14 +232,6 @@ void sl_bwp_cfg_common_r16_s::to_json(json_writer& j) const
     }
   }
   j.end_obj();
-}
-
-// SL-TxProfile-r17 ::= ENUMERATED
-const char* sl_tx_profile_r17_opts::to_string() const
-{
-  static const char* names[] = {
-      "drx-Compatible", "drx-Incompatible", "spare6", "spare5", "spare4", "spare3", "spare2", "spare1"};
-  return convert_enum_idx(names, 8, value, "sl_tx_profile_r17_e");
 }
 
 // SL-FreqConfigCommon-r16 ::= SEQUENCE
@@ -478,6 +469,14 @@ void sl_precfg_general_r16_s::to_json(json_writer& j) const
   j.end_obj();
 }
 
+// SL-TxProfile-r17 ::= ENUMERATED
+const char* sl_tx_profile_r17_opts::to_string() const
+{
+  static const char* names[] = {
+      "drx-Compatible", "drx-Incompatible", "spare6", "spare5", "spare4", "spare3", "spare2", "spare1"};
+  return convert_enum_idx(names, 8, value, "sl_tx_profile_r17_e");
+}
+
 // SL-RoHC-Profiles-r16 ::= SEQUENCE
 SRSASN_CODE sl_ro_hc_profiles_r16_s::pack(bit_ref& bref) const
 {
@@ -683,12 +682,10 @@ SRSASN_CODE sidelink_precfg_nr_r16_s::unpack(cbit_ref& bref)
   }
 
   if (ext) {
-    ext_groups_unpacker_guard group_flags(1);
-    group_flags.unpack(bref);
+    ext_groups_unpacker group_unpacker(bref);
 
-    if (group_flags[0]) {
-      varlength_field_unpack_guard varlen_scope(bref, false);
-
+    HANDLE_CODE(group_unpacker.unpack_next_group());
+    if (group_unpacker.get_last_group_range(bref)) {
       unpack_presence_flag(sl_drx_pre_cfg_gc_bc_r17, bref);
       unpack_presence_flag(sl_tx_profile_list_r17, bref);
       unpack_presence_flag(sl_precfg_disc_cfg_r17, bref);
@@ -702,6 +699,7 @@ SRSASN_CODE sidelink_precfg_nr_r16_s::unpack(cbit_ref& bref)
         HANDLE_CODE(sl_precfg_disc_cfg_r17->unpack(bref));
       }
     }
+    HANDLE_CODE(group_unpacker.consume_remaining_groups(bref));
   }
   return SRSASN_SUCCESS;
 }

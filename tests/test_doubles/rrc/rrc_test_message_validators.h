@@ -25,7 +25,7 @@
 #include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
 #include "srsran/asn1/rrc_nr/dl_dcch_msg.h"
 #include "srsran/asn1/rrc_nr/dl_dcch_msg_ies.h"
-#include "srsran/asn1/rrc_nr/ho_prep_info.h"
+#include "srsran/asn1/rrc_nr/rrc_nr.h"
 #include "srsran/ran/rb_id.h"
 #include <optional>
 

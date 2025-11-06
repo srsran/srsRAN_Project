@@ -410,40 +410,27 @@ static void configure_cli11_cell_affinity_args(CLI::App& app, ru_ofh_unit_cpu_af
       "Policy used for assigning CPU cores to the Radio Unit tasks");
 }
 
-static void configure_cli11_txrx_affinity_args(CLI::App& app, os_sched_affinity_bitmask& mask)
-{
-  add_option_function<std::string>(
-      app,
-      "--ru_txrx_cpus",
-      [&mask](const std::string& value) { parse_affinity_mask(mask, value, "txrx_cpus"); },
-      "Number of CPUs used for the Radio Unit tasks");
-}
-
 static void configure_cli11_expert_execution_args(CLI::App& app, ru_ofh_unit_expert_execution_config& config)
 {
   // Affinities section.
   CLI::App* affinities_subcmd = add_subcommand(app, "affinities", "gNB CPU affinities configuration")->configurable();
+  CLI::App* ofh_subcmd =
+      add_subcommand(*affinities_subcmd, "ofh", "Open Fronthaul CPU affinities configuration")->configurable();
   add_option_function<std::string>(
-      *affinities_subcmd,
+      *ofh_subcmd,
       "--ru_timing_cpu",
       [&config](const std::string& value) { parse_affinity_mask(config.ru_timing_cpu, value, "ru_timing_cpu"); },
       "CPU used for timing in the Radio Unit");
 
   // RU txrx affinity section.
   add_option_cell(
-      *affinities_subcmd,
-      "--ofh",
+      *ofh_subcmd,
+      "--txrx_cpus",
       [&config](const std::vector<std::string>& values) {
         config.txrx_affinities.resize(values.size());
 
         for (unsigned i = 0, e = values.size(); i != e; ++i) {
-          CLI::App subapp("RU tx-rx thread CPU affinities",
-                          "RU tx-rx thread CPU affinities config #" + std::to_string(i));
-          subapp.config_formatter(create_yaml_config_parser());
-          subapp.allow_config_extras();
-          configure_cli11_txrx_affinity_args(subapp, config.txrx_affinities[i]);
-          std::istringstream ss(values[i]);
-          subapp.parse_from_stream(ss);
+          parse_affinity_mask(config.txrx_affinities[i], values[i], "txrx_cpus");
         }
       },
       "Sets the CPU affinities configuration for RU cells tx-rx threads. Number of entries specified defines the "

@@ -24,14 +24,15 @@
 
 #include "srsran/du/du_high/o_du_high_metrics.h"
 #include "srsran/du/du_low/o_du_low_metrics.h"
+#include <optional>
 
 namespace srsran {
 namespace srs_du {
 
 /// O-RAN DU metrics.
 struct o_du_metrics {
-  o_du_high_metrics high;
-  o_du_low_metrics  low;
+  o_du_high_metrics               high;
+  std::optional<o_du_low_metrics> low;
 };
 
 } // namespace srs_du

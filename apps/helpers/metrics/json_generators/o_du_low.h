@@ -37,10 +37,10 @@ namespace app_helpers {
 namespace json_generators {
 
 /// Generates a nlohmann JSON object that codifies the given O-DU low metrics.
-nlohmann::json generate(const srs_du::o_du_low_metrics& metrics, span<const pci_t> pci_sector_map);
+nlohmann::json generate(const srs_du::o_du_low_metrics& metrics);
 
 /// Generates a string in JSON format that codifies the given O-DU low metrics.
-std::string generate_string(const srs_du::o_du_low_metrics& metrics, span<const pci_t> pci_sector_map, int indent = -1);
+std::string generate_string(const srs_du::o_du_low_metrics& metrics, int indent = -1);
 
 } // namespace json_generators
 } // namespace app_helpers

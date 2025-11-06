@@ -786,6 +786,7 @@ SRSASN_CODE unpack_length(uint32_t& val, cbit_ref& bref, bool aligned)
       val = (val << 8u) + val_octet_2;
       return SRSASN_SUCCESS;
     }
+    val = 0;
     log_error("Not handling octet strings longer than 16383 octets");
     return SRSASN_ERROR_DECODE_FAIL;
   }
@@ -1516,6 +1517,64 @@ SRSASN_CODE ext_groups_unpacker_guard::unpack(cbit_ref& bref)
   for (uint32_t i = 0; i < nof_unpacked_groups; ++i) {
     HANDLE_CODE(bref.unpack(groups[i], 1));
   }
+  return SRSASN_SUCCESS;
+}
+
+ext_groups_unpacker::ext_groups_unpacker(cbit_ref& bref, bool aligned_) :
+  aligned(aligned_), outer_bref(bref), group_bref({})
+{
+}
+
+SRSASN_CODE ext_groups_unpacker::unpack_presence_flags()
+{
+  // unpack nof of ext groups
+  uint32_t nof_ext_groups = 0;
+  HANDLE_CODE(unpack_norm_small_non_neg_whole_number(nof_ext_groups, outer_bref));
+  nof_unpacked_groups = nof_ext_groups + 1;
+
+  // Resize presence flags vector
+  groups.resize(nof_unpacked_groups);
+  std::fill(groups.data(), groups.data() + nof_unpacked_groups, false);
+
+  // unpack each group presence flag
+  for (uint32_t i = 0; i < nof_unpacked_groups; ++i) {
+    HANDLE_CODE(outer_bref.unpack(groups[i], 1));
+  }
+
+  return SRSASN_SUCCESS;
+}
+
+SRSASN_CODE ext_groups_unpacker::unpack_next_group()
+{
+  if (state == state_t::unpack_presence_flags) {
+    state = state_t::unpack_groups;
+    HANDLE_CODE(unpack_presence_flags());
+  }
+
+  if (next_group_idx >= nof_unpacked_groups) {
+    state = state_t::done;
+    return SRSASN_SUCCESS;
+  }
+
+  if (groups[next_group_idx++]) {
+    // Group is present. Decode its length.
+    uint32_t group_len;
+    HANDLE_CODE(unpack_length(group_len, outer_bref, aligned));
+    // Create subview for the group
+    group_bref = outer_bref.subview(0, group_len);
+    // Consume the padding bits of the group from the outer bitref
+    HANDLE_CODE(outer_bref.advance_bytes(group_len));
+  }
+
+  return SRSASN_SUCCESS;
+}
+
+SRSASN_CODE ext_groups_unpacker::consume_remaining_groups(cbit_ref& bref)
+{
+  while (next_group_idx < nof_unpacked_groups) {
+    HANDLE_CODE(unpack_next_group());
+  }
+  bref = outer_bref;
   return SRSASN_SUCCESS;
 }
 

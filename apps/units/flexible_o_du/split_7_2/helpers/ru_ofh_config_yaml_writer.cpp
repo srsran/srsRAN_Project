@@ -33,24 +33,14 @@ static void fill_ru_ofh_log_section(YAML::Node node, const ru_ofh_unit_logger_co
 
 static void fill_ru_ofh_expert_execution_section(YAML::Node node, const ru_ofh_unit_expert_execution_config& config)
 {
-  {
-    YAML::Node affinities_node       = node["affinities"];
-    affinities_node["ru_timing_cpu"] = fmt::format("{:,}", span<const size_t>(config.ru_timing_cpu.get_cpu_ids()));
-  }
+  YAML::Node affinities_node = node["affinities"];
+  YAML::Node ofh_node        = affinities_node["ofh"];
+  ofh_node["timing_cpu"]     = fmt::format("{:,}", span<const size_t>(config.ru_timing_cpu.get_cpu_ids()));
 
   if (config.txrx_affinities.size() > 0) {
-    YAML::Node affinities_node = node["affinities"];
-    YAML::Node ofh_node        = affinities_node["ofh"];
-    while (config.txrx_affinities.size() > ofh_node.size()) {
-      ofh_node.push_back(YAML::Node());
-    }
-
-    unsigned index = 0;
-    for (auto subnode : ofh_node) {
-      const auto& mask = config.txrx_affinities[index];
-
-      subnode["ru_txrx_cpus"] = fmt::format("{:,}", span<const size_t>(mask.get_cpu_ids()));
-      ++index;
+    YAML::Node txrx_node = ofh_node["txrx_cpus"];
+    for (const auto& affinity : config.txrx_affinities) {
+      txrx_node.push_back(fmt::format("{:,}", span<const size_t>(affinity.get_cpu_ids())));
     }
   }
 

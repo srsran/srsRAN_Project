@@ -18,7 +18,7 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-add_library(sched_test_doubles pucch_res_test_builder_helper.cpp scheduler_result_test.cpp
+add_library(sched_test_doubles pucch_res_test_builder_helper.cpp scheduler_result_finder.cpp
         cell_config_builder_profiles.cpp
         scheduler_config_helper.cpp
         scheduler_test_message_validators.cpp

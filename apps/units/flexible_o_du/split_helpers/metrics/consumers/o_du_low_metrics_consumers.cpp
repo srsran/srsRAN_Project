@@ -34,12 +34,7 @@ static constexpr unsigned str_buffer_size = 4096;
 
 void o_du_low_metrics_consumer_json::handle_metric(const srs_du::o_du_low_metrics& metric)
 {
-  // Nothing to print.
-  if (metric.du_lo_metrics.sector_metrics.empty()) {
-    return;
-  }
-
-  log_chan("{}", app_helpers::json_generators::generate_string(metric, pci_sector_map, 2));
+  log_chan("{}", app_helpers::json_generators::generate_string(metric, 2));
 }
 
 static void log_upper_phy_metrics_verbose(fmt::basic_memory_buffer<char, str_buffer_size>& buffer,
@@ -341,42 +336,35 @@ static void log_upper_phy_metrics_verbose(fmt::basic_memory_buffer<char, str_buf
 
 void o_du_low_metrics_consumer_log::handle_metric(const srs_du::o_du_low_metrics& metric)
 {
-  // No metrics to print.
-  if (metric.du_lo_metrics.sector_metrics.empty()) {
-    return;
+  const auto&                                     upper_metrics = metric.du_lo_metrics.upper_metrics;
+  fmt::basic_memory_buffer<char, str_buffer_size> buffer;
+
+  fmt::format_to(std::back_inserter(buffer),
+                 "PHY metrics: "
+                 "dl_processing_max_latency={:.1f}us "
+                 "dl_processing_max_slot={} "
+                 "ul_processing_max_latency={:.1f}us "
+                 "ul_processing_max_slot={} "
+                 "ldpc_encoder_avg_latency={:.1f}us "
+                 "ldpc_encoder_max_latency={:.1f}us "
+                 "ldpc_decoder_avg_latency={:.1f}us "
+                 "ldpc_decoder_max_latency={:.1f}us "
+                 "ldpc_decoder_avg_nof_iter={:.1f}",
+                 validate_fp_value(upper_metrics.dl_processor_metrics.max_latency_us.first),
+                 upper_metrics.dl_processor_metrics.max_latency_us.second,
+                 validate_fp_value(upper_metrics.pusch_metrics.pusch_proc_metrics.max_data_latency_us.first),
+                 upper_metrics.pusch_metrics.pusch_proc_metrics.max_data_latency_us.second,
+                 validate_fp_value(upper_metrics.ldpc_metrics.encoder_metrics.avg_cb_latency_us),
+                 validate_fp_value(upper_metrics.ldpc_metrics.encoder_metrics.max_cb_latency_us),
+                 validate_fp_value(upper_metrics.ldpc_metrics.decoder_metrics.avg_cb_latency_us),
+                 validate_fp_value(upper_metrics.ldpc_metrics.decoder_metrics.max_cb_latency_us),
+                 validate_fp_value(upper_metrics.ldpc_metrics.decoder_metrics.avg_nof_iterations));
+
+  // Verbose logging.
+  if (verbose) {
+    log_upper_phy_metrics_verbose(buffer, upper_metrics);
   }
 
-  for (const auto& upper_metrics : metric.du_lo_metrics.sector_metrics) {
-    fmt::basic_memory_buffer<char, str_buffer_size> buffer;
-    fmt::format_to(std::back_inserter(buffer), "Upper PHY sector#{} metrics: ", upper_metrics.sector_id);
-
-    fmt::format_to(std::back_inserter(buffer),
-                   "PHY metrics: "
-                   "dl_processing_max_latency={:.1f}us "
-                   "dl_processing_max_slot={} "
-                   "ul_processing_max_latency={:.1f}us "
-                   "ul_processing_max_slot={} "
-                   "ldpc_encoder_avg_latency={:.1f}us "
-                   "ldpc_encoder_max_latency={:.1f}us "
-                   "ldpc_decoder_avg_latency={:.1f}us "
-                   "ldpc_decoder_max_latency={:.1f}us "
-                   "ldpc_decoder_avg_nof_iter={:.1f}",
-                   validate_fp_value(upper_metrics.dl_processor_metrics.max_latency_us.first),
-                   upper_metrics.dl_processor_metrics.max_latency_us.second,
-                   validate_fp_value(upper_metrics.pusch_metrics.pusch_proc_metrics.max_data_latency_us.first),
-                   upper_metrics.pusch_metrics.pusch_proc_metrics.max_data_latency_us.second,
-                   validate_fp_value(upper_metrics.ldpc_metrics.encoder_metrics.avg_cb_latency_us),
-                   validate_fp_value(upper_metrics.ldpc_metrics.encoder_metrics.max_cb_latency_us),
-                   validate_fp_value(upper_metrics.ldpc_metrics.decoder_metrics.avg_cb_latency_us),
-                   validate_fp_value(upper_metrics.ldpc_metrics.decoder_metrics.max_cb_latency_us),
-                   validate_fp_value(upper_metrics.ldpc_metrics.decoder_metrics.avg_nof_iterations));
-
-    // Verbose logging.
-    if (verbose) {
-      log_upper_phy_metrics_verbose(buffer, upper_metrics);
-    }
-
-    // Flush buffer to the logger.
-    log_chan("{}", to_c_str(buffer));
-  }
+  // Flush buffer to the logger.
+  log_chan("{}", to_c_str(buffer));
 }

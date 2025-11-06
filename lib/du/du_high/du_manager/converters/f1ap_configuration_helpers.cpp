@@ -24,7 +24,7 @@
 #include "asn1_rrc_config_helpers.h"
 #include "asn1_sys_info_packer.h"
 #include "srsran/asn1/rrc_nr/bcch_dl_sch_msg.h"
-#include "srsran/asn1/rrc_nr/meas_timing_cfg.h"
+#include "srsran/asn1/rrc_nr/rrc_nr.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/support/error_handling.h"
 

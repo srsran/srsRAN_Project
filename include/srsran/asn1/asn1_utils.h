@@ -1485,6 +1485,45 @@ private:
   cbit_ref*       bref_tracker        = nullptr;
 };
 
+/// \brief Used to decode extension groups.
+class ext_groups_unpacker
+{
+public:
+  ext_groups_unpacker(cbit_ref& bref_, bool aligned_ = false);
+
+  /// Unpacks presence flags and extension groups.
+  [[nodiscard]] SRSASN_CODE unpack_next_group();
+
+  /// Retrieves a bit_ref representing the last unpacked extension group.
+  /// \return Returns false if there was no extension group left to unpack.
+  [[nodiscard]] bool get_last_group_range(cbit_ref& bref)
+  {
+    srsran_sanity_check(next_group_idx > 0, "No group has been unpacked yet");
+    if (state != state_t::done and groups[next_group_idx - 1]) {
+      bref = group_bref;
+      return true;
+    }
+    return false;
+  }
+
+  /// Skips all remaining extension groups and sets the position of bit_ref.
+  [[nodiscard]] SRSASN_CODE consume_remaining_groups(cbit_ref& bref);
+
+private:
+  enum class state_t : uint8_t { unpack_presence_flags, unpack_groups, done };
+
+  // Decodes only the presence flags of the extension groups.
+  SRSASN_CODE unpack_presence_flags();
+
+  const bool      aligned;
+  state_t         state               = state_t::unpack_presence_flags;
+  uint32_t        nof_unpacked_groups = 0;
+  uint32_t        next_group_idx      = 0;
+  cbit_ref        outer_bref;
+  cbit_ref        group_bref;
+  ext_array<bool> groups;
+};
+
 /*********************
    Var Length Field
 *********************/
@@ -1507,6 +1546,8 @@ class varlength_field_unpack_guard
 public:
   explicit varlength_field_unpack_guard(cbit_ref& bref, bool align = false);
   ~varlength_field_unpack_guard();
+
+  uint32_t length() const { return len; }
 
 private:
   uint32_t  len = 0;

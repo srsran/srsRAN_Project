@@ -22,7 +22,7 @@
 
 #include "du_meas_config_manager.h"
 #include "du_ue_resource_config.h"
-#include "srsran/asn1/rrc_nr/meas_cfg.h"
+#include "srsran/asn1/rrc_nr/dl_dcch_msg_ies.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;
