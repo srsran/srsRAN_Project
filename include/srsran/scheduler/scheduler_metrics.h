@@ -169,7 +169,7 @@ struct scheduler_cell_metrics {
   std::chrono::microseconds               max_decision_latency{0};
   slot_point                              max_decision_latency_slot;
   std::array<unsigned, latency_hist_bins> latency_histogram{0};
-  /// Number of RBs used for PUSCH per slot index in the TDD pattern.
+  /// Average number of RBs used for PUSCH per slot index in the TDD pattern.
   std::vector<unsigned>             pusch_prbs_used_per_tdd_slot_idx;
   std::vector<unsigned>             pdsch_prbs_used_per_tdd_slot_idx;
   std::vector<scheduler_cell_event> events;

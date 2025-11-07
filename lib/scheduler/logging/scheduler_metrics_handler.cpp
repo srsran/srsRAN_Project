@@ -431,13 +431,23 @@ void cell_metrics_handler::report_metrics()
   // Note: PUCCH is only allocated on full UL slots.
   next_report->pucch_tot_rb_usage_avg =
       data.nof_ul_slots > 0 ? static_cast<float>(data.pucch_rbs_used) / data.nof_ul_slots : 0;
-  for (unsigned rb_count : ul_prbs_used_per_tdd_slot_idx) {
-    next_report->pusch_prbs_used_per_tdd_slot_idx.push_back(rb_count);
-  }
-  for (unsigned rb_count : dl_prbs_used_per_tdd_slot_idx) {
-    next_report->pdsch_prbs_used_per_tdd_slot_idx.push_back(rb_count);
-  }
+  if (cell_cfg.tdd_cfg_common.has_value()) {
+    const float nof_tdd_periods_per_metric_report =
+        static_cast<float>(next_report->nof_slots) /
+        static_cast<float>(nof_slots_per_tdd_period(cell_cfg.tdd_cfg_common.value()));
 
+    for (unsigned rb_count : ul_prbs_used_per_tdd_slot_idx) {
+      const auto avg_nof_rbs =
+          static_cast<unsigned>(std::round(static_cast<float>(rb_count) / nof_tdd_periods_per_metric_report));
+      next_report->pusch_prbs_used_per_tdd_slot_idx.push_back(avg_nof_rbs);
+    }
+
+    for (unsigned rb_count : dl_prbs_used_per_tdd_slot_idx) {
+      const auto avg_nof_rbs =
+          static_cast<unsigned>(std::round(static_cast<float>(rb_count) / nof_tdd_periods_per_metric_report));
+      next_report->pdsch_prbs_used_per_tdd_slot_idx.push_back(avg_nof_rbs);
+    }
+  }
   // Reset cell-wide metric counters.
   data = {};
 

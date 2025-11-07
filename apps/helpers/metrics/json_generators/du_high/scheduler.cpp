@@ -109,6 +109,7 @@ void to_json(nlohmann::json& json, const scheduler_cell_metrics& metrics)
 {
   // Cell metrics.
   auto& cell_json                      = json["cell_metrics"];
+  cell_json["pci"]                     = metrics.pci;
   cell_json["error_indication_count"]  = metrics.nof_error_indications;
   cell_json["average_latency"]         = metrics.average_decision_latency.count();
   cell_json["max_latency"]             = metrics.max_decision_latency.count();

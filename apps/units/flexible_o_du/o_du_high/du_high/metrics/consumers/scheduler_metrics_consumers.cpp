@@ -229,13 +229,13 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const std::optional<sche
         cell.nof_failed_pdsch_allocs_late_harqs,
         cell.nof_failed_pusch_allocs_late_harqs,
         cell.pucch_tot_rb_usage_avg);
-    if (cell.pusch_prbs_used_per_tdd_slot_idx.size()) {
+    if (not cell.pusch_prbs_used_per_tdd_slot_idx.empty()) {
       fmt::format_to(
           std::back_inserter(buffer),
           " pusch_rbs_per_tdd_slot_idx=[{}]",
           fmt::join(cell.pusch_prbs_used_per_tdd_slot_idx.begin(), cell.pusch_prbs_used_per_tdd_slot_idx.end(), ", "));
     }
-    if (cell.pdsch_prbs_used_per_tdd_slot_idx.size()) {
+    if (not cell.pdsch_prbs_used_per_tdd_slot_idx.empty()) {
       fmt::format_to(
           std::back_inserter(buffer),
           " pdsch_rbs_per_tdd_slot_idx=[{}]",
