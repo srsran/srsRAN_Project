@@ -15,6 +15,7 @@
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/mac/mac_cell_slot_handler.h"
 #include "srsran/scheduler/result/pdcch_info.h"
+#include "srsran/support/synchronization/stop_event.h"
 
 namespace srsran {
 
@@ -57,6 +58,9 @@ public:
   mac_to_fapi_translator(const mac_to_fapi_translator_config&  config,
                          mac_to_fapi_translator_dependencies&& dependencies);
 
+  /// Stops the MAC to FAPI translator.
+  void stop();
+
   // See interface for documentation.
   void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override;
 
@@ -94,6 +98,11 @@ private:
   std::unique_ptr<uci_part2_correspondence_mapper> part2_mapper;
   /// MAC cell slot handler.
   mac_cell_slot_handler* mac_slot_handler;
+  /// Stop manager.
+  stop_event_source stop_manager;
+  /// Stop token. This token is used to track the when a slot is being used. It is set on new scheduler results
+  /// (downlink, uplink or downlink data) and reset on results completion.
+  stop_event_token stop_token;
 };
 
 } // namespace fapi_adaptor

@@ -26,6 +26,12 @@ mac_fapi_sector_adaptor& mac_fapi_adaptor_impl::get_sector_adaptor(unsigned cell
                 "Invalid cell identifier '{}'. Valid cell id range '[0-{})'",
                 cell_id,
                 sector_adaptors.size());
-
   return *sector_adaptors[cell_id];
+}
+
+void mac_fapi_adaptor_impl::stop()
+{
+  for (auto& sector : sector_adaptors) {
+    sector->stop();
+  }
 }

@@ -27,6 +27,9 @@ public:
   // See interface for documentation.
   mac_fapi_sector_adaptor& get_sector_adaptor(unsigned cell_id) override;
 
+  // See interface for documentation.
+  void stop() override;
+
 private:
   std::vector<std::unique_ptr<mac_fapi_sector_adaptor>> sector_adaptors;
 };

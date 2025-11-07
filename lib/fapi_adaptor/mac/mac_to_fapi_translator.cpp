@@ -83,6 +83,11 @@ mac_to_fapi_translator::mac_to_fapi_translator(const mac_to_fapi_translator_conf
   srsran_assert(part2_mapper, "Invalid Part2 mapper");
 }
 
+void mac_to_fapi_translator::stop()
+{
+  stop_manager.stop();
+}
+
 template <typename builder_type, typename pdu_type>
 static void add_pdcch_pdus_to_builder(builder_type&                  builder,
                                       span<const pdu_type>           pdcch_info,
@@ -194,6 +199,13 @@ static void clear_dl_tti_pdus(fapi::dl_tti_request_message& msg)
 
 void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res)
 {
+  stop_event_token token = stop_manager.get_token();
+  // Do not process results when the translator is not running.
+  if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
+    return;
+  }
+
+  stop_token = std::move(token);
   fapi::dl_tti_request_message         msg;
   fapi::dl_tti_request_message_builder builder(msg);
 
@@ -248,6 +260,14 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
 
 void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_data)
 {
+  stop_event_token token = stop_manager.get_token();
+  // Do not process results when the translator is not running.
+  if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
+    return;
+  }
+
+  stop_token = std::move(token);
+
   srsran_assert(!dl_data.si_pdus.empty() || !dl_data.rar_pdus.empty() || !dl_data.ue_pdus.empty() ||
                     !dl_data.paging_pdus.empty(),
                 "Received a mac_dl_data_result object with zero payloads");
@@ -322,6 +342,14 @@ static void clear_ul_tti_pdus(fapi::ul_tti_request_message& msg)
 
 void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res)
 {
+  stop_event_token token = stop_manager.get_token();
+  // Do not process results when the translator is not running.
+  if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
+    return;
+  }
+
+  stop_token = std::move(token);
+
   fapi::ul_tti_request_message         msg;
   fapi::ul_tti_request_message_builder builder(msg);
 
@@ -407,4 +435,7 @@ void mac_to_fapi_translator::handle_ul_dci_request(span<const pdcch_ul_informati
 void mac_to_fapi_translator::on_cell_results_completion(slot_point slot)
 {
   last_msg_notifier.on_last_message(slot);
+
+  // Reset the stop token.
+  stop_token.reset();
 }

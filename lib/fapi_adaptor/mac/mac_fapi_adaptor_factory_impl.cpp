@@ -38,6 +38,9 @@ public:
   }
 
   // See interface for documentation.
+  void stop() override { adaptor->stop(); }
+
+  // See interface for documentation.
   fapi::slot_time_message_notifier& get_slot_time_message_notifier() override
   {
     return decorator ? decorator->get_slot_time_message_notifier() : adaptor->get_slot_time_message_notifier();
