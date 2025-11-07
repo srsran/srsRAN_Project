@@ -89,7 +89,7 @@ struct du_high_unit_scheduler_config {
   /// When \c nof_preselected_newtx_ues is lower than the total number of active UEs in the cell, the scheduler will
   /// operate as a hybrid between a Round-Robin scheduler and whichever scheduler policy was selected (e.g. QoS-aware).
   /// This parameter is useful to reduce the complexity of the scheduling decision, at the cost of some performance.
-  unsigned nof_preselected_newtx_ues = 32;
+  unsigned nof_preselected_newtx_ues = 1024;
   /// Scheduler policy employed to prioritize or deprioritize pre-selected UE candidates.
   std::optional<scheduler_policy_config> policy_cfg;
 };
