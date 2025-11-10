@@ -25,6 +25,10 @@ TEST_P(pdcp_rx_test, create_new_entity)
 
   ASSERT_NE(pdcp_rx, nullptr);
   ASSERT_NE(test_frame, nullptr);
+
+  // No warnings or errors during construction
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// Test extraction of PDCP sequence numbers
@@ -54,6 +58,10 @@ TEST_P(pdcp_rx_test, sn_unpack)
   } else {
     FAIL();
   }
+
+  // No warnings or errors
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// Test in-order reception of PDCP PDUs
@@ -95,6 +103,10 @@ TEST_P(pdcp_rx_test, rx_in_order)
   } else {
     FAIL();
   }
+
+  // No warnings or errors
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// Test out of order reception of PDUs.
@@ -160,6 +172,10 @@ TEST_P(pdcp_rx_test, rx_out_of_order)
   } else {
     FAIL();
   }
+
+  // No warnings or errors
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// Test out of order reception of PDUs.
@@ -209,6 +225,10 @@ TEST_P(pdcp_rx_test, rx_reordering_timer)
   } else {
     FAIL();
   }
+
+  // No warnings or errors
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// Test out of order reception of PDUs.
@@ -256,6 +276,10 @@ TEST_P(pdcp_rx_test, rx_reordering_timer_0ms)
   } else {
     FAIL();
   }
+
+  // No warnings or errors
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// Test out of order reception of PDUs.
@@ -306,6 +330,10 @@ TEST_P(pdcp_rx_test, rx_reordering_timer_infinite)
   } else {
     FAIL();
   }
+
+  // One warning but no errors
+  EXPECT_EQ(test_spy.get_warning_counter(), 1);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// Test reception of PDUs with bad integrity checks.
@@ -344,6 +372,10 @@ TEST_P(pdcp_rx_test, rx_integrity_fail)
   } else {
     FAIL();
   }
+
+  // Three warnings but no errors
+  EXPECT_EQ(test_spy.get_warning_counter(), 3);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// Test count wrap-around protection for PDCP RX
@@ -383,6 +415,10 @@ TEST_P(pdcp_rx_test, count_wraparound)
   };
 
   test_max_count(rx_next_start);
+
+  // One warning and one error
+  EXPECT_EQ(test_spy.get_warning_counter(), 1);
+  EXPECT_EQ(test_spy.get_error_counter(), 1);
 }
 
 /// Test TX SDU buffering.
@@ -420,6 +456,10 @@ TEST_P(pdcp_rx_test, rx_buffer)
   wait_pending_crypto();
   worker.run_pending_tasks();
   FLUSH_AND_ASSERT_EQ(2, test_frame->sdu_queue.size());
+
+  // No warnings or errors
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 ///////////////////////////////////////////////////////////////////
