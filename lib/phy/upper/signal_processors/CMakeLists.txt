@@ -6,6 +6,8 @@
 # the distribution.
 #
 
+add_library(srsran_dmrs_helper STATIC dmrs_helper.cpp)
+
 add_library(srsran_channel_estimator STATIC
     channel_estimator/factories.cpp
     channel_estimator/port_channel_estimator_average_impl.cpp
@@ -22,14 +24,14 @@ target_link_libraries(srsran_nzp_csi_rs_generator srsran_ran)
 add_library(srsran_dmrs_pdcch STATIC
     pdcch/factories.cpp
     pdcch/dmrs_pdcch_processor_impl.cpp
-    dmrs_helper.cpp
 )
+target_link_libraries(srsran_dmrs_pdcch srsran_dmrs_helper)
 
 add_library(srsran_dmrs_pdsch STATIC
     pdsch/factories.cpp
     pdsch/dmrs_pdsch_processor_impl.cpp
-    dmrs_helper.cpp
 )
+target_link_libraries(srsran_dmrs_pdsch srsran_dmrs_helper)
 
 add_library(srsran_dmrs_pucch STATIC
     pucch/factories.cpp
@@ -40,8 +42,8 @@ add_library(srsran_dmrs_pucch STATIC
 add_library(srsran_dmrs_pusch STATIC
     pusch/factories.cpp
     pusch/dmrs_pusch_estimator_impl.cpp
-    dmrs_helper.cpp
 )
+target_link_libraries(srsran_dmrs_pusch srsran_dmrs_helper)
 
 add_library(srsran_prs_generator STATIC
     prs/factories.cpp
@@ -65,12 +67,12 @@ add_library(srsran_ssb_generators STATIC
     ssb/dmrs_pbch_processor_impl.cpp
     ssb/pss_processor_impl.cpp
     ssb/sss_processor_impl.cpp
-    dmrs_helper.cpp
 )
 target_link_libraries(srsran_ssb_generators srsran_dft)
 
 add_library(srsran_signal_processors INTERFACE)
 target_link_libraries(srsran_signal_processors INTERFACE
+    srsran_dmrs_helper
     srsran_channel_estimator
     srsran_nzp_csi_rs_generator
     srsran_dmrs_pdcch
@@ -84,6 +86,7 @@ target_link_libraries(srsran_signal_processors INTERFACE
 )
 
 add_to_exported_libs(
+    srsran_dmrs_helper
     srsran_signal_processors
     srsran_channel_estimator
     srsran_nzp_csi_rs_generator
