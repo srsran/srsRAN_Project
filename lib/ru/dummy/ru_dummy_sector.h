@@ -75,8 +75,7 @@ public:
 
     // Set the current slot information.
     std::optional<resource_grid_context> late_context =
-        dl_request[context.slot.system_slot() % dl_request.size()].new_request(
-            context, grid.copy(), stop_control.get_token());
+        dl_request[context.slot.system_slot() % dl_request.size()].new_request(context, grid.copy(), std::move(token));
     total_dl_request_count.fetch_add(1, std::memory_order_relaxed);
 
     // If the previous slot is valid, it is a late.
@@ -101,7 +100,7 @@ public:
 
     std::optional<prach_buffer_context> late_context =
         prach_request[context.slot.system_slot() % prach_request.size()].new_request(
-            context, &buffer, stop_control.get_token());
+            context, &buffer, std::move(token));
     total_prach_request_count.fetch_add(1, std::memory_order_relaxed);
 
     // Detect if there is an unhandled request from a different slot.
@@ -124,8 +123,7 @@ public:
     }
 
     std::optional<resource_grid_context> late_context =
-        ul_request[context.slot.system_slot() % ul_request.size()].new_request(
-            context, grid.copy(), stop_control.get_token());
+        ul_request[context.slot.system_slot() % ul_request.size()].new_request(context, grid.copy(), std::move(token));
     total_ul_request_count.fetch_add(1, std::memory_order_relaxed);
 
     // Detect if there is an unhandled request from a different slot.
@@ -290,9 +288,6 @@ private:
 
       // Transition to available. The object will become available again.
       internal_state.store(internal_states::available);
-
-      // Reset the stop token.
-      local_token.reset();
 
       // Return the context and resource.
       return {current_context, std::move(current_resource)};
