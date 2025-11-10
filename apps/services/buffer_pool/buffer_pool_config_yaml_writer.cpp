@@ -20,30 +20,22 @@
  *
  */
 
-#include "mac_fapi_adaptor_impl.h"
-#include "srsran/support/srsran_assert.h"
+#include "buffer_pool_config_yaml_writer.h"
+#include "apps/helpers/metrics/metrics_config_yaml_writer.h"
+#include "buffer_pool_appconfig.h"
 
 using namespace srsran;
-using namespace fapi_adaptor;
+using namespace app_services;
 
-mac_fapi_adaptor_impl::mac_fapi_adaptor_impl(std::vector<std::unique_ptr<mac_fapi_sector_adaptor>> sector_adaptors_) :
-  sector_adaptors(std::move(sector_adaptors_))
+static void fill_buffer_pool_section(YAML::Node node, const buffer_pool_appconfig& config)
 {
-  srsran_assert(!sector_adaptors.empty(), "Cannot create a MAC FAPI adaptor with zero cells");
+  auto buffer_pool_node            = node["buffer_pool"];
+  buffer_pool_node["nof_segments"] = config.nof_segments;
+  buffer_pool_node["segment_size"] = config.segment_size;
 }
 
-mac_fapi_sector_adaptor& mac_fapi_adaptor_impl::get_sector_adaptor(unsigned cell_id)
+void srsran::app_services::fill_buffer_pool_config_in_yaml_schema(YAML::Node& node, const buffer_pool_appconfig& config)
 {
-  srsran_assert(cell_id < sector_adaptors.size(),
-                "Invalid cell identifier '{}'. Valid cell id range '[0-{})'",
-                cell_id,
-                sector_adaptors.size());
-  return *sector_adaptors[cell_id];
-}
-
-void mac_fapi_adaptor_impl::stop()
-{
-  for (auto& sector : sector_adaptors) {
-    sector->stop();
-  }
+  app_helpers::fill_metrics_appconfig_in_yaml_schema(node, config.metrics_config.common_metrics_cfg);
+  fill_buffer_pool_section(node, config);
 }

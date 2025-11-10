@@ -268,33 +268,38 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
     }
 
     // If the PUCCH count is exceeded, proceed with the next SR resource/offset pair.
-    if (not pucch_cnt_exceeded) {
-      if (not default_csi_report_cfg.has_value()) {
-        sr_res_offset = *sr_res_offset_it;
-        free_sr_list.erase(sr_res_offset_it);
-        break;
-      }
-
-      const pucch_resource sr_res = default_pucch_res_list[sr_du_res_idx_to_pucch_res_idx(sr_res_offset_it->first)];
-
-      out_cell_cfg.serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list = {*default_csi_report_cfg};
-
-      auto optimal_res_it = get_csi_resource_offset(du_cell_index,
-                                                    out_cell_cfg.serv_cell_cfg.csi_meas_cfg.value(),
-                                                    sr_res_offset_it->second,
-                                                    sr_res,
-                                                    free_csi_list);
-
-      if (optimal_res_it != free_csi_list.end()) {
-        // At this point the allocation has been successful. Remove SR and CSI resources assigned to this UE from the
-        // lists of free resources.
-        csi_res_offset = *optimal_res_it;
-        free_csi_list.erase(optimal_res_it);
-        sr_res_offset = *sr_res_offset_it;
-        free_sr_list.erase(sr_res_offset_it);
-        break;
-      }
+    if (pucch_cnt_exceeded) {
+      ++sr_res_offset_it;
+      continue;
     }
+
+    if (not default_csi_report_cfg.has_value()) {
+      // No CSI report to allocate. Allocation successful.
+      sr_res_offset = *sr_res_offset_it;
+      free_sr_list.erase(sr_res_offset_it);
+      break;
+    }
+
+    const pucch_resource sr_res = default_pucch_res_list[sr_du_res_idx_to_pucch_res_idx(sr_res_offset_it->first)];
+
+    out_cell_cfg.serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list = {*default_csi_report_cfg};
+
+    auto optimal_res_it = get_csi_resource_offset(du_cell_index,
+                                                  out_cell_cfg.serv_cell_cfg.csi_meas_cfg.value(),
+                                                  sr_res_offset_it->second,
+                                                  sr_res,
+                                                  free_csi_list);
+
+    if (optimal_res_it != free_csi_list.end()) {
+      // At this point the allocation has been successful. Remove SR and CSI resources assigned to this UE from the
+      // lists of free resources.
+      csi_res_offset = *optimal_res_it;
+      free_csi_list.erase(optimal_res_it);
+      sr_res_offset = *sr_res_offset_it;
+      free_sr_list.erase(sr_res_offset_it);
+      break;
+    }
+
     ++sr_res_offset_it;
   }
 

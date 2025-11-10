@@ -41,10 +41,12 @@ static void configure_cli11_log_args(CLI::App& app, cu_cp_unit_logger_config& lo
   app_helpers::add_log_option(app, log_params.cu_level, "--cu_level", "Log level for the CU");
   app_helpers::add_log_option(app, log_params.sec_level, "--sec_level", "Security functions log level");
 
-  add_option(
-      app, "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")
+  add_option(app,
+             "--hex_max_size",
+             log_params.hex_max_size,
+             "Maximum number of bytes to print in hex (zero for no hex dumps, -1 for unlimited bytes)")
       ->capture_default_str()
-      ->check(CLI::Range(0, 1024));
+      ->check(CLI::Range(-1, 1024));
 
   add_option(app, "--e1ap_json_enabled", log_params.e1ap_json_enabled, "Enable JSON logging of E1AP PDUs")
       ->always_capture_default();

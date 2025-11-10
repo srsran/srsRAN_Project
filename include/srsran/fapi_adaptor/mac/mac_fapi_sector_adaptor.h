@@ -49,6 +49,9 @@ class mac_fapi_sector_adaptor
 public:
   virtual ~mac_fapi_sector_adaptor() = default;
 
+  /// Stops the MAC&ndash;FAPI sector adaptor.
+  virtual void stop() = 0;
+
   /// \brief Returns a reference to the slot time notifier used by the adaptor.
   virtual fapi::slot_time_message_notifier& get_slot_time_message_notifier() = 0;
 

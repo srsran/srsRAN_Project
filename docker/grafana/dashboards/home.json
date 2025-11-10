@@ -196,7 +196,6 @@
           "color": {
             "mode": "thresholds"
           },
-          "decimals": 0,
           "mappings": [],
           "min": 0,
           "thresholds": {
@@ -2184,6 +2183,6 @@
   "timezone": "",
   "title": "srsRAN Metrics",
   "uid": "eejyoivnn239cc",
-  "version": 5,
+  "version": 6,
   "weekStart": ""
 }

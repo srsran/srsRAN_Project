@@ -20,6 +20,7 @@
 
 set(SOURCES
         buffer_pool_appconfig_cli11_schema.cpp
+        buffer_pool_config_yaml_writer.cpp
         metrics/buffer_pool_metrics_builder.cpp)
 
 add_library(srsran_buffer_pool_app_service STATIC ${SOURCES})

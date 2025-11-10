@@ -74,7 +74,8 @@ fapi_to_phy_translator::fapi_to_phy_translator(const fapi_to_phy_translator_conf
   slot_controller_mngr(*dependencies.dl_processor_pool,
                        *dependencies.dl_rg_pool,
                        sector_id,
-                       config.nof_slots_request_headroom),
+                       config.nof_slots_request_headroom,
+                       logger),
   pm_repo(std::move(dependencies.pm_repo)),
   part2_repo(std::move(dependencies.part2_repo)),
   error_notifier(dummy_error_notifier),
@@ -93,7 +94,8 @@ fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_co
     downlink_processor_pool& dl_processor_pool,
     resource_grid_pool&      rg_pool,
     slot_point               slot_,
-    unsigned                 sector_id) :
+    unsigned                 sector_id,
+    srslog::basic_logger&    logger) :
   slot(slot_)
 {
   resource_grid_context context = {slot_, sector_id};
@@ -102,6 +104,7 @@ fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_co
 
   // If the resource grid is not valid, all DL transmissions for this slot shall be discarded.
   if (!grid) {
+    logger.warning("Could not acquire resource grid for slot={}", slot_);
     dl_processor = {};
     return;
   }
@@ -114,6 +117,7 @@ fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_co
 
   // Swap the DL processor with a dummy if it failed to configure the resource grid.
   if (!dl_processor.is_valid()) {
+    logger.warning("Could not acquire downlink processor for slot={}", slot_);
     dl_processor = {};
   }
 }
@@ -797,7 +801,7 @@ void fapi_to_phy_translator::slot_based_upper_phy_controller_manager::release_co
 fapi_to_phy_translator::slot_based_upper_phy_controller&
 fapi_to_phy_translator::slot_based_upper_phy_controller_manager::acquire_controller(slot_point slot)
 {
-  controller(slot) = slot_based_upper_phy_controller(dl_processor_pool, rg_pool, slot, sector_id);
+  controller(slot) = slot_based_upper_phy_controller(dl_processor_pool, rg_pool, slot, sector_id, logger);
 
   return controller(slot);
 }
@@ -806,11 +810,13 @@ fapi_to_phy_translator::slot_based_upper_phy_controller_manager::slot_based_uppe
     downlink_processor_pool& dl_processor_pool_,
     resource_grid_pool&      rg_pool_,
     unsigned                 sector_id_,
-    unsigned                 nof_slots_request_headroom) :
+    unsigned                 nof_slots_request_headroom,
+    srslog::basic_logger&    logger_) :
   dl_processor_pool(dl_processor_pool_),
   rg_pool(rg_pool_),
   sector_id(sector_id_),
   // The manager should be able to manage the current slot plus the requests headroom size.
-  controllers(nof_slots_request_headroom + 1U)
+  controllers(nof_slots_request_headroom + 1U),
+  logger(logger_)
 {
 }

@@ -63,7 +63,7 @@ struct gnb_appconfig {
   /// Node name.
   std::string ran_node_name = "srsgnb01";
   /// Buffer pool configuration.
-  buffer_pool_appconfig buffer_pool_config;
+  app_services::buffer_pool_appconfig buffer_pool_config;
   /// Expert configuration.
   expert_execution_appconfig expert_execution_cfg;
   /// HAL configuration.

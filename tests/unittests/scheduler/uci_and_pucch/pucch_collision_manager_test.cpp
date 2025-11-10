@@ -31,11 +31,13 @@
 
 using namespace srsran;
 
-static cell_configuration make_test_cell_configuration(const std::vector<pucch_resource>& ded_res)
+static cell_configuration make_test_cell_configuration(const std::vector<pucch_resource>& ded_res               = {},
+                                                       unsigned                           pucch_resource_common = 11)
 {
   const auto expert_cfg         = config_helpers::make_default_scheduler_expert_config();
   auto       sched_req          = sched_config_helper::make_default_sched_cell_configuration_request();
   sched_req.ded_pucch_resources = ded_res;
+  sched_req.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common = pucch_resource_common;
   return cell_configuration{expert_cfg, sched_req};
 }
 
@@ -62,15 +64,17 @@ static cell_configuration make_test_cell_configuration(const std::vector<pucch_r
 // |---------|--------|----------------|------------------|------------------|
 TEST(pucch_collision_manager_test, common_resources_dont_collide_with_each_other)
 {
-  const auto              cell_cfg = make_test_cell_configuration({});
+  const auto              cell_cfg = make_test_cell_configuration();
   pucch_collision_manager col_manager(cell_cfg);
 
   slot_point sl(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, 0);
   col_manager.slot_indication(sl);
   for (unsigned r_pucch = 0; r_pucch < pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES; ++r_pucch) {
-    ASSERT_TRUE(col_manager.can_alloc_common(sl, r_pucch));
-    col_manager.alloc_common(sl, r_pucch);
-    ASSERT_FALSE(col_manager.can_alloc_common(sl, r_pucch));
+    auto res = col_manager.alloc_common(sl, r_pucch);
+    ASSERT_TRUE(res.has_value());
+    res = col_manager.alloc_common(sl, r_pucch);
+    ASSERT_FALSE(res.has_value());
+    ASSERT_EQ(res.error(), pucch_collision_manager::alloc_failure_reason::PUCCH_COLLISION);
   }
 }
 
@@ -213,4 +217,77 @@ TEST(pucch_collision_manager_test, f4_multiplexed_resources_dont_collide)
       ASSERT_FALSE(col_manager.check_ded_to_ded_collision(i, j));
     }
   }
+}
+
+TEST(pucch_collision_manager_test, check_mux_regions_count_for_common_resources)
+{
+  static constexpr std::array<unsigned, 16> nof_expected_mux_regions = {
+      8, // 2 CS
+      6, // 3 CS, resources distributed in regions as 3-3-2-3-3-2
+      6, // 3 CS, resources distributed in regions as 3-3-2-3-3-2
+      8, // 2 CS
+      4, // 4 CS
+      4, // 4 CS
+      4, // 4 CS
+      8, // 2 CS
+      4, // 4 CS
+      4, // 4 CS
+      4, // 4 CS
+      8, // 2 CS
+      4, // 4 CS
+      4, // 4 CS
+      4, // 4 CS
+      4, // 4 CS
+  };
+  for (unsigned pucch_resource_common = 0; pucch_resource_common != 16; ++pucch_resource_common) {
+    const auto              cell_cfg = make_test_cell_configuration({}, pucch_resource_common);
+    pucch_collision_manager col_manager(cell_cfg);
+
+    ASSERT_EQ(nof_expected_mux_regions[pucch_resource_common], col_manager.nof_mux_regions());
+  }
+}
+
+TEST(pucch_collision_manager_test, handles_max_dedicated_resources_with_unique_regions)
+{
+  auto cell_cfg = make_test_cell_configuration();
+
+  std::vector<pucch_resource> ded_res_list;
+  ded_res_list.reserve(pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES);
+
+  // Generate a list with the maximum number of dedicated PUCCH resources in a way that all resources belongs to a
+  // different multiplexing region.
+  for (unsigned sym = 0, prb = 0; ded_res_list.size() != pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES;) {
+    const unsigned res_idx = ded_res_list.size();
+    ded_res_list.push_back(pucch_resource{
+        .res_id           = {res_idx, res_idx},
+        .starting_prb     = prb,
+        .second_hop_prb   = std::nullopt,
+        .nof_symbols      = 1,
+        .starting_sym_idx = static_cast<uint8_t>(sym),
+        .format           = pucch_format::FORMAT_2,
+        .format_params    = pucch_format_2_3_cfg{.nof_prbs = 1},
+    });
+
+    // By using different starting symbols and PRBs for each resource, we ensure that all resources have unique
+    // time-frequency allocations, and thus belong to different multiplexing regions.
+    // Using Format 2 ensures they are not multiplexed with the common resources either.
+    ++sym;
+    if (sym == NOF_OFDM_SYM_PER_SLOT_NORMAL_CP) {
+      sym = 0;
+      ++prb;
+      if (prb == cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length()) {
+        // No more PRBs available. This should not happen.
+        break;
+      }
+    }
+  }
+  ASSERT_EQ(ded_res_list.size(), pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES)
+      << "Failed to create the maximum number of dedicated PUCCH resources for the test";
+
+  // Overwrite the cell configuration with the dedicated resources.
+  cell_cfg.ded_pucch_resources = ded_res_list;
+  pucch_collision_manager col_manager(cell_cfg);
+
+  // Only the multiplexing regions of the common resources should be present.
+  EXPECT_EQ(8U, col_manager.nof_mux_regions());
 }

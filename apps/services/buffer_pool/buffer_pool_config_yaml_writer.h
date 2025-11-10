@@ -22,29 +22,15 @@
 
 #pragma once
 
-#include "srsran/fapi_adaptor/mac/mac_fapi_adaptor.h"
-#include "srsran/fapi_adaptor/mac/mac_fapi_sector_adaptor.h"
-#include <memory>
-#include <vector>
+#include <yaml-cpp/yaml.h>
 
 namespace srsran {
-namespace fapi_adaptor {
+namespace app_services {
 
-/// MAC/FAPI adaptor implementation.
-class mac_fapi_adaptor_impl : public mac_fapi_adaptor
-{
-public:
-  explicit mac_fapi_adaptor_impl(std::vector<std::unique_ptr<mac_fapi_sector_adaptor>> sector_adaptors_);
+struct buffer_pool_appconfig;
 
-  // See interface for documentation.
-  mac_fapi_sector_adaptor& get_sector_adaptor(unsigned cell_id) override;
+/// Fills the given node with the buffer pool configuration values.
+void fill_buffer_pool_config_in_yaml_schema(YAML::Node& node, const buffer_pool_appconfig& config);
 
-  // See interface for documentation.
-  void stop() override;
-
-private:
-  std::vector<std::unique_ptr<mac_fapi_sector_adaptor>> sector_adaptors;
-};
-
-} // namespace fapi_adaptor
+} // namespace app_services
 } // namespace srsran

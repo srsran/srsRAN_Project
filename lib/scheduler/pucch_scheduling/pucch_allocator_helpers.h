@@ -64,7 +64,7 @@ public:
 
   [[nodiscard]] bool     is_empty() const { return pdus_cnt == 0; }
   [[nodiscard]] unsigned get_nof_unallocated_pdu() const { return pdus_cnt; }
-  pucch_info*            get_next_grant(static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>& pucchs);
+  pucch_info*            get_next_pdu(static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>& pucchs);
   void remove_unused_pdus(static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>& pucchs, rnti_t rnti) const;
   void update_sr_pdu_bits(sr_nof_bits sr_bits, unsigned harq_ack_bits);
   void update_csi_pdu_bits(unsigned csi_part1_bits, sr_nof_bits sr_bits);

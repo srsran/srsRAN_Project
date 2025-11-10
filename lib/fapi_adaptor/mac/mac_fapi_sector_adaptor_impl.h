@@ -41,6 +41,9 @@ public:
                                mac_fapi_sector_adaptor_dependencies&& dependencies);
 
   // See interface for documentation.
+  void stop() override { mac_translator.stop(); }
+
+  // See interface for documentation.
   fapi::slot_time_message_notifier& get_slot_time_message_notifier() override;
 
   // See interface for documentation.

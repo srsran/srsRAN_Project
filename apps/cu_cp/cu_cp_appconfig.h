@@ -71,7 +71,7 @@ struct cu_cp_appconfig {
   /// F1AP configuration.
   srs_cu_cp::f1ap_appconfig f1ap_cfg;
   /// Buffer pool configuration.
-  buffer_pool_appconfig buffer_pool_config;
+  app_services::buffer_pool_appconfig buffer_pool_config;
   /// Remote control configuration.
   remote_control_appconfig remote_control_config;
   /// Metrics configuration.

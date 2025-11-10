@@ -76,6 +76,12 @@ static void fill_cu_up_metrics_section(YAML::Node node, const cu_up_unit_metrics
   fill_cu_up_metrics_layers_section(node["layers"], config.layers_cfg);
 }
 
+static void fill_cu_up_trace_section(YAML::Node node, const cu_up_unit_trace_config& config)
+{
+  auto layers_node            = node["layers"];
+  layers_node["cu_up_enable"] = config.cu_up_enable;
+}
+
 static void fill_cu_up_pcap_section(YAML::Node node, const cu_up_unit_pcap_config& config)
 {
   node["n3_filename"]   = config.n3.filename;
@@ -145,12 +151,14 @@ void srsran::fill_cu_up_config_in_yaml_schema(YAML::Node& node, const cu_up_unit
   node["gnb_cu_up_id"]      = static_cast<uint64_t>(config.gnb_cu_up_id);
 
   app_helpers::fill_metrics_appconfig_in_yaml_schema(node, config.metrics.common_metrics_cfg);
+  fill_cu_up_metrics_section(node["metrics"], config.metrics);
+
+  fill_cu_up_trace_section(node["trace"], config.trace_cfg);
+  fill_cu_up_log_section(node["log"], config.loggers);
+  fill_cu_up_pcap_section(node["pcap"], config.pcap_cfg);
 
   YAML::Node cu_up_node = node["cu_up"];
   fill_cu_up_section(cu_up_node, config);
-  fill_cu_up_log_section(cu_up_node["log"], config.loggers);
-  fill_cu_up_pcap_section(cu_up_node["pcap"], config.pcap_cfg);
-  fill_cu_up_metrics_section(cu_up_node["metrics"], config.metrics);
   fill_cu_up_ngu_section(cu_up_node["ngu"], config.ngu_cfg);
 
   fill_cu_up_qos_section(cu_up_node, config.qos_cfg);

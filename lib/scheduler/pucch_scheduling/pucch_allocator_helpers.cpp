@@ -225,7 +225,7 @@ pucch_existing_pdus_handler::pucch_existing_pdus_handler(rnti_t              crn
   }
 }
 
-pucch_info* pucch_existing_pdus_handler::get_next_grant(static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>& pucchs)
+pucch_info* pucch_existing_pdus_handler::get_next_pdu(static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>& pucchs)
 {
   if (is_empty()) {
     srsran_assert(not pucchs.full(), "PUCCH grants list is full");

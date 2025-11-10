@@ -126,7 +126,8 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway, public fapi::s
     slot_based_upper_phy_controller(downlink_processor_pool& dl_processor_pool,
                                     resource_grid_pool&      rg_pool,
                                     slot_point               slot_,
-                                    unsigned                 sector_id);
+                                    unsigned                 sector_id,
+                                    srslog::basic_logger&    logger);
 
     slot_based_upper_phy_controller(slot_based_upper_phy_controller&& other) = delete;
 
@@ -145,6 +146,7 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway, public fapi::s
     resource_grid_pool&                          rg_pool;
     const unsigned                               sector_id;
     std::vector<slot_based_upper_phy_controller> controllers;
+    srslog::basic_logger&                        logger;
 
     /// Returns the controller for the given slot.
     slot_based_upper_phy_controller& controller(slot_point slot)
@@ -165,7 +167,8 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway, public fapi::s
     slot_based_upper_phy_controller_manager(downlink_processor_pool& dl_processor_pool_,
                                             resource_grid_pool&      rg_pool_,
                                             unsigned                 sector_id_,
-                                            unsigned                 nof_slots_request_headroom);
+                                            unsigned                 nof_slots_request_headroom,
+                                            srslog::basic_logger&    logger);
 
     /// \brief Releases the controller for the given slot.
     ///

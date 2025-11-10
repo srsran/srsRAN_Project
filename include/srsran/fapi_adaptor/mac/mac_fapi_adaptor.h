@@ -35,6 +35,9 @@ public:
 
   /// Returns the MAC&ndash;FAPI sector adaptor for the given cell id.
   virtual mac_fapi_sector_adaptor& get_sector_adaptor(unsigned cell_id) = 0;
+
+  /// Stops the MAC&ndash;FAPI adaptor.
+  virtual void stop() = 0;
 };
 
 } // namespace fapi_adaptor

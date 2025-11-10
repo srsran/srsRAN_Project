@@ -313,6 +313,11 @@ protected:
 
   bool check_transaction_id(unsigned transaction_id) { return cu_cp_handler.last_transaction_id == transaction_id; }
 
+  const f1ap_ue_context_modification_request& get_source_f1ap_ctxt_mod_request()
+  {
+    return source_f1ap_ue_ctxt_mng.get_ctxt_mod_request();
+  }
+
 private:
   // source UE parameters.
   du_index_t                    source_du_index = uint_to_du_index(0);
@@ -351,6 +356,11 @@ TEST_F(handover_reconfiguration_routine_test, when_reconfiguration_successful_th
   ASSERT_TRUE(get_result());
 
   ASSERT_TRUE(check_transaction_id(test_transaction_id));
+
+  // Make sure that the source UP context was not modified.
+  f1ap_ue_context_modification_request context_mod = get_source_f1ap_ctxt_mod_request();
+  ASSERT_TRUE(context_mod.drbs_to_be_setup_mod_list.empty());
+  ASSERT_TRUE(context_mod.drbs_to_be_released_list.empty());
 }
 
 TEST_F(handover_reconfiguration_routine_test, when_ue_context_mod_unsuccessful_then_return_false)

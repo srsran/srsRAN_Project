@@ -38,9 +38,9 @@ static bool validate_qos_appconfig(span<const cu_up_unit_qos_config> config)
   return true;
 }
 
-static bool validate_cu_up_expert_execution_appconfig(const cu_up_unit_execution_config& exec_cfg, bool tracing_enabled)
+static bool validate_cu_up_trace_appconfig(const cu_up_unit_trace_config& exec_cfg, bool tracing_enabled)
 {
-  if (exec_cfg.executor_tracing_enable && !tracing_enabled) {
+  if (exec_cfg.cu_up_enable && !tracing_enabled) {
     fmt::println("Tracing requested for CU-UP executors, but tracing is disabled");
     return false;
   }
@@ -61,7 +61,8 @@ bool srsran::validate_cu_up_unit_config(const cu_up_unit_config& config, bool tr
   if (!validate_qos_appconfig(config.qos_cfg)) {
     return false;
   }
-  if (!validate_cu_up_expert_execution_appconfig(config.exec_cfg, tracing_enabled)) {
+
+  if (!validate_cu_up_trace_appconfig(config.trace_cfg, tracing_enabled)) {
     return false;
   }
 

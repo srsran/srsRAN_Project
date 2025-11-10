@@ -81,12 +81,6 @@ static void configure_cli11_execution_args(CLI::App& app, cu_up_unit_execution_c
       ->capture_default_str();
   add_option(*queues_subcmd, "--cu_up_strand_batch_size", exec_cfg.strand_batch_size, "CU-UP's strands batch size")
       ->capture_default_str();
-  CLI::App* tracing_subcmd = add_subcommand(app, "tracing", "Task executor tracing parameters")->configurable();
-  add_option(*tracing_subcmd,
-             "--cu_up_executor_tracing_enable",
-             exec_cfg.executor_tracing_enable,
-             "Enable tracing for CU-UP executors")
-      ->capture_default_str();
 }
 
 static void configure_cli11_ngu_args(CLI::App& app, cu_up_unit_ngu_config& ngu_params)
@@ -165,10 +159,12 @@ static void configure_cli11_log_args(CLI::App& app, cu_up_unit_logger_config& lo
   app_helpers::add_log_option(app, log_params.f1u_level, "--f1u_level", "F1-U log level");
   app_helpers::add_log_option(app, log_params.cu_level, "--cu_level", "Log level for the CU");
 
-  add_option(
-      app, "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")
+  add_option(app,
+             "--hex_max_size",
+             log_params.hex_max_size,
+             "Maximum number of bytes to print in hex (zero for no hex dumps, -1 for unlimited bytes)")
       ->capture_default_str()
-      ->check(CLI::Range(0, 1024));
+      ->check(CLI::Range(-1, 1024));
   add_option(app, "--e1ap_json_enabled", log_params.e1ap_json_enabled, "Enable JSON logging of E1AP PDUs")
       ->always_capture_default();
 }
@@ -206,6 +202,13 @@ static void configure_cli11_metrics_args(CLI::App& app, cu_up_unit_metrics_confi
 
   auto* layers_subcmd = add_subcommand(app, "layers", "Layer basis metrics configuration")->configurable();
   configure_cli11_metrics_layers_args(*layers_subcmd, metrics_params.layers_cfg);
+}
+
+static void configure_cli11_trace(CLI::App& app, cu_up_unit_trace_config& trace_params)
+{
+  CLI::App* layers_subcmd = add_subcommand(app, "layers", "Metrics configuration")->configurable();
+  add_option(*layers_subcmd, "--cu_up_enable", trace_params.cu_up_enable, "Enable tracing for CU-UP executors")
+      ->capture_default_str();
 }
 
 static void configure_cli11_f1u_cu_up_args(CLI::App& app, cu_cp_unit_f1u_config& f1u_cu_up_params)
@@ -255,6 +258,10 @@ void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_
   CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
   configure_cli11_metrics_args(*metrics_subcmd, unit_cfg.metrics);
   app_helpers::configure_cli11_with_metrics_appconfig_schema(app, unit_cfg.metrics.common_metrics_cfg);
+
+  // Trace section.
+  CLI::App* tracing_subcmd = add_subcommand(app, "trace", "General tracer configuration")->configurable();
+  configure_cli11_trace(*tracing_subcmd, unit_cfg.trace_cfg);
 
   // QoS section.
   auto qos_lambda = [&unit_cfg](const std::vector<std::string>& values) {

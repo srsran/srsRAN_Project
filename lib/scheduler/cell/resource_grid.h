@@ -65,6 +65,12 @@ struct grant_info {
   {
   }
 
+  bool operator==(const grant_info& other) const
+  {
+    return scs == other.scs and symbols == other.symbols and crbs == other.crbs;
+  }
+  bool operator!=(const grant_info& other) const { return not(*this == other); }
+
   /// Checks whether this grant overlaps with another grant in time and frequency.
   bool overlaps(const grant_info& other) const
   {

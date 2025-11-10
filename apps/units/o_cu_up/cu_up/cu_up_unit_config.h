@@ -50,6 +50,10 @@ struct cu_up_unit_metrics_config {
   cu_up_unit_metrics_layer_config layers_cfg;
 };
 
+struct cu_up_unit_trace_config {
+  bool cu_up_enable = false;
+};
+
 struct cu_up_unit_ngu_socket_config {
   std::string   bind_addr      = "127.0.0.1";
   std::string   bind_interface = "auto";
@@ -102,7 +106,6 @@ struct cu_up_unit_execution_config {
   uint32_t ul_ue_executor_queue_size   = 8192;
   uint32_t ctrl_ue_executor_queue_size = 8192;
   unsigned strand_batch_size           = 256;
-  bool     executor_tracing_enable     = false;
 };
 
 /// CU-UP application unit configuration.
@@ -121,6 +124,8 @@ struct cu_up_unit_config {
   cu_up_unit_metrics_config metrics;
   /// Loggers.
   cu_up_unit_logger_config loggers;
+  /// Trace.
+  cu_up_unit_trace_config trace_cfg;
   /// PCAPs.
   cu_up_unit_pcap_config pcap_cfg;
   /// QoS configuration.

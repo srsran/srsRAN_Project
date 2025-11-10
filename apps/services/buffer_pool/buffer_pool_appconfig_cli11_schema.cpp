@@ -26,6 +26,7 @@
 #include "srsran/support/cli11_utils.h"
 
 using namespace srsran;
+using namespace app_services;
 
 static void configure_cli11_buffer_pool_args(CLI::App& app, buffer_pool_appconfig& config)
 {
@@ -42,7 +43,8 @@ static void configure_cli11_metrics_args(CLI::App& app, bool& enable_metrics)
       ->capture_default_str();
 }
 
-void srsran::configure_cli11_with_buffer_pool_appconfig_schema(CLI::App& app, buffer_pool_appconfig& config)
+void srsran::app_services::configure_cli11_with_buffer_pool_appconfig_schema(CLI::App&              app,
+                                                                             buffer_pool_appconfig& config)
 {
   // Buffer pool section.
   CLI::App* buffer_pool_subcmd = app.add_subcommand("buffer_pool", "Buffer pool configuration")->configurable();
