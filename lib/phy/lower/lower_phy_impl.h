@@ -34,7 +34,7 @@
 namespace srsran {
 
 /// Lower physical layer implementation.
-class ue_lower_phy_impl : public lower_phy, private lower_phy_controller
+class lower_phy_impl : public lower_phy, private lower_phy_controller
 {
 public:
   /// Collects the injected dependencies of the lower physical layer.
@@ -56,7 +56,7 @@ public:
   };
 
   /// Constructs a generic lower physical layer.
-  ue_lower_phy_impl(configuration& config);
+  lower_phy_impl(configuration& config);
 
   // See interface for documentation.
   lower_phy_controller& get_controller() override { return *this; }

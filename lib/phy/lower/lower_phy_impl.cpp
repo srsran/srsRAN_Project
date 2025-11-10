@@ -13,7 +13,7 @@
 
 using namespace srsran;
 
-ue_lower_phy_impl::ue_lower_phy_impl(configuration& config) :
+lower_phy_impl::lower_phy_impl(configuration& config) :
   downlink_proc(std::move(config.downlink_proc)),
   uplink_proc(std::move(config.uplink_proc)),
   handler_adaptor(downlink_proc->get_downlink_request_handler(),
@@ -42,27 +42,27 @@ ue_lower_phy_impl::ue_lower_phy_impl(configuration& config) :
                        notification_adaptor.get_puxch_notifier());
 }
 
-lower_phy_cfo_controller& ue_lower_phy_impl::get_tx_cfo_control()
+lower_phy_cfo_controller& lower_phy_impl::get_tx_cfo_control()
 {
   return downlink_proc->get_cfo_control();
 }
 
-lower_phy_cfo_controller& ue_lower_phy_impl::get_rx_cfo_control()
+lower_phy_cfo_controller& lower_phy_impl::get_rx_cfo_control()
 {
   return uplink_proc->get_cfo_control();
 }
 
-lower_phy_center_freq_controller& ue_lower_phy_impl::get_tx_center_freq_control()
+lower_phy_center_freq_controller& lower_phy_impl::get_tx_center_freq_control()
 {
   return downlink_proc->get_carrier_center_frequency_control();
 }
 
-lower_phy_center_freq_controller& ue_lower_phy_impl::get_rx_center_freq_control()
+lower_phy_center_freq_controller& lower_phy_impl::get_rx_center_freq_control()
 {
   return uplink_proc->get_carrier_center_frequency_control();
 }
 
-lower_phy_tx_time_offset_controller& ue_lower_phy_impl::get_tx_time_offset_control()
+lower_phy_tx_time_offset_controller& lower_phy_impl::get_tx_time_offset_control()
 {
   return downlink_proc->get_tx_time_offset_control();
 }
