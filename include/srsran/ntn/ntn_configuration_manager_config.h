@@ -24,10 +24,10 @@ struct ntn_cell_config {
   /// NTN configuration.
   ntn_config ntn_cfg;
   /// SIB19 scheduling information.
-  unsigned                si_msg_idx;
-  unsigned                si_period_rf;
-  unsigned                si_window_len_slots;
-  std::optional<unsigned> si_window_position;
+  unsigned si_msg_idx;
+  unsigned si_period_rf;
+  unsigned si_window_len_slots;
+  unsigned si_window_position;
 };
 
 /// NTN Configuration manager config.

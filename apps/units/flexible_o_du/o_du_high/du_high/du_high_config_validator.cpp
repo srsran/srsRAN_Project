@@ -1056,6 +1056,9 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
       if (sib_it < r17_min_sib_type and si_msg.si_window_position.has_value()) {
         fmt::print("The SIB{} cannot be configured with SI-window position.\n", sib_it);
         return false;
+      } else if (sib_it >= r17_min_sib_type and !si_msg.si_window_position.has_value()) {
+        fmt::print("The SIB{} must be configured with SI-window position.\n", sib_it);
+        return false;
       }
       sibs_included.push_back(sib_it);
     }
