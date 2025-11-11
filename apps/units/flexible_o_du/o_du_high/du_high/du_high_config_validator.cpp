@@ -643,11 +643,13 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
   // Verify the number of RBs for the PUCCH resources does not exceed the BWP size.
   // [Implementation-defined] We do not allow the PUCCH resources to occupy more than 50% of the BWP. This is an extreme
   // case, and ideally the PUCCH configuration should result in a much lower PRBs usage.
-  // NOTE: for 5MHz BW, the default PUCCH config will be overwritten to force it to pass this check; skip this check
-  // here.
-  const bool def_cfg_for_5_mhz_bw =
-      config.channel_bw_mhz < bs_channel_bandwidth::MHz10 and pucch_cfg == du_high_unit_pucch_config{};
-  if (not def_cfg_for_5_mhz_bw) {
+  // NOTE: for 5MHz BW or for TDD and 10MHz BW, the default PUCCH config will be overwritten to force it to pass this
+  // check; skip this check here.
+  const bool def_cfg_for_narrow_bw =
+      (config.channel_bw_mhz < bs_channel_bandwidth::MHz10 or
+       (config.tdd_ul_dl_cfg.has_value() and config.channel_bw_mhz <= bs_channel_bandwidth::MHz10)) and
+      pucch_cfg == du_high_unit_pucch_config{};
+  if (not def_cfg_for_narrow_bw) {
     constexpr float max_allowed_prbs_usage = 0.5F;
     if (static_cast<float>(nof_f0_f1_rbs + nof_f2_f3_f4_rbs) / static_cast<float>(nof_crbs) >= max_allowed_prbs_usage) {
       fmt::print("With the given parameters, the number of PRBs for PUCCH exceeds the 50% of the BWP PRBs.\n");

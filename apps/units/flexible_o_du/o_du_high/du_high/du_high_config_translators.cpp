@@ -692,9 +692,10 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     pucch_builder_params&            du_pucch_cfg                  = out_cell.pucch_cfg;
     const du_high_unit_pucch_config& user_pucch_cfg_pre_processing = base_cell.pucch_cfg;
     du_high_unit_pucch_config        user_pucch_cfg                = user_pucch_cfg_pre_processing;
-    // For 5MHz BW, the default PUCCH configuration would use too many PRBs, we need to reduce them not to waste the
-    // useful UL BW.
-    if (param.channel_bw_mhz < bs_channel_bandwidth::MHz10 and
+    // For 5MHz BW or for 10MHz TDD, the default PUCCH configuration would use too many PRBs, we need to reduce them not
+    // to waste the useful UL BW.
+    if ((param.channel_bw_mhz < bs_channel_bandwidth::MHz10 or
+         (is_tdd and param.channel_bw_mhz <= bs_channel_bandwidth::MHz10)) and
         user_pucch_cfg_pre_processing == du_high_unit_pucch_config{}) {
       constexpr unsigned nof_ue_res_harq_per_set_bw_5mhz      = 7;
       constexpr unsigned nof_cell_harq_pucch_res_sets_bw_5mhz = 1;

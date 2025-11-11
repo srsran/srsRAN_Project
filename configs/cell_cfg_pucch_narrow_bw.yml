@@ -1,4 +1,4 @@
-#   This file contains the PUCCH configuration for the gNB to support 5MHz BW.
+#   This file contains the PUCCH configuration for the gNB to support 5MHz BW or 10MHz BS in TDD mode.
 
 cell_cfg:
   pucch:
