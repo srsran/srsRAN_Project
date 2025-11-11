@@ -400,6 +400,7 @@ void pdcp_entity_rx::apply_reordering(pdcp_rx_pdu_info pdu_info)
   // Store PDU in Rx window
   pdcp_rx_sdu_info& sdu_info = rx_window.add_sn(rcvd_count);
   sdu_info.buf               = std::move(pdu_info.buf);
+  sdu_info.count             = pdu_info.count;
   sdu_info.time_of_arrival   = pdu_info.time_of_arrival;
 
   // Update RX_NEXT

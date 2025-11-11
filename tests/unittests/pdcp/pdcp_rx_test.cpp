@@ -37,6 +37,10 @@ TEST_P(pdcp_rx_test, create_new_entity)
 
   ASSERT_NE(pdcp_rx, nullptr);
   ASSERT_NE(test_frame, nullptr);
+
+  // No warnings or errors during construction
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// Test extraction of PDCP sequence numbers
@@ -66,6 +70,10 @@ TEST_P(pdcp_rx_test, sn_unpack)
   } else {
     FAIL();
   }
+
+  // No warnings or errors
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// Test in-order reception of PDCP PDUs
@@ -107,6 +115,10 @@ TEST_P(pdcp_rx_test, rx_in_order)
   } else {
     FAIL();
   }
+
+  // No warnings or errors
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// Test out of order reception of PDUs.
@@ -172,6 +184,90 @@ TEST_P(pdcp_rx_test, rx_out_of_order)
   } else {
     FAIL();
   }
+
+  // No warnings or errors
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
+}
+
+/// Test reception of duplicate PDCP PDUs
+TEST_P(pdcp_rx_test, rx_duplicate)
+{
+  init(GetParam());
+  auto test_rx_out_of_order = [this](uint32_t count) {
+    srsran::test_delimit_logger delimiter("RX duplicate test. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
+
+    pdcp_rx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
+
+    byte_buffer test_pdu1;
+    get_test_pdu(count, test_pdu1);
+    byte_buffer test_pdu2;
+    get_test_pdu(count + 1, test_pdu2);
+    byte_buffer test_pdu2_dup;
+    get_test_pdu(count + 1, test_pdu2_dup);
+    byte_buffer test_pdu3;
+    get_test_pdu(count + 2, test_pdu3);
+    pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
+    pdcp_rx->set_state(init_state);
+
+    pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2)).value());
+
+    // Wait for crypto and reordering
+    wait_pending_crypto();
+    worker.run_pending_tasks();
+    ASSERT_EQ(0, test_frame->sdu_queue.size());
+    // check rx_reord matches rx_next matches count + 2
+    EXPECT_EQ(pdcp_rx->get_state().rx_reord, count + 2);
+    EXPECT_EQ(pdcp_rx->get_state().rx_reord, pdcp_rx->get_state().rx_next);
+
+    pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu3)).value());
+
+    // Wait for crypto and reordering
+    wait_pending_crypto();
+    worker.run_pending_tasks();
+    ASSERT_EQ(0, test_frame->sdu_queue.size());
+    // check rx_reord still maches count + 2, i.e did not change because t_reord is already running; rx_next moved on
+    EXPECT_EQ(pdcp_rx->get_state().rx_reord, count + 2);
+    EXPECT_EQ(pdcp_rx->get_state().rx_next, count + 3);
+
+    // Send the duplicate
+    pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2_dup)).value());
+
+    // Wait for crypto and reordering
+    wait_pending_crypto();
+    worker.run_pending_tasks();
+    ASSERT_EQ(0, test_frame->sdu_queue.size());
+    // check rx_reord still maches count + 2
+    EXPECT_EQ(pdcp_rx->get_state().rx_reord, count + 2);
+    EXPECT_EQ(pdcp_rx->get_state().rx_next, count + 3);
+
+    pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu1)).value());
+
+    // Wait for crypto and reordering
+    wait_pending_crypto();
+    worker.run_pending_tasks();
+    ASSERT_EQ(3, test_frame->sdu_queue.size());
+    while (not test_frame->sdu_queue.empty()) {
+      ASSERT_EQ(test_frame->sdu_queue.front(), sdu1);
+      test_frame->sdu_queue.pop();
+    }
+  };
+
+  if (sn_size == pdcp_sn_size::size12bits) {
+    test_rx_out_of_order(0);
+    test_rx_out_of_order(2047);
+    test_rx_out_of_order(4095);
+  } else if (sn_size == pdcp_sn_size::size18bits) {
+    test_rx_out_of_order(0);
+    test_rx_out_of_order(131071);
+    test_rx_out_of_order(262143);
+  } else {
+    FAIL();
+  }
+
+  // No warnings or errors
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// Test out of order reception of PDUs.
@@ -221,6 +317,10 @@ TEST_P(pdcp_rx_test, rx_reordering_timer)
   } else {
     FAIL();
   }
+
+  // No warnings or errors
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// Test out of order reception of PDUs.
@@ -268,6 +368,10 @@ TEST_P(pdcp_rx_test, rx_reordering_timer_0ms)
   } else {
     FAIL();
   }
+
+  // No warnings or errors
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// Test out of order reception of PDUs.
@@ -318,6 +422,10 @@ TEST_P(pdcp_rx_test, rx_reordering_timer_infinite)
   } else {
     FAIL();
   }
+
+  // One warning but no errors
+  EXPECT_EQ(test_spy.get_warning_counter(), 1);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// Test reception of PDUs with bad integrity checks.
@@ -356,6 +464,10 @@ TEST_P(pdcp_rx_test, rx_integrity_fail)
   } else {
     FAIL();
   }
+
+  // Three warnings but no errors
+  EXPECT_EQ(test_spy.get_warning_counter(), 3);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 /// Test count wrap-around protection for PDCP RX
@@ -395,6 +507,10 @@ TEST_P(pdcp_rx_test, count_wraparound)
   };
 
   test_max_count(rx_next_start);
+
+  // One warning and one error
+  EXPECT_EQ(test_spy.get_warning_counter(), 1);
+  EXPECT_EQ(test_spy.get_error_counter(), 1);
 }
 
 /// Test TX SDU buffering.
@@ -432,6 +548,10 @@ TEST_P(pdcp_rx_test, rx_buffer)
   wait_pending_crypto();
   worker.run_pending_tasks();
   FLUSH_AND_ASSERT_EQ(2, test_frame->sdu_queue.size());
+
+  // No warnings or errors
+  EXPECT_EQ(test_spy.get_warning_counter(), 0);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
 ///////////////////////////////////////////////////////////////////
