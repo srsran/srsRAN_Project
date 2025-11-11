@@ -40,7 +40,7 @@ BITRATE_THRESHOLD: float = 0.1
 
 @mark.zmq
 @mark.smoke
-@mark.flaky(reruns=2, only_rerun=["License unavailable"])
+@mark.flaky(reruns=2, only_rerun=["License unavailable", "Timeout reached while reserving"])
 def test_smoke(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -95,7 +95,10 @@ def test_smoke(
     ),
 )
 @mark.zmq
-@mark.flaky(reruns=3, only_rerun=["failed to start", "IPerf Data Invalid", "License unavailable"])
+@mark.flaky(
+    reruns=3,
+    only_rerun=["failed to start", "IPerf Data Invalid", "License unavailable", "Timeout reached while reserving"],
+)
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq(
     retina_manager: RetinaTestManager,

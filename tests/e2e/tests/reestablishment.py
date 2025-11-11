@@ -52,12 +52,13 @@ _ONLY_RERUN = [
     "StatusCode.ABORTED",
     "socket is already closed",
     "License unavailable",
+    "Timeout reached while reserving",
 ]
 
 
 @mark.zmq
 @mark.smoke
-@mark.flaky(reruns=2, only_rerun=["License unavailable"])
+@mark.flaky(reruns=2, only_rerun=["License unavailable", "Timeout reached while reserving"])
 def test_smoke_sequentially(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -672,7 +673,14 @@ HIGH_BITRATE = int(15e6)
 )
 @mark.zmq_single_ue
 @mark.flaky(
-    reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED", "License unavailable"]
+    reruns=2,
+    only_rerun=[
+        "failed to start",
+        "Attach timeout reached",
+        "StatusCode.ABORTED",
+        "License unavailable",
+        "Timeout reached while reserving",
+    ],
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_mobility_noise_reestablishment(

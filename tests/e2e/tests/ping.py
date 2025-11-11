@@ -334,6 +334,7 @@ def test_android_no_drx(
         "socket is already closed",
         "5GC crashed",
         "License unavailable",
+        "Timeout reached while reserving",
     ],
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -456,6 +457,7 @@ def test_example_srsue(
         "socket is already closed",
         "5GC crashed",
         "License unavailable",
+        "Timeout reached while reserving",
     ],
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -560,6 +562,7 @@ def test_zmq_valgrind(
         "socket is already closed",
         "5GC crashed",
         "License unavailable",
+        "Timeout reached while reserving",
     ],
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments

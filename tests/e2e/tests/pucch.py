@@ -41,7 +41,7 @@ from .steps.configuration import configure_test_parameters, get_minimum_sample_r
 )
 @mark.flaky(
     reruns=2,
-    only_rerun=["License unavailable"],
+    only_rerun=["License unavailable", "Timeout reached while reserving"],
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def test_pucch(
