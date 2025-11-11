@@ -876,7 +876,7 @@ srsran::srs_cu_cp::event_triggered_report_cfg_to_rrc_asn1(const rrc_event_trigge
   if (event_id.id == rrc_event_id::event_id_t::a5) {
     auto& asn1_event_a5 = asn1_event_trigger_cfg.event_id.set_event_a5();
     meas_trigger_quant_to_rrc_asn1(asn1_event_a5.a5_thres1, event_id.meas_trigger_quant_thres_or_offset.value());
-    meas_trigger_quant_to_rrc_asn1(asn1_event_a5.a5_thres2, event_id.meas_trigger_quant_thres_or_offset.value());
+    meas_trigger_quant_to_rrc_asn1(asn1_event_a5.a5_thres2, event_id.meas_trigger_quant_thres_2.value());
     asn1_event_a5.report_on_leave = event_id.report_on_leave;
     asn1_event_a5.hysteresis      = event_id.hysteresis;
     asn1::number_to_enum(asn1_event_a5.time_to_trigger, event_id.time_to_trigger);
