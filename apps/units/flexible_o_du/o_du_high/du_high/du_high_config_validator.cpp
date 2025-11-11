@@ -1084,12 +1084,12 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
 
   // Check whether SI window position when provided in SI scheduling information is in ascending order. See TS 38.331,
   // \c si-WindowPosition.
-  for (unsigned i = 0, j = 0; i < si_window_positions.size() && j < si_window_positions.size(); ++i, ++j) {
-    if (si_window_positions[i] > si_window_positions[j]) {
+  for (unsigned i = 0; i + 1 < si_window_positions.size(); ++i) {
+    if (si_window_positions[i] > si_window_positions[i + 1]) {
       fmt::print("The SI window position in the subsequent entry in SI scheduling information must have higher value "
                  "than in the previous entry ({}>{})",
                  si_window_positions[i],
-                 si_window_positions[j]);
+                 si_window_positions[i + 1]);
       return false;
     }
   }
