@@ -718,19 +718,13 @@ create_ul_processor_factory(const upper_phy_factory_configuration& config,
     report_fatal_error_if_not(pusch_precoding_factory, "Failed to create transform precoder factory.");
   }
 
-  // If the PUSCH channel estimator is configured for multiple threads, then wrap with a pool.
-  if (dependencies.executors.pusch_ch_estimator_executor.max_concurrency > 1) {
-    pusch_ch_estimator_factory = create_port_channel_estimator_pool_factory(
-        pusch_ch_estimator_factory, dependencies.executors.pusch_ch_estimator_executor.max_concurrency);
-    report_fatal_error_if_not(pusch_ch_estimator_factory, "Invalid channel estimator factory.");
-  }
-
   // Create DM-RS based PUSCH channel estimator factory.
   std::shared_ptr<dmrs_pusch_estimator_factory> pusch_channel_estimator_factory =
       create_dmrs_pusch_estimator_factory_sw(prg_factory,
                                              low_papr_sequence_gen_factory,
                                              pusch_ch_estimator_factory,
                                              *dependencies.executors.pusch_ch_estimator_executor.executor,
+                                             config.nof_rx_ports,
                                              pusch_chan_estimator_fd_strategy,
                                              pusch_chan_estimator_td_strategy,
                                              config.pusch_channel_estimator_compensate_cfo);
