@@ -24,6 +24,11 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&              estimate
   unsigned  nof_tx_layers = config.get_nof_tx_layers();
   unsigned  nof_rx_ports  = config.rx_ports.size();
 
+  srsran_assert(nof_rx_ports <= ch_estimator.size(),
+                "Trying to estimate the channel for {} antenna ports, configured {}.",
+                nof_rx_ports,
+                ch_estimator.size());
+
   // Select the DM-RS pattern for this PUSCH transmission.
   span<layer_dmrs_pattern> coordinates = span<layer_dmrs_pattern>(temp_pattern).first(nof_tx_layers);
 
@@ -55,7 +60,8 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&              estimate
   pending_ports = nof_rx_ports;
   for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
     auto estimator_callback = [this, &estimate, &grid, i_port, nof_tx_layers, &notifier]() {
-      const port_channel_estimator_results& ch_est_results = ch_estimator->compute(grid, i_port, temp_symbols, est_cfg);
+      const port_channel_estimator_results& ch_est_results =
+          ch_estimator[i_port]->compute(grid, i_port, temp_symbols, est_cfg);
 
       for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
         for (unsigned i_symbol = est_cfg.first_symbol, last_symbol = est_cfg.first_symbol + est_cfg.nof_symbols;

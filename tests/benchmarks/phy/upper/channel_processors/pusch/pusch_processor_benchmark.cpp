@@ -567,6 +567,7 @@ static std::shared_ptr<pusch_processor_factory> create_pusch_processor_factory()
                                              low_papr_sequence_gen_factory,
                                              port_chan_estimator_factory,
                                              ch_est_executor,
+                                             selected_profile.nof_rx_ports,
                                              fd_smoothing_strategy,
                                              td_interpolation_strategy,
                                              compensate_cfo);
