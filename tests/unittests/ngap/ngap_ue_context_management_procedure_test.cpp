@@ -96,6 +96,12 @@ protected:
     return n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type() ==
            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::error_ind;
   }
+
+  bool was_rrc_inactive_transition_report_sent() const
+  {
+    return n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type() ==
+           asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::rrc_inactive_transition_report;
+  }
 };
 
 /// Test Initial Context Setup Request
@@ -489,4 +495,31 @@ TEST_F(ngap_ue_context_management_procedure_test,
   ASSERT_TRUE(was_error_indication_sent());
   ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.error_ind()->cause.radio_network(),
             asn1::ngap::cause_radio_network_e::options::inconsistent_remote_ue_ngap_id);
+}
+
+/// Test RRC Inactive Transition Report.
+TEST_F(ngap_ue_context_management_procedure_test,
+       when_rrc_inactive_transition_report_transmission_is_requested_then_report_is_sent)
+{
+  // Test preamble
+  ue_index_t ue_index = this->start_procedure();
+
+  // Trigger RRC Inactive Transition Report transmission.
+  ngap_rrc_inactive_transition_report report;
+  report.ue_index                          = ue_index;
+  report.rrc_state                         = ngap_rrc_inactive_transition_report::ngap_rrc_state::inactive;
+  report.user_location_info.nr_cgi.plmn_id = plmn_identity::test_value();
+  report.user_location_info.nr_cgi.nci     = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
+  report.user_location_info.tai.plmn_id    = plmn_identity::test_value();
+  report.user_location_info.tai.tac        = 7;
+
+  async_task<bool>         t = ngap->handle_rrc_inactive_transition_report_required(report);
+  lazy_task_launcher<bool> t_launcher(t);
+
+  // Status: should have succeeded already
+  ASSERT_TRUE(t.ready());
+
+  // Procedure should have succeeded.
+  ASSERT_TRUE(t.get());
+  ASSERT_TRUE(was_rrc_inactive_transition_report_sent());
 }
