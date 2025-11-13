@@ -20,6 +20,7 @@
 #include "srsran/ngap/ngap_handover.h"
 #include "srsran/ngap/ngap_init_context_setup.h"
 #include "srsran/ngap/ngap_nas.h"
+#include "srsran/ngap/ngap_rrc_inactive_transition.h"
 #include "srsran/ngap/ngap_setup.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/ran/cu_types.h"
@@ -1127,6 +1128,24 @@ fill_asn1_ul_ran_status_transfer(asn1::ngap::ul_ran_status_transfer_s&          
     }
     asn1_drb_list.push_back(asn1_drb_item);
   }
+}
+
+/// \brief Convert common type RRC Inactive Transition Report to NGAP ASN1 RRC Inactive Transition Report.
+/// \param[out] asn1_report The ASN1 NGAP RRC Inactive Transition Report.
+/// \param[in] report The CU-CP RRC Inactive Transition Report.
+inline void fill_asn1_rrc_inactive_transition_report(asn1::ngap::rrc_inactive_transition_report_s& asn1_report,
+                                                     const ngap_rrc_inactive_transition_report&    report)
+{
+  // Fill RRC state.
+  if (report.rrc_state == ngap_rrc_inactive_transition_report::ngap_rrc_state::inactive) {
+    asn1_report->rrc_state = asn1::ngap::rrc_state_opts::inactive;
+  } else {
+    asn1_report->rrc_state = asn1::ngap::rrc_state_opts::connected;
+  }
+
+  // Fill user location info.
+  auto& user_loc_info_nr = asn1_report->user_location_info.set_user_location_info_nr();
+  user_loc_info_nr       = cu_cp_user_location_info_to_asn1(report.user_location_info);
 }
 
 } // namespace srs_cu_cp

@@ -71,6 +71,8 @@ public:
   const ngap_context_t& get_ngap_context() const override { return context; }
   void             handle_ul_ue_associated_nrppa_transport(ue_index_t ue_index, const byte_buffer& nrppa_pdu) override;
   async_task<void> handle_ul_non_ue_associated_nrppa_transport(const byte_buffer& nrppa_pdu) override;
+  async_task<bool>
+  handle_rrc_inactive_transition_report_required(const ngap_rrc_inactive_transition_report& report) override;
 
   // ngap_metrics_handler.
   ngap_info handle_ngap_metrics_report_request() const override;
