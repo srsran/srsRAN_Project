@@ -27,10 +27,10 @@ public:
   using layer_dmrs_pattern = port_channel_estimator::layer_dmrs_pattern;
 
   /// Constructor - sets the channel estimator.
-  explicit dmrs_pusch_estimator_impl(std::unique_ptr<pseudo_random_generator>             prg_,
-                                     std::unique_ptr<low_papr_sequence_generator>         tp_sequence_generator_,
-                                     std::vector<std::unique_ptr<port_channel_estimator>> ch_est,
-                                     task_executor&                                       executor_) :
+  explicit dmrs_pusch_estimator_impl(std::unique_ptr<pseudo_random_generator>     prg_,
+                                     std::unique_ptr<low_papr_sequence_generator> tp_sequence_generator_,
+                                     std::unique_ptr<port_channel_estimator>      ch_est,
+                                     task_executor&                               executor_) :
     prg(std::move(prg_)),
     low_papr_sequence_gen(std::move(tp_sequence_generator_)),
     ch_estimator(std::move(ch_est)),
@@ -38,9 +38,7 @@ public:
   {
     srsran_assert(prg, "Invalid PRG.");
     srsran_assert(low_papr_sequence_gen, "Invalid sequence generator.");
-    for (const auto& ch : ch_estimator) {
-      srsran_assert(ch, "Invalid port channel estimator.");
-    }
+    srsran_assert(ch_estimator, "Invalid port channel estimator.");
   }
 
   // See interface for the documentation.
@@ -60,7 +58,7 @@ private:
   /// Sequence generator for transform precoding.
   std::unique_ptr<low_papr_sequence_generator> low_papr_sequence_gen;
   /// Antenna port channel estimator.
-  std::vector<std::unique_ptr<port_channel_estimator>> ch_estimator;
+  std::unique_ptr<port_channel_estimator> ch_estimator;
   /// Buffer for DM-RS symbols.
   dmrs_symbol_list temp_symbols;
   /// Buffer for DM-RS symbol coordinates.

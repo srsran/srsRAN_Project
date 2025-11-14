@@ -10,6 +10,7 @@
 
 #include "../../../support/resource_grid_test_doubles.h"
 #include "dmrs_pusch_estimator_test_data.h"
+#include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_phy_capabilities.h"
 #include "srsran/phy/upper/signal_processors/pusch/factories.h"
 #include "srsran/srsvec/zero.h"
@@ -77,7 +78,7 @@ protected:
 
   void SetUp() override
   {
-    const test_case_t& test_case = GetParam();
+    test_case_t test_case = GetParam();
 
     // Create PRG.
     std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
@@ -109,7 +110,6 @@ protected:
                                                low_papr_sequence_gen_factory_factory,
                                                port_estimator_factory,
                                                ch_est_executor,
-                                               test_case.config.rx_ports.size(),
                                                port_channel_estimator_fd_smoothing_strategy::filter,
                                                port_channel_estimator_td_interpolation_strategy::average,
                                                true);
