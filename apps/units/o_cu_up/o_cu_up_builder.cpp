@@ -92,7 +92,7 @@ o_cu_up_unit srsran::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_
       n3_udp_cfg.tx_max_mmsg                = sock_cfg.udp_config.tx_max_msgs;
       n3_udp_cfg.tx_max_segments            = sock_cfg.udp_config.tx_max_segments;
       n3_udp_cfg.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;
-      n3_udp_cfg.reuse_addr                 = false; // TODO allow reuse_addr for multiple sockets
+      n3_udp_cfg.reuse_addr                 = sock_cfg.udp_config.reuse_addr;
       n3_udp_cfg.dscp                       = sock_cfg.udp_config.dscp;
 
       std::unique_ptr<gtpu_gateway> ngu_gw =

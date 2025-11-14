@@ -323,7 +323,7 @@ int main(int argc, char** argv)
     f1u_gw_config.bind_address               = sock_cfg.bind_addr;
     f1u_gw_config.ext_bind_addr              = sock_cfg.udp_config.ext_addr;
     f1u_gw_config.bind_port                  = du_cfg.f1u_cfg.f1u_sockets.bind_port;
-    f1u_gw_config.reuse_addr                 = false;
+    f1u_gw_config.reuse_addr                 = sock_cfg.udp_config.reuse_addr;
     f1u_gw_config.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;
     f1u_gw_config.rx_max_mmsg                = sock_cfg.udp_config.rx_max_msgs;
     f1u_gw_config.dscp                       = sock_cfg.udp_config.dscp;

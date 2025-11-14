@@ -21,6 +21,7 @@ void srsran::fill_udp_config_in_yaml_schema(YAML::Node node, const udp_appconfig
   node["max_tx_msgs"]     = config.tx_max_msgs;
   node["max_tx_segments"] = config.tx_max_segments;
   node["pool_threshold"]  = config.pool_threshold;
+  node["reuse_addr"]      = config.reuse_addr;
   if (config.dscp.has_value()) {
     node["dscp"] = *config.dscp;
   }
