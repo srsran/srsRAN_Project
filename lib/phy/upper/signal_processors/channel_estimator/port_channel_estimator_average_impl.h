@@ -23,7 +23,7 @@ namespace srsran {
 /// This estimator considers the channel constant in time over the entire slot. As for the frequency domain, the channel
 /// coefficients corresponding to subcarriers containing DM-RS pilots are LSE-estimated, while the remaining
 /// coefficients are estimated by interpolating the previous ones.
-class port_channel_estimator_average_impl : public port_channel_estimator, private port_channel_estimator_results
+class port_channel_estimator_average_impl : public port_channel_estimator
 {
 public:
   /// Maximum supported number of layers.
@@ -59,51 +59,31 @@ public:
     srsran_assert(ta_estimator, "Invalid TA estimator.");
   }
 
-  // See the port_channel_estimator interface for documentation.
-  const port_channel_estimator_results& compute(const resource_grid_reader& grid,
-                                                unsigned                    port,
-                                                const dmrs_symbol_list&     pilots,
-                                                const configuration&        cfg) override
+  // See interface for documentation.
+  void compute(channel_estimate&           estimate,
+               const resource_grid_reader& grid,
+               unsigned                    port,
+               const dmrs_symbol_list&     pilots,
+               const configuration&        cfg) override
   {
-    cfg_local = cfg;
-    do_compute(grid, port, pilots);
-    return *this;
+    do_compute(estimate, grid, port, pilots, cfg);
   }
 
 private:
-  // See the port_channel_estimator_results interface for documentation.
-  void get_symbol_ch_estimate(span<cbf16_t> symbol, unsigned i_symbol, unsigned tx_layer) const override;
-
-  // See the port_channel_estimator_results interface for documentation.
-  float get_epre() const override { return epre; }
-
-  // See the port_channel_estimator_results interface for documentation.
-  float get_noise_variance() const override { return noise_var; }
-
-  // See the port_channel_estimator_results interface for documentation.
-  float get_snr() const override { return snr_linear; }
-
-  // See the port_channel_estimator_results interface for documentation.
-  float get_rsrp(unsigned tx_layer) const override
-  {
-    srsran_assert(tx_layer < cfg_local.dmrs_pattern.size(),
-                  "Layer index {} is larger than the maximum supported index {}.",
-                  tx_layer,
-                  cfg_local.dmrs_pattern.size() - 1);
-    return rsrp[tx_layer];
-  }
-
-  // See the port_channel_estimator_results interface for documentation.
-  std::optional<float> get_cfo_Hz() const override { return cfo_Hz; }
-
-  // See the port_channel_estimator_results interface for documentation.
-  phy_time_unit get_time_alignment() const override { return phy_time_unit::from_seconds(time_alignment_s); }
-
   /// Actual implementation of the \c compute public method.
-  void do_compute(const resource_grid_reader& grid, unsigned port, const dmrs_symbol_list& pilots);
+  void do_compute(channel_estimate&           estimate,
+                  const resource_grid_reader& grid,
+                  unsigned                    port,
+                  const dmrs_symbol_list&     pilots,
+                  const configuration&        cfg);
 
   /// Specializes \ref compute for one hop.
-  void compute_hop(const resource_grid_reader& grid, unsigned port, const dmrs_symbol_list& pilots, unsigned hop);
+  void compute_hop(channel_estimate&           estimate,
+                   const resource_grid_reader& grid,
+                   unsigned                    port,
+                   const dmrs_symbol_list&     pilots,
+                   const configuration&        cfg,
+                   unsigned                    hop);
 
   /// \brief Preprocesses the pilots and computes the CFO.
   ///
@@ -159,14 +139,12 @@ private:
   /// \param[in]  hop_first_symbol    Start symbol index for the hop within the slot.
   /// \param[in]  hop_last_symbol     Last symbol index for the hop within the slot.
   /// \param[in]  i_symbol            OFDM symbol index within the slot to calculate.
-  /// \param[in]  i_layer             Transmission layer.
-  void apply_td_domain_strategy(span<cbf16_t>                     estimated_rg,
-                                const symbol_slot_mask&           dmrs_mask,
-                                const re_measurement<const cf_t>& freq_response_dmrs,
-                                unsigned                          hop_first_symbol,
-                                unsigned                          hop_last_symbol,
-                                unsigned                          i_symbol,
-                                unsigned                          i_layer) const;
+  void apply_td_domain_strategy(span<cbf16_t>                 estimated_rg,
+                                const symbol_slot_mask&       dmrs_mask,
+                                const re_buffer_reader<cf_t>& freq_response_dmrs,
+                                unsigned                      hop_first_symbol,
+                                unsigned                      hop_last_symbol,
+                                unsigned                      i_symbol) const;
 
   /// Frequency domain smoothing strategy.
   port_channel_estimator_fd_smoothing_strategy fd_smoothing_strategy;
@@ -196,24 +174,16 @@ private:
   static_re_measurement<cf_t, MAX_NOF_PILOTS_SYMBOL, MAX_NOF_DMRS_SYMBOLS, MAX_LAYERS> enlarged_pilots_lse;
   modular_re_measurement<cf_t, MAX_NOF_DMRS_SYMBOLS, MAX_LAYERS>                       pilots_lse;
 
-  /// \brief Buffer of frequency response coefficients for each hop.
-  ///
-  /// The storage for the first hop needs to be bigger since it covers the cases with no frequency hopping.
-  /// @{
-  static_re_measurement<cf_t, MAX_RB * NRE, MAX_NOF_DMRS_SYMBOLS, MAX_LAYERS>     freq_response_hop0;
-  static_re_measurement<cf_t, MAX_RB * NRE, MAX_NOF_DMRS_SYMBOLS / 2, MAX_LAYERS> freq_response_hop1;
-  /// @}
+  /// Buffer of frequency response coefficients.
+  static_re_buffer<MAX_NOF_DMRS_SYMBOLS, MAX_RB * NRE, cf_t> freq_response;
 
   /// Buffer for the OFDM symbols starting epochs within the current slot.
   std::array<float, MAX_NSYMB_PER_SLOT> aux_symbol_start_epochs;
   /// View on the used part of the symbols starting epochs buffer \c aux_symbol_start_epochs.
   span<float> symbol_start_epochs;
 
-  /// Channel estimator configuration.
-  configuration cfg_local = {};
-
-  /// Estimated RSRP value per layer.
-  std::array<float, MAX_LAYERS> rsrp;
+  /// Estimated RSRP value (single layer).
+  float rsrp = 0;
 
   /// \brief Observed average DM-RS EPRE.
   ///
@@ -223,17 +193,11 @@ private:
   /// Estimated noise variance (single layer).
   float noise_var = 0;
 
-  /// Estimated SNR (linear scale).
-  float snr_linear = 0;
-
   /// Estimated time alignment in seconds.
   float time_alignment_s = 0;
 
   /// Estimated CFO, normalized with respect to the subcarrier spacing.
   std::optional<float> cfo_normalized = std::nullopt;
-
-  /// Estimated CFO in hertz.
-  std::optional<float> cfo_Hz = std::nullopt;
 };
 
 } // namespace srsran

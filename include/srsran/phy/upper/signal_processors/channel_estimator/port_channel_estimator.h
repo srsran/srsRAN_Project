@@ -14,9 +14,9 @@
 #pragma once
 
 #include "srsran/adt/bounded_bitset.h"
+#include "srsran/phy/upper/channel_estimation.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/phy/upper/re_measurement.h"
-#include "srsran/ran/pusch/pusch_constants.h"
 #include "srsran/ran/subcarrier_spacing.h"
 
 namespace srsran {
@@ -28,8 +28,6 @@ using dmrs_symbol_list = static_re_measurement<cf_t,
                                                pusch_constants::MAX_NOF_DMRS_SUBC,
                                                pusch_constants::MAX_NOF_DMRS_SYMBOLS,
                                                pusch_constants::MAX_NOF_LAYERS>;
-
-class port_channel_estimator_results;
 
 /// DM-RS-based channel estimator for one receive antenna port.
 class port_channel_estimator
@@ -80,57 +78,20 @@ public:
 
   /// \brief Computes the channel estimate.
   ///
-  /// Estimates the channel for all transmit layers, as seen by the selected receive antenna port. The estimated channel
-  /// and the associated metrics (e.g., EPRE, SINR) are stored internally and accessible via the \c get methods of the
-  /// \c port_channel_estimator_results.
+  /// Estimates the channel to the current receive antenna port for all transmit layers.
+  /// \param[out] estimate The estimated channel coefficients for all resource elements, all OFDM symbols, all receive
+  ///                      ports and all transmit layers.
   /// \param[in]  grid     The frequency&ndash;time resource grid.
   /// \param[in]  port     Receive antenna port the estimation refers to.
   /// \param[in]  pilots   DM-RS symbols (a.k.a. pilots). For each layer, symbols are listed by RE first and then by
   ///                      OFDM symbol.
+  /// \param[in]  pattern  Pattern with the positions of the DM-RS symbols.
   /// \param[in]  cfg      Estimator configuration.
-  /// \return A reader interface for accessing the estimated channel coefficients and metrics.
-  virtual const port_channel_estimator_results& compute(const resource_grid_reader& grid,
-                                                        unsigned                    port,
-                                                        const dmrs_symbol_list&     pilots,
-                                                        const configuration&        cfg) = 0;
-};
-
-/// \brief Port channel estimator reader.
-///
-/// Provides access to the estimated channel coefficients and metrics.
-class port_channel_estimator_results
-{
-public:
-  /// Default destructor.
-  virtual ~port_channel_estimator_results() = default;
-
-  /// \brief Gets the estimated channel coefficients for one OFDM symbol.
-  /// \param[out] symbol    Storage for the channel coefficients.
-  /// \param[in]  i_symbol  Index of the OFDM symbol within the slot.
-  /// \param[in]  tx_layer  Transmission layer the estimated channel refers to.
-  /// \warning The method raises an assertion if the size of \c symbol does not match the grid size stored in the
-  /// channel estimator.
-  virtual void get_symbol_ch_estimate(span<cbf16_t> symbol, unsigned i_symbol, unsigned tx_layer) const = 0;
-
-  /// Gets the estimated EPRE.
-  virtual float get_epre() const = 0;
-
-  /// Gets the estimated noise variance.
-  virtual float get_noise_variance() const = 0;
-
-  /// Gets the estimated signal-to-noise ratio (linear scale).
-  virtual float get_snr() const = 0;
-
-  /// Gets the estimated RSRP for the given transmission layer.
-  virtual float get_rsrp(unsigned tx_layer) const = 0;
-
-  /// \brief Gets the estimated carrier frequency offset in hertz.
-  ///
-  /// The CFO can only be computed if the PUSCH PDU has two or more OFDM symbols carrying DM-RS in each hop.
-  virtual std::optional<float> get_cfo_Hz() const = 0;
-
-  /// Gets the estimated time alignment in PHY time units.
-  virtual phy_time_unit get_time_alignment() const = 0;
+  virtual void compute(channel_estimate&           estimate,
+                       const resource_grid_reader& grid,
+                       unsigned                    port,
+                       const dmrs_symbol_list&     pilots,
+                       const configuration&        cfg) = 0;
 };
 
 } // namespace srsran

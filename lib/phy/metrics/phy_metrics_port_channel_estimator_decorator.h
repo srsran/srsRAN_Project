@@ -12,6 +12,7 @@
 
 #include "srsran/phy/metrics/phy_metrics_notifiers.h"
 #include "srsran/phy/upper/signal_processors/channel_estimator/port_channel_estimator.h"
+#include "srsran/phy/upper/unique_rx_buffer.h"
 
 namespace srsran {
 
@@ -28,17 +29,17 @@ public:
   }
 
   // See interface for documentation.
-  const port_channel_estimator_results& compute(const resource_grid_reader& grid,
-                                                unsigned                    port,
-                                                const dmrs_symbol_list&     pilots,
-                                                const configuration&        cfg) override
+  void compute(channel_estimate&           estimate,
+               const resource_grid_reader& grid,
+               unsigned                    port,
+               const dmrs_symbol_list&     pilots,
+               const configuration&        cfg) override
   {
-    auto                                  tp_before  = std::chrono::high_resolution_clock::now();
-    const port_channel_estimator_results& ch_results = base->compute(grid, port, pilots, cfg);
-    auto                                  tp_after   = std::chrono::high_resolution_clock::now();
+    auto tp_before = std::chrono::high_resolution_clock::now();
+    base->compute(estimate, grid, port, pilots, cfg);
+    auto tp_after = std::chrono::high_resolution_clock::now();
 
     notifier.on_new_metric({.elapsed = tp_after - tp_before});
-    return ch_results;
   }
 
 private:
