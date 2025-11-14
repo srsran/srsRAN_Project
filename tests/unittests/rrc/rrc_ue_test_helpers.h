@@ -32,7 +32,7 @@ static security::security_context generate_security_context(ue_security_manager&
 {
   const char* sk_gnb_cstr = "8d2abb1a4349319ea4276295c33d107a6e274495cb9bc2433fb7d7ca4c3f7646";
 
-  // Pack hex strings into srsgnb types
+  // Pack hex strings into srsgnb types.
   security::sec_key sk_gnb = make_sec_key(sk_gnb_cstr);
 
   // Initialize security context and capabilities.
@@ -53,7 +53,7 @@ static security::security_context generate_security_context(ue_security_manager&
 
   sec_ctxt.select_algorithms(inc_algo_pref_list, ciph_algo_pref_list);
 
-  // Generate K_rrc_enc and K_rrc_int
+  // Generate K_rrc_enc and K_rrc_int.
   sec_ctxt.generate_as_keys();
 
   sec_mng.update_security_context(sec_ctxt);
@@ -79,11 +79,11 @@ protected:
 
   void init()
   {
-    // add UE to UE manager
+    // Add UE to UE manager.
     allocated_ue_index = ue_mng.add_ue(du_index_t::min);
     ue_mng.set_plmn(allocated_ue_index, plmn_identity::test_value());
 
-    // create RRC UE
+    // Create RRC UE.
     rrc_ue_creation_message rrc_ue_create_msg{};
     rrc_ue_create_msg.ue_index = allocated_ue_index;
     rrc_ue_create_msg.c_rnti   = to_rnti(0x1234);
@@ -96,7 +96,7 @@ protected:
     rrc_ue_create_msg.cell.plmn_identity_list.push_back(plmn_identity::test_value());
 
     rrc_ue_cfg_t ue_cfg;
-    // Add meas timing
+    // Add meas timing.
     rrc_meas_timing meas_timing;
     meas_timing.freq_and_timing.emplace();
     meas_timing.freq_and_timing.value().carrier_freq            = 535930;
@@ -126,11 +126,11 @@ protected:
 
   asn1::rrc_nr::dl_ccch_msg_s get_srb0_pdu()
   {
-    // generated PDU must not be empty
+    // Generated PDU must not be empty.
     EXPECT_GT(rrc_ue_f1ap_notifier.last_rrc_pdu.length(), 0);
     EXPECT_EQ(rrc_ue_f1ap_notifier.last_srb_id, srb_id_t::srb0);
 
-    // Unpack received PDU
+    // Unpack received PDU.
     byte_buffer rx_pdu =
         byte_buffer::create(rrc_ue_f1ap_notifier.last_rrc_pdu.begin(), rrc_ue_f1ap_notifier.last_rrc_pdu.end()).value();
     asn1::cbit_ref              bref(rx_pdu);
@@ -147,14 +147,14 @@ protected:
 
   srb_id_t get_last_srb() const
   {
-    // generated PDU must not be empty
+    // Generated PDU must not be empty.
     EXPECT_GT(rrc_ue_f1ap_notifier.last_rrc_pdu.length(), 0);
     return rrc_ue_f1ap_notifier.last_srb_id;
   }
 
   byte_buffer get_srb1_pdu()
   {
-    // generated PDU must not be empty
+    // Generated PDU must not be empty.
     EXPECT_GT(rrc_ue_f1ap_notifier.last_rrc_pdu.length(), 0);
     EXPECT_EQ(rrc_ue_f1ap_notifier.last_srb_id, srb_id_t::srb1);
 
@@ -164,7 +164,7 @@ protected:
 
   byte_buffer get_srb2_pdu()
   {
-    // generated PDU must not be empty
+    // Generated PDU must not be empty.
     EXPECT_GT(rrc_ue_f1ap_notifier.last_rrc_pdu.length(), 0);
     EXPECT_EQ(rrc_ue_f1ap_notifier.last_srb_id, srb_id_t::srb2);
 
@@ -179,10 +179,10 @@ protected:
 
   void init_security_context()
   {
-    // setup security
+    // Setup security.
     const char* sk_gnb_cstr = "45cbc3f8a81193fd5c5229300d59edf812e998a115ec4e0ce903ba89367e2628";
 
-    // Pack hex strings into srsgnb types
+    // Pack hex strings into srsgnb types.
     security::sec_key sk_gnb = make_sec_key(sk_gnb_cstr);
 
     // Initialize security context and capabilities.
@@ -193,7 +193,7 @@ protected:
 
     ue_mng.find_ue(allocated_ue_index)->get_security_manager().init_security_context(init_sec_ctx);
 
-    // Configure PDCP entity security on SRB1
+    // Configure PDCP entity security on SRB1.
     rrc_ue->on_new_as_security_context();
   }
 
@@ -214,59 +214,59 @@ protected:
 
   void receive_setup_request()
   {
-    // inject RRC setup into UE object
+    // Inject RRC setup into UE object.
     rrc_ue->get_ul_pdu_handler().handle_ul_ccch_pdu(byte_buffer::create(rrc_setup_pdu).value());
   }
 
   void receive_invalid_setup_request()
   {
-    // inject corrupted RRC setup into UE object
+    // Inject corrupted RRC setup into UE object.
     rrc_ue->get_ul_pdu_handler().handle_ul_ccch_pdu(byte_buffer::create({0x9d, 0xec, 0x89, 0xde, 0x57, 0x66}).value());
   }
 
   void receive_invalid_reestablishment_request(pci_t pci, rnti_t c_rnti)
   {
-    // inject RRC Reestablishment Request into UE object
+    // Inject RRC Reestablishment Request into UE object.
     rrc_ue->get_ul_pdu_handler().handle_ul_ccch_pdu(generate_invalid_rrc_reestablishment_request_pdu(pci, c_rnti));
   }
 
   void receive_valid_reestablishment_request(pci_t pci, rnti_t c_rnti)
   {
-    // inject RRC Reestablishment Request into UE object
+    // Inject RRC Reestablishment Request into UE object.
     rrc_ue->get_ul_pdu_handler().handle_ul_ccch_pdu(generate_valid_rrc_reestablishment_request_pdu(pci, c_rnti));
   }
 
   void receive_valid_reestablishment_request_with_cause_recfg_fail(pci_t pci, rnti_t c_rnti)
   {
-    // inject RRC Reestablishment Request into UE object
+    // Inject RRC Reestablishment Request into UE object.
     rrc_ue->get_ul_pdu_handler().handle_ul_ccch_pdu(generate_valid_rrc_reestablishment_request_pdu(
         pci, c_rnti, "0111011100001000", asn1::rrc_nr::reest_cause_opts::options::recfg_fail));
   }
 
   void receive_reestablishment_complete()
   {
-    // inject RRC Reestablishment complete
+    // Inject RRC Reestablishment complete.
     rrc_ue->get_ul_pdu_handler().handle_ul_dcch_pdu(srb_id_t::srb1,
                                                     byte_buffer::create(rrc_reest_complete_pdu).value());
   }
 
   void receive_setup_complete()
   {
-    // inject RRC setup complete
+    // Inject RRC setup complete.
     rrc_ue->get_ul_pdu_handler().handle_ul_dcch_pdu(srb_id_t::srb1,
                                                     byte_buffer::create(rrc_setup_complete_pdu).value());
   }
 
   void receive_corrupted_setup_complete()
   {
-    // inject corrupted RRC setup complete
+    // Inject corrupted RRC setup complete.
     rrc_ue->get_ul_pdu_handler().handle_ul_dcch_pdu(srb_id_t::srb1,
                                                     byte_buffer::create(corrupted_rrc_setup_complete_pdu).value());
   }
 
   void send_dl_info_transfer(byte_buffer nas_pdu)
   {
-    // inject RRC setup complete
+    // Inject RRC setup complete.
     rrc_ue->handle_dl_nas_transport_message(std::move(nas_pdu));
   }
 
@@ -306,7 +306,7 @@ protected:
 
   void receive_smc_complete()
   {
-    // inject RRC SMC complete into UE object
+    // Inject RRC SMC complete into UE object.
     rrc_ue->get_ul_pdu_handler().handle_ul_dcch_pdu(srb_id_t::srb1, byte_buffer::create(rrc_smc_complete_pdu).value());
   }
 
@@ -325,7 +325,7 @@ protected:
   {
     byte_buffer ul_dcch_msg_pdu = byte_buffer::create(span<uint8_t>{rrc_ue_capability_information_pdu}).value();
 
-    // inject RRC UE capability information into UE object
+    // Inject RRC UE capability information into UE object.
     rrc_ue->get_ul_pdu_handler().handle_ul_dcch_pdu(srb_id_t::srb1, std::move(ul_dcch_msg_pdu));
   }
 
@@ -333,7 +333,7 @@ protected:
 
   void receive_reconfig_complete()
   {
-    // inject RRC Reconfiguration complete into UE object
+    // Inject RRC Reconfiguration complete into UE object.
     rrc_ue->get_ul_pdu_handler().handle_ul_dcch_pdu(srb_id_t::srb1,
                                                     byte_buffer::create(rrc_reconfig_complete_pdu).value());
   }
@@ -438,10 +438,10 @@ protected:
   srslog::basic_logger&             logger = srslog::fetch_basic_logger("TEST", false);
   dummy_ue_task_scheduler           task_sched_handle{timers, ctrl_worker};
 
-  // UL-CCCH with RRC setup message
+  // UL-CCCH with RRC setup request message.
   std::array<uint8_t, 6> rrc_setup_pdu = {0x1d, 0xec, 0x89, 0xd0, 0x57, 0x66};
 
-  // UL-DCCH with RRC setup complete message
+  // UL-DCCH with RRC setup complete message.
   std::array<uint8_t, 127> rrc_setup_complete_pdu = {
       0x00, 0x00, 0x10, 0xc0, 0x10, 0x00, 0x08, 0x27, 0x27, 0xe0, 0x1c, 0x3f, 0xf1, 0x00, 0xc0, 0x47, 0xe0, 0x04, 0x13,
       0x90, 0x00, 0xbf, 0x20, 0x2f, 0x89, 0x98, 0x00, 0x04, 0x10, 0x00, 0x00, 0x00, 0xf2, 0xe0, 0x4f, 0x07, 0x0f, 0x07,
@@ -451,7 +451,7 @@ protected:
       0x00, 0x05, 0x20, 0x2f, 0x89, 0x90, 0x00, 0x00, 0x11, 0x70, 0x7f, 0x07, 0x0c, 0x04, 0x01, 0x98, 0x0b, 0x01, 0x80,
       0x10, 0x17, 0x40, 0x00, 0x09, 0x05, 0x30, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00};
 
-  // UL-DCCH with corrupted RRC setup complete message
+  // UL-DCCH with corrupted RRC setup complete message.
   std::array<uint8_t, 127> corrupted_rrc_setup_complete_pdu = {
       0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x3f, 0xf1, 0x00, 0xc0, 0x47, 0xe0, 0x04, 0x13,
       0x90, 0x00, 0xbf, 0x20, 0x2f, 0x89, 0x98, 0x00, 0x04, 0x10, 0x00, 0x00, 0x00, 0xf2, 0xe0, 0x4f, 0x07, 0x0f, 0x07,
@@ -461,17 +461,17 @@ protected:
       0x00, 0x05, 0x20, 0x2f, 0x89, 0x90, 0x00, 0x00, 0x11, 0x70, 0x7f, 0x07, 0x0c, 0x04, 0x01, 0x98, 0x0b, 0x01, 0x80,
       0x10, 0x17, 0x40, 0x00, 0x09, 0x05, 0x30, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00};
 
-  // DL-DCCH with RRC security mode command
+  // DL-DCCH with RRC security mode command.
   std::array<uint8_t, 9> rrc_smc_pdu = {0x0, 0x0, 0x22, 0x08, 0x10, 0xec, 0xf0, 0xef, 0x74};
 
-  // UL-DCCH with RRC security mode complete
+  // UL-DCCH with RRC security mode complete.
   std::array<uint8_t, 8> rrc_smc_complete_pdu = {0x0, 0x1, 0x2a, 0x00, 0xbf, 0x5d, 0x10, 0x52};
 
-  // DL-DCCH with RRC UE capability enquiry with freqBand filter for n78
+  // DL-DCCH with RRC UE capability enquiry with freqBand filter for n78.
   std::array<uint8_t, 14> rrc_ue_capability_enquiry_pdu =
       {0x00, 0x01, 0x34, 0x02, 0x01, 0x20, 0x01, 0x01, 0x34, 0x00, 0x61, 0x9c, 0x08, 0x1f};
 
-  // UL-DCCH with RRC ue capability information
+  // UL-DCCH with RRC ue capability information.
   std::array<uint8_t, 1020> rrc_ue_capability_information_pdu = {
       0x00, 0x02, 0x4c, 0x82, 0x20, 0xfc, 0x7a, 0x68, 0x04, 0x00, 0x01, 0xd3, 0xd6, 0x84, 0xc0, 0x80, 0x00, 0x80, 0x50,
       0x12, 0x09, 0x31, 0x60, 0x00, 0x98, 0x35, 0x03, 0x04, 0xd8, 0x06, 0x1c, 0xf9, 0x86, 0x3c, 0xa1, 0x60, 0x70, 0x4c,
@@ -528,16 +528,16 @@ protected:
       0x03, 0x85, 0x86, 0x06, 0x88, 0x08, 0x89, 0x09, 0x8c, 0x0c, 0x8d, 0x8e, 0x0e, 0x8f, 0x90, 0x92, 0x93, 0x13, 0x94,
       0x14, 0x95, 0x16, 0x97, 0xa0, 0xa1, 0x23, 0x20, 0x00, 0x6f, 0x4f, 0xc9, 0x58};
 
-  // DL-DCCH with RRC reconfiguration
+  // DL-DCCH with RRC reconfiguration.
   std::array<uint8_t, 54> rrc_reconfig_pdu = {
       0x00, 0x00, 0x02, 0xa8, 0xa0, 0x49, 0x40, 0xbc, 0x3e, 0x00, 0x61, 0x4a, 0xa0, 0x00, 0x3c, 0xa0, 0x09, 0x92,
       0x2a, 0x08, 0x06, 0x18, 0x91, 0x80, 0x00, 0x81, 0x42, 0x68, 0x00, 0x00, 0x64, 0xfd, 0xf1, 0xc0, 0x00, 0x00,
       0x09, 0x0d, 0x0d, 0x40, 0x09, 0xbd, 0x5b, 0x7d, 0xde, 0x00, 0x3a, 0xab, 0xbc, 0xc0, 0x00, 0x00, 0x00, 0x00};
 
-  // UL-DCCH with RRC reconfiguration complete
+  // UL-DCCH with RRC reconfiguration complete.
   std::array<uint8_t, 8> rrc_reconfig_complete_pdu = {0x0, 0x1, 0x0a, 0x00, 0xbf, 0x5d, 0x10, 0x52};
 
-  // UL-DCCH with RRC reestablishment complete
+  // UL-DCCH with RRC reestablishment complete.
   std::array<uint8_t, 8> rrc_reest_complete_pdu = {0x0, 0x0, 0x18, 0x00, 0xae, 0x09, 0xf9, 0x1a};
 };
 
