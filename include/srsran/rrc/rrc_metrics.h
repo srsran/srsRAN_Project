@@ -21,8 +21,11 @@ struct rrc_connection_establishment_counter_with_cause {
 
   void increase(establishment_cause_t cause)
   {
-    srsran_assert(static_cast<unsigned>(cause) < counters_by_cause.size(), "Invalid cause");
-    counters_by_cause[static_cast<unsigned>(cause)]++;
+    if (static_cast<unsigned>(cause) < counters_by_cause.size()) {
+      counters_by_cause[static_cast<unsigned>(cause)]++;
+    } else {
+      counters_by_cause[static_cast<unsigned>(establishment_cause_t::unknown)]++;
+    }
   }
 
   unsigned size() const { return counters_by_cause.size(); }
@@ -34,16 +37,16 @@ struct rrc_connection_establishment_counter_with_cause {
   establishment_cause_t get_cause(unsigned index) const { return establishment_cause_t(index); }
 
   /// Returns a const iterator to the beginning of the container.
-  std::array<unsigned, 10>::const_iterator begin() const { return counters_by_cause.begin(); }
-  std::array<unsigned, 10>::const_iterator cbegin() const { return counters_by_cause.cbegin(); }
+  std::array<unsigned, 11>::const_iterator begin() const { return counters_by_cause.begin(); }
+  std::array<unsigned, 11>::const_iterator cbegin() const { return counters_by_cause.cbegin(); }
 
   /// Returns a const iterator to the end of the container.
-  std::array<unsigned, 10>::const_iterator end() const { return counters_by_cause.end(); }
-  std::array<unsigned, 10>::const_iterator cend() const { return counters_by_cause.cend(); }
+  std::array<unsigned, 11>::const_iterator end() const { return counters_by_cause.end(); }
+  std::array<unsigned, 11>::const_iterator cend() const { return counters_by_cause.cend(); }
 
 private:
   // The RRC setup request/complete counters indexed by the establishment cause.
-  std::array<unsigned, 10> counters_by_cause = {};
+  std::array<unsigned, 11> counters_by_cause = {};
 };
 
 struct rrc_du_metrics {
