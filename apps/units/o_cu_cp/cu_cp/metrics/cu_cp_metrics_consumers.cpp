@@ -18,6 +18,11 @@ void cu_cp_metrics_consumer_json::handle_metric(const app_services::metrics_set&
 {
   const cu_cp_metrics_report& cp_metrics = static_cast<const cu_cp_metrics_impl&>(metric).get_metrics();
 
+  // Only log if there is data.
+  if (cp_metrics.dus.empty() && cp_metrics.ngaps.empty()) {
+    return;
+  }
+
   log_chan("{}", app_helpers::json_generators::generate_string(cp_metrics, 2));
 
   log_chan.enabled();
