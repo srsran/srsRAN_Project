@@ -121,7 +121,7 @@ ngap_message srsran::srs_cu_cp::generate_ng_setup_failure_with_bad_plmn(time_to_
   setup_fail->time_to_wait_present     = true;
   setup_fail->time_to_wait.value       = time_to_wait;
   setup_fail->crit_diagnostics_present = false;
-  // Fill critical diagnostics
+  // Fill critical diagnostics.
 
   return ng_setup_failure;
 }
@@ -142,7 +142,7 @@ cu_cp_initial_ue_message srsran::srs_cu_cp::generate_initial_ue_message(ue_index
   cu_cp_initial_ue_message msg = {};
   msg.ue_index                 = ue_index;
   (void)msg.nas_pdu.resize(nas_pdu_len);
-  msg.establishment_cause               = static_cast<establishment_cause_t>(rrc_establishment_cause_opts::mo_sig);
+  msg.establishment_cause               = establishment_cause_t::mo_sig;
   msg.user_location_info.nr_cgi.plmn_id = plmn_identity::test_value();
   msg.user_location_info.nr_cgi.nci     = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
   msg.user_location_info.tai.plmn_id    = plmn_identity::test_value();

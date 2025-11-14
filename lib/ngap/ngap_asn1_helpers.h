@@ -167,8 +167,7 @@ inline void fill_asn1_initial_ue_message(asn1::ngap::init_ue_msg_s&      asn1_ms
 {
   asn1_msg->nas_pdu = msg.nas_pdu.copy();
 
-  asn1_msg->rrc_establishment_cause.value =
-      static_cast<asn1::ngap::rrc_establishment_cause_opts::options>(msg.establishment_cause);
+  asn1_msg->rrc_establishment_cause = establishment_cause_to_asn1(msg.establishment_cause);
 
   auto& user_loc_info_nr = asn1_msg->user_location_info.set_user_location_info_nr();
   user_loc_info_nr       = cu_cp_user_location_info_to_asn1(msg.user_location_info);

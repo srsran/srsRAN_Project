@@ -14,7 +14,6 @@
 #include "srsran/asn1/ngap/ngap_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap_handover.h"
-#include "srsran/ran/bcd_helper.h"
 #include "srsran/ran/cause/ngap_cause.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/rb_id.h"
@@ -40,7 +39,7 @@ byte_buffer pack_into_pdu(const T& msg, const char* context_name = nullptr)
 }
 
 /// \brief  Convert CU-CP security result to NGAP security result.
-/// \param security_result The CU-CP security result.
+/// \param[in] security_result The CU-CP security result.
 /// \return The NGAP security result.
 inline asn1::ngap::security_result_s cu_cp_security_result_to_ngap_security_result(security_result_t security_result)
 {
@@ -66,7 +65,7 @@ inline asn1::ngap::security_result_s cu_cp_security_result_to_ngap_security_resu
 }
 
 /// \brief Convert CU-CP Associated QoS Flow to NGAP Associated QoS Flow Item.
-/// \param cu_cp_qos_flow The CU-CP Associated QoS Flow.
+/// \param[in] cu_cp_qos_flow The CU-CP Associated QoS Flow.
 /// \return The NGAP Associated QoS Flow Item.
 inline asn1::ngap::associated_qos_flow_item_s
 cu_cp_assoc_qos_flow_to_ngap_assoc_qos_flow_item(cu_cp_associated_qos_flow cu_cp_qos_flow)
@@ -91,7 +90,7 @@ cu_cp_assoc_qos_flow_to_ngap_assoc_qos_flow_item(cu_cp_associated_qos_flow cu_cp
 }
 
 /// \brief Convert CU-CP QoS Flow Per TNL Info to NGAP QoS Flow Per TNL Info.
-/// \param cu_cp_qos_flow_info The CU-CP QoS Flow Per TNL Info.
+/// \param[in] cu_cp_qos_flow_info The CU-CP QoS Flow Per TNL Info.
 /// \return The NGAP QoS Flow Per TNL Info.
 inline asn1::ngap::qos_flow_per_tnl_info_s
 cu_cp_qos_flow_per_tnl_info_to_ngap_qos_flow_per_tnl_info(const cu_cp_qos_flow_per_tnl_information& cu_cp_qos_flow_info)
@@ -111,7 +110,7 @@ cu_cp_qos_flow_per_tnl_info_to_ngap_qos_flow_per_tnl_info(const cu_cp_qos_flow_p
 }
 
 /// \brief Convert \c ngap_cause_t type to NGAP cause.
-/// \param cause The ngap_cause_t type.
+/// \param[in] cause The ngap_cause_t type.
 /// \return The NGAP cause.
 inline asn1::ngap::cause_c cause_to_asn1(ngap_cause_t cause)
 {
@@ -143,7 +142,7 @@ inline asn1::ngap::cause_c cause_to_asn1(ngap_cause_t cause)
 }
 
 /// \brief Convert NGAP ASN1 cause to \c ngap_cause_t type.
-/// \param asn1_cause The ASN1 NGAP cause.
+/// \param[in] asn1_cause The ASN1 NGAP cause.
 /// \return The ngap_cause_t type.
 inline ngap_cause_t asn1_to_cause(asn1::ngap::cause_c asn1_cause)
 {
@@ -173,7 +172,7 @@ inline ngap_cause_t asn1_to_cause(asn1::ngap::cause_c asn1_cause)
 }
 
 /// \brief Convert CU-CP QoS Flow Failed to Setup Item to NGAP QoS Flow With Cause Item.
-/// \param cu_cp_failed_item The CU-CP QoS Flow Failed to Setup Item.
+/// \param[in] cu_cp_failed_item The CU-CP QoS Flow Failed to Setup Item.
 /// \return The NGAP QoS Flow With Cause Item.
 inline asn1::ngap::qos_flow_with_cause_item_s cu_cp_qos_flow_failed_to_setup_item_to_ngap_qos_flow_with_cause_item(
     cu_cp_qos_flow_failed_to_setup_item cu_cp_failed_item)
@@ -186,15 +185,46 @@ inline asn1::ngap::qos_flow_with_cause_item_s cu_cp_qos_flow_failed_to_setup_ite
 }
 
 /// \brief Convert CU-CP NRCGI to NR Cell Identity.
-/// \param ngap_cgi The NGAP NRCGI.
+/// \param[in] ngap_cgi The NGAP NRCGI.
 /// \return The NR Cell Identity.
 inline nr_cell_identity cu_cp_nrcgi_to_nr_cell_identity(asn1::ngap::nr_cgi_s& ngap_cgi)
 {
   return nr_cell_identity::create(ngap_cgi.nr_cell_id.to_number()).value();
 }
 
+/// \brief Convert common type \c establishment_cause_t to ASN.1.
+/// \param[in] cause The common type establishment cause.
+/// \return The ASN.1 establishment cause.
+inline asn1::ngap::rrc_establishment_cause_e establishment_cause_to_asn1(establishment_cause_t cause)
+{
+  switch (cause) {
+    case establishment_cause_t::emergency:
+      return asn1::ngap::rrc_establishment_cause_e::emergency;
+    case establishment_cause_t::high_prio_access:
+      return asn1::ngap::rrc_establishment_cause_e::high_prio_access;
+    case establishment_cause_t::mt_access:
+      return asn1::ngap::rrc_establishment_cause_e::mt_access;
+    case establishment_cause_t::mo_sig:
+      return asn1::ngap::rrc_establishment_cause_e::mo_sig;
+    case establishment_cause_t::mo_data:
+      return asn1::ngap::rrc_establishment_cause_e::mo_data;
+    case establishment_cause_t::mo_voice_call:
+      return asn1::ngap::rrc_establishment_cause_e::mo_voice_call;
+    case establishment_cause_t::mo_video_call:
+      return asn1::ngap::rrc_establishment_cause_e::mo_video_call;
+    case establishment_cause_t::mo_sms:
+      return asn1::ngap::rrc_establishment_cause_e::mo_sms;
+    case establishment_cause_t::mps_prio_access:
+      return asn1::ngap::rrc_establishment_cause_e::mps_prio_access;
+    case establishment_cause_t::mcs_prio_access:
+      return asn1::ngap::rrc_establishment_cause_e::mcs_prio_access;
+    default:
+      return asn1::ngap::rrc_establishment_cause_e::not_available;
+  }
+}
+
 /// \brief Convert CU-CP NRCGI to NR Cell Identity.
-/// \param ngap_cgi The NGAP NRCGI.
+/// \param[in] ngap_cgi The NGAP NRCGI.
 /// \return The NR Cell Identity.
 inline asn1::ngap::user_location_info_nr_s
 cu_cp_user_location_info_to_asn1(const cu_cp_user_location_info_nr& cu_cp_user_location_info)
@@ -217,7 +247,7 @@ cu_cp_user_location_info_to_asn1(const cu_cp_user_location_info_nr& cu_cp_user_l
 }
 
 /// \brief Convert ASN.1 cause to a human-readable string.
-/// \param cause The ASN.1 cause.
+/// \param[in] cause The ASN.1 cause.
 /// \return The humand-readable string.
 inline std::string asn1_cause_to_string(const asn1::ngap::cause_c& cause)
 {
@@ -387,7 +417,7 @@ inline bool pdu_session_res_setup_failed_item_to_asn1(template_asn1_item&       
 }
 
 /// \brief Convert ASN.1 GUAMI to a common type.
-/// \param asn1_guami The ASN.1 GUAMI.
+/// \param[in] asn1_guami The ASN.1 GUAMI.
 /// \return The common type GUAMI.
 inline guami_t asn1_to_guami(const asn1::ngap::guami_s& asn1_guami)
 {
@@ -401,8 +431,8 @@ inline guami_t asn1_to_guami(const asn1::ngap::guami_s& asn1_guami)
 }
 
 /// \brief Converts type \c security_indication to an ASN.1 type.
-/// \param asn1obj ASN.1 object where the result of the conversion is stored.
-/// \param security_indication Security Indication IE contents.
+/// \param[out] asn1obj ASN.1 object where the result of the conversion is stored.
+/// \param[in] security_indication Security Indication IE contents.
 inline void security_indication_to_asn1(asn1::ngap::security_ind_s& asn1obj, const security_indication_t& security_ind)
 {
   switch (security_ind.integrity_protection_ind) {
@@ -429,8 +459,8 @@ inline void security_indication_to_asn1(asn1::ngap::security_ind_s& asn1obj, con
 }
 
 /// \brief Converts type \c security_indication to an ASN.1 type.
-/// \param asn1obj ASN.1 object where the result of the conversion is stored.
-/// \param security_indication Security Indication IE contents.
+/// \param[out] asn1obj ASN.1 object where the result of the conversion is stored.
+/// \param[in] security_indication Security Indication IE contents.
 inline void asn1_to_security_indication(security_indication_t& security_ind, const asn1::ngap::security_ind_s& asn1obj)
 {
   switch (asn1obj.integrity_protection_ind) {
@@ -456,6 +486,9 @@ inline void asn1_to_security_indication(security_indication_t& security_ind, con
   }
 }
 
+/// \brief Converts ASN.1 handover type to NGAP handover type.
+/// \param[out] handov_type NGAP handover type where the result of the conversion is stored.
+/// \param[in] asn1_handov_type ASN.1 handover type.
 inline void asn1_to_handov_type(ngap_handov_type& handov_type, const asn1::ngap::handov_type_e& asn1_handov_type)
 {
   switch (asn1_handov_type) {
@@ -477,6 +510,9 @@ inline void asn1_to_handov_type(ngap_handov_type& handov_type, const asn1::ngap:
   }
 }
 
+/// \brief Converts ASN.1 S-NSSAI type to common type.
+/// \param[in] asn1_s_nssai The ASN.1 S-NSSAI type.
+/// \return The common S-NSSAI type where the result of the conversion is stored.
 inline s_nssai_t ngap_asn1_to_s_nssai(const asn1::ngap::s_nssai_s& asn1_s_nssai)
 {
   s_nssai_t s_nssai;
@@ -488,6 +524,9 @@ inline s_nssai_t ngap_asn1_to_s_nssai(const asn1::ngap::s_nssai_s& asn1_s_nssai)
   return s_nssai;
 }
 
+/// \brief Converts common S-NSSAI type to ASN.1.
+/// \param[out] s_nssai Common type S-NSSAI.
+/// \return ASN.1 S-NSSAI type.
 inline asn1::ngap::s_nssai_s s_nssai_to_asn1(const s_nssai_t& s_nssai)
 {
   asn1::ngap::s_nssai_s asn1_s_nssai;
@@ -501,6 +540,9 @@ inline asn1::ngap::s_nssai_s s_nssai_to_asn1(const s_nssai_t& s_nssai)
   return asn1_s_nssai;
 }
 
+/// \brief Convert NGAP ASN.1 TAI to common type.
+/// \param[in] asn1_tai The ASN.1 type TAI.
+/// \return The common type TAI.
 inline cu_cp_tai ngap_asn1_to_tai(const asn1::ngap::tai_s& asn1_tai)
 {
   cu_cp_tai tai;
@@ -510,6 +552,11 @@ inline cu_cp_tai ngap_asn1_to_tai(const asn1::ngap::tai_s& asn1_tai)
   return tai;
 }
 
+/// \brief Convert NGAP ASN.1 security context to common type.
+/// \param[out] sec_ctxt The common type security context.
+/// \param[in] asn1_sec_cap The ASN.1 UE security capabilities.
+/// \param[in] asn1_sec_ctxt The ASN.1 security context.
+/// \return True on success, otherwise false.
 inline bool asn1_to_security_context(security::security_context&           sec_ctxt,
                                      const asn1::ngap::ue_security_cap_s&  asn1_sec_cap,
                                      const asn1::ngap::security_context_s& asn1_sec_ctxt)
@@ -707,6 +754,10 @@ inline cu_cp_global_gnb_id ngap_asn1_to_global_gnb_id(const asn1::ngap::global_g
   return gnb_id;
 }
 
+/// \brief Convert common type PDU session resource admitted item to ASN.1.
+/// \param[out] asn1_admitted_item The ASN.1 PDU session resource admitted item.
+/// \param[in] admitted_item The common type PDU session resource admitted item.
+/// \return True on success, otherwise false.
 inline bool pdu_session_res_admitted_item_to_asn1(asn1::ngap::pdu_session_res_admitted_item_s& asn1_admitted_item,
                                                   const ngap_pdu_session_res_admitted_item&    admitted_item)
 {
@@ -792,6 +843,10 @@ inline bool pdu_session_res_admitted_item_to_asn1(asn1::ngap::pdu_session_res_ad
   return true;
 }
 
+/// \brief Convert common type PDU session resource failed to setup item to ASN.1.
+/// \param[out] asn1_failed_item The ASN.1 PDU session resource failed to setup item.
+/// \param[in] failed_item The common type PDU session resource failed to setup item.
+/// \return True on success, otherwise false.
 inline bool pdu_session_res_failed_to_setup_item_ho_ack_to_asn1(
     asn1::ngap::pdu_session_res_failed_to_setup_item_ho_ack_s& asn1_failed_item,
     const cu_cp_pdu_session_res_setup_failed_item&             failed_item)
@@ -817,6 +872,10 @@ inline bool pdu_session_res_failed_to_setup_item_ho_ack_to_asn1(
   return true;
 }
 
+/// \brief Convert common type target to source transport container to NGAP ASN.1.
+/// \param[out] asn1_container The ASN.1 target to source transport container.
+/// \param[in] container The common type target to source transport container.
+/// \return True on success, otherwise false.
 inline bool target_to_source_transport_container_to_asn1(
     byte_buffer&                                                             asn1_container,
     const ngap_target_ngran_node_to_source_ngran_node_transparent_container& container)
