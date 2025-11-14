@@ -75,6 +75,33 @@ TEST_F(cu_cp_setup_test, when_new_ue_sends_rrc_setup_request_then_dl_rrc_message
   ASSERT_EQ(report.ues[0].pci, report.dus[0].cells[0].pci);
 }
 
+TEST_F(cu_cp_setup_test, when_new_ue_sends_rrc_setup_request_with_unknown_cause_then_dl_rrc_message_sent_with_rrc_setup)
+{
+  // Create UE by sending Initial UL RRC Message.
+  gnb_du_ue_f1ap_id_t du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(0);
+  rnti_t              crnti         = to_rnti(0x4601);
+  get_du(du_idx).push_ul_pdu(test_helpers::generate_init_ul_rrc_message_transfer(
+      du_ue_f1ap_id, crnti, {}, byte_buffer::create({0x1d, 0xa9, 0xe1, 0xb9, 0xf1, 0x18}).value()));
+
+  // Verify F1AP DL RRC Message is sent with RRC Setup.
+  f1ap_message f1ap_pdu;
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+
+  // Check if DL RRC Message Transfer (containing RRC Setup) is valid.
+  ASSERT_TRUE(test_helpers::is_valid_dl_rrc_message_transfer_with_msg4(f1ap_pdu));
+  const auto& dl_rrc_msg = f1ap_pdu.pdu.init_msg().value.dl_rrc_msg_transfer();
+  ASSERT_EQ(int_to_gnb_du_ue_f1ap_id(dl_rrc_msg->gnb_du_ue_f1ap_id), du_ue_f1ap_id);
+  ASSERT_EQ(int_to_srb_id(dl_rrc_msg->srb_id), srb_id_t::srb0);
+  cu_ue_id = int_to_gnb_cu_ue_f1ap_id(dl_rrc_msg->gnb_cu_ue_f1ap_id);
+
+  // Check UE is created.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ues.size(), 1);
+  ASSERT_EQ(report.ues[0].rnti, crnti);
+  ASSERT_EQ(report.ues[0].du_id, report.dus[0].id);
+  ASSERT_EQ(report.ues[0].pci, report.dus[0].cells[0].pci);
+}
+
 TEST_F(cu_cp_setup_test, when_cu_cp_receives_f1_removal_request_then_rrc_setup_procedure_is_cancelled)
 {
   // Create UE by sending Initial UL RRC Message.
