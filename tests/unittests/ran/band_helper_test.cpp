@@ -124,18 +124,6 @@ TEST(get_ul_arfcn_from_dl_arfcn, mixed_frequencies)
   ASSERT_EQ(0, get_ul_arfcn_from_dl_arfcn(303400, nr_band::n94));
 }
 
-TEST(test_get_abs_freq_point_a_arfcn, mixed_frequencies)
-{
-  // n3
-  ASSERT_EQ(367564, get_abs_freq_point_a_arfcn(52, 368500));
-  // n5
-  ASSERT_EQ(175364, get_abs_freq_point_a_arfcn(52, 176300));
-  // n7 n38
-  ASSERT_EQ(528984, get_abs_freq_point_a_arfcn(52, 529920));
-  // n78
-  ASSERT_EQ(633928, get_abs_freq_point_a_arfcn(52, 634240));
-}
-
 TEST(test_arfcn_freq_conversion, arfcn_to_freq_corner_cases)
 {
   const uint32_t max_valid_nr_arfcn = 3279165;
@@ -145,12 +133,6 @@ TEST(test_arfcn_freq_conversion, arfcn_to_freq_corner_cases)
 
   // Invalid ARFCN
   ASSERT_DOUBLE_EQ(0.0, nr_arfcn_to_freq(max_valid_nr_arfcn + 1));
-}
-
-TEST(test_center_freq_conversion, freq_center)
-{
-  ASSERT_DOUBLE_EQ(881.5e6, get_center_freq_from_abs_freq_point_a(52, 175364));
-  ASSERT_DOUBLE_EQ(836.5e6, get_center_freq_from_abs_freq_point_a(52, 166364));
 }
 
 TEST(test_band_duplexing, all_bands)
@@ -283,38 +265,77 @@ TEST(test_ssb_pattern, ssb_pattern_case_invalid)
 
 TEST(test_get_point_a_from_f_req, scs_kHz15)
 {
-  // Band n1, BWs are {5MHz, 10MHz, 15MHz, 20MHz}.
-  ASSERT_DOUBLE_EQ(2122150000.0, get_abs_freq_point_a_from_f_ref(2124400000.0, 25, subcarrier_spacing::kHz15));
-  ASSERT_DOUBLE_EQ(2105420000.0, get_abs_freq_point_a_from_f_ref(2110100000.0, 52, subcarrier_spacing::kHz15));
-  ASSERT_DOUBLE_EQ(2108090000.0, get_abs_freq_point_a_from_f_ref(2115200000.0, 79, subcarrier_spacing::kHz15));
-  ASSERT_DOUBLE_EQ(2150860000.0, get_abs_freq_point_a_from_f_ref(2160400000.0, 106, subcarrier_spacing::kHz15));
+  // Band n1, BWs are {5MHz, 10MHz, 15MHz, 20MHz, 50MHz}.
+  ASSERT_DOUBLE_EQ(2122150000.0, get_abs_freq_point_a_from_f_ref(2124400000.0, 25, subcarrier_spacing::kHz15, 0));
+  ASSERT_DOUBLE_EQ(2119390000.0, get_abs_freq_point_a_from_f_ref(2140000000.0, 25, subcarrier_spacing::kHz15, 102));
+  ASSERT_DOUBLE_EQ(2074530000.0, get_abs_freq_point_a_from_f_ref(2167500000.0, 25, subcarrier_spacing::kHz15, 504));
+  ASSERT_DOUBLE_EQ(2105420000.0, get_abs_freq_point_a_from_f_ref(2110100000.0, 52, subcarrier_spacing::kHz15, 0));
+  ASSERT_DOUBLE_EQ(2116960000.0, get_abs_freq_point_a_from_f_ref(2140000000.0, 52, subcarrier_spacing::kHz15, 102));
+  ASSERT_DOUBLE_EQ(2069600000.0, get_abs_freq_point_a_from_f_ref(2165000000.0, 52, subcarrier_spacing::kHz15, 504));
+  ASSERT_DOUBLE_EQ(1969240000.0, get_abs_freq_point_a_from_f_ref(1975000000.0, 52, subcarrier_spacing::kHz15, 6));
+  ASSERT_DOUBLE_EQ(2108090000.0, get_abs_freq_point_a_from_f_ref(2115200000.0, 79, subcarrier_spacing::kHz15, 0));
+  ASSERT_DOUBLE_EQ(2064670000.0, get_abs_freq_point_a_from_f_ref(2162500000.0, 79, subcarrier_spacing::kHz15, 504));
+  ASSERT_DOUBLE_EQ(1964310000.0, get_abs_freq_point_a_from_f_ref(1972500000.0, 79, subcarrier_spacing::kHz15, 6));
+  ASSERT_DOUBLE_EQ(2150860000.0, get_abs_freq_point_a_from_f_ref(2160400000.0, 106, subcarrier_spacing::kHz15, 0));
+  ASSERT_DOUBLE_EQ(2059740000.0, get_abs_freq_point_a_from_f_ref(2160000000.0, 106, subcarrier_spacing::kHz15, 504));
+  ASSERT_DOUBLE_EQ(2097340000.0, get_abs_freq_point_a_from_f_ref(2140000000.0, 270, subcarrier_spacing::kHz15, 102));
+  ASSERT_DOUBLE_EQ(1929620000.0, get_abs_freq_point_a_from_f_ref(1955000000.0, 270, subcarrier_spacing::kHz15, 6));
 
-  // Band n78, BWs are {10MHz, 15MHz, 20MHz, 30MHz, 40MHz, 50MHz}.
-  ASSERT_DOUBLE_EQ(3615675000.0, get_abs_freq_point_a_from_f_ref(3620355000.0, 52, subcarrier_spacing::kHz15));
-  ASSERT_DOUBLE_EQ(3613245000.0, get_abs_freq_point_a_from_f_ref(3620355000.0, 79, subcarrier_spacing::kHz15));
-  ASSERT_DOUBLE_EQ(3610815000.0, get_abs_freq_point_a_from_f_ref(3620355000.0, 106, subcarrier_spacing::kHz15));
-  ASSERT_DOUBLE_EQ(3605955000.0, get_abs_freq_point_a_from_f_ref(3620355000.0, 160, subcarrier_spacing::kHz15));
-  ASSERT_DOUBLE_EQ(3600915000.0, get_abs_freq_point_a_from_f_ref(3620355000.0, 216, subcarrier_spacing::kHz15));
-  ASSERT_DOUBLE_EQ(3596055000.0, get_abs_freq_point_a_from_f_ref(3620355000.0, 270, subcarrier_spacing::kHz15));
+  // Band n5, BWs are {5MHz, 10MHz, 20MHz}.
+  ASSERT_DOUBLE_EQ(860890000.0, get_abs_freq_point_a_from_f_ref(881500000.0, 25, subcarrier_spacing::kHz15, 102));
+  ASSERT_DOUBLE_EQ(743530000.0, get_abs_freq_point_a_from_f_ref(836500000.0, 25, subcarrier_spacing::kHz15, 504));
+  ASSERT_DOUBLE_EQ(869320000.0, get_abs_freq_point_a_from_f_ref(874000000.0, 52, subcarrier_spacing::kHz15, 0));
+  ASSERT_DOUBLE_EQ(793600000.0, get_abs_freq_point_a_from_f_ref(889000000.0, 52, subcarrier_spacing::kHz15, 504));
+  ASSERT_DOUBLE_EQ(738670000.0, get_abs_freq_point_a_from_f_ref(836500000.0, 79, subcarrier_spacing::kHz15, 504));
+  ASSERT_DOUBLE_EQ(833310000.0, get_abs_freq_point_a_from_f_ref(841500000.0, 79, subcarrier_spacing::kHz15, 6));
+  ASSERT_DOUBLE_EQ(824460000.0, get_abs_freq_point_a_from_f_ref(834000000.0, 106, subcarrier_spacing::kHz15, 0));
+  ASSERT_DOUBLE_EQ(736240000.0, get_abs_freq_point_a_from_f_ref(836500000.0, 106, subcarrier_spacing::kHz15, 504));
+
+  // Band n78, BWs are {10MHz, 15MHz, 20MHz, 25MHz, 30MHz, 40MHz, 50MHz}.
+  ASSERT_DOUBLE_EQ(3615675000.0, get_abs_freq_point_a_from_f_ref(3620355000.0, 52, subcarrier_spacing::kHz15, 0));
+  ASSERT_DOUBLE_EQ(3699600000.0, get_abs_freq_point_a_from_f_ref(3795000000.0, 52, subcarrier_spacing::kHz15, 504));
+  ASSERT_DOUBLE_EQ(3613245000.0, get_abs_freq_point_a_from_f_ref(3620355000.0, 79, subcarrier_spacing::kHz15, 0));
+  ASSERT_DOUBLE_EQ(3524520000.0, get_abs_freq_point_a_from_f_ref(3549990000.0, 79, subcarrier_spacing::kHz15, 102));
+  ASSERT_DOUBLE_EQ(3610815000.0, get_abs_freq_point_a_from_f_ref(3620355000.0, 106, subcarrier_spacing::kHz15, 0));
+  ASSERT_DOUBLE_EQ(3689730000.0, get_abs_freq_point_a_from_f_ref(3789990000.0, 106, subcarrier_spacing::kHz15, 504));
+  ASSERT_DOUBLE_EQ(3519660000.0, get_abs_freq_point_a_from_f_ref(3549990000.0, 133, subcarrier_spacing::kHz15, 102));
+  ASSERT_DOUBLE_EQ(3605955000.0, get_abs_freq_point_a_from_f_ref(3620355000.0, 160, subcarrier_spacing::kHz15, 0));
+  ASSERT_DOUBLE_EQ(3517230000.0, get_abs_freq_point_a_from_f_ref(3549990000.0, 160, subcarrier_spacing::kHz15, 102));
+  ASSERT_DOUBLE_EQ(3600915000.0, get_abs_freq_point_a_from_f_ref(3620355000.0, 216, subcarrier_spacing::kHz15, 0));
+  ASSERT_DOUBLE_EQ(3669840000.0, get_abs_freq_point_a_from_f_ref(3780000000.0, 216, subcarrier_spacing::kHz15, 504));
+  ASSERT_DOUBLE_EQ(3596055000.0, get_abs_freq_point_a_from_f_ref(3620355000.0, 270, subcarrier_spacing::kHz15, 0));
+  ASSERT_DOUBLE_EQ(3507330000.0, get_abs_freq_point_a_from_f_ref(3549990000.0, 270, subcarrier_spacing::kHz15, 102));
 }
 
 TEST(test_get_point_a_from_f_req, scs_kHz30)
 {
-  // Band n3, BWs are {10MHz, 15MHz, 20MHz, 25MHz, 30MHz}.
-  ASSERT_DOUBLE_EQ(1821380000.0, get_abs_freq_point_a_from_f_ref(1825700000.0, 24, subcarrier_spacing::kHz30));
-  ASSERT_DOUBLE_EQ(1844460000.0, get_abs_freq_point_a_from_f_ref(1851300000.0, 38, subcarrier_spacing::kHz30));
-  ASSERT_DOUBLE_EQ(1860220000.0, get_abs_freq_point_a_from_f_ref(1869400000.0, 51, subcarrier_spacing::kHz30));
-  ASSERT_DOUBLE_EQ(1837800000.0, get_abs_freq_point_a_from_f_ref(1849500000.0, 65, subcarrier_spacing::kHz30));
-  ASSERT_DOUBLE_EQ(1837800000.0, get_abs_freq_point_a_from_f_ref(1849500000.0, 65, subcarrier_spacing::kHz30));
-  ASSERT_DOUBLE_EQ(1842060000.0, get_abs_freq_point_a_from_f_ref(1856100000.0, 78, subcarrier_spacing::kHz30));
+  // Band n3, BWs are {10MHz, 15MHz, 20MHz, 25MHz, 30MHz, 50MHz}.
+  ASSERT_DOUBLE_EQ(1821380000.0, get_abs_freq_point_a_from_f_ref(1825700000.0, 24, subcarrier_spacing::kHz30, 0));
+  ASSERT_DOUBLE_EQ(1773520000.0, get_abs_freq_point_a_from_f_ref(1780000000.0, 24, subcarrier_spacing::kHz30, 6));
+  ASSERT_DOUBLE_EQ(1844460000.0, get_abs_freq_point_a_from_f_ref(1851300000.0, 38, subcarrier_spacing::kHz30, 0));
+  ASSERT_DOUBLE_EQ(1684220000.0, get_abs_freq_point_a_from_f_ref(1872500000.0, 38, subcarrier_spacing::kHz30, 504));
+  ASSERT_DOUBLE_EQ(1860220000.0, get_abs_freq_point_a_from_f_ref(1869400000.0, 51, subcarrier_spacing::kHz30, 0));
+  ASSERT_DOUBLE_EQ(1796600000.0, get_abs_freq_point_a_from_f_ref(1842500000.0, 51, subcarrier_spacing::kHz30, 102));
+  ASSERT_DOUBLE_EQ(1837800000.0, get_abs_freq_point_a_from_f_ref(1849500000.0, 65, subcarrier_spacing::kHz30, 0));
+  ASSERT_DOUBLE_EQ(1758640000.0, get_abs_freq_point_a_from_f_ref(1772500000.0, 65, subcarrier_spacing::kHz30, 6));
+  ASSERT_DOUBLE_EQ(1842060000.0, get_abs_freq_point_a_from_f_ref(1856100000.0, 78, subcarrier_spacing::kHz30, 0));
+  ASSERT_DOUBLE_EQ(1791740000.0, get_abs_freq_point_a_from_f_ref(1842500000.0, 78, subcarrier_spacing::kHz30, 102));
+  ASSERT_DOUBLE_EQ(1806060000.0, get_abs_freq_point_a_from_f_ref(1830000000.0, 133, subcarrier_spacing::kHz30, 0));
+  ASSERT_DOUBLE_EQ(1542120000.0, get_abs_freq_point_a_from_f_ref(1747500000.0, 133, subcarrier_spacing::kHz30, 504));
 
   // Band n78, BWs that are tested are {15MHz, 20MHz, 30MHz, 50MHz, 80MHz, 100MHz}.
-  ASSERT_DOUBLE_EQ(3697320000.0, get_abs_freq_point_a_from_f_ref(3704160000.0, 38, subcarrier_spacing::kHz30));
-  ASSERT_DOUBLE_EQ(3694980000.0, get_abs_freq_point_a_from_f_ref(3704160000.0, 51, subcarrier_spacing::kHz30));
-  ASSERT_DOUBLE_EQ(3690120000.0, get_abs_freq_point_a_from_f_ref(3704160000.0, 78, subcarrier_spacing::kHz30));
-  ASSERT_DOUBLE_EQ(3680220000.0, get_abs_freq_point_a_from_f_ref(3704160000.0, 133, subcarrier_spacing::kHz30));
-  ASSERT_DOUBLE_EQ(3665100000.0, get_abs_freq_point_a_from_f_ref(3704160000.0, 217, subcarrier_spacing::kHz30));
-  ASSERT_DOUBLE_EQ(3655020000.0, get_abs_freq_point_a_from_f_ref(3704160000.0, 273, subcarrier_spacing::kHz30));
+  ASSERT_DOUBLE_EQ(3697320000.0, get_abs_freq_point_a_from_f_ref(3704160000.0, 38, subcarrier_spacing::kHz30, 0));
+  ASSERT_DOUBLE_EQ(3506430000.0, get_abs_freq_point_a_from_f_ref(3549990000.0, 38, subcarrier_spacing::kHz30, 102));
+  ASSERT_DOUBLE_EQ(3694980000.0, get_abs_freq_point_a_from_f_ref(3704160000.0, 51, subcarrier_spacing::kHz30, 0));
+  ASSERT_DOUBLE_EQ(3599370000.0, get_abs_freq_point_a_from_f_ref(3789990000.0, 51, subcarrier_spacing::kHz30, 504));
+  ASSERT_DOUBLE_EQ(3690120000.0, get_abs_freq_point_a_from_f_ref(3704160000.0, 78, subcarrier_spacing::kHz30, 0));
+  ASSERT_DOUBLE_EQ(3499230000.0, get_abs_freq_point_a_from_f_ref(3549990000.0, 78, subcarrier_spacing::kHz30, 102));
+  ASSERT_DOUBLE_EQ(3680220000.0, get_abs_freq_point_a_from_f_ref(3704160000.0, 133, subcarrier_spacing::kHz30, 0));
+  ASSERT_DOUBLE_EQ(3569610000.0, get_abs_freq_point_a_from_f_ref(3774990000.0, 133, subcarrier_spacing::kHz30, 504));
+  ASSERT_DOUBLE_EQ(3665100000.0, get_abs_freq_point_a_from_f_ref(3704160000.0, 217, subcarrier_spacing::kHz30, 0));
+  ASSERT_DOUBLE_EQ(3539490000.0, get_abs_freq_point_a_from_f_ref(3759990000.0, 217, subcarrier_spacing::kHz30, 504));
+  ASSERT_DOUBLE_EQ(3655020000.0, get_abs_freq_point_a_from_f_ref(3704160000.0, 273, subcarrier_spacing::kHz30, 0));
+  ASSERT_DOUBLE_EQ(3464130000.0, get_abs_freq_point_a_from_f_ref(3549990000.0, 273, subcarrier_spacing::kHz30, 102));
 }
 
 TEST(test_get_point_a_from_f_req, scs_kHz60)
@@ -351,6 +372,12 @@ TEST(test_get_f_req_from_f_req_point_a, scs_kHz15)
   ASSERT_DOUBLE_EQ(3620355000.0, get_f_ref_from_abs_freq_point_a(3605955000.0, 160, subcarrier_spacing::kHz15));
   ASSERT_DOUBLE_EQ(3620355000.0, get_f_ref_from_abs_freq_point_a(3600915000.0, 216, subcarrier_spacing::kHz15));
   ASSERT_DOUBLE_EQ(3620355000.0, get_f_ref_from_abs_freq_point_a(3596055000.0, 270, subcarrier_spacing::kHz15));
+
+  // Band n7, BWs are {5MHz, 10MHz, 15MHz, 20MHz}.
+  ASSERT_DOUBLE_EQ(2687500000.0, get_f_ref_from_abs_freq_point_a(2594530000.0, 25, subcarrier_spacing::kHz15, 504));
+  ASSERT_DOUBLE_EQ(2565000000.0, get_f_ref_from_abs_freq_point_a(2559240000.0, 52, subcarrier_spacing::kHz15, 6));
+  ASSERT_DOUBLE_EQ(2655000000.0, get_f_ref_from_abs_freq_point_a(2629530000.0, 79, subcarrier_spacing::kHz15, 102));
+  ASSERT_DOUBLE_EQ(2535000000.0, get_f_ref_from_abs_freq_point_a(2434740000.0, 106, subcarrier_spacing::kHz15, 504));
 }
 
 TEST(test_get_f_req_from_f_req_point_a, scs_kHz30)
@@ -370,6 +397,13 @@ TEST(test_get_f_req_from_f_req_point_a, scs_kHz30)
   ASSERT_DOUBLE_EQ(3704160000.0, get_f_ref_from_abs_freq_point_a(3680220000.0, 133, subcarrier_spacing::kHz30));
   ASSERT_DOUBLE_EQ(3704160000.0, get_f_ref_from_abs_freq_point_a(3665100000.0, 217, subcarrier_spacing::kHz30));
   ASSERT_DOUBLE_EQ(3704160000.0, get_f_ref_from_abs_freq_point_a(3655020000.0, 273, subcarrier_spacing::kHz30));
+
+  // Band n48, BWs are {20, 40MHz, 50MHz, 90MHz, 100MHz}.
+  ASSERT_DOUBLE_EQ(3624990000.0, get_f_ref_from_abs_freq_point_a(3579090000.0, 51, subcarrier_spacing::kHz30, 102));
+  ASSERT_DOUBLE_EQ(3679980000.0, get_f_ref_from_abs_freq_point_a(3479460000.0, 106, subcarrier_spacing::kHz30, 504));
+  ASSERT_DOUBLE_EQ(3675000000.0, get_f_ref_from_abs_freq_point_a(3469620000.0, 133, subcarrier_spacing::kHz30, 504));
+  ASSERT_DOUBLE_EQ(3624990000.0, get_f_ref_from_abs_freq_point_a(3544170000.0, 245, subcarrier_spacing::kHz30, 102));
+  ASSERT_DOUBLE_EQ(3649980000.0, get_f_ref_from_abs_freq_point_a(3419400000.0, 273, subcarrier_spacing::kHz30, 504));
 }
 
 TEST(test_get_f_req_from_f_req_point_a, scs_kHz60)
@@ -384,11 +418,16 @@ TEST(test_get_f_req_from_f_req_point_a, scs_kHz60)
   ASSERT_DOUBLE_EQ(2689980000.0, get_f_ref_from_abs_freq_point_a(2641380000.0, 135, subcarrier_spacing::kHz60));
 
   // Band n78, BWs that are tested are {10MHz, 40MHz, 60MHz, 70MHz, 90MHz}.
-  ASSERT_DOUBLE_EQ(3704160000.0, get_f_ref_from_abs_freq_point_a(3700200000.0, 11, subcarrier_spacing::kHz60));
-  ASSERT_DOUBLE_EQ(3704160000.0, get_f_ref_from_abs_freq_point_a(3685800000.0, 51, subcarrier_spacing::kHz60));
-  ASSERT_DOUBLE_EQ(3704160000.0, get_f_ref_from_abs_freq_point_a(3675720000.0, 79, subcarrier_spacing::kHz60));
-  ASSERT_DOUBLE_EQ(3704160000.0, get_f_ref_from_abs_freq_point_a(3670680000.0, 93, subcarrier_spacing::kHz60));
-  ASSERT_DOUBLE_EQ(3704160000.0, get_f_ref_from_abs_freq_point_a(3660600000.0, 121, subcarrier_spacing::kHz60));
+  ASSERT_DOUBLE_EQ(3704160000.0, get_f_ref_from_abs_freq_point_a(3700200000.0, 11, subcarrier_spacing::kHz60, 0));
+  ASSERT_DOUBLE_EQ(3549990000.0, get_f_ref_from_abs_freq_point_a(3472590000.0, 11, subcarrier_spacing::kHz60, 102));
+  ASSERT_DOUBLE_EQ(3704160000.0, get_f_ref_from_abs_freq_point_a(3685800000.0, 51, subcarrier_spacing::kHz60, 0));
+  ASSERT_DOUBLE_EQ(3780000000.0, get_f_ref_from_abs_freq_point_a(3398760000.0, 51, subcarrier_spacing::kHz60, 504));
+  ASSERT_DOUBLE_EQ(3704160000.0, get_f_ref_from_abs_freq_point_a(3675720000.0, 79, subcarrier_spacing::kHz60, 0));
+  ASSERT_DOUBLE_EQ(3769980000.0, get_f_ref_from_abs_freq_point_a(3378660000.0, 79, subcarrier_spacing::kHz60, 504));
+  ASSERT_DOUBLE_EQ(3704160000.0, get_f_ref_from_abs_freq_point_a(3670680000.0, 93, subcarrier_spacing::kHz60, 0));
+  ASSERT_DOUBLE_EQ(3549990000.0, get_f_ref_from_abs_freq_point_a(3443070000.0, 93, subcarrier_spacing::kHz60, 102));
+  ASSERT_DOUBLE_EQ(3704160000.0, get_f_ref_from_abs_freq_point_a(3660600000.0, 121, subcarrier_spacing::kHz60, 0));
+  ASSERT_DOUBLE_EQ(3754980000.0, get_f_ref_from_abs_freq_point_a(3348540000.0, 121, subcarrier_spacing::kHz60, 504));
 }
 
 TEST(test_get_n_rbs_from_bw, scs_15kHz)
