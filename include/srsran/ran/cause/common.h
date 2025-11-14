@@ -52,7 +52,8 @@ enum class establishment_cause_t : uint8_t {
   mo_video_call,
   mo_sms,
   mps_prio_access,
-  mcs_prio_access
+  mcs_prio_access,
+  unknown
 };
 
 } // namespace srsran

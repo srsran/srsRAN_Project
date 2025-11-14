@@ -36,54 +36,54 @@ asn1::rrc_nr::pdcp_cfg_s srsran::srs_cu_cp::pdcp_config_to_rrc_nr_asn1(const pdc
 {
   asn1::rrc_nr::pdcp_cfg_s rrc_pdcp_cfg;
 
-  // t reordering -- Need S
+  // Fill t reordering -- Need S.
   if (pdcp_cfg.rx.t_reordering != pdcp_t_reordering::infinity) {
     rrc_pdcp_cfg.t_reordering_present = true;
     rrc_pdcp_cfg.t_reordering         = t_reordering_to_asn1(pdcp_cfg.rx.t_reordering);
   }
 
-  // ciphering disabled present -- Cond ConnectedTo5GC
+  // Fill ciphering disabled present -- Cond ConnectedTo5GC.
   if (!pdcp_cfg.ciphering_required) {
     rrc_pdcp_cfg.ciphering_disabled_present = true;
-    // this is an extension field.
+    // This is an extension field.
     rrc_pdcp_cfg.ext = true;
   }
 
-  // more than one rlc
+  // Fill more than one RLC.
   rrc_pdcp_cfg.more_than_one_rlc_present = false; // not supported.
 
-  // no more configurable parameters for SRBs
+  // Fill no more configurable parameters for SRBs.
   if (pdcp_cfg.rb_type == pdcp_rb_type::srb) {
     return rrc_pdcp_cfg;
   }
 
-  // drb -- Cond DRB
+  // Fill DRB -- Cond DRB.
   rrc_pdcp_cfg.drb_present = true;
 
-  // hdr compress
+  // Fill hdr compress.
   rrc_pdcp_cfg.drb.hdr_compress.set_not_used(); // not supported.
 
-  // discard timer -- Cond Setup
+  // Fill discard timer -- Cond Setup.
   if (pdcp_cfg.tx.discard_timer.has_value()) {
     rrc_pdcp_cfg.drb.discard_timer_present = true;
     rrc_pdcp_cfg.drb.discard_timer         = discard_timer_to_asn1(pdcp_cfg.tx.discard_timer.value());
   }
 
-  // pdcp sn size ul -- Cond Setup2
+  // Fill PDCP SN size UL -- Cond Setup2.
   rrc_pdcp_cfg.drb.pdcp_sn_size_ul_present = true;
   asn1::number_to_enum(rrc_pdcp_cfg.drb.pdcp_sn_size_ul, pdcp_sn_size_to_uint(pdcp_cfg.rx.sn_size));
 
-  // pdcp sn size dl -- Cond Setup2
+  // Fill PDCP SN size DL -- Cond Setup2.
   rrc_pdcp_cfg.drb.pdcp_sn_size_dl_present = true;
   asn1::number_to_enum(rrc_pdcp_cfg.drb.pdcp_sn_size_dl, pdcp_sn_size_to_uint(pdcp_cfg.tx.sn_size));
 
-  // integrity protection present
+  // Fill integrity protection present.
   rrc_pdcp_cfg.drb.integrity_protection_present = pdcp_cfg.integrity_protection_required;
 
-  // status report required present
+  // Fill status report required present.
   rrc_pdcp_cfg.drb.status_report_required_present = pdcp_cfg.tx.status_report_required;
 
-  // out of order delivery present
+  // Fill out of order delivery present.
   rrc_pdcp_cfg.drb.out_of_order_delivery_present = pdcp_cfg.rx.out_of_order_delivery;
 
   return rrc_pdcp_cfg;
@@ -121,26 +121,26 @@ asn1::rrc_nr::sdap_cfg_s srsran::srs_cu_cp::sdap_config_to_rrc_asn1(const sdap_c
 {
   asn1::rrc_nr::sdap_cfg_s asn1_sdap_cfg;
 
-  // pdu session
+  // Fill PDU session.
   asn1_sdap_cfg.pdu_session = pdu_session_id_to_uint(sdap_cfg.pdu_session);
 
-  // sdap hdr dl
+  // Fill SDAP hdr DL.
   asn1_sdap_cfg.sdap_hdr_dl = sdap_hdr_dl_cfg_to_rrc_asn1(sdap_cfg.sdap_hdr_dl);
 
-  // sdap hdr ul
+  // Fill SDAP hdr UL.
   asn1_sdap_cfg.sdap_hdr_ul = sdap_hdr_ul_cfg_to_rrc_asn1(sdap_cfg.sdap_hdr_ul);
 
-  // default drb
+  // Fill default DRB.
   asn1_sdap_cfg.default_drb = sdap_cfg.default_drb;
 
-  // mapped qos flow to add
-  for (const auto& mapped_qps_flow_to_add : sdap_cfg.mapped_qos_flows_to_add) {
-    asn1_sdap_cfg.mapped_qos_flows_to_add.push_back(qos_flow_id_to_uint(mapped_qps_flow_to_add));
+  // Fill mapped QoS flows to add.
+  for (const auto& mapped_qos_flow_to_add : sdap_cfg.mapped_qos_flows_to_add) {
+    asn1_sdap_cfg.mapped_qos_flows_to_add.push_back(qos_flow_id_to_uint(mapped_qos_flow_to_add));
   }
 
-  // mapped qos flow to release
-  for (const auto& mapped_qps_flow_to_release : sdap_cfg.mapped_qos_flows_to_release) {
-    asn1_sdap_cfg.mapped_qos_flows_to_release.push_back(qos_flow_id_to_uint(mapped_qps_flow_to_release));
+  // Fill mapped QoS flows to release.
+  for (const auto& mapped_qos_flow_to_release : sdap_cfg.mapped_qos_flows_to_release) {
+    asn1_sdap_cfg.mapped_qos_flows_to_release.push_back(qos_flow_id_to_uint(mapped_qos_flow_to_release));
   }
 
   return asn1_sdap_cfg;
@@ -165,7 +165,7 @@ srsran::srs_cu_cp::ciphering_algorithm_to_rrc_asn1(const security::ciphering_alg
       asn1_ciphering_algo = asn1::rrc_nr::ciphering_algorithm_opts::options::nea3;
       break;
     default:
-      // error
+      // Error.
       report_fatal_error("Cannot convert ciphering algorithm {} to ASN.1 type", ciphering_algo);
   }
 
@@ -191,7 +191,7 @@ srsran::srs_cu_cp::integrity_prot_algorithm_to_rrc_asn1(const security::integrit
       asn1_integrity_prot_algo = asn1::rrc_nr::integrity_prot_algorithm_opts::options::nia3;
       break;
     default:
-      // error
+      // Error.
       report_fatal_error("Cannot convert integrity_prot algorithm {} to ASN.1 type", integrity_prot_algo);
   }
 
@@ -227,4 +227,47 @@ cu_cp_amf_identifier_t srsran::srs_cu_cp::asn1_to_amf_identifier(const asn1::fix
   amf_id.amf_pointer   = (amf_identifier << 26U) >> 26U;
 
   return amf_id;
+}
+
+establishment_cause_t
+srsran::srs_cu_cp::asn1_to_establishment_cause(const asn1::rrc_nr::establishment_cause_opts::options& asn1_cause)
+{
+  establishment_cause_t cause;
+  switch (asn1_cause) {
+    case asn1::rrc_nr::establishment_cause_opts::options::emergency:
+      cause = establishment_cause_t::emergency;
+      break;
+    case asn1::rrc_nr::establishment_cause_opts::options::high_prio_access:
+      cause = establishment_cause_t::high_prio_access;
+      break;
+    case asn1::rrc_nr::establishment_cause_opts::options::mt_access:
+      cause = establishment_cause_t::mt_access;
+      break;
+    case asn1::rrc_nr::establishment_cause_opts::options::mo_sig:
+      cause = establishment_cause_t::mo_sig;
+      break;
+    case asn1::rrc_nr::establishment_cause_opts::options::mo_data:
+      cause = establishment_cause_t::mo_data;
+      break;
+    case asn1::rrc_nr::establishment_cause_opts::options::mo_voice_call:
+      cause = establishment_cause_t::mo_voice_call;
+      break;
+    case asn1::rrc_nr::establishment_cause_opts::options::mo_video_call:
+      cause = establishment_cause_t::mo_video_call;
+      break;
+    case asn1::rrc_nr::establishment_cause_opts::options::mo_sms:
+      cause = establishment_cause_t::mo_sms;
+      break;
+    case asn1::rrc_nr::establishment_cause_opts::options::mps_prio_access:
+      cause = establishment_cause_t::mps_prio_access;
+      break;
+    case asn1::rrc_nr::establishment_cause_opts::options::mcs_prio_access:
+      cause = establishment_cause_t::mcs_prio_access;
+      break;
+    default:
+      cause = establishment_cause_t::unknown;
+      break;
+  }
+
+  return cause;
 }
