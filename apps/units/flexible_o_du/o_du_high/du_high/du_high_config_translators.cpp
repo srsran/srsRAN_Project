@@ -528,7 +528,11 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
                        std::min(phy_capabilities.max_nof_layers, cell.cell.pusch_cfg.max_rank));
 
     if (cell.cell.ntn_cfg.has_value()) {
-      out_cell.ntn_cs_koffset = cell.cell.ntn_cfg.value().cell_specific_koffset;
+      if (base_cell.common_scs == subcarrier_spacing::kHz30) {
+        out_cell.ntn_cs_koffset = cell.cell.ntn_cfg.value().cell_specific_koffset * 2;
+      } else {
+        out_cell.ntn_cs_koffset = cell.cell.ntn_cfg.value().cell_specific_koffset;
+      }
     }
 
     out_cell.dl_harq_mode_b = cell.cell.pdsch_cfg.harq_mode_b;

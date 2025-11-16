@@ -259,7 +259,7 @@ struct nr_band_ssb_scs_case {
 
 /// NR operating bands with corresponding SSB Subcarrier Spacing and SSB pattern case, as per Table 5.4.3.3-1 for FR1
 /// and Table 5.4.3.3-1 for FR2, TS 38.104, Rel. 17, version 17.8.0.
-static constexpr unsigned                                           nof_nr_ssb_bands           = 72;
+static constexpr unsigned                                           nof_nr_ssb_bands           = 74;
 static constexpr std::array<nr_band_ssb_scs_case, nof_nr_ssb_bands> nr_ssb_band_scs_case_table = {{
     // clang-format off
     {nr_band::n1,  subcarrier_spacing::kHz15, ssb_pattern_case::A},
@@ -321,7 +321,9 @@ static constexpr std::array<nr_band_ssb_scs_case, nof_nr_ssb_bands> nr_ssb_band_
     {nr_band::n102, subcarrier_spacing::kHz30, ssb_pattern_case::C},
     {nr_band::n104, subcarrier_spacing::kHz30, ssb_pattern_case::C},
     {nr_band::n255, subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n255, subcarrier_spacing::kHz30, ssb_pattern_case::B},
     {nr_band::n256, subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n256, subcarrier_spacing::kHz30, ssb_pattern_case::B},
     {nr_band::n257,  subcarrier_spacing::kHz120, ssb_pattern_case::D},
     {nr_band::n257,  subcarrier_spacing::kHz240, ssb_pattern_case::E},
     {nr_band::n258,  subcarrier_spacing::kHz120, ssb_pattern_case::D},
