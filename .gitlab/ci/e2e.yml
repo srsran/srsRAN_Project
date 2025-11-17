@@ -102,7 +102,7 @@ smoke zmq:
     TESTBED: zmq
     MARKERS: smoke
     RETINA_LAUNCHER_ARGS: -x
-    RETINA_PARAM_ARGS: gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True ue.all.pdcch_decode_opt_threshold=0.1"
     E2E_LOG_LEVEL: info
     CLUSTER: new-retina-e2e-amd64
   timeout: 1 hour
@@ -253,7 +253,7 @@ amari 32UE [tests/pucch.py]:
   variables:
     TESTBED: zmq
     MARKERS: "zmq and not smoke"
-    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True ue.all.pdcch_decode_opt_threshold=0.1"
     E2E_FILE_OR_DIR: tests/pucch.py
   needs:
     - job: basic relwithdeb
