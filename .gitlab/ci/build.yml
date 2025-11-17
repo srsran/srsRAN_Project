@@ -692,7 +692,7 @@ valgrind changed tests:
     when: on_failure
     paths:
       - build/Testing/Temporary
-    expire_in: 1 day
+    expire_in: 5 days
 
 intermediate commits clean:
   extends: intermediate commits cached
