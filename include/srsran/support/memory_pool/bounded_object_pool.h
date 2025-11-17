@@ -36,6 +36,7 @@ public:
   void        increment_scanned_segments() {}
 };
 
+/// Specialization when metrics collection is enabled.
 template <>
 class bounded_object_pool_metrics_collector<true>
 {
@@ -50,12 +51,14 @@ public:
   void        increment_scanned_segments() { scanned_segment_counter.fetch_add(1, std::memory_order_relaxed); }
 };
 
+/// Helper class that implements the bounded object pool logic.
 template <typename SegmentType, typename OnClear = noop_operation, bool MetricsEnabled = false>
 class bounded_object_pool_impl : public bounded_object_pool_metrics_collector<MetricsEnabled>
 {
 public:
   using metrics_collector_type = bounded_object_pool_metrics_collector<MetricsEnabled>;
 
+  /// Reclaimer functor that calls on_clear and reclaims the object back to the pool.
   struct obj_reclaimer {
     obj_reclaimer() = default;
     obj_reclaimer(bounded_object_pool_impl& parent_, uint32_t seg_idx_, uint32_t obj_idx_) :
@@ -66,6 +69,7 @@ public:
     void operator()(typename SegmentType::value_type* val)
     {
       if (val != nullptr) {
+        // Call on_clear before reclaiming the object.
         parent->on_clear(*val);
         parent->reclaim(seg_idx, obj_idx);
       }
@@ -76,6 +80,7 @@ public:
     uint32_t                  obj_idx = static_cast<uint32_t>(-1);
   };
 
+  /// Base segment structure that holds the bitmap and number of objects.
   struct base_segment {
     /// Bitmap to track allocated objects in the segment.
     std::atomic<uint64_t> busy_bitmap{0};
@@ -103,10 +108,12 @@ public:
     static size_t max_size() { return 64; }
   };
 
-  template <typename Factory, typename OnClearTask = OnClear>
-  bounded_object_pool_impl(unsigned nof_objects, Factory&& factory, OnClearTask&& on_clear_ = {}) :
-    nof_objs(nof_objects), on_clear(std::forward<OnClear>(on_clear_))
+  template <typename Factory, typename OnClearFunc = OnClear>
+  bounded_object_pool_impl(unsigned nof_objects, const Factory& factory, OnClearFunc&& on_clear_) :
+    nof_objs(nof_objects), on_clear(std::forward<OnClearFunc>(on_clear_))
   {
+    static_assert(std::is_convertible_v<OnClear, std::function<void(typename SegmentType::value_type&)>>,
+                  "OnClear must be callable with SegmentType::value_type& argument");
     report_fatal_error_if_not(capacity() > 0, "Number of objects must be greater than zero");
     const unsigned nof_segments = divide_ceil(capacity(), base_segment::max_size());
 
@@ -120,15 +127,17 @@ public:
     for (unsigned i = 0; i != nof_segments; ++i) {
       unsigned seg_nof_objs = base_segment::max_size();
       if (i == nof_segments - 1) {
-        // Last segment may have fewer objects.
+        // Last segment may have fewer objects than the ones represented by the max bitmap size.
         seg_nof_objs = ((nof_objects - 1) % base_segment::max_size()) + 1;
       }
       segments.emplace_back(factory(i, seg_nof_objs));
     }
   }
 
+  /// Maximum number of objects that can be allocated in the pool.
   [[nodiscard]] size_t capacity() const { return nof_objs; }
 
+  /// Estimation of the current number of objects in the pool that can be allocated.
   [[nodiscard]] size_t size_approx() const
   {
     size_t sum_used = 0;
@@ -139,6 +148,7 @@ public:
     return segments.size() * base_segment::max_size() - sum_used;
   }
 
+  /// \brief Retrieves the segment and object index of a free object in the pool.
   std::pair<unsigned, unsigned> get()
   {
     const unsigned cpuid      = std::max(::sched_getcpu(), 0);
@@ -187,6 +197,9 @@ public:
     return std::make_pair(static_cast<unsigned>(-1), static_cast<unsigned>(-1));
   }
 
+  /// Reclaims an object back to the pool.
+  /// \param seg_idx Segment index where the object is stored.
+  /// \param obj_idx Object index within the segment.
   void reclaim(unsigned seg_idx, unsigned obj_idx)
   {
     srsran_assert(seg_idx < segments.size(), "Invalid segment index");
@@ -202,7 +215,8 @@ public:
   unsigned cpu_seg_offset_dist_coeff;
   /// Used to determine the bit shift distance between contiguous CPUs.
   unsigned cpu_bit_shift_dist_coeff;
-  OnClear  on_clear;
+  /// Functor called to clear objects before reclaiming them.
+  OnClear on_clear;
 
   /// List of segments that contain the objects.
   std::vector<std::unique_ptr<SegmentType>> segments;
@@ -219,6 +233,7 @@ public:
 template <typename T, typename OnClear = noop_operation, bool MetricsEnabled = false>
 class bounded_object_pool
 {
+  /// Segment structure that holds objects in a C-style dynamic array.
   struct segment : public detail::bounded_object_pool_impl<T>::base_segment {
     using base_type  = typename detail::bounded_object_pool_impl<T>::base_segment;
     using value_type = T;
@@ -227,24 +242,26 @@ class bounded_object_pool
     T* objects;
 
     template <typename... Args>
-    segment(unsigned nof_objects_, Args... args) : base_type(nof_objects_)
+    segment(unsigned nof_objects_, const Args&... args) : base_type(nof_objects_)
     {
       // Create objs.
-      objects = static_cast<T*>(::operator new(this->size() * sizeof(T)));
-      for (unsigned i = 0; i != this->size(); ++i) {
+      const auto sz = this->size();
+      objects       = static_cast<T*>(::operator new(sz * sizeof(T)));
+      for (unsigned i = 0; i != sz; ++i) {
         new (objects + i) T(args...);
       }
     }
     ~segment()
     {
-      for (unsigned i = 0; i != this->size(); ++i) {
+      for (unsigned i = 0, sz = this->size(); i != sz; ++i) {
         objects[i].~T();
       }
       ::operator delete(objects);
     }
   };
 
-  using obj_reclaimer = typename detail::bounded_object_pool_impl<segment, OnClear, MetricsEnabled>::obj_reclaimer;
+  using pool_impl_type = detail::bounded_object_pool_impl<segment, OnClear, MetricsEnabled>;
+  using obj_reclaimer  = typename pool_impl_type::obj_reclaimer;
 
 public:
   using value_type = T;
@@ -253,23 +270,17 @@ public:
 
   /// Creates an object pool with capacity equal to \c nof_objects.
   template <typename... Args>
-  bounded_object_pool(size_t nof_objects, Args... args) :
-    impl(nof_objects,
-         [args...](unsigned /* unused */, unsigned seg_size) { return std::make_unique<segment>(seg_size, args...); })
+  bounded_object_pool(size_t nof_objects, const Args&... args) : bounded_object_pool(OnClear{}, nof_objects, args...)
   {
   }
-  template <typename... Args>
-  bounded_object_pool(const OnClear& on_clear, size_t nof_objects, Args... args) :
-    impl(nof_objects, on_clear, [args...](unsigned /* unused */, unsigned seg_size) {
-      return std::make_unique<segment>(seg_size, args...);
-    })
-  {
-  }
-  template <typename... Args>
-  bounded_object_pool(OnClear&& on_clear, size_t nof_objects, Args... args) :
-    impl(nof_objects, std::move(on_clear), [args...](unsigned /* unused */, unsigned seg_size) {
-      return std::make_unique<segment>(seg_size, args...);
-    })
+  template <typename OnClearFunc,
+            typename... Args,
+            std::enable_if_t<std::is_convertible_v<OnClearFunc, OnClear>, int> = 0>
+  bounded_object_pool(OnClearFunc&& on_clear, size_t nof_objects, const Args&... args) :
+    impl(
+        nof_objects,
+        [&args...](unsigned /* unused */, unsigned seg_size) { return std::make_unique<segment>(seg_size, args...); },
+        std::forward<OnClearFunc>(on_clear))
   {
   }
 
@@ -291,17 +302,17 @@ public:
   size_t size_approx() const { return impl.size_approx(); }
 
   /// Collect metrics from the pool.
-  bool     are_metrics_activate() const { return impl.metrics_active(); }
+  bool     are_metrics_active() const { return impl.metrics_active(); }
   uint64_t nof_alloc_reattempts() const { return impl.nof_alloc_reattempts(); }
   uint64_t nof_scanned_segments() const { return impl.nof_scanned_segments(); }
 
 private:
-  detail::bounded_object_pool_impl<segment, OnClear, MetricsEnabled> impl;
+  pool_impl_type impl;
 };
 
 /// \brief A bounded thread-safe object pool. Unlike \c bounded_object_pool, this pool stores objects in unique_ptr<T>,
 /// so it allows storing polymorphic objects.
-template <typename T, bool MetricsEnabled = false>
+template <typename T, typename OnClear = noop_operation, bool MetricsEnabled = false>
 class bounded_unique_object_pool
 {
   struct segment : public detail::bounded_object_pool_impl<T>::base_segment {
@@ -312,7 +323,7 @@ class bounded_unique_object_pool
     std::vector<std::unique_ptr<T>> objects;
 
     template <typename... Args>
-    segment(unsigned nof_objects, Args... args) : base_type(nof_objects)
+    segment(unsigned nof_objects, const Args&... args) : base_type(nof_objects)
     {
       // Create obj.
       objects.reserve(nof_objects);
@@ -330,8 +341,8 @@ class bounded_unique_object_pool
     }
   };
 
-  using obj_reclaimer =
-      typename detail::bounded_object_pool_impl<segment, noop_operation, MetricsEnabled>::obj_reclaimer;
+  using pool_impl_type = detail::bounded_object_pool_impl<segment, OnClear, MetricsEnabled>;
+  using obj_reclaimer  = typename pool_impl_type::obj_reclaimer;
 
 public:
   using value_type             = T;
@@ -339,19 +350,34 @@ public:
   using metrics_collector_type = detail::bounded_object_pool_metrics_collector<true>;
 
   /// Creates an object pool with the objects passed in the ctor.
-  bounded_unique_object_pool(span<std::unique_ptr<T>> objects_) :
-    impl(objects_.size(), [&objects_](unsigned seg_idx, unsigned seg_nof_objs) {
-      return std::make_unique<segment>(objects_.subspan(seg_idx * segment::max_size(), seg_nof_objs));
-    })
+  bounded_unique_object_pool(span<std::unique_ptr<T>> objects_) : bounded_unique_object_pool(OnClear{}, objects_) {}
+  template <typename ClearFunc = OnClear, std::enable_if_t<std::is_convertible_v<ClearFunc, OnClear>, int> = 0>
+  bounded_unique_object_pool(ClearFunc&& on_clear, span<std::unique_ptr<T>> objects_) :
+    impl(
+        objects_.size(),
+        [&objects_](unsigned seg_idx, unsigned seg_nof_objs) {
+          return std::make_unique<segment>(objects_.subspan(seg_idx * segment::max_size(), seg_nof_objs));
+        },
+        std::forward<ClearFunc>(on_clear))
   {
   }
 
   /// Creates an object pool with capacity equal to \c nof_objects.
   template <typename... Args>
-  bounded_unique_object_pool(unsigned nof_objects, Args... args) :
-    impl(nof_objects, [args...](unsigned /* unused */, unsigned seg_nof_objs) {
-      return std::make_unique<segment>(seg_nof_objs, args...);
-    })
+  bounded_unique_object_pool(unsigned nof_objects, const Args&... args) :
+    bounded_unique_object_pool(OnClear{}, nof_objects, args...)
+  {
+  }
+  template <typename ClearFunc = OnClear,
+            typename... Args,
+            std::enable_if_t<std::is_convertible_v<ClearFunc, OnClear>, int> = 0>
+  bounded_unique_object_pool(ClearFunc&& on_clear, size_t nof_objects, const Args&... args) :
+    impl(
+        nof_objects,
+        [&args...](unsigned /* unused */, unsigned seg_nof_objs) {
+          return std::make_unique<segment>(seg_nof_objs, args...);
+        },
+        std::forward<ClearFunc>(on_clear))
   {
   }
 
@@ -374,19 +400,20 @@ public:
   size_t size_approx() const { return impl.size_approx(); }
 
   /// Collect metrics from the pool.
-  bool     are_metrics_activate() const { return impl.metrics_active(); }
+  bool     are_metrics_active() const { return impl.metrics_active(); }
   uint64_t nof_alloc_reattempts() const { return impl.nof_alloc_reattempts(); }
   uint64_t nof_scanned_segments() const { return impl.nof_scanned_segments(); }
 
 private:
-  detail::bounded_object_pool_impl<segment, noop_operation, MetricsEnabled> impl;
+  pool_impl_type impl;
 };
 
 /// \brief A bounded thread-safe object pool. Unlike \c bounded_unique_object_pool, this pool returns objects
 /// whose lifetime is reference counted.
-template <typename T, bool MetricsEnabled = false>
+template <typename T, typename OnClear = noop_operation, bool MetricsEnabled = false>
 class bounded_rc_object_pool
 {
+  /// Control block that holds the actual object and reference counting logic.
   struct obj_control_block {
     /// Actual pool object data.
     std::unique_ptr<T> obj;
@@ -400,6 +427,8 @@ class bounded_rc_object_pool
     intrusive_ptr_atomic_ref_counter ref_count;
 
     obj_control_block(bounded_rc_object_pool& parent_) : parent(parent_) {}
+
+    T& operator*() { return *obj; }
 
     friend void intrusive_ptr_inc_ref(obj_control_block* ptr) { ptr->ref_count.inc_ref(); }
     friend void intrusive_ptr_dec_ref(obj_control_block* ptr)
@@ -415,40 +444,43 @@ class bounded_rc_object_pool
     {
       // Return object back to the pool.
       obj_reclaimer reclaimer{parent.impl, seg_idx, obj_idx};
-      reclaimer(this);
+      reclaimer(obj.get());
     }
   };
 
   struct segment : public detail::bounded_object_pool_impl<obj_control_block>::base_segment {
     using base_type  = typename detail::bounded_object_pool_impl<obj_control_block>::base_segment;
-    using value_type = obj_control_block;
+    using value_type = T;
 
-    /// Array of objects in the segment.
+    /// Array of control blocks in the segment.
     obj_control_block* objects;
 
     segment(bounded_rc_object_pool& parent, unsigned nof_objects_) : base_type(nof_objects_)
     {
       // Create objs.
-      objects = static_cast<obj_control_block*>(::operator new(this->size() * sizeof(obj_control_block)));
-      for (unsigned i = 0; i != this->size(); ++i) {
+      auto sz = this->size();
+      objects = static_cast<obj_control_block*>(::operator new(sz * sizeof(obj_control_block)));
+      for (unsigned i = 0; i != sz; ++i) {
         new (objects + i) obj_control_block{parent};
       }
     }
     ~segment()
     {
-      for (unsigned i = 0; i != this->size(); ++i) {
+      for (unsigned i = 0, sz = this->size(); i != sz; ++i) {
         objects[i].~obj_control_block();
       }
       ::operator delete(objects);
     }
   };
 
-  using obj_reclaimer =
-      typename detail::bounded_object_pool_impl<segment, noop_operation, MetricsEnabled>::obj_reclaimer;
+  using pool_impl_type = detail::bounded_object_pool_impl<segment, OnClear, MetricsEnabled>;
+  using obj_reclaimer  = typename pool_impl_type::obj_reclaimer;
 
 public:
   using value_type             = T;
   using metrics_collector_type = detail::bounded_object_pool_metrics_collector<true>;
+
+  /// Pointer type that holds a reference-counted object from the pool.
   class ptr
   {
     explicit ptr(intrusive_ptr<obj_control_block> ptr_) : rc(std::move(ptr_)) {}
@@ -472,6 +504,7 @@ public:
 
     void reset() { return rc.reset(); }
 
+    /// Creates a copy of the pointer, increasing the reference count.
     ptr clone() const { return ptr{rc}; }
 
     bool operator==(const ptr& other) const { return rc == other.rc; }
@@ -486,32 +519,48 @@ public:
   };
 
   /// Creates an object pool with the objects passed in the ctor.
-  bounded_rc_object_pool(span<std::unique_ptr<T>> objects_) :
-    impl(objects_.size(), [this, &objects_](unsigned seg_idx, unsigned seg_nof_objs) {
-      auto     seg    = std::make_unique<segment>(*this, seg_nof_objs);
-      unsigned offset = seg_idx * segment::max_size();
-      for (unsigned i = 0, sz = seg_nof_objs; i != sz; ++i) {
-        seg->objects[i].obj     = std::move(objects_[offset + i]);
-        seg->objects[i].seg_idx = seg_idx;
-        seg->objects[i].obj_idx = i;
-      }
-      return seg;
-    })
+  bounded_rc_object_pool(span<std::unique_ptr<T>> objects_) : bounded_rc_object_pool(OnClear{}, objects_) {}
+  template <typename ClearFunc = OnClear, std::enable_if_t<std::is_convertible_v<ClearFunc, OnClear>, int> = 0>
+  bounded_rc_object_pool(ClearFunc&& on_clear, span<std::unique_ptr<T>> objects_) :
+    impl(
+        objects_.size(),
+        [this, &objects_](unsigned seg_idx, unsigned seg_nof_objs) {
+          auto     seg    = std::make_unique<segment>(*this, seg_nof_objs);
+          unsigned offset = seg_idx * segment::max_size();
+          for (unsigned i = 0, sz = seg_nof_objs; i != sz; ++i) {
+            seg->objects[i].obj     = std::move(objects_[offset + i]);
+            seg->objects[i].seg_idx = seg_idx;
+            seg->objects[i].obj_idx = i;
+          }
+          return seg;
+        },
+        std::forward<ClearFunc>(on_clear))
   {
   }
 
-  /// Creates an object pool with capacity equal to \c nof_objects.
+  /// \brief Creates an object pool with capacity equal to \c nof_objects, filled with objects constructed using the
+  /// provided \c args.
   template <typename... Args>
-  bounded_rc_object_pool(unsigned nof_objects, Args... args) :
-    impl(nof_objects, [this, args...](unsigned seg_idx, unsigned seg_nof_objs) {
-      auto seg = std::make_unique<segment>(*this, seg_nof_objs);
-      for (unsigned i = 0, sz = seg_nof_objs; i != sz; ++i) {
-        seg->objects[i].obj     = std::make_unique<T>(args...);
-        seg->objects[i].seg_idx = seg_idx;
-        seg->objects[i].obj_idx = i;
-      }
-      return seg;
-    })
+  bounded_rc_object_pool(unsigned nof_objects, const Args&... args) :
+    bounded_rc_object_pool(OnClear{}, nof_objects, args...)
+  {
+  }
+  template <typename ClearFunc = OnClear,
+            typename... Args,
+            std::enable_if_t<std::is_convertible_v<ClearFunc, OnClear>, int> = 0>
+  bounded_rc_object_pool(ClearFunc&& on_clear, size_t nof_objects, const Args&... args) :
+    impl(
+        nof_objects,
+        [this, &args...](unsigned seg_idx, unsigned seg_nof_objs) {
+          auto seg = std::make_unique<segment>(*this, seg_nof_objs);
+          for (unsigned i = 0, sz = seg_nof_objs; i != sz; ++i) {
+            seg->objects[i].obj     = std::make_unique<T>(args...);
+            seg->objects[i].seg_idx = seg_idx;
+            seg->objects[i].obj_idx = i;
+          }
+          return seg;
+        },
+        std::forward<ClearFunc>(on_clear))
   {
   }
 
@@ -538,7 +587,7 @@ public:
   uint64_t nof_scanned_segments() const { return impl.nof_scanned_segments(); }
 
 private:
-  detail::bounded_object_pool_impl<segment, noop_operation, MetricsEnabled> impl;
+  pool_impl_type impl;
 };
 
 } // namespace srsran
