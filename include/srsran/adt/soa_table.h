@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/adt/span.h"
+#include "srsran/adt/strong_type.h"
 #include "srsran/support/srsran_assert.h"
 #include <limits>
 #include <vector>
@@ -19,23 +20,8 @@ namespace srsran {
 namespace soa {
 
 /// Type representing a row ID.
-class row_id
-{
-public:
-  explicit row_id(uint32_t row_id_val) : val(row_id_val) {}
-
-  bool operator==(const row_id& other) const { return val == other.val; }
-  bool operator!=(const row_id& other) const { return val != other.val; }
-  bool operator<(const row_id& other) const { return val < other.val; }
-  bool operator>(const row_id& other) const { return val > other.val; }
-  bool operator<=(const row_id& other) const { return val <= other.val; }
-  bool operator>=(const row_id& other) const { return val >= other.val; }
-
-  uint32_t value() const { return val; }
-
-private:
-  uint32_t val;
-};
+struct row_id_tag;
+using row_id = strong_type<uint32_t, row_id_tag, strong_equality, strong_comparison>;
 
 /// View of a row in a table.
 template <typename TableType>
@@ -349,7 +335,7 @@ public:
     if (rid.value() >= index_map.size()) {
       return false;
     }
-    unsigned offset = index_map[rid.value()];
+    const unsigned offset = index_map[rid.value()];
     if (offset >= index_reverse_map.size()) {
       return false;
     }

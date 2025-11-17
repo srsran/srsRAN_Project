@@ -41,7 +41,7 @@ TEST(soa_table_test, insert_one_row)
   ASSERT_EQ(table.at<0>(row_id), 42);
   ASSERT_EQ(table.at<1>(row_id), 3.14f);
 
-  // Column test
+  // Column test.
   auto col0 = table.column<0>();
   auto col1 = table.column<1>();
   ASSERT_FALSE(col0.empty());
@@ -53,7 +53,7 @@ TEST(soa_table_test, insert_one_row)
   ASSERT_EQ(col0[row_id], 42);
   ASSERT_EQ(col1[row_id], 3.14f);
 
-  // Row test
+  // Row test.
   auto row0 = table.row(row_id);
   ASSERT_EQ(row0.nof_columns(), 2);
   ASSERT_EQ(row0.id(), row_id);
