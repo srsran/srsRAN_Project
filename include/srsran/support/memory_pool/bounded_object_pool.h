@@ -405,12 +405,18 @@ class bounded_rc_object_pool
     friend void intrusive_ptr_dec_ref(obj_control_block* ptr)
     {
       if (ptr->ref_count.dec_ref()) {
-        // Return object back to the pool.
-        obj_reclaimer reclaimer{ptr->parent.impl, ptr->seg_idx, ptr->obj_idx};
-        reclaimer(ptr);
+        ptr->reclaim();
       }
     }
     friend bool intrusive_ptr_is_unique(obj_control_block* ptr) { return ptr->ref_count.unique(); }
+
+  private:
+    void reclaim()
+    {
+      // Return object back to the pool.
+      obj_reclaimer reclaimer{parent.impl, seg_idx, obj_idx};
+      reclaimer(this);
+    }
   };
 
   struct segment : public detail::bounded_object_pool_impl<obj_control_block>::base_segment {
