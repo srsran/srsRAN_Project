@@ -129,9 +129,15 @@ static std::shared_ptr<ether::eth_frame_pool> create_eth_frame_pool(const transm
   frequency_range freq_range =
       (tx_config.scs > subcarrier_spacing::kHz60) ? frequency_range::FR2 : frequency_range::FR1;
 
-  ether::vlan_frame_params ether_params;
-  auto eth_builder   = (tx_config.tci_up || tx_config.tci_cp) ? ether::create_vlan_frame_builder(ether_params)
-                                                              : ether::create_frame_builder(ether_params);
+  auto eth_builder = [&tx_config]() {
+    if (tx_config.tci_up || tx_config.tci_cp) {
+      ether::vlan_frame_params ether_params{};
+      ether_params.tci.emplace(1);
+      return ether::create_vlan_frame_builder(ether_params);
+    }
+    ether::vlan_frame_params ether_params{};
+    return ether::create_frame_builder(ether_params);
+  }();
   auto ecpri_builder = ecpri::create_ecpri_packet_builder();
 
   std::array<std::unique_ptr<iq_compressor>, NOF_COMPRESSION_TYPES_SUPPORTED> compressors;

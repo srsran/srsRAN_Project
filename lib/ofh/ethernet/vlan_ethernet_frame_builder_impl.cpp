@@ -18,6 +18,7 @@ using namespace ether;
 vlan_frame_builder_impl::vlan_frame_builder_impl(const srsran::ether::vlan_frame_params& eth_params_) :
   eth_params(eth_params_)
 {
+  srsran_assert(eth_params.tci.has_value(), "Expected TCI field");
 }
 
 units::bytes vlan_frame_builder_impl::get_header_size() const
@@ -39,7 +40,7 @@ void vlan_frame_builder_impl::build_frame(span<uint8_t> buffer)
   serializer.write(VLAN_TPID);
 
   // Write VLAN TCI (2 Bytes).
-  serializer.write(eth_params.tci.value());
+  serializer.write(*eth_params.tci);
 
   // Write Ethernet Type (2 Bytes).
   serializer.write(eth_params.eth_type);
